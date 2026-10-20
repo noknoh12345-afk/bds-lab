@@ -1,3 +1,9 @@
-## loads
+# player.json に33個目のプロパティを宣言すると、BDS はどう読むか
+## 33個目は上限エラーになり、32個以内の分も含めてすべてのプロパティが読み込まれない
 @A join
-~ joined
+~ E .*Error loading properties - Too many properties on the definition \(Limit is 32\)
+~ E .*Error loading Actor Properties
+js const e = p('A'); JSON.stringify([e.getProperty('glab:bar'), e.getProperty('glab:p31'), e.getProperty('glab:p32')])
+= [null,null,null]
+js try { p('A').setProperty('glab:bar', 1); return 'ok' } catch (x) { return String(x) }
+~ InvalidArgumentError: .*Property "glab:bar" does not exist on Entity of type "minecraft:player"
