@@ -1,2 +1,3 @@
-import { world, system } from '@minecraft/server';
-import { cmd, ask, give, take, count, once, load, save, score, every, cooldown, ready } from './kit';
+// 何もしない。player.json のプロパティ定義（33個）を BDS がどう読むかだけを見る
+import { ready } from './kit';
+ready(() => {});
