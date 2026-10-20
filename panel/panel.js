@@ -53,6 +53,7 @@ import { lendForecastCard } from './ui/lendfc.mjs';
 import { wizardCard } from './ui/wizard.mjs';
 import { a11yCard, apply as applyA11y } from './ui/a11y.mjs';
 import * as A11Y from './lib/a11y.mjs';
+import * as PK from './lib/pick.mjs';
 
 // ---- the browser's storage (one that refuses it — a private window may — still works for the tab) ----
 const storage = (name) => { try { const s = window[name]; s.setItem('bdslab.probe', '1'); s.removeItem('bdslab.probe'); return s; } catch { return memoryStorage(); } };
@@ -75,6 +76,17 @@ const SIGNIN = 'bdslab.panel.signin';
 const PENDING = (() => { try { const p = JSON.parse(TAB.getItem(SIGNIN) ?? 'null'); return p && Date.now() - Number(p.at) < 15 * 60_000 ? p : null; } catch { return null; } })();
 const HANDOFF = FRAMED ? null : S.takeHandoff(location.hash, { nonce: PENDING?.nonce ?? null });
 if (HANDOFF) { history.replaceState(null, '', location.pathname + location.search + HANDOFF.rest); TAB.removeItem(SIGNIN); }
+// (「つまみ」's values, #bdslab-pick= — out of the address at once, onto 「連携」; kept in this tab alone for a sign-in on the way
+//  (GitHub's page in between), 10 minutes at most, gone once the card has them)
+const PICKED = 'bdslab.panel.pick';
+const PICK = (() => {
+  if (FRAMED) return null;
+  const p = PK.takePick(location.hash);
+  if (p) { history.replaceState(null, '', `${location.pathname}${location.search}#connect`); try { TAB.setItem(PICKED, JSON.stringify({ ...p, at: Date.now() })); } catch { /* this tab cannot keep it: used now or lost */ } return p; }
+  try { const k = JSON.parse(TAB.getItem(PICKED) ?? 'null'); if (k && Date.now() - Number(k.at) < 10 * 60_000) return k; TAB.removeItem(PICKED); } catch { /* none */ }
+  return null;
+})();
+const pickUsed = () => { try { TAB.removeItem(PICKED); } catch { /* gone with the tab */ } };
 
 // ---- the page's own config (pages.yml writes it from the lab's variables: common/panel-config.mjs) ----
 const RAW = await fetch('./config.json', { cache: 'no-store', credentials: 'omit' }).then((r) => (r.ok ? r.json() : {})).catch(() => ({ /* none (a copy served by hand): tokens alone, said on the door */ }));
@@ -408,7 +420,7 @@ const every = (fn) => { clearInterval(st.timer); st.timer = setInterval(() => { 
 function connectView(body) {
   // (the daily check of every service set up — connect.yml on schedule — above the services themselves)
   body.append(connectDailyCard({ api: st.api, lab: st.lab }));
-  connectTab(body, { api: st.api, lab: { slug: st.lab.slug, repo: st.lab.repo, role: st.lab.role, secrets: st.lab.secrets, workflows: st.lab.workflows }, me: st.me, policy: st.policy, role: st.role,
+  connectTab(body, { api: st.api, lab: { slug: st.lab.slug, repo: st.lab.repo, role: st.lab.role, secrets: st.lab.secrets, workflows: st.lab.workflows }, me: st.me, policy: st.policy, role: st.role, authUrl: CONFIG.authUrl, panelUrl: `${location.origin}${location.pathname}`, pick: PICK, pickUsed,
     guarded, reload: async () => { await loadEnv(st.lab); if (st.tab === 'connect') render(); }, record: (action, detail) => record(action, detail) });
 }
 function setup(body) {
@@ -1096,6 +1108,9 @@ async function controller(body, run) {
   try { issues = await st.api.issues(st.lab.slug); } catch (e) { return body.replaceChildren(h('div', { class: 'card' }, h('h2', {}, `端末 #${run.id}`), h('p', {}, 'ライブの issue（命令と返事の置き場）を読めませんでした。'), failView(e, () => controller(body, run)))); }
   const issue = LF.liveIssue(issues);
   const log = h('div', {}), shot = h('div', {}), since = new Date(Date.now() - 10 * 60_000).toISOString(), seen = new Set();
+  // (the game's Microsoft sign-in on the device asks the person: the number to approve in Authenticator, or a code — shown
+  //  big at the top, answered from here: the phone that gets the prompt is usually the one this page is open on)
+  const ask = h('div', { role: 'alert', 'aria-live': 'assertive' });
   let page = 'play';
   const send = async (text) => {
     if (!mine) return toast(`この端末を動かせるのは、実行を始めた ${starter} さんだけです`, true);
@@ -1127,11 +1142,22 @@ async function controller(body, run) {
       if (r) {
         log.prepend(h('pre', {}, r.text ?? '（封じられています: 設定に APP_CACHE_KEY を入れると読めます）'));
         if (r.png) shot.replaceChildren(h('img', { class: 'screen', alt: '端末の画面', src: `data:image/png;base64,${r.png}` }));
-      } else if (t) log.prepend(h('p', { class: 'muted' }, t));
+      } else if (t) { log.prepend(h('p', { class: 'muted' }, t)); showAsk(LF.signinAsk(t)); }
     }
     pollErr.replaceChildren();
   });
-  body.replaceChildren(h('div', { class: 'card' }, h('h2', {}, `端末 #${run.id}`, h('span', { class: 'chip' }, starter), link(run.html_url, 'GitHub')),
+  function showAsk(a) {
+    if (!a) return;
+    if (a.kind === 'approve') return ask.replaceChildren(h('div', { class: 'card ask' }, h('h3', {}, '📱 Microsoft Authenticator で承認してください'),
+      a.number ? [h('p', {}, '端末の画面に出ている番号:'), h('p', { class: 'code-big' }, a.number)] : h('p', {}, 'Authenticator の知らせを開いて「承認」を押します。'),
+      h('p', { class: 'muted' }, '承認すると、端末のサインインが自動で進みます。'), h('button', { onclick: () => ask.replaceChildren() }, '閉じる')));
+    if (a.kind === 'password') return ask.replaceChildren(h('div', { class: 'card ask' }, h('h3', {}, '🔑 パスワードを聞かれています'),
+      h('p', {}, 'パスワードなしで入るには、Microsoft アカウントを「パスワードなし（Authenticator）」にするか、「連携」で MS_PASSWORD を入れます。'), h('button', { onclick: () => go('connect') }, '「連携」を開く')));
+    const code = h('input', { type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', 'aria-label': '届いたコード', placeholder: '123456', maxlength: '12' });
+    const sendCode = () => { const c = LF.codeCommand(code.value); if (!c) return toast('数字 4〜10 桁のコードを入れてください', true); code.value = ''; send(c); ask.replaceChildren(h('p', { class: 'ok' }, 'コードを送りました: 端末が入力します')); };
+    ask.replaceChildren(h('div', { class: 'card ask' }, h('h3', {}, '✉️ 届いたコードを入れてください'), h('p', { class: 'muted' }, 'Microsoft からメールか SMS で届いたコードです。'), code, h('div', { class: 'row' }, h('button', { class: 'primary', onclick: sendCode }, '送る'))));
+  }
+  body.replaceChildren(h('div', { class: 'card' }, h('h2', {}, `端末 #${run.id}`, h('span', { class: 'chip' }, starter), link(run.html_url, 'GitHub')), ask,
     mine ? null : h('p', { class: 'warn' }, `命令が効くのは、この実行を始めた ${starter} さんのものだけです（見るのはできます）`),
     isPublic && !key ? h('p', { class: 'warn' }, '公開リポジトリ: 命令と返事は封じられます。設定に APP_CACHE_KEY を入れてください') : null,
     shot, pad, h('label', {}, '命令（1 行 1 つ）'), cmdBox, h('div', { class: 'row' }, h('button', { class: 'primary', onclick: () => { if (cmdBox.value.trim()) { send(cmdBox.value.trim()); cmdBox.value = ''; } } }, '送る'), h('button', { onclick: () => send('screen') }, '📷 画面'), h('button', { class: 'danger', onclick: () => confirm('端末を終わらせますか') && send('stop') }, '終わる'))),
