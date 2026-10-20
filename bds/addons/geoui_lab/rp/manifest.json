@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Lab RP",
+    "description": "GeoUIの検証用",
+    "uuid": "31a8b917-8b93-40b6-a17e-c6d60f41a384",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 26, 52]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "8c2afe8b-54e3-4aee-bfc6-ba64bc7e23d5",
+      "version": [1, 0, 0]
+    }
+  ]
+}
