@@ -35,3 +35,8 @@ html.a11y-calm, html.a11y-calm *, html.a11y-calm *::before, html.a11y-calm *::af
 
 /* リンクに下線: every link (and the buttons that look like links) underlined */
 html.a11y-links a, html.a11y-links button.linkish { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+/* 大きな字 on a phone: the strip's names and the menu's lines grow too (panel.css makes them small to fit six tabs) */
+html.a11y-big nav.tabs button { font-size: 15px; }
+html.a11y-big ul.menu small { font-size: 14px; }
+html.a11y-big #toast > div { font-size: 17px; }
