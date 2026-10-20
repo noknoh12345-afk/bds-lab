@@ -1,0 +1,119 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.glab_hud",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 512,
+        "visible_bounds_height": 512,
+        "visible_bounds_offset": [
+          0,
+          140,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "glab_root",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "glab_board",
+          "parent": "glab_root",
+          "pivot": [
+            0,
+            140,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -16,
+                136,
+                0
+              ],
+              "size": [
+                32,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    8
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    8
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "glab_bar",
+          "parent": "glab_root",
+          "pivot": [
+            -15,
+            138,
+            -0.2
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -15,
+                138,
+                -0.2
+              ],
+              "size": [
+                30,
+                4,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    16,
+                    4
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    16,
+                    4
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
