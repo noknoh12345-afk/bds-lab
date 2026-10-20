@@ -1,0 +1,114 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.geoui_l2",
+        "texture_width": 256,
+        "texture_height": 16,
+        "visible_bounds_width": 119.68,
+        "visible_bounds_height": 4.4,
+        "visible_bounds_offset": [
+          0,
+          140,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "geoui_l2",
+          "parent": "geo_ui",
+          "pivot": [
+            29.92,
+            140,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                137.8,
+                0
+              ],
+              "size": [
+                59.84,
+                4.4,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    256,
+                    16
+                  ]
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    0,
+                    0
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    0,
+                    0
+                  ]
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    0,
+                    0
+                  ]
+                },
+                "up": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    0,
+                    0
+                  ]
+                },
+                "down": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    0,
+                    0
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
