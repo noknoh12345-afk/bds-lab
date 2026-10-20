@@ -7,6 +7,7 @@
 import { h, toast, link, failView } from './dom.mjs';
 import * as C from '../lib/connect.mjs';
 import * as P from '../lib/policy.mjs';
+import * as PK from '../lib/pick.mjs';
 
 const ICON = { ok: '✅ ', bad: '⚠️ ', missing: '⚠️ ', unchecked: '❔ ' };
 const STATE_WORDS = { ok: 'つながっている', bad: 'つながらなかった', missing: '未（秘密がまだ入っていません）', unchecked: '入っているが、確かめていない' };
@@ -21,7 +22,9 @@ function notAllowed(ctx) {
   return no.length ? `役割「${roleName(role)}」には、ポリシー（${P.POLICY_FILE} の roles）が「${no.map((a) => P.ACTION_WORDS[a] ?? a).join('・')}」を許していません` : null;
 }
 
-/** the 「連携」 tab. ctx: the same as setupTab's { api, lab: { slug, secrets, role }, me, policy, role, reload, record(action, detail)? } */
+/** the 「連携」 tab. ctx: the same as setupTab's { api, lab: { slug, secrets, role }, me, policy, role, reload, record(action, detail)?,
+ *  authUrl? (the sign-in service: Microsoft's sign-in from a phone goes through it), panelUrl? (「つまみ」 is made for it),
+ *  pick? (「つまみ」's values on arrival: PK.takePick) and pickUsed(), fetchImpl?, sleep? (tests) } */
 export function connectTab(body, ctx) {
   const checked = {}, cards = new Map(), say = h('div', { class: 'muted', role: 'status' });
   let queue = null;
@@ -45,8 +48,19 @@ export function connectTab(body, ctx) {
   put(body, h('div', { class: 'card' }, h('h2', {}, `連携（${ctx.lab.slug}）`),
     h('p', { class: 'muted' }, 'サービスごとに、公式の画面を開いて値を写し、ここに貼ります。値はこのブラウザで封じてから GitHub の秘密に入り、GitHub Actions で本物かを確かめます（値は残しません・表示しません）。ログインや同意の確認は、あなたが公式の画面で押します。'),
     no ? h('p', { class: 'bad', role: 'alert' }, `（${no}）`) : null, h('div', { class: 'row' }, all), say),
-  [...cards.values()].map((c) => c.el));
+  ctx.panelUrl ? pickCard(ctx) : null, [...cards.values()].map((c) => c.el));
   refresh();
+  // (「つまみ」 brought values: each card they belong to opened, its fields filled — sealed and checked only when the person
+  //  presses 「封じて登録して確かめる」, as if they had pasted them)
+  const p = ctx.pick;
+  if (p && (Object.keys(p.picks ?? {}).length || p.rejected?.length)) {
+    const opened = PK.pickCards(p.picks).map((x) => { const c = cards.get(x.service); c?.fill(x.fields); return C.serviceOf(x.service).name; });
+    say.replaceChildren(h('div', { class: 'ok', role: 'status' }, `🔖 つまみから受け取りました: ${opened.join('・') || '（使える値なし）'}${opened.length ? ' — 開いたカードの「封じて登録して確かめる」を押してください' : ''}`),
+      p.rejected?.length ? h('div', { class: 'bad' }, `形が違うので使いませんでした: ${p.rejected.join('・')}`) : null);
+    const first = PK.pickCards(p.picks)[0];
+    if (first) cards.get(first.service)?.details.scrollIntoView?.({ block: 'start' });
+    ctx.pick = null; ctx.pickUsed?.();
+  }
   return Promise.resolve([...cards.keys()]);
 }
 
@@ -96,11 +110,76 @@ function card(ctx, svc, k) {
     } finally { btn.disabled = false; }
   };
   put(details, h('p', { class: 'muted' }, svc.why), steps,
-    k.no ? h('div', { class: 'muted' }, `（${k.no}）`) : [fields.map(([f, el]) => [h('label', {}, f.label), el]), h('div', { class: 'row' }, btn, skip)], out);
+    k.no ? h('div', { class: 'muted' }, `（${k.no}）`) : [fields.map(([f, el]) => [h('label', {}, f.label), el]), h('div', { class: 'row' }, btn, skip)], out,
+    svc.key === 'microsoft' && !k.no ? msPhone(ctx, k) : null);
   const el = h('div', { class: 'card', 'data-service': svc.key }, h('h3', {}, svc.name), st, details);
   const paint = (s) => {
     const n = s.state === 'missing' && s.missing.length ? ` — ${s.missing.join('・')}` : '';
     put(st, h('div', {}, ICON[s.state], STATE_WORDS[s.state], n), s.result && !s.result.ok ? h('div', { class: 'bad' }, s.result.text) : null, true);
   };
-  return { el, details, paint };
+  /** values from 「つまみ」 → the fields filled and the card opened (nothing sent yet) */
+  const fill = (vals) => { for (const [f, el] of fields) if (vals[f.name]) el.value = vals[f.name]; details.open = true; put(out, h('div', { class: 'ok' }, '🔖 つまみの値を入れました: 確かめて「封じて登録して確かめる」'), true); };
+  return { el, details, paint, fill };
+}
+
+/** 「📱 Microsoft で普通にサインイン」 (lan's bots): a code from the sign-in service, Microsoft's own page opened with it filled in
+ *  (the person signs in there as always — passkey, Authenticator, two-step), waited for, and live.com's tokens sealed into the
+ *  secret MS_LIVE_<NAME>. Nothing is kept on this page: the handle and the tokens live in variables until the secret is put */
+function msPhone(ctx, k) {
+  const name = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'characters', 'aria-label': 'ボットの名前', placeholder: 'MAIN', maxlength: '40' });
+  const out = h('div', { role: 'status', 'aria-live': 'polite' }), kept = h('div', { class: 'muted' });
+  const paintKept = () => { const l = k.secrets().filter((n) => C.MS_LIVE_SECRET.test(n)); put(kept, l.length ? `登録済み: ${l.join('・')}` : 'まだ登録されていません', true); };
+  let busy = false, left = false;
+  const start = h('button', { class: 'primary', onclick: () => go() }, 'サインインを始める');
+  const go = async () => {
+    if (busy) return;
+    if (!ctx.authUrl) return put(out, h('div', { class: 'bad', role: 'alert' }, 'サインインのサービスがありません: 「準備」でサインインのサービスを置いてください'), true);
+    busy = true; left = false; start.disabled = true;
+    const secret = C.msSecretName(name.value);
+    try {
+      const s = await C.msStart(ctx.authUrl, { fetchImpl: ctx.fetchImpl });
+      const copy = h('button', { onclick: () => navigator.clipboard?.writeText(s.code).then(() => toast('コードを写しました'), () => toast('写せませんでした: 手で入れてください', true)) }, '📋 コードを写す');
+      const stop = h('button', { onclick: () => { left = true; } }, 'やめる');
+      const wait = h('div', { class: 'muted' }, 'Microsoft の画面でサインインが終わるのを待っています…');
+      put(out, h('p', {}, '① 下のボタンで Microsoft の画面を開き、いつものようにサインインします（コードは入っています。聞かれたら下のコードを）。'),
+        h('p', { class: 'code-big', 'aria-label': 'コード' }, s.code),
+        h('div', { class: 'row' }, h('a', { class: 'btn primary', href: s.link, target: '_blank', rel: 'noopener noreferrer' }, 'Microsoft の画面を開く'), copy, stop),
+        h('p', { class: 'muted' }, '② 「Minecraft for Nintendo Switch」へのアクセスを聞かれたら「はい」。終わったらこの画面に戻ります。'), wait, true);
+      const r = await C.msWait(ctx.authUrl, s, { fetchImpl: ctx.fetchImpl, sleep: ctx.sleep, stop: () => left, onTick: (sec) => wait.replaceChildren(`Microsoft の画面でサインインが終わるのを待っています…（あと ${Math.floor(sec / 60)} 分 ${sec % 60} 秒）`) });
+      put(out, 'サインインできました: 封じて登録しています…', true);
+      const value = C.msSecretValue(r);
+      const put1 = () => ctx.api.putSecret(ctx.lab.slug, secret, value);
+      if (ctx.guarded) { if (await ctx.guarded('secrets.put', { name: secret }, put1) === undefined) throw new Error(`${secret} を登録しませんでした（上の知らせ）`); } else await put1();
+      ctx.lab.secrets = [...new Set([...k.secrets(), secret])];
+      ctx.record?.('connect.microsoft.live', { name: secret, ok: true });
+      const who = r.gamertag ? `「${r.gamertag}」` : 'そのアカウント';
+      put(out, h('div', { class: 'ok', role: 'status' }, `✅ ${who}を ${secret} に封じて登録しました`),
+        r.profile === false ? h('div', { class: 'bad' }, 'このアカウントにはまだ Xbox のプロフィールがありません: xbox.com で一度サインインしてプロフィールを作ってから使ってください') : null,
+        h('div', { class: 'muted' }, `lan で使う: node lab.mjs lan account import ${secret.slice('MS_LIVE_'.length).toLowerCase()}（秘密 ${secret} を読みます）`), true);
+      paintKept();
+    } catch (e) {
+      put(out, h('div', { class: 'bad', role: 'alert' }, `⚠️ ${e.message}`), true);
+    } finally { busy = false; start.disabled = false; }
+  };
+  paintKept();
+  return h('section', { class: 'card', 'data-part': 'ms-phone' }, h('h4', {}, '📱 lan のボット: Microsoft で普通にサインイン'),
+    h('p', { class: 'muted' }, 'パスワードはここに入れません。Microsoft の画面（microsoft.com/link）で、いつものように（パスキー・Authenticator・二段階認証も）サインインするだけです。受け取ったトークンは、このブラウザで封じて秘密 MS_LIVE_<名前> に入れます。'),
+    h('label', {}, 'ボットの名前（英数字。空なら MAIN）'), name, h('div', { class: 'row' }, start), out, kept);
+}
+
+/** 「🔖 つまみ」: the lab's own bookmark (lib/pick.mjs), made for this panel — how to keep it on a phone, and the link itself */
+function pickCard(ctx) {
+  let code;
+  try { code = PK.bookmarklet(ctx.panelUrl); } catch { return null; }
+  const box = h('textarea', { readonly: true, rows: '3', 'aria-label': 'つまみ（ブックマークの URL）' }, code);
+  const copy = h('button', { class: 'primary', onclick: () => navigator.clipboard?.writeText(code).then(() => toast('つまみを写しました: ブックマークの URL に貼ってください'), () => { box.select?.(); toast('写せませんでした: 上の欄を長押しして全部コピー', true); }) }, '📋 つまみを写す');
+  return h('details', { class: 'card', 'data-part': 'pick' }, h('summary', {}, '🔖 つまみ（スマホで値を拾うブックマーク・自作）'),
+    h('p', { class: 'muted' }, '各サービスの画面で値（トークン・キー）が出ているときに押すと、その値を拾ってこのパネルに渡します。入れるものはありません。何も読み込まず、拾った値はこのパネルの「連携」のカードに入るだけです（封じて登録するのは、あなたがボタンを押したとき）。'),
+    h('ol', {},
+      h('li', {}, '下の「つまみを写す」を押す。'),
+      h('li', {}, 'iPhone（Safari）: どのページでもよいので共有 →「ブックマークを追加」。ブックマークを編集して、アドレスを写したものに置き換え、名前を「つまみ」に。'),
+      h('li', {}, 'Android（Chrome）: ☆ でブックマークを作り、編集でアドレスを写したものに置き換え、名前を「つまみ」に。使うときはアドレス欄に「つまみ」と打って候補のブックマークを押します。'),
+      h('li', {}, '使う: Discord の Reset Token の後・Cloudflare でトークンを作った直後・API キーを作った直後などに、その画面で「つまみ」を開く → 確認 →「はい」でこのパネルに戻ります。')),
+    h('p', { class: 'muted' }, 'Google の oauth_token は、ブラウザや Google の守り（cookie をページから読めなくする・ブックマークの実行を止める）で拾えないことがあります。そのときは、そう表示されます。'),
+    box, h('div', { class: 'row' }, copy, h('a', { class: 'btn', href: code, title: 'パソコンではこれをブックマークバーへ引きずる' }, '🔖 つまみ')));
 }
