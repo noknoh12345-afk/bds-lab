@@ -345,7 +345,7 @@ function install(adb, list, info, log = out) {
 const vendingWanted = (file) => Boolean(file || process.env.APP_VENDING_APK || process.env.APP_VENDING_URL) || process.env.APP_VENDING !== '0';
 async function setupAccount(adb, { vending, log = out } = {}) {
   const c = K.playCredentials();
-  if (!c.ready) fail(c.problems.join(' / ') || 'GOOGLE_EMAIL / GOOGLE_AAS_TOKEN がありません', 'まず node lab.mjs app token（GitHub では Secrets と、ワークフローの入力 account）');
+  if (!c.ready) fail(c.problems.join(' / ') || 'GOOGLE_EMAIL / GOOGLE_AAS_TOKEN がありません', 'まず node lab.mjs app token（GitHub では Secrets と、ワークフローの入力 account）（Web だけなら: パネルの「🔗 連携」→ Google Play でメールと oauth_token を入れると、CI が AAS トークンを作って Secrets に置きます）');
   let apk = await A.vendingApk({ file: vending || process.env.APP_VENDING_APK, url: process.env.APP_VENDING_URL, sha256: process.env.APP_VENDING_SHA256, labDir: LAB, log });
   // one taken out of Google's "Google Play" image earlier (node lab.mjs app vending)
   if (!apk && process.env.APP_VENDING !== '0') { apk = A.extractedVending(LAB); if (apk) log(`  Play ストア: ${path.basename(apk)}（Google Play 入りのイメージから取り出したもの）`); }
