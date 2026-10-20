@@ -1,0 +1,58 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "無題のプロジェクト BP",
+    "description": "GeoUI Studio で作成",
+    "uuid": "51eade30-6cd4-4c94-875a-24c8ed7df72f",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      100
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "8dda0350-57dc-40ed-b48a-b47b7f4100d7",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "6262733b-8163-4ca1-b74b-a9b3e4831731",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "2f7a939a-bda7-466b-acd5-4cce8bc52f4d",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.1.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.1.0"
+    }
+  ]
+}
