@@ -14,7 +14,8 @@ const copy = (text, done) => navigator.clipboard?.writeText(text).then(() => toa
 
 /** the 「配布」 tab. ctx: { api, lab: { slug, workflows? (notify.yml looked for in it) }, gate(action), guarded(action, detail,
  *  fn, done), dispatch(workflow, inputs) (GitHub's call alone: the guard is this tab's), caps? ({ notify: { ok, need } }: the
- *  lab's settings, panel.js capsOf — Discord not set up: the button says what is missing) } → a promise of the releases shown */
+ *  lab's settings, panel.js capsOf — Discord not set up: the button says what is missing), simple? (「かんたん表示」: without
+ *  the next release's words to draft and the two versions compared — held back, not gone) } → a promise of the releases shown */
 export function releasesTab(body, ctx) {
   const slug = ctx.lab.slug, g = ctx.gate?.('dispatch') ?? {}, c = ctx.caps?.notify;
   const off = g.disabled ? g : !hasWorkflow(ctx.lab.workflows, 'notify.yml') ? { disabled: true, title: 'このラボには notify.yml がありません' } : c?.ok === false ? { disabled: true, title: c.need } : {};
@@ -52,13 +53,13 @@ export function releasesTab(body, ctx) {
     const rs = R.newestFirst(await R.listReleases(ctx.api, slug).catch((e) => { list.replaceChildren(wayOut(e, ctx, () => load())); throw e; })), t = R.totals(rs);
     sum.replaceChildren(...[`リリース ${t.releases}`, `ファイル ${t.assets}（パック ${t.packs}）`, `ダウンロード ${t.downloads} 回`, `合わせて ${fmtBytes(t.bytes)}`].map((x) => h('span', { class: 'chip' }, x)));
     // (two versions' packs compared, the files on this device: ui/packdiff.mjs)
-    diff.replaceChildren(packdiffCard(ctx, { releases: rs }));
+    if (!ctx.simple) diff.replaceChildren(packdiffCard(ctx, { releases: rs }));
     list.replaceChildren(...(rs.length ? rs.map(card) : [h('div', { class: 'card' }, h('p', { class: 'muted' }, 'まだリリースがありません。AI で作ったアドオン（ai-make）はリリースに届きます。「アドオン」の「仕上げる」の .mcaddon は、実行の成果物（「成果物」タブ）にあります。'),
       h('div', { class: 'row' }, ctx.go ? h('button', { onclick: () => ctx.go('units') }, '「アドオン」で作る') : null, link(`https://github.com/${slug}/releases/new`, 'GitHub でリリースを作る')))]));
     return rs;
   });
   body.append(h('div', { class: 'card', id: 'releases' }, h('h2', {}, `配布（${slug}）`),
     h('p', { class: 'muted' }, 'GitHub のリリースにあるものです（新しい 30 件）。リンクを写して遊ぶ人に渡すか、Discord に知らせます（notify.yml）。ダウンロードの数は GitHub が数えています。'),
-    whyNote, sum, h('div', { class: 'row' }, h('button', { onclick: () => load() }, '読み直す'), link(`https://github.com/${slug}/releases`, 'GitHub のリリース')), notes), list, diff);
+    whyNote, sum, h('div', { class: 'row' }, h('button', { onclick: () => load() }, '読み直す'), link(`https://github.com/${slug}/releases`, 'GitHub のリリース')), ctx.simple ? null : notes), list, diff);
   return load();
 }
