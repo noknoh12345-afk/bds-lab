@@ -274,6 +274,10 @@ let browser;
 for (const o of exe ? [{ executablePath: exe }] : [{ channel: 'chrome' }, {}]) { try { browser = await pw.chromium.launch({ headless: true, ...o, args: process.getuid?.() === 0 ? ['--no-sandbox'] : [] }); break; } catch (e) { console.log(`  (${JSON.stringify(o)}: ${e.message.split('\n')[0]})`); } }
 if (!browser) { console.log('✘ no browser to run'); process.exit(1); }
 const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+// (the panel with all of it shown — 「設定」's 「すべての機能を出す」 — for the checks below; 「かんたん表示」, the default of a
+//  browser new to the panel, is seen on its own further down)
+const allShown = () => { try { localStorage.setItem('bdslab.panel.full', '1'); } catch { /* a page with no storage (about:blank) */ } };
+await ctx.addInitScript(allShown);
 await ctx.route('https://api.github.com/**', api);
 await ctx.route('https://avatars.githubusercontent.com/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
 const page = await ctx.newPage(), errors = [];
@@ -757,6 +761,7 @@ try {
   // ======== an organization's lab, the company way: 「GitHub でサインイン」 through the real sign-in service, the lab's
   // policy and audit log, the App made in one click from 「準備」, the token revoked on leaving ========
   const ctx2 = await browser.newContext({ viewport: { width: 420, height: 900 }, acceptDownloads: true });
+  await ctx2.addInitScript(allShown);
   await ctx2.route('https://api.github.com/**', api);
   await ctx2.route('https://avatars.githubusercontent.com/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
   await ctx2.route(`${AUTH}/**`, authRoute);
@@ -839,6 +844,92 @@ try {
   await p2.waitForTimeout(500);
   check(G.secretsPut.length === before2 && /秘密を登録するは、あなたの役割（write）には許されていません/.test(await p2.locator('#toast').innerText()), 'a writer may not set a secret: the policy says so before GitHub is asked', await p2.locator('#toast').innerText());
   await ctx2.close();
+
+  // ======== 「かんたん表示」, the default of a browser new to the panel: the screens and cards few need held back — never
+  // gone: ☰'s fold and 🔎 open them, 「設定」 shows them all (kept for this browser), and back ========
+  const ctx4 = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await ctx4.route('https://api.github.com/**', api);
+  await ctx4.route('https://avatars.githubusercontent.com/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
+  const p4 = await ctx4.newPage();
+  p4.on('pageerror', (e) => errors.push(`pageerror (simple): ${e.message}`));
+  p4.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(`console (simple): ${m.text()}`); });
+  p4.on('dialog', (d) => d.accept());
+  const text4 = () => p4.locator('main').innerText();
+  const waitFor4 = async (re, ms = 10_000) => { const end = Date.now() + ms; while (Date.now() < end) { if (re.test(await text4())) return true; await p4.waitForTimeout(150); } return false; };
+  const strip4 = () => p4.locator('nav.tabs button').allInnerTexts();
+  const on4 = () => p4.locator('nav.tabs button.on').innerText();
+  const tab4 = (name) => p4.locator('nav.tabs button', { hasText: name }).click();
+  const shot4 = async (name) => { if (!process.env.PANEL_SHOTS) return; await p4.waitForTimeout(900); fs.mkdirSync(process.env.PANEL_SHOTS, { recursive: true }); await p4.screenshot({ path: path.join(process.env.PANEL_SHOTS, `simple-${String(++shots).padStart(2, '0')}-${name}.png`), fullPage: true }); };
+  const SIMPLE = ['概要', '進み具合', '実行', 'アドオン', '配布', '予約', '秘密', '端末', '貸し借り', '準備', '連携', '設定'];
+  const EVERY = ['概要', '進み具合', '実行', 'アドオン', '配布', '成果物', '予約', '統計', 'Discord', '秘密', '端末', '貸し借り', 'メンバー', '準備', '連携', '監査', '設定'];
+  await p4.goto(URL0); await p4.waitForSelector('#tok'); await p4.fill('#tok', 'tok-author'); await p4.fill('#lab', LAB); await p4.click('#go');
+  await p4.waitForSelector('nav.tabs button', { timeout: 10_000 });
+  check(JSON.stringify(await strip4()) === JSON.stringify(SIMPLE), 'かんたん表示 (the default): the strip without 成果物・統計・Discord・メンバー・監査', JSON.stringify(await strip4()));
+  await p4.waitForFunction(() => /最近の実行/.test(document.querySelector('#ovruns')?.innerText ?? ''), null, { timeout: 10_000 }).catch(() => {});
+  check(/最近の実行/.test(await text4()) && await p4.locator('#todo').count() === 1 && await p4.locator('#labhealth, #reportbox, #wizardbox, #me, details.help').count() === 0,
+    '概要: いまやること and the runs; no 🩺 health, no report, no 🧭 wizard, no who-am-I card, no 「？」', await text4());
+  await shot4('概要');
+  // ☰: the screens shown, grouped; the hidden ones folded at the bottom, each a tap away — and in the strip while it is open
+  await p4.locator('#menubtn').click();
+  const shown4 = await p4.locator('#menusheet section button[data-go]').evaluateAll((bs) => bs.map((b) => b.dataset.go));
+  check(shown4.length === SIMPLE.length && !['files', 'stats', 'discord', 'members', 'audit'].some((k) => shown4.includes(k)) && await p4.locator('#menuhidden').evaluate((d) => !d.open),
+    '☰: the screens shown; the hidden ones folded', JSON.stringify(shown4));
+  await p4.locator('#menuhidden summary').click();
+  const hidden4 = await p4.locator('#menuhidden button[data-go]').evaluateAll((bs) => bs.map((b) => b.dataset.go));
+  check(JSON.stringify(hidden4) === JSON.stringify(['files', 'discord', 'members', 'audit', 'stats']) && /かんたん表示で隠している画面（5）/.test(await p4.locator('#menuhidden summary').innerText()),
+    '☰\'s fold: the five hidden screens, said with their number', JSON.stringify(hidden4));
+  await shot4('menu');
+  await p4.locator('#menuhidden button[data-go="stats"]').click();
+  check(await p4.locator('#menusheet').count() === 0 && await on4() === '統計' && (await strip4()).includes('統計') && (await strip4()).length === SIMPLE.length + 1,
+    'a hidden screen opened from the fold: drawn, and in the strip while it is open', JSON.stringify(await strip4()));
+  await tab4('概要');
+  check(JSON.stringify(await strip4()) === JSON.stringify(SIMPLE), 'another screen: hidden again', JSON.stringify(await strip4()));
+  // 🔎 finds every screen and the card held back: 「デバッグ」 → 設定 with the debug card
+  await p4.locator('#find').click();
+  await p4.waitForSelector('#palette input');
+  await p4.keyboard.type('メンバー');
+  await p4.waitForSelector('#palette [data-intent="members"]', { timeout: 3000 }).catch(() => {});
+  check(await p4.locator('#palette [data-intent="members"]').count() === 1, '🔎: a hidden screen is still found (メンバー)', await p4.locator('#palette').innerText());
+  await p4.locator('#palette input').fill('デバッグ');
+  await p4.waitForSelector('#palette [data-intent="debug"]', { timeout: 3000 }).catch(() => {});
+  await p4.locator('#palette [data-intent="debug"]').click();
+  check(await on4() === '設定' && await p4.locator('#debug').count() === 1 && await p4.locator('#glossary').count() === 0, '🔎 「デバッグ」: 設定 with the debug card it holds back otherwise (the glossary still held back)', await text4());
+  await tab4('概要'); await tab4('設定');
+  check(await p4.locator('#debug').count() === 0 && /かんたん表示/.test(await p4.locator('#viewcard').innerText()) && /成果物・統計・Discord・メンバー・監査/.test(await p4.locator('#viewcard').innerText()) && !(await p4.locator('#fullview').isChecked()),
+    '設定 come to again: the debug card held back; 「表示」 says what かんたん表示 hides', await p4.locator('#viewcard').innerText().catch(() => ''));
+  await shot4('設定');
+  // 「アドオン」 and 「配布」 without their extras; 「実行」 without the list of every workflow
+  await tab4('アドオン');
+  await p4.waitForSelector('[data-unit="bds/coins"] button', { timeout: 10_000 }).catch(() => {});
+  check(/仕上げる/.test(await text4()) && !/遊び方カード|リリースの説明/.test(await text4()), 'アドオン: each unit without 🎮 遊び方カード and 📝 リリースの説明', await text4());
+  await tab4('配布');
+  await p4.waitForFunction(() => /リリース \d+/.test(document.querySelector('#reltotals')?.innerText ?? ''), null, { timeout: 10_000 }).catch(() => {});
+  check(await p4.locator('#relnotes').count() === 0 && !/2 つの版|比べる/.test(await text4()), '配布: no draft of the next release\'s words, no two versions compared', await text4());
+  await tab4('実行');
+  check(await waitFor4(/すぐ始める/) && !/ワークフローを選んで/.test(await text4()), '実行: すぐ始める — no list of every workflow', await text4());
+  // every screen of かんたん表示: a missing part is nothing — never 「null」「undefined」「[object …]」
+  for (const name of SIMPLE) {
+    await tab4(name);
+    await p4.waitForTimeout(500);
+    const words = await p4.locator('#main').innerText();
+    const bad4 = /(^|[^A-Za-z_])(null|undefined|NaN)([^A-Za-z_]|$)|\[object [A-Za-z]+\]/.exec(words);
+    check(!bad4, `かんたん表示「${name}」: no null, undefined or [object …]`, bad4 ? words.slice(Math.max(0, bad4.index - 80), bad4.index + 80) : '');
+  }
+  // 「すべての機能を出す」: every screen at once, said, kept for this browser (a reload keeps it); back to かんたん表示 from ☰
+  await tab4('設定');
+  await p4.locator('#fullview').check();
+  await p4.waitForFunction((n) => document.querySelectorAll('nav.tabs button').length === n, EVERY.length, { timeout: 5000 }).catch(() => {});
+  check(JSON.stringify(await strip4()) === JSON.stringify(EVERY) && /すべての機能を出しました/.test(await p4.locator('#toast').innerText()) && await p4.evaluate(() => localStorage.getItem('bdslab.panel.full')) === '1',
+    '「すべての機能を出す」: every screen in the strip, said, kept for this browser', JSON.stringify(await strip4()));
+  await p4.reload();
+  await p4.waitForSelector('nav.tabs button', { timeout: 10_000 });
+  check(JSON.stringify(await strip4()) === JSON.stringify(EVERY) && await p4.locator('#glossary').count() === 1 && await p4.locator('#debug').count() === 1, 'read again: still all of it (the glossary and the debug card on 設定)', JSON.stringify(await strip4()));
+  await p4.locator('#menubtn').click();
+  check(await p4.locator('#menuhidden').count() === 0, '☰ with all of it shown: no fold', '');
+  await p4.locator('#showsimple').click();
+  check(JSON.stringify(await strip4()) === JSON.stringify(SIMPLE) && await p4.evaluate(() => localStorage.getItem('bdslab.panel.full')) === null && /かんたん表示にしました/.test(await p4.locator('#toast').innerText()),
+    '☰ 「かんたん表示に戻す」: the strip as it was, the browser\'s choice taken away', JSON.stringify(await strip4()));
+  await ctx4.close();
 
   // the panel on the device (sw.js): its shell kept by version, opened again with no network; GitHub's API never kept
   const ctx3 = await browser.newContext({ viewport: { width: 390, height: 800 } }), p3 = await ctx3.newPage();
