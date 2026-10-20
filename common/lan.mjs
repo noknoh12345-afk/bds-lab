@@ -248,7 +248,19 @@ export async function lanCmd(CACHE, rest, out) {
       return true;
     }
     if (what === 'remove' && name) { out(store.remove(name) ? `OK removed ${name}` : `${name}: not registered`); return true; }
-    throw new Error('lan account list | add <name> | remove <name>');
+    if (what === 'import' && name) {
+      // (a sign-in made on a phone: the panel's 「連携」→ 📱 kept live.com's token sealed in MS_LIVE_<NAME>; written where
+      //  prismarine-auth reads it, so the bot starts signed in — no browser, no password: common/mslive.mjs)
+      const ML = await import('./mslive.mjs'), { readSecret } = await import('./secrets.mjs');
+      const secret = ML.secretName(name), raw = readSecret(path.dirname(HERE), secret);
+      if (!raw) throw new Error(`${secret} がありません（パネルの「連携」→ Microsoft →「📱 lan のボット」でサインインすると入ります。手元では .env.local に ${secret}=…）`);
+      const tok = ML.parseSecret(raw);
+      if (tok instanceof Error) throw new Error(`${secret}: ${tok.message}`);
+      const f = ML.writeLiveCache(config.auth.profilesFolder, name, tok);
+      out(`OK account ${name} imported from ${secret} → ${path.relative(process.cwd(), f)}（Xbox のトークンは最初の参加で作られます）`);
+      return true;
+    }
+    throw new Error('lan account list | add <name> | import <name> | remove <name>');
   }
   if (sub === 'snapshot') { if (!o.pos[0]) throw new Error('lan snapshot <world dir | world name | bds dir | restore.targets name>'); snapshotOf(nc, config, o.pos[0], out); return true; }
   if (sub === 'snapshots') { const s = new nc.SnapshotStore(config.restore.store).list(); s.forEach((m) => out(`${m.id} ${m.kind} ${m.label} ${m.files.length} files ${m.source}`)); if (!s.length) out('none'); return true; }
