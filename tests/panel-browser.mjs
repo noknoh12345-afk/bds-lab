@@ -611,6 +611,22 @@ try {
   await page.locator('#inbox li', { hasText: 'verify が失敗しました' }).locator('button', { hasText: '開く' }).click();
   check((await page.locator('nav.tabs button.on').innerText()) === '進み具合' && await waitText(/考えられる原因と直し方|offline/) && (await page.locator('#bell').innerText()) === '🔔', 'opened: its tab, its run, and read', await page.locator('nav.tabs button.on').innerText());
 
+  // 「連携」 on a phone: 📱 Microsoft's own sign-in (no password field) and 🔖 つまみ (the bookmark made for this panel, a
+  // javascript: address with this panel in it), nothing wider than the screen
+  await tab('連携');
+  check(await waitText(/連携（/), 'the 「連携」 tab', await text());
+  const msCard = page.locator('[data-service="microsoft"]');
+  await msCard.locator('summary').click();
+  const msPhone = msCard.locator('[data-part="ms-phone"]');
+  check(await msPhone.isVisible() && /Microsoft で普通にサインイン/.test(await msPhone.innerText()) && await msPhone.locator('input[type="password"]').count() === 0 && await msPhone.locator('button', { hasText: 'サインインを始める' }).isVisible(), 'Microsoft from a phone: no password asked, one button', await msPhone.innerText().catch(() => ''));
+  const pickCard = page.locator('[data-part="pick"]');
+  await pickCard.locator('summary').click();
+  const bm = await pickCard.locator('a', { hasText: 'つまみ' }).getAttribute('href');
+  check(bm?.startsWith('javascript:') && decodeURIComponent(bm).includes(JSON.stringify(`${new URL(page.url()).origin}${new URL(page.url()).pathname}`)) && await pickCard.locator('textarea').inputValue() === bm, 'つまみ: the bookmark for this panel, to copy', bm?.slice(0, 80));
+  const wide = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
+  check(wide[0] <= wide[1], 'nothing wider than the phone\'s screen', JSON.stringify(wide));
+  if (process.env.PANEL_SHOTS) { await msCard.screenshot({ path: path.join(process.env.PANEL_SHOTS, 'connect-microsoft.png') }); await pickCard.screenshot({ path: path.join(process.env.PANEL_SHOTS, 'connect-pick.png') }); }
+
   // members: someone invited as an administrator (asked first), a writer made a reader, the owner and oneself untouchable
   await tab('メンバー');
   check(await waitText(/helper1/) && await page.locator('[data-member="author1"] select').isDisabled() && /持ち主/.test(await text()), 'the lab\'s people: the owner (not changeable here), a writer', await text());
