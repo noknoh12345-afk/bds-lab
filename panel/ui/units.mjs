@@ -18,6 +18,8 @@ import { tutorialCard } from './tutorial.mjs';
  *    aiMake?({ unit })                        「アイデアからアドオンを作る」 (ai-make.yml) opened with the unit to change
  *                                             filled in — unit: bds/<name>; none for a new one. What to change and AI's fees
  *                                             are asked there (none: no AI button)
+ *    simple?                                  「かんたん表示」: each unit without 🎮 遊び方カード and 📝 リリースの説明
+ *                                             (held back, not gone: 「すべての機能を出す」 brings them)
  *  → a promise of the units shown */
 export function unitsTab(body, ctx) {
   const slug = ctx.lab.slug, branch = ctx.lab.repo?.default_branch ?? 'main';
@@ -50,8 +52,8 @@ export function unitsTab(body, ctx) {
         bds ? h('button', { class: 'primary', ...g, onclick: () => run({ job: 'go', unit: u.name }) }, '📦 仕上げる（.mcaddon）') : null,
         bds ? h('button', { onclick: () => edit(u) }, '✏️ ファイルを直す') : null,
         ctx.aiMake ? h('button', { onclick: () => ctx.aiMake({ unit: u.ref }) }, '💡 AI で変える') : null,
-        bds ? h('button', { onclick: () => show('play', () => playcardCard(ctx, u)) }, '🎮 遊び方カード') : null,
-        bds ? h('button', { onclick: () => show('notes', () => relnotesCard(ctx, { unit: u.name })) }, '📝 リリースの説明') : null,
+        bds && !ctx.simple ? h('button', { onclick: () => show('play', () => playcardCard(ctx, u)) }, '🎮 遊び方カード') : null,
+        bds && !ctx.simple ? h('button', { onclick: () => show('notes', () => relnotesCard(ctx, { unit: u.name })) }, '📝 リリースの説明') : null,
         last ? h('button', { onclick: () => ctx.go('releases') }, '配布を見る') : null,
         link(`https://github.com/${slug}/tree/${branch}/${u.dir}`, 'GitHub')),
       bds ? null : h('p', { class: 'muted' }, '試験と仕上げは「AI で変える」から（AI が本物のサーバーで確かめます）。'), extra);
