@@ -1,0 +1,51 @@
+{
+  "namespace": "hud",
+  "root_panel": {
+    "modifications": [
+      {
+        "array_name": "controls",
+        "operation": "insert_front",
+        "value": [
+          {
+            "glab_panel@hud.glab_panel": {}
+          }
+        ]
+      }
+    ]
+  },
+  "glab_panel": {
+    "type": "panel",
+    "size": [
+      "10%",
+      "10%"
+    ],
+    "offset": [
+      0,
+      "110%"
+    ],
+    "anchor_from": "top_middle",
+    "anchor_to": "top_middle",
+    "controls": [
+      {
+        "glab_renderer": {
+          "type": "custom",
+          "renderer": "live_player_renderer",
+          "layer": 1,
+          "animation_reset_name": "screen_animation_reset",
+          "anims": [
+            "@common.screen_exit_size_animation_push",
+            "@common.screen_exit_size_animation_pop",
+            "@common.screen_entrance_size_animation_push",
+            "@common.screen_entrance_size_animation_pop"
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_visible",
+              "binding_name_override": "#visible"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
