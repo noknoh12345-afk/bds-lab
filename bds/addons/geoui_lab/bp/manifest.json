@@ -1,0 +1,33 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Lab",
+    "description": "GeoUIの検証用",
+    "uuid": "56320fd4-3fff-461e-b4e6-fe69b7e44a82",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 26, 52]
+  },
+  "modules": [
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "5b4ce165-91ad-483b-84ad-a277c885acf7",
+      "version": [1, 0, 0],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.10.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.2.0"
+    },
+    {
+      "uuid": "31a8b917-8b93-40b6-a17e-c6d60f41a384",
+      "version": [1, 0, 0]
+    }
+  ]
+}
