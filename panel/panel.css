@@ -121,6 +121,11 @@ ul.menu .mi { font-size: 20px; line-height: 1.25; flex: none; }
 ul.menu .ml { display: flex; flex-direction: column; min-width: 0; }
 ul.menu small { color: var(--muted); font-size: 11.5px; line-height: 1.35; }
 ul.menu button.on small { color: inherit; opacity: .92; }
+/* ☰'s fold: the screens 「かんたん表示」 hides, at the bottom — said quietly, each still a tap away when opened */
+#menuhidden { margin: 16px 0 4px; border-top: 1px solid var(--line); padding-top: 10px; }
+#menuhidden > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 600; }
+#menuhidden[open] > summary { margin-bottom: 8px; }
+#menuhidden > .row { margin-top: 8px; }
 /* a row of a list: its words keep 12em at least and take the room, a short button stays on their right (「開く」 fell under the
    words on a phone); buttons that would squeeze the words under 12em go to the next line instead */
 li.row > .grow { flex: 1 1 12em; }
