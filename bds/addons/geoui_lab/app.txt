@@ -1,0 +1,95 @@
+# GeoUI の描画を本物のアプリで確かめる: node lab.mjs app run -a geoui_lab（GitHub: app.yml の addon=geoui_lab）
+# 比べ方: `shot world--<名前>` がその時点の画面を基準にし、`changed <割合>` が基準との違いを確かめる。
+# 仕様書の主張ごとに section を分ける（失敗した section は飛ばして次へ続く）。画は shots/ を人が見て確かめる。
+# 全員のプロパティを書く: do js for (const q of world.getAllPlayers()) q.setProperty(...)
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+do js for (const q of world.getAllPlayers()) { q.setProperty('glab:on', false); q.setProperty('glab:size', 400); q.setProperty('glab:bar', 100); } 'GLAB hidden'
+wait 2000
+shot world                                 # GeoUI を隠したワールド（基準）
+absent clientlog \bERROR\b                 # 参加しただけで UI・Molang・マテリアルのエラーが無い
+
+section hud-shows-geoui
+# 主張: HUD に足した live_player_renderer が、player に足した板を描く（人形そのものは画面外）
+do js for (const q of world.getAllPlayers()) q.setProperty('glab:on', true); 'GLAB shown'
+wait 2000
+shot hud-on
+changed 0.01                               # 隠したときより画面の1%以上が変わった＝板が見えている
+absent clientlog \bERROR\b
+
+section property-reaches-render
+# 主張: client_sync のプロパティを書き換えると、Molang 経由で毎フレームの描画に届く（バー 100% → 0%）
+shot world--bar100
+do js for (const q of world.getAllPlayers()) q.setProperty('glab:bar', 0); 'GLAB bar 0'
+wait 1500
+shot bar0
+changed 0.003
+do js for (const q of world.getAllPlayers()) q.setProperty('glab:bar', 100); 'GLAB bar 100'
+wait 1500
+
+section inventory
+# 主張: インベントリも live_player_renderer なので、判定（is_in_ui）だけでは GeoUI の板がインベントリにも映る
+# 人形の枠に板が入るかは画で確かめる（inventory-on と inventory-off を見比べる）
+key E
+wait 3000
+shot world--inventory-on
+do js for (const q of world.getAllPlayers()) q.setProperty('glab:on', false); 'GLAB hidden'
+wait 1500
+shot inventory-off
+changed 0.002                              # 板を消すとインベントリの画面も変わる＝映り込んでいた
+key BACK
+wait 1500
+do js for (const q of world.getAllPlayers()) q.setProperty('glab:on', true); 'GLAB shown'
+wait 1500
+absent clientlog \bERROR\b
+
+section pause-paperdoll
+# 主張: ポーズ画面の人形は paper_doll_renderer。!v.is_paperdoll で外し、そこではプロパティを読まないのでエラーが出ない
+pause
+wait 3000
+shot pause
+absent clientlog (?i)molang|property
+absent clientlog \bERROR\b
+key BACK
+wait 1500
+
+section invisibility
+# 主張: 透明化すると GeoUI も消える（UI が player 本体の描画として描かれるため）
+# 透明化の状態で板を消した画（invisible-off）と出した画（invisible-on）を見比べる。同じなら透明化中は描かれない
+do effect @a invisibility 60 0 true
+wait 2000
+do js for (const q of world.getAllPlayers()) q.setProperty('glab:on', false); 'GLAB hidden'
+wait 1500
+shot world--invisible-off
+do js for (const q of world.getAllPlayers()) q.setProperty('glab:on', true); 'GLAB shown'
+wait 1500
+shot invisible-on
+do effect @a clear
+wait 2000
+shot after-invisible
+
+section third-person
+# 主張: HUD 追加型は視点に依存しない（三人称でも同じ所に出る）。画で確かめる
+perspective
+wait 2000
+shot third-person
+perspective
+perspective
+wait 1500
+
+section aspect-4-3
+# 主張: 端末の画面比で位置がずれる。4:3 の画面で撮って、16:9（hud-on）と見比べる
+size 1024x768
+wait 4000
+shot aspect-4-3
+size reset
+wait 3000
+absent clientlog \bERROR\b
