@@ -253,8 +253,54 @@ await t('the policy and GitHub\'s role: a role that may not put secrets or start
     ok(!f.st.seen.length, 'nothing sent');
     const adm = new E('div');
     await UI.connectTab(adm, { api: f.api, lab: LAB(), role: 'admin', policy, me: { login: 'o' } });
-    ok(adm.all((e) => e.tagName === 'INPUT').length === 10, 'the administrator gets the fields');
+    ok(adm.all((e) => e.tagName === 'INPUT').length === 11, 'the administrator gets the fields (and the bot\'s name for Microsoft\'s sign-in)');
   } finally { f.close(); }
+});
+
+await t('📱 Microsoft from a phone (end to end: the panel → the sign-in service → a fake live.com and Xbox Live): the code and microsoft.com/link with it filled in, waited for, live.com\'s tokens sealed into MS_LIVE_<NAME> as prismarine-auth keeps them, the gamertag said; no password field', async () => {
+  const { E } = fakeDom(), UI = await imp('panel/ui/connect.mjs'), A = await imp('auth/handler.mjs'), f = await fakeGitHub();
+  const RT = 'M.C5_BAY.refresh-xyz', AT = 'EwBo-access-xyz';
+  let polls = 0;
+  const live = async (url, init = {}) => {
+    const u = String(url), json = (s, j, hd = {}) => new Response(JSON.stringify(j), { status: s, headers: { 'content-type': 'application/json', ...hd } });
+    if (u.endsWith('/oauth20_connect.srf')) return json(200, { user_code: 'QW12ER34', device_code: 'dc-1', interval: 5, expires_in: 900 }, { 'set-cookie': 'MSPOK=x; path=/' });
+    if (u.includes('/oauth20_token.srf')) return ++polls < 2 ? json(400, { error: 'authorization_pending' }) : json(200, { access_token: AT, refresh_token: RT, expires_in: 86400, user_id: 'abcd' });
+    if (u === A.MICROSOFT.xbl) return json(200, { Token: 'u' });
+    if (u === A.MICROSOFT.xsts) return json(200, { DisplayClaims: { xui: [{ gtg: 'BotOne', xid: '2535' }] } });
+    return json(404, {});
+  };
+  const auth = A.handler({ GITHUB_CLIENT_ID: 'Iv23liX', GITHUB_CLIENT_SECRET: 'x'.repeat(20), STATE_SECRET: 's'.repeat(40), PANEL_ORIGINS: 'https://panel.test' }, { fetchImpl: live });
+  const fetchImpl = (url, init) => auth(new Request(url, { ...init, headers: { ...(init?.headers ?? {}), origin: 'https://panel.test' } }));
+  try {
+    const body = new E('div'), lab = LAB();
+    await UI.connectTab(body, { api: f.api, lab, me: { login: 'o' }, authUrl: 'https://auth.test', fetchImpl, sleep: async () => {} });
+    const ms = body.all((e) => e.attrs['data-part'] === 'ms-phone')[0];
+    ok(ms && !ms.all((e) => e.tagName === 'INPUT' && e.attrs.type === 'password').length, 'no password asked');
+    field(ms, 'ボットの名前').value = 'bot one';
+    await button(ms, /サインインを始める/).click();
+    eq(polls, 2, 'waited while pending');
+    ok(f.st.secrets.has('MS_LIVE_BOT_ONE'), [...f.st.secrets.keys()].join());
+    const kept = JSON.parse(f.open('MS_LIVE_BOT_ONE'));
+    eq([kept.refresh_token, kept.access_token, kept.scope, typeof kept.obtainedOn], [RT, AT, A.MICROSOFT.scope, 'number'], 'prismarine-auth\'s live token');
+    ok(/「BotOne」を MS_LIVE_BOT_ONE に封じて登録しました/.test(ms.textContent) && /lan account import bot_one/.test(ms.textContent), ms.textContent);
+    ok(!ms.textContent.includes(RT) && !ms.textContent.includes(AT), 'the tokens are not shown');
+    ok(lab.secrets.includes('MS_LIVE_BOT_ONE') && /登録済み: MS_LIVE_BOT_ONE/.test(ms.textContent), 'the list');
+  } finally { f.close(); }
+});
+
+await t('📱 Microsoft: the code\'s link is Microsoft\'s own page (safeLink), the secret\'s name made safe; no sign-in service said, not a request sent (pure + UI)', async () => {
+  eq([C.msSecretName(''), C.msSecretName(' my-bot#2 '), C.msSecretName('ab'.repeat(30)).length], ['MS_LIVE_MAIN', 'MS_LIVE_MY_BOT_2', 48]);
+  ok(C.MS_LIVE_SECRET.test('MS_LIVE_MAIN') && !C.MS_LIVE_SECRET.test('MS_EMAIL'), 'the pattern');
+  const bad = await C.msStart('https://auth.test', { fetchImpl: async () => new Response(JSON.stringify({ handle: 'h', user_code: 'AB12CD34', verification_uri_complete: 'https://evil.test/link' }), { status: 200 }) }).catch((e) => e.message);
+  ok(/Microsoft に聞けません/.test(bad), bad);
+  const old = await C.msStart('https://auth.test', { fetchImpl: async () => new Response('{"error":"not_found"}', { status: 404 }) }).catch((e) => e.message);
+  ok(/古いまま/.test(old), old);
+  const { E } = fakeDom(), UI = await imp('panel/ui/connect.mjs');
+  const body = new E('div'); let asked = 0;
+  await UI.connectTab(body, { api: {}, lab: LAB(), me: { login: 'o' }, authUrl: null, fetchImpl: async () => { asked++; } });
+  const ms = body.all((e) => e.attrs['data-part'] === 'ms-phone')[0];
+  await button(ms, /サインインを始める/).click();
+  ok(/サインインのサービスがありません/.test(ms.textContent) && !asked, ms.textContent);
 });
 
 await t('the panel reads what common/connect.mjs really says (the same notice line, end to end): Discord\'s bot and invite, a problem, the AI\'s two keys', async () => {
