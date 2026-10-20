@@ -38,7 +38,7 @@ export function cleanEnv(env = process.env, extra = {}) { const e = { ...env, ..
 export class AppError extends Error {
   constructor(message, hint, kind = 'error') { super(message); this.name = 'AppError'; this.hint = hint; this.kind = kind; }
 }
-export const RENEW_HINT = 'AAS トークンを作り直してください: `node lab.mjs app token`（GitHub で使うなら続けて `node lab.mjs app secrets`）';
+export const RENEW_HINT = 'AAS トークンを作り直してください: `node lab.mjs app token`（GitHub で使うなら続けて `node lab.mjs app secrets`）（Web だけなら: パネルの「🔗 連携」→ Google Play でメールと oauth_token を入れると、CI が AAS トークンを作って Secrets に置きます）';
 
 const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const which = (cmd) => { const r = spawnSync(process.platform === 'win32' ? 'where' : 'which', [cmd], { encoding: 'utf8' }); return r.status === 0 ? r.stdout.split(/\r?\n/)[0].trim() : null; };
@@ -300,7 +300,7 @@ export async function fetchApk({ apkDir, toolsDir, env = process.env, device = e
   if (!cred.ready) {
     const missing = [!cred.email && 'GOOGLE_EMAIL', !cred.aasToken && 'GOOGLE_AAS_TOKEN'].filter(Boolean).join(' と ');
     throw new AppError(`APK を取るための認証情報がありません（${missing}）`,
-      '`node lab.mjs app token` で作れます（パスワードは使いません）。スマホから取り出した APK を使うなら `node lab.mjs app apk <フォルダ>`。', 'config');
+      '`node lab.mjs app token` で作れます（パスワードは使いません）（Web だけなら: パネルの「🔗 連携」→ Google Play でメールと oauth_token を入れると、CI が AAS トークンを作って Secrets に置きます）。スマホから取り出した APK を使うなら `node lab.mjs app apk <フォルダ>`。', 'config');
   }
   if (!/^[A-Za-z0-9_-]+$/.test(device)) throw new AppError(`端末プロファイルの形が違います: ${device}`);
   // gpdl first (app/gpdl: asks Play only for the delivery of what the account owns, which a paid app like Minecraft needs;
