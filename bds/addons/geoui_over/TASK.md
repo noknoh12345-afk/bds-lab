@@ -1,10 +1,10 @@
 # GeoUI Property Limits
 
 ## Request
-playerのプロパティ定義が上限（32個）を外れたとき、BDSがどう読むかを記録する
+player の BP 定義にプロパティを33個宣言したとき、BDS がどう読むかを記録する（仕様書「1エンティティ型あたり32個まで」の確かめ）。
 
 ## Acceptance (one tests.txt `## ` section each)
-- [ ] playerのプロパティ定義が上限（32個）を外れたとき、BDSがどう読むかを記録する
+- [x] 33個目は上限エラーになり、32個以内の分も含めてすべてのプロパティが読み込まれない
 
-## Guessed
-<!-- values decided without asking -->
+## Do not
+- make this addon "pass" by removing the 33rd property: the failure is what it records
