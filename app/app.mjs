@@ -1178,7 +1178,7 @@ async function signIn(adb, { decode, log = out, tell = async () => {}, nextCode 
         break;
       case 'approve': await tellOnce(`approve${p.number}`, `スマホの Microsoft Authenticator でサインインを承認してください${p.number ? `（番号 ${p.number}）` : ''}`); break;
       case 'code': {
-        await tellOnce('code', 'メールかスマホに届いたコードを送ってください: node lab.mjs app live "code 123456"');
+        await tellOnce('code', 'メールかスマホに届いたコードを送ってください: パネルの「端末」タブに入れる欄が出ます（手元からは node lab.mjs app live "code 123456"）');
         const c = await nextCode();
         if (c) { type(c); await sleep(beat); enter(); told.delete('code'); }
         break;
