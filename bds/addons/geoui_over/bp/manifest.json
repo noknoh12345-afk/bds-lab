@@ -1,0 +1,33 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Property Limits",
+    "description": "GeoUI Property Limits",
+    "uuid": "77b0e1b5-3297-4d34-a63a-acb235596ca0",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 26, 52]
+  },
+  "modules": [
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "3f839104-e9e5-40fe-9486-14dec5c51902",
+      "version": [1, 0, 0],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.11.0-beta"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.3.0-beta"
+    },
+    {
+      "uuid": "af6569cf-9e59-48f7-9f56-fd0cb4ab7e26",
+      "version": [1, 0, 0]
+    }
+  ]
+}

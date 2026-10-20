@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Property Limits RP",
+    "description": "GeoUI Property Limits",
+    "uuid": "af6569cf-9e59-48f7-9f56-fd0cb4ab7e26",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 26, 52]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "a05580b7-b4bc-4654-8e54-19c42bf24d23",
+      "version": [1, 0, 0]
+    }
+  ]
+}
