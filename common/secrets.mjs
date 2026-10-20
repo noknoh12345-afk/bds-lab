@@ -2,7 +2,8 @@
 // (written by the lab: `login`, `app token`). Both are git-ignored and never travel in a patch, handoff or update.
 //   - every command sees the plain settings (ANTHROPIC_API_KEY, GH_TOKEN, LAB_MODEL, LAB_NOTIFY_WEBHOOK ...) as environment
 //     variables; a variable already set outside wins, then .env.local, then .env
-//   - passwords and 2FA secrets (*_PASSWORD, *_TOTP_SECRET) and the Google AAS token are NOT put into the environment
+//   - passwords and 2FA secrets (*_PASSWORD, *_TOTP_SECRET), the Google AAS token and Microsoft's live tokens (MS_LIVE_*) are
+//     NOT put into the environment
 //     (servers, AIs and every other child would inherit them): `login` reads them from the files itself (readSecret)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,7 +11,7 @@ import crypto from 'node:crypto';
 import readline from 'node:readline';
 
 export const FILES = ['.env.local', '.env'];   // first one wins
-export const SECRET = /(_PASSWORD|_TOTP_SECRET|^GOOGLE_AAS_TOKEN)$/;
+export const SECRET = /(_PASSWORD|_TOTP_SECRET|^GOOGLE_AAS_TOKEN|^MS_LIVE_[A-Z0-9_]+)$/;
 
 export function parseEnv(text) {
   const out = {};
