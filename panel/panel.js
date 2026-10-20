@@ -59,6 +59,11 @@ import * as NAV from './lib/navmenu.mjs';
 // ---- the browser's storage (one that refuses it — a private window may — still works for the tab) ----
 const storage = (name) => { try { const s = window[name]; s.setItem('bdslab.probe', '1'); s.removeItem('bdslab.probe'); return s; } catch { return memoryStorage(); } };
 const LOCAL = storage('localStorage'), TAB = storage('sessionStorage');
+// (「かんたん表示」, the default: the screens and cards few need are held back — lib/navmenu.mjs ADVANCED_TABS, SIMPLE_HIDES —
+//  until 「設定」's 「すべての機能を出す」 (this browser). Held back, not taken away: 🔎 and ☰'s fold still open every screen)
+const FULL_KEY = 'bdslab.panel.full';
+const full = () => LOCAL.getItem(FULL_KEY) === '1';
+const setFull = (on) => { if (on) LOCAL.setItem(FULL_KEY, '1'); else LOCAL.removeItem(FULL_KEY); };
 // (見やすさ — big letters, strong colours, no motion, underlined links — this browser's choice, else the device's own, before
 // anything is drawn)
 try { applyA11y(document, A11Y.load(LOCAL, A11Y.fromMedia(globalThis.matchMedia?.bind(globalThis)))); } catch { /* the page as it is */ }
@@ -117,6 +122,8 @@ const saveSettings = (patch) => A.setCfg(st.login, patch);
 const st = { login: null, api: null, me: null, lab: null, hosts: [], tab: 'overview', timer: null, routed: false, focus: null, prefill: null, target: 'lab',
   policy: P.DEFAULT_POLICY, policyErrors: [], role: null, audit: 'off', lastActive: Date.now(), handed: false, signinErr: HANDOFF?.error ? S.explainAuth(HANDOFF.error) : null };
 const canLab = () => Boolean(st.lab && (st.lab.role === 'admin' || st.lab.role === 'write'));
+/** a card 「かんたん表示」 holds back: drawn in full, or when 🔎 led here for it (st.reveal: its id, until another tab) */
+const adv = (id) => full() || Boolean(id && st.reveal === id);
 // (no dead end: every failure's notice says what happened and offers the next step — lib/rescue.mjs: more rights, sign in
 // again, wait for the rate limit, try again, read again)
 const rescueCtx = () => ({ owner: st.lab?.repo?.owner?.login ?? st.lab?.slug?.split('/')[0], isOrg: st.lab?.repo?.owner?.type === 'Organization', appSlug: CONFIG.appSlug, signedInWithApp: A.session(st.login)?.kind === 'oauth', lab: st.lab?.slug, online: navigator.onLine });
@@ -206,7 +213,7 @@ function renderWho() {
   kids.push(h('button', { title: 'アカウントを加える', 'aria-label': 'アカウントを加える', onclick: () => renderSignIn('', { adding: true }) }, '＋'));
   if (st.login) kids.push(h('button', { onclick: () => signOut() }, '出る'));
   // (an error on this page or GitHub not answering: shown at once, a tap to what happened)
-  const n = loud(); if (n && st.login) kids.unshift(h('button', { class: 'danger', id: 'faults', title: 'このページで起きたこと（設定 → デバッグ）', onclick: () => { st.tab = 'settings'; go('settings'); $('debug')?.scrollIntoView({ block: 'start' }); } }, `⚠ ${n}`));
+  const n = loud(); if (n && st.login) kids.unshift(h('button', { class: 'danger', id: 'faults', title: 'このページで起きたこと（設定 → デバッグ）', onclick: () => { go('settings', 'debug'); $('debug')?.scrollIntoView({ block: 'start' }); } }, `⚠ ${n}`));
   $('who').replaceChildren(...kids);
 }
 /** an account forgotten by this browser, its news (「お知らせ」) with it → the account now in use */
@@ -405,6 +412,9 @@ const hasWf = (f) => (st.lab?.workflows ?? []).some((w) => String(w.path).endsWi
 // ---- the frame: tabs ----
 const TABS = [['overview', '概要'], ['runs', '進み具合'], ['start', '実行'], ['units', 'アドオン'], ['releases', '配布'], ['files', '成果物'], ['schedule', '予約'], ['stats', '統計'], ['discord', 'Discord'], ['secrets', '秘密'],
   ['live', '端末'], ['hosts', '貸し借り'], ['members', 'メンバー'], ['setup', '準備'], ['connect', '連携'], ['audit', '監査'], ['settings', '設定']];
+/** the tabs this person may open (監査: whoever may read it; without the lab: 概要・貸し借り・設定) — 🔎 finds any of them,
+ *  the strip and ☰ show those 「かんたん表示」 leaves (lib/navmenu.mjs visibleTabs) */
+const permittedTabs = () => TABS.filter(([k]) => (k === 'audit' ? may('audit.read') : canLab() || ['overview', 'hosts', 'settings'].includes(k)));
 function render() {
   clearInterval(st.timer);
   // (an AI run's progress cards read GitHub on their own: stopped when the page is drawn anew)
@@ -413,19 +423,27 @@ function render() {
   // (a finished run's cards — why it failed, an Issue of it — read GitHub once: kept while this page is shown)
   st.runCards = new Map();
   renderWho();
-  const tabs = TABS.filter(([k]) => (k === 'audit' ? may('audit.read') : canLab() || ['overview', 'hosts', 'settings'].includes(k)));
-  if (!tabs.some(([k]) => k === st.tab)) st.tab = tabs[0][0];
-  const body = h('div', { id: 'tabbody' }, helpLine(st.tab, LOCAL));
+  const allowed = permittedTabs();
+  if (!allowed.some(([k]) => k === st.tab)) st.tab = allowed[0][0];
+  // (「かんたん表示」: the strip and ☰ without the screens few need — the one shown now always in it; each screen's 「？」 left
+  //  out too: ☰ says what each one is for)
+  const view = { full: full(), current: st.tab }, tabs = NAV.visibleTabs(allowed, view), hidden = NAV.hiddenTabs(allowed, view);
+  const body = h('div', { id: 'tabbody' }, view.full ? helpLine(st.tab, LOCAL) : null);
   // (the strip: each tab with its icon — drawn from data-icon, so a button's words stay the tab's name — and 「☰」 before it,
   //  every screen at once in groups with what each is for: a phone shows only five of the strip)
   const strip = h('nav', { class: 'tabs', 'aria-label': '画面' }, tabs.map(([k, label], i) => h('button', { class: st.tab === k ? 'on' : '', 'data-tab': k, 'data-icon': NAV.TAB_ICONS[k] ?? null, 'aria-current': st.tab === k ? 'page' : null, title: i < 10 ? `キー ${(i + 1) % 10}` : null, onclick: () => go(k) }, label)));
-  const menuBtn = h('button', { id: 'menubtn', 'aria-haspopup': 'dialog', 'aria-label': '画面の一覧', title: '画面の一覧（すべての画面と、何をするところか）', onclick: () => openMenu(tabs) }, '☰');
+  const menuBtn = h('button', { id: 'menubtn', 'aria-haspopup': 'dialog', 'aria-label': '画面の一覧', title: '画面の一覧（すべての画面と、何をするところか）', onclick: () => openMenu(tabs, hidden) }, '☰');
   main().replaceChildren(h('div', { class: 'tabbar' }, menuBtn, strip), body);
   showActiveTab(strip);
   ({ overview, runs, start, units, releases, files, schedule, stats, discord, secrets, live, hosts, members, setup, connect: connectView, audit, settings: settingsTab })[st.tab](body);
 }
 /** another tab (the address follows: a reload or a shared link opens the same tab) */
-function go(tab) { $('menusheet')?.remove(); st.tab = tab; history.replaceState(null, '', `#${tab}`); render(); }
+function go(tab, reveal = null) { $('menusheet')?.remove(); st.tab = tab; st.reveal = reveal; history.replaceState(null, '', `#${tab}`); render(); }
+/** 「かんたん表示」 off (all of it shown) or on again, from 「設定」 or ☰: drawn anew at once, said in a toast */
+function setView(all) {
+  setFull(all); $('menusheet')?.remove(); render();
+  toast(all ? 'すべての機能を出しました（「設定」の「表示」で、かんたん表示に戻せます）' : 'かんたん表示にしました（隠した画面も 🔎 と ☰ から開けます）');
+}
 /** the strip scrolled so the tab shown is in sight (on a phone most of it is off the screen — 「設定」 was never seen), and
  *  its edges faded where there is more to scroll to */
 function showActiveTab(strip) {
@@ -442,17 +460,22 @@ function showActiveTab(strip) {
 }
 /** 「☰」: every screen this person sees, in groups (lib/navmenu.mjs), each with what it is for; a tap opens it. A dialog over
  *  the page: Esc, ✕ or a tap outside closes it and puts the focus back on 「☰」 */
-function openMenu(tabs) {
+function openMenu(tabs, hidden = []) {
   const was = $('menusheet');
   if (was) { was.remove(); return; }
   const close = () => { sheet.remove(); $('menubtn')?.focus(); };
   const groups = NAV.menuGroups(tabs, GD.HELP);
+  const item = (x) => h('li', {}, h('button', { class: x.key === st.tab ? 'on' : '', 'data-go': x.key, 'aria-current': x.key === st.tab ? 'page' : null, onclick: () => go(x.key) },
+    h('span', { class: 'mi', 'aria-hidden': 'true' }, x.icon), h('span', { class: 'ml' }, h('b', {}, x.label), x.what ? h('small', {}, x.what) : null)));
   const sheet = h('div', { id: 'menusheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '画面の一覧', onclick: (e) => { if (e.target === sheet) close(); }, onkeydown: (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } } },
     h('div', { class: 'card' },
       h('div', { class: 'row' }, h('h2', { class: 'grow' }, '画面の一覧'), h('button', { class: 'x', 'aria-label': '閉じる', title: '閉じる（Esc）', onclick: close }, '✕')),
-      groups.map((g) => h('section', {}, h('h3', {}, g.title), h('ul', { class: 'plain menu' }, g.items.map((x) => h('li', {},
-        h('button', { class: x.key === st.tab ? 'on' : '', 'data-go': x.key, 'aria-current': x.key === st.tab ? 'page' : null, onclick: () => go(x.key) },
-          h('span', { class: 'mi', 'aria-hidden': 'true' }, x.icon), h('span', { class: 'ml' }, h('b', {}, x.label), x.what ? h('small', {}, x.what) : null))))))),
+      groups.map((g) => h('section', {}, h('h3', {}, g.title), h('ul', { class: 'plain menu' }, g.items.map(item)))),
+      // (「かんたん表示」's screens: folded at the bottom, each still a tap away — and the way to show them all for good)
+      hidden.length ? h('details', { class: 'more', id: 'menuhidden' }, h('summary', {}, `かんたん表示で隠している画面（${hidden.length}）`),
+        h('ul', { class: 'plain menu' }, NAV.menuGroups(hidden, GD.HELP).flatMap((g) => g.items).map(item)),
+        h('div', { class: 'row' }, h('button', { id: 'showall', onclick: () => setView(true) }, 'すべての機能を出す'), h('span', { class: 'muted' }, '（「設定」の「表示」で戻せます）'))) : null,
+      full() ? h('p', { class: 'muted' }, 'すべての機能を出しています: ', h('button', { id: 'showsimple', onclick: () => setView(false) }, 'かんたん表示に戻す')) : null,
       st.me && st.as?.length ? h('p', { class: 'muted' }, '探すなら 🔎「やりたいこと」: ', h('button', { onclick: () => { sheet.remove(); PAL.open(); } }, '🔎 やりたいことで探す')) : null));
   document.body.append(sheet);
   (sheet.querySelector('li button.on') ?? sheet.querySelector('li button'))?.focus();
@@ -478,11 +501,11 @@ function audit(body) { auditTab(body, { api: st.api, lab: st.lab, policy: st.pol
 /** a workflow of the lab started on its default branch — GitHub's call alone: the tab that calls it guards it, once */
 const dispatchRaw = (wf, inputs) => st.api.dispatch(st.lab.slug, wf, st.lab.repo.default_branch, inputs);
 function units(body) {
-  unitsTab(body, { api: st.api, lab: st.lab, me: st.me, policy: st.policy, role: st.role, record, gate, guarded, go, dispatch: dispatchRaw,
+  unitsTab(body, { api: st.api, lab: st.lab, me: st.me, policy: st.policy, role: st.role, record, gate, guarded, go, dispatch: dispatchRaw, simple: !full(),
     // (「AI で変える」 and 「AI で作る」: the 「実行」 tab's idea card, the unit to change filled in)
     aiMake: hasWf('ai-make.yml') ? ({ unit } = {}) => { st.makeUnit = unit ?? ''; go('start'); setTimeout(() => { $('make')?.scrollIntoView({ block: 'start' }); $('idea')?.focus(); }, 50); } : null });
 }
-function releases(body) { releasesTab(body, { api: st.api, lab: st.lab, me: st.me, policy: st.policy, role: st.role, record, gate, guarded, go, dispatch: dispatchRaw, caps: capsOf() }); }
+function releases(body) { releasesTab(body, { api: st.api, lab: st.lab, me: st.me, policy: st.policy, role: st.role, record, gate, guarded, go, dispatch: dispatchRaw, caps: capsOf(), simple: !full() }); }
 // ---- 予約 (ui/schedule.mjs): the lab's timetable, .github/bds-lab-schedule.json — what is due started each hour by schedule.yml ----
 function schedule(body) {
   scheduleTab(body, { api: st.api, lab: st.lab, workflows: st.lab.workflows ?? [], may, gate, guarded,
@@ -678,9 +701,10 @@ setInterval(() => { if (document.visibilityState === 'visible') checkVersion(); 
 const shownTabs = () => [...document.querySelectorAll('nav.tabs button')].map((b) => b.dataset.tab);
 const KEYS_HELP = 'Ctrl/⌘+K か ?: やりたいこと　1〜9・0: タブ　/: 実行を探す　r: 読み直す';
 // 「やりたいこと」 (ui/guide.mjs): what someone wants in their own words → the tab for it (and the part of it: an anchor)
-const PAL = palette({ tabs: () => shownTabs(), may: (a) => (st.lab ? may(a) : false), go: (tab, anchor, id) => {
+// (every screen this person may open, those 「かんたん表示」 hides too — and the card asked for shown even when it holds it back)
+const PAL = palette({ tabs: () => permittedTabs().map(([k]) => k), may: (a) => (st.lab ? may(a) : false), go: (tab, anchor, id) => {
   if (id === 'guide') LOCAL.removeItem(`bdslab.panel.guide.hidden.${st.lab?.slug}`);
-  go(tab);
+  go(tab, anchor);
   if (anchor) setTimeout(() => $(anchor)?.scrollIntoView({ block: 'start' }), 50);
   if (id === 'inbox') openInbox();
 } });
@@ -698,11 +722,12 @@ window.addEventListener('keydown', (e) => {
 // ---- 概要 ----
 function overview(body) {
   const ses = A.session(st.login);
-  // (「何がしたい？」: three choices that lead to the tab and the button — folded; opened by whoever is lost)
-  if (st.lab && !lendFirst()) {
+  // (「何がしたい？」: three choices that lead to the tab and the button — folded; opened by whoever is lost. 「かんたん表示」
+  //  leaves it to 🔎 「やりたいこと」, which does the same in their own words)
+  if (st.lab && !lendFirst() && full()) {
     const wz = h('details', { class: 'card', id: 'wizardbox' }, h('summary', {}, '🧭 何がしたい？（迷ったらここ）'));
     let made = false;
-    wz.addEventListener('toggle', () => { if (!wz.open || made) return; made = true; wz.append(wizardCard({ tabs: () => TABS.map(([k]) => k).filter((k) => k === 'audit' ? may('audit.read') : canLab() || ['overview', 'hosts', 'settings'].includes(k)), may, storage: TAB, labSlug: st.lab.slug,
+    wz.addEventListener('toggle', () => { if (!wz.open || made) return; made = true; wz.append(wizardCard({ tabs: () => permittedTabs().map(([k]) => k), may, storage: TAB, labSlug: st.lab.slug,
       go: (tab, focus) => { go(tab); if (focus) setTimeout(() => $(focus)?.scrollIntoView({ block: 'start' }), 50); } })); });
     body.append(wz);
   }
@@ -730,7 +755,9 @@ function overview(body) {
   if (st.lab && canLab()) body.append(todoCard());
   // (the last runs next — what runs now, what failed, one tap to run it again — then the health; the report folded)
   if (st.lab && st.lab.caps) body.append(h('div', { class: 'card', id: 'recent' }, h('div', { id: 'ovruns' }, h('p', { class: 'muted' }, '実行を読んでいます…'))));
-  if (st.lab && canLab()) { const hc = healthCtx(); body.append(healthCard(hc), h('details', { class: 'card', id: 'reportbox' }, h('summary', {}, '📄 会社向けの報告書'), reportButton(hc))); }
+  // (the health as a number and the report for a company: 「かんたん表示」 leaves them out — 「いまやること」 says what to mend —
+  //  unless 🔎 「健康度」 led here; nothing of theirs is read then either)
+  if (st.lab && canLab() && adv('labhealth')) { const hc = healthCtx(); body.append(healthCard(hc), h('details', { class: 'card', id: 'reportbox' }, h('summary', {}, '📄 会社向けの報告書'), reportButton(hc))); }
   checkVersion().then((v) => $('version')?.replaceChildren(...(v.state === 'newer' ? [h('p', { class: 'warn' }, v.say, ' ', h('button', { onclick: () => location.reload() }, '読み直す'))] : v.state === 'deploying' || v.state === 'failed' ? [h('p', { class: v.state === 'failed' ? 'bad' : 'muted' }, v.say)] : [])));
   if (st.lab && st.lab.caps) {
     // (what this repository's settings allow: folded, its counts on the fold — the ⚠️ ones say what they need when opened)
@@ -758,7 +785,8 @@ function overview(body) {
   const others = A.list().filter((e) => e.login !== st.login);
   if (others.length) body.append(h('div', { class: 'card' }, h('h2', {}, 'このブラウザのほかのアカウント'),
     h('ul', { class: 'plain' }, others.map((e) => h('li', { class: 'row' }, h('span', { class: 'grow' }, e.login, ' ', h('span', { class: 'muted' }, `${A.cfg(e.login).lab}・ホスト ${A.cfg(e.login).hosts.length}`)), h('button', { onclick: () => switchTo(e.login) }, '切り替える'))))));
-  body.append(meCard);
+  // (who this is: the top bar says it — the card with the roles and GitHub's count left is for 「すべての機能」)
+  if (full()) body.append(meCard);
 }
 
 /** this person's role for the guide (lib/guide.mjs guideSteps) */
@@ -939,6 +967,8 @@ function start(body) {
     return h('li', {}, h('div', { class: 'row' }, h('span', { class: 'grow' }, p.label), h('button', { class: 'primary', disabled: !ok, title: ok ? null : c.need, onclick: () => dispatchForm(body, p.workflow, p.inputs) }, '開く')),
       ok ? null : h('div', { class: 'warn' }, c.need, ' ', h('button', { onclick: () => go('secrets') }, '「秘密」を開く')));
   }))));
+  // (any workflow by its name: for 「すべての機能」 — 「すぐ始める」 above and each screen's own buttons start the ones in use)
+  if (!full()) return;
   const active = (st.lab.workflows ?? []).filter((w) => w.state === 'active');
   const sel = h('select', {}, active.map((w) => h('option', { value: w.path }, `${w.name}（${w.path.split('/').pop()}）`)));
   // (none to choose: why — not read (said above), or none turned on — and where to turn them on)
@@ -1110,8 +1140,9 @@ function discord(body) {
 
 // ---- 秘密 ----
 function secrets(body) {
-  // (secrets not set again for long: which, and how to renew each — names and dates only, never a value)
-  body.append(secretWatchCard({ api: st.api, lab: st.lab }));
+  // (secrets not set again for long: which, and how to renew each — names and dates only, never a value. 「かんたん表示」 leaves
+  //  it to the list below, which says the old ones too)
+  if (full()) body.append(secretWatchCard({ api: st.api, lab: st.lab }));
   const list = h('div', {}, h('p', { class: 'muted' }, '読んでいます…'));
   const name = h('input', { type: 'text', list: 'known', placeholder: 'MS_EMAIL', autocapitalize: 'characters', value: st.prefill ?? '' }), value = h('input', { type: 'password', autocomplete: 'new-password' });
   st.prefill = null;
@@ -1296,7 +1327,7 @@ function hosts(body) {
       toast(found.length ? `${found.length} 個見つけました` : '見つかりませんでした（.lab-host.json のある、最近の 40 個を見ました）: 貸し手のリポジトリを owner/名前 で右に入れて「加える」');
     }) }, '自分のホストを探す'), add, h('button', { onclick: async () => { const v = add.value.trim(), bad = M.slugProblem(v, settings().hosts); if (bad) return toast(bad, true); saveSettings({ hosts: [...settings().hosts, v] }); await reload(); } }, '加える'))));
   if (!st.hosts.length) body.append(h('p', { class: 'muted' }, 'まだホストがありません: 時間を貸すなら「自分のホストを探す」か、ラボの「概要」の「フォークで貸す」。借りるなら、貸し手のリポジトリ（owner/名前）を上に入れて「加える」。'));
-  if (st.hosts.some((x) => x.rules)) body.append(lendForecastCard({ api: st.api, hosts: st.hosts.filter((x) => x.rules) }));
+  if (full() && st.hosts.some((x) => x.rules)) body.append(lendForecastCard({ api: st.api, hosts: st.hosts.filter((x) => x.rules) }));
   for (const x of st.hosts) body.append(hostCard(x), h('div', { class: 'row' }, h('button', { class: 'danger', onclick: () => { saveSettings({ hosts: settings().hosts.filter((s) => s !== x.slug) }); st.hosts = st.hosts.filter((y) => y.slug !== x.slug); render(); } }, `${x.slug} を一覧から外す`)));
 }
 
@@ -1346,7 +1377,7 @@ function forksCard() {
 // ---- 設定 (this account's, in this browser) ----
 function settingsTab(body) {
   const s = settings(), lab = h('input', { type: 'text', value: s.lab }), refresh = h('input', { type: 'number', min: 5, max: 600, value: s.refresh }), vault = h('input', { type: 'password', value: s.vault, autocomplete: 'off' });
-  body.append(h('div', { class: 'card' }, h('h2', {}, `${st.login} の設定（このブラウザ）`),
+  body.append(viewCard(), h('div', { class: 'card' }, h('h2', {}, `${st.login} の設定（このブラウザ）`),
     h('label', {}, 'ラボのリポジトリ'), lab, h('label', {}, '読み直す間隔（秒）'), refresh,
     h('label', {}, 'APP_CACHE_KEY（公開リポジトリの端末の命令と返事を封じる・開く。Secrets と同じ値。このブラウザだけに置きます）'), vault,
     h('div', { class: 'row' }, h('button', { class: 'primary', onclick: () => { const bad = M.slugProblem(lab.value); if (bad) return toast(bad, true); saveSettings({ lab: lab.value.trim(), refresh: Number(refresh.value) || 20, vault: vault.value }); toast('保存しました'); connect(); } }, '保存'),
@@ -1355,7 +1386,8 @@ function settingsTab(body) {
     h('span', { class: 'grow' }, h('strong', {}, e.login), e.login === st.login ? h('span', { class: 'chip' }, 'いま') : null, ' ', h('span', { class: 'muted' }, `${A.cfg(e.login).lab}・ホスト ${A.cfg(e.login).hosts.length}${e.remember ? '' : '・このタブだけ'}`)),
     e.login === st.login ? null : h('button', { onclick: () => switchTo(e.login) }, '切り替える')))),
   h('div', { class: 'row' }, h('button', { onclick: () => renderSignIn('', { adding: true }) }, '＋ アカウントを加える'))),
-  h('div', { class: 'card' }, h('h2', {}, A.session(st.login)?.kind === 'oauth' ? 'サインイン' : 'トークン'), h('p', {}, `ログイン ${st.me.login}・残り回数 ${st.api.state.remaining ?? '?'}`),
+  // (how this sign-in works and what it may do: 「すべての機能」 — a button that may not says why where it is)
+  !full() ? '' : h('div', { class: 'card' }, h('h2', {}, A.session(st.login)?.kind === 'oauth' ? 'サインイン' : 'トークン'), h('p', {}, `ログイン ${st.me.login}・残り回数 ${st.api.state.remaining ?? '?'}`),
     A.session(st.login)?.kind === 'oauth' ? h('p', { class: 'muted' }, 'ラボの GitHub App でサインインしています: できることは、App が入っているリポジトリで GitHub があなたに許すことだけです。「出る」でこのトークンを GitHub で取り消します。') : tokenHelp(s.lab.split('/')[0]),
     st.lab ? h('p', { class: 'muted' }, `役割: ${roleName()}（${P.POLICY_FILE}${st.policyErrors.length ? ': 正しくありません' : ''}）・できること: ${P.ACTIONS.filter((x) => may(x)).map((x) => P.ACTION_WORDS[x]).join('・') || 'なし'}${P.idleMinutes(st.policy) ? `・${P.idleMinutes(st.policy)} 分操作がないとサインアウト` : ''}・監査ログ: ${st.audit === 'issue' ? '残す' : '残さない'}`) : null,
     h('p', { class: 'muted' }, '権限が足りないと、その操作だけ「権限がありません」と出ます（秘密の一覧: Secrets: Read、登録: Read and write、実行: Actions: Read and write、知らせ方: Variables: Read and write、貸す条件: Contents: Read and write、端末: Issues: Read and write）')));
@@ -1371,7 +1403,18 @@ function settingsTab(body) {
   // (the lab's Discord messages: who is told of what — .github/bds-lab-notify.json, shared by everyone in the lab)
   body.append(a11yCard({ storage: LOCAL, document, matchMedia: globalThis.matchMedia?.bind(globalThis) }));
   if (st.lab) body.append(notifyPrefsCard({ api: st.api, lab: st.lab, me: st.me, policy: st.policy, role: st.role, may, guarded, record }));
-  body.append(debugCard(), glossaryCard());
+  // (デバッグ: 「すべての機能」, or 🔎 「うまく動かない」 / the top bar's ⚠ led here; the words explained: 🔎 says them too)
+  body.append(adv('debug') ? debugCard() : '', full() ? glossaryCard() : '');
+}
+/** 「表示」: 「かんたん表示」 (the default) or all of it, for this browser — what it holds back said in words (lib/navmenu.mjs) */
+function viewCard() {
+  const all = h('input', { type: 'checkbox', id: 'fullview', checked: full() });
+  all.addEventListener('change', () => setView(all.checked));
+  return h('div', { class: 'card', id: 'viewcard' }, h('h2', {}, '表示'),
+    h('label', {}, all, ' すべての機能を出す（上級）'),
+    full() ? h('p', { class: 'muted' }, 'いまは、すべての機能を出しています。外すと「かんたん表示」に戻ります。')
+      : [h('p', { class: 'muted' }, 'いまは「かんたん表示」です（おすすめ）。次のものを隠しています:'), h('ul', {}, NAV.SIMPLE_HIDES.map((x) => h('li', { class: 'muted' }, x)))],
+    h('p', { class: 'muted' }, '隠すだけで、消してはいません（このブラウザだけの設定）。'));
 }
 /** 「デバッグ」: this page's version, its errors and the last GitHub calls; a report to paste (tokens taken out) */
 function debugCard() {
