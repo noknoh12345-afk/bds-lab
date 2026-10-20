@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "無題のプロジェクト RP",
+    "description": "GeoUI Studio で作成",
+    "uuid": "2f7a939a-bda7-466b-acd5-4cce8bc52f4d",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      100
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "7bf8b3a1-3153-4879-a94b-f1a11970995b",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}
