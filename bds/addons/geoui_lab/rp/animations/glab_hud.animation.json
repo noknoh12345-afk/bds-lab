@@ -1,0 +1,20 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.glab.hud": {
+      "loop": true,
+      "bones": {
+        "glab_bar": {
+          "scale": [
+            "math.clamp(variable.glab_bar, 0.0, 1.0)",
+            1,
+            1
+          ]
+        },
+        "glab_root": {
+          "scale": "variable.glab_size"
+        }
+      }
+    }
+  }
+}
