@@ -1,0 +1,113 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.geoui_transform": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "geoui_l1_d0": {
+          "position": [
+            "((0)+(-(v.geoui_halfw-23.51)))*v.geoui_scale+v.geoui_ox+v.geoui_cx",
+            "((0)+(78.88))*v.geoui_scale+v.geoui_oy+v.geoui_cy",
+            "-0.2"
+          ],
+          "rotation": [
+            "0",
+            "0",
+            "0"
+          ],
+          "scale": [
+            "(1)*(1)*v.geoui_scale",
+            "(1)*(1)*v.geoui_scale",
+            "(1)*v.geoui_scale"
+          ]
+        },
+        "geoui_l1_d1": {
+          "position": [
+            "((0)+(-(v.geoui_halfw-23.51)))*v.geoui_scale+v.geoui_ox+v.geoui_cx",
+            "((0)+(78.88))*v.geoui_scale+v.geoui_oy+v.geoui_cy",
+            "-0.2"
+          ],
+          "rotation": [
+            "0",
+            "0",
+            "0"
+          ],
+          "scale": [
+            "(1)*(1)*v.geoui_scale",
+            "(1)*(1)*v.geoui_scale",
+            "(1)*v.geoui_scale"
+          ]
+        },
+        "geoui_l1_d2": {
+          "position": [
+            "((0)+(-(v.geoui_halfw-23.51)))*v.geoui_scale+v.geoui_ox+v.geoui_cx",
+            "((0)+(78.88))*v.geoui_scale+v.geoui_oy+v.geoui_cy",
+            "-0.2"
+          ],
+          "rotation": [
+            "0",
+            "0",
+            "0"
+          ],
+          "scale": [
+            "(1)*(1)*v.geoui_scale",
+            "(1)*(1)*v.geoui_scale",
+            "(1)*v.geoui_scale"
+          ]
+        },
+        "geoui_l1_d3": {
+          "position": [
+            "((0)+(-(v.geoui_halfw-23.51)))*v.geoui_scale+v.geoui_ox+v.geoui_cx",
+            "((0)+(78.88))*v.geoui_scale+v.geoui_oy+v.geoui_cy",
+            "-0.2"
+          ],
+          "rotation": [
+            "0",
+            "0",
+            "0"
+          ],
+          "scale": [
+            "(1)*(1)*v.geoui_scale",
+            "(1)*(1)*v.geoui_scale",
+            "(1)*v.geoui_scale"
+          ]
+        },
+        "geoui_l1_d4": {
+          "position": [
+            "((0)+(-(v.geoui_halfw-23.51)))*v.geoui_scale+v.geoui_ox+v.geoui_cx",
+            "((0)+(78.88))*v.geoui_scale+v.geoui_oy+v.geoui_cy",
+            "-0.2"
+          ],
+          "rotation": [
+            "0",
+            "0",
+            "0"
+          ],
+          "scale": [
+            "(1)*(1)*v.geoui_scale",
+            "(1)*(1)*v.geoui_scale",
+            "(1)*v.geoui_scale"
+          ]
+        },
+        "geoui_l2": {
+          "position": [
+            "(((0)+(-(v.geoui_halfw-31.12)))*v.geoui_scale+v.geoui_ox+v.geoui_cx)-29.92*v.geoui_scale",
+            "((0)+(81.4))*v.geoui_scale+v.geoui_oy+v.geoui_cy",
+            "-0.4"
+          ],
+          "rotation": [
+            "0",
+            "0",
+            "0"
+          ],
+          "scale": [
+            "(math.clamp(q.property('geoui:v1')/20,0,1))*((1)*(1)*v.geoui_scale)",
+            "(1)*(1)*v.geoui_scale",
+            "(1)*v.geoui_scale"
+          ]
+        }
+      }
+    }
+  }
+}
