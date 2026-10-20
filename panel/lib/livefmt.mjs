@@ -32,3 +32,19 @@ export async function tellText(body, run, opts = {}) {
 }
 /** the live issue among a repository's open issues → its number, or null */
 export const liveIssue = (issues) => (issues ?? []).find((x) => x.title === ISSUE_TITLE && !x.pull_request)?.number ?? null;
+
+/** a sign-in step said by the device (app.mjs signIn's tell: the game's Microsoft sign-in on the CI device) → what the person
+ *  does on their phone (pure): { kind: 'approve', number } (Authenticator, the number to match) | { kind: 'code' } (a code
+ *  that came by mail or SMS, sent back as `code 123456`) | { kind: 'password' } | null when it is not one */
+export function signinAsk(text) {
+  const s = String(text ?? '');
+  if (/Authenticator\s*でサインインを承認/.test(s)) { const n = /番号\s*(\d{1,3})/.exec(s)?.[1] ?? null; return { kind: 'approve', number: n }; }
+  if (/コードを送って/.test(s)) return { kind: 'code' };
+  if (/パスワードを聞かれています/.test(s)) return { kind: 'password' };
+  return null;
+}
+/** the code as typed on a phone → the command that answers the device (pure): digits only, 4 to 10; null otherwise */
+export function codeCommand(v) {
+  const d = String(v ?? '').replace(/[\s-]/g, '').replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+  return /^\d{4,10}$/.test(d) ? `code ${d}` : null;
+}
