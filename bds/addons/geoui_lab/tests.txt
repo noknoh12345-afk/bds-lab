@@ -1,0 +1,140 @@
+# GeoUI 仕様書の主張を、本物の BDS と本物のクライアントで確かめる（描画そのものは app.txt）
+# = 完全一致 | ~ 正規表現 | ! 無い | !~ 無い正規表現 | '## 題' = 節
+
+## player にプロパティを32個まで宣言でき、すべて既定値で読める
+@A join
+js const e = p('A'); const ids = ['bar','big','f','on','mode','size', ...Array.from({length: 26}, (_, i) => 'p' + String(i + 6).padStart(2, '0'))]; JSON.stringify([ids.length, ids.filter((k) => e.getProperty('glab:' + k) === undefined).length])
+= [32,0]
+js const e = p('A'); JSON.stringify([e.getProperty('glab:bar'), e.getProperty('glab:big'), e.getProperty('glab:on'), e.getProperty('glab:mode'), e.getProperty('glab:p31')])
+= [50,0,true,"a",0]
+
+## setProperty の値は同じ tick の getProperty には出ず、次の tick から読める
+js const e = p('A'); e.setProperty('glab:bar', 7); e.getProperty('glab:bar')
+= 50
+wait 100
+js p('A').getProperty('glab:bar')
+= 7
+
+## int の範囲外は丸めずに例外（ArgumentOutOfBoundsError）
+js try { p('A').setProperty('glab:bar', 101); return 'ok' } catch (x) { return String(x) }
+~ ArgumentOutOfBoundsError: .*Value: 101, Argument bounds: \[0, 100\]
+js try { p('A').setProperty('glab:bar', -1); return 'ok' } catch (x) { return String(x) }
+~ ArgumentOutOfBoundsError
+
+## int に小数を渡すと 0 の方へ切り捨て
+js p('A').setProperty('glab:bar', 3.7); 0
+wait 100
+js p('A').getProperty('glab:bar')
+= 3
+js p('A').setProperty('glab:bar', -0.4); 0
+wait 100
+js p('A').getProperty('glab:bar')
+= 0
+
+## int はサーバーでも float32 で持たれ、2^24 を超えると値がずれる
+js p('A').setProperty('glab:big', 16777217); 0
+wait 100
+js p('A').getProperty('glab:big')
+= 16777216
+js p('A').setProperty('glab:big', 123456789); 0
+wait 100
+js p('A').getProperty('glab:big')
+= 123456792
+js p('A').setProperty('glab:big', 1000000); 0
+wait 100
+js p('A').getProperty('glab:big')
+= 1000000
+
+## 範囲 ±(2^31-1) の int に入れられるのは 2147483583 まで（2^31 に丸まると例外）
+js try { p('A').setProperty('glab:big', 2147483583); return 'ok' } catch (x) { return String(x) }
+= ok
+wait 100
+js p('A').getProperty('glab:big')
+= 2147483520
+js try { p('A').setProperty('glab:big', 2147483647); return 'ok' } catch (x) { return String(x) }
+~ ArgumentOutOfBoundsError: .*Value: -2147483648, Argument bounds: \[-2147483647, 2147483647\]
+js try { p('A').setProperty('glab:big', -2147483647); return 'ok' } catch (x) { return String(x) }
+~ ArgumentOutOfBoundsError: .*Value: -2147483648
+
+## float も float32（0.1234 は 0.1234000027… になる）、範囲外は例外
+js p('A').setProperty('glab:f', 0.1234); 0
+wait 100
+js String(p('A').getProperty('glab:f'))
+= 0.1234000027179718
+js try { p('A').setProperty('glab:f', 1.0001); return 'ok' } catch (x) { return String(x) }
+~ ArgumentOutOfBoundsError
+
+## enum に無い値は例外
+js try { p('A').setProperty('glab:mode', 'z'); return 'ok' } catch (x) { return String(x) }
+~ InvalidArgumentError: .*enum property
+
+## プロパティはプレイヤーごと（A を変えても B は既定値のまま）
+@B join
+@A cmd /glab:bar 42
+~ @A GLAB bar 42
+wait 100
+js JSON.stringify([p('A').getProperty('glab:bar'), p('B').getProperty('glab:bar')])
+= [42,50]
+
+## コマンドで書いた値を1tick後に読める（権限 Any のコマンド）
+@B cmd /glab:bar 9
+~ @B GLAB bar 9
+@B cmd /glab:get
+~ @B GLAB bar=9 on=true
+@B cmd /glab:bar 101
+~ @B GLAB bar must be 0\.\.100 \(got 101\)
+@B cmd /glab:show false
+~ @B GLAB show false
+@B cmd /glab:get
+~ @B GLAB bar=9 on=false
+
+## スコアボードの値が2tick以内にプロパティへ写る（0〜100 に収める）
+scoreboard players set A glab_bar 30
+wait 200
+js p('A').getProperty('glab:bar')
+= 30
+scoreboard players set A glab_bar 500
+wait 200
+js p('A').getProperty('glab:bar')
+= 100
+scoreboard players reset A glab_bar
+wait 200
+js p('A').getProperty('glab:bar')
+= 100
+
+## 死んでリスポーンしても値は残る
+js p('A').setProperty('glab:mode', 'c'); 0
+kill A
+wait 500
+@A respawn
+wait 1000
+js JSON.stringify([p('A').getProperty('glab:bar'), p('A').getProperty('glab:mode')])
+= [100,"c"]
+
+## 抜けて入り直しても値は残る
+@A leave
+wait 1000
+@A join
+wait 1000
+js JSON.stringify([p('A').getProperty('glab:bar'), p('A').getProperty('glab:mode')])
+= [100,"c"]
+
+## スクリプトの再読込（/reload）でも値は残る
+reload
+wait 2000
+js JSON.stringify([p('A').getProperty('glab:bar'), p('A').getProperty('glab:mode'), p('B').getProperty('glab:on')])
+= [100,"c",false]
+
+## サーバーを再起動しても値は残る
+restart
+@A join
+@B join
+wait 1000
+js JSON.stringify([p('A').getProperty('glab:bar'), p('A').getProperty('glab:mode'), p('B').getProperty('glab:on')])
+= [100,"c",false]
+
+## player.json は現行バニラ（1.26.30）をそのまま元にしているので、満腹度と襲撃の予兆がバニラのまま
+js const e = p('A'); JSON.stringify([e.getComponent('minecraft:player.saturation').effectiveMax, e.getComponent('minecraft:player.exhaustion').effectiveMax])
+= [20,20]
+event entity A minecraft:gain_raid_omen
+~ minecraft:gain_raid_omen successfully executed on: minecraft:player
