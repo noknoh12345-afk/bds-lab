@@ -1,0 +1,107 @@
+{
+  "namespace": "hud",
+  "format_version": "1.8.0",
+  "geoui_panel": {
+    "type": "panel",
+    "size": [
+      "10%",
+      "10%"
+    ],
+    "offset": [
+      0,
+      "110%"
+    ],
+    "anchor_from": "top_middle",
+    "anchor_to": "top_middle",
+    "controls": [
+      {
+        "geoui_renderer": {
+          "type": "custom",
+          "renderer": "live_player_renderer",
+          "layer": 1,
+          "animation_reset_name": "screen_animation_reset",
+          "anims": [
+            "@common.screen_exit_size_animation_push",
+            "@common.screen_exit_size_animation_pop",
+            "@common.screen_entrance_size_animation_push",
+            "@common.screen_entrance_size_animation_pop"
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_visible",
+              "binding_name_override": "#visible"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "hud_player_renderer": {
+    "type": "panel",
+    "size": [
+      15,
+      15
+    ],
+    "controls": [
+      {
+        "hud_player": {
+          "type": "custom",
+          "renderer": "hud_player_renderer",
+          "layer": 1,
+          "animation_reset_name": "screen_animation_reset",
+          "anims": [
+            "@common.screen_exit_size_animation_push",
+            "@common.screen_exit_size_animation_pop",
+            "@common.screen_entrance_size_animation_push",
+            "@common.screen_entrance_size_animation_pop"
+          ],
+          "bindings": [
+            {
+              "binding_name": "#paper_doll_visible",
+              "binding_name_override": "#visible"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "hud_content": {
+    "type": "panel",
+    "$hud_size": [
+      "100%",
+      "100%"
+    ],
+    "$hud_player_rend_desktop_offset|default": [
+      15,
+      15
+    ],
+    "variables": [
+      {
+        "requires": "($is_holographic and not $is_living_room_mode)",
+        "$hud_player_rend_desktop_offset": [
+          100,
+          50
+        ]
+      },
+      {
+        "requires": "($compress_hud_width)",
+        "$hud_size": [
+          "90%",
+          "100%"
+        ]
+      }
+    ],
+    "size": "$hud_size",
+    "controls": [
+      {
+        "root_panel@hud.root_panel": {}
+      },
+      {
+        "camera_renderer@camera_renderer": {}
+      },
+      {
+        "geoui_panel@hud.geoui_panel": {}
+      }
+    ]
+  }
+}
