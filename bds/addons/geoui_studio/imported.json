@@ -1,0 +1,6 @@
+{
+  "from": "hud.mcaddon",
+  "bp": [1, 0, 0],
+  "rp": [1, 0, 0],
+  "request": "GeoUI Studio v10.1（7fe110f）が書き出したスコア＆ゲージのひな形。仕様書の主張とStudio固有の不具合を実機BDSで確かめる"
+}
