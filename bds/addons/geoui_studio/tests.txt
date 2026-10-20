@@ -1,0 +1,94 @@
+# GeoUI Studio v10.1（Au12jp/GeouiStudio 7fe110f）が書き出したパック（ひな形「スコア＆ゲージ」をそのまま書き出し）を
+# 本物の BDS に載せ、Studio の不具合を「いまそう動く」形で記録する。直ったら、その節の期待値を正しい動きに書き換える。
+# = 完全一致 | ~ 正規表現 | ! 無い | !~ 無い正規表現 | '## 題' = 節
+
+## 読み込める（プロパティ15個がすべて既定値で読める）
+@A join
+wait 2000
+js const e = p('A'); JSON.stringify(['gen','seek','playing','scene','aspect','scale','cx','cy','ox','oy','alpha','v0','v1','v2','v3'].map((k) => e.getProperty('geoui:' + k)))
+= [0,0,1,0,1778,100,-6,-278,0,0,100,0,0,0,0]
+~ @A \[GeoUI\] 画面比を 16:9 と推定（Desktop）
+
+## 【不具合】player.json が旧版（format 1.19.70）の写しで、満腹度などが現行バニラと違う（現行は [5,20,20]）
+js const e = p('A'); JSON.stringify([e.getComponent('minecraft:player.saturation').currentValue, e.getComponent('minecraft:player.exhaustion').effectiveMax, e.getComponent('minecraft:player.saturation').effectiveMax])
+= [20,4,20]
+
+## 【不具合】現行バニラの「襲撃の予兆」(gain_raid_omen) のイベントが無い（旧い bad_omen → trigger_raid のまま）
+event entity A minecraft:gain_raid_omen
+~ E minecraft:gain_raid_omen could not be executed on: minecraft:player
+
+## 【不具合】数値を取るサブコマンドが、数値をそのまま書くと構文エラー（arg が String 型のため。Studio 自身の例文も通らない）
+@A cmd /geoui:geoui alpha 50
+~ @A cmd failed: %commands\.generic\.syntax
+@A cmd /geoui:geoui aspect 1.778
+~ @A cmd failed: %commands\.generic\.syntax
+@A cmd /geoui:geoui center -0.0006 -0.0278
+~ @A cmd failed: %commands\.generic\.syntax
+@A cmd /geoui:geoui seek 3
+~ @A cmd failed: %commands\.generic\.syntax
+@A cmd /geoui:geoui scene 1
+~ @A cmd failed: %commands\.generic\.syntax
+wait 200
+js p('A').getProperty('geoui:alpha')
+= 100
+
+## 引用符で囲めば数値のサブコマンドが通る
+@A cmd /geoui:geoui alpha "50"
+wait 200
+js p('A').getProperty('geoui:alpha')
+= 50
+@A cmd /geoui:geoui aspect "2.0"
+~ @A \[GeoUI\] 画面比を .* にしました
+wait 200
+js p('A').getProperty('geoui:aspect')
+= 2000
+
+## 【不具合】alpha 0 が 100 扱いになる（Number(arg) || 100）
+@A cmd /geoui:geoui alpha "0"
+wait 200
+js p('A').getProperty('geoui:alpha')
+= 100
+
+## 【不具合】範囲外の値は何も言わずに捨てられる（setProp が例外を握りつぶす）
+@A cmd /geoui:geoui ox "99999"
+wait 200
+js p('A').getProperty('geoui:ox')
+= 0
+!~ @A .*99999
+
+## 【不具合】スコア同期で、2^24 を超える値はずれ、2147483584 以上は写らずに古い値のまま
+scoreboard players set A score 16777217
+wait 300
+js p('A').getProperty('geoui:v0')
+= 16777216
+scoreboard players set A score 2147483647
+wait 300
+js p('A').getProperty('geoui:v0')
+= 16777216
+
+## 【不具合】ワールドに汎用名のスコアボード目的 score と hp を勝手に作る（他のアドオンと名前がぶつかる）
+js JSON.stringify(world.scoreboard.getObjectives().map((o) => o.id).sort())
+= ["hp","score"]
+
+## 【不具合】コマンドで変えた alpha と scale が、入り直すと 100 に戻る（参加時に上書き・scale コマンドは保存しない）
+@A cmd /geoui:geoui alpha "40"
+@A cmd /geoui:geoui scale "150"
+wait 200
+js JSON.stringify([p('A').getProperty('geoui:alpha'), p('A').getProperty('geoui:scale')])
+= [40,150]
+@A leave
+wait 500
+@A join
+wait 2500
+js JSON.stringify([p('A').getProperty('geoui:alpha'), p('A').getProperty('geoui:scale'), p('A').getProperty('geoui:aspect')])
+= [100,100,2000]
+
+## play で再生中になり、stop で止まる（世代 gen が進む）
+@A cmd /geoui:geoui play
+wait 200
+js JSON.stringify([p('A').getProperty('geoui:playing'), p('A').getProperty('geoui:gen')])
+= [1,1]
+@A cmd /geoui:geoui stop
+wait 200
+js JSON.stringify([p('A').getProperty('geoui:playing'), p('A').getProperty('geoui:gen')])
+= [0,2]
