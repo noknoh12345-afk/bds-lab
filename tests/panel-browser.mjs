@@ -336,6 +336,9 @@ try {
 
   // the author
   await signIn('tok-author');
+  // (what the repository's settings allow is folded on 「概要」 — its counts on the fold: opened to read it)
+  await page.locator('#capsbox summary').click({ timeout: 10_000 });
+  check(/このリポジトリの設定でできること（✅ \d+・⚠️ \d+）/.test(await page.locator('#capsbox summary').innerText()), 'the fold says how many are ready and how many are not', await page.locator('#capsbox summary').innerText());
   check(await waitText(/管理者/) && await waitText(/✅ Discord の DM で端末を操作/) && /⚠️ 本物のアプリで確かめる/.test(await text()) && /GOOGLE_EMAIL・GOOGLE_AAS_TOKEN が要ります/.test(await text()), 'the author: admin; what their own secrets allow (Discord yes, the app lab not yet: what is missing said)', await text());
   check(await waitText(/動いている 1・失敗 1/), 'the overview counts the runs', await text());
   // what needs doing now, the worst first: the invitations from the forks, a secret left for half a year, a lending fork not in LAB_HOSTS
@@ -582,6 +585,8 @@ try {
   await tab('概要');
   await page.waitForFunction(() => /評価 [A-E]|まだ測れません/.test(document.querySelector('#labhealth')?.innerText ?? ''), null, { timeout: 10_000 }).catch(() => {});
   check(/評価 [A-E]|まだ測れません/.test(await page.locator('#labhealth').innerText()) && /数字で見る/.test(await page.locator('#labhealth').innerText()), 'the lab\'s health: points, a letter, what raises it, the numbers behind it', await page.locator('#labhealth').innerText().catch(() => ''));
+  // (the report is folded on 「概要」: opened first)
+  if (!(await page.locator('#reportbox').evaluate((d) => d.open))) await page.locator('#reportbox summary').click();
   await page.locator('#healthreport button', { hasText: '報告書を作る' }).click();
   await page.waitForSelector('#healthreport a[download]', { timeout: 10_000 }).catch(() => {});
   check(/^blob:/.test(await page.locator('#healthreport a[download]').getAttribute('href').catch(() => '')) && /\.md$/.test(await page.locator('#healthreport a[download]').getAttribute('download').catch(() => '')),
@@ -626,6 +631,25 @@ try {
   const wide = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
   check(wide[0] <= wide[1], 'nothing wider than the phone\'s screen', JSON.stringify(wide));
   if (process.env.PANEL_SHOTS) { await msCard.screenshot({ path: path.join(process.env.PANEL_SHOTS, 'connect-microsoft.png') }); await pickCard.screenshot({ path: path.join(process.env.PANEL_SHOTS, 'connect-pick.png') }); }
+
+  // 「☰」 on a phone: every screen in groups with what it is for; a tap opens that screen, Esc closes it (the focus back on ☰);
+  // the tab shown stays in sight in the strip; the header one line
+  await page.locator('#menubtn').click();
+  const sheet = page.locator('#menusheet');
+  const sheetText = await sheet.innerText().catch(() => '');
+  check(await sheet.isVisible() && /いつも見る/.test(sheetText) && /つなぐ・鍵/.test(sheetText) && /パスワードや鍵/.test(sheetText) && await sheet.locator('li button').count() >= 14, '☰: every screen in groups, each with what it is for', sheetText.slice(0, 200));
+  if (process.env.PANEL_SHOTS) await page.screenshot({ path: path.join(process.env.PANEL_SHOTS, 'menu.png') });
+  await sheet.locator('button[data-go="secrets"]').click();
+  check(await page.locator('#menusheet').count() === 0 && (await page.locator('nav.tabs button.on').innerText()) === '秘密', '☰ → a screen: opened, the menu gone', await page.locator('nav.tabs button.on').innerText());
+  await page.locator('#menubtn').click();
+  await page.keyboard.press('Escape');
+  check(await page.locator('#menusheet').count() === 0 && await page.evaluate(() => document.activeElement?.id) === 'menubtn', '☰: Esc closes it, the focus back on ☰');
+  await tab('設定');
+  const inSight = await page.locator('nav.tabs button.on').evaluate((b) => { const r = b.getBoundingClientRect(), n = b.parentElement.getBoundingClientRect(); return r.left >= n.left - 1 && r.right <= n.right + 1; });
+  check(inSight, 'the tab shown is in sight in the strip (「設定」 at its far end)');
+  const hdr = await page.locator('header#top').evaluate((e) => e.getBoundingClientRect().height);
+  check(hdr <= 72, 'the header on one line at a phone\'s width', String(hdr));
+  await tab('概要');
 
   // members: someone invited as an administrator (asked first), a writer made a reader, the owner and oneself untouchable
   await tab('メンバー');
