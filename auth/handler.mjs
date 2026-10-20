@@ -29,7 +29,22 @@
 //   GET /device?code=XXXX-XXXX → the consent page (the code to compare) → POST /device → GitHub → /callback → 「つながりました」
 //   POST /token grant_type=urn:ietf:params:oauth:grant-type:device_code → authorization_pending … then the tokens, once
 // and the end of it, for any AI client: POST /revoke token=<access or refresh token> (RFC 7009) → 200, the GitHub token gone
-export const VERSION = '4';
+// and, for the panel on a phone, Microsoft's own device sign-in (live.com has no CORS: a page cannot ask it) — relayed, kept
+// nowhere: the device code and live.com's cookie ride sealed in the handle the panel holds; the person signs in on Microsoft's
+// own page (microsoft.com/link, the code filled in), passkey, Authenticator and two-step as they always do — no password here
+//   POST /ms/device {}                   → { handle, user_code, verification_uri, verification_uri_complete, interval, expires_in }
+//   POST /ms/token {handle}              → { pending } … then { live: <live.com's tokens>, gamertag, xuid, profile } once
+export const VERSION = '5';
+/** what only the real Microsoft can confirm (kept in one place; the tests use a fake) — prismarine-auth's live flow: the
+ *  Nintendo Switch title, the scope Xbox Live's user token takes, an RPS ticket 't=' + the access token */
+export const MICROSOFT = {
+  live: 'https://login.live.com',
+  clientId: '00000000441cc96b',
+  scope: 'service::user.auth.xboxlive.com::MBI_SSL',
+  link: 'https://www.microsoft.com/link',
+  xbl: 'https://user.auth.xboxlive.com/user/authenticate',
+  xsts: 'https://xsts.auth.xboxlive.com/xsts/authorize',
+};
 /** what only the real GitHub can confirm (kept in this one place; the tests use a fake GitHub) */
 export const GITHUB = {
   // (GitHub's OAuth web flow takes PKCE: code_challenge S256 at /authorize, code_verifier at /access_token — 要実測)
@@ -76,7 +91,7 @@ export function config(env = {}) {
   return c;
 }
 
-const SEALED = { code: 'bdsl_cd.', access: 'bdsl_at.', refresh: 'bdsl_rt.' };
+const SEALED = { code: 'bdsl_cd.', access: 'bdsl_at.', refresh: 'bdsl_rt.', ms: 'bdsl_ms.' };
 /** sealed values for MCP's sign-in (pure but for crypto.subtle): seal(kind, object) → 'bdsl_<kind>.<base64url(iv ‖ AES-GCM)>'
  *  with a key made from STATE_SECRET by HKDF; open(kind, text) → the object, or null — a value sealed for one kind (a code)
  *  never opens as another (an access token): the kind is the cipher's associated data and inside it too */
@@ -274,6 +289,62 @@ export function handler(env, { fetchImpl = (...a) => globalThis.fetch(...a), now
     const at = body?.access_token;
     if (typeof at !== 'string' || !TOKEN.test(at)) return reply(400, { error: 'body' }, cors);
     return (await revokeGh(at)) ? reply(204, null, cors) : reply(502, { error: 'github' }, cors);
+  }
+
+  // ---- Microsoft's device sign-in, for the panel (a phone): relayed, nothing kept ----
+  const form = (o) => new URLSearchParams(o).toString();
+  const FORM = { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json', 'user-agent': UA };
+  /** POST /ms/device → a code to type at microsoft.com/link (the link with it filled in), and the handle to ask with */
+  async function msDevice(cors) {
+    let r, j;
+    try {
+      r = await fetchImpl(`${MICROSOFT.live}/oauth20_connect.srf`, { method: 'POST', headers: FORM, body: form({ client_id: MICROSOFT.clientId, scope: MICROSOFT.scope, response_type: 'device_code' }) });
+      j = await r.json();
+    } catch { return reply(502, { error: 'microsoft' }, cors); }
+    const uc = String(j?.user_code ?? ''), dc = String(j?.device_code ?? ''), every = Number(j?.interval), life = Number(j?.expires_in);
+    if (!r.ok || !/^[A-Z0-9]{4,16}$/.test(uc) || !TOKEN.test(dc) || !(life > 0 && life <= 3600)) return reply(502, { error: 'microsoft' }, cors);
+    // (live.com binds the poll to the cookie it set with the code: prismarine-auth sends it back the same way)
+    const ck = String(r.headers.get('set-cookie') ?? '').split(';')[0].trim();
+    const wait = every >= 1 && every <= 60 ? Math.floor(every) : 5;
+    const handle = await box.seal('ms', { dc, ck: /^[\x21-\x7e]{1,4000}$/.test(ck) ? ck : '', exp: now() + life * 1000 });
+    return reply(200, { handle, user_code: uc, verification_uri: MICROSOFT.link, verification_uri_complete: `${MICROSOFT.link}?otc=${uc}`, interval: wait, expires_in: Math.floor(life) }, cors);
+  }
+  /** an Xbox Live user token and XSTS for live.com's access token → { gamertag, xuid, profile } (profile false: the account
+   *  has no Xbox profile yet — XErr 2148916233); null when Xbox Live could not be asked */
+  async function xboxOf(at) {
+    const post = async (u, body) => { const r = await fetchImpl(u, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json', 'x-xbl-contract-version': '1', 'user-agent': UA }, body: JSON.stringify(body) }); const j = await r.json().catch(() => null); return { r, j }; };
+    try {
+      const u = await post(MICROSOFT.xbl, { RelyingParty: 'http://auth.xboxlive.com', TokenType: 'JWT', Properties: { AuthMethod: 'RPS', SiteName: 'user.auth.xboxlive.com', RpsTicket: `t=${at}` } });
+      if (!u.r.ok || typeof u.j?.Token !== 'string') return null;
+      const x = await post(MICROSOFT.xsts, { RelyingParty: 'http://xboxlive.com', TokenType: 'JWT', Properties: { SandboxId: 'RETAIL', UserTokens: [u.j.Token] } });
+      if (x.r.status === 401 && Number(x.j?.XErr) === 2148916233) return { gamertag: null, xuid: null, profile: false };
+      const xui = x.j?.DisplayClaims?.xui?.[0];
+      if (!x.r.ok || !xui) return null;
+      const gt = String(xui.gtg ?? ''), id = String(xui.xid ?? '');
+      return { gamertag: /^[\p{L}\p{N} #_-]{1,20}$/u.test(gt) ? gt : null, xuid: /^\d{1,20}$/.test(id) ? id : null, profile: true };
+    } catch { return null; }
+  }
+  /** POST /ms/token {handle} → { pending: true } while the person signs in, then live.com's tokens (to keep as a secret) and
+   *  who it is; { error: expired | denied | handle | microsoft } otherwise (Microsoft's own words are not passed on) */
+  async function msToken(body, cors) {
+    const h = await box.open('ms', body?.handle);
+    if (!h || typeof h.dc !== 'string') return reply(400, { error: 'handle' }, cors);
+    if (!(h.exp > now())) return reply(400, { error: 'expired' }, cors);
+    let r, j;
+    try {
+      r = await fetchImpl(`${MICROSOFT.live}/oauth20_token.srf?client_id=${MICROSOFT.clientId}`, { method: 'POST', headers: { ...FORM, ...(h.ck ? { cookie: h.ck } : {}) }, body: form({ client_id: MICROSOFT.clientId, device_code: h.dc, grant_type: DEVICE_GRANT }) });
+      j = await r.json();
+    } catch { return reply(502, { error: 'microsoft' }, cors); }
+    const e = String(j?.error ?? '');
+    if (e === 'authorization_pending') return reply(200, { pending: true }, cors);
+    if (e === 'slow_down') return reply(200, { pending: true, slow: true }, cors);
+    if (e === 'expired_token' || e === 'invalid_grant') return reply(400, { error: 'expired' }, cors);
+    if (e === 'access_denied' || e === 'authorization_declined') return reply(400, { error: 'denied' }, cors);
+    if (e || !r.ok || !TOKEN.test(String(j?.access_token ?? '')) || !TOKEN.test(String(j?.refresh_token ?? ''))) return reply(502, { error: 'microsoft' }, cors);
+    const n = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.floor(Number(v)) : null);
+    const live = { token_type: 'bearer', expires_in: n(j.expires_in), scope: MICROSOFT.scope, access_token: j.access_token, refresh_token: j.refresh_token, user_id: /^[0-9a-f]{1,32}$/i.test(String(j.user_id ?? '')) ? String(j.user_id) : null };
+    const who = await xboxOf(j.access_token);
+    return reply(200, { live, gamertag: who?.gamertag ?? null, xuid: who?.xuid ?? null, profile: who ? who.profile : null }, cors);
   }
 
   // ---- MCP's sign-in: AI clients to the lab's API (api.mjs) ----
@@ -564,7 +635,7 @@ export function handler(env, { fetchImpl = (...a) => globalThis.fetch(...a), now
     return req.method === 'GET' ? authorizeAsk(url) : authorizeYes(req, url);
   }
 
-  const ROUTES = { '/health': 'GET', '/login': 'GET', '/callback': 'GET', '/refresh': 'POST', '/logout': 'POST' };
+  const ROUTES = { '/health': 'GET', '/login': 'GET', '/callback': 'GET', '/refresh': 'POST', '/logout': 'POST', '/ms/device': 'POST', '/ms/token': 'POST' };
   async function route(req) {
     const url = new URL(req.url), path = url.pathname, want = ROUTES[path];
     if (MCP_ROUTES[path]) return mcpRoute(req, url, path);
@@ -576,12 +647,14 @@ export function handler(env, { fetchImpl = (...a) => globalThis.fetch(...a), now
       return allowed && path !== '/login' && path !== '/callback' ? reply(204, null, { ...cors, 'access-control-allow-methods': 'GET, POST', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '600' }) : reply(403, { error: 'origin' }, { vary: 'Origin' });
     }
     if (req.method !== want) return reply(405, { error: 'method' }, { allow: `${want}, OPTIONS` });
-    if (path === '/health') return reply(c.missing.length ? 503 : 200, { ok: !c.missing.length, clientId: c.clientId || null, origins: c.origins, panels: c.panels.map((p) => p.href), version: VERSION, lab: c.lab, device: Boolean(store), ...(c.missing.length ? { missing: c.missing } : {}) }, cors);
+    if (path === '/health') return reply(c.missing.length ? 503 : 200, { ok: !c.missing.length, clientId: c.clientId || null, origins: c.origins, panels: c.panels.map((p) => p.href), version: VERSION, lab: c.lab, device: Boolean(store), microsoft: true, ...(c.missing.length ? { missing: c.missing } : {}) }, cors);
     if (c.missing.length) return reply(500, { error: 'config' }, cors);
     if (path === '/login') return login(url);
     if (path === '/callback') return callback(url, req);
     if (!allowed) return reply(403, { error: 'origin' }, { vary: 'Origin' });
-    const body = await readJson(req);
+    if (path === '/ms/device') return msDevice(cors);
+    const body = await readJson(req, path === '/ms/token' ? 16384 : 4096);
+    if (path === '/ms/token') return msToken(body, cors);
     return path === '/refresh' ? refresh(body, cors) : logout(body, cors);
   }
   return async (request) => { try { return await route(request); } catch { return reply(500, { error: 'internal' }); } };
