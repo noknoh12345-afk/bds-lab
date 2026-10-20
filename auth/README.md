@@ -25,6 +25,8 @@ Node 22・Workers・ブラウザでそのまま動きます）。[worker.mjs](wo
 | `GET /callback` | state の署名・cookie の署名・cookie の k と state の中の値が合うこと・10 分以内を確かめ、code を GitHub でトークンに替え（verifier は cookie の k から）、`<return>#bdslab-auth=<base64url(JSON)>` へ 302（だめなら `#bdslab-auth-error=<短い語>`。このサービスが署名していない cookie は 400）。cookie は消す |
 | `POST /refresh` `{refresh_token}` | 期限の来るトークンを新しくする（GitHub の `grant_type=refresh_token`）。Origin が `PANEL_ORIGINS` の origin のときだけ、CORS もその origin だけ |
 | `POST /logout` `{access_token}` | GitHub の `DELETE /applications/{client_id}/token`（Basic `client_id:client_secret`）でトークンを無効に → 204。同じ Origin の決まり |
+| `POST /ms/device` | スマホから Microsoft に普通にサインインするための、Microsoft 自身のデバイスサインイン（live.com。CORS が無いのでパネルからは直接呼べない）を中継。`{ handle, user_code, verification_uri, verification_uri_complete（microsoft.com/link?otc=…）, interval, expires_in }`。デバイスコードと live.com の cookie は `handle` に封じて（AES-GCM）渡すだけで、何も覚えません。パネルの Origin のときだけ |
+| `POST /ms/token` `{handle}` | その人が Microsoft の画面でサインインするまで `{ pending }`、終わったら `{ live: <live.com のトークン>, gamertag, xuid, profile }` を 1 回。パネルはそれを封じて秘密 `MS_LIVE_<名前>` に入れます（`lan account import <名前>` が prismarine-auth の形で書き出す）。Microsoft の文はそのまま返しません |
 
 受け渡しの JSON は `access_token`・`expires_in`・`refresh_token`・`refresh_token_expires_in`・`token_type` の 5 つだけです。
 エラーは `{ "error": "<短い語>" }` だけで、秘密も GitHub の文も入れません（パネルが `panel/lib/session.mjs` の `explainAuth`
