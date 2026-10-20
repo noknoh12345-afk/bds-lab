@@ -7,7 +7,7 @@ import { runNotice } from './setup.mjs';
 const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** the only places the panel opens outside itself: GitHub and the services' own pages (the page's links; nothing is fetched) */
-export const LINK_HOSTS = Object.freeze(['github.com', 'discord.com', 'dash.cloudflare.com', 'accounts.google.com', 'account.microsoft.com', 'console.anthropic.com', 'platform.openai.com']);
+export const LINK_HOSTS = Object.freeze(['github.com', 'discord.com', 'dash.cloudflare.com', 'accounts.google.com', 'account.microsoft.com', 'www.microsoft.com', 'console.anthropic.com', 'platform.openai.com']);
 /** an address that may be opened from here: https, one of LINK_HOSTS, no login in it */
 export function safeLink(u) {
   try { const x = new URL(String(u ?? '')); return x.protocol === 'https:' && !x.username && !x.password && LINK_HOSTS.includes(x.hostname) ? x.href : null; } catch { return null; }
@@ -34,7 +34,7 @@ export const SERVICES = Object.freeze([
       { name: 'CLOUDFLARE_ACCOUNT_ID', label: 'アカウント ID', secret: false, check: (v) => (/^[0-9a-f]{32}$/i.test(v) ? null : 'アカウント ID は 32 文字の 16 進数です') }] },
   { key: 'microsoft', name: 'Microsoft', why: '本物の Minecraft（app ラボ・lan）が、あなたの Xbox（Microsoft）アカウントでサーバーに入るのに使います。',
     secrets: ['MS_EMAIL', 'MS_PASSWORD'],
-    steps: [{ say: 'Minecraft で使っている Microsoft アカウントのメールを入れます。パスワードは無くてもよい: 実際のサインインは app.yml（端末で動く本物のゲーム）で行い、二段階認証があればそのとき Microsoft が本人確認を求めます（それはあなたが押します）。', link: 'https://account.microsoft.com/' }],
+    steps: [{ say: 'Minecraft で使っている Microsoft アカウントのメールを入れます。パスワードは無くてもよい: 実際のサインインは app.yml（端末で動く本物のゲーム）で行い、二段階認証があればそのとき Microsoft が本人確認を求めます（それはあなたが押します）。サインイン中の「Authenticator の承認番号」や「届いたコード」は、このパネルの「端末」タブに大きく出て、そこで答えられます。', link: 'https://account.microsoft.com/' }],
     fields: [
       { name: 'MS_EMAIL', label: 'Microsoft アカウントのメール', secret: false, check: (v) => (EMAIL.test(v) ? null : 'メールアドレスの形が違います') },
       { name: 'MS_PASSWORD', label: 'パスワード（二段階認証だけの人は空でよい）', secret: true, optional: true, check: (v) => (v && !/[\r\n]/.test(v) ? null : 'パスワードが空か、改行が入っています') }] },
@@ -118,4 +118,51 @@ export async function runCheck(api, slug, key, { ref = 'main', me, sleep = sleep
   const raw = await runNotice(api, slug, run.id, `connect-${key}`);
   if (raw) return parseResult(raw);
   throw new Error(run.conclusion === 'success' ? 'connect.yml が結果（注釈 connect-' + key + '）を残していません' : `connect.yml が ${run.conclusion} で終わりました（「進み具合」で理由を）`);
+}
+
+// ---- Microsoft's own sign-in from a phone (lan's bots): the sign-in service relays live.com's device sign-in
+// (auth/handler.mjs /ms/device, /ms/token — live.com has no CORS); the person signs in on Microsoft's own page as always
+// (passkey, Authenticator, two-step), no password reaches the lab. What comes back — live.com's tokens — is sealed here into
+// the secret MS_LIVE_<NAME> as prismarine-auth keeps it (its live cache's `token`); `lan account import <name>` reads it ----
+export const MS_LIVE_SECRET = /^MS_LIVE_[A-Z0-9_]{1,40}$/;
+/** a bot's name as typed → the secret it is kept in (pure): MS_LIVE_<NAME>, letters and digits, MAIN when empty */
+export function msSecretName(name) {
+  const n = String(name ?? '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+  return `MS_LIVE_${n || 'MAIN'}`;
+}
+/** the sign-in's answer → the secret's value (pure): prismarine-auth's live token, with when it was had (obtainedOn) */
+export function msSecretValue(r, now = Date.now()) {
+  const l = r?.live;
+  if (!l || typeof l.refresh_token !== 'string' || typeof l.access_token !== 'string') throw new Error('Microsoft のトークンがありません');
+  return JSON.stringify({ token_type: l.token_type ?? 'bearer', expires_in: l.expires_in ?? 86400, scope: l.scope, access_token: l.access_token, refresh_token: l.refresh_token, user_id: l.user_id ?? null, obtainedOn: now });
+}
+const MS_WORDS = { expired: 'コードの時間が切れました: もう一度「サインインを始める」から', denied: 'Microsoft の画面でやめられました', handle: '受け渡しの値が壊れています: もう一度「サインインを始める」から', microsoft: 'Microsoft に聞けませんでした: 少しして、もう一度', origin: 'サインインのサービスがこのパネルを知りません（「準備」でサインインのサービスを置き直す）', not_found: 'サインインのサービスが古いままです（「準備」→ サインインのサービスを置き直す）' };
+async function msCall(authUrl, p, body, fetchImpl) {
+  if (!authUrl) throw new Error('サインインのサービスがありません（「準備」で置く）');
+  let r, j;
+  try { r = await fetchImpl(`${authUrl}${p}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) }); j = await r.json().catch(() => null); }
+  catch { throw new Error('サインインのサービスにつながりません（電波・オフライン？）'); }
+  if (!r.ok) throw new Error(MS_WORDS[j?.error] ?? MS_WORDS[r.status === 404 ? 'not_found' : r.status === 403 ? 'origin' : 'microsoft']);
+  return j;
+}
+/** the sign-in begun → { handle, code, link (microsoft.com/link with the code in it), every (s), until (ms) } */
+export async function msStart(authUrl, { fetchImpl = (...a) => globalThis.fetch(...a), now = Date.now() } = {}) {
+  const j = await msCall(authUrl, '/ms/device', {}, fetchImpl);
+  const link = safeLink(j?.verification_uri_complete) ?? safeLink(j?.verification_uri);
+  if (typeof j?.handle !== 'string' || !/^[A-Z0-9]{4,16}$/.test(String(j?.user_code ?? '')) || !link) throw new Error(MS_WORDS.microsoft);
+  return { handle: j.handle, code: j.user_code, link, every: Math.max(1, Number(j.interval) || 5), until: now + (Number(j.expires_in) || 900) * 1000 };
+}
+/** waited for until the person has signed in on Microsoft's page → { live, gamertag, xuid, profile }. onTick(seconds left);
+ *  stop() true ends it (the person left); sleep / now: tests */
+export async function msWait(authUrl, s, { fetchImpl = (...a) => globalThis.fetch(...a), sleep = sleeper, now = () => Date.now(), onTick = () => {}, stop = () => false } = {}) {
+  let every = s.every;
+  while (now() < s.until) {
+    await sleep(every * 1000);
+    if (stop()) throw new Error('やめました');
+    const j = await msCall(authUrl, '/ms/token', { handle: s.handle }, fetchImpl);
+    if (j?.pending) { if (j.slow) every += 5; onTick(Math.max(0, Math.round((s.until - now()) / 1000))); continue; }
+    if (j?.live) return j;
+    throw new Error(MS_WORDS.microsoft);
+  }
+  throw new Error(MS_WORDS.expired);
 }
