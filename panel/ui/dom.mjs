@@ -29,7 +29,21 @@ export const h = (tag, attrs = {}, ...kids) => {
 };
 export const $ = (id) => document.getElementById(id);
 export const main = () => $('main');
-export const toast = (text, bad = false, more = null) => { const d = h('div', { class: bad ? 'bad' : '' }, text, more ? [' ', more] : null); $('toast').append(d); setTimeout(() => d.remove(), bad ? 9000 : 4500); };
+// (a toast: the same words shown once — the older one taken away, not piled up — three at most, ✕ to close it at once; a
+//  failure stays longer and is said as an alert)
+const shownToasts = [];
+export const toast = (text, bad = false, more = null) => {
+  const key = `${bad ? '!' : ''}${typeof text === 'string' ? text : text?.textContent ?? String(text)}`;
+  const drop = (x) => { if (typeof x.el.remove === 'function') x.el.remove(); else x.el.parentNode?.removeChild?.(x.el); const i = shownToasts.indexOf(x); if (i >= 0) shownToasts.splice(i, 1); };
+  for (const x of shownToasts.filter((y) => y.key === key)) drop(x);
+  const me = { key, el: null };
+  me.el = h('div', { class: bad ? 'bad' : '', role: bad ? 'alert' : null }, h('span', { class: 'tx' }, text, more ? [' ', more] : null),
+    // (the ✕ is drawn by panel.css: the toast's words stay only its words)
+    h('button', { class: 'x', type: 'button', 'aria-label': '閉じる', title: '閉じる', onclick: () => drop(me) }));
+  $('toast').append(me.el); shownToasts.push(me);
+  while (shownToasts.length > 3) drop(shownToasts[0]);
+  setTimeout(() => drop(me), bad ? 9000 : 4500);
+};
 // (what to offer when something fails: the page sets it — onFail(error, retry) → an element: the next step, e.g. GitHub
 // refused this sign-in's rights → the way to more; the network → again)
 let onFail = null;
