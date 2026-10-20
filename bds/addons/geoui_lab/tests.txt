@@ -88,6 +88,15 @@ js JSON.stringify([p('A').getProperty('glab:bar'), p('B').getProperty('glab:bar'
 @B cmd /glab:get
 ~ @B GLAB bar=9 on=false
 
+## 大きさ（/glab:size）は 10〜1000 % だけ受け付ける
+@A cmd /glab:size 400
+~ @A GLAB size 400
+@A cmd /glab:size 5
+~ @A GLAB size must be 10\.\.1000 \(got 5\)
+wait 100
+js p('A').getProperty('glab:size')
+= 400
+
 ## スコアボードの値が2tick以内にプロパティへ写る（0〜100 に収める）
 scoreboard players set A glab_bar 30
 wait 200
