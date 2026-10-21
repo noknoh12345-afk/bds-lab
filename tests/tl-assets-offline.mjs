@@ -115,5 +115,18 @@ const bi = Me.bodyImage(bodies[0], { pxPerUnit: 4 }), calls = [];
 Me.drawOps(new Proxy({}, { get: (_, k) => (...a) => calls.push([k, ...a]), set: (_, k, v) => { calls.push([k, v]); return true; } }), bi.ops);
 ok(bi.w > 0 && bi.h > 0 && calls.filter((c) => c[0] === 'stroke').length === 2 && calls.some((c) => c[0] === 'lineWidth' && c[1] === bodies[0].width * 4), 'bodyImage: a slider\'s body drawn as two strokes (border and fill) by drawOps on a canvas');
 
+// ---- presets ----
+const P = require('../bds/geoui/timeline/presets.js');
+const list = P.presetList(), wrap = (frag) => ({ version: 1, sequences: [{ id: 's', duration: 10, ...frag }] });
+const bad = list.map((p) => [p.id, M.validate(wrap(P.makePreset(p.id, { target: 'e' })))]).filter(([, v]) => v.length);
+ok(list.length === 11 && !bad.length && list.every((p) => p.name && p.about && typeof p.options === 'object'), `presets: ${list.length}, each a valid fragment`, JSON.stringify(bad));
+const base = M.normalize({ sequences: [{ id: 's', duration: 10, tracks: [] }] });
+const applied = (id, o, at = 2) => M.reduce(base, { seq: 's', type: 'preset.apply', at, preset: P.makePreset(id, { target: 'e', ...o }) }).doc;
+const cd = applied('countdown', {}), pg = applied('progress', { duration: 2 }), bl = applied('blink', { period: 0.5 }), val = (d, t, prop) => M.evaluate(d, 's', t).e[prop];
+ok([2.5, 3.5, 4.5].map((t) => val(cd, t, 'value')).join() === '3,2,1' && val(pg, 3, 'fill') === 0.5 && val(bl, 2.1, 'opacity') === 1 && val(bl, 2.3, 'opacity') === 0 && val(bl, 2.55, 'opacity') === 1 && M.evaluate(cd, 's', 1).e.visible === false,
+  'presets placed at the playhead (2 s): countdown 3·2·1, a gauge half full half way, blinking every quarter of a second');
+let pe = ''; try { P.makePreset('nope'); } catch (e) { pe = e.message; }
+ok(/nope/.test(pe) && /countdown/.test(pe), 'an unknown preset is said with the ones there are');
+
 console.log(`\n${fails ? 'FAIL' : 'PASS'} tl-assets-offline (${n - fails}/${n})`);
 process.exit(fails ? 1 : 0);

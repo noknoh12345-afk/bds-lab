@@ -141,6 +141,8 @@
   ripple・split・locked）。contract.js: 枠の割り当て（区間の彩色・gap・溢れ）、24 bit の詰め方と同じ式の Molang、プロパティの名前と定義、予算（焼き込み／流し込み、
   上限 32 は要実測）。試験 `node tests/tl-model-offline.mjs`。
   追加: テンプレートのクリップの始まり・終わりを式に（param.d）、式の中で t（クリップが始まってからの秒）、実体ごとの道（`path: '@instance'`）と tail、道の長さ（osu! の長さ）。
-- 2. tl-assets: **途中**。できた: osu.js（.osu v14 の読み取り、AR・CS・OD・スライダーの長さの式、コンボの番号と色、文書へ: 円・スライダー（体・頭・玉の往復）・
+- 2. tl-assets: **できた**。できた: osu.js（.osu v14 の読み取り、AR・CS・OD・スライダーの長さの式、コンボの番号と色、文書へ: 円・スライダー（体・頭・玉の往復）・
   スピナーのテンプレート、実体、道、tempo、音楽のトラック）、media.js（MaxRects のアトラス・連番の uv_anim・文字の配置（折り返し・揃え）・WAV を作る/読む・OGG の長さ・
-  波形・sound_definitions・無圧縮 ZIP と読み戻し・連番の並べ方・スライダーの体の線と絵の描き方）。試験 `node tests/tl-assets-offline.mjs`。次: presets.js。
+  波形・sound_definitions・無圧縮 ZIP と読み戻し・連番の並べ方・スライダーの体の線と絵の描き方）、presets.js（タイトル・名前のテロップ・点数のポップ・カウントダウン・
+  通知・進むゲージ・点滅・揺れ・ヒットの弾け・コンボのポップ・判定の文字）。試験 `node tests/tl-assets-offline.mjs`。
+- 3. tl-anim: 次（RP への書き出し。Molang の値が model.evaluate と 1/60 秒ごとに一致することを試験で）。
