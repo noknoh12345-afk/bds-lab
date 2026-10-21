@@ -5,7 +5,7 @@
       "description": {
         "identifier": "geometry.geoui_atlas",
         "texture_width": 128,
-        "texture_height": 128,
+        "texture_height": 256,
         "visible_bounds_width": 885.402,
         "visible_bounds_height": 373.361,
         "visible_bounds_offset": [
@@ -227,6 +227,41 @@
                   "uv_size": [
                     16,
                     16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "sliderbody",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0.7
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -40.3697,
+                125.1767,
+                0.7
+              ],
+              "size": [
+                80.7395,
+                29.6465,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    128
+                  ],
+                  "uv_size": [
+                    128,
+                    47
                   ]
                 }
               }
@@ -7570,6 +7605,41 @@
                   "uv_size": [
                     32,
                     32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "sliderbody_t1s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0.7
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -40.3697,
+                125.1767,
+                0.721
+              ],
+              "size": [
+                80.7395,
+                29.6465,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    128
+                  ],
+                  "uv_size": [
+                    128,
+                    47
                   ]
                 }
               }

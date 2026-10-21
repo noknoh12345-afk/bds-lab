@@ -114,6 +114,27 @@ ok(outl.length > 8 && outl.every((p) => Math.abs(segDist(p) - 1) < 1e-9), 'strok
 const bi = Me.bodyImage(bodies[0], { pxPerUnit: 4 }), calls = [];
 Me.drawOps(new Proxy({}, { get: (_, k) => (...a) => calls.push([k, ...a]), set: (_, k, v) => { calls.push([k, v]); return true; } }), bi.ops);
 ok(bi.w > 0 && bi.h > 0 && calls.filter((c) => c[0] === 'stroke').length === 2 && calls.some((c) => c[0] === 'lineWidth' && c[1] === bodies[0].width * 4), 'bodyImage: a slider\'s body drawn as two strokes (border and fill) by drawOps on a canvas');
+// the body is the ball's way: its line goes where the ball goes (a Bézier's middle point is off the curve), on to osu!'s length
+// (a 100 px line slid 140 px: carried on straight), and the body element is put at that line's middle
+{
+  const sd = (p, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy, u = L2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2)) : 0; return Math.hypot(p[0] - a[0] - u * dx, p[1] - a[1] - u * dy); };
+  const wayD = (p, line) => Math.min(...line.slice(1).map((q, i) => sd(p, line[i], q)));
+  const ln = bodies[0], bz = bodies[1], bzPath = N.sequences[0].paths.find((p) => p.id === bz.path);
+  const ballOff = Math.max(...Array.from({ length: 41 }, (_, j) => wayD(M.pathPoint(bzPath, j / 40, { length: bzPath.length }), bz.line)));
+  const end = ln.line[ln.line.length - 1], mid = (l, ax) => (Math.min(...l.map((p) => p[ax])) + Math.max(...l.map((p) => p[ax]))) / 2, at26 = ev(2.6)['sliderbody#o4'];
+  ok(ballOff < 1e-3 && wayD(bz.points[1], bz.line) > 3 && near(end[0], 19.6875, 1e-4) && near(end[1], 9.84375, 1e-4)
+    && near(byId.o3.params.bx, 3.28125, 1e-4) && near(byId.o3.params.by, 9.84375, 1e-4) && near(byId.o4.params.bx, mid(bz.line, 0), 1e-4) && near(byId.o4.params.by, mid(bz.line, 1), 1e-4)
+    && JSON.stringify(bz.centre) === JSON.stringify([byId.o4.params.bx, byId.o4.params.by]) && at26 && near(at26.x, byId.o4.params.bx) && near(at26.y, byId.o4.params.by),
+  "a slider's body: the ball's way (on the line all along; the Bézier's middle point off it), carried on to osu!'s length, put at its middle", JSON.stringify({ ballOff, ctrl: wayD(bz.points[1], bz.line), end, o3: byId.o3.params, at26 }));
+  // drawn without a canvas (the sample add-on's way): a curved slider's middle is the fill, beside it the border, and its
+  // middle control point — 9.4 units off the curve, past the body's half width — nothing
+  const MAP2 = ['osu file format v14', '', '[Difficulty]', 'CircleSize:4', 'SliderMultiplier:1.4', '', '[TimingPoints]', '0,500,4,2,0,60,1,0', '', '[HitObjects]', '128,240,1000,6,0,B|256:320|384:240,2,280', ''].join('\n');
+  const b2 = O.toDocument(O.parseOsu(MAP2), { width: 120 }).bodies[0], img = Me.bodyImage(b2, { pxPerUnit: 4 }), ras = Me.rasterOps(img.ops, img.w, img.h);
+  const pix = (p) => { const x = Math.floor((p[0] - img.centre[0]) * 4 + img.w / 2), y = Math.floor(img.h / 2 - (p[1] - img.centre[1]) * 4), o = (y * ras.width + x) * 4; return [...ras.data.slice(o, o + 4)]; };
+  const apex = [0, -20.625];
+  ok(ras.width === img.w && ras.height === img.h && JSON.stringify(pix(apex)) === '[26,26,42,255]' && JSON.stringify(pix([0, -13.125])) === '[255,255,255,255]' && pix([0, -30])[3] === 0 && pix([0, -9.5])[3] === 0,
+    'rasterOps: bodyImage\'s strokes without a canvas — the fill along the curve, the border beside it, nothing at the control point off the curve', JSON.stringify([pix(apex), pix([0, -13.125]), pix([0, -30]), pix([0, -9.5])]));
+}
 
 // ---- presets ----
 const P = require('../bds/geoui/timeline/presets.js');

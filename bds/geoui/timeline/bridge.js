@@ -58,7 +58,8 @@
   /** slider bodies (osu.toDocument's) in one flipbook of equal cells: { cols, rows, cell: [w, h] px, pxPerUnit, w, h, at(i) → [x, y] }
    *  — px a unit as many as fit in maxSize (4 at most) */
   function bodyAtlas(bodies, { maxSize = 2048, most = 4 } = {}) {
-    const n = Math.max(1, bodies.length), span = (b, ax) => { const v = b.points.map((p) => p[ax]); return Math.max(...v) - Math.min(...v) + b.width + 2; };
+    // (each body's extent: the line its ball follows, as bodyImage draws it)
+    const n = Math.max(1, bodies.length), span = (b, ax) => { const v = (b.line && b.line.length ? b.line : b.points).map((p) => p[ax]); return Math.max(...v) - Math.min(...v) + b.width + 2; };
     const W = Math.max(1, ...bodies.map((b) => span(b, 0))), H = Math.max(1, ...bodies.map((b) => span(b, 1))), cols = Math.ceil(Math.sqrt((n * H) / W)) || 1, rows = Math.ceil(n / cols);
     // (a cell a whole number of px at most maxSize / cols wide: the atlas never passes maxSize)
     const p = Math.max(0.25, Math.min(most, Math.floor(maxSize / cols) / W, Math.floor(maxSize / rows) / H));

@@ -1,5 +1,5 @@
 // GeoUI Builder 0.1.0 with its timeline — one file for Blockbench (made by bds/geoui/build.mjs from bds/geoui/geoui_builder.js and
-// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 40c98740b374
+// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources d4a8d5701c34
 // ---- timeline/model.js
 (function (module) {
 // GeoUI timeline — the model (pure: no DOM, no Blockbench). The plan's step 1 (bds/geoui/timeline/PLAN.md):
@@ -1135,20 +1135,67 @@
     return [...L, ...cap(pts[n - 1], pts[n - 2]), ...R, ...cap(pts[0], pts[1])];
   }
   /** a slider's body as an image: its size in px and the canvas steps that draw it (an osu!-like border and fill: a wide stroke,
-   *  a narrower one inside), the body's centre at the image's centre. body = osu.toDocument's ({ points, width } in model units) */
+   *  a narrower one inside), the middle of its line at the image's centre. body = osu.toDocument's ({ line — the ball's way,
+   *  else points — and width, in model units) */
   function bodyImage(body, { pxPerUnit = 4, border = 0.12, colours = { border: '#ffffff', fill: '#1a1a2a' } } = {}) {
-    const xs = body.points.map((p) => p[0]), ys = body.points.map((p) => p[1]), cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const way = body.line && body.line.length ? body.line : body.points;
+    const xs = way.map((p) => p[0]), ys = way.map((p) => p[1]), cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
     const pad = body.width / 2 + 1, w = Math.ceil((Math.max(...xs) - Math.min(...xs) + 2 * pad) * pxPerUnit), h = Math.ceil((Math.max(...ys) - Math.min(...ys) + 2 * pad) * pxPerUnit);
     const px = (p) => [(p[0] - cx) * pxPerUnit + w / 2, h / 2 - (p[1] - cy) * pxPerUnit];
-    const line = body.points.map(px), path = [['moveTo', ...line[0]], ...line.slice(1).map((p) => ['lineTo', ...p])];
+    const line = way.map(px), path = [['moveTo', ...line[0]], ...line.slice(1).map((p) => ['lineTo', ...p])];
     return { w, h, centre: [cx, cy], ops: [['lineJoin', 'round'], ['lineCap', 'round'],
       ['strokeStyle', colours.border], ['lineWidth', body.width * pxPerUnit], ['beginPath'], ...path, ['stroke'],
       ['strokeStyle', colours.fill], ['lineWidth', body.width * pxPerUnit * (1 - 2 * border)], ['beginPath'], ...path, ['stroke']] };
   }
   /** canvas steps (bodyImage's ops) run on a 2D context */
   function drawOps(ctx, ops) { for (const [op, ...a] of ops) { if (typeof ctx[op] === 'function') ctx[op](...a); else ctx[op] = a[0]; } }
+  /** a colour as canvas takes it (#rgb, #rrggbb, #rrggbbaa, rgb(), rgba()) → [r, g, b, a 0..1] */
+  function parseColour(s) {
+    const t = String(s).trim();
+    let m = /^#([0-9a-f]{3,8})$/i.exec(t);
+    if (m) { let hx = m[1]; if (hx.length <= 4) hx = [...hx].map((c) => c + c).join(''); const v = (i) => parseInt(hx.slice(i, i + 2), 16); return [v(0), v(2), v(4), hx.length >= 8 ? v(6) / 255 : 1]; }
+    m = /^rgba?\(([^)]*)\)$/i.exec(t);
+    if (m) { const p = m[1].split(',').map((x) => parseFloat(x)); return [p[0] || 0, p[1] || 0, p[2] || 0, p.length > 3 && Number.isFinite(p[3]) ? p[3] : 1]; }
+    return [0, 0, 0, 1];
+  }
+  /** canvas steps drawn without a canvas, for Node (the sample add-on, the tests): the strokes bodyImage makes — straight
+   *  lines, round where they turn and at their ends — each pixel covered by how far its middle is from the line (so the
+   *  edge is smooth), painted over what is there. Other steps are left out → { width, height, data: RGBA bytes } */
+  function rasterOps(ops, w, h) {
+    const W = Math.max(1, Math.ceil(w)), H = Math.max(1, Math.ceil(h)), data = new Uint8Array(W * H * 4), st = { strokeStyle: '#000000', lineWidth: 1 };
+    let subs = [], cur = null;
+    const segDist = (x, y, a, b) => {
+      const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy, u = L2 > 0 ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / L2)) : 0;
+      return Math.hypot(x - a[0] - u * dx, y - a[1] - u * dy);
+    };
+    const stroke = () => {
+      const r = Math.max(0, +st.lineWidth || 0) / 2, [cr, cg, cb, ca] = parseColour(st.strokeStyle), all = subs.filter((s) => s.length);
+      if (!all.length || r <= 0 || ca <= 0) return;
+      const pts = all.flat(), xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+      const x0 = Math.max(0, Math.floor(Math.min(...xs) - r - 1)), x1 = Math.min(W - 1, Math.ceil(Math.max(...xs) + r + 1));
+      const y0 = Math.max(0, Math.floor(Math.min(...ys) - r - 1)), y1 = Math.min(H - 1, Math.ceil(Math.max(...ys) + r + 1));
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        // (one stroke is one shape: where its pieces overlap it is painted once)
+        let d = Infinity;
+        for (const s of all) { if (s.length === 1) d = Math.min(d, segDist(x + 0.5, y + 0.5, s[0], s[0])); else for (let i = 1; i < s.length; i++) d = Math.min(d, segDist(x + 0.5, y + 0.5, s[i - 1], s[i])); }
+        const a = Math.max(0, Math.min(1, r - d + 0.5)) * ca;
+        if (a <= 0) continue;
+        const o = (y * W + x) * 4, da = data[o + 3] / 255, oa = a + da * (1 - a);
+        data[o] = Math.round((cr * a + data[o] * da * (1 - a)) / oa); data[o + 1] = Math.round((cg * a + data[o + 1] * da * (1 - a)) / oa); data[o + 2] = Math.round((cb * a + data[o + 2] * da * (1 - a)) / oa);
+        data[o + 3] = Math.round(oa * 255);
+      }
+    };
+    for (const [op, ...a] of ops || []) {
+      if (op === 'beginPath') { subs = []; cur = null; }
+      else if (op === 'moveTo') { cur = [[+a[0], +a[1]]]; subs.push(cur); }
+      else if (op === 'lineTo') { if (cur) cur.push([+a[0], +a[1]]); else { cur = [[+a[0], +a[1]]]; subs.push(cur); } }
+      else if (op === 'stroke') stroke();
+      else if (op === 'strokeStyle' || op === 'lineWidth') st[op] = a[0];
+    }
+    return { width: W, height: H, data };
+  }
 
-  T.media = { packAtlas, flipbook, fontAtlas, layoutText, wavInfo, makeWav, oggInfo, peaks, soundDefinitions, crc32, zipStore, unzipStore, sortSequence, strokeOutline, bodyImage, drawOps };
+  T.media = { packAtlas, flipbook, fontAtlas, layoutText, wavInfo, makeWav, oggInfo, peaks, soundDefinitions, crc32, zipStore, unzipStore, sortSequence, strokeOutline, bodyImage, drawOps, parseColour, rasterOps };
   if (typeof module === 'object' && module && module.exports) module.exports = T.media;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 })(undefined);
@@ -1246,10 +1293,23 @@
   // ---- the document
   const DEFAULT_ELEMENTS = { circle: 'hitcircle', number: 'combonumber', approach: 'approachcircle', burst: 'hitburst', miss: 'hitmiss', body: 'sliderbody', ball: 'sliderball', spinner: 'spinner' };
   const r4 = (x) => Math.round(x * 1e4) / 1e4;
+  /** a slider's body: the line its ball follows — the path's own polyline (model.pathTable) cut at osu!'s length, or carried
+   *  on straight to it, as model.pathPoint goes. Not the points as given: a Bézier's middle points are off its curve.
+   *  (Without model.js loaded: the points) */
+  function lineOf(path) {
+    const Mo = T.model;
+    if (!Mo || !Mo.pathTable) return path.points.map((p) => [p[0], p[1]]);
+    const { pts, acc, length } = Mo.pathTable(path), L = path.length > 0 ? path.length : length, out = [];
+    for (let i = 0; i < pts.length && acc[i] < L - 1e-6; i++) out.push([r4(pts[i][0]), r4(pts[i][1])]);
+    const end = Mo.pathPoint(path, 1, { length: L });
+    out.push([r4(end[0]), r4(end[1])]);
+    return out;
+  }
   /** a beatmap → { doc, bodies, info }. opts: width (model units for the playfield's 512 osu! pixels, default 120; it keeps
    *  4:3, centred on 0, y up), designRadius (the radius the hit circle element is drawn at, model units, default 10),
    *  elements (the GeoUI elements' names, DEFAULT_ELEMENTS), sound (the music's sound id). bodies: each slider's path in
-   *  model units and width, for the editor to draw into an atlas (its frame is the instance's param f) */
+   *  model units — its points, the line its ball follows (line) and that line's middle (centre: the instance's bx, by,
+   *  where the body element is put) — and width, for the editor to draw into an atlas (its frame is the instance's param f) */
   function toDocument(map, opts = {}) {
     const diff = difficultyOf(map), k = num(opts.width, 120) / 512, E = Object.assign({}, DEFAULT_ELEMENTS, opts.elements || {});
     const px = (x) => r4((x - 256) * k), py = (y) => r4((192 - y) * k);
@@ -1285,12 +1345,15 @@
       const t = r4(o.time / 1000), c = cs[i];
       if (o.kind === 'circle') { instances.push({ id: `o${i + 1}`, template: 'osu-circle', t, params: { x: px(o.x), y: py(o.y), n: c.n, c: c.colour } }); end = Math.max(end, t + late); }
       else if (o.kind === 'slider') {
-        const d = r4(sliderDuration(map, o) / 1000), pts = o.points.map((p) => [px(p[0]), py(p[1])]), xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+        const d = r4(sliderDuration(map, o) / 1000), pts = o.points.map((p) => [px(p[0]), py(p[1])]);
         const path = { id: `op${i + 1}`, kind: o.curve, points: pts, length: r4(o.length * k) };
         paths.push(path);
-        bodies.push({ frame: bodies.length, path: path.id, kind: o.curve, points: pts, length: r4(o.length * k), width: r4(2 * diff.radius * k) });
+        // (the body drawn along the ball's line, put where that line's middle is)
+        const line = lineOf(path), xs = line.map((p) => p[0]), ys = line.map((p) => p[1]);
+        const bx = r4((Math.min(...xs) + Math.max(...xs)) / 2), by = r4((Math.min(...ys) + Math.max(...ys)) / 2);
+        bodies.push({ frame: bodies.length, path: path.id, kind: o.curve, points: pts, line, centre: [bx, by], length: r4(o.length * k), width: r4(2 * diff.radius * k) });
         instances.push({ id: `o${i + 1}`, template: 'osu-slider', t, path: path.id, tail: r4(d + 0.5),
-          params: { x: px(o.x), y: py(o.y), n: c.n, c: c.colour, d, r: o.slides, f: bodies.length - 1, bx: r4((Math.min(...xs) + Math.max(...xs)) / 2), by: r4((Math.min(...ys) + Math.max(...ys)) / 2) } });
+          params: { x: px(o.x), y: py(o.y), n: c.n, c: c.colour, d, r: o.slides, f: bodies.length - 1, bx, by } });
         end = Math.max(end, t + d + 0.5);
       } else if (o.kind === 'spinner') {
         const d = r4((o.endTime - o.time) / 1000);
@@ -1313,7 +1376,7 @@
     };
   }
 
-  T.osu = { parseOsu, preempt, fadeIn, radius, hitWindows, difficultyOf, timingAt, sliderDuration, combos, toDocument, DEFAULT_ELEMENTS };
+  T.osu = { parseOsu, preempt, fadeIn, radius, hitWindows, difficultyOf, timingAt, sliderDuration, combos, lineOf, toDocument, DEFAULT_ELEMENTS };
   if (typeof module === 'object' && module && module.exports) module.exports = T.osu;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 })(undefined);
@@ -3957,7 +4020,8 @@ world.afterEvents.itemUse.subscribe((e) => engine.press(e.source));
   /** slider bodies (osu.toDocument's) in one flipbook of equal cells: { cols, rows, cell: [w, h] px, pxPerUnit, w, h, at(i) → [x, y] }
    *  — px a unit as many as fit in maxSize (4 at most) */
   function bodyAtlas(bodies, { maxSize = 2048, most = 4 } = {}) {
-    const n = Math.max(1, bodies.length), span = (b, ax) => { const v = b.points.map((p) => p[ax]); return Math.max(...v) - Math.min(...v) + b.width + 2; };
+    // (each body's extent: the line its ball follows, as bodyImage draws it)
+    const n = Math.max(1, bodies.length), span = (b, ax) => { const v = (b.line && b.line.length ? b.line : b.points).map((p) => p[ax]); return Math.max(...v) - Math.min(...v) + b.width + 2; };
     const W = Math.max(1, ...bodies.map((b) => span(b, 0))), H = Math.max(1, ...bodies.map((b) => span(b, 1))), cols = Math.ceil(Math.sqrt((n * H) / W)) || 1, rows = Math.ceil(n / cols);
     // (a cell a whole number of px at most maxSize / cols wide: the atlas never passes maxSize)
     const p = Math.max(0.25, Math.min(most, Math.floor(maxSize / cols) / W, Math.floor(maxSize / rows) / H));

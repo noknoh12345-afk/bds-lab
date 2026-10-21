@@ -171,6 +171,37 @@ const L5 = await look(1.0);
 ok(L5.copies.some((c) => /hitcircle#/.test(c.name)), 'seek 1 s: the first circle\'s copy out', JSON.stringify(L5.copies.map((c) => c.name)));
 await ev(() => window.GeoUIBuilder.view());
 await shot('02-osu-1s.png');
+// the slider's body as the preview draws it: put at its line's middle (param bx, by), drawn along the ball's way — the curve
+// cut at osu!'s length (140 of its ~277 px: to the lowest point), not the points the map gives (the middle one, (0, −30) in
+// units, is 9.4 off the curve). Read back from the preview's own pixels: the white border 7.5 units above the lowest point;
+// nothing white 7.5 units under the middle point (where the old way's sharp turn had its border)
+const body = await ev(async (logoY) => {
+  const B = window.GeoUIBuilder, TL = B.timeline, S = TL.store, seq = S.doc().sequences[0], P = window.Preview.selected, V = window.THREE.Vector3;
+  const tp = seq.templates.find((t) => t.name === 'osu! スライダー'), inst = tp && seq.instances.find((i) => i.template === tp.id);
+  if (!inst) return { error: 'no slider instance' };
+  S.seek(inst.t + 0.05);
+  await new Promise((r) => setTimeout(r, 300));
+  window.Canvas.scene.updateMatrixWorld(true);
+  let mesh = null;
+  window.Canvas.scene.traverse((o) => { if (!mesh && /^geoui_copy:sliderbody#/.test(o.name)) o.traverse((q) => { if (!mesh && q.isMesh && q.geometry && q.geometry.attributes.position) mesh = q; }); });
+  if (!mesh) return { error: 'no copy of the slider body' };
+  const pos = mesh.geometry.attributes.position, v = new V();
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, z = 0;
+  for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(mesh.matrixWorld); x0 = Math.min(x0, -v.x); x1 = Math.max(x1, -v.x); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y); z += v.z / pos.count; }
+  const box = { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 }, { bx, by } = inst.params;
+  // (a point in the map's units → the preview canvas's px: by the copy's own place, x as the export's (Blockbench's is mirrored))
+  const toPx = (X, Y) => { const w = new V(-(X - bx + box.cx), Y - by + box.cy, z).project(P.camera); return [((w.x + 1) / 2) * P.canvas.width, ((1 - w.y) / 2) * P.canvas.height]; };
+  P.render();
+  const cv = document.createElement('canvas'); cv.width = P.canvas.width; cv.height = P.canvas.height;
+  const g = cv.getContext('2d'); g.drawImage(P.canvas, 0, 0);
+  // (the brightest of the 3 x 3 px around it: a sample a px off the ring still sees it)
+  const at = (X, Y) => { const [px, py] = toPx(X, Y), d = g.getImageData(Math.round(px) - 1, Math.round(py) - 1, 3, 3).data; let m = 0; for (let i = 0; i < 9; i++) m = Math.max(m, Math.min(d[i * 4], d[i * 4 + 1], d[i * 4 + 2])); return m; };
+  const unitPx = Math.abs(toPx(0, 0)[1] - toPx(0, 1)[1]);
+  return { box, bx, by, place: [box.cx - bx, box.cy - by - logoY], unitPx, above: at(0, -20.625 + 7.52), under: at(0, -30 - 7.52), lowest: at(0, -20.625), far: at(30, -45) };
+}, L2.planes.logo.cy);
+ok(body && !body.error && Math.abs(body.place[0]) < 0.05 && Math.abs(body.place[1]) < 0.05 && body.above > 180 && body.under < 120 && body.lowest < 120 && body.far < 120,
+  `the slider's body in the preview: at its line's middle (${body && body.bx}, ${body && body.by}), along the curve — the border white above its lowest point, nothing under its middle control point (${body && body.unitPx && body.unitPx.toFixed(2)} px a unit)`, JSON.stringify(body));
+await shot('03-osu-slider.png');
 
 // ---- 500 instances: the time a frame of ours takes (evaluate, the copies, Blockbench's own pose)
 const perf = await ev(async () => {

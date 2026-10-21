@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url);
 const TOP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const G = require('../geoui_builder.js');
 require('./model.js'); require('./contract.js');
-const Me = require('./media.js'), O = require('./osu.js'), C = require('./compile.js'), R = require('./runtime.js');
+const Me = require('./media.js'), O = require('./osu.js'), C = require('./compile.js'), R = require('./runtime.js'), Br = require('./bridge.js');
 const NS = 'geoui', OUT = path.join(TOP, 'bds', 'addons', 'geoui_rhythm');
 
 // ---- the beatmap: 120 BPM, 16 circles in 4 combos, a slider there and back, a spinner (written here, the lab's own)
@@ -28,10 +28,11 @@ const MAP = ['osu file format v14', '', '[General]', 'AudioFilename: click.wav',
   '[Difficulty]', 'HPDrainRate:5', 'CircleSize:4', 'OverallDifficulty:6', 'ApproachRate:7', 'SliderMultiplier:1.4', 'SliderTickRate:1', '',
   '[TimingPoints]', '1000,500,4,2,0,60,1,0', '', '[Colours]', 'Combo1 : 255,128,64', 'Combo2 : 64,192,255', 'Combo3 : 128,255,96', 'Combo4 : 255,96,192', '',
   '[HitObjects]', ...objects, ''].join('\n');
+const map = O.parseOsu(MAP), { doc, bodies, info } = O.toDocument(map, { width: 120, designRadius: 10, sound: 'click' });
 
-// ---- textures: one 128 x 128 atlas, drawn pixel by pixel
-const W = 128, img = new Uint8Array(W * W * 4);
-const px = (x, y, [r, g, b, a]) => { if (x < 0 || y < 0 || x >= W || y >= W) return; const o = (y * W + x) * 4; img[o] = r; img[o + 1] = g; img[o + 2] = b; img[o + 3] = a; };
+// ---- textures: one 128 x 256 atlas, drawn pixel by pixel
+const W = 128, H = 256, img = new Uint8Array(W * H * 4);
+const px = (x, y, [r, g, b, a]) => { if (x < 0 || y < 0 || x >= W || y >= H) return; const o = (y * W + x) * 4; img[o] = r; img[o + 1] = g; img[o + 2] = b; img[o + 3] = a; };
 const disc = (cx, cy, r0, r1, col) => { for (let y = Math.floor(cy - r1); y <= cy + r1; y++) for (let x = Math.floor(cx - r1); x <= cx + r1; x++) { const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy); if (d >= r0 && d <= r1) px(x, y, col); } };
 // (rows of 4 frames: a circle per combo colour, its approach ring per colour — the template's frame param.c picks it by uv_anim)
 const REG = {
@@ -52,7 +53,17 @@ for (let x = 96; x < 128; x++) for (let y = 84; y < 88; y++) px(x, y, [40, 40, 4
 // (digits: a 3 x 5 font, each in a 4 x 7 cell)
 const FONT = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111', '111100111101111', '111001001001001', '111101111101111', '111101111001111'];
 FONT.forEach((f, d) => { for (let i = 0; i < 15; i++) if (f[i] === '1') px(d * 4 + (i % 3), REG.digits[1] + 1 + Math.floor(i / 3), [255, 255, 255, 255]); });
-const png = encodePng({ width: W, height: W, data: img });
+// (the slider bodies under the rest: the editor's own atlas of them (bridge.bodyAtlas, a cell each — param f picks it) and its
+//  look (media.bodyImage, along the ball's way), drawn without a canvas (media.rasterOps), each centred in its cell)
+const BODY_Y = 128, BA = Br.bodyAtlas(bodies, { maxSize: W, most: 2 });
+if (BODY_Y + BA.h > H) throw new Error(`the slider bodies (${BA.w} x ${BA.h} px) do not fit under the atlas's rest`);
+REG.sliderbody = [0, BODY_Y, BA.cell[0], BA.cell[1]];
+bodies.forEach((b, i) => {
+  const bi = Me.bodyImage(b, { pxPerUnit: BA.pxPerUnit }), [cx, cy] = BA.at(i), dx = (BA.cell[0] - bi.w) / 2, dy = (BA.cell[1] - bi.h) / 2;
+  const ras = Me.rasterOps(bi.ops.map(([op, ...a]) => (op === 'moveTo' || op === 'lineTo' ? [op, a[0] + dx, a[1] + dy] : [op, ...a])), BA.cell[0], BA.cell[1]);
+  for (let y = 0; y < ras.height; y++) for (let x = 0; x < ras.width; x++) { const s = (y * ras.width + x) * 4; if (ras.data[s + 3]) px(cx + x, BODY_Y + cy + y, [...ras.data.subarray(s, s + 4)]); }
+});
+const png = encodePng({ width: W, height: H, data: img });
 
 // ---- the design: every element a plane centred on its own pivot (scale and rotation about its middle)
 const bones = [{ name: 'geo_ui', pivot: [0, 140, 0] }], elements = {};
@@ -63,6 +74,8 @@ for (const [name, size, z] of [['hitcircle', 20, -1], ['approachcircle', 20, -3]
   bones.push(plane(name, 'geo_ui', C0, [size, size], REG[name], z)); elements[name] = { type: 'image', blend: 'blend' };
 }
 elements.hitcircle.frames = { cols: 4, rows: 4 }; elements.approachcircle.frames = { cols: 4, rows: 4 };
+// the slider body: a plane its atlas cell's size (in units), behind the circles; the template puts it at its line's middle
+bones.push(plane('sliderbody', 'geo_ui', C0, BA.units, REG.sliderbody, 0.7)); elements.sliderbody = { type: 'image', blend: 'blend', frames: { cols: BA.cols, rows: BA.rows } };
 // numbers: the combo number (template), the score (6 digits, v0), the combo (3 digits, v1); the health gauge (v3)
 const digitBones = (name, parent, [cx, cy], count, h) => {
   const w = h * 4 / 7, out = [];
@@ -79,10 +92,9 @@ bones.push(plane('healthback', 'geo_ui', [-55, 206], [40, 4], REG.barback, 1)); 
 bones.push(Object.assign(plane('health', 'geo_ui', [-55, 206], [40, 4], REG.bar, 0.5), { pivot: [-75, 206, 0.5] }));
 elements.health = { type: 'gauge', anchor: 'top-left', gauge: { source: `q.property('${NS}:v3')`, max: 100, fill: 'left' } };
 const design = { settings: { ns: NS, name: 'GeoUI Rhythm', description: 'GeoUI timeline sample: an osu!-style HUD (bds-lab)', bp: true, calibration: G.MEASURED.id }, seed: 'geoui_rhythm',
-  bones, elements, textures: { atlas: { name: 'atlas', width: W, height: W, png: png.toString('base64') } } };
+  bones, elements, textures: { atlas: { name: 'atlas', width: W, height: H, png: png.toString('base64') } } };
 
-// ---- the timeline: the beatmap imported, the click track as its music
-const map = O.parseOsu(MAP), { doc, info } = O.toDocument(map, { width: 120, designRadius: 10, sound: 'click' });
+// ---- the timeline: the beatmap imported (above), the click track as its music
 const seq = doc.sequences[0];
 seq.name = 'Lab Click (demo)';
 seq.markers = [{ id: 'end', t: at(24) / 1000, name: 'おわり', event: 'done' }];
@@ -173,7 +185,7 @@ js p('A').getProperty('${NS}:seq')
 const shots = [1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 8.0, 9.5, 11.0, 12.5];
 // (measured in the playfield's part of the 1560 x 720 screen: the first-person hand on the right and the chat on top left out)
 const REGION = '0 170 1030 720';
-out.set('app.txt', Buffer.from(`# geoui_rhythm を本物のアプリで: 再生して、決まった時刻に写す（GeoUI のタイムラインが描く: 円・接近の輪・番号・スライダーの玉・スピナー・点数）
+out.set('app.txt', Buffer.from(`# geoui_rhythm を本物のアプリで: 再生して、決まった時刻に写す（GeoUI のタイムラインが描く: 円・接近の輪・番号・スライダーの体と玉・スピナー・点数）
 # 時刻は再生を始めてからの目安（サーバーの命令が届くまでの遅れがある）。比べる基準は再生前の画面（world--before-play）。
 
 section title

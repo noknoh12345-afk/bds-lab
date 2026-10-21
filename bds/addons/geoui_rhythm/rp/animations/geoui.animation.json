@@ -637,7 +637,7 @@
         "hitmiss": {
           "scale": 0
         },
-        "hitcircle_t1s0": {
+        "sliderbody_t1s0": {
           "position": [
             "v.geoui_1_t1s0_0_x",
             "v.geoui_1_t1s0_0_y",
@@ -649,7 +649,7 @@
             1
           ]
         },
-        "combonumber_t1s0": {
+        "hitcircle_t1s0": {
           "position": [
             "v.geoui_1_t1s0_1_x",
             "v.geoui_1_t1s0_1_y",
@@ -661,7 +661,7 @@
             1
           ]
         },
-        "approachcircle_t1s0": {
+        "combonumber_t1s0": {
           "position": [
             "v.geoui_1_t1s0_2_x",
             "v.geoui_1_t1s0_2_y",
@@ -673,7 +673,7 @@
             1
           ]
         },
-        "hitburst_t1s0": {
+        "approachcircle_t1s0": {
           "position": [
             "v.geoui_1_t1s0_3_x",
             "v.geoui_1_t1s0_3_y",
@@ -685,7 +685,7 @@
             1
           ]
         },
-        "hitmiss_t1s0": {
+        "hitburst_t1s0": {
           "position": [
             "v.geoui_1_t1s0_4_x",
             "v.geoui_1_t1s0_4_y",
@@ -697,7 +697,7 @@
             1
           ]
         },
-        "sliderball_t1s0": {
+        "hitmiss_t1s0": {
           "position": [
             "v.geoui_1_t1s0_5_x",
             "v.geoui_1_t1s0_5_y",
@@ -708,6 +708,21 @@
             "v.geoui_1_t1s0_5_sy",
             1
           ]
+        },
+        "sliderball_t1s0": {
+          "position": [
+            "v.geoui_1_t1s0_6_x",
+            "v.geoui_1_t1s0_6_y",
+            0
+          ],
+          "scale": [
+            "v.geoui_1_t1s0_6_sx",
+            "v.geoui_1_t1s0_6_sy",
+            1
+          ]
+        },
+        "sliderbody": {
+          "scale": 0
         },
         "sliderball": {
           "scale": 0
@@ -798,6 +813,9 @@
         "hitmiss_t0s3": {
           "scale": 0
         },
+        "sliderbody_t1s0": {
+          "scale": 0
+        },
         "hitcircle_t1s0": {
           "scale": 0
         },
@@ -832,6 +850,9 @@
           "scale": 0
         },
         "hitmiss": {
+          "scale": 0
+        },
+        "sliderbody": {
           "scale": 0
         },
         "sliderball": {

@@ -221,19 +221,66 @@
     return [...L, ...cap(pts[n - 1], pts[n - 2]), ...R, ...cap(pts[0], pts[1])];
   }
   /** a slider's body as an image: its size in px and the canvas steps that draw it (an osu!-like border and fill: a wide stroke,
-   *  a narrower one inside), the body's centre at the image's centre. body = osu.toDocument's ({ points, width } in model units) */
+   *  a narrower one inside), the middle of its line at the image's centre. body = osu.toDocument's ({ line — the ball's way,
+   *  else points — and width, in model units) */
   function bodyImage(body, { pxPerUnit = 4, border = 0.12, colours = { border: '#ffffff', fill: '#1a1a2a' } } = {}) {
-    const xs = body.points.map((p) => p[0]), ys = body.points.map((p) => p[1]), cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const way = body.line && body.line.length ? body.line : body.points;
+    const xs = way.map((p) => p[0]), ys = way.map((p) => p[1]), cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
     const pad = body.width / 2 + 1, w = Math.ceil((Math.max(...xs) - Math.min(...xs) + 2 * pad) * pxPerUnit), h = Math.ceil((Math.max(...ys) - Math.min(...ys) + 2 * pad) * pxPerUnit);
     const px = (p) => [(p[0] - cx) * pxPerUnit + w / 2, h / 2 - (p[1] - cy) * pxPerUnit];
-    const line = body.points.map(px), path = [['moveTo', ...line[0]], ...line.slice(1).map((p) => ['lineTo', ...p])];
+    const line = way.map(px), path = [['moveTo', ...line[0]], ...line.slice(1).map((p) => ['lineTo', ...p])];
     return { w, h, centre: [cx, cy], ops: [['lineJoin', 'round'], ['lineCap', 'round'],
       ['strokeStyle', colours.border], ['lineWidth', body.width * pxPerUnit], ['beginPath'], ...path, ['stroke'],
       ['strokeStyle', colours.fill], ['lineWidth', body.width * pxPerUnit * (1 - 2 * border)], ['beginPath'], ...path, ['stroke']] };
   }
   /** canvas steps (bodyImage's ops) run on a 2D context */
   function drawOps(ctx, ops) { for (const [op, ...a] of ops) { if (typeof ctx[op] === 'function') ctx[op](...a); else ctx[op] = a[0]; } }
+  /** a colour as canvas takes it (#rgb, #rrggbb, #rrggbbaa, rgb(), rgba()) → [r, g, b, a 0..1] */
+  function parseColour(s) {
+    const t = String(s).trim();
+    let m = /^#([0-9a-f]{3,8})$/i.exec(t);
+    if (m) { let hx = m[1]; if (hx.length <= 4) hx = [...hx].map((c) => c + c).join(''); const v = (i) => parseInt(hx.slice(i, i + 2), 16); return [v(0), v(2), v(4), hx.length >= 8 ? v(6) / 255 : 1]; }
+    m = /^rgba?\(([^)]*)\)$/i.exec(t);
+    if (m) { const p = m[1].split(',').map((x) => parseFloat(x)); return [p[0] || 0, p[1] || 0, p[2] || 0, p.length > 3 && Number.isFinite(p[3]) ? p[3] : 1]; }
+    return [0, 0, 0, 1];
+  }
+  /** canvas steps drawn without a canvas, for Node (the sample add-on, the tests): the strokes bodyImage makes — straight
+   *  lines, round where they turn and at their ends — each pixel covered by how far its middle is from the line (so the
+   *  edge is smooth), painted over what is there. Other steps are left out → { width, height, data: RGBA bytes } */
+  function rasterOps(ops, w, h) {
+    const W = Math.max(1, Math.ceil(w)), H = Math.max(1, Math.ceil(h)), data = new Uint8Array(W * H * 4), st = { strokeStyle: '#000000', lineWidth: 1 };
+    let subs = [], cur = null;
+    const segDist = (x, y, a, b) => {
+      const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy, u = L2 > 0 ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / L2)) : 0;
+      return Math.hypot(x - a[0] - u * dx, y - a[1] - u * dy);
+    };
+    const stroke = () => {
+      const r = Math.max(0, +st.lineWidth || 0) / 2, [cr, cg, cb, ca] = parseColour(st.strokeStyle), all = subs.filter((s) => s.length);
+      if (!all.length || r <= 0 || ca <= 0) return;
+      const pts = all.flat(), xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+      const x0 = Math.max(0, Math.floor(Math.min(...xs) - r - 1)), x1 = Math.min(W - 1, Math.ceil(Math.max(...xs) + r + 1));
+      const y0 = Math.max(0, Math.floor(Math.min(...ys) - r - 1)), y1 = Math.min(H - 1, Math.ceil(Math.max(...ys) + r + 1));
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        // (one stroke is one shape: where its pieces overlap it is painted once)
+        let d = Infinity;
+        for (const s of all) { if (s.length === 1) d = Math.min(d, segDist(x + 0.5, y + 0.5, s[0], s[0])); else for (let i = 1; i < s.length; i++) d = Math.min(d, segDist(x + 0.5, y + 0.5, s[i - 1], s[i])); }
+        const a = Math.max(0, Math.min(1, r - d + 0.5)) * ca;
+        if (a <= 0) continue;
+        const o = (y * W + x) * 4, da = data[o + 3] / 255, oa = a + da * (1 - a);
+        data[o] = Math.round((cr * a + data[o] * da * (1 - a)) / oa); data[o + 1] = Math.round((cg * a + data[o + 1] * da * (1 - a)) / oa); data[o + 2] = Math.round((cb * a + data[o + 2] * da * (1 - a)) / oa);
+        data[o + 3] = Math.round(oa * 255);
+      }
+    };
+    for (const [op, ...a] of ops || []) {
+      if (op === 'beginPath') { subs = []; cur = null; }
+      else if (op === 'moveTo') { cur = [[+a[0], +a[1]]]; subs.push(cur); }
+      else if (op === 'lineTo') { if (cur) cur.push([+a[0], +a[1]]); else { cur = [[+a[0], +a[1]]]; subs.push(cur); } }
+      else if (op === 'stroke') stroke();
+      else if (op === 'strokeStyle' || op === 'lineWidth') st[op] = a[0];
+    }
+    return { width: W, height: H, data };
+  }
 
-  T.media = { packAtlas, flipbook, fontAtlas, layoutText, wavInfo, makeWav, oggInfo, peaks, soundDefinitions, crc32, zipStore, unzipStore, sortSequence, strokeOutline, bodyImage, drawOps };
+  T.media = { packAtlas, flipbook, fontAtlas, layoutText, wavInfo, makeWav, oggInfo, peaks, soundDefinitions, crc32, zipStore, unzipStore, sortSequence, strokeOutline, bodyImage, drawOps, parseColour, rasterOps };
   if (typeof module === 'object' && module && module.exports) module.exports = T.media;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

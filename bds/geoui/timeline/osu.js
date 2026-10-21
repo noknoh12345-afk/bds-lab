@@ -89,10 +89,23 @@
   // ---- the document
   const DEFAULT_ELEMENTS = { circle: 'hitcircle', number: 'combonumber', approach: 'approachcircle', burst: 'hitburst', miss: 'hitmiss', body: 'sliderbody', ball: 'sliderball', spinner: 'spinner' };
   const r4 = (x) => Math.round(x * 1e4) / 1e4;
+  /** a slider's body: the line its ball follows — the path's own polyline (model.pathTable) cut at osu!'s length, or carried
+   *  on straight to it, as model.pathPoint goes. Not the points as given: a Bézier's middle points are off its curve.
+   *  (Without model.js loaded: the points) */
+  function lineOf(path) {
+    const Mo = T.model;
+    if (!Mo || !Mo.pathTable) return path.points.map((p) => [p[0], p[1]]);
+    const { pts, acc, length } = Mo.pathTable(path), L = path.length > 0 ? path.length : length, out = [];
+    for (let i = 0; i < pts.length && acc[i] < L - 1e-6; i++) out.push([r4(pts[i][0]), r4(pts[i][1])]);
+    const end = Mo.pathPoint(path, 1, { length: L });
+    out.push([r4(end[0]), r4(end[1])]);
+    return out;
+  }
   /** a beatmap → { doc, bodies, info }. opts: width (model units for the playfield's 512 osu! pixels, default 120; it keeps
    *  4:3, centred on 0, y up), designRadius (the radius the hit circle element is drawn at, model units, default 10),
    *  elements (the GeoUI elements' names, DEFAULT_ELEMENTS), sound (the music's sound id). bodies: each slider's path in
-   *  model units and width, for the editor to draw into an atlas (its frame is the instance's param f) */
+   *  model units — its points, the line its ball follows (line) and that line's middle (centre: the instance's bx, by,
+   *  where the body element is put) — and width, for the editor to draw into an atlas (its frame is the instance's param f) */
   function toDocument(map, opts = {}) {
     const diff = difficultyOf(map), k = num(opts.width, 120) / 512, E = Object.assign({}, DEFAULT_ELEMENTS, opts.elements || {});
     const px = (x) => r4((x - 256) * k), py = (y) => r4((192 - y) * k);
@@ -128,12 +141,15 @@
       const t = r4(o.time / 1000), c = cs[i];
       if (o.kind === 'circle') { instances.push({ id: `o${i + 1}`, template: 'osu-circle', t, params: { x: px(o.x), y: py(o.y), n: c.n, c: c.colour } }); end = Math.max(end, t + late); }
       else if (o.kind === 'slider') {
-        const d = r4(sliderDuration(map, o) / 1000), pts = o.points.map((p) => [px(p[0]), py(p[1])]), xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+        const d = r4(sliderDuration(map, o) / 1000), pts = o.points.map((p) => [px(p[0]), py(p[1])]);
         const path = { id: `op${i + 1}`, kind: o.curve, points: pts, length: r4(o.length * k) };
         paths.push(path);
-        bodies.push({ frame: bodies.length, path: path.id, kind: o.curve, points: pts, length: r4(o.length * k), width: r4(2 * diff.radius * k) });
+        // (the body drawn along the ball's line, put where that line's middle is)
+        const line = lineOf(path), xs = line.map((p) => p[0]), ys = line.map((p) => p[1]);
+        const bx = r4((Math.min(...xs) + Math.max(...xs)) / 2), by = r4((Math.min(...ys) + Math.max(...ys)) / 2);
+        bodies.push({ frame: bodies.length, path: path.id, kind: o.curve, points: pts, line, centre: [bx, by], length: r4(o.length * k), width: r4(2 * diff.radius * k) });
         instances.push({ id: `o${i + 1}`, template: 'osu-slider', t, path: path.id, tail: r4(d + 0.5),
-          params: { x: px(o.x), y: py(o.y), n: c.n, c: c.colour, d, r: o.slides, f: bodies.length - 1, bx: r4((Math.min(...xs) + Math.max(...xs)) / 2), by: r4((Math.min(...ys) + Math.max(...ys)) / 2) } });
+          params: { x: px(o.x), y: py(o.y), n: c.n, c: c.colour, d, r: o.slides, f: bodies.length - 1, bx, by } });
         end = Math.max(end, t + d + 0.5);
       } else if (o.kind === 'spinner') {
         const d = r4((o.endTime - o.time) / 1000);
@@ -156,6 +172,6 @@
     };
   }
 
-  T.osu = { parseOsu, preempt, fadeIn, radius, hitWindows, difficultyOf, timingAt, sliderDuration, combos, toDocument, DEFAULT_ELEMENTS };
+  T.osu = { parseOsu, preempt, fadeIn, radius, hitWindows, difficultyOf, timingAt, sliderDuration, combos, lineOf, toDocument, DEFAULT_ELEMENTS };
   if (typeof module === 'object' && module && module.exports) module.exports = T.osu;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
