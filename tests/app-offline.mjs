@@ -1334,6 +1334,26 @@ await t('vault: sealed (tar → zstd/gzip → AES-256-GCM), opened only whole an
   }
   eq(V.vaultAllowed({}).ok, true, 'this machine');
 });
+await t('vault: opens when tar leaves at the archive\'s end before the decompressor has closed its output (CI: "Premature close", 1 open in ~1000 on a busy machine — every time with a decompressor that stays a moment)', async () => {
+  const bin = path.join(tmp, 'slow-bin'); fs.mkdirSync(bin, { recursive: true });
+  for (const z of ['zstd', 'gzip']) {
+    const real = spawnSync('which', [z], { encoding: 'utf8' }).stdout?.trim();
+    if (real) fs.writeFileSync(path.join(bin, z), `#!/bin/sh\nif [ "$1" = "-d" ]; then "${real}" "$@"; s=$?; sleep 0.4; exit $s; fi\nexec "${real}" "$@"\n`, { mode: 0o755 });
+  }
+  const src = path.join(tmp, 'slow-src'); fs.mkdirSync(path.join(src, 'part'), { recursive: true }); fs.writeFileSync(path.join(src, 'part', 'a.txt'), 'DATA');
+  const k = V.vaultKey({ APP_CACHE_KEY: 'slow' }), f = path.join(tmp, 'slow', 'part.bin');
+  await V.seal({ base: src, entries: ['part'], outFile: f, key: k });
+  const PATH = process.env.PATH; process.env.PATH = `${bin}${path.delimiter}${PATH}`;
+  try {
+    for (let i = 0; i < 3; i++) {
+      const said = [], dest = path.join(tmp, `slow-out${i}`);
+      ok(await V.open({ inFile: f, dest, key: k, log: (x) => said.push(x) }) && fs.readFileSync(path.join(dest, 'part', 'a.txt'), 'utf8') === 'DATA', `open ${i}: ${said.join(' ')}`);
+    }
+    // (still whole or nothing: one byte changed is a miss with the slow decompressor too)
+    const b = fs.readFileSync(f); b[b.length - 20] ^= 1; fs.writeFileSync(f + '.x', b);
+    ok(!(await V.open({ inFile: f + '.x', dest: path.join(tmp, 'slow-bad'), key: k })) && !fs.existsSync(path.join(tmp, 'slow-bad', 'part')), 'a changed byte: a miss');
+  } finally { process.env.PATH = PATH; }
+});
 await t('tidy: before saving, the lab\'s old caches go, then the device base if the rest does not fit; the emulator and the device stay (pure)', () => {
   const G = 2 ** 30, c = (key, gb) => ({ key, size_in_bytes: gb * G });
   const cs = [c('app-sdk-v1-Linux', 1.7), c('app-base-k-x-new', 4.8), c('app-base-k-x-old', 8), c('app-avd-k-old', 5), c('auto-Linux-x', 1), c('app-vending-k-1', 0.03)];

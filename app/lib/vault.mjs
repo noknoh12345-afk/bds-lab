@@ -70,6 +70,22 @@ export function openText(str, key) {
 }
 const waitExit = (c, what) => new Promise((res, rej) => { c.on('error', (e) => rej(new AppError(`${what} を起動できません: ${e.message}`))); c.on('close', (code) => (code === 0 ? res() : rej(new AppError(`${what} が失敗しました（終了コード ${code}）`, c.errText?.trim().slice(-300))))); });
 const collect = (c) => { c.errText = ''; c.stderr?.on('data', (d) => { c.errText = (c.errText + d).slice(-2000); }); return c; };
+/** from → into, for a reader that may leave before the end (tar extracting: it stops at the archive's end-of-archive blocks
+ *  and exits, at times before the decompressor has closed its output — then the pipe into it closes before it was ended,
+ *  which pipeline() calls "Premature close": 1 open in ~1000 on a busy machine, every time when zstd stays a moment after
+ *  its last write). Not an error here: whether the reader got all it needed is its own exit code (waitExit), whether the
+ *  data was whole is the cipher's tag. What comes after it left is read and dropped, so the writer still ends */
+export function feedLeaver(from, into) {
+  return new Promise((res, rej) => {
+    let left = false;
+    const leave = () => { if (left) return; left = true; from.unpipe(into); from.resume(); };
+    from.on('error', rej);
+    from.on('end', res);
+    into.on('error', (e) => { if (['EPIPE', 'ERR_STREAM_DESTROYED', 'ECONNRESET', 'ERR_STREAM_WRITE_AFTER_END'].includes(e.code)) leave(); else rej(e); });
+    into.on('close', leave);
+    from.pipe(into);
+  });
+}
 
 /** base/entries (files or folders under base) → outFile, sealed. Returns {bytes, comp}. tarArgs: more for tar both ways
  *  (redroid's /data: --xattrs --numeric-owner, the Android uids and labels kept) */
@@ -110,7 +126,7 @@ export async function open({ inFile, dest, key, log = () => {}, tarArgs = [] }) 
   const z = collect(spawn(comp.d[0], comp.d[1], { stdio: ['pipe', 'pipe', 'pipe'], env: cleanEnv() }));
   const tar = collect(spawn('tar', [...tarOwn(), ...tarArgs, '-C', tmp, '-xf', '-'], { stdio: ['pipe', 'ignore', 'pipe'], env: tarEnv() }));
   try {
-    await Promise.all([pipeline(fs.createReadStream(inFile, { start: HEAD, end: size - TAG - 1 }), decipher, z.stdin), pipeline(z.stdout, tar.stdin), waitExit(z, comp.name), waitExit(tar, 'tar')]);
+    await Promise.all([pipeline(fs.createReadStream(inFile, { start: HEAD, end: size - TAG - 1 }), decipher, z.stdin), feedLeaver(z.stdout, tar.stdin), waitExit(z, comp.name), waitExit(tar, 'tar')]);
   } catch (e) {
     fs.rmSync(tmp, { recursive: true, force: true });
     log(`  ${path.basename(inFile)}: 開けません（${/auth|unable to authenticate/i.test(e.message) ? '中身が改変されているか、壊れています' : e.message}）`);
