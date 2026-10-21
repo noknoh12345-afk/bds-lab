@@ -1,5 +1,5 @@
 // GeoUI Builder 0.1.0 with its timeline — one file for Blockbench (made by bds/geoui/build.mjs from bds/geoui/geoui_builder.js and
-// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 6a75c166562b
+// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 40c98740b374
 // ---- timeline/model.js
 (function (module) {
 // GeoUI timeline — the model (pure: no DOM, no Blockbench). The plan's step 1 (bds/geoui/timeline/PLAN.md):
@@ -2825,10 +2825,15 @@
     const st = { playing: false, rate: 1, anchorT: 0, anchorC: 0, clock: base, latency: 0, raf: 0, loop: true, range: null, events: o.events || 'hit',
       run: 0, scheduled: new Set(), cache: { doc: null, seq: null, events: null, clips: null }, disposed: false, last: 0 };
     const seqOf = () => { const d = store.doc(), s = store.selection ? store.selection() : {}; return (d.sequences || []).find((q) => q.id === (s && s.seq)) || (d.sequences || [])[0] || null; };
-    /** the sequence's events and audio clips, made again only when the document changed */
+    /** the sequence's events and audio clips, made again only when the document changed (an audio clip edited while playing:
+     *  the sounds started again from where the time is, as they now lie) */
     function prepared() {
       const d = store.doc(), seq = seqOf();
-      if (st.cache.doc !== d || st.cache.seq !== seq) st.cache = { doc: d, seq, events: seq && st.events !== 'none' ? autoEvents(seq, st.events) : [], clips: seq ? audioClips(seq) : [] };
+      if (st.cache.doc !== d || st.cache.seq !== seq) {
+        const clips = seq ? audioClips(seq) : [], sig = JSON.stringify(clips);
+        if (st.playing && st.cache.sig !== undefined && sig !== st.cache.sig) silence();
+        st.cache = { doc: d, seq, events: seq && st.events !== 'none' ? autoEvents(seq, st.events) : [], clips, sig };
+      }
       return st.cache;
     }
     const rangeOf = (seq) => { if (st.range) return st.range; if (seq && seq.inOut) return seq.inOut; return [0, seq ? seq.duration : 0]; };
@@ -4022,6 +4027,8 @@ world.afterEvents.itemUse.subscribe((e) => engine.press(e.source));
       return st.elemCache;
     }
     for (const ev of ['finished_edit', 'select_project', 'undo', 'redo', 'update_selection']) on(ev, () => { st.elemCache = null; });
+    // (the design edited — a template's bones moved, resized, retextured: its copies are made again from it at the next frame)
+    on('finished_edit', ({ aspects } = {}) => { if (!(aspects && aspects.geoui_timeline) && st.clones.size) { for (const [key, c] of [...st.clones]) dropClone(key, c); if (PREVIEW_ON()) Animator.preview(); } });
     const media = () => mediaAll().map((m) => ({ id: m.id, kind: m.kind, name: m.name, ext: m.ext, duration: m.duration, peaks: m.peaks, game: m.game !== false }));
 
     // ---- the sounds for the preview: decoded once each
@@ -4063,10 +4070,12 @@ world.afterEvents.itemUse.subscribe((e) => engine.press(e.source));
     on('display_animation_frame', () => { if (PREVIEW_ON()) { try { overlay(); } catch (e) { warnOnce('overlay', `タイムラインのプレビューで問題: ${e.message || e}`); } } });
     on('select_mode', () => setTimeout(() => { if (!Modes.animate) { player.pause(); restore(); } }, 0));
     /** the bone (its mesh) of an element and how far below it a node is (child indices: the same in a copy) */
-    const groupOf = (name) => Group.all.find((g) => g.name === name) || null;
+    let names = null;   // (the bones by name, once a frame)
+    const groupOf = (name) => { if (!names) names = new Map(Group.all.map((g) => [g.name, g])); return names.get(name) || null; };
     const pathTo = (from, to) => { const out = []; for (let o = to; o && o !== from; o = o.parent) { if (!o.parent) return null; out.unshift(o.parent.children.indexOf(o)); } return out; };
     const follow = (obj, path) => { let o = obj; for (const i of path || []) { o = o && o.children[i]; } return o || null; };
     function overlay() {
+      names = null;
       const states = st.states, seq = st.seq, protos = protosOf(seq), rest = new Map();
       for (const w of st.wrapped.values()) setUniforms(w, 1, [0, 0]);
       // (the prototypes: where they rest now — their copies start there — then hidden)
@@ -4191,16 +4200,18 @@ world.afterEvents.itemUse.subscribe((e) => engine.press(e.source));
       return rectOf(pts);
     }
     function screen() { const { now } = ctx.frame(); return { unitsH: now.top - now.bottom, center: [(now.left + now.right) / 2, (now.top + now.bottom) / 2] }; }
+    /** the preview canvas's own px per CSS px (Blockbench's pixel ratio: the screen's, or its own setting) */
+    const pxRatio = () => { const p = Preview.selected; return p && p.canvas && p.width ? p.canvas.width / p.width : root.devicePixelRatio || 1; };
     function frameCanvas({ scale = 1 } = {}) {
       const r = frameRect();
       if (!r) throw new Error('GeoUI の画面が正面から見えていません（GeoUI → 画面を正面から見る）');
-      const dpr = root.devicePixelRatio || 1, cv = document.createElement('canvas');
+      const dpr = pxRatio(), cv = document.createElement('canvas');
       cv.width = Math.max(2, Math.round((r.w * dpr * num(scale, 1)) / 2) * 2); cv.height = Math.max(2, Math.round((r.h * dpr * num(scale, 1)) / 2) * 2);
       return cv;
     }
     /** the preview drawn now (no grid, gizmo or GeoUI frame) and the screen's part copied into cv (bg: a colour under it, or clear) */
     function drawFrame(cv, { background = null } = {}) {
-      const p = Preview.selected, r = frameRect(), dpr = root.devicePixelRatio || 1, c2 = cv.getContext('2d');
+      const p = Preview.selected, r = frameRect(), dpr = pxRatio(), c2 = cv.getContext('2d');
       if (!p || !r) return;
       ctx.setFrameVisible(false);
       try {
@@ -4963,7 +4974,9 @@ var GeoUICore = (function () {
   /** the transform animation: the whole UI on the root, the aspect term on each anchored element, values on gauges and digits */
   function transformAnimation(design, S) {
     const bones = {}, ref = r3(halfWAt(S, S.refAspect)), extraPre = [];
-    bones[ROOT] = { position: ['v.geoui_ox+v.geoui_cx', 'v.geoui_oy+v.geoui_cy', 0], scale: 'v.geoui_scale' };
+    // (alpha 0 hides the whole UI by its scale too: the game ignores a render controller's colour alpha with these materials —
+    //  bds-lab's probe, geoui_probe 2026-10-21; a fade between needs the colour mask, see timeline/PLAN.md)
+    bones[ROOT] = { position: ['v.geoui_ox+v.geoui_cx', 'v.geoui_oy+v.geoui_cy', 0], scale: 'v.geoui_scale*(v.geoui_alpha>0.004?1:0)' };
     for (const [name, el0] of Object.entries(design.elements || {})) {
       const el = el0 || {}, h = hAnchor(el.anchor), ch = {};
       if (h === 'left') ch.position = [`-(v.geoui_halfw-${ref})`, 0, 0];

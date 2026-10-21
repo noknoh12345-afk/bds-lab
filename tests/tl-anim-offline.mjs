@@ -108,6 +108,18 @@ for (const [loop, inOut, to] of [['once', null, 2.6], ['loop', null, 5], ['pingp
   ok(!r.bad.filter((x) => !/ bz\./.test(x)).length, 'played from 0.75 s (a seek): the same', r.bad.slice(0, 4).join('\n  '));
 }
 
+// ---- at the very edges: a clip's start and end, a key's time, a transition's edge, a loop's seam, a pingpong's turn — exactly
+//      there and a millisecond either side, the game's Molang and the preview pick the same clip, segment and value
+//      (a time on an edge belongs to what starts there: the model's rule, and compile's `<` / `>=`)
+{
+  const edges = [0.1, 1.2, 0.8, 0.9, 1.6, 1.7, 2.3, 0.3, 0.55, 1.3, 1.9, 2.1, 0.2 + 0.1, 0.5 + 0.1, 0.9 + 0.1, 1.1];
+  const at = (doc, list) => list.flatMap((T) => [T - 1e-3, T, T + 1e-3]).flatMap((T) => compare(doc, names, { from: T, to: T }).bad.filter((x) => !/ bz\./.test(x)).map((x) => `@${T.toFixed(4)} ${x}`));
+  const once = at(own('once', null), edges);
+  ok(!once.length, `the edges of clips, keys and transitions (${edges.length} times, exactly and ±1 ms): the same`, once.slice(0, 6).join('\n  '));
+  const seams = [...at(own('loop', null), [2.4, 4.8]), ...at(own('pingpong', [0.5, 2]), [2, 3.5, 5]), ...at(own('hold', null), [2.4])];
+  ok(!seams.length, 'a loop\'s seams (2.4, 4.8), a pingpong\'s turns (2, 3.5, 5) and a hold\'s end: the same', seams.slice(0, 6).join('\n  '));
+}
+
 // ---- osu!: a template's instances, baked and streamed, hits and misses ----
 const MAP = `osu file format v14
 

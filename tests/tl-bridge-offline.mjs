@@ -148,6 +148,12 @@ function rig(opts = {}) {
   const doc3 = JSON.parse(JSON.stringify(DOC)); doc3.sequences[0].tracks[2].solo = true;
   const r3 = rig({ doc: doc3 }); r3.st.seek(5.9); r3.st.transport.play(); r3.clock.frame(0.016);
   ok(!r3.audio.started.some((x) => x.buffer === 'music') && r3.audio.started.some((x) => x.buffer === 'fx'), 'a solo audio track: only it sounds');
+  // (an audio clip moved while it plays: the sounds stopped and started again where they now lie — from where the time is)
+  const r5 = rig({}); r5.st.seek(1.5); r5.st.transport.play(); r5.clock.frame(0.016);
+  const stops5 = r5.audio.stopped, n5 = r5.audio.started.length;
+  r5.st.dispatch({ seq: 's1', type: 'clip.move', ids: ['a1'], dt: 0.5 }); r5.clock.frame(0.016);
+  const again5 = r5.audio.started.slice(n5).find((x) => x.buffer === 'music');
+  ok(r5.audio.stopped > stops5 && again5 && Math.abs(again5.offset - (r5.st.time() - 1.5)) < 0.02, 'a clip moved while playing: the sounds stopped and started again as it now lies (the music from 1.5 s, part-way)', JSON.stringify(again5));
   const r4 = rig({ decoded: [] }); r4.st.seek(1); r4.st.transport.play(); r4.clock.frame(0.016);
   ok(r4.audio.started.length === 0 && r4.pl.playing(), 'a sound not decoded yet: the picture plays on, the sound starts when it is there');
 }

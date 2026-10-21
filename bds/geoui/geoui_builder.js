@@ -447,7 +447,9 @@ var GeoUICore = (function () {
   /** the transform animation: the whole UI on the root, the aspect term on each anchored element, values on gauges and digits */
   function transformAnimation(design, S) {
     const bones = {}, ref = r3(halfWAt(S, S.refAspect)), extraPre = [];
-    bones[ROOT] = { position: ['v.geoui_ox+v.geoui_cx', 'v.geoui_oy+v.geoui_cy', 0], scale: 'v.geoui_scale' };
+    // (alpha 0 hides the whole UI by its scale too: the game ignores a render controller's colour alpha with these materials —
+    //  bds-lab's probe, geoui_probe 2026-10-21; a fade between needs the colour mask, see timeline/PLAN.md)
+    bones[ROOT] = { position: ['v.geoui_ox+v.geoui_cx', 'v.geoui_oy+v.geoui_cy', 0], scale: 'v.geoui_scale*(v.geoui_alpha>0.004?1:0)' };
     for (const [name, el0] of Object.entries(design.elements || {})) {
       const el = el0 || {}, h = hAnchor(el.anchor), ch = {};
       if (h === 'left') ch.position = [`-(v.geoui_halfw-${ref})`, 0, 0];

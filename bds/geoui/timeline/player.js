@@ -77,10 +77,15 @@
     const st = { playing: false, rate: 1, anchorT: 0, anchorC: 0, clock: base, latency: 0, raf: 0, loop: true, range: null, events: o.events || 'hit',
       run: 0, scheduled: new Set(), cache: { doc: null, seq: null, events: null, clips: null }, disposed: false, last: 0 };
     const seqOf = () => { const d = store.doc(), s = store.selection ? store.selection() : {}; return (d.sequences || []).find((q) => q.id === (s && s.seq)) || (d.sequences || [])[0] || null; };
-    /** the sequence's events and audio clips, made again only when the document changed */
+    /** the sequence's events and audio clips, made again only when the document changed (an audio clip edited while playing:
+     *  the sounds started again from where the time is, as they now lie) */
     function prepared() {
       const d = store.doc(), seq = seqOf();
-      if (st.cache.doc !== d || st.cache.seq !== seq) st.cache = { doc: d, seq, events: seq && st.events !== 'none' ? autoEvents(seq, st.events) : [], clips: seq ? audioClips(seq) : [] };
+      if (st.cache.doc !== d || st.cache.seq !== seq) {
+        const clips = seq ? audioClips(seq) : [], sig = JSON.stringify(clips);
+        if (st.playing && st.cache.sig !== undefined && sig !== st.cache.sig) silence();
+        st.cache = { doc: d, seq, events: seq && st.events !== 'none' ? autoEvents(seq, st.events) : [], clips, sig };
+      }
       return st.cache;
     }
     const rangeOf = (seq) => { if (st.range) return st.range; if (seq && seq.inOut) return seq.inOut; return [0, seq ? seq.duration : 0]; };

@@ -128,6 +128,8 @@
       return st.elemCache;
     }
     for (const ev of ['finished_edit', 'select_project', 'undo', 'redo', 'update_selection']) on(ev, () => { st.elemCache = null; });
+    // (the design edited — a template's bones moved, resized, retextured: its copies are made again from it at the next frame)
+    on('finished_edit', ({ aspects } = {}) => { if (!(aspects && aspects.geoui_timeline) && st.clones.size) { for (const [key, c] of [...st.clones]) dropClone(key, c); if (PREVIEW_ON()) Animator.preview(); } });
     const media = () => mediaAll().map((m) => ({ id: m.id, kind: m.kind, name: m.name, ext: m.ext, duration: m.duration, peaks: m.peaks, game: m.game !== false }));
 
     // ---- the sounds for the preview: decoded once each
@@ -169,10 +171,12 @@
     on('display_animation_frame', () => { if (PREVIEW_ON()) { try { overlay(); } catch (e) { warnOnce('overlay', `タイムラインのプレビューで問題: ${e.message || e}`); } } });
     on('select_mode', () => setTimeout(() => { if (!Modes.animate) { player.pause(); restore(); } }, 0));
     /** the bone (its mesh) of an element and how far below it a node is (child indices: the same in a copy) */
-    const groupOf = (name) => Group.all.find((g) => g.name === name) || null;
+    let names = null;   // (the bones by name, once a frame)
+    const groupOf = (name) => { if (!names) names = new Map(Group.all.map((g) => [g.name, g])); return names.get(name) || null; };
     const pathTo = (from, to) => { const out = []; for (let o = to; o && o !== from; o = o.parent) { if (!o.parent) return null; out.unshift(o.parent.children.indexOf(o)); } return out; };
     const follow = (obj, path) => { let o = obj; for (const i of path || []) { o = o && o.children[i]; } return o || null; };
     function overlay() {
+      names = null;
       const states = st.states, seq = st.seq, protos = protosOf(seq), rest = new Map();
       for (const w of st.wrapped.values()) setUniforms(w, 1, [0, 0]);
       // (the prototypes: where they rest now — their copies start there — then hidden)
@@ -297,16 +301,18 @@
       return rectOf(pts);
     }
     function screen() { const { now } = ctx.frame(); return { unitsH: now.top - now.bottom, center: [(now.left + now.right) / 2, (now.top + now.bottom) / 2] }; }
+    /** the preview canvas's own px per CSS px (Blockbench's pixel ratio: the screen's, or its own setting) */
+    const pxRatio = () => { const p = Preview.selected; return p && p.canvas && p.width ? p.canvas.width / p.width : root.devicePixelRatio || 1; };
     function frameCanvas({ scale = 1 } = {}) {
       const r = frameRect();
       if (!r) throw new Error('GeoUI の画面が正面から見えていません（GeoUI → 画面を正面から見る）');
-      const dpr = root.devicePixelRatio || 1, cv = document.createElement('canvas');
+      const dpr = pxRatio(), cv = document.createElement('canvas');
       cv.width = Math.max(2, Math.round((r.w * dpr * num(scale, 1)) / 2) * 2); cv.height = Math.max(2, Math.round((r.h * dpr * num(scale, 1)) / 2) * 2);
       return cv;
     }
     /** the preview drawn now (no grid, gizmo or GeoUI frame) and the screen's part copied into cv (bg: a colour under it, or clear) */
     function drawFrame(cv, { background = null } = {}) {
-      const p = Preview.selected, r = frameRect(), dpr = root.devicePixelRatio || 1, c2 = cv.getContext('2d');
+      const p = Preview.selected, r = frameRect(), dpr = pxRatio(), c2 = cv.getContext('2d');
       if (!p || !r) return;
       ctx.setFrameVisible(false);
       try {

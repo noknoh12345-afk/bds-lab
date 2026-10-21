@@ -193,6 +193,14 @@
   bridge の純粋な部分・dist が最新）、`bds/geoui/blockbench-check.mjs`（dist で 10/10）、`bds/geoui/timeline/check-bridge.mjs`（本物の Blockbench 5.2.2:
   パネル・Undo・シークで要素の位置と不透明度・実体の複製の位置・+90 度は画面で時計回り・音が鳴る・.bbmodel の往復・パックの中身・osu! の要素・
   500 実体で 1 フレーム 2〜3 ms・PNG 10 コマ・webm のコマ数と音・外して何も残らない）、使い方 `bds/geoui/TIMELINE.md`。
+- 見直し（rv-game・rv-editor）: **できた**。
+  - rv-game: model.evaluate とゲームの Molang を、鍵の時刻ちょうどの前後 1 ms（16 か所）・ループの継ぎ目（2.4・4.8 秒）・往復の折り返し（2・3.5・5 秒）・
+    最後で止める所で比べる試験を足した（tl-anim 14/14: 食い違いなし）。GeoUI 本体の `alpha` プロパティはゲームで効かない（2 回目の確かめ）ので、
+    0 のときは根のボーンの大きさも 0 にして隠す（`v.geoui_scale*(v.geoui_alpha>0.004?1:0)`。途中の濃さは timeline の fade の材質で）。
+    作り直したのは probe 3 つと geoui_rhythm。geoui_bb・geoui_calib* は前の確かめの物なので作り直していない（次に GeoUI Builder で書き出せば入る）。
+  - rv-editor: 再生中に音のクリップを動かすと、鳴っている音を止めて今の時刻から置き直す（前は古い位置で鳴り続けた）。デザインを直したら（テンプレートの
+    ボーンを動かした・大きさや絵を変えた）実体の複製を次のフレームで作り直す（前は古い形の複製が残った）。名前からボーンを探すのを 1 フレーム 1 回の表に
+    （何百の実体でも線形に探さない）。動画のコマの大きさは Blockbench のプレビューの画素の比（その設定）で測る（画面の比では倍率の設定でずれた）。
 ### 本物のアプリで確かめたこと（probe.mjs → bds/addons/geoui_probe*、app.yml で写して `node bds/geoui/timeline/probe.mjs read <summary.json>`）
 
 - 1 回目（2026-10-21、run 39601130957 ほか）: ボーンは #248 まで描かれる。自分の render controller（共有のジオメトリを part_visibility で分ける）は

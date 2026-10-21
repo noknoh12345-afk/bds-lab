@@ -11,7 +11,7 @@
             "v.geoui_oy+v.geoui_cy",
             0
           ],
-          "scale": "v.geoui_scale"
+          "scale": "v.geoui_scale*(v.geoui_alpha>0.004?1:0)"
         }
       }
     },

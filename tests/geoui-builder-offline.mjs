@@ -91,6 +91,11 @@ function builderAt(built, { aspect, platform, props }) {
 
 const built = G.buildPack(design('center'));
 ok(!built.warnings.length, 'the template builds without warnings', built.warnings.join('\n'));
+{
+  // (alpha 0 hides the UI by its scale as well: the game ignores the render controllers' colour alpha — geoui_probe, 2026-10-21)
+  const on = G.layoutOf(built, { aspect: 1.778, platform: 'desktop', props: { 'geoui:v0': 42, 'geoui:alpha': 100 } }), off = G.layoutOf(built, { aspect: 1.778, platform: 'desktop', props: { 'geoui:v0': 42, 'geoui:alpha': 0 } });
+  ok(on.quads.some((q) => !q.hidden) && off.quads.every((q) => q.hidden), 'alpha 0: every plane hidden (by the root\'s scale too, not by colour alpha alone); alpha 100: shown');
+}
 const aspects = G.DEVICES.map((d) => d.aspect).concat([1.5]);
 const v0s = [0, 7, 42, 305, 12345, 99999, -305], v1s = [0, 5, 10, 20, 37], offs = [[0, 0], [123, -77], [-400, 250]];
 let cases = 0, bad = [];
