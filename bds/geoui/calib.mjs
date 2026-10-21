@@ -45,12 +45,15 @@ export function markers() {
   return out;
 }
 
-export function design(G, { ns = 'gcal' } = {}) {
+/** panel: the HUD's live_player_renderer frame ({ size: [w%, h%], offset: [x%, y%] }; Studio's 10% x 10%, 110% when not given);
+ *  seed: a variant's own pack UUIDs (another frame is another pack: the game keeps packs by UUID) */
+export function design(G, { ns = 'gcal', panel = null, seed = null } = {}) {
   const zero = { x: 0, y: 0 };
-  const settings = { ns, name: 'GeoUI Calibration', description: 'GeoUI の目盛り（本物のアプリで写して、画面とモデル座標の対応を測る）',
-    centerFix: { desktop: zero, mobile: zero, console: zero }, hideInPaperdoll: true, bp: true,
-    uuids: { rp: '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a01', rpMod: '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a02', bp: '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a03',
-      bpData: '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a04', bpScript: '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a05' } };
+  const id = (k, fixed) => (seed ? G.uuidFrom(`${seed}:${k}`) : fixed);
+  const settings = { ns, name: `GeoUI Calibration${panel ? ` (HUD ${panel.size.join('x')}% @ ${panel.offset[1]}%)` : ''}`, description: 'GeoUI の目盛り（本物のアプリで写して、画面とモデル座標の対応を測る）',
+    centerFix: { desktop: zero, mobile: zero, console: zero }, hideInPaperdoll: true, bp: true, ...(panel ? { panel } : {}),
+    uuids: { rp: id('rp', '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a01'), rpMod: id('rpMod', '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a02'), bp: id('bp', '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a03'),
+      bpData: id('bpData', '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a04'), bpScript: id('bpScript', '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a05') } };
   const px = PALETTE.length, tex = new Uint8Array(px * 4);
   PALETTE.forEach((c, i) => { tex.set([...COLORS[c], 255], i * 4); });
   const uvOf = (c) => ({ uv: [PALETTE.indexOf(c) + 0.25, 0.25], uv_size: [0.5, 0.5], texture: 'pal' });
@@ -61,9 +64,9 @@ export function design(G, { ns = 'gcal' } = {}) {
   return { settings, bones, elements: {}, textures: { pal: { name: 'gcal_palette', width: px, height: 1, png: Buffer.from(encodePng({ width: px, height: 1, data: tex })).toString('base64') } }, seed: 'gcal' };
 }
 
-/** the calibration pack as two folders (bp, rp) under dir */
-export function make(dir, G = core()) {
-  const built = G.buildPack(design(G));
+/** the calibration pack as two folders (bp, rp) under dir (opts: design's panel and seed) */
+export function make(dir, G = core(), opts = {}) {
+  const built = G.buildPack(design(G, opts));
   if (built.warnings.length) throw new Error(built.warnings.join('\n'));
   const ns = built.settings.ns;
   for (const [p, c] of Object.entries(built.files)) {
@@ -382,7 +385,10 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   const [cmd, ...rest] = process.argv.slice(2), opt = (k, d) => { const i = rest.indexOf(`--${k}`); return i >= 0 ? rest[i + 1] : d; };
   if (cmd === 'make') {
     const dir = rest[0] && !rest[0].startsWith('--') ? path.resolve(rest[0]) : fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-calib-'));
-    const built = make(dir);
+    // --panel 20x20@105: another HUD frame (size w x h %, top at y % of the screen), --seed: its own pack UUIDs
+    const pm = /^(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)@(-?\d+(?:\.\d+)?)$/.exec(opt('panel', '') || '');
+    if (opt('panel') && !pm) { console.log('--panel <w>x<h>@<y> (e.g. 20x20@105: 20 % x 20 % of the screen, its top 105 % down from the top)'); process.exit(1); }
+    const built = make(dir, core(), { panel: pm ? { size: [+pm[1], +pm[2]], offset: [0, +pm[3]] } : null, seed: opt('seed', null) });
     console.log(`OK ${dir} (bp + rp: ${Object.keys(built.files).length} files, ${markers().length} markers)\n${built.report.join('\n')}`);
   } else if (cmd === 'measure') {
     const files = rest.flatMap((p) => (fs.statSync(p).isDirectory() ? fs.readdirSync(p).filter((f) => f.endsWith('.png')).sort().map((f) => path.join(p, f)) : [p]));
@@ -395,7 +401,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
     fs.writeFileSync(rest[0], encodePng(img));
     console.log(`OK ${rest[0]}`);
   } else {
-    console.log('usage: node bds/geoui/calib.mjs make [<folder>] | measure <png|dir>... [--json out.json] | synth <out.png> [--h 176 --cx 0 --cy 0 --w 1560 --hpx 720 --persp 0 --hud]');
+    console.log('usage: node bds/geoui/calib.mjs make [<folder>] [--panel 20x20@105 --seed <name>] | measure <png|dir>... [--json out.json] | synth <out.png> [--h 176 --cx 0 --cy 0 --w 1560 --hpx 720 --persp 0 --hud]');
     process.exit(cmd ? 1 : 0);
   }
 }

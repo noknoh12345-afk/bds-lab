@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Calibration (HUD 2x10% @ 110%) RP",
+    "description": "GeoUI の目盛り（本物のアプリで写して、画面とモデル座標の対応を測る）",
+    "uuid": "1f272754-0a5c-4b17-b301-b45288b91335",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "c0e410a8-b535-4b15-b1e1-7346f9b5cb33",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

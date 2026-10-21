@@ -1,0 +1,14 @@
+{
+  "from": "calib.mjs make --panel 10x10@210 --seed geoui_calib_o210",
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI の目盛り（HUD の枠 10% x 10%（上から 210%））: 画面とモデル座標の対応が HUD の枠でどう変わるかを測る"
+}

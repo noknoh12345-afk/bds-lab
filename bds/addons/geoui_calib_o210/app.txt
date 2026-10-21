@@ -1,0 +1,49 @@
+# GeoUI の目盛りの変わり種: HUD の枠 10% x 10%（上から 210%）（bds/geoui/calib.mjs make --panel 10x10@210 --seed geoui_calib_o210）
+# 確かめること: 枠を geoui_calib より画面 1 つ分下に置く。中心のモデル座標が「画面の高さ（モデル単位）x 1」だけ上へ動くか。
+# geoui_calib（10% x 10%、110%）と同じ目盛りを写し、measure geoui で数を出す（チェック「app: 結果」の「測った値」）。
+# 目盛りが画面に 3 列・3 行写らないと測れない: 区切りごとに大きさ・位置を変えて写す（測れない区切りだけが失敗する）。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+# HUD の部品を隠して、目盛りだけにする
+do hud @a hide crosshair
+do hud @a hide hotbar
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+wait 2000
+until stable 60000
+absent clientlog \bERROR\b                 # 枠を変えても UI・Molang・マテリアルのエラーが無い
+
+section plain
+shot calib-plain                           # 目盛りそのまま（3 列・3 行写れば測れる）
+measure geoui calib-plain
+
+section up88
+# 目盛りを 88 単位上へ（測った中心から 88 を足すと本当のモデル座標）
+do scriptevent gcal:set oy 880
+wait 2000
+until stable 60000
+shot calib-up88
+measure geoui calib-up88
+
+section up176
+# 目盛りを 176 単位上へ（測った中心から 176 を足す）
+do scriptevent gcal:set oy 1760
+wait 2000
+until stable 60000
+shot calib-up176
+measure geoui calib-up176

@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Calibration (HUD 10x10% @ 210%) BP",
+    "description": "GeoUI の目盛り（本物のアプリで写して、画面とモデル座標の対応を測る）",
+    "uuid": "ef68de03-a430-4ad0-8cc1-479957dac616",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "e68ec1cb-4a58-41d8-960a-ff691e55d2d6",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "06c8a744-4237-43f3-ad7c-dcf67ead4f75",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "ef403b93-a457-4a40-8ce9-ea0957b223a6",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.1.0"
+    }
+  ]
+}

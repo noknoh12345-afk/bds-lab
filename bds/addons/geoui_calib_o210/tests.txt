@@ -1,0 +1,21 @@
+# GeoUI の目盛り（bds/geoui/calib.mjs make）。描画そのものは本物のアプリ（app.txt）で写し、node bds/geoui/calib.mjs measure で測る。
+# ここは BP: プロパティが既定値で、中心のずれが 0（目盛りがモデル座標のまま描かれる）こと。
+# = 完全一致 | ~ 正規表現 | ! 無い | !~ 無い正規表現 | '## 題' = 節
+
+## 読み込める（中心のずれは 0: 目盛りはモデル座標のまま描かれる）
+@A join
+wait 2000
+js const e = p('A'); JSON.stringify(['aspect','scale','cx','cy','ox','oy','alpha'].map((k) => e.getProperty('gcal:' + k)))
+= [1778,100,0,0,0,0,100]
+
+## scriptevent gcal:set で全員の値を変えられる（app.txt が大きさを変えて写すのに使う）
+@B join
+wait 2000
+scriptevent gcal:set scale 50
+wait 300
+js JSON.stringify([p('A').getProperty('gcal:scale'), p('B').getProperty('gcal:scale')])
+= [50,50]
+scriptevent gcal:set scale 100
+wait 300
+js p('A').getProperty('gcal:scale')
+= 100

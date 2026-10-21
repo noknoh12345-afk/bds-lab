@@ -1,0 +1,49 @@
+# GeoUI の目盛りの変わり種: HUD の枠 2% x 10%（上から 110%、細い枠）（bds/geoui/calib.mjs make --panel 2x10@110 --seed geoui_calib_w2）
+# 確かめること: 枠の高さは geoui_calib と同じで、幅だけ 1/5（画面 1560x720 なら 31 x 72 px: 縦長）。人形が枠の幅に合わせて縮むか（画面の高さのモデル単位が増えるか）。
+# geoui_calib（10% x 10%、110%）と同じ目盛りを写し、measure geoui で数を出す（チェック「app: 結果」の「測った値」）。
+# 目盛りが画面に 3 列・3 行写らないと測れない: 区切りごとに大きさ・位置を変えて写す（測れない区切りだけが失敗する）。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+# HUD の部品を隠して、目盛りだけにする
+do hud @a hide crosshair
+do hud @a hide hotbar
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+wait 2000
+until stable 60000
+absent clientlog \bERROR\b                 # 枠を変えても UI・Molang・マテリアルのエラーが無い
+
+section plain
+shot calib-plain                           # 目盛りそのまま（3 列・3 行写れば測れる）
+measure geoui calib-plain
+
+section double
+# 目盛りを 2 倍（測った値は「2 倍して読む」: 画面の高さが大きく増えたとき用）
+do scriptevent gcal:set scale 200
+wait 2000
+until stable 60000
+shot calib-double
+measure geoui calib-double
+
+section half
+# 目盛りを半分（画面の高さが減ったとき用）
+do scriptevent gcal:set scale 50
+wait 2000
+until stable 60000
+shot calib-half
+measure geoui calib-half
