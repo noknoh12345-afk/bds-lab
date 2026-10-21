@@ -2,10 +2,23 @@
 // a fake tesseract for tests/app-offline.mjs: `--version`, or `<png> - … tsv`: the words of a pause screen (Resume Game,
 // Settings) and a death screen (Respawn), at fixed places
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 const a = process.argv.slice(2);
 if (a[0] === '--version') { console.log('tesseract 5.3.4 (fake)'); process.exit(0); }
 // the game's first start (the fake device's state: tests/fake/app/adb FAKE_WELCOME): its welcome screen, Maybe later on one line
 let phase = null, S = {}; try { S = JSON.parse(fs.readFileSync(process.env.FAKE_APP_STATE, 'utf8')); phase = S.phase; } catch { /* no state */ }
+// FAKE_NEWTITLE=partial: that title as OCR read it on the CI device over its moving panorama — in pieces, never both
+// buttons in one picture: the logo misread and Get started, the hints and the copyright ("@MoJjang AG"), Get started broken
+// up ("be starte ed"). Which piece: by the picture (FAKE_ANIM_TITLE makes each one different)
+if (phase === 'title' && process.env.FAKE_NEWTITLE === 'partial' && !S.classic) {
+  let k = 0; try { k = createHash('sha1').update(fs.readFileSync(a[0])).digest()[0] % 3; } catch { /* no picture */ }
+  const pieces = [[['MIHECRAFT', 20, 4, 24, 6, 1], ['Get', 26, 14, 4, 3, 2], ['started', 31, 14, 8, 3, 2], ['Select', 40, 33, 6, 2, 3]],
+    [['Select', 40, 33, 6, 2, 1], ['Exit', 48, 33, 4, 2, 1], ['@MoJjang', 1, 33, 9, 2, 2], ['AG', 11, 33, 3, 2, 2]],
+    [['be', 24, 14, 3, 3, 1], ['starte', 28, 14, 7, 3, 1], ['ed', 36, 14, 3, 3, 1], ['Select', 40, 33, 6, 2, 2], ['Exit', 48, 33, 4, 2, 2]]];
+  console.log('level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext');
+  pieces[k].forEach(([t, l, tp, w, h, line], i) => console.log(`5\t1\t1\t1\t${line}\t${i + 1}\t${l}\t${tp}\t${w}\t${h}\t90\t${t}`));
+  process.exit(0);
+}
 // FAKE_NEWTITLE: the new player's title until the classic menu was opened (tests/fake/app/adb)
 if (phase === 'title' && process.env.FAKE_NEWTITLE && !S.classic) {
   console.log('level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext');

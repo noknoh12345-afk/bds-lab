@@ -103,11 +103,49 @@ export const TAP_WAY_NAMES = { tap: 'タップ', hold: '長めの押し', motion
 // (pad: 1.26's first-start screen is a new one — taps, BACK and ↓ Enter left it alone on the CI device for 3 minutes; the
 // controller's ↓ moves the focus from "Sign in now" to "Maybe later", its A held presses it)
 export const pressWays = (first) => { const all = ['tap', 'pad', ...TAP_WAYS.slice(1), 'back', 'keys']; return all.includes(first) ? [first, ...all.filter((x) => x !== first)] : all; };
-/** the title screen, by OCR (pure): its Play button and Settings; 1.26's classic title (Dressing Room, Profile), or its new
- *  player one (Get started, More options) */
-// (the classic menu's white words on its green and grey buttons are often not read on the CI device — 3 minutes waited
-// for a calm screen — where its "©Mojang AB" and the skin's name are: "@iMoJjang AB … Alex")
-export const titleWords = (words) => { const all = words.map((w) => w.text).join(' '); return Boolean((findText(words, /^Play$/i) && findText(words, /^Settings$/i)) || findText(words, /^Dressing Room$/i) || (findText(words, /^Get started$/i) && findText(words, /^More options$/i)) || (/mo[j]+ang\s*ab\b/i.test(all) && /\b(alex|steve|profile|marketplace|realms|dressing)\b/i.test(all))); };
+/** the first n words OCR read, for a log line (pure) */
+export const seenWords = (words, n = 24) => (words ?? []).slice(0, n).map((w) => w.text).join(' ').replace(/\s+/g, ' ') || 'なし';
+// ---- the title screens, by OCR (pure). On the CI device (1560x720) the white words over the moving panorama come in pieces
+// and misread — in 20 minutes of the new player's title: "Get started Select", "be starte ed", "Select Exit @MoJjang AG",
+// the logo as "MIHECRAFT" / "MIHELRAEL." / "MInELRRE", never "More options" (a pixel font reads M as H: "Hore options").
+// The patterns take those forms too ----
+const said = (words) => words.map((w) => w.text).join(' ');
+const GET_STARTED = /\b[GCJ6]?[ae]t\s+st[aeu]rt(?:ed|e\s?e?d)\b|\bst[aeu]rte\s+e?d\b/i;
+const MORE_OPTIONS = /\b[MHNF][ao0]re\s+[oa0]pt[il1|][oa0]ns?\b/i;
+const MOJANG = /\bm[o0]\W?j+\W?[ae]ng\b/i, MOJANG_AB = /m[o0]\W?j+\W?[ae]ng\s*a[b8g]\b/i;
+// (the logo in capitals: M, I, N read as H or R, E or C, then C L R or E)
+const LOGO = /M[Il1i|][NnHhRr]{1,2}[EeCc][CcLlRrEe]/;
+// the first-start screen ("WELCOME TO MINECRAFT!": Sign in now / Maybe later) has the logo's word and hints too
+const FIRST_START = /WELCOME|Sign in now|[MH][ae][yv]be ?[l1I]ater|Microsoft account/i;
+/** 1.26's classic title (Play, Settings, Dressing Room …), by OCR (pure). Its white words on the green and grey buttons are
+ *  often not read on the CI device (3 minutes waited for a calm screen), where its "©Mojang AB" and the skin's name are:
+ *  "@iMoJjang AB … Alex" */
+export const classicTitleWords = (words) => { const all = said(words); return Boolean((findText(words, /^Play$/i) && findText(words, /^Settings$/i)) || findText(words, /^Dressing Room$/i) || (MOJANG_AB.test(all) && /\b(alex|steve|profile|marketplace|realms|dressing)\b/i.test(all))); };
+/** 1.26's title for a new player (Ore UI: "Get started" / "More options" over a panorama that never stops, the controller's
+ *  hints "Ⓐ Select Ⓑ Exit" along the bottom, "©Mojang AB"), by OCR (pure). Either button read is enough; loose (the
+ *  default): the hints — Exit is the top screen's B, deeper screens say Back — beside the copyright or the logo will do.
+ *  strict: a button's words only (where a wrong guess presses on: a run's join). Never with the classic menu's own words
+ *  or the first-start screen's */
+export function newTitleWords(words, { strict = false } = {}) {
+  const all = said(words);
+  if (FIRST_START.test(all) || classicTitleWords(words)) return false;
+  if (GET_STARTED.test(all) || MORE_OPTIONS.test(all)) return true;
+  return !strict && /\bSelect\b/i.test(all) && /\bExit\b/i.test(all) && (MOJANG.test(all) || LOGO.test(all));
+}
+/** the title screen, by OCR (pure): the classic one (Play and Settings, Dressing Room, ©Mojang AB and the skin) or the new
+ *  player's (classicTitleWords, newTitleWords) */
+export const titleWords = (words) => classicTitleWords(words) || newTitleWords(words);
+/** the words a screen keeps showing while what is behind them moves (pure): over the last `of` reads (each a list of
+ *  words), the words in at least `need` of them — letters only, 4 or more, lower case — sorted. A title whose panorama
+ *  never holds still is never calm as a picture; its words are */
+export function steadyWords(reads, { need = 4, of = 6 } = {}) {
+  const last = reads.slice(-of), n = new Map();
+  for (const ws of last) for (const k of new Set(ws.map((w) => String(w.text ?? w).toLowerCase().replace(/[^a-z]/g, '')).filter((k) => k.length >= 4))) n.set(k, (n.get(k) ?? 0) + 1);
+  return last.length < of ? [] : [...n].filter(([, c]) => c >= need).map(([k]) => k).sort();
+}
+/** steadyWords' answer is a screen the lab may take as the title (pure): two or more words, none of the first-start
+ *  screen's (that one has its own way out: firstRunButton) */
+export const steadyTitle = (steady) => steady.length >= 2 && !steady.some((k) => /^(welcome|maybe|later|haybe|microsoft|account|sign)$/.test(k));
 /** the game's own questions on the way into a server, by OCR (pure): the button that goes on → findText's hit | null.
  *  1.26: "Unknown External Server … Do you still wish to join?" (Continue / Cancel), "Online play is not rated" (Proceed /
  *  Back); a server's resource packs to download. OCR often misses white words on the green button: with the screen's size,

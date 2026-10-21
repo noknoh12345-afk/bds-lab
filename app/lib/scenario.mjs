@@ -60,7 +60,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { GAME_VERBS, gameStep, playGame, playServer } from './play.mjs';
 import { KIND_NAMES as MEASURE_KINDS, measureShot } from './measure.mjs';
-import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, joinPromptButton, joinRefusal, joinPromptKind, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
+import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, classicTitleWords, newTitleWords, joinPromptButton, joinRefusal, joinPromptKind, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
 
 // APP_TIME_SCALE (0..1, tests on the fake device): every fixed pause shorter; deadlines stay in real time
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms * (Math.min(1, Math.max(0, Number(process.env.APP_TIME_SCALE) || 1)))));
@@ -307,7 +307,7 @@ export async function runScenario(steps, ctx) {
   const joinLan = async (s) => {
     const end = Date.now() + (Number(process.env.APP_LAN_JOIN_MS) || 180_000);
     if (!ctx.ocr) { for (const k of ['A', 'DOWN', 'A']) { padKey(k); await sleep(padWait); } return 'LAN のワールド（ゲームパッド A・DOWN・A。OCR なし）'; }
-    let said = '', listed = false, other = 0, moves = 0, sawPlay = false, titleA = 0;
+    let said = '', listed = false, other = 0, moves = 0, sawPlay = false, titleA = 0, newTries = 0;
     while (Date.now() < end) {
       if (clearDialog(s)) { await sleep(1000); continue; }
       const ws = ocrNow(), all = ws.map((w) => w.text).join(' '), p = playScreen(ws);
@@ -330,19 +330,21 @@ export async function runScenario(steps, ctx) {
       // a dialog over the title ("Play your way") before the menu behind it: B closes it (A on its Continue brought it back
       // again and again on the CI device)
       else if (/Play your way|How will you play/i.test(all)) { log(`${s.line} 「Play your way」: Close（B）`); padKey('B'); }
-      // the new player's title (Get started / More options): More options is the classic menu. The first press only turns the
-      // gamepad's focus on (on Get started — an A there starts the new player's game mode screens): DOWN twice, then A
-      else if (findText(ws, /^Get started$/i) && findText(ws, /^More options$/i)) { log(`${s.line} 新しい人向けのタイトル: More options へ（DOWN・DOWN・A）`); padKey('DOWN'); await sleep(padWait); padKey('DOWN'); await sleep(padWait); padKey('A'); }
+      // the new player's title (Get started / More options, either read — client.mjs newTitleWords): More options is the
+      // classic menu. The first press only turns the gamepad's focus on (on Get started — an A there starts the new player's
+      // game mode screens): DOWN twice, then A. Its hints and logo alone (not its buttons) only twice: then it is taken for
+      // the classic menu (never A on it before that: A there is Get started)
+      else if (newTitleWords(ws, { strict: newTries >= 2 })) { newTries++; log(`${s.line} 新しい人向けのタイトル: More options へ（DOWN・DOWN・A）`); padKey('DOWN'); await sleep(padWait); padKey('DOWN'); await sleep(padWait); padKey('A'); }
       // the classic menu: its focus moves by the screen's layout, so Play is pressed once it is the green one (UP until it is,
       // then DOWN: the first press only turns the gamepad's focus on)
-      else if (play && titleWords(ws)) {
+      else if (play && classicTitleWords(ws)) {
         let focused = false; try { focused = buttonFocused(decode(last), play); } catch { /* undecodable */ }
         if (focused) { log(`${s.line} タイトルの Play を押します（ゲームパッド A）`); padKey('A'); moves = 0; }
         else { moves++; padKey(moves % 12 <= 5 ? 'UP' : 'DOWN'); await sleep(Math.min(padWait, 1500)); continue; }
       }
       // the classic menu known by its "©Mojang AB" and the skin's name, its buttons' words not read (the CI device): Play has
       // the focus once it is on — A turns it on, A presses it (never B here: B is the menu's Exit)
-      else if (titleWords(ws)) { log(`${s.line} タイトル（ボタンの文字は読めず）: ゲームパッド A（Play）`); padKey('A'); titleA++; if (titleA > 6) throw new Error(`タイトルの Play が押せません（A を ${titleA - 1} 回）（画面の文字: ${said}）`); }
+      else if (classicTitleWords(ws) || (newTries >= 2 && titleWords(ws))) { log(`${s.line} タイトル（ボタンの文字は読めず）: ゲームパッド A（Play）`); padKey('A'); titleA++; if (titleA > 6) throw new Error(`タイトルの Play が押せません（A を ${titleA - 1} 回）（画面の文字: ${said}）`); }
       // (an unknown screen: A goes on at first — B once PLAY has been seen, where an A could create a world)
       else if (/\bContinue\b/i.test(all) || (other < 2 && !sawPlay)) { padKey('A'); other++; }
       else { padKey('B'); other = 0; }
@@ -608,7 +610,7 @@ export async function runScenario(steps, ctx) {
                   prompts++; log(`${s.line} ゲームの最初の画面: 「${hit.text}」を押します`);
                   tapAt(hit.x, hit.y); prev = null; calmSince = Date.now(); await sleep(1500); continue;
                 }
-                if (titleWords(words)) return 'title（Play と Settings）';
+                if (titleWords(words)) return classicTitleWords(words) ? 'title（Play と Settings）' : 'title（新しい人向けのタイトル）';
               }
               if (ok && prev && screenDiff(prev, b, decode) < 0.02) { if (Date.now() - calmSince >= (ctx.ocr ? 3 : 1) * TITLE_CALM_MS) return 'title'; }
               else calmSince = Date.now();

@@ -625,6 +625,11 @@ await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without
   const m = e2e('lanmojang', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_MOJANG: '1' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
   made.push(m.runDir);
   ok(m.status === 0 && m.state.uri === 'lan' && m.state.pads[0] === 'BUTTON_A' && !m.state.pads.includes('BUTTON_B') && /タイトル（ボタンの文字は読めず）: ゲームパッド A/.test(fs.readFileSync(path.join(m.runDir, 'run.txt'), 'utf8')), `exit ${m.status} ${JSON.stringify(m.state.pads)}`);
+  // the new player's title read in pieces over its moving panorama (as on the CI device: one button, or only the hints and
+  // the copyright): More options by DOWN, DOWN, A — never A first (A there is Get started) — then the classic menu's Play
+  const nt = e2e('lannewtitle', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_NEWTITLE: 'partial', FAKE_ANIM_TITLE: '1' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(nt.runDir);
+  ok(nt.status === 0 && nt.state.uri === 'lan' && nt.state.classic === true && JSON.stringify(nt.state.pads.slice(0, 3)) === JSON.stringify(['DPAD_DOWN', 'DPAD_DOWN', 'BUTTON_A']) && /新しい人向けのタイトル: More options へ（DOWN・DOWN・A）/.test(fs.readFileSync(path.join(nt.runDir, 'run.txt'), 'utf8')), `exit ${nt.status} ${JSON.stringify(nt.state.pads)}`);
   // the server spawns the player while the app still loads (the server's packs): joined is the world on the device's screen
   const ld = e2e('lanloading', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_LOADING: '3', APP_JOIN_OCR_MS: '50' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
   made.push(ld.runDir);
@@ -1484,6 +1489,41 @@ await t('prepare: the new player\'s title (Get started / More options) left for 
     const fifo = r.state.calls.map((c, i) => [c, i]).filter(([c]) => /lab-pad\.fifo$/.test(c)), save = r.state.calls.indexOf('emu avd snapshot save lab-title');
     ok(r.state.classic === true && r.state.padUp === true && JSON.stringify((r.state.pads ?? []).slice(-3)) === JSON.stringify(['DPAD_DOWN', 'DPAD_DOWN', 'BUTTON_A']) && fifo.length >= 1 && fifo.at(-1)[1] < save && r.state.calls.filter((c) => c === 'shell input gamepad keyevent KEYCODE_DPAD_DOWN').length === 2, `classic ${r.state.classic} pad ${r.state.padUp} ${JSON.stringify(r.state.pads)} fifo ${fifo.length} save ${save}`);
     ok(!JSON.parse(fs.readFileSync(path.join(P.avds, 'bdslab_app.avd', 'lab-ready.json'), 'utf8')).firstScreen, 'the stamp: no first screen kept');
+  } finally { P.cleanup(); }
+});
+await t('title by OCR (pure): the new player\'s title from the pieces read on the CI device (one button, the hints beside the copyright or the logo), never the classic menu, the first-start screen or a pause screen; the words that stay while the picture moves', async () => {
+  const C = await imp('app/lib/client.mjs');
+  const L = (t) => t.split(' ').map((x, i) => ({ text: x, left: i * 50, top: 10, width: 40, height: 20, conf: 90, line: '1.1.1' }));
+  // (each as the CI device's OCR read it, 2026-10-21, run 39550199371: 20 minutes on that title, never taken for one)
+  for (const s of ['— =A MHE a a HE yp Get started select', 'faa ~~ em MIHELCRRET nee om be be starte ed', 'Get sturted More options', 'Hore options'])
+    ok(C.newTitleWords(L(s)) && C.newTitleWords(L(s), { strict: true }) && C.titleWords(L(s)) && !C.classicTitleWords(L(s)), `a button read: ${s}`);
+  for (const s of ['Vi AMIHECRY be Sta Select Exit @MoJjang AG WEbe', 'MinHELR A tie ae [ae ¥ ec es Select Exit'])
+    ok(C.newTitleWords(L(s)) && !C.newTitleWords(L(s), { strict: true }) && C.titleWords(L(s)), `the hints beside the copyright or the logo (loose only): ${s}`);
+  for (const s of ['PlHE a= | A Select Bosit iM ang AB W608', 'Select Exit', 'MIHECRAFT Exit', '\\ Ga AIRELRWS qa? x00 = os = == —'])
+    ok(!C.newTitleWords(L(s)), `not enough: ${s}`);
+  // the classic menu (its own words, or its copyright and the skin's name) is not the new player's title
+  for (const s of ['Play Settings Get started', 'P rare SAA FES @iMoJjang AB Alex, 1 Select Exit', 'Dressing Room Select Exit MINECRAFT'])
+    ok(C.classicTitleWords(L(s)) && !C.newTitleWords(L(s)) && C.titleWords(L(s)), `classic: ${s}`);
+  // the first-start screen, a pause screen, PLAY, a loading screen: none
+  for (const s of ['WELCOME TO MINECRAFT! Sign in now Haybe later Select Exit', 'Resume Game Settings Save & Exit', 'Worlds Realms Servers B Back', 'Mojang Studios loading'])
+    ok(!C.titleWords(L(s)), `no title: ${s}`);
+  // the words that stay (4 of the last 6 reads) while the panorama behind them moves; not enough reads yet: none
+  const reads = ['Get started Select Exit', 'Select Exit @MoJjang AG', 'be starte ed Select', 'MIHECRAFT Select Exit', 'Exit qa x00', 'Select Exit'].map(L);
+  eq(C.steadyWords(reads), ['exit', 'select']); ok(C.steadyTitle(C.steadyWords(reads)), 'two steady words: a screen to take');
+  eq(C.steadyWords(reads.slice(0, 5)), [], 'five reads: too few');
+  ok(!C.steadyTitle(['later', 'maybe', 'select']) && !C.steadyTitle(['select']), 'the first-start screen\'s words, or one word: not a title');
+  eq(C.seenWords(L('a b c'), 2), 'a b'); eq(C.seenWords(null), 'なし');
+});
+await t('prepare: the new player\'s title read in pieces over a panorama that never holds still (as on the CI device) is taken for the title and left for the classic menu; a screen never calm whose words stay is taken after six reads', () => {
+  const P = prepEnv('newtitle-partial');
+  try {
+    const r = P.lab(['prepare', '--no-bds'], { FAKE_NEWTITLE: 'partial', FAKE_ANIM_TITLE: '1', APP_TESSERACT: path.join(FAKE, 'tesseract'), APP_PAD_WAIT_MS: '30' });
+    ok(r.status === 0 && /タイトル画面です（新しい人向けのタイトル。読めた文字: /.test(r.text) && /新しい人向けのタイトルです（文字: .*）: More options へ（DOWN・DOWN・A）/.test(r.text) && /クラシックのメニューにしました（More options: Play・Settings/.test(r.text), `exit ${r.status} pads ${JSON.stringify(r.state.pads)} classic ${r.state.classic}\n${r.text.slice(-1500)}`);
+    ok(r.state.classic === true && JSON.stringify((r.state.pads ?? []).slice(-3)) === JSON.stringify(['DPAD_DOWN', 'DPAD_DOWN', 'BUTTON_A']), `pads ${JSON.stringify(r.state.pads)}`);
+    // never calm, no title words, but the same words read again and again: taken (and said) — not after 20 minutes
+    fs.writeFileSync(P.state, JSON.stringify({ ...JSON.parse(fs.readFileSync(P.state, 'utf8')), classic: false }));
+    const s = P.lab(['prepare', '--no-bds', '--force'], { FAKE_ANIM_TITLE: '1', APP_TESSERACT: path.join(FAKE, 'tesseract'), APP_TITLE_TIMEOUT: '60000', APP_PAD_WAIT_MS: '30' });
+    ok(s.status === 0 && /タイトル画面とします（背景は動き続けていますが、同じ文字が 6 回のうち 4 回以上: game respawn resume settings）/.test(s.text) && !/落ち着いた画面/.test(s.text), `exit ${s.status}\n${s.text.slice(-1500)}`);
   } finally { P.cleanup(); }
 });
 await t('world: the player\'s own world (level.dat as little-endian NBT, its name) and the shell line that puts it in the game\'s folders', async () => {

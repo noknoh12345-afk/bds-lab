@@ -200,6 +200,11 @@ async function shotPng() {
   const black = process.env.FAKE_BLACK && S.phase === 'title';
   const [r, g, b] = black ? [0, 0, 0] : COLORS[anrUp() ? 'anr' : S.phase ?? 'home'], w = 64, h = 36, data = Buffer.alloc(w * h * 4);
   for (let i = 0; i < w * h; i++) { data[i * 4] = r; data[i * 4 + 1] = g; data[i * 4 + 2] = black ? 0 : (b + (i % 7 === 0 ? 20 : 0)) & 255; data[i * 4 + 3] = 255; }
+  // FAKE_ANIM_TITLE: the title's panorama never holds still (1.26: no two pictures alike), the classic menu's once it is open
+  if (process.env.FAKE_ANIM_TITLE && S.phase === 'title' && !S.classic && !black && !anrUp()) {
+    const n = (S.adbShots ?? 0) + (S.emuShots ?? 0);
+    for (let i = 0; i < w * h; i++) { data[i * 4] = (r + 47 * n + (i % 13)) & 255; data[i * 4 + 1] = (g + 29 * n) & 255; }
+  }
   if (S.hud && !anrUp()) for (let i = 0; i < w * 8; i++) { data[i * 4] = 250; data[i * 4 + 1] = 250; data[i * 4 + 2] = 250; }   // a title across the top
   // FAKE_NEWTITLE: the classic menu looks other than the new player's title (a band of buttons)
   if (S.phase === 'title' && S.classic && !anrUp()) for (let y = 28; y <= 33; y++) for (let x = 20; x <= 44; x++) { const o = (y * w + x) * 4; data[o] = 130; data[o + 1] = 130; data[o + 2] = 130; }

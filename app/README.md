@@ -634,7 +634,10 @@ node lab.mjs app run -a jsonui_demo --device phone
   `APP_JOIN_VIA=direct` で直接）。
 - **新しい人向けの画面**: 1.26 は、はじめての人に「Get started / More options」のタイトルや「Play your way」を出します。
   タップは効きませんが、ゲームパッドは効きます（上）。options.txt の `has_dismissed_new_player_flow:1` で従来のタイトル
-  （Dressing Room・Profile）になるので、準備がこれを入れます。
+  （Dressing Room・Profile）になるので、準備がこれを入れます。このタイトルは動き続けるパノラマの上にあり、CI の端末の OCR では
+  切れ端しか読めません（「Get started Select」「Select Exit @MoJjang AG」）。そこでボタンのどちらか 1 つ、または案内の「Select・Exit」と
+  ©Mojang・ロゴの崩れた形でタイトルと見分け（`app/lib/client.mjs` の `newTitleWords`）、絵が止まらなくても同じ言葉が読み続けられる
+  画面はタイトルとして進みます（`steadyWords`: 直近 6 回のうち 4 回）。
 - **ソフトウェア描画の重さ**: 2 CPU のランナーでゲームは毎秒 4〜6 枚しか描けず、一枚に数秒かかると Android が「GPU が止まった」
   （Buffer processing hung up due to stuck fence）として応答なしにし、参加の途中で止まりました。準備は、描き終わらない絵も
   待たずに使う設定（`debug.sf.latch_unsignaled=1`、`APP_LATCH_UNSIGNALED=0` で入れない）で画面合成を起動し直し、ゲームの

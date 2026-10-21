@@ -1095,19 +1095,28 @@ async function launchGame(adb, { log = out } = {}) {
 
 /** the new player's title (Get started / More options) → the classic menu (Play, Settings…) by its More options. 1.26's
  *  new screens take the gamepad, and its first press only turns the focus on (on Get started — whose game mode screens B
- *  and ESC do not leave): DOWN, DOWN, A, read back by OCR. → 'classic' | 'as-is' (no OCR, or not that title) |
- *  'relaunched' (it did not get there: the game started again, its title as the game shows it) */
-async function toClassicMenu(adb, { log = out, wait = Number(process.env.APP_PAD_WAIT_MS) || 3500 } = {}) {
+ *  and ESC do not leave): DOWN, DOWN, A, read back by OCR. Its words over the moving panorama come in pieces (C.newTitleWords):
+ *  looked at a few times before it is taken for another screen. → 'classic' | 'as-is' (no OCR, the classic menu already, or
+ *  not that title) | 'relaunched' (it did not get there: the game started again, its title as the game shows it) */
+async function toClassicMenu(adb, { log = out, wait = Number(process.env.APP_PAD_WAIT_MS) || 3500, looks = 4 } = {}) {
   const look = () => { try { return ocrBuf(adb.screencap()) ?? []; } catch { return []; } };
-  let w = look();
-  if (!(C.findText(w, /^Get started$/i) && C.findText(w, /^More options$/i))) return 'as-is';
+  let w = [], seen = false;
+  for (let i = 0; i < looks && !seen; i++) {
+    if (i) await sleep(wait);
+    w = look();
+    if (!w.length && !OCR_OK) return 'as-is';
+    if (C.classicTitleWords(w)) return 'as-is';
+    seen = C.newTitleWords(w);
+  }
+  if (!seen) return 'as-is';
+  log(`  新しい人向けのタイトルです（文字: ${C.seenWords(w, 12)}）: More options へ（DOWN・DOWN・A）`);
   for (const k of ['DOWN', 'DOWN', 'A']) { adb.pad(k); await sleep(wait); }
   for (let i = 0; i < 6; i++) {
     w = look();
-    if (C.findText(w, /^Play$/i) && C.findText(w, /^Settings$/i)) { log('  クラシックのメニューにしました（More options: Play・Settings。実行の LAN の参加は A から）'); return 'classic'; }
+    if (C.classicTitleWords(w)) { log(`  クラシックのメニューにしました（More options: ${C.findText(w, /^Play$/i) ? 'Play・Settings' : '©Mojang AB と人形の名前'}。実行の LAN の参加は A から）`); return 'classic'; }
     await sleep(wait);
   }
-  log(`  W クラシックのメニューになりません（画面の文字: ${w.slice(0, 12).map((x) => x.text).join(' ')}）: ゲームを起動し直し、新しい人向けのタイトルのままにします`);
+  log(`  W クラシックのメニューになりません（画面の文字: ${C.seenWords(w, 12)}）: ゲームを起動し直し、新しい人向けのタイトルのままにします`);
   adb.shell(['am', 'force-stop', K.PACKAGE]); await sleep(1500); await launchGame(adb, { log });
   return 'relaunched';
 }
@@ -1187,7 +1196,7 @@ async function signIn(adb, { decode, log = out, tell = async () => {}, nextCode 
       case 'stay': if (!tapWord(words, SI.SIGNIN_BUTTONS.stay)) enter(); break;
       case 'profile': if (!tapWord(words, SI.SIGNIN_BUTTONS.profile)) enter(); break;
       case 'error': return { ok: false, note: `サインインできません: ${p.message}` };
-      default: if (!began) { const w2 = words.map((x) => x.text).join(' '); if (/Get started/.test(w2) && /More options/.test(w2)) { adb.pad('DOWN'); await sleep(beat); adb.pad('DOWN'); await sleep(beat); adb.pad('A'); } }
+      default: if (!began && C.newTitleWords(words, { strict: true })) { adb.pad('DOWN'); await sleep(beat); adb.pad('DOWN'); await sleep(beat); adb.pad('A'); }
     }
     await sleep(Number(process.env.APP_SIGNIN_POLL_MS) || 3000);
   }
@@ -1216,6 +1225,8 @@ async function waitTitle(adb, { decode, timeoutMs = Number(process.env.APP_TITLE
   // how a first-start screen's button is pressed: a different way at each try until one leaves the screen (that way is the
   // device's: adb.tapHow, kept in the stamp). Keys last: BACK closes such a screen, DOWN + ENTER moves to its second button
   let tried = null, goneLooks = 0, front = 0, away = 0;
+  // the words of the last reads (C.steadyWords: what stays while the panorama behind it moves)
+  const reads = [];
   const ocrMs = Number(process.env.APP_TITLE_OCR_MS) || Math.min(8000, poll * 3);
   while (Date.now() < end) {
     const f = adb.focus();
@@ -1297,8 +1308,10 @@ async function waitTitle(adb, { decode, timeoutMs = Number(process.env.APP_TITLE
         }
         if (C.titleWords(words)) {
           if (tried && C.TAP_WAYS.includes(tried)) { adb.tapHow = tried; log(`  ゲームの画面は「${C.TAP_WAY_NAMES[tried]}」で押せました（これからの押し方）`); }
-          log('  タイトル画面です（Play と Settings が読めました）'); await sleep(settleMs); return { ms: Date.now() - t0, dialogs, prompts, shot: adb.screencap() };
+          log(C.classicTitleWords(words) ? '  タイトル画面です（Play と Settings が読めました）' : `  タイトル画面です（新しい人向けのタイトル。読めた文字: ${C.seenWords(words)}）`);
+          await sleep(settleMs); return { ms: Date.now() - t0, dialogs, prompts, shot: adb.screencap() };
         }
+        reads.push(words); if (reads.length > 6) reads.shift();
         lastWords = words;
       }
       const d = prev ? screenDiff(prev, b, decode) : 1;
@@ -1308,13 +1321,24 @@ async function waitTitle(adb, { decode, timeoutMs = Number(process.env.APP_TITLE
         if (OCR_OK) log(`  タイトル画面とします（落ち着いた画面。Play と Settings は読めませんでした。文字: ${(lastWords ?? []).slice(0, 10).map((w) => w.text).join(' ') || 'なし'}）`);
         await sleep(settleMs); return { ms: Date.now() - t0, dialogs, prompts, shot: adb.screencap() };
       }
+      // a picture that never holds still whose words do (the title's panorama moves behind them): taken once the same words
+      // came back in 4 of the last 6 reads (~50 s) — the calm above, for a screen that is never calm
+      if (words && !calm) {
+        const steady = C.steadyWords(reads);
+        if (C.steadyTitle(steady)) {
+          log(`  タイトル画面とします（背景は動き続けていますが、同じ文字が 6 回のうち 4 回以上: ${steady.slice(0, 12).join(' ')}）`);
+          await sleep(settleMs); return { ms: Date.now() - t0, dialogs, prompts, shot: adb.screencap() };
+        }
+      }
       prev = b;
     } else { prev = null; calm = 0; }
-    if (Date.now() - lastSay > 60_000) { lastSay = Date.now(); const fps = seen ? gameFps(adb) : null; log(`  タイトル画面を待っています（${Math.round((Date.now() - t0) / 1000)} 秒、画面 ${f.window ?? '?'}${fps !== null ? `、ゲームの描画 毎秒 ${fps.toFixed(1)} 枚` : ''}${lastWords ? `、文字: ${lastWords.slice(0, 10).map((w) => w.text).join(' ')}` : ''}）`); }
+    // (every word of the last read, and those that keep coming back: what the next fix of the patterns is made from)
+    if (Date.now() - lastSay > 60_000) { lastSay = Date.now(); const fps = seen ? gameFps(adb) : null, st = C.steadyWords(reads, { of: Math.min(6, reads.length), need: Math.min(4, reads.length) }); log(`  タイトル画面を待っています（${Math.round((Date.now() - t0) / 1000)} 秒、画面 ${f.window ?? '?'}${fps !== null ? `、ゲームの描画 毎秒 ${fps.toFixed(1)} 枚` : ''}${lastWords ? `、文字: ${C.seenWords(lastWords, 40)}` : ''}${st.length ? `、続けて読める文字: ${st.slice(0, 12).join(' ')}` : ''}）`); }
     await sleep(poll);
   }
   try { fs.writeFileSync(path.join(LAB, 'prepare-gpu.txt'), gpuFacts(adb)); } catch { /* none */ }
-  throw new K.AppError(`Minecraft が ${Math.round(timeoutMs / 60000)} 分でタイトル画面になりませんでした`, 'app/.lab/prepare-*.png（最後の画面）、gpu.txt（描画の速さとゲーム自身のログ）と emulator.log を見てください。');
+  const st = C.steadyWords(reads, { of: Math.min(6, reads.length), need: Math.min(4, reads.length) });
+  throw new K.AppError(`Minecraft が ${Math.round(timeoutMs / 60000)} 分でタイトル画面になりませんでした（最後に読めた文字: ${C.seenWords(lastWords, 40)}${st.length ? `。続けて読めた文字: ${st.slice(0, 12).join(' ')}` : ''}）`, 'app/.lab/prepare-*.png（最後の画面）、gpu.txt（描画の速さとゲーム自身のログ）と emulator.log を見てください。読めた文字がタイトルのものなら、app/lib/client.mjs の titleWords / newTitleWords にその形を足してください。');
 }
 
 // prepare: the device ready to join in seconds, kept for the next runs. From the private cache when it is there and still
