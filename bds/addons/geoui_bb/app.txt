@@ -1,9 +1,10 @@
 # GeoUI Builder の書き出し（Studio のひな形「スコア＆ゲージ」）を本物のアプリで写す: node lab.mjs app run -a geoui_bb
-# 見るもの: 左上に数字（5 桁）とゲージ、値が描画に届く、画面比を変えても左と上から 1.2 単位、scale 50 で全体が中心へ縮む、エラーが無い。
-# 画面比はスクリプトが端末の種類から推す（スマホは 2000）。この端末の本当の比は geoui:aspect に書いてから見る。
-# 描かれた所は数で: `shot world--…`（alpha 0 で GeoUI が見えない画面）を基準に、`measure diff` が違う所の枠（px）を出す
-#   （公開のリポジトリでもチェック「app: 結果」の「測った値」で読める。geoui_calib の測った画面の高さ・中心と合わせて、
-#    数字とゲージがプラグインの置いた所に出ているかを確かめる）。動くもの（雲・日の傾き）が写らないよう、真下の地面を見る。
+# 見るもの: 左上に数字（5 桁）とゲージ、値が描画に届く、画面比を変えても左と上から 1.2 単位、scale 50 で全体が中心へ縮む、
+# alpha 0 で消える、エラーが無い。画面比はスクリプトが端末の種類から推す（スマホは 2000）。この端末の本当の比は geoui:aspect に書いてから見る。
+# 描かれた所は数で: 基準の `shot world--…`（scale 1 = GeoUI を (0, 140) の 1 点に縮めて、無いのと同じにした画面）と比べて、
+#   `measure diff` が違う所の枠（px）を出す（公開のリポジトリでもチェック「app: 結果」の「測った値」で読める。geoui_calib の
+#   測った画面の高さ・中心と合わせて、数字とゲージがプラグインの置いた所に出ているかを確かめる）。
+# 動くもの（雲・日の傾き）が写らないよう、真下の地面を見る。
 
 section title
 launch
@@ -24,16 +25,16 @@ until stable 60000
 absent clientlog \bERROR\b
 
 section values
-do scriptevent geoui:set alpha 0
+do scriptevent geoui:set scale 1
 wait 2000
 until stable 60000
-shot world--hidden                         # 基準: GeoUI が見えない（alpha 0）
-do scriptevent geoui:set alpha 100
+shot world--hidden                         # 基準: GeoUI が無いのと同じ（1 点に縮めた）
+do scriptevent geoui:set scale 100
 do scriptevent geoui:set v0 12345
 do scriptevent geoui:set v1 20
 wait 2000
 shot hud-guessed-aspect                    # 画面比はスクリプトの推測のまま
-changed 0.0005                             # 描かれた（alpha 0 の画面と違う）
+changed 0.0005                             # 描かれた
 measure diff hud-guessed-aspect            # 描かれた所: 数字とゲージの枠（px）
 do scriptevent geoui:set aspect 2167
 wait 1500
@@ -49,11 +50,11 @@ absent clientlog \bERROR\b
 section aspect-4x3
 size 1024x768
 do scriptevent geoui:set aspect 1333
-do scriptevent geoui:set alpha 0
+do scriptevent geoui:set scale 1
 wait 5000
 until stable 60000
 shot world--4x3-hidden
-do scriptevent geoui:set alpha 100
+do scriptevent geoui:set scale 100
 wait 1500
 shot hud-4x3
 measure diff hud-4x3                       # 4:3 でも左と上から 1.2 単位
@@ -62,11 +63,10 @@ do scriptevent geoui:set aspect 2167
 wait 3000
 
 section scale-50
-do scriptevent geoui:set alpha 0
+do scriptevent geoui:set scale 1
 wait 1500
 until stable 60000
 shot world--hidden-again                   # 基準をこの画面の大きさで撮り直す
-do scriptevent geoui:set alpha 100
 do scriptevent geoui:set scale 50
 wait 1500
 shot hud-scale50                           # 数字の間隔も一緒に縮む（Studio はここで桁が離れる）
@@ -78,7 +78,7 @@ section alpha-0
 do scriptevent geoui:set alpha 0
 wait 1500
 shot hud-alpha0                            # 見えない
-measure diff hud-alpha0                    # 違い 0 か所のはず
+measure diff hud-alpha0                    # 基準（1 点に縮めた画面）と違う所が無い（0 か所）なら、alpha 0 で消えている
 do scriptevent geoui:set alpha 100
 wait 1500
 absent clientlog \bERROR\b
