@@ -222,9 +222,11 @@
     warnings.push(...budget.warnings);
     const N = K.names(ns), P = (s) => `q.property('${s}')`;
     // ---- time
+    // (every variable read before this frame sets it goes through ??: the game's pre_animation stops at a line that reads a
+    //  variable never set — every line after it is left undone, every frame (bds-lab's probe, geoui_probe, 2026-10-21))
     const pre = [
       `${V('seq')} = ${P(N.seq)};`,
-      `${V('t0')} = (${P(N.gen)} != ${V('gen')}) ? q.life_time : ${V('t0')};`,
+      `${V('t0')} = (${P(N.gen)} != (${V('gen')} ?? -1)) ? q.life_time : (${V('t0')} ?? q.life_time);`,
       `${V('gen')} = ${P(N.gen)};`,
       `${V('raw')} = ${P(N.pause)} ? ${P(N.from)} / 1000 : q.life_time - ${V('t0')} + ${P(N.from)} / 1000;`,
       `${V('st')} = ${V('raw')};`,
@@ -292,7 +294,7 @@
           }
           let ev = null;
           if (usesEvents) {
-            pre.push(`${Q}_et = (${P(SP.g)} != ${Q}_eg) ? ${st} : ${Q}_et;`, `${Q}_eg = ${P(SP.g)};`, `${Q}_er = (${Q}_et >= ${Q}_h - ${n(tpl.lead)} - ${EPS}) ? ${P(SP.r)} : 0;`);
+            pre.push(`${Q}_et = (${P(SP.g)} != (${Q}_eg ?? 0)) ? ${st} : (${Q}_et ?? -1000);`, `${Q}_eg = ${P(SP.g)};`, `${Q}_er = (${Q}_et >= ${Q}_h - ${n(tpl.lead)} - ${EPS}) ? ${P(SP.r)} : 0;`);
             ev = { t: `${Q}_et`, r: `${Q}_er` };
           }
           // (an instance's own path, baked: which one by the slot's instance)
@@ -314,9 +316,11 @@
       });
       anims[`animation.${ns}.seq_${i}`] = anim;
     });
-    // (a slot's bones that another sequence uses: hidden in this one; all of them when no sequence plays)
-    for (const a of Object.values(anims)) for (const bone of clones.keys()) if (!a.bones[bone]) a.bones[bone] = { scale: 0 };
-    anims[`animation.${ns}.seq_idle`] = { loop: true, animation_length: 1, bones: Object.fromEntries([...clones.keys()].map((b) => [b, { scale: 0 }])) };
+    // (a slot's bones that another sequence uses: hidden in this one; all of them when no sequence plays. A template's own
+    //  elements — its prototypes — never show in the game, playing or not: only their copies do)
+    const protos = new Set([...clones.values()].map((c) => c.of));
+    for (const a of Object.values(anims)) for (const bone of [...clones.keys(), ...protos]) if (!a.bones[bone]) a.bones[bone] = { scale: 0 };
+    anims[`animation.${ns}.seq_idle`] = { loop: true, animation_length: 1, bones: Object.fromEntries([...clones.keys(), ...protos].map((b) => [b, { scale: 0 }])) };
     // ---- per-element drives: opacity and frame (render controllers), value (digits), fill (gauges)
     const RCV = (bone, what) => V(`${what}_${clean(bone)}`);
     for (const [bone, d] of drives) {
@@ -365,7 +369,7 @@
         const el = (design.elements || {})[bone] || {}, digits = (el.number && Array.isArray(el.number.digits) ? el.number.digits.length : 0), hide = !(el.number && el.number.hideLeadingZero === false);
         for (let k = 0; k < digits; k++) {
           const dv = `v.${ns}_${clean(bone)}_d${k}`, place = Math.pow(10, digits - 1 - k), de = G && G.digitExpr ? G.digitExpr(RCV(bone, 'val'), place, hide) : `math.mod(math.floor(math.abs(${RCV(bone, 'val')})/${place}),10)`;
-          digitLines.push(`${dv} = ${RCV(bone, 'vd')} ? ${de} : ${dv};`);
+          digitLines.push(`${dv} = ${RCV(bone, 'vd')} ? ${de} : (${dv} ?? 0);`);
         }
       }
       dsc.scripts.pre_animation.push(...pre, ...digitLines);
@@ -373,6 +377,12 @@
       const animate = [];
       doc.sequences.forEach((_, si) => { dsc.animations[`${ns}_seq_${si + 1}`] = `animation.${ns}.seq_${si + 1}`; animate.push({ [`${ns}_seq_${si + 1}`]: `q.is_in_ui && ${V('seq')} == ${si + 1}` }); });
       if (clones.size) { dsc.animations[`${ns}_seq_idle`] = `animation.${ns}.seq_idle`; animate.push({ [`${ns}_seq_idle`]: `q.is_in_ui && (${V('seq')} < 1 || ${V('seq')} > ${doc.sequences.length})` }); }
+      // (a flipbook's frame step in the texture: the element's own cell size over the texture's — an atlas holds more than it)
+      const stepOf = (name, fb) => {
+        const b = bones.find((x) => x.name === name), faces = b && (b.cubes || []).map((c) => Object.values(c.faces || {}).find((f) => f && f.uv_size)).filter(Boolean), f = faces && faces[0];
+        const tex = f && (design.textures || {})[f.texture], tw = tex && num(tex.uvWidth || tex.width), th = tex && num(tex.uvHeight || tex.height);
+        return f && tw > 0 && th > 0 ? [Math.abs(f.uv_size[0]) / tw, Math.abs(f.uv_size[1]) / th] : [1 / fb.cols, 1 / fb.rows];
+      };
       dsc.scripts.animate = [...(dsc.scripts.animate || []), ...animate];
       // ---- render controllers: an element with its own opacity or frame drawn by its own controller (its bones only), the
       // shared controllers drawing everything else
@@ -385,12 +395,14 @@
           r.part_visibility = [{ '*': true }, ...own.flatMap((b) => treeOf(b).map((x) => ({ [x]: false })))];
           for (const bone of own) {
             const el = (design.elements || {})[clones.has(bone) ? clones.get(bone).of : bone] || {}, d = drives.get(bone), id2 = `${id}_${clean(bone)}`;
-            const copy = parse(r);
+            const copy = parse(r), c0 = clones.get(bone);
             copy.part_visibility = [{ '*': false }, ...treeOf(bone).map((x) => ({ [x]: true }))];
+            // (a slot's copy drawn with its prototype's material: the shared list names the prototype's bones, not the copy's)
+            if (c0) for (const x of subtree(c0.of)) { const m = (r.materials || []).find((e) => Object.keys(e)[0] === x); if (m) copy.materials.push({ [`${x}_${c0.tag}${c0.k}`]: m[x] }); }
             if (d.o.length) copy.color = Object.assign({}, r.color, { a: `${r.color && r.color.a !== undefined ? r.color.a : 1} * ${RCV(bone, 'a')}` });
             if (d.fr.length) {
               const fb = el.frames;
-              if (fb && fb.cols > 0 && fb.rows > 0) copy.uv_anim = { offset: [`math.mod(${RCV(bone, 'fr')}, ${fb.cols}) / ${fb.cols}`, `math.floor(${RCV(bone, 'fr')} / ${fb.cols}) / ${fb.rows}`], scale: [1, 1] };
+              if (fb && fb.cols > 0 && fb.rows > 0) { const [du, dv] = stepOf(clones.has(bone) ? clones.get(bone).of : bone, fb); copy.uv_anim = { offset: [`math.mod(${RCV(bone, 'fr')}, ${fb.cols}) * ${n(du)}`, `math.floor(${RCV(bone, 'fr')} / ${fb.cols}) * ${n(dv)}`], scale: [1, 1] }; }
               else warnings.push(`「${bone}」のコマ（frame）を書き出せません: 要素に連番の並び（frames: { cols, rows }）がありません`);
             }
             rc.render_controllers[id2] = copy;

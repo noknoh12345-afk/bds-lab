@@ -1,5 +1,5 @@
-# geoui_probe_m（bds/geoui/timeline/probe.mjs が作る）: GeoUI の Molang の長さ・深さと、600 本のジオメトリの確かめ。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
-# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px）を数で出す。
+# geoui_probe_m（bds/geoui/timeline/probe.mjs が作る）: GeoUI の Molang の長さ・深さの確かめ（pre_animation）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を数で出す。
 
 section title
 launch
@@ -12,6 +12,8 @@ until joined 300000
 wait 3000
 do time set noon
 do gamerule dodaylightcycle false
+do gamerule sendcommandfeedback false
+do gamerule commandblockoutput false
 do weather clear
 do tp @a 0 -60 0 0 90
 do hud @a hide paperdoll
@@ -27,83 +29,91 @@ section t01-ctl
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 1); 'probe 1'
 wait 1500
 shot t01-ctl
-measure diff t01-ctl
+measure diff t01-ctl 0 170 1030 720
 
-section t02-pre16
+section t02-d54
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 2); 'probe 2'
 wait 1500
-shot t02-pre16
-measure diff t02-pre16
+shot t02-d54
+measure diff t02-d54 0 170 1030 720
 
-section t03-pre54
+section t03-d54_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 3); 'probe 3'
 wait 1500
-shot t03-pre54
-measure diff t03-pre54
+shot t03-d54_c
+measure diff t03-d54_c 0 170 1030 720
 
-section t04-pre150
+section t04-f6k
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 4); 'probe 4'
 wait 1500
-shot t04-pre150
-measure diff t04-pre150
+shot t04-f6k
+measure diff t04-f6k 0 170 1030 720
 
-section t05-pref8k
+section t05-f6k_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 5); 'probe 5'
 wait 1500
-shot t05-pref8k
-measure diff t05-pref8k
+shot t05-f6k_c
+measure diff t05-f6k_c 0 170 1030 720
 
-section t06-ch54
+section t06-f8k
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 6); 'probe 6'
 wait 1500
-shot t06-ch54
-measure diff t06-ch54
+shot t06-f8k
+measure diff t06-f8k 0 170 1030 720
 
-section t07-ch400
+section t07-f8k_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 7); 'probe 7'
 wait 1500
-shot t07-ch400
-measure diff t07-ch400
+shot t07-f8k_c
+measure diff t07-f8k_c 0 170 1030 720
 
-section t08-chf30k
+section t08-f12k
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 8); 'probe 8'
 wait 1500
-shot t08-chf30k
-measure diff t08-chf30k
+shot t08-f12k
+measure diff t08-f12k 0 170 1030 720
 
-section t09-chf100k
+section t09-f12k_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 9); 'probe 9'
 wait 1500
-shot t09-chf100k
-measure diff t09-chf100k
+shot t09-f12k_c
+measure diff t09-f12k_c 0 170 1030 720
 
-section t10-big1
+section t10-d100
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 10); 'probe 10'
 wait 1500
-shot t10-big1
-measure diff t10-big1
+shot t10-d100
+measure diff t10-d100 0 170 1030 720
 
-section t11-big300
+section t11-d100_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 11); 'probe 11'
 wait 1500
-shot t11-big300
-measure diff t11-big300
+shot t11-d100_c
+measure diff t11-d100_c 0 170 1030 720
 
-section t12-big599
+section t12-f16k
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 12); 'probe 12'
 wait 1500
-shot t12-big599
-measure diff t12-big599
+shot t12-f16k
+measure diff t12-f16k 0 170 1030 720
+
+section t13-f16k_c
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 13); 'probe 13'
+wait 1500
+shot t13-f16k_c
+measure diff t13-f16k_c 0 170 1030 720
 
 section all
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 99); 'probe 99'
 wait 1500
 shot all
-measure diff all
+measure diff all 0 170 1030 720
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 0); 'probe 0'
 
 section log-molang
 absent clientlog (?i)molang
+section log-variable
+absent clientlog (?i)variable
 section log-geometry
 absent clientlog (?i)geometr|\bbones?\b
 section log-render

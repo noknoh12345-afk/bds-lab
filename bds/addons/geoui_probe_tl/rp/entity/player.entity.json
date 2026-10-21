@@ -49,7 +49,7 @@
           "v.geoui_cx = variable.is_paperdoll ? 0.0 : q.property('gprobt:cx')/10000.0*170.681;",
           "v.geoui_cy = variable.is_paperdoll ? 0.0 : q.property('gprobt:cy')/10000.0*170.681;",
           "v.gprobt_seq = q.property('gprobt:seq');",
-          "v.gprobt_t0 = (q.property('gprobt:seq_gen') != v.gprobt_gen) ? q.life_time : v.gprobt_t0;",
+          "v.gprobt_t0 = (q.property('gprobt:seq_gen') != (v.gprobt_gen ?? -1)) ? q.life_time : (v.gprobt_t0 ?? q.life_time);",
           "v.gprobt_gen = q.property('gprobt:seq_gen');",
           "v.gprobt_raw = q.property('gprobt:seq_pause') ? q.property('gprobt:seq_from') / 1000 : q.life_time - v.gprobt_t0 + q.property('gprobt:seq_from') / 1000;",
           "v.gprobt_st = v.gprobt_raw;",

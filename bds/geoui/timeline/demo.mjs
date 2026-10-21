@@ -156,6 +156,8 @@ js p('A').getProperty('${NS}:seq')
 = 0
 `));
 const shots = [1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 8.0, 9.5, 11.0, 12.5];
+// (measured in the playfield's part of the 1560 x 720 screen: the first-person hand on the right and the chat on top left out)
+const REGION = '0 170 1030 720';
 out.set('app.txt', Buffer.from(`# geoui_rhythm を本物のアプリで: 再生して、決まった時刻に写す（GeoUI のタイムラインが描く: 円・接近の輪・番号・スライダーの玉・スピナー・点数）
 # 時刻は再生を始めてからの目安（サーバーの命令が届くまでの遅れがある）。比べる基準は再生前の画面（world--before-play）。
 
@@ -170,6 +172,8 @@ until joined 300000
 wait 3000
 do time set noon
 do gamerule dodaylightcycle false
+do gamerule sendcommandfeedback false
+do gamerule commandblockoutput false
 do weather clear
 do tp @a 0 -60 0 0 90
 do hud @a hide paperdoll
@@ -182,25 +186,29 @@ absent clientlog \\bERROR\\b
 
 section play
 do scriptevent ${NS}:play 1
-${shots.map((t, i) => `wait ${Math.round((t - (i ? shots[i - 1] : 0)) * 1000)}\nshot play-${String(t).replace('.', '_')}s\nmeasure diff play-${String(t).replace('.', '_')}s`).join('\n')}
+${shots.map((t, i) => `wait ${Math.round((t - (i ? shots[i - 1] : 0)) * 1000)}\nshot play-${String(t).replace('.', '_')}s\nmeasure diff play-${String(t).replace('.', '_')}s ${REGION}`).join('\n')}
 absent clientlog \\bERROR\\b
 
 section seek-pause
 do scriptevent ${NS}:seek 6
 wait 1500
 shot seek-6s
-measure diff seek-6s
+measure diff seek-6s ${REGION}
 do scriptevent ${NS}:pause
 wait 1500
 shot paused-a
 wait 1500
 shot paused-b
-measure diff paused-b
+measure diff paused-b ${REGION}
 do scriptevent ${NS}:stop
 wait 2000
 shot stopped
-measure diff stopped
+measure diff stopped ${REGION}
 absent clientlog \\bERROR\\b
+
+section log-molang
+# (a content error of Molang: a pre_animation line that the game cannot run stops the lines after it — the slots then never show)
+absent clientlog (?i)molang
 `));
 out.set('rp/sounds/README.md', Buffer.from('click.wav: the lab\'s own click track (bds/geoui/timeline/demo.mjs makes it: 880 / 1320 Hz on each beat).\n'));
 

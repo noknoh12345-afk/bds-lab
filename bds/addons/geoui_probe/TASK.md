@@ -1,32 +1,33 @@
-# geoui_probe — GeoUI の作りの確かめ（ボーンの番号・自分の render controller・時間）
+# geoui_probe — GeoUI の作りの確かめ（pre_animation が止まる所・時計・自分の render controller）
 
 ## Request
 GeoUI のタイムラインの書き出しが頼る物を、本物のアプリで 1 つずつ確かめる（bds/geoui/timeline/probe.mjs が作る。手で変えない）。
 app.txt がテストを 1 つずつ出して写し、`measure diff` が変わった所を数で出す。`node bds/geoui/timeline/probe.mjs read <summary.json>` が読む。
 
 ## What it is
-- ボーンは 249 本（geoui_rhythm と同じ数）。テストのボーンは決まった番号に置き、間は画面の外の小さな板で埋める。
-- 自分の render controller は 31 個（6〜30 個目は何も描かない）。共有の render controller はそれらのボーンを part_visibility で描かない。
-- 時計の 3 つは、選んでから 1.5 秒と 3 秒で写す（毎秒 15 単位で右へ動けば、その時間が進んでいる）。
+- pre_animation に足した行の間にカナリア（1 なら板を描く変数）を置く: 描かれない最初のカナリアの前の行で、pre_animation が止まっている。
+- 最後の行は、一度も入れていない変数を ?? なしで読む（ゲームはここで止まるはず: カナリア 6 は描かれないのが正しい）。
+- 時計の 2 つは、選んでから 1.5 秒と 3 秒で写す（毎秒 15 単位で右へ動けば、その時間が進んでいる）。
 - テスト 1（ctl）: 基準: ボーン #1・共有の render controller・scale で出し入れ
-- テスト 2（clockpre）: pre_animation の q.life_time（選んでからの秒 x 15 単位、右へ）
-- テスト 3（clockanim）: アニメーションの中の q.anim_time（選ぶと始まるアニメーション: 秒 x 15 単位、右へ）
-- テスト 4（clocklife）: アニメーションの中の q.life_time（動けば「アニメーションが始まってから」、+90 で止まれば実体の寿命）
-- テスト 5（b60）: ボーン #60（共有の render controller）
-- テスト 6（b115）: ボーン #115
-- テスト 7（b121）: ボーン #121（geoui_rhythm で映った最後の番号）
-- テスト 8（b122）: ボーン #122（geoui_rhythm で枠の複製が始まった番号）
-- テスト 9（b126）: ボーン #126
-- テスト 10（b130）: ボーン #130
-- テスト 11（b200）: ボーン #200
-- テスト 12（b248）: ボーン #248（249 本の最後）
-- テスト 13（own1）: 自分の render controller（共有のジオメトリに part_visibility）・cutout
-- テスト 14（ownblend）: 自分の render controller・blend（ボーンの名前でマテリアル）
-- テスト 15（ownalpha）: 自分の render controller・color.a を変数で（scale は 1 のまま、不透明度だけで出し入れ）
-- テスト 16（ownuv）: 自分の render controller・uv_anim の offset を式で（コマ 0 は透明、選ぶとコマ 2）
-- テスト 17（ownclone）: compile.js と同じ作りの枠の複製（ボーン #140・原型の名前_t0s0・奥へ 0.021・その render controller）
-- テスト 18（own31）: 31 個目の自分の render controller（6〜30 個目は何も描かない複製）
-- テスト 19（line700）: pre_animation の 700 行目の変数で出し入れ
+- テスト 2（c1）: カナリア 1: pre_animation の最初の行の後
+- テスト 3（c2）: カナリア 2: q.life_time を読んだ行の後
+- テスト 4（c3）: カナリア 3: q.anim_time を読んだ行の後
+- テスト 5（c4）: カナリア 4: ?? で守った時計（前の値と変わったら q.life_time を覚える）の後
+- テスト 6（c5）: カナリア 5: 700 行目の後
+- テスト 7（c6）: カナリア 6: 一度も入れていない変数を ?? なしで読んだ行の後（描かれなければ「そこで止まる」の確かめ）
+- テスト 8（clockpre）: pre_animation の q.life_time（?? の時計: 選んでからの秒 x 15 単位、右へ）
+- テスト 9（clockanim）: アニメーションの中の q.anim_time（選ぶと始まるアニメーション: 秒 x 15 単位、右へ）
+- テスト 10（lifepre）: pre_animation の q.life_time の値（1 秒より大きければ +60 単位右に描く）
+- テスト 11（animpre）: pre_animation の q.anim_time の値（0 でなければ +60 単位右に描く）
+- テスト 12（ownalpha）: 自分の render controller・blend・color.a を変数で（scale は 1 のまま、不透明度だけで出し入れ）
+- テスト 13（alpha0）: 自分の render controller・blend・color.a を 0（定数）: 描かれたら color.a は効かない
+- テスト 14（ownuv）: 自分の render controller・uv_anim の offset を変数で（コマ 0 は透明、選ぶとコマ 2）
+- テスト 15（uvconst）: 自分の render controller・uv_anim の offset を 0.5（定数）: 透明のコマ 0 から緑のコマ 2 へ（描かれたら uv_anim が効く）
+- テスト 16（ownclone）: compile.js と同じ作りの枠の複製（ボーン #140・原型の名前_t0s0・奥へ 0.021・その render controller・color.a と uv を変数で）
+- テスト 17（line700）: pre_animation の 700 行目の変数で出し入れ
+- テスト 18（b121）: ボーン #121
+- テスト 19（b126）: ボーン #126
+- テスト 20（ownblend）: 自分の render controller・blend（ボーンの名前でマテリアル）
 
 ## Acceptance (one tests.txt `## ` section each)
 - [ ] 読み込める（プロパティが既定値）

@@ -823,6 +823,27 @@
         },
         "spinner_t2s0": {
           "scale": 0
+        },
+        "hitcircle": {
+          "scale": 0
+        },
+        "combonumber": {
+          "scale": 0
+        },
+        "approachcircle": {
+          "scale": 0
+        },
+        "hitburst": {
+          "scale": 0
+        },
+        "hitmiss": {
+          "scale": 0
+        },
+        "sliderball": {
+          "scale": 0
+        },
+        "spinner": {
+          "scale": 0
         }
       }
     }

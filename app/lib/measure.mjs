@@ -5,21 +5,25 @@
 //   geoui — the GeoUI calibration grid of bds/addons/geoui_calib (bds/geoui/calib.mjs): the screen's height in model units,
 //           its centre and centre fix, px per unit, skew and depth — what GeoUI Studio's hand-set numbers are checked against
 //   diff  — where the picture differs from the newest `shot world` (the baseline `changed` uses): the share that changed and
-//           the boxes (px) of the changed parts, biggest first — where a UI was drawn, in numbers
+//           the boxes (px) of the changed parts, biggest first — where a UI was drawn, in numbers. Optionally only inside a box
+//           of the game's screen (px): what else moves on the screen — a first-person hand, the chat — left out
 import { measureCode, cleanCode } from './failcodes.mjs';
 
-const DIFF_PARTS = 4, DIFF_LEVEL = 48;
+const DIFF_PARTS = 8, DIFF_LEVEL = 48;
 export const KINDS = {
   diff: {
-    fields: ['width', 'height', 'areaX', 'areaY', 'share', 'parts', 'x0', 'y0', 'x1', 'y1',
+    fields: ['width', 'height', 'areaX', 'areaY', 'share', 'parts', 'x0', 'y0', 'x1', 'y1', 'rx0', 'ry0', 'rx1', 'ry1',
       ...Array.from({ length: DIFF_PARTS }, (_, k) => ['x0', 'y0', 'x1', 'y1', 'n'].map((f) => `b${k + 1}${f}`)).flat()],
-    async run(img, { baseline } = {}) {
+    async run(img, { baseline, region } = {}) {
       if (!baseline) return { ok: false, why: '比べる `shot world` がありません（先に shot world か shot world--<名前>）' };
       const W = img.width, H = img.height, N = W * H, a = img.data, b = baseline.data;
       if (baseline.width !== W || baseline.height !== H) return { ok: false, why: `大きさが違います（基準 ${baseline.width}x${baseline.height}、この画面 ${W}x${H}）` };
+      // (a box of the screen: only the pixels in it count — the share is of the box)
+      const R = region ? { x0: Math.max(0, region.x0), y0: Math.max(0, region.y0), x1: Math.min(W, region.x1), y1: Math.min(H, region.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
+      if (R.x1 <= R.x0 || R.y1 <= R.y0) return { ok: false, why: `測る枠が画面の外です（${W}x${H}）` };
       const on = new Uint8Array(N);
       let changed = 0;
-      for (let i = 0; i < N; i++) { const o = i * 4; if (Math.abs(a[o] - b[o]) + Math.abs(a[o + 1] - b[o + 1]) + Math.abs(a[o + 2] - b[o + 2]) > DIFF_LEVEL) { on[i] = 1; changed++; } }
+      for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) { const i = y * W + x, o = i * 4; if (Math.abs(a[o] - b[o]) + Math.abs(a[o + 1] - b[o + 1]) + Math.abs(a[o + 2] - b[o + 2]) > DIFF_LEVEL) { on[i] = 1; changed++; } }
       // the changed parts (4-neighbour); specks smaller than a 1/200000 of the picture (at least 4 px) are noise
       const min = Math.max(4, Math.round(N / 200_000)), parts = [], stack = [];
       for (let i = 0; i < N; i++) {
@@ -37,7 +41,7 @@ export const KINDS = {
         if (n >= min) parts.push({ n, x0, y0, x1: x1 + 1, y1: y1 + 1 });
       }
       parts.sort((p, q) => q.n - p.n);
-      const v = { width: W, height: H, share: changed / N, parts: parts.length };
+      const v = { width: W, height: H, share: changed / ((R.x1 - R.x0) * (R.y1 - R.y0)), parts: parts.length, ...(region ? { rx0: R.x0, ry0: R.y0, rx1: R.x1, ry1: R.y1 } : {}) };
       if (parts.length) Object.assign(v, { x0: Math.min(...parts.map((p) => p.x0)), y0: Math.min(...parts.map((p) => p.y0)), x1: Math.max(...parts.map((p) => p.x1)), y1: Math.max(...parts.map((p) => p.y1)) });
       parts.slice(0, DIFF_PARTS).forEach((p, k) => { for (const f of ['x0', 'y0', 'x1', 'y1', 'n']) v[`b${k + 1}${f}`] = p[f]; });
       return { ok: true, values: v };

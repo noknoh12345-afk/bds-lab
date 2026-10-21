@@ -1,5 +1,5 @@
-# geoui_probe（bds/geoui/timeline/probe.mjs が作る）: GeoUI の作りの確かめ（ボーンの番号・自分の render controller・時間）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
-# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px）を数で出す。
+# geoui_probe（bds/geoui/timeline/probe.mjs が作る）: GeoUI の作りの確かめ（pre_animation が止まる所・時計・自分の render controller）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を数で出す。
 
 section title
 launch
@@ -12,6 +12,8 @@ until joined 300000
 wait 3000
 do time set noon
 do gamerule dodaylightcycle false
+do gamerule sendcommandfeedback false
+do gamerule commandblockoutput false
 do weather clear
 do tp @a 0 -60 0 0 90
 do hud @a hide paperdoll
@@ -27,134 +29,139 @@ section t01-ctl
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 1); 'probe 1'
 wait 1500
 shot t01-ctl
-measure diff t01-ctl
+measure diff t01-ctl 0 170 1030 720
 
-section t02-clockpre
+section t02-c1
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 2); 'probe 2'
 wait 1500
-shot t02-clockpre-a
-measure diff t02-clockpre-a
-wait 1500
-shot t02-clockpre-b
-measure diff t02-clockpre-b
+shot t02-c1
+measure diff t02-c1 0 170 1030 720
 
-section t03-clockanim
+section t03-c2
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 3); 'probe 3'
 wait 1500
-shot t03-clockanim-a
-measure diff t03-clockanim-a
-wait 1500
-shot t03-clockanim-b
-measure diff t03-clockanim-b
+shot t03-c2
+measure diff t03-c2 0 170 1030 720
 
-section t04-clocklife
+section t04-c3
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 4); 'probe 4'
 wait 1500
-shot t04-clocklife-a
-measure diff t04-clocklife-a
-wait 1500
-shot t04-clocklife-b
-measure diff t04-clocklife-b
+shot t04-c3
+measure diff t04-c3 0 170 1030 720
 
-section t05-b60
+section t05-c4
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 5); 'probe 5'
 wait 1500
-shot t05-b60
-measure diff t05-b60
+shot t05-c4
+measure diff t05-c4 0 170 1030 720
 
-section t06-b115
+section t06-c5
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 6); 'probe 6'
 wait 1500
-shot t06-b115
-measure diff t06-b115
+shot t06-c5
+measure diff t06-c5 0 170 1030 720
 
-section t07-b121
+section t07-c6
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 7); 'probe 7'
 wait 1500
-shot t07-b121
-measure diff t07-b121
+shot t07-c6
+measure diff t07-c6 0 170 1030 720
 
-section t08-b122
+section t08-clockpre
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 8); 'probe 8'
 wait 1500
-shot t08-b122
-measure diff t08-b122
+shot t08-clockpre-a
+measure diff t08-clockpre-a 0 170 1030 720
+wait 1500
+shot t08-clockpre-b
+measure diff t08-clockpre-b 0 170 1030 720
 
-section t09-b126
+section t09-clockanim
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 9); 'probe 9'
 wait 1500
-shot t09-b126
-measure diff t09-b126
+shot t09-clockanim-a
+measure diff t09-clockanim-a 0 170 1030 720
+wait 1500
+shot t09-clockanim-b
+measure diff t09-clockanim-b 0 170 1030 720
 
-section t10-b130
+section t10-lifepre
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 10); 'probe 10'
 wait 1500
-shot t10-b130
-measure diff t10-b130
+shot t10-lifepre
+measure diff t10-lifepre 0 170 1030 720
 
-section t11-b200
+section t11-animpre
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 11); 'probe 11'
 wait 1500
-shot t11-b200
-measure diff t11-b200
+shot t11-animpre
+measure diff t11-animpre 0 170 1030 720
 
-section t12-b248
+section t12-ownalpha
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 12); 'probe 12'
 wait 1500
-shot t12-b248
-measure diff t12-b248
+shot t12-ownalpha
+measure diff t12-ownalpha 0 170 1030 720
 
-section t13-own1
+section t13-alpha0
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 13); 'probe 13'
 wait 1500
-shot t13-own1
-measure diff t13-own1
+shot t13-alpha0
+measure diff t13-alpha0 0 170 1030 720
 
-section t14-ownblend
+section t14-ownuv
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 14); 'probe 14'
 wait 1500
-shot t14-ownblend
-measure diff t14-ownblend
+shot t14-ownuv
+measure diff t14-ownuv 0 170 1030 720
 
-section t15-ownalpha
+section t15-uvconst
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 15); 'probe 15'
 wait 1500
-shot t15-ownalpha
-measure diff t15-ownalpha
+shot t15-uvconst
+measure diff t15-uvconst 0 170 1030 720
 
-section t16-ownuv
+section t16-ownclone
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 16); 'probe 16'
 wait 1500
-shot t16-ownuv
-measure diff t16-ownuv
+shot t16-ownclone
+measure diff t16-ownclone 0 170 1030 720
 
-section t17-ownclone
+section t17-line700
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 17); 'probe 17'
 wait 1500
-shot t17-ownclone
-measure diff t17-ownclone
+shot t17-line700
+measure diff t17-line700 0 170 1030 720
 
-section t18-own31
+section t18-b121
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 18); 'probe 18'
 wait 1500
-shot t18-own31
-measure diff t18-own31
+shot t18-b121
+measure diff t18-b121 0 170 1030 720
 
-section t19-line700
+section t19-b126
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 19); 'probe 19'
 wait 1500
-shot t19-line700
-measure diff t19-line700
+shot t19-b126
+measure diff t19-b126 0 170 1030 720
+
+section t20-ownblend
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 20); 'probe 20'
+wait 1500
+shot t20-ownblend
+measure diff t20-ownblend 0 170 1030 720
 
 section all
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 99); 'probe 99'
 wait 1500
 shot all
-measure diff all
+measure diff all 0 170 1030 720
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 0); 'probe 0'
 
 section log-molang
 absent clientlog (?i)molang
+section log-variable
+absent clientlog (?i)variable
 section log-geometry
 absent clientlog (?i)geometr|\bbones?\b
 section log-render

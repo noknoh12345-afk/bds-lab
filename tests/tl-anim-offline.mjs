@@ -25,6 +25,9 @@ const designOf = (names) => ({ settings: { ns: 'geoui', bp: false }, bones: [{ n
 function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt = 1 / 60, from = 0 } = {}) {
   const design = designOf(names), built = G.buildPack(design), out = C.extendPack(built.files, doc, { design, core: G, ...ctx });
   const ent = JSON.parse(out.files['geoui_RP/entity/player.entity.json']), pre = ent['minecraft:client_entity'].description.scripts.pre_animation;
+  // (a variable read on the first frame before it is set is a content error in the game, and the game leaves every line after
+  //  it undone, every frame — the whole timeline dead while its first lines still run: what the probe found, 2026-10-21)
+  const unset = G.unsetReads(pre, { init: ent['minecraft:client_entity'].description.scripts.initialize });
   let N = M.normalize(doc);
   const seq = N.sequences[0], slots = Object.entries(out.stats.slots).map(([k, v]) => ({ tpl: seq.templates.find((x) => x.id === k.split(':')[1]), ...v }));
   // (streamed: the game sees each instance's params as the property packs them — the preview compared with those numbers)
@@ -71,6 +74,7 @@ function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt =
       }
     }
   }
+  if (unset.length) bad.unshift(`the first frame reads variables before they are set (the game stops there): ${unset.join(', ')}`);
   return { bad, out, pre };
 }
 

@@ -50,11 +50,17 @@
           "v.geoui_cx = variable.is_paperdoll ? 0.0 : q.property('gprobe:cx')/10000.0*170.681;",
           "v.geoui_cy = variable.is_paperdoll ? 0.0 : q.property('gprobe:cy')/10000.0*170.681;",
           "v.gp_t = q.property('gprobe:v2');",
-          "v.gp_c0 = (v.gp_t != v.gp_tp) ? q.life_time : v.gp_c0;",
+          "v.gp_c1 = 1;",
+          "v.gp_life = q.life_time;",
+          "v.gp_c2 = 1;",
+          "v.gp_anim = q.anim_time;",
+          "v.gp_c3 = 1;",
+          "v.gp_t0 = (v.gp_t != (v.gp_tp ?? -1)) ? q.life_time : (v.gp_t0 ?? 0);",
           "v.gp_tp = v.gp_t;",
-          "v.gp_cl = q.life_time - v.gp_c0;",
-          "v.gp_a = (v.gp_t == 15 || v.gp_t == 99) ? 1 : 0;",
-          "v.gp_fr = (v.gp_t == 16 || v.gp_t == 99) ? 2 : 0;",
+          "v.gp_cl = q.life_time - v.gp_t0;",
+          "v.gp_c4 = 1;",
+          "v.gp_a = (v.gp_t == 12 || v.gp_t == 99) ? 1 : 0;",
+          "v.gp_fr = (v.gp_t == 14 || v.gp_t == 99) ? 2 : 0;",
           "v.gprobe_a_ownproto_t0s0 = 1;",
           "v.gprobe_fr_ownproto_t0s0 = 0;",
           "v.gp_z0 = 0;",
@@ -737,19 +743,10 @@
           "v.gp_z677 = 677;",
           "v.gp_z678 = 678;",
           "v.gp_z679 = 679;",
-          "v.gp_z680 = 680;",
-          "v.gp_z681 = 681;",
-          "v.gp_z682 = 682;",
-          "v.gp_z683 = 683;",
-          "v.gp_z684 = 684;",
-          "v.gp_z685 = 685;",
-          "v.gp_z686 = 686;",
-          "v.gp_z687 = 687;",
-          "v.gp_z688 = 688;",
-          "v.gp_z689 = 689;",
-          "v.gp_z690 = 690;",
-          "v.gp_z691 = 691;",
-          "v.gp_l = (v.gp_t == 19 || v.gp_t == 99) ? 1 : 0;"
+          "v.gp_l = (v.gp_t == 17 || v.gp_t == 99) ? 1 : 0;",
+          "v.gp_c5 = 1;",
+          "v.gp_bad = v.gp_never + 1;",
+          "v.gp_c6 = 1;"
         ],
         "animate": [
           {
@@ -759,10 +756,7 @@
             "gprobe_probe": "q.is_in_ui"
           },
           {
-            "gprobe_clockanim": "q.is_in_ui && v.gp_t == 3"
-          },
-          {
-            "gprobe_clocklife": "q.is_in_ui && v.gp_t == 4"
+            "gprobe_clockanim": "q.is_in_ui && v.gp_t == 9"
           },
           "root"
         ],
@@ -851,8 +845,7 @@
         "third_person_melee_spear_controller": "controller.animation.player.melee_spear",
         "gprobe_transform": "animation.gprobe_transform",
         "gprobe_probe": "animation.gprobe.probe",
-        "gprobe_clockanim": "animation.gprobe.clockanim",
-        "gprobe_clocklife": "animation.gprobe.clocklife"
+        "gprobe_clockanim": "animation.gprobe.clockanim"
       },
       "render_controllers": [
         {
@@ -874,97 +867,22 @@
           "controller.render.player.map": "variable.map_face_icon"
         },
         {
-          "controller.render.gprobe_probe_own1": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_ownblend": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
           "controller.render.gprobe_probe_ownalpha": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.gprobe_probe_alpha0": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
           "controller.render.gprobe_probe_ownuv": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
+          "controller.render.gprobe_probe_uvconst": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
           "controller.render.gprobe_probe_ownproto_t0s0": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
-          "controller.render.gprobe_probe_d12": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d13": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d14": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d15": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d16": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d17": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d18": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d19": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d20": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d21": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d22": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d23": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d24": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d25": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d26": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d27": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d28": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d29": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d30": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d31": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d32": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d33": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d34": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d35": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_d36": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.gprobe_probe_own31": "q.is_in_ui && !variable.is_paperdoll"
+          "controller.render.gprobe_probe_ownblend": "q.is_in_ui && !variable.is_paperdoll"
         }
       ],
       "enable_attachables": true

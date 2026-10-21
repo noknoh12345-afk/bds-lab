@@ -1,5 +1,5 @@
 # geoui_probe_tl（bds/geoui/timeline/probe.mjs が作る）: GeoUI のタイムラインの書き出し（compile.js）をそのまま確かめる。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
-# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px）を数で出す。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を数で出す。
 
 section title
 launch
@@ -12,6 +12,8 @@ until joined 300000
 wait 3000
 do time set noon
 do gamerule dodaylightcycle false
+do gamerule sendcommandfeedback false
+do gamerule commandblockoutput false
 do weather clear
 do tp @a 0 -60 0 0 90
 do hud @a hide paperdoll
@@ -28,39 +30,41 @@ do scriptevent gprobt:play 1 2
 do scriptevent gprobt:pause
 wait 1500
 shot t01-st2
-measure diff t01-st2
+measure diff t01-st2 0 170 1030 720
 
 section t02-st4
 do scriptevent gprobt:seek 4
 do scriptevent gprobt:pause
 wait 1500
 shot t02-st4
-measure diff t02-st4
+measure diff t02-st4 0 170 1030 720
 
 section t03-st6
 do scriptevent gprobt:seek 6
 do scriptevent gprobt:pause
 wait 1500
 shot t03-st6
-measure diff t03-st6
+measure diff t03-st6 0 170 1030 720
 
 section t04-run
 do scriptevent gprobt:play 1 0
 wait 2500
 shot t04-run-a
-measure diff t04-run-a
+measure diff t04-run-a 0 170 1030 720
 wait 1500
 shot t04-run-b
-measure diff t04-run-b
+measure diff t04-run-b 0 170 1030 720
 
 section stop
 do scriptevent gprobt:stop
 wait 1500
 shot stopped
-measure diff stopped
+measure diff stopped 0 170 1030 720
 
 section log-molang
 absent clientlog (?i)molang
+section log-variable
+absent clientlog (?i)variable
 section log-geometry
 absent clientlog (?i)geometr|\bbones?\b
 section log-render

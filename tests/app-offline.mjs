@@ -1981,6 +1981,12 @@ await t('scenario: measure geoui <shot> — the lab\'s own measuring on a pictur
   const dv = d.measures[0]?.values ?? {};
   ok(d.ok && dv.parts === 2 && dv.b1n === 300 && [dv.b1x0, dv.b1y0, dv.b1x1, dv.b1y1].join() === '10,5,40,15' && [dv.b2x0, dv.b2y0, dv.b2x1, dv.b2y1].join() === '150,70,160,90' && [dv.x0, dv.y0, dv.x1, dv.y1].join() === '10,5,160,90' && Math.abs(dv.share - 501 / 20000) < 1e-9,
     'diff: two parts (biggest first), the box of all, the share (the 1 px speck counts in the share only)', JSON.stringify(dv));
+  // (a box of the screen: only what changed in it — a hand or the chat elsewhere left out; the share is of the box)
+  const rg = await S.runScenario(S.parseScenario('shot hud\nmeasure diff hud 100 40 200 100\n').steps, { ...ctx, baseline: () => worldPic });
+  const rv = rg.measures[0]?.values ?? {};
+  ok(rg.ok && rv.parts === 1 && [rv.b1x0, rv.b1y0, rv.b1x1, rv.b1y1].join() === '150,70,160,90' && [rv.rx0, rv.ry0, rv.rx1, rv.ry1].join() === '100,40,200,100' && Math.abs(rv.share - 201 / 6000) < 1e-6,
+    'diff in a box: only the parts in it, the share of the box', JSON.stringify(rv));
+  eq(S.parseScenario('measure diff hud 1 2 3\nmeasure diff hud 5 5 4 9\nmeasure geoui hud 0 0 9 9\n').errors.length, 3);
   const nb = await S.runScenario(S.parseScenario('shot hud\nmeasure diff hud\n').steps, ctx);
   ok(!nb.ok && /shot world/.test(nb.results[1]?.note ?? ''), 'diff without a `shot world`: fails, says what to take', JSON.stringify(nb.results));
   // after `size 1024x768`, a picture of the emulator's display (1560x720) holds the game's 4:3 screen scaled into its middle

@@ -22,26 +22,41 @@
         "ctl": {
           "scale": "(v.gp_t == 1 || v.gp_t == 99) ? 1 : 0"
         },
-        "pre16": {
-          "scale": "v.gpm_pre16"
+        "d54": {
+          "scale": "(v.gp_t == 2 || v.gp_t == 99) ? (v.gpm_d54 ?? 0) : 0"
         },
-        "pre54": {
-          "scale": "v.gpm_pre54"
+        "d54_c": {
+          "scale": "(v.gp_t == 3 || v.gp_t == 99) ? (v.gpm_d54_c ?? 0) : 0"
         },
-        "pre150": {
-          "scale": "v.gpm_pre150"
+        "f6k": {
+          "scale": "(v.gp_t == 4 || v.gp_t == 99) ? (v.gpm_f6k ?? 0) : 0"
         },
-        "pref8k": {
-          "scale": "v.gpm_pref8k"
+        "f6k_c": {
+          "scale": "(v.gp_t == 5 || v.gp_t == 99) ? (v.gpm_f6k_c ?? 0) : 0"
         },
-        "big1": {
-          "scale": "(v.gp_t == 10 || v.gp_t == 99) ? 1 : 0"
+        "f8k": {
+          "scale": "(v.gp_t == 6 || v.gp_t == 99) ? (v.gpm_f8k ?? 0) : 0"
         },
-        "big300": {
-          "scale": "(v.gp_t == 11 || v.gp_t == 99) ? 1 : 0"
+        "f8k_c": {
+          "scale": "(v.gp_t == 7 || v.gp_t == 99) ? (v.gpm_f8k_c ?? 0) : 0"
         },
-        "big599": {
-          "scale": "(v.gp_t == 12 || v.gp_t == 99) ? 1 : 0"
+        "f12k": {
+          "scale": "(v.gp_t == 8 || v.gp_t == 99) ? (v.gpm_f12k ?? 0) : 0"
+        },
+        "f12k_c": {
+          "scale": "(v.gp_t == 9 || v.gp_t == 99) ? (v.gpm_f12k_c ?? 0) : 0"
+        },
+        "d100": {
+          "scale": "(v.gp_t == 10 || v.gp_t == 99) ? (v.gpm_d100 ?? 0) : 0"
+        },
+        "d100_c": {
+          "scale": "(v.gp_t == 11 || v.gp_t == 99) ? (v.gpm_d100_c ?? 0) : 0"
+        },
+        "f16k": {
+          "scale": "(v.gp_t == 12 || v.gp_t == 99) ? (v.gpm_f16k ?? 0) : 0"
+        },
+        "f16k_c": {
+          "scale": "(v.gp_t == 13 || v.gp_t == 99) ? (v.gpm_f16k_c ?? 0) : 0"
         }
       }
     }

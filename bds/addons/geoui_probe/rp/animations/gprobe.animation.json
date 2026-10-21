@@ -19,73 +19,86 @@
       "loop": true,
       "animation_length": 1,
       "bones": {
+        "ownproto": {
+          "scale": 0
+        },
         "ctl": {
           "scale": "(v.gp_t == 1 || v.gp_t == 99) ? 1 : 0"
         },
+        "c1": {
+          "scale": "(v.gp_t == 2 || v.gp_t == 99) ? (v.gp_c1 ?? 0) : 0"
+        },
+        "c2": {
+          "scale": "(v.gp_t == 3 || v.gp_t == 99) ? (v.gp_c2 ?? 0) : 0"
+        },
+        "c3": {
+          "scale": "(v.gp_t == 4 || v.gp_t == 99) ? (v.gp_c3 ?? 0) : 0"
+        },
+        "c4": {
+          "scale": "(v.gp_t == 5 || v.gp_t == 99) ? (v.gp_c4 ?? 0) : 0"
+        },
+        "c5": {
+          "scale": "(v.gp_t == 6 || v.gp_t == 99) ? (v.gp_c5 ?? 0) : 0"
+        },
+        "c6": {
+          "scale": "(v.gp_t == 7 || v.gp_t == 99) ? (v.gp_c6 ?? 0) : 0"
+        },
         "clockpre": {
           "position": [
-            "(v.gp_t == 2 || v.gp_t == 99) ? math.clamp(v.gp_cl, 0, 6) * 15 : 0",
+            "(v.gp_t == 8 || v.gp_t == 99) ? math.clamp(v.gp_cl ?? 0, 0, 6) * 15 : 0",
             0,
             0
           ],
-          "scale": "(v.gp_t == 2 || v.gp_t == 99) ? 1 : 0"
-        },
-        "clockanim": {
-          "scale": "(v.gp_t == 3 || v.gp_t == 99) ? 1 : 0"
-        },
-        "clocklife": {
-          "scale": "(v.gp_t == 4 || v.gp_t == 99) ? 1 : 0"
-        },
-        "b60": {
-          "scale": "(v.gp_t == 5 || v.gp_t == 99) ? 1 : 0"
-        },
-        "b115": {
-          "scale": "(v.gp_t == 6 || v.gp_t == 99) ? 1 : 0"
-        },
-        "b121": {
-          "scale": "(v.gp_t == 7 || v.gp_t == 99) ? 1 : 0"
-        },
-        "b122": {
           "scale": "(v.gp_t == 8 || v.gp_t == 99) ? 1 : 0"
         },
-        "b126": {
+        "clockanim": {
           "scale": "(v.gp_t == 9 || v.gp_t == 99) ? 1 : 0"
         },
-        "b130": {
+        "lifepre": {
+          "position": [
+            "((v.gp_life ?? 0) > 1 ? 60 : 0)",
+            0,
+            0
+          ],
           "scale": "(v.gp_t == 10 || v.gp_t == 99) ? 1 : 0"
         },
-        "b200": {
+        "animpre": {
+          "position": [
+            "((v.gp_anim ?? 0) != 0 ? 60 : 0)",
+            0,
+            0
+          ],
           "scale": "(v.gp_t == 11 || v.gp_t == 99) ? 1 : 0"
         },
-        "b248": {
-          "scale": "(v.gp_t == 12 || v.gp_t == 99) ? 1 : 0"
-        },
-        "own1": {
+        "alpha0": {
           "scale": "(v.gp_t == 13 || v.gp_t == 99) ? 1 : 0"
         },
-        "ownblend": {
-          "scale": "(v.gp_t == 14 || v.gp_t == 99) ? 1 : 0"
+        "uvconst": {
+          "scale": "(v.gp_t == 15 || v.gp_t == 99) ? 1 : 0"
         },
         "ownproto_t0s0": {
           "position": [
-            "(v.gp_t == 17 || v.gp_t == 99) ? 15 : 0",
-            "(v.gp_t == 17 || v.gp_t == 99) ? 5 : 0",
+            "(v.gp_t == 16 || v.gp_t == 99) ? -125 : 0",
+            "(v.gp_t == 16 || v.gp_t == 99) ? -25 : 0",
             0
           ],
           "scale": [
-            "(v.gp_t == 17 || v.gp_t == 99) ? 1 : 0",
-            "(v.gp_t == 17 || v.gp_t == 99) ? 1 : 0",
+            "(v.gp_t == 16 || v.gp_t == 99) ? 1 : 0",
+            "(v.gp_t == 16 || v.gp_t == 99) ? 1 : 0",
             1
           ]
         },
-        "own31": {
+        "line700": {
+          "scale": "v.gp_l ?? 0"
+        },
+        "b121": {
           "scale": "(v.gp_t == 18 || v.gp_t == 99) ? 1 : 0"
         },
-        "line700": {
-          "scale": "v.gp_l"
+        "b126": {
+          "scale": "(v.gp_t == 19 || v.gp_t == 99) ? 1 : 0"
         },
-        "ownproto": {
-          "scale": 0
+        "ownblend": {
+          "scale": "(v.gp_t == 20 || v.gp_t == 99) ? 1 : 0"
         }
       }
     },
@@ -96,19 +109,6 @@
         "clockanim": {
           "position": [
             "math.clamp(q.anim_time, 0, 6) * 15",
-            0,
-            0
-          ]
-        }
-      }
-    },
-    "animation.gprobe.clocklife": {
-      "loop": true,
-      "animation_length": 100,
-      "bones": {
-        "clocklife": {
-          "position": [
-            "math.clamp(q.life_time, 0, 6) * 15",
             0,
             0
           ]

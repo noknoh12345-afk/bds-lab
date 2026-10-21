@@ -271,7 +271,8 @@ var GeoUICore = (function () {
         case 'bin': {
           if (x.op === '&&') return ev(x.a) && ev(x.b) ? 1 : 0;
           if (x.op === '||') return ev(x.a) || ev(x.b) ? 1 : 0;
-          if (x.op === '??') { const a = ev(x.a); return a === undefined || a === null ? ev(x.b) : a; }
+          // (a variable never set — the game's "not valid" — gives the right side; reading one without ?? is what env.unknown lists)
+          if (x.op === '??') { if (x.a.n === 'id' && x.a.id.startsWith('variable.') && !(x.a.id in vars)) return ev(x.b); const a = ev(x.a); return a === undefined || a === null ? ev(x.b) : a; }
           const a = ev(x.a), b = ev(x.b);
           switch (x.op) {
             case '+': return a + b; case '-': return a - b; case '*': return a * b; case '/': return b === 0 ? 0 : a / b;
@@ -362,8 +363,37 @@ var GeoUICore = (function () {
     });
     return { quads: out, rotated: [...rotated] };
   }
-  /** run pre_animation statements in env (vars filled in place) */
-  function runPre(lines, env) { for (const l of lines || []) molang(l.replace(/;\s*$/, ''), env); return env; }
+  /** the variables a list of pre_animation lines sets (variable.name, lower case: as the evaluator names them) */
+  const ownVars = (lines) => new Set((lines || []).map((l) => /^\s*(?:v|variable)\.(\w+)\s*=[^=]/.exec(l)).filter(Boolean).map((m) => `variable.${m[1].toLowerCase()}`));
+  /** run pre_animation statements in env (vars filled in place). opts.stopAtUnset: as the game does — the first line that reads
+   *  a variable the lines set but that is not set yet (without ??) is a content error, and the game stops there: that line and
+   *  every one after it left undone (env.stoppedAt: its index). opts.ours: a RegExp of more names that are never the game's
+   *  own (a variable read but set nowhere — a slip of the pen — stops it just the same) */
+  function runPre(lines, env, opts = {}) {
+    const set = opts.stopAtUnset ? ownVars(lines) : null, own = set && { has: (n) => set.has(n) || !!(opts.ours && opts.ours.test(n)) };
+    delete env.stoppedAt;
+    for (let i = 0; i < (lines || []).length; i++) {
+      const l = lines[i].replace(/;\s*$/, '');
+      if (!own) { molang(l, env); continue; }
+      const saved = env.unknown, keep = Object.assign({}, env.vars);
+      env.unknown = new Set();
+      molang(l, env);
+      const bad = [...env.unknown].some((n) => own.has(n));
+      env.unknown = new Set([...(saved || []), ...env.unknown]);
+      if (bad) { env.vars = keep; env.stoppedAt = i; break; }
+    }
+    return env;
+  }
+  /** the variables a pre_animation reads on its first frame before setting them (without ??) — of those it sets itself
+   *  (the game's own, like variable.is_paperdoll, are not ours to set) or named like ours (opts.ours, GeoUI's by default). Each
+   *  is a content error in the game, and the game leaves every line after it undone, every frame (bds-lab's probe, 2026-10-21).
+   *  opts: { props, init: [lines] (initialize), ours } */
+  function unsetReads(lines, { props = {}, init = [], ours = /^variable\.geoui_/ } = {}) {
+    const own = ownVars(lines), env = envOf({ props });
+    runPre(init, env); env.unknown = new Set();
+    runPre(lines, env);
+    return [...env.unknown].filter((n) => own.has(n) || (ours && ours.test(n))).sort();
+  }
 
   // ---------------------------------------------------------------------------------------------------------------
   // Building a pack from a design (what the Blockbench project holds, as plain data)
@@ -773,7 +803,7 @@ system.runInterval(() => {
   return {
     VERSION, STUDIO, MEASURED, CALIBRATIONS, DEVICES, ANCHORS, BLENDS, FILLS, PIVOT_Y, ROOT,
     num, r3, r4, clean, qa, defaults, newProjectSettings, frameScreen, settingsOf, halfWAt, centerOf, screenAt, hAnchor, vAnchor, padsOf, studioAnchor,
-    parse, evaluate, molang, molangError, envOf, pose, runPre, digitExpr, preAnimation, transformAnimation,
+    parse, evaluate, molang, molangError, envOf, pose, runPre, unsetReads, digitExpr, preAnimation, transformAnimation,
     geometriesOf, materialsFile, hudScreen, scriptOf, buildPack, layoutOf, uuidFrom, PROP_RANGES,
   };
 })();

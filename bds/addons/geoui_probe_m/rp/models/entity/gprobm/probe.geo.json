@@ -59,7 +59,7 @@
           ]
         },
         {
-          "name": "pre16",
+          "name": "d54",
           "parent": "geo_ui",
           "pivot": [
             -125,
@@ -94,7 +94,7 @@
           ]
         },
         {
-          "name": "pre54",
+          "name": "d54_c",
           "parent": "geo_ui",
           "pivot": [
             -90,
@@ -129,7 +129,7 @@
           ]
         },
         {
-          "name": "pre150",
+          "name": "f6k",
           "parent": "geo_ui",
           "pivot": [
             -55,
@@ -164,7 +164,7 @@
           ]
         },
         {
-          "name": "pref8k",
+          "name": "f6k_c",
           "parent": "geo_ui",
           "pivot": [
             -20,
@@ -199,7 +199,77 @@
           ]
         },
         {
-          "name": "ch54",
+          "name": "f8k",
+          "parent": "geo_ui",
+          "pivot": [
+            15,
+            175,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8,
+                168,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "f8k_c",
+          "parent": "geo_ui",
+          "pivot": [
+            50,
+            175,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                43,
+                168,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "f12k",
           "parent": "geo_ui",
           "pivot": [
             -160,
@@ -234,7 +304,7 @@
           ]
         },
         {
-          "name": "ch400",
+          "name": "f12k_c",
           "parent": "geo_ui",
           "pivot": [
             -125,
@@ -269,7 +339,7 @@
           ]
         },
         {
-          "name": "chf30k",
+          "name": "d100",
           "parent": "geo_ui",
           "pivot": [
             -90,
@@ -304,7 +374,7 @@
           ]
         },
         {
-          "name": "chf100k",
+          "name": "d100_c",
           "parent": "geo_ui",
           "pivot": [
             -55,
@@ -315,6 +385,76 @@
             {
               "origin": [
                 -62,
+                138,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "f16k",
+          "parent": "geo_ui",
+          "pivot": [
+            -20,
+            145,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -27,
+                138,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "f16k_c",
+          "parent": "geo_ui",
+          "pivot": [
+            15,
+            145,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8,
                 138,
                 0
               ],

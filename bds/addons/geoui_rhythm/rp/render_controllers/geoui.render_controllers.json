@@ -464,6 +464,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s0": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -471,8 +474,8 @@
       ],
       "uv_anim": {
         "offset": [
-          "math.mod(v.geoui_fr_hitcircle_t0s0, 4) / 4",
-          "math.floor(v.geoui_fr_hitcircle_t0s0 / 4) / 4"
+          "math.mod(v.geoui_fr_hitcircle_t0s0, 4) * 0.25",
+          "math.floor(v.geoui_fr_hitcircle_t0s0 / 4) * 0.25"
         ],
         "scale": [
           1,
@@ -654,6 +657,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s0": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -661,8 +667,8 @@
       ],
       "uv_anim": {
         "offset": [
-          "math.mod(v.geoui_fr_approachcircle_t0s0, 4) / 4",
-          "math.floor(v.geoui_fr_approachcircle_t0s0 / 4) / 4"
+          "math.mod(v.geoui_fr_approachcircle_t0s0, 4) * 0.25",
+          "math.floor(v.geoui_fr_approachcircle_t0s0 / 4) * 0.25"
         ],
         "scale": [
           1,
@@ -719,6 +725,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s0": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -784,6 +793,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s0": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -849,6 +861,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s1": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -856,8 +871,8 @@
       ],
       "uv_anim": {
         "offset": [
-          "math.mod(v.geoui_fr_hitcircle_t0s1, 4) / 4",
-          "math.floor(v.geoui_fr_hitcircle_t0s1 / 4) / 4"
+          "math.mod(v.geoui_fr_hitcircle_t0s1, 4) * 0.25",
+          "math.floor(v.geoui_fr_hitcircle_t0s1 / 4) * 0.25"
         ],
         "scale": [
           1,
@@ -1039,6 +1054,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s1": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -1046,8 +1064,8 @@
       ],
       "uv_anim": {
         "offset": [
-          "math.mod(v.geoui_fr_approachcircle_t0s1, 4) / 4",
-          "math.floor(v.geoui_fr_approachcircle_t0s1 / 4) / 4"
+          "math.mod(v.geoui_fr_approachcircle_t0s1, 4) * 0.25",
+          "math.floor(v.geoui_fr_approachcircle_t0s1 / 4) * 0.25"
         ],
         "scale": [
           1,
@@ -1104,6 +1122,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s1": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -1169,6 +1190,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s1": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -1234,6 +1258,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s2": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -1241,8 +1268,8 @@
       ],
       "uv_anim": {
         "offset": [
-          "math.mod(v.geoui_fr_hitcircle_t0s2, 4) / 4",
-          "math.floor(v.geoui_fr_hitcircle_t0s2 / 4) / 4"
+          "math.mod(v.geoui_fr_hitcircle_t0s2, 4) * 0.25",
+          "math.floor(v.geoui_fr_hitcircle_t0s2 / 4) * 0.25"
         ],
         "scale": [
           1,
@@ -1424,6 +1451,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s2": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -1431,8 +1461,8 @@
       ],
       "uv_anim": {
         "offset": [
-          "math.mod(v.geoui_fr_approachcircle_t0s2, 4) / 4",
-          "math.floor(v.geoui_fr_approachcircle_t0s2 / 4) / 4"
+          "math.mod(v.geoui_fr_approachcircle_t0s2, 4) * 0.25",
+          "math.floor(v.geoui_fr_approachcircle_t0s2 / 4) * 0.25"
         ],
         "scale": [
           1,
@@ -1489,6 +1519,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s2": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -1554,6 +1587,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s2": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -1619,6 +1655,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s3": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -1626,8 +1665,8 @@
       ],
       "uv_anim": {
         "offset": [
-          "math.mod(v.geoui_fr_hitcircle_t0s3, 4) / 4",
-          "math.floor(v.geoui_fr_hitcircle_t0s3 / 4) / 4"
+          "math.mod(v.geoui_fr_hitcircle_t0s3, 4) * 0.25",
+          "math.floor(v.geoui_fr_hitcircle_t0s3 / 4) * 0.25"
         ],
         "scale": [
           1,
@@ -1809,6 +1848,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s3": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -1816,8 +1858,8 @@
       ],
       "uv_anim": {
         "offset": [
-          "math.mod(v.geoui_fr_approachcircle_t0s3, 4) / 4",
-          "math.floor(v.geoui_fr_approachcircle_t0s3 / 4) / 4"
+          "math.mod(v.geoui_fr_approachcircle_t0s3, 4) * 0.25",
+          "math.floor(v.geoui_fr_approachcircle_t0s3 / 4) * 0.25"
         ],
         "scale": [
           1,
@@ -1874,6 +1916,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s3": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -1939,6 +1984,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s3": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -2004,6 +2052,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t1s0": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -2011,8 +2062,8 @@
       ],
       "uv_anim": {
         "offset": [
-          "math.mod(v.geoui_fr_hitcircle_t1s0, 4) / 4",
-          "math.floor(v.geoui_fr_hitcircle_t1s0 / 4) / 4"
+          "math.mod(v.geoui_fr_hitcircle_t1s0, 4) * 0.25",
+          "math.floor(v.geoui_fr_hitcircle_t1s0 / 4) * 0.25"
         ],
         "scale": [
           1,
@@ -2194,6 +2245,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t1s0": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -2201,8 +2255,8 @@
       ],
       "uv_anim": {
         "offset": [
-          "math.mod(v.geoui_fr_approachcircle_t1s0, 4) / 4",
-          "math.floor(v.geoui_fr_approachcircle_t1s0 / 4) / 4"
+          "math.mod(v.geoui_fr_approachcircle_t1s0, 4) * 0.25",
+          "math.floor(v.geoui_fr_approachcircle_t1s0 / 4) * 0.25"
         ],
         "scale": [
           1,
@@ -2259,6 +2313,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitburst_t1s0": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -2324,6 +2381,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t1s0": "material.geoui_blend"
         }
       ],
       "textures": [
@@ -2389,6 +2449,9 @@
         },
         {
           "sliderball": "material.geoui_blend"
+        },
+        {
+          "spinner_t2s0": "material.geoui_blend"
         }
       ],
       "textures": [

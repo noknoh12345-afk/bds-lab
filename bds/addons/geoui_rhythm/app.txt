@@ -12,6 +12,8 @@ until joined 300000
 wait 3000
 do time set noon
 do gamerule dodaylightcycle false
+do gamerule sendcommandfeedback false
+do gamerule commandblockoutput false
 do weather clear
 do tp @a 0 -60 0 0 90
 do hud @a hide paperdoll
@@ -26,49 +28,53 @@ section play
 do scriptevent geoui:play 1
 wait 1000
 shot play-1s
-measure diff play-1s
+measure diff play-1s 0 170 1030 720
 wait 1000
 shot play-2s
-measure diff play-2s
+measure diff play-2s 0 170 1030 720
 wait 1000
 shot play-3s
-measure diff play-3s
+measure diff play-3s 0 170 1030 720
 wait 1000
 shot play-4s
-measure diff play-4s
+measure diff play-4s 0 170 1030 720
 wait 1000
 shot play-5s
-measure diff play-5s
+measure diff play-5s 0 170 1030 720
 wait 1500
 shot play-6_5s
-measure diff play-6_5s
+measure diff play-6_5s 0 170 1030 720
 wait 1500
 shot play-8s
-measure diff play-8s
+measure diff play-8s 0 170 1030 720
 wait 1500
 shot play-9_5s
-measure diff play-9_5s
+measure diff play-9_5s 0 170 1030 720
 wait 1500
 shot play-11s
-measure diff play-11s
+measure diff play-11s 0 170 1030 720
 wait 1500
 shot play-12_5s
-measure diff play-12_5s
+measure diff play-12_5s 0 170 1030 720
 absent clientlog \bERROR\b
 
 section seek-pause
 do scriptevent geoui:seek 6
 wait 1500
 shot seek-6s
-measure diff seek-6s
+measure diff seek-6s 0 170 1030 720
 do scriptevent geoui:pause
 wait 1500
 shot paused-a
 wait 1500
 shot paused-b
-measure diff paused-b
+measure diff paused-b 0 170 1030 720
 do scriptevent geoui:stop
 wait 2000
 shot stopped
-measure diff stopped
+measure diff stopped 0 170 1030 720
 absent clientlog \bERROR\b
+
+section log-molang
+# (a content error of Molang: a pre_animation line that the game cannot run stops the lines after it — the slots then never show)
+absent clientlog (?i)molang

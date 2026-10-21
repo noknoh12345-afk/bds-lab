@@ -100,6 +100,12 @@ ok(plan.sequences[0].hits.length === 6 && !plan.sequences[0].hits.some((h) => h[
 // ---- the sample add-on (bds/addons/geoui_rhythm) is what demo.mjs makes ----
 const demo = spawnSync(process.execPath, [path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'bds', 'geoui', 'timeline', 'demo.mjs'), '--check'], { encoding: 'utf8' });
 ok(demo.status === 0, 'bds/addons/geoui_rhythm is up to date with demo.mjs', demo.stderr + demo.stdout);
+// (the game stops a pre_animation at a line that reads a variable not set yet: in geoui_rhythm that left every slot dead)
+{
+  const ent = JSON.parse(fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'bds', 'addons', 'geoui_rhythm', 'rp', 'entity', 'player.entity.json'), 'utf8'))['minecraft:client_entity'].description;
+  const unset = G.unsetReads(ent.scripts.pre_animation, { init: ent.scripts.initialize });
+  ok(!unset.length, 'geoui_rhythm: its pre_animation reads no variable before setting it (the game would stop there, every frame)', unset.join(', '));
+}
 
 console.log(`\n${fails ? 'FAIL' : 'PASS'} tl-runtime-offline (${n - fails}/${n})`);
 process.exit(fails ? 1 : 0);

@@ -40,6 +40,7 @@
 //   trim <RUNNING_CRITICAL|COMPLETE|…>   Android がメモリ不足を知らせる（ゲームの後始末と、戻った後の画面）
 //   until clientlog <正規表現> [ミリ秒]   ゲームのコンテンツログ（クライアントだけのエラー: JSON UI など）にその行が出るまで待つ
 //   expect clientlog <正規表現> / absent clientlog <正規表現>   ここまでのコンテンツログにある / ない
+//   measure diff <shot の名前> <x0> <y0> <x1> <y1>   diff をその枠（ゲームの画面の px）の中だけで（手や会話の動きを外す）
 //   measure <geoui|diff> <shot の名前>   その名前で撮った最後の画面を、ラボの測り方で測る（geoui = GeoUI の目盛り: 画面の高さ・中心・
 //                                遠近。diff = `shot world` と違う所の割合と枠 px）。測った数は公開の要約（summary.json・チェック）にも出る
 //                                （決まった名前の数だけ）。測れなければ失敗
@@ -152,7 +153,7 @@ function check(s) {
   if (s.verb === 'screen' && !(a.length === 1 && ['off', 'on'].includes(a[0]))) return '書き方: screen off|on';
   if ((s.verb === 'background' || s.verb === 'foreground') && a.length) return `書き方: ${s.verb}（引数なし）`;
   if (s.verb === 'trim' && !(a.length === 1 && TRIM.includes(String(a[0]).toUpperCase()))) return `書き方: trim <${TRIM.join('|')}>`;
-  if (s.verb === 'measure' && !(a.length === 2 && MEASURE_KINDS.includes(a[0]) && /^[\w.-]{1,40}$/.test(a[1]))) return `書き方: measure <${MEASURE_KINDS.join('|')}> <shot の名前>（その名前で撮った最後の画面を測る）`;
+  if (s.verb === 'measure' && !((a.length === 2 || (a.length === 6 && a[0] === 'diff' && a.slice(2).every((x) => /^\d{1,5}$/.test(x)) && +a[4] > +a[2] && +a[5] > +a[3])) && MEASURE_KINDS.includes(a[0]) && /^[\w.-]{1,40}$/.test(a[1]))) return `書き方: measure <${MEASURE_KINDS.join('|')}> <shot の名前>（その名前で撮った最後の画面を測る）・measure diff <shot の名前> <x0> <y0> <x1> <y1>（その枠の中だけ。ゲームの画面の px）`;
   if (s.verb === 'until') {
     if (a[0] === 'joined' || a[0] === 'stable' || a[0] === 'title') { if (a[1] !== undefined && Number.isNaN(num(a[1]))) return `書き方: until ${a[0]} [ミリ秒]`; }
     else if (LOGS.includes(a[0])) { if (!a[1]) return `書き方: until ${a[0]} <正規表現> [ミリ秒]`; try { rx(a[1]); } catch (e) { return `正規表現の誤り: ${e.message}`; } }
@@ -574,7 +575,8 @@ export async function runScenario(steps, ctx) {
         // (the game's part of the picture after `size`; diff: against the newest `shot world`, the picture `changed` compares with)
         const lg = shotLogical.get(f) ?? null, I = decode(fs.readFileSync(f)), area = gameArea(I.w, I.h, lg), base = kind === 'diff' ? ctx.baseline?.() : null;
         if (base && JSON.stringify(baseLogical) !== JSON.stringify(lg)) throw new Error(`基準の shot world を撮ったときと、ゲームの画面の大きさ（size）が違います: 同じ大きさで shot world を撮り直してください`);
-        const r = await measureShot(kind, cropImage(I, area), { baseline: base ? cropImage(decode(base), area) : null, area });
+        const region = a.length === 6 ? { x0: +a[2], y0: +a[3], x1: +a[4], y1: +a[5] } : null;
+        const r = await measureShot(kind, cropImage(I, area), { baseline: base ? cropImage(decode(base), area) : null, area, region });
         measures.push({ line: s.line, section: cur().name, kind, shot: name, ok: r.ok, values: r.values ?? {}, ...(r.ok ? {} : { why: r.why }) });
         if (!r.ok) throw new Error(`測れません（${kind} ${name}）: ${r.why}`);
         return `${Object.keys(r.values).length} 個の数`;
