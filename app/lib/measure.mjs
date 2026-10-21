@@ -9,7 +9,7 @@
 const DIFF_PARTS = 4, DIFF_LEVEL = 48;
 export const KINDS = {
   diff: {
-    fields: ['width', 'height', 'share', 'parts', 'x0', 'y0', 'x1', 'y1',
+    fields: ['width', 'height', 'areaX', 'areaY', 'share', 'parts', 'x0', 'y0', 'x1', 'y1',
       ...Array.from({ length: DIFF_PARTS }, (_, k) => ['x0', 'y0', 'x1', 'y1', 'n'].map((f) => `b${k + 1}${f}`)).flat()],
     async run(img, { baseline } = {}) {
       if (!baseline) return { ok: false, why: '比べる `shot world` がありません（先に shot world か shot world--<名前>）' };
@@ -47,7 +47,7 @@ export const KINDS = {
     },
   },
   geoui: {
-    fields: ['width', 'height', 'matched', 'dropped', 'anchors', 'colourAgreement', 'rmsPx', 'unitsPerScreenH', 'unitsPerScreenHFromX',
+    fields: ['width', 'height', 'areaX', 'areaY', 'matched', 'dropped', 'anchors', 'colourAgreement', 'rmsPx', 'unitsPerScreenH', 'unitsPerScreenHFromX',
       'centreX', 'centreY', 'centreFixX', 'centreFixY', 'pxPerUnitX', 'pxPerUnitY', 'skewXFromY', 'skewYFromX', 'depthNear', 'depthNearN', 'depthFar', 'depthFarN'],
     async run(img) {
       const { measure } = await import('../../bds/geoui/calib.mjs');
@@ -72,15 +72,16 @@ const name = (s) => (typeof s === 'string' && /^[\w.-]{1,40}$/.test(s) ? s : nul
 // (6 decimals: a centre fix is a few thousandths; a px count stays whole)
 const round = (v) => Math.round(v * 1e6) / 1e6;
 
-/** img (and opts.baseline, for diff): { width, height, data (RGBA) } → { ok, values } | { ok: false, why } */
+/** img (and opts.baseline, for diff): { width, height, data (RGBA) } → { ok, values } | { ok: false, why }.
+ *  opts.area: where img was cut from a bigger picture (the game's screen after `size`): its corner as areaX / areaY */
 export async function measureShot(kind, img, opts = {}) {
   const k = KINDS[kind];
   if (!k) return { ok: false, why: `知らない測り方 ${kind}（${KIND_NAMES.join(' ')}）` };
   try {
     const r = await k.run(img, opts);
     if (!r.ok) return { ok: false, why: String(r.why ?? '測れません') };
-    const values = {};
-    for (const f of k.fields) if (Number.isFinite(r.values[f])) values[f] = round(r.values[f]);
+    const raw = { ...r.values, ...(opts.area ? { areaX: opts.area.x, areaY: opts.area.y } : {}) }, values = {};
+    for (const f of k.fields) if (Number.isFinite(raw[f])) values[f] = round(raw[f]);
     return { ok: true, values };
   } catch (e) { return { ok: false, why: `測る途中で止まりました: ${String(e?.message ?? e).split('\n')[0].slice(0, 200)}` }; }
 }

@@ -168,6 +168,22 @@ function check(s) {
 }
 
 // ---- screens ----
+// the baseline picture `changed` and `measure diff` compare with (app.mjs keeps the newest one by this name)
+export const WORLD_SHOT = /^(ui-)?world(--[\w.-]+)?$/;
+/** where the game's own screen (logical, after `size`) is in a picture of w x h: null when the picture is that screen (the
+ *  device's screencap, or the same shape), else the part Android scales it into — the largest of its shape, centred */
+export function gameArea(w, h, logical) {
+  if (!logical || Math.abs((w / h) / (logical.w / logical.h) - 1) < 0.005) return null;
+  const k = Math.min(w / logical.w, h / logical.h), aw = Math.round(logical.w * k), ah = Math.round(logical.h * k);
+  return { x: Math.round((w - aw) / 2), y: Math.round((h - ah) / 2), w: aw, h: ah };
+}
+/** a decoded picture ({w, h, data}) → { width, height, data } of that part of it (all of it: area null) */
+export function cropImage(I, area) {
+  if (!area) return { width: I.w, height: I.h, data: I.data };
+  const out = Buffer.alloc(area.w * area.h * 4), src = Buffer.from(I.data.buffer, I.data.byteOffset, I.data.length);
+  for (let y = 0; y < area.h; y++) src.copy(out, y * area.w * 4, ((y + area.y) * I.w + area.x) * 4, ((y + area.y) * I.w + area.x + area.w) * 4);
+  return { width: area.w, height: area.h, data: out };
+}
 export function pngSize(buf) { return buf && buf.length > 24 && buf[0] === 0x89 ? { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) } : null; }
 /** the share of sampled pixels that differ (0..1). decode: common/extra.mjs pngDecode */
 export function screenDiff(a, b, decode) {
@@ -234,6 +250,10 @@ export async function runScenario(steps, ctx) {
   const srvTail = new Tail(server.logFile), logTail = new Tail(ctx.logcatFile);
   const results = [], shots = [], dialogs = ctx.dialogs ?? [], began = Date.now(), perf = [], recordings = [], measures = [];
   let n = 0, size = null, last = null, lastLook = 0, recN = 0, kbd, touched = false, ocrLast = null;
+  // the game's own screen after `size` (landscape; null = the device's): a picture of the emulator's display has it scaled
+  // into the display's shape, so `measure` looks at that part only. Kept per picture, and for the newest `shot world`
+  let logical = null, baseLogical = null;
+  const shotLogical = new Map();
   const doLog = path.join(runDir, 'do.txt');
   // the sections (`section <name>`): the client's content log is read at each boundary, so every line it wrote is tied
   // to the section (the screen) that was up when it was written. Lines before the first section go to "(はじめ)"
@@ -261,7 +281,7 @@ export async function runScenario(steps, ctx) {
   };
 
   const snap = () => { const b = adb.screencap(); size = pngSize(b) ?? size; last = b; return b; };
-  const save = (name, buf = snap()) => { n++; const f = path.join(shotsDir, `${String(n).padStart(2, '0')}-${name}.png`); fs.writeFileSync(f, buf); shots.push(f); return path.relative(runDir, f).split(path.sep).join('/'); };
+  const save = (name, buf = snap()) => { n++; const f = path.join(shotsDir, `${String(n).padStart(2, '0')}-${name}.png`); fs.writeFileSync(f, buf); shots.push(f); shotLogical.set(f, logical); return path.relative(runDir, f).split(path.sep).join('/'); };
   // a touch on the game, the way that works on this device (lib/android.mjs Adb.tap; a stand-in adb: input tap)
   const tapAt = (x, y) => { ocrLast = null; return adb.tap ? adb.tap(x, y) : adb.shell(['input', 'tap', String(x), String(y)]); };
   const px = (x, y) => { if (!size) snap(); return [x > 1 ? Math.round(x) : Math.round(x * size.w), y > 1 ? Math.round(y) : Math.round(y * size.h)]; };
@@ -363,7 +383,7 @@ export async function runScenario(steps, ctx) {
       }
       case 'wait': await sleep(num(a[0])); return '';
       case 'section': return '';
-      case 'shot': { const d = clearDialog(s); if (d) await sleep(2000); const f = save(a[0]); ctx.shotTaken?.(a[0], last); return '→ ' + f + (d ? `（先に Android のダイアログ「${d.proc}」に答えてから）` : ''); }
+      case 'shot': { const d = clearDialog(s); if (d) await sleep(2000); const f = save(a[0]); ctx.shotTaken?.(a[0], last); if (WORLD_SHOT.test(a[0])) baseLogical = logical; return '→ ' + f + (d ? `（先に Android のダイアログ「${d.proc}」に答えてから）` : ''); }
       case 'tap': case 'swipe': case 'key': case 'text': case 'chat': case 'press': case 'hold': case 'mouse': case 'pad': if (clearDialog(s)) await sleep(1000); break;
     }
     // the game played by name (walk, look, attack…): the controller's sticks, triggers and buttons (lib/play.mjs)
@@ -445,6 +465,7 @@ export async function runScenario(steps, ctx) {
         const v = a[0] === 'reset' ? 'reset' : s.verb === 'density' ? a[0] : (() => { const [w, h] = a[0].split('x').map(Number); return `${Math.min(w, h)}x${Math.max(w, h)}`; })();
         const r = adb.shell(['wm', s.verb, v], { timeout: 20_000 });
         if (r.status !== 0 || /Error|Exception/.test(r.stdout + r.stderr)) throw new Error(`画面を変えられませんでした（wm ${s.verb} ${v}）: ${(r.stdout + r.stderr).trim().slice(0, 200)}`);
+        if (s.verb === 'size') logical = a[0] === 'reset' ? null : (() => { const [w, h] = a[0].split('x').map(Number); return { w: Math.max(w, h), h: Math.min(w, h) }; })();
         size = null; await sleep(3000);   // (the game lays its screens out again; the next tap measures the new size)
         const now = pngSize(snap());
         return now ? `いま ${now.w}x${now.h}` : '';
@@ -475,9 +496,10 @@ export async function runScenario(steps, ctx) {
         // the newest picture of that name, measured on this machine (lib/measure.mjs: a fixed set of numbers, nothing of the screen)
         const [kind, name] = a, f = shots.filter((x) => path.basename(x).replace(/^\d+-/, '') === `${name}.png`).at(-1);
         if (!f) throw new Error(`測る画面がありません: 先に shot ${name}`);
-        // (diff: against the newest `shot world`, the picture `changed` compares with)
-        const img = (buf) => { const I = decode(buf); return { width: I.w, height: I.h, data: I.data }; }, base = kind === 'diff' ? ctx.baseline?.() : null;
-        const r = await measureShot(kind, img(fs.readFileSync(f)), { baseline: base ? img(base) : null });
+        // (the game's part of the picture after `size`; diff: against the newest `shot world`, the picture `changed` compares with)
+        const lg = shotLogical.get(f) ?? null, I = decode(fs.readFileSync(f)), area = gameArea(I.w, I.h, lg), base = kind === 'diff' ? ctx.baseline?.() : null;
+        if (base && JSON.stringify(baseLogical) !== JSON.stringify(lg)) throw new Error(`基準の shot world を撮ったときと、ゲームの画面の大きさ（size）が違います: 同じ大きさで shot world を撮り直してください`);
+        const r = await measureShot(kind, cropImage(I, area), { baseline: base ? cropImage(decode(base), area) : null, area });
         measures.push({ line: s.line, section: cur().name, kind, shot: name, ok: r.ok, values: r.values ?? {}, ...(r.ok ? {} : { why: r.why }) });
         if (!r.ok) throw new Error(`測れません（${kind} ${name}）: ${r.why}`);
         return `${Object.keys(r.values).length} 個の数`;

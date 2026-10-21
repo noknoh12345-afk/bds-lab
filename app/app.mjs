@@ -19,7 +19,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Worker } from 'node:worker_threads';
 import * as K from './lib/apk.mjs';
 import * as D from './lib/android.mjs';
-import { parseScenario, runScenario, dialogSummary, KEYS, pngSize, screenDiff, titleLike, blankScreen } from './lib/scenario.mjs';
+import { parseScenario, runScenario, dialogSummary, KEYS, pngSize, screenDiff, titleLike, blankScreen, WORLD_SHOT } from './lib/scenario.mjs';
 import { GAME_VERBS, gameLine, playGame, playServer } from './lib/play.mjs';
 import { startMonitor, fmtStats, hostNotes, hostStats } from './lib/host.mjs';
 import { annotations, deathExcerpt, ghEscape, guard, logcatDigest, writeReport } from './lib/report.mjs';
@@ -967,7 +967,7 @@ async function runCmd(args) {
       },
       ocr: C.ocrAvailable() ? (f) => C.ocrWords(f) : null, firstScreen: emu.warm ? ready?.stamp?.firstScreen ?? null : null,
       shotTaken: (name, buf) => {
-        if (/^(ui-)?world(--[\w.-]+)?$/.test(name)) baseline = buf;
+        if (WORLD_SHOT.test(name)) baseline = buf;
         // a texture the client could not find: only the picture shows it (no log line on the server, often none in the client's)
         try {
           const m = C.magentaShare(buf, pngDecode);

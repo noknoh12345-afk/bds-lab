@@ -1878,6 +1878,21 @@ await t('scenario: measure geoui <shot> — the lab\'s own measuring on a pictur
     'diff: two parts (biggest first), the box of all, the share (the 1 px speck counts in the share only)', JSON.stringify(dv));
   const nb = await S.runScenario(S.parseScenario('shot hud\nmeasure diff hud\n').steps, ctx);
   ok(!nb.ok && /shot world/.test(nb.results[1]?.note ?? ''), 'diff without a `shot world`: fails, says what to take', JSON.stringify(nb.results));
+  // after `size 1024x768`, a picture of the emulator's display (1560x720) holds the game's 4:3 screen scaled into its middle
+  // (960x720, black bars beside it): measured there, its corner given as areaX / areaY
+  eq(S.gameArea(1560, 720, { w: 1024, h: 768 }), { x: 300, y: 0, w: 960, h: 720 }); eq(S.gameArea(1024, 768, { w: 1024, h: 768 }), null); eq(S.gameArea(1560, 720, null), null);
+  eq(S.gameArea(1560, 720, { w: 2560, h: 1080 }), { x: 0, y: 31, w: 1560, h: 658 });
+  const g43 = synth({ h: 176, w: 960, hpx: 720 }), phys = Buffer.alloc(1560 * 720 * 4);
+  for (let i = 0; i < 1560 * 720; i++) phys[i * 4 + 3] = 255;
+  for (let y = 0; y < 720; y++) Buffer.from(g43.data).copy(phys, (y * 1560 + 300) * 4, y * 960 * 4, (y + 1) * 960 * 4);
+  pic = pngEncode({ w: 1560, h: 720, data: phys });
+  const sz = await S.runScenario(S.parseScenario('size 1024x768\nshot calib43\nmeasure geoui calib43\nsize reset\nmeasure geoui calib43\n').steps, ctx);
+  const [m43, again] = sz.measures;
+  ok(sz.ok && m43?.values.areaX === 300 && m43.values.areaY === 0 && m43.values.width === 960 && m43.values.height === 720 && Math.abs(m43.values.unitsPerScreenH - 176) < 1 && Math.abs(m43.values.centreX) < 1,
+    'size 1024x768 on a 1560x720 picture: the 4:3 part measured (height 176 units of the game\'s screen, centred)', JSON.stringify(m43?.values));
+  ok(again?.values.areaX === 300, 'measured later (after size reset): the shape the picture was taken with', JSON.stringify(again?.values));
+  const mix = await S.runScenario(S.parseScenario('shot world\nsize 1024x768\nshot hud43\nmeasure diff hud43\n').steps, { ...ctx, baseline: () => pic });
+  ok(!mix.ok && /撮り直して/.test(mix.results.at(-1)?.note ?? ''), 'diff against a `shot world` of another size: fails, says to take it again', JSON.stringify(mix.results.at(-1)));
 });
 await t('run: the device\'s own inputs — mouse (press, hover, wheel), a game controller, the screen off and on, home and back, a memory warning', () => {
   const sc = path.join(tmp, 'inputs.txt');
