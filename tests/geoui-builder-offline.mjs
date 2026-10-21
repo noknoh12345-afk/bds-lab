@@ -291,6 +291,14 @@ ok(back.width === 64 && back.height === 32 && Buffer.compare(Buffer.from(back.da
     ['インベントリに GeoUI が映り込む:false', '透明化の間も GeoUI が描かれる:true'], 'report: known diffs as yes / no, unknown shots left as numbers');
   eq2(RP.verdicts([{ addon: 'geoui_calib_far', shot: 'inventory-shown', values: { parts: 1, share: 0.864 } }]).map((v) => v.yes), [null], 'report: half the screen changed is no answer (the inventory that never opened: 86 %)');
   ok(/\| インベントリに GeoUI が映り込む \| \*\*いいえ\*\* \| geoui_calib の inventory-shown: 0 か所/.test(md), 'report: the answers in the Markdown');
+  // a run that never got into the world: its summary's join code and trail (app/lib/failcodes.mjs), read by load()
+  {
+    const jd = fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-join-'));
+    fs.writeFileSync(path.join(jd, 'summary.json'), JSON.stringify({ addon: 'geoui_calib', failed_lines: [14], failed_codes: ['join-play-unreached 2'], failed_trails: { 14: 'title-play wait*2 unknown-a restart' }, measures: [{ kind: 'geoui', shot: 'calib-hud', ok: false, code: 'no-anchor', values: {} }] }));
+    const L = RP.load([jd]), jmd = RP.markdown(RP.analyse(L.rows), { joins: L.joins });
+    fs.rmSync(jd, { recursive: true, force: true });
+    ok(L.joins.length === 1 && /\| geoui_calib \| 14 \| join-play-unreached 2 \| `title-play wait\*2 unknown-a restart` \|/.test(jmd) && /calib-hud（no-anchor）/.test(jmd), 'report: a run that could not join — its code and trail; a failed measure with its code', jmd.slice(-600));
+  }
   // from summary.json files (a run's artifacts as fetched): only measures, by addon
   const d = fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-report-')); fs.mkdirSync(path.join(d, 'app-geoui_calib-9', 'run1'), { recursive: true });
   fs.writeFileSync(path.join(d, 'app-geoui_calib-9', 'run1', 'summary.json'), JSON.stringify({ addon: 'geoui_calib', app: '1.26.52.3', measures: rows.filter((r) => r.addon === 'geoui_calib').map(({ shot, kind, ok: o, values }) => ({ shot, kind, ok: o, values })) }));

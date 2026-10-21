@@ -126,7 +126,7 @@ export const verdicts = (diffs) => diffs.filter((d) => DIFF_QUESTIONS[d.shot]).m
 const f = (x, n = 2) => (Number.isFinite(x) ? x.toFixed(n) : '—');
 const sgn = (x, n = 2) => (Number.isFinite(x) ? `${x >= 0 ? '+' : ''}${x.toFixed(n)}` : '—');
 /** the report as Markdown (pure) */
-export function markdown(a, { title = 'GeoUI の較正: 本物のアプリで測った値', runs = [], app = null } = {}) {
+export function markdown(a, { title = 'GeoUI の較正: 本物のアプリで測った値', runs = [], app = null, joins = [] } = {}) {
   const L = [`# ${title}`, ''];
   if (runs.length) L.push(`実行: ${runs.join('・')}${app ? `・アプリ ${app}` : ''}`, '');
   if (!a.geo.length) L.push('`measure geoui` の数がありません（実行が測るところまで行っていないか、測れなかった）。', '');
@@ -164,7 +164,13 @@ export function markdown(a, { title = 'GeoUI の較正: 本物のアプリで測
     for (const d of a.diffs) { const v = d.values; L.push(`| ${d.run ?? '—'} | ${d.addon} | ${d.shot} | ${f((v.share ?? 0) * 100, 3)} % | ${v.parts ?? 0} | ${Number.isFinite(v.x0) ? `(${v.x0}, ${v.y0})–(${v.x1}, ${v.y1})` : '—'} |`); }
     L.push('');
   }
-  if (a.failed.length) L.push(`測れなかった画面: ${a.failed.map((r) => `${r.addon}/${r.shot}`).join('、')}（理由は封じた結果に）`, '');
+  if (a.failed.length) L.push(`測れなかった画面: ${a.failed.map((r) => `${r.addon}/${r.shot}${r.code ? `（${r.code}）` : ''}`).join('、')}（詳しくは封じた結果に）`, '');
+  // (runs that never got into the world: no numbers from them — their code and the screens the join went through)
+  if (joins.length) {
+    L.push('## 参加できなかった実行（この実行の数は出ていない）', '', '| 実行 | アドオン | 行 | 理由 | 道筋 |', '|---|---|---|---|---|');
+    for (const j of joins) L.push(`| ${j.run ?? '—'} | ${j.addon} | ${j.line ?? '—'} | ${j.code} | ${j.trail ? `\`${j.trail}\`` : '—'} |`);
+    L.push('');
+  }
   return L.join('\n');
 }
 
@@ -180,7 +186,7 @@ function summariesIn(dir) {
 }
 /** the rows of the given inputs: run ids (fetched with gh), run folders, summary.json files */
 export function load(inputs, { repo = null, top = TOP } = {}) {
-  const rows = [], runs = [], apps = new Set(), plans = new Map();
+  const rows = [], runs = [], apps = new Set(), plans = new Map(), joins = [];
   const planOf = (addon) => {
     if (!plans.has(addon)) {
       const d = path.join(top, 'bds', 'addons', String(addon));
@@ -201,20 +207,22 @@ export function load(inputs, { repo = null, top = TOP } = {}) {
     if (run) runs.push(run);
     for (const file of files) {
       let s; try { s = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
+      // (a join that failed: its code, and its trail when the summary has one — app/lib/failcodes.mjs)
+      if (s?.addon && Array.isArray(s.failed_codes)) s.failed_codes.forEach((c, i) => { if (/^join(ed)?-/.test(String(c))) { const line = s.failed_lines?.[i] ?? null; joins.push({ run, addon: s.addon, line, code: String(c), trail: (line !== null && s.failed_trails?.[String(line)]) || null }); } });
       if (!s?.addon || !Array.isArray(s.measures)) continue;
       if (s.app) apps.add(s.app);
-      for (const m of s.measures) rows.push({ run, addon: s.addon, shot: m.shot, kind: m.kind, ok: m.ok === true, values: m.values ?? {}, plan: planOf(s.addon) });
+      for (const m of s.measures) rows.push({ run, addon: s.addon, shot: m.shot, kind: m.kind, ok: m.ok === true, values: m.values ?? {}, ...(m.code ? { code: m.code } : {}), plan: planOf(s.addon) });
     }
   }
-  return { rows, runs, app: [...apps].join('・') || null };
+  return { rows, runs, app: [...apps].join('・') || null, joins };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const args = process.argv.slice(2), opt = (k) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args.splice(i, 2)[1] : null; };
   const md = opt('md'), json = opt('json'), repo = opt('repo');
   if (!args.length) { console.log('usage: node bds/geoui/report.mjs <run id | run folder | summary.json>... [--md out.md] [--json out.json] [--repo owner/name]'); process.exit(1); }
-  const { rows, runs, app } = load(args, { repo });
-  const a = analyse(rows), text = markdown(a, { runs, app });
+  const { rows, runs, app, joins } = load(args, { repo });
+  const a = analyse(rows), text = markdown(a, { runs, app, joins });
   console.log(text);
   if (md) fs.writeFileSync(md, `${text}\n`);
   if (json) fs.writeFileSync(json, `${JSON.stringify({ runs, app, fit: a.fit, shots: a.geo.map(({ plan: _p, ...g }) => g), diffs: a.diffs.map(({ plan: _p, ...d }) => d) }, null, 1)}\n`);
