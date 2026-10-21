@@ -686,7 +686,8 @@ system.runInterval(() => {
     const animate = [{ [`${ns}_transform`]: 'q.is_in_ui' }];
     d.animations[`${ns}_transform`] = `animation.${ns}_transform`;
     for (const a of design.animations || []) {
-      const full = a.name.startsWith('animation.') ? a.name : `animation.${a.name}`, short = `${ns}_${clean(full.replace(/^animation\./, ''), 'anim')}`;
+      const full = a.name.startsWith('animation.') ? a.name : `animation.${a.name}`, base = clean(full.replace(/^animation\./, ''), 'anim');
+      const short = base.startsWith(`${ns}_`) ? base : `${ns}_${base}`;
       d.animations[short] = full; animate.push({ [short]: a.condition || 'q.is_in_ui' });
     }
     d.scripts.animate = [...animate, ...d.scripts.animate];
