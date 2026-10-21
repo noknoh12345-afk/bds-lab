@@ -1,0 +1,116 @@
+# geoui_probe_m（bds/geoui/timeline/probe.mjs が作る）: GeoUI の Molang の長さ・深さと、600 本のジオメトリの確かめ。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px）を数で出す。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+do time set noon
+do gamerule dodaylightcycle false
+do weather clear
+do tp @a 0 -60 0 0 90
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do hud @a hide crosshair
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 0); 'probe off'
+wait 6000
+shot world--probe-off
+absent clientlog \bERROR\b
+
+section t01-ctl
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 1); 'probe 1'
+wait 1500
+shot t01-ctl
+measure diff t01-ctl
+
+section t02-pre16
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 2); 'probe 2'
+wait 1500
+shot t02-pre16
+measure diff t02-pre16
+
+section t03-pre54
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 3); 'probe 3'
+wait 1500
+shot t03-pre54
+measure diff t03-pre54
+
+section t04-pre150
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 4); 'probe 4'
+wait 1500
+shot t04-pre150
+measure diff t04-pre150
+
+section t05-pref8k
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 5); 'probe 5'
+wait 1500
+shot t05-pref8k
+measure diff t05-pref8k
+
+section t06-ch54
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 6); 'probe 6'
+wait 1500
+shot t06-ch54
+measure diff t06-ch54
+
+section t07-ch400
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 7); 'probe 7'
+wait 1500
+shot t07-ch400
+measure diff t07-ch400
+
+section t08-chf30k
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 8); 'probe 8'
+wait 1500
+shot t08-chf30k
+measure diff t08-chf30k
+
+section t09-chf100k
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 9); 'probe 9'
+wait 1500
+shot t09-chf100k
+measure diff t09-chf100k
+
+section t10-big1
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 10); 'probe 10'
+wait 1500
+shot t10-big1
+measure diff t10-big1
+
+section t11-big300
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 11); 'probe 11'
+wait 1500
+shot t11-big300
+measure diff t11-big300
+
+section t12-big599
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 12); 'probe 12'
+wait 1500
+shot t12-big599
+measure diff t12-big599
+
+section all
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 99); 'probe 99'
+wait 1500
+shot all
+measure diff all
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 0); 'probe 0'
+
+section log-molang
+absent clientlog (?i)molang
+section log-geometry
+absent clientlog (?i)geometr|\bbones?\b
+section log-render
+absent clientlog (?i)render.?controller|part_visibility|uv_anim
+section log-animation
+absent clientlog (?i)animation
+section log-warn
+absent clientlog \bWARN
+section log-error
+absent clientlog \bERROR\b

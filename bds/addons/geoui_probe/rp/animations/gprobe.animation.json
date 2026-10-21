@@ -1,0 +1,119 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.gprobe_transform": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "geo_ui": {
+          "position": [
+            "v.geoui_ox+v.geoui_cx",
+            "v.geoui_oy+v.geoui_cy",
+            0
+          ],
+          "scale": "v.geoui_scale"
+        }
+      }
+    },
+    "animation.gprobe.probe": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "ctl": {
+          "scale": "(v.gp_t == 1 || v.gp_t == 99) ? 1 : 0"
+        },
+        "clockpre": {
+          "position": [
+            "(v.gp_t == 2 || v.gp_t == 99) ? math.clamp(v.gp_cl, 0, 6) * 15 : 0",
+            0,
+            0
+          ],
+          "scale": "(v.gp_t == 2 || v.gp_t == 99) ? 1 : 0"
+        },
+        "clockanim": {
+          "scale": "(v.gp_t == 3 || v.gp_t == 99) ? 1 : 0"
+        },
+        "clocklife": {
+          "scale": "(v.gp_t == 4 || v.gp_t == 99) ? 1 : 0"
+        },
+        "b60": {
+          "scale": "(v.gp_t == 5 || v.gp_t == 99) ? 1 : 0"
+        },
+        "b115": {
+          "scale": "(v.gp_t == 6 || v.gp_t == 99) ? 1 : 0"
+        },
+        "b121": {
+          "scale": "(v.gp_t == 7 || v.gp_t == 99) ? 1 : 0"
+        },
+        "b122": {
+          "scale": "(v.gp_t == 8 || v.gp_t == 99) ? 1 : 0"
+        },
+        "b126": {
+          "scale": "(v.gp_t == 9 || v.gp_t == 99) ? 1 : 0"
+        },
+        "b130": {
+          "scale": "(v.gp_t == 10 || v.gp_t == 99) ? 1 : 0"
+        },
+        "b200": {
+          "scale": "(v.gp_t == 11 || v.gp_t == 99) ? 1 : 0"
+        },
+        "b248": {
+          "scale": "(v.gp_t == 12 || v.gp_t == 99) ? 1 : 0"
+        },
+        "own1": {
+          "scale": "(v.gp_t == 13 || v.gp_t == 99) ? 1 : 0"
+        },
+        "ownblend": {
+          "scale": "(v.gp_t == 14 || v.gp_t == 99) ? 1 : 0"
+        },
+        "ownproto_t0s0": {
+          "position": [
+            "(v.gp_t == 17 || v.gp_t == 99) ? 15 : 0",
+            "(v.gp_t == 17 || v.gp_t == 99) ? 5 : 0",
+            0
+          ],
+          "scale": [
+            "(v.gp_t == 17 || v.gp_t == 99) ? 1 : 0",
+            "(v.gp_t == 17 || v.gp_t == 99) ? 1 : 0",
+            1
+          ]
+        },
+        "own31": {
+          "scale": "(v.gp_t == 18 || v.gp_t == 99) ? 1 : 0"
+        },
+        "line700": {
+          "scale": "v.gp_l"
+        },
+        "ownproto": {
+          "scale": 0
+        }
+      }
+    },
+    "animation.gprobe.clockanim": {
+      "loop": true,
+      "animation_length": 100,
+      "bones": {
+        "clockanim": {
+          "position": [
+            "math.clamp(q.anim_time, 0, 6) * 15",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.gprobe.clocklife": {
+      "loop": true,
+      "animation_length": 100,
+      "bones": {
+        "clocklife": {
+          "position": [
+            "math.clamp(q.life_time, 0, 6) * 15",
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.gprobt_probe",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 885.402,
+        "visible_bounds_height": 373.361,
+        "visible_bounds_offset": [
+          0,
+          140,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "bar",
+          "parent": "geo_ui",
+          "pivot": [
+            -160,
+            85,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -167,
+                78,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "dot",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -5,
+                135,
+                0
+              ],
+              "size": [
+                10,
+                10,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "dot_t0s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -5,
+                135,
+                0.021
+              ],
+              "size": [
+                10,
+                10,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "dot_t0s1",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -5,
+                135,
+                0.042
+              ],
+              "size": [
+                10,
+                10,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

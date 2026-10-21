@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Probe (timeline) BP",
+    "description": "GeoUI probe (bds-lab): GeoUI Probe (timeline)",
+    "uuid": "a4a0733a-cbe2-4733-845a-fccc9ce35205",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "acb03e71-fb41-46be-b4f1-d677dccd548c",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "f8221e64-d9b5-4a93-8e7d-7c2ef894fb15",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "c779a12a-9ba4-4ac3-8488-287c3ca5dab5",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.1.0"
+    }
+  ]
+}

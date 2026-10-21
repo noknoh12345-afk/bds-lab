@@ -1,0 +1,167 @@
+# geoui_probe（bds/geoui/timeline/probe.mjs が作る）: GeoUI の作りの確かめ（ボーンの番号・自分の render controller・時間）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px）を数で出す。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+do time set noon
+do gamerule dodaylightcycle false
+do weather clear
+do tp @a 0 -60 0 0 90
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do hud @a hide crosshair
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 0); 'probe off'
+wait 6000
+shot world--probe-off
+absent clientlog \bERROR\b
+
+section t01-ctl
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 1); 'probe 1'
+wait 1500
+shot t01-ctl
+measure diff t01-ctl
+
+section t02-clockpre
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 2); 'probe 2'
+wait 1500
+shot t02-clockpre-a
+measure diff t02-clockpre-a
+wait 1500
+shot t02-clockpre-b
+measure diff t02-clockpre-b
+
+section t03-clockanim
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 3); 'probe 3'
+wait 1500
+shot t03-clockanim-a
+measure diff t03-clockanim-a
+wait 1500
+shot t03-clockanim-b
+measure diff t03-clockanim-b
+
+section t04-clocklife
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 4); 'probe 4'
+wait 1500
+shot t04-clocklife-a
+measure diff t04-clocklife-a
+wait 1500
+shot t04-clocklife-b
+measure diff t04-clocklife-b
+
+section t05-b60
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 5); 'probe 5'
+wait 1500
+shot t05-b60
+measure diff t05-b60
+
+section t06-b115
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 6); 'probe 6'
+wait 1500
+shot t06-b115
+measure diff t06-b115
+
+section t07-b121
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 7); 'probe 7'
+wait 1500
+shot t07-b121
+measure diff t07-b121
+
+section t08-b122
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 8); 'probe 8'
+wait 1500
+shot t08-b122
+measure diff t08-b122
+
+section t09-b126
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 9); 'probe 9'
+wait 1500
+shot t09-b126
+measure diff t09-b126
+
+section t10-b130
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 10); 'probe 10'
+wait 1500
+shot t10-b130
+measure diff t10-b130
+
+section t11-b200
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 11); 'probe 11'
+wait 1500
+shot t11-b200
+measure diff t11-b200
+
+section t12-b248
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 12); 'probe 12'
+wait 1500
+shot t12-b248
+measure diff t12-b248
+
+section t13-own1
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 13); 'probe 13'
+wait 1500
+shot t13-own1
+measure diff t13-own1
+
+section t14-ownblend
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 14); 'probe 14'
+wait 1500
+shot t14-ownblend
+measure diff t14-ownblend
+
+section t15-ownalpha
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 15); 'probe 15'
+wait 1500
+shot t15-ownalpha
+measure diff t15-ownalpha
+
+section t16-ownuv
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 16); 'probe 16'
+wait 1500
+shot t16-ownuv
+measure diff t16-ownuv
+
+section t17-ownclone
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 17); 'probe 17'
+wait 1500
+shot t17-ownclone
+measure diff t17-ownclone
+
+section t18-own31
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 18); 'probe 18'
+wait 1500
+shot t18-own31
+measure diff t18-own31
+
+section t19-line700
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 19); 'probe 19'
+wait 1500
+shot t19-line700
+measure diff t19-line700
+
+section all
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 99); 'probe 99'
+wait 1500
+shot all
+measure diff all
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 0); 'probe 0'
+
+section log-molang
+absent clientlog (?i)molang
+section log-geometry
+absent clientlog (?i)geometr|\bbones?\b
+section log-render
+absent clientlog (?i)render.?controller|part_visibility|uv_anim
+section log-animation
+absent clientlog (?i)animation
+section log-warn
+absent clientlog \bWARN
+section log-error
+absent clientlog \bERROR\b

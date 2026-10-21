@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Probe (timeline) RP",
+    "description": "GeoUI probe (bds-lab): GeoUI Probe (timeline)",
+    "uuid": "c779a12a-9ba4-4ac3-8488-287c3ca5dab5",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "5aa42ea5-0d4a-4758-b414-4c034a68657e",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

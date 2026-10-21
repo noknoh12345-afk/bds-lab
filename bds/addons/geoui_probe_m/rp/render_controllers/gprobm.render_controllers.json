@@ -1,0 +1,83 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.gprobm_probe": {
+      "geometry": "Geometry.gprobm_probe",
+      "materials": [
+        {
+          "*": "material.gprobm_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobm_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      }
+    },
+    "controller.render.gprobm_big": {
+      "geometry": "Geometry.gprobm_big",
+      "materials": [
+        {
+          "*": "material.gprobm_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobm_big"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      }
+    }
+  }
+}

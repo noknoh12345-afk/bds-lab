@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Probe (Molang) BP",
+    "description": "GeoUI probe (bds-lab): GeoUI Probe (Molang)",
+    "uuid": "ebc01324-468b-4223-9362-7fe2dd7998f9",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "a0a2bd17-73e3-4576-a2c6-5071aebd96e8",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "a3b8a87c-213b-4fc1-bccf-1ea2e0b33aff",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "6d6d0834-fc57-4c33-9e2e-ad129f671ae9",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.1.0"
+    }
+  ]
+}

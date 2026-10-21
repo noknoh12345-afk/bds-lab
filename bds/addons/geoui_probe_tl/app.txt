@@ -1,0 +1,73 @@
+# geoui_probe_tl（bds/geoui/timeline/probe.mjs が作る）: GeoUI のタイムラインの書き出し（compile.js）をそのまま確かめる。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px）を数で出す。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+do time set noon
+do gamerule dodaylightcycle false
+do weather clear
+do tp @a 0 -60 0 0 90
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do hud @a hide crosshair
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobt:v2', 0); 'probe off'
+wait 6000
+shot world--probe-off
+absent clientlog \bERROR\b
+
+section t01-st2
+do scriptevent gprobt:play 1 2
+do scriptevent gprobt:pause
+wait 1500
+shot t01-st2
+measure diff t01-st2
+
+section t02-st4
+do scriptevent gprobt:seek 4
+do scriptevent gprobt:pause
+wait 1500
+shot t02-st4
+measure diff t02-st4
+
+section t03-st6
+do scriptevent gprobt:seek 6
+do scriptevent gprobt:pause
+wait 1500
+shot t03-st6
+measure diff t03-st6
+
+section t04-run
+do scriptevent gprobt:play 1 0
+wait 2500
+shot t04-run-a
+measure diff t04-run-a
+wait 1500
+shot t04-run-b
+measure diff t04-run-b
+
+section stop
+do scriptevent gprobt:stop
+wait 1500
+shot stopped
+measure diff stopped
+
+section log-molang
+absent clientlog (?i)molang
+section log-geometry
+absent clientlog (?i)geometr|\bbones?\b
+section log-render
+absent clientlog (?i)render.?controller|part_visibility|uv_anim
+section log-animation
+absent clientlog (?i)animation
+section log-warn
+absent clientlog \bWARN
+section log-error
+absent clientlog \bERROR\b

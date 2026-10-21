@@ -1,0 +1,76 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.gprobt_transform": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "geo_ui": {
+          "position": [
+            "v.geoui_ox+v.geoui_cx",
+            "v.geoui_oy+v.geoui_cy",
+            0
+          ],
+          "scale": "v.geoui_scale"
+        }
+      }
+    },
+    "animation.gprobt.seq_1": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "bar": {
+          "position": [
+            "v.gprobt_1_0_x",
+            "v.gprobt_1_0_y",
+            0
+          ],
+          "scale": [
+            "v.gprobt_1_0_sx",
+            "v.gprobt_1_0_sy",
+            1
+          ]
+        },
+        "dot_t0s0": {
+          "position": [
+            "v.gprobt_1_t0s0_0_x",
+            "v.gprobt_1_t0s0_0_y",
+            0
+          ],
+          "scale": [
+            "v.gprobt_1_t0s0_0_sx",
+            "v.gprobt_1_t0s0_0_sy",
+            1
+          ]
+        },
+        "dot_t0s1": {
+          "position": [
+            "v.gprobt_1_t0s1_0_x",
+            "v.gprobt_1_t0s1_0_y",
+            0
+          ],
+          "scale": [
+            "v.gprobt_1_t0s1_0_sx",
+            "v.gprobt_1_t0s1_0_sy",
+            1
+          ]
+        },
+        "dot": {
+          "scale": 0
+        }
+      }
+    },
+    "animation.gprobt.seq_idle": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "dot_t0s0": {
+          "scale": 0
+        },
+        "dot_t0s1": {
+          "scale": 0
+        }
+      }
+    }
+  }
+}

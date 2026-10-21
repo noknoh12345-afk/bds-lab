@@ -1,0 +1,49 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.gprobm_transform": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "geo_ui": {
+          "position": [
+            "v.geoui_ox+v.geoui_cx",
+            "v.geoui_oy+v.geoui_cy",
+            0
+          ],
+          "scale": "v.geoui_scale"
+        }
+      }
+    },
+    "animation.gprobm.probe": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "ctl": {
+          "scale": "(v.gp_t == 1 || v.gp_t == 99) ? 1 : 0"
+        },
+        "pre16": {
+          "scale": "v.gpm_pre16"
+        },
+        "pre54": {
+          "scale": "v.gpm_pre54"
+        },
+        "pre150": {
+          "scale": "v.gpm_pre150"
+        },
+        "pref8k": {
+          "scale": "v.gpm_pref8k"
+        },
+        "big1": {
+          "scale": "(v.gp_t == 10 || v.gp_t == 99) ? 1 : 0"
+        },
+        "big300": {
+          "scale": "(v.gp_t == 11 || v.gp_t == 99) ? 1 : 0"
+        },
+        "big599": {
+          "scale": "(v.gp_t == 12 || v.gp_t == 99) ? 1 : 0"
+        }
+      }
+    }
+  }
+}

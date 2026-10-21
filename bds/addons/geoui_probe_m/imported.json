@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/timeline/probe.mjs",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI の Molang の長さ・深さと、600 本のジオメトリの確かめ（ラボの確かめ。絵はラボの物）"
+}

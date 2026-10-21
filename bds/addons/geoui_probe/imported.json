@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/timeline/probe.mjs",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI の作りの確かめ（ボーンの番号・自分の render controller・時間）（ラボの確かめ。絵はラボの物）"
+}

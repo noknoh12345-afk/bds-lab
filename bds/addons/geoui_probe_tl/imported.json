@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/timeline/probe.mjs",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI のタイムラインの書き出し（compile.js）をそのまま確かめる（ラボの確かめ。絵はラボの物）"
+}
