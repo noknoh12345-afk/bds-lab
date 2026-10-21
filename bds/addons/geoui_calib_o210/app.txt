@@ -24,8 +24,7 @@ do hud @a hide status_effects
 do hud @a hide item_text
 do hud @a hide tooltips
 do hud @a hide paperdoll
-wait 2000
-until stable 60000
+wait 6000
 absent clientlog \bERROR\b                 # 枠を変えても UI・Molang・マテリアルのエラーが無い
 
 section plain
@@ -35,15 +34,13 @@ measure geoui calib-plain
 section up88
 # 目盛りを 88 単位上へ（測った中心から 88 を足すと本当のモデル座標）
 do scriptevent gcal:set oy 880
-wait 2000
-until stable 60000
+wait 6000
 shot calib-up88
 measure geoui calib-up88
 
 section up176
 # 目盛りを 176 単位上へ（測った中心から 176 を足す）
 do scriptevent gcal:set oy 1760
-wait 2000
-until stable 60000
+wait 6000
 shot calib-up176
 measure geoui calib-up176

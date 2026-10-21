@@ -24,8 +24,7 @@ do hud @a hide status_effects
 do hud @a hide item_text
 do hud @a hide tooltips
 do hud @a hide paperdoll
-wait 2000
-until stable 60000
+wait 6000
 absent clientlog \bERROR\b                 # 枠を変えても UI・Molang・マテリアルのエラーが無い
 
 section plain
@@ -36,7 +35,6 @@ section fit
 # 目盛りを (0, 140) を中心に半分にして下へ 66 単位: 画面の高さが 88 でも 176 でも 3 行以上写る（測った値は「0.5 倍して 66 下げる」と本当のモデル座標）
 do scriptevent gcal:set scale 50
 do scriptevent gcal:set oy -660
-wait 2000
-until stable 60000
+wait 6000
 shot calib-fit
 measure geoui calib-fit

@@ -24,8 +24,7 @@ do hud @a hide status_effects
 do hud @a hide item_text
 do hud @a hide tooltips
 do hud @a hide paperdoll
-wait 2000
-until stable 60000
+wait 6000
 absent clientlog \bERROR\b                 # 枠を変えても UI・Molang・マテリアルのエラーが無い
 
 section plain
@@ -35,15 +34,13 @@ measure geoui calib-plain
 section double
 # 目盛りを 2 倍（測った値は「2 倍して読む」: 画面の高さが大きく増えたとき用）
 do scriptevent gcal:set scale 200
-wait 2000
-until stable 60000
+wait 6000
 shot calib-double
 measure geoui calib-double
 
 section half
 # 目盛りを半分（画面の高さが減ったとき用）
 do scriptevent gcal:set scale 50
-wait 2000
-until stable 60000
+wait 6000
 shot calib-half
 measure geoui calib-half

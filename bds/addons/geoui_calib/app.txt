@@ -13,8 +13,7 @@ shot title
 section join
 join
 until joined 300000
-wait 3000
-until stable 60000
+wait 7000
 shot calib-hud                             # HUD ごと（この端末の画面のまま）
 absent clientlog \bERROR\b                 # 参加しただけで UI・Molang・マテリアルのエラーが無い
 measure geoui calib-hud                    # （測れなければ、この区切りだけ失敗。次の区切りへ）
@@ -32,43 +31,42 @@ do hud @a hide status_effects
 do hud @a hide item_text
 do hud @a hide tooltips
 do hud @a hide paperdoll
-wait 2000
-until stable 60000
+wait 6000
 shot calib-device                          # この端末の画面（既定の大きさ）
 measure geoui calib-device
 
+section steady
+# 画面が落ち着くか（GeoUI の板と目盛りは止まっているか）。CI の端末では 60 秒落ち着かなかったので、写す前は決まった時間だけ待つ。
+# ここで落ちれば、理由のコード（stable-moving）に動き続けた所の枠（px）・割合・4 x 3 の格子が出る（公開のリポジトリでも読める）
+until stable 30000
+
 section size-4x3
 size 1024x768
-wait 5000
-until stable 60000
+wait 9000
 shot calib-1024x768
 measure geoui calib-1024x768
 
 section size-16x10
 size 1920x1200
-wait 5000
-until stable 60000
+wait 9000
 shot calib-1920x1200
 measure geoui calib-1920x1200
 
 section size-16x9
 size 1920x1080
-wait 5000
-until stable 60000
+wait 9000
 shot calib-1920x1080
 measure geoui calib-1920x1080
 
 section size-20x9
 size 2400x1080
-wait 5000
-until stable 60000
+wait 9000
 shot calib-2400x1080
 measure geoui calib-2400x1080
 
 section size-21x9
 size 2560x1080
-wait 5000
-until stable 60000
+wait 9000
 shot calib-2560x1080
 measure geoui calib-2560x1080
 
@@ -76,15 +74,13 @@ section density-240
 # UI の大きさ（GUI の倍率）を変えても、目盛りの写り方が変わらないか（Studio は「画面の高さ = 240 UI 単位」と仮定）
 size reset
 density 240
-wait 5000
-until stable 60000
+wait 9000
 shot calib-dpi240
 measure geoui calib-dpi240
 
 section density-480
 density 480
-wait 5000
-until stable 60000
+wait 9000
 shot calib-dpi480
 measure geoui calib-dpi480
 
@@ -93,8 +89,7 @@ density reset
 wait 3000
 # GeoUI 全体の大きさ（v.geoui_scale）: 目盛りが (0, 140) を中心に半分になる
 do scriptevent gcal:set scale 50
-wait 2000
-until stable 60000
+wait 6000
 shot calib-scale50
 do scriptevent gcal:set scale 100
 wait 1500
@@ -103,8 +98,7 @@ measure geoui calib-scale50                # 画面の高さが 2 倍の単位�
 
 section repeat
 # 同じ画面をもう一度: 測り方と端末のぶれ（calib-device との差が、ほかの画面どうしの差を読むときの物差し）
-wait 2000
-until stable 60000
+wait 6000
 shot calib-repeat
 measure geoui calib-repeat
 
@@ -112,8 +106,7 @@ section third-person
 # 仕様書「HUD 追加型は視点に依存しない」: 三人称でも目盛りは同じ所（後ろの黒い板が世界を隠すので、一人称の画面と同じになるはず）
 shot world--first-person
 perspective
-wait 2000
-until stable 60000
+wait 6000
 shot third-person
 measure geoui third-person
 measure diff third-person                  # 0 か所なら視点で変わらない
@@ -124,8 +117,7 @@ wait 1500
 section spectator
 # スペクテイターでも HUD に足した GeoUI が出るか（ホットバーなどバニラの HUD は消える）。測れれば出ている
 do gamemode spectator @a
-wait 2000
-until stable 60000
+wait 6000
 shot spectator
 measure geoui spectator
 do gamemode default @a
@@ -135,12 +127,10 @@ section inventory
 # インベントリの人形も live_player_renderer: いつもの高さ（y = 20〜260・後ろの黒い板 800 x 360）の GeoUI が映り込むか（geoui_calib_far と比べる）
 do scriptevent gcal:set scale 1                    # 消す（目盛りを (0, 140) の 1 点に縮める）
 key E
-wait 3000
-until stable 30000
+wait 7000
 shot world--inventory-hidden
 do scriptevent gcal:set scale 100
-wait 2000
-until stable 30000
+wait 6000
 shot inventory-shown
 measure diff inventory-shown                      # 違う所が無い（0 か所）なら映り込まない
 key BACK

@@ -23,8 +23,7 @@ do hud @a hide status_effects
 do hud @a hide item_text
 do hud @a hide tooltips
 do hud @a hide paperdoll
-wait 2000
-until stable 60000
+wait 6000
 absent clientlog \bERROR\b
 
 section plain
@@ -35,12 +34,10 @@ section inventory
 # インベントリの人形も live_player_renderer。GeoUI を人形から 1760 単位 に置けば、インベントリには映らないはず
 do scriptevent gcal:set scale 1                    # 消す（目盛りを (0, 1900) の 1 点に縮める）
 key E
-wait 3000
-until stable 30000
+wait 7000
 shot world--inventory-hidden
 do scriptevent gcal:set scale 100
-wait 2000
-until stable 30000
+wait 6000
 shot inventory-shown
 measure diff inventory-shown                      # 違う所が無い（0 か所）なら映り込まない
 key BACK

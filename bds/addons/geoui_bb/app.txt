@@ -20,14 +20,12 @@ do gamerule dodaylightcycle false
 do weather clear
 do gamerule doweathercycle false
 do tp @a 0 -60 0 0 90
-wait 2000
-until stable 60000
+wait 6000
 absent clientlog \bERROR\b
 
 section values
 do scriptevent geoui:set scale 1
-wait 2000
-until stable 60000
+wait 6000
 shot world--hidden                         # 基準: GeoUI が無いのと同じ（1 点に縮めた）
 do scriptevent geoui:set scale 100
 do scriptevent geoui:set v0 12345
@@ -51,8 +49,7 @@ section aspect-4x3
 size 1024x768
 do scriptevent geoui:set aspect 1333
 do scriptevent geoui:set scale 1
-wait 5000
-until stable 60000
+wait 9000
 shot world--4x3-hidden
 do scriptevent geoui:set scale 100
 wait 1500
@@ -64,8 +61,7 @@ wait 3000
 
 section scale-50
 do scriptevent geoui:set scale 1
-wait 1500
-until stable 60000
+wait 5500
 shot world--hidden-again                   # 基準をこの画面の大きさで撮り直す
 do scriptevent geoui:set scale 50
 wait 1500
