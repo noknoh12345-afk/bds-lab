@@ -2,6 +2,8 @@ node_modules/
 .lab/
 .lab-current
 dist/
+# (GeoUI Builder as one plugin file for Blockbench: bds/geoui/build.mjs makes it, tests/tl-bridge-offline.mjs checks it is current)
+!bds/geoui/dist/
 # vendored code under common/ keeps its dist/ (common/nethernet-connect/dist: what `lan` runs; not a build output of the lab)
 !common/*/dist/
 __pycache__/

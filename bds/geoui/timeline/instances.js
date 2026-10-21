@@ -126,11 +126,11 @@
     const state = { sort: null, filter: '', anchor: null, raf: 0, editing: null };
     const seqOf = () => { const d = store.doc(), s = store.selection() || {}; return (d.sequences || []).find((q) => q.id === s.seq) || (d.sequences || [])[0] || null; };
     const say = (m) => { msg.textContent = m || ''; };
-    const filter = h('input', { class: 'gin-filter', placeholder: '絞り込み（例 x>0 template=osu-circle）', style: 'background:#2a2b31;color:#ddd;border:1px solid #444;padding:1px 4px;width:220px;font:12px sans-serif',
+    const filter = h('input', { class: 'gin-filter', placeholder: '絞り込み（例 x>0 template=osu-circle）', style: 'background:#2a2b31;color:#ddd;border:1px solid #444;padding:1px 4px;width:220px;max-width:100%;font:12px sans-serif',
       oninput: (e) => { state.filter = e.target.value; const f = parseFilter(state.filter, seqOf()); say(f.error || ''); scroller.scrollTop = 0; paint(); }, onkeydown: (e) => e.stopPropagation() });
     const count = h('span', { class: 'gin-count', style: 'margin-left:8px;color:#8b8f9a' });
     const file = h('input', { type: 'file', accept: '.osu', style: 'display:none', onchange: () => { const f = file.files && file.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { importOsu(String(rd.result), f); file.value = ''; }; rd.readAsText(f); } });
-    const tools = h('div', { style: 'display:flex;align-items:center;padding:3px 6px;background:#18191d;border-bottom:1px solid #2e3038;font:12px sans-serif;color:#ccc' }, [
+    const tools = h('div', { style: 'display:flex;flex-wrap:wrap;gap:3px;align-items:center;padding:3px 6px;background:#18191d;border-bottom:1px solid #2e3038;font:12px sans-serif;color:#ccc' }, [
       filter, count, h('button', { class: 'gin-paste', style: BTN, title: '表計算ソフトからコピーした行（時刻・テンプレート・param）を足す', onclick: () => openPaste() }, '貼り付けで足す…'),
       T.osu ? h('button', { class: 'gin-osu', style: BTN, title: 'osu! の譜面（.osu）を読んで実体・テンプレート・道・テンポを足す', onclick: () => file.click() }, 'osu! を取り込む') : null, file]);
     const msg = h('div', { class: 'gin-msg', style: 'color:#e8a23a;font:11px sans-serif;min-height:14px;padding:0 6px' });
@@ -236,7 +236,8 @@
     const onScroll = () => draw();
     const listeners = [[scroller, 'click', onClick], [scroller, 'dblclick', onDbl], [scroller, 'keydown', onKey], [scroller, 'paste', onPaste], [scroller, 'scroll', onScroll]];
     for (const [t, ev, fn] of listeners) t.addEventListener(ev, fn);
-    const unsub = store.subscribe(draw);
+    // (the time alone changing draws nothing: the rows do not follow the playhead)
+    const unsub = store.subscribe((what) => { if (!what || what.doc || what.selection || what.external) draw(); });
     paint();
     return {
       refresh: paint, state, addRows, importOsu,

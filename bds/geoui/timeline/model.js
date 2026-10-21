@@ -551,10 +551,17 @@
     try {
       if (!intent || typeof intent.type !== 'string') fail('intent の形ではありません');
       // (several edits as one — the inspector's change to many selected things, one undo step: all of them or none)
+      // (a later intent may name what an earlier one made: '$0' is the id the first one returned, '$1' the second's …)
       if (intent.type === 'batch') {
         let d = doc;
-        for (const it of intent.intents || []) { const r = reduce(d, it); if (!r.ok) return { doc, ok: false, error: r.error }; d = r.doc; }
-        return { doc: d, ok: true };
+        const ids = [];
+        for (const it0 of intent.intents || []) {
+          const it = Object.fromEntries(Object.entries(it0 || {}).map(([k, v]) => { const m = typeof v === 'string' && /^\$(\d+)$/.exec(v); return [k, m ? ids[+m[1]] : v]; }));
+          const r = reduce(d, it);
+          if (!r.ok) return { doc, ok: false, error: r.error };
+          d = r.doc; ids.push(r.id);
+        }
+        return { doc: d, ok: true, ids, id: ids[ids.length - 1] };
       }
       const mk = idMaker(allIds(doc));
       if (intent.type === 'seq.add') {

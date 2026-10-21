@@ -71,7 +71,7 @@
   const setPoints = (seq, path, points) => ({ seq: seq.id, type: 'path.set', id: path.id, patch: { points: points.map((q) => [r4(q[0]), r4(q[1])]) } });
 
   // ---------------------------------------------------------------------------------------------------------------- DOM
-  /** attach(host, store, opts) → { detach, refresh, state }. host: { canvas(), frameRect(), elements(), screen?() → { unitsH,
+  /** attach(host, store, opts) → { detach, refresh, state }. host: { canvas(), frameRect() (null: not shown now), elements(), screen?() → { unitsH,
    *  center } }. opts: { grid (units, 0 = none), spacing (units a beat for the ring, 0 = none), window (s around the playhead) } */
   function attach(host, store, opts = {}) {
     const cv = host.canvas(), parent = cv && cv.parentElement;
@@ -96,7 +96,8 @@
     /** what is shown and can be dragged now: the selected path (its points, at its element), the instances out and the selected */
     function scene() {
       const seq = seqOf(), sel = store.selection() || {};
-      if (!seq) return null;
+      // (no GeoUI screen in the canvas — the camera turned away from the front view: nothing drawn, the pointer the preview's)
+      if (!seq || !host.frameRect()) return null;
       const map = mapOf(), E = els(), path = sel.path ? (seq.paths || []).find((p) => p.id === sel.path) : null;
       const pOrigin = path ? restOf(E, pathTarget(seq, path.id)) : null;
       const selected = new Set(sel.instances || []), t = store.time(), w = num(opts.window, 2);

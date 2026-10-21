@@ -818,7 +818,7 @@ if (typeof module === 'object' && module && module.exports && typeof BBPlugin ==
 if (typeof BBPlugin !== 'undefined') (function () {
   const G = GeoUICore, FORMAT_ID = 'geoui';
   const toBB = (v) => [-v[0], v[1], v[2]], fromBB = (v) => [-v[0], v[1], v[2]];
-  const state = { format: null, menu: null, overlay: null, actions: [], props: [], listeners: [] };
+  const state = { format: null, menu: null, overlay: null, actions: [], props: [], listeners: [], bridge: null };
   const isGeo = () => typeof Format !== 'undefined' && Format && Format.id === FORMAT_ID && typeof Project !== 'undefined' && Project;
   const say = (text, kind) => Blockbench.showQuickMessage(text, kind === 'error' ? 3500 : 2000);
 
@@ -1078,9 +1078,12 @@ if (typeof BBPlugin !== 'undefined') (function () {
     for (const a of Animation.all) if (a.name !== PREVIEW_NAME() && codec) animations.push({ name: a.name, json: codec.compileAnimation(a) });
     return { settings: S, bones, elements, textures, animations, seed: Project.uuid || '', warnings };
   }
-  function build() {
+  /** the pack: GeoUICore's, and the timeline's RP and BP when the project has sequences (o.timeline false: the layout alone —
+   *  what the preview needs) */
+  function build(o = {}) {
     const d = design(), built = G.buildPack(d);
     built.warnings = [...d.warnings, ...built.warnings];
+    if (state.bridge && o.timeline !== false) state.bridge.extend(built, d);
     return built;
   }
   async function zip(built, type = 'blob') {
@@ -1120,7 +1123,7 @@ if (typeof BBPlugin !== 'undefined') (function () {
   function preview(o = {}) {
     if (!isGeo()) return say('GeoUI のプロジェクトではありません', 'error');
     if (o.aspect || o.platform) setSettings({ previewAspect: o.aspect || settings().previewAspect, previewPlatform: o.platform || settings().previewPlatform });
-    const built = build(), name = PREVIEW_NAME(), codec = AnimationCodecOf();
+    const built = build({ timeline: false }), name = PREVIEW_NAME(), codec = AnimationCodecOf();
     for (const a of Animation.all.filter((x) => x.name === name)) a.remove(false, false);
     const [anim] = codec.loadFile({ json: { format_version: '1.8.0', animations: { [name]: built.animation } }, path: '' }, [name]);
     const text = placeholders(built, o), vue = Interface.Panels.variable_placeholders && Interface.Panels.variable_placeholders.inside_vue;
@@ -1343,16 +1346,25 @@ if (typeof BBPlugin !== 'undefined') (function () {
     A('geoui_preview', { name: 'プレビュー（書き出す式をそのまま動かす）', icon: 'play_circle', condition: isGeo, click: () => { preview(); view(); } });
     A('geoui_check', { name: 'はみ出し・式を確かめる…', icon: 'fact_check', condition: isGeo, click: checkDialog });
     A('geoui_export', { name: 'アドオンを書き出す（.mcaddon）', icon: 'file_download', condition: isGeo, click: exportAddon });
+    // (the timeline — bds/geoui/timeline/, bundled before this file in dist/geoui_builder.js: its panels, preview and export)
+    const TL = window.GeoUITimeline;
+    if (TL && TL.bridge) {
+      try {
+        state.bridge = TL.bridge.install({ G, isGeo, settings, elementOf, boxOf, preview, frame, toBB, fromBB, say, addImage, addNumber, view,
+          setFrameVisible: (v) => { if (state.overlay) state.overlay.visible = !!v && !!isGeo(); } });
+      } catch (e) { console.error(e); say(`GeoUI のタイムラインを読み込めません: ${e.message || e}`, 'error'); }
+    }
     state.menu = new BarMenu('geoui', ['geoui_new', 'geoui_settings', '_', 'geoui_add_image', 'geoui_add_number', 'geoui_add_gauge', 'geoui_element', '_',
-      'geoui_view', 'geoui_preview', 'geoui_check', '_', 'geoui_export'], { name: 'GeoUI', icon: 'dashboard' });
+      'geoui_view', 'geoui_preview', 'geoui_check', '_', 'geoui_export', ...(state.bridge ? ['_', ...state.bridge.actions] : [])], { name: 'GeoUI', icon: 'dashboard' });
     MenuBar.update();
     const on = (ev, f) => { Blockbench.on(ev, f); state.listeners.push([ev, f]); };
     for (const ev of ['select_project', 'unselect_project', 'select_mode', 'select_animation', 'finished_edit']) on(ev, () => setTimeout(() => { syncNumerals(); refreshOverlay(); }, 0));
     window.GeoUIBuilder = { core: G, settings, setSettings, newProject: newGeoProject, addImage, addNumber, addGauge, align, rescale, elementOf, boxOf,
-      design, build, zip, exportAddon, preview, placeholders, view, refreshOverlay, frame, packUuids, syncNumerals };
+      design, build, zip, exportAddon, preview, placeholders, view, refreshOverlay, frame, packUuids, syncNumerals, timeline: state.bridge || null };
     refreshOverlay();
   }
   function teardown() {
+    if (state.bridge) { try { state.bridge.uninstall(); } catch (e) { console.error(e); } state.bridge = null; delete window.GeoUITimeline; }
     for (const [ev, f] of state.listeners) Blockbench.removeListener(ev, f);
     for (const a of state.actions) a.delete();
     if (state.menu) state.menu.delete();

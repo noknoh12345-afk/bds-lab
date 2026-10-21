@@ -177,6 +177,22 @@
   実体の道（instance.path）も新しい id に。試験 `node tests/tl-editors-offline.mjs`（Node）と `bds/geoui/timeline/check-editors.mjs`（本物の Chromium）。
   要実測: サーバーの tick は 50 ms 刻み（判定の細かさ）・押してから届くまでの遅れ（offset で補正）・loop と流し込みの 2 周目。
 
+- 7. tl-bridge: **できた**。store.js（rules の store: dispatch は model.reduce を通して 1 回が Blockbench の Undo の 1 手（履歴に「GeoUI: クリップを動かす」など）、
+  選びは文書に無い物を名指さない、購読者へ何が変わったか（doc・selection・time。再生中の毎フレームは time だけ: インスペクタと表は描き直さない））、
+  player.js（時刻 = 始めた所 + 時計の経過 × 速さ。音がある間は **音の時計**（WebAudio の currentTime。出力の遅れの分は絵が待つ）: 絵は聞こえる音に
+  合い、ずれは溜まらない。ループ・範囲・逆再生・コマ送り、音のクリップは 3 秒先まで予約（途中からも・高さ・音量・ミュート/ソロ）、プレビューの
+  当たり（オート / 外れ / なし）、renderFrames と exportVideo: PNG の zip（透明）と webm（MediaRecorder: 最初のコマを先に描き、録る前に少し待ち、
+  音は全部読んでから。背景は黒・緑・白・透明（VP9 のアルファ）））、bridge.js（Blockbench の中: 文書と音を .bbmodel に（Project.geoui_timeline・
+  geoui_media）、Undo の create_undo_save / load_undo_save に文書をそのまま（reduce は元を変えない: 手ごとの写しは要らない）、パネル 3 つ
+  （Blockbench が全部のボタン・入力を自分の形にするので、パネルの中はブラウザの形に戻す）、プレビューは display_animation_frame で Blockbench の
+  ポーズの上に当てる（x は Blockbench の鏡に合わせて、回転・大きさ・不透明度とコマ（Blockbench のシェーダーに alpha と uv のずらしを足した、
+  その要素だけの材質）・数字の桁・ゲージの量）、実体はテンプレートのボーンの複製（シーンだけ、出入りで作って消す）、道の重ね絵、素材（音・画像・連番 →
+  1 枚のテクスチャとコマのクリップ）、osu!（.osu・.osz、足りない要素を描く: コンボ色のコマ・番号・弾け・×・スピナー・玉・スライダーの体のアトラス）、
+  動画の書き出し、書き出しに compile と runtime、外すと何も残らない）、model の batch に `$0`（前の intent が作った id）。build.mjs が 1 ファイルに
+  （各部は自分のスコープ: デスクトップ版の `module` を取らない）。試験 `node tests/tl-bridge-offline.mjs`（Node: store・偽の時計と WebAudio の player・
+  bridge の純粋な部分・dist が最新）、`bds/geoui/blockbench-check.mjs`（dist で 10/10）、`bds/geoui/timeline/check-bridge.mjs`（本物の Blockbench 5.2.2:
+  パネル・Undo・シークで要素の位置と不透明度・実体の複製の位置・+90 度は画面で時計回り・音が鳴る・.bbmodel の往復・パックの中身・osu! の要素・
+  500 実体で 1 フレーム 2〜3 ms・PNG 10 コマ・webm のコマ数と音・外して何も残らない）、使い方 `bds/geoui/TIMELINE.md`。
 ### 本物のアプリで確かめたこと（probe.mjs → bds/addons/geoui_probe*、app.yml で写して `node bds/geoui/timeline/probe.mjs read <summary.json>`）
 
 - 1 回目（2026-10-21、run 39601130957 ほか）: ボーンは #248 まで描かれる。自分の render controller（共有のジオメトリを part_visibility で分ける）は

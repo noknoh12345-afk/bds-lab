@@ -5,7 +5,10 @@ GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付�
 
 | ファイル | 中身 |
 |---|---|
-| `geoui_builder.js` | **Blockbench プラグイン**（Blockbench 5.x、web 版・デスクトップ版）。中の `GeoUICore` は Node のモジュールにもなる（式・Molang・書き出し） |
+| `dist/geoui_builder.js` | **Blockbench に入れる 1 ファイル**: GeoUI Builder と **タイムライン**（`timeline/`。使い方は [TIMELINE.md](TIMELINE.md)）。`node bds/geoui/build.mjs` が作る（`--check`: 最新か） |
+| `geoui_builder.js` | GeoUI Builder 本体（Blockbench 5.x、web 版・デスクトップ版。これだけ入れるとタイムラインなし）。中の `GeoUICore` は Node のモジュールにもなる（式・Molang・書き出し） |
+| `timeline/` | タイムライン（データと編集・書き出しの Molang・ゲームの中のスクリプト・パネル・プレビュー・Blockbench とのつなぎ）。設計と本物のゲームで確かめたことは `timeline/PLAN.md` |
+| `bbpage.mjs` | 本物の Blockbench（web 版）をヘッドレスの Chromium で開く、確かめの共通部分（`blockbench-check.mjs`・`timeline/check-bridge.mjs`） |
 | `blockbench-check.mjs` | 本物の Blockbench（web 版をヘッドレスの Chromium で）にプラグインを入れて確かめ、画を撮る（作者向け。要るものはファイルの先頭） |
 | `calib.mjs` | 較正: 目盛りのパックを作る（`make`）・本物のアプリの画面を測る（`measure`）・答えのわかった偽の画面（`synth`） |
 | `report.mjs` | **較正のまとめ**: 本物のアプリの実行（番号・フォルダ・summary.json）の `measure` の数を集め、各画面の大きさ・ずらし・持ち上げを戻して、HUD の枠 → 画面の対応（尺度と原点の形）を比べて当てはめる。封じた成果物を開けなくても読める |
@@ -18,7 +21,7 @@ GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付�
 
 ## 使い方
 
-1. Blockbench（5.0 以上）→ **File → Plugins → Load Plugin from File** → `geoui_builder.js`。メニューに **GeoUI** が出ます。
+1. Blockbench（5.0 以上）→ **File → Plugins → Load Plugin from File** → `dist/geoui_builder.js`（タイムラインつき。[TIMELINE.md](TIMELINE.md)）。メニューに **GeoUI** が出ます。
 2. **GeoUI → 新しい GeoUI プロジェクト**。画面の枠（水色。基準の画面比 16:9）が出て、正面から見た向き（ゲームの HUD と同じ: 右が +x）になります。
 3. **画像を足す / 数字を足す / ゲージを足す**。寄せる先（`top_left` など）と余白（Studio の padX / padY、モデル単位）で置きます。
    画像は PNG を選ぶだけ（1 要素 1 テクスチャでよい）。数字はドット絵の 0〜9 を自動で描きます（自分の帯 0〜9＋空白でも）。

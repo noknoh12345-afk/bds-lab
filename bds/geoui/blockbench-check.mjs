@@ -18,24 +18,13 @@
 /* global window, document, Blockbench, Formats, Plugin, Format, Project, Group, Cube, Texture, Animation, Animator, Modes, Timeline, THREE,
    scene, Canvas, Codecs, Dialog, BarItems */
 import fs from 'node:fs';
-import http from 'node:http';
 import path from 'node:path';
-import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
+import { openBlockbench, pluginFile, DIST, TOP } from './bbpage.mjs';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url)), TOP = path.resolve(HERE, '..', '..');
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
-const BB = process.env.BLOCKBENCH_DIR, NM = process.env.GEOUI_NODE_MODULES;
 const OUT = path.resolve(opt('out', path.join(TOP, 'bds', '.lab', 'geoui-blockbench')));
-if (!BB || !fs.existsSync(path.join(BB, 'dist', 'bundle.js'))) { console.log('SKIP blockbench-check: set BLOCKBENCH_DIR to a Blockbench tree built with `npm run build-web` (see the top of this file)'); process.exit(0); }
-const req = createRequire(path.join(NM || path.join(TOP, 'node_modules'), 'x.js'));
-let pw, chromium;
-try { pw = req('playwright-core'); } catch { console.log('SKIP blockbench-check: playwright-core not found (GEOUI_NODE_MODULES=<a node_modules with playwright-core and @sparticuz/chromium>)'); process.exit(0); }
-const exe = process.env.CHROMIUM || await (async () => { try { chromium = req('@sparticuz/chromium'); return await (chromium.default || chromium).executablePath(); } catch { return null; } })();
-if (!exe) { console.log('SKIP blockbench-check: no Chromium (CHROMIUM=<binary> or @sparticuz/chromium in GEOUI_NODE_MODULES)'); process.exit(0); }
-fs.mkdirSync(OUT, { recursive: true });
-
-const PLUGIN = path.join(HERE, 'geoui_builder.js'), SRP = path.join(TOP, 'bds', 'addons', 'geoui_studio', 'rp');
+// (the one file Blockbench loads: GeoUI Builder with its timeline, bds/geoui/build.mjs's — geoui_builder.js alone when not built)
+const PLUGIN = pluginFile(), SRP = path.join(TOP, 'bds', 'addons', 'geoui_studio', 'rp');
 const mod = { exports: {} }; new Function('module', fs.readFileSync(PLUGIN, 'utf8'))(mod); const G = mod.exports;
 const dataUrl = (f) => 'data:image/png;base64,' + fs.readFileSync(f).toString('base64');
 const sj = (f) => JSON.parse(fs.readFileSync(path.join(SRP, f), 'utf8'));
@@ -44,33 +33,13 @@ let fails = 0, n = 0;
 const ok = (c, m, d = '') => { n++; console.log(`${c ? '✔' : '✘'} ${m}${c ? '' : '\n   ' + String(d).slice(0, 1500)}`); if (!c) fails++; };
 
 // ---- Blockbench, served from its folder, in Chromium (WebGL by SwiftShader)
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.webmanifest': 'application/manifest+json' };
-const srv = http.createServer((q, r) => {
-  let p = decodeURIComponent(new URL(q.url, 'http://x').pathname); if (p.endsWith('/')) p += 'index.html';
-  const f = path.join(BB, path.normalize(p).replace(/^(\.\.[/\\])+/, ''));
-  if (!f.startsWith(path.resolve(BB)) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); r.end(); return; }
-  r.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r);
-});
-await new Promise((r) => srv.listen(0, '127.0.0.1', r));
-const extraArgs = chromium ? (chromium.default || chromium).args.filter((a) => !/--single-process|--use-gl|--use-angle|--headless/.test(a)) : [];
-const browser = await pw.chromium.launch({ executablePath: exe, headless: true, args: [...extraArgs, '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--no-sandbox'] });
-const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
-const errors = [];
-page.on('pageerror', (e) => errors.push(String(e)));
-// (Blockbench's own calls home — its stats at blckbn.ch — fail when served from here: CORS or no network. Not the plugin's)
-page.on('console', (m) => { if (m.type() === 'error' && !/bad HTTP response|Failed to load resource|blckbn\.ch/.test(m.text())) errors.push(m.text()); });
-await page.addInitScript(() => { window.confirm = () => true; window.alert = () => {}; });
-await page.goto(`http://127.0.0.1:${srv.address().port}/index.html`, { waitUntil: 'load', timeout: 120000 });
-await page.waitForFunction(() => window.Blockbench && window.Formats && window.Plugins, null, { timeout: 120000 });
-await page.waitForTimeout(1500);
-const ev = (fn, arg) => page.evaluate(fn, arg);
-const shot = async (file) => { await page.waitForTimeout(500); await page.screenshot({ path: path.join(OUT, file) }); };
-const version = await ev(() => Blockbench.version);
+const BBP = await openBlockbench('blockbench-check', { out: OUT });
+const { ev, shot, errors, version } = BBP;
 
 // ---- install
-const inst = await ev(async ({ content }) => { const p = new Plugin(); await p.loadFromFile({ path: 'geoui_builder.js', name: 'geoui_builder.js', content }, true); return { id: p.id, installed: p.installed, version: p.version }; }, { content: fs.readFileSync(PLUGIN, 'utf8') });
-const reg = await ev(() => ({ format: !!Formats.geoui, menu: [...document.querySelectorAll('#menu_bar .menu_bar_point')].some((e) => e.textContent === 'GeoUI'), api: !!window.GeoUIBuilder }));
-ok(inst.installed && reg.format && reg.menu && reg.api, `Blockbench ${version}: installed from a file (${inst.id} ${inst.version}), the GeoUI format, menu and API are there`, JSON.stringify({ inst, reg }));
+const inst = await BBP.install(PLUGIN);
+const reg = await ev(() => ({ format: !!Formats.geoui, menu: [...document.querySelectorAll('#menu_bar .menu_bar_point')].some((e) => e.textContent === 'GeoUI'), api: !!window.GeoUIBuilder, timeline: !!(window.GeoUIBuilder && window.GeoUIBuilder.timeline) }));
+ok(inst.installed && reg.format && reg.menu && reg.api && (PLUGIN !== DIST || reg.timeline), `Blockbench ${version}: installed from a file (${path.relative(TOP, PLUGIN)}: ${inst.id} ${inst.version}), the GeoUI format, menu and API are there${reg.timeline ? ', with the timeline' : ''}`, JSON.stringify({ inst, reg }));
 
 // ---- the template, with Studio's textures
 const template = async (fill, uuids) => ev(async ({ L1, L2, fill, uuids }) => {
@@ -231,6 +200,6 @@ if (opt('export')) {
 }
 
 ok(!errors.length, 'no errors on the page', errors.join('\n'));
-await browser.close(); srv.close();
+await BBP.close();
 console.log(`\n${fails ? 'FAIL' : 'PASS'} blockbench-check (${n - fails}/${n}) — pictures in ${OUT}`);
 process.exit(fails ? 1 : 0);

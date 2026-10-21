@@ -40,7 +40,8 @@
   }
   /** the panel for a selection: [{ id, title, fields: [field], actions?: [{ label, intents() }] }] — a field: { id, label,
    *  kind: 'number' | 'time' | 'text' | 'select' | 'bool' | 'ease' | 'value' | 'info', value (MIXED when they differ),
-   *  options?: [[value, label]], step?, apply(v) → [intent] }. ctx: { elements: [{ name }], media: [{ id, kind, name }], time } */
+   *  options?: [[value, label]], step?, apply(v) → [intent] }. ctx: { elements: [{ name }], media: [{ id, kind, name }], time,
+   *  now() (the time when an action is taken) } */
   function sections(doc, sel, ctx = {}) {
     const R = resolve(doc, sel), out = [];
     if (!R.seq) return [{ id: 'none', title: 'シーケンスがありません', fields: [] }];
@@ -149,7 +150,7 @@
         F({ id: `tempo.${i}.t`, label: `${i + 1}: 時刻`, kind: 'time', value: p.t, apply: (v) => [{ seq: seq.id, type: 'tempo.set', index: i, patch: { t: v } }] }),
         F({ id: `tempo.${i}.bpm`, label: `${i + 1}: BPM`, kind: 'number', step: 1, value: p.bpm, apply: (v) => [{ seq: seq.id, type: 'tempo.set', index: i, patch: { bpm: v } }] }),
         F({ id: `tempo.${i}.meter`, label: `${i + 1}: 拍子`, kind: 'number', step: 1, value: p.meter, apply: (v) => [{ seq: seq.id, type: 'tempo.set', index: i, patch: { meter: v } }] }),
-      ]), actions: [{ label: '再生位置にテンポを足す', intents: () => { const before = M().tempoOf(seq).filter((q) => q.t <= num(ctx.time)); return [{ seq: seq.id, type: 'tempo.add', t: num(ctx.time), bpm: (before.length ? before[before.length - 1] : M().tempoOf(seq)[0]).bpm, meter: 4 }]; } },
+      ]), actions: [{ label: '再生位置にテンポを足す', intents: () => { const at = num(ctx.now ? ctx.now() : ctx.time), before = M().tempoOf(seq).filter((q) => q.t <= at); return [{ seq: seq.id, type: 'tempo.add', t: at, bpm: (before.length ? before[before.length - 1] : M().tempoOf(seq)[0]).bpm, meter: 4 }]; } },
         ...tempo.map((p, i) => ({ label: `${i + 1} を消す`, intents: () => [{ seq: seq.id, type: 'tempo.remove', index: i }] }))] });
       out.push({ id: 'templates', title: `テンプレート ${(seq.templates || []).length}・実体 ${(seq.instances || []).length}`, fields: (seq.templates || []).map((tp) => F({ id: `tpl.${tp.id}`, label: tp.name || tp.id, kind: 'info', value: `前 ${tp.lead} 秒・後 ${tp.tail} 秒・param ${tp.params.join(', ') || 'なし'}・実体 ${(seq.instances || []).filter((x) => x.template === tp.id).length}` })),
         actions: [{ label: 'テンプレートを足す', intents: () => [{ seq: seq.id, type: 'template.add', template: { name: `テンプレート ${(seq.templates || []).length + 1}`, lead: 0.5, tail: 0.5, params: ['x', 'y'] } }] }] });
@@ -265,7 +266,7 @@
     }
     function render() {
       if (editing) return;
-      const doc = store.doc(), sel = store.selection() || {}, secs = sections(doc, sel, { elements: store.elements ? store.elements() : [], media: store.media ? store.media() : [], time: store.time() });
+      const doc = store.doc(), sel = store.selection() || {}, secs = sections(doc, sel, { elements: store.elements ? store.elements() : [], media: store.media ? store.media() : [], time: store.time(), now: () => store.time() });
       if (curve) { curve.unmount(); curve = null; }
       body.textContent = '';
       for (const s of secs) {
@@ -299,7 +300,8 @@
         ...list.map((p) => h('div', { style: 'display:flex;align-items:center' }, [h('button', { style: CSS.btn, 'data-preset': p.id, title: p.about, onclick: () => { if (!presetTarget) { status.textContent = 'プリセットを置く要素がありません'; return; } send(presetIntent(store.doc(), store.selection(), p.id, { target: presetTarget, time: store.time() })); } }, p.name), h('span', { style: 'color:#8b8f9a' }, p.about)]))]));
     }
     const draw = () => { if (!raf) raf = (root.requestAnimationFrame || ((f) => setTimeout(f, 16)))(() => { raf = 0; render(); }); };
-    const unsub = store.subscribe(draw);
+    // (the time alone changing — 60 times a second while playing — draws nothing here: what a field shows does not follow it)
+    const unsub = store.subscribe((what) => { if (!what || what.doc || what.selection || what.external) draw(); });
     render();
     return {
       refresh: render,
