@@ -533,7 +533,7 @@
     const re = (c) => { if (c.path && map.has(c.path)) c.path = map.get(c.path); };
     for (const tp of f.templates || []) for (const tr of tp.tracks || []) (tr.clips || []).forEach(re);
     for (const tr of f.tracks || []) (tr.clips || []).forEach(re);
-    for (const x of f.instances || []) if (map.has(x.template)) x.template = map.get(x.template);
+    for (const x of f.instances || []) { if (map.has(x.template)) x.template = map.get(x.template); re(x); }   // (an instance's own path too: osu!'s sliders)
     return f;
   }
   /** the fragment's parts in the sequence's shape (normalize's rules, the ids kept) */
@@ -550,6 +550,12 @@
   function reduce(doc, intent) {
     try {
       if (!intent || typeof intent.type !== 'string') fail('intent の形ではありません');
+      // (several edits as one — the inspector's change to many selected things, one undo step: all of them or none)
+      if (intent.type === 'batch') {
+        let d = doc;
+        for (const it of intent.intents || []) { const r = reduce(d, it); if (!r.ok) return { doc, ok: false, error: r.error }; d = r.doc; }
+        return { doc: d, ok: true };
+      }
       const mk = idMaker(allIds(doc));
       if (intent.type === 'seq.add') {
         const s = normalize({ sequences: [{ id: mk('seq'), name: intent.name || `シーケンス ${((doc && doc.sequences) || []).length + 1}`, duration: num(intent.duration, 10), fps: num(intent.fps, 20) }] }).sequences[0];

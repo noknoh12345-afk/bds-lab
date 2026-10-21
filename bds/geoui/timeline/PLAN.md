@@ -167,5 +167,12 @@
   キー: Space・J/K/L・←→（Shift で 1 拍）・Home・S・Delete（Shift で詰める）・Ctrl+D・K・, .・I/O・M・1〜6・+/-・\・Esc、右クリックのメニュー、
   ダブルクリックで実体のテンプレートの中へ・空いた所にクリップ）。試験 `node tests/tl-timeline-offline.mjs`（Node）と
   `bds/geoui/timeline/check-timeline.mjs`（本物の Chromium: ドラッグ・端・鍵・キー・メニュー・描いた色・外すと何も残らない）。
-- 6. tl-editors: 次（インスペクタ・曲線エディタ・実体の表・画面の上で道と位置）。
+- 6. tl-editors: **できた**。curve.js（3 次ベジェの 2 点のドラッグ・名前付きのイージングの一覧・動く点・名前付きに一番近いベジェ（最小二乗、
+  bounce と elastic は近い形が無いと言う））、inspector.js（シーケンス・テンポ・テンプレート・道・クリップとそのトラック・鍵・マーカー・実体の欄、
+  複数を選ぶと共通の欄だけ・違う値は「—」、変更は intent（複数は batch で 1 回の取り消し）、数の欄はラベルを横にドラッグ、イージングは曲線を開く、
+  トランジションを選んだクリップの頭・尻へ、プリセットを再生位置へ（選んだクリップのトラックが同じ要素ならそこへ））、instances.js（実体の表:
+  並べ替え・絞り込み（x>0 template=名前 語）・見えている行だけ描く・行で選んで再生位置へ・セルを直す・TSV/CSV の貼り付け・TSV でコピー・
+  osu! の取り込み）、pathedit.js（プレビューの上に道と実体の位置: 点をドラッグ・Ctrl+クリックで足す・Alt+クリックで消す、実体の点をドラッグ、
+  格子と 1 拍の距離の輪に吸い付く。こちらの物の上でなければポインタはプレビューへ）。model に batch の intent（全部か何もしないか）、取り込みで
+  実体の道（instance.path）も新しい id に。試験 `node tests/tl-editors-offline.mjs`（Node）と `bds/geoui/timeline/check-editors.mjs`（本物の Chromium）。
   要実測: サーバーの tick は 50 ms 刻み（判定の細かさ）・押してから届くまでの遅れ（offset で補正）・loop と流し込みの 2 周目。
