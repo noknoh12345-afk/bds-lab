@@ -182,6 +182,555 @@
   }
   const pathLength = (path) => pathTable(path).length;
 
-  T.model = { EASES, ease, isEase, bezierAt, toFrames, fromFrames, timecode, parseTimecode, tempoOf, beatAt, timeAtBeat, snapToBeat, barBeat, pathTable, pathPoint, pathLength };
+  // ---------------------------------------------------------------------------------------------------------------- expressions
+  // A key's value may be an expression over a template's params ('param.x + 10'): numbers, param.<name>, + - * /, unary
+  // minus, parentheses and Molang's math functions with Molang's meaning (math.sin in degrees) — compile writes the same text
+  // into Molang, so what the preview shows is what the game draws. Never eval.
+  const MATH = {
+    abs: Math.abs, sqrt: Math.sqrt, floor: Math.floor, ceil: Math.ceil, round: Math.round, trunc: Math.trunc, sign: Math.sign, exp: Math.exp, ln: Math.log, pow: Math.pow,
+    sin: (d) => Math.sin((d * PI) / 180), cos: (d) => Math.cos((d * PI) / 180), min: Math.min, max: Math.max,
+    clamp: (v, a, b) => Math.min(Math.max(v, a), b), lerp: (a, b, u) => a + (b - a) * u, mod: (a, b) => a % b,
+  };
+  const EXPRS = new Map();
+  function exprFn(src) {
+    const s = String(src);
+    if (EXPRS.has(s)) return EXPRS.get(s);
+    const tk = s.match(/\d+(?:\.\d+)?|\.\d+|[A-Za-z_][\w.]*|[-+*/(),]|\S/g) || [];
+    let i = 0;
+    const peek = () => tk[i], take = (x) => { if (x !== undefined && tk[i] !== x) throw new Error(`式「${s}」: ${x} がありません`); return tk[i++]; };
+    const primary = () => {
+      const t = take();
+      if (t === undefined) throw new Error(`式「${s}」が途中で終わっています`);
+      if (/^(\d|\.\d)/.test(t)) { const v = +t; return () => v; }
+      if (t === '(') { const e = sum(); take(')'); return e; }
+      const m = /^(?:param|p)\.(\w+)$/.exec(t);
+      if (m) return (p) => num(p && p[m[1]]);
+      if (t === 'math.pi') return () => PI;
+      const f = /^math\.(\w+)$/.exec(t);
+      if (f && MATH[f[1]]) { take('('); const args = []; if (peek() !== ')') { args.push(sum()); while (peek() === ',') { take(','); args.push(sum()); } } take(')'); const fn = MATH[f[1]]; return (p) => fn(...args.map((a) => a(p))); }
+      throw new Error(`式「${s}」: 「${t}」は使えません（param.名前・数・+ - * /・math.〜 だけ）`);
+    };
+    const unary = () => { if (peek() === '-') { take(); const e = unary(); return (p) => -e(p); } if (peek() === '+') { take(); return unary(); } return primary(); };
+    const prod = () => { let e = unary(); while (peek() === '*' || peek() === '/') { const op = take(), a = e, b = unary(); e = op === '*' ? (p) => a(p) * b(p) : (p) => a(p) / b(p); } return e; };
+    const sum = () => { let e = prod(); while (peek() === '+' || peek() === '-') { const op = take(), a = e, b = prod(); e = op === '+' ? (p) => a(p) + b(p) : (p) => a(p) - b(p); } return e; };
+    const fn = sum();
+    if (i < tk.length) throw new Error(`式「${s}」: 「${tk[i]}」の所が読めません`);
+    EXPRS.set(s, fn);
+    return fn;
+  }
+  const exprError = (src) => { try { exprFn(src); return null; } catch (e) { return e.message; } };
+  const keyValue = (k, params) => (typeof k.v === 'string' ? exprFn(k.v)(params || {}) : k.v);
+
+  // ---------------------------------------------------------------------------------------------------------------- the document
+  const LOOPS = ['once', 'loop', 'hold', 'pingpong'];
+  const PROPS = ['x', 'y', 'scaleX', 'scaleY', 'rotation', 'opacity', 'value', 'fill', 'frame', 'path'];
+  const DEFAULTS = { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0, opacity: 1, value: 0, fill: 0, frame: 0, path: 0 };
+  const TRANSITIONS = ['fade', 'slide-left', 'slide-right', 'slide-up', 'slide-down', 'zoom', 'pop'];
+  const SLIDE = 40;          // model units a slide comes in from (or goes out to)
+  const MIN_LEN = 1e-3;      // the shortest clip (seconds)
+  function num(v, d = 0) { const x = typeof v === 'string' && v.trim() === '' ? NaN : +v; return v !== null && v !== undefined && Number.isFinite(x) ? x : d; }
+  const clone = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
+  const mod = (x, m) => ((x % m) + m) % m;
+  const str = (s, d = '') => (typeof s === 'string' ? s : s === undefined || s === null ? d : String(s));
+  /** every id in a document (sequences and all in them), to make new ones that clash with none */
+  function allIds(doc) {
+    const out = [];
+    const tracks = (ts) => { for (const tr of ts || []) { out.push(tr && tr.id); for (const c of (tr && tr.clips) || []) out.push(c && c.id); } };
+    for (const s of (doc && doc.sequences) || []) {
+      if (!s) continue;
+      out.push(s.id); tracks(s.tracks);
+      for (const k of ['markers', 'paths', 'instances']) for (const x of s[k] || []) out.push(x && x.id);
+      for (const tp of s.templates || []) { out.push(tp && tp.id); tracks(tp && tp.tracks); }
+    }
+    return out.filter((x) => typeof x === 'string' && x);
+  }
+  function idMaker(used) {
+    const taken = new Set(used);
+    return (prefix) => { let i = 1; while (taken.has(`${prefix}${i}`)) i++; taken.add(`${prefix}${i}`); return `${prefix}${i}`; };
+  }
+
+  // ---- normalize: any document → the plan's shape (defaults filled, ids unique, clips in time order and not overlapping)
+  function normKey(k) { return { t: num(k && k.t), v: typeof (k && k.v) === 'string' && k.v.trim() ? k.v.trim() : num(k && k.v), ease: isEase(k && k.ease) ? clone(k.ease) : 'linear' }; }
+  function normTransition(tr) { return tr && TRANSITIONS.includes(tr.kind) ? { kind: tr.kind, duration: Math.max(0, num(tr.duration, 0.3)), ease: isEase(tr.ease) ? clone(tr.ease) : 'quad-out' } : null; }
+  function normClip(c, id, free) {
+    const s0 = num(c.start), start = free ? s0 : Math.max(0, s0), end = Math.max(num(c.end, start + 1), start + MIN_LEN), channels = {};
+    for (const p of PROPS) { const ks = c.channels && c.channels[p]; if (Array.isArray(ks) && ks.length) channels[p] = ks.map(normKey).sort((a, b) => a.t - b.t); }
+    const out = { id, start, end, offset: num(c.offset), transitionIn: normTransition(c.transitionIn), transitionOut: normTransition(c.transitionOut), channels };
+    for (const k of ['name', 'path', 'trigger', 'until', 'sound', 'text', 'media']) if (typeof c[k] === 'string' && c[k]) out[k] = c[k];
+    if (c.volume !== undefined) out.volume = num(c.volume, 1);
+    if (c.pitch !== undefined) out.pitch = num(c.pitch, 1);
+    return out;
+  }
+  /** a track's clips in time order, each pushed after the one before it when they overlap (its length kept) */
+  function settle(track) {
+    track.clips.sort((a, b) => a.start - b.start);
+    for (let i = 1; i < track.clips.length; i++) { const p = track.clips[i - 1], c = track.clips[i]; if (!c.trigger && !p.trigger && c.start < p.end - 1e-9) { const len = c.end - c.start; c.start = p.end; c.end = p.end + len; } }
+    return track;
+  }
+  function normalize(doc0) {
+    const doc = doc0 && typeof doc0 === 'object' ? doc0 : {};
+    const mk = idMaker(allIds(doc)), seen = new Set();
+    const idOf = (id, prefix) => { if (typeof id === 'string' && id && !seen.has(id)) { seen.add(id); return id; } const n = mk(prefix); seen.add(n); return n; };
+    const normTrack = (tr, free) => settle({
+      id: idOf(tr && tr.id, 'tr'), kind: tr && tr.kind === 'audio' ? 'audio' : 'layer', target: str(tr && tr.target), name: str(tr && tr.name, str(tr && tr.target)),
+      muted: Boolean(tr && tr.muted), locked: Boolean(tr && tr.locked), solo: Boolean(tr && tr.solo),
+      clips: ((tr && tr.clips) || []).filter((c) => c && typeof c === 'object').map((c) => normClip(c, idOf(c.id, 'c'), free)),
+    });
+    const sequences = ((doc && doc.sequences) || []).filter((s) => s && typeof s === 'object').map((s) => {
+      const duration = Math.max(0.05, num(s.duration, 10)), io = Array.isArray(s.inOut) ? s.inOut.map((x) => num(x, NaN)) : null;
+      return {
+        id: idOf(s.id, 'seq'), name: str(s.name, 'シーケンス') || 'シーケンス', duration, fps: Math.min(240, Math.max(1, Math.round(num(s.fps, 20)))), loop: LOOPS.includes(s.loop) ? s.loop : 'once',
+        inOut: io && io.length === 2 && io[0] >= 0 && io[1] > io[0] && io[1] <= duration + 1e-9 ? io : null,
+        tempo: (s.tempo || []).filter((p) => p && num(p.bpm) > 0).map((p) => ({ t: num(p.t), bpm: num(p.bpm), meter: Math.max(1, Math.round(num(p.meter, 4))) })).sort((a, b) => a.t - b.t),
+        markers: (s.markers || []).filter(Boolean).map((m) => Object.assign({ id: idOf(m.id, 'm'), t: Math.max(0, num(m.t)), name: str(m.name) }, typeof m.event === 'string' && m.event ? { event: m.event } : {})).sort((a, b) => a.t - b.t),
+        paths: (s.paths || []).filter(Boolean).map((p) => ({ id: idOf(p.id, 'p'), kind: ['linear', 'bezier', 'catmull', 'arc'].includes(p.kind) ? p.kind : 'linear', points: (p.points || []).filter((q) => Array.isArray(q) && q.length >= 2).map((q) => [num(q[0]), num(q[1])]) })),
+        templates: (s.templates || []).filter(Boolean).map((tp) => ({ id: idOf(tp.id, 'tpl'), name: str(tp.name, 'テンプレート'), lead: Math.max(0, num(tp.lead, 1)), tail: Math.max(0, num(tp.tail, 0.5)),
+          params: (tp.params || []).filter((x) => typeof x === 'string' && /^\w+$/.test(x)), tracks: (tp.tracks || []).filter(Boolean).map((tr) => normTrack(tr, true)) })),
+        instances: (s.instances || []).filter(Boolean).map((x) => ({ id: idOf(x.id, 'i'), template: str(x.template), t: num(x.t), params: Object.fromEntries(Object.entries(x.params || {}).filter(([k]) => /^\w+$/.test(k)).map(([k, v]) => [k, num(v)])) })).sort((a, b) => a.t - b.t),
+        tracks: (s.tracks || []).filter(Boolean).map((tr) => normTrack(tr, false)),
+      };
+    });
+    return { version: 1, sequences };
+  }
+
+  // ---- validate: what is wrong with a document as given (Japanese, one line each; [] = nothing)
+  function validate(doc) {
+    const out = [];
+    if (!doc || typeof doc !== 'object' || !Array.isArray(doc.sequences)) return ['文書の形ではありません（{ version: 1, sequences: [...] }）'];
+    const ids = new Map();
+    for (const id of allIds(doc)) ids.set(id, (ids.get(id) || 0) + 1);
+    for (const [id, n] of ids) if (n > 1) out.push(`id「${id}」が ${n} 回使われています`);
+    for (const s of doc.sequences) {
+      const at = `シーケンス「${str(s && s.name, '?')}」`;
+      if (!s || typeof s !== 'object') { out.push('シーケンスの形ではない物があります'); continue; }
+      if (!(num(s.duration, NaN) > 0)) out.push(`${at}: 長さ（duration）が正の数ではありません`);
+      if (s.loop !== undefined && !LOOPS.includes(s.loop)) out.push(`${at}: loop「${s.loop}」は once・loop・hold・pingpong のどれでもありません`);
+      const pathIds = new Set((s.paths || []).map((p) => p && p.id)), tplIds = new Set((s.templates || []).map((x) => x && x.id));
+      const tracks = (ts, where, free) => {
+        for (const tr of ts || []) {
+          const clips = ((tr && tr.clips) || []).slice().sort((a, b) => num(a.start) - num(b.start));
+          clips.forEach((c, i) => {
+            const cat = `${where} トラック「${str(tr.name || tr.target || tr.id)}」のクリップ ${str(c.id, '?')}`;
+            if (!(num(c.end, NaN) > num(c.start, NaN))) out.push(`${cat}: 終わりが始まりより後ではありません`);
+            if (!free && num(c.start) < 0) out.push(`${cat}: 始まりが 0 より前です`);
+            if (i && !c.trigger && !clips[i - 1].trigger && num(c.start) < num(clips[i - 1].end) - 1e-9) out.push(`${cat}: 前のクリップと重なっています`);
+            if (c.path && !pathIds.has(c.path)) out.push(`${cat}: 道「${c.path}」がありません`);
+            for (const tr2 of [c.transitionIn, c.transitionOut]) if (tr2 && !TRANSITIONS.includes(tr2.kind)) out.push(`${cat}: トランジション「${tr2.kind}」は知りません`);
+            for (const [p, ks] of Object.entries(c.channels || {})) {
+              if (!PROPS.includes(p)) { out.push(`${cat}: 「${p}」は動かせるものではありません（${PROPS.join('・')}）`); continue; }
+              for (const k of ks || []) {
+                if (k.ease !== undefined && !isEase(k.ease)) out.push(`${cat} の ${p}: イージング ${JSON.stringify(k.ease)} は知りません`);
+                if (typeof k.v === 'string') { const e = exprError(k.v); if (e) out.push(`${cat} の ${p}: ${e}`); } else if (!Number.isFinite(+k.v)) out.push(`${cat} の ${p}: 値が数ではありません`);
+              }
+            }
+          });
+        }
+      };
+      tracks(s.tracks, at, false);
+      for (const tp of s.templates || []) tracks(tp && tp.tracks, `${at} のテンプレート「${str(tp && tp.name, '?')}」`, true);
+      for (const x of s.instances || []) if (!tplIds.has(x && x.template)) out.push(`${at}: 実体 ${str(x && x.id, '?')} のテンプレート「${str(x && x.template)}」がありません`);
+      for (const p of s.tempo || []) if (!(num(p && p.bpm) > 0)) out.push(`${at}: tempo の BPM が正の数ではありません`);
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------- evaluate
+  /** where a sequence is at time t of playing it: loop and pingpong over its in/out range (or the whole), hold stops on its
+   *  end (a microsecond before it, where the clips ending there still show), once runs on (past its end every clip is
+   *  over). An exact loop length is the next round (its start) */
+  function seqTime(seq, t) {
+    const [a, b] = seq.inOut || [0, seq.duration], len = b - a;
+    if (seq.loop === 'hold') return Math.min(t, b - 1e-6);   // (its last picture: a clip ends just before its end time)
+    if (!(len > 0) || t < a) return t;
+    if (seq.loop === 'loop') return a + mod(t - a, len);
+    if (seq.loop === 'pingpong') { const m = mod(t - a, 2 * len); return a + (m <= len ? m : 2 * len - m); }
+    return t;
+  }
+  /** a channel's value at tc seconds from its clip's start (undefined: the clip has no such channel). Before the first key:
+   *  the first value; after the last: the last; between: the segment's ease from its first key (a time exactly on a key
+   *  belongs to the segment that starts there) */
+  function channelAt(clip, prop, tc, params) {
+    const ks = clip && clip.channels && clip.channels[prop];
+    if (!ks || !ks.length) return undefined;
+    if (ks.length === 1 || tc <= ks[0].t) return keyValue(ks[0], params);
+    const last = ks[ks.length - 1];
+    if (tc >= last.t) return keyValue(last, params);
+    let lo = 0, hi = ks.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (ks[mid].t <= tc) lo = mid; else hi = mid; }
+    const a = ks[lo], b = ks[hi], v0 = keyValue(a, params), v1 = keyValue(b, params);
+    return v0 + (v1 - v0) * ease(a.ease, (tc - a.t) / (b.t - a.t));
+  }
+  /** a transition at p (0: not in, 1: fully in) on a state */
+  function applyTransition(s, kind, p) {
+    if (kind === 'fade') s.opacity *= p;
+    else if (kind === 'slide-left') s.x -= (1 - p) * SLIDE;       // (comes in from the left, goes out to it)
+    else if (kind === 'slide-right') s.x += (1 - p) * SLIDE;
+    else if (kind === 'slide-up') s.y += (1 - p) * SLIDE;         // (from above: the model's y is up)
+    else if (kind === 'slide-down') s.y -= (1 - p) * SLIDE;
+    else if (kind === 'zoom') { s.scaleX *= p; s.scaleY *= p; }
+    else if (kind === 'pop') { const f = p < 0.7 ? (p / 0.7) * 1.1 : 1.1 - ((p - 0.7) / 0.3) * 0.1; s.scaleX *= f; s.scaleY *= f; }
+  }
+  /** the clip of a track shown at sequence time u (zero: the track's time origin — 0, or an instance's time), with the time
+   *  in it: trigger clips (from the latest such event) before the others; until cuts a clip at its first such event */
+  function activeClip(track, u, zero, events, inst) {
+    let found = null;
+    for (const c of track.clips) {
+      let s0, e0, cut = false;
+      if (c.trigger) { let ev = null; for (const e of events) if (e.name === c.trigger && (e.instance || null) === inst && e.t <= u + 1e-9 && (!ev || e.t > ev.t)) ev = e; if (!ev) continue; s0 = ev.t + c.start; e0 = ev.t + c.end; }
+      else { s0 = zero + c.start; e0 = zero + c.end; }
+      if (c.until) for (const e of events) if (e.name === c.until && (e.instance || null) === inst && e.t >= s0 - 1e-9 && e.t < e0) { e0 = e.t; cut = true; }
+      if (u >= s0 - 1e-9 && u < e0) { const hit = { clip: c, tc: Math.max(0, u - s0), left: e0 - u, cut }; if (c.trigger) return hit; if (!found) found = hit; }
+    }
+    return found;
+  }
+  function clipState(seq, hit, params) {
+    const c = hit.clip, s = {};
+    for (const p of ['x', 'y', 'scaleX', 'scaleY', 'rotation', 'opacity']) { const v = channelAt(c, p, hit.tc, params); s[p] = v === undefined ? DEFAULTS[p] : v; }
+    for (const p of ['value', 'fill', 'frame']) { const v = channelAt(c, p, hit.tc, params); if (v !== undefined) s[p] = v; }
+    const path = c.path && (seq.paths || []).find((x) => x.id === c.path), u = channelAt(c, 'path', hit.tc, params);
+    if (path && u !== undefined) { const pt = pathPoint(path, u); s.x += pt[0]; s.y += pt[1]; }
+    if (c.transitionIn && hit.tc < c.transitionIn.duration) applyTransition(s, c.transitionIn.kind, ease(c.transitionIn.ease, hit.tc / c.transitionIn.duration));
+    if (c.transitionOut && !hit.cut && hit.left < c.transitionOut.duration) applyTransition(s, c.transitionOut.kind, ease(c.transitionOut.ease, hit.left / c.transitionOut.duration));
+    s.opacity = clamp01(s.opacity);
+    if (s.fill !== undefined) s.fill = clamp01(s.fill);
+    s.visible = true;
+    return s;
+  }
+  /** the states of a set of tracks at sequence time u: { target: state } — a track with no clips leaves its element alone;
+   *  muted (or not solo while one is) hides it; the top track with a clip there wins */
+  function tracksState(seq, tracks, u, zero, ctx, inst, suffix, out) {
+    for (const tr of tracks) {
+      if (tr.kind !== 'layer' || !tr.target || !tr.clips.length) continue;
+      const key = tr.target + suffix;
+      if (out[key] && out[key].visible) continue;
+      if (tr.muted || (ctx.solo && !tr.solo && !inst)) { out[key] = out[key] || { visible: false }; continue; }
+      const hit = activeClip(tr, u, zero, ctx.events, inst);
+      out[key] = hit ? clipState(seq, hit, ctx.params) : out[key] || { visible: false };
+    }
+  }
+  const seqOf = (doc, seqId) => ((doc && doc.sequences) || []).find((s) => s.id === seqId) || (seqId == null ? ((doc && doc.sequences) || [])[0] : null);
+  /** every element's state at time t of playing a sequence: { 'element': { visible, x, y, scaleX, scaleY, rotation,
+   *  opacity, value?, fill?, frame? } }; a template's instance only while it is out (t − lead … t + tail), as
+   *  'element#instance'. opts.events = [{ instance, name, t }] (hits, misses: what trigger and until clips answer) */
+  function evaluate(doc, seqId, t, opts = {}) {
+    const seq = seqOf(doc, seqId), out = {};
+    if (!seq) return out;
+    const u = seqTime(seq, num(t)), events = Array.isArray(opts.events) ? opts.events : [];
+    const solo = seq.tracks.some((tr) => tr.solo);
+    tracksState(seq, seq.tracks, u, 0, { events, solo, params: {} }, null, '', out);
+    const tpls = new Map((seq.templates || []).map((x) => [x.id, x]));
+    if (seq.instances && seq.instances.length && tpls.size) {
+      let lead = 0, tail = 0;
+      for (const x of tpls.values()) { lead = Math.max(lead, x.lead); tail = Math.max(tail, x.tail); }
+      const xs = seq.instances;
+      let lo = 0, hi = xs.length;
+      while (lo < hi) { const mid = (lo + hi) >> 1; if (xs[mid].t < u - tail) lo = mid + 1; else hi = mid; }
+      for (let i = lo; i < xs.length && xs[i].t <= u + lead; i++) {
+        const x = xs[i], tp = tpls.get(x.template);
+        if (!tp || u < x.t - tp.lead - 1e-9 || u >= x.t + tp.tail) continue;
+        tracksState(seq, tp.tracks, u, x.t, { events, solo: false, params: x.params }, x.id, `#${x.id}`, out);
+      }
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------- reduce
+  // An edit (an intent from the timeline, the inspector, a preset, an import) → a new document; the old one is never
+  // changed (only the sequence edited is copied). Fails with a reason the person reads (Japanese)
+  const fail = (m) => { throw new Error(m); };
+  function containerOf(seq, intent) {
+    if (!intent.template) return { tracks: seq.tracks, free: false };
+    const tp = seq.templates.find((x) => x.id === intent.template) || fail(`テンプレート「${intent.template}」がありません`);
+    return { tracks: tp.tracks, free: true };
+  }
+  function clipAt(cont, id) {
+    for (const track of cont.tracks) { const i = track.clips.findIndex((c) => c.id === id); if (i >= 0) return { track, clip: track.clips[i], i }; }
+    return fail(`クリップ「${id}」がありません`);
+  }
+  const unlocked = (track) => (track.locked ? fail(`トラック「${track.name || track.target}」は固定されています`) : track);
+  function snapPoints(seq, cont, skip, intent) {
+    const c = [];
+    for (const tr of cont.tracks) for (const cl of tr.clips) {
+      if (skip.has(cl.id)) continue;
+      c.push(cl.start, cl.end);
+      for (const ks of Object.values(cl.channels)) for (const k of ks) c.push(cl.start + k.t);
+    }
+    for (const m of seq.markers) c.push(m.t);
+    if (Number.isFinite(intent.playhead)) c.push(intent.playhead);
+    return c;
+  }
+  /** t snapped: to the nearest point within snapTol (default 0.1 s), else to the beat grid (beatDiv) within it, else to frames */
+  function snapOne(seq, t, points, intent) {
+    const tol = num(intent.snapTol, 0.1);
+    let best = null, bd = tol;
+    for (const p of points) { const d = Math.abs(p - t); if (d <= bd) { bd = d; best = p; } }
+    if (best !== null) return best;
+    if (intent.beatDiv) { const b = snapToBeat(seq, t, intent.beatDiv); if (Math.abs(b - t) <= tol) return b; }
+    return Math.round(t * seq.fps) / seq.fps;
+  }
+  /** the delta nearest dt that puts every moved clip on its track without overlapping the others there (and not before 0) */
+  function freeDelta(moves, dt, free) {
+    const ok = (d) => moves.every(({ clip, to }) => (free || clip.start + d >= -1e-9) && to.clips.every((o) => o.trigger || clip.trigger || moves.some((m) => m.clip === o) || clip.end + d <= o.start + 1e-9 || clip.start + d >= o.end - 1e-9));
+    if (ok(dt)) return dt;
+    const cands = [];
+    for (const { clip, to } of moves) for (const o of to.clips) { if (moves.some((m) => m.clip === o)) continue; cands.push(o.end - clip.start, o.start - clip.end); }
+    if (!free) for (const { clip } of moves) cands.push(-clip.start);
+    cands.sort((a, b) => Math.abs(a - dt) - Math.abs(b - dt));
+    for (const d of cands) if (ok(d)) return d;
+    return fail('重ならない場所がありません');
+  }
+  function shiftAfter(track, from, by, skip) { for (const c of track.clips) if (!skip.has(c.id) && c.start >= from - 1e-9) { c.start += by; c.end += by; } }
+  function keyAt(clip, prop, tc, v, easeName) {
+    const ks = (clip.channels[prop] = clip.channels[prop] || []);
+    const i = ks.findIndex((k) => Math.abs(k.t - tc) < 1e-6);
+    const k = { t: tc, v: v === undefined ? (channelAt(clip, prop, tc, {}) ?? DEFAULTS[prop]) : typeof v === 'string' ? v : num(v), ease: isEase(easeName) ? clone(easeName) : i >= 0 ? ks[i].ease : 'linear' };
+    if (i >= 0) ks[i] = k; else { ks.push(k); ks.sort((a, b) => a.t - b.t); }
+  }
+  /** one clip cut in two at sequence time t: the left keeps its keys up to t, the right gets the rest; both get a key on the
+   *  cut with the value there (the picture does not jump); the out-transition goes to the right */
+  function splitClip(track, clip, t, mk) {
+    const tc = t - clip.start, right = clone(clip);
+    right.id = mk('c'); right.start = t; right.offset = clip.offset + tc; right.transitionIn = null;
+    for (const p of Object.keys(clip.channels)) {
+      const v = channelAt(clip, p, tc, {}), L = clip.channels[p].filter((k) => k.t < tc - 1e-9), R = clip.channels[p].filter((k) => k.t > tc + 1e-9).map((k) => ({ ...k, t: k.t - tc }));
+      const at = clip.channels[p].find((k) => Math.abs(k.t - tc) <= 1e-9), easeAt = at ? at.ease : (L.length ? L[L.length - 1].ease : 'linear');
+      clip.channels[p] = [...L, { t: tc, v, ease: L.length ? L[L.length - 1].ease : 'linear' }];
+      right.channels[p] = [{ t: 0, v, ease: easeAt }, ...R];
+    }
+    clip.end = t; clip.transitionOut = null;
+    track.clips.splice(track.clips.indexOf(clip) + 1, 0, right);
+    return right;
+  }
+  function remapIds(frag, mk) {
+    // (a fragment pasted in — a preset, an import: every id made new, its references with it)
+    const map = new Map(), id = (old, prefix) => { const n = mk(prefix); if (old) map.set(old, n); return n; };
+    const f = clone(frag) || {};
+    for (const p of f.paths || []) p.id = id(p.id, 'p');
+    for (const tp of f.templates || []) { tp.id = id(tp.id, 'tpl'); for (const tr of tp.tracks || []) { tr.id = id(tr.id, 'tr'); for (const c of tr.clips || []) c.id = id(c.id, 'c'); } }
+    for (const tr of f.tracks || []) { tr.id = id(tr.id, 'tr'); for (const c of tr.clips || []) c.id = id(c.id, 'c'); }
+    for (const m of f.markers || []) m.id = id(m.id, 'm');
+    for (const x of f.instances || []) x.id = id(x.id, 'i');
+    const re = (c) => { if (c.path && map.has(c.path)) c.path = map.get(c.path); };
+    for (const tp of f.templates || []) for (const tr of tp.tracks || []) (tr.clips || []).forEach(re);
+    for (const tr of f.tracks || []) (tr.clips || []).forEach(re);
+    for (const x of f.instances || []) if (map.has(x.template)) x.template = map.get(x.template);
+    return f;
+  }
+  /** the fragment's parts in the sequence's shape (normalize's rules, the ids kept) */
+  function normPart(frag) {
+    const s = normalize({ sequences: [Object.assign({ id: '__frag', duration: 1 }, frag)] }).sequences[0];
+    return s;
+  }
+  const PATCH = {
+    seq: ['name', 'duration', 'fps', 'loop', 'inOut'], track: ['name', 'muted', 'locked', 'solo', 'target'],
+    clip: ['name', 'offset', 'transitionIn', 'transitionOut', 'path', 'trigger', 'until', 'sound', 'volume', 'pitch', 'text', 'media'],
+    marker: ['t', 'name', 'event'], tempo: ['t', 'bpm', 'meter'], path: ['kind', 'points'], template: ['name', 'lead', 'tail', 'params'], instance: ['t', 'template', 'params'],
+  };
+  const patchOf = (kind, patch) => Object.fromEntries(Object.entries(patch || {}).filter(([k]) => PATCH[kind].includes(k)));
+  function reduce(doc, intent) {
+    try {
+      if (!intent || typeof intent.type !== 'string') fail('intent の形ではありません');
+      const mk = idMaker(allIds(doc));
+      if (intent.type === 'seq.add') {
+        const s = normalize({ sequences: [{ id: mk('seq'), name: intent.name || `シーケンス ${((doc && doc.sequences) || []).length + 1}`, duration: num(intent.duration, 10), fps: num(intent.fps, 20) }] }).sequences[0];
+        return { doc: { version: 1, sequences: [...((doc && doc.sequences) || []), s] }, ok: true, id: s.id };
+      }
+      const src = seqOf(doc, intent.seq) || fail(`シーケンス「${intent.seq}」がありません`);
+      if (intent.type === 'seq.remove') return { doc: { ...doc, sequences: doc.sequences.filter((s) => s !== src) }, ok: true };
+      const seq = clone(src), next = { ...doc, sequences: doc.sequences.map((s) => (s === src ? seq : s)) };
+      const done = (extra) => Object.assign({ doc: next, ok: true }, extra || {});
+      const T0 = intent.type;
+      if (T0 === 'seq.set') { const n = normalize({ sequences: [Object.assign({}, seq, patchOf('seq', intent.patch))] }).sequences[0]; Object.assign(seq, { name: n.name, duration: n.duration, fps: n.fps, loop: n.loop, inOut: n.inOut }); return done(); }
+      if (T0.startsWith('track.')) {
+        const cont = containerOf(seq, intent);
+        if (T0 === 'track.add') {
+          const tr = { id: mk('tr'), kind: intent.kind === 'audio' ? 'audio' : 'layer', target: str(intent.target), name: str(intent.name, str(intent.target)), muted: false, locked: false, solo: false, clips: [] };
+          cont.tracks.splice(Number.isInteger(intent.index) ? Math.max(0, Math.min(intent.index, cont.tracks.length)) : cont.tracks.length, 0, tr);
+          return done({ id: tr.id });
+        }
+        const i = cont.tracks.findIndex((x) => x.id === intent.track);
+        if (i < 0) fail(`トラック「${intent.track}」がありません`);
+        if (T0 === 'track.remove') { cont.tracks.splice(i, 1); return done(); }
+        if (T0 === 'track.set') { Object.assign(cont.tracks[i], patchOf('track', intent.patch)); return done(); }
+        if (T0 === 'track.move') { const [tr] = cont.tracks.splice(i, 1); cont.tracks.splice(Math.max(0, Math.min(num(intent.index), cont.tracks.length)), 0, tr); return done(); }
+      }
+      if (T0.startsWith('clip.')) {
+        const cont = containerOf(seq, intent);
+        if (T0 === 'clip.add') {
+          const track = unlocked(cont.tracks.find((x) => x.id === intent.track) || fail(`トラック「${intent.track}」がありません`));
+          const c = normClip(Object.assign({}, intent.clip || {}, { start: intent.start, end: intent.end }), mk('c'), cont.free);
+          const d = freeDelta([{ clip: c, to: track }], 0, cont.free);
+          c.start += d; c.end += d; track.clips.push(c); settle(track);
+          return done({ id: c.id });
+        }
+        if (T0 === 'clip.remove') {
+          const ids = new Set(intent.ids || []);
+          for (const id of ids) {
+            const { track, clip } = clipAt(cont, id); unlocked(track);
+            track.clips.splice(track.clips.indexOf(clip), 1);
+            if (intent.ripple) shiftAfter(track, clip.end, -(clip.end - clip.start), new Set());
+          }
+          return done();
+        }
+        if (T0 === 'clip.move') {
+          const ids = new Set(intent.ids || []);
+          if (!ids.size) fail('動かすクリップがありません');
+          const found = [...ids].map((id) => clipAt(cont, id)), dTrack = Math.round(num(intent.dTrack));
+          const moves = found.map(({ track, clip }) => {
+            unlocked(track);
+            if (!dTrack) return { clip, from: track, to: track };
+            const same = cont.tracks.filter((x) => x.kind === track.kind), j = Math.max(0, Math.min(same.length - 1, same.indexOf(track) + dTrack));
+            return { clip, from: track, to: unlocked(same[j]) };
+          });
+          let dt = num(intent.dt);
+          if (intent.snap) {
+            const pts = snapPoints(seq, cont, ids, intent);
+            const lo = Math.min(...moves.map((m) => m.clip.start)), hi = Math.max(...moves.map((m) => m.clip.end));
+            const adj = [snapOne(seq, lo + dt, pts, intent) - (lo + dt), snapOne(seq, hi + dt, pts, intent) - (hi + dt)].filter((a) => Math.abs(a) > 1e-12);
+            if (adj.length) dt += adj.reduce((a, b) => (Math.abs(b) < Math.abs(a) ? b : a));
+          }
+          dt = freeDelta(moves, dt, cont.free);
+          for (const m of moves) { m.clip.start += dt; m.clip.end += dt; if (m.to !== m.from) { m.from.clips.splice(m.from.clips.indexOf(m.clip), 1); m.to.clips.push(m.clip); } }
+          for (const tr of new Set(moves.flatMap((m) => [m.from, m.to]))) tr.clips.sort((a, b) => a.start - b.start);
+          return done({ dt });
+        }
+        if (T0 === 'clip.trim') {
+          const { track, clip, i } = clipAt(cont, intent.id); unlocked(track);
+          let t = num(intent.t, NaN);
+          if (!Number.isFinite(t)) fail('トリムする時刻がありません');
+          if (intent.snap) t = snapOne(seq, t, snapPoints(seq, cont, new Set([clip.id]), intent), intent);
+          const prev = track.clips[i - 1], nextC = track.clips[i + 1];
+          if (intent.edge === 'start') {
+            t = Math.min(t, clip.end - MIN_LEN); if (prev) t = Math.max(t, prev.end); if (!cont.free) t = Math.max(0, t);
+            const d = t - clip.start;
+            for (const ks of Object.values(clip.channels)) for (const k of ks) k.t -= d;
+            clip.start = t; clip.offset += d;
+          } else {
+            const old = clip.end;
+            t = Math.max(t, clip.start + MIN_LEN); if (nextC && !intent.ripple) t = Math.min(t, nextC.start);
+            clip.end = t;
+            if (intent.ripple) shiftAfter(track, old, t - old, new Set([clip.id]));
+          }
+          return done();
+        }
+        if (T0 === 'clip.split') {
+          const t = num(intent.t, NaN), made = [];
+          if (!Number.isFinite(t)) fail('切る時刻がありません');
+          const ids = intent.ids && intent.ids.length ? new Set(intent.ids) : null;
+          for (const track of cont.tracks) {
+            if (track.locked) continue;
+            for (const clip of track.clips.slice()) if ((!ids || ids.has(clip.id)) && clip.start < t - MIN_LEN && clip.end > t + MIN_LEN) made.push(splitClip(track, clip, t, mk).id);
+          }
+          return done({ ids: made });
+        }
+        if (T0 === 'clip.duplicate') {
+          const found = (intent.ids || []).map((id) => clipAt(cont, id));
+          if (!found.length) fail('複製するクリップがありません');
+          const lo = Math.min(...found.map((f) => f.clip.start)), hi = Math.max(...found.map((f) => f.clip.end)), shift = (Number.isFinite(intent.at) ? intent.at : hi) - lo, made = [];
+          const copies = found.map(({ track, clip }) => { const c = clone(clip); c.id = mk('c'); return { clip: c, from: unlocked(track), to: track }; });
+          for (const m of copies) m.to.clips.push(m.clip);
+          const d = freeDelta(copies, shift, cont.free);
+          for (const m of copies) { m.clip.start += d; m.clip.end += d; made.push(m.clip.id); m.to.clips.sort((a, b) => a.start - b.start); }
+          return done({ ids: made });
+        }
+        if (T0 === 'clip.set') {
+          const { track, clip } = clipAt(cont, intent.id); unlocked(track);
+          const n = normClip(Object.assign(clone(clip), patchOf('clip', intent.patch)), clip.id, cont.free);
+          for (const k of PATCH.clip) { if (n[k] === undefined) delete clip[k]; else clip[k] = n[k]; }
+          return done();
+        }
+      }
+      if (T0.startsWith('key.')) {
+        const cont = containerOf(seq, intent);
+        if (T0 === 'key.add') {
+          if (!PROPS.includes(intent.prop)) fail(`「${intent.prop}」は動かせるものではありません`);
+          const { track, clip } = clipAt(cont, intent.clip); unlocked(track);
+          keyAt(clip, intent.prop, num(intent.t), intent.v, intent.ease);
+          return done();
+        }
+        const keysOf = (list) => (list || []).map((k) => { const { track, clip } = clipAt(cont, k.clip); unlocked(track); const ks = clip.channels[k.prop]; if (!ks || !ks[k.index]) fail(`鍵（${k.clip} ${k.prop} ${k.index}）がありません`); return { clip, prop: k.prop, key: ks[k.index] }; });
+        if (T0 === 'key.remove') {
+          for (const { clip, prop, key } of keysOf(intent.keys)) { const ks = clip.channels[prop]; ks.splice(ks.indexOf(key), 1); if (!ks.length) delete clip.channels[prop]; }
+          return done();
+        }
+        if (T0 === 'key.move') {
+          const ks = keysOf(intent.keys), dt = num(intent.dt), dv = num(intent.dv);
+          for (const { key } of ks) { key.t += dt; if (dv && typeof key.v === 'number') key.v += dv; }
+          for (const { clip, prop } of ks) clip.channels[prop].sort((a, b) => a.t - b.t);
+          return done();
+        }
+        if (T0 === 'key.set') {
+          const [{ clip, prop, key }] = keysOf([{ clip: intent.clip, prop: intent.prop, index: intent.index }]), p = intent.patch || {};
+          if (p.t !== undefined) key.t = num(p.t, key.t);
+          if (p.v !== undefined) key.v = typeof p.v === 'string' && p.v.trim() && !Number.isFinite(+p.v) ? (exprError(p.v) ? fail(exprError(p.v)) : p.v.trim()) : num(p.v, key.v);
+          if (p.ease !== undefined) key.ease = isEase(p.ease) ? clone(p.ease) : fail(`イージング ${JSON.stringify(p.ease)} は知りません`);
+          clip.channels[prop].sort((a, b) => a.t - b.t);
+          return done();
+        }
+      }
+      const listOp = (kind, list, prefix, made) => {
+        if (T0 === `${kind}.add`) { const x = made(mk(prefix)); list.push(x); return done({ id: x.id }); }
+        const i = list.findIndex((x) => x.id === intent.id);
+        if (i < 0 && T0 !== `${kind}.remove`) fail(`「${intent.id}」がありません`);
+        if (T0 === `${kind}.remove`) { const ids = new Set(intent.ids || [intent.id]); for (let k = list.length - 1; k >= 0; k--) if (ids.has(list[k].id)) list.splice(k, 1); return null; }
+        Object.assign(list[i], patchOf(kind, intent.patch));
+        return null;
+      };
+      if (T0.startsWith('marker.')) {
+        const r = listOp('marker', seq.markers, 'm', (id) => Object.assign({ id, t: Math.max(0, num(intent.t)), name: str(intent.name) }, intent.event ? { event: str(intent.event) } : {}));
+        seq.markers.sort((a, b) => a.t - b.t); return r || done();
+      }
+      if (T0.startsWith('tempo.')) {
+        if (T0 === 'tempo.add') { if (!(num(intent.bpm) > 0)) fail('BPM は正の数で'); seq.tempo.push({ t: num(intent.t), bpm: num(intent.bpm), meter: Math.max(1, Math.round(num(intent.meter, 4))) }); }
+        else { const i = Math.round(num(intent.index, -1)); if (!seq.tempo[i]) fail('その tempo の点はありません'); if (T0 === 'tempo.remove') seq.tempo.splice(i, 1); else { Object.assign(seq.tempo[i], patchOf('tempo', intent.patch)); if (!(seq.tempo[i].bpm > 0)) fail('BPM は正の数で'); } }
+        seq.tempo.sort((a, b) => a.t - b.t); return done();
+      }
+      if (T0.startsWith('path.')) {
+        const r = listOp('path', seq.paths, 'p', (id) => normPart({ paths: [Object.assign({}, intent.path || {}, { id })] }).paths[0]);
+        if (T0 === 'path.set') { const p = seq.paths.find((x) => x.id === intent.id); Object.assign(p, normPart({ paths: [p] }).paths[0]); }
+        return r || done();
+      }
+      if (T0.startsWith('template.')) {
+        const r = listOp('template', seq.templates, 'tpl', (id) => normPart({ templates: [Object.assign({ name: 'テンプレート' }, intent.template || {}, { id })] }).templates[0]);
+        if (T0 === 'template.remove') { const ids = new Set(intent.ids || [intent.id]); seq.instances = seq.instances.filter((x) => !ids.has(x.template)); }
+        return r || done();
+      }
+      if (T0.startsWith('instance.')) {
+        if (T0 === 'instance.add' && !seq.templates.some((x) => x.id === intent.template)) fail(`テンプレート「${intent.template}」がありません`);
+        if (T0 === 'instance.move') {
+          const ids = new Set(intent.ids || []), dt = num(intent.dt), dx = num(intent.dx), dy = num(intent.dy);
+          for (const x of seq.instances) if (ids.has(x.id)) { x.t += dt; if (dx) x.params.x = num(x.params.x) + dx; if (dy) x.params.y = num(x.params.y) + dy; }
+          seq.instances.sort((a, b) => a.t - b.t); return done();
+        }
+        const r = listOp('instance', seq.instances, 'i', (id) => ({ id, template: str(intent.template), t: num(intent.t), params: normPart({ instances: [{ template: 'x', params: intent.params || {} }] }).instances[0].params }));
+        seq.instances.sort((a, b) => a.t - b.t); return r || done();
+      }
+      if (T0 === 'instances.import' || T0 === 'preset.apply') {
+        const frag = remapIds(T0 === 'preset.apply' ? intent.preset : { instances: intent.instances, templates: intent.templates, tempo: intent.tempo, tracks: intent.tracks, paths: intent.paths, markers: intent.markers }, mk);
+        const at = num(intent.at), part = normPart(frag);
+        for (const p of part.paths) seq.paths.push(p);
+        for (const tp of part.templates) seq.templates.push(tp);
+        for (const x of part.instances) { x.t += at; seq.instances.push(x); }
+        for (const m of part.markers) { m.t += at; seq.markers.push(m); }
+        if (part.tempo.length) seq.tempo = [...seq.tempo, ...part.tempo.map((p) => ({ ...p, t: p.t + at }))].sort((a, b) => a.t - b.t);
+        const into = intent.track && seq.tracks.find((x) => x.id === intent.track);
+        for (const tr of part.tracks) {
+          for (const c of tr.clips) { c.start += at; c.end += at; }
+          if (into && part.tracks.length === 1 && tr.kind === into.kind) { unlocked(into); for (const c of tr.clips) { const d = freeDelta([{ clip: c, to: into }], 0, false); c.start += d; c.end += d; into.clips.push(c); } settle(into); }
+          else seq.tracks.push(settle(tr));
+        }
+        seq.instances.sort((a, b) => a.t - b.t); seq.markers.sort((a, b) => a.t - b.t);
+        return done();
+      }
+      return fail(`知らない intent「${T0}」`);
+    } catch (e) {
+      return { doc, ok: false, error: String(e && e.message ? e.message : e) };
+    }
+  }
+
+  T.model = {
+    EASES, ease, isEase, bezierAt, toFrames, fromFrames, timecode, parseTimecode, tempoOf, beatAt, timeAtBeat, snapToBeat, barBeat, pathTable, pathPoint, pathLength,
+    PROPS, DEFAULTS, TRANSITIONS, LOOPS, SLIDE, exprFn, exprError, normalize, validate, allIds, seqTime, channelAt, applyTransition, evaluate, reduce,
+  };
   if (typeof module === 'object' && module && module.exports) module.exports = T.model;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

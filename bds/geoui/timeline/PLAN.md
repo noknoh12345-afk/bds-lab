@@ -135,5 +135,9 @@
 
 ## 進み具合
 
-- 1. tl-model: **途中**。できた: イージング 32 種（Penner の式・3 次ベジェ）、タイムコード、拍（BPM の変わり目で格子が小節の頭から始まる）、道（直線・ベジェ（赤い点で区切る）・Catmull・円弧、弧長で等速、osu! の長さで切る・延ばす）。試験 `node tests/tl-model-offline.mjs`。
-  次: normalize・validate、evaluate（クリップ・トランジション・ループ・テンプレートの実体・道・出来事）、reduce（intent すべて）、contract.js（枠の割り当て・プロパティの詰め方・予算）。
+- 1. tl-model: **できた**。model.js: イージング 32 種と 3 次ベジェ、タイムコード、拍（tempo の点で格子が整数の拍から）、道（直線・ベジェ・Catmull・円弧を弧長で等速、osu! の長さ）、
+  式（param・四則・Molang の math。eval しない）、normalize・validate（日本語）、evaluate（鍵・トランジション・loop/hold/pingpong・in/out・muted/solo・道・
+  テンプレートの実体（出ている間だけ、二分探索）・出来事（trigger・until））、reduce（rules の intent すべて。元の文書は変えない・重ならない一番近い所・吸い付き・
+  ripple・split・locked）。contract.js: 枠の割り当て（区間の彩色・gap・溢れ）、24 bit の詰め方と同じ式の Molang、プロパティの名前と定義、予算（焼き込み／流し込み、
+  上限 32 は要実測）。試験 `node tests/tl-model-offline.mjs`。
+- 2. tl-assets: 次。

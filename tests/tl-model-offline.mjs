@@ -54,5 +54,120 @@ ok([[0, 0], [10, 5], [20, 0]].every((q) => cmPts.some((p) => near(p[0], q[0]) &&
 const tbl = M.pathTable(qb);
 ok(M.pathTable(qb) === tbl && M.pathLength({ points: [] }) === 0 && JSON.stringify(M.pathPoint({ points: [[3, 4]] }, 0.5)) === '[3,4]', 'the table is kept per path object; an empty or one-point path is a point');
 
+
+// ---- expressions over a template's params (Molang's meaning: math.sin in degrees) ----
+ok(M.exprFn('param.x * 2 + math.sin(90)')({ x: 3 }) === 7 && M.exprFn('-(param.a - 1) / 2')({ a: 5 }) === -2 && M.exprFn('math.clamp(param.v, 0, 1) + math.pi * 0')({ v: 7 }) === 1 && M.exprFn('param.missing + 1')({}) === 1,
+  'expressions: params, + - * /, unary minus, parentheses, math.* (sin in degrees)');
+ok(['param.x +', 'alert(1)', 'param.x % 2', 'this.constructor', 'math.nope(1)'].every((e) => M.exprError(e)) && M.exprError('1 + 2') === null, 'expressions: anything else is refused, never run');
+
+// ---- the document ----
+const W = (doc) => JSON.parse(JSON.stringify(doc));
+const deepFreeze = (o) => { if (o && typeof o === 'object' && !Object.isFrozen(o)) { Object.freeze(o); for (const v of Object.values(o)) deepFreeze(v); } return o; };
+const raw = { sequences: [{ id: 's', duration: 4, tracks: [
+  { id: 'a', target: 'title', clips: [{ id: 'c1', start: 0, end: 2, channels: { x: [{ t: 1, v: 10, ease: 'quad-in' }, { t: 0, v: 0, ease: 'bogus' }] } }, { id: 'c1', start: 1.5, end: 2.5 }] },
+  { target: 'gauge', clips: [] }] }] };
+const N = M.normalize(raw), s0 = N.sequences[0], [c1, c2] = s0.tracks[0].clips;
+ok(N.version === 1 && s0.fps === 20 && s0.loop === 'once' && s0.inOut === null && c1.id === 'c1' && c2.id !== 'c1' && c2.start === 2 && c2.end === 3 && c1.channels.x[0].t === 0 && c1.channels.x[0].ease === 'linear' && s0.tracks[1].id && s0.tracks[1].name === 'gauge',
+  'normalize: defaults, a repeated id made new, clips pushed apart (length kept), keys in order, an unknown ease linear', JSON.stringify(s0.tracks[0].clips.map((c) => [c.id, c.start, c.end])));
+ok(JSON.stringify(M.normalize(W(N))) === JSON.stringify(N), 'normalize: a normalized document comes back the same (JSON round trip)');
+const bad = M.validate(raw).join('\n');
+ok(/「c1」が 2 回/.test(bad) && /前のクリップと重なっています/.test(bad) && /イージング "bogus"/.test(bad) && M.validate(N).length === 0 && M.validate({}).length === 1, 'validate: repeated ids, overlaps, unknown eases (Japanese); a normalized document has none', bad);
+
+// ---- evaluate ----
+const ev = (doc, t, o) => M.evaluate(doc, 's', t, o);
+let st = ev(N, 0.5);
+ok(st.title.visible && st.title.x === 5 && st.title.opacity === 1 && st.title.scaleX === 1 && !('gauge' in st) && !('value' in st.title), 'evaluate: the segment takes its first key\'s ease (here linear: the unknown one), the rest at their defaults; a track with no clips is left alone');
+const qd = M.normalize({ sequences: [{ id: 's', duration: 2, tracks: [{ target: 'e', clips: [{ start: 0, end: 2, channels: { x: [{ t: 0, v: 0, ease: 'quad-in' }, { t: 1, v: 10 }] } }] }] }] });
+ok(M.evaluate(qd, 's', 0.5).e.x === 2.5, 'evaluate: quad-in from the first key (0 → 10: 2.5 at the middle)');
+ok(ev(N, 1).title.x === 10 && ev(N, 1.99).title.x === 10 && ev(N, 2).title.x === 0 && ev(N, 3).title.visible === false, 'evaluate: on a key exactly its value, after the last key the last value; the next clip from its start exactly; after the clips hidden');
+const tr = (extra, keys) => M.normalize({ sequences: [{ id: 's', duration: 2, ...extra, tracks: [{ id: 'a', target: 'e', clips: [{ id: 'c', start: 0, end: 2, ...keys }] }] }] });
+const fade = tr({}, { transitionIn: { kind: 'fade', duration: 0.5, ease: 'linear' }, transitionOut: { kind: 'slide-left', duration: 0.5, ease: 'linear' } });
+ok(ev(fade, 0.25).e.opacity === 0.5 && ev(fade, 1).e.opacity === 1 && ev(fade, 1.75).e.x === -20 && ev(fade, 1).e.x === 0, 'transitions: fade in (half way: half), slide out to the left (40 units)');
+const pop = tr({}, { transitionIn: { kind: 'pop', duration: 1, ease: 'linear' } });
+ok(Math.abs(ev(pop, 0.7).e.scaleX - 1.1) < 1e-9 && ev(pop, 1).e.scaleX === 1 && Math.abs(ev(pop, 0.35).e.scaleY - 0.55) < 1e-9, 'pop: 0 → 1.1 → 1');
+const loopDoc = (loop, inOut = null) => tr({ loop, inOut }, { channels: { x: [{ t: 0, v: 0 }, { t: 2, v: 20 }] } });
+ok(ev(loopDoc('loop'), 2.5).e.x === 5 && ev(loopDoc('loop'), 2).e.x === 0 && ev(loopDoc('pingpong'), 3).e.x === 10 && Math.abs(ev(loopDoc('hold'), 9).e.x - 20) < 1e-4 && ev(loopDoc('once'), 9).e.visible === false && ev(loopDoc('loop', [1, 2]), 2.25).e.x === 12.5,
+  'loop (an exact round is the start again), pingpong, hold (its last picture), once (over), loop over the in/out range');
+const two = M.normalize({ sequences: [{ id: 's', duration: 2, tracks: [{ id: 'a', target: 'e', muted: true, clips: [{ start: 0, end: 2 }] }, { id: 'b', target: 'f', clips: [{ start: 0, end: 2 }] }, { id: 'c', target: 'g', solo: true, clips: [{ start: 0, end: 2 }] }] }] });
+st = ev(two, 1);
+ok(st.e.visible === false && st.f.visible === false && st.g.visible === true, 'muted hides; solo shows only the solo tracks');
+const pathDoc = M.normalize({ sequences: [{ id: 's', duration: 2, paths: [{ id: 'p', kind: 'linear', points: [[0, 0], [10, 0]] }], tracks: [{ target: 'e', clips: [{ start: 0, end: 2, path: 'p', channels: { path: [{ t: 0, v: 0 }, { t: 1, v: 1 }], y: [{ t: 0, v: 3 }] } }] }] }] });
+ok(ev(pathDoc, 0.5).e.x === 5 && ev(pathDoc, 0.5).e.y === 3 && ev(pathDoc, 1.5).e.x === 10, 'a path channel: the point along it (0..1) added to x, y');
+const game = M.normalize({ sequences: [{ id: 's', duration: 10,
+  templates: [{ id: 'hc', lead: 1, tail: 0.5, params: ['x'], tracks: [
+    { target: 'circle', clips: [{ start: -1, end: 0.5, until: 'hit', channels: { x: [{ t: 0, v: 'param.x' }] } }] },
+    { target: 'ring', clips: [{ start: -1, end: 0, channels: { scaleX: [{ t: 0, v: 3 }, { t: 1, v: 1 }] } }] },
+    { target: 'burst', clips: [{ start: 0, end: 0.3, trigger: 'hit', channels: { opacity: [{ t: 0, v: 1 }, { t: 0.3, v: 0 }] } }] }] }],
+  instances: [{ id: 'i2', template: 'hc', t: 4, params: { x: -5 } }, { id: 'i1', template: 'hc', t: 2, params: { x: 10 } }] }] });
+st = ev(game, 1.5);
+ok(st['circle#i1'].x === 10 && st['ring#i1'].scaleX === 2 && st['burst#i1'].visible === false && !('circle#i2' in st), 'instances: shown from t − lead (params in expressions, keys from the hit time), the others not at all', JSON.stringify(st));
+ok(!('circle#i1' in ev(game, 0.9)) && !('circle#i1' in ev(game, 2.5)) && ev(game, 3.2)['circle#i2'].x === -5, 'instances: gone before t − lead and from t + tail');
+st = ev(game, 2.2, { events: [{ instance: 'i1', name: 'hit', t: 2.1 }] });
+ok(st['circle#i1'].visible === false && Math.abs(st['burst#i1'].opacity - 2 / 3) < 1e-9 && ev(game, 2.05, { events: [{ instance: 'i1', name: 'hit', t: 2.1 }] })['circle#i1'].visible === true && ev(game, 2.2, { events: [{ instance: 'i2', name: 'hit', t: 2.1 }] })['burst#i1'].visible === false,
+  'events: until cuts the circle at the hit, the trigger clip plays from it — only for its own instance');
+
+// ---- reduce (the input frozen: any change to it throws) ----
+const base = deepFreeze(M.normalize({ sequences: [{ id: 's', duration: 10, markers: [{ id: 'm', t: 5 }], tracks: [
+  { id: 'A', target: 'e', clips: [{ id: 'a1', start: 0, end: 2, channels: { x: [{ t: 0, v: 0 }, { t: 2, v: 20 }] } }, { id: 'a2', start: 3, end: 4 }] },
+  { id: 'B', target: 'f', clips: [{ id: 'b1', start: 1, end: 2 }] }, { id: 'L', target: 'g', locked: true, clips: [{ id: 'l1', start: 0, end: 1 }] }] }] }));
+const R = (intent) => M.reduce(base, { seq: 's', ...intent });
+const clipsOf = (r, tr) => r.doc.sequences[0].tracks.find((x) => x.id === tr).clips.map((c) => [c.id, +c.start.toFixed(6), +c.end.toFixed(6)]);
+let r = R({ type: 'clip.add', track: 'A', start: 1, end: 2 });
+ok(r.ok && JSON.stringify(clipsOf(r, 'A').map((c) => c.slice(1))) === '[[0,2],[2,3],[3,4]]' && r.doc !== base && base.sequences[0].tracks[0].clips.length === 2, 'clip.add: put where it fits nearest (between the two), the old document unchanged', JSON.stringify(r));
+r = R({ type: 'clip.move', ids: ['a2'], dt: -2.5 });
+ok(r.ok && JSON.stringify(clipsOf(r, 'A')) === '[["a1",0,2],["a2",2,3]]', 'clip.move: onto a neighbour → the nearest free place', JSON.stringify(r.doc && clipsOf(r, 'A')));
+r = R({ type: 'clip.move', ids: ['a2'], dt: 0.95, snap: true, snapTol: 0.1 });
+ok(r.ok && clipsOf(r, 'A')[1][2] === 5, 'clip.move with snap: its end onto the marker at 5', JSON.stringify(r.doc && clipsOf(r, 'A')));
+r = R({ type: 'clip.move', ids: ['b1'], dt: 3, dTrack: -1 });
+ok(r.ok && clipsOf(r, 'B').length === 0 && JSON.stringify(clipsOf(r, 'A')) === '[["a1",0,2],["a2",3,4],["b1",4,5]]', 'clip.move to another track (nearest free there)', JSON.stringify(r.doc && clipsOf(r, 'A')));
+r = R({ type: 'clip.trim', id: 'a1', edge: 'start', t: 1 });
+const a1 = r.doc.sequences[0].tracks[0].clips[0];
+ok(r.ok && a1.start === 1 && a1.offset === 1 && a1.channels.x[0].t === -1 && M.evaluate(r.doc, 's', 1.5).e.x === M.evaluate(base, 's', 1.5).e.x, 'clip.trim start: the keys stay where they were in time (the picture does not change)');
+r = R({ type: 'clip.trim', id: 'a1', edge: 'end', t: 2.5, ripple: true });
+ok(r.ok && JSON.stringify(clipsOf(r, 'A')) === '[["a1",0,2.5],["a2",3.5,4.5]]' && !R({ type: 'clip.trim', id: 'a1', edge: 'end', t: 9 }).doc.sequences[0].tracks[0].clips.some((c) => c.id === 'a1' && c.end > 3), 'clip.trim end: ripple pushes the next; without ripple it stops at the next clip');
+r = R({ type: 'clip.split', ids: ['a1'], t: 1 });
+const parts = r.doc.sequences[0].tracks[0].clips;
+ok(r.ok && parts.length === 3 && parts[0].end === 1 && parts[1].start === 1 && [0.5, 0.999, 1, 1.5].every((t) => Math.abs(M.evaluate(r.doc, 's', t).e.x - M.evaluate(base, 's', t).e.x) < 1e-9), 'clip.split: two clips, the picture the same either side of the cut');
+r = R({ type: 'clip.remove', ids: ['a1'], ripple: true });
+ok(r.ok && JSON.stringify(clipsOf(r, 'A')) === '[["a2",1,2]]', 'clip.remove with ripple: the later clips close the gap');
+r = R({ type: 'clip.duplicate', ids: ['a1'] });
+ok(r.ok && JSON.stringify(clipsOf(r, 'A').map((c) => c.slice(1))) === '[[0,2],[3,4],[4,6]]' && JSON.stringify(R({ type: 'clip.duplicate', ids: ['a2'] }).doc && clipsOf(R({ type: 'clip.duplicate', ids: ['a2'] }), 'A').map((c) => c.slice(1))) === '[[0,2],[3,4],[4,5]]', 'clip.duplicate: a copy right after it, or the nearest free place after that', JSON.stringify(r.doc && clipsOf(r, 'A')));
+r = R({ type: 'key.add', clip: 'a1', prop: 'x', t: 1 });
+ok(r.ok && r.doc.sequences[0].tracks[0].clips[0].channels.x.length === 3 && r.doc.sequences[0].tracks[0].clips[0].channels.x[1].v === 10, 'key.add: its value where it is put (the picture does not change)');
+r = R({ type: 'key.set', clip: 'a1', prop: 'x', index: 1, patch: { v: 'param.x + 1', ease: 'back-out' } });
+ok(r.ok && r.doc.sequences[0].tracks[0].clips[0].channels.x[1].v === 'param.x + 1' && !R({ type: 'key.set', clip: 'a1', prop: 'x', index: 1, patch: { v: 'param.x +' } }).ok, 'key.set: an expression (checked), an ease');
+ok(!R({ type: 'clip.move', ids: ['l1'], dt: 1 }).ok && /固定/.test(R({ type: 'clip.add', track: 'L', start: 5, end: 6 }).error) && !R({ type: 'nope' }).ok && R({ type: 'nope' }).doc === base, 'locked tracks refuse; an unknown intent is an error and the document stays');
+r = R({ type: 'preset.apply', at: 6, preset: { tracks: [{ id: 'x', target: 'pop', clips: [{ id: 'a1', start: 0, end: 1 }] }], markers: [{ id: 'm', t: 0.5, name: 'pop' }] } });
+const ids = M.allIds(r.doc);
+ok(r.ok && new Set(ids).size === ids.length && r.doc.sequences[0].tracks.at(-1).clips[0].start === 6 && r.doc.sequences[0].markers.some((m) => m.t === 6.5), 'preset.apply: new ids for everything (no clash), placed at the playhead');
+r = M.reduce(game, { seq: 's', type: 'instances.import', at: 1, templates: [{ id: 'hc', lead: 0.5, tail: 0.5, tracks: [] }], instances: [{ id: 'i1', template: 'hc', t: 0, params: { x: 1 } }] });
+const s1 = r.doc.sequences[0], newTpl = s1.templates[1];
+ok(r.ok && s1.templates.length === 2 && newTpl.id !== 'hc' && s1.instances.find((x) => x.template === newTpl.id).t === 1 && new Set(M.allIds(r.doc)).size === M.allIds(r.doc).length, 'instances.import: its templates and instances get new ids (references kept), times from at');
+r = M.reduce(game, { seq: 's', type: 'instance.move', ids: ['i1'], dt: 0.5, dx: 2 });
+ok(r.ok && r.doc.sequences[0].instances.find((x) => x.id === 'i1').t === 2.5 && r.doc.sequences[0].instances.find((x) => x.id === 'i1').params.x === 12 && M.reduce(game, { seq: 's', type: 'template.remove', id: 'hc' }).doc.sequences[0].instances.length === 0,
+  'instance.move (time and place); removing a template removes its instances');
+r = M.reduce(base, { seq: 's', type: 'tempo.add', t: 0, bpm: 150 });
+ok(r.ok && r.doc.sequences[0].tempo[0].bpm === 150 && !M.reduce(base, { seq: 's', type: 'tempo.add', t: 0, bpm: 0 }).ok && M.reduce(base, { type: 'seq.add', name: 'B' }).doc.sequences.length === 2, 'tempo.add (a BPM > 0); seq.add');
+
+// ---- the contract (bds/geoui/timeline/contract.js) ----
+const K = require('../bds/geoui/timeline/contract.js');
+const G = require('../bds/geoui/geoui_builder.js');
+const vals = { x: 37.3, y: -150.2, v: 9 }, back = K.unpack(K.pack(vals)), stepX = K.stepOf(K.DEFAULT_PACK[0]);
+ok(Math.abs(back.x - vals.x) <= stepX / 2 && Math.abs(back.y - vals.y) <= stepX / 2 && back.v === 9 && K.pack(vals) < 2 ** 24 && K.pack({ x: 999, y: -999, v: -3 }) === K.pack({ x: 200, y: -200, v: 0 }), 'pack / unpack: back within half a step, below 2^24, values held to their range');
+let threw = ''; try { K.pack({}, [{ name: 'a', bits: 20, min: 0, max: 1 }, { name: 'b', bits: 5, min: 0, max: 1 }]); } catch (e) { threw = e.message; }
+ok(/25 bit/.test(threw), 'more than 24 bits is refused (Molang\'s numbers are float32)');
+const um = K.unpackMolang("q.property('geoui:t0s0p')"), packed = K.pack(vals), env = G.envOf({ props: { 'geoui:t0s0p': packed } });
+ok(['x', 'y', 'v'].every((k) => Math.abs(G.molang(um[k], env) - back[k]) < 1e-6), 'unpackMolang: the game\'s Molang reads the same numbers (GeoUI Builder\'s evaluator)', JSON.stringify(um));
+const tplA = { id: 'hc', lead: 1, tail: 0.5 }, inst = [0, 0.5, 1, 3].map((t, i) => ({ id: `i${i}`, template: 'hc', t }));
+let a = K.allocateSlots(inst, tplA);
+ok(a.slots === 3 && a.slotOf.i3 === 0 && !a.overflow.length && [0, 1, 2].every((k) => { const xs = inst.filter((x) => a.slotOf[x.id] === k).sort((p, q) => p.t - q.t); return xs.every((x, i) => !i || xs[i - 1].t + 0.5 <= x.t - 1); }),
+  'allocateSlots: as many slots as are out at once, a slot reused once free, never two at once in one');
+a = K.allocateSlots(inst, tplA, { maxSlots: 2 });
+ok(a.slots === 2 && JSON.stringify(a.overflow) === '["i2"]' && K.allocateSlots(inst, tplA, { gap: 2 }).slots === 4, 'maxSlots: the rest overflow; a gap between two in one slot needs more slots');
+const many = { sequences: [{ id: 's', templates: [{ id: 'hc', lead: 1, tail: 0.5, params: ['x', 'y'], tracks: [{ clips: [{ trigger: 'hit' }] }] }], instances: Array.from({ length: 100 }, (_, i) => ({ id: `n${i}`, template: 'hc', t: i * 0.25 })) }] };
+const bud = K.budget(many), defs = K.propertyDefs(bud);
+ok(bud.sequences[0].templates[0].mode === 'streamed' && bud.sequences[0].templates[0].slots === 7 && bud.properties === 4 + 7 * 4 && bud.warnings.length === 0 && K.budget(many, { propertyLimit: 30 }).warnings.length === 1 && Object.keys(defs).length === bud.properties && defs['geoui:t0s6p'].range[1] === 2 ** 24 - 1 && defs['geoui:seq_pause'].type === 'bool',
+  'budget: 100 instances are streamed, 7 slots (with the gap), 4 properties a slot (time, params, event, result) — 32 fits, a lower limit says so; the definitions match', JSON.stringify(bud.sequences[0].templates[0]) + ' ' + bud.properties);
+
 console.log(`\n${fails ? 'FAIL' : 'PASS'} tl-model-offline (${n - fails}/${n})`);
 process.exit(fails ? 1 : 0);
