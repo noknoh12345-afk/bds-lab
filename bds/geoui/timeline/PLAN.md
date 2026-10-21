@@ -154,4 +154,8 @@
   ング・トランジション・loop の 4 種・シーク）、osu! の焼き込みと流し込み（スクリプトが入れるのと同じプロパティ）、当たり・外れ。
   要実測: プロパティの数の上限（32 と見込む）・Molang の式の長さの上限・アニメーションを重ねた時のスケールの掛け算と回転の向き・render controller の描く順・
   シークの後の音。osu! のテンプレートは円の大きさを数で持ち、流し込みの詰め方（x 8 bit・y 7 bit・番号 6 bit・色 3 bit）を持つ。
-- 4. tl-runtime: 次（BP: 再生の命令・流し込み・入力と判定・点数とコンボ、見本のアドオン geoui_rhythm）。
+- 4. tl-runtime: **途中**。できた: runtime.js — エンジン（1 つの関数。パックのスクリプトがその源を持ち、試験は同じコードを偽の世界で回す）: scriptevent の
+  play・stop・pause・resume・seek・offset、流し込みの枠を出る 250 ms 前に入れ・終わったら空ける、押した（ジャンプ・スニーク・アイテムを使う）時刻を osu! の幅で判定
+  （300/100/50・外れ）し枠へ g・r、点数（コンボで増える）・コンボ・正確さ・体力を v0〜v3 へ、マーカーの event を scriptevent で。extendBehavior: プレイヤーの
+  プロパティ（contract）とスクリプト（main.js から読む）。試験 `node tests/tl-runtime-offline.mjs`。次: 見本のアドオン geoui_rhythm（demo.mjs）。
+  要実測: サーバーの tick は 50 ms 刻み（判定の細かさ）・押してから届くまでの遅れ（offset で補正）・loop と流し込みの 2 周目。
