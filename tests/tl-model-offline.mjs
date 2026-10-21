@@ -11,9 +11,10 @@ const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e;
 
 // ---- easing ----
 ok(M.EASES.length === 2 + 10 * 3 && M.EASES.every((e) => M.ease(e, 0) === 0 && M.ease(e, 1) === 1), `every ease (${M.EASES.length}) starts at 0 and ends at 1`);
-const mids = { linear: 0.5, 'quad-in': 0.25, 'cubic-out': 0.875, 'sine-inout': 0.5, 'quart-in': 0.0625, 'back-in': -0.0876975, 'bounce-out': 0.765625, 'elastic-out': 1.015625, 'expo-inout': 0.5, 'circ-inout': 0.5 };
+const mids = { linear: 0.5, 'quad-in': 0.25, 'cubic-out': 0.875, 'sine-inout': 0.5, 'quart-in': 0.0625, 'back-in': -0.0876975, 'bounce-out': 0.765625, 'elastic-out': 1.0153809, 'expo-inout': 0.5, 'circ-inout': 0.5 };
 const badMid = Object.entries(mids).filter(([e, v]) => !near(M.ease(e, 0.5), v, 1e-6)).map(([e, v]) => `${e}: ${M.ease(e, 0.5)} ≠ ${v}`);
 ok(!badMid.length, 'the curves at their middle (Penner\'s values)', badMid.join(' / '));
+ok(M.EASES.every((e) => e === 'step' || (Math.abs(M.ease(e, 1e-12)) < 1e-4 && Math.abs(M.ease(e, 1 - 1e-12) - 1) < 1e-4)), 'every curve meets 0 and 1 without a jump (expo and elastic made to)');
 ok(M.ease('step', 0.999) === 0 && M.ease('linear', 0.3) === 0.3 && M.ease('nonsense', 0.3) === 0.3 && M.ease('quad-in', 2) === 1 && M.ease('quad-in', -1) === 0, 'step holds, an unknown ease is linear, x is held to 0..1');
 ok(M.EASES.filter((e) => e.endsWith('-inout')).every((e) => near(M.ease(e, 0.3) + M.ease(e, 0.7), 1, 1e-9)), 'every in-out curve is symmetric about its middle');
 ok(near(M.ease({ bezier: [0, 0, 1, 1] }, 0.3), 0.3, 1e-6) && near(M.ease({ bezier: [0.25, 0.1, 0.25, 1] }, 0.5), 0.8024033877, 1e-5) && near(M.ease({ bezier: [0.42, 0, 0.58, 1] }, 0.5), 0.5, 1e-6),

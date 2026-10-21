@@ -68,7 +68,7 @@ let st = ev(0.1);
 ok(near(st['hitcircle#o1'].opacity, 0.5) && st['approachcircle#o1'].visible && st['combonumber#o1'].value === 1 && st['hitcircle#o1'].frame === 0,
   'evaluate the import: the circle fading in (half way at 0.2 s of 0.4), its number, its colour frame');
 st = ev(0.2);
-ok(near(st['approachcircle#o1'].scaleX, byId.o1.params.s * 2.5, 1e-9), 'the approach ring halfway (4x → 1x over the preempt)', JSON.stringify(st['approachcircle#o1']));
+ok(near(st['approachcircle#o1'].scaleX, seq.templates[0].tracks.find((t) => t.target === 'hitcircle').clips[0].channels.scaleX[0].v * 2.5, 1e-3), 'the approach ring halfway (4x → 1x over the preempt)', JSON.stringify(st['approachcircle#o1']));
 st = ev(1.75);
 ok(near(st['sliderball#o3'].x, -13.125 + 16.40625, 1e-6) && near(st['sliderball#o3'].y, 9.84375, 1e-4) && near(ev(2.25)['sliderball#o3'].x, -13.125 + 16.40625, 1e-6) && near(ev(2)['sliderball#o3'].x, -13.125 + 32.8125, 1e-6),
   "the slider ball: osu!'s pixel length (140 of a 100 px line: gone on straight), there and back over its 2 slides", `${st['sliderball#o3'] && st['sliderball#o3'].x} ${ev(2)['sliderball#o3'] && ev(2)['sliderball#o3'].x}`);

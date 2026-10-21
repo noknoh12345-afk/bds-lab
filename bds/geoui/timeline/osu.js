@@ -98,39 +98,42 @@
     const px = (x) => r4((x - 256) * k), py = (y) => r4((192 - y) * k);
     const lead = diff.preempt / 1000, fade = diff.fadeIn / 1000, late = diff.windows.meh / 1000, s = r4((diff.radius * k) / num(opts.designRadius, 10));
     const at = (v) => [{ t: 0, v }];
-    const place = { x: at('param.x'), y: at('param.y') }, size = { scaleX: at('param.s'), scaleY: at('param.s') };
+    // (the circles' size is the map's, the same for all: a number in the template, not a param of each instance)
+    const place = { x: at('param.x'), y: at('param.y') }, size = { scaleX: at(s), scaleY: at(s) };
+    // how a streamed instance's params fit in one property (24 bits): the playfield's x and y, the combo number and colour
+    const hw = r4(num(opts.width, 120) / 2), field = [{ name: 'x', bits: 8, min: -hw, max: hw }, { name: 'y', bits: 7, min: r4(-hw * 0.75), max: r4(hw * 0.75) }, { name: 'n', bits: 6, min: 0, max: 63 }, { name: 'c', bits: 3, min: 0, max: 7 }];
     const fadeKeys = (to) => [{ t: 0, v: 0 }, { t: fade, v: to }];
     // the hit circle's look, shared by the circle and the slider's head: the circle (its colour a frame of the element's
     // image), its number, the approach ring closing in, the burst on a hit, the miss mark
     const circleTracks = () => [
       { target: E.circle, clips: [{ start: -lead, end: late, until: 'hit', channels: { ...place, ...size, opacity: fadeKeys(1), frame: at('param.c') } }] },
       { target: E.number, clips: [{ start: -lead, end: late, until: 'hit', channels: { ...place, ...size, opacity: fadeKeys(1), value: at('param.n') } }] },
-      { target: E.approach, clips: [{ start: -lead, end: 0, channels: { ...place, scaleX: [{ t: 0, v: 'param.s * 4' }, { t: lead, v: 'param.s' }], scaleY: [{ t: 0, v: 'param.s * 4' }, { t: lead, v: 'param.s' }], opacity: fadeKeys(0.9), frame: at('param.c') } }] },
-      { target: E.burst, clips: [{ start: 0, end: 0.25, trigger: 'hit', channels: { ...place, scaleX: [{ t: 0, v: 'param.s', ease: 'quad-out' }, { t: 0.25, v: 'param.s * 1.4' }], scaleY: [{ t: 0, v: 'param.s', ease: 'quad-out' }, { t: 0.25, v: 'param.s * 1.4' }], opacity: [{ t: 0, v: 1, ease: 'quad-in' }, { t: 0.25, v: 0 }] } }] },
+      { target: E.approach, clips: [{ start: -lead, end: 0, channels: { ...place, scaleX: [{ t: 0, v: r4(s * 4) }, { t: lead, v: s }], scaleY: [{ t: 0, v: r4(s * 4) }, { t: lead, v: s }], opacity: fadeKeys(0.9), frame: at('param.c') } }] },
+      { target: E.burst, clips: [{ start: 0, end: 0.25, trigger: 'hit', channels: { ...place, scaleX: [{ t: 0, v: s, ease: 'quad-out' }, { t: 0.25, v: r4(s * 1.4) }], scaleY: [{ t: 0, v: s, ease: 'quad-out' }, { t: 0.25, v: r4(s * 1.4) }], opacity: [{ t: 0, v: 1, ease: 'quad-in' }, { t: 0.25, v: 0 }] } }] },
       { target: E.miss, clips: [{ start: 0, end: 0.5, trigger: 'miss', channels: { x: at('param.x'), y: [{ t: 0, v: 'param.y' }, { t: 0.5, v: 'param.y - 5' }], opacity: [{ t: 0, v: 1 }, { t: 0.5, v: 0 }] } }] },
     ];
     const templates = [
-      { id: 'osu-circle', name: 'osu! 円', lead, tail: r4(late + 0.5), params: ['x', 'y', 'n', 'c', 's'], tracks: circleTracks() },
-      { id: 'osu-slider', name: 'osu! スライダー', lead, tail: 0.5, params: ['x', 'y', 'n', 'c', 's', 'd', 'r', 'f', 'bx', 'by'], tracks: [
+      { id: 'osu-circle', name: 'osu! 円', lead, tail: r4(late + 0.5), params: ['x', 'y', 'n', 'c'], pack: field, tracks: circleTracks() },
+      { id: 'osu-slider', name: 'osu! スライダー', lead, tail: 0.5, params: ['x', 'y', 'n', 'c', 'd', 'r', 'f', 'bx', 'by'], tracks: [
         { target: E.body, clips: [{ start: -lead, end: 'param.d + 0.15', channels: { x: at('param.bx'), y: at('param.by'), opacity: fadeKeys(0.85), frame: at('param.f') } }] },
         ...circleTracks(),
         { target: E.ball, clips: [{ start: 0, end: 'param.d', path: '@instance', channels: { ...size, path: at('1 - math.abs(math.mod(t * param.r / param.d, 2) - 1)') } }] },
       ] },
-      { id: 'osu-spinner', name: 'osu! スピナー', lead: 0.3, tail: 0.3, params: ['d'], tracks: [
+      { id: 'osu-spinner', name: 'osu! スピナー', lead: 0.3, tail: 0.3, params: ['d'], pack: [{ name: 'd', bits: 12, min: 0, max: 40.95 }], tracks: [
         { target: E.spinner, clips: [{ start: -0.3, end: 'param.d', channels: { opacity: [{ t: 0, v: 0 }, { t: 0.3, v: 1 }], rotation: at('t * 360') } }] }] },
     ];
     const cs = combos(map), instances = [], paths = [], bodies = [];
     let end = 0;
     (map.objects || []).forEach((o, i) => {
       const t = r4(o.time / 1000), c = cs[i];
-      if (o.kind === 'circle') { instances.push({ id: `o${i + 1}`, template: 'osu-circle', t, params: { x: px(o.x), y: py(o.y), n: c.n, c: c.colour, s } }); end = Math.max(end, t + late); }
+      if (o.kind === 'circle') { instances.push({ id: `o${i + 1}`, template: 'osu-circle', t, params: { x: px(o.x), y: py(o.y), n: c.n, c: c.colour } }); end = Math.max(end, t + late); }
       else if (o.kind === 'slider') {
         const d = r4(sliderDuration(map, o) / 1000), pts = o.points.map((p) => [px(p[0]), py(p[1])]), xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
         const path = { id: `op${i + 1}`, kind: o.curve, points: pts, length: r4(o.length * k) };
         paths.push(path);
         bodies.push({ frame: bodies.length, path: path.id, kind: o.curve, points: pts, length: r4(o.length * k), width: r4(2 * diff.radius * k) });
         instances.push({ id: `o${i + 1}`, template: 'osu-slider', t, path: path.id, tail: r4(d + 0.5),
-          params: { x: px(o.x), y: py(o.y), n: c.n, c: c.colour, s, d, r: o.slides, f: bodies.length - 1, bx: r4((Math.min(...xs) + Math.max(...xs)) / 2), by: r4((Math.min(...ys) + Math.max(...ys)) / 2) } });
+          params: { x: px(o.x), y: py(o.y), n: c.n, c: c.colour, d, r: o.slides, f: bodies.length - 1, bx: r4((Math.min(...xs) + Math.max(...xs)) / 2), by: r4((Math.min(...ys) + Math.max(...ys)) / 2) } });
         end = Math.max(end, t + d + 0.5);
       } else if (o.kind === 'spinner') {
         const d = r4((o.endTime - o.time) / 1000);

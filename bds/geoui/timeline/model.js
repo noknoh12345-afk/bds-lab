@@ -21,23 +21,26 @@
   const inOutOf = (inF) => (x) => (x < 0.5 ? inF(2 * x) / 2 : 1 - inF(2 - 2 * x) / 2);
   const outOf = (inF) => (x) => 1 - inF(1 - x);
   const POW = (k) => (x) => Math.pow(x, k);
+  // (expo and elastic as Penner wrote them jump by ~0.001 at their ends: here they are made to meet 0 and 1 exactly — a time a
+  //  hair either side of a key gives the same picture, in the preview and in the game's Molang alike)
+  const elasticInRaw = (x) => -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * C4);
+  const elasticIORaw = (x) => (x < 0.5 ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * C5)) / 2 : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * C5)) / 2 + 1);
+  const EASE_K = Object.freeze({ ei0: elasticInRaw(0), ei1: elasticInRaw(1), eo0: elasticIORaw(0), eo1: elasticIORaw(1) });
   const IN = {
     sine: (x) => 1 - Math.cos((x * PI) / 2),
     quad: POW(2), cubic: POW(3), quart: POW(4), quint: POW(5),
-    expo: (x) => (x === 0 ? 0 : Math.pow(2, 10 * x - 10)),
-    circ: (x) => 1 - Math.sqrt(1 - x * x),
+    expo: (x) => (Math.pow(2, 10 * x) - 1) / 1023,
+    circ: (x) => 1 - Math.sqrt(Math.max(0, 1 - x * x)),
     back: (x) => C3 * x * x * x - C1 * x * x,
-    elastic: (x) => (x === 0 ? 0 : x === 1 ? 1 : -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * C4)),
+    elastic: (x) => elasticInRaw(x) - EASE_K.ei0 * (1 - x) - (EASE_K.ei1 - 1) * x,
     bounce: (x) => 1 - bounceOut(1 - x),
   };
   const CURVES = { linear: (x) => x, step: (x) => (x >= 1 ? 1 : 0) };
   for (const [k, f] of Object.entries(IN)) { CURVES[`${k}-in`] = f; CURVES[`${k}-out`] = outOf(f); CURVES[`${k}-inout`] = inOutOf(f); }
   // (the in-out forms Penner wrote for these differ from the mirrored in: kept as written)
   CURVES['back-inout'] = (x) => (x < 0.5 ? (Math.pow(2 * x, 2) * ((C2 + 1) * 2 * x - C2)) / 2 : (Math.pow(2 * x - 2, 2) * ((C2 + 1) * (x * 2 - 2) + C2) + 2) / 2);
-  CURVES['elastic-out'] = (x) => (x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * C4) + 1);
-  CURVES['elastic-inout'] = (x) => (x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * C5)) / 2 : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * C5)) / 2 + 1);
+  CURVES['elastic-inout'] = (x) => elasticIORaw(x) - EASE_K.eo0 * (1 - x) - (EASE_K.eo1 - 1) * x;
   CURVES['bounce-out'] = bounceOut;
-  CURVES['expo-inout'] = (x) => (x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? Math.pow(2, 20 * x - 10) / 2 : (2 - Math.pow(2, -20 * x + 10)) / 2);
   const EASES = Object.freeze(Object.keys(CURVES));
 
   /** a CSS-style cubic Bézier (0,0) (x1,y1) (x2,y2) (1,1): y at x — the curve's parameter found by Newton's method, bisection
@@ -293,8 +296,10 @@
         markers: (s.markers || []).filter(Boolean).map((m) => Object.assign({ id: idOf(m.id, 'm'), t: Math.max(0, num(m.t)), name: str(m.name) }, typeof m.event === 'string' && m.event ? { event: m.event } : {})).sort((a, b) => a.t - b.t),
         paths: (s.paths || []).filter(Boolean).map((p) => Object.assign({ id: idOf(p.id, 'p'), kind: ['linear', 'bezier', 'catmull', 'arc'].includes(p.kind) ? p.kind : 'linear', points: (p.points || []).filter((q) => Array.isArray(q) && q.length >= 2).map((q) => [num(q[0]), num(q[1])]) },
           num(p.length) > 0 ? { length: num(p.length) } : {})),   // (length: osu!'s pixel length — the path cut, or gone on straight, to it)
-        templates: (s.templates || []).filter(Boolean).map((tp) => ({ id: idOf(tp.id, 'tpl'), name: str(tp.name, 'テンプレート'), lead: Math.max(0, num(tp.lead, 1)), tail: Math.max(0, num(tp.tail, 0.5)),
-          params: (tp.params || []).filter((x) => typeof x === 'string' && /^\w+$/.test(x)), tracks: (tp.tracks || []).filter(Boolean).map((tr) => normTrack(tr, true)) })),
+        templates: (s.templates || []).filter(Boolean).map((tp) => Object.assign({ id: idOf(tp.id, 'tpl'), name: str(tp.name, 'テンプレート'), lead: Math.max(0, num(tp.lead, 1)), tail: Math.max(0, num(tp.tail, 0.5)),
+          params: (tp.params || []).filter((x) => typeof x === 'string' && /^\w+$/.test(x)), tracks: (tp.tracks || []).filter(Boolean).map((tr) => normTrack(tr, true)) },
+          // (how a streamed instance's params fit in one property: contract.js checks it)
+          Array.isArray(tp.pack) && tp.pack.length && tp.pack.every((f) => f && /^\w+$/.test(String(f.name)) && Number.isInteger(f.bits) && num(f.max, NaN) > num(f.min, NaN)) ? { pack: tp.pack.map((f) => ({ name: String(f.name), bits: f.bits, min: num(f.min), max: num(f.max) })) } : {})),
         instances: (s.instances || []).filter(Boolean).map((x) => Object.assign({ id: idOf(x.id, 'i'), template: str(x.template), t: num(x.t), params: Object.fromEntries(Object.entries(x.params || {}).filter(([k]) => /^\w+$/.test(k)).map(([k, v]) => [k, num(v)])) },
           typeof x.path === 'string' && x.path ? { path: x.path } : {}, num(x.tail, NaN) >= 0 ? { tail: num(x.tail) } : {})).sort((a, b) => a.t - b.t),
         tracks: (s.tracks || []).filter(Boolean).map((tr) => normTrack(tr, false)),
@@ -744,7 +749,7 @@
   }
 
   T.model = {
-    EASES, ease, isEase, bezierAt, toFrames, fromFrames, timecode, parseTimecode, tempoOf, beatAt, timeAtBeat, snapToBeat, barBeat, pathTable, pathPoint, pathLength,
+    EASES, EASE_K, ease, isEase, bezierAt, toFrames, fromFrames, timecode, parseTimecode, tempoOf, beatAt, timeAtBeat, snapToBeat, barBeat, pathTable, pathPoint, pathLength,
     PROPS, DEFAULTS, TRANSITIONS, LOOPS, SLIDE, exprFn, exprError, timeOf, normalize, validate, allIds, seqTime, channelAt, applyTransition, evaluate, reduce,
   };
   if (typeof module === 'object' && module && module.exports) module.exports = T.model;

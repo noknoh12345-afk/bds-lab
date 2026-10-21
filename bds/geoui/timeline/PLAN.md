@@ -145,4 +145,13 @@
   スピナーのテンプレート、実体、道、tempo、音楽のトラック）、media.js（MaxRects のアトラス・連番の uv_anim・文字の配置（折り返し・揃え）・WAV を作る/読む・OGG の長さ・
   波形・sound_definitions・無圧縮 ZIP と読み戻し・連番の並べ方・スライダーの体の線と絵の描き方）、presets.js（タイトル・名前のテロップ・点数のポップ・カウントダウン・
   通知・進むゲージ・点滅・揺れ・ヒットの弾け・コンボのポップ・判定の文字）。試験 `node tests/tl-assets-offline.mjs`。
-- 3. tl-anim: 次（RP への書き出し。Molang の値が model.evaluate と 1/60 秒ごとに一致することを試験で）。
+- 3. tl-anim: **できた**。compile.js（extendPack）: 値はすべて pre_animation の変数で（シーケンスの時間＝seq_gen が変わった時の q.life_time から、
+  loop/hold/pingpong/in-out、一時停止とシーク）、各シーケンスのアニメーションはボーンをその変数で動かすだけ。全イージング（expo・elastic は端で飛ばない形に model と
+  そろえた）、ベジェは 16 の折れ線（誤差を warnings に）、トランジション、式（param・t）、道（折れ線を弧長で、osu! の長さ）、テンプレートの枠（ボーンの複製・焼き込み／
+  流し込み・24 bit のプロパティ）、出来事（g・r で時刻を覚え、trigger・until）、要素ごとの不透明度とコマ（専用の render controller と part_visibility）、数字の
+  値（桁の変数を作り直す）、ゲージの量（transform の fill を譲る）、音（sound_effects と sound_definitions）。試験 `node tests/tl-anim-offline.mjs`（1.2 秒）:
+  ゲームの Molang を 1/60 秒ごとに GeoUI Builder の評価器で回し（変数はフレームをまたいで残す）、全要素を model.evaluate と 1e-3 で比べる — 自分のトラック（全イージ
+  ング・トランジション・loop の 4 種・シーク）、osu! の焼き込みと流し込み（スクリプトが入れるのと同じプロパティ）、当たり・外れ。
+  要実測: プロパティの数の上限（32 と見込む）・Molang の式の長さの上限・アニメーションを重ねた時のスケールの掛け算と回転の向き・render controller の描く順・
+  シークの後の音。osu! のテンプレートは円の大きさを数で持ち、流し込みの詰め方（x 8 bit・y 7 bit・番号 6 bit・色 3 bit）を持つ。
+- 4. tl-runtime: 次（BP: 再生の命令・流し込み・入力と判定・点数とコンボ、見本のアドオン geoui_rhythm）。
