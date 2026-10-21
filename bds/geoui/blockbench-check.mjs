@@ -57,7 +57,8 @@ const browser = await pw.chromium.launch({ executablePath: exe, headless: true, 
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
-page.on('console', (m) => { if (m.type() === 'error' && !/bad HTTP response|Failed to load resource/.test(m.text())) errors.push(m.text()); });
+// (Blockbench's own calls home — its stats at blckbn.ch — fail when served from here: CORS or no network. Not the plugin's)
+page.on('console', (m) => { if (m.type() === 'error' && !/bad HTTP response|Failed to load resource|blckbn\.ch/.test(m.text())) errors.push(m.text()); });
 await page.addInitScript(() => { window.confirm = () => true; window.alert = () => {}; });
 await page.goto(`http://127.0.0.1:${srv.address().port}/index.html`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => window.Blockbench && window.Formats && window.Plugins, null, { timeout: 120000 });
