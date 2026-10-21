@@ -85,6 +85,15 @@ export function analyse(rows) {
   return { geo, diffs, failed, fit };
 }
 
+/** what a `measure diff` of a known shot answers (its app.txt compares it with a picture where only that one thing differs):
+ *  the question, asked of "something changed" (parts > 0: the measure already drops specks of < 1/200000 of the picture) */
+export const DIFF_QUESTIONS = {
+  'hud-on': 'HUD に GeoUI が描かれる', 'bar0': 'プロパティを変えると描画が変わる（バー）', 'inventory-off': 'インベントリに GeoUI が映り込む',
+  'inventory-shown': 'インベントリに GeoUI が映り込む', 'invisible-on': '透明化の間も GeoUI が描かれる', 'hud-alpha0': 'alpha 0 でも GeoUI が描かれる',
+  'third-person': '視点（三人称）で GeoUI の見え方が変わる',
+};
+/** the diffs of known shots as yes / no (pure) → [{ addon, shot, question, yes, parts, share }] */
+export const verdicts = (diffs) => diffs.filter((d) => DIFF_QUESTIONS[d.shot]).map((d) => ({ addon: d.addon, shot: d.shot, question: DIFF_QUESTIONS[d.shot], yes: (d.values.parts ?? 0) > 0, parts: d.values.parts ?? 0, share: d.values.share ?? 0 }));
 const f = (x, n = 2) => (Number.isFinite(x) ? x.toFixed(n) : '—');
 const sgn = (x, n = 2) => (Number.isFinite(x) ? `${x >= 0 ? '+' : ''}${x.toFixed(n)}` : '—');
 /** the report as Markdown (pure) */
@@ -110,6 +119,12 @@ export function markdown(a, { title = 'GeoUI の較正: 本物のアプリで測
       `- 中心 x = **${f(F.C, 3)}**（±${f(F.Csd, 3)}）・横と縦の尺度の比 ${f(F.xy, 4)}（1 なら画面の半分の幅 = H/2 × 画面比）`,
       `- 遠近: 60 単位手前の点の拡大率 ${f(F.near, 4)}・60 単位奥 ${f(F.far, 4)}${near && far ? '（どちらも 1: 遠近なし。重ね順は z だけで決まり、大きさは変わらない）' : ''}`,
       `- Studio の枠（10 % x 10%・110 %）では: 画面の高さ **${f(F.studioFrame.H, 2)}**（Studio 176）・中心 y **${f(F.studioFrame.cy, 2)}**（Studio 140）・中心のずれ（画面の高さの割合）x ${f(F.studioFrame.fixX, 5)} / y ${f(F.studioFrame.fixY, 5)}（Studio のスマホ ${STUDIO.fix.mobile.join(' / ')}、PC ${STUDIO.fix.desktop.join(' / ')}）`, '');
+  }
+  const V = verdicts(a.diffs);
+  if (V.length) {
+    L.push('## 仕様書の主張への答え（measure diff）', '', '| 問い | 答え | 根拠 |', '|---|---|---|');
+    for (const v of V) L.push(`| ${v.question} | **${v.yes ? 'はい' : 'いいえ'}** | ${v.addon} の ${v.shot}: ${v.parts} か所・${f(v.share * 100, 3)} % |`);
+    L.push('');
   }
   if (a.diffs.length) {
     L.push('## 違う所（measure diff: 基準の画面と比べて）', '', '| 実行 | アドオン | 写した画面 | 違う割合 | か所 | 全体の枠 (px) |', '|---|---|---|---|---|---|');

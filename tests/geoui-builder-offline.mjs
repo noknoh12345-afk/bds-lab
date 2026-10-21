@@ -224,8 +224,14 @@ ok(back.width === 64 && back.height === 32 && Buffer.compare(Buffer.from(back.da
 // mapping fitted. Shots made up from a known mapping must give it back, whatever their frame, scale, oy and lift ----
 {
   const RP = await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'report.mjs')).href);
+  const eq2 = (a, b, m) => ok(JSON.stringify(a) === JSON.stringify(b), m, `want ${JSON.stringify(b)} got ${JSON.stringify(a)}`);
   const planOf = (a) => RP.addonPlan({ imported: fs.readFileSync(path.join(TOP, 'bds', 'addons', a, 'imported.json'), 'utf8'), app: fs.readFileSync(path.join(TOP, 'bds', 'addons', a, 'app.txt'), 'utf8') });
   const base = planOf('geoui_calib'), far = planOf('geoui_calib_far'), p20 = planOf('geoui_calib_p20'), o210 = planOf('geoui_calib_o210'), w2 = planOf('geoui_calib_w2');
+  // (every GeoUI addon's real-app steps parse: a typo there costs a device run to find)
+  const SC = await import(pathToFileURL(path.join(TOP, 'app', 'lib', 'scenario.mjs')).href);
+  const bad = fs.readdirSync(path.join(TOP, 'bds', 'addons')).filter((a) => /^geoui/.test(a) && fs.existsSync(path.join(TOP, 'bds', 'addons', a, 'app.txt')))
+    .map((a) => [a, SC.parseScenario(fs.readFileSync(path.join(TOP, 'bds', 'addons', a, 'app.txt'), 'utf8')).errors]).filter(([, e]) => e.length);
+  ok(!bad.length, 'report: every geoui addon\'s app.txt parses (the steps a device run takes)', JSON.stringify(bad));
   ok(JSON.stringify(base.frame) === '{"w":10,"h":10,"top":110}' && base.lift === 0 && base.shots['calib-scale50'].scale === 50 && base.shots['calib-dpi240'].scale === 100 && base.shots['inventory-shown'].scale === 100, 'report: the plain pack\'s frame (Studio\'s), and each shot\'s scale as app.txt set it before that shot (scale 50 put back to 100 only after it)', JSON.stringify(base));
   ok(JSON.stringify(far.frame) === '{"w":10,"h":10,"top":1110}' && far.lift === 1760 && JSON.stringify(p20.frame) === '{"w":20,"h":20,"top":105}' && p20.shots['calib-fit'].scale === 50 && p20.shots['calib-fit'].oy === -660
     && JSON.stringify(o210.frame) === '{"w":10,"h":10,"top":210}' && o210.shots['calib-up176'].oy === 1760 && JSON.stringify(w2.frame) === '{"w":2,"h":10,"top":110}' && w2.shots['calib-double'].scale === 200, 'report: the variants\' frames and lift from imported.json, their shots\' scale and oy');
@@ -244,6 +250,10 @@ ok(back.width === 64 && back.height === 32 && Buffer.compare(Buffer.from(back.da
   ok(close(F.studioFrame.H, 182, 1e-9) && close(F.studioFrame.cy, 182 * 0.6 + 30, 1e-9) && close(F.studioFrame.fixY, (182 * 0.6 + 30 - 140) / 182, 1e-12) && a.diffs.length === 1 && a.failed.length === 1, 'report: Studio\'s frame on that device (height, centre, centre fix), the diff kept, the failed one named');
   const md = RP.markdown(a, { runs: ['1'] });
   ok(/K = 18\.200\*\*/.test(md) && /B = 30\.00\*\*/.test(md) && /どちらも 1: 遠近なし/.test(md) && /geoui_calib_o210（10x10@210） \| calib-up176/.test(md) && /測れなかった画面: geoui_calib\/calib-hud/.test(md), 'report: the Markdown says the fit, the depth and every shot', md.slice(0, 1200));
+  // the spec's claims answered by the diffs of known shots (0 parts: no)
+  eq2(RP.verdicts([{ addon: 'geoui_calib', shot: 'inventory-shown', values: { parts: 0, share: 0 } }, { addon: 'geoui_lab', shot: 'invisible-on', values: { parts: 2, share: 0.01 } }, { addon: 'geoui_lab', shot: 'third', values: { parts: 1 } }]).map((v) => `${v.question}:${v.yes}`),
+    ['インベントリに GeoUI が映り込む:false', '透明化の間も GeoUI が描かれる:true'], 'report: known diffs as yes / no, unknown shots left as numbers');
+  ok(/\| インベントリに GeoUI が映り込む \| \*\*いいえ\*\* \| geoui_calib の inventory-shown: 0 か所/.test(md), 'report: the answers in the Markdown');
   // from summary.json files (a run's artifacts as fetched): only measures, by addon
   const d = fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-report-')); fs.mkdirSync(path.join(d, 'app-geoui_calib-9', 'run1'), { recursive: true });
   fs.writeFileSync(path.join(d, 'app-geoui_calib-9', 'run1', 'summary.json'), JSON.stringify({ addon: 'geoui_calib', app: '1.26.52.3', measures: rows.filter((r) => r.addon === 'geoui_calib').map(({ shot, kind, ok: o, values }) => ({ shot, kind, ok: o, values })) }));

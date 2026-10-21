@@ -101,6 +101,36 @@ wait 1500
 absent clientlog \bERROR\b
 measure geoui calib-scale50                # 画面の高さが 2 倍の単位に（中心は 140 のまま）
 
+section repeat
+# 同じ画面をもう一度: 測り方と端末のぶれ（calib-device との差が、ほかの画面どうしの差を読むときの物差し）
+wait 2000
+until stable 60000
+shot calib-repeat
+measure geoui calib-repeat
+
+section third-person
+# 仕様書「HUD 追加型は視点に依存しない」: 三人称でも目盛りは同じ所（後ろの黒い板が世界を隠すので、一人称の画面と同じになるはず）
+shot world--first-person
+perspective
+wait 2000
+until stable 60000
+shot third-person
+measure geoui third-person
+measure diff third-person                  # 0 か所なら視点で変わらない
+perspective
+perspective
+wait 1500
+
+section spectator
+# スペクテイターでも HUD に足した GeoUI が出るか（ホットバーなどバニラの HUD は消える）。測れれば出ている
+do gamemode spectator @a
+wait 2000
+until stable 60000
+shot spectator
+measure geoui spectator
+do gamemode default @a
+wait 1500
+
 section inventory
 # インベントリの人形も live_player_renderer: いつもの高さ（y = 20〜260・後ろの黒い板 800 x 360）の GeoUI が映り込むか（geoui_calib_far と比べる）
 do scriptevent gcal:set scale 1                    # 消す（目盛りを (0, 140) の 1 点に縮める）
