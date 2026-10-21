@@ -235,21 +235,33 @@ ok(back.width === 64 && back.height === 32 && Buffer.compare(Buffer.from(back.da
   ok(JSON.stringify(base.frame) === '{"w":10,"h":10,"top":110}' && base.lift === 0 && base.shots['calib-scale50'].scale === 50 && base.shots['calib-dpi240'].scale === 100 && base.shots['inventory-shown'].scale === 100, 'report: the plain pack\'s frame (Studio\'s), and each shot\'s scale as app.txt set it before that shot (scale 50 put back to 100 only after it)', JSON.stringify(base));
   ok(JSON.stringify(far.frame) === '{"w":10,"h":10,"top":1110}' && far.lift === 1760 && JSON.stringify(p20.frame) === '{"w":20,"h":20,"top":105}' && p20.shots['calib-fit'].scale === 50 && p20.shots['calib-fit'].oy === -660
     && JSON.stringify(o210.frame) === '{"w":10,"h":10,"top":210}' && o210.shots['calib-up176'].oy === 1760 && JSON.stringify(w2.frame) === '{"w":2,"h":10,"top":110}' && w2.shots['calib-double'].scale === 200, 'report: the variants\' frames and lift from imported.json, their shots\' scale and oy');
-  // a made-up device: K = 18.2, B = 30, C = 0.5 (not Studio's), every variant's shots as the measure would read them
-  const truth = { K: 18.2, B: 30, C: 0.5 }, rows = [];
-  for (const [addon, plan] of [['geoui_calib', base], ['geoui_calib_far', far], ['geoui_calib_p20', p20], ['geoui_calib_o210', o210], ['geoui_calib_w2', w2]]) {
-    for (const [shot, t] of Object.entries(plan.shots).filter(([k]) => /^calib-/.test(k))) {
-      const s = t.scale / 100, H = (truth.K * 100) / plan.frame.h, cy = H * (plan.frame.top / 100 - 0.5) + truth.B, Ha = H / s;
-      rows.push({ run: '1', addon, shot, kind: 'geoui', ok: true, plan, values: { width: 1560, height: 720, unitsPerScreenH: Ha, unitsPerScreenHFromX: Ha, centreX: (truth.C - t.ox / 10) / s, centreY: 140 + (cy - 140 - plan.lift - t.oy / 10) / s, pxPerUnitX: 720 / Ha, pxPerUnitY: -720 / Ha, depthNear: 1, depthFar: 1 } });
-    }
+  // made-up devices (two answers that differ in every way), every variant's shots as the measure would read them — at the
+  // screen size each shot's name says (calib-1024x768 …), else the CI device's 1560x720 — and the fit must find each
+  const plans = [['geoui_calib', base], ['geoui_calib_far', far], ['geoui_calib_p20', p20], ['geoui_calib_o210', o210], ['geoui_calib_w2', w2]];
+  const shotsOf = (model) => plans.flatMap(([addon, plan]) => Object.entries(plan.shots).filter(([k]) => /^calib-/.test(k)).map(([shot, t]) => {
+    const m = /(\d+)x(\d+)/.exec(shot), W = m ? +m[1] : 1560, Hs = m ? +m[2] : 720, s = t.scale / 100, P = RP.predict(model, plan.frame, W, Hs), Ha = P.H / s;
+    return { run: '1', addon, shot, kind: 'geoui', ok: true, plan, values: { width: W, height: Hs, unitsPerScreenH: Ha, unitsPerScreenHFromX: Ha, centreX: (P.cx - t.ox / 10) / s, centreY: 140 + (P.cy - 140 - plan.lift - t.oy / 10) / s, pxPerUnitX: Hs / Ha, pxPerUnitY: -Hs / Ha, depthNear: 1, depthFar: 1 } };
+  }));
+  for (const truth of [{ scale: 'area', c: 0.038585, pin: 'middle', px: false, d: 24.1, C: 0.5 }, { scale: 'height', c: 10 / 176, pin: 'bottom', px: true, d: 8, C: 0 }]) {
+    const a = RP.analyse(shotsOf(truth)), M = a.fit?.model;
+    ok(M && M.scale === truth.scale && M.pin === truth.pin && M.px === truth.px && close(M.c / truth.c, 1, 1e-9) && close(M.d, truth.d, 1e-6) && close(M.C, truth.C, 1e-9) && a.fit.scales[1].spread > 1 && a.geo.every((g) => Math.abs(g.residual.cyPx) < 1e-6 && Math.abs(g.residual.kPct) < 1e-6),
+      `report: a device whose scale follows the frame's ${truth.scale} and whose origin is pinned at its ${truth.pin} found again from ${a.geo.length} shots of 5 frames and 6 screens (scale 50 / 200, oy, lift undone)`, JSON.stringify({ M, scales: a.fit?.scales }));
   }
-  rows.push({ run: '1', addon: 'geoui_calib', shot: 'inventory-shown', kind: 'diff', ok: true, plan: base, values: { share: 0, parts: 0 } }, { run: '1', addon: 'geoui_calib', shot: 'calib-hud', kind: 'geoui', ok: false, plan: base, values: {} });
+  // Studio's hand-set answer is the 'height' one: 176 high and centred 140 on every screen
+  // (k = Hs / 176 for the 10 % frame; its middle is 1.15 screens down: 0.65 · 176 = 114.4 units below the screen's centre, so the
+  //  origin 25.6 units further down puts the centre at y = 140)
+  const st = RP.analyse(shotsOf({ scale: 'height', c: 10 / 176, pin: 'middle', px: false, d: 25.6, C: 0 }));
+  ok(st.fit.studio.every((x) => close(x.H, 176, 1e-6) && close(x.cy, 140, 1e-6)), 'report: Studio\'s own answer (a height-scaled device) is 176 units high and centred at 140 on every screen for its frame', JSON.stringify(st.fit.studio));
+  const rows = [...shotsOf({ scale: 'area', c: 0.038585, pin: 'middle', px: false, d: 24.1, C: 0.5 }),
+    { run: '1', addon: 'geoui_calib', shot: 'inventory-shown', kind: 'diff', ok: true, plan: base, values: { share: 0, parts: 0 } }, { run: '1', addon: 'geoui_calib', shot: 'calib-hud', kind: 'geoui', ok: false, plan: base, values: {} }];
   const a = RP.analyse(rows), F = a.fit;
-  ok(F && F.n === rows.length - 2 && close(F.K, truth.K, 1e-9) && close(F.B, truth.B, 1e-9) && close(F.C, truth.C, 1e-9) && F.Ksd < 1e-9 && F.Bsd < 1e-9 && a.geo.every((g) => Math.abs(g.residual.H) < 1e-9 && Math.abs(g.residual.cy) < 1e-9),
-    `report: the mapping given back from ${rows.length - 2} shots of 5 frames (scale 50 / 200, oy ±, lift 1760 undone)`, JSON.stringify(F));
-  ok(close(F.studioFrame.H, 182, 1e-9) && close(F.studioFrame.cy, 182 * 0.6 + 30, 1e-9) && close(F.studioFrame.fixY, (182 * 0.6 + 30 - 140) / 182, 1e-12) && a.diffs.length === 1 && a.failed.length === 1, 'report: Studio\'s frame on that device (height, centre, centre fix), the diff kept, the failed one named');
+  ok(a.diffs.length === 1 && a.failed.length === 1 && F.studio.length === RP.SCREENS.length && close(F.studio[0].H, 176.07, 0.05) && F.studio[1].H > 190 && F.studio[4].H > 220, 'report: Studio\'s frame on the usual screens (an area-scaled device: 176 on the CI device, more on wider-than-tall ones less wide), the diff kept, the failed one named', JSON.stringify(F.studio));
   const md = RP.markdown(a, { runs: ['1'] });
-  ok(/K = 18\.200\*\*/.test(md) && /B = 30\.00\*\*/.test(md) && /どちらも 1: 遠近なし/.test(md) && /geoui_calib_o210（10x10@210） \| calib-up176/.test(md) && /測れなかった画面: geoui_calib\/calib-hud/.test(md), 'report: the Markdown says the fit, the depth and every shot', md.slice(0, 1200));
+  ok(/1 モデル単位 = \*\*0\.038585 × √\(枠の幅 × 高さ\)（px）\*\*/.test(md) && /枠の真ん中（横は真ん中）から下へ \*\*24\.10 単位\*\*/.test(md) && /どちらも 1: 遠近なし/.test(md) && /geoui_calib_o210（10x10@210） \| calib-up176/.test(md) && /\| 16:9（PC・ゲーム機） 1920x1080 \| \*\*/.test(md) && /測れなかった画面: geoui_calib\/calib-hud/.test(md),
+    'report: the Markdown says the model found, Studio\'s frame on each screen, the depth and every shot', md.slice(0, 1600));
+  // one frame shape on one screen: the scale models cannot be told apart — said
+  const one = RP.analyse(shotsOf({ scale: 'area', c: 0.038585, pin: 'middle', px: false, d: 24.1, C: 0 }).filter((r) => r.addon === 'geoui_calib' && !/\d+x\d+/.test(r.shot)));
+  ok(one.fit.shapes === 1 && /形の違う枠（幅 2 % など）が無いと見分けられません/.test(RP.markdown(one)), 'report: one frame shape only — the scale models cannot be told apart, and it says so');
   // the spec's claims answered by the diffs of known shots (0 parts: no)
   eq2(RP.verdicts([{ addon: 'geoui_calib', shot: 'inventory-shown', values: { parts: 0, share: 0 } }, { addon: 'geoui_lab', shot: 'invisible-on', values: { parts: 2, share: 0.01 } }, { addon: 'geoui_lab', shot: 'third', values: { parts: 1 } }]).map((v) => `${v.question}:${v.yes}`),
     ['インベントリに GeoUI が映り込む:false', '透明化の間も GeoUI が描かれる:true'], 'report: known diffs as yes / no, unknown shots left as numbers');

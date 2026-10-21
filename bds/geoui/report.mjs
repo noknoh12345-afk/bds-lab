@@ -5,11 +5,14 @@
 //   node bds/geoui/report.mjs <run id | run folder | summary.json>... [--md <out.md>] [--json <out.json>] [--repo <owner/name>]
 // (a run id: its artifacts are fetched with gh into a temporary folder; only summary.json is read)
 //
-// The model, in model units (x to the right, y up) and the frame's numbers in % of the screen (the HUD's live_player_renderer
-// frame: its height h, its top t from the screen's top — Studio's 10 % and 110 %):
-//   screen height   H  = K · 100 / h                 K: model units per frame height (Studio's 176 at 10 %: K = 17.6)
-//   screen centre   cy = H · (t / 100 − 1/2) + B     B: where the model is pinned in its frame, in model units
-//                   cx = C                           (Studio: cy = 140 at 10 % / 110 %, so B = 140 − 176 · 0.6 = 34.4)
+// The question: where does the HUD's live_player_renderer put the model, for any frame on any screen? (the frame: its panel,
+// w x h in % of the screen's width and height, its top t % down from the screen's top, centred across — Studio's 10 x 10 at
+// 110). Models compared, each against every shot at once:
+//   scale  k (px per model unit) = c · g(frame in px), g = its height | width | √(width · height) | diagonal
+//   pin    the model's origin (0, 0) on the screen: centred across, at the frame's top | middle | bottom + d (units, or px)
+// The one that fits all shots best (the smallest spread) is the answer; then the screen's height in model units H = screen px
+// / k and its centre cy = (the origin's px − the screen's middle px) / k follow for any frame and screen — what GeoUI Builder
+// needs, and what Studio's hand-set numbers (H = 176, centre y = 140 for 10 x 10 at 110, whatever the screen) are checked by.
 // Each shot's own changes are undone first — its scale about the pivot (0, 140 + lift) and its oy, as the addon's app.txt
 // set them before that shot, and the markers' lift (imported.json) — so every shot speaks of the same model.
 import fs from 'node:fs';
@@ -52,37 +55,61 @@ export function trueOf(v, { scale = 100, ox = 0, oy = 0 } = {}, lift = 0) {
 
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 const sd = (xs) => { if (xs.length < 2) return 0; const m = mean(xs); return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1)); };
+const rms = (xs) => (xs.length ? Math.sqrt(mean(xs.map((x) => x * x))) : null);
 
-/** rows: [{ run, addon, shot, kind, ok, values, plan }] → the shots with their model numbers, the fit, the diffs (pure) */
+/** the frame on a W x Hs screen, in px (pure): centred across (top_middle), its top t % of the screen's height down */
+export function frameOn(f, W, Hs) { const w = (W * f.w) / 100, h = (Hs * f.h) / 100, top = (Hs * f.top) / 100; return { w, h, top, middle: top + h / 2, bottom: top + h }; }
+/** what the model's scale (px per unit) may follow, times a constant */
+export const SCALES = { height: (fr) => fr.h, width: (fr) => fr.w, area: (fr) => Math.sqrt(fr.w * fr.h), diagonal: (fr) => Math.hypot(fr.w, fr.h) };
+/** where the model's origin may be pinned (then + d model units, or + d px) */
+export const PINS = { top: (fr) => fr.top, middle: (fr) => fr.middle, bottom: (fr) => fr.bottom };
+/** a model (scale, pin) → the screen's height in units, its centre and px per unit for a frame on a screen (pure) */
+export function predict(model, frame, W, Hs) {
+  const fr = frameOn(frame, W, Hs), k = model.c * SCALES[model.scale](fr), y0 = PINS[model.pin](fr) + (model.px ? model.d : model.d * k);
+  return { k, H: Hs / k, cy: (y0 - Hs / 2) / k, cx: model.C ?? 0 };
+}
+/** the screens the answer is said for: this lab's device, and the usual ones */
+export const SCREENS = [[1560, 720, 'CI の端末（19.5:9）'], [1920, 1080, '16:9（PC・ゲーム機）'], [2340, 1080, '19.5:9（スマホ）'], [2400, 1080, '20:9（スマホ）'], [2048, 1536, '4:3（iPad）'], [2560, 1600, '16:10']];
+
+/** rows: [{ run, addon, shot, kind, ok, values, plan }] → the shots with their model numbers, the models compared and the best
+ *  one, its residuals, its answer for Studio's frame, the diffs (pure) */
 export function analyse(rows) {
   const geo = [], diffs = [], failed = [];
   for (const r of rows) {
     if (r.kind === 'diff') { (r.ok ? diffs : failed).push(r); continue; }
     if (r.kind !== 'geoui') continue;
     if (!r.ok) { failed.push(r); continue; }
-    const t = trueOf(r.values, r.plan?.shots?.[r.shot], r.plan?.lift ?? 0);
-    if (!t) { failed.push(r); continue; }
-    const f = r.plan?.frame ?? STUDIO.frame;
-    geo.push({ ...r, ...t, frame: f, K: (t.H * f.h) / 100, B: t.cy === null ? null : t.cy - t.H * (f.top / 100 - 0.5) });
+    const t = trueOf(r.values, r.plan?.shots?.[r.shot], r.plan?.lift ?? 0), W = r.values.width, Hs = r.values.height;
+    if (!t || t.cy === null || !(W > 0) || !(Hs > 0)) { failed.push(r); continue; }
+    const frame = r.plan?.frame ?? STUDIO.frame, fr = frameOn(frame, W, Hs), k = Hs / t.H;
+    geo.push({ ...r, ...t, frame, fr, W, Hs, k, y0: Hs / 2 + t.cy * k });
   }
-  const use = geo.filter((g) => g.B !== null);
-  const K = mean(use.map((g) => g.K)), B = mean(use.map((g) => g.B)), C = mean(use.filter((g) => g.cx !== null).map((g) => g.cx));
-  for (const g of geo) {
-    const H = (K * 100) / g.frame.h, cy = H * (g.frame.top / 100 - 0.5) + B;
-    g.residual = { H: g.H - H, cy: g.cy === null ? null : g.cy - cy, cx: g.cx === null || C === null ? null : g.cx - C };
-    // (in pixels on that screen: what a misplaced layer would look like)
-    g.residualPx = { cy: g.residual.cy === null || !g.pxPerUnit ? null : g.residual.cy * g.pxPerUnit, H: g.pxPerUnit && g.values.height ? (g.values.height * g.residual.H) / g.H : null };
+  if (!geo.length) return { geo, diffs, failed, fit: null };
+  // the scale: c = the geometric mean of k / g; its spread in % (sd of the logs x 100)
+  const scales = Object.entries(SCALES).map(([name, g]) => { const r = geo.map((x) => Math.log(x.k / g(x.fr))); return { name, c: Math.exp(mean(r)), spread: sd(r) * 100 }; }).sort((a, b) => a.spread - b.spread);
+  // the pin: d by least squares (units: y0 − a = d·k; px: y0 − a = d), how far the origin then is from where it was (px, rms)
+  const pins = Object.entries(PINS).flatMap(([name, a]) => [false, true].map((px) => {
+    const e = geo.map((x) => ({ r: x.y0 - a(x.fr), k: x.k }));
+    const d = px ? mean(e.map((q) => q.r)) : e.reduce((s, q) => s + q.r * q.k, 0) / e.reduce((s, q) => s + q.k * q.k, 0);
+    return { name, px, d, spread: rms(e.map((q) => q.r - (px ? d : d * q.k))) };
+  })).sort((a, b) => a.spread - b.spread);
+  const cxs = geo.filter((x) => x.cx !== null).map((x) => x.cx), C = mean(cxs);
+  const model = { scale: scales[0].name, c: scales[0].c, pin: pins[0].name, px: pins[0].px, d: pins[0].d, C };
+  for (const x of geo) {
+    const p = predict(model, x.frame, x.W, x.Hs);
+    x.residual = { H: x.H - p.H, cy: x.cy - p.cy, cyPx: (x.cy - p.cy) * x.k, kPct: ((x.k - p.k) / p.k) * 100 };
   }
-  const depth = (k) => geo.map((g) => g.values[k]).filter(Number.isFinite);
-  const fit = use.length ? {
-    n: use.length, K, Ksd: sd(use.map((g) => g.K)), B, Bsd: sd(use.map((g) => g.B)), C, Csd: sd(geo.filter((g) => g.cx !== null).map((g) => g.cx)),
+  // (with every shot of one frame shape the scale models cannot be told apart: said, not guessed)
+  const shapes = new Set(geo.map((x) => (x.fr.w / x.fr.h).toFixed(2))).size, sizes = new Set(geo.map((x) => Math.round(x.fr.h))).size;
+  const depth = (k) => geo.map((x) => x.values[k]).filter(Number.isFinite);
+  return { geo, diffs, failed, fit: {
+    n: geo.length, scales, pins, model, shapes, sizes, C, Csd: sd(cxs),
     // (the screen's x scale against its y scale: 1 = square model units on the screen, so its half width is H/2 · aspect)
-    xy: mean(geo.filter((g) => g.Hx).map((g) => g.Hx / g.H)),
-    near: mean(depth('depthNear')), far: mean(depth('depthFar')),
-    // Studio's frame (10 % at 110 %) on this device: what the plugin's numbers become
-    studioFrame: { H: K * 10, cy: K * 10 * 0.6 + B, fixY: (K * 10 * 0.6 + B - 140) / (K * 10), fixX: C === null ? null : C / (K * 10) },
-  } : null;
-  return { geo, diffs, failed, fit };
+    xy: mean(geo.filter((x) => x.Hx).map((x) => x.Hx / x.H)), near: mean(depth('depthNear')), far: mean(depth('depthFar')),
+    residualPx: rms(geo.map((x) => x.residual.cyPx)), residualKPct: rms(geo.map((x) => x.residual.kPct)),
+    // Studio's frame (10 x 10 at 110) on the usual screens: what Studio assumes everywhere is H 176 and centre 140
+    studio: SCREENS.map(([W, Hs, label]) => ({ label, W, Hs, ...predict(model, STUDIO.frame, W, Hs) })),
+  } };
 }
 
 /** what a `measure diff` of a known shot answers (its app.txt compares it with a picture where only that one thing differs):
@@ -103,22 +130,26 @@ export function markdown(a, { title = 'GeoUI の較正: 本物のアプリで測
   if (!a.geo.length) L.push('`measure geoui` の数がありません（実行が測るところまで行っていないか、測れなかった）。', '');
   else {
     L.push('## 画面ごと（各画面の大きさ・ずらしは元に戻した、モデルそのものの単位）', '',
-      '| 実行 | アドオン（枠） | 写した画面 | 画面 | 画面の高さ H | K = H·枠の高さ | 中心 x | 中心 y | B | 当てはめとの差 H / 中心 y | 1 単位 | 横÷縦 | 奥行き 手前 / 奥 |',
+      '| 実行 | アドオン（枠 %） | 写した画面 | 画面 px | 枠 px | 画面の高さ H | 1 単位 px | 中心 x | 中心 y | 原点 px | 当てはめとの差 尺度 / 中心 | 横÷縦 | 奥行き 手前 / 奥 |',
       '|---|---|---|---|---|---|---|---|---|---|---|---|---|');
     for (const g of a.geo) {
-      L.push(`| ${g.run ?? '—'} | ${g.addon}（${g.frame.w}x${g.frame.h}@${g.frame.top}） | ${g.shot} | ${g.values.width ?? '?'}x${g.values.height ?? '?'} | ${f(g.H, 2)} | ${f(g.K, 3)} | ${f(g.cx, 2)} | ${f(g.cy, 2)} | ${f(g.B, 2)} | ${sgn(g.residual.H, 2)} / ${sgn(g.residual.cy, 2)}（${sgn(g.residualPx.cy, 1)} px） | ${f(g.pxPerUnit, 3)} px | ${f(g.Hx / g.H, 4)} | ${f(g.values.depthNear, 4)} / ${f(g.values.depthFar, 4)} |`);
+      L.push(`| ${g.run ?? '—'} | ${g.addon}（${g.frame.w}x${g.frame.h}@${g.frame.top}） | ${g.shot} | ${g.W}x${g.Hs} | ${f(g.fr.w, 1)}x${f(g.fr.h, 1)} | ${f(g.H, 2)} | ${f(g.k, 4)} | ${f(g.cx, 2)} | ${f(g.cy, 2)} | ${f(g.y0, 1)} | ${sgn(g.residual.kPct, 2)} % / ${sgn(g.residual.cyPx, 1)} px | ${f(g.Hx / g.H, 4)} | ${f(g.values.depthNear, 4)} / ${f(g.values.depthFar, 4)} |`);
     }
     L.push('');
   }
   const F = a.fit;
   if (F) {
-    const near = Number.isFinite(F.near) && Math.abs(F.near - 1) < 0.01, far = Number.isFinite(F.far) && Math.abs(F.far - 1) < 0.01;
+    const near = Number.isFinite(F.near) && Math.abs(F.near - 1) < 0.01, far = Number.isFinite(F.far) && Math.abs(F.far - 1) < 0.01, M = F.model;
+    const SN = { height: '枠の高さ', width: '枠の幅', area: '√(枠の幅 × 高さ)', diagonal: '枠の対角線' }, PN = { top: '上端', middle: '真ん中', bottom: '下端' };
     L.push('## 当てはめ（枠の設定 → 画面）', '',
-      `- **画面の高さ** H = K · 100 / 枠の高さ(%)、**K = ${f(F.K, 3)}**（±${f(F.Ksd, 3)}、${F.n} 枚）。Studio の値は 17.6（10 % の枠で 176）: ${sgn(((F.K - STUDIO.K) / STUDIO.K) * 100, 2)} %`,
-      `- **画面の中心** y = H · (枠の上端(%) / 100 − 1/2) + B、**B = ${f(F.B, 2)}**（±${f(F.Bsd, 2)}）。Studio の値は 34.4（10 % / 110 % で y = 140）`,
-      `- 中心 x = **${f(F.C, 3)}**（±${f(F.Csd, 3)}）・横と縦の尺度の比 ${f(F.xy, 4)}（1 なら画面の半分の幅 = H/2 × 画面比）`,
-      `- 遠近: 60 単位手前の点の拡大率 ${f(F.near, 4)}・60 単位奥 ${f(F.far, 4)}${near && far ? '（どちらも 1: 遠近なし。重ね順は z だけで決まり、大きさは変わらない）' : ''}`,
-      `- Studio の枠（10 % x 10%・110 %）では: 画面の高さ **${f(F.studioFrame.H, 2)}**（Studio 176）・中心 y **${f(F.studioFrame.cy, 2)}**（Studio 140）・中心のずれ（画面の高さの割合）x ${f(F.studioFrame.fixX, 5)} / y ${f(F.studioFrame.fixY, 5)}（Studio のスマホ ${STUDIO.fix.mobile.join(' / ')}、PC ${STUDIO.fix.desktop.join(' / ')}）`, '');
+      `- **尺度**: 1 モデル単位 = **${f(M.c, 6)} × ${SN[M.scale]}（px）**。比べた形（ばらつき、小さいほど合う）: ${F.scales.map((x) => `${SN[x.name]} ${f(x.spread, 2)} %`).join('・')}`
+        + `${F.shapes < 2 ? '（**どの画面も枠の形が同じなので、形の違う枠（幅 2 % など）が無いと見分けられません**）' : ''}`,
+      `- **原点**: 枠の${PN[M.pin]}（横は真ん中）から下へ **${f(M.d, 2)}${M.px ? ' px' : ' 単位'}**。比べた形（原点のずれ px の二乗平均）: ${F.pins.slice(0, 4).map((x) => `${PN[x.name]}+${x.px ? 'px' : '単位'} ${f(x.spread, 1)}`).join('・')}`,
+      `- 当てはめとの差: 尺度 ${f(F.residualKPct, 2)} %・中心 ${f(F.residualPx, 1)} px（二乗平均、${F.n} 枚）・中心 x ${f(F.C, 3)}（±${f(F.Csd, 3)}）・横と縦の尺度の比 ${f(F.xy, 4)}（1 なら画面の半分の幅 = H/2 × 画面比）`,
+      `- 遠近: 60 単位手前の点の拡大率 ${f(F.near, 4)}・60 単位奥 ${f(F.far, 4)}${near && far ? '（どちらも 1: 遠近なし。重ね順は z だけで決まり、大きさは変わらない）' : ''}`, '',
+      '### Studio の枠（10 % x 10 %・110 %）なら', '', '| 画面 | 画面の高さ H（Studio 176） | 中心 y（Studio 140） | 中心のずれ y（画面の高さの割合） | 1 単位 px |', '|---|---|---|---|---|',
+      ...F.studio.map((x) => `| ${x.label} ${x.W}x${x.Hs} | **${f(x.H, 2)}**（${sgn(((x.H - 176) / 176) * 100, 1)} %） | **${f(x.cy, 2)}** | ${f((x.cy - 140) / x.H, 5)} | ${f(x.k, 4)} |`), '',
+      `Studio が手で決めた中心のずれ: スマホ ${STUDIO.fix.mobile.join(' / ')}・PC ${STUDIO.fix.desktop.join(' / ')}（x / y、画面の高さの割合）。`, '');
   }
   const V = verdicts(a.diffs);
   if (V.length) {

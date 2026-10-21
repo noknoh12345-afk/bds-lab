@@ -8,7 +8,7 @@ GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付�
 | `geoui_builder.js` | **Blockbench プラグイン**（Blockbench 5.x、web 版・デスクトップ版）。中の `GeoUICore` は Node のモジュールにもなる（式・Molang・書き出し） |
 | `blockbench-check.mjs` | 本物の Blockbench（web 版をヘッドレスの Chromium で）にプラグインを入れて確かめ、画を撮る（作者向け。要るものはファイルの先頭） |
 | `calib.mjs` | 較正: 目盛りのパックを作る（`make`）・本物のアプリの画面を測る（`measure`）・答えのわかった偽の画面（`synth`） |
-| `report.mjs` | **較正のまとめ**: 本物のアプリの実行（番号・フォルダ・summary.json）の `measure` の数を集め、各画面の大きさ・ずらし・持ち上げを戻して、HUD の枠 → 画面の対応（K・B）を当てはめる。封じた成果物を開けなくても読める |
+| `report.mjs` | **較正のまとめ**: 本物のアプリの実行（番号・フォルダ・summary.json）の `measure` の数を集め、各画面の大きさ・ずらし・持ち上げを戻して、HUD の枠 → 画面の対応（尺度と原点の形）を比べて当てはめる。封じた成果物を開けなくても読める |
 | `png.mjs` | PNG の読み書き（node:zlib だけ） |
 | `measure.html` | **測定ページ**: スクショを選ぶだけで、その端末の中で測る（何も送らない）。`calib.mjs` の測り方をそのまま埋め込んだもの |
 | `page.mjs`・`measure.tpl.html` | 測定ページを作る（`node bds/geoui/page.mjs`。`calib.mjs` を変えたら作り直す。古いままだと試験が落ちる） |
@@ -77,9 +77,13 @@ node bds/geoui/calib.mjs measure app/runs/gh-<番号>/shots
 node bds/geoui/report.mjs <番号> [<番号>…] --md report.md   # 何本でも: 枠の違う変わり種（geoui_calib_*）もまとめて当てはめる
 ```
 
-`report.mjs` が当てはめる形（モデル単位。枠の高さ h・上端 t は画面の %）: **画面の高さ H = K·100/h**、**画面の中心 y = H·(t/100 − 1/2) + B**。
-Studio の値は K = 17.6（10 % の枠で 176）・B = 34.4（10 % / 110 % で y = 140）。各画面の `gcal:set scale / oy`（app.txt でその shot の前に
-設定したもの）と目盛りの持ち上げ（`--lift`）は戻してから当てはめるので、どの変わり種の画面も同じモデルの話になる。
+`report.mjs` は「HUD の枠（live_player_renderer のパネル: 幅 w %・高さ h %・上端 t %、横は真ん中）が、モデルを画面のどこに・どの大きさで
+置くか」を、いくつかの形を全部の画面に当てて比べ、いちばん合う形を答えにする:
+**尺度**（1 モデル単位の px）= c × 枠の高さ ／ 幅 ／ √(幅 × 高さ) ／ 対角線、**原点**（モデルの (0, 0)）= 枠の上端 ／ 真ん中 ／ 下端 + d（単位か px）。
+答えの形から、どの枠・どの画面でも画面の高さ H（モデル単位）と中心が出る（Studio の枠 10 x 10・110 % を、CI の端末・16:9・19.5:9・20:9・4:3・16:10 で）。
+Studio は「どの画面でも H = 176・中心 y = 140」と置いているが、これは尺度が枠の高さだけで決まるときにしか成り立たない。
+枠の形が 1 種類の画面しか無いと形どうしを見分けられないので、幅の違う枠（`geoui_calib_w2`）や大きさの違う画面（`size`）の数が要る。
+各画面の `gcal:set scale / oy`（app.txt でその shot の前に設定したもの）と目盛りの持ち上げ（`--lift`）は戻してから当てはめる。
 
 Google Play の連携が無くても、スマホ 1 台で測れます: `GeoUI_Calibration.mcaddon` を取り込んだワールドで横向きのまま撮り、
 `measure.html`（パネルに置くか、ファイルをそのままブラウザで開く）でそのスクショを選ぶだけ。輪が点に重なっていれば正しく測れています。
