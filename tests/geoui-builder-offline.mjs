@@ -198,6 +198,24 @@ const meas = [
 bad = meas.filter(({ o, r, near, far }) => !r.ok || Math.abs(r.unitsPerScreenH / o.h - 1) > 0.004 || Math.abs(r.centre.x - o.cx) > 0.1 || Math.abs(r.centre.y - (140 + o.cy)) > 0.1
   || Math.abs(r.depth.near.ratio - near) > 0.01 || Math.abs(r.depth.far.ratio - far) > 0.01).map(({ o, r }) => `${JSON.stringify(o)} → ${CAL.describe('synth', r)}`);
 ok(!bad.length, 'calib.mjs measure reads back the screen height (0.4 %), the centre (0.1 unit) and the depth scale (1 %) it was given — HUD pieces, perspective, a dim picture', bad.join('\n'));
+// a real screenshot: the game lights the board dimmer, the centre fix moves the grid so the blue (or green) marker is off
+// the picture, and a phone or chat app shrinks it and shares its colours between pixels — the grid is found by its shape
+const rough = [
+  { o: { h: 176, w: 2400, hpx: 1080, hud: true, dim: 0.45 }, d: {} },
+  { o: { h: 120, cy: -25, w: 1920, hpx: 1080, hud: true }, d: {} },
+  { o: { h: 260, cy: -25, w: 2532, hpx: 1170, hud: true, dim: 0.7, persp: 0.004 }, d: { scale: 0.4, chroma: true, noise: 12 } },
+  { o: { h: 150, cx: 4, cy: 12, w: 2048, hpx: 1536, hud: true }, d: { scale: 0.33, chroma: true, noise: 8 } },
+].map(({ o, d }) => ({ o, r: CAL.measure(CAL.degrade(CAL.synth(o), d)) }));
+bad = rough.filter(({ o, r }) => !r.ok || Math.abs(r.unitsPerScreenH / o.h - 1) > 0.01 || Math.hypot(r.centre.x - (o.cx || 0), r.centre.y - (140 + (o.cy || 0))) > 1).map(({ o, r }) => `${JSON.stringify(o)} → ${CAL.describe('synth', r)}`);
+const upright = CAL.measure(CAL.synth({ h: 176, w: 1080, hpx: 2400, hud: true }));
+ok(!bad.length && !upright.ok, 'calib.mjs measure finds the grid on a dim, shrunk, colour-shared picture with a marker off it (1 %, 1 unit) and refuses a phone held upright (too few columns) instead of guessing', bad.join('\n') + (upright.ok ? ` upright: ${CAL.describe('synth', upright)}` : ''));
+// the measuring page carries calib.mjs's own measuring code: rebuilt from it, it is the file in the repository, and its sample
+// measures as the made-up answer says (node bds/geoui/page.mjs after changing calib.mjs)
+const PAGE = await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'page.mjs')).href);
+const pageNow = fs.existsSync(path.join(TOP, 'bds', 'geoui', 'measure.html')) ? fs.readFileSync(path.join(TOP, 'bds', 'geoui', 'measure.html'), 'utf8') : '';
+const pageSrc = PAGE.calibSource(), smp = CAL.measure((await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'png.mjs')).href)).decodePng(Buffer.from(PAGE.sample().split(',')[1], 'base64')));
+ok(pageNow === PAGE.build() && pageSrc.includes('function measure(') && !/^export /m.test(pageSrc) && smp.ok && Math.abs(smp.unitsPerScreenH - 176) < 0.5 && Math.abs(smp.centre.y - 130.75) < 0.3,
+  'measure.html is built from calib.mjs as it is now, and its sample reads back height 176 and centre y 130.75', `${pageNow === PAGE.build() ? '' : 'measure.html is stale: node bds/geoui/page.mjs '}${CAL.describe('sample', smp)}`);
 const pngBack = (await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'png.mjs')).href));
 const img = CAL.synth({ w: 64, hpx: 32 }), back = pngBack.decodePng(pngBack.encodePng(img));
 ok(back.width === 64 && back.height === 32 && Buffer.compare(Buffer.from(back.data), Buffer.from(img.data)) === 0, 'png.mjs: a picture written and read back is the same');

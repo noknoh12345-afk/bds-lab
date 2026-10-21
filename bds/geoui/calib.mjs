@@ -102,40 +102,85 @@ export function synth({ h = 176, cx = 0, cy = 0, w = 1560, hpx = 720, persp = 0,
   return { width: w, height: hpx, data: img };
 }
 
+/**
+ * a made-up screenshot handed over the way a phone or a chat app does: shrunk (box filter), colours shared by 2x2 pixels
+ * (JPEG's 4:2:0) and a little noise — deterministic, so a test sees the same picture every time
+ */
+export function degrade(img, { scale = 1, chroma = false, noise = 0, seed = 1 } = {}) {
+  let { width: W, height: Hh, data } = img;
+  if (scale !== 1) {
+    const w = Math.max(1, Math.round(W * scale)), h = Math.max(1, Math.round(Hh * scale)), out = new Uint8Array(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const xa = Math.floor(x / scale), xb = Math.max(xa + 1, Math.floor((x + 1) / scale)), ya = Math.floor(y / scale), yb = Math.max(ya + 1, Math.floor((y + 1) / scale));
+      const acc = [0, 0, 0]; let n = 0;
+      for (let yy = ya; yy < Math.min(yb, Hh); yy++) for (let xx = xa; xx < Math.min(xb, W); xx++) { const k = (yy * W + xx) * 4; acc[0] += data[k]; acc[1] += data[k + 1]; acc[2] += data[k + 2]; n++; }
+      out.set([acc[0] / n, acc[1] / n, acc[2] / n, 255], (y * w + x) * 4);
+    }
+    W = w; Hh = h; data = out;
+  } else data = Uint8Array.from(data);
+  if (chroma) for (let y = 0; y + 1 < Hh; y += 2) for (let x = 0; x + 1 < W; x += 2) {
+    const ks = [(y * W + x) * 4, (y * W + x + 1) * 4, ((y + 1) * W + x) * 4, ((y + 1) * W + x + 1) * 4];
+    const yv = ks.map((k) => 0.299 * data[k] + 0.587 * data[k + 1] + 0.114 * data[k + 2]);
+    const cb = ks.reduce((s, k, i) => s + (data[k + 2] - yv[i]), 0) / 4, cr = ks.reduce((s, k, i) => s + (data[k] - yv[i]), 0) / 4;
+    ks.forEach((k, i) => { const r = yv[i] + cr, b = yv[i] + cb, g = (yv[i] - 0.299 * r - 0.114 * b) / 0.587; data[k] = Math.max(0, Math.min(255, r)); data[k + 1] = Math.max(0, Math.min(255, g)); data[k + 2] = Math.max(0, Math.min(255, b)); });
+  }
+  if (noise) { let st = seed >>> 0 || 1; const rnd = () => ((st = (st * 1664525 + 1013904223) >>> 0) / 4294967296) - 0.5;
+    for (let i = 0; i < W * Hh * 4; i += 4) for (let c = 0; c < 3; c++) data[i + c] = Math.max(0, Math.min(255, data[i + c] + rnd() * 2 * noise)); }
+  return { width: W, height: Hh, data };
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Measuring a screenshot
+//
+// What a real screenshot does to the markers: the game lights the board (everything dimmer than full colour), JPEG and
+// resizing blur and bleed the colours, the centre fix moves the grid so any one marker may be off the picture, and the
+// HUD, the touch controls and chat text add bright shapes of their own. So nothing below assumes a brightness, a colour
+// threshold or that a given marker is visible: the grid is found by its shape (equally spaced squares of one size), then
+// placed by whichever of its coloured markers are on the picture, and only then fitted.
 // ---------------------------------------------------------------------------------------------------------------------
-function classify(r, g, b) {
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), v = mx / 255, s = mx ? (mx - mn) / mx : 0;
-  if (v < 0.3) return null;
-  if (s < 0.22) return v > 0.55 ? 'white' : null;
-  if (s < 0.55) return null;
+const valueAt = (d, i) => Math.max(d[i], d[i + 1], d[i + 2]);
+/** the marker colour of a blob's mean (white = grey of any brightness), null when it is none of them */
+export function colourOf(r, g, b) {
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), s = mx ? (mx - mn) / mx : 0;
+  if (mx < 1) return null;
+  if (s < 0.3) return 'white';
+  if (s < 0.45) return null;
   let hue;
   if (mx === r) hue = ((g - b) / (mx - mn)) * 60; else if (mx === g) hue = (2 + (b - r) / (mx - mn)) * 60; else hue = (4 + (r - g) / (mx - mn)) * 60;
   hue = (hue + 360) % 360;
-  if (hue < 20 || hue >= 340) return 'red';
-  if (hue >= 45 && hue < 75) return 'yellow';
-  if (hue >= 95 && hue < 145) return 'green';
-  if (hue >= 165 && hue < 195) return 'cyan';
-  if (hue >= 215 && hue < 265) return 'blue';
+  if (hue < 25 || hue >= 335) return 'red';
+  if (hue >= 40 && hue < 80) return 'yellow';
+  if (hue >= 90 && hue < 150) return 'green';
+  if (hue >= 160 && hue < 200) return 'cyan';
+  if (hue >= 210 && hue < 270) return 'blue';
   return null;
 }
-/** connected blobs of each colour: {color, n, x, y (centroid), w, h, fill} */
+/**
+ * bright connected shapes over the background: {color, n, x, y (centroid weighted by brightness above the background),
+ * w, h, fill, rgb}. The threshold follows the picture: the background's median and its brightest marks.
+ */
 export function blobs(img) {
-  const { width: W, height: Hh, data } = img, cls = new Array(W * Hh), seen = new Uint8Array(W * Hh), out = [];
-  for (let i = 0; i < W * Hh; i++) cls[i] = classify(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
-  const stack = [];
-  for (let i = 0; i < W * Hh; i++) {
-    if (!cls[i] || seen[i]) continue;
-    const c = cls[i]; let n = 0, sx = 0, sy = 0, x0 = W, x1 = 0, y0 = Hh, y1 = 0;
+  const { width: W, height: Hh, data } = img, N = W * Hh, hist = new Uint32Array(256);
+  for (let i = 0; i < N; i++) hist[valueAt(data, i * 4)]++;
+  let acc = 0, bg = 0, top = 255;
+  for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= N / 2) { bg = v; break; } }
+  acc = 0;
+  for (let v = 255; v >= 0; v--) { acc += hist[v]; if (acc >= Math.max(20, N * 0.0005)) { top = v; break; } }
+  const T = Math.max(bg + 24, bg + 0.35 * (top - bg));
+  const on = new Uint8Array(N), seen = new Uint8Array(N), out = [], stack = [];
+  for (let i = 0; i < N; i++) on[i] = valueAt(data, i * 4) >= T ? 1 : 0;
+  for (let i = 0; i < N; i++) {
+    if (!on[i] || seen[i]) continue;
+    let n = 0, sw = 0, sx = 0, sy = 0, sr = 0, sg = 0, sb = 0, x0 = W, x1 = 0, y0 = Hh, y1 = 0;
     stack.push(i); seen[i] = 1;
     while (stack.length) {
-      const j = stack.pop(), x = j % W, y = (j - x) / W;
-      n++; sx += x + 0.5; sy += y + 0.5; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-      for (const k of [x > 0 ? j - 1 : -1, x < W - 1 ? j + 1 : -1, y > 0 ? j - W : -1, y < Hh - 1 ? j + W : -1]) if (k >= 0 && !seen[k] && cls[k] === c) { seen[k] = 1; stack.push(k); }
+      const j = stack.pop(), x = j % W, y = (j - x) / W, k = j * 4, wt = valueAt(data, k) - bg;
+      n++; sw += wt; sx += (x + 0.5) * wt; sy += (y + 0.5) * wt; sr += data[k]; sg += data[k + 1]; sb += data[k + 2];
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      for (const q of [x > 0 ? j - 1 : -1, x < W - 1 ? j + 1 : -1, y > 0 ? j - W : -1, y < Hh - 1 ? j + W : -1]) if (q >= 0 && on[q] && !seen[q]) { seen[q] = 1; stack.push(q); }
     }
-    const w = x1 - x0 + 1, h = y1 - y0 + 1;
-    out.push({ color: c, n, x: sx / n, y: sy / n, w, h, fill: n / (w * h) });
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, rgb = [sr / n, sg / n, sb / n];
+    out.push({ color: colourOf(...rgb), n, x: sx / sw, y: sy / sw, w, h, fill: n / (w * h), rgb });
   }
   return out;
 }
@@ -146,32 +191,146 @@ function line(pts) {
   const a = (n * sxy - sx * sy) / (n * sxx - sx * sx), b = (sy - a * sx) / n;
   return { a, b, rms: Math.sqrt(pts.reduce((s, p) => s + (p[1] - a * p[0] - b) ** 2, 0) / n) };
 }
+const GRID = () => markers().filter((m) => m.z === -1);
+/** the grid's column and row of a model point (i: x = (i + 0.5) STEP, j: y = 20 + j STEP) */
+const cellOf = (m) => [Math.round(m.x / STEP - 0.5), Math.round((m.y - 20) / STEP)];
+/** the coloured grid markers: each fixes where the grid is on its own */
+const ANCHORS = () => GRID().filter((m) => m.color !== 'white');
+/**
+ * the picture's lattice of equally spaced squares of one size: {sx, sy, x0, y0, cells: Map("u,v" → blob)}, u to the right
+ * and v down in pixels, (0, 0) at blob x0/y0 — found from pairs of neighbouring squares, scored by how many squares sit on it
+ */
+function lattice(S) {
+  const similar = (a, b) => b.n >= a.n / 2.5 && b.n <= a.n * 2.5;
+  const hyps = [];
+  for (const a of S) {
+    const nb = S.filter((b) => b !== a && similar(a, b)).map((b) => ({ b, dx: b.x - a.x, dy: b.y - a.y, d: Math.hypot(b.x - a.x, b.y - a.y) })).sort((p, q) => p.d - q.d).slice(0, 8);
+    const hz = nb.find((q) => Math.abs(q.dy) < 0.12 * Math.abs(q.dx)), vt = nb.find((q) => Math.abs(q.dx) < 0.12 * Math.abs(q.dy));
+    if (hz && vt) hyps.push({ a, sx: Math.abs(hz.dx), sy: Math.abs(vt.dy) });
+    else if (hz) hyps.push({ a, sx: Math.abs(hz.dx), sy: Math.abs(hz.dx) });
+    else if (vt) hyps.push({ a, sx: Math.abs(vt.dy), sy: Math.abs(vt.dy) });
+  }
+  const fit = (h, tol = 0.15) => {
+    const cells = new Map();
+    for (const b of S) {
+      if (!similar(h.a, b)) continue;
+      const u = (b.x - h.x0) / h.sx, v = (b.y - h.y0) / h.sy, iu = Math.round(u), iv = Math.round(v);
+      if (Math.abs(u - iu) > tol || Math.abs(v - iv) > tol) continue;
+      const key = `${iu},${iv}`, prev = cells.get(key);
+      const err = Math.hypot(u - iu, v - iv);
+      if (!prev || prev.err > err) cells.set(key, { b, iu, iv, err });
+    }
+    return cells;
+  };
+  // a row of equal squares (the hotbar's slots, the hearts) is a lattice too, but only along one axis: the grid has rows
+  // and columns, so a lattice counts by the squares it holds only when they span at least two of each
+  const score = (cells) => {
+    const c = [...cells.values()], us = new Set(c.map((q) => q.iu)), vs = new Set(c.map((q) => q.iv));
+    return us.size >= 2 && vs.size >= 2 ? c.length : c.length / 4;
+  };
+  const found = [];
+  for (const h0 of hyps) {
+    if (h0.sx < 4 || h0.sy < 4 || h0.sx / h0.sy > 2 || h0.sy / h0.sx > 2) continue;
+    let h = { ...h0, x0: h0.a.x, y0: h0.a.y }, cells = fit(h);
+    if (found.some((f) => f.cells.has(`${Math.round((h.a.x - f.x0) / f.sx)},${Math.round((h.a.y - f.y0) / f.sy)}`) && Math.abs(f.sx / h.sx - 1) < 0.08 && Math.abs(f.sy / h.sy - 1) < 0.08)) continue;
+    // refine the spacing and the origin over the squares on it, then take them again
+    for (let r = 0; r < 2 && cells.size >= 4; r++) {
+      const c = [...cells.values()], lx = line(c.map((q) => [q.iu, q.b.x])), ly = line(c.map((q) => [q.iv, q.b.y]));
+      const nh = { a: h.a, sx: Number.isFinite(lx.a) && lx.a > 1 ? lx.a : h.sx, sy: Number.isFinite(ly.a) && ly.a > 1 ? ly.a : h.sy, x0: Number.isFinite(lx.b) ? lx.b : h.x0, y0: Number.isFinite(ly.b) ? ly.b : h.y0 };
+      const nc = fit(nh, 0.12);
+      if (nc.size < cells.size) break;
+      h = nh; cells = nc;
+    }
+    found.push({ ...h, cells, score: score(cells) });
+  }
+  // each with its coarser versions: which of them is the grid is decided by where the coloured squares land (measure)
+  return found.sort((p, q) => q.score - p.score).slice(0, 12).flatMap((f) => { const c = coarsest(f); return c === f ? [f] : [f, c]; });
+}
+function coarsest(best) {
+  // a lattice twice as fine also holds every square of the true one (and stray ones between): take the coarsest that keeps
+  // nearly all of them — 2x along x, y or both, at whichever parity holds the most
+  for (let more = true, round = 0; more && round < 4; round++) {
+    more = false;
+    let pick = null;
+    const c0 = [...best.cells.values()], spanU = new Set(c0.map((c) => c.iu)).size > 1, spanV = new Set(c0.map((c) => c.iv)).size > 1;
+    for (const [kx, ky] of [[2, 2], [2, 1], [1, 2]]) for (let px = 0; px < kx; px++) for (let py = 0; py < ky; py++) {
+      // (along an axis with one row or column there is nothing to coarsen)
+      if ((kx > 1 && !spanU) || (ky > 1 && !spanV)) continue;
+      const keep = [...best.cells.values()].filter((c) => ((c.iu - px) % kx + kx) % kx === 0 && ((c.iv - py) % ky + ky) % ky === 0);
+      if (keep.length >= 6 && keep.length >= 0.6 * best.cells.size && (!pick || keep.length > pick.keep.length)) pick = { kx, ky, px, py, keep };
+    }
+    if (pick) {
+      const cells = new Map(pick.keep.map((c) => { const iu = (c.iu - pick.px) / pick.kx, iv = (c.iv - pick.py) / pick.ky; return [`${iu},${iv}`, { ...c, iu, iv }]; }));
+      best = { ...best, sx: best.sx * pick.kx, sy: best.sy * pick.ky, x0: best.x0 + pick.px * best.sx, y0: best.y0 + pick.py * best.sy, cells };
+      more = true;
+    }
+  }
+  return best;
+}
 /**
  * one screenshot → { ok, why, unitsPerScreenH, unitsPerScreenHFromX, centre: {x, y}, centreFix: {x, y} (Studio's fractions),
- *   pxPerUnit: {x, y}, matched, rmsPx, depth: {near, far} (how much farther from the centre a point 60 units nearer / farther
- *   lands than the grid's mapping says: 1 = no perspective) }
+ *   pxPerUnit: {x, y}, matched, rmsPx, anchors (the coloured markers that placed the grid), depth: {near, far} (how much
+ *   farther from the centre a point 60 units nearer / farther lands than the grid's mapping says: 1 = no perspective) }
  */
 export function measure(img) {
-  const B = blobs(img).filter((b) => b.n >= 4 && b.fill > 0.55 && b.w / b.h < 2.5 && b.h / b.w < 2.5);
-  const W = img.width, Hh = img.height, ctr = [W / 2, Hh / 2], d2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
-  const nearest = (color, to, not = []) => B.filter((b) => b.color === color && !not.includes(b)).sort((p, q) => d2([p.x, p.y], to) - d2([q.x, q.y], to))[0];
-  const red = nearest('red', ctr);
-  if (!red) return { ok: false, why: 'the red marker (20, 140) is not on the picture' };
-  const green = nearest('green', [red.x, red.y]), blue = nearest('blue', [red.x, red.y]);
-  if (!green || !blue) return { ok: false, why: 'the green (60, 140) or blue (20, 180) marker is not on the picture' };
-  // coarse affine from the three: 40 units along x and y
-  const ex = [(green.x - red.x) / STEP, (green.y - red.y) / STEP], ey = [(blue.x - red.x) / STEP, (blue.y - red.y) / STEP];
-  const guess = (x, y) => [red.x + ex[0] * (x - 20) + ey[0] * (y - 140), red.y + ex[1] * (x - 20) + ey[1] * (y - 140)];
-  const tol = 0.3 * STEP * Math.min(Math.hypot(...ex), Math.hypot(...ey));
-  const grid = markers().filter((m) => m.z === -1), pairs = [];
-  for (const m of grid) {
-    const g = guess(m.x, m.y), b = nearest(m.color, g);
-    if (b && Math.sqrt(d2([b.x, b.y], g)) < tol) pairs.push({ m, b });
+  const Hh = img.height;
+  const all = blobs(img), S = all.filter((b) => b.n >= 3 && b.fill > 0.45 && b.w / b.h < 2.2 && b.h / b.w < 2.2);
+  if (S.length < 6) return { ok: false, why: `only ${S.length} square marks on the picture` };
+  // (the yellow and cyan markers sit off the grid on purpose, between its rows and columns)
+  const cands = lattice(S.filter((b) => b.color !== 'yellow' && b.color !== 'cyan')).filter((L) => L.cells.size >= 6);
+  if (!cands.length) return { ok: false, why: 'no grid of equally spaced squares on the picture' };
+  // each lattice (the grid, or rows of text and HUD pieces that happen to be evenly spaced) is placed by its coloured
+  // squares; the one whose squares then hold the grid's own colours best is the grid
+  let pick = null;
+  for (const L of cands) {
+    const p = place(L);
+    if (p && (!pick || p.score > pick.p.score)) pick = { L, p };
   }
-  if (pairs.length < 6) return { ok: false, why: `only ${pairs.length} grid markers found` };
-  // (HUD pieces in the grid's colours — the hotbar's slots are white — are dropped as outliers: fit, drop the far ones, fit again)
+  if (!pick) return { ok: false, why: 'none of the red, green or blue markers is on the grid in the picture', unitsPerScreenH: Hh / (cands[0].sy / STEP) };
+  const L = pick.L, pl = pick.p;
+  const pairs = [];
+  for (const m of GRID()) {
+    const [i, j] = cellOf(m), c = L.cells.get(`${i + pl.ou},${pl.ov - j}`);
+    if (c && (c.b.color === m.color || (m.color === 'white' && c.b.color === null))) pairs.push({ m, b: c.b });
+  }
+  if (pairs.length < 6) return { ok: false, why: `only ${pairs.length} grid markers in their own colour`, unitsPerScreenH: Hh / (L.sy / STEP) };
+  // with fewer than three columns or rows on the picture a lattice of the wrong spacing fits as well as the right one:
+  // say so rather than give a number (a phone held upright shows two columns — the game is played across)
+  const cols = new Set(pairs.map(({ m }) => m.x)).size, rows = new Set(pairs.map(({ m }) => m.y)).size;
+  if (cols < 3 || rows < 3 || pairs.length < 9) return { ok: false, why: `only ${pairs.length} grid markers in ${cols} columns and ${rows} rows on the picture (9 in 3 of each are needed: hold the screen across)` };
+  return fitGrid(img, all, pairs, pl);
+}
+/** where the grid's (0, 0) cell is on lattice L (x to the right, y up — the HUD's way), by its coloured squares */
+function place(L) {
+  const cells = [...L.cells.values()], votes = new Map();
+  for (const m of ANCHORS()) {
+    const [i, j] = cellOf(m);
+    for (const c of cells) if (c.b.color === m.color) {
+      const key = `${c.iu - i},${c.iv + j}`;
+      votes.set(key, (votes.get(key) || 0) + 1);
+    }
+  }
+  if (!votes.size) return null;
+  // the placement whose cells hold the expected colours best (a stray red pixel cluster cannot win against the grid's own)
+  let place = null;
+  for (const key of votes.keys()) {
+    const [ou, ov] = key.split(',').map(Number);
+    let agree = 0, seen = 0;
+    for (const m of GRID()) {
+      const [i, j] = cellOf(m), c = L.cells.get(`${i + ou},${ov - j}`);
+      if (!c) continue;
+      seen++; if (c.b.color === m.color) agree++;
+    }
+    const score = agree - (seen - agree) * 2;
+    if (!place || score > place.score) place = { ou, ov, agree, seen, score };
+  }
+  return place;
+}
+function fitGrid(img, all, pairs, place) {
+  const W = img.width, Hh = img.height, d2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
+  // (shapes the HUD or text put on a lattice point are dropped as outliers: fit, drop the far ones, fit again)
   let fx, fy, used = pairs;
-  for (let round = 0; round < 4; round++) {
+  for (let r = 0; r < 4; r++) {
     fx = line(used.map(({ m, b }) => [m.x, b.x])); fy = line(used.map(({ m, b }) => [m.y, b.y]));
     const res = used.map(({ m, b }) => Math.hypot(b.x - fx.a * m.x - fx.b, b.y - fy.a * m.y - fy.b)), med = [...res].sort((p, q) => p - q)[res.length >> 1];
     const keep = used.filter((_, i) => res[i] <= Math.max(1.5, 3 * med));
@@ -179,13 +338,19 @@ export function measure(img) {
     used = keep;
   }
   const skew = { xFromY: line(used.map(({ m, b }) => [m.y, b.x - fx.a * m.x - fx.b])).a, yFromX: line(used.map(({ m, b }) => [m.x, b.y - fy.a * m.y - fy.b])).a };
+  // the markers are SIZE units wide on a STEP grid: squares much bigger than that against their spacing are not them
+  // (letters of a chat line spaced like a grid are as wide as half their spacing)
+  const side = [...used.map(({ b }) => Math.sqrt(b.n))].sort((p, q) => p - q)[used.length >> 1], ratio = side / (Math.abs(fy.a) * STEP);
+  if (ratio < 0.4 * SIZE / STEP || ratio > 3 * SIZE / STEP) return { ok: false, why: `the squares found are ${(ratio * STEP).toFixed(1)} units wide, not ${SIZE}: not the grid (text or HUD pieces)` };
   const cxm = (W / 2 - fx.b) / fx.a, cym = (Hh / 2 - fy.b) / fy.a, upsh = Hh / Math.abs(fy.a);
+  const tol = 0.3 * STEP * Math.min(Math.abs(fx.a), Math.abs(fy.a));
   // points off the grid's plane: where the grid's mapping puts them vs where they are, as one scale about some centre
   // (s = 1: no perspective; nearer points drawn bigger: s > 1) — the centre is fitted too, the camera's axis is not assumed
   const depthOf = (color) => {
     const pr = [];
     for (const m of markers().filter((q) => q.color === color)) {
-      const pred = [fx.a * m.x + fx.b, fy.a * m.y + fy.b], b = nearest(color, pred);
+      const pred = [fx.a * m.x + fx.b, fy.a * m.y + fy.b];
+      const b = all.filter((q) => q.color === color && q.n >= 3).sort((p, q) => d2([p.x, p.y], pred) - d2([q.x, q.y], pred))[0];
       if (b && Math.sqrt(d2([b.x, b.y], pred)) < tol * 2) pr.push([pred, [b.x, b.y]]);
     }
     if (pr.length < 3) return null;
@@ -195,6 +360,7 @@ export function measure(img) {
   };
   return {
     ok: true, width: W, height: Hh, aspect: W / Hh, matched: used.length, dropped: pairs.length - used.length,
+    anchors: place.agree, colourAgreement: place.seen ? place.agree / place.seen : 0,
     pxPerUnit: { x: fx.a, y: -fy.a }, rmsPx: Math.hypot(fx.rms, fy.rms),
     unitsPerScreenH: upsh, unitsPerScreenHFromX: (W / Math.abs(fx.a)) / (W / Hh),
     centre: { x: cxm, y: cym }, centreFix: { x: cxm / upsh, y: (cym - 140) / upsh },

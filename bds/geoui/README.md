@@ -9,6 +9,8 @@ GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付�
 | `blockbench-check.mjs` | 本物の Blockbench（web 版をヘッドレスの Chromium で）にプラグインを入れて確かめ、画を撮る（作者向け。要るものはファイルの先頭） |
 | `calib.mjs` | 較正: 目盛りのパックを作る（`make`）・本物のアプリの画面を測る（`measure`）・答えのわかった偽の画面（`synth`） |
 | `png.mjs` | PNG の読み書き（node:zlib だけ） |
+| `measure.html` | **測定ページ**: スクショを選ぶだけで、その端末の中で測る（何も送らない）。`calib.mjs` の測り方をそのまま埋め込んだもの |
+| `page.mjs`・`measure.tpl.html` | 測定ページを作る（`node bds/geoui/page.mjs`。`calib.mjs` を変えたら作り直す。古いままだと試験が落ちる） |
 | `../../tests/geoui-builder-offline.mjs` | Studio の書き出し（`bds/addons/geoui_studio`）との突き合わせ、書き出したファイル、較正の測り方（CI） |
 | `../addons/geoui_bb/` | このプラグインで Studio のひな形「スコア＆ゲージ」を作り直した書き出し（本物の BDS: DONE 22/22・本物のアプリ: `app.txt`） |
 | `../addons/geoui_calib/` | 較正の目盛り（本物の BDS: DONE 3/3・本物のアプリ: `app.txt`） |
@@ -73,9 +75,15 @@ node lab.mjs app ci -a geoui_calib --wait          # GitHub の本物のアプ�
 node bds/geoui/calib.mjs measure app/runs/gh-<番号>/shots
 ```
 
+Google Play の連携が無くても、スマホ 1 台で測れます: `GeoUI_Calibration.mcaddon` を取り込んだワールドで横向きのまま撮り、
+`measure.html`（パネルに置くか、ファイルをそのままブラウザで開く）でそのスクショを選ぶだけ。輪が点に重なっていれば正しく測れています。
+
 画面ごとに **画面の高さ（モデル単位）・画面の中心のモデル座標（＝ Studio の中心のずれ）・縦と横の尺度・遠近（奥行き ±60 の点の拡大率）** が出ます。
 測った値はプラグインの **画面と書き出しの設定**（画面の高さ・中心のずれ）に入れます。測り方は、答えのわかった偽の画面で確かめてあります
 （HUD の部品が混ざっても外れとして除く・遠近の拡大率も読める: `calib.mjs synth`）。
+本物のスクショで起こることにも耐えます: 格子は色ではなく「同じ大きさの四角が等間隔に並ぶ形」で見つけ、赤・緑・青のどれか 1 つが写っていれば位置が決まります。
+偽の画面 240 通り（5 種の画面 × 高さ 120 / 176 / 260 × 中心のずれ × 遠近 × 縮小 1〜1/3・JPEG 70〜90・暗さ 0.5〜1・タッチ操作のボタンとチャットの文字）で、
+横向きの 192 通りすべてが高さ 1 % 以内・中心 1 単位以内。縦向き（目盛りが 2 列しか写らない）は、間違った数字を出さずに測れないと答えます。
 
 ## Studio との違い（わざと）
 

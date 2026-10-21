@@ -1,0 +1,269 @@
+<title>GeoUI 目盛りの測定</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* layout: a working bench — steps and the picture on the left, the numbers the plugin needs on the right; each screenshot below as a card with the fitted grid drawn over it */
+:root {
+  --bg: #eceff3; --surface: #ffffff; --ink: #15202b; --muted: #586675; --line: #d2d9e1;
+  --accent: #1d6b86; --accent-ink: #ffffff; --board: #0b0e12;
+  --ok: #1f7a4a; --warn: #9a6400; --bad: #b3261e;
+  --m-red: #ff3b30; --m-green: #2fd25a; --m-blue: #3b82ff; --m-yellow: #ffd60a; --m-cyan: #33e0e0;
+  --display: "DotGothic16", "Zen Kaku Gothic New", system-ui, sans-serif;
+  --body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f141a; --surface: #161d25; --ink: #e5ecf2; --muted: #93a2b2; --line: #28323e;
+  --accent: #5fb4d0; --accent-ink: #0b1218; --ok: #5cc98d; --warn: #e3b04b; --bad: #f2867d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f141a; --surface: #161d25; --ink: #e5ecf2; --muted: #93a2b2; --line: #28323e;
+  --accent: #5fb4d0; --accent-ink: #0b1218; --ok: #5cc98d; --warn: #e3b04b; --bad: #f2867d; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.7; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 5vw, 38px); line-height: 1.2; margin: 0; letter-spacing: 0.02em; text-wrap: balance; }
+h2 { font-size: 17px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.lead { color: var(--muted); max-width: 62ch; }
+.bench { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+ol.steps { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+ol.steps li { padding-left: 2px; }
+code, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+code { font-size: 0.9em; background: color-mix(in srgb, var(--accent) 10%, transparent); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 10px; justify-items: start; transition: border-color .15s, background .15s; }
+.drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.btn { font: inherit; font-weight: 700; border: 0; border-radius: 8px; padding: 9px 16px; cursor: pointer; background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); font-weight: 400; padding: 6px 12px; }
+.btn:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+label.lbl { color: var(--muted); font-size: 13px; letter-spacing: 0.04em; }
+select { font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.hint { color: var(--muted); font-size: 13px; }
+.figs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 460px) { .figs { grid-template-columns: minmax(0, 1fr); } }
+.fig { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 2px; min-width: 0; }
+.fig .k { color: var(--muted); font-size: 13px; }
+.fig .v { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 500; }
+.fig .cmp { font-size: 13px; color: var(--muted); }
+.pill { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 1px 9px; letter-spacing: 0.03em; }
+.pill.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 13%, transparent); }
+.pill.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 15%, transparent); }
+.pill.bad { color: var(--bad); background: color-mix(in srgb, var(--bad) 13%, transparent); }
+.copy { display: grid; gap: 8px; }
+.copy pre { margin: 0; font-family: var(--mono); font-size: 13px; background: var(--board); color: #e9eef3; border-radius: 8px; padding: 12px 14px; overflow-x: auto; white-space: pre; }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+.shot { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; min-width: 0; }
+.shot canvas { width: 100%; height: auto; display: block; background: var(--board); }
+.shot .meta { padding: 12px 14px; display: grid; gap: 4px; font-size: 13px; }
+.shot .meta .name { font-weight: 700; overflow-wrap: anywhere; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; border: 2px solid currentColor; }
+.note { font-size: 13px; color: var(--muted); max-width: 70ch; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>GeoUI 目盛りの測定</h1>
+    <p class="lead">本物のマイクラで <code>GeoUI_Calibration.mcaddon</code> の目盛りを写したスクリーンショットから、HUD に描かれる板のモデル座標と画面の対応を測ります。GeoUI Studio が人の手で決めた「画面の高さ 176 単位」と「中心のずれ」を、測った値に置き換えるための道具です。</p>
+  </header>
+
+  <section class="bench">
+    <div class="panel">
+      <h2>写し方</h2>
+      <ol class="steps">
+        <li><code>GeoUI_Calibration.mcaddon</code> を開いて取り込む（統合版 1.26.50 以降）</li>
+        <li>新しいワールドで「GeoUI Calibration BP」を有効にする（リソースパックも付いてくる）。ほかの GeoUI のパックは外す</li>
+        <li>ワールドに入り、黒い板に白い点の格子と赤・緑・青の点が出たら、画面を横にしたままスクリーンショット</li>
+        <li>そのスクショをここで選ぶ。何枚でも（画面比や端末を変えて撮るほど確かになります）</li>
+      </ol>
+      <p class="hint">HUD やタッチ操作のボタン、チャットの文字が写っていても測れます。消したいときは <code>/hud @s hide all</code>（チートが要ります）。</p>
+      <div class="drop" id="drop">
+        <div class="row">
+          <button class="btn" id="pick" type="button">スクリーンショットを選ぶ</button>
+          <input id="file" type="file" accept="image/*" multiple hidden>
+          <button class="btn ghost" id="clear" type="button">見本に戻す</button>
+        </div>
+        <p class="hint">ここにドラッグ、または貼り付けでも入れられます。画像はこの端末の中だけで測り、どこにも送りません。</p>
+      </div>
+      <div class="row">
+        <label class="lbl" for="device">撮った端末</label>
+        <select id="device">
+          <option value="auto">画面比から推す</option>
+          <option value="mobile">スマホ・タブレット</option>
+          <option value="desktop">PC</option>
+          <option value="console">ゲーム機</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel" id="summary" aria-live="polite"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <div class="row" style="justify-content:space-between">
+      <h2>写した画面</h2>
+      <div class="legend"><span><i style="color:#ffffff"></i>格子の点が来るはずの所</span><span><i style="color:var(--m-red)"></i>赤 (20, 140)</span><span><i style="color:var(--m-green)"></i>緑 (60, 140)</span><span><i style="color:var(--m-blue)"></i>青 (20, 180)</span><span><i style="color:var(--m-yellow)"></i>手前・<i style="color:var(--m-cyan)"></i>奥</span></div>
+    </div>
+    <p class="note">輪が点の真上に乗っていれば、測った対応は正しい。輪と点がずれているときは、その画面の数字は使わないでください。</p>
+    <div class="shots" id="shots"></div>
+  </section>
+
+  <section class="panel">
+    <h2>数字の意味</h2>
+    <div class="note" style="display:grid;gap:8px">
+      <p><b>画面の高さ</b>：画面の上端から下端までが、ジオメトリの何単位にあたるか。Studio は 176 と決めています（「20.25 倍にしたらちょうど良かった」という報告から）。違うと、左右に寄せた要素が画面の端からずれます。</p>
+      <p><b>中心のずれ</b>：画面の真ん中に来るモデル座標が (0, 140) からどれだけ離れているかを、画面の高さに対する割合で表したもの。Studio は PC で (−0.00057, −0.02784)、スマホで (−0.00170, −0.05256) を使っています。</p>
+      <p><b>縦横の尺度</b>：1 単位が横と縦で何ピクセルか。同じなら、板は画面比に関係なく正しい形で描かれます。</p>
+      <p><b>遠近</b>：奥行きが 60 単位ちがう点が、どれだけ大きく（小さく）写るか。1 なら遠近がなく、Studio の板の重ね順（奥行き 0.2 ずつ）は見た目の大きさを変えません。</p>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+/*__CALIB__*/
+
+const SAMPLE = '__SAMPLE__';
+const STUDIO = { H: 176, fix: { desktop: { x: -0.00057, y: -0.02784 }, mobile: { x: -0.0017, y: -0.05256 }, console: { x: -0.00057, y: -0.02784 } } };
+const DEVICE = { desktop: 'PC', mobile: 'スマホ', console: 'ゲーム機' };
+const $ = (id) => document.getElementById(id);
+const fmt = (v, n = 2) => (Number.isFinite(v) ? v.toFixed(n) : '—');
+const sgn = (v, n) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(n);
+let shots = [];
+
+async function toImageData(src) {
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = src;
+  await img.decode();
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0);
+  const d = g.getImageData(0, 0, c.width, c.height);
+  return { img, data: { width: c.width, height: c.height, data: d.data } };
+}
+function deviceOf(r) {
+  const v = $('device').value;
+  if (v !== 'auto') return v;
+  return r && r.aspect > 1.9 ? 'mobile' : 'desktop';
+}
+function draw(canvas, img, r) {
+  const W = img.naturalWidth, H = img.naturalHeight, scale = Math.min(1, 1400 / W);
+  canvas.width = Math.round(W * scale); canvas.height = Math.round(H * scale);
+  const g = canvas.getContext('2d');
+  g.drawImage(img, 0, 0, canvas.width, canvas.height);
+  if (!r.ok) return;
+  const toPx = (x, y) => [(W / 2 + (x - r.centre.x) * r.pxPerUnit.x) * scale, (H / 2 - (y - r.centre.y) * r.pxPerUnit.y) * scale];
+  const rad = Math.max(5, SIZE * 1.6 * Math.abs(r.pxPerUnit.y) * scale);
+  const css = getComputedStyle(document.documentElement);
+  const col = { white: '#ffffff', red: css.getPropertyValue('--m-red'), green: css.getPropertyValue('--m-green'), blue: css.getPropertyValue('--m-blue'), yellow: css.getPropertyValue('--m-yellow'), cyan: css.getPropertyValue('--m-cyan') };
+  g.lineWidth = Math.max(1.5, 2 * scale * 1.5);
+  for (const m of markers()) {
+    const [x, y] = toPx(m.x, m.y);
+    if (x < -rad || y < -rad || x > canvas.width + rad || y > canvas.height + rad) continue;
+    g.strokeStyle = col[m.color].trim() || '#fff';
+    g.setLineDash(m.z === -1 ? [] : [4, 3]);
+    g.beginPath(); g.arc(x, y, m.z === -1 ? rad : rad * 1.25, 0, Math.PI * 2); g.stroke();
+  }
+  g.setLineDash([]);
+}
+function verdict(r) {
+  if (!r.ok) return ['bad', '測れない'];
+  if (r.rmsPx > Math.max(2, 0.04 * STEP * Math.abs(r.pxPerUnit.y))) return ['warn', 'ずれが大きい'];
+  return ['ok', '測れた'];
+}
+function renderShots() {
+  const box = $('shots');
+  box.replaceChildren();
+  for (const s of shots) {
+    const card = document.createElement('article'); card.className = 'shot';
+    const cv = document.createElement('canvas'); card.append(cv); draw(cv, s.img, s.r);
+    const meta = document.createElement('div'); meta.className = 'meta';
+    const [cls, word] = verdict(s.r);
+    const head = document.createElement('div'); head.className = 'row'; head.style.gap = '8px';
+    const nm = document.createElement('span'); nm.className = 'name'; nm.textContent = s.name;
+    const pill = document.createElement('span'); pill.className = `pill ${cls}`; pill.textContent = word;
+    head.append(nm, pill); meta.append(head);
+    const lines = s.r.ok ? [
+      `${s.r.width}×${s.r.height}（画面比 ${fmt(s.r.aspect, 3)}）・目盛り ${s.r.matched} 個${s.r.dropped ? `（外れ ${s.r.dropped} 個を除く）` : ''}・残りのずれ ${fmt(s.r.rmsPx, 2)} px`,
+      `画面の高さ ${fmt(s.r.unitsPerScreenH, 2)} 単位・中心 (${fmt(s.r.centre.x, 2)}, ${fmt(s.r.centre.y, 2)})`,
+      `遠近 手前 ${s.r.depth.near ? fmt(s.r.depth.near.ratio, 3) : '—'} / 奥 ${s.r.depth.far ? fmt(s.r.depth.far.ratio, 3) : '—'}`,
+    ] : [s.r.why];
+    for (const t of lines) { const p = document.createElement('p'); p.className = s.r.ok ? 'num' : ''; p.textContent = t; meta.append(p); }
+    card.append(meta); box.append(card);
+  }
+}
+function renderSummary() {
+  const box = $('summary');
+  const good = shots.filter((s) => s.r.ok && verdict(s.r)[0] !== 'bad');
+  const sample = shots.length && shots.every((s) => s.sample);
+  box.replaceChildren();
+  const h = document.createElement('div'); h.className = 'row'; h.style.justifyContent = 'space-between';
+  const t = document.createElement('h2'); t.textContent = 'プラグインに入れる値';
+  h.append(t);
+  if (sample) { const p = document.createElement('span'); p.className = 'pill warn'; p.textContent = '見本の画面'; h.append(p); }
+  box.append(h);
+  if (!good.length) {
+    const p = document.createElement('p'); p.className = 'note';
+    p.textContent = shots.length ? '測れた画面がありません。目盛りの点が 3 列・3 行以上写るよう、画面を横にして撮り直してください。' : 'スクリーンショットを選ぶと、ここに測った値が出ます。';
+    box.append(p); return;
+  }
+  const avg = (f) => good.reduce((a, s) => a + f(s.r), 0) / good.length;
+  const dev = deviceOf(good[0].r), H = avg((r) => r.unitsPerScreenH), fx = avg((r) => r.centreFix.x), fy = avg((r) => r.centreFix.y);
+  const ani = avg((r) => r.pxPerUnit.x / r.pxPerUnit.y), near = good.map((s) => s.r.depth.near?.ratio).filter(Number.isFinite), far = good.map((s) => s.r.depth.far?.ratio).filter(Number.isFinite);
+  const aspect = avg((r) => r.aspect), edge = ((H - STUDIO.H) / 2) * aspect;
+  const sf = STUDIO.fix[dev];
+  const figs = document.createElement('div'); figs.className = 'figs';
+  const fig = (k, v, cmp) => { const d = document.createElement('div'); d.className = 'fig'; d.innerHTML = '<span class="k"></span><span class="v"></span><span class="cmp"></span>'; d.children[0].textContent = k; d.children[1].textContent = v; d.children[2].textContent = cmp; figs.append(d); };
+  fig('画面の高さ（単位）', fmt(H, 2), `Studio は 176（${sgn((H / STUDIO.H - 1) * 100, 1)} %）。端に寄せた要素は ${fmt(Math.abs(edge), 1)} 単位ずれる`);
+  fig(`中心のずれ x（${DEVICE[dev]}）`, fmt(fx, 5), `Studio は ${fmt(sf.x, 5)}（差 ${sgn((fx - sf.x) * H, 2)} 単位）`);
+  fig(`中心のずれ y（${DEVICE[dev]}）`, fmt(fy, 5), `Studio は ${fmt(sf.y, 5)}（差 ${sgn((fy - sf.y) * H, 2)} 単位）`);
+  fig('横 ÷ 縦の尺度', fmt(ani, 4), Math.abs(ani - 1) < 0.01 ? '同じ。板は正しい形で描かれる' : '違う。板が横に伸び縮みして描かれる');
+  fig('遠近（手前 / 奥）', `${near.length ? fmt(near.reduce((a, b) => a + b) / near.length, 3) : '—'} / ${far.length ? fmt(far.reduce((a, b) => a + b) / far.length, 3) : '—'}`, '1 なら遠近なし');
+  fig('使った画面', `${good.length} 枚`, `目盛り ${good.reduce((a, s) => a + s.r.matched, 0)} 個`);
+  box.append(figs);
+  const copy = document.createElement('div'); copy.className = 'copy';
+  const pre = document.createElement('pre'); pre.id = 'out';
+  pre.textContent = `画面の高さ: ${fmt(H, 3)}\n中心のずれ（${DEVICE[dev]}）: x ${fmt(fx, 5)}  y ${fmt(fy, 5)}`;
+  const row = document.createElement('div'); row.className = 'row';
+  const b = document.createElement('button'); b.className = 'btn ghost'; b.type = 'button'; b.textContent = 'コピー';
+  const msg = document.createElement('span'); msg.className = 'hint';
+  b.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(pre.textContent); msg.textContent = 'コピーしました'; }
+    catch { const sel = getSelection(), rg = document.createRange(); rg.selectNodeContents(pre); sel.removeAllRanges(); sel.addRange(rg); msg.textContent = '選択しました。長押しかコピーの操作で写してください'; }
+  });
+  row.append(b, msg);
+  const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Blockbench の「GeoUI → 画面と書き出しの設定」で、画面の高さと、この端末の中心のずれに入れます。';
+  copy.append(pre, row, p); box.append(copy);
+}
+async function add(files) {
+  const fresh = [];
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    const url = URL.createObjectURL(f);
+    try { const { img, data } = await toImageData(url); fresh.push({ name: f.name || 'スクリーンショット', img, r: measure(data) }); }
+    catch { fresh.push({ name: f.name, img: new Image(), r: { ok: false, why: 'この画像は読めませんでした（PNG か JPEG を選んでください）' } }); }
+  }
+  if (!fresh.length) return;
+  shots = shots.filter((s) => !s.sample).concat(fresh);
+  renderShots(); renderSummary();
+}
+async function loadSample() {
+  const { img, data } = await toImageData(SAMPLE);
+  shots = [{ name: '見本：答えのわかっている作った画面（高さ 176・中心 (−0.30, 130.75)）', img, r: measure(data), sample: true }];
+  renderShots(); renderSummary();
+}
+$('pick').addEventListener('click', () => $('file').click());
+$('file').addEventListener('change', (e) => { add([...e.target.files]); e.target.value = ''; });
+$('clear').addEventListener('click', loadSample);
+$('device').addEventListener('change', renderSummary);
+const drop = $('drop');
+for (const ev of ['dragenter', 'dragover']) drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); });
+for (const ev of ['dragleave', 'drop']) drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); });
+drop.addEventListener('drop', (e) => add([...e.dataTransfer.files]));
+addEventListener('paste', (e) => { const fs = [...(e.clipboardData?.files || [])]; if (fs.length) add(fs); });
+loadSample();
+</script>
