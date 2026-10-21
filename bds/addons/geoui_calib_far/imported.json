@@ -1,0 +1,14 @@
+{
+  "from": "calib.mjs make --panel 10x10@1110 --seed geoui_calib_far --lift 1760",
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI の目盛り（人形から 1760 単位上、HUD の枠は上から 1110%）: 枠の位置とモデルの高さの関係、インベントリに映らないか"
+}

@@ -100,3 +100,18 @@ do scriptevent gcal:set scale 100
 wait 1500
 absent clientlog \bERROR\b
 measure geoui calib-scale50                # 画面の高さが 2 倍の単位に（中心は 140 のまま）
+
+section inventory
+# インベントリの人形も live_player_renderer: いつもの高さ（y = 20〜260・後ろの黒い板 800 x 360）の GeoUI が映り込むか（geoui_calib_far と比べる）
+do scriptevent gcal:set scale 1                    # 消す（目盛りを (0, 140) の 1 点に縮める）
+key E
+wait 3000
+until stable 30000
+shot world--inventory-hidden
+do scriptevent gcal:set scale 100
+wait 2000
+until stable 30000
+shot inventory-shown
+measure diff inventory-shown                      # 違う所が無い（0 か所）なら映り込まない
+key BACK
+wait 1500

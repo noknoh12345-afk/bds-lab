@@ -1,0 +1,48 @@
+# GeoUI の目盛りの変わり種: 人形から遠く（1760 単位 = 110 ブロック上）に置き、HUD の枠を上から 1110% に（bds/geoui/calib.mjs make --panel 10x10@1110 --seed geoui_calib_far --lift 1760）
+# 確かめること: 枠を画面 10 個分下げると、HUD に映るモデルの高さも「画面の高さ（モデル単位）x 10」上がるか（目盛りは 1760 上げてある:
+#   measure の中心に 1760 を足すと本当のモデル座標）。そして、そこまで離せばインベントリの人形（これも live_player_renderer）に映らないか
+#   （Discord の「GeoUI のモデルをプレイヤーからめちゃくちゃ離れた場所に置くことで解決」を数で確かめる。geoui_calib の inventory と比べる）。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+do hud @a hide crosshair
+do hud @a hide hotbar
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+wait 2000
+until stable 60000
+absent clientlog \bERROR\b
+
+section plain
+shot calib-plain                                  # 遠くに置いても HUD に目盛りが出る
+measure geoui calib-plain
+
+section inventory
+# インベントリの人形も live_player_renderer。GeoUI を人形から 1760 単位 に置けば、インベントリには映らないはず
+do scriptevent gcal:set scale 1                    # 消す（目盛りを (0, 1900) の 1 点に縮める）
+key E
+wait 3000
+until stable 30000
+shot world--inventory-hidden
+do scriptevent gcal:set scale 100
+wait 2000
+until stable 30000
+shot inventory-shown
+measure diff inventory-shown                      # 違う所が無い（0 か所）なら映り込まない
+key BACK
+wait 1500
+absent clientlog \bERROR\b
