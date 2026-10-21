@@ -1,0 +1,8501 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.geoui_atlas",
+        "texture_width": 128,
+        "texture_height": 128,
+        "visible_bounds_width": 885.402,
+        "visible_bounds_height": 373.361,
+        "visible_bounds_offset": [
+          0,
+          140,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "hitcircle",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -1
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "approachcircle",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -3
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -3
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    32
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitburst",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -2
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -2
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitmiss",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -4
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -6,
+                134,
+                -4
+              ],
+              "size": [
+                12,
+                12,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "spinner",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -30,
+                110,
+                0
+              ],
+              "size": [
+                60,
+                60,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    64,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "sliderball",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -5
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -5,
+                135,
+                -5
+              ],
+              "size": [
+                10,
+                10,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    96,
+                    64
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "combonumber_d0_0",
+          "parent": "combonumber",
+          "pivot": [
+            -2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -6
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_1",
+          "parent": "combonumber",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -6.02
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_2",
+          "parent": "combonumber",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -6.04
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_3",
+          "parent": "combonumber",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -6.06
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_4",
+          "parent": "combonumber",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -6.08
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_5",
+          "parent": "combonumber",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -6.1
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_6",
+          "parent": "combonumber",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -6.12
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_7",
+          "parent": "combonumber",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -6.14
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_8",
+          "parent": "combonumber",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -6.16
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_9",
+          "parent": "combonumber",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -6.18
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_0",
+          "parent": "combonumber",
+          "pivot": [
+            2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -6
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_1",
+          "parent": "combonumber",
+          "pivot": [
+            2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -6.02
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_2",
+          "parent": "combonumber",
+          "pivot": [
+            2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -6.04
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_3",
+          "parent": "combonumber",
+          "pivot": [
+            2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -6.06
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_4",
+          "parent": "combonumber",
+          "pivot": [
+            2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -6.08
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_5",
+          "parent": "combonumber",
+          "pivot": [
+            2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -6.1
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_6",
+          "parent": "combonumber",
+          "pivot": [
+            2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -6.12
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_7",
+          "parent": "combonumber",
+          "pivot": [
+            2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -6.14
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_8",
+          "parent": "combonumber",
+          "pivot": [
+            2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -6.16
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_9",
+          "parent": "combonumber",
+          "pivot": [
+            2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -6.18
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score",
+          "parent": "geo_ui",
+          "pivot": [
+            62,
+            205,
+            0
+          ]
+        },
+        {
+          "name": "score_d0_0",
+          "parent": "score",
+          "pivot": [
+            52,
+            205,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                50,
+                201.5,
+                -6
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d0_1",
+          "parent": "score",
+          "pivot": [
+            52,
+            205,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                50,
+                201.5,
+                -6.02
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d0_2",
+          "parent": "score",
+          "pivot": [
+            52,
+            205,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                50,
+                201.5,
+                -6.04
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d0_3",
+          "parent": "score",
+          "pivot": [
+            52,
+            205,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                50,
+                201.5,
+                -6.06
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d0_4",
+          "parent": "score",
+          "pivot": [
+            52,
+            205,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                50,
+                201.5,
+                -6.08
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d0_5",
+          "parent": "score",
+          "pivot": [
+            52,
+            205,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                50,
+                201.5,
+                -6.1
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d0_6",
+          "parent": "score",
+          "pivot": [
+            52,
+            205,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                50,
+                201.5,
+                -6.12
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d0_7",
+          "parent": "score",
+          "pivot": [
+            52,
+            205,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                50,
+                201.5,
+                -6.14
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d0_8",
+          "parent": "score",
+          "pivot": [
+            52,
+            205,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                50,
+                201.5,
+                -6.16
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d0_9",
+          "parent": "score",
+          "pivot": [
+            52,
+            205,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                50,
+                201.5,
+                -6.18
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d1_0",
+          "parent": "score",
+          "pivot": [
+            56,
+            205,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                54,
+                201.5,
+                -6
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d1_1",
+          "parent": "score",
+          "pivot": [
+            56,
+            205,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                54,
+                201.5,
+                -6.02
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d1_2",
+          "parent": "score",
+          "pivot": [
+            56,
+            205,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                54,
+                201.5,
+                -6.04
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d1_3",
+          "parent": "score",
+          "pivot": [
+            56,
+            205,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                54,
+                201.5,
+                -6.06
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d1_4",
+          "parent": "score",
+          "pivot": [
+            56,
+            205,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                54,
+                201.5,
+                -6.08
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d1_5",
+          "parent": "score",
+          "pivot": [
+            56,
+            205,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                54,
+                201.5,
+                -6.1
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d1_6",
+          "parent": "score",
+          "pivot": [
+            56,
+            205,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                54,
+                201.5,
+                -6.12
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d1_7",
+          "parent": "score",
+          "pivot": [
+            56,
+            205,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                54,
+                201.5,
+                -6.14
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d1_8",
+          "parent": "score",
+          "pivot": [
+            56,
+            205,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                54,
+                201.5,
+                -6.16
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d1_9",
+          "parent": "score",
+          "pivot": [
+            56,
+            205,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                54,
+                201.5,
+                -6.18
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d2_0",
+          "parent": "score",
+          "pivot": [
+            60,
+            205,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                58,
+                201.5,
+                -6
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d2_1",
+          "parent": "score",
+          "pivot": [
+            60,
+            205,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                58,
+                201.5,
+                -6.02
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d2_2",
+          "parent": "score",
+          "pivot": [
+            60,
+            205,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                58,
+                201.5,
+                -6.04
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d2_3",
+          "parent": "score",
+          "pivot": [
+            60,
+            205,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                58,
+                201.5,
+                -6.06
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d2_4",
+          "parent": "score",
+          "pivot": [
+            60,
+            205,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                58,
+                201.5,
+                -6.08
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d2_5",
+          "parent": "score",
+          "pivot": [
+            60,
+            205,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                58,
+                201.5,
+                -6.1
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d2_6",
+          "parent": "score",
+          "pivot": [
+            60,
+            205,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                58,
+                201.5,
+                -6.12
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d2_7",
+          "parent": "score",
+          "pivot": [
+            60,
+            205,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                58,
+                201.5,
+                -6.14
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d2_8",
+          "parent": "score",
+          "pivot": [
+            60,
+            205,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                58,
+                201.5,
+                -6.16
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d2_9",
+          "parent": "score",
+          "pivot": [
+            60,
+            205,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                58,
+                201.5,
+                -6.18
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d3_0",
+          "parent": "score",
+          "pivot": [
+            64,
+            205,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                62,
+                201.5,
+                -6
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d3_1",
+          "parent": "score",
+          "pivot": [
+            64,
+            205,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                62,
+                201.5,
+                -6.02
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d3_2",
+          "parent": "score",
+          "pivot": [
+            64,
+            205,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                62,
+                201.5,
+                -6.04
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d3_3",
+          "parent": "score",
+          "pivot": [
+            64,
+            205,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                62,
+                201.5,
+                -6.06
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d3_4",
+          "parent": "score",
+          "pivot": [
+            64,
+            205,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                62,
+                201.5,
+                -6.08
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d3_5",
+          "parent": "score",
+          "pivot": [
+            64,
+            205,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                62,
+                201.5,
+                -6.1
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d3_6",
+          "parent": "score",
+          "pivot": [
+            64,
+            205,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                62,
+                201.5,
+                -6.12
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d3_7",
+          "parent": "score",
+          "pivot": [
+            64,
+            205,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                62,
+                201.5,
+                -6.14
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d3_8",
+          "parent": "score",
+          "pivot": [
+            64,
+            205,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                62,
+                201.5,
+                -6.16
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d3_9",
+          "parent": "score",
+          "pivot": [
+            64,
+            205,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                62,
+                201.5,
+                -6.18
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d4_0",
+          "parent": "score",
+          "pivot": [
+            68,
+            205,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                66,
+                201.5,
+                -6
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d4_1",
+          "parent": "score",
+          "pivot": [
+            68,
+            205,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                66,
+                201.5,
+                -6.02
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d4_2",
+          "parent": "score",
+          "pivot": [
+            68,
+            205,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                66,
+                201.5,
+                -6.04
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d4_3",
+          "parent": "score",
+          "pivot": [
+            68,
+            205,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                66,
+                201.5,
+                -6.06
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d4_4",
+          "parent": "score",
+          "pivot": [
+            68,
+            205,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                66,
+                201.5,
+                -6.08
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d4_5",
+          "parent": "score",
+          "pivot": [
+            68,
+            205,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                66,
+                201.5,
+                -6.1
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d4_6",
+          "parent": "score",
+          "pivot": [
+            68,
+            205,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                66,
+                201.5,
+                -6.12
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d4_7",
+          "parent": "score",
+          "pivot": [
+            68,
+            205,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                66,
+                201.5,
+                -6.14
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d4_8",
+          "parent": "score",
+          "pivot": [
+            68,
+            205,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                66,
+                201.5,
+                -6.16
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d4_9",
+          "parent": "score",
+          "pivot": [
+            68,
+            205,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                66,
+                201.5,
+                -6.18
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d5_0",
+          "parent": "score",
+          "pivot": [
+            72,
+            205,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                70,
+                201.5,
+                -6
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d5_1",
+          "parent": "score",
+          "pivot": [
+            72,
+            205,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                70,
+                201.5,
+                -6.02
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d5_2",
+          "parent": "score",
+          "pivot": [
+            72,
+            205,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                70,
+                201.5,
+                -6.04
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d5_3",
+          "parent": "score",
+          "pivot": [
+            72,
+            205,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                70,
+                201.5,
+                -6.06
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d5_4",
+          "parent": "score",
+          "pivot": [
+            72,
+            205,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                70,
+                201.5,
+                -6.08
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d5_5",
+          "parent": "score",
+          "pivot": [
+            72,
+            205,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                70,
+                201.5,
+                -6.1
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d5_6",
+          "parent": "score",
+          "pivot": [
+            72,
+            205,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                70,
+                201.5,
+                -6.12
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d5_7",
+          "parent": "score",
+          "pivot": [
+            72,
+            205,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                70,
+                201.5,
+                -6.14
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d5_8",
+          "parent": "score",
+          "pivot": [
+            72,
+            205,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                70,
+                201.5,
+                -6.16
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "score_d5_9",
+          "parent": "score",
+          "pivot": [
+            72,
+            205,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                70,
+                201.5,
+                -6.18
+              ],
+              "size": [
+                4,
+                7,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo",
+          "parent": "geo_ui",
+          "pivot": [
+            -70,
+            80,
+            0
+          ]
+        },
+        {
+          "name": "combo_d0_0",
+          "parent": "combo",
+          "pivot": [
+            -75.1429,
+            80,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -77.7143,
+                75.5,
+                -6
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d0_1",
+          "parent": "combo",
+          "pivot": [
+            -75.1429,
+            80,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -77.7143,
+                75.5,
+                -6.02
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d0_2",
+          "parent": "combo",
+          "pivot": [
+            -75.1429,
+            80,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -77.7143,
+                75.5,
+                -6.04
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d0_3",
+          "parent": "combo",
+          "pivot": [
+            -75.1429,
+            80,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -77.7143,
+                75.5,
+                -6.06
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d0_4",
+          "parent": "combo",
+          "pivot": [
+            -75.1429,
+            80,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -77.7143,
+                75.5,
+                -6.08
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d0_5",
+          "parent": "combo",
+          "pivot": [
+            -75.1429,
+            80,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -77.7143,
+                75.5,
+                -6.1
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d0_6",
+          "parent": "combo",
+          "pivot": [
+            -75.1429,
+            80,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -77.7143,
+                75.5,
+                -6.12
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d0_7",
+          "parent": "combo",
+          "pivot": [
+            -75.1429,
+            80,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -77.7143,
+                75.5,
+                -6.14
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d0_8",
+          "parent": "combo",
+          "pivot": [
+            -75.1429,
+            80,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -77.7143,
+                75.5,
+                -6.16
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d0_9",
+          "parent": "combo",
+          "pivot": [
+            -75.1429,
+            80,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -77.7143,
+                75.5,
+                -6.18
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d1_0",
+          "parent": "combo",
+          "pivot": [
+            -70,
+            80,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -72.5714,
+                75.5,
+                -6
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d1_1",
+          "parent": "combo",
+          "pivot": [
+            -70,
+            80,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -72.5714,
+                75.5,
+                -6.02
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d1_2",
+          "parent": "combo",
+          "pivot": [
+            -70,
+            80,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -72.5714,
+                75.5,
+                -6.04
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d1_3",
+          "parent": "combo",
+          "pivot": [
+            -70,
+            80,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -72.5714,
+                75.5,
+                -6.06
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d1_4",
+          "parent": "combo",
+          "pivot": [
+            -70,
+            80,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -72.5714,
+                75.5,
+                -6.08
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d1_5",
+          "parent": "combo",
+          "pivot": [
+            -70,
+            80,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -72.5714,
+                75.5,
+                -6.1
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d1_6",
+          "parent": "combo",
+          "pivot": [
+            -70,
+            80,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -72.5714,
+                75.5,
+                -6.12
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d1_7",
+          "parent": "combo",
+          "pivot": [
+            -70,
+            80,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -72.5714,
+                75.5,
+                -6.14
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d1_8",
+          "parent": "combo",
+          "pivot": [
+            -70,
+            80,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -72.5714,
+                75.5,
+                -6.16
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d1_9",
+          "parent": "combo",
+          "pivot": [
+            -70,
+            80,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -72.5714,
+                75.5,
+                -6.18
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d2_0",
+          "parent": "combo",
+          "pivot": [
+            -64.8571,
+            80,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -67.4286,
+                75.5,
+                -6
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d2_1",
+          "parent": "combo",
+          "pivot": [
+            -64.8571,
+            80,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -67.4286,
+                75.5,
+                -6.02
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d2_2",
+          "parent": "combo",
+          "pivot": [
+            -64.8571,
+            80,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -67.4286,
+                75.5,
+                -6.04
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d2_3",
+          "parent": "combo",
+          "pivot": [
+            -64.8571,
+            80,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -67.4286,
+                75.5,
+                -6.06
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d2_4",
+          "parent": "combo",
+          "pivot": [
+            -64.8571,
+            80,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -67.4286,
+                75.5,
+                -6.08
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d2_5",
+          "parent": "combo",
+          "pivot": [
+            -64.8571,
+            80,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -67.4286,
+                75.5,
+                -6.1
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d2_6",
+          "parent": "combo",
+          "pivot": [
+            -64.8571,
+            80,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -67.4286,
+                75.5,
+                -6.12
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d2_7",
+          "parent": "combo",
+          "pivot": [
+            -64.8571,
+            80,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -67.4286,
+                75.5,
+                -6.14
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d2_8",
+          "parent": "combo",
+          "pivot": [
+            -64.8571,
+            80,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -67.4286,
+                75.5,
+                -6.16
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combo_d2_9",
+          "parent": "combo",
+          "pivot": [
+            -64.8571,
+            80,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -67.4286,
+                75.5,
+                -6.18
+              ],
+              "size": [
+                5.1429,
+                9,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "healthback",
+          "parent": "geo_ui",
+          "pivot": [
+            -55,
+            206,
+            1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -75,
+                204,
+                1
+              ],
+              "size": [
+                40,
+                4,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    96,
+                    84
+                  ],
+                  "uv_size": [
+                    32,
+                    4
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "health",
+          "parent": "geo_ui",
+          "pivot": [
+            -75,
+            206,
+            0.5
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -75,
+                204,
+                0.5
+              ],
+              "size": [
+                40,
+                4,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    96,
+                    80
+                  ],
+                  "uv_size": [
+                    32,
+                    4
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitcircle_t0s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -0.979
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_t0s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "combonumber_d0_0_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.979
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_1_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.957
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_2_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.935
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_3_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.913
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_4_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.891
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_5_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.869
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_6_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.847
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_7_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.825
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_8_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.803
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_9_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.781
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_0_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.979
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_1_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.957
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_2_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.935
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_3_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.913
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_4_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.891
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_5_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.869
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_6_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.847
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_7_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.825
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_8_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.803
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_9_t0s0",
+          "parent": "combonumber_t0s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.781
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "approachcircle_t0s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -3
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -2.979
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    32
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitburst_t0s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -2
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -1.979
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitmiss_t0s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -4
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -6,
+                134,
+                -3.979
+              ],
+              "size": [
+                12,
+                12,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitcircle_t0s1",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -0.958
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_t0s1",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "combonumber_d0_0_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            -2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.748
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_1_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.726
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_2_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.704
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_3_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.682
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_4_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.66
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_5_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.638
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_6_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.616
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_7_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.594
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_8_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.572
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_9_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.55
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_0_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.748
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_1_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.726
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_2_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.704
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_3_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.682
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_4_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.66
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_5_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.638
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_6_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.616
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_7_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.594
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_8_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.572
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_9_t0s1",
+          "parent": "combonumber_t0s1",
+          "pivot": [
+            2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.55
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "approachcircle_t0s1",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -3
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -2.958
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    32
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitburst_t0s1",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -2
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -1.958
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitmiss_t0s1",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -4
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -6,
+                134,
+                -3.958
+              ],
+              "size": [
+                12,
+                12,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitcircle_t0s2",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -0.937
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_t0s2",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "combonumber_d0_0_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            -2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.517
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_1_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.495
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_2_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.473
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_3_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.451
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_4_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.429
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_5_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.407
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_6_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.385
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_7_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.363
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_8_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.341
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_9_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.319
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_0_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.517
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_1_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.495
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_2_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.473
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_3_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.451
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_4_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.429
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_5_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.407
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_6_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.385
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_7_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.363
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_8_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.341
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_9_t0s2",
+          "parent": "combonumber_t0s2",
+          "pivot": [
+            2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.319
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "approachcircle_t0s2",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -3
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -2.937
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    32
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitburst_t0s2",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -2
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -1.937
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitmiss_t0s2",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -4
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -6,
+                134,
+                -3.937
+              ],
+              "size": [
+                12,
+                12,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitcircle_t0s3",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -0.916
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_t0s3",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "combonumber_d0_0_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            -2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.286
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_1_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.264
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_2_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.242
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_3_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.22
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_4_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.198
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_5_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.176
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_6_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.154
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_7_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.132
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_8_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.11
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_9_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.088
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_0_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.286
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_1_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.264
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_2_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.242
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_3_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.22
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_4_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.198
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_5_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.176
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_6_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.154
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_7_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.132
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_8_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.11
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_9_t0s3",
+          "parent": "combonumber_t0s3",
+          "pivot": [
+            2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.088
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "approachcircle_t0s3",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -3
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -2.916
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    32
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitburst_t0s3",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -2
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -1.916
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitmiss_t0s3",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -4
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -6,
+                134,
+                -3.916
+              ],
+              "size": [
+                12,
+                12,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitcircle_t1s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -0.895
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_t1s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "combonumber_d0_0_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.055
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_1_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -5.033
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_2_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -4.969
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_3_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -4.947
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_4_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -4.925
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_5_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -4.903
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_6_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -4.881
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_7_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -4.859
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_8_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -4.837
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d0_9_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            -2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4.5714,
+                136,
+                -4.815
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_0_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.055
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_1_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.02
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -5.033
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_2_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.04
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -4.969
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_3_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.06
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -4.947
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_4_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.08
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -4.925
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_5_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.1
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -4.903
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    20,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_6_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.12
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -4.881
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    24,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_7_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.14
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -4.859
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    28,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_8_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.16
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -4.837
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "combonumber_d1_9_t1s0",
+          "parent": "combonumber_t1s0",
+          "pivot": [
+            2.2857,
+            140,
+            -6.18
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                136,
+                -4.815
+              ],
+              "size": [
+                4.5714,
+                8,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    36,
+                    96
+                  ],
+                  "uv_size": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "approachcircle_t1s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -3
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -2.895
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    32
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitburst_t1s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -2
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10,
+                130,
+                -1.895
+              ],
+              "size": [
+                20,
+                20,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "hitmiss_t1s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -4
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -6,
+                134,
+                -3.895
+              ],
+              "size": [
+                12,
+                12,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "sliderball_t1s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            -5
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -5,
+                135,
+                -4.79
+              ],
+              "size": [
+                10,
+                10,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    96,
+                    64
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "spinner_t2s0",
+          "parent": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -30,
+                110,
+                0.021
+              ],
+              "size": [
+                60,
+                60,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    64,
+                    64
+                  ],
+                  "uv_size": [
+                    32,
+                    32
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

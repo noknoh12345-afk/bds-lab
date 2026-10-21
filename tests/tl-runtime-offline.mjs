@@ -97,5 +97,9 @@ ok(E.command(A, 'play', ['9']).includes('no sequence') && E.command({ id: 'B' },
 const plan = R.planOf(doc, rp.stats);
 ok(plan.sequences[0].hits.length === 6 && !plan.sequences[0].hits.some((h) => h[3] === 'o7'), 'the instances that take a press: circles and the slider, not the spinner');
 
+// ---- the sample add-on (bds/addons/geoui_rhythm) is what demo.mjs makes ----
+const demo = spawnSync(process.execPath, [path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'bds', 'geoui', 'timeline', 'demo.mjs'), '--check'], { encoding: 'utf8' });
+ok(demo.status === 0, 'bds/addons/geoui_rhythm is up to date with demo.mjs', demo.stderr + demo.stdout);
+
 console.log(`\n${fails ? 'FAIL' : 'PASS'} tl-runtime-offline (${n - fails}/${n})`);
 process.exit(fails ? 1 : 0);

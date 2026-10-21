@@ -193,6 +193,18 @@
   }
 
   // ---------------------------------------------------------------------------------------------------------------- the pack
+  /** a depth for a cube where no cube of the geometry that overlaps it (seen from the front) lies within 0.02 */
+  function freeDepth(geo, cube) {
+    const [x0, y0, z0] = cube.origin, x1 = x0 + cube.size[0], y1 = y0 + cube.size[1];
+    const near = [];
+    for (const b of geo.bones) for (const c of b.cubes || []) {
+      const [a0, b0, c0] = c.origin;
+      if (a0 < x1 && a0 + c.size[0] > x0 && b0 < y1 && b0 + c.size[1] > y0) near.push(c0, c0 + (c.size[2] || 0));
+    }
+    for (let k = 1; k < 2000; k++) { const z = Math.round((z0 + 0.021 * k) * 1e4) / 1e4; if (near.every((w) => Math.abs(w - z) >= 0.02)) return z; }
+    return z0;
+  }
+  // ---------------------------------------------------------------------------------------------------------------- the pack (cont.)
   /** the timeline (doc) into GeoUI Builder's files (buildPack's), RP side. ctx: { design (buildPack's input), core (GeoUICore;
    *  else the global one), propertyLimit,
    *  bakedMax, molangLimit, sounds: [{ id, ext, data }] }. → { files, warnings, stats: { bindings, pre, slots, longest } } */
@@ -257,7 +269,10 @@
         const instPaths = xs.some((x) => x.path), mode = instPaths && B.mode === 'streamed' ? 'baked' : B.mode;
         if (instPaths && B.mode === 'streamed') warnings.push(`テンプレート「${tpl.name}」は実体ごとの道を持つので、焼き込みで書き出します（実体 ${xs.length} 個: 式が長くなります）`);
         const alloc = K.allocateSlots(seq.instances, tpl, { gap: mode === 'streamed' ? 0.25 : 0 });
-        const tag = B.tag, spec = tpl.pack || K.DEFAULT_PACK, targets = [...new Set(tpl.tracks.filter((t) => t.kind === 'layer' && t.target).map((t) => t.target))];
+        const tag = B.tag, spec = tpl.pack || K.DEFAULT_PACK, all = [...new Set(tpl.tracks.filter((t) => t.kind === 'layer' && t.target).map((t) => t.target))];
+        // (an element the design does not have: said, and left out — nothing to copy, nothing to move)
+        const targets = all.filter((x) => boneSet.has(x) || !bones.length);
+        for (const x of all) if (!targets.includes(x)) warnings.push(`テンプレート「${tpl.name}」の要素（ボーン）「${x}」がありません: 書き出しません`);
         slotsOut[`${i}:${tpl.id}`] = { mode, slots: alloc.slots, slotOf: alloc.slotOf, tag };
         const usesEvents = tpl.tracks.some((t) => t.clips.some((c) => c.trigger || c.until));
         if (mode === 'streamed') for (const p of tpl.params) if (!spec.some((f) => f.name === p)) warnings.push(`テンプレート「${tpl.name}」の param「${p}」は流し込みの詰め方（pack）にありません（0 になります）`);
@@ -323,6 +338,9 @@
           if (!src) continue;
           const copy = parse(src);
           copy.name = `${name}_${tag}${k}`;
+          // (a copy moved in depth, 0.02 at a time, until no face it overlaps is within 0.02 of it: never two faces on one plane —
+          //  only one of them shows at a time, but two on one plane would flicker if ever they did)
+          for (const cube of copy.cubes || []) cube.origin = [cube.origin[0], cube.origin[1], freeDepth(geo, cube)];
           if (name !== of && src.parent) copy.parent = tree.includes(src.parent) ? `${src.parent}_${tag}${k}` : src.parent;
           geo.bones.push(copy); have.set(copy.name, copy);
         }

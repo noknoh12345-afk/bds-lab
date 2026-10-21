@@ -1,0 +1,34 @@
+# geoui_rhythm（bds/geoui/timeline/demo.mjs が作る）: タイムラインの BP（scripts/timeline.js）が本物の BDS で命令どおりにプロパティを書くか。
+# 描画は app.txt（本物のアプリ）。= 完全一致 | ~ 正規表現 | ! 無い | !~ 無い正規表現 | '## 題' = 節
+
+## 読み込める（タイムラインのプロパティが既定値）
+@A join
+wait 2000
+js const e = p('A'); JSON.stringify(['seq','seq_gen','seq_from','seq_pause','t0s0g','t0s0r'].map((k) => e.getProperty('geoui:' + k)))
+= [0,0,0,false,0,0]
+
+## play で再生が始まる（seq・seq_gen・seq_from）
+scriptevent geoui:play 1
+wait 500
+js const e = p('A'); JSON.stringify(['seq','seq_gen','seq_from','seq_pause','v3'].map((k) => e.getProperty('geoui:' + k)))
+= [1,1,0,false,100]
+
+## seek・pause・resume がプロパティに出る
+scriptevent geoui:seek 4
+wait 200
+js const e = p('A'); JSON.stringify(['seq_gen','seq_from'].map((k) => e.getProperty('geoui:' + k)))
+= [2,4000]
+scriptevent geoui:pause
+wait 200
+js p('A').getProperty('geoui:seq_pause')
+= true
+scriptevent geoui:resume
+wait 200
+js const e = p('A'); JSON.stringify(['seq_pause','seq_gen'].map((k) => e.getProperty('geoui:' + k)))
+= [false,3]
+
+## stop で止まる
+scriptevent geoui:stop
+wait 200
+js p('A').getProperty('geoui:seq')
+= 0
