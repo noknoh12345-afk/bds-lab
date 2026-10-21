@@ -13,6 +13,7 @@ shot title
 section join
 join
 until joined 300000
+do tp @a 0 -60 0 0 90                      # 真下を向く（板が覆わない所も、動かない地面だけに）
 wait 7000
 shot calib-hud                             # HUD ごと（この端末の画面のまま）
 absent clientlog \bERROR\b                 # 参加しただけで UI・Molang・マテリアルのエラーが無い
@@ -31,6 +32,7 @@ do hud @a hide status_effects
 do hud @a hide item_text
 do hud @a hide tooltips
 do hud @a hide paperdoll
+do hud @a hide touch_controls             # タッチ操作のボタン（CI の端末で出たり消えたりして、画面が落ち着かず diff も汚した）
 wait 6000
 shot calib-device                          # この端末の画面（既定の大きさ）
 measure geoui calib-device
@@ -126,12 +128,14 @@ wait 1500
 section inventory
 # インベントリの人形も live_player_renderer: いつもの高さ（y = 20〜260・後ろの黒い板 800 x 360）の GeoUI が映り込むか（geoui_calib_far と比べる）
 do scriptevent gcal:set scale 1                    # 消す（目盛りを (0, 140) の 1 点に縮める）
-key E
+shot world--before-inventory
+inventory                                          # 持ち物（ゲームパッドの Y。キーボードの E は CI の端末で開かなかった）
 wait 7000
+changed 0.05                                       # 持ち物の画面が開いた（開かなければ、この区切りの答えは出さない）
 shot world--inventory-hidden
 do scriptevent gcal:set scale 100
 wait 6000
 shot inventory-shown
 measure diff inventory-shown                      # 違う所が無い（0 か所）なら映り込まない
-key BACK
+pad B
 wait 1500

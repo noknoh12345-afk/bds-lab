@@ -46,6 +46,22 @@ var GeoUICore = (function () {
     layerZ: -0.2,
   });
 
+  /** What bds-lab measured on the real app (bds/geoui/report.mjs over the app runs of bds/addons/geoui_calib*: an Android
+   *  emulator 1560x720, Minecraft 1.26.52.3, 2026-10-21; five screens of three frames — 10 x 10, 20 x 20, 2 x 10 % — agree to
+   *  0.08 % and 0.7 px, the same frame in two runs to 0.003 %). The HUD's live_player_renderer draws one model unit as
+   *  k x the frame's smaller side (px) and pins the model's origin d units below the frame's middle (centred across):
+   *  Studio's frame (10 % x 10 % at 110 %) on any screen wider than tall is 170.68 units high, centred at y = 135.04
+   *  (Studio: 176 and 140, then a fix measured once on a PC — −4.9 units, close to this — and once on an iPhone: −9.25) */
+  const MEASURED = Object.freeze({ id: 'bds-lab-2026-10', k: 0.058589, d: 24.10, ref: 'bds-lab app runs (geoui_calib*), Android 1560x720, Minecraft 1.26.52.3, 2026-10-21' });
+  const CALIBRATIONS = { [MEASURED.id]: '実機で測った値（bds-lab: HUD の枠から計算）', 'studio-v10.1': 'GeoUI Studio v10.1 と同じ値', manual: '自分で入れた値' };
+  /** the screen a HUD frame shows, by the measured model (pure): its height in model units and its centre's y, at an aspect
+   *  (a frame narrower than tall on the screen — w % x aspect < h % — is scaled by its width, so then the aspect matters) */
+  function frameScreen(panel, aspect, M = MEASURED) {
+    const w = (num(panel && panel.size && panel.size[0], 10) / 100) * qa(aspect), h = num(panel && panel.size && panel.size[1], 10) / 100;
+    const H = 1 / (M.k * Math.min(w, h)), top = num(panel && panel.offset && panel.offset[1], 110) / 100;
+    return { H, cy: H * (top + h / 2 - 0.5) + M.d, cx: 0 };
+  }
+
   const DEVICES = [
     { id: 'pc', label: 'PC 16:9', aspect: 16 / 9 }, { id: 'pc16', label: 'PC 16:10', aspect: 1.6 },
     { id: 'uw', label: 'ウルトラワイド 21:9', aspect: 2.3333 }, { id: 'iphone', label: 'iPhone 19.5:9', aspect: 2.1667 },
@@ -93,8 +109,16 @@ var GeoUICore = (function () {
     const UU = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     s.uuids = s.uuids && typeof s.uuids === 'object' && ['rp', 'rpMod', 'bp', 'bpData', 'bpScript'].every((k) => UU.test(String(s.uuids[k]))) ? Object.assign({}, s.uuids) : null;
     s.autoBump = s.autoBump !== false; s.exported = Math.max(0, Math.round(num(s.exported)));
+    // (the measured calibration: the screen's height and centre follow the HUD frame — whatever is typed in for them)
+    if (!CALIBRATIONS[s.calibration]) s.calibration = 'manual';
+    if (s.calibration === MEASURED.id) {
+      const f = frameScreen(s.panel, s.refAspect), fix = { x: r4(f.cx / f.H), y: Math.round(((f.cy - PIVOT_Y) / f.H) * 1e5) / 1e5 };
+      s.unitsPerScreenH = r4(f.H); s.centerFix = { desktop: Object.assign({}, fix), mobile: Object.assign({}, fix), console: Object.assign({}, fix) };
+    }
     return s;
   }
+  /** a new project's settings: the measured calibration (defaults() stays Studio's: what an older project and the tests read) */
+  const newProjectSettings = () => Object.assign(defaults(), { calibration: MEASURED.id });
 
   // ---------------------------------------------------------------------------------------------------------------
   // The screen in model units (Bedrock geometry coordinates: x to the right of the screen, y up)
@@ -739,8 +763,8 @@ system.runInterval(() => {
   }
 
   return {
-    VERSION, STUDIO, DEVICES, ANCHORS, BLENDS, FILLS, PIVOT_Y, ROOT,
-    num, r3, r4, clean, qa, defaults, settingsOf, halfWAt, centerOf, screenAt, hAnchor, vAnchor, padsOf, studioAnchor,
+    VERSION, STUDIO, MEASURED, CALIBRATIONS, DEVICES, ANCHORS, BLENDS, FILLS, PIVOT_Y, ROOT,
+    num, r3, r4, clean, qa, defaults, newProjectSettings, frameScreen, settingsOf, halfWAt, centerOf, screenAt, hAnchor, vAnchor, padsOf, studioAnchor,
     parse, evaluate, molang, molangError, envOf, pose, runPre, digitExpr, preAnimation, transformAnimation,
     geometriesOf, materialsFile, hudScreen, scriptOf, buildPack, layoutOf, uuidFrom, PROP_RANGES,
   };
@@ -1117,6 +1141,7 @@ if (typeof BBPlugin !== 'undefined') (function () {
   }
 
   // ---------------------------------------------------------------- dialogs
+  const CALIB_OPTIONS = () => Object.assign({}, G.CALIBRATIONS);
   function settingsDialog() {
     const S = settings(), dev = Object.fromEntries(G.DEVICES.map((d) => [String(G.qa(d.aspect)), `${d.label}（${G.qa(d.aspect)}）`]));
     const cf = S.centerFix;
@@ -1127,6 +1152,7 @@ if (typeof BBPlugin !== 'undefined') (function () {
         name: { label: 'パックの名前', type: 'text', value: S.name },
         description: { label: 'パックの説明', type: 'text', value: S.description },
         _s1: '_',
+        calibration: { label: '画面の高さ・中心の値', type: 'select', options: CALIB_OPTIONS(), value: S.calibration, description: `実機で測った値: ${G.MEASURED.ref}。HUD の枠を変えても、画面の高さと中心がそれに合わせて決まる（下の 2 つの欄は使わない）` },
         unitsPerScreenH: { label: '画面の高さ（モデル単位）', type: 'number', value: S.unitsPerScreenH, min: 1, step: 0.01, description: `GeoUI Studio v10.1 は 176（実機の報告から決めた値）。本物のアプリで測った値があれば入れる` },
         refAspect: { label: '作る画面の比（基準）', type: 'select', options: Object.assign({ [String(S.refAspect)]: String(S.refAspect) }, dev), value: String(S.refAspect) },
         previewAspect: { label: 'プレビューの画面比', type: 'select', options: Object.assign({ [String(S.previewAspect)]: String(S.previewAspect) }, dev), value: String(S.previewAspect) },
@@ -1146,7 +1172,7 @@ if (typeof BBPlugin !== 'undefined') (function () {
       onConfirm(r) {
         const old = settings().unitsPerScreenH;
         setSettings({
-          ns: r.ns, name: r.name, description: r.description, unitsPerScreenH: r.unitsPerScreenH, refAspect: +r.refAspect, previewAspect: +r.previewAspect, previewPlatform: r.previewPlatform,
+          ns: r.ns, name: r.name, description: r.description, calibration: r.calibration, unitsPerScreenH: r.unitsPerScreenH, refAspect: +r.refAspect, previewAspect: +r.previewAspect, previewPlatform: r.previewPlatform,
           centerFix: { desktop: { x: r.cfDesktop[0], y: r.cfDesktop[1] }, mobile: { x: r.cfMobile[0], y: r.cfMobile[1] }, console: { x: r.cfConsole[0], y: r.cfConsole[1] } },
           panel: { size: r.panelSize, offset: r.panelOffset }, hud: r.hud, hideInPaperdoll: r.hideInPaperdoll, followHud: r.followHud, filter: r.filter, bp: r.bp,
         });
@@ -1240,7 +1266,7 @@ if (typeof BBPlugin !== 'undefined') (function () {
   }
   function newGeoProject() {
     if (!newProject(state.format)) return false;
-    Project.geoui_settings = G.defaults();
+    Project.geoui_settings = G.newProjectSettings();
     packUuids();
     ensureRoot();
     Canvas.updateAll();
@@ -1260,7 +1286,7 @@ if (typeof BBPlugin !== 'undefined') (function () {
       bone_rig: true, centered_grid: true, animation_mode: true, molang: true, locators: false,
       animation_codec: Formats.bedrock && Formats.bedrock.animation_codec,
       node_name_regex: '\\w.-',
-      onSetup(project, newModel) { if (newModel) project.geoui_settings = G.defaults(); },
+      onSetup(project, newModel) { if (newModel) project.geoui_settings = G.newProjectSettings(); },
       onActivation() { setTimeout(refreshOverlay, 0); },
       onDeactivation() { setTimeout(refreshOverlay, 0); },
     });

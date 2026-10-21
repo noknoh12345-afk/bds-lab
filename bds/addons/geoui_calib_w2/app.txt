@@ -11,6 +11,7 @@ shot title
 section join
 join
 until joined 300000
+do tp @a 0 -60 0 0 90                      # 真下を向く（板が覆わない所も、動かない地面だけに）
 wait 3000
 # HUD の部品を隠して、目盛りだけにする
 do hud @a hide crosshair
@@ -24,6 +25,7 @@ do hud @a hide status_effects
 do hud @a hide item_text
 do hud @a hide tooltips
 do hud @a hide paperdoll
+do hud @a hide touch_controls             # タッチ操作のボタン（CI の端末で出たり消えたりして、画面が落ち着かず diff も汚した）
 wait 6000
 absent clientlog \bERROR\b                 # 枠を変えても UI・Molang・マテリアルのエラーが無い
 

@@ -220,6 +220,24 @@ const pngBack = (await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'png.
 const img = CAL.synth({ w: 64, hpx: 32 }), back = pngBack.decodePng(pngBack.encodePng(img));
 ok(back.width === 64 && back.height === 32 && Buffer.compare(Buffer.from(back.data), Buffer.from(img.data)) === 0, 'png.mjs: a picture written and read back is the same');
 
+// ---- the measured calibration (GeoUI Builder's MEASURED, a new project's choice): the real app's own numbers ----
+{
+  const n = G.settingsOf(G.newProjectSettings()), st = G.settingsOf({});
+  ok(n.calibration === G.MEASURED.id && close(n.unitsPerScreenH, 170.68, 0.01) && close(n.centerFix.mobile.y, -0.02905, 1e-5) && n.centerFix.desktop.x === 0 && n.centerFix.console.y === n.centerFix.mobile.y,
+    'measured: a new project is 170.68 units high, centred at 135.04 (fix y −0.02905) on every platform', JSON.stringify(n.centerFix));
+  ok(st.calibration === 'studio-v10.1' && st.unitsPerScreenH === 176 && st.centerFix.mobile.y === -0.05256 && G.settingsOf({ calibration: 'odd' }).calibration === 'manual', 'measured: the library\'s defaults stay Studio\'s (older projects, the tests); an unknown choice is manual');
+  // the shots the real app gave (app runs 39560350529, 39563235250, 39563238661, 39563246391: Android 1560x720, 1.26.52.3) —
+  // each frame's height and centre as the model says them, against what was measured
+  const real = [[{ size: [2, 10], offset: [0, 110] }, 393.72, 279.96], [{ size: [10, 10], offset: [0, 1110] }, 170.61, 1841.60], [{ size: [20, 20], offset: [0, 105] }, 85.31, 79.47]];
+  const off = real.map(([panel, H, cy]) => { const f = G.frameScreen(panel, 1560 / 720); return { panel: panel.size.join('x'), dH: (f.H - H) / H, dcy: f.cy - cy }; });
+  ok(off.every((o) => Math.abs(o.dH) < 0.001 && Math.abs(o.dcy) < 0.3), 'measured: the model gives back the real app\'s three frames (height 0.1 %, centre 0.3 units)', JSON.stringify(off));
+  const moved = G.settingsOf({ ...G.newProjectSettings(), panel: { size: [20, 20], offset: [0, 105] } });
+  ok(close(moved.unitsPerScreenH, 85.34, 0.01) && close(140 + moved.centerFix.mobile.y * moved.unitsPerScreenH, 79.57, 0.01), 'measured: another frame in the settings moves the screen with it (20 x 20 at 105: 85.34 high, centred at 79.57)');
+  const mp = G.buildPack({ ...design('left'), settings: { ...G.newProjectSettings(), ns: 'geoui', name: 'Score & gauge', uuids: S0.uuids ?? undefined } });
+  const pre = JSON.stringify(mp.files['geoui_RP/entity/player.entity.json'] ?? '');
+  ok(!mp.warnings.length && /v\.geoui_halfw = 85\.34\*v\.geoui_aspect/.test(pre), 'measured: the export\'s own Molang carries it (half the screen 85.34 x aspect)', pre.slice(0, 300));
+}
+
 // ---- the report (bds/geoui/report.mjs): the real app's numbers gathered, each shot's own changes undone, the frame → screen
 // mapping fitted. Shots made up from a known mapping must give it back, whatever their frame, scale, oy and lift ----
 {
@@ -265,6 +283,7 @@ ok(back.width === 64 && back.height === 32 && Buffer.compare(Buffer.from(back.da
   // the spec's claims answered by the diffs of known shots (0 parts: no)
   eq2(RP.verdicts([{ addon: 'geoui_calib', shot: 'inventory-shown', values: { parts: 0, share: 0 } }, { addon: 'geoui_lab', shot: 'invisible-on', values: { parts: 2, share: 0.01 } }, { addon: 'geoui_lab', shot: 'third', values: { parts: 1 } }]).map((v) => `${v.question}:${v.yes}`),
     ['インベントリに GeoUI が映り込む:false', '透明化の間も GeoUI が描かれる:true'], 'report: known diffs as yes / no, unknown shots left as numbers');
+  eq2(RP.verdicts([{ addon: 'geoui_calib_far', shot: 'inventory-shown', values: { parts: 1, share: 0.864 } }]).map((v) => v.yes), [null], 'report: half the screen changed is no answer (the inventory that never opened: 86 %)');
   ok(/\| インベントリに GeoUI が映り込む \| \*\*いいえ\*\* \| geoui_calib の inventory-shown: 0 か所/.test(md), 'report: the answers in the Markdown');
   // from summary.json files (a run's artifacts as fetched): only measures, by addon
   const d = fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-report-')); fs.mkdirSync(path.join(d, 'app-geoui_calib-9', 'run1'), { recursive: true });

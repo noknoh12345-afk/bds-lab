@@ -11,6 +11,7 @@ shot title
 section join
 join
 until joined 300000
+do tp @a 0 -60 0 0 90                      # 真下を向く（板が覆わない所も、動かない地面だけに）
 wait 3000
 do hud @a hide crosshair
 do hud @a hide hotbar
@@ -23,6 +24,7 @@ do hud @a hide status_effects
 do hud @a hide item_text
 do hud @a hide tooltips
 do hud @a hide paperdoll
+do hud @a hide touch_controls             # タッチ操作のボタン（CI の端末で出たり消えたりして、画面が落ち着かず diff も汚した）
 wait 6000
 absent clientlog \bERROR\b
 
@@ -33,13 +35,15 @@ measure geoui calib-plain
 section inventory
 # インベントリの人形も live_player_renderer。GeoUI を人形から 1760 単位 に置けば、インベントリには映らないはず
 do scriptevent gcal:set scale 1                    # 消す（目盛りを (0, 1900) の 1 点に縮める）
-key E
+shot world--before-inventory
+inventory                                          # 持ち物（ゲームパッドの Y。キーボードの E は CI の端末で開かなかった）
 wait 7000
+changed 0.05                                       # 持ち物の画面が開いた（開かなければ、この区切りの答えは出さない）
 shot world--inventory-hidden
 do scriptevent gcal:set scale 100
 wait 6000
 shot inventory-shown
 measure diff inventory-shown                      # 違う所が無い（0 か所）なら映り込まない
-key BACK
+pad B
 wait 1500
 absent clientlog \bERROR\b

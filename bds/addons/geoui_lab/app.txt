@@ -13,6 +13,9 @@ section join
 join
 until joined 300000
 wait 3000
+do tp @a 0 -60 0 0 90                      # 真下を向く（比べる画面に動く物を入れない）
+do hud @a hide paperdoll                   # 動く人形と、出たり消えたりするタッチ操作のボタンは比べる画面から外す
+do hud @a hide touch_controls
 do js for (const q of world.getAllPlayers()) { q.setProperty('glab:on', false); q.setProperty('glab:size', 400); q.setProperty('glab:bar', 100); } 'GLAB hidden'
 wait 2000
 shot world                                 # GeoUI を隠したワールド（基準）
@@ -41,14 +44,16 @@ measure diff bar0                          # バーの消えた所（px）
 section inventory
 # 主張: インベントリも live_player_renderer なので、判定（is_in_ui）だけでは GeoUI の板がインベントリにも映る
 # 人形の枠に板が入るかは画で確かめる（inventory-on と inventory-off を見比べる）
-key E
+shot world--before-inventory
+inventory                                  # 持ち物（ゲームパッドの Y。キーボードの E は CI の端末で開かなかった）
 wait 3000
+changed 0.05                               # 持ち物の画面が開いた（開かなければ、この区切りの答えは出さない）
 shot world--inventory-on
 do js for (const q of world.getAllPlayers()) q.setProperty('glab:on', false); 'GLAB hidden'
 wait 1500
 shot inventory-off
 changed 0.002                              # 板を消すとインベントリの画面も変わる＝映り込んでいた
-key BACK
+pad B
 wait 1500
 do js for (const q of world.getAllPlayers()) q.setProperty('glab:on', true); 'GLAB shown'
 wait 1500

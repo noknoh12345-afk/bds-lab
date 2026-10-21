@@ -8,7 +8,7 @@
 // The question: where does the HUD's live_player_renderer put the model, for any frame on any screen? (the frame: its panel,
 // w x h in % of the screen's width and height, its top t % down from the screen's top, centred across — Studio's 10 x 10 at
 // 110). Models compared, each against every shot at once:
-//   scale  k (px per model unit) = c · g(frame in px), g = its height | width | √(width · height) | diagonal
+//   scale  k (px per model unit) = c · g(frame in px), g = its height | width | √(width · height) | diagonal | min(width, height)
 //   pin    the model's origin (0, 0) on the screen: centred across, at the frame's top | middle | bottom + d (units, or px)
 // The one that fits all shots best (the smallest spread) is the answer; then the screen's height in model units H = screen px
 // / k and its centre cy = (the origin's px − the screen's middle px) / k follow for any frame and screen — what GeoUI Builder
@@ -60,7 +60,7 @@ const rms = (xs) => (xs.length ? Math.sqrt(mean(xs.map((x) => x * x))) : null);
 /** the frame on a W x Hs screen, in px (pure): centred across (top_middle), its top t % of the screen's height down */
 export function frameOn(f, W, Hs) { const w = (W * f.w) / 100, h = (Hs * f.h) / 100, top = (Hs * f.top) / 100; return { w, h, top, middle: top + h / 2, bottom: top + h }; }
 /** what the model's scale (px per unit) may follow, times a constant */
-export const SCALES = { height: (fr) => fr.h, width: (fr) => fr.w, area: (fr) => Math.sqrt(fr.w * fr.h), diagonal: (fr) => Math.hypot(fr.w, fr.h) };
+export const SCALES = { height: (fr) => fr.h, width: (fr) => fr.w, area: (fr) => Math.sqrt(fr.w * fr.h), diagonal: (fr) => Math.hypot(fr.w, fr.h), min: (fr) => Math.min(fr.w, fr.h) };
 /** where the model's origin may be pinned (then + d model units, or + d px) */
 export const PINS = { top: (fr) => fr.top, middle: (fr) => fr.middle, bottom: (fr) => fr.bottom };
 /** a model (scale, pin) → the screen's height in units, its centre and px per unit for a frame on a screen (pure) */
@@ -119,8 +119,10 @@ export const DIFF_QUESTIONS = {
   'inventory-shown': 'インベントリに GeoUI が映り込む', 'invisible-on': '透明化の間も GeoUI が描かれる', 'hud-alpha0': 'alpha 0 でも GeoUI が描かれる',
   'third-person': '視点（三人称）で GeoUI の見え方が変わる',
 };
-/** the diffs of known shots as yes / no (pure) → [{ addon, shot, question, yes, parts, share }] */
-export const verdicts = (diffs) => diffs.filter((d) => DIFF_QUESTIONS[d.shot]).map((d) => ({ addon: d.addon, shot: d.shot, question: DIFF_QUESTIONS[d.shot], yes: (d.values.parts ?? 0) > 0, parts: d.values.parts ?? 0, share: d.values.share ?? 0 }));
+/** the diffs of known shots as yes / no (pure) → [{ addon, shot, question, yes, parts, share }]. yes null: not an answer — half
+ *  the screen or more changed, so it was not the one thing that differs (on the CI device the inventory never opened by its
+ *  key: the whole HUD with and without the GeoUI was compared, 86 %) */
+export const verdicts = (diffs) => diffs.filter((d) => DIFF_QUESTIONS[d.shot]).map((d) => ({ addon: d.addon, shot: d.shot, question: DIFF_QUESTIONS[d.shot], yes: (d.values.share ?? 0) > 0.5 ? null : (d.values.parts ?? 0) > 0, parts: d.values.parts ?? 0, share: d.values.share ?? 0 }));
 const f = (x, n = 2) => (Number.isFinite(x) ? x.toFixed(n) : '—');
 const sgn = (x, n = 2) => (Number.isFinite(x) ? `${x >= 0 ? '+' : ''}${x.toFixed(n)}` : '—');
 /** the report as Markdown (pure) */
@@ -140,7 +142,7 @@ export function markdown(a, { title = 'GeoUI の較正: 本物のアプリで測
   const F = a.fit;
   if (F) {
     const near = Number.isFinite(F.near) && Math.abs(F.near - 1) < 0.01, far = Number.isFinite(F.far) && Math.abs(F.far - 1) < 0.01, M = F.model;
-    const SN = { height: '枠の高さ', width: '枠の幅', area: '√(枠の幅 × 高さ)', diagonal: '枠の対角線' }, PN = { top: '上端', middle: '真ん中', bottom: '下端' };
+    const SN = { height: '枠の高さ', width: '枠の幅', area: '√(枠の幅 × 高さ)', diagonal: '枠の対角線', min: '枠の幅と高さの小さい方' }, PN = { top: '上端', middle: '真ん中', bottom: '下端' };
     L.push('## 当てはめ（枠の設定 → 画面）', '',
       `- **尺度**: 1 モデル単位 = **${f(M.c, 6)} × ${SN[M.scale]}（px）**。比べた形（ばらつき、小さいほど合う）: ${F.scales.map((x) => `${SN[x.name]} ${f(x.spread, 2)} %`).join('・')}`
         + `${F.shapes < 2 ? '（**どの画面も枠の形が同じなので、形の違う枠（幅 2 % など）が無いと見分けられません**）' : ''}`,
@@ -154,7 +156,7 @@ export function markdown(a, { title = 'GeoUI の較正: 本物のアプリで測
   const V = verdicts(a.diffs);
   if (V.length) {
     L.push('## 仕様書の主張への答え（measure diff）', '', '| 問い | 答え | 根拠 |', '|---|---|---|');
-    for (const v of V) L.push(`| ${v.question} | **${v.yes ? 'はい' : 'いいえ'}** | ${v.addon} の ${v.shot}: ${v.parts} か所・${f(v.share * 100, 3)} % |`);
+    for (const v of V) L.push(`| ${v.question} | **${v.yes === null ? '答えにならない（画面の半分以上が変わった）' : v.yes ? 'はい' : 'いいえ'}** | ${v.addon} の ${v.shot}: ${v.parts} か所・${f(v.share * 100, 3)} % |`);
     L.push('');
   }
   if (a.diffs.length) {

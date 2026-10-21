@@ -20,6 +20,8 @@ do gamerule dodaylightcycle false
 do weather clear
 do gamerule doweathercycle false
 do tp @a 0 -60 0 0 90
+do hud @a hide paperdoll                   # 動く人形と、出たり消えたりするタッチ操作のボタンは比べる画面から外す
+do hud @a hide touch_controls
 wait 6000
 absent clientlog \bERROR\b
 
