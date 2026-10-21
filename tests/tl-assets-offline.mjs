@@ -65,7 +65,7 @@ ok(byId.o1.params.x === 0 && byId.o1.params.y === 0 && byId.o2.params.x === -36.
   'the playfield (512 x 384) into model units (centred, y up), a slider\'s duration and slides, a spinner\'s length');
 const N = M.normalize(doc), ev = (t, o) => M.evaluate(N, 'osu', t, o);
 let st = ev(0.1);
-ok(near(st['hitcircle#o1'].opacity, 0.5) && near(st['approachcircle#o1'].scaleX, byId.o1.params.s * (4 - 3 * (0.7 / 0.6) > 0 ? 1 : 1), 1e9) && st['combonumber#o1'].value === 1 && st['hitcircle#o1'].frame === 0,
+ok(near(st['hitcircle#o1'].opacity, 0.5) && st['approachcircle#o1'].visible && st['combonumber#o1'].value === 1 && st['hitcircle#o1'].frame === 0,
   'evaluate the import: the circle fading in (half way at 0.2 s of 0.4), its number, its colour frame');
 st = ev(0.2);
 ok(near(st['approachcircle#o1'].scaleX, byId.o1.params.s * 2.5, 1e-9), 'the approach ring halfway (4x → 1x over the preempt)', JSON.stringify(st['approachcircle#o1']));
