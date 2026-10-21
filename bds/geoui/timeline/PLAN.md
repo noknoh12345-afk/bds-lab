@@ -205,7 +205,10 @@
     見ていなかった）→ 玉の通る線（model.pathTable の折れ線を osu! の長さで切る・延ばす。osu.lineOf → bodies[].line）で描き、体の要素はその線の
     真ん中（bx・by）に置く。media.rasterOps（キャンバス無しで bodyImage の線を描く）で、見本 geoui_rhythm にも体を入れた（アトラス 128 x 256。
     demo --check の「sliderbody がありません」の注意が消えた）。試験 tl-assets 29/29（玉の通る所が線の上・制御点は外・画素で体と縁）。
-    check-bridge.mjs に、本物の Blockbench のプレビューの画素で体を確かめる項目を足した（**まだ回していない**: 次に回して直す）。
+    check-bridge.mjs に、本物の Blockbench のプレビューの画素で体を確かめる項目を足した → 回した（2026-10-22、Blockbench 5.2.2 の web 版）: 初回で通った
+    （check-bridge 20/20）。体の複製は線の真ん中（bx・by）にずれ 0.05 未満で置かれ、いちばん低い所の 7.5 単位上に白い縁、真ん中の制御点の 7.5 単位下と
+    線から離れた所には何も無い（プレビューで 1 単位 1.67 px）。全部の試験も通った（Node の tl-* と geoui-builder と lint、build・probe・demo の --check、
+    blockbench-check 10/10、check-editors 26/26、check-timeline 15/15）。
 ### 本物のアプリで確かめたこと（probe.mjs → bds/addons/geoui_probe*、app.yml で写して `node bds/geoui/timeline/probe.mjs read <summary.json>`）
 
 - 1 回目（2026-10-21、run 39601130957 ほか）: ボーンは #248 まで描かれる。自分の render controller（共有のジオメトリを part_visibility で分ける）は
