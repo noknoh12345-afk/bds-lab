@@ -304,6 +304,9 @@ await t('anonymize: tokens, e-mails, account name, device/android ids and home p
   ok(!/example\.com/.test(a) && (a.match(/<email>/g) || []).length >= 2, 'emails: ' + a);
   ok(/<token>/.test(a) && /setCachedDeviceId\(<id>\)/.test(a) && /android_id=<id>/.test(a) && a.includes('/home/<user>/bds-lab') && a.includes('/Users/<user>/y'), a);
   ok(GR.anonymize('x TOPSECRETvalue y', ['TOPSECRETvalue']).includes('<secret>'), 'passed secrets');
+  // the game's own first-start lines (as the CI device printed them into a public job log)
+  const g = GR.anonymize('Device Push Token: cK-1B9UuTDqgbjgjFpw-ro:APA91bEpEWHDxQuCp6sU3zdCOEGMKkD_A1fw92nLDsKEffVaPke353srnK2LYG | Signing into signaling service using JsonRpc signaling, and sign-in ID: 076a6d84-2057-22c7-15d8-321b9b56e3ce | Player connected: Steve, xuid: 2535400000000000');
+  ok(!/APA91b|076a6d84|2535400000000000/.test(g) && /Device Push Token: <push-token>/.test(g) && /sign-in ID: <id>/.test(g) && /xuid: <id>/.test(g), 'push token, sign-in id, xuid: ' + g);
   const txt = ['[1/5] 端末', '      ふつうの進捗', '✔ 2: launch — ok', '✘ 6: until joined — timed out', 'W 最後にアプリが動いていません', 'E something broke', '===== 空の見出し =====', '===== エラー =====', 'java.lang.Error: boom'].join('\n');
   const e = GR.errorLines(txt);
   ok(/✘ 6/.test(e) && /W 最後に/.test(e) && /E something/.test(e) && /java\.lang\.Error/.test(e), 'keeps errors: ' + e);

@@ -19,15 +19,18 @@ const GLNOISE = (tag, msg) => /^emuglGLESv2_enc$/.test(tag) || (tag === 'libEGL'
 const SYSTAGS = /^(ActivityManager|ActivityTaskManager|AccountManagerService|SystemServer|SystemServerTiming|PackageManager|Watchdog)$/;
 
 // Scrub anything that could identify a person or the machine, so the output is safe to show on a stream: secrets passed
-// in, Google tokens, e-mail addresses (and so the account name in `Account {name=…}`), device / android ids, and home
-// paths that carry a username. Errors keep their wording; only these values are replaced.
+// in, Google tokens, e-mail addresses (and so the account name in `Account {name=…}`), device / android ids, the game's
+// push token (Firebase: "Device Push Token: <id>:APA91b…", printed by the game at its first start — in a public
+// repository's job log otherwise) and its sign-in ids, Xbox user ids, and home paths that carry a username. Errors keep
+// their wording; only these values are replaced.
 export function anonymize(s, secrets = []) {
   let t = String(s);
   for (const x of secrets) if (x && x.length >= 6) t = t.split(x).join('<secret>');
   return t
     .replace(/(aas_et|oauth2_4)\/[A-Za-z0-9._=-]+/g, '<token>')
+    .replace(/[A-Za-z0-9_-]{8,}:APA91b[A-Za-z0-9_-]{20,}/g, '<push-token>')
     .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '<email>')
-    .replace(/(setCachedDeviceId\(|\bandroid[_-]?id["'=:\s]+|\bGSF[ _]?id["'=:\s]+|\bdevice[_-]?id["'=:\s]+)[0-9a-fA-Fx]{8,}/gi, '$1<id>')
+    .replace(/(setCachedDeviceId\(|\bandroid[_-]?id["'=:\s]+|\bGSF[ _]?id["'=:\s]+|\bdevice[_-]?id["'=:\s]+|\bsign-in ID:\s*|\bxuid[:=]\s*)[0-9a-fA-Fx-]{8,}/gi, '$1<id>')
     .replace(/(\/home\/|\/Users\/)[^/\s"':]+/g, '$1<user>');
 }
 export const mask = anonymize;   // (earlier name)

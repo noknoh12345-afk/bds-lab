@@ -1566,7 +1566,8 @@ async function prepareCmd(args) {
         const opts = adb.run(['shell', `cat /data/data/${K.PACKAGE}/games/com.mojang/minecraftpe/options.txt`], { timeout: 20_000 }).stdout;
         if (opts.trim()) { fs.writeFileSync(path.join(LAB, 'prepare-options.txt'), opts); out(`  ゲームの設定（options.txt）: ${opts.trim().split('\n').length} 項目 → app/.lab/prepare-options.txt`); }
         out(`  ${title.stuck ? `ゲームは最初の画面（「${title.stuck}」が効かない）のまま準備を続けます` : 'タイトル画面になりました'}（起動から ${(title.ms / 1000).toFixed(0)} 秒${title.dialogs ? `、Android のダイアログ ${title.dialogs} 回` : ''}、${secs()}）`);
-        if (l.game.length) { out('  ゲームが最後に言ったこと:'); l.game.forEach((x) => out(`    ${x.slice(0, 200)}`)); }
+        // (scrubbed: the game prints its push token and sign-in ids at its first start, and this goes to the job's log)
+        if (l.game.length) { out('  ゲームが最後に言ったこと:'); l.game.forEach((x) => out(`    ${G.anonymize(x).slice(0, 200)}`)); }
         // the content log to a file (the client's own errors: JSON UI, packs, scripts): whatever this version calls that
         // switch (a key with "content log" in it, not the on-screen one) turned on, and the game started once more so it
         // takes it; the snapshot keeps it. APP_CONTENT_LOG=0: left as it is
