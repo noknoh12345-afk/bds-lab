@@ -1357,6 +1357,9 @@ await t('vault: opens when tar leaves at the archive\'s end before the decompres
       const said = [], dest = path.join(tmp, `slow-out${i}`);
       ok(await V.open({ inFile: f, dest, key: k, log: (x) => said.push(x) }) && fs.readFileSync(path.join(dest, 'part', 'a.txt'), 'utf8') === 'DATA', `open ${i}: ${said.join(' ')}`);
     }
+    // (into a folder whose parent is not there yet: a fresh CI machine's ~/.android/avd)
+    const deep = path.join(tmp, 'slow-fresh', 'home', '.android', 'avd');
+    ok(await V.open({ inFile: f, dest: deep, key: k }) && fs.readFileSync(path.join(deep, 'part', 'a.txt'), 'utf8') === 'DATA', 'opened where no folder was yet');
     // (still whole or nothing: one byte changed is a miss with the slow decompressor too)
     const b = fs.readFileSync(f); b[b.length - 20] ^= 1; fs.writeFileSync(f + '.x', b);
     ok(!(await V.open({ inFile: f + '.x', dest: path.join(tmp, 'slow-bad'), key: k })) && !fs.existsSync(path.join(tmp, 'slow-bad', 'part')), 'a changed byte: a miss');

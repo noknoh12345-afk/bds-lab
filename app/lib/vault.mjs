@@ -121,6 +121,10 @@ export async function open({ inFile, dest, key, log = () => {}, tarArgs = [] }) 
   const comp = COMP[head[MAGIC.length]], id = head.subarray(MAGIC.length + 1, MAGIC.length + 9).toString('hex'), iv = head.subarray(MAGIC.length + 9);
   if (!comp) { log(`  ${path.basename(inFile)}: 知らない圧縮`); return false; }
   if (id !== key.id) { log(`  ${path.basename(inFile)}: 別の鍵で作られています（秘密が変わった）`); return false; }
+  // (beside dest, so the move into place is a rename; its folder made first — a fresh CI machine has no ~/.android yet: the
+  //  device job's open, started while the next cache downloads, failed there with ENOENT and the device was opened again
+  //  later, a minute lost)
+  fs.mkdirSync(path.dirname(path.resolve(dest)), { recursive: true });
   const tmp = fs.mkdtempSync(path.join(path.dirname(path.resolve(dest)), '.vault-'));
   const decipher = crypto.createDecipheriv('aes-256-gcm', key.key, iv); decipher.setAuthTag(tag);
   const z = collect(spawn(comp.d[0], comp.d[1], { stdio: ['pipe', 'pipe', 'pipe'], env: cleanEnv() }));
