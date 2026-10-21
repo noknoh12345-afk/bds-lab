@@ -4,6 +4,20 @@
 **app ラボを「ほぼクライアント」に: 本物のアプリをコントローラーで人のように遊べる（歩く・見回す・跳ぶ・壊す・置く・持ち物・チャット…）。
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
+### 🧩 GeoUI: Blockbench で作る（GeoUI Builder）と、GeoUI Studio の式の確かめ
+- **Blockbench プラグイン** `bds/geoui/geoui_builder.js`（Blockbench 5.x、File → Plugins → Load Plugin from File）: 「GeoUI」の形式と
+  メニュー。画面の枠を出し、画像・数字・ゲージを寄せ先（左上など）と余白で置き、書き出す式そのものを Blockbench のプレビューで動かして
+  （画面比・端末・値・大きさを Variable Placeholders で）、はみ出しを確かめ、.mcaddon（RP＋BP）を書き出す。パックの UUID はプロジェクトに保存。
+- **GeoUI Studio v10.1 の式を再現**（`GeoUICore`）: 画面比の項・寄せ・大きさ・ずらし・中心のずれ・数字・ゲージ・HUD の枠。Studio の書き出し
+  （`geoui_studio`）と、同じ配置をプラグインで作った書き出しを、どちらも自分の Molang で動かすと scale 100 の 1890 通りで 1e-6 単位まで一致
+  （`tests/geoui-builder-offline.mjs`）。本物の Blockbench 5.2.2 でも 192 通り一致し、Blockbench 自身のプレビューとも一致（`bds/geoui/blockbench-check.mjs`）。
+- **Studio の書き出しで見つけたこと**: scale ≠ 100 で数字の桁の間隔が縮まずゲージもずれる、ひな形のゲージは中心へ縮む、`hud_content` を古い写しで
+  置き換える（1.26.50 のエディターの描画が消える）。プラグインは直した形で書き出す（README「Studio との違い」）。
+- **人の手で決めた値**（画面の高さ 176 単位・中心のずれ・240 json-ui 単位）を測る較正: `bds/geoui/calib.mjs`（目盛りのパック・画面の測り方・
+  答えのわかった偽の画面）と `bds/addons/geoui_calib`（本物の BDS で DONE。`app.txt` が画面比 6 種・UI の倍率・scale 50 で写す）。
+- `bds/addons/geoui_bb`: プラグインで作り直した「スコア＆ゲージ」。本物の BDS で DONE（22 項目: 型付きのコマンド・alpha 0・範囲外の理由・
+  画面比・スコア同期・入り直し・/reload・再起動）。描画は `app.txt`（本物のアプリは Google Play の連携のあとで）。
+
 ### 🤖 AI から操作: Claude（ほかの AI も）がラボを直接操作する API（MCP・HTTP）
 - **AI 用の API**（`auth/api.mjs`）: サインインのサービス（Cloudflare の Worker）に MCP（`POST /mcp`）と HTTP（`GET /api`・`POST /api/<道具>`）。
   パネルと同じ部品（`panel/lib`）で 34 の道具: `lab_status`（様子・役割・準備・落ちているもの）、`setup_checks`・`setup_fix`、`runs_list`・`run_detail`
