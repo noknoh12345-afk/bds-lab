@@ -139,12 +139,15 @@ function markers() {
   return out;
 }
 
-function design(G, { ns = 'gcal' } = {}) {
+/** panel: the HUD's live_player_renderer frame ({ size: [w%, h%], offset: [x%, y%] }; Studio's 10% x 10%, 110% when not given);
+ *  seed: a variant's own pack UUIDs (another frame is another pack: the game keeps packs by UUID) */
+function design(G, { ns = 'gcal', panel = null, seed = null } = {}) {
   const zero = { x: 0, y: 0 };
-  const settings = { ns, name: 'GeoUI Calibration', description: 'GeoUI の目盛り（本物のアプリで写して、画面とモデル座標の対応を測る）',
-    centerFix: { desktop: zero, mobile: zero, console: zero }, hideInPaperdoll: true, bp: true,
-    uuids: { rp: '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a01', rpMod: '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a02', bp: '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a03',
-      bpData: '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a04', bpScript: '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a05' } };
+  const id = (k, fixed) => (seed ? G.uuidFrom(`${seed}:${k}`) : fixed);
+  const settings = { ns, name: `GeoUI Calibration${panel ? ` (HUD ${panel.size.join('x')}% @ ${panel.offset[1]}%)` : ''}`, description: 'GeoUI の目盛り（本物のアプリで写して、画面とモデル座標の対応を測る）',
+    centerFix: { desktop: zero, mobile: zero, console: zero }, hideInPaperdoll: true, bp: true, ...(panel ? { panel } : {}),
+    uuids: { rp: id('rp', '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a01'), rpMod: id('rpMod', '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a02'), bp: id('bp', '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a03'),
+      bpData: id('bpData', '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a04'), bpScript: id('bpScript', '0f3c6a7e-2b1d-4c55-9a61-6f1a2c0c4a05') } };
   const px = PALETTE.length, tex = new Uint8Array(px * 4);
   PALETTE.forEach((c, i) => { tex.set([...COLORS[c], 255], i * 4); });
   const uvOf = (c) => ({ uv: [PALETTE.indexOf(c) + 0.25, 0.25], uv_size: [0.5, 0.5], texture: 'pal' });
@@ -155,9 +158,9 @@ function design(G, { ns = 'gcal' } = {}) {
   return { settings, bones, elements: {}, textures: { pal: { name: 'gcal_palette', width: px, height: 1, png: Buffer.from(encodePng({ width: px, height: 1, data: tex })).toString('base64') } }, seed: 'gcal' };
 }
 
-/** the calibration pack as two folders (bp, rp) under dir */
-function make(dir, G = core()) {
-  const built = G.buildPack(design(G));
+/** the calibration pack as two folders (bp, rp) under dir (opts: design's panel and seed) */
+function make(dir, G = core(), opts = {}) {
+  const built = G.buildPack(design(G, opts));
   if (built.warnings.length) throw new Error(built.warnings.join('\n'));
   const ns = built.settings.ns;
   for (const [p, c] of Object.entries(built.files)) {
