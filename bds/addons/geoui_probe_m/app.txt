@@ -1,5 +1,5 @@
 # geoui_probe_m（bds/geoui/timeline/probe.mjs が作る）: GeoUI の Molang の長さ・深さの確かめ（pre_animation）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
-# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を数で出す。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を、measure color で板の真ん中の色を数で出す。
 
 section title
 launch
@@ -114,10 +114,20 @@ section log-molang
 absent clientlog (?i)molang
 section log-variable
 absent clientlog (?i)variable
+section log-property
+absent clientlog (?i)property
+section log-paperdoll
+absent clientlog (?i)paper.?doll
+section log-ours
+absent clientlog (?i)gprobm
+section log-unknown
+absent clientlog (?i)unknown|not found|doesn.?t exist|undefined|invalid
 section log-geometry
 absent clientlog (?i)geometr|\bbones?\b
 section log-render
 absent clientlog (?i)render.?controller|part_visibility|uv_anim
+section log-material
+absent clientlog (?i)material|shader|define
 section log-animation
 absent clientlog (?i)animation
 section log-warn

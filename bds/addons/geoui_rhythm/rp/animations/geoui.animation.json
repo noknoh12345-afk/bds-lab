@@ -732,11 +732,6 @@
         "spinner": {
           "scale": 0
         }
-      },
-      "sound_effects": {
-        "0": {
-          "effect": "geoui_click"
-        }
       }
     },
     "animation.geoui.seq_idle": {

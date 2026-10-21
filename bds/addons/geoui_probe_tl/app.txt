@@ -1,5 +1,5 @@
 # geoui_probe_tl（bds/geoui/timeline/probe.mjs が作る）: GeoUI のタイムラインの書き出し（compile.js）をそのまま確かめる。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
-# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を数で出す。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を、measure color で板の真ん中の色を数で出す。
 
 section title
 launch
@@ -25,35 +25,43 @@ wait 6000
 shot world--probe-off
 absent clientlog \bERROR\b
 
-section t01-st2
-do scriptevent gprobt:play 1 2
+section t01-st0
+do scriptevent gprobt:play 1 0
 do scriptevent gprobt:pause
+do scriptevent gprobt:seek 0
 wait 1500
-shot t01-st2
-measure diff t01-st2 0 170 1030 720
+shot t01-st0
+measure diff t01-st0 0 170 1030 720
+measure color t01-st0 976 577 1006 607
 
-section t02-st4
+section t02-st2
+do scriptevent gprobt:seek 2
+wait 1500
+shot t02-st2
+measure diff t02-st2 0 170 1030 720
+measure color t02-st2 976 577 1006 607
+
+section t03-st4
 do scriptevent gprobt:seek 4
-do scriptevent gprobt:pause
 wait 1500
-shot t02-st4
-measure diff t02-st4 0 170 1030 720
+shot t03-st4
+measure diff t03-st4 0 170 1030 720
+measure color t03-st4 976 577 1006 607
 
-section t03-st6
+section t04-st6
 do scriptevent gprobt:seek 6
-do scriptevent gprobt:pause
 wait 1500
-shot t03-st6
-measure diff t03-st6 0 170 1030 720
+shot t04-st6
+measure diff t04-st6 0 170 1030 720
 
-section t04-run
+section t05-run
 do scriptevent gprobt:play 1 0
 wait 2500
-shot t04-run-a
-measure diff t04-run-a 0 170 1030 720
+shot t05-run-a
+measure diff t05-run-a 0 170 1030 720
 wait 1500
-shot t04-run-b
-measure diff t04-run-b 0 170 1030 720
+shot t05-run-b
+measure diff t05-run-b 0 170 1030 720
 
 section stop
 do scriptevent gprobt:stop
@@ -61,14 +69,32 @@ wait 1500
 shot stopped
 measure diff stopped 0 170 1030 720
 
+section pause-screen
+# ポーズ画面の人形（paper doll）: プロパティが無い。compile.js の行はそこで読まない（コンテンツログに出ない）
+pause
+wait 3000
+shot pause
+key BACK
+wait 2000
+
 section log-molang
 absent clientlog (?i)molang
 section log-variable
 absent clientlog (?i)variable
+section log-property
+absent clientlog (?i)property
+section log-paperdoll
+absent clientlog (?i)paper.?doll
+section log-ours
+absent clientlog (?i)gprobt
+section log-unknown
+absent clientlog (?i)unknown|not found|doesn.?t exist|undefined|invalid
 section log-geometry
 absent clientlog (?i)geometr|\bbones?\b
 section log-render
 absent clientlog (?i)render.?controller|part_visibility|uv_anim
+section log-material
+absent clientlog (?i)material|shader|define
 section log-animation
 absent clientlog (?i)animation
 section log-warn

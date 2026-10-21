@@ -1,5 +1,5 @@
-# geoui_probe（bds/geoui/timeline/probe.mjs が作る）: GeoUI の作りの確かめ（pre_animation が止まる所・時計・自分の render controller）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
-# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を数で出す。
+# geoui_probe（bds/geoui/timeline/probe.mjs が作る）: GeoUI の作りの確かめ 3 回目（不透明度・回転の向き・アニメーションの重ね方・initialize）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を、measure color で板の真ん中の色を数で出す。
 
 section title
 launch
@@ -30,126 +30,90 @@ do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 1); 'pro
 wait 1500
 shot t01-ctl
 measure diff t01-ctl 0 170 1030 720
+measure color t01-ctl 90 197 120 227
 
-section t02-c1
+section t02-mask1
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 2); 'probe 2'
 wait 1500
-shot t02-c1
-measure diff t02-c1 0 170 1030 720
+shot t02-mask1
+measure diff t02-mask1 0 170 1030 720
+measure color t02-mask1 238 197 268 227
 
-section t03-c2
+section t03-mask0
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 3); 'probe 3'
 wait 1500
-shot t03-c2
-measure diff t03-c2 0 170 1030 720
+shot t03-mask0
+measure diff t03-mask0 0 170 1030 720
 
-section t04-c3
+section t04-maskhalf
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 4); 'probe 4'
 wait 1500
-shot t04-c3
-measure diff t04-c3 0 170 1030 720
+shot t04-maskhalf
+measure diff t04-maskhalf 0 170 1030 720
+measure color t04-maskhalf 533 197 563 227
 
-section t05-c4
+section t05-maskvar
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 5); 'probe 5'
 wait 1500
-shot t05-c4
-measure diff t05-c4 0 170 1030 720
+shot t05-maskvar
+measure diff t05-maskvar 0 170 1030 720
 
-section t06-c5
+section t06-cutmask0
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 6); 'probe 6'
 wait 1500
-shot t06-c5
-measure diff t06-c5 0 170 1030 720
+shot t06-cutmask0
+measure diff t06-cutmask0 0 170 1030 720
 
-section t07-c6
+section t07-cutmaskhalf
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 7); 'probe 7'
 wait 1500
-shot t07-c6
-measure diff t07-c6 0 170 1030 720
+shot t07-cutmaskhalf
+measure diff t07-cutmaskhalf 0 170 1030 720
+measure color t07-cutmaskhalf 976 197 1006 227
 
-section t08-clockpre
+section t08-texhalf
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 8); 'probe 8'
 wait 1500
-shot t08-clockpre-a
-measure diff t08-clockpre-a 0 170 1030 720
-wait 1500
-shot t08-clockpre-b
-measure diff t08-clockpre-b 0 170 1030 720
+shot t08-texhalf
+measure diff t08-texhalf 0 170 1030 720
+measure color t08-texhalf 90 324 120 354
 
-section t09-clockanim
+section t09-texhalfcut
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 9); 'probe 9'
 wait 1500
-shot t09-clockanim-a
-measure diff t09-clockanim-a 0 170 1030 720
-wait 1500
-shot t09-clockanim-b
-measure diff t09-clockanim-b 0 170 1030 720
+shot t09-texhalfcut
+measure diff t09-texhalfcut 0 170 1030 720
 
-section t10-lifepre
+section t10-masktexhalf
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 10); 'probe 10'
 wait 1500
-shot t10-lifepre
-measure diff t10-lifepre 0 170 1030 720
+shot t10-masktexhalf
+measure diff t10-masktexhalf 0 170 1030 720
+measure color t10-masktexhalf 385 324 415 354
 
-section t11-animpre
+section t11-rot90
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 11); 'probe 11'
 wait 1500
-shot t11-animpre
-measure diff t11-animpre 0 170 1030 720
+shot t11-rot90
+measure diff t11-rot90 0 170 1030 720
 
-section t12-ownalpha
+section t12-scalemul
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 12); 'probe 12'
 wait 1500
-shot t12-ownalpha
-measure diff t12-ownalpha 0 170 1030 720
+shot t12-scalemul
+measure diff t12-scalemul 0 170 1030 720
 
-section t13-alpha0
+section t13-posadd
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 13); 'probe 13'
 wait 1500
-shot t13-alpha0
-measure diff t13-alpha0 0 170 1030 720
+shot t13-posadd
+measure diff t13-posadd 0 170 1030 720
 
-section t14-ownuv
+section t14-init
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 14); 'probe 14'
 wait 1500
-shot t14-ownuv
-measure diff t14-ownuv 0 170 1030 720
-
-section t15-uvconst
-do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 15); 'probe 15'
-wait 1500
-shot t15-uvconst
-measure diff t15-uvconst 0 170 1030 720
-
-section t16-ownclone
-do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 16); 'probe 16'
-wait 1500
-shot t16-ownclone
-measure diff t16-ownclone 0 170 1030 720
-
-section t17-line700
-do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 17); 'probe 17'
-wait 1500
-shot t17-line700
-measure diff t17-line700 0 170 1030 720
-
-section t18-b121
-do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 18); 'probe 18'
-wait 1500
-shot t18-b121
-measure diff t18-b121 0 170 1030 720
-
-section t19-b126
-do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 19); 'probe 19'
-wait 1500
-shot t19-b126
-measure diff t19-b126 0 170 1030 720
-
-section t20-ownblend
-do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 20); 'probe 20'
-wait 1500
-shot t20-ownblend
-measure diff t20-ownblend 0 170 1030 720
+shot t14-init
+measure diff t14-init 0 170 1030 720
 
 section all
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 99); 'probe 99'
@@ -162,10 +126,20 @@ section log-molang
 absent clientlog (?i)molang
 section log-variable
 absent clientlog (?i)variable
+section log-property
+absent clientlog (?i)property
+section log-paperdoll
+absent clientlog (?i)paper.?doll
+section log-ours
+absent clientlog (?i)gprobe
+section log-unknown
+absent clientlog (?i)unknown|not found|doesn.?t exist|undefined|invalid
 section log-geometry
 absent clientlog (?i)geometr|\bbones?\b
 section log-render
 absent clientlog (?i)render.?controller|part_visibility|uv_anim
+section log-material
+absent clientlog (?i)material|shader|define
 section log-animation
 absent clientlog (?i)animation
 section log-warn

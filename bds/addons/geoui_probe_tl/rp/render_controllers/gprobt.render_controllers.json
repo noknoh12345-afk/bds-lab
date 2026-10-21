@@ -38,7 +38,65 @@
         "g": 0,
         "b": 0,
         "a": 0
-      }
+      },
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "fader": false
+        }
+      ]
+    },
+    "controller.render.gprobt_probe_fader": {
+      "geometry": "Geometry.gprobt_probe",
+      "materials": [
+        {
+          "*": "material.gprobt_cutout"
+        },
+        {
+          "fader": "material.gprobt_fade"
+        }
+      ],
+      "textures": [
+        "Texture.gprobt_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.gprobt_a_fader"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "fader": "v.gprobt_a_fader > 0.004"
+        }
+      ]
     }
   }
 }

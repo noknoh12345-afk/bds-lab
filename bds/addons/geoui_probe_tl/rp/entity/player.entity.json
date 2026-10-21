@@ -8,7 +8,8 @@
         "cape": "entity_alphatest",
         "animated": "player_animated",
         "spectator": "player_spectator",
-        "gprobt_cutout": "gprobt_cutout"
+        "gprobt_cutout": "gprobt_cutout",
+        "gprobt_fade": "gprobt_fade"
       },
       "textures": {
         "default": "textures/entity/steve",
@@ -26,7 +27,9 @@
           "variable.is_holding_right = 0.0;",
           "variable.is_blinking = 0.0;",
           "variable.last_blink_time = 0.0;",
-          "variable.hand_bob = 0.0;"
+          "variable.hand_bob = 0.0;",
+          "v.gprobt_seq = 0;",
+          "v.gprobt_a_fader = 1;"
         ],
         "pre_animation": [
           "variable.helmet_layer_visible = !query.has_head_gear;",
@@ -48,10 +51,10 @@
           "v.geoui_alpha = variable.is_paperdoll ? 1.0 : q.property('gprobt:alpha')/100.0;",
           "v.geoui_cx = variable.is_paperdoll ? 0.0 : q.property('gprobt:cx')/10000.0*170.681;",
           "v.geoui_cy = variable.is_paperdoll ? 0.0 : q.property('gprobt:cy')/10000.0*170.681;",
-          "v.gprobt_seq = q.property('gprobt:seq');",
-          "v.gprobt_t0 = (q.property('gprobt:seq_gen') != (v.gprobt_gen ?? -1)) ? q.life_time : (v.gprobt_t0 ?? q.life_time);",
-          "v.gprobt_gen = q.property('gprobt:seq_gen');",
-          "v.gprobt_raw = q.property('gprobt:seq_pause') ? q.property('gprobt:seq_from') / 1000 : q.life_time - v.gprobt_t0 + q.property('gprobt:seq_from') / 1000;",
+          "v.gprobt_seq = (variable.is_paperdoll ? 0 : q.property('gprobt:seq'));",
+          "v.gprobt_t0 = ((variable.is_paperdoll ? 0 : q.property('gprobt:seq_gen')) != (v.gprobt_gen ?? -1)) ? q.life_time : (v.gprobt_t0 ?? q.life_time);",
+          "v.gprobt_gen = (variable.is_paperdoll ? 0 : q.property('gprobt:seq_gen'));",
+          "v.gprobt_raw = (variable.is_paperdoll ? 0 : q.property('gprobt:seq_pause')) ? (variable.is_paperdoll ? 0 : q.property('gprobt:seq_from')) / 1000 : q.life_time - v.gprobt_t0 + (variable.is_paperdoll ? 0 : q.property('gprobt:seq_from')) / 1000;",
           "v.gprobt_st = v.gprobt_raw;",
           "v.gprobt_1_0_c = v.gprobt_seq == 1 ? (1 ? ((v.gprobt_st >= 0 + 0 - 0.000001 && v.gprobt_st < 0 + 20) ? 0 : -1) : -1) : 0;",
           "v.gprobt_1_0_tc = v.gprobt_seq == 1 ? (math.max(0, v.gprobt_st - (v.gprobt_1_0_c == 0 ? 0 + 0 : 0))) : 0;",
@@ -61,6 +64,14 @@
           "v.gprobt_1_0_sy = v.gprobt_seq == 1 ? ((v.gprobt_1_0_c == 0 ? 1 : 0)) : 0;",
           "v.gprobt_1_0_r = v.gprobt_seq == 1 ? ((v.gprobt_1_0_c == 0 ? 0 : 0)) : 0;",
           "v.gprobt_1_0_o = v.gprobt_seq == 1 ? ((v.gprobt_1_0_c == 0 ? math.clamp(1, 0, 1) : 0)) : 0;",
+          "v.gprobt_1_1_c = v.gprobt_seq == 1 ? (1 ? ((v.gprobt_st >= 0 + 0 - 0.000001 && v.gprobt_st < 0 + 20) ? 0 : -1) : -1) : 0;",
+          "v.gprobt_1_1_tc = v.gprobt_seq == 1 ? (math.max(0, v.gprobt_st - (v.gprobt_1_1_c == 0 ? 0 + 0 : 0))) : 0;",
+          "v.gprobt_1_1_x = v.gprobt_seq == 1 ? ((v.gprobt_1_1_c == 0 ? 0 : 0)) : 0;",
+          "v.gprobt_1_1_y = v.gprobt_seq == 1 ? ((v.gprobt_1_1_c == 0 ? 0 : 0)) : 0;",
+          "v.gprobt_1_1_sx = v.gprobt_seq == 1 ? ((v.gprobt_1_1_c == 0 ? 1 : 0)) : 0;",
+          "v.gprobt_1_1_sy = v.gprobt_seq == 1 ? ((v.gprobt_1_1_c == 0 ? 1 : 0)) : 0;",
+          "v.gprobt_1_1_r = v.gprobt_seq == 1 ? ((v.gprobt_1_1_c == 0 ? 0 : 0)) : 0;",
+          "v.gprobt_1_1_o = v.gprobt_seq == 1 ? ((v.gprobt_1_1_c == 0 ? math.clamp((v.gprobt_1_1_tc < 0 ? 0 : (v.gprobt_1_1_tc < 4 ? 0 + (1 - 0) * ((v.gprobt_1_1_tc - 0) / 4) : 1)), 0, 1) : 0)) : 0;",
           "v.gprobt_1_t0s0_i = v.gprobt_seq == 1 ? (v.gprobt_st < 1.5 - 0.000001 ? -1 : (v.gprobt_st < 2.5 ? 0 : (v.gprobt_st < 3.5 - 0.000001 ? -1 : (v.gprobt_st < 4.5 ? 1 : (v.gprobt_st < 5.5 - 0.000001 ? -1 : (v.gprobt_st < 6.5 ? 2 : -1)))))) : -1;",
           "v.gprobt_1_t0s0_h = (v.gprobt_1_t0s0_i == 0 ? 2 : (v.gprobt_1_t0s0_i == 1 ? 4 : (v.gprobt_1_t0s0_i == 2 ? 6 : 0)));",
           "v.gprobt_1_t0s0_px = (v.gprobt_1_t0s0_i == 0 ? -125 : (v.gprobt_1_t0s0_i == 1 ? -90 : (v.gprobt_1_t0s0_i == 2 ? -55 : 0)));",
@@ -84,7 +95,8 @@
           "v.gprobt_1_t0s1_0_sx = v.gprobt_seq == 1 ? ((v.gprobt_1_t0s1_0_c == 0 ? 1 : 0)) : 0;",
           "v.gprobt_1_t0s1_0_sy = v.gprobt_seq == 1 ? ((v.gprobt_1_t0s1_0_c == 0 ? 1 : 0)) : 0;",
           "v.gprobt_1_t0s1_0_r = v.gprobt_seq == 1 ? ((v.gprobt_1_t0s1_0_c == 0 ? 0 : 0)) : 0;",
-          "v.gprobt_1_t0s1_0_o = v.gprobt_seq == 1 ? ((v.gprobt_1_t0s1_0_c == 0 ? math.clamp(1, 0, 1) : 0)) : 0;"
+          "v.gprobt_1_t0s1_0_o = v.gprobt_seq == 1 ? ((v.gprobt_1_t0s1_0_c == 0 ? math.clamp(1, 0, 1) : 0)) : 0;",
+          "v.gprobt_a_fader = (v.gprobt_seq == 1 ? v.gprobt_1_1_o : 1);"
         ],
         "animate": [
           {
@@ -203,6 +215,9 @@
         },
         {
           "controller.render.player.map": "variable.map_face_icon"
+        },
+        {
+          "controller.render.gprobt_probe_fader": "q.is_in_ui && !variable.is_paperdoll"
         }
       ],
       "enable_attachables": true

@@ -220,7 +220,9 @@
     const subtree = (name) => { const out = [name]; for (let grew = true; grew;) { grew = false; for (const b of bones) if (b.parent && out.includes(b.parent) && !out.includes(b.name)) { out.push(b.name); grew = true; } } return out; };
     const budget = K.budget(doc, { propertyLimit: num(ctx.propertyLimit, 32), bakedMax: num(ctx.bakedMax, 64), ns });
     warnings.push(...budget.warnings);
-    const N = K.names(ns), P = (s) => `q.property('${s}')`;
+    // (the pause screen's paper doll is a player the game builds for the picture: it has no properties, and reading one there
+    //  is a Molang error that leaves the rest of that doll's pre_animation undone — GeoUI Builder's own lines guard the same way)
+    const N = K.names(ns), P = (s) => `(variable.is_paperdoll ? 0 : q.property('${s}'))`;
     // ---- time
     // (every variable read before this frame sets it goes through ??: the game's pre_animation stops at a line that reads a
     //  variable never set — every line after it is left undone, every frame (bds-lab's probe, geoui_probe, 2026-10-21))
@@ -373,6 +375,11 @@
         }
       }
       dsc.scripts.pre_animation.push(...pre, ...digitLines);
+      // (what is read outside the pre_animation — the animate conditions, the render controllers — has a value from the
+      //  entity's first moment: initialize runs once, before anything else reads them)
+      const init = [`${V('seq')} = 0;`];
+      for (const [bone, d] of drives) { if (d.o.length) init.push(`${RCV(bone, 'a')} = 1;`); if (d.fr.length) init.push(`${RCV(bone, 'fr')} = 0;`); }
+      dsc.scripts.initialize = [...(dsc.scripts.initialize || []), ...init];
       dsc.animations = dsc.animations || {};
       const animate = [];
       doc.sequences.forEach((_, si) => { dsc.animations[`${ns}_seq_${si + 1}`] = `animation.${ns}.seq_${si + 1}`; animate.push({ [`${ns}_seq_${si + 1}`]: `q.is_in_ui && ${V('seq')} == ${si + 1}` }); });
@@ -387,19 +394,34 @@
       // ---- render controllers: an element with its own opacity or frame drawn by its own controller (its bones only), the
       // shared controllers drawing everything else
       const rcFile = `${rpDir}/render_controllers/${ns}.render_controllers.json`, rc = files[rcFile] ? parse(files[rcFile]) : null;
-      const own = [...drives].filter(([, d]) => d.o.length || d.fr.length).map(([bone]) => bone);
+      // (the element's front: the nearest face to the camera — GeoUI's layers go towards it in −z)
+      const frontOf = (name) => { const b = bones.find((x) => x.name === name); const zs = b ? (b.cubes || []).map((c) => num(c.origin && c.origin[2])) : []; return zs.length ? Math.min(...zs) : 0; };
+      const protoOf = (bone) => (clones.has(bone) ? clones.get(bone).of : bone);
+      // (drawn back to front: a see-through element over another is blended over what is already drawn behind it)
+      const own = [...drives].filter(([, d]) => d.o.length || d.fr.length).map(([bone]) => bone).sort((a, b) => frontOf(protoOf(b)) - frontOf(protoOf(a)));
+      const fades = new Set();
       if (rc && own.length) {
         const base = Object.entries(rc.render_controllers), addList = [];
         const treeOf = (bone) => { const c = clones.get(bone); return c ? subtree(c.of).map((x) => `${x}_${c.tag}${c.k}`) : subtree(bone); };
         for (const [id, r] of base) {
           r.part_visibility = [{ '*': true }, ...own.flatMap((b) => treeOf(b).map((x) => ({ [x]: false })))];
           for (const bone of own) {
-            const el = (design.elements || {})[clones.has(bone) ? clones.get(bone).of : bone] || {}, d = drives.get(bone), id2 = `${id}_${clean(bone)}`;
+            const el = (design.elements || {})[protoOf(bone)] || {}, d = drives.get(bone), id2 = `${id}_${clean(bone)}`;
             const copy = parse(r), c0 = clones.get(bone);
             copy.part_visibility = [{ '*': false }, ...treeOf(bone).map((x) => ({ [x]: true }))];
             // (a slot's copy drawn with its prototype's material: the shared list names the prototype's bones, not the copy's)
             if (c0) for (const x of subtree(c0.of)) { const m = (r.materials || []).find((e) => Object.keys(e)[0] === x); if (m) copy.materials.push({ [`${x}_${c0.tag}${c0.k}`]: m[x] }); }
-            if (d.o.length) copy.color = Object.assign({}, r.color, { a: `${r.color && r.color.a !== undefined ? r.color.a : 1} * ${RCV(bone, 'a')}` });
+            if (d.o.length) {
+              // (opacity: the game takes a render controller's colour alpha only through a material with the colour mask —
+              //  a plain blend draws the same at alpha 0 (bds-lab's probe, geoui_probe, 2026-10-21). The element's parts are
+              //  drawn with the fade material (blend, or additive for an additive element, with the mask) while this
+              //  controller draws them, and not at all while fully transparent: no invisible plane in front of what is behind)
+              const fade = el.blend === 'add' ? `${ns}_addfade` : `${ns}_fade`;
+              fades.add(fade);
+              for (const x of treeOf(bone)) copy.materials.push({ [x]: `material.${fade}` });
+              copy.color = Object.assign({}, r.color, { a: `${r.color && r.color.a !== undefined ? r.color.a : 1} * ${RCV(bone, 'a')}` });
+              copy.part_visibility = [{ '*': false }, ...treeOf(bone).map((x) => ({ [x]: `${RCV(bone, 'a')} > 0.004` }))];
+            }
             if (d.fr.length) {
               const fb = el.frames;
               if (fb && fb.cols > 0 && fb.rows > 0) { const [du, dv] = stepOf(clones.has(bone) ? clones.get(bone).of : bone, fb); copy.uv_anim = { offset: [`math.mod(${RCV(bone, 'fr')}, ${fb.cols}) * ${n(du)}`, `math.floor(${RCV(bone, 'fr')} / ${fb.cols}) * ${n(dv)}`], scale: [1, 1] }; }
@@ -412,20 +434,28 @@
         dsc.render_controllers = [...dsc.render_controllers, ...addList];
         files[rcFile] = J(rc);
       }
-      // ---- sounds: an audio track's clips start their sound (the sequence's animation's own time: 要実測 after a seek)
+      // ---- the fade materials (GeoUI Builder's base material with the colour mask: the controller's colour alpha counts)
+      const matFile = `${rpDir}/materials/entity.material`;
+      if (fades.size && files[matFile]) {
+        const mf = parse(files[matFile]), FADE = {
+          [`${ns}_fade`]: { '+defines': ['USE_UV_ANIM', 'USE_COLOR_MASK'], '+states': ['Blending'], blendSrc: 'SourceAlpha', blendDst: 'OneMinusSrcAlpha' },
+          [`${ns}_addfade`]: { '+defines': ['USE_UV_ANIM', 'USE_COLOR_MASK'], '+states': ['Blending', 'DisableDepthWrite'], blendSrc: 'SourceAlpha', blendDst: 'One' },
+        };
+        for (const f of fades) { mf.materials[`${f}:${ns}_base`] = FADE[f]; dsc.materials = Object.assign(dsc.materials || {}, { [f]: f }); }
+        files[matFile] = J(mf);
+      } else if (fades.size) warnings.push('マテリアルのファイルがありません: 不透明度（opacity）はゲームの中で効きません');
+      // ---- sounds: their definitions and files. The behaviour pack's script plays an audio clip when the sequence's time
+      //  reaches it and stops it at a pause, a seek or a stop (runtime.js: each clip's own volume and pitch) — a sequence's
+      //  animation runs on a clock of its own that neither a seek nor a pause moves, and it can neither stop a sound nor start
+      //  one part-way
       const sounds = (ctx.sounds || []), sdefs = [];
-      doc.sequences.forEach((seq, si) => {
-        const fx = {};
+      doc.sequences.forEach((seq) => {
         for (const tr of seq.tracks) if (tr.kind === 'audio' && !tr.muted) for (const c of tr.clips) if (c.sound) {
-          const short = `${ns}_${clean(c.sound)}`;
-          fx[n(c.start)] = { effect: short };
-          dsc.sound_effects = Object.assign(dsc.sound_effects || {}, { [short]: `${ns}.${clean(c.sound)}` });
-          if (!sdefs.some((s) => s.id === clean(c.sound))) { const src = sounds.find((s) => clean(s.id) === clean(c.sound)); sdefs.push({ id: clean(c.sound), ext: src && src.ext === 'wav' ? 'wav' : 'ogg', data: src && src.data, volume: c.volume, pitch: c.pitch }); }
+          if (!sdefs.some((s) => s.id === clean(c.sound))) { const src = sounds.find((s) => clean(s.id) === clean(c.sound)); sdefs.push({ id: clean(c.sound), ext: src && src.ext === 'wav' ? 'wav' : 'ogg', data: src && src.data }); }
+          if (c.offset > 1e-6) warnings.push(`音のクリップ（${c.id}）は頭を ${n(c.offset)} 秒切ってあります: ゲームでは音の頭から鳴ります`);
         }
-        if (Object.keys(fx).length) af.animations[`animation.${ns}.seq_${si + 1}`].sound_effects = fx;
       });
       if (sdefs.length) {
-        files[animFile] = J(af);
         const Me = T.media, sd = Me ? Me.soundDefinitions(sdefs, ns) : null;
         if (sd) {
           const sdf = `${rpDir}/sounds/sound_definitions.json`, prev = files[sdf] ? parse(files[sdf]) : { format_version: '1.20.20', sound_definitions: {} };

@@ -141,8 +141,13 @@ const events = [{ instance: 'o1', name: 'hit', t: 1 + 1 / 60 }, { instance: 'o2'
   ok(geo.includes('hitcircle_t0s0') && geo.includes('sliderball_t1s0') && af['animation.geoui.seq_1'].bones.hitcircle.scale === 0 && af['animation.geoui.seq_idle'].bones.hitcircle_t0s0.scale === 0 && ent.animations.geoui_seq_1 === 'animation.geoui.seq_1' && ent.scripts.animate.some((a) => a.geoui_seq_1),
     'the files: slot copies of the template\'s bones, the sequence\'s animation (the template\'s own elements hidden), idle hides the copies, the client entity plays it');
   const own2 = Object.entries(rc).filter(([id]) => /_hitcircle_t0s0$/.test(id));
-  ok(own2.length === 1 && JSON.stringify(own2[0][1].part_visibility) === '[{"*":false},{"hitcircle_t0s0":true}]' && /v\.geoui_a_hitcircle_t0s0/.test(own2[0][1].color.a) && rc['controller.render.geoui_atlas'].part_visibility.some((p) => p.hitcircle_t0s0 === false),
-    'opacity per element: its own render controller (only its bones), the shared one without them');
+  // (its own controller draws only its bones, and not at all while fully transparent; through the fade material — the colour
+  //  mask: a plain blend ignores the controller's alpha in the game (geoui_probe, 2026-10-21) — declared by the entity)
+  const mat = JSON.parse(r.out.files['geoui_RP/materials/entity.material']).materials['geoui_fade:geoui_base'];
+  ok(own2.length === 1 && JSON.stringify(own2[0][1].part_visibility) === '[{"*":false},{"hitcircle_t0s0":"v.geoui_a_hitcircle_t0s0 > 0.004"}]' && /v\.geoui_a_hitcircle_t0s0/.test(own2[0][1].color.a)
+    && own2[0][1].materials.at(-1).hitcircle_t0s0 === 'material.geoui_fade' && mat && mat['+defines'].includes('USE_COLOR_MASK') && mat['+states'].includes('Blending') && ent.materials.geoui_fade === 'geoui_fade'
+    && rc['controller.render.geoui_atlas'].part_visibility.some((p) => p.hitcircle_t0s0 === false) && ent.scripts.initialize.includes('v.geoui_a_hitcircle_t0s0 = 1;') && ent.scripts.initialize.includes('v.geoui_seq = 0;'),
+    'opacity per element: its own render controller (only its bones, none while fully transparent, the fade material with the colour mask), the shared one without them, starting values in initialize');
   ok(r.out.stats.longest < 8000 && r.pre.every((l) => !G.molangError(l.replace(/;$/, ''))), `every pre_animation line reads as Molang (the longest ${r.out.stats.longest} characters)`);
 }
 {

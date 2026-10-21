@@ -119,6 +119,7 @@ GeoUI Builder のタイムライン（bds/geoui/timeline）で、osu! のよう�
 - [ ] play で再生が始まる（seq・seq_gen・seq_from）
 - [ ] seek・pause・resume がプロパティに出る
 - [ ] stop で止まる
+- [ ] 入り直すと、再生中のシーケンスをその時刻から送り直す（世代は続きの番号）
 `));
 out.set('tests.txt', Buffer.from(`# geoui_rhythm（bds/geoui/timeline/demo.mjs が作る）: タイムラインの BP（scripts/timeline.js）が本物の BDS で命令どおりにプロパティを書くか。
 # 描画は app.txt（本物のアプリ）。= 完全一致 | ~ 正規表現 | ! 無い | !~ 無い正規表現 | '## 題' = 節
@@ -150,6 +151,20 @@ js const e = p('A'); JSON.stringify(['seq_pause','seq_gen'].map((k) => e.getProp
 = [false,3]
 
 ## stop で止まる
+scriptevent ${NS}:stop
+wait 200
+js p('A').getProperty('${NS}:seq')
+= 0
+
+## 入り直すと、再生中のシーケンスをその時刻から送り直す（世代は続きの番号）
+scriptevent ${NS}:play 1 3
+wait 1000
+@A leave
+wait 1500
+@A join
+wait 2000
+js const e = p('A'), f = e.getProperty('${NS}:seq_from'); JSON.stringify([e.getProperty('${NS}:seq'), e.getProperty('${NS}:seq_gen'), Math.min(1, Math.floor(f / 4000)), Math.floor(f / 20000)])
+= [1,5,1,0]
 scriptevent ${NS}:stop
 wait 200
 js p('A').getProperty('${NS}:seq')

@@ -31,6 +31,18 @@
             1
           ]
         },
+        "fader": {
+          "position": [
+            "v.gprobt_1_1_x",
+            "v.gprobt_1_1_y",
+            0
+          ],
+          "scale": [
+            "v.gprobt_1_1_sx",
+            "v.gprobt_1_1_sy",
+            1
+          ]
+        },
         "dot_t0s0": {
           "position": [
             "v.gprobt_1_t0s0_0_x",

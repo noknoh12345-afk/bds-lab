@@ -2,18 +2,24 @@
 // /scriptevent geoui:play <sequence number or id> [from seconds] · geoui:stop · geoui:pause · geoui:resume
 // geoui:seek <seconds> · geoui:offset <ms> (presses judged that much later: the lag of a device)
 // Presses: jump or sneak, or using an item. Score, combo, accuracy (x100) and health go to geoui:v0 … v3.
-// Markers with an event send /scriptevent geoui:marker <sequence>:<marker> <event>.
+// Markers with an event send /scriptevent geoui:marker <sequence>:<marker> <event>. Audio clips play when the time
+// reaches them and stop at a pause, a seek or a stop (a sound already past at a seek or a resume stays silent).
 import { world, system, ButtonState } from '@minecraft/server';
 
-const CFG = {"ns":"geoui","windows":{"great":44,"good":92,"ok":140},"margin":250,"missDrain":8,"hitGain":2,"values":{"score":"v0","combo":"v1","accuracy":"v2","health":"v3"},"sequences":[{"index":1,"id":"osu","duration":13640,"loop":"once","inOut":null,"markers":[[13000,"end","done"]],"templates":[{"tag":"t0s","mode":"baked","lead":900,"items":[[1000,0,0,1640,"o1"],[1500,1,0,2140,"o2"],[2000,2,0,2640,"o3"],[2500,3,0,3140,"o4"],[3000,0,0,3640,"o5"],[3500,1,0,4140,"o6"],[4000,2,0,4640,"o7"],[4500,3,0,5140,"o8"],[5000,0,0,5640,"o9"],[5500,1,0,6140,"o10"],[6000,2,0,6640,"o11"],[6500,3,0,7140,"o12"],[7000,0,0,7640,"o13"],[12000,0,0,12640,"o16"],[12250,1,0,12890,"o17"],[12500,2,0,13140,"o18"]]},{"tag":"t1s","mode":"baked","lead":900,"items":[[7500,0,0,10000,"o14"]]},{"tag":"t2s","mode":"baked","lead":300,"items":[[9500,0,0,11800,"o15"]]}],"hits":[[1000,"t0s",0,"o1","osu-circle/o1"],[1500,"t0s",1,"o2","osu-circle/o2"],[2000,"t0s",2,"o3","osu-circle/o3"],[2500,"t0s",3,"o4","osu-circle/o4"],[3000,"t0s",0,"o5","osu-circle/o5"],[3500,"t0s",1,"o6","osu-circle/o6"],[4000,"t0s",2,"o7","osu-circle/o7"],[4500,"t0s",3,"o8","osu-circle/o8"],[5000,"t0s",0,"o9","osu-circle/o9"],[5500,"t0s",1,"o10","osu-circle/o10"],[6000,"t0s",2,"o11","osu-circle/o11"],[6500,"t0s",3,"o12","osu-circle/o12"],[7000,"t0s",0,"o13","osu-circle/o13"],[7500,"t1s",0,"o14","osu-slider/o14"],[12000,"t0s",0,"o16","osu-circle/o16"],[12250,"t0s",1,"o17","osu-circle/o17"],[12500,"t0s",2,"o18","osu-circle/o18"]]}]};
+const CFG = {"ns":"geoui","windows":{"great":44,"good":92,"ok":140},"margin":250,"missDrain":8,"hitGain":2,"values":{"score":"v0","combo":"v1","accuracy":"v2","health":"v3"},"sequences":[{"index":1,"id":"osu","duration":13640,"loop":"once","inOut":null,"markers":[[13000,"end","done"]],"templates":[{"tag":"t0s","mode":"baked","lead":900,"items":[[1000,0,0,1640,"o1"],[1500,1,0,2140,"o2"],[2000,2,0,2640,"o3"],[2500,3,0,3140,"o4"],[3000,0,0,3640,"o5"],[3500,1,0,4140,"o6"],[4000,2,0,4640,"o7"],[4500,3,0,5140,"o8"],[5000,0,0,5640,"o9"],[5500,1,0,6140,"o10"],[6000,2,0,6640,"o11"],[6500,3,0,7140,"o12"],[7000,0,0,7640,"o13"],[12000,0,0,12640,"o16"],[12250,1,0,12890,"o17"],[12500,2,0,13140,"o18"]]},{"tag":"t1s","mode":"baked","lead":900,"items":[[7500,0,0,10000,"o14"]]},{"tag":"t2s","mode":"baked","lead":300,"items":[[9500,0,0,11800,"o15"]]}],"hits":[[1000,"t0s",0,"o1","osu-circle/o1"],[1500,"t0s",1,"o2","osu-circle/o2"],[2000,"t0s",2,"o3","osu-circle/o3"],[2500,"t0s",3,"o4","osu-circle/o4"],[3000,"t0s",0,"o5","osu-circle/o5"],[3500,"t0s",1,"o6","osu-circle/o6"],[4000,"t0s",2,"o7","osu-circle/o7"],[4500,"t0s",3,"o8","osu-circle/o8"],[5000,"t0s",0,"o9","osu-circle/o9"],[5500,"t0s",1,"o10","osu-circle/o10"],[6000,"t0s",2,"o11","osu-circle/o11"],[6500,"t0s",3,"o12","osu-circle/o12"],[7000,"t0s",0,"o13","osu-circle/o13"],[7500,"t1s",0,"o14","osu-slider/o14"],[12000,"t0s",0,"o16","osu-circle/o16"],[12250,"t0s",1,"o17","osu-circle/o17"],[12500,"t0s",2,"o18","osu-circle/o18"]],"sounds":[[0,"geoui.click",1,1]]}]};
 const createEngine = function createEngine(CFG, io) {
-    const P = (x) => `${CFG.ns}:${x}`, players = new Map(), HIT = 1, MISS = 2;
+    const P = (x) => `${CFG.ns}:${x}`, players = new Map(), HIT = 1, MISS = 2, LATE = 250;
     const W = CFG.windows, POINTS = { great: 300, good: 100, ok: 50 };
+    const get = (p, name) => { try { return io.getProp ? io.getProp(p, name) : undefined; } catch (e) { return undefined; } };
     function stateOf(p) {
       let s = players.get(p.id);
-      if (!s) { s = { seq: 0, gen: 0, from: 0, start: 0, paused: false, offset: 0, slots: new Map(), events: new Map(), judged: new Set(), marks: new Set(), score: 0, combo: 0, best: 0, total: 0, earned: 0, health: 100 }; players.set(p.id, s); }
+      // (the generation goes on from the one the player has: a client that saw it already would not count again from a
+      //  play that only set it to the same number — after a server restart the script begins at 0, the world keeps it)
+      if (!s) { const g0 = Number(get(p, P('seq_gen'))); s = { seq: 0, gen: Number.isFinite(g0) ? g0 : 0, from: 0, start: 0, paused: false, offset: 0, slots: new Map(), events: new Map(), judged: new Set(), marks: new Set(), played: new Set(), ringing: new Set(), lastT: -1, score: 0, combo: 0, best: 0, total: 0, earned: 0, health: 100 }; players.set(p.id, s); }
       return s;
     }
+    /** every sound this player was sent stops (a pause, a seek, a stop: a sound in the game cannot be held or moved) */
+    function silence(p, s) { if (io.stopSound) for (const id of s.ringing) { try { io.stopSound(p, id); } catch (e) { /* (gone) */ } } s.ringing.clear(); }
     const seqOf = (s) => CFG.sequences.find((q) => q.index === s.seq) || null;
     const nowMs = (s) => (s.paused ? s.from : s.from + (io.tick() - s.start) * 50);
     // (where the sequence is, as the client's Molang has it: loop and pingpong over its range, hold on its end)
@@ -35,9 +41,10 @@ const createEngine = function createEngine(CFG, io) {
     function restart(p, s, fromMs) {
       s.from = Math.max(0, Math.round(fromMs)); s.start = io.tick(); s.gen = (s.gen + 1) % 1000000;
       set(p, P('seq_from'), s.from); set(p, P('seq_pause'), s.paused); set(p, P('seq_gen'), s.gen);
-      clearSlots(p, s);
+      clearSlots(p, s); silence(p, s);
       const q = seqOf(s);
-      s.judged = new Set(); s.marks = new Set();
+      // (a sound starts only within LATE of its time: one already past at a seek or a resume stays silent)
+      s.judged = new Set(); s.marks = new Set(); s.played = new Set(); s.lastT = -1;
       if (q) {
         for (const h of q.hits) if (h[0] + W.ok < s.from) s.judged.add(h[4]);
         for (const m of q.markers) if (m[0] < s.from) s.marks.add(m[1]);
@@ -60,9 +67,9 @@ const createEngine = function createEngine(CFG, io) {
           set(p, P('seq'), q.index); restart(p, s, Number(args[1] || 0) * 1000); values(p, s);
           return '';
         }
-        if (verb === 'stop') { s.seq = 0; set(p, P('seq'), 0); clearSlots(p, s); return ''; }
+        if (verb === 'stop') { s.seq = 0; set(p, P('seq'), 0); clearSlots(p, s); silence(p, s); return ''; }
         if (!s.seq) return `${CFG.ns}: nothing is playing`;
-        if (verb === 'pause') { if (!s.paused) { s.from = nowMs(s); s.paused = true; set(p, P('seq_from'), Math.round(s.from)); set(p, P('seq_pause'), true); } return ''; }
+        if (verb === 'pause') { if (!s.paused) { s.from = nowMs(s); s.paused = true; set(p, P('seq_from'), Math.round(s.from)); set(p, P('seq_pause'), true); silence(p, s); } return ''; }
         if (verb === 'resume') { if (s.paused) { s.paused = false; restart(p, s, s.from); } return ''; }
         if (verb === 'seek') { restart(p, s, Number(args[0] || 0) * 1000); return ''; }
         if (verb === 'offset') { s.offset = Number(args[0] || 0) || 0; return ''; }
@@ -84,6 +91,15 @@ const createEngine = function createEngine(CFG, io) {
             for (const key of [...s.slots.keys()]) if (key.startsWith(tp.tag) && !want.has(key) && q.templates.every((o) => o === tp || !key.startsWith(o.tag))) { s.slots.delete(key); set(p, P(`${key}t`), -1); }
           }
           if (!s.paused) {
+            // (the sequence's audio clips, each once a round: a loop's time going back starts the round again)
+            if (t < s.lastT - 1) s.played = new Set();
+            s.lastT = t;
+            (q.sounds || []).forEach((c, i) => {
+              if (s.played.has(i) || t < c[0] || t >= c[0] + LATE) return;
+              s.played.add(i);
+              if (!io.sound) return;
+              try { io.sound(p, c[1], c[2], c[3]); s.ringing.add(c[1]); } catch (e) { /* (a sound the pack does not have: silent) */ }
+            });
             for (const h of q.hits) if (!s.judged.has(h[4]) && t > h[0] + W.ok) {
               s.judged.add(h[4]); send(p, s, h[1], h[2], MISS);
               s.combo = 0; s.total += 1; s.health = Math.max(0, s.health - CFG.missDrain); values(p, s);
@@ -107,6 +123,15 @@ const createEngine = function createEngine(CFG, io) {
         s.health = Math.min(100, s.health + CFG.hitGain); values(p, s);
         return { judge: j, dt: t - best[0], instance: best[3] };
       },
+      /** a player (back) in the world: a client that joins again counts from its own first moment, so the sequence it was
+       *  playing is sent again from where it is now; with nothing playing for it, a sequence its properties still name (a
+       *  world saved while one played) is stopped */
+      joined(p) {
+        const s = players.get(p.id);
+        if (s && s.seq) { restart(p, s, nowMs(s)); set(p, P('seq'), s.seq); values(p, s); return; }
+        const st = stateOf(p);
+        if (Number(get(p, P('seq'))) !== 0) { st.seq = 0; set(p, P('seq'), 0); }
+      },
       state: (p) => players.get(p.id),
     };
     return api;
@@ -114,9 +139,14 @@ const createEngine = function createEngine(CFG, io) {
 const engine = createEngine(CFG, {
   tick: () => system.currentTick,
   setProp: (p, name, value) => { if (p.isValid) p.setProperty(name, value); },
+  getProp: (p, name) => (p.isValid ? p.getProperty(name) : undefined),
   players: () => world.getAllPlayers(),
   event: (p, id, message) => system.sendScriptEvent(id, message),
+  sound: (p, id, volume, pitch) => { if (p.isValid) p.playSound(id, { volume, pitch }); },
+  stopSound: (p, id) => { if (p.isValid) p.runCommand(`stopsound @s ${id}`); },
 });
+// (a player who joins again counts from their own first moment: what they were playing is sent again from where it is)
+world.afterEvents.playerSpawn.subscribe((e) => { if (e.initialSpawn) system.run(() => { if (e.player.isValid) engine.joined(e.player); }); });
 system.afterEvents.scriptEventReceive.subscribe((e) => {
   const verb = e.id.slice(CFG.ns.length + 1);
   if (!['play', 'stop', 'pause', 'resume', 'seek', 'offset'].includes(verb)) return;

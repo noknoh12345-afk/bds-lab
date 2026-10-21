@@ -7,6 +7,9 @@
 //   diff  — where the picture differs from the newest `shot world` (the baseline `changed` uses): the share that changed and
 //           the boxes (px) of the changed parts, biggest first — where a UI was drawn, in numbers. Optionally only inside a box
 //           of the game's screen (px): what else moves on the screen — a first-person hand, the chat — left out
+//   color — the mean colour (0…255) inside a box of the game's screen, and the newest `shot world`'s in the same box when
+//           there is one, with how even it is (the spread of the brightness): how see-through something drawn there is, in
+//           numbers ((mean − world) / (opaque − world))
 import { measureCode, cleanCode } from './failcodes.mjs';
 
 const DIFF_PARTS = 8, DIFF_LEVEL = 48;
@@ -50,6 +53,31 @@ export const KINDS = {
       const box = (p) => (Number.isFinite(v[`${p}x0`]) ? `(${v[`${p}x0`]}, ${v[`${p}y0`]})–(${v[`${p}x1`]}, ${v[`${p}y1`]})` : '—');
       const parts = Array.from({ length: DIFF_PARTS }, (_, k) => `b${k + 1}`).filter((p) => Number.isFinite(v[`${p}n`])).map((p) => `${box(p)} ${v[`${p}n`]} px`);
       return `違い ${Number.isFinite(v.share) ? (v.share * 100).toFixed(3) : '?'}%・${v.parts ?? 0} か所・全体 ${box('')}${parts.length ? `・大きい順 ${parts.join(' / ')}` : ''}・${v.width ?? '?'}x${v.height ?? '?'}`;
+    },
+  },
+  color: {
+    fields: ['width', 'height', 'areaX', 'areaY', 'rx0', 'ry0', 'rx1', 'ry1', 'n', 'r', 'g', 'b', 'spread', 'br', 'bg', 'bb', 'bspread'],
+    async run(img, { baseline, region } = {}) {
+      if (!region) return { ok: false, why: '測る枠が要ります（measure color <shot の名前> <x0> <y0> <x1> <y1>）' };
+      const W = img.width, H = img.height;
+      if (baseline && (baseline.width !== W || baseline.height !== H)) return { ok: false, why: `大きさが違います（基準 ${baseline.width}x${baseline.height}、この画面 ${W}x${H}）` };
+      const R = { x0: Math.max(0, region.x0), y0: Math.max(0, region.y0), x1: Math.min(W, region.x1), y1: Math.min(H, region.y1) };
+      if (R.x1 <= R.x0 || R.y1 <= R.y0) return { ok: false, why: `測る枠が画面の外です（${W}x${H}）` };
+      const mean = (d) => {
+        let r = 0, g = 0, b = 0, l = 0, l2 = 0, n = 0;
+        for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) {
+          const o = (y * W + x) * 4, lum = 0.2126 * d[o] + 0.7152 * d[o + 1] + 0.0722 * d[o + 2];
+          r += d[o]; g += d[o + 1]; b += d[o + 2]; l += lum; l2 += lum * lum; n++;
+        }
+        return { n, r: r / n, g: g / n, b: b / n, spread: Math.sqrt(Math.max(0, l2 / n - (l / n) * (l / n))) };
+      };
+      const m = mean(img.data), v = { width: W, height: H, rx0: R.x0, ry0: R.y0, rx1: R.x1, ry1: R.y1, n: m.n, r: m.r, g: m.g, b: m.b, spread: m.spread };
+      if (baseline) { const w = mean(baseline.data); Object.assign(v, { br: w.r, bg: w.g, bb: w.b, bspread: w.spread }); }
+      return { ok: true, values: v };
+    },
+    line(v) {
+      const c = (r, g, b) => (Number.isFinite(r) ? `(${r.toFixed(1)}, ${g.toFixed(1)}, ${b.toFixed(1)})` : '—');
+      return `平均の色 ${c(v.r, v.g, v.b)}・むら ${Number.isFinite(v.spread) ? v.spread.toFixed(1) : '—'}・ワールド ${c(v.br, v.bg, v.bb)}・枠 (${v.rx0 ?? '?'}, ${v.ry0 ?? '?'})–(${v.rx1 ?? '?'}, ${v.ry1 ?? '?'}) ${v.n ?? '?'} px・${v.width ?? '?'}x${v.height ?? '?'}`;
     },
   },
   geoui: {

@@ -97,6 +97,24 @@
       ],
       "blendSrc": "SourceAlpha",
       "blendDst": "One"
+    },
+    "gprobe_fade:gprobe_base": {
+      "+defines": [
+        "USE_UV_ANIM",
+        "USE_COLOR_MASK"
+      ],
+      "+states": [
+        "Blending"
+      ],
+      "blendSrc": "SourceAlpha",
+      "blendDst": "OneMinusSrcAlpha"
+    },
+    "gprobe_cutfade:gprobe_base": {
+      "+defines": [
+        "USE_UV_ANIM",
+        "ALPHA_TEST",
+        "USE_COLOR_MASK"
+      ]
     }
   }
 }

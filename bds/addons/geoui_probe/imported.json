@@ -10,5 +10,5 @@
     0,
     0
   ],
-  "request": "GeoUI の作りの確かめ（pre_animation が止まる所・時計・自分の render controller）（ラボの確かめ。絵はラボの物）"
+  "request": "GeoUI の作りの確かめ 3 回目（不透明度・回転の向き・アニメーションの重ね方・initialize）（ラボの確かめ。絵はラボの物）"
 }

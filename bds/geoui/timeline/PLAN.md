@@ -176,3 +176,21 @@
   格子と 1 拍の距離の輪に吸い付く。こちらの物の上でなければポインタはプレビューへ）。model に batch の intent（全部か何もしないか）、取り込みで
   実体の道（instance.path）も新しい id に。試験 `node tests/tl-editors-offline.mjs`（Node）と `bds/geoui/timeline/check-editors.mjs`（本物の Chromium）。
   要実測: サーバーの tick は 50 ms 刻み（判定の細かさ）・押してから届くまでの遅れ（offset で補正）・loop と流し込みの 2 周目。
+
+### 本物のアプリで確かめたこと（probe.mjs → bds/addons/geoui_probe*、app.yml で写して `node bds/geoui/timeline/probe.mjs read <summary.json>`）
+
+- 1 回目（2026-10-21、run 39601130957 ほか）: ボーンは #248 まで描かれる。自分の render controller（共有のジオメトリを part_visibility で分ける）は
+  31 個目も描かれる。アニメーションの中の q.anim_time は秒で進む。**pre_animation で一度も入れていない変数を `??` なしで読むと、その行から後が毎フレーム
+  全部されない**（コンテンツログに Molang の行）。compile.js の時計がそれをしていたので、geoui_rhythm の枠の複製は 1 つも出なかった → `??` で直した。
+- 2 回目（run 39605771908・39605779539）: 直した時計で後のカナリアが全部描かれ、わざと入れた未設定の読みの後だけ描かれない（止まる規則の確かめ）。
+  pre_animation の q.life_time は秒で進む（アニメーションの q.anim_time と同じ速さ）。uv_anim は定数でも変数でも効く（連番のコマ）。compile.js の
+  枠の複製（#140）・トラックの動き・実体の点は、止めた 4 秒・6 秒と再生中に正しい所へ出る。**render controller の color.a は GeoUI の blend の
+  マテリアルでは何も変えない**（0 でも描かれる。GeoUI 自身の `alpha` プロパティも同じ: geoui_bb の alpha 0 の画は消えていない）→ 不透明度は
+  色のマスク（USE_COLOR_MASK）を持つ fade のマテリアルで描く形に変えた（3 回目で確かめる）。止めた 2 秒が 2.64 秒だったのは、play の直後の pause が
+  一瞬遅れるため（3 回目は止めたまま seek で時刻を決める）。probe_tl のコンテンツログに「molang」「variable」の行: ポーズ画面などの人形
+  （paper doll）はプロパティを持たず、compile.js の q.property がそこで Molang のエラーになり後が止まる、と見て `variable.is_paperdoll ? 0 :` で守り、
+  外から読む変数（seq・不透明度・コマ）は initialize でも入れる（3 回目はログの行を細かい正規表現で分けて確かめる）。
+- 音: シーケンスのアニメーションは 1 秒で回る（loop）ので、そこに置いた sound_effects は毎秒鳴っていた → 音のクリップはビヘイビアパックの
+  スクリプトがシーケンスの時刻で鳴らし（Player.playSound・クリップの音量と高さ）、一時停止・シーク・停止で止める（/stopsound）。途中からは鳴らせない
+  （シークや再開の時に頭を過ぎた音は鳴らない）。プレイヤーが入り直したら、その時刻から送り直す（クライアントの q.life_time は入った時から）。
+  世代（seq_gen）はプレイヤーの持つ値から続ける（サーバーを立て直しても、同じ番号で「変わっていない」と見られない）。

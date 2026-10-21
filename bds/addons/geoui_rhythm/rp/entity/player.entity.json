@@ -9,7 +9,8 @@
         "animated": "player_animated",
         "spectator": "player_spectator",
         "geoui_cutout": "geoui_cutout",
-        "geoui_blend": "geoui_blend"
+        "geoui_blend": "geoui_blend",
+        "geoui_fade": "geoui_fade"
       },
       "textures": {
         "default": "textures/entity/steve",
@@ -27,7 +28,44 @@
           "variable.is_holding_right = 0.0;",
           "variable.is_blinking = 0.0;",
           "variable.last_blink_time = 0.0;",
-          "variable.hand_bob = 0.0;"
+          "variable.hand_bob = 0.0;",
+          "v.geoui_seq = 0;",
+          "v.geoui_a_hitcircle_t0s0 = 1;",
+          "v.geoui_fr_hitcircle_t0s0 = 0;",
+          "v.geoui_a_combonumber_t0s0 = 1;",
+          "v.geoui_a_approachcircle_t0s0 = 1;",
+          "v.geoui_fr_approachcircle_t0s0 = 0;",
+          "v.geoui_a_hitburst_t0s0 = 1;",
+          "v.geoui_a_hitmiss_t0s0 = 1;",
+          "v.geoui_a_hitcircle_t0s1 = 1;",
+          "v.geoui_fr_hitcircle_t0s1 = 0;",
+          "v.geoui_a_combonumber_t0s1 = 1;",
+          "v.geoui_a_approachcircle_t0s1 = 1;",
+          "v.geoui_fr_approachcircle_t0s1 = 0;",
+          "v.geoui_a_hitburst_t0s1 = 1;",
+          "v.geoui_a_hitmiss_t0s1 = 1;",
+          "v.geoui_a_hitcircle_t0s2 = 1;",
+          "v.geoui_fr_hitcircle_t0s2 = 0;",
+          "v.geoui_a_combonumber_t0s2 = 1;",
+          "v.geoui_a_approachcircle_t0s2 = 1;",
+          "v.geoui_fr_approachcircle_t0s2 = 0;",
+          "v.geoui_a_hitburst_t0s2 = 1;",
+          "v.geoui_a_hitmiss_t0s2 = 1;",
+          "v.geoui_a_hitcircle_t0s3 = 1;",
+          "v.geoui_fr_hitcircle_t0s3 = 0;",
+          "v.geoui_a_combonumber_t0s3 = 1;",
+          "v.geoui_a_approachcircle_t0s3 = 1;",
+          "v.geoui_fr_approachcircle_t0s3 = 0;",
+          "v.geoui_a_hitburst_t0s3 = 1;",
+          "v.geoui_a_hitmiss_t0s3 = 1;",
+          "v.geoui_a_hitcircle_t1s0 = 1;",
+          "v.geoui_fr_hitcircle_t1s0 = 0;",
+          "v.geoui_a_combonumber_t1s0 = 1;",
+          "v.geoui_a_approachcircle_t1s0 = 1;",
+          "v.geoui_fr_approachcircle_t1s0 = 0;",
+          "v.geoui_a_hitburst_t1s0 = 1;",
+          "v.geoui_a_hitmiss_t1s0 = 1;",
+          "v.geoui_a_spinner_t2s0 = 1;"
         ],
         "pre_animation": [
           "variable.helmet_layer_visible = !query.has_head_gear;",
@@ -60,10 +98,10 @@
           "v.geoui_combo_d0 = (math.abs(q.property('geoui:v1'))<100 ? 10 : math.mod(math.floor(math.abs(q.property('geoui:v1'))/100),10));",
           "v.geoui_combo_d1 = (math.abs(q.property('geoui:v1'))<10 ? 10 : math.mod(math.floor(math.abs(q.property('geoui:v1'))/10),10));",
           "v.geoui_combo_d2 = math.mod(math.floor(math.abs(q.property('geoui:v1'))/1),10);",
-          "v.geoui_seq = q.property('geoui:seq');",
-          "v.geoui_t0 = (q.property('geoui:seq_gen') != (v.geoui_gen ?? -1)) ? q.life_time : (v.geoui_t0 ?? q.life_time);",
-          "v.geoui_gen = q.property('geoui:seq_gen');",
-          "v.geoui_raw = q.property('geoui:seq_pause') ? q.property('geoui:seq_from') / 1000 : q.life_time - v.geoui_t0 + q.property('geoui:seq_from') / 1000;",
+          "v.geoui_seq = (variable.is_paperdoll ? 0 : q.property('geoui:seq'));",
+          "v.geoui_t0 = ((variable.is_paperdoll ? 0 : q.property('geoui:seq_gen')) != (v.geoui_gen ?? -1)) ? q.life_time : (v.geoui_t0 ?? q.life_time);",
+          "v.geoui_gen = (variable.is_paperdoll ? 0 : q.property('geoui:seq_gen'));",
+          "v.geoui_raw = (variable.is_paperdoll ? 0 : q.property('geoui:seq_pause')) ? (variable.is_paperdoll ? 0 : q.property('geoui:seq_from')) / 1000 : q.life_time - v.geoui_t0 + (variable.is_paperdoll ? 0 : q.property('geoui:seq_from')) / 1000;",
           "v.geoui_st = v.geoui_raw;",
           "v.geoui_1_t0s0_i = v.geoui_seq == 1 ? (v.geoui_st < 0.1 - 0.000001 ? -1 : (v.geoui_st < 1.64 ? 0 : (v.geoui_st < 2.1 - 0.000001 ? -1 : (v.geoui_st < 3.64 ? 1 : (v.geoui_st < 4.1 - 0.000001 ? -1 : (v.geoui_st < 5.64 ? 2 : (v.geoui_st < 6.1 - 0.000001 ? -1 : (v.geoui_st < 7.64 ? 3 : (v.geoui_st < 11.1 - 0.000001 ? -1 : (v.geoui_st < 12.64 ? 4 : -1)))))))))) : -1;",
           "v.geoui_1_t0s0_h = (v.geoui_1_t0s0_i == 0 ? 1 : (v.geoui_1_t0s0_i == 1 ? 3 : (v.geoui_1_t0s0_i == 2 ? 5 : (v.geoui_1_t0s0_i == 3 ? 7 : (v.geoui_1_t0s0_i == 4 ? 12 : 0)))));",
@@ -71,9 +109,9 @@
           "v.geoui_1_t0s0_py = (v.geoui_1_t0s0_i == 0 ? 7.5 : (v.geoui_1_t0s0_i == 1 ? 22.5 : (v.geoui_1_t0s0_i == 2 ? 22.5 : (v.geoui_1_t0s0_i == 3 ? -22.5 : (v.geoui_1_t0s0_i == 4 ? 0 : 0)))));",
           "v.geoui_1_t0s0_pn = (v.geoui_1_t0s0_i == 0 ? 1 : (v.geoui_1_t0s0_i == 1 ? 1 : (v.geoui_1_t0s0_i == 2 ? 1 : (v.geoui_1_t0s0_i == 3 ? 1 : (v.geoui_1_t0s0_i == 4 ? 1 : 0)))));",
           "v.geoui_1_t0s0_pc = (v.geoui_1_t0s0_i == 0 ? 0 : (v.geoui_1_t0s0_i == 1 ? 1 : (v.geoui_1_t0s0_i == 2 ? 2 : (v.geoui_1_t0s0_i == 3 ? 3 : (v.geoui_1_t0s0_i == 4 ? 2 : 0)))));",
-          "v.geoui_1_t0s0_et = (q.property('geoui:t0s0g') != (v.geoui_1_t0s0_eg ?? 0)) ? v.geoui_st : (v.geoui_1_t0s0_et ?? -1000);",
-          "v.geoui_1_t0s0_eg = q.property('geoui:t0s0g');",
-          "v.geoui_1_t0s0_er = (v.geoui_1_t0s0_et >= v.geoui_1_t0s0_h - 0.9 - 0.000001) ? q.property('geoui:t0s0r') : 0;",
+          "v.geoui_1_t0s0_et = ((variable.is_paperdoll ? 0 : q.property('geoui:t0s0g')) != (v.geoui_1_t0s0_eg ?? 0)) ? v.geoui_st : (v.geoui_1_t0s0_et ?? -1000);",
+          "v.geoui_1_t0s0_eg = (variable.is_paperdoll ? 0 : q.property('geoui:t0s0g'));",
+          "v.geoui_1_t0s0_er = (v.geoui_1_t0s0_et >= v.geoui_1_t0s0_h - 0.9 - 0.000001) ? (variable.is_paperdoll ? 0 : q.property('geoui:t0s0r')) : 0;",
           "v.geoui_1_t0s0_0_c = v.geoui_seq == 1 ? (v.geoui_1_t0s0_i >= 0 ? ((v.geoui_st >= v.geoui_1_t0s0_h + -0.9 - 0.000001 && v.geoui_st < ((v.geoui_1_t0s0_er == 1 && v.geoui_1_t0s0_et >= v.geoui_1_t0s0_h + -0.9 - 0.000001 && v.geoui_1_t0s0_et < v.geoui_1_t0s0_h + 0.14) ? v.geoui_1_t0s0_et : v.geoui_1_t0s0_h + 0.14)) ? 0 : -1) : -1) : 0;",
           "v.geoui_1_t0s0_0_tc = v.geoui_seq == 1 ? (math.max(0, v.geoui_st - (v.geoui_1_t0s0_0_c == 0 ? v.geoui_1_t0s0_h + -0.9 : 0))) : 0;",
           "v.geoui_1_t0s0_0_k = v.geoui_seq == 1 ? ((v.geoui_1_t0s0_0_c == 0 ? (v.geoui_1_t0s0_er == 1 && v.geoui_1_t0s0_et >= v.geoui_1_t0s0_h + -0.9 - 0.000001 && v.geoui_1_t0s0_et < v.geoui_1_t0s0_h + 0.14) : 0)) : 0;",
@@ -128,9 +166,9 @@
           "v.geoui_1_t0s1_py = (v.geoui_1_t0s1_i == 0 ? 18.75 : (v.geoui_1_t0s1_i == 1 ? 30 : (v.geoui_1_t0s1_i == 2 ? 0 : (v.geoui_1_t0s1_i == 3 ? 0 : 0))));",
           "v.geoui_1_t0s1_pn = (v.geoui_1_t0s1_i == 0 ? 2 : (v.geoui_1_t0s1_i == 1 ? 2 : (v.geoui_1_t0s1_i == 2 ? 2 : (v.geoui_1_t0s1_i == 3 ? 2 : 0))));",
           "v.geoui_1_t0s1_pc = (v.geoui_1_t0s1_i == 0 ? 0 : (v.geoui_1_t0s1_i == 1 ? 1 : (v.geoui_1_t0s1_i == 2 ? 2 : (v.geoui_1_t0s1_i == 3 ? 2 : 0))));",
-          "v.geoui_1_t0s1_et = (q.property('geoui:t0s1g') != (v.geoui_1_t0s1_eg ?? 0)) ? v.geoui_st : (v.geoui_1_t0s1_et ?? -1000);",
-          "v.geoui_1_t0s1_eg = q.property('geoui:t0s1g');",
-          "v.geoui_1_t0s1_er = (v.geoui_1_t0s1_et >= v.geoui_1_t0s1_h - 0.9 - 0.000001) ? q.property('geoui:t0s1r') : 0;",
+          "v.geoui_1_t0s1_et = ((variable.is_paperdoll ? 0 : q.property('geoui:t0s1g')) != (v.geoui_1_t0s1_eg ?? 0)) ? v.geoui_st : (v.geoui_1_t0s1_et ?? -1000);",
+          "v.geoui_1_t0s1_eg = (variable.is_paperdoll ? 0 : q.property('geoui:t0s1g'));",
+          "v.geoui_1_t0s1_er = (v.geoui_1_t0s1_et >= v.geoui_1_t0s1_h - 0.9 - 0.000001) ? (variable.is_paperdoll ? 0 : q.property('geoui:t0s1r')) : 0;",
           "v.geoui_1_t0s1_0_c = v.geoui_seq == 1 ? (v.geoui_1_t0s1_i >= 0 ? ((v.geoui_st >= v.geoui_1_t0s1_h + -0.9 - 0.000001 && v.geoui_st < ((v.geoui_1_t0s1_er == 1 && v.geoui_1_t0s1_et >= v.geoui_1_t0s1_h + -0.9 - 0.000001 && v.geoui_1_t0s1_et < v.geoui_1_t0s1_h + 0.14) ? v.geoui_1_t0s1_et : v.geoui_1_t0s1_h + 0.14)) ? 0 : -1) : -1) : 0;",
           "v.geoui_1_t0s1_0_tc = v.geoui_seq == 1 ? (math.max(0, v.geoui_st - (v.geoui_1_t0s1_0_c == 0 ? v.geoui_1_t0s1_h + -0.9 : 0))) : 0;",
           "v.geoui_1_t0s1_0_k = v.geoui_seq == 1 ? ((v.geoui_1_t0s1_0_c == 0 ? (v.geoui_1_t0s1_er == 1 && v.geoui_1_t0s1_et >= v.geoui_1_t0s1_h + -0.9 - 0.000001 && v.geoui_1_t0s1_et < v.geoui_1_t0s1_h + 0.14) : 0)) : 0;",
@@ -185,9 +223,9 @@
           "v.geoui_1_t0s2_py = (v.geoui_1_t0s2_i == 0 ? 7.5 : (v.geoui_1_t0s2_i == 1 ? 22.5 : (v.geoui_1_t0s2_i == 2 ? -22.5 : (v.geoui_1_t0s2_i == 3 ? 0 : 0))));",
           "v.geoui_1_t0s2_pn = (v.geoui_1_t0s2_i == 0 ? 3 : (v.geoui_1_t0s2_i == 1 ? 3 : (v.geoui_1_t0s2_i == 2 ? 3 : (v.geoui_1_t0s2_i == 3 ? 3 : 0))));",
           "v.geoui_1_t0s2_pc = (v.geoui_1_t0s2_i == 0 ? 0 : (v.geoui_1_t0s2_i == 1 ? 1 : (v.geoui_1_t0s2_i == 2 ? 2 : (v.geoui_1_t0s2_i == 3 ? 2 : 0))));",
-          "v.geoui_1_t0s2_et = (q.property('geoui:t0s2g') != (v.geoui_1_t0s2_eg ?? 0)) ? v.geoui_st : (v.geoui_1_t0s2_et ?? -1000);",
-          "v.geoui_1_t0s2_eg = q.property('geoui:t0s2g');",
-          "v.geoui_1_t0s2_er = (v.geoui_1_t0s2_et >= v.geoui_1_t0s2_h - 0.9 - 0.000001) ? q.property('geoui:t0s2r') : 0;",
+          "v.geoui_1_t0s2_et = ((variable.is_paperdoll ? 0 : q.property('geoui:t0s2g')) != (v.geoui_1_t0s2_eg ?? 0)) ? v.geoui_st : (v.geoui_1_t0s2_et ?? -1000);",
+          "v.geoui_1_t0s2_eg = (variable.is_paperdoll ? 0 : q.property('geoui:t0s2g'));",
+          "v.geoui_1_t0s2_er = (v.geoui_1_t0s2_et >= v.geoui_1_t0s2_h - 0.9 - 0.000001) ? (variable.is_paperdoll ? 0 : q.property('geoui:t0s2r')) : 0;",
           "v.geoui_1_t0s2_0_c = v.geoui_seq == 1 ? (v.geoui_1_t0s2_i >= 0 ? ((v.geoui_st >= v.geoui_1_t0s2_h + -0.9 - 0.000001 && v.geoui_st < ((v.geoui_1_t0s2_er == 1 && v.geoui_1_t0s2_et >= v.geoui_1_t0s2_h + -0.9 - 0.000001 && v.geoui_1_t0s2_et < v.geoui_1_t0s2_h + 0.14) ? v.geoui_1_t0s2_et : v.geoui_1_t0s2_h + 0.14)) ? 0 : -1) : -1) : 0;",
           "v.geoui_1_t0s2_0_tc = v.geoui_seq == 1 ? (math.max(0, v.geoui_st - (v.geoui_1_t0s2_0_c == 0 ? v.geoui_1_t0s2_h + -0.9 : 0))) : 0;",
           "v.geoui_1_t0s2_0_k = v.geoui_seq == 1 ? ((v.geoui_1_t0s2_0_c == 0 ? (v.geoui_1_t0s2_er == 1 && v.geoui_1_t0s2_et >= v.geoui_1_t0s2_h + -0.9 - 0.000001 && v.geoui_1_t0s2_et < v.geoui_1_t0s2_h + 0.14) : 0)) : 0;",
@@ -242,9 +280,9 @@
           "v.geoui_1_t0s3_py = (v.geoui_1_t0s3_i == 0 ? -3.75 : (v.geoui_1_t0s3_i == 1 ? 30 : (v.geoui_1_t0s3_i == 2 ? 0 : 0)));",
           "v.geoui_1_t0s3_pn = (v.geoui_1_t0s3_i == 0 ? 4 : (v.geoui_1_t0s3_i == 1 ? 4 : (v.geoui_1_t0s3_i == 2 ? 4 : 0)));",
           "v.geoui_1_t0s3_pc = (v.geoui_1_t0s3_i == 0 ? 0 : (v.geoui_1_t0s3_i == 1 ? 1 : (v.geoui_1_t0s3_i == 2 ? 2 : 0)));",
-          "v.geoui_1_t0s3_et = (q.property('geoui:t0s3g') != (v.geoui_1_t0s3_eg ?? 0)) ? v.geoui_st : (v.geoui_1_t0s3_et ?? -1000);",
-          "v.geoui_1_t0s3_eg = q.property('geoui:t0s3g');",
-          "v.geoui_1_t0s3_er = (v.geoui_1_t0s3_et >= v.geoui_1_t0s3_h - 0.9 - 0.000001) ? q.property('geoui:t0s3r') : 0;",
+          "v.geoui_1_t0s3_et = ((variable.is_paperdoll ? 0 : q.property('geoui:t0s3g')) != (v.geoui_1_t0s3_eg ?? 0)) ? v.geoui_st : (v.geoui_1_t0s3_et ?? -1000);",
+          "v.geoui_1_t0s3_eg = (variable.is_paperdoll ? 0 : q.property('geoui:t0s3g'));",
+          "v.geoui_1_t0s3_er = (v.geoui_1_t0s3_et >= v.geoui_1_t0s3_h - 0.9 - 0.000001) ? (variable.is_paperdoll ? 0 : q.property('geoui:t0s3r')) : 0;",
           "v.geoui_1_t0s3_0_c = v.geoui_seq == 1 ? (v.geoui_1_t0s3_i >= 0 ? ((v.geoui_st >= v.geoui_1_t0s3_h + -0.9 - 0.000001 && v.geoui_st < ((v.geoui_1_t0s3_er == 1 && v.geoui_1_t0s3_et >= v.geoui_1_t0s3_h + -0.9 - 0.000001 && v.geoui_1_t0s3_et < v.geoui_1_t0s3_h + 0.14) ? v.geoui_1_t0s3_et : v.geoui_1_t0s3_h + 0.14)) ? 0 : -1) : -1) : 0;",
           "v.geoui_1_t0s3_0_tc = v.geoui_seq == 1 ? (math.max(0, v.geoui_st - (v.geoui_1_t0s3_0_c == 0 ? v.geoui_1_t0s3_h + -0.9 : 0))) : 0;",
           "v.geoui_1_t0s3_0_k = v.geoui_seq == 1 ? ((v.geoui_1_t0s3_0_c == 0 ? (v.geoui_1_t0s3_er == 1 && v.geoui_1_t0s3_et >= v.geoui_1_t0s3_h + -0.9 - 0.000001 && v.geoui_1_t0s3_et < v.geoui_1_t0s3_h + 0.14) : 0)) : 0;",
@@ -304,9 +342,9 @@
           "v.geoui_1_t1s0_pf = (v.geoui_1_t1s0_i == 0 ? 0 : 0);",
           "v.geoui_1_t1s0_pbx = (v.geoui_1_t1s0_i == 0 ? 0 : 0);",
           "v.geoui_1_t1s0_pby = (v.geoui_1_t1s0_i == 0 ? -20.625 : 0);",
-          "v.geoui_1_t1s0_et = (q.property('geoui:t1s0g') != (v.geoui_1_t1s0_eg ?? 0)) ? v.geoui_st : (v.geoui_1_t1s0_et ?? -1000);",
-          "v.geoui_1_t1s0_eg = q.property('geoui:t1s0g');",
-          "v.geoui_1_t1s0_er = (v.geoui_1_t1s0_et >= v.geoui_1_t1s0_h - 0.9 - 0.000001) ? q.property('geoui:t1s0r') : 0;",
+          "v.geoui_1_t1s0_et = ((variable.is_paperdoll ? 0 : q.property('geoui:t1s0g')) != (v.geoui_1_t1s0_eg ?? 0)) ? v.geoui_st : (v.geoui_1_t1s0_et ?? -1000);",
+          "v.geoui_1_t1s0_eg = (variable.is_paperdoll ? 0 : q.property('geoui:t1s0g'));",
+          "v.geoui_1_t1s0_er = (v.geoui_1_t1s0_et >= v.geoui_1_t1s0_h - 0.9 - 0.000001) ? (variable.is_paperdoll ? 0 : q.property('geoui:t1s0r')) : 0;",
           "v.geoui_1_t1s0_0_c = v.geoui_seq == 1 ? (v.geoui_1_t1s0_i >= 0 ? ((v.geoui_st >= v.geoui_1_t1s0_h + -0.9 - 0.000001 && v.geoui_st < ((v.geoui_1_t1s0_er == 1 && v.geoui_1_t1s0_et >= v.geoui_1_t1s0_h + -0.9 - 0.000001 && v.geoui_1_t1s0_et < v.geoui_1_t1s0_h + 0.14) ? v.geoui_1_t1s0_et : v.geoui_1_t1s0_h + 0.14)) ? 0 : -1) : -1) : 0;",
           "v.geoui_1_t1s0_0_tc = v.geoui_seq == 1 ? (math.max(0, v.geoui_st - (v.geoui_1_t1s0_0_c == 0 ? v.geoui_1_t1s0_h + -0.9 : 0))) : 0;",
           "v.geoui_1_t1s0_0_k = v.geoui_seq == 1 ? ((v.geoui_1_t1s0_0_c == 0 ? (v.geoui_1_t1s0_er == 1 && v.geoui_1_t1s0_et >= v.geoui_1_t1s0_h + -0.9 - 0.000001 && v.geoui_1_t1s0_et < v.geoui_1_t1s0_h + 0.14) : 0)) : 0;",
@@ -541,88 +579,85 @@
           "controller.render.player.map": "variable.map_face_icon"
         },
         {
-          "controller.render.geoui_atlas_hitcircle_t0s0": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
           "controller.render.geoui_atlas_combonumber_t0s0": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_approachcircle_t0s0": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_hitburst_t0s0": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_hitmiss_t0s0": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_hitcircle_t0s1": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
           "controller.render.geoui_atlas_combonumber_t0s1": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
-          "controller.render.geoui_atlas_approachcircle_t0s1": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_hitburst_t0s1": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_hitmiss_t0s1": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_hitcircle_t0s2": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
           "controller.render.geoui_atlas_combonumber_t0s2": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_approachcircle_t0s2": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_hitburst_t0s2": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_hitmiss_t0s2": "q.is_in_ui && !variable.is_paperdoll"
-        },
-        {
-          "controller.render.geoui_atlas_hitcircle_t0s3": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
           "controller.render.geoui_atlas_combonumber_t0s3": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
-          "controller.render.geoui_atlas_approachcircle_t0s3": "q.is_in_ui && !variable.is_paperdoll"
+          "controller.render.geoui_atlas_combonumber_t1s0": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
-          "controller.render.geoui_atlas_hitburst_t0s3": "q.is_in_ui && !variable.is_paperdoll"
+          "controller.render.geoui_atlas_spinner_t2s0": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
-          "controller.render.geoui_atlas_hitmiss_t0s3": "q.is_in_ui && !variable.is_paperdoll"
+          "controller.render.geoui_atlas_hitcircle_t0s0": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_hitcircle_t0s1": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_hitcircle_t0s2": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_hitcircle_t0s3": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
           "controller.render.geoui_atlas_hitcircle_t1s0": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
-          "controller.render.geoui_atlas_combonumber_t1s0": "q.is_in_ui && !variable.is_paperdoll"
+          "controller.render.geoui_atlas_hitburst_t0s0": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
-          "controller.render.geoui_atlas_approachcircle_t1s0": "q.is_in_ui && !variable.is_paperdoll"
+          "controller.render.geoui_atlas_hitburst_t0s1": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_hitburst_t0s2": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_hitburst_t0s3": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
           "controller.render.geoui_atlas_hitburst_t1s0": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
-          "controller.render.geoui_atlas_hitmiss_t1s0": "q.is_in_ui && !variable.is_paperdoll"
+          "controller.render.geoui_atlas_approachcircle_t0s0": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
-          "controller.render.geoui_atlas_spinner_t2s0": "q.is_in_ui && !variable.is_paperdoll"
+          "controller.render.geoui_atlas_approachcircle_t0s1": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_approachcircle_t0s2": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_approachcircle_t0s3": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_approachcircle_t1s0": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_hitmiss_t0s0": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_hitmiss_t0s1": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_hitmiss_t0s2": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_hitmiss_t0s3": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.geoui_atlas_hitmiss_t1s0": "q.is_in_ui && !variable.is_paperdoll"
         }
       ],
-      "enable_attachables": true,
-      "sound_effects": {
-        "geoui_click": "geoui.click"
-      }
+      "enable_attachables": true
     }
   }
 }

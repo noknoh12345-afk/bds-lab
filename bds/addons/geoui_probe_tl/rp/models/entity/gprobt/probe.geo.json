@@ -94,6 +94,41 @@
           ]
         },
         {
+          "name": "fader",
+          "parent": "geo_ui",
+          "pivot": [
+            50,
+            85,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                43,
+                78,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
           "name": "dot_t0s0",
           "parent": "geo_ui",
           "pivot": [

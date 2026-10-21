@@ -19,96 +19,78 @@
       "loop": true,
       "animation_length": 1,
       "bones": {
-        "ownproto": {
-          "scale": 0
-        },
         "ctl": {
           "scale": "(v.gp_t == 1 || v.gp_t == 99) ? 1 : 0"
         },
-        "c1": {
-          "scale": "(v.gp_t == 2 || v.gp_t == 99) ? (v.gp_c1 ?? 0) : 0"
+        "mask1": {
+          "scale": "(v.gp_t == 2 || v.gp_t == 99) ? 1 : 0"
         },
-        "c2": {
-          "scale": "(v.gp_t == 3 || v.gp_t == 99) ? (v.gp_c2 ?? 0) : 0"
+        "mask0": {
+          "scale": "(v.gp_t == 3 || v.gp_t == 99) ? 1 : 0"
         },
-        "c3": {
-          "scale": "(v.gp_t == 4 || v.gp_t == 99) ? (v.gp_c3 ?? 0) : 0"
+        "maskhalf": {
+          "scale": "(v.gp_t == 4 || v.gp_t == 99) ? 1 : 0"
         },
-        "c4": {
-          "scale": "(v.gp_t == 5 || v.gp_t == 99) ? (v.gp_c4 ?? 0) : 0"
+        "cutmask0": {
+          "scale": "(v.gp_t == 6 || v.gp_t == 99) ? 1 : 0"
         },
-        "c5": {
-          "scale": "(v.gp_t == 6 || v.gp_t == 99) ? (v.gp_c5 ?? 0) : 0"
+        "cutmaskhalf": {
+          "scale": "(v.gp_t == 7 || v.gp_t == 99) ? 1 : 0"
         },
-        "c6": {
-          "scale": "(v.gp_t == 7 || v.gp_t == 99) ? (v.gp_c6 ?? 0) : 0"
-        },
-        "clockpre": {
-          "position": [
-            "(v.gp_t == 8 || v.gp_t == 99) ? math.clamp(v.gp_cl ?? 0, 0, 6) * 15 : 0",
-            0,
-            0
-          ],
+        "texhalf": {
           "scale": "(v.gp_t == 8 || v.gp_t == 99) ? 1 : 0"
         },
-        "clockanim": {
+        "texhalfcut": {
           "scale": "(v.gp_t == 9 || v.gp_t == 99) ? 1 : 0"
         },
-        "lifepre": {
-          "position": [
-            "((v.gp_life ?? 0) > 1 ? 60 : 0)",
-            0,
-            0
-          ],
+        "masktexhalf": {
           "scale": "(v.gp_t == 10 || v.gp_t == 99) ? 1 : 0"
         },
-        "animpre": {
-          "position": [
-            "((v.gp_anim ?? 0) != 0 ? 60 : 0)",
+        "rot90": {
+          "rotation": [
             0,
-            0
+            0,
+            90
           ],
           "scale": "(v.gp_t == 11 || v.gp_t == 99) ? 1 : 0"
         },
-        "alpha0": {
+        "scalemul": {
+          "scale": "(v.gp_t == 12 || v.gp_t == 99) ? 1 : 0"
+        },
+        "posadd": {
           "scale": "(v.gp_t == 13 || v.gp_t == 99) ? 1 : 0"
         },
-        "uvconst": {
-          "scale": "(v.gp_t == 15 || v.gp_t == 99) ? 1 : 0"
-        },
-        "ownproto_t0s0": {
-          "position": [
-            "(v.gp_t == 16 || v.gp_t == 99) ? -125 : 0",
-            "(v.gp_t == 16 || v.gp_t == 99) ? -25 : 0",
-            0
-          ],
-          "scale": [
-            "(v.gp_t == 16 || v.gp_t == 99) ? 1 : 0",
-            "(v.gp_t == 16 || v.gp_t == 99) ? 1 : 0",
-            1
-          ]
-        },
-        "line700": {
-          "scale": "v.gp_l ?? 0"
-        },
-        "b121": {
-          "scale": "(v.gp_t == 18 || v.gp_t == 99) ? 1 : 0"
-        },
-        "b126": {
-          "scale": "(v.gp_t == 19 || v.gp_t == 99) ? 1 : 0"
-        },
-        "ownblend": {
-          "scale": "(v.gp_t == 20 || v.gp_t == 99) ? 1 : 0"
+        "init": {
+          "scale": "(v.gp_t == 14 || v.gp_t == 99) ? ((v.gp_init ?? 0) == 7 ? 1 : 0) : 0"
         }
       }
     },
-    "animation.gprobe.clockanim": {
+    "animation.gprobe.mul_a": {
       "loop": true,
-      "animation_length": 100,
+      "animation_length": 1,
       "bones": {
-        "clockanim": {
+        "scalemul": {
+          "scale": 2
+        },
+        "posadd": {
           "position": [
-            "math.clamp(q.anim_time, 0, 6) * 15",
+            10,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.gprobe.mul_b": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "scalemul": {
+          "scale": 0.5
+        },
+        "posadd": {
+          "position": [
+            10,
             0,
             0
           ]

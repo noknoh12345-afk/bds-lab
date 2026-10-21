@@ -1,33 +1,27 @@
-# geoui_probe — GeoUI の作りの確かめ（pre_animation が止まる所・時計・自分の render controller）
+# geoui_probe — GeoUI の作りの確かめ 3 回目（不透明度・回転の向き・アニメーションの重ね方・initialize）
 
 ## Request
 GeoUI のタイムラインの書き出しが頼る物を、本物のアプリで 1 つずつ確かめる（bds/geoui/timeline/probe.mjs が作る。手で変えない）。
 app.txt がテストを 1 つずつ出して写し、`measure diff` が変わった所を数で出す。`node bds/geoui/timeline/probe.mjs read <summary.json>` が読む。
 
 ## What it is
-- pre_animation に足した行の間にカナリア（1 なら板を描く変数）を置く: 描かれない最初のカナリアの前の行で、pre_animation が止まっている。
-- 最後の行は、一度も入れていない変数を ?? なしで読む（ゲームはここで止まるはず: カナリア 6 は描かれないのが正しい）。
-- 時計の 2 つは、選んでから 1.5 秒と 3 秒で写す（毎秒 15 単位で右へ動けば、その時間が進んでいる）。
-- テスト 1（ctl）: 基準: ボーン #1・共有の render controller・scale で出し入れ
-- テスト 2（c1）: カナリア 1: pre_animation の最初の行の後
-- テスト 3（c2）: カナリア 2: q.life_time を読んだ行の後
-- テスト 4（c3）: カナリア 3: q.anim_time を読んだ行の後
-- テスト 5（c4）: カナリア 4: ?? で守った時計（前の値と変わったら q.life_time を覚える）の後
-- テスト 6（c5）: カナリア 5: 700 行目の後
-- テスト 7（c6）: カナリア 6: 一度も入れていない変数を ?? なしで読んだ行の後（描かれなければ「そこで止まる」の確かめ）
-- テスト 8（clockpre）: pre_animation の q.life_time（?? の時計: 選んでからの秒 x 15 単位、右へ）
-- テスト 9（clockanim）: アニメーションの中の q.anim_time（選ぶと始まるアニメーション: 秒 x 15 単位、右へ）
-- テスト 10（lifepre）: pre_animation の q.life_time の値（1 秒より大きければ +60 単位右に描く）
-- テスト 11（animpre）: pre_animation の q.anim_time の値（0 でなければ +60 単位右に描く）
-- テスト 12（ownalpha）: 自分の render controller・blend・color.a を変数で（scale は 1 のまま、不透明度だけで出し入れ）
-- テスト 13（alpha0）: 自分の render controller・blend・color.a を 0（定数）: 描かれたら color.a は効かない
-- テスト 14（ownuv）: 自分の render controller・uv_anim の offset を変数で（コマ 0 は透明、選ぶとコマ 2）
-- テスト 15（uvconst）: 自分の render controller・uv_anim の offset を 0.5（定数）: 透明のコマ 0 から緑のコマ 2 へ（描かれたら uv_anim が効く）
-- テスト 16（ownclone）: compile.js と同じ作りの枠の複製（ボーン #140・原型の名前_t0s0・奥へ 0.021・その render controller・color.a と uv を変数で）
-- テスト 17（line700）: pre_animation の 700 行目の変数で出し入れ
-- テスト 18（b121）: ボーン #121
-- テスト 19（b126）: ボーン #126
-- テスト 20（ownblend）: 自分の render controller・blend（ボーンの名前でマテリアル）
+- テストの板を 1 つずつ出して写す。`measure diff` で描かれた所、`measure color` で板の真ん中の平均の色（と、何も出さない画面の同じ所の色）。
+- 透け具合 = (色 − 何も無い所の色) / (不透明の白（ctl）− 何も無い所の色): read が明るさで出す。
+- 2 回目までの答えは probe.mjs の頭と PLAN.md の進み具合に。
+- テスト 1（ctl）: 基準: 共有の render controller（cutout）の白い板・scale で出し入れ（色の測りの「不透明の白」）
+- テスト 2（mask1）: fade（blend + USE_COLOR_MASK）・color.a = 1: 描かれればこのマテリアルは使える
+- テスト 3（mask0）: fade・color.a = 0（定数）: 描かれなければ color.a が効く
+- テスト 4（maskhalf）: fade・color.a = 0.5: 色を測る（0.5 なら半分透ける）
+- テスト 5（maskvar）: fade・color.a を変数で（選んだ時だけ 1・scale は 1 のまま）: 描かれれば変数の color.a が効く
+- テスト 6（cutmask0）: cutfade（cutout + USE_COLOR_MASK）・color.a = 0: 描かれなければ効く（cutout は 0.5 より薄い所を捨てる）
+- テスト 7（cutmaskhalf）: cutfade・color.a = 0.6: 色を測る（cutout のままなら不透明）
+- テスト 8（texhalf）: blend・テクスチャの白（不透明度 0.376）: 色を測る（半透明のテクセルが混ざるか）
+- テスト 9（texhalfcut）: cutout・テクスチャの白（0.376）: 描かれなければ 0.5 より薄いテクセルは捨てられる
+- テスト 10（masktexhalf）: fade・テクスチャ 0.376・color.a = 0.5: 色を測る（掛け算なら 0.188）
+- テスト 11（rot90）: アニメーションの rotation z = +90（板はピボットの右 20 単位）: 上へ行けば左回り・下なら右回り
+- テスト 12（scalemul）: 同じボーンに 3 つのアニメーション（scale 1・2・0.5）: 14 単位なら掛け算
+- テスト 13（posadd）: 同じボーンに 2 つのアニメーション（x +10 ずつ）: +20 なら足し算
+- テスト 14（init）: initialize だけで入れた変数（7）で出し入れ: 描かれれば initialize が効く
 
 ## Acceptance (one tests.txt `## ` section each)
 - [ ] 読み込める（プロパティが既定値）

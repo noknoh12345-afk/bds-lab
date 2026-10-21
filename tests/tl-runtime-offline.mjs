@@ -97,6 +97,53 @@ ok(E.command(A, 'play', ['9']).includes('no sequence') && E.command({ id: 'B' },
 const plan = R.planOf(doc, rp.stats);
 ok(plan.sequences[0].hits.length === 6 && !plan.sequences[0].hits.some((h) => h[3] === 'o7'), 'the instances that take a press: circles and the slider, not the spinner');
 
+// ---- the audio clips on the sequence's time (the script plays and stops them); a player who joins again ----
+{
+  const d2 = JSON.parse(JSON.stringify(doc));
+  // (the osu! map's own music track out; a music clip and an effect on tracks of their own: clips on one track never overlap)
+  d2.sequences[0].tracks = [...d2.sequences[0].tracks.filter((t) => t.kind !== 'audio'), { id: 'aud', kind: 'audio', name: 'music', clips: [{ id: 'm', start: 0, end: 4, sound: 'Music', volume: 0.8 }] },
+    { id: 'aud2', kind: 'audio', name: 'fx', clips: [{ id: 'fx', start: 2, end: 2.5, sound: 'fx-1', pitch: 1.5 }] }];
+  const rp2 = C.extendPack(built.files, d2, { design, core: G, bakedMax: 0, sounds: [{ id: 'Music', ext: 'ogg', data: new Uint8Array([79, 103, 103, 83]) }, { id: 'fx-1', ext: 'wav', data: new Uint8Array([82, 73, 70, 70]) }] });
+  const out2 = R.extendBehavior(rp2.files, d2, { stats: rp2.stats });
+  const anims2 = rp2.files['geoui_RP/animations/geoui.animation.json'], sdj = JSON.parse(rp2.files['geoui_RP/sounds/sound_definitions.json']).sound_definitions;
+  ok(!/sound_effects/.test(anims2) && !/sound_effects/.test(rp2.files['geoui_RP/entity/player.entity.json']) && sdj['geoui.music'] && sdj['geoui.fx_1'] && rp2.files['geoui_RP/sounds/geoui/music.ogg'] && rp2.files['geoui_RP/sounds/geoui/fx_1.wav']
+    && JSON.stringify(out2.cfg.sequences[0].sounds) === JSON.stringify([[0, 'geoui.music', 0.8, 1], [2000, 'geoui.fx_1', 1, 1.5]]),
+  'audio clips: their sounds defined in the RP, none in an animation (its own clock follows no seek); the script has each clip\'s time, name, volume and pitch', JSON.stringify(out2.cfg.sequences[0].sounds));
+  ok(/playerSpawn/.test(out2.files['geoui_BP/scripts/timeline.js']) && /stopsound @s/.test(out2.files['geoui_BP/scripts/timeline.js']) && /playSound\(id, \{ volume, pitch \}\)/.test(out2.files['geoui_BP/scripts/timeline.js']),
+    'the script: plays a clip (Player.playSound, its volume and pitch), stops it (/stopsound @s), and greets a player who joins again');
+  const w = { tick: 0, props: new Map([['geoui:seq_gen', 7], ['geoui:seq', 0]]), sounds: [], stops: [] }, B = { id: 'B' };
+  const io2 = { tick: () => w.tick, setProp: (p, k, v) => w.props.set(k, v), getProp: (p, k) => w.props.get(k), players: () => [B], event: () => {},
+    sound: (p, id, vol, pi) => w.sounds.push([w.tick * 50, id, vol, pi]), stopSound: (p, id) => w.stops.push([w.tick * 50, id]) };
+  const E2 = R.createEngine(out2.cfg, io2), go = (ms) => { while (w.tick * 50 < ms) { w.tick++; E2.tick(); } };
+  E2.command(B, 'play', ['1']);
+  ok(w.props.get('geoui:seq_gen') === 8, 'the generation goes on from the one the player has (a world keeps it: 7 → 8, never the same number again)', String(w.props.get('geoui:seq_gen')));
+  go(2600);
+  ok(JSON.stringify(w.sounds) === JSON.stringify([[50, 'geoui.music', 0.8, 1], [2000, 'geoui.fx_1', 1, 1.5]]), 'played: the music at its time, the effect at 2 s, each once, with its volume and pitch', JSON.stringify(w.sounds));
+  E2.command(B, 'pause', []);
+  ok(w.stops.length === 2 && w.stops.every(([t]) => t === 2600) && new Set(w.stops.map((x) => x[1])).size === 2, 'pause: every sound it started is stopped (a sound in the game cannot be held)', JSON.stringify(w.stops));
+  E2.command(B, 'resume', []); go(3000);
+  ok(w.sounds.length === 2, 'resume: a sound already past stays silent (one cannot start part-way)', JSON.stringify(w.sounds));
+  E2.command(B, 'seek', ['1.9']); go(3400);
+  ok(w.sounds.length === 3 && w.sounds[2][1] === 'geoui.fx_1', 'seek before a clip: it plays when the time reaches it again', JSON.stringify(w.sounds));
+  // (a player back in the world: the sequence sent again from where it is — a new generation, its time — the score kept)
+  const gen = w.props.get('geoui:seq_gen'), at = E2.state(B).from + (w.tick - E2.state(B).start) * 50;
+  E2.joined(B);
+  ok(w.props.get('geoui:seq_gen') === gen + 1 && w.props.get('geoui:seq_from') === at && w.props.get('geoui:seq') === 1 && w.props.get('geoui:seq_pause') === false, 'joined again while playing: the sequence again from where it is (a new generation)', JSON.stringify([...w.props].filter(([k]) => /seq/.test(k))));
+  E2.command(B, 'stop', []);
+  ok(w.stops.at(-1)[1] === 'geoui.fx_1' && w.props.get('geoui:seq') === 0, 'stop: what still rings stopped');
+  const C2 = { id: 'C' };
+  w.props.set('geoui:seq', 1);
+  E2.joined(C2);
+  ok(w.props.get('geoui:seq') === 0, 'joined with nothing playing for them, but a sequence still in their properties (a world saved while it played): stopped');
+  // (a loop: the clips again each round)
+  const cfgL = JSON.parse(JSON.stringify(out2.cfg));
+  Object.assign(cfgL.sequences[0], { loop: 'loop', inOut: [0, 3000], templates: [], hits: [] });
+  const wl = { tick: 0, sounds: [] }, EL = R.createEngine(cfgL, { tick: () => wl.tick, setProp: () => {}, players: () => [B], sound: (p, id) => wl.sounds.push([wl.tick * 50, id]), stopSound: () => {} });
+  EL.command(B, 'play', ['1']);
+  while (wl.tick * 50 < 6600) { wl.tick++; EL.tick(); }
+  ok(JSON.stringify(wl.sounds.map((x) => x[0])) === JSON.stringify([50, 2000, 3000, 5000, 6000]), 'a loop: the clips again at each round', JSON.stringify(wl.sounds));
+}
+
 // ---- the sample add-on (bds/addons/geoui_rhythm) is what demo.mjs makes ----
 const demo = spawnSync(process.execPath, [path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'bds', 'geoui', 'timeline', 'demo.mjs'), '--check'], { encoding: 'utf8' });
 ok(demo.status === 0, 'bds/addons/geoui_rhythm is up to date with demo.mjs', demo.stderr + demo.stdout);

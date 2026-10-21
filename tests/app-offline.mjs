@@ -15,6 +15,7 @@ const imp = (p) => import(pathToFileURL(path.join(TOP, p)).href);
 const K = await imp('app/lib/apk.mjs');
 const S = await imp('app/lib/scenario.mjs');
 const R = await imp('app/lib/report.mjs');
+const M = await imp('app/lib/measure.mjs');
 const { QUIET_APPS } = await imp('app/lib/android.mjs');
 const WARM = await imp('app/lib/warm.mjs');
 const { crc32 } = await imp('bedrock-binary/src/apk/zip.js');
@@ -1986,6 +1987,16 @@ await t('scenario: measure geoui <shot> — the lab\'s own measuring on a pictur
   const rv = rg.measures[0]?.values ?? {};
   ok(rg.ok && rv.parts === 1 && [rv.b1x0, rv.b1y0, rv.b1x1, rv.b1y1].join() === '150,70,160,90' && [rv.rx0, rv.ry0, rv.rx1, rv.ry1].join() === '100,40,200,100' && Math.abs(rv.share - 201 / 6000) < 1e-6,
     'diff in a box: only the parts in it, the share of the box', JSON.stringify(rv));
+  // color: the mean colour in a box and the world's in the same box (how see-through a thing drawn there is, in numbers)
+  const cv = await S.runScenario(S.parseScenario('shot hud\nmeasure color hud 10 5 40 15\nmeasure color hud 30 0 50 10\n').steps, { ...ctx, baseline: () => worldPic });
+  const [c1, c2] = cv.measures.map((m) => m.values ?? {});
+  ok(cv.ok && c1.n === 300 && c1.r === 250 && c1.g === 250 && c1.b === 250 && c1.spread === 0 && c1.br === 60 && c1.bspread === 0 && [c1.rx0, c1.ry0, c1.rx1, c1.ry1].join() === '10,5,40,15',
+    'color: the mean in the box, even (no spread), the world\'s there', JSON.stringify(c1));
+  ok(c2.n === 200 && Math.abs(c2.r - (50 * 250 + 150 * 60) / 200) < 1e-6 && c2.spread > 50 && c2.br === 60, 'color: half the box painted — the mean between, a spread', JSON.stringify(c2));
+  eq(S.parseScenario('measure color hud\nmeasure color hud 5 5 4 9\nmeasure color hud 1 2 3\n').errors.length, 3);
+  const cn = await S.runScenario(S.parseScenario('shot hud\nmeasure color hud 10 5 40 15\n').steps, ctx);
+  ok(cn.ok && cn.measures[0]?.values.r === 250 && cn.measures[0].values.br === undefined, 'color without a `shot world`: the mean alone', JSON.stringify(cn.measures));
+  ok(/^平均の色 \(250\.0, 250\.0, 250\.0\)・むら 0\.0・ワールド \(60\.0, 60\.0, 60\.0\)/.test(M.measureLines([{ ...cv.measures[0], ok: true }])[0].replace(/^- 測った値 hud（color、2 行目）: /, '')), 'color: its line in a report', M.measureLines([cv.measures[0]])[0]);
   eq(S.parseScenario('measure diff hud 1 2 3\nmeasure diff hud 5 5 4 9\nmeasure geoui hud 0 0 9 9\n').errors.length, 3);
   const nb = await S.runScenario(S.parseScenario('shot hud\nmeasure diff hud\n').steps, ctx);
   ok(!nb.ok && /shot world/.test(nb.results[1]?.note ?? ''), 'diff without a `shot world`: fails, says what to take', JSON.stringify(nb.results));

@@ -8,7 +8,7 @@
           "*": "material.gprobe_cutout"
         },
         {
-          "ownblend": "material.gprobe_blend"
+          "texhalf": "material.gprobe_blend"
         }
       ],
       "textures": [
@@ -47,36 +47,39 @@
           "*": true
         },
         {
-          "ownalpha": false
+          "mask1": false
         },
         {
-          "alpha0": false
+          "mask0": false
         },
         {
-          "ownuv": false
+          "maskhalf": false
         },
         {
-          "uvconst": false
+          "maskvar": false
         },
         {
-          "ownproto_t0s0": false
+          "cutmask0": false
         },
         {
-          "ownblend": false
+          "cutmaskhalf": false
+        },
+        {
+          "masktexhalf": false
         }
       ]
     },
-    "controller.render.gprobe_probe_ownalpha": {
+    "controller.render.gprobe_probe_mask1": {
       "geometry": "Geometry.gprobe_probe",
       "materials": [
         {
           "*": "material.gprobe_cutout"
         },
         {
-          "ownblend": "material.gprobe_blend"
+          "texhalf": "material.gprobe_blend"
         },
         {
-          "ownalpha": "material.gprobe_blend"
+          "mask1": "material.gprobe_fade"
         }
       ],
       "textures": [
@@ -96,7 +99,7 @@
         "r": 1,
         "g": 1,
         "b": 1,
-        "a": "v.geoui_alpha * v.gp_a"
+        "a": "v.geoui_alpha * 1"
       },
       "is_hurt_color": {
         "r": 0,
@@ -115,21 +118,21 @@
           "*": false
         },
         {
-          "ownalpha": true
+          "mask1": true
         }
       ]
     },
-    "controller.render.gprobe_probe_alpha0": {
+    "controller.render.gprobe_probe_mask0": {
       "geometry": "Geometry.gprobe_probe",
       "materials": [
         {
           "*": "material.gprobe_cutout"
         },
         {
-          "ownblend": "material.gprobe_blend"
+          "texhalf": "material.gprobe_blend"
         },
         {
-          "alpha0": "material.gprobe_blend"
+          "mask0": "material.gprobe_fade"
         }
       ],
       "textures": [
@@ -168,171 +171,21 @@
           "*": false
         },
         {
-          "alpha0": true
+          "mask0": true
         }
       ]
     },
-    "controller.render.gprobe_probe_ownuv": {
+    "controller.render.gprobe_probe_maskhalf": {
       "geometry": "Geometry.gprobe_probe",
       "materials": [
         {
           "*": "material.gprobe_cutout"
         },
         {
-          "ownblend": "material.gprobe_blend"
-        }
-      ],
-      "textures": [
-        "Texture.gprobe_probe"
-      ],
-      "uv_anim": {
-        "offset": [
-          "math.mod(v.gp_fr, 4) / 4",
-          "math.floor(v.gp_fr / 4) / 4"
-        ],
-        "scale": [
-          1,
-          1
-        ]
-      },
-      "color": {
-        "r": 1,
-        "g": 1,
-        "b": 1,
-        "a": "v.geoui_alpha"
-      },
-      "is_hurt_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 0
-      },
-      "on_fire_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 0
-      },
-      "part_visibility": [
-        {
-          "*": false
+          "texhalf": "material.gprobe_blend"
         },
         {
-          "ownuv": true
-        }
-      ]
-    },
-    "controller.render.gprobe_probe_uvconst": {
-      "geometry": "Geometry.gprobe_probe",
-      "materials": [
-        {
-          "*": "material.gprobe_cutout"
-        },
-        {
-          "ownblend": "material.gprobe_blend"
-        }
-      ],
-      "textures": [
-        "Texture.gprobe_probe"
-      ],
-      "uv_anim": {
-        "offset": [
-          0.5,
-          0
-        ],
-        "scale": [
-          1,
-          1
-        ]
-      },
-      "color": {
-        "r": 1,
-        "g": 1,
-        "b": 1,
-        "a": "v.geoui_alpha"
-      },
-      "is_hurt_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 0
-      },
-      "on_fire_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 0
-      },
-      "part_visibility": [
-        {
-          "*": false
-        },
-        {
-          "uvconst": true
-        }
-      ]
-    },
-    "controller.render.gprobe_probe_ownproto_t0s0": {
-      "geometry": "Geometry.gprobe_probe",
-      "materials": [
-        {
-          "*": "material.gprobe_cutout"
-        },
-        {
-          "ownblend": "material.gprobe_blend"
-        }
-      ],
-      "textures": [
-        "Texture.gprobe_probe"
-      ],
-      "uv_anim": {
-        "offset": [
-          "math.mod(v.gprobe_fr_ownproto_t0s0, 4) * 0.25",
-          "math.floor(v.gprobe_fr_ownproto_t0s0 / 4) * 0.25"
-        ],
-        "scale": [
-          1,
-          1
-        ]
-      },
-      "color": {
-        "r": 1,
-        "g": 1,
-        "b": 1,
-        "a": "v.geoui_alpha * v.gprobe_a_ownproto_t0s0"
-      },
-      "is_hurt_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 0
-      },
-      "on_fire_color": {
-        "r": 0,
-        "g": 0,
-        "b": 0,
-        "a": 0
-      },
-      "part_visibility": [
-        {
-          "*": false
-        },
-        {
-          "ownproto_t0s0": true
-        }
-      ]
-    },
-    "controller.render.gprobe_probe_ownblend": {
-      "geometry": "Geometry.gprobe_probe",
-      "materials": [
-        {
-          "*": "material.gprobe_cutout"
-        },
-        {
-          "ownblend": "material.gprobe_blend"
-        },
-        {
-          "ownblend": "material.gprobe_blend"
+          "maskhalf": "material.gprobe_fade"
         }
       ],
       "textures": [
@@ -352,7 +205,7 @@
         "r": 1,
         "g": 1,
         "b": 1,
-        "a": "v.geoui_alpha"
+        "a": "v.geoui_alpha * 0.5"
       },
       "is_hurt_color": {
         "r": 0,
@@ -371,7 +224,219 @@
           "*": false
         },
         {
-          "ownblend": true
+          "maskhalf": true
+        }
+      ]
+    },
+    "controller.render.gprobe_probe_maskvar": {
+      "geometry": "Geometry.gprobe_probe",
+      "materials": [
+        {
+          "*": "material.gprobe_cutout"
+        },
+        {
+          "texhalf": "material.gprobe_blend"
+        },
+        {
+          "maskvar": "material.gprobe_fade"
+        }
+      ],
+      "textures": [
+        "Texture.gprobe_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.gp_a"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "maskvar": true
+        }
+      ]
+    },
+    "controller.render.gprobe_probe_cutmask0": {
+      "geometry": "Geometry.gprobe_probe",
+      "materials": [
+        {
+          "*": "material.gprobe_cutout"
+        },
+        {
+          "texhalf": "material.gprobe_blend"
+        },
+        {
+          "cutmask0": "material.gprobe_cutfade"
+        }
+      ],
+      "textures": [
+        "Texture.gprobe_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * 0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "cutmask0": true
+        }
+      ]
+    },
+    "controller.render.gprobe_probe_cutmaskhalf": {
+      "geometry": "Geometry.gprobe_probe",
+      "materials": [
+        {
+          "*": "material.gprobe_cutout"
+        },
+        {
+          "texhalf": "material.gprobe_blend"
+        },
+        {
+          "cutmaskhalf": "material.gprobe_cutfade"
+        }
+      ],
+      "textures": [
+        "Texture.gprobe_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * 0.6"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "cutmaskhalf": true
+        }
+      ]
+    },
+    "controller.render.gprobe_probe_masktexhalf": {
+      "geometry": "Geometry.gprobe_probe",
+      "materials": [
+        {
+          "*": "material.gprobe_cutout"
+        },
+        {
+          "texhalf": "material.gprobe_blend"
+        },
+        {
+          "masktexhalf": "material.gprobe_fade"
+        }
+      ],
+      "textures": [
+        "Texture.gprobe_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * 0.5"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "masktexhalf": true
         }
       ]
     }

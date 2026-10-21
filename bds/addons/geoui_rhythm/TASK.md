@@ -14,3 +14,4 @@ GeoUI Builder のタイムライン（bds/geoui/timeline）で、osu! のよう�
 - [ ] play で再生が始まる（seq・seq_gen・seq_from）
 - [ ] seek・pause・resume がプロパティに出る
 - [ ] stop で止まる
+- [ ] 入り直すと、再生中のシーケンスをその時刻から送り直す（世代は続きの番号）
