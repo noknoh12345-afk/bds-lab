@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Pack RP",
+    "description": "GeoUI Builder (Blockbench) で作成",
+    "uuid": "5ed8794c-9c1f-4c13-bc01-888e4b6f75d5",
+    "version": [1, 0, 1],
+    "min_engine_version": [1, 26, 50]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "8a8546a3-cb41-4678-bdae-5481fbb1f796",
+      "version": [1, 0, 1]
+    }
+  ]
+}

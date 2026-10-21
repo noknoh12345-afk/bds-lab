@@ -1,0 +1,568 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.geoui_gauge_fill",
+        "texture_width": 256,
+        "texture_height": 16,
+        "visible_bounds_width": 912,
+        "visible_bounds_height": 384,
+        "visible_bounds_offset": [
+          0,
+          140,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "score",
+          "parent": "geo_ui",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0",
+          "parent": "score",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0_n0",
+          "parent": "score_d0",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0_n1",
+          "parent": "score_d0",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0_n2",
+          "parent": "score_d0",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0_n3",
+          "parent": "score_d0",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0_n4",
+          "parent": "score_d0",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0_n5",
+          "parent": "score_d0",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0_n6",
+          "parent": "score_d0",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0_n7",
+          "parent": "score_d0",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0_n8",
+          "parent": "score_d0",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d0_n9",
+          "parent": "score_d0",
+          "pivot": [
+            -150.802,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1",
+          "parent": "score",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1_n0",
+          "parent": "score_d1",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1_n1",
+          "parent": "score_d1",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1_n2",
+          "parent": "score_d1",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1_n3",
+          "parent": "score_d1",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1_n4",
+          "parent": "score_d1",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1_n5",
+          "parent": "score_d1",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1_n6",
+          "parent": "score_d1",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1_n7",
+          "parent": "score_d1",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1_n8",
+          "parent": "score_d1",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d1_n9",
+          "parent": "score_d1",
+          "pivot": [
+            -141.8781,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2",
+          "parent": "score",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2_n0",
+          "parent": "score_d2",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2_n1",
+          "parent": "score_d2",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2_n2",
+          "parent": "score_d2",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2_n3",
+          "parent": "score_d2",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2_n4",
+          "parent": "score_d2",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2_n5",
+          "parent": "score_d2",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2_n6",
+          "parent": "score_d2",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2_n7",
+          "parent": "score_d2",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2_n8",
+          "parent": "score_d2",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d2_n9",
+          "parent": "score_d2",
+          "pivot": [
+            -132.9541,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3",
+          "parent": "score",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3_n0",
+          "parent": "score_d3",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3_n1",
+          "parent": "score_d3",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3_n2",
+          "parent": "score_d3",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3_n3",
+          "parent": "score_d3",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3_n4",
+          "parent": "score_d3",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3_n5",
+          "parent": "score_d3",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3_n6",
+          "parent": "score_d3",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3_n7",
+          "parent": "score_d3",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3_n8",
+          "parent": "score_d3",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d3_n9",
+          "parent": "score_d3",
+          "pivot": [
+            -124.0302,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4",
+          "parent": "score",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4_n0",
+          "parent": "score_d4",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4_n1",
+          "parent": "score_d4",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4_n2",
+          "parent": "score_d4",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4_n3",
+          "parent": "score_d4",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4_n4",
+          "parent": "score_d4",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4_n5",
+          "parent": "score_d4",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4_n6",
+          "parent": "score_d4",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4_n7",
+          "parent": "score_d4",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4_n8",
+          "parent": "score_d4",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "score_d4_n9",
+          "parent": "score_d4",
+          "pivot": [
+            -115.1063,
+            218.88,
+            -0.2
+          ]
+        },
+        {
+          "name": "gauge",
+          "parent": "geo_ui",
+          "pivot": [
+            -155.264,
+            221.4,
+            -0.58
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -155.264,
+                219.2,
+                -0.58
+              ],
+              "size": [
+                59.84,
+                4.4,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    256,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

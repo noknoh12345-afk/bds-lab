@@ -1,0 +1,54 @@
+# GeoUI Builder の書き出し（Studio のひな形「スコア＆ゲージ」）を本物のアプリで写す: node lab.mjs app run -a geoui_bb
+# 見るもの: 左上に数字（5 桁）とゲージ、値が描画に届く、画面比を変えても左と上から 1.2 単位、scale 50 で全体が中心へ縮む、エラーが無い。
+# 画面比はスクリプトが端末の種類から推す（スマホは 2000）。この端末の本当の比は geoui:aspect に書いてから見る。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+until stable 60000
+absent clientlog \bERROR\b
+
+section values
+do scriptevent geoui:set v0 12345
+do scriptevent geoui:set v1 20
+wait 2000
+shot hud-guessed-aspect                    # 画面比はスクリプトの推測のまま
+do scriptevent geoui:set aspect 2167
+wait 1500
+shot hud-12345-full                        # この端末（720x1560 → 横 2.1667）の画面比
+do scriptevent geoui:set v0 42
+do scriptevent geoui:set v1 5
+wait 1500
+shot hud-42-quarter                        # 頭の 0 は出ない・ゲージは左から 1/4
+absent clientlog \bERROR\b
+
+section aspect-4x3
+size 1024x768
+do scriptevent geoui:set aspect 1333
+wait 5000
+until stable 60000
+shot hud-4x3
+size reset
+do scriptevent geoui:set aspect 2167
+wait 3000
+
+section scale-50
+do scriptevent geoui:set scale 50
+wait 1500
+shot hud-scale50                           # 数字の間隔も一緒に縮む（Studio はここで桁が離れる）
+do scriptevent geoui:set scale 100
+wait 1500
+
+section alpha-0
+do scriptevent geoui:set alpha 0
+wait 1500
+shot hud-alpha0                            # 見えない
+do scriptevent geoui:set alpha 100
+wait 1500
+absent clientlog \bERROR\b

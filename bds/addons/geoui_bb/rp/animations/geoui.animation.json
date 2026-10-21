@@ -1,0 +1,188 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.geoui_transform": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "geo_ui": {
+          "position": [
+            "v.geoui_ox+v.geoui_cx",
+            "v.geoui_oy+v.geoui_cy",
+            0
+          ],
+          "scale": "v.geoui_scale"
+        },
+        "score_d0_n0": {
+          "scale": "v.geoui_score_d0==0"
+        },
+        "score_d0_n1": {
+          "scale": "v.geoui_score_d0==1"
+        },
+        "score_d0_n2": {
+          "scale": "v.geoui_score_d0==2"
+        },
+        "score_d0_n3": {
+          "scale": "v.geoui_score_d0==3"
+        },
+        "score_d0_n4": {
+          "scale": "v.geoui_score_d0==4"
+        },
+        "score_d0_n5": {
+          "scale": "v.geoui_score_d0==5"
+        },
+        "score_d0_n6": {
+          "scale": "v.geoui_score_d0==6"
+        },
+        "score_d0_n7": {
+          "scale": "v.geoui_score_d0==7"
+        },
+        "score_d0_n8": {
+          "scale": "v.geoui_score_d0==8"
+        },
+        "score_d0_n9": {
+          "scale": "v.geoui_score_d0==9"
+        },
+        "score_d1_n0": {
+          "scale": "v.geoui_score_d1==0"
+        },
+        "score_d1_n1": {
+          "scale": "v.geoui_score_d1==1"
+        },
+        "score_d1_n2": {
+          "scale": "v.geoui_score_d1==2"
+        },
+        "score_d1_n3": {
+          "scale": "v.geoui_score_d1==3"
+        },
+        "score_d1_n4": {
+          "scale": "v.geoui_score_d1==4"
+        },
+        "score_d1_n5": {
+          "scale": "v.geoui_score_d1==5"
+        },
+        "score_d1_n6": {
+          "scale": "v.geoui_score_d1==6"
+        },
+        "score_d1_n7": {
+          "scale": "v.geoui_score_d1==7"
+        },
+        "score_d1_n8": {
+          "scale": "v.geoui_score_d1==8"
+        },
+        "score_d1_n9": {
+          "scale": "v.geoui_score_d1==9"
+        },
+        "score_d2_n0": {
+          "scale": "v.geoui_score_d2==0"
+        },
+        "score_d2_n1": {
+          "scale": "v.geoui_score_d2==1"
+        },
+        "score_d2_n2": {
+          "scale": "v.geoui_score_d2==2"
+        },
+        "score_d2_n3": {
+          "scale": "v.geoui_score_d2==3"
+        },
+        "score_d2_n4": {
+          "scale": "v.geoui_score_d2==4"
+        },
+        "score_d2_n5": {
+          "scale": "v.geoui_score_d2==5"
+        },
+        "score_d2_n6": {
+          "scale": "v.geoui_score_d2==6"
+        },
+        "score_d2_n7": {
+          "scale": "v.geoui_score_d2==7"
+        },
+        "score_d2_n8": {
+          "scale": "v.geoui_score_d2==8"
+        },
+        "score_d2_n9": {
+          "scale": "v.geoui_score_d2==9"
+        },
+        "score_d3_n0": {
+          "scale": "v.geoui_score_d3==0"
+        },
+        "score_d3_n1": {
+          "scale": "v.geoui_score_d3==1"
+        },
+        "score_d3_n2": {
+          "scale": "v.geoui_score_d3==2"
+        },
+        "score_d3_n3": {
+          "scale": "v.geoui_score_d3==3"
+        },
+        "score_d3_n4": {
+          "scale": "v.geoui_score_d3==4"
+        },
+        "score_d3_n5": {
+          "scale": "v.geoui_score_d3==5"
+        },
+        "score_d3_n6": {
+          "scale": "v.geoui_score_d3==6"
+        },
+        "score_d3_n7": {
+          "scale": "v.geoui_score_d3==7"
+        },
+        "score_d3_n8": {
+          "scale": "v.geoui_score_d3==8"
+        },
+        "score_d3_n9": {
+          "scale": "v.geoui_score_d3==9"
+        },
+        "score_d4_n0": {
+          "scale": "v.geoui_score_d4==0"
+        },
+        "score_d4_n1": {
+          "scale": "v.geoui_score_d4==1"
+        },
+        "score_d4_n2": {
+          "scale": "v.geoui_score_d4==2"
+        },
+        "score_d4_n3": {
+          "scale": "v.geoui_score_d4==3"
+        },
+        "score_d4_n4": {
+          "scale": "v.geoui_score_d4==4"
+        },
+        "score_d4_n5": {
+          "scale": "v.geoui_score_d4==5"
+        },
+        "score_d4_n6": {
+          "scale": "v.geoui_score_d4==6"
+        },
+        "score_d4_n7": {
+          "scale": "v.geoui_score_d4==7"
+        },
+        "score_d4_n8": {
+          "scale": "v.geoui_score_d4==8"
+        },
+        "score_d4_n9": {
+          "scale": "v.geoui_score_d4==9"
+        },
+        "score": {
+          "position": [
+            "-(v.geoui_halfw-156.464)",
+            0,
+            0
+          ]
+        },
+        "gauge": {
+          "position": [
+            "-(v.geoui_halfw-156.464)",
+            0,
+            0
+          ],
+          "scale": [
+            "math.clamp((q.property('geoui:v1'))/20,0,1)",
+            1,
+            1
+          ]
+        }
+      }
+    }
+  }
+}

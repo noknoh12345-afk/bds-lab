@@ -1,0 +1,111 @@
+# GeoUI Builder（Blockbench プラグイン bds/geoui/geoui_builder.js）が書き出したパック。GeoUI Studio v10.1 のひな形「スコア＆ゲージ」を
+# Blockbench で作り直したもの（RP の描画は app.txt と tests/geoui-builder-offline.mjs）。ここは BP: プロパティ・コマンド・スコア同期・保存。
+# geoui_studio の【不具合】の節と同じことを、Builder の書き出しで確かめる（直っていること）。
+# = 完全一致 | ~ 正規表現 | ! 無い | !~ 無い正規表現 | '## 題' = 節
+
+## 読み込める（プロパティ11個がすべて既定値。画面比と中心は端末の種類から）
+@A join
+wait 2000
+js const e = p('A'); JSON.stringify(['aspect','scale','cx','cy','ox','oy','alpha','v0','v1','v2','v3'].map((k) => e.getProperty('geoui:' + k)))
+= [1778,100,-6,-278,0,0,100,0,0,0,0]
+
+## player.json は現行バニラ（1.26.50）のまま: 満腹度と襲撃の予兆がバニラと同じ
+js const e = p('A'); JSON.stringify([e.getComponent('minecraft:player.saturation').currentValue, e.getComponent('minecraft:player.exhaustion').effectiveMax, e.getComponent('minecraft:player.saturation').effectiveMax])
+= [5,20,20]
+event entity A minecraft:gain_raid_omen
+wait 200
+
+## ワールドにスコアボードの目的を勝手に作らない
+js JSON.stringify(world.scoreboard.getObjectives().map((o) => o.id))
+= []
+
+## 数値はそのまま書ける（引数が整数型）
+@A cmd /geoui:set alpha 50
+~ @A geoui:alpha = 50
+wait 200
+js p('A').getProperty('geoui:alpha')
+= 50
+
+## alpha 0 は 0（見えなくなる）
+@A cmd /geoui:set alpha 0
+~ @A geoui:alpha = 0
+wait 200
+js p('A').getProperty('geoui:alpha')
+= 0
+@A cmd /geoui:set alpha 100
+wait 200
+
+## 範囲外の値は理由を言って断り、前の値のまま
+@A cmd /geoui:set ox 99999
+~ @A geoui:ox must be an integer -4000\.\.4000 \(got 99999\)
+wait 200
+js p('A').getProperty('geoui:ox')
+= 0
+
+## 画面の大きさから画面比を決められる（2340x1080 → 2167）
+@A cmd /geoui:aspect 2340 1080
+~ @A geoui:aspect = 2167
+wait 200
+js p('A').getProperty('geoui:aspect')
+= 2167
+@A cmd /geoui:get
+~ @A aspect=2167 scale=100 cx=-6 cy=-278 ox=0 oy=0 alpha=100 v0=0 v1=0 v2=0 v3=0
+
+## プロパティはプレイヤーごと（A の値は B に移らない）
+@B join
+wait 2000
+js JSON.stringify([p('A').getProperty('geoui:aspect'), p('B').getProperty('geoui:aspect')])
+= [2167,1778]
+
+## スコアボード geoui_v0 を作れば、値が2tick以内にプロパティへ写る（float32 で正確な ±2^24 に収める）
+scoreboard objectives add geoui_v0 dummy
+scoreboard players set A geoui_v0 12345678
+wait 300
+js p('A').getProperty('geoui:v0')
+= 12345678
+scoreboard players set A geoui_v0 2147483647
+wait 300
+js p('A').getProperty('geoui:v0')
+= 16777216
+scoreboard players set A geoui_v0 -5
+wait 300
+js p('A').getProperty('geoui:v0')
+= -5
+
+## scriptevent で値を書ける（コンソールからは全員に）
+scriptevent geoui:set v1 15
+wait 300
+js JSON.stringify([p('A').getProperty('geoui:v1'), p('B').getProperty('geoui:v1')])
+= [15,15]
+
+## 抜けて入り直しても、自分で変えた alpha・scale・画面比はそのまま
+@A cmd /geoui:set alpha 40
+@A cmd /geoui:set scale 150
+wait 200
+@A leave
+wait 500
+@A join
+wait 2500
+js JSON.stringify([p('A').getProperty('geoui:alpha'), p('A').getProperty('geoui:scale'), p('A').getProperty('geoui:aspect')])
+= [40,150,2167]
+
+## スクリプトの再読込（/reload）でもそのまま
+reload
+wait 3000
+js JSON.stringify([p('A').getProperty('geoui:alpha'), p('A').getProperty('geoui:scale'), p('A').getProperty('geoui:aspect')])
+= [40,150,2167]
+
+## サーバーを再起動してもそのまま
+restart
+@A join
+@B join
+wait 2500
+js JSON.stringify([p('A').getProperty('geoui:alpha'), p('A').getProperty('geoui:scale'), p('A').getProperty('geoui:aspect'), p('B').getProperty('geoui:aspect')])
+= [40,150,2167,1778]
+
+## /geoui:reset で端末の既定に戻る
+@A cmd /geoui:reset
+~ @A geoui: reset
+wait 300
+js JSON.stringify([p('A').getProperty('geoui:alpha'), p('A').getProperty('geoui:scale'), p('A').getProperty('geoui:aspect'), p('A').getProperty('geoui:cy')])
+= [100,100,1778,-278]

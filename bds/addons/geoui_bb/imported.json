@@ -1,0 +1,6 @@
+{
+  "from": "geoui_bb.mcaddon",
+  "bp": [1, 0, 0],
+  "rp": [1, 0, 0],
+  "request": "GeoUI Builder（Blockbench プラグイン bds/geoui/geoui_builder.js）で GeoUI Studio v10.1 のひな形「スコア＆ゲージ」を作り直した書き出し。BP のプロパティ・コマンド・スコア同期が本物の BDS で仕様どおりか、Studio の不具合が無いかを確かめる"
+}
