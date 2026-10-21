@@ -6,6 +6,7 @@
 /** a failed step's message → its code (the first rule that matches; 'other' for none) */
 export const STEP_CODES = [
   [/LAN のワールドに焦点が移らない/, 'join-lan-focus'],
+  [/LAN のワールドが出ない（PLAY を開き直した: (\d+) 回）/, 'join-lan-missing'],
   [/LAN のワールドが出ない/, 'join-lan-missing'],
   [/タイトルの Play が押せません/, 'join-title-play'],
   [/ゲームが参加をやめました/, 'join-refused'],

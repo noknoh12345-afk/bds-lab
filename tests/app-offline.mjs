@@ -646,7 +646,13 @@ await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without
   ok(q.status === 0 && /参加の確認（rated）: ゲームパッド A/.test(qRun) && /参加の確認（packs）: ゲームパッド A/.test(qRun) && !q.state.calls.some((c) => /^shell input tap/.test(c)), `exit ${q.status} ${JSON.stringify(q.state.pads)}\n${qRun.slice(-1200)}`);
   const n = e2e('lannone', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_LAN_NONE: '1', APP_LAN_JOIN_MS: '1500' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
   made.push(n.runDir);
-  ok(n.status === 1 && /LAN のワールドが出ない: 端末の中継（UDP 7551）と BDS の LAN の公開を確かめる/.test(n.text), n.text.slice(-1500));
+  ok(n.status === 1 && /LAN のワールドが出ない（PLAY を開き直した: \d+ 回）: 端末の中継（UDP 7551）と BDS の LAN の公開を確かめる/.test(n.text), n.text.slice(-1500));
+  // the LAN world listed only once PLAY is opened again (the CI device's discovery: 2–3 minutes, or never in 5): after a while
+  // on PLAY without it, B back to the title and PLAY again — joined on the third opening
+  const lt = e2e('lanlate', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_LAN_LATE: '3', APP_LAN_RELIST_MS: '200', APP_LAN_JOIN_MS: '60000' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(lt.runDir);
+  const ltRun = fs.readFileSync(path.join(lt.runDir, 'run.txt'), 'utf8');
+  ok(lt.status === 0 && lt.state.uri === 'lan' && lt.state.playOpens === 3 && (ltRun.match(/PLAY を開き直します（B でタイトルへ、\d 回目）/g) ?? []).length === 2, `exit ${lt.status} opens ${lt.state.playOpens} ${JSON.stringify(lt.state.pads)}\n${ltRun.slice(-1200)}`);
 });
 await t('run: the content log on and no file yet (the game makes it at its first line) is a client that logged nothing: absent passes, the report says none', () => {
   const sc = path.join(tmp, 'cl-none.txt'); fs.writeFileSync(sc, 'launch\njoin\nuntil joined 5000\nabsent clientlog ERROR\n');

@@ -129,7 +129,8 @@ async function padPress(k) {
     else if (process.env.FAKE_SIGNIN && S.phase === 'title' && k === 'BUTTON_A' && S.titleFocus === 'signin') { S.phase = 'ms-start'; S.titleFocus = null; save(); }
     // (the classic title: the first move turns the focus on, on its Play — drawn green — and A opens PLAY)
     else if (k === 'DPAD_UP' && S.phase === 'title') { S.titleFocus = 'play'; save(); }
-    else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && S.launched) { S.phase = process.env.FAKE_LAN_NONE ? 'lanempty' : 'lanlist'; S.titleFocus = null; save(); }
+    // (FAKE_LAN_LATE=n: the LAN world is listed only from the n-th time PLAY is opened — the CI device's discovery that came late)
+    else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && S.launched) { S.playOpens = (S.playOpens ?? 0) + 1; S.phase = process.env.FAKE_LAN_NONE || S.playOpens < Number(process.env.FAKE_LAN_LATE || 0) ? 'lanempty' : 'lanlist'; S.titleFocus = null; save(); }
     // FAKE_OWN_WORLD: the player's own world listed first — the first DOWN focuses its card (the hint "A Play" all the same;
     // A there opens it), the next the LAN world's
     else if (k === 'DPAD_DOWN' && S.phase === 'lanlist') { S.phase = process.env.FAKE_OWN_WORLD ? 'lanown' : 'lanfocus'; save(); }

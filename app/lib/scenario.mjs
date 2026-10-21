@@ -323,7 +323,10 @@ export async function runScenario(steps, ctx) {
   const joinLan = async (s) => {
     const end = Date.now() + (Number(process.env.APP_LAN_JOIN_MS) || 180_000);
     if (!ctx.ocr) { for (const k of ['A', 'DOWN', 'A']) { padKey(k); await sleep(padWait); } return 'LAN のワールド（ゲームパッド A・DOWN・A。OCR なし）'; }
-    let said = '', listed = false, other = 0, moves = 0, sawPlay = false, titleA = 0, newTries = 0;
+    let said = '', listed = false, other = 0, moves = 0, sawPlay = false, titleA = 0, newTries = 0, emptySince = 0, reopened = 0;
+    // (the LAN world not listed for this long on PLAY: back to the title and PLAY opened again — the game asks the network
+    //  anew when its Worlds list opens; on the CI device the world showed after 2-3 minutes or never in 5)
+    const relistMs = Number(process.env.APP_LAN_RELIST_MS) || 60_000, relistMax = 3;
     while (Date.now() < end) {
       if (clearDialog(s)) { await sleep(1000); continue; }
       const ws = ocrNow(), all = ws.map((w) => w.text).join(' '), p = playScreen(ws);
@@ -338,7 +341,13 @@ export async function runScenario(steps, ctx) {
         if (p.lan && card) { try { onLan = focusRing(decode(last), card) || (p.focused && !own && moves >= 6); } catch { onLan = p.focused && !own; } }
         if (onLan) { padKey('A'); log(`${s.line} PLAY の LAN のワールドを選びます（ゲームパッド A）`); return 'LAN のワールド（PLAY → Worlds）'; }
         // (not listed yet: the discovery takes a moment. Listed: the focus moved on — down the list, back up after a while)
-        if (p.lan) { moves++; padKey(moves % 12 <= 7 ? 'DOWN' : 'UP'); }
+        if (p.lan) { moves++; padKey(moves % 12 <= 7 ? 'DOWN' : 'UP'); emptySince = 0; }
+        else if (!emptySince) emptySince = Date.now();
+        else if (Date.now() - emptySince > relistMs && reopened < relistMax) {
+          // (the title next: its A opens PLAY again — sawPlay forgotten, so a title OCR cannot place still gets its A)
+          reopened++; emptySince = 0; sawPlay = false; other = 0;
+          log(`${s.line} LAN のワールドが ${Math.round(relistMs / 1000)} 秒出ません: PLAY を開き直します（B でタイトルへ、${reopened} 回目）`); padKey('B');
+        }
         await sleep(padWait); continue;
       }
       const play = titlePlay(ws);
@@ -366,7 +375,7 @@ export async function runScenario(steps, ctx) {
       else { padKey('B'); other = 0; }
       await sleep(padWait);
     }
-    throw new Error(`PLAY の LAN のワールドへ進めませんでした（${listed ? 'LAN のワールドに焦点が移らない' : 'LAN のワールドが出ない: 端末の中継（UDP 7551）と BDS の LAN の公開を確かめる'}）（画面の文字: ${said}）`);
+    throw new Error(`PLAY の LAN のワールドへ進めませんでした（${listed ? 'LAN のワールドに焦点が移らない' : `LAN のワールドが出ない（PLAY を開き直した: ${reopened} 回）: 端末の中継（UDP 7551）と BDS の LAN の公開を確かめる`}）（画面の文字: ${said}）`);
   };
   const seenWords = (ws) => ws.map((w) => w.text).join(' ').replace(/\s+/g, ' ').slice(0, 240) || '（文字なし）';
   const joinedRe = /Player Spawned: /;
