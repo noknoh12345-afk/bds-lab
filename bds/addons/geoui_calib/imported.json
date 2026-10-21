@@ -1,0 +1,6 @@
+{
+  "from": "geoui_calib_pack",
+  "bp": [1, 0, 0],
+  "rp": [1, 0, 0],
+  "request": "GeoUI の目盛り（bds/geoui/calib.mjs make）。本物のアプリで HUD の live_player_renderer が描くモデル座標の点を写し、画面の高さ（Studio は 176 単位）・画面の中心（Studio は y=140 と中心のずれ）・遠近の有無を測る"
+}

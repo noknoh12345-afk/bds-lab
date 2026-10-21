@@ -1,0 +1,89 @@
+# GeoUI の目盛りを本物のアプリで写す: node lab.mjs app run -a geoui_calib（GitHub: app.yml の addon=geoui_calib）
+# 写した画面（shots/*.png）を測る: node bds/geoui/calib.mjs measure <run>/shots
+#   → 画面の高さ（モデル単位。Studio は 176）・画面の中心のモデル座標（Studio は y=140 と中心のずれ）・縦横の尺度・遠近（奥行き 60 での拡大率）
+# 目盛り: 白い点が 40 単位ごと（x = ±20, ±60 … ±220、y = 20 … 260、z = -1）、赤 (20,140)・緑 (60,140)・青 (20,180)、
+# 黄 z=-60（手前）・水色 z=+60（奥）。後ろは黒い板（z=+100）。中心のずれは 0 にしてあるので、Studio の式は何も入っていない。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+until stable 60000
+shot calib-hud                             # HUD ごと（この端末の画面のまま）
+absent clientlog \bERROR\b                 # 参加しただけで UI・Molang・マテリアルのエラーが無い
+
+section hud-hidden
+# HUD の部品（ホットバー・体力・照準…）を隠して、目盛りだけにする（隠せない部品は測るときに外れとして除く）
+do hud @a hide crosshair
+do hud @a hide hotbar
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+wait 2000
+until stable 60000
+shot calib-device                          # この端末の画面（既定の大きさ）
+
+section size-4x3
+size 1024x768
+wait 5000
+until stable 60000
+shot calib-1024x768
+
+section size-16x10
+size 1920x1200
+wait 5000
+until stable 60000
+shot calib-1920x1200
+
+section size-16x9
+size 1920x1080
+wait 5000
+until stable 60000
+shot calib-1920x1080
+
+section size-20x9
+size 2400x1080
+wait 5000
+until stable 60000
+shot calib-2400x1080
+
+section size-21x9
+size 2560x1080
+wait 5000
+until stable 60000
+shot calib-2560x1080
+
+section density
+# UI の大きさ（GUI の倍率）を変えても、目盛りの写り方が変わらないか（Studio は「画面の高さ = 240 UI 単位」と仮定）
+size reset
+density 240
+wait 5000
+until stable 60000
+shot calib-dpi240
+density 480
+wait 5000
+until stable 60000
+shot calib-dpi480
+density reset
+wait 3000
+
+section scale-50
+# GeoUI 全体の大きさ（v.geoui_scale）: 目盛りが (0, 140) を中心に半分になる
+do scriptevent gcal:set scale 50
+wait 2000
+until stable 60000
+shot calib-scale50
+do scriptevent gcal:set scale 100
+wait 1500
+absent clientlog \bERROR\b
