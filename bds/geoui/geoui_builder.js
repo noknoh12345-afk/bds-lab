@@ -111,6 +111,14 @@ var GeoUICore = (function () {
     s.autoBump = s.autoBump !== false; s.exported = Math.max(0, Math.round(num(s.exported)));
     // (the measured calibration: the screen's height and centre follow the HUD frame — whatever is typed in for them)
     if (!CALIBRATIONS[s.calibration]) s.calibration = 'manual';
+    // (Studio's: its two numbers, whatever was left in the fields — a project from before calibrations, with numbers of its
+    //  own typed in, is 'manual': they stay)
+    if (s.calibration === 'studio-v10.1') {
+      const fixOf = (c) => ['desktop', 'mobile', 'console'].map((k) => `${num(c[k] && c[k].x)},${num(c[k] && c[k].y)}`).join(';');
+      const own = !(s0 && s0.calibration) && (s.unitsPerScreenH !== STUDIO.unitsPerScreenH || fixOf(s.centerFix) !== fixOf(STUDIO.centerFix));
+      if (own) s.calibration = 'manual';
+      else { s.unitsPerScreenH = STUDIO.unitsPerScreenH; s.centerFix = clone(STUDIO.centerFix); }
+    }
     if (s.calibration === MEASURED.id) {
       const f = frameScreen(s.panel, s.refAspect), fix = { x: r4(f.cx / f.H), y: Math.round(((f.cy - PIVOT_Y) / f.H) * 1e5) / 1e5 };
       s.unitsPerScreenH = r4(f.H); s.centerFix = { desktop: Object.assign({}, fix), mobile: Object.assign({}, fix), console: Object.assign({}, fix) };
@@ -1171,8 +1179,12 @@ if (typeof BBPlugin !== 'undefined') (function () {
       },
       onConfirm(r) {
         const old = settings().unitsPerScreenH;
+        // (the same calibration kept, its numbers typed over: the person's own numbers — 'manual'. Another one chosen: its numbers)
+        const typed = Math.abs(G.num(r.unitsPerScreenH) - S.unitsPerScreenH) > 1e-6
+          || [['desktop', r.cfDesktop], ['mobile', r.cfMobile], ['console', r.cfConsole]].some(([k, v]) => Math.abs(G.num(v[0]) - cf[k].x) > 1e-6 || Math.abs(G.num(v[1]) - cf[k].y) > 1e-6);
+        const calibration = r.calibration === S.calibration && typed ? 'manual' : r.calibration;
         setSettings({
-          ns: r.ns, name: r.name, description: r.description, calibration: r.calibration, unitsPerScreenH: r.unitsPerScreenH, refAspect: +r.refAspect, previewAspect: +r.previewAspect, previewPlatform: r.previewPlatform,
+          ns: r.ns, name: r.name, description: r.description, calibration, unitsPerScreenH: r.unitsPerScreenH, refAspect: +r.refAspect, previewAspect: +r.previewAspect, previewPlatform: r.previewPlatform,
           centerFix: { desktop: { x: r.cfDesktop[0], y: r.cfDesktop[1] }, mobile: { x: r.cfMobile[0], y: r.cfMobile[1] }, console: { x: r.cfConsole[0], y: r.cfConsole[1] } },
           panel: { size: r.panelSize, offset: r.panelOffset }, hud: r.hud, hideInPaperdoll: r.hideInPaperdoll, followHud: r.followHud, filter: r.filter, bp: r.bp,
         });

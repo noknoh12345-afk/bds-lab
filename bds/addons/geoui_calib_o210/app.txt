@@ -30,8 +30,9 @@ wait 6000
 absent clientlog \bERROR\b                 # 枠を変えても UI・Molang・マテリアルのエラーが無い
 
 section plain
-shot calib-plain                           # 目盛りそのまま（3 列・3 行写れば測れる）
-measure geoui calib-plain
+shot calib-plain                           # 目盛りそのまま（写すだけ。測らない）
+# 測った対応（画面の高さ 170.68・中心 135.04 + 枠を下げた分）では中心が 305.7: 写るのは y 220〜391 で、目盛り（y 20〜260）は
+# 2 行しか入らず測れない（run 39566341288 の no-anchor がそれ）。測るのは下の up88・up176（217.60 + 88 = 129.60 + 176 = 305.60）
 
 section up88
 # 目盛りを 88 単位上へ（測った中心から 88 を足すと本当のモデル座標）

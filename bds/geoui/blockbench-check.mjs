@@ -76,6 +76,10 @@ ok(inst.installed && reg.format && reg.menu && reg.api, `Blockbench ${version}: 
 const template = async (fill, uuids) => ev(async ({ L1, L2, fill, uuids }) => {
   const B = window.GeoUIBuilder;
   B.newProject();
+  // (a new project starts from the measured calibration: this one is Studio's template, compared with Studio's own export)
+  const fresh = B.settings();
+  window.__geouiFresh = { calibration: fresh.calibration, H: fresh.unitsPerScreenH, fixY: fresh.centerFix.mobile.y };
+  B.setSettings({ calibration: 'studio-v10.1' });
   if (uuids) B.setSettings({ uuids, name: 'GeoUI Pack', description: 'GeoUI Builder (Blockbench) で作成' });
   await B.addNumber({ name: 'score', digits: 5, heightPct: 9, anchor: 'top_left', padX: 1.2, padY: 1.2, source: "q.property('geoui:v0')", dataUrl: L1, cells: 11 });
   await B.addGauge({ name: 'gauge', dataUrl: L2, widthPct: 34, heightPct: 2.5, anchor: 'top_left', padX: 1.2, padY: 4.4, max: 20, fill, source: "q.property('geoui:v1')" });
@@ -84,6 +88,8 @@ const template = async (fill, uuids) => ev(async ({ L1, L2, fill, uuids }) => {
 }, { L1, L2, fill, uuids });
 const made = await template('center');
 ok(made.cubes === 51 && made.groups === 58, `the template: ${made.cubes} planes in ${made.groups} bones (5 digits x 10 numerals, a gauge)`, JSON.stringify(made));
+const fresh = await ev(() => window.__geouiFresh);
+ok(fresh.calibration === G.MEASURED.id && Math.abs(fresh.H - 170.68) < 0.01 && Math.abs(fresh.fixY + 0.02905) < 1e-5, `a new project starts from the measured calibration (${fresh.H} units high, centre fix y ${fresh.fixY}); Studio's template is switched to Studio's values`, JSON.stringify(fresh));
 const built = await ev(() => { const b = window.GeoUIBuilder.build(); return { settings: b.settings, pre: b.pre, animation: b.animation, geometries: b.geometries, warnings: b.warnings }; });
 ok(!built.warnings.length, 'built inside Blockbench without warnings', built.warnings.join('\n'));
 

@@ -226,9 +226,15 @@ ok(back.width === 64 && back.height === 32 && Buffer.compare(Buffer.from(back.da
   ok(n.calibration === G.MEASURED.id && close(n.unitsPerScreenH, 170.68, 0.01) && close(n.centerFix.mobile.y, -0.02905, 1e-5) && n.centerFix.desktop.x === 0 && n.centerFix.console.y === n.centerFix.mobile.y,
     'measured: a new project is 170.68 units high, centred at 135.04 (fix y −0.02905) on every platform', JSON.stringify(n.centerFix));
   ok(st.calibration === 'studio-v10.1' && st.unitsPerScreenH === 176 && st.centerFix.mobile.y === -0.05256 && G.settingsOf({ calibration: 'odd' }).calibration === 'manual', 'measured: the library\'s defaults stay Studio\'s (older projects, the tests); an unknown choice is manual');
-  // the shots the real app gave (app runs 39560350529, 39563235250, 39563238661, 39563246391: Android 1560x720, 1.26.52.3) —
-  // each frame's height and centre as the model says them, against what was measured
-  const real = [[{ size: [2, 10], offset: [0, 110] }, 393.72, 279.96], [{ size: [10, 10], offset: [0, 1110] }, 170.61, 1841.60], [{ size: [20, 20], offset: [0, 105] }, 85.31, 79.47]];
+  // Studio's chosen again: its two numbers come back (a measured project's are left in the fields); a project from before
+  // calibrations with its own numbers is 'manual' — they stay
+  const back = G.settingsOf({ ...n, calibration: 'studio-v10.1' }), old = G.settingsOf({ unitsPerScreenH: 180, centerFix: { mobile: { x: 0, y: -0.04 } } });
+  ok(back.unitsPerScreenH === 176 && JSON.stringify(back.centerFix) === JSON.stringify(G.STUDIO.centerFix) && old.calibration === 'manual' && old.unitsPerScreenH === 180 && old.centerFix.mobile.y === -0.04,
+    'Studio\'s calibration is a preset (176 and its centre fixes); an older project\'s own numbers stay (manual)', JSON.stringify([back.unitsPerScreenH, back.centerFix, old.calibration, old.unitsPerScreenH]));
+  // the shots the real app gave (app runs 39560350529, 39563235250, 39563238661, 39563246391, 39566341288: Android 1560x720,
+  // 1.26.52.3) — each frame's height and centre as the model says them, against what was measured (o210: its markers lifted
+  // 88 and 176 units into view, the centre measured 217.60 + 88 = 129.60 + 176 = 305.60)
+  const real = [[{ size: [2, 10], offset: [0, 110] }, 393.72, 279.96], [{ size: [10, 10], offset: [0, 1110] }, 170.61, 1841.60], [{ size: [20, 20], offset: [0, 105] }, 85.31, 79.47], [{ size: [10, 10], offset: [0, 210] }, 170.61, 305.60]];
   const off = real.map(([panel, H, cy]) => { const f = G.frameScreen(panel, 1560 / 720); return { panel: panel.size.join('x'), dH: (f.H - H) / H, dcy: f.cy - cy }; });
   ok(off.every((o) => Math.abs(o.dH) < 0.001 && Math.abs(o.dcy) < 0.3), 'measured: the model gives back the real app\'s three frames (height 0.1 %, centre 0.3 units)', JSON.stringify(off));
   const moved = G.settingsOf({ ...G.newProjectSettings(), panel: { size: [20, 20], offset: [0, 105] } });
