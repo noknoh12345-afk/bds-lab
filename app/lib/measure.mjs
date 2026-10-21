@@ -6,6 +6,8 @@
 //           its centre and centre fix, px per unit, skew and depth — what GeoUI Studio's hand-set numbers are checked against
 //   diff  — where the picture differs from the newest `shot world` (the baseline `changed` uses): the share that changed and
 //           the boxes (px) of the changed parts, biggest first — where a UI was drawn, in numbers
+import { measureCode, cleanCode } from './failcodes.mjs';
+
 const DIFF_PARTS = 4, DIFF_LEVEL = 48;
 export const KINDS = {
   diff: {
@@ -94,7 +96,8 @@ export function cleanMeasures(list) {
     if (!k) return [];
     const values = {};
     if (m.ok === true && m.values && typeof m.values === 'object') for (const f of k.fields) if (Number.isFinite(m.values[f])) values[f] = round(m.values[f]);
-    return [{ kind: m.kind, shot: name(m.shot), line: Number.isFinite(m.line) ? m.line : null, ok: m.ok === true, values }];
+    // (why it could not measure stays sealed: its code — failcodes.mjs, a word and counts — goes out)
+    return [{ kind: m.kind, shot: name(m.shot), line: Number.isFinite(m.line) ? m.line : null, ok: m.ok === true, values, ...(m.ok === true ? {} : { code: cleanCode(m.code) ?? measureCode(m.why) }) }];
   });
 }
 
@@ -102,7 +105,7 @@ export function cleanMeasures(list) {
 export function measureLines(list, { why = false } = {}) {
   return (Array.isArray(list) ? list : []).map((m) => {
     const head = `- 測った値 ${m.shot ?? '?'}（${m.kind}${m.line ? `、${m.line} 行目` : ''}）`;
-    if (!m.ok) return `${head}: ✘ 測れません${why && m.why ? `（${m.why}）` : ''}`;
+    if (!m.ok) return `${head}: ✘ 測れません${why && m.why ? `（${m.why}）` : m.code ? `（${m.code}）` : ''}`;
     return `${head}: ${KINDS[m.kind]?.line(m.values ?? {}) ?? JSON.stringify(m.values)}`;
   });
 }

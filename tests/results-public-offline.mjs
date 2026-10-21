@@ -56,10 +56,10 @@ let r = await lab(['checks', '--seal', runs], PUB);
 ok(r.status === 0 && /OK .*results\.sealed/.test(r.text), 'public with a key: sealed', r.text);
 ok(JSON.stringify(fs.readdirSync(run).sort()) === JSON.stringify(['results.sealed', 'summary.json']), 'only results.sealed and summary.json are left', fs.readdirSync(run).join(' '));
 const sumText = fs.readFileSync(path.join(run, 'summary.json'), 'utf8'), sum = JSON.parse(sumText);
-ok(sum.ok === false && sum.steps === 3 && JSON.stringify(sum.failed) === '[2]' && JSON.stringify(sum.failed_lines) === '[7]' && sum.seconds === 95 && sum.join_seconds === 12.3 && sum.bds === '1.21.120.4' && sum.app === '1.21.120.4' && sum.addon === 'demo' && sum.sealed === true, 'summary.json: the verdict, the steps and which failed, seconds, the versions', sumText);
+ok(sum.ok === false && sum.steps === 3 && JSON.stringify(sum.failed) === '[2]' && JSON.stringify(sum.failed_lines) === '[7]' && JSON.stringify(sum.failed_codes) === '["other"]' && sum.seconds === 95 && sum.join_seconds === 12.3 && sum.bds === '1.21.120.4' && sum.app === '1.21.120.4' && sum.addon === 'demo' && sum.sealed === true, 'summary.json: the verdict, the steps and which failed, seconds, the versions', sumText);
 ok(![EMAIL, SCREEN, LOG, STEP, 'my-secret-words', '0123456789abcdef', '01-title', KEY].some((x) => sumText.includes(x)), 'summary.json: no e-mail, screen text, log line, step text, device id, screenshot or key', sumText);
-ok(JSON.stringify(sum.measures) === JSON.stringify([{ kind: 'geoui', shot: 'calib-device', line: 11, ok: true, values: { width: 1560, height: 720, unitsPerScreenH: 176.25, centreFixX: -0.0017, centreFixY: -0.05256 } }, { kind: 'geoui', shot: null, line: 12, ok: false, values: {} }]),
-  "summary.json: the measures, a kind's own numbers only (no word, other field, other kind or why)", JSON.stringify(sum.measures));
+ok(JSON.stringify(sum.measures) === JSON.stringify([{ kind: 'geoui', shot: 'calib-device', line: 11, ok: true, values: { width: 1560, height: 720, unitsPerScreenH: 176.25, centreFixX: -0.0017, centreFixY: -0.05256 } }, { kind: 'geoui', shot: null, line: 12, ok: false, values: {}, code: 'other' }]),
+  "summary.json: the measures, a kind's own numbers only (no word, other field, other kind or why: a failure only as its code)", JSON.stringify(sum.measures));
 const sealedBuf = fs.readFileSync(path.join(run, 'results.sealed'));
 ok(sealedBuf.subarray(0, 8).toString() === 'BDSLABV1' && ![EMAIL, SCREEN, LOG].some((x) => sealedBuf.includes(Buffer.from(x))), "the vault's form, nothing readable in it");
 ok(!r.text.includes(KEY) && !r.text.includes(EMAIL) && !r.text.includes(SCREEN), 'nothing of the key or the run in what it says', r.text);
@@ -95,10 +95,10 @@ const API = { GITHUB_API_URL: `http://127.0.0.1:${server.address().port}`, GITHU
 r = await lab(['checks', runs], { ...API, APP_REPO_VISIBILITY: 'public' });
 const all = JSON.stringify(posts);
 ok(r.status === 0 && posts.length === 1 && /^FAIL .*中身は暗号化/.test(posts[0].output.title), 'a sealed run: one check (no logcat, no screens)', r.text + all);
-ok(/手順 3 個、落ちた: 2 番目（7 行目）/.test(posts[0].output.summary) && /1\.21\.120\.4/.test(posts[0].output.summary) && /95s/.test(posts[0].output.summary) && !posts[0].output.text, 'its summary: the verdict, which step, versions, seconds; no text', posts[0]?.output?.summary);
+ok(/手順 3 個、落ちた: 2 番目（7 行目 other）/.test(posts[0].output.summary) && /1\.21\.120\.4/.test(posts[0].output.summary) && /95s/.test(posts[0].output.summary) && !posts[0].output.text, 'its summary: the verdict, which step, versions, seconds; no text', posts[0]?.output?.summary);
 ok(/中身は暗号化されています: 手元で node lab\.mjs app ci watch 424242/.test(posts[0].output.summary), 'one line: where to read it', posts[0]?.output?.summary);
-ok(/^- 測った値 calib-device（geoui、11 行目）: 画面の高さ 176\.250 単位.*中心のずれ x -0\.00170 \/ y -0\.05256/m.test(posts[0].output.summary) && /^- 測った値 \?（geoui、12 行目）: ✘ 測れません$/m.test(posts[0].output.summary) && posts[0].output.summary.includes('"unitsPerScreenH":176.25'),
-  'the measures in the check: a line each and the numbers as JSON', posts[0]?.output?.summary);
+ok(/^- 測った値 calib-device（geoui、11 行目）: 画面の高さ 176\.250 単位.*中心のずれ x -0\.00170 \/ y -0\.05256/m.test(posts[0].output.summary) && /^- 測った値 \?（geoui、12 行目）: ✘ 測れません（other）$/m.test(posts[0].output.summary) && posts[0].output.summary.includes('"unitsPerScreenH":176.25'),
+  'the measures in the check: a line each (a failed one with its code) and the numbers as JSON', posts[0]?.output?.summary);
 ok(![EMAIL, SCREEN, LOG, STEP, 'my-secret-words', 'base64'].some((x) => all.includes(x)), 'no e-mail, screen text, log line or step text in the check', all);
 const sealedChecks = posts.splice(0);
 posts.length = 0;
@@ -160,5 +160,25 @@ try {
 ok(JSON.stringify(tree(keep)) === JSON.stringify(before), '(the copy of the original is untouched)');
 
 fs.rmSync(tmp, { recursive: true, force: true });
+// ---- 4. why a step failed, as a code (lib/failcodes.mjs): the words of the fixed list, never the message ----
+{
+  const F = await import(new URL('../app/lib/failcodes.mjs', import.meta.url).href);
+  const join = `PLAY の LAN のワールドへ進めませんでした（LAN のワールドが出ない: 端末の中継（UDP 7551）と BDS の LAN の公開を確かめる）（画面の文字: ${SCREEN} ${EMAIL}）`;
+  const codes = [join, '180000 ミリ秒待ちました: サーバーに接続が来ていません（参加の画面・サインイン・版の違い？ 画面を見てください）', `測れません（geoui calib-plain）: only 4 square marks on the picture`, `画面に /Play/ の文字が見つかりません（読めた文字: ${SCREEN}）`, SCREEN, undefined].map(F.stepCode);
+  ok(JSON.stringify(codes) === '["join-lan-missing","joined-no-connection","measure-failed","text-missing","other","other"]', 'step codes from their messages', JSON.stringify(codes));
+  const mv = F.stepCode(`60000 ミリ秒待ちました: 画面が落ち着きません（動き続けた所: 0,24–1560,720 px・3.41%・格子 1111.1111.0110）（画面の文字: ${SCREEN}）`);
+  ok(mv === 'stable-moving 0/24/1560/720/3.41/1111.1111.0110' && F.cleanCode(mv) === mv, 'a screen that never held still: where it moved, in numbers', mv);
+  const mc = ['only 4 square marks on the picture', 'no grid of equally spaced squares on the picture', 'only 7 grid markers in 2 columns and 3 rows on the picture (9 in 3 of each are needed: hold the screen across)', 'the squares found are 12.5 units wide, not 3: not the grid (text or HUD pieces)', `${SCREEN} ${EMAIL}`].map(F.measureCode);
+  ok(JSON.stringify(mc) === '["few-marks 4","no-grid","few-rows 7/2/3","wrong-size 12.5","other"]', 'measure codes with their counts, nothing else', JSON.stringify(mc));
+  ok(F.cleanCode('join-lan-missing') === 'join-lan-missing' && F.cleanCode('few-rows 7/2/3') === 'few-rows 7/2/3' && F.cleanCode(`other ${SCREEN}`) === null && F.cleanCode(EMAIL) === null && F.cleanCode(42) === null, 'only codes of that form are kept');
+  // a run whose failed steps say why: their codes in summary.json and the check, the messages nowhere
+  const d0 = path.join(tmp, 'coded'), d = makeRun(d0, '20261021-070000-coded');
+  const res = JSON.parse(fs.readFileSync(path.join(d, 'result.json'), 'utf8'));
+  res.results[1].note = join; res.measures[1].why = 'only 4 square marks on the picture';
+  fs.writeFileSync(path.join(d, 'result.json'), JSON.stringify(res));
+  const rr = await lab(['checks', '--seal', d0], PUB), cs = fs.readFileSync(path.join(d, 'summary.json'), 'utf8'), c = JSON.parse(cs);
+  ok(rr.status === 0 && JSON.stringify(c.failed_codes) === '["join-lan-missing"]' && c.measures[1].code === 'few-marks 4' && ![SCREEN, EMAIL, 'UDP 7551', 'square marks'].some((x) => cs.includes(x)), 'summary.json: the codes, none of the words', cs);
+}
+
 console.log(fails ? `✘ ${fails} failed` : '✔ all passed');
 process.exit(fails ? 1 : 0);

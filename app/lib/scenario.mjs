@@ -197,6 +197,22 @@ export function screenDiff(a, b, decode) {
   }
   return n ? d / n : 1;
 }
+/** where two pictures differ (pure but for decoding): the share of sampled pixels that changed, their box (px) and which
+ *  of a 4 x 3 grid of the screen they are in ('0110.0000.0110': the rows top to bottom) — numbers only, so a screen that
+ *  never held still can say where it moved without showing it (the paper doll's corner, the whole world, the chat) */
+export function moveBox(a, b, decode) {
+  const A = decode(a), B = decode(b);
+  if (A.w !== B.w || A.h !== B.h) return null;
+  let n = 0, d = 0, x0 = A.w, y0 = A.h, x1 = -1, y1 = -1;
+  const cells = new Array(12).fill(0);
+  for (let y = 0; y < A.h; y += 4) for (let x = 0; x < A.w; x += 4) {
+    const o = (y * A.w + x) * 4; n++;
+    if (Math.abs(A.data[o] - B.data[o]) + Math.abs(A.data[o + 1] - B.data[o + 1]) + Math.abs(A.data[o + 2] - B.data[o + 2]) <= 30) continue;
+    d++; if (x < x0) x0 = x; if (y < y0) y0 = y; if (x > x1) x1 = x; if (y > y1) y1 = y;
+    cells[Math.min(2, Math.floor((y * 3) / A.h)) * 4 + Math.min(3, Math.floor((x * 4) / A.w))] = 1;
+  }
+  return { share: n ? d / n : 0, box: d ? [x0, y0, x1 + 4, y1 + 4] : null, grid: [0, 1, 2].map((r) => cells.slice(r * 4, r * 4 + 4).join('')).join('.') };
+}
 /** the share of sampled pixels in Mojang's red (the game's first screen, bright or dimmed under a dialog): the splash, not the title */
 export function splashRed(buf, decode) {
   const I = decode(buf); let n = 0, red = 0;
@@ -546,7 +562,7 @@ export async function runScenario(steps, ctx) {
       case 'until': {
         const kind = a[0], ms = num(LOGS.includes(kind) ? a[2] : a[1]) || DEFAULT_MS[kind] || 60_000;
         const end = Date.now() + ms; let nextEvery = s.every ? Date.now() + s.every.ms : Infinity;
-        let prev = null, calmSince = Date.now(), blank = false, words = [], prompts = 0, lastOcr = 0, spawned = null, loadingSince = 0;
+        let prev = null, calmSince = Date.now(), blank = false, words = [], prompts = 0, lastOcr = 0, spawned = null, loadingSince = 0, lastMove = null;
         const met = dialogs.length;
         if (kind === 'clientlog') needClient();
         while (Date.now() < end) {
@@ -624,7 +640,10 @@ export async function runScenario(steps, ctx) {
             else {
               const b = snap(); blank = blankScreen(b, decode);
               let again = false;
-              if (prev && !blank && screenDiff(prev, b, decode) < 0.004) {
+              const moved = prev && !blank ? screenDiff(prev, b, decode) : 1;
+              // (what kept moving, kept for the message if it never holds still: numbers only)
+              if (prev && !blank && moved >= 0.004) { try { lastMove = moveBox(prev, b, decode); } catch { /* undecodable */ } }
+              if (prev && !blank && moved < 0.004) {
                 if (Date.now() - calmSince >= STABLE_MS) { if (!clearDialog(s)) return 'stable'; again = true; }
               } else calmSince = Date.now();
               if (again) { prev = null; calmSince = Date.now(); } else prev = b;
@@ -647,6 +666,7 @@ export async function runScenario(steps, ctx) {
         if (kind === 'joined' && /Player connected: /.test(srvTail.read())) throw new Error(`${ms} ミリ秒待ちました: サーバーには接続したが、ワールドに出ていません（確認画面やリソースパックのダウンロードで止まっている？ 画面を見てください）${busy}`);
         if (kind === 'joined') throw new Error(`${ms} ミリ秒待ちました: サーバーに接続が来ていません（参加の画面・サインイン・版の違い？ 画面を見てください）${busy}`);
         if (kind === 'stable' && blank) throw new Error(`${ms} ミリ秒待ちました: 画面が真っ黒（か真っ白）のままです（まだ読み込み中か、描画できていない。README「うまくいかないとき」）`);
+        if (kind === 'stable' && lastMove?.box) throw new Error(`${ms} ミリ秒待ちました: 画面が落ち着きません（動き続けた所: ${lastMove.box[0]},${lastMove.box[1]}–${lastMove.box[2]},${lastMove.box[3]} px・${(lastMove.share * 100).toFixed(2)}%・格子 ${lastMove.grid}）${busy}`);
         throw new Error(`${ms} ミリ秒待ちました（時間切れ）${busy}`);
       }
       case 'pull': { const dst = path.join(runDir, 'pulled', (a[1] ?? path.posix.basename(a[0])).replace(/[^\w.-]+/g, '_').replace(/^\.+/, '_')); fs.mkdirSync(path.dirname(dst), { recursive: true }); const r = adb.run(['pull', a[0], dst], { timeout: 120_000 }); if (r.status !== 0) throw new Error((r.stderr || r.stdout).trim().slice(0, 200)); return '→ ' + path.relative(runDir, dst); }

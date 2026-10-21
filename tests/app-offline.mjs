@@ -1520,6 +1520,14 @@ await t('title by OCR (pure): the new player\'s title from the pieces read on th
   ok(!C.steadyTitle(['later', 'maybe', 'select']) && !C.steadyTitle(['select']), 'the first-start screen\'s words, or one word: not a title');
   eq(C.seenWords(L('a b c'), 2), 'a b'); eq(C.seenWords(null), 'なし');
 });
+await t('moveBox (pure): where two pictures differ, as numbers only — the box, the share and which of a 4 x 3 grid (what a screen that never held still says publicly)', () => {
+  const W = 160, H = 90, img = (paint) => { const d = Buffer.alloc(W * H * 4, 40); for (let i = 3; i < d.length; i += 4) d[i] = 255; paint?.(d); return pngEncode({ w: W, h: H, data: d }); };
+  const box = (x0, y0, x1, y1) => (d) => { for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) d.fill(220, (y * W + x) * 4, (y * W + x) * 4 + 3); };
+  const m = S.moveBox(img(), img(box(0, 0, 40, 30)), pngDecode);
+  eq(m.box, [0, 0, 40, 32]); eq(m.grid, '1000.0000.0000'); ok(m.share > 0.07 && m.share < 0.1, `share ${m.share}`);
+  eq(S.moveBox(img(), img(), pngDecode), { share: 0, box: null, grid: '0000.0000.0000' }, 'nothing moved');
+  eq(S.moveBox(img(), img(box(0, 0, W, H)), pngDecode).grid, '1111.1111.1111', 'all of it');
+});
 await t('prepare: the new player\'s title read in pieces over a panorama that never holds still (as on the CI device) is taken for the title and left for the classic menu; a screen never calm whose words stay is taken after six reads', () => {
   const P = prepEnv('newtitle-partial');
   try {
