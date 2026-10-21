@@ -220,5 +220,37 @@ const pngBack = (await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'png.
 const img = CAL.synth({ w: 64, hpx: 32 }), back = pngBack.decodePng(pngBack.encodePng(img));
 ok(back.width === 64 && back.height === 32 && Buffer.compare(Buffer.from(back.data), Buffer.from(img.data)) === 0, 'png.mjs: a picture written and read back is the same');
 
+// ---- the report (bds/geoui/report.mjs): the real app's numbers gathered, each shot's own changes undone, the frame → screen
+// mapping fitted. Shots made up from a known mapping must give it back, whatever their frame, scale, oy and lift ----
+{
+  const RP = await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'report.mjs')).href);
+  const planOf = (a) => RP.addonPlan({ imported: fs.readFileSync(path.join(TOP, 'bds', 'addons', a, 'imported.json'), 'utf8'), app: fs.readFileSync(path.join(TOP, 'bds', 'addons', a, 'app.txt'), 'utf8') });
+  const base = planOf('geoui_calib'), far = planOf('geoui_calib_far'), p20 = planOf('geoui_calib_p20'), o210 = planOf('geoui_calib_o210'), w2 = planOf('geoui_calib_w2');
+  ok(JSON.stringify(base.frame) === '{"w":10,"h":10,"top":110}' && base.lift === 0 && base.shots['calib-scale50'].scale === 50 && base.shots['calib-dpi240'].scale === 100 && base.shots['inventory-shown'].scale === 100, 'report: the plain pack\'s frame (Studio\'s), and each shot\'s scale as app.txt set it before that shot (scale 50 put back to 100 only after it)', JSON.stringify(base));
+  ok(JSON.stringify(far.frame) === '{"w":10,"h":10,"top":1110}' && far.lift === 1760 && JSON.stringify(p20.frame) === '{"w":20,"h":20,"top":105}' && p20.shots['calib-fit'].scale === 50 && p20.shots['calib-fit'].oy === -660
+    && JSON.stringify(o210.frame) === '{"w":10,"h":10,"top":210}' && o210.shots['calib-up176'].oy === 1760 && JSON.stringify(w2.frame) === '{"w":2,"h":10,"top":110}' && w2.shots['calib-double'].scale === 200, 'report: the variants\' frames and lift from imported.json, their shots\' scale and oy');
+  // a made-up device: K = 18.2, B = 30, C = 0.5 (not Studio's), every variant's shots as the measure would read them
+  const truth = { K: 18.2, B: 30, C: 0.5 }, rows = [];
+  for (const [addon, plan] of [['geoui_calib', base], ['geoui_calib_far', far], ['geoui_calib_p20', p20], ['geoui_calib_o210', o210], ['geoui_calib_w2', w2]]) {
+    for (const [shot, t] of Object.entries(plan.shots).filter(([k]) => /^calib-/.test(k))) {
+      const s = t.scale / 100, H = (truth.K * 100) / plan.frame.h, cy = H * (plan.frame.top / 100 - 0.5) + truth.B, Ha = H / s;
+      rows.push({ run: '1', addon, shot, kind: 'geoui', ok: true, plan, values: { width: 1560, height: 720, unitsPerScreenH: Ha, unitsPerScreenHFromX: Ha, centreX: (truth.C - t.ox / 10) / s, centreY: 140 + (cy - 140 - plan.lift - t.oy / 10) / s, pxPerUnitX: 720 / Ha, pxPerUnitY: -720 / Ha, depthNear: 1, depthFar: 1 } });
+    }
+  }
+  rows.push({ run: '1', addon: 'geoui_calib', shot: 'inventory-shown', kind: 'diff', ok: true, plan: base, values: { share: 0, parts: 0 } }, { run: '1', addon: 'geoui_calib', shot: 'calib-hud', kind: 'geoui', ok: false, plan: base, values: {} });
+  const a = RP.analyse(rows), F = a.fit;
+  ok(F && F.n === rows.length - 2 && close(F.K, truth.K, 1e-9) && close(F.B, truth.B, 1e-9) && close(F.C, truth.C, 1e-9) && F.Ksd < 1e-9 && F.Bsd < 1e-9 && a.geo.every((g) => Math.abs(g.residual.H) < 1e-9 && Math.abs(g.residual.cy) < 1e-9),
+    `report: the mapping given back from ${rows.length - 2} shots of 5 frames (scale 50 / 200, oy ±, lift 1760 undone)`, JSON.stringify(F));
+  ok(close(F.studioFrame.H, 182, 1e-9) && close(F.studioFrame.cy, 182 * 0.6 + 30, 1e-9) && close(F.studioFrame.fixY, (182 * 0.6 + 30 - 140) / 182, 1e-12) && a.diffs.length === 1 && a.failed.length === 1, 'report: Studio\'s frame on that device (height, centre, centre fix), the diff kept, the failed one named');
+  const md = RP.markdown(a, { runs: ['1'] });
+  ok(/K = 18\.200\*\*/.test(md) && /B = 30\.00\*\*/.test(md) && /どちらも 1: 遠近なし/.test(md) && /geoui_calib_o210（10x10@210） \| calib-up176/.test(md) && /測れなかった画面: geoui_calib\/calib-hud/.test(md), 'report: the Markdown says the fit, the depth and every shot', md.slice(0, 1200));
+  // from summary.json files (a run's artifacts as fetched): only measures, by addon
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-report-')); fs.mkdirSync(path.join(d, 'app-geoui_calib-9', 'run1'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'app-geoui_calib-9', 'run1', 'summary.json'), JSON.stringify({ addon: 'geoui_calib', app: '1.26.52.3', measures: rows.filter((r) => r.addon === 'geoui_calib').map(({ shot, kind, ok: o, values }) => ({ shot, kind, ok: o, values })) }));
+  const L = RP.load([d]);
+  ok(L.rows.length === rows.filter((r) => r.addon === 'geoui_calib').length && L.app === '1.26.52.3' && L.rows.every((r) => r.plan.frame.top === 110), 'report: summary.json files under a run folder read, each addon\'s plan from its files', JSON.stringify(L).slice(0, 400));
+  fs.rmSync(d, { recursive: true, force: true });
+}
+
 console.log(`\n${fails ? 'FAIL' : 'PASS'} geoui-builder-offline (${n - fails}/${n})`);
 process.exit(fails ? 1 : 0);
