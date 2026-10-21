@@ -169,5 +169,15 @@ const bud = K.budget(many), defs = K.propertyDefs(bud);
 ok(bud.sequences[0].templates[0].mode === 'streamed' && bud.sequences[0].templates[0].slots === 7 && bud.properties === 4 + 7 * 4 && bud.warnings.length === 0 && K.budget(many, { propertyLimit: 30 }).warnings.length === 1 && Object.keys(defs).length === bud.properties && defs['geoui:t0s6p'].range[1] === 2 ** 24 - 1 && defs['geoui:seq_pause'].type === 'bool',
   'budget: 100 instances are streamed, 7 slots (with the gap), 4 properties a slot (time, params, event, result) — 32 fits, a lower limit says so; the definitions match', JSON.stringify(bud.sequences[0].templates[0]) + ' ' + bud.properties);
 
+
+// ---- a template timed by its instance (a slider: its length and path its own; the ball back and forth with t) ----
+const sl = M.normalize({ sequences: [{ id: 's', duration: 10, paths: [{ id: 'p1', kind: 'linear', points: [[0, 0], [10, 0]] }],
+  templates: [{ id: 'sl', lead: 1, tail: 0, params: ['d', 'r'], tracks: [{ target: 'ball', clips: [{ start: 0, end: 'param.d', path: '@instance', channels: { path: [{ t: 0, v: '1 - math.abs(math.mod(t * param.r / param.d, 2) - 1)' }] } }] }] }],
+  instances: [{ id: 'a', template: 'sl', t: 1, params: { d: 2, r: 2 }, path: 'p1', tail: 2 }] }] });
+const bx = (t) => (M.evaluate(sl, 's', t)['ball#a'] || {}).x;
+ok(M.validate(sl).length === 0 && bx(1.5) === 5 && bx(2) === 10 && bx(2.5) === 5 && Math.abs(bx(2.99) - 0.1) < 1e-9 && !('ball#a' in M.evaluate(sl, 's', 3)) && sl.sequences[0].templates[0].tracks[0].clips[0].end === 'param.d',
+  'a clip ending at param.d, the instance\'s own path (@instance) and tail, a key\'s expression of t (there and back)', [1.5, 2, 2.5, 2.99, 3].map(bx).join(' '));
+ok(K.allocateSlots([{ id: 'a', template: 'sl', t: 1, tail: 2 }, { id: 'b', template: 'sl', t: 3.5 }], { id: 'sl', lead: 1, tail: 0 }).slots === 2, 'allocateSlots: an instance\'s own tail keeps its slot longer');
+
 console.log(`\n${fails ? 'FAIL' : 'PASS'} tl-model-offline (${n - fails}/${n})`);
 process.exit(fails ? 1 : 0);

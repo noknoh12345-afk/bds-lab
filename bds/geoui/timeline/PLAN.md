@@ -140,4 +140,7 @@
   テンプレートの実体（出ている間だけ、二分探索）・出来事（trigger・until））、reduce（rules の intent すべて。元の文書は変えない・重ならない一番近い所・吸い付き・
   ripple・split・locked）。contract.js: 枠の割り当て（区間の彩色・gap・溢れ）、24 bit の詰め方と同じ式の Molang、プロパティの名前と定義、予算（焼き込み／流し込み、
   上限 32 は要実測）。試験 `node tests/tl-model-offline.mjs`。
-- 2. tl-assets: 次。
+  追加: テンプレートのクリップの始まり・終わりを式に（param.d）、式の中で t（クリップが始まってからの秒）、実体ごとの道（`path: '@instance'`）と tail、道の長さ（osu! の長さ）。
+- 2. tl-assets: **途中**。できた: osu.js（.osu v14 の読み取り、AR・CS・OD・スライダーの長さの式、コンボの番号と色、文書へ: 円・スライダー（体・頭・玉の往復）・
+  スピナーのテンプレート、実体、道、tempo、音楽のトラック）。試験 `node tests/tl-assets-offline.mjs`。次: media.js（アトラス・連番・文字・WAV・波形・音の定義・ZIP・
+  スライダーの体の線）、presets.js。

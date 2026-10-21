@@ -62,7 +62,7 @@
     const lead = num(tpl && tpl.lead, 1), tail = num(tpl && tpl.tail, 0.5), ends = [], slotOf = {}, overflow = [];
     const xs = (instances || []).filter((x) => x && x.template === (tpl && tpl.id)).slice().sort((a, b) => a.t - b.t || String(a.id).localeCompare(String(b.id)));
     for (const x of xs) {
-      const s = x.t - lead, e = x.t + tail;
+      const s = x.t - lead, e = x.t + (Number.isFinite(x.tail) ? x.tail : tail);   // (an instance may stay out longer: a slider, a spinner)
       let k = ends.findIndex((end) => end + gap <= s + 1e-9);
       if (k < 0) { if (ends.length >= maxSlots) { overflow.push(x.id); continue; } k = ends.length; ends.push(e); } else ends[k] = e;
       slotOf[x.id] = k;
