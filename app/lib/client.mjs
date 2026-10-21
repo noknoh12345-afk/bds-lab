@@ -183,9 +183,11 @@ export function joinRefusal(words) {
 /** 1.26's PLAY screen (Ore UI: Worlds / Realms / Servers), by OCR (pure) → { lan, focused } or null when it is not that
  *  screen. lan: a world of the same network is listed (the lab's BDS: "Dedicated Server's world", "LAN world");
  *  focused: its footer offers "A Play" (the gamepad's focus is on a world card) */
+// (its tabs as OCR reads them: two of them, whichever — "Reaims", "Wor1ds" — the classic title has none of them)
+const PLAY_TABS = [/\bW[o0]r[l1Ii|]ds\b/i, /\bRea[l1Ii|]ms\b/i, /\bServ[e3]rs\b/i, /\bFr[i1l]ends\b/i];
 export function playScreen(words) {
   const all = words.map((w) => w.text).join(' ');
-  if (!(/\bRealms\b/i.test(all) && /\bServers\b/i.test(all)) && !/Create new world|No worlds here/i.test(all)) return null;
+  if (PLAY_TABS.filter((re) => re.test(all)).length < 2 && !/Create new world|No worlds here/i.test(all)) return null;
   // (the hint read as "A Flay" on the CI device)
   return { lan: /Dedicated Server'?s world|LAN world/i.test(all), focused: /\bA\s+[PF]lay\b/.test(all) };
 }

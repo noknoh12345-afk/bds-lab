@@ -60,6 +60,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { GAME_VERBS, gameStep, playGame, playServer } from './play.mjs';
 import { KIND_NAMES as MEASURE_KINDS, measureShot } from './measure.mjs';
+import { makeTrail } from './failcodes.mjs';
 import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, classicTitleWords, newTitleWords, joinPromptButton, joinRefusal, joinPromptKind, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
 
 // APP_TIME_SCALE (0..1, tests on the fake device): every fixed pause shorter; deadlines stay in real time
@@ -327,12 +328,36 @@ export async function runScenario(steps, ctx) {
     // (the LAN world not listed for this long on PLAY: back to the title and PLAY opened again — the game asks the network
     //  anew when its Worlds list opens; on the CI device the world showed after 2-3 minutes or never in 5)
     const relistMs = Number(process.env.APP_LAN_RELIST_MS) || 60_000, relistMax = 3;
+    // (an A that may have opened PLAY: its screen takes seconds to come on the CI device — an A meanwhile lands on whatever
+    //  has the focus there, "Create new world" first. No press on a screen not known until it has had that long)
+    const loadMs = Number(process.env.APP_PLAY_LOAD_MS) || 9000;
+    // (PLAY not reached for this long — the screens in between went round and round: the game stopped and started again,
+    //  from its title; at most twice)
+    const stuckMs = Number(process.env.APP_LAN_STUCK_MS) || 150_000, restartMax = 2;
+    // which screens it went through (a fixed vocabulary — failcodes.mjs: a public summary may say where it got stuck)
+    const tr = makeTrail();
+    let quietUntil = 0, seenPlay = false, restarts = 0, since = Date.now();
+    const opened = () => { quietUntil = Date.now() + loadMs; };
     while (Date.now() < end) {
-      if (clearDialog(s)) { await sleep(1000); continue; }
+      if (clearDialog(s)) { tr.add('android-dialog'); await sleep(1000); continue; }
+      // the game gone (it closed, or crashed): started again, its title comes back
+      if (ctx.alive && !ctx.alive() && restarts < restartMax) {
+        restarts++; tr.add('app-gone'); log(`${s.line} アプリが動いていません: 起動し直します（${restarts} 回目）`);
+        ctx.launch(); ctx.started?.(); quietUntil = Date.now() + 45_000; since = Date.now(); sawPlay = false; other = 0; titleA = 0;
+        await sleep(padWait); continue;
+      }
+      if (!sawPlay && Date.now() - since > stuckMs && restarts < restartMax) {
+        restarts++; tr.add('restart');
+        log(`${s.line} ${Math.round(stuckMs / 1000)} 秒たっても PLAY の画面に着きません: アプリを止めて起動し直します（${restarts} 回目。道筋: ${tr.text()}）`);
+        adb.shell(['am', 'force-stop', ctx.pkg]); await sleep(1500); ctx.launch(); ctx.started?.();
+        quietUntil = Date.now() + 45_000; since = Date.now(); other = 0; titleA = 0; newTries = 0;
+        await sleep(padWait); continue;
+      }
       const ws = ocrNow(), all = ws.map((w) => w.text).join(' '), p = playScreen(ws);
       said = seenWords(ws);
       if (p) {
-        other = 0; listed ||= p.lan; sawPlay = true;
+        other = 0; listed ||= p.lan; sawPlay = true; seenPlay = true; quietUntil = 0;
+        tr.add(p.lan ? (p.focused ? 'play-lan-focus' : 'play-lan') : 'play-empty', ws);
         // the player's own world is listed too (lib/world.mjs: a player without one is sent into the new player's flow): the
         // hint "A Play" does not say which card has the focus, its white ring does — A only on the LAN world's
         // (the ring whenever the card's words are read; the hint alone only with no other world on the list)
@@ -345,37 +370,46 @@ export async function runScenario(steps, ctx) {
         else if (!emptySince) emptySince = Date.now();
         else if (Date.now() - emptySince > relistMs && reopened < relistMax) {
           // (the title next: its A opens PLAY again — sawPlay forgotten, so a title OCR cannot place still gets its A)
-          reopened++; emptySince = 0; sawPlay = false; other = 0;
+          reopened++; emptySince = 0; sawPlay = false; other = 0; since = Date.now(); tr.add('relist');
           log(`${s.line} LAN のワールドが ${Math.round(relistMs / 1000)} 秒出ません: PLAY を開き直します（B でタイトルへ、${reopened} 回目）`); padKey('B');
         }
         await sleep(padWait); continue;
       }
       const play = titlePlay(ws);
-      if (backToTitle(ws) !== false || joinRefusal(ws)) { log(`${s.line} 前の画面が残っています（${said.slice(0, 80)}）: B で戻ります`); padKey('B'); }
+      if (backToTitle(ws) !== false || joinRefusal(ws)) { tr.add('back', ws); log(`${s.line} 前の画面が残っています（${said.slice(0, 80)}）: B で戻ります`); padKey('B'); }
       // a dialog over the title ("Play your way") before the menu behind it: B closes it (A on its Continue brought it back
       // again and again on the CI device)
-      else if (/Play your way|How will you play/i.test(all)) { log(`${s.line} 「Play your way」: Close（B）`); padKey('B'); }
+      else if (/Play your way|How will you play/i.test(all)) { tr.add('play-your-way', ws); log(`${s.line} 「Play your way」: Close（B）`); padKey('B'); }
       // the new player's title (Get started / More options, either read — client.mjs newTitleWords): More options is the
       // classic menu. The first press only turns the gamepad's focus on (on Get started — an A there starts the new player's
       // game mode screens): DOWN twice, then A. Its hints and logo alone (not its buttons) only twice: then it is taken for
       // the classic menu (never A on it before that: A there is Get started)
-      else if (newTitleWords(ws, { strict: newTries >= 2 })) { newTries++; log(`${s.line} 新しい人向けのタイトル: More options へ（DOWN・DOWN・A）`); padKey('DOWN'); await sleep(padWait); padKey('DOWN'); await sleep(padWait); padKey('A'); }
+      else if (newTitleWords(ws, { strict: newTries >= 2 })) { newTries++; tr.add('title-new', ws); log(`${s.line} 新しい人向けのタイトル: More options へ（DOWN・DOWN・A）`); padKey('DOWN'); await sleep(padWait); padKey('DOWN'); await sleep(padWait); padKey('A'); }
       // the classic menu: its focus moves by the screen's layout, so Play is pressed once it is the green one (UP until it is,
       // then DOWN: the first press only turns the gamepad's focus on)
       else if (play && classicTitleWords(ws)) {
         let focused = false; try { focused = buttonFocused(decode(last), play); } catch { /* undecodable */ }
-        if (focused) { log(`${s.line} タイトルの Play を押します（ゲームパッド A）`); padKey('A'); moves = 0; }
-        else { moves++; padKey(moves % 12 <= 5 ? 'UP' : 'DOWN'); await sleep(Math.min(padWait, 1500)); continue; }
+        if (focused) { tr.add('title-play', ws); log(`${s.line} タイトルの Play を押します（ゲームパッド A）`); padKey('A'); moves = 0; opened(); }
+        else { tr.add('title-focus', ws); moves++; padKey(moves % 12 <= 5 ? 'UP' : 'DOWN'); await sleep(Math.min(padWait, 1500)); continue; }
       }
       // the classic menu known by its "©Mojang AB" and the skin's name, its buttons' words not read (the CI device): Play has
       // the focus once it is on — A turns it on, A presses it (never B here: B is the menu's Exit)
-      else if (classicTitleWords(ws) || (newTries >= 2 && titleWords(ws))) { log(`${s.line} タイトル（ボタンの文字は読めず）: ゲームパッド A（Play）`); padKey('A'); titleA++; if (titleA > 6) throw new Error(`タイトルの Play が押せません（A を ${titleA - 1} 回）（画面の文字: ${said}）`); }
+      else if (classicTitleWords(ws) || (newTries >= 2 && titleWords(ws))) {
+        tr.add('title-blind', ws); log(`${s.line} タイトル（ボタンの文字は読めず）: ゲームパッド A（Play）`); padKey('A'); opened(); titleA++;
+        if (titleA > 6) throw Object.assign(new Error(`タイトルの Play が押せません（A を ${titleA - 1} 回）（画面の文字: ${said}）（道筋: ${tr.text()}）`), { trail: tr.text() });
+      }
+      // (a screen not known yet, just after an A that may have opened PLAY or a start: let it come — no press)
+      else if (Date.now() < quietUntil) tr.add('wait', ws);
       // (an unknown screen: A goes on at first — B once PLAY has been seen, where an A could create a world)
-      else if (/\bContinue\b/i.test(all) || (other < 2 && !sawPlay)) { padKey('A'); other++; }
-      else { padKey('B'); other = 0; }
+      else if (/\bContinue\b/i.test(all)) { tr.add('continue', ws); padKey('A'); other++; }
+      else if (other < 2 && !sawPlay) { tr.add('unknown-a', ws); padKey('A'); other++; opened(); }
+      else { tr.add('unknown-b', ws); padKey('B'); other = 0; }
       await sleep(padWait);
     }
-    throw new Error(`PLAY の LAN のワールドへ進めませんでした（${listed ? 'LAN のワールドに焦点が移らない' : `LAN のワールドが出ない（PLAY を開き直した: ${reopened} 回）: 端末の中継（UDP 7551）と BDS の LAN の公開を確かめる`}）（画面の文字: ${said}）`);
+    const why = listed ? 'LAN のワールドに焦点が移らない'
+      : seenPlay ? `LAN のワールドが出ない（PLAY を開き直した: ${reopened} 回）: 端末の中継（UDP 7551）と BDS の LAN の公開を確かめる`
+        : `PLAY の画面に着きません（アプリを起動し直した: ${restarts} 回）: 道筋の画面を見る`;
+    throw Object.assign(new Error(`PLAY の LAN のワールドへ進めませんでした（${why}）（画面の文字: ${said}）（道筋: ${tr.text()}）`), { trail: tr.text() });
   };
   const seenWords = (ws) => ws.map((w) => w.text).join(' ').replace(/\s+/g, ' ').slice(0, 240) || '（文字なし）';
   const joinedRe = /Player Spawned: /;
@@ -420,7 +454,18 @@ export async function runScenario(steps, ctx) {
       if (!(g.server === 'where' || g.server === 'items')) ocrLast = null;
       if (!adb.pad && g.server !== 'where' && g.server !== 'items' && g.server !== 'face' && g.server !== 'lookat') throw new Error('この端末ではコントローラーを使えません');
       // (where, face, goto…: the server's word on the player — the lab's BDS of the run)
-      return g.server ? await playServer(adb, g, { server, sleep, ensurePad }) : await playGame(adb, g, { ensurePad, sleep });
+      if (g.server) return await playServer(adb, g, { server, sleep, ensurePad });
+      // (a screen it opens — the inventory, the pause screen: on the CI device the game in touch mode may take the first press
+      //  only to wake the controller. The screen unchanged a moment later: pressed once more)
+      if (s.verb !== 'inventory' && s.verb !== 'pause') return await playGame(adb, g, { ensurePad, sleep });
+      let before = null; try { before = snap(); } catch { /* no picture */ }
+      const said = await playGame(adb, g, { ensurePad, sleep });
+      if (!before) return said;
+      await sleep(Number(process.env.APP_OPEN_SETTLE_MS) || 2500);
+      let moved = 1; try { moved = screenDiff(before, snap(), decode); } catch { /* undecodable */ }
+      if (moved >= 0.03) return said;
+      log(`${s.line} 画面が変わりません（${(moved * 100).toFixed(1)}%）: もう一度押します（最初の 1 回はコントローラーを起こすだけのことがある）`);
+      return `${await playGame(adb, g, { ensurePad, sleep })}（2 回目で開いた）`;
     }
     switch (s.verb) {
       case 'tap': {
@@ -702,9 +747,16 @@ export async function runScenario(steps, ctx) {
       ok = false; cur().ok = false;
       let shot;
       try { shot = save(`fail-line${s.line}`); } catch { /* no screen */ }
-      results.push({ line: s.line, verb: s.verb, raw: s.raw, ok: false, note: e.message, shot, ms: Date.now() - t0, t0, t1: Date.now(), section: cur().name });
+      results.push({ line: s.line, verb: s.verb, raw: s.raw, ok: false, note: e.message, ...(e.trail ? { trail: e.trail } : {}), shot, ms: Date.now() - t0, t0, t1: Date.now(), section: cur().name });
       log(`✘ ${s.line} ${s.raw}\n  ${e.message}${shot ? `\n  screen: ${shot}` : ''}`);
-      const next = sectioned && !e.fatal ? steps.findIndex((x, k) => k > i && x.verb === 'section') : -1;
+      // (not in the world — a join, or the wait for it, failed: every section up to the next join acts in a world the player
+      //  is not in. Those are skipped, not failed one by one: the run's one failure stays the one that matters)
+      const outside = s.verb === 'join' || (s.verb === 'until' && s.args[0] === 'joined');
+      const rejoin = outside ? steps.findIndex((x, k) => k > i && x.verb === 'join') : -1;
+      const next = !sectioned || e.fatal ? -1
+        : outside ? (rejoin < 0 ? -1 : steps.findLastIndex((x, k) => k > i && k <= rejoin && x.verb === 'section'))
+          : steps.findIndex((x, k) => k > i && x.verb === 'section');
+      if (outside && next < 0 && sectioned) log(`  → ワールドに入れなかったので、残りの区切り（ワールドの中の手順: ${steps.filter((x, k) => k > i && x.verb === 'section').length} 個）は飛ばします`);
       if (next < 0) break;   // the next steps assume this one worked
       log(`  → 区切り「${cur().name}」の残りを飛ばして、${steps[next].line} 行目の区切り「${steps[next].args[0]}」から続けます`);
       try { await ctx.recover?.(); } catch { /* the next section will tell */ }

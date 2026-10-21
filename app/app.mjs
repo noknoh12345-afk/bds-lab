@@ -39,7 +39,7 @@ import * as SI from './lib/signin.mjs';
 import * as WD from './lib/world.mjs';
 import * as Dev from './lib/device.mjs';
 import * as M from './lib/measure.mjs';
-import { stepCode, cleanCode } from './lib/failcodes.mjs';
+import { stepCode, cleanCode, cleanTrail } from './lib/failcodes.mjs';
 import { gridOverlay } from './lib/screen.mjs';
 import { autoOauthToken, browserCandidates, canShowWindow } from './lib/login.mjs';
 import { playwrightOauthToken } from './lib/playwright-login.mjs';
@@ -2544,13 +2544,15 @@ async function checksCmd(args) {
     try { r = JSON.parse(readT(path.join(d, 'result.json'))); } catch { /* no result.json: a prepare record, redroid's out/ */ }
     const md = readT(path.join(d, 'report.md')), cell = (k) => new RegExp(`^\\| ${k} \\| ([\\w.()+-]+)`, 'm').exec(md)?.[1] ?? null;
     // (a failed step's message stays sealed: only its code — lib/failcodes.mjs, a word of a fixed list — goes out)
-    const steps = Array.isArray(r?.results) ? r.results.map((x) => ({ ok: Boolean(x?.ok), line: num(x?.line), code: x?.ok ? null : stepCode(x?.note) }))
+    // (and its trail, when it kept one: the screens it went through, in the lab's own words — failcodes.mjs cleanTrail)
+    const steps = Array.isArray(r?.results) ? r.results.map((x) => ({ ok: Boolean(x?.ok), line: num(x?.line), code: x?.ok ? null : stepCode(x?.note), trail: x?.ok ? null : cleanTrail(x?.trail) }))
       : readT(path.join(d, 'steps.txt')).split('\n').filter((l) => /^(OK |FAIL)/.test(l)).map((l) => ({ ok: l.startsWith('OK'), line: num(Number(/^\S+\s+(\d+)/.exec(l)?.[1])), code: l.startsWith('OK') ? null : 'other' }));
     const secs = r && num(r.ended) !== null && num(r.started) !== null ? Math.round((r.ended - r.started) / 1000) : num(Number(/^\| 時間 \| (\d+)s/m.exec(md)?.[1]));
     return {
       run: word(path.basename(d)), addon: word(r?.addon), ok: r ? r.ok === true : /^# app: PASS/m.test(md),
       steps: steps.length, failed: steps.flatMap((x, i) => (x.ok ? [] : [i + 1])), failed_lines: steps.filter((x) => !x.ok && x.line !== null).map((x) => x.line),
       failed_codes: steps.filter((x) => !x.ok && x.line !== null).map((x) => cleanCode(x.code) ?? 'other'),
+      ...(steps.some((x) => !x.ok && x.trail && x.line !== null) ? { failed_trails: Object.fromEntries(steps.filter((x) => !x.ok && x.trail && x.line !== null).slice(0, 6).map((x) => [String(x.line), x.trail])) } : {}),
       seconds: secs, join_seconds: num(r?.timing?.join) !== null ? Math.round(r.timing.join / 100) / 10 : null,
       bds: word(r?.bds?.version) ?? cell('BDS'), app: word(r?.app?.versionName) ?? cell('アプリ'),
       ...(Array.isArray(r?.measures) && r.measures.length ? { measures: M.cleanMeasures(r.measures) } : {}),
@@ -2603,6 +2605,8 @@ async function checksCmd(args) {
     const tag = shard ? ` [${shard}]` : '', ok = s.ok === true, n = num(s.steps), failed = (Array.isArray(s.failed) ? s.failed : []).filter((x) => num(x) !== null).slice(0, 20);
     const lines = (Array.isArray(s.failed_lines) ? s.failed_lines : []).filter((x) => num(x) !== null).slice(0, 20);
     const codes = Array.isArray(s.failed_codes) && s.failed_codes.length === (s.failed_lines ?? []).length ? s.failed_codes.slice(0, 20).map(cleanCode) : [];
+    // (a failed step's trail: the screens it went through, read back through the same filter)
+    const trails = s.failed_trails && typeof s.failed_trails === 'object' ? Object.entries(s.failed_trails).filter(([k, v]) => /^\d{1,5}$/.test(k) && cleanTrail(v)).slice(0, 6) : [];
     // (the measure steps' numbers, read back as numbers only: a line each for a person, and the same as JSON to take away)
     const ms = M.cleanMeasures(s.measures), measured = ms.length ? ['', '## 測った値（measure: ラボの測り方の数だけ）', '', ...M.measureLines(ms), '',
       '<details><summary>数（JSON）</summary>', '', '```json', JSON.stringify(ms), '```', '', '</details>'] : [];
@@ -2610,7 +2614,8 @@ async function checksCmd(args) {
       summary: [`# app: ${ok ? 'PASS' : 'FAIL'}${word(s.addon) ? ` — ${s.addon}` : ''}`, '', '| | |', '|---|---|',
         `| 結果 | ${ok ? 'PASS' : 'FAIL'}${n !== null ? `（手順 ${n} 個${failed.length ? `、落ちた: ${failed.join(', ')} 番目${lines.length ? `（${lines.map((x, i) => `${x} 行目${codes[i] ? ` ${codes[i]}` : ''}`).join(', ')}）` : ''}` : ''}）` : ''} |`,
         `| アプリ | ${word(s.app) ?? '—'} |`, `| BDS | ${word(s.bds) ?? '—'} |`,
-        ...(num(s.join_seconds) !== null ? [`| 参加 | ${s.join_seconds} 秒 |`] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`, '',
+        ...(num(s.join_seconds) !== null ? [`| 参加 | ${s.join_seconds} 秒 |`] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`,
+        ...trails.map(([k, v]) => `| 道筋（${k} 行目） | \`${v}\` |`), '',
         s.sealed === false ? '- 中身は封じる鍵が無かったので成果物に入れていません（APP_CACHE_KEY か GOOGLE_AAS_TOKEN を Secrets に）'
           : `- 中身は暗号化されています: 手元で node lab.mjs app ci watch ${runId ?? '<run の番号>'}`, ...measured].join('\n') }];
   };

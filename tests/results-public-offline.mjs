@@ -178,6 +178,25 @@ fs.rmSync(tmp, { recursive: true, force: true });
   fs.writeFileSync(path.join(d, 'result.json'), JSON.stringify(res));
   const rr = await lab(['checks', '--seal', d0], PUB), cs = fs.readFileSync(path.join(d, 'summary.json'), 'utf8'), c = JSON.parse(cs);
   ok(rr.status === 0 && JSON.stringify(c.failed_codes) === '["join-lan-missing"]' && c.measures[1].code === 'few-marks 4' && ![SCREEN, EMAIL, 'UDP 7551', 'square marks'].some((x) => cs.includes(x)), 'summary.json: the codes, none of the words', cs);
+  // ---- 5. a step's trail (the screens a join went through): the lab's states and the game's own UI words only ----
+  const W = (s) => s.split(' ').map((text) => ({ text }));
+  const tr = F.makeTrail(6);
+  tr.add('title-new', W(`Get started More options ${EMAIL} Alexandra`)); tr.add('title-new', W('Hore options Select Exit'));
+  tr.add('wait'); for (const k of ['unknown-a', 'unknown-b', 'restart', 'unknown-a', 'play-empty']) tr.add(k, W(`Worlds Realms Servers ${EMAIL} Kz9Player`));
+  const tt = tr.text();
+  ok(/^title-new\*2\[get\+started\+more\+options\+select\+exit\] wait unknown-a\[worlds\+realms\+servers\] unknown-b\[worlds\+realms\+servers\] cut\*1 /.test(tt) && tt.endsWith('play-empty[worlds+realms+servers]') && F.cleanTrail(tt) === tt && !tt.includes('alexandra') && !tt.includes('example'), 'a trail: runs counted, UI words only, the start and the end kept', tt);
+  ok(F.cleanTrail('title-new[get+started]') !== null && F.cleanTrail('title-new[get+someone]') === null && F.cleanTrail(`wait ${EMAIL}`) === null && F.cleanTrail('Wait') === null && F.cleanTrail(42) === null && F.cleanTrail('a'.repeat(901)) === null, 'only a trail of that form and vocabulary is kept');
+  ok(F.stepCode(`PLAY の LAN のワールドへ進めませんでした（PLAY の画面に着きません（アプリを起動し直した: 2 回）: 道筋の画面を見る）（画面の文字: ${SCREEN}）（道筋: ${tt}）`) === 'join-play-unreached 2', 'PLAY never reached: its own code');
+  const d2 = makeRun(path.join(tmp, 'trail'), '20261021-080000-trail'), r2 = JSON.parse(fs.readFileSync(path.join(d2, 'result.json'), 'utf8'));
+  r2.results[1].note = join; r2.results[1].trail = tt; r2.results[0].trail = `play-lan[${EMAIL}]`;
+  fs.writeFileSync(path.join(d2, 'result.json'), JSON.stringify(r2));
+  const r3 = await lab(['checks', '--seal', path.join(tmp, 'trail')], PUB), s2 = fs.readFileSync(path.join(d2, 'summary.json'), 'utf8'), c2 = JSON.parse(s2);
+  ok(r3.status === 0 && c2.failed_trails?.[String(r2.results[1].line)] === tt && Object.keys(c2.failed_trails).length === 1 && ![SCREEN, EMAIL].some((x) => s2.includes(x)), 'summary.json: the failed step\'s trail (its line), nothing else', s2);
+  const got = [], srv2 = http.createServer((q, s) => { let b = ''; q.on('data', (x) => { b += x; }); q.on('end', () => { if (q.method === 'POST' && q.url.endsWith('/check-runs')) got.push(JSON.parse(b)); s.writeHead(201, { 'content-type': 'application/json' }); s.end('{}'); }); });
+  await new Promise((res) => srv2.listen(0, '127.0.0.1', res));
+  const ck = await lab(['checks', path.join(tmp, 'trail')], { ...API, GITHUB_API_URL: `http://127.0.0.1:${srv2.address().port}`, APP_REPO_VISIBILITY: 'public' });
+  srv2.close();
+  ok(ck.status === 0 && got[0]?.output?.summary?.includes(`| 道筋（${r2.results[1].line} 行目） | \`${tt}\` |`), 'the check shows it', ck.text.slice(-800) + JSON.stringify(got).slice(0, 1500));
 }
 
 console.log(fails ? `✘ ${fails} failed` : '✔ all passed');

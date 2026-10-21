@@ -305,7 +305,7 @@ GitHub のリポジトリの **Actions → app → Run workflow** で、アド�
 使わず、毎回すべて作ります）。エミュレータ本体とシステムイメージ（Google が公開しているもの。秘密を含まない）もキャッシュします。
 
 **公開リポジトリでも private 並み**: 誰でも見られるもの（ログ・注釈・チェック・issue・成果物）に秘密や画面の中身を出しません。
-成果物（報告・スクリーンショット・ログ）は同じ鍵で `results.sealed` に暗号化し、平文は合否・手順の数・秒数・版（と、シナリオの `measure` が測った決まった名前の数、落ちた手順ごとの**理由のコード**）だけの `summary.json`。理由のコードは決まった言葉と数だけ（`app/lib/failcodes.mjs`: `join-lan-missing`・`joined-no-connection`・`stable-moving 0/24/1560/720/3.41/1111.1111.0110`（動き続けた所の枠 px・割合・4 x 3 の格子）・測れなかった `measure` の `few-marks 4` など）で、画面の文字やログは入らない。鍵の無い所（スマホ・AI）でも、どこでなぜ落ちたかの見当がつく。
+成果物（報告・スクリーンショット・ログ）は同じ鍵で `results.sealed` に暗号化し、平文は合否・手順の数・秒数・版（と、シナリオの `measure` が測った決まった名前の数、落ちた手順ごとの**理由のコード**）だけの `summary.json`。理由のコードは決まった言葉と数だけ（`app/lib/failcodes.mjs`: `join-lan-missing`・`joined-no-connection`・`stable-moving 0/24/1560/720/3.41/1111.1111.0110`（動き続けた所の枠 px・割合・4 x 3 の格子）・測れなかった `measure` の `few-marks 4` など）で、画面の文字やログは入らない。参加（join）が落ちたときは**道筋**（`failed_trails`: 通った画面をラボの決まった名前と、ゲーム自身の UI の言葉だけで 1 行に。例 `title-play wait*2 play-empty*9[worlds+realms+servers] relist …`。PLAY に着かなかったのは `join-play-unreached`、着いたが LAN のワールドが出ないのは `join-lan-missing`）も。鍵の無い所（スマホ・AI）でも、どこでなぜ落ちたかの見当がつく。
 チェックと注釈は合否だけ。`app ci watch <番号>` が取るときに `.env.local` の鍵（Secrets と同じ `APP_CACHE_KEY`、無ければ
 `GOOGLE_AAS_TOKEN`）で開きます。鍵が無い実行は中身を成果物に出しません。
 **端末の土台**: `account` のとき、ゲームを入れる前の端末（Play ストアを system に入れ、アカウントを書き込み、Google の最初の重い処理が

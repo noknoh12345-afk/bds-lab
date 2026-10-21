@@ -130,7 +130,15 @@ async function padPress(k) {
     // (the classic title: the first move turns the focus on, on its Play — drawn green — and A opens PLAY)
     else if (k === 'DPAD_UP' && S.phase === 'title') { S.titleFocus = 'play'; save(); }
     // (FAKE_LAN_LATE=n: the LAN world is listed only from the n-th time PLAY is opened — the CI device's discovery that came late)
-    else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && S.launched) { S.playOpens = (S.playOpens ?? 0) + 1; S.phase = process.env.FAKE_LAN_NONE || S.playOpens < Number(process.env.FAKE_LAN_LATE || 0) ? 'lanempty' : 'lanlist'; S.titleFocus = null; save(); }
+    // FAKE_TITLE_STUCK: the title takes no A (PLAY never opens)
+    else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && process.env.FAKE_TITLE_STUCK) { S.stuckA = (S.stuckA ?? 0) + 1; save(); }
+    // FAKE_PLAY_SLOW=n: PLAY comes only after n pictures (the CI device's Ore UI); an A meanwhile lands on "Create new world"
+    else if (k === 'BUTTON_A' && S.phase === 'playload') { S.phase = 'createworld'; S.createdWorld = true; save(); }
+    else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && S.launched) {
+      S.playOpens = (S.playOpens ?? 0) + 1; S.phase = process.env.FAKE_LAN_NONE || S.playOpens < Number(process.env.FAKE_LAN_LATE || 0) ? 'lanempty' : 'lanlist'; S.titleFocus = null;
+      if (process.env.FAKE_PLAY_SLOW) { S.playNext = S.phase; S.phase = 'playload'; S.playLoadLeft = Number(process.env.FAKE_PLAY_SLOW); }
+      save();
+    }
     // FAKE_OWN_WORLD: the player's own world listed first — the first DOWN focuses its card (the hint "A Play" all the same;
     // A there opens it), the next the LAN world's
     else if (k === 'DPAD_DOWN' && S.phase === 'lanlist') { S.phase = process.env.FAKE_OWN_WORLD ? 'lanown' : 'lanfocus'; save(); }
@@ -140,8 +148,10 @@ async function padPress(k) {
     else if (k === 'BUTTON_A' && S.phase === 'join-rated' && process.env.FAKE_LAN_PROMPTS) { S.phase = 'join-packs'; save(); }
     else if (k === 'BUTTON_A' && S.phase === 'join-packs') { S.phase = 'world'; save(); srv('Player connected: , xuid: '); srv('Player Spawned: Alex xuid: , pfid: '); }
     else if (k === 'BUTTON_B' && ['lanlist', 'lanfocus', 'lanempty', 'join-refused'].includes(S.phase)) { S.phase = 'title'; save(); }
+    // Y in the world opens the inventory (FAKE_PAD_WAKE: the game in touch mode takes the first press only to wake the controller)
+    else if (k === 'BUTTON_Y' && S.phase === 'world') { if (process.env.FAKE_PAD_WAKE && !S.padAwake) S.padAwake = true; else S.phase = 'screen'; save(); }
   }
-const COLORS = { loading: [24, 24, 24], 'join-packs': [58, 58, 58], lanown: [52, 52, 62], ownworld: [120, 160, 220], 'ms-start': [16, 124, 16], 'ms-email': [250, 250, 250], 'ms-password': [248, 250, 250], 'ms-code': [250, 248, 250], 'ms-approve': [250, 250, 248], 'ms-stay': [246, 246, 246], 'ms-error': [250, 244, 244], home: [40, 40, 40], title: [60, 120, 200], gamemode: [64, 64, 64], lanlist: [52, 52, 60], lanfocus: [52, 52, 64], lanempty: [52, 52, 56], welcome: [70, 60, 50], 'join-external': [50, 50, 50], 'join-rated': [55, 55, 55], 'join-refused': [45, 45, 45], world: [90, 160, 80], form: [230, 180, 40], anr: [235, 235, 235], pause: [70, 70, 90], screen: [150, 110, 60], play: [255, 255, 255], paywall: [248, 248, 248] };
+const COLORS = { loading: [24, 24, 24], playload: [30, 30, 34], createworld: [100, 100, 40], 'join-packs': [58, 58, 58], lanown: [52, 52, 62], ownworld: [120, 160, 220], 'ms-start': [16, 124, 16], 'ms-email': [250, 250, 250], 'ms-password': [248, 250, 250], 'ms-code': [250, 248, 250], 'ms-approve': [250, 250, 248], 'ms-stay': [246, 246, 246], 'ms-error': [250, 244, 244], home: [40, 40, 40], title: [60, 120, 200], gamemode: [64, 64, 64], lanlist: [52, 52, 60], lanfocus: [52, 52, 64], lanempty: [52, 52, 56], welcome: [70, 60, 50], 'join-external': [50, 50, 50], 'join-rated': [55, 55, 55], 'join-refused': [45, 45, 45], world: [90, 160, 80], form: [230, 180, 40], anr: [235, 235, 235], pause: [70, 70, 90], screen: [150, 110, 60], play: [255, 255, 255], paywall: [248, 248, 248] };
 // the game's license (PairIP asks the Play Store at each start): FAKE_PAIRIP_UNTIL_PLAY = Play's paywall until Play itself
 // installed or updated the game (its page's button tapped); FAKE_PAIRIP_ALWAYS = always; FAKE_NOT_OWNED = Play's page shows a price
 const paywalled = () => Boolean(process.env.FAKE_PAIRIP_ALWAYS || (process.env.FAKE_PAIRIP_UNTIL_PLAY && !S.byPlay));
@@ -229,6 +239,7 @@ if (a[0] === 'exec-out' && a[1] === 'screencap') {
   // (FAKE_SIGNIN=approve: the person approves on their phone after the page was looked at three times)
   if (S.phase === 'ms-approve' && (S.approveLooks = (S.approveLooks ?? 0) + 1) > 3) S.phase = 'ms-stay';
   if (S.phase === 'loading' && --S.loadLeft < 0) S.phase = 'world';
+  if (S.phase === 'playload' && --S.playLoadLeft < 0) S.phase = S.playNext;
   save(); process.stdout.write(await shotPng()); process.exit(0); }
 if (a[0] === 'logcat') {
   if (a.includes('-c')) process.exit(0);

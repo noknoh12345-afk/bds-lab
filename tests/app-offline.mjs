@@ -610,7 +610,7 @@ await t('run: the join answers the game\'s own questions (Unknown External Serve
   made.push(n.runDir);
   ok(n.status === 1 && /ゲームが参加をやめました: You need to authenticate to Microsoft services\./.test(n.text) && Date.now() - t0 < 60_000, n.text.slice(-1200));
 });
-await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without focus → DOWN, its LAN world focused → A; a LAN world that never shows is said with what to check', () => {
+await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without focus → DOWN, its LAN world focused → A; a LAN world that never shows is said with what to check', async () => {
   const r = e2e('lanocr', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract') }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
   made.push(r.runDir);
   const run = fs.readFileSync(path.join(r.runDir, 'run.txt'), 'utf8');
@@ -653,6 +653,31 @@ await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without
   made.push(lt.runDir);
   const ltRun = fs.readFileSync(path.join(lt.runDir, 'run.txt'), 'utf8');
   ok(lt.status === 0 && lt.state.uri === 'lan' && lt.state.playOpens === 3 && (ltRun.match(/PLAY を開き直します（B でタイトルへ、\d 回目）/g) ?? []).length === 2, `exit ${lt.status} opens ${lt.state.playOpens} ${JSON.stringify(lt.state.pads)}\n${ltRun.slice(-1200)}`);
+  // the inventory (Y): opened by one press; where the first press only wakes the controller (the game in touch mode), the
+  // screen unchanged a moment later — pressed once more
+  const invSc = path.join(tmp, 'inventory.txt'); fs.writeFileSync(invSc, 'launch\njoin\nuntil joined 5000\ninventory\n');
+  const iv1 = e2e('inv1', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), APP_OPEN_SETTLE_MS: '50' }, ['--scenario', invSc]);
+  const iv2 = e2e('inv2', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), APP_OPEN_SETTLE_MS: '50', FAKE_PAD_WAKE: '1' }, ['--scenario', invSc]);
+  made.push(iv1.runDir, iv2.runDir);
+  const ys = (r) => r.state.pads.filter((k) => k === 'BUTTON_Y').length;
+  ok(iv1.status === 0 && iv2.status === 0 && ys(iv1) === 1 && ys(iv2) === 2 && iv1.state.phase === 'screen' && iv2.state.phase === 'screen' && /もう一度押します/.test(fs.readFileSync(path.join(iv2.runDir, 'run.txt'), 'utf8')),
+    `exit ${iv1.status}/${iv2.status} Y ${ys(iv1)}/${ys(iv2)} phase ${iv1.state.phase}/${iv2.state.phase}`);
+  // PLAY slow to come (the CI device's Ore UI): no press on the screen in between — an A there lands on "Create new world"
+  const sl = e2e('lanslow', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_PLAY_SLOW: '3', APP_LAN_JOIN_MS: '60000' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(sl.runDir);
+  ok(sl.status === 0 && sl.state.uri === 'lan' && !sl.state.createdWorld && JSON.stringify(sl.state.pads) === JSON.stringify(['BUTTON_A', 'DPAD_DOWN', 'BUTTON_A']), `exit ${sl.status} ${JSON.stringify(sl.state.pads)} created ${sl.state.createdWorld}`);
+  // PLAY never reached (the title takes no A): the game stopped and started again after a while (twice), then said with the
+  // screens it went through (a trail of the lab's own words: the one thing a public summary keeps of it); the sections after
+  // it act in a world the player is not in — skipped, not failed one by one
+  const stuckSc = path.join(tmp, 'join-sections.txt');
+  fs.writeFileSync(stuckSc, 'section title\nlaunch\nuntil title 20000\nsection join\njoin\nuntil joined 5000\nsection inside\nwait 10\nshot inside\n');
+  const st = e2e('lanstuck', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_TITLE_STUCK: '1', APP_PLAY_LOAD_MS: '100', APP_LAN_STUCK_MS: '1000', APP_LAN_JOIN_MS: '5000' }, ['--scenario', stuckSc]);
+  made.push(st.runDir);
+  const stRes = JSON.parse(fs.readFileSync(path.join(st.runDir, 'result.json'), 'utf8')), stFail = stRes.results.find((x) => !x.ok), FC = await imp('app/lib/failcodes.mjs');
+  ok(st.status === 1 && /PLAY の画面に着きません（アプリを起動し直した: 2 回）/.test(st.text) && st.state.calls.filter((c) => /am force-stop com\.mojang\.minecraftpe$/.test(c)).length >= 2 && st.state.stuckA >= 2,
+    `exit ${st.status} stuckA ${st.state.stuckA}\n${st.text.slice(-1500)}`);
+  ok(/unknown-a/.test(stFail?.trail) && /restart/.test(stFail?.trail) && FC.cleanTrail(stFail.trail) === stFail.trail && stRes.results.filter((x) => !x.ok).length === 1 && !stRes.results.some((x) => x.raw === 'shot inside') && /ワールドに入れなかったので、残りの区切り（ワールドの中の手順: 1 個）は飛ばします/.test(fs.readFileSync(path.join(st.runDir, 'run.txt'), 'utf8')),
+    `trail ${stFail?.trail} results ${JSON.stringify(stRes.results.map((x) => [x.raw, x.ok]))}`);
 });
 await t('run: the content log on and no file yet (the game makes it at its first line) is a client that logged nothing: absent passes, the report says none', () => {
   const sc = path.join(tmp, 'cl-none.txt'); fs.writeFileSync(sc, 'launch\njoin\nuntil joined 5000\nabsent clientlog ERROR\n');
