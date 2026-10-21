@@ -8,3 +8,6 @@ player の BP 定義にプロパティを33個宣言したとき、BDS がどう
 
 ## Do not
 - make this addon "pass" by removing the 33rd property: the failure is what it records
+
+## Maintenance
+- 2026-10-21 BDS 1.26.52.3: moved to stable APIs
