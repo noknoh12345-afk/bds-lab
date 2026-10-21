@@ -398,6 +398,9 @@ export async function runScenario(steps, ctx) {
         tr.add('title-blind', ws); log(`${s.line} タイトル（ボタンの文字は読めず）: ゲームパッド A（Play）`); padKey('A'); opened(); titleA++;
         if (titleA > 6) throw Object.assign(new Error(`タイトルの Play が押せません（A を ${titleA - 1} 回）（画面の文字: ${said}）（道筋: ${tr.text()}）`), { trail: tr.text() });
       }
+      // (a store's screen — "Get more packs …", reached by an A on a screen not known: run 39583733131's trail went round
+      //  it for minutes — B out of it, never A)
+      else if (/\bget\b.{0,40}\bpacks?\b|\bmore\s+packs\b/i.test(all)) { tr.add('store', ws); log(`${s.line} ストアの画面（${said.slice(0, 60)}）: B で戻ります`); padKey('B'); other = 0; }
       // (a screen not known yet, just after an A that may have opened PLAY or a start: let it come — no press)
       else if (Date.now() < quietUntil) tr.add('wait', ws);
       // (an unknown screen: A goes on at first — B once PLAY has been seen, where an A could create a world)
