@@ -40,6 +40,9 @@
 //   trim <RUNNING_CRITICAL|COMPLETE|…>   Android がメモリ不足を知らせる（ゲームの後始末と、戻った後の画面）
 //   until clientlog <正規表現> [ミリ秒]   ゲームのコンテンツログ（クライアントだけのエラー: JSON UI など）にその行が出るまで待つ
 //   expect clientlog <正規表現> / absent clientlog <正規表現>   ここまでのコンテンツログにある / ない
+//   measure <geoui|diff> <shot の名前>   その名前で撮った最後の画面を、ラボの測り方で測る（geoui = GeoUI の目盛り: 画面の高さ・中心・
+//                                遠近。diff = `shot world` と違う所の割合と枠 px）。測った数は公開の要約（summary.json・チェック）にも出る
+//                                （決まった名前の数だけ）。測れなければ失敗
 //   Android の「応答なし」「停止しました」のダイアログには、until・shot・tap などの前にラボが答える（待つ / 閉じる。回数は報告に）
 // ゲームを人のように遊ぶ（端末のコントローラー: スティック・トリガー・ボタンを押したまま。lib/play.mjs。ワールドの中で）:
 //   walk <forward|back|left|right>… [秒]   歩く（walk forward left 2 で斜め）     sprint [秒]   前へ走る
@@ -56,6 +59,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { GAME_VERBS, gameStep, playGame, playServer } from './play.mjs';
+import { KIND_NAMES as MEASURE_KINDS, measureShot } from './measure.mjs';
 import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, joinPromptButton, joinRefusal, joinPromptKind, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
 
 // APP_TIME_SCALE (0..1, tests on the fake device): every fixed pause shorter; deadlines stay in real time
@@ -67,10 +71,10 @@ const TITLE_OCR_MS = Number(process.env.APP_TITLE_OCR_MS) || 6000;
 const JOIN_OCR_MS = Number(process.env.APP_JOIN_OCR_MS) || 4000;
 export const KEYS = ANDROID_KEYS;
 const VERBS = new Set(['launch', 'stop', 'join', 'wait', 'shot', 'tap', 'swipe', 'key', 'text', 'do', 'until', 'expect', 'absent', 'pull', 'push', 'sh', 'section', 'chat', 'press', 'hold', 'record', 'perf', 'changed', 'network', 'size', 'density', 'cutout',
-  'mouse', 'pad', 'screen', 'background', 'foreground', 'trim', ...GAME_VERBS]);
+  'mouse', 'pad', 'screen', 'background', 'foreground', 'trim', 'measure', ...GAME_VERBS]);
 // a game controller's buttons (Android key names): the game's UI moves its focus with them, a path touch never takes
 // steps that leave the game as it is (the rest act on it)
-const STILL = new Set(['launch', 'until', 'wait', 'shot', 'section', 'do', 'expect', 'absent', 'changed', 'perf', 'record', 'pull', 'sh', 'where', 'items']);
+const STILL = new Set(['launch', 'until', 'wait', 'shot', 'section', 'do', 'expect', 'absent', 'changed', 'perf', 'record', 'pull', 'sh', 'where', 'items', 'measure']);
 export const PAD = { A: 'BUTTON_A', B: 'BUTTON_B', X: 'BUTTON_X', Y: 'BUTTON_Y', L1: 'BUTTON_L1', R1: 'BUTTON_R1', L2: 'BUTTON_L2', R2: 'BUTTON_R2', START: 'BUTTON_START', SELECT: 'BUTTON_SELECT',
   THUMBL: 'BUTTON_THUMBL', THUMBR: 'BUTTON_THUMBR', UP: 'DPAD_UP', DOWN: 'DPAD_DOWN', LEFT: 'DPAD_LEFT', RIGHT: 'DPAD_RIGHT' };
 // the scenario's names for the controller's buttons → the device controller's words (app/relay/lab-pad.c)
@@ -147,6 +151,7 @@ function check(s) {
   if (s.verb === 'screen' && !(a.length === 1 && ['off', 'on'].includes(a[0]))) return '書き方: screen off|on';
   if ((s.verb === 'background' || s.verb === 'foreground') && a.length) return `書き方: ${s.verb}（引数なし）`;
   if (s.verb === 'trim' && !(a.length === 1 && TRIM.includes(String(a[0]).toUpperCase()))) return `書き方: trim <${TRIM.join('|')}>`;
+  if (s.verb === 'measure' && !(a.length === 2 && MEASURE_KINDS.includes(a[0]) && /^[\w.-]{1,40}$/.test(a[1]))) return `書き方: measure <${MEASURE_KINDS.join('|')}> <shot の名前>（その名前で撮った最後の画面を測る）`;
   if (s.verb === 'until') {
     if (a[0] === 'joined' || a[0] === 'stable' || a[0] === 'title') { if (a[1] !== undefined && Number.isNaN(num(a[1]))) return `書き方: until ${a[0]} [ミリ秒]`; }
     else if (LOGS.includes(a[0])) { if (!a[1]) return `書き方: until ${a[0]} <正規表現> [ミリ秒]`; try { rx(a[1]); } catch (e) { return `正規表現の誤り: ${e.message}`; } }
@@ -227,7 +232,7 @@ export async function runScenario(steps, ctx) {
   const shotsDir = path.join(runDir, 'shots');
   fs.mkdirSync(shotsDir, { recursive: true });
   const srvTail = new Tail(server.logFile), logTail = new Tail(ctx.logcatFile);
-  const results = [], shots = [], dialogs = ctx.dialogs ?? [], began = Date.now(), perf = [], recordings = [];
+  const results = [], shots = [], dialogs = ctx.dialogs ?? [], began = Date.now(), perf = [], recordings = [], measures = [];
   let n = 0, size = null, last = null, lastLook = 0, recN = 0, kbd, touched = false, ocrLast = null;
   const doLog = path.join(runDir, 'do.txt');
   // the sections (`section <name>`): the client's content log is read at each boundary, so every line it wrote is tied
@@ -466,6 +471,17 @@ export async function runScenario(steps, ctx) {
         await sleep(3000);
         return a[0];
       }
+      case 'measure': {
+        // the newest picture of that name, measured on this machine (lib/measure.mjs: a fixed set of numbers, nothing of the screen)
+        const [kind, name] = a, f = shots.filter((x) => path.basename(x).replace(/^\d+-/, '') === `${name}.png`).at(-1);
+        if (!f) throw new Error(`測る画面がありません: 先に shot ${name}`);
+        // (diff: against the newest `shot world`, the picture `changed` compares with)
+        const img = (buf) => { const I = decode(buf); return { width: I.w, height: I.h, data: I.data }; }, base = kind === 'diff' ? ctx.baseline?.() : null;
+        const r = await measureShot(kind, img(fs.readFileSync(f)), { baseline: base ? img(base) : null });
+        measures.push({ line: s.line, section: cur().name, kind, shot: name, ok: r.ok, values: r.values ?? {}, ...(r.ok ? {} : { why: r.why }) });
+        if (!r.ok) throw new Error(`測れません（${kind} ${name}）: ${r.why}`);
+        return `${Object.keys(r.values).length} 個の数`;
+      }
       case 'changed': {
         // the screen that should have opened did: the last picture against the bare world (`shot world`)
         const base = ctx.baseline?.();
@@ -643,5 +659,5 @@ export async function runScenario(steps, ctx) {
     }
   }
   readClient(); cur().ms = Date.now() - cur().t0;
-  return { ok, results, shots, dialogs, sections: sections.filter((x, k) => k > 0 || x.client.length).map(({ t0: _t0, ...x }) => x), perf, recordings };
+  return { ok, results, shots, dialogs, sections: sections.filter((x, k) => k > 0 || x.client.length).map(({ t0: _t0, ...x }) => x), perf, recordings, measures };
 }

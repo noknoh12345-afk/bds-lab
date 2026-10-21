@@ -156,6 +156,7 @@ node lab.mjs app screen                   # 押した結果を見る
 | `until clientlog <正規表現> [ミリ秒]` | ゲームのコンテンツログ（JSON UI・パック・スクリプトのエラー。クライアントにしか出ない）にその行が出るまで待つ |
 | `expect clientlog <正規表現>` / `absent clientlog <正規表現>` | ここまでのコンテンツログにその行がある / ない |
 | `changed [割合]` | いまの画面が `shot world`（何も開いていないワールド）と違う＝画面が本当に開いた（既定 3%） |
+| `measure geoui <shot の名前>` / `measure diff <shot の名前>` | その名前で撮った最後の画面を、ラボの測り方で測る（`geoui` = GeoUI の目盛り。bds/addons/geoui_calib: 画面の高さのモデル単位・中心・中心のずれ・縦横の尺度・遠近。`diff` = いちばん新しい `shot world`（`changed` と同じ基準）と違う所: 割合と、変わった部分の枠（px、大きい順に 4 つ）。app/lib/measure.mjs）。測れなければ失敗。測った数は、公開のリポジトリでも要約（`summary.json`・チェック「app: 結果」の「測った値」）に出ます: 決まった名前の数だけで、画面・文字・ログは出ません |
 | `network delay <ミリ秒\|none>` / `network speed <edge\|umts\|…\|kbps>` | 端末の回線を遅くする（読み込み中の画面や、遅い回線での UI を試す） |
 | `size <幅>x<高さ>` / `size reset` | ゲームの画面の大きさ・比率を変える（横向きで。`size 1024x768` = 4:3 のタブレット、`size 2400x1080` = 細長いスマホ）。JSON UI がほかの比率で崩れないか |
 | `density <dpi>` / `density reset` | 画素の細かさ（UI の大きさが変わる） |
@@ -304,7 +305,7 @@ GitHub のリポジトリの **Actions → app → Run workflow** で、アド�
 使わず、毎回すべて作ります）。エミュレータ本体とシステムイメージ（Google が公開しているもの。秘密を含まない）もキャッシュします。
 
 **公開リポジトリでも private 並み**: 誰でも見られるもの（ログ・注釈・チェック・issue・成果物）に秘密や画面の中身を出しません。
-成果物（報告・スクリーンショット・ログ）は同じ鍵で `results.sealed` に暗号化し、平文は合否・手順の数・秒数・版だけの `summary.json`。
+成果物（報告・スクリーンショット・ログ）は同じ鍵で `results.sealed` に暗号化し、平文は合否・手順の数・秒数・版（と、シナリオの `measure` が測った決まった名前の数）だけの `summary.json`。
 チェックと注釈は合否だけ。`app ci watch <番号>` が取るときに `.env.local` の鍵（Secrets と同じ `APP_CACHE_KEY`、無ければ
 `GOOGLE_AAS_TOKEN`）で開きます。鍵が無い実行は中身を成果物に出しません。
 **端末の土台**: `account` のとき、ゲームを入れる前の端末（Play ストアを system に入れ、アカウントを書き込み、Google の最初の重い処理が

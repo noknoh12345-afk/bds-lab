@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { anonymize } from './ghresults.mjs';
 import { logLevel as clientLevel } from './client.mjs';
+import { measureLines } from './measure.mjs';
 
 const ELF = Buffer.from([0x7f, 0x45, 0x4c, 0x46]), ZIP = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
 const FORBIDDEN_EXT = /\.(apk|apks|xapk|aab|so|dex|zip|mcpack|mcaddon)$/i;
@@ -185,6 +186,7 @@ export function writeReport(runDir, r) {
           ...r.client.warnings.slice(0, 15).map((x) => `- ⚠ [${x.section}] ${x.line.slice(0, 300)}`), ...(r.client.warnings.length > 15 ? [`- …警告ほか ${r.client.warnings.length - 15} 行`] : [])]
         : [`- なし（コンテンツログ ${r.client.lines} 行を読みました）`]), ''] : []),
     ...(r.perf?.length ? ['## 性能（perf）', '', ...r.perf.map((p) => `- ${p.line} 行目 [${p.section}]: メモリ ${p.mem ?? '?'} MB、${p.fps === null || p.fps === undefined ? '毎秒のフレーム数は不明' : `${p.fps.toFixed(1)} fps`}`), ''] : []),
+    ...(r.measures?.length ? ['## 測った値（measure）', '', ...measureLines(r.measures, { why: true }), ''] : []),
     ...(r.recordings?.length ? ['## 録画', '', ...r.recordings.map((f) => `- ${f}`), ''] : []),
     '## 手順',
     '',

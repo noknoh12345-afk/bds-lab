@@ -1840,6 +1840,45 @@ await t('scenario + ui: other shapes (size, density, cutout), words that must or
   eq(p.steps.filter((x) => x.verb === 'section').map((x) => x.args[0]), ['start', 'join', 'chest', 'shape--1024x768', 'chest--1024x768', 'shape-off--1024x768', 'shape--cutout-tall', 'chest--cutout-tall', 'shape-off--cutout-tall', 'death'], 'each shape: its own baseline, every screen, then back; death last of all');
   ok(/^shot ui-chest--1024x768$/m.test(sc) && /^shot world--cutout-tall$/m.test(sc) && /^size 1024x768$/m.test(sc) && /^cutout none$/m.test(sc), sc);
 });
+await t('scenario: measure geoui <shot> — the lab\'s own measuring on a picture taken before; numbers only, a failure fails the step', async () => {
+  const { steps, errors } = S.parseScenario('shot calib\nmeasure geoui calib\n');
+  eq(errors, []); eq(steps.map((x) => x.verb), ['shot', 'measure']); eq(steps[1].args, ['geoui', 'calib']);
+  const bad = S.parseScenario('measure\nmeasure geoui\nmeasure ruler calib\nmeasure geoui a/b\nmeasure geoui calib extra\n').errors;
+  eq(bad.length, 5, bad.join('\n'));
+  const { synth } = await imp('bds/geoui/calib.mjs');
+  const dir = path.join(tmp, 'measure'); fs.mkdirSync(dir, { recursive: true });
+  const srv = path.join(dir, 'server.log'); fs.writeFileSync(srv, ''); fs.writeFileSync(path.join(dir, 'logcat.txt'), '');
+  const g = synth({ h: 176, cx: -0.3, cy: -9.25, w: 1560, hpx: 720 }), grid = pngEncode({ w: g.width, h: g.height, data: Buffer.from(g.data) });
+  const flat = pngEncode({ w: 64, h: 32, data: Buffer.alloc(64 * 32 * 4, 90) });
+  let pic = grid;
+  const adb = { screencap: () => pic, shell: () => ({ status: 0, stdout: '', stderr: '' }), run: () => ({ status: 0, stdout: '', stderr: '' }) };
+  const ctx = { adb, runDir: dir, decode: pngDecode, pkg: 'x', logcatFile: path.join(dir, 'logcat.txt'), server: { logFile: srv, joinUri: 'u', do: async () => ({ ok: true, lines: [] }) } };
+  const sc = S.parseScenario('section a\nshot calib\nmeasure geoui calib\nsection b\nmeasure geoui never-taken\nsection c\nshot blank\nmeasure geoui blank\n');
+  pic = grid;
+  const r = await S.runScenario(sc.steps.slice(0, 5), ctx);
+  pic = flat;
+  const r2 = await S.runScenario(sc.steps.slice(5), ctx);
+  const m = r.measures[0];
+  ok(m && m.ok && m.kind === 'geoui' && m.shot === 'calib' && m.line === 3 && m.section === 'a', 'measured', JSON.stringify(r.measures));
+  ok(Math.abs(m.values.unitsPerScreenH - 176) < 1 && Math.abs(m.values.centreFixY - (-9.25 / 176)) < 0.005 && Math.abs(m.values.centreX - (-0.3)) < 1, 'the numbers of the picture: height 176 units, the centre fix', JSON.stringify(m.values));
+  ok(Object.values(m.values).every((v) => typeof v === 'number'), 'numbers only');
+  ok(r.results.find((x) => x.line === 5 && !x.ok && /先に shot never-taken/.test(x.note)), 'no picture of that name: the step fails, says which shot', JSON.stringify(r.results));
+  ok(!r2.ok && r2.measures.length === 1 && r2.measures[0].ok === false && r2.measures[0].why && r2.results.some((x) => x.verb === 'measure' && !x.ok && /測れません/.test(x.note)), 'a picture without the grid: recorded as not measured, the step fails', JSON.stringify(r2.measures));
+  const md = R.writeReport(dir, { ok: false, addon: 'geoui_calib', results: [...r.results, ...r2.results], shots: [...r.shots, ...r2.shots], measures: [...r.measures, ...r2.measures], started: 0, ended: 1000, scenario: 'app.txt' });
+  ok(/^## 測った値（measure）$/m.test(md) && /^- 測った値 calib（geoui、3 行目）: 画面の高さ 17\d\.\d{3} 単位/m.test(md) && /^- 測った値 blank（geoui、8 行目）: ✘ 測れません（/m.test(md), 'the report: a line each (why it failed too)', md);
+  // diff: against the newest `shot world` — the share and the boxes of what changed, biggest first; specks are noise
+  const W = 200, H = 100, base = Buffer.alloc(W * H * 4, 60), now = Buffer.from(base);
+  const paint = (x0, y0, x1, y1) => { for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) now.fill(250, (y * W + x) * 4, (y * W + x) * 4 + 3); };
+  paint(10, 5, 40, 15); paint(150, 70, 160, 90); paint(100, 50, 101, 51);
+  pic = pngEncode({ w: W, h: H, data: now });
+  const worldPic = pngEncode({ w: W, h: H, data: base });
+  const d = await S.runScenario(S.parseScenario('shot hud\nmeasure diff hud\n').steps, { ...ctx, baseline: () => worldPic });
+  const dv = d.measures[0]?.values ?? {};
+  ok(d.ok && dv.parts === 2 && dv.b1n === 300 && [dv.b1x0, dv.b1y0, dv.b1x1, dv.b1y1].join() === '10,5,40,15' && [dv.b2x0, dv.b2y0, dv.b2x1, dv.b2y1].join() === '150,70,160,90' && [dv.x0, dv.y0, dv.x1, dv.y1].join() === '10,5,160,90' && Math.abs(dv.share - 501 / 20000) < 1e-9,
+    'diff: two parts (biggest first), the box of all, the share (the 1 px speck counts in the share only)', JSON.stringify(dv));
+  const nb = await S.runScenario(S.parseScenario('shot hud\nmeasure diff hud\n').steps, ctx);
+  ok(!nb.ok && /shot world/.test(nb.results[1]?.note ?? ''), 'diff without a `shot world`: fails, says what to take', JSON.stringify(nb.results));
+});
 await t('run: the device\'s own inputs — mouse (press, hover, wheel), a game controller, the screen off and on, home and back, a memory warning', () => {
   const sc = path.join(tmp, 'inputs.txt');
   fs.writeFileSync(sc, 'launch\nuntil title 60000\njoin\nuntil joined 60000\nshot world\nmouse tap 0.5 0.5\nmouse move 0.25 0.25\nmouse scroll 0.5 0.5 3\npad A\npad up\nscreen off\nscreen on\nbackground\nforeground\ntrim RUNNING_CRITICAL\n');

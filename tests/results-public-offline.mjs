@@ -25,7 +25,10 @@ const PNG = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), crypt
 const makeRun = (root, name = '20261007-120000-demo') => {
   const d = path.join(root, name);
   w(path.join(d, 'report.md'), `# app: FAIL — demo\n\n| | |\n|---|---|\n| 結果 | FAIL |\n| アプリ | 1.21.120.4 (912012004) |\n| BDS | 1.21.120.4 |\n| 時間 | 95s |\n\n## 手順\n\n- ✔ 1: \`join\`\n- ✘ 2: \`${STEP}\` — ${SCREEN} ${EMAIL}\n`);
-  w(path.join(d, 'result.json'), JSON.stringify({ ok: false, addon: 'demo', app: { versionName: '1.21.120.4', versionCode: 912012004 }, bds: { version: '1.21.120.4', exact: true }, started: 1000, ended: 96_000, timing: { join: 12_345 }, results: [{ ok: true, line: 3, raw: 'join' }, { ok: false, line: 7, raw: STEP, note: SCREEN }, { ok: true, line: 9, raw: 'wait 1' }], notes: [EMAIL] }));
+  w(path.join(d, 'result.json'), JSON.stringify({ ok: false, addon: 'demo', app: { versionName: '1.21.120.4', versionCode: 912012004 }, bds: { version: '1.21.120.4', exact: true }, started: 1000, ended: 96_000, timing: { join: 12_345 }, results: [{ ok: true, line: 3, raw: 'join' }, { ok: false, line: 7, raw: STEP, note: SCREEN }, { ok: true, line: 9, raw: 'wait 1' }], notes: [EMAIL],
+    // measure steps (lib/measure.mjs): a kind's own numbers go out; words, other fields, other kinds and why it failed do not
+    measures: [{ line: 11, section: 'hud', kind: 'geoui', shot: 'calib-device', ok: true, why: SCREEN, values: { unitsPerScreenH: 176.25, centreFixX: -0.0017, centreFixY: -0.05256, width: 1560, height: 720, rmsPx: SCREEN, secret: 5 } },
+      { line: 12, kind: 'geoui', shot: EMAIL, ok: false, values: {}, why: SCREEN }, { line: 13, kind: 'ocr', shot: 'x', ok: true, values: { text: 1 } }] }));
   w(path.join(d, 'steps.txt'), `OK   3 join\nFAIL 7 ${STEP}  ${SCREEN}\nOK   9 wait 1\n`);
   w(path.join(d, 'run.txt'), `E something failed ${LOG}\n${EMAIL}\n`);
   w(path.join(d, 'logcat.txt'), `${LOG}\n`);
@@ -55,6 +58,8 @@ ok(JSON.stringify(fs.readdirSync(run).sort()) === JSON.stringify(['results.seale
 const sumText = fs.readFileSync(path.join(run, 'summary.json'), 'utf8'), sum = JSON.parse(sumText);
 ok(sum.ok === false && sum.steps === 3 && JSON.stringify(sum.failed) === '[2]' && JSON.stringify(sum.failed_lines) === '[7]' && sum.seconds === 95 && sum.join_seconds === 12.3 && sum.bds === '1.21.120.4' && sum.app === '1.21.120.4' && sum.addon === 'demo' && sum.sealed === true, 'summary.json: the verdict, the steps and which failed, seconds, the versions', sumText);
 ok(![EMAIL, SCREEN, LOG, STEP, 'my-secret-words', '0123456789abcdef', '01-title', KEY].some((x) => sumText.includes(x)), 'summary.json: no e-mail, screen text, log line, step text, device id, screenshot or key', sumText);
+ok(JSON.stringify(sum.measures) === JSON.stringify([{ kind: 'geoui', shot: 'calib-device', line: 11, ok: true, values: { width: 1560, height: 720, unitsPerScreenH: 176.25, centreFixX: -0.0017, centreFixY: -0.05256 } }, { kind: 'geoui', shot: null, line: 12, ok: false, values: {} }]),
+  "summary.json: the measures, a kind's own numbers only (no word, other field, other kind or why)", JSON.stringify(sum.measures));
 const sealedBuf = fs.readFileSync(path.join(run, 'results.sealed'));
 ok(sealedBuf.subarray(0, 8).toString() === 'BDSLABV1' && ![EMAIL, SCREEN, LOG].some((x) => sealedBuf.includes(Buffer.from(x))), "the vault's form, nothing readable in it");
 ok(!r.text.includes(KEY) && !r.text.includes(EMAIL) && !r.text.includes(SCREEN), 'nothing of the key or the run in what it says', r.text);
@@ -92,6 +97,8 @@ const all = JSON.stringify(posts);
 ok(r.status === 0 && posts.length === 1 && /^FAIL .*中身は暗号化/.test(posts[0].output.title), 'a sealed run: one check (no logcat, no screens)', r.text + all);
 ok(/手順 3 個、落ちた: 2 番目（7 行目）/.test(posts[0].output.summary) && /1\.21\.120\.4/.test(posts[0].output.summary) && /95s/.test(posts[0].output.summary) && !posts[0].output.text, 'its summary: the verdict, which step, versions, seconds; no text', posts[0]?.output?.summary);
 ok(/中身は暗号化されています: 手元で node lab\.mjs app ci watch 424242/.test(posts[0].output.summary), 'one line: where to read it', posts[0]?.output?.summary);
+ok(/^- 測った値 calib-device（geoui、11 行目）: 画面の高さ 176\.250 単位.*中心のずれ x -0\.00170 \/ y -0\.05256/m.test(posts[0].output.summary) && /^- 測った値 \?（geoui、12 行目）: ✘ 測れません$/m.test(posts[0].output.summary) && posts[0].output.summary.includes('"unitsPerScreenH":176.25'),
+  'the measures in the check: a line each and the numbers as JSON', posts[0]?.output?.summary);
 ok(![EMAIL, SCREEN, LOG, STEP, 'my-secret-words', 'base64'].some((x) => all.includes(x)), 'no e-mail, screen text, log line or step text in the check', all);
 const sealedChecks = posts.splice(0);
 posts.length = 0;

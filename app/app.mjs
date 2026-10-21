@@ -38,6 +38,7 @@ import * as RF from './lib/runfiles.mjs';
 import * as SI from './lib/signin.mjs';
 import * as WD from './lib/world.mjs';
 import * as Dev from './lib/device.mjs';
+import * as M from './lib/measure.mjs';
 import { gridOverlay } from './lib/screen.mjs';
 import { autoOauthToken, browserCandidates, canShowWindow } from './lib/login.mjs';
 import { playwrightOauthToken } from './lib/playwright-login.mjs';
@@ -990,7 +991,7 @@ async function runCmd(args) {
       atTitle: () => Boolean(emu.warm && launched && !process.env.APP_LIVE_DEVICE && ready?.stamp && !ready.stamp.firstScreen),
       server: { joinUri, lan, logFile: serverLog, do: async (c) => bds(['do', c], { LAB_ADDON: addon }, 5 * 60_000) },
     });
-    st.results = res.results; st.shots = res.shots; st.sections = res.sections; st.perf = res.perf; st.recordings = res.recordings.map((f) => rel(f));
+    st.results = res.results; st.shots = res.shots; st.sections = res.sections; st.perf = res.perf; st.measures = res.measures; st.recordings = res.recordings.map((f) => rel(f));
     // the screens' own words: a translation key the client could not find shows as is (an addon's .lang missing a line).
     // Only the screens' pictures (shot ui-…, jsonui-…), read once the steps are done (OCR takes a moment a picture)
     if (C.ocrAvailable() && process.env.APP_OCR_KEYS !== '0') {
@@ -2502,7 +2503,8 @@ async function ghFetch(url, { method = 'GET', body } = {}) {
 /** (in the workflow's second job) the run folder → check runs on the commit; --artifact <name> takes it from this run's artifact.
  *  A repository that is not private (APP_REPO_VISIBILITY): the app job seals its run folder before the upload (--seal <folder>:
  *  everything in it → results.sealed with the vault's key, AES-256-GCM; in the clear only summary.json: the verdict, the number
- *  of steps and which failed, seconds, the BDS and app versions — no screenshot, log line, screen text, e-mail or device id).
+ *  of steps and which failed, seconds, the BDS and app versions, and the numbers of `measure` steps (lib/measure.mjs: the lab's
+ *  own measuring, a fixed set of named numbers) — no screenshot, log line, screen text, e-mail or device id).
  *  A sealed run becomes one check from summary.json alone. No key: nothing of it is uploaded (summary.json only).
  *  --open <folder>: (this machine, through app ci) every results.sealed under it opened in place with the key of .env.local */
 async function checksCmd(args) {
@@ -2523,6 +2525,7 @@ async function checksCmd(args) {
       steps: steps.length, failed: steps.flatMap((x, i) => (x.ok ? [] : [i + 1])), failed_lines: steps.filter((x) => !x.ok && x.line !== null).map((x) => x.line),
       seconds: secs, join_seconds: num(r?.timing?.join) !== null ? Math.round(r.timing.join / 100) / 10 : null,
       bds: word(r?.bds?.version) ?? cell('BDS'), app: word(r?.app?.versionName) ?? cell('アプリ'),
+      ...(Array.isArray(r?.measures) && r.measures.length ? { measures: M.cleanMeasures(r.measures) } : {}),
     };
   };
   // the run folders under a folder: itself when it holds files, else each folder in it (app/runs: every run of the job)
@@ -2571,13 +2574,16 @@ async function checksCmd(args) {
     else try { s = JSON.parse(readT(path.join(runDir, SUMMARY))) ?? {}; } catch { /* a broken summary: only what is certain */ }
     const tag = shard ? ` [${shard}]` : '', ok = s.ok === true, n = num(s.steps), failed = (Array.isArray(s.failed) ? s.failed : []).filter((x) => num(x) !== null).slice(0, 20);
     const lines = (Array.isArray(s.failed_lines) ? s.failed_lines : []).filter((x) => num(x) !== null).slice(0, 20);
+    // (the measure steps' numbers, read back as numbers only: a line each for a person, and the same as JSON to take away)
+    const ms = M.cleanMeasures(s.measures), measured = ms.length ? ['', '## 測った値（measure: ラボの測り方の数だけ）', '', ...M.measureLines(ms), '',
+      '<details><summary>数（JSON）</summary>', '', '```json', JSON.stringify(ms), '```', '', '</details>'] : [];
     return [{ name: `${G.CHECK_PREFIX}結果${tag}`, title: `${ok ? 'PASS' : 'FAIL'}${tag} ${word(s.run) ?? path.basename(runDir)}${s.sealed === false ? '（中身は出していません）' : '（中身は暗号化）'}`, text: '',
       summary: [`# app: ${ok ? 'PASS' : 'FAIL'}${word(s.addon) ? ` — ${s.addon}` : ''}`, '', '| | |', '|---|---|',
         `| 結果 | ${ok ? 'PASS' : 'FAIL'}${n !== null ? `（手順 ${n} 個${failed.length ? `、落ちた: ${failed.join(', ')} 番目${lines.length ? `（${lines.map((x) => `${x} 行目`).join(', ')}）` : ''}` : ''}）` : ''} |`,
         `| アプリ | ${word(s.app) ?? '—'} |`, `| BDS | ${word(s.bds) ?? '—'} |`,
         ...(num(s.join_seconds) !== null ? [`| 参加 | ${s.join_seconds} 秒 |`] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`, '',
         s.sealed === false ? '- 中身は封じる鍵が無かったので成果物に入れていません（APP_CACHE_KEY か GOOGLE_AAS_TOKEN を Secrets に）'
-          : `- 中身は暗号化されています: 手元で node lab.mjs app ci watch ${runId ?? '<run の番号>'}`].join('\n') }];
+          : `- 中身は暗号化されています: 手元で node lab.mjs app ci watch ${runId ?? '<run の番号>'}`, ...measured].join('\n') }];
   };
   // the run folder(s): this machine's newest run, or (in the workflow) each device's artifact: <name> for one device,
   // <name>-<k>of<n> for n devices run at once, each posted with "[k/n]" in its checks

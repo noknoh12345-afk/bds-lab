@@ -1,6 +1,7 @@
 # GeoUI の描画を本物のアプリで確かめる: node lab.mjs app run -a geoui_lab（GitHub: app.yml の addon=geoui_lab）
 # 比べ方: `shot world--<名前>` がその時点の画面を基準にし、`changed <割合>` が基準との違いを確かめる。
 # 仕様書の主張ごとに section を分ける（失敗した section は飛ばして次へ続く）。画は shots/ を人が見て確かめる。
+# `measure diff <shot>` が基準と違う所の割合と枠（px）を数で出す（公開のリポジトリでもチェック「app: 結果」の「測った値」で読める）。
 # 全員のプロパティを書く: do js for (const q of world.getAllPlayers()) q.setProperty(...)
 
 section title
@@ -24,6 +25,7 @@ wait 2000
 shot hud-on
 changed 0.01                               # 隠したときより画面の1%以上が変わった＝板が見えている
 absent clientlog \bERROR\b
+measure diff hud-on                        # 板の出た所（px）
 
 section property-reaches-render
 # 主張: client_sync のプロパティを書き換えると、Molang 経由で毎フレームの描画に届く（バー 100% → 0%）
@@ -34,6 +36,7 @@ shot bar0
 changed 0.003
 do js for (const q of world.getAllPlayers()) q.setProperty('glab:bar', 100); 'GLAB bar 100'
 wait 1500
+measure diff bar0                          # バーの消えた所（px）
 
 section inventory
 # 主張: インベントリも live_player_renderer なので、判定（is_in_ui）だけでは GeoUI の板がインベントリにも映る
@@ -50,6 +53,7 @@ wait 1500
 do js for (const q of world.getAllPlayers()) q.setProperty('glab:on', true); 'GLAB shown'
 wait 1500
 absent clientlog \bERROR\b
+measure diff inventory-off                 # インベントリの中で板が映っていた所（px）
 
 section pause-paperdoll
 # 主張: ポーズ画面の人形は paper_doll_renderer。!v.is_paperdoll で外し、そこではプロパティを読まないのでエラーが出ない
@@ -75,6 +79,7 @@ shot invisible-on
 do effect @a clear
 wait 2000
 shot after-invisible
+measure diff invisible-on                  # 透明化の間に板が描かれたか（0 か所なら描かれない）
 
 section third-person
 # 主張: HUD 追加型は視点に依存しない（三人称でも同じ所に出る）。画で確かめる
