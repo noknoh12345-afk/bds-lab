@@ -78,7 +78,11 @@ tb('what is pushed: the lab as a release carries it, its own CI inert (only host
   ok(rels.includes('common/core.mjs') && rels.includes('bds/vendor/bds-version.txt') && !rels.includes('bds/vendor/bedrock-server.zip'), 'the lab, the BDS version, no BDS');
   eq(rels.filter((r) => r.startsWith('.github/')), ['.github/workflows/host.yml'], 'no workflow of the lab\'s own where GitHub starts them (a push must start nothing but host.yml)');
   ok(rels.includes('.lab-github/workflows/verify.yml'), 'the lab\'s own workflows carried under .lab-github/ (inert there)');
-  ok(rels.includes('bds/addons/coins/bp/manifest.json') && !rels.some((r) => /(^|\/)(\.lab|node_modules|dist)\//.test(r) || /tsconfig\.json$/.test(r)), 'the unit, without its caches');
+  // (caches: .lab/ and node_modules/ anywhere; dist/ and tsconfig.json anywhere but in a vendored package's own folder —
+  //  common/<package>/dist and its tsconfig.json are the lab's own files: common/nethernet-connect builds its dist from them)
+  const vendored = (r) => /^common\/[^/]+\/(dist\/|tsconfig\.json$)/.test(r);
+  const cache = (r) => /(^|\/)(\.lab|node_modules)\//.test(r) || ((/(^|\/)dist\//.test(r) || /(^|\/)tsconfig\.json$/.test(r)) && !vendored(r));
+  ok(rels.includes('bds/addons/coins/bp/manifest.json') && !rels.some(cache) && !rels.some((r) => r.startsWith('bds/addons/coins/') && (/(^|\/)(\.lab|node_modules|dist)\//.test(r) || /tsconfig\.json$/.test(r))), `the unit, without its caches${rels.some(cache) ? ` (${rels.filter(cache).slice(0, 6).join(', ')})` : ''}`);
   eq(files.find(([r]) => r === 'auto/ledger.jsonl')?.[1].toString(), '', 'the autopilot\'s ledger reset (share\'s resetMemory)');
   const { policy } = await import(pathToFileURL(path.join(TOP, 'common', 'auto-guard.mjs')).href);
   eq(JSON.parse(files.find(([r]) => r === 'auto/policy.json')[1].toString()).gate, policy(TOP).gate, 'the gate the host runs is the person\'s own list');
