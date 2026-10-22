@@ -582,12 +582,13 @@ jobs:
           swap=$(free -m | awk '/Swap/{print $2}'); mnt=$(df -BG --output=avail /mnt 2>/dev/null | tail -1 | tr -d ' ')
           echo "::notice title=ランナー（${SHARD}）::CPU $(nproc) 個（${cpu}）、メモリ ${mem} GB、スワップ ${swap} MB、ディスク空き ${disk}（/mnt ${mnt:-?}）、KVM $([ -e /dev/kvm ] && echo あり || echo なし)"
 
-      # 使わない道具を消す（裏で）。画面の文字を読む OCR（tesseract: tap text / until text）も裏で入れる
+      # 使わない道具を消す（裏で）。画面の文字を読む OCR（tesseract: tap text / until text）も裏で入れる。続けて ffmpeg
+      # （Discord に送る録画を上限の大きさに縮める: app/lib/feed.mjs。apt は 1 つずつしか動かないので同じ裏の続きで）
       - name: ディスクを空け、OCR を入れる（裏で）
         run: |
           a="$ANDROID_HOME"
           sudo -b sh -c "rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost '$AGENT_TOOLSDIRECTORY/CodeQL' /usr/share/swift /usr/local/share/powershell /usr/local/share/chromium /usr/local/lib/node_modules /opt/microsoft /opt/az '$a/ndk' '$a/ndk-bundle' '$a/cmake' '$a/build-tools' '$a/platforms' '$a/extras'" >/dev/null 2>&1
-          sudo -b sh -c "DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends tesseract-ocr || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends tesseract-ocr)" >/dev/null 2>&1
+          sudo -b sh -c "{ DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends tesseract-ocr || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends tesseract-ocr); }; command -v ffmpeg >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends ffmpeg || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends ffmpeg)" >/dev/null 2>&1
 
       # つまみ APP_HOST_SWAP_GB: このパソコンにスワップを足す（2 CPU・7.8 GB のランナーで、エミュレータがメモリ不足で止められないように）
       - name: スワップを足す（つまみ）
@@ -677,6 +678,13 @@ jobs:
           APP_PLAY_CODE: ${{ needs.prep.outputs.play_code }}
           APP_VENDING_URL: ${{ inputs.account && vars.APP_VENDING_URL || '' }}
           APP_VENDING_SHA256: ${{ inputs.account && vars.APP_VENDING_SHA256 || '' }}
+          # (Discord: the run's pictures and videos as it goes — app/lib/feed.mjs: your bot's DM, else a Discord webhook;
+          #  variable LAB_NOTIFY_MEDIA auto / end / off. Sent to you alone: the public log and artifacts stay as they are)
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
+          LAB_NOTIFY_WEBHOOK: ${{ secrets.LAB_NOTIFY_WEBHOOK }}
+          LAB_NOTIFY_MEDIA: ${{ vars.LAB_NOTIFY_MEDIA }}
+          APP_LANE: ${{ inputs.lane }}
         run: |
           set -euo pipefail
           args=(-a "$ADDON" --no-fetch --bds "$BDS")

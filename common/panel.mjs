@@ -2,7 +2,7 @@
 // tokens tried right after a change, without a deploy.
 //   check [--quick] [--all] [files..]  the checks the changed files need (git's changed and new files when none are named):
 //                                       ESLint, the offline tests, and the real browser (panel-browser, ~1 min; --quick: not)
-//   shots [dir]                         the real-browser run with a picture of each tab it opens (default .lab/panel-shots)
+//   shots [dir] [--dark]                the real-browser run with a picture of each tab it opens (default .lab/panel-shots)
 //   hook                                for Claude Code's PostToolUse: a file just edited → its quick checks; a failure is told
 //                                       back to the AI at once (exit 2), anything else is silent
 import fs from 'node:fs';
@@ -107,9 +107,10 @@ export async function panelCmd(args, out = console.log) {
   const [sub = 'check', ...rest] = args;
   if (sub === 'check') return check({ quick: rest.includes('--quick'), all: rest.includes('--all'), files: rest.filter((a) => !a.startsWith('--')).length ? rest.filter((a) => !a.startsWith('--')) : undefined, out });
   if (sub === 'shots') {
-    const dir = path.resolve(TOP, rest[0] ?? '.lab/panel-shots');
+    // (--dark: in the dark colours, as a phone set to dark mode shows it)
+    const dark = rest.includes('--dark'), dir = path.resolve(TOP, rest.filter((a) => !a.startsWith('--'))[0] ?? '.lab/panel-shots');
     fs.rmSync(dir, { recursive: true, force: true });
-    const r = runOne(process.execPath, [BROWSER], { PANEL_SHOTS: dir });
+    const r = runOne(process.execPath, [BROWSER], { PANEL_SHOTS: dir, ...(dark ? { PANEL_SHOTS_SCHEME: 'dark' } : {}) });
     for (const x of failLines(r.out)) if (!r.ok) out(`    ${x}`);
     const pics = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.png')).sort() : [];
     out(`${r.ok ? '✔' : '✘'} 本物のブラウザで ${pics.length} 枚: ${path.relative(TOP, dir)}/`);
@@ -129,6 +130,6 @@ export async function panelCmd(args, out = console.log) {
     process.stderr.write(`${rel} を変えたあとのパネルの試験（node lab.mjs panel check --quick）:\n${lines.join('\n')}\n`);
     process.exit(2);
   }
-  out('usage: node lab.mjs panel check [--quick] [--all] [files..] | shots [dir] | hook');
+  out('usage: node lab.mjs panel check [--quick] [--all] [files..] | shots [dir] [--dark] | hook');
   return false;
 }

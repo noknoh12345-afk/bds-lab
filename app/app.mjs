@@ -35,6 +35,7 @@ import * as Dc from './lib/discord.mjs';
 import * as SF from './lib/secretform.mjs';
 import * as RM from './lib/runmsg.mjs';
 import * as RF from './lib/runfiles.mjs';
+import * as Feed from './lib/feed.mjs';
 import * as SI from './lib/signin.mjs';
 import * as WD from './lib/world.mjs';
 import * as Dev from './lib/device.mjs';
@@ -607,6 +608,12 @@ async function runCmd(args) {
   fs.mkdirSync(runDir, { recursive: true });
   // the screen gets the stages, a failing step and the result; every line goes to run.txt (-v: the screen too)
   const log = (s, show = true) => { if (show || verbose) out(s); fs.appendFileSync(path.join(runDir, 'run.txt'), s + '\n'); };
+  // the run's pictures and videos in the person's Discord as it goes (lib/feed.mjs: LAB_NOTIFY_MEDIA; no Discord set: nothing)
+  const shardTag = /^\d+\/(\d+)$/.test(process.env.SHARD ?? '') && !/\/1$/.test(process.env.SHARD) ? ` ${process.env.SHARD}` : '';
+  const runUrl = process.env.GITHUB_RUN_ID && process.env.GITHUB_REPOSITORY ? `${process.env.GITHUB_SERVER_URL || 'https://github.com'}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}` : null;
+  const feed = Feed.createFeed({ title: `📱 ${addon}${process.env.APP_LANE ? ` [${String(process.env.APP_LANE).slice(0, 40)}]` : ''}${shardTag}`, link: runUrl, log: (s) => log(s, false) });
+  let recordingsAbs = [];
+  feed.start({ what: `${rel(scenarioFile)}・${steps.length} 手順${REAL ? `・${REAL.name}` : ''}` });
   const serverLog = path.join(runDir, 'server.log'), logcatFile = path.join(runDir, 'logcat.txt');
   fs.writeFileSync(serverLog, '');
   fs.copyFileSync(scenarioFile, path.join(runDir, 'scenario.txt'));
@@ -733,6 +740,12 @@ async function runCmd(args) {
     st.next.forEach((n) => log(`     次: ${n}`));
     if (keep) log(REAL ? `     BDS は動いたまま、端末 ${REAL.name} の設定もそのままです。止める: node lab.mjs bds down / 戻す: node lab.mjs app device restore ${REAL.name}` : '     BDS とエミュレータは動いたままです。止める: node lab.mjs bds down / node lab.mjs app emu stop');
     if (REAL && Dev.linkOf(adb?.serial ?? '') === 'wifi') log(`     ${wifiNote.replace('<名前>', REAL.name)}`);
+    // (the person's Discord: the verdict with the last screen, then the videos — waited for, a few minutes at most)
+    if (feed.on) await tryDo(async () => {
+      const finalShot = path.join(runDir, 'shots', '99-final.png');
+      const r = await feed.end({ ok: st.ok, ms: Date.now() - st.started, shots: st.shots.length, fatal: st.fatal, notes: st.notes, recordings: recordingsAbs, final: fs.existsSync(finalShot) ? finalShot : null });
+      log(`     Discord: 写真・動画 ${r.sent} 個${r.failed ? `（${r.failed} 回送れず: run.txt）` : ''}`, false);
+    });
     unlock();
   };
   const onSignal = () => { st.fatal ??= '中断しました（Ctrl+C）'; finish().finally(() => process.exit(130)); };
@@ -991,7 +1004,9 @@ async function runCmd(args) {
       // (the device came back from its snapshot with the game on its title: `until title` takes it as it is)
       atTitle: () => Boolean(emu.warm && launched && !process.env.APP_LIVE_DEVICE && ready?.stamp && !ready.stamp.firstScreen),
       server: { joinUri, lan, logFile: serverLog, do: async (c) => bds(['do', c], { LAB_ADDON: addon }, 5 * 60_000) },
+      sectionDone: (sec) => feed.section(sec),
     });
+    recordingsAbs = res.recordings;
     st.results = res.results; st.shots = res.shots; st.sections = res.sections; st.perf = res.perf; st.measures = res.measures; st.recordings = res.recordings.map((f) => rel(f));
     // the screens' own words: a translation key the client could not find shows as is (an addon's .lang missing a line).
     // Only the screens' pictures (shot ui-…, jsonui-…), read once the steps are done (OCR takes a moment a picture)

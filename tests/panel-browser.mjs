@@ -319,7 +319,9 @@ const exe = process.env.LAB_BROWSER || process.env.APP_BROWSER || (fs.existsSync
 let browser;
 for (const o of exe ? [{ executablePath: exe }] : [{ channel: 'chrome' }, {}]) { try { browser = await pw.chromium.launch({ headless: true, ...o, args: process.getuid?.() === 0 ? ['--no-sandbox'] : [] }); break; } catch (e) { console.log(`  (${JSON.stringify(o)}: ${e.message.split('\n')[0]})`); } }
 if (!browser) { console.log('✘ no browser to run'); process.exit(1); }
-const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+// (PANEL_SHOTS_SCHEME=dark: the pictures of `node lab.mjs panel shots --dark` in the dark colours — what is checked stays the same)
+const scheme = process.env.PANEL_SHOTS_SCHEME === 'dark' ? { colorScheme: 'dark' } : {};
+const ctx = await browser.newContext({ viewport: { width: 420, height: 900 }, ...scheme });
 // (the panel with all of it shown — 「設定」's 「すべての機能を出す」 — for the checks below; 「かんたん表示」, the default of a
 //  browser new to the panel, is seen on its own further down)
 const allShown = () => { try { localStorage.setItem('bdslab.panel.full', '1'); } catch { /* a page with no storage (about:blank) */ } };
@@ -532,6 +534,11 @@ try {
   await page.locator('button', { hasText: '知らせ方を保存' }).click();
   await page.waitForTimeout(700);
   check(JSON.stringify(G.varsPut.filter((x) => /LAB_NOTIFY/.test(x))) === JSON.stringify(['PATCH LAB_NOTIFY=all', 'POST LAB_NOTIFY_FILES=off']), 'saved as repository variables (made when missing)', JSON.stringify(G.varsPut));
+  // (the real app's pictures and videos: written only when changed — none set is auto)
+  await page.selectOption('select[aria-label="LAB_NOTIFY_MEDIA"]', 'end');
+  await page.locator('button', { hasText: '知らせ方を保存' }).click();
+  await page.waitForTimeout(700);
+  check(G.varsPut.filter((x) => /LAB_NOTIFY_MEDIA/.test(x)).join() === 'POST LAB_NOTIFY_MEDIA=end', 'the pictures\' setting saved when it changes (LAB_NOTIFY_MEDIA)', JSON.stringify(G.varsPut));
   const putBefore = G.secretsPut.length;
   await page.locator('input[aria-label="DISCORD_USER_ID"]').fill('not-a-number');
   await page.locator('#tabbody li', { hasText: 'DISCORD_USER_ID' }).locator('button').click();
@@ -893,7 +900,7 @@ try {
 
   // ======== 「かんたん表示」, the default of a browser new to the panel: the screens and cards few need held back — never
   // gone: ☰'s fold and 🔎 open them, 「設定」 shows them all (kept for this browser), and back ========
-  const ctx4 = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const ctx4 = await browser.newContext({ viewport: { width: 390, height: 844 }, ...scheme });
   await ctx4.route('https://api.github.com/**', api);
   await ctx4.route('https://avatars.githubusercontent.com/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
   const p4 = await ctx4.newPage();

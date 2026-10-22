@@ -135,7 +135,7 @@ FAIL upkeep (412s) · 次: node lab.mjs bds why -a my_addon
 | Actions → **hostrun** | **貸し手の Actions で**ラボの仕事を（パネルの「実行」から。秘密 LAB_HOST_TOKEN。待てばホストの結果がこの実行の結果・成果物に: docs/guide/host.md） |
 | **管理パネル**（pages） | **スマホのブラウザで全部**。いくつものアカウントを切り替えて、進み具合・実行（自分の Actions か貸し手の Actions か）・成果物・Discord・秘密・端末・貸し借り（自分のトークンで。README「管理パネル」） |
 | Actions → **app**（mode hold） | **スマホの Discord で本物のアプリを操作**。DM に画面と 25 個のボタン（歩く・見回す・壊す・使う・持ち物・チャット…）、押すたびにその後の画面。DM に書いた文は `app live` の命令 |
-| `LAB_NOTIFY_WEBHOOK` | **スマホに通知**。`.env` に Discord / Slack の Webhook か `https://ntfy.sh/<トピック>` を書くと、make・maintain・最新版チェックの結果が届きます（`node lab.mjs notify` で試験） |
+| `LAB_NOTIFY_WEBHOOK` | **スマホに通知**。`.env` に Discord / Slack の Webhook か `https://ntfy.sh/<トピック>` を書くと、make・maintain・最新版チェックの結果が届きます（`node lab.mjs notify` で試験）。Discord なら、本物のアプリの実行の写真と録画も進むたびに届きます（変数 `LAB_NOTIFY_MEDIA`: auto・end・off。ほかの画は `node lab.mjs notify "…" --file a.png`） |
 | `--budget` / `LAB_TOKEN_BUDGET` | **トークンの上限**。`make --budget 300000` はそれ以上 AI に聞きません |
 | `upkeep --auto daily` | **毎日自動で点検**（`weekly` も可、`--at 04:00` で時刻、`off` で解除）。Linux/Mac は cron、Windows はタスク スケジューラに登録します。GitHub を使わなくても手元で回り続け、結果は通知に届きます（`maintain --schedule daily` は 3 番目だけ） |
 | **先取りクライアント** | 新しい Minecraft（プレビューや発売当日）に本物のクライアント部品（bedrock-protocol）が追いついていなくても、直前の版のパケットとサーバーのプロトコル番号で参加して試験します（番号は Mojang の protocol docs から取り、合わなければサーバーの返事を見て自動で合わせます）。だから `maintain --to preview` で「次のアップデートで壊れるもの」を今すぐ調べられます。`LAB_BORROW=0` で従来どおり待ちます |

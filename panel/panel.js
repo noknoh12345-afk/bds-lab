@@ -1131,20 +1131,24 @@ function discord(body) {
     h('p', {}, caps.discord?.ok ? '✅ DM で届きます' : caps.notify?.ok ? '✅ Webhook で届きます（端末の操作・秘密のフォームはボットが要ります）' : '⚠️ まだ届きません（上のどちらか）')));
   const when = h('select', { 'aria-label': 'LAB_NOTIFY' }, Object.entries(M.NOTIFY_WHEN).map(([k, v]) => h('option', { value: k }, `${k}: ${v}`)));
   const what = h('select', { 'aria-label': 'LAB_NOTIFY_FILES' }, Object.entries(M.NOTIFY_FILES).map(([k, v]) => h('option', { value: k }, `${k}: ${v}`)));
+  const media = h('select', { 'aria-label': 'LAB_NOTIFY_MEDIA' }, Object.entries(M.NOTIFY_MEDIA).map(([k, v]) => h('option', { value: k }, `${k}: ${v}`)));
   const note = h('p', { class: 'muted' }, 'リポジトリの変数を読んでいます…');
   body.append(h('div', { class: 'card' }, h('h2', {}, '知らせる実行と、添えるもの'),
-    h('label', {}, 'どの実行を知らせる（変数 LAB_NOTIFY）'), when, h('label', {}, '添える成果物（変数 LAB_NOTIFY_FILES）'), what, note,
+    h('label', {}, 'どの実行を知らせる（変数 LAB_NOTIFY）'), when, h('label', {}, '添える成果物（変数 LAB_NOTIFY_FILES）'), what,
+    h('label', {}, '本物のアプリの実行の写真・動画（変数 LAB_NOTIFY_MEDIA）'), media, note,
     h('div', { class: 'row' }, h('button', { class: 'primary', ...gate('variables'), onclick: () => { const d = { name: 'LAB_NOTIFY' }; return guarded('variables', d, async () => {
-      // (the two values before, for 「↩️ 取り消す」: LAB_NOTIFY's in this entry, LAB_NOTIFY_FILES' in one of its own)
-      const [w0, f0] = await Promise.all([st.api.variable(st.lab.slug, 'LAB_NOTIFY'), st.api.variable(st.lab.slug, 'LAB_NOTIFY_FILES')]);
+      // (the values before, for 「↩️ 取り消す」: LAB_NOTIFY's in this entry, LAB_NOTIFY_FILES' and LAB_NOTIFY_MEDIA's in their own)
+      const [w0, f0, m0] = await Promise.all([st.api.variable(st.lab.slug, 'LAB_NOTIFY'), st.api.variable(st.lab.slug, 'LAB_NOTIFY_FILES'), st.api.variable(st.lab.slug, 'LAB_NOTIFY_MEDIA')]);
       if (typeof w0 === 'string') d.before = w0;
       await st.api.setVariable(st.lab.slug, 'LAB_NOTIFY', when.value); await st.api.setVariable(st.lab.slug, 'LAB_NOTIFY_FILES', what.value);
       record('variables', { name: 'LAB_NOTIFY_FILES', ...(typeof f0 === 'string' ? { before: f0 } : {}) });
+      // (the pictures' setting written only when it changes: none set is auto already)
+      if ((m0 ?? 'auto') !== media.value) { await st.api.setVariable(st.lab.slug, 'LAB_NOTIFY_MEDIA', media.value); record('variables', { name: 'LAB_NOTIFY_MEDIA', ...(typeof m0 === 'string' ? { before: m0 } : {}) }); }
       return true; }, '知らせ方を保存しました'); } }, '知らせ方を保存'))));
   fill(note, async () => {
-    const [w, f] = await Promise.all([st.api.variable(st.lab.slug, 'LAB_NOTIFY'), st.api.variable(st.lab.slug, 'LAB_NOTIFY_FILES')]);
-    when.value = M.NOTIFY_WHEN[w] ? w : 'auto'; what.value = M.NOTIFY_FILES[f] ? f : 'auto';
-    note.replaceChildren(`いま: LAB_NOTIFY=${w ?? '（なし: auto）'}・LAB_NOTIFY_FILES=${f ?? '（なし: auto）'}`);
+    const [w, f, m] = await Promise.all([st.api.variable(st.lab.slug, 'LAB_NOTIFY'), st.api.variable(st.lab.slug, 'LAB_NOTIFY_FILES'), st.api.variable(st.lab.slug, 'LAB_NOTIFY_MEDIA')]);
+    when.value = M.NOTIFY_WHEN[w] ? w : 'auto'; what.value = M.NOTIFY_FILES[f] ? f : 'auto'; media.value = M.NOTIFY_MEDIA[m] ? m : 'auto';
+    note.replaceChildren(`いま: LAB_NOTIFY=${w ?? '（なし: auto）'}・LAB_NOTIFY_FILES=${f ?? '（なし: auto）'}・LAB_NOTIFY_MEDIA=${m ?? '（なし: auto）'}`);
   });
   const go2 = (file, preset) => { st.tab = 'start'; st.target = 'lab'; render(); dispatchForm(main(), file, preset); };
   const btn = (label, cap, fn) => { const c = caps[cap]; return h('li', {}, h('div', { class: 'row' }, h('span', { class: 'grow' }, label), h('button', { disabled: c?.ok === false, title: c?.ok === false ? c.need : null, onclick: fn }, '始める')), c?.ok === false ? h('div', { class: 'warn' }, c.need, '（上で登録すると使えます）') : null); };

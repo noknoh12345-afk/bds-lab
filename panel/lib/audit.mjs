@@ -45,7 +45,7 @@ const DETAIL = {
   via: (v) => v === 'panel' || v === 'api' || v === 'mcp',
 };
 /** the variables whose value before may be kept (they are the lab's settings: which lenders, which runs are told — no secret) */
-export const BEFORE_NAMES = ['LAB_HOSTS', 'LAB_NOTIFY', 'LAB_NOTIFY_FILES'];
+export const BEFORE_NAMES = ['LAB_HOSTS', 'LAB_NOTIFY', 'LAB_NOTIFY_FILES', 'LAB_NOTIFY_MEDIA'];
 export const DETAIL_KEYS = Object.keys(DETAIL);
 export const AUDIT_WORDS = { dispatch: 'ワークフローを始めた', hostrun: '貸し手の Actions で走らせた', 'secrets.put': '秘密を登録した', 'secrets.delete': '秘密を消した', variables: '変数を変えた', 'run.cancel': '実行を止めた', 'run.rerun': '失敗したジョブをやり直した', lend: '貸す条件を変えた', members: 'メンバーを変えた', policy: '役割（ポリシー）を変えた',
   'setup.app': 'App を作った', 'setup.pages': 'Pages を有効にした', 'setup.auth': 'サインインのサービスの URL を変えた', 'setup.deploy': 'サインインのサービスを置いた' };

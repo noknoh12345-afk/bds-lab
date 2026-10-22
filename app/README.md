@@ -425,6 +425,21 @@ node も端末（PC）も無いスマホから、GitHub の Actions と Discord 
 issue のコメントも今までどおり同時に使えます。動くのは `DISCORD_USER_ID` の人の DM だけで（サーバーのメッセージ・ほかの人・
 ボットは見ない）、ボットのトークンはどこにも出しません。画面は Discord の DM に届きます（公開リポジトリでも、見えるのは自分だけ）。
 
+### 進み具合を Discord で見る: 実行の写真と動画が、進むたびに届く
+
+`app run` / `app ui`（GitHub の app ワークフローでも、手元でも）は、区切り（`section`）が終わるたびに、その区切りで撮った写真を
+Discord に送ります（速く進む区切りは数個まとめて 1 通。失敗した区切りはすぐ、その画面と失敗した行と理由つき）。始まりに 1 通、
+終わりに結果（通った・落ちた・注意）と最後の画面、そのあと録画（`record start` … `record stop` の recordings/*.mp4）。
+録画が Discord の上限（10 MB）より大きいときは ffmpeg で縮めて送ります（GitHub の端末には裏で入れます。無ければ大きさだけ言う）。
+
+- 送り先: 自分のボットの DM（`DISCORD_BOT_TOKEN` + `DISCORD_USER_ID`）、無ければ Discord の Webhook（`LAB_NOTIFY_WEBHOOK`）。
+  上の「スマホだけで」か、管理パネルの「Discord」タブで登録。手元は .env に同じ名前で。
+- 送り方: リポジトリの変数 `LAB_NOTIFY_MEDIA` — `auto`（既定: 進むたびに）・`end`（終わりにまとめて 1 通: 落ちた区切りの画面と最後の画面、
+  それと録画）・`off`（送らない）。パネルの「Discord」→「知らせる実行と、添えるもの」でも選べます。
+- 送るのは自分の Discord だけ: 公開リポジトリのログと成果物は今までどおり（中身は封じたまま）。送れないときも実行は落ちず、
+  run.txt に `W Discord（写真・動画）: …` の行が残ります。
+- ほかのコマンドの画も同じ形で: `node lab.mjs notify "Blockbench の画" --file a.png --file b.mp4`（大きい画は半分に、長い動画は縮める）。
+
 **確かめたこと（2026-10-04）**: GitHub の端末で、jsonui_demo の app.txt が本物のアプリで通りました（サインインなし。
 BDS は NetherNet の LAN、アプリは PLAY → Worlds の LAN のワールドから入り、アドオンの JSON UI のフォームが画面に出た）。
 

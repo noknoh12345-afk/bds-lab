@@ -229,8 +229,11 @@ shot world--before-play
 absent clientlog \\bERROR\\b
 
 section play
+# (the whole play recorded too: recordings/rec-1.mp4 — the person's Discord gets it at the end, made to fit: app/lib/feed.mjs)
+record start
 do scriptevent ${NS}:play 1
 ${shots.map((t, i) => `wait ${Math.round((t - (i ? shots[i - 1] : 0)) * 1000)}\nshot play-${String(t).replace('.', '_')}s\nmeasure diff play-${String(t).replace('.', '_')}s ${REGION}`).join('\n')}
+record stop
 absent clientlog \\bERROR\\b
 
 section seek-pause

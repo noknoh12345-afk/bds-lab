@@ -138,7 +138,8 @@ const COLS = [-160, -125, -90, -55, -20, 15, 50], ROWS = [175, 145, 115, 85], ce
   ok(base.length === 0, 'geoui_probe_b: nothing is drawn while no test is chosen (the "idle" shot the app compares with everything hidden)', JSON.stringify(base.map((d) => d.bone)));
   const names = ['ctl', 'b250', 'b255', 'b256', 'b257', 'b300', 'b400', 'b511', 'b512', 'b599', 'rc40', 'rc70', 'an1200'], bad = [];
   names.forEach((bone, i) => {
-    const s = shown(frame('geoui_probe_b', 'gprobb', { v2: i + 1 })), at = [cellAt(i)[0] + 20, cellAt(i)[1]];
+    // (6 columns: moved 20 units right, the last one stays in the measured part of the screen — probe.mjs checks that too)
+    const s = shown(frame('geoui_probe_b', 'gprobb', { v2: i + 1 })), at = [COLS[i % 6] + 20, ROWS[Math.floor(i / 6)]];
     if (!(s.length === 1 && s[0].bone === bone && near(s[0], at))) bad.push(`${i + 1} ${bone}: ${JSON.stringify(s.map((d) => [d.bone, d.id, mid(d)]))}`);
   });
   ok(!bad.length, `geoui_probe_b: each of ${names.length} tests draws its own plane 20 units on from its cell, only when chosen`, bad.join('\n  '));

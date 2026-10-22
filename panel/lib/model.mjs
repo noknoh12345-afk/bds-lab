@@ -409,6 +409,8 @@ export const DISCORD_ID = /^\d{17,20}$/;
 /** the notify workflow's choices, as its variables take them */
 export const NOTIFY_WHEN = { auto: '失敗と、手で始めた実行（既定）', all: 'すべて', failures: '失敗だけ', off: '知らせない' };
 export const NOTIFY_FILES = { auto: 'アドオン・ワールド（.mcaddon .mcpack .mcworld .mctemplate、既定）', off: '添えない' };
+// (the real app's runs: their pictures and videos in Discord as they go — app/lib/feed.mjs)
+export const NOTIFY_MEDIA = { auto: '進むたびに（区切りごとの写真、最後に動画。既定）', end: '終わりにまとめて', off: '送らない' };
 
 /** the lender stops lending now / again until a day (pure): the rules with `until` moved (host.yml and the borrower's lab
  *  both stop after it — no new field, so every host made from the template understands it) */

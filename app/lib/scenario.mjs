@@ -258,7 +258,9 @@ export function dialogSummary(dialogs) {
  * Runs the steps. ctx: { adb, server: {do(cmd)->{ok, lines}, joinUri, logFile}, logcatFile, runDir, decode, log, pkg, launch(),
  *   dialog?() → {kind, proc} | null (Android's own dialog with the focus), answer?(dialog) → what was pressed, dialogs?: [],
  *   focus?() → the focused window, clientLog?: ClientLog (lib/client.mjs; null = the content log cannot be read),
- *   ocr?(pngFile) → words (lib/client.mjs ocrWords), recover?() → closes what is open (a section that failed) }
+ *   ocr?(pngFile) → words (lib/client.mjs ocrWords), recover?() → closes what is open (a section that failed),
+ *   sectionDone?({ name, line, ok, ms, shots: [files], fails: [{ line, raw, note }] }) → as each section ends (lib/feed.mjs:
+ *   its pictures to the person's Discord; never awaited, its errors never the run's) }
  * @returns {{ok:boolean, results:Array<{line, raw, ok, note, shot?, section?}>, shots:string[], dialogs:Array<{line, kind, proc, how, at}>,
  *   sections:Array<{name, line, ok, ms, client:string[]}>, perf:Array<{line, mem, fps}>, recordings:string[]}}
  */
@@ -276,7 +278,7 @@ export async function runScenario(steps, ctx) {
   const doLog = path.join(runDir, 'do.txt');
   // the sections (`section <name>`): the client's content log is read at each boundary, so every line it wrote is tied
   // to the section (the screen) that was up when it was written. Lines before the first section go to "(はじめ)"
-  const sections = [{ name: '(はじめ)', line: 0, ok: true, t0: Date.now(), client: [] }];
+  const sections = [{ name: '(はじめ)', line: 0, ok: true, t0: Date.now(), client: [], s0: 0, r0: 0 }];
   const cur = () => sections.at(-1);
   const clientAll = [];
   const readClient = () => {
@@ -736,6 +738,12 @@ export async function runScenario(steps, ctx) {
     return '';
   };
 
+  // a section that ended told (ctx.sectionDone): its pictures and its failures. The first, "(はじめ)", only when it has some
+  const sectionEnd = () => {
+    const c = cur(), mine = results.slice(c.r0), pics = shots.slice(c.s0), fails = mine.filter((x) => !x.ok).map((x) => ({ line: x.line, raw: x.raw, note: x.note }));
+    if (!ctx.sectionDone || (sections.length === 1 && !pics.length && !fails.length)) return;
+    try { ctx.sectionDone({ name: c.name, line: c.line, ok: c.ok, ms: c.ms ?? Date.now() - c.t0, shots: pics, fails }); } catch { /* the feed's trouble, never the run's */ }
+  };
   // with sections, a failure costs only the rest of its section: what was open is closed (ctx.recover) and the next
   // section runs. Without sections, the first failure ends the run (the next steps assume it worked)
   const sectioned = steps.some((s) => s.verb === 'section');
@@ -744,7 +752,7 @@ export async function runScenario(steps, ctx) {
     const s = steps[i], t0 = Date.now();
     // (a step that acts on the game: the title the device came back with is no longer taken on its word)
     if (!STILL.has(s.verb)) { touched = true; ocrLast = null; }
-    if (s.verb === 'section') { readClient(); cur().ms = Date.now() - cur().t0; sections.push({ name: s.args[0], line: s.line, ok: true, t0: Date.now(), client: [] }); }
+    if (s.verb === 'section') { readClient(); cur().ms = Date.now() - cur().t0; sectionEnd(); sections.push({ name: s.args[0], line: s.line, ok: true, t0: Date.now(), client: [], s0: shots.length, r0: results.length }); }
     try {
       const note = await act(s);
       results.push({ line: s.line, verb: s.verb, raw: s.raw + (s.every ? ` ; every ${s.every.ms} ${s.every.step.raw}` : ''), ok: true, note, ms: Date.now() - t0, t0, t1: Date.now(), section: cur().name });
@@ -769,6 +777,6 @@ export async function runScenario(steps, ctx) {
       i = next - 1;
     }
   }
-  readClient(); cur().ms = Date.now() - cur().t0;
-  return { ok, results, shots, dialogs, sections: sections.filter((x, k) => k > 0 || x.client.length).map(({ t0: _t0, ...x }) => x), perf, recordings, measures };
+  readClient(); cur().ms = Date.now() - cur().t0; sectionEnd();
+  return { ok, results, shots, dialogs, sections: sections.filter((x, k) => k > 0 || x.client.length).map(({ t0: _t0, s0: _s0, r0: _r0, ...x }) => x), perf, recordings, measures };
 }

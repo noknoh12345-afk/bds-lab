@@ -17,11 +17,15 @@ html.a11y-big ul.targets label { font-size: 18.75px; }
 html.a11y-big #palette input { font-size: 21px; }
 
 /* はっきりした色: text against its background 7:1 or more where it can (never under 4.5:1), borders 3:1 or more */
-html.a11y-contrast { --bg: #ffffff; --card: #ffffff; --fg: #000000; --muted: #343a46; --line: #5c6370; --accent: #0a3d91; --ok: #0b5a2a; --warn: #6b3a00; --bad: #a00d0d; --chip: #e6ebf5; --on-accent: #ffffff; --on-bad: #ffffff; }
+html.a11y-contrast { --bg: #ffffff; --card: #ffffff; --fg: #000000; --muted: #343a46; --line: #5c6370; --accent: #0a3d91; --ok: #0b5a2a; --warn: #6b3a00; --bad: #a00d0d; --chip: #e6ebf5; --on-accent: #ffffff; --on-bad: #ffffff;
+  --brand1: #0a3d91; --brand2: #0a3d91; --field: #ffffff; --glass: #ffffff; --ring: rgb(10 61 145 / 40%); --glow: transparent; --aura1: transparent; --aura2: transparent; --sheen: none; --shadow: none;
+  --toast: #000000; --on-toast: #ffffff; --toast-bad: #a00d0d; }
 @media (prefers-color-scheme: dark) {
-  html.a11y-contrast { --bg: #000000; --card: #0b0e13; --fg: #ffffff; --muted: #d0d6e0; --line: #8a94a6; --accent: #a8c8ff; --ok: #7fe0a3; --warn: #ffd08a; --bad: #ffa3a3; --chip: #1b2330; --on-accent: #000000; --on-bad: #000000; }
+  html.a11y-contrast { --bg: #000000; --card: #0b0e13; --fg: #ffffff; --muted: #d0d6e0; --line: #8a94a6; --accent: #a8c8ff; --ok: #7fe0a3; --warn: #ffd08a; --bad: #ffa3a3; --chip: #1b2330; --on-accent: #000000; --on-bad: #000000;
+    --brand1: #a8c8ff; --brand2: #a8c8ff; --field: #000000; --glass: #0b0e13; --ring: rgb(168 200 255 / 45%); --glow: transparent; --aura1: transparent; --aura2: transparent; --sheen: none; --shadow: none;
+    --toast: #ffffff; --on-toast: #000000; --toast-bad: #ffa3a3; }
 }
-html.a11y-contrast button.primary, html.a11y-contrast button.on { color: var(--on-accent); }
+html.a11y-contrast button.primary, html.a11y-contrast button.on, html.a11y-contrast a.btn.primary { color: var(--on-accent); }
 html.a11y-contrast #toast div.bad { color: var(--on-bad); }
 html.a11y-contrast button, html.a11y-contrast .btn, html.a11y-contrast .card, html.a11y-contrast input, html.a11y-contrast select, html.a11y-contrast textarea { border-color: var(--line); }
 /* (a button that cannot be pressed stays readable: a dashed border says so, not a faded colour) */

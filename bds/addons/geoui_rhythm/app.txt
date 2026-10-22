@@ -25,6 +25,8 @@ shot world--before-play
 absent clientlog \bERROR\b
 
 section play
+# (the whole play recorded too: recordings/rec-1.mp4 — the person's Discord gets it at the end, made to fit: app/lib/feed.mjs)
+record start
 do scriptevent geoui:play 1
 wait 1000
 shot play-1s
@@ -56,6 +58,7 @@ measure diff play-11s 0 170 1030 720
 wait 1500
 shot play-12_5s
 measure diff play-12_5s 0 170 1030 720
+record stop
 absent clientlog \bERROR\b
 
 section seek-pause

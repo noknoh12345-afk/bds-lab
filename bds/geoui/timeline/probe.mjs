@@ -219,7 +219,9 @@ function probeLimits() {
   tests.push({ id: 'rc40', what: '自分の render controller の 40 個目が描く板（選ぶと +20）', move: true, rc: 40 },
     { id: 'rc70', what: '自分の render controller の 70 個目が描く板（選ぶと +20）', move: true, rc: 70 },
     { id: 'an1200', what: '1200 個目のアニメーション（anim_time_update が 0.5 の時に +20: 鍵は 0 秒 +0・1 秒 +40）が動かす板', anim: 1200 });
-  tests.forEach((t, i) => Object.assign(t, { k: i + 1, at: cellAt(i) }));
+  // (6 columns, not 7: a plane that moves 20 units right from the last column leaves the measured part of the screen — the
+  //  first-person hand's — round 3's #400 was there: drawn and moved, never seen)
+  tests.forEach((t, i) => Object.assign(t, { k: i + 1, at: cell(i % 6, Math.floor(i / 6)) }));
   const K = Object.fromEntries(tests.map((t) => [t.id, t.k]));
   // (the bones in order: the root, the control, fillers — a 1 x 1 plane each, far off the screen — and the test planes at
   //  their own index)
@@ -492,8 +494,24 @@ function read(files) {
 
 // ---------------------------------------------------------------------------------------------------------------- main
 if (process.argv[2] === 'read') { read(process.argv.slice(3)); process.exit(0); }
+/** the places the reader looks for a probe's planes (a test's cell, where it moves to, a timeline's expected planes) that are
+ *  not wholly in REGION of the 1560 x 720 screen (GeoUI's measured scale: 720 px are 170.68 units, (0, 140) in the middle) */
+function outside(P, W = 1560, H = 720) {
+  const U = H / 170.68, px = ([x, y]) => [W / 2 + x * U, H / 2 - (y - 140) * U], bad = [];
+  const look = (name, at, size = SIZE) => { const [cx, cy] = px(at), r = (size / 2) * U; if (cx - r < REGION[0] || cy - r < REGION[1] || cx + r > REGION[2] || cy + r > REGION[3]) bad.push(`${P.name} ${name} (${at.join(', ')})`); };
+  for (const t of P.tests) {
+    if (P.timeline) { for (const e of t.expect || []) look(`${t.id}/${e.name}`, e.at, e.size); if (t.run && P.bar) look(`${t.id}/bar+40`, [P.bar[0] + 40, P.bar[1]]); continue; }
+    look(t.id, t.at);
+    if (t.pos || t.move || t.anim) look(`${t.id}+moved`, [t.at[0] + (Number.isFinite(t.expect) ? t.expect : 20), t.at[1]]);
+    if (t.rot) for (const [dx, dy] of [[0, 20], [0, -20], [20, 0], [-20, 0]]) look(`${t.id}+rot`, [t.at[0] + dx, t.at[1] + dy]);
+  }
+  return bad;
+}
 const check = process.argv.includes('--check'), stale = [];
 for (const P of [probeStructure(), probeMolang(), probeTimeline(), probeLimits()]) {
+  // (a plane the reader would look for outside the measured part of the screen: never seen, whatever the game does)
+  const off = outside(P);
+  if (off.length) { console.error(`E probe.mjs: 測る範囲（${REGION.join(' ')} px）の外を見る板があります: ${off.join('、')}`); process.exit(1); }
   const OUT = path.join(TOP, 'bds', 'addons', P.name), out = addon(P);
   if (check) { for (const [rel, data] of out) { const f = path.join(OUT, rel); if (!fs.existsSync(f) || !fs.readFileSync(f).equals(data)) stale.push(`${P.name}/${rel}`); } continue; }
   fs.rmSync(path.join(OUT, 'rp'), { recursive: true, force: true }); fs.rmSync(path.join(OUT, 'bp'), { recursive: true, force: true });
