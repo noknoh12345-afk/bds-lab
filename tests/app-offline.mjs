@@ -685,6 +685,18 @@ await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without
   made.push(lt.runDir);
   const ltRun = fs.readFileSync(path.join(lt.runDir, 'run.txt'), 'utf8');
   ok(lt.status === 0 && lt.state.uri === 'lan' && lt.state.playOpens === 3 && (ltRun.match(/PLAY を開き直します（B でタイトルへ、\d 回目）/g) ?? []).length === 2, `exit ${lt.status} opens ${lt.state.playOpens} ${JSON.stringify(lt.state.pads)}\n${ltRun.slice(-1200)}`);
+  // the join step's own record (where a slow join spent its time): when PLAY showed, when the LAN world was listed, when A
+  // went on it — ms from the join's start, in that order, the listing after the two re-openings — and the screens on the
+  // way; the run's timing, its report and the join's line in run.txt say them
+  const ltRes = fs.existsSync(path.join(lt.runDir, 'result.json')) ? JSON.parse(fs.readFileSync(path.join(lt.runDir, 'result.json'), 'utf8')) : {};
+  const ltJoin = (ltRes.results ?? []).find((x) => x.verb === 'join'), ltLan = ltJoin?.lan ?? {}, ltRep = fs.existsSync(path.join(lt.runDir, 'report.md')) ? fs.readFileSync(path.join(lt.runDir, 'report.md'), 'utf8') : '';
+  const FCl = await imp('app/lib/failcodes.mjs');
+  ok(ltJoin?.ok === true && ltLan.play >= 0 && ltLan.listed >= ltLan.play + 2 * 200 && ltLan.pressed >= ltLan.listed && (ltJoin.trail?.match(/(^| )relist( |$)/g) ?? []).length === 2
+    && /play-lan(-focus)?(\[[a-z+]+\])?$/.test(ltJoin.trail) && FCl.cleanTrail(ltJoin.trail) === ltJoin.trail
+    && JSON.stringify(ltRes.timing?.lan) === JSON.stringify(ltLan) && ltRes.timing.lan.pressed <= ltRes.timing.connect
+    && /\| 参加の手順（PLAY・LAN のワールドが出た・押した） \| [\d.]+ \/ [\d.]+ \/ [\d.]+ 秒 \|/.test(ltRep) && /\| 参加の手順の道筋（\d+ 行目） \| `[^`]*relist[^`]*` \|/.test(ltRep)
+    && /✔ \d+ join {2}LAN のワールド（PLAY → Worlds。PLAY [\d.]+ 秒・LAN のワールドが出た [\d.]+ 秒・押した [\d.]+ 秒）/.test(ltRun),
+    `${JSON.stringify(ltJoin)} ${JSON.stringify(ltRes.timing)}\n${ltRep.slice(0, 1200)}`);
   // the inventory (Y): opened by one press; where the first press only wakes the controller (the game in touch mode), the
   // screen unchanged a moment later — pressed once more
   const invSc = path.join(tmp, 'inventory.txt'); fs.writeFileSync(invSc, 'launch\njoin\nuntil joined 5000\ninventory\n');

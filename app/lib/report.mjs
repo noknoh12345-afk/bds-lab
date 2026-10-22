@@ -174,6 +174,10 @@ export function writeReport(runDir, r) {
     ...(r.timing?.join ? [`| 参加 | ${(r.timing.join / 1000).toFixed(1)} 秒（参加リンク → ワールドに出るまで）${r.timing.fromStart ? `。端末の起動から ${(r.timing.fromStart / 1000).toFixed(1)} 秒` : ''} |`] : []),
     // (when the server first said the player connected, from the same start: before the packs' download, or after it)
     ...(r.timing?.join && Number.isFinite(r.timing.connect) ? [`| 参加: サーバーの Player connected | ${(r.timing.connect / 1000).toFixed(1)} 秒 |`] : []),
+    // (the LAN way, from the same start: when PLAY showed, when the LAN world was listed on it, when A went on it — the rest
+    //  up to Player connected is the connection after the press — and the screens the join step went through)
+    ...(r.timing?.join && r.timing.lan ? [`| 参加の手順（PLAY・LAN のワールドが出た・押した） | ${['play', 'listed', 'pressed'].map((k) => (Number.isFinite(r.timing.lan[k]) ? (r.timing.lan[k] / 1000).toFixed(1) : '—')).join(' / ')} 秒 |`] : []),
+    ...((r.results ?? []).filter((x) => x.verb === 'join' && x.ok && x.lan && x.trail).slice(0, 2).map((x) => `| 参加の手順の道筋（${x.line} 行目） | \`${x.trail}\` |`)),
     // (the screens the join went through, in the lab's own names: lib/failcodes.mjs)
     ...((r.results ?? []).filter((x) => x.verb === 'until' && /^until joined\b/.test(x.raw ?? '') && x.trail).slice(0, 2).map((x) => `| 参加の道筋（${x.line} 行目） | \`${x.trail}\` |`)),
     ...(r.timing?.device ? [`| 準備済みの端末 | ${(r.timing.device / 1000).toFixed(1)} 秒で戻りました（Minecraft はタイトル画面で起動済み） |`] : []),

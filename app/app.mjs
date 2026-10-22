@@ -40,7 +40,7 @@ import * as SI from './lib/signin.mjs';
 import * as WD from './lib/world.mjs';
 import * as Dev from './lib/device.mjs';
 import * as M from './lib/measure.mjs';
-import { stepCode, cleanCode, cleanTrail } from './lib/failcodes.mjs';
+import { stepCode, cleanCode, cleanTrail, lanSeconds } from './lib/failcodes.mjs';
 import { gridOverlay } from './lib/screen.mjs';
 import { autoOauthToken, browserCandidates, canShowWindow } from './lib/login.mjs';
 import { playwrightOauthToken } from './lib/playwright-login.mjs';
@@ -1041,8 +1041,12 @@ async function runCmd(args) {
       st.timing.join = sp.t1 - st.results[j].t0; if (!REAL) st.timing.fromStart = sp.t1 - emuStarted;
       // (when the server first said the player connected, from the same start: before the packs' download or after it)
       if (Number.isFinite(sp.connectedAt)) st.timing.connect = sp.connectedAt - st.results[j].t0;
+      // (the LAN way: when PLAY showed, when the LAN world was listed on it, when A went on it — from the same start. A slow
+      //  join is then the game finding the server, or the connection after the press: lib/scenario.mjs joinLan)
+      const jl = st.results[j].lan, lan = jl && typeof jl === 'object' ? Object.fromEntries(['play', 'listed', 'pressed'].filter((k) => Number.isFinite(jl[k])).map((k) => [k, jl[k]])) : {};
+      if (Object.keys(lan).length) st.timing.lan = lan;
       const target = Number(process.env.APP_JOIN_TARGET_MS) || 30_000;
-      log(`      参加: ${(st.timing.join / 1000).toFixed(1)} 秒（参加リンク → ワールド）${st.timing.connect !== undefined ? `、サーバーの Player connected まで ${(st.timing.connect / 1000).toFixed(1)} 秒` : ''}${st.timing.fromStart ? `、端末の起動から ${(st.timing.fromStart / 1000).toFixed(1)} 秒` : ''}${sp.trail ? `（道筋: ${sp.trail}）` : ''}`);
+      log(`      参加: ${(st.timing.join / 1000).toFixed(1)} 秒（参加リンク → ワールド）${st.timing.connect !== undefined ? `、サーバーの Player connected まで ${(st.timing.connect / 1000).toFixed(1)} 秒` : ''}${Number.isFinite(lan.pressed) ? `（PLAY ${Number.isFinite(lan.play) ? (lan.play / 1000).toFixed(1) : '—'} 秒・LAN のワールドが出た ${Number.isFinite(lan.listed) ? (lan.listed / 1000).toFixed(1) : '—'} 秒・押した ${(lan.pressed / 1000).toFixed(1)} 秒）` : ''}${st.timing.fromStart ? `、端末の起動から ${(st.timing.fromStart / 1000).toFixed(1)} 秒` : ''}${sp.trail ? `（道筋: ${sp.trail}）` : ''}`);
       if (st.timing.join > target) st.notes.push(`参加に ${(st.timing.join / 1000).toFixed(1)} 秒かかりました（目標 ${target / 1000} 秒）${emu.warm ? '' : ': 準備済みの端末（node lab.mjs app prepare）なら、起動済みのゲームから参加します'}`);
     }
   } catch (e) {
@@ -2570,6 +2574,10 @@ async function checksCmd(args) {
     // (a join that went in: the screens it went through on the way — the same filter as a failure's — and when the server
     //  first said the player connected)
     const uj = Array.isArray(r?.results) ? r.results.find((x) => x?.ok && x?.verb === 'until' && /^until joined\b/.test(String(x?.raw ?? ''))) : null;
+    // (the LAN way's join step — the first that went in, else the first: when PLAY showed, when the LAN world was listed,
+    //  when A went on it, seconds from the join's start — numbers only — and, gone in, its screens: a slow join told apart)
+    const lj = Array.isArray(r?.results) ? r.results.filter((x) => x?.verb === 'join' && x?.lan && typeof x.lan === 'object') : [], jn = lj.find((x) => x.ok) ?? lj[0] ?? null;
+    const lanS = jn ? lanSeconds(jn.lan, 1000) : null;
     return {
       run: word(path.basename(d)), addon: word(r?.addon), ok: r ? r.ok === true : /^# app: PASS/m.test(md),
       steps: steps.length, failed: steps.flatMap((x, i) => (x.ok ? [] : [i + 1])), failed_lines: steps.filter((x) => !x.ok && x.line !== null).map((x) => x.line),
@@ -2578,6 +2586,7 @@ async function checksCmd(args) {
       seconds: secs, join_seconds: num(r?.timing?.join) !== null ? Math.round(r.timing.join / 100) / 10 : null,
       ...(num(r?.timing?.connect) !== null ? { join_connect_seconds: Math.round(r.timing.connect / 100) / 10 } : {}),
       ...(uj && cleanTrail(uj.trail) ? { join_trail: cleanTrail(uj.trail) } : {}),
+      ...(lanS ? { join_lan_seconds: lanS } : {}), ...(jn?.ok && cleanTrail(jn.trail) ? { join_lan_trail: cleanTrail(jn.trail) } : {}),
       bds: word(r?.bds?.version) ?? cell('BDS'), app: word(r?.app?.versionName) ?? cell('アプリ'),
       ...(Array.isArray(r?.measures) && r.measures.length ? { measures: M.cleanMeasures(r.measures) } : {}),
       // (the pictures and videos sent to the person's Discord: how many, numbers only — lib/feed.mjs)
@@ -2641,7 +2650,10 @@ async function checksCmd(args) {
         `| 結果 | ${ok ? 'PASS' : 'FAIL'}${n !== null ? `（手順 ${n} 個${failed.length ? `、落ちた: ${failed.join(', ')} 番目${lines.length ? `（${lines.map((x, i) => `${x} 行目${codes[i] ? ` ${codes[i]}` : ''}`).join(', ')}）` : ''}` : ''}）` : ''} |`,
         `| アプリ | ${word(s.app) ?? '—'} |`, `| BDS | ${word(s.bds) ?? '—'} |`,
         ...(num(s.join_seconds) !== null ? [`| 参加 | ${s.join_seconds} 秒 |`] : []), ...(num(s.join_connect_seconds) !== null ? [`| 参加: サーバーの Player connected | ${s.join_connect_seconds} 秒 |`] : []),
-        ...(cleanTrail(s.join_trail) ? [`| 参加の道筋 | \`${cleanTrail(s.join_trail)}\` |`] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`,
+        ...(cleanTrail(s.join_trail) ? [`| 参加の道筋 | \`${cleanTrail(s.join_trail)}\` |`] : []),
+        // (the LAN way's join step: read back as numbers only, its trail through the same filter)
+        ...(lanSeconds(s.join_lan_seconds) ? [`| 参加の手順（PLAY・LAN のワールドが出た・押した） | ${['play', 'listed', 'pressed'].map((k) => lanSeconds(s.join_lan_seconds)[k] ?? '—').join(' / ')} 秒 |`] : []),
+        ...(cleanTrail(s.join_lan_trail) ? [`| 参加の手順の道筋 | \`${cleanTrail(s.join_lan_trail)}\` |`] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`,
         // (the pictures and videos that went to the person's Discord: numbers only)
         ...(s.media && num(s.media.sent) !== null ? [`| Discord | 写真・動画 ${s.media.sent} 個${num(s.media.failed) ? `（送れなかった ${s.media.failed} 回）` : ''}${s.media.late === true ? '（時間切れ）' : ''} |`] : []),
         ...trails.map(([k, v]) => `| 道筋（${k} 行目） | \`${v}\` |`), '',

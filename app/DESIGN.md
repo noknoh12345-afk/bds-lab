@@ -72,13 +72,33 @@ qcow2 が 6.5 GB、その中で使われているのは 3.1 GB: 残りは消し�
 7. 旧来の道（`APP_TRANSPORT=raknet`）は残す: リンク・質問（Unknown External Server → Continue、Online play is not rated →
    Proceed。OCR が緑のボタンの白い字を読めなくても、問いの文から 1.26 のボタンの位置を押す）。
 
+### 2026-10-23: 参加の待ちは LAN のワールドを押す前（1000 個のパックの 387 秒も）
+
+`join_connect_seconds`（と `join_seconds`）は join の段の始め、つまりタイトルから測っている（app.mjs: `connectedAt − join の t0`）。
+1000 個のパックの run 39803242567 で、押した後の `until joined` の道筋は `play-lan`（1 回）のすぐ後に `srv-connected`（OCR は 4 秒ごと）:
+押してから `Player connected` までは数秒で、387 秒のほとんどは押す前（PLAY に着く・LAN のワールドが出る・焦点を合わせる）だった。
+lc・vx も `play-lan srv-connected`、sz は `srv-connected play-lan`（until joined が始まる前に接続していた）。
+
+公開の summary.json 50 本（参加まで行った 31 本）: パックが 110 KB 未満の 19 本でも参加は 84〜319 秒（中央 131 秒、同じ geoui_calib で
+97 秒と 319 秒）、300 個（1.4 MB）は 223 秒、1000 個（3.2 MB）は 402 秒（1 本）。手元の本物の BDS 1.26.52 では 19・300・1000 個の見本で
+`up` 約 4 秒・待っている CPU 1 コアの 11〜12 %・ボットの LAN の参加（接続まで）約 1.4 秒と同じ。クライアントは押す前にパックを知らない
+（LAN の発見の答えにパックは入らない）。だから、押す前の待ちがパックの大きさで伸びるとは言えない（要実測）。
+
+押す前のどこで待ったかを読めるように、join の段が記録を残す（lib/scenario.mjs joinLan）: PLAY が出た・LAN のワールドが出た・押した時
+（join の始めからのミリ秒）と、通った画面の道筋。result.json の join の `lan`・`trail`、`timing.lan`、report.md の 2 行、公開の summary.json の
+`join_lan_seconds`（数 3 つだけ: failcodes.mjs `lanSeconds`）と `join_lan_trail`（`cleanTrail`）。
+
+別に分からないこと（要実測）: 押した後に入れなかったのは、6 回目の sz（0.7 MB）・huge（3.2 MB）の「接続が来ない」と、7 回目の huge の
+「An error has occurred」2 回で、どれも大きい 2 つだった（コードのある小さいパックの実行では押した後の失敗は無い）。数が少なく、
+偶然かどうかは分からない。
+
 ### 2026-10-23: BDS の `Player connected` はログインの時（パックより前）
 
 BDS 1.26.52 の `Player connected` は、ログインが通った時（`play_status login_success` のすぐ後、パックを見せる `resource_packs_info`
 より前）に出る。ラボのプレイヤーで確かめた: RakNet でパックへの答えを遅らせても先に出る、NetherNet（LAN と HTTP シグナリング、
 nethernet-connect v3）でもログインの直後に出る。アプリはそのあとでパックを取り、`Player Spawned` の後も読み込む（下の 2026-10-04）。
 クライアントはつなぐ前にサーバーのパックを知らないので、`joined-no-connection`（接続が一度も来ない）は、リソースパックの大きさ・中身が
-直接の理由ではない（GeoUI の 1000 個のパックでは、LAN のワールドを選んでから接続まで 387 秒かかった: なぜ遅いかは要実測）。
+直接の理由ではない（GeoUI の 1000 個のパックでは、参加の段の始めから接続まで 387 秒かかった。そのほとんどは押す前: 上の項）。
 
 ### いまの状態（2026-10-04 11:25）: **jsonui_demo の app.txt が本物のアプリで通った（PASS）**
 

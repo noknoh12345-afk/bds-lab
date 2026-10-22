@@ -28,7 +28,8 @@ noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の
   別の枝のアドオンは inputs[ref]=<枝> を足す（ワークフローは ref=main のまま）。枝が main より古ければ git rebase origin/main して
   node bds/geoui/timeline/demo.mjs --huge で作り直し、その枝に push（--force-with-lease）
 - 結果: gh run download <run> → probe は node bds/geoui/timeline/probe.mjs read <summary.json>、見本は summary.json の measures・
-  failed_codes・failed_trails・join_trail・join_seconds・join_connect_seconds（参加の道筋はラボの語だけ: app/lib/failcodes.mjs）。
+  failed_codes・failed_trails・join_trail・join_seconds・join_connect_seconds・join_lan_seconds（PLAY が出た・LAN のワールドが出た・
+  押した秒）・join_lan_trail（参加の道筋はラボの語だけ: app/lib/failcodes.mjs）。
   写真と録画は私の Discord に届く（summary.json の media に送った数）。成果物の中身は封じてある（鍵が無いと読めない）
 
 全部の試験（変えたら毎回）:
@@ -44,8 +45,10 @@ noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の
 - GEOUI_NODE_MODULES: playwright-core のある node_modules（例 /opt/npm-tools/node_modules）
 - CHROMIUM: 例 /opt/pw-browsers/chromium-1194/chrome-linux/chrome
 
-残っている要実測: 大きいパックの参加が遅い理由（1000 個は LAN のワールドを選んでから接続まで 387 秒、300 個は 223 秒。クライアントは
-つなぐ前にパックを知らない: 端末の重さか BDS の起動直後か）。geoui_probe_m の 3000 行（1 行 150 文字）の最後の変数だけ合わなかった理由
+残っている要実測: 参加の待ちの内訳（1000 個は参加の手順の始めから接続まで 387 秒。押してから接続までは数秒で、待ちは押す前。
+110 KB 未満のパックでも参加は 84〜319 秒なので、パックの大きさのせいとは言えない。次の実行の join_lan_seconds・join_lan_trail で
+PLAY・LAN のワールドが出るまで・焦点のどこかが分かる）。6・7 回目に 1000 個と probe_sz が押した後に入れなかった理由（数が少なく、
+偶然かどうか分からない）。geoui_probe_m の 3000 行（1 行 150 文字）の最後の変数だけ合わなかった理由
 （行・大きさ・変数の数のどれでもない）。render controller 70 個・ボーン 600 本・アニメーション 1200 個より先（書き出しは超えると注意を
 出す）。geoui_bb・geoui_calib* は前の確かめの物（測り直すときだけ作り直す）。
 ```

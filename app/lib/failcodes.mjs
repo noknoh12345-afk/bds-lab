@@ -95,6 +95,18 @@ export function makeTrail(max = 20) {
     text: () => xs.map((x, i) => `${i === 4 && cut ? `cut*${cut} ` : ''}${x.state}${x.n > 1 ? `*${x.n}` : ''}${x.words.length ? `[${x.words.join('+')}]` : ''}`).join(' '),
   };
 }
+/** a LAN join's record as summary.json may hold it (pure): when PLAY showed, when the LAN world was listed on it, when A
+ *  went on it (scenario.mjs joinLan) — seconds from the join's start, one decimal (`unit` 1000: given in ms). Only those
+ *  three keys, each a number in [0, 1 day) or left out; nothing at all → null */
+export function lanSeconds(l, unit = 1) {
+  if (!l || typeof l !== 'object' || Array.isArray(l)) return null;
+  const o = {};
+  for (const k of ['play', 'listed', 'pressed']) {
+    const v = typeof l[k] === 'number' ? l[k] / unit : NaN;
+    if (Number.isFinite(v) && v >= 0 && v < 86400) o[k] = Math.round(v * 10) / 10;
+  }
+  return Object.keys(o).length ? o : null;
+}
 /** a trail as summary.json may hold it (pure): states of a-z and -, a count, the UI words in brackets — any other word or
  *  form drops the whole trail (null) */
 export function cleanTrail(t) {

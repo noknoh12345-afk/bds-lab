@@ -226,6 +226,42 @@ fs.rmSync(tmp, { recursive: true, force: true });
   const sum2 = got2[0]?.output?.summary ?? '';
   ok(ck2.status === 0 && sum2.includes('| 参加 | 12.3 秒 |') && sum2.includes('| 参加: サーバーの Player connected | 8.8 秒 |') && sum2.includes(`| 参加の道筋 | \`${jt}\` |`), 'the check shows them', sum2.slice(0, 1500));
 }
+// ---- 7. the LAN way's join step (scenario.mjs joinLan): when PLAY showed, when the LAN world was listed on it, when A went
+// on it — seconds, numbers only — and, gone in, its screens: where a slow join spent its time, nothing of the screen ----
+{
+  const F = await import(new URL('../app/lib/failcodes.mjs', import.meta.url).href);
+  ok(JSON.stringify(F.lanSeconds({ play: 21_340, listed: 312_400, pressed: 318_250 }, 1000)) === '{"play":21.3,"listed":312.4,"pressed":318.3}'
+    && JSON.stringify(F.lanSeconds({ play: '5', listed: -1, pressed: 2e9, at: 7, [EMAIL]: 1 }, 1000)) === 'null' && F.lanSeconds([1, 2]) === null && F.lanSeconds(SCREEN) === null
+    && JSON.stringify(F.lanSeconds({ listed: 4.25, note: SCREEN })) === '{"listed":4.3}', 'a join\'s three moments: numbers in range, those keys only', JSON.stringify(F.lanSeconds({ play: 21_340, listed: 312_400, pressed: 318_250 }, 1000)));
+  const lt = 'title-blind[mojang] wait play-empty*14[worlds+realms+servers] relist title-blind play-lan[worlds+lan+world] play-lan-focus[worlds+lan]';
+  ok(F.cleanTrail(lt) === lt, 'the join step\'s states and words are the lab\'s own', lt);
+  // gone in: its seconds and screens (the first join that went in); the run's other fields as before
+  const d5 = makeRun(path.join(tmp, 'lanjoin'), '20261023-030000-lanjoin'), r8 = JSON.parse(fs.readFileSync(path.join(d5, 'result.json'), 'utf8'));
+  r8.results.splice(0, 1, { ok: true, line: 3, verb: 'join', raw: 'join', note: `LAN のワールド（${SCREEN}）`, trail: lt, lan: { play: 21_340, listed: 312_400, pressed: 318_250, who: EMAIL } },
+    { ok: true, line: 4, verb: 'until', raw: 'until joined 900000', trail: 'play-lan srv-connected srv-spawned world', connectedAt: 1000 + 322_000 });
+  r8.timing = { join: 334_100, connect: 321_900, lan: { play: 21_340, listed: 312_400, pressed: 318_250 } };
+  fs.writeFileSync(path.join(d5, 'result.json'), JSON.stringify(r8));
+  // a join that never went in (the LAN world never listed): its seconds still say how far it got; its trail is a failed
+  // step's (failed_trails), not this; a record of other words and values: dropped
+  const d6 = makeRun(path.join(tmp, 'lanjoin2'), '20261023-031000-lanjoin'), r9 = JSON.parse(fs.readFileSync(path.join(d6, 'result.json'), 'utf8'));
+  r9.results.splice(0, 1, { ok: false, line: 3, verb: 'join', raw: 'join', note: `PLAY の LAN のワールドへ進めませんでした（LAN のワールドが出ない（PLAY を開き直した: 3 回）: 端末の中継（UDP 7551）と BDS の LAN の公開を確かめる）（画面の文字: ${SCREEN}）`,
+    trail: 'title-blind play-empty*40[worlds] relist play-empty*30[worlds]', lan: { play: 19_000, listed: `${EMAIL}`, pressed: -5 } });
+  fs.writeFileSync(path.join(d6, 'result.json'), JSON.stringify(r9));
+  const r10 = await lab(['checks', '--seal', path.join(tmp, 'lanjoin')], PUB), r11 = await lab(['checks', '--seal', path.join(tmp, 'lanjoin2')], PUB);
+  const s5 = fs.readFileSync(path.join(d5, 'summary.json'), 'utf8'), c5 = JSON.parse(s5), s6 = fs.readFileSync(path.join(d6, 'summary.json'), 'utf8'), c6 = JSON.parse(s6);
+  ok(r10.status === 0 && r11.status === 0 && JSON.stringify(c5.join_lan_seconds) === '{"play":21.3,"listed":312.4,"pressed":318.3}' && c5.join_lan_trail === lt && c5.join_connect_seconds === 321.9 && c5.join_seconds === 334.1
+    && JSON.stringify(c6.join_lan_seconds) === '{"play":19}' && !('join_lan_trail' in c6) && c6.failed_trails?.['3'] === 'title-blind play-empty*40[worlds] relist play-empty*30[worlds]' && JSON.stringify(c6.failed_codes.slice(0, 1)) === '["join-lan-missing 3"]'
+    && ![SCREEN, EMAIL, 'who'].some((x) => s5.includes(x) || s6.includes(x)), 'summary.json: the join step\'s seconds (gone in or not) and, gone in, its trail — nothing else', `${s5}\n${s6}`);
+  const got3 = [], srv4 = http.createServer((q, s) => { let b = ''; q.on('data', (x) => { b += x; }); q.on('end', () => { if (q.method === 'POST' && q.url.endsWith('/check-runs')) got3.push(JSON.parse(b)); s.writeHead(201, { 'content-type': 'application/json' }); s.end('{}'); }); });
+  await new Promise((res) => srv4.listen(0, '127.0.0.1', res));
+  const ck3 = await lab(['checks', path.join(tmp, 'lanjoin')], { ...API, GITHUB_API_URL: `http://127.0.0.1:${srv4.address().port}`, APP_REPO_VISIBILITY: 'public' });
+  const ck4 = await lab(['checks', path.join(tmp, 'lanjoin2')], { ...API, GITHUB_API_URL: `http://127.0.0.1:${srv4.address().port}`, APP_REPO_VISIBILITY: 'public' });
+  srv4.close();
+  const sum3 = got3[0]?.output?.summary ?? '', sum4 = got3[1]?.output?.summary ?? '';
+  ok(ck3.status === 0 && ck4.status === 0 && sum3.includes('| 参加の手順（PLAY・LAN のワールドが出た・押した） | 21.3 / 312.4 / 318.3 秒 |') && sum3.includes(`| 参加の手順の道筋 | \`${lt}\` |`)
+    && sum4.includes('| 参加の手順（PLAY・LAN のワールドが出た・押した） | 19 / — / — 秒 |') && !sum4.includes('参加の手順の道筋') && ![SCREEN, EMAIL].some((x) => sum3.includes(x) || sum4.includes(x)),
+    'the check shows them', `${sum3.slice(0, 1200)}\n${sum4.slice(0, 1200)}`);
+}
 
 console.log(fails ? `✘ ${fails} failed` : '✔ all passed');
 process.exit(fails ? 1 : 0);

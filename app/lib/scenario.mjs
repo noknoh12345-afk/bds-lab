@@ -277,6 +277,16 @@ export async function runScenario(steps, ctx) {
   // (what a step adds to its result beside its note — a join's trail, when the server said the player connected — taken by
   //  the loop below and cleared for the next step)
   let stepExtra = null;
+  // (the LAN join's own record — joinLan: when PLAY first showed, when the LAN world was first listed on it, when A went on
+  //  it, ms from the join's start, and the screens on the way — for the `join` step's result: where a slow join spent its
+  //  time, numbers and the lab's words only)
+  let lanRec = null;
+  const lanExtra = () => {
+    if (!lanRec) return null;
+    const lan = Object.fromEntries(['play', 'listed', 'pressed'].filter((k) => Number.isFinite(lanRec[k])).map((k) => [k, lanRec[k]]));
+    return { ...(lanRec.trail ? { trail: lanRec.trail } : {}), ...(Object.keys(lan).length ? { lan } : {}) };
+  };
+  const lanSays = (l) => [['play', 'PLAY'], ['listed', 'LAN のワールドが出た'], ['pressed', '押した']].filter(([k]) => Number.isFinite(l?.[k])).map(([k, w]) => `${w} ${(l[k] / 1000).toFixed(1)} 秒`).join('・');
   // the game's own screen after `size` (landscape; null = the device's): a picture of the emulator's display has it scaled
   // into the display's shape, so `measure` looks at that part only. Kept per picture, and for the newest `shot world`
   let logical = null, baseLogical = null;
@@ -346,6 +356,7 @@ export async function runScenario(steps, ctx) {
     const stuckMs = Number(process.env.APP_LAN_STUCK_MS) || 150_000, restartMax = 2;
     // which screens it went through (a fixed vocabulary — failcodes.mjs: a public summary may say where it got stuck)
     const tr = makeTrail();
+    const rec = lanRec = { t0: Date.now(), trail: null }, at = () => Date.now() - rec.t0;
     let quietUntil = 0, seenPlay = false, restarts = 0, since = Date.now();
     const opened = () => { quietUntil = Date.now() + loadMs; };
     while (Date.now() < end) {
@@ -367,6 +378,7 @@ export async function runScenario(steps, ctx) {
       said = seenWords(ws);
       if (p) {
         other = 0; listed ||= p.lan; sawPlay = true; seenPlay = true; quietUntil = 0;
+        rec.play ??= at(); if (p.lan) rec.listed ??= at();
         tr.add(p.lan ? (p.focused ? 'play-lan-focus' : 'play-lan') : 'play-empty', ws);
         // the player's own world is listed too (lib/world.mjs: a player without one is sent into the new player's flow): the
         // hint "A Play" does not say which card has the focus, its white ring does — A only on the LAN world's
@@ -374,7 +386,11 @@ export async function runScenario(steps, ctx) {
         const own = ownWorldListed(ws), card = p.lan ? lanCardWord(ws) : null;
         let onLan = p.lan && p.focused && !own && !card;
         if (p.lan && card) { try { onLan = focusRing(decode(last), card) || (p.focused && !own && moves >= 6); } catch { onLan = p.focused && !own; } }
-        if (onLan) { padKey('A'); log(`${s.line} PLAY の LAN のワールドを選びます（ゲームパッド A）`); return 'LAN のワールド（PLAY → Worlds）'; }
+        if (onLan) {
+          padKey('A'); rec.pressed = at(); rec.trail = tr.text();
+          log(`${s.line} PLAY の LAN のワールドを選びます（ゲームパッド A）`);
+          return `LAN のワールド（PLAY → Worlds。${lanSays(rec)}）`;
+        }
         // (not listed yet: the discovery takes a moment. Listed: the focus moved on — down the list, back up after a while)
         if (p.lan) { moves++; padKey(moves % 12 <= 7 ? 'DOWN' : 'UP'); emptySince = 0; }
         else if (!emptySince) emptySince = Date.now();
@@ -422,6 +438,7 @@ export async function runScenario(steps, ctx) {
     const why = listed ? 'LAN のワールドに焦点が移らない'
       : seenPlay ? `LAN のワールドが出ない（PLAY を開き直した: ${reopened} 回）: 端末の中継（UDP 7551）と BDS の LAN の公開を確かめる`
         : `PLAY の画面に着きません（アプリを起動し直した: ${restarts} 回）: 道筋の画面を見る`;
+    rec.trail = tr.text();
     throw Object.assign(new Error(`PLAY の LAN のワールドへ進めませんでした（${why}）（画面の文字: ${said}）（道筋: ${tr.text()}）`), { trail: tr.text() });
   };
   const seenWords = (ws) => ws.map((w) => w.text).join(' ').replace(/\s+/g, ' ').slice(0, 240) || '（文字なし）';
@@ -452,7 +469,8 @@ export async function runScenario(steps, ctx) {
       case 'stop': adb.shell(['am', 'force-stop', ctx.pkg]); ctx.stopped?.(); return 'stopped';
       case 'join': {
         ctx.started?.();
-        if (server.lan) return await joinLan(s);
+        // (the LAN way keeps its record in the step's result, gone in or not: lanExtra)
+        if (server.lan) { lanRec = null; try { return await joinLan(s); } finally { stepExtra = lanExtra(); } }
         const r = adb.shell(['am', 'start', '-a', 'android.intent.action.VIEW', '-d', server.joinUri, ctx.pkg]); if (r.status !== 0 || /Error/.test(r.stdout)) throw new Error(`参加用のリンクを受け付けませんでした: ${(r.stdout + r.stderr).trim().slice(0, 200)}`); return server.joinUri;
       }
       case 'wait': await sleep(num(a[0])); return '';
