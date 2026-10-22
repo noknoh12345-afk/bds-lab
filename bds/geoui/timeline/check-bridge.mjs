@@ -8,7 +8,7 @@
 //   the pack with the timeline's RP and BP; and unloaded, nothing left (panels, copies, styles, listeners, globals).
 // Pictures to --out. Needs what bds/geoui/blockbench-check.mjs needs (BLOCKBENCH_DIR, GEOUI_NODE_MODULES / CHROMIUM).
 // node bds/geoui/timeline/check-bridge.mjs [--out <folder>]
-/* global window, document, Blockbench, Project, Group, Cube, Modes, Undo, Codecs, Canvas, Panels, BarItems, Plugins, Format */
+/* global window, document, requestAnimationFrame, createImageBitmap, Project, Group, Cube, Modes, Undo, Codecs, Canvas, Panels, BarItems, Plugins, Format */
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';

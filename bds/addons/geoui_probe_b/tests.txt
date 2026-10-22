@@ -1,0 +1,8 @@
+# geoui_probe_b（bds/geoui/timeline/probe.mjs が作る）: BP が読み込めること。描画は app.txt（本物のアプリ）で。
+# = 完全一致 | ~ 正規表現 | ! 無い | !~ 無い正規表現 | '## 題' = 節
+
+## 読み込める（プロパティが既定値）
+@A join
+wait 2000
+js const e = p('A'); JSON.stringify(['v2','alpha'].map((k) => e.getProperty('gprobb:' + k)))
+= [0,100]

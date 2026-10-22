@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/timeline/probe.mjs",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI の大きい書き出しが頼る上限（ボーン 600 本・自分の render controller 70 個・アニメーション 1200 個）（ラボの確かめ。絵はラボの物）"
+}

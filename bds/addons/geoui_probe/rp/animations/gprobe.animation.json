@@ -62,6 +62,17 @@
         },
         "init": {
           "scale": "(v.gp_t == 14 || v.gp_t == 99) ? ((v.gp_init ?? 0) == 7 ? 1 : 0) : 0"
+        },
+        "atu": {
+          "scale": "(v.gp_t == 15 || v.gp_t == 99) ? 1 : 0"
+        },
+        "atuwrap": {
+          "scale": "(v.gp_t == 16 || v.gp_t == 99) ? 1 : 0",
+          "position": [
+            "(v.gp_t == 16 || v.gp_t == 99) ? 10 : 0",
+            0,
+            0
+          ]
         }
       }
     },
@@ -94,6 +105,48 @@
             0,
             0
           ]
+        }
+      }
+    },
+    "animation.gprobe.atu": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 1,
+      "anim_time_update": "v.gp_u",
+      "bones": {
+        "atu": {
+          "position": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "1.0": [
+              40,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.gprobe.atuwrap": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 1,
+      "anim_time_update": "v.gp_u",
+      "bones": {
+        "atuwrap_p": {
+          "position": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "1.0": [
+              40,
+              0,
+              0
+            ]
+          }
         }
       }
     }

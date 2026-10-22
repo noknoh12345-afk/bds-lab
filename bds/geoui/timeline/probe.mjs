@@ -109,13 +109,16 @@ function probeStructure() {
     ['scalemul', '同じボーンに 3 つのアニメーション（scale 1・2・0.5）: 14 単位なら掛け算', { size: true }],
     ['posadd', '同じボーンに 2 つのアニメーション（x +10 ずつ）: +20 なら足し算', { pos: true }],
     ['init', 'initialize だけで入れた変数（7）で出し入れ: 描かれれば initialize が効く'],
+    ['atu', 'アニメーションの anim_time_update を変数（0.5）で: 鍵は 0 秒で +0・1 秒で +40 単位。+20 なら変数の時刻で動く（+40 なら時間がそのまま進んだ、+0 なら止まったまま）', { pos: true, expect: 20 }],
+    ['atuwrap', '親のボーンを anim_time_update のアニメーションで +20（0.5）、子の板を別のアニメーションで +10: +30 なら重なる（タイムラインの道はこの形）', { pos: true, expect: 30 }],
   ];
   const tests = T0.map(([id, what, o], i) => Object.assign({ k: i + 1, id, what, at: cellAt(i) }, o || {}));
   // (rot90 in the third row: up or down 20 units stays inside the measured part of the screen)
   const K = Object.fromEntries(tests.map((t) => [t.id, t.k])), T = (id) => tests.find((t) => t.id === id);
   T('rot90').at = cell(5, 2);
   const uvOf = (id) => (/texhalf/.test(id) ? UV.half : UV.white);
-  const bones = [{ name: 'geo_ui', pivot: [0, 140, 0] }, ...tests.map((t) => {
+  const bones = [{ name: 'geo_ui', pivot: [0, 140, 0] }, { name: 'atuwrap_p', parent: 'geo_ui', pivot: [...T('atuwrap').at, 0] }, ...tests.map((t) => {
+    if (t.id === 'atuwrap') return plane(t.id, t.at, { parent: 'atuwrap_p' });
     if (t.id !== 'rot90') return plane(t.id, t.at, { uv: uvOf(t.id) });
     // (the pivot in the cell's middle, the plane 20 units to its right: where +90 takes it says the direction)
     const [cx, cy] = t.at;
@@ -128,25 +131,30 @@ function probeStructure() {
     if (b === 'maskvar') continue;   // (always scale 1: its alpha alone shows it)
     if (b === 'init') { anim.bones[b] = { scale: `${sel(k)} ? ((v.gp_init ?? 0) == 7 ? 1 : 0) : 0` }; continue; }
     if (b === 'rot90') { anim.bones[b] = { rotation: [0, 0, 90], scale: on(k) }; continue; }
+    if (b === 'atuwrap') { anim.bones[b] = { scale: on(k), position: [`${sel(k)} ? 10 : 0`, 0, 0] }; continue; }
     anim.bones[b] = { scale: on(k) };
   }
+  // (an animation's own time from a variable — anim_time_update — as the timeline's paths go: keys at 0 and 1 s, the
+  //  variable 0.5 while the test is chosen)
+  const keyed = (bone) => ({ loop: 'hold_on_last_frame', animation_length: 1, anim_time_update: 'v.gp_u', bones: { [bone]: { position: { '0.0': [0, 0, 0], '1.0': [40, 0, 0] } } } });
   // (two more animations on scalemul and posadd, only while their test is chosen)
   const mulA = { loop: true, animation_length: 1, bones: { scalemul: { scale: 2 }, posadd: { position: [10, 0, 0] } } };
   const mulB = { loop: true, animation_length: 1, bones: { scalemul: { scale: 0.5 }, posadd: { position: [10, 0, 0] } } };
   const chosen = `q.is_in_ui && (${sel(K.scalemul)} || ${sel(K.posadd)})`;
   const design = { settings: settings(ns, 'GeoUI Probe (structure)'), seed: 'geoui_probe', bones, elements, textures: { probe: { name: 'probe', width: TW, height: TW, png: PNG } },
-    animations: [{ name: `${ns}.probe`, json: anim, condition: 'q.is_in_ui' }, { name: `${ns}.mul_a`, json: mulA, condition: chosen }, { name: `${ns}.mul_b`, json: mulB, condition: chosen }] };
+    animations: [{ name: `${ns}.probe`, json: anim, condition: 'q.is_in_ui' }, { name: `${ns}.mul_a`, json: mulA, condition: chosen }, { name: `${ns}.mul_b`, json: mulB, condition: chosen },
+      { name: `${ns}.atu`, json: keyed('atu'), condition: 'q.is_in_ui' }, { name: `${ns}.atuwrap`, json: keyed('atuwrap_p'), condition: 'q.is_in_ui' }] };
   const built = G.buildPack(design), files = built.files;
   addMaterials(files, ns, MATS);
   addInit(files, ns, ['v.gp_init = 7;']);
   // (every property read guarded as compile.js guards it: the pause screen's paper doll has none)
-  addPre(files, ns, [`v.gp_t = variable.is_paperdoll ? 0 : q.property('${ns}:v2');`, `v.gp_a = ${on(K.maskvar)};`]);
+  addPre(files, ns, [`v.gp_t = variable.is_paperdoll ? 0 : q.property('${ns}:v2');`, `v.gp_a = ${on(K.maskvar)};`, `v.gp_u = (${sel(K.atu)} || ${sel(K.atuwrap)}) ? 0.5 : 0;`]);
   ownControllers(files, ns, 'probe', [
     { bone: 'mask1', material: 'fade', alpha: '1' }, { bone: 'mask0', material: 'fade', alpha: '0' }, { bone: 'maskhalf', material: 'fade', alpha: '0.5' },
     { bone: 'maskvar', material: 'fade', alpha: 'v.gp_a' }, { bone: 'cutmask0', material: 'cutfade', alpha: '0' }, { bone: 'cutmaskhalf', material: 'cutfade', alpha: '0.6' },
     { bone: 'masktexhalf', material: 'fade', alpha: '0.5' },
   ]);
-  return { ns, name: 'geoui_probe', files, warnings: built.warnings, tests, title: 'GeoUI の作りの確かめ 3 回目（不透明度・回転の向き・アニメーションの重ね方・initialize）',
+  return { ns, name: 'geoui_probe', files, warnings: built.warnings, tests, title: 'GeoUI の作りの確かめ 3 回目（不透明度・回転の向き・アニメーションの重ね方・initialize・anim_time_update）',
     notes: ['テストの板を 1 つずつ出して写す。`measure diff` で描かれた所、`measure color` で板の真ん中の平均の色（と、何も出さない画面の同じ所の色）。',
       '透け具合 = (色 − 何も無い所の色) / (不透明の白（ctl）− 何も無い所の色): read が明るさで出す。',
       '2 回目までの答えは probe.mjs の頭と PLAN.md の進み具合に。'] };
@@ -159,7 +167,11 @@ const flat = (length, k) => { const head = `(v.gp_t == ${k}) * 0.5 + (v.gp_t == 
 /** geoui_probe_m: Molang's length and depth in pre_animation, from short to long, a canary after each (round 1 put longer ones
  *  and a 600-bone geometry in one pack, and nothing of it drew: something there stops the whole entity) */
 function probeMolang() {
-  const ns = 'gprobm', steps = [['d54', nested(54, 0), '入れ子 54 段（geoui_rhythm のスライダーの玉と同じ深さ）'], ['f6k', flat(6000, 0), '入れ子なし 6000 文字'],
+  // (first what the export itself does — a long line cut into short ones (compile.splitLines), many lines — then the longer
+  //  and deeper lines, short to long, a canary after each)
+  const ns = 'gprobm', steps = [['split', flat(16000, 0), '入れ子なし 16000 文字を compile.js の splitLines で 1000 文字以下・深さ 24 以下の行に分けた物（書き出しはこの形）', 'split'],
+    ['lines', null, 'pre_animation に 3000 行（その後の行で 2999 行目の値を読む）', 'lines'],
+    ['d54', nested(54, 0), '入れ子 54 段（geoui_rhythm のスライダーの玉と同じ深さ）'], ['f6k', flat(6000, 0), '入れ子なし 6000 文字'],
     ['f8k', flat(8000, 0), '入れ子なし 8000 文字（compile.js の上限の見込み）'], ['f12k', flat(12000, 0), '入れ子なし 12000 文字'], ['d100', nested(100, 0), '入れ子 100 段'], ['f16k', flat(16000, 0), '入れ子なし 16000 文字']];
   const tests = [{ id: 'ctl', what: '基準: ふつうのボーン・scale で出し入れ' }];
   for (const [id, , what] of steps) tests.push({ id, what: `${what}（${id} の式の板）` }, { id: `${id}_c`, what: `カナリア: ${what} の行の後` });
@@ -173,13 +185,57 @@ function probeMolang() {
   const built = G.buildPack(design), files = built.files;
   // (each expression is 1 when its own test is chosen: its plane shows only if the line ran; the canary after it, that the
   //  pre_animation went on past it)
-  const lines = [`v.gp_t = q.property('${ns}:v2');`];
-  for (const [id, expr] of steps) { lines.push(`v.gpm_${id} = ${expr.replace(/v\.gp_t == 0\)/g, `v.gp_t == ${K[id]} || v.gp_t == ${ALL})`).replace(/v\.gp_t == 0 \?/g, `(v.gp_t == ${K[id]} || v.gp_t == ${ALL}) ?`)};`, `v.gpm_${id}_c = 1;`); }
+  const lines = [`v.gp_t = q.property('${ns}:v2');`], choose = (id, expr) => expr.replace(/v\.gp_t == 0\)/g, `v.gp_t == ${K[id]} || v.gp_t == ${ALL})`).replace(/v\.gp_t == 0 \?/g, `(v.gp_t == ${K[id]} || v.gp_t == ${ALL}) ?`);
+  for (const [id, expr, , kind] of steps) {
+    if (kind === 'split') { const r = C.splitLines([`v.gpm_${id} = ${choose(id, expr)};`], { limit: 1000, depth: 24, prefix: 'v.gpm_s' }); lines.push(...r.lines); tests.find((t) => t.id === id).lines = r.lines.length; }
+    else if (kind === 'lines') { for (let i = 0; i < 3000; i++) lines.push(`v.gpm_l${i} = ${i};`); lines.push(`v.gpm_${id} = ((v.gp_t == ${K[id]} || v.gp_t == ${ALL}) && v.gpm_l2999 == 2999) ? 1 : 0;`); }
+    else lines.push(`v.gpm_${id} = ${choose(id, expr)};`);
+    lines.push(`v.gpm_${id}_c = 1;`);
+  }
   addPre(files, ns, lines);
-  for (const [id, expr] of steps) tests.find((t) => t.id === id).len = expr.length;
+  for (const [id, expr] of steps) if (expr) tests.find((t) => t.id === id).len = expr.length;
   return { ns, name: 'geoui_probe_m', files, warnings: built.warnings, tests, title: 'GeoUI の Molang の長さ・深さの確かめ（pre_animation）',
-    notes: [`式の長さ: ${steps.map(([id, e]) => `${id} ${e.length} 文字`).join('・')}。短い物から順に、各行の後にカナリア。`,
+    notes: [`式の長さ: ${steps.filter(([, e]) => e).map(([id, e]) => `${id} ${e.length} 文字`).join('・')}（split はそれを ${tests.find((t) => t.id === 'split').lines} 行に分けた物）。短い物から順に、各行の後にカナリア。`,
       '1 回目（2026-10-21）は長い式（3 万・10 万文字、入れ子 400 段）と 600 本のジオメトリを 1 つのパックに入れ、何も描かれなかった（エンティティごと読まれていない）。'] };
+}
+
+/** geoui_probe_b: the limits a big export leans on — a geometry of 600 bones (planes on bones #250 … #599: a bone's index
+ *  may be kept in a byte), 70 render controllers of the element's own, 1200 animations each driven by anim_time_update (as
+ *  the timeline's paths are). Each test plane moves 20 units right when chosen, by its own bone: one drawn and moved says
+ *  the bone (controller, animation) works; one not moved (or drawn while not chosen: the "idle" shot) says it does not */
+function probeLimits() {
+  const ns = 'gprobb', TOTAL = 600, HIGH = [250, 255, 256, 257, 300, 400, 511, 512, 599];
+  const tests = [{ id: 'ctl', what: '基準: ボーン #1 の板（scale で出し入れ・選ぶと +20 単位）', move: true }];
+  for (const b of HIGH) tests.push({ id: `b${b}`, bone: b, what: `ボーン #${b} の板（選ぶと +20 単位）: 動けばこの番号のボーンも効く`, move: true });
+  tests.push({ id: 'rc40', what: '自分の render controller の 40 個目が描く板（選ぶと +20）', move: true, rc: 40 },
+    { id: 'rc70', what: '自分の render controller の 70 個目が描く板（選ぶと +20）', move: true, rc: 70 },
+    { id: 'an1200', what: '1200 個目のアニメーション（anim_time_update が 0.5 の時に +20: 鍵は 0 秒 +0・1 秒 +40）が動かす板', anim: 1200 });
+  tests.forEach((t, i) => Object.assign(t, { k: i + 1, at: cellAt(i) }));
+  const K = Object.fromEntries(tests.map((t) => [t.id, t.k]));
+  // (the bones in order: the root, the control, fillers — a 1 x 1 plane each, far off the screen — and the test planes at
+  //  their own index)
+  const at = new Map(tests.filter((t) => t.bone).map((t) => [t.bone, t])), bones = [{ name: 'geo_ui', pivot: [0, 140, 0] }, plane('ctl', cellAt(0))];
+  for (let i = bones.length; i < TOTAL; i++) bones.push(at.has(i) ? plane(at.get(i).id, at.get(i).at) : filler(`f${i}`));
+  bones.push(plane('rc40', tests.find((t) => t.id === 'rc40').at), plane('rc70', tests.find((t) => t.id === 'rc70').at), plane('an1200', tests.find((t) => t.id === 'an1200').at));
+  const anim = { loop: true, animation_length: 1, bones: {} };
+  for (const t of tests) anim.bones[t.id] = t.anim ? { scale: on(t.k) } : { scale: on(t.k), position: [`${sel(t.k)} ? 20 : 0`, 0, 0] };
+  // (1200 animations as the timeline's paths: keyed 0 … 1 s, their time a variable — all but the last never on)
+  const keyed = (bone) => ({ loop: 'hold_on_last_frame', animation_length: 1, anim_time_update: 'v.gpb_u', bones: { [bone]: { position: { '0.0': [0, 0, 0], '0.5': [20, 0, 0], '1.0': [40, 0, 0] } } } });
+  const many = [];
+  for (let i = 1; i < 1200; i++) many.push({ name: `${ns}.a${i}`, json: keyed(`f${10 + (i % 200)}`), condition: `v.gpb_t == ${5000 + i}` });
+  many.push({ name: `${ns}.a1200`, json: keyed('an1200'), condition: `q.is_in_ui && ${sel(K.an1200)}` });
+  const design = { settings: settings(ns, 'GeoUI Probe (limits)'), seed: 'geoui_probe_b', bones, elements: { ctl: { type: 'image' } }, textures: { probe: { name: 'probe', width: TW, height: TW, png: PNG } },
+    animations: [{ name: `${ns}.probe`, json: anim, condition: 'q.is_in_ui' }, ...many] };
+  const built = G.buildPack(design), files = built.files;
+  addPre(files, ns, [`v.gp_t = variable.is_paperdoll ? 0 : q.property('${ns}:v2');`, `v.gpb_t = v.gp_t;`, `v.gpb_u = ${sel(K.an1200)} ? 0.5 : 0;`]);
+  // (70 controllers of their own: each draws one bone; the 40th and the 70th the test planes)
+  const own = [];
+  for (let i = 1; i <= 70; i++) own.push({ bone: i === 40 ? 'rc40' : i === 70 ? 'rc70' : `f${100 + i}` });
+  ownControllers(files, ns, 'probe', own);
+  return { ns, name: 'geoui_probe_b', files, warnings: built.warnings, tests, limits: true, title: 'GeoUI の大きい書き出しが頼る上限（ボーン 600 本・自分の render controller 70 個・アニメーション 1200 個）',
+    notes: ['ボーンの番号は 1 バイト（256 で 1 周）で持たれているかもしれない: #250〜#599 の板が自分のボーンで動くかを見る。',
+      '始めに GeoUI の alpha を 0 にして全部を隠した画面（world--hidden）を撮り、何も選ばない画面（idle）と比べる: 違えば、選んでいない板が別のボーンで出ている。',
+      '一体のエンティティごと読まれなければ、何も描かれない（基準の ctl も）。'] };
 }
 
 /** geoui_probe_tl: compile.js's own output for a sequence (a track that moves 10 units a second, an element that fades in over
@@ -280,6 +336,7 @@ function appTxt(P) {
     s += `\nsection stop\ndo scriptevent ${P.ns}:stop\nwait 1500\nshot stopped\n${measure('stopped')}\n`;
     s += `\nsection pause-screen\n# ポーズ画面の人形（paper doll）: プロパティが無い。compile.js の行はそこで読まない（コンテンツログに出ない）\npause\nwait 3000\nshot pause\nkey BACK\nwait 2000\n`;
   } else {
+    if (P.limits) s += `\nsection idle\n# GeoUI の alpha 0 で全部を隠した画面を基準に、何も選ばない画面を比べる（選んでいない板が別のボーンで出ていないか）\ndo js for (const q of world.getAllPlayers()) q.setProperty('${P.ns}:alpha', 0); 'hidden'\nwait 3000\nshot world--hidden\ndo js for (const q of world.getAllPlayers()) q.setProperty('${P.ns}:alpha', 100); 'shown'\nwait 3000\nshot idle\n${measure('idle')}\nshot world--probe-off2\n`;
     for (const t of P.tests) {
       s += `\nsection ${shotName(t)}\n${setV2(P.ns, t.k)}\n`;
       s += `wait 1500\nshot ${shotName(t)}\n${measure(shotName(t))}\n${t.color ? `${measureColor(shotName(t), t.at)}\n` : ''}`;
@@ -330,7 +387,7 @@ js const e = p('A'); JSON.stringify(${props}.map((k) => e.getProperty('${P.ns}:'
  *  (0, 140) in the middle), checked against the control plane when it is there. A test's plane: a part of the change of about
  *  its size within a third of a plane of its cell */
 function read(files) {
-  const all = [probeStructure(), probeMolang(), probeTimeline()];
+  const all = [probeStructure(), probeMolang(), probeTimeline(), probeLimits()];
   for (const f of files) {
     const s = JSON.parse(fs.readFileSync(f, 'utf8')), P = all.find((p) => p.name === s.addon);
     if (!P) { console.log(`${f}: ${s.addon} は probe の add-on ではありません`); continue; }
@@ -380,11 +437,21 @@ function read(files) {
         console.log(`  ${shotName(t).padEnd(14)} ${bs.length ? bs.map((b) => `${(side(b) / U).toFixed(1)} 単位`).join(' / ') : '✘ 見つからない'} ${rest(v)} — ${t.what}`);
         continue;
       }
-      if (t.pos) { const m = along(v, t.at); console.log(`  ${shotName(t).padEnd(14)} ${m.length ? m.map((x) => `${x >= 0 ? '+' : ''}${x.toFixed(1)} 単位`).join(' / ') : '✘ 見つからない'} ${rest(v)} — ${t.what}`); continue; }
+      if (t.pos || t.move || t.anim) {
+        // (moved along its row: how far, in units — against what the test expects when it works)
+        const m = along(v, t.at), want = t.expect !== undefined ? t.expect : 20, hit = m.some((x) => Math.abs(x - want) < 1.5);
+        console.log(`  ${shotName(t).padEnd(14)} ${m.length ? `${hit ? '✔' : '✘'} ${m.map((x) => `${x >= 0 ? '+' : ''}${x.toFixed(1)} 単位`).join(' / ')}（効けば +${want}）` : '✘ 見つからない'} ${rest(v)} — ${t.what}`);
+        continue;
+      }
       const col = t.color && c ? `・明るさ ${lum(c).toFixed(1)}（何も無い所 ${lum(c, 'b').toFixed(1)}）${t.id === 'ctl' ? '（不透明の白）' : `・透け具合 ${fmt(seeThrough(c))}${t.alpha !== undefined ? `（効けば ${t.alpha.toFixed(2)}）` : ''}`}` : '';
       console.log(`  ${shotName(t).padEnd(14)} ${say(find(v, t.at), t.at)}${col} ${rest(v)} — ${t.what}`);
     }
     if (!P.timeline) { const v = shots.get('all'); console.log(`  all（全部を出す）: ${v ? `${v.parts} か所` : '測っていない'}`); }
+    if (P.limits) {
+      // (nothing chosen, against everything hidden: what shows there is a plane drawn by a bone other than its own)
+      const v = shots.get('idle'), cellOf = (b) => { const [cx, cy] = ctr(b); let best = null, bd = Infinity; for (const t of P.tests) { const [ex, ey] = px(t.at), d = Math.hypot(cx - ex, cy - ey); if (d < bd) { bd = d; best = t; } } return best && bd < SIZE * U ? best.id : `(${cx.toFixed(0)}, ${cy.toFixed(0)}) px`; };
+      console.log(`  idle（何も選ばない・全部を隠した画面と比べる）: ${v ? (v.parts ? `✘ ${v.parts} か所に出ている: ${boxes(v).map(cellOf).join('・')}` : '✔ 何も出ていない') : '測っていない'}`);
+    }
     const lines = appTxt(P).split('\n');
     for (const n of s.failed_lines || []) if (/clientlog/.test(lines[n - 1] || '')) console.log(`  コンテンツログ: ${n} 行目「${lines[n - 1]}」が落ちた（その種類の行がある）`);
   }
@@ -393,7 +460,7 @@ function read(files) {
 // ---------------------------------------------------------------------------------------------------------------- main
 if (process.argv[2] === 'read') { read(process.argv.slice(3)); process.exit(0); }
 const check = process.argv.includes('--check'), stale = [];
-for (const P of [probeStructure(), probeMolang(), probeTimeline()]) {
+for (const P of [probeStructure(), probeMolang(), probeTimeline(), probeLimits()]) {
   const OUT = path.join(TOP, 'bds', 'addons', P.name), out = addon(P);
   if (check) { for (const [rel, data] of out) { const f = path.join(OUT, rel); if (!fs.existsSync(f) || !fs.readFileSync(f).equals(data)) stale.push(`${P.name}/${rel}`); } continue; }
   fs.rmSync(path.join(OUT, 'rp'), { recursive: true, force: true }); fs.rmSync(path.join(OUT, 'bp'), { recursive: true, force: true });

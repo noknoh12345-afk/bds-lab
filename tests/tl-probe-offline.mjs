@@ -38,14 +38,24 @@ function frame(name, ns, props, { lifeTime = 100, frames = 2 } = {}) {
   G.runPre(init, env);   // (once, at the entity's first moment)
   for (let f = 0; f < frames; f++) G.runPre(pre, env, { stopAtUnset: true, ours: /^variable\.(gp|geoui_)/ });   // (twice: a latch settles)
   const M = (e) => G.molang(e, env), v3 = (v, d) => (v === undefined ? [d, d, d] : Array.isArray(v) ? [0, 1, 2].map((i) => M(v[i] ?? d)) : [M(v), M(v), M(v)]);
+  // (a channel keyed by time — { "0.0": [x, y, z], … } — at the animation's time: straight between keys, held past the ends)
+  const keyedAt = (v, d, at) => {
+    if (!v || Array.isArray(v) || typeof v !== 'object') return v3(v, d);
+    const ks = Object.entries(v).map(([t, x]) => [+t, v3(x, d)]).sort((a, b) => a[0] - b[0]);
+    if (at <= ks[0][0]) return ks[0][1];
+    for (let i = 1; i < ks.length; i++) if (at <= ks[i][0]) { const [t0, a] = ks[i - 1], [t1, b] = ks[i], u = (at - t0) / (t1 - t0); return a.map((x, j) => x + (b[j] - x) * u); }
+    return ks[ks.length - 1][1];
+  };
   const merged = {};
   for (const a of ent.scripts.animate) {
     if (typeof a !== 'object') continue;
     const [short, cond] = Object.entries(a)[0], json = anims[ent.animations[short]];
     if (!json || !M(cond)) continue;
+    // (its time: anim_time_update's, or the seconds it has run — 0 here: what a keyed channel shows at its start)
+    const at = json.anim_time_update !== undefined ? M(json.anim_time_update) : 0;
     for (const [bone, ch] of Object.entries(json.bones || {})) {
       const m = merged[bone] || (merged[bone] = { position: [0, 0, 0], scale: [1, 1, 1], rotation: [0, 0, 0] });
-      const pos = v3(ch.position, 0), sc = v3(ch.scale, 1), rot = v3(ch.rotation, 0);
+      const pos = keyedAt(ch.position, 0, at), sc = keyedAt(ch.scale, 1, at), rot = keyedAt(ch.rotation, 0, at);
       for (let i = 0; i < 3; i++) { m.position[i] += pos[i]; m.scale[i] *= sc[i]; m.rotation[i] += rot[i]; }
     }
   }
@@ -82,17 +92,20 @@ const COLS = [-160, -125, -90, -55, -20, 15, 50], ROWS = [175, 145, 115, 85], ce
 {
   const base = shown(frame('geoui_probe', 'gprobe', { v2: 0 }));
   ok(base.length === 0, 'geoui_probe: nothing is drawn while no test is chosen (the baseline the app compares with)', JSON.stringify(base.map((d) => d.bone)));
-  const names = ['ctl', 'mask1', 'mask0', 'maskhalf', 'maskvar', 'cutmask0', 'cutmaskhalf', 'texhalf', 'texhalfcut', 'masktexhalf', 'rot90', 'scalemul', 'posadd', 'init'];
+  const names = ['ctl', 'mask1', 'mask0', 'maskhalf', 'maskvar', 'cutmask0', 'cutmaskhalf', 'texhalf', 'texhalfcut', 'masktexhalf', 'rot90', 'scalemul', 'posadd', 'init', 'atu', 'atuwrap'];
   const none = new Set(['mask0', 'cutmask0', 'texhalfcut']), alphaOf = { maskhalf: 0.5, cutmaskhalf: 0.6, texhalf: 96 / 255, masktexhalf: 48 / 255 }, bad = [];
   names.forEach((bone, i) => {
     const k = i + 1, s = shown(frame('geoui_probe', 'gprobe', { v2: k }));
     let at = cellAt(i);
     if (bone === 'rot90') at = [15 + 20, 115];   // (its plane right of its pivot: pose does not turn it — the game says which way)
     if (bone === 'posadd') at = [at[0] + 20, at[1]];
+    // (anim_time_update 0.5 between keys at +0 and +40: +20; the parent so, its child +10 more: +30)
+    if (bone === 'atu') at = [at[0] + 20, at[1]];
+    if (bone === 'atuwrap') at = [at[0] + 30, at[1]];
     const good = none.has(bone) ? s.length === 0 : s.length === 1 && s[0].bone === bone && near(s[0], at) && Math.abs(s[0].alpha - (alphaOf[bone] ?? 1)) < 1e-6 && (bone !== 'rot90' || s[0].rotated);
     if (!good) bad.push(`${k} ${bone}: ${JSON.stringify(s.map((d) => [d.bone, d.id, mid(d), d.alpha]))}`);
   });
-  ok(!bad.length, `geoui_probe: each of ${names.length} tests draws its own plane in its own cell, at the alpha it asks about (mask 0, cutfade 0, a cutout's 0.376 texel: none)`, bad.join('\n  '));
+  ok(!bad.length, `geoui_probe: each of ${names.length} tests draws its own plane in its own cell, at the alpha it asks about (mask 0, cutfade 0, a cutout's 0.376 texel: none), anim_time_update's at +20 and through a parent at +30`, bad.join('\n  '));
   const mats = rd(path.join(TOP, 'bds/addons/geoui_probe/rp'), 'materials/entity.material').materials, ent = rd(path.join(TOP, 'bds/addons/geoui_probe/rp'), 'entity/player.entity.json')['minecraft:client_entity'].description;
   ok(mats['gprobe_fade:gprobe_base']['+defines'].includes('USE_COLOR_MASK') && mats['gprobe_cutfade:gprobe_base']['+defines'].includes('ALPHA_TEST') && ent.materials.gprobe_fade === 'gprobe_fade' && ent.materials.gprobe_cutfade === 'gprobe_cutfade' && ent.scripts.initialize.includes('v.gp_init = 7;'),
     'geoui_probe: the fade materials (blend / cutout with the colour mask) declared by the client entity; the initialize line');
@@ -106,11 +119,33 @@ const COLS = [-160, -125, -90, -55, -20, 15, 50], ROWS = [175, 145, 115, 85], ce
 {
   const base = shown(frame('geoui_probe_m', 'gprobm', { v2: 0 }));
   ok(base.length === 0, 'geoui_probe_m: nothing is drawn while no test is chosen', JSON.stringify(base.map((d) => d.bone)));
-  const names = ['ctl', 'd54', 'd54_c', 'f6k', 'f6k_c', 'f8k', 'f8k_c', 'f12k', 'f12k_c', 'd100', 'd100_c', 'f16k', 'f16k_c'], bad = [];
+  const names = ['ctl', 'split', 'split_c', 'lines', 'lines_c', 'd54', 'd54_c', 'f6k', 'f6k_c', 'f8k', 'f8k_c', 'f12k', 'f12k_c', 'd100', 'd100_c', 'f16k', 'f16k_c'], bad = [];
   names.forEach((bone, i) => { const s = shown(frame('geoui_probe_m', 'gprobm', { v2: i + 1 })); if (!(s.length === 1 && s[0].bone === bone && near(s[0], cellAt(i)))) bad.push(`${i + 1} ${bone}: ${JSON.stringify(s.map((d) => d.bone))}`); });
   ok(!bad.length, `geoui_probe_m: each of ${names.length} tests draws its own plane only`, bad.join('\n  '));
   const pre = rd(path.join(TOP, 'bds/addons/geoui_probe_m/rp'), 'entity/player.entity.json')['minecraft:client_entity'].description.scripts.pre_animation, len = (id) => pre.find((l) => l.startsWith(`v.gpm_${id} =`)).length;
   ok(len('f8k') > 8000 && len('f16k') > 16000 && len('f6k') < 6100, `geoui_probe_m: the expressions are as long as they say (f6k ${len('f6k')} … f16k ${len('f16k')})`);
+  const cut = pre.filter((l) => /^v\.gpm_s\d+ = |^v\.gpm_split = /.test(l)), lines = pre.filter((l) => /^v\.gpm_l\d+ = /.test(l));
+  ok(cut.length > 10 && cut.every((l) => l.length <= 1000) && cut.reduce((a, l) => a + l.length, 0) > 16000 && lines.length === 3000,
+    `geoui_probe_m: the long line cut into ${cut.length} lines of at most 1000 characters (as the export cuts its own), 3000 lines before the many-lines test`);
+}
+
+// ---- geoui_probe_b: the limits — each test plane only when chosen, moved 20 units by its own bone (#250 … #599), drawn by its
+//      own render controller (the 40th, the 70th) or moved by the 1200th animation (anim_time_update); nothing while idle
+{
+  const base = shown(frame('geoui_probe_b', 'gprobb', { v2: 0 }));
+  ok(base.length === 0, 'geoui_probe_b: nothing is drawn while no test is chosen (the "idle" shot the app compares with everything hidden)', JSON.stringify(base.map((d) => d.bone)));
+  const names = ['ctl', 'b250', 'b255', 'b256', 'b257', 'b300', 'b400', 'b511', 'b512', 'b599', 'rc40', 'rc70', 'an1200'], bad = [];
+  names.forEach((bone, i) => {
+    const s = shown(frame('geoui_probe_b', 'gprobb', { v2: i + 1 })), at = [cellAt(i)[0] + 20, cellAt(i)[1]];
+    if (!(s.length === 1 && s[0].bone === bone && near(s[0], at))) bad.push(`${i + 1} ${bone}: ${JSON.stringify(s.map((d) => [d.bone, d.id, mid(d)]))}`);
+  });
+  ok(!bad.length, `geoui_probe_b: each of ${names.length} tests draws its own plane 20 units on from its cell, only when chosen`, bad.join('\n  '));
+  const dir = path.join(TOP, 'bds/addons/geoui_probe_b/rp'), geo = rd(path.join(dir, 'models/entity/gprobb'), fs.readdirSync(path.join(dir, 'models/entity/gprobb'))[0])['minecraft:geometry'][0];
+  const ent = rd(dir, 'entity/player.entity.json')['minecraft:client_entity'].description, rcs = rd(dir, 'render_controllers/gprobb.render_controllers.json').render_controllers;
+  const idx = (b) => geo.bones.findIndex((x) => x.name === b), own = Object.keys(rcs).filter((k) => k !== 'controller.render.gprobb_probe');
+  ok(geo.bones.length >= 600 && [250, 255, 256, 257, 300, 400, 511, 512, 599].every((b) => idx(`b${b}`) === b) && own.length === 70 && own[39].endsWith('_rc40') && own[69].endsWith('_rc70')
+    && Object.keys(ent.animations).filter((k) => /^gprobb_a\d+$/.test(k)).length === 1200 && ent.scripts.animate.length >= 1200,
+  `geoui_probe_b: ${geo.bones.length} bones with each test plane at its own index, 70 controllers of their own (the 40th and 70th the tests), 1200 animations`);
 }
 
 // ---- geoui_probe_tl: compile.js's own pack, paused at 0, 2, 4 and 6 s: the track's bar, the instances' dots where they belong,

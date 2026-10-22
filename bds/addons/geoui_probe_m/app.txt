@@ -31,77 +31,101 @@ wait 1500
 shot t01-ctl
 measure diff t01-ctl 0 170 1030 720
 
-section t02-d54
+section t02-split
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 2); 'probe 2'
 wait 1500
-shot t02-d54
-measure diff t02-d54 0 170 1030 720
+shot t02-split
+measure diff t02-split 0 170 1030 720
 
-section t03-d54_c
+section t03-split_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 3); 'probe 3'
 wait 1500
-shot t03-d54_c
-measure diff t03-d54_c 0 170 1030 720
+shot t03-split_c
+measure diff t03-split_c 0 170 1030 720
 
-section t04-f6k
+section t04-lines
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 4); 'probe 4'
 wait 1500
-shot t04-f6k
-measure diff t04-f6k 0 170 1030 720
+shot t04-lines
+measure diff t04-lines 0 170 1030 720
 
-section t05-f6k_c
+section t05-lines_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 5); 'probe 5'
 wait 1500
-shot t05-f6k_c
-measure diff t05-f6k_c 0 170 1030 720
+shot t05-lines_c
+measure diff t05-lines_c 0 170 1030 720
 
-section t06-f8k
+section t06-d54
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 6); 'probe 6'
 wait 1500
-shot t06-f8k
-measure diff t06-f8k 0 170 1030 720
+shot t06-d54
+measure diff t06-d54 0 170 1030 720
 
-section t07-f8k_c
+section t07-d54_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 7); 'probe 7'
 wait 1500
-shot t07-f8k_c
-measure diff t07-f8k_c 0 170 1030 720
+shot t07-d54_c
+measure diff t07-d54_c 0 170 1030 720
 
-section t08-f12k
+section t08-f6k
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 8); 'probe 8'
 wait 1500
-shot t08-f12k
-measure diff t08-f12k 0 170 1030 720
+shot t08-f6k
+measure diff t08-f6k 0 170 1030 720
 
-section t09-f12k_c
+section t09-f6k_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 9); 'probe 9'
 wait 1500
-shot t09-f12k_c
-measure diff t09-f12k_c 0 170 1030 720
+shot t09-f6k_c
+measure diff t09-f6k_c 0 170 1030 720
 
-section t10-d100
+section t10-f8k
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 10); 'probe 10'
 wait 1500
-shot t10-d100
-measure diff t10-d100 0 170 1030 720
+shot t10-f8k
+measure diff t10-f8k 0 170 1030 720
 
-section t11-d100_c
+section t11-f8k_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 11); 'probe 11'
 wait 1500
-shot t11-d100_c
-measure diff t11-d100_c 0 170 1030 720
+shot t11-f8k_c
+measure diff t11-f8k_c 0 170 1030 720
 
-section t12-f16k
+section t12-f12k
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 12); 'probe 12'
 wait 1500
-shot t12-f16k
-measure diff t12-f16k 0 170 1030 720
+shot t12-f12k
+measure diff t12-f12k 0 170 1030 720
 
-section t13-f16k_c
+section t13-f12k_c
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 13); 'probe 13'
 wait 1500
-shot t13-f16k_c
-measure diff t13-f16k_c 0 170 1030 720
+shot t13-f12k_c
+measure diff t13-f12k_c 0 170 1030 720
+
+section t14-d100
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 14); 'probe 14'
+wait 1500
+shot t14-d100
+measure diff t14-d100 0 170 1030 720
+
+section t15-d100_c
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 15); 'probe 15'
+wait 1500
+shot t15-d100_c
+measure diff t15-d100_c 0 170 1030 720
+
+section t16-f16k
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 16); 'probe 16'
+wait 1500
+shot t16-f16k
+measure diff t16-f16k 0 170 1030 720
+
+section t17-f16k_c
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 17); 'probe 17'
+wait 1500
+shot t17-f16k_c
+measure diff t17-f16k_c 0 170 1030 720
 
 section all
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobm:v2', 99); 'probe 99'

@@ -15,7 +15,7 @@
 //                   or CHROMIUM=<a Chromium binary> with playwright-core
 //   node bds/geoui/blockbench-check.mjs [--out <folder>] [--export <file.mcaddon> [--uuids <unit folder>]]
 // (the functions handed to page.evaluate run inside Blockbench: its globals)
-/* global window, document, Blockbench, Formats, Plugin, Format, Project, Group, Cube, Texture, Animation, Animator, Modes, Timeline, THREE,
+/* global window, document, Formats, Format, Project, Group, Cube, Texture, Animation, Animator, Modes, Timeline, THREE,
    scene, Canvas, Codecs, Dialog, BarItems */
 import fs from 'node:fs';
 import path from 'node:path';

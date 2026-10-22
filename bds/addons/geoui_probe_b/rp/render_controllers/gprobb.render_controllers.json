@@ -1,0 +1,3549 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.gprobb_probe": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "f101": false
+        },
+        {
+          "f102": false
+        },
+        {
+          "f103": false
+        },
+        {
+          "f104": false
+        },
+        {
+          "f105": false
+        },
+        {
+          "f106": false
+        },
+        {
+          "f107": false
+        },
+        {
+          "f108": false
+        },
+        {
+          "f109": false
+        },
+        {
+          "f110": false
+        },
+        {
+          "f111": false
+        },
+        {
+          "f112": false
+        },
+        {
+          "f113": false
+        },
+        {
+          "f114": false
+        },
+        {
+          "f115": false
+        },
+        {
+          "f116": false
+        },
+        {
+          "f117": false
+        },
+        {
+          "f118": false
+        },
+        {
+          "f119": false
+        },
+        {
+          "f120": false
+        },
+        {
+          "f121": false
+        },
+        {
+          "f122": false
+        },
+        {
+          "f123": false
+        },
+        {
+          "f124": false
+        },
+        {
+          "f125": false
+        },
+        {
+          "f126": false
+        },
+        {
+          "f127": false
+        },
+        {
+          "f128": false
+        },
+        {
+          "f129": false
+        },
+        {
+          "f130": false
+        },
+        {
+          "f131": false
+        },
+        {
+          "f132": false
+        },
+        {
+          "f133": false
+        },
+        {
+          "f134": false
+        },
+        {
+          "f135": false
+        },
+        {
+          "f136": false
+        },
+        {
+          "f137": false
+        },
+        {
+          "f138": false
+        },
+        {
+          "f139": false
+        },
+        {
+          "rc40": false
+        },
+        {
+          "f141": false
+        },
+        {
+          "f142": false
+        },
+        {
+          "f143": false
+        },
+        {
+          "f144": false
+        },
+        {
+          "f145": false
+        },
+        {
+          "f146": false
+        },
+        {
+          "f147": false
+        },
+        {
+          "f148": false
+        },
+        {
+          "f149": false
+        },
+        {
+          "f150": false
+        },
+        {
+          "f151": false
+        },
+        {
+          "f152": false
+        },
+        {
+          "f153": false
+        },
+        {
+          "f154": false
+        },
+        {
+          "f155": false
+        },
+        {
+          "f156": false
+        },
+        {
+          "f157": false
+        },
+        {
+          "f158": false
+        },
+        {
+          "f159": false
+        },
+        {
+          "f160": false
+        },
+        {
+          "f161": false
+        },
+        {
+          "f162": false
+        },
+        {
+          "f163": false
+        },
+        {
+          "f164": false
+        },
+        {
+          "f165": false
+        },
+        {
+          "f166": false
+        },
+        {
+          "f167": false
+        },
+        {
+          "f168": false
+        },
+        {
+          "f169": false
+        },
+        {
+          "rc70": false
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f101": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f101": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f102": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f102": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f103": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f103": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f104": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f104": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f105": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f105": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f106": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f106": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f107": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f107": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f108": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f108": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f109": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f109": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f110": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f110": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f111": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f111": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f112": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f112": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f113": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f113": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f114": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f114": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f115": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f115": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f116": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f116": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f117": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f117": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f118": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f118": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f119": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f119": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f120": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f120": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f121": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f121": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f122": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f122": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f123": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f123": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f124": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f124": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f125": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f125": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f126": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f126": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f127": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f127": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f128": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f128": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f129": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f129": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f130": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f130": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f131": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f131": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f132": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f132": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f133": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f133": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f134": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f134": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f135": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f135": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f136": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f136": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f137": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f137": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f138": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f138": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f139": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f139": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_rc40": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "rc40": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f141": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f141": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f142": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f142": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f143": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f143": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f144": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f144": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f145": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f145": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f146": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f146": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f147": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f147": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f148": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f148": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f149": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f149": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f150": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f150": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f151": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f151": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f152": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f152": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f153": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f153": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f154": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f154": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f155": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f155": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f156": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f156": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f157": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f157": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f158": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f158": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f159": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f159": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f160": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f160": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f161": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f161": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f162": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f162": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f163": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f163": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f164": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f164": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f165": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f165": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f166": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f166": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f167": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f167": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f168": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f168": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_f169": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "f169": true
+        }
+      ]
+    },
+    "controller.render.gprobb_probe_rc70": {
+      "geometry": "Geometry.gprobb_probe",
+      "materials": [
+        {
+          "*": "material.gprobb_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.gprobb_probe"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "rc70": true
+        }
+      ]
+    }
+  }
+}

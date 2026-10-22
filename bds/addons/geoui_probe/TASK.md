@@ -1,4 +1,4 @@
-# geoui_probe — GeoUI の作りの確かめ 3 回目（不透明度・回転の向き・アニメーションの重ね方・initialize）
+# geoui_probe — GeoUI の作りの確かめ 3 回目（不透明度・回転の向き・アニメーションの重ね方・initialize・anim_time_update）
 
 ## Request
 GeoUI のタイムラインの書き出しが頼る物を、本物のアプリで 1 つずつ確かめる（bds/geoui/timeline/probe.mjs が作る。手で変えない）。
@@ -22,6 +22,8 @@ app.txt がテストを 1 つずつ出して写し、`measure diff` が変わっ
 - テスト 12（scalemul）: 同じボーンに 3 つのアニメーション（scale 1・2・0.5）: 14 単位なら掛け算
 - テスト 13（posadd）: 同じボーンに 2 つのアニメーション（x +10 ずつ）: +20 なら足し算
 - テスト 14（init）: initialize だけで入れた変数（7）で出し入れ: 描かれれば initialize が効く
+- テスト 15（atu）: アニメーションの anim_time_update を変数（0.5）で: 鍵は 0 秒で +0・1 秒で +40 単位。+20 なら変数の時刻で動く（+40 なら時間がそのまま進んだ、+0 なら止まったまま）
+- テスト 16（atuwrap）: 親のボーンを anim_time_update のアニメーションで +20（0.5）、子の板を別のアニメーションで +10: +30 なら重なる（タイムラインの道はこの形）
 
 ## Acceptance (one tests.txt `## ` section each)
 - [ ] 読み込める（プロパティが既定値）

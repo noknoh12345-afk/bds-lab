@@ -1,4 +1,4 @@
-/* global document, Blockbench, Project, ModelProject, Property, Group, Cube, Texture, Modes, Animator, Preview, Panel, Undo, Action, Dialog, THREE, Canvas, JSZip */
+/* global document, Image, Blockbench, Project, ModelProject, Property, Group, Cube, Modes, Animator, Preview, Panel, Undo, Action, Dialog, THREE, Canvas, JSZip */
 // GeoUI timeline — the bridge (bds/geoui/timeline/PLAN.md step 7): the timeline inside GeoUI Builder in Blockbench.
 //  - the document and its sounds kept in the project (.bbmodel: Project.geoui_timeline, Project.geoui_media); every edit one
 //    step of Blockbench's Undo (its history names it; undo and redo bring the document back)

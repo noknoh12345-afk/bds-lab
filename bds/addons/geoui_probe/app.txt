@@ -1,4 +1,4 @@
-# geoui_probe（bds/geoui/timeline/probe.mjs が作る）: GeoUI の作りの確かめ 3 回目（不透明度・回転の向き・アニメーションの重ね方・initialize）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
+# geoui_probe（bds/geoui/timeline/probe.mjs が作る）: GeoUI の作りの確かめ 3 回目（不透明度・回転の向き・アニメーションの重ね方・initialize・anim_time_update）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
 # 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を、measure color で板の真ん中の色を数で出す。
 
 section title
@@ -114,6 +114,18 @@ do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 14); 'pr
 wait 1500
 shot t14-init
 measure diff t14-init 0 170 1030 720
+
+section t15-atu
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 15); 'probe 15'
+wait 1500
+shot t15-atu
+measure diff t15-atu 0 170 1030 720
+
+section t16-atuwrap
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 16); 'probe 16'
+wait 1500
+shot t16-atuwrap
+measure diff t16-atuwrap 0 170 1030 720
 
 section all
 do js for (const q of world.getAllPlayers()) q.setProperty('gprobe:v2', 99); 'probe 99'

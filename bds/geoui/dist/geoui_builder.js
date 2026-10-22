@@ -1,5 +1,5 @@
 // GeoUI Builder 0.1.0 with its timeline — one file for Blockbench (made by bds/geoui/build.mjs from bds/geoui/geoui_builder.js and
-// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources d4a8d5701c34
+// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 8cc8d4b86e9f
 // ---- timeline/model.js
 (function (module) {
 // GeoUI timeline — the model (pure: no DOM, no Blockbench). The plan's step 1 (bds/geoui/timeline/PLAN.md):
@@ -3228,6 +3228,146 @@
     return {};
   }
 
+  // ---------------------------------------------------------------------------------------------------------------- long lines
+  // The game's limits on one Molang line (its length, how deep its brackets go) are not documented, and a line past them stops
+  // the whole entity (bds-lab's probe, round 1: nothing drew). So no line is left long or deep: a part of it is worked out on a
+  // line of its own first, into a variable of its own (<prefix><n>), and the line reads that variable. A chain of choices —
+  // (c0 ? a0 : (c1 ? a1 : … : d)), as every table here is written — becomes a ladder: `x = d;` then `x = (ck) ? (ak) : x;`
+  // from the last choice to the first, so a choice's value is still worked out only when its condition holds. Only parts the
+  // grammar marks off whatever its precedences (a bracket, an argument, a condition or a branch of a choice, an operand of
+  // + - * / < > <= >= == != && ||) are cut out; a part that reads a property outside the paper doll's guard never is (worked
+  // out on its own line it would be read where the guard said not to).
+  const OPS2 = ['&&', '||', '==', '!=', '<=', '>=', '??'];
+  const PREC = { '??': 1, '||': 2, '&&': 3, '==': 4, '!=': 4, '<': 5, '>': 5, '<=': 5, '>=': 5, '+': 6, '-': 6, '*': 7, '/': 7 };
+  function mtokens(s) {
+    const out = [];
+    for (let i = 0; i < s.length;) {
+      const c = s[i];
+      if (/\s/.test(c)) { i++; continue; }
+      if (/\d/.test(c) || (c === '.' && /\d/.test(s[i + 1] || ''))) { const m = /^(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?f?/.exec(s.slice(i)); out.push({ k: 'num', s: i, e: i + m[0].length }); i += m[0].length; continue; }
+      if (/[A-Za-z_]/.test(c)) { const m = /^[A-Za-z_][\w.]*/.exec(s.slice(i)); out.push({ k: 'id', v: m[0].toLowerCase(), s: i, e: i + m[0].length }); i += m[0].length; continue; }
+      if (c === "'" || c === '"') { const j = s.indexOf(c, i + 1); if (j < 0) throw new Error('closing quote'); out.push({ k: 'str', s: i, e: j + 1 }); i = j + 1; continue; }
+      const two = s.slice(i, i + 2);
+      if (OPS2.includes(two)) { out.push({ k: 'op', v: two, s: i, e: i + 2 }); i += 2; continue; }
+      if ('+-*/<>!?:(),'.includes(c)) { out.push({ k: 'op', v: c, s: i, e: i + 1 }); i++; continue; }
+      throw new Error(`character ${c}`);
+    }
+    return out;
+  }
+  /** an expression → a tree of { t, s, e, kids } over its own text (t: num str id call un bin if paren) */
+  function mparse(src) {
+    const tk = mtokens(src); let p = 0;
+    const is = (v) => tk[p] && tk[p].k === 'op' && tk[p].v === v;
+    const eat = (v) => { if (!is(v)) throw new Error(`expected ${v}`); return tk[p++]; };
+    function primary() {
+      const x = tk[p++];
+      if (!x) throw new Error('end of expression');
+      if (x.k === 'num' || x.k === 'str') return { t: x.k, s: x.s, e: x.e, kids: [] };
+      if (x.k === 'op' && x.v === '(') { const inner = ternary(); const close = eat(')'); return { t: 'paren', s: x.s, e: close.e, kids: [inner] }; }
+      if (x.k === 'id') {
+        if (is('(')) { p++; const args = []; if (!is(')')) { args.push(ternary()); while (is(',')) { p++; args.push(ternary()); } } const close = eat(')'); return { t: 'call', id: x.v, s: x.s, e: close.e, kids: args }; }
+        return { t: 'id', id: x.v, s: x.s, e: x.e, kids: [] };
+      }
+      throw new Error(`unexpected ${x.v}`);
+    }
+    function unary() { if (is('-') || is('!') || is('+')) { const op = tk[p++]; const a = unary(); return { t: 'un', op: op.v, s: op.s, e: a.e, kids: [a] }; } return primary(); }
+    function binary(min) {
+      let a = unary();
+      for (;;) {
+        const o = tk[p];
+        if (!o || o.k !== 'op' || !(PREC[o.v] >= min)) return a;
+        p++;
+        const b = binary(PREC[o.v] + 1);
+        a = { t: 'bin', op: o.v, s: a.s, e: b.e, kids: [a, b] };
+      }
+    }
+    function ternary() {
+      const c = binary(1);
+      if (!is('?')) return c;
+      p++;
+      const a = ternary();
+      if (!is(':')) return { t: 'if', s: c.s, e: a.e, kids: [c, a] };
+      p++;
+      const b = ternary();
+      return { t: 'if', s: c.s, e: b.e, kids: [c, a, b] };
+    }
+    const tree = ternary();
+    if (p < tk.length) throw new Error(`unexpected ${tk[p].v || tk[p].k}`);
+    return tree;
+  }
+  /** lines (`name = expression;`, or anything else kept as it is) → the same values with no line over `limit` characters and
+   *  no bracket deeper than `depth` (beyond a part that cannot be cut: said in `uncut`). → { lines, cuts, uncut } */
+  function splitLines(lines, { limit = 1000, depth = 24, prefix = 'v.geoui__' } = {}) {
+    const out = [], uncut = [];
+    let n = 0, cuts = 0;
+    for (const line of lines) {
+      const m = /^\s*([A-Za-z_][\w.]*)\s*=\s*([\s\S]*?);?\s*$/.exec(line);
+      if (line.length <= limit && maxDepth(line) <= depth) { out.push(line); continue; }
+      let tree = null;
+      // (a part the grammar here does not know — or nested past what a parse of it can hold — is kept as it is, and said)
+      if (m && !/[;{}]/.test(m[2])) { try { tree = mparse(m[2]); } catch (e) { tree = null; } }
+      if (!tree) { out.push(line); uncut.push(line.slice(0, 80)); continue; }
+      const src = m[2], room = Math.max(40, limit - m[1].length - 4), DEEP = Math.max(4, depth - 2);
+      // (each part's length and depth as it now stands — a part cut out is a variable: its name's length, no depth)
+      const isGuard = (x) => { if (x.t !== 'if' || x.kids.length < 3) return false; let c = x.kids[0]; while (c.t === 'paren') c = c.kids[0]; return c.t === 'id' && /^(v|variable)\.is_paperdoll$/.test(c.id); };
+      const measure = (x) => {
+        let len = x.e - x.s, dep = 0, ung = x.t === 'call' && /^(q|query)\.property$/.test(x.id);
+        for (const k of x.kids) { len += k.len - (k.e - k.s); dep = Math.max(dep, k.dep); if (k.ung) ung = true; }
+        x.len = len; x.dep = dep + (x.t === 'paren' || x.t === 'call' ? 1 : 0); x.ung = ung && !isGuard(x);
+      };
+      const text = (x) => {
+        if (x.rep) return x.rep;
+        let s = '', at = x.s;
+        for (const k of x.kids) { s += src.slice(at, k.s) + text(k); at = k.e; }
+        return s + src.slice(at, x.e);
+      };
+      const replace = (x, v) => { x.rep = v; x.len = v.length; x.dep = 0; x.ung = false; x.kids = []; cuts++; };
+      const fits = (x) => x.len <= room && x.dep <= DEEP;
+      // (a part that may stand as a variable: what the grammar marks off whatever the game's ranks are — never one that reads a
+      //  property outside the paper doll's guard, nor an operand of ?? that is not in brackets)
+      const cuttable = (x, parent) => !x.rep && !x.ung && x.t !== 'num' && x.t !== 'str' && x.t !== 'id' && !(parent && parent.t === 'bin' && parent.op === '??' && x.t !== 'paren');
+      const hoist = (x) => { const v = `${prefix}${n++}`; out.push(`${v} = ${text(x)};`); replace(x, v); };
+      const chainOf = (x) => {
+        // (c0 ? a0 : (c1 ? a1 : … d)) → [[c0, a0], [c1, a1], …] and d (the first part that is not a choice)
+        const steps = []; let y = x;
+        for (;;) {
+          while (y.t === 'paren' && !y.rep) y = y.kids[0];
+          if (y.rep || y.t !== 'if' || y.kids.length < 3 || y.kids[0].ung) return { steps, rest: y };
+          steps.push([y, y.kids[0], y.kids[1]]); y = y.kids[2];
+        }
+      };
+      const ladder = (x) => {
+        const { steps, rest } = chainOf(x), v = `${prefix}${n++}`;
+        out.push(`${v} = ${text(rest)};`);
+        for (let i = steps.length - 1; i >= 0; i--) {
+          const [node, c, a] = steps[i];
+          // (a step's line too long or deep: its value worked out first, then its condition — each fits alone)
+          for (const part of [a, c]) if (c.len + a.len + v.length * 2 + 16 > room || Math.max(c.dep, a.dep) + 1 > DEEP) { if (cuttable(part, node)) hoist(part); }
+          out.push(`${v} = (${text(c)}) ? (${text(a)}) : ${v};`);
+        }
+        replace(x, v);
+      };
+      // bottom up: a part too long or too deep is cut where it first grows past the limits
+      const fit = (x, parent) => {
+        for (const k of x.kids) fit(k, x);
+        measure(x);
+        if (fits(x)) return;
+        let y = x; while (y.t === 'paren' && !y.rep) y = y.kids[0];
+        if (y.t === 'if' && y.kids.length === 3 && !y.kids[0].ung && cuttable(x, parent)) { ladder(x); return; }
+        const kids = x.kids.filter((k) => cuttable(k, x)).sort((p, q) => q.len - p.len || q.dep - p.dep);
+        for (const k of kids) { hoist(k); measure(x); if (fits(x)) return; }
+      };
+      const mark = out.length;
+      try { fit(tree, null); } catch (e) { out.length = mark; out.push(line); uncut.push(line.slice(0, 80)); continue; }
+      const full = `${m[1]} = ${text(tree)};`;
+      if (full.length > limit || maxDepth(full) > depth) uncut.push(full.slice(0, 80));
+      out.push(full);
+    }
+    return { lines: out, cuts, uncut };
+  }
+  /** how deep a line's brackets go */
+  function maxDepth(s) { let d = 0, most = 0; for (const c of s) { if (c === '(') most = Math.max(most, ++d); else if (c === ')') d--; } return most; }
+
   // ---------------------------------------------------------------------------------------------------------------- a target
   /** one element's clips (on one track) → pre_animation lines that put its state in variables P_x, P_y, P_sx, P_sy, P_r, P_o
    *  (and P_v, P_f, P_fr when its clips have them). o: { st, zero, vars (params), ev: { t, r } | null, active, paths, instPath,
@@ -3576,7 +3716,7 @@
     return { files, warnings: [...new Set(warnings)], stats: { bindings, pre, slots: slotsOut, longest, bezierError: report.bezier, budget } };
   }
 
-  T.compile = { extendPack, easeM, keysM, pathM, exprM, targetLines };
+  T.compile = { extendPack, easeM, keysM, pathM, exprM, targetLines, splitLines, maxDepth, mparse };
   if (typeof module === 'object' && module && module.exports) module.exports = T.compile;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 })(undefined);
@@ -3960,7 +4100,7 @@ world.afterEvents.itemUse.subscribe((e) => engine.press(e.source));
 
 // ---- timeline/bridge.js
 (function (module) {
-/* global document, Blockbench, Project, ModelProject, Property, Group, Cube, Texture, Modes, Animator, Preview, Panel, Undo, Action, Dialog, THREE, Canvas, JSZip */
+/* global document, Image, Blockbench, Project, ModelProject, Property, Group, Cube, Modes, Animator, Preview, Panel, Undo, Action, Dialog, THREE, Canvas, JSZip */
 // GeoUI timeline — the bridge (bds/geoui/timeline/PLAN.md step 7): the timeline inside GeoUI Builder in Blockbench.
 //  - the document and its sounds kept in the project (.bbmodel: Project.geoui_timeline, Project.geoui_media); every edit one
 //    step of Blockbench's Undo (its history names it; undo and redo bring the document back)

@@ -1,0 +1,147 @@
+# geoui_probe_b（bds/geoui/timeline/probe.mjs が作る）: GeoUI の大きい書き出しが頼る上限（ボーン 600 本・自分の render controller 70 個・アニメーション 1200 個）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を、measure color で板の真ん中の色を数で出す。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+do time set noon
+do gamerule dodaylightcycle false
+do gamerule sendcommandfeedback false
+do gamerule commandblockoutput false
+do weather clear
+do tp @a 0 -60 0 0 90
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do hud @a hide crosshair
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 0); 'probe off'
+wait 6000
+shot world--probe-off
+absent clientlog \bERROR\b
+
+section idle
+# GeoUI の alpha 0 で全部を隠した画面を基準に、何も選ばない画面を比べる（選んでいない板が別のボーンで出ていないか）
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:alpha', 0); 'hidden'
+wait 3000
+shot world--hidden
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:alpha', 100); 'shown'
+wait 3000
+shot idle
+measure diff idle 0 170 1030 720
+shot world--probe-off2
+
+section t01-ctl
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 1); 'probe 1'
+wait 1500
+shot t01-ctl
+measure diff t01-ctl 0 170 1030 720
+
+section t02-b250
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 2); 'probe 2'
+wait 1500
+shot t02-b250
+measure diff t02-b250 0 170 1030 720
+
+section t03-b255
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 3); 'probe 3'
+wait 1500
+shot t03-b255
+measure diff t03-b255 0 170 1030 720
+
+section t04-b256
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 4); 'probe 4'
+wait 1500
+shot t04-b256
+measure diff t04-b256 0 170 1030 720
+
+section t05-b257
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 5); 'probe 5'
+wait 1500
+shot t05-b257
+measure diff t05-b257 0 170 1030 720
+
+section t06-b300
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 6); 'probe 6'
+wait 1500
+shot t06-b300
+measure diff t06-b300 0 170 1030 720
+
+section t07-b400
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 7); 'probe 7'
+wait 1500
+shot t07-b400
+measure diff t07-b400 0 170 1030 720
+
+section t08-b511
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 8); 'probe 8'
+wait 1500
+shot t08-b511
+measure diff t08-b511 0 170 1030 720
+
+section t09-b512
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 9); 'probe 9'
+wait 1500
+shot t09-b512
+measure diff t09-b512 0 170 1030 720
+
+section t10-b599
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 10); 'probe 10'
+wait 1500
+shot t10-b599
+measure diff t10-b599 0 170 1030 720
+
+section t11-rc40
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 11); 'probe 11'
+wait 1500
+shot t11-rc40
+measure diff t11-rc40 0 170 1030 720
+
+section t12-rc70
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 12); 'probe 12'
+wait 1500
+shot t12-rc70
+measure diff t12-rc70 0 170 1030 720
+
+section t13-an1200
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 13); 'probe 13'
+wait 1500
+shot t13-an1200
+measure diff t13-an1200 0 170 1030 720
+
+section all
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 99); 'probe 99'
+wait 1500
+shot all
+measure diff all 0 170 1030 720
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobb:v2', 0); 'probe 0'
+
+section log-molang
+absent clientlog (?i)molang
+section log-variable
+absent clientlog (?i)variable
+section log-property
+absent clientlog (?i)property
+section log-paperdoll
+absent clientlog (?i)paper.?doll
+section log-ours
+absent clientlog (?i)gprobb
+section log-unknown
+absent clientlog (?i)unknown|not found|doesn.?t exist|undefined|invalid
+section log-geometry
+absent clientlog (?i)geometr|\bbones?\b
+section log-render
+absent clientlog (?i)render.?controller|part_visibility|uv_anim
+section log-material
+absent clientlog (?i)material|shader|define
+section log-animation
+absent clientlog (?i)animation
+section log-warn
+absent clientlog \bWARN
+section log-error
+absent clientlog \bERROR\b

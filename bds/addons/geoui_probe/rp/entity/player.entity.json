@@ -53,7 +53,8 @@
           "v.geoui_cx = variable.is_paperdoll ? 0.0 : q.property('gprobe:cx')/10000.0*170.681;",
           "v.geoui_cy = variable.is_paperdoll ? 0.0 : q.property('gprobe:cy')/10000.0*170.681;",
           "v.gp_t = variable.is_paperdoll ? 0 : q.property('gprobe:v2');",
-          "v.gp_a = (v.gp_t == 5 || v.gp_t == 99) ? 1 : 0;"
+          "v.gp_a = (v.gp_t == 5 || v.gp_t == 99) ? 1 : 0;",
+          "v.gp_u = ((v.gp_t == 15 || v.gp_t == 99) || (v.gp_t == 16 || v.gp_t == 99)) ? 0.5 : 0;"
         ],
         "animate": [
           {
@@ -67,6 +68,12 @@
           },
           {
             "gprobe_mul_b": "q.is_in_ui && ((v.gp_t == 12 || v.gp_t == 99) || (v.gp_t == 13 || v.gp_t == 99))"
+          },
+          {
+            "gprobe_atu": "q.is_in_ui"
+          },
+          {
+            "gprobe_atuwrap": "q.is_in_ui"
           },
           "root"
         ],
@@ -156,7 +163,9 @@
         "gprobe_transform": "animation.gprobe_transform",
         "gprobe_probe": "animation.gprobe.probe",
         "gprobe_mul_a": "animation.gprobe.mul_a",
-        "gprobe_mul_b": "animation.gprobe.mul_b"
+        "gprobe_mul_b": "animation.gprobe.mul_b",
+        "gprobe_atu": "animation.gprobe.atu",
+        "gprobe_atuwrap": "animation.gprobe.atuwrap"
       },
       "render_controllers": [
         {
