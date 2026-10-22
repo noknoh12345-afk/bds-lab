@@ -72,6 +72,14 @@ qcow2 が 6.5 GB、その中で使われているのは 3.1 GB: 残りは消し�
 7. 旧来の道（`APP_TRANSPORT=raknet`）は残す: リンク・質問（Unknown External Server → Continue、Online play is not rated →
    Proceed。OCR が緑のボタンの白い字を読めなくても、問いの文から 1.26 のボタンの位置を押す）。
 
+### 2026-10-23: BDS の `Player connected` はログインの時（パックより前）
+
+BDS 1.26.52 の `Player connected` は、ログインが通った時（`play_status login_success` のすぐ後、パックを見せる `resource_packs_info`
+より前）に出る。ラボのプレイヤーで確かめた: RakNet でパックへの答えを遅らせても先に出る、NetherNet（LAN と HTTP シグナリング、
+nethernet-connect v3）でもログインの直後に出る。アプリはそのあとでパックを取り、`Player Spawned` の後も読み込む（下の 2026-10-04）。
+クライアントはつなぐ前にサーバーのパックを知らないので、`joined-no-connection`（接続が一度も来ない）は、リソースパックの大きさ・中身が
+直接の理由ではない（GeoUI の 1000 個のパックでは、LAN のワールドを選んでから接続まで 387 秒かかった: なぜ遅いかは要実測）。
+
 ### いまの状態（2026-10-04 11:25）: **jsonui_demo の app.txt が本物のアプリで通った（PASS）**
 
 常駐の端末（run 37197181375、準備で自分のワールドと ANR の 5 倍を入れた端末）で `run`: タイトル → PLAY → LAN の
