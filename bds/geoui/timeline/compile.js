@@ -3,10 +3,13 @@
 // only moves its bones by those variables, and per-element render controllers take their opacity and flipbook frame from them.
 // The Molang is the model's own arithmetic written out (model.evaluate is the preview): tests/tl-anim-offline.mjs runs it
 // frame by frame in GeoUI Builder's Molang evaluator and compares every element with model.evaluate.
-// Time: the server sets <ns>:seq (which sequence, 1…; 0 none), <ns>:seq_gen (+1 at each play or seek), <ns>:seq_from (ms) and
-// <ns>:seq_pause; the client counts from the moment it sees seq_gen change (q.life_time). Many instances of a template are drawn
-// by slots (copies of its bones, contract.js): baked (each slot's instances written into the Molang) or streamed (the script
-// puts the next instance into the slot's properties before it shows). Hits and misses: <ns>:<tag><k>g (+1) and r (the result).
+// Time: the server sets <ns>:seq (the sequence, paused or not, and a generation: contract.js) and <ns>:seq_from (ms); the
+// client counts from the moment it sees seq change (q.life_time). Many instances of a template are drawn by slots (copies of
+// its bones, contract.js): baked (each slot's instances written into the Molang as short lookups — groups of 16, a balanced
+// tree in each: a frame works out a few comparisons however many there are) or streamed (the script puts the next instance
+// into the slot's properties before it shows). An instance's own path (an osu! slider's) is an animation of its own, timed by
+// anim_time_update. Hits and misses: <ns>:<tag>e<g>, 3 bits a slot. Every line is cut short at the end (splitLines): the
+// game stops an entity at a line past its limits.
 (function (root) {
   'use strict';
   const T = root.GeoUITimeline = root.GeoUITimeline || {};
@@ -83,7 +86,7 @@
   }
   /** the point along a path at a progress (a variable, 0..1) → { x, y } Molang: the path's own polyline by arc length (cut or
    *  gone on straight at its osu! length), points closer than tol to a straight run dropped first */
-  function pathM(path, u, tol = 1e-9) {
+  function pathPoly(path, tol = 1e-9) {
     const tb = Mo().pathTable(path), L = path.length > 0 ? path.length : tb.length;
     let pts = tb.pts;
     if (pts.length > 2) {
@@ -96,7 +99,12 @@
     }
     const acc = [0];
     for (let i = 1; i < pts.length; i++) acc.push(acc[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
-    const scale = acc[acc.length - 1] > 0 ? tb.length / acc[acc.length - 1] : 1, d = `(math.clamp(${u}, 0, 1) * ${n(L / scale)})`;
+    const scale = acc[acc.length - 1] > 0 ? tb.length / acc[acc.length - 1] : 1;
+    // (D: how far along the polyline progress 1 is — the osu! length, past the polyline's end on straight or short of it)
+    return { pts, acc, D: L / scale };
+  }
+  function pathM(path, u, tol = 1e-9) {
+    const { pts, acc, D } = pathPoly(path, tol), d = `(math.clamp(${u}, 0, 1) * ${n(D)})`;
     const out = {};
     for (const ax of [0, 1]) {
       const a = pts[pts.length - 2], b = pts[pts.length - 1], seg = acc[acc.length - 1] - acc[acc.length - 2];
@@ -109,6 +117,20 @@
       out[ax ? 'y' : 'x'] = s;
     }
     return out;
+  }
+  /** the same path as keys over progress 0..1 → [[u, x, y]]: straight between them is pathM's polyline exactly (an animation's
+   *  keys are straight between, and progress is straight in the distance) */
+  function pathKeys(path, tol = 1e-9) {
+    const { pts, acc, D } = pathPoly(path, tol), last = acc.length - 1;
+    if (!(D > 0) || pts.length < 2) return [[0, pts[0][0], pts[0][1]]];
+    const keys = [];
+    for (let i = 0; i <= last && acc[i] < D - 1e-9; i++) keys.push([acc[i] / D, pts[i][0], pts[i][1]]);
+    // the end, at D: inside a segment, or past the last point on along the last segment (pathM's rule)
+    let i = 0;
+    while (i < last - 1 && !(D < acc[i + 1])) i++;
+    const a = pts[i], b = pts[i + 1], seg = acc[i + 1] - acc[i], f = seg > 0 ? (D - acc[i]) / seg : 0;
+    keys.push([1, a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+    return keys;
   }
   /** a transition (at p, a Molang expression 0..1) as Molang terms: added to x / y, multiplied into opacity / scale */
   function transM(kind, p) {
@@ -263,10 +285,41 @@
   /** how deep a line's brackets go */
   function maxDepth(s) { let d = 0, most = 0; for (const c of s) { if (c === '(') most = Math.max(most, ++d); else if (c === ')') d--; } return most; }
 
+  // ---------------------------------------------------------------------------------------------------------------- lookups
+  // A slot's instances (baked) are found by the time and their values by the instance's number — for thousands of instances
+  // too: in groups of 16 (one line each, a group's line worked out only in the frame's own group: the ternary does not work out
+  // the branch it does not take) with a balanced tree inside, so a frame does a handful of comparisons, and no line is long
+  const GROUP = 16;
+  /** lines that set `name` to the first i with key < thr[i] (thr ascending), thr.length when none */
+  function searchLines(key, thr, name, lines) {
+    const tree = (lo, hi) => { if (lo >= hi) return String(lo); const mid = (lo + hi) >> 1; return `(${key} < ${n(thr[mid])} ? ${tree(lo, mid)} : ${tree(mid + 1, hi)})`; };
+    if (thr.length <= GROUP) { lines.push(`${name} = ${tree(0, thr.length)};`); return; }
+    const groups = [];
+    for (let g = 0; g * GROUP < thr.length; g++) groups.push(thr[Math.min(thr.length, (g + 1) * GROUP) - 1]);
+    searchLines(key, groups, `${name}g`, lines);
+    lines.push(`${name} = ${thr.length};`);
+    // (the first group whose last threshold is past the key: the answer is in it — key is at or past the one before it)
+    groups.forEach((_, g) => {
+      const lo = g * GROUP, hi = Math.min(thr.length, lo + GROUP) - 1;
+      lines.push(`${name} = (${name}g == ${g}) ? ${tree(lo, hi)} : ${name};`);
+    });
+  }
+  /** lines that set `name` to values[idx] (idx an integer 0…values.length − 1; anything else: dflt). q: a variable already set
+   *  to math.floor(idx / 16) (more than 16 values) */
+  function tableLines(idx, values, name, dflt, q, lines) {
+    const m = values.length, same = (lo, hi) => { for (let j = lo + 1; j <= hi; j++) if (values[j] !== values[lo]) return false; return true; };
+    const tree = (lo, hi) => (same(lo, hi) ? values[lo] : (() => { const mid = (lo + hi) >> 1; return `(${idx} < ${mid + 0.5} ? ${tree(lo, mid)} : ${tree(mid + 1, hi)})`; })());
+    if (!m) { lines.push(`${name} = ${dflt};`); return; }
+    if (m <= GROUP || same(0, m - 1)) { lines.push(`${name} = (${idx} > -0.5 && ${idx} < ${m - 0.5}) ? ${tree(0, m - 1)} : ${dflt};`); return; }
+    lines.push(`${name} = ${dflt};`);
+    for (let g = 0; g * GROUP < m; g++) lines.push(`${name} = (${q} == ${g}) ? ${tree(g * GROUP, Math.min(m, (g + 1) * GROUP) - 1)} : ${name};`);
+  }
+
   // ---------------------------------------------------------------------------------------------------------------- a target
   /** one element's clips (on one track) → pre_animation lines that put its state in variables P_x, P_y, P_sx, P_sy, P_r, P_o
    *  (and P_v, P_f, P_fr when its clips have them). o: { st, zero, vars (params), ev: { t, r } | null, active, paths, instPath,
-   *  hidden (muted / not solo), report } */
+   *  hidden (muted / not solo), report }. An instance's own path (@instance) is not in x / y: it is the instance's animation,
+   *  timed by P_u (has.instPath) */
   function targetLines(P, clips, o) {
     const lines = [], report = o.report, parts = [];
     const RES = Ko().RESULTS, code = (name) => Math.max(0, RES.indexOf(name));
@@ -295,21 +348,18 @@
     const D = Mo().DEFAULTS, tc = `${P}_tc`;
     const chan = (c, prop) => (c.channels && c.channels[prop] && c.channels[prop].length ? keysM(c.channels[prop], tc, o.vars, report) : null);
     // the progress along a path first (x and y use it)
-    const pathOf = (c) => { const id = c.path === '@instance' ? o.instPath : c.path; return id ? o.paths(id) : null; };
-    if (parts.some((p) => pathOf(p.c) && chan(p.c, 'path'))) lines.push(`${P}_u = ${pick((p) => chan(p.c, 'path') || '0', '0')};`);
+    const own = (c) => c.path === '@instance' && Boolean(o.instPath);
+    const pathOf = (c) => { if (own(c)) return null; const id = c.path === '@instance' ? null : c.path; return id ? o.paths(id) : null; };
+    const usesPath = (c) => chan(c, 'path') && (own(c) || pathOf(c));
+    if (parts.some((p) => usesPath(p.c))) lines.push(`${P}_u = ${pick((p) => (usesPath(p.c) ? chan(p.c, 'path') : '0'), '0')};`);
     // per clip: its values with its transitions
     const val = (p, prop) => {
       const c = p.c, base = chan(c, prop) ?? n(D[prop]);
       const terms = [], muls = [];
       if (prop === 'x' || prop === 'y') {
         const path = chan(c, 'path') && pathOf(c);
-        if (path && path.__pick) {
-          // (each instance's own path: the one of the slot's instance now)
-          let s = '0';
-          for (let j = path.__pick.length - 1; j >= 0; j--) s = `(${path.__sel} == ${j} ? ${path.__pick[j] ? pathM(path.__pick[j], `${P}_u`)[prop] : '0'} : ${s})`;
-          terms.push(s);
-        } else if (path) terms.push(pathM(path, `${P}_u`)[prop]);
-        else if (c.path && chan(c, 'path')) report.warnings.push(`道「${c.path}」がありません（${c.id}）`);
+        if (path) terms.push(pathM(path, `${P}_u`)[prop]);
+        else if (c.path && chan(c, 'path') && !own(c)) report.warnings.push(`道「${c.path}」がありません（${c.id}）`);
       }
       for (const [tr, pv] of [[c.transitionIn, `math.clamp(${tc} / ${n(c.transitionIn && c.transitionIn.duration)}, 0, 1)`], [c.transitionOut, `math.clamp(${P}_l / ${n(c.transitionOut && c.transitionOut.duration)}, 0, 1)`]]) {
         if (!tr || !(tr.duration > 0)) continue;
@@ -329,7 +379,7 @@
     if (has('value')) lines.push(`${P}_v = ${pick((p) => chan(p.c, 'value') || '0', '0')};`, `${P}_vd = ${pick((p) => (chan(p.c, 'value') ? '1' : '0'), '0')};`);
     if (has('fill')) lines.push(`${P}_f = math.clamp(${pick((p) => chan(p.c, 'fill') || '0', '0')}, 0, 1);`, `${P}_fd = ${pick((p) => (chan(p.c, 'fill') ? '1' : '0'), '0')};`);
     if (has('frame')) lines.push(`${P}_fr = ${pick((p) => chan(p.c, 'frame') || '0', '0')};`, `${P}_frd = ${pick((p) => (chan(p.c, 'frame') ? '1' : '0'), '0')};`);
-    return { lines, has: { value: has('value'), fill: has('fill'), frame: has('frame'), opacity: parts.some((p) => chan(p.c, 'opacity') || (p.c.transitionIn && p.c.transitionIn.kind === 'fade') || (p.c.transitionOut && p.c.transitionOut.kind === 'fade')), rotation: parts.some((p) => chan(p.c, 'rotation')) } };
+    return { lines, has: { value: has('value'), fill: has('fill'), frame: has('frame'), opacity: parts.some((p) => chan(p.c, 'opacity') || (p.c.transitionIn && p.c.transitionIn.kind === 'fade') || (p.c.transitionOut && p.c.transitionOut.kind === 'fade')), rotation: parts.some((p) => chan(p.c, 'rotation')), instPath: parts.some((p) => own(p.c) && chan(p.c, 'path')) } };
   }
 
   // ---------------------------------------------------------------------------------------------------------------- the pack
@@ -346,8 +396,9 @@
   }
   // ---------------------------------------------------------------------------------------------------------------- the pack (cont.)
   /** the timeline (doc) into GeoUI Builder's files (buildPack's), RP side. ctx: { design (buildPack's input), core (GeoUICore;
-   *  else the global one), propertyLimit,
-   *  bakedMax, molangLimit, sounds: [{ id, ext, data }] }. → { files, warnings, stats: { bindings, pre, slots, longest } } */
+   *  else the global one), propertyLimit, bakedMax (instances a template may bake: more are streamed when their params fit),
+   *  lineLimit / lineDepth (the longest / deepest Molang line: 1000 characters, 24 brackets), sounds: [{ id, ext, data }] }.
+   *  → { files, warnings, stats: { bindings, pre, slots, longest, deepest, lines, chars, budget, counts } } */
   function extendPack(files0, doc0, ctx = {}) {
     const M = Mo(), K = Ko();
     if (!M || !K) throw new Error('GeoUITimeline.model と contract が要ります（model.js・contract.js を先に読み込む）');
@@ -358,7 +409,9 @@
     if (!doc.sequences.length) return { files, warnings, stats: { bindings: {}, pre: [], slots: {}, longest: 0 } };
     const bones = design.bones || [], boneSet = new Set(bones.map((b) => b.name));
     const subtree = (name) => { const out = [name]; for (let grew = true; grew;) { grew = false; for (const b of bones) if (b.parent && out.includes(b.parent) && !out.includes(b.name)) { out.push(b.name); grew = true; } } return out; };
-    const budget = K.budget(doc, { propertyLimit: num(ctx.propertyLimit, 32), bakedMax: num(ctx.bakedMax, 64), ns });
+    // (the player's properties: GeoUI's own, when its behaviour pack is there, count towards the game's limit too)
+    const bpPlayer = files[`${ns}_BP/entities/player.json`], base = bpPlayer ? Object.keys((parse(bpPlayer)['minecraft:entity'].description || {}).properties || {}).length : 0;
+    const budget = K.budget(doc, { propertyLimit: num(ctx.propertyLimit, 32), bakedMax: num(ctx.bakedMax, 2000), ns, base });
     warnings.push(...budget.warnings);
     // (the pause screen's paper doll is a player the game builds for the picture: it has no properties, and reading one there
     //  is a Molang error that leaves the rest of that doll's pre_animation undone — GeoUI Builder's own lines guard the same way)
@@ -366,11 +419,15 @@
     // ---- time
     // (every variable read before this frame sets it goes through ??: the game's pre_animation stops at a line that reads a
     //  variable never set — every line after it is left undone, every frame (bds-lab's probe, geoui_probe, 2026-10-21))
+    // (seq: the sequence, paused or not, and a generation in one number — the client counts again whenever it changes: a
+    //  play, a seek, a resume change the generation; a pause holds the time at from)
+    const SQ = K.seqMolang(V('sq'));
     const pre = [
-      `${V('seq')} = ${P(N.seq)};`,
-      `${V('t0')} = (${P(N.gen)} != (${V('gen')} ?? -1)) ? q.life_time : (${V('t0')} ?? q.life_time);`,
-      `${V('gen')} = ${P(N.gen)};`,
-      `${V('raw')} = ${P(N.pause)} ? ${P(N.from)} / 1000 : q.life_time - ${V('t0')} + ${P(N.from)} / 1000;`,
+      `${V('sq')} = ${P(N.seq)};`,
+      `${V('seq')} = ${SQ.seq};`,
+      `${V('t0')} = (${V('sq')} != (${V('sqp')} ?? -1)) ? q.life_time : (${V('t0')} ?? q.life_time);`,
+      `${V('sqp')} = ${V('sq')};`,
+      `${V('raw')} = ${SQ.pause} ? ${P(N.from)} / 1000 : q.life_time - ${V('t0')} + ${P(N.from)} / 1000;`,
       `${V('st')} = ${V('raw')};`,
     ];
     doc.sequences.forEach((seq, si) => {
@@ -380,6 +437,7 @@
       else if (seq.loop === 'pingpong' && len > 0) pre.push(`${V('m')} = math.mod(${raw} - ${n(a)}, ${n(2 * len)});`, `${V('st')} = (${V('seq')} == ${i} && ${raw} >= ${n(a)}) ? ${n(a)} + (${V('m')} <= ${n(len)} ? ${V('m')} : ${n(2 * len)} - ${V('m')}) : ${V('st')};`);
     });
     const st = V('st'), bindings = {}, slotsOut = {}, anims = {}, clones = new Map(), drives = new Map();   // drives: bone → { o: [[seq, var]], fr, v, f }
+    const instAnims = [];   // [{ key, cond, time, bone, keys }]: an instance's own path
     const drive = (bone, kind, i, varName) => { if (!drives.has(bone)) drives.set(bone, { o: [], fr: [], v: [], f: [] }); drives.get(bone)[kind].push([i, varName]); };
     doc.sequences.forEach((seq, si) => {
       const i = si + 1, anim = { loop: true, animation_length: 1, bones: {} }, paths = (id) => (seq.paths || []).find((p) => p.id === id) || null;
@@ -410,25 +468,25 @@
       (seq.templates || []).forEach((tpl, pi) => {
         const B = bt[pi], xs = seq.instances.filter((x) => x.template === tpl.id);
         if (!B || !xs.length) return;
-        const instPaths = xs.some((x) => x.path), mode = instPaths && B.mode === 'streamed' ? 'baked' : B.mode;
-        if (instPaths && B.mode === 'streamed') warnings.push(`テンプレート「${tpl.name}」は実体ごとの道を持つので、焼き込みで書き出します（実体 ${xs.length} 個: 式が長くなります）`);
-        const alloc = K.allocateSlots(seq.instances, tpl, { gap: mode === 'streamed' ? 0.25 : 0 });
+        const mode = B.mode, alloc = K.allocateSlots(seq.instances, tpl, { gap: mode === 'streamed' ? 0.25 : 0 });
         const tag = B.tag, spec = tpl.pack || K.DEFAULT_PACK, all = [...new Set(tpl.tracks.filter((t) => t.kind === 'layer' && t.target).map((t) => t.target))];
         // (an element the design does not have: said, and left out — nothing to copy, nothing to move)
         const targets = all.filter((x) => boneSet.has(x) || !bones.length);
         for (const x of all) if (!targets.includes(x)) warnings.push(`テンプレート「${tpl.name}」の要素（ボーン）「${x}」がありません: 書き出しません`);
-        slotsOut[`${i}:${tpl.id}`] = { mode, slots: alloc.slots, slotOf: alloc.slotOf, tag };
-        const usesEvents = tpl.tracks.some((t) => t.clips.some((c) => c.trigger || c.until));
-        if (mode === 'streamed') for (const p of tpl.params) if (!spec.some((f) => f.name === p)) warnings.push(`テンプレート「${tpl.name}」の param「${p}」は流し込みの詰め方（pack）にありません（0 になります）`);
+        slotsOut[`${i}:${tpl.id}`] = { mode, slots: alloc.slots, slotOf: alloc.slotOf, tag, events: B.needs.events };
+        const usesEvents = B.needs.events;
         for (let k = 0; k < alloc.slots; k++) {
           const Q = V(`${i}_${tag}${k}`), SP = K.names(ns).slot(tag, k), mine = xs.filter((x) => alloc.slotOf[x.id] === k).sort((a, b) => a.t - b.t), vars = {};
           const tailOf = (x) => (x.tail !== undefined ? x.tail : tpl.tail);
           if (mode === 'baked') {
-            let sel = '-1';
-            for (let j = mine.length - 1; j >= 0; j--) sel = `(${st} < ${n(mine[j].t - tpl.lead)} - ${EPS} ? -1 : (${st} < ${n(mine[j].t + tailOf(mine[j]))} ? ${j} : ${sel}))`;
-            const pickI = (f) => { let s = '0'; for (let j = mine.length - 1; j >= 0; j--) s = `(${Q}_i == ${j} ? ${f(mine[j])} : ${s})`; return s; };
-            pre.push(`${Q}_i = ${on} ? ${sel} : -1;`, `${Q}_h = ${pickI((x) => n(x.t))};`);
-            for (const p of tpl.params) { pre.push(`${Q}_p${clean(p)} = ${pickI((x) => n(x.params[p]))};`); vars[p] = `${Q}_p${clean(p)}`; }
+            // (the slot's instance now: the first whose end is past the time, if it has begun; then its values by its number)
+            const m = mine.length;
+            searchLines(st, mine.map((x) => x.t + tailOf(x)), `${Q}_j`, pre);
+            tableLines(`${Q}_j`, mine.map((x) => n(x.t - tpl.lead)), `${Q}_s0`, '0', `math.floor(${Q}_j / ${GROUP})`, pre);
+            pre.push(`${Q}_i = (${on} && ${Q}_j < ${m - 0.5} && ${st} >= ${Q}_s0 - ${EPS}) ? ${Q}_j : -1;`);
+            if (m > GROUP) pre.push(`${Q}_q = math.floor(${Q}_i / ${GROUP});`);
+            tableLines(`${Q}_i`, mine.map((x) => n(x.t)), `${Q}_h`, '0', `${Q}_q`, pre);
+            for (const p of tpl.params) { tableLines(`${Q}_i`, mine.map((x) => n(x.params[p])), `${Q}_p${clean(p)}`, '0', `${Q}_q`, pre); vars[p] = `${Q}_p${clean(p)}`; }
           } else {
             const un = K.unpackMolang(P(SP.p), spec);
             pre.push(`${Q}_h = ${P(SP.t)} / 1000;`, `${Q}_i = (${on} && ${P(SP.t)} >= 0 && ${st} >= ${Q}_h - ${n(tpl.lead)} - ${EPS} && ${st} < ${Q}_h + ${n(Math.max(tpl.tail, ...xs.map(tailOf)))}) ? 0 : -1;`);
@@ -436,20 +494,26 @@
           }
           let ev = null;
           if (usesEvents) {
-            pre.push(`${Q}_et = (${P(SP.g)} != (${Q}_eg ?? 0)) ? ${st} : (${Q}_et ?? -1000);`, `${Q}_eg = ${P(SP.g)};`, `${Q}_er = (${Q}_et >= ${Q}_h - ${n(tpl.lead)} - ${EPS}) ? ${P(SP.r)} : 0;`);
+            // (the slot's result, 3 bits of its group's property; the moment it changes is the event's time — the script sets
+            //  it back to 0 when the next instance takes the slot, and a result older than the instance does not count)
+            const es = K.eventSlot(k);
+            pre.push(`${Q}_r = ${K.eventMolang(P(K.names(ns).events(tag, es.group)), k)};`, `${Q}_et = (${Q}_r != (${Q}_rp ?? 0)) ? ${st} : (${Q}_et ?? -1000);`, `${Q}_rp = ${Q}_r;`,
+              `${Q}_er = (${Q}_et >= ${Q}_h - ${n(tpl.lead)} - ${EPS}) ? ${Q}_r : 0;`);
             ev = { t: `${Q}_et`, r: `${Q}_er` };
           }
-          // (an instance's own path, baked: which one by the slot's instance)
-          const instPath = mode === 'baked' && instPaths ? `__inst_${i}_${tag}${k}` : null;
-          const pathsHere = (id) => {
-            if (id !== instPath) return paths(id);
-            // (each instance's path, chosen by the slot's instance index: one table per instance, picked in the Molang)
-            return { __pick: mine.map((x) => paths(x.path)), __sel: `${Q}_i` };
-          };
+          // (an instance's own path: an animation of the instance's, on the slot's bone, while the slot shows it)
+          const instPath = xs.some((x) => x.path) ? '@instance' : null;
           targets.forEach((target, ti) => {
             const tr = tpl.tracks.find((t) => t.kind === 'layer' && t.target === target), bone = `${target}_${tag}${k}`, Pv = `${Q}_${ti}`;
-            const r = targetLines(Pv, tr.clips, { st, zero: `${Q}_h`, vars, ev, active: `${Q}_i >= 0`, paths: pathsHere, instPath, hidden: tr.muted, report });
+            const r = targetLines(Pv, tr.clips, { st, zero: `${Q}_h`, vars, ev, active: `${Q}_i >= 0`, paths, instPath, hidden: tr.muted, report });
             add(bone, Pv, r);
+            if (r.has.instPath) mine.forEach((x, j) => {
+              const path = x.path && paths(x.path);
+              if (!x.path) return;
+              if (!path) { warnings.push(`道「${x.path}」がありません（実体 ${x.id}）`); return; }
+              const cond = mode === 'baked' ? `${Q}_i == ${j}` : `${Q}_i >= 0 && math.abs(${Q}_h * 1000 - ${Math.round(x.t * 1000)}) < 0.5`;
+              instAnims.push({ key: `${i}_${tag}${k}_${clean(x.id)}`, seq: i, cond, time: `${Pv}_u`, bone, keys: pathKeys(path) });
+            });
             if (!clones.has(bone)) clones.set(bone, { of: target, tag, k });
             for (const x of mine) bindings[`${i}:${target}#${x.id}`] = { prefix: Pv, bone };
           });
@@ -463,6 +527,13 @@
     const protos = new Set([...clones.values()].map((c) => c.of));
     for (const a of Object.values(anims)) for (const bone of [...clones.keys(), ...protos]) if (!a.bones[bone]) a.bones[bone] = { scale: 0 };
     anims[`animation.${ns}.seq_idle`] = { loop: true, animation_length: 1, bones: Object.fromEntries([...clones.keys(), ...protos].map((b) => [b, { scale: 0 }])) };
+    // (an instance's own path: its keys over half the animation's length, timed by the slot's progress — the time never comes
+    //  to the length, where a looping animation would start again; straight between keys, as the game does by default)
+    for (const a of instAnims) {
+      const pos = {};
+      for (const [u, x, y] of a.keys) pos[n(u * 0.5)] = [Number(n(x)), Number(n(y)), 0];
+      anims[`animation.${ns}.ip_${a.key}`] = { loop: true, animation_length: 1, anim_time_update: `math.clamp(${a.time}, 0, 1) * 0.5`, bones: { [a.bone]: { position: pos } } };
+    }
     // ---- per-element drives: opacity and frame (render controllers), value (digits), fill (gauges)
     const RCV = (bone, what) => V(`${what}_${clean(bone)}`);
     for (const [bone, d] of drives) {
@@ -503,6 +574,8 @@
     }
     files[animFile] = J(af);
     const entFile = `${rpDir}/entity/player.entity.json`, ent = files[entFile] ? parse(files[entFile]) : null;
+    const lineLimit = num(ctx.lineLimit, 1000), lineDepth = num(ctx.lineDepth, 24);
+    let written = pre, counts = { renderControllers: 0, animations: 0, bones: 0 };
     if (ent) {
       const dsc = ent['minecraft:client_entity'].description;
       // (a number whose value a clip drives: its digits are worked out again from the clip's value while it does)
@@ -514,7 +587,11 @@
           digitLines.push(`${dv} = ${RCV(bone, 'vd')} ? ${de} : (${dv} ?? 0);`);
         }
       }
-      dsc.scripts.pre_animation.push(...pre, ...digitLines);
+      // (every line short and shallow: a part of a long one worked out first on a line of its own — splitLines)
+      const cut = splitLines([...pre, ...digitLines], { limit: lineLimit, depth: lineDepth, prefix: `v.${ns}__` });
+      if (cut.uncut.length) warnings.push(`Molang の行を ${lineLimit} 文字・括弧 ${lineDepth} 段に収められませんでした（${cut.uncut.length} 行: ${cut.uncut[0]}…）`);
+      written = cut.lines;
+      dsc.scripts.pre_animation.push(...written);
       // (what is read outside the pre_animation — the animate conditions, the render controllers — has a value from the
       //  entity's first moment: initialize runs once, before anything else reads them)
       const init = [`${V('seq')} = 0;`];
@@ -524,6 +601,7 @@
       const animate = [];
       doc.sequences.forEach((_, si) => { dsc.animations[`${ns}_seq_${si + 1}`] = `animation.${ns}.seq_${si + 1}`; animate.push({ [`${ns}_seq_${si + 1}`]: `q.is_in_ui && ${V('seq')} == ${si + 1}` }); });
       if (clones.size) { dsc.animations[`${ns}_seq_idle`] = `animation.${ns}.seq_idle`; animate.push({ [`${ns}_seq_idle`]: `q.is_in_ui && (${V('seq')} < 1 || ${V('seq')} > ${doc.sequences.length})` }); }
+      for (const a of instAnims) { dsc.animations[`${ns}_ip_${a.key}`] = `animation.${ns}.ip_${a.key}`; animate.push({ [`${ns}_ip_${a.key}`]: `q.is_in_ui && ${V('seq')} == ${a.seq} && ${a.cond}` }); }
       // (a flipbook's frame step in the texture: the element's own cell size over the texture's — an atlas holds more than it)
       const stepOf = (name, fb) => {
         const b = bones.find((x) => x.name === name), faces = b && (b.cubes || []).map((c) => Object.values(c.faces || {}).find((f) => f && f.uv_size)).filter(Boolean), f = faces && faces[0];
@@ -572,6 +650,7 @@
           }
         }
         dsc.render_controllers = [...dsc.render_controllers, ...addList];
+        counts.renderControllers = addList.length;
         files[rcFile] = J(rc);
       }
       // ---- the fade materials (GeoUI Builder's base material with the colour mask: the controller's colour alpha counts)
@@ -605,12 +684,18 @@
       }
       files[entFile] = J(ent);
     }
-    const longest = Math.max(...pre.map((l) => l.length));
-    if (longest > num(ctx.molangLimit, 8000)) warnings.push(`Molang の式がいちばん長い所で ${longest} 文字です（上限の見込み ${num(ctx.molangLimit, 8000)}・要実測）: 鍵や実体を減らすか、流し込みに`);
+    // (what the game was seen to draw — bds-lab's probes: 600 bones, 70 render controllers of one's own, 1200 animations; past
+    //  that it is not known)
+    counts.animations = Object.keys(anims).length;
+    for (const f of geoFiles) counts.bones = Math.max(counts.bones, parse(files[f])['minecraft:geometry'][0].bones.length);
+    if (counts.bones > 600) warnings.push(`ボーンが ${counts.bones} 本です（本物のゲームで確かめたのは 600 本まで・要実測）`);
+    if (counts.renderControllers > 70) warnings.push(`要素ごとの render controller が ${counts.renderControllers} 個です（本物のゲームで確かめたのは 70 個まで・要実測）`);
+    if (counts.animations > 1200) warnings.push(`アニメーションが ${counts.animations} 個です（本物のゲームで確かめたのは 1200 個まで・要実測）`);
+    const longest = Math.max(0, ...written.map((l) => l.length)), deepest = Math.max(0, ...written.map(maxDepth));
     if (report.bezier > 0.002) warnings.push(`ベジェのイージングを 16 の折れ線にした誤差: 最大 ${report.bezier.toFixed(4)}`);
-    return { files, warnings: [...new Set(warnings)], stats: { bindings, pre, slots: slotsOut, longest, bezierError: report.bezier, budget } };
+    return { files, warnings: [...new Set(warnings)], stats: { bindings, pre: written, slots: slotsOut, longest, deepest, lines: written.length, chars: written.reduce((a, l) => a + l.length, 0), bezierError: report.bezier, budget, counts } };
   }
 
-  T.compile = { extendPack, easeM, keysM, pathM, exprM, targetLines, splitLines, maxDepth, mparse };
+  T.compile = { extendPack, easeM, keysM, pathM, pathKeys, exprM, targetLines, searchLines, tableLines, splitLines, maxDepth, mparse };
   if (typeof module === 'object' && module && module.exports) module.exports = T.compile;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -1,0 +1,6560 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.geoui_atlas": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "sliderbody_t1s0": false
+        },
+        {
+          "sliderbody_t1s1": false
+        },
+        {
+          "sliderbody_t1s2": false
+        },
+        {
+          "combonumber_t0s0": false
+        },
+        {
+          "combonumber_d0_0_t0s0": false
+        },
+        {
+          "combonumber_d0_1_t0s0": false
+        },
+        {
+          "combonumber_d0_2_t0s0": false
+        },
+        {
+          "combonumber_d0_3_t0s0": false
+        },
+        {
+          "combonumber_d0_4_t0s0": false
+        },
+        {
+          "combonumber_d0_5_t0s0": false
+        },
+        {
+          "combonumber_d0_6_t0s0": false
+        },
+        {
+          "combonumber_d0_7_t0s0": false
+        },
+        {
+          "combonumber_d0_8_t0s0": false
+        },
+        {
+          "combonumber_d0_9_t0s0": false
+        },
+        {
+          "combonumber_d1_0_t0s0": false
+        },
+        {
+          "combonumber_d1_1_t0s0": false
+        },
+        {
+          "combonumber_d1_2_t0s0": false
+        },
+        {
+          "combonumber_d1_3_t0s0": false
+        },
+        {
+          "combonumber_d1_4_t0s0": false
+        },
+        {
+          "combonumber_d1_5_t0s0": false
+        },
+        {
+          "combonumber_d1_6_t0s0": false
+        },
+        {
+          "combonumber_d1_7_t0s0": false
+        },
+        {
+          "combonumber_d1_8_t0s0": false
+        },
+        {
+          "combonumber_d1_9_t0s0": false
+        },
+        {
+          "combonumber_t0s1": false
+        },
+        {
+          "combonumber_d0_0_t0s1": false
+        },
+        {
+          "combonumber_d0_1_t0s1": false
+        },
+        {
+          "combonumber_d0_2_t0s1": false
+        },
+        {
+          "combonumber_d0_3_t0s1": false
+        },
+        {
+          "combonumber_d0_4_t0s1": false
+        },
+        {
+          "combonumber_d0_5_t0s1": false
+        },
+        {
+          "combonumber_d0_6_t0s1": false
+        },
+        {
+          "combonumber_d0_7_t0s1": false
+        },
+        {
+          "combonumber_d0_8_t0s1": false
+        },
+        {
+          "combonumber_d0_9_t0s1": false
+        },
+        {
+          "combonumber_d1_0_t0s1": false
+        },
+        {
+          "combonumber_d1_1_t0s1": false
+        },
+        {
+          "combonumber_d1_2_t0s1": false
+        },
+        {
+          "combonumber_d1_3_t0s1": false
+        },
+        {
+          "combonumber_d1_4_t0s1": false
+        },
+        {
+          "combonumber_d1_5_t0s1": false
+        },
+        {
+          "combonumber_d1_6_t0s1": false
+        },
+        {
+          "combonumber_d1_7_t0s1": false
+        },
+        {
+          "combonumber_d1_8_t0s1": false
+        },
+        {
+          "combonumber_d1_9_t0s1": false
+        },
+        {
+          "combonumber_t0s2": false
+        },
+        {
+          "combonumber_d0_0_t0s2": false
+        },
+        {
+          "combonumber_d0_1_t0s2": false
+        },
+        {
+          "combonumber_d0_2_t0s2": false
+        },
+        {
+          "combonumber_d0_3_t0s2": false
+        },
+        {
+          "combonumber_d0_4_t0s2": false
+        },
+        {
+          "combonumber_d0_5_t0s2": false
+        },
+        {
+          "combonumber_d0_6_t0s2": false
+        },
+        {
+          "combonumber_d0_7_t0s2": false
+        },
+        {
+          "combonumber_d0_8_t0s2": false
+        },
+        {
+          "combonumber_d0_9_t0s2": false
+        },
+        {
+          "combonumber_d1_0_t0s2": false
+        },
+        {
+          "combonumber_d1_1_t0s2": false
+        },
+        {
+          "combonumber_d1_2_t0s2": false
+        },
+        {
+          "combonumber_d1_3_t0s2": false
+        },
+        {
+          "combonumber_d1_4_t0s2": false
+        },
+        {
+          "combonumber_d1_5_t0s2": false
+        },
+        {
+          "combonumber_d1_6_t0s2": false
+        },
+        {
+          "combonumber_d1_7_t0s2": false
+        },
+        {
+          "combonumber_d1_8_t0s2": false
+        },
+        {
+          "combonumber_d1_9_t0s2": false
+        },
+        {
+          "combonumber_t0s3": false
+        },
+        {
+          "combonumber_d0_0_t0s3": false
+        },
+        {
+          "combonumber_d0_1_t0s3": false
+        },
+        {
+          "combonumber_d0_2_t0s3": false
+        },
+        {
+          "combonumber_d0_3_t0s3": false
+        },
+        {
+          "combonumber_d0_4_t0s3": false
+        },
+        {
+          "combonumber_d0_5_t0s3": false
+        },
+        {
+          "combonumber_d0_6_t0s3": false
+        },
+        {
+          "combonumber_d0_7_t0s3": false
+        },
+        {
+          "combonumber_d0_8_t0s3": false
+        },
+        {
+          "combonumber_d0_9_t0s3": false
+        },
+        {
+          "combonumber_d1_0_t0s3": false
+        },
+        {
+          "combonumber_d1_1_t0s3": false
+        },
+        {
+          "combonumber_d1_2_t0s3": false
+        },
+        {
+          "combonumber_d1_3_t0s3": false
+        },
+        {
+          "combonumber_d1_4_t0s3": false
+        },
+        {
+          "combonumber_d1_5_t0s3": false
+        },
+        {
+          "combonumber_d1_6_t0s3": false
+        },
+        {
+          "combonumber_d1_7_t0s3": false
+        },
+        {
+          "combonumber_d1_8_t0s3": false
+        },
+        {
+          "combonumber_d1_9_t0s3": false
+        },
+        {
+          "combonumber_t0s4": false
+        },
+        {
+          "combonumber_d0_0_t0s4": false
+        },
+        {
+          "combonumber_d0_1_t0s4": false
+        },
+        {
+          "combonumber_d0_2_t0s4": false
+        },
+        {
+          "combonumber_d0_3_t0s4": false
+        },
+        {
+          "combonumber_d0_4_t0s4": false
+        },
+        {
+          "combonumber_d0_5_t0s4": false
+        },
+        {
+          "combonumber_d0_6_t0s4": false
+        },
+        {
+          "combonumber_d0_7_t0s4": false
+        },
+        {
+          "combonumber_d0_8_t0s4": false
+        },
+        {
+          "combonumber_d0_9_t0s4": false
+        },
+        {
+          "combonumber_d1_0_t0s4": false
+        },
+        {
+          "combonumber_d1_1_t0s4": false
+        },
+        {
+          "combonumber_d1_2_t0s4": false
+        },
+        {
+          "combonumber_d1_3_t0s4": false
+        },
+        {
+          "combonumber_d1_4_t0s4": false
+        },
+        {
+          "combonumber_d1_5_t0s4": false
+        },
+        {
+          "combonumber_d1_6_t0s4": false
+        },
+        {
+          "combonumber_d1_7_t0s4": false
+        },
+        {
+          "combonumber_d1_8_t0s4": false
+        },
+        {
+          "combonumber_d1_9_t0s4": false
+        },
+        {
+          "combonumber_t0s5": false
+        },
+        {
+          "combonumber_d0_0_t0s5": false
+        },
+        {
+          "combonumber_d0_1_t0s5": false
+        },
+        {
+          "combonumber_d0_2_t0s5": false
+        },
+        {
+          "combonumber_d0_3_t0s5": false
+        },
+        {
+          "combonumber_d0_4_t0s5": false
+        },
+        {
+          "combonumber_d0_5_t0s5": false
+        },
+        {
+          "combonumber_d0_6_t0s5": false
+        },
+        {
+          "combonumber_d0_7_t0s5": false
+        },
+        {
+          "combonumber_d0_8_t0s5": false
+        },
+        {
+          "combonumber_d0_9_t0s5": false
+        },
+        {
+          "combonumber_d1_0_t0s5": false
+        },
+        {
+          "combonumber_d1_1_t0s5": false
+        },
+        {
+          "combonumber_d1_2_t0s5": false
+        },
+        {
+          "combonumber_d1_3_t0s5": false
+        },
+        {
+          "combonumber_d1_4_t0s5": false
+        },
+        {
+          "combonumber_d1_5_t0s5": false
+        },
+        {
+          "combonumber_d1_6_t0s5": false
+        },
+        {
+          "combonumber_d1_7_t0s5": false
+        },
+        {
+          "combonumber_d1_8_t0s5": false
+        },
+        {
+          "combonumber_d1_9_t0s5": false
+        },
+        {
+          "combonumber_t0s6": false
+        },
+        {
+          "combonumber_d0_0_t0s6": false
+        },
+        {
+          "combonumber_d0_1_t0s6": false
+        },
+        {
+          "combonumber_d0_2_t0s6": false
+        },
+        {
+          "combonumber_d0_3_t0s6": false
+        },
+        {
+          "combonumber_d0_4_t0s6": false
+        },
+        {
+          "combonumber_d0_5_t0s6": false
+        },
+        {
+          "combonumber_d0_6_t0s6": false
+        },
+        {
+          "combonumber_d0_7_t0s6": false
+        },
+        {
+          "combonumber_d0_8_t0s6": false
+        },
+        {
+          "combonumber_d0_9_t0s6": false
+        },
+        {
+          "combonumber_d1_0_t0s6": false
+        },
+        {
+          "combonumber_d1_1_t0s6": false
+        },
+        {
+          "combonumber_d1_2_t0s6": false
+        },
+        {
+          "combonumber_d1_3_t0s6": false
+        },
+        {
+          "combonumber_d1_4_t0s6": false
+        },
+        {
+          "combonumber_d1_5_t0s6": false
+        },
+        {
+          "combonumber_d1_6_t0s6": false
+        },
+        {
+          "combonumber_d1_7_t0s6": false
+        },
+        {
+          "combonumber_d1_8_t0s6": false
+        },
+        {
+          "combonumber_d1_9_t0s6": false
+        },
+        {
+          "combonumber_t0s7": false
+        },
+        {
+          "combonumber_d0_0_t0s7": false
+        },
+        {
+          "combonumber_d0_1_t0s7": false
+        },
+        {
+          "combonumber_d0_2_t0s7": false
+        },
+        {
+          "combonumber_d0_3_t0s7": false
+        },
+        {
+          "combonumber_d0_4_t0s7": false
+        },
+        {
+          "combonumber_d0_5_t0s7": false
+        },
+        {
+          "combonumber_d0_6_t0s7": false
+        },
+        {
+          "combonumber_d0_7_t0s7": false
+        },
+        {
+          "combonumber_d0_8_t0s7": false
+        },
+        {
+          "combonumber_d0_9_t0s7": false
+        },
+        {
+          "combonumber_d1_0_t0s7": false
+        },
+        {
+          "combonumber_d1_1_t0s7": false
+        },
+        {
+          "combonumber_d1_2_t0s7": false
+        },
+        {
+          "combonumber_d1_3_t0s7": false
+        },
+        {
+          "combonumber_d1_4_t0s7": false
+        },
+        {
+          "combonumber_d1_5_t0s7": false
+        },
+        {
+          "combonumber_d1_6_t0s7": false
+        },
+        {
+          "combonumber_d1_7_t0s7": false
+        },
+        {
+          "combonumber_d1_8_t0s7": false
+        },
+        {
+          "combonumber_d1_9_t0s7": false
+        },
+        {
+          "combonumber_t1s0": false
+        },
+        {
+          "combonumber_d0_0_t1s0": false
+        },
+        {
+          "combonumber_d0_1_t1s0": false
+        },
+        {
+          "combonumber_d0_2_t1s0": false
+        },
+        {
+          "combonumber_d0_3_t1s0": false
+        },
+        {
+          "combonumber_d0_4_t1s0": false
+        },
+        {
+          "combonumber_d0_5_t1s0": false
+        },
+        {
+          "combonumber_d0_6_t1s0": false
+        },
+        {
+          "combonumber_d0_7_t1s0": false
+        },
+        {
+          "combonumber_d0_8_t1s0": false
+        },
+        {
+          "combonumber_d0_9_t1s0": false
+        },
+        {
+          "combonumber_d1_0_t1s0": false
+        },
+        {
+          "combonumber_d1_1_t1s0": false
+        },
+        {
+          "combonumber_d1_2_t1s0": false
+        },
+        {
+          "combonumber_d1_3_t1s0": false
+        },
+        {
+          "combonumber_d1_4_t1s0": false
+        },
+        {
+          "combonumber_d1_5_t1s0": false
+        },
+        {
+          "combonumber_d1_6_t1s0": false
+        },
+        {
+          "combonumber_d1_7_t1s0": false
+        },
+        {
+          "combonumber_d1_8_t1s0": false
+        },
+        {
+          "combonumber_d1_9_t1s0": false
+        },
+        {
+          "combonumber_t1s1": false
+        },
+        {
+          "combonumber_d0_0_t1s1": false
+        },
+        {
+          "combonumber_d0_1_t1s1": false
+        },
+        {
+          "combonumber_d0_2_t1s1": false
+        },
+        {
+          "combonumber_d0_3_t1s1": false
+        },
+        {
+          "combonumber_d0_4_t1s1": false
+        },
+        {
+          "combonumber_d0_5_t1s1": false
+        },
+        {
+          "combonumber_d0_6_t1s1": false
+        },
+        {
+          "combonumber_d0_7_t1s1": false
+        },
+        {
+          "combonumber_d0_8_t1s1": false
+        },
+        {
+          "combonumber_d0_9_t1s1": false
+        },
+        {
+          "combonumber_d1_0_t1s1": false
+        },
+        {
+          "combonumber_d1_1_t1s1": false
+        },
+        {
+          "combonumber_d1_2_t1s1": false
+        },
+        {
+          "combonumber_d1_3_t1s1": false
+        },
+        {
+          "combonumber_d1_4_t1s1": false
+        },
+        {
+          "combonumber_d1_5_t1s1": false
+        },
+        {
+          "combonumber_d1_6_t1s1": false
+        },
+        {
+          "combonumber_d1_7_t1s1": false
+        },
+        {
+          "combonumber_d1_8_t1s1": false
+        },
+        {
+          "combonumber_d1_9_t1s1": false
+        },
+        {
+          "combonumber_t1s2": false
+        },
+        {
+          "combonumber_d0_0_t1s2": false
+        },
+        {
+          "combonumber_d0_1_t1s2": false
+        },
+        {
+          "combonumber_d0_2_t1s2": false
+        },
+        {
+          "combonumber_d0_3_t1s2": false
+        },
+        {
+          "combonumber_d0_4_t1s2": false
+        },
+        {
+          "combonumber_d0_5_t1s2": false
+        },
+        {
+          "combonumber_d0_6_t1s2": false
+        },
+        {
+          "combonumber_d0_7_t1s2": false
+        },
+        {
+          "combonumber_d0_8_t1s2": false
+        },
+        {
+          "combonumber_d0_9_t1s2": false
+        },
+        {
+          "combonumber_d1_0_t1s2": false
+        },
+        {
+          "combonumber_d1_1_t1s2": false
+        },
+        {
+          "combonumber_d1_2_t1s2": false
+        },
+        {
+          "combonumber_d1_3_t1s2": false
+        },
+        {
+          "combonumber_d1_4_t1s2": false
+        },
+        {
+          "combonumber_d1_5_t1s2": false
+        },
+        {
+          "combonumber_d1_6_t1s2": false
+        },
+        {
+          "combonumber_d1_7_t1s2": false
+        },
+        {
+          "combonumber_d1_8_t1s2": false
+        },
+        {
+          "combonumber_d1_9_t1s2": false
+        },
+        {
+          "spinner_t2s0": false
+        },
+        {
+          "hitcircle_t0s0": false
+        },
+        {
+          "hitcircle_t0s1": false
+        },
+        {
+          "hitcircle_t0s2": false
+        },
+        {
+          "hitcircle_t0s3": false
+        },
+        {
+          "hitcircle_t0s4": false
+        },
+        {
+          "hitcircle_t0s5": false
+        },
+        {
+          "hitcircle_t0s6": false
+        },
+        {
+          "hitcircle_t0s7": false
+        },
+        {
+          "hitcircle_t1s0": false
+        },
+        {
+          "hitcircle_t1s1": false
+        },
+        {
+          "hitcircle_t1s2": false
+        },
+        {
+          "hitburst_t0s0": false
+        },
+        {
+          "hitburst_t0s1": false
+        },
+        {
+          "hitburst_t0s2": false
+        },
+        {
+          "hitburst_t0s3": false
+        },
+        {
+          "hitburst_t0s4": false
+        },
+        {
+          "hitburst_t0s5": false
+        },
+        {
+          "hitburst_t0s6": false
+        },
+        {
+          "hitburst_t0s7": false
+        },
+        {
+          "hitburst_t1s0": false
+        },
+        {
+          "hitburst_t1s1": false
+        },
+        {
+          "hitburst_t1s2": false
+        },
+        {
+          "approachcircle_t0s0": false
+        },
+        {
+          "approachcircle_t0s1": false
+        },
+        {
+          "approachcircle_t0s2": false
+        },
+        {
+          "approachcircle_t0s3": false
+        },
+        {
+          "approachcircle_t0s4": false
+        },
+        {
+          "approachcircle_t0s5": false
+        },
+        {
+          "approachcircle_t0s6": false
+        },
+        {
+          "approachcircle_t0s7": false
+        },
+        {
+          "approachcircle_t1s0": false
+        },
+        {
+          "approachcircle_t1s1": false
+        },
+        {
+          "approachcircle_t1s2": false
+        },
+        {
+          "hitmiss_t0s0": false
+        },
+        {
+          "hitmiss_t0s1": false
+        },
+        {
+          "hitmiss_t0s2": false
+        },
+        {
+          "hitmiss_t0s3": false
+        },
+        {
+          "hitmiss_t0s4": false
+        },
+        {
+          "hitmiss_t0s5": false
+        },
+        {
+          "hitmiss_t0s6": false
+        },
+        {
+          "hitmiss_t0s7": false
+        },
+        {
+          "hitmiss_t1s0": false
+        },
+        {
+          "hitmiss_t1s1": false
+        },
+        {
+          "hitmiss_t1s2": false
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_sliderbody_t1s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "sliderbody_t1s0": "material.geoui_blend"
+        },
+        {
+          "sliderbody_t1s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_sliderbody_t1s0, 9) * 0.09668",
+          "math.floor(v.geoui_fr_sliderbody_t1s0 / 9) * 0.06543"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_sliderbody_t1s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "sliderbody_t1s0": "v.geoui_a_sliderbody_t1s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_sliderbody_t1s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "sliderbody_t1s1": "material.geoui_blend"
+        },
+        {
+          "sliderbody_t1s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_sliderbody_t1s1, 9) * 0.09668",
+          "math.floor(v.geoui_fr_sliderbody_t1s1 / 9) * 0.06543"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_sliderbody_t1s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "sliderbody_t1s1": "v.geoui_a_sliderbody_t1s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_sliderbody_t1s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "sliderbody_t1s2": "material.geoui_blend"
+        },
+        {
+          "sliderbody_t1s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_sliderbody_t1s2, 9) * 0.09668",
+          "math.floor(v.geoui_fr_sliderbody_t1s2 / 9) * 0.06543"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_sliderbody_t1s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "sliderbody_t1s2": "v.geoui_a_sliderbody_t1s2 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t0s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t0s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t0s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t0s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t0s0": "v.geoui_a_combonumber_t0s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t0s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t0s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t0s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t0s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t0s1": "v.geoui_a_combonumber_t0s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t0s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t0s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t0s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t0s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t0s2": "v.geoui_a_combonumber_t0s2 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t0s3": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t0s3": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t0s3": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t0s3"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t0s3": "v.geoui_a_combonumber_t0s3 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t0s4": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t0s4": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t0s4": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t0s4"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t0s4": "v.geoui_a_combonumber_t0s4 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t0s5": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t0s5": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t0s5": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t0s5"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t0s5": "v.geoui_a_combonumber_t0s5 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t0s6": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t0s6": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t0s6": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t0s6"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t0s6": "v.geoui_a_combonumber_t0s6 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t0s7": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t0s7": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t0s7": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t0s7"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t0s7": "v.geoui_a_combonumber_t0s7 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t1s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t1s0": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t1s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t1s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t1s0": "v.geoui_a_combonumber_t1s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t1s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t1s1": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t1s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t1s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t1s1": "v.geoui_a_combonumber_t1s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_combonumber_t1s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "combonumber_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_0_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_1_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_2_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_3_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_4_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_5_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_6_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_7_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_8_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d0_9_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_0_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_1_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_2_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_3_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_4_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_5_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_6_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_7_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_8_t1s2": "material.geoui_fade"
+        },
+        {
+          "combonumber_d1_9_t1s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_combonumber_t1s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "combonumber_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d0_0_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d0_1_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d0_2_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d0_3_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d0_4_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d0_5_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d0_6_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d0_7_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d0_8_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d0_9_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d1_0_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d1_1_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d1_2_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d1_3_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d1_4_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d1_5_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d1_6_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d1_7_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d1_8_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        },
+        {
+          "combonumber_d1_9_t1s2": "v.geoui_a_combonumber_t1s2 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_spinner_t2s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "spinner_t2s0": "material.geoui_blend"
+        },
+        {
+          "spinner_t2s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_spinner_t2s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "spinner_t2s0": "v.geoui_a_spinner_t2s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t0s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s0": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t0s0, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t0s0 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t0s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t0s0": "v.geoui_a_hitcircle_t0s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t0s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s1": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t0s1, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t0s1 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t0s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t0s1": "v.geoui_a_hitcircle_t0s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t0s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s2": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t0s2, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t0s2 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t0s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t0s2": "v.geoui_a_hitcircle_t0s2 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t0s3": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s3": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s3": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t0s3, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t0s3 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t0s3"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t0s3": "v.geoui_a_hitcircle_t0s3 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t0s4": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s4": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s4": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t0s4, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t0s4 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t0s4"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t0s4": "v.geoui_a_hitcircle_t0s4 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t0s5": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s5": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s5": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t0s5, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t0s5 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t0s5"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t0s5": "v.geoui_a_hitcircle_t0s5 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t0s6": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s6": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s6": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t0s6, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t0s6 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t0s6"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t0s6": "v.geoui_a_hitcircle_t0s6 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t0s7": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s7": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t0s7": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t0s7, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t0s7 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t0s7"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t0s7": "v.geoui_a_hitcircle_t0s7 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t1s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t1s0": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t1s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t1s0, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t1s0 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t1s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t1s0": "v.geoui_a_hitcircle_t1s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t1s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t1s1": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t1s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t1s1, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t1s1 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t1s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t1s1": "v.geoui_a_hitcircle_t1s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitcircle_t1s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t1s2": "material.geoui_blend"
+        },
+        {
+          "hitcircle_t1s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_hitcircle_t1s2, 4) * 0.03125",
+          "math.floor(v.geoui_fr_hitcircle_t1s2 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitcircle_t1s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitcircle_t1s2": "v.geoui_a_hitcircle_t1s2 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t0s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s0": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t0s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t0s0": "v.geoui_a_hitburst_t0s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t0s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s1": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t0s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t0s1": "v.geoui_a_hitburst_t0s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t0s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s2": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t0s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t0s2": "v.geoui_a_hitburst_t0s2 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t0s3": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s3": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s3": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t0s3"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t0s3": "v.geoui_a_hitburst_t0s3 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t0s4": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s4": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s4": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t0s4"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t0s4": "v.geoui_a_hitburst_t0s4 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t0s5": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s5": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s5": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t0s5"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t0s5": "v.geoui_a_hitburst_t0s5 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t0s6": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s6": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s6": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t0s6"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t0s6": "v.geoui_a_hitburst_t0s6 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t0s7": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s7": "material.geoui_blend"
+        },
+        {
+          "hitburst_t0s7": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t0s7"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t0s7": "v.geoui_a_hitburst_t0s7 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t1s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t1s0": "material.geoui_blend"
+        },
+        {
+          "hitburst_t1s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t1s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t1s0": "v.geoui_a_hitburst_t1s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t1s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t1s1": "material.geoui_blend"
+        },
+        {
+          "hitburst_t1s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t1s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t1s1": "v.geoui_a_hitburst_t1s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitburst_t1s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitburst_t1s2": "material.geoui_blend"
+        },
+        {
+          "hitburst_t1s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitburst_t1s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitburst_t1s2": "v.geoui_a_hitburst_t1s2 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t0s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s0": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t0s0, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t0s0 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t0s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t0s0": "v.geoui_a_approachcircle_t0s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t0s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s1": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t0s1, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t0s1 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t0s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t0s1": "v.geoui_a_approachcircle_t0s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t0s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s2": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t0s2, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t0s2 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t0s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t0s2": "v.geoui_a_approachcircle_t0s2 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t0s3": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s3": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s3": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t0s3, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t0s3 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t0s3"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t0s3": "v.geoui_a_approachcircle_t0s3 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t0s4": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s4": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s4": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t0s4, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t0s4 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t0s4"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t0s4": "v.geoui_a_approachcircle_t0s4 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t0s5": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s5": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s5": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t0s5, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t0s5 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t0s5"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t0s5": "v.geoui_a_approachcircle_t0s5 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t0s6": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s6": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s6": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t0s6, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t0s6 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t0s6"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t0s6": "v.geoui_a_approachcircle_t0s6 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t0s7": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s7": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t0s7": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t0s7, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t0s7 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t0s7"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t0s7": "v.geoui_a_approachcircle_t0s7 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t1s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t1s0": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t1s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t1s0, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t1s0 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t1s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t1s0": "v.geoui_a_approachcircle_t1s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t1s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t1s1": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t1s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t1s1, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t1s1 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t1s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t1s1": "v.geoui_a_approachcircle_t1s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_approachcircle_t1s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t1s2": "material.geoui_blend"
+        },
+        {
+          "approachcircle_t1s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          "math.mod(v.geoui_fr_approachcircle_t1s2, 4) * 0.03125",
+          "math.floor(v.geoui_fr_approachcircle_t1s2 / 4) * 0.03125"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_approachcircle_t1s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "approachcircle_t1s2": "v.geoui_a_approachcircle_t1s2 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t0s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s0": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t0s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t0s0": "v.geoui_a_hitmiss_t0s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t0s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s1": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t0s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t0s1": "v.geoui_a_hitmiss_t0s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t0s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s2": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t0s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t0s2": "v.geoui_a_hitmiss_t0s2 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t0s3": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s3": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s3": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t0s3"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t0s3": "v.geoui_a_hitmiss_t0s3 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t0s4": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s4": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s4": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t0s4"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t0s4": "v.geoui_a_hitmiss_t0s4 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t0s5": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s5": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s5": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t0s5"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t0s5": "v.geoui_a_hitmiss_t0s5 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t0s6": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s6": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s6": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t0s6"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t0s6": "v.geoui_a_hitmiss_t0s6 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t0s7": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s7": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t0s7": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t0s7"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t0s7": "v.geoui_a_hitmiss_t0s7 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t1s0": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t1s0": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t1s0": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t1s0"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t1s0": "v.geoui_a_hitmiss_t1s0 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t1s1": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t1s1": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t1s1": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t1s1"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t1s1": "v.geoui_a_hitmiss_t1s1 > 0.004"
+        }
+      ]
+    },
+    "controller.render.geoui_atlas_hitmiss_t1s2": {
+      "geometry": "Geometry.geoui_atlas",
+      "materials": [
+        {
+          "*": "material.geoui_cutout"
+        },
+        {
+          "hitcircle": "material.geoui_blend"
+        },
+        {
+          "approachcircle": "material.geoui_blend"
+        },
+        {
+          "hitburst": "material.geoui_blend"
+        },
+        {
+          "hitmiss": "material.geoui_blend"
+        },
+        {
+          "spinner": "material.geoui_blend"
+        },
+        {
+          "sliderball": "material.geoui_blend"
+        },
+        {
+          "sliderbody": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t1s2": "material.geoui_blend"
+        },
+        {
+          "hitmiss_t1s2": "material.geoui_fade"
+        }
+      ],
+      "textures": [
+        "Texture.geoui_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha * v.geoui_a_hitmiss_t1s2"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "hitmiss_t1s2": "v.geoui_a_hitmiss_t1s2 > 0.004"
+        }
+      ]
+    }
+  }
+}

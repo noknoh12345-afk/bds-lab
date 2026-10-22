@@ -4,5 +4,5 @@
 ## 読み込める（プロパティが既定値）
 @A join
 wait 2000
-js const e = p('A'); JSON.stringify(['v2','seq','seq_gen'].map((k) => e.getProperty('gprobt:' + k)))
+js const e = p('A'); JSON.stringify(['v2','seq','seq_from'].map((k) => e.getProperty('gprobt:' + k)))
 = [0,0,0]

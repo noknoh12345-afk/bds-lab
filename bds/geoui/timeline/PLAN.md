@@ -9,7 +9,7 @@
 - 置き場所と形: 新しいコードは bds/geoui/timeline/<部品>.js。どれも同じ形 `(function (root) { 'use strict'; const T = root.GeoUITimeline = root.GeoUITimeline || {}; … T.<部品> = {…}; if (typeof module === 'object' && module && module.exports) module.exports = T.<部品>; })(typeof globalThis !== 'undefined' ? globalThis : this);`。読み込みのときに他の部品を require しない（使う時に GeoUITimeline.<部品> から。Node の試験では、先にその部品のファイルを require する）。プラグインに npm の物は入れない（Blockbench がそのまま読む）
 - データの形（全レーン共通・変えない）: 文書 = { version: 1, sequences: [Seq] }。Seq = { id, name, duration(秒), fps(既定 20), loop: 'once'|'loop'|'hold'|'pingpong', inOut: [入, 出]|null, markers: [{ id, t, name, event? }], tracks: [Track] }。Track = { id, kind: 'layer'|'audio', target(layer のとき GeoUI の要素の名前 = ボーン名), name, muted, locked, solo, clips: [Clip] }（上のトラックほど手前）。Clip = { id, start, end(秒。同じトラックで重ならない), offset(素材の時間), transitionIn?/transitionOut?: { kind: 'fade'|'slide-left'|'slide-right'|'slide-up'|'slide-down'|'zoom'|'pop', duration, ease }, channels: { x?, y?, scaleX?, scaleY?, rotation?, opacity?, value?, fill?, frame?: [Key] }, 音のクリップは sound, volume, pitch }。Key = { t(クリップの頭からの秒), v, ease }。ease はその鍵から次の鍵までの区間: 'linear'|'step'|'<sine|quad|cubic|quart|quint|expo|circ|back|elastic|bounce>-<in|out|inout>'|{ bezier: [x1, y1, x2, y2] }。x・y はモデル単位の、要素を置いた位置からのずれ。rotation は度、scale は倍、opacity・fill は 0〜1、value は数字の要素の値、frame は連番画像のコマ。クリップの無いトラック（とトラックの無い要素）は今のまま（いつも見える）。クリップのあるトラックの要素は、クリップの間だけ見える。osu! のための追加（同じく全レーン共通）: Seq に tempo: [{ t, bpm, meter }]（拍の格子と吸い付き。BPM が途中で変わってよい）、paths: [{ id, kind: 'linear'|'bezier'|'catmull'|'arc', points: [[x, y]] }]、templates: [{ id, name, lead(秒: 本番の時刻より前に出る長さ), tail(秒: 後に残る長さ), params: [名前], tracks: [Track] }]（テンプレートの中の時刻は本番の時刻からの秒。鍵の v は数か式の文字列: param.<名前>・四則・math.* だけ）、instances: [{ id, template, t(本番の時刻), params: { … } }]（何百個でもよい）。channels に path: [Key]（道の上の進み 0〜1。道は clip.path の id、長さに比例して等速）。Clip に trigger?: 'hit'|'miss'|名前（その出来事が起きた時刻から再生する。evaluate は opts.events = [{ instance, name, t }] で決める）。evaluate の states で、実体の要素の名前は「<要素>#<実体の id>」
 - 部品どうしの約束（全レーン共通）: 画面の部品（timeline・inspector）は文書を書き換えず store.dispatch(intent) だけ。intent = { type, seq, … }: seq.add/remove/set, track.add/remove/set/move, clip.add / clip.remove{ids, ripple} / clip.move{ids, dt, dTrack, snap} / clip.trim{id, edge: 'start'|'end', t, ripple} / clip.split{ids, t} / clip.duplicate{ids, at} / clip.set{id, patch}, key.add{clip, prop, t, v?, ease?} / key.remove{keys} / key.move{keys, dt, dv} / key.set{clip, prop, index, patch}, marker.add/remove/set, preset.apply{track?, at, preset}（snap のとき snapTol 秒）。store = { doc(), dispatch(intent) → { ok, error? }, selection() → { seq, clips, keys: [{ clip, prop, index }], markers }, select(sel), time(), seek(t), subscribe(cb) → 外す関数, elements() → [{ name, kind: 'image'|'number'|'gauge'|'text', w, h }], media() → [{ id, kind: 'image'|'sequence'|'sound'|'font', name, frames?, duration? }], transport: { play, pause, toggle, stop, step(n), rate(r), playing() } }。host（プレビューの相手。bridge が作る）= { elements(), apply(states), render(), canvas(), frameRect() → { x, y, w, h }, playSound(id, { volume, pitch, offset }), stopSounds() }。states = model.evaluate の返り値 { 要素の名前: { visible, x, y, scaleX, scaleY, rotation, opacity, value?, fill?, frame? } }。足す intent: tempo.add/remove/set, path.add/remove/set（points の点の追加・移動）, template.add/remove/set, instance.add/remove/move{ids, dt, dx, dy}/set, instances.import{instances, templates?, tempo?, tracks?}（osu! の譜面などから一度に）
-- 試験: tests/tl-<レーン>-offline.mjs は Node の標準ライブラリだけ（CI の offline が自動で拾う: ブラウザも Blockbench も無い所で通ること）。ブラウザでの確かめは bds/geoui/timeline/check-<レーン>.mjs に分ける（CI では走らない）: Playwright は GEOUI_NODE_MODULES=/opt/npm-tools/node_modules、Chromium は CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome（このコンテナにある）。本物の Blockbench 5.2.2（web 版）は BLOCKBENCH_DIR=/tmp/claude-0/-home-claude/31b6f006-5fb5-5f8a-b55c-61b09e2fcf52/scratchpad/bb/bbsrc（bds/geoui/blockbench-check.mjs の動かし方を手本に）
+- 試験: tests/tl-<レーン>-offline.mjs は Node の標準ライブラリだけ（CI の offline が自動で拾う: ブラウザも Blockbench も無い所で通ること）。ブラウザでの確かめは bds/geoui/timeline/check-<レーン>.mjs に分ける（CI では走らない）: Playwright は GEOUI_NODE_MODULES=/opt/npm-tools/node_modules、Chromium は CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome（このコンテナにある）。本物の Blockbench 5.2.2（web 版）は BLOCKBENCH_DIR=<git clone --branch v5.2.2 https://github.com/JannisX11/blockbench → npm ci --ignore-scripts → npm run build-web した所>（bds/geoui/blockbench-check.mjs の動かし方を手本に）
 - 画面の文字は日本語（今のプラグインの言い方に合わせる）、コードのコメントは英語（このリポジトリの書き方）。bds/geoui/geoui_builder.js を変えてよいのは bridge だけ。今ある試験は変えない・緩めない。各レーンは自分の試験のあと node tests/lint-offline.mjs も通す
 - 本物のゲームでしか分からないこと（Molang の式の長さの上限、q.life_time の進み方、render controller を重ねたときの描く順、uv_anim のふるまい）は決めつけない。確かめる区切り（app.txt）を残し、報告に「要実測」と書く（実機の CI は司令塔が回す）
 - ゲームの中の約束（model の contract.js が決め、compile・runtime・bridge が使う）: 時間はプロパティ <ns>:seq・<ns>:seq_gen・<ns>:seq_from(ms)・<ns>:seq_pause。多数の実体は「枠」（テンプレートのボーンを k 個複製）に順に割り当てる。少なければ焼き込み（Molang に全部）、多ければ流し込み（runtime のスクリプトが、出る少し前に枠 k のプロパティ <ns>:s<k>t（本番の時刻 ms、-1 = 空き）と <ns>:s<k>p（x・y・種類などを 24 bit 以下に詰めた整数。Molang の数は float で 2^24 まで正確）を入れる）。出来事（hit・miss）は <ns>:s<k>g を +1 して <ns>:s<k>r に結果。プロパティの数の上限は既定 32（要実測。設定で変えられる）
@@ -128,7 +128,7 @@
 - `for f in tests/tl-*-offline.mjs; do node $f || exit 1; done`
 - `node bds/geoui/build.mjs --check`
 - `node tests/lint-offline.mjs`
-- `<ブラウザの環境> node bds/geoui/blockbench-check.mjs --out /tmp/claude-0/-home-claude/31b6f006-5fb5-5f8a-b55c-61b09e2fcf52/scratchpad/bbout`
+- `<ブラウザの環境> node bds/geoui/blockbench-check.mjs --out <絵の置き場所>`
 - `for f in bds/geoui/timeline/check-*.mjs; do <ブラウザの環境> node $f || exit 1; done`
 
 ブラウザの環境: `GEOUI_NODE_MODULES`（playwright）・`CHROMIUM`・`BLOCKBENCH_DIR`（本物の Blockbench の web 版。bds/geoui/blockbench-check.mjs と同じ）。
@@ -209,6 +209,33 @@
     （check-bridge 20/20）。体の複製は線の真ん中（bx・by）にずれ 0.05 未満で置かれ、いちばん低い所の 7.5 単位上に白い縁、真ん中の制御点の 7.5 単位下と
     線から離れた所には何も無い（プレビューで 1 単位 1.67 px）。全部の試験も通った（Node の tl-* と geoui-builder と lint、build・probe・demo の --check、
     blockbench-check 10/10、check-editors 26/26、check-timeline 15/15）。
+- 作り直し（本物の大きさの譜面）: **できた**（2026-10-22）。osu.sampleMap の 300 個の譜面で、前の書き出しは Molang 181 万文字・1 行最長 50 万文字・
+  プロパティ 63 個（GeoUI の 11 個を含む。上限 32）で、ゲームで動かない大きさだった（9 割がスライダーの玉の道: 実体ごとの折れ線を 1 行の入れ子に）。
+  - contract.js: プロパティを 4 + 4×枠 → 2 + 流し込みの枠ごとに 2 + 当たり外れ 8 枠ごとに 1 に。`<ns>:seq` = シーケンス + 1024 × 止め +
+    2048 × 世代（8192 で回る）、`<ns>:seq_from`、`<ns>:<tag><k>t`・`p`（流し込み）、`<ns>:<tag>e<g>`（枠 8g〜8g+7 の結果、3 bit ずつ。スクリプトは
+    次の実体が枠を取ると 0 に戻す）。budget はシーケンスどうしで共有する数（タグごとの最大）と、GeoUI の分（base）を足した数で注意。
+  - compile.js: 焼き込みが既定（bakedMax 2000。超えて param が pack に入るテンプレートだけ流し込み）。枠の今の実体は searchLines（16 個ずつの組と
+    二分木: 三項演算子は選ばない枝を計算しないので、1 フレームは数回の比べ）、値は tableLines（実体の番号 → 値、同じ値の続きはまとめる）。
+    実体ごとの道はその実体のアニメーション（pathKeys: pathM と同じ折れ線の鍵を長さの半分に並べ、anim_time_update = 進み × 0.5。ループの継ぎ目に
+    時刻が来ない）、条件はその枠がその実体を見せている間だけ。できた行はすべて splitLines（1000 文字・括弧 24 段）。注意: ボーン 600・
+    render controller 70・アニメーション 1200 を超えたら（確かめた所まで）。変数名: param は `_p<名前>` なので、書き出し自身の変数は `_p` で始めない
+    （前は `_pr` が param r とぶつかっていた）。
+  - runtime.js: 新しいプロパティ、loop・pingpong は回るたびに流し込み直して判定し直す（前は 2 周目を流さなかった）、pingpong の戻りは判定と
+    音が無い（前は戻りで毎 tick 音を鳴らし直す道があった）、シーク・再開で全部の枠の結果を 0 に。
+  - 300 個の譜面: プロパティ 15 個（GeoUI の 11 個を含む）、1079 行・20 万文字・最長 653 文字・括弧 9 段・ボーン 405 本・要素ごとの render controller 59 個・
+    アニメーション 106 個（見本 geoui_rhythm_big の数）。1000 個でも 15 個・43 万文字・最長 677 文字。
+  - 試験: tl-anim 17/17（ボーンの位置を、流れているアニメーションすべての和で計算して比べる形に強めた: 実体ごとの道のアニメーションも、
+    その鍵・anim_time_update・条件ごと確かめる。300 個の譜面の全要素を 1/20 秒ごと 40 秒・当たり外れ 89 個で一致）、tl-model 67/67（予算・
+    seq と結果の詰め方を Molang の評価で）、tl-runtime 31/31（次の実体で結果が 0 に戻る・シークで 0・loop の 2 周目・pingpong）、
+    tl-probe 18/18。見本に `bds/addons/geoui_rhythm_big`（300 個・音楽なし・アトラス 1024 x 1024 にスライダーの体 104 本）。本物の BDS で
+    geoui_rhythm・geoui_rhythm_big とも tests.txt 8/8、`go` も DONE（qa clean）。
+  - ついでに直した: 実体の表でセルをダブルクリックした直後に、前のクリックの描き直しが入力欄を消すことがあった（check-editors が時々 25/26。
+    変更前のコードでも落ちた）→ 入力中は描き直さない。5 回続けて 26/26。
+  - probe_m を作り直し: 2・3 回目（6000〜16000 文字の行・括弧 54 と 100 段を入れた物）はアプリがワールドに 3 回とも入れなかった
+    （join-lan-missing・join-play-unreached。同じ時の他の probe は入れた。BDS は読み込み、手元のクライアントは入れた）。書き出しはその形を
+    もう出さないので、書き出しが出す形だけにした: splitLines の行・1000 文字の 1 行・括弧 24 段・2000 個の引き方（searchLines・tableLines）・
+    3000 行 45 万文字。
+
 ### 本物のアプリで確かめたこと（probe.mjs → bds/addons/geoui_probe*、app.yml で写して `node bds/geoui/timeline/probe.mjs read <summary.json>`）
 
 - 1 回目（2026-10-21、run 39601130957 ほか）: ボーンは #248 まで描かれる。自分の render controller（共有のジオメトリを part_visibility で分ける）は
@@ -226,3 +253,10 @@
   スクリプトがシーケンスの時刻で鳴らし（Player.playSound・クリップの音量と高さ）、一時停止・シーク・停止で止める（/stopsound）。途中からは鳴らせない
   （シークや再開の時に頭を過ぎた音は鳴らない）。プレイヤーが入り直したら、その時刻から送り直す（クライアントの q.life_time は入った時から）。
   世代（seq_gen）はプレイヤーの持つ値から続ける（サーバーを立て直しても、同じ番号で「変わっていない」と見られない）。
+- 3 回目（2026-10-22）: geoui_probe（run 39699374650）の答えはコミット 79417e3 に（fade の材質で不透明度が効く・+90 は時計回り・同じボーンの
+  scale は掛け算・position は足し算・initialize が効く・anim_time_update が効く）。**geoui_probe_b**（run 39700777530）: ボーン #250・#255・#256・#257・
+  #300・#511・#512・#599 の板はどれも動いた（番号が 1 バイトで 256 で回ることは無い: 600 本まで効く）。#400 の板だけ見つからなかった（前後の番号は
+  動くので番号の上限ではない。写しの位置の側と見る・要再確認）。自分の render controller の 40・70 個目が描き、1200 個目のアニメーション
+  （anim_time_update）が動かした。何も選ばない画面は何も出ない。コンテンツログの molang・variable・unknown 系の行は item_use・main_hand・holding・
+  spear の名前の節にだけ当たり（バニラのプレイヤーの変数）、パックの名前空間・geoui_ には無い。**geoui_probe_m**（run 39734548973・39739198496）:
+  アプリがワールドに入れず、何も測れなかった（上の「作り直し」の probe_m を参照）。

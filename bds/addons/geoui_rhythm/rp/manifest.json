@@ -4,26 +4,14 @@
     "name": "GeoUI Rhythm RP",
     "description": "GeoUI timeline sample: an osu!-style HUD (bds-lab)",
     "uuid": "b50fe1d2-83ae-4fad-a1fc-2554b17e7f5f",
-    "version": [
-      1,
-      0,
-      0
-    ],
-    "min_engine_version": [
-      1,
-      26,
-      50
-    ]
+    "version": [1, 0, 1],
+    "min_engine_version": [1, 26, 50]
   },
   "modules": [
     {
       "type": "resources",
       "uuid": "0f072b9d-bfc6-40ce-b7c0-32bb8db26bcc",
-      "version": [
-        1,
-        0,
-        0
-      ]
+      "version": [1, 0, 1]
     }
   ]
 }

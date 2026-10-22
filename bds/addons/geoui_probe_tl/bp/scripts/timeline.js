@@ -6,16 +6,16 @@
 // reaches them and stop at a pause, a seek or a stop (a sound already past at a seek or a resume stays silent).
 import { world, system, ButtonState } from '@minecraft/server';
 
-const CFG = {"ns":"gprobt","windows":{"great":50,"good":100,"ok":150},"margin":250,"missDrain":8,"hitGain":2,"values":{"score":"v0","combo":"v1","accuracy":"v2","health":"v3"},"sequences":[{"index":1,"id":"probe","duration":20000,"loop":"once","inOut":null,"markers":[],"templates":[{"tag":"t0s","mode":"baked","lead":500,"items":[[2000,0,0,2500,"i1"],[4000,0,0,4500,"i2"],[6000,0,0,6500,"i3"],[6200,1,0,6700,"i4"]]}],"hits":[],"sounds":[]}]};
+const CFG = {"ns":"gprobt","windows":{"great":50,"good":100,"ok":150},"margin":250,"missDrain":8,"hitGain":2,"values":{"score":"v0","combo":"v1","accuracy":"v2","health":"v3"},"sequences":[{"index":1,"id":"probe","duration":20000,"loop":"once","inOut":null,"markers":[],"templates":[{"tag":"t0s","mode":"baked","lead":500,"slots":2,"events":false,"items":[[2000,0,0,2500,"i1",1500,"blip/i1"],[4000,0,0,4500,"i2",3500,"blip/i2"],[6000,0,0,6500,"i3",5500,"blip/i3"],[6200,1,0,6700,"i4",5700,"blip/i4"]]}],"hits":[],"sounds":[]}]};
 const createEngine = function createEngine(CFG, io) {
-    const P = (x) => `${CFG.ns}:${x}`, players = new Map(), HIT = 1, MISS = 2, LATE = 250;
+    const P = (x) => `${CFG.ns}:${x}`, players = new Map(), HIT = 1, MISS = 2, LATE = 250, PAUSE = 1024, GEN = 2048, GENS = 8192;
     const W = CFG.windows, POINTS = { great: 300, good: 100, ok: 50 };
     const get = (p, name) => { try { return io.getProp ? io.getProp(p, name) : undefined; } catch (e) { return undefined; } };
     function stateOf(p) {
       let s = players.get(p.id);
       // (the generation goes on from the one the player has: a client that saw it already would not count again from a
       //  play that only set it to the same number — after a server restart the script begins at 0, the world keeps it)
-      if (!s) { const g0 = Number(get(p, P('seq_gen'))); s = { seq: 0, gen: Number.isFinite(g0) ? g0 : 0, from: 0, start: 0, paused: false, offset: 0, slots: new Map(), events: new Map(), judged: new Set(), marks: new Set(), played: new Set(), ringing: new Set(), lastT: -1, score: 0, combo: 0, best: 0, total: 0, earned: 0, health: 100 }; players.set(p.id, s); }
+      if (!s) { const v0 = Number(get(p, P('seq'))), g0 = Number.isFinite(v0) ? Math.floor(v0 / GEN) % GENS : 0; s = { seq: 0, gen: g0, from: 0, start: 0, paused: false, offset: 0, slots: new Map(), results: new Map(), cur: new Map(), groups: new Map(), judged: new Set(), marks: new Set(), played: new Set(), ringing: new Set(), round: 0, score: 0, combo: 0, best: 0, total: 0, earned: 0, health: 100 }; players.set(p.id, s); }
       return s;
     }
     /** every sound this player was sent stops (a pause, a seek, a stop: a sound in the game cannot be held or moved) */
@@ -31,29 +31,64 @@ const createEngine = function createEngine(CFG, io) {
       if (q.loop === 'pingpong') { const m = (t - a) % (2 * len); return a + (m <= len ? m : 2 * len - m); }
       return t;
     }
+    // (which round of a loop or a pingpong it is: 0 before the range; a pingpong's odd rounds run backwards)
+    function roundOf(q, t) {
+      const a = q.inOut ? q.inOut[0] : 0, b = q.inOut ? q.inOut[1] : q.duration, len = b - a;
+      if ((q.loop !== 'loop' && q.loop !== 'pingpong') || !(len > 0) || t < a) return 0;
+      return Math.floor((t - a) / len);
+    }
+    const backwards = (q, s) => q.loop === 'pingpong' && s.round % 2 === 1;
+    /** the seq property: the sequence, paused or not, the generation */
+    const seqProp = (p, s) => set(p, P('seq'), s.seq + (s.paused ? PAUSE : 0) + GEN * s.gen);
     const set = (p, name, v) => { try { io.setProp(p, name, v); } catch (e) { /* (a property the pack does not have: said once by the pack's check) */ } };
     function values(p, s) {
       const acc = s.total ? Math.round((s.earned / s.total) * 10000) : 10000;
       set(p, P(CFG.values.score), s.score); set(p, P(CFG.values.combo), s.combo); set(p, P(CFG.values.accuracy), acc); set(p, P(CFG.values.health), Math.round(s.health));
     }
     function clearSlots(p, s) { for (const key of s.slots.keys()) set(p, P(`${key}t`), -1); s.slots.clear(); }
-    /** from a time on (a play, a seek, a resume): the client counts again from it (seq_gen +1); what is before it is judged already */
-    function restart(p, s, fromMs) {
-      s.from = Math.max(0, Math.round(fromMs)); s.start = io.tick(); s.gen = (s.gen + 1) % 1000000;
-      set(p, P('seq_from'), s.from); set(p, P('seq_pause'), s.paused); set(p, P('seq_gen'), s.gen);
-      clearSlots(p, s); silence(p, s);
-      const q = seqOf(s);
-      // (a sound starts only within LATE of its time: one already past at a seek or a resume stays silent)
-      s.judged = new Set(); s.marks = new Set(); s.played = new Set(); s.lastT = -1;
-      if (q) {
-        for (const h of q.hits) if (h[0] + W.ok < s.from) s.judged.add(h[4]);
-        for (const m of q.markers) if (m[0] < s.from) s.marks.add(m[1]);
+    /** each slot's result (3 bits of its group's property, contract.js): the result of the instance now in the slot (the last
+     *  to have begun in it), 0 while it has none. Sent: the groups whose slots changed instance, and `also` (true: all) */
+    function results(p, s, q, t, also) {
+      for (const tp of q.templates) {
+        if (!tp.events) continue;
+        const now = new Map(), dirty = new Set();
+        // (items in time order: in start order too — one lead for a template)
+        for (const it of tp.items) { if (it[5] > t) break; now.set(it[1], it[6]); }
+        for (const [k, id] of now) { const key = `${tp.tag}${k}`; if (s.cur.get(key) !== id) { s.cur.set(key, id); dirty.add(Math.floor(k / 8)); } }
+        for (let g = 0; g * 8 < tp.slots; g++) {
+          const name = `${tp.tag}e${g}`;
+          if (!(also === true || (also && also.has(name)) || dirty.has(g))) continue;
+          let v = 0;
+          for (let k = g * 8; k < Math.min(tp.slots, g * 8 + 8); k++) v += (s.results.get(s.cur.get(`${tp.tag}${k}`)) || 0) * 2 ** (3 * (k - g * 8));
+          if (also === true || s.groups.get(name) !== v) { s.groups.set(name, v); set(p, P(name), v); }
+        }
       }
     }
-    function send(p, s, tag, slot, result) {
-      const key = `${tag}${slot}`, g = ((s.events.get(key) || 0) + 1) % 1000000;
-      s.events.set(key, g);
-      set(p, P(`${key}r`), result); set(p, P(`${key}g`), g);
+    /** a new round (a play, a seek, a resume, a loop going round): nothing judged, every slot sent again */
+    function newRound(p, s, q, t) {
+      clearSlots(p, s);
+      s.judged = new Set(); s.marks = new Set(); s.played = new Set(); s.results = new Map(); s.cur = new Map();
+      if (q) {
+        // (what is behind the time is judged already, with no result: a press cannot take it and it is no miss)
+        for (const h of q.hits) if (h[0] + W.ok < t) s.judged.add(h[4]);
+        for (const m of q.markers) if (m[0] < t) s.marks.add(m[1]);
+        results(p, s, q, t, true);
+      }
+    }
+    /** from a time on (a play, a seek, a resume): the client counts again from it (a new generation) */
+    function restart(p, s, fromMs) {
+      s.from = Math.max(0, Math.min(16777215, Math.round(fromMs))); s.start = io.tick(); s.gen = (s.gen + 1) % GENS;
+      set(p, P('seq_from'), s.from); seqProp(p, s);
+      silence(p, s);
+      const q = seqOf(s);
+      // (a sound starts only within LATE of its time: one already past at a seek or a resume stays silent)
+      s.round = q ? roundOf(q, s.from) : 0;
+      newRound(p, s, q, q ? seqTime(q, s.from) : s.from);
+    }
+    /** an instance's result, to its slot's group (seen only while it is the instance in its slot) */
+    function send(p, s, q, h, result) {
+      s.results.set(h[4], result);
+      results(p, s, q, seqTime(q, nowMs(s)), new Set([`${h[1]}e${Math.floor(h[2] / 8)}`]));
     }
     function judgeOf(dt) { const a = Math.abs(dt); return a <= W.great ? 'great' : a <= W.good ? 'good' : a <= W.ok ? 'ok' : null; }
     const api = {
@@ -63,13 +98,13 @@ const createEngine = function createEngine(CFG, io) {
         if (verb === 'play') {
           const want = String(args[0] || '1'), q = CFG.sequences.find((x) => String(x.index) === want || x.id === want);
           if (!q) return `${CFG.ns}: no sequence ${want} (${CFG.sequences.map((x) => `${x.index}=${x.id}`).join(', ')})`;
-          s.seq = q.index; s.paused = false; s.score = 0; s.combo = 0; s.best = 0; s.total = 0; s.earned = 0; s.health = 100; s.events = new Map();
-          set(p, P('seq'), q.index); restart(p, s, Number(args[1] || 0) * 1000); values(p, s);
+          s.seq = q.index; s.paused = false; s.score = 0; s.combo = 0; s.best = 0; s.total = 0; s.earned = 0; s.health = 100;
+          restart(p, s, Number(args[1] || 0) * 1000); values(p, s);
           return '';
         }
-        if (verb === 'stop') { s.seq = 0; set(p, P('seq'), 0); clearSlots(p, s); silence(p, s); return ''; }
+        if (verb === 'stop') { s.seq = 0; s.paused = false; seqProp(p, s); clearSlots(p, s); silence(p, s); return ''; }
         if (!s.seq) return `${CFG.ns}: nothing is playing`;
-        if (verb === 'pause') { if (!s.paused) { s.from = nowMs(s); s.paused = true; set(p, P('seq_from'), Math.round(s.from)); set(p, P('seq_pause'), true); silence(p, s); } return ''; }
+        if (verb === 'pause') { if (!s.paused) { s.from = Math.round(nowMs(s)); s.paused = true; set(p, P('seq_from'), s.from); seqProp(p, s); silence(p, s); } return ''; }
         if (verb === 'resume') { if (s.paused) { s.paused = false; restart(p, s, s.from); } return ''; }
         if (verb === 'seek') { restart(p, s, Number(args[0] || 0) * 1000); return ''; }
         if (verb === 'offset') { s.offset = Number(args[0] || 0) || 0; return ''; }
@@ -82,7 +117,10 @@ const createEngine = function createEngine(CFG, io) {
           if (!s || !s.seq) continue;
           const q = seqOf(s);
           if (!q) continue;
-          const t = seqTime(q, nowMs(s));
+          const raw = nowMs(s), round = roundOf(q, raw), t = seqTime(q, raw);
+          // (a loop or a pingpong going round: its instances streamed and judged anew)
+          if (round !== s.round) { s.round = round; newRound(p, s, q, t); }
+          const back = backwards(q, s);
           for (const tp of q.templates) {
             if (tp.mode !== 'streamed') continue;
             const want = new Map();
@@ -90,10 +128,9 @@ const createEngine = function createEngine(CFG, io) {
             for (const [key, it] of want) if (s.slots.get(key) !== it) { s.slots.set(key, it); set(p, P(`${key}p`), it[2]); set(p, P(`${key}t`), it[0]); }
             for (const key of [...s.slots.keys()]) if (key.startsWith(tp.tag) && !want.has(key) && q.templates.every((o) => o === tp || !key.startsWith(o.tag))) { s.slots.delete(key); set(p, P(`${key}t`), -1); }
           }
-          if (!s.paused) {
-            // (the sequence's audio clips, each once a round: a loop's time going back starts the round again)
-            if (t < s.lastT - 1) s.played = new Set();
-            s.lastT = t;
+          results(p, s, q, t, false);
+          if (!s.paused && !back) {
+            // (the sequence's audio clips, each once a round)
             (q.sounds || []).forEach((c, i) => {
               if (s.played.has(i) || t < c[0] || t >= c[0] + LATE) return;
               s.played.add(i);
@@ -101,7 +138,7 @@ const createEngine = function createEngine(CFG, io) {
               try { io.sound(p, c[1], c[2], c[3]); s.ringing.add(c[1]); } catch (e) { /* (a sound the pack does not have: silent) */ }
             });
             for (const h of q.hits) if (!s.judged.has(h[4]) && t > h[0] + W.ok) {
-              s.judged.add(h[4]); send(p, s, h[1], h[2], MISS);
+              s.judged.add(h[4]); send(p, s, q, h, MISS);
               s.combo = 0; s.total += 1; s.health = Math.max(0, s.health - CFG.missDrain); values(p, s);
             }
             for (const m of q.markers) if (!s.marks.has(m[1]) && t >= m[0]) { s.marks.add(m[1]); if (m[2] !== undefined && io.event) io.event(p, `${CFG.ns}:marker`, `${q.index}:${m[1]}${m[2] ? ` ${m[2]}` : ''}`); }
@@ -112,12 +149,14 @@ const createEngine = function createEngine(CFG, io) {
       press(p) {
         const s = players.get(p.id);
         if (!s || !s.seq || s.paused) return null;
-        const q = seqOf(s), t = seqTime(q, nowMs(s)) + s.offset;
+        const q = seqOf(s);
+        if (!q || backwards(q, s)) return null;
+        const t = seqTime(q, nowMs(s)) + s.offset;
         let best = null;
         for (const h of q.hits) if (!s.judged.has(h[4]) && Math.abs(t - h[0]) <= W.ok && (!best || Math.abs(t - h[0]) < Math.abs(t - best[0]))) best = h;
         if (!best) return null;
         const j = judgeOf(t - best[0]);
-        s.judged.add(best[4]); send(p, s, best[1], best[2], HIT);
+        s.judged.add(best[4]); send(p, s, q, best, HIT);
         s.combo += 1; s.best = Math.max(s.best, s.combo); s.total += 1; s.earned += POINTS[j] / 300;
         s.score += POINTS[j] * (1 + Math.floor(s.combo / 10) / 10); s.score = Math.round(s.score);
         s.health = Math.min(100, s.health + CFG.hitGain); values(p, s);
@@ -128,9 +167,9 @@ const createEngine = function createEngine(CFG, io) {
        *  world saved while one played) is stopped */
       joined(p) {
         const s = players.get(p.id);
-        if (s && s.seq) { restart(p, s, nowMs(s)); set(p, P('seq'), s.seq); values(p, s); return; }
+        if (s && s.seq) { restart(p, s, nowMs(s)); values(p, s); return; }
         const st = stateOf(p);
-        if (Number(get(p, P('seq'))) !== 0) { st.seq = 0; set(p, P('seq'), 0); }
+        if (Number(get(p, P('seq'))) % PAUSE !== 0) { st.seq = 0; st.paused = false; seqProp(p, st); }
       },
       state: (p) => players.get(p.id),
     };

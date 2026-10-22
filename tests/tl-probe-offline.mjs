@@ -119,14 +119,16 @@ const COLS = [-160, -125, -90, -55, -20, 15, 50], ROWS = [175, 145, 115, 85], ce
 {
   const base = shown(frame('geoui_probe_m', 'gprobm', { v2: 0 }));
   ok(base.length === 0, 'geoui_probe_m: nothing is drawn while no test is chosen', JSON.stringify(base.map((d) => d.bone)));
-  const names = ['ctl', 'split', 'split_c', 'lines', 'lines_c', 'd54', 'd54_c', 'f6k', 'f6k_c', 'f8k', 'f8k_c', 'f12k', 'f12k_c', 'd100', 'd100_c', 'f16k', 'f16k_c'], bad = [];
+  const names = ['ctl', 'split', 'split_c', 'w1000', 'w1000_c', 'd24', 'd24_c', 'tbl', 'tbl_c', 'lines', 'lines_c'], bad = [];
   names.forEach((bone, i) => { const s = shown(frame('geoui_probe_m', 'gprobm', { v2: i + 1 })); if (!(s.length === 1 && s[0].bone === bone && near(s[0], cellAt(i)))) bad.push(`${i + 1} ${bone}: ${JSON.stringify(s.map((d) => d.bone))}`); });
-  ok(!bad.length, `geoui_probe_m: each of ${names.length} tests draws its own plane only`, bad.join('\n  '));
-  const pre = rd(path.join(TOP, 'bds/addons/geoui_probe_m/rp'), 'entity/player.entity.json')['minecraft:client_entity'].description.scripts.pre_animation, len = (id) => pre.find((l) => l.startsWith(`v.gpm_${id} =`)).length;
-  ok(len('f8k') > 8000 && len('f16k') > 16000 && len('f6k') < 6100, `geoui_probe_m: the expressions are as long as they say (f6k ${len('f6k')} … f16k ${len('f16k')})`);
-  const cut = pre.filter((l) => /^v\.gpm_s\d+ = |^v\.gpm_split = /.test(l)), lines = pre.filter((l) => /^v\.gpm_l\d+ = /.test(l));
-  ok(cut.length > 10 && cut.every((l) => l.length <= 1000) && cut.reduce((a, l) => a + l.length, 0) > 16000 && lines.length === 3000,
-    `geoui_probe_m: the long line cut into ${cut.length} lines of at most 1000 characters (as the export cuts its own), 3000 lines before the many-lines test`);
+  ok(!bad.length, `geoui_probe_m: each of ${names.length} tests draws its own plane only (the 2000-instance lookup finds #1500 and its value)`, bad.join('\n  '));
+  const pre = rd(path.join(TOP, 'bds/addons/geoui_probe_m/rp'), 'entity/player.entity.json')['minecraft:client_entity'].description.scripts.pre_animation, line = (id) => pre.find((l) => l.startsWith(`v.gpm_${id} =`));
+  const C = require('../bds/geoui/timeline/compile.js');
+  ok(line('w1000').length >= 980 && line('w1000').length <= 1000 && C.maxDepth(line('d24')) === 24 && pre.every((l) => l.length <= 1000 && C.maxDepth(l) <= 24),
+    `geoui_probe_m: as long and deep as the export may write (w1000 ${line('w1000').length} characters, d24 ${C.maxDepth(line('d24'))} brackets) and no line past that`);
+  const cut = pre.filter((l) => /^v\.gpm_s\d+ = |^v\.gpm_split = /.test(l)), lines = pre.filter((l) => /^v\.gpm_l\d+ = /.test(l)), tbl = pre.filter((l) => /^v\.gpm_t[kiqvg]\w* = /.test(l));
+  ok(cut.length > 10 && cut.every((l) => l.length <= 1000) && cut.reduce((a, l) => a + l.length, 0) > 16000 && lines.length === 3000 && pre.reduce((a, l) => a + l.length, 0) > 450000 && tbl.length > 200,
+    `geoui_probe_m: the long line cut into ${cut.length} lines of at most 1000 characters (as the export cuts its own), the lookup in ${tbl.length} lines, 3000 lines before the many-lines test (${Math.round(pre.reduce((a, l) => a + l.length, 0) / 1000)}k characters in all)`);
 }
 
 // ---- geoui_probe_b: the limits — each test plane only when chosen, moved 20 units by its own bone (#250 … #599), drawn by its

@@ -3,7 +3,9 @@
 // (1/60 s, its variables kept from frame to frame as the game keeps them) in GeoUI Builder's Molang evaluator, every element
 // compared with the editor's preview (model.evaluate): position, scale, rotation, opacity, value, fill, frame — the sequence's
 // own tracks with every ease and transition and loop, a template's instances baked and streamed (the properties set as the
-// pack's script would set them), hits and misses. node tests/tl-anim-offline.mjs
+// pack's script would set them), hits and misses. Positions are the bones' own: every animation the client entity plays
+// that frame (its condition), each at its own time (anim_time_update) — an instance's own path is an animation of its own.
+// A large osu! map: what it takes (properties, lines, characters) and the same comparison. node tests/tl-anim-offline.mjs
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const G = require('../bds/geoui/geoui_builder.js');
@@ -39,23 +41,46 @@ function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt =
   const props = {}, vars = {}, env = { vars, life: 0, query(name, args) { if (name === 'query.property') return +props[args[0]] || 0; if (name === 'query.life_time') return this.life; if (name === 'query.is_in_ui') return 1; return undefined; } };
   env.query = env.query.bind(env);
   const get = (v) => vars[v.replace(/^v\./, 'variable.')] ?? 0, bad = [], seenAt = new Map();
+  // (a bone's position: the sum of every playing animation's — an expression, or keys at the animation's own time, straight
+  //  between them)
+  const desc = ent['minecraft:client_entity'].description, af = JSON.parse(out.files['geoui_RP/animations/geoui.animation.json']).animations;
+  const playing = (desc.scripts.animate || []).map((e) => (typeof e === 'string' ? [e, '1'] : Object.entries(e)[0])).map(([k, c]) => ({ anim: af[desc.animations[k]], cond: c })).filter((x) => x.anim);
+  const sample = (keys, time) => {
+    const ts = Object.keys(keys).map(Number).sort((a, b) => a - b), at = (x) => keys[Object.keys(keys).find((k) => Number(k) === x)];
+    if (time <= ts[0]) return at(ts[0]);
+    for (let i = 0; i < ts.length - 1; i++) if (time < ts[i + 1]) { const a = at(ts[i]), b = at(ts[i + 1]), f = (time - ts[i]) / (ts[i + 1] - ts[i]); return a.map((v, j) => v + (b[j] - v) * f); }
+    return at(ts[ts.length - 1]);
+  };
+  const boneAt = (bone) => {
+    let x = 0, y = 0, any = false;
+    for (const { anim, cond } of playing) {
+      const b = anim.bones[bone];
+      if (!b || !b.position || !G.molang(cond, env)) continue;
+      any = true;
+      const v = Array.isArray(b.position) ? b.position.map((e) => (typeof e === 'number' ? e : G.molang(String(e), env))) : sample(b.position, G.molang(anim.anim_time_update || '0', env));
+      x += v[0]; y += v[1];
+    }
+    return any ? { x, y } : null;
+  };
   for (let f = 0; ; f++) {
     const t = from + f * dt;
     if (t > to + 1e-9) break;
     env.life = 100 + t;
-    Object.assign(props, { 'geoui:seq': 1, 'geoui:seq_gen': 1, 'geoui:seq_from': Math.round(from * 1000), 'geoui:seq_pause': 0 });
-    // (the pack's script: each slot's instance just before it shows; the hits and misses so far)
+    Object.assign(props, { 'geoui:seq': K.seqValue({ seq: 1, gen: 1 }), 'geoui:seq_from': Math.round(from * 1000) });
+    // (the pack's script: each slot's instance just before it shows; each slot's result — the instance that last took the
+    //  slot, once it has one — 3 bits of its group's property)
     for (const s of slots) {
-      const lead = s.tpl.lead;
+      const lead = s.tpl.lead, codes = [];
       for (let k = 0; k < s.slots; k++) {
-        const names2 = K.names('geoui').slot(s.tag, k), mine = seq.instances.filter((x) => s.slotOf[x.id] === k);
+        const names2 = K.names('geoui').slot(s.tag, k), mine = seq.instances.filter((x) => s.slotOf[x.id] === k).sort((a, b) => a.t - b.t);
         if (s.mode === 'streamed') {
           const x = mine.find((y) => t >= y.t - lead - 0.25 - 1e-9 && t < y.t + (y.tail ?? s.tpl.tail));
           props[names2.t] = x ? Math.round(x.t * 1000) : -1; props[names2.p] = x ? K.pack(x.params, s.tpl.pack || K.DEFAULT_PACK) : 0;
         }
-        const evs = events.filter((e) => mine.some((x) => x.id === e.instance) && e.t <= t + 1e-9);
-        props[names2.g] = evs.length; props[names2.r] = evs.length ? K.RESULTS.indexOf(evs[evs.length - 1].name) : 0;
+        const cur = mine.filter((x) => Math.round((x.t - lead) * 1000) <= Math.round(t * 1000) + 1e-9).at(-1), ev = cur && events.filter((e) => e.instance === cur.id && e.t <= t + 1e-9).at(-1);
+        codes.push(ev ? K.RESULTS.indexOf(ev.name) : 0);
       }
+      if (s.events) for (let g = 0; g * K.EV_PER < s.slots; g++) props[K.names('geoui').events(s.tag, g)] = K.eventValue(codes.slice(g * K.EV_PER, (g + 1) * K.EV_PER));
     }
     G.runPre(pre, env);
     // (the preview at the game's own clock — the same float the game's Molang counted with — and each event at the time the
@@ -67,9 +92,11 @@ function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt =
       if (!s) { if (!sk.includes('#') && c >= 0) bad.push(`${t.toFixed(3)} ${sk}: shown, the preview leaves it`); continue; }
       if (!s.visible) { if (c >= 0) bad.push(`${t.toFixed(3)} ${sk}: shown, the preview hides it`); continue; }
       if (c < 0) { bad.push(`${t.toFixed(3)} ${sk}: hidden, the preview shows it`); continue; }
+      const pos = boneAt(b.bone);
+      if (!pos) { bad.push(`${t.toFixed(3)} ${sk}: no animation places its bone`); continue; }
       for (const [prop, v] of [['x', 'x'], ['y', 'y'], ['scaleX', 'sx'], ['scaleY', 'sy'], ['rotation', 'r'], ['opacity', 'o'], ['value', 'v'], ['fill', 'f'], ['frame', 'fr']]) {
         if (s[prop] === undefined) continue;
-        const got = get(`${b.prefix}_${v}`);
+        const got = prop === 'x' || prop === 'y' ? pos[prop] : get(`${b.prefix}_${v}`);
         if (!(Math.abs(got - s[prop]) <= 1e-3)) bad.push(`${t.toFixed(3)} ${sk}.${prop}: game ${got} preview ${s[prop]}`);
       }
     }
@@ -160,13 +187,37 @@ const events = [{ instance: 'o1', name: 'hit', t: 1 + 1 / 60 }, { instance: 'o2'
     && own2[0][1].materials.at(-1).hitcircle_t0s0 === 'material.geoui_fade' && mat && mat['+defines'].includes('USE_COLOR_MASK') && mat['+states'].includes('Blending') && ent.materials.geoui_fade === 'geoui_fade'
     && rc['controller.render.geoui_atlas'].part_visibility.some((p) => p.hitcircle_t0s0 === false) && ent.scripts.initialize.includes('v.geoui_a_hitcircle_t0s0 = 1;') && ent.scripts.initialize.includes('v.geoui_seq = 0;'),
     'opacity per element: its own render controller (only its bones, none while fully transparent, the fade material with the colour mask), the shared one without them, starting values in initialize');
-  ok(r.out.stats.longest < 8000 && r.pre.every((l) => !G.molangError(l.replace(/;$/, ''))), `every pre_animation line reads as Molang (the longest ${r.out.stats.longest} characters)`);
+  ok(r.out.stats.longest <= 1000 && r.out.stats.deepest <= 24 && r.pre.every((l) => !G.molangError(l.replace(/;$/, ''))), `every pre_animation line reads as Molang (the longest ${r.out.stats.longest} characters, ${r.out.stats.deepest} brackets deep)`);
+  // (the slider's ball: its own path is an animation of the instance's, timed by the slot's progress, played only while the
+  //  slot shows that instance — its keys straight between, half the length long)
+  const ip = Object.entries(af).filter(([k]) => /^animation\.geoui\.ip_1_t1s0_o5$/.test(k));
+  ok(ip.length === 1 && /math\.clamp\(v\.geoui_1_t1s0_\d+_u, 0, 1\) \* 0\.5/.test(ip[0][1].anim_time_update) && Object.keys(ip[0][1].bones.sliderball_t1s0.position).every((k) => +k >= 0 && +k <= 0.5)
+    && ent.scripts.animate.some((a) => a.geoui_ip_1_t1s0_o5 === 'q.is_in_ui && v.geoui_seq == 1 && v.geoui_1_t1s0_i == 0'), 'an instance\'s own path: its own animation (anim_time_update by the slot\'s progress, keys over half its length), played while its slot shows it', JSON.stringify(ip[0] && ip[0][1]).slice(0, 300));
 }
 {
   const r = compare(osu, osuNames, { to: 4.6, events, ctx: { bakedMax: 0 }, quantize: true });
-  ok(!r.bad.length && Object.values(r.out.stats.slots).some((s) => s.mode === 'streamed') && r.out.warnings.some((w) => /実体ごとの道/.test(w)),
-    'osu! streamed (the properties as the script sets them, params packed in 24 bits): the same every frame; the slider (its own path) stays baked and says so', r.bad.slice(0, 8).join('\n  '));
+  ok(!r.bad.length && r.out.stats.slots['1:osu-circle'].mode === 'streamed' && r.out.stats.slots['1:osu-slider'].mode === 'baked' && r.out.warnings.some((w) => /pack.*焼き込み/.test(w)),
+    'osu! streamed (the properties as the script sets them, params packed in 24 bits): the same every frame; the slider (params past its pack) stays baked and says so', r.bad.slice(0, 8).join('\n  ') + ' ' + r.out.warnings.join(' / '));
 }
+// ---- a map of real size (osu.sampleMap: 300 objects — circles, sliders of every curve and their slides, spinners) ----
+//      what it takes — the player's properties within the game's 32 with GeoUI's own, every line short and shallow — and the
+//      same comparison every frame (1/20 s over 40 s), hits and misses on every other object
+{
+  const { doc: big } = O.toDocument(O.parseOsu(O.sampleMap(300)), { width: 120 });
+  const xs = big.sequences[0].instances, judged = xs.filter((x) => x.template !== 'osu-spinner');
+  const evs = judged.map((x, i) => (i % 2 ? { instance: x.id, name: 'miss', t: x.t + 0.15 } : { instance: x.id, name: 'hit', t: x.t + 0.02 }));
+  const design = { ...designOf(osuNames), settings: { ns: 'geoui', bp: true } }, built = G.buildPack(design);
+  const out = C.extendPack(built.files, big, { design, core: G });
+  const R = require('../bds/geoui/timeline/runtime.js'), bp = R.extendBehavior(out.files, big, { stats: out.stats });
+  const props = Object.keys(JSON.parse(bp.files['geoui_BP/entities/player.json'])['minecraft:entity'].description.properties).length;
+  const st = out.stats;
+  ok(props <= 32 && st.budget.total === props && !bp.warnings.some((w) => /プロパティ/.test(w)) && st.longest <= 1000 && st.deepest <= 24 && st.chars < 400000 && Object.values(st.slots).every((x) => x.mode === 'baked'),
+    `300 objects: ${props} properties on the player with GeoUI's 11 (the game takes 32), ${st.lines} lines, the longest ${st.longest} characters and ${st.deepest} brackets deep, ${Math.round(st.chars / 1000)}k characters, every template baked`,
+    JSON.stringify({ props, total: st.budget.total, longest: st.longest, deepest: st.deepest, chars: st.chars, warnings: [...out.warnings, ...bp.warnings].filter((w) => !/コマ|音/.test(w)) }));
+  const r = compare(big, osuNames, { to: 40, events: evs, dt: 1 / 20 });
+  ok(!r.bad.length, `300 objects: every element of every instance, every frame (1/20 s) to 40 s with ${evs.filter((e) => e.t < 40).length} hits and misses — the game's Molang = the preview`, r.bad.slice(0, 8).join('\n  '));
+}
+
 // ---- what cannot be exported is said ----
 {
   const doc = { version: 1, sequences: [{ id: 's', duration: 1, tracks: [{ target: 'nope', clips: [{ start: 0, end: 1, trigger: 'hit' }] }, { target: 'e0', clips: [{ start: 0, end: 1 }] }, { target: 'e0', clips: [{ start: 0, end: 1 }] }] }] };

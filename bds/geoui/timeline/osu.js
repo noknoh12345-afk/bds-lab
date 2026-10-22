@@ -172,6 +172,27 @@
     };
   }
 
-  T.osu = { parseOsu, preempt, fadeIn, radius, hitWindows, difficultyOf, timingAt, sliderDuration, combos, lineOf, toDocument, DEFAULT_ELEMENTS };
+  /** a made-up beatmap of n objects (the lab's own: no real map or song) — circles on the half beat, sliders of every curve
+   *  (Bézier, perfect circle, linear, Catmull) and their slides, now and then a spinner; 180 BPM, AR 9, OD 8, CS 4. The same
+   *  seed, the same map: the tests and the large sample (demo.mjs) share it */
+  function sampleMap(n = 300, seed = 7) {
+    let s = seed; const rnd = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
+    const lines = ['osu file format v14', '', '[Metadata]', 'Title:Lab Sample', 'Artist:bds-lab', `Version:${n} objects`, '', '[Difficulty]', 'HPDrainRate:5', 'CircleSize:4', 'OverallDifficulty:8', 'ApproachRate:9', 'SliderMultiplier:1.8', '',
+      '[TimingPoints]', '1000,333.333,4,2,0,60,1,0', '', '[HitObjects]'];
+    let t = 1000;
+    for (let i = 0; i < n; i++) {
+      const x = Math.round(40 + rnd() * 432), y = Math.round(40 + rnd() * 304), nc = i % 6 === 0 ? 4 : 0, r = rnd();
+      if (r < 0.6) { lines.push(`${x},${y},${Math.round(t)},${1 | nc},0,0:0:0:0:`); t += 333.333 / 2; }
+      else if (r < 0.95) {
+        const k = ['B', 'P', 'L', 'C'][i % 4], pts = k === 'P' ? [[x + 60, y + 40], [x + 120, y]] : k === 'L' ? [[x + 100, y + 30]] : [[x + 40, y - 60], [x + 90, y + 50], [x + 140, y]];
+        const len = Math.round(120 + rnd() * 100), sl = 1 + (i % 3 === 0 ? 1 : 0);
+        lines.push(`${x},${y},${Math.round(t)},${2 | nc},0,${k}|${pts.map((p) => p.map((v) => Math.max(0, Math.min(512, Math.round(v)))).join(':')).join('|')},${sl},${len}`);
+        t += (len / (1.8 * 100)) * 333.333 * sl + 333.333 / 2;
+      } else { lines.push(`256,192,${Math.round(t)},12,0,${Math.round(t + 1500)},0:0:0:0:`); t += 2000; }
+    }
+    return `${lines.join('\n')}\n`;
+  }
+
+  T.osu = { parseOsu, sampleMap, preempt, fadeIn, radius, hitWindows, difficultyOf, timingAt, sliderDuration, combos, lineOf, toDocument, DEFAULT_ELEMENTS };
   if (typeof module === 'object' && module && module.exports) module.exports = T.osu;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

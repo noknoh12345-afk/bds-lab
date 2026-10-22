@@ -1,0 +1,80 @@
+# geoui_rhythm_big を本物のアプリで: 再生して、決まった時刻に写す（GeoUI のタイムラインが描く: 円・接近の輪・番号・スライダーの体と玉・スピナー・点数）
+# 時刻は再生を始めてからの目安（サーバーの命令が届くまでの遅れがある）。比べる基準は再生前の画面（world--before-play）。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+do time set noon
+do gamerule dodaylightcycle false
+do gamerule sendcommandfeedback false
+do gamerule commandblockoutput false
+do weather clear
+do tp @a 0 -60 0 0 90
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do hud @a hide crosshair
+wait 6000
+shot world--before-play
+absent clientlog \bERROR\b
+
+section play
+do scriptevent geoui:play 1
+wait 2000
+shot play-2s
+measure diff play-2s 0 170 1030 720
+wait 3000
+shot play-5s
+measure diff play-5s 0 170 1030 720
+wait 5000
+shot play-10s
+measure diff play-10s 0 170 1030 720
+wait 10000
+shot play-20s
+measure diff play-20s 0 170 1030 720
+wait 10000
+shot play-30s
+measure diff play-30s 0 170 1030 720
+wait 15000
+shot play-45s
+measure diff play-45s 0 170 1030 720
+wait 15000
+shot play-60s
+measure diff play-60s 0 170 1030 720
+wait 20000
+shot play-80s
+measure diff play-80s 0 170 1030 720
+wait 20000
+shot play-100s
+measure diff play-100s 0 170 1030 720
+wait 12000
+shot play-112s
+measure diff play-112s 0 170 1030 720
+absent clientlog \bERROR\b
+
+section seek-pause
+do scriptevent geoui:seek 60
+wait 1500
+shot seek-60s
+measure diff seek-60s 0 170 1030 720
+do scriptevent geoui:pause
+wait 1500
+shot paused-a
+wait 1500
+shot paused-b
+measure diff paused-b 0 170 1030 720
+do scriptevent geoui:stop
+wait 2000
+shot stopped
+measure diff stopped 0 170 1030 720
+absent clientlog \bERROR\b
+
+section log-molang
+# (a content error of Molang: a pre_animation line that the game cannot run stops the lines after it — the slots then never show)
+absent clientlog (?i)molang

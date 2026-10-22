@@ -70,64 +70,81 @@
     return { slots: ends.length, slotOf, overflow };
   }
 
-  // ---- the properties (on the player: one sequence plays at a time, so every sequence shares them)
+  // ---- the properties (on the player: one sequence plays at a time, so every sequence shares them). A player has at most 32
+  // (the game's documented limit) and GeoUI Builder's own pack takes 11 of them: the timeline takes as few as it can —
+  //   <ns>:seq       the sequence (0 none, 1…1023) + 1024 × paused + 2048 × the generation (0…8191, +1 at each play, seek
+  //                  and resume): the client counts from the moment this number changes
+  //   <ns>:seq_from  the time it counts from (ms)
+  //   <ns>:<tag><k>t, <ns>:<tag><k>p   a streamed slot's instance: its time (ms, −1 none) and its params packed in 24 bits
+  //   <ns>:<tag>e<g> the results (hit, miss…) of the instances now in slots 8g … 8g + 7, 3 bits a slot: 0 until the slot's
+  //                  instance has one (the script sets it back to 0 when the next instance takes the slot)
+  // Every value is an integer below 2^24: Molang's numbers are float32, exact to there.
+  const SEQ = Object.freeze({ max: 1023, pause: 1024, gen: 2048, gens: 8192 });
+  const EV_BITS = 3, EV_PER = 8;
   const names = (ns) => ({
-    seq: `${ns}:seq`, gen: `${ns}:seq_gen`, from: `${ns}:seq_from`, pause: `${ns}:seq_pause`,
-    slot: (tid, k) => ({ t: `${ns}:${tid}${k}t`, p: `${ns}:${tid}${k}p`, g: `${ns}:${tid}${k}g`, r: `${ns}:${tid}${k}r` }),
+    seq: `${ns}:seq`, from: `${ns}:seq_from`,
+    slot: (tid, k) => ({ t: `${ns}:${tid}${k}t`, p: `${ns}:${tid}${k}p` }),
+    events: (tid, g) => `${ns}:${tid}e${g}`,
   });
-  const RESULTS = Object.freeze(['none', 'hit', 'miss', 'great', 'good', 'ok']);   // the r property's numbers (0 = none)
-  /** what a template needs per slot: t + p when its instances are streamed (p only with params), g + r when its clips answer
-   *  events (trigger / until) */
+  const RESULTS = Object.freeze(['none', 'hit', 'miss', 'great', 'good', 'ok']);   // a result's number in its 3 bits (0 = none)
+  /** the seq property's number for a sequence, paused or not, and a generation */
+  const seqValue = ({ seq = 0, pause = false, gen = 0 } = {}) => Math.min(SEQ.max, Math.max(0, Math.round(num(seq)))) + (pause ? SEQ.pause : 0) + SEQ.gen * (((Math.round(num(gen)) % SEQ.gens) + SEQ.gens) % SEQ.gens);
+  const seqParts = (v) => { const x = Math.max(0, Math.round(num(v))); return { seq: x % SEQ.pause, pause: Math.floor(x / SEQ.pause) % 2 === 1, gen: Math.floor(x / SEQ.gen) % SEQ.gens }; };
+  /** the same as Molang (expr: the property read) → { seq, pause } */
+  const seqMolang = (expr) => ({ seq: `math.mod(${expr}, ${SEQ.pause})`, pause: `math.mod(math.floor((${expr}) / ${SEQ.pause}), 2)` });
+  /** which events property a slot's result is in, and where: { group, shift (the slot's place, 0…7) } */
+  const eventSlot = (k) => ({ group: Math.floor(k / EV_PER), shift: k % EV_PER });
+  /** a group's number from its slots' results (codes 0…7; slot 8g + i at bits 3i) */
+  const eventValue = (codes) => { let v = 0; (codes || []).slice(0, EV_PER).forEach((c, i) => { v += (Math.max(0, Math.min(7, Math.round(num(c)))) * 2 ** (EV_BITS * i)); }); return v; };
+  /** slot k's result as Molang (expr: its group's property read) */
+  const eventMolang = (expr, k) => { const sh = k % EV_PER; return sh ? `math.mod(math.floor((${expr}) / ${2 ** (EV_BITS * sh)}), 8)` : `math.mod(${expr}, 8)`; };
+  /** a template whose params all fit its pack (or that has none) can be streamed */
+  const canStream = (tpl) => { const spec = (tpl && tpl.pack) || DEFAULT_PACK; return ((tpl && tpl.params) || []).every((p) => spec.some((f) => f.name === p)); };
+  /** what a template needs: per slot t + p when its instances are streamed (p only with params); a share of an events
+   *  property when its clips answer events (trigger / until) */
   function slotNeeds(tpl, mode) {
     const events = (tpl.tracks || []).some((tr) => (tr.clips || []).some((c) => c.trigger || c.until));
-    return { t: mode === 'streamed', p: mode === 'streamed' && (tpl.params || []).length > 0, g: events, r: events };
+    return { t: mode === 'streamed', p: mode === 'streamed' && (tpl.params || []).length > 0, events };
   }
   /** a short, stable property-name part for a template (property names are short: namespace:name, lower case) */
   const slotTag = (i) => `t${i}s`;
-  /** the budget of a document: per sequence, its templates' instances, slots and mode (baked: every instance written into the
-   *  Molang; streamed: the script puts each instance into its slot just before it shows), the properties that takes (the
-   *  sequences share them: the largest counts) — warnings when over propertyLimit (32 by default: to be measured on the game) */
-  function budget(doc, { propertyLimit = 32, bakedMax = 64, gap = 0.25, ns = 'geoui' } = {}) {
-    const sequences = [], warnings = [];
-    let most = 0;
+  /** the budget of a document: per sequence, its templates' instances, slots and mode — baked (each slot's instances written
+   *  into the Molang: what shows runs on the client's own clock, no property per instance) unless a template has more than
+   *  bakedMax instances and its params fit its pack: streamed (the script puts each instance into its slot just before it
+   *  shows). The properties are shared by the sequences (a template's tag is its place in its sequence): what every
+   *  sequence needs, together, plus base (the pack's own) — warnings when over propertyLimit (32: the game's) */
+  function budget(doc, { propertyLimit = 32, bakedMax = 2000, gap = 0.25, ns = 'geoui', base = 0 } = {}) {
+    const sequences = [], warnings = [], tags = new Map();   // tag → { t, p, groups }
     for (const seq of (doc && doc.sequences) || []) {
-      let props = 0;
       const templates = (seq.templates || []).map((tpl, i) => {
         const count = (seq.instances || []).filter((x) => x.template === tpl.id).length;
-        const mode = count > bakedMax ? 'streamed' : 'baked';
-        const a = allocateSlots(seq.instances, tpl, { gap: mode === 'streamed' ? gap : 0 }), need = slotNeeds(tpl, mode);
-        const per = Object.values(need).filter(Boolean).length;
-        props += per * a.slots;
-        return { id: tpl.id, tag: slotTag(i), instances: count, slots: a.slots, mode, perSlot: per, needs: need };
+        const mode = count > bakedMax && canStream(tpl) ? 'streamed' : 'baked';
+        if (count > bakedMax && mode === 'baked') warnings.push(`テンプレート「${tpl.name || tpl.id}」は実体が ${count} 個ですが、param が詰め方（pack）に入りきらないので焼き込みで書き出します（式が長くなります）`);
+        const a = allocateSlots(seq.instances, tpl, { gap: mode === 'streamed' ? gap : 0 }), need = slotNeeds(tpl, mode), tag = slotTag(i);
+        const groups = need.events ? Math.ceil(a.slots / EV_PER) : 0, u = tags.get(tag) || { t: 0, p: 0, groups: 0 };
+        tags.set(tag, { t: Math.max(u.t, need.t ? a.slots : 0), p: Math.max(u.p, need.p ? a.slots : 0), groups: Math.max(u.groups, groups) });
+        return { id: tpl.id, tag, instances: count, slots: a.slots, mode, needs: need, eventGroups: groups, properties: (need.t ? a.slots : 0) + (need.p ? a.slots : 0) + groups };
       });
-      sequences.push({ id: seq.id, templates, properties: 4 + props });
-      most = Math.max(most, 4 + props);
+      sequences.push({ id: seq.id, templates, properties: 2 + templates.reduce((s, t) => s + t.properties, 0) });
     }
-    if (most > propertyLimit) warnings.push(`プロパティが ${most} 個要ります（上限 ${propertyLimit}）: 同時に出る実体を減らす（lead・tail を短く）か、出来事（trigger・until）を使うテンプレートを減らす`);
-    return { sequences, properties: most, propertyLimit, warnings, names: names(ns) };
+    const own = 2 + [...tags.values()].reduce((s, u) => s + u.t + u.p + u.groups, 0), total = base + own;
+    if (total > propertyLimit) warnings.push(`プロパティが ${total} 個要ります（GeoUI の ${base} 個とタイムラインの ${own} 個。上限 ${propertyLimit}）: 流し込みのテンプレートを焼き込みに（bakedMax を上げる）するか、同時に出る実体を減らす（lead・tail を短く）`);
+    return { sequences, properties: own, total, base, propertyLimit, warnings, names: names(ns), tags: Object.fromEntries(tags) };
   }
   /** the entity properties (BP player.json "description.properties") for a budget */
   function propertyDefs(b, ns = 'geoui') {
-    const N = names(ns), out = {
-      [N.seq]: { type: 'int', range: [0, 1023], default: 0, client_sync: true },
-      [N.gen]: { type: 'int', range: [0, 1000000], default: 0, client_sync: true },
-      [N.from]: { type: 'int', range: [0, 100000000], default: 0, client_sync: true },
-      [N.pause]: { type: 'bool', default: false, client_sync: true },
+    const N = names(ns), top = 2 ** MAX_BITS - 1, out = {
+      [N.seq]: { type: 'int', range: [0, top], default: 0, client_sync: true },
+      [N.from]: { type: 'int', range: [0, top], default: 0, client_sync: true },
     };
-    // (the largest sequence's slots: the others reuse them)
-    const big = (b.sequences || []).reduce((a, s) => (!a || s.properties > a.properties ? s : a), null);
-    for (const t of (big && big.templates) || []) {
-      for (let k = 0; k < t.slots; k++) {
-        const P = N.slot(t.tag, k);
-        if (t.needs.t) out[P.t] = { type: 'int', range: [-1, 100000000], default: -1, client_sync: true };
-        if (t.needs.p) out[P.p] = { type: 'int', range: [0, 2 ** MAX_BITS - 1], default: 0, client_sync: true };
-        if (t.needs.g) out[P.g] = { type: 'int', range: [0, 1000000], default: 0, client_sync: true };
-        if (t.needs.r) out[P.r] = { type: 'int', range: [0, RESULTS.length - 1], default: 0, client_sync: true };
-      }
+    for (const [tag, u] of Object.entries((b && b.tags) || {})) {
+      for (let k = 0; k < u.t; k++) out[N.slot(tag, k).t] = { type: 'int', range: [-1, top], default: -1, client_sync: true };
+      for (let k = 0; k < u.p; k++) out[N.slot(tag, k).p] = { type: 'int', range: [0, top], default: 0, client_sync: true };
+      for (let g = 0; g < u.groups; g++) out[N.events(tag, g)] = { type: 'int', range: [0, top], default: 0, client_sync: true };
     }
     return out;
   }
 
-  T.contract = { MAX_BITS, DEFAULT_PACK, RESULTS, checkSpec, stepOf, pack, unpack, unpackMolang, allocateSlots, names, slotNeeds, slotTag, budget, propertyDefs };
+  T.contract = { MAX_BITS, DEFAULT_PACK, RESULTS, SEQ, EV_BITS, EV_PER, checkSpec, stepOf, pack, unpack, unpackMolang, allocateSlots, names, seqValue, seqParts, seqMolang, eventSlot, eventValue, eventMolang, canStream, slotNeeds, slotTag, budget, propertyDefs };
   if (typeof module === 'object' && module && module.exports) module.exports = T.contract;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

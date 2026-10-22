@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Rhythm 300 RP",
+    "description": "GeoUI timeline sample: a map of real size, 300 objects (bds-lab)",
+    "uuid": "fc53402f-bf79-4638-8e51-010505be766e",
+    "version": [1, 0, 1],
+    "min_engine_version": [1, 26, 50]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "22e58488-444c-4b2b-82a0-0b9a16a2c55d",
+      "version": [1, 0, 1]
+    }
+  ]
+}

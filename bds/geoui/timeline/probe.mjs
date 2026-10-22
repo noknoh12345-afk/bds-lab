@@ -164,15 +164,16 @@ function probeStructure() {
 const nested = (depth, k) => { let s = `(v.gp_t == ${k} ? 1 : 0)`; for (let i = 0; i < depth - 1; i++) s = `(v.gp_t == ${1000 + i} ? 0 : ${s})`; return s; };
 const flat = (length, k) => { const head = `(v.gp_t == ${k}) * 0.5 + (v.gp_t == ${k}) * 0.5`, term = ' + v.gp_t * 0'; return head + term.repeat(Math.max(0, Math.ceil((length - head.length) / term.length))); };
 
-/** geoui_probe_m: Molang's length and depth in pre_animation, from short to long, a canary after each (round 1 put longer ones
- *  and a 600-bone geometry in one pack, and nothing of it drew: something there stops the whole entity) */
+/** geoui_probe_m: the Molang the export writes, at its largest — lines cut short (compile.splitLines: 1000 characters, 24
+ *  brackets), the lookups of thousands of baked instances (compile.searchLines / tableLines), 3000 lines and 450 000
+ *  characters in one pre_animation — a canary after each. Not what it never writes: rounds 2 and 3 also had lines of 6000 …
+ *  16 000 characters and 54 and 100 brackets deep, and the app never got into that world (3 runs, while the other probes got
+ *  in: the BDS took the pack and a client joined it here) */
 function probeMolang() {
-  // (first what the export itself does — a long line cut into short ones (compile.splitLines), many lines — then the longer
-  //  and deeper lines, short to long, a canary after each)
   const ns = 'gprobm', steps = [['split', flat(16000, 0), '入れ子なし 16000 文字を compile.js の splitLines で 1000 文字以下・深さ 24 以下の行に分けた物（書き出しはこの形）', 'split'],
-    ['lines', null, 'pre_animation に 3000 行（その後の行で 2999 行目の値を読む）', 'lines'],
-    ['d54', nested(54, 0), '入れ子 54 段（geoui_rhythm のスライダーの玉と同じ深さ）'], ['f6k', flat(6000, 0), '入れ子なし 6000 文字'],
-    ['f8k', flat(8000, 0), '入れ子なし 8000 文字（compile.js の上限の見込み）'], ['f12k', flat(12000, 0), '入れ子なし 12000 文字'], ['d100', nested(100, 0), '入れ子 100 段'], ['f16k', flat(16000, 0), '入れ子なし 16000 文字']];
+    ['w1000', flat(948, 0), '入れ子なし 1000 文字の 1 行（書き出しの 1 行の上限）'], ['d24', nested(23, 0), '入れ子 24 段（書き出しの深さの上限）'],
+    ['tbl', null, '2000 個の焼き込みの実体の引き方（compile.js の searchLines と tableLines: 16 個ずつの組と二分木）で 1500 個目を引く', 'tbl'],
+    ['lines', null, 'pre_animation に 3000 行・45 万文字（その後の行で 2999 行目の値を読む）', 'lines']];
   const tests = [{ id: 'ctl', what: '基準: ふつうのボーン・scale で出し入れ' }];
   for (const [id, , what] of steps) tests.push({ id, what: `${what}（${id} の式の板）` }, { id: `${id}_c`, what: `カナリア: ${what} の行の後` });
   tests.forEach((t, i) => Object.assign(t, { k: i + 1, at: cellAt(i) }));
@@ -188,15 +189,23 @@ function probeMolang() {
   const lines = [`v.gp_t = q.property('${ns}:v2');`], choose = (id, expr) => expr.replace(/v\.gp_t == 0\)/g, `v.gp_t == ${K[id]} || v.gp_t == ${ALL})`).replace(/v\.gp_t == 0 \?/g, `(v.gp_t == ${K[id]} || v.gp_t == ${ALL}) ?`);
   for (const [id, expr, , kind] of steps) {
     if (kind === 'split') { const r = C.splitLines([`v.gpm_${id} = ${choose(id, expr)};`], { limit: 1000, depth: 24, prefix: 'v.gpm_s' }); lines.push(...r.lines); tests.find((t) => t.id === id).lines = r.lines.length; }
-    else if (kind === 'lines') { for (let i = 0; i < 3000; i++) lines.push(`v.gpm_l${i} = ${i};`); lines.push(`v.gpm_${id} = ((v.gp_t == ${K[id]} || v.gp_t == ${ALL}) && v.gpm_l2999 == 2999) ? 1 : 0;`); }
+    else if (kind === 'tbl') {
+      // (the time 150.05 when chosen: the first of 2000 ends (i + 1) × 0.1 past it is #1500; then its value, i mod 7, by number)
+      const tl = [`v.gpm_tk = (v.gp_t == ${K[id]} || v.gp_t == ${ALL}) ? 150.05 : -1;`];
+      C.searchLines('v.gpm_tk', Array.from({ length: 2000 }, (_, i) => (i + 1) / 10), 'v.gpm_ti', tl);
+      tl.push('v.gpm_tq = math.floor(v.gpm_ti / 16);');
+      C.tableLines('v.gpm_ti', Array.from({ length: 2000 }, (_, i) => String(i % 7)), 'v.gpm_tv', '-1', 'v.gpm_tq', tl);
+      tl.push(`v.gpm_${id} = ((v.gp_t == ${K[id]} || v.gp_t == ${ALL}) && v.gpm_ti == 1500 && v.gpm_tv == ${1500 % 7}) ? 1 : 0;`);
+      lines.push(...tl); tests.find((t) => t.id === id).lines = tl.length;
+    } else if (kind === 'lines') { for (let i = 0; i < 3000; i++) lines.push(`v.gpm_l${i} = ${i}${' + v.gp_t * 0'.repeat(10)};`); lines.push(`v.gpm_${id} = ((v.gp_t == ${K[id]} || v.gp_t == ${ALL}) && v.gpm_l2999 == 2999) ? 1 : 0;`); }
     else lines.push(`v.gpm_${id} = ${choose(id, expr)};`);
     lines.push(`v.gpm_${id}_c = 1;`);
   }
   addPre(files, ns, lines);
   for (const [id, expr] of steps) if (expr) tests.find((t) => t.id === id).len = expr.length;
   return { ns, name: 'geoui_probe_m', files, warnings: built.warnings, tests, title: 'GeoUI の Molang の長さ・深さの確かめ（pre_animation）',
-    notes: [`式の長さ: ${steps.filter(([, e]) => e).map(([id, e]) => `${id} ${e.length} 文字`).join('・')}（split はそれを ${tests.find((t) => t.id === 'split').lines} 行に分けた物）。短い物から順に、各行の後にカナリア。`,
-      '1 回目（2026-10-21）は長い式（3 万・10 万文字、入れ子 400 段）と 600 本のジオメトリを 1 つのパックに入れ、何も描かれなかった（エンティティごと読まれていない）。'] };
+    notes: [`式: ${steps.filter(([, e]) => e).map(([id, e]) => `${id} ${e.length} 文字`).join('・')}（split はそれを ${tests.find((t) => t.id === 'split').lines} 行に分けた物）、tbl ${tests.find((t) => t.id === 'tbl').lines} 行。各行の後にカナリア。`,
+      '1 回目（2026-10-21）は長い式（3 万・10 万文字、入れ子 400 段）と 600 本のジオメトリを 1 つのパックに入れ、何も描かれなかった。2・3 回目（6000〜16000 文字・入れ子 54 と 100 段も入れた物）は、アプリがそのワールドに 3 回とも入れなかった（BDS は読み込み、手元のクライアントは入れた）。書き出しはどちらの形も出さないので、ここでは書き出しが出す形だけを確かめる。'] };
 }
 
 /** geoui_probe_b: the limits a big export leans on — a geometry of 600 bones (planes on bones #250 … #599: a bone's index
@@ -392,7 +401,7 @@ ${P.tests.map((t) => `- テスト ${t.k}（${t.id}）: ${t.what}`).join('\n')}
 ## Not proven here (needs the real app: app.txt)
 - どのテストの板が描かれるか（probe.mjs read が答える）
 `));
-  const props = P.timeline ? `['v2','seq','seq_gen']` : `['v2','alpha']`, want = P.timeline ? '[0,0,0]' : '[0,100]';
+  const props = P.timeline ? `['v2','seq','seq_from']` : `['v2','alpha']`, want = P.timeline ? '[0,0,0]' : '[0,100]';
   out.set('tests.txt', Buffer.from(`# ${P.name}（bds/geoui/timeline/probe.mjs が作る）: BP が読み込めること。描画は app.txt（本物のアプリ）で。
 # = 完全一致 | ~ 正規表現 | ! 無い | !~ 無い正規表現 | '## 題' = 節
 

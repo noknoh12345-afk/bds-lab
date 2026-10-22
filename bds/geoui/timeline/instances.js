@@ -141,6 +141,9 @@
     el.append(wrap);
     const widthOf = (c) => (c.key === 't' ? 84 : c.key === 'template' ? 120 : 70);
     function paint() {
+      // (a cell being edited is kept: a repaint queued by the click before the double-click would take its input away — the
+      //  edit then repaints when it is done)
+      if (state.editing && state.editing.isConnected) return;
       const seq = seqOf();
       if (!seq) { spacer.textContent = ''; count.textContent = 'シーケンスがありません'; return; }
       const cols = columns(seq), rows = rowsOf(seq, state), sel = new Set((store.selection() || {}).instances || []), fps = seq.fps || 20;

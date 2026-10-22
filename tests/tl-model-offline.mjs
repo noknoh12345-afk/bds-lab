@@ -166,10 +166,30 @@ ok(a.slots === 3 && a.slotOf.i3 === 0 && !a.overflow.length && [0, 1, 2].every((
 a = K.allocateSlots(inst, tplA, { maxSlots: 2 });
 ok(a.slots === 2 && JSON.stringify(a.overflow) === '["i2"]' && K.allocateSlots(inst, tplA, { gap: 2 }).slots === 4, 'maxSlots: the rest overflow; a gap between two in one slot needs more slots');
 const many = { sequences: [{ id: 's', templates: [{ id: 'hc', lead: 1, tail: 0.5, params: ['x', 'y'], tracks: [{ clips: [{ trigger: 'hit' }] }] }], instances: Array.from({ length: 100 }, (_, i) => ({ id: `n${i}`, template: 'hc', t: i * 0.25 })) }] };
+// (baked by default: the instances in the Molang, only the results a property — 3 bits a slot, 8 slots a property)
 const bud = K.budget(many), defs = K.propertyDefs(bud);
-ok(bud.sequences[0].templates[0].mode === 'streamed' && bud.sequences[0].templates[0].slots === 7 && bud.properties === 4 + 7 * 4 && bud.warnings.length === 0 && K.budget(many, { propertyLimit: 30 }).warnings.length === 1 && Object.keys(defs).length === bud.properties && defs['geoui:t0s6p'].range[1] === 2 ** 24 - 1 && defs['geoui:seq_pause'].type === 'bool',
-  'budget: 100 instances are streamed, 7 slots (with the gap), 4 properties a slot (time, params, event, result) — 32 fits, a lower limit says so; the definitions match', JSON.stringify(bud.sequences[0].templates[0]) + ' ' + bud.properties);
-
+ok(bud.sequences[0].templates[0].mode === 'baked' && bud.sequences[0].templates[0].slots === 6 && bud.properties === 2 + 1 && Object.keys(defs).length === bud.properties && defs['geoui:t0se0'] && defs['geoui:seq'].range[1] === 2 ** 24 - 1 && !defs['geoui:t0s0t'],
+  'budget: 100 instances baked by default, 6 slots, 3 properties (the sequence, its time, one for the results of up to 8 slots); the definitions match', JSON.stringify(bud.sequences[0].templates[0]) + ' ' + bud.properties);
+// (streamed past bakedMax: time and params a slot, with the gap; GeoUI's own properties count towards the game's 32)
+const bs = K.budget(many, { bakedMax: 50 }), ds = K.propertyDefs(bs);
+ok(bs.sequences[0].templates[0].mode === 'streamed' && bs.sequences[0].templates[0].slots === 7 && bs.properties === 2 + 7 * 2 + 1 && bs.warnings.length === 0 && K.budget(many, { bakedMax: 50, base: 16 }).warnings.length === 1 && K.budget(many, { bakedMax: 50, base: 15 }).warnings.length === 0
+  && Object.keys(ds).length === bs.properties && ds['geoui:t0s6p'].range[1] === 2 ** 24 - 1 && ds['geoui:t0s6t'].default === -1,
+  'budget: past bakedMax streamed — 7 slots (with the gap), time and params a slot, the results in one; with the pack\'s own 16 that is 33 (said), with 15 it fits', JSON.stringify(bs.sequences[0].templates[0]) + ' ' + bs.properties);
+// (params that do not fit the pack: baked however many, and said)
+const wide = JSON.parse(JSON.stringify(many)); wide.sequences[0].templates[0].params = ['x', 'y', 'q'];
+const bw = K.budget(wide, { bakedMax: 50 });
+ok(bw.sequences[0].templates[0].mode === 'baked' && bw.warnings.some((w) => /焼き込み/.test(w)) && !K.canStream(wide.sequences[0].templates[0]) && K.canStream(many.sequences[0].templates[0]), 'budget: a template whose params do not fit its pack stays baked past bakedMax, and says so');
+// (two sequences share the properties: a tag's slots are the most any sequence needs)
+const twoSeq = { sequences: [many.sequences[0], { id: 's2', templates: [{ id: 'z', lead: 3, tail: 3, params: [], tracks: [{ clips: [{ until: 'hit' }] }] }], instances: Array.from({ length: 60 }, (_, i) => ({ id: `z${i}`, template: 'z', t: i * 0.2 })) }] };
+const b2 = K.budget(twoSeq), d2 = K.propertyDefs(b2);
+ok(b2.sequences[1].templates[0].slots > 8 && d2['geoui:t0se1'] && b2.properties === 2 + Math.ceil(b2.sequences[1].templates[0].slots / 8), 'budget: two sequences share their properties — a tag takes the most slots any sequence needs (here 2 result properties)', JSON.stringify(b2.tags));
+// (the seq property: sequence, pause and generation in 24 bits; the game's Molang reads the same)
+const sv = K.seqValue({ seq: 37, pause: true, gen: 8191 }), sp = K.seqParts(sv), sm = K.seqMolang("q.property('geoui:seq')"), senv = G.envOf({ props: { 'geoui:seq': sv } });
+ok(sv < 2 ** 24 && sp.seq === 37 && sp.pause === true && sp.gen === 8191 && K.seqParts(K.seqValue({ seq: 2, gen: 8192 })).gen === 0 && G.molang(sm.seq, senv) === 37 && G.molang(sm.pause, senv) === 1
+  && G.molang(sm.pause, G.envOf({ props: { 'geoui:seq': K.seqValue({ seq: 5, gen: 77 }) } })) === 0, 'seq: the sequence, paused, the generation (it wraps at 8192) in one number below 2^24 — the Molang reads the sequence and the pause back');
+// (results: 3 bits a slot, 8 slots a property; the Molang reads each slot's)
+const codes = [1, 2, 0, 5, 3, 7, 4, 6], evv = K.eventValue(codes), eenv = G.envOf({ props: { "geoui:t0se0": evv } });
+ok(evv < 2 ** 24 && codes.every((c, k) => G.molang(K.eventMolang("q.property('geoui:t0se0')", k), eenv) === c) && K.eventSlot(13).group === 1 && K.eventSlot(13).shift === 5, 'results: 8 slots in one number below 2^24, each slot\'s read back by its Molang');
 
 // ---- a template timed by its instance (a slider: its length and path its own; the ball back and forth with t) ----
 const sl = M.normalize({ sequences: [{ id: 's', duration: 10, paths: [{ id: 'p1', kind: 'linear', points: [[0, 0], [10, 0]] }],

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// GeoUI timeline — the sample: an osu!-style rhythm HUD made with the timeline and written to bds/addons/geoui_rhythm/ (an
-// add-on the lab can test: tests.txt on a real BDS, app.txt in the real app). Everything is the lab's own: the beatmap, the
-// textures (drawn here) and the click track (made here). node bds/geoui/timeline/demo.mjs [--check]
-//   --check: write nothing, fail when the add-on in the repository is not what this makes (tests/tl-runtime-offline.mjs runs it)
+// GeoUI timeline — the samples: an osu!-style rhythm HUD made with the timeline and written to bds/addons/geoui_rhythm/ (a
+// short map: 19 objects, a click track) and bds/addons/geoui_rhythm_big/ (a map of real size: osu.sampleMap's 300 objects over
+// two minutes, no music) — add-ons the lab can test: tests.txt on a real BDS, app.txt in the real app. Everything is the lab's
+// own: the beatmaps, the textures (drawn here) and the click track (made here). node bds/geoui/timeline/demo.mjs [--check]
+//   --check: write nothing, fail when an add-on in the repository is not what this makes (tests/tl-runtime-offline.mjs runs it)
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -13,9 +14,13 @@ const TOP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..
 const G = require('../geoui_builder.js');
 require('./model.js'); require('./contract.js');
 const Me = require('./media.js'), O = require('./osu.js'), C = require('./compile.js'), R = require('./runtime.js'), Br = require('./bridge.js');
-const NS = 'geoui', OUT = path.join(TOP, 'bds', 'addons', 'geoui_rhythm');
+const NS = 'geoui';
+let failed = false;
 
-// ---- the beatmap: 120 BPM, 16 circles in 4 combos, a slider there and back, a spinner (written here, the lab's own)
+function make(V) {
+const OUT = path.join(TOP, 'bds', 'addons', V.name);
+// ---- the beatmap: 120 BPM, 16 circles in 4 combos, a slider there and back, a spinner (written here, the lab's own) — or the
+//      large one (osu.sampleMap)
 const objects = [];
 const at = (beat) => Math.round(1000 + beat * 500);
 [[176, 160], [256, 112], [336, 160], [256, 208], [96, 96], [176, 64], [256, 96], [336, 64], [416, 96], [336, 192], [256, 288], [176, 192], [96, 288]].forEach(([x, y], i) => {
@@ -28,10 +33,10 @@ const MAP = ['osu file format v14', '', '[General]', 'AudioFilename: click.wav',
   '[Difficulty]', 'HPDrainRate:5', 'CircleSize:4', 'OverallDifficulty:6', 'ApproachRate:7', 'SliderMultiplier:1.4', 'SliderTickRate:1', '',
   '[TimingPoints]', '1000,500,4,2,0,60,1,0', '', '[Colours]', 'Combo1 : 255,128,64', 'Combo2 : 64,192,255', 'Combo3 : 128,255,96', 'Combo4 : 255,96,192', '',
   '[HitObjects]', ...objects, ''].join('\n');
-const map = O.parseOsu(MAP), { doc, bodies, info } = O.toDocument(map, { width: 120, designRadius: 10, sound: 'click' });
+const map = O.parseOsu(V.big ? O.sampleMap(V.big) : MAP), { doc, bodies, info } = O.toDocument(map, { width: 120, designRadius: 10, sound: 'click' });
 
-// ---- textures: one 128 x 256 atlas, drawn pixel by pixel
-const W = 128, H = 256, img = new Uint8Array(W * H * 4);
+// ---- textures: one atlas (128 x 256; the large map's 1024 x 1024 for its bodies), drawn pixel by pixel
+const W = V.atlas[0], H = V.atlas[1], img = new Uint8Array(W * H * 4);
 const px = (x, y, [r, g, b, a]) => { if (x < 0 || y < 0 || x >= W || y >= H) return; const o = (y * W + x) * 4; img[o] = r; img[o + 1] = g; img[o + 2] = b; img[o + 3] = a; };
 const disc = (cx, cy, r0, r1, col) => { for (let y = Math.floor(cy - r1); y <= cy + r1; y++) for (let x = Math.floor(cx - r1); x <= cx + r1; x++) { const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy); if (d >= r0 && d <= r1) px(x, y, col); } };
 // (rows of 4 frames: a circle per combo colour, its approach ring per colour — the template's frame param.c picks it by uv_anim)
@@ -55,7 +60,7 @@ const FONT = ['111101101101111', '010110010010111', '111001111100111', '11100111
 FONT.forEach((f, d) => { for (let i = 0; i < 15; i++) if (f[i] === '1') px(d * 4 + (i % 3), REG.digits[1] + 1 + Math.floor(i / 3), [255, 255, 255, 255]); });
 // (the slider bodies under the rest: the editor's own atlas of them (bridge.bodyAtlas, a cell each — param f picks it) and its
 //  look (media.bodyImage, along the ball's way), drawn without a canvas (media.rasterOps), each centred in its cell)
-const BODY_Y = 128, BA = Br.bodyAtlas(bodies, { maxSize: W, most: 2 });
+const BODY_Y = 128, BA = Br.bodyAtlas(bodies, { maxSize: Math.min(W, H - BODY_Y), most: 2 });
 if (BODY_Y + BA.h > H) throw new Error(`the slider bodies (${BA.w} x ${BA.h} px) do not fit under the atlas's rest`);
 REG.sliderbody = [0, BODY_Y, BA.cell[0], BA.cell[1]];
 bodies.forEach((b, i) => {
@@ -91,20 +96,27 @@ elements.combo = { type: 'number', anchor: 'bottom-left', number: { source: `q.p
 bones.push(plane('healthback', 'geo_ui', [-55, 206], [40, 4], REG.barback, 1)); elements.healthback = { type: 'image', anchor: 'top-left' };
 bones.push(Object.assign(plane('health', 'geo_ui', [-55, 206], [40, 4], REG.bar, 0.5), { pivot: [-75, 206, 0.5] }));
 elements.health = { type: 'gauge', anchor: 'top-left', gauge: { source: `q.property('${NS}:v3')`, max: 100, fill: 'left' } };
-const design = { settings: { ns: NS, name: 'GeoUI Rhythm', description: 'GeoUI timeline sample: an osu!-style HUD (bds-lab)', bp: true, calibration: G.MEASURED.id }, seed: 'geoui_rhythm',
+const design = { settings: { ns: NS, name: V.title, description: V.description, bp: true, calibration: G.MEASURED.id }, seed: V.name,
   bones, elements, textures: { atlas: { name: 'atlas', width: W, height: H, png: png.toString('base64') } } };
 
 // ---- the timeline: the beatmap imported (above), the click track as its music
 const seq = doc.sequences[0];
-seq.name = 'Lab Click (demo)';
-seq.markers = [{ id: 'end', t: at(24) / 1000, name: 'おわり', event: 'done' }];
-const rate = 22050, len = Math.ceil((at(24) / 1000 + 1) * rate), pcm = new Float32Array(len);
-for (let b = 0; b < 24; b++) { const s0 = Math.round((at(b) / 1000) * rate); for (let i = 0; i < 1200 && s0 + i < len; i++) pcm[s0 + i] = Math.sin((i / rate) * 2 * Math.PI * (b % 4 ? 880 : 1320)) * Math.exp(-i / 220) * 0.6; }
-const wav = Me.makeWav(pcm, rate);
+seq.name = V.big ? `Lab Sample ${V.big}` : 'Lab Click (demo)';
+let sounds = [];
+if (V.big) {
+  // (no music for two minutes: the map alone, played silent; the end marked)
+  seq.tracks = seq.tracks.filter((t) => t.kind !== 'audio');
+  seq.markers = [{ id: 'end', t: Math.round((seq.duration - 1) * 1000) / 1000, name: 'おわり', event: 'done' }];
+} else {
+  seq.markers = [{ id: 'end', t: at(24) / 1000, name: 'おわり', event: 'done' }];
+  const rate = 22050, len = Math.ceil((at(24) / 1000 + 1) * rate), pcm = new Float32Array(len);
+  for (let b = 0; b < 24; b++) { const s0 = Math.round((at(b) / 1000) * rate); for (let i = 0; i < 1200 && s0 + i < len; i++) pcm[s0 + i] = Math.sin((i / rate) * 2 * Math.PI * (b % 4 ? 880 : 1320)) * Math.exp(-i / 220) * 0.6; }
+  sounds = [{ id: 'click', ext: 'wav', data: Me.makeWav(pcm, rate) }];
+}
 
 // ---- the pack: GeoUI Builder's export, the timeline's RP and BP added
 const built = G.buildPack(design);
-const rp = C.extendPack(built.files, doc, { design, core: G, bakedMax: 64, sounds: [{ id: 'click', ext: 'wav', data: wav }] });
+const rp = C.extendPack(built.files, doc, { design, core: G, sounds });
 const bp = R.extendBehavior(rp.files, doc, { stats: rp.stats, windows: info.difficulty.windows });
 const files = bp.files, warnings = [...built.warnings, ...rp.warnings, ...bp.warnings];
 
@@ -114,58 +126,63 @@ for (const [f, v] of Object.entries(files)) {
   const rel = f.replace(`${NS}_RP/`, 'rp/').replace(`${NS}_BP/`, 'bp/');
   out.set(rel, v && v.base64 ? Buffer.from(v.base64, 'base64') : v instanceof Uint8Array ? Buffer.from(v) : Buffer.from(String(v)));
 }
-out.set('imported.json', Buffer.from(`${JSON.stringify({ from: 'bds/geoui/timeline/demo.mjs', rp: [1, 0, 0], bp: [1, 0, 0], request: 'GeoUI のタイムラインで作った osu! 風の HUD（見本）: 譜面・絵・音はラボの物' }, null, 2)}\n`));
-out.set('TASK.md', Buffer.from(`# geoui_rhythm — GeoUI のタイムラインで作った osu! 風の HUD（見本）
+out.set('imported.json', Buffer.from(`${JSON.stringify({ from: 'bds/geoui/timeline/demo.mjs', rp: [1, 0, 0], bp: [1, 0, 0], request: V.big ? `GeoUI のタイムラインで作った osu! 風の HUD（本物の大きさの譜面 ${V.big} 個の見本）: 譜面・絵はラボの物` : 'GeoUI のタイムラインで作った osu! 風の HUD（見本）: 譜面・絵・音はラボの物' }, null, 2)}\n`));
+const props = Object.keys(JSON.parse(files[`${NS}_BP/entities/player.json`])['minecraft:entity'].description.properties).length;
+out.set('TASK.md', Buffer.from(`# ${V.name} — GeoUI のタイムラインで作った osu! 風の HUD（${V.big ? `本物の大きさの譜面 ${V.big} 個の見本` : '見本'}）
 
 ## Request
-GeoUI Builder のタイムライン（bds/geoui/timeline）で、osu! のようなリズムゲームの画面を作れることを、本物の BDS と本物のアプリで確かめる。
-作り方: \`node bds/geoui/timeline/demo.mjs\`（譜面・絵・クリックの音はラボの物。実在の譜面・曲は入れない）。
+GeoUI Builder のタイムライン（bds/geoui/timeline）で、osu! のようなリズムゲームの画面を作れることを、本物の BDS と本物のアプリで確かめる${V.big ? '。本物の大きさの譜面（何百個）でも、プロパティ・Molang の行・ボーン・アニメーションがゲームの限度に収まり、写した画が動くこと' : ''}。
+作り方: \`node bds/geoui/timeline/demo.mjs\`（譜面・絵${V.big ? '' : '・クリックの音'}はラボの物。実在の譜面・曲は入れない）。
 
 ## What it is
-- 譜面 ${info.counts.circles} 個の円・${info.counts.sliders} 本のスライダー（往復）・${info.counts.spinners} 個のスピナー、120 BPM、AR 7・CS 4・OD 6（判定 ${info.difficulty.windows.great}/${info.difficulty.windows.good}/${info.difficulty.windows.meh} ms）。
-- RP: テンプレートの枠（円 ${Object.values(rp.stats.slots).map((s) => s.slots).join('・')} 枠）、出来事（当たり・外れ）、点数・コンボ（v0・v1）・体力のゲージ（v3）。
+- 譜面 ${info.counts.circles} 個の円・${info.counts.sliders} 本のスライダー（往復も）・${info.counts.spinners} 個のスピナー、${V.big ? '180 BPM、AR 9・CS 4・OD 8' : '120 BPM、AR 7・CS 4・OD 6'}（判定 ${info.difficulty.windows.great}/${info.difficulty.windows.good}/${info.difficulty.windows.meh} ms）、${Math.round(seq.duration)} 秒${V.big ? '（音楽なし）' : ''}。
+- RP: テンプレートの枠（${Object.values(rp.stats.slots).map((s) => `${s.slots} 枠`).join('・')}、焼き込み: 見た目はクライアントの時計だけで動く）、スライダーの玉は実体ごとのアニメーション、出来事（当たり・外れ）、点数・コンボ（v0・v1）・体力のゲージ（v3）。
+- 大きさ: プレイヤーのプロパティ ${props} 個（GeoUI の 11 個を含む・上限 32）、pre_animation ${rp.stats.lines} 行（最長 ${rp.stats.longest} 文字・括弧 ${rp.stats.deepest} 段）、ボーン ${rp.stats.counts.bones} 本、要素ごとの render controller ${rp.stats.counts.renderControllers} 個、アニメーション ${rp.stats.counts.animations} 個。
 - BP: \`/scriptevent ${NS}:play 1\`・stop・pause・resume・seek <秒>・offset <ms>。ジャンプ・スニーク・アイテムを使うで判定。
 
 ## Acceptance (one tests.txt \`## \` section each)
 - [ ] 読み込める（タイムラインのプロパティが既定値）
-- [ ] play で再生が始まる（seq・seq_gen・seq_from）
+- [ ] play で再生が始まる（seq の番号と世代・seq_from）
 - [ ] seek・pause・resume がプロパティに出る
 - [ ] stop で止まる
 - [ ] 入り直すと、再生中のシーケンスをその時刻から送り直す（世代は続きの番号）
 `));
-out.set('tests.txt', Buffer.from(`# geoui_rhythm（bds/geoui/timeline/demo.mjs が作る）: タイムラインの BP（scripts/timeline.js）が本物の BDS で命令どおりにプロパティを書くか。
+// (the seq property, as contract.js packs it: [the sequence, paused, the generation])
+const SEQ = 'const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)];';
+out.set('tests.txt', Buffer.from(`# ${V.name}（bds/geoui/timeline/demo.mjs が作る）: タイムラインの BP（scripts/timeline.js）が本物の BDS で命令どおりにプロパティを書くか。
 # 描画は app.txt（本物のアプリ）。= 完全一致 | ~ 正規表現 | ! 無い | !~ 無い正規表現 | '## 題' = 節
+# seq は 1 つの数: シーケンス + 1024 × 止め + 2048 × 世代（contract.js）。q() が [シーケンス, 止め, 世代] に戻す。
 
 ## 読み込める（タイムラインのプロパティが既定値）
 @A join
 wait 2000
-js const e = p('A'); JSON.stringify(['seq','seq_gen','seq_from','seq_pause','t0s0g','t0s0r'].map((k) => e.getProperty('${NS}:' + k)))
-= [0,0,0,false,0,0]
+js const e = p('A'); ${SEQ} JSON.stringify([...q(e.getProperty('${NS}:seq')), ...['seq_from','t0se0'].map((k) => e.getProperty('${NS}:' + k))])
+= [0,false,0,0,0]
 
-## play で再生が始まる（seq・seq_gen・seq_from）
+## play で再生が始まる（seq の番号と世代・seq_from）
 scriptevent ${NS}:play 1
 wait 500
-js const e = p('A'); JSON.stringify(['seq','seq_gen','seq_from','seq_pause','v3'].map((k) => e.getProperty('${NS}:' + k)))
-= [1,1,0,false,100]
+js const e = p('A'); ${SEQ} JSON.stringify([...q(e.getProperty('${NS}:seq')), ...['seq_from','v3'].map((k) => e.getProperty('${NS}:' + k))])
+= [1,false,1,0,100]
 
 ## seek・pause・resume がプロパティに出る
 scriptevent ${NS}:seek 4
 wait 200
-js const e = p('A'); JSON.stringify(['seq_gen','seq_from'].map((k) => e.getProperty('${NS}:' + k)))
+js const e = p('A'); ${SEQ} JSON.stringify([q(e.getProperty('${NS}:seq'))[2], e.getProperty('${NS}:seq_from')])
 = [2,4000]
 scriptevent ${NS}:pause
 wait 200
-js p('A').getProperty('${NS}:seq_pause')
-= true
+js ${SEQ} JSON.stringify(q(p('A').getProperty('${NS}:seq')))
+= [1,true,2]
 scriptevent ${NS}:resume
 wait 200
-js const e = p('A'); JSON.stringify(['seq_pause','seq_gen'].map((k) => e.getProperty('${NS}:' + k)))
-= [false,3]
+js ${SEQ} JSON.stringify(q(p('A').getProperty('${NS}:seq')))
+= [1,false,3]
 
 ## stop で止まる
 scriptevent ${NS}:stop
 wait 200
-js p('A').getProperty('${NS}:seq')
+js ${SEQ} q(p('A').getProperty('${NS}:seq'))[0]
 = 0
 
 ## 入り直すと、再生中のシーケンスをその時刻から送り直す（世代は続きの番号）
@@ -175,17 +192,17 @@ wait 1000
 wait 1500
 @A join
 wait 2000
-js const e = p('A'), f = e.getProperty('${NS}:seq_from'); JSON.stringify([e.getProperty('${NS}:seq'), e.getProperty('${NS}:seq_gen'), Math.min(1, Math.floor(f / 4000)), Math.floor(f / 20000)])
+js const e = p('A'), f = e.getProperty('${NS}:seq_from'); ${SEQ} const v = q(e.getProperty('${NS}:seq')); JSON.stringify([v[0], v[2], Math.min(1, Math.floor(f / 4000)), Math.floor(f / 20000)])
 = [1,5,1,0]
 scriptevent ${NS}:stop
 wait 200
-js p('A').getProperty('${NS}:seq')
+js ${SEQ} q(p('A').getProperty('${NS}:seq'))[0]
 = 0
 `));
-const shots = [1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 8.0, 9.5, 11.0, 12.5];
+const shots = V.shots;
 // (measured in the playfield's part of the 1560 x 720 screen: the first-person hand on the right and the chat on top left out)
 const REGION = '0 170 1030 720';
-out.set('app.txt', Buffer.from(`# geoui_rhythm を本物のアプリで: 再生して、決まった時刻に写す（GeoUI のタイムラインが描く: 円・接近の輪・番号・スライダーの体と玉・スピナー・点数）
+out.set('app.txt', Buffer.from(`# ${V.name} を本物のアプリで: 再生して、決まった時刻に写す（GeoUI のタイムラインが描く: 円・接近の輪・番号・スライダーの体と玉・スピナー・点数）
 # 時刻は再生を始めてからの目安（サーバーの命令が届くまでの遅れがある）。比べる基準は再生前の画面（world--before-play）。
 
 section title
@@ -217,10 +234,10 @@ ${shots.map((t, i) => `wait ${Math.round((t - (i ? shots[i - 1] : 0)) * 1000)}\n
 absent clientlog \\bERROR\\b
 
 section seek-pause
-do scriptevent ${NS}:seek 6
+do scriptevent ${NS}:seek ${V.seek}
 wait 1500
-shot seek-6s
-measure diff seek-6s ${REGION}
+shot seek-${V.seek}s
+measure diff seek-${V.seek}s ${REGION}
 do scriptevent ${NS}:pause
 wait 1500
 shot paused-a
@@ -237,16 +254,27 @@ section log-molang
 # (a content error of Molang: a pre_animation line that the game cannot run stops the lines after it — the slots then never show)
 absent clientlog (?i)molang
 `));
-out.set('rp/sounds/README.md', Buffer.from('click.wav: the lab\'s own click track (bds/geoui/timeline/demo.mjs makes it: 880 / 1320 Hz on each beat).\n'));
+if (!V.big) out.set('rp/sounds/README.md', Buffer.from('click.wav: the lab\'s own click track (bds/geoui/timeline/demo.mjs makes it: 880 / 1320 Hz on each beat).\n'));
 
+const rel0 = `bds/addons/${V.name}`;
 if (process.argv.includes('--check')) {
   const stale = [];
   for (const [rel, data] of out) { const f = path.join(OUT, rel); if (!fs.existsSync(f) || !fs.readFileSync(f).equals(data)) stale.push(rel); }
-  if (stale.length) { console.error(`bds/addons/geoui_rhythm is not what demo.mjs makes (${stale.slice(0, 5).join(', ')}): node bds/geoui/timeline/demo.mjs`); process.exit(1); }
-  console.log(`OK bds/addons/geoui_rhythm is up to date (${out.size} files)`);
+  // (and nothing left over that this no longer makes)
+  const walk = (d) => (fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.relative(OUT, path.join(d, e.name)).split(path.sep).join('/')])) : []);
+  for (const rel of [...walk(path.join(OUT, 'rp')), ...walk(path.join(OUT, 'bp'))]) if (!out.has(rel)) stale.push(`${rel} (left over)`);
+  if (stale.length) { console.error(`${rel0} is not what demo.mjs makes (${stale.slice(0, 5).join(', ')}): node bds/geoui/timeline/demo.mjs`); failed = true; }
+  else console.log(`OK ${rel0} is up to date (${out.size} files)`);
 } else {
   fs.rmSync(path.join(OUT, 'rp'), { recursive: true, force: true }); fs.rmSync(path.join(OUT, 'bp'), { recursive: true, force: true });
   for (const [rel, data] of out) { const f = path.join(OUT, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, data); }
-  console.log(`OK bds/addons/geoui_rhythm: ${out.size} files · slots ${JSON.stringify(Object.fromEntries(Object.entries(rp.stats.slots).map(([k, v]) => [k, `${v.slots} ${v.mode}`])))} · longest Molang ${rp.stats.longest} · properties ${bp.cfg ? Object.keys(JSON.parse(files[`${NS}_BP/entities/player.json`])['minecraft:entity'].description.properties).length : 0}`);
+  console.log(`OK ${rel0}: ${out.size} files · slots ${JSON.stringify(Object.fromEntries(Object.entries(rp.stats.slots).map(([k, v]) => [k, `${v.slots} ${v.mode}`])))} · ${rp.stats.lines} lines, longest ${rp.stats.longest} · properties ${props}`);
 }
+// (what a sample cannot help: the large map's frame-less elements are none of these)
 for (const w of [...new Set(warnings)]) console.log(`W ${w}`);
+return warnings;
+}
+
+make({ name: 'geoui_rhythm', title: 'GeoUI Rhythm', description: 'GeoUI timeline sample: an osu!-style HUD (bds-lab)', atlas: [128, 256], shots: [1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 8.0, 9.5, 11.0, 12.5], seek: 6 });
+make({ name: 'geoui_rhythm_big', big: 300, title: 'GeoUI Rhythm 300', description: 'GeoUI timeline sample: a map of real size, 300 objects (bds-lab)', atlas: [1024, 1024], shots: [2, 5, 10, 20, 30, 45, 60, 80, 100, 112], seek: 60 });
+if (failed) process.exit(1);

@@ -110,16 +110,7 @@
           "type": "int",
           "range": [
             0,
-            1023
-          ],
-          "default": 0,
-          "client_sync": true
-        },
-        "geoui:seq_gen": {
-          "type": "int",
-          "range": [
-            0,
-            1000000
+            16777215
           ],
           "default": 0,
           "client_sync": true
@@ -128,102 +119,25 @@
           "type": "int",
           "range": [
             0,
-            100000000
+            16777215
           ],
           "default": 0,
           "client_sync": true
         },
-        "geoui:seq_pause": {
-          "type": "bool",
-          "default": false,
-          "client_sync": true
-        },
-        "geoui:t0s0g": {
+        "geoui:t0se0": {
           "type": "int",
           "range": [
             0,
-            1000000
+            16777215
           ],
           "default": 0,
           "client_sync": true
         },
-        "geoui:t0s0r": {
+        "geoui:t1se0": {
           "type": "int",
           "range": [
             0,
-            5
-          ],
-          "default": 0,
-          "client_sync": true
-        },
-        "geoui:t0s1g": {
-          "type": "int",
-          "range": [
-            0,
-            1000000
-          ],
-          "default": 0,
-          "client_sync": true
-        },
-        "geoui:t0s1r": {
-          "type": "int",
-          "range": [
-            0,
-            5
-          ],
-          "default": 0,
-          "client_sync": true
-        },
-        "geoui:t0s2g": {
-          "type": "int",
-          "range": [
-            0,
-            1000000
-          ],
-          "default": 0,
-          "client_sync": true
-        },
-        "geoui:t0s2r": {
-          "type": "int",
-          "range": [
-            0,
-            5
-          ],
-          "default": 0,
-          "client_sync": true
-        },
-        "geoui:t0s3g": {
-          "type": "int",
-          "range": [
-            0,
-            1000000
-          ],
-          "default": 0,
-          "client_sync": true
-        },
-        "geoui:t0s3r": {
-          "type": "int",
-          "range": [
-            0,
-            5
-          ],
-          "default": 0,
-          "client_sync": true
-        },
-        "geoui:t1s0g": {
-          "type": "int",
-          "range": [
-            0,
-            1000000
-          ],
-          "default": 0,
-          "client_sync": true
-        },
-        "geoui:t1s0r": {
-          "type": "int",
-          "range": [
-            0,
-            5
+            16777215
           ],
           "default": 0,
           "client_sync": true
