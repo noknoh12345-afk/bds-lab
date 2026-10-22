@@ -723,6 +723,27 @@ await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without
   ok(/unknown-a/.test(stFail?.trail) && /restart/.test(stFail?.trail) && FC.cleanTrail(stFail.trail) === stFail.trail && stRes.results.filter((x) => !x.ok).length === 1 && !stRes.results.some((x) => x.raw === 'shot inside') && /ワールドに入れなかったので、残りの区切り（ワールドの中の手順: 1 個）は飛ばします/.test(fs.readFileSync(path.join(st.runDir, 'run.txt'), 'utf8')),
     `trail ${stFail?.trail} results ${JSON.stringify(stRes.results.map((x) => [x.raw, x.ok]))}`);
 });
+await t('run: OCR still being installed (the workflow\'s apt in the background) is waited for before the steps — not gone without, where the LAN join pressed blind; none and nothing installing it: no wait, said in the notes, the result and the join\'s code', async () => {
+  // a stand-in for the workflow's background apt: a process whose command line holds a mark, putting tesseract in place 3 s on
+  const late = path.join(tmp, 'ocr-late', 'tesseract'), mark = `lab-ocr-install-${process.pid}`;
+  fs.mkdirSync(path.dirname(late), { recursive: true }); fs.rmSync(late, { force: true });
+  fs.writeFileSync(`${late}.part`, `#!/bin/sh\nexec "${path.join(FAKE, 'tesseract')}" "$@"\n`, { mode: 0o755 });
+  const inst = spawn(process.execPath, ['-e', 'setTimeout(() => require("fs").renameSync(process.argv[1], process.argv[2]), 3000)', `${late}.part`, late, mark], { stdio: 'ignore' });
+  const r = e2e('ocrlate', { APP_PORT: '19132', APP_TESSERACT: late, APP_OCR_WAIT_PROC: mark, APP_JOIN_OCR_MS: '50' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  inst.kill(); made.push(r.runDir);
+  const rRes = fs.existsSync(path.join(r.runDir, 'result.json')) ? JSON.parse(fs.readFileSync(path.join(r.runDir, 'result.json'), 'utf8')) : {}, rRun = fs.existsSync(path.join(r.runDir, 'run.txt')) ? fs.readFileSync(path.join(r.runDir, 'run.txt'), 'utf8') : '';
+  const rJoin = (rRes.results ?? []).find((x) => x.verb === 'join');
+  ok(r.status === 0 && rRes.ocr === true && /OCR（tesseract）: 入るのを \d+ 秒待ちました/.test(rRun) && Number.isFinite(rJoin?.lan?.pressed) && /PLAY → Worlds。/.test(rJoin?.note ?? '') && r.state.uri === 'lan',
+    `exit ${r.status} ocr ${rRes.ocr} ${JSON.stringify(rJoin)}\n${rRun.slice(-1500)}`);
+  // no tesseract and nothing putting it in: the steps start at once without it; the LAN world never listed and pressed
+  // blind, the join's failure says the likeliest reason with its own code
+  const t0 = Date.now(), n = e2e('ocrnone', { APP_PORT: '19132', APP_TESSERACT: path.join(tmp, 'no-such-dir', 'tesseract'), APP_OCR_WAIT_PROC: `${mark}-none`, FAKE_LAN_NONE: '1' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(n.runDir);
+  const nRes = fs.existsSync(path.join(n.runDir, 'result.json')) ? JSON.parse(fs.readFileSync(path.join(n.runDir, 'result.json'), 'utf8')) : {}, nRun = fs.existsSync(path.join(n.runDir, 'run.txt')) ? fs.readFileSync(path.join(n.runDir, 'run.txt'), 'utf8') : '';
+  const nRep = fs.existsSync(path.join(n.runDir, 'report.md')) ? fs.readFileSync(path.join(n.runDir, 'report.md'), 'utf8') : '', nUntil = (nRes.results ?? []).find((x) => x.verb === 'until'), FCo = await imp('app/lib/failcodes.mjs');
+  ok(n.status === 1 && nRes.ocr === false && !/OCR（tesseract）: /.test(nRun) && /OCR（tesseract）が使えませんでした/.test(nRep) && FCo.stepCode(nUntil?.note) === 'joined-no-ocr' && !(nRes.results ?? []).some((x) => x.lan) && Date.now() - t0 < 90_000,
+    `exit ${n.status} ocr ${nRes.ocr} ${JSON.stringify(nUntil)}\n${nRun.slice(-1200)}`);
+});
 await t('run: the content log on and no file yet (the game makes it at its first line) is a client that logged nothing: absent passes, the report says none', () => {
   const sc = path.join(tmp, 'cl-none.txt'); fs.writeFileSync(sc, 'launch\njoin\nuntil joined 5000\nabsent clientlog ERROR\n');
   const r = e2e('clnone', { APP_PORT: '19132', FAKE_OPTIONS: 'content_log_file:1\\nscreen_animations:0' }, ['--scenario', sc]);

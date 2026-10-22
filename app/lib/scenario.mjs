@@ -786,6 +786,8 @@ export async function runScenario(steps, ctx) {
         if (kind === 'joined' && /^(loading|generating)$/.test(lastScreen)) throw joinFail('サーバーに接続の行（Player connected）が無いまま、アプリは読み込みの画面のままでした');
         if (kind === 'joined' && lastScreen === 'connecting') throw joinFail('サーバーに接続の行（Player connected）が無いまま、アプリはサーバーにつなぐ画面のままでした');
         if (kind === 'joined' && /^(play-lan|play-empty|title)$/.test(lastScreen)) throw joinFail('サーバーに接続の行（Player connected）が無いまま、アプリは参加をやめて PLAY かタイトルに戻っていました（LAN のワールドを押した A が効かなかった？）');
+        // (the LAN way without OCR: A, DOWN, A went in blind — the likeliest reason, said first)
+        if (kind === 'joined' && server.lan && !ctx.ocr) throw joinFail('サーバーに接続が来ていません: OCR（tesseract）が使えず、LAN のワールドを画面を見ずに押しました（ゲームパッド A・DOWN・A）。tesseract を入れてください');
         if (kind === 'joined') throw joinFail('サーバーに接続が来ていません（参加の画面・サインイン・版の違い？ 画面を見てください）');
         if (kind === 'stable' && blank) throw new Error(`${ms} ミリ秒待ちました: 画面が真っ黒（か真っ白）のままです（まだ読み込み中か、描画できていない。README「うまくいかないとき」）`);
         if (kind === 'stable' && lastMove?.box) throw new Error(`${ms} ミリ秒待ちました: 画面が落ち着きません（動き続けた所: ${lastMove.box[0]},${lastMove.box[1]}–${lastMove.box[2]},${lastMove.box[3]} px・${(lastMove.share * 100).toFixed(2)}%・格子 ${lastMove.grid}）${busy}`);

@@ -4,6 +4,19 @@
 **app ラボを「ほぼクライアント」に: 本物のアプリをコントローラーで人のように遊べる（歩く・見回す・跳ぶ・壊す・置く・持ち物・チャット…）。
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
+### 🔤 app: OCR が入り終わるまで待つ — 画面を見ずに押した LAN の参加は入れなかった
+- 本物のアプリの実行で、OCR（tesseract）が無いまま手順が始まることがあった。ワークフローは tesseract を裏の apt で入れていて、忙しい
+  ランナーではそれに 4〜5 分かかり、手順の始まりに間に合わなかった。OCR が無いと LAN の参加は画面を見ずに A・DOWN・A を押すだけで、
+  LAN のワールドに入れず「接続が来ない」（`joined-no-connection`）で落ちた。run 39827901848（geoui_probe_lc）: join の段が約 11 秒
+  （見ずに押す 3 回の長さ）、参加の記録も道筋も空、裏の apt（tesseract の後の ffmpeg）は手順が始まった後。6 回目の 1000 個の run
+  39778443343 も、裏の apt が手順の始まりの後まで動いていた（参加が通った実行では、apt は端末を起こす 1 分半以上前に終わっていた）。
+- 手順の前に OCR を待つ（`waitOcr`）: GitHub Actions では、ワークフローの「apt-get install … tesseract」が動いている間、最大 300 秒
+  （`APP_OCR_WAIT_MS`、待つ相手は `APP_OCR_WAIT_PROC`）。待ったら run.txt に「OCR（tesseract）: 入るのを N 秒待ちました」。
+- それでも無ければ報告に書き、LAN の参加の「接続が来ない」は新しいコード `joined-no-ocr`。result.json と公開の summary.json に `ocr`
+  （true か false だけ）、チェックに「OCR 使えなかった」の行。
+- 試験: 3 秒後に tesseract を置く偽の apt を待って OCR で入る・無くて何も入れていなければ待たずに `joined-no-ocr`（app-offline）、
+  公開の形（results-public の 8 章）。
+
 ### ⏱ app: 参加の時間の内訳 — PLAY が出た・LAN のワールドが出た・押した時を、公開の要約にも
 - 1000 個の譜面の「Player connected まで 387 秒」は、LAN のワールドを押してからではなく、参加の手順（タイトル → PLAY → LAN のワールド）を
   始めてからの秒だった（`join_connect_seconds` は join の段の始めから）。押した後の `until joined` の道筋は `play-lan` 1 回のすぐ後に

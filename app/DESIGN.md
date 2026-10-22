@@ -72,6 +72,22 @@ qcow2 が 6.5 GB、その中で使われているのは 3.1 GB: 残りは消し�
 7. 旧来の道（`APP_TRANSPORT=raknet`）は残す: リンク・質問（Unknown External Server → Continue、Online play is not rated →
    Proceed。OCR が緑のボタンの白い字を読めなくても、問いの文から 1.26 のボタンの位置を押す）。
 
+### 2026-10-23: OCR が間に合わないと、LAN の参加は見ずに押して入れない → 手順の前に待つ
+
+app.yml は tesseract を裏の apt で入れる（「ディスクを空け、OCR を入れる（裏で）」、続けて ffmpeg）。アプリの実行は手順の前に一度だけ
+`ocrAvailable()` を見ていたので、apt が遅いと OCR なしで手順が始まった。OCR が無いと joinLan は画面を見ずに A・DOWN・A を押すだけで、
+CI の端末では LAN のワールドに届かず、`until joined` は「接続が来ない」で落ちる。
+
+- run 39827901848（geoui_probe_lc、2026-10-23）: join の段は約 11 秒（見ずに押す 3 回の長さ。OCR があると 50 秒以上）、join の記録
+  （`join_lan_seconds`）も until joined の道筋も空、`joined-no-connection`。ランナーのネットワークの記録（harden-runner）では、裏の apt
+  の 2 回目の通信（tesseract の後の ffmpeg）が 18:07:09 で、手順の始まり（Discord への最初の送信 18:06:39）より後。
+- 6 回目の 1000 個（run 39778443343、`joined-no-connection`）も同じ形: apt の 2 回目 12:32:45、手順の始まり 12:31:43。OCR なしで見ずに
+  押したと見るのが自然（パックの大きさのせいではない）。6 回目の probe_sz（run 39775140906）は記録が途中で切れていて分からない。
+- 参加が通った実行（39803242567・39801374609）では、apt の 2 回の通信は 8〜17 秒の間に続き、端末を起こす 1 分半以上前に終わっていた。
+- 直し: `waitOcr`（app.mjs）が手順の前に、`APP_OCR_WAIT_PROC` に合うプロセス（GitHub Actions では `apt-get install.*tesseract`: ワーク
+  フローの裏のシェルが apt の続きの間ずっと持つ）が動いている間、OCR を最大 `APP_OCR_WAIT_MS`（300 秒）待つ。人の手元の実行は待たない。
+  それでも無ければ報告に書き、LAN の「接続が来ない」は `joined-no-ocr`。result.json・summary.json に `ocr`。
+
 ### 2026-10-23: 参加の待ちは LAN のワールドを押す前（1000 個のパックの 387 秒も）
 
 `join_connect_seconds`（と `join_seconds`）は join の段の始め、つまりタイトルから測っている（app.mjs: `connectedAt − join の t0`）。
@@ -88,9 +104,8 @@ lc・vx も `play-lan srv-connected`、sz は `srv-connected play-lan`（until j
 （join の始めからのミリ秒）と、通った画面の道筋。result.json の join の `lan`・`trail`、`timing.lan`、report.md の 2 行、公開の summary.json の
 `join_lan_seconds`（数 3 つだけ: failcodes.mjs `lanSeconds`）と `join_lan_trail`（`cleanTrail`）。
 
-別に分からないこと（要実測）: 押した後に入れなかったのは、6 回目の sz（0.7 MB）・huge（3.2 MB）の「接続が来ない」と、7 回目の huge の
-「An error has occurred」2 回で、どれも大きい 2 つだった（コードのある小さいパックの実行では押した後の失敗は無い）。数が少なく、
-偶然かどうかは分からない。
+別に分からないこと（要実測）: 7 回目の huge で、押した後にゲームが「An error has occurred」を 2 回出した理由（OCR はあった: 道筋に画面の
+言葉）。6 回目の huge の「接続が来ない」は OCR が間に合わなかったため（上の項）、6 回目の sz は分からない。
 
 ### 2026-10-23: BDS の `Player connected` はログインの時（パックより前）
 

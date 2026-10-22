@@ -965,6 +965,12 @@ async function runCmd(args) {
     if (REAL && clientLog) { try { clientLog.skipExisting(); } catch { /* none yet */ } }
     if (!rooted && !REAL) st.notes.push('端末で root になれないので、ゲームのコンテンツログ（クライアントだけのエラー）を読めませんでした（Google APIs のイメージで動かしてください）');
     let baseline = null;   // the world with nothing open (`shot world`): what `recover` brings the screen back to
+    // (the screen's words: OCR the workflow may still be installing — waited for, not gone without: waitOcr. Whether the steps
+    //  had it goes in the result and the public summary: a join pressed blind is told apart from one that read the screen)
+    const ocrWait = await waitOcr();
+    if (ocrWait.waited) log(`      OCR（tesseract）: ${ocrWait.ok ? `入るのを ${(ocrWait.waited / 1000).toFixed(0)} 秒待ちました` : `${(ocrWait.waited / 1000).toFixed(0)} 秒待っても使えません`}`, !ocrWait.ok);
+    st.ocr = ocrWait.ok;
+    if (!st.ocr) st.notes.push('画面の文字を読む OCR（tesseract）が使えませんでした: 文字で探す手順（tap text・until text）は効かず、LAN の参加は画面を見ずに押します（sudo apt-get install tesseract-ocr / brew install tesseract）');
     const res = await runScenario(steps, {
       adb, runDir, decode: pngDecode, pkg: K.PACKAGE, baseDir: path.dirname(scenarioFile), logcatFile, clientLog,
       log: (s) => log('      ' + s.replace(/\n/g, '\n      '), /^[✘⚠]/.test(s)),
@@ -981,7 +987,7 @@ async function runCmd(args) {
         for (let k = 0; k < 30 && adb.focus().dialog?.kind === 'permission'; k++) spawnSync(process.platform === 'win32' ? 'timeout' : 'sleep', ['2']);
         return adb.focus().dialog?.kind === 'permission' ? '答えがありません（端末で答えてください）' : '端末で答えました';
       },
-      ocr: C.ocrAvailable() ? (f) => C.ocrWords(f) : null, firstScreen: emu.warm ? ready?.stamp?.firstScreen ?? null : null,
+      ocr: st.ocr ? (f) => C.ocrWords(f) : null, firstScreen: emu.warm ? ready?.stamp?.firstScreen ?? null : null,
       shotTaken: (name, buf) => {
         if (WORLD_SHOT.test(name)) baseline = buf;
         // a texture the client could not find: only the picture shows it (no log line on the server, often none in the client's)
@@ -1227,6 +1233,25 @@ async function signIn(adb, { decode, log = out, tell = async () => {}, nextCode 
   return { ok: false, note: `${Math.round(timeoutMs / 60_000)} 分でサインインが終わりませんでした（最後の画面: ${lastKind}）` };
 }
 /** the faster of the two ways to picture the screen, of those that show the same thing → { via, note } (adb.shotVia) */
+// OCR (tesseract) that the workflow is still putting in: app.yml installs it with apt in the background beside the rest of
+// its set-up, and on a busy runner that apt took 4–5 minutes, past the start of the steps — which then went on without
+// reading the screen: the LAN join pressed A, DOWN, A blind and never connected (runs 39778443343, 39827901848). Waited for
+// while a process of APP_OCR_WAIT_PROC is at work (a pgrep -f pattern; on GitHub Actions the workflow's own install, whose
+// shell holds "apt-get install … tesseract-ocr" until its apt chain ends), at most APP_OCR_WAIT_MS (300 s; 0 = not at all);
+// a person's own run (no workflow, no pattern) never waits
+async function waitOcr() {
+  if (C.ocrAvailable()) return { ok: true, waited: 0 };
+  const max = Number(process.env.APP_OCR_WAIT_MS ?? 300_000), pat = process.env.APP_OCR_WAIT_PROC || (process.env.GITHUB_ACTIONS === 'true' ? 'apt-get install.*tesseract' : '');
+  const busy = () => Boolean(pat) && spawnSync('pgrep', ['-f', pat], { stdio: 'ignore', timeout: 10_000 }).status === 0;
+  if (!(max > 0) || !busy()) return { ok: false, waited: 0 };
+  const t0 = Date.now();
+  while (Date.now() - t0 < max) {
+    await sleep(2000);
+    if (C.ocrAvailable()) return { ok: true, waited: Date.now() - t0 };
+    if (!busy()) break;
+  }
+  return { ok: C.ocrAvailable(), waited: Date.now() - t0 };
+}
 function pickShot(adb, decode) {
   if (adb.shotVia === 'emu') return { via: 'emu', note: 'エミュレータの画像（準備で決めたもの）' };
   const t0 = Date.now(), e = adb.emuScreencap(), te = Date.now() - t0, t1 = Date.now();
@@ -2587,6 +2612,8 @@ async function checksCmd(args) {
       ...(num(r?.timing?.connect) !== null ? { join_connect_seconds: Math.round(r.timing.connect / 100) / 10 } : {}),
       ...(uj && cleanTrail(uj.trail) ? { join_trail: cleanTrail(uj.trail) } : {}),
       ...(lanS ? { join_lan_seconds: lanS } : {}), ...(jn?.ok && cleanTrail(jn.trail) ? { join_lan_trail: cleanTrail(jn.trail) } : {}),
+      // (whether the steps could read the screen: without OCR the LAN join presses blind — waitOcr)
+      ...(typeof r?.ocr === 'boolean' ? { ocr: r.ocr } : {}),
       bds: word(r?.bds?.version) ?? cell('BDS'), app: word(r?.app?.versionName) ?? cell('アプリ'),
       ...(Array.isArray(r?.measures) && r.measures.length ? { measures: M.cleanMeasures(r.measures) } : {}),
       // (the pictures and videos sent to the person's Discord: how many, numbers only — lib/feed.mjs)
@@ -2653,7 +2680,8 @@ async function checksCmd(args) {
         ...(cleanTrail(s.join_trail) ? [`| 参加の道筋 | \`${cleanTrail(s.join_trail)}\` |`] : []),
         // (the LAN way's join step: read back as numbers only, its trail through the same filter)
         ...(lanSeconds(s.join_lan_seconds) ? [`| 参加の手順（PLAY・LAN のワールドが出た・押した） | ${['play', 'listed', 'pressed'].map((k) => lanSeconds(s.join_lan_seconds)[k] ?? '—').join(' / ')} 秒 |`] : []),
-        ...(cleanTrail(s.join_lan_trail) ? [`| 参加の手順の道筋 | \`${cleanTrail(s.join_lan_trail)}\` |`] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`,
+        ...(cleanTrail(s.join_lan_trail) ? [`| 参加の手順の道筋 | \`${cleanTrail(s.join_lan_trail)}\` |`] : []),
+        ...(s.ocr === false ? ['| OCR | 使えなかった（画面の文字を読めず、LAN の参加は見ずに押した） |'] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`,
         // (the pictures and videos that went to the person's Discord: numbers only)
         ...(s.media && num(s.media.sent) !== null ? [`| Discord | 写真・動画 ${s.media.sent} 個${num(s.media.failed) ? `（送れなかった ${s.media.failed} 回）` : ''}${s.media.late === true ? '（時間切れ）' : ''} |`] : []),
         ...trails.map(([k, v]) => `| 道筋（${k} 行目） | \`${v}\` |`), '',

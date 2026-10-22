@@ -14,6 +14,8 @@ export const STEP_CODES = [
   [/参加用のリンク/, 'join-link'],
   [/サーバーはプレイヤーを出しました/, 'joined-app-loading'],
   [/サーバーには接続したが/, 'joined-not-in-world'],
+  // (no OCR: the LAN world pressed without reading the screen — scenario.mjs until joined, app.mjs waitOcr)
+  [/OCR（tesseract）が使えず/, 'joined-no-ocr'],
   [/サーバーに接続が来ていません/, 'joined-no-connection'],
   // (no "Player connected" from the server, told apart by the app's last screen: scenario.mjs until joined)
   [/アプリはサーバーのパックを取り込んでいました/, 'joined-packs-slow'],

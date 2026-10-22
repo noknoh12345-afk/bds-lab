@@ -262,6 +262,28 @@ fs.rmSync(tmp, { recursive: true, force: true });
     && sum4.includes('| 参加の手順（PLAY・LAN のワールドが出た・押した） | 19 / — / — 秒 |') && !sum4.includes('参加の手順の道筋') && ![SCREEN, EMAIL].some((x) => sum3.includes(x) || sum4.includes(x)),
     'the check shows them', `${sum3.slice(0, 1200)}\n${sum4.slice(0, 1200)}`);
 }
+// ---- 8. whether the steps could read the screen (OCR): a join pressed blind is told apart — a boolean, its own code ----
+{
+  const F = await import(new URL('../app/lib/failcodes.mjs', import.meta.url).href);
+  const blind = `300000 ミリ秒待ちました: サーバーに接続が来ていません: OCR（tesseract）が使えず、LAN のワールドを画面を見ずに押しました（ゲームパッド A・DOWN・A）。tesseract を入れてください（道筋: ）`;
+  ok(F.stepCode(blind) === 'joined-no-ocr' && F.stepCode('300000 ミリ秒待ちました: サーバーに接続が来ていません（参加の画面・サインイン・版の違い？ 画面を見てください）') === 'joined-no-connection', 'a join pressed blind: its own code, the other no-connection as before');
+  // (each run in a folder of its own: `checks` takes the newest run of the folder it is given)
+  const runs = [['20261023-040000-noocr', false], ['20261023-041000-ocr', true], ['20261023-042000-ocrword', 'yes']].map(([name, v]) => {
+    const top = path.join(tmp, 'ocr', name), d = makeRun(top, name), r = JSON.parse(fs.readFileSync(path.join(d, 'result.json'), 'utf8'));
+    r.ocr = v; if (v === false) r.results[1].note = blind;
+    fs.writeFileSync(path.join(d, 'result.json'), JSON.stringify(r)); return { top, d };
+  });
+  const sealed = [];
+  for (const x of runs) sealed.push((await lab(['checks', '--seal', x.top], PUB)).status);
+  const cs = runs.map((x) => JSON.parse(fs.readFileSync(path.join(x.d, 'summary.json'), 'utf8')));
+  ok(sealed.every((s) => s === 0) && cs[0].ocr === false && cs[0].failed_codes[0] === 'joined-no-ocr' && cs[1].ocr === true && !('ocr' in cs[2]), 'summary.json: ocr only as true or false', JSON.stringify(cs));
+  const got4 = [], srv5 = http.createServer((q, s) => { let b = ''; q.on('data', (x) => { b += x; }); q.on('end', () => { if (q.method === 'POST' && q.url.endsWith('/check-runs')) got4.push(JSON.parse(b)); s.writeHead(201, { 'content-type': 'application/json' }); s.end('{}'); }); });
+  await new Promise((res) => srv5.listen(0, '127.0.0.1', res));
+  for (const x of runs.slice(0, 2)) await lab(['checks', x.top], { ...API, GITHUB_API_URL: `http://127.0.0.1:${srv5.address().port}`, APP_REPO_VISIBILITY: 'public' });
+  srv5.close();
+  const sum5 = got4[0]?.output?.summary ?? '', sum6 = got4[1]?.output?.summary ?? '';
+  ok(sum5.includes('| OCR | 使えなかった（画面の文字を読めず、LAN の参加は見ずに押した） |') && /joined-no-ocr/.test(sum5) && !sum6.includes('| OCR |'), 'the check says a run without OCR', `${sum5.slice(0, 900)}\n${sum6.slice(0, 600)}`);
+}
 
 console.log(fails ? `✘ ${fails} failed` : '✔ all passed');
 process.exit(fails ? 1 : 0);
