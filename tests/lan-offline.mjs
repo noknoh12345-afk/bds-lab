@@ -32,6 +32,9 @@ if (!fs.existsSync(path.join(TOP, 'common', 'nethernet-connect', 'dist', 'src', 
   process.exit(must ? 1 : 0);
 }
 const { req } = await lan.ncLoad(CACHE);
+// (UDP 7551: bedrock-protocol's NetherNet server binds it without SO_REUSEADDR — one test at a time holds it)
+const { acquire, UDP_7551 } = await import(path.join(TOP, 'tests', 'fake', 'lock.mjs'));
+await acquire(UDP_7551);
 const bp = req('bedrock-protocol');
 const { CURRENT_VERSION } = req('bedrock-protocol/src/options');
 const seen = { world: [], rak: [] };

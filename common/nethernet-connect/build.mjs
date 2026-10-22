@@ -2,6 +2,8 @@
 // Compiles src/ and test/ (TypeScript) to dist/ — what the lab runs (common/lan.mjs loads dist/src/index.js) and keeps in git.
 //   node build.mjs           type-check, then write dist/ (only what changed; files no longer made are removed)
 //   node build.mjs --check   type-check, and fail when dist/ is not what src/ and test/ make now (CI: tests/nc-offline.mjs)
+//   node build.mjs --out <dir>   type-check, then write the same tree into <dir> instead of dist/ (a test's own copy:
+//                            tests/fake/nc.mjs — dist/ in the lab is left as it is)
 // The compiler is pinned (devDependencies: typescript, @types/node) and installed once into a cache of its own — never next to
 // this file: NC_BUILD_CACHE, else $LAB_CACHE/nc-build, else <tmp>/bds-lab-nc-build. The output is the same on every machine
 // (LF line ends, no source maps, no time stamps), so --check compares bytes.
@@ -18,6 +20,10 @@ const WANT = ['typescript', '@types/node'].map((n) => `${n}@${PKG.devDependencie
 const CACHE = process.env.NC_BUILD_CACHE || (process.env.LAB_CACHE ? path.join(process.env.LAB_CACHE, 'nc-build') : path.join(os.tmpdir(), 'bds-lab-nc-build'));
 const check = process.argv.includes('--check');
 const quiet = process.argv.includes('--quiet');
+const outAt = process.argv.indexOf('--out'), OUT = outAt > 0 ? process.argv[outAt + 1] : null;
+if (outAt > 0 && (!OUT || OUT.startsWith('--'))) { console.log('✘ --out <dir>: the folder is missing'); process.exit(1); }
+if (OUT && check) { console.log('✘ --out and --check: one or the other (--check compares dist/ itself)'); process.exit(1); }
+const DIST = OUT ? path.resolve(OUT) : path.join(HERE, 'dist');
 const say = (s) => { if (!quiet) console.log(s); };
 
 function compiler() {
@@ -58,12 +64,12 @@ function emit() {
   return { out, version: ts.version };
 }
 
-const listDist = (dir = path.join(HERE, 'dist'), base = '') => (fs.existsSync(dir) ? fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? listDist(path.join(dir, e.name), base + e.name + '/') : [base + e.name])) : []);
+const listDist = (dir = DIST, base = '') => (fs.existsSync(dir) ? fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? listDist(path.join(dir, e.name), base + e.name + '/') : [base + e.name])) : []);
 
 try {
   const { out, version } = emit();
   const now = new Set(listDist());
-  const changed = [...out].filter(([f, t]) => !now.has(f) || fs.readFileSync(path.join(HERE, 'dist', f), 'utf8') !== t).map(([f]) => f);
+  const changed = [...out].filter(([f, t]) => !now.has(f) || fs.readFileSync(path.join(DIST, f), 'utf8') !== t).map(([f]) => f);
   const stale = [...now].filter((f) => !out.has(f));
   if (check) {
     if (changed.length || stale.length) {
@@ -72,9 +78,9 @@ try {
     }
     say(`✔ dist/ is current (${out.size} files, TypeScript ${version}, no type errors)`);
   } else {
-    for (const f of changed) { fs.mkdirSync(path.dirname(path.join(HERE, 'dist', f)), { recursive: true }); fs.writeFileSync(path.join(HERE, 'dist', f), out.get(f)); }
-    for (const f of stale) fs.rmSync(path.join(HERE, 'dist', f));
-    say(`dist/: ${changed.length} written, ${stale.length} removed, ${out.size - changed.length} unchanged (TypeScript ${version})`);
+    for (const f of changed) { fs.mkdirSync(path.dirname(path.join(DIST, f)), { recursive: true }); fs.writeFileSync(path.join(DIST, f), out.get(f)); }
+    for (const f of stale) fs.rmSync(path.join(DIST, f));
+    say(`${OUT ? DIST : 'dist'}/: ${changed.length} written, ${stale.length} removed, ${out.size - changed.length} unchanged (TypeScript ${version})`);
   }
 } catch (e) {
   console.log('✘ ' + e.message);
