@@ -158,3 +158,27 @@ section log-warn
 absent clientlog \bWARN
 section log-error
 absent clientlog \bERROR\b
+# (round 3: lines with "molang", "variable" and "unknown|not found|…" were there, none with the pack's namespace, "property" or
+#  "paperdoll" — which names they are about, one section each: the vanilla player's own variables this pack copies, GeoUI's)
+section log-n-geoui
+absent clientlog (?i)geoui_
+section log-n-gliding
+absent clientlog (?i)gliding
+section log-n-attack
+absent clientlog (?i)attack_time|attack_body
+section log-n-firstperson
+absent clientlog (?i)first_person
+section log-n-mapface
+absent clientlog (?i)map_face|map_angle
+section log-n-rotation
+absent clientlog (?i)x_rotation|look_at
+section log-n-handbob
+absent clientlog (?i)hand_bob|tcos|riding_y
+section log-n-item
+absent clientlog (?i)item_use|main_hand|holding|spear
+section log-n-blink
+absent clientlog (?i)blink|layer_visible|cape
+section log-n-query
+absent clientlog (?i)query\.|\bq\.
+section log-n-math
+absent clientlog (?i)math\.
