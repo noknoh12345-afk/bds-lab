@@ -72,6 +72,27 @@ qcow2 が 6.5 GB、その中で使われているのは 3.1 GB: 残りは消し�
 7. 旧来の道（`APP_TRANSPORT=raknet`）は残す: リンク・質問（Unknown External Server → Continue、Online play is not rated →
    Proceed。OCR が緑のボタンの白い字を読めなくても、問いの文から 1.26 のボタンの位置を押す）。
 
+### 2026-10-23: 参加の内訳（本物のアプリ 2 本）— 時間はタイトル → PLAY で、パックの大きさではない
+
+`join_lan_seconds` と道筋をつけた 2 本（秒は join の段の始めから。どちらも OCR あり）:
+
+| | 対照 geoui_probe_lc（219 KB）run 39832045558 | geoui_rhythm_huge（3.2 MB）run 39833823950 |
+|---|---|---|
+| PLAY が出た | 194.4 | 269.4 |
+| LAN のワールドが出た | 309.8（60 秒出ず、開き直した後） | 274.9 |
+| 押した | 352.0 | 325.3 |
+| Player connected | 355.9 | 331.7 |
+| ワールド | 374.5 | 352.4 |
+
+- 押してから接続まで 4〜6 秒、接続からワールドまで 19〜21 秒（3.2 MB のパックのダウンロード込み）。小さいパックの方が遅かった。
+- 長いのはタイトル → PLAY。どちらの道筋も同じ形: classic のタイトル（`title-focus`、読めた語 play・settings・marketplace）で焦点を
+  動かし続け、Play に焦点があると見た印（`title-play`）は残った部分に 1 度も無い → Settings の読めない絵を新しい人のタイトル
+  （`title-new`、play・select・exit）と見て DOWN・DOWN・A → `unknown-a[marketplace]` → `store[get+packs]` → … → 150 秒で起動し直し
+  （`restart`）→ 最後は `title-new` の DOWN・DOWN・A で PLAY が開いた。
+- その後: LAN のワールドは huge で PLAY から 5.5 秒、対照は 60 秒出ずに開き直して出た。焦点合わせ（`play-lan*8`・`*10`）は 42〜50 秒。
+- 要実測: 1.26.52 の classic のタイトルで、Play の焦点が緑の印（`buttonFocused`）で見つからない理由（ボタンの色か、測る所か）。
+  前の実行（2026-10-04）ではボタンの字が読めず `title-blind`（A で焦点を出し、A で Play）で進んでいた。写真は Discord にある。
+
 ### 2026-10-23: OCR が間に合わないと、LAN の参加は見ずに押して入れない → 手順の前に待つ
 
 app.yml は tesseract を裏の apt で入れる（「ディスクを空け、OCR を入れる（裏で）」、続けて ffmpeg）。アプリの実行は手順の前に一度だけ

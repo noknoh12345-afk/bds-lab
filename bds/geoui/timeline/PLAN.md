@@ -327,3 +327,17 @@
   6 回目の huge が入れなかったのは、OCR（tesseract）がまだ入っていなかったため（ワークフローの裏の apt が手順の始まりの後まで動いて
   いた。app はいま手順の前に待つ: app/DESIGN.md）。6 回目の probe_sz は分からない。7 回目の huge で押した後にゲームが「An error has
   occurred」を 2 回出した理由は要実測。
+- 9 回目（2026-10-23、参加の内訳つき。秒は join の段の始めから）:
+  - 対照 **geoui_probe_lc** の 1 本目（run 39827901848）は OCR が手順の始まりに間に合わず、見ずに押して入れなかった（joined-no-connection、
+    join の段は約 11 秒）→ app は手順の前に OCR を待つようにした（3d7f9fb）。
+  - 対照 **geoui_probe_lc**（run 39832045558、219 KB）: 9 か所すべて描かれた（8 回目と同じ）。参加 374.5 秒 = PLAY 194.4 秒・LAN の
+    ワールドが出た 309.8 秒（60 秒出ず、開き直した後）・押した 352.0 秒・Player connected 355.9 秒・ワールド 374.5 秒。
+  - **geoui_rhythm_huge**（run 39833823950、3.2 MB）: **74 手順すべて通った（2 回目）**。参加 352.4 秒 = PLAY 269.4 秒・出た 274.9 秒・
+    押した 325.3 秒・Player connected 331.7 秒・ワールド 352.4 秒。Discord に 18 個。
+  - → **パックの大きさは参加の長さを決めていない**（219 KB で 356 秒、3.2 MB で 332 秒で接続）。押してから接続までは 4〜6 秒、接続から
+    ワールドまでは 19〜21 秒（3.2 MB のダウンロード込み）。長いのはタイトル → PLAY（194・269 秒）。どちらの道筋（join_lan_trail）も、
+    classic のタイトル（title-focus: Play・Settings・Marketplace が読める）で動かし続け、Play に焦点があると見た印（title-play）は残った
+    部分に無い。Settings の読めない絵を新しい人のタイトル（title-new）と見て DOWN・DOWN・A → Marketplace → ストア（get packs）→ 150 秒で
+    アプリを起動し直し、最後は title-new の DOWN・DOWN・A で PLAY が開いた。LAN のワールドは huge で PLAY から 5.5 秒、対照で 115 秒
+    （開き直し 1 回）、焦点合わせは 42〜50 秒（8〜10 回）。
+  - 要実測: classic のタイトルで Play の焦点（緑: app/lib/client.mjs buttonFocused）が見つからない理由。写真は Discord にある。

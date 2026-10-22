@@ -33,6 +33,10 @@
   LAN の参加（`LAB_TRANSPORT=lan`）は接続まで約 1.4 秒で、どれも同じだった（BDS の側はパックの大きさで遅くならない）。
 - 試験: results-public に 7 章（秒の形と鍵、入れなかった join、チェックの行）、app-offline の LAN の参加（2 回開き直した後に出る
   LAN のワールド）で記録の順・報告の行・run.txt の行。
+- **測った**（本物のアプリ 2 本）: 219 KB の対照は Player connected まで 356 秒（PLAY 194・LAN のワールドが出た 310・押した 352 秒）、
+  3.2 MB の 1000 個は 332 秒（PLAY 269・275・325 秒）で、1000 個は 2 回目も 74 手順すべて通った。長いのはタイトル → PLAY: classic の
+  タイトルで Play の焦点が見つからず、新しい人のタイトルと見た DOWN・DOWN・A でストアへ行き、起動し直していた（app/DESIGN.md
+  「参加の内訳」。理由は要実測）。
 
 ### 🌐 nethernet-connect v3: 自分のネットワークのワールドとサーバーに、それぞれの入り方で（`node lab.mjs lan`）
 - `common/nethernet-connect` に v3 を作った（`dist/` も入れた: `lan` と `LAB_TRANSPORT=lan` がそのまま動く）。探す

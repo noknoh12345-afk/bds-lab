@@ -1,6 +1,6 @@
 # 続きのプロンプト（GeoUI タイムライン）
 
-次のセッションの AI に、下の枠の中をそのまま貼る。2026-10-23 に書いた（8 回目の確かめ: 1000 個の譜面と変数の probe・nethernet-connect v3 まで）。
+次のセッションの AI に、下の枠の中をそのまま貼る。2026-10-23 に書いた（9 回目の確かめ: 参加の内訳と 1000 個の 2 回目まで）。
 設計と記録は [PLAN.md](PLAN.md)、使い方は [../TIMELINE.md](../TIMELINE.md)。
 
 このリポジトリは公開なので、前の会話の記録・添付の素材（zip など）・ログインの記録はここに置かない。
@@ -10,7 +10,8 @@ noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の
 7 段・見直し・作り直し（本物の大きさの譜面）は済み。本物のアプリで 300 個（geoui_rhythm_big）も 1000 個・6 分の譜面
 （geoui_rhythm_huge: addon/geoui_rhythm_huge の枝、3.2 MB）も最後まで動いた。pre_animation は 61 万文字・4029 行（geoui_probe_sz）、
 5029 行（geoui_probe_lc）、変数 5000 個（geoui_probe_vx）まで効く。ラボのボットは LAB_TRANSPORT=lan（nethernet-connect v3）で
-1000 個のパックのワールドに入れる（tests.txt 8/8）。
+1000 個のパックのワールドに入れる（tests.txt 8/8）。9 回目: 1000 個は 2 回目も 74 手順すべて通り、参加の長さはパックの大きさではなく
+ラボのタイトル → PLAY の進め方だった（PLAN.md の 9 回目、app/DESIGN.md「参加の内訳」）。
 
 守ること:
 - .github/・auto/policy.json・auto/STOP・.env は触らない。bds/vendor/bedrock-server.zip はコミットしない（git add -A -- . ':!bds/vendor/bedrock-server.zip'）
@@ -45,9 +46,9 @@ noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の
 - GEOUI_NODE_MODULES: playwright-core のある node_modules（例 /opt/npm-tools/node_modules）
 - CHROMIUM: 例 /opt/pw-browsers/chromium-1194/chrome-linux/chrome
 
-残っている要実測: 参加の待ちの内訳（1000 個は参加の手順の始めから接続まで 387 秒。押してから接続までは数秒で、待ちは押す前。
-110 KB 未満のパックでも参加は 84〜319 秒なので、パックの大きさのせいとは言えない。次の実行の join_lan_seconds・join_lan_trail で
-PLAY・LAN のワールドが出るまで・焦点のどこかが分かる）。7 回目の 1000 個で、押した後にゲームが「An error has occurred」を出した理由
+残っている要実測: 参加の待ちはパックの大きさではない（9 回目: 219 KB で 356 秒、3.2 MB で 332 秒で接続）。長いのはラボのタイトル →
+PLAY（194・269 秒）: classic のタイトルで Play の焦点（緑）が見つからず、新しい人のタイトルと見て DOWN・DOWN・A でストアへ行き、起動し
+直していた理由（app/DESIGN.md「参加の内訳」。写真は Discord）。7 回目の 1000 個で、押した後にゲームが「An error has occurred」を出した理由
 （6 回目の 1000 個は OCR が間に合わなかったため: app/DESIGN.md）。geoui_probe_m の 3000 行（1 行 150 文字）の最後の変数だけ合わなかった理由
 （行・大きさ・変数の数のどれでもない）。render controller 70 個・ボーン 600 本・アニメーション 1200 個より先（書き出しは超えると注意を
 出す）。geoui_bb・geoui_calib* は前の確かめの物（測り直すときだけ作り直す）。
