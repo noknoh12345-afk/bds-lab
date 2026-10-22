@@ -110,6 +110,19 @@ fs.writeFileSync(path.join(wd, 'db', 'new.ldb'), 'x');
 await lan.lanCmd(CACHE, ['restore', id ?? '-', '--config', cfg], out);
 check(fs.readFileSync(path.join(wd, 'level.dat'), 'utf8') === 'v1' && !fs.existsSync(path.join(wd, 'db', 'new.ldb')), 'lan snapshot / restore: a world folder back as it was', lines.join('\n'));
 
+// ---- lan account import: a sign-in kept as a secret (MS_LIVE_<NAME>) written where prismarine-auth reads it, and listed
+const cfgA = path.join(T, 'lan-acc.json');
+fs.writeFileSync(cfgA, JSON.stringify({ auth: { profilesFolder: path.join(T, 'auth') }, lanPolicy: { scope: 'same-host', tailscale: { mode: 'off' } } }));
+process.env.MS_LIVE_IMPBOT = JSON.stringify({ access_token: 'a-test', refresh_token: 'r-test', expires_in: 3600 });
+lines.length = 0;
+await lan.lanCmd(CACHE, ['account', 'import', 'impbot', '--config', cfgA], out);
+await lan.lanCmd(CACHE, ['account', 'list', '--config', cfgA], out);
+await lan.lanCmd(CACHE, ['account', 'remove', 'impbot', '--config', cfgA], out);
+await lan.lanCmd(CACHE, ['account', 'list', '--config', cfgA], out);
+delete process.env.MS_LIVE_IMPBOT;
+check(lines.some((l) => /^OK account impbot imported from MS_LIVE_IMPBOT/.test(l)) && lines.some((l) => /^impbot /.test(l)) && lines.some((l) => /^OK removed impbot/.test(l)) && lines.at(-1) === 'no accounts (node lab.mjs lan account add <name>)' && !lines.join('\n').includes('r-test'),
+  'lan account import: the secret\'s sign-in written for prismarine-auth and registered (listed), then removed; the token never printed', lines.join('\n'));
+
 world.close(); rak.close();
 fs.rmSync(T, { recursive: true, force: true });   // (the test's own temp folder)
 console.log(`${bad ? 'FAIL' : 'PASS'} ${good}/${good + bad}`);

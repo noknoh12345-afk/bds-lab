@@ -257,6 +257,8 @@ export async function lanCmd(CACHE, rest, out) {
       const tok = ML.parseSecret(raw);
       if (tok instanceof Error) throw new Error(`${secret}: ${tok.message}`);
       const f = ML.writeLiveCache(config.auth.profilesFolder, name, tok);
+      // (and in the list: lan account list, the web dashboard and a join without --account see it from now on)
+      store.register(name);
       out(`OK account ${name} imported from ${secret} → ${path.relative(process.cwd(), f)}（Xbox のトークンは最初の参加で作られます）`);
       return true;
     }

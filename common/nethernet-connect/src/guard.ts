@@ -48,6 +48,11 @@ export interface GuardOptions {
 export class LanGuard {
   /** これ以外の相手IPとは通信しない（接続対象を決めた後に設定） */
   pinAddress: string | null = null;
+  /**
+   * v3: この接続の合図は BDS の NetherNet HTTP シグナリング（http-signal.ts）。その時だけ外からの合図（signalHandler）を許し、
+   * 相手はこのアドレスに固定、UDP の発見は送らない（ICE の候補と確立した経路は今までどおり確かめる）
+   */
+  httpSignal: { address: string; port: number } | null = null;
   readonly trustedHostKeys: string[];
   private seen = new Set<string>();
   deniedCount = 0;
@@ -60,7 +65,7 @@ export class LanGuard {
    * 1接続/1回のディスカバリ用の子ガードを作る。スコープと信頼鍵は共有、pin と拒否カウントは独立。
    * イベントは「親のハンドラ → 子に追加したハンドラ」の順に両方呼ぶ（親の events は呼び出し時に参照）。
    */
-  fork(opts: { pinAddress?: string | null; events?: GuardEvents } = {}): LanGuard {
+  fork(opts: { pinAddress?: string | null; events?: GuardEvents; httpSignal?: { address: string; port: number } | null } = {}): LanGuard {
     const parent = this.events;
     const extra = opts.events ?? {};
     const merged: GuardEvents = {};
@@ -72,6 +77,11 @@ export class LanGuard {
     }
     const child = new LanGuard(this.scope, merged, { trustedHostKeys: this.trustedHostKeys });
     child.pinAddress = 'pinAddress' in opts ? (opts.pinAddress ?? null) : this.pinAddress;
+    // (an HTTP-signaled connection is its own fork's: never handed down by a fork that does not ask for it)
+    if (opts.httpSignal) {
+      child.httpSignal = { address: normalizeAddress(opts.httpSignal.address), port: opts.httpSignal.port };
+      child.pinAddress = child.httpSignal.address;
+    }
     return child;
   }
 
@@ -124,6 +134,13 @@ export class LanGuard {
       return { allowed: false, reason: `${c.address} はこのマシンのアドレスではありません` };
     }
     if (this.scope.isOwnAddress(target)) return { allowed: true, reason: '同一マシン' };
+    // (v3: a Tailscale device of the user's: only this machine's own Tailscale address goes out — never a LAN NIC's)
+    const ts = this.scope.tailscaleName(target);
+    if (ts) {
+      const own = this.scope.ownTailscaleAddresses();
+      if (!own.includes(normalizeAddress(c.address))) return { allowed: false, reason: `自分の候補 ${c.address} はこのマシンの Tailscale のアドレス（${own.join(', ') || 'なし'}）ではありません（接続先は Tailscale の端末「${ts}」）` };
+      return { allowed: true, reason: `Tailscale の候補（端末「${ts}」へ）` };
+    }
     const iface = this.scope.interfaceFor(target);
     if (!iface || iface.address !== normalizeAddress(c.address)) {
       return { allowed: false, reason: `自分の候補 ${c.address} は接続先 ${target} と別セグメントのNICです` };
@@ -198,6 +215,8 @@ export function installLanGuard(): void {
   proto.sendDiscoveryRequest = function (this: any) {
     const g = guardOf(this); // ← コンストラクタ内の最初の呼び出しで、ここでガードが結び付く
     if (!g) return;
+    // (v3: an HTTP-signaled connection finds nobody over UDP — its peer is the signaling server's own address)
+    if (g.httpSignal) return;
     const d = g.scope.checkDiscoveryDestination(this.broadcastAddress);
     if (!d.allowed) {
       g.deny('discovery', `ディスカバリ要求の送信先 ${this.broadcastAddress} を拒否 — ${d.reason}`);
@@ -229,11 +248,17 @@ export function installLanGuard(): void {
       this.failNegotiation(this.serverNetworkId, code);
     };
     if (!g) return abort('ガード未設定のため接続しません');
+    let rinfo: { address: string; port: number } | undefined;
     if (this._externalSignaling) {
-      return abort('外部シグナリング(Xbox/Realms等のサービス経由)はLAN外になり得るため使いません');
+      // (v3: the one outside signaling allowed — this connection's own HTTP signaler, to the address its guard fork names)
+      if (!g.httpSignal || !this._signalHandler?.__ncHttpSignal) {
+        return abort('外部シグナリング(Xbox/Realms等のサービス経由)はLAN外になり得るため使いません');
+      }
+      rinfo = { address: g.httpSignal.address, port: g.httpSignal.port };
+    } else {
+      rinfo = this.addresses.get(BigInt(this.serverNetworkId));
+      if (!rinfo) return abort('LANディスカバリで応答を確認していない相手には接続しません');
     }
-    const rinfo = this.addresses.get(BigInt(this.serverNetworkId));
-    if (!rinfo) return abort('LANディスカバリで応答を確認していない相手には接続しません');
     const d = g.acceptRemoteAddress(rinfo.address);
     if (!d.allowed) return abort(`接続先 ${rinfo.address} を拒否 — ${d.reason}`);
 
@@ -314,13 +339,17 @@ function wrapOutgoing(g: LanGuard, send: (signal: any) => void, target: string, 
     return send(signal);
   };
   (fn as any).__lanGuarded = true;
+  // (the HTTP signaler stays known as such once wrapped: a second offer on the same client is still allowed)
+  if ((send as any)?.__ncHttpSignal) (fn as any).__ncHttpSignal = true;
   return fn;
 }
 
 /** werift の RTCPeerConnection を、LAN専用の ICE 設定に固定したものへ差し替える（テストからも使う） */
 export function makeGuardedBackend(g: LanGuard, target: string) {
   const Base = weriftBackend().RTCPeerConnection;
-  const bindIface = g.scope.isOwnAddress(target) ? undefined : g.scope.interfaceFor(target);
+  // (bound to the NIC on the target's own segment; a Tailscale device of the user's: to this machine's Tailscale address)
+  const tsOwn = g.scope.tailscaleName(target) ? g.scope.ownTailscaleAddresses()[0] : undefined;
+  const bindIface = g.scope.isOwnAddress(target) ? undefined : tsOwn ? { address: tsOwn } : g.scope.interfaceFor(target);
 
   class LanOnlyPeerConnection extends Base {
     constructor(config: any = {}) {

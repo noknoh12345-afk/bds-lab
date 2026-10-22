@@ -4,6 +4,21 @@
 **app ラボを「ほぼクライアント」に: 本物のアプリをコントローラーで人のように遊べる（歩く・見回す・跳ぶ・壊す・置く・持ち物・チャット…）。
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
+### 🌐 nethernet-connect v3: 自分のネットワークのワールドとサーバーに、それぞれの入り方で（`node lab.mjs lan`）
+- `common/nethernet-connect` に v3 を作った（`dist/` も入れた: `lan` と `LAB_TRANSPORT=lan` がそのまま動く）。探す
+  （`discoverEndpoints`: LAN の発見・RakNet の ping・BDS の `GET /v1/join` を並行に、名前が合う時だけまとめる）、入る
+  （`connectToEndpoint`: lan・**BDS の NetherNet HTTP シグナリング**・RakNet）、観戦モード（世界を変えるパケットは送らない。通すのは決まった
+  一覧だけ、落とした種類は `[observe] <名前>`）、自分の Tailscale の端末、アカウント（device code）、BDS・ワールドのスナップショット、
+  Web の画面のサーバー（トークン・自分のネットワークの外は 403）。
+- ガード: 外からの合図は、その接続の自分の HTTP シグナラーだけ許す（相手は固定、UDP の発見は送らない、候補と経路は今までどおり）。
+- 本物の BDS 1.26.52 で確かめた: NetherNet・LAN 公開の BDS は server-port で HTTP シグナリングも出していて、HTTP でも LAN でも入れた
+  （ホスト鍵の署名検証 OK）。`LAB_TRANSPORT=lan` で GeoUI の 1000 個の譜面のパックのワールドに入り、その tests.txt が 8/8。
+- `lan account import` が名前を一覧にも入れる（`lan account list`・Web・`--account` なしの参加で見える）。
+- 試験: `tests/nc-offline.mjs`（パッケージの unit・e2e、`dist/` が今の `src/` と同じか）・`tests/nc-join-offline.mjs`・
+  `tests/nc-find-offline.mjs`、`tests/lan-offline.mjs` に account import。UDP 7551 を使う試験は 1 本ずつ（`tests/fake/lock.mjs`）、
+  試験は `tests/fake/nc.mjs` が一時フォルダに組み立てた物で動く（`build.mjs --out`）。
+- 直した: CI の host-offline が、取り込んだパッケージの `tsconfig.json`（と `dist/`）をユニットのキャッシュと見て落ちていた。
+
 ### 📸 本物のアプリの実行の写真と動画が、進むたびに Discord に届く
 - `app run` / `app ui`（GitHub の app ワークフローでも手元でも）が、区切り（`section`）が終わるたびにその写真を Discord へ送る
   （`app/lib/feed.mjs`）。速く進む区切りは数個まとめて 1 通、失敗した区切りはすぐ（失敗した行と理由つき）。始まりに 1 通、終わりに
@@ -32,6 +47,10 @@
 - probe_b の #400 の板が見つからなかったのは、右端の列の板が +20 動くと測る範囲（一人称の手の手前）の外に出たため（番号の上限では
   なかった）。6 列に並べ、どの probe でも測る範囲の外を見に行く並べ方なら作る時に止まる。Blockbench の「確かめる」にタイムラインの
   大きさ（プロパティ・Molang の行・ボーン・render controller・アニメーション）を出す。見本の再生を録画する。
+- **本物のアプリで、1000 個・6 分の譜面（3.2 MB のパック・43 万文字）が最後まで動いた**（再生 2〜375 秒・シーク・一時停止・止め、
+  74 手順すべて）。300 個の譜面も、時計・止め・不透明度も。pre_animation は 61 万文字・5029 行・変数 5000 個まで効くことを probe で
+  確かめ、書き出しはそれを超えると注意を出す。大きいパックは参加（接続まで）が遅い（1000 個で 387 秒、理由は要実測）: ラボは参加を
+  900 秒待ち、ゲームのエラーなら入り直す。
 
 ### 👀 管理パネル: 成果物をパネルで見る — 画像は画像で、動画はその場で再生、すべてのファイルを（スマホでも zip を取らずに）
 - 今までの成果物は名前と大きさと「GitHub で取る」（zip のダウンロード）だけで、スマホでは開けなかった。いまは「進み具合」の実行と
