@@ -97,6 +97,7 @@ const all = JSON.stringify(posts);
 ok(r.status === 0 && posts.length === 1 && /^FAIL .*中身は暗号化/.test(posts[0].output.title), 'a sealed run: one check (no logcat, no screens)', r.text + all);
 ok(/手順 3 個、落ちた: 2 番目（7 行目 other）/.test(posts[0].output.summary) && /1\.21\.120\.4/.test(posts[0].output.summary) && /95s/.test(posts[0].output.summary) && !posts[0].output.text, 'its summary: the verdict, which step, versions, seconds; no text', posts[0]?.output?.summary);
 ok(/中身は暗号化されています: 手元で node lab\.mjs app ci watch 424242/.test(posts[0].output.summary), 'one line: where to read it', posts[0]?.output?.summary);
+ok(/^\| Discord \| 写真・動画 12 個（送れなかった 1 回） \|$/m.test(posts[0].output.summary), 'how many pictures and videos went to Discord (numbers only)', posts[0]?.output?.summary);
 ok(/^- 測った値 calib-device（geoui、11 行目）: 画面の高さ 176\.250 単位.*中心のずれ x -0\.00170 \/ y -0\.05256/m.test(posts[0].output.summary) && /^- 測った値 \?（geoui、12 行目）: ✘ 測れません（other）$/m.test(posts[0].output.summary) && posts[0].output.summary.includes('"unitsPerScreenH":176.25'),
   'the measures in the check: a line each (a failed one with its code) and the numbers as JSON', posts[0]?.output?.summary);
 ok(![EMAIL, SCREEN, LOG, STEP, 'my-secret-words', 'base64'].some((x) => all.includes(x)), 'no e-mail, screen text, log line or step text in the check', all);

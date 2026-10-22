@@ -2634,6 +2634,8 @@ async function checksCmd(args) {
         `| 結果 | ${ok ? 'PASS' : 'FAIL'}${n !== null ? `（手順 ${n} 個${failed.length ? `、落ちた: ${failed.join(', ')} 番目${lines.length ? `（${lines.map((x, i) => `${x} 行目${codes[i] ? ` ${codes[i]}` : ''}`).join(', ')}）` : ''}` : ''}）` : ''} |`,
         `| アプリ | ${word(s.app) ?? '—'} |`, `| BDS | ${word(s.bds) ?? '—'} |`,
         ...(num(s.join_seconds) !== null ? [`| 参加 | ${s.join_seconds} 秒 |`] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`,
+        // (the pictures and videos that went to the person's Discord: numbers only)
+        ...(s.media && num(s.media.sent) !== null ? [`| Discord | 写真・動画 ${s.media.sent} 個${num(s.media.failed) ? `（送れなかった ${s.media.failed} 回）` : ''}${s.media.late === true ? '（時間切れ）' : ''} |`] : []),
         ...trails.map(([k, v]) => `| 道筋（${k} 行目） | \`${v}\` |`), '',
         s.sealed === false ? '- 中身は封じる鍵が無かったので成果物に入れていません（APP_CACHE_KEY か GOOGLE_AAS_TOKEN を Secrets に）'
           : `- 中身は暗号化されています: 手元で node lab.mjs app ci watch ${runId ?? '<run の番号>'}`, ...measured].join('\n') }];
