@@ -146,12 +146,15 @@ async function padPress(k) {
     else if (k === 'BUTTON_A' && S.phase === 'lanown') { S.phase = 'ownworld'; S.openedOwn = true; save(); }
     else if (k === 'BUTTON_A' && S.phase === 'lanfocus') { S.uri = 'lan'; save(); await joined(); }
     else if (k === 'BUTTON_A' && S.phase === 'join-rated' && process.env.FAKE_LAN_PROMPTS) { S.phase = 'join-packs'; save(); }
+    // (FAKE_PACKS_SLOW=n: the packs come in for n pictures first — the server says the player connected only after them;
+    //  FAKE_PACKS_STUCK: they never finish, the server never says it)
+    else if (k === 'BUTTON_A' && S.phase === 'join-packs' && (process.env.FAKE_PACKS_SLOW || process.env.FAKE_PACKS_STUCK)) { S.phase = 'downloading'; S.downLeft = Number(process.env.FAKE_PACKS_SLOW || 1e9); save(); }
     else if (k === 'BUTTON_A' && S.phase === 'join-packs') { S.phase = 'world'; save(); srv('Player connected: , xuid: '); srv('Player Spawned: Alex xuid: , pfid: '); }
     else if (k === 'BUTTON_B' && ['lanlist', 'lanfocus', 'lanempty', 'join-refused'].includes(S.phase)) { S.phase = 'title'; save(); }
     // Y in the world opens the inventory (FAKE_PAD_WAKE: the game in touch mode takes the first press only to wake the controller)
     else if (k === 'BUTTON_Y' && S.phase === 'world') { if (process.env.FAKE_PAD_WAKE && !S.padAwake) S.padAwake = true; else S.phase = 'screen'; save(); }
   }
-const COLORS = { loading: [24, 24, 24], playload: [30, 30, 34], createworld: [100, 100, 40], 'join-packs': [58, 58, 58], lanown: [52, 52, 62], ownworld: [120, 160, 220], 'ms-start': [16, 124, 16], 'ms-email': [250, 250, 250], 'ms-password': [248, 250, 250], 'ms-code': [250, 248, 250], 'ms-approve': [250, 250, 248], 'ms-stay': [246, 246, 246], 'ms-error': [250, 244, 244], home: [40, 40, 40], title: [60, 120, 200], gamemode: [64, 64, 64], lanlist: [52, 52, 60], lanfocus: [52, 52, 64], lanempty: [52, 52, 56], welcome: [70, 60, 50], 'join-external': [50, 50, 50], 'join-rated': [55, 55, 55], 'join-refused': [45, 45, 45], world: [90, 160, 80], form: [230, 180, 40], anr: [235, 235, 235], pause: [70, 70, 90], screen: [150, 110, 60], play: [255, 255, 255], paywall: [248, 248, 248] };
+const COLORS = { loading: [24, 24, 24], downloading: [40, 28, 64], playload: [30, 30, 34], createworld: [100, 100, 40], 'join-packs': [58, 58, 58], lanown: [52, 52, 62], ownworld: [120, 160, 220], 'ms-start': [16, 124, 16], 'ms-email': [250, 250, 250], 'ms-password': [248, 250, 250], 'ms-code': [250, 248, 250], 'ms-approve': [250, 250, 248], 'ms-stay': [246, 246, 246], 'ms-error': [250, 244, 244], home: [40, 40, 40], title: [60, 120, 200], gamemode: [64, 64, 64], lanlist: [52, 52, 60], lanfocus: [52, 52, 64], lanempty: [52, 52, 56], welcome: [70, 60, 50], 'join-external': [50, 50, 50], 'join-rated': [55, 55, 55], 'join-refused': [45, 45, 45], world: [90, 160, 80], form: [230, 180, 40], anr: [235, 235, 235], pause: [70, 70, 90], screen: [150, 110, 60], play: [255, 255, 255], paywall: [248, 248, 248] };
 // the game's license (PairIP asks the Play Store at each start): FAKE_PAIRIP_UNTIL_PLAY = Play's paywall until Play itself
 // installed or updated the game (its page's button tapped); FAKE_PAIRIP_ALWAYS = always; FAKE_NOT_OWNED = Play's page shows a price
 const paywalled = () => Boolean(process.env.FAKE_PAIRIP_ALWAYS || (process.env.FAKE_PAIRIP_UNTIL_PLAY && !S.byPlay));
@@ -240,6 +243,8 @@ if (a[0] === 'exec-out' && a[1] === 'screencap') {
   if (S.phase === 'ms-approve' && (S.approveLooks = (S.approveLooks ?? 0) + 1) > 3) S.phase = 'ms-stay';
   if (S.phase === 'loading' && --S.loadLeft < 0) S.phase = 'world';
   if (S.phase === 'playload' && --S.playLoadLeft < 0) S.phase = S.playNext;
+  // (the packs in: the server says so, the app loads the world for a picture more)
+  if (S.phase === 'downloading' && --S.downLeft < 0) { S.phase = 'loading'; S.loadLeft = 1; srv('Player connected: , xuid: '); srv('Player Spawned: Alex xuid: , pfid: '); }
   save(); process.stdout.write(await shotPng()); process.exit(0); }
 if (a[0] === 'logcat') {
   if (a.includes('-c')) process.exit(0);

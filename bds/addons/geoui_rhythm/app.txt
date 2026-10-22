@@ -8,7 +8,7 @@ shot title
 
 section join
 join
-until joined 300000
+until joined 900000
 wait 3000
 do time set noon
 do gamerule dodaylightcycle false

@@ -191,6 +191,24 @@ export function playScreen(words) {
   // (the hint read as "A Flay" on the CI device)
   return { lan: /Dedicated Server'?s world|LAN world/i.test(all), focused: /\bA\s+[PF]lay\b/.test(all) };
 }
+/** a screen on the way into a world, by OCR, as one of the lab's own names (pure) — the states of a join's trail, which a
+ *  public summary may hold (failcodes.mjs makeTrail): a question of the game's (prompt-external | prompt-rated |
+ *  prompt-packs), the server's packs coming in (downloading), the game finding the server (connecting), the world made
+ *  (generating), another loading screen (loading), back on PLAY (play-lan | play-empty) or the title (title), nothing read
+ *  (blank), anything else (other) */
+export function joinScreen(words) {
+  const k = joinPromptKind(words);
+  if (k) return `prompt-${k}`;
+  const all = words.map((w) => w.text).join(' ');
+  if (/Downloading|Applying (resource )?packs?/i.test(all)) return 'downloading';
+  if (/Locating server|Connecting|Joining/i.test(all)) return 'connecting';
+  if (/Generating World|Building terrain|Preparing world/i.test(all)) return 'generating';
+  if (loadingScreen(words)) return 'loading';
+  const p = playScreen(words);
+  if (p) return p.lan ? 'play-lan' : 'play-empty';
+  if (titleWords(words)) return 'title';
+  return words.length ? 'other' : 'blank';
+}
 /** a button has the gamepad's focus when it is drawn green (1.26's classic menus: the focused button green, the others grey;
  *  pure) → is the button under this word (OCR's box) focused. Sampled just above and below the word, inside the button */
 export function buttonFocused(img, word) {

@@ -204,6 +204,9 @@ js ${SEQ} q(p('A').getProperty('${NS}:seq'))[0]
 const shots = V.shots;
 // (measured in the playfield's part of the 1560 x 720 screen: the first-person hand on the right and the chat on top left out)
 const REGION = '0 170 1030 720';
+// (how long `until joined` waits for a pack this big: 300 s, 900 s past 600 KB — the 6th round's two big packs went past 300 s
+//  with no "Player connected" from the server; the join's trail in summary.json says what the app showed)
+const joinWaitMs = (bytes) => (bytes > 600 * 1024 ? 900_000 : 300_000);
 out.set('app.txt', Buffer.from(`# ${V.name} を本物のアプリで: 再生して、決まった時刻に写す（GeoUI のタイムラインが描く: 円・接近の輪・番号・スライダーの体と玉・スピナー・点数）
 # 時刻は再生を始めてからの目安（サーバーの命令が届くまでの遅れがある）。比べる基準は再生前の画面（world--before-play）。
 
@@ -214,7 +217,7 @@ shot title
 
 section join
 join
-until joined 300000
+until joined ${joinWaitMs([...out.values()].reduce((n, b) => n + b.length, 0))}
 wait 3000
 do time set noon
 do gamerule dodaylightcycle false

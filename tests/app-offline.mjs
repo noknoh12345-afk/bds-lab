@@ -645,6 +645,23 @@ await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without
   made.push(q.runDir);
   const qRun = fs.readFileSync(path.join(q.runDir, 'run.txt'), 'utf8');
   ok(q.status === 0 && /参加の確認（rated）: ゲームパッド A/.test(qRun) && /参加の確認（packs）: ゲームパッド A/.test(qRun) && !q.state.calls.some((c) => /^shell input tap/.test(c)), `exit ${q.status} ${JSON.stringify(q.state.pads)}\n${qRun.slice(-1200)}`);
+  // the server's packs coming in for a while (the server says the player connected only after them): the join's trail keeps
+  // the screens in order and when the server said it — the report and the run's result have them
+  const pk = e2e('lanpackslow', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_LAN_PROMPTS: '1', FAKE_PACKS_SLOW: '4', APP_JOIN_OCR_MS: '50' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(pk.runDir);
+  const pkRes = fs.existsSync(path.join(pk.runDir, 'result.json')) ? JSON.parse(fs.readFileSync(path.join(pk.runDir, 'result.json'), 'utf8')) : {};
+  const pkJoin = (pkRes.results ?? []).find((x) => x.verb === 'until'), pkRep = fs.existsSync(path.join(pk.runDir, 'report.md')) ? fs.readFileSync(path.join(pk.runDir, 'report.md'), 'utf8') : '';
+  ok(pk.status === 0 && /^prompt-rated.* prompt-packs.* downloading\*\d+\[downloading\+resource\+packs\] srv-connected srv-spawned generating(\*\d+)?\[[a-z+]+\] world(\[[a-z+]+\])?$/.test(pkJoin?.trail ?? '') && pkJoin.connectedAt > 0
+    && Number.isFinite(pkRes.timing?.connect) && pkRes.timing.connect <= pkRes.timing.join && /\| 参加の道筋（3 行目） \| `prompt-rated/.test(pkRep) && /\| 参加: サーバーの Player connected \| [\d.]+ 秒 \|/.test(pkRep),
+    `exit ${pk.status} ${JSON.stringify(pkJoin)} ${JSON.stringify(pkRes.timing)}\n${pkRep.slice(0, 800)}`);
+  // the packs never finish (no "Player connected" from the server): said so — the download screen was the last — with its own
+  // code and the trail
+  const ps = e2e('lanpackstuck', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_LAN_PROMPTS: '1', FAKE_PACKS_STUCK: '1', APP_JOIN_OCR_MS: '50' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(ps.runDir);
+  const psRes = fs.existsSync(path.join(ps.runDir, 'result.json')) ? JSON.parse(fs.readFileSync(path.join(ps.runDir, 'result.json'), 'utf8')) : {}, psJoin = (psRes.results ?? []).find((x) => x.verb === 'until');
+  const FCj = await imp('app/lib/failcodes.mjs');
+  ok(ps.status === 1 && /アプリはサーバーのパックを取り込んでいました/.test(ps.text) && FCj.stepCode(psJoin?.note) === 'joined-packs-slow' && /downloading\*\d+\[downloading\+resource\+packs\]$/.test(psJoin?.trail ?? '') && !/srv-connected/.test(psJoin.trail),
+    `exit ${ps.status} ${JSON.stringify(psJoin)}\n${ps.text.slice(-1200)}`);
   const n = e2e('lannone', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_LAN_NONE: '1', APP_LAN_JOIN_MS: '1500' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
   made.push(n.runDir);
   ok(n.status === 1 && /LAN のワールドが出ない（PLAY を開き直した: \d+ 回）: 端末の中継（UDP 7551）と BDS の LAN の公開を確かめる/.test(n.text), n.text.slice(-1500));

@@ -172,6 +172,10 @@ export function writeReport(runDir, r) {
     ...(r.path ? [`| 道 | ${r.path} |`] : []),
     `| シナリオ | ${r.scenario} |`,
     ...(r.timing?.join ? [`| 参加 | ${(r.timing.join / 1000).toFixed(1)} 秒（参加リンク → ワールドに出るまで）${r.timing.fromStart ? `。端末の起動から ${(r.timing.fromStart / 1000).toFixed(1)} 秒` : ''} |`] : []),
+    // (when the server first said the player connected, from the same start: before the packs' download, or after it)
+    ...(r.timing?.join && Number.isFinite(r.timing.connect) ? [`| 参加: サーバーの Player connected | ${(r.timing.connect / 1000).toFixed(1)} 秒 |`] : []),
+    // (the screens the join went through, in the lab's own names: lib/failcodes.mjs)
+    ...((r.results ?? []).filter((x) => x.verb === 'until' && /^until joined\b/.test(x.raw ?? '') && x.trail).slice(0, 2).map((x) => `| 参加の道筋（${x.line} 行目） | \`${x.trail}\` |`)),
     ...(r.timing?.device ? [`| 準備済みの端末 | ${(r.timing.device / 1000).toFixed(1)} 秒で戻りました（Minecraft はタイトル画面で起動済み） |`] : []),
     `| 時間 | ${dur}s |`,
     '',

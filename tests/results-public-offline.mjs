@@ -198,6 +198,33 @@ fs.rmSync(tmp, { recursive: true, force: true });
   const ck = await lab(['checks', path.join(tmp, 'trail')], { ...API, GITHUB_API_URL: `http://127.0.0.1:${srv2.address().port}`, APP_REPO_VISIBILITY: 'public' });
   srv2.close();
   ok(ck.status === 0 && got[0]?.output?.summary?.includes(`| 道筋（${r2.results[1].line} 行目） | \`${tt}\` |`), 'the check shows it', ck.text.slice(-800) + JSON.stringify(got).slice(0, 1500));
+  // ---- 6. a join's wait (until joined): no "Player connected" told apart by the app's last screen; a join that went in
+  // keeps its trail and when the server said the player connected — numbers and the lab's words only ----
+  const wait = (t) => `300000 ミリ秒待ちました: ${t}（画面の文字: ${SCREEN}）（道筋: prompt-packs downloading*40[downloading+resource+packs]）`;
+  const jc = ['サーバーに接続の行（Player connected）が無いまま、アプリはサーバーのパックを取り込んでいました（最後の画面: パックのダウンロード）: パックが大きいと時間がかかる。until joined の時間を延ばす',
+    'サーバーに接続の行（Player connected）が無いまま、アプリは読み込みの画面のままでした', 'サーバーに接続の行（Player connected）が無いまま、アプリはサーバーにつなぐ画面のままでした',
+    'サーバーに接続の行（Player connected）が無いまま、アプリは参加をやめて PLAY かタイトルに戻っていました（LAN のワールドを押した A が効かなかった？）',
+    'サーバーに接続が来ていません（参加の画面・サインイン・版の違い？ 画面を見てください）', 'サーバーには接続したが、ワールドに出ていません（確認画面やリソースパックのダウンロードで止まっている？ 画面を見てください）'].map((t) => F.stepCode(wait(t)));
+  ok(JSON.stringify(jc) === '["joined-packs-slow","joined-loading","joined-connecting","joined-back-out","joined-no-connection","joined-not-in-world"]', 'a join that never connected: what the app showed last, as a code', JSON.stringify(jc));
+  const jt = 'title-play prompt-rated[online+play+rated] prompt-packs[download+resource+packs] downloading*12[downloading+resource+packs] srv-connected srv-spawned world';
+  ok(F.cleanTrail(jt) === jt, 'the join\'s states and words are the lab\'s own (a public trail)', jt);
+  const d3 = makeRun(path.join(tmp, 'joined'), '20261022-090000-joined'), r4 = JSON.parse(fs.readFileSync(path.join(d3, 'result.json'), 'utf8'));
+  r4.results.splice(1, 0, { ok: true, line: 4, verb: 'until', raw: 'until joined 300000', note: SCREEN, trail: jt, connectedAt: 1000 + 60_000 });
+  r4.timing.connect = 8_765;
+  fs.writeFileSync(path.join(d3, 'result.json'), JSON.stringify(r4));
+  const d4 = makeRun(path.join(tmp, 'joined2'), '20261022-091000-joined'), r5 = JSON.parse(fs.readFileSync(path.join(d4, 'result.json'), 'utf8'));
+  r5.results.splice(1, 0, { ok: true, line: 4, verb: 'until', raw: 'until joined 300000', trail: `srv-spawned world[${EMAIL}]` });
+  fs.writeFileSync(path.join(d4, 'result.json'), JSON.stringify(r5));
+  const r6 = await lab(['checks', '--seal', path.join(tmp, 'joined')], PUB), r7 = await lab(['checks', '--seal', path.join(tmp, 'joined2')], PUB);
+  const s3 = fs.readFileSync(path.join(d3, 'summary.json'), 'utf8'), c3 = JSON.parse(s3), s4 = fs.readFileSync(path.join(d4, 'summary.json'), 'utf8'), c4 = JSON.parse(s4);
+  ok(r6.status === 0 && r7.status === 0 && c3.join_trail === jt && c3.join_connect_seconds === 8.8 && c3.join_seconds === 12.3 && !('join_trail' in c4) && !('join_connect_seconds' in c4) && ![SCREEN, EMAIL].some((x) => s3.includes(x) || s4.includes(x)),
+    'summary.json: a join\'s trail and the seconds to the server\'s Player connected (a trail with another word: dropped)', `${s3}\n${s4}`);
+  const got2 = [], srv3 = http.createServer((q, s) => { let b = ''; q.on('data', (x) => { b += x; }); q.on('end', () => { if (q.method === 'POST' && q.url.endsWith('/check-runs')) got2.push(JSON.parse(b)); s.writeHead(201, { 'content-type': 'application/json' }); s.end('{}'); }); });
+  await new Promise((res) => srv3.listen(0, '127.0.0.1', res));
+  const ck2 = await lab(['checks', path.join(tmp, 'joined')], { ...API, GITHUB_API_URL: `http://127.0.0.1:${srv3.address().port}`, APP_REPO_VISIBILITY: 'public' });
+  srv3.close();
+  const sum2 = got2[0]?.output?.summary ?? '';
+  ok(ck2.status === 0 && sum2.includes('| 参加 | 12.3 秒 |') && sum2.includes('| 参加: サーバーの Player connected | 8.8 秒 |') && sum2.includes(`| 参加の道筋 | \`${jt}\` |`), 'the check shows them', sum2.slice(0, 1500));
 }
 
 console.log(fails ? `✘ ${fails} failed` : '✔ all passed');

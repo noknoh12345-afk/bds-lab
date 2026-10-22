@@ -63,7 +63,7 @@ import path from 'node:path';
 import { GAME_VERBS, gameStep, playGame, playServer } from './play.mjs';
 import { KIND_NAMES as MEASURE_KINDS, measureShot } from './measure.mjs';
 import { makeTrail } from './failcodes.mjs';
-import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, classicTitleWords, newTitleWords, joinPromptButton, joinRefusal, joinPromptKind, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
+import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, classicTitleWords, newTitleWords, joinPromptButton, joinRefusal, joinPromptKind, joinScreen, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
 
 // APP_TIME_SCALE (0..1, tests on the fake device): every fixed pause shorter; deadlines stay in real time
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms * (Math.min(1, Math.max(0, Number(process.env.APP_TIME_SCALE) || 1)))));
@@ -271,6 +271,9 @@ export async function runScenario(steps, ctx) {
   const srvTail = new Tail(server.logFile), logTail = new Tail(ctx.logcatFile);
   const results = [], shots = [], dialogs = ctx.dialogs ?? [], began = Date.now(), perf = [], recordings = [], measures = [];
   let n = 0, size = null, last = null, lastLook = 0, recN = 0, kbd, touched = false, ocrLast = null;
+  // (what a step adds to its result beside its note — a join's trail, when the server said the player connected — taken by
+  //  the loop below and cleared for the next step)
+  let stepExtra = null;
   // the game's own screen after `size` (landscape; null = the device's): a picture of the emulator's display has it scaled
   // into the display's shape, so `measure` looks at that part only. Kept per picture, and for the newest `shot world`
   let logical = null, baseLogical = null;
@@ -627,30 +630,46 @@ export async function runScenario(steps, ctx) {
         let prev = null, calmSince = Date.now(), blank = false, words = [], prompts = 0, lastOcr = 0, spawned = null, loadingSince = 0, lastMove = null;
         const met = dialogs.length;
         if (kind === 'clientlog') needClient();
+        // (a join: the screens it went through, as the lab's own names — a public summary may hold them, failcodes.mjs — and
+        //  when the server first said the player connected. Which came first, that or the packs' download screen, tells a
+        //  slow download from no connection at all: the summary's join_trail, failed_trails)
+        const jt = kind === 'joined' ? makeTrail(24) : null, srvFrom = kind === 'joined' ? cursor.get(srvTail) ?? 0 : 0;
+        let connectedAt = 0, lastScreen = null;
+        const onScreen = (ws) => { lastScreen = joinScreen(ws); jt.add(lastScreen, ws); };
+        const joinedAs = (what) => { stepExtra = { trail: jt.text(), ...(connectedAt ? { connectedAt } : {}) }; return what; };
+        // (the server's two lines, looked for before each screen is put in the trail: what came first stays first)
+        const fromServer = () => {
+          if (!connectedAt && /Player connected: /.test(srvTail.read().slice(srvFrom))) { connectedAt = Date.now(); jt.add('srv-connected'); }
+          if (!spawned) { const hit = consume(srvTail, joinedRe); if (hit) { spawned = hit.trim().slice(0, 160); jt.add('srv-spawned'); lastOcr = 0; } }
+        };
         while (Date.now() < end) {
           // a line counts once: the search starts after the line the previous `until` of that log matched
           // (not at this step: a `do` just before may already have printed what we wait for)
           if (kind === 'joined') {
             // the server's "Player Spawned" comes while the app may still load (the server's packs, the terrain): joined is the
             // world on the device's screen, read by OCR (without OCR, the server's word)
-            if (!spawned) { const hit = consume(srvTail, joinedRe); if (hit) { spawned = hit.trim().slice(0, 160); if (!ctx.ocr) return spawned; lastOcr = 0; } }
+            fromServer();
+            if (spawned && !ctx.ocr) return joinedAs(spawned);
             if (spawned && Date.now() - lastOcr >= Math.min(JOIN_OCR_MS, 2000)) {
               lastOcr = Date.now(); words = ocrNow();
-              if (!loadingScreen(words) && !joinPromptKind(words)) return loadingSince ? `${spawned}（アプリの読み込み ${((Date.now() - loadingSince) / 1000).toFixed(0)} 秒）` : spawned;
+              if (!loadingScreen(words) && !joinPromptKind(words)) { jt.add('world', words); return joinedAs(loadingSince ? `${spawned}（アプリの読み込み ${((Date.now() - loadingSince) / 1000).toFixed(0)} 秒）` : spawned); }
+              onScreen(words);
               loadingSince ||= Date.now();
               if (joinPromptKind(words) && server.lan) { log(`${s.line} 参加の確認（${joinPromptKind(words)}）: ゲームパッド A`); padKey('A'); }
             }
             if (spawned) { await sleep(500); continue; }
-            clearDialog(s, 5000);
+            if (clearDialog(s, 5000)) jt.add('android-dialog');
             // the game's own questions on the way in (an unknown server, online play not rated, packs): answered by OCR;
             // the game saying it will not join (a sign-in it wants, a time-out): said now, not after the wait
             if (ctx.ocr && Date.now() - lastOcr >= JOIN_OCR_MS) {
-              lastOcr = Date.now(); words = ocrNow();
+              lastOcr = Date.now(); words = ocrNow(); fromServer(); onScreen(words);
+              // (the player out in the world meanwhile: the screen read again as the world's, at once)
+              if (spawned) { lastOcr = 0; continue; }
               // (the LAN way: 1.26's questions take the controller, their button that goes on has its focus already)
               const k = server.lan ? joinPromptKind(words) : null, b = k ? null : joinPromptButton(words, { w: size?.w ?? 0, h: size?.h ?? 0 });
               if (k) { log(`${s.line} 参加の確認（${k}）: ゲームパッド A（${words.slice(0, 8).map((w) => w.text).join(' ')}）`); padKey('A'); }
               else if (b) { log(`${s.line} 参加の確認: 「${b.text}」を押します（${words.slice(0, 8).map((w) => w.text).join(' ')}）`); tapAt(b.x, b.y); }
-              else { const no = joinRefusal(words); if (no) throw new Error(`ゲームが参加をやめました: ${no}（画面の文字: ${seenWords(words)}）`); }
+              else { const no = joinRefusal(words); if (no) { jt.add('refused', words); throw Object.assign(new Error(`ゲームが参加をやめました: ${no}（画面の文字: ${seenWords(words)}）（道筋: ${jt.text()}）`), { trail: jt.text() }); } }
             }
           }
           else if (kind === 'server' || kind === 'log') { const hit = consume(kind === 'server' ? srvTail : logTail, rx(a[1])); if (hit) return hit.trim().slice(0, 160); clearDialog(s, 5000); }
@@ -724,9 +743,17 @@ export async function runScenario(steps, ctx) {
         if (kind === 'stable' && seen.length) throw new Error(`${ms} ミリ秒待ちました: 画面が落ち着きません${busy}`);
         if (kind === 'title') throw new Error(`${ms} ミリ秒待ちました: タイトル画面になりません（${blank ? '画面が真っ黒のまま' : '起動画面・読み込み中・別の画面のまま'}）${busy}`);
         if (kind === 'text') throw new Error(`${ms} ミリ秒待ちました: 画面に /${a[1]}/ の文字が出ません（最後に読めた文字: ${seenWords(words)}）${busy}`);
-        if (kind === 'joined' && spawned) throw new Error(`${ms} ミリ秒待ちました: サーバーはプレイヤーを出しました（${spawned}）が、アプリはまだ読み込み中です（パックや地形。端末が追いついていない）${busy}`);
-        if (kind === 'joined' && /Player connected: /.test(srvTail.read())) throw new Error(`${ms} ミリ秒待ちました: サーバーには接続したが、ワールドに出ていません（確認画面やリソースパックのダウンロードで止まっている？ 画面を見てください）${busy}`);
-        if (kind === 'joined') throw new Error(`${ms} ミリ秒待ちました: サーバーに接続が来ていません（参加の画面・サインイン・版の違い？ 画面を見てください）${busy}`);
+        // (a join's failure carries its trail: a public summary says where it got stuck. With no "Player connected" from the
+        //  server, the last screen read tells what the app was doing: taking in the server's packs, finding the server, back
+        //  out on PLAY or the title)
+        const joinFail = (text) => { stepExtra = connectedAt ? { connectedAt } : null; return Object.assign(new Error(`${ms} ミリ秒待ちました: ${text}${busy}（道筋: ${jt.text()}）`), { trail: jt.text() }); };
+        if (kind === 'joined' && spawned) throw joinFail(`サーバーはプレイヤーを出しました（${spawned}）が、アプリはまだ読み込み中です（パックや地形。端末が追いついていない）`);
+        if (kind === 'joined' && connectedAt) throw joinFail('サーバーには接続したが、ワールドに出ていません（確認画面やリソースパックのダウンロードで止まっている？ 画面を見てください）');
+        if (kind === 'joined' && /^(downloading|prompt-packs)$/.test(lastScreen)) throw joinFail('サーバーに接続の行（Player connected）が無いまま、アプリはサーバーのパックを取り込んでいました（最後の画面: パックのダウンロード）: パックが大きいと時間がかかる。until joined の時間を延ばす');
+        if (kind === 'joined' && /^(loading|generating)$/.test(lastScreen)) throw joinFail('サーバーに接続の行（Player connected）が無いまま、アプリは読み込みの画面のままでした');
+        if (kind === 'joined' && lastScreen === 'connecting') throw joinFail('サーバーに接続の行（Player connected）が無いまま、アプリはサーバーにつなぐ画面のままでした');
+        if (kind === 'joined' && /^(play-lan|play-empty|title)$/.test(lastScreen)) throw joinFail('サーバーに接続の行（Player connected）が無いまま、アプリは参加をやめて PLAY かタイトルに戻っていました（LAN のワールドを押した A が効かなかった？）');
+        if (kind === 'joined') throw joinFail('サーバーに接続が来ていません（参加の画面・サインイン・版の違い？ 画面を見てください）');
         if (kind === 'stable' && blank) throw new Error(`${ms} ミリ秒待ちました: 画面が真っ黒（か真っ白）のままです（まだ読み込み中か、描画できていない。README「うまくいかないとき」）`);
         if (kind === 'stable' && lastMove?.box) throw new Error(`${ms} ミリ秒待ちました: 画面が落ち着きません（動き続けた所: ${lastMove.box[0]},${lastMove.box[1]}–${lastMove.box[2]},${lastMove.box[3]} px・${(lastMove.share * 100).toFixed(2)}%・格子 ${lastMove.grid}）${busy}`);
         throw new Error(`${ms} ミリ秒待ちました（時間切れ）${busy}`);
@@ -753,15 +780,16 @@ export async function runScenario(steps, ctx) {
     // (a step that acts on the game: the title the device came back with is no longer taken on its word)
     if (!STILL.has(s.verb)) { touched = true; ocrLast = null; }
     if (s.verb === 'section') { readClient(); cur().ms = Date.now() - cur().t0; sectionEnd(); sections.push({ name: s.args[0], line: s.line, ok: true, t0: Date.now(), client: [], s0: shots.length, r0: results.length }); }
+    stepExtra = null;
     try {
       const note = await act(s);
-      results.push({ line: s.line, verb: s.verb, raw: s.raw + (s.every ? ` ; every ${s.every.ms} ${s.every.step.raw}` : ''), ok: true, note, ms: Date.now() - t0, t0, t1: Date.now(), section: cur().name });
+      results.push({ line: s.line, verb: s.verb, raw: s.raw + (s.every ? ` ; every ${s.every.ms} ${s.every.step.raw}` : ''), ok: true, note, ...(stepExtra ?? {}), ms: Date.now() - t0, t0, t1: Date.now(), section: cur().name });
       log(`✔ ${s.line} ${s.raw}${note ? '  ' + note : ''}`);
     } catch (e) {
       ok = false; cur().ok = false;
       let shot;
       try { shot = save(`fail-line${s.line}`); } catch { /* no screen */ }
-      results.push({ line: s.line, verb: s.verb, raw: s.raw, ok: false, note: e.message, ...(e.trail ? { trail: e.trail } : {}), shot, ms: Date.now() - t0, t0, t1: Date.now(), section: cur().name });
+      results.push({ line: s.line, verb: s.verb, raw: s.raw, ok: false, note: e.message, ...(stepExtra ?? {}), ...(e.trail ? { trail: e.trail } : {}), shot, ms: Date.now() - t0, t0, t1: Date.now(), section: cur().name });
       log(`✘ ${s.line} ${s.raw}\n  ${e.message}${shot ? `\n  screen: ${shot}` : ''}`);
       // (not in the world — a join, or the wait for it, failed: every section up to the next join acts in a world the player
       //  is not in. Those are skipped, not failed one by one: the run's one failure stays the one that matters)

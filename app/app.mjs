@@ -1039,8 +1039,10 @@ async function runCmd(args) {
     const sp = j >= 0 ? st.results.slice(j).find((r) => r.verb === 'until' && /^until joined\b/.test(r.raw) && r.ok) : null;
     if (sp) {
       st.timing.join = sp.t1 - st.results[j].t0; if (!REAL) st.timing.fromStart = sp.t1 - emuStarted;
+      // (when the server first said the player connected, from the same start: before the packs' download or after it)
+      if (Number.isFinite(sp.connectedAt)) st.timing.connect = sp.connectedAt - st.results[j].t0;
       const target = Number(process.env.APP_JOIN_TARGET_MS) || 30_000;
-      log(`      参加: ${(st.timing.join / 1000).toFixed(1)} 秒（参加リンク → ワールド）${st.timing.fromStart ? `、端末の起動から ${(st.timing.fromStart / 1000).toFixed(1)} 秒` : ''}`);
+      log(`      参加: ${(st.timing.join / 1000).toFixed(1)} 秒（参加リンク → ワールド）${st.timing.connect !== undefined ? `、サーバーの Player connected まで ${(st.timing.connect / 1000).toFixed(1)} 秒` : ''}${st.timing.fromStart ? `、端末の起動から ${(st.timing.fromStart / 1000).toFixed(1)} 秒` : ''}${sp.trail ? `（道筋: ${sp.trail}）` : ''}`);
       if (st.timing.join > target) st.notes.push(`参加に ${(st.timing.join / 1000).toFixed(1)} 秒かかりました（目標 ${target / 1000} 秒）${emu.warm ? '' : ': 準備済みの端末（node lab.mjs app prepare）なら、起動済みのゲームから参加します'}`);
     }
   } catch (e) {
@@ -2565,12 +2567,17 @@ async function checksCmd(args) {
     const steps = Array.isArray(r?.results) ? r.results.map((x) => ({ ok: Boolean(x?.ok), line: num(x?.line), code: x?.ok ? null : stepCode(x?.note), trail: x?.ok ? null : cleanTrail(x?.trail) }))
       : readT(path.join(d, 'steps.txt')).split('\n').filter((l) => /^(OK |FAIL)/.test(l)).map((l) => ({ ok: l.startsWith('OK'), line: num(Number(/^\S+\s+(\d+)/.exec(l)?.[1])), code: l.startsWith('OK') ? null : 'other' }));
     const secs = r && num(r.ended) !== null && num(r.started) !== null ? Math.round((r.ended - r.started) / 1000) : num(Number(/^\| 時間 \| (\d+)s/m.exec(md)?.[1]));
+    // (a join that went in: the screens it went through on the way — the same filter as a failure's — and when the server
+    //  first said the player connected)
+    const uj = Array.isArray(r?.results) ? r.results.find((x) => x?.ok && x?.verb === 'until' && /^until joined\b/.test(String(x?.raw ?? ''))) : null;
     return {
       run: word(path.basename(d)), addon: word(r?.addon), ok: r ? r.ok === true : /^# app: PASS/m.test(md),
       steps: steps.length, failed: steps.flatMap((x, i) => (x.ok ? [] : [i + 1])), failed_lines: steps.filter((x) => !x.ok && x.line !== null).map((x) => x.line),
       failed_codes: steps.filter((x) => !x.ok && x.line !== null).map((x) => cleanCode(x.code) ?? 'other'),
       ...(steps.some((x) => !x.ok && x.trail && x.line !== null) ? { failed_trails: Object.fromEntries(steps.filter((x) => !x.ok && x.trail && x.line !== null).slice(0, 6).map((x) => [String(x.line), x.trail])) } : {}),
       seconds: secs, join_seconds: num(r?.timing?.join) !== null ? Math.round(r.timing.join / 100) / 10 : null,
+      ...(num(r?.timing?.connect) !== null ? { join_connect_seconds: Math.round(r.timing.connect / 100) / 10 } : {}),
+      ...(uj && cleanTrail(uj.trail) ? { join_trail: cleanTrail(uj.trail) } : {}),
       bds: word(r?.bds?.version) ?? cell('BDS'), app: word(r?.app?.versionName) ?? cell('アプリ'),
       ...(Array.isArray(r?.measures) && r.measures.length ? { measures: M.cleanMeasures(r.measures) } : {}),
       // (the pictures and videos sent to the person's Discord: how many, numbers only — lib/feed.mjs)
@@ -2633,7 +2640,8 @@ async function checksCmd(args) {
       summary: [`# app: ${ok ? 'PASS' : 'FAIL'}${word(s.addon) ? ` — ${s.addon}` : ''}`, '', '| | |', '|---|---|',
         `| 結果 | ${ok ? 'PASS' : 'FAIL'}${n !== null ? `（手順 ${n} 個${failed.length ? `、落ちた: ${failed.join(', ')} 番目${lines.length ? `（${lines.map((x, i) => `${x} 行目${codes[i] ? ` ${codes[i]}` : ''}`).join(', ')}）` : ''}` : ''}）` : ''} |`,
         `| アプリ | ${word(s.app) ?? '—'} |`, `| BDS | ${word(s.bds) ?? '—'} |`,
-        ...(num(s.join_seconds) !== null ? [`| 参加 | ${s.join_seconds} 秒 |`] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`,
+        ...(num(s.join_seconds) !== null ? [`| 参加 | ${s.join_seconds} 秒 |`] : []), ...(num(s.join_connect_seconds) !== null ? [`| 参加: サーバーの Player connected | ${s.join_connect_seconds} 秒 |`] : []),
+        ...(cleanTrail(s.join_trail) ? [`| 参加の道筋 | \`${cleanTrail(s.join_trail)}\` |`] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`,
         // (the pictures and videos that went to the person's Discord: numbers only)
         ...(s.media && num(s.media.sent) !== null ? [`| Discord | 写真・動画 ${s.media.sent} 個${num(s.media.failed) ? `（送れなかった ${s.media.failed} 回）` : ''}${s.media.late === true ? '（時間切れ）' : ''} |`] : []),
         ...trails.map(([k, v]) => `| 道筋（${k} 行目） | \`${v}\` |`), '',

@@ -15,6 +15,11 @@ export const STEP_CODES = [
   [/サーバーはプレイヤーを出しました/, 'joined-app-loading'],
   [/サーバーには接続したが/, 'joined-not-in-world'],
   [/サーバーに接続が来ていません/, 'joined-no-connection'],
+  // (no "Player connected" from the server, told apart by the app's last screen: scenario.mjs until joined)
+  [/アプリはサーバーのパックを取り込んでいました/, 'joined-packs-slow'],
+  [/アプリは読み込みの画面のままでした/, 'joined-loading'],
+  [/アプリはサーバーにつなぐ画面のままでした/, 'joined-connecting'],
+  [/アプリは参加をやめて PLAY かタイトルに戻っていました/, 'joined-back-out'],
   [/タイトル画面になりません/, 'title-timeout'],
   [/真っ黒/, 'screen-black'],
   // (where it kept moving: its box in px, the share that changed and which of a 4 x 3 grid — scenario.mjs moveBox)
@@ -70,7 +75,8 @@ export const UI_VOCAB = new Set(`play settings realms servers server worlds worl
   exit mojang dedicated lan get started more options marketplace dressing room profile sign later maybe welcome proceed download
   join loading generating connecting disconnected error achievements store quit game mode creative survival hardcore your way how
   will you okay yes close help menu title screen resource packs online rated external unknown trust edit delete copy storage
-  manage invite friend local network update news alex steve flat simple advanced`.split(/\s+/).filter(Boolean));
+  manage invite friend local network update news alex steve flat simple advanced downloading locating joining building terrain
+  preparing applying everything requires players resources`.split(/\s+/).filter(Boolean));
 /** OCR's words → the UI words among them (in the order read, each once, at most n; pure) */
 export const uiWords = (words, n = 8) => [...new Set((words ?? []).flatMap((w) => String(w?.text ?? w).toLowerCase().split(/[^a-z]+/)).filter((k) => UI_VOCAB.has(k)))].slice(0, n);
 /** a trail being written (pure): add(state, words) — the same state as the last joins it (counted, its UI words added, at

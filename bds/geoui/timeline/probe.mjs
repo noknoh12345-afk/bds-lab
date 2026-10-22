@@ -328,14 +328,18 @@ function probeTimeline() {
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the add-on
-const HEAD = (ns) => `section title
+// how long `until joined` waits for a pack this big: 300 s, 900 s past 600 KB (the 6th round's two big packs — 716 KB, 3.2 MB —
+// went past 300 s with no "Player connected" from the server; the join's trail in summary.json says what the app showed)
+const joinWaitMs = (bytes) => (bytes > 600 * 1024 ? 900_000 : 300_000);
+const packBytes = (files) => Object.values(files).reduce((n, v) => n + (v && v.base64 ? Buffer.from(v.base64, 'base64').length : v instanceof Uint8Array ? v.length : Buffer.byteLength(typeof v === 'string' ? v : JSON.stringify(v))), 0);
+const HEAD = (ns, joinMs = 300_000) => `section title
 launch
 until title 600000
 shot title
 
 section join
 join
-until joined 300000
+until joined ${joinMs}
 wait 3000
 do time set noon
 do gamerule dodaylightcycle false
@@ -416,7 +420,7 @@ const measure = (name) => `measure diff ${name} ${REGION.join(' ')}`;
 const U_PX = 720 / 170.68, toPx = ([x, y]) => [780 + x * U_PX, 360 - (y - 140) * U_PX];
 const measureColor = (name, at) => { const [x, y] = toPx(at).map(Math.round); return `measure color ${name} ${x - 15} ${y - 15} ${x + 15} ${y + 15}`; };
 function appTxt(P) {
-  let s = `# ${P.name}（bds/geoui/timeline/probe.mjs が作る）: ${P.title}。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。\n# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を、measure color で板の真ん中の色を数で出す。\n\n${HEAD(P.ns)}`;
+  let s = `# ${P.name}（bds/geoui/timeline/probe.mjs が作る）: ${P.title}。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。\n# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を、measure color で板の真ん中の色を数で出す。\n\n${HEAD(P.ns, joinWaitMs(packBytes(P.files)))}`;
   if (P.timeline) {
     for (const t of P.tests) {
       s += `\nsection ${shotName(t)}\n${t.cmd.map((c) => `do scriptevent ${P.ns}:${c}`).join('\n')}\n`;
