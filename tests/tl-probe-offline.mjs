@@ -149,6 +149,22 @@ for (const [name, ns, ids, lines] of [['geoui_probe_lc', 'gprobl', ['ctl', 'l100
   ok(!bad.length && placed && long && pre.filter((l) => counter.test(l) || /^v\.gpv_\d+ = \d+;$/.test(l)).length === lines, `${name}: each of ${ids.length} tests draws its own plane only, its line right after the ${name === 'geoui_probe_vc' ? 'variable' : 'line'} it counts (${lines})`, bad.join('\n  '));
 }
 
+// ---- geoui_probe_vx: the variables' number past 3000 — each test's plane only when chosen; the reads with ?? right after their
+//      variable, then (after all 5000) the first and the 2000th again with ??, then the same marks without ?? in rising order
+{
+  const name = 'geoui_probe_vx', ns = 'gprobx', marks = [3000, 3030, 3045, 3060, 3100, 3500, 4096, 5000];
+  const ids = ['ctl', ...marks.map((m) => `v${m}`), ...marks.map((m) => `n${m}`), 'e1', 'e2000'];
+  const base = shown(frame(name, ns, { v2: 0 })), bad = [];
+  ids.forEach((bone, i) => { const s = shown(frame(name, ns, { v2: i + 1 })); if (!(s.length === 1 && s[0].bone === bone && near(s[0], cellAt(i)))) bad.push(`${i + 1} ${bone}: ${JSON.stringify(s.map((d) => d.bone))}`); });
+  const pre = rd(path.join(TOP, 'bds/addons', name, 'rp'), 'entity/player.entity.json')['minecraft:client_entity'].description.scripts.pre_animation;
+  const at = (id) => pre.findIndex((l) => l.startsWith(`v.gpq_${id} =`)), made = (id) => pre.slice(0, at(id)).filter((l) => /^v\.gpv_\d+ = \d+;$/.test(l)).length, last = pre.findLastIndex((l) => /^v\.gpv_\d+ = \d+;$/.test(l));
+  const withQ = marks.every((m) => made(`v${m}`) === m && pre[at(`v${m}`)].includes(`(v.gpv_${m - 1} ?? -1) == ${m - 1}`));
+  const bare = marks.every((m, k) => at(`n${m}`) > last && (k === 0 || at(`n${m}`) > at(`n${marks[k - 1]}`)) && pre[at(`n${m}`)].includes(`v.gpv_${m - 1} == ${m - 1}`) && !pre[at(`n${m}`)].includes('??'));
+  const early = at('e1') > last && at('e2000') > last && at('e2000') < at('n3000') && pre[at('e1')].includes('(v.gpv_0 ?? -1) == 0') && pre[at('e2000')].includes('(v.gpv_1999 ?? -1) == 1999');
+  ok(!base.length && !bad.length && withQ && bare && early && pre.filter((l) => /^v\.gpv_\d+ = \d+;$/.test(l)).length === 5000,
+    `${name}: each of ${ids.length} tests draws its own plane only; 5000 variables, each mark read with ?? right after it, the early ones again after all, the marks without ?? last in rising order`, bad.join('\n  '));
+}
+
 // ---- geoui_probe_b: the limits — each test plane only when chosen, moved 20 units by its own bone (#250 … #599), drawn by its
 //      own render controller (the 40th, the 70th) or moved by the 1200th animation (anim_time_update); nothing while idle
 {

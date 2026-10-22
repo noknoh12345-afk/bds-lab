@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import vm from 'node:vm';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -188,6 +189,49 @@ ok(demo.status === 0, 'bds/addons/geoui_rhythm is up to date with demo.mjs', dem
   const ent = JSON.parse(fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'bds', 'addons', 'geoui_rhythm', 'rp', 'entity', 'player.entity.json'), 'utf8'))['minecraft:client_entity'].description;
   const unset = G.unsetReads(ent.scripts.pre_animation, { init: ent.scripts.initialize });
   ok(!unset.length, 'geoui_rhythm: its pre_animation reads no variable before setting it (the game would stop there, every frame)', unset.join(', '));
+}
+// (the samples' tests.txt against the script's own engine with the lab's timing: a console command a tick or two to arrive, then
+//  the lab's pause after it — 300 ms counted in the server's ticks: 6 — a js line its round trip and 50 ms of the wall clock
+//  (4 ticks at CI's speed 4), wait ms / 50 ticks, a join a while. Every expectation must hold over that and a margin past it)
+function labRun(dir, { arrive = 1, cmdPause = 6, jsPause = 1, joinTicks = 20 } = {}) {
+  const script = fs.readFileSync(path.join(dir, 'bp', 'scripts', 'timeline.js'), 'utf8');
+  const CFG = JSON.parse(/^const CFG = (.*);$/m.exec(script)[1]);
+  const defs = JSON.parse(fs.readFileSync(path.join(dir, 'bp', 'entities', 'player.json'), 'utf8'))['minecraft:entity'].description.properties;
+  const props = Object.fromEntries(Object.entries(defs).map(([k, d]) => [k, d.default]));
+  const A = { id: 'A' }, w = { tick: 0, online: false, runs: [] }, has = (k) => { if (!(k in props)) throw new Error(`no property ${k}`); };
+  const E = R.createEngine(CFG, { tick: () => w.tick, setProp: (p, k, v) => { has(k); props[k] = v; }, getProp: (p, k) => props[k], players: () => (w.online ? [A] : []) });
+  const tick = (k) => { for (let i = 0; i < k; i++) { w.tick++; for (const f of w.runs.splice(0)) f(); E.tick(); } };
+  const player = { getProperty: (k) => { has(k); return props[k]; } }, fails = [];
+  let section = '', last = '';
+  for (const raw of fs.readFileSync(path.join(dir, 'tests.txt'), 'utf8').split('\n')) {
+    const l = raw.trimEnd();
+    if (!l || /^#/.test(l)) continue;
+    if (l.startsWith('## ')) section = l.slice(3);
+    else if (/^scriptevent /.test(l)) { tick(arrive); const [id, ...words] = l.slice(12).split(/\s+/); const why = w.online ? E.command(A, id.split(':')[1], words) : 'no player'; if (why) fails.push(`${section}: ${l} → ${why}`); tick(cmdPause); }
+    else if (/^wait \d+$/.test(l)) tick(Math.round(Number(l.slice(5)) / 50));
+    else if (l === '@A leave') { w.online = false; tick(cmdPause); }
+    else if (l === '@A join') { tick(joinTicks); w.online = true; w.runs.push(() => E.joined(A)); tick(cmdPause); }
+    else if (/^js /.test(l)) { tick(arrive); try { last = String(vm.runInNewContext(l.slice(3), { p: () => player, JSON, Math })); } catch (e) { last = `E ${e.message}`; } tick(jsPause); }
+    else if (/^= /.test(l)) { if (last !== l.slice(2)) fails.push(`${section}: ${l.slice(2)} ← ${last}`); }
+    else fails.push(`a line this run does not know: ${l}`);
+  }
+  return fails;
+}
+for (const name of ['geoui_rhythm', 'geoui_rhythm_big']) {
+  const dir = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'bds', 'addons', name), bad = [];
+  let runs = 0;
+  for (const arrive of [0, 1, 2]) for (const cmdPause of [5, 6, 8]) for (const jsPause of [0, 2, 5, 8]) for (const joinTicks of [5, 60, 200]) {
+    runs++;
+    const f = labRun(dir, { arrive, cmdPause, jsPause, joinTicks });
+    if (f.length) bad.push(`${JSON.stringify({ arrive, cmdPause, jsPause, joinTicks })} ${f[0]}`);
+  }
+  const tests = fs.readFileSync(path.join(dir, 'tests.txt'), 'utf8'), wrong = tests.replace(/^= \[1,false,3\]$/m, '= [1,false,4]');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tl-lab-'));
+  fs.cpSync(dir, tmp, { recursive: true }); fs.writeFileSync(path.join(tmp, 'tests.txt'), wrong);
+  const caught = wrong !== tests && labRun(tmp).length === 1;
+  fs.rmSync(tmp, { recursive: true, force: true });
+  ok(!bad.length && (tests.match(/^= /gm) || []).length >= 6 && caught,
+    `${name}'s tests.txt against the script's own engine with the lab's pauses (6 ticks a command, a js line up to 8): every expectation holds (${runs} timings; a generation off by one is caught)`, bad.slice(0, 4).join('\n  '));
 }
 
 console.log(`\n${fails ? 'FAIL' : 'PASS'} tl-runtime-offline (${n - fails}/${n})`);

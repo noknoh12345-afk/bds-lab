@@ -1,0 +1,202 @@
+# geoui_probe_vx（bds/geoui/timeline/probe.mjs が作る）: GeoUI のエンティティの変数の数の限度（3000〜5000 個を細かく。?? ありとなしで読む）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を、measure color で板の真ん中の色を数で出す。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+do time set noon
+do gamerule dodaylightcycle false
+do gamerule sendcommandfeedback false
+do gamerule commandblockoutput false
+do weather clear
+do tp @a 0 -60 0 0 90
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do hud @a hide crosshair
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 0); 'probe off'
+wait 6000
+shot world--probe-off
+absent clientlog \bERROR\b
+
+section t01-ctl
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 1); 'probe 1'
+wait 1500
+shot t01-ctl
+measure diff t01-ctl 0 170 1030 720
+
+section t02-v3000
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 2); 'probe 2'
+wait 1500
+shot t02-v3000
+measure diff t02-v3000 0 170 1030 720
+
+section t03-v3030
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 3); 'probe 3'
+wait 1500
+shot t03-v3030
+measure diff t03-v3030 0 170 1030 720
+
+section t04-v3045
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 4); 'probe 4'
+wait 1500
+shot t04-v3045
+measure diff t04-v3045 0 170 1030 720
+
+section t05-v3060
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 5); 'probe 5'
+wait 1500
+shot t05-v3060
+measure diff t05-v3060 0 170 1030 720
+
+section t06-v3100
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 6); 'probe 6'
+wait 1500
+shot t06-v3100
+measure diff t06-v3100 0 170 1030 720
+
+section t07-v3500
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 7); 'probe 7'
+wait 1500
+shot t07-v3500
+measure diff t07-v3500 0 170 1030 720
+
+section t08-v4096
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 8); 'probe 8'
+wait 1500
+shot t08-v4096
+measure diff t08-v4096 0 170 1030 720
+
+section t09-v5000
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 9); 'probe 9'
+wait 1500
+shot t09-v5000
+measure diff t09-v5000 0 170 1030 720
+
+section t10-n3000
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 10); 'probe 10'
+wait 1500
+shot t10-n3000
+measure diff t10-n3000 0 170 1030 720
+
+section t11-n3030
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 11); 'probe 11'
+wait 1500
+shot t11-n3030
+measure diff t11-n3030 0 170 1030 720
+
+section t12-n3045
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 12); 'probe 12'
+wait 1500
+shot t12-n3045
+measure diff t12-n3045 0 170 1030 720
+
+section t13-n3060
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 13); 'probe 13'
+wait 1500
+shot t13-n3060
+measure diff t13-n3060 0 170 1030 720
+
+section t14-n3100
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 14); 'probe 14'
+wait 1500
+shot t14-n3100
+measure diff t14-n3100 0 170 1030 720
+
+section t15-n3500
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 15); 'probe 15'
+wait 1500
+shot t15-n3500
+measure diff t15-n3500 0 170 1030 720
+
+section t16-n4096
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 16); 'probe 16'
+wait 1500
+shot t16-n4096
+measure diff t16-n4096 0 170 1030 720
+
+section t17-n5000
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 17); 'probe 17'
+wait 1500
+shot t17-n5000
+measure diff t17-n5000 0 170 1030 720
+
+section t18-e1
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 18); 'probe 18'
+wait 1500
+shot t18-e1
+measure diff t18-e1 0 170 1030 720
+
+section t19-e2000
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 19); 'probe 19'
+wait 1500
+shot t19-e2000
+measure diff t19-e2000 0 170 1030 720
+
+section all
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 99); 'probe 99'
+wait 1500
+shot all
+measure diff all 0 170 1030 720
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobx:v2', 0); 'probe 0'
+
+section log-molang
+absent clientlog (?i)molang
+section log-variable
+absent clientlog (?i)variable
+section log-property
+absent clientlog (?i)property
+section log-paperdoll
+absent clientlog (?i)paper.?doll
+section log-ours
+absent clientlog (?i)gprobx
+section log-unknown
+absent clientlog (?i)unknown|not found|doesn.?t exist|undefined|invalid
+section log-geometry
+absent clientlog (?i)geometr|\bbones?\b
+section log-render
+absent clientlog (?i)render.?controller|part_visibility|uv_anim
+section log-material
+absent clientlog (?i)material|shader|define
+section log-animation
+absent clientlog (?i)animation
+section log-warn
+absent clientlog \bWARN
+section log-error
+absent clientlog \bERROR\b
+# (round 3: lines with "molang", "variable" and "unknown|not found|…" were there, none with the pack's namespace, "property" or
+#  "paperdoll" — which names they are about, one section each: the vanilla player's own variables this pack copies, GeoUI's)
+section log-n-geoui
+absent clientlog (?i)geoui_
+section log-n-gliding
+absent clientlog (?i)gliding
+section log-n-attack
+absent clientlog (?i)attack_time|attack_body
+section log-n-firstperson
+absent clientlog (?i)first_person
+section log-n-mapface
+absent clientlog (?i)map_face|map_angle
+section log-n-rotation
+absent clientlog (?i)x_rotation|look_at
+section log-n-handbob
+absent clientlog (?i)hand_bob|tcos|riding_y
+section log-n-item
+absent clientlog (?i)item_use|main_hand|holding|spear
+section log-n-blink
+absent clientlog (?i)blink|layer_visible|cape
+section log-n-query
+absent clientlog (?i)query\.|\bq\.
+section log-n-math
+absent clientlog (?i)math\.
+# (round 4: the probes' own variables — gp_t, gpm_…, gpq_…, gpv_… — were in no section: a content error about one of them
+#  would have gone by as "molang" alone)
+section log-n-probe
+absent clientlog (?i)\bgp[a-z]{0,2}_
+section log-n-probe-count
+absent clientlog (?i)gpm_l\d|gpv_\d|gpl_n|gpq_

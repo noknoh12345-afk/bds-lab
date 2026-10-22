@@ -176,6 +176,9 @@ export const loadingScreen = (words) => /Generating World|Loading Resources|Buil
 export const ownWorldListed = (words) => /\bo[wuv]n world\b/i.test(words.map((w) => w.text).join(' '));
 /** the game saying it will not join, by OCR (pure): its words, or null ("You need to authenticate to Microsoft services":
  *  a server not on this device asks for a Microsoft sign-in) */
+/** which of the game's refusals (joinRefusal's words) as one of the lab's names (pure): auth | timeout | unable | outdated |
+ *  disconnected | error — a join's trail may hold it */
+export const refusalKind = (text) => { const t = String(text ?? ''); return /authenticate/i.test(t) ? 'auth' : /timed out/i.test(t) ? 'timeout' : /Unable to connect|Could not connect/i.test(t) ? 'unable' : /Outdated/i.test(t) ? 'outdated' : /disconnected/i.test(t) ? 'disconnected' : 'error'; };
 export function joinRefusal(words) {
   const m = /(You need to authenticate to Microsoft services|Connection timed out|Unable to connect to world|Could not connect|Outdated (client|server)|You were disconnected|Disconnected from server|An error has occurred)[^.]*\.?/i.exec(words.map((w) => w.text).join(' '));
   return m ? m[0] : null;
@@ -194,11 +197,13 @@ export function playScreen(words) {
 /** a screen on the way into a world, by OCR, as one of the lab's own names (pure) — the states of a join's trail, which a
  *  public summary may hold (failcodes.mjs makeTrail): a question of the game's (prompt-external | prompt-rated |
  *  prompt-packs), the server's packs coming in (downloading), the game finding the server (connecting), the world made
- *  (generating), another loading screen (loading), back on PLAY (play-lan | play-empty) or the title (title), nothing read
- *  (blank), anything else (other) */
+ *  (generating), another loading screen (loading), the game refusing (refused-<refusalKind>), back on PLAY (play-lan |
+ *  play-empty) or the title (title), nothing read (blank), anything else (other) */
 export function joinScreen(words) {
   const k = joinPromptKind(words);
   if (k) return `prompt-${k}`;
+  const no = joinRefusal(words);
+  if (no) return `refused-${refusalKind(no)}`;
   const all = words.map((w) => w.text).join(' ');
   if (/Downloading|Applying (resource )?packs?/i.test(all)) return 'downloading';
   if (/Locating server|Connecting|Joining/i.test(all)) return 'connecting';

@@ -76,7 +76,8 @@ export const UI_VOCAB = new Set(`play settings realms servers server worlds worl
   join loading generating connecting disconnected error achievements store quit game mode creative survival hardcore your way how
   will you okay yes close help menu title screen resource packs online rated external unknown trust edit delete copy storage
   manage invite friend local network update news alex steve flat simple advanced downloading locating joining building terrain
-  preparing applying everything requires players resources`.split(/\s+/).filter(Boolean));
+  preparing applying everything requires players resources occurred something went wrong unable connect connection timed failed
+  disconnected kicked lost details show info outdated multiplayer full`.split(/\s+/).filter(Boolean));
 /** OCR's words → the UI words among them (in the order read, each once, at most n; pure) */
 export const uiWords = (words, n = 8) => [...new Set((words ?? []).flatMap((w) => String(w?.text ?? w).toLowerCase().split(/[^a-z]+/)).filter((k) => UI_VOCAB.has(k)))].slice(0, n);
 /** a trail being written (pure): add(state, words) — the same state as the last joins it (counted, its UI words added, at

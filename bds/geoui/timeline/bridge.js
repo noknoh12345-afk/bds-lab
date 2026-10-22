@@ -605,7 +605,7 @@
       // (「確かめる」: what the timeline takes of the game's limits — the player's properties with GeoUI's own, the Molang,
       //  the bones, the element's own render controllers, the animations)
       const st2 = rp.stats, b2 = st2.budget || {}, c2 = st2.counts || {};
-      if (Array.isArray(built.report)) built.report.push(`タイムライン: プロパティ ${b2.total ?? '?'} 個（GeoUI の ${b2.base ?? 0} 個込み・上限 ${b2.propertyLimit ?? 32}）・Molang ${st2.lines ?? 0} 行・${Math.round((st2.chars ?? 0) / 1000)} k 文字・変数 ${st2.variables ?? 0} 個（最長 ${st2.longest ?? 0} 文字・括弧 ${st2.deepest ?? 0} 段）・ボーン ${c2.bones ?? 0} 本・要素の render controller ${c2.renderControllers ?? 0} 個・アニメーション ${c2.animations ?? 0} 個`);
+      if (Array.isArray(built.report)) built.report.push(`タイムライン: プロパティ ${b2.total ?? '?'} 個（GeoUI の ${b2.base ?? 0} 個込み・上限 ${b2.propertyLimit ?? 32}）・Molang ${st2.lines ?? 0} 行・${Math.round((st2.chars ?? 0) / 1000)} k 文字・変数 ${st2.variables ?? 0} 個（プレイヤーの分も込みで ${st2.entityVariables ?? st2.variables ?? 0} 個）（最長 ${st2.longest ?? 0} 文字・括弧 ${st2.deepest ?? 0} 段）・ボーン ${c2.bones ?? 0} 本・要素の render controller ${c2.renderControllers ?? 0} 個・アニメーション ${c2.animations ?? 0} 個`);
       return Object.assign(built, { files, warnings: [...built.warnings, ...warnings], timeline: rp.stats });
     }
 

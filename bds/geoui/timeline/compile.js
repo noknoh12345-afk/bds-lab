@@ -692,13 +692,17 @@
     if (counts.renderControllers > 70) warnings.push(`要素ごとの render controller が ${counts.renderControllers} 個です（本物のゲームで確かめたのは 70 個まで・要実測）`);
     if (counts.animations > 1200) warnings.push(`アニメーションが ${counts.animations} 個です（本物のゲームで確かめたのは 1200 個まで・要実測）`);
     const longest = Math.max(0, ...written.map((l) => l.length)), deepest = Math.max(0, ...written.map(maxDepth));
-    // (the whole pre_animation: bds-lab's geoui_rhythm_big ran with 1109 lines, 906 variables, 200 000 characters; geoui_probe_vc
-    //  with 3030 lines and 3023 variables (short lines); geoui_probe_m's 3000 long lines of 577 000 characters left the last of
-    //  their variables unset — past what was seen to run, said, to be measured)
-    const chars = written.reduce((a, l) => a + l.length, 0), variables = new Set(written.map((l) => (/^\s*((?:v|variable)\.\w+)\s*=/.exec(l) || [])[1]).filter(Boolean)).size;
-    if (chars > 210000) warnings.push(`pre_animation が ${Math.round(chars / 1000)} k 文字です（本物のゲームで最後まで動いたのは 20 万文字・1109 行まで。58 万文字では後ろの変数が効かなかった・要実測）: 同時に出る実体（枠）を減らすと小さくなります`);
+    // (the whole pre_animation, as bds-lab's probes saw it run in the game: 610 000 characters in 4029 lines of 150 (geoui_probe_sz)
+    //  and 5029 short lines (geoui_probe_lc) — the size is not what stops it; the entity's 3032nd variable worked (geoui_probe_vc),
+    //  its 3053rd did not (geoui_probe_m: set, read back wrong, nothing stopped). Counted over the whole entity, the player's own
+    //  lines too, as the probes count. Past what was seen to run: said, to be measured)
+    const chars = written.reduce((a, l) => a + l.length, 0), setIn = (ls) => (ls || []).map((l) => (/^\s*(?:v|variable)\.(\w+)\s*=(?!=)/i.exec(String(l)) || [])[1]).filter(Boolean).map((k) => k.toLowerCase());
+    const variables = new Set(setIn(written)).size;
+    const dscW = ent && ent['minecraft:client_entity'].description, entityVariables = dscW ? new Set([...setIn((dscW.scripts || {}).initialize), ...setIn((dscW.scripts || {}).pre_animation)]).size : variables;
+    if (entityVariables > 3000) warnings.push(`変数が ${entityVariables} 個です（プレイヤーの分も込み。本物のゲームで効いたのは 3032 個目まで、3053 個目は値が合わなかった・要実測）: 同時に出る実体（枠）を減らすと少なくなります`);
+    if (chars > 610000 || written.length > 5029) warnings.push(`pre_animation が ${Math.round(chars / 1000)} k 文字・${written.length} 行です（本物のゲームで最後まで動いたのは 61 万文字・4029 行、短い行なら 5029 行まで・要実測）: 同時に出る実体（枠）を減らすと小さくなります`);
     if (report.bezier > 0.002) warnings.push(`ベジェのイージングを 16 の折れ線にした誤差: 最大 ${report.bezier.toFixed(4)}`);
-    return { files, warnings: [...new Set(warnings)], stats: { bindings, pre: written, slots: slotsOut, longest, deepest, lines: written.length, chars, variables, bezierError: report.bezier, budget, counts } };
+    return { files, warnings: [...new Set(warnings)], stats: { bindings, pre: written, slots: slotsOut, longest, deepest, lines: written.length, chars, variables, entityVariables, bezierError: report.bezier, budget, counts } };
   }
 
   T.compile = { extendPack, easeM, keysM, pathM, pathKeys, exprM, targetLines, searchLines, tableLines, splitLines, maxDepth, mparse };

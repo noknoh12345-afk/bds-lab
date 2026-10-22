@@ -72,6 +72,9 @@ const STABLE_MS = Number(process.env.APP_STABLE_MS) || 6000;
 const TITLE_CALM_MS = Number(process.env.APP_TITLE_CALM_MS) || 4000;
 const TITLE_OCR_MS = Number(process.env.APP_TITLE_OCR_MS) || 6000;
 const JOIN_OCR_MS = Number(process.env.APP_JOIN_OCR_MS) || 4000;
+// (the LAN way: the game's "An error has occurred" before the server heard of the player — the CI device, a 3.2 MB pack — the
+//  way in again from PLAY this many times before the wait for the world fails)
+const JOIN_RETRIES = Math.max(0, Number(process.env.APP_JOIN_RETRIES ?? 2) || 0);
 export const KEYS = ANDROID_KEYS;
 const VERBS = new Set(['launch', 'stop', 'join', 'wait', 'shot', 'tap', 'swipe', 'key', 'text', 'do', 'until', 'expect', 'absent', 'pull', 'push', 'sh', 'section', 'chat', 'press', 'hold', 'record', 'perf', 'changed', 'network', 'size', 'density', 'cutout',
   'mouse', 'pad', 'screen', 'background', 'foreground', 'trim', 'measure', ...GAME_VERBS]);
@@ -634,7 +637,7 @@ export async function runScenario(steps, ctx) {
         //  when the server first said the player connected. Which came first, that or the packs' download screen, tells a
         //  slow download from no connection at all: the summary's join_trail, failed_trails)
         const jt = kind === 'joined' ? makeTrail(24) : null, srvFrom = kind === 'joined' ? cursor.get(srvTail) ?? 0 : 0;
-        let connectedAt = 0, lastScreen = null;
+        let connectedAt = 0, lastScreen = null, retries = 0;
         const onScreen = (ws) => { lastScreen = joinScreen(ws); jt.add(lastScreen, ws); };
         const joinedAs = (what) => { stepExtra = { trail: jt.text(), ...(connectedAt ? { connectedAt } : {}) }; return what; };
         // (the server's two lines, looked for before each screen is put in the trail: what came first stays first)
@@ -669,7 +672,19 @@ export async function runScenario(steps, ctx) {
               const k = server.lan ? joinPromptKind(words) : null, b = k ? null : joinPromptButton(words, { w: size?.w ?? 0, h: size?.h ?? 0 });
               if (k) { log(`${s.line} 参加の確認（${k}）: ゲームパッド A（${words.slice(0, 8).map((w) => w.text).join(' ')}）`); padKey('A'); }
               else if (b) { log(`${s.line} 参加の確認: 「${b.text}」を押します（${words.slice(0, 8).map((w) => w.text).join(' ')}）`); tapAt(b.x, b.y); }
-              else { const no = joinRefusal(words); if (no) { jt.add('refused', words); throw Object.assign(new Error(`ゲームが参加をやめました: ${no}（画面の文字: ${seenWords(words)}）（道筋: ${jt.text()}）`), { trail: jt.text() }); } }
+              else {
+                const no = joinRefusal(words);
+                if (no) {
+                  // (no word from the server yet, the game's own error: the way in again — joinLan backs out of the error to
+                  //  PLAY and plays the LAN world again — while there is time for it)
+                  if (server.lan && !connectedAt && retries < JOIN_RETRIES && Date.now() < end - 60_000) {
+                    retries++; jt.add('retry');
+                    log(`${s.line} ゲームが参加をやめました（${no}）: もう一度入ります（${retries} 回目）`);
+                    await joinLan(s); lastOcr = 0; continue;
+                  }
+                  throw Object.assign(new Error(`ゲームが参加をやめました: ${no}${retries ? `（入り直し ${retries} 回）` : ''}（画面の文字: ${seenWords(words)}）（道筋: ${jt.text()}）`), { trail: jt.text() });
+                }
+              }
             }
           }
           else if (kind === 'server' || kind === 'log') { const hit = consume(kind === 'server' ? srvTail : logTail, rx(a[1])); if (hit) return hit.trim().slice(0, 160); clearDialog(s, 5000); }

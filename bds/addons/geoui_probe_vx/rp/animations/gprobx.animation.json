@@ -1,0 +1,82 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.gprobx_transform": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "geo_ui": {
+          "position": [
+            "v.geoui_ox+v.geoui_cx",
+            "v.geoui_oy+v.geoui_cy",
+            0
+          ],
+          "scale": "v.geoui_scale*(v.geoui_alpha>0.004?1:0)"
+        }
+      }
+    },
+    "animation.gprobx.probe": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "ctl": {
+          "scale": "(v.gp_t == 1 || v.gp_t == 99) ? 1 : 0"
+        },
+        "v3000": {
+          "scale": "(v.gp_t == 2 || v.gp_t == 99) ? (v.gpq_v3000 ?? 0) : 0"
+        },
+        "v3030": {
+          "scale": "(v.gp_t == 3 || v.gp_t == 99) ? (v.gpq_v3030 ?? 0) : 0"
+        },
+        "v3045": {
+          "scale": "(v.gp_t == 4 || v.gp_t == 99) ? (v.gpq_v3045 ?? 0) : 0"
+        },
+        "v3060": {
+          "scale": "(v.gp_t == 5 || v.gp_t == 99) ? (v.gpq_v3060 ?? 0) : 0"
+        },
+        "v3100": {
+          "scale": "(v.gp_t == 6 || v.gp_t == 99) ? (v.gpq_v3100 ?? 0) : 0"
+        },
+        "v3500": {
+          "scale": "(v.gp_t == 7 || v.gp_t == 99) ? (v.gpq_v3500 ?? 0) : 0"
+        },
+        "v4096": {
+          "scale": "(v.gp_t == 8 || v.gp_t == 99) ? (v.gpq_v4096 ?? 0) : 0"
+        },
+        "v5000": {
+          "scale": "(v.gp_t == 9 || v.gp_t == 99) ? (v.gpq_v5000 ?? 0) : 0"
+        },
+        "n3000": {
+          "scale": "(v.gp_t == 10 || v.gp_t == 99) ? (v.gpq_n3000 ?? 0) : 0"
+        },
+        "n3030": {
+          "scale": "(v.gp_t == 11 || v.gp_t == 99) ? (v.gpq_n3030 ?? 0) : 0"
+        },
+        "n3045": {
+          "scale": "(v.gp_t == 12 || v.gp_t == 99) ? (v.gpq_n3045 ?? 0) : 0"
+        },
+        "n3060": {
+          "scale": "(v.gp_t == 13 || v.gp_t == 99) ? (v.gpq_n3060 ?? 0) : 0"
+        },
+        "n3100": {
+          "scale": "(v.gp_t == 14 || v.gp_t == 99) ? (v.gpq_n3100 ?? 0) : 0"
+        },
+        "n3500": {
+          "scale": "(v.gp_t == 15 || v.gp_t == 99) ? (v.gpq_n3500 ?? 0) : 0"
+        },
+        "n4096": {
+          "scale": "(v.gp_t == 16 || v.gp_t == 99) ? (v.gpq_n4096 ?? 0) : 0"
+        },
+        "n5000": {
+          "scale": "(v.gp_t == 17 || v.gp_t == 99) ? (v.gpq_n5000 ?? 0) : 0"
+        },
+        "e1": {
+          "scale": "(v.gp_t == 18 || v.gp_t == 99) ? (v.gpq_e1 ?? 0) : 0"
+        },
+        "e2000": {
+          "scale": "(v.gp_t == 19 || v.gp_t == 99) ? (v.gpq_e2000 ?? 0) : 0"
+        }
+      }
+    }
+  }
+}

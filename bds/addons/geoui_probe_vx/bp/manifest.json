@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Probe (variables, 3000-5000) BP",
+    "description": "GeoUI probe (bds-lab): GeoUI Probe (variables, 3000-5000)",
+    "uuid": "c91dd708-c329-4c41-955c-5276eae0dd5f",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "864cc5ab-2374-4eec-83fe-7d4d7e4d1956",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "cd57adce-43e3-4249-a0a2-a604697fc977",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "a5197978-5921-45d1-adf7-8aa6820b4fef",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.1.0"
+    }
+  ]
+}

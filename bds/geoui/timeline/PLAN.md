@@ -278,4 +278,28 @@
     その時刻の物、fader の不透明度 0・0.51・1.00、再生中は 2.5 秒後 +23.3・4 秒後 +46.8（写す時の遅れのぶん）: seq（シーケンス・
     止め・世代を 1 つの数に）と seq_from で、時計・止め・シークがゲームで正しく動く。落ちたのはバニラのコンテンツログの行だけ。
     Discord に 15 個。
-
+- 5 回目（2026-10-22）: **geoui_probe_vc**（run 39769056136）: 1 行に 1 つ作った 3000 個の変数（パック全体で約 3023 個・3030 行。?? で
+  読む）は、500〜3000 個目のどれも効いた。**geoui_probe_lc**（run 39770003767）: 1 つの変数を 5000 行（5029 行目）まで数えて合った。
+  → 行の数も 3000 個の変数も限度ではない。probe_m の 3000 行（1 行 150 文字・変数を 10 回読む）の最後の変数だけが合わなかったので、
+  大きさ（58 万文字）を **geoui_probe_sz**（同じ長い行で 1 つの変数を 4000 行・61 万文字まで数える）で測ることにした。
+- 6 回目（2026-10-22）: **geoui_probe_sz**（run 39775140906）と **geoui_rhythm_huge**（1000 個・6 分・3.2 MB のパック。既定の枝には
+  入れず addon/geoui_rhythm_huge。run 39778443343）は、どちらも参加の待ち（300 秒）で、サーバーの Player connected が無いまま落ちた
+  （joined-no-connection。それまでの参加は 93〜223 秒）。封じた結果のほかに手がかりが無かったので、until joined が見た画面をラボの語の
+  道筋に（summary.json の join_trail・failed_trails）、Player connected までの秒を join_connect_seconds に出すようにした
+  （app/lib/scenario.mjs・client.mjs joinScreen・failcodes.mjs。接続の行が無いまま時間切れなら、最後の画面で joined-packs-slow・
+  joined-loading・joined-connecting・joined-back-out に分ける）。600 KB を超えるパックの probe と見本は参加を 900 秒待つ。
+- 7 回目（2026-10-22、参加の道筋つき）:
+  - **geoui_probe_sz**（run 39785700040）: 参加 71.9 秒。**500〜4000 行のどれも数えて合った（4029 行目・61 万文字目まで）**: 大きさは
+    限度ではない。参加の道筋は `srv-connected play-lan prompt-packs srv-spawned connecting loading*3 world`（Player connected まで
+    56.3 秒）: **BDS の Player connected は、ゲームがパックのダウンロードを尋ねるより前（ログインの時）に出る**。だから 6 回目の
+    2 本は、パックが遅かったのではなく、ログインまで行っていない（1 本はこの回入れた）。
+  - 変数の数: エンティティの中で 3032 個目（probe_vc の 3000 個目、?? で読む）は効き、probe_m の 3053 個目（gpm_l2999、?? なしで
+    読む）は値が合わず、止まりもしなかった。行（5029 行）と大きさ（61 万文字）は効いたので、残るのは変数の数（3032〜3053 個の間、
+    要実測）→ **geoui_probe_vx**（3000〜5000 個を細かく、?? ありとなしで、最後に 1・2000 個目をもう一度）を作った（まだ回していない）。
+    書き出しの注意は、pre_animation が 61 万文字・5029 行を超えたら、変数がプレイヤーの分も込みで 3000 個を超えたら（compile.js。
+    stats.entityVariables）。300 個の見本は約 910 個・20 万文字、1000 個の見本は約 1020 個・43 万文字で、どちらも注意は出ない。
+  - **geoui_rhythm_huge**（run 39787331657）: また入れなかった（join-refused）。道筋は `play-lan other*9[error+more+select+back+menu]
+    refused[…]`: LAN のワールドを押すと、ゲームが「An error has occurred」を出していた（サーバーに Player connected は来ない）。
+    300 個（1.4 MB）は最後まで動き、1000 個（3.2 MB）は 2 回とも入れない（要実測: パックの大きさか、BDS の起動直後の重さか）→
+    until joined は、Player connected の前のゲームのエラーなら、LAN のワールドに入り直す（2 回まで、APP_JOIN_RETRIES）。エラーの
+    種類も道筋に（refused-error・refused-timeout・refused-unable ほか: client.mjs refusalKind）、ゲームのエラーの語も道筋の語に。

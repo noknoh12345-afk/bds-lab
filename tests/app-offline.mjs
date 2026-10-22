@@ -654,6 +654,20 @@ await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without
   ok(pk.status === 0 && /^prompt-rated.* prompt-packs.* downloading\*\d+\[downloading\+resource\+packs\] srv-connected srv-spawned generating(\*\d+)?\[[a-z+]+\] world(\[[a-z+]+\])?$/.test(pkJoin?.trail ?? '') && pkJoin.connectedAt > 0
     && Number.isFinite(pkRes.timing?.connect) && pkRes.timing.connect <= pkRes.timing.join && /\| 参加の道筋（3 行目） \| `prompt-rated/.test(pkRep) && /\| 参加: サーバーの Player connected \| [\d.]+ 秒 \|/.test(pkRep),
     `exit ${pk.status} ${JSON.stringify(pkJoin)} ${JSON.stringify(pkRes.timing)}\n${pkRep.slice(0, 800)}`);
+  // the game's own "An error has occurred" before the server heard of the player (the CI device, a 3.2 MB pack): the way in
+  // again from PLAY — once is enough here; one that never goes in fails after two, its trail saying so
+  const longSc = path.join(tmp, 'joinlong.txt'); fs.writeFileSync(longSc, 'launch\njoin\nuntil joined 120000\nshot world\n');
+  const er = e2e('lanerror1', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_JOIN_ERROR: '1', APP_JOIN_OCR_MS: '50' }, ['--scenario', longSc]);
+  made.push(er.runDir);
+  const erRes = fs.existsSync(path.join(er.runDir, 'result.json')) ? JSON.parse(fs.readFileSync(path.join(er.runDir, 'result.json'), 'utf8')) : {}, erJoin = (erRes.results ?? []).find((x) => x.verb === 'until');
+  ok(er.status === 0 && er.state.joinErrors === 1 && /^refused-error\[[a-z+]*error[a-z+]*\] retry .*srv-connected srv-spawned world/.test(erJoin?.trail ?? '') && /ゲームが参加をやめました（An error has occurred\.?）: もう一度入ります（1 回目）/.test(fs.readFileSync(path.join(er.runDir, 'run.txt'), 'utf8')),
+    `exit ${er.status} errors ${er.state.joinErrors} ${JSON.stringify(erJoin)}\n${er.text.slice(-1200)}`);
+  const ea = e2e('lanerror9', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_JOIN_ERROR: '9', APP_JOIN_OCR_MS: '50' }, ['--scenario', longSc]);
+  made.push(ea.runDir);
+  const eaRes = fs.existsSync(path.join(ea.runDir, 'result.json')) ? JSON.parse(fs.readFileSync(path.join(ea.runDir, 'result.json'), 'utf8')) : {}, eaJoin = (eaRes.results ?? []).find((x) => x.verb === 'until');
+  const FCe = await imp('app/lib/failcodes.mjs');
+  ok(ea.status === 1 && ea.state.joinErrors === 3 && FCe.stepCode(eaJoin?.note) === 'join-refused' && /（入り直し 2 回）/.test(eaJoin?.note ?? '') && (eaJoin?.trail.match(/ retry /g) ?? []).length === 2 && FCe.cleanTrail(eaJoin.trail) === eaJoin.trail,
+    `exit ${ea.status} errors ${ea.state.joinErrors} ${JSON.stringify(eaJoin)}\n${ea.text.slice(-1200)}`);
   // the packs never finish (no "Player connected" from the server): said so — the download screen was the last — with its own
   // code and the trail
   const ps = e2e('lanpackstuck', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_LAN_PROMPTS: '1', FAKE_PACKS_STUCK: '1', APP_JOIN_OCR_MS: '50' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
