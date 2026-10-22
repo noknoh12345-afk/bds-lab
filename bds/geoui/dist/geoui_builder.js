@@ -1,5 +1,5 @@
 // GeoUI Builder 0.1.0 with its timeline — one file for Blockbench (made by bds/geoui/build.mjs from bds/geoui/geoui_builder.js and
-// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources b253339c6665
+// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 2837c86c8d3a
 // ---- timeline/model.js
 (function (module) {
 // GeoUI timeline — the model (pure: no DOM, no Blockbench). The plan's step 1 (bds/geoui/timeline/PLAN.md):
@@ -3838,8 +3838,13 @@
     if (counts.renderControllers > 70) warnings.push(`要素ごとの render controller が ${counts.renderControllers} 個です（本物のゲームで確かめたのは 70 個まで・要実測）`);
     if (counts.animations > 1200) warnings.push(`アニメーションが ${counts.animations} 個です（本物のゲームで確かめたのは 1200 個まで・要実測）`);
     const longest = Math.max(0, ...written.map((l) => l.length)), deepest = Math.max(0, ...written.map(maxDepth));
+    // (the whole pre_animation: bds-lab's geoui_rhythm_big ran with 1109 lines, 906 variables, 200 000 characters; geoui_probe_vc
+    //  with 3030 lines and 3023 variables (short lines); geoui_probe_m's 3000 long lines of 577 000 characters left the last of
+    //  their variables unset — past what was seen to run, said, to be measured)
+    const chars = written.reduce((a, l) => a + l.length, 0), variables = new Set(written.map((l) => (/^\s*((?:v|variable)\.\w+)\s*=/.exec(l) || [])[1]).filter(Boolean)).size;
+    if (chars > 210000) warnings.push(`pre_animation が ${Math.round(chars / 1000)} k 文字です（本物のゲームで最後まで動いたのは 20 万文字・1109 行まで。58 万文字では後ろの変数が効かなかった・要実測）: 同時に出る実体（枠）を減らすと小さくなります`);
     if (report.bezier > 0.002) warnings.push(`ベジェのイージングを 16 の折れ線にした誤差: 最大 ${report.bezier.toFixed(4)}`);
-    return { files, warnings: [...new Set(warnings)], stats: { bindings, pre: written, slots: slotsOut, longest, deepest, lines: written.length, chars: written.reduce((a, l) => a + l.length, 0), bezierError: report.bezier, budget, counts } };
+    return { files, warnings: [...new Set(warnings)], stats: { bindings, pre: written, slots: slotsOut, longest, deepest, lines: written.length, chars, variables, bezierError: report.bezier, budget, counts } };
   }
 
   T.compile = { extendPack, easeM, keysM, pathM, pathKeys, exprM, targetLines, searchLines, tableLines, splitLines, maxDepth, mparse };
@@ -4874,7 +4879,7 @@ world.afterEvents.itemUse.subscribe((e) => engine.press(e.source));
       // (「確かめる」: what the timeline takes of the game's limits — the player's properties with GeoUI's own, the Molang,
       //  the bones, the element's own render controllers, the animations)
       const st2 = rp.stats, b2 = st2.budget || {}, c2 = st2.counts || {};
-      if (Array.isArray(built.report)) built.report.push(`タイムライン: プロパティ ${b2.total ?? '?'} 個（GeoUI の ${b2.base ?? 0} 個込み・上限 ${b2.propertyLimit ?? 32}）・Molang ${st2.lines ?? 0} 行（最長 ${st2.longest ?? 0} 文字・括弧 ${st2.deepest ?? 0} 段）・ボーン ${c2.bones ?? 0} 本・要素の render controller ${c2.renderControllers ?? 0} 個・アニメーション ${c2.animations ?? 0} 個`);
+      if (Array.isArray(built.report)) built.report.push(`タイムライン: プロパティ ${b2.total ?? '?'} 個（GeoUI の ${b2.base ?? 0} 個込み・上限 ${b2.propertyLimit ?? 32}）・Molang ${st2.lines ?? 0} 行・${Math.round((st2.chars ?? 0) / 1000)} k 文字・変数 ${st2.variables ?? 0} 個（最長 ${st2.longest ?? 0} 文字・括弧 ${st2.deepest ?? 0} 段）・ボーン ${c2.bones ?? 0} 本・要素の render controller ${c2.renderControllers ?? 0} 個・アニメーション ${c2.animations ?? 0} 個`);
       return Object.assign(built, { files, warnings: [...built.warnings, ...warnings], timeline: rp.stats });
     }
 

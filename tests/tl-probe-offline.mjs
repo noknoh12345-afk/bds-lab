@@ -134,16 +134,19 @@ const COLS = [-160, -125, -90, -55, -20, 15, 50], ROWS = [175, 145, 115, 85], ce
 // ---- geoui_probe_lc / geoui_probe_vc: how many lines run, how many variables an entity keeps — each test's plane only when
 //      chosen, its line right after what it counts (lc: 5000 lines counting one variable; vc: 3000 variables, read with ??)
 for (const [name, ns, ids, lines] of [['geoui_probe_lc', 'gprobl', ['ctl', 'l1000', 'l1500', 'l2000', 'l2500', 'l3000', 'l3500', 'l4000', 'l5000'], 5000],
-  ['geoui_probe_vc', 'gprobv', ['ctl', 'v500', 'v800', 'v1000', 'v1024', 'v1100', 'v1500', 'v2000', 'v2048', 'v2100', 'v3000'], 3000]]) {
+  ['geoui_probe_vc', 'gprobv', ['ctl', 'v500', 'v800', 'v1000', 'v1024', 'v1100', 'v1500', 'v2000', 'v2048', 'v2100', 'v3000'], 3000],
+  ['geoui_probe_sz', 'gprobz', ['ctl', 'l500', 'l1000', 'l1500', 'l2000', 'l2500', 'l3000', 'l3500', 'l4000'], 4000]]) {
   const base = shown(frame(name, ns, { v2: 0 }));
   ok(base.length === 0, `${name}: nothing is drawn while no test is chosen`, JSON.stringify(base.map((d) => d.bone)));
   const bad = [];
   ids.forEach((bone, i) => { const s = shown(frame(name, ns, { v2: i + 1 })); if (!(s.length === 1 && s[0].bone === bone && near(s[0], cellAt(i)))) bad.push(`${i + 1} ${bone}: ${JSON.stringify(s.map((d) => d.bone))}`); });
   const pre = rd(path.join(TOP, 'bds/addons', name, 'rp'), 'entity/player.entity.json')['minecraft:client_entity'].description.scripts.pre_animation;
   // (each test's line right after the line or the variable it counts: where it stands in the file)
-  const at = (id) => pre.findIndex((l) => l.startsWith(`v.gpq_${id} =`)), counted = (id) => (name === 'geoui_probe_lc' ? pre.slice(0, at(id)).filter((l) => l === 'v.gpl_n = v.gpl_n + 1;').length : pre.slice(0, at(id)).filter((l) => /^v\.gpv_\d+ = /.test(l)).length);
+  const counter = /^v\.gpl_n = v\.gpl_n \+ 1(?: \+ v\.gp_t \* 0){0,10};$/, at = (id) => pre.findIndex((l) => l.startsWith(`v.gpq_${id} =`)), counted = (id) => (name !== 'geoui_probe_vc' ? pre.slice(0, at(id)).filter((l) => counter.test(l)).length : pre.slice(0, at(id)).filter((l) => /^v\.gpv_\d+ = /.test(l)).length);
   const placed = ids.slice(1).every((id) => counted(id) === Number(id.slice(1)));
-  ok(!bad.length && placed && pre.filter((l) => /^v\.gpl_n = v\.gpl_n \+ 1;$|^v\.gpv_\d+ = \d+;$/.test(l)).length === lines, `${name}: each of ${ids.length} tests draws its own plane only, its line right after the ${lines === 5000 ? 'line' : 'variable'} it counts (${lines})`, bad.join('\n  '));
+  // (sz: each counting line as long as geoui_probe_m's, 150 characters or so)
+  const long = name !== 'geoui_probe_sz' || pre.filter((l) => counter.test(l)).every((l) => l.length >= 140);
+  ok(!bad.length && placed && long && pre.filter((l) => counter.test(l) || /^v\.gpv_\d+ = \d+;$/.test(l)).length === lines, `${name}: each of ${ids.length} tests draws its own plane only, its line right after the ${name === 'geoui_probe_vc' ? 'variable' : 'line'} it counts (${lines})`, bad.join('\n  '));
 }
 
 // ---- geoui_probe_b: the limits — each test plane only when chosen, moved 20 units by its own bone (#250 … #599), drawn by its

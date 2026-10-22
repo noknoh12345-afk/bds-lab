@@ -1,0 +1,52 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.gprobz_transform": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "geo_ui": {
+          "position": [
+            "v.geoui_ox+v.geoui_cx",
+            "v.geoui_oy+v.geoui_cy",
+            0
+          ],
+          "scale": "v.geoui_scale*(v.geoui_alpha>0.004?1:0)"
+        }
+      }
+    },
+    "animation.gprobz.probe": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "ctl": {
+          "scale": "(v.gp_t == 1 || v.gp_t == 99) ? 1 : 0"
+        },
+        "l500": {
+          "scale": "(v.gp_t == 2 || v.gp_t == 99) ? (v.gpq_l500 ?? 0) : 0"
+        },
+        "l1000": {
+          "scale": "(v.gp_t == 3 || v.gp_t == 99) ? (v.gpq_l1000 ?? 0) : 0"
+        },
+        "l1500": {
+          "scale": "(v.gp_t == 4 || v.gp_t == 99) ? (v.gpq_l1500 ?? 0) : 0"
+        },
+        "l2000": {
+          "scale": "(v.gp_t == 5 || v.gp_t == 99) ? (v.gpq_l2000 ?? 0) : 0"
+        },
+        "l2500": {
+          "scale": "(v.gp_t == 6 || v.gp_t == 99) ? (v.gpq_l2500 ?? 0) : 0"
+        },
+        "l3000": {
+          "scale": "(v.gp_t == 7 || v.gp_t == 99) ? (v.gpq_l3000 ?? 0) : 0"
+        },
+        "l3500": {
+          "scale": "(v.gp_t == 8 || v.gp_t == 99) ? (v.gpq_l3500 ?? 0) : 0"
+        },
+        "l4000": {
+          "scale": "(v.gp_t == 9 || v.gp_t == 99) ? (v.gpq_l4000 ?? 0) : 0"
+        }
+      }
+    }
+  }
+}

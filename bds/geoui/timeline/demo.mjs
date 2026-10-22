@@ -4,6 +4,8 @@
 // two minutes, no music) — add-ons the lab can test: tests.txt on a real BDS, app.txt in the real app. Everything is the lab's
 // own: the beatmaps, the textures (drawn here) and the click track (made here). node bds/geoui/timeline/demo.mjs [--check]
 //   --check: write nothing, fail when an add-on in the repository is not what this makes (tests/tl-runtime-offline.mjs runs it)
+//   --huge [top]: only bds/addons/geoui_rhythm_huge (1000 objects, six minutes) under top (default this checkout) — kept on a
+//   branch of its own (addon/geoui_rhythm_huge: app.yml's ref), not in the default branch
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -18,7 +20,7 @@ const NS = 'geoui';
 let failed = false;
 
 function make(V) {
-const OUT = path.join(TOP, 'bds', 'addons', V.name);
+const OUT = path.join(V.top || TOP, 'bds', 'addons', V.name);
 // ---- the beatmap: 120 BPM, 16 circles in 4 combos, a slider there and back, a spinner (written here, the lab's own) — or the
 //      large one (osu.sampleMap)
 const objects = [];
@@ -280,6 +282,12 @@ for (const w of [...new Set(warnings)]) console.log(`W ${w}`);
 return warnings;
 }
 
-make({ name: 'geoui_rhythm', title: 'GeoUI Rhythm', description: 'GeoUI timeline sample: an osu!-style HUD (bds-lab)', atlas: [128, 256], shots: [1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 8.0, 9.5, 11.0, 12.5], seek: 6 });
-make({ name: 'geoui_rhythm_big', big: 300, title: 'GeoUI Rhythm 300', description: 'GeoUI timeline sample: a map of real size, 300 objects (bds-lab)', atlas: [1024, 1024], shots: [2, 5, 10, 20, 30, 45, 60, 80, 100, 112], seek: 60 });
+const hugeAt = process.argv.indexOf('--huge');
+if (hugeAt >= 0) {
+  const top = process.argv[hugeAt + 1] && !process.argv[hugeAt + 1].startsWith('--') ? path.resolve(process.argv[hugeAt + 1]) : TOP;
+  make({ name: 'geoui_rhythm_huge', big: 1000, top, title: 'GeoUI Rhythm 1000', description: 'GeoUI timeline sample: a long map, 1000 objects (bds-lab)', atlas: [2048, 2048], shots: [2, 10, 30, 60, 120, 180, 240, 300, 350, 375], seek: 300 });
+} else {
+  make({ name: 'geoui_rhythm', title: 'GeoUI Rhythm', description: 'GeoUI timeline sample: an osu!-style HUD (bds-lab)', atlas: [128, 256], shots: [1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 8.0, 9.5, 11.0, 12.5], seek: 6 });
+  make({ name: 'geoui_rhythm_big', big: 300, title: 'GeoUI Rhythm 300', description: 'GeoUI timeline sample: a map of real size, 300 objects (bds-lab)', atlas: [1024, 1024], shots: [2, 5, 10, 20, 30, 45, 60, 80, 100, 112], seek: 60 });
+}
 if (failed) process.exit(1);

@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/timeline/probe.mjs",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI の pre_animation がどの大きさまで動くか（長い行で 1 つの変数を数える）（ラボの確かめ。絵はラボの物）"
+}

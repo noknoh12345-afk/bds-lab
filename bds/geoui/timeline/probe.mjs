@@ -14,6 +14,8 @@
 //   geoui_probe_lc  how many pre_animation lines run (one variable counted up a line at a time, a test right after line
 //                   1000 … 5000)
 //   geoui_probe_vc  how many variables an entity keeps (a variable a line, a test right after the 500th … 3000th, read with ??)
+//   geoui_probe_sz  how large a pre_animation runs (one variable counted up by long lines — 4000 of 150 characters, each
+//                   reading a variable ten times as geoui_probe_m's did — a test right after line 500 … 4000)
 // Round 1 (2026-10-21, runs 39601130957 …): bones to #248 and 31 own render controllers draw; q.anim_time runs in an animation,
 // q.life_time there is the entity's age; a line reading a variable never set stops the pre_animation from there (a content
 // error, "molang" in the content log) — compile.js's clock did that, so no slot ever showed in geoui_rhythm.
@@ -218,26 +220,28 @@ function probeMolang() {
  *  ??: a variable that is not there gives -1 and stops nothing). Each test where it counts: lines that stop at some number
  *  leave the tests after it dark and the ones before it drawn */
 function probeCounts(kind) {
-  const lc = kind === 'lc', ns = lc ? 'gprobl' : 'gprobv';
-  const marks = lc ? [1000, 1500, 2000, 2500, 3000, 3500, 4000, 5000] : [500, 800, 1000, 1024, 1100, 1500, 2000, 2048, 2100, 3000];
+  const lc = kind === 'lc' || kind === 'sz', sz = kind === 'sz', ns = sz ? 'gprobz' : lc ? 'gprobl' : 'gprobv';
+  const marks = sz ? [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000] : lc ? [1000, 1500, 2000, 2500, 3000, 3500, 4000, 5000] : [500, 800, 1000, 1024, 1100, 1500, 2000, 2048, 2100, 3000];
   const tests = [{ id: 'ctl', what: '基準: ふつうのボーン・scale で出し入れ' }];
   for (const m of marks) tests.push({ id: `${lc ? 'l' : 'v'}${m}`, mark: m });
   tests.forEach((t, i) => Object.assign(t, { k: i + 1, at: cellAt(i) }));
   const bones = [{ name: 'geo_ui', pivot: [0, 140, 0] }, ...tests.map((t) => plane(t.id, t.at))];
   const anim = { loop: true, animation_length: 1, bones: {} };
   for (const t of tests) anim.bones[t.id] = { scale: t.id === 'ctl' ? on(t.k) : `${sel(t.k)} ? (v.gpq_${t.id} ?? 0) : 0` };
-  const design = { settings: settings(ns, lc ? 'GeoUI Probe (lines)' : 'GeoUI Probe (variables)'), seed: `geoui_probe_${kind}`, bones, elements: { ctl: { type: 'image' } }, textures: { probe: { name: 'probe', width: TW, height: TW, png: PNG } },
+  const design = { settings: settings(ns, sz ? 'GeoUI Probe (size)' : lc ? 'GeoUI Probe (lines)' : 'GeoUI Probe (variables)'), seed: `geoui_probe_${kind}`, bones, elements: { ctl: { type: 'image' } }, textures: { probe: { name: 'probe', width: TW, height: TW, png: PNG } },
     animations: [{ name: `${ns}.probe`, json: anim, condition: 'q.is_in_ui' }] };
   const built = G.buildPack(design), files = built.files;
   const ent = parse(files[`${ns}_RP/entity/player.entity.json`])['minecraft:client_entity'].description, base = ent.scripts.pre_animation.length;
   const own = new Set([...ent.scripts.pre_animation, ...(ent.scripts.initialize || [])].map((l) => (/^\s*((?:v|variable)\.\w+)\s*=/.exec(l) || [])[1]).filter(Boolean).map((x) => x.replace(/^variable\./, 'v.')));
   const lines = [`v.gp_t = variable.is_paperdoll ? 0 : q.property('${ns}:v2');`], byMark = new Map(tests.filter((t) => t.mark).map((t) => [t.mark, t]));
   if (lc) {
+    // (sz: each line as long as geoui_probe_m's — 150 characters, the test variable read ten times — the size what grows)
+    const pad = sz ? `${' + v.gp_t * 0'.repeat(10)}` : '', upTo = sz ? 4000 : 5000;
     lines.push('v.gpl_n = 0;');
-    for (let i = 1; i <= 5000; i++) {
-      lines.push('v.gpl_n = v.gpl_n + 1;');
+    for (let i = 1; i <= upTo; i++) {
+      lines.push(`v.gpl_n = v.gpl_n + 1${pad};`);
       const t = byMark.get(i);
-      if (t) { lines.push(`v.gpq_${t.id} = (${sel(t.k)} && v.gpl_n == ${i}) ? 1 : 0;`); Object.assign(t, { line: base + lines.length, what: `${i} 行を数えた直後（1 つの変数を 1 行ずつ +1。pre_animation の ${base + lines.length} 行目）` }); }
+      if (t) { const chars = lines.reduce((a, l) => a + l.length, 0); lines.push(`v.gpq_${t.id} = (${sel(t.k)} && v.gpl_n == ${i}) ? 1 : 0;`); Object.assign(t, { line: base + lines.length, chars, what: `${i} 行を数えた直後（1 つの変数を 1 行ずつ +1${sz ? '・1 行 150 文字' : ''}。pre_animation の ${base + lines.length} 行目${sz ? `・足した行の ${Math.round(chars / 1000)} k 文字目` : ''}）` }); }
     }
   } else {
     for (let i = 0; i < 3000; i++) {
@@ -247,8 +251,9 @@ function probeCounts(kind) {
     }
   }
   addPre(files, ns, lines);
-  return { ns, name: `geoui_probe_${kind}`, files, warnings: built.warnings, tests, title: lc ? 'GeoUI の pre_animation が何行まで動くか（1 つの変数を数える）' : 'GeoUI のエンティティが変数を何個まで持つか（1 行に 1 つ）',
-    notes: [`4 回目（2026-10-22）の geoui_probe_m: 3000 行に 1 つずつ作った変数の最後を読む板が描かれなかった（geoui_rhythm_big の 1109 行・906 個は動いた）。行の数か変数の数かを、${lc ? 'この probe（行だけ増やす）' : 'この probe（変数を増やす）'} と geoui_probe_${lc ? 'vc' : 'lc'} で分ける。`,
+  return { ns, name: `geoui_probe_${kind}`, files, warnings: built.warnings, tests, title: sz ? 'GeoUI の pre_animation がどの大きさまで動くか（長い行で 1 つの変数を数える）' : lc ? 'GeoUI の pre_animation が何行まで動くか（1 つの変数を数える）' : 'GeoUI のエンティティが変数を何個まで持つか（1 行に 1 つ）',
+    notes: [sz ? '5 回目（2026-10-22）: 行（5000 行、geoui_probe_lc）も変数（3000 個、geoui_probe_vc）も限度ではなかった。geoui_probe_m の 3000 行は 1 行 150 文字・変数を 10 回読む行で、58 万文字の所で最後の変数の値が合わなかった: 同じ長い行で 1 つの変数を数え、大きさ（文字数・式の部品）で止まるかを見る。'
+      : `4 回目（2026-10-22）の geoui_probe_m: 3000 行に 1 つずつ作った変数の最後を読む板が描かれなかった（geoui_rhythm_big の 1109 行・906 個は動いた）。行の数か変数の数かを、${lc ? 'この probe（行だけ増やす）' : 'この probe（変数を増やす）'} と geoui_probe_${lc ? 'vc' : 'lc'} で分ける。`,
       `GeoUI 本体の行 ${base} 行・変数 ${own.size} 個の後ろに足した。確かめは数えた所のすぐ後ろ（後ろの行が動かなくても、どこまで効いたかが分かる）。`] };
 }
 
@@ -397,6 +402,12 @@ section log-n-query
 absent clientlog (?i)query\\.|\\bq\\.
 section log-n-math
 absent clientlog (?i)math\\.
+# (round 4: the probes' own variables — gp_t, gpm_…, gpq_…, gpv_… — were in no section: a content error about one of them
+#  would have gone by as "molang" alone)
+section log-n-probe
+absent clientlog (?i)\\bgp[a-z]{0,2}_
+section log-n-probe-count
+absent clientlog (?i)gpm_l\\d|gpv_\\d|gpl_n|gpq_
 `;
 const setV2 = (ns, k) => `do js for (const q of world.getAllPlayers()) q.setProperty('${ns}:v2', ${k}); 'probe ${k}'`;
 const shotName = (t, s = '') => `t${String(t.k).padStart(2, '0')}-${t.id}${s}`;
@@ -466,7 +477,7 @@ js const e = p('A'); JSON.stringify(${props}.map((k) => e.getProperty('${P.ns}:'
  *  (0, 140) in the middle), checked against the control plane when it is there. A test's plane: a part of the change of about
  *  its size within a third of a plane of its cell */
 function read(files) {
-  const all = [probeStructure(), probeMolang(), probeTimeline(), probeLimits(), probeCounts('lc'), probeCounts('vc')];
+  const all = [probeStructure(), probeMolang(), probeTimeline(), probeLimits(), probeCounts('lc'), probeCounts('vc'), probeCounts('sz')];
   for (const f of files) {
     const s = JSON.parse(fs.readFileSync(f, 'utf8')), P = all.find((p) => p.name === s.addon);
     if (!P) { console.log(`${f}: ${s.addon} は probe の add-on ではありません`); continue; }
@@ -552,7 +563,7 @@ function outside(P, W = 1560, H = 720) {
   return bad;
 }
 const check = process.argv.includes('--check'), stale = [];
-for (const P of [probeStructure(), probeMolang(), probeTimeline(), probeLimits(), probeCounts('lc'), probeCounts('vc')]) {
+for (const P of [probeStructure(), probeMolang(), probeTimeline(), probeLimits(), probeCounts('lc'), probeCounts('vc'), probeCounts('sz')]) {
   // (a plane the reader would look for outside the measured part of the screen: never seen, whatever the game does)
   const off = outside(P);
   if (off.length) { console.error(`E probe.mjs: 測る範囲（${REGION.join(' ')} px）の外を見る板があります: ${off.join('、')}`); process.exit(1); }

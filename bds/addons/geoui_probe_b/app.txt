@@ -169,3 +169,9 @@ section log-n-query
 absent clientlog (?i)query\.|\bq\.
 section log-n-math
 absent clientlog (?i)math\.
+# (round 4: the probes' own variables — gp_t, gpm_…, gpq_…, gpv_… — were in no section: a content error about one of them
+#  would have gone by as "molang" alone)
+section log-n-probe
+absent clientlog (?i)\bgp[a-z]{0,2}_
+section log-n-probe-count
+absent clientlog (?i)gpm_l\d|gpv_\d|gpl_n|gpq_

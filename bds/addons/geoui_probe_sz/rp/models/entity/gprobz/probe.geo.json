@@ -1,0 +1,344 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.gprobz_probe",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 885.402,
+        "visible_bounds_height": 373.361,
+        "visible_bounds_offset": [
+          0,
+          140,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "geo_ui",
+          "pivot": [
+            0,
+            140,
+            0
+          ]
+        },
+        {
+          "name": "ctl",
+          "parent": "geo_ui",
+          "pivot": [
+            -160,
+            175,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -167,
+                168,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "l500",
+          "parent": "geo_ui",
+          "pivot": [
+            -125,
+            175,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -132,
+                168,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "l1000",
+          "parent": "geo_ui",
+          "pivot": [
+            -90,
+            175,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -97,
+                168,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "l1500",
+          "parent": "geo_ui",
+          "pivot": [
+            -55,
+            175,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -62,
+                168,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "l2000",
+          "parent": "geo_ui",
+          "pivot": [
+            -20,
+            175,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -27,
+                168,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "l2500",
+          "parent": "geo_ui",
+          "pivot": [
+            15,
+            175,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8,
+                168,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "l3000",
+          "parent": "geo_ui",
+          "pivot": [
+            50,
+            175,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                43,
+                168,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "l3500",
+          "parent": "geo_ui",
+          "pivot": [
+            -160,
+            145,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -167,
+                138,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "l4000",
+          "parent": "geo_ui",
+          "pivot": [
+            -125,
+            145,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -132,
+                138,
+                0
+              ],
+              "size": [
+                14,
+                14,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    16
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

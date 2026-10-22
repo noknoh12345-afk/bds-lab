@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Probe (size) RP",
+    "description": "GeoUI probe (bds-lab): GeoUI Probe (size)",
+    "uuid": "fe90db8d-77d3-43bc-b3ff-880399843922",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "89e2e15e-4159-45eb-a330-cec865b0142d",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}
