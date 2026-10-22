@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Rhythm 1000 RP",
+    "description": "GeoUI timeline sample: a long map, 1000 objects (bds-lab)",
+    "uuid": "f0dff228-b1ad-4731-b134-913637b7760f",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "a16c3d41-16db-44fc-9678-a2a36a6ab97e",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

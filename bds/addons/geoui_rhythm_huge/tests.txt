@@ -1,0 +1,49 @@
+# geoui_rhythm_huge（bds/geoui/timeline/demo.mjs が作る）: タイムラインの BP（scripts/timeline.js）が本物の BDS で命令どおりにプロパティを書くか。
+# 描画は app.txt（本物のアプリ）。= 完全一致 | ~ 正規表現 | ! 無い | !~ 無い正規表現 | '## 題' = 節
+# seq は 1 つの数: シーケンス + 1024 × 止め + 2048 × 世代（contract.js）。q() が [シーケンス, 止め, 世代] に戻す。
+
+## 読み込める（タイムラインのプロパティが既定値）
+@A join
+wait 2000
+js const e = p('A'); const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; JSON.stringify([...q(e.getProperty('geoui:seq')), ...['seq_from','t0se0'].map((k) => e.getProperty('geoui:' + k))])
+= [0,false,0,0,0]
+
+## play で再生が始まる（seq の番号と世代・seq_from）
+scriptevent geoui:play 1
+wait 500
+js const e = p('A'); const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; JSON.stringify([...q(e.getProperty('geoui:seq')), ...['seq_from','v3'].map((k) => e.getProperty('geoui:' + k))])
+= [1,false,1,0,100]
+
+## seek・pause・resume がプロパティに出る
+scriptevent geoui:seek 4
+wait 200
+js const e = p('A'); const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; JSON.stringify([q(e.getProperty('geoui:seq'))[2], e.getProperty('geoui:seq_from')])
+= [2,4000]
+scriptevent geoui:pause
+wait 200
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; JSON.stringify(q(p('A').getProperty('geoui:seq')))
+= [1,true,2]
+scriptevent geoui:resume
+wait 200
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; JSON.stringify(q(p('A').getProperty('geoui:seq')))
+= [1,false,3]
+
+## stop で止まる
+scriptevent geoui:stop
+wait 200
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; q(p('A').getProperty('geoui:seq'))[0]
+= 0
+
+## 入り直すと、再生中のシーケンスをその時刻から送り直す（世代は続きの番号）
+scriptevent geoui:play 1 3
+wait 1000
+@A leave
+wait 1500
+@A join
+wait 2000
+js const e = p('A'), f = e.getProperty('geoui:seq_from'); const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; const v = q(e.getProperty('geoui:seq')); JSON.stringify([v[0], v[2], Math.min(1, Math.floor(f / 4000)), Math.floor(f / 20000)])
+= [1,5,1,0]
+scriptevent geoui:stop
+wait 200
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; q(p('A').getProperty('geoui:seq'))[0]
+= 0

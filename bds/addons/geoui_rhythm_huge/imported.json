@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/timeline/demo.mjs",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI のタイムラインで作った osu! 風の HUD（本物の大きさの譜面 1000 個の見本）: 譜面・絵はラボの物"
+}
