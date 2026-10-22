@@ -4,27 +4,47 @@
     "name": "GeoUI Rhythm 300 BP",
     "description": "GeoUI timeline sample: a map of real size, 300 objects (bds-lab)",
     "uuid": "e5465eff-0c1e-4aa8-a990-d775ce80095e",
-    "version": [1, 0, 1],
-    "min_engine_version": [1, 26, 50]
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
   },
   "modules": [
     {
       "type": "data",
       "uuid": "964134ae-f0bb-4fef-a40d-7fe0fa6eab09",
-      "version": [1, 0, 1]
+      "version": [
+        1,
+        0,
+        0
+      ]
     },
     {
       "type": "script",
       "language": "javascript",
       "uuid": "f8f491ff-b40d-4bfa-aa15-2855dcbdeb68",
       "entry": "scripts/main.js",
-      "version": [1, 0, 1]
+      "version": [
+        1,
+        0,
+        0
+      ]
     }
   ],
   "dependencies": [
     {
       "uuid": "fc53402f-bf79-4638-8e51-010505be766e",
-      "version": [1, 0, 1]
+      "version": [
+        1,
+        0,
+        0
+      ]
     },
     {
       "module_name": "@minecraft/server",
