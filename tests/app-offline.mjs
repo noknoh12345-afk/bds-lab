@@ -723,24 +723,6 @@ await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without
   ok(/unknown-a/.test(stFail?.trail) && /restart/.test(stFail?.trail) && FC.cleanTrail(stFail.trail) === stFail.trail && stRes.results.filter((x) => !x.ok).length === 1 && !stRes.results.some((x) => x.raw === 'shot inside') && /ワールドに入れなかったので、残りの区切り（ワールドの中の手順: 1 個）は飛ばします/.test(fs.readFileSync(path.join(st.runDir, 'run.txt'), 'utf8')),
     `trail ${stFail?.trail} results ${JSON.stringify(stRes.results.map((x) => [x.raw, x.ok]))}`);
 });
-await t('run: the classic title as the CI device shows it (no focus the lab can see, Settings not read on every picture): after the press that wakes the controller, A on Play — never the new player\'s DOWN, DOWN, A into the store, no restart; a controller awake already: what the guess opened is left with B, then DOWN and A', async () => {
-  const FCt = await imp('app/lib/failcodes.mjs');
-  const res = (r) => (fs.existsSync(path.join(r.runDir, 'result.json')) ? JSON.parse(fs.readFileSync(path.join(r.runDir, 'result.json'), 'utf8')) : {});
-  const c = e2e('lanci', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_TITLE_CI: '1', APP_LAN_STUCK_MS: '20000', APP_LAN_JOIN_MS: '60000' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
-  made.push(c.runDir);
-  const cJoin = (res(c).results ?? []).find((x) => x.verb === 'join');
-  ok(c.status === 0 && c.state.uri === 'lan' && JSON.stringify(c.state.pads) === JSON.stringify(['DPAD_UP', 'BUTTON_A', 'DPAD_DOWN', 'BUTTON_A']) && !c.state.ciOpened
-    && /^title-focus(\[[a-z+]+\])? title-guess(\[[a-z+]+\])? play-lan/.test(cJoin?.trail ?? '') && !/title-new|store|restart/.test(cJoin.trail) && FCt.cleanTrail(cJoin.trail) === cJoin.trail,
-    `exit ${c.status} ${JSON.stringify(c.state.pads)} opened ${JSON.stringify(c.state.ciOpened)} ${cJoin?.trail}\n${c.text.slice(-1200)}`);
-  // the controller awake already, on Play: the waking press went up to the button above it — the first guess opened that,
-  // B came back, DOWN and A opened PLAY
-  const w = e2e('lanciawake', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_TITLE_CI: 'awake', APP_PLAY_LOAD_MS: '300', APP_LAN_STUCK_MS: '20000', APP_LAN_JOIN_MS: '60000' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
-  made.push(w.runDir);
-  const wJoin = (res(w).results ?? []).find((x) => x.verb === 'join');
-  ok(w.status === 0 && w.state.uri === 'lan' && JSON.stringify(w.state.ciOpened) === '["news"]' && JSON.stringify(w.state.pads) === JSON.stringify(['DPAD_UP', 'BUTTON_A', 'BUTTON_B', 'DPAD_DOWN', 'BUTTON_A', 'DPAD_DOWN', 'BUTTON_A'])
-    && /title-guess.* guess-back.* title-guess.* play-lan/.test(wJoin?.trail ?? '') && !/title-new|store|restart/.test(wJoin.trail),
-    `exit ${w.status} ${JSON.stringify(w.state.pads)} opened ${JSON.stringify(w.state.ciOpened)} ${wJoin?.trail}\n${w.text.slice(-1200)}`);
-});
 await t('run: OCR still being installed (the workflow\'s apt in the background) is waited for before the steps — not gone without, where the LAN join pressed blind; none and nothing installing it: no wait, said in the notes, the result and the join\'s code', async () => {
   // a stand-in for the workflow's background apt: a process whose command line holds a mark, putting tesseract in place 3 s on
   const late = path.join(tmp, 'ocr-late', 'tesseract'), mark = `lab-ocr-install-${process.pid}`;

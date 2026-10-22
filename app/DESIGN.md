@@ -72,20 +72,20 @@ qcow2 が 6.5 GB、その中で使われているのは 3.1 GB: 残りは消し�
 7. 旧来の道（`APP_TRANSPORT=raknet`）は残す: リンク・質問（Unknown External Server → Continue、Online play is not rated →
    Proceed。OCR が緑のボタンの白い字を読めなくても、問いの文から 1.26 のボタンの位置を押す）。
 
-### 2026-10-23: タイトルで Play の焦点が見えなければ、起こした焦点のまま A（joinLan）
+### 2026-10-23: 試して戻した「焦点が見えなければ当て推量で A」（run 39871120572 で参加できなかった）
 
-下の「参加の内訳」の 2 本の道筋から: classic のタイトルは字（Play・Settings・Marketplace、案内の Select・Exit、ロゴ）が読めるのに、
-Play の焦点の印（緑: `buttonFocused`）が 1 度も見えず、ラボは Play を探して UP・DOWN を続けた。Settings の読めない絵は新しい人の
-タイトル（`newTitleWords` の緩い形: Select・Exit とロゴ）と見て DOWN・DOWN・A を押し、Marketplace のストアに入った（`unknown-a
-[marketplace]`・`store[get+packs]`）。道筋の並びから、メニューは Play の上にもう 1 つボタンがある形と見ている（要実測）。
+ff995ff は、classic のタイトルで Play の焦点が見えない時に「起こす UP の後に A、だめなら B で戻って DOWN・A」と押し、一度 classic を見たら
+Play の字のある絵をすべて classic のタイトルと見た。本物のアプリの対照 geoui_probe_lc（run 39871120572）は `join-lan-missing 2` で
+落ち、PLAY に着くのも 218.7 秒（前は 194.4 秒）と遅くなった。道筋（failed_trails の 10 行目）から分かったこと:
 
-- 一度 classic のタイトルを見たら（または Play の字と Select・Exit の案内があれば）、新しい人のタイトルとは見ない。
-- 焦点が見えないとき: 起こす押し（UP）の後、そのまま A（2026-10-04: CI の端末でコントローラーを起こすと焦点は Play にあった）。
-  だめなら DOWN・A（コントローラーが起きていて UP が Play の上へ動かした時）。押した先が PLAY でなければ B で戻り、そこで A は
-  押さない（Settings を変えないため）。2 回だめなら今までの探し方。アプリを起動し直したら最初から。PLAY を開き直した時（relist）は
-  コントローラーが起きていて焦点は Play なので、すぐ A。
-- 偽の端末 `FAKE_TITLE_CI`（tests/fake/app）が CI の端末の形を写す: 前の進め方はストアへ行って落ちる、新しい進め方は 4 回の押しで入る。
-- 本物のアプリで確かめるまでは要実測（焦点が本当に Play にあるか、Play の上のボタンが何か）。
+- 起こす UP の後の A は PLAY ではない画面（読めた語 you・how・screen・menu・options・game・back）を開いた: CI の端末のコントローラーは
+  はじめから起きていて、UP が焦点を Play から動かしたと見ている（要実測）。B の後の DOWN・A では PLAY が開いた（2 回目のアプリで）。
+- 「Play の字があれば classic」は広すぎた: PLAY が出るまでの絵（your・server・online・join・how・play・manage）を classic と見て UP・DOWN を
+  6 回押し、その後の PLAY は Friends らしい画面（multiplayer・friends・invite・players）のままで、LAN のワールドは 3 回開いても出なかった。
+- 1 回目のアプリでは当て推量の後に焦点探しを 34 回して 150 秒で起動し直した（間の 3 つは道筋から切れている）。
+
+→ 前の進め方（2 本続けて参加できた: 下の「参加の内訳」）に戻した。次に試すなら、押す前に測る（タイトルのボタンの色や焦点の印を数だけ
+summary に出す）か、最初から A だけで押す形（2026-10-04 の `title-blind` と同じ）。どちらも本物のアプリで確かめるまで要実測。
 
 ### 2026-10-23: 参加の内訳（本物のアプリ 2 本）— 時間はタイトル → PLAY で、パックの大きさではない
 

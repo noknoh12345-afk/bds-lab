@@ -341,3 +341,5 @@
     アプリを起動し直し、最後は title-new の DOWN・DOWN・A で PLAY が開いた。LAN のワールドは huge で PLAY から 5.5 秒、対照で 115 秒
     （開き直し 1 回）、焦点合わせは 42〜50 秒（8〜10 回）。
   - 要実測: classic のタイトルで Play の焦点（緑: app/lib/client.mjs buttonFocused）が見つからない理由。写真は Discord にある。
+  - 対照の 3 本目（run 39871120572、焦点が見えない時に当て推量で A を押す ff995ff）: `join-lan-missing 2` で落ち、PLAY まで 218.7 秒。
+    PLAY が出るまでの絵も classic のタイトルと見て押していた → 戻した（app/DESIGN.md「試して戻した」）。

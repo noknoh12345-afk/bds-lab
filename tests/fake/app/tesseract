@@ -69,19 +69,6 @@ if (JOIN[phase]) {
   JOIN[phase].filter(([t]) => !(process.env.FAKE_OCR_NO_BUTTONS && /^(Continue|Proceed)$/.test(t))).forEach(([t, l, tp, w, h, line], i) => console.log(`5\t1\t1\t1\t${line}\t${i + 1}\t${l}\t${tp}\t${w}\t${h}\t90\t${t}`));
   process.exit(0);
 }
-// FAKE_TITLE_CI: the classic title as OCR reads it on the CI device (tests/fake/app/adb) — the logo, Play, the controller's
-// hints, Settings and Marketplace on some pictures only (which: by the picture — its panorama moves); news, Settings and the
-// Marketplace's store as screens of their own
-if (process.env.FAKE_TITLE_CI && ['title', 'ci-news', 'ci-settings', 'store'].includes(phase)) {
-  let k = 0; try { k = createHash('sha1').update(fs.readFileSync(a[0])).digest()[0] % 2; } catch { /* no picture */ }
-  const W = { title: [['MINECRAFT', 20, 2, 24, 4, 1], ['Play', 28, 12, 8, 3, 2], ...(k ? [] : [['Settings', 26, 18, 12, 3, 3], ['Marketplace', 24, 24, 16, 3, 4]]), ['Select', 40, 33, 6, 2, 5], ['Exit', 48, 33, 4, 2, 5]],
-    'ci-news': [["What's", 10, 4, 7, 3, 1], ['New', 18, 4, 4, 3, 1], ['Back', 5, 33, 5, 2, 2]],
-    'ci-settings': [['Settings', 10, 4, 10, 3, 1], ['General', 4, 10, 8, 3, 2], ['Video', 4, 16, 6, 3, 3], ['Back', 5, 33, 5, 2, 4]],
-    store: [['Get', 10, 4, 4, 3, 1], ['more', 15, 4, 5, 3, 1], ['packs', 21, 4, 6, 3, 1], ['Marketplace', 30, 4, 12, 3, 1]] }[phase];
-  console.log('level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext');
-  W.forEach(([t, l, tp, w, h, line], i) => console.log(`5\t1\t1\t1\t${line}\t${i + 1}\t${l}\t${tp}\t${w}\t${h}\t90\t${t}`));
-  process.exit(0);
-}
 // FAKE_OCR_TITLE: the title screen reads as one (its Play and Settings)
 // FAKE_OCR_MOJANG: the classic menu as OCR reads it on the CI device — not its buttons' words, its "©Mojang AB" and the skin
 if (phase === 'title' && process.env.FAKE_OCR_MOJANG) {

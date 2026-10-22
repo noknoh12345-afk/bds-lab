@@ -358,12 +358,6 @@ export async function runScenario(steps, ctx) {
     const tr = makeTrail();
     const rec = lanRec = { t0: Date.now(), trail: null }, at = () => Date.now() - rec.t0;
     let quietUntil = 0, seenPlay = false, restarts = 0, since = Date.now();
-    // (the classic title as the CI device shows it — 1.26.52, runs 39832045558 / 39833823950: its words read, no focus the lab
-    //  can see — Play never drawn green — so the search for it went on for minutes. Once seen it is never taken for the new
-    //  player's title (a picture of it whose Settings was not read was, and DOWN, DOWN, A went into the Marketplace's store).
-    //  The controller's first press wakes it with its focus on Play (2026-10-04, app/DESIGN.md): after that press, A; then
-    //  DOWN and A (a controller awake already went up off Play). A guess that opened something else: B back, never A there)
-    let classicSeen = false, woke = false, guesses = 0, guessed = false;
     const opened = () => { quietUntil = Date.now() + loadMs; };
     while (Date.now() < end) {
       if (clearDialog(s)) { tr.add('android-dialog'); await sleep(1000); continue; }
@@ -371,7 +365,6 @@ export async function runScenario(steps, ctx) {
       if (ctx.alive && !ctx.alive() && restarts < restartMax) {
         restarts++; tr.add('app-gone'); log(`${s.line} アプリが動いていません: 起動し直します（${restarts} 回目）`);
         ctx.launch(); ctx.started?.(); quietUntil = Date.now() + 45_000; since = Date.now(); sawPlay = false; other = 0; titleA = 0;
-        woke = false; guesses = 0; guessed = false; moves = 0;
         await sleep(padWait); continue;
       }
       if (!sawPlay && Date.now() - since > stuckMs && restarts < restartMax) {
@@ -379,13 +372,12 @@ export async function runScenario(steps, ctx) {
         log(`${s.line} ${Math.round(stuckMs / 1000)} 秒たっても PLAY の画面に着きません: アプリを止めて起動し直します（${restarts} 回目。道筋: ${tr.text()}）`);
         adb.shell(['am', 'force-stop', ctx.pkg]); await sleep(1500); ctx.launch(); ctx.started?.();
         quietUntil = Date.now() + 45_000; since = Date.now(); other = 0; titleA = 0; newTries = 0;
-        woke = false; guesses = 0; guessed = false; moves = 0;
         await sleep(padWait); continue;
       }
       const ws = ocrNow(), all = ws.map((w) => w.text).join(' '), p = playScreen(ws);
       said = seenWords(ws);
       if (p) {
-        other = 0; listed ||= p.lan; sawPlay = true; seenPlay = true; quietUntil = 0; guessed = false;
+        other = 0; listed ||= p.lan; sawPlay = true; seenPlay = true; quietUntil = 0;
         rec.play ??= at(); if (p.lan) rec.listed ??= at();
         tr.add(p.lan ? (p.focused ? 'play-lan-focus' : 'play-lan') : 'play-empty', ws);
         // the player's own world is listed too (lib/world.mjs: a player without one is sent into the new player's flow): the
@@ -404,15 +396,12 @@ export async function runScenario(steps, ctx) {
         else if (!emptySince) emptySince = Date.now();
         else if (Date.now() - emptySince > relistMs && reopened < relistMax) {
           // (the title next: its A opens PLAY again — sawPlay forgotten, so a title OCR cannot place still gets its A)
-          // (back on the title its controller is awake, its focus on Play that opened PLAY: A again — a guess)
-          reopened++; emptySince = 0; sawPlay = false; other = 0; since = Date.now(); woke = true; guesses = 0; tr.add('relist');
+          reopened++; emptySince = 0; sawPlay = false; other = 0; since = Date.now(); tr.add('relist');
           log(`${s.line} LAN のワールドが ${Math.round(relistMs / 1000)} 秒出ません: PLAY を開き直します（B でタイトルへ、${reopened} 回目）`); padKey('B');
         }
         await sleep(padWait); continue;
       }
-      // (the classic title's Play read: its menu — with Settings, or once the menu was seen, or beside the controller's hints:
-      //  the new player's title has no Play button)
-      const play = titlePlay(ws), classicMenu = Boolean(play) && (classicSeen || classicTitleWords(ws) || (/\bSelect\b/i.test(all) && /\bExit\b/i.test(all)));
+      const play = titlePlay(ws);
       if (backToTitle(ws) !== false || joinRefusal(ws)) { tr.add('back', ws); log(`${s.line} 前の画面が残っています（${said.slice(0, 80)}）: B で戻ります`); padKey('B'); }
       // a dialog over the title ("Play your way") before the menu behind it: B closes it (A on its Continue brought it back
       // again and again on the CI device)
@@ -421,26 +410,17 @@ export async function runScenario(steps, ctx) {
       // classic menu. The first press only turns the gamepad's focus on (on Get started — an A there starts the new player's
       // game mode screens): DOWN twice, then A. Its hints and logo alone (not its buttons) only twice: then it is taken for
       // the classic menu (never A on it before that: A there is Get started)
-      else if (!classicSeen && !classicMenu && newTitleWords(ws, { strict: newTries >= 2 })) { newTries++; tr.add('title-new', ws); log(`${s.line} 新しい人向けのタイトル: More options へ（DOWN・DOWN・A）`); padKey('DOWN'); await sleep(padWait); padKey('DOWN'); await sleep(padWait); padKey('A'); }
+      else if (newTitleWords(ws, { strict: newTries >= 2 })) { newTries++; tr.add('title-new', ws); log(`${s.line} 新しい人向けのタイトル: More options へ（DOWN・DOWN・A）`); padKey('DOWN'); await sleep(padWait); padKey('DOWN'); await sleep(padWait); padKey('A'); }
       // the classic menu: its focus moves by the screen's layout, so Play is pressed once it is the green one (UP until it is,
-      // then DOWN: the first press only turns the gamepad's focus on). No green after that first press (the CI device): A
-      // where the woken focus is, then DOWN and A — two guesses, then the search as before
-      else if (classicMenu) {
-        classicSeen = true; guessed = false;
+      // then DOWN: the first press only turns the gamepad's focus on)
+      else if (play && classicTitleWords(ws)) {
         let focused = false; try { focused = buttonFocused(decode(last), play); } catch { /* undecodable */ }
         if (focused) { tr.add('title-play', ws); log(`${s.line} タイトルの Play を押します（ゲームパッド A）`); padKey('A'); moves = 0; opened(); }
-        else if (woke && guesses < 2) {
-          guesses++; tr.add('title-guess', ws);
-          if (guesses === 2) { padKey('DOWN'); await sleep(Math.min(padWait, 1500)); }
-          log(`${s.line} タイトルの Play の焦点が見えません: ${guesses === 1 ? '起こした焦点のまま' : 'DOWN で Play へ戻して'}ゲームパッド A`);
-          padKey('A'); moves = 0; guessed = true; opened();
-        }
-        else { tr.add('title-focus', ws); moves++; woke = true; padKey(moves % 12 <= 5 ? 'UP' : 'DOWN'); await sleep(Math.min(padWait, 1500)); continue; }
+        else { tr.add('title-focus', ws); moves++; padKey(moves % 12 <= 5 ? 'UP' : 'DOWN'); await sleep(Math.min(padWait, 1500)); continue; }
       }
       // the classic menu known by its "©Mojang AB" and the skin's name, its buttons' words not read (the CI device): Play has
       // the focus once it is on — A turns it on, A presses it (never B here: B is the menu's Exit)
       else if (classicTitleWords(ws) || (newTries >= 2 && titleWords(ws))) {
-        classicSeen = true;
         tr.add('title-blind', ws); log(`${s.line} タイトル（ボタンの文字は読めず）: ゲームパッド A（Play）`); padKey('A'); opened(); titleA++;
         if (titleA > 6) throw Object.assign(new Error(`タイトルの Play が押せません（A を ${titleA - 1} 回）（画面の文字: ${said}）（道筋: ${tr.text()}）`), { trail: tr.text() });
       }
@@ -449,8 +429,6 @@ export async function runScenario(steps, ctx) {
       else if (/\bget\b.{0,40}\bpacks?\b|\bmore\s+packs\b/i.test(all)) { tr.add('store', ws); log(`${s.line} ストアの画面（${said.slice(0, 60)}）: B で戻ります`); padKey('B'); other = 0; }
       // (a screen not known yet, just after an A that may have opened PLAY or a start: let it come — no press)
       else if (Date.now() < quietUntil) tr.add('wait', ws);
-      // (a guess on the title that opened something else — the button above Play, Settings: B back to the title, no A there)
-      else if (guessed) { guessed = false; tr.add('guess-back', ws); log(`${s.line} 押した先は PLAY ではありません（${said.slice(0, 60)}）: B でタイトルへ`); padKey('B'); }
       // (an unknown screen: A goes on at first — B once PLAY has been seen, where an A could create a world)
       else if (/\bContinue\b/i.test(all)) { tr.add('continue', ws); padKey('A'); other++; }
       else if (other < 2 && !sawPlay) { tr.add('unknown-a', ws); padKey('A'); other++; opened(); }
