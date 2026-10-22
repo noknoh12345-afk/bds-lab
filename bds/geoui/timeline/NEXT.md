@@ -19,14 +19,12 @@ noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の
 - 本物のアプリでの確かめ（app.yml の dispatch）は、私に聞いて許可をもらってから。勝手に回さない
 - 本物のゲームでしか分からないことは「要実測」と書き、決めつけない
 
-最初にやること（私の許可が出たら、1 本ずつ）: 新しい書き出しを本物のアプリで確かめる
-- geoui_probe_m（書き出しが出す形だけ: splitLines の行・1000 文字・括弧 24 段・2000 個の引き方・3000 行 45 万文字）  lane probe4-m
-- geoui_probe_tl（新しいプロパティでタイムラインの時計・人形）  lane probe4-tl
-- geoui_rhythm（19 個）  lane rhythm-3
-- geoui_rhythm_big（300 個・2 分。app.txt は 2〜112 秒に写す）  lane rhythm-big-1
-- 回し方: gh api -X POST repos/noknoh12345-afk/bds-lab/actions/workflows/app.yml/dispatches -f ref=main -f "inputs[addon]=<名前>" -f "inputs[mode]=run" -f "inputs[account]=true" -f "inputs[screen]=720x1560" -f "inputs[lane]=<lane>" -f "inputs[knobs]=APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"
-- 結果: gh run download <run> → probe は node bds/geoui/timeline/probe.mjs read <summary.json>、rhythm は summary.json と measure diff の数。
-  答えに合わせて compile.js などを直し、PLAN.md の「本物のアプリで確かめたこと」に足す。参加できなかった実行は failed_codes（join-lan-missing など）を見る
+最初にやること:
+- 2026-10-22 の 4 本（本物のアプリ）の答えを PLAN.md の「本物のアプリで確かめたこと」で読む（rhythm-3・rhythm-big-1・probe4-m・probe4-tl）。
+  まだ回していない物があれば、私の許可をもらってから 1 本ずつ:
+  gh api -X POST repos/noknoh12345-afk/bds-lab/actions/workflows/app.yml/dispatches -f ref=main -f "inputs[addon]=<名前>" -f "inputs[mode]=run" -f "inputs[account]=true" -f "inputs[screen]=720x1560" -f "inputs[lane]=<lane>" -f "inputs[knobs]=APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"
+- 結果: gh run download <run> → probe は node bds/geoui/timeline/probe.mjs read <summary.json>、rhythm は summary.json の measures と failed_codes。
+  写真と録画は私の Discord に届く（app/lib/feed.mjs。summary.json の media に送った数）。成果物の中身は封じてある（鍵が無いと読めない）
 
 全部の試験（変えたら毎回）:
   for f in tests/tl-*-offline.mjs tests/geoui-builder-offline.mjs tests/lint-offline.mjs; do node $f || exit 1; done

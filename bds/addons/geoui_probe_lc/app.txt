@@ -1,0 +1,136 @@
+# geoui_probe_lc（bds/geoui/timeline/probe.mjs が作る）: GeoUI の pre_animation が何行まで動くか（1 つの変数を数える）。node bds/geoui/timeline/probe.mjs read <summary.json> が読む。
+# 基準は何も出さない画面（world--probe-off）。テストを 1 つずつ出して写し、measure diff で変わった所（px。板のある所だけ）を、measure color で板の真ん中の色を数で出す。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 3000
+do time set noon
+do gamerule dodaylightcycle false
+do gamerule sendcommandfeedback false
+do gamerule commandblockoutput false
+do weather clear
+do tp @a 0 -60 0 0 90
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do hud @a hide crosshair
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 0); 'probe off'
+wait 6000
+shot world--probe-off
+absent clientlog \bERROR\b
+
+section t01-ctl
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 1); 'probe 1'
+wait 1500
+shot t01-ctl
+measure diff t01-ctl 0 170 1030 720
+
+section t02-l1000
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 2); 'probe 2'
+wait 1500
+shot t02-l1000
+measure diff t02-l1000 0 170 1030 720
+
+section t03-l1500
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 3); 'probe 3'
+wait 1500
+shot t03-l1500
+measure diff t03-l1500 0 170 1030 720
+
+section t04-l2000
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 4); 'probe 4'
+wait 1500
+shot t04-l2000
+measure diff t04-l2000 0 170 1030 720
+
+section t05-l2500
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 5); 'probe 5'
+wait 1500
+shot t05-l2500
+measure diff t05-l2500 0 170 1030 720
+
+section t06-l3000
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 6); 'probe 6'
+wait 1500
+shot t06-l3000
+measure diff t06-l3000 0 170 1030 720
+
+section t07-l3500
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 7); 'probe 7'
+wait 1500
+shot t07-l3500
+measure diff t07-l3500 0 170 1030 720
+
+section t08-l4000
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 8); 'probe 8'
+wait 1500
+shot t08-l4000
+measure diff t08-l4000 0 170 1030 720
+
+section t09-l5000
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 9); 'probe 9'
+wait 1500
+shot t09-l5000
+measure diff t09-l5000 0 170 1030 720
+
+section all
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 99); 'probe 99'
+wait 1500
+shot all
+measure diff all 0 170 1030 720
+do js for (const q of world.getAllPlayers()) q.setProperty('gprobl:v2', 0); 'probe 0'
+
+section log-molang
+absent clientlog (?i)molang
+section log-variable
+absent clientlog (?i)variable
+section log-property
+absent clientlog (?i)property
+section log-paperdoll
+absent clientlog (?i)paper.?doll
+section log-ours
+absent clientlog (?i)gprobl
+section log-unknown
+absent clientlog (?i)unknown|not found|doesn.?t exist|undefined|invalid
+section log-geometry
+absent clientlog (?i)geometr|\bbones?\b
+section log-render
+absent clientlog (?i)render.?controller|part_visibility|uv_anim
+section log-material
+absent clientlog (?i)material|shader|define
+section log-animation
+absent clientlog (?i)animation
+section log-warn
+absent clientlog \bWARN
+section log-error
+absent clientlog \bERROR\b
+# (round 3: lines with "molang", "variable" and "unknown|not found|…" were there, none with the pack's namespace, "property" or
+#  "paperdoll" — which names they are about, one section each: the vanilla player's own variables this pack copies, GeoUI's)
+section log-n-geoui
+absent clientlog (?i)geoui_
+section log-n-gliding
+absent clientlog (?i)gliding
+section log-n-attack
+absent clientlog (?i)attack_time|attack_body
+section log-n-firstperson
+absent clientlog (?i)first_person
+section log-n-mapface
+absent clientlog (?i)map_face|map_angle
+section log-n-rotation
+absent clientlog (?i)x_rotation|look_at
+section log-n-handbob
+absent clientlog (?i)hand_bob|tcos|riding_y
+section log-n-item
+absent clientlog (?i)item_use|main_hand|holding|spear
+section log-n-blink
+absent clientlog (?i)blink|layer_visible|cape
+section log-n-query
+absent clientlog (?i)query\.|\bq\.
+section log-n-math
+absent clientlog (?i)math\.

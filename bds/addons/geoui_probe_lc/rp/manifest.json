@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Probe (lines) RP",
+    "description": "GeoUI probe (bds-lab): GeoUI Probe (lines)",
+    "uuid": "30a704c3-a6f6-474a-8206-948122a380b8",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "59f94a88-1ab2-4845-b26f-202a3cfc4aaf",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

@@ -25,6 +25,8 @@ h1, h2, h3, nav.tabs button, button { font-feature-settings: "palt"; }
 header#top { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px; background: var(--glass); -webkit-backdrop-filter: saturate(1.8) blur(16px); backdrop-filter: saturate(1.8) blur(16px); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
 header#top h1 { font-size: 17px; font-weight: 800; letter-spacing: -.02em; margin: 0; background: linear-gradient(90deg, var(--brand1), var(--brand2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 header#top .h1sub { color: var(--muted); font-weight: 600; letter-spacing: 0; }
+header#top h1 { display: flex; align-items: center; gap: 9px; }
+header#top h1::before { content: ''; flex: none; width: 26px; height: 26px; border-radius: 8px; background: url(icon.svg) center / cover no-repeat; box-shadow: 0 6px 14px -6px var(--glow); }
 #who { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
 #who img { width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 0 0 2px var(--card), 0 0 0 3.5px color-mix(in srgb, var(--accent) 55%, transparent); }
 main { max-width: 1000px; margin: 0 auto; padding: 14px 14px 40px; }
@@ -97,7 +99,7 @@ a:hover { text-decoration: underline; }
 ul.targets label { display: flex; gap: 10px; align-items: flex-start; color: var(--fg); font-size: 15px; margin: 0; cursor: pointer; }
 .grow { min-width: 0; }
 .row > input[type=text], .row > input[type=password] { flex: 1 1 180px; width: auto; }
-input[type=radio] { width: 20px; height: 20px; margin: 0; flex: none; }
+input[type=radio] { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--accent); }
 .files { margin-top: 8px; display: grid; gap: 6px; }
 .files .chip { margin: 2px 4px 2px 0; }
 .files .arts { gap: 6px; }

@@ -1,0 +1,102 @@
+{
+  "materials": {
+    "version": "1.0.0",
+    "gprobv_base": {
+      "vertexShader": "shaders/entity.vertex",
+      "vrGeometryShader": "shaders/entity.geometry",
+      "fragmentShader": "shaders/entity.fragment",
+      "vertexFields": [
+        {
+          "field": "Position"
+        },
+        {
+          "field": "Normal"
+        },
+        {
+          "field": "UV0"
+        }
+      ],
+      "variants": [
+        {
+          "skinning": {
+            "+defines": [
+              "USE_SKINNING"
+            ],
+            "vertexFields": [
+              {
+                "field": "Position"
+              },
+              {
+                "field": "BoneId0"
+              },
+              {
+                "field": "Normal"
+              },
+              {
+                "field": "UV0"
+              }
+            ]
+          }
+        },
+        {
+          "skinning_color": {
+            "+defines": [
+              "USE_SKINNING"
+            ],
+            "vertexFields": [
+              {
+                "field": "Position"
+              },
+              {
+                "field": "BoneId0"
+              },
+              {
+                "field": "Color"
+              },
+              {
+                "field": "Normal"
+              },
+              {
+                "field": "UV0"
+              }
+            ]
+          }
+        }
+      ],
+      "msaaSupport": "Both",
+      "+samplerStates": [
+        {
+          "samplerIndex": 0,
+          "textureFilter": "Point"
+        }
+      ]
+    },
+    "gprobv_cutout:gprobv_base": {
+      "+defines": [
+        "USE_UV_ANIM",
+        "ALPHA_TEST"
+      ]
+    },
+    "gprobv_blend:gprobv_base": {
+      "+defines": [
+        "USE_UV_ANIM"
+      ],
+      "+states": [
+        "Blending"
+      ],
+      "blendSrc": "SourceAlpha",
+      "blendDst": "OneMinusSrcAlpha"
+    },
+    "gprobv_add:gprobv_base": {
+      "+defines": [
+        "USE_UV_ANIM"
+      ],
+      "+states": [
+        "Blending",
+        "DisableDepthWrite"
+      ],
+      "blendSrc": "SourceAlpha",
+      "blendDst": "One"
+    }
+  }
+}

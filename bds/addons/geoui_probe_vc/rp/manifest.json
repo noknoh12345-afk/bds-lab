@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Probe (variables) RP",
+    "description": "GeoUI probe (bds-lab): GeoUI Probe (variables)",
+    "uuid": "2d6935c3-f18c-4aa6-9304-16914c55b51c",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "8462e148-a8a4-4c19-a69c-6efa1b87a44b",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}
