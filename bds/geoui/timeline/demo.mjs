@@ -254,8 +254,10 @@ measure diff stopped ${REGION}
 absent clientlog \\bERROR\\b
 
 section log-molang
-# (a content error of Molang: a pre_animation line that the game cannot run stops the lines after it — the slots then never show)
-absent clientlog (?i)molang
+# (a content error of Molang in the pack's own lines: a pre_animation line that the game cannot run stops the lines after it —
+#  the slots then never show. Only lines that name the pack's own variables (geoui_): the game's own vanilla player writes
+#  Molang lines of its own (item_use, main_hand, holding, spear: geoui_probe_b, 2026-10-22), which are not this pack's)
+absent clientlog (?i)geoui_
 `));
 if (!V.big) out.set('rp/sounds/README.md', Buffer.from('click.wav: the lab\'s own click track (bds/geoui/timeline/demo.mjs makes it: 880 / 1320 Hz on each beat).\n'));
 

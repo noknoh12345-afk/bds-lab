@@ -745,6 +745,8 @@ async function runCmd(args) {
       const finalShot = path.join(runDir, 'shots', '99-final.png');
       const r = await feed.end({ ok: st.ok, ms: Date.now() - st.started, shots: st.shots.length, fatal: st.fatal, notes: st.notes, recordings: recordingsAbs, final: fs.existsSync(finalShot) ? finalShot : null });
       log(`     Discord: 写真・動画 ${r.sent} 個${r.failed ? `（${r.failed} 回送れず: run.txt）` : ''}`, false);
+      // (how many went, in result.json: a public repository's summary.json carries the numbers alone — `app checks --seal`)
+      try { const rf = path.join(runDir, 'result.json'), rj = JSON.parse(fs.readFileSync(rf, 'utf8')); rj.media = { sent: r.sent, failed: r.failed, late: Boolean(r.late) }; fs.writeFileSync(rf, JSON.stringify(rj, null, 2)); } catch { /* no result.json */ }
     });
     unlock();
   };
@@ -2571,6 +2573,8 @@ async function checksCmd(args) {
       seconds: secs, join_seconds: num(r?.timing?.join) !== null ? Math.round(r.timing.join / 100) / 10 : null,
       bds: word(r?.bds?.version) ?? cell('BDS'), app: word(r?.app?.versionName) ?? cell('アプリ'),
       ...(Array.isArray(r?.measures) && r.measures.length ? { measures: M.cleanMeasures(r.measures) } : {}),
+      // (the pictures and videos sent to the person's Discord: how many, numbers only — lib/feed.mjs)
+      ...(r?.media && num(r.media.sent) !== null ? { media: { sent: num(r.media.sent), failed: num(r.media.failed) ?? 0, late: r.media.late === true } } : {}),
     };
   };
   // the run folders under a folder: itself when it holds files, else each folder in it (app/runs: every run of the job)
