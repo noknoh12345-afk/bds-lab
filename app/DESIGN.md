@@ -72,6 +72,21 @@ qcow2 が 6.5 GB、その中で使われているのは 3.1 GB: 残りは消し�
 7. 旧来の道（`APP_TRANSPORT=raknet`）は残す: リンク・質問（Unknown External Server → Continue、Online play is not rated →
    Proceed。OCR が緑のボタンの白い字を読めなくても、問いの文から 1.26 のボタンの位置を押す）。
 
+### 2026-10-23: タイトルで Play の焦点が見えなければ、起こした焦点のまま A（joinLan）
+
+下の「参加の内訳」の 2 本の道筋から: classic のタイトルは字（Play・Settings・Marketplace、案内の Select・Exit、ロゴ）が読めるのに、
+Play の焦点の印（緑: `buttonFocused`）が 1 度も見えず、ラボは Play を探して UP・DOWN を続けた。Settings の読めない絵は新しい人の
+タイトル（`newTitleWords` の緩い形: Select・Exit とロゴ）と見て DOWN・DOWN・A を押し、Marketplace のストアに入った（`unknown-a
+[marketplace]`・`store[get+packs]`）。道筋の並びから、メニューは Play の上にもう 1 つボタンがある形と見ている（要実測）。
+
+- 一度 classic のタイトルを見たら（または Play の字と Select・Exit の案内があれば）、新しい人のタイトルとは見ない。
+- 焦点が見えないとき: 起こす押し（UP）の後、そのまま A（2026-10-04: CI の端末でコントローラーを起こすと焦点は Play にあった）。
+  だめなら DOWN・A（コントローラーが起きていて UP が Play の上へ動かした時）。押した先が PLAY でなければ B で戻り、そこで A は
+  押さない（Settings を変えないため）。2 回だめなら今までの探し方。アプリを起動し直したら最初から。PLAY を開き直した時（relist）は
+  コントローラーが起きていて焦点は Play なので、すぐ A。
+- 偽の端末 `FAKE_TITLE_CI`（tests/fake/app）が CI の端末の形を写す: 前の進め方はストアへ行って落ちる、新しい進め方は 4 回の押しで入る。
+- 本物のアプリで確かめるまでは要実測（焦点が本当に Play にあるか、Play の上のボタンが何か）。
+
 ### 2026-10-23: 参加の内訳（本物のアプリ 2 本）— 時間はタイトル → PLAY で、パックの大きさではない
 
 `join_lan_seconds` と道筋をつけた 2 本（秒は join の段の始めから。どちらも OCR あり）:

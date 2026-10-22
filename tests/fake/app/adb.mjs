@@ -116,10 +116,35 @@ async function joined() {
   else if (!process.env.FAKE_NOJOIN) { if (process.env.FAKE_LOADING) { S.phase = 'loading'; S.loadLeft = Number(process.env.FAKE_LOADING); save(); } srv('Player connected: Steve, xuid: 2535400000000000'); srv('Player Spawned: Steve xuid: 2535400000000000, pfid: 1'); }
   else srv('Player connected: Steve, xuid: 2535400000000000');
 }
+// PLAY opened from the title (FAKE_LAN_LATE=n: the LAN world is listed only from the n-th time PLAY is opened — the CI
+// device's discovery that came late; FAKE_PLAY_SLOW=n: PLAY comes only after n pictures)
+function openPlay() {
+  S.playOpens = (S.playOpens ?? 0) + 1; S.phase = process.env.FAKE_LAN_NONE || S.playOpens < Number(process.env.FAKE_LAN_LATE || 0) ? 'lanempty' : 'lanlist'; S.titleFocus = null;
+  if (process.env.FAKE_PLAY_SLOW) { S.playNext = S.phase; S.phase = 'playload'; S.playLoadLeft = Number(process.env.FAKE_PLAY_SLOW); }
+  save();
+}
+// FAKE_TITLE_CI: the classic title as the CI device shows it (1.26.52, runs 39832045558 / 39833823950): its focus never drawn
+// where the lab looks (no green), a button above Play (news), Settings and Marketplace below it (Marketplace: its store, "Get
+// more packs"); the controller asleep at first (touch mode: the first press only wakes it, its focus on Play), or =awake:
+// awake already, on Play (each press counts). B leaves news, Settings and the store for the title, the focus kept
+const CI_MENU = ['news', 'play', 'settings', 'marketplace'];
 // a controller button (the shell's injected key, or the device's controller: the same screens move)
 async function padPress(k) {
 
     S.pads = [...(S.pads ?? []), k]; save();
+    if (process.env.FAKE_TITLE_CI && S.launched && ['title', 'ci-news', 'ci-settings', 'store'].includes(S.phase)) {
+      if (S.phase !== 'title') { if (k === 'BUTTON_B') S.phase = 'title'; save(); return; }
+      S.ciFocus ??= 1;
+      if (process.env.FAKE_TITLE_CI !== 'awake' && !S.ciAwake) { S.ciAwake = true; save(); return; }
+      if (k === 'DPAD_UP') S.ciFocus = Math.max(0, S.ciFocus - 1);
+      else if (k === 'DPAD_DOWN') S.ciFocus = Math.min(CI_MENU.length - 1, S.ciFocus + 1);
+      else if (k === 'BUTTON_A') {
+        const b = CI_MENU[S.ciFocus];
+        if (b === 'play') { openPlay(); return; }
+        S.phase = b === 'marketplace' ? 'store' : `ci-${b}`; S.ciOpened = [...(S.ciOpened ?? []), b];
+      }
+      save(); return;
+    }
     // FAKE_NEWTITLE: the new player's title first (Get started / More options): the first press turns the focus on (on Get
     // started), DOWN moves it to More options, A there opens the classic menu; A on Get started opens its game mode screen
     if (process.env.FAKE_NEWTITLE && S.phase === 'title' && !S.classic) {
@@ -132,16 +157,11 @@ async function padPress(k) {
     else if (process.env.FAKE_SIGNIN && S.phase === 'title' && k === 'BUTTON_A' && S.titleFocus === 'signin') { S.phase = 'ms-start'; S.titleFocus = null; save(); }
     // (the classic title: the first move turns the focus on, on its Play — drawn green — and A opens PLAY)
     else if (k === 'DPAD_UP' && S.phase === 'title') { S.titleFocus = 'play'; save(); }
-    // (FAKE_LAN_LATE=n: the LAN world is listed only from the n-th time PLAY is opened — the CI device's discovery that came late)
     // FAKE_TITLE_STUCK: the title takes no A (PLAY never opens)
     else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && process.env.FAKE_TITLE_STUCK) { S.stuckA = (S.stuckA ?? 0) + 1; save(); }
     // FAKE_PLAY_SLOW=n: PLAY comes only after n pictures (the CI device's Ore UI); an A meanwhile lands on "Create new world"
     else if (k === 'BUTTON_A' && S.phase === 'playload') { S.phase = 'createworld'; S.createdWorld = true; save(); }
-    else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && S.launched) {
-      S.playOpens = (S.playOpens ?? 0) + 1; S.phase = process.env.FAKE_LAN_NONE || S.playOpens < Number(process.env.FAKE_LAN_LATE || 0) ? 'lanempty' : 'lanlist'; S.titleFocus = null;
-      if (process.env.FAKE_PLAY_SLOW) { S.playNext = S.phase; S.phase = 'playload'; S.playLoadLeft = Number(process.env.FAKE_PLAY_SLOW); }
-      save();
-    }
+    else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && S.launched) openPlay();
     // FAKE_OWN_WORLD: the player's own world listed first — the first DOWN focuses its card (the hint "A Play" all the same;
     // A there opens it), the next the LAN world's
     else if (k === 'DPAD_DOWN' && S.phase === 'lanlist') { S.phase = process.env.FAKE_OWN_WORLD ? 'lanown' : 'lanfocus'; save(); }
@@ -157,7 +177,7 @@ async function padPress(k) {
     // Y in the world opens the inventory (FAKE_PAD_WAKE: the game in touch mode takes the first press only to wake the controller)
     else if (k === 'BUTTON_Y' && S.phase === 'world') { if (process.env.FAKE_PAD_WAKE && !S.padAwake) S.padAwake = true; else S.phase = 'screen'; save(); }
   }
-const COLORS = { loading: [24, 24, 24], downloading: [40, 28, 64], 'join-error': [70, 30, 30], playload: [30, 30, 34], createworld: [100, 100, 40], 'join-packs': [58, 58, 58], lanown: [52, 52, 62], ownworld: [120, 160, 220], 'ms-start': [16, 124, 16], 'ms-email': [250, 250, 250], 'ms-password': [248, 250, 250], 'ms-code': [250, 248, 250], 'ms-approve': [250, 250, 248], 'ms-stay': [246, 246, 246], 'ms-error': [250, 244, 244], home: [40, 40, 40], title: [60, 120, 200], gamemode: [64, 64, 64], lanlist: [52, 52, 60], lanfocus: [52, 52, 64], lanempty: [52, 52, 56], welcome: [70, 60, 50], 'join-external': [50, 50, 50], 'join-rated': [55, 55, 55], 'join-refused': [45, 45, 45], world: [90, 160, 80], form: [230, 180, 40], anr: [235, 235, 235], pause: [70, 70, 90], screen: [150, 110, 60], play: [255, 255, 255], paywall: [248, 248, 248] };
+const COLORS = { 'ci-news': [80, 60, 100], 'ci-settings': [64, 64, 80], store: [90, 40, 110], loading: [24, 24, 24], downloading: [40, 28, 64], 'join-error': [70, 30, 30], playload: [30, 30, 34], createworld: [100, 100, 40], 'join-packs': [58, 58, 58], lanown: [52, 52, 62], ownworld: [120, 160, 220], 'ms-start': [16, 124, 16], 'ms-email': [250, 250, 250], 'ms-password': [248, 250, 250], 'ms-code': [250, 248, 250], 'ms-approve': [250, 250, 248], 'ms-stay': [246, 246, 246], 'ms-error': [250, 244, 244], home: [40, 40, 40], title: [60, 120, 200], gamemode: [64, 64, 64], lanlist: [52, 52, 60], lanfocus: [52, 52, 64], lanempty: [52, 52, 56], welcome: [70, 60, 50], 'join-external': [50, 50, 50], 'join-rated': [55, 55, 55], 'join-refused': [45, 45, 45], world: [90, 160, 80], form: [230, 180, 40], anr: [235, 235, 235], pause: [70, 70, 90], screen: [150, 110, 60], play: [255, 255, 255], paywall: [248, 248, 248] };
 // the game's license (PairIP asks the Play Store at each start): FAKE_PAIRIP_UNTIL_PLAY = Play's paywall until Play itself
 // installed or updated the game (its page's button tapped); FAKE_PAIRIP_ALWAYS = always; FAKE_NOT_OWNED = Play's page shows a price
 const paywalled = () => Boolean(process.env.FAKE_PAIRIP_ALWAYS || (process.env.FAKE_PAIRIP_UNTIL_PLAY && !S.byPlay));
@@ -218,7 +238,7 @@ async function shotPng() {
   const [r, g, b] = black ? [0, 0, 0] : COLORS[anrUp() ? 'anr' : S.phase ?? 'home'], w = 64, h = 36, data = Buffer.alloc(w * h * 4);
   for (let i = 0; i < w * h; i++) { data[i * 4] = r; data[i * 4 + 1] = g; data[i * 4 + 2] = black ? 0 : (b + (i % 7 === 0 ? 20 : 0)) & 255; data[i * 4 + 3] = 255; }
   // FAKE_ANIM_TITLE: the title's panorama never holds still (1.26: no two pictures alike), the classic menu's once it is open
-  if (process.env.FAKE_ANIM_TITLE && S.phase === 'title' && !S.classic && !black && !anrUp()) {
+  if ((process.env.FAKE_ANIM_TITLE || process.env.FAKE_TITLE_CI) && S.phase === 'title' && !S.classic && !black && !anrUp()) {
     const n = (S.adbShots ?? 0) + (S.emuShots ?? 0);
     for (let i = 0; i < w * h; i++) { data[i * 4] = (r + 47 * n + (i % 13)) & 255; data[i * 4 + 1] = (g + 29 * n) & 255; }
   }
@@ -346,7 +366,7 @@ else if (sh !== null) {
   else if (/^dumpsys package/.test(sh)) say(!S.installed ? '' : S.byPlay ? '    primaryCpuAbi=x86_64\n    versionCode=912605300 minSdk=24\n    versionName=1.26.52.04\n    firstInstallTime=2026-10-03 12:00:00\n    installerPackageName=com.android.vending\n    initiatingPackageName=com.android.vending\n'
     : '    primaryCpuAbi=arm64-v8a\n    versionCode=912605203 minSdk=24\n    versionName=1.26.52.03\n    firstInstallTime=2026-10-03 12:00:00\n    installerPackageName=com.android.vending\n    initiatingPackageName=com.android.shell\n');
   // FAKE_WELCOME: the game's first start shows "WELCOME TO MINECRAFT!" (Sign in now / Maybe later) until Maybe later is tapped
-  else if (/^monkey -p com\.mojang\.minecraftpe/.test(sh)) { S.launched = true; S.phase = paywalled() ? 'paywall' : process.env.FAKE_WELCOME && !S.welcomed ? 'welcome' : 'title'; S.anr = Number(process.env.FAKE_ANR) || 0; save(); say('Events injected: 1\n'); }
+  else if (/^monkey -p com\.mojang\.minecraftpe/.test(sh)) { S.launched = true; S.phase = paywalled() ? 'paywall' : process.env.FAKE_WELCOME && !S.welcomed ? 'welcome' : 'title'; S.anr = Number(process.env.FAKE_ANR) || 0; if (process.env.FAKE_TITLE_CI) { S.ciAwake = false; S.ciFocus = 1; } save(); say('Events injected: 1\n'); }
   // the focused window: the dialog while it is up, else the game (or the home screen)
   // (the whole dump, not its displays section, starts with the state saved at the last ANR: the launcher, stale — as on
   // Android 14, where it misled the lab for 2 hours after "Pixel Launcher isn't responding")
