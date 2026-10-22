@@ -50,11 +50,14 @@ export function tools(cache) {
   const dir = path.join(cache, 'tool');
   const want = JSON.stringify(TOOLS);
   const stamp = path.join(dir, 'stamp');
-  if (!exists(stamp) || fs.readFileSync(stamp, 'utf8') !== want) {
+  const req = createRequire(path.join(dir, 'package.json'));
+  // (the stamp alone is not the tools: a cache restored with the stamp and without node_modules — CI's bds/.lab — said
+  //  "Cannot find module 'esbuild'" on every build until the stamp changed. Installed again whenever they do not resolve)
+  const there = () => { try { req.resolve('esbuild'); req.resolve('typescript'); return true; } catch { return false; } };
+  if (!exists(stamp) || fs.readFileSync(stamp, 'utf8') !== want || !there()) {
     npmI(dir, Object.entries(TOOLS).map(([k, v]) => `${k}@${v}`));
     fs.writeFileSync(stamp, want);
   }
-  const req = createRequire(path.join(dir, 'package.json'));
   return { req, esbuild: req('esbuild'), get ts() { return req('typescript'); } };
 }
 

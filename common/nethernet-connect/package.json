@@ -1,9 +1,25 @@
 {
   "name": "nethernet-connect",
   "version": "3.0.0",
+  "description": "自分のネットワーク（このマシン・同じLAN・自分の Tailscale の端末）にいる Minecraft 統合版のワールドとサーバーにだけ、それぞれの入り方（LAN の NetherNet・BDS の NetherNet HTTP・RakNet）で入るボット（Node.js 22+ / TypeScript）",
   "type": "module",
   "main": "dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node build.mjs --check",
+    "test": "node build.mjs && node --test dist/test/unit.test.js && node dist/test/e2e-local.js"
+  },
   "dependencies": {
     "bedrock-protocol": "^3.60.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "6.0.3"
   }
 }
