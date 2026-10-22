@@ -10,7 +10,9 @@ OAuth（ウェブの流れ）だけをします。App の client secret は置�
 - **トークンを持ちません**: GitHub から受け取ったトークンは、パネルのアドレスの `#` の後ろでパネルに 1 回だけ渡します
   （`#` はどのサーバーにも、ログにも、Referer にも出ません）。パネルは受け取るとすぐアドレスから消します。
 - **力を足しません**: パネルはそのあと、その人のユーザーのトークンで GitHub と直接話します。見えるもの・できることは、
-  GitHub がその人に（ラボのリポジトリに入れた App を通して）許していることだけです。
+  GitHub がその人に（ラボのリポジトリに入れた App を通して）許していることだけです。ただ 1 つ、成果物の中身だけは、GitHub が
+  保管場所への転送でしか渡さず、ページがその行き先を読めないので、パネルが頼んだときにこのサービスがその人のトークンで GitHub に
+  聞き、中身をそのまま流します（`/artifact`: 覚えず、記録せず、トークンは GitHub にだけ）。
 
 コードは [handler.mjs](handler.mjs) の 1 つです（`fetch`・`Request`・`Response`・`URL`・`crypto.subtle`・`TextEncoder` だけ:
 Node 22・Workers・ブラウザでそのまま動きます）。[worker.mjs](worker.mjs) が Cloudflare に、[node.mjs](node.mjs) が自分の
@@ -26,6 +28,7 @@ Node 22・Workers・ブラウザでそのまま動きます）。[worker.mjs](wo
 | `POST /refresh` `{refresh_token}` | 期限の来るトークンを新しくする（GitHub の `grant_type=refresh_token`）。Origin が `PANEL_ORIGINS` の origin のときだけ、CORS もその origin だけ |
 | `POST /logout` `{access_token}` | GitHub の `DELETE /applications/{client_id}/token`（Basic `client_id:client_secret`）でトークンを無効に → 204。同じ Origin の決まり |
 | `POST /ms/device` | スマホから Microsoft に普通にサインインするための、Microsoft 自身のデバイスサインイン（live.com。CORS が無いのでパネルからは直接呼べない）を中継。`{ handle, user_code, verification_uri, verification_uri_complete（microsoft.com/link?otc=…）, interval, expires_in }`。デバイスコードと live.com の cookie は `handle` に封じて（AES-GCM）渡すだけで、何も覚えません。パネルの Origin のときだけ |
+| `GET /artifact?repo=<owner/name>&id=<成果物の番号>` | パネルの成果物ビューア（`panel/ui/viewer.mjs`）のため: `Authorization: Bearer <その人の GitHub のトークン>` で GitHub の `GET /repos/{repo}/actions/artifacts/{id}/zip` に聞き（転送は追わずに行き先を読む）、その保管場所から中身をそのまま流す（`Range: bytes=a-b` は渡して 206 と `Content-Range`、ほかの形の Range は渡さない）。トークンは GitHub にだけ渡し、保管場所には渡さない。同じトークン・同じ成果物の行き先は 1 分だけ覚え（大きな zip を何回かに分けて読むとき GitHub に聞くのは 1 回）、保管場所が断ったら忘れる。答えは `application/octet-stream`・`attachment`・`sandbox`。断り: `{ error: token（401）\| forbidden（403）\| artifact（404: 無い・見えない）\| expired（410）\| range（416）\| github \| storage（502） }`。パネルの Origin のときだけ（CORS もその origin だけ。`authorization` と `range` を許す） |
 | `POST /ms/token` `{handle}` | その人が Microsoft の画面でサインインするまで `{ pending }`、終わったら `{ live: <live.com のトークン>, gamertag, xuid, profile }` を 1 回。パネルはそれを封じて秘密 `MS_LIVE_<名前>` に入れます（`lan account import <名前>` が prismarine-auth の形で書き出す）。Microsoft の文はそのまま返しません |
 
 受け渡しの JSON は `access_token`・`expires_in`・`refresh_token`・`refresh_token_expires_in`・`token_type` の 5 つだけです。
@@ -176,8 +179,12 @@ AI に「`<このサービス>/llms.txt` を読んで、デバイスのサイン
   にだけ置き、GitHub は使うたびに新しくします。
 - **秘密**: client secret と `STATE_SECRET` は、答え・ログ・エラーに出しません。node.mjs はリクエストを記録しません
   （callback のアドレスには code があるので）。足りない設定は名前だけを言います。
-- **権限**: このサービスは GitHub の API をその人として呼びません。パネルのポリシーは見せるものを狭めるだけで、広げるのは
+- **権限**: このサービスは GitHub の API をその人として呼びません（AI 用の API と、成果物の中継 `/artifact` だけは、渡された
+  その人のトークンで: GitHub がその人に許すことのほかは何もできません）。パネルのポリシーは見せるものを狭めるだけで、広げるのは
   GitHub の権限（App を入れたリポジトリと、その人の役割）だけです。
+- **成果物の中継**: 受け取ったトークンは、その 1 回の GitHub への問い合わせにだけ使い、どこにも書きません。保管場所の行き先は、
+  トークン・リポジトリ・番号のハッシュを鍵に 1 分だけメモリーに（同じ人が同じ成果物の続きを読むときだけ使う）。行き先は GitHub の
+  答えのものだけで、https（試験の http の偽物だけは http）。中身は読まずに流すだけ（node.mjs も溜めずに流します）。
 
 ## 確かめる
 
@@ -185,6 +192,8 @@ AI に「`<このサービス>/llms.txt` を読んで、デバイスのサイン
 アドレスを見た人が state を cookie にして送るもの（400）・ほかの origin・同じ origin のほかのパス・
 refresh と logout の CORS・logout の Basic と DELETE・秘密が出ないこと・node.mjs を空いている番号で・worker.mjs の形）。
 `node tests/api-offline.mjs`（AI 用の API と MCP の OAuth・デバイスのサインイン・説明のページ）。
+`node tests/viewer-offline.mjs`（成果物の中継: トークンは GitHub にだけ・転送を読む・Range・断りの言葉・CORS・行き先を 1 分・node.mjs が流す、と
+パネルの側の読み方と展開）。
 `WRANGLER="npx --yes wrangler@4.148.0" node tests/api-workerd.mjs`（Cloudflare の実行環境 workerd で、置くものそのまま:
 Durable Object・プラットフォームの fetch と WebCrypto と時計・自分の https の /health を中で答えること。auth-deploy.yml は
 置く前にこれを通し、落ちたら置かずに止めます: 今のサービスはそのまま動きます）。

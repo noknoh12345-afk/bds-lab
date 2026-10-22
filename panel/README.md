@@ -220,6 +220,28 @@ GitHub のアカウントを選ぶ画面から）。それぞれのトークン�
 「結果を待つ」なら、ホストの結果がその実行の結果・まとめ・注釈・成果物（go の .mcaddon も）になり、notify が Discord に知らせます。
 ホストへは、貸し手が App を入れていれば App の 1 時間のトークン（`common/ghapp.mjs`）で、なければ秘密 `LAB_HOST_TOKEN` で。
 
+## 成果物をパネルで見る（スマホでも、zip を取らずに）
+
+「進み具合」の実行（「詳しく」）と「成果物」のタブで、成果物の名前を押すと、その中身がパネルの上に開きます（`ui/viewer.mjs`）:
+
+- **画像は画像で**: いちばん上に画像と動画の一覧（見えたものから読みます）。押すと大きく、← → で前後の画像、小さなテクスチャは
+  ドットのまま大きく。**動画はその場で再生**（mp4・webm・mov。端末の録画 `recordings/*.mp4` も）。音（ogg・mp3・wav）も。
+- **すべてのファイル**: 名前・フォルダで探す、種類（画像・動画・文字・ほか）で絞る。ログ・JSON・.lang・.mcfunction などは文字で
+  （JSON は整形、長いものは始めだけ出して「全部出す」、UTF-8 と Shift_JIS）、それ以外は始めの 4 KB を 16 進で。
+- **中のアーカイブも**: .mcaddon・.mcpack・.mcworld・.zip・.tar・.tar.gz・.zst を押すと、その中へ（何段でも）。
+- **保存・共有**: どのファイルも「保存」、スマホでは「共有」（.mcaddon を共有から Minecraft に渡すと、そのまま入ります）。
+- **公開リポジトリの端末の結果**（`results.sealed`: スクショ・録画・ログを runner が AES-256-GCM で封じたもの）: Secrets の
+  `APP_CACHE_KEY`（無ければ `GOOGLE_AAS_TOKEN`）と同じ値を入れると、このブラウザの中で開いて、ほかのファイルと並べます（鍵は
+  「この端末に覚える」でこのアカウントの「設定」に。覚えた鍵があれば次からは開くだけ）。鍵は外に出しません。
+- **戻る**: ←・Esc・ブラウザ（スマホ）の戻るで 1 段ずつ、✕ で閉じる。アドレス `#files?repo=<owner/name>&art=<成果物の番号>`
+  で、その成果物を開いたパネルに（AI 用の API の `artifacts_list` が `view` として渡します）。
+
+GitHub は成果物を「保管場所への一時的な転送」でしか渡さず、ページはその行き先を読めません（ブラウザが隠します）。そこで
+サインインのサービス（`auth/`、`GET /artifact`）が、**その人のトークンで** GitHub に聞いて行き先を受け取り、中身をそのまま流します
+（覚えない・記録しない。トークンは GitHub にだけ渡し、保管場所には渡しません）。小さい成果物（12 MB まで）は 1 回で全部、大きな zip は
+目次と開いたファイルの分だけ（Range）を読みます。サインインのサービスが無いパネル（トークンだけで入る）は、名前と「GitHub で取る」
+のまま。サービスが古いときは、そう言います（「準備」でサインインのサービスを置き直す: auth-deploy）。
+
 ## Discord
 
 「Discord」のタブで: つなぐ秘密（`DISCORD_BOT_TOKEN`・`DISCORD_USER_ID`、またはボットのかわりに `LAB_NOTIFY_WEBHOOK`）をその場で
@@ -230,7 +252,8 @@ GitHub のアカウントを選ぶ画面から）。それぞれのトークン�
 ## 守っていること
 
 [SECURITY.md](../SECURITY.md)「管理パネル」に。要点: トークンはそのブラウザの中だけ（「覚える」なら localStorage、外せばそのタブ
-だけ）。ページの CSP で、通信は GitHub の API・自分の config・サインインのサービスだけ、フォームは github.com だけ。サインインの
+だけ）。ページの CSP で、通信は GitHub の API・自分の config・サインインのサービスだけ、フォームは github.com だけ、画像と動画は
+自分のもの・GitHub のアバター・ページの中で作った blob:（成果物の中身）だけ。サインインの
 受け渡しは URL の # だけで、受け取ったらすぐ消し、そのタブが始めたもの（nonce）だけを受け取ります。秘密の値は、その場で
 リポジトリの公開鍵で封じてから送ります（`lib/seal.mjs` を libsodium の出力で試験）。ほかのページの枠の中では何もしません。
 
@@ -257,9 +280,11 @@ GitHub のアカウントを選ぶ画面から）。それぞれのトークン�
 | `lib/gh.mjs` | GitHub の API（その人のトークンで） |
 | `lib/seal.mjs` | 秘密を封じる（X25519・XSalsa20-Poly1305・BLAKE2b、ライブラリなし） |
 | `lib/vault.mjs` `lib/livefmt.mjs` `lib/pages.mjs` | ライブの issue の行と端末のボタン（Discord と同じ表） |
+| `ui/viewer.mjs` `lib/artifact.mjs` `lib/unpack.mjs` `lib/zstd.mjs` | 成果物を見る: サインインのサービスから読む（Range）・zip / tar / gzip / zstd・封じた結果（`results.sealed`）を鍵で開く・種類を名前と始めのバイトで（`zstd.mjs` は fzstd 0.1.1、MIT） |
 | `ui/dom.mjs` | 画面を作る小道具（文字は文字として） |
 
 試験: `tests/panel-offline.mjs`・`session-offline`・`setup-offline`・`governance-offline`・`auth-offline`・`appci-offline`・
-`units-offline`・`schedule-offline`・`stats-offline`・`inbox-offline`（部品）、
+`units-offline`・`schedule-offline`・`stats-offline`・`inbox-offline`・`viewer-offline`（成果物の中身とサービスの中継）（部品）、
 `tests/panel-browser.mjs`（本物のブラウザで: 入れない人・作者（アドオン・配布・予約・統計・健康度・まとめて登録・🔔 も）・借り手・
-貸し手・2 つのアカウント・会社のラボで GitHub でサインイン → ポリシー → 監査 → App を作る → 出る、ネットなしで開く。CI の verify が走らせます）。
+貸し手・2 つのアカウント・会社のラボで GitHub でサインイン → ポリシー → 監査 → App を作る → 出る、成果物を開く（画像・動画・
+文字・中の .mcaddon・封じた結果を鍵で・戻る・アドレスで）、ネットなしで開く。CI の verify が走らせます）。

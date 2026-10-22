@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- the page talks to GitHub's API alone (and its own config.json; pages.yml adds the lab's sign-in service, its origin
      only: common/panel-config.mjs), runs only its own scripts, posts a form only to GitHub (the App's manifest), and shows
-     pictures only of its own, GitHub's avatars and the live screen's PNG (data:). A token here can go nowhere else -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://avatars.githubusercontent.com; connect-src 'self' https://api.github.com; base-uri 'none'; form-action https://github.com; manifest-src 'self'">
+     pictures only of its own, GitHub's avatars, the live screen's PNG (data:) and what an artifact holds — its pictures and
+     videos, made in the page itself from the bytes the lab's service passed on (blob:: ui/viewer.mjs). A token here can go
+     nowhere else -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://avatars.githubusercontent.com; media-src blob:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action https://github.com; manifest-src 'self'">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light dark">
 <title>bds-lab 管理パネル</title>

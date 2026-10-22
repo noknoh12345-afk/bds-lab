@@ -34,7 +34,12 @@
 // own page (microsoft.com/link, the code filled in), passkey, Authenticator and two-step as they always do — no password here
 //   POST /ms/device {}                   → { handle, user_code, verification_uri, verification_uri_complete, interval, expires_in }
 //   POST /ms/token {handle}              → { pending } … then { live: <live.com's tokens>, gamertag, xuid, profile } once
-export const VERSION = '5';
+// and, for the panel's viewer of a run's artifacts (panel/ui/viewer.mjs: the pictures, the videos, every file — on a phone, no
+// zip to take away): GitHub hands an artifact out only as a redirect to its storage, which a page cannot read (the browser hides
+// a redirect's address). Asked with the person's own token — what GitHub lets them take, nothing more — the address is read
+// here and the bytes passed on as they come, a range of them when asked (a big zip read a part at a time), kept nowhere
+//   GET /artifact?repo=<owner/name>&id=<artifact id>  (Authorization: Bearer <their token>, Range: bytes=a-b) → its bytes
+export const VERSION = '6';
 /** what only the real Microsoft can confirm (kept in one place; the tests use a fake) — prismarine-auth's live flow: the
  *  Nintendo Switch title, the scope Xbox Live's user token takes, an RPS ticket 't=' + the access token */
 export const MICROSOFT = {
@@ -58,6 +63,14 @@ export const GITHUB = {
 };
 const COOKIE = '__Host-bdslab_state', TTL = 600_000, UA = `bds-lab-auth/${VERSION}`;
 const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/, TOKEN = /^[\x21-\x7e]{1,2048}$/;
+const REPO = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-Za-z0-9._-]{1,100}$/;
+// (an artifact's storage address, kept a minute for the next range of the same file — a viewer reads a big zip a part at a
+//  time: GitHub asked once, not each time. Keyed by a hash of the token, the repository and the artifact: another token is
+//  another key. The storage's own address lasts longer than this; one that failed is forgotten at once)
+const STORE_MS = 60_000, stored = new Map();
+const storageAt = (k, t) => { const x = stored.get(k); if (!x) return null; if (!(x.exp > t)) { stored.delete(k); return null; } return x.at; };
+const keepStorage = (k, at, t) => { stored.delete(k); stored.set(k, { at, exp: t + STORE_MS }); while (stored.size > 200) stored.delete(stored.keys().next().value); };
+const forgetStorage = (k) => { stored.delete(k); };
 /** on every answer: nothing cached, no Referer, no sniffing, nothing framed or loaded */
 export const HEADERS = { 'cache-control': 'no-store', 'referrer-policy': 'no-referrer', 'x-content-type-options': 'nosniff', 'content-security-policy': "default-src 'none'; frame-ancestors 'none'" };
 const enc = new TextEncoder(), dec = new TextDecoder();
@@ -289,6 +302,54 @@ export function handler(env, { fetchImpl = (...a) => globalThis.fetch(...a), now
     const at = body?.access_token;
     if (typeof at !== 'string' || !TOKEN.test(at)) return reply(400, { error: 'body' }, cors);
     return (await revokeGh(at)) ? reply(204, null, cors) : reply(502, { error: 'github' }, cors);
+  }
+
+  // ---- a run's artifact for the panel's viewer: GitHub asked with the person's own token, the bytes passed on ----
+  /** GET /artifact?repo&id (Authorization: Bearer <token>, Range: bytes=a-b): GitHub answers with a short-lived address of
+   *  its storage (a redirect a page cannot read: the browser hides it) — read here, and what the storage gives back passed
+   *  on as it comes (206 and Content-Range for a range), never kept. The token goes to GitHub alone, never to the storage.
+   *  Errors: { error: token (401) | forbidden (403) | artifact (404: not there, or not this token's to see) | expired (410)
+   *  | range (416) | github | storage (502) } — never GitHub's or the storage's own words */
+  async function artifact(req, url, cors) {
+    const out = { ...cors, 'access-control-expose-headers': 'content-length, content-range, accept-ranges, x-artifact-type' };
+    const tok = /^Bearer\s+([\x21-\x7e]{1,2048})$/i.exec(req.headers.get('authorization') ?? '')?.[1];
+    if (!tok) return reply(401, { error: 'token' }, out);
+    const repo = url.searchParams.get('repo') ?? '', id = url.searchParams.get('id') ?? '';
+    // (a name of dots alone would move the path GitHub is asked for: no repository is called that)
+    if (!REPO.test(repo) || /^\.+$/.test(repo.split('/')[1]) || !/^[1-9]\d{0,19}$/.test(id)) return reply(400, { error: 'artifact' }, out);
+    // (one range, as a viewer asks for it — the storage takes no other kind: a suffix range there is the whole file)
+    const range = /^bytes=\d{1,15}-\d{0,15}$/.exec(String(req.headers.get('range') ?? '').trim())?.[0] ?? null;
+    const key = await sha(`${c.api}\n${tok}\n${repo}\n${id}`);
+    let at = storageAt(key, now());
+    if (!at) {
+      let r;
+      try { r = await fetchImpl(`${c.api}/repos/${repo}/actions/artifacts/${id}/zip`, { headers: { accept: 'application/vnd.github+json', authorization: `Bearer ${tok}`, 'x-github-api-version': GITHUB.apiVersion, 'user-agent': UA }, redirect: 'manual' }); }
+      catch { return reply(502, { error: 'github' }, out); }
+      const loc = r.headers.get('location');
+      await r.body?.cancel?.().catch?.(() => { /* nothing to read */ });
+      if (r.status === 401) return reply(401, { error: 'token' }, out);
+      if (r.status === 403) return reply(403, { error: 'forbidden' }, out);
+      if (r.status === 404) return reply(404, { error: 'artifact' }, out);
+      if (r.status === 410) return reply(410, { error: 'expired' }, out);
+      if (!(r.status >= 300 && r.status < 400) || !loc) return reply(502, { error: 'github' }, out);
+      let u; try { u = new URL(loc, c.api); } catch { return reply(502, { error: 'github' }, out); }
+      // (the storage over https; plain http only where GitHub itself is asked over http — a fake on this machine, in tests)
+      if (!(u.protocol === 'https:' || (u.protocol === 'http:' && c.api.startsWith('http:'))) || u.username || u.password) return reply(502, { error: 'github' }, out);
+      at = u.href;
+      keepStorage(key, at, now());
+    }
+    let s;
+    try { s = await fetchImpl(at, { headers: { 'user-agent': UA, ...(range ? { range } : {}) } }); }
+    catch { forgetStorage(key); return reply(502, { error: 'storage' }, out); }
+    if (s.status === 416) { await s.body?.cancel?.().catch?.(() => { /* nothing to read */ }); return reply(416, { error: 'range' }, { ...out, ...(s.headers.get('content-range') ? { 'content-range': s.headers.get('content-range') } : {}) }); }
+    // (an address that ran out — the storage's own time — is asked of GitHub again next time)
+    if (s.status !== 200 && s.status !== 206) { await s.body?.cancel?.().catch?.(() => { /* nothing to read */ }); forgetStorage(key); return reply(502, { error: 'storage' }, out); }
+    const headers = { ...HEADERS, ...out, 'content-security-policy': "default-src 'none'; frame-ancestors 'none'; sandbox", 'content-type': 'application/octet-stream', 'content-disposition': 'attachment', 'accept-ranges': 'bytes' };
+    for (const k of ['content-length', 'content-range']) { const v = s.headers.get(k); if (v && /^[\w */-]{1,80}$/.test(v)) headers[k] = v; }
+    // (what the storage says it holds — a zip, or one file kept as it is — for the viewer, as a plain type name)
+    const t = /^([a-z]+\/[\w.+-]{1,80})/i.exec(s.headers.get('content-type') ?? '')?.[1];
+    if (t) headers['x-artifact-type'] = t.toLowerCase();
+    return new Response(s.body, { status: s.status, headers });
   }
 
   // ---- Microsoft's device sign-in, for the panel (a phone): relayed, nothing kept ----
@@ -635,7 +696,7 @@ export function handler(env, { fetchImpl = (...a) => globalThis.fetch(...a), now
     return req.method === 'GET' ? authorizeAsk(url) : authorizeYes(req, url);
   }
 
-  const ROUTES = { '/health': 'GET', '/login': 'GET', '/callback': 'GET', '/refresh': 'POST', '/logout': 'POST', '/ms/device': 'POST', '/ms/token': 'POST' };
+  const ROUTES = { '/health': 'GET', '/login': 'GET', '/callback': 'GET', '/refresh': 'POST', '/logout': 'POST', '/ms/device': 'POST', '/ms/token': 'POST', '/artifact': 'GET' };
   async function route(req) {
     const url = new URL(req.url), path = url.pathname, want = ROUTES[path];
     if (MCP_ROUTES[path]) return mcpRoute(req, url, path);
@@ -644,10 +705,13 @@ export function handler(env, { fetchImpl = (...a) => globalThis.fetch(...a), now
     const origin = req.headers.get('origin'), allowed = origin !== null && c.origins.includes(origin);
     const cors = allowed ? { 'access-control-allow-origin': origin, vary: 'Origin' } : { vary: 'Origin' };
     if (req.method === 'OPTIONS') {
-      return allowed && path !== '/login' && path !== '/callback' ? reply(204, null, { ...cors, 'access-control-allow-methods': 'GET, POST', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '600' }) : reply(403, { error: 'origin' }, { vary: 'Origin' });
+      // (an artifact is asked with the person's token and, for a part of a big one, a range)
+      return allowed && path !== '/login' && path !== '/callback' ? reply(204, null, { ...cors, 'access-control-allow-methods': 'GET, POST', 'access-control-allow-headers': path === '/artifact' ? 'authorization, range' : 'content-type', 'access-control-max-age': '600' }) : reply(403, { error: 'origin' }, { vary: 'Origin' });
     }
     if (req.method !== want) return reply(405, { error: 'method' }, { allow: `${want}, OPTIONS` });
-    if (path === '/health') return reply(c.missing.length ? 503 : 200, { ok: !c.missing.length, clientId: c.clientId || null, origins: c.origins, panels: c.panels.map((p) => p.href), version: VERSION, lab: c.lab, device: Boolean(store), microsoft: true, ...(c.missing.length ? { missing: c.missing } : {}) }, cors);
+    if (path === '/health') return reply(c.missing.length ? 503 : 200, { ok: !c.missing.length, clientId: c.clientId || null, origins: c.origins, panels: c.panels.map((p) => p.href), version: VERSION, lab: c.lab, device: Boolean(store), microsoft: true, artifacts: true, ...(c.missing.length ? { missing: c.missing } : {}) }, cors);
+    // (the viewer needs only the panel's origin: a panel signed in with a token of its own uses it too)
+    if (path === '/artifact') return allowed ? artifact(req, url, cors) : reply(403, { error: 'origin' }, { vary: 'Origin' });
     if (c.missing.length) return reply(500, { error: 'config' }, cors);
     if (path === '/login') return login(url);
     if (path === '/callback') return callback(url, req);

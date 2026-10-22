@@ -19,7 +19,7 @@ import * as RI from '../panel/lib/runissue.mjs';
 import * as M from '../panel/lib/members.mjs';
 import * as R from '../panel/lib/releases.mjs';
 import * as SC from '../panel/lib/schedule.mjs';
-import { SLUG } from '../panel/lib/model.mjs';
+import { SLUG, artifactHash } from '../panel/lib/model.mjs';
 import { tokenBox, HEADERS } from './handler.mjs';
 
 export const API_VERSION = '1';
@@ -258,10 +258,10 @@ function tools(H) {
         return { summary: rs.map((r) => `${r.tag}（${r.assets.map((x) => x.name).join(', ') || 'ファイルなし'}）`).join('\n') || 'リリースはありません', result: { releases: rs } };
       } },
     { name: 'artifacts_list', title: '成果物', readOnly: true, input: obj({ run_id: RUN_ID, limit: int('how many (default 30)', { minimum: 1, maximum: 100 }) }),
-      description: 'Actions artifacts — of one run, or the lab\'s newest: name, size, expired, and url: the page a person signed in to GitHub downloads it from (unit_run job go keeps its .mcaddon here as unit-<name>). A rerun run lists each attempt\'s: the newest is first.',
+      description: 'Actions artifacts — of one run, or the lab\'s newest: name, size, expired, url: the page a person signed in to GitHub downloads it from, and view: the lab\'s panel showing what is inside — its pictures, its videos, every file, on a phone too (give the person this one). unit_run job go keeps its .mcaddon here as unit-<name>. A rerun run lists each attempt\'s: the newest is first.',
       run: async (ctx, a) => {
-        const [list, repo] = await Promise.all([ctx.api.artifacts(H.lab, { run: a.run_id, per: a.limit ?? 30 }), ctx.repo()]);
-        const xs = list.map((x) => { const run = x.workflow_run?.id ?? a.run_id ?? null; return { id: x.id, name: x.name, size: x.size_in_bytes, expired: x.expired, created: x.created_at, run, url: run && !x.expired ? `${repo.html_url}/actions/runs/${run}/artifacts/${x.id}` : null }; })
+        const [list, repo] = await Promise.all([ctx.api.artifacts(H.lab, { run: a.run_id, per: a.limit ?? 30 }), ctx.repo()]), panel = H.panelUrl();
+        const xs = list.map((x) => { const run = x.workflow_run?.id ?? a.run_id ?? null; return { id: x.id, name: x.name, size: x.size_in_bytes, expired: x.expired, created: x.created_at, run, url: run && !x.expired ? `${repo.html_url}/actions/runs/${run}/artifacts/${x.id}` : null, view: panel && !x.expired ? `${panel}${artifactHash(H.lab, x.id)}` : null }; })
           .sort((p, q) => String(q.created ?? '').localeCompare(String(p.created ?? '')));
         return { summary: xs.map((x) => `${x.name}${x.expired ? '（期限切れ）' : ''}`).join(' ') || '成果物はありません', result: { artifacts: xs } };
       } },
@@ -332,7 +332,7 @@ export function instructions(lab, panel) {
   return `This server operates one bds-lab repository: ${lab} — a lab where AI makes Minecraft Bedrock addons and GitHub Actions proves them on a real Bedrock Dedicated Server with real clients. You act as the signed-in GitHub user: GitHub's permissions first, then the lab's role policy (.github/bds-lab-panel.json); writes go in the lab's audit log when it is kept. Answers are mostly Japanese; reply to the person in their language.
 Start with lab_status. To fix something that fails: runs_list → run_detail (where / why / next step) → run_log (grep) → file_read → file_write (with the sha you read; never blind) → unit_run (test) or workflow_run → run_detail until it is green.
 Units (addons) live in bds/addons/<name>/: src/main.ts (TypeScript, the Script API through src/kit.ts), tests.txt (one ## section per thing asked; a command line, then = exact, ~ regex, ! absent), TASK.md, bp/ and rp/. unit_run job=test runs tests.txt on a real server; job=go also does QA and builds the .mcaddon, kept as the run's artifact unit-<name> (artifacts_list with its run_id: the link to download it). The lab's AGENTS.md (file_read) has the whole method.
-Actions: workflow_run (workflow_get shows its inputs) and unit_run return the new run; run_detail until it is completed, run_log for what it printed, artifacts_list for what it kept. run_cancel asks GitHub to stop a run (it stops within a minute: run_detail again); run_rerun runs a finished run again (a failed or cancelled one: its failed jobs; a passed one: all of it). Give the person each run's url with what you found.
+Actions: workflow_run (workflow_get shows its inputs) and unit_run return the new run; run_detail until it is completed, run_log for what it printed, artifacts_list for what it kept (each one's view: the panel's page with its pictures, videos and every file, on a phone too — give the person that link). run_cancel asks GitHub to stop a run (it stops within a minute: run_detail again); run_rerun runs a finished run again (a failed or cancelled one: its failed jobs; a passed one: all of it). Give the person each run's url with what you found.
 Never through this API: .github/ (CI and policy; the timetable only by schedule_set), auto/policy.json, auto/STOP, .env files — a person changes those. When a tool says confirmation is needed, ask the person, then call again with confirm: true. Steps that need GitHub's own buttons (making or installing the GitHub App) are the person's, in the panel: ${panel || 'the lab\'s management panel'}. Never ask the person to paste a secret into the chat when the panel can take it; if they hand you one to set, use secret_set and do not repeat it.`;
 }
 

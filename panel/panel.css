@@ -66,6 +66,8 @@ ul.targets label { display: flex; gap: 10px; align-items: flex-start; color: var
 input[type=radio] { width: 20px; height: 20px; margin: 0; flex: none; }
 .files { margin-top: 8px; display: grid; gap: 6px; }
 .files .chip { margin: 2px 4px 2px 0; }
+.files .arts { gap: 6px; }
+.files .arts button.art { min-height: 36px; padding: 4px 10px; text-align: left; overflow-wrap: anywhere; }
 [hidden] { display: none !important; }
 details > summary { cursor: pointer; margin: 10px 0 4px; color: var(--muted); }
 table { width: 100%; border-collapse: collapse; font-size: 13px; display: block; overflow-x: auto; }
@@ -139,3 +141,61 @@ details.card[open] > summary { margin-bottom: 8px; }
   nav.tabs { flex-wrap: wrap; overflow: visible; }
   nav.tabs.fade-l, nav.tabs.fade-r { -webkit-mask-image: none; mask-image: none; }
 }
+/* the artifact viewer (ui/viewer.mjs): over the whole page, a level at a time — pictures in a grid, a video full width,
+   every file in a list; the page under it does not scroll */
+body.vopen { overflow: hidden; }
+#viewer { position: fixed; inset: 0; z-index: 25; background: var(--bg); display: flex; flex-direction: column; }
+#viewer .vbar { display: flex; align-items: center; gap: 6px; padding: calc(6px + env(safe-area-inset-top, 0px)) 8px 6px; background: var(--card); border-bottom: 1px solid var(--line); }
+#viewer .vbar button { flex: none; }
+#viewer .vback { font-size: 18px; padding: 4px 14px; }
+#viewer .vbar button.x { font-size: 18px; min-height: 40px; padding: 0 14px; }
+#viewer .vtitle { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+#viewer .vtitle b, #viewer .vtitle small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#viewer .vtitle small { color: var(--muted); font-size: 12px; }
+#viewer .vtitle:focus { outline: none; }
+#viewer .vtitle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+#viewer .vprog { padding: 2px 12px 6px; font-size: 12px; color: var(--muted); background: var(--card); border-bottom: 1px solid var(--line); }
+#viewer .vprog .bar { margin: 4px 0 2px; height: 6px; }
+#viewer .vbody { flex: 1 1 auto; overflow: auto; padding: 12px 12px calc(28px + env(safe-area-inset-bottom, 0px)); overscroll-behavior: contain; }
+#viewer .vbody > * { max-width: 980px; margin-left: auto; margin-right: auto; }
+#viewer .vinfo { margin: 0 auto 8px; }
+#viewer .vsec h3 { font-size: 14px; margin: 16px auto 8px; }
+#viewer .vgal { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
+#viewer .vtile { position: relative; aspect-ratio: 1 / 1; padding: 0; min-height: 0; overflow: hidden; border-radius: 10px; background: var(--chip); }
+#viewer .vtile img, #viewer .vtile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+#viewer .vtile img.px, #viewer img.vimg.px { image-rendering: pixelated; }
+#viewer .vtile img.px { object-fit: contain; }
+#viewer .vtile .vname { position: absolute; left: 0; right: 0; bottom: 0; padding: 2px 6px; font-size: 11px; line-height: 1.5; background: rgb(0 0 0 / 58%); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+#viewer .vtile .vplay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -62%); width: 42px; height: 42px; border-radius: 50%; background: rgb(0 0 0 / 58%); color: #fff; display: grid; place-items: center; font-size: 16px; }
+#viewer .vmore { margin-top: 8px; }
+#viewer .vfind input[type=search] { flex: 1 1 100%; }
+#viewer .vkinds { margin: 6px 0; gap: 6px; }
+#viewer .vkinds button { min-height: 34px; padding: 4px 12px; }
+#viewer ul.vfiles li { padding: 0; }
+#viewer .vrow { width: 100%; display: flex; gap: 8px; align-items: center; text-align: left; border: 0; border-radius: 8px; background: none; padding: 8px 4px; min-height: 44px; }
+#viewer .vrow:hover { background: var(--chip); }
+#viewer .vicon { flex: none; width: 1.6em; text-align: center; }
+#viewer .vpath { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+#viewer .vpath .chip { margin-left: 6px; }
+#viewer .vsize { flex: none; font-size: 12px; }
+#viewer .vact { margin: 0 auto 10px; }
+#viewer .vact p { margin: 6px 0 0; font-size: 13px; }
+#viewer .vgh { margin: 0 auto 4px; }
+#viewer .vpic { overflow: auto; text-align: center; border-radius: 10px; background: repeating-conic-gradient(var(--chip) 0 25%, transparent 0 50%) 0 0 / 16px 16px; }
+#viewer img.vimg { max-width: 100%; height: auto; display: inline-block; vertical-align: top; cursor: zoom-in; }
+#viewer img.vimg.px { width: min(100%, 512px); }
+#viewer img.vimg.zoom { max-width: none; cursor: zoom-out; }
+#viewer img.vimg.px.zoom { width: auto; }
+#viewer .vnav { margin-top: 8px; }
+#viewer .vnav .grow { text-align: center; }
+#viewer video.vvideo { display: block; width: 100%; max-height: 72vh; background: #000; border-radius: 10px; }
+#viewer audio.vaudio { width: 100%; }
+#viewer .vtools { margin: 0 auto 6px; }
+#viewer .vtools button { min-height: 34px; padding: 4px 12px; }
+#viewer pre.vtext { max-height: none; white-space: pre; overflow: auto; font-size: 12px; line-height: 1.5; tab-size: 4; }
+#viewer pre.vtext.wrap { white-space: pre-wrap; word-break: break-word; }
+#viewer .vsealed { border-color: var(--accent); }
+#viewer .vsealed input[type=password] { flex: 1 1 220px; width: auto; }
+#viewer .vkeep { display: flex; gap: 8px; align-items: center; color: var(--fg); margin-top: 10px; }
+html.a11y-big #viewer .vtile .vname { font-size: 14px; }
+html.a11y-big #viewer pre.vtext { font-size: 15px; }

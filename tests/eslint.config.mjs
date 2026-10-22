@@ -24,7 +24,9 @@ const rules = {
 };
 export default [
   { ignores: ['**/node_modules/**', '**/.lab/**', '**/dist/**', '**/runs/**', 'training/**', 'bds/addons/**', 'end/plugins/**', 'll/mods/**', 'skills/probes/**', 'bds/docs/*/bp/**',
-    'bds/bench/**/bp/**', 'bds/vendor/**', 'common/nethernet-connect/**', 'sandbox-be/src/vm/runtime/**', 'sandbox-be/src/vm/commands/**', '**/data/**', 'common/kit/kit.js'] },
+    'bds/bench/**/bp/**', 'bds/vendor/**', 'common/nethernet-connect/**', 'sandbox-be/src/vm/runtime/**', 'sandbox-be/src/vm/commands/**', '**/data/**', 'common/kit/kit.js',
+    // (vendored as it is: fzstd's own build, the panel's zstd)
+    'panel/lib/zstd.mjs'] },
   { files: ['**/*.mjs', '**/*.js'], languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: node }, rules },
   { files: ['**/*.cjs'], languageOptions: { ecmaVersion: 2024, sourceType: 'commonjs', globals: node }, rules },
   // run in a browser page (the lab's pages, the app lab's page scripts, bedrock-binary's report, the management panel and the

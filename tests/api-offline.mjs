@@ -388,6 +388,7 @@ await t('reading: lab_status (who, role, allowed, setup rows, newest runs, faili
   ok((await tool('releases_list')).meta.releases[0].assets[0].name === 'Coins.mcaddon', 'releases');
   const art = await tool('artifacts_list', { run_id: 100 });
   ok(art.meta.artifacts[0].name === 'dist' && art.meta.artifacts[0].url === 'https://github.com/o/lab/actions/runs/100/artifacts/5', `artifacts, with the page to download each: ${art.text}`);
+  ok(art.meta.artifacts[0].view === `${GH}/pages/lab/#files?repo=o%2Flab&art=5`, `and the panel's page that shows what is inside (the viewer): ${art.meta.artifacts[0].view}`);
   ok((await tool('workflows_list')).meta.workflows.some((w) => w.file === 'unit.yml'), 'workflows');
   const sec = await tool('secrets_list');
   ok(sec.meta.secrets.some((s) => s.name === 'APP_PRIVATE_KEY') && !JSON.stringify(sec.meta).includes('sealed'), 'secret names only');

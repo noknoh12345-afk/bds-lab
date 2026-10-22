@@ -49,7 +49,7 @@ Never weaken a test to make it pass: fix the addon.
 ## Run and watch Actions
 
 - \`workflow_run\` (\`workflow_get\` first shows its inputs) and \`unit_run\` start a run and return it: its id and its \`url\`.
-- \`run_detail\` until its status is completed (a short run ends in seconds, a real server's in minutes); \`run_log\` for what it printed, \`artifacts_list\` for what it kept.
+- \`run_detail\` until its status is completed (a short run ends in seconds, a real server's in minutes); \`run_log\` for what it printed, \`artifacts_list\` for what it kept — each one's \`view\` is the panel's page with its pictures, videos and every file (a phone too): give the person that link.
 - \`run_cancel\` (ask first) asks GitHub to stop a run: it stops within a minute and its clean-up steps still run — \`run_detail\` until it says cancelled.
 - \`run_rerun\` runs a finished run again as its next attempt: a failed or cancelled one its failed jobs, a passed one all of it (\`failed_only\` decides it yourself). Not a run still going.
 - A push to the default branch starts \`verify.yml\` by itself: after a \`file_write\`, look for that run instead of starting another (a newer push cancels the older verify).

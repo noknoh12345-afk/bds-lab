@@ -350,9 +350,12 @@ async function connect() {
     if (want.tab) st.tab = want.tab;
     if (want.run && (!want.repo || want.repo.toLowerCase() === String(st.lab?.slug).toLowerCase())) st.focus = { run: Number(want.run) };
     if (/[?&]inbox=1\b/.test(location.hash)) st.openInbox = true;
+    // (an address naming an artifact — the API's artifacts_list gives one — opens it in the viewer)
+    if (want.art && (want.repo || st.lab)) st.openArt = { repo: want.repo ?? st.lab.slug, id: want.art };
   }
   render();
   if (st.openInbox) { st.openInbox = false; openInbox(); }
+  if (st.openArt) { const x = st.openArt; st.openArt = null; viewArtifact(x.repo, x.id); }
 }
 /** the lab's policy and this person's role in it (the organization's teams it names, when GitHub lets this account read
  *  them: else every role they might have counts, and only what all of them allow is offered) */
@@ -623,8 +626,10 @@ window.addEventListener('hashchange', () => {
   if (want.repo && st.hosts.some((x) => M.same(x.slug, want.repo))) st.runsFrom = st.hosts.find((x) => M.same(x.slug, want.repo)).slug;
   else if (want.run) st.runsFrom = st.lab.slug;
   if (want.run) st.focus = { run: Number(want.run) };
+  const art = want.art ? { repo: want.repo ?? st.lab.slug, id: want.art } : null;
   go(want.tab);
   if (/[?&]inbox=1\b/.test(location.hash)) openInbox();
+  if (art) viewArtifact(art.repo, art.id);
 });
 setInterval(async () => {
   if (!st.lab || !st.api || !canLab() || document.hidden && !notifyOn()) return;
@@ -927,12 +932,29 @@ async function detail(slug, r, box, show) {
     box.replaceChildren(...parts.filter(Boolean));
   });
 }
-/** a run's artifacts: names and sizes, GitHub's page to take them, and (the lab's runs) sent to Discord by notify */
+/** a run's artifacts: each opened here (ui/viewer.mjs: its pictures, videos and every file — through the lab's sign-in
+ *  service), GitHub's page to take them, and (the lab's runs) sent to Discord by notify */
 function artifactList(slug, runId, arts, runUrl) {
   const c = capsOf().notify, live = arts.filter((a) => !a.expired), mine = slug === st.lab?.slug && hasWf('notify.yml');
-  return h('div', { class: 'files' }, h('div', {}, '📦 成果物: ', arts.map((a) => h('span', { class: 'chip' }, `${a.name}（${M.fmtBytes(a.size_in_bytes ?? 0)}${a.expired ? '・期限切れ' : ''}）`))),
-    h('div', { class: 'row' }, live.length ? link(`${runUrl ?? `https://github.com/${slug}/actions/runs/${runId}`}#artifacts`, 'GitHub で取る') : null,
-      mine && live.length ? h('button', { disabled: c?.ok === false, title: c?.ok === false ? c.need : null, onclick: () => sendToDiscord(runId) }, '📨 Discord に送る') : null));
+  const size = (a) => `${M.fmtBytes(a.size_in_bytes ?? 0)}${a.expired ? '・期限切れ' : ''}`, page = runUrl ?? `https://github.com/${slug}/actions/runs/${runId}`;
+  return h('div', { class: 'files' }, h('div', { class: 'row arts' }, '📦 成果物: ', arts.map((a) => (CONFIG.authUrl && !a.expired
+    ? h('button', { class: 'art', 'data-art': a.id, title: '中を見る（画像・動画・すべてのファイル）', onclick: () => viewArtifact(slug, a, page) }, `👀 ${a.name}`, h('span', { class: 'muted' }, `（${size(a)}）`))
+    : h('span', { class: 'chip' }, `${a.name}（${size(a)}）`)))),
+  live.length && !CONFIG.authUrl ? h('p', { class: 'muted' }, 'サインインのサービス（「準備」）があると、ここで中を見られます（画像・動画・すべてのファイル）') : null,
+  h('div', { class: 'row' }, live.length ? link(`${page}#artifacts`, 'GitHub で取る') : null,
+    mine && live.length ? h('button', { disabled: c?.ok === false, title: c?.ok === false ? c.need : null, onclick: () => sendToDiscord(runId) }, '📨 Discord に送る') : null));
+}
+/** an artifact (as GitHub lists it, or its id: a link to it opened) over the page — read through the lab's sign-in service
+ *  with this person's token; a public lab's sealed results opened with the vault key of 「設定」 (typed in the viewer, kept) */
+async function viewArtifact(slug, a, runUrl = null) {
+  let art = a;
+  if (!art || typeof art !== 'object') { try { art = await st.api.artifact(slug, a); } catch (e) { return toast(`成果物 ${a} を読めませんでした: ${e.message}`, true); } }
+  if (art.expired) return toast(`${art.name} は期限が切れて、GitHub が消しました`, true);
+  // (the viewer and its unpacking — zstd too — loaded when first opened: the panel itself starts as light as before)
+  let openViewer;
+  try { ({ openViewer } = await import('./ui/viewer.mjs')); } catch (e) { return toast(`成果物を開く部品を読めませんでした（${e.message}）: ネットを確かめて、もう一度`, true); }
+  openViewer({ authUrl: CONFIG.authUrl, token: () => st.apiToken, fresh: () => freshen(), vault: () => settings().vault ?? '', saveVault: (v) => saveSettings({ vault: v }) },
+    art, { slug, runUrl: runUrl ?? (art.workflow_run?.id ? `https://github.com/${slug}/actions/runs/${art.workflow_run.id}` : null) });
 }
 /** notify.yml started for a run: its message and its deliverables (.mcaddon …) to the person's Discord, LAB_NOTIFY aside */
 const sendToDiscord = (runId) => guarded('dispatch', { workflow: 'notify.yml', run: String(runId) }, () => st.api.dispatch(st.lab.slug, 'notify.yml', st.lab.repo.default_branch, { run: String(runId), message: '' }), `実行 ${runId} を Discord に送ります（notify: 成果物は 10 MB まで添えます）`);

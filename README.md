@@ -42,7 +42,7 @@ node lab.mjs login ai           # ANTHROPIC_API_KEY / OPENAI_API_KEY を確か�
 | 他の人のアドオンで、最新で動くものを借りて直して学ぶ（配り直さない） | `node lab.mjs colony harvest`（見たことのないものだけ。`colony borrowed`・`colony diff`） |
 | 自分のスマホ・タブレットで JSON UI を確かめる（root あり・なし × USB・Wi-Fi） | `node lab.mjs app device add <名前>` → `app run -a <アドオン> --device <名前>`（[app/README.md](app/README.md)） |
 | 知り合いが貸してくれる GitHub Actions の時間で試験を回す | `node lab.mjs host add <owner/repo>` → `host run gate`（[docs/guide/host.md](docs/guide/host.md)） |
-| スマホのブラウザで進み具合を見る・実行する（自分の Actions か貸し手の Actions か）・成果物を Discord に・秘密を入れる・端末を動かす・貸す条件を変える | 管理パネル（下の「管理パネル」: リポジトリの GitHub Pages） |
+| スマホのブラウザで進み具合を見る・実行する（自分の Actions か貸し手の Actions か）・成果物の中身を見る（画像・動画・すべてのファイル）・成果物を Discord に・秘密を入れる・端末を動かす・貸す条件を変える | 管理パネル（下の「管理パネル」: リポジトリの GitHub Pages） |
 | git clone もパソコンもなしで、アドオンを作る・人のアドオンを取り込む・ファイルを直す・試験・仕上げ（.mcaddon）・配る・決めた時刻に自動で | 管理パネルの「アドオン」「配布」「予約」（`unit.yml`・`schedule.yml` が GitHub の Actions で） |
 
 どれも最後の行に「次にやること」を 1 つだけ出します。AI も人も、それをそのまま打てば進みます。
@@ -64,6 +64,10 @@ node lab.mjs login ai           # ANTHROPIC_API_KEY / OPENAI_API_KEY を確か�
   取り込むパックは専用の枝 `lab-incoming/…` に置き、ユニットにできたら枝を消します（既定の枝の履歴にパックを残しません）。
   既定の枝が守られている（PR が要る）ラボでは、できたユニットを別の枝に置いて「PR を作る」のリンクを出します。
 - **配布**: 「配布」でリリースのファイル・大きさ・ダウンロードの数・合計、リンクを写す、Discord に知らせる（notify.yml）。
+- **成果物を見る**（zip を取らずに、スマホでも）: 実行の成果物を押すと、その中身がパネルに開きます — 画像は画像で一覧と大きく、
+  動画（端末の録画も）はその場で再生、ログ・JSON などは文字で、中の .mcaddon・.zip・.tar も開いて、どのファイルも保存・共有
+  （.mcaddon は共有から Minecraft へ）。公開リポジトリの端末の結果（`results.sealed`）は Secrets と同じ鍵を入れるとブラウザの中で
+  開きます。中身はサインインのサービスがその人のトークンで GitHub から取り、そのまま流します（[panel/README.md](panel/README.md)「成果物をパネルで見る」）。
 - **予約**: 「予約」で、決めた時刻にワークフローを自動で始めます（何時間ごと・毎日・毎週、時間帯つき）。予約は
   `.github/bds-lab-schedule.json` に入り、毎時の `schedule.yml` がラボの Actions で始めます（だれのトークンも PC も要りません）。
 - **統計と健康度**: 「統計」で実行の数・通った割合・かかった時間・曜日×時間・貸し手の分をグラフと表で（どのグラフも「数字で見る」）。

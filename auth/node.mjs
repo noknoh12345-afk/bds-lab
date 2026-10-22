@@ -4,6 +4,7 @@
 // to <PUBLIC_URL>/callback; its cookie is Secure). It logs no request: a callback's address carries a code.
 //   node auth/node.mjs        (env: GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET PANEL_ORIGINS STATE_SECRET PUBLIC_URL LAB_SLUG [PORT HOST])
 import http from 'node:http';
+import { Readable } from 'node:stream';
 import { pathToFileURL } from 'node:url';
 import { handler, config, HEADERS, memoryStore } from './handler.mjs';
 import { api } from './api.mjs';
@@ -28,7 +29,13 @@ export function server(env = process.env, opts = {}) {
       const r = await h(new Request(url, { method: req.method, headers, body }));
       const out = {}; r.headers.forEach((v, k) => { if (k !== 'set-cookie') out[k] = v; });
       const sc = r.headers.getSetCookie?.() ?? []; if (sc.length) out['set-cookie'] = sc;
-      res.writeHead(r.status, out); res.end(Buffer.from(await r.arrayBuffer()));
+      // (passed on as it comes: an artifact for the panel's viewer may be large — never held here whole)
+      res.writeHead(r.status, out);
+      if (!r.body) { res.end(); return; }
+      const flow = Readable.fromWeb(r.body);
+      res.on('close', () => flow.destroy());
+      flow.on('error', () => res.destroy());
+      flow.pipe(res);
     } catch {
       if (!res.headersSent) res.writeHead(400, { ...HEADERS, 'content-type': 'application/json; charset=utf-8' });
       res.end('{"error":"request"}');

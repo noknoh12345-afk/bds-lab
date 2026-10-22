@@ -393,12 +393,15 @@ export function signInNext(e, { authUrl = null } = {}) {
   return { say, steps: [...new Set(steps)] };
 }
 
-/** location.hash → { tab, repo, run } (pure; anything unknown → nulls) */
+/** location.hash → { tab, repo, run } and, when it names one, art: an artifact to open in the viewer (#files?art=<id>) (pure;
+ *  anything unknown → nulls) */
 export function parseHash(hash) {
   const [k, q = ''] = String(hash ?? '').replace(/^#/, '').split('?');
-  const p = new URLSearchParams(q), repo = p.get('repo'), run = p.get('run');
-  return { tab: TAB_KEYS.includes(k) ? k : null, repo: repo && SLUG.test(repo) ? repo : null, run: run && /^\d{1,20}$/.test(run) ? run : null };
+  const p = new URLSearchParams(q), repo = p.get('repo'), run = p.get('run'), art = p.get('art');
+  return { tab: TAB_KEYS.includes(k) ? k : null, repo: repo && SLUG.test(repo) ? repo : null, run: run && /^\d{1,20}$/.test(run) ? run : null, ...(art && /^[1-9]\d{0,19}$/.test(art) ? { art } : {}) };
 }
+/** the # of the panel's address that opens an artifact in the viewer (pure; parseHash reads it back) */
+export const artifactHash = (repo, id) => `#files?repo=${encodeURIComponent(repo)}&art=${encodeURIComponent(id)}`;
 /** an artifact's size in words (pure) */
 export const fmtBytes = (n) => (n < 1e3 ? `${n} B` : n < 1e6 ? `${(n / 1e3).toFixed(0)} KB` : `${(n / 1e6).toFixed(1)} MB`);
 /** a Discord user id (pure): 17〜20 digits */

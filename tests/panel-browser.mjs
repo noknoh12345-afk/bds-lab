@@ -7,6 +7,9 @@
 //  - both in one browser: added with ＋, switched at the top, each with its own settings; the author runs a job on the
 //    lender's Actions (hostrun.yml, after LAB_HOST_TOKEN is set in the page), sends a run's deliverables to Discord, sets
 //    how Discord is told (repository variables), and a link from Discord opens the run it names
+//  - a run's artifact opened in the panel (ui/viewer.mjs) through the real sign-in service: its pictures and video shown, every
+//    file read, an addon inside opened and saved, a public lab's sealed results opened with the vault key typed there, the
+//    browser's back a level at a time, and a link naming the artifact
 // Every page error and CSP report fails it. node tests/panel-browser.mjs (playwright-core is fetched once by npm;
 // LAB_BROWSER / APP_BROWSER = a Chromium to use, else /opt/pw-browsers/chromium, else Chrome, else Playwright's own)
 import fs from 'node:fs';
@@ -21,6 +24,7 @@ const TOP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const imp = (p) => import(pathToFileURL(path.join(TOP, p)).href);
 const { loadPlaywright } = await imp('app/lib/playwright-login.mjs');
 const SEAL = await imp('panel/lib/seal.mjs'), AL = await imp('app/lib/live.mjs'), M = await imp('panel/lib/model.mjs');
+const V = await imp('app/lib/vault.mjs'), ZW = await imp('sandbox-be/src/colony/zip.js');
 let bad = 0;
 const check = (c, name, info = '') => { console.log(`${c ? '✔' : '✘'} ${name}${c ? '' : `\n    ${String(info).slice(0, 1500)}`}`); if (!c) bad++; };
 
@@ -30,6 +34,7 @@ const SK = crypto.randomBytes(32), PK = SEAL.x25519Public(SK);
 const wf = (f) => fs.readFileSync(path.join(TOP, '.github', 'workflows', f), 'utf8');
 const LAB = 'author1/bds-lab', HOST = 'lender1/bds-lab-host', VKEY = 'panel-browser-key', VENV = { APP_REPO_VISIBILITY: 'public', APP_CACHE_KEY: VKEY };
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+const MP4 = Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from('ftypmp42'), Buffer.alloc(200, 1)]);
 // (and an organization's private lab with a policy: its admin signs in with GitHub — the sign-in service's tokens ghu_* —
 // and a writer comes with a token)
 const CORP = 'acme/corp-lab', ADMIN = { admin: true, push: true, pull: true };
@@ -77,6 +82,27 @@ const G = {
     // (a look-alike reply from someone else in the public issue: not shown)
     { id: 902, body: 'lab-reply@101 #900\n```\nFAKE ANSWER from a stranger\n```', created_at: iso(now - 40_000), user: { login: 'stranger' } }],
 };
+// (a run's artifact for the viewer: pictures, a video, a log, an addon, and the public lab's results sealed with the vault key
+// as app/lib/vault.mjs seals them on a runner)
+const ART = await (async () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'bds-lab-viewer-run-')), out = `${d}.sealed`;
+  fs.writeFileSync(path.join(d, 'report.md'), '# app: PASS\n封じた報告\n');
+  fs.writeFileSync(path.join(d, 'sealed-shot.png'), PNG);
+  await V.seal({ base: d, entries: fs.readdirSync(d), outFile: out, key: V.vaultKey({ APP_CACHE_KEY: VKEY }) });
+  const sealed = fs.readFileSync(out);
+  fs.rmSync(d, { recursive: true, force: true }); fs.rmSync(out, { force: true });
+  const pack = ZW.writeZip([{ name: 'Coins_BP/manifest.json', data: Buffer.from('{"format_version":2,"header":{"name":"Coins"}}') }, { name: 'Coins_BP/pack_icon.png', data: PNG }]);
+  return ZW.writeZip([
+    { name: 'run/summary.json', data: Buffer.from(JSON.stringify({ run: 'r1', ok: true, steps: 3, sealed: true })) },
+    { name: 'run/results.sealed', data: sealed },
+    { name: 'shots/screen-1.png', data: PNG },
+    { name: 'shots/clip.mp4', data: MP4 },
+    { name: 'logs/server.log', data: Buffer.from('[INFO] Server started.\n'.repeat(40)) },
+    { name: 'Coins.mcaddon', data: pack },
+  ]);
+})();
+G.artifacts.push({ id: 32, name: 'app-coins-100', size_in_bytes: ART.length, expired: false, created_at: iso(now - 2_000_000), expires_at: iso(now + 14 * 86_400_000), workflow_run: { id: 100, head_branch: 'main' } });
+const VIEW = { asked: [], stored: [] };
 const cancelled = [];
 const runs = {
   [LAB]: [{ id: 101, name: 'app', path: '.github/workflows/app.yml', status: 'in_progress', conclusion: null, event: 'workflow_dispatch', head_branch: 'main', created_at: iso(now - 300_000), run_started_at: iso(now - 300_000), updated_at: iso(now), html_url: 'https://github.com/author1/bds-lab/actions/runs/101', triggering_actor: { login: 'author1' } },
@@ -155,6 +181,8 @@ async function api(route) {
   if (rest === '/git/refs' && req.method() === 'POST') { if (!perm.push) return send(403, { message: 'no' }); G.refsMade.push(body); return send(201, { ref: body.ref, object: { sha: body.sha } }); }
   if (rest === '/actions/artifacts') return send(200, { artifacts: slug === LAB ? G.artifacts : [] });
   const am = /^\/actions\/runs\/(\d+)\/artifacts/.exec(rest); if (am) return send(200, { artifacts: slug === LAB ? G.artifacts.filter((a) => String(a.workflow_run.id) === am[1]) : [] });
+  // (one artifact by its number: a link that names it)
+  const a1 = /^\/actions\/artifacts\/(\d+)$/.exec(rest); if (a1) { const x = slug === LAB ? G.artifacts.find((a) => String(a.id) === a1[1]) : null; return x ? send(200, x) : send(404, { message: 'Not Found' }); }
   const vm = /^\/actions\/variables(?:\/([A-Z_]+))?$/.exec(rest);
   if (vm) {
     if (!perm.admin) return send(403, { message: 'Resource not accessible by personal access token' });
@@ -235,6 +263,24 @@ const { srv: srv3, url: URL3 } = await serve(BUILT3);
 const OA = { authorize: [], exchanges: [], revoked: [] }, CID = 'Iv1.labapp', CSECRET = 'app-client-secret-xyz';
 const ghWeb = async (url, init = {}) => {
   const u = new URL(url), json = (status, j) => new Response(j === null ? null : JSON.stringify(j), { status, headers: { 'content-type': 'application/json' } });
+  // (an artifact for the viewer, as GitHub gives it to the service: a redirect to its storage for the person's token — and the
+  // storage, which wants no token and takes a range)
+  const az = /^\/repos\/([^/]+\/[^/]+)\/actions\/artifacts\/(\d+)\/zip$/.exec(u.pathname);
+  if (u.hostname === 'api.github.com' && az) {
+    const who = people[String(init.headers?.authorization ?? '').replace(/^Bearer /, '')];
+    VIEW.asked.push({ repo: az[1], id: az[2], who: who?.login ?? null, redirect: init.redirect ?? 'follow' });
+    if (!who) return json(401, { message: 'Bad credentials' });
+    if (!who.repos[az[1]] || az[2] !== '32') return json(404, { message: 'Not Found' });
+    return new Response(null, { status: 302, headers: { location: 'https://storage.bdslab.test/artifacts/32.zip?sig=short-lived' } });
+  }
+  if (u.hostname === 'storage.bdslab.test') {
+    VIEW.stored.push({ auth: init.headers?.authorization ?? null, range: init.headers?.range ?? null });
+    if (init.headers?.authorization || u.searchParams.get('sig') !== 'short-lived') return new Response('<Error/>', { status: 403 });
+    const m = /^bytes=(\d+)-(\d*)$/.exec(init.headers?.range ?? '');
+    if (!m) return new Response(ART, { status: 200, headers: { 'content-type': 'application/zip', 'content-length': String(ART.length) } });
+    const a = Number(m[1]), e = m[2] ? Math.min(Number(m[2]), ART.length - 1) : ART.length - 1;
+    return new Response(ART.subarray(a, e + 1), { status: 206, headers: { 'content-type': 'application/zip', 'content-length': String(e - a + 1), 'content-range': `bytes ${a}-${e}/${ART.length}` } });
+  }
   if (u.pathname === '/login/oauth/access_token') {
     const b = Object.fromEntries(new URLSearchParams(String(init.body)));
     OA.exchanges.push(b);
@@ -930,6 +976,95 @@ try {
   check(JSON.stringify(await strip4()) === JSON.stringify(SIMPLE) && await p4.evaluate(() => localStorage.getItem('bdslab.panel.full')) === null && /かんたん表示にしました/.test(await p4.locator('#toast').innerText()),
     '☰ 「かんたん表示に戻す」: the strip as it was, the browser\'s choice taken away', JSON.stringify(await strip4()));
   await ctx4.close();
+
+  // ======== the artifact viewer (ui/viewer.mjs): a run's artifact opened in the panel through the real sign-in service — its
+  // pictures and video shown, every file read, an addon inside opened and saved, the public lab's sealed results opened with
+  // the vault key typed there (kept for this account), the browser's back a level at a time, ✕, and a link naming it ========
+  const ctx5 = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
+  await ctx5.addInitScript(allShown);
+  await ctx5.route('https://api.github.com/**', api);
+  await ctx5.route('https://avatars.githubusercontent.com/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
+  await ctx5.route(`${AUTH}/**`, authRoute);
+  const p5 = await ctx5.newPage();
+  p5.on('pageerror', (e) => errors.push(`pageerror (viewer): ${e.message}`));
+  p5.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(`console (viewer): ${m.text()}`); });
+  p5.on('dialog', (d) => d.accept());
+  const shot5 = async (name) => { if (!process.env.PANEL_SHOTS) return; await p5.waitForTimeout(700); fs.mkdirSync(process.env.PANEL_SHOTS, { recursive: true }); await p5.screenshot({ path: path.join(process.env.PANEL_SHOTS, `viewer-${String(++shots).padStart(2, '0')}-${name}.png`) }); };
+  const vtext = () => p5.locator('#viewer').innerText();
+  const vwait = async (re, ms = 10_000) => { const end = Date.now() + ms; while (Date.now() < end) { if (re.test(await vtext().catch(() => ''))) return true; await p5.waitForTimeout(150); } return false; };
+  const rows = () => p5.locator('#viewer .vfiles .vrow').allInnerTexts();
+  const row = (name) => p5.locator('#viewer .vfiles .vrow', { hasText: name }).first();
+  await p5.goto(URL2);
+  await p5.waitForSelector('#oauth');
+  await p5.locator('details').first().evaluate((d) => { d.open = true; });
+  await p5.fill('#tok', 'tok-author'); await p5.fill('#lab', LAB); await p5.click('#go');
+  await p5.waitForSelector('nav.tabs button', { timeout: 10_000 });
+  // 「成果物」 (every run's): each live artifact a button that opens it, an expired one only its name (it is run 90's)
+  // (a list drawn again as it refreshes: what it shows waited for, not read once)
+  await p5.locator('nav.tabs button', { hasText: '成果物' }).click();
+  const arts5 = await p5.waitForFunction(() => { const m = document.querySelector('main'); return Boolean(m?.querySelector('button.art[data-art="32"]') && m.querySelector('button.art[data-art="31"]') && !m.querySelector('button.art[data-art="30"]') && /old-addons（99 B・期限切れ）/.test(m.innerText)); }, null, { timeout: 10_000 }).then(() => true, () => false);
+  check(arts5, 'with a sign-in service: 「成果物」 — each live artifact a button that opens it; an expired one only its name', await p5.locator('main').innerText());
+  // the run's own: opened from 「進み具合」
+  await p5.locator('nav.tabs button', { hasText: '進み具合' }).click();
+  await p5.locator('[data-run="100"] button', { hasText: '詳しく' }).click();
+  const run5 = await p5.waitForFunction(() => { const c = document.querySelector('[data-run="100"]'); return Boolean(c?.querySelector('button.art[data-art="32"]') && c.querySelector('button.art[data-art="31"]')); }, null, { timeout: 10_000 }).then(() => true, () => false);
+  check(run5, 'the run\'s card: its artifacts each a button', await p5.locator('[data-run="100"]').innerText());
+  await p5.locator('[data-run="100"] button.art[data-art="32"]').click();
+  await p5.waitForSelector('#viewer', { timeout: 5000 });
+  const loaded = await p5.waitForFunction(() => [...document.querySelectorAll('#viewer .vtile img')].some((i) => i.complete && i.naturalWidth > 0 && i.src.startsWith('blob:')), null, { timeout: 10_000 }).then(() => true, () => false);
+  check(loaded && /app-coins-100/.test(await p5.locator('#viewer .vtitle').innerText()) && await p5.locator('#viewer .vtile').count() === 2 && await p5.locator('#viewer .vtile.video').count() === 1,
+    'opened: the picture shown (a blob: of the page, decoded), the video a tile of its own', await vtext());
+  check(await p5.waitForFunction(() => document.querySelector('#viewer .vtile.video video')?.src.startsWith('blob:'), null, { timeout: 5000 }).then(() => true, () => false), 'the video\'s tile: its own first frame (a blob:)', await vtext());
+  const r0 = (await rows()).join('\n');
+  check(['summary.json', 'results.sealed', 'screen-1.png', 'clip.mp4', 'server.log', 'Coins.mcaddon'].every((n) => r0.includes(n)) && /run\//.test(r0) && /6 ファイル/.test(await vtext()), 'every file listed, its folder with it', r0);
+  check(await p5.locator('#viewer .vsealed input[type=password]').count() === 1 && /暗号化されています/.test(await vtext()), 'the sealed results: a key asked (none kept in this browser yet)', await vtext());
+  await shot5('artifact');
+  await p5.locator('#viewer .vsealed input[type=password]').fill('not-the-key');
+  await p5.locator('#viewer .vsealed button', { hasText: '開く' }).click();
+  check(await vwait(/入れた値では開けません/), 'another key: said, nothing opened', await vtext());
+  await p5.locator('#viewer .vsealed input[type=password]').fill(VKEY);
+  await p5.locator('#viewer .vsealed button', { hasText: '開く' }).click();
+  check(await vwait(/report\.md/) && await p5.locator('#viewer .vsealed').count() === 0 && await p5.locator('#viewer .vtile').count() === 3 && /🔓 run\/results\.sealed\//.test((await rows()).join('\n')),
+    'the right key: the sealed results opened in this browser — their picture in the gallery, their files under 🔓', (await rows()).join('\n'));
+  check((await p5.evaluate(() => JSON.stringify({ ...localStorage }))).includes(VKEY), 'the key kept for this account (「設定」 shows it): the next sealed result opens by itself');
+  await shot5('sealed-opened');
+  // a text file, read; the browser's back: a level up, the viewer still open
+  await row('server.log').click();
+  check(await p5.waitForSelector('#viewer pre.vtext', { timeout: 5000 }).then(() => true, () => false) && /\[INFO\] Server started\./.test(await p5.locator('#viewer pre.vtext').innerText()) && await p5.locator('#viewer .vback').isVisible(), 'a log read as text', await vtext());
+  await p5.evaluate(() => history.back());
+  check(await p5.waitForSelector('#viewer .vgal', { timeout: 5000 }).then(() => true, () => false) && await p5.locator('#viewer .vback').isHidden(), 'the browser\'s back: up one level, the viewer still open', await vtext());
+  // a picture, then the next one (← →); Esc: up
+  await p5.locator('#viewer .vtile.image').first().click();
+  check(await p5.waitForFunction(() => { const i = document.querySelector('#viewer img.vimg'); return i && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).then(() => true, () => false) && /1 \/ 2/.test(await vtext()), 'a picture opened whole, one of two', await vtext());
+  const first = await p5.locator('#viewer .vtitle b').innerText();
+  await p5.keyboard.press('ArrowRight');
+  check(await p5.waitForFunction((was) => document.querySelector('#viewer .vtitle b')?.textContent !== was, first, { timeout: 5000 }).then(() => true, () => false) && /2 \/ 2/.test(await vtext()), '→ the next picture', await vtext());
+  await shot5('picture');
+  await p5.keyboard.press('Escape');
+  check(await p5.waitForSelector('#viewer .vgal', { timeout: 5000 }).then(() => true, () => false), 'Esc: up to the artifact', await vtext());
+  await row('clip.mp4').click();
+  check(await p5.waitForFunction(() => { const v = document.querySelector('#viewer video.vvideo'); return v && v.src.startsWith('blob:') && v.controls; }, null, { timeout: 5000 }).then(() => true, () => false), 'a video: a player of the page (controls, plays inline)', await vtext());
+  await p5.keyboard.press('Escape');
+  // the addon inside: its files, its picture, saved as it is
+  await row('Coins.mcaddon').click();
+  check(await vwait(/manifest\.json/) && /pack_icon\.png/.test(await vtext()) && await p5.waitForFunction(() => [...document.querySelectorAll('#viewer .vtile img')].some((i) => i.naturalWidth > 0), null, { timeout: 5000 }).then(() => true, () => false), 'an addon inside: opened, its files and its icon', await vtext());
+  const [save] = await Promise.all([p5.waitForEvent('download'), p5.locator('#viewer .vact button', { hasText: '保存' }).click()]);
+  const savedTo = path.join(os.tmpdir(), `bds-lab-viewer-${Date.now()}.mcaddon`);
+  await save.saveAs(savedTo);
+  check(save.suggestedFilename() === 'Coins.mcaddon' && ZW.listEntries(fs.readFileSync(savedTo)).some((e) => e.name === 'Coins_BP/manifest.json'), 'saved: the addon itself, whole', save.suggestedFilename());
+  fs.rmSync(savedTo, { force: true });
+  await row('manifest.json').click();
+  check(await vwait(/"format_version": 2/), 'its manifest, indented', await vtext());
+  await shot5('addon-manifest');
+  // ✕: the viewer gone, the page as it was (the steps back it made taken back too)
+  const before = p5.url();
+  await p5.locator('#viewer button.x').click();
+  check(await p5.locator('#viewer').count() === 0 && !(await p5.evaluate(() => document.body.classList.contains('vopen'))) && p5.url() === before && /実行|verify/.test(await p5.locator('main').innerText()), '✕: closed, the page under it as it was', p5.url());
+  check(VIEW.asked.length >= 1 && VIEW.asked.every((x) => x.who === 'author1' && x.redirect === 'manual' && x.repo === LAB) && VIEW.stored.length >= 1 && VIEW.stored.every((x) => x.auth === null), 'the service: GitHub asked with the person\'s token (its redirect read, not followed), the storage never given it', JSON.stringify(VIEW));
+  // a link that names the artifact (the API's artifacts_list gives it): the panel opens with it, the sealed results opened by the kept key
+  await p5.goto(`${URL2}${M.artifactHash(LAB, 32)}`);
+  check(await p5.waitForSelector('#viewer', { timeout: 10_000 }).then(() => true, () => false) && await vwait(/report\.md/) && await p5.locator('#viewer .vsealed').count() === 0, 'a link naming the artifact: opened at once, its sealed results by the kept key', await vtext().catch(() => ''));
+  await ctx5.close();
 
   // the panel on the device (sw.js): its shell kept by version, opened again with no network; GitHub's API never kept
   const ctx3 = await browser.newContext({ viewport: { width: 390, height: 800 } }), p3 = await ctx3.newPage();

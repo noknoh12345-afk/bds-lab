@@ -3,7 +3,8 @@
 // fetch, WebCrypto and timers — against a fake GitHub on this machine. /health, the discovery pages, the tools (a secret
 // sealed with the platform's X25519 so GitHub opens it, a log fetched over its redirect without the token, the units by one
 // GraphQL query, a file written in UTF-8, a workflow started and its run found, MCP), its own https /health answered inside
-// (no network: a Worker cannot fetch its own workers.dev address), and the device sign-in through the Durable Object.
+// (no network: a Worker cannot fetch its own workers.dev address), the device sign-in through the Durable Object, and the
+// panel's artifact viewer's /artifact (GitHub's redirect read, not followed; the storage asked without the token; a range).
 // Nothing leaves this machine. auth-deploy.yml runs it before it puts the service in place.
 // WRANGLER: the command to run wrangler (e.g. "npx --yes wrangler@4.148.0"; default: a wrangler in node_modules — with
 // none, skipped and said).
@@ -35,7 +36,9 @@ const freePort = () => new Promise((r) => { const s = net.createServer().listen(
 const CLIENT_ID = 'Iv23liFAKECLIENT', CLIENT_SECRET = 'fake-client-secret-0123456789abcdef', STATE_SECRET = 'fake-state-secret-0123456789abcdef-0123456789';
 const SELF = 'https://bds-lab-auth.test', OWNER = 'ghp_fake_owner_token_0123456789abcd';
 const sk = crypto.randomBytes(32), pk = SEAL.x25519Public(sk);
-const G = { tokens: { [OWNER]: 'o' }, codes: new Map(), refreshes: new Set(), files: new Map(), secrets: new Map(), dispatched: [], blobAuth: [], revoked: [], agents: new Set(), n: 0 };
+const G = { tokens: { [OWNER]: 'o' }, codes: new Map(), refreshes: new Set(), files: new Map(), secrets: new Map(), dispatched: [], blobAuth: [], revoked: [], agents: new Set(), n: 0, artAuth: [] };
+// (an artifact's bytes in its storage, for the viewer's /artifact)
+const ART = crypto.randomBytes(300_000);
 const put = (p, text) => G.files.set(p, { bytes: Buffer.from(text), sha: crypto.createHash('sha1').update(`${p}\n${text}\n${Math.random()}`).digest('hex') });
 put('bds/addons/coins/bp/manifest.json', JSON.stringify({ format_version: 2, header: { name: 'Coins', version: [1, 2, 0] }, modules: [] }));
 put('bds/addons/coins/tests.txt', '## one\nsay hi\n~ hi\n## two\nsay yo\n~ yo\n');
@@ -61,6 +64,14 @@ const fake = http.createServer(async (req, res) => {
     else if (!ch || ch !== sha256(q.get('code_verifier') ?? '')) return send(200, { error: 'bad_verification_code' });
     G.n++; const tk = `ghu_AccessToken${G.n}xxxxxxxxxxxxxxxxxx`, rt = `ghr_RefreshToken${G.n}xxxxxxxxxxxxxxx`; G.tokens[tk] = 'o'; G.refreshes.add(rt);
     return send(200, { access_token: tk, expires_in: 28800, refresh_token: rt, refresh_token_expires_in: 15811200, token_type: 'bearer', scope: '' });
+  }
+  if (p === '/blob/art-77') {
+    G.artAuth.push(req.headers.authorization ?? null);
+    const m = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? '');
+    if (!m) { res.writeHead(200, { 'content-type': 'application/zip', 'content-length': String(ART.length) }); return res.end(ART); }
+    const a = Number(m[1]), e = m[2] ? Math.min(Number(m[2]), ART.length - 1) : ART.length - 1;
+    res.writeHead(206, { 'content-type': 'application/zip', 'content-length': String(e - a + 1), 'content-range': `bytes ${a}-${e}/${ART.length}` });
+    return res.end(ART.subarray(a, e + 1));
   }
   if (p.startsWith('/blob/')) { G.blobAuth.push(req.headers.authorization ?? null); return send(200, '2026-10-17T00:00:01.1234567Z setting up\n2026-10-17T00:00:02.0000000Z \x1b[31mError: boom\x1b[0m\n2026-10-17T00:00:03.0000000Z after\n'); }
   if (p === '/pages/lab/config.json') return send(200, { authUrl: SELF, appSlug: 'lab-o', appClientId: CLIENT_ID });
@@ -101,6 +112,7 @@ const fake = http.createServer(async (req, res) => {
   }
   if (r === '/actions/runs/100/jobs') return send(200, { jobs: [{ id: 1001, name: 'test coins', status: 'completed', conclusion: 'failure', steps: [] }] });
   if (r === '/actions/jobs/1001/logs') return send(302, null, { location: `http://127.0.0.1:${fake.address().port}/blob/log-1001?sig=abc` });
+  if (r === '/actions/artifacts/77/zip') return send(302, null, { location: `http://127.0.0.1:${fake.address().port}/blob/art-77?sig=abc` });
   if ((x = /^\/actions\/workflows\/([\w.-]+)\/dispatches$/.exec(r)) && m === 'POST') { G.dispatched.push({ file: x[1], ...jb }); return send(204, null); }
   if (r === '/actions/workflows') return send(200, { total_count: WFS.length, workflows: WFS });
   if (r === '/actions/secrets/public-key') return send(200, { key_id: 'K1', key: SEAL.toB64(pk) });
@@ -218,6 +230,19 @@ await t('the device sign-in through the Durable Object: a code, the page, GitHub
   ok((await rv(tk.access_token)) === 200 && G.revoked.length === 1 && G.revoked[0].startsWith('ghu_'), `revoked on GitHub: ${G.revoked}`);
   ok((await call('lab_status', {}, { authorization: `Bearer ${tk.access_token}` })).status === 401, 'the revoked token refused');
   ok((await rv(tk.refresh_token)) === 200 && G.revoked.length === 2, 'the refresh token: traded once, that token revoked');
+});
+
+await t('/artifact for the panel\'s viewer: GitHub\'s redirect read (not followed), the storage asked without the token, the bytes passed on — a range (206) and the whole; CORS for the panel alone', async () => {
+  const PANEL = F, ask = (h = {}) => fetch(`${B}/artifact?repo=o/lab&id=77`, { headers: { origin: PANEL, authorization: `Bearer ${OWNER}`, ...h } });
+  const r = await ask({ range: 'bytes=100-199' }), part = Buffer.from(await r.arrayBuffer());
+  ok(r.status === 206 && r.headers.get('content-range') === `bytes 100-199/${ART.length}` && r.headers.get('access-control-allow-origin') === PANEL && Buffer.compare(part, ART.subarray(100, 200)) === 0, `a range: ${r.status} ${r.headers.get('content-range')} ${part.length}`);
+  const all = await ask(), whole = Buffer.from(await all.arrayBuffer());
+  ok(all.status === 200 && Buffer.compare(whole, ART) === 0 && all.headers.get('x-artifact-type') === 'application/zip', `the whole: ${all.status} ${whole.length}`);
+  ok(G.artAuth.length === 2 && G.artAuth.every((x) => x === null), `the storage never given the token: ${G.artAuth}`);
+  const other = await fetch(`${B}/artifact?repo=o/lab&id=77`, { headers: { origin: 'https://evil.test', authorization: `Bearer ${OWNER}` } });
+  ok(other.status === 403, `another origin: ${other.status}`);
+  const h = await (await fetch(`${B}/health`)).json();
+  ok(h.artifacts === true, show(h));
 });
 
 await stop(); fake.close();
