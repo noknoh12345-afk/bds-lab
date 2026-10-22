@@ -32,7 +32,8 @@ noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の
   for f in tests/tl-*-offline.mjs tests/geoui-builder-offline.mjs tests/lint-offline.mjs; do node $f || exit 1; done
   node bds/geoui/build.mjs --check; node bds/geoui/timeline/probe.mjs --check; node bds/geoui/timeline/demo.mjs --check（W 行が出ないこと）
   ブラウザの環境で: node bds/geoui/blockbench-check.mjs、for f in bds/geoui/timeline/check-*.mjs; do node $f || exit 1; done
-  本物の BDS で（cd bds; node lab.mjs setup が要る）: node lab.mjs go -a geoui_rhythm、node lab.mjs go -a geoui_rhythm_big
+  本物の BDS で（cd bds; node lab.mjs setup が要る）: node lab.mjs test -a geoui_rhythm、node lab.mjs test -a geoui_rhythm_big
+  （go も通るが、最後のリリースが manifest の版を上げる: 回したら node bds/geoui/timeline/demo.mjs で戻す）
 
 ブラウザの環境（前のセッションの物は残っていないので作り直す）:
 - BLOCKBENCH_DIR: git clone --depth 1 --branch v5.2.2 https://github.com/JannisX11/blockbench → npm ci --ignore-scripts → npm run build-web
