@@ -1,5 +1,5 @@
 // GeoUI Builder 0.1.0 with its timeline — one file for Blockbench (made by bds/geoui/build.mjs from bds/geoui/geoui_builder.js and
-// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 49fe1c62ea67
+// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 6a17525ebdd4
 // ---- timeline/model.js
 (function (module) {
 // GeoUI timeline — the model (pure: no DOM, no Blockbench). The plan's step 1 (bds/geoui/timeline/PLAN.md):
@@ -3839,13 +3839,15 @@
     if (counts.animations > 1200) warnings.push(`アニメーションが ${counts.animations} 個です（本物のゲームで確かめたのは 1200 個まで・要実測）`);
     const longest = Math.max(0, ...written.map((l) => l.length)), deepest = Math.max(0, ...written.map(maxDepth));
     // (the whole pre_animation, as bds-lab's probes saw it run in the game: 610 000 characters in 4029 lines of 150 (geoui_probe_sz)
-    //  and 5029 short lines (geoui_probe_lc) — the size is not what stops it; the entity's 3032nd variable worked (geoui_probe_vc),
-    //  its 3053rd did not (geoui_probe_m: set, read back wrong, nothing stopped). Counted over the whole entity, the player's own
-    //  lines too, as the probes count. Past what was seen to run: said, to be measured)
+    //  and 5029 short lines (geoui_probe_lc) — the size is not what stops it; the entity's variables up to its 5023rd all worked,
+    //  read with ?? or without, the early ones still there after them (geoui_probe_vx, 2026-10-22) — the count is not either.
+    //  geoui_probe_m's 3053rd that read back wrong is still unexplained. A 1000-instance map (geoui_rhythm_huge: 437 000
+    //  characters, about 1020 variables) played to the end in the real app. Counted over the whole entity, the player's own lines
+    //  too, as the probes count. Past what was seen to run: said, to be measured)
     const chars = written.reduce((a, l) => a + l.length, 0), setIn = (ls) => (ls || []).map((l) => (/^\s*(?:v|variable)\.(\w+)\s*=(?!=)/i.exec(String(l)) || [])[1]).filter(Boolean).map((k) => k.toLowerCase());
     const variables = new Set(setIn(written)).size;
     const dscW = ent && ent['minecraft:client_entity'].description, entityVariables = dscW ? new Set([...setIn((dscW.scripts || {}).initialize), ...setIn((dscW.scripts || {}).pre_animation)]).size : variables;
-    if (entityVariables > 3000) warnings.push(`変数が ${entityVariables} 個です（プレイヤーの分も込み。本物のゲームで効いたのは 3032 個目まで、3053 個目は値が合わなかった・要実測）: 同時に出る実体（枠）を減らすと少なくなります`);
+    if (entityVariables > 5000) warnings.push(`変数が ${entityVariables} 個です（プレイヤーの分も込み。本物のゲームで効いたのは約 5000 個まで・その先は要実測）: 同時に出る実体（枠）を減らすと少なくなります`);
     if (chars > 610000 || written.length > 5029) warnings.push(`pre_animation が ${Math.round(chars / 1000)} k 文字・${written.length} 行です（本物のゲームで最後まで動いたのは 61 万文字・4029 行、短い行なら 5029 行まで・要実測）: 同時に出る実体（枠）を減らすと小さくなります`);
     if (report.bezier > 0.002) warnings.push(`ベジェのイージングを 16 の折れ線にした誤差: 最大 ${report.bezier.toFixed(4)}`);
     return { files, warnings: [...new Set(warnings)], stats: { bindings, pre: written, slots: slotsOut, longest, deepest, lines: written.length, chars, variables, entityVariables, bezierError: report.bezier, budget, counts } };
