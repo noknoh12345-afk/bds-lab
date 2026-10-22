@@ -8,7 +8,8 @@
 //   - lan run on the RakNet server with --no-observe: the real player's inputs reach it (the lab's own RakNet client under it)
 //   - LAB_TRANSPORT=lan's join path (labJoin): finds the server on this machine by LAN discovery and joins
 //   - lan snapshot / restore of a world folder
-// First run installs nethernet-connect's dependencies (npm) into $LAB_CACHE/nc (default: <tmp>/bds-lab-lan-test).
+// First run installs nethernet-connect's dependencies (npm) into $LAB_CACHE/nc/deps-… (default: <tmp>/bds-lab-lan-test) — once,
+// however many tests ask at the same moment (common/lan.mjs ncDeps → common/nethernet-connect/install.mjs).
 //   node tests/lan-offline.mjs
 import fs from 'node:fs';
 import os from 'node:os';

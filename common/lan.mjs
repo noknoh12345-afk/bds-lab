@@ -7,30 +7,35 @@
 //      snapshot/restore (things on this machine), web (the own-network dashboard)
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const NC_DIR = path.join(HERE, 'nethernet-connect');
-const WIN = process.platform === 'win32';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// nethernet-connect + its own bedrock-protocol with real Xbox sign-in (the lab's copy stubs prismarine-auth: offline only)
+// nethernet-connect's own bedrock-protocol (real Xbox sign-in: the lab's copy stubs prismarine-auth, offline only), installed
+// once into <CACHE>/nc/deps-<hash> and shared by every process — lab runs, tests side by side, other work trees
+// (common/nethernet-connect/install.mjs: under a lock, counted only once npm finished). The folder the bot reads it from
+export async function ncDeps(CACHE) {
+  const { installOnce } = await import(pathToFileURL(path.join(NC_DIR, 'install.mjs')).href);
+  const deps = JSON.parse(fs.readFileSync(path.join(NC_DIR, 'package.json'), 'utf8')).dependencies;
+  const nc = path.join(CACHE, 'nc');
+  // --ignore-scripts: raknet-native's native build is optional (the lab's own RakNet client is used); allow_git: prismarine-auth
+  // pulls a GitHub-hosted package that newer npm refuses (EALLOWGIT)
+  const dir = await installOnce(nc, deps, { flags: ['--ignore-scripts'], env: { npm_config_allow_git: 'all' } });
+  // (the layout before: bedrock-protocol straight in <CACHE>/nc, some 600 MB — not used any more; auth/ and snapshots/ stay)
+  if (fs.existsSync(path.join(nc, 'node_modules'))) for (const f of ['node_modules', 'package.json', 'package-lock.json']) fs.rmSync(path.join(nc, f), { recursive: true, force: true });
+  return dir;
+}
+
+// nethernet-connect + that bedrock-protocol
 let loaded = null;
 export async function ncLoad(CACHE) {
   if (loaded) return loaded;
   if (!fs.existsSync(path.join(NC_DIR, 'dist', 'src', 'index.js'))) throw new Error('common/nethernet-connect is missing (from the nethernet-connect project: node scripts/vendor.mjs <this lab>)');
   const dir = path.join(CACHE, 'nc');
-  if (!fs.existsSync(path.join(dir, 'node_modules', 'bedrock-protocol'))) {
-    fs.mkdirSync(dir, { recursive: true });
-    const deps = JSON.parse(fs.readFileSync(path.join(NC_DIR, 'package.json'), 'utf8')).dependencies;
-    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ private: true, dependencies: deps }));
-    // --ignore-scripts: raknet-native's native build is optional (the lab's own RakNet client is used)
-    const r = spawnSync(WIN ? 'npm.cmd' : 'npm', ['i', '--ignore-scripts', '--no-audit', '--no-fund', '--loglevel=error'], { cwd: dir, encoding: 'utf8', shell: WIN, env: { ...process.env, npm_config_allow_git: 'all' } });
-    if (r.status !== 0) throw new Error('npm install for nethernet-connect failed:\n' + (r.stderr || r.stdout).slice(-800));
-  }
-  const req = createRequire(path.join(dir, 'package.json'));
+  const req = createRequire(path.join(await ncDeps(CACHE), 'package.json'));
   const nc = await import(pathToFileURL(path.join(NC_DIR, 'dist', 'src', 'index.js')).href);
   nc.useBedrockProtocol(req);
   loaded = { nc, req, dir };

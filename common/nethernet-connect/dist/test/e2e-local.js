@@ -12,7 +12,7 @@
  */
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -186,6 +186,7 @@ function runCli(args, cfg) {
         const t = setTimeout(() => child.kill('SIGKILL'), 45000);
         child.on('exit', (code) => {
             clearTimeout(t);
+            rmSync(dir, { recursive: true, force: true });
             resolve({ code, out });
         });
     });

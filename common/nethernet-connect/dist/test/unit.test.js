@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { LanScope } from '../src/lan-scope.js';
@@ -231,10 +231,15 @@ test('config: 型違い・範囲外・精度落ちは例外、未知キーは警
 });
 test('config: BOM付きファイルも読める・存在しないと案内付きエラー', () => {
     const dir = mkdtempSync(join(tmpdir(), 'nnc-'));
-    const p = join(dir, 'config.json');
-    writeFileSync(p, '﻿{"lanPolicy":{"scope":"same-host"}}');
-    assert.equal(loadConfig(p).lanPolicy.scope, 'same-host');
-    assert.throws(() => loadConfig(join(dir, 'none.json')), /config.example.json/);
+    try {
+        const p = join(dir, 'config.json');
+        writeFileSync(p, '﻿{"lanPolicy":{"scope":"same-host"}}');
+        assert.equal(loadConfig(p).lanPolicy.scope, 'same-host');
+        assert.throws(() => loadConfig(join(dir, 'none.json')), /config.example.json/);
+    }
+    finally {
+        rmSync(dir, { recursive: true, force: true });
+    }
 });
 test('validateOfflineUsername: 26.30 の名前制限を見越して安全な名前だけ', () => {
     assert.equal(validateOfflineUsername('NetherBot'), null);

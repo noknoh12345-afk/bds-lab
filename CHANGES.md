@@ -18,6 +18,14 @@
   `tests/nc-find-offline.mjs`、`tests/lan-offline.mjs` に account import。UDP 7551 を使う試験は 1 本ずつ（`tests/fake/lock.mjs`）、
   試験は `tests/fake/nc.mjs` が一時フォルダに組み立てた物で動く（`build.mjs --out`）。
 - 直した: CI の host-offline が、取り込んだパッケージの `tsconfig.json`（と `dist/`）をユニットのキャッシュと見て落ちていた。
+- 直した: CI（試験を 6 本ずつ同時に回す）で nc-offline・nc-find・nc-join が落ちた。いくつもの試験が同じキャッシュに同時に TypeScript と
+  bedrock-protocol を npm で入れ、ほかの npm が書いている途中の物を読んでいた（半分の `typescript.js` で「Missing initializer in const
+  declaration」、データの無い minecraft-data）。npm で入れる物は `common/nethernet-connect/install.mjs` が入れる: 入れる物ごとのフォルダ
+  （`deps-<hash>`）に、鍵（持ち主の pid、npm の間は時刻を更新。持ち主がいない・1 分更新の無い鍵は引き継ぐ）をかけて 1 回だけ、npm が最後まで
+  終わった物（`.installed`）だけを使う。途中で止まった物は空から入れ直す。30 日使われない別の版のフォルダは片付ける。ビルド（`build.mjs`）・
+  ラボ（`lan`・`LAB_TRANSPORT=lan`）・試験が同じ物を使い、前の置き方（`nc/node_modules`、約 600 MB）は消す（サインインとスナップショットは残す）。
+  試験 `tests/nc-install-offline.mjs`（代わりの npm で: 6 プロセス同時に npm は 1 回・途中で殺された物・鍵の引き継ぎ・npm の失敗・片付け）。
+  Web の画面の試験 `tests/nc-web-offline.mjs`（本物のブラウザ）も足した。パッケージの試験が一時フォルダを残していたのも直した。
 
 ### 📸 本物のアプリの実行の写真と動画が、進むたびに Discord に届く
 - `app run` / `app ui`（GitHub の app ワークフローでも手元でも）が、区切り（`section`）が終わるたびにその写真を Discord へ送る

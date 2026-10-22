@@ -4,7 +4,7 @@
 //   import { acquire, withLock, UDP_7551 } from './fake/lock.mjs'
 //   await acquire(UDP_7551)          the tests that bind UDP 7551 (the LAN discovery port: bedrock-protocol's NetherNet server
 //                                    binds it without SO_REUSEADDR, so two at once fail with EADDRINUSE) hold it to the end
-//   await withLock('nc-npm', fn)     held while fn runs
+//   await withLock('<name>', fn)     held while fn runs
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

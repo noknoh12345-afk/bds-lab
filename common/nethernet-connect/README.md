@@ -40,13 +40,16 @@ node lab.mjs lan web [--port <n>]
 LAB_TRANSPORT=lan node lab.mjs test -a <アドオン>              # ラボの BDS を NetherNet・LAN に公開し、ボットは LAN のやり方で入る
 ```
 
-設定は `lan.json`（`config.example.json` の形）。ラボが置く所: bedrock-protocol は `$LAB_CACHE/nc`、サインインは `$LAB_CACHE/nc/auth`、
-スナップショットは `$LAB_CACHE/nc/snapshots`。
+設定は `lan.json`（`config.example.json` の形）。ラボが置く所: bedrock-protocol は `$LAB_CACHE/nc/deps-<入れる物の hash>`、サインインは
+`$LAB_CACHE/nc/auth`、スナップショットは `$LAB_CACHE/nc/snapshots`。bedrock-protocol もコンパイラ（`build.mjs`）も `install.mjs` が
+入れる: 同時に動くいくつものプロセス（ラボ・並べて動く試験・別の作業ツリー）で 1 回だけ、鍵（`<フォルダ>.lock`）をかけて入れ、npm が
+最後まで終わった物（`.installed`）だけを使う。途中の物を読むことも、2 つの npm が同じフォルダに書くこともない。
 
 ## 確かめたこと
 
 - **試験（Node の標準だけ、このマシンの上で本物の通信）**: `tests/nc-offline.mjs`（パッケージ自身の unit 33 件・e2e A〜G、`dist/` が今の
-  `src/` と同じか）、`tests/nc-join-offline.mjs`（3 つの入り方で本当にログインまで・観戦で落ちる物と通る物・断る場合・偽の BDS の HTTP
+  `src/` と同じか）、`tests/nc-install-offline.mjs`（`install.mjs`: 6 つのプロセスが同時に入れても npm は 1 回・途中で殺された物・
+  鍵の引き継ぎ・片付け）、`tests/nc-web-offline.mjs`（Web の画面を本物のブラウザで: playwright-core。ブラウザが起動できなければ理由を言って飛ばす）、`tests/nc-join-offline.mjs`（3 つの入り方で本当にログインまで・観戦で落ちる物と通る物・断る場合・偽の BDS の HTTP
   シグナリング・2 つ同時）、`tests/nc-find-offline.mjs`（発見とまとめ方・Tailscale・アカウント・スナップショット・Web の API）、
   `tests/lan-offline.mjs`（ラボの `lan list` / `lan run` / `LAB_TRANSPORT=lan` / snapshot / account import）。
 - **本物の BDS 1.26.52**（2026-10-23、このマシンの上で）: `transport=nethernet`・`enable-lan-visibility=true` の BDS は server-port で
@@ -76,6 +79,7 @@ LAB_TRANSPORT=lan node lab.mjs test -a <アドオン>              # ラボの B
 | `src/config.ts` / `src/types.ts` | 設定の厳格な読み込みと型 |
 | `src/cli.ts` / `src/bp.ts` / `src/index.ts` | v2 の CLI / 使う bedrock-protocol（呼ぶ側が渡す）/ 入口 |
 | `build.mjs` | 決まった TypeScript で `dist/` を作る（`--check` は同じか、`--out` は別の場所へ） |
+| `install.mjs` | npm の物を共有のキャッシュに 1 回だけ入れる（鍵・終わった印・入れる物ごとのフォルダ・使われない物の片付け） |
 
 ## 制限
 

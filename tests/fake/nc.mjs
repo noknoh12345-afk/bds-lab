@@ -7,36 +7,29 @@
 //     nc   = <root>/dist/src/index.js (useBedrockProtocol(req) done)   req = a require that resolves bedrock-protocol
 //     root = the package's copy (root/web is the dashboard's files)    bp  = the folder bedrock-protocol is installed in
 //   import(path.join(root, 'dist/test/e2e-local.js')) … the package's own tests run from there too (NC_BEDROCK_PROTOCOL=bp)
-// bedrock-protocol's folder: NC_BEDROCK_PROTOCOL when set, else $LAB_CACHE/nc (lan-offline's: common/lan.mjs ncLoad), else
-// <tmp>/bds-lab-lan-test/nc. The compiler's: build.mjs's own (NC_BUILD_CACHE, $LAB_CACHE/nc-build, <tmp>/bds-lab-nc-build).
+// bedrock-protocol's folder: NC_BEDROCK_PROTOCOL when set, else the lab's own (common/lan.mjs ncDeps: $LAB_CACHE/nc/deps-…,
+// else <tmp>/bds-lab-lan-test/nc/deps-… — lan-offline's), the compiler build.mjs's (NC_BUILD_CACHE, $LAB_CACHE/nc-build,
+// <tmp>/bds-lab-nc-build): both installed under a lock and counted once npm finished (common/nethernet-connect/install.mjs) —
+// the tests side by side wait for one install instead of reading a half-written one
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { withLock } from './lock.mjs';
 
 const TOP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const PKG = path.join(TOP, 'common', 'nethernet-connect');
-const WIN = process.platform === 'win32';
 
 /** the folder bedrock-protocol (nethernet-connect's dependencies) is installed in, installed when it is not there yet */
 export async function bedrockProtocolDir() {
-  const dir = process.env.NC_BEDROCK_PROTOCOL || path.join(process.env.LAB_CACHE || path.join(os.tmpdir(), 'bds-lab-lan-test'), 'nc');
-  const there = () => fs.existsSync(path.join(dir, 'node_modules', 'bedrock-protocol', 'package.json'));
-  if (there()) return dir;
-  if (process.env.NC_BEDROCK_PROTOCOL) throw new Error(`NC_BEDROCK_PROTOCOL=${dir}: no node_modules/bedrock-protocol there`);
-  await withLock('nc-npm', async () => {
-    if (there()) return;
-    fs.mkdirSync(dir, { recursive: true });
-    const deps = JSON.parse(fs.readFileSync(path.join(PKG, 'package.json'), 'utf8')).dependencies;
-    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ private: true, dependencies: deps }));
-    // (--ignore-scripts: raknet-native's native build is optional — the lab's own RakNet client and jsp-raknet are used)
-    const r = spawnSync(WIN ? 'npm.cmd' : 'npm', ['i', '--ignore-scripts', '--no-audit', '--no-fund', '--loglevel=error'], { cwd: dir, encoding: 'utf8', shell: WIN, env: { ...process.env, npm_config_allow_git: 'all' } });
-    if (r.status !== 0) throw new Error(`npm install for nethernet-connect failed:\n${(r.stderr || r.stdout).slice(-800)}`);
-  });
-  return dir;
+  const dir = process.env.NC_BEDROCK_PROTOCOL;
+  if (dir) {
+    if (!fs.existsSync(path.join(dir, 'node_modules', 'bedrock-protocol', 'package.json'))) throw new Error(`NC_BEDROCK_PROTOCOL=${dir}: no node_modules/bedrock-protocol there`);
+    return dir;
+  }
+  const { ncDeps } = await import(pathToFileURL(path.join(TOP, 'common', 'lan.mjs')).href);
+  return ncDeps(process.env.LAB_CACHE || path.join(os.tmpdir(), 'bds-lab-lan-test'));
 }
 
 let built = null;
