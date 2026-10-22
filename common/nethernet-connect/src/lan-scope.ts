@@ -1,6 +1,6 @@
 import os from 'node:os';
 import net from 'node:net';
-import type { Decision, LanPolicy } from './types.js';
+import type { Decision, LanPolicy, TailscaleInfo } from './types.js';
 
 /**
  * ★安全設計の中核★ 「このアドレスは“同一IP内(同一LAN)”か？」を判定する。
@@ -85,11 +85,28 @@ export function listLocalInterfaces(onlyNames: string[] = []): LocalInterface[] 
 export class LanScope {
   private readonly extra: Cidr[];
 
+  /**
+   * tailscale: loadTailscale の結果（v3）。その allowed にある自分の Tailscale の端末のアドレスも「自分のネットワーク」に入れる
+   * （scope=same-subnet のときだけ。same-host はこのマシン自身だけのまま）。requirePrivateAddress と allowedSubnets は
+   * LAN の絞り込みなので Tailscale の端末には当てない（端末は mode と devices で選んだ物だけ）。null / 省略 = 使わない
+   */
   constructor(
     readonly policy: LanPolicy,
-    readonly interfaces: LocalInterface[] = listLocalInterfaces(policy.interfaces)
+    readonly interfaces: LocalInterface[] = listLocalInterfaces(policy.interfaces),
+    readonly tailscale: TailscaleInfo | null = null
   ) {
     this.extra = policy.allowedSubnets.map(parseCidr);
+  }
+
+  /** 自分のネットワークに入れた Tailscale の端末なら、その名前（scope=same-subnet のときだけ。違えば null） */
+  tailscaleName(addr: string): string | null {
+    if (!this.tailscale || this.policy.scope !== 'same-subnet') return null;
+    return this.tailscale.allowed.get(normalizeAddress(addr)) ?? null;
+  }
+
+  /** このマシン自身の Tailscale のアドレス（Tailscale の端末と WebRTC でつなぐ時の、こちら側の候補） */
+  ownTailscaleAddresses(): string[] {
+    return this.tailscale?.self?.addresses.filter((a) => net.isIPv4(a)) ?? [];
   }
 
   /** このマシン自身のアドレスか（ループバック 127/8 を含む） */
@@ -136,6 +153,8 @@ export class LanScope {
     if (this.policy.scope === 'same-host') {
       return deny(`${ip} はこのマシンのアドレスではありません（scope=same-host）`);
     }
+    const ts = this.tailscaleName(ip);
+    if (ts) return allow(`${ip} は自分の Tailscale の端末「${ts}」（lanPolicy.tailscale.mode=${this.tailscale?.mode}）`);
 
     const iface = this.interfaceFor(ip);
     if (!iface) {
@@ -244,6 +263,14 @@ export class LanScope {
       }
       if (eligible.length === 0) lines.push('  ※許可できるLAN用NICがありません（このマシン自身以外には接続できません）');
       if (this.extra.length) lines.push(`  追加絞り込み: ${this.policy.allowedSubnets.join(', ')}`);
+    }
+    if (this.tailscale) {
+      const names = new Map<string, string[]>();
+      for (const [ip, name] of this.tailscale.allowed) names.set(name, [...(names.get(name) ?? []), ip]);
+      const list = [...names].map(([name, ips]) => `${name} ${ips.join(', ')}`).join(' / ');
+      lines.push(this.policy.scope === 'same-subnet'
+        ? `  Tailscale（${this.tailscale.mode}）: ${list || '許す端末がありません'}`
+        : `  Tailscale（${this.tailscale.mode}）: scope=same-host なので使いません`);
     }
     return lines;
   }

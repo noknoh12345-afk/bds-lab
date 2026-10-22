@@ -92,6 +92,38 @@ test('same-host: このマシン自身のアドレスだけ', () => {
   assert.deepEqual(s.discoveryDestinations(), ['127.0.0.1']);
 });
 
+// (v3) the user's own Tailscale devices: only the addresses loadTailscale allowed, only with scope=same-subnet
+const TS = (allowed: Array<[string, string]>, mode: 'own' | 'tailnet' = 'own') => ({
+  mode, self: { name: 'me', addresses: ['100.101.1.1'], own: true, online: true, tags: [], shared: false, self: true },
+  devices: [], allowed: new Map(allowed),
+});
+
+test('Tailscale: 許した端末のアドレスだけ「自分のネットワーク」に（CGNAT 帯でも・allowedSubnets の外でも）、他は今までどおり', () => {
+  const s = new LanScope(policy({ allowedSubnets: ['192.168.1.0/28'] }), IFACES, TS([['100.101.2.2', 'home-pc'], ['100.101.3.3', 'nas']]));
+  assert.equal(s.check('100.101.2.2').allowed, true);
+  assert.match(s.check('100.101.2.2').reason, /Tailscale の端末「home-pc」/);
+  assert.equal(s.check('100.101.3.3').allowed, true);
+  assert.equal(s.check('100.101.9.9').allowed, false);   // (a Tailscale address not allowed: as before)
+  assert.equal(s.check('192.168.1.23').allowed, false);   // (allowedSubnets still narrows the LAN)
+  assert.equal(s.tailscaleName('::ffff:100.101.2.2'), 'home-pc');
+  assert.equal(s.tailscaleName('192.168.1.5'), null);
+  assert.deepEqual(s.ownTailscaleAddresses(), ['100.101.1.1']);
+  assert.ok(s.describe().some((l) => /Tailscale（own）: home-pc 100\.101\.2\.2 \/ nas 100\.101\.3\.3/.test(l)));
+  // (broadcasts stay on the LAN: Tailscale devices are asked one by one — discoverEndpoints)
+  assert.deepEqual(s.discoveryDestinations(), new LanScope(policy({ allowedSubnets: ['192.168.1.0/28'] }), IFACES).discoveryDestinations());
+});
+
+test('Tailscale: scope=same-host ではこのマシン自身だけのまま・無しなら何も変わらない', () => {
+  const h = new LanScope(policy({ scope: 'same-host' }), IFACES, TS([['100.101.2.2', 'home-pc']]));
+  assert.equal(h.check('100.101.2.2').allowed, false);
+  assert.equal(h.tailscaleName('100.101.2.2'), null);
+  assert.ok(h.describe().some((l) => /scope=same-host なので使いません/.test(l)));
+  const none = new LanScope(policy(), IFACES);
+  assert.equal(none.tailscaleName('100.101.2.2'), null);
+  assert.deepEqual(none.ownTailscaleAddresses(), []);
+  assert.ok(!none.describe().some((l) => /Tailscale/.test(l)));
+});
+
 test('ディスカバリ送信先: リミテッド/許可NICの有向ブロードキャスト/許可アドレスのみ', () => {
   const s = new LanScope(policy(), IFACES);
   assert.equal(s.checkDiscoveryDestination('255.255.255.255').allowed, true);
