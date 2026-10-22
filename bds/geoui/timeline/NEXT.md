@@ -1,14 +1,16 @@
 # 続きのプロンプト（GeoUI タイムライン）
 
-次のセッションの AI に、下の枠の中をそのまま貼る。2026-10-22 に書いた（7 回目の確かめと、参加の道筋・入り直しのコミットまで）。
+次のセッションの AI に、下の枠の中をそのまま貼る。2026-10-23 に書いた（8 回目の確かめ: 1000 個の譜面と変数の probe・nethernet-connect v3 まで）。
 設計と記録は [PLAN.md](PLAN.md)、使い方は [../TIMELINE.md](../TIMELINE.md)。
 
 このリポジトリは公開なので、前の会話の記録・添付の素材（zip など）・ログインの記録はここに置かない。
 
 ```
 noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の続き。設計と記録は bds/geoui/timeline/PLAN.md、使い方は bds/geoui/TIMELINE.md。
-7 段・見直し・作り直し（本物の大きさの譜面）は済み。本物のアプリで 300 個の譜面（geoui_rhythm_big）が最後まで動き、
-pre_animation は 61 万文字・4029 行（geoui_probe_sz）、5029 行（geoui_probe_lc）まで動いた。
+7 段・見直し・作り直し（本物の大きさの譜面）は済み。本物のアプリで 300 個（geoui_rhythm_big）も 1000 個・6 分の譜面
+（geoui_rhythm_huge: addon/geoui_rhythm_huge の枝、3.2 MB）も最後まで動いた。pre_animation は 61 万文字・4029 行（geoui_probe_sz）、
+5029 行（geoui_probe_lc）、変数 5000 個（geoui_probe_vx）まで効く。ラボのボットは LAB_TRANSPORT=lan（nethernet-connect v3）で
+1000 個のパックのワールドに入れる（tests.txt 8/8）。
 
 守ること:
 - .github/・auto/policy.json・auto/STOP・.env は触らない。bds/vendor/bedrock-server.zip はコミットしない（git add -A -- . ':!bds/vendor/bedrock-server.zip'）
@@ -20,19 +22,14 @@ pre_animation は 61 万文字・4029 行（geoui_probe_sz）、5029 行（geoui
 - 本物のアプリでの確かめ（app.yml の dispatch）は、私に聞いて許可をもらってから。勝手に回さない
 - 本物のゲームでしか分からないことは「要実測」と書き、決めつけない
 
-最初にやること（どちらも私の許可をもらってから、1 本ずつ）:
-- geoui_probe_vx（変数の数の限度: エンティティの中で 3032 個目は効き、geoui_probe_m の 3053 個目は値が合わなかった。3000〜5000 個を
-  細かく、?? ありとなしで、最後に 1・2000 個目をもう一度読む）:
-  gh api -X POST repos/noknoh12345-afk/bds-lab/actions/workflows/app.yml/dispatches -f ref=main -f "inputs[addon]=geoui_probe_vx" -f "inputs[mode]=run" -f "inputs[account]=true" -f "inputs[screen]=720x1560" -f "inputs[lane]=probe8-vx" -f "inputs[knobs]=APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"
-  読み方: node bds/geoui/timeline/probe.mjs read <summary.json>。分かった限度で compile.js の変数の注意（今は 3000 個）と TIMELINE.md を直す
-- geoui_rhythm_huge（1000 個・3.2 MB。addon/geoui_rhythm_huge の枝。2 回とも参加の時にゲームが「An error has occurred」）を、
-  until joined の入り直し（ゲームのエラーなら LAN のワールドにもう一度、2 回まで）で:
-  上と同じ形で inputs[addon]=geoui_rhythm_huge、inputs[ref]=addon/geoui_rhythm_huge（ワークフローは ref=main のまま。枝の
-  app.yml は動かない）、lane rhythm-huge-3。枝が main より古ければ git rebase origin/main して node bds/geoui/timeline/demo.mjs --huge
-  で作り直し、その枝に push（--force-with-lease）
-- 結果: gh run download <run> → summary.json の failed_codes・failed_trails・join_trail・join_seconds・join_connect_seconds（参加の
-  道筋はラボの語だけ: app/lib/failcodes.mjs）。写真と録画は私の Discord に届く（summary.json の media に送った数）。
-  成果物の中身は封じてある（鍵が無いと読めない）
+最初にやること:
+- PLAN.md の「本物のアプリで確かめたこと」の 8 回目まで読む。本物のアプリでまた確かめる時は、私の許可をもらってから 1 本ずつ:
+  gh api -X POST repos/noknoh12345-afk/bds-lab/actions/workflows/app.yml/dispatches -f ref=main -f "inputs[addon]=<名前>" -f "inputs[mode]=run" -f "inputs[account]=true" -f "inputs[screen]=720x1560" -f "inputs[lane]=<lane>" -f "inputs[knobs]=APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"
+  別の枝のアドオンは inputs[ref]=<枝> を足す（ワークフローは ref=main のまま）。枝が main より古ければ git rebase origin/main して
+  node bds/geoui/timeline/demo.mjs --huge で作り直し、その枝に push（--force-with-lease）
+- 結果: gh run download <run> → probe は node bds/geoui/timeline/probe.mjs read <summary.json>、見本は summary.json の measures・
+  failed_codes・failed_trails・join_trail・join_seconds・join_connect_seconds（参加の道筋はラボの語だけ: app/lib/failcodes.mjs）。
+  写真と録画は私の Discord に届く（summary.json の media に送った数）。成果物の中身は封じてある（鍵が無いと読めない）
 
 全部の試験（変えたら毎回）:
   for f in tests/tl-*-offline.mjs tests/geoui-builder-offline.mjs tests/lint-offline.mjs; do node $f || exit 1; done
@@ -47,7 +44,8 @@ pre_animation は 61 万文字・4029 行（geoui_probe_sz）、5029 行（geoui
 - GEOUI_NODE_MODULES: playwright-core のある node_modules（例 /opt/npm-tools/node_modules）
 - CHROMIUM: 例 /opt/pw-browsers/chromium-1194/chrome-linux/chrome
 
-残っている要実測: 変数の数の限度（geoui_probe_vx）。1000 個の譜面が入れない理由（パックの大きさか、BDS の起動直後の重さか: 入り直しで
-入れれば後者に近い。入れなければ 1.4 MB と 3.2 MB の間の大きさの見本で分ける）。render controller 70 個・ボーン 600 本・アニメーション
-1200 個より先（書き出しは超えると注意を出す）。geoui_bb・geoui_calib* は前の確かめの物（測り直すときだけ作り直す）。
+残っている要実測: 大きいパックの参加が遅い理由（1000 個は LAN のワールドを選んでから接続まで 387 秒、300 個は 223 秒。クライアントは
+つなぐ前にパックを知らない: 端末の重さか BDS の起動直後か）。geoui_probe_m の 3000 行（1 行 150 文字）の最後の変数だけ合わなかった理由
+（行・大きさ・変数の数のどれでもない）。render controller 70 個・ボーン 600 本・アニメーション 1200 個より先（書き出しは超えると注意を
+出す）。geoui_bb・geoui_calib* は前の確かめの物（測り直すときだけ作り直す）。
 ```
