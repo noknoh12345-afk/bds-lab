@@ -38,6 +38,9 @@ batch・測った値の at（写した時刻）。次はこの形でバッチを
 - 本物のゲームでしか分からないことは「要実測」と書き、決めつけない
 
 最初にやること:
+- GeoUI の仕様書 bds/geoui/SPEC.md を読む（どの画面でも正しい所に出す式・端末ごとの数・描き方の限度・フォームなしの入力・要実測の一覧。
+  osu! の盤面は contain の 1 グループ、HUD は寄せ先ごとのグループ: SPEC.md 14 章）。端末の確かめは bds/addons/geoui_device
+  （node bds/geoui/screen/device.mjs、結果は SPEC.md 13 章）、HTML → GeoUI は bds/geoui/html/。
 - PLAN.md の「本物のアプリで確かめたこと」の 8 回目まで読む。本物のアプリでまた確かめる時は、私の許可をもらってから 1 本ずつ:
   gh api -X POST repos/noknoh12345-afk/bds-lab/actions/workflows/app.yml/dispatches -f ref=main -f "inputs[addon]=<名前>" -f "inputs[mode]=run" -f "inputs[account]=true" -f "inputs[screen]=720x1560" -f "inputs[lane]=<lane>" -f "inputs[knobs]=APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"
   （1000 個の見本も既定の枝にある: demo.mjs が 3 つとも作り、--check で確かめる。--huge はそれだけを作る）
@@ -49,7 +52,8 @@ batch・測った値の at（写した時刻）。次はこの形でバッチを
   写真と録画は私の Discord に届く（summary.json の media に送った数）。成果物の中身は封じてある（鍵が無いと読めない）
 
 全部の試験（変えたら毎回）:
-  for f in tests/tl-*-offline.mjs tests/geoui-builder-offline.mjs tests/lint-offline.mjs; do node $f || exit 1; done（tl-probe は 8 分）
+  for f in tests/tl-*-offline.mjs tests/geoui-builder-offline.mjs tests/geoui-screen-offline.mjs tests/geoui-html-offline.mjs tests/lint-offline.mjs; do node $f || exit 1; done（tl-probe は 8 分）
+  node bds/geoui/screen/device.mjs --check; node bds/geoui/html/convert.mjs --sample --check
   node bds/geoui/build.mjs --check; node bds/geoui/timeline/probe.mjs --check; node bds/geoui/timeline/demo.mjs --check（W 行が出ないこと）
   node bds/geoui/osu/music.mjs --check（osusong.js を変えたら --write。.ogg は ffmpeg）
   npx --yes eslint@9 -c tests/eslint.config.mjs .（CI の verify も回す: 使っていない変数ひとつで落ちる。2026-10-23 の cbfa6a6 はこれで落ちた）

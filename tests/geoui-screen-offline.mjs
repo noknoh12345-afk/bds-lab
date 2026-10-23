@@ -229,6 +229,9 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
     const r = await KINDS.marks.run(img, { baseline: base });
     const off = Object.entries(names).map(([k2, nm]) => Math.max(Math.abs(r.values[`${nm}x0`] - Math.round(e[`anchor ${k2}`].x0)), Math.abs(r.values[`${nm}y1`] - Math.round(e[`anchor ${k2}`].y1))));
     ok(r.ok && r.values.classes === 9 && Math.max(...off) <= 1, `measure marks reads the 9 anchors of a ${W}x${H} screen back to 1 px`, JSON.stringify(off));
+    const cmp = D.compare([{ kind: 'marks', shot: `anchors-${W}x${H}`, ok: true, values: r.values }]), worstD = Math.max(...cmp.rows.map((x) => x.d));
+    const ins = cmp.screens[0] && cmp.screens[0].inset;
+    ok(worstD <= 1.5 && ins && Object.values(ins).every((x) => Math.abs(x) <= 1), `device.mjs compare: the marks against the formulas, ${worstD.toFixed(1)} px off, the HUD's insets read as 0`, JSON.stringify([worstD, ins]));
   }
 }
 

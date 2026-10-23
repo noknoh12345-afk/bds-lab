@@ -327,6 +327,7 @@ node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu
 | 操作の種類の変化 | Android CI: in-mode | （同） |
 | HTML の見本の見た目・焦点・ページ | Android CI: `-a geoui_html_demo`（許可が要る） | （まだ回していない） |
 | インベントリの人形に GeoUI が映らないか | ゲームパッドの Y で持ち物を開いて写す | （まだ） |
+| タッチでタップした所（案）: 止めたカメラの前にブロックの面を置き、タップが当たった面の点（`faceLocation`）から画面の位置を逆算する | 作って写す | （案） |
 | 大きな UI の重さ（fps） | `perf` の手順 | （まだ） |
 
 ## 14. osu! を作るときの決め方

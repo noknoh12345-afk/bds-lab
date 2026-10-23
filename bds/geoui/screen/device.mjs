@@ -396,6 +396,67 @@ export function expected(W, H, uiScale = 2) {
   return out;
 }
 
+// ---- a run's measures against the formulas: `node bds/geoui/screen/device.mjs compare <summary.json | run folder>`
+const ANCHOR_HUE = { tl: 'red', t: 'orange', tr: 'yellow', l: 'chartreuse', c: 'green', r: 'spring', bl: 'cyan', b: 'azure', br: 'blue' };
+const QUERY_NAMES = ['head_y_rotation(0)', 'head_x_rotation(0)', 'body_y_rotation', 'body_x_rotation', 'target_y_rotation', 'target_x_rotation',
+  'camera_rotation(1)', 'camera_rotation(0)', 'eye_target_y_rotation', 'eye_target_x_rotation', 'is_local_player x 300'];
+/** measures (summary.json's: [{ shot, kind, ok, values, why }]) → rows { shot, what, want, got, d (px), note } and per screen what it
+ *  says: the viewport's insets (how far each side of the HUD is in from the screen's edge), the GUI scale, clipped or not */
+export function compare(measures, opts = {}) {
+  const rows = [], screens = [];
+  for (const m of (measures || []).filter((x) => x.kind === 'marks')) {
+    const v = m.values || {}, shot = m.shot || m.name || '?';
+    if (!m.ok) { rows.push({ shot, what: '—', note: m.why || '測れなかった' }); continue; }
+    const W = v.width, H = v.height, e = expected(W, H, opts.ui || 2);
+    const got = (c) => (Number.isFinite(v[`${c}x0`]) ? { x0: v[`${c}x0`], y0: v[`${c}y0`], x1: v[`${c}x1`], y1: v[`${c}y1`] } : null);
+    const add = (what, c, want, note) => {
+      const g = got(c), d = g && want ? Math.max(...['x0', 'y0', 'x1', 'y1'].map((k) => Math.abs(g[k] - want[k]))) : null;
+      rows.push({ shot, what, cls: c, want: want || null, got: g, d, note: note || (g ? '' : 'その色が無い') });
+      return g;
+    };
+    if (/^(anchors|gui-dpi)/.test(shot)) {
+      const g = {};
+      for (const [k, c] of Object.entries(ANCHOR_HUE)) g[k] = add(`寄せ先 ${k}`, c, e[`anchor ${k}`]);
+      // (the viewport's edges, read off the corner squares: 0 when the HUD reaches the screen's edge)
+      if (g.tl && g.br) screens.push({ shot, W, H, inset: { left: g.tl.x0, top: g.tl.y0, right: W - g.br.x1, bottom: H - g.br.y1 } });
+    }
+    if (/^box/.test(shot)) {
+      add('contain の箱', 'violet', e.box);
+      const r = add('gui の枠（ホットバー 182 x 22）', 'rose', e['gui hotbar']);
+      if (r) screens.push({ shot, W, H, ui: (r.x1 - r.x0) / 182 });
+    }
+    if (/^gui-dpi/.test(shot)) { const r = got('rose'); if (r) screens.push({ shot, W, H, ui: (r.x1 - r.x0) / 182 }); }
+    if (/^clip/.test(shot)) {
+      const g = got('gray'), c = e.clip, inside = g && g.x0 >= c.x0 - 2 && g.y0 >= c.y0 - 2 && g.x1 <= c.x1 + 2 && g.y1 <= c.y1 + 2;
+      rows.push({ shot, what: '切り抜き（30 % x 30 % の枠）', cls: 'gray', want: c, got: g, d: null, note: g ? (inside ? '枠の中: 切り抜かれる' : '枠の外まで: 切り抜かれない') : 'その色が無い' });
+    }
+    if (/^over/.test(shot)) {
+      const g = got('white');
+      rows.push({ shot, what: 'viewport の外の白い印', cls: 'white', want: null, got: g, d: null, note: g ? '見える: 画面が HUD の外まである' : '見えない: HUD が画面いっぱい' });
+    }
+    if (/^colors/.test(shot)) for (const c of ['white', 'gray', 'red', 'green', 'blue', 'black']) {
+      if (Number.isFinite(v[`${c}n`])) rows.push({ shot, what: `色 ${c}`, cls: c, want: null, got: got(c), d: null, note: `rgb(${[v[`${c}r`], v[`${c}g`], v[`${c}b`]].map((x) => Math.round(x)).join(', ')})` });
+    }
+    if (/^query/.test(shot)) {
+      const u = L.K * 0.1 * H;
+      QUERY_NAMES.forEach((q, k) => { const g = got(HUES[k][0]); rows.push({ shot, what: `q.${q}`, cls: HUES[k][0], want: null, got: g, d: null, note: g ? `棒 ${((g.x1 - g.x0) / u).toFixed(1)} 単位（4 = 値 0、60 = 1 回り）` : 'その色が無い' }); });
+    }
+  }
+  return { rows, screens };
+}
+/** the comparison as text (Japanese, a line a mark) */
+export function compareText(r) {
+  const box = (b) => (b ? `(${Math.round(b.x0)}, ${Math.round(b.y0)})–(${Math.round(b.x1)}, ${Math.round(b.y1)})` : '—');
+  const out = r.rows.map((x) => `${x.shot.padEnd(18)} ${x.what.padEnd(24)} 式 ${box(x.want)}  測った ${box(x.got)}${x.d !== null && x.d !== undefined ? `  ずれ ${x.d.toFixed(1)} px` : ''}${x.note ? `  ${x.note}` : ''}`);
+  for (const s of r.screens) {
+    if (s.inset) out.push(`${s.shot.padEnd(18)} 表示領域の内側への寄り（px）: 左 ${s.inset.left}・上 ${s.inset.top}・右 ${s.inset.right}・下 ${s.inset.bottom}（${s.W}x${s.H}）`);
+    if (s.ui) out.push(`${s.shot.padEnd(18)} GUI の倍率: ${s.ui.toFixed(2)} 画面 px / JSON UI px（${s.W}x${s.H}）`);
+  }
+  const worst = r.rows.filter((x) => Number.isFinite(x.d)).reduce((a, x) => Math.max(a, x.d), 0);
+  out.push(`いちばん大きいずれ ${worst.toFixed(1)} px（3 px 以内なら式どおり: SPEC.md 6 章）`);
+  return out.join('\n');
+}
+
 // ---- the add-on's other files
 const TESTS = `# geoui_device（bds/geoui/screen/device.mjs が作る）: 端末の確かめのパックが本物の BDS で動き、入力（視点・移動・ジャンプ・スニーク・
 # スロット・腕の振り・コマンドの文字）がスクリプトの UI のモードに届くか。描画（9 つの寄せ先・contain の枠・GUI の倍率・セーフエリア・
@@ -638,6 +699,14 @@ export function files() {
 }
 
 function main(argv) {
+  if (argv[0] === 'compare') {
+    let f = argv[1] || '';
+    if (f && fs.existsSync(f) && fs.statSync(f).isDirectory()) f = ['summary.json', 'results/summary.json'].map((x) => path.join(argv[1], x)).find((x) => fs.existsSync(x)) || '';
+    if (!f || !fs.existsSync(f)) { console.error('node bds/geoui/screen/device.mjs compare <summary.json | 実行のフォルダ（app/runs/gh-<番号>）> [--ui <画面の px / JSON UI の px>]'); process.exit(2); }
+    const sum = JSON.parse(fs.readFileSync(f, 'utf8')), ui = Number((argv.indexOf('--ui') >= 0 && argv[argv.indexOf('--ui') + 1]) || 2);
+    console.log(compareText(compare(sum.measures || [], { ui })));
+    return;
+  }
   if (argv[0] === 'expect') {
     const m = /^(\d+)x(\d+)$/.exec(argv[1] || ''), ui = Number((argv.indexOf('--ui') >= 0 && argv[argv.indexOf('--ui') + 1]) || 2);
     if (!m) { console.error('node bds/geoui/screen/device.mjs expect <幅>x<高さ> [--ui <画面の px / JSON UI の px>]'); process.exit(2); }
