@@ -327,7 +327,8 @@ node lab.mjs app ci watch <番号>                          # 待ってから取
 **バッチ（いくつかのアドオンを 1 回で）**: `--batch a,b,…`（2〜8 個）は、端末の用意・ゲームの起動・サインインを 1 回にして、それぞれの
 app.txt を順に回します（ワークフローの `addon` はその最初、`scenario` は `batch/a/b/…`）。2 つ目からは、そのアドオンの `join` の前に
 `addon <名前>` が入り、BDS をそのアドオンで起動し直して（同じポート）ゲームは入り直します。区切りの名前は `<アドオン>.<区切り>`
-（報告の表・クライアントのエラー・Discord の進み具合）。`summary.json` の `batch` に、アドオンごとの起動し直しの秒が入ります。
+（報告の表・クライアントのエラー・Discord の進み具合）。`summary.json` の `batch` にアドオンごとの起動し直しの秒、`joins` に参加ごとの
+秒（PLAY・LAN のワールドが出た・押した）、測った値の `at` に写した時刻（秒）が入ります（鍵なしで読める数だけ）。
 手元でも `node lab.mjs app run -a a --scenario batch/a/b`。1 本ずつ回すより、端末の復元・タイトル・サインインの分（1 本あたり数分）が浮きます。
 
 `app/runs/gh-<番号>/` には `report.md`、`details.txt`（**既定は結果とエラーだけ**）、`shots/*.png`（縮小したスクショ）、`annotations.txt`、`steps.txt` が入ります。

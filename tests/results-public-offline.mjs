@@ -262,6 +262,29 @@ fs.rmSync(tmp, { recursive: true, force: true });
     && sum4.includes('| 参加の手順（PLAY・LAN のワールドが出た・押した） | 19 / — / — 秒 |') && !sum4.includes('参加の手順の道筋') && ![SCREEN, EMAIL].some((x) => sum3.includes(x) || sum4.includes(x)),
     'the check shows them', `${sum3.slice(0, 1200)}\n${sum4.slice(0, 1200)}`);
 }
+// ---- 7b. a batch (several addons in one run, app ci --batch): every LAN join's seconds and moments, each addon's server
+//      started again (its plain name and seconds), when each measured shot was taken — numbers only, in the summary and the check ----
+{
+  const d7 = makeRun(path.join(tmp, 'batch'), '20261023-140628-geoui_osu_pixel'), r12 = JSON.parse(fs.readFileSync(path.join(d7, 'result.json'), 'utf8'));
+  r12.results = [{ ok: true, line: 9, verb: 'join', raw: 'join', ms: 102_480, note: SCREEN, trail: 'title-a play-lan', lan: { play: 45_400, listed: 45_400, pressed: 77_500, who: EMAIL } },
+    { ok: true, line: 80, verb: 'join', raw: 'join', ms: 64_210, note: SCREEN, lan: { play: 12_100, listed: 20_000, pressed: 31_960 } }, { ok: false, line: 82, raw: STEP, note: SCREEN }];
+  r12.batch = [{ addon: 'geoui_osu_pixel', up_ms: 0 }, { addon: 'geoui_osu_skin', up_ms: 14_260, why: SCREEN }, { addon: EMAIL, up_ms: -3 }];
+  r12.measures = [{ line: 37, section: 'tour', kind: 'diff', shot: 'tour-01-circles', at: 141.26, ok: true, values: { width: 1560, height: 720, share: 0.4, parts: 3 } }, { line: 38, kind: 'diff', shot: 'tour-02-slider', at: SCREEN, ok: true, values: { share: 0.5 } }];
+  fs.writeFileSync(path.join(d7, 'result.json'), JSON.stringify(r12));
+  const r13 = await lab(['checks', '--seal', path.join(tmp, 'batch')], PUB), s7 = fs.readFileSync(path.join(d7, 'summary.json'), 'utf8'), c7 = JSON.parse(s7);
+  ok(r13.status === 0 && JSON.stringify(c7.joins) === '[{"line":9,"ok":true,"seconds":102.5,"play":45.4,"listed":45.4,"pressed":77.5},{"line":80,"ok":true,"seconds":64.2,"play":12.1,"listed":20,"pressed":32}]'
+    && JSON.stringify(c7.batch) === '[{"addon":"geoui_osu_pixel","up_seconds":0},{"addon":"geoui_osu_skin","up_seconds":14.3},{"addon":null,"up_seconds":null}]'
+    && c7.measures[0].at === 141.3 && !('at' in c7.measures[1]) && ![SCREEN, EMAIL, 'who', 'why'].some((x) => s7.includes(x)),
+  'summary.json of a batch: each join\'s seconds and moments, each server started again (a plain name or none), when each shot was taken — nothing else', s7);
+  const got4 = [], srv5 = http.createServer((q, s) => { let b = ''; q.on('data', (x) => { b += x; }); q.on('end', () => { if (q.method === 'POST' && q.url.endsWith('/check-runs')) got4.push(JSON.parse(b)); s.writeHead(201, { 'content-type': 'application/json' }); s.end('{}'); }); });
+  await new Promise((res) => srv5.listen(0, '127.0.0.1', res));
+  const ck5 = await lab(['checks', path.join(tmp, 'batch')], { ...API, GITHUB_API_URL: `http://127.0.0.1:${srv5.address().port}`, APP_REPO_VISIBILITY: 'public' });
+  srv5.close();
+  const sum5 = got4[0]?.output?.summary ?? '';
+  ok(ck5.status === 0 && sum5.includes('| 参加 1（9 行目） | 入った・102.5 秒（PLAY・出た・押した 45.4 / 45.4 / 77.5 秒） |') && sum5.includes('| 参加 2（80 行目） | 入った・64.2 秒（PLAY・出た・押した 12.1 / 20 / 32 秒） |')
+    && sum5.includes('| BDS を起動し直す: geoui_osu_skin | 14.3 秒 |') && /^- 測った値 tour-01-circles（diff、37 行目）: 違い 40\.000%.*・141\.3 秒に撮った$/m.test(sum5) && ![SCREEN, EMAIL].some((x) => sum5.includes(x)),
+  'the check shows each join, each server started again and when each shot was taken', sum5.slice(0, 1600));
+}
 // ---- 8. whether the steps could read the screen (OCR): a join pressed blind is told apart — a boolean, its own code ----
 {
   const F = await import(new URL('../app/lib/failcodes.mjs', import.meta.url).href);

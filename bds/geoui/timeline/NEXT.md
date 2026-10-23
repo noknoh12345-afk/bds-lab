@@ -22,7 +22,10 @@ osukit.js（ドット絵をキューブで / 公式の Legacy スキン の 2 �
 （コインの円と浮き出た番号・フープ・輪切りの球・車輪・宝石・影つきの字・枠。osukit.js pixelModels / modelBone）、どの 2 枚の面も同じ
 平面に重ねない（compile.js freePlace）。見本 geoui_osu_pixel・geoui_osu_skin は本物の BDS の tests.txt が 31/31（両方）。
 app: `app ci --batch a,b`（端末・ゲーム・サインイン 1 回で、アドオンごとに BDS を替えて入り直す。手順 addon <名前>）、classic の
-タイトルではまず A を 1 回（APP_TITLE_A_FIRST。当たるかは要実測）。
+タイトルではまず A を 1 回（APP_TITLE_A_FIRST。当たるかは要実測）。10 回目（PLAN.md）: バッチ 1 本（run 39966429198）で両方の見本が
+122 手順すべて通り 415 秒。ただしスピナーから後の写真は HUD が無かった（写すのがツアーより遅れたと見ている）→ 一歩ずつの検証ツアー
+（/scriptevent geoui:tour step・tour next: どの場面も最後の瞬間で止まって待つ）を作り、app.txt はそれで写す。summary.json に joins・
+batch・測った値の at（写した時刻）。次はこの形でバッチをもう 1 本（許可をもらってから）。
 
 守ること:
 - .github/・auto/policy.json・auto/STOP・.env は触らない。bds/vendor/bedrock-server.zip はコミットしない（git add -A -- . ':!bds/vendor/bedrock-server.zip'）

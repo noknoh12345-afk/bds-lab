@@ -2643,6 +2643,10 @@ async function checksCmd(args) {
       ...(num(r?.timing?.connect) !== null ? { join_connect_seconds: Math.round(r.timing.connect / 100) / 10 } : {}),
       ...(uj && cleanTrail(uj.trail) ? { join_trail: cleanTrail(uj.trail) } : {}),
       ...(lanS ? { join_lan_seconds: lanS } : {}), ...(jn?.ok && cleanTrail(jn.trail) ? { join_lan_trail: cleanTrail(jn.trail) } : {}),
+      // (a batch — several joins, each addon's server started again before its own: every LAN join's seconds and moments, each
+      //  restart's seconds — numbers and the addon's plain name only)
+      ...(lj.length > 1 ? { joins: lj.slice(0, 8).map((x) => ({ line: num(x.line), ok: x.ok === true, seconds: num(x.ms) !== null && x.ms >= 0 && x.ms < 864e5 ? Math.round(x.ms / 100) / 10 : null, ...(lanSeconds(x.lan, 1000) ?? {}) })) } : {}),
+      ...(Array.isArray(r?.batch) && r.batch.length ? { batch: r.batch.slice(0, 8).map((b) => ({ addon: word(b?.addon), up_seconds: num(b?.up_ms) !== null && b.up_ms >= 0 && b.up_ms < 864e5 ? Math.round(b.up_ms / 100) / 10 : null })) } : {}),
       // (whether the steps could read the screen: without OCR the LAN join presses blind — waitOcr)
       ...(typeof r?.ocr === 'boolean' ? { ocr: r.ocr } : {}),
       bds: word(r?.bds?.version) ?? cell('BDS'), app: word(r?.app?.versionName) ?? cell('アプリ'),
@@ -2712,6 +2716,9 @@ async function checksCmd(args) {
         // (the LAN way's join step: read back as numbers only, its trail through the same filter)
         ...(lanSeconds(s.join_lan_seconds) ? [`| 参加の手順（PLAY・LAN のワールドが出た・押した） | ${['play', 'listed', 'pressed'].map((k) => lanSeconds(s.join_lan_seconds)[k] ?? '—').join(' / ')} 秒 |`] : []),
         ...(cleanTrail(s.join_lan_trail) ? [`| 参加の手順の道筋 | \`${cleanTrail(s.join_lan_trail)}\` |`] : []),
+        // (a batch's joins and its servers started again: numbers only, read back the same way)
+        ...(Array.isArray(s.joins) ? s.joins.slice(0, 8).filter((j) => j && typeof j === 'object').map((j, i) => { const l = lanSeconds(j); return `| 参加 ${i + 1}（${num(j.line) ?? '?'} 行目） | ${j.ok === true ? '入った' : '入れない'}${num(j.seconds) !== null ? `・${j.seconds} 秒` : ''}${l ? `（PLAY・出た・押した ${['play', 'listed', 'pressed'].map((k) => l[k] ?? '—').join(' / ')} 秒）` : ''} |`; }) : []),
+        ...(Array.isArray(s.batch) ? s.batch.slice(0, 8).filter((b) => b && typeof b === 'object').map((b) => `| BDS を起動し直す: ${word(b.addon) ?? '?'} | ${num(b.up_seconds) !== null ? `${b.up_seconds} 秒` : '—'} |`) : []),
         ...(s.ocr === false ? ['| OCR | 使えなかった（画面の文字を読めず、LAN の参加は見ずに押した） |'] : []), `| 時間 | ${num(s.seconds) !== null ? `${s.seconds}s` : '—'} |`,
         // (the pictures and videos that went to the person's Discord: numbers only)
         ...(s.media && num(s.media.sent) !== null ? [`| Discord | 写真・動画 ${s.media.sent} 個${num(s.media.failed) ? `（送れなかった ${s.media.failed} 回）` : ''}${s.media.late === true ? '（時間切れ）' : ''} |`] : []),

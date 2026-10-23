@@ -94,7 +94,7 @@ osu! を GeoUI のタイムラインで丸ごと再現する（曲・判定・�
 - osu! のルール: 体力が尽きると失敗（盤面が落ち、幕が下り、FAILED・失敗の音・曲が止まる。1 秒後からジャンプでやり直し）。Mods（HD: 接近の輪なし・円が先に消える／FL: カーソルのまわりだけ見え、コンボ 100・200 で狭まる／NF: 失敗しない ×0.5／SD: 1 つ落とすと失敗／PF: 300 以外で失敗）は右上に並ぶ。
 - 終わりに結果の画面（${V.skin === 'pixel' ? 'キューブの枠の盤' : 'osu! の ranking-panel'}: 点数・300/100/50/ミスの数を数え上げ・最大コンボ・精度・ランク（HD・FL で銀）・フルコンボの印・自己ベストなら NEW RECORD）。ベストはプレイヤーごとにワールドへ（オートは残さない）、スコアボード ${NS}_best、チャットに 1 行、拍手。
 - 遊び方: \`/${NS}:osu\`（メニュー: プレイ・Mods・感度とずれ・検証ツアー）、または \`/scriptevent ${NS}:mode auto\`（ひとりでに遊ぶ）・\`aim\`（見ている所がカーソル、ジャンプ・スニーク・アイテムで押す）・\`relax\`（狙わなくてよい）→ \`/scriptevent ${NS}:play 1\`。\`${NS}:mods HD FL\`・\`${NS}:sens 2.4\`・\`${NS}:offset 30\`（遊び方・感度・ずれ・Mods はプレイヤーごとに残る）・\`${NS}:retry\`。
-- 検証ツアー（\`/scriptevent ${NS}:tour\`）: 全部の演出を ${(built0.tour.length / 1000).toFixed(0)} 秒で（${built0.tour.shots.map((x) => x[1]).join('・')}）。本物のアプリの確かめ（app.txt）はこれ 1 回で済む。
+- 検証ツアー（\`/scriptevent ${NS}:tour\`）: 全部の演出を ${(built0.tour.length / 1000).toFixed(0)} 秒で（${built0.tour.shots.map((x) => x[1]).join('・')}）。一歩ずつ（\`tour step\`、\`tour next\` で次へ）なら、どの場面も最後の瞬間で止まって待つ: 本物のアプリの確かめ（app.txt）はこれで全部の場面を写す。
 - 大きさ: プロパティ ${props} 個（GeoUI の 11 個を含む）・pre_animation ${st.lines} 行（最長 ${st.longest} 文字）・ボーン ${st.counts.bones} 本・キューブ ${cubes} 個・要素ごとの render controller ${st.counts.renderControllers} 個・アニメーション ${st.counts.animations} 個・アトラス ${built0.atlas.width}x${built0.atlas.height}。
 - ひとりでに遊ぶと（osugame.js、20 tick/秒）: 点数 ${fin.score}・最大コンボ ${fin.maxcombo}・精度 ${fin.acc}%・ランク ${['', 'D', 'C', 'B', 'A', 'S', 'SS'][fin.rank]}。
 - preview.png はラボの描き方（bds/geoui/osu/render.mjs）で描いた 6 つの場面（キアイ・スライダー・スピナー・FL と Mods・失敗・結果。本物のゲームではない: 本物は app.txt）。
@@ -111,6 +111,7 @@ osu! を GeoUI のタイムラインで丸ごと再現する（曲・判定・�
 - [ ] Mods の文字・組み合わせの不可・none
 - [ ] メニュー（/${NS}:osu）: Mods を選ぶとメニューに戻って出る
 - [ ] 検証ツアー: HD・FL・失敗・結果を順に見せて止まり、遊び方と Mods が戻る
+- [ ] 一歩ずつの検証ツアー: どの場面も最後の瞬間で止まって次を待ち、tour next で次へ、最後に止まる
 `));
   const SEQ = 'const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)];';
   const RES = `const res = (v) => [v % 8, Math.floor(v / 8) % 2048, Math.floor(v / 16384) % 1024];`;
@@ -120,6 +121,17 @@ osu! を GeoUI のタイムラインで丸ごと再現する（曲・判定・�
   // (aim, nothing pressed: when the health runs out — osugame.js's own rules, stepped as the script steps them)
   const failedAt = (() => { const g = OG.createGame(built0.game).start(0); for (let t = 0; t <= 120000 && !g.state().failed; t += 50) g.step(t, { presses: [] }); return g.state().failedAt; })();
   const MOD = `const mod = (v, k) => Math.floor(v / 2 ** k) % 2;`, tour = built0.tour, sceneAt = (pred) => (tour.scenes.find(pred) || [0])[0];
+  // (the stepped tour, scene by scene: each played past its length and a while more — held paused on its last moment — then the
+  //  next; HD, FL, the fail and the results checked where they are)
+  const held = `js ${SEQ} ${MOD} const v = p('A').getProperty('${NS}:mod'), s = q(p('A').getProperty('${NS}:seq')); JSON.stringify([s[0], s[1], mod(v, 0), mod(v, 1), mod(v, 7)])`;
+  const stepped = tour.scenes.slice(0, -1).flatMap((x, k) => {
+    const len = tour.scenes[k + 1][0] - x[0], lines = [...(k ? [`scriptevent ${NS}:tour next`] : []), `wait ${len + 1500}`];
+    if (x[4] === 'HD') lines.push(held, '= [1,true,1,0,0]');
+    else if (x[4] === 'FL') lines.push(held, '= [1,true,0,1,0]');
+    else if (x[1] === 'fail') lines.push(held, '= [1,true,0,0,1]');
+    else if (x[1] === 'results') lines.push(held, '= [1,true,0,0,0]', '~ @A .* SS 100\\.00% ×\\d+ FULL COMBO \\(auto: not kept\\)');
+    return lines;
+  });
   out.set('tests.txt', Buffer.from(`# ${V.name}（bds/geoui/osu/addon.mjs が作る）: osu! の BP（scripts/timeline.js と osugame.js）が本物の BDS で遊ばれ、点数・コンボ・判定がプロパティに出るか。
 # 描画は app.txt（本物のアプリ）。res = [ランク, 最大コンボ, ミス]（contract.js の詰め方）。最初の物は ${firstHit} 秒。
 
@@ -244,12 +256,30 @@ js ${SEQ} q(p('A').getProperty('${NS}:seq'))[0]
 until form
 ~ @A form action: .*遊び方: 押すタイミングだけ　Mods: なし
 @A form close
+
+## 一歩ずつの検証ツアー: どの場面も最後の瞬間で止まって（一時停止）次を待ち、tour next で次へ、最後の next で止まって遊び方と Mods が戻る
+# (本物のアプリの app.txt はこれで写す: 写すのが遅れても場面は止まったまま。[seq, 止まっている, HD, FL, 失敗])
+scriptevent ${NS}:mode relax
+scriptevent ${NS}:tour step
+${stepped.join('\n')}
+scriptevent ${NS}:tour next
+wait 1500
+js ${SEQ} q(p('A').getProperty('${NS}:seq'))[0]
+= 0
+@A cmd /${NS}:osu
+until form
+~ @A form action: .*遊び方: 押すタイミングだけ　Mods: なし
+@A form close
 `));
   const REGION = '0 0 1560 720';
-  // (the real app: the tour — every look in about 24 s — shot at a moment of each scene, the whole of it recorded)
+  // (the real app: the stepped tour — each scene played, then held paused on its last moment until the next: a shot taken late
+  //  still sees its scene — shot at its moment, the whole of it recorded, measured after)
   const shotName = (x, i) => `tour-${String(i + 1).padStart(2, '0')}-${x[1]}`;
-  out.set('app.txt', Buffer.from(`# ${V.name} を本物のアプリで: 検証ツアー（/scriptevent ${NS}:tour: 円・スライダー・キアイ・HD・FL・スピナー・休み・ミス・失敗・結果を約 ${Math.round(tour.length / 1000)} 秒で）を
-# 場面ごとに写し、全部を録る（GeoUI のタイムラインが描く osu!）。時刻はツアーを始めてからの目安（命令が届くまでの遅れがある）。比べる基準は再生前の画面（world--before-play）。
+  const sceneOf = (at) => tour.scenes.reduce((k, x, i) => (x[0] <= at && x[1] !== 'stop' ? i : k), 0);
+  const shotSteps = tour.shots.map((x, i) => { const k = sceneOf(x[0]), prev = i ? sceneOf(tour.shots[i - 1][0]) : -1; return [...Array.from({ length: k - Math.max(0, prev) }, () => `do scriptevent ${NS}:tour next`), `wait ${x[0] - tour.scenes[k][0]}`, `shot ${shotName(x, i)}`]; });
+  out.set('app.txt', Buffer.from(`# ${V.name} を本物のアプリで: 一歩ずつの検証ツアー（/scriptevent ${NS}:tour step と tour next: 円・スライダー・キアイ・HD・FL・スピナー・休み・ミス・失敗・結果）を
+# 場面ごとに写し、全部を録る（GeoUI のタイムラインが描く osu!）。どの場面も最後の瞬間で止まって次を待つので、写すのが遅れても場面は変わらない。
+# 測るのは全部を写した後。比べる基準は再生前の画面（world--before-play）。
 
 section title
 launch
@@ -277,14 +307,16 @@ absent clientlog \\bERROR\\b
 section tour
 # (the whole tour recorded: recordings/rec-1.mp4 — the person's Discord gets it at the end, made to fit: app/lib/feed.mjs)
 record start
-do scriptevent ${NS}:tour
-${tour.shots.map((x, i) => `wait ${x[0] - (i ? tour.shots[i - 1][0] : 0)}\nshot ${shotName(x, i)}\nmeasure diff ${shotName(x, i)} ${REGION}`).join('\n')}
-wait ${tour.length - tour.shots.at(-1)[0] + 1500}
+do scriptevent ${NS}:tour step
+${shotSteps.flat().join('\n')}
+do scriptevent ${NS}:tour next
+wait 1500
 record stop
+${tour.shots.map((x, i) => `measure diff ${shotName(x, i)} ${REGION}`).join('\n')}
 absent clientlog \\bERROR\\b
 
 section stop
-# (the tour stops by itself: nothing of the game left on the screen)
+# (the last tour next stopped it: nothing of the game left on the screen)
 shot stopped
 measure diff stopped ${REGION}
 

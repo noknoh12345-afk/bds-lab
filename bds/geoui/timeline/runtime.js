@@ -217,14 +217,15 @@
       }
       return null;
     }
-    /** a slice of the next scene's play: as much of the song as finishes it by the scene's time */
+    /** a slice of the next scene's play: as much of the song as finishes it by the scene's time (a stepped tour held on a scene:
+     *  as much as finishes it in a second and a half — it waits for `tour next`) */
     function prepStep(s, T0, el) {
       const want = prepOf(s, T0);
       if (!want) { T0.prep = null; return; }
       if (!T0.prep || T0.prep.k !== want.k) T0.prep = { k: want.k, at: want.at, mods: want.mods, game: createGame(T0.q.game, { mods: want.mods }).start(0), done: 0 };
       const P0 = T0.prep;
       if (P0.done >= P0.at) return;
-      const ticksLeft = Math.max(1, Math.floor((T0.q.game.tour[P0.k][0] - el) / 50) - 1), slice = Math.max(1500, Math.ceil((P0.at - P0.done) / ticksLeft));
+      const ticksLeft = Math.max(T0.held ? 30 : 1, Math.floor((T0.q.game.tour[P0.k][0] - el) / 50) - 1), slice = Math.max(1500, Math.ceil((P0.at - P0.done) / ticksLeft));
       P0.done = Math.min(P0.at, P0.done + slice); P0.game.fastForward(P0.done);
     }
     /** the play for scene k at the song's ms `at`: the one made ready (finished now if it is not yet), else made now */
@@ -234,8 +235,21 @@
       return (P0 ? P0.game : createGame(T0.q.game, { mods }).start(0)).fastForward(at);
     }
     function tourStep(p, s) {
-      const T0 = s.tour, el = (io.tick() - T0.t0) * 50, q = T0.q, sc = q.game.tour;
-      while (s.tour === T0 && T0.next < sc.length && sc[T0.next][0] <= el) {
+      const T0 = s.tour, q = T0.q, sc = q.game.tour;
+      // (a stepped tour — `tour step`, then `tour next` for each scene after the first: its clock runs while a scene plays; at the
+      //  next scene's time it holds, the play paused on the scene's last moment, until `tour next` — a shot taken late still sees
+      //  its scene)
+      let el;
+      if (T0.manual) {
+        const now = io.tick();
+        if (!T0.held) T0.el += (now - T0.at) * 50;
+        T0.at = now; el = T0.el;
+        if (T0.next < sc.length && T0.next > T0.allow && el >= sc[T0.next][0]) {
+          T0.el = el = sc[T0.next][0];
+          if (!T0.held) { T0.held = true; if (s.seq && !s.paused) api.command(p, 'pause', []); }
+        }
+      } else el = (io.tick() - T0.t0) * 50;
+      while (s.tour === T0 && T0.next < sc.length && sc[T0.next][0] <= el && (!T0.manual || T0.next <= T0.allow)) {
         const k = T0.next++, [, what, a, b, c] = sc[k];
         if (what === 'play') { s.mode = b || 'auto'; s.mods = modsIn(c, []); api.command(p, 'play', [String(q.index), String(a / 1000)]); }
         else if (what === 'seek') {
@@ -289,12 +303,24 @@
         if (verb === 'mods') { const m = modsOf(args); if (typeof m === 'string') return m; s.mods = m; if (!s.tour) savePrefs(p, s); return ''; }
         // (the last play again from its start: the same mode and mods)
         if (verb === 'retry') { if (!s.last) return `${CFG.ns}: nothing to retry`; if (s.tour) { s.mode = s.tour.keep.mode; s.mods = s.tour.keep.mods; s.tour = null; } return api.command(p, 'play', [String(s.last)]); }
-        // (the tour: every look of a game in about 20 seconds, its scenes at fixed times — q.game.tour)
+        // (the tour: every look of a game in about 20 seconds, its scenes at fixed times — q.game.tour. `tour step`: the same scenes
+        //  one at a time, each held on its last moment until `tour next` — what a slow camera can still take one by one)
         if (verb === 'tour') {
-          const want = args[0] ? String(args[0]) : null, q = CFG.sequences.find((x) => x.game && x.game.tour && (!want || String(x.index) === want || x.id === want));
+          if (String(args[0]) === 'next') {
+            const T0 = s.tour;
+            if (!T0 || !T0.manual) return `${CFG.ns}: no stepped tour (tour step first)`;
+            const sc = T0.q.game.tour;
+            T0.allow = T0.next; T0.at = io.tick();
+            if (T0.held) { T0.held = false; if (s.seq && s.paused) api.command(p, 'resume', []); }
+            if (T0.next < sc.length) T0.el = Math.max(T0.el, sc[T0.next][0]);
+            tourStep(p, s);
+            return '';
+          }
+          const manual = String(args[0]) === 'step', want = args[manual ? 1 : 0] ? String(args[manual ? 1 : 0]) : null;
+          const q = CFG.sequences.find((x) => x.game && x.game.tour && (!want || String(x.index) === want || x.id === want));
           if (!q) return `${CFG.ns}: no tour (a game sequence has one)`;
           const keep = s.tour ? s.tour.keep : { mode: s.mode, mods: s.mods };
-          s.tour = { q, t0: io.tick(), next: 0, keep, prep: null };
+          s.tour = { q, t0: io.tick(), next: 0, keep, prep: null, ...(manual ? { manual: true, allow: 0, el: 0, at: io.tick(), held: false } : {}) };
           tourStep(p, s);
           return '';
         }
@@ -302,7 +328,7 @@
         if (verb === 'pause') { if (!s.paused) { s.from = Math.round(nowMs(s)); s.paused = true; set(p, P('seq_from'), s.from); seqProp(p, s); silence(p, s); } return ''; }
         if (verb === 'resume') { if (s.paused) { s.paused = false; restart(p, s, s.from); } return ''; }
         if (verb === 'seek') { restart(p, s, Number(args[0] || 0) * 1000); return ''; }
-        return `${CFG.ns}: unknown ${verb} (play stop pause resume seek offset mode sens mods retry tour)`;
+        return `${CFG.ns}: unknown ${verb} (play stop pause resume seek offset mode sens mods retry tour [step|next])`;
       },
       /** what a game's menu shows a player: the game, their best, their settings (the script's forms) */
       menuInfo(p) {

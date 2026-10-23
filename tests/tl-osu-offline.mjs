@@ -279,6 +279,26 @@ for (const skin of ['pixel', 'skin']) {
       'the tour as the script plays it: HD then FL on their scenes, aim (no autoplay) for the misses, the fail, the results of a whole play, then stopped — the player\'s own mode and mods back', JSON.stringify({ hd: atMs(hdS[0] + 500), fl: atMs(flS[0] + 500), fail: atMs(failS[0] + 300), res: atMs(resS[0] + 500), last: seen.at(-1), mode: end.mode, mods: end.mods }));
     ok(!tw.board.size && tw.chat.length === 1 && /auto: not kept/.test(tw.chat[0]) && tw.sounds.some(([id]) => id === out.game.sounds.fail) && tw.sounds.some(([id]) => id === out.game.sounds.applause),
       'the tour keeps no best (an autoplay\'s): its results say so; the fail\'s sound and the applause played', JSON.stringify(tw.chat));
+    // ---- the stepped tour (`tour step`, then `tour next`): each scene plays its time, then holds on its last moment — paused,
+    //      its mode and mods on — however long a slow camera takes before the next; at the last `next` stopped, the player's own
+    //      mode and mods back
+    const sw = world({ store: new Map() });
+    sw.E.command(sw.A, 'mode', ['relax']); sw.E.command(sw.A, 'mods', ['NF']);
+    const notYet = sw.E.command(sw.A, 'tour', ['next']);
+    sw.E.command(sw.A, 'tour', ['step']);
+    const held = [];
+    for (let k = 0; k < sc.length - 1; k++) {
+      const len = sc[k + 1][0] - sc[k][0];
+      sw.until(sw.tick * 50 + len + 2500 + (k % 3) * 1700);
+      const st = sw.E.state(sw.A), md = sw.st('mod');
+      held.push({ k, what: sc[k][1], mods: sc[k][4] || '', paused: st.paused, seq: st.seq, hd: md.hd, fl: md.fl, auto: md.auto, failed: md.failed, done: st.done, from: st.from, at: sc[k][2], len, chat: sw.chat.length });
+      sw.E.command(sw.A, 'tour', ['next']);
+    }
+    sw.until(sw.tick * 50 + 1000);
+    const swEnd = sw.E.state(sw.A), sceneOk = (h) => (h.what === 'seek' && h.mods === 'HD' ? h.hd === 1 && h.fl === 0 : h.what === 'seek' && h.mods === 'FL' ? h.fl === 1 && h.hd === 0 : h.what === 'fail' ? h.failed === 1 : h.what === 'results' ? h.done && h.failed === 0 && h.chat === 1 : true)
+      && (h.what !== 'seek' || sc[h.k][3] !== 'auto' || Math.abs(h.from - (h.at + h.len)) <= 60);
+    ok(/tour step first/.test(notYet) && held.length === sc.length - 1 && held.every((h) => h.paused && h.seq > 0 && sceneOk(h)) && held.some((h) => h.auto === 0) && swEnd.seq === 0 && swEnd.mode === 'relax' && swEnd.mods.join() === 'NF' && !swEnd.tour,
+      `the stepped tour: each of the ${held.length} scenes played and held on its last moment (paused, its mods and mode on) until the next, however late; stopped at the last — the player's own mode and mods back`, JSON.stringify({ notYet, held: held.filter((h) => !(h.paused && h.seq > 0 && sceneOk(h))), end: { seq: swEnd.seq, mode: swEnd.mode, mods: swEnd.mods } }));
   }
   // ---- the design as Blockbench's outliner, read back as GeoUI Builder reads a project ----
   const spec = Br.designToOutliner(out.design), byName = new Map(spec.groups.map((g) => [g.name, g]));

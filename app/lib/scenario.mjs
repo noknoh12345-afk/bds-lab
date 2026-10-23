@@ -320,6 +320,8 @@ export async function runScenario(steps, ctx) {
   // into the display's shape, so `measure` looks at that part only. Kept per picture, and for the newest `shot world`
   let logical = null, baseLogical = null;
   const shotLogical = new Map();
+  // (when each picture was taken, ms: a measure says how far into the steps its shot was — a late shot told apart)
+  const shotAt = new Map();
   const doLog = path.join(runDir, 'do.txt');
   // the sections (`section <name>`): the client's content log is read at each boundary, so every line it wrote is tied
   // to the section (the screen) that was up when it was written. Lines before the first section go to "(はじめ)"
@@ -347,7 +349,7 @@ export async function runScenario(steps, ctx) {
   };
 
   const snap = () => { const b = adb.screencap(); size = pngSize(b) ?? size; last = b; return b; };
-  const save = (name, buf = snap()) => { n++; const f = path.join(shotsDir, `${String(n).padStart(2, '0')}-${name}.png`); fs.writeFileSync(f, buf); shots.push(f); shotLogical.set(f, logical); return path.relative(runDir, f).split(path.sep).join('/'); };
+  const save = (name, buf = snap()) => { n++; const f = path.join(shotsDir, `${String(n).padStart(2, '0')}-${name}.png`); fs.writeFileSync(f, buf); shots.push(f); shotLogical.set(f, logical); shotAt.set(f, Date.now()); return path.relative(runDir, f).split(path.sep).join('/'); };
   // a touch on the game, the way that works on this device (lib/android.mjs Adb.tap; a stand-in adb: input tap)
   const tapAt = (x, y) => { ocrLast = null; return adb.tap ? adb.tap(x, y) : adb.shell(['input', 'tap', String(x), String(y)]); };
   const px = (x, y) => { if (!size) snap(); return [x > 1 ? Math.round(x) : Math.round(x * size.w), y > 1 ? Math.round(y) : Math.round(y * size.h)]; };
@@ -643,7 +645,7 @@ export async function runScenario(steps, ctx) {
         if (base && JSON.stringify(baseLogical) !== JSON.stringify(lg)) throw new Error(`基準の shot world を撮ったときと、ゲームの画面の大きさ（size）が違います: 同じ大きさで shot world を撮り直してください`);
         const region = a.length === 6 ? { x0: +a[2], y0: +a[3], x1: +a[4], y1: +a[5] } : null;
         const r = await measureShot(kind, cropImage(I, area), { baseline: base ? cropImage(decode(base), area) : null, area, region });
-        measures.push({ line: s.line, section: cur().name, kind, shot: name, ok: r.ok, values: r.values ?? {}, ...(r.ok ? {} : { why: r.why }) });
+        measures.push({ line: s.line, section: cur().name, kind, shot: name, ...(shotAt.has(f) ? { at: Math.round((shotAt.get(f) - began) / 100) / 10 } : {}), ok: r.ok, values: r.values ?? {}, ...(r.ok ? {} : { why: r.why }) });
         if (!r.ok) throw new Error(`測れません（${kind} ${name}）: ${r.why}`);
         return `${Object.keys(r.values).length} 個の数`;
       }

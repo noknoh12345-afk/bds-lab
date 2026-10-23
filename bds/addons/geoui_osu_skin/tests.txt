@@ -122,3 +122,44 @@ js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 20
 until form
 ~ @A form action: .*遊び方: 押すタイミングだけ　Mods: なし
 @A form close
+
+## 一歩ずつの検証ツアー: どの場面も最後の瞬間で止まって（一時停止）次を待ち、tour next で次へ、最後の next で止まって遊び方と Mods が戻る
+# (本物のアプリの app.txt はこれで写す: 写すのが遅れても場面は止まったまま。[seq, 止まっている, HD, FL, 失敗])
+scriptevent geoui:mode relax
+scriptevent geoui:tour step
+wait 3700
+scriptevent geoui:tour next
+wait 3700
+scriptevent geoui:tour next
+wait 3700
+scriptevent geoui:tour next
+wait 3700
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; const mod = (v, k) => Math.floor(v / 2 ** k) % 2; const v = p('A').getProperty('geoui:mod'), s = q(p('A').getProperty('geoui:seq')); JSON.stringify([s[0], s[1], mod(v, 0), mod(v, 1), mod(v, 7)])
+= [1,true,1,0,0]
+scriptevent geoui:tour next
+wait 3700
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; const mod = (v, k) => Math.floor(v / 2 ** k) % 2; const v = p('A').getProperty('geoui:mod'), s = q(p('A').getProperty('geoui:seq')); JSON.stringify([s[0], s[1], mod(v, 0), mod(v, 1), mod(v, 7)])
+= [1,true,0,1,0]
+scriptevent geoui:tour next
+wait 3900
+scriptevent geoui:tour next
+wait 3700
+scriptevent geoui:tour next
+wait 3200
+scriptevent geoui:tour next
+wait 4500
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; const mod = (v, k) => Math.floor(v / 2 ** k) % 2; const v = p('A').getProperty('geoui:mod'), s = q(p('A').getProperty('geoui:seq')); JSON.stringify([s[0], s[1], mod(v, 0), mod(v, 1), mod(v, 7)])
+= [1,true,0,0,1]
+scriptevent geoui:tour next
+wait 5200
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; const mod = (v, k) => Math.floor(v / 2 ** k) % 2; const v = p('A').getProperty('geoui:mod'), s = q(p('A').getProperty('geoui:seq')); JSON.stringify([s[0], s[1], mod(v, 0), mod(v, 1), mod(v, 7)])
+= [1,true,0,0,0]
+~ @A .* SS 100\.00% ×\d+ FULL COMBO \(auto: not kept\)
+scriptevent geoui:tour next
+wait 1500
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; q(p('A').getProperty('geoui:seq'))[0]
+= 0
+@A cmd /geoui:osu
+until form
+~ @A form action: .*遊び方: 押すタイミングだけ　Mods: なし
+@A form close

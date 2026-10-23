@@ -1,5 +1,6 @@
-# geoui_osu_pixel を本物のアプリで: 検証ツアー（/scriptevent geoui:tour: 円・スライダー・キアイ・HD・FL・スピナー・休み・ミス・失敗・結果を約 24 秒で）を
-# 場面ごとに写し、全部を録る（GeoUI のタイムラインが描く osu!）。時刻はツアーを始めてからの目安（命令が届くまでの遅れがある）。比べる基準は再生前の画面（world--before-play）。
+# geoui_osu_pixel を本物のアプリで: 一歩ずつの検証ツアー（/scriptevent geoui:tour step と tour next: 円・スライダー・キアイ・HD・FL・スピナー・休み・ミス・失敗・結果）を
+# 場面ごとに写し、全部を録る（GeoUI のタイムラインが描く osu!）。どの場面も最後の瞬間で止まって次を待つので、写すのが遅れても場面は変わらない。
+# 測るのは全部を写した後。比べる基準は再生前の画面（world--before-play）。
 
 section title
 launch
@@ -27,43 +28,53 @@ absent clientlog \bERROR\b
 section tour
 # (the whole tour recorded: recordings/rec-1.mp4 — the person's Discord gets it at the end, made to fit: app/lib/feed.mjs)
 record start
-do scriptevent geoui:tour
+do scriptevent geoui:tour step
 wait 1500
 shot tour-01-circles
-measure diff tour-01-circles 0 0 1560 720
-wait 2000
+do scriptevent geoui:tour next
+wait 1300
 shot tour-02-slider
-measure diff tour-02-slider 0 0 1560 720
-wait 2050
+do scriptevent geoui:tour next
+wait 1150
 shot tour-03-kiai
-measure diff tour-03-kiai 0 0 1560 720
-wait 2450
+do scriptevent geoui:tour next
+wait 1400
 shot tour-04-hidden
-measure diff tour-04-hidden 0 0 1560 720
-wait 2100
+do scriptevent geoui:tour next
+wait 1300
 shot tour-05-flashlight
-measure diff tour-05-flashlight 0 0 1560 720
-wait 2600
-shot tour-06-spinner
-measure diff tour-06-spinner 0 0 1560 720
+do scriptevent geoui:tour next
 wait 1700
+shot tour-06-spinner
+do scriptevent geoui:tour next
+wait 1000
 shot tour-07-break
-measure diff tour-07-break 0 0 1560 720
-wait 2550
+do scriptevent geoui:tour next
+wait 1350
 shot tour-08-miss
-measure diff tour-08-miss 0 0 1560 720
-wait 1850
+do scriptevent geoui:tour next
+wait 1500
 shot tour-09-fail
-measure diff tour-09-fail 0 0 1560 720
-wait 4400
+do scriptevent geoui:tour next
+wait 2900
 shot tour-10-results
-measure diff tour-10-results 0 0 1560 720
-wait 2300
+do scriptevent geoui:tour next
+wait 1500
 record stop
+measure diff tour-01-circles 0 0 1560 720
+measure diff tour-02-slider 0 0 1560 720
+measure diff tour-03-kiai 0 0 1560 720
+measure diff tour-04-hidden 0 0 1560 720
+measure diff tour-05-flashlight 0 0 1560 720
+measure diff tour-06-spinner 0 0 1560 720
+measure diff tour-07-break 0 0 1560 720
+measure diff tour-08-miss 0 0 1560 720
+measure diff tour-09-fail 0 0 1560 720
+measure diff tour-10-results 0 0 1560 720
 absent clientlog \bERROR\b
 
 section stop
-# (the tour stops by itself: nothing of the game left on the screen)
+# (the last tour next stopped it: nothing of the game left on the screen)
 shot stopped
 measure diff stopped 0 0 1560 720
 

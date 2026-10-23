@@ -11,7 +11,7 @@ osu! を GeoUI のタイムラインで丸ごと再現する（曲・判定・�
 - osu! のルール: 体力が尽きると失敗（盤面が落ち、幕が下り、FAILED・失敗の音・曲が止まる。1 秒後からジャンプでやり直し）。Mods（HD: 接近の輪なし・円が先に消える／FL: カーソルのまわりだけ見え、コンボ 100・200 で狭まる／NF: 失敗しない ×0.5／SD: 1 つ落とすと失敗／PF: 300 以外で失敗）は右上に並ぶ。
 - 終わりに結果の画面（キューブの枠の盤: 点数・300/100/50/ミスの数を数え上げ・最大コンボ・精度・ランク（HD・FL で銀）・フルコンボの印・自己ベストなら NEW RECORD）。ベストはプレイヤーごとにワールドへ（オートは残さない）、スコアボード geoui_best、チャットに 1 行、拍手。
 - 遊び方: `/geoui:osu`（メニュー: プレイ・Mods・感度とずれ・検証ツアー）、または `/scriptevent geoui:mode auto`（ひとりでに遊ぶ）・`aim`（見ている所がカーソル、ジャンプ・スニーク・アイテムで押す）・`relax`（狙わなくてよい）→ `/scriptevent geoui:play 1`。`geoui:mods HD FL`・`geoui:sens 2.4`・`geoui:offset 30`（遊び方・感度・ずれ・Mods はプレイヤーごとに残る）・`geoui:retry`。
-- 検証ツアー（`/scriptevent geoui:tour`）: 全部の演出を 24 秒で（circles・slider・kiai・hidden・flashlight・spinner・break・miss・fail・results）。本物のアプリの確かめ（app.txt）はこれ 1 回で済む。
+- 検証ツアー（`/scriptevent geoui:tour`）: 全部の演出を 24 秒で（circles・slider・kiai・hidden・flashlight・spinner・break・miss・fail・results）。一歩ずつ（`tour step`、`tour next` で次へ）なら、どの場面も最後の瞬間で止まって待つ: 本物のアプリの確かめ（app.txt）はこれで全部の場面を写す。
 - 大きさ: プロパティ 21 個（GeoUI の 11 個を含む）・pre_animation 2314 行（最長 887 文字）・ボーン 315 本・キューブ 6597 個・要素ごとの render controller 56 個・アニメーション 35 個・アトラス 1024x1024。
 - ひとりでに遊ぶと（osugame.js、20 tick/秒）: 点数 672572・最大コンボ 193・精度 100%・ランク SS。
 - preview.png はラボの描き方（bds/geoui/osu/render.mjs）で描いた 6 つの場面（キアイ・スライダー・スピナー・FL と Mods・失敗・結果。本物のゲームではない: 本物は app.txt）。
@@ -28,3 +28,4 @@ osu! を GeoUI のタイムラインで丸ごと再現する（曲・判定・�
 - [ ] Mods の文字・組み合わせの不可・none
 - [ ] メニュー（/geoui:osu）: Mods を選ぶとメニューに戻って出る
 - [ ] 検証ツアー: HD・FL・失敗・結果を順に見せて止まり、遊び方と Mods が戻る
+- [ ] 一歩ずつの検証ツアー: どの場面も最後の瞬間で止まって次を待ち、tour next で次へ、最後に止まる
