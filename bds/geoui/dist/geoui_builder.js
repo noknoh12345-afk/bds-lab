@@ -1,5 +1,5 @@
 // GeoUI Builder 0.1.0 with its timeline — one file for Blockbench (made by bds/geoui/build.mjs from bds/geoui/geoui_builder.js and
-// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 709e6650f6a2
+// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 094491d3d8b8
 // ---- timeline/model.js
 (function (module) {
 // GeoUI timeline — the model (pure: no DOM, no Blockbench). The plan's step 1 (bds/geoui/timeline/PLAN.md):
@@ -2191,7 +2191,7 @@
   /** the pixel look's models (modelCells' input): each object of the game modeled — a few layers of blocks, the pixel art on their
    *  faces. Layers: { im | ims (frames), dx, dy (px from the middle, up), z (px behind the front), d (px deep), perPixel }; zs: how
    *  deep a px is, against its width */
-  function pixelModels(colours, S, maxN = 1) {
+  function pixelModels(colours, S, pairs = null) {
     const M = {}, C4 = (c) => [...c, 255];
     const diamond = (n, col) => { const im = img(7, 7); for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) if (Math.abs(x - 3) + Math.abs(y - 3) <= n) put(im, x, y, col(x, y)); return im; };
     // (raised letters: the letters a pixel deep, and behind them their shadow half a pixel right and down — a block of letters)
@@ -2200,24 +2200,24 @@
     const text = (ims, o = {}) => { const a = [].concat(ims), pp = a.length > 1; return { layers: [{ ims: a, z: 0, d: o.d || 1, perPixel: pp }, { ims: a.map((m) => lit(m, 0.34)), dx: 0.5, dy: -0.5, z: o.d || 1, d: 0.7, perPixel: pp }] }; };
     // hit circle: a coin — its white rim and a dome standing out of its body (the combo colour lit from the top left), a dark
     // plate under it all, a little wider — and its combo number standing out of the dome on its shadow, a part of the coin: one
-    // frame a combo colour and number (frame (n - 1) × colours + colour; numbers 1 … maxN, the map's longest combo)
-    const NC = colours.length, frameOf = (f) => [Math.floor(f / NC), f % NC], nf = NC * maxN;
+    // frame for each combo number and colour the map's circles show (pairs: [[n, colour], …]; none: a frame a colour, no number)
     const rim = discImage(16, (x, y, d) => (d > 6.0 && d <= 7.0 ? WHITE : null));
     // (the dome: the coin's colour a little darker at its edge, one lit pixel at its top left — the white number stands on it)
     const domes = colours.map((cc) => discImage(16, (x, y, d) => (d > 3.3 ? null : x === 6 && y === 6 ? mix(C4(cc), WHITE, 0.45) : d > 2.3 ? shade(C4(cc), 0.78) : shade(C4(cc), 0.9))));
     const bodies = colours.map((cc) => discImage(16, (x, y, d) => { if (d > 7.0) return null; const l = (8 - x - y) / 16; return l > 0.18 ? mix(C4(cc), WHITE, 0.3) : l < -0.3 ? shade(C4(cc), 0.75) : C4(cc); }));
     const plates = colours.map((cc) => discImage(16, (x, y, d) => (d <= 7.95 ? shade(C4(cc), 0.45) : null)));
-    // (a number: one digit or two in the middle of seven pixels by five)
-    const numbers = Array.from({ length: maxN }, (_, k) => { const t = textImage(String(k + 1), WHITE), o = img(7, 5); blit(o, t, Math.floor((7 - t.width) / 2), 0); return o; });
-    const each = (fn) => Array.from({ length: nf }, (_, f) => fn(...frameOf(f)));
+    const frames = pairs || colours.map((cc, c) => [0, c]);
+    // (a number in the middle of a picture as wide as the widest: 3 pixels a digit, 1 between)
+    const nw = Math.max(3, ...frames.map(([n]) => 4 * String(n).length - 1));
+    const number = (n) => { const o = img(nw, 5); if (n > 0) { const t = textImage(String(n), WHITE); blit(o, t, Math.floor((nw - t.width) / 2), 0); } return o; };
+    const each = (fn) => frames.map(([n, c]) => fn(n, c));
     M.hitcircle = { layers: [
       { ims: each(() => rim), z: 0, d: 0.5 },
       { ims: each((n, c) => domes[c]), z: -0.5, d: 1.0 },
       { ims: each((n, c) => bodies[c]), z: 0.5, d: 1.2 },
       { ims: each((n, c) => plates[c]), z: 1.7, d: 0.9 },
       // (the number: white blocks a pixel deep on their dark shadow, half a pixel right and down)
-      { ims: each((n) => numbers[n]), z: -1.5, d: 0.6, perPixel: true },
-      { ims: each((n) => lit(numbers[n], 0.3)), dx: 0.5, dy: -0.5, z: -0.9, d: 0.4 },
+      ...(pairs ? [{ ims: each((n) => number(n)), z: -1.5, d: 0.6, perPixel: true }, { ims: each((n) => lit(number(n), 0.3)), dx: 0.5, dy: -0.5, z: -0.9, d: 0.4 }] : []),
     ] };
     // approach circle: a hoop — a bright ring at its front, a wider darker one behind it
     M.approachcircle = { layers: [
@@ -2301,8 +2301,8 @@
     const comeIn = P ? { scaleX: popHd('1 - state.hd'), scaleY: popHd('1 - state.hd') }
       : { opacity: at(`math.clamp(t / ${fade}, 0, 1) * (1 - state.hd) + state.hd * math.clamp(t / ${hdA}, 0, 1) * ${hdOut}`) };
     const shakeX = 'param.x + 2.4 * math.sin(t * 2880) * (1 - t / 0.25)', noHd = at('1 - state.hd');
-    // (the circle's frame: its combo colour — and in the pixel look its number too, the coin's own: (n - 1) × colours + colour)
-    const cf = at(P ? `(math.clamp(param.n, 1, ${L.circleNumbers || 1}) - 1) * ${L.colours} + param.c` : 'param.c');
+    // (the circle's frame: its combo colour — in the pixel look its number too, the coin's own: the instance's cf, its pair's frame)
+    const cf = at(L.coinFrame ? 'param.cf' : 'param.c');
     const circleLook = (hitName, endExpr) => [
       { target: 'hitcircle', clips: [
         { start: 0, end: 0.25, trigger: 'early', channels: { x: at(shakeX), y: at('param.y'), frame: cf, scaleX: noHd, scaleY: noHd } },
@@ -2325,8 +2325,8 @@
         rotation: [{ t: 0, v: 0 }, { t: 0.7, v: 'param.n * 7 - 20' }], scaleX: [{ t: 0, v: 1.5, ease: 'quad-out' }, { t: 0.1, v: 1 }, { t: 0.55, v: 1 }, { t: 0.7, v: P ? 0 : 1 }], scaleY: [{ t: 0, v: 1.5, ease: 'quad-out' }, { t: 0.1, v: 1 }, { t: 0.55, v: 1 }, { t: 0.7, v: P ? 0 : 1 }],
         ...(P ? {} : { opacity: [{ t: 0, v: 1 }, { t: 0.5, v: 1 }, { t: 0.7, v: 0 }] }) } }] });
     const templates = [
-      { id: 'osu-circle', name: 'osu! 円', lead, tail: r4(late + 0.7), params: ['x', 'y', 'n', 'c', 'jx', 'jy'], judge: { kind: 'circle' }, tracks: [...circleLook('hit', late), judgement('j')] },
-      { id: 'osu-slider', name: 'osu! スライダー', lead, tail: 0.7, params: ['x', 'y', 'n', 'c', 'd', 'r', 'f', 'bx', 'by', 'ex', 'ey', 'ea', 'jx', 'jy'], judge: { kind: 'slider' }, tracks: [
+      { id: 'osu-circle', name: 'osu! 円', lead, tail: r4(late + 0.7), params: ['x', 'y', 'n', 'c', ...(L.coinFrame ? ['cf'] : []), 'jx', 'jy'], judge: { kind: 'circle' }, tracks: [...circleLook('hit', late), judgement('j')] },
+      { id: 'osu-slider', name: 'osu! スライダー', lead, tail: 0.7, params: ['x', 'y', 'n', 'c', ...(L.coinFrame ? ['cf'] : []), 'd', 'r', 'f', 'bx', 'by', 'ex', 'ey', 'ea', 'jx', 'jy'], judge: { kind: 'slider' }, tracks: [
         { target: 'sliderbody', clips: [{ start: -lead, end: 'param.d + 0.1', channels: { x: at('param.bx'), y: at('param.by'), frame: at('param.f'),
           ...(P ? { scaleX: [{ t: 0, v: 0.2, ease: 'back-out' }, { t: 0.2, v: 1 }, { t: lead, v: 1, ease: 'quad-in' }, { t: r4(lead + 0.18), v: '1 - state.hd' }], scaleY: [{ t: 0, v: 0.2, ease: 'back-out' }, { t: 0.2, v: 1 }, { t: lead, v: 1, ease: 'quad-in' }, { t: r4(lead + 0.18), v: '1 - state.hd' }] }
             : { opacity: at(`math.clamp(t / ${fade}, 0, 1) * 0.9 * (1 - state.hd * math.clamp((t - ${lead}) / math.max(0.05, param.d), 0, 1))`) }) } }] },
@@ -2355,12 +2355,14 @@
     const objs = map.objects || [];
     objs.forEach((o, i) => {
       const g = G.objects[i], id = `o${i + 1}`, t = r4(o.time / 1000), c = cs[i];
-      if (g.k === 'c') instances.push({ id, template: 'osu-circle', t, params: { x: g.x, y: g.y, n: c.n, c: c.colour % L.colours, jx: g.x, jy: g.y } });
+      // (the coin's frame of its number and colour: the pixel look's — L.coinFrame)
+      const cfOf = () => (L.coinFrame ? { cf: L.coinFrame[`${Math.min(9999, c.n)}/${c.colour % L.colours}`] } : {});
+      if (g.k === 'c') instances.push({ id, template: 'osu-circle', t, params: { x: g.x, y: g.y, n: c.n, c: c.colour % L.colours, ...cfOf(), jx: g.x, jy: g.y } });
       else if (g.k === 's') {
         const d = r4(g.d / 1000), line = g.line, end = line[line.length - 1], prev = line[Math.max(0, line.length - 2)], fin = g.r % 2 ? end : line[0], pid = `op${i + 1}`;
         paths.push({ id: pid, kind: 'linear', points: line.map((p) => [p[0], p[1]]), length: g.len });
         const ea = r4((-Math.atan2(prev[1] - end[1], prev[0] - end[0]) * 180) / Math.PI);
-        instances.push({ id, template: 'osu-slider', t, path: pid, tail: r4(d + 0.7), params: { x: g.x, y: g.y, n: c.n, c: c.colour % L.colours, d, r: g.r, f: L.bodyFrame[i], bx: L.bodyCentre[i][0], by: L.bodyCentre[i][1], ex: end[0], ey: end[1], ea, jx: fin[0], jy: fin[1] } });
+        instances.push({ id, template: 'osu-slider', t, path: pid, tail: r4(d + 0.7), params: { x: g.x, y: g.y, n: c.n, c: c.colour % L.colours, ...cfOf(), d, r: g.r, f: L.bodyFrame[i], bx: L.bodyCentre[i][0], by: L.bodyCentre[i][1], ex: end[0], ey: end[1], ea, jx: fin[0], jy: fin[1] } });
         // (its ticks, first slide only: each shows from the slider's coming in until the ball reaches it)
         const span = g.d / g.r;
         for (const tk of g.ticks) if (tk < span) { const tt = (g.t + tk) / 1000, p = (() => { const gg = T.osugame.createGame({ objects: [g], windows: G.windows, r: G.r }); return gg.ballAt(0, g.t + tk); })(); ticks.push({ t: r4(tt), x: r4(p[0]), y: r4(p[1]), w: r4(tt - (t - lead)) }); }
@@ -2534,8 +2536,10 @@
     const warnings = [], diff = O.difficultyOf(map), G = O.gameOf(map, { width: FW, sound: opts.sound || ((x) => x) }), R = G.r;
     const colours = (map.colours.combos.length ? map.colours.combos : [[255, 192, 0], [0, 202, 0], [18, 124, 255], [242, 24, 57]]).slice(0, 8);
     const cs = O.combos(map), bpm = r4(60000 / ((map.timing.find((p) => p.uninherited) || { beatLength: 500 }).beatLength));
-    // (the pixel look's circles carry their numbers: a frame a colour and number, up to the map's longest combo — 99 at most)
-    const circleNumbers = Math.min(99, Math.max(1, ...cs.map((c) => c.n)));
+    // (the pixel look's circles carry their numbers: a frame for each combo number and colour a circle or a slider's head shows —
+    //  the pairs the map has, not all of them: the coin's frames stay few however long a combo runs)
+    const pairKey = ([n, c]) => `${n}/${c}`;
+    let coinPairs = P ? [...new Map(G.objects.map((g, i) => [g.k, [Math.min(9999, cs[i].n), cs[i].colour % colours.length]]).filter(([k]) => k === 'c' || k === 's').map(([, p]) => [pairKey(p), p])).values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]) : null;
     const lastEnd = Math.max(...G.objects.map((g) => (g.k === 's' ? g.t + g.d : g.k === 'p' ? g.e : g.t)));
     const duration = r4(Math.max(lastEnd / 1000 + 4, num(opts.duration, 0)));
     // ---- the sprites and their sizes (model units)
@@ -2557,7 +2561,7 @@
       // (the mods on: a plate a mod — its colour's border, its letters)
       for (const [m, c] of MODC) { const t = textImage(m, [...c.map((v) => Math.min(255, v + 40)), 255]), o = img(t.width + 4, 9); for (let y = 0; y < 9; y++) for (let x = 0; x < o.width; x++) { const e = Math.min(x, y, o.width - 1 - x, 8 - y), corner = (x === 0 || x === o.width - 1) && (y === 0 || y === 8); if (!corner) put(o, x, y, e === 0 ? [...c.map((v) => Math.round(v * 0.7)), 255] : [18, 20, 32, 255]); } blit(o, t, 2, 2); S[`mod${m}`] = o; }
       // the models (pixelModels: each object of the game built of blocks, the pixel art on their faces)
-      const MODELS = pixelModels(colours, S, circleNumbers), models = {};
+      const MODELS = pixelModels(colours, S, coinPairs), models = {};
       MODELS.rank.zs = 0.45; for (const id of ['digitframes', 'x', 'dot', 'pct', ...Array.from({ length: 10 }, (_, d) => `num${d}`)]) MODELS[id].zs = 0.5;
       for (const [id, im, sh] of [['hitcircle', S.hitcircle, 1], ['approachcircle', S.approachcircle, 1], ['hitburst', S.hitburst, 1], ['sliderball', S.sliderball, 1], ['followcircle', S.followcircle, 1],
         ['reversearrow', S.reversearrow, 1], ['slidertick', S.slidertick, 1], ['followpoint', S.followpoint, 1], ['spinner', S.spinner, 1], ['spinnerapproach', S.spinnerapproach, 1], ['cursor', S.cursor, 1],
@@ -2647,6 +2651,13 @@
     for (let tries = 0, bp = bodyInfo.ppu; !A; tries++) {
       try { A = atlasOf(items, { maxSize: num(opts.maxAtlas, 2048) }); }
       catch (e) {
+        // (the coins' numbers when nothing else is left to make smaller: a frame for each number and colour → a frame a colour)
+        if ((tries >= 6 || !bodyInfo.cells.length) && P && coinPairs) {
+          const mc = modelCells(pixelModels(colours, size.sprites, null).hitcircle);
+          size.models.hitcircle = mc; items.find((x) => x.id === 'hitcircle').image = mc.cells;
+          warnings.push(`コンボの数字をコインに描けませんでした（数字と色の組 ${coinPairs.length} 個がアトラス（${num(opts.maxAtlas, 2048)} x ${num(opts.maxAtlas, 2048)}）に入りません）。数字のない円にしました`);
+          coinPairs = null; continue;
+        }
         if (tries >= 6 || !bodyInfo.cells.length) throw e;
         bp *= 0.84; bodyInfo = bodies(G, colours, cs.map((c) => c.colour), { ppu: bp, pixel: P }); items.find((x) => x.id === 'bodies').image = bodyInfo.cells;
         if (tries === 0) warnings.push('アトラス（2048 x 2048）に入りきらないので、スライダーの体を小さい絵にしました（画面での大きさは同じ・きめが粗い）');
@@ -2881,7 +2892,7 @@
     // (the pixel look's models: no two of them share a plane where they overlap)
     if (P) settleDepths(bones);
     // ---- the timeline and the game
-    const L = Object.assign({ pixel: P, C, bpm, colours: colours.length, circleNumbers, kiai: G.kiai, breaks: G.breaks, duration, music: opts.music || 'music', bodyFrame, bodyCentre, width: FW, comboDigitW: P ? 2.6 * 4 : size.score[0] * 1.25 * 0.92, flR: FLR }, L0);
+    const L = Object.assign({ pixel: P, C, bpm, colours: colours.length, coinFrame: coinPairs ? Object.fromEntries(coinPairs.map((p, f) => [pairKey(p), f])) : null, kiai: G.kiai, breaks: G.breaks, duration, music: opts.music || 'music', bodyFrame, bodyCentre, width: FW, comboDigitW: P ? 2.6 * 4 : size.score[0] * 1.25 * 0.92, flR: FLR }, L0);
     const doc = docOf(map, G, L);
     // (the tour rides on the game's config: the script plays its scenes)
     const tour = tourOf(G);

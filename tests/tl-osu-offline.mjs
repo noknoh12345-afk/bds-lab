@@ -139,6 +139,18 @@ const at = (o) => [o.x, o.y];
   ok(g.state().score === 0 && (() => { g.step(5520, { cx: Gc.objects[4].x, cy: Gc.objects[4].y, presses: [5520] }); return g.state().n300 === 1 && g.state().misses === 0; })(), 'a seek: what is before it left out (no misses for it), what comes after played');
 }
 
+// ---- the pixel look's coins on a map of one long combo in 8 colours: a frame for each number (three digits too) — and, when the
+//      atlas cannot hold them, coins of a frame a colour without numbers, said, the document without the coins' frames ----
+{
+  let k = 0;
+  const long = O.parseOsu(S.beatmap('chip').replace(/\[HitObjects\]([\s\S]*)$/, (m, body) => '[Colours]\n' + Array.from({ length: 8 }, (_, i) => `Combo${i + 1} : ${50 + i * 25},${200 - i * 20},${100 + i * 15}`).join('\n') + '\n\n[HitObjects]' + body.split('\n').map((l) => { const f = l.split(','); if (f.length < 5) return l; f[3] = String((Number(f[3]) & ~4) | (k++ === 0 ? 4 : 0)); return f.join(','); }).join('\n')));
+  const big = KIT.build(long, { skin: 'pixel', music: 'music' }), heads = big.doc.sequences[0].instances.filter((x) => x.template === 'osu-circle' || x.template === 'osu-slider');
+  const small = KIT.build(long, { skin: 'pixel', music: 'music', maxAtlas: 1024 }), sh = small.doc.sequences[0].instances.filter((x) => x.template === 'osu-circle');
+  ok(Math.max(...heads.map((x) => x.params.n)) > 99 && big.atlas.at.hitcircle.frames === heads.length && big.atlas.width <= 2048 && big.atlas.height <= 2048 && !big.warnings.some((w) => /コンボの数字/.test(w))
+    && small.warnings.some((w) => /コンボの数字をコインに描けませんでした/.test(w)) && small.atlas.at.hitcircle.frames === 8 && sh.every((x) => x.params.cf === undefined) && !small.doc.sequences[0].templates.some((t) => t.params.includes('cf')),
+    `pixel: a combo of ${heads.length} in 8 colours — the coins a frame a number (three digits too, ${big.atlas.width}x${big.atlas.height}); in an atlas too small for them, a frame a colour without numbers, said`, JSON.stringify([big.atlas.at.hitcircle.frames, big.warnings, small.warnings, small.atlas.at.hitcircle.frames]));
+}
+
 // ---- both looks built: the game's limits, the geometry clean, every target there ----
 const fakeSkin = () => { const out = {}; for (const nme of KIT.SKIN_IMAGES) { const w = /scorebar/.test(nme) ? 120 : /spinner-circle|approachcircle/.test(nme) ? 96 : 40, h = /scorebar/.test(nme) ? 10 : 40, im = KIT.img(w, h); for (let i = 3; i < im.data.length; i += 4) { im.data[i] = 255; im.data[i - 3] = 200; } out[nme] = im; } return out; };
 const songMap = O.parseOsu(S.beatmap('chip'));
@@ -295,23 +307,26 @@ for (const skin of ['pixel', 'skin']) {
   ok(Math.abs(ap({}).scaleX - 2.5) < 1e-6 && ap({ hd: 1 }).scaleX === 0 && Math.abs(vis(hc({}, 0.2)) - 1) < 1e-6 && Math.abs(vis(hc({ hd: 1 }, 0.2))) < 1e-6 && vis(hc({ hd: 1 }, 0.7)) >= 0.5 && vis(hc({ hd: 1 }, 0.45)) > 0 && vis(hc({ hd: 1 }, 0.45)) < 1,
     `${skin}: HD — no approach circle; a circle in by 40 % of its approach, fading after it, gone by 70 % (without HD: there to the end)`, JSON.stringify([ap({}), ap({ hd: 1 }), hc({}, 0.2), hc({ hd: 1 }, 0.2), hc({ hd: 1 }, 0.7), hc({ hd: 1 }, 0.45)]));
   if (skin === 'pixel') {
-    // (the combo number a part of the coin: a frame a colour and number — every circle and slider head shows the frame of its
-    //  own, and that frame's picture holds its number's digits, white, as the pixel font draws them, and no other number's)
-    const NC = out.info.colours.length, a = out.atlas.at.hitcircle, im = out.atlas.image, heads = sq.instances.filter((x) => x.template === 'osu-circle' || x.template === 'osu-slider');
-    const maxN = Math.max(...heads.map((x) => x.params.n)), frameOf = (x) => ev(x.t - lead * 0.3, {})[`hitcircle#${x.id}`].frame;
+    // (the combo number a part of the coin: a frame for each number and colour the map's circles show — every circle and slider
+    //  head shows the frame of its own pair (its cf), one pair one frame, and that frame's picture holds its number's digits,
+    //  white, as the pixel font draws them, and no other number's)
+    const a = out.atlas.at.hitcircle, im = out.atlas.image, heads = sq.instances.filter((x) => x.template === 'osu-circle' || x.template === 'osu-slider');
+    const pairOf = (x) => `${x.params.n}/${x.params.c}`, frameOf = (x) => ev(x.t - lead * 0.3, {})[`hitcircle#${x.id}`].frame;
+    const nw = Math.max(3, ...heads.map((x) => 4 * String(x.params.n).length - 1)), byPair = new Map(), byFrame = new Map();
+    for (const x of heads) { byPair.set(pairOf(x), new Set([...(byPair.get(pairOf(x)) || []), frameOf(x)])); byFrame.set(frameOf(x), new Set([...(byFrame.get(frameOf(x)) || []), pairOf(x)])); }
     const holds = (f, n) => {
-      const t = KIT.textImage(String(n), [255, 255, 255, 255]), x0 = a.x + (f % a.cols) * a.cell[0], y0 = a.y + Math.floor(f / a.cols) * a.cell[1], lx = Math.floor((7 - t.width) / 2);
+      const t = KIT.textImage(String(n), [255, 255, 255, 255]), x0 = a.x + (f % a.cols) * a.cell[0], y0 = a.y + Math.floor(f / a.cols) * a.cell[1], lx = Math.floor((nw - t.width) / 2);
       const white = (x, y) => { const p = ((y0 + y) * im.width + x0 + x) * 4; return im.data[p + 3] > 0 && im.data[p] > 240 && im.data[p + 1] > 240 && im.data[p + 2] > 240; };
-      for (let ox = 0; ox + 7 <= a.cell[0]; ox++) for (let oy = 0; oy + 5 <= a.cell[1]; oy++) {
+      for (let ox = 0; ox + nw <= a.cell[0]; ox++) for (let oy = 0; oy + 5 <= a.cell[1]; oy++) {
         let all = true;
-        for (let y = 0; y < 5 && all; y++) for (let x = 0; x < 7 && all; x++) { const tx = x - lx, on = tx >= 0 && tx < t.width && t.data[(y * t.width + tx) * 4 + 3] > 0; if (on !== white(ox + x, oy + y)) all = false; }
+        for (let y = 0; y < 5 && all; y++) for (let x = 0; x < nw && all; x++) { const tx = x - lx, on = tx >= 0 && tx < t.width && t.data[(y * t.width + tx) * 4 + 3] > 0; if (on !== white(ox + x, oy + y)) all = false; }
         if (all) return true;
       }
       return false;
     };
-    const wrong = heads.filter((x) => frameOf(x) !== (x.params.n - 1) * NC + x.params.c || !holds(frameOf(x), x.params.n) || holds(frameOf(x), x.params.n === 1 ? 7 : x.params.n - 1));
-    ok(a.frames === NC * maxN && heads.length > 100 && !wrong.length && !out.design.elements.combonumber,
-      `pixel: the combo number is the coin's own (${NC} colours × ${maxN} numbers, ${a.frames} frames): each of the ${heads.length} circles and slider heads shows the frame of its colour and number, its digits in that frame's picture — no numerals of their own`, JSON.stringify(wrong.slice(0, 3).map((x) => [x.id, x.params.n, x.params.c, frameOf(x)])));
+    const wrong = heads.filter((x) => frameOf(x) !== x.params.cf || !holds(frameOf(x), x.params.n) || holds(frameOf(x), x.params.n === 1 ? 7 : x.params.n - 1));
+    ok(a.frames === byPair.size && [...byPair.values()].every((v) => v.size === 1) && [...byFrame.values()].every((v) => v.size === 1) && heads.length > 100 && !wrong.length && !out.design.elements.combonumber,
+      `pixel: the combo number is the coin's own (${byPair.size} numbers and colours the map shows, ${a.frames} frames): each of the ${heads.length} circles and slider heads shows its own pair's frame, its digits in that frame's picture — no numerals of their own`, JSON.stringify(wrong.slice(0, 3).map((x) => [x.id, x.params.n, x.params.c, x.params.cf, frameOf(x)])));
   }
   const fl = ev(20, { fl: 1, cx: 30, cy: -10, combo: 150 }), fl0 = ev(20, { fl: 0, cx: 30, cy: -10, combo: 150 }), fl2 = ev(20, { fl: 1, cx: 30, cy: -10, combo: 230 });
   const hole = out.design.bones.find((b) => b.name === 'flhole').cubes[0].size[0] / 2, pv = (nm) => out.design.bones.find((b) => b.name === nm).pivot, C0 = pv('flhole');

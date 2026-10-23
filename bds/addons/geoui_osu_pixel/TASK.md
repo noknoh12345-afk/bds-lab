@@ -12,7 +12,7 @@ osu! を GeoUI のタイムラインで丸ごと再現する（曲・判定・�
 - 終わりに結果の画面（キューブの枠の盤: 点数・300/100/50/ミスの数を数え上げ・最大コンボ・精度・ランク（HD・FL で銀）・フルコンボの印・自己ベストなら NEW RECORD）。ベストはプレイヤーごとにワールドへ（オートは残さない）、スコアボード geoui_best、チャットに 1 行、拍手。
 - 遊び方: `/geoui:osu`（メニュー: プレイ・Mods・感度とずれ・検証ツアー）、または `/scriptevent geoui:mode auto`（ひとりでに遊ぶ）・`aim`（見ている所がカーソル、ジャンプ・スニーク・アイテムで押す）・`relax`（狙わなくてよい）→ `/scriptevent geoui:play 1`。`geoui:mods HD FL`・`geoui:sens 2.4`・`geoui:offset 30`（遊び方・感度・ずれ・Mods はプレイヤーごとに残る）・`geoui:retry`。
 - 検証ツアー（`/scriptevent geoui:tour`）: 全部の演出を 24 秒で（circles・slider・kiai・hidden・flashlight・spinner・break・miss・fail・results）。本物のアプリの確かめ（app.txt）はこれ 1 回で済む。
-- 大きさ: プロパティ 21 個（GeoUI の 11 個を含む）・pre_animation 2296 行（最長 887 文字）・ボーン 315 本・キューブ 6597 個・要素ごとの render controller 56 個・アニメーション 35 個・アトラス 1024x1024。
+- 大きさ: プロパティ 21 個（GeoUI の 11 個を含む）・pre_animation 2314 行（最長 887 文字）・ボーン 315 本・キューブ 6597 個・要素ごとの render controller 56 個・アニメーション 35 個・アトラス 1024x1024。
 - ひとりでに遊ぶと（osugame.js、20 tick/秒）: 点数 672572・最大コンボ 193・精度 100%・ランク SS。
 - preview.png はラボの描き方（bds/geoui/osu/render.mjs）で描いた 6 つの場面（キアイ・スライダー・スピナー・FL と Mods・失敗・結果。本物のゲームではない: 本物は app.txt）。
   ツアーの動画は `node bds/geoui/osu/video.mjs pixel tour.mp4 --tour`（パックのスクリプトそのものを偽の世界で動かして描く）。
