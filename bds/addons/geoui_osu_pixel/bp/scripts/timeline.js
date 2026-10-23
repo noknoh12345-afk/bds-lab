@@ -99,7 +99,6 @@ const createEngine = function createEngine(CFG, io, createGame) {
     //      played, its states to their properties (contract.js: 24 bits a property, packed as an instance's params)
     const GL = CFG.global || { events: [], groups: [], specs: {} };
     const packOf = (vals, spec) => { let n = 0, sh = 0; for (const f of spec) { const v = Math.min(Math.max(Number(vals[f.name]) || 0, f.min), f.max), L = 2 ** f.bits - 1; n += Math.round(((v - f.min) / (f.max - f.min)) * L) * 2 ** sh; sh += f.bits; } return n; };
-    const NAMES = ['none', 'hit', 'miss', 'great', 'good', 'ok', 'early', 'drop'];
     function gameStart(p, s, q, ms, fresh) { if (!q.game || !createGame) { s.game = null; return; } if (fresh || !s.game) s.game = createGame(q.game).start(ms); else s.game.seek(ms); s.ref = null; s.pending = []; s.prevMs = null; }
     function gameTick(p, s, q, ms) {
       const g = s.game, prev = s.prevMs === null ? ms : s.prevMs;
@@ -248,6 +247,15 @@ const createGame = function createGame(G) {
       for (let j = 1; j < p.length; j++) if (a[j] >= L || j === p.length - 1) { const f = a[j] > a[j - 1] ? (L - a[j - 1]) / (a[j] - a[j - 1]) : 1; return [p[j - 1][0] + (p[j][0] - p[j - 1][0]) * f, p[j - 1][1] + (p[j][1] - p[j - 1][1]) * f]; }
       return [p[p.length - 1][0], p[p.length - 1][1]];
     }
+    /** osu!stable's rank from the counts: 0 none yet, 1 D, 2 C, 3 B, 4 A, 5 S, 6 SS (contract.js RANKS). SS: all 300s; S: over
+     *  90 % 300s, under 1 % 50s and no miss; A: over 80 % with no miss, or over 90 %; B: over 70 % with no miss, or over 80 %;
+     *  C: over 60 %; else D */
+    function rankOf(n300, n100, n50, misses) {
+      const total = n300 + n100 + n50 + misses;
+      if (!total) return 0;
+      const acc = (300 * n300 + 100 * n100 + 50 * n50) / (300 * total), r300 = n300 / total, r50 = n50 / total;
+      return acc >= 1 ? 6 : r300 > 0.9 && r50 < 0.01 && !misses ? 5 : (r300 > 0.8 && !misses) || r300 > 0.9 ? 4 : (r300 > 0.7 && !misses) || r300 > 0.8 ? 3 : r300 > 0.6 ? 2 : 1;
+    }
     const near = (x, y, cx, cy, r) => (cx - x) * (cx - x) + (cy - y) * (cy - y) <= r * r;
     function out() { return { results: [], events: [], sounds: [] }; }
     function judgeOf(dt) { const a = Math.abs(dt); return a <= W.great ? 'great' : a <= W.good ? 'good' : a <= W.ok ? 'ok' : null; }
@@ -372,7 +380,7 @@ const createGame = function createGame(G) {
       },
       step(ms, inp0) {
         if (!S) S = fresh();
-        const inp = Object.assign({ cx: S.cx, cy: S.cy, hold: 0, presses: [], aim: true }, inp0 || {}), o = out(), t0 = S.t;
+        const inp = Object.assign({ cx: S.cx, cy: S.cy, hold: 0, presses: [], aim: true }, inp0 || {}), o = out();
         S.cx = inp.cx; S.cy = inp.cy; S.hold = inp.hold ? 1 : 0;
         // presses in time order, each after what was due before it
         for (const pt of [...(inp.presses || [])].sort((a, b) => a - b)) { if (pt > ms) continue; settle(o, S.t, Math.max(S.t, pt), inp); S.t = Math.max(S.t, pt); press(o, pt, inp.cx, inp.cy, inp.aim !== false); }
@@ -384,8 +392,7 @@ const createGame = function createGame(G) {
       },
       state() {
         const total = S.n300 + S.n100 + S.n50 + S.misses, acc = total ? (300 * S.n300 + 100 * S.n100 + 50 * S.n50) / (300 * total) : 1;
-        const r300 = total ? S.n300 / total : 0, r50 = total ? S.n50 / total : 0;
-        const rank = !total ? 0 : acc >= 1 ? 6 : r300 > 0.9 && r50 < 0.01 && !S.misses ? 5 : (r300 > 0.8 && !S.misses) || r300 > 0.9 ? 4 : (r300 > 0.7 && !S.misses) || r300 > 0.8 ? 3 : r300 > 0.6 ? 2 : 1;
+        const rank = rankOf(S.n300, S.n100, S.n50, S.misses);
         const sp = objs.findIndex((ob, i) => ob.k === 'p' && S.t >= ob.t && S.t < ob.e);
         return { score: S.score, combo: S.combo, acc: Math.round(acc * 10000) / 100, hp: Math.round(S.hp * 100), cx: S.cx, cy: S.cy, hold: S.hold,
           spin: sp >= 0 && objs[sp].need > 0 ? Math.min(1, S.spins[sp] / objs[sp].need) : 0, rpm: Math.min(511, Math.round(S.rpmLog.reduce((a, x) => a + x[1], 0) * 60)), sa: S.sa,
@@ -416,6 +423,7 @@ const createGame = function createGame(G) {
         return { cx, cy, hold, presses, aim: true };
       },
       ballAt,
+      rankOf,
     };
     return api;
   };

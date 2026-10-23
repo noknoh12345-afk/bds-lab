@@ -163,14 +163,14 @@
     const lead = score().filter((n) => n.part === 'lead');
     // the cursor's flow: a slow Lissajous over the field — patterns are cut along it
     const flow = (t) => [256 + 170 * Math.sin(t * 0.61 + 0.5) * Math.cos(t * 0.13), 192 + 120 * Math.sin(t * 0.47 + 1.3)];
-    let last = [256, 192], lastT = 0;
+    let last = [256, 192];
     const place = (t, spacing, jump = false) => {
       const f = flow(t / 1000), dx = f[0] - last[0], dy = f[1] - last[1], d = Math.hypot(dx, dy) || 1;
       let p = [last[0] + (dx / d) * spacing, last[1] + (dy / d) * spacing];
       if (jump) p = [512 - last[0] + (f[0] - 256) * 0.3, 384 - last[1] + (f[1] - 192) * 0.3];
       if (p[0] < 40 || p[0] > 472 || p[1] < 40 || p[1] > 344) p = [last[0] - (dx / d) * spacing, last[1] - (dy / d) * spacing];
       p = [clampP(Math.round(p[0]), 32, 480), clampP(Math.round(p[1]), 32, 352)];
-      last = p; lastT = t;
+      last = p;
       return p;
     };
     const HS = { normal: 0, whistle: 2, finish: 4, clap: 8 };

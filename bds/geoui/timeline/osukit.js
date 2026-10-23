@@ -77,7 +77,7 @@
   }
   /** a disc / ring of pixels (centre at the middle of an n × n image), coloured by fn(x, y, d) */
   function discImage(n, fn) { const im = img(n, n), c = n / 2; for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const d = Math.hypot(x + 0.5 - c, y + 0.5 - c), col = fn(x, y, d, c); if (col) put(im, x, y, col); } return im; }
-  const WHITE = [255, 255, 255, 255], INK = [24, 24, 40, 255];
+  const WHITE = [255, 255, 255, 255];
   /** the pixel look's sprites for a combo colour palette → { name: image | [images] (frames) } */
   function pixelSprites(colours) {
     const S = {};
@@ -213,7 +213,6 @@
       ...(P ? [{ target: 'hitburst', clips: [{ start: 0, end: 0.32, trigger: hitName, channels: { ...place, scaleX: [{ t: 0, v: 0.8, ease: 'quad-out' }, { t: 0.32, v: 2.3 }], scaleY: [{ t: 0, v: 0.8, ease: 'quad-out' }, { t: 0.32, v: 2.3 }], rotation: [{ t: 0, v: 0, ease: 'quad-out' }, { t: 0.32, v: 60 }] } }] }] : []),
     ];
     // ---- the judgement: 300 / 100 / 50 / miss where it was judged (jx, jy: a slider's end), popping in and away
-    const jx = (k) => ({ x: at(`param.${k}x`), y: at(`param.${k}y`) });
     const judgement = (k) => ({ target: 'judgement', clips: [
       ...['great', 'good', 'ok'].map((name, f) => ({ start: 0, end: 0.6, trigger: name, channels: { x: at(`param.${k}x`), y: [{ t: 0, v: `param.${k}y` }, { t: 0.6, v: `param.${k}y + 2.5` }], frame: at(f),
         scaleX: [{ t: 0, v: 0.6, ease: 'back-out' }, { t: 0.12, v: 1 }, { t: 0.45, v: 1, ease: 'quad-in' }, { t: 0.6, v: P ? 0 : 0.95 }], scaleY: [{ t: 0, v: 0.6, ease: 'back-out' }, { t: 0.12, v: 1 }, { t: 0.45, v: 1, ease: 'quad-in' }, { t: 0.6, v: P ? 0 : 0.95 }],
@@ -348,7 +347,7 @@
     const lastEnd = Math.max(...G.objects.map((g) => (g.k === 's' ? g.t + g.d : g.k === 'p' ? g.e : g.t)));
     const duration = r4(Math.max(lastEnd / 1000 + 4, num(opts.duration, 0)));
     // ---- the sprites and their sizes (model units)
-    const items = [], size = {}, el = {};
+    const items = [], size = {};
     let bodyInfo;
     const HALFW = 151.7, TOP = 220.4, BOTTOM = 49.7;   // (the screen at 16:9 by bds-lab's measure: GeoUI's measured calibration)
     if (P) {
@@ -489,7 +488,6 @@
       vox('rank', 'rank', H, [0, C[1]], -24, 3, { px: 5, perPixel: true });
       vox('section', 'section', H, [0, C[1]], -28, 2, { px: 3.2, perPixel: true });
     } else {
-      const k = size.k;
       flat('board', 'board', F, C, 12, [FW + 16, FW * 0.75 + 16]);
       flat('kiaiglow', 'glow', F, C, 11, [FW * 1.15, FW * 0.9], { blend: 'add' });
       flat('followpoint', 'followpoint', F, C, 6, size.followpoint);

@@ -109,7 +109,6 @@
     //      played, its states to their properties (contract.js: 24 bits a property, packed as an instance's params)
     const GL = CFG.global || { events: [], groups: [], specs: {} };
     const packOf = (vals, spec) => { let n = 0, sh = 0; for (const f of spec) { const v = Math.min(Math.max(Number(vals[f.name]) || 0, f.min), f.max), L = 2 ** f.bits - 1; n += Math.round(((v - f.min) / (f.max - f.min)) * L) * 2 ** sh; sh += f.bits; } return n; };
-    const NAMES = ['none', 'hit', 'miss', 'great', 'good', 'ok', 'early', 'drop'];
     function gameStart(p, s, q, ms, fresh) { if (!q.game || !createGame) { s.game = null; return; } if (fresh || !s.game) s.game = createGame(q.game).start(ms); else s.game.seek(ms); s.ref = null; s.pending = []; s.prevMs = null; }
     function gameTick(p, s, q, ms) {
       const g = s.game, prev = s.prevMs === null ? ms : s.prevMs;

@@ -1,5 +1,5 @@
 // GeoUI Builder 0.1.0 with its timeline — one file for Blockbench (made by bds/geoui/build.mjs from bds/geoui/geoui_builder.js and
-// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources b48a5c527ba1
+// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources fd81a1030642
 // ---- timeline/model.js
 (function (module) {
 // GeoUI timeline — the model (pure: no DOM, no Blockbench). The plan's step 1 (bds/geoui/timeline/PLAN.md):
@@ -1638,6 +1638,15 @@
       for (let j = 1; j < p.length; j++) if (a[j] >= L || j === p.length - 1) { const f = a[j] > a[j - 1] ? (L - a[j - 1]) / (a[j] - a[j - 1]) : 1; return [p[j - 1][0] + (p[j][0] - p[j - 1][0]) * f, p[j - 1][1] + (p[j][1] - p[j - 1][1]) * f]; }
       return [p[p.length - 1][0], p[p.length - 1][1]];
     }
+    /** osu!stable's rank from the counts: 0 none yet, 1 D, 2 C, 3 B, 4 A, 5 S, 6 SS (contract.js RANKS). SS: all 300s; S: over
+     *  90 % 300s, under 1 % 50s and no miss; A: over 80 % with no miss, or over 90 %; B: over 70 % with no miss, or over 80 %;
+     *  C: over 60 %; else D */
+    function rankOf(n300, n100, n50, misses) {
+      const total = n300 + n100 + n50 + misses;
+      if (!total) return 0;
+      const acc = (300 * n300 + 100 * n100 + 50 * n50) / (300 * total), r300 = n300 / total, r50 = n50 / total;
+      return acc >= 1 ? 6 : r300 > 0.9 && r50 < 0.01 && !misses ? 5 : (r300 > 0.8 && !misses) || r300 > 0.9 ? 4 : (r300 > 0.7 && !misses) || r300 > 0.8 ? 3 : r300 > 0.6 ? 2 : 1;
+    }
     const near = (x, y, cx, cy, r) => (cx - x) * (cx - x) + (cy - y) * (cy - y) <= r * r;
     function out() { return { results: [], events: [], sounds: [] }; }
     function judgeOf(dt) { const a = Math.abs(dt); return a <= W.great ? 'great' : a <= W.good ? 'good' : a <= W.ok ? 'ok' : null; }
@@ -1762,7 +1771,7 @@
       },
       step(ms, inp0) {
         if (!S) S = fresh();
-        const inp = Object.assign({ cx: S.cx, cy: S.cy, hold: 0, presses: [], aim: true }, inp0 || {}), o = out(), t0 = S.t;
+        const inp = Object.assign({ cx: S.cx, cy: S.cy, hold: 0, presses: [], aim: true }, inp0 || {}), o = out();
         S.cx = inp.cx; S.cy = inp.cy; S.hold = inp.hold ? 1 : 0;
         // presses in time order, each after what was due before it
         for (const pt of [...(inp.presses || [])].sort((a, b) => a - b)) { if (pt > ms) continue; settle(o, S.t, Math.max(S.t, pt), inp); S.t = Math.max(S.t, pt); press(o, pt, inp.cx, inp.cy, inp.aim !== false); }
@@ -1774,8 +1783,7 @@
       },
       state() {
         const total = S.n300 + S.n100 + S.n50 + S.misses, acc = total ? (300 * S.n300 + 100 * S.n100 + 50 * S.n50) / (300 * total) : 1;
-        const r300 = total ? S.n300 / total : 0, r50 = total ? S.n50 / total : 0;
-        const rank = !total ? 0 : acc >= 1 ? 6 : r300 > 0.9 && r50 < 0.01 && !S.misses ? 5 : (r300 > 0.8 && !S.misses) || r300 > 0.9 ? 4 : (r300 > 0.7 && !S.misses) || r300 > 0.8 ? 3 : r300 > 0.6 ? 2 : 1;
+        const rank = rankOf(S.n300, S.n100, S.n50, S.misses);
         const sp = objs.findIndex((ob, i) => ob.k === 'p' && S.t >= ob.t && S.t < ob.e);
         return { score: S.score, combo: S.combo, acc: Math.round(acc * 10000) / 100, hp: Math.round(S.hp * 100), cx: S.cx, cy: S.cy, hold: S.hold,
           spin: sp >= 0 && objs[sp].need > 0 ? Math.min(1, S.spins[sp] / objs[sp].need) : 0, rpm: Math.min(511, Math.round(S.rpmLog.reduce((a, x) => a + x[1], 0) * 60)), sa: S.sa,
@@ -1806,6 +1814,7 @@
         return { cx, cy, hold, presses, aim: true };
       },
       ballAt,
+      rankOf,
     };
     return api;
   }
@@ -1914,7 +1923,7 @@
   }
   /** a disc / ring of pixels (centre at the middle of an n × n image), coloured by fn(x, y, d) */
   function discImage(n, fn) { const im = img(n, n), c = n / 2; for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const d = Math.hypot(x + 0.5 - c, y + 0.5 - c), col = fn(x, y, d, c); if (col) put(im, x, y, col); } return im; }
-  const WHITE = [255, 255, 255, 255], INK = [24, 24, 40, 255];
+  const WHITE = [255, 255, 255, 255];
   /** the pixel look's sprites for a combo colour palette → { name: image | [images] (frames) } */
   function pixelSprites(colours) {
     const S = {};
@@ -2050,7 +2059,6 @@
       ...(P ? [{ target: 'hitburst', clips: [{ start: 0, end: 0.32, trigger: hitName, channels: { ...place, scaleX: [{ t: 0, v: 0.8, ease: 'quad-out' }, { t: 0.32, v: 2.3 }], scaleY: [{ t: 0, v: 0.8, ease: 'quad-out' }, { t: 0.32, v: 2.3 }], rotation: [{ t: 0, v: 0, ease: 'quad-out' }, { t: 0.32, v: 60 }] } }] }] : []),
     ];
     // ---- the judgement: 300 / 100 / 50 / miss where it was judged (jx, jy: a slider's end), popping in and away
-    const jx = (k) => ({ x: at(`param.${k}x`), y: at(`param.${k}y`) });
     const judgement = (k) => ({ target: 'judgement', clips: [
       ...['great', 'good', 'ok'].map((name, f) => ({ start: 0, end: 0.6, trigger: name, channels: { x: at(`param.${k}x`), y: [{ t: 0, v: `param.${k}y` }, { t: 0.6, v: `param.${k}y + 2.5` }], frame: at(f),
         scaleX: [{ t: 0, v: 0.6, ease: 'back-out' }, { t: 0.12, v: 1 }, { t: 0.45, v: 1, ease: 'quad-in' }, { t: 0.6, v: P ? 0 : 0.95 }], scaleY: [{ t: 0, v: 0.6, ease: 'back-out' }, { t: 0.12, v: 1 }, { t: 0.45, v: 1, ease: 'quad-in' }, { t: 0.6, v: P ? 0 : 0.95 }],
@@ -2185,7 +2193,7 @@
     const lastEnd = Math.max(...G.objects.map((g) => (g.k === 's' ? g.t + g.d : g.k === 'p' ? g.e : g.t)));
     const duration = r4(Math.max(lastEnd / 1000 + 4, num(opts.duration, 0)));
     // ---- the sprites and their sizes (model units)
-    const items = [], size = {}, el = {};
+    const items = [], size = {};
     let bodyInfo;
     const HALFW = 151.7, TOP = 220.4, BOTTOM = 49.7;   // (the screen at 16:9 by bds-lab's measure: GeoUI's measured calibration)
     if (P) {
@@ -2326,7 +2334,6 @@
       vox('rank', 'rank', H, [0, C[1]], -24, 3, { px: 5, perPixel: true });
       vox('section', 'section', H, [0, C[1]], -28, 2, { px: 3.2, perPixel: true });
     } else {
-      const k = size.k;
       flat('board', 'board', F, C, 12, [FW + 16, FW * 0.75 + 16]);
       flat('kiaiglow', 'glow', F, C, 11, [FW * 1.15, FW * 0.9], { blend: 'add' });
       flat('followpoint', 'followpoint', F, C, 6, size.followpoint);
@@ -2571,14 +2578,14 @@
     const lead = score().filter((n) => n.part === 'lead');
     // the cursor's flow: a slow Lissajous over the field — patterns are cut along it
     const flow = (t) => [256 + 170 * Math.sin(t * 0.61 + 0.5) * Math.cos(t * 0.13), 192 + 120 * Math.sin(t * 0.47 + 1.3)];
-    let last = [256, 192], lastT = 0;
+    let last = [256, 192];
     const place = (t, spacing, jump = false) => {
       const f = flow(t / 1000), dx = f[0] - last[0], dy = f[1] - last[1], d = Math.hypot(dx, dy) || 1;
       let p = [last[0] + (dx / d) * spacing, last[1] + (dy / d) * spacing];
       if (jump) p = [512 - last[0] + (f[0] - 256) * 0.3, 384 - last[1] + (f[1] - 192) * 0.3];
       if (p[0] < 40 || p[0] > 472 || p[1] < 40 || p[1] > 344) p = [last[0] - (dx / d) * spacing, last[1] - (dy / d) * spacing];
       p = [clampP(Math.round(p[0]), 32, 480), clampP(Math.round(p[1]), 32, 352)];
-      last = p; lastT = t;
+      last = p;
       return p;
     };
     const HS = { normal: 0, whistle: 2, finish: 4, clap: 8 };
@@ -5268,7 +5275,6 @@
     //      played, its states to their properties (contract.js: 24 bits a property, packed as an instance's params)
     const GL = CFG.global || { events: [], groups: [], specs: {} };
     const packOf = (vals, spec) => { let n = 0, sh = 0; for (const f of spec) { const v = Math.min(Math.max(Number(vals[f.name]) || 0, f.min), f.max), L = 2 ** f.bits - 1; n += Math.round(((v - f.min) / (f.max - f.min)) * L) * 2 ** sh; sh += f.bits; } return n; };
-    const NAMES = ['none', 'hit', 'miss', 'great', 'good', 'ok', 'early', 'drop'];
     function gameStart(p, s, q, ms, fresh) { if (!q.game || !createGame) { s.game = null; return; } if (fresh || !s.game) s.game = createGame(q.game).start(ms); else s.game.seek(ms); s.ref = null; s.pending = []; s.prevMs = null; }
     function gameTick(p, s, q, ms) {
       const g = s.game, prev = s.prevMs === null ? ms : s.prevMs;

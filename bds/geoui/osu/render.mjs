@@ -6,16 +6,14 @@
 // real app (bds-lab's app.yml) does, and for a preview video with its music and hitsounds (ffmpeg). Not the game: the real app
 // is what says how the game draws it (要実測).
 //   import { renderFrame, renderVideo } from './render.mjs'
-//   node bds/geoui/osu/render.mjs <pixel|skin> [--at 30.5 ...] [--video out.mp4 [--from s] [--to s]] [--out dir]
+// (a module, no command of its own: a sample's preview.png is addon.mjs's, a video is node bds/geoui/osu/video.mjs <pixel|skin> <out.mp4>)
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
 import { encodePng } from '../png.mjs';
 
 const require = createRequire(import.meta.url);
-const HERE = path.dirname(fileURLToPath(import.meta.url));
 const M = require('../timeline/model.js');
 require('../timeline/contract.js');
 

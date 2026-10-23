@@ -123,11 +123,12 @@ const at = (o) => [o.x, o.y];
   ok(fast.ev.some((e) => e[0] === 'clear') && fast.ev.filter((e) => e[0] === 'bonus').length >= 4 && fast.ev.some((e) => e[0] === 'result' && e[1] === 3) && fast.st.spin === 0, 'spun fast (5 a second): cleared, bonus spins (+1000 each), a 300', JSON.stringify(fast.ev.filter((e) => e[0] !== 'combo').slice(0, 12)));
 }
 {
-  // accuracy and rank: osu!'s own thresholds
-  const g = game(); const st = (n300, n100, n50, misses) => Object.assign(g.state(), {});
-  const rankOf = (n300, n100, n50, misses) => { const gg = game(); const S0 = gg.state(); const T0 = n300 + n100 + n50 + misses; const acc = (300 * n300 + 100 * n100 + 50 * n50) / (300 * T0); const r300 = n300 / T0, r50 = n50 / T0; return acc >= 1 ? 'SS' : r300 > 0.9 && r50 < 0.01 && !misses ? 'S' : (r300 > 0.8 && !misses) || r300 > 0.9 ? 'A' : (r300 > 0.7 && !misses) || r300 > 0.8 ? 'B' : r300 > 0.6 ? 'C' : 'D'; };
-  void st; void g;
-  ok(rankOf(10, 0, 0, 0) === 'SS' && rankOf(95, 5, 0, 0) === 'S' && rankOf(95, 4, 0, 1) === 'A' && rankOf(85, 15, 0, 0) === 'A' && rankOf(75, 25, 0, 0) === 'B' && rankOf(65, 35, 0, 0) === 'C' && rankOf(50, 50, 0, 0) === 'D', 'ranks: SS, S (no miss, few 50s), A, B, C, D as osu!stable draws them');
+  // accuracy and rank: osu!'s own thresholds, as the game works them out (its rankOf is what state().rank and the script's
+  // <ns>:res say), the letters by contract.js RANKS
+  const g = game(), rankOf = (n300, n100, n50, misses) => K.RANKS[g.rankOf(n300, n100, n50, misses)];
+  ok(rankOf(10, 0, 0, 0) === 'SS' && rankOf(95, 5, 0, 0) === 'S' && rankOf(95, 4, 0, 1) === 'A' && rankOf(85, 15, 0, 0) === 'A' && rankOf(75, 25, 0, 0) === 'B' && rankOf(65, 35, 0, 0) === 'C' && rankOf(50, 50, 0, 0) === 'D'
+    && rankOf(199, 0, 1, 0) === 'S' && rankOf(97, 0, 3, 0) === 'A' && rankOf(91, 0, 0, 9) === 'A' && rankOf(85, 14, 0, 1) === 'B' && g.rankOf(0, 0, 0, 0) === 0 && g.state().rank === 0,
+  'ranks: SS, S (no miss, under 1 % 50s), A, B, C, D as osu!stable draws them — the game\'s own (none before anything is judged)');
 }
 {
   const ap = OG.autoplay(Gc, { fps: 20 }), fin = ap.states[ap.states.length - 1];
