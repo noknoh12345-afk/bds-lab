@@ -1,7 +1,9 @@
 // GeoUI Screen — spatial navigation (pure): which element a direction moves the focus to, the way a TV remote or a game pad
 // moves it — better than Tab's one-dimensional order. The direction is any vector, not only four: W+D at once goes up-right,
 // a stick half-way is the angle it points at. When two elements are about as good (the ambiguous case), the one nearer to
-// where the player looks (the pointer) wins, then the one nearer the focus's own row or column, then the document's order.
+// where the player points wins while they point (opts.pointer: input.js gives it only while the pointer is in use and shown),
+// else the one more squarely that way (more of it across from the focus), then the nearer row or column, then the document's
+// order — and the hints show it before the key is pressed.
 // hintsFor() gives where each of the four keys would go from the focus, so the page can show it before the key is pressed.
 //
 // targets: [{ id, rect: { x, y, w, h } (y down), disabled?, group? (a container: moves stay in it while it has a candidate) }]
@@ -18,7 +20,8 @@
   /** the score of moving from rect A to rect B in direction d (unit vector), lower is better; null when B is not that way.
    *  Four-way (an axis): B must start past A's middle that way; the distance is from A's edge to B's near edge along d, plus
    *  twice the sideways distance between them (0 when they share a row/column), less a little for the share of overlap.
-   *  Any other way (diagonal, a stick's angle): from centre to centre, B within 60° of d, the sideways part counted 1.5 times */
+   *  Any other way (diagonal, a stick's angle): from centre to centre, B within 60° of d, the sideways part counted 3 times
+   *  (a candidate 45° off the way must be 2.8 times nearer than one right on it: up-right in a grid is the diagonal one) */
   function score(A, B, d, opts = {}) {
     const ca = center(A), cb = center(B), v = [cb[0] - ca[0], cb[1] - ca[1]];
     const along = v[0] * d[0] + v[1] * d[1];
@@ -40,7 +43,7 @@
     if (along <= eps) return null;
     const side = Math.abs(v[0] * d[1] - v[1] * d[0]);
     if (Math.atan2(side, along) > (opts.cone ?? Math.PI / 3)) return null;
-    return { score: along + 1.5 * side, along, side, share: 0 };
+    return { score: along + 3 * side, along, side, share: 0 };
   }
 
   /** a unit direction from a name, a key, or a vector ([x, y], y down); null for a zero vector */
@@ -55,7 +58,7 @@
   }
 
   /** the element the focus moves to from `from` (an id) in direction `dir`, or null. opts.pointer [x, y]: where the player looks
-   *  (the tie-break); opts.tie: scores within this are a tie (units, default 2); opts.wrap: 'none' | 'line' (past the last one
+   *  while they point (the first tie-break); opts.tie: scores within this are a tie (units, default 2); opts.wrap: 'none' | 'line' (past the last one
    *  of a row/column, the first one of the next: Tab-like) */
   function navigate(targets, from, dir, opts = {}) {
     const d = dirOf(dir);
@@ -74,7 +77,7 @@
     const tied = pool.filter((c) => c.s.score - best <= tie);
     if (tied.length > 1) {
       const p = opts.pointer;
-      tied.sort((a, b) => (p ? dist2(center(a.t.rect), p) - dist2(center(b.t.rect), p) : 0) || (a.s.side - b.s.side) || (a.i - b.i));
+      tied.sort((a, b) => (p ? dist2(center(a.t.rect), p) - dist2(center(b.t.rect), p) : 0) || (b.s.share - a.s.share) || (a.s.side - b.s.side) || (a.s.score - b.s.score) || (a.i - b.i));
     }
     return tied[0].t.id;
   }
@@ -87,14 +90,18 @@
     if (under) return under.id;
     return list.slice().sort((a, b) => dist2(center(a.rect), p) - dist2(center(b.rect), p))[0].id;
   }
-  /** Tab-like wrap: past the end of a row (moving right) the first of the next row down; past a column's end, the next column */
+  /** Tab-like wrap: past the end of a row (moving right) the first of the next row down, past its start (moving left) the last
+   *  of the row above; up and down the same with columns. A row: the elements across the nearest centre line beyond the focus */
   function wrapLine(list, A, d) {
-    const ca = center(A.rect), horizontal = Math.abs(d[0]) > Math.abs(d[1]), s = horizontal ? Math.sign(d[0]) : Math.sign(d[1]);
-    const key = (t) => { const c = center(t.rect); return horizontal ? [c[1], c[0] * s] : [c[0], c[1] * s]; };
-    const me = key(A);
-    const next = list.filter((t) => t !== A).map((t) => ({ t, k: key(t) }))
-      .filter((o) => (horizontal ? o.k[0] > ca[1] + 1 : o.k[0] > ca[0] + 1) === (s > 0)).sort((a, b) => (a.k[0] - b.k[0]) * s || a.k[1] - b.k[1]);
-    return next.length ? next[0].t.id : (me ? null : null);
+    const horizontal = Math.abs(d[0]) >= Math.abs(d[1]), s = horizontal ? Math.sign(d[0]) : Math.sign(d[1]);
+    const cross = (t) => center(t.rect)[horizontal ? 1 : 0], main = (t) => center(t.rect)[horizontal ? 0 : 1];
+    const lo = (t) => (horizontal ? t.rect.y : t.rect.x), hi = (t) => (horizontal ? t.rect.y + t.rect.h : t.rect.x + t.rect.w);
+    const me = cross(A);
+    const beyond = list.filter((t) => t !== A && (s > 0 ? cross(t) > me + 1 : cross(t) < me - 1));
+    if (!beyond.length) return null;
+    const line = cross(beyond.reduce((b, t) => (Math.abs(cross(t) - me) < Math.abs(cross(b) - me) ? t : b)));
+    const row = beyond.filter((t) => lo(t) <= line && line <= hi(t)).sort((a, b) => (main(a) - main(b)) * s);
+    return row[0].id;
   }
   /** where each of W A S D would go from the focus (null where nothing is) — what the page draws as hints */
   function hintsFor(targets, from, opts = {}) {

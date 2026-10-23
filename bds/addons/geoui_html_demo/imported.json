@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/html/convert.mjs --sample",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "HTML を GeoUI に（フォームなし: 視点でマウス・WASD で焦点・ジャンプで決定・スニークで戻る・スロット）"
+}

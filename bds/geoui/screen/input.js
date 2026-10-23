@@ -7,8 +7,8 @@
 //             sample right after a turn-back may still be from before it — whichever reading of it is the smaller move wins
 //             (two frames: the old one and the turned-back one), so the turn-back never shows as a jump of the pointer
 //   keys      the move input (W A S D, a stick, the touch pad) = arrow keys: a press moves the focus that way (nav.js: any
-//             angle, the ambiguous case settled by where the player looks), held it repeats (after repeatDelay ticks, then
-//             every repeatEvery)
+//             angle, the ambiguous case settled by where the player points while the pointer is in use, else by which is more
+//             squarely that way — the hints say the same), held it repeats (after repeatDelay ticks, then every repeatEvery)
 //   buttons   jump = the primary button / Enter (down, up, click), sneak = the secondary one / Escape (back), the attack
 //             swing (left click, a tap of the screen) = a click at the pointer, use = the secondary click
 //   wheel     the hotbar's selected slot: the change (−4…+4, shortest way round) = the wheel, the slot itself = keys 1–9
@@ -45,6 +45,8 @@
       slot: null, mode: null, tick: 0, recentred: 0,
     };
     const targetById = (id) => targets.find((t) => t.id === id) || null;
+    /** how nav.js is asked (moves and hints alike): the pointer is a tie-break only while it is the player's (shown, in use) */
+    const navOpts = () => ({ pointer: st.via === 'pointer' ? st.pointer : null, wrap: cfg.wrap || 'none' });
     /** the turn between two rotations (degrees: yaw the short way round) */
     const turn = (a, b) => ({ yaw: wrap180(a.y - b.y), pitch: a.x - b.x });
     const size = (d) => Math.abs(d.yaw) + Math.abs(d.pitch);
@@ -99,7 +101,7 @@
           const fresh = !st.move.active || angleOff > 30;
           if (fresh || st.tick >= st.move.next) {
             const from = st.focus;
-            const to = N.navigate(targets, from, vec, { pointer: st.pointer, wrap: cfg.wrap || 'none' });
+            const to = N.navigate(targets, from, vec, navOpts());
             events.push({ type: 'key', key: keyOf(vec), vec, repeat: !fresh });
             if (to !== null && to !== from) { st.focus = to; st.via = 'keys'; events.push({ type: 'nav', from, to, vec }); events.push({ type: 'focus', id: to, via: 'keys' }); }
             else if (to === null && from === null && targets.length) { const f = N.first(targets.filter((t) => !t.disabled), st.pointer); if (f !== null) { st.focus = f; st.via = 'keys'; events.push({ type: 'focus', id: f, via: 'keys' }); } }
@@ -144,7 +146,7 @@
     const keyOf = (v) => { const a = Math.atan2(v[1], v[0]) * 180 / Math.PI; const k = Math.round(a / 45); return ['D', 'SD', 'S', 'AS', 'A', 'AW', 'W', 'WD'][((k % 8) + 8) % 8]; };
     function focus(id) { if (id === null || targetById(id)) { st.focus = id; st.via = 'keys'; } }
     function pointerTo(x, y) { st.pointer = [clamp(x, cfg.bounds.x0, cfg.bounds.x1), clamp(y, cfg.bounds.y0, cfg.bounds.y1)]; }
-    function hints() { return st.focus === null ? { W: null, A: null, S: null, D: null } : nav().hintsFor(targets, st.focus, { pointer: st.pointer }); }
+    function hints() { return st.focus === null ? { W: null, A: null, S: null, D: null } : nav().hintsFor(targets, st.focus, navOpts()); }
     return { cfg, state: st, step, reset, turnedTo, setTargets, focus, pointerTo, hints };
   }
 

@@ -27,6 +27,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { encodePng } from '../png.mjs';
 const require = createRequire(import.meta.url);
+const LAB_OWN = new Set(['lab.mjs', 'tsconfig.json']);
 const HERE = path.dirname(fileURLToPath(import.meta.url)), TOP = path.resolve(HERE, '..', '..', '..');
 const G = require('../geoui_builder.js');
 const L = require('./layout.js'), P = require('./pack.js'), F = require('./font.js');
@@ -654,7 +655,8 @@ function main(argv) {
   }
   // (a file this no longer makes is left over: --check says so, writing removes it)
   const walk = (d, pre = '') => (fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name), `${pre}${e.name}/`) : [`${pre}${e.name}`])) : []);
-  for (const rel of walk(OUT)) if (!want.has(rel)) { if (check) bad.push(`${rel}（余分）`); else fs.rmSync(path.join(OUT, rel)); }
+  // (the lab's own files beside a unit it tested — lab.mjs, tsconfig.json: git ignores them — are not the add-on's)
+  for (const rel of walk(OUT)) if (!want.has(rel) && !LAB_OWN.has(rel)) { if (check) bad.push(`${rel}（余分）`); else fs.rmSync(path.join(OUT, rel)); }
   if (check) {
     if (bad.length) { console.error(`bds/addons/${NAME} は device.mjs が作る物と違います: ${bad.join(' ')}\n→ node bds/geoui/screen/device.mjs`); process.exit(1); }
     console.log(`OK bds/addons/${NAME} is what device.mjs makes`);

@@ -1,0 +1,1125 @@
+{
+ "version": 1,
+ "source": "menu.html",
+ "design": {
+  "w": 1280,
+  "h": 720
+ },
+ "dpr": 2,
+ "pages": [
+  {
+   "id": "play",
+   "base": "base-play.png"
+  },
+  {
+   "id": "items",
+   "base": "base-items.png"
+  },
+  {
+   "id": "settings",
+   "base": "base-settings.png"
+  }
+ ],
+ "controls": [
+  {
+   "key": "c0",
+   "id": null,
+   "kind": "tab",
+   "page": null,
+   "rect": {
+    "x": 40,
+    "y": 108,
+    "w": 200,
+    "h": 52
+   },
+   "action": "page:play",
+   "slot": 1,
+   "group": "tabs",
+   "name": null,
+   "checked": true,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "あそぶ",
+   "clip": {
+    "x": 34,
+    "y": 102,
+    "width": 212,
+    "height": 64
+   },
+   "states": {
+    "normal": "c0-normal.png",
+    "hover": "c0-hover.png",
+    "focus": "c0-focus.png",
+    "active": "c0-active.png",
+    "normal-on": "c0-normal-on.png",
+    "hover-on": "c0-hover-on.png",
+    "focus-on": "c0-focus-on.png",
+    "active-on": "c0-active-on.png"
+   }
+  },
+  {
+   "key": "c1",
+   "id": null,
+   "kind": "tab",
+   "page": null,
+   "rect": {
+    "x": 252,
+    "y": 108,
+    "w": 200,
+    "h": 52
+   },
+   "action": "page:items",
+   "slot": 2,
+   "group": "tabs",
+   "name": null,
+   "checked": false,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "もちもの",
+   "clip": {
+    "x": 246,
+    "y": 102,
+    "width": 212,
+    "height": 64
+   },
+   "states": {
+    "normal": "c1-normal.png",
+    "hover": "c1-hover.png",
+    "focus": "c1-focus.png",
+    "active": "c1-active.png",
+    "normal-on": "c1-normal-on.png",
+    "hover-on": "c1-hover-on.png",
+    "focus-on": "c1-focus-on.png",
+    "active-on": "c1-active-on.png"
+   }
+  },
+  {
+   "key": "c2",
+   "id": null,
+   "kind": "tab",
+   "page": null,
+   "rect": {
+    "x": 464,
+    "y": 108,
+    "w": 200,
+    "h": 52
+   },
+   "action": "page:settings",
+   "slot": 3,
+   "group": "tabs",
+   "name": null,
+   "checked": false,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "せってい",
+   "clip": {
+    "x": 458,
+    "y": 102,
+    "width": 212,
+    "height": 64
+   },
+   "states": {
+    "normal": "c2-normal.png",
+    "hover": "c2-hover.png",
+    "focus": "c2-focus.png",
+    "active": "c2-active.png",
+    "normal-on": "c2-normal-on.png",
+    "hover-on": "c2-hover-on.png",
+    "focus-on": "c2-focus-on.png",
+    "active-on": "c2-active-on.png"
+   }
+  },
+  {
+   "key": "c3",
+   "id": null,
+   "kind": "button",
+   "page": "play",
+   "rect": {
+    "x": 72,
+    "y": 263.1875,
+    "w": 240,
+    "h": 64
+   },
+   "action": "event:stage1",
+   "slot": null,
+   "group": "stages",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "1. 草原",
+   "clip": {
+    "x": 66,
+    "y": 257,
+    "width": 252,
+    "height": 77
+   },
+   "states": {
+    "normal": "c3-normal.png",
+    "hover": "c3-hover.png",
+    "focus": "c3-focus.png",
+    "active": "c3-active.png"
+   }
+  },
+  {
+   "key": "c4",
+   "id": null,
+   "kind": "button",
+   "page": "play",
+   "rect": {
+    "x": 328,
+    "y": 263.1875,
+    "w": 240,
+    "h": 64
+   },
+   "action": "event:stage2",
+   "slot": null,
+   "group": "stages",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "2. 洞くつ",
+   "clip": {
+    "x": 322,
+    "y": 257,
+    "width": 252,
+    "height": 77
+   },
+   "states": {
+    "normal": "c4-normal.png",
+    "hover": "c4-hover.png",
+    "focus": "c4-focus.png",
+    "active": "c4-active.png"
+   }
+  },
+  {
+   "key": "c5",
+   "id": null,
+   "kind": "button",
+   "page": "play",
+   "rect": {
+    "x": 584,
+    "y": 263.1875,
+    "w": 240,
+    "h": 64
+   },
+   "action": "event:stage3",
+   "slot": null,
+   "group": "stages",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "3. ネザー",
+   "clip": {
+    "x": 578,
+    "y": 257,
+    "width": 252,
+    "height": 77
+   },
+   "states": {
+    "normal": "c5-normal.png",
+    "hover": "c5-hover.png",
+    "focus": "c5-focus.png",
+    "active": "c5-active.png"
+   }
+  },
+  {
+   "key": "c6",
+   "id": null,
+   "kind": "button",
+   "page": "play",
+   "rect": {
+    "x": 72,
+    "y": 343.1875,
+    "w": 240,
+    "h": 64
+   },
+   "action": "event:stage4",
+   "slot": null,
+   "group": "stages",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "4. 海の底",
+   "clip": {
+    "x": 66,
+    "y": 337,
+    "width": 252,
+    "height": 77
+   },
+   "states": {
+    "normal": "c6-normal.png",
+    "hover": "c6-hover.png",
+    "focus": "c6-focus.png",
+    "active": "c6-active.png"
+   }
+  },
+  {
+   "key": "c7",
+   "id": null,
+   "kind": "button",
+   "page": "play",
+   "rect": {
+    "x": 328,
+    "y": 343.1875,
+    "w": 240,
+    "h": 64
+   },
+   "action": "event:stage5",
+   "slot": null,
+   "group": "stages",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "5. 空の島",
+   "clip": {
+    "x": 322,
+    "y": 337,
+    "width": 252,
+    "height": 77
+   },
+   "states": {
+    "normal": "c7-normal.png",
+    "hover": "c7-hover.png",
+    "focus": "c7-focus.png",
+    "active": "c7-active.png"
+   }
+  },
+  {
+   "key": "c8",
+   "id": null,
+   "kind": "button",
+   "page": "play",
+   "rect": {
+    "x": 584,
+    "y": 343.1875,
+    "w": 240,
+    "h": 64
+   },
+   "action": "",
+   "slot": null,
+   "group": "stages",
+   "name": null,
+   "checked": null,
+   "disabled": true,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "6. ？？？",
+   "clip": {
+    "x": 578,
+    "y": 337,
+    "width": 252,
+    "height": 77
+   },
+   "states": {
+    "normal": "c8-normal.png"
+   }
+  },
+  {
+   "key": "c9",
+   "id": null,
+   "kind": "button",
+   "page": "play",
+   "rect": {
+    "x": 908,
+    "y": 512,
+    "w": 300,
+    "h": 80
+   },
+   "action": "event:start",
+   "slot": null,
+   "group": "auto:16",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "スタート",
+   "clip": {
+    "x": 902,
+    "y": 506,
+    "width": 312,
+    "height": 92
+   },
+   "states": {
+    "normal": "c9-normal.png",
+    "hover": "c9-hover.png",
+    "focus": "c9-focus.png",
+    "active": "c9-active.png"
+   }
+  },
+  {
+   "key": "c10",
+   "id": null,
+   "kind": "button",
+   "page": "items",
+   "rect": {
+    "x": 72,
+    "y": 263.1875,
+    "w": 96,
+    "h": 96
+   },
+   "action": "event:item1",
+   "slot": 1,
+   "group": "slots",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "×3",
+   "clip": {
+    "x": 66,
+    "y": 257,
+    "width": 108,
+    "height": 109
+   },
+   "states": {
+    "normal": "c10-normal.png",
+    "hover": "c10-hover.png",
+    "focus": "c10-focus.png",
+    "active": "c10-active.png"
+   }
+  },
+  {
+   "key": "c11",
+   "id": null,
+   "kind": "button",
+   "page": "items",
+   "rect": {
+    "x": 178,
+    "y": 263.1875,
+    "w": 96,
+    "h": 96
+   },
+   "action": "event:item2",
+   "slot": 2,
+   "group": "slots",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "×12",
+   "clip": {
+    "x": 172,
+    "y": 257,
+    "width": 108,
+    "height": 109
+   },
+   "states": {
+    "normal": "c11-normal.png",
+    "hover": "c11-hover.png",
+    "focus": "c11-focus.png",
+    "active": "c11-active.png"
+   }
+  },
+  {
+   "key": "c12",
+   "id": null,
+   "kind": "button",
+   "page": "items",
+   "rect": {
+    "x": 284,
+    "y": 263.1875,
+    "w": 96,
+    "h": 96
+   },
+   "action": "event:item3",
+   "slot": 3,
+   "group": "slots",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "1",
+   "clip": {
+    "x": 278,
+    "y": 257,
+    "width": 108,
+    "height": 109
+   },
+   "states": {
+    "normal": "c12-normal.png",
+    "hover": "c12-hover.png",
+    "focus": "c12-focus.png",
+    "active": "c12-active.png"
+   }
+  },
+  {
+   "key": "c13",
+   "id": null,
+   "kind": "button",
+   "page": "items",
+   "rect": {
+    "x": 390,
+    "y": 263.1875,
+    "w": 96,
+    "h": 96
+   },
+   "action": "event:item4",
+   "slot": 4,
+   "group": "slots",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "×5",
+   "clip": {
+    "x": 384,
+    "y": 257,
+    "width": 108,
+    "height": 109
+   },
+   "states": {
+    "normal": "c13-normal.png",
+    "hover": "c13-hover.png",
+    "focus": "c13-focus.png",
+    "active": "c13-active.png"
+   }
+  },
+  {
+   "key": "c14",
+   "id": null,
+   "kind": "button",
+   "page": "items",
+   "rect": {
+    "x": 496,
+    "y": 263.1875,
+    "w": 96,
+    "h": 96
+   },
+   "action": "event:item5",
+   "slot": 5,
+   "group": "slots",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "×64",
+   "clip": {
+    "x": 490,
+    "y": 257,
+    "width": 108,
+    "height": 109
+   },
+   "states": {
+    "normal": "c14-normal.png",
+    "hover": "c14-hover.png",
+    "focus": "c14-focus.png",
+    "active": "c14-active.png"
+   }
+  },
+  {
+   "key": "c15",
+   "id": null,
+   "kind": "button",
+   "page": "items",
+   "rect": {
+    "x": 602,
+    "y": 263.1875,
+    "w": 96,
+    "h": 96
+   },
+   "action": "event:item6",
+   "slot": 6,
+   "group": "slots",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "1",
+   "clip": {
+    "x": 596,
+    "y": 257,
+    "width": 108,
+    "height": 109
+   },
+   "states": {
+    "normal": "c15-normal.png",
+    "hover": "c15-hover.png",
+    "focus": "c15-focus.png",
+    "active": "c15-active.png"
+   }
+  },
+  {
+   "key": "c16",
+   "id": null,
+   "kind": "button",
+   "page": "items",
+   "rect": {
+    "x": 708,
+    "y": 263.1875,
+    "w": 96,
+    "h": 96
+   },
+   "action": "event:item7",
+   "slot": 7,
+   "group": "slots",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "",
+   "clip": {
+    "x": 702,
+    "y": 257,
+    "width": 108,
+    "height": 109
+   },
+   "states": {
+    "normal": "c16-normal.png",
+    "hover": "c16-hover.png",
+    "focus": "c16-focus.png",
+    "active": "c16-active.png"
+   }
+  },
+  {
+   "key": "c17",
+   "id": null,
+   "kind": "button",
+   "page": "items",
+   "rect": {
+    "x": 814,
+    "y": 263.1875,
+    "w": 96,
+    "h": 96
+   },
+   "action": "event:item8",
+   "slot": 8,
+   "group": "slots",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "",
+   "clip": {
+    "x": 808,
+    "y": 257,
+    "width": 108,
+    "height": 109
+   },
+   "states": {
+    "normal": "c17-normal.png",
+    "hover": "c17-hover.png",
+    "focus": "c17-focus.png",
+    "active": "c17-active.png"
+   }
+  },
+  {
+   "key": "c18",
+   "id": null,
+   "kind": "button",
+   "page": "items",
+   "rect": {
+    "x": 920,
+    "y": 263.1875,
+    "w": 96,
+    "h": 96
+   },
+   "action": "event:item9",
+   "slot": 9,
+   "group": "slots",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "",
+   "clip": {
+    "x": 914,
+    "y": 257,
+    "width": 108,
+    "height": 109
+   },
+   "states": {
+    "normal": "c18-normal.png",
+    "hover": "c18-hover.png",
+    "focus": "c18-focus.png",
+    "active": "c18-active.png"
+   }
+  },
+  {
+   "key": "c19",
+   "id": null,
+   "kind": "checkbox",
+   "page": "settings",
+   "rect": {
+    "x": 352,
+    "y": 263.1875,
+    "w": 96,
+    "h": 44
+   },
+   "action": "",
+   "slot": null,
+   "group": "auto:47",
+   "name": null,
+   "checked": true,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": "music",
+   "label": "",
+   "clip": {
+    "x": 346,
+    "y": 257,
+    "width": 108,
+    "height": 57
+   },
+   "states": {
+    "normal": "c19-normal.png",
+    "hover": "c19-hover.png",
+    "focus": "c19-focus.png",
+    "active": "c19-active.png",
+    "normal-on": "c19-normal-on.png",
+    "hover-on": "c19-hover-on.png",
+    "focus-on": "c19-focus-on.png",
+    "active-on": "c19-active-on.png"
+   }
+  },
+  {
+   "key": "c20",
+   "id": null,
+   "kind": "checkbox",
+   "page": "settings",
+   "rect": {
+    "x": 352,
+    "y": 329.1875,
+    "w": 96,
+    "h": 44
+   },
+   "action": "",
+   "slot": null,
+   "group": "auto:50",
+   "name": null,
+   "checked": false,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": "sfx",
+   "label": "",
+   "clip": {
+    "x": 346,
+    "y": 323,
+    "width": 108,
+    "height": 57
+   },
+   "states": {
+    "normal": "c20-normal.png",
+    "hover": "c20-hover.png",
+    "focus": "c20-focus.png",
+    "active": "c20-active.png",
+    "normal-on": "c20-normal-on.png",
+    "hover-on": "c20-hover-on.png",
+    "focus-on": "c20-focus-on.png",
+    "active-on": "c20-active-on.png"
+   }
+  },
+  {
+   "key": "c21",
+   "id": null,
+   "kind": "radio",
+   "page": "settings",
+   "rect": {
+    "x": 352,
+    "y": 395.1875,
+    "w": 150,
+    "h": 44
+   },
+   "action": "",
+   "slot": null,
+   "group": "level",
+   "name": "level",
+   "checked": false,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "やさしい",
+   "clip": {
+    "x": 346,
+    "y": 389,
+    "width": 162,
+    "height": 57
+   },
+   "states": {
+    "normal": "c21-normal.png",
+    "hover": "c21-hover.png",
+    "focus": "c21-focus.png",
+    "active": "c21-active.png",
+    "normal-on": "c21-normal-on.png",
+    "hover-on": "c21-hover-on.png",
+    "focus-on": "c21-focus-on.png",
+    "active-on": "c21-active-on.png"
+   }
+  },
+  {
+   "key": "c22",
+   "id": null,
+   "kind": "radio",
+   "page": "settings",
+   "rect": {
+    "x": 522,
+    "y": 395.1875,
+    "w": 150,
+    "h": 44
+   },
+   "action": "",
+   "slot": null,
+   "group": "level",
+   "name": "level",
+   "checked": true,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "ふつう",
+   "clip": {
+    "x": 516,
+    "y": 389,
+    "width": 162,
+    "height": 57
+   },
+   "states": {
+    "normal": "c22-normal.png",
+    "hover": "c22-hover.png",
+    "focus": "c22-focus.png",
+    "active": "c22-active.png",
+    "normal-on": "c22-normal-on.png",
+    "hover-on": "c22-hover-on.png",
+    "focus-on": "c22-focus-on.png",
+    "active-on": "c22-active-on.png"
+   }
+  },
+  {
+   "key": "c23",
+   "id": null,
+   "kind": "radio",
+   "page": "settings",
+   "rect": {
+    "x": 692,
+    "y": 395.1875,
+    "w": 150,
+    "h": 44
+   },
+   "action": "",
+   "slot": null,
+   "group": "level",
+   "name": "level",
+   "checked": false,
+   "disabled": false,
+   "min": 0,
+   "max": 100,
+   "step": 1,
+   "value": null,
+   "prop": null,
+   "label": "むずかしい",
+   "clip": {
+    "x": 686,
+    "y": 389,
+    "width": 162,
+    "height": 57
+   },
+   "states": {
+    "normal": "c23-normal.png",
+    "hover": "c23-hover.png",
+    "focus": "c23-focus.png",
+    "active": "c23-active.png",
+    "normal-on": "c23-normal-on.png",
+    "hover-on": "c23-hover-on.png",
+    "focus-on": "c23-focus-on.png",
+    "active-on": "c23-active-on.png"
+   }
+  },
+  {
+   "key": "c24",
+   "id": null,
+   "kind": "slider",
+   "page": "settings",
+   "rect": {
+    "x": 352,
+    "y": 461.1875,
+    "w": 420,
+    "h": 44
+   },
+   "action": "",
+   "slot": null,
+   "group": "auto:58",
+   "name": null,
+   "checked": null,
+   "disabled": false,
+   "min": 1,
+   "max": 10,
+   "step": 1,
+   "value": 4,
+   "prop": "sens",
+   "label": "4",
+   "clip": {
+    "x": 346,
+    "y": 455,
+    "width": 432,
+    "height": 57
+   },
+   "states": {
+    "normal": "c24-normal.png",
+    "hover": "c24-hover.png",
+    "focus": "c24-focus.png",
+    "active": "c24-active.png"
+   },
+   "frameValues": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "frames": [
+    "c24-f0.png",
+    "c24-f1.png",
+    "c24-f2.png",
+    "c24-f3.png",
+    "c24-f4.png",
+    "c24-f5.png",
+    "c24-f6.png",
+    "c24-f7.png",
+    "c24-f8.png",
+    "c24-f9.png"
+   ],
+   "framesFocus": [
+    "c24-ff0.png",
+    "c24-ff1.png",
+    "c24-ff2.png",
+    "c24-ff3.png",
+    "c24-ff4.png",
+    "c24-ff5.png",
+    "c24-ff6.png",
+    "c24-ff7.png",
+    "c24-ff8.png",
+    "c24-ff9.png"
+   ]
+  }
+ ],
+ "dynamic": [
+  {
+   "key": "d0",
+   "kind": "number",
+   "page": null,
+   "rect": {
+    "x": 1099,
+    "y": 45.59375,
+    "w": 117,
+    "h": 28.796875
+   },
+   "prop": "score",
+   "min": 0,
+   "max": 100,
+   "value": 0,
+   "digits": 6,
+   "text": "000000",
+   "clip": {
+    "x": 1097,
+    "y": 43,
+    "width": 121,
+    "height": 34
+   },
+   "places": [
+    {
+     "x": 1099,
+     "y": 45.59375,
+     "w": 19.5,
+     "h": 27
+    },
+    {
+     "x": 1118.5,
+     "y": 45.59375,
+     "w": 19.5,
+     "h": 27
+    },
+    {
+     "x": 1138,
+     "y": 45.59375,
+     "w": 19.5,
+     "h": 27
+    },
+    {
+     "x": 1157.5,
+     "y": 45.59375,
+     "w": 19.5,
+     "h": 27
+    },
+    {
+     "x": 1177,
+     "y": 45.59375,
+     "w": 19.5,
+     "h": 27
+    },
+    {
+     "x": 1196.5,
+     "y": 45.59375,
+     "w": 19.5,
+     "h": 27
+    }
+   ],
+   "glyphs": [
+    "d0-g0.png",
+    "d0-g1.png",
+    "d0-g2.png",
+    "d0-g3.png",
+    "d0-g4.png",
+    "d0-g5.png",
+    "d0-g6.png",
+    "d0-g7.png",
+    "d0-g8.png",
+    "d0-g9.png"
+   ]
+  },
+  {
+   "key": "d1",
+   "kind": "gauge",
+   "page": "settings",
+   "rect": {
+    "x": 352,
+    "y": 527.578125,
+    "w": 420,
+    "h": 28
+   },
+   "prop": "progress",
+   "min": 0,
+   "max": 100,
+   "value": 60,
+   "digits": null,
+   "text": null,
+   "clip": {
+    "x": 350,
+    "y": 525,
+    "width": 424,
+    "height": 33
+   },
+   "frames": [
+    "d1-f0.png",
+    "d1-f1.png",
+    "d1-f2.png",
+    "d1-f3.png",
+    "d1-f4.png",
+    "d1-f5.png",
+    "d1-f6.png",
+    "d1-f7.png",
+    "d1-f8.png",
+    "d1-f9.png",
+    "d1-f10.png"
+   ],
+   "frameValues": [
+    0,
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90,
+    100
+   ]
+  }
+ ],
+ "background": {
+  "color": "rgb(20, 23, 29)",
+  "image": false
+ },
+ "title": "GeoUI HTML Demo",
+ "start": "play",
+ "previews": [
+  "page-play.png",
+  "page-items.png",
+  "page-settings.png"
+ ]
+}

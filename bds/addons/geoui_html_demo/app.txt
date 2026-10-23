@@ -1,0 +1,71 @@
+# geoui_html_demo（bds/geoui/html/convert.mjs --sample が作る）を本物のアプリで: ページの見た目・焦点・ポインタ・ページの切り替え
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 900000
+do tp @a 0 -60 0 0 90
+do gamemode adventure @a
+wait 6000
+shot world
+absent clientlog \bERROR\b
+
+section open
+do scriptevent ghd:open
+wait 2500
+shot page-play
+changed 0.2
+measure diff page-play
+
+section keys
+press D 300
+wait 800
+press S 300
+wait 800
+shot keys-focus
+press SPACE 200
+wait 800
+until server GEOUI event 5000
+
+section tabs
+key 2
+wait 1500
+shot page-items
+key 3
+wait 1500
+shot page-settings
+press S 300
+wait 600
+press SPACE 200
+wait 1000
+shot settings-toggle
+
+section pointer
+key 1
+wait 1200
+look left 400 50
+wait 800
+shot pointer
+look right 600 50
+wait 800
+shot pointer-2
+
+section sizes
+size 1024x768
+wait 9000
+shot page-4x3
+size 2400x1080
+wait 9000
+shot page-20x9
+size reset
+wait 6000
+
+section close
+press SHIFT_LEFT 300
+wait 600
+press SHIFT_LEFT 300
+wait 1500
+shot closed

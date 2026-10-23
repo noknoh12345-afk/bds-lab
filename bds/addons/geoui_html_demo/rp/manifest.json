@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI HTML Demo RP",
+    "description": "menu.html を GeoUI に（bds-lab: bds/geoui/html）",
+    "uuid": "b6e0c2a4-7d31-4f58-8a2c-1e9f0d3b5a61",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "b6e0c2a4-7d31-4f58-8a2c-1e9f0d3b5a62",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

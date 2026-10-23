@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI HTML Demo BP",
+    "description": "menu.html を GeoUI に（bds-lab: bds/geoui/html）",
+    "uuid": "b6e0c2a4-7d31-4f58-8a2c-1e9f0d3b5a63",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "b6e0c2a4-7d31-4f58-8a2c-1e9f0d3b5a64",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "b6e0c2a4-7d31-4f58-8a2c-1e9f0d3b5a65",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "b6e0c2a4-7d31-4f58-8a2c-1e9f0d3b5a61",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.1.0"
+    }
+  ]
+}

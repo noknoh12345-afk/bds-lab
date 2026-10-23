@@ -1,0 +1,63 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ghd.ui": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "ghd_ui": {
+          "scale": "v.ghd_pg > 0 ? 1 : 0"
+        },
+        "ghd_p0": {
+          "scale": "v.ghd_pg == 1 ? 1 : 0"
+        },
+        "ghd_p1": {
+          "scale": "v.ghd_pg == 2 ? 1 : 0"
+        },
+        "ghd_p2": {
+          "scale": "v.ghd_pg == 3 ? 1 : 0"
+        },
+        "ghd_hint_w": {
+          "position": [
+            "v.ghd_hxw",
+            "-v.ghd_hyw",
+            0
+          ],
+          "scale": "(v.ghd_hw >= 0 && math.mod(math.floor(v.ghd_flg / 2), 2) > 0.5) ? 1 : 0"
+        },
+        "ghd_hint_a": {
+          "position": [
+            "v.ghd_hxa",
+            "-v.ghd_hya",
+            0
+          ],
+          "scale": "(v.ghd_ha >= 0 && math.mod(math.floor(v.ghd_flg / 2), 2) > 0.5) ? 1 : 0"
+        },
+        "ghd_hint_s": {
+          "position": [
+            "v.ghd_hxs",
+            "-v.ghd_hys",
+            0
+          ],
+          "scale": "(v.ghd_hs >= 0 && math.mod(math.floor(v.ghd_flg / 2), 2) > 0.5) ? 1 : 0"
+        },
+        "ghd_hint_d": {
+          "position": [
+            "v.ghd_hxd",
+            "-v.ghd_hyd",
+            0
+          ],
+          "scale": "(v.ghd_hd >= 0 && math.mod(math.floor(v.ghd_flg / 2), 2) > 0.5) ? 1 : 0"
+        },
+        "ghd_ptr": {
+          "position": [
+            "v.ghd_cx",
+            "-v.ghd_cy",
+            0
+          ],
+          "scale": "math.mod(v.ghd_flg, 2) > 0.5 ? 1 : 0"
+        }
+      }
+    }
+  }
+}

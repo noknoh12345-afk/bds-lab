@@ -1,0 +1,97 @@
+{
+  "namespace": "hud",
+  "ghd_vp": {
+    "type": "panel",
+    "$ghd_vp_size|default": [
+      "100%",
+      "100%"
+    ],
+    "size": "$ghd_vp_size",
+    "variables": [
+      {
+        "requires": "($compress_hud_width)",
+        "$ghd_vp_size": [
+          "111.111111%",
+          "100%"
+        ]
+      }
+    ],
+    "controls": [
+      {
+        "ghd_g_page": {
+          "type": "panel",
+          "size": [
+            "5.333333%",
+            "9.481481%"
+          ],
+          "controls": [
+            {
+              "ghd_mid_page": {
+                "type": "panel",
+                "size": [
+                  "100%y",
+                  "100%"
+                ],
+                "max_size": [
+                  "100%",
+                  "100%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "controls": [
+                  {
+                    "ghd_sq_page": {
+                      "type": "panel",
+                      "size": [
+                        "100%",
+                        "100%x"
+                      ],
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "offset": [
+                        "17578.125%x",
+                        "6890.039063%y"
+                      ],
+                      "controls": [
+                        {
+                          "ghd_r_page": {
+                            "type": "custom",
+                            "renderer": "live_player_renderer",
+                            "layer": 1,
+                            "size": [
+                              "100%",
+                              "100%"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_name_override": "#visible"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "root_panel": {
+    "modifications": [
+      {
+        "array_name": "controls",
+        "operation": "insert_front",
+        "value": [
+          {
+            "ghd_vp@hud.ghd_vp": {}
+          }
+        ]
+      }
+    ]
+  }
+}

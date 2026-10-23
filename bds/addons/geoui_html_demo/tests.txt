@@ -1,0 +1,100 @@
+# geoui_html_demo（bds/geoui/html/convert.mjs --sample が作る）: HTML のページを GeoUI にした物が、フォームなしで動くか —
+# 開く・視点のポインタ・W A S D の焦点・ジャンプで決定・スニークで戻る・スロット（タブ）・切り替え・ラジオ・スライダー（ホイール）・閉じる。
+# fha = [焦点, ポインタの下, 押している] の番号（-1 = なし）。描画は app.txt（本物のアプリ）。
+
+## 読み込める（閉じている）
+@A join
+wait 2000
+js JSON.stringify([p('A').getProperty('ghd:pg'), p('A').getProperty('ghd:fha')])
+= [0,0]
+
+## 開くと最初のページ（あそぶ）で、焦点は最初の操作できる物
+scriptevent ghd:open
+wait 600
+js p('A').getProperty('ghd:pg')
+= 1
+js const v = p('A').getProperty('ghd:fha'); JSON.stringify([v % 256 - 1, Math.floor(v / 256) % 256 - 1, Math.floor(v / 65536) - 1])
+= [0,-1,-1]
+
+## W A S D で焦点が動く（右へ → タブの 2 つ目、下へ → ステージのボタン）
+@A walk right 4
+wait 600
+js const v = p('A').getProperty('ghd:fha'); JSON.stringify([v % 256 - 1, Math.floor(v / 256) % 256 - 1, Math.floor(v / 65536) - 1])
+= [1,-1,-1]
+@A walk back 4
+wait 600
+js const f = p('A').getProperty('ghd:fha') % 256 - 1; JSON.stringify([f > 2, f < 8])
+= [true,true]
+
+## ジャンプで決定（ステージのボタン → event）
+@A jump
+wait 600
+~ GEOUI event .*"name":"stage
+
+## スロット 3 でタブ「せってい」へ
+@A slot 2
+wait 600
+js p('A').getProperty('ghd:pg')
+= 3
+
+## 切り替え（音楽）をジャンプで OFF に
+scriptevent ghd:focus c19
+wait 300
+js Math.floor(p('A').getProperty('ghd:chk0') / 524288) % 2
+= 1
+@A jump
+wait 600
+js Math.floor(p('A').getProperty('ghd:chk0') / 524288) % 2
+= 0
+
+## スライダーはホイールで変わる（スロットの物は選ばれない）
+scriptevent ghd:focus c24
+wait 300
+@A hotbar prev
+wait 600
+~ GEOUI change .*"value":5
+js JSON.stringify([p('A').getProperty('ghd:pg'), p('A').getProperty('ghd:fha') % 256 - 1])
+= [3,24]
+
+## 視点を回すとポインタが動き、下の物に焦点が移る
+scriptevent ghd:page play
+wait 400
+@A turn -40 10 10
+wait 800
+js const v = p('A').getProperty('ghd:cur'); v !== 8390656
+= true
+
+## スニークで前のページへ戻り、最初のページでもう一度で閉じる
+scriptevent ghd:close
+wait 300
+scriptevent ghd:open
+wait 400
+scriptevent ghd:page settings
+wait 400
+@A sneak on
+wait 300
+@A sneak off
+wait 500
+js p('A').getProperty('ghd:pg')
+= 1
+@A sneak on
+wait 300
+@A sneak off
+wait 600
+js p('A').getProperty('ghd:pg')
+= 0
+
+## 開いたまま抜けて戻ると閉じている
+scriptevent ghd:open
+wait 600
+js p('A').getProperty('ghd:pg')
+= 1
+@A leave
+wait 1500
+@A join
+wait 3000
+js p('A').getProperty('ghd:pg')
+= 0
+wait 1500
+js p('A').getProperty('ghd:pg')
+= 0
