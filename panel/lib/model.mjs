@@ -13,7 +13,7 @@ export function roleOf(perm) {
   if (perm.pull || perm.triage) return 'read';
   return null;
 }
-export const ROLE_NAMES = { admin: '管理者', write: '書き込みできる人', read: '見るだけ', lender: '貸し手', borrower: '借り手' };
+export const ROLE_NAMES = { admin: '管理者', write: '書き込みできる人', read: '見るだけ', reader: '見るだけ（招かれた人）', lender: '貸し手', borrower: '借り手' };
 /** may this person use the panel: they can write to the lab's repository, or they lend or borrow a host (GitHub Actions
  *  minutes) → { ok, as: [..], why } */
 export function access({ lab, hosts = [] }) {
@@ -22,7 +22,17 @@ export function access({ lab, hosts = [] }) {
   if (lr === 'admin' || lr === 'write') as.push(lr === 'admin' ? 'admin' : 'write');
   for (const h of hosts) { const r = roleOf(h.permissions); if (r === 'admin') as.push('lender'); else if (r === 'write') as.push('borrower'); }
   const uniq = [...new Set(as)];
-  return uniq.length ? { ok: true, as: uniq, why: '' } : { ok: false, as: [], why: 'このパネルは、ラボのリポジトリに書き込める人と、GitHub Actions の時間を貸している人（ホストの持ち主）・借りている人だけが使えます。このトークンではどちらでもありません。「設定」のラボのリポジトリ（owner/名前）が合っているか確かめるか、持ち主に招いてもらうか、下の「時間を貸す」から始めてください' };
+  return uniq.length ? { ok: true, as: uniq, why: '' } : { ok: false, as: [], why: 'このパネルは、ラボのリポジトリに書き込める人と、見るだけで招かれた人（公開のラボは、管理者が「メンバー」の「見るだけで入れる人」に名前を入れた人）、GitHub Actions の時間を貸している人（ホストの持ち主）・借りている人だけが使えます。このトークンではどれでもありません。「設定」のラボのリポジトリ（owner/名前）が合っているか確かめるか、持ち主に招いてもらうか、下の「時間を貸す」から始めてください' };
+}
+
+/** someone GitHub lets read the lab but not write to it: let in to look? (pure) — yes when the lab is not public (a private
+ *  lab's readers were invited, an internal lab's are its enterprise's own people: no stranger sees it), or when the lab's policy
+ *  names them (viewers: on a public lab GitHub lets everyone read, so only the people named count as let in). role: roleOf the
+ *  lab's permissions */
+export function mayLook({ role, visibility, login, viewers = [] }) {
+  if (role !== 'read') return false;
+  if (visibility === 'private' || visibility === 'internal') return true;
+  return Boolean(login) && (viewers ?? []).some((v) => String(v).toLowerCase() === String(login).toLowerCase());
 }
 
 // ---- what a repository's own settings allow (its secrets' names; the values are never read) ----

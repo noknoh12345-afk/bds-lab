@@ -48,6 +48,8 @@ const people = {
   'tok-newlender': { login: 'newlender', repos: { [LAB]: { pull: true }, [FORK]: { admin: true, push: true, pull: true }, 'someone/their-repo': { push: true, pull: true } } },
   'tok-lender': { login: 'lender1', repos: { [HOST]: { admin: true, push: true, pull: true } } },
   'tok-admin2': { login: 'admin2', repos: { [LAB]: { ...ADMIN }, [FORK2]: { ...ADMIN } } },
+  // (someone GitHub lets read the public lab — as it lets everyone — whom the lab's policy names to look: viewers)
+  'tok-viewer': { login: 'viewer1', repos: { [LAB]: { pull: true } } },
   ghu_ceo1: { login: 'ceo1', repos: { [CORP]: ADMIN } }, ghu_ceo2: { login: 'ceo1', repos: { [CORP]: ADMIN } },
   'tok-writer': { login: 'writer1', repos: { [CORP]: { push: true, pull: true } } },
 };
@@ -58,7 +60,7 @@ const G = {
     [`${CORP}:.github/workflows/verify.yml`]: wf('verify.yml'), [`${CORP}:.github/workflows/notify.yml`]: wf('notify.yml'), [`${CORP}:.github/workflows/pages.yml`]: wf('pages.yml'), [`${CORP}:.github/workflows/auth-deploy.yml`]: wf('auth-deploy.yml'),
     [`${CORP}:.github/bds-lab-panel.json`]: JSON.stringify(POLICY),
     // (this lab's administrators always lend; everything else as with no file)
-    [`${LAB}:.github/bds-lab-panel.json`]: JSON.stringify({ version: 1, adminsLend: true }),
+    [`${LAB}:.github/bds-lab-panel.json`]: JSON.stringify({ version: 1, adminsLend: true, viewers: ['Viewer1'] }),
     // (a unit of the lab: its manifest, task, tests and code — 「アドオン」 reads them; unit.yml and schedule.yml as the lab has them)
     [`${LAB}:bds/addons/coins/bp/manifest.json`]: JSON.stringify({ format_version: 2, header: { name: 'Coins Shop', description: 'Coins from mobs, spent at a shop', uuid: '0f6c1b7e-0000-4000-8000-000000000001', version: [1, 2, 0], min_engine_version: [1, 21, 0] },
       modules: [{ type: 'script', language: 'javascript', entry: 'scripts/main.js', uuid: '0f6c1b7e-0000-4000-8000-000000000002', version: [1, 2, 0] }] }),
@@ -346,7 +348,19 @@ page.on('dialog', (d) => d.accept(d.type() === 'prompt' ? '2099-01-31' : undefin
 const text = () => page.locator('main').innerText();
 const waitText = async (re, ms = 10_000) => { const end = Date.now() + ms; while (Date.now() < end) { if (re.test(await text())) return true; await page.waitForTimeout(150); } return false; };
 const signIn = async (tok) => { await page.goto(URL0); await page.waitForSelector('#tok'); await page.fill('#tok', tok); await page.fill('#lab', LAB); await page.click('#go'); };
-const tab = async (name) => { await page.locator('nav.tabs button', { hasText: name }).click(); if (process.env.PANEL_SHOTS) { await page.waitForTimeout(900); fs.mkdirSync(process.env.PANEL_SHOTS, { recursive: true }); await page.screenshot({ path: path.join(process.env.PANEL_SHOTS, `${String(++shots).padStart(2, '0')}-${name}.png`), fullPage: true }); } };
+// (the panel's frame, OreUI's: the five groups on the dock, each group's screens as a segmented row — a screen is opened by its
+//  group, then its segment; the screens someone sees are the dock's, said here in the panel's own order of them)
+const KEY = { 概要: 'overview', 進み具合: 'runs', 実行: 'start', アドオン: 'units', 配布: 'releases', 成果物: 'files', 予約: 'schedule', 統計: 'stats', Discord: 'discord', 秘密: 'secrets', 端末: 'live', 貸し借り: 'hosts', メンバー: 'members', 準備: 'setup', 連携: 'connect', 監査: 'audit', 設定: 'settings' };
+const NAME = Object.fromEntries(Object.entries(KEY).map(([n, k]) => [k, n])), ORDER = Object.keys(KEY);
+const openScreen = async (pg, name) => {
+  const k = KEY[name] ?? name, seg = pg.locator(`nav.tabs button[data-tab="${k}"]`);
+  if (!(await seg.isVisible().catch(() => false))) await pg.locator(`#dock button[data-tabs~="${k}"]`).click();
+  if (await seg.isVisible().catch(() => false) && !(await seg.evaluate((b) => b.classList.contains('on')))) await seg.click();
+};
+const screensOf = async (pg) => (await pg.locator('#dock button[data-tabs]').evaluateAll((bs) => bs.flatMap((b) => b.dataset.tabs.split(' ')))).map((k) => NAME[k] ?? k).sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+// (the account: who, switching, adding one, leaving — a sheet from the avatar in the title bar)
+const accountDo = async (pg, id) => { if (!(await pg.locator('#acctsheet').count())) await pg.locator('#acctbtn').click(); await pg.locator(`#acctsheet #${id}`).click(); };
+const tab = async (name) => { await openScreen(page, name); if (process.env.PANEL_SHOTS) { await page.waitForTimeout(900); fs.mkdirSync(process.env.PANEL_SHOTS, { recursive: true }); await page.screenshot({ path: path.join(process.env.PANEL_SHOTS, `${String(++shots).padStart(2, '0')}-${name}.png`), fullPage: true }); } };
 let shots = 0;
 
 try {
@@ -374,11 +388,11 @@ try {
   await page.locator('#lend button', { hasText: 'フォークで貸す' }).click();
   await waitText(/貸す条件（あなたのホスト）/, 8000);
   const made = G.filesPut.filter((f) => f.slug === FORK).map((f) => f.f);
-  const tabsNow = await page.locator('nav.tabs button').allInnerTexts();
+  const tabsNow = await screensOf(page);
   check(JSON.stringify(forkSide.synced) === '["main"]' && JSON.stringify(made) === '[".lab-host.json"]' && JSON.parse(G.files[`${FORK}:.lab-host.json`]).minutesPerMonth === 50000 && !JSON.parse(G.files[`${FORK}:.lab-host.json`]).until, 'their fork made a host: brought up to the lab (host.yml as the lab has it), their rules written — nothing else', JSON.stringify({ synced: forkSide.synced, made }));
   check(JSON.stringify(forkSide.toggled) === JSON.stringify(['enable 31', 'disable 32']), 'only host.yml runs in their fork: the lab\'s own CI off there', JSON.stringify(forkSide.toggled));
   check(JSON.stringify(tabsNow) === JSON.stringify(['概要', '貸し借り', '設定']) && /貸し手/.test(await text()) && /のフォーク/.test(await text()), 'then a lender: lending is all there is (no runs, secrets, members …)', JSON.stringify(tabsNow));
-  await page.locator('#who button', { hasText: '出る' }).click();
+  await accountDo(page, 'signout');
 
   // an administrator of the lab but not its owner: the lab's policy says they always lend (adminsLend) — until they do, lending
   // is all the panel offers them; then their fork lends always, its whole say given to the owner (invited), into LAB_HOSTS
@@ -395,7 +409,22 @@ try {
   check(JSON.stringify(forkSide2.invited) === '["author1=admin"]' && G.varsPut.includes('POST LAB_HOSTS=admin2/bds-lab'), 'its whole say given to the owner (invited) and into LAB_HOSTS', JSON.stringify({ invited: forkSide2.invited, vars: G.varsPut }));
   await tab('設定');
   check(/できること: ワークフローを始める/.test(await text()), 'lending: the administrator\'s powers back', await text());
-  await page.locator('#who button', { hasText: '出る' }).click();
+  await accountDo(page, 'signout');
+
+  // someone let in to look (the public lab's policy names them — GitHub lets everyone read it): the lab as it is, and nothing
+  // they may not do offered — no starting, stopping, secrets, members, setup
+  await signIn('tok-viewer');
+  await page.waitForSelector('#dock button', { timeout: 10_000 }).catch(() => {});
+  const seen = await screensOf(page);
+  check(JSON.stringify(seen) === JSON.stringify(['概要', '進み具合', 'アドオン', '配布', '成果物', '予約', '統計', '貸し借り', '設定']), 'a viewer: the lab\'s screens to look at, none to change it', JSON.stringify(seen));
+  check(await waitText(/見るだけで入っています/) && !/このリポジトリの設定でできること/.test(await text()) && await page.locator('#todo').count() === 1, 'a viewer\'s 概要: said they may look, what to do now still shown', await text());
+  await tab('進み具合');
+  await waitText(/verify/);
+  check(await page.locator('#tabbody button:visible', { hasText: '止める' }).count() === 0 && await page.locator('#tabbody button:visible', { hasText: 'やり直す' }).count() === 0 && await page.locator('#tabbody button', { hasText: '詳しく' }).count() >= 1,
+    'a viewer\'s runs: no stopping, no running again — what they cannot do is not there', await page.locator('#tabbody').innerText());
+  await page.locator('#acctbtn').click();
+  check(/ここでできること: 見るだけ/.test(await page.locator('#acctsheet').innerText()) && /見るだけ（招かれた人）/.test(await page.locator('#acctsheet').innerText()), 'the account sheet says it: look only', await page.locator('#acctsheet').innerText());
+  await page.locator('#acctsheet #signout').click();
 
   // the author
   await signIn('tok-author');
@@ -427,6 +456,7 @@ try {
   await waitText(/verify/);
   check(await waitText(/いま: 端末をそのまま調べる（hold）/), 'a run still going shows its progress by itself (the step it is on)', await text());
   await page.locator('.card', { hasText: 'verify' }).locator('button', { hasText: '詳しく' }).click();
+  check(await page.locator('.card', { hasText: 'verify' }).locator('button.runtap').getAttribute('aria-expanded') === 'true', 'a run\'s head is one tap: its details open (aria-expanded)');
   check(await waitText(/考えられる原因と直し方/) && /試験が落ちました（panel-offline\.mjs）/.test(await page.locator('.diagnose').innerText()), 'a failed run: why in words, what to do', await page.locator('.diagnose').innerText().catch(() => ''));
   check(await waitText(/FAIL gate: tests\/panel-offline\.mjs/) && /❌ offline — 2\/2/.test(await text()), 'a failed run: its jobs, steps and the annotation that says why', await text());
   await tab('実行');
@@ -700,21 +730,24 @@ try {
   check(wide[0] <= wide[1], 'nothing wider than the phone\'s screen', JSON.stringify(wide));
   if (process.env.PANEL_SHOTS) { await msCard.screenshot({ path: path.join(process.env.PANEL_SHOTS, 'connect-microsoft.png') }); await pickCard.screenshot({ path: path.join(process.env.PANEL_SHOTS, 'connect-pick.png') }); }
 
+  // (the account sheet from the avatar: a picture when pictures are asked for)
+  if (process.env.PANEL_SHOTS) { await page.locator('#acctbtn').click(); await page.waitForTimeout(400); await page.screenshot({ path: path.join(process.env.PANEL_SHOTS, 'account.png') }); await page.keyboard.press('Escape'); }
   // 「☰」 on a phone: every screen in groups with what it is for; a tap opens that screen, Esc closes it (the focus back on ☰);
   // the tab shown stays in sight in the strip; the header one line
   await page.locator('#menubtn').click();
   const sheet = page.locator('#menusheet');
   const sheetText = await sheet.innerText().catch(() => '');
   check(await sheet.isVisible() && /いつも見る/.test(sheetText) && /つなぐ・鍵/.test(sheetText) && /パスワードや鍵/.test(sheetText) && await sheet.locator('li button').count() >= 14, '☰: every screen in groups, each with what it is for', sheetText.slice(0, 200));
-  if (process.env.PANEL_SHOTS) await page.screenshot({ path: path.join(process.env.PANEL_SHOTS, 'menu.png') });
+  // (a picture once the sheet has faded in)
+  if (process.env.PANEL_SHOTS) { await page.waitForTimeout(300); await page.screenshot({ path: path.join(process.env.PANEL_SHOTS, 'menu.png') }); }
   await sheet.locator('button[data-go="secrets"]').click();
   check(await page.locator('#menusheet').count() === 0 && (await page.locator('nav.tabs button.on').innerText()) === '秘密', '☰ → a screen: opened, the menu gone', await page.locator('nav.tabs button.on').innerText());
   await page.locator('#menubtn').click();
   await page.keyboard.press('Escape');
   check(await page.locator('#menusheet').count() === 0 && await page.evaluate(() => document.activeElement?.id) === 'menubtn', '☰: Esc closes it, the focus back on ☰');
   await tab('設定');
-  const inSight = await page.locator('nav.tabs button.on').evaluate((b) => { const r = b.getBoundingClientRect(), n = b.parentElement.getBoundingClientRect(); return r.left >= n.left - 1 && r.right <= n.right + 1; });
-  check(inSight, 'the tab shown is in sight in the strip (「設定」 at its far end)');
+  const inSight = await page.locator('#dock button.on').evaluate((b) => { const r = b.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; });
+  check(inSight, 'the group shown is in sight on the dock (「設定」 at its far end)');
   const hdr = await page.locator('header#top').evaluate((e) => e.getBoundingClientRect().height);
   check(hdr <= 72, 'the header on one line at a phone\'s width', String(hdr));
   await tab('概要');
@@ -780,11 +813,11 @@ try {
   check(await waitText(/FAIL gate: tests\/panel-offline\.mjs/) && (await page.locator('nav.tabs button.on').innerText()) === '進み具合', 'Discord\'s link opens the run it names, its reasons shown', await text());
 
   // a second account in the same browser: the lender, added with ＋ (their own hosts found on their first visit)
-  await page.locator('#who button', { hasText: '＋' }).click();
+  await accountDo(page, 'addacct');
   await page.waitForSelector('#tok');
   await page.fill('#tok', 'tok-lender'); await page.fill('#lab', LAB); await page.click('#go');
-  await page.waitForSelector('nav.tabs button', { timeout: 10_000 }).catch(() => {});
-  const tabs = await page.locator('nav.tabs button').allInnerTexts();
+  await page.waitForSelector('#dock button', { timeout: 10_000 }).catch(() => {});
+  const tabs = await screensOf(page);
   check(JSON.stringify(tabs) === JSON.stringify(['概要', '貸し借り', '設定']), 'a lender sees the overview, the hosts and the settings only', JSON.stringify(tabs));
   await tab('貸し借り');
   await page.locator('button', { hasText: '自分のホストを探す' }).click();
@@ -794,21 +827,47 @@ try {
   const put = G.filesPut.at(-1), j = put ? JSON.parse(Buffer.from(put.body.content, 'base64').toString('utf8')) : null;
   check(put && put.slug === HOST && put.f === '.lab-host.json' && j.until === M.dayOf(new Date(now - 86_400_000), 'UTC') && j.minutesPerMonth === 600 && put.body.sha, 'stopped: .lab-host.json\'s until moved to yesterday (the rest kept, with its sha)', JSON.stringify(put?.body));
   check(await waitText(/期限（\d{4}-\d\d-\d\d）を過ぎました/), 'the host now says it is not lending', await text());
+  await page.locator('#acctbtn').click();
   check(JSON.stringify(await page.locator('#acct option').allInnerTexts()) === JSON.stringify(['author1', 'lender1']) && (await page.locator('#acct').inputValue()) === 'lender1', 'both accounts at the top, the lender in use', await page.locator('#who').innerText());
 
   // back to the author with a tap: their own settings (the host they borrow, the vault key) as they left them
   await page.selectOption('#acct', 'author1');
   await waitText(/管理者/);
-  check(JSON.stringify(await page.locator('nav.tabs button').allInnerTexts()) === JSON.stringify(['概要', '進み具合', '実行', 'アドオン', '配布', '成果物', '予約', '統計', 'Discord', '秘密', '端末', '貸し借り', 'メンバー', '準備', '連携', '監査', '設定']), 'switched: the author\'s tabs', JSON.stringify(await page.locator('nav.tabs button').allInnerTexts()));
+  check(JSON.stringify(await screensOf(page)) === JSON.stringify(['概要', '進み具合', '実行', 'アドオン', '配布', '成果物', '予約', '統計', 'Discord', '秘密', '端末', '貸し借り', 'メンバー', '準備', '連携', '監査', '設定']), 'switched: the author\'s tabs', JSON.stringify(await page.locator('nav.tabs button').allInnerTexts()));
   // every tab, as the author sees it: a missing part is nothing — never the words 「null」「undefined」「[object …]」 on the page
   // (the browser's own replaceChildren / append write them; ui/dom.mjs keeps them out)
-  for (const name of await page.locator('nav.tabs button').allInnerTexts()) {
+  for (const name of await screensOf(page)) {
     await tab(name);
     await page.waitForTimeout(700);
     const words = await page.locator('#main').innerText();
     const bad = /(^|[^A-Za-z_])(null|undefined|NaN)([^A-Za-z_]|$)|\[object [A-Za-z]+\]/.exec(words);
     check(!bad, `「${name}」: no null, undefined or [object …] on the page`, bad ? words.slice(Math.max(0, bad.index - 80), bad.index + 80) : '');
+    // (and nothing wider than the screen: a long choice, a long word or a table never makes the page scroll sideways)
+    const wideNow = await page.evaluate(() => { const w = innerWidth, over = [...document.querySelectorAll('#main *')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && r.right > w + 1 && !e.closest('pre, .tablewrap, table, nav.tabs'); }); return [document.documentElement.scrollWidth, w, over.slice(0, 3).map((e) => `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}.${e.className}: ${Math.round(e.getBoundingClientRect().right)}`)]; });
+    check(wideNow[0] <= wideNow[1], `「${name}」: nothing wider than the screen (no sideways scroll)`, JSON.stringify(wideNow));
   }
+  // OreUI's own parts at work: the fonts of the panel loaded (the pixel face for the title bar), the dock of five with the group
+  // shown, an emoji of the words drawn as its icon with the words kept, 「…を読んでいます…」 marked while it waits, 「なめらかな字」
+  await tab('概要');
+  await page.waitForTimeout(400);
+  const ore = await page.evaluate(async () => { await document.fonts.ready; return { pixel: document.fonts.check('16px "Ore Pixel"'), jp: document.fonts.check('16px "Ore Sans JP"', 'あ'),
+    titleFont: getComputedStyle(document.querySelector('#title')).fontFamily, dock: [...document.querySelectorAll('#dock button')].map((b) => `${b.dataset.hub}${b.getAttribute('aria-current') ? '*' : ''}`),
+    icons: document.querySelectorAll('#main span.pi[data-pi]').length, pt: document.querySelector('#main span.pt')?.innerText ?? '' }; });
+  check(ore.pixel && ore.jp && /^"?Ore Pixel"?/.test(ore.titleFont) && JSON.stringify(ore.dock) === JSON.stringify(['home*', 'make', 'link', 'team', 'more']) && ore.icons > 0 && /\S/.test(ore.pt),
+    'OreUI: its fonts loaded, the title bar in the pixel face, the dock of five (ホーム shown), the emoji of the words drawn as icons with the words kept', JSON.stringify(ore));
+  const waits = await page.evaluate(async () => {
+    const p = document.createElement('p'); p.textContent = '試しに読んでいます…'; document.querySelector('#tabbody').append(p);
+    await new Promise((r) => setTimeout(r, 50)); const on = p.classList.contains('ore-wait');
+    p.textContent = '読みました'; await new Promise((r) => setTimeout(r, 50)); const off = !p.classList.contains('ore-wait'); p.remove();
+    return [on, off];
+  });
+  check(waits[0] && waits[1], '「…を読んでいます…」: the loading mark while it waits, gone when the words change', JSON.stringify(waits));
+  await tab('設定');
+  await page.locator('#smoothfont').check();
+  const smooth = await page.evaluate(() => [document.documentElement.classList.contains('ore-smooth'), localStorage.getItem('bdslab.panel.smooth'), getComputedStyle(document.querySelector('#title')).fontFamily]);
+  await page.locator('#smoothfont').uncheck();
+  const pixelAgain = await page.evaluate(() => [document.documentElement.classList.contains('ore-smooth'), localStorage.getItem('bdslab.panel.smooth')]);
+  check(smooth[0] && smooth[1] === '1' && !/Ore Pixel/.test(smooth[2]) && !pixelAgain[0] && pixelAgain[1] === null, '「なめらかな字」: the pixel face off for this browser (kept), and on again', JSON.stringify([smooth, pixelAgain]));
   await tab('貸し借り');
   check(await waitText(/期限（\d{4}-\d\d-\d\d）を過ぎました/) && /借り手/.test(await text()), 'the host the author borrows (their own list), now stopped by its lender', await text());
   await tab('設定');
@@ -817,10 +876,10 @@ try {
   check(lenderCfg && !lenderCfg.includes('panel-browser-key') && lenderCfg.includes('lender1/bds-lab-host'), 'the lender\'s settings are theirs (no vault key of the author\'s)', lenderCfg);
 
   // 出る: this account forgotten by this browser — the other stays, in use
-  await page.locator('#who button', { hasText: '出る' }).click();
+  await accountDo(page, 'signout');
   await waitText(/貸し借り/);
   const left = await page.evaluate(() => JSON.stringify({ ...localStorage }));
-  check(!left.includes('tok-author') && !left.includes('panel-browser-key') && left.includes('tok-lender') && (await page.locator('#who').innerText()).includes('lender1') && (await page.locator('#acct').count()) === 0, 'leaving forgets that account only (its token and key)', left);
+  check(!left.includes('tok-author') && !left.includes('panel-browser-key') && left.includes('tok-lender') && (await page.locator('#acctbtn').getAttribute('aria-label')).includes('lender1') && (await page.locator('#acct').count()) === 0, 'leaving forgets that account only (its token and key)', left);
 
   // ======== an organization's lab, the company way: 「GitHub でサインイン」 through the real sign-in service, the lab's
   // policy and audit log, the App made in one click from 「準備」, the token revoked on leaving ========
@@ -836,7 +895,7 @@ try {
   p2.on('dialog', (d) => { asked.push(d.message()); d.accept(); });
   const text2 = () => p2.locator('main').innerText();
   const wait2 = async (re, ms = 10_000) => { const end = Date.now() + ms; while (Date.now() < end) { if (re.test(await text2())) return true; await p2.waitForTimeout(150); } return false; };
-  const tab2 = (name) => p2.locator('nav.tabs button', { hasText: name }).click();
+  const tab2 = (name) => openScreen(p2, name);
   const kept2 = () => p2.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }));
   await p2.goto(URL2);
   await p2.waitForSelector('#oauth');
@@ -890,7 +949,7 @@ try {
   check(!p2.url().includes('setup_action') && p2.url().endsWith('#setup') && (await text2()).includes('準備と診断'), 'back from installing: 「準備」, the address clean', p2.url());
 
   // leaving: the token revoked on GitHub through the service, nothing of the account left
-  await p2.locator('#who button', { hasText: '出る' }).click();
+  await accountDo(p2, 'signout');
   await p2.waitForSelector('#oauth');
   const k3 = await kept2();
   check(OA.revoked.length === 1 && OA.revoked[0].body.access_token === 'ghu_ceo2' && OA.revoked[0].auth === `Basic ${Buffer.from(`${CID}:${CSECRET}`).toString('base64')}` && !/ghu_|ghr_/.test(k3), 'leaving revokes the token on GitHub (through the service) and forgets it here', JSON.stringify(OA.revoked));
@@ -898,8 +957,8 @@ try {
   // a writer of the organization's lab (a token): what the policy gives the role (runs) and what it does not (secrets, the log)
   await p2.locator('summary').click();
   await p2.fill('#tok', 'tok-writer'); await p2.fill('#lab', CORP); await p2.click('#go');
-  await p2.waitForSelector('nav.tabs button');
-  const tabs2 = await p2.locator('nav.tabs button').allInnerTexts();
+  await p2.waitForSelector('#dock button');
+  const tabs2 = await screensOf(p2);
   check(!tabs2.includes('監査') && tabs2.includes('実行'), 'a writer: no audit tab (the policy gives the role no audit.read)', JSON.stringify(tabs2));
   await tab2('秘密');
   await p2.locator('#tabbody input').nth(0).fill('MS_EMAIL'); await p2.locator('#tabbody input').nth(1).fill('w@example.com');
@@ -920,14 +979,14 @@ try {
   p4.on('dialog', (d) => d.accept());
   const text4 = () => p4.locator('main').innerText();
   const waitFor4 = async (re, ms = 10_000) => { const end = Date.now() + ms; while (Date.now() < end) { if (re.test(await text4())) return true; await p4.waitForTimeout(150); } return false; };
-  const strip4 = () => p4.locator('nav.tabs button').allInnerTexts();
+  const strip4 = () => screensOf(p4);
   const on4 = () => p4.locator('nav.tabs button.on').innerText();
-  const tab4 = (name) => p4.locator('nav.tabs button', { hasText: name }).click();
+  const tab4 = (name) => openScreen(p4, name);
   const shot4 = async (name) => { if (!process.env.PANEL_SHOTS) return; await p4.waitForTimeout(900); fs.mkdirSync(process.env.PANEL_SHOTS, { recursive: true }); await p4.screenshot({ path: path.join(process.env.PANEL_SHOTS, `simple-${String(++shots).padStart(2, '0')}-${name}.png`), fullPage: true }); };
   const SIMPLE = ['概要', '進み具合', '実行', 'アドオン', '配布', '予約', '秘密', '端末', '貸し借り', '準備', '連携', '設定'];
   const EVERY = ['概要', '進み具合', '実行', 'アドオン', '配布', '成果物', '予約', '統計', 'Discord', '秘密', '端末', '貸し借り', 'メンバー', '準備', '連携', '監査', '設定'];
   await p4.goto(URL0); await p4.waitForSelector('#tok'); await p4.fill('#tok', 'tok-author'); await p4.fill('#lab', LAB); await p4.click('#go');
-  await p4.waitForSelector('nav.tabs button', { timeout: 10_000 });
+  await p4.waitForSelector('#dock button', { timeout: 10_000 });
   check(JSON.stringify(await strip4()) === JSON.stringify(SIMPLE), 'かんたん表示 (the default): the strip without 成果物・統計・Discord・メンバー・監査', JSON.stringify(await strip4()));
   await p4.waitForFunction(() => /最近の実行/.test(document.querySelector('#ovruns')?.innerText ?? ''), null, { timeout: 10_000 }).catch(() => {});
   check(/最近の実行/.test(await text4()) && await p4.locator('#todo').count() === 1 && await p4.locator('#labhealth, #reportbox, #wizardbox, #me, details.help').count() === 0,
@@ -982,11 +1041,11 @@ try {
   // 「すべての機能を出す」: every screen at once, said, kept for this browser (a reload keeps it); back to かんたん表示 from ☰
   await tab4('設定');
   await p4.locator('#fullview').check();
-  await p4.waitForFunction((n) => document.querySelectorAll('nav.tabs button').length === n, EVERY.length, { timeout: 5000 }).catch(() => {});
+  await p4.waitForFunction((n) => [...document.querySelectorAll('#dock button[data-tabs]')].flatMap((b) => b.dataset.tabs.split(' ')).length === n, EVERY.length, { timeout: 5000 }).catch(() => {});
   check(JSON.stringify(await strip4()) === JSON.stringify(EVERY) && /すべての機能を出しました/.test(await p4.locator('#toast').innerText()) && await p4.evaluate(() => localStorage.getItem('bdslab.panel.full')) === '1',
     '「すべての機能を出す」: every screen in the strip, said, kept for this browser', JSON.stringify(await strip4()));
   await p4.reload();
-  await p4.waitForSelector('nav.tabs button', { timeout: 10_000 });
+  await p4.waitForSelector('#dock button', { timeout: 10_000 });
   check(JSON.stringify(await strip4()) === JSON.stringify(EVERY) && await p4.locator('#glossary').count() === 1 && await p4.locator('#debug').count() === 1, 'read again: still all of it (the glossary and the debug card on 設定)', JSON.stringify(await strip4()));
   await p4.locator('#menubtn').click();
   check(await p4.locator('#menuhidden').count() === 0, '☰ with all of it shown: no fold', '');
@@ -1016,14 +1075,14 @@ try {
   await p5.waitForSelector('#oauth');
   await p5.locator('details').first().evaluate((d) => { d.open = true; });
   await p5.fill('#tok', 'tok-author'); await p5.fill('#lab', LAB); await p5.click('#go');
-  await p5.waitForSelector('nav.tabs button', { timeout: 10_000 });
+  await p5.waitForSelector('#dock button', { timeout: 10_000 });
   // 「成果物」 (every run's): each live artifact a button that opens it, an expired one only its name (it is run 90's)
   // (a list drawn again as it refreshes: what it shows waited for, not read once)
-  await p5.locator('nav.tabs button', { hasText: '成果物' }).click();
+  await openScreen(p5, '成果物');
   const arts5 = await p5.waitForFunction(() => { const m = document.querySelector('main'); return Boolean(m?.querySelector('button.art[data-art="32"]') && m.querySelector('button.art[data-art="31"]') && !m.querySelector('button.art[data-art="30"]') && /old-addons（99 B・期限切れ）/.test(m.innerText)); }, null, { timeout: 10_000 }).then(() => true, () => false);
   check(arts5, 'with a sign-in service: 「成果物」 — each live artifact a button that opens it; an expired one only its name', await p5.locator('main').innerText());
   // the run's own: opened from 「進み具合」
-  await p5.locator('nav.tabs button', { hasText: '進み具合' }).click();
+  await openScreen(p5, '進み具合');
   await p5.locator('[data-run="100"] button', { hasText: '詳しく' }).click();
   const run5 = await p5.waitForFunction(() => { const c = document.querySelector('[data-run="100"]'); return Boolean(c?.querySelector('button.art[data-art="32"]') && c.querySelector('button.art[data-art="31"]')); }, null, { timeout: 10_000 }).then(() => true, () => false);
   check(run5, 'the run\'s card: its artifacts each a button', await p5.locator('[data-run="100"]').innerText());

@@ -22,7 +22,7 @@ export function signInCard({ authUrl = null, err = '', adding = false, login = n
   const sayer = () => { const el = h('p', { class: 'bad' }); return [el, (text, hint) => { el.textContent = `${text}: ${hint}`; toast(text, true); }]; };
   const [fix, no] = sayer(), [fixO, noO] = sayer();
   const backBtn = () => (back ? h('button', { onclick: () => back() }, '戻る') : null);
-  const intro = (who) => h('p', {}, `このパネルは、ラボのリポジトリに書き込める人と、GitHub Actions の時間を貸している・借りている人だけが使えます。見えるもの・できることは、${who}に GitHub が許していることだけです。`);
+  const intro = (who) => h('p', {}, `このパネルは、ラボのリポジトリに書き込める人・見るだけで招かれた人と、GitHub Actions の時間を貸している・借りている人だけが使えます。見えるもの・できることは、${who}に GitHub が許していることだけです（見るだけの人は見るだけ）。`);
   const tokenForm = [
     h('p', { class: 'muted' }, 'トークンはこのブラウザの中だけに置き、GitHub の API にだけ送ります（このページはほかのどこにも通信できません）。作者・貸し手・借り手など、いくつかのアカウントを加えて上で切り替えられます（それぞれのトークンと設定で）。'),
     tokenHelp(owner),

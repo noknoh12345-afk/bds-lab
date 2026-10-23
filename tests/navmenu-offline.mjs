@@ -67,7 +67,7 @@ await t('かんたん表示 said in words: each hidden screen named; held back, 
   ok(/🔎/.test(words), 'where they still are');
 });
 await t('panel.js: the strip and ☰ from visibleTabs, 🔎 from every tab permitted, the held-back cards behind full() / adv(), the choice in 「設定」', () => {
-  ok(/NAV\.visibleTabs\(allowed, view\)/.test(src) && /NAV\.hiddenTabs\(allowed, view\)/.test(src) && /openMenu\(tabs, hidden\)/.test(src), 'the strip and the menu');
+  ok(/NAV\.visibleTabs\(allowed, view\)/.test(src) && /NAV\.hiddenTabs\(allowed, view\)/.test(src) && /dockOf\(tabs\)/.test(src) && /openMenu\(st\.nav\.tabs, st\.nav\.hidden\)/.test(src), 'the dock and the menu');
   ok(/palette\(\{ tabs: \(\) => permittedTabs\(\)\.map/.test(src), '🔎: every tab this person may open');
   ok(/adv\('labhealth'\)/.test(src) && /adv\('debug'\)/.test(src) && /go\(tab, anchor\)/.test(src), 'the cards 🔎 leads to, shown when it does');
   ok(/const FULL_KEY = 'bdslab\.panel\.full'/.test(src) && /function viewCard\(\)/.test(src) && /id: 'fullview'/.test(src) && /id: 'showall'/.test(src) && /id: 'showsimple'/.test(src), '「表示」 in 設定, and ☰\'s two buttons');
@@ -79,10 +79,10 @@ await t('first sentence: to 。！？ with the mark, cut at 60 with …', () => 
   eq(NAV.firstSentence('あ'.repeat(80)).length, 60);
   eq(NAV.firstSentence(undefined), '');
 });
-await t('the strip in panel.js: the icon from data-icon (outside the words), 「☰」 outside nav.tabs, the tab shown scrolled into sight', () => {
-  ok(/'data-icon': NAV\.TAB_ICONS\[k\]/.test(src) && /h\('div', \{ class: 'tabbar' \}, menuBtn, strip\)/.test(src) && /showActiveTab\(strip\)/.test(src), 'panel.js');
+await t('the frame in panel.js (OreUI): the five groups on the dock, the group\'s screens as nav.tabs (none for a group of one), 「☰」 in the title bar, the screen shown scrolled into sight', () => {
+  ok(/h\('nav', \{ id: 'dock'/.test(src) && /'data-tabs': g\.tabs\.map/.test(src) && /h\('nav', \{ class: 'tabs', 'aria-label': group\.title \}/.test(src) && /group\.tabs\.length < 2 \? ' single' : ''/.test(src) && /\$\('nstart'\)\?\.replaceChildren\(h\('button', \{ id: 'menubtn'/.test(src) && /showActiveTab\(strip\)/.test(src), 'panel.js');
   const css = fs.readFileSync(path.join(TOP, 'panel', 'panel.css'), 'utf8');
-  ok(/nav\.tabs button::before \{ content: attr\(data-icon\)/.test(css) && /\.tabbar \{[^}]*position: sticky; top: var\(--hdr/.test(css), 'panel.css');
+  ok(/#dock \{[^}]*position: fixed/.test(css) && /\.tabbar \{[^}]*position: sticky; top: var\(--hdr/.test(css) && /\.tabbar\.single \{ display: none; \}/.test(css), 'panel.css');
 });
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

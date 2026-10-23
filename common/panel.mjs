@@ -1,11 +1,12 @@
-// node lab.mjs panel <check|shots|hook>: the management panel (panel/), its sign-in service (auth/) and the workflows' App
-// tokens tried right after a change, without a deploy.
+// node lab.mjs panel <check|shots|hook|icons>: the management panel (panel/), its sign-in service (auth/) and the workflows'
+// App tokens tried right after a change, without a deploy.
 //   check [--quick] [--all] [files..]  the checks the changed files need (git's changed and new files when none are named):
 //                                       ESLint, the offline tests, and the real browser (panel-browser, ~1 min; --quick: not)
 //   shots [dir] [--dark] [--wide]       the real-browser run with a picture of each tab it opens (default .lab/panel-shots;
 //                                       --wide: 1280 px across, as a desktop shows it)
 //   hook                                for Claude Code's PostToolUse: a file just edited → its quick checks; a failure is told
 //                                       back to the AI at once (exit 2), anything else is silent
+//   icons                               panel/icons.css written again from the pixel icons' grids (panel/lib/pixelicons.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -42,13 +43,15 @@ const RULES = [
   // (the panel as Pages serves it: bundled into one script and its chunks — any of its files, the bundler, the Pages build)
   [/^panel\/(panel\.js|lib\/|ui\/|index\.html|panel\.css|a11y\.css)|^common\/(panel-bundle|panel-config)\.mjs$/, ['tests/bundle-offline.mjs']],
   [/^panel\/(a11y|panel)\.css$/, ['tests/a11y-offline.mjs']],
+  // (OreUI: the pixel icons, the frame's pure parts, the fonts and the look)
+  [/^panel\/(lib\/(pixelicons|navmenu)|ui\/ore)\.mjs$|^panel\/(icons|panel)\.css$|^panel\/index\.html$|^panel\/fonts\//, ['tests/ore-offline.mjs']],
   [/^common\/(connect-daily|weekly|statuspage)\.mjs$/, (f) => [`tests/${f.slice(7, -4).replace('-', '')}-offline.mjs`]],
   [/^app\/(app\.mjs|lib\/runfiles\.mjs)$/, ['tests/panel-offline.mjs']],
   [/^panel\/(lib|ui)\/|^panel\/panel\.js$/, ['tests/rescue-offline.mjs', 'tests/shell-rescue-offline.mjs', 'tests/setup-rescue-offline.mjs', 'tests/units-rescue-offline.mjs', 'tests/misc-rescue-offline.mjs', 'tests/ghrules-offline.mjs', 'tests/fakes-rules-offline.mjs', 'tests/connect-ui-offline.mjs',
     'tests/qr-offline.mjs', 'tests/playcard-offline.mjs', 'tests/relnotes-offline.mjs', 'tests/packdiff-offline.mjs', 'tests/revert-offline.mjs', 'tests/drafts-offline.mjs', 'tests/tutorial-offline.mjs', 'tests/progress-offline.mjs',
     'tests/failsum-offline.mjs', 'tests/runissue-offline.mjs', 'tests/runcompare-offline.mjs', 'tests/testhist-offline.mjs', 'tests/secretwatch-offline.mjs', 'tests/connectdaily-offline.mjs', 'tests/weekly-offline.mjs', 'tests/notifyprefs-offline.mjs',
     'tests/minutes-offline.mjs', 'tests/lendfc-offline.mjs', 'tests/nlsched-offline.mjs', 'tests/wizard-offline.mjs', 'tests/a11y-offline.mjs', 'tests/inviteqr-offline.mjs', 'tests/undo-offline.mjs', 'tests/pick-offline.mjs', 'tests/mslive-offline.mjs', 'tests/navmenu-offline.mjs']],
-  [/^tests\/(panel-offline|panel-browser|governance-offline|setup-offline|session-offline|auth-offline|auth-ms-offline|pick-offline|mslive-offline|navmenu-offline|appci-offline|units-offline|schedule-offline|stats-offline|inbox-offline|rescue-offline|shell-rescue-offline|setup-rescue-offline|units-rescue-offline|misc-rescue-offline|ghrules-offline|fakes-rules-offline|connect-ui-offline|qr-offline|playcard-offline|relnotes-offline|packdiff-offline|revert-offline|drafts-offline|tutorial-offline|progress-offline|failsum-offline|runissue-offline|runcompare-offline|testhist-offline|secretwatch-offline|connectdaily-offline|weekly-offline|notifyprefs-offline|minutes-offline|lendfc-offline|nlsched-offline|wizard-offline|a11y-offline|inviteqr-offline|undo-offline|statuspage-offline|viewer-offline|bundle-offline)\.mjs$/, (f) => [f]],
+  [/^tests\/(panel-offline|panel-browser|governance-offline|setup-offline|session-offline|auth-offline|auth-ms-offline|pick-offline|mslive-offline|navmenu-offline|appci-offline|units-offline|schedule-offline|stats-offline|inbox-offline|rescue-offline|shell-rescue-offline|setup-rescue-offline|units-rescue-offline|misc-rescue-offline|ghrules-offline|fakes-rules-offline|connect-ui-offline|qr-offline|playcard-offline|relnotes-offline|packdiff-offline|revert-offline|drafts-offline|tutorial-offline|progress-offline|failsum-offline|runissue-offline|runcompare-offline|testhist-offline|secretwatch-offline|connectdaily-offline|weekly-offline|notifyprefs-offline|minutes-offline|lendfc-offline|nlsched-offline|wizard-offline|a11y-offline|inviteqr-offline|undo-offline|statuspage-offline|viewer-offline|bundle-offline|ore-offline)\.mjs$/, (f) => [f]],
 ];
 export const ALL = ['tests/panel-offline.mjs', 'tests/governance-offline.mjs', 'tests/setup-offline.mjs', 'tests/session-offline.mjs', 'tests/auth-offline.mjs', 'tests/auth-ms-offline.mjs', 'tests/api-offline.mjs', 'tests/appci-offline.mjs',
   'tests/viewer-offline.mjs', 'tests/units-offline.mjs', 'tests/schedule-offline.mjs', 'tests/stats-offline.mjs', 'tests/inbox-offline.mjs',
@@ -56,8 +59,8 @@ export const ALL = ['tests/panel-offline.mjs', 'tests/governance-offline.mjs', '
   'tests/ghrules-offline.mjs', 'tests/fakes-rules-offline.mjs', 'tests/connect-ui-offline.mjs',
   'tests/qr-offline.mjs', 'tests/playcard-offline.mjs', 'tests/relnotes-offline.mjs', 'tests/packdiff-offline.mjs', 'tests/revert-offline.mjs', 'tests/drafts-offline.mjs', 'tests/tutorial-offline.mjs', 'tests/progress-offline.mjs',
   'tests/failsum-offline.mjs', 'tests/runissue-offline.mjs', 'tests/runcompare-offline.mjs', 'tests/testhist-offline.mjs', 'tests/secretwatch-offline.mjs', 'tests/connectdaily-offline.mjs', 'tests/weekly-offline.mjs', 'tests/notifyprefs-offline.mjs',
-  'tests/minutes-offline.mjs', 'tests/lendfc-offline.mjs', 'tests/nlsched-offline.mjs', 'tests/wizard-offline.mjs', 'tests/a11y-offline.mjs', 'tests/inviteqr-offline.mjs', 'tests/undo-offline.mjs', 'tests/pick-offline.mjs', 'tests/mslive-offline.mjs', 'tests/navmenu-offline.mjs', 'tests/statuspage-offline.mjs', 'tests/bundle-offline.mjs', WORKERD, BROWSER];
-const LINTABLE = /^(panel|auth)\/.*\.(m?js)$|^common\/(panel|panel-config|panel-bundle|ghapp|hosts|schedule|unitci|connect-daily|weekly|statuspage)\.mjs$|^tests\/(panel|governance|setup|session|auth|appci|host|units|schedule|stats|inbox|rescue|shell|misc|ghrules|fakes|connect|qr|playcard|relnotes|packdiff|revert|drafts|tutorial|progress|failsum|runissue|runcompare|testhist|secretwatch|connectdaily|weekly|notifyprefs|minutes|lendfc|nlsched|wizard|a11y|inviteqr|undo|statuspage|viewer|bundle)-[a-z-]+\.mjs$/;
+  'tests/minutes-offline.mjs', 'tests/lendfc-offline.mjs', 'tests/nlsched-offline.mjs', 'tests/wizard-offline.mjs', 'tests/a11y-offline.mjs', 'tests/inviteqr-offline.mjs', 'tests/undo-offline.mjs', 'tests/pick-offline.mjs', 'tests/mslive-offline.mjs', 'tests/navmenu-offline.mjs', 'tests/statuspage-offline.mjs', 'tests/bundle-offline.mjs', 'tests/ore-offline.mjs', WORKERD, BROWSER];
+const LINTABLE = /^(panel|auth)\/.*\.(m?js)$|^common\/(panel|panel-config|panel-bundle|ghapp|hosts|schedule|unitci|connect-daily|weekly|statuspage)\.mjs$|^tests\/(panel|governance|setup|session|auth|appci|host|units|schedule|stats|inbox|rescue|shell|misc|ghrules|fakes|connect|qr|playcard|relnotes|packdiff|revert|drafts|tutorial|progress|failsum|runissue|runcompare|testhist|secretwatch|connectdaily|weekly|notifyprefs|minutes|lendfc|nlsched|wizard|a11y|inviteqr|undo|statuspage|viewer|bundle|ore)-[a-z-]+\.mjs$/;
 
 /** the changed files → { lint: [files], tests: [files] } (pure); quick leaves the browser out */
 export function plan(files, { quick = false } = {}) {
@@ -133,6 +136,15 @@ export async function panelCmd(args, out = console.log) {
     process.stderr.write(`${rel} を変えたあとのパネルの試験（node lab.mjs panel check --quick）:\n${lines.join('\n')}\n`);
     process.exit(2);
   }
-  out('usage: node lab.mjs panel check [--quick] [--all] [files..] | shots [dir] [--dark] [--wide] | hook');
+  if (sub === 'icons') {
+    // (the pixel icons' grids → panel/icons.css: what tests/ore-offline.mjs checks it is)
+    const PX = await import(new URL('../panel/lib/pixelicons.mjs', import.meta.url).href);
+    const bad = PX.problems();
+    if (bad.length) { for (const x of bad) out(`✘ ${x}`); return false; }
+    fs.writeFileSync(path.join(TOP, 'panel', 'icons.css'), PX.css());
+    out(`✔ panel/icons.css（${Object.keys(PX.ICONS).length + Object.keys(PX.COLOR).length} 個のアイコン）`);
+    return true;
+  }
+  out('usage: node lab.mjs panel check [--quick] [--all] [files..] | shots [dir] [--dark] [--wide] | hook | icons');
   return false;
 }

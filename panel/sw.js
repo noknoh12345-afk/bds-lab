@@ -5,8 +5,9 @@
 //   navigator.serviceWorker.register('sw.js?v=' + <config.json's version>)
 // The version in the address names the cache (a new deploy is a new address: the browser installs the new worker, which keeps
 // the new shell and drops the old). Without a version the files are asked of the network first, so nothing can go stale.
-//   - at install: the shell is fetched afresh (index.html, panel.css, panel.js, the manifest and icon, config.json and every
-//     module panel.js imports, found by reading the imports) and kept in this version's cache, all or nothing
+//   - at install: the shell is fetched afresh (index.html, its stylesheets — the look, 見やすさ, the pixel icons and the fonts' list —
+//     the pixel font, panel.js, the manifest and icon, config.json and every module panel.js imports, found by reading the
+//     imports) and kept in this version's cache, all or nothing; the Japanese font comes in slices, each kept when first shown
 //   - the page itself (a navigation to the folder's head or its index.html) and config.json: the network first, the kept copy
 //     when it does not answer; the page is kept as index.html, and only when the answer is html
 //   - any other file opened in a tab (README.md, an icon, a module, another page): the network's answer, never kept — it must not
@@ -24,7 +25,7 @@ const VERSION = (() => { const v = new URL(globalThis.location.href).searchParam
 const PREFIX = `bdslab-panel:${new URL(SCOPE).pathname}:`;
 const CACHE = PREFIX + (VERSION || 'unversioned');
 const INDEX = new URL('index.html', SCOPE).href;
-const SHELL = ['index.html', 'panel.css', 'a11y.css', 'panel.js', 'manifest.webmanifest', 'icon.svg', 'config.json'];
+const SHELL = ['index.html', 'panel.css', 'a11y.css', 'icons.css', 'fonts/fonts.css', 'fonts/pixel/pixel-regular.otf', 'panel.js', 'manifest.webmanifest', 'icon.svg', 'config.json'];
 const MUST = ['index.html', 'panel.css', 'panel.js'];
 const MAX_FILES = 300;
 

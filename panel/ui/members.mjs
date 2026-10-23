@@ -60,13 +60,38 @@ export function membersTab(body, ctx) {
       if (r !== undefined) { toast(`${r.startsWith('invited') ? `${name} を招きました（相手が受けると入ります）` : `${name} の役割を変えました`}${r.endsWith('-write') ? '。個人のリポジトリには役割がないので「書き込み」の協力者です（管理者にするなら組織のリポジトリに）' : ''}`); who.value = ''; load(); }
     } }, '招く')) : null,
     list));
-  body.append(policyCard(ctx, admin));
+  body.append(viewersCard(ctx, admin), policyCard(ctx, admin));
   if (admin) body.append(reviewCard(ctx));
   load();
 }
 
 /** text to the clipboard (shown to copy by hand where the browser will not) */
 const copy = (text, done) => navigator.clipboard?.writeText(text).then(() => toast(done), () => prompt('写してください', text)) ?? prompt('写してください', text);
+
+/** 「見るだけで入れる人」: the people let into the panel to look (the policy's viewers). On a public lab GitHub lets everyone read,
+ *  so the panel lets in only the people named here; a private lab's readers (invited 見るだけ) come in by themselves. They see
+ *  the lab as it is and do what their GitHub role allows — looking. Saved into the policy file with the roles (the administrators') */
+function viewersCard(ctx, admin) {
+  const g = MB.gridOf(ctx.policy), names = new Set(g.viewers ?? []), isPublic = ctx.lab.repo?.visibility === 'public';
+  const list = h('ul', { class: 'plain', id: 'viewers' });
+  const who = h('input', { type: 'text', placeholder: 'GitHub のユーザー名', autocapitalize: 'off', 'aria-label': '見るだけで入れる人', onkeydown: (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); add(); } } });
+  const draw = () => list.replaceChildren(...(names.size ? [...names].map((n) => h('li', { class: 'row', 'data-viewer': n }, h('span', { class: 'grow' }, h('strong', {}, n)),
+    admin ? h('button', { class: 'danger', onclick: () => { names.delete(n); draw(); } }, '外す') : null)) : [h('li', { class: 'muted' }, 'まだいません')]));
+  const add = () => {
+    const v = who.value.trim().replace(/^@/, '');
+    if (!P.LOGIN.test(v)) return toast('GitHub のユーザー名を入れてください（英数字と -）', true);
+    names.add(v.toLowerCase()); who.value = ''; draw();
+    return toast(`${v} を加えました（まだ保存していません）`);
+  };
+  draw();
+  return h('div', { class: 'card', id: 'viewerscard' }, h('h2', {}, '👀 見るだけで入れる人'),
+    h('p', { class: 'muted' }, isPublic ? '公開のラボは GitHub が誰にでも読ませるので、パネルは「見るだけ」で入れる人をここで決めます。名前を入れた人は「GitHub でサインイン」で入り、進み具合・アドオン・配布・成果物・予約・統計を見られます（実行や設定は変えられません）。'
+      : '非公開のラボでは、「見るだけ（Read）」で招いた人はそのまま見るだけで入れます。ここに名前を入れておくと、ラボを公開にしたあとも入れます。'),
+    admin ? h('div', { class: 'row' }, who, h('button', { onclick: add }, '加える')) : null,
+    list,
+    admin ? h('div', { class: 'row' }, h('button', { class: 'primary', onclick: () => ctx.guarded('members', { file: P.POLICY_FILE }, () => MB.savePolicy(ctx.api, ctx.lab.slug, { ...g, viewers: [...names] }), '見るだけで入れる人を保存しました（既定の枝に）').then((r) => { if (r !== undefined) ctx.reload(); }) }, '保存'))
+      : h('p', { class: 'muted' }, '変えられるのは管理者だけです'));
+}
 
 /** the policy as a grid: which GitHub role may do which action in the panel, what is asked first, idle minutes, the log */
 function policyCard(ctx, admin) {

@@ -64,10 +64,14 @@ await t('what the page may do is unchanged: the same CSP (the service let in), n
   ok(fs.readFileSync(path.join(out, 'sw.js'), 'utf8') === fs.readFileSync(path.join(TOP, 'panel', 'sw.js'), 'utf8'), 'sw.js untouched');
   ok(JSON.parse(fs.readFileSync(path.join(out, 'config.json'), 'utf8')).version === 'cd'.repeat(20), 'config.json as before');
 });
-await t('the stylesheets minified, their rules kept (url(icon.svg), the .later place, the dark colours)', () => {
+await t('the stylesheets minified, their rules kept (the .later place, the wide screen\'s dock and 「概要」, OreUI\'s steps, 見やすさ); the icons and fonts as they are', () => {
   if (!ES) return 'skip';
-  const css = fs.readFileSync(path.join(out, 'panel.css'), 'utf8');
-  ok(css.length < fs.readFileSync(path.join(TOP, 'panel', 'panel.css'), 'utf8').length && /url\(icon\.svg\)/.test(css) && /\.later\{display:contents\}/.test(css) && /prefers-color-scheme:\s*dark/.test(css), 'kept');
+  const css = fs.readFileSync(path.join(out, 'panel.css'), 'utf8'), a11y = fs.readFileSync(path.join(out, 'a11y.css'), 'utf8');
+  ok(css.length < fs.readFileSync(path.join(TOP, 'panel', 'panel.css'), 'utf8').length && /\.later\{display:contents\}/.test(css) && /@media ?\(min-width: ?900px\)/.test(css) && /@media ?\(min-width: ?1180px\)/.test(css)
+    && /@keyframes ore-enter/.test(css) && /var\(--chev-ico\)/.test(css), 'kept');
+  ok(a11y.length < fs.readFileSync(path.join(TOP, 'panel', 'a11y.css'), 'utf8').length && /html\.a11y-contrast\{/.test(a11y), 'a11y.css kept');
+  // (the pixel icons and the fonts' list are files of their own, served as written: their addresses relative to themselves)
+  for (const f of ['icons.css', 'fonts/fonts.css', 'fonts/pixel/pixel-regular.otf']) ok(fs.existsSync(path.join(out, f)) && fs.readFileSync(path.join(out, f)).equals(fs.readFileSync(path.join(TOP, 'panel', f))), `${f} as it is`);
 });
 await t('no esbuild: the copy served as it is (one module per file), the reason given', async () => {
   const o2 = path.join(tmp, 'plain');

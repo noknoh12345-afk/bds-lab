@@ -110,6 +110,8 @@ export function guideSteps(role, f = {}) {
   ];
   const steps = role === 'owner' || role === 'admin' ? (role === 'admin' ? [lab[0], S('lend', '時間を貸す（管理者の決まり）', '自分のフォークで、ずっと貸します。', f.lending, 'overview', 'まだ時間を貸していません', '「概要」の「フォークで貸す」を押す'), ...lab.slice(4, 6)] : lab)
     : role === 'writer' ? [lab[0], lab[5], S('watch', '進み具合を見る', '「進み具合」で、落ちたら原因と直し方を言葉で見られます。', f.watched, 'runs', 'まだ「進み具合」を開いていません', '「進み具合」を開く'), lab[4]]
+      // (someone let in to look: signed in, then the runs — what they may do is look)
+      : role === 'reader' ? [lab[0], S('watch', '進み具合を見る', '「進み具合」で、落ちたら原因と直し方を言葉で見られます。', f.watched, 'runs', 'まだ「進み具合」を開いていません', '「進み具合」を開く')]
       : [S('fork', 'ラボをフォークする', 'ラボの写しを自分のアカウントに作ります（public・無料）。', f.fork, 'overview', 'まだ自分のフォークがありません', '「概要」の「ラボをフォークする」を押す'), S('lend', 'フォークで貸す', 'ボタン 1 つで、ずっと貸す設定にします。', f.lending, 'overview', 'まだ貸す設定になっていません（フォークが先に要ります）', '「概要」の「フォークで貸す」を押す'),
         ...(role === 'stranger' ? [S('join', '参加をお願いする（したいなら）', '持ち主に、ラボへの参加をお願いできます。', f.asked, 'overview', 'まだお願いしていません', '「概要」の「参加をお願いする」を押す')] : [])];
   const done = steps.filter((x) => x.done).length;

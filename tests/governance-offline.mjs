@@ -51,7 +51,11 @@ await t('the policy file checked: errors in words; a file that does not check ou
   }
   const { policy, errors } = P.checkPolicy({ version: 1, roles: { admin: ['*'], write: ['dispatch', 'dispatch', 'run.cancel'], auditor: ['audit.read'] }, teams: { auditors: 'auditor' }, confirm: ['run.cancel'], idleMinutes: 30, audit: 'issue' });
   eq(errors, []);
-  eq(policy, { version: 1, roles: { admin: ['*'], write: ['dispatch', 'run.cancel'], auditor: ['audit.read'] }, teams: { auditors: 'auditor' }, confirm: ['run.cancel'], idleMinutes: 30, audit: 'issue', adminsLend: false });
+  eq(policy, { version: 1, roles: { admin: ['*'], write: ['dispatch', 'run.cancel'], auditor: ['audit.read'] }, teams: { auditors: 'auditor' }, confirm: ['run.cancel'], idleMinutes: 30, audit: 'issue', adminsLend: false, viewers: [] });
+  // (viewers: the GitHub logins let in to look — a public lab's readers are everyone otherwise; names any case, kept once, lower)
+  eq(P.checkPolicy({ viewers: ['AokiJP', 'aokijp', 'helper-2'] }).policy.viewers, ['aokijp', 'helper-2']);
+  eq([P.isViewer(P.checkPolicy({ viewers: ['AokiJP'] }).policy, 'aokiJP'), P.isViewer(P.checkPolicy({ viewers: ['AokiJP'] }).policy, 'someone'), P.isViewer(P.DEFAULT_POLICY, 'x'), P.isViewer(P.LOCKED_POLICY, 'x'), P.isViewer(null, '')], [true, false, false, false, false]);
+  for (const v of [['a b'], 'aokijp', [1], ['-x']]) ok(P.checkPolicy({ viewers: v }).policy === P.LOCKED_POLICY && /viewers/.test(P.checkPolicy({ viewers: v }).errors.join()), `viewers ${JSON.stringify(v)}: GitHub names only`);
   // (adminsLend: the administrators always lend — a boolean, off unless the file says true)
   eq([P.adminsLend(policy), P.adminsLend(P.checkPolicy({ adminsLend: true }).policy), P.adminsLend(P.DEFAULT_POLICY), P.adminsLend(P.LOCKED_POLICY)], [false, true, false, false]);
   ok(P.checkPolicy({ adminsLend: 'yes' }).policy === P.LOCKED_POLICY && /adminsLend/.test(P.checkPolicy({ adminsLend: 'yes' }).errors.join()), 'adminsLend: true or false only');

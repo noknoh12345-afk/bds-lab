@@ -65,10 +65,11 @@ await t('ratio: the WCAG formula (black on white 21:1, same colour 1:1, a known 
 
 const css = fs.readFileSync(path.join(TOP, 'panel/a11y.css'), 'utf8');
 const blocks = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/html\.a11y-contrast\s*\{([^}]*)\}/g)].map((m) => Object.fromEntries([...m[1].matchAll(/--([a-z-]+)\s*:\s*([^;]+);/g)].map((v) => [v[1], v[2].trim()]))).filter((b) => Object.keys(b).length);
-const rootVars = [...fs.readFileSync(path.join(TOP, 'panel/panel.css'), 'utf8').matchAll(/:root\s*\{([^}]*)\}/g)].flatMap((m) => [...m[1].matchAll(/--([a-z-]+)\s*:/g)].map((v) => v[1]));
+// (panel.css's colour variables: those of :root whose value is a colour — its sizes and fonts are not the contrast set's)
+const rootVars = [...new Set([...fs.readFileSync(path.join(TOP, 'panel/panel.css'), 'utf8').matchAll(/:root\s*\{([^}]*)\}/g)].flatMap((m) => [...m[1].matchAll(/--([a-z-]+)\s*:\s*(#[0-9a-f]{3,8}|rgb)/gi)].map((v) => v[1])))];
 
-await t('a11y.css: a light and a dark set of colours, each laying a value over every colour variable of panel.css', () => {
-  eq(blocks.length, 2, 'light and dark');
+await t('a11y.css: one set of strong colours (the panel is OreUI\'s dark in either scheme), laying a value over every colour variable of panel.css', () => {
+  eq(blocks.length, 1, 'one set');
   ok(rootVars.length >= 10, `panel.css variables read: ${rootVars}`);
   for (const [i, b] of blocks.entries()) for (const v of rootVars) ok(b[v], `${i ? 'dark' : 'light'}: --${v} not set`);
   ok(/html\.a11y-contrast button\.primary[^{]*\{[^}]*var\(--on-accent\)/.test(css), 'the primary button text uses --on-accent');
@@ -84,7 +85,7 @@ const PAIRS = [
   ['on-accent', 'accent', 4.5], ['on-bad', 'bad', 4.5],
   ['line', 'bg', 3], ['line', 'card', 3],
 ];
-await t('a11y.css: every pair of text and background reads (AA 4.5:1 or more; the main text 7:1; borders 3:1), light and dark', () => {
+await t('a11y.css: every pair of text and background reads (AA 4.5:1 or more; the main text 7:1; borders 3:1)', () => {
   const low = [];
   for (const [i, b] of blocks.entries()) for (const [f, g, min] of PAIRS) { const r = ratio(b[f], b[g]); if (!(r >= min)) low.push(`${i ? 'dark' : 'light'} --${f} on --${g}: ${r.toFixed(2)} < ${min}`); }
   eq(low, [], 'too low');

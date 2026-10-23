@@ -48,6 +48,7 @@ import { a11yCard, apply as applyA11y } from './ui/a11y.mjs';
 import * as A11Y from './lib/a11y.mjs';
 import * as PK from './lib/pick.mjs';
 import * as NAV from './lib/navmenu.mjs';
+import { icon, pixelEmoji, dockOf, applySmooth, setSmooth } from './ui/ore.mjs';
 
 // ---- the browser's storage (one that refuses it — a private window may — still works for the tab) ----
 const storage = (name) => { try { const s = window[name]; s.setItem('bdslab.probe', '1'); s.removeItem('bdslab.probe'); return s; } catch { return memoryStorage(); } };
@@ -60,6 +61,9 @@ const setFull = (on) => { if (on) LOCAL.setItem(FULL_KEY, '1'); else LOCAL.remov
 // (見やすさ — big letters, strong colours, no motion, underlined links — this browser's choice, else the device's own, before
 // anything is drawn)
 try { applyA11y(document, A11Y.load(LOCAL, A11Y.fromMedia(globalThis.matchMedia?.bind(globalThis)))); } catch { /* the page as it is */ }
+// (OreUI: 「なめらかな字」 when this browser chose it, and the emoji of the words drawn as pixel icons from now on — ui/ore.mjs)
+applySmooth(LOCAL);
+pixelEmoji(document.body);
 
 // ---- never inside another page's frame: a click there would be this person's own (GitHub Pages sends no frame-ancestors
 // header, and a meta CSP cannot say it) — the panel then does nothing at all ----
@@ -115,6 +119,9 @@ const saveSettings = (patch) => A.setCfg(st.login, patch);
 const st = { login: null, api: null, me: null, lab: null, hosts: [], tab: 'overview', timer: null, routed: false, focus: null, prefill: null, target: 'lab',
   policy: P.DEFAULT_POLICY, policyErrors: [], role: null, audit: 'off', lastActive: Date.now(), handed: false, signinErr: HANDOFF?.error ? S.explainAuth(HANDOFF.error) : null };
 const canLab = () => Boolean(st.lab && (st.lab.role === 'admin' || st.lab.role === 'write'));
+/** may look at the lab, doing what the role allows: whoever may write it, or someone GitHub lets read it who was let in — a
+ *  collaborator of a private lab, or one the lab's policy names (viewers: a public lab's readers are everyone otherwise) */
+const seeLab = () => Boolean(st.lab && (canLab() || st.lab.viewer));
 /** a card 「かんたん表示」 holds back: drawn in full, or when 🔎 led here for it (st.reveal: its id, until another tab) */
 const adv = (id) => full() || Boolean(id && st.reveal === id);
 // (no dead end: every failure's notice says what happened and offers the next step — lib/rescue.mjs: more rights, sign in
@@ -177,8 +184,9 @@ const may = (action) => Boolean(st.lab) && !lendFirst() && P.can(st.policy, st.r
 const roleName = () => st.role?.name ?? st.role?.names?.join('・') ?? st.lab?.role ?? '?';
 const notMine = (action) => (lendFirst() ? `管理者は、まず時間を貸します（${P.POLICY_FILE} の adminsLend）: 「概要」の「フォークで貸す」から`
   : `${P.ACTION_WORDS[action] ?? action}は、あなたの役割（${roleName()}）には許されていません（${P.POLICY_FILE}）`);
-/** a button's attributes for an action the policy may not allow this role */
-const gate = (action) => (may(action) ? {} : { disabled: true, title: notMine(action) });
+/** a button's attributes for an action the policy may not allow this role — not there at all for one GitHub would never let
+ *  this person do (someone who may only look: nothing they cannot do is offered), held and said why when the policy narrows */
+const gate = (action) => (may(action) ? {} : !canLab() && P.GITHUB_NEEDS[action] !== 'read' ? { hidden: true, disabled: true } : { disabled: true, title: notMine(action) });
 /** an action on the lab as the policy says: allowed for this role, asked again when it wants, kept in the audit log once
  *  it went through → what fn gave, undefined when it was not done */
 async function guarded(action, detail, fn, done) {
@@ -231,20 +239,45 @@ setInterval(async () => {
   if (!(await freshen())) renderSignIn(st.signinErr, { login: st.login });
 }, 30_000);
 
-// ---- the top: who, switching accounts, adding one, leaving ----
+// ---- the title bar (OreUI's): ☰ every screen at its start, the screen's name in the middle; at its end ⚠ (what went wrong on
+// this page), 🔎 「やりたいこと」, 🔔 the news and the account — who, switching, adding one, leaving: a sheet of its own ----
 function renderWho() {
-  const list = A.list(), kids = [];
-  if (st.me) kids.push(h('img', { src: st.me.avatar_url, alt: '' }));
-  if (list.length > 1) kids.push(h('select', { id: 'acct', 'aria-label': 'アカウントを切り替える', onchange: (e) => switchTo(e.target.value) }, list.map((a) => h('option', { value: a.login, selected: a.login === st.login ? 'selected' : null }, `${a.login}${a.remember ? '' : '（このタブだけ）'}`))));
-  else if (st.me) kids.push(st.me.login);
-  if (st.me && st.as?.length) kids.push(h('button', { id: 'find', title: 'やりたいこと（Ctrl/⌘+K）', 'aria-label': 'やりたいこと', onclick: () => PAL.open() }, '🔎'));
-  const box = st.me && canLab() ? inboxStore() : null;
-  if (box) kids.push(bellButton({ inbox: box, go: inboxGo }));
-  kids.push(h('button', { title: 'アカウントを加える', 'aria-label': 'アカウントを加える', onclick: () => renderSignIn('', { adding: true }) }, '＋'));
-  if (st.login) kids.push(h('button', { onclick: () => signOut() }, '出る'));
+  const kids = [];
   // (an error on this page or GitHub not answering: shown at once, a tap to what happened)
-  const n = loud(); if (n && st.login) kids.unshift(h('button', { class: 'danger', id: 'faults', title: 'このページで起きたこと（設定 → デバッグ）', onclick: () => { go('settings', 'debug'); $('debug')?.scrollIntoView({ block: 'start' }); } }, `⚠ ${n}`));
+  const n = loud(); if (n && st.login) kids.push(h('button', { class: 'danger', id: 'faults', title: 'このページで起きたこと（設定 → デバッグ）', onclick: () => { go('settings', 'debug'); $('debug')?.scrollIntoView({ block: 'start' }); } }, `⚠ ${n}`));
+  if (st.me && st.as?.length) kids.push(h('button', { id: 'find', title: 'やりたいこと（Ctrl/⌘+K）', 'aria-label': 'やりたいこと', onclick: () => PAL.open() }, icon('search')));
+  const box = st.me && seeLab() ? inboxStore() : null;
+  if (box) kids.push(bellButton({ inbox: box, go: inboxGo }));
+  if (st.me) kids.push(h('button', { id: 'acctbtn', 'aria-haspopup': 'dialog', 'aria-label': `アカウント: ${st.me.login}`, title: `${st.me.login}（アカウント・切り替え・出る）`, onclick: () => openAccount() }, h('img', { src: st.me.avatar_url, alt: '' })));
+  else if (A.list().length) kids.push(h('button', { id: 'acctbtn', 'aria-haspopup': 'dialog', 'aria-label': 'アカウント', title: 'アカウント', onclick: () => openAccount() }, icon('user')));
   $('who').replaceChildren(...kids);
+  // (☰ while a screen of the panel is shown — render() puts it back; the door and the shut door have none)
+  $('nstart')?.replaceChildren();
+}
+/** the title bar's name: the screen's, or the panel's own */
+const setTitle = (words) => $('title')?.replaceChildren(words ?? 'bds-lab');
+/** the account sheet: who this is and what they may do here, the other accounts of this browser to switch to, another one to
+ *  add, and 「出る」 — a dialog over the page: Esc, ✕ or a tap outside closes it, the focus back on the avatar */
+function openAccount() {
+  const was = $('acctsheet');
+  if (was) { was.remove(); return; }
+  const list = A.list(), ses = A.session(st.login);
+  const close = () => { sheet.remove(); $('acctbtn')?.focus(); };
+  const can = st.lab ? P.ACTIONS.filter((x) => may(x)).map((x) => P.ACTION_WORDS[x]) : [];
+  const sheet = h('div', { id: 'acctsheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'アカウント', onclick: (e) => { if (e.target === sheet) close(); }, onkeydown: (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } } },
+    h('div', { class: 'card' },
+      h('div', { class: 'row' }, h('h2', { class: 'grow' }, 'アカウント'), h('button', { class: 'x', 'aria-label': '閉じる', title: '閉じる（Esc）', onclick: close })),
+      st.me ? h('div', { class: 'who' }, h('img', { src: st.me.avatar_url, alt: '' }), h('div', { class: 'grow' }, h('b', {}, st.me.login),
+        h('div', { class: 'row' }, (st.as ?? []).map((r) => h('span', { class: 'chip' }, M.ROLE_NAMES[r])), st.lab ? h('span', { class: 'chip' }, `役割 ${roleName()}`) : null))) : null,
+      st.me ? h('p', { class: 'muted' }, ses?.kind === 'oauth' ? `GitHub でサインイン（ラボの App）${ses.expiresAt ? `・${new Date(ses.expiresAt).toLocaleTimeString()} まで（自動で更新）` : ''}` : 'トークンで入っています') : null,
+      st.lab && st.me ? h('p', {}, h('span', { class: 'muted' }, 'ここでできること: '), can.length ? can.join('・') : seeLab() ? '見るだけ（実行・成果物・アドオン・配布・予約・統計を見られます）' : 'なし') : null,
+      list.length > 1 ? [h('label', { for: 'acct' }, 'アカウントを切り替える'), h('select', { id: 'acct', 'aria-label': 'アカウントを切り替える', onchange: (e) => { sheet.remove(); switchTo(e.target.value); } }, list.map((a) => h('option', { value: a.login, selected: a.login === st.login ? 'selected' : null }, `${a.login}${a.remember ? '' : '（このタブだけ）'}`)))] : null,
+      h('div', { class: 'acts' },
+        h('button', { id: 'addacct', onclick: () => { sheet.remove(); renderSignIn('', { adding: true }); } }, icon('plus'), 'アカウントを加える'),
+        st.me && st.as?.length ? h('button', { id: 'acctsettings', onclick: () => { sheet.remove(); go('settings'); } }, icon('gear'), 'このアカウントの設定') : null,
+        st.login ? h('button', { class: 'danger', id: 'signout', onclick: () => { sheet.remove(); signOut(); } }, icon('logout'), '出る') : null)));
+  document.body.append(sheet);
+  (sheet.querySelector('#acct') ?? sheet.querySelector('button.x'))?.focus();
 }
 /** an account forgotten by this browser, its news (「お知らせ」) with it → the account now in use */
 function forget(login) {
@@ -272,7 +305,8 @@ function renderSignIn(err = '', { adding = false, login = null } = {}) {
   const lab0 = (login && A.get(login) ? A.cfg(login).lab : null) ?? (adding ? DEFAULT_LAB : settings().lab ?? DEFAULT_LAB);
   // (err: the words, or what was thrown — its status tells the next step: the network again, a new token, another lab)
   const why = err || st.signinErr || '', words = typeof why === 'string' ? why : why?.message ?? String(why);
-  main().replaceChildren(signInCard({ authUrl: CONFIG.authUrl, err: words, adding, login, lab: lab0,
+  setTitle(adding ? 'アカウントを加える' : null);
+  main().replaceChildren(door(), signInCard({ authUrl: CONFIG.authUrl, err: words, adding, login, lab: lab0,
     // (to GitHub through the service; this tab keeps the nonce it expects back, how to keep the account, and the lab)
     onOAuth: ({ remember, lab }) => {
       const nonce = S.newNonce();
@@ -311,7 +345,10 @@ function lockedWays(err) {
     h('div', { class: 'row' }, lab, h('button', { onclick: () => { const bad = M.slugProblem(lab.value); if (bad) return toast(bad, true); saveSettings({ lab: lab.value.trim() }); connect(); } }, 'このラボで入り直す'),
       h('button', { onclick: () => connect() }, 'もう一度'), link('https://github.com/notifications', '招待を見る（GitHub へ）')));
 }
+/** the door's mark: the panel's name drawn big in pixels, and what this is (the words are the mark's own: role img) */
+const door = () => h('div', { class: 'door' }, h('span', { class: 'mark', role: 'img', 'aria-label': 'bds-lab' }), h('p', { class: 'muted' }, 'アドオンを本物のサーバーで確かめるラボの管理パネル'));
 function renderLocked(why, err = null) {
+  setTitle(null);
   // (someone the lab's owner did not invite: the one thing offered is to lend their own Actions minutes — ui/lend.mjs)
   if (st.me) return main().replaceChildren(h('p', { class: 'muted' }, why), lockedWays(err), lendStart({ api: st.api, me: st.me, labSlug: settings().lab, oauth: A.session(st.login)?.kind === 'oauth', appSlug: CONFIG.appSlug,
     onReady: (slug) => { saveSettings({ hosts: [...new Set([...settings().hosts, slug])] }); st.tab = 'hosts'; st.routed = true; connect(); },
@@ -363,6 +400,15 @@ async function connect() {
   st.lab = labRepo ? { slug: s.lab, repo: labRepo, role: M.roleOf(labRepo.permissions) } : null;
   st.hosts = await loadHosts(s.hosts);
   let a = M.access({ lab: labRepo, hosts: st.hosts.filter((x) => x.repo).map((x) => x.repo) });
+  // (someone GitHub lets read the lab but not write it: in to look — a private lab's reader was invited; a public lab's only
+  //  when its policy names them, GitHub letting everyone read it — doing what their role allows: looking)
+  if (st.lab?.role === 'read') {
+    const pol = st.lab.repo.visibility === 'public' ? await P.loadPolicy(st.api, st.lab.slug).catch(() => null /* not read: not named */) : null;
+    if (M.mayLook({ role: st.lab.role, visibility: st.lab.repo.visibility, login: st.me.login, viewers: pol?.policy?.viewers })) {
+      st.lab.viewer = true;
+      a = { ok: true, as: [...new Set([...a.as, 'reader'])], why: '' };
+    }
+  }
   // (a lender's first visit: no host in this account's settings yet — their own hosts looked for before the door shuts)
   if (!a.ok && !s.hosts.length) {
     main().replaceChildren(h('p', { class: 'muted' }, '貸し借りのホストを探しています…'));
@@ -372,7 +418,7 @@ async function connect() {
   }
   st.as = a.as;
   if (!a.ok) { const e = st.findErr; st.findErr = null; return renderLocked(a.why, e); }
-  if (canLab()) await loadEnv(st.lab);
+  if (seeLab()) await loadEnv(st.lab);
   await loadPolicy();
   st.adminLend = await adminLendNow();
   if (!st.routed) {
@@ -431,8 +477,10 @@ async function loadEnv(x) {
   // (secretNames / variableNames are null by themselves when this sign-in may not look; a throw is a read that failed: kept
   // in x.envErr, said on 「概要」 and 「実行」 with 「もう一度」)
   const bag = [];
-  x.secrets = await soft(st.api.secretNames(x.slug), null, bag, '秘密の名前');
-  x.vars = await soft(st.api.variableNames(x.slug), null, bag, '変数の名前');
+  // (someone who may only look is not asked for the secrets' and variables' names: GitHub shows them to writers alone)
+  const writer = x !== st.lab || canLab();
+  x.secrets = writer ? await soft(st.api.secretNames(x.slug), null, bag, '秘密の名前') : null;
+  x.vars = writer ? await soft(st.api.variableNames(x.slug), null, bag, '変数の名前') : null;
   x.workflows = await soft(st.api.workflows(x.slug), [], bag, 'ワークフロー');
   x.envErr = bag.length ? Object.assign(new Error(`${bag.map((b) => b.what).join('・')}を読めませんでした（${bag[0].e.message}）`), { status: bag[0].e.status, reset: bag[0].e.reset }) : null;
   x.caps = M.capabilities({ secrets: x.secrets, workflows: x.workflows, visibility: x.repo.visibility, vars: x.vars });
@@ -445,9 +493,15 @@ const hasWf = (f) => (st.lab?.workflows ?? []).some((w) => String(w.path).endsWi
 // ---- the frame: tabs ----
 const TABS = [['overview', '概要'], ['runs', '進み具合'], ['start', '実行'], ['units', 'アドオン'], ['releases', '配布'], ['files', '成果物'], ['schedule', '予約'], ['stats', '統計'], ['discord', 'Discord'], ['secrets', '秘密'],
   ['live', '端末'], ['hosts', '貸し借り'], ['members', 'メンバー'], ['setup', '準備'], ['connect', '連携'], ['audit', '監査'], ['settings', '設定']];
-/** the tabs this person may open (監査: whoever may read it; without the lab: 概要・貸し借り・設定) — 🔎 finds any of them,
- *  the strip and ☰ show those 「かんたん表示」 leaves (lib/navmenu.mjs visibleTabs) */
-const permittedTabs = () => TABS.filter(([k]) => (k === 'audit' ? may('audit.read') : canLab() || ['overview', 'hosts', 'settings'].includes(k)));
+/** what each screen asks of its person: 'anyone' (概要・貸し借り・設定 — a lender, a borrower), 'look' (someone let in to look
+ *  at the lab: they see the lab as it is, and do what their role allows), 'write' (whoever GitHub lets write the lab), or the
+ *  action the policy must allow (監査: whoever may read it) */
+const NEEDS = { overview: 'anyone', hosts: 'anyone', settings: 'anyone', runs: 'look', units: 'look', releases: 'look', files: 'look', schedule: 'look', stats: 'look', audit: 'audit.read' };
+/** the tabs this person may open — 🔎 finds any of them, the dock and ☰ show those 「かんたん表示」 leaves (lib/navmenu.mjs
+ *  visibleTabs): nothing they may not open is offered */
+const permittedTabs = () => TABS.filter(([k]) => { const n = NEEDS[k] ?? 'write'; return n === 'anyone' ? true : n === 'look' ? seeLab() : n === 'write' ? canLab() : may(n); });
+/** the screen each group of the dock last showed (this visit): a tap on the group goes back there */
+const lastOf = new Map();
 function render() {
   clearInterval(st.timer);
   // (an AI run's progress cards read GitHub on their own: stopped when the page is drawn anew)
@@ -458,22 +512,32 @@ function render() {
   renderWho();
   const allowed = permittedTabs();
   if (!allowed.some(([k]) => k === st.tab)) st.tab = allowed[0][0];
-  // (「かんたん表示」: the strip and ☰ without the screens few need — the one shown now always in it; each screen's 「？」 left
+  // (「かんたん表示」: the dock and ☰ without the screens few need — the one shown now always in it; each screen's 「？」 left
   //  out too: ☰ says what each one is for)
   const view = { full: full(), current: st.tab }, tabs = NAV.visibleTabs(allowed, view), hidden = NAV.hiddenTabs(allowed, view);
+  st.nav = { tabs, hidden };
+  // (OreUI's frame: the five groups on the dock — the bottom of a phone, the tab row of a wide screen — and the screens of the
+  //  group shown as a segmented row; a group of one screen has no row)
+  const dock = dockOf(tabs), group = dock.find((g) => g.tabs.some(([k]) => k === st.tab)) ?? dock[0];
+  lastOf.set(group.key, st.tab);
   // (data-tab: a wide screen lays 「概要」 out in two columns — panel.css)
-  const body = h('div', { id: 'tabbody', 'data-tab': st.tab }, view.full ? helpLine(st.tab, LOCAL) : null);
-  // (the strip: each tab with its icon — drawn from data-icon, so a button's words stay the tab's name — and 「☰」 before it,
-  //  every screen at once in groups with what each is for: a phone shows only five of the strip)
-  const strip = h('nav', { class: 'tabs', 'aria-label': '画面' }, tabs.map(([k, label], i) => h('button', { class: st.tab === k ? 'on' : '', 'data-tab': k, 'data-icon': NAV.TAB_ICONS[k] ?? null, 'aria-current': st.tab === k ? 'page' : null, title: i < 10 ? `キー ${(i + 1) % 10}` : null, onclick: () => go(k) }, label)));
-  const menuBtn = h('button', { id: 'menubtn', 'aria-haspopup': 'dialog', 'aria-label': '画面の一覧', title: '画面の一覧（すべての画面と、何をするところか）', onclick: () => openMenu(tabs, hidden) }, '☰');
-  main().replaceChildren(h('div', { class: 'tabbar' }, menuBtn, strip), body);
+  const body = h('div', { id: 'tabbody', 'data-tab': st.tab, class: st.entering ? 'enter' : null }, view.full ? helpLine(st.tab, LOCAL) : null);
+  st.entering = false;
+  const keyOf = new Map(tabs.map(([k], i) => [k, i]));
+  const strip = h('nav', { class: 'tabs', 'aria-label': group.title }, group.tabs.map(([k, label]) => h('button', { class: st.tab === k ? 'on' : '', 'data-tab': k, 'aria-current': st.tab === k ? 'page' : null, title: keyOf.get(k) < 10 ? `キー ${(keyOf.get(k) + 1) % 10}` : null, onclick: () => go(k) }, label)));
+  const dockEl = h('nav', { id: 'dock', 'aria-label': '画面のグループ' }, dock.map((g) => h('button', { class: g.key === group.key ? 'on' : '', 'data-hub': g.key, 'data-tabs': g.tabs.map(([k]) => k).join(' '),
+    'aria-current': g.key === group.key ? 'true' : null, title: `${g.title}: ${g.tabs.map(([, l]) => l).join('・')}`,
+    onclick: () => { const last = lastOf.get(g.key); go(last && g.tabs.some(([k]) => k === last) ? last : g.tabs[0][0]); } }, icon(g.icon), h('span', { class: 'dl' }, g.label))));
+  main().replaceChildren(h('div', { class: `tabbar${group.tabs.length < 2 ? ' single' : ''}` }, strip), body, dockEl);
+  setTitle(tabs.find(([k]) => k === st.tab)?.[1] ?? allowed.find(([k]) => k === st.tab)?.[1]);
+  $('nstart')?.replaceChildren(h('button', { id: 'menubtn', 'aria-haspopup': 'dialog', 'aria-label': '画面の一覧', title: '画面の一覧（すべての画面と、何をするところか）', onclick: () => openMenu(st.nav.tabs, st.nav.hidden) }, icon('menu')));
   showActiveTab(strip);
   ({ overview, runs, start, units, releases, files, schedule, stats, discord, secrets, live, hosts, members, setup, connect: connectView, audit, settings: settingsTab })[st.tab](body);
   readLater();
 }
-/** another tab (the address follows: a reload or a shared link opens the same tab) */
-function go(tab, reveal = null) { $('menusheet')?.remove(); st.tab = tab; st.reveal = reveal; history.replaceState(null, '', `#${tab}`); render(); }
+/** another tab (the address follows: a reload or a shared link opens the same tab); a screen of its own comes in as OreUI's
+ *  do — quickly, in a few steps (panel.css #tabbody.enter; none when motion is not wanted) */
+function go(tab, reveal = null) { $('menusheet')?.remove(); $('acctsheet')?.remove(); st.entering = tab !== st.tab; st.tab = tab; st.reveal = reveal; history.replaceState(null, '', `#${tab}`); render(); }
 /** 「かんたん表示」 off (all of it shown) or on again, from 「設定」 or ☰: drawn anew at once, said in a toast */
 function setView(all) {
   setFull(all); $('menusheet')?.remove(); render();
@@ -664,7 +728,7 @@ window.addEventListener('hashchange', () => {
   if (art) viewArtifact(art.repo, art.id);
 });
 setInterval(async () => {
-  if (!st.lab || !st.api || !canLab() || document.hidden && !notifyOn()) return;
+  if (!st.lab || !st.api || !seeLab() || document.hidden && !notifyOn()) return;
   let rs; try { rs = await st.api.runs(st.lab.slug, { per: 20 }); } catch { return; /* in the background: the next look tries again; GitHub not answering shows as ⚠ at the top (the debug log) */ }
   const ended = watched.size ? M.endedSince(watched, rs) : [];
   watched.clear(); for (const r of rs) watched.set(r.id, r.status);
@@ -691,7 +755,7 @@ function inboxStore() {
   return IB.store(A.get(st.login)?.remember === false ? TAB : LOCAL, `${INBOX_PREFIX}${st.login}.${st.lab.slug}`);
 }
 /** the list of news at the top of the page (no matter if it is open already) */
-function openInbox() { const box = canLab() ? inboxStore() : null; if (box && !$('inbox')) toggleInbox({ inbox: box, go: inboxGo }); }
+function openInbox() { const box = seeLab() ? inboxStore() : null; if (box && !$('inbox')) toggleInbox({ inbox: box, go: inboxGo }); }
 /** a piece of news opened: its tab, and the run it names */
 function inboxGo(tab, item) {
   if (item?.run) {
@@ -785,23 +849,26 @@ function overview(body) {
       st.lab ? h('span', { class: 'chip' }, `役割 ${roleName()}`) : null, st.adminLend?.required && st.adminLend.ok ? h('span', { class: 'chip' }, `⏱ いつも貸している（${st.adminLend.fork}）`) : null),
     h('p', { class: 'muted' }, ses?.kind === 'oauth' ? `GitHub でサインイン（ラボの App）${ses.expiresAt ? `・${new Date(ses.expiresAt).toLocaleTimeString()} まで（自動で更新）` : ''}` : 'トークンで入っています', `・GitHub の残り回数: ${st.api.state.remaining ?? '?'}`));
   body.append(guideSlot());
-  if (st.lab && canLab()) body.append(envNote() ?? '');
+  if (st.lab && seeLab()) body.append(envNote() ?? '');
   // (a lender or a borrower whose account cannot see the lab: said, with the way to another lab's name)
   if (!st.lab) body.append(h('div', { class: 'card', id: 'nolab' }, h('h2', {}, `ラボ（${settings().lab}）`), h('p', { class: 'muted' }, 'このアカウントでは、このラボが見えません（招かれていないか、名前がちがいます）。貸し借りは下から使えます。ラボも使うなら、持ち主に招いてもらうか、「設定」でラボの名前を直してください。'),
     h('div', { class: 'row' }, h('button', { onclick: () => go('settings') }, '「設定」でラボを直す'), link('https://github.com/notifications', '招待を見る（GitHub へ）'))));
-  if (st.lab && canLab()) body.append(todoCard());
+  if (st.lab && seeLab()) body.append(todoCard());
   // (the last runs next — what runs now, what failed, one tap to run it again — then the health; the report folded)
-  if (st.lab && st.lab.caps) body.append(h('div', { class: 'card', id: 'recent' }, h('div', { id: 'ovruns' }, h('p', { class: 'muted' }, '実行を読んでいます…'))));
+  if (st.lab && st.lab.caps && seeLab()) body.append(h('div', { class: 'card', id: 'recent' }, h('div', { id: 'ovruns' }, h('p', { class: 'muted' }, '実行を読んでいます…'))));
   // (the health as a number and the report for a company: 「かんたん表示」 leaves them out — 「いまやること」 says what to mend —
   //  unless 🔎 「健康度」 led here; nothing of theirs is read then either)
   if (st.lab && canLab() && adv('labhealth')) { const hc = healthCtx(); body.append(healthCard(hc), h('details', { class: 'card', id: 'reportbox' }, h('summary', {}, '📄 会社向けの報告書'), reportButton(hc))); }
   checkVersion().then((v) => $('version')?.replaceChildren(...(v.state === 'newer' ? [h('p', { class: 'warn' }, v.say, ' ', h('button', { onclick: () => location.reload() }, '読み直す'))] : v.state === 'deploying' || v.state === 'failed' ? [h('p', { class: v.state === 'failed' ? 'bad' : 'muted' }, v.say)] : [])));
-  if (st.lab && st.lab.caps) {
-    // (what this repository's settings allow: folded, its counts on the fold — the ⚠️ ones say what they need when opened)
+  if (st.lab && st.lab.caps && seeLab()) {
+    // (what this repository's settings allow: folded, its counts on the fold — the ⚠️ ones say what they need when opened. Someone
+    //  who may only look is told so instead: what they see, and whom to ask for more)
     const capsOk = st.lab.caps.filter((c) => c.ok === true).length, capsNo = st.lab.caps.filter((c) => c.ok === false).length;
-    body.append(h('div', { class: 'card' }, h('h2', {}, st.lab.slug, h('span', { class: 'chip' }, M.ROLE_NAMES[st.lab.role]), h('span', { class: 'chip' }, st.lab.repo.visibility), link(st.lab.repo.html_url, 'GitHub')),
-      h('details', { id: 'capsbox' }, h('summary', {}, `このリポジトリの設定でできること（✅ ${capsOk}${capsNo ? `・⚠️ ${capsNo}` : ''}）`),
-        h('ul', { class: 'plain' }, st.lab.caps.map((c) => h('li', {}, c.ok === null ? '❔ ' : c.ok ? '✅ ' : '⚠️ ', c.label, c.need ? h('div', { class: 'muted' }, c.need) : null))))));
+    body.append(h('div', { class: 'card', id: 'labcard' }, h('h2', {}, st.lab.slug, h('span', { class: 'chip' }, canLab() ? M.ROLE_NAMES[st.lab.role] : M.ROLE_NAMES.reader), h('span', { class: 'chip' }, st.lab.repo.visibility), link(st.lab.repo.html_url, 'GitHub')),
+      canLab() ? h('details', { id: 'capsbox' }, h('summary', {}, `このリポジトリの設定でできること（✅ ${capsOk}${capsNo ? `・⚠️ ${capsNo}` : ''}）`),
+        h('ul', { class: 'plain' }, st.lab.caps.map((c) => h('li', {}, c.ok === null ? '❔ ' : c.ok ? '✅ ' : '⚠️ ', c.label, c.need ? h('div', { class: 'muted' }, c.need) : null))))
+        : h('div', { id: 'lookonly' }, h('p', {}, '👀 見るだけで入っています: 進み具合・アドオン・配布・成果物・予約・統計を、ラボのいまのまま見られます。'),
+          h('p', { class: 'muted' }, `実行を始める・止める、秘密や設定を変えるのは、書き込める人（Write 以上）だけです。必要なら、持ち主（${st.lab.repo.owner?.login ?? st.lab.slug.split('/')[0]}）に役割を頼んでください。`))));
     fill($('ovruns') ?? body, async () => {
       const [all, prs] = await Promise.all([st.api.runs(st.lab.slug, { per: 50 }), st.api.pulls(st.lab.slug).catch(() => null /* said: 「PR は読めませんでした」 */)]), rs = all.slice(0, 20);
       const going = rs.filter((r) => r.status !== 'completed'), bad = rs.filter((r) => r.conclusion === 'failure');
@@ -812,10 +879,13 @@ function overview(body) {
         h('div', { class: 'row' }, last ? h('button', { ...gate('dispatch'), onclick: () => guarded('dispatch', { run: String(last.id), workflow: String(last.path ?? '').split('/').pop() }, () => st.api.rerunFailed(st.lab.slug, last.id), `${last.name} の落ちたジョブをやり直します`) }, `🔁 ${last.name} をやり直す`) : null,
           going.length ? h('button', { onclick: () => { st.runsShow = 'going'; go('runs'); } }, `🔄 動いている ${going.length} 件を見る`) : null,
           bad.length ? h('button', { onclick: () => { st.runsShow = 'failed'; go('runs'); } }, '❌ 落ちたものを見る') : null),
-        h('ul', { class: 'plain' }, rs.slice(0, 5).map((r) => h('li', {}, M.STATE_ICON[r.status === 'completed' ? r.conclusion : r.status] ?? '•', ' ', link(r.html_url, r.name), ' ', h('span', { class: 'muted' }, `${r.head_branch} · ${M.ago(r.created_at)}`)))),
+        // (a run here is a tap away in 「進み具合」, open there — the panel's own screen, not GitHub's)
+        h('ul', { class: 'plain', id: 'ovlist' }, rs.slice(0, 5).map((r) => h('li', {}, h('button', { class: 'runtap ahead', title: `${r.name}: 「進み具合」で開く`,
+          onclick: () => { st.focus = { run: r.id }; st.runsQ = ''; st.runsShow = 'all'; st.runsFrom = st.lab.slug; go('runs'); } },
+          h('strong', {}, `${M.STATE_ICON[r.status === 'completed' ? r.conclusion : r.status] ?? '•'} ${r.name}`), h('span', { class: 'muted' }, `${r.head_branch} · ${M.ago(r.created_at)}`))))),
         healthTable(M.workflowHealth(all), all.length));
     });
-  } else if (st.lab) body.append(h('div', { class: 'card' }, h('h2', {}, st.lab.slug), h('p', { class: 'muted' }, `このリポジトリは ${M.ROLE_NAMES[st.lab.role] ?? '見えない'} です: 実行・秘密・端末は、書き込める人だけ。使うときは、持ち主に書き込める人（Write 以上）として招いてもらってください。`),
+  } else if (st.lab && !seeLab()) body.append(h('div', { class: 'card' }, h('h2', {}, st.lab.slug), h('p', { class: 'muted' }, `このリポジトリは ${M.ROLE_NAMES[st.lab.role] ?? '見えない'} です: 実行・秘密・端末は、書き込める人だけ。使うときは、持ち主に書き込める人（Write 以上）として招いてもらってください。`),
     link(st.lab.repo.html_url, 'ラボを GitHub で見る')));
   for (const x of st.hosts) body.append(hostCard(x, true));
   if (!st.hosts.length) body.append(h('div', { class: 'card' }, h('h2', {}, '貸し借り（ホスト）'), h('p', { class: 'muted' }, 'まだありません。「貸し借り」で自分のホストを探すか、貸し手のリポジトリを加えると、ここに出ます。'), h('button', { onclick: () => go('hosts') }, '「貸し借り」を開く')));
@@ -827,12 +897,12 @@ function overview(body) {
 }
 
 /** this person's role for the guide (lib/guide.mjs guideSteps) */
-const guideRole = () => (isOwner() ? 'owner' : st.lab?.role === 'admin' ? 'admin' : canLab() ? 'writer' : (st.as ?? []).includes('lender') ? 'lender' : 'stranger');
+const guideRole = () => (isOwner() ? 'owner' : st.lab?.role === 'admin' ? 'admin' : canLab() ? 'writer' : seeLab() ? 'reader' : (st.as ?? []).includes('lender') ? 'lender' : 'stranger');
 /** the beginner's guide, filled once what its steps need is read (the lab's runs, LAB_HOSTS) */
 function guideSlot() {
   const slot = h('div', { class: 'guideslot' });
   act(async () => {
-    const role = guideRole(), lab = st.lab && canLab();
+    const role = guideRole(), lab = st.lab && seeLab();
     // (the guide's facts are best guesses: a read that failed counts as not done yet — 「いまやること」 says what was not read)
     const [rs, lh] = await Promise.all([lab ? st.api.runs(st.lab.slug, { per: 1 }).catch(() => [] /* a guess: not run yet */) : [], lab ? st.api.variable(st.lab.slug, 'LAB_HOSTS').catch(() => null /* a guess: none */) : null]);
     const caps = capsOf(), mine = st.hosts.filter((x) => x.role === 'lender');
@@ -910,11 +980,16 @@ function runs(body) {
       : none.step === 'start' ? h('button', { onclick: () => { if (!isLab) st.target = from; go('start'); } }, '「実行」を開く') : null));
     else list.replaceChildren(...rs.map((r) => {
       const state = r.status === 'completed' ? r.conclusion : r.status, box = h('div', { class: 'jobs' });
+      // (the run's head is one tap: its details open and close under it — the chevron says which — and the words 「詳しく」 are
+      //  there for a screen reader; what can be done to the run stays beside it as buttons)
+      const tap = h('button', { class: 'runtap', 'aria-expanded': open.has(r.id) ? 'true' : 'false', title: '詳しく（段・成果物・なぜ落ちたか）',
+        onclick: () => { if (open.has(r.id)) { open.delete(r.id); shut.add(r.id); } else { open.add(r.id); shut.delete(r.id); } tap.setAttribute('aria-expanded', open.has(r.id) ? 'true' : 'false'); detail(from, r, box, open.has(r.id)); } },
+        h('strong', {}, `${M.STATE_ICON[state] ?? '•'} ${r.name}`), h('span', { class: 'chip' }, r.event), h('span', { class: 'muted' }, `${r.head_branch} · ${r.triggering_actor?.login ?? r.actor?.login ?? ''} · ${M.ago(r.created_at)}`), h('span', { class: 'sr' }, '詳しく'));
       const row = h('div', { class: 'card', 'data-run': r.id },
-        h('div', { class: 'row' }, h('strong', {}, `${M.STATE_ICON[state] ?? '•'} ${r.name}`), h('span', { class: 'chip' }, r.event), h('span', { class: 'muted grow' }, `${r.head_branch} · ${r.triggering_actor?.login ?? r.actor?.login ?? ''} · ${M.ago(r.created_at)}`),
+        h('div', { class: 'row' }, tap,
           r.status !== 'completed' ? h('button', { class: 'danger', ...(isLab ? gate('run.cancel') : {}), onclick: () => (isLab ? guarded('run.cancel', { run: String(r.id), workflow: String(r.path ?? '').split('/').pop() }, () => st.api.cancel(from, r.id), '止めるよう頼みました') : act(() => st.api.cancel(from, r.id), '止めるよう頼みました')) }, '止める') : null,
           r.conclusion === 'failure' ? h('button', { ...(isLab ? gate('dispatch') : {}), onclick: () => (isLab ? guarded('dispatch', { run: String(r.id), workflow: String(r.path ?? '').split('/').pop() }, () => st.api.rerunFailed(from, r.id), '失敗したジョブをやり直します') : act(() => st.api.rerunFailed(from, r.id), '失敗したジョブをやり直します')) }, 'やり直す') : null,
-          h('button', { onclick: () => { if (open.has(r.id)) { open.delete(r.id); shut.add(r.id); } else { open.add(r.id); shut.delete(r.id); } detail(from, r, box, open.has(r.id)); } }, '詳しく'), link(r.html_url, 'GitHub')),
+          null),
         box);
       if (open.has(r.id)) detail(from, r, box, true);
       return row;
@@ -961,6 +1036,7 @@ async function detail(slug, r, box, show) {
     }
     if (arts === null) parts.push(h('p', { class: 'muted' }, '成果物を読めませんでした: ', link(`${r.html_url}#artifacts`, 'GitHub で見る')));
     else if (arts.length) parts.push(artifactList(slug, r.id, arts, r.html_url));
+    parts.push(h('p', { class: 'runlink' }, link(r.html_url, 'GitHub でこの実行を開く')));
     box.replaceChildren(...parts.filter(Boolean));
   });
 }
@@ -1468,8 +1544,12 @@ function settingsTab(body) {
 function viewCard() {
   const all = h('input', { type: 'checkbox', id: 'fullview', checked: full() });
   all.addEventListener('change', () => setView(all.checked));
+  // (「なめらかな字」: the pixel letters off, Noto Sans for every letter — easier to read at length; this browser's choice)
+  const smooth = h('input', { type: 'checkbox', id: 'smoothfont', checked: document.documentElement.classList.contains('ore-smooth') });
+  smooth.addEventListener('change', () => { setSmooth(LOCAL, smooth.checked); toast(smooth.checked ? 'なめらかな字にしました（英数字もドットでない字に）' : 'ドットの字に戻しました'); });
   return h('div', { class: 'card', id: 'viewcard' }, h('h2', {}, '表示'),
     h('label', {}, all, ' すべての機能を出す（上級）'),
+    h('label', {}, smooth, ' なめらかな字（英数字もドットの字にしない。長い文が読みやすくなります）'),
     full() ? h('p', { class: 'muted' }, 'いまは、すべての機能を出しています。外すと「かんたん表示」に戻ります。')
       : [h('p', { class: 'muted' }, 'いまは「かんたん表示」です（おすすめ）。次のものを隠しています:'), h('ul', {}, NAV.SIMPLE_HIDES.map((x) => h('li', { class: 'muted' }, x)))],
     h('p', { class: 'muted' }, '隠すだけで、消してはいません（このブラウザだけの設定）。'));

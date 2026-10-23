@@ -13,9 +13,12 @@
 //     "confirm": ["secrets.delete", "run.cancel"],
 //     "idleMinutes": 30,                         (0: never)
 //     "audit": "issue",                          (or "off"; "auto": issue when the lab is not public)
-//     "adminsLend": true                         (the lab's administrators but its owner always lend their Actions time: their
+//     "adminsLend": true,                        (the lab's administrators but its owner always lend their Actions time: their
 //                                                 own fork of the lab, every job, all day, no last day — until they do, the
 //                                                 panel offers them that alone; panel/lib/model.mjs adminLend)
+//     "viewers": ["someone"]                     (GitHub logins let into the panel to look: on a public lab GitHub lets everyone
+//                                                 read, so the panel lets in only the people named here — and the lab's private
+//                                                 collaborators; they do what their GitHub role allows, nothing more)
 //   }
 
 export const POLICY_FILE = '.github/bds-lab-panel.json';
@@ -31,10 +34,12 @@ const rank = (r) => GITHUB_ROLES.indexOf(r);
 const freeze = (o) => { for (const v of Object.values(o)) if (v && typeof v === 'object') freeze(v); return Object.freeze(o); };
 /** no file: what the panel did before policies — writers and admins do everything GitHub lets them (lending: a host's
  *  admin), readers nothing; deleting a secret asks first; never signed out for idling; the audit log kept when the lab is not public */
-export const DEFAULT_POLICY = freeze({ version: 1, roles: { admin: ['*'], maintain: [...ACTIONS], write: [...ACTIONS], triage: [], read: [] }, teams: {}, confirm: ['secrets.delete'], idleMinutes: 0, audit: 'auto', adminsLend: false });
+export const DEFAULT_POLICY = freeze({ version: 1, roles: { admin: ['*'], maintain: [...ACTIONS], write: [...ACTIONS], triage: [], read: [] }, teams: {}, confirm: ['secrets.delete'], idleMinutes: 0, audit: 'auto', adminsLend: false, viewers: [] });
 /** a file that does not check out: nothing allowed, everything asks */
-export const LOCKED_POLICY = freeze({ version: 1, roles: {}, teams: {}, confirm: [...ACTIONS], idleMinutes: 0, audit: 'auto', adminsLend: false });
-const KEYS = ['version', 'roles', 'teams', 'confirm', 'idleMinutes', 'audit', 'adminsLend'];
+export const LOCKED_POLICY = freeze({ version: 1, roles: {}, teams: {}, confirm: [...ACTIONS], idleMinutes: 0, audit: 'auto', adminsLend: false, viewers: [] });
+const KEYS = ['version', 'roles', 'teams', 'confirm', 'idleMinutes', 'audit', 'adminsLend', 'viewers'];
+/** a GitHub login (a person's name on GitHub) */
+export const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 const ROLE = /^[a-z][a-z0-9_-]{0,39}$/, TEAM = /^[a-z0-9][a-z0-9_.-]{0,99}$/i;
 const isObj = (x) => Boolean(x) && typeof x === 'object' && !Array.isArray(x);
 const actionList = (x, star) => Array.isArray(x) && x.every((a) => ACTIONS.includes(a) || (star && a === '*'));
@@ -66,8 +71,9 @@ export function checkPolicy(j) {
   if (j.idleMinutes !== undefined && (!Number.isInteger(j.idleMinutes) || j.idleMinutes < 0 || j.idleMinutes > 1440)) e.push('idleMinutes: 0〜1440 の整数（0: 切らない）');
   if (j.audit !== undefined && !['issue', 'off', 'auto'].includes(j.audit)) e.push('audit: "issue" か "off" か "auto"');
   if (j.adminsLend !== undefined && typeof j.adminsLend !== 'boolean') e.push('adminsLend: true か false');
+  if (j.viewers !== undefined && !(Array.isArray(j.viewers) && j.viewers.length <= 200 && j.viewers.every((v) => typeof v === 'string' && LOGIN.test(v)))) e.push('viewers: GitHub のユーザー名の並び（200 人まで）');
   if (e.length) return { policy: LOCKED_POLICY, errors: e };
-  return { policy: freeze({ version: 1, roles: Object.fromEntries(Object.entries(roles).map(([k, v]) => [k, [...new Set(v)]])), teams: { ...(j.teams ?? {}) }, confirm: [...(j.confirm ?? DEFAULT_POLICY.confirm)], idleMinutes: j.idleMinutes ?? 0, audit: j.audit ?? 'auto', adminsLend: j.adminsLend === true }), errors: [] };
+  return { policy: freeze({ version: 1, roles: Object.fromEntries(Object.entries(roles).map(([k, v]) => [k, [...new Set(v)]])), teams: { ...(j.teams ?? {}) }, confirm: [...(j.confirm ?? DEFAULT_POLICY.confirm)], idleMinutes: j.idleMinutes ?? 0, audit: j.audit ?? 'auto', adminsLend: j.adminsLend === true, viewers: [...new Set((j.viewers ?? []).map((v) => v.toLowerCase()))] }), errors: [] };
 }
 /** the lab's policy from its default branch → { policy, errors, found } (a file that cannot be read: LOCKED_POLICY, said why) */
 export async function loadPolicy(api, slug) {
@@ -113,6 +119,8 @@ export function can(policy, role, action) {
 export const needsConfirm = (policy, action) => { const l = (policy ?? DEFAULT_POLICY).confirm ?? []; return l.includes('*') || l.includes(action); };
 /** do the lab's administrators (its owner aside) always lend their Actions time (pure) */
 export const adminsLend = (policy) => (policy ?? DEFAULT_POLICY).adminsLend === true;
+/** is this login named to look at the panel (pure): the policy's viewers, any case */
+export const isViewer = (policy, login) => Boolean(login) && ((policy ?? DEFAULT_POLICY).viewers ?? []).includes(String(login).toLowerCase());
 /** after how many idle minutes the panel signs out (0: never) (pure) */
 export const idleMinutes = (policy) => (policy ?? DEFAULT_POLICY).idleMinutes ?? 0;
 /** whether actions are kept in the audit issue → 'issue' | 'off' (pure): the policy's, or (auto) when the lab is not public */

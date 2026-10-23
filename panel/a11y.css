@@ -1,36 +1,45 @@
 /* bds-lab panel: 見やすさ (panel/lib/a11y.mjs, ui/a11y.mjs) — each switch is a class on <html>, chosen in 「設定」 and kept in this
-   browser. Loaded after panel.css: it only lays its own values over panel.css's variables and sizes.
+   browser. Loaded after panel.css: it only lays its own values over panel.css's variables and sizes. The panel is OreUI's
+   dark in either scheme of the device: one set of strong colours.
    tests/a11y-offline.mjs reads the colours below and checks each pair of text and background (WCAG AA 4.5:1 at least; 7:1 aimed). */
 
 /* 大きな字: text 1.25 times (15px → 18.75px), and the smaller sizes with it; bigger buttons and boxes to press */
 html.a11y-big body { font-size: 18.75px; }
-html.a11y-big header#top h1, html.a11y-big .card h2 { font-size: 20px; }
-html.a11y-big .card h3 { font-size: 18px; }
-html.a11y-big label, html.a11y-big #who, html.a11y-big table, html.a11y-big .jobs, html.a11y-big textarea,
-html.a11y-big .pad button, html.a11y-big #who select { font-size: 16px; }
-html.a11y-big .chip, html.a11y-big pre { font-size: 15px; }
-html.a11y-big button, html.a11y-big .btn { min-height: 52px; padding: 10px 16px; }
-html.a11y-big #who button, html.a11y-big #who select { min-height: 44px; }
-html.a11y-big .pad button { min-height: 60px; }
-html.a11y-big input[type=checkbox], html.a11y-big input[type=radio] { width: 28px; height: 28px; }
+html.a11y-big header#top h1, html.a11y-big .card h2 { font-size: 21px; }
+html.a11y-big .card h3 { font-size: 19px; }
+html.a11y-big label, html.a11y-big table, html.a11y-big .jobs, html.a11y-big textarea, html.a11y-big select { font-size: 18px; }
+html.a11y-big .chip, html.a11y-big pre, html.a11y-big th { font-size: 16px; }
+html.a11y-big button, html.a11y-big .btn { min-height: 52px; font-size: 18px; }
+html.a11y-big input[type=text], html.a11y-big input[type=password], html.a11y-big input[type=number], html.a11y-big input[type=search] { min-height: 52px; font-size: 19px; }
+html.a11y-big .pad button { min-height: 62px; }
+html.a11y-big input[type=radio] { width: 30px; height: 30px; }
 html.a11y-big ul.targets label { font-size: 18.75px; }
 html.a11y-big #palette input { font-size: 21px; }
+html.a11y-big nav.tabs button { font-size: 17px; height: 48px; line-height: 44px; }
+html.a11y-big #dock button .dl { font-size: 14px; }
+html.a11y-big ul.menu small { font-size: 14px; }
+html.a11y-big #toast > div { font-size: 17px; }
+html.a11y-big #viewer .vtile .vname { font-size: 14px; }
+html.a11y-big #viewer pre.vtext { font-size: 15px; }
 
-/* はっきりした色: text against its background 7:1 or more where it can (never under 4.5:1), borders 3:1 or more */
-html.a11y-contrast { --bg: #ffffff; --card: #ffffff; --fg: #000000; --muted: #343a46; --line: #5c6370; --accent: #0a3d91; --ok: #0b5a2a; --warn: #6b3a00; --bad: #a00d0d; --chip: #e6ebf5; --on-accent: #ffffff; --on-bad: #ffffff;
-  --brand1: #0a3d91; --brand2: #0a3d91; --field: #ffffff; --glass: #ffffff; --ring: rgb(10 61 145 / 40%); --glow: transparent; --aura1: transparent; --aura2: transparent; --sheen: none; --shadow: none;
-  --toast: #000000; --on-toast: #ffffff; --toast-bad: #a00d0d; }
-@media (prefers-color-scheme: dark) {
-  html.a11y-contrast { --bg: #000000; --card: #0b0e13; --fg: #ffffff; --muted: #d0d6e0; --line: #8a94a6; --accent: #a8c8ff; --ok: #7fe0a3; --warn: #ffd08a; --bad: #ffa3a3; --chip: #1b2330; --on-accent: #000000; --on-bad: #000000;
-    --brand1: #a8c8ff; --brand2: #a8c8ff; --field: #000000; --glass: #0b0e13; --ring: rgb(168 200 255 / 45%); --glow: transparent; --aura1: transparent; --aura2: transparent; --sheen: none; --shadow: none;
-    --toast: #ffffff; --on-toast: #000000; --toast-bad: #ffa3a3; }
-}
-html.a11y-contrast button.primary, html.a11y-contrast button.on, html.a11y-contrast a.btn.primary { color: var(--on-accent); }
+/* はっきりした色: text against its background 7:1 or more where it can (never under 4.5:1), borders 3:1 or more — OreUI's
+   shapes kept, its greys pushed to black and white */
+html.a11y-contrast { --bg: #000000; --card: #121213; --chip: #000000; --field: #000000; --fg: #ffffff; --muted: #e6e8eb; --line: #b1b2b5;
+  --accent: #a0e081; --ok: #a0e081; --warn: #ffe866; --bad: #ff9b9b; --link: #b3cdff; --on-accent: #000000; --on-bad: #000000;
+  --hi: #6e6e70; --lo: #000000; --sunk: #000000; --deep: #b1b2b5;
+  --head: #ffffff; --head-lo: #000000; --on-head: #000000;
+  --btn: #ffffff; --btn-hi: #ffffff; --btn-lo: #000000; --btn-hover: #e6e8eb; --btn-press: #d0d1d4; --on-btn: #000000;
+  --go: #a0e081; --go-hi: #c6f0b0; --go-lo: #1d4d13; --go-hover: #b6ea9c; --go-press: #86d562;
+  --stop: #ff9b9b; --stop-hi: #ffc2c2; --stop-lo: #7a1010; --stop-hover: #ffb3b3; --stop-press: #f46d6d;
+  --off: #8c8d90; --off-hi: #b1b2b5;
+  --toast: #ffffff; --on-toast: #000000; --toast-bad: #ff9b9b; }
+html.a11y-contrast button.primary, html.a11y-contrast button.on, html.a11y-contrast a.btn.primary, html.a11y-contrast #dock button.on { color: var(--on-accent); }
 html.a11y-contrast #toast div.bad { color: var(--on-bad); }
-html.a11y-contrast button, html.a11y-contrast .btn, html.a11y-contrast .card, html.a11y-contrast input, html.a11y-contrast select, html.a11y-contrast textarea { border-color: var(--line); }
-/* (a button that cannot be pressed stays readable: a dashed border says so, not a faded colour) */
-html.a11y-contrast button:disabled { opacity: 1; border-style: dashed; color: var(--muted); }
-html.a11y-contrast :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+html.a11y-contrast .card, html.a11y-contrast input, html.a11y-contrast select, html.a11y-contrast textarea, html.a11y-contrast pre { border-color: var(--line); }
+/* (a button that cannot be pressed stays readable: a dashed rim says so, not a faded colour) */
+html.a11y-contrast button:disabled::before { border-style: dashed; }
+html.a11y-contrast button:disabled { --ink: #000000; }
+html.a11y-contrast :focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
 
 /* 動きを減らす: no animation, no transition, no smooth scrolling */
 html.a11y-calm, html.a11y-calm *, html.a11y-calm *::before, html.a11y-calm *::after {
@@ -39,8 +48,3 @@ html.a11y-calm, html.a11y-calm *, html.a11y-calm *::before, html.a11y-calm *::af
 
 /* リンクに下線: every link (and the buttons that look like links) underlined */
 html.a11y-links a, html.a11y-links button.linkish { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
-
-/* 大きな字 on a phone: the strip's names and the menu's lines grow too (panel.css makes them small to fit six tabs) */
-html.a11y-big nav.tabs button { font-size: 15px; }
-html.a11y-big ul.menu small { font-size: 14px; }
-html.a11y-big #toast > div { font-size: 17px; }
