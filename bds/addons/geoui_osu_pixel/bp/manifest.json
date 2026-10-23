@@ -49,6 +49,10 @@
     {
       "module_name": "@minecraft/server",
       "version": "2.1.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.2.0"
     }
   ]
 }

@@ -177,6 +177,24 @@
           ],
           "default": 0,
           "client_sync": true
+        },
+        "geoui:cnt": {
+          "type": "int",
+          "range": [
+            0,
+            16777215
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "geoui:mod": {
+          "type": "int",
+          "range": [
+            0,
+            16777215
+          ],
+          "default": 0,
+          "client_sync": true
         }
       }
     },

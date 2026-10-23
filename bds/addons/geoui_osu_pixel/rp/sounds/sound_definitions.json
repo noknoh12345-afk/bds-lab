@@ -88,6 +88,28 @@
           "load_on_low_memory": true
         }
       ]
+    },
+    "geoui.failsound": {
+      "category": "ui",
+      "sounds": [
+        {
+          "name": "sounds/geoui/failsound",
+          "volume": 1,
+          "pitch": 1,
+          "load_on_low_memory": true
+        }
+      ]
+    },
+    "geoui.applause": {
+      "category": "ui",
+      "sounds": [
+        {
+          "name": "sounds/geoui/applause",
+          "volume": 1,
+          "pitch": 1,
+          "load_on_low_memory": true
+        }
+      ]
     }
   }
 }

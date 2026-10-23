@@ -7,6 +7,8 @@
 //   swipe <x1> <y1> <x2> <y2> [ミリ秒]   なぞる          key <BACK|ENTER|ESCAPE|TAB|DPAD_UP など|番号>   キーを押す
 //   text <文字>                  文字を打つ（英数字と記号だけ。日本語は打てない）
 //   do <コマンド>                BDS のコンソールで実行（tests.txt のコマンドがそのまま使える: scriptevent, js, give ...）
+//   addon <名前>                 BDS をそのアドオン（bds/addons/<名前>）で起動し直す（ゲームは動いたまま。次に join で入り直す）。
+//                                --scenario batch/<名前>/<名前>… は、それぞれの app.txt をこれでつないだ 1 本（端末・ゲーム・サインインは 1 回）
 //   until joined [ミリ秒]        アプリのプレイヤーがワールドに出るまで待つ
 //   until title [ミリ秒]         ゲームのタイトル画面まで待つ（ゲームが前面、Android のダイアログなし、赤い起動画面でも真っ黒でもなく、落ち着いている。
 //                                最初の起動の「WELCOME TO MINECRAFT!」などは OCR で読めれば「Maybe later」で抜ける。
@@ -76,11 +78,11 @@ const JOIN_OCR_MS = Number(process.env.APP_JOIN_OCR_MS) || 4000;
 //  way in again from PLAY this many times before the wait for the world fails)
 const JOIN_RETRIES = Math.max(0, Number(process.env.APP_JOIN_RETRIES ?? 2) || 0);
 export const KEYS = ANDROID_KEYS;
-const VERBS = new Set(['launch', 'stop', 'join', 'wait', 'shot', 'tap', 'swipe', 'key', 'text', 'do', 'until', 'expect', 'absent', 'pull', 'push', 'sh', 'section', 'chat', 'press', 'hold', 'record', 'perf', 'changed', 'network', 'size', 'density', 'cutout',
+const VERBS = new Set(['launch', 'stop', 'join', 'wait', 'shot', 'tap', 'swipe', 'key', 'text', 'do', 'addon', 'until', 'expect', 'absent', 'pull', 'push', 'sh', 'section', 'chat', 'press', 'hold', 'record', 'perf', 'changed', 'network', 'size', 'density', 'cutout',
   'mouse', 'pad', 'screen', 'background', 'foreground', 'trim', 'measure', ...GAME_VERBS]);
 // a game controller's buttons (Android key names): the game's UI moves its focus with them, a path touch never takes
 // steps that leave the game as it is (the rest act on it)
-const STILL = new Set(['launch', 'until', 'wait', 'shot', 'section', 'do', 'expect', 'absent', 'changed', 'perf', 'record', 'pull', 'sh', 'where', 'items', 'measure']);
+const STILL = new Set(['launch', 'until', 'wait', 'shot', 'section', 'do', 'addon', 'expect', 'absent', 'changed', 'perf', 'record', 'pull', 'sh', 'where', 'items', 'measure']);
 export const PAD = { A: 'BUTTON_A', B: 'BUTTON_B', X: 'BUTTON_X', Y: 'BUTTON_Y', L1: 'BUTTON_L1', R1: 'BUTTON_R1', L2: 'BUTTON_L2', R2: 'BUTTON_R2', START: 'BUTTON_START', SELECT: 'BUTTON_SELECT',
   THUMBL: 'BUTTON_THUMBL', THUMBR: 'BUTTON_THUMBR', UP: 'DPAD_UP', DOWN: 'DPAD_DOWN', LEFT: 'DPAD_LEFT', RIGHT: 'DPAD_RIGHT' };
 // the scenario's names for the controller's buttons → the device controller's words (app/relay/lab-pad.c)
@@ -94,6 +96,32 @@ const LOGS = ['server', 'log', 'clientlog', 'text'];
 const num = (s) => (s !== undefined && /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : NaN);
 // a regex written in the file; `(?i)` at the start = ignore case
 export function rx(src) { const i = src.startsWith('(?i)'); return new RegExp(i ? src.slice(4) : src, i ? 'i' : ''); }
+
+/** a batch: several addons' app.txt as one scenario for one run of the app (one device, one game, one sign-in) — each one's
+ *  sections named `<addon>.<section>`, the server started again with its addon just before its join (`addon <name>`), the
+ *  game's own start (launch, until title …) only in the first: the game stays up from one to the next. read(name) → its
+ *  app.txt text, or null. → { text, errors } (pure) */
+export const BATCH_RE = /^batch(\/[A-Za-z0-9_-]{1,64}){1,8}$/;
+export function batchScenario(names, read) {
+  const errors = [], out = [`# バッチ: ${names.join(' → ')}（1 回のアプリの実行で順に: lib/scenario.mjs batchScenario が各 app.txt から作った手順）`];
+  names.forEach((name, k) => {
+    const src = read(name);
+    if (src === null || src === undefined) { errors.push(`bds/addons/${name}/app.txt がありません`); return; }
+    const { steps, errors: errs } = parseScenario(src);
+    for (const e of errs) errors.push(`${name}/app.txt:${e}`);
+    const joinAt = steps.findIndex((x) => x.verb === 'join');
+    if (joinAt < 0) { errors.push(`${name}/app.txt に join がありません（バッチではアドオンごとに BDS を替えて入り直します）`); return; }
+    // (the first from its start; the next from the section its join is in — the game is up already)
+    const secAt = steps.slice(0, joinAt).findLastIndex((x) => x.verb === 'section'), from = k === 0 ? 0 : (secAt >= 0 ? steps[secAt].line : steps[joinAt].line) - 1;
+    out.push('', `# ---- ${k + 1}/${names.length} ${name}（bds/addons/${name}/app.txt の ${from + 1} 行目から）`);
+    String(src).split(/\r?\n/).slice(from).forEach((raw, i) => {
+      if (from + i + 1 === steps[joinAt].line) out.push(`addon ${name}`);
+      const m = /^(\s*section\s+)([\w.-]+)(.*)$/.exec(raw);
+      out.push(m ? `${m[1]}${name}.${m[2]}${m[3]}` : raw);
+    });
+  });
+  return { text: `${out.join('\n').replace(/\n+$/, '')}\n`, errors };
+}
 
 /** @returns {{steps: Array<{line:number, verb:string, args:string[], raw:string, every?:{ms:number, step:object}}>, errors: string[]}} */
 export function parseScenario(text) {
@@ -143,6 +171,7 @@ function check(s) {
   if (s.verb === 'key' && !(a[0] && androidKey(a[0]) !== null)) return '書き方: key <A〜Z|0〜9|F1〜F12|ENTER|ESCAPE|BACK|TAB|SPACE|SLASH|UP|DOWN|LEFT|RIGHT など|番号>';
   if (['do', 'text', 'sh', 'chat'].includes(s.verb) && !a[0]) return `${s.verb} の後ろに中身が要ります`;
   if (s.verb === 'section' && (a.length !== 1 || !/^[\w.-]+$/.test(a[0]))) return '書き方: section <名前>（英数字と _ . - だけ）';
+  if (s.verb === 'addon' && !(a.length === 1 && /^[A-Za-z0-9_-]{1,64}$/.test(a[0]))) return '書き方: addon <アドオンの名前>（bds/addons の。BDS をそれで起動し直す: 次に join で入り直す）';
   if (s.verb === 'press' && (!a[0] || a[0].split('+').some((k) => linuxKey(k) === null) || (a[1] !== undefined && Number.isNaN(num(a[1]))))) return '書き方: press <キー>[+<キー>…] [ミリ秒]（例 press W 2000）';
   if (s.verb === 'hold' && (a.length < 2 || a.slice(0, 3).some((x) => Number.isNaN(num(x))))) return '書き方: hold <x> <y> [ミリ秒]';
   if (s.verb === 'record' && !['start', 'stop'].includes(a[0])) return '書き方: record start|stop';
@@ -345,6 +374,11 @@ export async function runScenario(steps, ctx) {
     const end = Date.now() + (Number(process.env.APP_LAN_JOIN_MS) || 180_000);
     if (!ctx.ocr) { for (const k of ['A', 'DOWN', 'A']) { padKey(k); await sleep(padWait); } return 'LAN のワールド（ゲームパッド A・DOWN・A。OCR なし）'; }
     let said = '', listed = false, other = 0, moves = 0, sawPlay = false, titleA = 0, newTries = 0, emptySince = 0, reopened = 0;
+    // (A first on the classic title, once a visit, before any search for its Play's focus: on the CI device the controller
+    //  is awake on Play already — the search took minutes there (DESIGN.md: 194 and 269 s to PLAY). An A that opened anything
+    //  but PLAY is backed out of with B and the search goes on. APP_TITLE_A_FIRST=0: the search only)
+    const aFirstOn = process.env.APP_TITLE_A_FIRST !== '0';
+    let aFirst = aFirstOn ? 'ready' : 'done';
     // (the LAN world not listed for this long on PLAY: back to the title and PLAY opened again — the game asks the network
     //  anew when its Worlds list opens; on the CI device the world showed after 2-3 minutes or never in 5)
     const relistMs = Number(process.env.APP_LAN_RELIST_MS) || 60_000, relistMax = 3;
@@ -377,7 +411,7 @@ export async function runScenario(steps, ctx) {
       const ws = ocrNow(), all = ws.map((w) => w.text).join(' '), p = playScreen(ws);
       said = seenWords(ws);
       if (p) {
-        other = 0; listed ||= p.lan; sawPlay = true; seenPlay = true; quietUntil = 0;
+        other = 0; listed ||= p.lan; sawPlay = true; seenPlay = true; quietUntil = 0; if (aFirst === 'pressed') aFirst = 'done';
         rec.play ??= at(); if (p.lan) rec.listed ??= at();
         tr.add(p.lan ? (p.focused ? 'play-lan-focus' : 'play-lan') : 'play-empty', ws);
         // the player's own world is listed too (lib/world.mjs: a player without one is sent into the new player's flow): the
@@ -396,7 +430,7 @@ export async function runScenario(steps, ctx) {
         else if (!emptySince) emptySince = Date.now();
         else if (Date.now() - emptySince > relistMs && reopened < relistMax) {
           // (the title next: its A opens PLAY again — sawPlay forgotten, so a title OCR cannot place still gets its A)
-          reopened++; emptySince = 0; sawPlay = false; other = 0; since = Date.now(); tr.add('relist');
+          reopened++; emptySince = 0; sawPlay = false; other = 0; since = Date.now(); tr.add('relist'); aFirst = aFirstOn ? 'ready' : 'done';
           log(`${s.line} LAN のワールドが ${Math.round(relistMs / 1000)} 秒出ません: PLAY を開き直します（B でタイトルへ、${reopened} 回目）`); padKey('B');
         }
         await sleep(padWait); continue;
@@ -416,6 +450,7 @@ export async function runScenario(steps, ctx) {
       else if (play && classicTitleWords(ws)) {
         let focused = false; try { focused = buttonFocused(decode(last), play); } catch { /* undecodable */ }
         if (focused) { tr.add('title-play', ws); log(`${s.line} タイトルの Play を押します（ゲームパッド A）`); padKey('A'); moves = 0; opened(); }
+        else if (aFirst === 'ready') { aFirst = 'pressed'; tr.add('title-a', ws); log(`${s.line} タイトルの Play を押します（焦点は見えないが、まず A を 1 回）`); padKey('A'); moves = 0; opened(); quietUntil = Date.now() + 2 * loadMs; }
         else { tr.add('title-focus', ws); moves++; padKey(moves % 12 <= 5 ? 'UP' : 'DOWN'); await sleep(Math.min(padWait, 1500)); continue; }
       }
       // the classic menu known by its "©Mojang AB" and the skin's name, its buttons' words not read (the CI device): Play has
@@ -429,6 +464,8 @@ export async function runScenario(steps, ctx) {
       else if (/\bget\b.{0,40}\bpacks?\b|\bmore\s+packs\b/i.test(all)) { tr.add('store', ws); log(`${s.line} ストアの画面（${said.slice(0, 60)}）: B で戻ります`); padKey('B'); other = 0; }
       // (a screen not known yet, just after an A that may have opened PLAY or a start: let it come — no press)
       else if (Date.now() < quietUntil) tr.add('wait', ws);
+      // (the first A on the title opened something other than PLAY: B back to the title, where the search for Play goes on)
+      else if (aFirst === 'pressed') { aFirst = 'done'; tr.add('title-a-back', ws); log(`${s.line} A で開いたのは PLAY ではない画面（${said.slice(0, 60)}）: B で戻って Play を探します`); padKey('B'); }
       // (an unknown screen: A goes on at first — B once PLAY has been seen, where an A could create a world)
       else if (/\bContinue\b/i.test(all)) { tr.add('continue', ws); padKey('A'); other++; }
       else if (other < 2 && !sawPlay) { tr.add('unknown-a', ws); padKey('A'); other++; opened(); }
@@ -475,6 +512,8 @@ export async function runScenario(steps, ctx) {
       }
       case 'wait': await sleep(num(a[0])); return '';
       case 'section': return '';
+      // (the server started again with another addon: the game is left as it is — disconnected, the next join takes it in)
+      case 'addon': { if (!ctx.switchAddon) throw new Error('この実行ではアドオンを替えられません（node lab.mjs app run の手順で使えます）'); return await ctx.switchAddon(a[0]); }
       case 'shot': { const d = clearDialog(s); if (d) await sleep(2000); const f = save(a[0]); ctx.shotTaken?.(a[0], last); if (WORLD_SHOT.test(a[0])) baseLogical = logical; return '→ ' + f + (d ? `（先に Android のダイアログ「${d.proc}」に答えてから）` : ''); }
       case 'tap': case 'swipe': case 'key': case 'text': case 'chat': case 'press': case 'hold': case 'mouse': case 'pad': if (clearDialog(s)) await sleep(1000); break;
     }

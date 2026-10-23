@@ -8,7 +8,7 @@ GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付�
 | `dist/geoui_builder.js` | **Blockbench に入れる 1 ファイル**: GeoUI Builder と **タイムライン**（`timeline/`。使い方は [TIMELINE.md](TIMELINE.md)）。`node bds/geoui/build.mjs` が作る（`--check`: 最新か） |
 | `geoui_builder.js` | GeoUI Builder 本体（Blockbench 5.x、web 版・デスクトップ版。これだけ入れるとタイムラインなし）。中の `GeoUICore` は Node のモジュールにもなる（式・Molang・書き出し） |
 | `timeline/` | タイムライン（データと編集・書き出しの Molang・ゲームの中のスクリプト・パネル・プレビュー・Blockbench とのつなぎ）。設計と本物のゲームで確かめたことは `timeline/PLAN.md`。osu! を丸ごと作る部品（`osugame.js` ルール・`osukit.js` 2 つの見た目・`osusong.js` ラボの曲）も |
-| `osu/` | osu! の見本の道具: 曲と譜面を書き出す（`music.mjs`）・公式の Legacy スキン（`skin-legacy/`、ppy/osu-resources・CC-BY-NC 4.0、`fetch-skin.mjs`）・見本のアドオンを作る（`addon.mjs`、demo.mjs から）・ゲームを使わない絵と動画（`render.mjs`・`video.mjs`）。使い方は [TIMELINE.md](TIMELINE.md)「osu! を丸ごと作る」 |
+| `osu/` | osu! の見本の道具: 曲と譜面を書き出す（`music.mjs`）・公式の Legacy スキン（`skin-legacy/`、ppy/osu-resources・CC-BY-NC 4.0、`fetch-skin.mjs`）・見本のアドオンを作る（`addon.mjs`、demo.mjs から）・ゲームを使わない絵と動画（`render.mjs`・`video.mjs`。`--tour` はパックのスクリプトのまま検証ツアーを）。使い方は [TIMELINE.md](TIMELINE.md)「osu! を丸ごと作る」 |
 | `bbpage.mjs` | 本物の Blockbench（web 版）をヘッドレスの Chromium で開く、確かめの共通部分（`blockbench-check.mjs`・`timeline/check-bridge.mjs`） |
 | `blockbench-check.mjs` | 本物の Blockbench（web 版をヘッドレスの Chromium で）にプラグインを入れて確かめ、画を撮る（作者向け。要るものはファイルの先頭） |
 | `calib.mjs` | 較正: 目盛りのパックを作る（`make`）・本物のアプリの画面を測る（`measure`）・答えのわかった偽の画面（`synth`） |
@@ -19,7 +19,7 @@ GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付�
 | `../../tests/geoui-builder-offline.mjs` | Studio の書き出し（`bds/addons/geoui_studio`）との突き合わせ、書き出したファイル、較正の測り方（CI） |
 | `../addons/geoui_bb/` | このプラグインで Studio のひな形「スコア＆ゲージ」を作り直した書き出し（本物の BDS: DONE 22/22・本物のアプリ: `app.txt`） |
 | `../addons/geoui_calib/` | 較正の目盛り（本物の BDS: DONE 3/3・本物のアプリ: `app.txt`） |
-| `../addons/geoui_osu_pixel/`・`geoui_osu_skin/` | タイムラインで作った osu!（ドット絵のキューブ / 公式の素材。ラボの曲「Cubic Pulse」）。本物の BDS: `tests.txt`・本物のアプリ: `app.txt`（`node bds/geoui/timeline/demo.mjs` が作る） |
+| `../addons/geoui_osu_pixel/`・`geoui_osu_skin/` | タイムラインで作った osu!（キューブで組んだドット絵の模型 / 公式の素材。ラボの曲「Cubic Pulse」。失敗・Mods・結果・自己ベスト・検証ツアー・メニュー `/geoui:osu`）。本物の BDS: `tests.txt`・本物のアプリ: `app.txt`（ツアー 1 回）（`node bds/geoui/timeline/demo.mjs` が作る） |
 
 ## 使い方
 

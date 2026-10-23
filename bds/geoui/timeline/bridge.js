@@ -621,6 +621,8 @@
         const b1 = await get(`${n}.png`);
         if (b1) images[n] = K.as2x(await imageOf(b1)); else missing.push(n);
       }
+      // (the results' and the fail's pictures where the skin has them — else osukit draws its own)
+      for (const n of K.SKIN_EXTRA || []) { const b2 = await get(`${n}@2x.png`), b1 = b2 ? null : await get(`${n}.png`); if (b2) images[n] = await imageOf(b2); else if (b1) images[n] = K.as2x(await imageOf(b1)); }
       for (const n of K.SKIN_SOUNDS) for (const ext of ['ogg', 'wav']) { const b = await get(`${n}.${ext}`); if (b) { sounds[n] = { ext, bytes: new Uint8Array(b) }; break; } }
       if (missing.length) throw new Error(`スキンに足りない絵があります: ${missing.slice(0, 6).join('・')}${missing.length > 6 ? ' …' : ''}`);
       return { images, sounds };

@@ -138,7 +138,8 @@
   }
 
   /** the chip version's hitsounds (osu!'s names: normal-hitnormal, …-hitwhistle, …-hitfinish, …-hitclap, slidertick, combobreak,
-   *  spinnerbonus): short blips made here → { name: { rate, channels } } */
+   *  spinnerbonus) and the play's own (failsound: a fall down the scale; applause: a fanfare, the results'): short blips made here
+   *  → { name: { rate, channels } } */
   function chipHitsounds() {
     const rate = 22050, out = {}, rnd = noiseGen(3);
     const make = (len, fn) => { const a = new Float32Array(Math.round(len * rate)); for (let i = 0; i < a.length; i++) a[i] = fn(i / rate, i); return { rate, channels: [a] }; };
@@ -150,6 +151,12 @@
     out['normal-slidertick'] = make(0.04, (t) => sq(t * 2640, 0.5) * 0.25 * Math.exp(-t * 80));
     out.combobreak = make(0.5, (t) => sq(t * (440 - t * 500), 0.5) * 0.35 * Math.exp(-t * 4));
     out.spinnerbonus = make(0.25, (t) => sq(t * (880 + t * 2400), 0.125) * 0.3 * Math.exp(-t * 9));
+    // (the fail: a square wave sliding from 660 Hz to 82 Hz, wobbling — the phase summed so the slide stays smooth)
+    let ph = 0;
+    out.failsound = make(1.5, (t) => { const f = 82 + 578 * Math.pow(1 - t / 1.5, 2.2), v = 1 + 0.03 * Math.sin(t * 38); ph += (f * v) / rate; return sq(ph, 0.5) * 0.32 * Math.min(1, t * 60) * Math.exp(-t * 1.1); });
+    // (the applause: C E G C' as 16ths up, then the chord held with a sparkle of noise)
+    const ARP = [523.25, 659.26, 783.99, 1046.5];
+    out.applause = make(1.6, (t) => { const k = Math.min(3, Math.floor(t / 0.09)), held = t >= 0.36; const tone = held ? ARP.reduce((a, f, i) => a + sq(t * f * (1 + i * 0.002), 0.25), 0) / 4 : sq(t * ARP[k], 0.25); return (tone * 0.34 * (held ? Math.exp(-(t - 0.36) * 1.8) : 1) + (held ? rnd() * 0.07 * Math.exp(-(t - 0.36) * 2.4) : 0)) * Math.min(1, t * 80); });
     return out;
   }
 

@@ -268,7 +268,7 @@
     for (const p of map.timing || []) { if (p.kiai && open === null) open = p.time; else if (!p.kiai && open !== null) { kiai.push([Math.round(open), Math.round(p.time)]); open = null; } }
     if (open !== null) kiai.push([Math.round(open), Math.round(drainEnd + 1000)]);
     return { r: r4(diff.radius * k), follow: r4(diff.radius * k * 2.4), windows: { great: diff.windows.great, good: diff.windows.good, ok: diff.windows.meh }, preempt: diff.preempt, hp: diff.hp, od: diff.od, diffMul,
-      objects, breaks, kiai, sounds: Object.assign({ break: snd('combobreak'), tick: snd('normal-slidertick'), bonus: snd('spinnerbonus'), clear: null }, opts.sounds || {}) };
+      objects, breaks, kiai, sounds: Object.assign({ break: snd('combobreak'), tick: snd('normal-slidertick'), bonus: snd('spinnerbonus'), clear: null, fail: snd('failsound'), applause: snd('applause') }, opts.sounds || {}) };
   }
 
   T.osu = { parseOsu, sampleMap, preempt, fadeIn, radius, hitWindows, difficultyOf, timingAt, sliderDuration, sliderMarks, hitsoundsOf, gameOf, diffRange, combos, lineOf, toDocument, DEFAULT_ELEMENTS };

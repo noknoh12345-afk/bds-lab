@@ -1,5 +1,5 @@
 // GeoUI Builder 0.1.0 with its timeline — one file for Blockbench (made by bds/geoui/build.mjs from bds/geoui/geoui_builder.js and
-// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources fd81a1030642
+// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 709e6650f6a2
 // ---- timeline/model.js
 (function (module) {
 // GeoUI timeline — the model (pure: no DOM, no Blockbench). The plan's step 1 (bds/geoui/timeline/PLAN.md):
@@ -202,7 +202,10 @@
   };
   // (state.<name>: what the game keeps live for the whole play — the cursor, the score, the combo, a spinner's spin: contract.STATES.
   //  evaluate takes them from opts.state — the editor's autoplay, autoplay.js — and the game from the properties the script sets)
-  let STATE = {};
+  // (screen.dx: how much wider half the screen is than the design's reference aspect, model units — 0 there; GeoUI moves an
+  //  element anchored right that much right and one anchored left that much left, so an element moving from one to the other
+  //  adds it: evaluate takes it from opts.screen.dx, the game from GeoUI's own v.geoui_halfw)
+  let STATE = {}, SCREEN = {};
   const EXPRS = new Map();
   function exprFn(src) {
     const s = String(src);
@@ -221,9 +224,10 @@
       const sm = /^state\.(\w+)$/.exec(t);
       if (sm) { if (!STATE_NAMES().includes(sm[1])) throw new Error(`式「${s}」: state.${sm[1]} はありません（${STATE_NAMES().map((x) => `state.${x}`).join('・')}）`); return () => num(STATE[sm[1]]); }
       if (t === 'math.pi') return () => PI;
+      if (t === 'screen.dx') return () => num(SCREEN.dx);
       const f = /^math\.(\w+)$/.exec(t);
       if (f && MATH[f[1]]) { take('('); const args = []; if (peek() !== ')') { args.push(sum()); while (peek() === ',') { take(','); args.push(sum()); } } take(')'); const fn = MATH[f[1]]; return (p, tt) => fn(...args.map((a) => a(p, tt))); }
-      throw new Error(`式「${s}」: 「${t}」は使えません（param.名前・state.名前・t・数・+ - * /・math.〜 だけ）`);
+      throw new Error(`式「${s}」: 「${t}」は使えません（param.名前・state.名前・screen.dx・t・数・+ - * /・math.〜 だけ）`);
     };
     const unary = () => { if (peek() === '-') { take(); const e = unary(); return (p, t) => -e(p, t); } if (peek() === '+') { take(); return unary(); } return primary(); };
     const prod = () => { let e = unary(); while (peek() === '*' || peek() === '/') { const op = take(), a = e, b = unary(); e = op === '*' ? (p, t) => a(p, t) * b(p, t) : (p, t) => a(p, t) / b(p, t); } return e; };
@@ -235,7 +239,8 @@
   }
   const exprError = (src) => { try { exprFn(src); return null; } catch (e) { return e.message; } };
   // (the state names: contract.js's when it is loaded — the one list the game and the preview share — else the same list here)
-  const STATE_NAMES = () => (T.contract && T.contract.STATE_NAMES) || ['score', 'combo', 'acc', 'hp', 'cx', 'cy', 'hold', 'spin', 'rpm', 'sa', 'rank', 'maxcombo', 'misses', 'n300', 'n100', 'n50'];
+  const STATE_NAMES = () => (T.contract && T.contract.STATE_NAMES) || ['score', 'combo', 'acc', 'hp', 'cx', 'cy', 'hold', 'spin', 'rpm', 'sa', 'rank', 'maxcombo', 'misses', 'n300', 'n100', 'n50',
+    'hd', 'fl', 'nf', 'sd', 'pf', 'auto', 'fc', 'failed', 'record'];
   /** the state names an expression reads (state.<name>), in order of first use */
   const stateRefs = (src) => [...new Set((String(src).match(/\bstate\.(\w+)/g) || []).map((x) => x.slice(6)))];
   const keyValue = (k, params, t) => (typeof k.v === 'string' ? exprFn(k.v)(params || {}, t) : k.v);
@@ -456,12 +461,14 @@
   /** every element's state at time t of playing a sequence: { 'element': { visible, x, y, scaleX, scaleY, rotation,
    *  opacity, value?, fill?, frame? } }; a template's instance only while it is out (t − lead … t + tail), as
    *  'element#instance'. opts.events = [{ instance, name, t }] (hits, misses: what trigger and until clips answer; an event with
-   *  no instance answers the sequence's own tracks: a shake on any miss), opts.state = { name: value } (state.<name>) */
+   *  no instance answers the sequence's own tracks: a shake on any miss), opts.state = { name: value } (state.<name>),
+   *  opts.screen = { dx } (screen.dx: the screen's half width past the reference aspect's) */
   function evaluate(doc, seqId, t, opts = {}) {
     const seq = seqOf(doc, seqId), out = {};
     if (!seq) return out;
     const u = seqTime(seq, num(t)), events = Array.isArray(opts.events) ? opts.events : [];
     STATE = opts.state && typeof opts.state === 'object' ? opts.state : {};
+    SCREEN = opts.screen && typeof opts.screen === 'object' ? opts.screen : {};
     const solo = seq.tracks.some((tr) => tr.solo);
     tracksState(seq, seq.tracks, u, 0, { events, solo, params: {} }, null, '', out);
     const tpls = new Map((seq.templates || []).map((x) => [x.id, x]));
@@ -912,6 +919,8 @@
   //   <ns>:sp    the spinner now: spin (0…1 of the spins it needs), rpm, sa (its angle, degrees)
   //   <ns>:res   rank (0 none, 1 D … 5 S, 6 SS), maxcombo, misses
   //   <ns>:cnt   n300, n100, n50
+  //   <ns>:mod   the mods on (hd, fl, nf, sd, pf: 1 each), auto (the game plays itself), fc (no miss or break so far), failed (the
+  //              play failed: osu!'s fail), record (this play beat the player's best: told at its end)
   // (hit: any hit — a 300 / 100 / 50 or a slider's head; combo: the combo went up — a hit, a slider's tick or turn; break: the combo
   //  was broken; tick: a slider's tick or turn followed; clear: a spinner spun enough; bonus: a spin past it; fail: health ran out;
   //  kiai: a kiai section began)
@@ -922,6 +931,7 @@
     sp: Object.freeze([{ name: 'spin', bits: 7, min: 0, max: 1 }, { name: 'rpm', bits: 9, min: 0, max: 511 }, { name: 'sa', bits: 8, min: 0, max: 358.59375 }]),
     res: Object.freeze([{ name: 'rank', bits: 3, min: 0, max: 7 }, { name: 'maxcombo', bits: 11, min: 0, max: 2047 }, { name: 'misses', bits: 10, min: 0, max: 1023 }]),
     cnt: Object.freeze([{ name: 'n300', bits: 10, min: 0, max: 1023 }, { name: 'n100', bits: 7, min: 0, max: 127 }, { name: 'n50', bits: 7, min: 0, max: 127 }]),
+    mod: Object.freeze(['hd', 'fl', 'nf', 'sd', 'pf', 'auto', 'fc', 'failed', 'record'].map((name) => Object.freeze({ name, bits: 1, min: 0, max: 1 }))),
   });
   // (GeoUI's own values: v0 … v3 — the runtime's CFG.values says which is which; accuracy is kept × 100)
   const VALUE_STATES = Object.freeze({ score: { prop: 'v0', scale: 1 }, combo: { prop: 'v1', scale: 1 }, acc: { prop: 'v2', scale: 0.01 }, hp: { prop: 'v3', scale: 1 } });
@@ -1584,7 +1594,7 @@
     for (const p of map.timing || []) { if (p.kiai && open === null) open = p.time; else if (!p.kiai && open !== null) { kiai.push([Math.round(open), Math.round(p.time)]); open = null; } }
     if (open !== null) kiai.push([Math.round(open), Math.round(drainEnd + 1000)]);
     return { r: r4(diff.radius * k), follow: r4(diff.radius * k * 2.4), windows: { great: diff.windows.great, good: diff.windows.good, ok: diff.windows.meh }, preempt: diff.preempt, hp: diff.hp, od: diff.od, diffMul,
-      objects, breaks, kiai, sounds: Object.assign({ break: snd('combobreak'), tick: snd('normal-slidertick'), bonus: snd('spinnerbonus'), clear: null }, opts.sounds || {}) };
+      objects, breaks, kiai, sounds: Object.assign({ break: snd('combobreak'), tick: snd('normal-slidertick'), bonus: snd('spinnerbonus'), clear: null, fail: snd('failsound'), applause: snd('applause') }, opts.sounds || {}) };
   }
 
   T.osu = { parseOsu, sampleMap, preempt, fadeIn, radius, hitWindows, difficultyOf, timingAt, sliderDuration, sliderMarks, hitsoundsOf, gameOf, diffRange, combos, lineOf, toDocument, DEFAULT_ELEMENTS };
@@ -1601,6 +1611,8 @@
 // some: 50); a spinner is spun around the playfield's middle, the spins it needs counted (osu!lazer's minimum spins per second
 // for its OD), bonus spins past it. Score v1 (each hit's value grows with the combo and the beatmap's difficulty), accuracy,
 // rank (SS … D), health (drained over time, filled by hits, emptied by misses), the combo and its breaks, hitsounds.
+// Mods (osu!'s letters): HD and FL change what the client draws and the score (×1.06, ×1.12), NF never fails (×0.5), SD fails
+// on a miss or a combo break, PF on anything but a 300. A failed play judges nothing more (osu! ends it: the script stops it).
 // createGame's source goes into the behaviour pack's script as it is (runtime.js): it names nothing outside itself. autoInput
 // is the autoplay (the cursor eased from object to object, the ball followed, spinners spun at 477 rpm): the preview plays it
 // and `/scriptevent <ns>:mode auto` makes the game play itself. The config (G) is made from a beatmap by osu.js gameOf.
@@ -1614,16 +1626,20 @@
    *  edges [ms from t] (each turn and the end), es [[sound ids] each edge], a spinner e (end ms), need (spins) }],
    *  breaks [[ms, ms]], kiai [[ms, ms]], sounds { break, tick, bonus, clear, spin } }.
    *  → { start(ms), seek(ms), step(ms, input) → { results: [[key, code]], events: [[name, ms]], sounds: [[id, ms]] }, state(),
-   *    autoInput(ms0, ms1) → input, ballAt(index, ms) } — input: { cx, cy, hold, presses: [ms], aim (false: the cursor not
-   *  needed — relax) } */
-  function createGame(G) {
+   *    autoInput(ms0, ms1) → input, ballAt(index, ms), rankOf(…), fail(ms) → { events } (the play failed now: the tour's),
+   *    fastForward(ms) (played by the autoplay up to ms, nothing told: a jump with the score it would have), mods } — input:
+   *  { cx, cy, hold, presses: [ms], aim (false: the cursor not needed — relax) }. opts: { mods: ['HD', 'FL', 'NF', 'SD', 'PF'] } */
+  function createGame(G, opts) {
     const CODE = { hit: 1, miss: 2, great: 3, good: 4, ok: 5, early: 6, drop: 7 };
     const VALUE = { great: 300, good: 100, ok: 50 };
     const objs = G.objects || [], W = G.windows, R = G.r, FOLLOW = G.follow || R * 2.4, TAU = Math.PI * 2;
     const lastEnd = objs.length ? Math.max(...objs.map((o) => (o.k === 's' ? o.t + o.d : o.k === 'p' ? o.e : o.t))) : 0;
     const firstT = objs.length ? objs[0].t : 0;
+    // (the mods: what the rules see of them — the client draws HD and FL by itself from the script's state)
+    const MODS = new Set([].concat((opts && opts.mods) || []).map((m) => String(m).toUpperCase()).filter((m) => ['HD', 'FL', 'NF', 'SD', 'PF'].includes(m)));
+    const MODMUL = (MODS.has('HD') ? 1.06 : 1) * (MODS.has('FL') ? 1.12 : 1) * (MODS.has('NF') ? 0.5 : 1);
     let S = null;
-    const fresh = () => ({ t: 0, score: 0, combo: 0, maxcombo: 0, n300: 0, n100: 0, n50: 0, misses: 0, hp: 1, failed: false,
+    const fresh = () => ({ t: 0, lo: 0, score: 0, combo: 0, maxcombo: 0, n300: 0, n100: 0, n50: 0, misses: 0, hp: 1, failed: false, failedAt: -1, broken: false,
       done: objs.map(() => false), head: objs.map(() => 0), parts: objs.map(() => [0, 0]), next: objs.map(() => 0), spins: objs.map(() => 0),
       angle: objs.map(() => null), sa: 0, rpmLog: [], bonus: objs.map(() => 0), cleared: objs.map(() => false), cx: 0, cy: 0, hold: 0, active: -1, kiaiAt: -1 });
     const inBreak = (t) => (G.breaks || []).some((b) => t >= b[0] && t < b[1]);
@@ -1650,30 +1666,37 @@
     const near = (x, y, cx, cy, r) => (cx - x) * (cx - x) + (cy - y) * (cy - y) <= r * r;
     function out() { return { results: [], events: [], sounds: [] }; }
     function judgeOf(dt) { const a = Math.abs(dt); return a <= W.great ? 'great' : a <= W.good ? 'good' : a <= W.ok ? 'ok' : null; }
-    function hpAdd(o, v) { S.hp = Math.min(1, Math.max(0, S.hp + v)); if (S.hp <= 0 && !S.failed) { S.failed = true; o.events.push(['fail', S.t]); } }
+    /** the play failed at t (once): judged no more — osu! ends it there */
+    function failNow(o, t) { if (S.failed) return; S.failed = true; S.failedAt = t; o.events.push(['fail', t]); }
+    // (health out: a fail, but with NF — the bar stays empty and the play goes on)
+    function hpAdd(o, v, t) { S.hp = Math.min(1, Math.max(0, S.hp + v)); if (S.hp <= 0 && !MODS.has('NF')) failNow(o, t === undefined ? S.t : t); }
     const HPK = 1 + (G.hp || 5) / 5;
     function comboUp(o, t) { S.combo++; S.maxcombo = Math.max(S.maxcombo, S.combo); o.events.push(['combo', t]); }
+    // (a break — a miss, a slider's head or tick let go — ends a full combo; SD and PF fail on it)
     function breakCombo(o, t) {
       if (S.combo > 0) { o.events.push(['break', t]); if (S.combo >= 20 && G.sounds && G.sounds.break) o.sounds.push([G.sounds.break, t]); }
-      S.combo = 0;
+      S.combo = 0; S.broken = true;
+      if (MODS.has('SD') || MODS.has('PF')) failNow(o, t);
     }
     /** a judgement that counts towards accuracy (a circle, a slider's end, a spinner): its score with the combo before it */
     function judge(o, i, name, t) {
       const ob = objs[i];
       S.done[i] = true;
       if (name === 'miss') {
-        S.misses++; breakCombo(o, t); hpAdd(o, -0.06 * HPK);
-        o.results.push([ob.key, CODE.miss]); o.events.push(['miss', t]);
+        S.misses++; o.results.push([ob.key, CODE.miss]); o.events.push(['miss', t]);
+        breakCombo(o, t); hpAdd(o, -0.06 * HPK, t);
         return;
       }
       const v = VALUE[name];
-      S.score += v + Math.floor((v * Math.max(0, S.combo - 1) * (G.diffMul || 1)) / 25);
+      // (score v1: the hit's value, and its value again by the combo before it × the difficulty × the mods, over 25)
+      S.score += v + Math.floor((v * Math.max(0, S.combo - 1) * (G.diffMul || 1) * MODMUL) / 25);
       if (name === 'great') S.n300++; else if (name === 'good') S.n100++; else S.n50++;
       // (a slider's end and a spinner add no combo of their own here: the combo went up on their head, ticks and turns — a spinner
       //  does count one, as in osu!)
       if (ob.k !== 's') comboUp(o, t);
-      hpAdd(o, name === 'great' ? 0.05 : name === 'good' ? 0.025 : 0.008);
+      hpAdd(o, name === 'great' ? 0.05 : name === 'good' ? 0.025 : 0.008, t);
       o.results.push([ob.key, CODE[name]]); o.events.push(['hit', t], [name, t]);
+      if (name !== 'great' && MODS.has('PF')) failNow(o, t);
     }
     /** a press at time pt with the cursor at cx, cy (aim: it must be on the object) */
     function press(o, pt, cx, cy, aim) {
@@ -1697,8 +1720,11 @@
     }
     /** everything due by time t that needs no press: missed heads and circles, slider ticks and turns, spinners, health */
     function settle(o, t0, t, inp) {
-      for (let i = 0; i < objs.length; i++) {
+      // (S.lo: the first object not judged yet — those before it are all done)
+      while (S.lo < objs.length && S.done[S.lo]) S.lo++;
+      for (let i = S.lo; i < objs.length; i++) {
         const ob = objs[i];
+        if (S.failed) return;
         if (S.done[i]) continue;
         if (ob.t - (G.preempt || 1200) > t) break;
         if (ob.k === 'c') { if (ob.t + W.ok < t) judge(o, i, 'miss', ob.t + W.ok); continue; }
@@ -1748,7 +1774,8 @@
         }
       }
       // (health drains while there is something to play, not in a break)
-      if (t > firstT && t0 < lastEnd && !inBreak(t)) hpAdd(o, -((t - t0) / 1000) * (0.008 + 0.004 * (G.hp || 5)));
+      if (t > firstT && t0 < lastEnd && !inBreak(t)) hpAdd(o, -((t - t0) / 1000) * (0.008 + 0.004 * (G.hp || 5)), t);
+      if (S.failed) return;
       const k = kiaiOf(t);
       if (k >= 0 && k !== S.kiaiAt) o.events.push(['kiai', (G.kiai[k] || [t])[0]]);
       S.kiaiAt = k;
@@ -1756,10 +1783,12 @@
     const api = {
       /** a new play from a time: everything scored afresh, what is before it left out */
       start(ms) { S = fresh(); api.seek(ms); return api; },
-      /** from another time (a seek, a resume, a loop going round): what is before it left out, the score kept */
+      /** from another time (a seek, a resume, a loop going round): what is before it left out, the score kept (the very time it
+       *  is at already: nothing left out — a slider being followed stays followed) */
       seek(ms) {
         if (!S) S = fresh();
-        S.t = ms; S.angle = objs.map(() => null); S.rpmLog = [];
+        if (ms === S.t && S.lo !== undefined) return api;
+        S.t = ms; S.angle = objs.map(() => null); S.rpmLog = []; S.lo = 0;
         objs.forEach((ob, i) => {
           const end = ob.k === 's' ? ob.t + ob.d : ob.k === 'p' ? ob.e : ob.t + W.ok;
           S.done[i] = end < ms;
@@ -1773,9 +1802,11 @@
         if (!S) S = fresh();
         const inp = Object.assign({ cx: S.cx, cy: S.cy, hold: 0, presses: [], aim: true }, inp0 || {}), o = out();
         S.cx = inp.cx; S.cy = inp.cy; S.hold = inp.hold ? 1 : 0;
-        // presses in time order, each after what was due before it
-        for (const pt of [...(inp.presses || [])].sort((a, b) => a - b)) { if (pt > ms) continue; settle(o, S.t, Math.max(S.t, pt), inp); S.t = Math.max(S.t, pt); press(o, pt, inp.cx, inp.cy, inp.aim !== false); }
-        settle(o, S.t, ms, inp);
+        // (failed: nothing judged any more — the cursor still follows)
+        if (S.failed) { S.t = Math.max(S.t, ms); return o; }
+        // presses in time order, each after what was due before it (none once a press or what came due made the play fail)
+        for (const pt of [...(inp.presses || [])].sort((a, b) => a - b)) { if (pt > ms || S.failed) continue; settle(o, S.t, Math.max(S.t, pt), inp); S.t = Math.max(S.t, pt); if (!S.failed) press(o, pt, inp.cx, inp.cy, inp.aim !== false); }
+        if (!S.failed) settle(o, S.t, ms, inp);
         S.t = Math.max(S.t, ms);
         S.rpmLog = S.rpmLog.filter((x) => x[0] > ms - 1000);
         S.active = objs.findIndex((ob, i) => !S.done[i] && ob.t - (G.preempt || 1200) <= ms);
@@ -1787,8 +1818,30 @@
         const sp = objs.findIndex((ob, i) => ob.k === 'p' && S.t >= ob.t && S.t < ob.e);
         return { score: S.score, combo: S.combo, acc: Math.round(acc * 10000) / 100, hp: Math.round(S.hp * 100), cx: S.cx, cy: S.cy, hold: S.hold,
           spin: sp >= 0 && objs[sp].need > 0 ? Math.min(1, S.spins[sp] / objs[sp].need) : 0, rpm: Math.min(511, Math.round(S.rpmLog.reduce((a, x) => a + x[1], 0) * 60)), sa: S.sa,
-          rank, maxcombo: S.maxcombo, misses: S.misses, n300: S.n300, n100: S.n100, n50: S.n50, failed: S.failed };
+          rank, maxcombo: S.maxcombo, misses: S.misses, n300: S.n300, n100: S.n100, n50: S.n50, failed: S.failed ? 1 : 0, failedAt: S.failedAt,
+          // (a full combo so far: no miss and no break — osu!'s "perfect" stamp; done: every object judged, the play over)
+          fc: S.broken ? 0 : 1, done: objs.length && S.t > lastEnd ? 1 : 0 };
       },
+      /** the play fails now (a fail shown on purpose — the tour): the fail event, nothing judged after */
+      fail(ms) { if (!S) S = fresh(); const o = out(); S.hp = 0; S.t = Math.max(S.t, ms); failNow(o, ms); return o; },
+      /** the autoplay from where the play is up to ms, its results and sounds dropped: the score a jump would have. Every 50 ms
+       *  through a slider or a spinner (the ball followed, the spinner turned), else one step to the next object — the server's
+       *  script runs it within a tick (the tour's results: the whole play at once) */
+      fastForward(ms) {
+        if (!S) S = fresh();
+        for (let t = S.t; t < ms && !S.failed;) {
+          let busy = false, next = ms;
+          for (let i = S.lo; i < objs.length; i++) {
+            const ob = objs[i];
+            if (ob.t > t) { next = Math.min(next, ob.t); if (ob.t - t > 50) break; }
+            if ((ob.k === 's' && t + 50 > ob.t && t < ob.t + ob.d + 20) || (ob.k === 'p' && t + 50 > ob.t && t < ob.e)) { busy = true; break; }
+          }
+          const nt = busy || next <= t ? Math.min(ms, t + 50) : Math.min(ms, next);
+          api.step(nt, api.autoInput(t, nt)); t = nt;
+        }
+        return api;
+      },
+      mods: [...MODS],
       /** the autoplay's input between two times: the cursor eased from where it was to the next object (on it at its time),
        *  along a slider's ball, around a spinner at 477 rpm; every press exactly on time */
       autoInput(ms0, ms) {
@@ -1821,8 +1874,8 @@
 
   /** the autoplay of a whole map, for the preview: every 1/fps s → { events: [{ instance (key's instance id, or null for the
    *  whole play), name, t (s) }], states: [{ … }] at i / fps, sounds: [[id, t (s)]] (its hitsounds), at(t) → the state at t } */
-  function autoplay(G, { fps = 60, until } = {}) {
-    const g = createGame(G).start(0), end = until !== undefined ? until : (G.objects || []).reduce((m, o) => Math.max(m, o.k === 's' ? o.t + o.d : o.k === 'p' ? o.e : o.t), 0) + 2000;
+  function autoplay(G, { fps = 60, until, mods } = {}) {
+    const g = createGame(G, { mods }).start(0), end = until !== undefined ? until : (G.objects || []).reduce((m, o) => Math.max(m, o.k === 's' ? o.t + o.d : o.k === 'p' ? o.e : o.t), 0) + 2000;
     const events = [], states = [], sounds = [], dt = 1000 / fps, inst = (key) => String(key).split('/').pop();
     const NAMES = ['none', 'hit', 'miss', 'great', 'good', 'ok', 'early', 'drop'];
     let prev = 0;
@@ -1912,6 +1965,10 @@
     I: ['111', '010', '010', '010', '111'], L: ['100', '100', '100', '100', '111'], N: ['101', '111', '111', '111', '101'], P: ['110', '101', '110', '100', '100'],
     R: ['110', '101', '110', '101', '101'], S: ['011', '100', '010', '001', '110'], '!': ['010', '010', '010', '000', '010'], '.': ['000', '000', '000', '000', '010'],
     x: ['000', '101', '010', '101', '000'], '%': ['101', '001', '010', '100', '101'], X: ['10001', '01010', '00100', '01010', '10001'],
+    H: ['101', '101', '111', '101', '101'], O: ['111', '101', '101', '101', '111'], T: ['111', '010', '010', '010', '010'], U: ['101', '101', '101', '101', '111'],
+    Y: ['101', '101', '010', '010', '010'], G: ['011', '100', '101', '101', '011'], K: ['101', '101', '110', '101', '101'],
+    M: ['10001', '11011', '10101', '10001', '10001'], W: ['10001', '10001', '10101', '11011', '10001'], ' ': ['0', '0', '0', '0', '0'],
+    ':': ['000', '010', '000', '010', '000'], J: ['001', '001', '001', '101', '111'],
   };
   /** text in the font → an image (1 px a pixel, gap px between glyphs), colour c, a darker outline row below (depth on a flat face) */
   function textImage(s, c, { gap = 1 } = {}) {
@@ -1920,6 +1977,34 @@
     let x0 = 0;
     for (const g of glyphs) { g.forEach((row, y) => [...row].forEach((b, x) => { if (b === '1') put(im, x0 + x, y, y === 0 ? mix(c, [255, 255, 255], 0.35) : c); })); x0 += g[0].length + gap; }
     return im;
+  }
+  // a stroke font for the skin look's words that osu!'s skin has no picture for (FAILED, NEW RECORD!, the mods): each glyph lines
+  // on a 4 × 6 grid (y down), drawn smooth — round-capped strokes (media.js rasterOps), an outline under a lit fill
+  const STROKES = {
+    A: [[[0, 6], [2, 0], [4, 6]], [[0.75, 4], [3.25, 4]]], B: [[[0, 3], [0, 0], [2.6, 0], [3.6, 0.8], [3.6, 2.2], [2.6, 3], [0, 3], [3, 3], [4, 3.9], [4, 5.1], [3, 6], [0, 6], [0, 3]]],
+    C: [[[4, 1], [3, 0], [1, 0], [0, 1], [0, 5], [1, 6], [3, 6], [4, 5]]], D: [[[0, 0], [0, 6], [2.4, 6], [4, 4.4], [4, 1.6], [2.4, 0], [0, 0]]],
+    E: [[[4, 0], [0, 0], [0, 6], [4, 6]], [[0, 3], [3, 3]]], F: [[[4, 0], [0, 0], [0, 6]], [[0, 3], [3, 3]]],
+    G: [[[4, 1], [3, 0], [1, 0], [0, 1], [0, 5], [1, 6], [3, 6], [4, 5], [4, 3.4], [2.4, 3.4]]], H: [[[0, 0], [0, 6]], [[4, 0], [4, 6]], [[0, 3], [4, 3]]],
+    I: [[[0, 0], [2, 0]], [[1, 0], [1, 6]], [[0, 6], [2, 6]]], J: [[[4, 0], [4, 5], [3, 6], [1, 6], [0, 5]]], K: [[[0, 0], [0, 6]], [[4, 0], [0, 3.6]], [[1.4, 2.6], [4, 6]]],
+    L: [[[0, 0], [0, 6], [4, 6]]], M: [[[0, 6], [0, 0], [2, 3.4], [4, 0], [4, 6]]], N: [[[0, 6], [0, 0], [4, 6], [4, 0]]],
+    O: [[[1, 0], [3, 0], [4, 1], [4, 5], [3, 6], [1, 6], [0, 5], [0, 1], [1, 0]]], P: [[[0, 6], [0, 0], [3, 0], [4, 1], [4, 2.2], [3, 3.2], [0, 3.2]]],
+    R: [[[0, 6], [0, 0], [3, 0], [4, 1], [4, 2.2], [3, 3.2], [0, 3.2]], [[2.2, 3.2], [4, 6]]], S: [[[4, 1], [3, 0], [1, 0], [0, 1], [0, 2], [1, 3], [3, 3], [4, 4], [4, 5], [3, 6], [1, 6], [0, 5]]],
+    T: [[[0, 0], [4, 0]], [[2, 0], [2, 6]]], U: [[[0, 0], [0, 5], [1, 6], [3, 6], [4, 5], [4, 0]]], W: [[[0, 0], [0.9, 6], [2, 2.4], [3.1, 6], [4, 0]]],
+    X: [[[0, 0], [4, 6]], [[4, 0], [0, 6]]], Y: [[[0, 0], [2, 3], [4, 0]], [[2, 3], [2, 6]]], '!': [[[0, 0], [0, 4]], [[0, 6], [0, 6]]], ':': [[[0, 1.6], [0, 1.6]], [[0, 4.6], [0, 4.6]]],
+  };
+  /** text in the stroke font → an image: ppu pixels a grid unit, the fill weight units wide (lit from the top: lighter above,
+   *  darker below), an outline edge units round it. → { image, cap } (cap: the glyphs' height over the image's) */
+  function strokeText(s, { colour = [255, 255, 255], outline = [0, 0, 0], ppu = 8, weight = 1.15, edge = 0.5, gap = 2 } = {}) {
+    const glyphs = [...String(s).toUpperCase()].map((ch) => (ch === ' ' ? null : STROKES[ch] || null)), widthOf = (g) => (g ? Math.max(...g.flat().map((p) => p[0])) : 1.6);
+    const pad = weight / 2 + edge + 0.4, path = [];
+    let x = pad;
+    glyphs.forEach((g, i) => { if (g) for (const l of g) { path.push(['moveTo', (x + l[0][0]) * ppu, (pad + l[0][1]) * ppu]); for (const p of l.slice(1)) path.push(['lineTo', (x + p[0]) * ppu, (pad + p[1]) * ppu]); } x += widthOf(g) + (i < glyphs.length - 1 ? gap : 0); });
+    const W = (x + pad) * ppu, Hh = (6 + 2 * pad) * ppu, rgb = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
+    const under = T.media.rasterOps([['strokeStyle', rgb(outline)], ['lineWidth', (weight + 2 * edge) * ppu], ['beginPath'], ...path, ['stroke']], W, Hh);
+    const fill = T.media.rasterOps([['strokeStyle', rgb(colour)], ['lineWidth', weight * ppu], ['beginPath'], ...path, ['stroke']], W, Hh);
+    const im = { width: under.width, height: under.height, data: under.data };
+    for (let y = 0; y < fill.height; y++) { const f = 1.14 - 0.3 * (y / fill.height); for (let x2 = 0; x2 < fill.width; x2++) { const c = get(fill, x2, y); if (c[3]) put(im, x2, y, [Math.min(255, Math.round(c[0] * f)), Math.min(255, Math.round(c[1] * f)), Math.min(255, Math.round(c[2] * f)), c[3]]); } }
+    return { image: im, cap: 6 / (6 + 2 * pad) };
   }
   /** a disc / ring of pixels (centre at the middle of an n × n image), coloured by fn(x, y, d) */
   function discImage(n, fn) { const im = img(n, n), c = n / 2; for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const d = Math.hypot(x + 0.5 - c, y + 0.5 - c), col = fn(x, y, d, c); if (col) put(im, x, y, col); } return im; }
@@ -1950,6 +2035,20 @@
     S.barfill = (() => { const im = img(40, 1); for (let x = 0; x < 40; x++) put(im, x, 0, mix([255, 90, 120, 255], [120, 255, 160, 255], x / 39)); return im; })();
     S.board = (() => { const im = img(64, 48); for (let y = 0; y < 48; y++) for (let x = 0; x < 64; x++) put(im, x, y, x % 8 === 0 || y % 8 === 0 ? [52, 58, 98, 200] : (x + y) % 2 ? [12, 14, 28, 190] : [16, 18, 34, 190]); return im; })();
     S.glow = discImage(16, (x, y, d) => (d < 7.9 ? [255, 255, 255, Math.round(150 * (1 - d / 8))] : null));
+    // the rank letters again, silver (HD or FL on: osu!'s silver SS and S)
+    S.rank.push(textImage('SS', [220, 230, 245, 255]), textImage('S', [190, 205, 225, 255]));
+    // the results: the board (a dark panel, a frame of bright cubes), its words, the full combo's and the new best's stamps
+    S.resboard = (() => { const im = img(48, 39); for (let y = 0; y < 39; y++) for (let x = 0; x < 48; x++) { const e = Math.min(x, y, 47 - x, 38 - y), bar = y >= 1 && y <= 6; put(im, x, y, e === 0 ? [120, 140, 230, 255] : bar ? (y === 1 ? [70, 80, 150, 235] : [38, 44, 92, 235]) : y === 7 ? [120, 140, 230, 255] : e === 1 ? [30, 34, 70, 230] : (x + y) % 2 ? [14, 16, 32, 225] : [18, 20, 40, 225]); } return im; })();
+    S.restitle = textImage('RESULTS', [255, 220, 120, 255]); S.maxcombo = textImage('MAX COMBO', [150, 200, 255, 255]); S.accuracy = textImage('ACCURACY', [150, 200, 255, 255]);
+    S.fc = textImage('FULL COMBO', [255, 214, 64, 255]); S.record = textImage('NEW RECORD!', [120, 255, 140, 255]);
+    S.failed = textImage('FAILED', [255, 70, 70, 255]); S.retry = textImage('JUMP: RETRY', [255, 200, 200, 255]);
+    S.j300 = S.judgement[0]; S.j100 = S.judgement[1]; S.j50 = S.judgement[2]; S.jx = S.judgement[3];
+    // the mods on (top right): osu!'s letters, each its own colour; AUTO when the game plays itself
+    for (const [m, c] of [['HD', [255, 220, 90]], ['FL', [240, 240, 240]], ['NF', [110, 170, 255]], ['SD', [255, 130, 80]], ['PF', [255, 90, 160]], ['AUTO', [150, 255, 200]]]) S[`mod${m}`] = textImage(m, [...c, 255]);
+    // the flashlight (build draws it the look's pixel a pixel: black but for a pixel circle round the cursor, dithered at its
+    // edge — this one for a look of its own); the fail's shade: a dark curtain, see-through
+    S.flashlight = (() => { const n = 64, im = img(n, n), c = n / 2; for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const d = Math.hypot(x + 0.5 - c, y + 0.5 - c); if (d > 25 || (d > 23.4 && (x + y) % 2 === 0)) put(im, x, y, [0, 0, 0, 255]); } return im; })();
+    S.shade = (() => { const im = img(8, 8); for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) put(im, x, y, [12, 0, 4, 170]); return im; })();
     return S;
   }
 
@@ -1983,22 +2082,25 @@
    *  Merged into as few rectangles as the picture allows (each face shows its own pixels: front from the picture, the sides
    *  from its darker copy) — or a cube a pixel (perPixel: the pixels any of its frames has, so that a frame's own picture
    *  decides which show: an empty texel is cut out) */
+  /** the rectangles of cubes a picture's pixels make: a cube a pixel (perPixel), or as few as the picture allows — runs of a row,
+   *  each grown down while the rows below have the very same run (and the same edges beside it) → [[x0, y0, x1, y1]] */
+  function rectsOf(on, w, h, perPixel) {
+    const rects = [];
+    if (perPixel) { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (on(x, y)) rects.push([x, y, x, y]); return rects; }
+    const used = new Set();
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (!on(x, y) || used.has(`${x},${y}`)) continue;
+      let x1 = x; while (x1 + 1 < w && on(x1 + 1, y) && !used.has(`${x1 + 1},${y}`)) x1++;
+      let y1 = y; const rowOk = (yy) => { for (let k = x; k <= x1; k++) if (!on(k, yy) || used.has(`${k},${yy}`)) return false; return !on(x - 1, yy) === !on(x - 1, y) && !on(x1 + 1, yy) === !on(x1 + 1, y); };
+      while (y1 + 1 < h && rowOk(y1 + 1)) y1++;
+      for (let yy = y; yy <= y1; yy++) for (let k = x; k <= x1; k++) used.add(`${k},${yy}`);
+      rects.push([x, y, x1, y1]);
+    }
+    return rects;
+  }
   function voxel(name, parent, [cx, cy], images, cellAt, px, d, z, { perPixel = false } = {}) {
     const ims = Array.isArray(images) ? images : [images], w = Math.max(...ims.map((m) => m.width)), h = Math.max(...ims.map((m) => m.height));
-    const on = (x, y) => ims.some((m) => get(m, x, y)[3] > 0), rects = [];
-    if (perPixel) { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (on(x, y)) rects.push([x, y, x, y]); }
-    else {
-      // (runs of a row, then each run grown down while the rows below have the very same run)
-      const used = new Set();
-      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-        if (!on(x, y) || used.has(`${x},${y}`)) continue;
-        let x1 = x; while (x1 + 1 < w && on(x1 + 1, y) && !used.has(`${x1 + 1},${y}`)) x1++;
-        let y1 = y; const rowOk = (yy) => { for (let k = x; k <= x1; k++) if (!on(k, yy) || used.has(`${k},${yy}`)) return false; return !on(x - 1, yy) === !on(x - 1, y) && !on(x1 + 1, yy) === !on(x1 + 1, y); };
-        while (y1 + 1 < h && rowOk(y1 + 1)) y1++;
-        for (let yy = y; yy <= y1; yy++) for (let k = x; k <= x1; k++) used.add(`${k},${yy}`);
-        rects.push([x, y, x1, y1]);
-      }
-    }
+    const on = (x, y) => ims.some((m) => get(m, x, y)[3] > 0), rects = rectsOf(on, w, h, perPixel);
     const left = cx - (w * px) / 2, top = cy + (h * px) / 2, [ux, uy] = cellAt, sx = ux + w;   // (the darker copy: right of the picture)
     const cubes = rects.map(([x0, y0, x1, y1]) => {
       const rw = x1 - x0 + 1, rh = y1 - y0 + 1;
@@ -2009,6 +2111,155 @@
       } };
     });
     return { name, parent, pivot: [r4(cx), r4(cy), r4(z)], cubes };
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------- 3D models
+  // The pixel look's models are built of cubes the way a block model is: layers of blocks, each a pixel picture made solid —
+  // its own outline, its own depth, its own place in front of or behind the others (a coin: its plate, its body, its rim, its
+  // dome; a ball: its slices; a gem; a wheel: its hub, rim and spokes; a word standing on its shadow). Every face keeps the
+  // pixel art: the front the picture, the sides, the top and the bottom the same pixels in their own light (sides darker, the
+  // top lit, the bottom darkest) — so the forms read as solid from every side the playfield's lean shows.
+  const LIGHT = { side: 0.62, top: 0.84, bottom: 0.44 };
+  const lit = (im, f) => { const o = img(im.width, im.height); for (let y = 0; y < im.height; y++) for (let x = 0; x < im.width; x++) { const c = get(im, x, y); if (c[3]) put(o, x, y, shade(c, f)); } return o; };
+  /** a model's layers into atlas cells: one cell a frame (the largest number of frames of its layers; a layer of one picture the
+   *  same in each), each layer's picture and its three lights side by side in it → { cells, layers: [{ u, w, h, dx, dy, z, d,
+   *  perPixel, on }] } (on(x, y): a pixel any frame of the layer has) */
+  function modelCells(model) {
+    const Ls = model.layers.map((L) => { const ims = [].concat(L.ims || L.im); return { ...L, ims, w: Math.max(...ims.map((m) => m.width)), h: Math.max(...ims.map((m) => m.height)) }; });
+    const frames = Math.max(...Ls.map((L) => L.ims.length));
+    let u = 0;
+    for (const L of Ls) { L.u = u; u += 4 * L.w; }
+    const H = Math.max(...Ls.map((L) => L.h)), cells = [];
+    for (let f = 0; f < frames; f++) {
+      const cell = img(u, H);
+      for (const L of Ls) { const m = L.ims[Math.min(f, L.ims.length - 1)]; blit(cell, m, L.u, 0); blit(cell, lit(m, LIGHT.side), L.u + L.w, 0); blit(cell, lit(m, LIGHT.top), L.u + 2 * L.w, 0); blit(cell, lit(m, LIGHT.bottom), L.u + 3 * L.w, 0); }
+      cells.push(cell);
+    }
+    return { cells, zs: model.zs || 1, layers: Ls.map((L) => ({ u: L.u, w: L.w, h: L.h, dx: L.dx || 0, dy: L.dy || 0, z: L.z || 0, d: L.d || 1, perPixel: Boolean(L.perPixel), on: (x, y) => L.ims.some((m) => get(m, x, y)[3] > 0) })) };
+  }
+  /** a model's bone: its layers' cubes, px model units a pixel across, zs × px a pixel deep; z: the model's front plane (a
+   *  layer's z counts back from it, a negative one stands out in front), centred on (cx, cy) */
+  function modelBone(name, parent, [cx, cy], cellAt, px, z, meta) {
+    const [ux, uy] = cellAt, zp = px * meta.zs, cubes = [];
+    for (const L of meta.layers) {
+      const left = cx + L.dx * px - (L.w * px) / 2, top = cy + L.dy * px + (L.h * px) / 2, u0 = ux + L.u;
+      for (const [x0, y0, x1, y1] of rectsOf(L.on, L.w, L.h, L.perPixel)) {
+        const rw = x1 - x0 + 1, rh = y1 - y0 + 1;
+        cubes.push({ origin: [r4(left + x0 * px), r4(top - (y1 + 1) * px), r4(z + L.z * zp)], size: [r4(rw * px), r4(rh * px), r4(L.d * zp)], faces: {
+          north: { uv: [u0 + x0, uy + y0], uv_size: [rw, rh], texture: 'atlas' },
+          east: { uv: [u0 + L.w + x1, uy + y0], uv_size: [1, rh], texture: 'atlas' }, west: { uv: [u0 + L.w + x0, uy + y0], uv_size: [1, rh], texture: 'atlas' },
+          up: { uv: [u0 + 2 * L.w + x0, uy + y0], uv_size: [rw, 1], texture: 'atlas' }, down: { uv: [u0 + 3 * L.w + x0, uy + y1], uv_size: [rw, 1], texture: 'atlas' },
+        } });
+      }
+    }
+    return { name, parent, pivot: [r4(cx), r4(cy), r4(z)], cubes };
+  }
+  /** every bone after the first moved as little as it takes (compile.freePlace: back 0.021 at a time, up, down or across 0.02)
+   *  for no face of its cubes to lie on a plane with a face of an earlier bone's that looks the same way and overlaps it: models
+   *  of many layers, all resting at the playfield's middle on one pixel grid, never share a plane (two faces on one plane flicker) */
+  function settleDepths(bones) {
+    const F = T.compile && T.compile.freePlace;
+    if (!F) throw new Error('GeoUITimeline.compile が要ります（compile.js を先に読み込む）');
+    const placed = [];
+    for (const b of bones) {
+      const cubes = b.cubes || [];
+      if (!cubes.length) continue;
+      const [dx, dy, dz] = F(placed, cubes, { kz: 0 });
+      if (dx || dy || dz) for (const c of cubes) c.origin = [r4(c.origin[0] + dx), r4(c.origin[1] + dy), r4(c.origin[2] + dz)];
+      placed.push(...cubes);
+    }
+    return bones;
+  }
+  /** a tray's frame of blocks round a w × h floor centred on c: four walls (3 thick, 5 deep from zw), a lip inside them on the
+   *  floor (1.4 wide, 1.2 high, a hair from the walls), and four posts at the corners (6 × 6, standing 3 out of the walls) with
+   *  a cap on each — their faces from a bar's picture `bar` (an atlas place of a shaded item: its top row lit, its second row,
+   *  its darker copy for the sides). No two faces share a plane */
+  function trayCubes(c, w, h, zw, bar, { out: o = 4 } = {}) {
+    // (the floor is at zw + 4: walls `o` out of it — less for a panel under words — the lip 0.2, the posts 3 more)
+    zw += 4 - o;
+    const out = [], face = (row, side) => ({ uv: [bar.x + (side ? bar.w : 0), bar.y + row], uv_size: [bar.w, 1], texture: 'atlas' });
+    const box = (cx, cy, bw, bh, z0, d, row) => out.push({ origin: [r4(cx - bw / 2), r4(cy - bh / 2), r4(z0)], size: [r4(bw), r4(bh), r4(d)], faces: { north: face(row, false), east: face(1, true), west: face(1, true), up: face(0, true), down: face(2, true) } });
+    const [x0, y0] = c, hw = w / 2, hh = h / 2;
+    // (the top and bottom walls the whole width, the sides between them)
+    box(x0, y0 + hh, w + 3, 3, zw, o + 1, 1); box(x0, y0 - hh, w + 3, 3, zw, o + 1, 1); box(x0 - hw, y0, 3, h - 3, zw, o + 1, 1); box(x0 + hw, y0, 3, h - 3, zw, o + 1, 1);
+    const li = 1.6 + 0.7 + 0.1, zl = zw + o - 0.2;   // (the lip's middle: inside the wall's inner face, a hair off it; its front)
+    box(x0, y0 + hh - li, w - 2 * li - 1.4, 1.4, zl, 1.2, 0); box(x0, y0 - hh + li, w - 2 * li - 1.4, 1.4, zl, 1.2, 0);
+    box(x0 - hw + li, y0, 1.4, h - 2 * li + 1.4, zl + 0.01, 1.2, 0); box(x0 + hw - li, y0, 1.4, h - 2 * li + 1.4, zl + 0.01, 1.2, 0);
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { box(x0 + sx * hw, y0 + sy * hh, 6, 6, zw - 3, o + 4, 0); box(x0 + sx * hw, y0 + sy * hh, 4, 4, zw - 4, 1, 0); }
+    return out;
+  }
+  /** the pixel look's models (modelCells' input): each object of the game modeled — a few layers of blocks, the pixel art on their
+   *  faces. Layers: { im | ims (frames), dx, dy (px from the middle, up), z (px behind the front), d (px deep), perPixel }; zs: how
+   *  deep a px is, against its width */
+  function pixelModels(colours, S, maxN = 1) {
+    const M = {}, C4 = (c) => [...c, 255];
+    const diamond = (n, col) => { const im = img(7, 7); for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) if (Math.abs(x - 3) + Math.abs(y - 3) <= n) put(im, x, y, col(x, y)); return im; };
+    // (raised letters: the letters a pixel deep, and behind them their shadow half a pixel right and down — a block of letters)
+    // (a block a pixel when the letters change with the frame — each frame's own outline then shows from the side; one picture's
+    //  pixels in rows and columns of blocks: fewer faces)
+    const text = (ims, o = {}) => { const a = [].concat(ims), pp = a.length > 1; return { layers: [{ ims: a, z: 0, d: o.d || 1, perPixel: pp }, { ims: a.map((m) => lit(m, 0.34)), dx: 0.5, dy: -0.5, z: o.d || 1, d: 0.7, perPixel: pp }] }; };
+    // hit circle: a coin — its white rim and a dome standing out of its body (the combo colour lit from the top left), a dark
+    // plate under it all, a little wider — and its combo number standing out of the dome on its shadow, a part of the coin: one
+    // frame a combo colour and number (frame (n - 1) × colours + colour; numbers 1 … maxN, the map's longest combo)
+    const NC = colours.length, frameOf = (f) => [Math.floor(f / NC), f % NC], nf = NC * maxN;
+    const rim = discImage(16, (x, y, d) => (d > 6.0 && d <= 7.0 ? WHITE : null));
+    // (the dome: the coin's colour a little darker at its edge, one lit pixel at its top left — the white number stands on it)
+    const domes = colours.map((cc) => discImage(16, (x, y, d) => (d > 3.3 ? null : x === 6 && y === 6 ? mix(C4(cc), WHITE, 0.45) : d > 2.3 ? shade(C4(cc), 0.78) : shade(C4(cc), 0.9))));
+    const bodies = colours.map((cc) => discImage(16, (x, y, d) => { if (d > 7.0) return null; const l = (8 - x - y) / 16; return l > 0.18 ? mix(C4(cc), WHITE, 0.3) : l < -0.3 ? shade(C4(cc), 0.75) : C4(cc); }));
+    const plates = colours.map((cc) => discImage(16, (x, y, d) => (d <= 7.95 ? shade(C4(cc), 0.45) : null)));
+    // (a number: one digit or two in the middle of seven pixels by five)
+    const numbers = Array.from({ length: maxN }, (_, k) => { const t = textImage(String(k + 1), WHITE), o = img(7, 5); blit(o, t, Math.floor((7 - t.width) / 2), 0); return o; });
+    const each = (fn) => Array.from({ length: nf }, (_, f) => fn(...frameOf(f)));
+    M.hitcircle = { layers: [
+      { ims: each(() => rim), z: 0, d: 0.5 },
+      { ims: each((n, c) => domes[c]), z: -0.5, d: 1.0 },
+      { ims: each((n, c) => bodies[c]), z: 0.5, d: 1.2 },
+      { ims: each((n, c) => plates[c]), z: 1.7, d: 0.9 },
+      // (the number: white blocks a pixel deep on their dark shadow, half a pixel right and down)
+      { ims: each((n) => numbers[n]), z: -1.5, d: 0.6, perPixel: true },
+      { ims: each((n) => lit(numbers[n], 0.3)), dx: 0.5, dy: -0.5, z: -0.9, d: 0.4 },
+    ] };
+    // approach circle: a hoop — a bright ring at its front, a wider darker one behind it
+    M.approachcircle = { layers: [
+      { ims: colours.map((cc) => discImage(16, (x, y, d) => (d > 7.05 && d <= 7.75 ? mix(C4(cc), WHITE, 0.45) : null))), z: 0, d: 0.5 },
+      { ims: colours.map((cc) => discImage(16, (x, y, d) => (d > 6.6 && d <= 7.95 ? shade(C4(cc), 0.7) : null))), z: 0.5, d: 0.8 },
+    ] };
+    // the burst: eight chunks round the circle, every other one deeper (they fly out and turn)
+    const chunks = (k0) => { const im = img(16, 16); for (let k = k0; k < 8; k += 2) { const a = (k * Math.PI) / 4, cx = 8 + Math.cos(a) * 6, cy = 8 + Math.sin(a) * 6; for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) put(im, Math.floor(cx - 1 + x), Math.floor(cy - 1 + y), k % 4 ? [255, 236, 140, 255] : WHITE); } return im; };
+    M.hitburst = { layers: [{ im: chunks(0), z: 0, d: 1.6 }, { im: chunks(1), z: 1.6, d: 1.6 }] };
+    // the slider's ball: a sphere of eight slices (front to back), orange with a white band — it rolls
+    M.sliderball = { zs: 0.6, layers: Array.from({ length: 8 }, (_, k) => {
+      const zc = k - 3.5, r = Math.sqrt(Math.max(0, 16 - zc * zc)) + 0.15;
+      return { im: discImage(8, (x, y, d) => { if (d > r) return null; const band = Math.abs(x - y) <= 0.5, l = 1.12 - k * 0.06 - (x + y) * 0.018; return [...(band ? [255, 248, 228] : [255, 166, 46]).map((v) => Math.min(255, Math.round(v * l))), 255]; }), z: k, d: 1 };
+    }) };
+    // the follow circle: a hoop; the reverse arrow and the follow points: raised on their shadow; a tick: a little gem
+    M.followcircle = { layers: [{ im: discImage(28, (x, y, d) => (d > 12.9 && d <= 13.95 ? WHITE : null)), z: 0, d: 0.5 }, { im: discImage(28, (x, y, d) => (d > 11.9 && d <= 13.95 ? [255, 190, 80, 255] : null)), z: 0.5, d: 0.7 }] };
+    M.reversearrow = text(S.reversearrow, { d: 1.2 });
+    M.followpoint = text(S.followpoint, { d: 0.8 });
+    M.slidertick = { layers: [{ im: (() => { const im = img(3, 3); put(im, 1, 1, WHITE); return im; })(), z: -0.7, d: 0.7 }, { im: discImage(3, (x, y, d) => (d < 1.6 ? [200, 220, 255, 255] : null)), z: 0, d: 0.9 }] };
+    // the spinner: a wheel — its hub standing out, its rim, the blue ring and the spokes set back behind it
+    const spokes = discImage(32, (x, y, d, c) => { const a = Math.atan2(y + 0.5 - c, x + 0.5 - c), on = Math.abs(((a / (Math.PI * 2)) * 6 + 6) % 1 - 0.5) > 0.42; return on && d > 2.5 && d <= 13.4 ? [140, 170, 255, 255] : null; });
+    M.spinner = { zs: 0.35, layers: [
+      { im: discImage(32, (x, y, d) => (d <= 2.5 ? (d < 1.2 ? WHITE : [210, 225, 255, 255]) : null)), z: -3, d: 3 },
+      { im: discImage(32, (x, y, d) => (d > 14.6 && d <= 15.9 ? WHITE : null)), z: 0, d: 3 },
+      { im: spokes, z: 1, d: 2 },
+      { im: discImage(32, (x, y, d) => (d > 13.4 && d <= 14.6 ? [70, 110, 255, 255] : null)), z: 3, d: 2 },
+    ] };
+    M.spinnerapproach = { zs: 0.35, layers: [{ im: discImage(32, (x, y, d) => (d > 14.9 && d <= 15.9 ? [140, 220, 255, 255] : null)), z: 0, d: 1.5 }, { im: discImage(32, (x, y, d) => (d > 14.2 && d <= 15.9 ? [70, 130, 200, 255] : null)), z: 1.5, d: 1.5 }] };
+    // the cursor: a gem (an octahedron of seven-pixel diamonds, its point toward the player)
+    const gem = (x, y) => ((x + y) % 2 ? [255, 230, 120, 255] : WHITE);
+    M.cursor = { layers: [
+      { im: diamond(0, () => WHITE), z: -3, d: 1 }, { im: diamond(1, gem), z: -2, d: 1 }, { im: diamond(2, gem), z: -1, d: 1 }, { im: diamond(3, gem), z: 0, d: 1 },
+      { im: diamond(2, (x, y) => shade(gem(x, y), 0.8)), z: 1, d: 1 }, { im: diamond(1, (x, y) => shade(gem(x, y), 0.65)), z: 2, d: 1 },
+    ] };
+    // words and numbers: raised letters on their shadow
+    for (const id of ['judgement', 'spin', 'clear', 'rank', 'section', 'x', 'dot', 'pct', 'restitle', 'maxcombo', 'accuracy', 'fc', 'record', 'failed', 'retry', 'j300', 'j100', 'j50', 'jx']) M[id] = text(S[id]);
+    M.digitframes = text([...S.digit, img(3, 5)]);
+    // (a number's numerals, each its own block of letters: the results' counts)
+    for (let d = 0; d < 10; d++) M[`num${d}`] = text(S.digit[d]);
+    // the mods: a plate, its letters standing out of it
+    for (const m of ['HD', 'FL', 'NF', 'SD', 'PF', 'AUTO']) { const pl = S[`mod${m}`], letters = img(pl.width, pl.height); for (let y = 2; y < pl.height - 2; y++) for (let x = 2; x < pl.width - 2; x++) { const c = get(pl, x, y); if (c[3] && (c[0] + c[1] + c[2]) > 200) put(letters, x, y, c); } M[`mod${m}`] = { layers: [{ im: letters, z: 0, d: 0.4 }, { im: pl, z: 0.4, d: 0.8 }] }; }
+    return M;
   }
 
   // ---------------------------------------------------------------------------------------------------------------- bodies
@@ -2031,7 +2282,7 @@
       im = { width: im.width, height: im.height, data: im.data };
       cells.push(im); centre.push([r4(mx), r4(my)]);
     }
-    return { cells, centre, units: [cw / ppu, ch / ppu] };
+    return { cells, centre, units: [cw / ppu, ch / ppu], ppu };
   }
 
   // ---------------------------------------------------------------------------------------------------------------- the document
@@ -2043,19 +2294,26 @@
     const beat = 60 / L.bpm;
     // ---- how a circle looks (the circle template and a slider's head): it comes in (fades — pops, in the pixel look), shakes when
     //      pressed too early, explodes on its hit (bursts into cubes)
-    const comeIn = P ? { scaleX: [{ t: 0, v: 0, ease: 'back-out' }, { t: 0.16, v: 1 }], scaleY: [{ t: 0, v: 0, ease: 'back-out' }, { t: 0.16, v: 1 }] } : { opacity: [{ t: 0, v: 0 }, { t: fade, v: 1 }] };
-    const shakeX = 'param.x + 2.4 * math.sin(t * 2880) * (1 - t / 0.25)';
+    // (HD — osu!'s Hidden, state.hd: no approach circles; a circle and its number gone again by 70 % of its approach — in by
+    //  40 %, out over the next 30 % — a slider's body fading as its ball goes)
+    const hdA = r4(lead * 0.4), hdB = r4(lead * 0.7), hdOut = `(1 - state.hd * math.clamp((t - ${hdA}) / ${r4(hdB - hdA)}, 0, 1))`;
+    const popHd = (k) => [{ t: 0, v: 0, ease: 'back-out' }, { t: 0.16, v: 1 }, { t: hdA, v: 1 }, { t: hdB, v: k }];
+    const comeIn = P ? { scaleX: popHd('1 - state.hd'), scaleY: popHd('1 - state.hd') }
+      : { opacity: at(`math.clamp(t / ${fade}, 0, 1) * (1 - state.hd) + state.hd * math.clamp(t / ${hdA}, 0, 1) * ${hdOut}`) };
+    const shakeX = 'param.x + 2.4 * math.sin(t * 2880) * (1 - t / 0.25)', noHd = at('1 - state.hd');
+    // (the circle's frame: its combo colour — and in the pixel look its number too, the coin's own: (n - 1) × colours + colour)
+    const cf = at(P ? `(math.clamp(param.n, 1, ${L.circleNumbers || 1}) - 1) * ${L.colours} + param.c` : 'param.c');
     const circleLook = (hitName, endExpr) => [
       { target: 'hitcircle', clips: [
-        { start: 0, end: 0.25, trigger: 'early', channels: { x: at(shakeX), y: at('param.y'), frame: at('param.c') } },
-        P ? { start: 0, end: 0.12, trigger: hitName, channels: { ...place, frame: at('param.c'), scaleX: [{ t: 0, v: 1.25, ease: 'quad-in' }, { t: 0.12, v: 0 }], scaleY: [{ t: 0, v: 1.25, ease: 'quad-in' }, { t: 0.12, v: 0 }] } }
-          : { start: 0, end: 0.24, trigger: hitName, channels: { ...place, frame: at('param.c'), scaleX: [{ t: 0, v: 1, ease: 'quad-out' }, { t: 0.24, v: 1.45 }], scaleY: [{ t: 0, v: 1, ease: 'quad-out' }, { t: 0.24, v: 1.45 }], opacity: [{ t: 0, v: 1, ease: 'quad-in' }, { t: 0.24, v: 0 }] } },
-        { start: -lead, end: endExpr, until: 'hit', channels: { ...place, frame: at('param.c'), ...comeIn } }] },
-      { target: 'combonumber', clips: [
-        { start: 0, end: 0.25, trigger: 'early', channels: { x: at(shakeX), y: at('param.y'), value: at('param.n') } },
-        { start: -lead, end: endExpr, until: 'hit', channels: { ...place, value: at('param.n'), ...(P ? comeIn : {}) } }] },
+        { start: 0, end: 0.25, trigger: 'early', channels: { x: at(shakeX), y: at('param.y'), frame: cf, scaleX: noHd, scaleY: noHd } },
+        P ? { start: 0, end: 0.12, trigger: hitName, channels: { ...place, frame: cf, scaleX: [{ t: 0, v: '1.25 * (1 - state.hd)', ease: 'quad-in' }, { t: 0.12, v: 0 }], scaleY: [{ t: 0, v: '1.25 * (1 - state.hd)', ease: 'quad-in' }, { t: 0.12, v: 0 }] } }
+          : { start: 0, end: 0.24, trigger: hitName, channels: { ...place, frame: cf, scaleX: [{ t: 0, v: 1, ease: 'quad-out' }, { t: 0.24, v: 1.45 }], scaleY: [{ t: 0, v: 1, ease: 'quad-out' }, { t: 0.24, v: 1.45 }], opacity: [{ t: 0, v: '1 - state.hd', ease: 'quad-in' }, { t: 0.24, v: 0 }] } },
+        { start: -lead, end: endExpr, until: 'hit', channels: { ...place, frame: cf, ...comeIn } }] },
+      ...(P ? [] : [{ target: 'combonumber', clips: [
+        { start: 0, end: 0.25, trigger: 'early', channels: { x: at(shakeX), y: at('param.y'), value: at('param.n'), scaleX: noHd, scaleY: noHd } },
+        { start: -lead, end: endExpr, until: 'hit', channels: { ...place, value: at('param.n'), scaleX: at(hdOut), scaleY: at(hdOut) } }] }]),
       { target: 'approachcircle', clips: [{ start: -lead, end: 0, until: 'hit', channels: { ...place, frame: at('param.c'),
-        scaleX: [{ t: 0, v: 4 }, { t: lead, v: 1 }], scaleY: [{ t: 0, v: 4 }, { t: lead, v: 1 }], ...(P ? {} : { opacity: [{ t: 0, v: 0 }, { t: Math.min(lead, fade * 2), v: 0.9 }] }) } }] },
+        scaleX: [{ t: 0, v: '4 * (1 - state.hd)' }, { t: lead, v: '1 - state.hd' }], scaleY: [{ t: 0, v: '4 * (1 - state.hd)' }, { t: lead, v: '1 - state.hd' }], ...(P ? {} : { opacity: [{ t: 0, v: 0 }, { t: Math.min(lead, fade * 2), v: 0.9 }] }) } }] },
       ...(P ? [{ target: 'hitburst', clips: [{ start: 0, end: 0.32, trigger: hitName, channels: { ...place, scaleX: [{ t: 0, v: 0.8, ease: 'quad-out' }, { t: 0.32, v: 2.3 }], scaleY: [{ t: 0, v: 0.8, ease: 'quad-out' }, { t: 0.32, v: 2.3 }], rotation: [{ t: 0, v: 0, ease: 'quad-out' }, { t: 0.32, v: 60 }] } }] }] : []),
     ];
     // ---- the judgement: 300 / 100 / 50 / miss where it was judged (jx, jy: a slider's end), popping in and away
@@ -2069,7 +2327,9 @@
     const templates = [
       { id: 'osu-circle', name: 'osu! 円', lead, tail: r4(late + 0.7), params: ['x', 'y', 'n', 'c', 'jx', 'jy'], judge: { kind: 'circle' }, tracks: [...circleLook('hit', late), judgement('j')] },
       { id: 'osu-slider', name: 'osu! スライダー', lead, tail: 0.7, params: ['x', 'y', 'n', 'c', 'd', 'r', 'f', 'bx', 'by', 'ex', 'ey', 'ea', 'jx', 'jy'], judge: { kind: 'slider' }, tracks: [
-        { target: 'sliderbody', clips: [{ start: -lead, end: 'param.d + 0.1', channels: { x: at('param.bx'), y: at('param.by'), frame: at('param.f'), ...(P ? { scaleX: [{ t: 0, v: 0.2, ease: 'back-out' }, { t: 0.2, v: 1 }], scaleY: [{ t: 0, v: 0.2, ease: 'back-out' }, { t: 0.2, v: 1 }] } : { opacity: [{ t: 0, v: 0 }, { t: fade, v: 0.9 }] }) } }] },
+        { target: 'sliderbody', clips: [{ start: -lead, end: 'param.d + 0.1', channels: { x: at('param.bx'), y: at('param.by'), frame: at('param.f'),
+          ...(P ? { scaleX: [{ t: 0, v: 0.2, ease: 'back-out' }, { t: 0.2, v: 1 }, { t: lead, v: 1, ease: 'quad-in' }, { t: r4(lead + 0.18), v: '1 - state.hd' }], scaleY: [{ t: 0, v: 0.2, ease: 'back-out' }, { t: 0.2, v: 1 }, { t: lead, v: 1, ease: 'quad-in' }, { t: r4(lead + 0.18), v: '1 - state.hd' }] }
+            : { opacity: at(`math.clamp(t / ${fade}, 0, 1) * 0.9 * (1 - state.hd * math.clamp((t - ${lead}) / math.max(0.05, param.d), 0, 1))`) }) } }] },
         ...circleLook('tap', 'math.min(' + late + ', param.d)'),
         { target: 'reversearrow', clips: [{ start: -lead, end: 'param.d * (param.r - 1) / param.r', channels: { x: at('param.ex'), y: at('param.ey'), rotation: at('param.ea'),
           scaleX: at(`math.min(1, param.r - 1) * (1 + 0.15 * math.abs(math.sin(t * ${r4(180 / beat)})))`), scaleY: at(`math.min(1, param.r - 1) * (1 + 0.15 * math.abs(math.sin(t * ${r4(180 / beat)})))`) } }] },
@@ -2152,20 +2412,71 @@
       { target: 'acc3', clips: [span(0, dur, { frame: at(dg(accSrc, 10)) })] }, { target: 'acc4', clips: [span(0, dur, { frame: at(dg(accSrc, 1)) })] }];
     // the combo: right-aligned digits (blank above its size), the group moved left by the blanks; it pops on each combo
     const ndig = '(1 + math.min(1, math.floor(state.combo / 10)) + math.min(1, math.floor(state.combo / 100)) + math.min(1, math.floor(state.combo / 1000)))';
-    const comboTracks = [0, 1, 2, 3].map((k) => { const place = 10 ** (3 - k); return { target: `combo${k}`, clips: [span(0, dur, { frame: at(k === 3 ? dg('state.combo', 1) : `10 - (10 - ${dg('state.combo', place)}) * math.min(1, math.floor(state.combo / ${place}))`) })] }; });
+    // (the results come R0 after the last object: the HUD's combo, health and progress go then; the score and the accuracy fly
+    //  into the ranking panel)
+    const R0 = r4(lastEnd + 0.8);
+    const comboTracks = [0, 1, 2, 3].map((k) => { const place = 10 ** (3 - k); return { target: `combo${k}`, clips: [span(0, R0, { frame: at(k === 3 ? dg('state.combo', 1) : `10 - (10 - ${dg('state.combo', place)}) * math.min(1, math.floor(state.combo / ${place}))`) })] }; });
     const comboShift = `0 - (4 - ${ndig}) * ${r4(L.comboDigitW)}`;
     comboTracks.push({ target: 'combo', clips: [
       span(0, 0.18, { x: at(comboShift), scaleX: [{ t: 0, v: 1.35, ease: 'quad-out' }, { t: 0.18, v: 1 }], scaleY: [{ t: 0, v: 1.35, ease: 'quad-out' }, { t: 0.18, v: 1 }] }, { trigger: 'combo' }),
-      span(0, dur, { x: at(comboShift) })] });
+      span(0, R0, { x: at(comboShift) })] });
+    // ---- FL (state.fl): the light's square on the cursor and the four shutters up to it, all smaller at a combo of 100 and 200
+    const flk = '(1 - 0.15 * math.min(2, math.floor(state.combo / 100)))', fs = r4(L.flS), FX = r4(L.flX), FY = r4(L.flY);
+    const flTracks = [
+      { target: 'flhole', clips: [span(0, R0, { x: at('state.cx'), y: at('state.cy'), scaleX: at(`${flk} * state.fl`), scaleY: at(`${flk} * state.fl`) })] },
+      { target: 'flleft', clips: [span(0, R0, { scaleX: at(`math.max(0, state.cx - ${fs} * ${flk} + ${FX} + 0.4) * state.fl`) })] },
+      { target: 'flright', clips: [span(0, R0, { scaleX: at(`math.max(0, ${FX} - state.cx - ${fs} * ${flk} + 0.4) * state.fl`) })] },
+      { target: 'fltop', clips: [span(0, R0, { x: at('state.cx'), scaleX: at(`${flk} * state.fl`), scaleY: at(`math.max(0, ${FY} - state.cy - ${fs} * ${flk} + 0.4) * state.fl`) })] },
+      { target: 'flbottom', clips: [span(0, R0, { x: at('state.cx'), scaleX: at(`${flk} * state.fl`), scaleY: at(`math.max(0, ${FY} + state.cy - ${fs} * ${flk} + 0.4) * state.fl`) })] },
+    ];
+    // ---- the fail (the play's fail event): the field drops away, a dark curtain comes down, FAILED, the retry's hint
+    const pop = (d, k = 1) => [{ t: 0, v: 0, ease: 'back-out' }, { t: d, v: k }];
+    const failTracks = [
+      { target: 'failshade', clips: [{ start: 0, end: 6, trigger: 'fail', channels: { scaleY: [{ t: 0, v: 0, ease: 'quad-out' }, { t: 0.7, v: 1 }] } }] },
+      { target: 'failtext', clips: [{ start: 0.3, end: 6, trigger: 'fail', channels: { scaleX: pop(0.4), scaleY: pop(0.4), rotation: [{ t: 0, v: -14, ease: 'back-out' }, { t: 0.4, v: 0 }], y: at('1.2 * math.sin(t * 160)') } }] },
+      ...(L.failButton ? ['failretry', 'failbutton'] : ['failretry']).map((target) => ({ target, clips: [{ start: 1.0, end: 6, trigger: 'fail', channels: { scaleX: at('math.min(1, t / 0.2) * (1 + 0.05 * math.sin(t * 300))'), scaleY: at('math.min(1, t / 0.2) * (1 + 0.05 * math.sin(t * 300))') } }] })),
+    ];
+    // ---- the mods on: each by its flag, moved left by the width of those after it that are on
+    const modTracks = L.mods.map((m, i) => ({ target: `mod${m.m.toUpperCase()}`, clips: [span(0, dur, { scaleX: at(`state.${m.m}`), scaleY: at(`state.${m.m}`),
+      ...(i < L.mods.length - 1 ? { x: at(`0 - (${L.mods.slice(i + 1).map((n) => `${n.w} * state.${n.m}`).join(' + ')})`) } : {}) })] }));
+    // ---- the results (none after a fail): the panel slides in, the counts count up, the grade comes down hard (the panel shakes
+    //      with it), the full combo's stamp, a new best
+    const RR = L.R, nf = '(1 - state.failed)', countUp = (src) => at(`math.floor(${src} * math.clamp(t / 0.8, 0, 1) + 0.5)`);
+    const fly = (g, to, sc) => { const tx = r4(to[0] - sc * g.right - g.pivot[0]), ty = r4(to[1] - g.pivot[1]);
+      return [span(0, R0, {}), span(R0, dur, { x: [{ t: 0, v: 0, ease: 'quad-inout' }, { t: 0.6, v: `(${tx} - screen.dx) * ${nf}` }], y: [{ t: 0, v: 0, ease: 'quad-inout' }, { t: 0.6, v: `${ty} * ${nf}` }],
+        scaleX: [{ t: 0, v: 1, ease: 'quad-inout' }, { t: 0.6, v: `1 + ${r4(sc - 1)} * ${nf}` }], scaleY: [{ t: 0, v: 1, ease: 'quad-inout' }, { t: 0.6, v: `1 + ${r4(sc - 1)} * ${nf}` }] })]; };
+    const rankFrame = '(6 - state.rank) + 6 * math.min(1, state.hd + state.fl) * math.clamp(state.rank - 4, 0, 1)';
+    const resTracks = [
+      { target: 'res', clips: [span(R0, dur, { scaleX: at(nf), scaleY: at(nf), x: at('2.2 * math.sin(t * 2600) * math.clamp(1 - math.abs(t - 1.32) / 0.14, 0, 1)') })] },
+      { target: 'respanel', clips: [span(R0, dur, { x: [{ t: 0, v: -24, ease: 'quad-out' }, { t: 0.35, v: 0 }], scaleY: [{ t: 0, v: 0.3, ease: 'back-out' }, { t: 0.35, v: 1 }] })] },
+      { target: 'restitle', clips: [span(R0 + 0.15, dur, { scaleX: pop(0.3), scaleY: pop(0.3) })] },
+      ...['300', '100', '50', 'miss'].flatMap((n, k) => [
+        { target: `res${n}_icon`, clips: [span(R0 + 0.25 + k * 0.05, dur, { scaleX: pop(0.25), scaleY: pop(0.25) })] },
+        { target: `res${n}`, clips: [span(R0 + 0.3, dur, { value: countUp(`state.${n === 'miss' ? 'misses' : `n${n}`}`), scaleX: pop(0.2), scaleY: pop(0.2) })] }]),
+      { target: 'reslabelcombo', clips: [span(R0 + 0.3, dur, { scaleX: pop(0.25), scaleY: pop(0.25) })] },
+      { target: 'reslabelacc', clips: [span(R0 + 0.3, dur, { scaleX: pop(0.25), scaleY: pop(0.25) })] },
+      { target: 'resmaxcombo', clips: [span(R0 + 0.35, dur, { value: countUp('state.maxcombo'), scaleX: pop(0.2), scaleY: pop(0.2) })] },
+      // (the grade: the pixel look's cubes turn slowly, their sides showing)
+      { target: 'resrank', clips: [span(R0 + 1.0, dur, { frame: at(rankFrame), scaleX: [{ t: 0, v: 2.4, ease: 'quad-in' }, { t: 0.2, v: 0.94, ease: 'quad-out' }, { t: 0.32, v: 1 }], scaleY: [{ t: 0, v: 2.4, ease: 'quad-in' }, { t: 0.2, v: 0.94, ease: 'quad-out' }, { t: 0.32, v: 1 }], rotation: [{ t: 0, v: -16, ease: 'quad-in' }, { t: 0.2, v: 0 }],
+        ...(P ? { rotationY: at('18 * math.sin(t * 50)'), rotationX: at('-8 + 4 * math.sin(t * 37)') } : {}) })] },
+      { target: 'resfc', clips: [span(R0 + 1.6, dur, { scaleX: [{ t: 0, v: '1.8 * state.fc', ease: 'quad-in' }, { t: 0.18, v: 'state.fc' }], scaleY: [{ t: 0, v: '1.8 * state.fc', ease: 'quad-in' }, { t: 0.18, v: 'state.fc' }], rotation: [{ t: 0, v: -22, ease: 'quad-in' }, { t: 0.18, v: -8 }] })] },
+      { target: 'resrecord', clips: [span(R0 + 2.0, dur, { scaleX: at('state.record * math.min(1, t / 0.25) * (1 + 0.06 * math.sin(t * 400))'), scaleY: at('state.record * math.min(1, t / 0.25) * (1 + 0.06 * math.sin(t * 400))') })] },
+      { target: 'score', clips: fly(L.score, RR.scoreTo, RR.scoreScale) },
+      { target: 'acc', clips: fly(L.acc, RR.accTo, RR.accScale) },
+    ];
     const tracks = [
+      // (the fall: a fail drops the field away, tumbling; the results take it away)
+      { target: 'osu_fall', clips: [{ start: 0, end: 6, trigger: 'fail', channels: { y: [{ t: 0, v: 0, ease: 'quad-in' }, { t: 1.5, v: -210 }], rotation: [{ t: 0, v: 0, ease: 'quad-in' }, { t: 1.5, v: 26 }], rotationX: [{ t: 0, v: 0, ease: 'quad-in' }, { t: 1.5, v: 50 }] } },
+        span(0, R0, {}), span(R0, dur, { scaleX: [{ t: 0, v: 1, ease: 'back-in' }, { t: 0.5, v: 0 }], scaleY: [{ t: 0, v: 1, ease: 'back-in' }, { t: 0.5, v: 0 }], rotation: [{ t: 0, v: 0, ease: 'quad-in' }, { t: 0.5, v: -10 }] })] },
       { target: 'osu_shake', clips: [span(0, 0.35, { x: at('2.6 * math.sin(t * 3100) * (1 - t / 0.35)'), y: at('1.6 * math.cos(t * 2300) * (1 - t / 0.35)'), rotation: at('1.4 * math.sin(t * 1900) * (1 - t / 0.35)') }, { trigger: 'miss' }), span(0, dur, {})] },
       { target: 'osu_tilt', clips: tiltClips },
       { target: 'osu_pulse', clips: pulseClips },
       { target: 'cursor', clips: [span(0, lastEnd + 0.3, { x: at('state.cx'), y: at('state.cy'), scaleX: at('1 + 0.25 * state.hold'), scaleY: at('1 + 0.25 * state.hold'), ...(P ? { rotation: at('t * 90') } : {}) })] },
       { target: 'kiaiglow', clips: glowClips },
       ...scoreTracks, ...accTracks, ...comboTracks,
-      { target: 'progress', clips: [span(0, dur, { fill: [{ t: 0, v: 0 }, { t: r4(firstT), v: 0 }, { t: r4(lastEnd), v: 1 }] })] },
-      { target: 'rank', clips: [span(lastEnd + 0.4, dur, { frame: at('6 - state.rank'), scaleX: [{ t: 0, v: 0, ease: 'back-out' }, { t: 0.45, v: 1 }], scaleY: [{ t: 0, v: 0, ease: 'back-out' }, { t: 0.45, v: 1 }], rotation: [{ t: 0, v: -25, ease: 'back-out' }, { t: 0.45, v: 0 }] })] },
+      { target: 'progress', clips: [span(0, R0, { fill: [{ t: 0, v: 0 }, { t: r4(firstT), v: 0 }, { t: r4(lastEnd), v: 1 }] })] },
+      ...['progressback', 'health', 'healthback'].map((target) => ({ target, clips: [span(0, R0, {})] })),
+      ...flTracks, ...failTracks, ...modTracks, ...resTracks,
       ...(L.breaks.length ? [{ target: 'section', clips: L.breaks.map(([a, b]) => span(a / 1000 + 1.2, Math.min(b / 1000 - 1.2, a / 1000 + 4.2), { frame: at('math.clamp(math.floor((50 - state.hp) / 50) + 1, 0, 1)'),
         scaleX: [{ t: 0, v: 0, ease: 'back-out' }, { t: 0.3, v: 1 }, { t: 2.6, v: 1, ease: 'quad-in' }, { t: 3.0, v: 0 }], scaleY: [{ t: 0, v: 0, ease: 'back-out' }, { t: 0.3, v: 1 }, { t: 2.6, v: 1, ease: 'quad-in' }, { t: 3.0, v: 0 }] })) }] : []),
       { id: 'osu-music', kind: 'audio', name: '音楽', target: '', clips: [{ id: 'osu-music-clip', start: 0, end: dur, sound: L.music }] },
@@ -2177,9 +2488,42 @@
   }
 
   // ---------------------------------------------------------------------------------------------------------------- the design
-  /** the playfield's frame of bones: the shake, the lean, the pulse — each a bone of its own (one track a bone), the pulse's
-   *  children the playfield's elements */
-  const FIELD = (C) => [{ name: 'osu_shake', parent: 'osu_root', pivot: [C[0], C[1], 0] }, { name: 'osu_tilt', parent: 'osu_shake', pivot: [C[0], C[1], 0] }, { name: 'osu_pulse', parent: 'osu_tilt', pivot: [C[0], C[1], 0] }];
+  /** the playfield's frame of bones: the fall (a fail: it drops away; the results: it goes), the shake, the lean, the pulse — each
+   *  a bone of its own (one track a bone), the pulse's children the playfield's elements */
+  const FIELD = (C) => [{ name: 'osu_fall', parent: 'osu_root', pivot: [C[0], C[1], 0] }, { name: 'osu_shake', parent: 'osu_fall', pivot: [C[0], C[1], 0] }, { name: 'osu_tilt', parent: 'osu_shake', pivot: [C[0], C[1], 0] }, { name: 'osu_pulse', parent: 'osu_tilt', pivot: [C[0], C[1], 0] }];
+
+  /** the tour: every look of the game in about 23 seconds, scene by scene at fixed times — what runtime.js plays for
+   *  `<ns>:tour` (and the menu's 検証ツアー), the real app's one quick check of it all: circles, a slider with its turns, a kiai, HD,
+   *  FL, the spinner, a break's PASS, misses (aim, nothing pressed: the shake), a fail, the results (the autoplay's whole play).
+   *  → { scenes: [[ms, what, a, b, c]] (play: from ms of the song, mode, mods · seek: likewise · fail · results: the song's ms ·
+   *  stop), shots: [[ms, name]] (a moment of each scene to look at), length } */
+  function tourOf(G) {
+    const objs = G.objects || [], end = (o) => (o.k === 's' ? o.t + o.d : o.k === 'p' ? o.e : o.t);
+    if (!objs.length) return { scenes: [], shots: [], length: 0 };
+    const first = objs[0].t, lastEnd = Math.max(...objs.map(end)), kiai = G.kiai || [], brk = (G.breaks || [])[0], sp = objs.find((o) => o.k === 'p');
+    // (the slider with the most turns, the longest of them; the 2.2 s with the most objects after a time; the object at a time)
+    const slider = objs.filter((o) => o.k === 's').sort((a, b) => b.r - a.r || b.d - a.d)[0];
+    const dense = (from, to = Infinity) => { let best = null, n = -1; for (const o of objs) { if (o.t < from || o.t > to) continue; const c = objs.filter((x) => x.t >= o.t && x.t < o.t + 2200).length; if (c > n) { n = c; best = o.t; } } return best === null ? from : best; };
+    const scenes = [], shots = [];
+    let at = 0;
+    const add = (dt, row, shot, name) => { scenes.push([at, ...row]); if (shot !== null) shots.push([at + shot, name]); at += dt; };
+    add(2200, ['play', Math.max(0, first - 1200), 'auto', ''], 1500, 'circles');
+    if (slider) add(2200, ['seek', Math.max(0, slider.t - 600), 'auto', ''], 1300, 'slider');
+    if (kiai[0]) add(2200, ['seek', kiai[0][0] + 150, 'auto', ''], 1150, 'kiai');
+    const hdAt = dense(first + 4000, kiai[0] ? kiai[0][0] - 2500 : Infinity);
+    add(2200, ['seek', Math.max(0, hdAt - 500), 'auto', 'HD'], 1400, 'hidden');
+    const flAt = kiai[1] ? kiai[1][0] + 300 : dense(lastEnd / 2);
+    add(2200, ['seek', Math.max(0, flAt - 300), 'auto', 'FL'], 1300, 'flashlight');
+    if (sp) add(2400, ['seek', Math.max(0, sp.t - 300), 'auto', ''], 1700, 'spinner');
+    if (brk) add(2200, ['seek', brk[0] + 900, 'auto', ''], 1000, 'break');
+    // (aim, and nothing pressed: misses — the shake, the combo gone, the health down — then the fail)
+    const missAt = dense(kiai[0] ? kiai[0][0] + 1500 : first + 3000);
+    add(1700, ['seek', Math.max(0, missAt - 300), 'aim', ''], 1350, 'miss');
+    add(3000, ['fail'], 1500, 'fail');
+    add(3700, ['results', lastEnd + 100], 2900, 'results');
+    scenes.push([at, 'stop']);
+    return { scenes, shots, length: at };
+  }
 
   /** a beatmap (parsed: osu.parseOsu) → the whole game. opts: { skin: 'pixel' | 'skin', images ({ name: image } of an osu! skin:
    *  the Legacy skin's @2x names without '@2x', for 'skin'), ns, title, description, width (the playfield's, model units: 176),
@@ -2190,19 +2534,42 @@
     const warnings = [], diff = O.difficultyOf(map), G = O.gameOf(map, { width: FW, sound: opts.sound || ((x) => x) }), R = G.r;
     const colours = (map.colours.combos.length ? map.colours.combos : [[255, 192, 0], [0, 202, 0], [18, 124, 255], [242, 24, 57]]).slice(0, 8);
     const cs = O.combos(map), bpm = r4(60000 / ((map.timing.find((p) => p.uninherited) || { beatLength: 500 }).beatLength));
+    // (the pixel look's circles carry their numbers: a frame a colour and number, up to the map's longest combo — 99 at most)
+    const circleNumbers = Math.min(99, Math.max(1, ...cs.map((c) => c.n)));
     const lastEnd = Math.max(...G.objects.map((g) => (g.k === 's' ? g.t + g.d : g.k === 'p' ? g.e : g.t)));
     const duration = r4(Math.max(lastEnd / 1000 + 4, num(opts.duration, 0)));
     // ---- the sprites and their sizes (model units)
     const items = [], size = {};
     let bodyInfo;
     const HALFW = 151.7, TOP = 220.4, BOTTOM = 49.7;   // (the screen at 16:9 by bds-lab's measure: GeoUI's measured calibration)
+    // (FL: the light round the cursor — its radius at a combo under 100, 0.3 of the field's height (osu!'s shrinks at 100 and
+    //  200), the square it is drawn in; the field and its frame it darkens, with room for the tilt — the board lies deeper than
+    //  the light, so a lean shows it a little beside where the light's plane is — but not as far as the combo at the bottom left)
+    const FLR = r4(FW * 0.75 * 0.3), FLS = r4(FLR * 1.12), FLX = r4(FW / 2 + 13.5), FLY = r4(FW * 0.375 + 19.5);
+    // (the mods on: osu!'s letters, each its colour)
+    const MODC = [['HD', [234, 178, 40]], ['FL', [96, 96, 112]], ['NF', [60, 130, 230]], ['SD', [230, 110, 50]], ['PF', [220, 70, 150]], ['AUTO', [60, 190, 150]]];
     if (P) {
       const S = pixelSprites(colours), pu = (2 * R) / 16;   // (a hit circle 16 px across)
       Object.assign(size, { pu });
+      // (the flashlight a pixel of the look a pixel: black but for a pixel circle round the cursor, dithered at its edge)
+      S.flashlight = (() => { const n = 2 * Math.ceil(FLS / pu), im = img(n, n), c = n / 2, rr = FLR / pu; for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const d = Math.hypot(x + 0.5 - c, y + 0.5 - c); if (d > rr || (d > rr - 1.6 && (x + y) % 2 === 0)) put(im, x, y, [0, 0, 0, 255]); } return im; })();
+      size.flS = (S.flashlight.width * pu) / 2;
+      // (the mods on: a plate a mod — its colour's border, its letters)
+      for (const [m, c] of MODC) { const t = textImage(m, [...c.map((v) => Math.min(255, v + 40)), 255]), o = img(t.width + 4, 9); for (let y = 0; y < 9; y++) for (let x = 0; x < o.width; x++) { const e = Math.min(x, y, o.width - 1 - x, 8 - y), corner = (x === 0 || x === o.width - 1) && (y === 0 || y === 8); if (!corner) put(o, x, y, e === 0 ? [...c.map((v) => Math.round(v * 0.7)), 255] : [18, 20, 32, 255]); } blit(o, t, 2, 2); S[`mod${m}`] = o; }
+      // the models (pixelModels: each object of the game built of blocks, the pixel art on their faces)
+      const MODELS = pixelModels(colours, S, circleNumbers), models = {};
+      MODELS.rank.zs = 0.45; for (const id of ['digitframes', 'x', 'dot', 'pct', ...Array.from({ length: 10 }, (_, d) => `num${d}`)]) MODELS[id].zs = 0.5;
       for (const [id, im, sh] of [['hitcircle', S.hitcircle, 1], ['approachcircle', S.approachcircle, 1], ['hitburst', S.hitburst, 1], ['sliderball', S.sliderball, 1], ['followcircle', S.followcircle, 1],
         ['reversearrow', S.reversearrow, 1], ['slidertick', S.slidertick, 1], ['followpoint', S.followpoint, 1], ['spinner', S.spinner, 1], ['spinnerapproach', S.spinnerapproach, 1], ['cursor', S.cursor, 1],
-        ['judgement', S.judgement, 1], ['digit', S.digit, 1], ['digitframes', [...S.digit, img(3, 5)], 1], ['spin', S.spin, 1], ['clear', S.clear, 1], ['rank', S.rank, 1], ['section', S.section, 1],
-        ['x', S.x, 1], ['dot', S.dot, 1], ['pct', S.pct, 1], ['barback', S.barback, 1], ['barfill', S.barfill, 1], ['board', S.board, 0], ['glow', S.glow, 0]]) items.push({ id, image: im, shade: Boolean(sh) });
+        ['judgement', S.judgement, 1], ['digit', S.digit, 1], ['digitframes', [...S.digit, img(3, 5)], 1], ...S.digit.map((im, d) => [`num${d}`, im, 1]), ['spin', S.spin, 1], ['clear', S.clear, 1], ['rank', S.rank, 1], ['section', S.section, 1],
+        ['x', S.x, 1], ['dot', S.dot, 1], ['pct', S.pct, 1], ['barback', S.barback, 1], ['barfill', S.barfill, 1], ['board', S.board, 0], ['glow', S.glow, 0],
+        ['resboard', S.resboard, 0], ['restitle', S.restitle, 1], ['maxcombo', S.maxcombo, 1], ['accuracy', S.accuracy, 1], ['fc', S.fc, 1], ['record', S.record, 1], ['failed', S.failed, 1], ['retry', S.retry, 1],
+        ['j300', S.j300, 1], ['j100', S.j100, 1], ['j50', S.j50, 1], ['jx', S.jx, 1], ...['HD', 'FL', 'NF', 'SD', 'PF', 'AUTO'].map((m) => [`mod${m}`, S[`mod${m}`], 1]), ['flashlight', S.flashlight, 0], ['shade', S.shade, 0]]) {
+        // (a modeled object: its layers' cells — the pixel art and its lights; the rest as before: a picture made solid)
+        if (MODELS[id]) { const mc = modelCells(MODELS[id]); models[id] = mc; items.push({ id, image: mc.cells, shade: false }); }
+        else items.push({ id, image: im, shade: Boolean(sh) });
+      }
+      Object.assign(size, { models, sprites: S });
       bodyInfo = bodies(G, colours, cs.map((c) => c.colour), { ppu: 1 / pu, pixel: true });
     } else {
       const I = opts.images || {}, need = (n) => { if (!I[n]) throw new Error(`osu! のスキンに「${n}」がありません`); return I[n]; };
@@ -2235,8 +2602,38 @@
       for (const [id, name, ff] of [['x', 'score-x', hud], ['pct', 'score-percent', hud], ['dot', 'score-dot', hud], ['barback', 'scorebar-bg', 0.09], ['barfill', 'scorebar-colour', 0.09]]) { const m = need(name); items.push({ id, image: sc(m, ff) }); size[id] = px(m, ff); }
       // (the glow: soft, a small picture stretched)
       items.push({ id: 'glow', image: resize(need('lighting'), 128, 128) });
-      const ranks = ['ranking-X-small', 'ranking-S-small', 'ranking-A-small', 'ranking-B-small', 'ranking-C-small', 'ranking-D-small'].map(need), rw = Math.max(...ranks.map((m) => m.width)), rh = Math.max(...ranks.map((m) => m.height)), rf = 36 / rh;
-      items.push({ id: 'rank', image: ranks.map((m) => resize(centred(m, rw, rh), rw * rf * 3, rh * rf * 3)) }); size.rank = [rw * rf, rh * rf];
+      // the grade on the results: the big letters (X = SS), silver XH / SH with HD or FL — the small ones where a skin has no big ones
+      const opt = (n) => I[n] || null;
+      const ranks = ['X', 'S', 'A', 'B', 'C', 'D', 'XH', 'SH'].map((g) => opt(`ranking-${g}`) || opt(`ranking-${g.replace('H', '')}`) || need(`ranking-${g.replace('H', '')}-small`));
+      const rw = Math.max(...ranks.map((m) => m.width)), rh = Math.max(...ranks.map((m) => m.height)), rf = 68 / rh, rppu = 1.75;
+      items.push({ id: 'rank', image: ranks.map((m) => resize(centred(m, rw, rh), rw * rf * rppu, rh * rf * rppu)) }); size.rank = [rw * rf, rh * rf];
+      // the results' panel and words (the skin's own, else drawn here: a dark panel, the pixel font's words)
+      const res = (n, h, ppx, fallback) => { const m = opt(n); if (!m) { const t = fallback(); items.push({ id: n, image: t }); size[n] = [t.width * (h / t.height), h]; return; } const f = h / m.height; items.push({ id: n, image: resize(m, m.width * f * ppx, m.height * f * ppx) }); size[n] = [m.width * f, h]; };
+      res('ranking-panel', 112, 1.6, () => { const o = img(62, 50); for (let y = 0; y < 50; y++) for (let x = 0; x < 62; x++) put(o, x, y, y < 1 || (y > 7 && y < 9) ? [0, 0, 0, 0] : y < 8 ? [230, 205, 160, 230] : [62, 124, 214, 230]); return o; });
+      res('ranking-title', 13, 3, () => strokeText('RANKING').image);
+      res('ranking-maxcombo', 8, 4, () => strokeText('MAX COMBO').image);
+      res('ranking-accuracy', 8, 4, () => strokeText('ACCURACY').image);
+      res('ranking-perfect', 18, 3, () => strokeText('PERFECT', { colour: [255, 214, 64] }).image);
+      // (the words the skin has none of — a new best, the fail, its hint — in the stroke font, cap the height asked; the retry
+      //  button the skin's own where it has one)
+      const word = (id, s, cap, colour, outline) => { const t = strokeText(s, { colour, outline, ppu: Math.max(4, Math.round(cap * 0.75)) }); items.push({ id, image: t.image }); size[id] = [(t.image.width / t.image.height) * (cap / t.cap), cap / t.cap]; };
+      word('record', 'NEW RECORD!', 6, [150, 255, 160], [10, 50, 20]); word('failed', 'FAILED', 15, [255, 84, 96], [50, 0, 10]); word('retry', 'JUMP: RETRY', 4.2, [255, 236, 236], [40, 20, 20]);
+      if (opt('pause-retry')) res('pause-retry', 15, 3, () => img(1, 1));
+      // the mods on: a pill a mod (its colour, lit from the top), its letters white
+      for (const [m, c] of MODC) {
+        const t = strokeText(m, { colour: [255, 255, 255], outline: c.map((v) => Math.round(v * 0.45)), ppu: 8 }).image, Hp = Math.round(t.height * 1.08), Wp = t.width + Math.round(Hp * 0.55);
+        const pill = (w, cc) => T.media.rasterOps([['strokeStyle', `rgb(${cc[0]},${cc[1]},${cc[2]})`], ['lineWidth', w], ['beginPath'], ['moveTo', Hp / 2, Hp / 2], ['lineTo', Wp - Hp / 2, Hp / 2], ['stroke']], Wp, Hp);
+        const o = img(Wp, Hp), back = pill(Hp, c.map((v) => Math.round(v * 0.5))), face = pill(Hp - 6, c);
+        blit(o, { width: back.width, height: back.height, data: back.data }, 0, 0);
+        for (let y = 0; y < face.height; y++) { const f = 1.18 - 0.36 * (y / face.height); for (let x = 0; x < face.width; x++) { const cc = get(face, x, y); if (cc[3]) put(o, x, y, [Math.min(255, Math.round(cc[0] * f)), Math.min(255, Math.round(cc[1] * f)), Math.min(255, Math.round(cc[2] * f)), cc[3]]); } }
+        blit(o, t, Math.round((Wp - t.width) / 2), Math.round((Hp - t.height) / 2));
+        items.push({ id: `mod${m}`, image: o }); size[`mod${m}`] = [(Wp / Hp) * 6.8, 6.8];
+      }
+      // the flashlight: black, a soft hole round the cursor (its edge a fifth of the square's half); the fail's shade: black,
+      // see-through
+      items.push({ id: 'flashlight', image: (() => { const n = 128, o = img(n, n), c = n / 2, uh = FLR / FLS; for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const u = Math.hypot(x + 0.5 - c, y + 0.5 - c) / c; put(o, x, y, [0, 0, 0, Math.round(255 * Math.min(1, Math.max(0, (u - (uh - 0.22)) / 0.22)))]); } return o; })() });
+      size.flS = FLS;
+      items.push({ id: 'shade', image: (() => { const o = img(8, 8); for (let k = 3; k < o.data.length; k += 4) o.data[k] = 160; return o; })() });
       const sec = ['section-pass', 'section-fail'].map(need), sw2 = Math.max(...sec.map((m) => m.width)), sh2 = Math.max(...sec.map((m) => m.height)), sf = 46 / sh2;
       items.push({ id: 'section', image: sec.map((m) => sc(centred(m, sw2, sh2), sf)) }); size.section = [sw2 * sf, sh2 * sf];
       const back = (() => { const o = img(64, 48); for (let y = 0; y < 48; y++) for (let x = 0; x < 64; x++) { const e = Math.min(x, y, 63 - x, 47 - y); put(o, x, y, [0, 0, 0, Math.round(Math.min(1, e / 3) * 180)]); } return o; })();
@@ -2245,8 +2642,16 @@
       bodyInfo = bodies(G, colours, cs.map((c) => c.colour), { ppu: Math.min(ppu, num(opts.bodyPpu, 2.2)), pixel: false });
     }
     items.push({ id: 'bodies', image: bodyInfo.cells.length ? bodyInfo.cells : [img(1, 1)] });
-    // (2048 at most: the size every device takes — a body's cells shrink first when they do not fit)
-    const A = atlasOf(items, { maxSize: num(opts.maxAtlas, 2048) });
+    // (2048 at most: the size every device takes — the slider bodies, the largest part, drawn smaller until it all fits)
+    let A = null;
+    for (let tries = 0, bp = bodyInfo.ppu; !A; tries++) {
+      try { A = atlasOf(items, { maxSize: num(opts.maxAtlas, 2048) }); }
+      catch (e) {
+        if (tries >= 6 || !bodyInfo.cells.length) throw e;
+        bp *= 0.84; bodyInfo = bodies(G, colours, cs.map((c) => c.colour), { ppu: bp, pixel: P }); items.find((x) => x.id === 'bodies').image = bodyInfo.cells;
+        if (tries === 0) warnings.push('アトラス（2048 x 2048）に入りきらないので、スライダーの体を小さい絵にしました（画面での大きさは同じ・きめが粗い）');
+      }
+    }
     // ---- the bones (GeoUI's design): the field, the playfield's elements under its pulse, the HUD under the root
     // (osu_root: everything, shown only while a sequence plays — GeoUI's visible condition on it; the HUD's bones under it too)
     const bones = [{ name: 'geo_ui', pivot: [0, 140, 0] }, { name: 'osu_root', parent: 'geo_ui', pivot: [0, 140, 0] }, ...FIELD(C)], F = 'osu_pulse', H = 'osu_root';
@@ -2254,9 +2659,11 @@
     const cellOf = (id, frame = 0) => { const a = A.at[id]; return [a.x + (frame % a.cols) * a.cell[0], a.y + Math.floor(frame / a.cols) * a.cell[1]]; };
     const framesOf = (id) => { const a = A.at[id]; return { cols: a.cols, rows: a.rows, step: a.cell }; };
     const imageEl = (name, frames, blend = P ? 'cutout' : 'blend') => { elements[name] = Object.assign({ type: 'image', blend }, frames ? { frames } : {}); };
+    // (a modeled object — pixelModels — as its model; any other sprite made solid: its picture d units deep)
     const vox = (name, id, parent, at, z, d, o = {}) => {
-      const fr = A.at[id].frames, ims = items.find((x) => x.id === id).image;
-      bones.push(voxel(name, parent, at, Array.isArray(ims) ? ims : [ims], cellOf(id), o.px || size.pu, d, z, { perPixel: Boolean(o.perPixel) }));
+      const fr = A.at[id].frames, mdl = size.models && size.models[id];
+      if (mdl) bones.push(modelBone(name, parent, at, cellOf(id), o.px || size.pu, z, mdl));
+      else { const ims = items.find((x) => x.id === id).image; bones.push(voxel(name, parent, at, Array.isArray(ims) ? ims : [ims], cellOf(id), o.px || size.pu, d, z, { perPixel: Boolean(o.perPixel) })); }
       imageEl(name, fr > 1 && !o.noFrames ? framesOf(id) : null);
     };
     const flat = (name, id, parent, at, z, sz, o = {}) => {
@@ -2269,6 +2676,8 @@
     const bodyFrames = framesOf('bodies');
     const bodyFrame = {}, bodyCentre = {};
     G.objects.forEach((g, i) => { if (g.k === 's') { const n = Object.keys(bodyFrame).length; bodyFrame[i] = n; bodyCentre[i] = bodyInfo.centre[n]; } });
+    // (what the document needs of the layout: build's places for the HUD, the flashlight, the mods, the results)
+    const L0 = {};
     const hudDigits = (prefix, n, [x0, y0], dw, z, idDigits, anchor, o = {}) => {
       bones.push({ name: prefix, parent: H, pivot: [r4(x0), r4(y0), 0] });
       if (anchor) elements[prefix] = { type: 'image', anchor };
@@ -2281,58 +2690,58 @@
     if (P) {
       const pu = size.pu, D = 2.2;   // (a sprite's depth: about one and a half pixels)
       bones.push(plane('board', F, C, [FW + 14, FW * 0.75 + 14], [A.at.board.x, A.at.board.y, A.at.board.w, A.at.board.h], 10)); imageEl('board', null, 'blend');
-      // the board's frame: four bars of cubes around the field, deep (its sides show as the field leans)
-      const fw = FW + 16, fh = FW * 0.75 + 16, bar = (n, cx, cy, w, h) => bones.push({ name: n, parent: F, pivot: [r4(cx), r4(cy), 8], cubes: [{ origin: [r4(cx - w / 2), r4(cy - h / 2), 6], size: [r4(w), r4(h), 5], faces: Object.fromEntries(['north', 'east', 'west', 'up', 'down'].map((f, j) => [f, { uv: [A.at.barback.x + (j ? A.at.barback.w : 0), A.at.barback.y + 1], uv_size: [A.at.barback.w, 1], texture: 'atlas' }])) }] });
-      // (the top and bottom bars the whole width, the sides between them: no two faces on one plane at the corners)
-      bar('board_top', C[0], C[1] + fh / 2, fw + 3, 3); bar('board_bottom', C[0], C[1] - fh / 2, fw + 3, 3); bar('board_left', C[0] - fw / 2, C[1], 3, fh - 3); bar('board_right', C[0] + fw / 2, C[1], 3, fh - 3);
+      // the board's frame, modeled: walls round the field (deep: their sides show as the field leans), a lip inside them on
+      // the floor, a post at each corner standing out of the walls with a cap on it — one bone of blocks
+      bones.push({ name: 'board_frame', parent: F, pivot: [C[0], C[1], 8], cubes: trayCubes(C, FW + 16, FW * 0.75 + 16, 6, A.at.barback) });
       bones.push(plane('kiaiglow', F, C, [FW * 1.1, FW * 0.85], [A.at.glow.x, A.at.glow.y, A.at.glow.w, A.at.glow.h], 9)); imageEl('kiaiglow', null, 'add');
       vox('followpoint', 'followpoint', F, C, 4, 0.8, { px: pu * 0.9 });
       bones.push(plane('sliderbody', F, C, bodyInfo.units, [A.at.bodies.x, A.at.bodies.y, A.at.bodies.w, A.at.bodies.h], 3)); elements.sliderbody = { type: 'image', blend: 'cutout', frames: bodyFrames };
       vox('slidertick', 'slidertick', F, C, 2, 0.8, { px: pu });
       vox('spinner', 'spinner', F, C, 1.5, 2.5, { px: (FW * 0.75 * 0.9) / 32 });
-      vox('spinnerapproach', 'spinnerapproach', F, C, 0.5, 1, { px: (FW * 0.75 * 0.9) / 32 });
+      vox('spinnerapproach', 'spinnerapproach', F, C, -3, 1, { px: (FW * 0.75 * 0.9) / 32 });
       // (each a depth of its own, front to back without two overlapping: a voxel's sides then share no plane with another's)
       vox('spinnerspin', 'spin', F, [C[0], C[1] - 34], -14.6, 1.5, { px: pu * 1.3 });
       vox('spinnerclear', 'clear', F, [C[0], C[1] + 30], -16.4, 1.5, { px: pu * 1.6 });
       [0, 1, 2].forEach((k) => { vox(`spinnerrpm${k}`, 'digitframes', F, [C[0] + (k - 1) * pu * 4.2, C[1] - 48], -18, 1, { px: pu * 1.05, perPixel: true }); elements[`spinnerrpm${k}`].frames = framesOf('digitframes'); });
+      // (the coin and its number in one model: a frame a combo colour and number — no numerals of their own, so no slot of
+      //  the circles carries twenty of them)
       vox('hitcircle', 'hitcircle', F, C, -3, D);
-      bones.push({ name: 'combonumber', parent: F, pivot: [C[0], C[1], -4.6] });
-      // (the numerals: flat — a decal on the circle's face — each 0.021 nearer than the one before: only one shows at a time, and
-      //  no two faces share a plane)
-      const digitBone = (k, d) => { const a = cellOf('digit', d), im = items.find((x) => x.id === 'digit').image[d]; return plane(`combonumber_d${k}_${d}`, 'combonumber', [C[0] + (k - 0.5) * pu * 4 * 0.95, C[1]], [im.width * pu * 0.95, im.height * pu * 0.95], [a[0], a[1], im.width, im.height], -4.6 - d * 0.021); };
-      const digits = [0, 1].map((k) => Array.from({ length: 10 }, (_, d) => { const b = digitBone(k, d); bones.push(b); return b.name; }));
-      elements.combonumber = { type: 'number', number: { source: '0', digits, hideLeadingZero: true } };
       vox('followcircle', 'followcircle', F, C, -4.4, 0.8, { px: (2.4 * 2 * R) / 28 });
       vox('approachcircle', 'approachcircle', F, C, -6, 1.0);
       vox('reversearrow', 'reversearrow', F, C, -7.4, 1.2, { px: pu * 1.2 });
       vox('sliderball', 'sliderball', F, C, -9.8, 2, { px: (1.6 * R) / 8 });
       vox('hitburst', 'hitburst', F, C, -11.4, 1.4);
       vox('judgement', 'judgement', F, C, -13, 1.4, { px: pu * 0.85, perPixel: true });
-      vox('cursor', 'cursor', F, C, -20, 1.6, { px: pu * 0.9 });
-      // HUD (score top right, accuracy under it, the combo bottom left, health top left, progress, rank, section)
-      const spx = 1.9, sdw = spx * 4;
-      hudDigits('score', 8, [HALFW - 6, TOP - 9], sdw, -2, 'digitframes', 'top-right', { px: spx });
+      // (the gem whole in front of the flashlight's plane: its back at -18.3)
+      vox('cursor', 'cursor', F, C, -22.5, 1.6, { px: pu * 0.9 });
+      // HUD (score top right, accuracy under it, the combo bottom left, health top left, progress, section) — in front of the
+      // playfield and its flashlight (HZ: the HUD's layer; osu!'s HUD stays over the flashlight)
+      const spx = 1.9, sdw = spx * 4, HZ = -28;
+      hudDigits('score', 8, [HALFW - 6, TOP - 9], sdw, HZ, 'digitframes', 'top-right', { px: spx });
       const apx = 1.2, adw = apx * 4, ay = TOP - 22;
-      hudDigits('acc', 5, [HALFW - 6 - adw * 2.2, ay], adw, -2, 'digitframes', 'top-right', { px: apx });
+      hudDigits('acc', 5, [HALFW - 6 - adw * 2.2, ay], adw, HZ, 'digitframes', 'top-right', { px: apx });
       // (the accuracy reads 99.87%: its point after the third digit — the digits are at fixed places, the point and % beside)
       const accBones = bones.filter((b) => /^acc[0-4]$/.test(b.name));
       accBones.forEach((b) => { const k = +b.name.slice(3); const dx = k >= 3 ? adw * 0.9 : 0; for (const c of b.cubes) c.origin[0] = r4(c.origin[0] + dx); b.pivot[0] = r4(b.pivot[0] + dx); });
-      vox('accdot', 'dot', 'acc', [HALFW - 6 - adw * 2.2 - adw * 1.05, ay], -2, 0.9, { px: apx });
-      vox('accpct', 'pct', 'acc', [HALFW - 6 - adw * 2.2 + adw * 1.9, ay], -2, 0.9, { px: apx });
+      vox('accdot', 'dot', 'acc', [HALFW - 6 - adw * 2.2 - adw * 1.05, ay], HZ, 0.9, { px: apx });
+      vox('accpct', 'pct', 'acc', [HALFW - 6 - adw * 2.2 + adw * 1.9, ay], HZ, 0.9, { px: apx });
       const cpx = 2.6, cdw = cpx * 4, cy0 = BOTTOM + 11;
       bones.push({ name: 'combo', parent: H, pivot: [r4(-HALFW + 8), cy0, 0] }); elements.combo = { type: 'image', anchor: 'bottom-left' };
-      for (let k = 0; k < 4; k++) { vox(`combo${k}`, 'digitframes', 'combo', [-HALFW + 8 + k * cdw, cy0], -2, 1.4, { px: cpx, perPixel: true }); elements[`combo${k}`].frames = framesOf('digitframes'); }
-      vox('combox', 'x', 'combo', [-HALFW + 8 + 4 * cdw - cdw * 0.15, cy0 - cpx], -2, 1.4, { px: cpx });
-      vox('healthback', 'barback', H, [-HALFW + 6 + 63, TOP - 7], -1, 1.5, { px: 3 }); elements.healthback.anchor = 'top-left';
-      vox('health', 'barfill', H, [-HALFW + 6 + 63, TOP - 7], -2.6, 1.5, { px: 3 });
-      Object.assign(bones.find((b) => b.name === 'health'), { pivot: [r4(-HALFW + 6 + 3), TOP - 7, -2.6] });
+      for (let k = 0; k < 4; k++) { vox(`combo${k}`, 'digitframes', 'combo', [-HALFW + 8 + k * cdw, cy0], HZ, 1.4, { px: cpx, perPixel: true }); elements[`combo${k}`].frames = framesOf('digitframes'); }
+      vox('combox', 'x', 'combo', [-HALFW + 8 + 4 * cdw - cdw * 0.15, cy0 - cpx], HZ, 1.4, { px: cpx });
+      vox('healthback', 'barback', H, [-HALFW + 6 + 63, TOP - 7], HZ + 1, 1.5, { px: 3 }); elements.healthback.anchor = 'top-left';
+      vox('health', 'barfill', H, [-HALFW + 6 + 63, TOP - 7], HZ - 0.6, 1.5, { px: 3 });
+      Object.assign(bones.find((b) => b.name === 'health'), { pivot: [r4(-HALFW + 6 + 3), TOP - 7, HZ - 0.6] });
       elements.health = { type: 'gauge', anchor: 'top-left', blend: 'cutout', gauge: { source: `q.property('${ns}:v3')`, max: 100, fill: 'left' } };
-      vox('progressback', 'barback', H, [HALFW - 6 - 25.2, TOP - 30], -1, 0.8, { px: 1.2 }); elements.progressback.anchor = 'top-right';
-      vox('progress', 'barfill', H, [HALFW - 6 - 25.2, TOP - 30], -2, 0.8, { px: 1.2 });
-      Object.assign(bones.find((b) => b.name === 'progress'), { pivot: [r4(HALFW - 6 - 49.2), TOP - 30, -2] });
+      vox('progressback', 'barback', H, [HALFW - 6 - 25.2, TOP - 30], HZ + 1, 0.8, { px: 1.2 }); elements.progressback.anchor = 'top-right';
+      vox('progress', 'barfill', H, [HALFW - 6 - 25.2, TOP - 30], HZ, 0.8, { px: 1.2 });
+      Object.assign(bones.find((b) => b.name === 'progress'), { pivot: [r4(HALFW - 6 - 49.2), TOP - 30, HZ] });
       elements.progress = { type: 'gauge', anchor: 'top-right', blend: 'cutout', gauge: { source: '0', max: 1, fill: 'left' } };
-      vox('rank', 'rank', H, [0, C[1]], -24, 3, { px: 5, perPixel: true });
-      vox('section', 'section', H, [0, C[1]], -28, 2, { px: 3.2, perPixel: true });
+      vox('section', 'section', H, [0, C[1]], HZ - 6, 2, { px: 3.2, perPixel: true });
+      // (where the score and the accuracy are, for the results: each group's pivot — its last digit — and how far it reaches left
+      //  and right of it)
+      Object.assign(L0, { HZ, score: { pivot: [HALFW - 6, TOP - 9], left: 7 * sdw + 1.5 * spx, right: 1.5 * spx, h: 5 * spx },
+        acc: { pivot: [HALFW - 6 - adw * 2.2, ay], left: 4 * adw + 1.5 * apx, right: adw * 1.9 + 1.5 * apx, h: 5 * apx } });
     } else {
       flat('board', 'board', F, C, 12, [FW + 16, FW * 0.75 + 16]);
       flat('kiaiglow', 'glow', F, C, 11, [FW * 1.15, FW * 0.9], { blend: 'add' });
@@ -2357,35 +2766,126 @@
       flat('sliderball', 'sliderball', F, C, -9, size.sliderball);
       flat('judgement', 'judgement', F, C, -11, size.judgement);
       flat('cursor', 'cursor', F, C, -13, size.cursor);
-      // HUD
-      const sw = size.score[0] * 0.95;
-      hudDigits('score', 8, [HALFW - 4 - size.score[0] / 2, TOP - 7], sw, -2, 'scoredigits', 'top-right');
+      // HUD — in front of the playfield and its flashlight (HZ: the HUD's layer)
+      const sw = size.score[0] * 0.95, HZ = -18;
+      hudDigits('score', 8, [HALFW - 4 - size.score[0] / 2, TOP - 7], sw, HZ, 'scoredigits', 'top-right');
       const as = 0.62, aw = sw * as, ay = TOP - 18;
-      hudDigits('acc', 5, [HALFW - 4 - size.pct[0] * as - aw * 0.5, ay], aw, -2, 'scoredigits', 'top-right', { size: [size.score[0] * as, size.score[1] * as] });
+      hudDigits('acc', 5, [HALFW - 4 - size.pct[0] * as - aw * 0.5, ay], aw, HZ, 'scoredigits', 'top-right', { size: [size.score[0] * as, size.score[1] * as] });
       const accBones = bones.filter((b) => /^acc[0-4]$/.test(b.name));
       accBones.forEach((b) => { const kk = +b.name.slice(3); const dx = kk < 3 ? -size.dot[0] * as * 0.9 : 0; for (const c of b.cubes) c.origin[0] = r4(c.origin[0] + dx); b.pivot[0] = r4(b.pivot[0] + dx); });
-      flat('accdot', 'dot', 'acc', [HALFW - 4 - size.pct[0] * as - aw * 2.0 - size.dot[0] * as * 0.45, ay], -2.2, [size.dot[0] * as, size.dot[1] * as]);
-      flat('accpct', 'pct', 'acc', [HALFW - 4 - size.pct[0] * as / 2, ay], -2.25, [size.pct[0] * as, size.pct[1] * as]);
+      flat('accdot', 'dot', 'acc', [HALFW - 4 - size.pct[0] * as - aw * 2.0 - size.dot[0] * as * 0.45, ay], HZ - 0.2, [size.dot[0] * as, size.dot[1] * as]);
+      flat('accpct', 'pct', 'acc', [HALFW - 4 - size.pct[0] * as / 2, ay], HZ - 0.25, [size.pct[0] * as, size.pct[1] * as]);
       const cs2 = 1.25, cw = size.score[0] * cs2 * 0.92, cy0 = BOTTOM + 9;
       bones.push({ name: 'combo', parent: H, pivot: [r4(-HALFW + 6), cy0, 0] }); elements.combo = { type: 'image', anchor: 'bottom-left' };
-      for (let kk = 0; kk < 4; kk++) flat(`combo${kk}`, 'scoredigits', 'combo', [-HALFW + 6 + cw / 2 + kk * cw, cy0], -2 - kk * 0.021, [size.score[0] * cs2, size.score[1] * cs2]);
-      flat('combox', 'x', 'combo', [-HALFW + 6 + cw * 4 + size.x[0] * cs2 * 0.4, cy0], -2.1, [size.x[0] * cs2, size.x[1] * cs2]);
+      for (let kk = 0; kk < 4; kk++) flat(`combo${kk}`, 'scoredigits', 'combo', [-HALFW + 6 + cw / 2 + kk * cw, cy0], HZ - kk * 0.021, [size.score[0] * cs2, size.score[1] * cs2]);
+      flat('combox', 'x', 'combo', [-HALFW + 6 + cw * 4 + size.x[0] * cs2 * 0.4, cy0], HZ - 0.1, [size.x[0] * cs2, size.x[1] * cs2]);
       const hb = size.barback, hx = -HALFW + 4 + hb[0] / 2, hy = TOP - 2 - hb[1] / 2;
-      flat('healthback', 'barback', H, [hx, hy], -1, hb); elements.healthback.anchor = 'top-left';
+      flat('healthback', 'barback', H, [hx, hy], HZ + 1, hb); elements.healthback.anchor = 'top-left';
       const hf = size.barfill, fx = -HALFW + 4 + hb[0] * 0.018 + hf[0] / 2, fy = hy + hb[1] * 0.06;
-      flat('health', 'barfill', H, [fx, fy], -2, hf);
-      Object.assign(bones.find((b) => b.name === 'health'), { pivot: [r4(fx - hf[0] / 2), r4(fy), -2] });
+      flat('health', 'barfill', H, [fx, fy], HZ, hf);
+      Object.assign(bones.find((b) => b.name === 'health'), { pivot: [r4(fx - hf[0] / 2), r4(fy), HZ] });
       elements.health = { type: 'gauge', anchor: 'top-left', blend: 'blend', gauge: { source: `q.property('${ns}:v3')`, max: 100, fill: 'left' } };
       const pw = 36, ph = 1.6, ppx = HALFW - 4 - pw / 2, ppy = TOP - 27;
-      bones.push(plane('progressback', H, [ppx, ppy], [pw, ph], [A.at.barback.x, A.at.barback.y + 2, A.at.barback.w, Math.max(1, A.at.barback.h - 4)], -1)); imageEl('progressback'); elements.progressback.anchor = 'top-right';
-      bones.push(plane('progress', H, [ppx, ppy], [pw, ph * 0.7], [A.at.barfill.x, A.at.barfill.y, A.at.barfill.w, A.at.barfill.h], -2)); bones[bones.length - 1].pivot = [r4(ppx - pw / 2), r4(ppy), -2];
+      bones.push(plane('progressback', H, [ppx, ppy], [pw, ph], [A.at.barback.x, A.at.barback.y + 2, A.at.barback.w, Math.max(1, A.at.barback.h - 4)], HZ + 1)); imageEl('progressback'); elements.progressback.anchor = 'top-right';
+      bones.push(plane('progress', H, [ppx, ppy], [pw, ph * 0.7], [A.at.barfill.x, A.at.barfill.y, A.at.barfill.w, A.at.barfill.h], HZ)); bones[bones.length - 1].pivot = [r4(ppx - pw / 2), r4(ppy), HZ];
       elements.progress = { type: 'gauge', anchor: 'top-right', blend: 'blend', gauge: { source: '0', max: 1, fill: 'left' } };
-      flat('rank', 'rank', H, [0, C[1]], -16, size.rank);
-      flat('section', 'section', H, [0, C[1]], -17, size.section);
+      flat('section', 'section', H, [0, C[1]], HZ - 4, size.section);
+      Object.assign(L0, { HZ, score: { pivot: [HALFW - 4 - size.score[0] / 2, TOP - 7], left: 7 * sw + size.score[0] / 2, right: size.score[0] / 2, h: size.score[1] },
+        acc: { pivot: [HALFW - 4 - size.pct[0] * as - aw * 0.5, ay], left: 4 * aw + size.dot[0] * as * 0.9 + (size.score[0] * as) / 2, right: size.pct[0] * as + aw / 2, h: size.score[1] * as } });
     }
+    // ---- what both looks have past the HUD above: the flashlight, the fail, the mods on, the results
+    {
+      const Z = P ? { fl: -18.2, shade: -25.6, fail: -36, mods: L0.HZ, panel: -26, res: -29.5, grade: -31, stamp: -34 } : { fl: -12.5, shade: -15.5, fail: -22.6, mods: L0.HZ, panel: -16, res: -19, grade: -20, stamp: -21 };
+      const blackUv = [A.at.flashlight.x, A.at.flashlight.y, 1, 1];   // (the flashlight's corner: black, opaque)
+      const flBlend = P ? 'cutout' : 'blend';
+      // the flashlight (FL): a square with the light in it, following the cursor, and four shutters from the field's frame to the
+      // square (each scaled to reach it) — in the playfield's frame, in front of all but the cursor; the HUD in front of it
+      const fs = size.flS;
+      bones.push(plane('flhole', F, C, [2 * fs, 2 * fs], [A.at.flashlight.x, A.at.flashlight.y, A.at.flashlight.w, A.at.flashlight.h], Z.fl)); imageEl('flhole', null, flBlend);
+      // (the shutters opaque — cut out: what is behind them is hidden whatever order the game draws in)
+      const shutter = (name, pivot, origin, sz) => { bones.push({ name, parent: F, pivot: [r4(pivot[0]), r4(pivot[1]), Z.fl], cubes: [{ origin: [r4(origin[0]), r4(origin[1]), Z.fl], size: [r4(sz[0]), r4(sz[1]), 0], faces: { north: { uv: [blackUv[0], blackUv[1]], uv_size: [1, 1], texture: 'atlas' } } }] }); imageEl(name, null, 'cutout'); };
+      shutter('flleft', [C[0] - FLX, C[1]], [C[0] - FLX, C[1] - FLY], [1, 2 * FLY]);
+      shutter('flright', [C[0] + FLX, C[1]], [C[0] + FLX - 1, C[1] - FLY], [1, 2 * FLY]);
+      shutter('fltop', [C[0], C[1] + FLY], [C[0] - fs * 1.01, C[1] + FLY - 1], [2 * fs * 1.01, 1]);
+      shutter('flbottom', [C[0], C[1] - FLY], [C[0] - fs * 1.01, C[1] - FLY], [2 * fs * 1.01, 1]);
+      Object.assign(L0, { flS: fs, flX: FLX, flY: FLY });
+      // the fail: a dark curtain over the screen (under the HUD), FAILED, the retry's hint
+      const shadeW = 2 * (HALFW + 60), shadeTop = TOP + 2;
+      bones.push({ name: 'failshade', parent: H, pivot: [0, r4(shadeTop), Z.shade], cubes: [{ origin: [r4(-shadeW / 2), r4(BOTTOM - 2), Z.shade], size: [r4(shadeW), r4(shadeTop - BOTTOM + 2), 0], faces: { north: { uv: [A.at.shade.x + 1, A.at.shade.y + 1], uv_size: [Math.max(1, A.at.shade.w - 2), Math.max(1, A.at.shade.h - 2)], texture: 'atlas' } } }] }); imageEl('failshade', null, 'blend');
+      if (P) {
+        vox('failtext', 'failed', H, [0, C[1] + 22], Z.fail, 3, { px: 3.4 });
+        vox('failretry', 'retry', H, [0, C[1] - 14], Z.fail, 1.2, { px: 1.3 });
+      } else {
+        // (each its own depth: no two faces on one plane — the break's section is in front of the HUD too)
+        flat('failtext', 'failed', H, [0, C[1] + 22], Z.fail, size.failed);
+        if (A.at['pause-retry']) { flat('failbutton', 'pause-retry', H, [0, C[1] - 10], Z.fail - 0.2, size['pause-retry']); flat('failretry', 'retry', H, [0, C[1] - 23], Z.fail - 0.4, size.retry); L0.failButton = true; }
+        else flat('failretry', 'retry', H, [0, C[1] - 12], Z.fail - 0.4, size.retry);
+      }
+      // the mods on (top right, under the score): a row from the right, each shown by its state, those after it moving it left
+      const modY = 184, modR = HALFW - 6, gapM = P ? 1.6 : 1.4, mods = [];
+      bones.push({ name: 'mods', parent: H, pivot: [r4(modR), modY, 0] }); elements.mods = { type: 'image', anchor: 'top-right' };
+      // (they rest on one another until moved: each its own depth, 0.05 apart, and its own edges, 0.03 apart)
+      MODC.forEach(([m], i) => {
+        const id = `mod${m}`, w = P ? size.sprites[id].width * 0.75 : size[id][0], at = [modR - w / 2 - i * 0.03, modY - i * 0.03];
+        if (P) vox(id, id, 'mods', at, Z.mods - i * 0.05, 1, { px: 0.75 }); else flat(id, id, 'mods', at, Z.mods - i * 0.05, size[id]);
+        mods.push({ m: m.toLowerCase(), w: r4(w + gapM) });
+      });
+      L0.mods = mods;
+      // the results: osu!'s ranking — its panel (the score in its bar, the counts of 300 / 100 / 50 / miss, the max combo and the
+      // accuracy under their labels), the title, the grade, the full combo's stamp, a new best. Laid out to fit a 4:3 screen
+      // (±110 model units), not anchored: the score and the accuracy fly in from the HUD (anchored right: screen.dx)
+      const RL = -110, PT = TOP - 22, PH = 112, PW = r4(P ? 137.9 : size['ranking-panel'][0]), PB = PT - PH;
+      bones.push({ name: 'res', parent: H, pivot: [0, 140, 0] }); elements.res = { type: 'image' };
+      if (P) {
+        bones.push(plane('respanel', 'res', [RL + PW / 2, PT - PH / 2], [PW, PH], [A.at.resboard.x, A.at.resboard.y, A.at.resboard.w, A.at.resboard.h], Z.panel)); imageEl('respanel', null, 'blend');
+        // (its frame: a tray as the playfield's board — walls, a lip, corner posts — standing out of the panel)
+        bones.push({ name: 'respanel_frame', parent: 'respanel', pivot: [r4(RL + PW / 2), r4(PT - PH / 2), Z.panel], cubes: trayCubes([RL + PW / 2, PT - PH / 2], PW, PH, Z.panel - 4, A.at.barback, { out: 1.6 }) });
+      } else flat('respanel', 'ranking-panel', 'res', [RL + PW / 2, PT - PH / 2], Z.panel, [PW, PH]);
+      if (P) vox('restitle', 'restitle', 'res', [110 - (size.sprites.restitle.width * 1.6) / 2, TOP - 10], Z.res, 1.4, { px: 1.6 });
+      else flat('restitle', 'ranking-title', 'res', [110 - size['ranking-title'][0] / 2, TOP - 10], Z.res, size['ranking-title']);
+      // (a number in the results: digits right-aligned, the last at x0; 10 numerals a digit — a number element: no render
+      //  controller. The pixel look's numerals blocks of letters on their shadow, as the HUD's: each a model of its own)
+      const dig = P ? { w: 3 * 1.7 * 1.25, plane: (nm, par, at, z, d) => modelBone(nm, par, at, cellOf(`num${d}`), 1.7, z, size.models[`num${d}`]) }
+        : { w: size.score[0] * 0.85 * 0.95, plane: (nm, par, at, z, d) => { const a = cellOf('scoredigits', d), at2 = A.at.scoredigits; return plane(nm, par, at, [size.score[0] * 0.85, size.score[1] * 0.85], [a[0], a[1], at2.w, at2.h], z); } };
+      const numberEl = (name, [x0, y0], n, xParent) => {
+        bones.push({ name, parent: 'res', pivot: [r4(x0), r4(y0), Z.res] });
+        const digits = Array.from({ length: n }, (_, k) => Array.from({ length: 10 }, (_, d) => { const b = dig.plane(`${name}_d${k}_${d}`, name, [x0 + (k - (n - 1)) * dig.w, y0], Z.res - (k * 10 + d) * 0.021, d); bones.push(b); return b.name; }));
+        elements[name] = { type: 'number', number: { source: '0', digits, hideLeadingZero: true } };
+        // (its x: osu!'s "123x" — on its label's bone: a number element's own children are its numerals)
+        const xs = P ? 1.7 : 0.85, xw = P ? 3 * xs : size.x[0] * xs, xat = [x0 + dig.w * 0.5 + xw * 0.6, y0 - (P ? xs * 0.5 : 0)];
+        if (P) bones.push(modelBone(`${name}_x`, xParent, xat, cellOf('x'), xs, Z.res - 0.3, size.models.x));
+        else bones.push(plane(`${name}_x`, xParent, xat, [xw, size.x[1] * xs], [A.at.x.x, A.at.x.y, A.at.x.w, A.at.x.h], Z.res - 0.3));
+      };
+      const nd = String(G.objects.length).length, top = T.osugame.createGame(G).start(0).fastForward(lastEnd + 100).state();
+      // (the counts: 300 and 100 in the left column, 50 and miss in the right; each its judgement's picture)
+      const cols = [RL + 16, RL + 72], rows = [PT - 44, PT - 63];
+      [['300', 0], ['100', 1], ['50', 2], ['miss', 3]].forEach(([n, k]) => {
+        const at = [cols[k >> 1], rows[k & 1]], id = `res${n}`;
+        if (P) vox(`${id}_icon`, ['j300', 'j100', 'j50', 'jx'][k], 'res', at, Z.res, 1.2, { px: 1.5 });
+        else { const c = cellOf('judgement', k), jw = size.judgement[0] * 0.95, jh = size.judgement[1] * 0.95; bones.push(plane(`${id}_icon`, 'res', at, [jw, jh], [c[0], c[1], A.at.judgement.w, A.at.judgement.h], Z.res)); imageEl(`${id}_icon`); }
+        numberEl(id, [at[0] + 14 + (nd - 1) * dig.w, at[1]], nd, `${id}_icon`);
+      });
+      // (the max combo and the accuracy at the panel's foot, under their labels)
+      const lab = (name, id, at) => (P ? vox(name, id, 'res', at, Z.res, 1, { px: 1.0 }) : flat(name, id, 'res', at, Z.res, size[id]));
+      lab('reslabelcombo', P ? 'maxcombo' : 'ranking-maxcombo', [RL + 30, PB + 23]);
+      lab('reslabelacc', P ? 'accuracy' : 'ranking-accuracy', [RL + 100, PB + 23]);
+      const nc = String(Math.max(1, top.maxcombo)).length;
+      numberEl('resmaxcombo', [RL + 22 + (nc - 1) * dig.w, PB + 11], nc, 'reslabelcombo');
+      // (the grade: osu!'s letters, silver with HD or FL)
+      if (P) vox('resrank', 'rank', 'res', [72, 144], Z.grade, 3, { px: 8, perPixel: true }); else flat('resrank', 'rank', 'res', [72, 144], Z.grade, size.rank);
+      // (a full combo: osu!'s "perfect"; a new best of this player's)
+      if (P) vox('resfc', 'fc', 'res', [72, 98], Z.stamp, 1.4, { px: 1.6 }); else flat('resfc', 'ranking-perfect', 'res', [72, 98], Z.stamp, size['ranking-perfect']);
+      if (P) vox('resrecord', 'record', 'res', [72, 195], Z.stamp, 1.2, { px: 1.3 }); else flat('resrecord', 'record', 'res', [72, 195], Z.stamp, size.record);
+      Object.assign(L0, { R: { RL, PT, PH, PW, PB, scoreTo: [RL + PW - 9, PT - 10], scoreScale: P ? 1.25 : 1.3, accTo: [RL + PW - 10, PB + 11], accScale: P ? 1.6 : 1.25 }, top });
+    }
+    // (the pixel look's models: no two of them share a plane where they overlap)
+    if (P) settleDepths(bones);
     // ---- the timeline and the game
-    const L = { pixel: P, C, bpm, colours: colours.length, kiai: G.kiai, breaks: G.breaks, duration, music: opts.music || 'music', bodyFrame, bodyCentre, width: FW, comboDigitW: P ? 2.6 * 4 : size.score[0] * 1.25 * 0.92 };
+    const L = Object.assign({ pixel: P, C, bpm, colours: colours.length, circleNumbers, kiai: G.kiai, breaks: G.breaks, duration, music: opts.music || 'music', bodyFrame, bodyCentre, width: FW, comboDigitW: P ? 2.6 * 4 : size.score[0] * 1.25 * 0.92, flR: FLR }, L0);
     const doc = docOf(map, G, L);
+    // (the tour rides on the game's config: the script plays its scenes)
+    const tour = tourOf(G);
+    G.tour = tour.scenes;
     const md = map.metadata || {};
     const design = { settings: Object.assign({ ns, name: opts.title || `${md.Title || 'osu!'} (${P ? 'pixel' : 'skin'})`, description: opts.description || 'GeoUI timeline: osu! (bds-lab)', bp: true }, opts.settings || {}),
       seed: opts.seed || `osu-${skin}`, bones, elements, textures: { atlas: { name: 'atlas', width: A.width, height: A.height, image: A.image } } };
@@ -2393,7 +2893,7 @@
     const sounds = [...new Set(G.objects.flatMap((g) => [...(g.hs || []), ...(g.es || []).flat()]).concat(Object.values(G.sounds).filter(Boolean)))];
     const info = { title: md.Title || '', artist: md.Artist || '', version: md.Version || '', bpm, duration, difficulty: diff, colours, counts: { circles: G.objects.filter((g) => g.k === 'c').length, sliders: G.objects.filter((g) => g.k === 's').length, spinners: G.objects.filter((g) => g.k === 'p').length,
       ticks: doc.sequences[0].instances.filter((x) => x.template === 'osu-tick').length, followpoints: doc.sequences[0].instances.filter((x) => x.template === 'osu-follow').length } };
-    return { design, doc, game: G, info, sounds, atlas: A, warnings };
+    return { design, doc, game: G, info, sounds, atlas: A, warnings, tour };
   }
 
   // (an osu! skin's files this uses: its @2x pictures by these names — a skin with only 1x pictures is read as they are, doubled —
@@ -2401,12 +2901,14 @@
   const SKIN_IMAGES = ['hitcircle', 'hitcircleoverlay', 'approachcircle', ...Array.from({ length: 10 }, (_, d) => `default-${d}`), 'hit0', 'hit50', 'hit100', 'hit300', ...Array.from({ length: 10 }, (_, d) => `sliderb${d}`),
     'sliderfollowcircle', 'reversearrow', 'sliderscorepoint', 'followpoint', 'spinner-circle', 'spinner-approachcircle', 'spinner-clear', 'spinner-spin', 'spinner-rpm', ...Array.from({ length: 10 }, (_, d) => `score-${d}`),
     'score-x', 'score-percent', 'score-dot', 'scorebar-bg', 'scorebar-colour', 'cursor', 'lighting', 'ranking-X-small', 'ranking-S-small', 'ranking-A-small', 'ranking-B-small', 'ranking-C-small', 'ranking-D-small', 'section-pass', 'section-fail'];
-  const SKIN_SOUNDS = ['normal-hitnormal', 'normal-hitwhistle', 'normal-hitfinish', 'normal-hitclap', 'soft-hitnormal', 'soft-hitwhistle', 'soft-hitfinish', 'soft-hitclap', 'drum-hitnormal', 'drum-hitwhistle', 'drum-hitfinish', 'drum-hitclap', 'normal-slidertick', 'spinnerbonus', 'combobreak'];
+  // (what a skin may have besides: the results' panel, words and big grades, the fail's retry button — drawn here where it has none)
+  const SKIN_EXTRA = ['ranking-panel', 'ranking-title', 'ranking-maxcombo', 'ranking-accuracy', 'ranking-perfect', 'ranking-X', 'ranking-XH', 'ranking-S', 'ranking-SH', 'ranking-A', 'ranking-B', 'ranking-C', 'ranking-D', 'pause-retry'];
+  const SKIN_SOUNDS = ['normal-hitnormal', 'normal-hitwhistle', 'normal-hitfinish', 'normal-hitclap', 'soft-hitnormal', 'soft-hitwhistle', 'soft-hitfinish', 'soft-hitclap', 'drum-hitnormal', 'drum-hitwhistle', 'drum-hitfinish', 'drum-hitclap', 'normal-slidertick', 'spinnerbonus', 'combobreak', 'failsound', 'applause'];
   const LEGACY_SKIN = 'https://raw.githubusercontent.com/ppy/osu-resources/46d344264e5938e168cfbbd2c8fab5f572ebeda4/osu.Game.Resources/Skins/Legacy/';
   /** a skin's picture named n where its @2x is missing: the 1x one doubled (osukit reads @2x sizes) */
   const as2x = (im) => resize(im, im.width * 2, im.height * 2);
 
-  T.osukit = { build, pixelSprites, textImage, voxel, plane, atlasOf, resize, img, FONT, SKIN_IMAGES, SKIN_SOUNDS, LEGACY_SKIN, as2x };
+  T.osukit = { build, tourOf, pixelSprites, textImage, strokeText, voxel, plane, atlasOf, resize, img, FONT, SKIN_IMAGES, SKIN_EXTRA, SKIN_SOUNDS, LEGACY_SKIN, as2x };
   if (typeof module === 'object' && module && module.exports) module.exports = T.osukit;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 })(undefined);
@@ -2553,7 +3055,8 @@
   }
 
   /** the chip version's hitsounds (osu!'s names: normal-hitnormal, …-hitwhistle, …-hitfinish, …-hitclap, slidertick, combobreak,
-   *  spinnerbonus): short blips made here → { name: { rate, channels } } */
+   *  spinnerbonus) and the play's own (failsound: a fall down the scale; applause: a fanfare, the results'): short blips made here
+   *  → { name: { rate, channels } } */
   function chipHitsounds() {
     const rate = 22050, out = {}, rnd = noiseGen(3);
     const make = (len, fn) => { const a = new Float32Array(Math.round(len * rate)); for (let i = 0; i < a.length; i++) a[i] = fn(i / rate, i); return { rate, channels: [a] }; };
@@ -2565,6 +3068,12 @@
     out['normal-slidertick'] = make(0.04, (t) => sq(t * 2640, 0.5) * 0.25 * Math.exp(-t * 80));
     out.combobreak = make(0.5, (t) => sq(t * (440 - t * 500), 0.5) * 0.35 * Math.exp(-t * 4));
     out.spinnerbonus = make(0.25, (t) => sq(t * (880 + t * 2400), 0.125) * 0.3 * Math.exp(-t * 9));
+    // (the fail: a square wave sliding from 660 Hz to 82 Hz, wobbling — the phase summed so the slide stays smooth)
+    let ph = 0;
+    out.failsound = make(1.5, (t) => { const f = 82 + 578 * Math.pow(1 - t / 1.5, 2.2), v = 1 + 0.03 * Math.sin(t * 38); ph += (f * v) / rate; return sq(ph, 0.5) * 0.32 * Math.min(1, t * 60) * Math.exp(-t * 1.1); });
+    // (the applause: C E G C' as 16ths up, then the chord held with a sparkle of noise)
+    const ARP = [523.25, 659.26, 783.99, 1046.5];
+    out.applause = make(1.6, (t) => { const k = Math.min(3, Math.floor(t / 0.09)), held = t >= 0.36; const tone = held ? ARP.reduce((a, f, i) => a + sq(t * f * (1 + i * 0.002), 0.25), 0) / 4 : sq(t * ARP[k], 0.25); return (tone * 0.34 * (held ? Math.exp(-(t - 0.36) * 1.8) : 1) + (held ? rnd() * 0.07 * Math.exp(-(t - 0.36) * 2.4) : 0)) * Math.min(1, t * 80); });
     return out;
   }
 
@@ -4472,11 +4981,12 @@
 
   // ---------------------------------------------------------------------------------------------------------------- expressions
   // the model's key expressions are Molang already (param.<name>, t, math.*): their params and t become variables
-  // (state.<name>: the variable extendPack made for it — STATEV, set while it writes a pack; '0' outside one)
-  let STATEV = {};
+  // (state.<name>: the variable extendPack made for it — STATEV, set while it writes a pack; '0' outside one. screen.dx: the
+  //  screen's half width past the reference aspect's, from GeoUI's own v.geoui_halfw — SCREENDX, set likewise)
+  let STATEV = {}, SCREENDX = '0';
   function exprM(src, vars, tVar) {
     const tk = String(src).match(/\d+(?:\.\d+)?|\.\d+|[A-Za-z_][\w.]*|[-+*/(),]|\S/g) || [];
-    return `(${tk.map((t) => { const m = /^(?:param|p)\.(\w+)$/.exec(t), sm = /^state\.(\w+)$/.exec(t); return m ? (vars[m[1]] || '0') : sm ? (STATEV[sm[1]] || '0') : t === 't' ? (tVar || '0') : t; }).join(' ')})`;
+    return `(${tk.map((t) => { const m = /^(?:param|p)\.(\w+)$/.exec(t), sm = /^state\.(\w+)$/.exec(t); return m ? (vars[m[1]] || '0') : sm ? (STATEV[sm[1]] || '0') : t === 't' ? (tVar || '0') : t === 'screen.dx' ? SCREENDX : t; }).join(' ')})`;
   }
   const valM = (v, vars, tVar) => (typeof v === 'string' ? exprM(v, vars, tVar) : n(v));
 
@@ -4799,16 +5309,49 @@
   }
 
   // ---------------------------------------------------------------------------------------------------------------- the pack
-  /** a depth for a cube where no cube of the geometry that overlaps it (seen from the front) lies within 0.02 */
-  function freeDepth(geo, cube) {
-    const [x0, y0, z0] = cube.origin, x1 = x0 + cube.size[0], y1 = y0 + cube.size[1];
-    const near = [];
-    for (const b of geo.bones) for (const c of b.cubes || []) {
-      const [a0, b0, c0] = c.origin;
-      if (a0 < x1 && a0 + c.size[0] > x0 && b0 < y1 && b0 + c.size[1] > y0) near.push(c0, c0 + (c.size[2] || 0));
+  /** where to move a model's cubes — all of them alike, so that a model of many blocks keeps its shape — for none of their
+   *  faces to lie within 0.02 of a face of one of `placed` that looks the same way and overlaps it there (two faces on one plane
+   *  flicker; a face of no area, a flat plate's side, is none): back in depth (0.021 at a time, from `kz` steps) to the first
+   *  step where no front or back is near, then up or down and across (0.02 at a time, either way) for the sides — again, as
+   *  each move changes what the others overlap — and when the sides find no room there, the next step back. Cubes as a
+   *  geometry has them (origin, size, inflate); rotated ones are left out. → [dx, dy, dz] */
+  function freePlace(placed, cubes, { kz = 1, maxZ = 2000, maxXY = 25 } = {}) {
+    const M = 0.02 - 1e-6, A = 1e-6, R4 = (v) => Math.round(v * 1e4) / 1e4;
+    const boxOf = (c) => { const i = num(c.inflate), o = c.origin, s = c.size || [0, 0, 0]; return [o[0] - i, o[1] - i, o[2] - i, o[0] + num(s[0]) + i, o[1] + num(s[1]) + i, o[2] + num(s[2]) + i]; };
+    const mine = cubes.filter((c) => !c.rotation).map(boxOf), others = placed.filter((c) => !c.rotation).map(boxOf), pad = maxXY * 0.02 + 0.05;
+    const near = mine.map((q) => others.filter((w) => w[0] < q[3] + pad && w[3] > q[0] - pad && w[1] < q[4] + pad && w[4] > q[1] - pad));
+    const ov = (a0, a1, b0, b1) => Math.max(0, Math.min(a1, b1) - Math.max(a0, b0));
+    // (the moves along axis a that would bring a face of ours near one of theirs — the other two moves as d has them)
+    const near1 = (a, d) => {
+      const b = (a + 1) % 3, c = (a + 2) % 3, out = [];
+      for (let i = 0; i < mine.length; i++) {
+        const q = mine[i];
+        for (const w of near[i]) if (ov(q[b] + d[b], q[b + 3] + d[b], w[b], w[b + 3]) * ov(q[c] + d[c], q[c + 3] + d[c], w[c], w[c + 3]) > A) out.push(w[a] - q[a], w[a + 3] - q[a + 3]);
+      }
+      return out;
+    };
+    const first = (a, d, cands, from = 0) => { const ws = near1(a, d); for (let k = from; k < cands.length; k++) if (ws.every((w) => Math.abs(w - cands[k]) >= M)) return k; return -1; };
+    const free = (d) => [2, 1, 0].every((a) => first(a, d, [d[a]]) === 0);
+    const zs = [], xys = [0];
+    for (let k = kz; k < maxZ; k++) zs.push(R4(0.021 * k));
+    for (let j = 1; j <= maxXY; j++) xys.push(R4(0.02 * j), R4(-0.02 * j));
+    let d = [0, 0, zs[0]];
+    for (let from = 0, tries = 0; from < zs.length && tries < 60; tries++) {
+      let zi = from;
+      d = [0, 0, zs[from]];
+      for (let round = 0; round < 6; round++) {
+        zi = first(2, d, zs, from);
+        if (zi < 0) return d;
+        d = [d[0], d[1], zs[zi]];
+        const yi = first(1, d, xys);
+        if (yi >= 0) d = [d[0], xys[yi], d[2]];
+        const xi = first(0, d, xys);
+        if (xi >= 0) d = [xys[xi], d[1], d[2]];
+        if (free(d)) return d;
+      }
+      from = zi + 1;
     }
-    for (let k = 1; k < 2000; k++) { const z = Math.round((z0 + 0.021 * k) * 1e4) / 1e4; if (near.every((w) => Math.abs(w - z) >= 0.02)) return z; }
-    return z0;
+    return d;
   }
   // ---------------------------------------------------------------------------------------------------------------- the pack (cont.)
   /** the timeline (doc) into GeoUI Builder's files (buildPack's), RP side. ctx: { design (buildPack's input), core (GeoUICore;
@@ -4821,6 +5364,9 @@
     const doc = M.normalize(doc0), design = ctx.design || {}, files = Object.assign({}, files0), warnings = [], report = { warnings, bezier: 0 };
     const G = ctx.core || T.core || root.GeoUICore || null;
     const S = G && G.settingsOf ? G.settingsOf(design.settings) : Object.assign({ ns: 'geoui' }, design.settings || {});
+    // (screen.dx as GeoUI's anchors have it: the half width now less the reference aspect's — 0 without GeoUI's core)
+    const REFW = G && G.halfWAt && G.r3 && S.unitsPerScreenH ? G.r3(G.halfWAt(S, S.refAspect)) : null;
+    SCREENDX = REFW !== null ? `((v.geoui_halfw ?? ${REFW}) - ${REFW})` : '0';
     const ns = clean(S.ns || 'geoui'), rpDir = `${ns}_RP`, V = (s) => `v.${ns}_${s}`;
     if (!doc.sequences.length) return { files, warnings, stats: { bindings: {}, pre: [], slots: {}, longest: 0 } };
     const bones = design.bones || [], boneSet = new Set(bones.map((b) => b.name));
@@ -4995,9 +5541,12 @@
           if (!src) continue;
           const copy = parse(src);
           copy.name = `${name}_${tag}${k}`;
-          // (a copy moved in depth, 0.02 at a time, until no face it overlaps is within 0.02 of it: never two faces on one plane —
-          //  only one of them shows at a time, but two on one plane would flicker if ever they did)
-          for (const cube of copy.cubes || []) { const dxy = cube.size && cube.size[2] > 0 ? Math.round(nc * 0.02 * 1e4) / 1e4 : 0; cube.origin = [Math.round((cube.origin[0] + dxy) * 1e4) / 1e4, Math.round((cube.origin[1] + dxy) * 1e4) / 1e4, freeDepth(geo, cube)]; }
+          // (a copy moved in depth, 0.021 at a time, until no face it overlaps is within 0.02 of one of its own: never two faces on
+          //  one plane — only one of them shows at a time, but two on one plane would flicker if ever they did. The whole copy
+          //  alike: a model of blocks in layers keeps its shape)
+          for (const cube of copy.cubes || []) { const dxy = cube.size && cube.size[2] > 0 ? Math.round(nc * 0.02 * 1e4) / 1e4 : 0; cube.origin = [Math.round((cube.origin[0] + dxy) * 1e4) / 1e4, Math.round((cube.origin[1] + dxy) * 1e4) / 1e4, cube.origin[2]]; }
+          const [dx, dy, dz] = freePlace(geo.bones.flatMap((b) => b.cubes || []), copy.cubes || []);
+          for (const cube of copy.cubes || []) cube.origin = cube.origin.map((v, i) => Math.round((v + [dx, dy, dz][i]) * 1e4) / 1e4);
           if (name !== of && src.parent) copy.parent = tree.includes(src.parent) ? `${src.parent}_${tag}${k}` : src.parent;
           geo.bones.push(copy); have.set(copy.name, copy);
         }
@@ -5157,7 +5706,7 @@
     return { files, warnings: [...new Set(warnings)], stats: { bindings, pre: written, slots: slotsOut, longest, deepest, lines: written.length, chars, variables, entityVariables, bezierError: report.bezier, budget, counts } };
   }
 
-  T.compile = { extendPack, easeM, keysM, pathM, pathKeys, exprM, targetLines, searchLines, tableLines, splitLines, maxDepth, mparse };
+  T.compile = { extendPack, freePlace, easeM, keysM, pathM, pathKeys, exprM, targetLines, searchLines, tableLines, splitLines, maxDepth, mparse };
   if (typeof module === 'object' && module && module.exports) module.exports = T.compile;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 })(undefined);
@@ -5173,6 +5722,10 @@
 // streamed and judged anew (a pingpong's way back, where the time runs backwards, is shown but not judged and not heard).
 // The engine below is one self-contained function: the pack's script carries its source, and the tests run the very same
 // code with a fake world. The properties are contract.js's (seq: sequence + 1024 × paused + 2048 × generation).
+// A game (osu!, osugame.js) also has: each player's own settings kept in the world (mode, sensitivity, offset, mods), a failed
+// play stopped after its fall (a press meanwhile plays it again), its end (the best kept — not an autoplay's — the scoreboard,
+// a line in the chat, the applause), and the tour: every look of the game in about 20 seconds, scene by scene at fixed times
+// (osukit.js writes the scenes for the beatmap) — for seeing the whole of it at once, the real app's quick check above all.
 (function (root) {
   'use strict';
   const T = root.GeoUITimeline = root.GeoUITimeline || {};
@@ -5183,19 +5736,48 @@
   /** the engine (no outside names: its source goes into the pack's script as is). io: { tick() (the server's tick), setProp(p,
    *  name, value), getProp(p, name) (what the player has: a world keeps its players' properties), players() (everyone in the
    *  world), event(p, id, message) (a scriptevent: markers), sound(p, id, volume, pitch) and stopSound(p, id) (the sequence's
-   *  audio clips) } */
+   *  audio clips), rotation(p) and held(p) (a game's cursor and button), load(p, key) and save(p, key, value) (the player's own
+   *  values kept in the world: a game's settings and best), scoreboard(p, id, name, score), message(p, text) } */
   function createEngine(CFG, io, createGame) {
     const P = (x) => `${CFG.ns}:${x}`, players = new Map(), HIT = 1, MISS = 2, LATE = 250, PAUSE = 1024, GEN = 2048, GENS = 8192;
     const W = CFG.windows, POINTS = { great: 300, good: 100, ok: 50 };
+    // (a game: a failed play is shown this long — its fall, FAILED — then stopped; a press after the first second of it plays
+    //  it again. The mods a player may choose, osu!'s letters)
+    const FAIL_HOLD = 4500, RETRY_AFTER = 1000, MOD_NAMES = ['HD', 'FL', 'NF', 'SD', 'PF'];
     const get = (p, name) => { try { return io.getProp ? io.getProp(p, name) : undefined; } catch (e) { return undefined; } };
+    const load = (p, key) => { try { return io.load ? io.load(p, key) : undefined; } catch (e) { return undefined; } };
+    const save = (p, key, v) => { try { if (io.save) io.save(p, key, v); } catch (e) { /* (kept for this session only) */ } };
     function stateOf(p) {
       let s = players.get(p.id);
       // (the generation goes on from the one the player has: a client that saw it already would not count again from a
       //  play that only set it to the same number — after a server restart the script begins at 0, the world keeps it)
-      if (!s) { const v0 = Number(get(p, P('seq'))), g0 = Number.isFinite(v0) ? Math.floor(v0 / GEN) % GENS : 0; s = { seq: 0, gen: g0, from: 0, start: 0, paused: false, offset: 0, slots: new Map(), results: new Map(), cur: new Map(), groups: new Map(), judged: new Set(), marks: new Set(), played: new Set(), ringing: new Set(), round: 0, score: 0, combo: 0, best: 0, total: 0, earned: 0, health: 100,
-        game: null, mode: CFG.mode || 'aim', sens: CFG.sens || 2.4, ref: null, pending: [], prevMs: null, ge: {}, gp: {} }; players.set(p.id, s); }
+      if (!s) {
+        const v0 = Number(get(p, P('seq'))), g0 = Number.isFinite(v0) ? Math.floor(v0 / GEN) % GENS : 0;
+        s = { seq: 0, gen: g0, from: 0, start: 0, paused: false, offset: 0, slots: new Map(), results: new Map(), cur: new Map(), groups: new Map(), judged: new Set(), marks: new Set(), played: new Set(), ringing: new Set(), round: 0, score: 0, combo: 0, best: 0, total: 0, earned: 0, health: 100,
+          game: null, mode: CFG.mode || 'aim', sens: CFG.sens || 2.4, mods: [], ref: null, pending: [], prevMs: null, ge: {}, gp: {}, failAt: -1, stopAt: -1, done: false, record: 0, tour: null, last: 0 };
+        players.set(p.id, s);
+        // (the player's own settings for a game, kept in the world: what they chose last time)
+        let o = null; try { o = JSON.parse(String(load(p, P('prefs')) || 'null')); } catch (e) { o = null; }
+        if (o && typeof o === 'object') {
+          if (['auto', 'aim', 'relax'].includes(o.mode)) s.mode = o.mode;
+          if (o.sens > 0 && o.sens < 50) s.sens = o.sens;
+          if (Number.isFinite(o.offset)) s.offset = Math.max(-500, Math.min(500, o.offset));
+          if (Array.isArray(o.mods)) s.mods = o.mods.filter((m) => MOD_NAMES.includes(m));
+        }
+      }
       return s;
     }
+    const savePrefs = (p, s) => save(p, P('prefs'), JSON.stringify({ mode: s.mode, sens: s.sens, offset: s.offset, mods: s.mods }));
+    /** mods from words ('HD FL', 'hdfl', 'none') → [letters] or a reason: NF never with SD or PF (osu!'s own rule), PF over SD */
+    function modsOf(words) {
+      const w = words.join('').toUpperCase().replace(/[^A-Z]/g, '');
+      if (!w || w === 'NONE' || w === 'NM') return [];
+      const out = [];
+      for (let i = 0; i < w.length; i += 2) { const m = w.slice(i, i + 2); if (!MOD_NAMES.includes(m)) return `${CFG.ns}: mods ${MOD_NAMES.join(' ')} | none (${m}?)`; if (!out.includes(m)) out.push(m); }
+      if (out.includes('NF') && (out.includes('SD') || out.includes('PF'))) return `${CFG.ns}: NF cannot go with SD or PF`;
+      return out.includes('PF') ? out.filter((m) => m !== 'SD') : out;
+    }
+    const play1 = (p, s, id) => { if (!id || !io.sound) return; try { io.sound(p, id, 1, 1); } catch (e) { /* (a sound the pack does not have: silent) */ } };
     /** every sound this player was sent stops (a pause, a seek, a stop: a sound in the game cannot be held or moved) */
     function silence(p, s) { if (io.stopSound) for (const id of s.ringing) { try { io.stopSound(p, id); } catch (e) { /* (gone) */ } } s.ringing.clear(); }
     const seqOf = (s) => CFG.sequences.find((q) => q.index === s.seq) || null;
@@ -5275,7 +5857,30 @@
     //      played, its states to their properties (contract.js: 24 bits a property, packed as an instance's params)
     const GL = CFG.global || { events: [], groups: [], specs: {} };
     const packOf = (vals, spec) => { let n = 0, sh = 0; for (const f of spec) { const v = Math.min(Math.max(Number(vals[f.name]) || 0, f.min), f.max), L = 2 ** f.bits - 1; n += Math.round(((v - f.min) / (f.max - f.min)) * L) * 2 ** sh; sh += f.bits; } return n; };
-    function gameStart(p, s, q, ms, fresh) { if (!q.game || !createGame) { s.game = null; return; } if (fresh || !s.game) s.game = createGame(q.game).start(ms); else s.game.seek(ms); s.ref = null; s.pending = []; s.prevMs = null; }
+    function gameStart(p, s, q, ms, fresh) {
+      if (!q.game || !createGame) { s.game = null; return; }
+      if (fresh || !s.game) { s.game = createGame(q.game, { mods: s.mods }).start(ms); s.failAt = -1; s.stopAt = -1; s.done = false; s.record = 0; }
+      else s.game.seek(ms);
+      s.ref = null; s.pending = []; s.prevMs = null;
+    }
+    /** the whole play's events (a hit, a miss, a fail…) counted up: the client takes a counter's change as the event's time */
+    function countEvents(p, s, events) {
+      let dirty = false;
+      for (const [name] of events) if (GL.events.includes(name)) { s.ge[name] = ((s.ge[name] || 0) + 1) % 64; dirty = true; }
+      if (dirty) for (let k = 0; k < GL.events.length; k += 4) { let v = 0; GL.events.slice(k, k + 4).forEach((e, j) => { v += (s.ge[e] || 0) * 2 ** (6 * j); }); set(p, P(k ? `ge${k / 4}` : 'ge'), v); }
+    }
+    /** the play's end (every object judged, not failed): the best kept and the scoreboard (not an autoplay's: osu! keeps none),
+     *  the applause, a line in the chat */
+    function finish(p, s, q, st) {
+      const auto = s.mode === 'auto' || Boolean(s.tour), key = P(`best_${q.id}`);
+      const best0 = Number(load(p, key)) || 0;
+      if (!auto && st.score > best0) { s.record = 1; save(p, key, st.score); }
+      const best = Math.max(best0, auto ? 0 : st.score);
+      if (!auto && io.scoreboard) { try { io.scoreboard(p, `${CFG.ns}_best`, `osu! ${q.title || q.id}`, best); } catch (e) { /* (no scoreboard: the best is kept all the same) */ } }
+      play1(p, s, q.game.sounds && q.game.sounds.applause);
+      const ranks = ['-', 'D', 'C', 'B', 'A', 'S', 'SS'], mods = s.mods.length ? ` +${s.mods.join('')}` : '';
+      if (io.message) { try { io.message(p, `§e${q.title || q.id}§r ${String(st.score).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} ${ranks[st.rank] || '-'} ${st.acc.toFixed(2)}% ×${st.maxcombo}${mods}${st.fc ? ' FULL COMBO' : ''}${auto ? ' (auto: not kept)' : s.record ? ' §a★ NEW RECORD§r' : ` (best ${String(best).replace(/\B(?=(\d{3})+(?!\d))/g, ',')})`}`); } catch (e) { /* (left) */ } }
+    }
     function gameTick(p, s, q, ms) {
       const g = s.game, prev = s.prevMs === null ? ms : s.prevMs;
       let inp;
@@ -5292,14 +5897,84 @@
       s.prevMs = ms;
       const r = g.step(ms, inp);
       for (const [key, code] of r.results) { const h = q.keyMap && q.keyMap[key]; if (h) send(p, s, q, h, code); }
-      let geDirty = false;
-      for (const [name] of r.events) if (GL.events.includes(name)) { s.ge[name] = ((s.ge[name] || 0) + 1) % 64; geDirty = true; }
-      if (geDirty) for (let k = 0; k < GL.events.length; k += 4) { let v = 0; GL.events.slice(k, k + 4).forEach((e, j) => { v += (s.ge[e] || 0) * 2 ** (6 * j); }); set(p, P(k ? `ge${k / 4}` : 'ge'), v); }
-      for (const [id] of r.sounds) if (io.sound) { try { io.sound(p, id, 1, 1); } catch (e) { /* (a sound the pack does not have: silent) */ } }
-      const st = g.state();
+      countEvents(p, s, r.events);
+      for (const [id] of r.sounds) play1(p, s, id);
+      gameState(p, s, q);
+    }
+    /** the game's state to the properties: GeoUI's values, the packed groups (with the play's flags: the mods on, auto, a full
+     *  combo so far, failed, a new best), and what a fail or the end calls for */
+    function gameState(p, s, q) {
+      const st = s.game.state();
       s.score = st.score; s.combo = st.combo; s.health = st.hp; s.acc = Math.round(st.acc * 100);
-      for (const grp of GL.groups) { const v = packOf(st, GL.specs[grp]); if (s.gp[grp] !== v) { s.gp[grp] = v; set(p, P(grp), v); } }
-      values(p, s);
+      sendGroups(p, s, st); values(p, s);
+      // (failed: the music stops, the fail's sound, the play stopped once its fall has been seen — osu!'s fail screen)
+      if (st.failed && s.failAt < 0) { s.failAt = nowMs(s); s.stopAt = s.failAt + FAIL_HOLD; silence(p, s); play1(p, s, q.game.sounds && q.game.sounds.fail); }
+      if (st.done && !st.failed && !s.done) { s.done = true; finish(p, s, q, st); sendGroups(p, s, st); }
+    }
+    /** the packed groups the pack reads (contract.js STATE_GROUPS), the play's own flags with them */
+    function sendGroups(p, s, st) {
+      const has = (m) => (s.mods.includes(m) ? 1 : 0);
+      const all = Object.assign({}, st, { hd: has('HD'), fl: has('FL'), nf: has('NF'), sd: has('SD'), pf: has('PF'), auto: s.mode === 'auto' ? 1 : 0, record: s.record });
+      for (const grp of GL.groups) { const v = packOf(all, GL.specs[grp]); if (s.gp[grp] !== v) { s.gp[grp] = v; set(p, P(grp), v); } }
+    }
+    // ---- the tour: every look of the game, scene by scene at fixed times from its start (q.game.tour: [ms, what, …]). A scene
+    //      the autoplay plays from a time on (a seek in auto, the results) takes the autoplay's play up to that time, made ready
+    //      during the scene before it a slice a tick (the server's script is slow: a whole play at once stalls its tick)
+    const modsIn = (c, now) => (c !== undefined && c !== null ? String(c).split(',').filter(Boolean) : now);
+    /** the next scene that wants a play made ready: { k, at (the song's ms), mods } — or null */
+    function prepOf(s, T0) {
+      const sc = T0.q.game.tour;
+      for (let k = T0.next; k < sc.length; k++) {
+        const [, what, a, b, c] = sc[k];
+        if (what === 'results') return { k, at: a, mods: [] };
+        if (what === 'seek' && b === 'auto') return { k, at: a, mods: modsIn(c, s.mods) };
+        if (what === 'stop') return null;
+      }
+      return null;
+    }
+    /** a slice of the next scene's play: as much of the song as finishes it by the scene's time */
+    function prepStep(s, T0, el) {
+      const want = prepOf(s, T0);
+      if (!want) { T0.prep = null; return; }
+      if (!T0.prep || T0.prep.k !== want.k) T0.prep = { k: want.k, at: want.at, mods: want.mods, game: createGame(T0.q.game, { mods: want.mods }).start(0), done: 0 };
+      const P0 = T0.prep;
+      if (P0.done >= P0.at) return;
+      const ticksLeft = Math.max(1, Math.floor((T0.q.game.tour[P0.k][0] - el) / 50) - 1), slice = Math.max(1500, Math.ceil((P0.at - P0.done) / ticksLeft));
+      P0.done = Math.min(P0.at, P0.done + slice); P0.game.fastForward(P0.done);
+    }
+    /** the play for scene k at the song's ms `at`: the one made ready (finished now if it is not yet), else made now */
+    function takePrep(T0, k, at, mods) {
+      const P0 = T0.prep && T0.prep.k === k && T0.prep.mods.join() === mods.join() ? T0.prep : null;
+      T0.prep = null;
+      return (P0 ? P0.game : createGame(T0.q.game, { mods }).start(0)).fastForward(at);
+    }
+    function tourStep(p, s) {
+      const T0 = s.tour, el = (io.tick() - T0.t0) * 50, q = T0.q, sc = q.game.tour;
+      while (s.tour === T0 && T0.next < sc.length && sc[T0.next][0] <= el) {
+        const k = T0.next++, [, what, a, b, c] = sc[k];
+        if (what === 'play') { s.mode = b || 'auto'; s.mods = modsIn(c, []); api.command(p, 'play', [String(q.index), String(a / 1000)]); }
+        else if (what === 'seek') {
+          if (b) s.mode = b;
+          const mods = modsIn(c, s.mods);
+          // (in auto: the autoplay's play up to the scene by the scene's mods — as if it had played so; else the play goes on
+          //  from there, other mods by their rules from the start)
+          if (s.game && s.mode === 'auto') s.game = takePrep(T0, k, a, mods);
+          else if (s.game && mods.join() !== s.mods.join()) s.game = createGame(q.game, { mods }).start(0);
+          s.mods = mods;
+          if (s.seq) restart(p, s, a);
+        } else if (what === 'mode') { s.mode = a; s.ref = null; }
+        else if (what === 'results') {
+          // (a whole play by the autoplay up to the end: the results as a full play would show them)
+          s.mode = 'auto'; s.mods = [];
+          if (!s.seq) api.command(p, 'play', [String(q.index), '0']);
+          s.game = takePrep(T0, k, a, []); s.failAt = -1; s.stopAt = -1; s.done = false; s.record = 0;
+          restart(p, s, a);
+        } else if (what === 'fail' && s.game) { const r = s.game.fail(seqTime(q, nowMs(s))); countEvents(p, s, r.events); gameState(p, s, q); }
+        else if (what === 'stop') api.command(p, 'stop', []);
+      }
+      // (over: the player's own settings back; else the next scene's play a slice nearer)
+      if (s.tour === T0 && T0.next >= sc.length) { s.mode = T0.keep.mode; s.mods = T0.keep.mods; s.tour = null; }
+      else if (s.tour === T0) prepStep(s, T0, el);
     }
     const api = {
       /** a scriptevent's verb and words for a player */
@@ -5308,27 +5983,53 @@
         if (verb === 'play') {
           const want = String(args[0] || '1'), q = CFG.sequences.find((x) => String(x.index) === want || x.id === want);
           if (!q) return `${CFG.ns}: no sequence ${want} (${CFG.sequences.map((x) => `${x.index}=${x.id}`).join(', ')})`;
-          s.seq = q.index; s.paused = false; s.score = 0; s.combo = 0; s.best = 0; s.total = 0; s.earned = 0; s.health = 100; s.game = null;
+          s.seq = q.index; s.last = q.index; s.paused = false; s.score = 0; s.combo = 0; s.best = 0; s.total = 0; s.earned = 0; s.health = 100; s.game = null;
           if (q.game) gameStart(p, s, q, Number(args[1] || 0) * 1000, true);
           restart(p, s, Number(args[1] || 0) * 1000); values(p, s);
+          if (s.game) gameState(p, s, q);
           return '';
         }
-        if (verb === 'stop') { s.seq = 0; s.paused = false; s.game = null; seqProp(p, s); clearSlots(p, s); silence(p, s); return ''; }
+        if (verb === 'stop') {
+          // (a tour stopped, or over: the player's own settings back)
+          if (s.tour) { s.mode = s.tour.keep.mode; s.mods = s.tour.keep.mods; s.tour = null; }
+          s.seq = 0; s.paused = false; s.game = null; s.failAt = -1; s.stopAt = -1; seqProp(p, s); clearSlots(p, s); silence(p, s); return '';
+        }
         // (how the player plays a game: auto — it plays itself; aim — the cursor where they look, a press to hit; relax — any
-        //  press on time hits, sliders followed and spinners spun while held. sens: model units of cursor a degree of looking)
-        if (verb === 'mode') { if (!['auto', 'aim', 'relax'].includes(String(args[0]))) return `${CFG.ns}: mode auto | aim | relax`; s.mode = String(args[0]); s.ref = null; return ''; }
-        if (verb === 'sens') { const v = Number(args[0]); if (!(v > 0 && v < 50)) return `${CFG.ns}: sens <0.1…50>`; s.sens = v; return ''; }
+        //  press on time hits, sliders followed and spinners spun while held. sens: model units of cursor a degree of looking.
+        //  Each kept for the player, as are the offset and the mods)
+        if (verb === 'mode') { if (!['auto', 'aim', 'relax'].includes(String(args[0]))) return `${CFG.ns}: mode auto | aim | relax`; s.mode = String(args[0]); s.ref = null; if (!s.tour) savePrefs(p, s); return ''; }
+        if (verb === 'sens') { const v = Number(args[0]); if (!(v > 0 && v < 50)) return `${CFG.ns}: sens <0.1…50>`; s.sens = v; savePrefs(p, s); return ''; }
+        if (verb === 'offset') { const v = Number(args[0] || 0); if (!(Math.abs(v) <= 500)) return `${CFG.ns}: offset <-500…500 ms>`; s.offset = v; savePrefs(p, s); return ''; }
+        // (the mods of the next play: HD FL NF SD PF, or none — osu!'s letters)
+        if (verb === 'mods') { const m = modsOf(args); if (typeof m === 'string') return m; s.mods = m; if (!s.tour) savePrefs(p, s); return ''; }
+        // (the last play again from its start: the same mode and mods)
+        if (verb === 'retry') { if (!s.last) return `${CFG.ns}: nothing to retry`; if (s.tour) { s.mode = s.tour.keep.mode; s.mods = s.tour.keep.mods; s.tour = null; } return api.command(p, 'play', [String(s.last)]); }
+        // (the tour: every look of a game in about 20 seconds, its scenes at fixed times — q.game.tour)
+        if (verb === 'tour') {
+          const want = args[0] ? String(args[0]) : null, q = CFG.sequences.find((x) => x.game && x.game.tour && (!want || String(x.index) === want || x.id === want));
+          if (!q) return `${CFG.ns}: no tour (a game sequence has one)`;
+          const keep = s.tour ? s.tour.keep : { mode: s.mode, mods: s.mods };
+          s.tour = { q, t0: io.tick(), next: 0, keep, prep: null };
+          tourStep(p, s);
+          return '';
+        }
         if (!s.seq) return `${CFG.ns}: nothing is playing`;
         if (verb === 'pause') { if (!s.paused) { s.from = Math.round(nowMs(s)); s.paused = true; set(p, P('seq_from'), s.from); seqProp(p, s); silence(p, s); } return ''; }
         if (verb === 'resume') { if (s.paused) { s.paused = false; restart(p, s, s.from); } return ''; }
         if (verb === 'seek') { restart(p, s, Number(args[0] || 0) * 1000); return ''; }
-        if (verb === 'offset') { s.offset = Number(args[0] || 0) || 0; return ''; }
-        return `${CFG.ns}: unknown ${verb} (play stop pause resume seek offset mode sens)`;
+        return `${CFG.ns}: unknown ${verb} (play stop pause resume seek offset mode sens mods retry tour)`;
+      },
+      /** what a game's menu shows a player: the game, their best, their settings (the script's forms) */
+      menuInfo(p) {
+        const s = stateOf(p), q = CFG.sequences.find((x) => x.game);
+        if (!q) return null;
+        return { index: q.index, id: q.id, title: q.title || q.id, best: Number(load(p, P(`best_${q.id}`))) || 0, mode: s.mode, sens: s.sens, offset: s.offset, mods: s.mods.slice(), playing: Boolean(s.seq), tour: Boolean(q.game.tour) };
       },
       /** every tick: the streamed slots, the misses, the markers */
       tick() {
         for (const p of io.players()) {
           const s = players.get(p.id);
+          if (s && s.tour) tourStep(p, s);
           if (!s || !s.seq) continue;
           const q = seqOf(s);
           if (!q) continue;
@@ -5346,9 +6047,11 @@
           results(p, s, q, t, false);
           if (s.game && !s.paused) {
             gameTick(p, s, q, t);
-            // (a game held on its end: stopped a while after, its rank seen)
+            // (a failed play: stopped once its fall has been seen; a game held on its end: stopped a while after, its results seen)
+            if (s.stopAt >= 0 && raw >= s.stopAt) { api.command(p, 'stop', []); continue; }
             if (q.autoStop && raw > q.autoStop) { api.command(p, 'stop', []); continue; }
-            (q.sounds || []).forEach((c, i) => { if (s.played.has(i) || t < c[0] || t >= c[0] + LATE) return; s.played.add(i); if (!io.sound) return; try { io.sound(p, c[1], c[2], c[3]); s.ringing.add(c[1]); } catch (e) { /* (silent) */ } });
+            // (the music and the other audio clips — none once the play failed: osu!'s music stops there)
+            if (s.failAt < 0) (q.sounds || []).forEach((c, i) => { if (s.played.has(i) || t < c[0] || t >= c[0] + LATE) return; s.played.add(i); if (!io.sound) return; try { io.sound(p, c[1], c[2], c[3]); s.ringing.add(c[1]); } catch (e) { /* (silent) */ } });
             for (const m of q.markers) if (!s.marks.has(m[1]) && t >= m[0]) { s.marks.add(m[1]); if (m[2] !== undefined && io.event) io.event(p, `${CFG.ns}:marker`, `${q.index}:${m[1]}${m[2] ? ` ${m[2]}` : ''}`); }
             continue;
           }
@@ -5374,8 +6077,13 @@
         if (!s || !s.seq || s.paused) return null;
         const q = seqOf(s);
         if (!q || backwards(q, s)) return null;
-        // (a game: the press queued with its time, judged by the game on the next tick — where the cursor is)
-        if (s.game) { if (s.mode !== 'auto') s.pending.push(seqTime(q, nowMs(s)) + s.offset); return { queued: true }; }
+        // (a game: the press queued with its time, judged by the game on the next tick — where the cursor is. A failed play: a
+        //  press after its first second plays it again — osu!'s retry)
+        if (s.game) {
+          if (s.failAt >= 0) { if (nowMs(s) - s.failAt >= RETRY_AFTER && !s.tour) { api.command(p, 'retry', []); return { retry: true }; } return null; }
+          if (s.mode !== 'auto') s.pending.push(seqTime(q, nowMs(s)) + s.offset);
+          return { queued: true };
+        }
         const t = seqTime(q, nowMs(s)) + s.offset;
         let best = null;
         for (const h of q.hits) if (!s.judged.has(h[4]) && Math.abs(t - h[0]) <= W.ok && (!best || Math.abs(t - h[0]) < Math.abs(t - best[0]))) best = h;
@@ -5428,7 +6136,7 @@
       const out = { index: i, id: seq.id, duration: Math.round(seq.duration * 1000), loop: seq.loop, inOut: seq.inOut ? seq.inOut.map((x) => Math.round(x * 1000)) : null,
         markers: seq.markers.map((m) => [Math.round(m.t * 1000), m.id, m.event]), templates, hits: hits.sort((a, b) => a[0] - b[0]), sounds: sounds.sort((a, b) => a[0] - b[0]) };
       // (a game: osu!'s rules for it — osugame.js — and each instance's key to its slot; held on its end, stopped 8 s after)
-      if (seq.game) { out.game = seq.game; out.keyMap = Object.fromEntries(out.hits.map((h) => [h[4], h])); if (seq.loop === 'hold') out.autoStop = out.duration + 8000; }
+      if (seq.game) { out.game = seq.game; out.title = seq.name; out.keyMap = Object.fromEntries(out.hits.map((h) => [h[4], h])); if (seq.loop === 'hold') out.autoStop = out.duration + 8000; }
       return out;
     });
     const gl = (stats && stats.budget && stats.budget.global) || { events: [], groups: [], states: [] };
@@ -5437,17 +6145,75 @@
       values: Object.assign({ score: 'v0', combo: 'v1', accuracy: 'v2', health: 'v3' }, opts.values || {}), sequences };
   }
 
+  /** a game's menu in the pack's script (server-ui forms): /<ns>:osu or /scriptevent <ns>:menu — play (aim / relax / auto), the
+   *  mods, the settings (sensitivity, offset), the tour. Japanese, as the lab's screens; the game's own words (osu!'s mods) as they are */
+  const MENU = `
+// osu!'s menu: /\${CFG.ns}:osu (or /scriptevent \${CFG.ns}:menu) — play, the mods, the settings, the tour
+const MODS = [['HD', '円が消えていく・接近の輪なし ×1.06'], ['FL', 'カーソルのまわりだけ見える ×1.12'], ['NF', '失敗しない ×0.5'], ['SD', '1 つ落とすと失敗'], ['PF', '300 以外で失敗']];
+const HOW = { aim: '見ている所がカーソル', relax: '押すタイミングだけ', auto: 'オート' };
+const fmt = (n) => String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');
+async function menu(p) {
+  const m = engine.menuInfo(p);
+  if (!m || !p.isValid) return;
+  const f = new ActionFormData().title('osu! — ' + m.title)
+    .body('ベスト ' + fmt(m.best) + '\\n遊び方: ' + HOW[m.mode] + '　Mods: ' + (m.mods.join(' ') || 'なし') + '\\n感度 ' + m.sens + '・ずれ ' + m.offset + ' ms\\n押す: ジャンプ・スニーク・アイテムを使う');
+  const acts = [];
+  const add = (label, fn) => { f.button(label); acts.push(fn); };
+  const play = (mode) => () => { engine.command(p, 'mode', [mode]); return engine.command(p, 'play', [String(m.index)]); };
+  add('▶ プレイ（見ている所がカーソル）', play('aim'));
+  add('▶ プレイ（押すタイミングだけ）', play('relax'));
+  add('▶ オートで見る', play('auto'));
+  add('Mods: ' + (m.mods.join(' ') || 'なし'), () => mods(p));
+  add('設定（感度・ずれ）', () => settings(p));
+  if (m.tour) add('検証ツアー（全部の演出を約 20 秒で）', () => engine.command(p, 'tour', []));
+  if (m.playing) add('やめる', () => engine.command(p, 'stop', []));
+  const r = await f.show(p);
+  if (r.canceled || r.selection === undefined || !p.isValid) return;
+  const why = await acts[r.selection]();
+  if (typeof why === 'string' && why) p.sendMessage(why);
+}
+async function mods(p) {
+  const m = engine.menuInfo(p), f = new ModalFormData().title('osu! — Mods');
+  for (const [k, what] of MODS) f.toggle(k + '（' + what + '）', { defaultValue: m.mods.includes(k) });
+  const r = await f.show(p);
+  if (r.canceled || !r.formValues || !p.isValid) return;
+  const on = MODS.filter((x, i) => r.formValues[i]).map((x) => x[0]), why = engine.command(p, 'mods', on.length ? on : ['none']);
+  if (why) p.sendMessage(why);
+  return menu(p);
+}
+async function settings(p) {
+  const m = engine.menuInfo(p), f = new ModalFormData().title('osu! — 設定')
+    .slider('感度（1 度でカーソルが動く量 ×10）', 5, 60, { valueStep: 1, defaultValue: Math.max(5, Math.min(60, Math.round(m.sens * 10))) })
+    .slider('ずれ（押した時刻を遅らせる ms）', -200, 200, { valueStep: 10, defaultValue: Math.max(-200, Math.min(200, Math.round(m.offset / 10) * 10)) });
+  const r = await f.show(p);
+  if (r.canceled || !r.formValues || !p.isValid) return;
+  engine.command(p, 'sens', [String(r.formValues[0] / 10)]);
+  engine.command(p, 'offset', [String(r.formValues[1])]);
+  return menu(p);
+}
+system.beforeEvents.startup.subscribe((e) => {
+  e.customCommandRegistry.registerCommand({ name: CFG.ns + ':osu', description: 'osu!: menu (play, mods, settings, the tour)', permissionLevel: CommandPermissionLevel.Any }, (o) => {
+    const p = o.initiator ?? o.sourceEntity;
+    if (!(p instanceof Player)) return { status: CustomCommandStatus.Failure, message: 'players only' };
+    system.run(() => { if (p.isValid) menu(p); });
+    return { status: CustomCommandStatus.Success };
+  });
+});
+`;
+
   /** the pack's script for a CFG: the engine, wired to the world */
   function scriptOf(CFG) {
+    const game = CFG.sequences.some((q) => q.game) && T.osugame;
     return `// GeoUI timeline: plays the pack's sequences for each player (GeoUI Builder's timeline; bds-lab bds/geoui/timeline).
 // /scriptevent ${CFG.ns}:play <sequence number or id> [from seconds] · ${CFG.ns}:stop · ${CFG.ns}:pause · ${CFG.ns}:resume
 // ${CFG.ns}:seek <seconds> · ${CFG.ns}:offset <ms> (presses judged that much later: the lag of a device)
 // A game (osu!): ${CFG.ns}:mode auto | aim | relax (it plays itself / the cursor where you look / any press on time) · ${CFG.ns}:sens <units a degree>
+// · ${CFG.ns}:mods HD FL NF SD PF | none · ${CFG.ns}:retry · ${CFG.ns}:tour (every look in about 20 s) · ${CFG.ns}:menu (or /${CFG.ns}:osu)
 // Presses: jump or sneak, or using an item. Score, combo, accuracy (x100) and health go to ${CFG.ns}:${CFG.values.score} … ${CFG.values.health}.
 // Markers with an event send /scriptevent ${CFG.ns}:marker <sequence>:<marker> <event>. Audio clips play when the time
 // reaches them and stop at a pause, a seek or a stop (a sound already past at a seek or a resume stays silent).
-import { world, system, ButtonState, InputButton } from '@minecraft/server';
-
+import { world, system, ButtonState, InputButton${game ? ', Player, CommandPermissionLevel, CustomCommandStatus' : ''} } from '@minecraft/server';
+${game ? "import { ActionFormData, ModalFormData } from '@minecraft/server-ui';\n" : ''}
 const CFG = ${JSON.stringify(CFG)};
 const createEngine = ${createEngine.toString()};
 ${CFG.sequences.some((q) => q.game) && T.osugame ? `// osu!'s rules (GeoUI timeline osugame.js): what a game sequence is played by
@@ -5462,20 +6228,25 @@ const createGame = ${T.osugame.createGame.toString()};
   stopSound: (p, id) => { if (p.isValid) p.runCommand(\`stopsound @s \${id}\`); },
   rotation: (p) => (p.isValid ? p.getRotation() : { x: 0, y: 0 }),
   held: (p) => { if (!p.isValid) return false; const i = p.inputInfo; return i.getButtonState(InputButton.Jump) === ButtonState.Pressed || i.getButtonState(InputButton.Sneak) === ButtonState.Pressed; },
+  // (the player's own values kept in the world: a game's settings and best)
+  load: (p, key) => (p.isValid ? p.getDynamicProperty(key) : undefined),
+  save: (p, key, v) => { if (p.isValid) p.setDynamicProperty(key, v); },
+  scoreboard: (p, id, name, score) => { const sb = world.scoreboard, o = sb.getObjective(id) ?? sb.addObjective(id, name); if (p.isValid) o.setScore(p, score); },
+  message: (p, text) => { if (p.isValid) p.sendMessage(text); },
 }, createGame);
 // (a player who joins again counts from their own first moment: what they were playing is sent again from where it is)
 world.afterEvents.playerSpawn.subscribe((e) => { if (e.initialSpawn) system.run(() => { if (e.player.isValid) engine.joined(e.player); }); });
 system.afterEvents.scriptEventReceive.subscribe((e) => {
   const verb = e.id.slice(CFG.ns.length + 1);
-  if (!['play', 'stop', 'pause', 'resume', 'seek', 'offset', 'mode', 'sens'].includes(verb)) return;
+  if (!['play', 'stop', 'pause', 'resume', 'seek', 'offset', 'mode', 'sens', 'mods', 'retry', 'tour'${game ? ", 'menu'" : ''}].includes(verb)) return;
   const words = String(e.message).trim().split(/\\s+/).filter(Boolean);
   const targets = e.sourceEntity && e.sourceEntity.typeId === 'minecraft:player' ? [e.sourceEntity] : world.getAllPlayers();
-  for (const p of targets) { const why = engine.command(p, verb, words); if (why) console.warn(why); }
+  for (const p of targets) {${game ? " if (verb === 'menu') { menu(p); continue; }" : ''} const why = engine.command(p, verb, words); if (why) console.warn(why); }
 }, { namespaces: [CFG.ns] });
 system.runInterval(() => engine.tick(), 1);
 world.afterEvents.playerButtonInput.subscribe((e) => { if (e.newButtonState === ButtonState.Pressed) engine.press(e.player); });
 world.afterEvents.itemUse.subscribe((e) => engine.press(e.source));
-`;
+${game ? MENU.replace(/\$\{CFG\.ns\}/g, CFG.ns) : ''}`;
   }
 
   /** the timeline into GeoUI Builder's files, BP side: the properties (contract.propertyDefs) on the player and the script.
@@ -5493,6 +6264,17 @@ world.afterEvents.itemUse.subscribe((e) => engine.press(e.source));
     const count = Object.keys(desc.properties).length;
     if (count > 32) warnings.push(`プレイヤーのプロパティが ${count} 個です（上限は 32 と見込む・要実測）`);
     files[playerFile] = `${JSON.stringify(pj, null, 2)}\n`;
+    // (a game's menu takes server-ui's forms: the behaviour pack depends on it — 2.2.0, the stable one of this BDS; any 2.x
+    //  takes the pack's @minecraft/server 2.x)
+    if (cfg.sequences.some((q) => q.game) && T.osugame) {
+      const mf = `${bpDir}/manifest.json`;
+      if (files[mf]) {
+        const m = JSON.parse(typeof files[mf] === 'string' ? files[mf] : JSON.stringify(files[mf]));
+        m.dependencies = m.dependencies || [];
+        if (!m.dependencies.some((d) => d.module_name === '@minecraft/server-ui')) m.dependencies.push({ module_name: '@minecraft/server-ui', version: '2.2.0' });
+        files[mf] = `${JSON.stringify(m, null, 2)}\n`;
+      } else warnings.push('ビヘイビアパックの manifest.json がありません: ゲームのメニュー（フォーム）は動きません');
+    }
     files[`${bpDir}/scripts/timeline.js`] = scriptOf(cfg);
     const main = String(files[mainFile]);
     if (!/import '\.\/timeline\.js';/.test(main)) files[mainFile] = `${main.replace(/\n*$/, '\n')}import './timeline.js';\n`;
@@ -6265,6 +7047,8 @@ world.afterEvents.itemUse.subscribe((e) => engine.press(e.source));
         const b1 = await get(`${n}.png`);
         if (b1) images[n] = K.as2x(await imageOf(b1)); else missing.push(n);
       }
+      // (the results' and the fail's pictures where the skin has them — else osukit draws its own)
+      for (const n of K.SKIN_EXTRA || []) { const b2 = await get(`${n}@2x.png`), b1 = b2 ? null : await get(`${n}.png`); if (b2) images[n] = await imageOf(b2); else if (b1) images[n] = K.as2x(await imageOf(b1)); }
       for (const n of K.SKIN_SOUNDS) for (const ext of ['ogg', 'wav']) { const b = await get(`${n}.${ext}`); if (b) { sounds[n] = { ext, bytes: new Uint8Array(b) }; break; } }
       if (missing.length) throw new Error(`スキンに足りない絵があります: ${missing.slice(0, 6).join('・')}${missing.length > 6 ? ' …' : ''}`);
       return { images, sounds };

@@ -113,6 +113,8 @@
   //   <ns>:sp    the spinner now: spin (0…1 of the spins it needs), rpm, sa (its angle, degrees)
   //   <ns>:res   rank (0 none, 1 D … 5 S, 6 SS), maxcombo, misses
   //   <ns>:cnt   n300, n100, n50
+  //   <ns>:mod   the mods on (hd, fl, nf, sd, pf: 1 each), auto (the game plays itself), fc (no miss or break so far), failed (the
+  //              play failed: osu!'s fail), record (this play beat the player's best: told at its end)
   // (hit: any hit — a 300 / 100 / 50 or a slider's head; combo: the combo went up — a hit, a slider's tick or turn; break: the combo
   //  was broken; tick: a slider's tick or turn followed; clear: a spinner spun enough; bonus: a spin past it; fail: health ran out;
   //  kiai: a kiai section began)
@@ -123,6 +125,7 @@
     sp: Object.freeze([{ name: 'spin', bits: 7, min: 0, max: 1 }, { name: 'rpm', bits: 9, min: 0, max: 511 }, { name: 'sa', bits: 8, min: 0, max: 358.59375 }]),
     res: Object.freeze([{ name: 'rank', bits: 3, min: 0, max: 7 }, { name: 'maxcombo', bits: 11, min: 0, max: 2047 }, { name: 'misses', bits: 10, min: 0, max: 1023 }]),
     cnt: Object.freeze([{ name: 'n300', bits: 10, min: 0, max: 1023 }, { name: 'n100', bits: 7, min: 0, max: 127 }, { name: 'n50', bits: 7, min: 0, max: 127 }]),
+    mod: Object.freeze(['hd', 'fl', 'nf', 'sd', 'pf', 'auto', 'fc', 'failed', 'record'].map((name) => Object.freeze({ name, bits: 1, min: 0, max: 1 }))),
   });
   // (GeoUI's own values: v0 … v3 — the runtime's CFG.values says which is which; accuracy is kept × 100)
   const VALUE_STATES = Object.freeze({ score: { prop: 'v0', scale: 1 }, combo: { prop: 'v1', scale: 1 }, acc: { prop: 'v2', scale: 0.01 }, hp: { prop: 'v3', scale: 1 } });

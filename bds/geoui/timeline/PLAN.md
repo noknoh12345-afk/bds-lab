@@ -132,6 +132,31 @@
 - player.js（プレビューはオートで遊ぶ）、bridge.js（「osu! を丸ごと作る…」のダイアログ・designToOutliner でデザインを Blockbench の
   アウトライナーへ・スキンは ppy/osu-resources か .osk）、bds/geoui/osu/（addon.mjs・render.mjs・video.mjs・fetch-skin.mjs・skin-legacy/）
 
+### 8 の続き（2026-10-23 の 2 回目）: osu! の流れ全部と、ドット絵版の模型
+
+- 人の頼み: 「さらに完璧に、さらに深く」。本物のアプリの確かめは「一括で、時間を極限まで減らして、そのための機能を作って」（→ app の
+  `--batch` と検証ツアー）。そのあと「ドット絵版は cube を使って、ドット絵を描くだけでなくちゃんとモデリング。ドット絵は残す」
+- osugame.js: fail(ms)（体力 0。NF なら起きない。SD は 1 つ落とすと、PF は 300 以外で）・mods（HD・FL・NF・SD・PF・AUTO、点の倍率 MODMUL）・
+  state の failed・failedAt・fc・done。fastForward は適応（スライダーとスピナーの中は 50 ms、それ以外は次の物まで跳ぶ: オートと同じ結果）、
+  S.lo（終わった物の次から数える）、seek(ms) は同じ時刻なら何もしない
+- runtime.js: 失敗（FAIL_HOLD 4.5 秒見せて止める、1 秒後からジャンプで retry）、結果（ベストをプレイヤーの動的プロパティへ、
+  スコアボード `<ns>_best`、チャットに 1 行、拍手）、メニュー `/<ns>:osu`（ActionFormData / ModalFormData）、遊び方・感度・ずれ・Mods は
+  プレイヤーごとに残す。ツアー（`<ns>:tour`）: 場面ごとに seek と Mods と遊び方を替え、場面の間の早送りは prepOf / prepStep / takePrep で
+  何 tick にも分ける（1 tick に収めないと BDS のウォッチドッグが 105〜234 ms を言った）
+- contract.js: 状態の組に mod（hd fl nf sd pf auto fc failed record、1 bit ずつ）、出来事に fail。式の `screen.dx`（model.js と compile.js:
+  `((v.geoui_halfw ?? REFW) - REFW)`、REFW は基準の比率の半分の幅）
+- osukit.js（ドット絵の模型）: pixelModels（物ごとの層: { ims, dx, dy, z, d, perPixel }、zs = 奥行きの尺度）→ modelCells（層の絵と
+  3 つの明るさ（横 0.62・上 0.84・下 0.44）をコマごとに 1 マスへ）→ modelBone（層ごとに rectsOf の長方形を立体に）。コマの変わる層は 1 ドット
+  1 キューブ（コマごとの輪郭が横から見える）、1 枚の絵の層は行と列にまとめる（面が減る）。円の番号はコインの層（コンボ色 × 番号のコマ:
+  (n − 1) × 色の数 + 色。譜面のいちばん長いコンボまで、99 まで）: 枠ごとに 20 本の数字のボーンがなくなり、中央に重なる面がぐっと減った。
+  結果の数字・x も影つきの字の模型。盤面と結果の盤は trayCubes（壁・内側の縁・角の柱）
+- compile.js の freePlace(placed, cubes, { kz, maxZ, maxXY }): 模型（ボーンのキューブ全部を同じだけ）を、向きの同じ面と重なる所で 0.02 以上
+  離れる所へ: まず奥へ 0.021 ずつ（前と後ろの面）、次に縦と横へ 0.02 ずつ（傾くと見える上・下・横の面）、まだ当たれば次の奥行きの段から
+  やり直す。テンプレートの枠の複製（kz 1: 前の freeShift と同じ所から）と、osukit の模型（settleDepths、kz 0）が使う。平らな面だけの
+  デザインでは前の freeShift と同じ答え（geoui_rhythm・プローブの形は 1 つも変わらない）。lab の model check（common/model.mjs lintGeo）は
+  見本の 6597 個のキューブで 0 件
+- 要実測: キューブ 6597 個・ボーン 315 本の描画の重さ（スマホ）、傾き（rotationX・rotationY）で見える横の面、結果の盤の字の大きさ
+
 ## 見直す観点
 
 ### rv-game（tl-model・tl-anim・tl-runtime の後）

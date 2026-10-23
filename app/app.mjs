@@ -19,7 +19,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Worker } from 'node:worker_threads';
 import * as K from './lib/apk.mjs';
 import * as D from './lib/android.mjs';
-import { parseScenario, runScenario, dialogSummary, KEYS, pngSize, screenDiff, titleLike, blankScreen, WORLD_SHOT } from './lib/scenario.mjs';
+import { parseScenario, runScenario, batchScenario, BATCH_RE, dialogSummary, KEYS, pngSize, screenDiff, titleLike, blankScreen, WORLD_SHOT } from './lib/scenario.mjs';
 import { GAME_VERBS, gameLine, playGame, playServer } from './lib/play.mjs';
 import { startMonitor, fmtStats, hostNotes, hostStats } from './lib/host.mjs';
 import { annotations, deathExcerpt, ghEscape, guard, logcatDigest, writeReport } from './lib/report.mjs';
@@ -99,6 +99,8 @@ const HELP = `app: 本物の Minecraft アプリをエミュレータで動か�
         全部: APK → エミュレータ → インストール → BDS → 参加 → 撮影 → 報告
         --account: インストールの後に Google アカウントをエミュレータへ書き込む（下の account）
         --keep: 終わっても BDS とエミュレータを動かしたまま（続けて screen / tap で調べるとき）  -v: 各手順も画面に（普段は run.txt だけ）
+        --scenario batch/<アドオン>/<アドオン>…: いくつかのアドオンの app.txt を 1 回の実行で順に（端末・ゲーム・サインインは 1 回、
+        それぞれの join の前に BDS をそのアドオンで起動し直す。区切りは <アドオン>.<区切り>。手順の addon）
   ui -a <アドオン> [--all] [--screens <id,id>] [--shard k/n] [--sizes 1024x768,…] [--cutouts tall,…] [--list] [--allow-client-errors]
         JSON UI の画面を本物のアプリで全部開いて撮る（アドオンの rp/ui → それを描く画面。--all = ラボが開ける画面すべて）。画面ごとに
         ゲームのコンテンツログ（クライアントだけのエラー）を読み、ERROR があれば失敗。--sizes / --cutouts: ほかの画面の形（比率・
@@ -129,7 +131,8 @@ const HELP = `app: 本物の Minecraft アプリをエミュレータで動か�
   redroid doctor|setup|prep|run|ui|up|down|bench|report   redroid の端末（Linux: docker と binder）
   ci … --device redroid [--mode run|ui] [--bench] [--keep] [--fresh] [--wait]   GitHub の redroid ワークフローで（private なら準備済みの
         端末を暗号化キャッシュから。--keep: 作った端末をキャッシュへ、--fresh: 作り直す）。ci watch|fetch <番号> --device redroid
-  ci [-a <アドオン>] [--ref <枝>] [--account] [--scenario <ファイル>] [--bds <版>] [--screen <幅x高さ>]
+  ci [-a <アドオン>] [--ref <枝>] [--account] [--scenario <ファイル>] [--batch <アドオン>,<アドオン>…] [--bds <版>] [--screen <幅x高さ>]
+        --batch: いくつかのアドオンを 1 本の実行で（-a はその最初、シナリオは batch/<アドオン>/…）。
         GitHub の app ワークフローを起動して、待たずに戻る（実行はいくつでも同時に走る）。--wait: 終わるまで待って、結果を
         app/runs/gh-<番号>/ に取ってくる（報告・ログ・スクショ。成果物を開けなくても API だけで読める。実行ごと止められて成果物が
         無いときは、どこで・どう止まったかを explain.txt に）。ci watch <番号> = 待って取る、ci fetch <番号> = 取るだけ（gh が要る）。
@@ -595,15 +598,28 @@ async function runCmd(args) {
   const bdsWant = o.opts['--bds'] ?? 'auto';
   if (!/^(auto|keep|\d+\.\d+\.\d+\.\d+)$/.test(bdsWant)) fail(`--bds ${bdsWant} は使えません`, '--bds auto（アプリに合わせる）/ keep（いまのまま）/ 1.26.52.3 のような版');
   const keep = o.flags.has('--keep');
-  const scenarioFile = path.resolve(o.opts['--scenario'] ?? [path.join(ADDONS, addon, 'app.txt'), path.join(APPDIR, 'scenarios', 'default.txt')].find((f) => fs.existsSync(f)));
-  if (!fs.existsSync(scenarioFile)) fail(`${o.opts['--scenario']} がありません`);
-  const { steps, errors } = parseScenario(fs.readFileSync(scenarioFile, 'utf8'));
-  if (errors.length) { errors.forEach((e) => out(`E ${rel(scenarioFile)}:${e}`)); fail('手順の書き方に誤りがあります（上の行）', '書き方の一覧: node lab.mjs app help'); }
-  if (!steps.length) fail(`${rel(scenarioFile)} に手順がありません`, 'node lab.mjs app init -a ' + addon);
+  // (--scenario batch/<a>/<b>…: those addons' app.txt one after another in this one run — the device, the game and the
+  //  sign-in once; the server started again with each before its join: lib/scenario.mjs batchScenario)
+  const batch = BATCH_RE.test(o.opts['--scenario'] ?? '') ? o.opts['--scenario'].split('/').slice(1) : null;
+  let scenarioFile, scenarioText;
+  if (batch) {
+    for (const b of batch) needAddon(b);
+    const made = batchScenario(batch, (b) => { const f = path.join(ADDONS, b, 'app.txt'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : null; });
+    if (made.errors.length) { made.errors.forEach((e) => out(`E ${e}`)); fail('バッチの手順を作れません（上の行）', '--scenario batch/<アドオン>/<アドオン>…（どれも app.txt があり、join がある）'); }
+    scenarioFile = path.join(ADDONS, batch[0], 'app.txt'); scenarioText = made.text;
+  } else {
+    scenarioFile = path.resolve(o.opts['--scenario'] ?? [path.join(ADDONS, addon, 'app.txt'), path.join(APPDIR, 'scenarios', 'default.txt')].find((f) => fs.existsSync(f)));
+    if (!fs.existsSync(scenarioFile)) fail(`${o.opts['--scenario']} がありません`);
+    scenarioText = fs.readFileSync(scenarioFile, 'utf8');
+  }
+  const scenarioName = batch ? o.opts['--scenario'] : rel(scenarioFile);
+  const { steps, errors } = parseScenario(scenarioText);
+  if (errors.length) { errors.forEach((e) => out(`E ${scenarioName}:${e}`)); fail('手順の書き方に誤りがあります（上の行）', '書き方の一覧: node lab.mjs app help'); }
+  if (!steps.length) fail(`${scenarioName} に手順がありません`, 'node lab.mjs app init -a ' + addon);
   if (REAL) { const bad = steps.filter((x) => ['size', 'density', 'cutout', 'network'].includes(x.verb)); if (bad.length) fail(`本物の端末では使わない手順があります: ${bad.map((x) => `${x.line} 行目 ${x.verb}`).join('、')}`, '画面の形と回線を変える手順はエミュレータで（--device emu）。本物の端末の設定は変えません'); }
   const unlock = takeLock();
 
-  const st = { ok: false, addon, app: null, bds: null, device: null, scenario: rel(scenarioFile), results: [], shots: [], notes: [], dialogs: [], fatal: null, next: [], started: Date.now(), ended: 0, timing: {}, realDevice: REAL?.name ?? null };
+  const st = { ok: false, addon, app: null, bds: null, device: null, scenario: scenarioName, results: [], shots: [], notes: [], dialogs: [], fatal: null, next: [], started: Date.now(), ended: 0, timing: {}, realDevice: REAL?.name ?? null, ...(batch ? { batch: [] } : {}) };
   const runDir = path.join(RUNS, `${stampLocal()}-${addon}`);
   fs.mkdirSync(runDir, { recursive: true });
   // the screen gets the stages, a failing step and the result; every line goes to run.txt (-v: the screen too)
@@ -613,10 +629,10 @@ async function runCmd(args) {
   const runUrl = process.env.GITHUB_RUN_ID && process.env.GITHUB_REPOSITORY ? `${process.env.GITHUB_SERVER_URL || 'https://github.com'}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}` : null;
   const feed = Feed.createFeed({ title: `📱 ${addon}${process.env.APP_LANE ? ` [${String(process.env.APP_LANE).slice(0, 40)}]` : ''}${shardTag}`, link: runUrl, log: (s) => log(s, false) });
   let recordingsAbs = [];
-  feed.start({ what: `${rel(scenarioFile)}・${steps.length} 手順${REAL ? `・${REAL.name}` : ''}` });
+  feed.start({ what: `${scenarioName}・${steps.length} 手順${REAL ? `・${REAL.name}` : ''}` });
   const serverLog = path.join(runDir, 'server.log'), logcatFile = path.join(runDir, 'logcat.txt');
   fs.writeFileSync(serverLog, '');
-  fs.copyFileSync(scenarioFile, path.join(runDir, 'scenario.txt'));
+  fs.writeFileSync(path.join(runDir, 'scenario.txt'), scenarioText);
   // what `app prepare` did just before (this machine), or how the prepared device was made (it carries its own log, on CI
   // from the prep job's machine): the log, the game's settings and the screens go with this run's report
   {
@@ -908,6 +924,7 @@ async function runCmd(args) {
     // and a "hang" must not stop the server under the game: APP_WATCHDOG_MS, 0 = BDS's own 10 s)
     const up = bds(['up'], { LAB_ADDON: addon, LAB_PORT: String(wantPort), LAB_TAIL: serverLog, LAB_TEXTUREPACK_REQUIRED: '1', LAB_LIVE_IDLE: '240', ...bdsForApp() });
     serverUp = true;
+    let liveAddon = addon;   // (the addon the server runs now: a batch's `addon` steps change it)
     if (!up.ok) { up.lines.slice(-8).forEach((l) => log('      ' + l)); fail('BDS が起動しませんでした（上の行）', `アドオンの誤りなら、まず node lab.mjs bds go -a ${addon} を通してください。`); }
     // the port BDS really took (the lab moves on when 19132 is busy): the deep link must point there
     const port = Number(readJson(BDS_LIVE)?.port) || wantPort;
@@ -952,7 +969,7 @@ async function runCmd(args) {
     if (!REAL) adb.run(['logcat', '-c']);
     lcFd = fs.openSync(logcatFile, 'w');
     lc = spawn(adb.bin, ['-s', adb.serial, 'logcat', '-v', 'threadtime', ...(REAL ? ['-T', '1'] : [])], { stdio: ['ignore', lcFd, lcFd], env: K.cleanEnv() });
-    stage(`[5/5] 手順 ${rel(scenarioFile)}（${steps.length} 個）`);
+    stage(`[5/5] 手順 ${scenarioName}（${steps.length} 個）`);
     const { pngDecode } = await import(pathToFileURL(path.join(TOP, 'common', 'extra.mjs')).href);
     // where the pictures come from (APP_SHOT=auto, the default): the emulator's own view of its display when it shows the
     // same picture — the host makes that PNG, while the device's screencap costs the game seconds of CPU each (2.5 s on the
@@ -1011,7 +1028,21 @@ async function runCmd(args) {
       },
       // (the device came back from its snapshot with the game on its title: `until title` takes it as it is)
       atTitle: () => Boolean(emu.warm && launched && !process.env.APP_LIVE_DEVICE && ready?.stamp && !ready.stamp.firstScreen),
-      server: { joinUri, lan, logFile: serverLog, do: async (c) => bds(['do', c], { LAB_ADDON: addon }, 5 * 60_000) },
+      server: { joinUri, lan, logFile: serverLog, do: async (c) => bds(['do', c], { LAB_ADDON: liveAddon }, 5 * 60_000) },
+      // (`addon <name>`: the server down and up again with that addon — the same port, the same log, the relay as it is; the
+      //  game is left as it is: the next join takes it in. The batch's times go in the result: st.batch)
+      switchAddon: async (name) => {
+        if (name === liveAddon) { st.batch?.push({ addon: name, up_ms: 0 }); return `${name}（いま動いているもの）`; }
+        if (!fs.existsSync(path.join(ADDONS, name, 'bp', 'manifest.json')) && !fs.existsSync(path.join(ADDONS, name, 'rp', 'manifest.json'))) throw new Error(`bds/addons/${name} がありません`);
+        const t1 = Date.now();
+        bds(['down'], { LAB_ADDON: liveAddon }, 60_000);
+        const up2 = bds(['up'], { LAB_ADDON: name, LAB_PORT: String(port), LAB_TAIL: serverLog, LAB_TEXTUREPACK_REQUIRED: '1', LAB_LIVE_IDLE: '240', ...bdsForApp() });
+        if (!up2.ok) throw Object.assign(new Error(`BDS が ${name} で起動しませんでした: ${up2.lines.slice(-3).join(' / ')}`), { fatal: true });
+        const p2 = Number(readJson(BDS_LIVE)?.port) || port;
+        if (p2 !== port) throw Object.assign(new Error(`BDS が ${name} でポート ${p2} を取りました（${port} が使用中）: 端末の中継は ${port} 向けです`), { fatal: true });
+        liveAddon = name; st.batch?.push({ addon: name, up_ms: Date.now() - t1 });
+        return `BDS を ${name} で起動し直しました（${((Date.now() - t1) / 1000).toFixed(1)} 秒）`;
+      },
       sectionDone: (sec) => feed.section(sec),
     });
     recordingsAbs = res.recordings;
@@ -2810,8 +2841,17 @@ function ciFetch(repo, id, { full = false } = {}) {
 }
 async function ciCmd(args) {
   const sub = ['fetch', 'watch'].includes(args[0]) ? args.shift() : 'run';
-  const o = parse(args, { flags: ['--account', '--no-account', '--no-wait', '--wait', '--full', '--fresh', '--bench', '--keep'], opts: ['-a', '--addon', '--ref', '--scenario', '--bds', '--repo', '--screen', '--mode', '--devices', '--lane', '--knobs', '--hold', '--device'], multi: ['--try'] });
+  const o = parse(args, { flags: ['--account', '--no-account', '--no-wait', '--wait', '--full', '--fresh', '--bench', '--keep'], opts: ['-a', '--addon', '--ref', '--scenario', '--batch', '--bds', '--repo', '--screen', '--mode', '--devices', '--lane', '--knobs', '--hold', '--device'], multi: ['--try'] });
   const full = o.flags.has('--full') || process.env.APP_FULL_LOGS === '1';
+  // (--batch a,b,…: one run of those addons' app.txt in turn — the workflow's addon the first, its scenario batch/a/b/…)
+  if (o.opts['--batch'] !== undefined) {
+    const names = String(o.opts['--batch']).split(',').map((x) => x.trim()).filter(Boolean);
+    if (names.length < 2 || names.length > 8 || !BATCH_RE.test(`batch/${names.join('/')}`)) fail(`--batch ${o.opts['--batch']}: アドオンの名前を , で区切って 2〜8 個`, 'node lab.mjs app ci --batch geoui_osu_pixel,geoui_osu_skin');
+    if (o.opts['--scenario'] || (o.opts['-a'] ?? o.opts['--addon'])) fail('--batch は -a・--scenario と一緒に使いません（-a はその最初、シナリオは batch/…）');
+    if (o.opts['--mode'] && o.opts['--mode'] !== 'run') fail('--batch は --mode run だけ（app.txt の手順をつなぐ）');
+    for (const b of names) if (!fs.existsSync(path.join(ADDONS, b, 'app.txt'))) fail(`bds/addons/${b}/app.txt がありません`, `node lab.mjs app init -a ${b}`);
+    o.opts['-a'] = names[0]; o.opts['--scenario'] = `batch/${names.join('/')}`;
+  }
   if (gh(['--version']).status !== 0) fail('GitHub CLI（gh）がありません', 'https://cli.github.com から入れて、gh auth login でログインしてください。');
   const repo = ciRepo(o);
   let id = sub === 'run' ? null : (o.rest[0] ?? fail(`node lab.mjs app ci ${sub} <run の番号>`));

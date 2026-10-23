@@ -24,8 +24,12 @@ const designOf = (names) => ({ settings: { ns: 'geoui', bp: false }, bones: [{ n
   elements: Object.fromEntries(names.map((x) => [x, { type: 'image' }])), textures: { t: { name: 'atlas', width: 16, height: 16, png: 'iVBORw0KGgo=' } } });
 
 /** the pack's Molang against the preview: every frame from 0 to `to`; returns the mismatches (and the built files) */
-function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt = 1 / 60, from = 0, stateAt = null } = {}) {
-  const design = designOf(names), built = G.buildPack(design), out = C.extendPack(built.files, doc, { design, core: G, ...ctx });
+function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt = 1 / 60, from = 0, stateAt = null, aspect = null } = {}) {
+  // (aspect: the screen's, as GeoUI's behaviour pack sets it — <ns>:aspect × 1000 — and screen.dx the preview's from it)
+  const design = designOf(names);
+  if (aspect) design.settings.bp = true;
+  const built = G.buildPack(design), out = C.extendPack(built.files, doc, { design, core: G, ...ctx });
+  const S0 = G.settingsOf(design.settings), dx = aspect ? G.r3(S0.unitsPerScreenH / 2) * (Math.round(aspect * 1000) / 1000) - G.r3(G.halfWAt(S0, S0.refAspect)) : 0;
   const ent = JSON.parse(out.files['geoui_RP/entity/player.entity.json']), pre = ent['minecraft:client_entity'].description.scripts.pre_animation;
   // (a variable read on the first frame before it is set is a content error in the game, and the game leaves every line after
   //  it undone, every frame — the whole timeline dead while its first lines still run: what the probe found, 2026-10-21)
@@ -66,7 +70,7 @@ function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt =
     const t = from + f * dt;
     if (t > to + 1e-9) break;
     env.life = 100 + t;
-    Object.assign(props, { 'geoui:seq': K.seqValue({ seq: 1, gen: 1 }), 'geoui:seq_from': Math.round(from * 1000) });
+    Object.assign(props, { 'geoui:seq': K.seqValue({ seq: 1, gen: 1 }), 'geoui:seq_from': Math.round(from * 1000) }, aspect ? { 'geoui:aspect': Math.round(aspect * 1000), 'geoui:scale': 100, 'geoui:alpha': 100 } : {});
     // (the pack's script: each slot's instance just before it shows; each slot's result — the instance that last took the
     //  slot, once it has one — 3 bits of its group's property)
     for (const s of slots) {
@@ -95,7 +99,7 @@ function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt =
     // (the preview at the game's own clock — the same float the game's Molang counted with — and each event at the time the
     //  game learnt of it: the frame its property changed)
     for (const e of events) if (e.t <= t + 1e-9 && !seenAt.has(e)) seenAt.set(e, get('v.geoui_raw'));
-    const states = M.evaluate(N, seq.id, get('v.geoui_raw'), { events: events.filter((e) => seenAt.has(e)).map((e) => ({ ...e, t: seenAt.get(e) })), state: seen0 });
+    const states = M.evaluate(N, seq.id, get('v.geoui_raw'), { events: events.filter((e) => seenAt.has(e)).map((e) => ({ ...e, t: seenAt.get(e) })), state: seen0, screen: { dx } });
     for (const [key, b] of Object.entries(out.stats.bindings)) {
       const sk = key.replace(/^1:/, ''), s = states[sk], c = get(`${b.prefix}_c`);
       if (!s) { if (!sk.includes('#') && c >= 0) bad.push(`${t.toFixed(3)} ${sk}: shown, the preview leaves it`); continue; }
@@ -246,6 +250,20 @@ const events = [{ instance: 'o1', name: 'hit', t: 1 + 1 / 60 }, { instance: 'o2'
   ok(!r.bad.length && b.events.join() === 'miss,hit,break' && b.groups.join() === 'cur,sp' && b.states.includes('combo'), 'the whole play: a tilt (rotationX / Y), a shake on every miss and a pop on every hit (global events), until a combo break, the cursor / hold / combo / spinner from the script\'s states — the game\'s Molang = the preview every frame', `${r.bad.slice(0, 6).join('\n  ')} ${JSON.stringify(b)} ${props}`);
   const anim = JSON.parse(r.out.files['geoui_RP/animations/geoui.animation.json']).animations['animation.geoui.seq_1'];
   ok(JSON.stringify(anim.bones.fd.rotation) === JSON.stringify(['v.geoui_1_0_rx', 'v.geoui_1_0_ry', 0]) && JSON.stringify(anim.bones.sh.rotation) === JSON.stringify([0, 0, 'v.geoui_1_1_r']), 'a tilt is the bone\'s rotation about x and y (the turn in the screen\'s plane about z, as before)', JSON.stringify([anim.bones.fd.rotation, anim.bones.sh.rotation]));
+}
+
+// ---- screen.dx (2026-10-23): an element anchored to one side going to the middle (osu!'s results: the score from the HUD's top
+//      right into the ranking panel) takes away how much wider half the screen is than the reference aspect's — GeoUI's own
+//      v.geoui_halfw, from the aspect its behaviour pack sets — the game's Molang against the preview at 4:3, 16:9 and 19.5:9
+{
+  const doc = { version: 1, sequences: [{ id: 's', duration: 2, tracks: [{ target: 'sd', clips: [{ start: 0, end: 2, channels: { x: [{ t: 0, v: 0, ease: 'quad-inout' }, { t: 1, v: '40 - screen.dx' }], y: [{ t: 0, v: 'screen.dx * 0.5' }], scaleX: [{ t: 0, v: '1 + screen.dx / 100' }] } }] }] }] };
+  const runs = [4 / 3, 16 / 9, 2.1667].map((aspect) => ({ aspect, r: compare(doc, ['sd'], { to: 2, aspect }) }));
+  const ys = runs.map(({ r }) => r.out.stats.bindings), molang = JSON.stringify(runs[0].r.out.stats.pre || runs[0].r.pre);
+  ok(runs.every(({ r }) => !r.bad.length) && /v\.geoui_halfw \?\? /.test(molang), `screen.dx: the game's Molang (GeoUI's v.geoui_halfw, read through ??) = the preview at 4:3, 16:9 and 19.5:9`, runs.map(({ aspect, r }) => `${aspect.toFixed(3)}: ${r.bad.slice(0, 3).join(' / ')}`).join('\n  '));
+  const M0 = M.normalize(doc), at = (dx) => M.evaluate(M0, 's', 1.5, { screen: { dx } }).sd;
+  ok(at(0).x === 40 && at(33).x === 7 && at(-38).x === 78 && at(33).y === 16.5 && M.exprError('screen.dx + 1') === null && /screen\.dx/.test(M.exprError('screen.dy') || ''),
+    'screen.dx in the preview: 0 at the reference aspect, what opts.screen says otherwise; screen.dy is not a word (said, with screen.dx among the words)', JSON.stringify([at(0), at(33), at(-38), M.exprError('screen.dy')]));
+  void ys;
 }
 
 // ---- a template's number in its slot copies: each copy picks its own numerals (2026-10-23: before, a copy had no digit

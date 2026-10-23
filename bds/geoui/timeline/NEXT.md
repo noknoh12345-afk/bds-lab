@@ -1,7 +1,8 @@
 # 続きのプロンプト（GeoUI タイムライン）
 
 次のセッションの AI に、下の枠の中をそのまま貼る。2026-10-23 に書いた（9 回目の確かめ: 参加の内訳と 1000 個の 2 回目まで。
-そのあと osu! を丸ごと: ドット絵のキューブと公式の素材の 2 つの見本、本物の BDS まで）。
+そのあと osu! を丸ごと: ドット絵のキューブと公式の素材の 2 つの見本、本物の BDS まで。2 回目: osu! の流れ全部（失敗・Mods・結果・
+自己ベスト・検証ツアー・メニュー）、ドット絵版をキューブで組んだ模型に、app のバッチ（いくつかのアドオンを本物のアプリ 1 回で））。
 設計と記録は [PLAN.md](PLAN.md)、使い方は [../TIMELINE.md](../TIMELINE.md)。
 
 このリポジトリは公開なので、前の会話の記録・添付の素材（zip など）・ログインの記録はここに置かない。
@@ -15,8 +16,13 @@ noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の
 ラボのタイトル → PLAY の進め方だった（PLAN.md の 9 回目、app/DESIGN.md「参加の内訳」）。
 osu! を丸ごと（PLAN.md の 8、TIMELINE.md「osu! を丸ごと作る」）: osugame.js（osu! のルール。パックのスクリプトとプレビューが同じコード）・
 osukit.js（ドット絵をキューブで / 公式の Legacy スキン の 2 つの見た目、盤面の osu_shake・osu_tilt・osu_pulse）・osusong.js（ラボの曲
-「Cubic Pulse」と譜面）、ゲーム全体の出来事と state.<名前>、rotationX・rotationY、mode auto|aim|relax・sens。見本 geoui_osu_pixel・
-geoui_osu_skin は本物の BDS の tests.txt が通った。本物のアプリではまだ回していない（app.txt はある）。
+「Cubic Pulse」と譜面）、ゲーム全体の出来事と state.<名前>、rotationX・rotationY、mode auto|aim|relax・sens。2 回目（PLAN.md「8 の続き」）:
+失敗とやり直し・Mods（HD FL NF SD PF）・結果の画面・自己ベスト（動的プロパティ・スコアボード）・メニュー /geoui:osu・検証ツアー
+（/scriptevent geoui:tour: 全部の演出を約 24 秒、早送りは何 tick にも分ける）・式の screen.dx。ドット絵版は物ごとにキューブで組んだ模型
+（コインの円と浮き出た番号・フープ・輪切りの球・車輪・宝石・影つきの字・枠。osukit.js pixelModels / modelBone）、どの 2 枚の面も同じ
+平面に重ねない（compile.js freePlace）。見本 geoui_osu_pixel・geoui_osu_skin は本物の BDS の tests.txt が 31/31（両方）。
+app: `app ci --batch a,b`（端末・ゲーム・サインイン 1 回で、アドオンごとに BDS を替えて入り直す。手順 addon <名前>）、classic の
+タイトルではまず A を 1 回（APP_TITLE_A_FIRST。当たるかは要実測）。
 
 守ること:
 - .github/・auto/policy.json・auto/STOP・.env は触らない。bds/vendor/bedrock-server.zip はコミットしない（git add -A -- . ':!bds/vendor/bedrock-server.zip'）
@@ -32,13 +38,15 @@ geoui_osu_skin は本物の BDS の tests.txt が通った。本物のアプリ�
 - PLAN.md の「本物のアプリで確かめたこと」の 8 回目まで読む。本物のアプリでまた確かめる時は、私の許可をもらってから 1 本ずつ:
   gh api -X POST repos/noknoh12345-afk/bds-lab/actions/workflows/app.yml/dispatches -f ref=main -f "inputs[addon]=<名前>" -f "inputs[mode]=run" -f "inputs[account]=true" -f "inputs[screen]=720x1560" -f "inputs[lane]=<lane>" -f "inputs[knobs]=APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"
   （1000 個の見本も既定の枝にある: demo.mjs が 3 つとも作り、--check で確かめる。--huge はそれだけを作る）
+  いくつかを 1 回で: node lab.mjs app ci --batch geoui_osu_pixel,geoui_osu_skin --lane <lane> --screen 720x1560 --knobs "APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"
+  （summary の batch に各アドオンの BDS の起動し直しの秒、区切りは <アドオン>.<区切り>）
 - 結果: gh run download <run> → probe は node bds/geoui/timeline/probe.mjs read <summary.json>、見本は summary.json の measures・
   failed_codes・failed_trails・join_trail・join_seconds・join_connect_seconds・join_lan_seconds（PLAY が出た・LAN のワールドが出た・
   押した秒）・join_lan_trail（参加の道筋はラボの語だけ: app/lib/failcodes.mjs）。
   写真と録画は私の Discord に届く（summary.json の media に送った数）。成果物の中身は封じてある（鍵が無いと読めない）
 
 全部の試験（変えたら毎回）:
-  for f in tests/tl-*-offline.mjs tests/geoui-builder-offline.mjs tests/lint-offline.mjs; do node $f || exit 1; done
+  for f in tests/tl-*-offline.mjs tests/geoui-builder-offline.mjs tests/lint-offline.mjs; do node $f || exit 1; done（tl-probe は 8 分）
   node bds/geoui/build.mjs --check; node bds/geoui/timeline/probe.mjs --check; node bds/geoui/timeline/demo.mjs --check（W 行が出ないこと）
   node bds/geoui/osu/music.mjs --check（osusong.js を変えたら --write。.ogg は ffmpeg）
   npx --yes eslint@9 -c tests/eslint.config.mjs .（CI の verify も回す: 使っていない変数ひとつで落ちる。2026-10-23 の cbfa6a6 はこれで落ちた）
@@ -59,7 +67,9 @@ PLAY（194・269 秒）: classic のタイトルで Play の焦点（緑）が�
 （6 回目の 1000 個は OCR が間に合わなかったため: app/DESIGN.md）。geoui_probe_m の 3000 行（1 行 150 文字）の最後の変数だけ合わなかった理由
 （行・大きさ・変数の数のどれでもない）。render controller 70 個・ボーン 600 本・アニメーション 1200 個より先（書き出しは超えると注意を
 出す）。geoui_bb・geoui_calib* は前の確かめの物（測り直すときだけ作り直す）。
-osu! の要実測（本物のアプリで geoui_osu_pixel・geoui_osu_skin を回すと分かる。回すのは許可をもらってから）: キューブの数（pixel はボーン 361 本）
-の描画と重さ、rotationX・rotationY の符号（盤面が倒れる向き）、頭の向きでの狙い（aim。スマホのカメラ操作・sens）、ジャンプ・スニークで
-押すと体が動く・しゃがむこと（/inputpermission で止めるか）、プラグインが作るラボの曲（.wav）が鳴るか（見本のパックは .ogg）。
+osu! の要実測（本物のアプリで geoui_osu_pixel・geoui_osu_skin を回すと分かる。回すのは許可をもらってから）: キューブの数（pixel は
+キューブ 6597 個・ボーン 315 本・アトラス 1024 x 1024）の描画と重さ、傾きで見える模型の横の面、rotationX・rotationY の符号（盤面が倒れる
+向き）、頭の向きでの狙い（aim。スマホのカメラ操作・sens）、ジャンプ・スニークで押すと体が動く・しゃがむこと（/inputpermission で止めるか）、
+プラグインが作るラボの曲（.wav）が鳴るか（見本のパックは .ogg）、classic のタイトルのまず A（道筋の title-a の次が play-… なら当たり）。
+古い枝 addon/geoui_rhythm_huge・panel-artifact-viewer は消してよいと言われた（このセッションの中継からは消せないので、GitHub の画面で）。
 ```

@@ -11,7 +11,7 @@ js const e = p('A'); const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1,
 scriptevent geoui:mode auto
 scriptevent geoui:play 1
 wait 8000
-js const e = p('A'); const res = (v) => [v % 8, Math.floor(v / 8) % 2048, Math.floor(v / 16384) % 1024]; const r = res(e.getProperty('geoui:res')); JSON.stringify([e.getProperty('geoui:v0') > 1000, e.getProperty('geoui:v1') > 3, e.getProperty('geoui:v2'), r[0] > 4, r[1] > 3, r[2], Math.floor(e.getProperty('geoui:ge') / 64) % 64 > 3])
+js const e = p('A'); const res = (v) => [v % 8, Math.floor(v / 8) % 2048, Math.floor(v / 16384) % 1024]; const r = res(e.getProperty('geoui:res')); JSON.stringify([e.getProperty('geoui:v0') > 1000, e.getProperty('geoui:v1') > 3, e.getProperty('geoui:v2'), r[0] > 4, r[1] > 3, r[2], Math.floor(e.getProperty('geoui:ge') / 4096) % 64 > 3])
 = [true,true,10000,true,true,0,true]
 scriptevent geoui:stop
 wait 300
@@ -20,7 +20,7 @@ wait 300
 scriptevent geoui:mode aim
 scriptevent geoui:play 1
 wait 5000
-js const e = p('A'); const res = (v) => [v % 8, Math.floor(v / 8) % 2048, Math.floor(v / 16384) % 1024]; const r = res(e.getProperty('geoui:res')); JSON.stringify([r[2] > 2, e.getProperty('geoui:v1'), e.getProperty('geoui:v3') < 100, Math.floor(e.getProperty('geoui:ge') / 1) % 64 > 2, e.getProperty('geoui:v0')])
+js const e = p('A'); const res = (v) => [v % 8, Math.floor(v / 8) % 2048, Math.floor(v / 16384) % 1024]; const r = res(e.getProperty('geoui:res')); JSON.stringify([r[2] > 2, e.getProperty('geoui:v1'), e.getProperty('geoui:v3') < 100, Math.floor(e.getProperty('geoui:ge') / 64) % 64 > 2, e.getProperty('geoui:v0')])
 = [true,0,true,true,0]
 
 ## seek・pause・resume・stop
@@ -40,3 +40,85 @@ scriptevent geoui:stop
 wait 300
 js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; q(p('A').getProperty('geoui:seq'))[0]
 = 0
+
+## aim で何も押さないと体力が尽きて失敗: 判定が止まり、失敗の出来事、FAILED を見せたあと止まる
+# (osugame.js では 6.75 秒で失敗。mod = [HD, FL, NF, SD, PF, auto, FC, 失敗, 新記録] の 1 bit ずつ)
+scriptevent geoui:mode aim
+scriptevent geoui:play 1
+wait 7950
+js const e = p('A'); const mod = (v, k) => Math.floor(v / 2 ** k) % 2; const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; const v = e.getProperty('geoui:mod'); JSON.stringify([mod(v, 7), Math.floor(e.getProperty('geoui:ge') / 1) % 64, q(e.getProperty('geoui:seq'))[0], e.getProperty('geoui:v3')])
+= [1,1,1,0]
+wait 4500
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; q(p('A').getProperty('geoui:seq'))[0]
+= 0
+
+## 失敗のあとジャンプでやり直す（osu! の retry）
+scriptevent geoui:play 1
+wait 8350
+js const mod = (v, k) => Math.floor(v / 2 ** k) % 2; mod(p('A').getProperty('geoui:mod'), 7)
+= 1
+@A jump
+wait 600
+js const e = p('A'); const mod = (v, k) => Math.floor(v / 2 ** k) % 2; const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; JSON.stringify([mod(e.getProperty('geoui:mod'), 7), q(e.getProperty('geoui:seq'))[0], e.getProperty('geoui:seq_from') < 1000])
+= [0,1,true]
+scriptevent geoui:stop
+wait 300
+
+## NF なら失敗せず最後まで: 結果がチャットとスコアボードに
+scriptevent geoui:mods NF
+scriptevent geoui:play 1 59
+until ×0 \+NF 20000
+~ @A .* D 0\.00% ×0 \+NF \(best 0\)
+js const mod = (v, k) => Math.floor(v / 2 ** k) % 2; JSON.stringify([mod(p('A').getProperty('geoui:mod'), 2), mod(p('A').getProperty('geoui:mod'), 7)])
+= [1,0]
+scoreboard objectives list
+~ geoui_best
+scriptevent geoui:stop
+wait 300
+
+## Mods の文字・組み合わせの不可・none
+scriptevent geoui:mods NF SD
+~ NF cannot go with SD or PF
+scriptevent geoui:mods XX
+~ mods HD FL NF SD PF \| none
+scriptevent geoui:mods hdfl
+scriptevent geoui:play 1 30
+wait 1500
+js const mod = (v, k) => Math.floor(v / 2 ** k) % 2; const v = p('A').getProperty('geoui:mod'); JSON.stringify([mod(v, 0), mod(v, 1), mod(v, 2)])
+= [1,1,0]
+scriptevent geoui:stop
+scriptevent geoui:mods none
+wait 300
+
+## メニュー（/geoui:osu）: Mods を選ぶとメニューに戻って出る
+@A cmd /geoui:osu
+until form
+~ @A form action: title\("osu! — .*"\) body\("ベスト 0
+@A form 3
+until form modal
+~ @A form modal: title\("osu! — Mods"\)
+@A form [true,false,true,false,false]
+until Mods: HD NF
+~ @A form action: .*Mods: HD NF
+@A form close
+scriptevent geoui:mods none
+
+## 検証ツアー: HD・FL・失敗・結果を順に見せて止まり、遊び方と Mods が戻る
+# (場面の時刻: HD 6600 ms・FL 8800 ms・失敗 17300 ms・結果 20300 ms・終わり 24000 ms)
+scriptevent geoui:mode relax
+scriptevent geoui:tour
+wait 7700
+js const mod = (v, k) => Math.floor(v / 2 ** k) % 2; const v = p('A').getProperty('geoui:mod'); JSON.stringify([mod(v, 0), mod(v, 1), mod(v, 5)])
+= [1,0,1]
+wait 2200
+js const mod = (v, k) => Math.floor(v / 2 ** k) % 2; const v = p('A').getProperty('geoui:mod'); JSON.stringify([mod(v, 0), mod(v, 1)])
+= [0,1]
+until auto: not kept 24000
+~ @A .* SS 100\.00% ×\d+ FULL COMBO \(auto: not kept\)
+wait 4700
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; q(p('A').getProperty('geoui:seq'))[0]
+= 0
+@A cmd /geoui:osu
+until form
+~ @A form action: .*遊び方: 押すタイミングだけ　Mods: なし
+@A form close

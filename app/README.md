@@ -130,6 +130,7 @@ node lab.mjs app screen                   # 押した結果を見る
 | `key BACK` | キーを押す（BACK ENTER ESCAPE TAB DPAD_UP など） |
 | `text hello` | 文字を打つ（英数字と記号だけ） |
 | `do <コマンド>` | サーバーのコンソールで実行（`scriptevent`、`give`、`js …` など tests.txt と同じ） |
+| `addon <名前>` | BDS をそのアドオン（`bds/addons/<名前>`）で起動し直す（同じポート。ゲームは動いたままで切れるので、次の `join` で入り直す）。バッチ（下）が join の前に入れる |
 | `until title [ミリ秒]` | ゲームのタイトル画面まで待つ（ゲームが前面・Android のダイアログなし・赤い起動画面でも真っ黒でもない・落ち着いている）。最初の起動の「WELCOME TO MINECRAFT!」（Microsoft サインインの誘い）などは、OCR で読めれば「Maybe later」で抜けて待ち続ける |
 | `until joined [ミリ秒]` | ワールドに出るまで待つ（かかった時間が報告の「参加」に出ます） |
 | `until stable [ミリ秒]` | 画面が 6 秒変わらなくなるまで待つ（真っ黒の間は待ち続ける） |
@@ -319,8 +320,15 @@ node lab.mjs app ci -a jsonui_demo                       # 起動して、待た
 node lab.mjs app ci -a jsonui_demo --wait                # 終わるまで待って app/runs/gh-<番号>/ に取ってくる
 node lab.mjs app ci -a jsonui_demo --mode ui-all          # ラボが開ける画面を全部、端末 4 台で手分けして（--devices 1〜8）
 node lab.mjs app ci --try "APP_TAP=hold" --try "APP_TAP=motion APP_FAST_UI=0"   # 設定違いを 1 本ずつ同時に（8 本まで）
+node lab.mjs app ci --batch geoui_osu_pixel,geoui_osu_skin  # いくつかのアドオンを 1 本の実行で順に（下）
 node lab.mjs app ci watch <番号>                          # 待ってから取る（ci fetch <番号> = 取るだけ）
 ```
+
+**バッチ（いくつかのアドオンを 1 回で）**: `--batch a,b,…`（2〜8 個）は、端末の用意・ゲームの起動・サインインを 1 回にして、それぞれの
+app.txt を順に回します（ワークフローの `addon` はその最初、`scenario` は `batch/a/b/…`）。2 つ目からは、そのアドオンの `join` の前に
+`addon <名前>` が入り、BDS をそのアドオンで起動し直して（同じポート）ゲームは入り直します。区切りの名前は `<アドオン>.<区切り>`
+（報告の表・クライアントのエラー・Discord の進み具合）。`summary.json` の `batch` に、アドオンごとの起動し直しの秒が入ります。
+手元でも `node lab.mjs app run -a a --scenario batch/a/b`。1 本ずつ回すより、端末の復元・タイトル・サインインの分（1 本あたり数分）が浮きます。
 
 `app/runs/gh-<番号>/` には `report.md`、`details.txt`（**既定は結果とエラーだけ**）、`shots/*.png`（縮小したスクショ）、`annotations.txt`、`steps.txt` が入ります。
 実行ごと止められて成果物が無いときは `explain.txt`（どの手順が何分で・どう止まったか、最後に出た進行の notice）も入ります。

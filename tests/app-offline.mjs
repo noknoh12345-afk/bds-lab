@@ -337,6 +337,13 @@ await t('checks --print / ci: the workflow posts, `app ci` starts, waits and rea
   ok(rp.status === 0 && disp.length === 2 && /待たずに戻ります/.test(rp.text) && /app live --run 123 "screen"/.test(rp.text), rp.text);
   ok(/-f lane=p[0-9a-z]{5}-1 -f knobs=APP_GPU=swangle_indirect APP_TAP=hold -f hold=30/.test(disp[0]) && /-f lane=p[0-9a-z]{5}-2 -f knobs=APP_GPU=swangle_indirect APP_TAP=motion APP_FAST_UI=0/.test(disp[1]), disp.join('\n'));
   ok(cli(['ci', '--repo', 'o/r', '--try', 'rm=-rf'], env).status === 1, 'a try is knobs too');
+  // --batch: one run of several addons' app.txt — the workflow's addon the first, its scenario batch/…; mistakes said
+  fs.writeFileSync(log, '');
+  const rb = cli(['ci', '--repo', 'o/r', '--ref', 'my-branch', '--batch', 'geoui_osu_pixel,geoui_osu_skin', '--lane', 'osu-batch'], env);
+  const db = fs.readFileSync(log, 'utf8').split('\n').filter((l) => l.startsWith('workflow run'));
+  ok(rb.status === 0 && db.length === 1 && /-f addon=geoui_osu_pixel -f account=true -f scenario=batch\/geoui_osu_pixel\/geoui_osu_skin .*-f lane=osu-batch/.test(db[0]), `${rb.text}\n${db.join('\n')}`);
+  const bad = [['--batch', 'geoui_osu_pixel'], ['--batch', 'geoui_osu_pixel,no_such_addon'], ['--batch', 'a,b', '-a', 'jsonui_demo'], ['--batch', 'geoui_osu_pixel,geoui_osu_skin', '--mode', 'ui'], ['--batch', 'a/b,c']].map((x) => cli(['ci', '--repo', 'o/r', ...x], env));
+  ok(bad.every((x) => x.status === 1) && /2〜8 個/.test(bad[0].text) && /no_such_addon\/app\.txt がありません/.test(bad[1].text) && /-a・--scenario と一緒に使いません/.test(bad[2].text) && /--mode run だけ/.test(bad[3].text), bad.map((x) => x.text.split('\n').slice(-3).join(' ')).join('\n'));
   const rf = cli(['ci', 'fetch', '123', '--repo', 'o/r'], env);
   ok(rf.status === 0 && /^FAIL app\/runs\/gh-123/m.test(rf.text), rf.text);
   ok(cli(['ci', 'fetch', '--repo', 'o/r'], env).status === 1, 'fetch needs a run number');
@@ -616,10 +623,22 @@ await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without
   made.push(r.runDir);
   const run = fs.readFileSync(path.join(r.runDir, 'run.txt'), 'utf8');
   ok(r.status === 0 && r.state.uri === 'lan' && JSON.stringify(r.state.pads) === JSON.stringify(['BUTTON_A', 'DPAD_DOWN', 'BUTTON_A']) && /PLAY の LAN のワールドを選びます/.test(run), `exit ${r.status} ${JSON.stringify(r.state.pads)}\n${run.slice(-1200)}`);
-  // the classic title (Play / Settings): its Play pressed once it is the green one (the first move turns the focus on)
+  // the classic title (Play / Settings): A first, once, though its Play's focus is not seen (the CI device's controller is
+  // awake on Play: the search for it took minutes there) — its trail says title-a
   const c = e2e('lanclassic', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_TITLE: '1' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
   made.push(c.runDir);
-  ok(c.status === 0 && JSON.stringify(c.state.pads) === JSON.stringify(['DPAD_UP', 'BUTTON_A', 'DPAD_DOWN', 'BUTTON_A']) && /タイトルの Play を押します/.test(fs.readFileSync(path.join(c.runDir, 'run.txt'), 'utf8')), `exit ${c.status} ${JSON.stringify(c.state.pads)}`);
+  const cRes = JSON.parse(fs.readFileSync(path.join(c.runDir, 'result.json'), 'utf8')), cJoin = cRes.results.find((x) => x.verb === 'join');
+  ok(c.status === 0 && JSON.stringify(c.state.pads) === JSON.stringify(['BUTTON_A', 'DPAD_DOWN', 'BUTTON_A']) && /タイトルの Play を押します（焦点は見えないが、まず A を 1 回）/.test(fs.readFileSync(path.join(c.runDir, 'run.txt'), 'utf8')) && /^title-a\b/.test(cJoin?.trail ?? ''), `exit ${c.status} ${JSON.stringify(c.state.pads)} ${cJoin?.trail}`);
+  // an A that opened something else (the focus elsewhere): B back, then the search — Play made the green one, A on it
+  const cw = e2e('lanclassicwrong', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_TITLE: '1', FAKE_TITLE_A_WRONG: '1', APP_PLAY_LOAD_MS: '100' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(cw.runDir);
+  const cwJoin = JSON.parse(fs.readFileSync(path.join(cw.runDir, 'result.json'), 'utf8')).results.find((x) => x.verb === 'join');
+  ok(cw.status === 0 && cw.state.wrongA === 1 && JSON.stringify(cw.state.pads) === JSON.stringify(['BUTTON_A', 'BUTTON_B', 'DPAD_UP', 'BUTTON_A', 'DPAD_DOWN', 'BUTTON_A']) && /^title-a\[.*\btitle-a-back\b.*\btitle-focus\b.*\btitle-play\b/.test(cwJoin?.trail ?? ''),
+    `exit ${cw.status} ${JSON.stringify(cw.state.pads)} ${cwJoin?.trail}\n${cw.text.slice(-800)}`);
+  // APP_TITLE_A_FIRST=0: the search only — Play pressed once it is the green one (the first move turns the focus on)
+  const cs = e2e('lanclassicsearch', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_TITLE: '1', APP_TITLE_A_FIRST: '0' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(cs.runDir);
+  ok(cs.status === 0 && JSON.stringify(cs.state.pads) === JSON.stringify(['DPAD_UP', 'BUTTON_A', 'DPAD_DOWN', 'BUTTON_A']) && /タイトルの Play を押します（ゲームパッド A）/.test(fs.readFileSync(path.join(cs.runDir, 'run.txt'), 'utf8')), `exit ${cs.status} ${JSON.stringify(cs.state.pads)}`);
   // the player's own world listed too (prepare puts one there): "A Play" shows on its card as well — A only once the LAN
   // world's card has the focus's white ring
   const o = e2e('lanown', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OWN_WORLD: '1' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
@@ -982,6 +1001,40 @@ await t('cli: status names the one next thing; help lists every step', () => {
   ok(r.status === 0 && /✘ Android SDK/.test(r.text) && /次にやること: Android Studio/.test(r.text), r.text);
   const h = cli(['help']);
   for (const w of ['launch', 'join', 'until joined', 'until stable', 'shot', 'tap', 'do <コマンド>', '; every', 'absent']) ok(h.text.includes(w), 'help: ' + w);
+});
+await t('batch: several addons\' app.txt as one scenario — the first from its start, the next from its join\'s section, `addon <name>` before each join, the sections named <addon>.<section>; mistakes said', () => {
+  const A = 'section title\nlaunch\nuntil title 600000\nshot title\nsection join\njoin\nuntil joined 300000\nshot world\nsection play\ndo scriptevent a:go\nshot a\n';
+  const B = '# b\nsection title\nlaunch\nuntil title\nsection join\njoin\nuntil joined\nsection look\nshot b\n';
+  const m = S.batchScenario(['aa', 'bb'], (n) => ({ aa: A, bb: B })[n] ?? null), p = S.parseScenario(m.text);
+  const verbs = p.steps.map((x) => (x.verb === 'section' || x.verb === 'addon' ? `${x.verb}:${x.args[0]}` : x.verb));
+  eq(m.errors, []); eq(p.errors, []);
+  eq(verbs, ['section:aa.title', 'launch', 'until', 'shot', 'section:aa.join', 'addon:aa', 'join', 'until', 'shot', 'section:aa.play', 'do', 'shot', 'section:bb.join', 'addon:bb', 'join', 'until', 'section:bb.look', 'shot']);
+  ok(/^# バッチ: aa → bb/.test(m.text) && /# ---- 2\/2 bb（bds\/addons\/bb\/app\.txt の 5 行目から）/.test(m.text), m.text);
+  const bad = S.batchScenario(['aa', 'none', 'nojoin', 'broken'], (n) => ({ aa: A, nojoin: 'launch\nshot x\n', broken: 'join\nfly away\n' })[n] ?? null);
+  ok(bad.errors.some((e) => /bds\/addons\/none\/app\.txt がありません/.test(e)) && bad.errors.some((e) => /nojoin\/app\.txt に join がありません/.test(e)) && bad.errors.some((e) => /broken\/app\.txt:2: 知らない手順「fly」/.test(e)), bad.errors.join('\n'));
+  ok(S.BATCH_RE.test('batch/a/b') && S.BATCH_RE.test('batch/geoui_osu_pixel/geoui_osu_skin') && !S.BATCH_RE.test('batch/a b') && !S.BATCH_RE.test('batch') && !S.BATCH_RE.test('batch/../x') && !S.BATCH_RE.test('app.txt'), 'batch/<name>/… only');
+  const pa = S.parseScenario('addon geoui_osu_skin\naddon\naddon a b\naddon ../x\n');
+  ok(pa.steps.length === 1 && pa.steps[0].verb === 'addon' && pa.errors.length === 3 && pa.errors.every((e) => /書き方: addon <アドオンの名前>/.test(e)), pa.errors.join('\n'));
+});
+await t('run: a batch end to end — one device and one game; the server started again with the next addon, the game disconnected and joined again (the title from its error screen); each block\'s sections and pictures, the switch\'s time in the result', () => {
+  const d = path.join(TOP, 'bds', 'addons', '_appbatch');
+  fs.mkdirSync(path.join(d, 'bp'), { recursive: true }); fs.writeFileSync(path.join(d, 'bp', 'manifest.json'), '{}');
+  fs.copyFileSync(path.join(TOP, 'bds', 'addons', 'jsonui_demo', 'app.txt'), path.join(d, 'app.txt'));
+  try {
+    const r = e2e('batch', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_DISCONNECT_ON_DOWN: '1', APP_JOIN_OCR_MS: '50' }, ['--scenario', 'batch/jsonui_demo/_appbatch']);
+    made.push(r.runDir);
+    const res = JSON.parse(fs.readFileSync(path.join(r.runDir, 'result.json'), 'utf8')), sc = fs.readFileSync(path.join(r.runDir, 'scenario.txt'), 'utf8');
+    const ups = r.state.bds.filter((x) => /^up /.test(x)), shots = fs.readdirSync(path.join(r.runDir, 'shots'));
+        // (disconnected twice: by the switch — then joined again — and by the run's own end)
+    ok(r.status === 0 && JSON.stringify(r.state.addons) === JSON.stringify(['jsonui_demo', '_appbatch']) && ups.length === 2 && ups.every((x) => /\[packs required\].*\[port 19132\]/.test(x)) && r.state.disconnects === 2,
+      `exit ${r.status} addons ${JSON.stringify(r.state.addons)} ups ${ups.length} disconnects ${r.state.disconnects}\n${r.text.slice(-1500)}`);
+    ok((sc.match(/^launch\b/gm) ?? []).length === 1 && /^addon _appbatch$/m.test(sc) && /^section _appbatch\.form$/m.test(sc) && res.scenario === 'batch/jsonui_demo/_appbatch'
+      && JSON.stringify(res.batch?.map((x) => x.addon)) === JSON.stringify(['jsonui_demo', '_appbatch']) && res.batch[0].up_ms === 0 && res.batch[1].up_ms >= 0
+      && res.results.filter((x) => x.verb === 'join').length === 2 && res.results.every((x) => x.ok) && shots.filter((x) => /-world\.png$/.test(x)).length === 2 && shots.filter((x) => /-jsonui-form\.png$/.test(x)).length === 2,
+    `${JSON.stringify(res.batch)} ${shots.join(' ')}\n${sc}`);
+    const sections = (res.sections ?? []).map((x) => x.name);
+    ok(['jsonui_demo.join', 'jsonui_demo.form', '_appbatch.join', '_appbatch.form'].every((x) => sections.includes(x)) && /BDS を _appbatch で起動し直しました/.test(fs.readFileSync(path.join(r.runDir, 'run.txt'), 'utf8')), sections.join(' '));
+  } finally { fs.rmSync(d, { recursive: true, force: true }); }
 });
 await t('cli: init writes an app.txt that parses; refuses to overwrite', () => {
   const d = path.join(TOP, 'bds', 'addons', '_apptest');

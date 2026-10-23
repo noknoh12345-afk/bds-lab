@@ -66,11 +66,12 @@
 
   // ---------------------------------------------------------------------------------------------------------------- expressions
   // the model's key expressions are Molang already (param.<name>, t, math.*): their params and t become variables
-  // (state.<name>: the variable extendPack made for it — STATEV, set while it writes a pack; '0' outside one)
-  let STATEV = {};
+  // (state.<name>: the variable extendPack made for it — STATEV, set while it writes a pack; '0' outside one. screen.dx: the
+  //  screen's half width past the reference aspect's, from GeoUI's own v.geoui_halfw — SCREENDX, set likewise)
+  let STATEV = {}, SCREENDX = '0';
   function exprM(src, vars, tVar) {
     const tk = String(src).match(/\d+(?:\.\d+)?|\.\d+|[A-Za-z_][\w.]*|[-+*/(),]|\S/g) || [];
-    return `(${tk.map((t) => { const m = /^(?:param|p)\.(\w+)$/.exec(t), sm = /^state\.(\w+)$/.exec(t); return m ? (vars[m[1]] || '0') : sm ? (STATEV[sm[1]] || '0') : t === 't' ? (tVar || '0') : t; }).join(' ')})`;
+    return `(${tk.map((t) => { const m = /^(?:param|p)\.(\w+)$/.exec(t), sm = /^state\.(\w+)$/.exec(t); return m ? (vars[m[1]] || '0') : sm ? (STATEV[sm[1]] || '0') : t === 't' ? (tVar || '0') : t === 'screen.dx' ? SCREENDX : t; }).join(' ')})`;
   }
   const valM = (v, vars, tVar) => (typeof v === 'string' ? exprM(v, vars, tVar) : n(v));
 
@@ -393,16 +394,49 @@
   }
 
   // ---------------------------------------------------------------------------------------------------------------- the pack
-  /** a depth for a cube where no cube of the geometry that overlaps it (seen from the front) lies within 0.02 */
-  function freeDepth(geo, cube) {
-    const [x0, y0, z0] = cube.origin, x1 = x0 + cube.size[0], y1 = y0 + cube.size[1];
-    const near = [];
-    for (const b of geo.bones) for (const c of b.cubes || []) {
-      const [a0, b0, c0] = c.origin;
-      if (a0 < x1 && a0 + c.size[0] > x0 && b0 < y1 && b0 + c.size[1] > y0) near.push(c0, c0 + (c.size[2] || 0));
+  /** where to move a model's cubes — all of them alike, so that a model of many blocks keeps its shape — for none of their
+   *  faces to lie within 0.02 of a face of one of `placed` that looks the same way and overlaps it there (two faces on one plane
+   *  flicker; a face of no area, a flat plate's side, is none): back in depth (0.021 at a time, from `kz` steps) to the first
+   *  step where no front or back is near, then up or down and across (0.02 at a time, either way) for the sides — again, as
+   *  each move changes what the others overlap — and when the sides find no room there, the next step back. Cubes as a
+   *  geometry has them (origin, size, inflate); rotated ones are left out. → [dx, dy, dz] */
+  function freePlace(placed, cubes, { kz = 1, maxZ = 2000, maxXY = 25 } = {}) {
+    const M = 0.02 - 1e-6, A = 1e-6, R4 = (v) => Math.round(v * 1e4) / 1e4;
+    const boxOf = (c) => { const i = num(c.inflate), o = c.origin, s = c.size || [0, 0, 0]; return [o[0] - i, o[1] - i, o[2] - i, o[0] + num(s[0]) + i, o[1] + num(s[1]) + i, o[2] + num(s[2]) + i]; };
+    const mine = cubes.filter((c) => !c.rotation).map(boxOf), others = placed.filter((c) => !c.rotation).map(boxOf), pad = maxXY * 0.02 + 0.05;
+    const near = mine.map((q) => others.filter((w) => w[0] < q[3] + pad && w[3] > q[0] - pad && w[1] < q[4] + pad && w[4] > q[1] - pad));
+    const ov = (a0, a1, b0, b1) => Math.max(0, Math.min(a1, b1) - Math.max(a0, b0));
+    // (the moves along axis a that would bring a face of ours near one of theirs — the other two moves as d has them)
+    const near1 = (a, d) => {
+      const b = (a + 1) % 3, c = (a + 2) % 3, out = [];
+      for (let i = 0; i < mine.length; i++) {
+        const q = mine[i];
+        for (const w of near[i]) if (ov(q[b] + d[b], q[b + 3] + d[b], w[b], w[b + 3]) * ov(q[c] + d[c], q[c + 3] + d[c], w[c], w[c + 3]) > A) out.push(w[a] - q[a], w[a + 3] - q[a + 3]);
+      }
+      return out;
+    };
+    const first = (a, d, cands, from = 0) => { const ws = near1(a, d); for (let k = from; k < cands.length; k++) if (ws.every((w) => Math.abs(w - cands[k]) >= M)) return k; return -1; };
+    const free = (d) => [2, 1, 0].every((a) => first(a, d, [d[a]]) === 0);
+    const zs = [], xys = [0];
+    for (let k = kz; k < maxZ; k++) zs.push(R4(0.021 * k));
+    for (let j = 1; j <= maxXY; j++) xys.push(R4(0.02 * j), R4(-0.02 * j));
+    let d = [0, 0, zs[0]];
+    for (let from = 0, tries = 0; from < zs.length && tries < 60; tries++) {
+      let zi = from;
+      d = [0, 0, zs[from]];
+      for (let round = 0; round < 6; round++) {
+        zi = first(2, d, zs, from);
+        if (zi < 0) return d;
+        d = [d[0], d[1], zs[zi]];
+        const yi = first(1, d, xys);
+        if (yi >= 0) d = [d[0], xys[yi], d[2]];
+        const xi = first(0, d, xys);
+        if (xi >= 0) d = [xys[xi], d[1], d[2]];
+        if (free(d)) return d;
+      }
+      from = zi + 1;
     }
-    for (let k = 1; k < 2000; k++) { const z = Math.round((z0 + 0.021 * k) * 1e4) / 1e4; if (near.every((w) => Math.abs(w - z) >= 0.02)) return z; }
-    return z0;
+    return d;
   }
   // ---------------------------------------------------------------------------------------------------------------- the pack (cont.)
   /** the timeline (doc) into GeoUI Builder's files (buildPack's), RP side. ctx: { design (buildPack's input), core (GeoUICore;
@@ -415,6 +449,9 @@
     const doc = M.normalize(doc0), design = ctx.design || {}, files = Object.assign({}, files0), warnings = [], report = { warnings, bezier: 0 };
     const G = ctx.core || T.core || root.GeoUICore || null;
     const S = G && G.settingsOf ? G.settingsOf(design.settings) : Object.assign({ ns: 'geoui' }, design.settings || {});
+    // (screen.dx as GeoUI's anchors have it: the half width now less the reference aspect's — 0 without GeoUI's core)
+    const REFW = G && G.halfWAt && G.r3 && S.unitsPerScreenH ? G.r3(G.halfWAt(S, S.refAspect)) : null;
+    SCREENDX = REFW !== null ? `((v.geoui_halfw ?? ${REFW}) - ${REFW})` : '0';
     const ns = clean(S.ns || 'geoui'), rpDir = `${ns}_RP`, V = (s) => `v.${ns}_${s}`;
     if (!doc.sequences.length) return { files, warnings, stats: { bindings: {}, pre: [], slots: {}, longest: 0 } };
     const bones = design.bones || [], boneSet = new Set(bones.map((b) => b.name));
@@ -589,9 +626,12 @@
           if (!src) continue;
           const copy = parse(src);
           copy.name = `${name}_${tag}${k}`;
-          // (a copy moved in depth, 0.02 at a time, until no face it overlaps is within 0.02 of it: never two faces on one plane —
-          //  only one of them shows at a time, but two on one plane would flicker if ever they did)
-          for (const cube of copy.cubes || []) { const dxy = cube.size && cube.size[2] > 0 ? Math.round(nc * 0.02 * 1e4) / 1e4 : 0; cube.origin = [Math.round((cube.origin[0] + dxy) * 1e4) / 1e4, Math.round((cube.origin[1] + dxy) * 1e4) / 1e4, freeDepth(geo, cube)]; }
+          // (a copy moved in depth, 0.021 at a time, until no face it overlaps is within 0.02 of one of its own: never two faces on
+          //  one plane — only one of them shows at a time, but two on one plane would flicker if ever they did. The whole copy
+          //  alike: a model of blocks in layers keeps its shape)
+          for (const cube of copy.cubes || []) { const dxy = cube.size && cube.size[2] > 0 ? Math.round(nc * 0.02 * 1e4) / 1e4 : 0; cube.origin = [Math.round((cube.origin[0] + dxy) * 1e4) / 1e4, Math.round((cube.origin[1] + dxy) * 1e4) / 1e4, cube.origin[2]]; }
+          const [dx, dy, dz] = freePlace(geo.bones.flatMap((b) => b.cubes || []), copy.cubes || []);
+          for (const cube of copy.cubes || []) cube.origin = cube.origin.map((v, i) => Math.round((v + [dx, dy, dz][i]) * 1e4) / 1e4);
           if (name !== of && src.parent) copy.parent = tree.includes(src.parent) ? `${src.parent}_${tag}${k}` : src.parent;
           geo.bones.push(copy); have.set(copy.name, copy);
         }
@@ -751,6 +791,6 @@
     return { files, warnings: [...new Set(warnings)], stats: { bindings, pre: written, slots: slotsOut, longest, deepest, lines: written.length, chars, variables, entityVariables, bezierError: report.bezier, budget, counts } };
   }
 
-  T.compile = { extendPack, easeM, keysM, pathM, pathKeys, exprM, targetLines, searchLines, tableLines, splitLines, maxDepth, mparse };
+  T.compile = { extendPack, freePlace, easeM, keysM, pathM, pathKeys, exprM, targetLines, searchLines, tableLines, splitLines, maxDepth, mparse };
   if (typeof module === 'object' && module && module.exports) module.exports = T.compile;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

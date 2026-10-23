@@ -135,6 +135,9 @@ async function padPress(k) {
     // (FAKE_LAN_LATE=n: the LAN world is listed only from the n-th time PLAY is opened — the CI device's discovery that came late)
     // FAKE_TITLE_STUCK: the title takes no A (PLAY never opens)
     else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && process.env.FAKE_TITLE_STUCK) { S.stuckA = (S.stuckA ?? 0) + 1; save(); }
+    // FAKE_TITLE_A_WRONG: an A on the title without Play's focus opens another screen (its focus was elsewhere); B closes it
+    else if (k === 'BUTTON_A' && S.phase === 'title' && process.env.FAKE_TITLE_A_WRONG && S.titleFocus !== 'play') { S.phase = 'gamemode'; S.wrongA = (S.wrongA ?? 0) + 1; save(); }
+    else if (k === 'BUTTON_B' && S.phase === 'gamemode' && process.env.FAKE_TITLE_A_WRONG) { S.phase = 'title'; save(); }
     // FAKE_PLAY_SLOW=n: PLAY comes only after n pictures (the CI device's Ore UI); an A meanwhile lands on "Create new world"
     else if (k === 'BUTTON_A' && S.phase === 'playload') { S.phase = 'createworld'; S.createdWorld = true; save(); }
     else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && S.launched) {

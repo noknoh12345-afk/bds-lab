@@ -13,13 +13,18 @@ const srv = (l) => fs.appendFileSync(S.tail, l + '\n');
 if (cmd === 'bds') { if (rest[0]) S.bdsVersion = rest[0]; save(); console.log(`OK bds ${S.bdsVersion ?? '1.26.52.3'} (cache only)`); }
 else if (cmd === 'up') {
   if (process.env.FAKE_UP_FAIL) { console.log('E main.ts:3 Cannot find name world'); console.log('FAIL'); process.exit(1); }
-  S.tail = process.env.LAB_TAIL; save(); srv('Server started.');
+  S.tail = process.env.LAB_TAIL; (S.addons ??= []).push(process.env.LAB_ADDON ?? ''); save(); srv('Server started.');
   // like the real live server: .lab/live.json next to lab.mjs, with the port it really took (FAKE_PORT_TAKEN: 19132 was busy)
   fs.mkdirSync(new URL('./.lab/', import.meta.url), { recursive: true });
   fs.writeFileSync(new URL('./.lab/live.json', import.meta.url), JSON.stringify({ pid: process.pid, port: Number(process.env.FAKE_PORT_TAKEN || process.env.LAB_PORT), ready: true }));
   console.log('OK live (jsonui_demo): node lab.mjs do <cmd>...');
 }
-else if (cmd === 'down') { fs.rmSync(new URL('./.lab/live.json', import.meta.url), { force: true }); console.log('OK down'); }
+else if (cmd === 'down') {
+  fs.rmSync(new URL('./.lab/live.json', import.meta.url), { force: true });
+  // FAKE_DISCONNECT_ON_DOWN: the game in the world loses the server (its "An error has occurred … Back to menu")
+  if (process.env.FAKE_DISCONNECT_ON_DOWN && ['world', 'form', 'screen'].includes(S.phase)) { S.phase = 'join-error'; S.disconnects = (S.disconnects ?? 0) + 1; save(); }
+  console.log('OK down');
+}
 else if (cmd === 'do') {
   console.log('> ' + rest[0]);
   if (/demo:open/.test(rest[0])) { S.phase = 'form'; save(); srv('[Scripting] DEMO shown to 1'); console.log('DEMO shown to 1'); }

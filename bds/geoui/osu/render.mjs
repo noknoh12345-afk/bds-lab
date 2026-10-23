@@ -46,7 +46,9 @@ function backdrop(w, h) {
 export function renderFrame(design, doc, t, ctx = {}) {
   const W = ctx.w || 1280, H = ctx.h || 720, aspect = W / H, ppu = H / SCREEN.h, halfW = (SCREEN.h * aspect) / 2;
   const tex = design.textures.atlas.image, TW = tex.width, TH = tex.height;
-  const seq = doc.sequences[0], st = M.evaluate(doc, seq.id, t, { events: ctx.events || [], state: ctx.state || {} });
+  // (screen.dx: half the screen past the reference aspect's — what an element anchored right moves by)
+  const ref = (() => { const s = ((design.settings || {}).refAspect) || 16 / 9; return (SCREEN.h * s) / 2; })();
+  const seq = doc.sequences[0], st = M.evaluate(doc, seq.id, t, { events: ctx.events || [], state: ctx.state || {}, screen: { dx: halfW - ref } });
   const bones = design.bones, byName = new Map(bones.map((b) => [b.name, b])), kids = new Map();
   for (const b of bones) if (b.parent) { if (!kids.has(b.parent)) kids.set(b.parent, []); kids.get(b.parent).push(b); }
   const els = design.elements || {};
@@ -54,7 +56,6 @@ export function renderFrame(design, doc, t, ctx = {}) {
   const protos = new Set(), tracked = new Set();
   for (const tp of seq.templates || []) for (const tr of tp.tracks) if (tr.target) protos.add(tr.target);
   for (const tr of seq.tracks) if (tr.kind === 'layer' && tr.target && tr.clips.length) tracked.add(tr.target);
-  const ref = (() => { const s = ((design.settings || {}).refAspect) || 16 / 9; return (SCREEN.h * s) / 2; })();
   const quads = [];
   const ST = ctx.state || {};
   /** a bone and its children drawn with a matrix; the state (the timeline's, or an instance's) of the elements on the way */
@@ -152,20 +153,26 @@ export function renderFrame(design, doc, t, ctx = {}) {
   };
   const cut = quads.filter((q) => q.blend === 'cutout'), soft = quads.filter((q) => q.blend !== 'cutout');
   for (const q of cut) draw(q);
-  soft.sort((a, b) => Math.max(...b.p.map((p) => p[2])) - Math.max(...a.p.map((p) => p[2])));
+  // (back to front by each quad's middle: a large plane leant out of the screen is not taken for a far one by its far corner)
+  const mid = (q) => (q.p[0][2] + q.p[1][2] + q.p[2][2] + q.p[3][2]) / 4;
+  soft.sort((a, b) => mid(b) - mid(a));
   for (const q of soft) draw(q);
   return { width: W, height: H, data: out };
 }
 
 /** a whole play as a video (mp4: H.264 + AAC) with its music and the autoplay's hitsounds — ffmpeg reads the frames as they are
- *  drawn. o: { design, doc, play (osugame.autoplay's), from, to, fps, w, h, music (a file), sounds: { id: file }, hits: [[id, s]] } */
+ *  drawn. o: { design, doc, play (osugame.autoplay's), from, to, fps, w, h, music (a file), sounds: { id: file }, hits: [[id, s]] }
+ *  — or a play the script drove (the tour: seeks, mods, a fail): o.at(s) → { t (the sequence's time, null: nothing plays),
+ *  events, state } at each second s of the video, o.musicSpans [[from s, to s, the song's s]] (the music as the script started
+ *  and stopped it), hits at the video's seconds */
 export async function renderVideo(file, o) {
   const fps = o.fps || 30, from = o.from || 0, to = o.to ?? o.doc.sequences[0].duration, W = o.w || 1280, H = o.h || 720;
   const tmp = fs.mkdtempSync(path.join(process.env.TMPDIR || '/tmp', 'osu-video-')), mix = path.join(tmp, 'mix.wav');
   // the sound: the music from `from`, each hitsound mixed in at its time (ffmpeg decodes; the mix is summed here)
   const decode = (f) => { const r = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', f, '-f', 'f32le', '-ac', '2', '-ar', '44100', '-'], { maxBuffer: 1 << 30 }); if (r.status !== 0) throw new Error(`ffmpeg: ${r.stderr}`); return new Float32Array(r.stdout.buffer, r.stdout.byteOffset, r.stdout.length / 4); };
   const n = Math.ceil((to - from) * 44100) * 2, buf = new Float32Array(n);
-  if (o.music) { const m = decode(o.music), off = Math.round(from * 44100) * 2; for (let i = 0; i < n && off + i < m.length; i++) buf[i] += m[off + i] * 0.8; }
+  if (o.music && o.musicSpans) { const m = decode(o.music); for (const [a, b, song] of o.musicSpans) { const i0 = Math.max(0, Math.round((a - from) * 44100) * 2), i1 = Math.min(n, Math.round((b - from) * 44100) * 2), off = Math.round(song * 44100) * 2 - i0; for (let i = i0; i < i1 && off + i < m.length; i++) if (off + i >= 0) buf[i] += m[off + i] * 0.8; } }
+  else if (o.music) { const m = decode(o.music), off = Math.round(from * 44100) * 2; for (let i = 0; i < n && off + i < m.length; i++) buf[i] += m[off + i] * 0.8; }
   const cache = {};
   for (const [id, at] of o.hits || []) {
     const f = (o.sounds || {})[id];
@@ -181,7 +188,9 @@ export async function renderVideo(file, o) {
   const done = new Promise((res, rej) => ff.on('close', (c) => (c === 0 ? res() : rej(new Error(`ffmpeg exited ${c}`)))));
   const total = Math.ceil((to - from) * fps);
   for (let k = 0; k < total; k++) {
-    const t = from + k / fps, ap = o.play, frame = renderFrame(o.design, o.doc, t, { w: W, h: H, events: ap ? ap.events : [], state: ap ? ap.at(t) : {} });
+    const t = from + k / fps, ap = o.play, sc = o.at ? o.at(t) : null;
+    const frame = sc ? renderFrame(o.design, o.doc, sc.t === null ? 0 : sc.t, { w: W, h: H, events: sc.events, state: sc.state, playing: sc.t !== null })
+      : renderFrame(o.design, o.doc, t, { w: W, h: H, events: ap ? ap.events : [], state: ap ? ap.at(t) : {} });
     if (!ff.stdin.write(Buffer.from(frame.data.buffer, frame.data.byteOffset, frame.data.length))) await new Promise((r) => ff.stdin.once('drain', r));
     if (o.onFrame) o.onFrame(k, total);
   }

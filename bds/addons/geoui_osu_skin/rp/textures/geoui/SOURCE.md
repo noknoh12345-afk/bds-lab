@@ -6,5 +6,6 @@ Licensed under **Creative Commons Attribution-NonCommercial 4.0** (CC-BY-NC 4.0,
 - Kept unchanged, but for the sounds: the .wav and .mp3 are kept as .ogg (libvorbis q4) for Minecraft.
 - bds-lab's sample add-on `geoui_osu_skin` (bds/geoui/timeline/demo.mjs) resizes and tints them into one texture atlas.
 - Non-commercial use only. The "osu!" and "ppy" names and logos are trademarks of ppy and are not covered by this licence:
-  no logo or menu art is taken here. This lab is not affiliated with or endorsed by ppy.
+  no logo is taken here, and of the menus only the pause screen's Retry button (pause-retry, shown on the fail screen as osu!
+  does). This lab is not affiliated with or endorsed by ppy.
 - Fetched by `node bds/geoui/osu/fetch-skin.mjs`.

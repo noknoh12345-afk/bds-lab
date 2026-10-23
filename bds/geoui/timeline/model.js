@@ -198,7 +198,10 @@
   };
   // (state.<name>: what the game keeps live for the whole play — the cursor, the score, the combo, a spinner's spin: contract.STATES.
   //  evaluate takes them from opts.state — the editor's autoplay, autoplay.js — and the game from the properties the script sets)
-  let STATE = {};
+  // (screen.dx: how much wider half the screen is than the design's reference aspect, model units — 0 there; GeoUI moves an
+  //  element anchored right that much right and one anchored left that much left, so an element moving from one to the other
+  //  adds it: evaluate takes it from opts.screen.dx, the game from GeoUI's own v.geoui_halfw)
+  let STATE = {}, SCREEN = {};
   const EXPRS = new Map();
   function exprFn(src) {
     const s = String(src);
@@ -217,9 +220,10 @@
       const sm = /^state\.(\w+)$/.exec(t);
       if (sm) { if (!STATE_NAMES().includes(sm[1])) throw new Error(`式「${s}」: state.${sm[1]} はありません（${STATE_NAMES().map((x) => `state.${x}`).join('・')}）`); return () => num(STATE[sm[1]]); }
       if (t === 'math.pi') return () => PI;
+      if (t === 'screen.dx') return () => num(SCREEN.dx);
       const f = /^math\.(\w+)$/.exec(t);
       if (f && MATH[f[1]]) { take('('); const args = []; if (peek() !== ')') { args.push(sum()); while (peek() === ',') { take(','); args.push(sum()); } } take(')'); const fn = MATH[f[1]]; return (p, tt) => fn(...args.map((a) => a(p, tt))); }
-      throw new Error(`式「${s}」: 「${t}」は使えません（param.名前・state.名前・t・数・+ - * /・math.〜 だけ）`);
+      throw new Error(`式「${s}」: 「${t}」は使えません（param.名前・state.名前・screen.dx・t・数・+ - * /・math.〜 だけ）`);
     };
     const unary = () => { if (peek() === '-') { take(); const e = unary(); return (p, t) => -e(p, t); } if (peek() === '+') { take(); return unary(); } return primary(); };
     const prod = () => { let e = unary(); while (peek() === '*' || peek() === '/') { const op = take(), a = e, b = unary(); e = op === '*' ? (p, t) => a(p, t) * b(p, t) : (p, t) => a(p, t) / b(p, t); } return e; };
@@ -231,7 +235,8 @@
   }
   const exprError = (src) => { try { exprFn(src); return null; } catch (e) { return e.message; } };
   // (the state names: contract.js's when it is loaded — the one list the game and the preview share — else the same list here)
-  const STATE_NAMES = () => (T.contract && T.contract.STATE_NAMES) || ['score', 'combo', 'acc', 'hp', 'cx', 'cy', 'hold', 'spin', 'rpm', 'sa', 'rank', 'maxcombo', 'misses', 'n300', 'n100', 'n50'];
+  const STATE_NAMES = () => (T.contract && T.contract.STATE_NAMES) || ['score', 'combo', 'acc', 'hp', 'cx', 'cy', 'hold', 'spin', 'rpm', 'sa', 'rank', 'maxcombo', 'misses', 'n300', 'n100', 'n50',
+    'hd', 'fl', 'nf', 'sd', 'pf', 'auto', 'fc', 'failed', 'record'];
   /** the state names an expression reads (state.<name>), in order of first use */
   const stateRefs = (src) => [...new Set((String(src).match(/\bstate\.(\w+)/g) || []).map((x) => x.slice(6)))];
   const keyValue = (k, params, t) => (typeof k.v === 'string' ? exprFn(k.v)(params || {}, t) : k.v);
@@ -452,12 +457,14 @@
   /** every element's state at time t of playing a sequence: { 'element': { visible, x, y, scaleX, scaleY, rotation,
    *  opacity, value?, fill?, frame? } }; a template's instance only while it is out (t − lead … t + tail), as
    *  'element#instance'. opts.events = [{ instance, name, t }] (hits, misses: what trigger and until clips answer; an event with
-   *  no instance answers the sequence's own tracks: a shake on any miss), opts.state = { name: value } (state.<name>) */
+   *  no instance answers the sequence's own tracks: a shake on any miss), opts.state = { name: value } (state.<name>),
+   *  opts.screen = { dx } (screen.dx: the screen's half width past the reference aspect's) */
   function evaluate(doc, seqId, t, opts = {}) {
     const seq = seqOf(doc, seqId), out = {};
     if (!seq) return out;
     const u = seqTime(seq, num(t)), events = Array.isArray(opts.events) ? opts.events : [];
     STATE = opts.state && typeof opts.state === 'object' ? opts.state : {};
+    SCREEN = opts.screen && typeof opts.screen === 'object' ? opts.screen : {};
     const solo = seq.tracks.some((tr) => tr.solo);
     tracksState(seq, seq.tracks, u, 0, { events, solo, params: {} }, null, '', out);
     const tpls = new Map((seq.templates || []).map((x) => [x.id, x]));
