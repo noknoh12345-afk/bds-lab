@@ -8,7 +8,7 @@
 ```
 noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の続き。設計と記録は bds/geoui/timeline/PLAN.md、使い方は bds/geoui/TIMELINE.md。
 7 段・見直し・作り直し（本物の大きさの譜面）は済み。本物のアプリで 300 個（geoui_rhythm_big）も 1000 個・6 分の譜面
-（geoui_rhythm_huge: addon/geoui_rhythm_huge の枝、3.2 MB）も最後まで動いた。pre_animation は 61 万文字・4029 行（geoui_probe_sz）、
+（geoui_rhythm_huge、3.2 MB。2026-10-23 に既定の枝へ統合）も最後まで動いた。pre_animation は 61 万文字・4029 行（geoui_probe_sz）、
 5029 行（geoui_probe_lc）、変数 5000 個（geoui_probe_vx）まで効く。ラボのボットは LAB_TRANSPORT=lan（nethernet-connect v3）で
 1000 個のパックのワールドに入れる（tests.txt 8/8）。9 回目: 1000 個は 2 回目も 74 手順すべて通り、参加の長さはパックの大きさではなく
 ラボのタイトル → PLAY の進め方だった（PLAN.md の 9 回目、app/DESIGN.md「参加の内訳」）。
@@ -26,8 +26,7 @@ noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の
 最初にやること:
 - PLAN.md の「本物のアプリで確かめたこと」の 8 回目まで読む。本物のアプリでまた確かめる時は、私の許可をもらってから 1 本ずつ:
   gh api -X POST repos/noknoh12345-afk/bds-lab/actions/workflows/app.yml/dispatches -f ref=main -f "inputs[addon]=<名前>" -f "inputs[mode]=run" -f "inputs[account]=true" -f "inputs[screen]=720x1560" -f "inputs[lane]=<lane>" -f "inputs[knobs]=APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"
-  別の枝のアドオンは inputs[ref]=<枝> を足す（ワークフローは ref=main のまま）。枝が main より古ければ git rebase origin/main して
-  node bds/geoui/timeline/demo.mjs --huge で作り直し、その枝に push（--force-with-lease）
+  （1000 個の見本も既定の枝にある: demo.mjs が 3 つとも作り、--check で確かめる。--huge はそれだけを作る）
 - 結果: gh run download <run> → probe は node bds/geoui/timeline/probe.mjs read <summary.json>、見本は summary.json の measures・
   failed_codes・failed_trails・join_trail・join_seconds・join_connect_seconds・join_lan_seconds（PLAY が出た・LAN のワールドが出た・
   押した秒）・join_lan_trail（参加の道筋はラボの語だけ: app/lib/failcodes.mjs）。
