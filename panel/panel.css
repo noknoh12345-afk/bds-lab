@@ -388,6 +388,10 @@ body.vopen { overflow: hidden; }
 .door { text-align: center; padding: 28px 0 8px; }
 .door .mark { display: block; width: min(320px, 78vw); aspect-ratio: 41 / 9; margin: 0 auto 10px; background: var(--wordmark) center / contain no-repeat; image-rendering: pixelated; }
 .door p { margin: 4px 0; }
+/* (Japanese wrapped at its phrases, not in the middle of a word, where the browser can — headings, a fold's title, a label, the
+   door's line — and a heading's lines balanced: no lone character left on a line of its own) */
+:is(h1, h2, h3, summary, label, .door p) { word-break: auto-phrase; overflow-wrap: break-word; }
+:is(h2, h3, .door p) { text-wrap: balance; }
 
 /* ---- a wide screen: the dock becomes OreUI's tab row under the title bar, the segments below it ---- */
 @media (min-width: 900px) {
