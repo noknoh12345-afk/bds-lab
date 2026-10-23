@@ -2,7 +2,8 @@
 // tokens tried right after a change, without a deploy.
 //   check [--quick] [--all] [files..]  the checks the changed files need (git's changed and new files when none are named):
 //                                       ESLint, the offline tests, and the real browser (panel-browser, ~1 min; --quick: not)
-//   shots [dir] [--dark]                the real-browser run with a picture of each tab it opens (default .lab/panel-shots)
+//   shots [dir] [--dark] [--wide]       the real-browser run with a picture of each tab it opens (default .lab/panel-shots;
+//                                       --wide: 1280 px across, as a desktop shows it)
 //   hook                                for Claude Code's PostToolUse: a file just edited → its quick checks; a failure is told
 //                                       back to the AI at once (exit 2), anything else is silent
 import fs from 'node:fs';
@@ -38,6 +39,8 @@ const RULES = [
   [/^panel\/lib\//, [WORKERD]],
   [/^common\/(panel-config|ghapp)\.mjs$/, ['tests/appci-offline.mjs', 'tests/panel-offline.mjs']],
   [/^common\/panel\.mjs$/, ['tests/panel-offline.mjs']],
+  // (the panel as Pages serves it: bundled into one script and its chunks — any of its files, the bundler, the Pages build)
+  [/^panel\/(panel\.js|lib\/|ui\/|index\.html|panel\.css|a11y\.css)|^common\/(panel-bundle|panel-config)\.mjs$/, ['tests/bundle-offline.mjs']],
   [/^panel\/(a11y|panel)\.css$/, ['tests/a11y-offline.mjs']],
   [/^common\/(connect-daily|weekly|statuspage)\.mjs$/, (f) => [`tests/${f.slice(7, -4).replace('-', '')}-offline.mjs`]],
   [/^app\/(app\.mjs|lib\/runfiles\.mjs)$/, ['tests/panel-offline.mjs']],
@@ -45,7 +48,7 @@ const RULES = [
     'tests/qr-offline.mjs', 'tests/playcard-offline.mjs', 'tests/relnotes-offline.mjs', 'tests/packdiff-offline.mjs', 'tests/revert-offline.mjs', 'tests/drafts-offline.mjs', 'tests/tutorial-offline.mjs', 'tests/progress-offline.mjs',
     'tests/failsum-offline.mjs', 'tests/runissue-offline.mjs', 'tests/runcompare-offline.mjs', 'tests/testhist-offline.mjs', 'tests/secretwatch-offline.mjs', 'tests/connectdaily-offline.mjs', 'tests/weekly-offline.mjs', 'tests/notifyprefs-offline.mjs',
     'tests/minutes-offline.mjs', 'tests/lendfc-offline.mjs', 'tests/nlsched-offline.mjs', 'tests/wizard-offline.mjs', 'tests/a11y-offline.mjs', 'tests/inviteqr-offline.mjs', 'tests/undo-offline.mjs', 'tests/pick-offline.mjs', 'tests/mslive-offline.mjs', 'tests/navmenu-offline.mjs']],
-  [/^tests\/(panel-offline|panel-browser|governance-offline|setup-offline|session-offline|auth-offline|auth-ms-offline|pick-offline|mslive-offline|navmenu-offline|appci-offline|units-offline|schedule-offline|stats-offline|inbox-offline|rescue-offline|shell-rescue-offline|setup-rescue-offline|units-rescue-offline|misc-rescue-offline|ghrules-offline|fakes-rules-offline|connect-ui-offline|qr-offline|playcard-offline|relnotes-offline|packdiff-offline|revert-offline|drafts-offline|tutorial-offline|progress-offline|failsum-offline|runissue-offline|runcompare-offline|testhist-offline|secretwatch-offline|connectdaily-offline|weekly-offline|notifyprefs-offline|minutes-offline|lendfc-offline|nlsched-offline|wizard-offline|a11y-offline|inviteqr-offline|undo-offline|statuspage-offline|viewer-offline)\.mjs$/, (f) => [f]],
+  [/^tests\/(panel-offline|panel-browser|governance-offline|setup-offline|session-offline|auth-offline|auth-ms-offline|pick-offline|mslive-offline|navmenu-offline|appci-offline|units-offline|schedule-offline|stats-offline|inbox-offline|rescue-offline|shell-rescue-offline|setup-rescue-offline|units-rescue-offline|misc-rescue-offline|ghrules-offline|fakes-rules-offline|connect-ui-offline|qr-offline|playcard-offline|relnotes-offline|packdiff-offline|revert-offline|drafts-offline|tutorial-offline|progress-offline|failsum-offline|runissue-offline|runcompare-offline|testhist-offline|secretwatch-offline|connectdaily-offline|weekly-offline|notifyprefs-offline|minutes-offline|lendfc-offline|nlsched-offline|wizard-offline|a11y-offline|inviteqr-offline|undo-offline|statuspage-offline|viewer-offline|bundle-offline)\.mjs$/, (f) => [f]],
 ];
 export const ALL = ['tests/panel-offline.mjs', 'tests/governance-offline.mjs', 'tests/setup-offline.mjs', 'tests/session-offline.mjs', 'tests/auth-offline.mjs', 'tests/auth-ms-offline.mjs', 'tests/api-offline.mjs', 'tests/appci-offline.mjs',
   'tests/viewer-offline.mjs', 'tests/units-offline.mjs', 'tests/schedule-offline.mjs', 'tests/stats-offline.mjs', 'tests/inbox-offline.mjs',
@@ -53,8 +56,8 @@ export const ALL = ['tests/panel-offline.mjs', 'tests/governance-offline.mjs', '
   'tests/ghrules-offline.mjs', 'tests/fakes-rules-offline.mjs', 'tests/connect-ui-offline.mjs',
   'tests/qr-offline.mjs', 'tests/playcard-offline.mjs', 'tests/relnotes-offline.mjs', 'tests/packdiff-offline.mjs', 'tests/revert-offline.mjs', 'tests/drafts-offline.mjs', 'tests/tutorial-offline.mjs', 'tests/progress-offline.mjs',
   'tests/failsum-offline.mjs', 'tests/runissue-offline.mjs', 'tests/runcompare-offline.mjs', 'tests/testhist-offline.mjs', 'tests/secretwatch-offline.mjs', 'tests/connectdaily-offline.mjs', 'tests/weekly-offline.mjs', 'tests/notifyprefs-offline.mjs',
-  'tests/minutes-offline.mjs', 'tests/lendfc-offline.mjs', 'tests/nlsched-offline.mjs', 'tests/wizard-offline.mjs', 'tests/a11y-offline.mjs', 'tests/inviteqr-offline.mjs', 'tests/undo-offline.mjs', 'tests/pick-offline.mjs', 'tests/mslive-offline.mjs', 'tests/navmenu-offline.mjs', 'tests/statuspage-offline.mjs', WORKERD, BROWSER];
-const LINTABLE = /^(panel|auth)\/.*\.(m?js)$|^common\/(panel|panel-config|ghapp|hosts|schedule|unitci|connect-daily|weekly|statuspage)\.mjs$|^tests\/(panel|governance|setup|session|auth|appci|host|units|schedule|stats|inbox|rescue|shell|misc|ghrules|fakes|connect|qr|playcard|relnotes|packdiff|revert|drafts|tutorial|progress|failsum|runissue|runcompare|testhist|secretwatch|connectdaily|weekly|notifyprefs|minutes|lendfc|nlsched|wizard|a11y|inviteqr|undo|statuspage|viewer)-[a-z-]+\.mjs$/;
+  'tests/minutes-offline.mjs', 'tests/lendfc-offline.mjs', 'tests/nlsched-offline.mjs', 'tests/wizard-offline.mjs', 'tests/a11y-offline.mjs', 'tests/inviteqr-offline.mjs', 'tests/undo-offline.mjs', 'tests/pick-offline.mjs', 'tests/mslive-offline.mjs', 'tests/navmenu-offline.mjs', 'tests/statuspage-offline.mjs', 'tests/bundle-offline.mjs', WORKERD, BROWSER];
+const LINTABLE = /^(panel|auth)\/.*\.(m?js)$|^common\/(panel|panel-config|panel-bundle|ghapp|hosts|schedule|unitci|connect-daily|weekly|statuspage)\.mjs$|^tests\/(panel|governance|setup|session|auth|appci|host|units|schedule|stats|inbox|rescue|shell|misc|ghrules|fakes|connect|qr|playcard|relnotes|packdiff|revert|drafts|tutorial|progress|failsum|runissue|runcompare|testhist|secretwatch|connectdaily|weekly|notifyprefs|minutes|lendfc|nlsched|wizard|a11y|inviteqr|undo|statuspage|viewer|bundle)-[a-z-]+\.mjs$/;
 
 /** the changed files → { lint: [files], tests: [files] } (pure); quick leaves the browser out */
 export function plan(files, { quick = false } = {}) {
@@ -90,7 +93,7 @@ const eslint = (files) => (fs.existsSync(LOCAL_ESLINT) ? runOne(process.execPath
 
 /** the checks run → true when all passed; out: each one ✔/✘ with its time, a failure's lines */
 export function check({ files, quick = false, all = false, out = console.log } = {}) {
-  const p = all ? { lint: ['panel', 'auth', 'common/panel.mjs', 'common/panel-config.mjs', 'common/ghapp.mjs', 'common/hosts.mjs', 'common/claude-plugin.mjs', ...ALL], tests: ALL.filter((t) => !(quick && SLOW.has(t))) } : plan(files ?? changed(), { quick });
+  const p = all ? { lint: ['panel', 'auth', 'common/panel.mjs', 'common/panel-config.mjs', 'common/panel-bundle.mjs', 'common/ghapp.mjs', 'common/hosts.mjs', 'common/claude-plugin.mjs', ...ALL], tests: ALL.filter((t) => !(quick && SLOW.has(t))) } : plan(files ?? changed(), { quick });
   if (!p.lint.length && !p.tests.length) { out('panel: 変えたファイルに、パネルの試験の要るものはありません（--all ですべて）'); return true; }
   let ok = true;
   const say = (name, r) => { ok &&= r.ok; out(`${r.ok ? '✔' : '✘'} ${name}（${(r.ms / 1000).toFixed(1)} 秒）`); if (!r.ok) for (const x of failLines(r.out)) out(`    ${x}`); };
@@ -108,9 +111,9 @@ export async function panelCmd(args, out = console.log) {
   if (sub === 'check') return check({ quick: rest.includes('--quick'), all: rest.includes('--all'), files: rest.filter((a) => !a.startsWith('--')).length ? rest.filter((a) => !a.startsWith('--')) : undefined, out });
   if (sub === 'shots') {
     // (--dark: in the dark colours, as a phone set to dark mode shows it)
-    const dark = rest.includes('--dark'), dir = path.resolve(TOP, rest.filter((a) => !a.startsWith('--'))[0] ?? '.lab/panel-shots');
+    const dark = rest.includes('--dark'), wide = rest.includes('--wide'), dir = path.resolve(TOP, rest.filter((a) => !a.startsWith('--'))[0] ?? '.lab/panel-shots');
     fs.rmSync(dir, { recursive: true, force: true });
-    const r = runOne(process.execPath, [BROWSER], { PANEL_SHOTS: dir, ...(dark ? { PANEL_SHOTS_SCHEME: 'dark' } : {}) });
+    const r = runOne(process.execPath, [BROWSER], { PANEL_SHOTS: dir, ...(dark ? { PANEL_SHOTS_SCHEME: 'dark' } : {}), ...(wide ? { PANEL_SHOTS_WIDTH: '1280' } : {}) });
     for (const x of failLines(r.out)) if (!r.ok) out(`    ${x}`);
     const pics = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.png')).sort() : [];
     out(`${r.ok ? '✔' : '✘'} 本物のブラウザで ${pics.length} 枚: ${path.relative(TOP, dir)}/`);
@@ -130,6 +133,6 @@ export async function panelCmd(args, out = console.log) {
     process.stderr.write(`${rel} を変えたあとのパネルの試験（node lab.mjs panel check --quick）:\n${lines.join('\n')}\n`);
     process.exit(2);
   }
-  out('usage: node lab.mjs panel check [--quick] [--all] [files..] | shots [dir] [--dark] | hook');
+  out('usage: node lab.mjs panel check [--quick] [--all] [files..] | shots [dir] [--dark] [--wide] | hook');
   return false;
 }

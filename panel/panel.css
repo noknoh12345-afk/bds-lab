@@ -105,6 +105,8 @@ input[type=radio] { width: 20px; height: 20px; margin: 0; flex: none; accent-col
 .files .arts { gap: 6px; }
 .files .arts button.art { min-height: 36px; padding: 4px 10px; text-align: left; overflow-wrap: anywhere; }
 [hidden] { display: none !important; }
+/* a tab's view still being read (panel.js later()): its place among the cards, laid out as if its cards were the tab's own */
+.later { display: contents; }
 details > summary { cursor: pointer; margin: 10px 0 4px; color: var(--muted); font-weight: 600; border-radius: 8px; }
 details > summary:hover { color: var(--fg); }
 table { width: 100%; border-collapse: collapse; font-size: 13px; display: block; overflow-x: auto; }
@@ -243,3 +245,12 @@ body.vopen { overflow: hidden; }
 #viewer .vkeep { display: flex; gap: 8px; align-items: center; color: var(--fg); margin-top: 10px; }
 html.a11y-big #viewer .vtile .vname { font-size: 14px; }
 html.a11y-big #viewer pre.vtext { font-size: 15px; }
+
+/* 「概要」 on a wide screen (a desktop, a tablet across): its cards in two columns, the page wider — what must be read first
+   (the tab's help, 「何がしたい？」, a newer version, the notices, the beginner's guide) across both; a card never split */
+@media (min-width: 1180px) {
+  main:has(#tabbody[data-tab=overview]) { max-width: 1240px; }
+  #tabbody[data-tab=overview] { columns: 2; column-gap: 16px; }
+  #tabbody[data-tab=overview] > * { break-inside: avoid; }
+  #tabbody[data-tab=overview] > :is(details.help, #wizardbox, #notices, .guideslot, .vslot) { column-span: all; }
+}

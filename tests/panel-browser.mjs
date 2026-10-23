@@ -249,15 +249,24 @@ async function serve(root) {
   await new Promise((r) => srv.once('listening', r));
   return { srv, url: `http://127.0.0.1:${srv.address().port}/` };
 }
-const { srv, url: URL0 } = await serve(path.join(TOP, 'panel'));
+// (the sign-in service's panel and the versioned one are built as pages.yml builds them — bundled into one script with its
+// chunks (common/panel-bundle.mjs) when esbuild is here: what is deployed is what is tried. PANEL_BROWSER_SERVE=bundle: the
+// main run (every tab) on the bundled panel too, not on panel/ as it is)
+const PC = await imp('common/panel-config.mjs'), BUNDLES = [];
+const build = async (dir, env) => { const r = await PC.buildPagesBundled(dir, env); BUNDLES.push(r.bundle); return r; };
+const SRC0 = process.env.PANEL_BROWSER_SERVE === 'bundle' ? fs.mkdtempSync(path.join(os.tmpdir(), 'bds-lab-panel-main-')) : null;
+if (SRC0) await build(SRC0, {});
+const { srv, url: URL0 } = await serve(SRC0 ?? path.join(TOP, 'panel'));
 // (the same panel as pages.yml builds it with a sign-in service: config.json, the service let into its CSP)
 const AUTH = 'https://auth.bdslab.test', BUILT = fs.mkdtempSync(path.join(os.tmpdir(), 'bds-lab-panel-built-'));
-(await imp('common/panel-config.mjs')).buildPages(BUILT, { LAB_AUTH_URL: AUTH, APP_CLIENT_ID: 'Iv1.labapp' });
+await build(BUILT, { LAB_AUTH_URL: AUTH, APP_CLIENT_ID: 'Iv1.labapp' });
 const { srv: srv2, url: URL2 } = await serve(BUILT);
 // (and as pages.yml builds it from a commit: config.json's version names the service worker's cache)
 const BUILT3 = fs.mkdtempSync(path.join(os.tmpdir(), 'bds-lab-panel-versioned-'));
-(await imp('common/panel-config.mjs')).buildPages(BUILT3, { GITHUB_SHA: 'ab'.repeat(20) });
+await build(BUILT3, { GITHUB_SHA: 'ab'.repeat(20) });
 const { srv: srv3, url: URL3 } = await serve(BUILT3);
+const BUNDLED = BUNDLES.every((b) => b.bundled);
+if (!BUNDLED) console.log(`・ 束ねずに試します: ${BUNDLES.find((b) => !b.bundled)?.why}`);
 // (the real sign-in service, auth/handler.mjs, answering at AUTH — GitHub's side of it a fake: the code and the refresh
 // token exchanged, a token revoked)
 const OA = { authorize: [], exchanges: [], revoked: [] }, CID = 'Iv1.labapp', CSECRET = 'app-client-secret-xyz';
@@ -321,7 +330,9 @@ for (const o of exe ? [{ executablePath: exe }] : [{ channel: 'chrome' }, {}]) {
 if (!browser) { console.log('✘ no browser to run'); process.exit(1); }
 // (PANEL_SHOTS_SCHEME=dark: the pictures of `node lab.mjs panel shots --dark` in the dark colours — what is checked stays the same)
 const scheme = process.env.PANEL_SHOTS_SCHEME === 'dark' ? { colorScheme: 'dark' } : {};
-const ctx = await browser.newContext({ viewport: { width: 420, height: 900 }, ...scheme });
+// (PANEL_SHOTS_WIDTH: the main run's pictures at another width — `panel shots --wide` takes them as a desktop shows the panel)
+const W0 = Math.min(2560, Math.max(320, Number(process.env.PANEL_SHOTS_WIDTH) || 420));
+const ctx = await browser.newContext({ viewport: { width: W0, height: 900 }, ...scheme });
 // (the panel with all of it shown — 「設定」's 「すべての機能を出す」 — for the checks below; 「かんたん表示」, the default of a
 //  browser new to the panel, is seen on its own further down)
 const allShown = () => { try { localStorage.setItem('bdslab.panel.full', '1'); } catch { /* a page with no storage (about:blank) */ } };
@@ -1085,8 +1096,11 @@ try {
     return name ? { name, urls: (await (await globalThis.caches.open(name)).keys()).map((r) => r.url) } : (await globalThis.caches.keys());
   });
   const paths = (kept?.urls ?? []).map((u) => new URL(u).pathname);
-  check(kept?.name?.endsWith(`:${'ab'.repeat(20)}`) && ['/index.html', '/panel.css', '/panel.js', '/config.json', '/lib/inbox.mjs', '/ui/units.mjs'].every((x) => paths.includes(x)) && !kept.urls.some((u) => !u.startsWith(URL3)),
-    'the panel kept on the device: its own files only (index, style, config, every module), in a cache named for this version', JSON.stringify(kept));
+  // (bundled: panel.js and every chunk it imports or loads later — the viewer's and each later tab's; not bundled: every module)
+  const chunks = BUNDLED ? fs.readdirSync(path.join(BUILT3, 'chunks')).filter((f) => f.endsWith('.js')).map((f) => `/chunks/${f}`) : ['/lib/inbox.mjs', '/ui/units.mjs'];
+  check(kept?.name?.endsWith(`:${'ab'.repeat(20)}`) && ['/index.html', '/panel.css', '/panel.js', '/config.json', ...chunks].every((x) => paths.includes(x)) && !kept.urls.some((u) => !u.startsWith(URL3))
+    && (!BUNDLED || (chunks.some((x) => /\/viewer-/.test(x)) && !paths.some((x) => x.endsWith('.map')))),
+    `the panel kept on the device: its own files only (index, style, config, ${BUNDLED ? `all ${chunks.length} chunks, no source map` : 'every module'}), in a cache named for this version`, JSON.stringify(kept));
   await ctx3.setOffline(true);
   await p3.reload();
   check(await p3.waitForSelector('#tok', { timeout: 8000 }).then(() => true, () => false), 'no network: the panel opens all the same (the kept copy)', await p3.locator('main').innerText().catch(() => ''));
@@ -1097,7 +1111,7 @@ try {
   check(false, 'the run went through', e.stack);
 } finally {
   await browser.close();
-  srv.close(); srv2.close(); srv3.close(); fs.rmSync(BUILT, { recursive: true, force: true }); fs.rmSync(BUILT3, { recursive: true, force: true });
+  srv.close(); srv2.close(); srv3.close(); fs.rmSync(BUILT, { recursive: true, force: true }); fs.rmSync(BUILT3, { recursive: true, force: true }); if (SRC0) fs.rmSync(SRC0, { recursive: true, force: true });
 }
 console.log(bad ? `FAIL panel-browser (${bad})` : 'PASS panel-browser');
 process.exit(bad ? 1 : 0);

@@ -20,9 +20,6 @@ import * as AU from './lib/audit.mjs';
 import { h, $, main, toast, act, link, setOnFail, failView } from './ui/dom.mjs';
 import { signInCard, tokenHelp } from './ui/signin.mjs';
 import { setupTab, takeAppReturn } from './ui/setup.mjs';
-import { connectTab } from './ui/connect.mjs';
-import { auditTab } from './ui/audit.mjs';
-import { membersTab } from './ui/members.mjs';
 import * as DBG from './lib/debug.mjs';
 import { lendStart, lendFork } from './ui/lend.mjs';
 import { HOST_FILES } from './lib/hosttemplate.mjs';
@@ -31,10 +28,6 @@ import * as GD from './lib/guide.mjs';
 import { helpLine, guideCard, palette, glossaryCard } from './ui/guide.mjs';
 import { checks as setupChecks, tokenUrl } from './lib/setup.mjs';
 import * as R from './lib/rescue.mjs';
-import { unitsTab } from './ui/units.mjs';
-import { releasesTab } from './ui/releases.mjs';
-import { scheduleTab } from './ui/schedule.mjs';
-import { statsTab } from './ui/stats.mjs';
 import { healthCard, reportButton } from './ui/health.mjs';
 import * as IB from './lib/inbox.mjs';
 import { bellButton, toggleInbox } from './ui/inbox.mjs';
@@ -139,6 +132,43 @@ setOnFail((e, retry) => rescueView(R.rescue(e, rescueCtx()), retry, e));
 const fill = async (box, fn) => { try { return await fn(); } catch (e) { box?.replaceChildren(failView(e, () => fill(box, fn))); return undefined; } };
 /** a read that may fail without stopping the rest: its failure kept in `bag` (what, error) to be said, the fallback used */
 const soft = (p, fallback, bag, what) => Promise.resolve(p).catch((e) => { bag.push({ what, e }); return fallback; });
+/** a tab's view read the first time it is drawn (import() of its module) → view(body, ctx) as the module's own: until it is read,
+ *  a place kept for it where it stands among the tab's cards (div.later, display: contents — the view draws into it, later
+ *  cards and all, as into the tab), 「読み込んでいます…」 there; a failure to read it (offline, a newer deploy) said there with
+ *  「もう一度」. view.ready(): read it now (the panel reads them all in the background once it is up: LATER) */
+const LATER = [];
+function later(load, name) {
+  let mod = null, p = null;
+  const ready = () => (p ??= load().then((m) => (mod = m), (e) => { p = null; throw e; }));
+  const view = (body, ctx) => {
+    if (mod) return mod[name](body, ctx);
+    const slot = h('div', { class: 'later' }, h('p', { class: 'muted' }, '読み込んでいます…'));
+    body.append(slot);
+    const draw = () => ready().then((m) => { if (slot.isConnected || !body.isConnected) { slot.replaceChildren(); m[name](slot, ctx); } }, (e) => slot.replaceChildren(failView(e, draw)));
+    draw();
+    return undefined;
+  };
+  view.ready = ready;
+  LATER.push(view);
+  return view;
+}
+// (the tabs few open first, each read the first time it is opened — in the served panel its own small file, common/panel-bundle.mjs —
+// and all of them read in the background once the panel is up, so a tab is drawn at once when it is chosen)
+const connectTab = later(() => import('./ui/connect.mjs'), 'connectTab');
+const auditTab = later(() => import('./ui/audit.mjs'), 'auditTab');
+const membersTab = later(() => import('./ui/members.mjs'), 'membersTab');
+const unitsTab = later(() => import('./ui/units.mjs'), 'unitsTab');
+const releasesTab = later(() => import('./ui/releases.mjs'), 'releasesTab');
+const scheduleTab = later(() => import('./ui/schedule.mjs'), 'scheduleTab');
+const statsTab = later(() => import('./ui/stats.mjs'), 'statsTab');
+let laterAll = false;
+/** every later tab read once, when the browser is idle after the panel first drew a lab (a tab chosen then is drawn at once) */
+function readLater() {
+  if (laterAll) return;
+  laterAll = true;
+  const go = () => { for (const v of LATER) v.ready().catch(() => { /* read again when the tab is opened: it says so there */ }); };
+  if (typeof globalThis.requestIdleCallback === 'function') globalThis.requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 1500);
+}
 
 // ---- the lab's policy: may this person do this here (GitHub's role first, then the policy: never wider than GitHub) ----
 /** an administrator who has to lend first (the policy's adminsLend): nothing else is offered until they do */
@@ -431,7 +461,8 @@ function render() {
   // (「かんたん表示」: the strip and ☰ without the screens few need — the one shown now always in it; each screen's 「？」 left
   //  out too: ☰ says what each one is for)
   const view = { full: full(), current: st.tab }, tabs = NAV.visibleTabs(allowed, view), hidden = NAV.hiddenTabs(allowed, view);
-  const body = h('div', { id: 'tabbody' }, view.full ? helpLine(st.tab, LOCAL) : null);
+  // (data-tab: a wide screen lays 「概要」 out in two columns — panel.css)
+  const body = h('div', { id: 'tabbody', 'data-tab': st.tab }, view.full ? helpLine(st.tab, LOCAL) : null);
   // (the strip: each tab with its icon — drawn from data-icon, so a button's words stay the tab's name — and 「☰」 before it,
   //  every screen at once in groups with what each is for: a phone shows only five of the strip)
   const strip = h('nav', { class: 'tabs', 'aria-label': '画面' }, tabs.map(([k, label], i) => h('button', { class: st.tab === k ? 'on' : '', 'data-tab': k, 'data-icon': NAV.TAB_ICONS[k] ?? null, 'aria-current': st.tab === k ? 'page' : null, title: i < 10 ? `キー ${(i + 1) % 10}` : null, onclick: () => go(k) }, label)));
@@ -439,6 +470,7 @@ function render() {
   main().replaceChildren(h('div', { class: 'tabbar' }, menuBtn, strip), body);
   showActiveTab(strip);
   ({ overview, runs, start, units, releases, files, schedule, stats, discord, secrets, live, hosts, members, setup, connect: connectView, audit, settings: settingsTab })[st.tab](body);
+  readLater();
 }
 /** another tab (the address follows: a reload or a shared link opens the same tab) */
 function go(tab, reveal = null) { $('menusheet')?.remove(); st.tab = tab; st.reveal = reveal; history.replaceState(null, '', `#${tab}`); render(); }
@@ -798,7 +830,7 @@ function overview(body) {
 const guideRole = () => (isOwner() ? 'owner' : st.lab?.role === 'admin' ? 'admin' : canLab() ? 'writer' : (st.as ?? []).includes('lender') ? 'lender' : 'stranger');
 /** the beginner's guide, filled once what its steps need is read (the lab's runs, LAB_HOSTS) */
 function guideSlot() {
-  const slot = h('div', {});
+  const slot = h('div', { class: 'guideslot' });
   act(async () => {
     const role = guideRole(), lab = st.lab && canLab();
     // (the guide's facts are best guesses: a read that failed counts as not done yet — 「いまやること」 says what was not read)

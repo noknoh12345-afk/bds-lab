@@ -183,7 +183,8 @@ GitHub のアカウントを選ぶ画面から）。それぞれのトークン�
   （約 1 分）。`--quick` でブラウザなし（数秒）、`--all` で全部。✘ の行に、落ちたところが出ます。
 - Claude Code では、パネル・サインイン・ひな形のファイルを編集するたびに `--quick` が自動で走り（`.claude/settings.json` の
   PostToolUse）、落ちたらすぐ AI に伝わります。
-- `node lab.mjs panel shots`: 本物のブラウザで開いたタブごとの画像を `.lab/panel-shots/` に。
+- `node lab.mjs panel shots`: 本物のブラウザで開いたタブごとの画像を `.lab/panel-shots/` に（`--dark` で暗い色、`--wide` でパソコンの幅 1280 px）。
+- `PANEL_BROWSER_SERVE=bundle node tests/panel-browser.mjs`: 本物のブラウザの試験のすべてのタブを、Pages に出すのと同じ 1 本にまとめたパネルで。
 - 公開しているパネルでは「設定」→「**デバッグ**」: このページの版（`pages.yml` が書くコミット）といちばん新しく出した版、
   エラーと最近の GitHub への呼び出し（トークン・中身は入りません）、「写す」で貼れる報告。エラーが起きると右上に ⚠ が出ます。
   push した変更が出たら、概要と知らせで「新しい版が出ています: 読み直す」。
@@ -249,6 +250,23 @@ GitHub は成果物を「保管場所への一時的な転送」でしか渡さ�
 端末をスマホで・秘密を Discord のフォームで（App があれば `LAB_SECRETS_TOKEN` も要りません）。notify は、終わった実行の知らせに、
 その実行の成果物から合うファイルを 10 MB まで添えます（このリポジトリのコードの実行だけ: フォークからの PR のファイルは渡しません）。
 
+## 速く開く（Pages には 1 本にまとめて）
+
+`pages.yml` は panel/ をそのまま置かず、`common/panel-bundle.mjs`（esbuild）で **1 本のスクリプトと小さな分け前**（`chunks/`）に
+まとめて縮めてから置きます。`panel/` はそのまま（試験・AI 用の API・Worker はこちらを読みます）で、変わるのは配るものだけです。
+
+- 最初に読むのは `panel.js` と、それが使う分け前だけ（`index.html` の `modulepreload` で同時に頼みます）。あまり開かないタブ
+  （連携・メンバー・統計・予約・アドオン・配布・監査）と成果物ビューアは、それぞれ開いたときに読み（`panel.js` の `later()`）、
+  ラボを一度描いたあと、手が空いたときに裏で全部読んでおくので、選んだときにはすぐ出ます。読めなかったら、その場に理由と「もう一度」。
+- 実測（本物の Pages の今までの形と、まとめた形。スマホの幅・最初のカードが出るまで）: 頼むファイル 96 → 15、速い回線 0.43 →
+  0.23 秒、CPU が 4 分の 1 のスマホ 0.88 → 0.56 秒、4G 3.75 → 1.17 秒、遅い回線（3G 相当）6.75 → 2.34 秒。
+- できることは同じ: CSP はそのまま（自分のスクリプトだけ・eval なし）、`sw.js` もそのまま（`panel.js` の `import()` を読んで
+  分け前も版ごとにしまうので、ネットなしでも開けます）。ソースマップを横に置くので、ブラウザの開発ツールでは元のファイルの名前で見えます。
+- esbuild が無いときは、今までどおりそのまま置きます（遅いだけで同じに動きます。Actions に警告）。手元では
+  `node common/panel-config.mjs <出力先>`（`--no-bundle` でそのまま）。
+- 試験: `tests/bundle-offline.mjs`（あとで読むタブ・分け前・modulepreload・CSP・eval なし・esbuild なし）、`tests/panel-browser.mjs`
+  は「サインインのサービスつき」と「版つき」のパネルをまとめた形で開き、`PANEL_BROWSER_SERVE=bundle` で全部のタブもまとめた形で。
+
 ## 守っていること
 
 [SECURITY.md](../SECURITY.md)「管理パネル」に。要点: トークンはそのブラウザの中だけ（「覚える」なら localStorage、外せばそのタブ
@@ -261,7 +279,7 @@ GitHub は成果物を「保管場所への一時的な転送」でしか渡さ�
 
 | ファイル | |
 |---|---|
-| `index.html` `panel.css` `panel.js` | 画面（スマホが先。明るい・暗いどちらも）。`config.json` は pages.yml が書きます（`common/panel-config.mjs`） |
+| `index.html` `panel.css` `panel.js` | 画面（スマホが先。明るい・暗いどちらも。広い画面では「概要」を 2 段に）。`config.json` は pages.yml が書きます（`common/panel-config.mjs`）。Pages には 1 本にまとめて（`common/panel-bundle.mjs`） |
 | `lib/session.mjs` `ui/signin.mjs` | GitHub でサインイン（受け渡し・更新・取り消し）と、入口の画面 |
 | `lib/accounts.mjs` | このブラウザのアカウント（それぞれのトークンと設定、使っている 1 つ） |
 | `lib/setup.mjs` `ui/setup.mjs` | 「準備」: App の manifest・鍵の登録・Pages・サインインのサービス・診断 |
@@ -284,7 +302,7 @@ GitHub は成果物を「保管場所への一時的な転送」でしか渡さ�
 | `ui/dom.mjs` | 画面を作る小道具（文字は文字として） |
 
 試験: `tests/panel-offline.mjs`・`session-offline`・`setup-offline`・`governance-offline`・`auth-offline`・`appci-offline`・
-`units-offline`・`schedule-offline`・`stats-offline`・`inbox-offline`・`viewer-offline`（成果物の中身とサービスの中継）（部品）、
+`units-offline`・`schedule-offline`・`stats-offline`・`inbox-offline`・`viewer-offline`（成果物の中身とサービスの中継）・`bundle-offline`（Pages に出す 1 本の形）（部品）、
 `tests/panel-browser.mjs`（本物のブラウザで: 入れない人・作者（アドオン・配布・予約・統計・健康度・まとめて登録・🔔 も）・借り手・
 貸し手・2 つのアカウント・会社のラボで GitHub でサインイン → ポリシー → 監査 → App を作る → 出る、成果物を開く（画像・動画・
 文字・中の .mcaddon・封じた結果を鍵で・戻る・アドレスで）、ネットなしで開く。CI の verify が走らせます）。

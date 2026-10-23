@@ -273,8 +273,10 @@ await t('panel check: a changed file → the checks it needs (ESLint, the offlin
     'tests/failsum-offline.mjs', 'tests/runissue-offline.mjs', 'tests/runcompare-offline.mjs', 'tests/testhist-offline.mjs', 'tests/secretwatch-offline.mjs', 'tests/connectdaily-offline.mjs', 'tests/weekly-offline.mjs', 'tests/notifyprefs-offline.mjs',
     'tests/minutes-offline.mjs', 'tests/lendfc-offline.mjs', 'tests/nlsched-offline.mjs', 'tests/wizard-offline.mjs', 'tests/a11y-offline.mjs', 'tests/inviteqr-offline.mjs', 'tests/undo-offline.mjs', 'tests/pick-offline.mjs', 'tests/mslive-offline.mjs', 'tests/navmenu-offline.mjs'];
   // (a panel library also runs the lab's API for AI: auth/api.mjs — tried through it, and in Cloudflare's runtime unless quick)
-  eq(PN.plan(['panel/lib/members.mjs']), { lint: ['panel/lib/members.mjs'], tests: ['tests/panel-offline.mjs', 'tests/governance-offline.mjs', 'tests/api-offline.mjs', ...LANES, 'tests/api-workerd.mjs', 'tests/panel-browser.mjs'] });
-  eq(PN.plan(['panel/ui/signin.mjs', 'auth/handler.mjs'], { quick: true }).tests, ['tests/panel-offline.mjs', 'tests/session-offline.mjs', 'tests/auth-offline.mjs', 'tests/auth-ms-offline.mjs', 'tests/api-offline.mjs', 'tests/viewer-offline.mjs', ...LANES]);
+  eq(PN.plan(['panel/lib/members.mjs']), { lint: ['panel/lib/members.mjs'], tests: ['tests/panel-offline.mjs', 'tests/governance-offline.mjs', 'tests/api-offline.mjs', ...LANES, 'tests/bundle-offline.mjs', 'tests/api-workerd.mjs', 'tests/panel-browser.mjs'] });
+  eq(PN.plan(['panel/ui/signin.mjs', 'auth/handler.mjs'], { quick: true }).tests, ['tests/panel-offline.mjs', 'tests/session-offline.mjs', 'tests/auth-offline.mjs', 'tests/auth-ms-offline.mjs', 'tests/api-offline.mjs', 'tests/viewer-offline.mjs', ...LANES, 'tests/bundle-offline.mjs']);
+  // (the panel as Pages serves it, bundled: the bundler and the Pages build run its test, and the browser on what is deployed)
+  eq(PN.plan(['common/panel-bundle.mjs', 'common/panel-config.mjs']).tests, ['tests/panel-offline.mjs', 'tests/appci-offline.mjs', 'tests/bundle-offline.mjs'], 'the bundler and the Pages build');
   // (the artifact viewer: its unpacking, its way through the service, the vault that seals what it opens)
   eq(PN.plan(['app/lib/vault.mjs']).tests, ['tests/viewer-offline.mjs'], 'the vault: the viewer opens what it seals');
   ok(['panel/ui/viewer.mjs', 'panel/lib/unpack.mjs', 'panel/lib/zstd.mjs', 'auth/node.mjs'].every((f) => PN.plan([f], { quick: true }).tests.includes('tests/viewer-offline.mjs')), 'the viewer\'s files: its test');

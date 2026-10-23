@@ -41,6 +41,14 @@ export function buildPages(out, env = process.env, src = path.join(TOP, 'panel')
   return r;
 }
 
+/** buildPages, then the copy bundled into one script (common/panel-bundle.mjs) → { config, errors, bundle } — what pages.yml
+ *  serves. No esbuild: the copy is left unbundled and bundle.why says so (the panel works the same, only slower to open) */
+export async function buildPagesBundled(out, env = process.env, src = path.join(TOP, 'panel'), opts = {}) {
+  const r = buildPages(out, env, src);
+  const { bundlePanel } = await import('./panel-bundle.mjs');
+  return { ...r, bundle: await bundlePanel(out, opts) };
+}
+
 /** the lender's three files (host/template) as a module the panel writes a new host from (pure but for reading them):
  *  host.yml byte for byte as the lab checks it (common/hosts.mjs `host add`); tests/panel-offline.mjs holds it current */
 export const HOST_FILES = ['README.md', '.github/workflows/host.yml', '.lab-host.json'];
@@ -59,9 +67,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   process.exit(0);
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const out = process.argv[2];
+  const out = process.argv.slice(2).find((a) => !a.startsWith('--'));
   if (!out) { console.log('usage: node common/panel-config.mjs <out>'); process.exit(1); }
-  const r = buildPages(path.resolve(out));
+  // (--no-bundle: panel/ copied as it is, one module per file — what the tests serve)
+  const r = process.argv.includes('--no-bundle') ? buildPages(path.resolve(out)) : await buildPagesBundled(path.resolve(out));
   for (const e of r.errors) console.log(`::warning title=panel config::${e}`);
-  console.log(`OK ${out}: サインイン ${r.config.authUrl ?? '（なし: トークンで入る）'}・App ${r.config.appSlug ?? '（なし）'}`);
+  if (r.bundle && !r.bundle.bundled) console.log(`::warning title=panel bundle::${r.bundle.why}`);
+  const b = r.bundle?.bundled ? `・1 本に（${r.bundle.files.length} ファイル ${Math.round(r.bundle.bytes / 1024)} KB）` : '';
+  console.log(`OK ${out}: サインイン ${r.config.authUrl ?? '（なし: トークンで入る）'}・App ${r.config.appSlug ?? '（なし）'}${b}`);
 }
