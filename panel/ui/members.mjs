@@ -7,6 +7,7 @@ import * as P from '../lib/policy.mjs';
 import * as M from '../lib/model.mjs';
 import * as G from '../lib/guide.mjs';
 import { inviteQrCard } from './inviteqr.mjs';
+import { t } from './i18n.mjs';
 
 /** ctx: { api, lab: { slug, repo, role }, me, policy, role, may(action), guarded(action, detail, fn, done), reload(),
  *  lending() (the owner's: the lab's lending forks → { list }, for each administrator's mark) } */
@@ -132,10 +133,10 @@ function reviewCard(ctx) {
     let runsUnread = false, lendingUnread = false;
     const [m, runs, lending] = await Promise.all([MB.readMembers(ctx.api, ctx.lab.slug, ctx.lab.repo), ctx.api.runs(ctx.lab.slug, { per: 100 }).catch(() => { runsUnread = true; return []; }), ctx.lending ? ctx.lending().catch(() => { lendingUnread = true; return null; }) : null]);
     const r = G.accessReview({ members: m.members, invitations: m.invitations, runs, owner: m.owner, lending: (lending?.list ?? []).filter((x) => x.always.ok).map((x) => x.owner), adminsLend: P.adminsLend(ctx.policy) });
-    const url = URL.createObjectURL(new Blob([G.accessCsv(r.rows)], { type: 'text/csv;charset=utf-8' }));
+    const url = URL.createObjectURL(new Blob([G.accessCsv(r.rows, t)], { type: 'text/csv;charset=utf-8' }));
     out.replaceChildren(h('p', { class: r.flagged ? 'warn' : 'ok' }, r.flagged ? `見ておくこと ${r.flagged} 件` : '✅ 気になるところはありません'),
-      runsUnread || lendingUnread ? h('p', { class: 'warn', id: 'reviewpartial' }, `${[runsUnread ? '最後の実行' : '', lendingUnread ? '貸している状況' : ''].filter(Boolean).join('と')}を読めませんでした: その欄は当てになりません。少し待って、もう一度「棚卸しを作る」を押してください。`) : null,
-      h('table', { id: 'reviewtable' }, h('thead', {}, h('tr', {}, ['ログイン', '種類', '役割', '最後の実行', '注意'].map((t) => h('th', {}, t)))),
+      runsUnread || lendingUnread ? h('p', { class: 'warn', id: 'reviewpartial' }, `${[runsUnread ? '最後の実行' : '', lendingUnread ? '貸している状況' : ''].filter(Boolean).join('・')}を読めませんでした: その欄は当てになりません。少し待って、もう一度「棚卸しを作る」を押してください。`) : null,
+      h('table', { id: 'reviewtable' }, h('thead', {}, h('tr', {}, ['ログイン', '種類', '役割', '最後の実行', '注意'].map((x) => h('th', {}, x)))),
         h('tbody', {}, r.rows.map((x) => h('tr', { 'data-review': x.login }, h('td', {}, x.login), h('td', {}, x.kind), h('td', {}, MB.PERMISSION_WORDS[x.role]?.split('（')[0] ?? x.role), h('td', {}, x.last ?? '—'), h('td', { class: x.flags.length ? 'warn' : '' }, x.flags.join(' / ') || '—'))))),
       h('div', { class: 'row' }, h('a', { class: 'btn', href: url, download: `bds-lab-access-${ctx.lab.slug.replace('/', '_')}-${new Date().toISOString().slice(0, 10)}.csv` }, '⬇ CSV で書き出す')));
   });

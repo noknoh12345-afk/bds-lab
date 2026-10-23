@@ -117,7 +117,7 @@ export async function runCheck(api, slug, key, { ref = 'main', me, sleep = sleep
   }
   const raw = await runNotice(api, slug, run.id, `connect-${key}`);
   if (raw) return parseResult(raw);
-  throw new Error(run.conclusion === 'success' ? 'connect.yml が結果（注釈 connect-' + key + '）を残していません' : `connect.yml が ${run.conclusion} で終わりました（「進み具合」で理由を）`);
+  throw new Error(run.conclusion === 'success' ? `connect.yml が結果（注釈 connect-${key}）を残していません` : `connect.yml が ${run.conclusion} で終わりました（「進み具合」で理由を）`);
 }
 
 // ---- Microsoft's own sign-in from a phone (lan's bots): the sign-in service relays live.com's device sign-in

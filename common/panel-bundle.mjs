@@ -1,6 +1,6 @@
 // The management panel as one file for GitHub Pages (common/panel-config.mjs buildPages, pages.yml): panel.js and every module
 // it imports bundled and minified by esbuild into panel.js, what it loads only later (the artifact viewer: import()) in its own
-// file under chunks/, the two stylesheets minified. The page then asks for 1 script instead of ~90 modules one after another
+// file under chunks/, the stylesheets minified. The page then asks for 1 script instead of ~90 modules one after another
 // (measured on the real Pages: 96 requests and 2.4 s to the first card on a fast line, 8.3 s on a slow one). panel/ stays the
 // source the tests, the API (auth/api.mjs) and the Worker read; only the copy that is served is bundled.
 //   - what the page may do does not change: one script of its own ('self' in the CSP), no eval, no inline code
@@ -41,7 +41,7 @@ export async function bundlePanel(out, { esbuild = findEsbuild(), sourcemap = tr
       external: ['./sw.js'],
     });
     if (r.errors.length) throw new Error(r.errors.map((e) => e.text).join('\n'));
-    for (const css of ['panel.css', 'a11y.css']) {
+    for (const css of ['styles.css', 'panel.css', 'a11y.css']) {
       const f = path.join(out, css);
       if (!fs.existsSync(f)) continue;
       // (url(icon.svg) and the data: pictures stay as they are written: nothing is fetched or inlined)

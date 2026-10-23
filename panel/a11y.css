@@ -1,38 +1,20 @@
 /* bds-lab panel: 見やすさ (panel/lib/a11y.mjs, ui/a11y.mjs) — each switch is a class on <html>, chosen in 「設定」 and kept in this
-   browser. Loaded after panel.css: it only lays its own values over panel.css's variables and sizes. The panel is OreUI's
-   dark in either scheme of the device: one set of strong colours.
-   tests/a11y-offline.mjs reads the colours below and checks each pair of text and background (WCAG AA 4.5:1 at least; 7:1 aimed). */
+   browser. Loaded after panel.css: it only lays its own values over panel.css's sizes and rules. The strong colours are
+   styles.css's (lib/styles.mjs CONTRAST), whatever the style chosen: tests/a11y-offline.mjs checks each pair of text and
+   background (WCAG AA 4.5:1 at least; 7:1 aimed). */
 
-/* 大きな字: text 1.25 times (15px → 18.75px), and the smaller sizes with it; bigger buttons and boxes to press */
-html.a11y-big body { font-size: 18.75px; }
-html.a11y-big header#top h1, html.a11y-big .card h2 { font-size: 21px; }
-html.a11y-big .card h3 { font-size: 19px; }
-html.a11y-big label, html.a11y-big table, html.a11y-big .jobs, html.a11y-big textarea, html.a11y-big select { font-size: 18px; }
-html.a11y-big .chip, html.a11y-big pre, html.a11y-big th { font-size: 16px; }
-html.a11y-big button, html.a11y-big .btn { min-height: 52px; font-size: 18px; }
-html.a11y-big input[type=text], html.a11y-big input[type=password], html.a11y-big input[type=number], html.a11y-big input[type=search] { min-height: 52px; font-size: 19px; }
+/* 大きな字: every letter half again as big — 16px → 24px, the small ones 12px → 16px (the pixel faces still land on whole
+   pixels of a phone's screen: 2× and 3×); bigger buttons and boxes to press */
+html.a11y-big { --fs: 24px; --fs-s: 16px; --fs-l: 32px; }
+html.a11y-big button, html.a11y-big .btn { min-height: 52px; }
+html.a11y-big input[type=text], html.a11y-big input[type=password], html.a11y-big input[type=number], html.a11y-big input[type=search] { min-height: 52px; }
 html.a11y-big .pad button { min-height: 62px; }
 html.a11y-big input[type=radio] { width: 30px; height: 30px; }
-html.a11y-big ul.targets label { font-size: 18.75px; }
-html.a11y-big #palette input { font-size: 21px; }
-html.a11y-big nav.tabs button { font-size: 17px; height: 48px; line-height: 44px; }
-html.a11y-big #dock button .dl { font-size: 14px; }
-html.a11y-big ul.menu small { font-size: 14px; }
-html.a11y-big #toast > div { font-size: 17px; }
-html.a11y-big #viewer .vtile .vname { font-size: 14px; }
-html.a11y-big #viewer pre.vtext { font-size: 15px; }
+html.a11y-big nav.tabs button { height: 52px; line-height: 48px; }
 
 /* はっきりした色: text against its background 7:1 or more where it can (never under 4.5:1), borders 3:1 or more — OreUI's
-   shapes kept, its greys pushed to black and white */
-html.a11y-contrast { --bg: #000000; --card: #121213; --chip: #000000; --field: #000000; --fg: #ffffff; --muted: #e6e8eb; --line: #b1b2b5;
-  --accent: #a0e081; --ok: #a0e081; --warn: #ffe866; --bad: #ff9b9b; --link: #b3cdff; --on-accent: #000000; --on-bad: #000000;
-  --hi: #6e6e70; --lo: #000000; --sunk: #000000; --deep: #b1b2b5;
-  --head: #ffffff; --head-lo: #000000; --on-head: #000000;
-  --btn: #ffffff; --btn-hi: #ffffff; --btn-lo: #000000; --btn-hover: #e6e8eb; --btn-press: #d0d1d4; --on-btn: #000000;
-  --go: #a0e081; --go-hi: #c6f0b0; --go-lo: #1d4d13; --go-hover: #b6ea9c; --go-press: #86d562;
-  --stop: #ff9b9b; --stop-hi: #ffc2c2; --stop-lo: #7a1010; --stop-hover: #ffb3b3; --stop-press: #f46d6d;
-  --off: #8c8d90; --off-hi: #b1b2b5;
-  --toast: #ffffff; --on-toast: #000000; --toast-bad: #ff9b9b; }
+   shapes kept, its greys pushed to black and white. The colours are styles.css's (lib/styles.mjs CONTRAST: over any style);
+   here, what they need besides */
 html.a11y-contrast button.primary, html.a11y-contrast button.on, html.a11y-contrast a.btn.primary, html.a11y-contrast #dock button.on { color: var(--on-accent); }
 html.a11y-contrast #toast div.bad { color: var(--on-bad); }
 html.a11y-contrast .card, html.a11y-contrast input, html.a11y-contrast select, html.a11y-contrast textarea, html.a11y-contrast pre { border-color: var(--line); }

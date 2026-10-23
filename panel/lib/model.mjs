@@ -65,10 +65,10 @@ export function capabilities({ secrets, workflows = [], visibility = 'public', h
   if (host) return [c('host', 'ラボの試験を走らせる（host.yml）', wf('host.yml'), 'host.yml がありません（node lab.mjs host template）')];
   const discord = has('DISCORD_BOT_TOKEN') && has('DISCORD_USER_ID');
   return [
-    c('discord', 'Discord の DM で端末を操作（mode hold）', discord && wf('app.yml'), [!has('DISCORD_BOT_TOKEN') && 'DISCORD_BOT_TOKEN', !has('DISCORD_USER_ID') && 'DISCORD_USER_ID', !wf('app.yml') && 'app.yml'].filter(Boolean).join('・') + ' が要ります'),
+    c('discord', 'Discord の DM で端末を操作（mode hold）', discord && wf('app.yml'), `${[!has('DISCORD_BOT_TOKEN') && 'DISCORD_BOT_TOKEN', !has('DISCORD_USER_ID') && 'DISCORD_USER_ID', !wf('app.yml') && 'app.yml'].filter(Boolean).join('・')} が要ります`),
     c('notify', '進み具合を Discord に知らせる（notify）', (discord || has('LAB_NOTIFY_WEBHOOK')) && wf('notify.yml'), !wf('notify.yml') ? 'notify.yml がありません' : 'DISCORD_BOT_TOKEN + DISCORD_USER_ID か LAB_NOTIFY_WEBHOOK が要ります'),
-    c('secretsForm', '秘密を Discord のフォームで登録（secrets）', discord && (app || has('LAB_SECRETS_TOKEN')) && wf('secrets.yml'), [!discord && 'Discord の 2 つ', !app && !has('LAB_SECRETS_TOKEN') && 'ラボの App（「準備」）か LAB_SECRETS_TOKEN', !wf('secrets.yml') && 'secrets.yml'].filter(Boolean).join('・') + ' が要ります（このパネルの「秘密」からなら、どれも要りません）'),
-    c('hostrun', '貸し手の Actions で走らせる（hostrun: パソコンなしで）', (app || has('LAB_HOST_TOKEN')) && wf('hostrun.yml'), [!app && !has('LAB_HOST_TOKEN') && 'ラボの App（「準備」: 貸し手がホストに入れる）か LAB_HOST_TOKEN', !wf('hostrun.yml') && 'hostrun.yml'].filter(Boolean).join('・') + ' が要ります'),
+    c('secretsForm', '秘密を Discord のフォームで登録（secrets）', discord && (app || has('LAB_SECRETS_TOKEN')) && wf('secrets.yml'), `${[!discord && 'Discord の 2 つ', !app && !has('LAB_SECRETS_TOKEN') && 'ラボの App（「準備」）か LAB_SECRETS_TOKEN', !wf('secrets.yml') && 'secrets.yml'].filter(Boolean).join('・')} が要ります（このパネルの「秘密」からなら、どれも要りません）`),
+    c('hostrun', '貸し手の Actions で走らせる（hostrun: パソコンなしで）', (app || has('LAB_HOST_TOKEN')) && wf('hostrun.yml'), `${[!app && !has('LAB_HOST_TOKEN') && 'ラボの App（「準備」: 貸し手がホストに入れる）か LAB_HOST_TOKEN', !wf('hostrun.yml') && 'hostrun.yml'].filter(Boolean).join('・')} が要ります`),
     c('app', '本物のアプリで確かめる（app）', has('GOOGLE_EMAIL') && has('GOOGLE_AAS_TOKEN') && wf('app.yml'), 'GOOGLE_EMAIL・GOOGLE_AAS_TOKEN が要ります（パネルの「🔗 連携」→ Google Play: メールと oauth_token を入れるだけ）'),
     c('signin', 'ゲームを Microsoft でサインイン（フレンドのワールド）', has('MS_EMAIL'), 'MS_EMAIL（と MS_PASSWORD）が要ります'),
     c('make', 'アイデアから AI がアドオンを作る（ai-make）', (has('ANTHROPIC_API_KEY') || has('OPENAI_API_KEY')) && wf('ai-make.yml'), !wf('ai-make.yml') ? 'ai-make.yml がありません' : 'ANTHROPIC_API_KEY（か OPENAI_API_KEY）が要ります'),

@@ -2,6 +2,7 @@
 // run already has an Issue, that one is opened instead of a second. The write goes through ctx.guarded('issues', …).
 import { h, act, link } from './dom.mjs';
 import * as R from '../lib/runissue.mjs';
+import { t, tText } from './i18n.mjs';
 
 const fill = (el, ...kids) => el.replaceChildren(...kids.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false));
 
@@ -18,7 +19,7 @@ export function runIssueCard(ctx, run) {
       const had = await act(() => R.findIssue(api, lab.slug, run.id));
       if (had === undefined) return;
       if (had) return show({ issue: had, existed: true });
-      const work = () => R.createIssue(api, lab.slug, run);
+      const work = () => R.createIssue(api, lab.slug, run, { t, text: tText });
       const r = ctx.guarded ? await ctx.guarded('issues', { run: run.id }, work, 'Issue を作りました') : await act(work, 'Issue を作りました');
       if (r === undefined) return;
       show(r);

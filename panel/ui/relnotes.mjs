@@ -3,6 +3,7 @@
 // written to GitHub; the copy goes to the clipboard of this browser only.
 import { h, act, failView } from './dom.mjs';
 import * as R from '../lib/relnotes.mjs';
+import { tText } from './i18n.mjs';
 
 /** ctx: { api, lab: { slug, repo, role }, me, policy, role, guarded?, record? } · unit: { name, kind } (null: the whole lab) ·
  *  fromTag: the previous release's tag (undefined: found from the lab's releases; null: the first version).
@@ -21,7 +22,7 @@ export function relnotesCard(ctx, { unit = null, fromTag } = {}) {
     copy.disabled = true; say.replaceChildren('下書きを作っています…'); out.replaceChildren();
     try {
       const d = await R.draftNotes(ctx.api, ctx.lab.slug, { unit, fromTag, head: ctx.lab.repo?.default_branch ?? 'HEAD', title: unit ? `${unit.name}` : '' });
-      md = d.markdown;
+      md = tText(d.markdown);
       say.replaceChildren(d.from ? `${d.from} から今までの変わったところです（${d.count} 件）。` : '前のリリースが見つからないので、最初の版として書きました。');
       if (d.truncated) say.append(' 多いので、新しい方だけを見ています。');
       if (!d.count) { out.replaceChildren(h('p', { class: 'muted' }, '遊ぶ人に伝える変更がまだありません。アドオンを直してから、もう一度作ってください。')); return; }

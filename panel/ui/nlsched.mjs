@@ -25,7 +25,7 @@ export function nlScheduleCard(ctx = {}, opts = {}) {
     const ids = typeof ctx.ids === 'function' ? ctx.ids() : ctx.ids;
     cur = N.parse(input.value, { workflows: ctx.workflows ?? [], units: ctx.units, tz: ctx.tz ?? localTz(), ids: ids ?? [] });
     const kids = [];
-    if (!String(input.value).trim()) kids.push(h('p', { class: 'muted' }, `たとえば: ${EXAMPLES.join(' ・ ')}`));
+    if (!String(input.value).trim()) kids.push(h('p', { class: 'muted' }, `たとえば: ${EXAMPLES.join('・')}`));
     else if (cur.ask) kids.push(cur.said ? h('p', {}, `わかったこと: ${cur.said}`) : null, h('p', { class: 'bad' }, `❓ ${cur.ask}`));
     else {
       kids.push(h('p', {}, `✔ ${cur.said}`));

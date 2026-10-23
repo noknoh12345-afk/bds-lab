@@ -6,6 +6,7 @@
 import { h, toast, failView } from './dom.mjs';
 import { playcard } from '../lib/playcard.mjs';
 import { KINDS, isUnitName } from '../lib/units.mjs';
+import { lang as uiLang } from './i18n.mjs';
 
 const FILES = ['TASK.md', 'tests.txt', 'bp/manifest.json'];
 const fill = (el, ...kids) => el.replaceChildren(...kids.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false));
@@ -30,21 +31,24 @@ async function readFiles(ctx, unit, ref) {
  *  (as the other tabs'); unit: { name, kind? } */
 export function playcardCard(ctx, unit) {
   const box = h('div', { class: 'card', 'data-playcard': String(unit?.name ?? '') }, h('h2', {}, '🎮 遊び方カード'), h('p', { class: 'muted', role: 'status' }, '読んでいます…'));
-  let lang = 'ja', files = null;
+  // (the card's own language — Japanese or English, for the players — starts as the panel's: English for every other; its words
+  //  stay in it, translate="no", while the panel's around it are the person's)
+  let lang = uiLang() === 'ja' ? 'ja' : 'en', files = null;
   const draw = (c) => {
     const empty = !c.what && !c.commands.length && !c.items.length;
     const copyBtn = h('button', { class: 'primary', disabled: empty, title: empty ? '書くことがまだありません: 下の「埋め方」のとおりに TASK.md か tests.txt を書くと押せます' : null, onclick: () => copy(c.md, 'Markdown を写しました（リリースの本文などに貼れます）') }, 'Markdown を写す');
-    const langBtn = h('button', { onclick: () => { lang = lang === 'ja' ? 'en' : 'ja'; show(); } }, lang === 'ja' ? 'English' : '日本語');
+    const langBtn = h('button', { translate: 'no', onclick: () => { lang = lang === 'ja' ? 'en' : 'ja'; show(); } }, lang === 'ja' ? 'English' : '日本語');
+    const own = { translate: 'no', lang };
     fill(box, h('h2', {}, '🎮 遊び方カード', c.title ? h('span', { class: 'chip' }, c.title) : null),
       h('p', { class: 'muted' }, '遊ぶ人向けの短い説明です。TASK.md・tests.txt・bp/manifest.json から作ります。'),
       empty ? h('div', { class: 'muted', 'data-empty': '' }, h('p', {}, 'まだ書くことがありません。埋め方:'), h('ul', {},
         h('li', {}, `${c.dir}/TASK.md の最初の段落に、何ができるかを 1〜2 文で`),
         h('li', {}, `${c.dir}/tests.txt に、使うコマンドを「@A cmd /ns:名前」、もらうアイテムを「give A ns:名前」の行で`)))
-        : [h('h3', {}, lang === 'ja' ? '何ができるか' : 'What it does'), h('p', {}, c.what || (lang === 'ja' ? '（TASK.md の最初の段落に書くと出ます）' : '(write it in the first paragraph of TASK.md)')),
-          h('h3', {}, lang === 'ja' ? 'コマンド' : 'Commands'),
+        : [h('h3', own, lang === 'ja' ? '何ができるか' : 'What it does'), h('p', c.what ? own : {}, c.what || (lang === 'ja' ? '（TASK.md の最初の段落に書くと出ます）' : '(write it in the first paragraph of TASK.md)')),
+          h('h3', own, lang === 'ja' ? 'コマンド' : 'Commands'),
           c.commands.length ? h('ul', { class: 'plain' }, c.commands.map((x) => h('li', { 'data-cmd': x.cmd }, h('code', {}, x.cmd), ' — ', x.say)))
             : h('p', { class: 'muted' }, 'コマンドはありません（tests.txt に「@A cmd /ns:名前」の行があると出ます）'),
-          h('h3', {}, lang === 'ja' ? 'アイテム' : 'Items'),
+          h('h3', own, lang === 'ja' ? 'アイテム' : 'Items'),
           c.items.length ? h('ul', { class: 'plain' }, c.items.map((x) => h('li', { 'data-item': x }, h('code', {}, x))))
             : h('p', { class: 'muted' }, 'アイテムはありません（tests.txt に「give A ns:名前」の行があると出ます）')],
       h('details', {}, h('summary', {}, '📋 Markdown を見る'), h('pre', {}, c.md)),

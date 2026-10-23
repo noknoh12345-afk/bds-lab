@@ -122,7 +122,7 @@ export function scheduleTab(body, ctx) {
     if (on && j.workflow === HOSTRUN && !may('hostrun')) return toast(`貸し手の Actions で走らせる（${HOSTRUN}）予約は、あなたの役割には許されていません。管理者に、役割の「貸し手の Actions で走らせる」を足してもらってください`, true);
     if (on && S.AI_WORKFLOWS.includes(j.workflow) && !confirm(aiAsk(j))) return;
     const what = `${j.workflow}・${S.describe(j)}`;
-    await save(st.raw.map((x, k) => (k === i ? { ...j, enabled: on } : x)), { workflow: j.workflow, done: `${on ? '動かしました' : '止めました'}: ${what}`, message: `${on ? '動かす' : '止める'} ${j.id}` });
+    await save(st.raw.map((x, k) => (k === i ? { ...j, enabled: on } : x)), { workflow: j.workflow, done: on ? `動かしました: ${what}` : `止めました: ${what}`, message: `${on ? '動かす' : '止める'} ${j.id}` });
   };
   const remove = async (i) => {
     const raw = st.raw[i], j = S.checkJob(raw).job;
@@ -205,7 +205,7 @@ export function scheduleTab(body, ctx) {
       if (S.AI_WORKFLOWS.includes(c.job.workflow) && c.job.enabled && !confirm(aiAsk(c.job))) return;
       const what = `${c.job.workflow}・${S.describe(c.job)}`;
       const r = await save(i === null ? [...st.raw, c.job] : st.raw.map((x, k) => (k === i ? c.job : x)),
-        { workflow: c.job.workflow, done: `${i === null ? '予約しました' : '予約を直しました'}: ${what}`, message: `${i === null ? '足す' : '直す'} ${c.job.id}` });
+        { workflow: c.job.workflow, done: i === null ? `予約しました: ${what}` : `予約を直しました: ${what}`, message: `${i === null ? '足す' : '直す'} ${c.job.id}` });
       if (r !== undefined) editor.replaceChildren();
     } }, i === null ? '予約する' : '保存');
     f.workflow.addEventListener('change', pick);

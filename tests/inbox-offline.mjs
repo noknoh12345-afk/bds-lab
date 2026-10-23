@@ -318,7 +318,8 @@ function loadSw({ href = `${B}sw.js?v=v1`, site = {}, kept = {}, windows = [], c
     const m = store.get(name);
     // (a kept copy keeps its content-type, as the real cache does: the page given back from it must still be a page)
     return { put: async (r, res) => { m.set(urlOf(r), { body: await res.text(), status: res.status, type: res.headers.get('content-type') }); },
-      match: async (r) => { const e = m.get(urlOf(r)); return e ? new Response(e.body, { status: e.status, headers: e.type ? { 'content-type': e.type } : undefined }) : undefined; } };
+      match: async (r) => { const e = m.get(urlOf(r)); return e ? new Response(e.body, { status: e.status, headers: e.type ? { 'content-type': e.type } : undefined }) : undefined; },
+      keys: async () => [...m.keys()].map((url) => ({ url })) };
   };
   const sandbox = {
     URL, Response, console, location: { href, origin: new URL(href).origin },
@@ -354,7 +355,7 @@ function loadSw({ href = `${B}sw.js?v=v1`, site = {}, kept = {}, windows = [], c
     return res;
   };
   const kept2 = (name) => { const m = store.get(name); return m ? Object.fromEntries([...m].map(([u, x]) => [u, x.body])) : null; };
-  return { sandbox, route: sandbox.route, target: sandbox.target, isPage: sandbox.isPage, listeners, log, net, line, store, fire, request, kept: kept2, site };
+  return { sandbox, route: sandbox.route, target: sandbox.target, isPage: sandbox.isPage, isDict: sandbox.isDict, listeners, log, net, line, store, fire, request, kept: kept2, site };
 }
 const SITE = () => ({
   [`${B}index.html`]: '<!doctype html>INDEX', [`${B}panel.css`]: 'css', [`${B}manifest.webmanifest`]: '{}', [`${B}icon.svg`]: '<svg/>', [`${B}config.json`]: '{"version":"v1"}',
@@ -464,6 +465,33 @@ await t('sw.js activate: the caches of other versions of this panel go, other pa
   await w.fire('activate');
   eq([...w.store.keys()].sort(), ['bdslab-panel:/:v1', 'bdslab-panel:/bds-lab/:v1', 'bdslab-panel:/other-lab/:v1', 'workbox-precache']);
   eq(w.log.claimed, 1);
+});
+
+await t('sw.js the panel\'s words in another language: only the dictionaries this device reads — the one a page names (nothing else a message names), and the ones the version before kept, asked for afresh (node:vm)', async () => {
+  const site = { ...SITE(), [`${B}i18n/en.json`]: '{"設定":"Settings"}', [`${B}i18n/ko.json`]: '{"設定":"설정"}', [`${B}i18n/zh-Hant.json`]: '{"設定":"設定"}', [`${B}lib/x.json`]: '{}' };
+  const w = loadSw({ site });
+  ok([`${B}i18n/en.json`, `${B}i18n/zh-Hant.json`, `${B}i18n/ko.json`].every((u) => w.isDict(u)), 'a dictionary of this panel');
+  for (const u of [`${B}i18n/en.json?x=1`, `${B}i18n/../panel.js`, `${B}i18n/en.mjs`, `${B}lib/x.json`, `${B}i18n/sub/en.json`, `${ORIGIN}/i18n/en.json`, 'https://evil.example/bds-lab/i18n/en.json', `${B}i18n/english-long.json`, '', null, 'http://[bad']) ok(!w.isDict(u), String(u));
+  await w.fire('install');
+  ok(!Object.keys(w.kept(CACHE_V1)).some((u) => u.includes('/i18n/')), 'not at install: no dictionary until a page names one');
+  await w.fire('message', { data: { keep: [`${B}i18n/en.json`, `${B}lib/x.json`, 'https://evil.example/bds-lab/i18n/en.json', `${B}panel.js`] } });
+  eq(Object.keys(w.kept(CACHE_V1)).filter((u) => /json$/.test(u)).sort(), [`${B}config.json`, `${B}i18n/en.json`], 'the one dictionary, nothing else the message named');
+  ok(!w.log.fetched.some((f) => /evil|lib\/x\.json/.test(f.url)), 'what is not a dictionary is not even fetched');
+  const n = w.log.fetched.length;
+  await w.fire('message', { data: { keep: `${B}i18n/en.json` } });
+  eq(w.log.fetched.length, n, 'kept already: not asked again');
+  for (const data of [null, 'x', { keep: 5 }, { keep: [{}] }]) await w.fire('message', { data });
+  eq(w.log.fetched.length, n, 'a message of anything else: nothing');
+  w.net.offline = true;
+  eq(await (await w.request(`${B}i18n/en.json`)).text(), '{"設定":"Settings"}', 'offline: the page still reads it');
+  // a new version: the dictionaries the one before kept, afresh (the deploy may have changed them); never the other languages'
+  site[`${B}i18n/en.json`] = '{"設定":"Settings!"}';
+  const v2 = loadSw({ href: `${B}sw.js?v=v2`, site, kept: { [CACHE_V1]: w.kept(CACHE_V1), 'bdslab-panel:/other-lab/:v1': { [`${ORIGIN}/other-lab/i18n/ko.json`]: '{}' } } });
+  await v2.fire('install');
+  const k2 = v2.kept('bdslab-panel:/bds-lab/:v2');
+  eq(k2[`${B}i18n/en.json`], '{"設定":"Settings!"}', 'the language this device reads, as the new deploy has it');
+  ok(!(`${B}i18n/ko.json` in k2) && !(`${B}i18n/zh-Hant.json` in k2), 'not the others');
+  ok(v2.log.fetched.filter((f) => f.url.includes('/i18n/')).every((f) => f.cache === 'reload' && f.url.startsWith(B)), 'past the browser\'s cache, and only this panel\'s');
 });
 
 await t('sw.js fetch: the page and config.json network first (the kept copy when the network is down or the server fails); a page is kept as index.html whatever its address, a one-time code in it never (node:vm)', async () => {

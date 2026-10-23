@@ -5,9 +5,13 @@
 //   navigator.serviceWorker.register('sw.js?v=' + <config.json's version>)
 // The version in the address names the cache (a new deploy is a new address: the browser installs the new worker, which keeps
 // the new shell and drops the old). Without a version the files are asked of the network first, so nothing can go stale.
-//   - at install: the shell is fetched afresh (index.html, its stylesheets — the look, 見やすさ, the pixel icons and the fonts' list —
-//     the pixel font, panel.js, the manifest and icon, config.json and every module panel.js imports, found by reading the
-//     imports) and kept in this version's cache, all or nothing; the Japanese font comes in slices, each kept when first shown
+//   - at install: the shell is fetched afresh (index.html, early.js, its stylesheets — the colours, the look, 見やすさ, the pixel
+//     icons and the fonts' list — the pixel font, panel.js, the manifest and icon, config.json and every module panel.js
+//     imports, found by reading the imports) and kept in this version's cache, all or nothing; the fonts come in slices, each
+//     kept when first shown
+//   - the panel's words in another language (i18n/<lang>.json, one per language): only the ones this device reads — a page
+//     tells the worker which it reads (a message { keep: [address] }: an address that is not a dictionary of this panel is not
+//     fetched), and a new version fetches afresh the ones the version before it kept; never the other languages'
 //   - the page itself (a navigation to the folder's head or its index.html) and config.json: the network first, the kept copy
 //     when it does not answer; the page is kept as index.html, and only when the answer is html
 //   - any other file opened in a tab (README.md, an icon, a module, another page): the network's answer, never kept — it must not
@@ -16,8 +20,8 @@
 //   - api.github.com and every other origin: not touched at all (the page's CSP lets it talk to GitHub alone, and a token
 //     never passes through here)
 //   - a notification tapped: the panel's address in its data (a string, or { url }) is opened, or brought to the front
-// route() is the whole decision of where a request goes, isPage() of what the page is and target() of where a tapped notification
-// goes: kept at the top level for tests/inbox-offline.mjs to read.
+// route() is the whole decision of where a request goes, isPage() of what the page is, isDict() of what a page may ask to keep and
+// target() of where a tapped notification goes: kept at the top level for tests/inbox-offline.mjs to read.
 
 const SCOPE = new URL('./', globalThis.location.href).href;
 const VERSION = (() => { const v = new URL(globalThis.location.href).searchParams.get('v') ?? ''; return /^[A-Za-z0-9._-]{1,64}$/.test(v) ? v : ''; })();
@@ -25,7 +29,7 @@ const VERSION = (() => { const v = new URL(globalThis.location.href).searchParam
 const PREFIX = `bdslab-panel:${new URL(SCOPE).pathname}:`;
 const CACHE = PREFIX + (VERSION || 'unversioned');
 const INDEX = new URL('index.html', SCOPE).href;
-const SHELL = ['index.html', 'panel.css', 'a11y.css', 'icons.css', 'fonts/fonts.css', 'fonts/pixel/pixel-regular.otf', 'panel.js', 'manifest.webmanifest', 'icon.svg', 'config.json'];
+const SHELL = ['index.html', 'early.js', 'styles.css', 'panel.css', 'a11y.css', 'icons.css', 'fonts/fonts.css', 'fonts/pixel/pixel-regular.otf', 'panel.js', 'manifest.webmanifest', 'icon.svg', 'config.json'];
 const MUST = ['index.html', 'panel.css', 'panel.js'];
 const MAX_FILES = 300;
 
@@ -52,6 +56,15 @@ function isPage(url, scope = SCOPE) {
   return u.origin === head.origin && (u.pathname === head.pathname || u.pathname === new URL('index.html', head).pathname);
 }
 
+/** whether an address is one of this panel's dictionaries (pure): <folder>/i18n/<lang>.json, no query, nothing else — the one
+ *  kind of file a page may ask the worker to keep */
+function isDict(url, scope = SCOPE) {
+  let u;
+  try { u = new URL(String(url)); } catch { return false; }
+  const head = new URL(scope);
+  return u.origin === head.origin && !u.search && u.pathname.startsWith(head.pathname) && /^i18n\/[A-Za-z]{2,3}(-[A-Za-z]{2,4})?\.json$/.test(u.pathname.slice(head.pathname.length));
+}
+
 /** the files a module names with import / export … from / import(), as addresses inside this folder (pure) */
 function imports(text, base) {
   const out = [];
@@ -69,6 +82,13 @@ function imports(text, base) {
 async function precache() {
   const got = new Map(), tried = new Set();
   let wave = SHELL.map((p) => new URL(p, SCOPE).href);
+  // (the languages this device reads: the dictionaries a version before this one kept, asked for afresh like the rest)
+  try {
+    for (const n of await globalThis.caches.keys()) {
+      if (!n.startsWith(PREFIX) || n === CACHE) continue;
+      for (const r of await (await globalThis.caches.open(n)).keys()) if (isDict(r.url)) wave.push(r.url.split('#')[0]);
+    }
+  } catch { /* none to read: a page tells this one which it reads */ }
   while (wave.length && tried.size < MAX_FILES) {
     const now = [...new Set(wave)].filter((u) => !tried.has(u)).slice(0, MAX_FILES - tried.size);
     for (const u of now) tried.add(u);
@@ -133,6 +153,21 @@ globalThis.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     for (const n of await globalThis.caches.keys()) if (n.startsWith(PREFIX) && n !== CACHE) await globalThis.caches.delete(n);
     await globalThis.clients.claim();
+  })());
+});
+// (a page's dictionary, kept for offline: the page read it before this worker was there, or chose another language — fetched
+//  here from the panel's own folder, once; anything else a message names is not fetched)
+globalThis.addEventListener('message', (event) => {
+  const want = [].concat(event.data?.keep ?? []).filter((u) => typeof u === 'string' && isDict(u)).slice(0, 5);
+  if (!want.length) return;
+  event.waitUntil?.((async () => {
+    for (const u of want) {
+      try {
+        if (await kept(u)) continue;
+        const res = await fetch(u);
+        if (res.ok && res.type === 'basic') await keep(u, res);
+      } catch { /* offline now: it is kept when the page next reads it */ }
+    }
   })());
 });
 globalThis.addEventListener('fetch', (event) => {

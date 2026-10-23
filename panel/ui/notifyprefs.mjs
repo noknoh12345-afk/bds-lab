@@ -55,13 +55,13 @@ export function notifyPrefsCard(ctx) {
         const keep = () => { const v = id.value.trim(); try { return save(N.setPref(st.prefs, own ?? login, null, false, v || null), `${login} の Discord の ID を${v ? '入れる' : '消す'}`, { user: login, discord: v ? 'set' : 'removed' }); } catch (e) { box.append(failView(e)); return undefined; } };
         return h('span', { class: 'row' }, ' ', id, h('button', { type: 'button', disabled: Boolean(t), title: t ?? 'Discord で開発者モードを入れ、自分の名前を右クリック →「ユーザー ID をコピー」', onclick: keep }, 'ID を記録'));
       })(),
-      has ? null : h('span', { class: 'muted' }, ' まだ選んでいません（いまは初めの設定: ' + N.DEFAULT_KINDS.map((k) => N.KIND_WORDS[k]).join('・') + '）'),
+      has ? null : h('span', { class: 'muted' }, ` まだ選んでいません（いまは初めの設定: ${N.DEFAULT_KINDS.map((k) => N.KIND_WORDS[k]).join('・')}）`),
       t ? h('p', { class: 'muted' }, t) : null);
   };
 
   const draw = () => box.replaceChildren(...[
     h('h3', {}, '🔔 通知の設定'),
-    h('p', { class: 'muted' }, '誰が何を知らせてほしいかを、チェックで選びます。リポジトリの ' + N.NOTIFY_FILE + ' に残ります。'),
+    h('p', { class: 'muted' }, `誰が何を知らせてほしいかを、チェックで選びます。リポジトリの ${N.NOTIFY_FILE} に残ります。`),
     st.broken ? h('p', { class: 'warn' }, `いまの ${N.NOTIFY_FILE} は読めません。切り替えて保存すると、ここの設定で置き換わります。`) : null,
     h('ul', { class: 'plain' }, logins().map(row))].filter(Boolean));
 

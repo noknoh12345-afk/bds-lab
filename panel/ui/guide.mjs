@@ -3,6 +3,7 @@
 // place for it, and the panel's words explained) and the glossary.
 import { h } from './dom.mjs';
 import * as G from '../lib/guide.mjs';
+import { t } from './i18n.mjs';
 
 /** the tab's help line: open the first time this browser sees the tab, folded after */
 export function helpLine(tab, storage) {
@@ -10,7 +11,7 @@ export function helpLine(tab, storage) {
   if (!x) return null;
   const key = `bdslab.panel.help.${tab}`, first = !storage.getItem(key);
   storage.setItem(key, '1');
-  return h('details', { class: 'help', open: first ? 'open' : null }, h('summary', {}, `？ ${x.title}でできること`), h('p', {}, x.what), x.tips.length ? h('ul', {}, x.tips.map((t) => h('li', { class: 'muted' }, t))) : null);
+  return h('details', { class: 'help', open: first ? 'open' : null }, h('summary', {}, `？ ${x.title}でできること`), h('p', {}, x.what), x.tips.length ? h('ul', {}, x.tips.map((tip) => h('li', { class: 'muted' }, tip))) : null);
 }
 
 /** the guide for this role: done of total, each step a tap away, the next one first; hidden on asking (per lab and browser) */
@@ -37,12 +38,12 @@ export function palette(ctx) {
     const input = h('input', { type: 'search', placeholder: '何をしたいですか？（例: 秘密を登録したい・アドオンを作りたい・ひみつ）', 'aria-label': 'やりたいこと' });
     const list = h('ul', { class: 'plain', role: 'listbox' }), terms = h('div', {});
     const draw = () => {
-      found = G.findIntents(input.value, { tabs: ctx.tabs(), may: ctx.may });
+      found = G.findIntents(input.value, { tabs: ctx.tabs(), may: ctx.may, t });
       sel = Math.min(sel, Math.max(0, found.length - 1));
       list.replaceChildren(...(found.length ? found.map((x, i) => h('li', {}, h('button', { class: i === sel ? 'on' : '', role: 'option', 'data-intent': x.id, onclick: () => choose(x) }, x.label)))
         : [h('li', { class: 'muted' }, 'まだ見つかりません: 言い方を変えてみてください（例: 「止めたい」「招く」「貸す」）。「わからない」と入れると、はじめてのガイドが出ます')]));
-      const t = G.findTerms(input.value);
-      terms.replaceChildren(...(t.length ? [h('h3', {}, 'ことばの意味'), ...t.map((g) => h('p', {}, h('strong', {}, g.term), ': ', g.means))] : []));
+      const words = G.findTerms(input.value, 3, t);
+      terms.replaceChildren(...(words.length ? [h('h3', {}, 'ことばの意味'), ...words.map((g) => h('p', {}, h('strong', {}, g.term), ': ', g.means))] : []));
     };
     input.addEventListener('input', () => { sel = 0; draw(); });
     input.addEventListener('keydown', (e) => {

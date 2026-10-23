@@ -331,7 +331,9 @@ let browser;
 for (const o of exe ? [{ executablePath: exe }] : [{ channel: 'chrome' }, {}]) { try { browser = await pw.chromium.launch({ headless: true, ...o, args: process.getuid?.() === 0 ? ['--no-sandbox'] : [] }); break; } catch (e) { console.log(`  (${JSON.stringify(o)}: ${e.message.split('\n')[0]})`); } }
 if (!browser) { console.log('✘ no browser to run'); process.exit(1); }
 // (PANEL_SHOTS_SCHEME=dark: the pictures of `node lab.mjs panel shots --dark` in the dark colours — what is checked stays the same)
-const scheme = process.env.PANEL_SHOTS_SCHEME === 'dark' ? { colorScheme: 'dark' } : {};
+// (every context reads Japanese — the checks read the panel's own words: a browser in English would be shown English; the
+// languages' own run, further down, picks its own)
+const scheme = { locale: 'ja-JP', ...(process.env.PANEL_SHOTS_SCHEME === 'dark' ? { colorScheme: 'dark' } : {}) };
 // (PANEL_SHOTS_WIDTH: the main run's pictures at another width — `panel shots --wide` takes them as a desktop shows the panel)
 const W0 = Math.min(2560, Math.max(320, Number(process.env.PANEL_SHOTS_WIDTH) || 420));
 const ctx = await browser.newContext({ viewport: { width: W0, height: 900 }, ...scheme });
@@ -846,15 +848,16 @@ try {
     const wideNow = await page.evaluate(() => { const w = innerWidth, over = [...document.querySelectorAll('#main *')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && r.right > w + 1 && !e.closest('pre, .tablewrap, table, nav.tabs'); }); return [document.documentElement.scrollWidth, w, over.slice(0, 3).map((e) => `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}.${e.className}: ${Math.round(e.getBoundingClientRect().right)}`)]; });
     check(wideNow[0] <= wideNow[1], `「${name}」: nothing wider than the screen (no sideways scroll)`, JSON.stringify(wideNow));
   }
-  // OreUI's own parts at work: the fonts of the panel loaded (the pixel face for the title bar), the dock of five with the group
-  // shown, an emoji of the words drawn as its icon with the words kept, 「…を読んでいます…」 marked while it waits, 「なめらかな字」
+  // OreUI's own parts at work: the fonts of the panel loaded (the pixel face for the title bar; Japanese in Unifont's Japanese
+  // shapes, as the page's lang is ja), the dock of five with the group shown, an emoji of the words drawn as its icon with the
+  // words kept, 「…を読んでいます…」 marked while it waits, a Minecraft font of one's own
   await tab('概要');
   await page.waitForTimeout(400);
-  const ore = await page.evaluate(async () => { await document.fonts.ready; return { pixel: document.fonts.check('16px "Ore Pixel"'), jp: document.fonts.check('16px "Ore Sans JP"', 'あ'),
+  const ore = await page.evaluate(async () => { await document.fonts.ready; return { pixel: document.fonts.check('16px "Ore Pixel"'), jp: document.fonts.check('16px "Ore Unifont JP"', 'あ') && /Ore Unifont JP/.test(getComputedStyle(document.body).fontFamily),
     titleFont: getComputedStyle(document.querySelector('#title')).fontFamily, dock: [...document.querySelectorAll('#dock button')].map((b) => `${b.dataset.hub}${b.getAttribute('aria-current') ? '*' : ''}`),
     icons: document.querySelectorAll('#main span.pi[data-pi]').length, pt: document.querySelector('#main span.pt')?.innerText ?? '' }; });
-  check(ore.pixel && ore.jp && /^"?Ore Pixel"?/.test(ore.titleFont) && JSON.stringify(ore.dock) === JSON.stringify(['home*', 'make', 'link', 'team', 'more']) && ore.icons > 0 && /\S/.test(ore.pt),
-    'OreUI: its fonts loaded, the title bar in the pixel face, the dock of five (ホーム shown), the emoji of the words drawn as icons with the words kept', JSON.stringify(ore));
+  check(ore.pixel && ore.jp && /^"?Ore User Title"?, "?Ore User Body"?, "?Ore Pixel"?/.test(ore.titleFont) && JSON.stringify(ore.dock) === JSON.stringify(['home*', 'make', 'link', 'team', 'more']) && ore.icons > 0 && /\S/.test(ore.pt),
+    'OreUI: its fonts loaded (Japanese in Unifont\'s Japanese shapes), the title bar in the pixel face (after one\'s own Minecraft fonts), the dock of five (ホーム shown), the emoji of the words drawn as icons with the words kept', JSON.stringify(ore));
   const waits = await page.evaluate(async () => {
     const p = document.createElement('p'); p.textContent = '試しに読んでいます…'; document.querySelector('#tabbody').append(p);
     await new Promise((r) => setTimeout(r, 50)); const on = p.classList.contains('ore-wait');
@@ -862,12 +865,50 @@ try {
     return [on, off];
   });
   check(waits[0] && waits[1], '「…を読んでいます…」: the loading mark while it waits, gone when the words change', JSON.stringify(waits));
+  // (「マイクラのフォント」: a font file of one's own — the game's data/fonts, here a stand-in — given to the page from its bytes
+  //  under the page's CSP, kept in this browser alone (IndexedDB), first in the stacks; 外す takes it out again)
   await tab('設定');
-  await page.locator('#smoothfont').check();
-  const smooth = await page.evaluate(() => [document.documentElement.classList.contains('ore-smooth'), localStorage.getItem('bdslab.panel.smooth'), getComputedStyle(document.querySelector('#title')).fontFamily]);
-  await page.locator('#smoothfont').uncheck();
-  const pixelAgain = await page.evaluate(() => [document.documentElement.classList.contains('ore-smooth'), localStorage.getItem('bdslab.panel.smooth')]);
-  check(smooth[0] && smooth[1] === '1' && !/Ore Pixel/.test(smooth[2]) && !pixelAgain[0] && pixelAgain[1] === null, '「なめらかな字」: the pixel face off for this browser (kept), and on again', JSON.stringify([smooth, pixelAgain]));
+  await page.locator('#font-body').setInputFiles(path.join(TOP, 'panel', 'fonts', 'pixel', 'pixel-regular.otf'));
+  await page.waitForFunction(() => document.fonts.check('16px "Ore User Body"', 'A') && [...document.fonts].some((f) => f.family.replace(/"/g, '') === 'Ore User Body' && f.status === 'loaded'), null, { timeout: 8000 }).catch(() => {});
+  // (and the card drawn again with it: the file's name in its row, once it is kept)
+  await page.waitForFunction(() => /pixel-regular\.otf/.test(document.querySelector('.fontrow[data-font="body"]')?.innerText ?? ''), null, { timeout: 8000 }).catch(() => {});
+  const own = await page.evaluate(async () => {
+    const kept = await new Promise((ok) => { const r = globalThis.indexedDB.open('bdslab-panel', 1); r.onsuccess = () => { const tx = r.result.transaction('fonts', 'readonly'), g = tx.objectStore('fonts').get('body'); g.onsuccess = () => { ok(g.result ? { name: g.result.name, size: g.result.size, bytes: g.result.bytes?.byteLength ?? 0 } : null); r.result.close(); }; g.onerror = () => ok(null); }; r.onerror = () => ok(null); });
+    return { face: [...document.fonts].some((f) => f.family.replace(/"/g, '') === 'Ore User Body' && f.status === 'loaded'), stack: getComputedStyle(document.body).fontFamily, kept, row: document.querySelector('.fontrow[data-font="body"]')?.innerText ?? '' };
+  });
+  await page.locator('.fontrow[data-font="body"] button[data-clear]').click();
+  await page.waitForTimeout(400);
+  const ownGone = await page.evaluate(async () => ({ face: [...document.fonts].some((f) => f.family.replace(/"/g, '') === 'Ore User Body'), kept: await new Promise((ok) => { const r = globalThis.indexedDB.open('bdslab-panel', 1); r.onsuccess = () => { const g = r.result.transaction('fonts', 'readonly').objectStore('fonts').get('body'); g.onsuccess = () => { ok(Boolean(g.result)); r.result.close(); }; }; r.onerror = () => ok(null); }) }));
+  check(own.face && /^"?Ore User Body"?/.test(own.stack) && own.kept?.name === 'pixel-regular.otf' && own.kept.bytes > 1000 && /pixel-regular\.otf/.test(own.row) && !ownGone.face && ownGone.kept === false,
+    '「マイクラのフォント」: one\'s own font file in the page from its bytes (CSP allows it), first in the stack, kept only in this browser (IndexedDB) — and 外す takes it out', JSON.stringify([own, ownGone]));
+  // (「スタイル」: a look of one's own — かわいい, かっこいい, Minecraft's places — on the page at once with no reload, kept in this
+  //  browser and on <html> again before anything is drawn when the page opens (early.js), the phone's bar in its title bar's
+  //  colour; each one's picture when pictures are asked for; OreUI's own again)
+  const picks = await page.locator('#stylecard button.stylepick').evaluateAll((bs) => bs.map((b) => b.dataset.pick));
+  await page.locator('#stylecard button[data-pick="sakura"]').click();
+  await page.waitForTimeout(250);
+  const lookOf = () => page.evaluate(() => ({ attr: document.documentElement.getAttribute('data-style'), kept: localStorage.getItem('bdslab.panel.style'), bg: getComputedStyle(document.body).backgroundColor,
+    tile: /data:image\/svg\+xml/.test(getComputedStyle(document.body).backgroundImage), theme: document.querySelector('meta[name="theme-color"]')?.content,
+    pressed: [...document.querySelectorAll('#stylecard button.stylepick[aria-pressed="true"]')].map((b) => b.dataset.pick), scheme: getComputedStyle(document.documentElement).colorScheme }));
+  const sakura = await lookOf();
+  await page.reload();
+  await waitText(/スタイル/);
+  const again = await page.evaluate(() => document.documentElement.getAttribute('data-style'));
+  check(picks.length === 11 && picks[0] === 'ore' && sakura.attr === 'sakura' && sakura.kept === 'sakura' && sakura.bg === 'rgb(242, 201, 217)' && sakura.tile && sakura.theme === '#f5a9c4' && JSON.stringify(sakura.pressed) === '["sakura"]' && sakura.scheme === 'light' && again === 'sakura',
+    '「スタイル」: a style on the page at once (its colours, its tile, light, the phone\'s bar), kept in this browser and on <html> again when the page opens', JSON.stringify([picks, sakura, again]));
+  if (process.env.PANEL_SHOTS) {
+    for (const k of picks) {
+      await tab('設定');
+      await page.locator(`#stylecard button[data-pick="${k}"]`).click();
+      await page.waitForTimeout(300);
+      for (const [name, scr] of [['概要', 'overview'], ['設定', 'settings'], ['実行', 'runs']]) { await tab(name); await page.waitForTimeout(500); await page.screenshot({ path: path.join(process.env.PANEL_SHOTS, `style-${k}-${scr}.png`), fullPage: name !== '設定' }); }
+    }
+  }
+  await tab('設定');
+  await page.locator('#stylecard button[data-pick="ore"]').click();
+  await page.waitForTimeout(250);
+  const ore2 = await lookOf();
+  check(ore2.attr === null && ore2.kept === null && ore2.bg === 'rgb(49, 50, 51)' && !ore2.tile && ore2.theme === '#e6e8eb' && ore2.scheme === 'dark', '「スタイル」: OreUI\'s own again — nothing kept', JSON.stringify(ore2));
   await tab('貸し借り');
   check(await waitText(/期限（\d{4}-\d\d-\d\d）を過ぎました/) && /借り手/.test(await text()), 'the host the author borrows (their own list), now stopped by its lender', await text());
   await tab('設定');
@@ -883,7 +924,7 @@ try {
 
   // ======== an organization's lab, the company way: 「GitHub でサインイン」 through the real sign-in service, the lab's
   // policy and audit log, the App made in one click from 「準備」, the token revoked on leaving ========
-  const ctx2 = await browser.newContext({ viewport: { width: 420, height: 900 }, acceptDownloads: true });
+  const ctx2 = await browser.newContext({ viewport: { width: 420, height: 900 }, acceptDownloads: true, locale: 'ja-JP' });
   await ctx2.addInitScript(allShown);
   await ctx2.route('https://api.github.com/**', api);
   await ctx2.route('https://avatars.githubusercontent.com/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
@@ -1057,7 +1098,7 @@ try {
   // ======== the artifact viewer (ui/viewer.mjs): a run's artifact opened in the panel through the real sign-in service — its
   // pictures and video shown, every file read, an addon inside opened and saved, the public lab's sealed results opened with
   // the vault key typed there (kept for this account), the browser's back a level at a time, ✕, and a link naming it ========
-  const ctx5 = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
+  const ctx5 = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true, locale: 'ja-JP' });
   await ctx5.addInitScript(allShown);
   await ctx5.route('https://api.github.com/**', api);
   await ctx5.route('https://avatars.githubusercontent.com/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
@@ -1143,8 +1184,69 @@ try {
   check(await p5.waitForSelector('#viewer', { timeout: 10_000 }).then(() => true, () => false) && await vwait(/report\.md/) && await p5.locator('#viewer .vsealed').count() === 0, 'a link naming the artifact: opened at once, its sealed results by the kept key', await vtext().catch(() => ''));
   await ctx5.close();
 
+  // the panel in the person's language (ui/i18n.mjs): a browser in English, Korean, Chinese — the door's buttons in each
+  // language, a choice kept in the browser, the page's lang (the letters' shapes), the dock in that language, and on every screen
+  // each text the dictionary knows shown translated (what is left in Japanese is listed: the lab's own data, or words the code
+  // put together that no key covers)
+  const LI = await imp('panel/lib/i18n.mjs');
+  const visibleJa = (pg) => pg.evaluate(() => {
+    const JA = /[぀-ヿ㐀-䶿一-鿿]/, out = [];
+    const skip = (el) => !el || el.closest('script,style,textarea,code,pre,[translate="no"],[contenteditable="true"]') || !el.getClientRects().length;
+    const it = document.createTreeWalker(document.body, 4 /* NodeFilter.SHOW_TEXT */);
+    for (let n = it.nextNode(); n; n = it.nextNode()) if (JA.test(n.nodeValue) && !skip(n.parentElement)) out.push(n.nodeValue);
+    for (const el of document.body.querySelectorAll('[title],[placeholder],[aria-label],[alt]')) {
+      if (el.closest('[translate="no"]') || el.matches('script,style,textarea,code,pre')) continue;
+      for (const a of ['title', 'placeholder', 'aria-label', 'alt']) { const v = el.getAttribute(a); if (v && JA.test(v)) out.push(v); }
+    }
+    return out;
+  });
+  const LANG_RUNS = [['en', 'en-US', true], ['ko', 'ko-KR', false], ['zh-Hans', 'zh-CN', false], ['zh-Hant', 'zh-TW', false]];
+  const DOCK = { en: ['Home', 'Make', 'Connect', 'Team', 'Settings'], ko: ['홈', '만들기', '연결', '팀', '설정'], 'zh-Hans': ['主页', '制作', '连接', '团队', '设置'], 'zh-Hant': ['首頁', '製作', '連接', '團隊', '設定'] };
+  for (const [code, locale, every] of LANG_RUNS) {
+    const look = LI.compile(JSON.parse(fs.readFileSync(path.join(TOP, 'panel', 'i18n', `${code}.json`), 'utf8'))), missed = new Set(), left = new Set();
+    const c6 = await browser.newContext({ viewport: { width: W0, height: 900 }, locale, ...(process.env.PANEL_SHOTS_SCHEME === 'dark' ? { colorScheme: 'dark' } : {}) });
+    await c6.addInitScript(allShown);
+    await c6.route('https://api.github.com/**', api);
+    await c6.route('https://avatars.githubusercontent.com/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
+    const p6 = await c6.newPage();
+    p6.on('pageerror', (e) => errors.push(`pageerror (${code}): ${e.message}`));
+    p6.on('dialog', (d) => d.dismiss());
+    // (Chinese is written in Han: what is left in Japanese there is kana — and a translation is not read again (「45 点」 is
+    //  「45 分」 in Chinese, which a fresh lookup would take for minutes))
+    const han = code.startsWith('zh'), KANA = /[ぁ-ゖァ-ヺー]/;
+    const sweep = async (where) => { for (const t of await visibleJa(p6)) { if (han && !KANA.test(t)) continue; (LI.translate(t, look) !== t ? missed : left).add(`${where}: ${t.trim().slice(0, 120)}`); } };
+    const shot6 = async (name) => { if (!process.env.PANEL_SHOTS) return; await p6.waitForTimeout(700); fs.mkdirSync(process.env.PANEL_SHOTS, { recursive: true }); await p6.screenshot({ path: path.join(process.env.PANEL_SHOTS, `${code}-${String(++shots).padStart(2, '0')}-${name}.png`), fullPage: true }); };
+    await p6.goto(URL0); await p6.waitForSelector('#tok');
+    const door = await p6.evaluate(() => ({ lang: document.documentElement.lang, buttons: [...document.querySelectorAll('.langs button')].map((b) => [b.dataset.lang, b.getAttribute('aria-current')]) }));
+    check(door.lang === code && door.buttons.length === 5 && door.buttons.find(([l]) => l === code)?.[1] === 'true', `${code}: a browser in ${locale} is shown the panel in it (the page's lang ${code}; the door's five language buttons, its own marked)`, JSON.stringify(door));
+    await sweep('door'); await shot6('door');
+    if (code === 'en') {
+      // (a choice on the door: kept in this browser, the page drawn again in it — and back)
+      await Promise.all([p6.waitForEvent('load'), p6.locator('.langs button[data-lang="ko"]').click()]);
+      await p6.waitForSelector('#tok');
+      const ko = await p6.evaluate(() => ({ lang: document.documentElement.lang, kept: localStorage.getItem('bdslab.panel.lang') }));
+      await Promise.all([p6.waitForEvent('load'), p6.locator('.langs button[data-lang="en"]').click()]);
+      await p6.waitForSelector('#tok');
+      check(ko.lang === 'ko' && ko.kept === 'ko' && await p6.evaluate(() => document.documentElement.lang === 'en' && localStorage.getItem('bdslab.panel.lang') === 'en'), 'a language chosen on the door: kept in the browser, the page drawn again in it (Korean, then English again)', JSON.stringify(ko));
+    }
+    await p6.fill('#tok', 'tok-author'); await p6.fill('#lab', LAB); await p6.click('#go');
+    await p6.waitForSelector('#dock button[data-tabs]', { timeout: 15_000 });
+    await p6.waitForTimeout(800);
+    const dock = await p6.locator('#dock button[data-tabs]').evaluateAll((bs) => bs.map((b) => b.innerText.trim()));
+    check(DOCK[code].every((w) => dock.includes(w)), `${code}: the dock in ${code} (${DOCK[code].join(' · ')})`, JSON.stringify(dock));
+    const keys = (await p6.locator('#dock button[data-tabs]').evaluateAll((bs) => bs.flatMap((b) => b.dataset.tabs.split(' '))));
+    for (const k of every ? keys : keys.filter((x) => ['overview', 'start', 'settings'].includes(x))) {
+      await openScreen(p6, k);
+      await p6.waitForTimeout(900);
+      await sweep(k); await shot6(k);
+    }
+    check(!missed.size, `${code}: on ${every ? 'every screen' : 'the screens opened'}, every text the dictionary knows is shown in ${code}`, [...missed].slice(0, 40).join('\n'));
+    if (left.size) console.log(`  ・ ${code}: left in Japanese (${left.size}; data or words no key covers):\n${[...left].slice(0, every ? 80 : 20).map((x) => `      ${x}`).join('\n')}`);
+    await c6.close();
+  }
+
   // the panel on the device (sw.js): its shell kept by version, opened again with no network; GitHub's API never kept
-  const ctx3 = await browser.newContext({ viewport: { width: 390, height: 800 } }), p3 = await ctx3.newPage();
+  const ctx3 = await browser.newContext({ viewport: { width: 390, height: 800 }, locale: 'ja-JP' }), p3 = await ctx3.newPage();
   await ctx3.route('https://api.github.com/**', api);
   p3.on('pageerror', (e) => errors.push(`pageerror (offline): ${e.message}`));
   await p3.goto(URL3);

@@ -49,20 +49,22 @@ export async function findIssue(api, slug, runId, { pages = 3 } = {}) {
 
 /** the Issue for a run → { issue: { number, html_url }, existed } : the one already there, else a new one. Only a failed run
  *  gets one. Annotations are read for the failed jobs (up to 5; a job whose annotations cannot be read just has none). */
-export async function openOrCreate(api, slug, run) {
+export async function openOrCreate(api, slug, run, say = {}) {
   if (!run?.id) throw new Error('実行が選ばれていません');
   if (!bad(run.conclusion)) throw new Error('この実行は落ちていないので、Issue は作りません');
   const had = await findIssue(api, slug, run.id);
   if (had) return { issue: had, existed: true };
-  return createIssue(api, slug, run);
+  return createIssue(api, slug, run, say);
 }
-/** a new Issue for a failed run (the write alone: findIssue first, outside any guard — reading is no write) → { issue, existed: false } */
-export async function createIssue(api, slug, run) {
+/** a new Issue for a failed run (the write alone: findIssue first, outside any guard — reading is no write) → { issue, existed: false }.
+ *  say: { t, text } — its title and its text in the person's language (ui/i18n.mjs t, tText; none: the panel's own words) */
+export async function createIssue(api, slug, run, { t = null, text = null } = {}) {
   if (!run?.id) throw new Error('実行が選ばれていません');
   if (!bad(run.conclusion)) throw new Error('この実行は落ちていないので、Issue は作りません');
   const jobs = await api.jobs(slug, run.id);
   const notes = [];
   for (const j of jobs.filter((x) => bad(x.conclusion)).slice(0, 5)) { try { const a = await api.annotations(slug, j.id); if (Array.isArray(a)) notes.push(...a); } catch { /* none for this job */ } }
-  const made = await api.call('POST', `/repos/${slug}/issues`, issueBody(run, jobs, notes));
+  const it = issueBody(run, jobs, notes);
+  const made = await api.call('POST', `/repos/${slug}/issues`, { ...it, title: t ? t(it.title) : it.title, body: text ? text(it.body) : it.body });
   return { issue: { number: made.number, html_url: made.html_url, state: 'open' }, existed: false };
 }

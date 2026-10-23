@@ -13,6 +13,7 @@ import * as G from '../lib/guide.mjs';
 import * as P from '../lib/policy.mjs';
 import * as M from '../lib/model.mjs';
 import { readRuns } from './stats.mjs';
+import { tText } from './i18n.mjs';
 
 // (what was read, kept per client and lab for whoever asks for a reading no older than it wants — the report, a minute: the
 // card always reads again, so a thing just mended shows at once)
@@ -117,7 +118,8 @@ export function reportButton(ctx) {
   let url = null;
   const make = () => act(async () => {
     const now = ctx.now ?? Date.now(), f = await readFacts(ctx, { maxAge: 60_000 }), lenders = await lendersOf(ctx, f, now), date = M.dayOf(new Date(now), ctx.tz ?? ST.localZone());
-    const md = H.report({ lab: ctx.lab.slug, date, score: f.score, review: f.review, policy: ctx.policy, policyErrors: ctx.policyErrors, failures: f.failures, lenders });
+    // (the report in the person's language: line by line, a table cell by cell)
+    const md = tText(H.report({ lab: ctx.lab.slug, date, score: f.score, review: f.review, policy: ctx.policy, policyErrors: ctx.policyErrors, failures: f.failures, lenders }));
     if (url) URL.revokeObjectURL(url);
     url = URL.createObjectURL(new Blob([md], { type: 'text/markdown;charset=utf-8' }));
     out.replaceChildren(h('a', { class: 'btn', href: url, download: `bds-lab-health-${ctx.lab.slug.replace('/', '_')}-${date}.md` }, '⬇ 報告書（Markdown）をダウンロード'));

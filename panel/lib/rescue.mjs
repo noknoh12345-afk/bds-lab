@@ -22,7 +22,7 @@ export function rescue(e, ctx = {}) {
   if (status === 403) return { why: `このサインインには、その操作の権限がありません${msg ? `（${msg}）` : ''}`, next: more.how, action: { label: more.label, link: more.link }, wait: 0 };
   if (status === 404) {
     if (ctx.signedInWithApp && installUrl(ctx.appSlug)) return { why: '見つからないか、ラボの App がそのリポジトリに入っていません', next: 'App をそのリポジトリに入れてから、もう一度', action: { label: 'App を入れる（GitHub へ）', link: installUrl(ctx.appSlug) }, wait: 0 };
-    return { why: '見つからないか、このトークンでは見えません', next: `${ctx.signedInWithApp ? '' : 'トークンの Repository access にラボ（と貸し借りのホスト）が入っているか確かめてください。'}${more.how}`, action: { label: more.label, link: more.link }, wait: 0 };
+    return { why: '見つからないか、このトークンでは見えません', next: ctx.signedInWithApp ? more.how : `トークンの Repository access にラボ（と貸し借りのホスト）が入っているか確かめてください。${more.how}`, action: { label: more.label, link: more.link }, wait: 0 };
   }
   if (status === 409) return { why: 'ほかの人（か別のタブ）が先に同じものを変えました', next: '「読み直す」で今の中身にしてから、もう一度', action: { label: '読み直す', kind: 'reload' }, wait: 0 };
   if (status === 422) return { why: `GitHub が受け付けませんでした${msg ? `（${msg}）` : ''}`, next: '入れた中身（名前・空の欄・長さ）を確かめて、もう一度', action: retry, wait: 0 };

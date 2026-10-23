@@ -127,10 +127,12 @@ export const COLOR = Object.freeze({
 
 // the parts the stylesheet draws with: the switch's I and O, the radio's diamond, the panel's name — letters of a palette
 export const PARTS = Object.freeze({
-  switchI: { pal: { w: '#ffffff' }, grid: ['............', '............', '.....ww.....', '.....ww.....', '.....ww.....', '.....ww.....', '.....ww.....', '.....ww.....', '.....ww.....', '.....ww.....', '............', '............'] },
-  switchO: { pal: { k: '#313233' }, grid: ['............', '............', '...kkkkkk...', '...k....k...', '...k....k...', '...k....k...', '...k....k...', '...k....k...', '...k....k...', '...kkkkkk...', '............', '............'] },
+  // (the switch's marks as the game's toggle draws them: a line of one texel by seven, a ring of six by six with its corners cut —
+  //  drawn at 24 px, two screen pixels a cell)
+  switchI: { pal: { w: '#ffffff' }, grid: ['............', '............', '......w.....', '......w.....', '......w.....', '......w.....', '......w.....', '......w.....', '......w.....', '............', '............', '............'] },
+  switchO: { pal: { k: '#242425' }, grid: ['............', '............', '............', '....kkkk....', '...k....k...', '...k....k...', '...k....k...', '...k....k...', '....kkkk....', '............', '............', '............'] },
   radioOff: { pal: { k: '#1e1e1f', g: '#8c8d90', l: '#a4a5a8' }, grid: ['.....kk.....', '....kllk....', '...klgggk...', '..klgggggk..', '.klgggggggk.', 'klgggggggggk', 'kggggggggggk', '.kggggggggk.', '..kggggggk..', '...kggggk...', '....kggk....', '.....kk.....'] },
-  radioOn: { pal: { k: '#1e1e1f', g: '#3c8527', l: '#63a052', w: '#ffffff' }, grid: ['.....kk.....', '....kllk....', '...klgggk...', '..klgggggk..', '.klggwwgggk.', 'klggwwwwgggk', 'kgggwwwwgggk', '.kgggwwgggk.', '..kggggggk..', '...kggggk...', '....kggk....', '.....kk.....'] },
+  radioOn: { pal: { k: '#1e1e1f', g: '#3c8527', l: '#639d52', w: '#ffffff' }, grid: ['.....kk.....', '....kllk....', '...klgggk...', '..klgggggk..', '.klggwwgggk.', 'klggwwwwgggk', 'kgggwwwwgggk', '.kgggwwgggk.', '..kggggggk..', '...kggggk...', '....kggk....', '.....kk.....'] },
   chev: { pal: { k: '#1e1e1f' }, grid: ['............', '............', '............', '.kk......kk.', '..kk....kk..', '...kk..kk...', '....kkkk....', '.....kk.....', '............', '............', '............', '............'] },
   lens: { pal: { g: '#8c8d90' }, grid: ['..gggg......', '.g....g.....', 'g......g....', 'g......g....', 'g......g....', 'g......g....', '.g....gg....', '..ggggggg...', '.......ggg..', '........ggg.', '.........ggg', '..........g.'] },
 });

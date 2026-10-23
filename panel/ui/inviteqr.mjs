@@ -5,6 +5,7 @@ import { h, act, failView } from './dom.mjs';
 import { qrCard } from './qr.mjs';
 import * as I from '../lib/inviteqr.mjs';
 import * as MB from '../lib/members.mjs';
+import { tText } from './i18n.mjs';
 
 /** ctx: { api, lab: { slug, repo }, panelUrl?, clipboard? } · who: { login, role } (no login: whoever was invited last) → an element */
 export function inviteQrCard(ctx, { login, role } = {}) {
@@ -23,7 +24,7 @@ export function inviteQrCard(ctx, { login, role } = {}) {
         .filter((i) => !login || String(i.login).toLowerCase() === String(login).toLowerCase()).sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
       if (list && !mine.length) { body.replaceChildren(h('p', { class: 'warn' }, `${login ? `${login} への` : ''}招待がまだありません。先に「メンバー」で GitHub のユーザー名を入れて招いてください。招くと、ここに QR と文が出ます。`), h('button', { onclick: () => draw() }, '調べ直す')); return; }
       // (the list unreadable but the login known: the QR and words all the same — GitHub's page itself shows the invitation, or none)
-      const who = login || mine[0].login, t = I.inviteText({ slug: ctx.lab.slug, panelUrl: ctx.panelUrl, role: role ?? MB.roleOfPermission(mine[0]?.permission), login: who });
+      const who = login || mine[0].login, made = I.inviteText({ slug: ctx.lab.slug, panelUrl: ctx.panelUrl, role: role ?? MB.roleOfPermission(mine[0]?.permission), login: who }), t = { ...made, md: tText(made.md) };
       const note = list ? null : h('p', { class: 'muted' }, '招待の一覧は管理者だけが見られます。招待が届いているかは、QR の GitHub のページを開くと分かります。');
       body.replaceChildren(...(note ? [note] : []), qrCard(ctx, t.url, `${who} さんがスマホで招待を受ける`), h('pre', { 'aria-label': '招いた人に渡す文' }, t.md),
         h('button', { class: 'primary', onclick: () => act(async () => {

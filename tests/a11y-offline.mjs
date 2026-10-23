@@ -1,7 +1,8 @@
 // a11y (見やすさ: 大きな字・はっきりした色・動きを減らす・リンクに下線) without a browser: the choice kept in a storage (broken text
 // and a refusing storage are no trouble), the device's settings as defaults (matchMedia), the classes for <html>, the card on a
-// small fake DOM (a click runs onclick, a disabled button is not pressed), and every colour pair of panel/a11y.css checked for
-// contrast (WCAG AA 4.5:1 for text, 3:1 for borders; 7:1 for the main text).
+// small fake DOM (a click runs onclick, a disabled button is not pressed), and every colour pair of the strong colours
+// (styles.css html.a11y-contrast, from lib/styles.mjs) checked for contrast (WCAG AA 4.5:1 for text, 3:1 for borders; 7:1 for
+// the main text).
 // node tests/a11y-offline.mjs
 import fs from 'node:fs';
 import path from 'node:path';
@@ -64,16 +65,21 @@ await t('ratio: the WCAG formula (black on white 21:1, same colour 1:1, a known 
 });
 
 const css = fs.readFileSync(path.join(TOP, 'panel/a11y.css'), 'utf8');
-const blocks = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/html\.a11y-contrast\s*\{([^}]*)\}/g)].map((m) => Object.fromEntries([...m[1].matchAll(/--([a-z-]+)\s*:\s*([^;]+);/g)].map((v) => [v[1], v[2].trim()]))).filter((b) => Object.keys(b).length);
-// (panel.css's colour variables: those of :root whose value is a colour — its sizes and fonts are not the contrast set's)
-const rootVars = [...new Set([...fs.readFileSync(path.join(TOP, 'panel/panel.css'), 'utf8').matchAll(/:root\s*\{([^}]*)\}/g)].flatMap((m) => [...m[1].matchAll(/--([a-z-]+)\s*:\s*(#[0-9a-f]{3,8}|rgb)/gi)].map((v) => v[1])))];
+// (the strong colours: lib/styles.mjs CONTRAST, written into styles.css as html.a11y-contrast — over any style)
+const ST = await import(pathToFileURL(path.join(TOP, 'panel/lib/styles.mjs')).href);
+const styles = fs.readFileSync(path.join(TOP, 'panel/styles.css'), 'utf8');
+const blocks = [...styles.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(?:^|\n)html\.a11y-contrast\s*\{([^}]*)\}/g)].map((m) => Object.fromEntries([...m[1].matchAll(/--([a-z-]+)\s*:\s*([^;]+);/g)].map((v) => [v[1], v[2].trim()]))).filter((b) => Object.keys(b).length);
+// (every colour a style sets — OreUI's own, on :root — is what the strong colours must each lay their own over)
+const rootVars = ST.VARS.filter((v) => !/-ico$/.test(v));
 
-await t('a11y.css: one set of strong colours (the panel is OreUI\'s dark in either scheme), laying a value over every colour variable of panel.css', () => {
+await t('the strong colours (styles.css html.a11y-contrast, from lib/styles.mjs): one set over any style, laying a value over every colour variable', () => {
   eq(blocks.length, 1, 'one set');
-  ok(rootVars.length >= 10, `panel.css variables read: ${rootVars}`);
+  ok(rootVars.length >= 40, `the styles' variables: ${rootVars.length}`);
   for (const [i, b] of blocks.entries()) for (const v of rootVars) ok(b[v], `${i ? 'dark' : 'light'}: --${v} not set`);
   ok(/html\.a11y-contrast button\.primary[^{]*\{[^}]*var\(--on-accent\)/.test(css), 'the primary button text uses --on-accent');
   ok(/#toast div\.bad\s*\{[^}]*var\(--on-bad\)/.test(css), 'the bad toast uses --on-bad');
+  ok(!/#[0-9a-f]{6}\b/i.test(css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/--ink: #000000;/, '')), 'a11y.css names no colour of its own but a disabled button\'s words');
+  eq(blocks[0].tile, 'none', 'no style\'s tile behind the page');
 });
 
 // [text, background, at least]
@@ -82,19 +88,20 @@ const PAIRS = [
   ['muted', 'bg', 7], ['muted', 'card', 7], ['muted', 'chip', 4.5],
   ['accent', 'bg', 4.5], ['accent', 'card', 4.5], ['accent', 'chip', 4.5],
   ['ok', 'bg', 4.5], ['ok', 'card', 4.5], ['warn', 'bg', 4.5], ['warn', 'card', 4.5], ['bad', 'bg', 4.5], ['bad', 'card', 4.5], ['bad', 'chip', 4.5],
-  ['on-accent', 'accent', 4.5], ['on-bad', 'bad', 4.5],
+  ['on-accent', 'accent', 4.5], ['on-bad', 'bad', 4.5], ['on-accent', 'go', 7], ['on-btn', 'btn', 7], ['on-bad', 'stop', 7],
   ['line', 'bg', 3], ['line', 'card', 3],
 ];
-await t('a11y.css: every pair of text and background reads (AA 4.5:1 or more; the main text 7:1; borders 3:1)', () => {
+await t('the strong colours: every pair of text and background reads (AA 4.5:1 or more; the main text 7:1; borders 3:1) — and lib/styles.mjs\'s own pairs', () => {
   const low = [];
   for (const [i, b] of blocks.entries()) for (const [f, g, min] of PAIRS) { const r = ratio(b[f], b[g]); if (!(r >= min)) low.push(`${i ? 'dark' : 'light'} --${f} on --${g}: ${r.toFixed(2)} < ${min}`); }
   eq(low, [], 'too low');
+  eq(ST.problems(ST.CONTRAST), []);
   const worst = Math.min(...blocks.flatMap((b) => PAIRS.filter((p) => p[2] >= 4.5).map(([f, g]) => ratio(b[f], b[g]))));
   console.log(`     (the lowest text pair: ${worst.toFixed(2)}:1)`);
 });
 
-await t('a11y.css: each switch has its rules (big: 1.25 times; calm: animation and transition off; links: underline)', () => {
-  ok(/html\.a11y-big body\s*\{\s*font-size:\s*18\.75px/.test(css), 'big 1.25 × 15px');
+await t('a11y.css: each switch has its rules (big: 1.5 times, on whole pixels; calm: animation and transition off; links: underline)', () => {
+  ok(/html\.a11y-big\s*\{\s*--fs:\s*24px;\s*--fs-s:\s*16px;/.test(css), 'big 1.5 × 16px (and the small letters 12px → 16px)');
   ok(/html\.a11y-calm[^{]*\{[^}]*animation:\s*none !important;[^}]*transition:\s*none !important/.test(css), 'calm');
   ok(/html\.a11y-links a[^{]*\{[^}]*text-decoration:\s*underline/.test(css), 'links');
   ok(!/url\(|@import|https?:/.test(css.replace(/\/\*[\s\S]*?\*\//g, '')), 'nothing fetched from elsewhere');

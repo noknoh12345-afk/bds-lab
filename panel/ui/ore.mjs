@@ -1,6 +1,6 @@
 // ore: what makes the panel look and move like OreUI beyond its stylesheet — the pixel icons in place of the emoji the
-// panel's words carry, the loading mark beside 「…を読んでいます…」, the dock of five (the screens in groups:
-// lib/navmenu.mjs GROUPS) and 「なめらかな字」 (the pixel face off: every letter in the smooth face, easier to read at length).
+// panel's words carry, the loading mark beside 「…を読んでいます…」 and the dock of five (the screens in groups:
+// lib/navmenu.mjs GROUPS).
 // The emoji stay in the words: an icon is drawn over one (panel/icons.css), so copying, a screen reader and the tests read
 // the words as before. Text is always text; no inline style (the page's CSP allows none).
 import { h } from './dom.mjs';
@@ -45,40 +45,65 @@ function draw(node) {
 /** words that say the page is waiting (pure): 「…を読んでいます…」, a tab's own part still coming 「読み込んでいます…」 */
 export const isWaiting = (text) => /読(?:み込)?んでいます…\s*$/.test(String(text ?? ''));
 /** an element whose own words say it waits gets OreUI's loading mark (panel.css .ore-wait); when its words change, it goes.
- *  (never a button: its ::before is its face) */
+ *  (never a button: its ::before is its face.) Words translated from waiting ones still wait: data-ore-wait holds them */
 function waiting(el) {
   if (!el || el.nodeType !== 1 || SKIP.has(el.nodeName) || el.nodeName === 'BUTTON' || !el.classList || el.classList.contains('btn')) return;
   let own = '';
   for (const n of el.childNodes) if (n.nodeType === 3) own += n.nodeValue;
-  if (isWaiting(own)) el.classList.add('ore-wait');
-  else if (el.classList.contains('ore-wait')) el.classList.remove('ore-wait');
+  if (isWaiting(own) || (el.dataset?.oreWait && el.dataset.oreWait === own.trim())) el.classList.add('ore-wait');
+  else if (el.classList.contains('ore-wait')) { el.classList.remove('ore-wait'); delete el.dataset.oreWait; }
 }
-/** every text under a node: its marks drawn, its waiting words marked */
+
+// ---- the words in the person's language (lib/i18n.mjs, given by panel.js): every text and these attributes as drawn ----
+let tr = null;
+const ATTRS = ['title', 'placeholder', 'aria-label', 'alt'];
+// (what is not the panel's own words: a script, a style, what someone typed or pasted, code, and what says translate="no" —
+// a chart's words, inside its svg, are the panel's: translated, though its marks are never drawn there)
+const KEEP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'CODE', 'PRE']);
+const kept = (node) => { for (let p = node.parentNode; p && p.nodeType === 1; p = p.parentNode) { if (KEEP.has(p.nodeName) || p.getAttribute?.('translate') === 'no' || p.isContentEditable) return true; } return false; };
+/** one text node in the person's language (a waiting one keeps its mark: its parent remembers the words) */
+function word(node) {
+  if (!tr || !node.nodeValue || kept(node)) return;
+  const was = node.nodeValue, now = tr(was);
+  if (now === was) return;
+  if (isWaiting(was) && node.parentNode?.dataset) node.parentNode.dataset.oreWait = now.trim();
+  node.nodeValue = now;
+}
+/** an element's own attributes that people read (a tooltip, a box's hint, what a screen reader says) in their language */
+function attrsOf(el) {
+  if (!tr || !el || el.nodeType !== 1 || KEEP.has(el.nodeName) || el.getAttribute?.('translate') === 'no') return;
+  for (const a of ATTRS) { const v = el.getAttribute(a); if (v) { const t = tr(v); if (t !== v) el.setAttribute(a, t); } }
+}
+/** every text under a node: translated, its marks drawn, its waiting words marked */
 function walk(root) {
-  if (root.nodeType === 3) { waiting(root.parentNode); return draw(root); }
-  if (root.nodeType !== 1 || SKIP.has(root.nodeName) || root.classList?.contains('pi')) return;
+  if (root.nodeType === 3) { if (isWaiting(root.nodeValue)) waiting(root.parentNode); word(root); waiting(root.parentNode); return draw(root); }
+  if (root.nodeType !== 1 || KEEP.has(root.nodeName) || root.classList?.contains('pi')) return;
+  if (tr) { attrsOf(root); for (const el of root.querySelectorAll?.('[title],[placeholder],[aria-label],[alt]') ?? []) attrsOf(el); }
   const doc = root.ownerDocument, it = doc.createTreeWalker(root, 4 /* NodeFilter.SHOW_TEXT */), found = [];
   for (let n = it.nextNode(); n; n = it.nextNode()) {
     if (!n.nodeValue) continue;
     if (isWaiting(n.nodeValue)) waiting(n.parentNode);
-    if (HAS.test(n.nodeValue)) found.push(n);
+    found.push(n);
   }
-  for (const n of found) draw(n);
+  for (const n of found) { word(n); if (n.parentNode) waiting(n.parentNode); if (n.nodeValue && HAS.test(n.nodeValue)) draw(n); }
 }
-/** from now on every mark the page shows is drawn as its icon, and every 「…を読んでいます…」 has the loading mark — what is
- *  there now and whatever comes (the page draws its screens anew often) → stop() */
-export function pixelEmoji(root = globalThis.document?.body) {
+/** from now on every text the page shows is in the person's language (translate: a text → itself translated; none: as written),
+ *  every mark drawn as its icon, every 「…を読んでいます…」 with the loading mark — what is there now and whatever comes (the
+ *  page draws its screens anew often) → stop() */
+export function pixelEmoji(root = globalThis.document?.body, { translate = null } = {}) {
+  tr = translate;
   if (!root || !globalThis.MutationObserver) return () => {};
   walk(root);
   const mo = new MutationObserver((recs) => {
     for (const r of recs) {
-      if (r.type === 'characterData') { waiting(r.target.parentNode); draw(r.target); continue; }
+      if (r.type === 'attributes') { attrsOf(r.target); continue; }
+      if (r.type === 'characterData') { word(r.target); waiting(r.target.parentNode); draw(r.target); continue; }
       // (an element's words replaced — textContent, replaceChildren: whether it still waits)
       if (r.target.classList?.contains('ore-wait')) waiting(r.target);
       for (const n of r.addedNodes) walk(n);
     }
   });
-  mo.observe(root, { childList: true, subtree: true, characterData: true });
+  mo.observe(root, { childList: true, subtree: true, characterData: true, ...(tr ? { attributes: true, attributeFilter: ATTRS } : {}) });
   return () => mo.disconnect();
 }
 
@@ -103,16 +128,3 @@ export function dockOf(tabs) {
 }
 /** which group a screen is in (pure) → its key, or null */
 export const groupOf = (dock, tab) => dock.find((g) => g.tabs.some(([k]) => k === tab))?.key ?? null;
-
-// ---- 「なめらかな字」: the pixel face off — this browser's choice ----
-export const SMOOTH_KEY = 'bdslab.panel.smooth';
-export function applySmooth(storage, doc = globalThis.document) {
-  let on = false;
-  try { on = storage?.getItem(SMOOTH_KEY) === '1'; } catch { /* the default */ }
-  doc?.documentElement?.classList?.toggle('ore-smooth', on);
-  return on;
-}
-export function setSmooth(storage, on, doc = globalThis.document) {
-  try { if (on) storage.setItem(SMOOTH_KEY, '1'); else storage.removeItem(SMOOTH_KEY); } catch { /* this tab only */ }
-  doc?.documentElement?.classList?.toggle('ore-smooth', Boolean(on));
-}

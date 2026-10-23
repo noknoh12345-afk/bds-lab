@@ -48,7 +48,9 @@ import { a11yCard, apply as applyA11y } from './ui/a11y.mjs';
 import * as A11Y from './lib/a11y.mjs';
 import * as PK from './lib/pick.mjs';
 import * as NAV from './lib/navmenu.mjs';
-import { icon, pixelEmoji, dockOf, applySmooth, setSmooth } from './ui/ore.mjs';
+import { icon, pixelEmoji, dockOf } from './ui/ore.mjs';
+import { fontsCard, loadUserFonts, styleCard, themeColor } from './ui/look.mjs';
+import { startI18n, t, langButtons, langSelect, keepOffline } from './ui/i18n.mjs';
 
 // ---- the browser's storage (one that refuses it — a private window may — still works for the tab) ----
 const storage = (name) => { try { const s = window[name]; s.setItem('bdslab.probe', '1'); s.removeItem('bdslab.probe'); return s; } catch { return memoryStorage(); } };
@@ -61,9 +63,15 @@ const setFull = (on) => { if (on) LOCAL.setItem(FULL_KEY, '1'); else LOCAL.remov
 // (見やすさ — big letters, strong colours, no motion, underlined links — this browser's choice, else the device's own, before
 // anything is drawn)
 try { applyA11y(document, A11Y.load(LOCAL, A11Y.fromMedia(globalThis.matchMedia?.bind(globalThis)))); } catch { /* the page as it is */ }
-// (OreUI: 「なめらかな字」 when this browser chose it, and the emoji of the words drawn as pixel icons from now on — ui/ore.mjs)
-applySmooth(LOCAL);
-pixelEmoji(document.body);
+// (OreUI: their own Minecraft fonts when this browser keeps some — ui/look.mjs — and the emoji of the words drawn as pixel
+//  icons from now on — ui/ore.mjs)
+loadUserFonts().catch(() => { /* the panel's own letters */ });
+// (the person's language — the one chosen here, else the browser's own — read before anything is drawn: every word the page
+//  shows from now on is in it, translated as it is drawn — ui/i18n.mjs, ui/ore.mjs)
+await startI18n(LOCAL);
+pixelEmoji(document.body, { translate: t });
+// (the style this browser chose is on <html> already — early.js — and the phone's bar takes its title bar's colour)
+try { themeColor(document); } catch { /* the page's own */ }
 
 // ---- never inside another page's frame: a click there would be this person's own (GitHub Pages sends no frame-ancestors
 // header, and a meta CSP cannot say it) — the panel then does nothing at all ----
@@ -346,7 +354,7 @@ function lockedWays(err) {
       h('button', { onclick: () => connect() }, 'もう一度'), link('https://github.com/notifications', '招待を見る（GitHub へ）')));
 }
 /** the door's mark: the panel's name drawn big in pixels, and what this is (the words are the mark's own: role img) */
-const door = () => h('div', { class: 'door' }, h('span', { class: 'mark', role: 'img', 'aria-label': 'bds-lab' }), h('p', { class: 'muted' }, 'アドオンを本物のサーバーで確かめるラボの管理パネル'));
+const door = () => h('div', { class: 'door' }, h('span', { class: 'mark', role: 'img', 'aria-label': 'bds-lab' }), h('p', { class: 'muted' }, 'アドオンを本物のサーバーで確かめるラボの管理パネル'), langButtons(LOCAL));
 function renderLocked(why, err = null) {
   setTitle(null);
   // (someone the lab's owner did not invite: the one thing offered is to lend their own Actions minutes — ui/lend.mjs)
@@ -702,6 +710,8 @@ const SW = FRAMED || !globalThis.navigator?.serviceWorker ? Promise.resolve(null
   : navigator.serviceWorker.register(`./sw.js?v=${CONFIG.version ?? ''}`).then(() => navigator.serviceWorker.ready).catch(() => null /* none (a private window, a file:// copy): the page works as it is */);
 // (a new version taking over a page that had one: said once — the page goes on with what it has until it is read again)
 if (!FRAMED && globalThis.navigator?.serviceWorker?.controller) navigator.serviceWorker.addEventListener('controllerchange', () => toast('パネルの新しい版が届きました（読み直すと新しくなります）'));
+// (the words in this person's language kept with it — only theirs: ui/i18n.mjs, sw.js)
+SW.then(keepOffline).catch(() => { /* no worker here: the page reads it from the network */ });
 
 // ---- runs that end while the panel is open: told on this device (a notification when allowed, else a toast) and counted
 // in the tab's title — opt-in in 「設定」, kept per browser ----
@@ -1018,7 +1028,7 @@ async function detail(slug, r, box, show) {
       pc = st.progress?.get(r.id) ?? progressCard({ api: st.api, lab: st.lab, me: st.me, policy: st.policy, role: st.role, guarded, record }, r);
       st.progress?.set(r.id, pc);
     }
-    const parts = [pc, why, h('div', { class: 'bar' + (p.state === 'failure' ? ' bad' : '') }, h('i', { style: { width: `${p.pct}%` } })), h('div', { class: 'muted' }, `${p.done}/${p.total} 段 · ${M.fmtMs(p.ms)}${p.now ? ` · いま: ${p.now}` : ''}`)];
+    const parts = [pc, why, h('div', { class: 'bar' + (p.state === 'failure' ? ' bad' : '') }, h('i', { style: { width: `${p.pct}%` } })), h('div', { class: 'muted' }, `${p.done}/${p.total} 段`, ' · ', M.fmtMs(p.ms), p.now ? ` · いま: ${p.now}` : '')];
     for (const j of p.jobs) parts.push(h('div', {}, `${M.STATE_ICON[j.state] ?? '•'} ${j.name} — ${j.done}/${j.total}${j.now ? `（${j.now}）` : ''}`));
     // (a failed job's own words: its check run's annotations)
     const said = [];
@@ -1044,7 +1054,7 @@ async function detail(slug, r, box, show) {
  *  service), GitHub's page to take them, and (the lab's runs) sent to Discord by notify */
 function artifactList(slug, runId, arts, runUrl) {
   const c = capsOf().notify, live = arts.filter((a) => !a.expired), mine = slug === st.lab?.slug && hasWf('notify.yml');
-  const size = (a) => `${M.fmtBytes(a.size_in_bytes ?? 0)}${a.expired ? '・期限切れ' : ''}`, page = runUrl ?? `https://github.com/${slug}/actions/runs/${runId}`;
+  const size = (a) => [M.fmtBytes(a.size_in_bytes ?? 0), a.expired ? '期限切れ' : ''].filter(Boolean).join('・'), page = runUrl ?? `https://github.com/${slug}/actions/runs/${runId}`;
   return h('div', { class: 'files' }, h('div', { class: 'row arts' }, '📦 成果物: ', arts.map((a) => (CONFIG.authUrl && !a.expired
     ? h('button', { class: 'art', 'data-art': a.id, title: '中を見る（画像・動画・すべてのファイル）', onclick: () => viewArtifact(slug, a, page) }, `👀 ${a.name}`, h('span', { class: 'muted' }, `（${size(a)}）`))
     : h('span', { class: 'chip' }, `${a.name}（${size(a)}）`)))),
@@ -1511,7 +1521,7 @@ function forksCard() {
 // ---- 設定 (this account's, in this browser) ----
 function settingsTab(body) {
   const s = settings(), lab = h('input', { type: 'text', value: s.lab }), refresh = h('input', { type: 'number', min: 5, max: 600, value: s.refresh }), vault = h('input', { type: 'password', value: s.vault, autocomplete: 'off' });
-  body.append(viewCard(), h('div', { class: 'card' }, h('h2', {}, `${st.login} の設定（このブラウザ）`),
+  body.append(viewCard(), styleCard(LOCAL), fontsCard(), h('div', { class: 'card' }, h('h2', {}, `${st.login} の設定（このブラウザ）`),
     h('label', {}, 'ラボのリポジトリ'), lab, h('label', {}, '読み直す間隔（秒）'), refresh,
     h('label', {}, 'APP_CACHE_KEY（公開リポジトリの端末の命令と返事を封じる・開く。Secrets と同じ値。このブラウザだけに置きます）'), vault,
     h('div', { class: 'row' }, h('button', { class: 'primary', onclick: () => { const bad = M.slugProblem(lab.value); if (bad) return toast(bad, true); saveSettings({ lab: lab.value.trim(), refresh: Number(refresh.value) || 20, vault: vault.value }); toast('保存しました'); connect(); } }, '保存'),
@@ -1544,12 +1554,9 @@ function settingsTab(body) {
 function viewCard() {
   const all = h('input', { type: 'checkbox', id: 'fullview', checked: full() });
   all.addEventListener('change', () => setView(all.checked));
-  // (「なめらかな字」: the pixel letters off, Noto Sans for every letter — easier to read at length; this browser's choice)
-  const smooth = h('input', { type: 'checkbox', id: 'smoothfont', checked: document.documentElement.classList.contains('ore-smooth') });
-  smooth.addEventListener('change', () => { setSmooth(LOCAL, smooth.checked); toast(smooth.checked ? 'なめらかな字にしました（英数字もドットでない字に）' : 'ドットの字に戻しました'); });
   return h('div', { class: 'card', id: 'viewcard' }, h('h2', {}, '表示'),
+    langSelect(LOCAL),
     h('label', {}, all, ' すべての機能を出す（上級）'),
-    h('label', {}, smooth, ' なめらかな字（英数字もドットの字にしない。長い文が読みやすくなります）'),
     full() ? h('p', { class: 'muted' }, 'いまは、すべての機能を出しています。外すと「かんたん表示」に戻ります。')
       : [h('p', { class: 'muted' }, 'いまは「かんたん表示」です（おすすめ）。次のものを隠しています:'), h('ul', {}, NAV.SIMPLE_HIDES.map((x) => h('li', { class: 'muted' }, x)))],
     h('p', { class: 'muted' }, '隠すだけで、消してはいません（このブラウザだけの設定）。'));

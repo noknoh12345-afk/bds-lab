@@ -12,9 +12,11 @@
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark">
 <title>bds-lab 管理パネル</title>
+<script src="early.js"></script>
 <link rel="preload" href="fonts/pixel/pixel-regular.otf" as="font" type="font/otf" crossorigin>
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="stylesheet" href="icons.css">
+<link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="panel.css">
 <link rel="stylesheet" href="a11y.css">
 <link rel="manifest" href="manifest.webmanifest">
@@ -28,8 +30,8 @@
 </head>
 <body>
 <header id="top"><div class="nstart" id="nstart"></div><h1 id="title">bds-lab<span class="h1sub"> 管理パネル</span></h1><div id="who"></div></header>
-<main id="main"><p class="muted">読み込んでいます…</p></main>
+<main id="main"><p class="muted boot ore-wait" role="status"></p></main>
 <div id="toast" role="status" aria-live="polite"></div>
-<noscript><p>このパネルは JavaScript で動きます。</p></noscript>
+<noscript><p>このパネルは JavaScript で動きます。</p><p lang="en">This panel needs JavaScript.</p></noscript>
 </body>
 </html>

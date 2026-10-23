@@ -80,19 +80,23 @@ export const INTENTS = Object.freeze([
 
 // (matching as people type: case, katakana/hiragana and spacing do not matter)
 export const norm = (s) => String(s ?? '').toLowerCase().replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/[\s・、。,.!?！？「」（）()]/g, '');
-/** the places for what was typed, best first (pure) → [{ ...intent, score }]; tabs: the tabs this person sees; may(action) */
-export function findIntents(query, { tabs = null, may = () => true, limit = 6 } = {}) {
+// (the words a place is found by: its own, and — given t, the panel's words in the person's language (ui/i18n.mjs) — the same
+// words in that language too, so someone typing English finds 「秘密を登録する」 by "secret")
+const findable = (list, t) => (typeof t === 'function' ? [...list, ...list.map((w) => t(w))] : list).map(norm).filter(Boolean);
+/** the places for what was typed, best first (pure) → [{ ...intent, score }]; tabs: the tabs this person sees; may(action);
+ *  t: the words in the person's language (none: the panel's own) */
+export function findIntents(query, { tabs = null, may = () => true, limit = 6, t = null } = {}) {
   const q = norm(query);
   const seen = INTENTS.filter((x) => (!tabs || tabs.includes(x.tab)) && (!x.need || may(x.need)));
   if (!q) return seen.slice(0, limit).map((x) => ({ ...x, score: 0 }));
   return seen.map((x, i) => {
     let score = 0;
-    for (const w of [x.label, ...x.words].map(norm)) { if (q.includes(w)) score += 3; else if (q.length >= 2 && w.includes(q)) score += 2; }
+    for (const w of findable([x.label, ...x.words], t)) { if (q.includes(w)) score += 3; else if (q.length >= 2 && w.includes(q)) score += 2; }
     return { ...x, score, i };
   }).filter((x) => x.score > 0).sort((a, b) => b.score - a.score || a.i - b.i).slice(0, limit).map(({ i, ...x }) => x);
 }
 /** the glossary's terms for what was typed (pure) */
-export const findTerms = (query, limit = 3) => { const q = norm(query); return q.length < 2 ? [] : GLOSSARY.filter((g) => [g.term, ...g.words].map(norm).some((w) => w.includes(q) || q.includes(w))).slice(0, limit); };
+export const findTerms = (query, limit = 3, t = null) => { const q = norm(query); return q.length < 2 ? [] : GLOSSARY.filter((g) => findable([g.term, ...g.words], t).some((w) => w.includes(q) || q.includes(w))).slice(0, limit); };
 
 /** the next steps for this person's role (pure) → { steps: [{ id, title, why, done, tab }], done, total, next }. role: owner |
  *  admin | writer | lender | stranger; facts: what the panel knows (pages, app, auth, discord, ran, lenders, lending, members) */
@@ -155,8 +159,8 @@ export function accessReview({ members = [], invitations = [], runs = [], owner 
   for (const i of invitations) { const d = days(Date.parse(i.at)); rows.push({ login: i.login, kind: '招待中', role: i.permission, last: null, days: d, flags: d !== null && d >= inviteDays ? [`招待が ${d} 日そのまま`] : [] }); }
   return { rows, flagged: rows.filter((r) => r.flags.some((f) => f !== '管理者（全部できる）')).length };
 }
-/** the review as CSV for a spreadsheet (pure; BOM for Excel) */
-export function accessCsv(rows) {
+/** the review as CSV for a spreadsheet (pure; BOM for Excel); t: the panel's words in the person's language (none: its own) */
+export function accessCsv(rows, t = (s) => s) {
   const q = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-  return '﻿' + [['ログイン', '種類', '役割', '最後の実行', '日数', '注意'], ...rows.map((r) => [r.login, r.kind, r.role, r.last ?? '', r.days ?? '', r.flags.join(' / ')])].map((r) => r.map(q).join(',')).join('\n') + '\n';
+  return '﻿' + [['ログイン', '種類', '役割', '最後の実行', '日数', '注意'].map((x) => t(x)), ...rows.map((r) => [r.login, t(r.kind), r.role, r.last ?? '', r.days ?? '', r.flags.map((f) => t(f)).join(' / ')])].map((r) => r.map(q).join(',')).join('\n') + '\n';
 }

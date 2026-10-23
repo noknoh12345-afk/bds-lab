@@ -1,4 +1,4 @@
-// node lab.mjs panel <check|shots|hook|icons>: the management panel (panel/), its sign-in service (auth/) and the workflows'
+// node lab.mjs panel <check|shots|hook|icons|styles|fonts|i18n>: the management panel (panel/), its sign-in service (auth/) and the workflows'
 // App tokens tried right after a change, without a deploy.
 //   check [--quick] [--all] [files..]  the checks the changed files need (git's changed and new files when none are named):
 //                                       ESLint, the offline tests, and the real browser (panel-browser, ~1 min; --quick: not)
@@ -7,6 +7,12 @@
 //   hook                                for Claude Code's PostToolUse: a file just edited → its quick checks; a failure is told
 //                                       back to the AI at once (exit 2), anything else is silent
 //   icons                               panel/icons.css written again from the pixel icons' grids (panel/lib/pixelicons.mjs)
+//   styles                              panel/styles.css written again from the panel's colours: OreUI's and each style's, every
+//                                       pair of words and ground checked first (panel/lib/styles.mjs)
+//   fonts <folder>                      the panel's letters cut again from GNU Unifont's builds in <folder> (common/panel-fonts.mjs;
+//                                       needs Python's fontTools: pip install fonttools brotli)
+//   i18n [--sheet [file..]|--merge <json>]  the panel's words in its other languages: what is missing, a sheet to translate, a merge
+//                                       into panel/i18n/<lang>.json (common/panel-i18n.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -44,14 +50,16 @@ const RULES = [
   [/^panel\/(panel\.js|lib\/|ui\/|index\.html|panel\.css|a11y\.css)|^common\/(panel-bundle|panel-config)\.mjs$/, ['tests/bundle-offline.mjs']],
   [/^panel\/(a11y|panel)\.css$/, ['tests/a11y-offline.mjs']],
   // (OreUI: the pixel icons, the frame's pure parts, the fonts and the look)
-  [/^panel\/(lib\/(pixelicons|navmenu)|ui\/ore)\.mjs$|^panel\/(icons|panel)\.css$|^panel\/index\.html$|^panel\/fonts\//, ['tests/ore-offline.mjs']],
+  [/^panel\/(lib\/(pixelicons|navmenu)|ui\/(ore|look))\.mjs$|^panel\/(icons|panel)\.css$|^panel\/index\.html$|^panel\/(fonts|i18n)\/|^common\/panel-fonts\.mjs$/, ['tests/ore-offline.mjs']],
+  // (the five languages: any of the panel's words — the page, its script, its libraries and views — the dictionaries, the reader)
+  [/^panel\/(panel\.js|index\.html|lib\/|ui\/|i18n\/)|^common\/panel-i18n\.mjs$/, ['tests/i18n-offline.mjs']],
   [/^common\/(connect-daily|weekly|statuspage)\.mjs$/, (f) => [`tests/${f.slice(7, -4).replace('-', '')}-offline.mjs`]],
   [/^app\/(app\.mjs|lib\/runfiles\.mjs)$/, ['tests/panel-offline.mjs']],
   [/^panel\/(lib|ui)\/|^panel\/panel\.js$/, ['tests/rescue-offline.mjs', 'tests/shell-rescue-offline.mjs', 'tests/setup-rescue-offline.mjs', 'tests/units-rescue-offline.mjs', 'tests/misc-rescue-offline.mjs', 'tests/ghrules-offline.mjs', 'tests/fakes-rules-offline.mjs', 'tests/connect-ui-offline.mjs',
     'tests/qr-offline.mjs', 'tests/playcard-offline.mjs', 'tests/relnotes-offline.mjs', 'tests/packdiff-offline.mjs', 'tests/revert-offline.mjs', 'tests/drafts-offline.mjs', 'tests/tutorial-offline.mjs', 'tests/progress-offline.mjs',
     'tests/failsum-offline.mjs', 'tests/runissue-offline.mjs', 'tests/runcompare-offline.mjs', 'tests/testhist-offline.mjs', 'tests/secretwatch-offline.mjs', 'tests/connectdaily-offline.mjs', 'tests/weekly-offline.mjs', 'tests/notifyprefs-offline.mjs',
     'tests/minutes-offline.mjs', 'tests/lendfc-offline.mjs', 'tests/nlsched-offline.mjs', 'tests/wizard-offline.mjs', 'tests/a11y-offline.mjs', 'tests/inviteqr-offline.mjs', 'tests/undo-offline.mjs', 'tests/pick-offline.mjs', 'tests/mslive-offline.mjs', 'tests/navmenu-offline.mjs']],
-  [/^tests\/(panel-offline|panel-browser|governance-offline|setup-offline|session-offline|auth-offline|auth-ms-offline|pick-offline|mslive-offline|navmenu-offline|appci-offline|units-offline|schedule-offline|stats-offline|inbox-offline|rescue-offline|shell-rescue-offline|setup-rescue-offline|units-rescue-offline|misc-rescue-offline|ghrules-offline|fakes-rules-offline|connect-ui-offline|qr-offline|playcard-offline|relnotes-offline|packdiff-offline|revert-offline|drafts-offline|tutorial-offline|progress-offline|failsum-offline|runissue-offline|runcompare-offline|testhist-offline|secretwatch-offline|connectdaily-offline|weekly-offline|notifyprefs-offline|minutes-offline|lendfc-offline|nlsched-offline|wizard-offline|a11y-offline|inviteqr-offline|undo-offline|statuspage-offline|viewer-offline|bundle-offline|ore-offline)\.mjs$/, (f) => [f]],
+  [/^tests\/(panel-offline|panel-browser|governance-offline|setup-offline|session-offline|auth-offline|auth-ms-offline|pick-offline|mslive-offline|navmenu-offline|appci-offline|units-offline|schedule-offline|stats-offline|inbox-offline|rescue-offline|shell-rescue-offline|setup-rescue-offline|units-rescue-offline|misc-rescue-offline|ghrules-offline|fakes-rules-offline|connect-ui-offline|qr-offline|playcard-offline|relnotes-offline|packdiff-offline|revert-offline|drafts-offline|tutorial-offline|progress-offline|failsum-offline|runissue-offline|runcompare-offline|testhist-offline|secretwatch-offline|connectdaily-offline|weekly-offline|notifyprefs-offline|minutes-offline|lendfc-offline|nlsched-offline|wizard-offline|a11y-offline|inviteqr-offline|undo-offline|statuspage-offline|viewer-offline|bundle-offline|ore-offline|i18n-offline)\.mjs$/, (f) => [f]],
 ];
 export const ALL = ['tests/panel-offline.mjs', 'tests/governance-offline.mjs', 'tests/setup-offline.mjs', 'tests/session-offline.mjs', 'tests/auth-offline.mjs', 'tests/auth-ms-offline.mjs', 'tests/api-offline.mjs', 'tests/appci-offline.mjs',
   'tests/viewer-offline.mjs', 'tests/units-offline.mjs', 'tests/schedule-offline.mjs', 'tests/stats-offline.mjs', 'tests/inbox-offline.mjs',
@@ -59,8 +67,8 @@ export const ALL = ['tests/panel-offline.mjs', 'tests/governance-offline.mjs', '
   'tests/ghrules-offline.mjs', 'tests/fakes-rules-offline.mjs', 'tests/connect-ui-offline.mjs',
   'tests/qr-offline.mjs', 'tests/playcard-offline.mjs', 'tests/relnotes-offline.mjs', 'tests/packdiff-offline.mjs', 'tests/revert-offline.mjs', 'tests/drafts-offline.mjs', 'tests/tutorial-offline.mjs', 'tests/progress-offline.mjs',
   'tests/failsum-offline.mjs', 'tests/runissue-offline.mjs', 'tests/runcompare-offline.mjs', 'tests/testhist-offline.mjs', 'tests/secretwatch-offline.mjs', 'tests/connectdaily-offline.mjs', 'tests/weekly-offline.mjs', 'tests/notifyprefs-offline.mjs',
-  'tests/minutes-offline.mjs', 'tests/lendfc-offline.mjs', 'tests/nlsched-offline.mjs', 'tests/wizard-offline.mjs', 'tests/a11y-offline.mjs', 'tests/inviteqr-offline.mjs', 'tests/undo-offline.mjs', 'tests/pick-offline.mjs', 'tests/mslive-offline.mjs', 'tests/navmenu-offline.mjs', 'tests/statuspage-offline.mjs', 'tests/bundle-offline.mjs', 'tests/ore-offline.mjs', WORKERD, BROWSER];
-const LINTABLE = /^(panel|auth)\/.*\.(m?js)$|^common\/(panel|panel-config|panel-bundle|ghapp|hosts|schedule|unitci|connect-daily|weekly|statuspage)\.mjs$|^tests\/(panel|governance|setup|session|auth|appci|host|units|schedule|stats|inbox|rescue|shell|misc|ghrules|fakes|connect|qr|playcard|relnotes|packdiff|revert|drafts|tutorial|progress|failsum|runissue|runcompare|testhist|secretwatch|connectdaily|weekly|notifyprefs|minutes|lendfc|nlsched|wizard|a11y|inviteqr|undo|statuspage|viewer|bundle|ore)-[a-z-]+\.mjs$/;
+  'tests/minutes-offline.mjs', 'tests/lendfc-offline.mjs', 'tests/nlsched-offline.mjs', 'tests/wizard-offline.mjs', 'tests/a11y-offline.mjs', 'tests/inviteqr-offline.mjs', 'tests/undo-offline.mjs', 'tests/pick-offline.mjs', 'tests/mslive-offline.mjs', 'tests/navmenu-offline.mjs', 'tests/statuspage-offline.mjs', 'tests/bundle-offline.mjs', 'tests/ore-offline.mjs', 'tests/i18n-offline.mjs', WORKERD, BROWSER];
+const LINTABLE = /^(panel|auth)\/.*\.(m?js)$|^common\/(panel|panel-config|panel-bundle|panel-fonts|panel-i18n|ghapp|hosts|schedule|unitci|connect-daily|weekly|statuspage)\.mjs$|^tests\/(panel|governance|setup|session|auth|appci|host|units|schedule|stats|inbox|rescue|shell|misc|ghrules|fakes|connect|qr|playcard|relnotes|packdiff|revert|drafts|tutorial|progress|failsum|runissue|runcompare|testhist|secretwatch|connectdaily|weekly|notifyprefs|minutes|lendfc|nlsched|wizard|a11y|inviteqr|undo|statuspage|viewer|bundle|ore|i18n)-[a-z-]+\.mjs$/;
 
 /** the changed files → { lint: [files], tests: [files] } (pure); quick leaves the browser out */
 export function plan(files, { quick = false } = {}) {
@@ -96,7 +104,7 @@ const eslint = (files) => (fs.existsSync(LOCAL_ESLINT) ? runOne(process.execPath
 
 /** the checks run → true when all passed; out: each one ✔/✘ with its time, a failure's lines */
 export function check({ files, quick = false, all = false, out = console.log } = {}) {
-  const p = all ? { lint: ['panel', 'auth', 'common/panel.mjs', 'common/panel-config.mjs', 'common/panel-bundle.mjs', 'common/ghapp.mjs', 'common/hosts.mjs', 'common/claude-plugin.mjs', ...ALL], tests: ALL.filter((t) => !(quick && SLOW.has(t))) } : plan(files ?? changed(), { quick });
+  const p = all ? { lint: ['panel', 'auth', 'common/panel.mjs', 'common/panel-config.mjs', 'common/panel-bundle.mjs', 'common/panel-fonts.mjs', 'common/panel-i18n.mjs', 'common/ghapp.mjs', 'common/hosts.mjs', 'common/claude-plugin.mjs', ...ALL], tests: ALL.filter((t) => !(quick && SLOW.has(t))) } : plan(files ?? changed(), { quick });
   if (!p.lint.length && !p.tests.length) { out('panel: 変えたファイルに、パネルの試験の要るものはありません（--all ですべて）'); return true; }
   let ok = true;
   const say = (name, r) => { ok &&= r.ok; out(`${r.ok ? '✔' : '✘'} ${name}（${(r.ms / 1000).toFixed(1)} 秒）`); if (!r.ok) for (const x of failLines(r.out)) out(`    ${x}`); };
@@ -145,6 +153,24 @@ export async function panelCmd(args, out = console.log) {
     out(`✔ panel/icons.css（${Object.keys(PX.ICONS).length + Object.keys(PX.COLOR).length} 個のアイコン）`);
     return true;
   }
-  out('usage: node lab.mjs panel check [--quick] [--all] [files..] | shots [dir] [--dark] [--wide] | hook | icons');
+  if (sub === 'styles') {
+    // (the colours → panel/styles.css: what tests/ore-offline.mjs checks it is; nothing written while a pair does not read)
+    const S = await import(new URL('../panel/lib/styles.mjs', import.meta.url).href);
+    const bad = [...S.STYLES, S.CONTRAST].flatMap((st) => S.problems(st));
+    if (bad.length) { for (const x of bad) out(`✘ ${x}`); return false; }
+    fs.writeFileSync(path.join(TOP, 'panel', 'styles.css'), S.css());
+    out(`✔ panel/styles.css（OreUI と ${S.STYLES.length - 1} のスタイル、見やすさの色）`);
+    return true;
+  }
+  if (sub === 'fonts') {
+    // (GNU Unifont's builds → panel/fonts/unifont*/ and fonts.css: what tests/ore-offline.mjs checks)
+    const dir = rest.find((a) => !a.startsWith('--'));
+    if (!dir) { out('usage: node lab.mjs panel fonts <GNU Unifont の otf があるフォルダ>（https://unifoundry.com/pub/unifont/ の font-builds）'); return false; }
+    const { buildFonts } = await import('./panel-fonts.mjs');
+    buildFonts(path.resolve(dir), { log: out });
+    return true;
+  }
+  if (sub === 'i18n') return (await import('./panel-i18n.mjs')).i18nCmd(rest, out);
+  out('usage: node lab.mjs panel check [--quick] [--all] [files..] | shots [dir] [--dark] [--wide] | hook | icons | styles | fonts <folder> | i18n [--sheet|--merge <json>]');
   return false;
 }
