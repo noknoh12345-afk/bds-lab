@@ -1,0 +1,105 @@
+# geoui_device（bds/geoui/screen/device.mjs が作る）: 端末の確かめのパックが本物の BDS で動き、入力（視点・移動・ジャンプ・スニーク・
+# スロット・腕の振り・コマンドの文字）がスクリプトの UI のモードに届くか。描画（9 つの寄せ先・contain の枠・GUI の倍率・セーフエリア・
+# 切り抜き・色・向き・順番・HUD の文字）は app.txt（本物のアプリ）と TASK.md（人が iPhone などで見る）。
+
+## 読み込める（プロパティが既定値）
+@A join
+wait 2000
+js JSON.stringify([p('A').getProperty('gdev:show'), p('A').getProperty('gdev:ui'), p('A').getProperty('gdev:cur')])
+= [0,0,8390656]
+
+## 表示の切り替え（gdev:show のビット）
+scriptevent gdev:show 4095
+wait 300
+js p('A').getProperty('gdev:show')
+= 4095
+scriptevent gdev:show 0
+wait 300
+
+## UI のモード（動きを禁止）: カメラを止め、歩いても動かず、視点でポインタが動く
+scriptevent gdev:ui on lock
+wait 500
+js JSON.stringify([p('A').getProperty('gdev:ui'), p('A').inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.Movement)])
+= [1,false]
+scriptevent gdev:mark
+@A walk forward 10
+wait 800
+scriptevent gdev:check still bot-locked-still
+~ GDEV CHECK bot-locked-still PASS
+scriptevent gdev:mark
+@A turn 20 10 10
+wait 800
+scriptevent gdev:check pointer bot-pointer
+~ GDEV CHECK bot-pointer PASS
+js const n = p('A').getProperty('gdev:cur'); const x = (n % 4096) * 0.1 - 204.8, y = Math.floor(n / 4096) * 0.1 - 204.8; JSON.stringify([x > 60, y > 25])
+= [true,true]
+
+## 下を向き続けると水平に戻し、ポインタは跳ばない
+scriptevent gdev:mark
+@A turn 0 60 30
+wait 2500
+scriptevent gdev:check recentre bot-recentre
+~ GDEV CHECK bot-recentre PASS
+
+## UI のモード（動けるまま毎 tick 戻す）: 移動の入力は届き、体は戻る
+scriptevent gdev:ui on free
+wait 500
+scriptevent gdev:mark
+@A walk forward 10
+wait 800
+scriptevent gdev:check move bot-free-move
+~ GDEV CHECK bot-free-move PASS
+scriptevent gdev:check forward bot-free-forward
+~ GDEV CHECK bot-free-forward PASS
+scriptevent gdev:check home bot-free-home
+~ GDEV CHECK bot-free-home PASS
+
+## ジャンプ・スニークのボタンが届く
+scriptevent gdev:mark
+@A jump
+wait 600
+@A sneak on
+wait 400
+@A sneak off
+wait 400
+scriptevent gdev:check jump bot-jump
+~ GDEV CHECK bot-jump PASS
+scriptevent gdev:check sneak bot-sneak
+~ GDEV CHECK bot-sneak PASS
+
+## スロット（ホイール）と腕の振り
+scriptevent gdev:mark
+@A hotbar next
+wait 400
+@A slot 5
+wait 400
+@A swing
+wait 400
+scriptevent gdev:check wheel bot-wheel
+~ GDEV CHECK bot-wheel PASS
+scriptevent gdev:check swing bot-swing
+~ GDEV CHECK bot-swing PASS
+
+## 文字はコマンドで（/gdev:t）
+scriptevent gdev:mark
+@A cmd /gdev:t hello
+wait 600
+scriptevent gdev:check text bot-text
+~ GDEV CHECK bot-text PASS
+
+## 動きの速さ 0（speed）でも移動の入力は届く
+scriptevent gdev:ui on speed
+wait 500
+scriptevent gdev:mark
+@A walk left 10
+wait 800
+scriptevent gdev:check left bot-speed-left
+~ GDEV CHECK bot-speed-left PASS
+js p('A').getComponent('minecraft:movement').currentValue
+= 0
+
+## UI を閉じると元に戻る
+scriptevent gdev:ui off
+wait 400
+js JSON.stringify([p('A').getProperty('gdev:ui'), p('A').inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.Movement), p('A').getComponent('minecraft:movement').currentValue > 0])
+= [0,true,true]

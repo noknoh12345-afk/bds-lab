@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Device Check BP",
+    "description": "GeoUI の式を本物の画面で確かめる（bds-lab: bds/geoui/SPEC.md）",
+    "uuid": "c3a8e1d2-4b7f-4c19-9e0a-5d6f7a8b9c03",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "c3a8e1d2-4b7f-4c19-9e0a-5d6f7a8b9c04",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "c3a8e1d2-4b7f-4c19-9e0a-5d6f7a8b9c05",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "c3a8e1d2-4b7f-4c19-9e0a-5d6f7a8b9c01",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.1.0"
+    }
+  ]
+}

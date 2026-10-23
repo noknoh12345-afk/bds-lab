@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Device Check RP",
+    "description": "GeoUI の式を本物の画面で確かめる（bds-lab: bds/geoui/SPEC.md）",
+    "uuid": "c3a8e1d2-4b7f-4c19-9e0a-5d6f7a8b9c01",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "c3a8e1d2-4b7f-4c19-9e0a-5d6f7a8b9c02",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

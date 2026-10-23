@@ -807,6 +807,8 @@ system.runInterval(() => {
     num, r3, r4, clean, qa, defaults, newProjectSettings, frameScreen, settingsOf, halfWAt, centerOf, screenAt, hAnchor, vAnchor, padsOf, studioAnchor,
     parse, evaluate, molang, molangError, envOf, pose, runPre, unsetReads, digitExpr, preAnimation, transformAnimation,
     geometriesOf, materialsFile, hudScreen, scriptOf, buildPack, layoutOf, uuidFrom, PROP_RANGES,
+    // (the vanilla player definitions a GeoUI pack starts from: bds/geoui/screen/pack.js builds on the same two)
+    VANILLA_RP_PLAYER, VANILLA_BP_PLAYER,
   };
 })();
 

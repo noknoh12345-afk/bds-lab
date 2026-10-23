@@ -1,5 +1,5 @@
 // GeoUI Builder 0.1.0 with its timeline — one file for Blockbench (made by bds/geoui/build.mjs from bds/geoui/geoui_builder.js and
-// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 2d9cdcb0e400
+// bds/geoui/timeline/*.js: change those, then node bds/geoui/build.mjs). sources 0ffd8fbf73b0
 // ---- timeline/model.js
 (function (module) {
 // GeoUI timeline — the model (pure: no DOM, no Blockbench). The plan's step 1 (bds/geoui/timeline/PLAN.md):
@@ -8055,6 +8055,8 @@ system.runInterval(() => {
     num, r3, r4, clean, qa, defaults, newProjectSettings, frameScreen, settingsOf, halfWAt, centerOf, screenAt, hAnchor, vAnchor, padsOf, studioAnchor,
     parse, evaluate, molang, molangError, envOf, pose, runPre, unsetReads, digitExpr, preAnimation, transformAnimation,
     geometriesOf, materialsFile, hudScreen, scriptOf, buildPack, layoutOf, uuidFrom, PROP_RANGES,
+    // (the vanilla player definitions a GeoUI pack starts from: bds/geoui/screen/pack.js builds on the same two)
+    VANILLA_RP_PLAYER, VANILLA_BP_PLAYER,
   };
 })();
 

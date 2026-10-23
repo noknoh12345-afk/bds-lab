@@ -1,0 +1,47 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.gdev_atlas": {
+      "geometry": "Geometry.gdev_atlas",
+      "materials": [
+        {
+          "*": "material.gdev_cutout"
+        },
+        {
+          "gdev_col_half": "material.gdev_blend"
+        }
+      ],
+      "textures": [
+        "Texture.gdev_atlas"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      }
+    }
+  }
+}

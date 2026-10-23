@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/screen/device.mjs",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI の式を本物の画面で確かめる（9 つの寄せ先・contain・GUI の倍率・セーフエリア・切り抜き・色・向き・入力）"
+}

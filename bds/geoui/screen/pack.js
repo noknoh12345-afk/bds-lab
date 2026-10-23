@@ -1,0 +1,229 @@
+// GeoUI Screen — a scene (groups anchored on the screen, planes on atlases, Molang, properties, a script) → the two packs
+// (pure: files as text and bytes, nothing written). The resource pack redefines minecraft:player the way GeoUI Builder does
+// (the vanilla definitions it carries, GeoUICore.VANILLA_*), adds one geometry + render controller per atlas (every geometry
+// keeps every bone; a bone's planes are on one atlas), a transform animation (bone positions, scales and rotations as Molang)
+// and the HUD's renderers (layout.hudScreen: one per group). The behaviour pack carries the player's properties and the script.
+//
+// scene = {
+//   ns, name, description, version [1,0,0], minEngine [1,26,50], uuids {rp,rpMod,bp,bpData,bpScript} | seed,
+//   scale (layout.modeOf), groups [{ id, anchor, scale?, clip?, layer? }],
+//   textures [{ id, width, height, png (bytes or base64) }],
+//   bones [{ name, group, parent?, pivot? [x, y] (local units), material? 'cutout'|'blend'|'add'|'fade'|'addfade' (+ '_s': smooth),
+//            visible? Molang, position? [x, y, z] Molang (model units, added: x right, y UP), scale? Molang|[3], rotation? [3] }],
+//   planes [{ bone, texture, rect {x, y, w, h} (local units, y down), z (toward the camera is negative), uv [u, v, w, h] (texture px) }],
+//   pre [lines] (pre_animation, after the guard), initialize [lines], properties [{ name, range [a, b], default }],
+//   hideLocalPlayer (Molang: hide the player's own body in the world while true — a frozen camera then sees through it),
+//   script (the BP's scripts/main.js), extraScripts { 'name.js': text }, lang { en_US: '', ja_JP: '' }
+// }
+(function (root) {
+  'use strict';
+  const S = root.GeoUIScreen = root.GeoUIScreen || {};
+  const L = () => S.layout || (typeof require === 'function' ? require('./layout.js') : null);
+  const J = (o) => JSON.stringify(o, null, 2);
+  const r4 = (v) => Math.round(v * 10000) / 10000;
+  const clean = (s, fb) => String(s || '').toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '') || fb;
+
+  /** the materials (the ones GeoUI Builder and the timeline proved on the real app: cutout, blend, add; fade and addfade with the
+   *  colour mask, whose alpha the render controller's colour sets — blend alone ignores it) in a point- and a smooth-filtered set */
+  const MATS = {
+    cutout: { '+defines': ['USE_UV_ANIM', 'ALPHA_TEST'] },
+    blend: { '+defines': ['USE_UV_ANIM'], '+states': ['Blending'], blendSrc: 'SourceAlpha', blendDst: 'OneMinusSrcAlpha' },
+    add: { '+defines': ['USE_UV_ANIM'], '+states': ['Blending', 'DisableDepthWrite'], blendSrc: 'SourceAlpha', blendDst: 'One' },
+    fade: { '+defines': ['USE_UV_ANIM', 'USE_COLOR_MASK'], '+states': ['Blending'], blendSrc: 'SourceAlpha', blendDst: 'OneMinusSrcAlpha' },
+    addfade: { '+defines': ['USE_UV_ANIM', 'USE_COLOR_MASK'], '+states': ['Blending', 'DisableDepthWrite'], blendSrc: 'SourceAlpha', blendDst: 'One' },
+    // (translucent without writing depth: what is drawn later is never hidden behind it — a glass panel over a page)
+    glass: { '+defines': ['USE_UV_ANIM'], '+states': ['Blending', 'DisableDepthWrite'], blendSrc: 'SourceAlpha', blendDst: 'OneMinusSrcAlpha' },
+  };
+  const MAT_NAMES = Object.keys(MATS);
+  function materialsFile(ns, used) {
+    const m = { materials: { version: '1.0.0' } };
+    const base = (filter) => ({
+      vertexShader: 'shaders/entity.vertex', vrGeometryShader: 'shaders/entity.geometry', fragmentShader: 'shaders/entity.fragment',
+      vertexFields: [{ field: 'Position' }, { field: 'Normal' }, { field: 'UV0' }],
+      variants: [
+        { skinning: { '+defines': ['USE_SKINNING'], vertexFields: [{ field: 'Position' }, { field: 'BoneId0' }, { field: 'Normal' }, { field: 'UV0' }] } },
+        { skinning_color: { '+defines': ['USE_SKINNING'], vertexFields: [{ field: 'Position' }, { field: 'BoneId0' }, { field: 'Color' }, { field: 'Normal' }, { field: 'UV0' }] } },
+      ],
+      msaaSupport: 'Both', '+samplerStates': [{ samplerIndex: 0, textureFilter: filter }],
+    });
+    m.materials[`${ns}_base`] = base('Point');
+    m.materials[`${ns}_bases`] = base('Bilinear');
+    for (const name of used) {
+      const smooth = name.endsWith('_s'), kind = smooth ? name.slice(0, -2) : name;
+      m.materials[`${ns}_${name}:${ns}_${smooth ? 'bases' : 'base'}`] = MATS[kind];
+    }
+    return m;
+  }
+
+  /** a stable UUID v4-shaped id from text (the same one GeoUI Builder makes: FNV-1a, 4 rounds) */
+  function uuidFrom(seed) {
+    const hex = [];
+    for (let r = 0; r < 4; r++) {
+      let h = 0x811c9dc5 ^ (r * 0x9e3779b9);
+      for (let i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+      hex.push((h >>> 0).toString(16).padStart(8, '0'));
+    }
+    const s = hex.join('');
+    return `${s.slice(0, 8)}-${s.slice(8, 12)}-4${s.slice(13, 16)}-${((parseInt(s[16], 16) & 3) | 8).toString(16)}${s.slice(17, 20)}-${s.slice(20, 32)}`;
+  }
+  const b64 = (bytes) => (typeof bytes === 'string' ? bytes : (typeof Buffer !== 'undefined' ? Buffer.from(bytes).toString('base64') : btoa(String.fromCharCode(...bytes))));
+
+  /** scene → { files: { 'rp/…' | 'bp/…': string | { base64 } }, stats, warnings } */
+  function build(scene, opts = {}) {
+    const lay = L(), G = opts.core || null, warnings = [];
+    if (!G || !G.VANILLA_RP_PLAYER) throw new Error('GeoUICore（geoui_builder.js）を opts.core に渡してください: プレイヤーの元の定義を使います');
+    const ns = clean(scene.ns, 'gs').slice(0, 24), files = {};
+    const groups = lay.groupsOf(scene), byGroup = Object.fromEntries(groups.map((g) => [g.id, g]));
+    const textures = scene.textures || [], texIds = new Set(textures.map((t) => t.id));
+    // ---- bones: model positions from the groups' origins; a bone's planes on one atlas, its material its own
+    const bones = (scene.bones || []).map((b0) => {
+      const b = Object.assign({}, b0), g = byGroup[b.group];
+      if (!g) throw new Error(`ボーン ${b.name} のグループ「${b.group}」がありません`);
+      b.material = b.material || 'cutout';
+      const kind = b.material.endsWith('_s') ? b.material.slice(0, -2) : b.material;
+      if (!MAT_NAMES.includes(kind)) throw new Error(`ボーン ${b.name} のマテリアル「${b.material}」は ${MAT_NAMES.join(' ')}（なめらかなら _s）`);
+      const p = b.pivot || [0, 0];
+      b.modelPivot = [r4(g.origin[0] + p[0]), r4(g.origin[1] - p[1]), 0];
+      return b;
+    });
+    const boneByName = new Map(bones.map((b) => [b.name, b]));
+    if (boneByName.size !== bones.length) throw new Error('同じ名前のボーンが 2 つあります');
+    for (const b of bones) if (b.parent && !boneByName.has(b.parent)) throw new Error(`ボーン ${b.name} の親 ${b.parent} がありません`);
+    const rootName = `${ns}_root`;
+    // ---- planes → cubes per texture. No two faces on one plane: a plane that overlaps one before it at the same depth (within
+    //      0.02) goes 0.021 farther back until it is free — the lab's model check (z-fight) and the game's flicker both come from
+    //      two faces on one plane; the one written first stays in front
+    const perTex = new Map(textures.map((t) => [t.id, new Map()]));
+    let planeCount = 0, settled = 0;
+    const placed = [];
+    const overlaps = (a, b) => a.x0 < b.x1 - 1e-6 && b.x0 < a.x1 - 1e-6 && a.y0 < b.y1 - 1e-6 && b.y0 < a.y1 - 1e-6;
+    for (const p of scene.planes || []) {
+      const b = boneByName.get(p.bone);
+      if (!b) throw new Error(`面のボーン「${p.bone}」がありません`);
+      if (!texIds.has(p.texture)) throw new Error(`面のテクスチャ「${p.texture}」がありません`);
+      const g = byGroup[b.group];
+      const box = { x0: g.origin[0] + p.rect.x, x1: g.origin[0] + p.rect.x + p.rect.w, y0: g.origin[1] - p.rect.y - p.rect.h, y1: g.origin[1] - p.rect.y };
+      let z = p.z || 0, guard = 0;
+      while (placed.some((q) => Math.abs(q.z - z) < 0.02 && overlaps(q.box, box)) && guard++ < 400) z = r4(z + 0.021);
+      if (guard) settled++;
+      placed.push({ box, z });
+      const cube = lay.rectToModel(g, p.rect, z);
+      const uv = p.uv;
+      cube.uv = { north: { uv: [r4(uv[0]), r4(uv[1])], uv_size: [r4(uv[2]), r4(uv[3])] } };
+      const m = perTex.get(p.texture);
+      if (!m.has(b.name)) m.set(b.name, []);
+      m.get(b.name).push(cube);
+      planeCount++;
+    }
+    // ---- geometry per texture (every bone in each: the transform animation finds them all)
+    const allBones = (texId) => {
+      const cubesOf = perTex.get(texId) || new Map();
+      const out = [{ name: rootName, pivot: [0, 0, 0] }];
+      for (const b of bones) {
+        const o = { name: b.name, parent: b.parent || rootName, pivot: b.modelPivot };
+        if (b.rotation) o.rotation = b.rotation;
+        const cubes = cubesOf.get(b.name);
+        if (cubes && cubes.length) o.cubes = cubes;
+        out.push(o);
+      }
+      return out;
+    };
+    // (the content is far from the origin: the bounds hold every group's, in blocks, so nothing is culled)
+    const xs = groups.map((g) => g.origin[0]), ys = groups.map((g) => g.origin[1]);
+    const bounds = { visible_bounds_width: Math.ceil((Math.max(...xs.map(Math.abs)) + 800) * 2 / 16), visible_bounds_height: Math.ceil((Math.max(...ys) + 800) * 2 / 16), visible_bounds_offset: [0, 0, 0] };
+    const geos = textures.map((t) => {
+      const key = `${ns}_${clean(t.id, 't')}`;
+      return { key, tex: t, json: { format_version: '1.12.0', 'minecraft:geometry': [{ description: Object.assign({ identifier: `geometry.${key}`, texture_width: t.width, texture_height: t.height }, bounds), bones: allBones(t.id) }] } };
+    });
+    // ---- materials and render controllers
+    const used = new Set(['cutout']);
+    for (const b of bones) used.add(b.material);
+    const cond = ['q.is_in_ui', '!variable.is_paperdoll'].join(' && ');
+    const controllers = {}, rcList = [];
+    const vis = bones.filter((b) => b.visible !== undefined && b.visible !== null && String(b.visible).trim() !== '');
+    for (const g of geos) {
+      const mats = [{ '*': `material.${ns}_cutout` }];
+      for (const b of bones) if (b.material !== 'cutout') mats.push({ [b.name]: `material.${ns}_${b.material}` });
+      // (the materials define USE_UV_ANIM: the controller says its offset and scale, 0 and 1 — left out, they are not 1)
+      const rc = { geometry: `Geometry.${g.key}`, materials: mats, textures: [`Texture.${g.key}`], uv_anim: { offset: [0, 0], scale: [1, 1] },
+        color: { r: 1, g: 1, b: 1, a: scene.alpha || 1 }, is_hurt_color: { r: 0, g: 0, b: 0, a: 0 }, on_fire_color: { r: 0, g: 0, b: 0, a: 0 } };
+      if (vis.length) rc.part_visibility = [{ '*': true }, ...vis.map((b) => ({ [b.name]: String(b.visible) }))];
+      controllers[`controller.render.${g.key}`] = rc;
+      rcList.push({ [`controller.render.${g.key}`]: cond });
+      files[`rp/models/entity/${ns}/${clean(g.tex.id, 't')}.geo.json`] = J(g.json);
+      files[`rp/textures/${ns}/${clean(g.tex.id, 't')}.png`] = { base64: b64(g.tex.png) };
+    }
+    // ---- the transform animation: positions (added), scales and rotations (Molang) per bone
+    const anim = {};
+    for (const b of bones) {
+      const ch = {};
+      if (b.position) ch.position = b.position.map((v) => (typeof v === 'number' ? r4(v) : String(v)));
+      if (b.scale !== undefined && b.scale !== null) ch.scale = Array.isArray(b.scale) ? b.scale.map(String) : String(b.scale);
+      if (b.spin) ch.rotation = b.spin.map((v) => (typeof v === 'number' ? r4(v) : String(v)));
+      if (Object.keys(ch).length) anim[b.name] = ch;
+    }
+    const animations = { [`animation.${ns}.ui`]: { loop: true, animation_length: 1, bones: anim } };
+    // (more animations of the scene's own: each its own Molang, so a query that fails in one leaves the others running)
+    const extraAnims = (scene.animations || []).map((a) => {
+      const key = `${ns}_${clean(a.name, 'a')}`;
+      animations[`animation.${ns}.${clean(a.name, 'a')}`] = { loop: true, animation_length: 1, bones: a.bones };
+      return { key, full: `animation.${ns}.${clean(a.name, 'a')}`, cond: a.condition || 'q.is_in_ui' };
+    });
+    files[`rp/animations/${ns}.animation.json`] = J({ format_version: '1.8.0', animations });
+    files[`rp/render_controllers/${ns}.render_controllers.json`] = J({ format_version: '1.8.0', render_controllers: controllers });
+    files[`rp/materials/entity.material`] = J(materialsFile(ns, used));
+    files[`rp/ui/hud_screen.json`] = J(lay.hudScreen(scene, { followHud: scene.followHud !== false }));
+    // ---- the player: vanilla + ours
+    const ce = JSON.parse(G.VANILLA_RP_PLAYER), d = ce['minecraft:client_entity'].description;
+    for (const m of used) d.materials[`${ns}_${m}`] = `${ns}_${m}`;
+    for (const g of geos) { d.textures[g.key] = `textures/${ns}/${clean(g.tex.id, 't')}`; d.geometry[g.key] = `geometry.${g.key}`; }
+    // (the paper doll of the pause screen is a player built for the picture: it has no properties, and a q.property there stops
+    //  the rest of pre_animation — bds-lab's probe: every line that reads one is guarded by variable.is_paperdoll)
+    d.scripts.initialize = [...(d.scripts.initialize || []), ...(scene.initialize || [])];
+    d.scripts.pre_animation = [...d.scripts.pre_animation, ...(scene.pre || [])];
+    d.animations[`${ns}_ui`] = `animation.${ns}.ui`;
+    for (const a of extraAnims) d.animations[a.key] = a.full;
+    d.scripts.animate = [{ [`${ns}_ui`]: 'q.is_in_ui' }, ...extraAnims.map((a) => ({ [a.key]: a.cond })), ...d.scripts.animate];
+    d.render_controllers = [...rcList, ...d.render_controllers.map((rc) => {
+      if (!scene.hideLocalPlayer) return rc;
+      // (the player's own body hidden from its own frozen camera: in the world only, for the local player only — the inventory's
+      //  doll and everyone else still see it)
+      const [k, v] = Object.entries(rc)[0];
+      return /third_person/.test(k) ? { [k]: `(${v}) && !(q.is_local_player && !q.is_in_ui && (${scene.hideLocalPlayer}))` } : rc;
+    })];
+    files['rp/entity/player.entity.json'] = J(ce);
+    const U = scene.uuids || { rp: uuidFrom(`${ns}:rp:${scene.seed || ''}`), rpMod: uuidFrom(`${ns}:rp-mod:${scene.seed || ''}`), bp: uuidFrom(`${ns}:bp:${scene.seed || ''}`),
+      bpData: uuidFrom(`${ns}:bp-data:${scene.seed || ''}`), bpScript: uuidFrom(`${ns}:bp-script:${scene.seed || ''}`) };
+    const version = scene.version || [1, 0, 0], minEngine = scene.minEngine || [1, 26, 50];
+    const name = scene.name || 'GeoUI Screen', desc = scene.description || 'GeoUI Screen (bds-lab)';
+    files['rp/manifest.json'] = J({ format_version: 2, header: { name: `${name} RP`, description: desc, uuid: U.rp, version, min_engine_version: minEngine }, modules: [{ type: 'resources', uuid: U.rpMod, version: [1, 0, 0] }] });
+    const langOf = (k) => `pack.name=${String(name).replace(/[\r\n=]/g, ' ')}\npack.description=${String(desc).replace(/[\r\n=]/g, ' ')}\n${(scene.lang && scene.lang[k]) || ''}`;
+    files['rp/texts/languages.json'] = J(['en_US', 'ja_JP']);
+    files['rp/texts/en_US.lang'] = `${langOf('en_US')}entity.minecraft:player.name=Player\n`;
+    files['rp/texts/ja_JP.lang'] = `${langOf('ja_JP')}entity.minecraft:player.name=プレイヤー\n`;
+    // ---- the behaviour pack
+    const be = JSON.parse(G.VANILLA_BP_PLAYER), props = {};
+    for (const p of scene.properties || []) {
+      if (!/^[a-z0-9_]{1,32}$/.test(p.name)) throw new Error(`プロパティの名前「${p.name}」は英小文字・数字・_`);
+      props[`${ns}:${p.name}`] = { client_sync: true, type: 'int', range: p.range, default: p.default ?? p.range[0] };
+    }
+    if (Object.keys(props).length > 32) warnings.push(`プロパティが ${Object.keys(props).length} 個: ゲームの上限は 32 個`);
+    if (Object.keys(props).length) be['minecraft:entity'].description.properties = props;
+    files['bp/entities/player.json'] = J(be);
+    files['bp/loot_tables/empty.json'] = J({ pools: [] });
+    const deps = [{ uuid: U.rp, version }, { module_name: '@minecraft/server', version: scene.serverVersion || '2.1.0' }];
+    files['bp/manifest.json'] = J({ format_version: 2, header: { name: `${name} BP`, description: desc, uuid: U.bp, version, min_engine_version: minEngine },
+      modules: [{ type: 'data', uuid: U.bpData, version: [1, 0, 0] }, ...(scene.script ? [{ type: 'script', language: 'javascript', uuid: U.bpScript, entry: 'scripts/main.js', version: [1, 0, 0] }] : [])],
+      dependencies: scene.script ? deps : deps.slice(0, 1) });
+    if (scene.script) files['bp/scripts/main.js'] = scene.script;
+    for (const [k, v] of Object.entries(scene.extraScripts || {})) files[`bp/scripts/${k}`] = v;
+    files['bp/texts/languages.json'] = J(['en_US', 'ja_JP']);
+    files['bp/texts/en_US.lang'] = langOf('en_US'); files['bp/texts/ja_JP.lang'] = langOf('ja_JP');
+    if (bones.length + 1 > 600) warnings.push(`ボーンが ${bones.length + 1} 本: 本物のアプリで確かめたのは 600 本まで`);
+    const stats = { groups: groups.length, bones: bones.length + 1, planes: planeCount, settled, textures: textures.length, properties: Object.keys(props).length, renderers: groups.filter((g) => g.renderer !== false).length };
+    return { files, stats, warnings, ns, uuids: U };
+  }
+
+  S.pack = { MATS, MAT_NAMES, materialsFile, uuidFrom, build };
+  if (typeof module === 'object' && module && module.exports) module.exports = S.pack;
+})(typeof globalThis !== 'undefined' ? globalThis : this);

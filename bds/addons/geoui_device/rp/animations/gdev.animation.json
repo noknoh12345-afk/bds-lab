@@ -1,0 +1,437 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.gdev.ui": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_tl_mark": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_tl_rc": {
+          "scale": [
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? (2 + 2 * math.mod(v.gdev_rc, 12)) : 0",
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? 1 : 0",
+            "1"
+          ]
+        },
+        "gdev_tl_over": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 8), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_t_mark": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_t_rc": {
+          "scale": [
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? (2 + 2 * math.mod(v.gdev_rc, 12)) : 0",
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? 1 : 0",
+            "1"
+          ]
+        },
+        "gdev_t_over": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 8), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_tr_mark": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_tr_rc": {
+          "scale": [
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? (2 + 2 * math.mod(v.gdev_rc, 12)) : 0",
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? 1 : 0",
+            "1"
+          ]
+        },
+        "gdev_tr_over": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 8), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_l_mark": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_l_rc": {
+          "scale": [
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? (2 + 2 * math.mod(v.gdev_rc, 12)) : 0",
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? 1 : 0",
+            "1"
+          ]
+        },
+        "gdev_l_over": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 8), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_c_mark": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_c_rc": {
+          "scale": [
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? (2 + 2 * math.mod(v.gdev_rc, 12)) : 0",
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? 1 : 0",
+            "1"
+          ]
+        },
+        "gdev_c_over": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 8), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_r_mark": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_r_rc": {
+          "scale": [
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? (2 + 2 * math.mod(v.gdev_rc, 12)) : 0",
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? 1 : 0",
+            "1"
+          ]
+        },
+        "gdev_r_over": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 8), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_bl_mark": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_bl_rc": {
+          "scale": [
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? (2 + 2 * math.mod(v.gdev_rc, 12)) : 0",
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? 1 : 0",
+            "1"
+          ]
+        },
+        "gdev_bl_over": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 8), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_b_mark": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_b_rc": {
+          "scale": [
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? (2 + 2 * math.mod(v.gdev_rc, 12)) : 0",
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? 1 : 0",
+            "1"
+          ]
+        },
+        "gdev_b_over": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 8), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_br_mark": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_br_rc": {
+          "scale": [
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? (2 + 2 * math.mod(v.gdev_rc, 12)) : 0",
+            "(math.mod(math.floor(v.gdev_show / 512), 2) > 0.5) ? 1 : 0",
+            "1"
+          ]
+        },
+        "gdev_br_over": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 8), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_box": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 2), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_gui": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 4), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_clip": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 16), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_ref": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 32), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_inp": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 128), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_inp_dot": {
+          "position": [
+            "-((math.mod(v.gdev_mv, 256) - 127) / 127) * 6",
+            "((math.floor(v.gdev_mv / 256) - 127) / 127) * 6",
+            0
+          ]
+        },
+        "gdev_inp_l0": {
+          "scale": "(math.mod(math.floor(v.gdev_btn / 1), 2) > 0.5 ? 1 : 0)"
+        },
+        "gdev_inp_l1": {
+          "scale": "(math.mod(math.floor(v.gdev_btn / 2), 2) > 0.5 ? 1 : 0)"
+        },
+        "gdev_inp_l2": {
+          "scale": "(math.mod(math.floor(v.gdev_btn / 4), 2) > 0.5 ? 1 : 0)"
+        },
+        "gdev_inp_l3": {
+          "scale": "(math.mod(math.floor(v.gdev_btn / 8), 2) > 0.5 ? 1 : 0)"
+        },
+        "gdev_inp_l4": {
+          "scale": "(math.mod(math.floor(v.gdev_btn / 16), 2) > 0.5 ? 1 : 0)"
+        },
+        "gdev_inp_l5": {
+          "scale": "(math.mod(math.floor(v.gdev_btn / 32), 2) > 0.5 ? 1 : 0)"
+        },
+        "gdev_inp_l6": {
+          "scale": "(math.mod(math.floor(v.gdev_btn / 64), 2) > 0.5 ? 1 : 0)"
+        },
+        "gdev_inp_c0": {
+          "scale": "(q.is_jumping) ? 1 : 0"
+        },
+        "gdev_inp_c1": {
+          "scale": "(q.is_sneaking) ? 1 : 0"
+        },
+        "gdev_inp_c2": {
+          "scale": "(q.last_input_mode_is_any('keyboard_and_mouse')) ? 1 : 0"
+        },
+        "gdev_inp_c3": {
+          "scale": "(q.last_input_mode_is_any('touch')) ? 1 : 0"
+        },
+        "gdev_inp_c4": {
+          "scale": "(q.last_input_mode_is_any('gamepad')) ? 1 : 0"
+        },
+        "gdev_inp_slot": {
+          "position": [
+            "v.gdev_slot * 7",
+            0,
+            0
+          ]
+        },
+        "gdev_inp_yaw": {
+          "scale": [
+            "1 + 79 * (v.gdev_yaw + 180) / 360",
+            "1",
+            "1"
+          ]
+        },
+        "gdev_inp_pitch": {
+          "scale": [
+            "1 + 79 * (v.gdev_pitch + 90) / 180",
+            "1",
+            "1"
+          ]
+        },
+        "gdev_ptr": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 128), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_ptr_s": {
+          "position": [
+            "v.gdev_cx",
+            "-v.gdev_cy",
+            0
+          ]
+        },
+        "gdev_qry": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 256), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_col": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 64), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_glyph": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 1024), 2) > 0.5) ? 1 : 0"
+        },
+        "gdev_order": {
+          "scale": "(math.mod(math.floor(v.gdev_show / 2048), 2) > 0.5) ? 1 : 0"
+        }
+      }
+    },
+    "animation.gdev.ptr_q1": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_ptr_q1": {
+          "position": [
+            "(math.mod(q.head_y_rotation(0) - v.gdev_refyaw + 540, 360) - 180) * 4",
+            "-((q.head_x_rotation(0)) - v.gdev_refpitch) * 4",
+            0
+          ]
+        }
+      }
+    },
+    "animation.gdev.ptr_q2": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_ptr_q2": {
+          "position": [
+            "(math.mod(q.target_y_rotation - v.gdev_refyaw + 540, 360) - 180) * 4",
+            "-((q.target_x_rotation) - v.gdev_refpitch) * 4",
+            0
+          ]
+        }
+      }
+    },
+    "animation.gdev.ptr_q3": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_ptr_q3": {
+          "position": [
+            "(math.mod(q.camera_rotation(1) - v.gdev_refyaw + 540, 360) - 180) * 4",
+            "-((q.camera_rotation(0)) - v.gdev_refpitch) * 4",
+            0
+          ]
+        }
+      }
+    },
+    "animation.gdev.ptr_q4": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_ptr_q4": {
+          "position": [
+            "(math.mod(q.body_y_rotation - v.gdev_refyaw + 540, 360) - 180) * 4",
+            "-((q.body_x_rotation) - v.gdev_refpitch) * 4",
+            0
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_0": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_0": {
+          "scale": [
+            "4 + 56 * math.mod((q.head_y_rotation(0)) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_1": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_1": {
+          "scale": [
+            "4 + 56 * math.mod((q.head_x_rotation(0)) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_2": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_2": {
+          "scale": [
+            "4 + 56 * math.mod((q.body_y_rotation) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_3": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_3": {
+          "scale": [
+            "4 + 56 * math.mod((q.body_x_rotation) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_4": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_4": {
+          "scale": [
+            "4 + 56 * math.mod((q.target_y_rotation) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_5": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_5": {
+          "scale": [
+            "4 + 56 * math.mod((q.target_x_rotation) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_6": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_6": {
+          "scale": [
+            "4 + 56 * math.mod((q.camera_rotation(1)) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_7": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_7": {
+          "scale": [
+            "4 + 56 * math.mod((q.camera_rotation(0)) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_8": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_8": {
+          "scale": [
+            "4 + 56 * math.mod((q.eye_target_y_rotation) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_9": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_9": {
+          "scale": [
+            "4 + 56 * math.mod((q.eye_target_x_rotation) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_10": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_10": {
+          "scale": [
+            "4 + 56 * math.mod((q.is_local_player * 300) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "animation.gdev.qry_11": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gdev_qry_11": {
+          "scale": [
+            "4 + 56 * math.mod((q.cardinal_player_facing * 60) + 3600, 360) / 360",
+            1,
+            1
+          ]
+        }
+      }
+    }
+  }
+}

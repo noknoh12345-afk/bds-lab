@@ -13,7 +13,69 @@
 import { measureCode, cleanCode } from './failcodes.mjs';
 
 const DIFF_PARTS = 8, DIFF_LEVEL = 48;
+// marks: the colours a probe draws its marks in (bds/geoui/screen/device.mjs HUES: 11 hues 30° apart without 300°, then white,
+// grey and black) — each changed pixel is put in the class of its colour, each class's box is where that mark is
+export const MARK_HUES = [['red', 0], ['orange', 30], ['yellow', 60], ['chartreuse', 90], ['green', 120], ['spring', 150], ['cyan', 180], ['azure', 210], ['blue', 240], ['violet', 270], ['rose', 330]];
+export const MARK_CLASSES = [...MARK_HUES.map(([n]) => n), 'white', 'gray', 'black'];
+const MARK_FIELDS = ['x0', 'y0', 'x1', 'y1', 'n', 'r', 'g', 'b'];
+/** a pixel's mark class (pure): a hue within 14° of one (saturated, not dark), else white / grey / black by its brightness, else null */
+export function markClass(r, g, b) {
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), v = max / 255, s = max ? (max - min) / max : 0;
+  if (s >= 0.45 && v >= 0.25) {
+    let h;
+    if (max === r) h = (60 * ((g - b) / (max - min)) + 360) % 360; else if (max === g) h = 60 * ((b - r) / (max - min)) + 120; else h = 60 * ((r - g) / (max - min)) + 240;
+    let best = null, bd = 99;
+    for (const [n, c] of MARK_HUES) { const d = Math.min(Math.abs(h - c), 360 - Math.abs(h - c)); if (d < bd) { bd = d; best = n; } }
+    return bd <= 14 ? best : null;
+  }
+  // (white drawn by a lit renderer can come out a little darker: down to 0.68 is still white)
+  if (s < 0.25) return v >= 0.68 ? 'white' : v >= 0.3 && v < 0.62 ? 'gray' : v < 0.12 ? 'black' : null;
+  return null;
+}
 export const KINDS = {
+  marks: {
+    fields: ['width', 'height', 'areaX', 'areaY', 'share', 'classes', ...MARK_CLASSES.flatMap((c) => MARK_FIELDS.map((f) => `${c}${f}`))],
+    async run(img, { baseline, region } = {}) {
+      if (!baseline) return { ok: false, why: '比べる `shot world` がありません（先に shot world: GeoUI の印を出す前の画面）' };
+      const W = img.width, H = img.height, N = W * H, a = img.data, base = baseline.data;
+      if (baseline.width !== W || baseline.height !== H) return { ok: false, why: `大きさが違います（基準 ${baseline.width}x${baseline.height}、この画面 ${W}x${H}）` };
+      const R = region ? { x0: Math.max(0, region.x0), y0: Math.max(0, region.y0), x1: Math.min(W, region.x1), y1: Math.min(H, region.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
+      // each changed pixel's class (1 + its index), then 4-neighbour parts of one class; parts under 6 px are edges and noise
+      const cls = new Int8Array(N);
+      let changed = 0;
+      for (let y = R.y0; y < R.y1; y++) for (let x = R.x0; x < R.x1; x++) {
+        const i = y * W + x, o = i * 4;
+        if (Math.abs(a[o] - base[o]) + Math.abs(a[o + 1] - base[o + 1]) + Math.abs(a[o + 2] - base[o + 2]) <= DIFF_LEVEL) continue;
+        changed++;
+        const c = markClass(a[o], a[o + 1], a[o + 2]);
+        if (c) cls[i] = MARK_CLASSES.indexOf(c) + 1;
+      }
+      const v = { width: W, height: H, share: changed / ((R.x1 - R.x0) * (R.y1 - R.y0)) }, boxes = {}, stack = [];
+      for (let i = 0; i < N; i++) {
+        const k = cls[i];
+        if (k <= 0) continue;
+        let n = 0, x0 = W, y0 = H, x1 = -1, y1 = -1, sr = 0, sg = 0, sb = 0;
+        stack.push(i); cls[i] = -k;
+        while (stack.length) {
+          const j = stack.pop(), x = j % W, y = (j - x) / W, o = j * 4;
+          n++; sr += a[o]; sg += a[o + 1]; sb += a[o + 2];
+          if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+          for (const q of [x > 0 ? j - 1 : -1, x < W - 1 ? j + 1 : -1, y > 0 ? j - W : -1, y < H - 1 ? j + W : -1]) if (q >= 0 && cls[q] === k) { cls[q] = -k; stack.push(q); }
+        }
+        if (n < 6) continue;
+        const c = MARK_CLASSES[k - 1], bx = boxes[c] || (boxes[c] = { x0: W, y0: H, x1: -1, y1: -1, n: 0, r: 0, g: 0, b: 0 });
+        bx.x0 = Math.min(bx.x0, x0); bx.y0 = Math.min(bx.y0, y0); bx.x1 = Math.max(bx.x1, x1 + 1); bx.y1 = Math.max(bx.y1, y1 + 1);
+        bx.n += n; bx.r += sr; bx.g += sg; bx.b += sb;
+      }
+      v.classes = Object.keys(boxes).length;
+      for (const [c, bx] of Object.entries(boxes)) Object.assign(v, { [`${c}x0`]: bx.x0, [`${c}y0`]: bx.y0, [`${c}x1`]: bx.x1, [`${c}y1`]: bx.y1, [`${c}n`]: bx.n, [`${c}r`]: bx.r / bx.n, [`${c}g`]: bx.g / bx.n, [`${c}b`]: bx.b / bx.n });
+      return { ok: true, values: v };
+    },
+    line(v) {
+      const parts = MARK_CLASSES.filter((c) => Number.isFinite(v[`${c}n`])).map((c) => `${c} (${v[`${c}x0`]}, ${v[`${c}y0`]})–(${v[`${c}x1`]}, ${v[`${c}y1`]}) ${v[`${c}n`]} px rgb(${[v[`${c}r`], v[`${c}g`], v[`${c}b`]].map((x) => Math.round(x)).join(', ')})`);
+      return `印 ${v.classes ?? 0} 色・違い ${Number.isFinite(v.share) ? (v.share * 100).toFixed(3) : '?'}%${parts.length ? `・${parts.join(' / ')}` : ''}・${v.width ?? '?'}x${v.height ?? '?'}`;
+    },
+  },
   diff: {
     fields: ['width', 'height', 'areaX', 'areaY', 'share', 'parts', 'x0', 'y0', 'x1', 'y1', 'rx0', 'ry0', 'rx1', 'ry1',
       ...Array.from({ length: DIFF_PARTS }, (_, k) => ['x0', 'y0', 'x1', 'y1', 'n'].map((f) => `b${k + 1}${f}`)).flat()],

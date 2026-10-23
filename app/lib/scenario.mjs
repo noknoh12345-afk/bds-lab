@@ -186,7 +186,7 @@ function check(s) {
   if (s.verb === 'screen' && !(a.length === 1 && ['off', 'on'].includes(a[0]))) return '書き方: screen off|on';
   if ((s.verb === 'background' || s.verb === 'foreground') && a.length) return `書き方: ${s.verb}（引数なし）`;
   if (s.verb === 'trim' && !(a.length === 1 && TRIM.includes(String(a[0]).toUpperCase()))) return `書き方: trim <${TRIM.join('|')}>`;
-  if (s.verb === 'measure' && !(((a.length === 2 && a[0] !== 'color') || (a.length === 6 && ['diff', 'color'].includes(a[0]) && a.slice(2).every((x) => /^\d{1,5}$/.test(x)) && +a[4] > +a[2] && +a[5] > +a[3])) && MEASURE_KINDS.includes(a[0]) && /^[\w.-]{1,40}$/.test(a[1]))) return `書き方: measure <${MEASURE_KINDS.filter((k) => k !== 'color').join('|')}> <shot の名前>（その名前で撮った最後の画面を測る）・measure diff <shot の名前> <x0> <y0> <x1> <y1>（その枠の中だけ。ゲームの画面の px）・measure color <shot の名前> <x0> <y0> <x1> <y1>（その枠の平均の色）`;
+  if (s.verb === 'measure' && !(((a.length === 2 && a[0] !== 'color') || (a.length === 6 && ['diff', 'color', 'marks'].includes(a[0]) && a.slice(2).every((x) => /^\d{1,5}$/.test(x)) && +a[4] > +a[2] && +a[5] > +a[3])) && MEASURE_KINDS.includes(a[0]) && /^[\w.-]{1,40}$/.test(a[1]))) return `書き方: measure <${MEASURE_KINDS.filter((k) => k !== 'color').join('|')}> <shot の名前>（その名前で撮った最後の画面を測る）・measure diff <shot の名前> <x0> <y0> <x1> <y1>（その枠の中だけ。ゲームの画面の px）・measure color <shot の名前> <x0> <y0> <x1> <y1>（その枠の平均の色）・measure marks <shot の名前>（GeoUI の印の色ごとの枠: bds/geoui/screen/device.mjs）`;
   if (s.verb === 'until') {
     if (a[0] === 'joined' || a[0] === 'stable' || a[0] === 'title') { if (a[1] !== undefined && Number.isNaN(num(a[1]))) return `書き方: until ${a[0]} [ミリ秒]`; }
     else if (LOGS.includes(a[0])) { if (!a[1]) return `書き方: until ${a[0]} <正規表現> [ミリ秒]`; try { rx(a[1]); } catch (e) { return `正規表現の誤り: ${e.message}`; } }
@@ -641,7 +641,7 @@ export async function runScenario(steps, ctx) {
         const [kind, name] = a, f = shots.filter((x) => path.basename(x).replace(/^\d+-/, '') === `${name}.png`).at(-1);
         if (!f) throw new Error(`測る画面がありません: 先に shot ${name}`);
         // (the game's part of the picture after `size`; diff: against the newest `shot world`, the picture `changed` compares with)
-        const lg = shotLogical.get(f) ?? null, I = decode(fs.readFileSync(f)), area = gameArea(I.w, I.h, lg), base = kind === 'diff' || kind === 'color' ? ctx.baseline?.() : null;
+        const lg = shotLogical.get(f) ?? null, I = decode(fs.readFileSync(f)), area = gameArea(I.w, I.h, lg), base = kind === 'diff' || kind === 'color' || kind === 'marks' ? ctx.baseline?.() : null;
         if (base && JSON.stringify(baseLogical) !== JSON.stringify(lg)) throw new Error(`基準の shot world を撮ったときと、ゲームの画面の大きさ（size）が違います: 同じ大きさで shot world を撮り直してください`);
         const region = a.length === 6 ? { x0: +a[2], y0: +a[3], x1: +a[4], y1: +a[5] } : null;
         const r = await measureShot(kind, cropImage(I, area), { baseline: base ? cropImage(decode(base), area) : null, area, region });
