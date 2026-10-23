@@ -1,0 +1,42 @@
+# geoui_osu_skin（bds/geoui/osu/addon.mjs が作る）: osu! の BP（scripts/timeline.js と osugame.js）が本物の BDS で遊ばれ、点数・コンボ・判定がプロパティに出るか。
+# 描画は app.txt（本物のアプリ）。res = [ランク, 最大コンボ, ミス]（contract.js の詰め方）。最初の物は 1 秒。
+
+## 読み込める（タイムラインのプロパティが既定値）
+@A join
+wait 2000
+js const e = p('A'); const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; JSON.stringify([...q(e.getProperty('geoui:seq')), e.getProperty('geoui:ge'), e.getProperty('geoui:res')])
+= [0,false,0,0,0]
+
+## auto でひとりでに遊ぶ: 点数とコンボが増え、精度 100 %、ミス 0、出来事の数（コンボ）が進む
+scriptevent geoui:mode auto
+scriptevent geoui:play 1
+wait 8000
+js const e = p('A'); const res = (v) => [v % 8, Math.floor(v / 8) % 2048, Math.floor(v / 16384) % 1024]; const r = res(e.getProperty('geoui:res')); JSON.stringify([e.getProperty('geoui:v0') > 1000, e.getProperty('geoui:v1') > 3, e.getProperty('geoui:v2'), r[0] > 4, r[1] > 3, r[2], Math.floor(e.getProperty('geoui:ge') / 64) % 64 > 3])
+= [true,true,10000,true,true,0,true]
+scriptevent geoui:stop
+wait 300
+
+## aim で何も押さないと: ミスが増え、コンボ 0、体力が減る（ミスの出来事で盤面が揺れる）
+scriptevent geoui:mode aim
+scriptevent geoui:play 1
+wait 5000
+js const e = p('A'); const res = (v) => [v % 8, Math.floor(v / 8) % 2048, Math.floor(v / 16384) % 1024]; const r = res(e.getProperty('geoui:res')); JSON.stringify([r[2] > 2, e.getProperty('geoui:v1'), e.getProperty('geoui:v3') < 100, Math.floor(e.getProperty('geoui:ge') / 1) % 64 > 2, e.getProperty('geoui:v0')])
+= [true,0,true,true,0]
+
+## seek・pause・resume・stop
+scriptevent geoui:seek 40
+wait 300
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; JSON.stringify([q(p('A').getProperty('geoui:seq'))[0], p('A').getProperty('geoui:seq_from')])
+= [1,40000]
+scriptevent geoui:pause
+wait 300
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; q(p('A').getProperty('geoui:seq'))[1]
+= true
+scriptevent geoui:resume
+wait 300
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; q(p('A').getProperty('geoui:seq'))[1]
+= false
+scriptevent geoui:stop
+wait 300
+js const q = (v) => [v % 1024, Math.floor(v / 1024) % 2 === 1, Math.floor(v / 2048)]; q(p('A').getProperty('geoui:seq'))[0]
+= 0

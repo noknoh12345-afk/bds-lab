@@ -1,6 +1,7 @@
 # 続きのプロンプト（GeoUI タイムライン）
 
-次のセッションの AI に、下の枠の中をそのまま貼る。2026-10-23 に書いた（9 回目の確かめ: 参加の内訳と 1000 個の 2 回目まで）。
+次のセッションの AI に、下の枠の中をそのまま貼る。2026-10-23 に書いた（9 回目の確かめ: 参加の内訳と 1000 個の 2 回目まで。
+そのあと osu! を丸ごと: ドット絵のキューブと公式の素材の 2 つの見本、本物の BDS まで）。
 設計と記録は [PLAN.md](PLAN.md)、使い方は [../TIMELINE.md](../TIMELINE.md)。
 
 このリポジトリは公開なので、前の会話の記録・添付の素材（zip など）・ログインの記録はここに置かない。
@@ -12,6 +13,10 @@ noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の
 5029 行（geoui_probe_lc）、変数 5000 個（geoui_probe_vx）まで効く。ラボのボットは LAB_TRANSPORT=lan（nethernet-connect v3）で
 1000 個のパックのワールドに入れる（tests.txt 8/8）。9 回目: 1000 個は 2 回目も 74 手順すべて通り、参加の長さはパックの大きさではなく
 ラボのタイトル → PLAY の進め方だった（PLAN.md の 9 回目、app/DESIGN.md「参加の内訳」）。
+osu! を丸ごと（PLAN.md の 8、TIMELINE.md「osu! を丸ごと作る」）: osugame.js（osu! のルール。パックのスクリプトとプレビューが同じコード）・
+osukit.js（ドット絵をキューブで / 公式の Legacy スキン の 2 つの見た目、盤面の osu_shake・osu_tilt・osu_pulse）・osusong.js（ラボの曲
+「Cubic Pulse」と譜面）、ゲーム全体の出来事と state.<名前>、rotationX・rotationY、mode auto|aim|relax・sens。見本 geoui_osu_pixel・
+geoui_osu_skin は本物の BDS の tests.txt が通った。本物のアプリではまだ回していない（app.txt はある）。
 
 守ること:
 - .github/・auto/policy.json・auto/STOP・.env は触らない。bds/vendor/bedrock-server.zip はコミットしない（git add -A -- . ':!bds/vendor/bedrock-server.zip'）
@@ -35,9 +40,11 @@ noknoh12345-afk/bds-lab の GeoUI タイムライン（bds/geoui/timeline/）の
 全部の試験（変えたら毎回）:
   for f in tests/tl-*-offline.mjs tests/geoui-builder-offline.mjs tests/lint-offline.mjs; do node $f || exit 1; done
   node bds/geoui/build.mjs --check; node bds/geoui/timeline/probe.mjs --check; node bds/geoui/timeline/demo.mjs --check（W 行が出ないこと）
+  node bds/geoui/osu/music.mjs --check（osusong.js を変えたら --write。.ogg は ffmpeg）
   app を変えたら: node tests/app-offline.mjs、node tests/results-public-offline.mjs、node tests/feed-offline.mjs
   ブラウザの環境で: node bds/geoui/blockbench-check.mjs、for f in bds/geoui/timeline/check-*.mjs; do node $f || exit 1; done
-  本物の BDS で（cd bds; node lab.mjs setup が要る）: node lab.mjs test -a geoui_rhythm、node lab.mjs test -a geoui_rhythm_big
+  本物の BDS で（cd bds; node lab.mjs setup が要る）: node lab.mjs test -a geoui_rhythm、node lab.mjs test -a geoui_rhythm_big、
+  node lab.mjs test -a geoui_osu_pixel、node lab.mjs test -a geoui_osu_skin
   （BDS を落とせない環境では、push した後の CI の verify の bds ジョブが同じ物を回す）
 
 ブラウザの環境（前のセッションの物は残っていないので作り直す）:
@@ -51,4 +58,7 @@ PLAY（194・269 秒）: classic のタイトルで Play の焦点（緑）が�
 （6 回目の 1000 個は OCR が間に合わなかったため: app/DESIGN.md）。geoui_probe_m の 3000 行（1 行 150 文字）の最後の変数だけ合わなかった理由
 （行・大きさ・変数の数のどれでもない）。render controller 70 個・ボーン 600 本・アニメーション 1200 個より先（書き出しは超えると注意を
 出す）。geoui_bb・geoui_calib* は前の確かめの物（測り直すときだけ作り直す）。
+osu! の要実測（本物のアプリで geoui_osu_pixel・geoui_osu_skin を回すと分かる。回すのは許可をもらってから）: キューブの数（pixel はボーン 361 本）
+の描画と重さ、rotationX・rotationY の符号（盤面が倒れる向き）、頭の向きでの狙い（aim。スマホのカメラ操作・sens）、ジャンプ・スニークで
+押すと体が動く・しゃがむこと（/inputpermission で止めるか）、プラグインが作るラボの曲（.wav）が鳴るか（見本のパックは .ogg）。
 ```

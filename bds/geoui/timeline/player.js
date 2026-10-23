@@ -84,7 +84,12 @@
       if (st.cache.doc !== d || st.cache.seq !== seq) {
         const clips = seq ? audioClips(seq) : [], sig = JSON.stringify(clips);
         if (st.playing && st.cache.sig !== undefined && sig !== st.cache.sig) silence();
-        st.cache = { doc: d, seq, events: seq && st.events !== 'none' ? autoEvents(seq, st.events) : [], clips, sig };
+        // (a game — osu!: osugame.js — plays itself: its events and its live states (the cursor, the score…) from its autoplay;
+        //  'miss' shows it missing everything, 'none' nothing pressed)
+        const game = seq && seq.game && T.osugame ? (st.events === 'hit' ? T.osugame.autoplay(seq.game, { fps: 60 }) : null) : null;
+        // (and its hitsounds, where the autoplay hits: a short clip each, the sound's id in the project without the namespace)
+        if (game) for (const [i, [id, t]] of game.sounds.entries()) clips.push({ id: `gs${i}`, sound: String(id).replace(/^[^.]*\./, ''), start: t, end: t + 0.8, offset: 0, volume: 0.7, pitch: 1 });
+        st.cache = { doc: d, seq, events: game ? game.events : seq && st.events !== 'none' ? autoEvents(seq, st.events) : [], clips, sig, game };
       }
       return st.cache;
     }
@@ -113,8 +118,8 @@
     function render(t) {
       const seq = seqOf();
       if (!seq) { if (host.apply) host.apply({}, t, null); return; }
-      const { events } = prepared();
-      host.apply(evaluate(store.doc(), seq.id, t, { events }), t, seq);
+      const { events, game } = prepared();
+      host.apply(evaluate(store.doc(), seq.id, t, { events, state: game ? game.at(t) : undefined }), t, seq);
     }
     function told(t) { st.last = t; if (o.onTime) o.onTime(t); if (store.timeChanged) store.timeChanged(); }
     function frame() {

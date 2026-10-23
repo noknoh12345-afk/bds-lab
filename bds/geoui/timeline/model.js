@@ -196,6 +196,9 @@
     sin: (d) => Math.sin((d * PI) / 180), cos: (d) => Math.cos((d * PI) / 180), min: Math.min, max: Math.max,
     clamp: (v, a, b) => Math.min(Math.max(v, a), b), lerp: (a, b, u) => a + (b - a) * u, mod: (a, b) => a % b,
   };
+  // (state.<name>: what the game keeps live for the whole play — the cursor, the score, the combo, a spinner's spin: contract.STATES.
+  //  evaluate takes them from opts.state — the editor's autoplay, autoplay.js — and the game from the properties the script sets)
+  let STATE = {};
   const EXPRS = new Map();
   function exprFn(src) {
     const s = String(src);
@@ -211,10 +214,12 @@
       if (t === '(') { const e = sum(); take(')'); return e; }
       const m = /^(?:param|p)\.(\w+)$/.exec(t);
       if (m) return (p) => num(p && p[m[1]]);
+      const sm = /^state\.(\w+)$/.exec(t);
+      if (sm) { if (!STATE_NAMES().includes(sm[1])) throw new Error(`式「${s}」: state.${sm[1]} はありません（${STATE_NAMES().map((x) => `state.${x}`).join('・')}）`); return () => num(STATE[sm[1]]); }
       if (t === 'math.pi') return () => PI;
       const f = /^math\.(\w+)$/.exec(t);
       if (f && MATH[f[1]]) { take('('); const args = []; if (peek() !== ')') { args.push(sum()); while (peek() === ',') { take(','); args.push(sum()); } } take(')'); const fn = MATH[f[1]]; return (p, tt) => fn(...args.map((a) => a(p, tt))); }
-      throw new Error(`式「${s}」: 「${t}」は使えません（param.名前・t・数・+ - * /・math.〜 だけ）`);
+      throw new Error(`式「${s}」: 「${t}」は使えません（param.名前・state.名前・t・数・+ - * /・math.〜 だけ）`);
     };
     const unary = () => { if (peek() === '-') { take(); const e = unary(); return (p, t) => -e(p, t); } if (peek() === '+') { take(); return unary(); } return primary(); };
     const prod = () => { let e = unary(); while (peek() === '*' || peek() === '/') { const op = take(), a = e, b = unary(); e = op === '*' ? (p, t) => a(p, t) * b(p, t) : (p, t) => a(p, t) / b(p, t); } return e; };
@@ -225,6 +230,10 @@
     return fn;
   }
   const exprError = (src) => { try { exprFn(src); return null; } catch (e) { return e.message; } };
+  // (the state names: contract.js's when it is loaded — the one list the game and the preview share — else the same list here)
+  const STATE_NAMES = () => (T.contract && T.contract.STATE_NAMES) || ['score', 'combo', 'acc', 'hp', 'cx', 'cy', 'hold', 'spin', 'rpm', 'sa', 'rank', 'maxcombo', 'misses', 'n300', 'n100', 'n50'];
+  /** the state names an expression reads (state.<name>), in order of first use */
+  const stateRefs = (src) => [...new Set((String(src).match(/\bstate\.(\w+)/g) || []).map((x) => x.slice(6)))];
   const keyValue = (k, params, t) => (typeof k.v === 'string' ? exprFn(k.v)(params || {}, t) : k.v);
   /** a time that may be an expression over params (a template's clip) */
   const timeOf = (v, params) => (typeof v === 'string' ? exprFn(v)(params || {}, 0) : v);
@@ -232,8 +241,10 @@
 
   // ---------------------------------------------------------------------------------------------------------------- the document
   const LOOPS = ['once', 'loop', 'hold', 'pingpong'];
-  const PROPS = ['x', 'y', 'scaleX', 'scaleY', 'rotation', 'opacity', 'value', 'fill', 'frame', 'path'];
-  const DEFAULTS = { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0, opacity: 1, value: 0, fill: 0, frame: 0, path: 0 };
+  // (rotationX / rotationY: the element tilted out of the screen, in degrees, as the game's bone rotation about x and y — what
+  //  shows the sides of a model's cubes; rotation is the turn in the screen's own plane)
+  const PROPS = ['x', 'y', 'scaleX', 'scaleY', 'rotation', 'rotationX', 'rotationY', 'opacity', 'value', 'fill', 'frame', 'path'];
+  const DEFAULTS = { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0, rotationX: 0, rotationY: 0, opacity: 1, value: 0, fill: 0, frame: 0, path: 0 };
   const TRANSITIONS = ['fade', 'slide-left', 'slide-right', 'slide-up', 'slide-down', 'zoom', 'pop'];
   const SLIDE = 40;          // model units a slide comes in from (or goes out to)
   const MIN_LEN = 1e-3;      // the shortest clip (seconds)
@@ -299,10 +310,14 @@
         templates: (s.templates || []).filter(Boolean).map((tp) => Object.assign({ id: idOf(tp.id, 'tpl'), name: str(tp.name, 'テンプレート'), lead: Math.max(0, num(tp.lead, 1)), tail: Math.max(0, num(tp.tail, 0.5)),
           params: (tp.params || []).filter((x) => typeof x === 'string' && /^\w+$/.test(x)), tracks: (tp.tracks || []).filter(Boolean).map((tr) => normTrack(tr, true)) },
           // (how a streamed instance's params fit in one property: contract.js checks it)
-          Array.isArray(tp.pack) && tp.pack.length && tp.pack.every((f) => f && /^\w+$/.test(String(f.name)) && Number.isInteger(f.bits) && num(f.max, NaN) > num(f.min, NaN)) ? { pack: tp.pack.map((f) => ({ name: String(f.name), bits: f.bits, min: num(f.min), max: num(f.max) })) } : {})),
+          Array.isArray(tp.pack) && tp.pack.length && tp.pack.every((f) => f && /^\w+$/.test(String(f.name)) && Number.isInteger(f.bits) && num(f.max, NaN) > num(f.min, NaN)) ? { pack: tp.pack.map((f) => ({ name: String(f.name), bits: f.bits, min: num(f.min), max: num(f.max) })) } : {},
+          // (how the game judges its instances — a hit circle, a slider, a spinner: runtime.js — kept as written)
+          tp.judge && typeof tp.judge === 'object' && ['circle', 'slider', 'spinner'].includes(tp.judge.kind) ? { judge: clone(tp.judge) } : {})),
         instances: (s.instances || []).filter(Boolean).map((x) => Object.assign({ id: idOf(x.id, 'i'), template: str(x.template), t: num(x.t), params: Object.fromEntries(Object.entries(x.params || {}).filter(([k]) => /^\w+$/.test(k)).map(([k, v]) => [k, num(v)])) },
           typeof x.path === 'string' && x.path ? { path: x.path } : {}, num(x.tail, NaN) >= 0 ? { tail: num(x.tail) } : {})).sort((a, b) => a.t - b.t),
         tracks: (s.tracks || []).filter(Boolean).map((tr) => normTrack(tr, false)),
+        // (how the game plays it — osu!'s rules for a beatmap, osugame.js: kept as written, the runtime and the preview read it)
+        ...(s.game && typeof s.game === 'object' && Array.isArray(s.game.objects) ? { game: s.game } : {}),
       };
     });
     return { version: 1, sequences };
@@ -386,16 +401,20 @@
     else if (kind === 'zoom') { s.scaleX *= p; s.scaleY *= p; }
     else if (kind === 'pop') { const f = p < 0.7 ? (p / 0.7) * 1.1 : 1.1 - ((p - 0.7) / 0.3) * 0.1; s.scaleX *= f; s.scaleY *= f; }
   }
+  /** whether an event answers a clip's trigger / until: its own name, and 'hit' for every judgement of a hit (osu!'s 300 / 100 / 50:
+   *  great, good, ok — contract.RESULTS; and 'tap' for a bare 'hit' alone: an osu! slider's head, not its final judgement) */
+  const evMatch = (want, name) => want === name || (want === 'hit' && (name === 'great' || name === 'good' || name === 'ok')) || (want === 'tap' && name === 'hit');
   /** the clip of a track shown at sequence time u (zero: the track's time origin — 0, or an instance's time), with the time
    *  in it: trigger clips (from the latest such event) before the others; until cuts a clip at its first such event */
   function activeClip(track, u, zero, events, inst, params) {
     let found = null;
+    const is = evMatch;
     for (const c of track.clips) {
       let s0, e0, cut = false;
       const cs = timeOf(c.start, params), ce = timeOf(c.end, params);
-      if (c.trigger) { let ev = null; for (const e of events) if (e.name === c.trigger && (e.instance || null) === inst && e.t <= u + 1e-9 && (!ev || e.t > ev.t)) ev = e; if (!ev) continue; s0 = ev.t + cs; e0 = ev.t + ce; }
+      if (c.trigger) { let ev = null; for (const e of events) if (is(c.trigger, e.name) && (e.instance || null) === inst && e.t <= u + 1e-9 && (!ev || e.t > ev.t)) ev = e; if (!ev) continue; s0 = ev.t + cs; e0 = ev.t + ce; }
       else { s0 = zero + cs; e0 = zero + ce; }
-      if (c.until) for (const e of events) if (e.name === c.until && (e.instance || null) === inst && e.t >= s0 - 1e-9 && e.t < e0) { e0 = e.t; cut = true; }
+      if (c.until) for (const e of events) if (is(c.until, e.name) && (e.instance || null) === inst && e.t >= s0 - 1e-9 && e.t < e0) { e0 = e.t; cut = true; }
       if (u >= s0 - 1e-9 && u < e0) { const hit = { clip: c, tc: Math.max(0, u - s0), left: e0 - u, cut }; if (c.trigger) return hit; if (!found) found = hit; }
     }
     return found;
@@ -403,6 +422,7 @@
   function clipState(seq, hit, params, instPath) {
     const c = hit.clip, s = {};
     for (const p of ['x', 'y', 'scaleX', 'scaleY', 'rotation', 'opacity']) { const v = channelAt(c, p, hit.tc, params); s[p] = v === undefined ? DEFAULTS[p] : v; }
+    for (const p of ['rotationX', 'rotationY']) { const v = channelAt(c, p, hit.tc, params); if (v !== undefined) s[p] = v; }
     for (const p of ['value', 'fill', 'frame']) { const v = channelAt(c, p, hit.tc, params); if (v !== undefined) s[p] = v; }
     const pid = c.path === '@instance' ? instPath : c.path, path = pid && (seq.paths || []).find((x) => x.id === pid), u = channelAt(c, 'path', hit.tc, params);
     if (path && u !== undefined) { const pt = pathPoint(path, u, { length: path.length }); s.x += pt[0]; s.y += pt[1]; }
@@ -431,11 +451,13 @@
   const seqOf = (doc, seqId) => ((doc && doc.sequences) || []).find((s) => s.id === seqId) || (seqId == null ? ((doc && doc.sequences) || [])[0] : null);
   /** every element's state at time t of playing a sequence: { 'element': { visible, x, y, scaleX, scaleY, rotation,
    *  opacity, value?, fill?, frame? } }; a template's instance only while it is out (t − lead … t + tail), as
-   *  'element#instance'. opts.events = [{ instance, name, t }] (hits, misses: what trigger and until clips answer) */
+   *  'element#instance'. opts.events = [{ instance, name, t }] (hits, misses: what trigger and until clips answer; an event with
+   *  no instance answers the sequence's own tracks: a shake on any miss), opts.state = { name: value } (state.<name>) */
   function evaluate(doc, seqId, t, opts = {}) {
     const seq = seqOf(doc, seqId), out = {};
     if (!seq) return out;
     const u = seqTime(seq, num(t)), events = Array.isArray(opts.events) ? opts.events : [];
+    STATE = opts.state && typeof opts.state === 'object' ? opts.state : {};
     const solo = seq.tracks.some((tr) => tr.solo);
     tracksState(seq, seq.tracks, u, 0, { events, solo, params: {} }, null, '', out);
     const tpls = new Map((seq.templates || []).map((x) => [x.id, x]));
@@ -763,7 +785,7 @@
 
   T.model = {
     EASES, EASE_K, ease, isEase, bezierAt, toFrames, fromFrames, timecode, parseTimecode, tempoOf, beatAt, timeAtBeat, snapToBeat, barBeat, pathTable, pathPoint, pathLength,
-    PROPS, DEFAULTS, TRANSITIONS, LOOPS, SLIDE, exprFn, exprError, timeOf, normalize, validate, allIds, seqTime, channelAt, applyTransition, evaluate, reduce,
+    PROPS, DEFAULTS, TRANSITIONS, LOOPS, SLIDE, exprFn, exprError, stateRefs, evMatch, timeOf, normalize, validate, allIds, seqTime, channelAt, applyTransition, evaluate, reduce,
   };
   if (typeof module === 'object' && module && module.exports) module.exports = T.model;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

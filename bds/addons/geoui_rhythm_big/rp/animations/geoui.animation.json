@@ -375,6 +375,666 @@
             1,
             1
           ]
+        },
+        "combonumber_d0_0_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d0==0"
+        },
+        "combonumber_d0_1_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d0==1"
+        },
+        "combonumber_d0_2_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d0==2"
+        },
+        "combonumber_d0_3_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d0==3"
+        },
+        "combonumber_d0_4_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d0==4"
+        },
+        "combonumber_d0_5_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d0==5"
+        },
+        "combonumber_d0_6_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d0==6"
+        },
+        "combonumber_d0_7_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d0==7"
+        },
+        "combonumber_d0_8_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d0==8"
+        },
+        "combonumber_d0_9_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d0==9"
+        },
+        "combonumber_d1_0_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d1==0"
+        },
+        "combonumber_d1_1_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d1==1"
+        },
+        "combonumber_d1_2_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d1==2"
+        },
+        "combonumber_d1_3_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d1==3"
+        },
+        "combonumber_d1_4_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d1==4"
+        },
+        "combonumber_d1_5_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d1==5"
+        },
+        "combonumber_d1_6_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d1==6"
+        },
+        "combonumber_d1_7_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d1==7"
+        },
+        "combonumber_d1_8_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d1==8"
+        },
+        "combonumber_d1_9_t0s0": {
+          "scale": "v.geoui_combonumber_t0s0_d1==9"
+        },
+        "combonumber_d0_0_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d0==0"
+        },
+        "combonumber_d0_1_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d0==1"
+        },
+        "combonumber_d0_2_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d0==2"
+        },
+        "combonumber_d0_3_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d0==3"
+        },
+        "combonumber_d0_4_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d0==4"
+        },
+        "combonumber_d0_5_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d0==5"
+        },
+        "combonumber_d0_6_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d0==6"
+        },
+        "combonumber_d0_7_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d0==7"
+        },
+        "combonumber_d0_8_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d0==8"
+        },
+        "combonumber_d0_9_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d0==9"
+        },
+        "combonumber_d1_0_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d1==0"
+        },
+        "combonumber_d1_1_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d1==1"
+        },
+        "combonumber_d1_2_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d1==2"
+        },
+        "combonumber_d1_3_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d1==3"
+        },
+        "combonumber_d1_4_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d1==4"
+        },
+        "combonumber_d1_5_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d1==5"
+        },
+        "combonumber_d1_6_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d1==6"
+        },
+        "combonumber_d1_7_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d1==7"
+        },
+        "combonumber_d1_8_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d1==8"
+        },
+        "combonumber_d1_9_t0s1": {
+          "scale": "v.geoui_combonumber_t0s1_d1==9"
+        },
+        "combonumber_d0_0_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d0==0"
+        },
+        "combonumber_d0_1_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d0==1"
+        },
+        "combonumber_d0_2_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d0==2"
+        },
+        "combonumber_d0_3_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d0==3"
+        },
+        "combonumber_d0_4_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d0==4"
+        },
+        "combonumber_d0_5_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d0==5"
+        },
+        "combonumber_d0_6_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d0==6"
+        },
+        "combonumber_d0_7_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d0==7"
+        },
+        "combonumber_d0_8_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d0==8"
+        },
+        "combonumber_d0_9_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d0==9"
+        },
+        "combonumber_d1_0_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d1==0"
+        },
+        "combonumber_d1_1_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d1==1"
+        },
+        "combonumber_d1_2_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d1==2"
+        },
+        "combonumber_d1_3_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d1==3"
+        },
+        "combonumber_d1_4_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d1==4"
+        },
+        "combonumber_d1_5_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d1==5"
+        },
+        "combonumber_d1_6_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d1==6"
+        },
+        "combonumber_d1_7_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d1==7"
+        },
+        "combonumber_d1_8_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d1==8"
+        },
+        "combonumber_d1_9_t0s2": {
+          "scale": "v.geoui_combonumber_t0s2_d1==9"
+        },
+        "combonumber_d0_0_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d0==0"
+        },
+        "combonumber_d0_1_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d0==1"
+        },
+        "combonumber_d0_2_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d0==2"
+        },
+        "combonumber_d0_3_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d0==3"
+        },
+        "combonumber_d0_4_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d0==4"
+        },
+        "combonumber_d0_5_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d0==5"
+        },
+        "combonumber_d0_6_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d0==6"
+        },
+        "combonumber_d0_7_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d0==7"
+        },
+        "combonumber_d0_8_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d0==8"
+        },
+        "combonumber_d0_9_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d0==9"
+        },
+        "combonumber_d1_0_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d1==0"
+        },
+        "combonumber_d1_1_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d1==1"
+        },
+        "combonumber_d1_2_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d1==2"
+        },
+        "combonumber_d1_3_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d1==3"
+        },
+        "combonumber_d1_4_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d1==4"
+        },
+        "combonumber_d1_5_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d1==5"
+        },
+        "combonumber_d1_6_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d1==6"
+        },
+        "combonumber_d1_7_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d1==7"
+        },
+        "combonumber_d1_8_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d1==8"
+        },
+        "combonumber_d1_9_t0s3": {
+          "scale": "v.geoui_combonumber_t0s3_d1==9"
+        },
+        "combonumber_d0_0_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d0==0"
+        },
+        "combonumber_d0_1_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d0==1"
+        },
+        "combonumber_d0_2_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d0==2"
+        },
+        "combonumber_d0_3_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d0==3"
+        },
+        "combonumber_d0_4_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d0==4"
+        },
+        "combonumber_d0_5_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d0==5"
+        },
+        "combonumber_d0_6_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d0==6"
+        },
+        "combonumber_d0_7_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d0==7"
+        },
+        "combonumber_d0_8_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d0==8"
+        },
+        "combonumber_d0_9_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d0==9"
+        },
+        "combonumber_d1_0_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d1==0"
+        },
+        "combonumber_d1_1_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d1==1"
+        },
+        "combonumber_d1_2_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d1==2"
+        },
+        "combonumber_d1_3_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d1==3"
+        },
+        "combonumber_d1_4_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d1==4"
+        },
+        "combonumber_d1_5_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d1==5"
+        },
+        "combonumber_d1_6_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d1==6"
+        },
+        "combonumber_d1_7_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d1==7"
+        },
+        "combonumber_d1_8_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d1==8"
+        },
+        "combonumber_d1_9_t0s4": {
+          "scale": "v.geoui_combonumber_t0s4_d1==9"
+        },
+        "combonumber_d0_0_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d0==0"
+        },
+        "combonumber_d0_1_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d0==1"
+        },
+        "combonumber_d0_2_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d0==2"
+        },
+        "combonumber_d0_3_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d0==3"
+        },
+        "combonumber_d0_4_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d0==4"
+        },
+        "combonumber_d0_5_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d0==5"
+        },
+        "combonumber_d0_6_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d0==6"
+        },
+        "combonumber_d0_7_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d0==7"
+        },
+        "combonumber_d0_8_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d0==8"
+        },
+        "combonumber_d0_9_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d0==9"
+        },
+        "combonumber_d1_0_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d1==0"
+        },
+        "combonumber_d1_1_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d1==1"
+        },
+        "combonumber_d1_2_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d1==2"
+        },
+        "combonumber_d1_3_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d1==3"
+        },
+        "combonumber_d1_4_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d1==4"
+        },
+        "combonumber_d1_5_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d1==5"
+        },
+        "combonumber_d1_6_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d1==6"
+        },
+        "combonumber_d1_7_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d1==7"
+        },
+        "combonumber_d1_8_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d1==8"
+        },
+        "combonumber_d1_9_t0s5": {
+          "scale": "v.geoui_combonumber_t0s5_d1==9"
+        },
+        "combonumber_d0_0_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d0==0"
+        },
+        "combonumber_d0_1_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d0==1"
+        },
+        "combonumber_d0_2_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d0==2"
+        },
+        "combonumber_d0_3_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d0==3"
+        },
+        "combonumber_d0_4_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d0==4"
+        },
+        "combonumber_d0_5_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d0==5"
+        },
+        "combonumber_d0_6_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d0==6"
+        },
+        "combonumber_d0_7_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d0==7"
+        },
+        "combonumber_d0_8_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d0==8"
+        },
+        "combonumber_d0_9_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d0==9"
+        },
+        "combonumber_d1_0_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d1==0"
+        },
+        "combonumber_d1_1_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d1==1"
+        },
+        "combonumber_d1_2_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d1==2"
+        },
+        "combonumber_d1_3_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d1==3"
+        },
+        "combonumber_d1_4_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d1==4"
+        },
+        "combonumber_d1_5_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d1==5"
+        },
+        "combonumber_d1_6_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d1==6"
+        },
+        "combonumber_d1_7_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d1==7"
+        },
+        "combonumber_d1_8_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d1==8"
+        },
+        "combonumber_d1_9_t0s6": {
+          "scale": "v.geoui_combonumber_t0s6_d1==9"
+        },
+        "combonumber_d0_0_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d0==0"
+        },
+        "combonumber_d0_1_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d0==1"
+        },
+        "combonumber_d0_2_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d0==2"
+        },
+        "combonumber_d0_3_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d0==3"
+        },
+        "combonumber_d0_4_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d0==4"
+        },
+        "combonumber_d0_5_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d0==5"
+        },
+        "combonumber_d0_6_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d0==6"
+        },
+        "combonumber_d0_7_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d0==7"
+        },
+        "combonumber_d0_8_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d0==8"
+        },
+        "combonumber_d0_9_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d0==9"
+        },
+        "combonumber_d1_0_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d1==0"
+        },
+        "combonumber_d1_1_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d1==1"
+        },
+        "combonumber_d1_2_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d1==2"
+        },
+        "combonumber_d1_3_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d1==3"
+        },
+        "combonumber_d1_4_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d1==4"
+        },
+        "combonumber_d1_5_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d1==5"
+        },
+        "combonumber_d1_6_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d1==6"
+        },
+        "combonumber_d1_7_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d1==7"
+        },
+        "combonumber_d1_8_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d1==8"
+        },
+        "combonumber_d1_9_t0s7": {
+          "scale": "v.geoui_combonumber_t0s7_d1==9"
+        },
+        "combonumber_d0_0_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d0==0"
+        },
+        "combonumber_d0_1_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d0==1"
+        },
+        "combonumber_d0_2_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d0==2"
+        },
+        "combonumber_d0_3_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d0==3"
+        },
+        "combonumber_d0_4_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d0==4"
+        },
+        "combonumber_d0_5_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d0==5"
+        },
+        "combonumber_d0_6_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d0==6"
+        },
+        "combonumber_d0_7_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d0==7"
+        },
+        "combonumber_d0_8_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d0==8"
+        },
+        "combonumber_d0_9_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d0==9"
+        },
+        "combonumber_d1_0_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d1==0"
+        },
+        "combonumber_d1_1_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d1==1"
+        },
+        "combonumber_d1_2_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d1==2"
+        },
+        "combonumber_d1_3_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d1==3"
+        },
+        "combonumber_d1_4_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d1==4"
+        },
+        "combonumber_d1_5_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d1==5"
+        },
+        "combonumber_d1_6_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d1==6"
+        },
+        "combonumber_d1_7_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d1==7"
+        },
+        "combonumber_d1_8_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d1==8"
+        },
+        "combonumber_d1_9_t1s0": {
+          "scale": "v.geoui_combonumber_t1s0_d1==9"
+        },
+        "combonumber_d0_0_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d0==0"
+        },
+        "combonumber_d0_1_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d0==1"
+        },
+        "combonumber_d0_2_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d0==2"
+        },
+        "combonumber_d0_3_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d0==3"
+        },
+        "combonumber_d0_4_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d0==4"
+        },
+        "combonumber_d0_5_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d0==5"
+        },
+        "combonumber_d0_6_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d0==6"
+        },
+        "combonumber_d0_7_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d0==7"
+        },
+        "combonumber_d0_8_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d0==8"
+        },
+        "combonumber_d0_9_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d0==9"
+        },
+        "combonumber_d1_0_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d1==0"
+        },
+        "combonumber_d1_1_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d1==1"
+        },
+        "combonumber_d1_2_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d1==2"
+        },
+        "combonumber_d1_3_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d1==3"
+        },
+        "combonumber_d1_4_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d1==4"
+        },
+        "combonumber_d1_5_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d1==5"
+        },
+        "combonumber_d1_6_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d1==6"
+        },
+        "combonumber_d1_7_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d1==7"
+        },
+        "combonumber_d1_8_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d1==8"
+        },
+        "combonumber_d1_9_t1s1": {
+          "scale": "v.geoui_combonumber_t1s1_d1==9"
+        },
+        "combonumber_d0_0_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d0==0"
+        },
+        "combonumber_d0_1_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d0==1"
+        },
+        "combonumber_d0_2_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d0==2"
+        },
+        "combonumber_d0_3_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d0==3"
+        },
+        "combonumber_d0_4_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d0==4"
+        },
+        "combonumber_d0_5_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d0==5"
+        },
+        "combonumber_d0_6_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d0==6"
+        },
+        "combonumber_d0_7_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d0==7"
+        },
+        "combonumber_d0_8_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d0==8"
+        },
+        "combonumber_d0_9_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d0==9"
+        },
+        "combonumber_d1_0_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d1==0"
+        },
+        "combonumber_d1_1_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d1==1"
+        },
+        "combonumber_d1_2_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d1==2"
+        },
+        "combonumber_d1_3_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d1==3"
+        },
+        "combonumber_d1_4_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d1==4"
+        },
+        "combonumber_d1_5_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d1==5"
+        },
+        "combonumber_d1_6_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d1==6"
+        },
+        "combonumber_d1_7_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d1==7"
+        },
+        "combonumber_d1_8_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d1==8"
+        },
+        "combonumber_d1_9_t1s2": {
+          "scale": "v.geoui_combonumber_t1s2_d1==9"
         }
       }
     },

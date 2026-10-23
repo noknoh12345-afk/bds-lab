@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI osu! Pixel BP",
+    "description": "GeoUI timeline: osu! in pixel art of cubes, its own song (bds-lab)",
+    "uuid": "d80a75b0-9ba7-4635-a2c6-784645799bc3",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "4d9ed4d3-9c27-4020-b98c-b3cd9f5d894a",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "1c0f56b0-ad0e-42af-936f-c6a664ebb1f5",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "38d79460-8172-4405-89c2-f6961538e693",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.1.0"
+    }
+  ]
+}

@@ -24,7 +24,7 @@ const designOf = (names) => ({ settings: { ns: 'geoui', bp: false }, bones: [{ n
   elements: Object.fromEntries(names.map((x) => [x, { type: 'image' }])), textures: { t: { name: 'atlas', width: 16, height: 16, png: 'iVBORw0KGgo=' } } });
 
 /** the pack's Molang against the preview: every frame from 0 to `to`; returns the mismatches (and the built files) */
-function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt = 1 / 60, from = 0 } = {}) {
+function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt = 1 / 60, from = 0, stateAt = null } = {}) {
   const design = designOf(names), built = G.buildPack(design), out = C.extendPack(built.files, doc, { design, core: G, ...ctx });
   const ent = JSON.parse(out.files['geoui_RP/entity/player.entity.json']), pre = ent['minecraft:client_entity'].description.scripts.pre_animation;
   // (a variable read on the first frame before it is set is a content error in the game, and the game leaves every line after
@@ -82,11 +82,20 @@ function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt =
       }
       if (s.events) for (let g = 0; g * K.EV_PER < s.slots; g++) props[K.names('geoui').events(s.tag, g)] = K.eventValue(codes.slice(g * K.EV_PER, (g + 1) * K.EV_PER));
     }
+    // (the whole play, as the pack's script sets it: each global event's counter, and the states packed in their properties —
+    //  the preview then sees the values the game reads back, 0.1 apart for the cursor)
+    const gl = out.stats.budget && out.stats.budget.global, seen0 = {};
+    if (gl) {
+      if (gl.events.length) { const counts = {}; for (const e of events) if (!e.instance && e.t <= t + 1e-9) counts[e.name] = (counts[e.name] || 0) + 1; for (let g = 0; g * K.GE_PER < gl.events.length; g++) props[K.geName('geoui', g * K.GE_PER)] = K.geValue(gl.events, counts, g); }
+      const sv = stateAt ? stateAt(t) : {};
+      for (const g of gl.groups) { props[`geoui:${g}`] = K.pack(sv, K.STATE_GROUPS[g]); Object.assign(seen0, K.unpack(props[`geoui:${g}`], K.STATE_GROUPS[g])); }
+      for (const [nm, so] of Object.entries(K.VALUE_STATES)) if (gl.states.includes(nm)) { props[`geoui:${so.prop}`] = Math.round((sv[nm] || 0) / so.scale); seen0[nm] = props[`geoui:${so.prop}`] * so.scale; }
+    }
     G.runPre(pre, env);
     // (the preview at the game's own clock — the same float the game's Molang counted with — and each event at the time the
     //  game learnt of it: the frame its property changed)
     for (const e of events) if (e.t <= t + 1e-9 && !seenAt.has(e)) seenAt.set(e, get('v.geoui_raw'));
-    const states = M.evaluate(N, seq.id, get('v.geoui_raw'), { events: events.filter((e) => seenAt.has(e)).map((e) => ({ ...e, t: seenAt.get(e) })) });
+    const states = M.evaluate(N, seq.id, get('v.geoui_raw'), { events: events.filter((e) => seenAt.has(e)).map((e) => ({ ...e, t: seenAt.get(e) })), state: seen0 });
     for (const [key, b] of Object.entries(out.stats.bindings)) {
       const sk = key.replace(/^1:/, ''), s = states[sk], c = get(`${b.prefix}_c`);
       if (!s) { if (!sk.includes('#') && c >= 0) bad.push(`${t.toFixed(3)} ${sk}: shown, the preview leaves it`); continue; }
@@ -94,7 +103,7 @@ function compare(doc, names, { to, events = [], ctx = {}, quantize = false, dt =
       if (c < 0) { bad.push(`${t.toFixed(3)} ${sk}: hidden, the preview shows it`); continue; }
       const pos = boneAt(b.bone);
       if (!pos) { bad.push(`${t.toFixed(3)} ${sk}: no animation places its bone`); continue; }
-      for (const [prop, v] of [['x', 'x'], ['y', 'y'], ['scaleX', 'sx'], ['scaleY', 'sy'], ['rotation', 'r'], ['opacity', 'o'], ['value', 'v'], ['fill', 'f'], ['frame', 'fr']]) {
+      for (const [prop, v] of [['x', 'x'], ['y', 'y'], ['scaleX', 'sx'], ['scaleY', 'sy'], ['rotation', 'r'], ['rotationX', 'rx'], ['rotationY', 'ry'], ['opacity', 'o'], ['value', 'v'], ['fill', 'f'], ['frame', 'fr']]) {
         if (s[prop] === undefined) continue;
         const got = prop === 'x' || prop === 'y' ? pos[prop] : get(`${b.prefix}_${v}`);
         if (!(Math.abs(got - s[prop]) <= 1e-3)) bad.push(`${t.toFixed(3)} ${sk}.${prop}: game ${got} preview ${s[prop]}`);
@@ -218,11 +227,57 @@ const events = [{ instance: 'o1', name: 'hit', t: 1 + 1 / 60 }, { instance: 'o2'
   ok(!r.bad.length, `300 objects: every element of every instance, every frame (1/20 s) to 40 s with ${evs.filter((e) => e.t < 40).length} hits and misses — the game's Molang = the preview`, r.bad.slice(0, 8).join('\n  '));
 }
 
+// ---- the whole play (2026-10-23): a tilt out of the screen (rotationX / rotationY, the bone's rotation about x and y), clips on
+//      the sequence's own tracks answering any instance's event (a shake on every miss, a pop on every hit — <ns>:ge's
+//      counters), and the states the script keeps live (state.cx / cy / hold / combo / spin) in expressions — the game's Molang
+//      against the preview frame by frame, the properties set as the script sets them
+{
+  const doc = { version: 1, sequences: [{ id: 's', duration: 4, tracks: [
+    { target: 'fd', clips: [{ start: 0, end: 4, channels: { rotationX: [{ t: 0, v: -20, ease: 'sine-inout' }, { t: 2, v: 15 }, { t: 4, v: -20 }], rotationY: [{ t: 0, v: '10 * math.sin(t * 90)' }] } }] },
+    { target: 'sh', clips: [{ start: 0, end: 0.4, trigger: 'miss', channels: { x: [{ t: 0, v: '4 * math.sin(t * 2700) * (1 - t / 0.4)' }], rotation: [{ t: 0, v: 6, ease: 'quad-out' }, { t: 0.4, v: 0 }] } }] },
+    { target: 'po', clips: [{ start: 0, end: 0.2, trigger: 'hit', channels: { scaleX: [{ t: 0, v: 1.4, ease: 'quad-out' }, { t: 0.2, v: 1 }], scaleY: [{ t: 0, v: 1.4, ease: 'quad-out' }, { t: 0.2, v: 1 }] } }] },
+    { target: 'cu', clips: [{ start: 0, end: 4, channels: { x: [{ t: 0, v: 'state.cx' }], y: [{ t: 0, v: 'state.cy' }], opacity: [{ t: 0, v: '0.5 + state.hold * 0.5' }], value: [{ t: 0, v: 'state.combo' }], rotation: [{ t: 0, v: 'state.sa' }], fill: [{ t: 0, v: 'state.spin' }] } }] },
+    { target: 'gu', clips: [{ start: 0.5, end: 3.5, until: 'break', channels: { opacity: [{ t: 0, v: 1 }] } }] },
+  ] }] };
+  const events = [{ name: 'hit', t: 0.5 }, { name: 'great', t: 0.5 }, { name: 'miss', t: 1.2 }, { name: 'hit', t: 1.9 }, { name: 'miss', t: 2.6 }, { name: 'break', t: 2.6 }, { name: 'miss', t: 2.8 }];
+  const stateAt = (t) => ({ cx: 30 * Math.sin(t * 2), cy: -20 + 10 * t, hold: t > 1 && t < 2.5 ? 1 : 0, combo: Math.floor(t * 3), sa: (t * 200) % 358, spin: Math.min(1, t / 3) });
+  const r = compare(doc, ['fd', 'sh', 'po', 'cu', 'gu'], { to: 4, events, stateAt });
+  const b = r.out.stats.budget.global, props = Object.keys(JSON.parse(r.out.files['geoui_RP/entity/player.entity.json']) && {});
+  ok(!r.bad.length && b.events.join() === 'miss,hit,break' && b.groups.join() === 'cur,sp' && b.states.includes('combo'), 'the whole play: a tilt (rotationX / Y), a shake on every miss and a pop on every hit (global events), until a combo break, the cursor / hold / combo / spinner from the script\'s states — the game\'s Molang = the preview every frame', `${r.bad.slice(0, 6).join('\n  ')} ${JSON.stringify(b)} ${props}`);
+  const anim = JSON.parse(r.out.files['geoui_RP/animations/geoui.animation.json']).animations['animation.geoui.seq_1'];
+  ok(JSON.stringify(anim.bones.fd.rotation) === JSON.stringify(['v.geoui_1_0_rx', 'v.geoui_1_0_ry', 0]) && JSON.stringify(anim.bones.sh.rotation) === JSON.stringify([0, 0, 'v.geoui_1_1_r']), 'a tilt is the bone\'s rotation about x and y (the turn in the screen\'s plane about z, as before)', JSON.stringify([anim.bones.fd.rotation, anim.bones.sh.rotation]));
+}
+
+// ---- a template's number in its slot copies: each copy picks its own numerals (2026-10-23: before, a copy had no digit
+//      variables and all ten numerals of each digit showed at once)
+{
+  const digits = (name) => Array.from({ length: 2 }, (_, k) => Array.from({ length: 10 }, (__, d) => `${name}_d${k}_${d}`));
+  const design = designOf(['nm']);
+  design.bones = design.bones.filter((b) => b.name !== 'nm').concat([{ name: 'nm', parent: 'geo_ui', pivot: [0, 140, 0] }],
+    digits('nm').flat().map((b, i) => ({ name: b, parent: 'nm', pivot: [0, 140, 0], cubes: [{ origin: [-5 + (i >= 10 ? 5 : 0), 135, -0.02 * (i % 10)], size: [4, 7, 0], faces: { north: { uv: [0, 0], uv_size: [4, 7], texture: 't' } } }] })));
+  design.elements.nm = { type: 'number', number: { source: '0', digits: digits('nm'), hideLeadingZero: true } };
+  const doc = { version: 1, sequences: [{ id: 's', duration: 3, templates: [{ id: 'tp', name: 'n', lead: 0.2, tail: 0.3, params: ['n'], tracks: [{ target: 'nm', clips: [{ start: -0.2, end: 0.3, channels: { value: [{ t: 0, v: 'param.n' }] } }] }] }],
+    instances: [{ id: 'a', template: 'tp', t: 0.5, params: { n: 7 } }, { id: 'b', template: 'tp', t: 0.6, params: { n: 42 } }] }] };
+  const out = C.extendPack(G.buildPack(design).files, doc, { design, core: G });
+  const ent = JSON.parse(out.files['geoui_RP/entity/player.entity.json']).description || JSON.parse(out.files['geoui_RP/entity/player.entity.json'])['minecraft:client_entity'].description;
+  const tf = JSON.parse(out.files['geoui_RP/animations/geoui.animation.json']).animations['animation.geoui_transform'].bones;
+  const vars = {}, env = { vars, query(n0, a) { if (n0 === 'query.property') return a[0] === 'geoui:seq' ? K.seqValue({ seq: 1, gen: 1 }) : 0; if (n0 === 'query.life_time') return this.life; return n0 === 'query.is_in_ui' ? 1 : undefined; }, life: 100 };
+  env.query = env.query.bind(env);
+  G.runPre(ent.scripts.pre_animation, env); env.life = 100.55; G.runPre(ent.scripts.pre_animation, env);
+  const shown = (slot) => digits('nm').map((ds) => ds.filter((b) => G.molang(String(tf[`${b}_${slot}`] && tf[`${b}_${slot}`].scale), env)).map((b) => b.slice(-1)).join('') || '-').join('');
+  ok(shown('t0s0') === '-7' && shown('t0s1') === '42', 'a number\'s slot copies: each shows its own instance\'s value (one numeral a digit, the leading zero blank)', `${shown('t0s0')} ${shown('t0s1')}`);
+}
+
 // ---- what cannot be exported is said ----
 {
-  const doc = { version: 1, sequences: [{ id: 's', duration: 1, tracks: [{ target: 'nope', clips: [{ start: 0, end: 1, trigger: 'hit' }] }, { target: 'e0', clips: [{ start: 0, end: 1 }] }, { target: 'e0', clips: [{ start: 0, end: 1 }] }] }] };
+  // (a trigger on a sequence's own track answers the whole play's events — 'hit', 'miss'…: contract.GLOBAL_EVENTS — and one
+  //  the game never raises is said, as before; before 2026-10-23 every trigger outside a template was)
+  const doc = { version: 1, sequences: [{ id: 's', duration: 1, tracks: [{ target: 'nope', clips: [{ start: 0, end: 1, trigger: 'boom' }] }, { target: 'e0', clips: [{ start: 0, end: 1 }] }, { target: 'e0', clips: [{ start: 0, end: 1 }] }] }] };
   const out = C.extendPack(G.buildPack(designOf(['e0'])).files, doc, { design: designOf(['e0']), core: G });
-  ok(out.warnings.some((w) => /nope.*ありません/.test(w)) && out.warnings.some((w) => /trigger/.test(w)) && out.warnings.some((w) => /2 本/.test(w)), 'said: an element that is not there, a trigger outside a template, two tracks on one element', out.warnings.join(' / '));
+  ok(out.warnings.some((w) => /nope.*ありません/.test(w)) && out.warnings.some((w) => /trigger.*boom|boom.*出来事/.test(w)) && out.warnings.some((w) => /2 本/.test(w)), 'said: an element that is not there, a trigger the game never raises, two tracks on one element', out.warnings.join(' / '));
+  const doc2 = { version: 1, sequences: [{ id: 's', duration: 1, tracks: [{ target: 'e0', clips: [{ start: 0, end: 1, trigger: 'miss' }] }] }] };
+  const out2 = C.extendPack(G.buildPack(designOf(['e0'])).files, doc2, { design: designOf(['e0']), core: G });
+  ok(!out2.warnings.some((w) => /trigger/.test(w)) && out2.stats.budget.global.events.join() === 'miss', 'a trigger on a sequence\'s own track that the game raises (miss): no warning, a global event', out2.warnings.join(' / '));
 }
 
 console.log(`\n${fails ? 'FAIL' : 'PASS'} tl-anim-offline (${n - fails}/${n})`);

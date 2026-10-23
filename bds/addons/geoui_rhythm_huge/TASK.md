@@ -7,7 +7,7 @@ GeoUI Builder のタイムライン（bds/geoui/timeline）で、osu! のよう�
 ## What it is
 - 譜面 612 個の円・353 本のスライダー（往復も）・35 個のスピナー、180 BPM、AR 9・CS 4・OD 8（判定 32/76/120 ms）、382 秒（音楽なし）。
 - RP: テンプレートの枠（8 枠・4 枠・2 枠、焼き込み: 見た目はクライアントの時計だけで動く）、スライダーの玉は実体ごとのアニメーション、出来事（当たり・外れ）、点数・コンボ（v0・v1）・体力のゲージ（v3）。
-- 大きさ: プレイヤーのプロパティ 15 個（GeoUI の 11 個を含む・上限 32）、pre_animation 1558 行（最長 677 文字・括弧 9 段）、ボーン 433 本、要素ごとの render controller 66 個、アニメーション 355 個。
+- 大きさ: プレイヤーのプロパティ 15 個（GeoUI の 11 個を含む・上限 32）、pre_animation 1583 行（最長 677 文字・括弧 9 段）、ボーン 433 本、要素ごとの render controller 66 個、アニメーション 355 個。
 - BP: `/scriptevent geoui:play 1`・stop・pause・resume・seek <秒>・offset <ms>。ジャンプ・スニーク・アイテムを使うで判定。
 
 ## Acceptance (one tests.txt `## ` section each)

@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/timeline/demo.mjs (bds/geoui/osu/addon.mjs)",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI のタイムラインで作った osu!（ドット絵をキューブで: 角度のついた 3D の盤面・曲つき）: 譜面・絵・曲・音はラボの物"
+}

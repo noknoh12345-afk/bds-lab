@@ -106,6 +106,32 @@
 - blockbench-check.mjs は dist を読む（今の 10 項目はそのまま通る）。check-bridge.mjs: 本物の Blockbench 5.2.2 で、シーケンスを作る → クリップと鍵 → 再生で絵が動く → 取り消しで戻る → .bbmodel の往復 → 500 個の実体を取り込んで再生が 30 fps 以上 → 動画の書き出しのコマ数 → パックの書き出しにアニメーション。偽の時計での再生位置・速さ・ループ・音の呼び出しは tests/tl-bridge-offline.mjs（Node）で
 - TIMELINE.md（日本語の使い方）: 画面の見方・キー操作・拍と BPM・テンプレートと実体・道・出来事（当たり外れ）・osu! の取り込み・プリセット・書き出し（パックと動画）・ゲームの中での再生と判定（scriptevent）・できないこと（要実測を含む）
 
+## 8. osu! を丸ごと: 2 つの見た目（ドット絵のキューブ・公式の素材）・オリジナルの曲・osu! のルール・盤面全体の動き
+
+持ち物: `bds/geoui/timeline/osugame.js`、`osukit.js`、`osusong.js`（と osu.js・contract.js・compile.js・runtime.js・player.js・bridge.js への足し）、
+`bds/geoui/osu/**`、`bds/addons/geoui_osu_pixel/**`・`geoui_osu_skin/**`、`tests/tl-osu-offline.mjs`
+
+試験: `node tests/tl-osu-offline.mjs && node bds/geoui/osu/music.mjs --check && node bds/geoui/timeline/demo.mjs --check`
+
+- 人の頼み（2026-10-23）: osu! のドット絵版と公式の素材版。低い解像度のドット絵は画像にすると角ばるので、基本はキューブで角度をつけ、
+  モデルを活かす。曲もつけ、画面が揺らぐ・モデル全体を動かす・公式の物を再現する
+- osugame.js（純粋・自分の外を名指さない: パックのスクリプトにそのまま入る）: createGame(G) → start・seek・step(ms, input)・state・autoInput・
+  ballAt。OD → 300/100/50、ノートロックと早押しの震え、スライダー（ティック・折り返し・最後のティック −36 ms・フォローの半径 2.4r）、
+  スピナー（lazer の 1 秒の最低回転数・ボーナス）、score v1・精度・ランク SS〜D・体力・20 以上のコンボ切れの音、autoplay（477 rpm）
+- osukit.js: build(map, { skin: 'pixel'|'skin', images, music, sound }) → { design, doc, game, sounds, stats, warnings }。pixel = ドット絵を
+  キューブ（厚み・横の面は暗い色）の立体に、盤面を斜めに立てる。skin = Legacy スキンの絵を高い解像度のアトラスに。盤面のボーン
+  osu_root → osu_shake（ミスで揺れる）→ osu_tilt（カーソルで傾く・キアイで揺れる）→ osu_pulse（キアイの拍で脈打つ）
+- osusong.js: オリジナル曲「Cubic Pulse」（140 BPM・40 小節・チップ / シンセの 2 つの編曲・チップの効果音）と譜面（円 96・スライダー 33・
+  スピナー 1・休み・キアイ 2）。決まった乱数で毎回同じ。bds/geoui/osu/music.mjs が .ogg と .osu に
+- contract.js: ゲーム全体の出来事（GLOBAL_EVENTS。シーケンス自身のトラックの trigger / until。6 bit の数を 4 つで 1 プロパティ `<ns>:ge`）と
+  state（式の `state.<名前>`。`<ns>:cur`・`sp`・`res`・`cnt` に 24 bit ずつ、v0〜v3）。結果の 3 bit に early・drop
+- compile.js: state と出来事の時刻の変数、rotationX・rotationY のチャンネル、ボクセルの枠の複製は横にも 0.02 ずらす（面を重ねない）、
+  数字の要素の枠の複製に桁の変数（前は全部の数字が重なって出た）
+- runtime.js: シーケンスに game があれば osugame で遊ぶ（毎 tick: カーソル = 見ている向き × sens、押した時刻を並べて渡す、結果を枠へ、
+  出来事を数え、効果音を鳴らし、state をプロパティへ）。`mode auto|aim|relax`・`sens`。hold のシーケンスは終わりの 8 秒後に止める
+- player.js（プレビューはオートで遊ぶ）、bridge.js（「osu! を丸ごと作る…」のダイアログ・designToOutliner でデザインを Blockbench の
+  アウトライナーへ・スキンは ppy/osu-resources か .osk）、bds/geoui/osu/（addon.mjs・render.mjs・video.mjs・fetch-skin.mjs・skin-legacy/）
+
 ## 見直す観点
 
 ### rv-game（tl-model・tl-anim・tl-runtime の後）
@@ -235,6 +261,22 @@
     （join-lan-missing・join-play-unreached。同じ時の他の probe は入れた。BDS は読み込み、手元のクライアントは入れた）。書き出しはその形を
     もう出さないので、書き出しが出す形だけにした: splitLines の行・1000 文字の 1 行・括弧 24 段・2000 個の引き方（searchLines・tableLines）・
     3000 行 45 万文字。
+- 8. osu! を丸ごと: **できた**（2026-10-23。本物の BDS まで。本物のアプリはまだ）。上の 8 の部品すべて。
+  - 見本 `geoui_osu_pixel`（ドット絵のキューブ）・`geoui_osu_skin`（Legacy スキン）: 同じ曲と譜面（円 96・スライダー 33・スピナー 1・
+    ティック 54・フォローポイント 141、AR 8.5・OD 7・CS 4・HP 5、判定 38/84/130 ms、73 秒、キアイ 2・休み 1）。大きさ: どちらも
+    プロパティ 19 個（GeoUI の 11 個を含む）、pre_animation 2103 / 2123 行（最長 887 文字）、ボーン 361 / 348 本、要素ごとの
+    render controller 56 / 59 個、アニメーション 35 個、アトラス 1024 x 256 / 2048 x 2048。オート（20 tick/秒）で 672572 点・
+    最大コンボ 193・精度 100 %・SS。
+  - 本物の BDS（ローカル 1.26.52.3、`node lab.mjs test -a …`）: geoui_osu_pixel・geoui_osu_skin とも tests.txt 7/7（スクリプトが
+    オートで遊ぶ: 点数・コンボ・精度 100 %・ミス 0・出来事の数、aim で何も押さないとミス・コンボ 0・体力が減る、seek・pause・
+    resume・stop）。geoui_rhythm・geoui_rhythm_big も作り直した後に通った。
+  - 試験: tl-osu 38/38（曲と譜面がいつも同じ・スライダーのティックと最後の −36 ms・判定とノートロック・スライダーの追い方・
+    スピナーの回転数・ランク・オートで SS（20 と 60 step/秒で同じ点数）・シーク・パックがゲームの限度の中・モデルの検査（面が
+    重ならない）・スクリプトを偽の世界で auto / aim / relax）、tl-anim 21/21（枠の数字: 前は全部の数字が重なって出た）。
+  - 要実測（本物のアプリで geoui_osu_pixel・geoui_osu_skin を回すと分かる。app.txt はある）: キューブの数（pixel はボーン 361 本）
+    の描画と重さ、rotationX・rotationY の符号（盤面が倒れる向き）、頭の向きでの
+    狙い（aim: スマホのカメラの操作で狙えるか・sens）、ジャンプ・スニークで押すと体が動く・しゃがむこと（/inputpermission で
+    止めるか）、プラグインが作るラボの曲（.wav）が鳴るか（見本のパックは .ogg）。
 
 ### 本物のアプリで確かめたこと（probe.mjs → bds/addons/geoui_probe*、app.yml で写して `node bds/geoui/timeline/probe.mjs read <summary.json>`）
 

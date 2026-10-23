@@ -66,9 +66,11 @@
 
   // ---------------------------------------------------------------------------------------------------------------- expressions
   // the model's key expressions are Molang already (param.<name>, t, math.*): their params and t become variables
+  // (state.<name>: the variable extendPack made for it — STATEV, set while it writes a pack; '0' outside one)
+  let STATEV = {};
   function exprM(src, vars, tVar) {
     const tk = String(src).match(/\d+(?:\.\d+)?|\.\d+|[A-Za-z_][\w.]*|[-+*/(),]|\S/g) || [];
-    return `(${tk.map((t) => { const m = /^(?:param|p)\.(\w+)$/.exec(t); return m ? (vars[m[1]] || '0') : t === 't' ? (tVar || '0') : t; }).join(' ')})`;
+    return `(${tk.map((t) => { const m = /^(?:param|p)\.(\w+)$/.exec(t), sm = /^state\.(\w+)$/.exec(t); return m ? (vars[m[1]] || '0') : sm ? (STATEV[sm[1]] || '0') : t === 't' ? (tVar || '0') : t; }).join(' ')})`;
   }
   const valM = (v, vars, tVar) => (typeof v === 'string' ? exprM(v, vars, tVar) : n(v));
 
@@ -323,17 +325,22 @@
   function targetLines(P, clips, o) {
     const lines = [], report = o.report, parts = [];
     const RES = Ko().RESULTS, code = (name) => Math.max(0, RES.indexOf(name));
+    // (a result answering a trigger / until: its own code — and 'hit' every hit: hit, great, good, ok — model.evMatch)
+    const is = (r, name) => (name === 'hit' ? `(${r} == ${code('hit')} || (${r} >= ${code('great')} && ${r} <= ${code('ok')}))` : name === 'tap' ? `${r} == ${code('hit')}` : `${r} == ${code(name)}`);
     const ordered = [...clips.filter((c) => c.trigger), ...clips.filter((c) => !c.trigger)];
     for (const c of ordered) {
       const s = valM(c.start, o.vars), e = valM(c.end, o.vars);
       if (c.trigger) {
-        if (!o.ev) { report.warnings.push(`trigger（${c.trigger}）はテンプレートの中だけで使えます（${c.id}）`); continue; }
-        const start = `${o.ev.t} + ${s}`, end = `${o.ev.t} + ${e}`;
-        parts.push({ c, start, end, cut: '0', cond: `(${o.ev.r} == ${code(c.trigger)} && ${o.st} >= ${start} - ${EPS} && ${o.st} < ${end})` });
+        // (on a sequence's own track: the latest such event of the whole play — o.gev, the global events' times)
+        const gt = !o.ev && o.gev ? o.gev(c.trigger) : null;
+        if (!o.ev && !gt) { report.warnings.push(`trigger（${c.trigger}）は、テンプレートの中か、ゲームの中の出来事（${Ko().GLOBAL_EVENTS.join('・')}）で使えます（${c.id}）`); continue; }
+        const start = `${o.ev ? o.ev.t : gt} + ${s}`, end = `${o.ev ? o.ev.t : gt} + ${e}`;
+        parts.push({ c, start, end, cut: '0', cond: o.ev ? `(${is(o.ev.r, c.trigger)} && ${o.st} >= ${start} - ${EPS} && ${o.st} < ${end})` : `(${o.st} >= ${start} - ${EPS} && ${o.st} < ${end})` });
       } else {
         const start = `${o.zero} + ${s}`, rawEnd = `${o.zero} + ${e}`;
         let end = rawEnd, cut = '0';
-        if (c.until && o.ev) { cut = `(${o.ev.r} == ${code(c.until)} && ${o.ev.t} >= ${start} - ${EPS} && ${o.ev.t} < ${rawEnd})`; end = `(${cut} ? ${o.ev.t} : ${rawEnd})`; }
+        if (c.until && o.ev) { cut = `(${is(o.ev.r, c.until)} && ${o.ev.t} >= ${start} - ${EPS} && ${o.ev.t} < ${rawEnd})`; end = `(${cut} ? ${o.ev.t} : ${rawEnd})`; }
+        else if (c.until && o.gev && o.gev(c.until)) { const gt = o.gev(c.until); cut = `(${gt} >= ${start} - ${EPS} && ${gt} < ${rawEnd})`; end = `(${cut} ? ${gt} : ${rawEnd})`; }
         parts.push({ c, start, end, cut, cond: `(${o.st} >= ${start} - ${EPS} && ${o.st} < ${end})` });
       }
     }
@@ -376,10 +383,13 @@
     };
     for (const [v, prop, hid] of [['x', 'x', '0'], ['y', 'y', '0'], ['sx', 'scaleX', '0'], ['sy', 'scaleY', '0'], ['r', 'rotation', '0'], ['o', 'opacity', '0']]) lines.push(`${P}_${v} = ${pick((p) => val(p, prop), hid)};`);
     const has = (prop) => parts.some((p) => chan(p.c, prop));
+    // (a tilt out of the screen: only when a clip has one — most elements turn in the screen's plane alone)
+    if (has('rotationX')) lines.push(`${P}_rx = ${pick((p) => chan(p.c, 'rotationX') || '0', '0')};`);
+    if (has('rotationY')) lines.push(`${P}_ry = ${pick((p) => chan(p.c, 'rotationY') || '0', '0')};`);
     if (has('value')) lines.push(`${P}_v = ${pick((p) => chan(p.c, 'value') || '0', '0')};`, `${P}_vd = ${pick((p) => (chan(p.c, 'value') ? '1' : '0'), '0')};`);
     if (has('fill')) lines.push(`${P}_f = math.clamp(${pick((p) => chan(p.c, 'fill') || '0', '0')}, 0, 1);`, `${P}_fd = ${pick((p) => (chan(p.c, 'fill') ? '1' : '0'), '0')};`);
     if (has('frame')) lines.push(`${P}_fr = ${pick((p) => chan(p.c, 'frame') || '0', '0')};`, `${P}_frd = ${pick((p) => (chan(p.c, 'frame') ? '1' : '0'), '0')};`);
-    return { lines, has: { value: has('value'), fill: has('fill'), frame: has('frame'), opacity: parts.some((p) => chan(p.c, 'opacity') || (p.c.transitionIn && p.c.transitionIn.kind === 'fade') || (p.c.transitionOut && p.c.transitionOut.kind === 'fade')), rotation: parts.some((p) => chan(p.c, 'rotation')), instPath: parts.some((p) => own(p.c) && chan(p.c, 'path')) } };
+    return { lines, has: { value: has('value'), fill: has('fill'), frame: has('frame'), opacity: parts.some((p) => chan(p.c, 'opacity') || (p.c.transitionIn && p.c.transitionIn.kind === 'fade') || (p.c.transitionOut && p.c.transitionOut.kind === 'fade')), rotation: parts.some((p) => chan(p.c, 'rotation')), rx: has('rotationX'), ry: has('rotationY'), instPath: parts.some((p) => own(p.c) && chan(p.c, 'path')) } };
   }
 
   // ---------------------------------------------------------------------------------------------------------------- the pack
@@ -425,6 +435,8 @@
     const pre = [
       `${V('sq')} = ${P(N.seq)};`,
       `${V('seq')} = ${SQ.seq};`,
+      // (seq changed this frame: a play, a seek, a resume, a stop — the global events' times start over with it)
+      `${V('sqc')} = ${V('sq')} != (${V('sqp')} ?? -1);`,
       `${V('t0')} = (${V('sq')} != (${V('sqp')} ?? -1)) ? q.life_time : (${V('t0')} ?? q.life_time);`,
       `${V('sqp')} = ${V('sq')};`,
       `${V('raw')} = ${SQ.pause} ? ${P(N.from)} / 1000 : q.life_time - ${V('t0')} + ${P(N.from)} / 1000;`,
@@ -437,16 +449,35 @@
       else if (seq.loop === 'pingpong' && len > 0) pre.push(`${V('m')} = math.mod(${raw} - ${n(a)}, ${n(2 * len)});`, `${V('st')} = (${V('seq')} == ${i} && ${raw} >= ${n(a)}) ? ${n(a)} + (${V('m')} <= ${n(len)} ? ${V('m')} : ${n(2 * len)} - ${V('m')}) : ${V('st')};`);
     });
     const st = V('st'), bindings = {}, slotsOut = {}, anims = {}, clones = new Map(), drives = new Map();   // drives: bone → { o: [[seq, var]], fr, v, f }
+    // ---- the whole play: the global events (a counter each in <ns>:ge — its change is the event's time) and the states
+    //      (state.<name> in an expression: the script's live values — contract.js STATES)
+    const GL = budget.global || { events: [], states: [], groups: [] }, gevVar = {};
+    GL.events.forEach((e, k) => {
+      const c = V(`ge${k}`), p = V(`gep${k}`), t = V(`get${k}`);
+      pre.push(`${c} = ${K.geMolang(P(K.geName(ns, k)), k)};`, `${t} = (${c} != (${p} ?? ${c})) ? ${st} : (${V('sqc')} ? -1000 : (${t} ?? -1000));`, `${p} = ${c};`);
+      gevVar[e] = t;
+    });
+    const gev = (name) => gevVar[name] || null;
+    STATEV = {};
+    for (const grp of GL.groups) {
+      const un = K.unpackMolang(P(N.state(grp)), K.STATE_GROUPS[grp]);
+      for (const f of K.STATE_GROUPS[grp]) if (GL.states.includes(f.name)) { pre.push(`${V(`s_${f.name}`)} = ${un[f.name]};`); STATEV[f.name] = V(`s_${f.name}`); }
+    }
+    for (const name of GL.states) {
+      const so = K.stateOf(name);
+      if (so && so.value) { const prop = (ctx.values && ctx.values[name]) || so.prop; pre.push(`${V(`s_${name}`)} = ${P(`${ns}:${prop}`)}${so.scale !== 1 ? ` * ${so.scale}` : ''};`); STATEV[name] = V(`s_${name}`); }
+    }
     const instAnims = [];   // [{ key, cond, time, bone, keys }]: an instance's own path
     const drive = (bone, kind, i, varName) => { if (!drives.has(bone)) drives.set(bone, { o: [], fr: [], v: [], f: [] }); drives.get(bone)[kind].push([i, varName]); };
     doc.sequences.forEach((seq, si) => {
       const i = si + 1, anim = { loop: true, animation_length: 1, bones: {} }, paths = (id) => (seq.paths || []).find((p) => p.id === id) || null;
-      const on = `${V('seq')} == ${i}`, solo = seq.tracks.some((t) => t.solo), seen = new Set(), bind = (bone, Pv, rot) => {
-        anim.bones[bone] = Object.assign({ position: [`${Pv}_x`, `${Pv}_y`, 0], scale: [`${Pv}_sx`, `${Pv}_sy`, 1] }, rot ? { rotation: [0, 0, `${Pv}_r`] } : {});
+      const on = `${V('seq')} == ${i}`, solo = seq.tracks.some((t) => t.solo), seen = new Set(), bind = (bone, Pv, r) => {
+        const rot = r.has.rotation || r.has.rx || r.has.ry;
+        anim.bones[bone] = Object.assign({ position: [`${Pv}_x`, `${Pv}_y`, 0], scale: [`${Pv}_sx`, `${Pv}_sy`, 1] }, rot ? { rotation: [r.has.rx ? `${Pv}_rx` : 0, r.has.ry ? `${Pv}_ry` : 0, r.has.rotation ? `${Pv}_r` : 0] } : {});
       };
       const add = (bone, Pv, r) => {
         pre.push(...r.lines.map((l) => l.replace(/^(\S+) = (.*);$/, (m0, lhs, rhs) => `${lhs} = ${on} ? (${rhs}) : 0;`)));
-        bind(bone, Pv, r.has.rotation);
+        bind(bone, Pv, r);
         if (r.has.opacity) drive(bone, 'o', i, `${Pv}_o`);
         if (r.has.frame) drive(bone, 'fr', i, Pv);
         if (r.has.value) drive(bone, 'v', i, Pv);
@@ -459,7 +490,7 @@
         seen.add(tr.target);
         if (!boneSet.has(tr.target)) warnings.push(`要素（ボーン）「${tr.target}」がありません（${seq.name}）`);
         const Pv = V(`${i}_${ti}`);
-        const r = targetLines(Pv, tr.clips, { st, zero: '0', vars: {}, ev: null, active: '1', paths, hidden: tr.muted || (solo && !tr.solo), report });
+        const r = targetLines(Pv, tr.clips, { st, zero: '0', vars: {}, ev: null, gev, active: '1', paths, hidden: tr.muted || (solo && !tr.solo), report });
         add(tr.target, Pv, r);
         bindings[`${i}:${tr.target}`] = { prefix: Pv, bone: tr.target };
       });
@@ -545,11 +576,14 @@
     // ---- the files: geometry copies for the slots, the animations, the client entity, render controllers
     const geoFiles = Object.keys(files).filter((f) => f.startsWith(`${rpDir}/models/entity/`) && f.endsWith('.geo.json'));
     for (const f of geoFiles) {
-      const g = parse(files[f]), geo = g['minecraft:geometry'][0], have = new Map(geo.bones.map((b) => [b.name, b]));
+      const g = parse(files[f]), geo = g['minecraft:geometry'][0], have = new Map(geo.bones.map((b) => [b.name, b])), nth = new Map();
       for (const [bone, { of, tag, k }] of clones) {
         if (have.has(bone)) continue;
         const tree = subtree(of);
         if (!have.has(of)) continue;
+        // (a copy of a deep cube — a voxel — also moved 0.02 a copy across the screen: its sides then share no plane with its
+        //  prototype's or another copy's, which a move in depth alone leaves on one plane. Flat planes move in depth only, as before)
+        const nc = (nth.get(of) || 0) + 1; nth.set(of, nc);
         for (const name of tree) {
           const src = have.get(name);
           if (!src) continue;
@@ -557,7 +591,7 @@
           copy.name = `${name}_${tag}${k}`;
           // (a copy moved in depth, 0.02 at a time, until no face it overlaps is within 0.02 of it: never two faces on one plane —
           //  only one of them shows at a time, but two on one plane would flicker if ever they did)
-          for (const cube of copy.cubes || []) cube.origin = [cube.origin[0], cube.origin[1], freeDepth(geo, cube)];
+          for (const cube of copy.cubes || []) { const dxy = cube.size && cube.size[2] > 0 ? Math.round(nc * 0.02 * 1e4) / 1e4 : 0; cube.origin = [Math.round((cube.origin[0] + dxy) * 1e4) / 1e4, Math.round((cube.origin[1] + dxy) * 1e4) / 1e4, freeDepth(geo, cube)]; }
           if (name !== of && src.parent) copy.parent = tree.includes(src.parent) ? `${src.parent}_${tag}${k}` : src.parent;
           geo.bones.push(copy); have.set(copy.name, copy);
         }
@@ -580,13 +614,19 @@
       const dsc = ent['minecraft:client_entity'].description;
       // (a number whose value a clip drives: its digits are worked out again from the clip's value while it does)
       const digitLines = [];
+      // (a slot's copy of a number: the prototype's digits — its numerals copied too, each shown by the copy's own digit
+      //  variable in the transform animation. Before 2026-10-23 a copy had no digit variables: all ten numerals of every digit
+      //  showed at once — an osu! combo number drew as a block of overlaid numerals)
+      const tfa = af.animations[`animation.${ns}_transform`];
       for (const [bone, d] of drives) if (d.v.length) {
-        const el = (design.elements || {})[bone] || {}, digits = (el.number && Array.isArray(el.number.digits) ? el.number.digits.length : 0), hide = !(el.number && el.number.hideLeadingZero === false);
+        const c0 = clones.get(bone), el = (design.elements || {})[c0 ? c0.of : bone] || {}, digits = (el.number && Array.isArray(el.number.digits) ? el.number.digits.length : 0), hide = !(el.number && el.number.hideLeadingZero === false);
         for (let k = 0; k < digits; k++) {
           const dv = `v.${ns}_${clean(bone)}_d${k}`, place = Math.pow(10, digits - 1 - k), de = G && G.digitExpr ? G.digitExpr(RCV(bone, 'val'), place, hide) : `math.mod(math.floor(math.abs(${RCV(bone, 'val')})/${place}),10)`;
           digitLines.push(`${dv} = ${RCV(bone, 'vd')} ? ${de} : (${dv} ?? 0);`);
+          if (c0 && tfa) (el.number.digits[k] || []).forEach((bn, j) => { if (bn) tfa.bones[`${bn}_${c0.tag}${c0.k}`] = { scale: `${dv}==${j}` }; });
         }
       }
+      if (tfa) files[animFile] = J(af);
       // (every line short and shallow: a part of a long one worked out first on a line of its own — splitLines)
       const cut = splitLines([...pre, ...digitLines], { limit: lineLimit, depth: lineDepth, prefix: `v.${ns}__` });
       if (cut.uncut.length) warnings.push(`Molang の行を ${lineLimit} 文字・括弧 ${lineDepth} 段に収められませんでした（${cut.uncut.length} 行: ${cut.uncut[0]}…）`);
@@ -606,6 +646,8 @@
       const stepOf = (name, fb) => {
         const b = bones.find((x) => x.name === name), faces = b && (b.cubes || []).map((c) => Object.values(c.faces || {}).find((f) => f && f.uv_size)).filter(Boolean), f = faces && faces[0];
         const tex = f && (design.textures || {})[f.texture], tw = tex && num(tex.uvWidth || tex.width), th = tex && num(tex.uvHeight || tex.height);
+        // (an explicit step in texels: a voxel element's cell, its cubes each a small part of it — osukit.js)
+        if (Array.isArray(fb.step) && tw > 0 && th > 0) return [num(fb.step[0]) / tw, num(fb.step[1]) / th];
         return f && tw > 0 && th > 0 ? [Math.abs(f.uv_size[0]) / tw, Math.abs(f.uv_size[1]) / th] : [1 / fb.cols, 1 / fb.rows];
       };
       dsc.scripts.animate = [...(dsc.scripts.animate || []), ...animate];
@@ -674,6 +716,8 @@
           if (c.offset > 1e-6) warnings.push(`音のクリップ（${c.id}）は頭を ${n(c.offset)} 秒切ってあります: ゲームでは音の頭から鳴ります`);
         }
       });
+      // (sounds the behaviour pack's script plays that no audio clip names: osu!'s hitsounds — ctx.extraSounds, their ids)
+      for (const id of ctx.extraSounds || []) if (!sdefs.some((x) => x.id === clean(id))) { const src = sounds.find((x) => clean(x.id) === clean(id)); sdefs.push({ id: clean(id), ext: src && src.ext === 'wav' ? 'wav' : 'ogg', data: src && src.data }); }
       if (sdefs.length) {
         const Me = T.media, sd = Me ? Me.soundDefinitions(sdefs, ns) : null;
         if (sd) {

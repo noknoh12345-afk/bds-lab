@@ -55,6 +55,42 @@
   function protosOf(seq) { const out = new Set(); for (const tp of (seq && seq.templates) || []) for (const tr of tp.tracks) if (tr.kind === 'layer' && tr.target) out.add(tr.target); return out; }
   /** a sound's id in the pack (compile.js's name for it), not one already taken */
   function soundId(name, taken) { const base = clean(String(name).replace(/\.[^.]*$/, '')); let id = base, i = 1; while ((taken || []).includes(id)) id = `${base}_${++i}`; return id; }
+  /** a design (GeoUICore's input: bones, elements — osukit.js builds one) as Blockbench's outliner: groups (origin, rotation, the
+   *  element's settings — a number's numerals under digit groups, as GeoUI Builder reads them) and cubes (from, to, faces' uv) —
+   *  the inverse of GeoUI Builder's design(): x mirrored, up and down faces' uv turned round. The root (geo_ui) is the project's
+   *  own. toBB: GeoUI Builder's (Bedrock → Blockbench) */
+  function designToOutliner(design, toBB = (v) => [-v[0], v[1], v[2]]) {
+    const els = design.elements || {}, groups = [], cubes = [], r4 = (v) => v.map((x) => Math.round(x * 1e4) / 1e4 + 0);
+    const parentOf = new Map(), numeralOf = new Map();
+    // (a number's numerals: under a digit group each — GeoUI Builder finds them by the digit's index and the numeral's value)
+    for (const [name, el] of Object.entries(els)) if (el.type === 'number' && el.number && Array.isArray(el.number.digits)) el.number.digits.forEach((ns, k) => ns.forEach((n, v) => { if (n) numeralOf.set(n, { number: name, k, v }); }));
+    const madeDigit = new Set();
+    for (const b of design.bones || []) {
+      if (!b.parent) { groups.push({ name: b.name, root: true }); continue; }
+      let parent = b.parent;
+      const nm = numeralOf.get(b.name);
+      if (nm) {
+        const dg = `${nm.number}_d${nm.k}`;
+        if (!madeDigit.has(dg)) { madeDigit.add(dg); const owner = (design.bones || []).find((x) => x.name === nm.number); groups.push({ name: dg, parent: nm.number, origin: r4(toBB(owner ? owner.pivot : b.pivot)), rotation: [0, 0, 0], geoui: { role: 'digit', index: nm.k } }); }
+        parent = dg;
+      }
+      parentOf.set(b.name, parent);
+      const el = els[b.name], meta = el ? Object.assign({}, el) : nm ? { role: 'numeral', value: nm.v } : null;
+      if (meta && meta.number) meta.number = { source: meta.number.source, hideLeadingZero: meta.number.hideLeadingZero };
+      groups.push({ name: b.name, parent, origin: r4(toBB(b.pivot || [0, 0, 0])), rotation: b.rotation ? [-b.rotation[0], -b.rotation[1], b.rotation[2]] : [0, 0, 0], geoui: meta });
+      (b.cubes || []).forEach((c, i) => {
+        const [x, y, z] = c.origin, [w, h, d] = c.size, faces = {};
+        for (const key of ['north', 'south', 'east', 'west', 'up', 'down']) {
+          const f = c.faces && c.faces[key];
+          if (!f) continue;
+          const [u, v] = f.uv, [sw, sh] = f.uv_size;
+          faces[key] = { uv: key === 'up' || key === 'down' ? [u + sw, v + sh, u, v] : [u, v, u + sw, v + sh], texture: f.texture };
+        }
+        cubes.push({ name: `${b.name}_c${i}`, parent: b.name, from: r4([-(x + w), y, z]), to: r4([-x, y + h, z + d]), origin: r4(toBB(b.pivot || [0, 0, 0])), faces });
+      });
+    }
+    return { groups, cubes };
+  }
   /** slider bodies (osu.toDocument's) in one flipbook of equal cells: { cols, rows, cell: [w, h] px, pxPerUnit, w, h, at(i) → [x, y] }
    *  — px a unit as many as fit in maxSize (4 at most) */
   function bodyAtlas(bodies, { maxSize = 2048, most = 4 } = {}) {
@@ -241,6 +277,8 @@
       const fb = g.geoui.frames, c = (() => { let x = null; g.forEachChild((n) => { if (!x && n instanceof Cube) x = n; }, null, true); return x; })();
       const face = c && c.faces && c.faces.north, tex = face && face.getTexture && face.getTexture();
       if (!fb || !face || !tex) return [0, 0];
+      // (an explicit step — a voxel element's cell, its cubes each a part of it: osukit.js — else the first plane's own size)
+      if (Array.isArray(fb.step)) return frameOffset(fr, fb.cols, fb.step[0] / (tex.uv_width || tex.width || 1), fb.step[1] / (tex.uv_height || tex.height || 1));
       return frameOffset(fr, fb.cols, Math.abs(face.uv[2] - face.uv[0]) / (tex.uv_width || tex.width || 1), Math.abs(face.uv[3] - face.uv[1]) / (tex.uv_height || tex.height || 1));
     }
     // ---- a material of the mesh's own while it plays (Blockbench's own, its shader given an alpha and a uv offset)
@@ -414,6 +452,7 @@
     A('geoui_tl_track', { name: 'タイムライン: 選んだ要素のトラックを足す', icon: 'playlist_add', condition: isGeo, click: addTrackForSelected });
     A('geoui_tl_media', { name: 'タイムライン: 音・画像・連番を取り込む…', icon: 'library_music', condition: isGeo, click: importMedia });
     A('geoui_tl_osu', { name: 'タイムライン: osu! の譜面を取り込む（.osu・.osz）…', icon: 'radio_button_checked', condition: isGeo, click: importOsuFile });
+    A('geoui_tl_osu_full', { name: 'osu! を丸ごと作る（ドット絵のキューブ・公式の素材・曲つき）…', icon: 'sports_esports', condition: isGeo, click: osuFullDialog });
     A('geoui_tl_video', { name: 'タイムライン: 動画を書き出す…', icon: 'movie_creation', condition: isGeo, click: videoDialog });
 
     function ensureSeq() {
@@ -551,6 +590,115 @@
       return jobs.reduce((p, j) => p.then(j), Promise.resolve()).then(() => { st.elemCache = null; if (made.length) say(`osu! の要素を描いて足しました: ${made.join('・')}`); });
     }
 
+    // ---- osu! made whole (osukit.js): its design built into this project (groups, cubes, one atlas), its timeline, its music and
+    //      hitsounds — the lab's own song made here (osusong.js) or the person's map; the pixel look of cubes, or a skin's pictures
+    function osuFullDialog() {
+      new Dialog({
+        id: 'geoui_osu_full', title: 'GeoUI: osu! を丸ごと作る', width: 620,
+        form: {
+          look: { label: '見た目', type: 'select', options: { pixel: 'ドット絵をキューブで（角度のついた 3D の盤面・チップチューン）', skin: 'osu! の公式の素材（スキン）' }, value: 'pixel' },
+          map: { label: '譜面と曲', type: 'select', options: { lab: 'ラボの曲「Cubic Pulse」と譜面（ここで作る・140 BPM・72 秒）', file: '自分の譜面（.osz・.osu）' }, value: 'lab' },
+          skin: { label: 'スキン（公式の素材のとき）', type: 'select', options: { legacy: 'osu! の Legacy スキン（ppy/osu-resources から取る・CC-BY-NC 4.0・営利は不可）', osk: '自分のスキン（.osk）' }, value: 'legacy' },
+          _info: { type: 'info', text: 'このプロジェクトの要素とタイムラインを置き換えます（新しい GeoUI プロジェクトで）。ゲームでは /scriptevent geoui:mode auto（ひとりでに遊ぶ）・aim（見ている所がカーソル）・relax → /scriptevent geoui:play 1。' },
+        },
+        onConfirm: (r) => { osuFull(r).catch((e) => say(`osu! を作れません: ${e.message || e}`, 'error')); },
+      }).show();
+    }
+    const pickFile = (extensions, type, readtype = 'buffer') => new Promise((ok) => Blockbench.import({ extensions, type, readtype }, (files) => ok((files && files[0]) || null)));
+    /** PNG bytes → { width, height, data } (a canvas reads them) */
+    const imageOf = (bytes) => new Promise((ok, no) => {
+      const url = URL.createObjectURL(new root.Blob([bytes], { type: 'image/png' })), im = new Image();
+      im.onload = () => { const cv = document.createElement('canvas'); cv.width = im.naturalWidth; cv.height = im.naturalHeight; const c2 = cv.getContext('2d'); c2.drawImage(im, 0, 0); const d = c2.getImageData(0, 0, cv.width, cv.height); URL.revokeObjectURL(url); ok({ width: cv.width, height: cv.height, data: new Uint8Array(d.data.buffer.slice(0)) }); };
+      im.onerror = () => { URL.revokeObjectURL(url); no(new Error('画像を読めません')); };
+      im.src = url;
+    });
+    /** a skin's files by name → { images: { name: image (@2x sizes) }, sounds: { name: { ext, bytes } } } — get(file) → bytes or null */
+    async function skinFrom(get) {
+      const K = T.osukit, images = {}, sounds = {}, missing = [];
+      for (const n of K.SKIN_IMAGES) {
+        const b2 = await get(`${n}@2x.png`);
+        if (b2) { images[n] = await imageOf(b2); continue; }
+        const b1 = await get(`${n}.png`);
+        if (b1) images[n] = K.as2x(await imageOf(b1)); else missing.push(n);
+      }
+      for (const n of K.SKIN_SOUNDS) for (const ext of ['ogg', 'wav']) { const b = await get(`${n}.${ext}`); if (b) { sounds[n] = { ext, bytes: new Uint8Array(b) }; break; } }
+      if (missing.length) throw new Error(`スキンに足りない絵があります: ${missing.slice(0, 6).join('・')}${missing.length > 6 ? ' …' : ''}`);
+      return { images, sounds };
+    }
+    async function osuFull(r) {
+      const K = T.osukit, S = T.osusong, ns = (ctx.settings() || {}).ns || 'geoui';
+      say('osu! を作っています…（曲を作り、絵を並べます。少しかかります）');
+      // the map and its music
+      let mapText = null, music = null;
+      if (r.map === 'lab') {
+        mapText = S.beatmap(r.look === 'pixel' ? 'chip' : 'synth');
+        const pcm = S.render(r.look === 'pixel' ? 'chip' : 'synth'), mono = pcm.channels.length > 1 ? pcm.channels[0].map((v, i) => (v + pcm.channels[1][i]) / 2) : pcm.channels[0];
+        // (the game plays .wav: mono, the chip's 22050 Hz, the synth's at 32000 to keep the pack small)
+        const rate = r.look === 'pixel' ? pcm.rate : 32000, step = pcm.rate / rate, out = new Float32Array(Math.floor(mono.length / step));
+        for (let i = 0; i < out.length; i++) out[i] = mono[Math.floor(i * step)];
+        music = { name: 'cubic_pulse.wav', bytes: T.media.makeWav(out, rate) };
+      } else {
+        const f = await pickFile(['osz', 'osu'], 'osu! の譜面', 'buffer');
+        if (!f) return;
+        if (/\.osu$/i.test(f.name)) mapText = new TextDecoder().decode(new Uint8Array(f.content));
+        else {
+          if (typeof JSZip === 'undefined') throw new Error('.osz を開けません（JSZip がありません）');
+          const zip = await JSZip.loadAsync(f.content), osus = Object.keys(zip.files).filter((n) => /\.osu$/i.test(n));
+          if (!osus.length) throw new Error('.osz に .osu がありません');
+          mapText = await zip.file(osus[0]).async('string');
+          const audio = (T.osu.parseOsu(mapText).general || {}).AudioFilename, af = audio && Object.keys(zip.files).find((n) => n.toLowerCase() === String(audio).toLowerCase());
+          if (af) music = { name: af, bytes: await zip.file(af).async('uint8array') };
+          if (osus.length > 1) say(`.osz に譜面が ${osus.length} 個: 最初の「${osus[0].replace(/\.osu$/i, '')}」で作りました`);
+        }
+      }
+      const map = T.osu.parseOsu(mapText);
+      // the look: the pixel art (and its blips, made here), or a skin's pictures and hitsounds
+      let images = null, skinSounds = {};
+      if (r.look === 'skin') {
+        if (r.skin === 'osk') {
+          const f = await pickFile(['osk', 'zip'], 'osu! のスキン（.osk）', 'buffer');
+          if (!f) return;
+          const zip = await JSZip.loadAsync(f.content), byName = new Map(Object.keys(zip.files).map((n) => [n.split('/').pop().toLowerCase(), n]));
+          ({ images, sounds: skinSounds } = await skinFrom(async (n) => { const k = byName.get(n.toLowerCase()); return k ? zip.file(k).async('uint8array') : null; }));
+        } else {
+          ({ images, sounds: skinSounds } = await skinFrom(async (n) => { try { const res = await root.fetch(K.LEGACY_SKIN + n); return res.ok ? new Uint8Array(await res.arrayBuffer()) : null; } catch (e) { return null; } }));
+        }
+      } else {
+        const chip = S.chipHitsounds();
+        for (const [n, pcm] of Object.entries(chip)) skinSounds[n] = { ext: 'wav', bytes: T.media.makeWav(pcm.channels[0], pcm.rate) };
+      }
+      const used = new Set(), sound = (n) => { const k = skinSounds[n] ? n : skinSounds[n.replace(/^(soft|drum)-/, 'normal-')] ? n.replace(/^(soft|drum)-/, 'normal-') : null; if (!k) return null; used.add(k); return `${ns}.${clean(k)}`; };
+      const built = K.build(map, { skin: r.look, images, music: 'music', sound, ns });
+      // into the project: its outliner (under the root), its atlas, its timeline and sounds — one step of Undo
+      const spec = designToOutliner(built.design, ctx.toBB), A2 = built.atlas.image;
+      const cv = document.createElement('canvas'); cv.width = A2.width; cv.height = A2.height;
+      cv.getContext('2d').putImageData(new root.ImageData(new Uint8ClampedArray(A2.data.buffer.slice(A2.data.byteOffset, A2.data.byteOffset + A2.data.byteLength)), A2.width, A2.height), 0, 0);
+      Undo.initEdit({ outliner: true, elements: [], textures: [] });
+      const rootG = Group.all.find((g) => g.name === ctx.G.ROOT && !(g.parent instanceof Group));
+      if (!rootG) throw new Error(`${ctx.G.ROOT} のボーンがありません（新しい GeoUI プロジェクトで）`);
+      for (const c of [...rootG.children]) c.remove();
+      const tex = new root.Texture({ name: `osu_${r.look}` }).fromDataURL(cv.toDataURL('image/png'));
+      tex.uv_width = A2.width; tex.uv_height = A2.height; tex.add(false);
+      const made = new Map([[rootG.name, rootG]]), cubes = [];
+      for (const g of spec.groups) { if (g.root) continue; const ng = new Group({ name: g.name, origin: g.origin, rotation: g.rotation }); ng.addTo(made.get(g.parent) || rootG).init(); if (g.geoui) ng.geoui = g.geoui; made.set(g.name, ng); }
+      for (const c of spec.cubes) {
+        const faces = {};
+        for (const k of ['north', 'south', 'east', 'west', 'up', 'down']) faces[k] = c.faces[k] ? { uv: c.faces[k].uv, texture: tex.uuid } : { uv: [0, 0, 0, 0], texture: null };
+        const nc = new Cube({ name: c.name, from: c.from, to: c.to, origin: c.origin, box_uv: false, faces });
+        nc.addTo(made.get(c.parent) || rootG).init(); cubes.push(nc);
+      }
+      Undo.finishEdit('GeoUI: osu! を作る', { outliner: true, elements: cubes, textures: [tex] });
+      const media2 = [];
+      if (music) { const info = soundInfo(music.name, music.bytes); media2.push({ id: 'music', kind: 'sound', name: music.name, ext: (info && info.ext) || 'ogg', game: Boolean(info && info.game), duration: info ? info.seconds : built.info.duration, peaks: [], data: toB64(music.bytes) }); }
+      for (const k of used) media2.push({ id: clean(k), kind: 'sound', name: `${k}.${skinSounds[k].ext}`, ext: skinSounds[k].ext, game: true, duration: 1, peaks: [], data: toB64(skinSounds[k].bytes) });
+      setMedia(media2, 'osu! の曲と音');
+      undo.edit('osu! のタイムライン', () => setDoc(built.doc));
+      store.refresh(); store.select({ seq: built.doc.sequences[0].id });
+      st.elemCache = null; Canvas.updateAll();
+      const i = built.info;
+      say(`osu!「${i.title}」[${i.version}]（${r.look === 'pixel' ? 'ドット絵のキューブ' : 'スキン'}）を作りました: 円 ${i.counts.circles}・スライダー ${i.counts.sliders}・スピナー ${i.counts.spinners}・ボーン ${built.design.bones.length}・キューブ ${cubes.length}・アトラス ${A2.width}x${A2.height}${music && !(soundInfo(music.name, music.bytes) || {}).game ? `（曲「${music.name}」はプレビューだけ: ゲームでは .ogg か .wav に）` : ''}`);
+    }
+
     // ---- a video of the timeline
     function videoDialog() {
       const seqId = store.selection().seq, seq = store.doc().sequences.find((s) => s.id === seqId);
@@ -597,7 +745,9 @@
         if (m.game === false || !['ogg', 'wav'].includes(m.ext)) { warnings.push(`音「${m.name}」は .${m.ext}: ゲームでは鳴りません（.ogg か .wav にして取り込み直す）`); return []; }
         return [{ id: m.id, ext: m.ext, data: fromB64(m.data) }];
       });
-      const rp = T.compile.extendPack(built.files, doc, { design, core: G, sounds });
+      // (a game's hitsounds — osu!'s: the script plays them, no audio clip names them — defined in the pack too)
+      const extraSounds = [...new Set(doc.sequences.flatMap((q) => (q.game ? [...q.game.objects.flatMap((o) => [...(o.hs || []), ...((o.es || []).flat())]), ...Object.values(q.game.sounds || {})] : [])).filter(Boolean).map((id) => String(id).replace(/^[^.]*\./, '')))];
+      const rp = T.compile.extendPack(built.files, doc, { design, core: G, sounds, extraSounds });
       let files = rp.files;
       warnings.push(...rp.warnings);
       if (S.bp) { const bp = T.runtime.extendBehavior(files, doc, { stats: rp.stats, ns: S.ns }); files = bp.files; warnings.push(...bp.warnings); }
@@ -621,10 +771,10 @@
       if (st.audioCtx && st.audioCtx.close) st.audioCtx.close();
       store.dispose();
     }
-    return { uninstall, extend, store, player, host: H, actions: ['geoui_tl_play', 'geoui_tl_track', 'geoui_tl_media', 'geoui_tl_osu', 'geoui_tl_video'], state: st, importOsuText, addSounds, exportVideo, frameRect,
+    return { uninstall, extend, store, player, host: H, actions: ['geoui_tl_play', 'geoui_tl_track', 'geoui_tl_media', 'geoui_tl_osu', 'geoui_tl_osu_full', 'geoui_tl_video'], state: st, importOsuText, addSounds, exportVideo, frameRect, osuFull,
       audio: audioEngine, audioCount: () => (audioEngine ? audioEngine.count() : 0) };
   }
 
-  T.bridge = { install, digitsOf, patchShader, rectOf, frameOffset, protosOf, soundId, bodyAtlas, toB64, fromB64, soundInfo };
+  T.bridge = { designToOutliner, install, digitsOf, patchShader, rectOf, frameOffset, protosOf, soundId, bodyAtlas, toB64, fromB64, soundInfo };
   if (typeof module === 'object' && module && module.exports) module.exports = T.bridge;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

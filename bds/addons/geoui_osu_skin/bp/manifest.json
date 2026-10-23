@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI osu! Skin BP",
+    "description": "GeoUI timeline: osu! with its Legacy skin (CC-BY-NC 4.0, ppy), its own song (bds-lab)",
+    "uuid": "36491341-3720-4066-aa82-55a71cb44484",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "3c453394-f1dd-4771-a6f4-5bceed5ed70b",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "cd014e41-d13f-4e20-a30b-288781336126",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "740c1eb1-540b-4736-8e44-387796bf5c54",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.1.0"
+    }
+  ]
+}

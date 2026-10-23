@@ -4,6 +4,7 @@
 // two minutes, no music) — add-ons the lab can test: tests.txt on a real BDS, app.txt in the real app. Everything is the lab's
 // own: the beatmaps, the textures (drawn here) and the click track (made here). node bds/geoui/timeline/demo.mjs [--check]
 //   --check: write nothing, fail when an add-on in the repository is not what this makes (tests/tl-runtime-offline.mjs runs it)
+//   bds/addons/geoui_osu_pixel and geoui_osu_skin: osu! whole (bds/geoui/osu/addon.mjs; --no-osu leaves them out)
 //   bds/addons/geoui_rhythm_huge (1000 objects, six minutes, 3.2 MB) is made and checked with the others (it was a branch of its
 //   own, addon/geoui_rhythm_huge, until it was merged into the default branch on 2026-10-23). --huge [top]: that one alone,
 //   under top (default this checkout)
@@ -286,6 +287,27 @@ for (const w of [...new Set(warnings)]) console.log(`W ${w}`);
 return warnings;
 }
 
+// ---- the osu! samples (bds/geoui/osu/addon.mjs): the pixel look of cubes and osu!'s own Legacy skin, each with the lab's song
+const { OSU_SAMPLES, makeOsu } = await import('../osu/addon.mjs');
+function osuSamples(top = TOP) {
+  for (const V of OSU_SAMPLES) {
+    const { out, OUT, warnings, stats } = makeOsu(V, top), rel0 = `bds/addons/${V.name}`;
+    if (process.argv.includes('--check')) {
+      const stale = [];
+      for (const [rel, data] of out) { const f = path.join(OUT, rel); if (!fs.existsSync(f) || !fs.readFileSync(f).equals(data)) stale.push(rel); }
+      const walk = (d) => (fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.relative(OUT, path.join(d, e.name)).split(path.sep).join('/')])) : []);
+      for (const rel of [...walk(path.join(OUT, 'rp')), ...walk(path.join(OUT, 'bp'))]) if (!out.has(rel)) stale.push(`${rel} (left over)`);
+      if (stale.length) { console.error(`${rel0} is not what demo.mjs makes (${stale.slice(0, 5).join(', ')}): node bds/geoui/timeline/demo.mjs`); failed = true; }
+      else console.log(`OK ${rel0} is up to date (${out.size} files)`);
+    } else {
+      fs.rmSync(path.join(OUT, 'rp'), { recursive: true, force: true }); fs.rmSync(path.join(OUT, 'bp'), { recursive: true, force: true });
+      for (const [rel, data] of out) { const f = path.join(OUT, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, data); }
+      console.log(`OK ${rel0}: ${out.size} files · ${stats.lines} lines, longest ${stats.longest} · properties ${stats.props} · bones ${stats.counts.bones} · render controllers ${stats.counts.renderControllers} · atlas ${stats.atlas.join('x')} · auto ${stats.auto.score} (${stats.auto.acc}%)`);
+    }
+    for (const w of [...new Set(warnings)]) console.log(`W ${w}`);
+  }
+}
+
 const hugeAt = process.argv.indexOf('--huge');
 const HUGE = (top = TOP) => ({ name: 'geoui_rhythm_huge', big: 1000, top, title: 'GeoUI Rhythm 1000', description: 'GeoUI timeline sample: a long map, 1000 objects (bds-lab)', atlas: [2048, 2048], shots: [2, 10, 30, 60, 120, 180, 240, 300, 350, 375], seek: 300 });
 if (hugeAt >= 0) {
@@ -294,5 +316,6 @@ if (hugeAt >= 0) {
   make({ name: 'geoui_rhythm', title: 'GeoUI Rhythm', description: 'GeoUI timeline sample: an osu!-style HUD (bds-lab)', atlas: [128, 256], shots: [1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 8.0, 9.5, 11.0, 12.5], seek: 6 });
   make({ name: 'geoui_rhythm_big', big: 300, title: 'GeoUI Rhythm 300', description: 'GeoUI timeline sample: a map of real size, 300 objects (bds-lab)', atlas: [1024, 1024], shots: [2, 5, 10, 20, 30, 45, 60, 80, 100, 112], seek: 60 });
   make(HUGE());
+  if (!process.argv.includes('--no-osu')) osuSamples();
 }
 if (failed) process.exit(1);

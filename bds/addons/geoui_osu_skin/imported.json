@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/timeline/demo.mjs (bds/geoui/osu/addon.mjs)",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI のタイムラインで作った osu!（osu! の Legacy スキンの素材: CC-BY-NC 4.0・曲つき）: 譜面・曲はラボの物"
+}

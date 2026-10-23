@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // (the order: what a part uses at load time comes before it — none does, but the bridge expects all of them at install)
-export const PARTS = ['model', 'contract', 'media', 'osu', 'presets', 'view', 'timeline', 'curve', 'inspector', 'instances', 'pathedit', 'player', 'compile', 'runtime', 'store', 'bridge'];
+export const PARTS = ['model', 'contract', 'media', 'osu', 'osugame', 'osukit', 'osusong', 'presets', 'view', 'timeline', 'curve', 'inspector', 'instances', 'pathedit', 'player', 'compile', 'runtime', 'store', 'bridge'];
 export const OUT = path.join(HERE, 'dist', 'geoui_builder.js');
 
 /** the bundle's text: a header, each part in its own scope, GeoUI Builder last (as it is: its core exported to Node) */

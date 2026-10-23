@@ -1,0 +1,72 @@
+# geoui_osu_pixel を本物のアプリで: ひとりでに遊ばせて（mode auto）、決まった時刻に写し、全部を録る（GeoUI のタイムラインが描く osu!）
+# 時刻は再生を始めてからの目安（サーバーの命令が届くまでの遅れがある）。比べる基準は再生前の画面（world--before-play）。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 900000
+wait 3000
+do time set noon
+do gamerule dodaylightcycle false
+do gamerule sendcommandfeedback false
+do gamerule commandblockoutput false
+do weather clear
+do tp @a 0 -60 0 0 90
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do hud @a hide crosshair
+wait 6000
+shot world--before-play
+absent clientlog \bERROR\b
+
+section play
+# (the whole play recorded: recordings/rec-1.mp4 — the person's Discord gets it at the end, made to fit: app/lib/feed.mjs)
+record start
+do scriptevent geoui:mode auto
+do scriptevent geoui:play 1
+wait 2200
+shot play-2_2s
+measure diff play-2_2s 0 0 1560 720
+wait 7800
+shot play-10s
+measure diff play-10s 0 0 1560 720
+wait 12300
+shot play-22_3s
+measure diff play-22_3s 0 0 1560 720
+wait 7700
+shot play-30s
+measure diff play-30s 0 0 1560 720
+wait 15000
+shot play-45s
+measure diff play-45s 0 0 1560 720
+wait 7000
+shot play-52s
+measure diff play-52s 0 0 1560 720
+wait 8000
+shot play-60s
+measure diff play-60s 0 0 1560 720
+wait 7500
+shot play-67_5s
+measure diff play-67_5s 0 0 1560 720
+wait 2500
+shot play-70s
+measure diff play-70s 0 0 1560 720
+wait 4000
+shot rank
+record stop
+absent clientlog \bERROR\b
+
+section stop
+do scriptevent geoui:stop
+wait 2000
+shot stopped
+measure diff stopped 0 0 1560 720
+
+section log-molang
+# (a content error of Molang in the pack's own lines (geoui_): a pre_animation line the game cannot run stops the lines after it)
+absent clientlog (?i)geoui_

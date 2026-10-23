@@ -85,8 +85,11 @@
     seq: `${ns}:seq`, from: `${ns}:seq_from`,
     slot: (tid, k) => ({ t: `${ns}:${tid}${k}t`, p: `${ns}:${tid}${k}p` }),
     events: (tid, g) => `${ns}:${tid}e${g}`,
+    ge: `${ns}:ge`, state: (group) => `${ns}:${group}`,
   });
-  const RESULTS = Object.freeze(['none', 'hit', 'miss', 'great', 'good', 'ok']);   // a result's number in its 3 bits (0 = none)
+  // (a result's number in its 3 bits, 0 = none: hit — a press that counts, an osu! slider's head; great / good / ok — osu!'s
+  //  300 / 100 / 50; early — pressed before its window (osu!'s shake, notelock); drop — a slider's head missed, the slider going on)
+  const RESULTS = Object.freeze(['none', 'hit', 'miss', 'great', 'good', 'ok', 'early', 'drop']);
   /** the seq property's number for a sequence, paused or not, and a generation */
   const seqValue = ({ seq = 0, pause = false, gen = 0 } = {}) => Math.min(SEQ.max, Math.max(0, Math.round(num(seq)))) + (pause ? SEQ.pause : 0) + SEQ.gen * (((Math.round(num(gen)) % SEQ.gens) + SEQ.gens) % SEQ.gens);
   const seqParts = (v) => { const x = Math.max(0, Math.round(num(v))); return { seq: x % SEQ.pause, pause: Math.floor(x / SEQ.pause) % 2 === 1, gen: Math.floor(x / SEQ.gen) % SEQ.gens }; };
@@ -98,6 +101,69 @@
   const eventValue = (codes) => { let v = 0; (codes || []).slice(0, EV_PER).forEach((c, i) => { v += (Math.max(0, Math.min(7, Math.round(num(c)))) * 2 ** (EV_BITS * i)); }); return v; };
   /** slot k's result as Molang (expr: its group's property read) */
   const eventMolang = (expr, k) => { const sh = k % EV_PER; return sh ? `math.mod(math.floor((${expr}) / ${2 ** (EV_BITS * sh)}), 8)` : `math.mod(${expr}, 8)`; };
+  // ---- the whole play, not one instance (osu!'s HUD and its effects): events any instance raises, and states the script keeps
+  // live. A clip on a sequence's own track with trigger <name> (or until <name>) answers the latest such event of the whole
+  // play — a shake of the playfield on any miss, the combo's pop on any hit:
+  //   <ns>:ge, <ns>:ge1   up to 8 event names (GLOBAL_EVENTS, the ones the document uses), a 6-bit counter each (+1 each
+  //             time, mod 64), 4 to a property: the client sees the number change and takes that moment as the event's time
+  // An expression may read state.<name> (STATES): the cursor where the player looks, whether a button is held, a spinner's spin,
+  // the score… — the script sets them in a few properties (each 24 bits at most, packed as an instance's params are):
+  //   <ns>:v0 … v3  GeoUI's own values (score, combo, accuracy × 100, health): as they are
+  //   <ns>:cur   the cursor (cx, cy: model units, 0.1 apart) and hold (a button held: 0 / 1)
+  //   <ns>:sp    the spinner now: spin (0…1 of the spins it needs), rpm, sa (its angle, degrees)
+  //   <ns>:res   rank (0 none, 1 D … 5 S, 6 SS), maxcombo, misses
+  //   <ns>:cnt   n300, n100, n50
+  // (hit: any hit — a 300 / 100 / 50 or a slider's head; combo: the combo went up — a hit, a slider's tick or turn; break: the combo
+  //  was broken; tick: a slider's tick or turn followed; clear: a spinner spun enough; bonus: a spin past it; fail: health ran out;
+  //  kiai: a kiai section began)
+  const GLOBAL_EVENTS = Object.freeze(['hit', 'miss', 'great', 'good', 'ok', 'combo', 'break', 'tick', 'clear', 'bonus', 'fail', 'kiai']);
+  const GE_BITS = 6, GE_PER = 4, GE_MAX = 8;
+  const STATE_GROUPS = Object.freeze({
+    cur: Object.freeze([{ name: 'cx', bits: 11, min: -102.4, max: 102.3 }, { name: 'cy', bits: 11, min: -102.4, max: 102.3 }, { name: 'hold', bits: 1, min: 0, max: 1 }]),
+    sp: Object.freeze([{ name: 'spin', bits: 7, min: 0, max: 1 }, { name: 'rpm', bits: 9, min: 0, max: 511 }, { name: 'sa', bits: 8, min: 0, max: 358.59375 }]),
+    res: Object.freeze([{ name: 'rank', bits: 3, min: 0, max: 7 }, { name: 'maxcombo', bits: 11, min: 0, max: 2047 }, { name: 'misses', bits: 10, min: 0, max: 1023 }]),
+    cnt: Object.freeze([{ name: 'n300', bits: 10, min: 0, max: 1023 }, { name: 'n100', bits: 7, min: 0, max: 127 }, { name: 'n50', bits: 7, min: 0, max: 127 }]),
+  });
+  // (GeoUI's own values: v0 … v3 — the runtime's CFG.values says which is which; accuracy is kept × 100)
+  const VALUE_STATES = Object.freeze({ score: { prop: 'v0', scale: 1 }, combo: { prop: 'v1', scale: 1 }, acc: { prop: 'v2', scale: 0.01 }, hp: { prop: 'v3', scale: 1 } });
+  const STATE_NAMES = Object.freeze([...Object.keys(VALUE_STATES), ...Object.values(STATE_GROUPS).flatMap((g) => g.map((f) => f.name))]);
+  const RANKS = Object.freeze(['', 'D', 'C', 'B', 'A', 'S', 'SS']);
+  /** where a state lives: { group, field } (a packed group) or { prop, scale } (one of GeoUI's values) */
+  function stateOf(name) {
+    if (VALUE_STATES[name]) return Object.assign({ value: true }, VALUE_STATES[name]);
+    for (const [group, spec] of Object.entries(STATE_GROUPS)) { const field = spec.find((f) => f.name === name); if (field) return { group, field }; }
+    return null;
+  }
+  /** the global events' counter number from counts { name: n } in the document's order (events: the names it uses) */
+  const geValue = (events, counts, g = 0) => { let v = 0; (events || []).slice(g * GE_PER, (g + 1) * GE_PER).forEach((e, k) => { v += (((Math.round(num(counts && counts[e])) % 64) + 64) % 64) * 2 ** (GE_BITS * k); }); return v; };
+  /** the property event k is counted in (its group: 4 to a property) */
+  const geName = (ns, k) => (Math.floor(k / GE_PER) ? `${ns}:ge${Math.floor(k / GE_PER)}` : `${ns}:ge`);
+  /** event k's counter as Molang (expr: its property read — geName) */
+  const geMolang = (expr, k) => { const sh = k % GE_PER; return sh ? `math.mod(math.floor((${expr}) / ${2 ** (GE_BITS * sh)}), 64)` : `math.mod(${expr}, 64)`; };
+  /** what a document's sequences use of the whole play: the global events (triggers / untils on a sequence's own tracks, in first
+   *  use order, at most GE_MAX) and the states (state.<name> in any key's value or a clip's start / end) → { events, states,
+   *  groups (the packed groups the states need), warnings } */
+  function globalNeeds(doc) {
+    const events = [], states = [], warnings = [];
+    const addState = (src) => { const m = String(src).match(/\bstate\.(\w+)/g) || []; for (const x of m) { const k = x.slice(6); if (!states.includes(k)) states.push(k); } };
+    const scan = (tracks, own) => {
+      for (const tr of tracks || []) for (const c of (tr && tr.clips) || []) {
+        if (own) for (const e of [c.trigger, c.until]) if (typeof e === 'string' && e && !events.includes(e)) events.push(e);
+        for (const v of [c.start, c.end]) if (typeof v === 'string') addState(v);
+        for (const ks of Object.values(c.channels || {})) for (const k of ks || []) if (typeof k.v === 'string') addState(k.v);
+      }
+    };
+    for (const seq of (doc && doc.sequences) || []) { scan(seq.tracks, true); for (const tp of seq.templates || []) scan(tp.tracks, false); }
+    for (const e of events) if (!GLOBAL_EVENTS.includes(e)) warnings.push(`シーケンスのトラックの trigger / until「${e}」は、ゲームの中のどの出来事でもありません（${GLOBAL_EVENTS.join('・')}）`);
+    const known = events.filter((e) => GLOBAL_EVENTS.includes(e));
+    if (known.length > GE_MAX) warnings.push(`シーケンスのトラックが答える出来事が ${known.length} 種類あります（${GE_MAX} 種類まで: ${known.slice(GE_MAX).join('・')} は書き出しません）`);
+    const bad = states.filter((x) => !stateOf(x));
+    if (bad.length) warnings.push(`state.${bad.join('・state.')} はありません（${STATE_NAMES.join('・')}）`);
+    const ok = states.filter((x) => stateOf(x));
+    const groups = Object.keys(STATE_GROUPS).filter((g) => ok.some((x) => (stateOf(x) || {}).group === g));
+    return { events: known.slice(0, GE_MAX), states: ok, groups, warnings };
+  }
+
   /** a template whose params all fit its pack (or that has none) can be streamed */
   const canStream = (tpl) => { const spec = (tpl && tpl.pack) || DEFAULT_PACK; return ((tpl && tpl.params) || []).every((p) => spec.some((f) => f.name === p)); };
   /** what a template needs: per slot t + p when its instances are streamed (p only with params); a share of an events
@@ -127,9 +193,11 @@
       });
       sequences.push({ id: seq.id, templates, properties: 2 + templates.reduce((s, t) => s + t.properties, 0) });
     }
-    const own = 2 + [...tags.values()].reduce((s, u) => s + u.t + u.p + u.groups, 0), total = base + own;
+    const g = globalNeeds(doc);
+    warnings.push(...g.warnings);
+    const own = 2 + [...tags.values()].reduce((s, u) => s + u.t + u.p + u.groups, 0) + Math.ceil(g.events.length / GE_PER) + g.groups.length, total = base + own;
     if (total > propertyLimit) warnings.push(`プロパティが ${total} 個要ります（GeoUI の ${base} 個とタイムラインの ${own} 個。上限 ${propertyLimit}）: 流し込みのテンプレートを焼き込みに（bakedMax を上げる）するか、同時に出る実体を減らす（lead・tail を短く）`);
-    return { sequences, properties: own, total, base, propertyLimit, warnings, names: names(ns), tags: Object.fromEntries(tags) };
+    return { sequences, properties: own, total, base, propertyLimit, warnings, names: names(ns), tags: Object.fromEntries(tags), global: { events: g.events, states: g.states, groups: g.groups } };
   }
   /** the entity properties (BP player.json "description.properties") for a budget */
   function propertyDefs(b, ns = 'geoui') {
@@ -142,9 +210,14 @@
       for (let k = 0; k < u.p; k++) out[N.slot(tag, k).p] = { type: 'int', range: [0, top], default: 0, client_sync: true };
       for (let g = 0; g < u.groups; g++) out[N.events(tag, g)] = { type: 'int', range: [0, top], default: 0, client_sync: true };
     }
+    const gl = (b && b.global) || {};
+    for (let k = 0; k < (gl.events || []).length; k += GE_PER) out[geName(ns, k)] = { type: 'int', range: [0, top], default: 0, client_sync: true };
+    for (const grp of gl.groups || []) out[N.state(grp)] = { type: 'int', range: [0, top], default: grp === 'cur' ? pack({ cx: 0, cy: 0, hold: 0 }, STATE_GROUPS.cur) : 0, client_sync: true };
     return out;
   }
 
-  T.contract = { MAX_BITS, DEFAULT_PACK, RESULTS, SEQ, EV_BITS, EV_PER, checkSpec, stepOf, pack, unpack, unpackMolang, allocateSlots, names, seqValue, seqParts, seqMolang, eventSlot, eventValue, eventMolang, canStream, slotNeeds, slotTag, budget, propertyDefs };
+  T.contract = { MAX_BITS, DEFAULT_PACK, RESULTS, SEQ, EV_BITS, EV_PER, GLOBAL_EVENTS, GE_BITS, GE_PER, GE_MAX, STATE_GROUPS, VALUE_STATES, STATE_NAMES, RANKS,
+    checkSpec, stepOf, pack, unpack, unpackMolang, allocateSlots, names, seqValue, seqParts, seqMolang, eventSlot, eventValue, eventMolang, stateOf, geValue, geName, geMolang, globalNeeds,
+    canStream, slotNeeds, slotTag, budget, propertyDefs };
   if (typeof module === 'object' && module && module.exports) module.exports = T.contract;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
