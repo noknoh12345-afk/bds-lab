@@ -25,6 +25,9 @@
   /** where the content lives: far from the model's origin (the player's own body, which every renderer also draws) and far
    *  enough that any other renderer of the player — the inventory's doll, the HUD's paper doll — draws it off its screen */
   const BAND_Y = 1200, GROUP_DX = 1500, GROUP_DY = 600;
+  /** a gui group's unit is a JSON UI px — a few screen px — so its renderer sees far: such groups get a band of their own below
+   *  the model, wider apart (what a renderer sees of another group's content: ghosts(), checked by pack.js on every device) */
+  const GUI_Y = -3000, GUI_DX = 4500, GUI_DY = 1500;
   const ANCHORS = Object.freeze({
     top_left: [0, 0], top_middle: [0.5, 0], top_right: [1, 0],
     left_middle: [0, 0.5], center: [0.5, 0.5], right_middle: [1, 0.5],
@@ -77,6 +80,8 @@
     const col = (i % 5) - 2, row = Math.floor(i / 5);
     return [col * GROUP_DX, BAND_Y + row * GROUP_DY];
   }
+  /** the k-th gui group's model point */
+  function guiOrigin(k) { return [((k % 3) - 1) * GUI_DX, GUI_Y - Math.floor(k / 3) * GUI_DY]; }
   /** JSON UI offset (of the square panel, anchored by its centre) that puts model point G on the anchor point: in % of the
    *  square's own size (%x, %y), so it holds on every screen. ox = −K·side·Gx, oy = K·side·(Gy − D) (screen y is down) */
   function offsetOf(G, k = K, d = D) {
@@ -86,12 +91,13 @@
   /** a group as the builders use it: { id, anchor, origin, scale, clip?, layer } (scale: the scene's unless its own) */
   function groupsOf(scene) {
     const m = modeOf(scene.scale);
+    let main = 0, gui = 0;
     const list = (scene.groups || []).map((g0, i) => {
       const g = Object.assign({}, g0);
       if (!/^[a-z0-9_]{1,24}$/.test(String(g.id))) throw new Error(`グループの名前「${g.id}」は英小文字・数字・_ で 24 文字まで`);
       g.anchor = anchorName(g.anchor || 'center');
       g.scale = g.scale ? modeOf(g.scale) : m;
-      g.origin = Array.isArray(g.origin) ? g.origin.map(Number) : groupOrigin(i);
+      g.origin = Array.isArray(g.origin) ? g.origin.map(Number) : g.scale.mode === 'gui' ? guiOrigin(gui++) : groupOrigin(main++);
       g.index = i;
       return g;
     });
@@ -119,6 +125,25 @@
     const cx = a.x - K * side * G[0], cy = a.y + K * side * (G[1] - D);
     const X = G[0] + x, Y = G[1] - y;
     return { x: cx + u * X, y: cy - u * (Y - d) };
+  }
+  /** what a renderer sees that is not its own: every live_player_renderer draws the whole model — every group, and the player's
+   *  body at the model's origin — so each group's content must be off the screen in every other group's renderer. boxes: { group
+   *  id: { x0, y0, x1, y1 } } (its content, local units); margin: room for bones that move. → [{ by, seen }] on a W x H screen */
+  const BODY = { id: '(体)', origin: [0, 0] }, BODY_BOX = { x0: -24, y0: -40, x1: 24, y1: 8 };
+  function ghosts(groups, boxes, W, H, uiScale = 2, margin = 40) {
+    const out = [];
+    for (const A of groups) {
+      if (A.renderer === false) continue;
+      const a = anchorPx(A, W, H, uiScale), u = a.u;
+      for (const B of [...groups, BODY]) {
+        const b = B === BODY ? BODY_BOX : boxes[B.id];
+        if (A === B || !b) continue;
+        const dx = B.origin[0] - A.origin[0], dy = B.origin[1] - A.origin[1];
+        const x0 = a.x + u * (dx + b.x0 - margin), x1 = a.x + u * (dx + b.x1 + margin), y0 = a.y + u * (b.y0 - margin - dy), y1 = a.y + u * (b.y1 + margin - dy);
+        if (x1 > 0 && x0 < W && y1 > 0 && y0 < H) out.push({ by: A.id, seen: B.id });
+      }
+    }
+    return out;
   }
   /** a rectangle in local units ({ x, y, w, h }, y down) → its screen box { x0, y0, x1, y1 } */
   function rectToScreen(g, r, W, H, uiScale = 1, k = K, d = D) {
@@ -208,8 +233,8 @@
   }
 
   S.layout = {
-    K, K_MEASURED, K_ERR, D, D_ERR, BAND_Y, GROUP_DX, GROUP_DY, ANCHORS, ANCHOR_NAMES, MODES, DEVICES,
-    anchorName, modeOf, sidePx, unitPx, viewportUnits, groupOrigin, offsetOf, groupsOf, anchorPx, localToScreen, rectToScreen, rectToModel,
+    K, K_MEASURED, K_ERR, D, D_ERR, BAND_Y, GROUP_DX, GROUP_DY, GUI_Y, GUI_DX, GUI_DY, ANCHORS, ANCHOR_NAMES, MODES, DEVICES,
+    anchorName, modeOf, sidePx, unitPx, viewportUnits, groupOrigin, guiOrigin, offsetOf, groupsOf, anchorPx, localToScreen, rectToScreen, rectToModel, ghosts,
     squareOf, hudScreen, deviceTable,
   };
   if (typeof module === 'object' && module && module.exports) module.exports = S.layout;

@@ -112,6 +112,13 @@ const viaRenderer = (r, X, Y, k = L.K, d = L.D) => { const u = k * Math.min(r.w,
   }
   ok(drift < 3, `the measured constants' error moves a group (up to ${far} units from the origin) by under 3 px on 1080p (${drift.toFixed(2)} px): the device check's tolerance`);
   ok(hud.root_panel.modifications[0].operation === 'insert_front' && hud.tt_vp.variables[0].requires === '($compress_hud_width)', 'the viewport: in front of the HUD\'s root panel, the whole width again when the game compresses the HUD');
+  // (every renderer draws the whole model: each group's content, and the player's body at the origin, must be off the screen
+  //  in every other renderer — the gui ones see far: a band of their own)
+  const sc2 = { ns: 'gh', scale: { mode: 'height', s: 0.1 }, groups: [...L.ANCHOR_NAMES.map((a, i) => ({ id: `g${i}`, anchor: a })), { id: 'u', anchor: 'bottom_middle', scale: { mode: 'gui', px: 1 } }, { id: 'k', anchor: 'center', scale: { mode: 'contain', w: 1280, h: 720, g: 0.25 } }] };
+  const gs2 = L.groupsOf(sc2), boxes2 = Object.fromEntries(gs2.map((g) => [g.id, { x0: -60, y0: -40, x1: 60, y1: 40 }]));
+  const ghostOn = (gs) => L.DEVICES.flatMap((d) => [1, 2, 3, 4].flatMap((ui) => L.ghosts(gs, boxes2, d.w, d.h, ui).map((h) => `${d.id}@${ui}:${h.by}←${h.seen}`)));
+  const crowded = gs2.map((g) => (g.id === 'u' ? Object.assign({}, g, { origin: [0, 600] }) : g));
+  ok(ghostOn(gs2).length === 0 && ghostOn(crowded).length > 0, `no renderer shows another group or the player's body, on ${L.DEVICES.length} screens at GUI scales 1–4 (a gui group put among the others would: ${ghostOn(crowded)[0]})`, ghostOn(gs2).slice(0, 4).join(' '));
   const table = L.deviceTable('height');
   ok(table.every((t) => near(t.unitsH, 170.666667, 1e-3)) && near(table.find((t) => t.id === 'uw329').unitsW, 606.814815, 1e-3), 'the device table: the height scale keeps 170.67 units of height; a 32:9 screen is 606.8 units wide');
 }
@@ -123,6 +130,7 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
   const f = built.files, geo = JSON.parse(f['rp/models/entity/gdev/atlas.geo.json'])['minecraft:geometry'][0];
   const lint = lintGeo(geo);
   ok(Array.isArray(lint) ? lint.length === 0 : !lint.length, 'the device pack\'s geometry passes the lab\'s model check (no two faces on one plane)', JSON.stringify(lint).slice(0, 600));
+  ok(built.warnings.length === 0, 'the device pack builds with no warning (no group shows in another\'s renderer)', built.warnings.join('\n'));
   const ent = JSON.parse(f['rp/entity/player.entity.json'])['minecraft:client_entity'].description;
   const reads = ent.scripts.pre_animation.filter((l) => /q\.property|query\.property/.test(l));
   ok(reads.length > 0 && reads.every((l) => /variable\.is_paperdoll \?/.test(l)), 'every property the pack reads is guarded: the pause screen\'s paper doll has none (a read there stops the rest)');

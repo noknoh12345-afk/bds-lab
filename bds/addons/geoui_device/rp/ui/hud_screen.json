@@ -395,8 +395,8 @@
           "anchor_from": "bottom_middle",
           "anchor_to": "center",
           "offset": [
-            "17578.125%x",
-            "13921.289063%y"
+            "26367.1875%x",
+            "-17719.335937%y"
           ],
           "controls": [
             {
@@ -444,7 +444,7 @@
                 "anchor_from": "center",
                 "anchor_to": "center",
                 "offset": [
-                  "8789.0625%x",
+                  "17578.125%x",
                   "13921.289063%y"
                 ],
                 "controls": [
@@ -481,7 +481,7 @@
           "anchor_from": "top_middle",
           "anchor_to": "center",
           "offset": [
-            "-8789.0625%x",
+            "8789.0625%x",
             "13921.289063%y"
           ],
           "controls": [
@@ -515,7 +515,7 @@
           "anchor_from": "center",
           "anchor_to": "center",
           "offset": [
-            "-17578.125%x",
+            "0%x",
             "13921.289063%y"
           ],
           "controls": [
@@ -549,8 +549,8 @@
           "anchor_from": "left_middle",
           "anchor_to": "center",
           "offset": [
-            "17578.125%x",
-            "17436.914063%y"
+            "-8789.0625%x",
+            "13921.289063%y"
           ],
           "controls": [
             {
@@ -583,8 +583,8 @@
           "anchor_from": "center",
           "anchor_to": "center",
           "offset": [
-            "8789.0625%x",
-            "17436.914063%y"
+            "-17578.125%x",
+            "13921.289063%y"
           ],
           "controls": [
             {

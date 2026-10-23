@@ -3,6 +3,9 @@
 GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付けた板（平らなキューブ）を描くことで作る 2D の UI（統合版）。
 このフォルダは、それを **Blockbench の上で組み立てて書き出すプラグイン** と、GeoUI Studio v10.1 の式の検証・本物のアプリでの較正の道具です。
 
+**仕様書: [SPEC.md](SPEC.md)** — どの画面でも正しい所に出す式（renderer の写し方・表示領域・4 つの大きさの決め方・寄せ先ごとの renderer・
+端末ごとの数）、描き方の決まりと限度、フォームなしで PC を再現する入力、HTML から GeoUI への変換器、端末の確かめ方と要実測の一覧。
+
 | ファイル | 中身 |
 |---|---|
 | `dist/geoui_builder.js` | **Blockbench に入れる 1 ファイル**: GeoUI Builder と **タイムライン**（`timeline/`。使い方は [TIMELINE.md](TIMELINE.md)）。`node bds/geoui/build.mjs` が作る（`--check`: 最新か） |
@@ -19,6 +22,9 @@ GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付�
 | `../../tests/geoui-builder-offline.mjs` | Studio の書き出し（`bds/addons/geoui_studio`）との突き合わせ、書き出したファイル、較正の測り方（CI） |
 | `../addons/geoui_bb/` | このプラグインで Studio のひな形「スコア＆ゲージ」を作り直した書き出し（本物の BDS: DONE 22/22・本物のアプリ: `app.txt`） |
 | `../addons/geoui_calib/` | 較正の目盛り（本物の BDS: DONE 3/3・本物のアプリ: `app.txt`） |
+| `screen/` | **GeoUI Screen**: SPEC.md の式（`layout.js`）・パックを作る（`pack.js`）・向きつきの焦点の移動（`nav.js`）・フォームなしの入力（`input.js`）・端末の確かめのパック（`device.mjs` → `../addons/geoui_device`） |
+| `html/` | **HTML → GeoUI**: ページをブラウザで状態ごとに撮り（`capture.mjs`）、アトラスとボーンにして（`scene.mjs`）、フォームなしで動かす（`runtime.js`）。`node bds/geoui/html/convert.mjs <page.html> --out <フォルダ>`。見本 `../addons/geoui_html_demo` |
+| `../../tests/geoui-screen-offline.mjs`・`geoui-html-offline.mjs` | 式と JSON UI の配置・パック・焦点・入力、変換器（パックの Molang をゲームと同じに動かした見た目・main.js そのもの）（CI） |
 | `../addons/geoui_osu_pixel/`・`geoui_osu_skin/` | タイムラインで作った osu!（キューブで組んだドット絵の模型 / 公式の素材。ラボの曲「Cubic Pulse」。失敗・Mods・結果・自己ベスト・検証ツアー・メニュー `/geoui:osu`）。本物の BDS: `tests.txt`・本物のアプリ: `app.txt`（ツアー 1 回）（`node bds/geoui/timeline/demo.mjs` が作る） |
 
 ## 使い方

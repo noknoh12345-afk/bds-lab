@@ -4,6 +4,31 @@
 **app ラボを「ほぼクライアント」に: 本物のアプリをコントローラーで人のように遊べる（歩く・見回す・跳ぶ・壊す・置く・持ち物・チャット…）。
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
+### 🎮 GeoUI の仕様書（SPEC.md）・端末の確かめ・HTML → GeoUI（フォームなしで操作する）
+- 頼み: 「osu! を作る前に GeoUI を仕様書で全部網羅して（各デバイスで正しい表示・正しい表示領域と式を全部）。まず色々なアスペクト比の Android、
+  次に iPhone などの実機で調べる。それから HTML を GeoUI に変える物を作って（スクロールでスロット・視点でマウス・W A S D で見た目の向きへ焦点・
+  ジャンプやシフトなど使えるキー全部で PC を再現・フォームは使わない）」。
+- **[bds/geoui/SPEC.md](bds/geoui/SPEC.md)**: renderer の写し方（1 単位 = K · パネルの短い辺、K = 0.9375/16、原点はパネルの真ん中の 24.10 単位下:
+  測った値）、表示領域（HUD の root_panel = セーフエリアの内側。HUD が 90 % に縮む時は 111.1 % で戻す）、大きさの決め方 4 つ（height・width・gui・
+  contain）とその JSON UI、**寄せ先ごとに 1 つの renderer**（`offset = [−100·K·G.x %x, 100·K·(G.y − D) %y]` で、画面の点 = 寄せ先 + 単位 x u。サーバーは
+  画面の形を知らなくてよい）、13 の端末の表、描き方の決まりと限度、入力の対応表、要実測の一覧と確かめ方、osu! を作るときの決め方。
+- **GeoUI Screen**（`bds/geoui/screen/`）: 式（`layout.js`。ほかのグループや自分の体が renderer に映らない置き方も: gui のグループは自分の帯）・
+  パック（`pack.js`。映る組があれば注意）・向きつきの焦点の移動（`nav.js`: 斜めも、あいまいならポインタを使っている間はポインタ、そうでなければ
+  よりまっすぐその向きの方、ヒントも同じ）・フォームなしの入力（`input.js`: 頭の向きがマウス、45° で水平に戻しても跳ばない、移動が矢印キーと
+  くり返し、ジャンプが決定、スニークが戻る、腕の振りがクリック、ホットバーがホイールと 1〜9）。
+- **端末の確かめ** `bds/addons/geoui_device`（`node bds/geoui/screen/device.mjs`）: 9 つの寄せ先・contain の枠・GUI の倍率・セーフエリアの外・切り抜き・
+  色・鏡写し・描く順・renderer ごとの計算・回転のクエリ・HUD の文字を `/scriptevent gdev:show <ビット>` で出し、本物の Android（画面 10 種・
+  画素の細かさ 2 種・切り欠き 3 種）で `measure marks`（色ごとの箱 px: `app/lib/measure.mjs`）が測る。入力 30 通りは `GDEV CHECK`。
+  期待の位置は `device.mjs expect <幅>x<高さ>`。iPhone などは TASK.md の「人が見ること」。本物の BDS で 18/18。
+- **HTML → GeoUI**（`bds/geoui/html/`、`node bds/geoui/html/convert.mjs <page.html> --out <フォルダ>`）: Chromium がページを操作できる物ごと・状態ごと
+  （通常・hover・focus-visible・active・ON / OFF・使えない、スライダーは値ごとに焦点のある姿も）に描いた絵を切り出し、アトラスとボーンにして、
+  contain の 1 グループに（どの画面でも形を変えない）。`data-geoui-action`（page・event・cmd・toggle…）・タブ・スイッチ・ラジオ・スライダー・
+  スロット・数字・進み具合。押した見た目の無い物は押している間も焦点の見た目。焦点のあるスライダーにホイール 1 目盛りは値（スロットは選ばない）。
+  開いたまま抜けた人は閉じた状態で戻る。出来事は `/scriptevent <ns>:on_<名前>`。見本 `bds/addons/geoui_html_demo`（本物の BDS で 17/17）。
+- 試験 `tests/geoui-screen-offline.mjs`（式と JSON UI の配置を 13 画面 x 4 つの決め方 x 9 つの寄せ先で突き合わせる・映り込み・パック・焦点・入力・
+  端末のパック・measure marks）と `tests/geoui-html-offline.mjs`（パックの Molang をゲームと同じに動かした見た目、main.js そのものを作り物の
+  @minecraft/server で: 開く・キー・ジャンプ・スロット・ホイール・視点・腕の振り・戻る・抜けて戻る・体を止める 3 つの方法）。
+
 ### 🎮 GeoUI タイムライン: osu! をさらに深く — 失敗・やり直し・Mods・結果の画面・自己ベスト・検証ツアー、ドット絵版はキューブで組んだ模型に
 - 頼み: 「さらに完璧に、さらに深く」。ドット絵版は「キューブを使って、ドット絵を描くだけでなくちゃんとモデリングする（ドット絵は残す）」。
 - **osu! の流れを丸ごと**（`osugame.js`・`runtime.js`・`osukit.js`）: 体力が尽きると失敗（盤面が落ち、幕・FAILED・失敗の音、曲が止まる。

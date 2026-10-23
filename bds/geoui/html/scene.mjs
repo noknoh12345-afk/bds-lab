@@ -3,7 +3,7 @@
 //
 // Layout: the page is one rigid box — the "contain" scale of screen/layout.js: the design (e.g. 1280 x 720 px, g model units a
 // px) fitted inside the screen on every device, centred, its own background colour reaching past it to the screen's edges.
-// One renderer draws it all, so the pointer, every control and the hit test share one frame (SPEC.md: 操作する物は 1 つの枠に).
+// One renderer draws it all, so the pointer, every control and the hit test share one frame (SPEC.md 6 章: 当たり判定は 1 つのグループの中で).
 // Layers, back to front (z and the order of the bones): the background → each page's base → the controls and dynamic parts
 // (each state a bone of its own, shown by part_visibility) → the focus ring, the WASD hints and the pointer.
 // A picture is stored as parts: cut into blocks of 64 px, a block of one colour (a run of them along a row) is a 4 x 4 sprite
@@ -319,6 +319,8 @@ export function buildScene(dir, opts = {}) {
     d.cols.forEach((_, j) => { const place = 10 ** (d.cols.length - 1 - j); pre.push(`${P(`${name}_${j}`)} = math.mod(math.floor(${P(name)} / ${place}), 10);`); });
   }
   for (const t of T) pre.push(...t.lines);
+  if (controls.length > 255) warnings.push(`操作できる物が ${controls.length} 個: 焦点・ポインタ・押している物の番号は 8 bit（255 個まで）。ページを分けてください`);
+  else if (controls.length > 63) warnings.push(`操作できる物が ${controls.length} 個: W A S D のヒントは 63 個目まで（それより後の物の上には出ない）`);
   if (props.length > 32) warnings.push(`プロパティが ${props.length} 個になります（上限 32）: 操作できる物・動く物を減らすか、ページを分けてください`);
   const scene = {
     ns, name: opts.name || cap.title || 'GeoUI HTML', description: opts.description || `${cap.source} を GeoUI に（bds-lab: bds/geoui/html）`, seed: opts.seed || `${ns}:${cap.source}`,

@@ -56,7 +56,8 @@
       set(p, s, 'cur', q(r.pointer[0]) + q(r.pointer[1]) * 4096);
       const showHints = s.open && r.focus !== null && (s.via === 'keys' || s.tick < s.hintsUntil);
       const h = showHints ? s.ctl.hints() : { W: null, A: null, S: null, D: null };
-      set(p, s, 'hint', ['W', 'A', 'S', 'D'].reduce((n, k, j) => n + (indexOf(h[k]) + 1) * 64 ** j, 0));
+      // (6 bits a key: the 63 first controls; a later one gets no badge)
+      set(p, s, 'hint', ['W', 'A', 'S', 'D'].reduce((n, k, j) => { const i = indexOf(h[k]); return n + (i >= 0 && i < 63 ? i + 1 : 0) * 64 ** j; }, 0));
       set(p, s, 'flg', (s.open && s.via === 'pointer' ? 1 : 0) | (showHints ? 2 : 0));
       const chk = {};
       for (const c of CFG.controls) if (s.checked[c.i]) { const k = Math.floor(c.i / 24); chk[k] = (chk[k] || 0) + 2 ** (c.i % 24); }
@@ -223,7 +224,8 @@ const engine = createScreens(CFG, {
     const i = p.inputInfo, q = pend.get(p.id) || { swings: 0, uses: 0 }; pend.set(p.id, { swings: 0, uses: 0 });
     const h = held.get(p.id);
     if (h && HOLD !== 'lock' && Math.hypot(p.location.x - h.loc.x, p.location.z - h.loc.z) > 0.05) { try { p.teleport(h.loc, { keepVelocity: false }); } catch (e) { /* (the next tick) */ } }
-    return { rot: p.getRotation(), move: i.getMovementVector(), jump: i.getButtonState(InputButton.Jump) === ButtonState.Pressed, sneak: i.getButtonState(InputButton.Sneak) === ButtonState.Pressed,
+    // (a press is the button held now, or one pressed since the last tick: a tap shorter than a tick still counts)
+    return { rot: p.getRotation(), move: i.getMovementVector(), jump: i.getButtonState(InputButton.Jump) === ButtonState.Pressed || !!q.jump, sneak: i.getButtonState(InputButton.Sneak) === ButtonState.Pressed || !!q.sneak,
       slot: p.selectedSlotIndex, mode: String(i.lastInputModeUsed), swings: q.swings, uses: q.uses };
   },
   setProp: (p, name, v) => { if (p.isValid) p.setProperty(name, v); },
@@ -260,6 +262,12 @@ const engine = createScreens(CFG, {
   load: (p, key) => (p.isValid ? p.getDynamicProperty(key) : undefined),
   save: (p, key, v) => { if (p.isValid) p.setDynamicProperty(key, v); },
 }, GS);
+world.afterEvents.playerButtonInput.subscribe((e) => {
+  if (e.newButtonState !== ButtonState.Pressed) return;
+  const q = pend.get(e.player.id) || { swings: 0, uses: 0 };
+  if (e.button === InputButton.Jump) q.jump = true; else if (e.button === InputButton.Sneak) q.sneak = true;
+  pend.set(e.player.id, q);
+});
 world.afterEvents.playerSwingStart.subscribe((e) => { const q = pend.get(e.player.id) || { swings: 0, uses: 0 }; if (String(e.swingSource) === 'Attack') q.swings++; pend.set(e.player.id, q); });
 world.afterEvents.itemUse.subscribe((e) => { const q = pend.get(e.source.id) || { swings: 0, uses: 0 }; q.uses++; pend.set(e.source.id, q); });
 system.runInterval(() => engine.tick(), 1);

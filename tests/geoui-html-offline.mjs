@@ -177,7 +177,7 @@ const looks = (shown, i) => [...shown.keys()].filter((b) => b.startsWith(`${NS}_
 function harness(script, opts = {}) {
   const decl = json('bp/entities/player.json')['minecraft:entity'].description.properties;
   const out = { sent: [], logs: [], camera: [], hud: [], perms: [], tp: 0, bar: [], msgs: [], runs: [], badProps: [], cmds: {}, rot: [], delivered: 0 };
-  const subs = { script: [], spawn: [], swing: [], use: [], startup: [] };
+  const subs = { script: [], spawn: [], swing: [], use: [], button: [], startup: [] };
   const later = [], queue = [];
   let interval = null;
   class Player { }
@@ -199,7 +199,7 @@ function harness(script, opts = {}) {
     sendMessage: (m) => out.msgs.push(m),
   });
   const mc = {
-    world: { getAllPlayers: () => (p.isValid ? [p] : []), afterEvents: { playerSwingStart: { subscribe: (f) => subs.swing.push(f) }, itemUse: { subscribe: (f) => subs.use.push(f) }, playerSpawn: { subscribe: (f) => subs.spawn.push(f) } } },
+    world: { getAllPlayers: () => (p.isValid ? [p] : []), afterEvents: { playerSwingStart: { subscribe: (f) => subs.swing.push(f) }, itemUse: { subscribe: (f) => subs.use.push(f) }, playerSpawn: { subscribe: (f) => subs.spawn.push(f) }, playerButtonInput: { subscribe: (f) => subs.button.push(f) } } },
     system: {
       runInterval: (f) => { interval = f; return 1; }, run: (f) => { later.push(f); return 2; },
       sendScriptEvent: (id, message) => { out.sent.push([id, message]); queue.push({ id, message, sourceEntity: undefined }); },
@@ -262,6 +262,10 @@ function harness(script, opts = {}) {
   ok(S.chk(19) === 0 && S.last('change').id === 'c19' && S.last('change').checked === false && /"19":false/.test(p.dyn[`${NS}:state`] || ''), 'jump: 「音楽」 off, ghd:on_change, kept in the world');
   S.scriptevent(`${NS}:focus`, 'c21', p); S.press('jump');
   ok(S.chk(21) === 1 && S.chk(22) === 0 && S.chk(23) === 0, 'a radio: on, and the others of its name off');
+  S.scriptevent(`${NS}:focus`, 'c20', p); S.tick();
+  for (const f of S.subs.button) { f({ player: p, button: 'Jump', newButtonState: 'Pressed' }); f({ player: p, button: 'Jump', newButtonState: 'Released' }); }
+  S.tick(2);
+  ok(S.chk(20) === 1, 'a jump tapped quicker than a tick (pressed and let go between two samples) still clicks');
   S.scriptevent(`${NS}:focus`, 'c24', p); S.tick();
   S.move(1, 0);
   ok(S.last('change').id === 'c24' && S.last('change').value === 3 && S.fha()[0] === 24, 'a slider in focus: A lowers it (4 → 3) and keeps the focus');

@@ -130,7 +130,7 @@
     };
     // (the content is far from the origin: the bounds hold every group's, in blocks, so nothing is culled)
     const xs = groups.map((g) => g.origin[0]), ys = groups.map((g) => g.origin[1]);
-    const bounds = { visible_bounds_width: Math.ceil((Math.max(...xs.map(Math.abs)) + 800) * 2 / 16), visible_bounds_height: Math.ceil((Math.max(...ys) + 800) * 2 / 16), visible_bounds_offset: [0, 0, 0] };
+    const bounds = { visible_bounds_width: Math.ceil((Math.max(...xs.map(Math.abs)) + 800) * 2 / 16), visible_bounds_height: Math.ceil((Math.max(...ys.map(Math.abs)) + 800) * 2 / 16), visible_bounds_offset: [0, 0, 0] };
     const geos = textures.map((t) => {
       const key = `${ns}_${clean(t.id, 't')}`;
       return { key, tex: t, json: { format_version: '1.12.0', 'minecraft:geometry': [{ description: Object.assign({ identifier: `geometry.${key}`, texture_width: t.width, texture_height: t.height }, bounds), bones: allBones(t.id) }] } };
@@ -220,6 +220,16 @@
     files['bp/texts/languages.json'] = J(['en_US', 'ja_JP']);
     files['bp/texts/en_US.lang'] = langOf('en_US'); files['bp/texts/ja_JP.lang'] = langOf('ja_JP');
     if (bones.length + 1 > 600) warnings.push(`ボーンが ${bones.length + 1} 本: 本物のアプリで確かめたのは 600 本まで`);
+    // ---- every renderer draws every group: none may show another's content (or the player's body) on any device, at the GUI
+    //      scales a phone, a tablet and a PC use (2 and 3 screen px a JSON UI px: SPEC.md 「ほかのグループが映らないこと」)
+    const boxes = {};
+    for (const p of scene.planes || []) {
+      const g = boneByName.get(p.bone).group, b = boxes[g] || (boxes[g] = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity });
+      b.x0 = Math.min(b.x0, p.rect.x); b.y0 = Math.min(b.y0, p.rect.y); b.x1 = Math.max(b.x1, p.rect.x + p.rect.w); b.y1 = Math.max(b.y1, p.rect.y + p.rect.h);
+    }
+    const seen = new Map();
+    for (const ui of [2, 3]) for (const d of lay.DEVICES) for (const h of lay.ghosts(groups, boxes, d.w, d.h, ui)) { const k = `${h.by}←${h.seen}`; if (!seen.has(k)) seen.set(k, `${d.id} GUI ${ui}`); }
+    for (const [k, where] of seen) warnings.push(`グループ ${k.replace('←', ' の renderer に ')} が映る（${where} など）: origin を離すか、大きさの決め方を変えてください`);
     const stats = { groups: groups.length, bones: bones.length + 1, planes: planeCount, settled, textures: textures.length, properties: Object.keys(props).length, renderers: groups.filter((g) => g.renderer !== false).length };
     return { files, stats, warnings, ns, uuids: U };
   }
