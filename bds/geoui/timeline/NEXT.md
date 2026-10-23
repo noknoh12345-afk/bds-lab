@@ -41,6 +41,7 @@ geoui_osu_skin は本物の BDS の tests.txt が通った。本物のアプリ�
   for f in tests/tl-*-offline.mjs tests/geoui-builder-offline.mjs tests/lint-offline.mjs; do node $f || exit 1; done
   node bds/geoui/build.mjs --check; node bds/geoui/timeline/probe.mjs --check; node bds/geoui/timeline/demo.mjs --check（W 行が出ないこと）
   node bds/geoui/osu/music.mjs --check（osusong.js を変えたら --write。.ogg は ffmpeg）
+  npx --yes eslint@9 -c tests/eslint.config.mjs .（CI の verify も回す: 使っていない変数ひとつで落ちる。2026-10-23 の cbfa6a6 はこれで落ちた）
   app を変えたら: node tests/app-offline.mjs、node tests/results-public-offline.mjs、node tests/feed-offline.mjs
   ブラウザの環境で: node bds/geoui/blockbench-check.mjs、for f in bds/geoui/timeline/check-*.mjs; do node $f || exit 1; done
   本物の BDS で（cd bds; node lab.mjs setup が要る）: node lab.mjs test -a geoui_rhythm、node lab.mjs test -a geoui_rhythm_big、

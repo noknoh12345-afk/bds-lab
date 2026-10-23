@@ -154,6 +154,7 @@
 - `for f in tests/tl-*-offline.mjs; do node $f || exit 1; done`
 - `node bds/geoui/build.mjs --check`
 - `node tests/lint-offline.mjs`
+- `npx --yes eslint@9 -c tests/eslint.config.mjs .`（CI の verify と同じ。使っていない変数でも落ちる）
 - `<ブラウザの環境> node bds/geoui/blockbench-check.mjs --out <絵の置き場所>`
 - `for f in bds/geoui/timeline/check-*.mjs; do <ブラウザの環境> node $f || exit 1; done`
 
