@@ -1,6 +1,6 @@
 # GeoUI の規則を決める 2 本目（bds/geoui/screen/rules.mjs が作る。予測は predictions.json: 走らせる前にコミットしたもの）
 # 1 本目（run 40055307539）で決まった事と、その予測・手順は bds/geoui/rules-history/run-40055307539/
-# node lab.mjs app ci -a geoui_rules --screen 720x1560（人の許可をもらってから）→ node bds/geoui/screen/rules.mjs verdict <summary.json>
+# node lab.mjs app ci -a geoui_rules --screen 720x1560 --knobs "APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"（人の許可をもらってから）→ node bds/geoui/screen/rules.mjs verdict <summary.json>
 
 section title
 launch

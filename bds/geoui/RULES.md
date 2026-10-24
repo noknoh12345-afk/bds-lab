@@ -201,5 +201,9 @@ cd bedrock-samples && git sparse-checkout set resource_pack/ui resource_pack/ent
 | 対照 | control: scale 0.9375・1 の目盛り、目盛りの黒い板（z 100） | 170.67（0.9375 はぼけて 171.29）・中心 134.93、160・128.00。板は描かれれば 0 |
 
 測りは 116 個（公開のまとめに残るのは 160 個まで: 試験が確かめる）。新しい問いを先に、GUI の 6 画面と対照を後に回す。
-回すのは `node lab.mjs app ci -a geoui_rules --screen 720x1560`（**人の許可をもらってから**。1 本目と同じ 1560 x 720: 測る箱はこの画面の px）。`geoui_device` の次の 1 本（R4.7・R6.3・R7.5 など）と同じく、
+回すのは `node lab.mjs app ci -a geoui_rules --screen 720x1560 --knobs "APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"`（**人の許可をもらってから**。
+1 本目と同じ 1560 x 720: 測る箱はこの画面の px。knobs も 1 本目と同じ: サインインしない準備済みの端末がキャッシュにある）。
+**2 本目の 1 回目（run 40059578622、2026-10-24）は手順が 1 つも動かなかった**: knobs を付けずに出したので、サインインありの端末をキャッシュに
+見つけられず作り直し、Microsoft のサインインが 10 分で終わらず準備で止まった（`rules-history/run-40059578622/result.md`）。予測と手順はそのまま、
+knobs を付けてもう一度回す。`geoui_device` の次の 1 本（R4.7・R6.3・R7.5 など）と同じく、
 結果をこの台帳の「状態」と SPEC.md の 13 章に書く。

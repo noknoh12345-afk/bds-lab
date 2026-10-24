@@ -250,7 +250,7 @@ const HUD_OFF = ['crosshair', 'health', 'hunger', 'armor', 'progress_bar', 'air_
 export function appTxt() {
   const lines = [`# GeoUI の規則を決める 2 本目（bds/geoui/screen/rules.mjs が作る。予測は predictions.json: 走らせる前にコミットしたもの）`,
     `# 1 本目（run 40055307539）で決まった事と、その予測・手順は bds/geoui/rules-history/run-40055307539/`,
-    `# node lab.mjs app ci -a geoui_rules --screen 720x1560（人の許可をもらってから）→ node bds/geoui/screen/rules.mjs verdict <summary.json>`, '',
+    `# node lab.mjs app ci -a geoui_rules --screen 720x1560 --knobs "APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"（人の許可をもらってから）→ node bds/geoui/screen/rules.mjs verdict <summary.json>`, '',
     'section title', 'launch', 'until title 600000', 'shot title', '',
     'section join', 'join', 'until joined 900000', 'do tp @a 0 -60 0 0 0', 'do gamemode adventure @a', 'do time set noon', 'do weather clear',
     ...HUD_OFF.map((h) => `do hud @a hide ${h}`), 'do scriptevent grl:show 0', 'wait 6000', 'absent clientlog \\bERROR\\b', ''];
@@ -534,7 +534,7 @@ const TASK = `# geoui_rules — GeoUI の規則を本物の画面で決める
 - R3.7 暗視・閉じた箱 · R5.3 GUI の倍率の決まり（6 画面）· 対照: scale 0.9375・1 と目盛りの黒い板（z 100）
 
 ## Run
-\`node lab.mjs app ci -a geoui_rules --screen 720x1560\`（人の許可をもらってから。1 本目と同じ 1560 x 720 の画面: 測る箱はこの画面の px）→ \`node bds/geoui/screen/rules.mjs verdict <summary.json>\`。
+\`node lab.mjs app ci -a geoui_rules --screen 720x1560 --knobs "APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"\`（人の許可をもらってから。1 本目と同じ 1560 x 720 の画面: 測る箱はこの画面の px。knobs も 1 本目と同じ: サインインしない準備済みの端末がキャッシュにある。knobs なしの run 40059578622 はサインインありの端末を作り直そうとして 10 分で止まった）→ \`node bds/geoui/screen/rules.mjs verdict <summary.json>\`。
 
 ## Acceptance (one tests.txt \`## \` section each)
 - [ ] 読み込める（プロパティが既定値）

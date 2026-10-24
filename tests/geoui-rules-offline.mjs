@@ -145,6 +145,9 @@ const pr = R.predictions();
   ok(Math.abs((box.x1 - box.x0) - 30 * 0.9375 / 16 * 72) < 1e-9, 'a 30-unit patch is 30 x K x 72 px wide (the panel\'s shorter side 10 % of 720)');
   const app = R.appTxt();
   ok(app === fs.readFileSync(path.join(TOP, 'bds/addons/geoui_rules/app.txt'), 'utf8'), 'app.txt in the add-on is what rules.mjs makes');
+  const how = app.split('\n')[2], task = fs.readFileSync(path.join(TOP, 'bds/addons/geoui_rules/TASK.md'), 'utf8');
+  ok([how, task].every((t) => t.includes('--screen 720x1560 --knobs "APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"')),
+    'the way to run it is run 40055307539\'s: the same screen and the same knobs (without them run 40059578622 made a signed-in device and stopped at the sign-in)');
   const shots = [...app.matchAll(/^shot (\S+)/gm)].map((m) => m[1]), measured = [...app.matchAll(/^measure \w+ (\S+)/gm)].map((m) => m[1]);
   ok(measured.every((s) => shots.includes(s)) && measured.every((s) => app.indexOf(`shot ${s}\n`) < app.indexOf(`measure`, app.indexOf(`shot ${s}\n`))), 'every measured shot is taken first in app.txt');
   const count = (re) => (app.match(re) || []).length, P2 = R.PROBES;
