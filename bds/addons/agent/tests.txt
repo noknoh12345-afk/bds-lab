@@ -1,3 +1,40 @@
-## loads
+## tp moves me to x y z
 @A join
-~ joined
+@A cmd /lab:tp 5 -60 5
+~ @A tp 5 -?\d+ 5
+js [Math.floor(p('A').location.x), Math.floor(p('A').location.z)].join(' ')
+= 5 5
+
+## move is relative
+@A cmd /lab:move 2 0 3
+~ @A move 7 -?\d+ 8
+js [Math.floor(p('A').location.x), Math.floor(p('A').location.z)].join(' ')
+= 7 8
+
+## look sets yaw and pitch
+@A cmd /lab:look 90 10
+~ @A look 90 10
+js [Math.round(p('A').getRotation().y), Math.round(p('A').getRotation().x)].join(' ')
+= 90 10
+
+## place then break a block
+@A cmd /lab:place 3 -60 3 stone
+~ @A place stone
+js world.getDimension('overworld').getBlock({x:3,y:-60,z:3}).typeId
+= minecraft:stone
+@A cmd /lab:break 3 -60 3
+~ @A break air
+js world.getDimension('overworld').getBlock({x:3,y:-60,z:3}).typeId
+= minecraft:air
+
+## say broadcasts to chat
+@A cmd /lab:say hello
+~ @A hello
+
+## query reports position, rotation and player count
+@A cmd /lab:query
+~ @A self 7 -?\d+ 8 yaw 90 pitch 10 players 1
+
+## face points the view at a target
+@A cmd /lab:face 0 -60 0
+~ @A face -?\d+ -?\d+
