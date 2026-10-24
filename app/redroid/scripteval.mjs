@@ -257,7 +257,7 @@ async function run(o) {
     note('pushed_so', DEVICE_SO);
     dev.adb.run(['logcat', '-c'], { timeout: 15_000 });
     const t1 = now();
-    const inj = R.sh('python3', [path.join(SE_DIR, 'inject_mod.py'), '--so', DEVICE_SO, '--pkg', PKG, '--host', `127.0.0.1:${FRIDA_PORT}`], { timeout: 90_000, quiet: true });
+    const inj = R.sh('python3', [path.join(SE_DIR, 'inject_mod.py'), '--so', DEVICE_SO, '--pid', String(pid), '--pkg', PKG, '--host', `127.0.0.1:${FRIDA_PORT}`], { timeout: 90_000, quiet: true });
     const injLines = `${inj.stdout || ''}\n${inj.stderr || ''}`.split('\n').map((l) => l.replace(/^\[inject\]\s?/, '').trimEnd()).filter(Boolean);
     for (const l of injLines.slice(-40)) log('  inject| ' + l);
     report.inject = { status: inj.status, s: secs(now() - t1), steps: injLines.slice(-20) };
