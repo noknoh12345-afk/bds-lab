@@ -3,12 +3,11 @@
 # node bds/geoui/screen/device.mjs expect <幅>x<高さ>。入力は gdev:check の PASS / FAIL がサーバーのログに出る（expect server）。
 # 結果: node bds/geoui/screen/device.mjs compare <summary.json>（式と比べ、色・向き・重なり・renderer ごとの計算・回転のクエリも読む）。
 
-section title
+section join
+stop
 launch
 until title 600000
 shot title
-
-section join
 join
 until joined 900000
 do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）

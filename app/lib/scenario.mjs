@@ -65,7 +65,7 @@ import path from 'node:path';
 import { GAME_VERBS, gameStep, playGame, playServer } from './play.mjs';
 import { KIND_NAMES as MEASURE_KINDS, measureShot } from './measure.mjs';
 import { makeTrail } from './failcodes.mjs';
-import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, classicTitleWords, newTitleWords, signInOffer, joinPromptButton, joinRefusal, joinPromptKind, joinScreen, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
+import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, classicTitleWords, newTitleWords, signInOffer, playTab, joinPromptButton, joinRefusal, joinPromptKind, joinScreen, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
 
 // APP_TIME_SCALE (0..1, tests on the fake device): every fixed pause shorter; deadlines stay in real time
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms * (Math.min(1, Math.max(0, Number(process.env.APP_TIME_SCALE) || 1)))));
@@ -393,21 +393,21 @@ export async function runScenario(steps, ctx) {
     // which screens it went through (a fixed vocabulary — failcodes.mjs: a public summary may say where it got stuck)
     const tr = makeTrail();
     const rec = lanRec = { t0: Date.now(), trail: null }, at = () => Date.now() - rec.t0;
-    let quietUntil = 0, seenPlay = false, restarts = 0, since = Date.now();
+    let quietUntil = 0, seenPlay = false, restarts = 0, since = Date.now(), tabMoves = 0;
     const opened = () => { quietUntil = Date.now() + loadMs; };
     while (Date.now() < end) {
       if (clearDialog(s)) { tr.add('android-dialog'); await sleep(1000); continue; }
       // the game gone (it closed, or crashed): started again, its title comes back
       if (ctx.alive && !ctx.alive() && restarts < restartMax) {
         restarts++; tr.add('app-gone'); log(`${s.line} アプリが動いていません: 起動し直します（${restarts} 回目）`);
-        ctx.launch(); ctx.started?.(); quietUntil = Date.now() + 45_000; since = Date.now(); sawPlay = false; other = 0; titleA = 0;
+        ctx.launch(); ctx.started?.(); quietUntil = Date.now() + 45_000; since = Date.now(); sawPlay = false; other = 0; titleA = 0; tabMoves = 0;
         await sleep(padWait); continue;
       }
       if (!sawPlay && Date.now() - since > stuckMs && restarts < restartMax) {
         restarts++; tr.add('restart');
         log(`${s.line} ${Math.round(stuckMs / 1000)} 秒たっても PLAY の画面に着きません: アプリを止めて起動し直します（${restarts} 回目。道筋: ${tr.text()}）`);
         adb.shell(['am', 'force-stop', ctx.pkg]); await sleep(1500); ctx.launch(); ctx.started?.();
-        quietUntil = Date.now() + 45_000; since = Date.now(); other = 0; titleA = 0; newTries = 0;
+        quietUntil = Date.now() + 45_000; since = Date.now(); other = 0; titleA = 0; newTries = 0; tabMoves = 0;
         await sleep(padWait); continue;
       }
       const ws = ocrNow(), all = ws.map((w) => w.text).join(' '), p = playScreen(ws);
@@ -416,6 +416,12 @@ export async function runScenario(steps, ctx) {
         other = 0; listed ||= p.lan; sawPlay = true; seenPlay = true; quietUntil = 0; if (aFirst === 'pressed') aFirst = 'done';
         rec.play ??= at(); if (p.lan) rec.listed ??= at();
         tr.add(p.lan ? (p.focused ? 'play-lan-focus' : 'play-lan') : 'play-empty', ws);
+        // (PLAY open on its Realms tab — run 40059144882: it opened there every time, and B then A brought it back to it, the
+        //  LAN world never in sight. Worlds is the first tab: LB goes left — twice at most a visit, then the ways below)
+        if (!p.lan && playTab(ws) === 'realms' && tabMoves < 2) {
+          tabMoves++; tr.add('play-tab', ws); log(`${s.line} PLAY が Realms のタブで開いています: LB で左のタブ（Worlds）へ（${tabMoves} 回目）`);
+          padKey('L1'); emptySince = 0; await sleep(padWait); continue;
+        }
         // the player's own world is listed too (lib/world.mjs: a player without one is sent into the new player's flow): the
         // hint "A Play" does not say which card has the focus, its white ring does — A only on the LAN world's
         // (the ring whenever the card's words are read; the hint alone only with no other world on the list)
@@ -432,12 +438,16 @@ export async function runScenario(steps, ctx) {
         else if (!emptySince) emptySince = Date.now();
         else if (Date.now() - emptySince > relistMs && reopened < relistMax) {
           // (the title next: its A opens PLAY again — sawPlay forgotten, so a title OCR cannot place still gets its A)
-          reopened++; emptySince = 0; sawPlay = false; other = 0; since = Date.now(); tr.add('relist'); aFirst = aFirstOn ? 'ready' : 'done';
+          reopened++; emptySince = 0; sawPlay = false; other = 0; since = Date.now(); tabMoves = 0; tr.add('relist'); aFirst = aFirstOn ? 'ready' : 'done';
           log(`${s.line} LAN のワールドが ${Math.round(relistMs / 1000)} 秒出ません: PLAY を開き直します（B でタイトルへ、${reopened} 回目）`); padKey('B');
         }
         await sleep(padWait); continue;
       }
       const play = titlePlay(ws);
+      // (the classic menu read only as its Play and the controller's hints — "Ⓐ Select Ⓑ Exit", Settings not read: the CI device,
+      //  run 40059144882. The new player's title has no Play, so it is this one: Play's focus looked for as below — never the new
+      //  player's DOWN, DOWN, A, which on the classic menu pressed Realms or News)
+      const classic = classicTitleWords(ws) || Boolean(play && /\bSelect\b/i.test(all) && /\bExit\b/i.test(all));
       if (backToTitle(ws) !== false || joinRefusal(ws)) { tr.add('back', ws); log(`${s.line} 前の画面が残っています（${said.slice(0, 80)}）: B で戻ります`); padKey('B'); }
       // a dialog over the title ("Play your way") before the menu behind it: B closes it (A on its Continue brought it back
       // again and again on the CI device)
@@ -456,10 +466,10 @@ export async function runScenario(steps, ctx) {
       // classic menu. The first press only turns the gamepad's focus on (on Get started — an A there starts the new player's
       // game mode screens): DOWN twice, then A. Its hints and logo alone (not its buttons) only twice: then it is taken for
       // the classic menu (never A on it before that: A there is Get started)
-      else if (newTitleWords(ws, { strict: newTries >= 2 })) { newTries++; tr.add('title-new', ws); log(`${s.line} 新しい人向けのタイトル: More options へ（DOWN・DOWN・A）`); padKey('DOWN'); await sleep(padWait); padKey('DOWN'); await sleep(padWait); padKey('A'); }
+      else if (!play && newTitleWords(ws, { strict: newTries >= 2 })) { newTries++; tr.add('title-new', ws); log(`${s.line} 新しい人向けのタイトル: More options へ（DOWN・DOWN・A）`); padKey('DOWN'); await sleep(padWait); padKey('DOWN'); await sleep(padWait); padKey('A'); }
       // the classic menu: its focus moves by the screen's layout, so Play is pressed once it is the green one (UP until it is,
       // then DOWN: the first press only turns the gamepad's focus on)
-      else if (play && classicTitleWords(ws)) {
+      else if (play && classic) {
         let focused = false; try { focused = buttonFocused(decode(last), play); } catch { /* undecodable */ }
         if (focused) { tr.add('title-play', ws); log(`${s.line} タイトルの Play を押します（ゲームパッド A）`); padKey('A'); moves = 0; opened(); }
         else if (aFirst === 'ready') { aFirst = 'pressed'; tr.add('title-a', ws); log(`${s.line} タイトルの Play を押します（焦点は見えないが、まず A を 1 回）`); padKey('A'); moves = 0; opened(); quietUntil = Date.now() + 2 * loadMs; }
@@ -478,6 +488,10 @@ export async function runScenario(steps, ctx) {
       else if (Date.now() < quietUntil) tr.add('wait', ws);
       // (the first A on the title opened something other than PLAY: B back to the title, where the search for Play goes on)
       else if (aFirst === 'pressed') { aFirst = 'done'; tr.add('title-a-back', ws); log(`${s.line} A で開いたのは PLAY ではない画面（${said.slice(0, 60)}）: B で戻って Play を探します`); padKey('B'); }
+      // (Realms' own words with no PLAY tabs read, left after the wait: a Realms page — never A there, its buttons make or buy
+      //  a Realm — B; a news panel over the title — run 40059144882: an A on it opened the store, again and again — B closes it)
+      else if (playTab(ws) === 'realms') { tr.add('realms-back', ws); log(`${s.line} Realms の画面（${said.slice(0, 60)}）: B で戻ります`); padKey('B'); other = 0; }
+      else if (/\bnews\b/i.test(all) && !play) { tr.add('news-close', ws); log(`${s.line} ニュースの画面（${said.slice(0, 60)}）: B で閉じます`); padKey('B'); other = 0; }
       // (an unknown screen: A goes on at first — B once PLAY has been seen, where an A could create a world)
       else if (/\bContinue\b/i.test(all)) { tr.add('continue', ws); padKey('A'); other++; }
       else if (other < 2 && !sawPlay) { tr.add('unknown-a', ws); padKey('A'); other++; opened(); }

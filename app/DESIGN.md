@@ -182,6 +182,28 @@ connect+play+friends+close`）が出るようになった。ラボの見知ら�
 起動し直すと、PLAY に LAN のワールドが出なかった。→ LAN の参加はサインインしない: 誘いは B で閉じ、ページは B で戻る（`client.mjs
 signInOffer`、道筋の `signin-close`・`signin-back`。タイトル自身の Sign In・最初の起動の WELCOME・PLAY には効かない）。
 
+### 2026-10-24: 準備済みの端末の最初の参加・PLAY の Realms のタブ・Play と Select・Exit だけのタイトル
+
+GeoUI の端末の確かめを 3 本（run 40052537778・40055381439・40059144882）回して、**準備済みの端末（スナップショットから戻った端末）の最初の参加は
+6 回とも失敗**し（「An error has occurred」・サインインの誘い・Realms のタブ）、**ゲームを止めて起動し直した後の参加は 4 回中 3 回入れた**
+（同じ時刻に別のレーンの run 40055307539 は最初の参加で入っている: 当たり外れはある）。スナップショットのゲームは保存した時の状態（ネットの
+つながり・タブ・焦点）を持ったまま戻るので、GeoUI の app.txt（geoui_device・geoui_html_demo）は最初の参加の前に `stop` → `launch` →
+`until title` にした（geoui_rules にも同じことが言える: 次の手順を書く時に）。
+
+run 40059144882 の道筋: タイトルを `play+select+exit`（Play と、コントローラーの「Ⓐ Select Ⓑ Exit」、それとロゴ）とだけ読んだ時、ラボは
+新しい人向けのタイトル（Get started / More options）と取り違えて DOWN・DOWN・A を押し、Realms（`your+server+online+you+join+how+play+manage`）や
+ニュース（`news` → A でストア）に入った。その後の PLAY は **Realms のタブ**（`realms+play+you+manage+multiplayer+worlds+your+friends`）で開き、
+B でタイトルへ戻って A を押しても同じタブに戻った（LAN のワールドは Worlds のタブ）。→ joinLan:
+- Play が読めたタイトルは新しい人向けのタイトルではない（そちらに Play は無い）: Play と Select・Exit だけでも古いタイトルとして、Play の焦点（緑）を
+  見てから A。
+- PLAY が Realms のタブ（`client.mjs playTab`: multiplayer・manage・always online … が読めて、ワールドのカードが無い）なら LB で左のタブへ（1 回の
+  訪問で 2 回まで。Worlds が最初のタブ。**LB で変わるかは要実測**: 変わらなければ今までどおり開き直す）。道筋に `play-tab`。
+- タブの読めない Realms の画面は待った後 B（`realms-back`）、ニュースの画面は B（`news-close`）。どちらも A は押さない（作る・買うボタン）。
+
+準備済みの端末のキャッシュの名前は、その端末の作り方（`lib/warm.mjs wantStamp`: APK・システムイメージ・画面・GPU・サインインの有無 …）で決まる。
+knobs に `APP_SIGNIN=0` が無いと、Secrets に MS_EMAIL がある lab ではサインインした端末が要る（名前が変わる）: run 40059578622 はそれを作ろうとして
+サインインが 10 分で終わらず止まった。Actions のキャッシュは 10 GB までで、その日のうちに準備済みの端末（6.5 GB）が消えた（次の 1 本は作り直しから）。
+
 ### 2026-10-23: BDS の `Player connected` はログインの時（パックより前）
 
 BDS 1.26.52 の `Player connected` は、ログインが通った時（`play_status login_success` のすぐ後、パックを見せる `resource_packs_info`

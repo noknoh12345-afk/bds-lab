@@ -39,6 +39,10 @@ const MS = { 'ms-start': [["Let's", 10, 8, 6, 3, 1], ['get', 17, 8, 4, 3, 1], ['
   'ms-approve': [['Approve', 4, 4, 8, 3, 1], ['sign', 13, 4, 5, 3, 1], ['in', 19, 4, 3, 3, 1], ['request', 23, 4, 8, 3, 1], ['42', 30, 18, 4, 3, 2]],
   'ms-stay': [['Stay', 4, 4, 5, 3, 1], ['signed', 10, 4, 7, 3, 1], ['in?', 18, 4, 4, 3, 1], ['No', 34, 30, 4, 3, 2], ['Yes', 48, 30, 5, 3, 2]],
   'ms-error': [['Your', 4, 4, 5, 3, 1], ['account', 10, 4, 8, 3, 1], ['or', 19, 4, 3, 3, 1], ['password', 23, 4, 9, 3, 1], ['is', 33, 4, 2, 3, 1], ['incorrect.', 36, 4, 10, 3, 1]] };
+// FAKE_TITLE_HINTS: Realms' page an A on the wrong button opens; FAKE_NEWS: the news panel over the title and the store
+MS.realmspage = [['Your', 4, 4, 5, 3, 1], ['own', 10, 4, 4, 3, 1], ['server,', 15, 4, 8, 3, 1], ['always', 24, 4, 7, 3, 1], ['online', 32, 4, 7, 3, 1], ['Manage', 4, 12, 8, 3, 2], ['Create', 30, 28, 7, 3, 3], ['Realm', 38, 28, 6, 3, 3]];
+MS.news = [['News', 20, 4, 6, 3, 1], ["What's", 10, 12, 7, 3, 2], ['new', 18, 12, 4, 3, 2], ['Read', 10, 20, 5, 3, 3], ['more', 16, 20, 5, 3, 3]];
+MS.store = [['Get', 4, 4, 4, 3, 1], ['more', 9, 4, 5, 3, 1], ['packs', 15, 4, 6, 3, 1], ['Marketplace', 30, 4, 12, 3, 1]];
 // FAKE_SIGNIN_OFFER: the game's own offer to sign in (tests/fake/app/adb)
 MS['signin-offer'] = [['Sign', 4, 4, 5, 3, 1], ['in', 10, 4, 3, 3, 1], ['to', 14, 4, 3, 3, 1], ['earn', 18, 4, 5, 3, 1], ['achievements', 24, 4, 13, 3, 1], ['and', 38, 4, 4, 3, 1],
   ['play', 4, 10, 5, 3, 2], ['with', 10, 10, 5, 3, 2], ['your', 16, 10, 5, 3, 2], ['friends', 22, 10, 8, 3, 2], ['Sign', 10, 28, 5, 3, 3], ['In', 16, 28, 3, 3, 3], ['Close', 40, 28, 6, 3, 3]];
@@ -60,7 +64,10 @@ const PLAY_WORDS = [['Worlds', 10, 4, 8, 3, 1], ['(1)', 19, 4, 3, 3, 1], ['Realm
 // (FAKE_OWN_WORLD: the player's own world's card beside it, "Creative / own world")
 const OWN = process.env.FAKE_OWN_WORLD ? [['Creative', 40, 20, 9, 3, 6], ['own', 40, 28, 4, 3, 7], ['world', 45, 28, 5, 3, 7]] : [];
 const HINT = [['A', 50, 33, 2, 2, 5], ['Play', 53, 33, 5, 2, 5]];
-const LAN = { lanlist: [...PLAY_WORDS, ...OWN], lanfocus: [...PLAY_WORDS, ...OWN, ...HINT], lanown: [...PLAY_WORDS, ...OWN, ...HINT], lanempty: [...PLAY_WORDS.filter(([t]) => !/^(Survival|lab|Dedicated|Server's|world)$/.test(t)), ...OWN] };
+// FAKE_PLAY_REALMS: PLAY on its Realms tab (the tabs, then Realms' own words — no world card)
+const REALMS_TAB = [['Worlds', 10, 4, 8, 3, 1], ['Realms', 30, 4, 8, 3, 1], ['Servers', 45, 4, 9, 3, 1], ['Play', 4, 14, 5, 3, 2], ['with', 10, 14, 5, 3, 2], ['your', 16, 14, 5, 3, 2], ['friends', 22, 14, 8, 3, 2],
+  ['multiplayer', 4, 20, 12, 3, 3], ['Manage', 4, 26, 8, 3, 4], ['your', 13, 26, 5, 3, 4], ['Realm', 19, 26, 6, 3, 4]];
+const LAN = { lanrealms: REALMS_TAB, lanlist: [...PLAY_WORDS, ...OWN], lanfocus: [...PLAY_WORDS, ...OWN, ...HINT], lanown: [...PLAY_WORDS, ...OWN, ...HINT], lanempty: [...PLAY_WORDS.filter(([t]) => !/^(Survival|lab|Dedicated|Server's|world)$/.test(t)), ...OWN] };
 if (LAN[phase]) {
   console.log('level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext');
   LAN[phase].forEach(([t, l, tp, w, h, line], i) => console.log(`5\t1\t1\t1\t${line}\t${i + 1}\t${l}\t${tp}\t${w}\t${h}\t90\t${t}`));
@@ -77,6 +84,12 @@ if (JOIN[phase]) {
 if (phase === 'title' && process.env.FAKE_OCR_MOJANG) {
   console.log('level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext');
   [['P', 2, 2, 2, 3, 1], ['rare', 5, 2, 5, 3, 1], ['SAA', 11, 2, 4, 3, 1], ['Alex,', 50, 10, 6, 3, 2], ['@iMoJjang', 1, 33, 10, 2, 3], ['AB', 12, 33, 3, 2, 3]].forEach(([t, l, tp, w, h, line], i) => console.log(`5\t1\t1\t1\t${line}\t${i + 1}\t${l}\t${tp}\t${w}\t${h}\t90\t${t}`));
+  process.exit(0);
+}
+// FAKE_TITLE_HINTS: the classic menu read only as its Play, the logo (misread) and the controller's hints (run 40059144882)
+if (phase === 'title' && process.env.FAKE_TITLE_HINTS) {
+  console.log('level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext');
+  [['MIHECRAFT', 20, 2, 24, 6, 1], ['Play', 28, 12, 8, 3, 2], ['Select', 40, 33, 6, 2, 3], ['Exit', 48, 33, 4, 2, 3]].forEach(([t, l, tp, w, h, line], i) => console.log(`5\t1\t1\t1\t${line}\t${i + 1}\t${l}\t${tp}\t${w}\t${h}\t90\t${t}`));
   process.exit(0);
 }
 // (FAKE_SIGNIN: its Sign In bottom left, until signed in)

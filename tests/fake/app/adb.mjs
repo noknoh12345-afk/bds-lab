@@ -130,6 +130,14 @@ async function padPress(k) {
     // FAKE_SIGNIN: the menu's Sign In (bottom left) is LEFT of the focused Play; A there opens the Xbox library's WebView
     else if (process.env.FAKE_SIGNIN && S.phase === 'title' && k === 'DPAD_LEFT' && S.titleFocus) { S.titleFocus = 'signin'; save(); }
     else if (process.env.FAKE_SIGNIN && S.phase === 'title' && k === 'BUTTON_A' && S.titleFocus === 'signin') { S.phase = 'ms-start'; S.titleFocus = null; save(); }
+    // FAKE_TITLE_HINTS: the classic menu read as its Play and the hints only (tests/fake/app/tesseract) — DOWN moves the focus
+    // to Realms below it, where A opens Realms' page (run 40059144882's DOWN, DOWN, A)
+    else if (process.env.FAKE_TITLE_HINTS && k === 'DPAD_DOWN' && S.phase === 'title') { S.titleFocus = 'realms'; save(); }
+    else if (process.env.FAKE_TITLE_HINTS && k === 'BUTTON_A' && S.phase === 'title' && S.titleFocus === 'realms') { S.phase = 'realmspage'; S.realmsPage = (S.realmsPage ?? 0) + 1; save(); }
+    else if (k === 'BUTTON_B' && S.phase === 'realmspage') { S.phase = 'title'; S.titleFocus = null; save(); }
+    // FAKE_NEWS: a news panel over the title from the start: A opens the store (its Get more packs), B closes the panel
+    else if (process.env.FAKE_NEWS && S.phase === 'news') { if (k === 'BUTTON_A') { S.phase = 'store'; S.storeVisits = (S.storeVisits ?? 0) + 1; } else if (k === 'BUTTON_B') { S.phase = 'title'; S.newsClosed = true; } save(); }
+    else if (process.env.FAKE_NEWS && S.phase === 'store' && k === 'BUTTON_B') { S.phase = 'news'; save(); }
     // (the classic title: the first move turns the focus on, on its Play — drawn green — and A opens PLAY)
     else if (k === 'DPAD_UP' && S.phase === 'title') { S.titleFocus = 'play'; save(); }
     // (FAKE_LAN_LATE=n: the LAN world is listed only from the n-th time PLAY is opened — the CI device's discovery that came late)
@@ -149,11 +157,14 @@ async function padPress(k) {
     else if (k === 'BUTTON_A' && S.phase === 'playload') { S.phase = 'createworld'; S.createdWorld = true; save(); }
     else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && S.launched) {
       S.playOpens = (S.playOpens ?? 0) + 1; S.phase = process.env.FAKE_LAN_NONE || S.playOpens < Number(process.env.FAKE_LAN_LATE || 0) ? 'lanempty' : 'lanlist'; S.titleFocus = null;
+      // FAKE_PLAY_REALMS: PLAY opens on its Realms tab (run 40059144882) until LB once took it to Worlds (the tab is kept)
+      if (process.env.FAKE_PLAY_REALMS && !S.tabWorlds) S.phase = 'lanrealms';
       if (process.env.FAKE_PLAY_SLOW) { S.playNext = S.phase; S.phase = 'playload'; S.playLoadLeft = Number(process.env.FAKE_PLAY_SLOW); }
       save();
     }
     // FAKE_OWN_WORLD: the player's own world listed first — the first DOWN focuses its card (the hint "A Play" all the same;
     // A there opens it), the next the LAN world's
+    else if (S.phase === 'lanrealms') { if (k === 'BUTTON_L1') { S.phase = 'lanlist'; S.tabWorlds = true; } else if (k === 'BUTTON_B') S.phase = 'title'; else if (k === 'BUTTON_A') S.realmsA = (S.realmsA ?? 0) + 1; save(); }
     else if (k === 'DPAD_DOWN' && S.phase === 'lanlist') { S.phase = process.env.FAKE_OWN_WORLD ? 'lanown' : 'lanfocus'; save(); }
     else if (k === 'DPAD_DOWN' && S.phase === 'lanown') { S.phase = 'lanfocus'; save(); }
     else if (k === 'BUTTON_A' && S.phase === 'lanown') { S.phase = 'ownworld'; S.openedOwn = true; save(); }
@@ -167,7 +178,7 @@ async function padPress(k) {
     // Y in the world opens the inventory (FAKE_PAD_WAKE: the game in touch mode takes the first press only to wake the controller)
     else if (k === 'BUTTON_Y' && S.phase === 'world') { if (process.env.FAKE_PAD_WAKE && !S.padAwake) S.padAwake = true; else S.phase = 'screen'; save(); }
   }
-const COLORS = { 'signin-offer': [20, 60, 30], loading: [24, 24, 24], downloading: [40, 28, 64], 'join-error': [70, 30, 30], playload: [30, 30, 34], createworld: [100, 100, 40], 'join-packs': [58, 58, 58], lanown: [52, 52, 62], ownworld: [120, 160, 220], 'ms-start': [16, 124, 16], 'ms-email': [250, 250, 250], 'ms-password': [248, 250, 250], 'ms-code': [250, 248, 250], 'ms-approve': [250, 250, 248], 'ms-stay': [246, 246, 246], 'ms-error': [250, 244, 244], home: [40, 40, 40], title: [60, 120, 200], gamemode: [64, 64, 64], lanlist: [52, 52, 60], lanfocus: [52, 52, 64], lanempty: [52, 52, 56], welcome: [70, 60, 50], 'join-external': [50, 50, 50], 'join-rated': [55, 55, 55], 'join-refused': [45, 45, 45], world: [90, 160, 80], form: [230, 180, 40], anr: [235, 235, 235], pause: [70, 70, 90], screen: [150, 110, 60], play: [255, 255, 255], paywall: [248, 248, 248] };
+const COLORS = { 'signin-offer': [20, 60, 30], lanrealms: [52, 52, 70], realmspage: [40, 90, 40], news: [80, 60, 40], store: [90, 70, 50], loading: [24, 24, 24], downloading: [40, 28, 64], 'join-error': [70, 30, 30], playload: [30, 30, 34], createworld: [100, 100, 40], 'join-packs': [58, 58, 58], lanown: [52, 52, 62], ownworld: [120, 160, 220], 'ms-start': [16, 124, 16], 'ms-email': [250, 250, 250], 'ms-password': [248, 250, 250], 'ms-code': [250, 248, 250], 'ms-approve': [250, 250, 248], 'ms-stay': [246, 246, 246], 'ms-error': [250, 244, 244], home: [40, 40, 40], title: [60, 120, 200], gamemode: [64, 64, 64], lanlist: [52, 52, 60], lanfocus: [52, 52, 64], lanempty: [52, 52, 56], welcome: [70, 60, 50], 'join-external': [50, 50, 50], 'join-rated': [55, 55, 55], 'join-refused': [45, 45, 45], world: [90, 160, 80], form: [230, 180, 40], anr: [235, 235, 235], pause: [70, 70, 90], screen: [150, 110, 60], play: [255, 255, 255], paywall: [248, 248, 248] };
 // the game's license (PairIP asks the Play Store at each start): FAKE_PAIRIP_UNTIL_PLAY = Play's paywall until Play itself
 // installed or updated the game (its page's button tapped); FAKE_PAIRIP_ALWAYS = always; FAKE_NOT_OWNED = Play's page shows a price
 const paywalled = () => Boolean(process.env.FAKE_PAIRIP_ALWAYS || (process.env.FAKE_PAIRIP_UNTIL_PLAY && !S.byPlay));
@@ -356,7 +367,7 @@ else if (sh !== null) {
   else if (/^dumpsys package/.test(sh)) say(!S.installed ? '' : S.byPlay ? '    primaryCpuAbi=x86_64\n    versionCode=912605300 minSdk=24\n    versionName=1.26.52.04\n    firstInstallTime=2026-10-03 12:00:00\n    installerPackageName=com.android.vending\n    initiatingPackageName=com.android.vending\n'
     : '    primaryCpuAbi=arm64-v8a\n    versionCode=912605203 minSdk=24\n    versionName=1.26.52.03\n    firstInstallTime=2026-10-03 12:00:00\n    installerPackageName=com.android.vending\n    initiatingPackageName=com.android.shell\n');
   // FAKE_WELCOME: the game's first start shows "WELCOME TO MINECRAFT!" (Sign in now / Maybe later) until Maybe later is tapped
-  else if (/^monkey -p com\.mojang\.minecraftpe/.test(sh)) { S.launched = true; S.phase = paywalled() ? 'paywall' : process.env.FAKE_WELCOME && !S.welcomed ? 'welcome' : process.env.FAKE_SIGNIN_OFFER === 'page' && !S.offerClosed ? 'ms-email' : 'title'; S.anr = Number(process.env.FAKE_ANR) || 0; save(); say('Events injected: 1\n'); }
+  else if (/^monkey -p com\.mojang\.minecraftpe/.test(sh)) { S.launched = true; S.phase = paywalled() ? 'paywall' : process.env.FAKE_WELCOME && !S.welcomed ? 'welcome' : process.env.FAKE_SIGNIN_OFFER === 'page' && !S.offerClosed ? 'ms-email' : process.env.FAKE_NEWS && !S.newsClosed ? 'news' : 'title'; S.anr = Number(process.env.FAKE_ANR) || 0; save(); say('Events injected: 1\n'); }
   // the focused window: the dialog while it is up, else the game (or the home screen)
   // (the whole dump, not its displays section, starts with the state saved at the last ANR: the launcher, stale — as on
   // Android 14, where it misled the lab for 2 hours after "Pixel Launcher isn't responding")

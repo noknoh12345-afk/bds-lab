@@ -135,6 +135,16 @@ export function newTitleWords(words, { strict = false } = {}) {
 /** the title screen, by OCR (pure): the classic one (Play and Settings, Dressing Room, ©Mojang AB and the skin) or the new
  *  player's (classicTitleWords, newTitleWords) */
 export const titleWords = (words) => classicTitleWords(words) || newTitleWords(words);
+/** which tab of 1.26's PLAY screen is open, by OCR (pure) → 'worlds' (its world cards, Create new world) | 'realms' (Realms' own
+ *  words: multiplayer, manage, always online, your own server, a subscription) | null when the words do not tell. On the CI
+ *  device PLAY opened on Realms again and again (run 40059144882) — the LAN world is on Worlds. Also Realms' page with no tabs
+ *  read (PLAY coming up on that tab: "your server … online … join … how … play … manage") */
+export function playTab(words) {
+  const all = said(words);
+  if (/Create new world|\b(Survival|Creative|Hardcore|Adventure)\b|Dedicated Server'?s world|LAN world/i.test(all)) return 'worlds';
+  if (/\b(multiplayer|manage|subscription|always online|your (own )?server|realms? plus)\b/i.test(all)) return 'realms';
+  return null;
+}
 /** Microsoft's sign-in offered on the way to PLAY, by OCR (pure) → 'offer' | 'page' | null. offer: the game's own dialog
  *  ("Sign in … achievements … friends", Close — 1.26 on the CI device, 2026-10-24); page: the Xbox library's sign-in pages an
  *  A on it opens ("Let's get you signed in", "Sign in to continue to Minecraft", "Create one", "Stay signed in?" …). Never the

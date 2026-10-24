@@ -61,6 +61,14 @@
   contain の 1 グループに（どの画面でも形を変えない）。`data-geoui-action`（page・event・cmd・toggle…）・タブ・スイッチ・ラジオ・スライダー・
   スロット・数字・進み具合。押した見た目の無い物は押している間も焦点の見た目。焦点のあるスライダーにホイール 1 目盛りは値（スロットは選ばない）。
   開いたまま抜けた人は閉じた状態で戻る。出来事は `/scriptevent <ns>:on_<名前>`。見本 `bds/addons/geoui_html_demo`（本物の BDS で 17/17）。
+- **app: 準備済みの端末の最初の参加をやめ、起動し直してから入る・PLAY の Realms のタブ・Play と Select・Exit だけのタイトル**（2026-10-24、
+  run 40059144882）: 端末の確かめ 3 本で、スナップショットから戻った端末の最初の参加は 6 回とも失敗、起動し直した後は 4 回中 3 回入れた →
+  geoui_device・geoui_html_demo の app.txt は最初の参加の前に `stop` → `launch` → `until title`（geoui_rules は回っている run 40061560812 の手順のまま）。joinLan: Play が読めたタイトルは
+  古いタイトル（Play の焦点を見てから A。DOWN・DOWN・A で Realms やニュースに入っていた）、PLAY が Realms のタブなら LB で Worlds へ
+  （`client.mjs playTab`、道筋の `play-tab`。LB で変わるかは要実測）、Realms の画面とニュースは B。偽の端末に `FAKE_PLAY_REALMS`・
+  `FAKE_TITLE_HINTS`・`FAKE_NEWS` と試験（app-offline 109）。切り欠き tall の結果は 2 本目と同じ数（SPEC.md 13 章・RULES.md R6.3）。
+  geoui_rules の 2 本目（run 40059578622）は knobs の `APP_SIGNIN=0` が無く、サインインした端末を作ろうとして準備で止まった（手順 0 個:
+  `rules-history/run-40059578622/result.md`。knobs を付けた回し直しは run 40061560812）。
 - **app: LAN の参加はサインインしない**（2026-10-24、run 40055381439）: タイトルに Microsoft のサインインの誘い（achievements・friends・Close）が
   出るようになり、ラボが A で Xbox のサインインのページへ入って Continue を押し続けていた → 誘いは B で閉じ、ページは B で戻る
   （`app/lib/client.mjs signInOffer`、道筋の `signin-close`・`signin-back`）。偽の端末にその誘いとページ（`FAKE_SIGNIN_OFFER`）、試験を足した。

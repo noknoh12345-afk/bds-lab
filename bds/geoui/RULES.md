@@ -107,7 +107,7 @@ cd bedrock-samples && git sparse-checkout set resource_pack/ui resource_pack/ent
 |---|---|---|---|
 | R6.1 | Android エミュレータの横向き 10 種では、表示領域 = 画面いっぱい（四隅の四角が角に ±1 px） | 測った（run 39989463030） | |
 | R6.2 | Android で切り欠きを変えるとアプリが閉じる（作り直される） | 測った（run 39989463030、0445272 で手順を直した） | 切り欠きを測るたびにゲームを起動し直す |
-| R6.3 | iPhone の Dynamic Island・ホームバー、Android の切り欠き、ゲーム機の画面の位置の設定、`$compress_hud_width` が立つ端末 | **仮説**（要実測） | `geoui_device`（Android）と TASK.md の人の確かめ |
+| R6.3 | 切り欠き・セーフエリア: **Android エミュレータの縦長のノッチ（tall）では、HUD（と GeoUI）は画面いっぱいのまま**（四隅・上下の真ん中・右の真ん中の四角が切り欠きの無い時と同じ所 0 px、viewport の外の白い印は見えない: ゲームはエミュレータの切り欠きをセーフエリアにしない）。iPhone の Dynamic Island・ホームバー、Android の hole など、ゲーム機の画面の位置の設定、`$compress_hud_width` が立つ端末は仮説 | **測った**（tall: run 40055381439・40059144882 で同じ数。ノッチが写真に出ていたかは封じた写真で要確認）／ほかは**仮説**（要実測） | 少なくともこの端末では、ノッチの下にも GeoUI が描かれる: 押す物・読ませる物を角と辺の真ん中から少し離す。`geoui_device`（Android）と TASK.md の人の確かめ |
 | R6.4 | 分割画面: `q.is_local_player` は他の画面の自分を 0 にする | 一次資料（Molang の一覧） | 画面ごとの GeoUI は要実測 |
 
 ## 7. 入力（指 → サーバー）

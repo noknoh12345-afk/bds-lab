@@ -658,8 +658,11 @@ export function appTxt() {
     `# 各画面の大きさで、GeoUI を出す前（shot world）と後を比べ、色ごとの枠を測る（measure marks: 11 色・白・灰の箱 px）。期待の位置は`,
     `# node bds/geoui/screen/device.mjs expect <幅>x<高さ>。入力は gdev:check の PASS / FAIL がサーバーのログに出る（expect server）。`,
     `# 結果: node bds/geoui/screen/device.mjs compare <summary.json>（式と比べ、色・向き・重なり・renderer ごとの計算・回転のクエリも読む）。`, '',
-    'section title', 'launch', 'until title 600000', 'shot title', '',
-    'section join', 'join', 'until joined 900000', ...setup,
+    // (the game stopped and started again right before the join: a device come back from its snapshot carries the game's
+    //  state of when it was saved — its first joins all failed on 2026-10-24 (run 40052537778: "An error has occurred";
+    //  40055381439: a sign-in offer; 40059144882: PLAY on Realms), every join after a restart but one went in. In a batch
+    //  this section is where this add-on starts)
+    'section join', 'stop', 'launch', 'until title 600000', 'shot title', 'join', 'until joined 900000', ...setup,
     'absent clientlog \\bERROR\\b', ''];
   const sizes = [['default', null], ['4x3', '1024x768'], ['fold', '1104x920'], ['16x10', '1280x800'], ['16x9', '1920x1080'], ['18x9', '2160x1080'], ['195x9', '2340x1080'],
     ['20x9', '2400x1080'], ['21x9', '2520x1080'], ['32x9', '3840x1080']];

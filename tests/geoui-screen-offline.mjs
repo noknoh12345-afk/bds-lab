@@ -279,6 +279,10 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
     const cuts = ['tall', 'hole'].map((c) => sec(`cutout-${c}`));
     ok(cuts.every((s, i) => new RegExp(`^section cutout-${['tall', 'hole'][i]}\\ncutout ${['tall', 'hole'][i]}\\nwait \\d+\\nstop\\nlaunch\\nuntil title \\d+\\njoin\\nuntil joined \\d+\\ndo tp @a 0 -60 0 0 90`).test(s) && /\nshot world\n[^]*measure marks anchors-cut-/.test(s)) && /^section over\n[^]*measure marks over$/m.test(sec('over')) && at.indexOf('section over') < at.indexOf('section cutout-'),
       'device app.txt: the edge with no cut-out first, then each cut-out with the game stopped, started and joined again before its marks', cuts.join('\n'));
+    // (the game stopped and started right before its first join — in a batch this section is where the add-on starts: the
+    //  first joins of a device come back from its snapshot failed three runs in a row on 2026-10-24, the joins after a restart went in)
+    ok(/^section join\nstop\nlaunch\nuntil title \d+\nshot title\njoin\nuntil joined \d+\n/.test(sec('join')) && !/^section title$/m.test(at),
+      'device app.txt: its first join from a game just started again (stop, launch, the title), no section before it', sec('join').slice(0, 200));
     const plate = D.scene().planes.find((p) => p.bone === 'gdev_clip' && p.rect.w === 400);
     ok(plate && plate.uv[0] === D.HUES.findIndex(([nm]) => nm === 'rose') + 0.25, 'device: the clip square is rose (a hue no floor has; grey was not found at all on the CI device)', JSON.stringify(plate && plate.uv));
   }

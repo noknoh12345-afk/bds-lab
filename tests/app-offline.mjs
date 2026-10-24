@@ -761,6 +761,32 @@ await t('run: the LAN join never signs in — Microsoft\'s sign-in offered on th
   ok(p.status === 0 && p.state.uri === 'lan' && !p.state.msContinue && JSON.stringify(p.state.pads.slice(0, 2)) === JSON.stringify(['BUTTON_B', 'BUTTON_B']) && /^signin-back\*2\b/.test(pJoin?.trail ?? '') && FC.cleanTrail(pJoin.trail) === pJoin.trail,
     `exit ${p.status} ${JSON.stringify(p.state.pads)} continue ${p.state.msContinue} ${pJoin?.trail}\n${p.text.slice(-800)}`);
 });
+await t('run: the LAN join finds the LAN world past PLAY\'s Realms tab (LB to Worlds), the classic menu read as Play and the hints (its Play\'s focus, never DOWN, DOWN, A) and a news panel (B) — run 40059144882', async () => {
+  const CL = await imp('app/lib/client.mjs'), W = (t) => t.split(' ').map((x, i) => ({ text: x, x: i * 10, y: 5, w: 8, h: 3 }));
+  eq(['Worlds Realms Servers Play with your friends multiplayer Manage your Realm', 'your server online you join how play manage', "Worlds Realms Servers Survival lab Dedicated Server's world", 'Worlds (1) Realms Servers B Back', 'Create new world Worlds Realms', 'Play Settings Marketplace'].map((t) => CL.playTab(W(t))),
+    ['realms', 'realms', 'worlds', null, 'worlds', null], 'PLAY\'s tab by its words: Realms\' own, the world cards; the empty Worlds tab and the title say nothing');
+  const FC = await imp('app/lib/failcodes.mjs');
+  const joinOf = (r) => JSON.parse(fs.readFileSync(path.join(r.runDir, 'result.json'), 'utf8')).results.find((x) => x.verb === 'join');
+  // PLAY on its Realms tab: LB, then the LAN world on Worlds — never A on Realms
+  const rl = e2e('lanrealms', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_TITLE: '1', FAKE_PLAY_REALMS: '1', APP_PLAY_LOAD_MS: '100' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(rl.runDir);
+  const rlJoin = joinOf(rl);
+  ok(rl.status === 0 && rl.state.uri === 'lan' && rl.state.tabWorlds === true && !rl.state.realmsA && rl.state.pads.includes('BUTTON_L1') && /\bplay-tab\b/.test(rlJoin?.trail ?? '') && FC.cleanTrail(rlJoin.trail) === rlJoin.trail,
+    `exit ${rl.status} ${JSON.stringify(rl.state.pads)} ${rlJoin?.trail}\n${rl.text.slice(-800)}`);
+  // the classic menu read as Play, the logo and Select / Exit: taken for the classic menu (A on Play), not the new player's
+  // title (DOWN, DOWN, A pressed Realms below Play)
+  const th = e2e('lantitlehints', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_TITLE_HINTS: '1', APP_PLAY_LOAD_MS: '100' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(th.runDir);
+  const thJoin = joinOf(th);
+  ok(th.status === 0 && th.state.uri === 'lan' && !th.state.realmsPage && th.state.pads[0] === 'BUTTON_A' && !/title-new/.test(thJoin?.trail ?? '') && /^title-a\b/.test(thJoin?.trail ?? ''),
+    `exit ${th.status} ${JSON.stringify(th.state.pads)} realms page ${th.state.realmsPage} ${thJoin?.trail}\n${th.text.slice(-800)}`);
+  // a news panel over the title: B closes it — an A opened the store
+  const nw = e2e('lannews', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_TITLE: '1', FAKE_NEWS: '1', APP_PLAY_LOAD_MS: '100' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(nw.runDir);
+  const nwJoin = joinOf(nw);
+  ok(nw.status === 0 && nw.state.uri === 'lan' && nw.state.newsClosed === true && !nw.state.storeVisits && nw.state.pads[0] === 'BUTTON_B' && /^news-close\b/.test(nwJoin?.trail ?? ''),
+    `exit ${nw.status} ${JSON.stringify(nw.state.pads)} store ${nw.state.storeVisits} ${nwJoin?.trail}\n${nw.text.slice(-800)}`);
+});
 await t('run: OCR still being installed (the workflow\'s apt in the background) is waited for before the steps — not gone without, where the LAN join pressed blind; none and nothing installing it: no wait, said in the notes, the result and the join\'s code', async () => {
   // a stand-in for the workflow's background apt: a process whose command line holds a mark, putting tesseract in place 3 s on
   const late = path.join(tmp, 'ocr-late', 'tesseract'), mark = `lab-ocr-install-${process.pid}`;

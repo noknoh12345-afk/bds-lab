@@ -149,6 +149,7 @@ js p('A').getProperty('${ns}:pg')
 `;
   const app = `# geoui_html_demo（bds/geoui/html/convert.mjs --sample が作る）を本物のアプリで: ページの見た目・焦点・ポインタ・ページの切り替え
 section title
+stop
 launch
 until title 600000
 shot title
