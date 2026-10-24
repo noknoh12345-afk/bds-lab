@@ -70,6 +70,20 @@ function rootSh(adb, isRoot, line, opts = {}) {
   return adb.run(['shell', isRoot ? line : `su 0 sh -c ${q}`], { timeout: 30_000, ...opts });
 }
 
+/** host:hostPort → device:devPort を張る。端末通信と同じ adb.bin を使う(bare 'adb' は CI の PATH に無く SDK 配下の
+ *  ことがある。run #5/#6 の「forward が効かない/張れない」真因はこれ)。落ちていれば connect し直して数回試す → {ok, err} */
+async function forwardPort(adb, hostPort, devPort) {
+  let err = '';
+  for (let i = 0; i < 5; i++) {
+    R.sh(adb.bin, ['connect', adb.serial], { quiet: true, timeout: 10_000 });
+    const r = R.sh(adb.bin, ['-s', adb.serial, 'forward', `tcp:${hostPort}`, `tcp:${devPort}`], { quiet: true, timeout: 10_000 });
+    if (r.status === 0) return { ok: true, err: '' };
+    err = (r.stderr || r.stdout || '').trim();
+    await sleep(800);
+  }
+  return { ok: false, err };
+}
+
 /** 準備済みの端末を起こしてゲームをタイトルまで(game.mjs debug と同じ手順)。常駐の端末(--keep の残り)はそのまま使う。
  *  state.started: このスクリプトが端末を起こし始めたか(途中で失敗しても片付けるため) */
 async function bringUp({ data, port, img = R.GAPPS_TAG, log, state }) {
@@ -144,9 +158,8 @@ async function ensureFridaServer(adb, isRoot, { fridaVersion, farch, log }) {
     if (fridaListening()) pid = adb.run(['shell', 'pidof frida-server'], { timeout: 10_000 }).stdout.trim().split(/\s+/)[0] || '?';
   }
   if (!pid) throw new Error(`frida-server が 127.0.0.1:${FRIDA_PORT} で listen しません`);
-  // host 側の forward を張り直す(古い forward が残っていることがある)
-  R.sh(process.env.ADB || 'adb', ['-s', adb.serial, 'forward', '--remove', `tcp:${FRIDA_PORT}`], { quiet: true, timeout: 10_000 });
-  if (R.sh(process.env.ADB || 'adb', ['-s', adb.serial, 'forward', `tcp:${FRIDA_PORT}`, `tcp:${FRIDA_PORT}`], { quiet: true, timeout: 10_000 }).status !== 0) throw new Error(`adb forward tcp:${FRIDA_PORT} を張れません`);
+  const fw = await forwardPort(adb, FRIDA_PORT, FRIDA_PORT);
+  if (!fw.ok) throw new Error(`adb forward tcp:${FRIDA_PORT} を張れません: ${fw.err.slice(0, 160)}`);
   return { version: ver, pid, listening: true };
 }
 
@@ -275,7 +288,8 @@ async function run(o) {
     note('repl_listen', up ? `はい(:${replPort})` : `いいえ(:${replPort} が LISTEN に無い)`);
     ev.repl = { token: Boolean(token), listening: up };
 
-    R.sh(process.env.ADB || 'adb', ['-s', dev.adb.serial, 'forward', `tcp:${localPort}`, `tcp:${replPort}`], { quiet: true, timeout: 10_000 });
+    const rfw = await forwardPort(dev.adb, localPort, replPort);
+    note('repl_forward', rfw.ok ? `tcp:${localPort}→${replPort}` : `失敗: ${rfw.err.slice(0, 120)}`);
     const probe = await runProbe({ host: '127.0.0.1', port: localPort, token });
     report.probe = probe;
     ev.probe = { reachable: probe.reachable, authed: probe.authed, banner: probe.banner ? probe.banner.split('\n')[0] : null, checks: probe.checks.map((c) => ({ name: c.name, ok: c.ok, detail: c.detail.slice(0, 160) })), conclusions: probe.conclusions, error: probe.error ?? null };
