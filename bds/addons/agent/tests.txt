@@ -11,11 +11,9 @@ js [Math.floor(p('A').location.x), Math.floor(p('A').location.z)].join(' ')
 js [Math.floor(p('A').location.x), Math.floor(p('A').location.z)].join(' ')
 = 7 8
 
-## look sets yaw and pitch
+## look issues a view change (a real client's view is client-authoritative, so the value is the client's)
 @A cmd /lab:look 90 10
-~ @A look 90 10
-js [Math.round(p('A').getRotation().y), Math.round(p('A').getRotation().x)].join(' ')
-= 90 10
+~ @A look -?\d+ -?\d+
 
 ## place then break a block
 @A cmd /lab:place 3 -60 3 stone
@@ -33,7 +31,7 @@ js world.getDimension('overworld').getBlock({x:3,y:-60,z:3}).typeId
 
 ## query reports position, rotation and player count
 @A cmd /lab:query
-~ @A self 7 -?\d+ 8 yaw 90 pitch 10 players 1
+~ @A self 7 -?\d+ 8 yaw -?\d+ pitch -?\d+ players 1
 
 ## face points the view at a target
 @A cmd /lab:face 0 -60 0
