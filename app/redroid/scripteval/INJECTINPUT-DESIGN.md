@@ -1,6 +1,16 @@
 # 設計: scripteval に `injectInput`(入力注入)を足して操作を可能にする
 
-scripteval 0.3.0 は**読み取り専用**で、操作系 API は無い(`prelude.js` は "read-only"、`teleport()` は
+> **状況(2026-10-24)**: この設計は **0.3.1 で実装された**(別配布 zip の `scripteval-0.3.1.patch`: `src/inject_input.{h,cpp}`・
+> `src/input_backend.cpp`・`jsnative`/`jsengine` の `__native.input`・`prelude.js` の `agent`/`ScriptEval.injectInput`・
+> `onGameTick` での `scripteval_input_tick()`)。bds-lab 側では redroid 検証で確かめる:
+> - **配線が通ったか**(素の APK で `ScriptEval.injectInput`/`agent` が生え、`agent.status()` が wired を言う)= タイトル画面で `features.mjs`。
+> - **実際に効くための版オフセット**(`offsets.moveVectorX/Z`・`cameraYaw/Pitch`)= ワールドの中で `world.mjs` が mod の
+>   読み取り専用 dbg(snapshot/diff)で探す。見つけた値を config.json に入れれば戦略A(直接書き込み)が効く。
+> `input_backend.cpp` の離散操作(攻撃/インベ/フォーム等)は版の関数結線が未実装(呼ぶとログ)= 下記 5 の続き。
+>
+> 以下は実装前に書いた設計。実装済みの今は「どこを確かめ・どのオフセットを埋めるか」の地図として読む。
+
+scripteval 0.3.0 は**読み取り専用**で、操作系 API は無かった(`prelude.js` は "read-only"、`teleport()` は
 `NotSupportedOnClientError`)。クライアント完結のタッチレス操作(HANDOFF の目標)には、scripteval 側に
 **ネイティブ入力注入**を足す必要がある。これはその設計(scripteval 0.3.0 のソース構造に合わせた具体手順)。
 

@@ -22,8 +22,11 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import * as R from './redroid.mjs';
 import * as V from '../lib/vault.mjs';
-import { Adb } from '../lib/android.mjs';
-import { runProbe, summarize } from './scripteval/probe.mjs';
+import { Adb, startPad } from '../lib/android.mjs';
+import { runProbe, summarize, openRepl } from './scripteval/probe.mjs';
+import * as features from './scripteval/features.mjs';
+import * as world from './scripteval/world.mjs';
+import * as studio from './scripteval/studio.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const LAB = path.join(HERE, '.lab');
@@ -108,12 +111,19 @@ async function bringUp({ data, port, img = R.GAPPS_TAG, log, state }) {
   return { adb, isRoot, resident, boot, game, why: why ?? null, whyNot, readyS: secs(now() - t0) };
 }
 
+/** .so の封緘鍵。専用の SCRIPTEVAL_SO_KEY があればそれで(端末の金庫 APP_CACHE_KEY には触らない)。無ければ従来どおり
+ *  vaultKey()(APP_CACHE_KEY → GOOGLE_AAS_TOKEN)。seal-so.mjs と同じ決め方にする。 */
+export function soVaultKey(env = process.env) {
+  if (env.SCRIPTEVAL_SO_KEY?.trim()) return V.vaultKey({ ...env, APP_CACHE_KEY: env.SCRIPTEVAL_SO_KEY, GOOGLE_AAS_TOKEN: '' });
+  return V.vaultKey(env);
+}
+
 /** 封緘 .bin があれば開封、無ければ素の .so(開発時のみ)を探して返す。見つからねば null。 */
 async function resolveSo(abi, log) {
   const sealed = path.join(SE_DIR, `libscripteval-${abi}.so.bin`);
   const plain = path.join(SE_DIR, `libscripteval-${abi}.so`); // 開発時のみ(.gitignore 済み・コミットしない)
   if (fs.existsSync(sealed)) {
-    const key = V.vaultKey();
+    const key = soVaultKey();
     if (!key) { log('W 封緘 .so はありますが鍵がありません(APP_CACHE_KEY / GOOGLE_AAS_TOKEN)'); return null; }
     const dest = fs.mkdtempSync(path.join(os.tmpdir(), 'se-so-'));
     const ok = await V.open({ inFile: sealed, dest, key, log });
@@ -292,7 +302,61 @@ async function run(o) {
     note('repl_forward', rfw.ok ? `tcp:${localPort}→${replPort}` : `失敗: ${rfw.err.slice(0, 120)}`);
     const probe = await runProbe({ host: '127.0.0.1', port: localPort, token });
     report.probe = probe;
+    ev.version = probe.version ?? null;
     ev.probe = { reachable: probe.reachable, authed: probe.authed, banner: probe.banner ? probe.banner.split('\n')[0] : null, checks: probe.checks.map((c) => ({ name: c.name, ok: c.ok, detail: c.detail.slice(0, 160) })), conclusions: probe.conclusions, error: probe.error ?? null };
+
+    // 7.5) 0.3.1 の機能チェック(タイトル画面でよい): injectInput の配線 / http(+https の結果) / グロリソ / 自己更新。
+    //      端末はこのホストの小さな HTTP サーバに docker ブリッジ越しで届く(app run の BDS と同じ APP_HOST の道)。
+    if (probe.authed && token) {
+      try {
+        const { bridgeIp } = await import('./game.mjs');
+        const pack = features.testPack();
+        const routes = { '/ping.txt': 'hello-scripteval', '/data.json': { b: 'x' }, '/webpack.mcpack': pack.bytes };
+        const srv = await features.serveFiles(routes, { host: '0.0.0.0' });
+        const base = `http://${bridgeIp()}:${srv.port}`;
+        note('features_base', base);
+        try { report.features = await features.runFeatures({ host: '127.0.0.1', port: localPort, token, base }); }
+        finally { srv.srv.close(); }
+        ev.features = { version: report.features.version, ok: report.features.ok, checks: report.features.checks.map((c) => ({ name: c.name, ok: c.ok })) };
+        console.log('\n' + scrub(features.summarize(report.features), secrets));
+      } catch (e) { note('features_error', String(e.message || e)); }
+    }
+
+    // 7.55) Studio の見た目(0.3.1「操作」タブ)。端末の :25600 を host へ forward し、この環境の Chrome で開いて撮る。
+    //       ベストエフォート(Chrome 無し等は理由を記録して先へ)。撮れた png は out/ に入り成果物になる。
+    if (probe.authed && token) {
+      try {
+        const sfw = await forwardPort(dev.adb, 25600, 25600);
+        if (!sfw.ok) note('studio_forward', `失敗: ${sfw.err.slice(0, 100)}`);
+        else {
+          const repl = await openRepl({ host: '127.0.0.1', port: localPort, token, timeoutMs: 20_000 });
+          try { report.studio = await studio.captureStudio({ repl, outDir, localPort: 25600, labDir: path.join(SE_DIR, '.lab'), log: (m) => log('studio| ' + scrub(m, secrets)) }); }
+          finally { repl.close(); }
+          ev.studio = { ok: report.studio.ok, agentTab: report.studio.agentTab ?? null, shots: report.studio.shots, error: report.studio.error ?? null };
+          note('studio', report.studio.ok ? `撮影 ${report.studio.shots.join(', ')}${report.studio.agentTab ? '(操作タブ)' : ''}` : `撮れず: ${report.studio.error || ''}`);
+        }
+      } catch (e) { note('studio_error', String(e.message || e)); }
+    }
+
+    // 7.6) ワールドの中: injectInput の実効に要るオフセットを mod の読み取り専用 dbg で探す(ワールドに入っていれば)。
+    //      タイトルのまま(未参加)なら「未参加」を記録して次段へ。探索は一切書き込まない(読むだけ)。
+    if (probe.conclusions?.input_injection_available && token) {
+      try {
+        const repl = await openRepl({ host: '127.0.0.1', port: localPort, token, timeoutMs: 20_000 });
+        try {
+          const q = await repl.js('const lp = mc.localPlayer(); return !!(lp && lp[0]);');
+          if (q.ok && q.value) {
+            const pd = startPad(dev.adb, { labDir: path.join(SE_DIR, '.lab'), abi });
+            note('world_pad', pd.note);
+            report.world = await world.findOffsets({ repl, pad: async (w) => { dev.adb.pad(w); }, sleep, log: (m) => log('world| ' + scrub(m, secrets)) });
+          } else {
+            report.world = { inWorld: false, why: 'タイトル画面(未参加)。オフセット特定は参加してから(次段)' };
+          }
+        } finally { repl.close(); }
+        ev.world = { inWorld: report.world.inWorld, found: report.world.found ?? null };
+        console.log('\n' + scrub(world.summarize(report.world), secrets));
+      } catch (e) { note('world_error', String(e.message || e)); }
+    }
 
     // 8) scripteval 自身のログ(どこまで初期化が進んだか: preinit / launcher apis / REPL / Studio / RTTI / tick hook)
     const lc = dev.adb.run(['logcat', '-d', '-v', 'brief'], { timeout: 30_000 }).stdout || '';
@@ -300,7 +364,11 @@ async function run(o) {
     for (const l of report.scripteval_log.slice(-40)) log('  se| ' + l);
     ev.log_lines = report.scripteval_log.length;
 
-    const result = probe.conclusions?.js_runtime_runs_in_apk ? 'js_runtime_up' : (probe.reachable ? 'repl_reachable' : 'repl_unreachable');
+    const result = !probe.reachable ? 'repl_unreachable'
+      : !probe.conclusions?.js_runtime_runs_in_apk ? 'repl_reachable'
+      : report.world?.inWorld && Object.keys(report.world.found ?? {}).length ? 'offsets_found'
+      : probe.conclusions?.input_injection_available ? 'injectinput_present'
+      : 'js_runtime_up';
     console.log('\n' + scrub(summarize(probe), secrets));
     return finish(result);
   } finally {
@@ -331,9 +399,14 @@ async function selftest() {
   t('listening: 無い port は偽', listening(tcp, 25600) === false);
   t('listening: ESTABLISHED だけなら偽', listening('   1: 0100007F:63FF 0100007F:9C40 01 0', 25599) === false);
   t('resolveData: 明示 > REDROID_DATA', resolveData('/x/y', { REDROID_DATA: '/z' }) === '/x/y' && resolveData(undefined, { REDROID_DATA: '/z' }) === '/z');
-  // プローブの配線(probe.mjs 自身の selftest: 偽 REPL で実プロトコル)
-  const p = spawnSync(process.execPath, [path.join(SE_DIR, 'probe.mjs'), '--selftest'], { encoding: 'utf8' });
-  t('probe.mjs --selftest', p.status === 0 && /SELFTEST OK/.test(p.stdout));
+  // 専用鍵: SCRIPTEVAL_SO_KEY が APP_CACHE_KEY より優先(両方あっても SO_KEY を使う)
+  t('soVaultKey: SCRIPTEVAL_SO_KEY を使う', soVaultKey({ SCRIPTEVAL_SO_KEY: 'K1', APP_CACHE_KEY: 'K2' })?.id === V.vaultKey({ APP_CACHE_KEY: 'K1' }).id);
+  t('soVaultKey: 無ければ従来どおり', soVaultKey({ APP_CACHE_KEY: 'K2' })?.id === V.vaultKey({ APP_CACHE_KEY: 'K2' }).id);
+  // 各モジュール自身の selftest(偽 REPL で実プロトコル・機能・オフセット探索)
+  for (const m of ['probe.mjs', 'features.mjs', 'world.mjs', 'studio.mjs']) {
+    const r = spawnSync(process.execPath, [path.join(SE_DIR, m), '--selftest'], { encoding: 'utf8' });
+    t(`${m} --selftest`, r.status === 0 && /SELFTEST OK/.test(r.stdout));
+  }
   console.log(bad ? `\nSELFTEST FAIL (${bad})` : '\nSELFTEST OK');
   return bad ? 1 : 0;
 }

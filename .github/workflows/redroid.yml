@@ -142,6 +142,8 @@ jobs:
         if: steps.turn.outputs.ok == 'true' && inputs.scripteval && (steps.prep.outputs.game_ok == 'true' || steps.open.outputs.opened == 'true')
         continue-on-error: true
         env:
+          # 封緘 .so の鍵。専用の SCRIPTEVAL_SO_KEY を優先(端末の金庫 APP_CACHE_KEY には触らない)。両方 Secrets から。
+          SCRIPTEVAL_SO_KEY: ${{ secrets.SCRIPTEVAL_SO_KEY }}
           APP_CACHE_KEY: ${{ secrets.APP_CACHE_KEY }}
           GOOGLE_AAS_TOKEN: ${{ secrets.GOOGLE_AAS_TOKEN }}
         run: |

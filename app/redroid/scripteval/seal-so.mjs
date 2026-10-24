@@ -27,8 +27,12 @@ if (!abi || !soPath) { console.error('usage: node app/redroid/scripteval/seal-so
 if (!['arm64-v8a', 'x86_64'].includes(abi)) { console.error(`abi は arm64-v8a か x86_64: ${abi}`); process.exit(2); }
 if (!fs.existsSync(soPath)) { console.error(`見つかりません: ${soPath}`); process.exit(2); }
 
-const key = V.vaultKey();
-if (!key) { console.error('鍵がありません。APP_CACHE_KEY(無ければ GOOGLE_AAS_TOKEN)を .env.local か環境変数に。'); process.exit(1); }
+// 専用鍵 SCRIPTEVAL_SO_KEY があればそれで(端末の金庫 APP_CACHE_KEY には触らない)。無ければ従来どおり APP_CACHE_KEY → GOOGLE_AAS_TOKEN。
+// scripteval.mjs の soVaultKey と同じ決め方(CI でも同じ鍵で開封できる)。
+const usingSo = Boolean(process.env.SCRIPTEVAL_SO_KEY?.trim());
+const key = usingSo ? V.vaultKey({ ...process.env, APP_CACHE_KEY: process.env.SCRIPTEVAL_SO_KEY, GOOGLE_AAS_TOKEN: '' }) : V.vaultKey();
+if (!key) { console.error('鍵がありません。SCRIPTEVAL_SO_KEY か APP_CACHE_KEY(無ければ GOOGLE_AAS_TOKEN)を .env.local か環境変数に。'); process.exit(1); }
+console.log(`鍵: ${usingSo ? 'SCRIPTEVAL_SO_KEY(専用)' : 'APP_CACHE_KEY/GOOGLE_AAS_TOKEN(既存)'}`);
 
 const base = fs.mkdtempSync(path.join(os.tmpdir(), 'se-seal-'));
 const entry = `libscripteval-${abi}.so`;
