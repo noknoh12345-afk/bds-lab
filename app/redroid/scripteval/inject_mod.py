@@ -55,15 +55,18 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--so", default="/data/local/tmp/libscripteval.so")
     ap.add_argument("--pkg", default="com.mojang.minecraftpe")
+    ap.add_argument("--pid", type=int, default=0, help="PID で attach(プロセス名が package と一致しない端末向け。0 で --pkg)")
     ap.add_argument("--host", default="127.0.0.1:27042")
     a = ap.parse_args()
 
     dev = frida.get_device_manager().add_remote_device(a.host)
+    # PID があれば PID で(redroid では frida のプロセス名が package と一致せず名前 attach が外れる)。無ければ名前で。
+    target = a.pid if a.pid else a.pkg
     try:
-        session = dev.attach(a.pkg)
+        session = dev.attach(target)
     except Exception as e:
-        print(f"[inject] attach 失敗({a.pkg}): {e}", file=sys.stderr)
-        print("[inject] MC が起動していません。先にゲームをワールドまで入れてから実行してください。", file=sys.stderr)
+        print(f"[inject] attach 失敗({target}): {e}", file=sys.stderr)
+        print("[inject] frida-server に届かない、または対象 PID/プロセスが見つかりません。", file=sys.stderr)
         return 2
 
     script = session.create_script(JS)
