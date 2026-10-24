@@ -129,13 +129,25 @@ async function ensureFridaServer(adb, isRoot, { fridaVersion, farch, log }) {
     if (adb.run(['push', bin, '/data/local/tmp/frida-server'], { timeout: 120_000 }).status !== 0) throw new Error('frida-server を push できません');
     adb.run(['shell', 'chmod 755 /data/local/tmp/frida-server'], { timeout: 10_000 });
   }
-  // (背景で起動: adb shell が閉じても残るよう nohup + 出力を捨てる。既に動いていれば起動しない)
-  rootSh(adb, isRoot, `pidof frida-server >/dev/null || (nohup /data/local/tmp/frida-server -l 0.0.0.0:${FRIDA_PORT} >/dev/null 2>&1 </dev/null &)`, { timeout: 15_000 });
+  // frida-server を daemonize(-D)で起動する。nohup+サブシェル背景化は adb shell 終了時に殺されることがあり、
+  // pidof は socket が立つ前でも真・直後に死んでも分からない(run #5 の「unable to connect to remote frida-server」が
+  // これ: pid は出たが実際には listen していなかった)。-D なら自分で fork して daemon になり生き残る。
+  // 「pid がある」ではなく「FRIDA_PORT が端末内で LISTEN」を確かめてから進む。
+  const fridaListening = () => listening(adb.run(['shell', `cat /proc/net/tcp /proc/net/tcp6 2>/dev/null`], { timeout: 10_000 }).stdout, FRIDA_PORT);
   let pid = '';
-  for (let i = 0; i < 20 && !pid; i++) { await sleep(500); pid = adb.run(['shell', 'pidof frida-server'], { timeout: 10_000 }).stdout.trim(); }
-  if (!pid) throw new Error('frida-server が起動しません(pidof に出ない)');
-  R.sh(process.env.ADB || 'adb', ['-s', adb.serial, 'forward', `tcp:${FRIDA_PORT}`, `tcp:${FRIDA_PORT}`], { quiet: true, timeout: 10_000 });
-  return { version: ver, pid };
+  for (let attempt = 0; attempt < 2 && !pid; attempt++) {
+    if (!fridaListening()) {
+      // 立っていなければ(古い/固まった frida-server は始末してから)daemonize で起動
+      rootSh(adb, isRoot, `(pidof frida-server >/dev/null && kill -9 \`pidof frida-server\`) 2>/dev/null; /data/local/tmp/frida-server -D -l 127.0.0.1:${FRIDA_PORT}`, { timeout: 15_000 });
+    }
+    for (let i = 0; i < 30 && !fridaListening(); i++) await sleep(500); // 最大 ~15s、socket が立つまで
+    if (fridaListening()) pid = adb.run(['shell', 'pidof frida-server'], { timeout: 10_000 }).stdout.trim().split(/\s+/)[0] || '?';
+  }
+  if (!pid) throw new Error(`frida-server が 127.0.0.1:${FRIDA_PORT} で listen しません`);
+  // host 側の forward を張り直す(古い forward が残っていることがある)
+  R.sh(process.env.ADB || 'adb', ['-s', adb.serial, 'forward', '--remove', `tcp:${FRIDA_PORT}`], { quiet: true, timeout: 10_000 });
+  if (R.sh(process.env.ADB || 'adb', ['-s', adb.serial, 'forward', `tcp:${FRIDA_PORT}`, `tcp:${FRIDA_PORT}`], { quiet: true, timeout: 10_000 }).status !== 0) throw new Error(`adb forward tcp:${FRIDA_PORT} を張れません`);
+  return { version: ver, pid, listening: true };
 }
 
 function readToken(adb, isRoot) {
@@ -222,7 +234,7 @@ async function run(o) {
     note('so_sha256', ev.subject.sha256);
 
     // 4) frida-server
-    try { const fr = await ensureFridaServer(dev.adb, dev.isRoot, { fridaVersion: o.fridaVersion, farch, log }); note('frida', `server ${fr.version} pid ${fr.pid}`); ev.frida = fr.version; }
+    try { const fr = await ensureFridaServer(dev.adb, dev.isRoot, { fridaVersion: o.fridaVersion, farch, log }); note('frida', `server ${fr.version} pid ${fr.pid} listen:${fr.listening}`); ev.frida = { version: fr.version, listening: fr.listening }; }
     catch (e) { note('frida_error', String(e.message || e)); return finish('frida_failed'); }
 
     // 5) push + 注入(既存 inject_mod.py をそのまま使う: Module.load → mod_preinit → mod_init)。各段階を標準出力にも。
