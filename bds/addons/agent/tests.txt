@@ -36,3 +36,15 @@ js world.getDimension('overworld').getBlock({x:3,y:-60,z:3}).typeId
 ## face points the view at a target
 @A cmd /lab:face 0 -60 0
 ~ @A face -?\d+ -?\d+
+
+## goto walks me to a target with no touch (continuous server teleport)
+@A cmd /lab:goto 12 9
+~ @A goto 12 9
+until arrived 15000
+js [Math.round(p('A').location.x), Math.round(p('A').location.z)].join(' ')
+= 12 9
+
+## stop halts walking
+@A cmd /lab:goto -20 -18
+@A cmd /lab:stop
+~ @A stop
