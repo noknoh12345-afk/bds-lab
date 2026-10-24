@@ -1,0 +1,23 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.grl.ui": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "grl_cal": {
+          "scale": "(math.mod(math.floor(v.grl_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "grl_ramp": {
+          "scale": "(math.mod(math.floor(v.grl_show / 2), 2) > 0.5) ? 1 : 0"
+        },
+        "grl_tilts": {
+          "scale": "(math.mod(math.floor(v.grl_show / 4), 2) > 0.5) ? 1 : 0"
+        },
+        "grl_gui": {
+          "scale": "(math.mod(math.floor(v.grl_show / 8), 2) > 0.5) ? 1 : 0"
+        }
+      }
+    }
+  }
+}

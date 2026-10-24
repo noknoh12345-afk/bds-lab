@@ -4,6 +4,23 @@
 **app ラボを「ほぼクライアント」に: 本物のアプリをコントローラーで人のように遊べる（歩く・見回す・跳ぶ・壊す・置く・持ち物・チャット…）。
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
+### 🎮 GeoUI の規則の台帳（RULES.md）と、規則を決める実験 geoui_rules
+- 頼み: 「規則を見つけて GeoUI によるマイクラの反映設計を全て網羅してさらに深めて」。
+- **[bds/geoui/RULES.md](bds/geoui/RULES.md)**: サーバーの値が画面の画素になるまで（と指が値になるまで）の 9 段の規則に、ID・状態（一次資料・
+  測った・式・仮説）・出どころ・設計への意味。一次資料は Mojang の bedrock-samples 1.26.50.4（バニラの UI・player・アニメーション、公式の文書、
+  Molang と Script API のメタデータ。リポジトリには入れない）。見つけた事: K の 0.9375 はバニラの player の `scripts.scale`（→ 仮説: 1 ブロック =
+  パネルの短い辺）、姿勢のアニメーションはバニラの root・腕・頭だけを動かす、render controller に光を切る項目は無い、HUD の人形は
+  `hud_player_renderer`・持ち物の人形は `live_player_renderer` に `#look_at_cursor`、GUI の倍率は測った 10 画面で min(⌊幅/320⌋, ⌊高さ/240⌋) にも
+  ⌊高さ/240⌋ にも合う、Script API の各イベントが入った版。
+- **直した事**: GeoUI Screen のパックは `@minecraft/server` 2.1.0 を宣言して playerSwingStart（2.5.0〜）を使っていた → 2.5.0 に。`pack.js` の
+  `API_MIN`・`apiNeeds` が、使う API より古い版の宣言に注意を出す。`scaleScript`（UI の中だけ player の scale を変える）と `patchPlayer` の口。
+  本物の BDS で geoui_device 18/18・geoui_html_demo 17/17。
+- **規則を決める実験** `bds/addons/geoui_rules`（`node bds/geoui/screen/rules.mjs`、本物の BDS で 10/10）: UI の中の scale を 5 つ（R4.1 単位・R4.2 原点）、
+  体の minecraft:scale（R4.8）、しゃがむ・眠る・泳ぐ・ボート・三人称（R2.3）、9 段の灰色と傾けた 5 枚を昼・夜・暗視・閉じた箱で（R3.7 光）、
+  ダメージ（R3.8）・透明化（R3.9）、GUI の倍率の決まりを分ける 6 画面（R5.3）。**予測は実験の前に** `predictions.json`（`rules.mjs predict`）、
+  結果は `rules.mjs verdict <summary.json>`。本物のアプリで回すのは人の許可をもらってから。
+- 試験 `tests/geoui-rules-offline.mjs`（24: パック・scale の式・予測・Studio の枠の px・verdict の読み方・各パックの API の版）。
+
 ### 🎮 GeoUI の仕様書（SPEC.md）・端末の確かめ・HTML → GeoUI（フォームなしで操作する）
 - 頼み: 「osu! を作る前に GeoUI を仕様書で全部網羅して（各デバイスで正しい表示・正しい表示領域と式を全部）。まず色々なアスペクト比の Android、
   次に iPhone などの実機で調べる。それから HTML を GeoUI に変える物を作って（スクロールでスロット・視点でマウス・W A S D で見た目の向きへ焦点・

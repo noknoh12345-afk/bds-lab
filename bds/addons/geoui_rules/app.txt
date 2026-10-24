@@ -1,0 +1,313 @@
+# GeoUI の規則を決める（bds/geoui/screen/rules.mjs が作る。予測は predictions.json: 走らせる前にコミットしたもの）
+# node lab.mjs app ci -a geoui_rules（人の許可をもらってから）→ node bds/geoui/screen/rules.mjs verdict <summary.json>
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 900000
+do tp @a 0 -60 0 0 0
+do gamemode adventure @a
+do time set noon
+do weather clear
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do scriptevent grl:show 0
+wait 6000
+absent clientlog \bERROR\b
+
+section scale
+do scriptevent grl:show 1
+do scriptevent grl:scale 0.9375
+wait 1500
+shot cal-s0_9375
+measure geoui cal-s0_9375
+do scriptevent grl:scale 0.5
+wait 1500
+shot cal-s0_5
+measure geoui cal-s0_5
+do scriptevent grl:scale 0.75
+wait 1500
+shot cal-s0_75
+measure geoui cal-s0_75
+do scriptevent grl:scale 1
+wait 1500
+shot cal-s1
+measure geoui cal-s1
+do scriptevent grl:scale 1.5
+wait 1500
+shot cal-s1_5
+measure geoui cal-s1_5
+do scriptevent grl:scale 0.9375
+
+section entity-scale
+do scriptevent grl:small 1
+wait 1500
+shot cal-small
+measure geoui cal-small
+do scriptevent grl:small 0
+wait 1000
+
+section poses
+do scriptevent grl:sneak 1
+wait 1500
+shot cal-sneak
+measure geoui cal-sneak
+do scriptevent grl:sneak 0
+do scriptevent grl:anim animation.player.sleeping
+wait 1500
+shot cal-sleep
+measure geoui cal-sleep
+do scriptevent grl:anim animation.player.swim
+wait 1500
+shot cal-swim
+measure geoui cal-swim
+do scriptevent grl:anim stop
+do summon boat 0 -60 2
+wait 500
+do ride @a start_riding @e[type=boat,c=1]
+wait 1500
+shot cal-ride
+measure geoui cal-ride
+do ride @a stop_riding
+do kill @e[type=boat]
+do tp @a 0 -60 0 0 0
+perspective
+wait 1500
+shot cal-third
+measure geoui cal-third
+perspective
+wait 1500
+shot cal-front
+measure geoui cal-front
+perspective
+wait 1000
+
+section light-noon
+do time set noon
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 2
+wait 1500
+shot ramp-noon
+measure color ramp-noon 453 160 516 223
+measure color ramp-noon 748 160 812 223
+measure color ramp-noon 1044 160 1107 223
+measure color ramp-noon 453 329 516 392
+measure color ramp-noon 748 329 812 392
+measure color ramp-noon 1044 329 1107 392
+measure color ramp-noon 453 497 516 561
+measure color ramp-noon 748 497 812 561
+measure color ramp-noon 1044 497 1107 561
+do scriptevent grl:show 4
+wait 1500
+shot tilt-noon
+measure color tilt-noon 254 340 294 380
+measure color tilt-noon 507 340 547 380
+measure color tilt-noon 760 340 800 380
+measure color tilt-noon 1013 340 1053 380
+measure color tilt-noon 1266 340 1307 380
+do scriptevent grl:show 0
+
+section light-midnight
+do time set midnight
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 2
+wait 1500
+shot ramp-midnight
+measure color ramp-midnight 453 160 516 223
+measure color ramp-midnight 748 160 812 223
+measure color ramp-midnight 1044 160 1107 223
+measure color ramp-midnight 453 329 516 392
+measure color ramp-midnight 748 329 812 392
+measure color ramp-midnight 1044 329 1107 392
+measure color ramp-midnight 453 497 516 561
+measure color ramp-midnight 748 497 812 561
+measure color ramp-midnight 1044 497 1107 561
+do scriptevent grl:show 4
+wait 1500
+shot tilt-midnight
+measure color tilt-midnight 254 340 294 380
+measure color tilt-midnight 507 340 547 380
+measure color tilt-midnight 760 340 800 380
+measure color tilt-midnight 1013 340 1053 380
+measure color tilt-midnight 1266 340 1307 380
+do scriptevent grl:show 0
+
+section light-nightvision
+do effect @a night_vision 60 0 true
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 2
+wait 1500
+shot ramp-nightvision
+measure color ramp-nightvision 453 160 516 223
+measure color ramp-nightvision 748 160 812 223
+measure color ramp-nightvision 1044 160 1107 223
+measure color ramp-nightvision 453 329 516 392
+measure color ramp-nightvision 748 329 812 392
+measure color ramp-nightvision 1044 329 1107 392
+measure color ramp-nightvision 453 497 516 561
+measure color ramp-nightvision 748 497 812 561
+measure color ramp-nightvision 1044 497 1107 561
+do scriptevent grl:show 4
+wait 1500
+shot tilt-nightvision
+measure color tilt-nightvision 254 340 294 380
+measure color tilt-nightvision 507 340 547 380
+measure color tilt-nightvision 760 340 800 380
+measure color tilt-nightvision 1013 340 1053 380
+measure color tilt-nightvision 1266 340 1307 380
+do scriptevent grl:show 0
+do effect @a clear
+
+section light-box
+do time set noon
+do fill -2 -61 -2 2 -56 2 stone hollow
+do tp @a 0 -60 0 0 0
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 2
+wait 1500
+shot ramp-box
+measure color ramp-box 453 160 516 223
+measure color ramp-box 748 160 812 223
+measure color ramp-box 1044 160 1107 223
+measure color ramp-box 453 329 516 392
+measure color ramp-box 748 329 812 392
+measure color ramp-box 1044 329 1107 392
+measure color ramp-box 453 497 516 561
+measure color ramp-box 748 497 812 561
+measure color ramp-box 1044 497 1107 561
+do scriptevent grl:show 4
+wait 1500
+shot tilt-box
+measure color tilt-box 254 340 294 380
+measure color tilt-box 507 340 547 380
+measure color tilt-box 760 340 800 380
+measure color tilt-box 1013 340 1053 380
+measure color tilt-box 1266 340 1307 380
+do scriptevent grl:show 0
+do fill -2 -61 -2 2 -56 2 air
+do fill -2 -61 -2 2 -61 2 grass_block
+do tp @a 0 -60 0 0 0
+
+section hurt
+do scriptevent grl:show 2
+wait 1500
+do damage @a 1
+shot ramp-hurt
+measure color ramp-hurt 453 160 516 223
+measure color ramp-hurt 748 160 812 223
+measure color ramp-hurt 1044 160 1107 223
+measure color ramp-hurt 453 329 516 392
+measure color ramp-hurt 748 329 812 392
+measure color ramp-hurt 1044 329 1107 392
+measure color ramp-hurt 453 497 516 561
+measure color ramp-hurt 748 497 812 561
+measure color ramp-hurt 1044 497 1107 561
+do effect @a instant_health 1 1 true
+do scriptevent grl:show 0
+
+section invisible
+do scriptevent grl:show 1
+do effect @a invisibility 60 0 true
+wait 1500
+shot cal-invisible
+measure geoui cal-invisible
+do effect @a clear
+do scriptevent grl:show 0
+
+section gui
+do hud @a hide hotbar
+
+section gui-1100x1000
+size 1100x1000
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1100x1000
+measure marks gui-1100x1000
+
+section gui-960x540
+size 960x540
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-960x540
+measure marks gui-960x540
+
+section gui-1279x960
+size 1279x960
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1279x960
+measure marks gui-1279x960
+
+section gui-1280x960
+size 1280x960
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1280x960
+measure marks gui-1280x960
+
+section gui-1920x959
+size 1920x959
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1920x959
+measure marks gui-1920x959
+
+section gui-2560x1440
+size 2560x1440
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-2560x1440
+measure marks gui-2560x1440
+
+section end
+size reset
+wait 6000
+do scriptevent grl:show 0
+do hud @a reset
+do time set noon
+shot end

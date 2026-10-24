@@ -1,0 +1,50 @@
+# geoui_rules（bds/geoui/screen/rules.mjs が作る）: 規則を決める実験のパックが本物の BDS で動くか（プロパティ・scale・しゃがむ・
+# アニメーション・体の大きさの component・乗り物）。描画（目盛り・灰色・GUI の枠）は app.txt（本物のアプリ）が写して測る。
+
+## 読み込める（プロパティが既定値）
+@A join
+wait 2000
+js JSON.stringify([p('A').getProperty('grl:show'), p('A').getProperty('grl:sc')])
+= [0,9375]
+
+## 表示と UI の中の scale を変える
+scriptevent grl:show 3
+scriptevent grl:scale 0.5
+wait 300
+js JSON.stringify([p('A').getProperty('grl:show'), p('A').getProperty('grl:sc')])
+= [3,5000]
+scriptevent grl:scale 9
+~ GRL scale <0.1…4>
+scriptevent grl:scale 0.9375
+wait 300
+
+## サーバーからしゃがませる・アニメーション
+js const q = p('A'); q.isSneaking = true; q.isSneaking
+= true
+scriptevent grl:anim animation.player.sleeping
+wait 300
+scriptevent grl:anim stop
+wait 300
+~ GRL anim animation.player.sleeping
+~ GRL anim stop
+!~ GRL .*error
+
+## 体の大きさ（minecraft:scale 0.5、他のアドオンがするように）
+scriptevent grl:small 1
+wait 600
+js p('A').getComponent('minecraft:scale').value
+= 0.5
+scriptevent grl:small 0
+wait 600
+js const c = p('A').getComponent('minecraft:scale'); c ? c.value : 1
+= 1
+
+## 乗り物（ボートに乗る・降りる）
+summon boat 0 -60 2
+wait 500
+ride @a start_riding @e[type=boat,c=1]
+wait 500
+js const r = p('A').getComponent('minecraft:riding'); r ? r.entityRidingOn.typeId : 'none'
+= minecraft:boat
+ride @a stop_riding
+kill @e[type=boat]

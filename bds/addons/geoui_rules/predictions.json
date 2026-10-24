@@ -1,0 +1,162 @@
+{
+ "version": 1,
+ "made": "bds/geoui/screen/rules.mjs",
+ "note": "Written before the run. verdict compares the run with these numbers.",
+ "scale": [
+  {
+   "shot": "cal-s0_9375",
+   "scale": 0.9375,
+   "unitsPerScreenH": 170.6667,
+   "centreY_M": 135.0333,
+   "centreY_W": 135.0333
+  },
+  {
+   "shot": "cal-s0_5",
+   "scale": 0.5,
+   "unitsPerScreenH": 320,
+   "centreY_M": 232.1,
+   "centreY_W": 253.1875
+  },
+  {
+   "shot": "cal-s0_75",
+   "scale": 0.75,
+   "unitsPerScreenH": 213.3333,
+   "centreY_M": 162.7667,
+   "centreY_W": 168.7917
+  },
+  {
+   "shot": "cal-s1",
+   "scale": 1,
+   "unitsPerScreenH": 160,
+   "centreY_M": 128.1,
+   "centreY_W": 126.5938
+  },
+  {
+   "shot": "cal-s1_5",
+   "scale": 1.5,
+   "unitsPerScreenH": 106.6667,
+   "centreY_M": 93.4333,
+   "centreY_W": 84.3958
+  }
+ ],
+ "entityScale": {
+  "shot": "cal-small",
+  "follows": {
+   "unitsPerScreenH": 341.3333
+  },
+  "ignores": {
+   "unitsPerScreenH": 170.6667
+  }
+ },
+ "poses": [
+  {
+   "shot": "cal-sneak",
+   "unitsPerScreenH": 170.6667,
+   "centreY": 135.0333,
+   "tolerance": 0.003
+  },
+  {
+   "shot": "cal-sleep",
+   "unitsPerScreenH": 170.6667,
+   "centreY": 135.0333,
+   "tolerance": 0.003
+  },
+  {
+   "shot": "cal-swim",
+   "unitsPerScreenH": 170.6667,
+   "centreY": 135.0333,
+   "tolerance": 0.003
+  },
+  {
+   "shot": "cal-ride",
+   "unitsPerScreenH": 170.6667,
+   "centreY": 135.0333,
+   "tolerance": 0.003
+  },
+  {
+   "shot": "cal-third",
+   "unitsPerScreenH": 170.6667,
+   "centreY": 135.0333,
+   "tolerance": 0.003
+  },
+  {
+   "shot": "cal-front",
+   "unitsPerScreenH": 170.6667,
+   "centreY": 135.0333,
+   "tolerance": 0.003
+  }
+ ],
+ "gui": [
+  {
+   "shot": "gui-1100x1000",
+   "W": 1100,
+   "H": 1000,
+   "A": 3,
+   "B": 4
+  },
+  {
+   "shot": "gui-960x540",
+   "W": 960,
+   "H": 540,
+   "A": 2,
+   "B": 2
+  },
+  {
+   "shot": "gui-1279x960",
+   "W": 1279,
+   "H": 960,
+   "A": 3,
+   "B": 4
+  },
+  {
+   "shot": "gui-1280x960",
+   "W": 1280,
+   "H": 960,
+   "A": 4,
+   "B": 4
+  },
+  {
+   "shot": "gui-1920x959",
+   "W": 1920,
+   "H": 959,
+   "A": 3,
+   "B": 3
+  },
+  {
+   "shot": "gui-2560x1440",
+   "W": 2560,
+   "H": 1440,
+   "A": 6,
+   "B": 6
+  }
+ ],
+ "hurt": {
+  "shot": "ramp-hurt",
+  "patch": "g255",
+  "expect": "the same colour as at noon (is_hurt_color a 0)"
+ },
+ "light": {
+  "conditions": [
+   "noon",
+   "midnight",
+   "nightvision",
+   "box"
+  ],
+  "patches": [
+   "g0",
+   "g32",
+   "g64",
+   "g96",
+   "g128",
+   "g160",
+   "g192",
+   "g224",
+   "g255",
+   "tilt-flat",
+   "tilt-up45",
+   "tilt-down45",
+   "tilt-left45",
+   "tilt-right45"
+  ]
+ }
+}

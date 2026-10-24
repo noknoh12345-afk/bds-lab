@@ -13,7 +13,11 @@
 //   planes [{ bone, texture, rect {x, y, w, h} (local units, y down), z (toward the camera is negative), uv [u, v, w, h] (texture px) }],
 //   pre [lines] (pre_animation, after the guard), initialize [lines], properties [{ name, range [a, b], default }],
 //   hideLocalPlayer (Molang: hide the player's own body in the world while true — a frozen camera then sees through it),
-//   script (the BP's scripts/main.js), extraScripts { 'name.js': text }, lang { en_US: '', ja_JP: '' }
+//   script (the BP's scripts/main.js), extraScripts { 'name.js': text }, lang { en_US: '', ja_JP: '' },
+//   serverVersion ('@minecraft/server' the script asks for: 2.5.0 by default — playerSwingStart is in WorldAfterEvents from 2.5.0,
+//   Mojang's script metadata (bedrock-samples metadata/script_modules), RULES.md R7.1),
+//   scaleScript (the player's scripts.scale, Molang: the renderer's unit is scale / 16 of its panel — RULES.md R4.1; vanilla 0.9375),
+//   patchPlayer({ rp, bp }) (last changes to the two player definitions: component groups, events …)
 // }
 (function (root) {
   'use strict';
@@ -35,6 +39,19 @@
     glass: { '+defines': ['USE_UV_ANIM'], '+states': ['Blending', 'DisableDepthWrite'], blendSrc: 'SourceAlpha', blendDst: 'OneMinusSrcAlpha' },
   };
   const MAT_NAMES = Object.keys(MATS);
+  /** the @minecraft/server version each API a GeoUI script uses first appeared in (Mojang's script metadata, bedrock-samples
+   *  1.26.50.4 metadata/script_modules/@minecraft/server-bindings_*.json — RULES.md R7.1): a pack asks for the highest it uses */
+  const API_MIN = Object.freeze({
+    playerSwingStart: '2.5.0', EntitySwingSource: '2.5.0', playerHotbarSelectedSlotChange: '2.1.0', playerButtonInput: '1.18.0',
+    playerInputModeChange: '1.17.0', playerEmote: '1.14.0', selectedSlotIndex: '1.11.0', playAnimation: '1.9.0', isSneaking: '1.6.0',
+  });
+  const vnum = (v) => String(v).split('.').map(Number).reduce((a, x) => a * 1000 + (x || 0), 0);
+  /** the lowest @minecraft/server version that has every API of API_MIN a script names, and which ones need it */
+  function apiNeeds(text) {
+    let need = '1.0.0'; const uses = [];
+    for (const [name, v] of Object.entries(API_MIN)) if (new RegExp(`\\b${name}\\b`).test(String(text || ''))) { uses.push(name); if (vnum(v) > vnum(need)) need = v; }
+    return { need, uses };
+  }
   function materialsFile(ns, used) {
     const m = { materials: { version: '1.0.0' } };
     const base = (filter) => ({
@@ -179,6 +196,7 @@
     for (const g of geos) { d.textures[g.key] = `textures/${ns}/${clean(g.tex.id, 't')}`; d.geometry[g.key] = `geometry.${g.key}`; }
     // (the paper doll of the pause screen is a player built for the picture: it has no properties, and a q.property there stops
     //  the rest of pre_animation — bds-lab's probe: every line that reads one is guarded by variable.is_paperdoll)
+    if (scene.scaleScript) d.scripts.scale = String(scene.scaleScript);
     d.scripts.initialize = [...(d.scripts.initialize || []), ...(scene.initialize || [])];
     d.scripts.pre_animation = [...d.scripts.pre_animation, ...(scene.pre || [])];
     d.animations[`${ns}_ui`] = `animation.${ns}.ui`;
@@ -191,6 +209,8 @@
       const [k, v] = Object.entries(rc)[0];
       return /third_person/.test(k) ? { [k]: `(${v}) && !(q.is_local_player && !q.is_in_ui && (${scene.hideLocalPlayer}))` } : rc;
     })];
+    const be = JSON.parse(G.VANILLA_BP_PLAYER);
+    if (typeof scene.patchPlayer === 'function') scene.patchPlayer({ rp: ce, bp: be });
     files['rp/entity/player.entity.json'] = J(ce);
     const U = scene.uuids || { rp: uuidFrom(`${ns}:rp:${scene.seed || ''}`), rpMod: uuidFrom(`${ns}:rp-mod:${scene.seed || ''}`), bp: uuidFrom(`${ns}:bp:${scene.seed || ''}`),
       bpData: uuidFrom(`${ns}:bp-data:${scene.seed || ''}`), bpScript: uuidFrom(`${ns}:bp-script:${scene.seed || ''}`) };
@@ -202,7 +222,7 @@
     files['rp/texts/en_US.lang'] = `${langOf('en_US')}entity.minecraft:player.name=Player\n`;
     files['rp/texts/ja_JP.lang'] = `${langOf('ja_JP')}entity.minecraft:player.name=プレイヤー\n`;
     // ---- the behaviour pack
-    const be = JSON.parse(G.VANILLA_BP_PLAYER), props = {};
+    const props = {};
     for (const p of scene.properties || []) {
       if (!/^[a-z0-9_]{1,32}$/.test(p.name)) throw new Error(`プロパティの名前「${p.name}」は英小文字・数字・_`);
       props[`${ns}:${p.name}`] = { client_sync: true, type: 'int', range: p.range, default: p.default ?? p.range[0] };
@@ -211,7 +231,10 @@
     if (Object.keys(props).length) be['minecraft:entity'].description.properties = props;
     files['bp/entities/player.json'] = J(be);
     files['bp/loot_tables/empty.json'] = J({ pools: [] });
-    const deps = [{ uuid: U.rp, version }, { module_name: '@minecraft/server', version: scene.serverVersion || '2.1.0' }];
+    const serverVersion = scene.serverVersion || '2.5.0';
+    const needs = apiNeeds([scene.script || '', ...Object.values(scene.extraScripts || {})].join('\n'));
+    if (scene.script && vnum(needs.need) > vnum(serverVersion)) warnings.push(`スクリプトが @minecraft/server ${needs.need} の API（${needs.uses.join('・')}）を使うのに ${serverVersion} を宣言しています`);
+    const deps = [{ uuid: U.rp, version }, { module_name: '@minecraft/server', version: serverVersion }];
     files['bp/manifest.json'] = J({ format_version: 2, header: { name: `${name} BP`, description: desc, uuid: U.bp, version, min_engine_version: minEngine },
       modules: [{ type: 'data', uuid: U.bpData, version: [1, 0, 0] }, ...(scene.script ? [{ type: 'script', language: 'javascript', uuid: U.bpScript, entry: 'scripts/main.js', version: [1, 0, 0] }] : [])],
       dependencies: scene.script ? deps : deps.slice(0, 1) });
@@ -234,6 +257,6 @@
     return { files, stats, warnings, ns, uuids: U };
   }
 
-  S.pack = { MATS, MAT_NAMES, materialsFile, uuidFrom, build };
+  S.pack = { MATS, MAT_NAMES, API_MIN, apiNeeds, materialsFile, uuidFrom, build };
   if (typeof module === 'object' && module && module.exports) module.exports = S.pack;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

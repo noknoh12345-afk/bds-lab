@@ -268,7 +268,8 @@ world.afterEvents.playerButtonInput.subscribe((e) => {
   if (e.button === InputButton.Jump) q.jump = true; else if (e.button === InputButton.Sneak) q.sneak = true;
   pend.set(e.player.id, q);
 });
-world.afterEvents.playerSwingStart.subscribe((e) => { const q = pend.get(e.player.id) || { swings: 0, uses: 0 }; if (String(e.swingSource) === 'Attack') q.swings++; pend.set(e.player.id, q); });
+// (playerSwingStart is in @minecraft/server from 2.5.0, the version the pack asks for: RULES.md R7.1 — kept optional all the same)
+if (world.afterEvents.playerSwingStart) world.afterEvents.playerSwingStart.subscribe((e) => { const q = pend.get(e.player.id) || { swings: 0, uses: 0 }; if (String(e.swingSource) === 'Attack') q.swings++; pend.set(e.player.id, q); });
 world.afterEvents.itemUse.subscribe((e) => { const q = pend.get(e.source.id) || { swings: 0, uses: 0 }; q.uses++; pend.set(e.source.id, q); });
 system.runInterval(() => engine.tick(), 1);
 system.afterEvents.scriptEventReceive.subscribe((e) => {

@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Rules Probe RP",
+    "description": "GeoUI の規則を本物の画面で決める（bds-lab: bds/geoui/RULES.md）",
+    "uuid": "d4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d11",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "d4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d12",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

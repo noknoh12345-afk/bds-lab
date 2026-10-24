@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Rules Probe BP",
+    "description": "GeoUI の規則を本物の画面で決める（bds-lab: bds/geoui/RULES.md）",
+    "uuid": "d4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d13",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "d4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d14",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "d4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d15",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "d4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d11",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.5.0"
+    }
+  ]
+}

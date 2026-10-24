@@ -3,6 +3,8 @@
 GeoUI を作る途中で行き詰まらないための、表示（どこに・どの大きさで出るか）と操作（何がどう届くか）の決まりを全部ここに書く。
 式は `bds/geoui/screen/layout.js` が 1 か所で持ち、`tests/geoui-screen-offline.mjs` がその式と、それが書く JSON UI の配置を突き合わせる。
 本物の画面で確かめる道具は `bds/addons/geoui_device`（[12 章](#12-端末の確かめandroid-の-ciiphone-などの実機)）。
+**規則の台帳は [RULES.md](RULES.md)**: サーバーの値が画面の画素になるまでの全段の規則に、出どころ（Mojang の一次資料・測った実行・式）と状態、
+まだ決まっていない仮説には、決める実験（`bds/addons/geoui_rules`）と実験の前に書いた予測を付けてある。
 
 **印**: 「**測った**」= 本物のアプリで測った値（どの実行かを書く）。「**式**」= 式と JSON UI から出る（オフラインの試験が確かめる）。
 「**要実測**」= まだ本物のアプリで確かめていない（確かめ方を書く。決めつけない）。
@@ -331,6 +333,10 @@ node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu
 | HTML の見本の見た目・焦点・ページ | Android CI: `-a geoui_html_demo`（許可が要る） | （まだ回していない） |
 | インベントリの人形に GeoUI が映らないか | ゲームパッドの Y で持ち物を開いて写す | （まだ） |
 | タッチでタップした所（案）: 止めたカメラの前にブロックの面を置き、タップが当たった面の点（`faceLocation`）から画面の位置を逆算する | 作って写す | （案） |
+| renderer の 1 単位 = scripts.scale / 16（RULES R4.1）・原点のずれ D はモデルの単位かブロックか（R4.2） | `geoui_rules` の scale（UI の中の scale を 5 つ） | （予測は geoui_rules/predictions.json。回すのは許可をもらってから） |
+| プレイヤーの minecraft:scale に renderer が付いてくるか（R4.8）・姿勢・乗り物・視点で動かないか（R2.3） | `geoui_rules` の entity-scale・poses | （同） |
+| 板にかかる光の形（R3.7）・ダメージの赤（R3.8）・透明化（R3.9） | `geoui_rules` の light-*・hurt・invisible | （同） |
+| GUI の倍率の決まり: min(⌊幅/320⌋, ⌊高さ/240⌋) か ⌊高さ/240⌋ か（R5.3） | `geoui_rules` の gui-*（6 画面） | （同） |
 | 大きな UI の重さ（fps） | `perf` の手順 | （まだ） |
 
 ## 14. osu! を作るときの決め方
@@ -368,6 +374,8 @@ node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu
 | `screen/input.js` | フォームなしの入力（ポインタ・キー・ボタン・ホイール・くり返し） |
 | `screen/font.js` | 3 x 5 の字 |
 | `screen/device.mjs` | 端末の確かめのパック（`bds/addons/geoui_device`）と期待の位置（`expect`） |
+| `screen/rules.mjs` | 規則を決める実験のパック（`bds/addons/geoui_rules`）・実験の前の予測（`predict`）・結果の読み方（`verdict`） |
+| `RULES.md` | 規則の台帳（全段の規則・出どころ・状態・決める実験） |
 | `html/` | HTML → GeoUI（`capture.mjs`・`scene.mjs`・`runtime.js`・`convert.mjs`・見本 `examples/menu.html`） |
 | `app/lib/measure.mjs` の `marks` | スクショの色ごとの箱を測る（`measure marks <shot>`） |
 | `tests/geoui-screen-offline.mjs`・`tests/geoui-html-offline.mjs` | 式と JSON UI・パック・焦点・入力・端末のパック、変換器（パックの Molang をゲームと同じに動かした見た目・main.js そのもの） |

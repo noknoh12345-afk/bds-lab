@@ -1,0 +1,99 @@
+{
+  "namespace": "hud",
+  "grl_vp": {
+    "type": "panel",
+    "$grl_vp_size|default": [
+      "100%",
+      "100%"
+    ],
+    "size": "$grl_vp_size",
+    "variables": [
+      {
+        "requires": "($compress_hud_width)",
+        "$grl_vp_size": [
+          "111.111111%",
+          "100%"
+        ]
+      }
+    ],
+    "controls": [
+      {
+        "grl_g_gui": {
+          "type": "panel",
+          "size": [
+            17.066667,
+            17.066667
+          ],
+          "anchor_from": "bottom_middle",
+          "anchor_to": "center",
+          "offset": [
+            "26367.1875%x",
+            "-17719.335937%y"
+          ],
+          "controls": [
+            {
+              "grl_r_gui": {
+                "type": "custom",
+                "renderer": "live_player_renderer",
+                "layer": 1,
+                "size": [
+                  "100%",
+                  "100%"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_name_override": "#visible"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "grl_studio": {
+          "type": "panel",
+          "size": [
+            "10%",
+            "10%"
+          ],
+          "offset": [
+            0,
+            "110%"
+          ],
+          "anchor_from": "top_middle",
+          "anchor_to": "top_middle",
+          "controls": [
+            {
+              "grl_r_studio": {
+                "type": "custom",
+                "renderer": "live_player_renderer",
+                "layer": 1,
+                "bindings": [
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_name_override": "#visible"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "root_panel": {
+    "modifications": [
+      {
+        "array_name": "controls",
+        "operation": "insert_front",
+        "value": [
+          {
+            "grl_vp@hud.grl_vp": {}
+          }
+        ]
+      }
+    ]
+  }
+}

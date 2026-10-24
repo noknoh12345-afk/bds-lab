@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/screen/rules.mjs",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "GeoUI の規則を本物の画面で決める（scale・原点・体の大きさ・姿勢・光・GUI の倍率）"
+}

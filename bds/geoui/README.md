@@ -5,6 +5,7 @@ GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付�
 
 **仕様書: [SPEC.md](SPEC.md)** — どの画面でも正しい所に出す式（renderer の写し方・表示領域・4 つの大きさの決め方・寄せ先ごとの renderer・
 端末ごとの数）、描き方の決まりと限度、フォームなしで PC を再現する入力、HTML から GeoUI への変換器、端末の確かめ方と要実測の一覧。
+**規則の台帳: [RULES.md](RULES.md)** — サーバーの値が画面の画素になるまでの全段の規則（出どころ・状態）と、仮説を決める実験 `../addons/geoui_rules`。
 
 | ファイル | 中身 |
 |---|---|
