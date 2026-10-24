@@ -634,7 +634,9 @@ export async function runScenario(steps, ctx) {
           : adb.shell(['cmd', 'overlay', 'enable-exclusive', '--category', ov(a[0])], { timeout: 30_000 });
         if (r.status !== 0 || /Error|Exception|Unknown/.test(r.stdout + r.stderr)) throw new Error(`切り欠きを変えられませんでした（${a[0]}）: ${(r.stdout + r.stderr).trim().slice(0, 200)}`);
         await sleep(3000);
-        return a[0];
+        // (Android re-creates the apps when a cut-out overlay changes: on the CI device the game was gone after it — said here, so
+        //  a run tells it from a game that only drew nothing; app.txt then stops, starts and joins it again)
+        return ctx.alive && !ctx.alive() ? `${a[0]}（ゲームが閉じました: 切り欠きを変えると Android がアプリを作り直す。続けるなら stop → launch → join）` : a[0];
       }
       case 'measure': {
         // the newest picture of that name, measured on this machine (lib/measure.mjs: a fixed set of numbers, nothing of the screen)

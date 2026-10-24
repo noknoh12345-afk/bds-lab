@@ -1,6 +1,7 @@
 # GeoUI の端末の確かめ（bds/geoui/screen/device.mjs が作る）: node lab.mjs app ci -a geoui_device（許可をもらってから）
 # 各画面の大きさで、GeoUI を出す前（shot world）と後を比べ、色ごとの枠を測る（measure marks: 11 色・白・灰の箱 px）。期待の位置は
 # node bds/geoui/screen/device.mjs expect <幅>x<高さ>。入力は gdev:check の PASS / FAIL がサーバーのログに出る（expect server）。
+# 結果: node bds/geoui/screen/device.mjs compare <summary.json>（式と比べ、色・向き・重なり・renderer ごとの計算・回転のクエリも読む）。
 
 section title
 launch
@@ -188,14 +189,24 @@ shot clip-32x9
 measure marks clip-32x9
 
 section look
+size reset
+wait 6000
 do scriptevent gdev:show 0
 wait 1500
 shot world
-do scriptevent gdev:show 3136
+do scriptevent gdev:show 64
 wait 2000
 shot colors
 measure marks colors
-do scriptevent gdev:show 513
+do scriptevent gdev:show 1024
+wait 2000
+shot glyph
+measure marks glyph
+do scriptevent gdev:show 2048
+wait 2000
+shot order
+measure marks order
+do scriptevent gdev:show 512
 wait 2000
 shot rc
 measure marks rc
@@ -262,9 +273,13 @@ expect server GDEV CHECK frozen-pointer PASS
 
 section in-query
 do scriptevent gdev:mark
-do scriptevent gdev:show 384
+do scriptevent gdev:show 0
 wait 1500
 shot world
+do scriptevent gdev:show 256
+wait 1500
+shot query-before
+measure marks query-before
 look left 400 60
 wait 800
 shot query-after
@@ -466,26 +481,38 @@ measure marks gui-dpi480
 density reset
 wait 6000
 
-section cutout-corner
-cutout corner
-wait 9000
+section over
 do scriptevent gdev:show 0
 wait 1500
 shot world
-do scriptevent gdev:show 1
-wait 2000
-shot anchors-cut-corner
-measure marks anchors-cut-corner
 do scriptevent gdev:show 8
 wait 2000
-shot over-cut-corner
-measure marks over-cut-corner
+shot over
+measure marks over
 
 section cutout-tall
 cutout tall
-wait 9000
+wait 3000
+stop
+launch
+until title 180000
+join
+until joined 300000
+do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
+do gamemode adventure @a
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
 do scriptevent gdev:show 0
-wait 1500
+wait 7000
 shot world
 do scriptevent gdev:show 1
 wait 2000
@@ -496,31 +523,38 @@ wait 2000
 shot over-cut-tall
 measure marks over-cut-tall
 
-section cutout-double
-cutout double
-wait 9000
+section cutout-hole
+cutout hole
+wait 3000
+stop
+launch
+until title 180000
+join
+until joined 300000
+do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
+do gamemode adventure @a
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
 do scriptevent gdev:show 0
-wait 1500
+wait 7000
 shot world
 do scriptevent gdev:show 1
 wait 2000
-shot anchors-cut-double
-measure marks anchors-cut-double
+shot anchors-cut-hole
+measure marks anchors-cut-hole
 do scriptevent gdev:show 8
 wait 2000
-shot over-cut-double
-measure marks over-cut-double
-
-section cutout-none
-cutout none
-wait 6000
-do scriptevent gdev:show 0
-wait 1500
-shot world
-do scriptevent gdev:show 8
-wait 2000
-shot over
-measure marks over
+shot over-cut-hole
+measure marks over-cut-hole
 
 section end
 do scriptevent gdev:ui off

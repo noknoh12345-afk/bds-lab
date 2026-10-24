@@ -42,6 +42,13 @@ const PAL = [...HUES, ['white', [255, 255, 255]], ['gray', [128, 128, 128]], ['b
 const PI = Object.fromEntries(PAL.map(([n], i) => [n, i]));
 export const BITS = { anchors: 1, box: 2, gui: 4, over: 8, clip: 16, ref: 32, colors: 64, input: 128, query: 256, rc: 512, glyph: 1024, order: 2048, text: 4096 };
 const ATLAS = [256, 64], LABEL_Y = 8;
+// the middle group's marks (local units: x, y, w, h), for the scene and for expected(): the colour swatches (64) and the half-white
+// one (blend), the F and its two dots (1024), the two planes of the order test (2048: the blue one nearer, first in the geometry)
+const SWATCHES = [['white', -60], ['gray', -48], ['red', -36], ['green', -24], ['blue', -12], ['black', 12]], HALF_X = 0;
+const GLYPH = { F: [[30, -40, 2, 14], [30, -40, 10, 2], [30, -34, 7, 2]], red: [43, -40, 3, 3], blue: [25, -29, 3, 3] };
+const ORDER = { blue: [-10, 12, 20, 6, -0.5], red: [-20, 10, 20, 10, 0] };
+// the query bars (256): bar k at (QUERY_X, -42 + 7k), 4 units long at a value of 0 and 56 more a whole turn
+const QUERY_X = 14, QUERY_Y0 = -42, QUERY_DY = 7;
 
 // ---- the scene
 export function scene() {
@@ -103,11 +110,12 @@ export function scene() {
     label(b, -91, -29, 'GUI 182X22');
   }
   // clip (16): a renderer inside a panel that clips_children, 30 % x 30 % from 5 % of the left; scale 1/3 of that panel = 10 % of
-  // the screen's height, like the others; a 400 x 400 square that is far bigger than the panel
+  // the screen's height, like the others; a 400 x 400 square that is far bigger than the panel. Rose, not grey: on the CI device
+  // (run 39989463030) no grey pixel was found at all — clipped away, or grey like the floor? A saturated hue no floor has tells
   {
     const g = group('clip', 'center', { scale: { mode: 'height', s: 1 / 3 }, clip: { size: ['30%', '30%'], anchor: 'left_middle', offset: ['5%', 0] } });
     const b = bone('gdev_clip', g, { scale: showIf(BITS.clip) });
-    rect(b, -200, -200, 400, 400, 'gray', 1);
+    rect(b, -200, -200, 400, 400, 'rose', 1);
     label(b, -10, -2, 'CLIP');
   }
   // the reference: GeoUI Studio's single renderer (10 % x 10 % at 110 % from the top), its screen centre at y 135.04
@@ -165,9 +173,9 @@ export function scene() {
     const Q = ['q.head_y_rotation(0)', 'q.head_x_rotation(0)', 'q.body_y_rotation', 'q.body_x_rotation', 'q.target_y_rotation', 'q.target_x_rotation',
       'q.camera_rotation(1)', 'q.camera_rotation(0)', 'q.eye_target_y_rotation', 'q.eye_target_x_rotation', 'q.is_local_player * 300', 'q.cardinal_player_facing * 60'];
     Q.forEach((q, k) => {
-      const y = -42 + 7 * k, col = k < 11 ? HUES[k][0] : 'white';
-      const b = bone(`gdev_qry_${k}`, g, { parent: root, pivot: [14, y] });
-      rect(b, 14, y, 1, 4, col);
+      const y = QUERY_Y0 + QUERY_DY * k, col = k < 11 ? HUES[k][0] : 'white';
+      const b = bone(`gdev_qry_${k}`, g, { parent: root, pivot: [QUERY_X, y] });
+      rect(b, QUERY_X, y, 1, 4, col);
       anims.push({ name: `qry_${k}`, bones: { [b]: { scale: [`4 + 56 * math.mod((${q}) + 3600, 360) / 360`, 1, 1] } } });
     });
     label(root, 14, -49, 'QUERIES');
@@ -176,14 +184,14 @@ export function scene() {
   {
     const g = group('col', 'center');
     const cb = bone('gdev_col', g, { scale: showIf(BITS.colors) });
-    [['white', -60], ['gray', -48], ['red', -36], ['green', -24], ['blue', -12], ['black', 12]].forEach(([c, x]) => rect(cb, x, -40, 10, 10, c));
-    const half = bone('gdev_col_half', g, { parent: cb, material: 'blend' }); rect(half, 0, -40, 10, 10, 'halfwhite');
+    SWATCHES.forEach(([c, x]) => rect(cb, x, -40, 10, 10, c));
+    const half = bone('gdev_col_half', g, { parent: cb, material: 'blend' }); rect(half, HALF_X, -40, 10, 10, 'halfwhite');
     const gb = bone('gdev_glyph', g, { scale: showIf(BITS.glyph) });
-    rect(gb, 30, -40, 2, 14, 'white'); rect(gb, 30, -40, 10, 2, 'white'); rect(gb, 30, -34, 7, 2, 'white');
-    rect(gb, 43, -40, 3, 3, 'red'); rect(gb, 25, -29, 3, 3, 'blue');
+    for (const r of GLYPH.F) rect(gb, ...r, 'white');
+    rect(gb, ...GLYPH.red, 'red'); rect(gb, ...GLYPH.blue, 'blue');
     // (the blue plane nearer the camera but first in the geometry, the red one behind and after it)
     const ob = bone('gdev_order', g, { scale: showIf(BITS.order) });
-    rect(ob, -10, 12, 20, 6, 'blue', -0.5); rect(ob, -20, 10, 20, 10, 'red', 0);
+    rect(ob, ...ORDER.blue.slice(0, 4), 'blue', ORDER.blue[4]); rect(ob, ...ORDER.red.slice(0, 4), 'red', ORDER.red[4]);
   }
   const textures = [{ id: 'atlas', width: ATLAS[0], height: ATLAS[1], png: atlasPng(labels) }];
   const R = (n) => `variable.is_paperdoll ? 0 : q.property('gdev:${n}')`;
@@ -391,6 +399,14 @@ export function expected(W, H, uiScale = 2) {
   add('box', 'box', { x: -160, y: -90, w: 320, h: 180 });
   add('gui hotbar', 'gui', { x: -91, y: -22, w: 182, h: 22 });
   add('gui square', 'gui', { x: 100, y: -32, w: 32, h: 32 });
+  // the middle's marks, each its own picture in app.txt (colors, glyph, order)
+  for (const [c, x] of [...SWATCHES, ['halfwhite', HALF_X]]) add(`color ${c}`, 'col', { x, y: -40, w: 10, h: 10 });
+  const xs = GLYPH.F.flatMap(([x, , w]) => [x, x + w]), ys = GLYPH.F.flatMap(([, y, , h]) => [y, y + h]);
+  add('glyph F', 'col', { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) });
+  for (const k of ['red', 'blue']) { const [x, y, w, h] = GLYPH[k]; add(`glyph ${k}`, 'col', { x, y, w, h }); }
+  for (const k of ['blue', 'red']) { const [x, y, w, h] = ORDER[k]; add(`order ${k}`, 'col', { x, y, w, h }); }
+  // the query bars at a value of 0 (4 units long; a bar's box is as long as its value says: 56 more a whole turn)
+  QUERY_NAMES.forEach((q, k) => add(`query ${k}`, 'qry', { x: QUERY_X, y: QUERY_Y0 + QUERY_DY * k, w: 4, h: 4 }));
   out.clip = { x0: 0.05 * W, y0: 0.35 * H, x1: 0.35 * W, y1: 0.65 * H };
   out['ref cross (measured d)'] = { x0: W / 2 - 6 * L.K * 0.1 * H, x1: W / 2 + 6 * L.K * 0.1 * H, y0: H / 2 - 6 * L.K * 0.1 * H, y1: H / 2 + 6 * L.K * 0.1 * H };
   return out;
@@ -400,61 +416,126 @@ export function expected(W, H, uiScale = 2) {
 const ANCHOR_HUE = { tl: 'red', t: 'orange', tr: 'yellow', l: 'chartreuse', c: 'green', r: 'spring', bl: 'cyan', b: 'azure', br: 'blue' };
 const QUERY_NAMES = ['head_y_rotation(0)', 'head_x_rotation(0)', 'body_y_rotation', 'body_x_rotation', 'target_y_rotation', 'target_x_rotation',
   'camera_rotation(1)', 'camera_rotation(0)', 'eye_target_y_rotation', 'eye_target_x_rotation', 'is_local_player x 300'];
-/** measures (summary.json's: [{ shot, kind, ok, values, why }]) → rows { shot, what, want, got, d (px), note } and per screen what it
- *  says: the viewport's insets (how far each side of the HUD is in from the screen's edge), the GUI scale, clipped or not */
+const COLOR_RGB = { white: [255, 255, 255], gray: [128, 128, 128], red: [255, 0, 0], green: [0, 255, 0], blue: [0, 0, 255], black: [0, 0, 0] };
+const boxD = (g, w) => Math.max(...['x0', 'y0', 'x1', 'y1'].map((k) => Math.abs(g[k] - w[k])));
+const mid = (b) => ({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 });
+const wrap180 = (a) => ((a % 360) + 540) % 360 - 180;
+/** measures (summary.json's: [{ shot, kind, ok, values, why }]) → rows { shot, what, want, got, d (px), note, fit } and per screen
+ *  what it says: the viewport's insets (how far each side of the HUD is in from the screen's edge), the GUI scale, clipped or not;
+ *  and what the looks say: how much the renderer lights a colour, mirrored or not, depth or drawing order, pre_animation once a
+ *  frame or per renderer, the client's rotation queries before and after a turn. fit false: a row the formulas' worst error leaves
+ *  out (a mark that may be somewhere else on purpose: the order test's blue, white with the half-white in it) */
 export function compare(measures, opts = {}) {
-  const rows = [], screens = [];
+  const rows = [], screens = [], bars = {};
   for (const m of (measures || []).filter((x) => x.kind === 'marks')) {
     const v = m.values || {}, shot = m.shot || m.name || '?';
     if (!m.ok) { rows.push({ shot, what: '—', note: m.why || '測れなかった' }); continue; }
-    const W = v.width, H = v.height, e = expected(W, H, opts.ui || 2);
+    const W = v.width, H = v.height, e = expected(W, H, opts.ui || 2), u = L.K * 0.1 * H;
     const got = (c) => (Number.isFinite(v[`${c}x0`]) ? { x0: v[`${c}x0`], y0: v[`${c}y0`], x1: v[`${c}x1`], y1: v[`${c}y1`] } : null);
-    const add = (what, c, want, note) => {
-      const g = got(c), d = g && want ? Math.max(...['x0', 'y0', 'x1', 'y1'].map((k) => Math.abs(g[k] - want[k]))) : null;
-      rows.push({ shot, what, cls: c, want: want || null, got: g, d, note: note || (g ? '' : 'その色が無い') });
+    const add = (what, c, want, note, fit = true) => {
+      const g = got(c), d = g && want ? boxD(g, want) : null;
+      rows.push({ shot, what, cls: c, want: want || null, got: g, d, note: g ? note || '' : 'その色が無い', ...(fit ? {} : { fit: false }) });
       return g;
     };
+    const say = (what, note) => rows.push({ shot, what, note, summary: true });
     if (/^(anchors|gui-dpi)/.test(shot)) {
       const g = {};
-      for (const [k, c] of Object.entries(ANCHOR_HUE)) g[k] = add(`寄せ先 ${k}`, c, e[`anchor ${k}`]);
+      // (the bottom's middle and right: azure and blue are in the world too — the sky, water — and their boxes take them in: shown,
+      //  not counted in the worst error)
+      for (const [k, c] of Object.entries(ANCHOR_HUE)) {
+        const blue = k === 'b' || k === 'br';
+        g[k] = add(`寄せ先 ${k}`, c, e[`anchor ${k}`], blue ? '（ワールドの青と混ざることがある: いちばん大きいずれに数えない）' : '', !blue);
+      }
       // (the viewport's edges, read off the corner squares: 0 when the HUD reaches the screen's edge. Not off the bottom-right one:
       //  blue and azure are in the world too — the sky, water — and its box takes them in)
       if (g.tl && g.tr && g.bl) screens.push({ shot, W, H, inset: { left: g.tl.x0, top: g.tl.y0, right: W - g.tr.x1, bottom: H - g.bl.y1 } });
     }
     if (/^box/.test(shot)) {
       add('contain の箱', 'violet', e.box);
-      const r = add('gui の枠（ホットバー 182 x 22）', 'rose', e['gui hotbar']);
+      // (the real hotbar is drawn over it: only its lower edge shows — its width is the GUI scale, not counted in the worst error)
+      const r = add('gui の枠（ホットバー 182 x 22）', 'rose', e['gui hotbar'], '（本物のホットバーの下: 幅で GUI の倍率を読む）', false);
       if (r) screens.push({ shot, W, H, ui: (r.x1 - r.x0) / 182 });
     }
     if (/^gui-dpi/.test(shot)) { const r = got('rose'); if (r) screens.push({ shot, W, H, ui: (r.x1 - r.x0) / 182 }); }
     if (/^clip/.test(shot)) {
-      const g = got('gray'), c = e.clip, inside = g && g.x0 >= c.x0 - 2 && g.y0 >= c.y0 - 2 && g.x1 <= c.x1 + 2 && g.y1 <= c.y1 + 2;
-      rows.push({ shot, what: '切り抜き（30 % x 30 % の枠）', cls: 'gray', want: c, got: g, d: null, note: g ? (inside ? '枠の中: 切り抜かれる' : '枠の外まで: 切り抜かれない') : 'その色が無い' });
+      // (rose since 2026-10-24: the square far bigger than the panel — the panel's box if clipped, the whole screen if not)
+      const g = got('rose'), c = e.clip, inside = g && g.x0 >= c.x0 - 2 && g.y0 >= c.y0 - 2 && g.x1 <= c.x1 + 2 && g.y1 <= c.y1 + 2;
+      rows.push({ shot, what: '切り抜き（30 % x 30 % の枠）', cls: 'rose', want: c, got: g, d: inside ? boxD(g, c) : null, fit: false,
+        note: !g ? '薔薇色が無い: 切り抜く枠の中の renderer は何も描いていない（写真で確かめる）'
+          : inside ? (boxD(g, c) <= 3 ? '枠いっぱいに収まる: clips_children が renderer を切り抜く' : '枠の中だが枠より小さい（写真で確かめる）')
+            : g.x1 - g.x0 > 0.9 * W ? '画面いっぱい: 切り抜かれない' : '枠の外まで出る: 切り抜かれない' });
     }
     if (/^over/.test(shot)) {
       const g = got('white');
       rows.push({ shot, what: 'viewport の外の白い印', cls: 'white', want: null, got: g, d: null, note: g ? '見える: 画面が HUD の外まである' : '見えない: HUD が画面いっぱい' });
     }
-    if (/^colors/.test(shot)) for (const c of ['white', 'gray', 'red', 'green', 'blue', 'black']) {
-      if (Number.isFinite(v[`${c}n`])) rows.push({ shot, what: `色 ${c}`, cls: c, want: null, got: got(c), d: null, note: `rgb(${[v[`${c}r`], v[`${c}g`], v[`${c}b`]].map((x) => Math.round(x)).join(', ')})` });
+    if (/^colors/.test(shot)) for (const [c, rgb] of Object.entries(COLOR_RGB)) {
+      // (how much the renderer lights a plane: the measured channel over the drawn one; white's box may take the half-white in)
+      const g = got(c), want = e[`color ${c}`], mean = [v[`${c}r`], v[`${c}g`], v[`${c}b`]], lit = rgb.map((x, i) => (x ? mean[i] / x : null)).filter((x) => x !== null);
+      const half = c === 'white' && g && Math.abs(g.x1 - e['color halfwhite'].x1) <= 3;
+      add(`色 ${c}`, c, want, g ? `rgb(${mean.map((x) => Math.round(x)).join(', ')})${lit.length ? `・明るさ ${(lit.reduce((a, x) => a + x, 0) / lit.length).toFixed(3)}` : ''}${half ? '（半透明の白も白に入った: 平均は混ざる）' : ''}` : '', !half);
+    }
+    if (/^glyph/.test(shot)) {
+      const f = add('F の字（白）', 'white', e['glyph F']), r = add('F の右上の赤い点', 'red', e['glyph red']), b = add('F の左下の青い点', 'blue', e['glyph blue']);
+      if (f && r && b) {
+        const F2 = mid(f), lr = mid(r).x > F2.x && mid(b).x < F2.x, ud = mid(r).y < mid(b).y;
+        say('F の向き', lr && ud ? '鏡写しではない（赤が右上・青が左下）' : `${lr ? '' : '左右が逆。'}${ud ? '' : '上下が逆。'}`);
+      }
+    }
+    if (/^order/.test(shot)) {
+      // (the blue plane nearer (z −0.5) but first in the geometry; the red one behind it and after: where they overlap, the one
+      //  on top shows — the whole blue one if depth decides, else only its part out of the red one, from the red one's right edge)
+      const b = add('手前の青（z −0.5・先に書いた）', 'blue', e['order blue'], '', false);
+      add('奥の赤（z 0・後に書いた）', 'red', e['order red']);
+      if (b) {
+        const depth = Math.abs(b.x0 - e['order blue'].x0) <= 3, order = Math.abs(b.x0 - e['order red'].x1) <= 3;
+        say('描く順と奥行き', depth ? '奥行きが効く: 手前（z が小さい）の青が上' : order ? '描いた順: 後に書いた赤が上（奥行きは効かない）' : '分からない（青の左端が式のどちらでもない: 写真で確かめる）');
+      }
+    }
+    if (/^rc/.test(shot)) {
+      // (a bar per anchor, 2 + 2 x (pre_animation's count mod 12) units: all alike when it runs once a frame for every renderer)
+      const lens = {};
+      for (const [k, c] of Object.entries(ANCHOR_HUE)) {
+        const g = got(c);
+        if (g) lens[k] = (g.x1 - g.x0) / u;
+        rows.push({ shot, what: `rc の棒 ${k}`, cls: c, want: null, got: g, d: null, note: g ? `${lens[k].toFixed(1)} 単位（2 + 2 x (数え mod 12)）` : 'その色が無い' });
+      }
+      // (not the bottom's middle and right: azure and blue are in the world too)
+      const sure = Object.entries(lens).filter(([k]) => k !== 'b' && k !== 'br').map(([, x]) => x);
+      if (sure.length >= 3) {
+        const spread = Math.max(...sure) - Math.min(...sure);
+        say('pre_animation の回数', spread < 1.5 ? `どの renderer の棒も同じ長さ（差 ${spread.toFixed(1)} 単位）: 1 フレームに 1 回（renderer ごとではない）` : `棒の長さが違う（差 ${spread.toFixed(1)} 単位）: renderer ごとに動いている`);
+      }
     }
     if (/^query/.test(shot)) {
-      const u = L.K * 0.1 * H;
-      QUERY_NAMES.forEach((q, k) => { const g = got(HUES[k][0]); rows.push({ shot, what: `q.${q}`, cls: HUES[k][0], want: null, got: g, d: null, note: g ? `棒 ${((g.x1 - g.x0) / u).toFixed(1)} 単位（4 = 値 0、60 = 1 回り）` : 'その色が無い' }); });
+      // (a bar QUERY_X units from the left's middle, 4 + 56 x (the value's place on a turn) long; its box is the bar itself when the
+      //  shot world before it had no bars — app.txt since 2026-10-24)
+      QUERY_NAMES.forEach((q, k) => {
+        const g = got(HUES[k][0]), len = g ? (g.x1 - g.x0) / u : null, deg = g ? ((len - 4) / 56) * 360 : null;
+        if (g) (bars[q] = bars[q] || {})[shot] = deg;
+        rows.push({ shot, what: `q.${q}`, cls: HUES[k][0], want: e[`query ${k}`], got: g, d: null, note: g ? `棒 ${len.toFixed(1)} 単位 = ${deg.toFixed(0)}°（4 単位 = 0°、56 単位で 1 回り）` : 'その色が無い' });
+      });
     }
+  }
+  // the client's rotation queries before and after a turn of the head with the camera frozen: which follow it, by how much
+  for (const [q, s] of Object.entries(bars)) {
+    if (s['query-before'] === undefined || s['query-after'] === undefined) continue;
+    const dd = wrap180(s['query-after'] - s['query-before']);
+    rows.push({ shot: 'query', what: `q.${q} の変化`, summary: true, note: `${Math.abs(dd) < 3 ? '動かない' : `${dd > 0 ? '+' : ''}${dd.toFixed(0)}°`}（${s['query-before'].toFixed(0)}° → ${s['query-after'].toFixed(0)}°）` });
   }
   return { rows, screens };
 }
 /** the comparison as text (Japanese, a line a mark) */
 export function compareText(r) {
   const box = (b) => (b ? `(${Math.round(b.x0)}, ${Math.round(b.y0)})–(${Math.round(b.x1)}, ${Math.round(b.y1)})` : '—');
-  const out = r.rows.map((x) => `${x.shot.padEnd(18)} ${x.what.padEnd(24)} 式 ${box(x.want)}  測った ${box(x.got)}${x.d !== null && x.d !== undefined ? `  ずれ ${x.d.toFixed(1)} px` : ''}${x.note ? `  ${x.note}` : ''}`);
+  const out = r.rows.map((x) => (x.summary ? `${x.shot.padEnd(18)} ${x.what.padEnd(24)} → ${x.note}`
+    : `${x.shot.padEnd(18)} ${x.what.padEnd(24)} 式 ${box(x.want)}  測った ${box(x.got)}${x.d !== null && x.d !== undefined ? `  ずれ ${x.d.toFixed(1)} px` : ''}${x.note ? `  ${x.note}` : ''}`));
   for (const s of r.screens) {
     if (s.inset) out.push(`${s.shot.padEnd(18)} 表示領域の内側への寄り（px）: 左 ${s.inset.left}・上 ${s.inset.top}・右 ${s.inset.right}・下 ${s.inset.bottom}（${s.W}x${s.H}）`);
     if (s.ui) out.push(`${s.shot.padEnd(18)} GUI の倍率: ${s.ui.toFixed(2)} 画面 px / JSON UI px（${s.W}x${s.H}）`);
   }
-  const worst = r.rows.filter((x) => Number.isFinite(x.d)).reduce((a, x) => Math.max(a, x.d), 0);
-  out.push(`いちばん大きいずれ ${worst.toFixed(1)} px（3 px 以内なら式どおり: SPEC.md 6 章）`);
+  const worst = r.rows.filter((x) => Number.isFinite(x.d) && x.fit !== false).reduce((a, x) => (!a || x.d > a.d ? x : a), null);
+  out.push(`いちばん大きいずれ ${(worst ? worst.d : 0).toFixed(1)} px${worst ? `（${worst.shot} の${worst.what}）` : ''}（3 px 以内なら式どおり: SPEC.md 6 章）`);
   return out.join('\n');
 }
 
@@ -568,16 +649,17 @@ js JSON.stringify([p('A').getProperty('gdev:ui'), p('A').inputPermissions.isPerm
 
 /** the real app (Android): the shapes, the safe area and the inputs. Measures: `measure marks` (each hue's box on the screen) */
 export function appTxt() {
+  // (in the world: looking straight down (behind the marks only the still ground); adventure: a tap or a click on the ground breaks
+  //  nothing; the HUD's parts hidden one by one, the hotbar kept — the GUI frame is drawn over it)
+  const setup = ['do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）', 'do gamemode adventure @a',
+    ...['crosshair', 'health', 'hunger', 'armor', 'progress_bar', 'air_bubbles', 'status_effects', 'item_text', 'tooltips', 'paperdoll', 'touch_controls'].map((h) => `do hud @a hide ${h}`),
+    'do scriptevent gdev:show 0', 'wait 7000'];
   const lines = [`# GeoUI の端末の確かめ（bds/geoui/screen/device.mjs が作る）: node lab.mjs app ci -a geoui_device（許可をもらってから）`,
     `# 各画面の大きさで、GeoUI を出す前（shot world）と後を比べ、色ごとの枠を測る（measure marks: 11 色・白・灰の箱 px）。期待の位置は`,
-    `# node bds/geoui/screen/device.mjs expect <幅>x<高さ>。入力は gdev:check の PASS / FAIL がサーバーのログに出る（expect server）。`, '',
+    `# node bds/geoui/screen/device.mjs expect <幅>x<高さ>。入力は gdev:check の PASS / FAIL がサーバーのログに出る（expect server）。`,
+    `# 結果: node bds/geoui/screen/device.mjs compare <summary.json>（式と比べ、色・向き・重なり・renderer ごとの計算・回転のクエリも読む）。`, '',
     'section title', 'launch', 'until title 600000', 'shot title', '',
-    'section join', 'join', 'until joined 900000',
-    'do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）',
-    // (adventure: a tap or a click on the ground breaks nothing; the HUD's parts hidden one by one, the hotbar kept — the GUI frame is
-    //  drawn over it)
-    'do gamemode adventure @a', ...['crosshair', 'health', 'hunger', 'armor', 'progress_bar', 'air_bubbles', 'status_effects', 'item_text', 'tooltips', 'paperdoll', 'touch_controls'].map((h) => `do hud @a hide ${h}`),
-    'do scriptevent gdev:show 0', 'wait 7000',
+    'section join', 'join', 'until joined 900000', ...setup,
     'absent clientlog \\bERROR\\b', ''];
   const sizes = [['default', null], ['4x3', '1024x768'], ['fold', '1104x920'], ['16x10', '1280x800'], ['16x9', '1920x1080'], ['18x9', '2160x1080'], ['195x9', '2340x1080'],
     ['20x9', '2400x1080'], ['21x9', '2520x1080'], ['32x9', '3840x1080']];
@@ -590,9 +672,12 @@ export function appTxt() {
     if (id === 'default' || id === '4x3' || id === '32x9') lines.push(`do scriptevent gdev:show ${BITS.clip}`, 'wait 2000', `shot clip-${id}`, `measure marks clip-${id}`);
     lines.push('');
   }
-  lines.push('section look', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world',
-    `do scriptevent gdev:show ${BITS.colors | BITS.glyph | BITS.order}`, 'wait 2000', 'shot colors', 'measure marks colors',
-    `do scriptevent gdev:show ${BITS.anchors | BITS.rc}`, 'wait 2000', 'shot rc', 'measure marks rc', '');
+  // (the looks, the text and the inputs on the device's own screen again (the sizes end at 32:9); one picture a kind of mark:
+  //  `measure marks` boxes each colour once, and red, blue and white are in the colours, the F and the order test alike — the
+  //  rc bars too without their anchors' squares, so each box is its bar)
+  lines.push('section look', 'size reset', 'wait 6000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world');
+  for (const [name, bits] of [['colors', BITS.colors], ['glyph', BITS.glyph], ['order', BITS.order], ['rc', BITS.rc]]) lines.push(`do scriptevent gdev:show ${bits}`, 'wait 2000', `shot ${name}`, `measure marks ${name}`);
+  lines.push('');
   lines.push('section text', 'do scriptevent gdev:show 4096', 'do scriptevent gdev:title QZX7JK2W SUBLINE', 'wait 2500', 'shot text',
     'expect text QZX7JK2W', 'expect text ^QZX$', 'expect text ^7JK2W$', 'expect text SUBLINE', 'do scriptevent gdev:title', '');
   // the inputs: first without the lock (does each input arrive at all), then locked, then the camera frozen
@@ -604,7 +689,10 @@ export function appTxt() {
   sec('in-key-locked', 'press W 700', 'wait 400', ...chk('move', 'locked-key-w'), ...chk('still', 'locked-still'));
   sec('in-stick-locked', 'walk forward 0.7', 'wait 400', ...chk('move', 'locked-stick'));
   sec('in-look-locked', 'shot look-before', 'look right 400 60', 'wait 600', 'shot look-after', ...chk('rot', 'frozen-turn'), ...chk('pointer', 'frozen-pointer'));
-  sec('in-query', `do scriptevent gdev:show ${BITS.query | BITS.input}`, 'wait 1500', 'shot world', 'look left 400 60', 'wait 800', 'shot query-after', 'measure marks query-after');
+  // (the bars against a world without them — each box is the whole bar, its length the query's value — before and after a turn
+  //  of the head with the camera frozen; the input monitor off: its lamps and pointers are in the bars' colours)
+  sec('in-query', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world', `do scriptevent gdev:show ${BITS.query}`, 'wait 1500', 'shot query-before', 'measure marks query-before',
+    'look left 400 60', 'wait 800', 'shot query-after', 'measure marks query-after');
   sec('in-recentre', `do scriptevent gdev:show ${BITS.input}`, 'look down 1500 80', 'wait 600', ...chk('recentre', 'recentre'));
   sec('in-jump-pad', 'jump', 'wait 500', ...chk('jump', 'pad-jump'));
   sec('in-jump-key', 'press SPACE 300', 'wait 500', ...chk('jump', 'key-jump'));
@@ -635,13 +723,18 @@ export function appTxt() {
     lines.push(`density ${dpi}`, 'wait 9000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world', `do scriptevent gdev:show ${BITS.anchors | BITS.gui}`, 'wait 2000', `shot gui-dpi${dpi}`, `measure marks gui-dpi${dpi}`);
   }
   lines.push('density reset', 'wait 6000', '');
-  for (const cut of ['corner', 'tall', 'double']) {
-    lines.push(`section cutout-${cut}`, `cutout ${cut}`, 'wait 9000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world',
-      `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-cut-${cut}`, `measure marks anchors-cut-${cut}`,
+  // (the screen's edges with no cut-out: the white marks just outside the viewport show only where the screen reaches past it)
+  lines.push('section over', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world', `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', 'shot over', 'measure marks over', '');
+  // the cut-outs last of all, each with the game started again: in run 39989463030 every picture after `cutout corner` was
+  // 720 x 1560 and the same as the one before it (the launcher's, not the game's) — Android re-creates an app when a cut-out
+  // overlay changes, and the game did not come back. So: the overlay, the game stopped, started, joined again (shorter waits than
+  // the first time), the same set-up, then the marks. Two shapes: a tall notch and a punch hole (the corner and double ones
+  // the same way, if these show the game's safe area follows the cut-out)
+  for (const cut of ['tall', 'hole']) {
+    lines.push(`section cutout-${cut}`, `cutout ${cut}`, 'wait 3000', 'stop', 'launch', 'until title 180000', 'join', 'until joined 300000', ...setup,
+      'shot world', `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-cut-${cut}`, `measure marks anchors-cut-${cut}`,
       `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', `shot over-cut-${cut}`, `measure marks over-cut-${cut}`, '');
   }
-  lines.push('section cutout-none', 'cutout none', 'wait 6000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world',
-    `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', 'shot over', 'measure marks over', '');
   lines.push('section end', 'do scriptevent gdev:ui off', 'do scriptevent gdev:show 0', 'do hud @a reset', 'wait 1000', 'shot end', '');
   return lines.join('\n');
 }
@@ -656,7 +749,7 @@ osu! を作る前に GeoUI の仕様を全部確かめる（bds/geoui/SPEC.md）
 - 1 つのパックで、GeoUI の「画面のどこに何が出るか」の式（bds/geoui/screen/layout.js）を全部見せる。\`/scriptevent gdev:show <ビット>\` で切り替える:
   1 = 9 つの寄せ先（四隅・上下左右の真ん中・中心に 8 x 8 単位の四角。四隅の四角は画面の角にぴったり付く）、2 = contain の枠（16:9 のデザインの外枠: 画面の 2 辺に付く）、
   4 = GUI の倍率（ホットバーと同じ 182 x 22 の枠: ホットバーにぴったり重なる）、8 = セーフエリアの外（HUD の外にだけ出る白い印: 普通の画面では見えない）、
-  16 = 切り抜き（灰色の大きな四角が画面の左の 30 % x 30 % の枠に収まるか）、32 = GeoUI Studio の 1 つの renderer で真ん中に出る十字、
+  16 = 切り抜き（ピンクの大きな四角が画面の左の 30 % x 30 % の枠に収まるか）、32 = GeoUI Studio の 1 つの renderer で真ん中に出る十字、
   64 = 色（白・灰・赤・緑・青・黒・半透明の白）、128 = 入力の表示、256 = 回転のクエリの棒、512 = renderer ごとの計算の回数、1024 = F の字（鏡写しか）、
   2048 = 重なり（青が手前・赤が奥）、4096 = HUD の文字（タイトルとサブタイトルを GeoUI の画面に置く・タイトルの先頭 3 文字と残り）。
 - \`/scriptevent gdev:ui on\`（lock: 動きを禁止 / free: 動いても戻す）で UI のモード: カメラを止め、視点でポインタ（白い四角）、W A S D・スティックで移動の点、
@@ -669,8 +762,8 @@ osu! を作る前に GeoUI の仕様を全部確かめる（bds/geoui/SPEC.md）
    切り欠き（ノッチ・Dynamic Island）や角の丸い所で欠けていないか。欠けていれば、その分だけ HUD のセーフエリアが内側にある。
 2. \`/scriptevent gdev:show 8\`: 白い印や白い線が見えたら、その所は HUD の外（GeoUI の viewport の外）に画面がある。見えた辺と太さを写真に。
 3. \`/scriptevent gdev:show 38\`: 紫の枠（16:9）が画面の左右か上下の 2 辺にぴったり付くか、ピンクの枠がホットバーにぴったり重なるか、白い十字が緑の中心と同じ所か。
-4. \`/scriptevent gdev:show 16\`: 灰色の四角が左の枠（幅 30 %・高さ 30 %）に収まっていれば切り抜きが効く。画面いっぱいなら効かない。
-5. \`/scriptevent gdev:show 1088\`（64 + 1024）: 色の見え方と F の向き（赤い点が F の右、青い点が左なら鏡写しではない）。
+4. \`/scriptevent gdev:show 16\`: ピンクの大きな四角が左の枠（幅 30 %・高さ 30 %）に収まっていれば切り抜きが効く。画面いっぱいなら効かない。何も出なければ、切り抜く枠の中の renderer は描かれない。
+5. \`/scriptevent gdev:show 1088\`（64 + 1024）: 色の見え方と F の向き（赤い点が F の右、青い点が左なら鏡写しではない）。\`gdev:show 2048\`: 青と赤の板の重なった所が青なら奥行きが効く（赤なら描いた順）。
 6. \`/scriptevent gdev:title ABCDEFG XYZ\` と \`gdev:show 4096\`: 左に黄色い字で ABCDEFG・XYZ・ABC・DEFG が出れば、HUD の文字を GeoUI に置ける。
 7. \`/scriptevent gdev:show 128\` → \`/scriptevent gdev:ui on\`: 画面を指でなぞると白い四角（ポインタ）が動き、ジャンプ・スニークのボタンでランプ、ホットバーを
    押すとスロット、移動のパッドで点が動くか。カメラは止まったまま。終わったら \`/scriptevent gdev:ui off\`。

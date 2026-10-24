@@ -233,6 +233,55 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
     const ins = cmp.screens[0] && cmp.screens[0].inset;
     ok(worstD <= 1.5 && ins && Object.values(ins).every((x) => Math.abs(x) <= 1), `device.mjs compare: the marks against the formulas, ${worstD.toFixed(1)} px off, the HUD's insets read as 0`, JSON.stringify([worstD, ins]));
   }
+  // what compare reads off the looks (values as measure marks gives them: a box and a mean colour a class)
+  {
+    const W = 1560, H = 720, e = D.expected(W, H), u = L.K * 0.1 * H;
+    const vals = (boxes) => {
+      const v = { width: W, height: H, classes: Object.keys(boxes).length };
+      for (const [c, b] of Object.entries(boxes)) Object.assign(v, { [`${c}x0`]: Math.round(b.x0), [`${c}y0`]: Math.round(b.y0), [`${c}x1`]: Math.round(b.x1), [`${c}y1`]: Math.round(b.y1), [`${c}n`]: 100, [`${c}r`]: b.rgb?.[0] ?? 0, [`${c}g`]: b.rgb?.[1] ?? 0, [`${c}b`]: b.rgb?.[2] ?? 0 });
+      return v;
+    };
+    const run = (...shots) => D.compare(shots.map(([shot, boxes]) => ({ kind: 'marks', shot, ok: true, values: vals(boxes) }))).rows;
+    const said = (rows, what) => (rows.find((x) => x.what === what) || {}).note || '';
+    // clip: the square in the panel's box (clipped), over the whole screen (not), none at all (the renderer draws nothing)
+    const clip = (b) => said(run(['clip-default', b ? { rose: b } : {}]), '切り抜き（30 % x 30 % の枠）');
+    const cl = [clip(e.clip), clip({ x0: 0, y0: 0, x1: W, y1: H }), clip(null)];
+    ok(/枠いっぱい/.test(cl[0]) && /画面いっぱい: 切り抜かれない/.test(cl[1]) && /何も描いていない/.test(cl[2]), 'compare: the clip square — the panel\'s box is clipped, the whole screen is not, none at all is a renderer that draws nothing', cl.join(' / '));
+    // order: the whole blue plane on top is depth; only its part out of the red one is the drawing order
+    const order = (x0) => said(run(['order', { blue: { ...e['order blue'], x0 }, red: e['order red'] }]), '描く順と奥行き');
+    ok(/奥行きが効く/.test(order(e['order blue'].x0)) && /描いた順/.test(order(e['order red'].x1)), 'compare: the order test — the blue plane whole is depth, cut at the red one\'s edge is the drawing order', [order(e['order blue'].x0), order(e['order red'].x1)].join(' / '));
+    // glyph: as drawn, and mirrored across the screen's middle
+    const flip = (b) => ({ ...b, x0: W - b.x1, x1: W - b.x0 });
+    const glyph = (f) => said(run(['glyph', { white: f(e['glyph F']), red: f(e['glyph red']), blue: f(e['glyph blue']) }]), 'F の向き');
+    ok(/鏡写しではない/.test(glyph((b) => b)) && /左右が逆/.test(glyph(flip)), 'compare: the F — its red dot right of it is not mirrored, left of it is', [glyph((b) => b), glyph(flip)].join(' / '));
+    // rc: bars of one length (pre_animation once a frame) or of many (per renderer); the bottom's blue ones not counted
+    const rc = (lens) => said(run(['rc', Object.fromEntries(['red', 'orange', 'yellow', 'chartreuse', 'green', 'spring', 'cyan', 'azure', 'blue'].map((c, i) => [c, { x0: 100, y0: 12 * i, x1: 100 + lens[i] * u, y1: 12 * i + 2 * u }]))]), 'pre_animation の回数');
+    ok(/1 フレームに 1 回/.test(rc([6, 6, 6, 6, 6, 6, 6, 22, 2])) && /renderer ごとに動いている/.test(rc([2, 4, 6, 8, 10, 12, 14, 16, 18])), 'compare: the rc bars — one length is once a frame (the bottom\'s azure and blue left out), many lengths per renderer', [rc([6, 6, 6, 6, 6, 6, 6, 22, 2]), rc([2, 4, 6, 8, 10, 12, 14, 16, 18])].join(' / '));
+    // query: each bar's length is its value; before and after a turn, the change (the short way round)
+    const qb = (degs) => Object.fromEntries(degs.map((d, k) => [D.HUES[k][0], { ...e[`query ${k}`], x1: e[`query ${k}`].x0 + (4 + (56 * d) / 360) * u }]));
+    const qr = run(['query-before', qb([350, 0, 90, 0, 350, 0, 350, 0, 350, 0, 300])], ['query-after', qb([20, 0, 90, 0, 20, 0, 20, 0, 350, 0, 300])]);
+    // (a px of bar is 360 / 56 / u ≈ 1.5° at 720 px high: the change read to a few degrees)
+    const turn = Number((/^([+-]\d+)°/.exec(said(qr, 'q.head_y_rotation(0) の変化')) || [])[1]);
+    ok(Math.abs(turn - 30) <= 3 && /^動かない/.test(said(qr, 'q.body_y_rotation の変化')) && /^動かない/.test(said(qr, 'q.eye_target_y_rotation の変化')) && / = 300°/.test(said(qr.filter((x) => x.shot === 'query-after'), 'q.is_local_player x 300')),
+      'compare: the rotation queries — a bar\'s length read back as its value, the turn between the two pictures the short way (350° → 20° is +30°)', qr.filter((x) => x.summary).map((x) => `${x.what} ${x.note}`).join(' / '));
+    // colors: how much the renderer lit each plane (a channel drawn 255 measured 194: 0.761)
+    const co = run(['colors', { white: { ...e['color white'], rgb: [194, 194, 194] }, red: { ...e['color red'], rgb: [194, 2, 3] }, gray: { ...e['color gray'], rgb: [97, 97, 97] } }]);
+    ok(/明るさ 0\.761/.test(said(co, '色 white')) && /明るさ 0\.761/.test(said(co, '色 red')) && /明るさ 0\.758/.test(said(co, '色 gray')) && said(co, '色 blue') === 'その色が無い', 'compare: the colours — lit by the measured channel over the drawn one, a missing one said', ['white', 'red', 'gray', 'blue'].map((c) => said(co, `色 ${c}`)).join(' / '));
+  }
+  // app.txt: the looks on the device's own screen and one picture a kind of mark; the query bars against a world without them;
+  // each cut-out with the game started and joined again; the clip square rose (grey did not show on the CI device)
+  {
+    const at = D.appTxt(), sec = (name) => at.split(/\n(?=section )/).find((s) => s.startsWith(`section ${name}\n`)) || '';
+    ok(/^section look\nsize reset\n/.test(sec('look')) && ['colors', 'glyph', 'order', 'rc'].every((n) => new RegExp(`^shot ${n}\\nmeasure marks ${n}$`, 'm').test(sec('look'))) && !/gdev:show (3136|513)\b/.test(at),
+      'device app.txt: the looks measured on the device\'s own size, the colours, the F, the order test and the rc bars each in a picture of its own', sec('look'));
+    ok(/do scriptevent gdev:show 0\nwait \d+\nshot world\ndo scriptevent gdev:show 256\nwait \d+\nshot query-before\nmeasure marks query-before\nlook left [\d ]+\nwait \d+\nshot query-after\nmeasure marks query-after/.test(sec('in-query')),
+      'device app.txt: the query bars measured against a world without them, before and after the turn', sec('in-query'));
+    const cuts = ['tall', 'hole'].map((c) => sec(`cutout-${c}`));
+    ok(cuts.every((s, i) => new RegExp(`^section cutout-${['tall', 'hole'][i]}\\ncutout ${['tall', 'hole'][i]}\\nwait \\d+\\nstop\\nlaunch\\nuntil title \\d+\\njoin\\nuntil joined \\d+\\ndo tp @a 0 -60 0 0 90`).test(s) && /\nshot world\n[^]*measure marks anchors-cut-/.test(s)) && /^section over\n[^]*measure marks over$/m.test(sec('over')) && at.indexOf('section over') < at.indexOf('section cutout-'),
+      'device app.txt: the edge with no cut-out first, then each cut-out with the game stopped, started and joined again before its marks', cuts.join('\n'));
+    const plate = D.scene().planes.find((p) => p.bone === 'gdev_clip' && p.rect.w === 400);
+    ok(plate && plate.uv[0] === D.HUES.findIndex(([nm]) => nm === 'rose') + 0.25, 'device: the clip square is rose (a hue no floor has; grey was not found at all on the CI device)', JSON.stringify(plate && plate.uv));
+  }
 }
 
 console.log(`\n${fails ? 'FAIL' : 'PASS'} geoui-screen-offline (${n - fails}/${n})`);
