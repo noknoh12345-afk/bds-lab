@@ -1,0 +1,424 @@
+{
+ "version": 2,
+ "made": "bds/geoui/screen/rules.mjs",
+ "note": "Written before the run. verdict compares the run with these numbers.",
+ "earlier": "bds/geoui/rules-history/run-40055307539/",
+ "bright": {
+  "shots": {
+   "plain": "bright-plain",
+   "gain": "bright-gain",
+   "ov": "bright-ov"
+  },
+  "gain": 1.32,
+  "ov": 0.24,
+  "ids": [
+   "ref255",
+   "ref128",
+   "fd255",
+   "fd128",
+   "ov255",
+   "ov128",
+   "em255",
+   "em255h",
+   "em255z",
+   "em128z"
+  ],
+  "lit": {
+   "g255": 193.035,
+   "g128": 96.896
+  },
+  "emissive": {
+   "lerp": {
+    "em255": 193.035,
+    "em255h": 223.896,
+    "em255z": 253.056,
+    "em128z": 127.0242
+   },
+   "full": {
+    "em255": 255,
+    "em255h": 255,
+    "em255z": 255,
+    "em128z": 128
+   },
+   "none": {
+    "em255": 193.035,
+    "em255h": 193.035,
+    "em255z": 193.035,
+    "em128z": 96.896
+   },
+   "why": "lerp: the light lerp(1, 0.757, alpha) — the texture's alpha marks how much is lit (vanilla entity_emissive_alpha: the less alpha the more it glows); full: no light at all; none: USE_EMISSIVE does nothing"
+  },
+  "colour": {
+   "unclamped": {
+    "fd255": 255,
+    "fd128": 127.9027
+   },
+   "clamped": {
+    "fd255": 193.035,
+    "fd128": 96.896
+   },
+   "cutoutUnchanged": {
+    "ref255": 193.035,
+    "ref128": 96.896
+   }
+  },
+  "overlay": {
+   "after": {
+    "ov255": 207.9066,
+    "ov128": 134.841
+   },
+   "before": {
+    "ov255": 193.035,
+    "ov128": 119.9694
+   },
+   "none": {
+    "ov255": 193.035,
+    "ov128": 96.896
+   },
+   "cutoutUnchanged": {
+    "ref128": 96.896
+   }
+  }
+ },
+ "depth": {
+  "shot": "depth",
+  "zs": [
+   -150,
+   -100,
+   -60,
+   -30,
+   0,
+   30,
+   60,
+   100,
+   150
+  ],
+  "ifDrawn": 193.035,
+  "overlap": {
+   "ifPlusZFar": "green",
+   "ifPlusZNear": "red"
+  },
+  "boards": {
+   "ifDrawn": 72.672
+  },
+  "expect": "pack.js puts the nearer of two planes at the smaller z (toward the camera is negative): green in front; every square of ±60 drawn (R4.3 measured the grid's markers at ±60)"
+ },
+ "tilt": {
+  "shot": "tilt-noon",
+  "planes": [
+   {
+    "id": "ry-45b",
+    "rot": [
+     0,
+     -45,
+     0
+    ],
+    "x": -150,
+    "y": 135
+   },
+   {
+    "id": "ry-60",
+    "rot": [
+     0,
+     -60,
+     0
+    ],
+    "x": -120,
+    "y": 135
+   },
+   {
+    "id": "ry-30",
+    "rot": [
+     0,
+     -30,
+     0
+    ],
+    "x": -90,
+    "y": 135
+   },
+   {
+    "id": "ry-15",
+    "rot": [
+     0,
+     -15,
+     0
+    ],
+    "x": -60,
+    "y": 135
+   },
+   {
+    "id": "flat",
+    "rot": [
+     0,
+     0,
+     0
+    ],
+    "x": -30,
+    "y": 135,
+    "v1": 194
+   },
+   {
+    "id": "ry15",
+    "rot": [
+     0,
+     15,
+     0
+    ],
+    "x": 0,
+    "y": 135
+   },
+   {
+    "id": "ry30",
+    "rot": [
+     0,
+     30,
+     0
+    ],
+    "x": 30,
+    "y": 135
+   },
+   {
+    "id": "ry45",
+    "rot": [
+     0,
+     45,
+     0
+    ],
+    "x": 60,
+    "y": 135,
+    "v1": 148
+   },
+   {
+    "id": "ry60",
+    "rot": [
+     0,
+     60,
+     0
+    ],
+    "x": 90,
+    "y": 135
+   },
+   {
+    "id": "ry-45",
+    "rot": [
+     0,
+     -45,
+     0
+    ],
+    "x": 120,
+    "y": 135,
+    "v1": null
+   },
+   {
+    "id": "flatb",
+    "rot": [
+     0,
+     0,
+     0
+    ],
+    "x": 150,
+    "y": 135
+   },
+   {
+    "id": "rx-60",
+    "rot": [
+     -60,
+     0,
+     0
+    ],
+    "x": -120,
+    "y": 95
+   },
+   {
+    "id": "rx-45",
+    "rot": [
+     -45,
+     0,
+     0
+    ],
+    "x": -90,
+    "y": 95,
+    "v1": 107
+   },
+   {
+    "id": "rx-30",
+    "rot": [
+     -30,
+     0,
+     0
+    ],
+    "x": -60,
+    "y": 95
+   },
+   {
+    "id": "rx-15",
+    "rot": [
+     -15,
+     0,
+     0
+    ],
+    "x": -30,
+    "y": 95
+   },
+   {
+    "id": "flatc",
+    "rot": [
+     0,
+     0,
+     0
+    ],
+    "x": 0,
+    "y": 95
+   },
+   {
+    "id": "rx15",
+    "rot": [
+     15,
+     0,
+     0
+    ],
+    "x": 30,
+    "y": 95
+   },
+   {
+    "id": "rx30",
+    "rot": [
+     30,
+     0,
+     0
+    ],
+    "x": 60,
+    "y": 95
+   },
+   {
+    "id": "rx45",
+    "rot": [
+     45,
+     0,
+     0
+    ],
+    "x": 90,
+    "y": 95,
+    "v1": 235
+   },
+   {
+    "id": "rx60",
+    "rot": [
+     60,
+     0,
+     0
+    ],
+    "x": 120,
+    "y": 95
+   }
+  ],
+  "boardIfDrawn": 72.672
+ },
+ "invisible": {
+  "shot": "ramp-invisible",
+  "ids": [
+   "g255",
+   "g0"
+  ],
+  "ifDrawn": {
+   "g255": 193.035,
+   "g0": 0
+  },
+  "expect": "not drawn (run 40055307539 found no grid)"
+ },
+ "hurt": {
+  "shots": [
+   "bright-hurt1",
+   "bright-hurt2",
+   "bright-hurt3"
+  ],
+  "ids": [
+   "ref255",
+   "ov255"
+  ],
+  "ifNoFlash": 193.035,
+  "expect": "no red on either (is_hurt_color a 0; the cutout material has no USE_OVERLAY)"
+ },
+ "comp": {
+  "shot": "cal-comp",
+  "cancels": {
+   "unitsPerScreenH": 170.6667,
+   "centreY": 134.9333
+  },
+  "notCancelled": {
+   "unitsPerScreenH": 341.3333,
+   "centreY": 245.8667
+  }
+ },
+ "light": {
+  "conditions": [
+   "nightvision",
+   "box"
+  ],
+  "flat": 0.757,
+  "board": 72.672,
+  "expect": "the same 0.757 as at noon and at midnight (the UI has a light of its own)"
+ },
+ "gui": [
+  {
+   "shot": "gui-1100x1000",
+   "W": 1100,
+   "H": 1000,
+   "A": 3,
+   "B": 4
+  },
+  {
+   "shot": "gui-960x540",
+   "W": 960,
+   "H": 540,
+   "A": 2,
+   "B": 2
+  },
+  {
+   "shot": "gui-1279x960",
+   "W": 1279,
+   "H": 960,
+   "A": 3,
+   "B": 4
+  },
+  {
+   "shot": "gui-1280x960",
+   "W": 1280,
+   "H": 960,
+   "A": 4,
+   "B": 4
+  },
+  {
+   "shot": "gui-1920x959",
+   "W": 1920,
+   "H": 959,
+   "A": 3,
+   "B": 3
+  },
+  {
+   "shot": "gui-2560x1440",
+   "W": 2560,
+   "H": 1440,
+   "A": 6,
+   "B": 6
+  }
+ ],
+ "control": [
+  {
+   "shot": "cal-s0_9375",
+   "scale": 0.9375,
+   "unitsPerScreenH": 170.6667,
+   "centreY": 134.9333
+  },
+  {
+   "shot": "cal-s1",
+   "scale": 1,
+   "unitsPerScreenH": 160,
+   "centreY": 128
+  }
+ ],
+ "calBoard": {
+  "shot": "cal-s0_9375",
+  "ifDrawn": 0
+ }
+}

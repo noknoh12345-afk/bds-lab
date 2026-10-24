@@ -1,0 +1,341 @@
+# GeoUI の規則を決める 2 本目（bds/geoui/screen/rules.mjs が作る。予測は predictions.json: 走らせる前にコミットしたもの）
+# 1 本目（run 40055307539）で決まった事と、その予測・手順は bds/geoui/rules-history/run-40055307539/
+# node lab.mjs app ci -a geoui_rules --screen 720x1560 --knobs "APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"（人の許可をもらってから）→ node bds/geoui/screen/rules.mjs verdict <summary.json>
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 900000
+do tp @a 0 -60 0 0 0
+do gamemode adventure @a
+do time set noon
+do weather clear
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do scriptevent grl:show 0
+wait 6000
+absent clientlog \bERROR\b
+
+section brighten
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 16
+wait 1500
+shot bright-plain
+measure color bright-plain 242 202 305 265
+measure color bright-plain 495 202 559 265
+measure color bright-plain 748 202 812 265
+measure color bright-plain 1001 202 1065 265
+measure color bright-plain 1255 202 1318 265
+measure color bright-plain 242 455 305 518
+measure color bright-plain 495 455 559 518
+measure color bright-plain 748 455 812 518
+measure color bright-plain 1001 455 1065 518
+measure color bright-plain 1255 455 1318 518
+do scriptevent grl:gain 1.32
+wait 1500
+shot bright-gain
+measure color bright-gain 242 202 305 265
+measure color bright-gain 495 202 559 265
+measure color bright-gain 748 202 812 265
+measure color bright-gain 1001 202 1065 265
+measure color bright-gain 1255 202 1318 265
+measure color bright-gain 242 455 305 518
+measure color bright-gain 495 455 559 518
+measure color bright-gain 748 455 812 518
+measure color bright-gain 1001 455 1065 518
+measure color bright-gain 1255 455 1318 518
+do scriptevent grl:gain 1
+do scriptevent grl:ov 0.24
+wait 1500
+shot bright-ov
+measure color bright-ov 242 202 305 265
+measure color bright-ov 495 202 559 265
+measure color bright-ov 748 202 812 265
+measure color bright-ov 1001 202 1065 265
+measure color bright-ov 1255 202 1318 265
+measure color bright-ov 242 455 305 518
+measure color bright-ov 495 455 559 518
+measure color bright-ov 748 455 812 518
+measure color bright-ov 1001 455 1065 518
+measure color bright-ov 1255 455 1318 518
+do scriptevent grl:ov 0
+do scriptevent grl:show 0
+
+section depth
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 32
+wait 1500
+shot depth
+measure color depth 92 115 118 140
+measure color depth 261 115 286 140
+measure color depth 430 115 455 140
+measure color depth 599 115 624 140
+measure color depth 767 115 793 140
+measure color depth 936 115 961 140
+measure color depth 1105 115 1130 140
+measure color depth 1274 115 1299 140
+measure color depth 1442 115 1468 140
+measure color depth 92 600 118 626
+measure color depth 261 600 286 626
+measure color depth 430 600 455 626
+measure color depth 599 600 624 626
+measure color depth 767 600 793 626
+measure color depth 936 600 961 626
+measure color depth 1105 600 1130 626
+measure color depth 1274 600 1299 626
+measure color depth 1442 600 1468 626
+measure color depth 763 343 797 377
+measure color depth 691 343 725 377
+measure color depth 835 343 869 377
+measure color depth 333 457 383 474
+measure color depth 1177 457 1227 474
+measure color depth 333 246 383 263
+measure color depth 1177 246 1227 263
+measure diff depth
+do scriptevent grl:show 0
+
+section tilt
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 4
+wait 1500
+shot tilt-noon
+measure color tilt-noon 127 339 167 380
+measure color tilt-noon 254 339 294 380
+measure color tilt-noon 380 339 421 380
+measure color tilt-noon 507 339 547 380
+measure color tilt-noon 633 339 674 380
+measure color tilt-noon 760 339 800 380
+measure color tilt-noon 886 339 927 380
+measure color tilt-noon 1013 339 1053 380
+measure color tilt-noon 1139 339 1180 380
+measure color tilt-noon 1266 339 1307 380
+measure color tilt-noon 1393 339 1433 380
+measure color tilt-noon 254 508 294 549
+measure color tilt-noon 380 508 421 549
+measure color tilt-noon 507 508 547 549
+measure color tilt-noon 633 508 674 549
+measure color tilt-noon 760 508 800 549
+measure color tilt-noon 886 508 927 549
+measure color tilt-noon 1013 508 1053 549
+measure color tilt-noon 1139 508 1180 549
+measure color tilt-noon 1266 508 1307 549
+measure color tilt-noon 738 427 822 461
+do scriptevent grl:show 0
+
+section invisible
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 2
+do effect @a invisibility 60 0 true
+wait 1500
+shot ramp-invisible
+measure color ramp-invisible 1044 497 1107 560
+measure color ramp-invisible 453 159 516 223
+measure diff ramp-invisible
+do effect @a clear
+do scriptevent grl:show 0
+
+section hurt
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 16
+wait 1500
+do damage @a 1
+shot bright-hurt1
+measure color bright-hurt1 242 202 305 265
+measure color bright-hurt1 1255 202 1318 265
+wait 1200
+do damage @a 1
+shot bright-hurt2
+measure color bright-hurt2 242 202 305 265
+measure color bright-hurt2 1255 202 1318 265
+wait 1200
+do damage @a 1
+shot bright-hurt3
+measure color bright-hurt3 242 202 305 265
+measure color bright-hurt3 1255 202 1318 265
+wait 1200
+do effect @a instant_health 1 1 true
+do scriptevent grl:show 0
+
+section comp
+do scriptevent grl:show 1
+do scriptevent grl:small 1
+do scriptevent grl:comp 1
+wait 1500
+shot cal-comp
+measure geoui cal-comp
+do scriptevent grl:comp 0
+do scriptevent grl:small 0
+do scriptevent grl:show 0
+wait 1000
+
+section light-nightvision
+do time set midnight
+do effect @a night_vision 60 0 true
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 2
+wait 1500
+shot ramp-nightvision
+measure color ramp-nightvision 453 159 516 223
+measure color ramp-nightvision 748 159 812 223
+measure color ramp-nightvision 1044 159 1107 223
+measure color ramp-nightvision 453 328 516 391
+measure color ramp-nightvision 748 328 812 391
+measure color ramp-nightvision 1044 328 1107 391
+measure color ramp-nightvision 453 497 516 560
+measure color ramp-nightvision 748 497 812 560
+measure color ramp-nightvision 1044 497 1107 560
+measure color ramp-nightvision 611 339 653 381
+do scriptevent grl:show 0
+do effect @a clear
+do time set noon
+
+section light-box
+do fill -2 -61 -2 2 -56 2 stone hollow
+do tp @a 0 -60 0 0 0
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 2
+wait 1500
+shot ramp-box
+measure color ramp-box 453 159 516 223
+measure color ramp-box 748 159 812 223
+measure color ramp-box 1044 159 1107 223
+measure color ramp-box 453 328 516 391
+measure color ramp-box 748 328 812 391
+measure color ramp-box 1044 328 1107 391
+measure color ramp-box 453 497 516 560
+measure color ramp-box 748 497 812 560
+measure color ramp-box 1044 497 1107 560
+measure color ramp-box 611 339 653 381
+do scriptevent grl:show 0
+do fill -2 -60 -2 2 -56 2 air
+do fill -2 -61 -2 2 -61 2 grass_block
+do tp @a 0 -60 0 0 0
+
+section gui
+do hud @a hide hotbar
+
+section gui-1100x1000
+size 1100x1000
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1100x1000
+measure marks gui-1100x1000
+
+section gui-960x540
+size 960x540
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-960x540
+measure marks gui-960x540
+
+section gui-1279x960
+size 1279x960
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1279x960
+measure marks gui-1279x960
+
+section gui-1280x960
+size 1280x960
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1280x960
+measure marks gui-1280x960
+
+section gui-1920x959
+size 1920x959
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1920x959
+measure marks gui-1920x959
+
+section gui-2560x1440
+size 2560x1440
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-2560x1440
+measure marks gui-2560x1440
+
+section control
+size reset
+wait 6000
+do hud @a reset
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do scriptevent grl:show 1
+do scriptevent grl:scale 0.9375
+wait 1500
+shot cal-s0_9375
+measure geoui cal-s0_9375
+measure color cal-s0_9375 746 52 814 119
+do scriptevent grl:scale 1
+wait 1500
+shot cal-s1
+measure geoui cal-s1
+do scriptevent grl:scale 0.9375
+
+section end
+do scriptevent grl:show 0
+do hud @a reset
+do time set noon
+shot end
