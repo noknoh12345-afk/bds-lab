@@ -137,18 +137,21 @@ export function nextWorldAction(state, tab) {
  *  OCR とコントローラ頼みなので、各手でスクショを残す(外した所が後で分かる)。offline では nextWorldAction を試験する。 */
 async function enterOwnWorld(adb, { log, shotDir, ready, sleep, maxMs = 90_000 }) {
   const shot = (name) => { try { const p = path.join(shotDir, `world-${name}.png`); fs.writeFileSync(p, adb.screencap()); return path.basename(p); } catch { return null; } };
-  const read = () => { try { return ocrWords(adb.screencap()); } catch { return []; } };
+  // ocrWords は PNG の「ファイルパス」を取る(中で readFileSync する)。screencap の Buffer を一旦ファイルに書いて渡す。
+  const ocrFile = path.join(shotDir, '_ocr.png');
+  const read = () => { try { fs.writeFileSync(ocrFile, adb.screencap()); return ocrWords(ocrFile); } catch { return []; } };
   const trail = [];
   const end = now() + maxMs;
   shot('00-start');
-  let i = 0, aOnWorlds = 0;
+  let i = 0;
   while (now() < end) {
     if (await ready()) { shot(`${String(i).padStart(2, '0')}-inworld`); return { entered: true, trail, s: secs(now() - (end - maxMs)) }; }
     const w = read();
-    const state = joinScreen(w), tab = playScreen(w) ? playTab(w) : null;
+    const ps = playScreen(w);
+    const state = joinScreen(w), tab = ps ? playTab(w) : null;
     let act = nextWorldAction(state, tab);
-    // Worlds タブで A を 3 回押しても入れないなら、カードに焦点が無い可能性 → DOWN で寄せてから A
-    if (act === 'A' && (state === 'play-empty' || state === 'play-lan')) { if (aOnWorlds >= 3 && aOnWorlds % 2 === 1) act = 'DOWN'; aOnWorlds++; }
+    // Worlds タブにいて、どのワールドのカードにも焦点が無い(footer に "A Play" が出ない)なら、DOWN で先頭のカードへ寄せてから A。
+    if (act === 'A' && ps && tab !== 'realms') act = ps.focused ? 'A' : 'DOWN';
     trail.push(`${state}${tab ? '/' + tab : ''}:${act}`);
     log(`world| ${i}: ${state}${tab ? '(' + tab + ')' : ''} → ${act}`);
     if (act === 'wait') { await sleep(2500); }
