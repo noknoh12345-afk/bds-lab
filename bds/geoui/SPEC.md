@@ -73,6 +73,7 @@ base_screen → セーフエリアの枠（左右上下の buffer。大きさは
   → screen_panel → hud_screen → hud_content（$compress_hud_width のとき幅 90 %）→ root_panel → <ns>_vp（GeoUI の viewport）
 ```
 
+- **測った**（13 章）: Android エミュレータの横向き 10 種では、表示領域 = 画面いっぱい（四隅の四角が画面の角に ±1 px）。
 - **式**: GeoUI の viewport（`<ns>_vp`）は `root_panel` の先頭に入れ（`insert_front`）、`$compress_hud_width` のときは幅 111.111111 % にして
   90 % を元に戻す（= セーフエリアの内側いっぱい）。ホットバー・体力などの HUD と同じ枠なので、HUD と重ねて置ける。
 - `$left_horizontal_safezone_size` などの buffer の大きさは JSON に無く、ゲームが入れる。**要実測**: 切り欠き（ノッチ・パンチホール・Dynamic
@@ -161,8 +162,8 @@ offset = [ "<−100·K·G.x>%x", "<100·K·(G.y − D)>%y" ]     （正方形な
   **一番狭い 4:3 の 227 単位（左右の寄せ先の間）に収まるように置く**。縦に置く物は 170 単位に収める。
 - iPhone の横向きのセーフエリア（OS の値）: 左右 59 pt・下 21 pt（@3x で 177 px・63 px）。ゲームがこれを HUD の外にするなら viewport は
   2202 x 1116 px（**要実測**）。
-- `gui` の 1 単位 = 1 JSON UI px x px。g_ui（画面 px / JSON UI px）は端末と設定の GUI の倍率で決まり、**要実測**（`geoui_device` の density の区切りで、
-  ホットバーの大きさの枠 182 x 22 が本物のホットバーに重なるか）。
+- `gui` の 1 単位 = 1 JSON UI px x px。g_ui（画面 px / JSON UI px）は端末と設定の GUI の倍率で決まる。**測った**（Android エミュレータ、既定の設定）:
+  高さ 720〜920 px の画面で 3、高さ 1080 px で 4。182 x 22 の枠は本物のホットバーにぴったり重なる（13 章）。ほかの端末・設定の GUI の倍率は要実測。
 
 ## 8. 描き方の決まりと限度
 
@@ -308,23 +309,23 @@ node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu
 
 | こと | 確かめ方 | 結果 |
 |---|---|---|
-| 9 つの寄せ先が 4:3〜32:9・折りたたみで式どおりか | Android CI: anchors-* の measure marks | （CI の結果を待つ） |
-| contain の箱（`%x`・`%y`・`max_size` の鎖） | Android CI: box-* | （同） |
-| GUI の倍率（g_ui）と画素の細かさ | Android CI: gui-dpi240/480・box-* の gui の枠 | （同） |
-| 切り欠きを HUD の外にするか（Android） | Android CI: anchors-cut-*・over-cut-* | （同） |
+| 9 つの寄せ先が 4:3〜32:9・折りたたみで式どおりか | Android CI: anchors-* の measure marks | **測った**（run 39989463030（2026-10-23、Android エミュレータ、Minecraft 1.26.52.3））: 横向きの 10 種（1560x720・1024x768・1104x920・1280x800・1920x1080・2160x1080・2340x1080・2400x1080・2520x1080・3840x1080）で、四隅・辺の真ん中・中心の四角が式どおり **1 px 以内**（4:3 の右上だけ 2 px。下の真ん中と右下は、空・水の青と混ざって測れない）。表示領域の内側への寄りは 0（±1 px）: この端末では HUD が画面いっぱい |
+| contain の箱（`%x`・`%y`・`max_size` の鎖） | Android CI: box-* | **測った**: 10 種すべてで式どおり 0〜1 px（4:3 は上下に帯、横長は左右に帯） |
+| GUI の倍率（g_ui）と画素の細かさ | Android CI: gui-dpi240/480・box-* の gui の枠 | **測った**: 1024x768・1104x920・1280x800・1560x720 で 3、高さ 1080 の 6 種で 4。gui の 182 x 22 の枠は本物のホットバーと同じ幅・同じ所（ホットバーの下から 1〜5 px だけ見える）。画素の細かさ 240・480 dpi では変わらない（1560x720 で 3） |
+| 切り欠きを HUD の外にするか（Android） | Android CI: anchors-cut-*・over-cut-* | 測れなかった: 切り欠きを出した後、画面が縦（720x1560）になり、その後の写真には何も写っていない → app.txt の順を変えた（画素の細かさと切り欠きを最後に）。もう一度回す |
 | 切り欠き・Dynamic Island（iPhone） | 人の目: TASK.md の 1・2 | （人の確かめ待ち） |
 | `$compress_hud_width` が立つ端末 | 人の目・CI: over の白い印 | （同） |
-| `clips_children` が renderer に効くか | Android CI: clip-* | （CI の結果を待つ） |
-| 光・鏡写し・描く順 | Android CI: colors | （同） |
-| pre_animation が renderer ごとに動くか | Android CI: rc | （同） |
-| 回転のクエリ（クライアントでポインタを毎フレーム） | Android CI: query-after | （同） |
-| タイトルの文字をラベルに・先頭 3 文字・残り | Android CI: text（OCR） | （同） |
-| 移動を禁止（lock）した時、本物のクライアントが移動の入力を送るか | Android CI: in-key-locked・in-stick-locked | （同） |
-| 止めたカメラ（`minecraft:free`）で頭の向きが変わるか | Android CI: in-look-locked（frozen-turn・frozen-pointer） | （同） |
-| ジャンプ・スニークを禁止した時のボタン | Android CI: in-jump-denied・in-sneak-denied | （同） |
-| マウスのホイール・数字のキー・パッドの LB/RB | Android CI: in-wheel・in-slot-key・in-slot-pad | （同） |
-| 腕の振り（マウス・タッチ・パッド）・使う | Android CI: in-swing-*・in-use-pad | （同） |
-| 操作の種類の変化 | Android CI: in-mode | （同） |
+| `clips_children` が renderer に効くか | Android CI: clip-* | 分からない: 灰色の印が測れない（全部切り抜かれたのか、灰色が光で暗くなり灰色の判定に入らないのか）。写真で決める（封じた結果を開く鍵 APP_CACHE_KEY が要る） |
+| 光・鏡写し・描く順 | Android CI: colors | 測れなかった（縦の画面の後。もう一度回す） |
+| pre_animation が renderer ごとに動くか | Android CI: rc | 測れなかった（縦の画面の後。もう一度回す） |
+| 回転のクエリ（クライアントでポインタを毎フレーム） | Android CI: query-after | 測れなかった（縦の画面の後。もう一度回す） |
+| タイトルの文字をラベルに・先頭 3 文字・残り | Android CI: text（OCR） | 測れなかった（縦の画面の後。もう一度回す） |
+| 移動を禁止（lock）した時、本物のクライアントが移動の入力を送るか | Android CI: in-key-locked・in-stick-locked | 測れなかった（縦の画面の後で、GDEV CHECK の行が出なかった。順を変えてもう一度） |
+| 止めたカメラ（`minecraft:free`）で頭の向きが変わるか | Android CI: in-look-locked（frozen-turn・frozen-pointer） | 測れなかった（縦の画面の後で、GDEV CHECK の行が出なかった。順を変えてもう一度） |
+| ジャンプ・スニークを禁止した時のボタン | Android CI: in-jump-denied・in-sneak-denied | 測れなかった（縦の画面の後で、GDEV CHECK の行が出なかった。順を変えてもう一度） |
+| マウスのホイール・数字のキー・パッドの LB/RB | Android CI: in-wheel・in-slot-key・in-slot-pad | 測れなかった（縦の画面の後で、GDEV CHECK の行が出なかった。順を変えてもう一度） |
+| 腕の振り（マウス・タッチ・パッド）・使う | Android CI: in-swing-*・in-use-pad | 測れなかった（縦の画面の後で、GDEV CHECK の行が出なかった。順を変えてもう一度） |
+| 操作の種類の変化 | Android CI: in-mode | 測れなかった（縦の画面の後で、GDEV CHECK の行が出なかった。順を変えてもう一度） |
 | HTML の見本の見た目・焦点・ページ | Android CI: `-a geoui_html_demo`（許可が要る） | （まだ回していない） |
 | インベントリの人形に GeoUI が映らないか | ゲームパッドの Y で持ち物を開いて写す | （まだ） |
 | タッチでタップした所（案）: 止めたカメラの前にブロックの面を置き、タップが当たった面の点（`faceLocation`）から画面の位置を逆算する | 作って写す | （案） |

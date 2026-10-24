@@ -417,8 +417,9 @@ export function compare(measures, opts = {}) {
     if (/^(anchors|gui-dpi)/.test(shot)) {
       const g = {};
       for (const [k, c] of Object.entries(ANCHOR_HUE)) g[k] = add(`寄せ先 ${k}`, c, e[`anchor ${k}`]);
-      // (the viewport's edges, read off the corner squares: 0 when the HUD reaches the screen's edge)
-      if (g.tl && g.br) screens.push({ shot, W, H, inset: { left: g.tl.x0, top: g.tl.y0, right: W - g.br.x1, bottom: H - g.br.y1 } });
+      // (the viewport's edges, read off the corner squares: 0 when the HUD reaches the screen's edge. Not off the bottom-right one:
+      //  blue and azure are in the world too — the sky, water — and its box takes them in)
+      if (g.tl && g.tr && g.bl) screens.push({ shot, W, H, inset: { left: g.tl.x0, top: g.tl.y0, right: W - g.tr.x1, bottom: H - g.bl.y1 } });
     }
     if (/^box/.test(shot)) {
       add('contain の箱', 'violet', e.box);
@@ -589,18 +590,6 @@ export function appTxt() {
     if (id === 'default' || id === '4x3' || id === '32x9') lines.push(`do scriptevent gdev:show ${BITS.clip}`, 'wait 2000', `shot clip-${id}`, `measure marks clip-${id}`);
     lines.push('');
   }
-  lines.push('section density', 'size reset', 'wait 6000');
-  for (const dpi of [240, 480]) {
-    lines.push(`density ${dpi}`, 'wait 9000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world', `do scriptevent gdev:show ${BITS.anchors | BITS.gui}`, 'wait 2000', `shot gui-dpi${dpi}`, `measure marks gui-dpi${dpi}`);
-  }
-  lines.push('density reset', 'wait 6000', '');
-  for (const cut of ['corner', 'tall', 'double']) {
-    lines.push(`section cutout-${cut}`, `cutout ${cut}`, 'wait 9000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world',
-      `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-cut-${cut}`, `measure marks anchors-cut-${cut}`,
-      `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', `shot over-cut-${cut}`, `measure marks over-cut-${cut}`, '');
-  }
-  lines.push('section cutout-none', 'cutout none', 'wait 6000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world',
-    `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', 'shot over', 'measure marks over', '');
   lines.push('section look', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world',
     `do scriptevent gdev:show ${BITS.colors | BITS.glyph | BITS.order}`, 'wait 2000', 'shot colors', 'measure marks colors',
     `do scriptevent gdev:show ${BITS.anchors | BITS.rc}`, 'wait 2000', 'shot rc', 'measure marks rc', '');
@@ -638,6 +627,21 @@ export function appTxt() {
   lines.push('section ui-speed', 'do scriptevent gdev:ui on speed', 'wait 2000', '');
   sec('in-key-speed', 'press W 700', 'wait 400', ...chk('move', 'speed-key-w'), ...chk('home', 'speed-home'));
   sec('in-jump-speed', 'press SPACE 300', 'wait 500', ...chk('jump', 'speed-key-jump'));
+  // (the density and the cut-outs last: the run of 2026-10-23 (39989463030) came back from them in portrait — every shot after
+  //  them 720 x 1560 with nothing drawn, every input check after them lost)
+  lines.push('section ui-off', 'do scriptevent gdev:ui off', 'do scriptevent gdev:show 0', 'wait 1000', '');
+  lines.push('section density', 'size reset', 'wait 6000');
+  for (const dpi of [240, 480]) {
+    lines.push(`density ${dpi}`, 'wait 9000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world', `do scriptevent gdev:show ${BITS.anchors | BITS.gui}`, 'wait 2000', `shot gui-dpi${dpi}`, `measure marks gui-dpi${dpi}`);
+  }
+  lines.push('density reset', 'wait 6000', '');
+  for (const cut of ['corner', 'tall', 'double']) {
+    lines.push(`section cutout-${cut}`, `cutout ${cut}`, 'wait 9000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world',
+      `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-cut-${cut}`, `measure marks anchors-cut-${cut}`,
+      `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', `shot over-cut-${cut}`, `measure marks over-cut-${cut}`, '');
+  }
+  lines.push('section cutout-none', 'cutout none', 'wait 6000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world',
+    `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', 'shot over', 'measure marks over', '');
   lines.push('section end', 'do scriptevent gdev:ui off', 'do scriptevent gdev:show 0', 'do hud @a reset', 'wait 1000', 'shot end', '');
   return lines.join('\n');
 }

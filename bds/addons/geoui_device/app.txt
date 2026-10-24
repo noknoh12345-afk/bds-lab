@@ -187,86 +187,6 @@ wait 2000
 shot clip-32x9
 measure marks clip-32x9
 
-section density
-size reset
-wait 6000
-density 240
-wait 9000
-do scriptevent gdev:show 0
-wait 1500
-shot world
-do scriptevent gdev:show 5
-wait 2000
-shot gui-dpi240
-measure marks gui-dpi240
-density 480
-wait 9000
-do scriptevent gdev:show 0
-wait 1500
-shot world
-do scriptevent gdev:show 5
-wait 2000
-shot gui-dpi480
-measure marks gui-dpi480
-density reset
-wait 6000
-
-section cutout-corner
-cutout corner
-wait 9000
-do scriptevent gdev:show 0
-wait 1500
-shot world
-do scriptevent gdev:show 1
-wait 2000
-shot anchors-cut-corner
-measure marks anchors-cut-corner
-do scriptevent gdev:show 8
-wait 2000
-shot over-cut-corner
-measure marks over-cut-corner
-
-section cutout-tall
-cutout tall
-wait 9000
-do scriptevent gdev:show 0
-wait 1500
-shot world
-do scriptevent gdev:show 1
-wait 2000
-shot anchors-cut-tall
-measure marks anchors-cut-tall
-do scriptevent gdev:show 8
-wait 2000
-shot over-cut-tall
-measure marks over-cut-tall
-
-section cutout-double
-cutout double
-wait 9000
-do scriptevent gdev:show 0
-wait 1500
-shot world
-do scriptevent gdev:show 1
-wait 2000
-shot anchors-cut-double
-measure marks anchors-cut-double
-do scriptevent gdev:show 8
-wait 2000
-shot over-cut-double
-measure marks over-cut-double
-
-section cutout-none
-cutout none
-wait 6000
-do scriptevent gdev:show 0
-wait 1500
-shot world
-do scriptevent gdev:show 8
-wait 2000
-shot over
-measure marks over
-
 section look
 do scriptevent gdev:show 0
 wait 1500
@@ -516,6 +436,91 @@ press SPACE 300
 wait 500
 do scriptevent gdev:check jump speed-key-jump
 expect server GDEV CHECK speed-key-jump PASS
+
+section ui-off
+do scriptevent gdev:ui off
+do scriptevent gdev:show 0
+wait 1000
+
+section density
+size reset
+wait 6000
+density 240
+wait 9000
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 5
+wait 2000
+shot gui-dpi240
+measure marks gui-dpi240
+density 480
+wait 9000
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 5
+wait 2000
+shot gui-dpi480
+measure marks gui-dpi480
+density reset
+wait 6000
+
+section cutout-corner
+cutout corner
+wait 9000
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-cut-corner
+measure marks anchors-cut-corner
+do scriptevent gdev:show 8
+wait 2000
+shot over-cut-corner
+measure marks over-cut-corner
+
+section cutout-tall
+cutout tall
+wait 9000
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-cut-tall
+measure marks anchors-cut-tall
+do scriptevent gdev:show 8
+wait 2000
+shot over-cut-tall
+measure marks over-cut-tall
+
+section cutout-double
+cutout double
+wait 9000
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-cut-double
+measure marks anchors-cut-double
+do scriptevent gdev:show 8
+wait 2000
+shot over-cut-double
+measure marks over-cut-double
+
+section cutout-none
+cutout none
+wait 6000
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 8
+wait 2000
+shot over
+measure marks over
 
 section end
 do scriptevent gdev:ui off
