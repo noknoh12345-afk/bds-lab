@@ -135,6 +135,16 @@ export function newTitleWords(words, { strict = false } = {}) {
 /** the title screen, by OCR (pure): the classic one (Play and Settings, Dressing Room, ©Mojang AB and the skin) or the new
  *  player's (classicTitleWords, newTitleWords) */
 export const titleWords = (words) => classicTitleWords(words) || newTitleWords(words);
+/** Microsoft's sign-in offered on the way to PLAY, by OCR (pure) → 'offer' | 'page' | null. offer: the game's own dialog
+ *  ("Sign in … achievements … friends", Close — 1.26 on the CI device, 2026-10-24); page: the Xbox library's sign-in pages an
+ *  A on it opens ("Let's get you signed in", "Sign in to continue to Minecraft", "Create one", "Stay signed in?" …). Never the
+ *  title (its own Sign In button), PLAY, or the first start's WELCOME screen (Sign in now / Maybe later: firstRunButton) */
+export function signInOffer(words) {
+  const all = said(words);
+  if (!/\bsign(?:ed)?\b/i.test(all) || /WELCOME|Sign in now|[MH][ae][yv]be ?[l1I]ater/i.test(all) || titleWords(words) || playScreen(words)) return null;
+  if (/get you signed in|sign in to continue|email,? phone|enter (your )?password|stay signed in|create one|no account|forgot (your )?password|approve sign.?in/i.test(all)) return 'page';
+  return /\bachievements?\b/i.test(all) ? 'offer' : null;
+}
 /** the words a screen keeps showing while what is behind them moves (pure): over the last `of` reads (each a list of
  *  words), the words in at least `need` of them — letters only, 4 or more, lower case — sorted. A title whose panorama
  *  never holds still is never calm as a picture; its words are */

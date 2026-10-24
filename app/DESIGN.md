@@ -170,6 +170,17 @@ lc・vx も `play-lan srv-connected`、sz は `srv-connected play-lan`（until j
 
 別に分からないこと（要実測）: 7 回目の huge で、押した後にゲームが「An error has occurred」を 2 回出した理由（OCR はあった: 道筋に画面の
 言葉）。6 回目の huge の「接続が来ない」は OCR が間に合わなかったため（上の項）、6 回目の sz は分からない。
+2026-10-24 の GeoUI の端末の確かめ（run 40052537778）では、参加 4 回 x 入り直し 3 回がすべて同じ「An error has occurred」（Player connected
+なし）。端末・BDS・アプリ・ランナーの版は前の日に通った回と同じで、タイトルではマーケットプレイスのエラーも出ていた: その回の端末か
+オンラインの側（要実測）。同じ時刻に別のレーンの run 40055307539 は 1 回で入った。
+
+### 2026-10-24: Microsoft のサインインの誘い（タイトルの上）
+
+run 40055381439 で、タイトルに Microsoft のサインインの誘い（「Sign in … achievements … friends」と Close。道筋の語 `sign+your+achievements+
+connect+play+friends+close`）が出るようになった。ラボの見知らぬ画面の決まり（まず A）がそれを押し、Xbox のライブラリのサインインの
+ページ（`get+you+sign`、`sign+continue+your+new+create+help`）に入り、その Continue を A で押し続けて（continue*38）参加に失敗した。その後
+起動し直すと、PLAY に LAN のワールドが出なかった。→ LAN の参加はサインインしない: 誘いは B で閉じ、ページは B で戻る（`client.mjs
+signInOffer`、道筋の `signin-close`・`signin-back`。タイトル自身の Sign In・最初の起動の WELCOME・PLAY には効かない）。
 
 ### 2026-10-23: BDS の `Player connected` はログインの時（パックより前）
 

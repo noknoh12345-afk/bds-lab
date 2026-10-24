@@ -39,6 +39,9 @@ const MS = { 'ms-start': [["Let's", 10, 8, 6, 3, 1], ['get', 17, 8, 4, 3, 1], ['
   'ms-approve': [['Approve', 4, 4, 8, 3, 1], ['sign', 13, 4, 5, 3, 1], ['in', 19, 4, 3, 3, 1], ['request', 23, 4, 8, 3, 1], ['42', 30, 18, 4, 3, 2]],
   'ms-stay': [['Stay', 4, 4, 5, 3, 1], ['signed', 10, 4, 7, 3, 1], ['in?', 18, 4, 4, 3, 1], ['No', 34, 30, 4, 3, 2], ['Yes', 48, 30, 5, 3, 2]],
   'ms-error': [['Your', 4, 4, 5, 3, 1], ['account', 10, 4, 8, 3, 1], ['or', 19, 4, 3, 3, 1], ['password', 23, 4, 9, 3, 1], ['is', 33, 4, 2, 3, 1], ['incorrect.', 36, 4, 10, 3, 1]] };
+// FAKE_SIGNIN_OFFER: the game's own offer to sign in (tests/fake/app/adb)
+MS['signin-offer'] = [['Sign', 4, 4, 5, 3, 1], ['in', 10, 4, 3, 3, 1], ['to', 14, 4, 3, 3, 1], ['earn', 18, 4, 5, 3, 1], ['achievements', 24, 4, 13, 3, 1], ['and', 38, 4, 4, 3, 1],
+  ['play', 4, 10, 5, 3, 2], ['with', 10, 10, 5, 3, 2], ['your', 16, 10, 5, 3, 2], ['friends', 22, 10, 8, 3, 2], ['Sign', 10, 28, 5, 3, 3], ['In', 16, 28, 3, 3, 3], ['Close', 40, 28, 6, 3, 3]];
 if (MS[phase]) {
   console.log('level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext');
   MS[phase].forEach(([t, l, tp, w, h, line], i) => console.log(`5\t1\t1\t1\t${line}\t${i + 1}\t${l}\t${tp}\t${w}\t${h}\t90\t${t}`));

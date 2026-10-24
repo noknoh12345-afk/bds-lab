@@ -65,7 +65,7 @@ import path from 'node:path';
 import { GAME_VERBS, gameStep, playGame, playServer } from './play.mjs';
 import { KIND_NAMES as MEASURE_KINDS, measureShot } from './measure.mjs';
 import { makeTrail } from './failcodes.mjs';
-import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, classicTitleWords, newTitleWords, joinPromptButton, joinRefusal, joinPromptKind, joinScreen, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
+import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, classicTitleWords, newTitleWords, signInOffer, joinPromptButton, joinRefusal, joinPromptKind, joinScreen, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
 
 // APP_TIME_SCALE (0..1, tests on the fake device): every fixed pause shorter; deadlines stay in real time
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms * (Math.min(1, Math.max(0, Number(process.env.APP_TIME_SCALE) || 1)))));
@@ -442,6 +442,16 @@ export async function runScenario(steps, ctx) {
       // a dialog over the title ("Play your way") before the menu behind it: B closes it (A on its Continue brought it back
       // again and again on the CI device)
       else if (/Play your way|How will you play/i.test(all)) { tr.add('play-your-way', ws); log(`${s.line} 「Play your way」: Close（B）`); padKey('B'); }
+      // Microsoft's sign-in offered on the way (a dialog: "Sign in … achievements … friends" / Close — 1.26 on the CI device,
+      // 2026-10-24) and the pages an A on it opens ("Let's get you signed in", "Sign in to continue …" with its Continue): this
+      // way never signs in — B closes the offer and backs out of the pages (where the game does not take the controller's B,
+      // Android makes it BACK). An A on the offer went into the pages, and A on their Continue kept the game there for minutes
+      // (run 40055381439: continue*38, then PLAY without the LAN world)
+      else if (signInOffer(ws)) {
+        const k = signInOffer(ws);
+        tr.add(k === 'page' ? 'signin-back' : 'signin-close', ws); log(`${s.line} Microsoft のサインインの${k === 'page' ? '画面' : '誘い'}: B で${k === 'page' ? '戻ります' : '閉じます'}（${said.slice(0, 60)}）`);
+        padKey('B'); other = 0;
+      }
       // the new player's title (Get started / More options, either read — client.mjs newTitleWords): More options is the
       // classic menu. The first press only turns the gamepad's focus on (on Get started — an A there starts the new player's
       // game mode screens): DOWN twice, then A. Its hints and logo alone (not its buttons) only twice: then it is taken for

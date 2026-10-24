@@ -138,6 +138,13 @@ async function padPress(k) {
     // FAKE_TITLE_A_WRONG: an A on the title without Play's focus opens another screen (its focus was elsewhere); B closes it
     else if (k === 'BUTTON_A' && S.phase === 'title' && process.env.FAKE_TITLE_A_WRONG && S.titleFocus !== 'play') { S.phase = 'gamemode'; S.wrongA = (S.wrongA ?? 0) + 1; save(); }
     else if (k === 'BUTTON_B' && S.phase === 'gamemode' && process.env.FAKE_TITLE_A_WRONG) { S.phase = 'title'; save(); }
+    // FAKE_SIGNIN_OFFER: an A on the title first brings Microsoft's sign-in offer (achievements, friends — 1.26 on the CI device,
+    // 2026-10-24): A there opens the Xbox library's pages, B closes it for good. In the pages A goes deeper and their Continue
+    // goes nowhere (msContinue counts it); B goes a page back, out of the first to the title. =page: the game starts in them
+    else if (process.env.FAKE_SIGNIN_OFFER && k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && S.launched && !S.offerClosed) { S.phase = 'signin-offer'; S.offers = (S.offers ?? 0) + 1; save(); }
+    else if (process.env.FAKE_SIGNIN_OFFER && S.phase === 'signin-offer') { if (k === 'BUTTON_A') { S.phase = 'ms-start'; S.msVisits = (S.msVisits ?? 0) + 1; } else if (k === 'BUTTON_B') { S.phase = 'title'; S.offerClosed = true; } save(); }
+    else if (process.env.FAKE_SIGNIN_OFFER && S.phase === 'ms-start') { if (k === 'BUTTON_A') S.phase = 'ms-email'; else if (k === 'BUTTON_B') { S.phase = 'title'; S.offerClosed = true; } save(); }
+    else if (process.env.FAKE_SIGNIN_OFFER && S.phase === 'ms-email') { if (k === 'BUTTON_A') S.msContinue = (S.msContinue ?? 0) + 1; else if (k === 'BUTTON_B') S.phase = 'ms-start'; save(); }
     // FAKE_PLAY_SLOW=n: PLAY comes only after n pictures (the CI device's Ore UI); an A meanwhile lands on "Create new world"
     else if (k === 'BUTTON_A' && S.phase === 'playload') { S.phase = 'createworld'; S.createdWorld = true; save(); }
     else if (k === 'BUTTON_A' && ['title', 'home'].includes(S.phase) && S.launched) {
@@ -160,7 +167,7 @@ async function padPress(k) {
     // Y in the world opens the inventory (FAKE_PAD_WAKE: the game in touch mode takes the first press only to wake the controller)
     else if (k === 'BUTTON_Y' && S.phase === 'world') { if (process.env.FAKE_PAD_WAKE && !S.padAwake) S.padAwake = true; else S.phase = 'screen'; save(); }
   }
-const COLORS = { loading: [24, 24, 24], downloading: [40, 28, 64], 'join-error': [70, 30, 30], playload: [30, 30, 34], createworld: [100, 100, 40], 'join-packs': [58, 58, 58], lanown: [52, 52, 62], ownworld: [120, 160, 220], 'ms-start': [16, 124, 16], 'ms-email': [250, 250, 250], 'ms-password': [248, 250, 250], 'ms-code': [250, 248, 250], 'ms-approve': [250, 250, 248], 'ms-stay': [246, 246, 246], 'ms-error': [250, 244, 244], home: [40, 40, 40], title: [60, 120, 200], gamemode: [64, 64, 64], lanlist: [52, 52, 60], lanfocus: [52, 52, 64], lanempty: [52, 52, 56], welcome: [70, 60, 50], 'join-external': [50, 50, 50], 'join-rated': [55, 55, 55], 'join-refused': [45, 45, 45], world: [90, 160, 80], form: [230, 180, 40], anr: [235, 235, 235], pause: [70, 70, 90], screen: [150, 110, 60], play: [255, 255, 255], paywall: [248, 248, 248] };
+const COLORS = { 'signin-offer': [20, 60, 30], loading: [24, 24, 24], downloading: [40, 28, 64], 'join-error': [70, 30, 30], playload: [30, 30, 34], createworld: [100, 100, 40], 'join-packs': [58, 58, 58], lanown: [52, 52, 62], ownworld: [120, 160, 220], 'ms-start': [16, 124, 16], 'ms-email': [250, 250, 250], 'ms-password': [248, 250, 250], 'ms-code': [250, 248, 250], 'ms-approve': [250, 250, 248], 'ms-stay': [246, 246, 246], 'ms-error': [250, 244, 244], home: [40, 40, 40], title: [60, 120, 200], gamemode: [64, 64, 64], lanlist: [52, 52, 60], lanfocus: [52, 52, 64], lanempty: [52, 52, 56], welcome: [70, 60, 50], 'join-external': [50, 50, 50], 'join-rated': [55, 55, 55], 'join-refused': [45, 45, 45], world: [90, 160, 80], form: [230, 180, 40], anr: [235, 235, 235], pause: [70, 70, 90], screen: [150, 110, 60], play: [255, 255, 255], paywall: [248, 248, 248] };
 // the game's license (PairIP asks the Play Store at each start): FAKE_PAIRIP_UNTIL_PLAY = Play's paywall until Play itself
 // installed or updated the game (its page's button tapped); FAKE_PAIRIP_ALWAYS = always; FAKE_NOT_OWNED = Play's page shows a price
 const paywalled = () => Boolean(process.env.FAKE_PAIRIP_ALWAYS || (process.env.FAKE_PAIRIP_UNTIL_PLAY && !S.byPlay));
@@ -349,7 +356,7 @@ else if (sh !== null) {
   else if (/^dumpsys package/.test(sh)) say(!S.installed ? '' : S.byPlay ? '    primaryCpuAbi=x86_64\n    versionCode=912605300 minSdk=24\n    versionName=1.26.52.04\n    firstInstallTime=2026-10-03 12:00:00\n    installerPackageName=com.android.vending\n    initiatingPackageName=com.android.vending\n'
     : '    primaryCpuAbi=arm64-v8a\n    versionCode=912605203 minSdk=24\n    versionName=1.26.52.03\n    firstInstallTime=2026-10-03 12:00:00\n    installerPackageName=com.android.vending\n    initiatingPackageName=com.android.shell\n');
   // FAKE_WELCOME: the game's first start shows "WELCOME TO MINECRAFT!" (Sign in now / Maybe later) until Maybe later is tapped
-  else if (/^monkey -p com\.mojang\.minecraftpe/.test(sh)) { S.launched = true; S.phase = paywalled() ? 'paywall' : process.env.FAKE_WELCOME && !S.welcomed ? 'welcome' : 'title'; S.anr = Number(process.env.FAKE_ANR) || 0; save(); say('Events injected: 1\n'); }
+  else if (/^monkey -p com\.mojang\.minecraftpe/.test(sh)) { S.launched = true; S.phase = paywalled() ? 'paywall' : process.env.FAKE_WELCOME && !S.welcomed ? 'welcome' : process.env.FAKE_SIGNIN_OFFER === 'page' && !S.offerClosed ? 'ms-email' : 'title'; S.anr = Number(process.env.FAKE_ANR) || 0; save(); say('Events injected: 1\n'); }
   // the focused window: the dialog while it is up, else the game (or the home screen)
   // (the whole dump, not its displays section, starts with the state saved at the last ANR: the launcher, stale — as on
   // Android 14, where it misled the lab for 2 hours after "Pixel Launcher isn't responding")

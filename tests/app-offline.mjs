@@ -742,6 +742,25 @@ await t('run: the LAN join reads the screen (OCR): the title → A, PLAY without
   ok(/unknown-a/.test(stFail?.trail) && /restart/.test(stFail?.trail) && FC.cleanTrail(stFail.trail) === stFail.trail && stRes.results.filter((x) => !x.ok).length === 1 && !stRes.results.some((x) => x.raw === 'shot inside') && /ワールドに入れなかったので、残りの区切り（ワールドの中の手順: 1 個）は飛ばします/.test(fs.readFileSync(path.join(st.runDir, 'run.txt'), 'utf8')),
     `trail ${stFail?.trail} results ${JSON.stringify(stRes.results.map((x) => [x.raw, x.ok]))}`);
 });
+await t('run: the LAN join never signs in — Microsoft\'s sign-in offered on the way (run 40055381439: an A went into its pages, their Continue kept the game there) is closed with B, its pages are backed out of with B, then PLAY as ever', async () => {
+  const CL = await imp('app/lib/client.mjs'), W = (t) => t.split(' ').map((x, i) => ({ text: x, x: i * 10, y: 5, w: 8, h: 3 }));
+  eq(['Sign in to earn achievements and play with your friends Sign In Close', "Let's get you signed in SIGN IN", 'Sign in to continue to Minecraft Email, phone, or Skype Next', 'Sign in No account? Create one! Help Continue',
+    'Play Settings Marketplace Sign In Achievements', 'WELCOME TO MINECRAFT! Sign in now Haybe later', 'Worlds Realms Servers Friends Sign in', 'Online play is not rated Proceed Back'].map((t) => CL.signInOffer(W(t))),
+  ['offer', 'page', 'page', 'page', null, null, null, null], 'the offer and the pages; never the title (its own Sign In), the first start\'s WELCOME, PLAY or a join\'s question');
+  // the offer over the title after its first A: B closes it, never A (A opens the pages); then Play's focus, A, the LAN world
+  const o = e2e('lansigninoffer', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_TITLE: '1', FAKE_SIGNIN_OFFER: '1', APP_PLAY_LOAD_MS: '100' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(o.runDir);
+  const oJoin = JSON.parse(fs.readFileSync(path.join(o.runDir, 'result.json'), 'utf8')).results.find((x) => x.verb === 'join');
+  ok(o.status === 0 && o.state.uri === 'lan' && o.state.offers === 1 && !o.state.msVisits && o.state.pads[1] === 'BUTTON_B' && /\bsignin-close\b/.test(oJoin?.trail ?? '') && /Microsoft のサインインの誘い: B で閉じます/.test(fs.readFileSync(path.join(o.runDir, 'run.txt'), 'utf8')),
+    `exit ${o.status} ${JSON.stringify(o.state.pads)} offers ${o.state.offers} ms ${o.state.msVisits} ${oJoin?.trail}\n${o.text.slice(-800)}`);
+  // the game started in its pages (left there before): B back, page by page, to the title — never their Continue
+  const p = e2e('lansigninpage', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_TITLE: '1', FAKE_SIGNIN_OFFER: 'page', APP_PLAY_LOAD_MS: '100' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(p.runDir);
+  const pJoin = JSON.parse(fs.readFileSync(path.join(p.runDir, 'result.json'), 'utf8')).results.find((x) => x.verb === 'join'), FC = await imp('app/lib/failcodes.mjs');
+  // (the trail as a public summary keeps it: the lab's own states and the game's UI words only)
+  ok(p.status === 0 && p.state.uri === 'lan' && !p.state.msContinue && JSON.stringify(p.state.pads.slice(0, 2)) === JSON.stringify(['BUTTON_B', 'BUTTON_B']) && /^signin-back\*2\b/.test(pJoin?.trail ?? '') && FC.cleanTrail(pJoin.trail) === pJoin.trail,
+    `exit ${p.status} ${JSON.stringify(p.state.pads)} continue ${p.state.msContinue} ${pJoin?.trail}\n${p.text.slice(-800)}`);
+});
 await t('run: OCR still being installed (the workflow\'s apt in the background) is waited for before the steps — not gone without, where the LAN join pressed blind; none and nothing installing it: no wait, said in the notes, the result and the join\'s code', async () => {
   // a stand-in for the workflow's background apt: a process whose command line holds a mark, putting tesseract in place 3 s on
   const late = path.join(tmp, 'ocr-late', 'tesseract'), mark = `lab-ocr-install-${process.pid}`;
