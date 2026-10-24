@@ -201,5 +201,5 @@ cd bedrock-samples && git sparse-checkout set resource_pack/ui resource_pack/ent
 | 対照 | control: scale 0.9375・1 の目盛り、目盛りの黒い板（z 100） | 170.67（0.9375 はぼけて 171.29）・中心 134.93、160・128.00。板は描かれれば 0 |
 
 測りは 116 個（公開のまとめに残るのは 160 個まで: 試験が確かめる）。新しい問いを先に、GUI の 6 画面と対照を後に回す。
-回すのは `node lab.mjs app ci -a geoui_rules`（**人の許可をもらってから**）。`geoui_device` の次の 1 本（R4.7・R6.3・R7.5 など）と同じく、
+回すのは `node lab.mjs app ci -a geoui_rules --screen 720x1560`（**人の許可をもらってから**。1 本目と同じ 1560 x 720: 測る箱はこの画面の px）。`geoui_device` の次の 1 本（R4.7・R6.3・R7.5 など）と同じく、
 結果をこの台帳の「状態」と SPEC.md の 13 章に書く。

@@ -20,7 +20,7 @@
 - R3.7 暗視・閉じた箱 · R5.3 GUI の倍率の決まり（6 画面）· 対照: scale 0.9375・1 と目盛りの黒い板（z 100）
 
 ## Run
-`node lab.mjs app ci -a geoui_rules`（人の許可をもらってから）→ `node bds/geoui/screen/rules.mjs verdict <summary.json>`。
+`node lab.mjs app ci -a geoui_rules --screen 720x1560`（人の許可をもらってから。1 本目と同じ 1560 x 720 の画面: 測る箱はこの画面の px）→ `node bds/geoui/screen/rules.mjs verdict <summary.json>`。
 
 ## Acceptance (one tests.txt `## ` section each)
 - [ ] 読み込める（プロパティが既定値）
