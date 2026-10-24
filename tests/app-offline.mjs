@@ -761,7 +761,7 @@ await t('run: the LAN join never signs in — Microsoft\'s sign-in offered on th
   ok(p.status === 0 && p.state.uri === 'lan' && !p.state.msContinue && JSON.stringify(p.state.pads.slice(0, 2)) === JSON.stringify(['BUTTON_B', 'BUTTON_B']) && /^signin-back\*2\b/.test(pJoin?.trail ?? '') && FC.cleanTrail(pJoin.trail) === pJoin.trail,
     `exit ${p.status} ${JSON.stringify(p.state.pads)} continue ${p.state.msContinue} ${pJoin?.trail}\n${p.text.slice(-800)}`);
 });
-await t('run: the LAN join finds the LAN world past PLAY\'s Realms tab (LB to Worlds), the classic menu read as Play and the hints (its Play\'s focus, never DOWN, DOWN, A) and a news panel (B) — run 40059144882', async () => {
+await t('run: the LAN join finds the LAN world past PLAY\'s Realms tab (LB to Worlds), Realms\' page after the new player\'s DOWN, DOWN, A on the classic menu (B), a title whose focus is never seen (an A every 4th move) and a news panel (B) — runs 40059144882, 40062490868', async () => {
   const CL = await imp('app/lib/client.mjs'), W = (t) => t.split(' ').map((x, i) => ({ text: x, x: i * 10, y: 5, w: 8, h: 3 }));
   eq(['Worlds Realms Servers Play with your friends multiplayer Manage your Realm', 'your server online you join how play manage', "Worlds Realms Servers Survival lab Dedicated Server's world", 'Worlds (1) Realms Servers B Back', 'Create new world Worlds Realms', 'Play Settings Marketplace'].map((t) => CL.playTab(W(t))),
     ['realms', 'realms', 'worlds', null, 'worlds', null], 'PLAY\'s tab by its words: Realms\' own, the world cards; the empty Worlds tab and the title say nothing');
@@ -773,13 +773,25 @@ await t('run: the LAN join finds the LAN world past PLAY\'s Realms tab (LB to Wo
   const rlJoin = joinOf(rl);
   ok(rl.status === 0 && rl.state.uri === 'lan' && rl.state.tabWorlds === true && !rl.state.realmsA && rl.state.pads.includes('BUTTON_L1') && /\bplay-tab\b/.test(rlJoin?.trail ?? '') && FC.cleanTrail(rlJoin.trail) === rlJoin.trail,
     `exit ${rl.status} ${JSON.stringify(rl.state.pads)} ${rlJoin?.trail}\n${rl.text.slice(-800)}`);
-  // the classic menu read as Play, the logo and Select / Exit: taken for the classic menu (A on Play), not the new player's
-  // title (DOWN, DOWN, A pressed Realms below Play)
+  // the classic menu read as Play, the logo and Select / Exit (taken for the new player's title: DOWN, DOWN, A — on the CI device
+  // that pressed Realms, or News, and some times Play): Realms' page is backed out of with B, never an A on it, and PLAY reached
   const th = e2e('lantitlehints', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_TITLE_HINTS: '1', APP_PLAY_LOAD_MS: '100' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
   made.push(th.runDir);
   const thJoin = joinOf(th);
-  ok(th.status === 0 && th.state.uri === 'lan' && !th.state.realmsPage && th.state.pads[0] === 'BUTTON_A' && !/title-new/.test(thJoin?.trail ?? '') && /^title-a\b/.test(thJoin?.trail ?? ''),
+  ok(th.status === 0 && th.state.uri === 'lan' && th.state.realmsPage >= 1 && th.state.realmsPage <= 2 && /\brealms-back\b/.test(thJoin?.trail ?? '') && FC.cleanTrail(thJoin.trail) === thJoin.trail,
     `exit ${th.status} ${JSON.stringify(th.state.pads)} realms page ${th.state.realmsPage} ${thJoin?.trail}\n${th.text.slice(-800)}`);
+  // the title whose first A does nothing (run 40062490868: title-a, then 59 moves looking for a focus never seen, and no A): A
+  // once more at once; and where that is lost too, an A every 4th move on whatever has the focus — here Play
+  const n1 = e2e('lannofocus1', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_TITLE: '1', FAKE_TITLE_NOFOCUS: '1', APP_PLAY_LOAD_MS: '100' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(n1.runDir);
+  const n1Join = joinOf(n1);
+  ok(n1.status === 0 && n1.state.uri === 'lan' && n1.state.lostA === 1 && JSON.stringify(n1.state.pads.slice(0, 2)) === JSON.stringify(['BUTTON_A', 'BUTTON_A']) && /^title-a\S* title-again\b/.test(n1Join?.trail ?? '') && FC.cleanTrail(n1Join.trail) === n1Join.trail,
+    `exit ${n1.status} ${JSON.stringify(n1.state.pads)} lost ${n1.state.lostA} ${n1Join?.trail}\n${n1.text.slice(-800)}`);
+  const nf = e2e('lannofocus2', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_TITLE: '1', FAKE_TITLE_NOFOCUS: '2', APP_PLAY_LOAD_MS: '100' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
+  made.push(nf.runDir);
+  const nfJoin = joinOf(nf);
+  ok(nf.status === 0 && nf.state.uri === 'lan' && nf.state.lostA === 2 && /^title-a\S* title-again\b[^]*\btitle-probe\b/.test(nfJoin?.trail ?? '') && FC.cleanTrail(nfJoin.trail) === nfJoin.trail,
+    `exit ${nf.status} ${JSON.stringify(nf.state.pads)} lost ${nf.state.lostA} ${nfJoin?.trail}\n${nf.text.slice(-800)}`);
   // a news panel over the title: B closes it — an A opened the store
   const nw = e2e('lannews', { APP_PORT: '19132', APP_TESSERACT: path.join(FAKE, 'tesseract'), FAKE_OCR_TITLE: '1', FAKE_NEWS: '1', APP_PLAY_LOAD_MS: '100' }, ['--scenario', path.join(tmp, 'joinonly.txt')]);
   made.push(nw.runDir);

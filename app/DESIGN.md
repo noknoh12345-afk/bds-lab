@@ -194,8 +194,11 @@ run 40059144882 の道筋: タイトルを `play+select+exit`（Play と、コ�
 新しい人向けのタイトル（Get started / More options）と取り違えて DOWN・DOWN・A を押し、Realms（`your+server+online+you+join+how+play+manage`）や
 ニュース（`news` → A でストア）に入った。その後の PLAY は **Realms のタブ**（`realms+play+you+manage+multiplayer+worlds+your+friends`）で開き、
 B でタイトルへ戻って A を押しても同じタブに戻った（LAN のワールドは Worlds のタブ）。→ joinLan:
-- Play が読めたタイトルは新しい人向けのタイトルではない（そちらに Play は無い）: Play と Select・Exit だけでも古いタイトルとして、Play の焦点（緑）を
-  見てから A。
+- （6ef1de6 で、Play が読めたタイトルを古いタイトルとして Play の焦点（緑）を見てから A にしたが、run 40062490868 では焦点が一度も緑に見えず、
+  最初の A が効かないまま 59 回動かして A を押さなかった: 取り違えの DOWN・DOWN・A が PLAY に入っていた道まで消した → 元に戻した。）
+  タイトルで最初の A の後もタイトルなら、もう一度 A（`title-again`: 最初の A は焦点を点けただけか、タイトルが入力を受ける前だった）。焦点が
+  見えないまま探す間は 4 回目ごとにいまの焦点で A（`title-probe`、8 回まで）。それで開いた PLAY でない画面は B で戻る（`probe-back`。A は
+  押さない: 設定・ストアなど）。
 - PLAY が Realms のタブ（`client.mjs playTab`: multiplayer・manage・always online … が読めて、ワールドのカードが無い）なら LB で左のタブへ（1 回の
   訪問で 2 回まで。Worlds が最初のタブ。**LB で変わるかは要実測**: 変わらなければ今までどおり開き直す）。道筋に `play-tab`。
 - タブの読めない Realms の画面は待った後 B（`realms-back`）、ニュースの画面は B（`news-close`）。どちらも A は押さない（作る・買うボタン）。

@@ -135,6 +135,9 @@ async function padPress(k) {
     else if (process.env.FAKE_TITLE_HINTS && k === 'DPAD_DOWN' && S.phase === 'title') { S.titleFocus = 'realms'; save(); }
     else if (process.env.FAKE_TITLE_HINTS && k === 'BUTTON_A' && S.phase === 'title' && S.titleFocus === 'realms') { S.phase = 'realmspage'; S.realmsPage = (S.realmsPage ?? 0) + 1; save(); }
     else if (k === 'BUTTON_B' && S.phase === 'realmspage') { S.phase = 'title'; S.titleFocus = null; save(); }
+    // FAKE_TITLE_NOFOCUS=n: the first n A after each start are lost (the title not taking input yet, or only waking the focus), and
+    // the focus is never drawn green (run 40062490868: title-a, then 59 moves looking for it)
+    else if (process.env.FAKE_TITLE_NOFOCUS && k === 'BUTTON_A' && S.phase === 'title' && (S.lostSince ?? 0) < Number(process.env.FAKE_TITLE_NOFOCUS)) { S.lostSince = (S.lostSince ?? 0) + 1; S.lostA = (S.lostA ?? 0) + 1; save(); }
     // FAKE_NEWS: a news panel over the title from the start: A opens the store (its Get more packs), B closes the panel
     else if (process.env.FAKE_NEWS && S.phase === 'news') { if (k === 'BUTTON_A') { S.phase = 'store'; S.storeVisits = (S.storeVisits ?? 0) + 1; } else if (k === 'BUTTON_B') { S.phase = 'title'; S.newsClosed = true; } save(); }
     else if (process.env.FAKE_NEWS && S.phase === 'store' && k === 'BUTTON_B') { S.phase = 'news'; save(); }
@@ -247,7 +250,7 @@ async function shotPng() {
   // FAKE_NEWTITLE: the classic menu looks other than the new player's title (a band of buttons)
   if (S.phase === 'title' && S.classic && !anrUp()) for (let y = 28; y <= 33; y++) for (let x = 20; x <= 44; x++) { const o = (y * w + x) * 4; data[o] = 130; data[o + 1] = 130; data[o + 2] = 130; }
   // the classic title's Play button with the gamepad's focus: green around the word (tests/fake/app/tesseract: Play at 28,12 8x3)
-  if (S.phase === 'title' && S.titleFocus === 'play' && !anrUp()) for (let y = 8; y <= 19; y++) for (let x = 26; x <= 37; x++) { const o = (y * w + x) * 4; data[o] = 60; data[o + 1] = 133; data[o + 2] = 39; }
+  if (S.phase === 'title' && S.titleFocus === 'play' && !anrUp() && !process.env.FAKE_TITLE_NOFOCUS) for (let y = 8; y <= 19; y++) for (let x = 26; x <= 37; x++) { const o = (y * w + x) * 4; data[o] = 60; data[o + 1] = 133; data[o + 2] = 39; }
   // the focused card on PLAY: a white ring round it (tests/fake/app/tesseract: the LAN card's words at 4..31,28, the own
   // world's at 40..50,28)
   const ring = (x0, x1) => { for (const y of [25, 33]) for (let x = x0; x <= x1; x++) { const o = (y * w + x) * 4; data[o] = 250; data[o + 1] = 250; data[o + 2] = 250; } };
@@ -367,7 +370,7 @@ else if (sh !== null) {
   else if (/^dumpsys package/.test(sh)) say(!S.installed ? '' : S.byPlay ? '    primaryCpuAbi=x86_64\n    versionCode=912605300 minSdk=24\n    versionName=1.26.52.04\n    firstInstallTime=2026-10-03 12:00:00\n    installerPackageName=com.android.vending\n    initiatingPackageName=com.android.vending\n'
     : '    primaryCpuAbi=arm64-v8a\n    versionCode=912605203 minSdk=24\n    versionName=1.26.52.03\n    firstInstallTime=2026-10-03 12:00:00\n    installerPackageName=com.android.vending\n    initiatingPackageName=com.android.shell\n');
   // FAKE_WELCOME: the game's first start shows "WELCOME TO MINECRAFT!" (Sign in now / Maybe later) until Maybe later is tapped
-  else if (/^monkey -p com\.mojang\.minecraftpe/.test(sh)) { S.launched = true; S.phase = paywalled() ? 'paywall' : process.env.FAKE_WELCOME && !S.welcomed ? 'welcome' : process.env.FAKE_SIGNIN_OFFER === 'page' && !S.offerClosed ? 'ms-email' : process.env.FAKE_NEWS && !S.newsClosed ? 'news' : 'title'; S.anr = Number(process.env.FAKE_ANR) || 0; save(); say('Events injected: 1\n'); }
+  else if (/^monkey -p com\.mojang\.minecraftpe/.test(sh)) { S.launched = true; S.phase = paywalled() ? 'paywall' : process.env.FAKE_WELCOME && !S.welcomed ? 'welcome' : process.env.FAKE_SIGNIN_OFFER === 'page' && !S.offerClosed ? 'ms-email' : process.env.FAKE_NEWS && !S.newsClosed ? 'news' : 'title'; S.anr = Number(process.env.FAKE_ANR) || 0; S.lostSince = 0; save(); say('Events injected: 1\n'); }
   // the focused window: the dialog while it is up, else the game (or the home screen)
   // (the whole dump, not its displays section, starts with the state saved at the last ANR: the launcher, stale — as on
   // Android 14, where it misled the lab for 2 hours after "Pixel Launcher isn't responding")

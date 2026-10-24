@@ -375,7 +375,7 @@ export async function runScenario(steps, ctx) {
   const joinLan = async (s) => {
     const end = Date.now() + (Number(process.env.APP_LAN_JOIN_MS) || 180_000);
     if (!ctx.ocr) { for (const k of ['A', 'DOWN', 'A']) { padKey(k); await sleep(padWait); } return 'LAN のワールド（ゲームパッド A・DOWN・A。OCR なし）'; }
-    let said = '', listed = false, other = 0, moves = 0, sawPlay = false, titleA = 0, newTries = 0, emptySince = 0, reopened = 0;
+    let said = '', listed = false, other = 0, moves = 0, sawPlay = false, titleA = 0, newTries = 0, emptySince = 0, reopened = 0, probes = 0, probeOpen = false;
     // (A first on the classic title, once a visit, before any search for its Play's focus: on the CI device the controller
     //  is awake on Play already — the search took minutes there (DESIGN.md: 194 and 269 s to PLAY). An A that opened anything
     //  but PLAY is backed out of with B and the search goes on. APP_TITLE_A_FIRST=0: the search only)
@@ -413,7 +413,7 @@ export async function runScenario(steps, ctx) {
       const ws = ocrNow(), all = ws.map((w) => w.text).join(' '), p = playScreen(ws);
       said = seenWords(ws);
       if (p) {
-        other = 0; listed ||= p.lan; sawPlay = true; seenPlay = true; quietUntil = 0; if (aFirst === 'pressed') aFirst = 'done';
+        other = 0; listed ||= p.lan; sawPlay = true; seenPlay = true; quietUntil = 0; probeOpen = false; if (aFirst === 'pressed' || aFirst === 'again') aFirst = 'done';
         rec.play ??= at(); if (p.lan) rec.listed ??= at();
         tr.add(p.lan ? (p.focused ? 'play-lan-focus' : 'play-lan') : 'play-empty', ws);
         // (PLAY open on its Realms tab — run 40059144882: it opened there every time, and B then A brought it back to it, the
@@ -444,10 +444,6 @@ export async function runScenario(steps, ctx) {
         await sleep(padWait); continue;
       }
       const play = titlePlay(ws);
-      // (the classic menu read only as its Play and the controller's hints — "Ⓐ Select Ⓑ Exit", Settings not read: the CI device,
-      //  run 40059144882. The new player's title has no Play, so it is this one: Play's focus looked for as below — never the new
-      //  player's DOWN, DOWN, A, which on the classic menu pressed Realms or News)
-      const classic = classicTitleWords(ws) || Boolean(play && /\bSelect\b/i.test(all) && /\bExit\b/i.test(all));
       if (backToTitle(ws) !== false || joinRefusal(ws)) { tr.add('back', ws); log(`${s.line} 前の画面が残っています（${said.slice(0, 80)}）: B で戻ります`); padKey('B'); }
       // a dialog over the title ("Play your way") before the menu behind it: B closes it (A on its Continue brought it back
       // again and again on the CI device)
@@ -466,13 +462,21 @@ export async function runScenario(steps, ctx) {
       // classic menu. The first press only turns the gamepad's focus on (on Get started — an A there starts the new player's
       // game mode screens): DOWN twice, then A. Its hints and logo alone (not its buttons) only twice: then it is taken for
       // the classic menu (never A on it before that: A there is Get started)
-      else if (!play && newTitleWords(ws, { strict: newTries >= 2 })) { newTries++; tr.add('title-new', ws); log(`${s.line} 新しい人向けのタイトル: More options へ（DOWN・DOWN・A）`); padKey('DOWN'); await sleep(padWait); padKey('DOWN'); await sleep(padWait); padKey('A'); }
+      else if (newTitleWords(ws, { strict: newTries >= 2 })) { newTries++; tr.add('title-new', ws); log(`${s.line} 新しい人向けのタイトル: More options へ（DOWN・DOWN・A）`); padKey('DOWN'); await sleep(padWait); padKey('DOWN'); await sleep(padWait); padKey('A'); }
       // the classic menu: its focus moves by the screen's layout, so Play is pressed once it is the green one (UP until it is,
       // then DOWN: the first press only turns the gamepad's focus on)
-      else if (play && classic) {
+      else if (play && classicTitleWords(ws)) {
+        probeOpen = false;
         let focused = false; try { focused = buttonFocused(decode(last), play); } catch { /* undecodable */ }
         if (focused) { tr.add('title-play', ws); log(`${s.line} タイトルの Play を押します（ゲームパッド A）`); padKey('A'); moves = 0; opened(); }
         else if (aFirst === 'ready') { aFirst = 'pressed'; tr.add('title-a', ws); log(`${s.line} タイトルの Play を押します（焦点は見えないが、まず A を 1 回）`); padKey('A'); moves = 0; opened(); quietUntil = Date.now() + 2 * loadMs; }
+        // (still the title after it: that A may only have turned the controller's focus on — on Play — or come before the title
+        //  took input (run 40062490868: the first A did nothing, then the search below never saw the focus). A once more, before
+        //  any move takes the focus off Play)
+        else if (aFirst === 'pressed') { aFirst = 'again'; tr.add('title-again', ws); log(`${s.line} まだタイトル: もう一度 A（Play）`); padKey('A'); moves = 0; opened(); quietUntil = Date.now() + 2 * loadMs; }
+        // (the focus never seen green — run 40062490868: the first A did not open PLAY, then 59 moves looking for it and no A
+        //  at all: every 4th move an A on whatever has the focus; what it opens instead of PLAY is backed out of with B below)
+        else if (moves % 4 === 3 && probes < 8) { probes++; probeOpen = true; moves++; tr.add('title-probe', ws); log(`${s.line} タイトルの焦点が見えません: いまの焦点で A（${probes} 回目）`); padKey('A'); opened(); }
         else { tr.add('title-focus', ws); moves++; padKey(moves % 12 <= 5 ? 'UP' : 'DOWN'); await sleep(Math.min(padWait, 1500)); continue; }
       }
       // the classic menu known by its "©Mojang AB" and the skin's name, its buttons' words not read (the CI device): Play has
@@ -487,9 +491,10 @@ export async function runScenario(steps, ctx) {
       // (a screen not known yet, just after an A that may have opened PLAY or a start: let it come — no press)
       else if (Date.now() < quietUntil) tr.add('wait', ws);
       // (the first A on the title opened something other than PLAY: B back to the title, where the search for Play goes on)
-      else if (aFirst === 'pressed') { aFirst = 'done'; tr.add('title-a-back', ws); log(`${s.line} A で開いたのは PLAY ではない画面（${said.slice(0, 60)}）: B で戻って Play を探します`); padKey('B'); }
+      else if (aFirst === 'pressed' || aFirst === 'again') { aFirst = 'done'; tr.add('title-a-back', ws); log(`${s.line} A で開いたのは PLAY ではない画面（${said.slice(0, 60)}）: B で戻って Play を探します`); padKey('B'); }
       // (Realms' own words with no PLAY tabs read, left after the wait: a Realms page — never A there, its buttons make or buy
       //  a Realm — B; a news panel over the title — run 40059144882: an A on it opened the store, again and again — B closes it)
+      else if (probeOpen) { probeOpen = false; tr.add('probe-back', ws); log(`${s.line} タイトルの A で開いたのは PLAY ではない画面（${said.slice(0, 60)}）: B で戻ります`); padKey('B'); other = 0; }
       else if (playTab(ws) === 'realms') { tr.add('realms-back', ws); log(`${s.line} Realms の画面（${said.slice(0, 60)}）: B で戻ります`); padKey('B'); other = 0; }
       else if (/\bnews\b/i.test(all) && !play) { tr.add('news-close', ws); log(`${s.line} ニュースの画面（${said.slice(0, 60)}）: B で閉じます`); padKey('B'); other = 0; }
       // (an unknown screen: A goes on at first — B once PLAY has been seen, where an A could create a world)
