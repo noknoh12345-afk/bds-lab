@@ -1,10 +1,11 @@
-import { world } from '@minecraft/server';
+import { world, system, Player } from '@minecraft/server';
 import { cmd } from './kit';
 
 // 経路②(Android実機クライアント内 scripteval / agent.js)の操作語彙を、
 // bds-lab の Script API アドオンとして実装した「サーバ側ツイン」。
 // adb の tap/swipe を使わずプレイヤーを制御する verb を、実機BDSで検証できる形にする。
-// 語彙は control_protocol.md と一致: tp / move / look / face / place / break / say / query。
+// 語彙は control_protocol.md と一致: tp / move / look / face / place / break / say / query
+//   + goto / stop(タッチなしの連続移動=歩行)。
 
 cmd('lab:tp', 'Teleport self to x y z', { to: 'loc' }, (p, a) => {
   p.teleport(a.to);
@@ -59,3 +60,37 @@ cmd('lab:query', 'Report self pos/rot and player count', {}, (p) => {
   const n = world.getAllPlayers().length;
   return `self ${Math.floor(x)} ${Math.floor(y)} ${Math.floor(z)} yaw ${Math.round(r.y)} pitch ${Math.round(r.x)} players ${n}`;
 });
+
+// ---- タッチなしの移動(歩行): 毎tickの連続テレポートで目的地まで運ぶ ----
+// tp は server 権限で実クライアントにも恒久的に効く(検証済み)。これを1tick刻みで
+// 繰り返すことで、画面に触れずにプレイヤーを歩かせる。向きは facingLocation で進行方向へ。
+const walkers = new Map<string, number>(); // playerId -> runInterval id
+function stopWalk(p: Player): void {
+  const id = walkers.get(p.id);
+  if (id !== undefined) { system.clearRun(id); walkers.delete(p.id); }
+}
+
+cmd('lab:goto', 'Walk to x z without touch', { x: 'float', z: 'float', 'speed?': 'float' }, (p, a) => {
+  stopWalk(p);
+  const speed = Math.max(0.05, Math.min(a.speed ?? 0.4, 1)); // blocks/tick
+  const run = system.runInterval(() => {
+    if (!p.isValid) { stopWalk(p); return; }
+    const l = p.location;
+    const dx = a.x - l.x, dz = a.z - l.z;
+    const d = Math.hypot(dx, dz);
+    if (d < 0.5) {
+      stopWalk(p);
+      p.sendMessage(`arrived ${Math.round(l.x)} ${Math.round(l.z)}`);
+      return;
+    }
+    const step = Math.min(speed, d);
+    p.teleport(
+      { x: l.x + (dx / d) * step, y: l.y, z: l.z + (dz / d) * step },
+      { facingLocation: { x: a.x, y: l.y, z: a.z } },
+    );
+  }, 1);
+  walkers.set(p.id, run);
+  return `goto ${a.x} ${a.z}`;
+});
+
+cmd('lab:stop', 'Stop walking', {}, (p) => { stopWalk(p); return 'stop'; });
