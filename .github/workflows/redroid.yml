@@ -146,7 +146,6 @@ jobs:
           GOOGLE_AAS_TOKEN: ${{ secrets.GOOGLE_AAS_TOKEN }}
         run: |
           python3 -m pip install --user -q frida frida-tools 2>/dev/null || pip3 install -q frida frida-tools 2>/dev/null || echo "::warning::frida を入れられません"
-          node app/redroid/game.mjs launch --data /mnt/redroid/data --shots /mnt/redroid/shots/scripteval || true
           mkdir -p out
           node app/redroid/scripteval.mjs run --out out 2>&1 | tee out/scripteval-stdout.txt || true
           { echo "## scripteval (redroid)"; echo '```'; tail -n 40 out/scripteval-stdout.txt 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

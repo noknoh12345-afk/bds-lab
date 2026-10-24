@@ -77,6 +77,29 @@ function readToken(port) {
   return null;
 }
 
+// MC が落ちた時などの診断ログ
+function grabCrash(port) {
+  const crash = (R.adb(port, ['logcat', '-d', '-b', 'crash'], { timeout: 15_000 }).stdout || '').split('\n').slice(-20).join('\n');
+  const main = (R.adb(port, ['logcat', '-d'], { timeout: 20_000 }).stdout || '').split('\n')
+    .filter((l) => /minecraftpe|Minecraft|FATAL|AndroidRuntime|libminecraft|PairIP|licens|ANR/i.test(l)).slice(-25).join('\n');
+  return (crash + '\n--main(filtered)--\n' + main).slice(0, 2800);
+}
+
+// MC を確実に起動して pid を返す(アカウント直後は端末が高負荷なので粘る)。
+async function ensureMcRunning(port, log) {
+  const pidof = () => (R.adb(port, ['shell', 'pidof', PKG], { timeout: 10_000 }).stdout || '').trim().split(/\s+/)[0] || '';
+  const launch = () => R.adb(port, ['shell', 'monkey', '-p', PKG, '-c', 'android.intent.category.LAUNCHER', '1'], { timeout: 30_000 });
+  let pid = pidof();
+  if (!pid) { log('MC を起動 (monkey LAUNCHER)'); launch(); }
+  for (let i = 0; i < 50 && !pid; i++) { await sleep(3000); pid = pidof(); }   // 最大 ~150s
+  if (!pid) return { pid: '', crash: grabCrash(port) };
+  log(`MC pid=${pid}、ロード安定待ち`);
+  await sleep(20000);
+  if (!pidof()) { log('MC が落ちた → 再起動'); launch(); for (let i = 0; i < 40 && !pidof(); i++) await sleep(3000); }
+  pid = pidof();
+  return pid ? { pid } : { pid: '', crash: grabCrash(port) };
+}
+
 async function run(o) {
   const port = Number(o.port) || R.PORT;
   const localPort = Number(o.localPort) || 25599;
@@ -100,10 +123,10 @@ async function run(o) {
     return 0; // ファイル未配置は想定内。CI を赤くしない。
   }
 
-  // MC 起動確認(未起動なら注入できない)
-  const pid = R.adb(port, ['shell', 'pidof', PKG], { timeout: 10_000 }).stdout.trim();
-  note('mc_pid', pid || '(未起動)');
-  if (!pid) { report.result = 'mc_not_running'; writeReport(outDir, report, log); return 0; }
+  // MC を起動して pid を得る(未起動なら注入できない)
+  const mc = await ensureMcRunning(port, log);
+  note('mc_pid', mc.pid || '(未起動)');
+  if (!mc.pid) { report.result = 'mc_not_running'; report.mc_crash = mc.crash; writeReport(outDir, report, log); return 0; }
 
   try {
     ensureFridaServer(port, o.fridaVersion, farch, log);
