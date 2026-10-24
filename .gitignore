@@ -61,3 +61,7 @@ bds/addons/borrowed_*/
 .claude/worktrees/
 # hostrun.yml: the host's results for the run's artifact (made on the runner)
 hostrun-result/
+
+# scripteval: 素の .so はコミットしない(封緘 .bin のみ置く)
+app/redroid/scripteval/*.so
+app/redroid/scripteval/.lab/

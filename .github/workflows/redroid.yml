@@ -34,6 +34,10 @@ on:
         description: make the device again even when the cache has one
         type: boolean
         default: false
+      scripteval:
+        description: "scripteval(自作mod)を注入し素のAPKでJSランタイムが動くか検証(読み取り専用。要: 封緘 .so)"
+        type: boolean
+        default: false
   push:
     branches: [main, 'claude/redroid-*']
     paths: ['app/redroid/**', '.github/workflows/redroid.yml']
@@ -126,11 +130,26 @@ jobs:
         run: node app/redroid/game.mjs bench --data /mnt/redroid/data --rounds 3 --shots /mnt/redroid/shots/bench
 
       - name: app ${{ inputs.mode || 'run' }} on the redroid device
-        if: steps.turn.outputs.ok == 'true' && (steps.prep.outputs.game_ok == 'true' || steps.open.outputs.opened == 'true')
+        if: steps.turn.outputs.ok == 'true' && !inputs.scripteval && (steps.prep.outputs.game_ok == 'true' || steps.open.outputs.opened == 'true')
         env:
           ADDON: ${{ inputs.addon || 'jsonui_demo' }}
           MODE: ${{ inputs.mode || 'run' }}
         run: node app/redroid/game.mjs debug --data /mnt/redroid/data --addon "$ADDON" --mode "$MODE" --shots /mnt/redroid/shots/debug
+
+      # scripteval 検証(input scripteval): 自作 mod の libscripteval.so を素の APK に注入し、
+      # 読み取り専用 JS ランタイムが動くか(REPL が立つか)を確かめる。app/redroid/scripteval/README.md 参照。
+      - name: scripteval inject + probe (input scripteval)
+        if: steps.turn.outputs.ok == 'true' && inputs.scripteval && (steps.prep.outputs.game_ok == 'true' || steps.open.outputs.opened == 'true')
+        continue-on-error: true
+        env:
+          APP_CACHE_KEY: ${{ secrets.APP_CACHE_KEY }}
+          GOOGLE_AAS_TOKEN: ${{ secrets.GOOGLE_AAS_TOKEN }}
+        run: |
+          python3 -m pip install --user -q frida frida-tools 2>/dev/null || pip3 install -q frida frida-tools 2>/dev/null || echo "::warning::frida を入れられません"
+          node app/redroid/game.mjs launch --data /mnt/redroid/data --shots /mnt/redroid/shots/scripteval || true
+          mkdir -p out
+          node app/redroid/scripteval.mjs run --out out 2>&1 | tee out/scripteval-stdout.txt || true
+          { echo "## scripteval (redroid)"; echo '```'; tail -n 40 out/scripteval-stdout.txt 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - name: seal the prepared device (input keep)
         id: seal
