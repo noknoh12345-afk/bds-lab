@@ -19,6 +19,9 @@ cmd('lab:move', 'Move relative by dx dy dz', { dx: 'float', dy: 'float', dz: 'fl
   return `move ${Math.floor(x)} ${Math.floor(y)} ${Math.floor(z)}`;
 });
 
+// 注意: 実クライアントの視点はクライアント権限。server側 setRotation は同tickでは効くが
+// 次tickにクライアントの実値で上書きされる(= 恒久的な視点制御は経路②のネイティブ入力
+// フック ScriptEval.injectInput が要る)。tp/move/place/break は server 権限で恒久的に効く。
 cmd('lab:look', 'Set view to yaw pitch', { yaw: 'float', pitch: 'float' }, (p, a) => {
   p.setRotation({ x: a.pitch, y: a.yaw });
   const r = p.getRotation();
