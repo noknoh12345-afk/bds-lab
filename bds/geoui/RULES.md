@@ -16,6 +16,8 @@ git clone --filter=blob:none --sparse --depth 1 https://github.com/Mojang/bedroc
 cd bedrock-samples && git sparse-checkout set resource_pack/ui resource_pack/entity resource_pack/animations resource_pack/animation_controllers metadata
 ```
 
+入力の一次資料は `Mojang/bedrock-protocol-docs`（1.26.70-preview.21 のメタデータ、`json/PlayerAuthInput*.json`・`additional_docs/`）。
+
 使ったファイル: `resource_pack/ui/hud_screen.json`・`ui_common.json`・`inventory_screen.json`・`_global_variables.json`、
 `resource_pack/entity/player.entity.json`、`resource_pack/animations/*.json`・`animation_controllers/*.json`、
 `metadata/doc_modules/animations.json`（render controller とアニメーションの公式の文書）、`metadata/molang_modules/mojang-molang-queries.json`、
@@ -115,6 +117,10 @@ cd bedrock-samples && git sparse-checkout set resource_pack/ui resource_pack/ent
 | R7.6 | 1 tick より短い押しは `playerButtonInput` で拾える | 式（`html/runtime.js`） | |
 | R7.7 | 出来事の名前を自分のコマンドと同じにすると自分に戻ってくり返す | 測った（ウォッチドッグ） | `<ns>:on_<名前>` |
 | R7.8 | `Entity.isSneaking` はサーバーから書ける | 一次資料・測った（BDS: geoui_rules） | 本物のクライアントの姿勢が変わるか・GeoUI が動くかは `geoui_rules` の poses |
+| R7.9 | クライアントが毎 tick 送る PlayerAuthInput には、ゲームの動きの印（Jumping・Sneaking・StartSneaking …）とは別に、ボタンそのものの印（JumpPressedRaw・JumpReleasedRaw・JumpCurrentRaw・SneakPressedRaw・SneakReleasedRaw・SneakCurrentRaw）がある。ほかに MissedSwing（何にも当たらない腕の振り）・IsHotbarOnlyTouch・Emoting | 一次資料（Mojang の bedrock-protocol-docs、1.26.70-preview の `PlayerAuthInputData.json`） | 動きを止めて（lock）もボタンの押しは「生の印」で届く見込み → 仮説: lock でもジャンプ・スニークは決定・戻るに使える（`geoui_device` の in-jump / in-sneak で決める） |
+| R7.10 | PlayerAuthInput には Player Rotation とは別に Camera Orientation・Interact Rotation・Player Head Rotation、移動は Move Vector・Analog Move Vector・Raw Move Vector がある | 一次資料（`PlayerAuthInputPacketPayload.json`） | 止めたカメラでも、ポインタに使う `getRotation()`（体の向き）はカメラと別に動く見込み（`geoui_device` の frozen-turn で決める） |
+| R7.11 | 操作の型は Input Mode（Mouse・Touch・GamePad・GamePadAndMouse）と、タッチの Interaction Model（Touch・Crosshair・Classic）の 2 つ | 一次資料（`InputMode.json`・`NewInteractionModel.json`） | タップが腕の振り（クリック）になるかは Interaction Model しだい → 仮説。タップに頼らない道（ジャンプ = 決定）を残す |
+| R7.12 | プレイヤーの動きはサーバーが決める形（ServerAuthoritativeV3）に移った: クライアントの予測をサーバーが直す（CorrectPlayerMovePrediction） | 一次資料（`additional_docs/MovementProtocolDeprecation.md`） | free（毎 tick 戻す）は直しと teleport を毎 tick 生む → speed（速さ 0）の方が軽い見込み（仮説: 直しの数を数える実験はまだ無い） |
 
 ## 8. 時間
 

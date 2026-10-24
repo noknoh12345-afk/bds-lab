@@ -89,7 +89,7 @@ const pr = R.predictions();
   const get = (rows, id) => rows.find((x) => x.rule === id);
   const good = mk({ unit: (p) => p.unitsPerScreenH * 1.001, centre: (p) => p.centreY_W, small: pr.entityScale.ignores.unitsPerScreenH, gui: (g) => g.A, inv: true });
   ok(get(good, 'R4.1').result === '成り立つ' && /^W/.test(get(good, 'R4.2').result) && get(good, 'R4.8').result === '付いてこない' && get(good, 'R2.3').result === '成り立つ'
-    && get(good, 'R5.3').result === 'A' && get(good, 'R3.8').result === '成り立つ' && get(good, 'R3.9').result === '描かれる' && /0\.760/.test(get(good, 'R3.7').detail),
+    && get(good, 'R5.3').result === 'A' && get(good, 'R3.8').result.startsWith('赤くならなかった') && get(good, 'R3.9').result === '描かれる' && /0\.760/.test(get(good, 'R3.7').detail),
     'verdict: a run that agrees reads as held (R4.1), W (R4.2), not followed (R4.8), still (R2.3), rule A (R5.3), no red (R3.8), drawn (R3.9), the light 0.76', JSON.stringify(good.map((x) => [x.rule, x.result])));
   const bad = mk({ unit: () => 170.6667, centre: (p) => p.centreY_M, small: pr.entityScale.follows.unitsPerScreenH, gui: (g) => g.B, inv: false, poseMove: true, red: 60 });
   ok(get(bad, 'R4.1').result === '成り立たない' && get(bad, 'R4.8').result.startsWith('付いてくる') && get(bad, 'R2.3').result.startsWith('動いた') && get(bad, 'R5.3').result === 'B'

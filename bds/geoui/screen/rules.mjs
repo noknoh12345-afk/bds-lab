@@ -254,7 +254,8 @@ export function verdict(measures) {
   }
   out.push({ rule: 'R3.7', claim: '板の色にかかる光（明るさ・法線・時刻・暗視・暗い箱）', result: '値（下）', detail: rows.join(' / ') });
   const hurt = col('ramp-hurt')[RAMP.findIndex((r) => r.id === 'g255')], noon = col('ramp-noon')[RAMP.findIndex((r) => r.id === 'g255')];
-  out.push({ rule: 'R3.8', claim: 'ダメージの赤い点滅（is_hurt_color の a 0）は GeoUI にかからない', result: hurt && noon ? (Math.abs(hurt.r - noon.r) + Math.abs(hurt.g - noon.g) + Math.abs(hurt.b - noon.b) < 12 ? '成り立つ' : '赤くなった') : '測れなかった',
+  // (the flash lasts about half a second: a shot that missed it looks the same as no flash — only "red" is a sure answer)
+  out.push({ rule: 'R3.8', claim: 'ダメージの赤い点滅（is_hurt_color の a 0）は GeoUI にかからない', result: hurt && noon ? (Math.abs(hurt.r - noon.r) + Math.abs(hurt.g - noon.g) + Math.abs(hurt.b - noon.b) < 12 ? '赤くならなかった（写した時に点滅していたかは分からない）' : '赤くなった') : '測れなかった',
     detail: hurt && noon ? `白: 昼 rgb(${[noon.r, noon.g, noon.b].map(Math.round)}) / ダメージ rgb(${[hurt.r, hurt.g, hurt.b].map(Math.round)})` : '' });
   const inv = by('cal-invisible', 'geoui')[0];
   out.push({ rule: 'R3.9', claim: '透明化のポーションの間も GeoUI は描かれる', result: inv ? (inv.ok ? '描かれる' : '描かれない（目盛りが無い）') : '測れなかった', detail: inv && !inv.ok ? String(inv.why || '') : '' });
