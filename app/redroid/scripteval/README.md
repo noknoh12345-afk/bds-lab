@@ -54,11 +54,14 @@ git add app/redroid/scripteval/libscripteval-*.so.bin && git commit -m "scriptev
 
 ## 回す
 
-- **GitHub(推奨)**: Actions → **redroid** → Run workflow で入力 `scripteval` を on。端末準備のあと注入+プローブ+機能が走り、
-  `redroid-game` artifact の `scripteval-report.json`(封じた中)と、`run_log` の `SE_EVIDENCE {json}` 1 行に結果が出る。
-  Secrets は `SCRIPTEVAL_SO_KEY`(+ 既存の `APP_CACHE_KEY`/`GOOGLE_AAS_TOKEN`)。
+- **GitHub(推奨)**: Actions → **redroid** → Run workflow で入力 `scripteval` を on(タイトル画面の検証)。さらに
+  `scripteval_world` も on にすると、注入後に自分のシングルプレイ world を開いてオフセットまで探す(3 段目)。端末準備のあと
+  注入+プローブ+機能(+world)が走り、`redroid-game` artifact の `scripteval-report.json`(封じた中)と `run_log` の
+  `SE_EVIDENCE {json}` 1 行に結果が出る。Secrets は `SCRIPTEVAL_SO_KEY`(+ 既存の `APP_CACHE_KEY`/`GOOGLE_AAS_TOKEN`)。
 - **手元(Linux + docker + binder)**: `node lab.mjs app redroid prep`(または open)で端末を用意し、
-  `SCRIPTEVAL_SO_KEY=… node app/redroid/scripteval.mjs run --out out`。
+  `SCRIPTEVAL_SO_KEY=… node app/redroid/scripteval.mjs run [--open-world] --out out`。
+  - `--open-world`: 注入後に自分のシングルプレイ world を開く(BDS なし=切断されない。injectInput が実際にプレイヤーを動かす)。
+  - `--no-launch`: 画面に触らず、いま起動中のゲームをそのまま使う(常駐の端末を自分で world に入れてあるとき)。
 
 ## 結果の読み方(`result` と `SE_EVIDENCE`)
 

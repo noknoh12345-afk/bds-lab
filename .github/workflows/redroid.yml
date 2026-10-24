@@ -35,7 +35,11 @@ on:
         type: boolean
         default: false
       scripteval:
-        description: "scripteval(自作mod)を注入し素のAPKでJSランタイムが動くか検証(読み取り専用。要: 封緘 .so)"
+        description: "scripteval(自作mod)を注入し素のAPKで injectInput/http/グロリソ/自己更新が動くか検証(要: 封緘 .so)"
+        type: boolean
+        default: false
+      scripteval_world:
+        description: "scripteval 検証で、さらに自分のシングルプレイ world を開き injectInput のオフセットを実機で探す"
         type: boolean
         default: false
   push:
@@ -149,7 +153,8 @@ jobs:
         run: |
           python3 -m pip install --user -q frida frida-tools 2>/dev/null || pip3 install -q frida frida-tools 2>/dev/null || echo "::warning::frida を入れられません"
           mkdir -p out
-          node app/redroid/scripteval.mjs run --out out 2>&1 | tee out/scripteval-stdout.txt || true
+          WORLD=""; [ "${{ inputs.scripteval_world }}" = "true" ] && WORLD="--open-world"
+          node app/redroid/scripteval.mjs run $WORLD --out out 2>&1 | tee out/scripteval-stdout.txt || true
           { echo "## scripteval (redroid)"; echo '```'; tail -n 40 out/scripteval-stdout.txt 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - name: seal the prepared device (input keep)

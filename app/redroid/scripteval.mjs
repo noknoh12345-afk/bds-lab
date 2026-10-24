@@ -12,6 +12,10 @@
 //
 //   node app/redroid/scripteval.mjs run [--data <準備済みフォルダ>] [--keep] [--abi auto] [--repl-port 25599]
 //                                       [--local-port 25599] [--out <dir>] [--frida-version X]
+//                                       [--open-world] [--no-launch]
+//     --open-world: 注入後に自分のシングルプレイ「own world」を開き(BDS なし=切断されない)、ワールドの中で
+//                   injectInput の実効に要るオフセット(moveVectorX/Z・cameraYaw/Pitch)を mod の読み取り専用 dbg で探す。
+//     --no-launch:  画面に触らず、いま起動中のゲームをそのまま使う(常駐の端末を自分でワールドに入れてあるとき)。
 //   node app/redroid/scripteval.mjs --selftest        端末不要(プローブ配線 + 伏字の確認)
 //
 // --data の既定: $REDROID_DATA → /mnt/redroid/data(redroid.yml の prep/open が作る所)→ app/redroid/.lab/data
@@ -27,6 +31,7 @@ import { runProbe, summarize, openRepl } from './scripteval/probe.mjs';
 import * as features from './scripteval/features.mjs';
 import * as world from './scripteval/world.mjs';
 import * as studio from './scripteval/studio.mjs';
+import { ocrWords, playScreen, playTab, joinScreen } from '../lib/client.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const LAB = path.join(HERE, '.lab');
@@ -89,7 +94,7 @@ async function forwardPort(adb, hostPort, devPort) {
 
 /** 準備済みの端末を起こしてゲームをタイトルまで(game.mjs debug と同じ手順)。常駐の端末(--keep の残り)はそのまま使う。
  *  state.started: このスクリプトが端末を起こし始めたか(途中で失敗しても片付けるため) */
-async function bringUp({ data, port, img = R.GAPPS_TAG, log, state }) {
+async function bringUp({ data, port, img = R.GAPPS_TAG, log, state, noLaunch = false }) {
   const t0 = now();
   const { launch, whyNot } = await import('./game.mjs');
   const adb = adbOf(port);
@@ -105,10 +110,54 @@ async function bringUp({ data, port, img = R.GAPPS_TAG, log, state }) {
   }
   const isRoot = await ensureRoot(adb);
   log(`adb root: ${isRoot ? 'はい' : 'いいえ(su 0 を使います)'}`);
+  // --no-launch: 画面に触らず、いま走っているゲームをそのまま使う(常駐の端末を自分でワールドに入れてあるとき用)。
+  //  MC が動いていなければ結局起動する。
+  if (noLaunch && resident && adb.pid(PKG)) {
+    log('no-launch: 起動中のゲームをそのまま使います(タイトルへ戻さない)');
+    return { adb, isRoot, resident, boot, game: { noLaunch: true }, why: null, whyNot, readyS: secs(now() - t0) };
+  }
   const g = await launch(adb, { boost: true });
   const { why, ...game } = g;
   log(`ゲームの起動: ${JSON.stringify({ pidS: game.pidS, windowS: game.windowS, titleS: game.titleS, license: game.license, am: game.am })}`);
   return { adb, isRoot, resident, boot, game, why: why ?? null, whyNot, readyS: secs(now() - t0) };
+}
+
+/** PLAY→Worlds→(先頭のワールド)→開く、の 1 手を画面の状態から決める(純粋。偽の OCR で試験できる)。
+ *  state: client.mjs joinScreen の戻り(title / play-empty / play-lan / prompt-* / generating / loading / connecting / other / blank)
+ *  tab: client.mjs playTab の戻り(worlds / realms / null)。戻り: 'A' 押す / 'LB' タブを左へ / 'wait' 待つ */
+export function nextWorldAction(state, tab) {
+  if (/^generating|^loading|^connecting|^downloading/.test(state)) return 'wait';
+  if (state === 'title') return 'A';                               // タイトル → 入る
+  if (state === 'play-empty' || state === 'play-lan') return tab === 'realms' ? 'LB' : 'A'; // Worlds タブで先頭のカードを開く
+  if (state.startsWith('prompt-')) return 'A';                     // 「続ける/パック」等は A
+  return 'A';                                                      // other/blank: 軽く A で促す(回数で頭打ち)
+}
+
+/** 端末の自分のシングルプレイ「own world」を開く(BDS なし=切断されない)。ready() が真になるまで画面を見て 1 手ずつ。
+ *  OCR とコントローラ頼みなので、各手でスクショを残す(外した所が後で分かる)。offline では nextWorldAction を試験する。 */
+async function enterOwnWorld(adb, { log, shotDir, ready, sleep, maxMs = 90_000 }) {
+  const shot = (name) => { try { const p = path.join(shotDir, `world-${name}.png`); fs.writeFileSync(p, adb.screencap()); return path.basename(p); } catch { return null; } };
+  const read = () => { try { return ocrWords(adb.screencap()); } catch { return []; } };
+  const trail = [];
+  const end = now() + maxMs;
+  shot('00-start');
+  let i = 0, aOnWorlds = 0;
+  while (now() < end) {
+    if (await ready()) { shot(`${String(i).padStart(2, '0')}-inworld`); return { entered: true, trail, s: secs(now() - (end - maxMs)) }; }
+    const w = read();
+    const state = joinScreen(w), tab = playScreen(w) ? playTab(w) : null;
+    let act = nextWorldAction(state, tab);
+    // Worlds タブで A を 3 回押しても入れないなら、カードに焦点が無い可能性 → DOWN で寄せてから A
+    if (act === 'A' && (state === 'play-empty' || state === 'play-lan')) { if (aOnWorlds >= 3 && aOnWorlds % 2 === 1) act = 'DOWN'; aOnWorlds++; }
+    trail.push(`${state}${tab ? '/' + tab : ''}:${act}`);
+    log(`world| ${i}: ${state}${tab ? '(' + tab + ')' : ''} → ${act}`);
+    if (act === 'wait') { await sleep(2500); }
+    else { adb.pad(act); await sleep(act === 'A' ? 3500 : 1500); }
+    if (i % 4 === 0) shot(`${String(i).padStart(2, '0')}-${state}`);
+    i++;
+  }
+  shot('99-timeout');
+  return { entered: await ready(), trail, s: secs(maxMs / 1000) };
 }
 
 /** .so の封緘鍵。専用の SCRIPTEVAL_SO_KEY があればそれで(端末の金庫 APP_CACHE_KEY には触らない)。無ければ従来どおり
@@ -229,7 +278,7 @@ async function run(o) {
 
   try {
     // 1) 端末を起こし、ゲームをタイトルまで
-    try { dev = await bringUp({ data, port, log, state }); }
+    try { dev = await bringUp({ data, port, log, state, noLaunch: Boolean(o.noLaunch) }); }
     catch (e) { note('device_error', String(e.message || e)); return finish('device_failed'); }
     report.device = { resident: dev.resident, boot: dev.boot, readyS: dev.readyS, game: dev.game };
     const facts = deviceFacts(dev.adb);
@@ -344,13 +393,21 @@ async function run(o) {
       try {
         const repl = await openRepl({ host: '127.0.0.1', port: localPort, token, timeoutMs: 20_000 });
         try {
-          const q = await repl.js('const lp = mc.localPlayer(); return !!(lp && lp[0]);');
-          if (q.ok && q.value) {
+          const inWorld = async () => { const q = await repl.js('const lp = mc.localPlayer(); return !!(lp && lp[0]);'); return q.ok && q.value === true; };
+          // --open-world: BDS なしの自分のシングルプレイ「own world」を開く(切断されない。injectInput が実際にプレイヤーを動かす)。
+          //  コントローラが要るので先に用意。入れたら mod はワールドを見つけ LocalPlayer を検証する。
+          if (!(await inWorld()) && o.openWorld) {
             const pd = startPad(dev.adb, { labDir: path.join(SE_DIR, '.lab'), abi });
             note('world_pad', pd.note);
+            const ent = await enterOwnWorld(dev.adb, { log, shotDir: outDir, ready: inWorld, sleep });
+            report.enterWorld = { entered: ent.entered, trail: ent.trail, s: ent.s };
+            note('enter_world', ent.entered ? `入れました(${ent.s} 秒、手順 ${ent.trail.length})` : `入れず(${ent.s} 秒、手順 ${ent.trail.join(' ')})`);
+          }
+          if (await inWorld()) {
+            if (!dev.adb.padReady) { const pd = startPad(dev.adb, { labDir: path.join(SE_DIR, '.lab'), abi }); note('world_pad', pd.note); }
             report.world = await world.findOffsets({ repl, pad: async (w) => { dev.adb.pad(w); }, sleep, log: (m) => log('world| ' + scrub(m, secrets)) });
           } else {
-            report.world = { inWorld: false, why: 'タイトル画面(未参加)。オフセット特定は参加してから(次段)' };
+            report.world = { inWorld: false, why: o.openWorld ? 'ワールドに入れませんでした(enterWorld の手順/スクショを見て調整)' : 'タイトル画面(未参加)。--open-world でシングルプレイを開く' };
           }
         } finally { repl.close(); }
         ev.world = { inWorld: report.world.inWorld, found: report.world.found ?? null };
@@ -382,7 +439,8 @@ function writeReport(outDir, report, log) {
   log('report: ' + f + ' (result=' + (report.result || '?') + ')');
 }
 
-function parseArgs(a) { const o = {}; const rest = []; for (let i = 0; i < a.length; i++) { const k = a[i]; if (k === '--selftest' || k === '--keep') o[k.slice(2)] = true; else if (k.startsWith('--')) o[k.slice(2).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = a[++i]; else rest.push(k); } o._ = rest; return o; }
+const BOOL_FLAGS = ['--selftest', '--keep', '--no-launch', '--open-world'];
+function parseArgs(a) { const o = {}; const rest = []; for (let i = 0; i < a.length; i++) { const k = a[i]; if (BOOL_FLAGS.includes(k)) o[k.slice(2).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = true; else if (k.startsWith('--')) o[k.slice(2).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = a[++i]; else rest.push(k); } o._ = rest; return o; }
 
 async function selftest() {
   const { spawnSync } = await import('node:child_process');
@@ -399,6 +457,12 @@ async function selftest() {
   t('listening: 無い port は偽', listening(tcp, 25600) === false);
   t('listening: ESTABLISHED だけなら偽', listening('   1: 0100007F:63FF 0100007F:9C40 01 0', 25599) === false);
   t('resolveData: 明示 > REDROID_DATA', resolveData('/x/y', { REDROID_DATA: '/z' }) === '/x/y' && resolveData(undefined, { REDROID_DATA: '/z' }) === '/z');
+  // world opener の 1 手の判断(純粋): タイトル→A、Worlds で A、Realms なら LB、読み込み中は wait
+  t('nextWorldAction: title → A', nextWorldAction('title', null) === 'A');
+  t('nextWorldAction: play-empty + worlds → A', nextWorldAction('play-empty', 'worlds') === 'A');
+  t('nextWorldAction: play-lan + realms → LB', nextWorldAction('play-lan', 'realms') === 'LB');
+  t('nextWorldAction: generating → wait', nextWorldAction('generating', null) === 'wait');
+  t('nextWorldAction: prompt-packs → A', nextWorldAction('prompt-packs', null) === 'A');
   // 専用鍵: SCRIPTEVAL_SO_KEY が APP_CACHE_KEY より優先(両方あっても SO_KEY を使う)
   t('soVaultKey: SCRIPTEVAL_SO_KEY を使う', soVaultKey({ SCRIPTEVAL_SO_KEY: 'K1', APP_CACHE_KEY: 'K2' })?.id === V.vaultKey({ APP_CACHE_KEY: 'K1' }).id);
   t('soVaultKey: 無ければ従来どおり', soVaultKey({ APP_CACHE_KEY: 'K2' })?.id === V.vaultKey({ APP_CACHE_KEY: 'K2' }).id);
