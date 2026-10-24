@@ -29,7 +29,7 @@ js world.getDimension('overworld').getBlock({x:3,y:-60,z:3}).typeId
 
 ## say broadcasts to chat
 @A cmd /lab:say hello
-~ @A A: hello
+~ A: hello
 
 ## query reports position, rotation and player count
 @A cmd /lab:query
