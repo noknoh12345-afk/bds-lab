@@ -24,6 +24,33 @@
             40000
           ],
           "default": 9375
+        },
+        "grl:comp": {
+          "client_sync": true,
+          "type": "int",
+          "range": [
+            0,
+            1
+          ],
+          "default": 0
+        },
+        "grl:gain": {
+          "client_sync": true,
+          "type": "int",
+          "range": [
+            0,
+            4000
+          ],
+          "default": 1000
+        },
+        "grl:ov": {
+          "client_sync": true,
+          "type": "int",
+          "range": [
+            0,
+            1000
+          ],
+          "default": 0
         }
       }
     },

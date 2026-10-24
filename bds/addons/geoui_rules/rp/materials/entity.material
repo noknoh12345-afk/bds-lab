@@ -146,6 +146,30 @@
         "USE_UV_ANIM",
         "ALPHA_TEST"
       ]
+    },
+    "grl_fade:grl_base": {
+      "+defines": [
+        "USE_UV_ANIM",
+        "USE_COLOR_MASK"
+      ],
+      "+states": [
+        "Blending"
+      ],
+      "blendSrc": "SourceAlpha",
+      "blendDst": "OneMinusSrcAlpha"
+    },
+    "grl_overlay:grl_base": {
+      "+defines": [
+        "USE_UV_ANIM",
+        "ALPHA_TEST",
+        "USE_OVERLAY"
+      ]
+    },
+    "grl_emissive:grl_base": {
+      "+defines": [
+        "USE_UV_ANIM",
+        "USE_EMISSIVE"
+      ]
     }
   }
 }

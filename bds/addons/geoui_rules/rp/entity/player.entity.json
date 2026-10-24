@@ -8,7 +8,10 @@
         "cape": "entity_alphatest",
         "animated": "player_animated",
         "spectator": "player_spectator",
-        "grl_cutout": "grl_cutout"
+        "grl_cutout": "grl_cutout",
+        "grl_fade": "grl_fade",
+        "grl_overlay": "grl_overlay",
+        "grl_emissive": "grl_emissive"
       },
       "textures": {
         "default": "textures/entity/steve",
@@ -21,7 +24,7 @@
         "grl_pal": "geometry.grl_pal"
       },
       "scripts": {
-        "scale": "variable.is_paperdoll ? 0.9375 : (q.is_in_ui ? (v.grl_sc ?? 9375) / 10000 : 0.9375)",
+        "scale": "variable.is_paperdoll ? 0.9375 : (q.is_in_ui ? ((v.grl_sc ?? 9375) / 10000) / ((((v.grl_comp ?? 0) > 0) && q.model_scale > 0.05) ? q.model_scale : 1) : 0.9375)",
         "initialize": [
           "variable.is_holding_right = 0.0;",
           "variable.is_blinking = 0.0;",
@@ -41,7 +44,10 @@
           "variable.item_use_normalized = query.main_hand_item_use_duration / query.main_hand_item_max_duration;",
           "variable.riding_y_offset = query.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat', 'minecraft:strider') ? -3.0 : 0.0;",
           "v.grl_show = variable.is_paperdoll ? 0 : q.property('grl:show');",
-          "v.grl_sc = variable.is_paperdoll ? 9375 : q.property('grl:sc');"
+          "v.grl_sc = variable.is_paperdoll ? 9375 : q.property('grl:sc');",
+          "v.grl_comp = variable.is_paperdoll ? 0 : q.property('grl:comp');",
+          "v.grl_gain = (variable.is_paperdoll ? 1000 : q.property('grl:gain')) / 1000;",
+          "v.grl_ov = (variable.is_paperdoll ? 0 : q.property('grl:ov')) / 1000;"
         ],
         "animate": [
           {

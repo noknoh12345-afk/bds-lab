@@ -6,6 +6,15 @@
       "materials": [
         {
           "*": "material.grl_cutout"
+        },
+        {
+          "grl_b_fade": "material.grl_fade"
+        },
+        {
+          "grl_b_ovl": "material.grl_overlay"
+        },
+        {
+          "grl_b_emis": "material.grl_emissive"
         }
       ],
       "textures": [
@@ -22,9 +31,9 @@
         ]
       },
       "color": {
-        "r": 1,
-        "g": 1,
-        "b": 1,
+        "r": "v.grl_gain ?? 1",
+        "g": "v.grl_gain ?? 1",
+        "b": "v.grl_gain ?? 1",
         "a": 1
       },
       "is_hurt_color": {
@@ -38,6 +47,12 @@
         "g": 0,
         "b": 0,
         "a": 0
+      },
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.grl_ov ?? 0"
       }
     }
   }

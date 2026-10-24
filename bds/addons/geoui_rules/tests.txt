@@ -1,21 +1,28 @@
-# geoui_rules（bds/geoui/screen/rules.mjs が作る）: 規則を決める実験のパックが本物の BDS で動くか（プロパティ・scale・しゃがむ・
-# アニメーション・体の大きさの component・乗り物）。描画（目盛り・灰色・GUI の枠）は app.txt（本物のアプリ）が写して測る。
+# geoui_rules（bds/geoui/screen/rules.mjs が作る）: 規則を決める実験のパックが本物の BDS で動くか（プロパティ・scale・打ち消し・
+# 色の倍率・重ねる色・しゃがむ・アニメーション・体の大きさの component・乗り物・閉じた箱）。描画は app.txt（本物のアプリ）が写して測る。
 
 ## 読み込める（プロパティが既定値）
 @A join
 wait 2000
-js JSON.stringify([p('A').getProperty('grl:show'), p('A').getProperty('grl:sc')])
-= [0,9375]
+js JSON.stringify([p('A').getProperty('grl:show'), p('A').getProperty('grl:sc'), p('A').getProperty('grl:comp'), p('A').getProperty('grl:gain'), p('A').getProperty('grl:ov')])
+= [0,9375,0,1000,0]
 
-## 表示と UI の中の scale を変える
-scriptevent grl:show 3
+## 表示と UI の中の scale・打ち消し・色の倍率・重ねる色を変える
+scriptevent grl:show 63
 scriptevent grl:scale 0.5
+scriptevent grl:comp 1
+scriptevent grl:gain 1.32
+scriptevent grl:ov 0.24
 wait 300
-js JSON.stringify([p('A').getProperty('grl:show'), p('A').getProperty('grl:sc')])
-= [3,5000]
+js JSON.stringify([p('A').getProperty('grl:show'), p('A').getProperty('grl:sc'), p('A').getProperty('grl:comp'), p('A').getProperty('grl:gain'), p('A').getProperty('grl:ov')])
+= [63,5000,1,1320,240]
 scriptevent grl:scale 9
 ~ GRL scale <0.1…4>
+scriptevent grl:show 0
 scriptevent grl:scale 0.9375
+scriptevent grl:comp 0
+scriptevent grl:gain 1
+scriptevent grl:ov 0
 wait 300
 
 ## サーバーからしゃがませる・アニメーション
@@ -48,3 +55,13 @@ js const r = p('A').getComponent('minecraft:riding'); r ? r.entityRidingOn.typeI
 = minecraft:boat
 ride @a stop_riding
 kill @e[type=boat]
+
+## 閉じた箱を作って壊す（app.txt の light-box と同じコマンド）
+fill -2 -61 -2 2 -56 2 stone hollow
+tp A 0 -60 0 0 0
+js [world.getDimension('overworld').getBlock({ x: 2, y: -58, z: 0 }).typeId, world.getDimension('overworld').getBlock({ x: 0, y: -58, z: 0 }).typeId].join(' ')
+= minecraft:stone minecraft:air
+fill -2 -60 -2 2 -56 2 air
+fill -2 -61 -2 2 -61 2 grass_block
+js [world.getDimension('overworld').getBlock({ x: 2, y: -58, z: 0 }).typeId, world.getDimension('overworld').getBlock({ x: 0, y: -61, z: 0 }).typeId].join(' ')
+= minecraft:air minecraft:grass_block

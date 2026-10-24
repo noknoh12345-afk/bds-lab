@@ -10,18 +10,20 @@
 //   local   a group's own units: x right, y DOWN, from the group's anchor point (what a designer and the HTML converter use)
 //   screen  px of the viewport: x right, y down, (0, 0) at its top-left
 //   ui      JSON UI px (the game's GUI scale): screen px / uiScale
-// The renderer (measured on the real app, 3 panel shapes x 5 screens, 0.08 % / 0.7 px; bds/geoui/README.md):
-//   one model unit = K x min(panel width, panel height) px, K = 0.9375 / 16 (one block across the panel's shorter side at the
-//   player's render scale 0.9375; measured 0.058589); the model's origin sits D = 24.10 units below the panel's middle,
-//   centred across; orthographic (no perspective: x and y scale alike, depth does not move a point)
+// The renderer (measured on the real app: 3 panel shapes x 5 screens, 0.08 % / 0.7 px, 2026-10-21; then decided by
+// bds/addons/geoui_rules, run 40055307539 (2026-10-24): the player's scale in the UI at 0.5 / 0.75 / 1 / 1.5 → the unit exactly
+// scale / 16 of the panel's shorter side and the origin exactly 24 model units below its middle, 0.00 px off — RULES.md R4.1 R4.2):
+//   one model unit = K x min(panel width, panel height) px, K = scripts.scale / 16 — vanilla's player scale 0.9375 (and any
+//   minecraft:scale the entity has multiplies it: R4.8) — i.e. one block of the world across the panel's shorter side; the model's
+//   origin sits D = 24 model units below the panel's middle at any scale, centred across; orthographic (no perspective)
 (function (root) {
   'use strict';
   const S = root.GeoUIScreen = root.GeoUIScreen || {};
   const num = (v, d = 0) => (v !== null && v !== undefined && v !== '' && Number.isFinite(+v) ? +v : d);
   const r6 = (v) => Math.round(v * 1e6) / 1e6;
 
-  /** the renderer: K exact (0.9375 / 16) and as measured; D measured (± its error) */
-  const K = 0.9375 / 16, K_MEASURED = 0.058589, K_ERR = 0.00005, D = 24.10, D_ERR = 0.17;
+  /** the renderer: K (vanilla's scale 0.9375 / 16) and as measured; D (± what is left of its error) */
+  const K = 0.9375 / 16, K_MEASURED = 0.05859375, K_ERR = 0.00001, D = 24, D_ERR = 0.02;
   /** where the content lives: far from the model's origin (the player's own body, which every renderer also draws) and far
    *  enough that any other renderer of the player — the inventory's doll, the HUD's paper doll — draws it off its screen */
   const BAND_Y = 1200, GROUP_DX = 1500, GROUP_DY = 600;

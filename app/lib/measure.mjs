@@ -163,7 +163,8 @@ export const KINDS = {
   },
 };
 export const KIND_NAMES = Object.keys(KINDS);
-const MAX = 40;
+// (how many measures a run's public summary keeps: a probe that reads 80 numbers lost the last half at 40 — run 40055307539)
+const MAX = 160;
 const name = (s) => (typeof s === 'string' && /^[\w.-]{1,40}$/.test(s) ? s : null);
 // (6 decimals: a centre fix is a few thousandths; a px count stays whole)
 const round = (v) => Math.round(v * 1e6) / 1e6;

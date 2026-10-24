@@ -71,7 +71,7 @@ const viaRenderer = (r, X, Y, k = L.K, d = L.D) => { const u = k * Math.min(r.w,
 
 // ---- layout
 {
-  ok(near(L.K, 0.05859375) && Math.abs(L.K - L.K_MEASURED) / L.K < 1e-4, 'the renderer\'s unit: 0.9375 / 16 of the panel\'s shorter side, within 0.01 % of what was measured (0.058589)');
+  ok(near(L.K, 0.05859375) && Math.abs(L.K - L.K_MEASURED) / L.K < 1e-4, 'the renderer\'s unit: 0.9375 / 16 of the panel\'s shorter side — what was measured (0.058589 in 2026-10, exactly scale / 16 at 4 scales in run 40055307539)');
   ok(near(1 / (L.K * 0.1), 170.6667, 1e-3), 'height scale 0.1: the viewport is 170.67 units high on every screen wider than tall');
   const scene = { ns: 'tt', scale: { mode: 'height', s: 0.1 }, groups: L.ANCHOR_NAMES.map((a, i) => ({ id: `g${i}`, anchor: a })) };
   scene.groups.push({ id: 'w', anchor: 'top_right', scale: { mode: 'width', s: 0.05 } }, { id: 'u', anchor: 'bottom_middle', scale: { mode: 'gui', px: 1 } });

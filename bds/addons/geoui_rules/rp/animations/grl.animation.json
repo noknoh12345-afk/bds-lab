@@ -16,6 +16,12 @@
         },
         "grl_gui": {
           "scale": "(math.mod(math.floor(v.grl_show / 8), 2) > 0.5) ? 1 : 0"
+        },
+        "grl_bright": {
+          "scale": "(math.mod(math.floor(v.grl_show / 16), 2) > 0.5) ? 1 : 0"
+        },
+        "grl_depth": {
+          "scale": "(math.mod(math.floor(v.grl_show / 32), 2) > 0.5) ? 1 : 0"
         }
       }
     }

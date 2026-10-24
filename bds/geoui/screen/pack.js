@@ -8,7 +8,8 @@
 //   ns, name, description, version [1,0,0], minEngine [1,26,50], uuids {rp,rpMod,bp,bpData,bpScript} | seed,
 //   scale (layout.modeOf), groups [{ id, anchor, scale?, clip?, layer? }],
 //   textures [{ id, width, height, png (bytes or base64) }],
-//   bones [{ name, group, parent?, pivot? [x, y] (local units), material? 'cutout'|'blend'|'add'|'fade'|'addfade' (+ '_s': smooth),
+//   bones [{ name, group, parent?, pivot? [x, y] (local units), material? 'cutout'|'blend'|'add'|'fade'|'addfade'|'glass' or one of
+//            extraMaterials (+ '_s': smooth),
 //            visible? Molang, position? [x, y, z] Molang (model units, added: x right, y UP), scale? Molang|[3], rotation? [3] }],
 //   planes [{ bone, texture, rect {x, y, w, h} (local units, y down), z (toward the camera is negative), uv [u, v, w, h] (texture px) }],
 //   pre [lines] (pre_animation, after the guard), initialize [lines], properties [{ name, range [a, b], default }],
@@ -17,7 +18,10 @@
 //   serverVersion ('@minecraft/server' the script asks for: 2.5.0 by default — playerSwingStart is in WorldAfterEvents from 2.5.0,
 //   Mojang's script metadata (bedrock-samples metadata/script_modules), RULES.md R7.1),
 //   scaleScript (the player's scripts.scale, Molang: the renderer's unit is scale / 16 of its panel — RULES.md R4.1; vanilla 0.9375),
-//   patchPlayer({ rp, bp }) (last changes to the two player definitions: component groups, events …)
+//   patchPlayer({ rp, bp }) (last changes to the two player definitions: component groups, events …),
+//   rcPatch (keys merged into every GeoUI render controller: color, overlay_color … as Molang),
+//   extraMaterials { name: definition } (materials not proved yet, for an experiment's bones only — never one of MATS' names:
+//   a probe tries them, RULES.md says what they did; what holds moves into MATS)
 // }
 (function (root) {
   'use strict';
@@ -52,7 +56,8 @@
     for (const [name, v] of Object.entries(API_MIN)) if (new RegExp(`\\b${name}\\b`).test(String(text || ''))) { uses.push(name); if (vnum(v) > vnum(need)) need = v; }
     return { need, uses };
   }
-  function materialsFile(ns, used) {
+  function materialsFile(ns, used, extra = {}) {
+    const table = Object.assign({}, MATS, extra);
     const m = { materials: { version: '1.0.0' } };
     const base = (filter) => ({
       vertexShader: 'shaders/entity.vertex', vrGeometryShader: 'shaders/entity.geometry', fragmentShader: 'shaders/entity.fragment',
@@ -67,7 +72,7 @@
     m.materials[`${ns}_bases`] = base('Bilinear');
     for (const name of used) {
       const smooth = name.endsWith('_s'), kind = smooth ? name.slice(0, -2) : name;
-      m.materials[`${ns}_${name}:${ns}_${smooth ? 'bases' : 'base'}`] = MATS[kind];
+      m.materials[`${ns}_${name}:${ns}_${smooth ? 'bases' : 'base'}`] = table[kind];
     }
     return m;
   }
@@ -92,13 +97,17 @@
     const ns = clean(scene.ns, 'gs').slice(0, 24), files = {};
     const groups = lay.groupsOf(scene), byGroup = Object.fromEntries(groups.map((g) => [g.id, g]));
     const textures = scene.textures || [], texIds = new Set(textures.map((t) => t.id));
+    // (an experiment's own materials: new names only — a proved one is never redefined by a scene)
+    const extraMats = scene.extraMaterials || {};
+    for (const k of Object.keys(extraMats)) if (MAT_NAMES.includes(k) || !/^[a-z][a-z0-9]{0,15}$/.test(k)) throw new Error(`実験の材質の名前「${k}」は英小文字と数字の新しい名前で（${MAT_NAMES.join(' ')} 以外）`);
+    const matNames = [...MAT_NAMES, ...Object.keys(extraMats)];
     // ---- bones: model positions from the groups' origins; a bone's planes on one atlas, its material its own
     const bones = (scene.bones || []).map((b0) => {
       const b = Object.assign({}, b0), g = byGroup[b.group];
       if (!g) throw new Error(`ボーン ${b.name} のグループ「${b.group}」がありません`);
       b.material = b.material || 'cutout';
       const kind = b.material.endsWith('_s') ? b.material.slice(0, -2) : b.material;
-      if (!MAT_NAMES.includes(kind)) throw new Error(`ボーン ${b.name} のマテリアル「${b.material}」は ${MAT_NAMES.join(' ')}（なめらかなら _s）`);
+      if (!matNames.includes(kind)) throw new Error(`ボーン ${b.name} のマテリアル「${b.material}」は ${matNames.join(' ')}（なめらかなら _s）`);
       const p = b.pivot || [0, 0];
       b.modelPivot = [r4(g.origin[0] + p[0]), r4(g.origin[1] - p[1]), 0];
       return b;
@@ -165,6 +174,8 @@
       const rc = { geometry: `Geometry.${g.key}`, materials: mats, textures: [`Texture.${g.key}`], uv_anim: { offset: [0, 0], scale: [1, 1] },
         color: { r: 1, g: 1, b: 1, a: scene.alpha || 1 }, is_hurt_color: { r: 0, g: 0, b: 0, a: 0 }, on_fire_color: { r: 0, g: 0, b: 0, a: 0 } };
       if (vis.length) rc.part_visibility = [{ '*': true }, ...vis.map((b) => ({ [b.name]: String(b.visible) }))];
+      // (the scene's own changes to every controller: a colour multiplier, an overlay colour … — RULES.md R3.11)
+      if (scene.rcPatch) Object.assign(rc, JSON.parse(JSON.stringify(scene.rcPatch)));
       controllers[`controller.render.${g.key}`] = rc;
       rcList.push({ [`controller.render.${g.key}`]: cond });
       files[`rp/models/entity/${ns}/${clean(g.tex.id, 't')}.geo.json`] = J(g.json);
@@ -188,7 +199,7 @@
     });
     files[`rp/animations/${ns}.animation.json`] = J({ format_version: '1.8.0', animations });
     files[`rp/render_controllers/${ns}.render_controllers.json`] = J({ format_version: '1.8.0', render_controllers: controllers });
-    files[`rp/materials/entity.material`] = J(materialsFile(ns, used));
+    files[`rp/materials/entity.material`] = J(materialsFile(ns, used, extraMats));
     files[`rp/ui/hud_screen.json`] = J(lay.hudScreen(scene, { followHud: scene.followHud !== false }));
     // ---- the player: vanilla + ours
     const ce = JSON.parse(G.VANILLA_RP_PLAYER), d = ce['minecraft:client_entity'].description;
