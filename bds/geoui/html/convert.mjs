@@ -45,6 +45,9 @@ function sampleDocs(cfg, stats) {
   const ns = cfg.ns, pageNo = (id) => cfg.pages.findIndex((p) => p.id === id) + 1, C = (label) => cfg.controls.find((c) => c.label === label);
   const idx = (label) => (C(label) ? C(label).i : -1);
   const music = cfg.controls.find((c) => c.prop === 'music'), sens = cfg.controls.find((c) => c.prop === 'sens');
+  // (the app's decision tests: a button with an event on the first page, a checkbox on the settings page — the focus put on them
+  //  by the pack, as where D and S land depends on the page's layout)
+  const evBtn = cfg.controls.find((c) => c.page === 0 && String(c.action || '').startsWith('event:')), box = cfg.controls.find((c) => c.kind === 'checkbox' && c.page === pageNo('settings') - 1);
   const fha = (n) => `js const v = p('A').getProperty('${ns}:fha'); JSON.stringify([v % 256 - 1, Math.floor(v / 256) % 256 - 1, Math.floor(v / 65536) - 1])`;
   const tests = `# geoui_html_demo（bds/geoui/html/convert.mjs --sample が作る）: HTML のページを GeoUI にした物が、フォームなしで動くか —
 # 開く・視点のポインタ・W A S D の焦点・ジャンプで決定・スニークで戻る・スロット（タブ）・切り替え・ラジオ・スライダー（ホイール）・閉じる。
@@ -170,8 +173,9 @@ shot page-play
 changed 0.2
 measure diff page-play
 
-# (D・S は 150 ms: 押し続けて 8 tick（400 ms）で焦点は繰り返し動き、300 ms では近すぎる。run 40961440806 では決定も数字のキーの
-#  ページも届かず、写真は封じられている: 各段の絵をその前のページ（shot world）と比べた数を公開のまとめに残す — 焦点が動いたか・スロットが替わったか)
+# (D・S は 150 ms: 押し続けて 8 tick（400 ms）で焦点は繰り返し動き、300 ms では近すぎる。各段の絵をその前のページ（shot world）と
+#  比べた数を公開のまとめに残す — 焦点が動いたか・スロットが替わったか。run 40968015119 で D・S は焦点を動かした（上のタブの列 → 真ん中の
+#  ボタン）が、行き先は出来事の無いボタンだった見込み: 決定（SPACE）の確かめは、パックで焦点を出来事のあるボタン・チェックボックスに置いてから)
 section keys
 shot world
 press D 150
@@ -182,6 +186,8 @@ press S 150
 wait 800
 shot keys-focus
 measure diff keys-focus
+do scriptevent ${ns}:focus ${evBtn.id}
+wait 600
 press SPACE 200
 wait 800
 until server GEOUI event 5000
@@ -199,7 +205,7 @@ press 3 200
 until server GEOUI page 5000
 wait 1500
 shot page-settings
-press S 300
+do scriptevent ${ns}:focus ${box.id}
 wait 600
 press SPACE 200
 until server GEOUI change 5000

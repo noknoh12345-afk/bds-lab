@@ -21,8 +21,9 @@ shot page-play
 changed 0.2
 measure diff page-play
 
-# (D・S は 150 ms: 押し続けて 8 tick（400 ms）で焦点は繰り返し動き、300 ms では近すぎる。run 40961440806 では決定も数字のキーの
-#  ページも届かず、写真は封じられている: 各段の絵をその前のページ（shot world）と比べた数を公開のまとめに残す — 焦点が動いたか・スロットが替わったか)
+# (D・S は 150 ms: 押し続けて 8 tick（400 ms）で焦点は繰り返し動き、300 ms では近すぎる。各段の絵をその前のページ（shot world）と
+#  比べた数を公開のまとめに残す — 焦点が動いたか・スロットが替わったか。run 40968015119 で D・S は焦点を動かした（上のタブの列 → 真ん中の
+#  ボタン）が、行き先は出来事の無いボタンだった見込み: 決定（SPACE）の確かめは、パックで焦点を出来事のあるボタン・チェックボックスに置いてから)
 section keys
 shot world
 press D 150
@@ -33,6 +34,8 @@ press S 150
 wait 800
 shot keys-focus
 measure diff keys-focus
+do scriptevent ghd:focus c3
+wait 600
 press SPACE 200
 wait 800
 until server GEOUI event 5000
@@ -50,7 +53,7 @@ press 3 200
 until server GEOUI page 5000
 wait 1500
 shot page-settings
-press S 300
+do scriptevent ghd:focus c19
 wait 600
 press SPACE 200
 until server GEOUI change 5000

@@ -803,8 +803,11 @@ export function appTxt() {
     //  section would be skipped. The set-up's tp after the join again failed with the server's error in runs 40877717430,
     //  40924847860 and 40961440806 (the kick too): the game is stopped before the overlay changes and started after Android has
     //  had 10 s for it — changed under a running game, Android re-creates it, and it may have left the server again right after
-    //  joining. `testfor @a` first: its line failing says nobody is on the server, rather than the tp failing for its own reason)
-    lines.push(`section cutout-${cut}`, 'do scriptevent gdev:kick', 'wait 3000', 'stop', `cutout ${cut}`, 'wait 10000', 'launch', 'until title 180000', 'join', 'until joined 300000', 'wait 5000', 'do testfor @a', ...setup,
+    //  joining. `testfor @a` first: its line failing says nobody is on the server, rather than the tp failing for its own reason —
+    //  and it did fail in run 40968015119: the game joined and was gone 5 s later. The screen at the join against 5 s later says
+    //  in numbers whether the game left the world then (a title or a "disconnected" screen: most of it changes))
+    lines.push(`section cutout-${cut}`, 'do scriptevent gdev:kick', 'wait 3000', 'stop', `cutout ${cut}`, 'wait 10000', 'launch', 'until title 180000', 'join', 'until joined 300000',
+      'shot world', 'wait 5000', `shot rejoin-${cut}`, `measure diff rejoin-${cut}`, 'do testfor @a', ...setup,
       'do hud @a hide hotbar', 'wait 1000', 'shot world', `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-cut-${cut}`, `measure marks anchors-cut-${cut}`, 'do hud @a reset hotbar',
       `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', `shot over-cut-${cut}`, `measure marks over-cut-${cut}`, '');
   }

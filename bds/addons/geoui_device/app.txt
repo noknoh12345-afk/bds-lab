@@ -615,7 +615,10 @@ launch
 until title 180000
 join
 until joined 300000
+shot world
 wait 5000
+shot rejoin-tall
+measure diff rejoin-tall
 do testfor @a
 do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
 do gamemode adventure @a
@@ -656,7 +659,10 @@ launch
 until title 180000
 join
 until joined 300000
+shot world
 wait 5000
+shot rejoin-hole
+measure diff rejoin-hole
 do testfor @a
 do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
 do gamemode adventure @a
