@@ -95,7 +95,7 @@ jobs:
       - name: build the mod (NDK, both ABIs or the chosen one)
         run: |
           NDK=~/ndk/$NDK_VERSION
-          want='${{ inputs.abi || "all" }}'
+          want='${{ inputs.abi || 'all' }}'
           abis="x86_64 arm64-v8a"; [ "$want" != "all" ] && [ -n "$want" ] && abis="$want"
           for abi in $abis; do
             echo "::group::build $abi"
@@ -121,7 +121,7 @@ jobs:
           if [ -z "$SCRIPTEVAL_SO_KEY$APP_CACHE_KEY$GOOGLE_AAS_TOKEN" ]; then
             echo "::error::封緘鍵がありません(SCRIPTEVAL_SO_KEY か APP_CACHE_KEY/GOOGLE_AAS_TOKEN を Secrets に)"; exit 1
           fi
-          want='${{ inputs.abi || "all" }}'
+          want='${{ inputs.abi || 'all' }}'
           abis="x86_64 arm64-v8a"; [ "$want" != "all" ] && [ -n "$want" ] && abis="$want"
           for abi in $abis; do
             node app/redroid/scripteval/seal-so.mjs "$abi" "$SRC/build-$abi/libscripteval.so"
