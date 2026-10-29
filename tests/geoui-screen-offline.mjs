@@ -138,6 +138,9 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
   ok(ent.render_controllers[0]['controller.render.gdev_atlas'] === 'q.is_in_ui && !variable.is_paperdoll', 'GeoUI is drawn in the UI only, never on the paper doll');
   const third = ent.render_controllers.find((r) => Object.keys(r)[0] === 'controller.render.player.third_person');
   ok(/q\.is_local_player && !q\.is_in_ui/.test(Object.values(third)[0]), 'the player\'s own body is hidden from its frozen camera only in the world and only for itself');
+  const firsts = ent.render_controllers.filter((r) => /^controller\.render\.player\.first_person/.test(Object.keys(r)[0])), map = ent.render_controllers.find((r) => Object.keys(r)[0] === 'controller.render.player.map');
+  ok(firsts.length === 2 && firsts.every((r) => /q\.is_local_player && !q\.is_in_ui && \(v\.gdev_hide > 0\)/.test(Object.values(r)[0])) && Object.values(map)[0] === 'variable.map_face_icon',
+    'the first-person controllers hidden the same way (a frozen camera may keep the first-person view and its arm); the map\'s face icon untouched');
   const rc = JSON.parse(f['rp/render_controllers/gdev.render_controllers.json']).render_controllers['controller.render.gdev_atlas'];
   ok(rc.uv_anim && rc.uv_anim.scale[0] === 1 && rc.materials.some((m) => m.gdev_col_half === 'material.gdev_blend'), 'render controller: uv_anim given (the materials define USE_UV_ANIM), a blended bone its own material');
   const mats = JSON.parse(f['rp/materials/entity.material']).materials;
@@ -284,7 +287,7 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
     ok(/do scriptevent gdev:show 0\nwait \d+\nshot world\ndo scriptevent gdev:show 256\nwait \d+\nshot query-before\nmeasure marks query-before\nlook left [\d ]+\nwait \d+\nshot query-after\nmeasure marks query-after/.test(sec('in-query')),
       'device app.txt: the query bars measured against a world without them, before and after the turn', sec('in-query'));
     const cuts = ['tall', 'hole'].map((c) => sec(`cutout-${c}`));
-    ok(cuts.every((s, i) => new RegExp(`^section cutout-${['tall', 'hole'][i]}\\ncutout ${['tall', 'hole'][i]}\\nwait \\d+\\nstop\\nlaunch\\nuntil title \\d+\\njoin\\nuntil joined \\d+\\nwait \\d+\\ndo tp @a 0 -60 0 0 90`).test(s) && /\nshot world\n[^]*measure marks anchors-cut-/.test(s)) && /^section over\n[^]*measure marks over$/m.test(sec('over')) && at.indexOf('section over') < at.indexOf('section cutout-'),
+    ok(cuts.every((s, i) => new RegExp(`^section cutout-${['tall', 'hole'][i]}\\ndo kick @a\\nwait \\d+\\ncutout ${['tall', 'hole'][i]}\\nwait \\d+\\nstop\\nlaunch\\nuntil title \\d+\\njoin\\nuntil joined \\d+\\nwait \\d+\\ndo tp @a 0 -60 0 0 90`).test(s) && /\nshot world\n[^]*measure marks anchors-cut-/.test(s)) && /^section over\n[^]*measure marks over$/m.test(sec('over')) && at.indexOf('section over') < at.indexOf('section cutout-'),
       'device app.txt: the edge with no cut-out first, then each cut-out with the game stopped, started and joined again before its marks', cuts.join('\n'));
     // (the game stopped and started right before its first join — in a batch this section is where the add-on starts: the
     //  first joins of a device come back from its snapshot failed three runs in a row on 2026-10-24, the joins after a restart went in)

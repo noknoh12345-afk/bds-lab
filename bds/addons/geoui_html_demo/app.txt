@@ -32,20 +32,24 @@ wait 800
 until server GEOUI event 5000
 
 section tabs
-key 2
+press 2 200
+until server GEOUI page 5000
 wait 1500
 shot page-items
-key 3
+press 3 200
+until server GEOUI page 5000
 wait 1500
 shot page-settings
 press S 300
 wait 600
 press SPACE 200
+until server GEOUI change 5000
 wait 1000
 shot settings-toggle
 
 section pointer
-key 1
+press 1 200
+until server GEOUI page 5000
 wait 1200
 look left 400 50
 wait 800

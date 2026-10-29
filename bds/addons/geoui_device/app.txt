@@ -520,6 +520,8 @@ shot over
 measure marks over
 
 section cutout-tall
+do kick @a
+wait 3000
 cutout tall
 wait 3000
 stop
@@ -555,6 +557,8 @@ shot over-cut-tall
 measure marks over-cut-tall
 
 section cutout-hole
+do kick @a
+wait 3000
 cutout hole
 wait 3000
 stop

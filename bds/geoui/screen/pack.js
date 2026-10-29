@@ -216,9 +216,10 @@
     d.render_controllers = [...rcList, ...d.render_controllers.map((rc) => {
       if (!scene.hideLocalPlayer) return rc;
       // (the player's own body hidden from its own frozen camera: in the world only, for the local player only — the inventory's
-      //  doll and everyone else still see it)
+      //  doll and everyone else still see it. The first-person controllers too: the frozen camera may keep the first-person view,
+      //  whose arm hides GeoUI by depth — RULES R4.11; run 40924847860 still saw blue below a camera frozen looking down)
       const [k, v] = Object.entries(rc)[0];
-      return /third_person/.test(k) ? { [k]: `(${v}) && !(q.is_local_player && !q.is_in_ui && (${scene.hideLocalPlayer}))` } : rc;
+      return /^controller\.render\.player\.(first|third)_person/.test(k) ? { [k]: `(${v}) && !(q.is_local_player && !q.is_in_ui && (${scene.hideLocalPlayer}))` } : rc;
     })];
     const be = JSON.parse(G.VANILLA_BP_PLAYER);
     if (typeof scene.patchPlayer === 'function') scene.patchPlayer({ rp: ce, bp: be });

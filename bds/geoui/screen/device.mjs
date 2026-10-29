@@ -776,7 +776,9 @@ export function appTxt() {
   // the first time), the same set-up, then the marks. Two shapes: a tall notch and a punch hole (the corner and double ones
   // the same way, if these show the game's safe area follows the cut-out)
   for (const cut of ['tall', 'hole']) {
-    lines.push(`section cutout-${cut}`, `cutout ${cut}`, 'wait 3000', 'stop', 'launch', 'until title 180000', 'join', 'until joined 300000', 'wait 5000', ...setup,
+    // (the player sent off the server first: after a game killed in the world the server still held its old session when the
+    //  game joined again, and the set-up's tp failed with the server's error in runs 40877717430 and 40924847860)
+    lines.push(`section cutout-${cut}`, 'do kick @a', 'wait 3000', `cutout ${cut}`, 'wait 3000', 'stop', 'launch', 'until title 180000', 'join', 'until joined 300000', 'wait 5000', ...setup,
       'shot world', `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-cut-${cut}`, `measure marks anchors-cut-${cut}`,
       `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', `shot over-cut-${cut}`, `measure marks over-cut-${cut}`, '');
   }
