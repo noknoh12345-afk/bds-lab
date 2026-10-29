@@ -170,8 +170,10 @@ export function scene() {
   {
     const g = group('qry', 'left_middle');
     const root = bone('gdev_qry', g, { scale: showIf(BITS.query) });
-    const Q = ['q.head_y_rotation(0)', 'q.head_x_rotation(0)', 'q.body_y_rotation', 'q.body_x_rotation', 'q.target_y_rotation', 'q.target_x_rotation',
-      'q.camera_rotation(1)', 'q.camera_rotation(0)', 'q.eye_target_y_rotation', 'q.eye_target_x_rotation', 'q.is_local_player * 300', 'q.cardinal_player_facing * 60'];
+    // (the two run 40877717430 could not read — their azure and blue bars took in the first-person arm's blue — first, on red and
+    //  orange; the ones it read as 0 on azure, blue, violet and rose)
+    const Q = ['q.camera_rotation(0)', 'q.eye_target_y_rotation', 'q.camera_rotation(1)', 'q.eye_target_x_rotation', 'q.head_y_rotation(0)', 'q.head_x_rotation(0)',
+      'q.is_local_player * 300', 'q.body_y_rotation', 'q.body_x_rotation', 'q.target_y_rotation', 'q.target_x_rotation', 'q.cardinal_player_facing * 60'];
     Q.forEach((q, k) => {
       const y = QUERY_Y0 + QUERY_DY * k, col = k < 11 ? HUES[k][0] : 'white';
       const b = bone(`gdev_qry_${k}`, g, { parent: root, pivot: [QUERY_X, y] });
@@ -205,7 +207,7 @@ export function scene() {
     // (the player's own body, hidden from its frozen camera while the UI is open: read here, where the paper doll is guarded)
     `v.gdev_hide = variable.is_paperdoll ? 0 : (q.property('gdev:ui') > 0 ? 1 : 0);`,
   ];
-  const properties = [{ name: 'show', range: [0, 8191], default: 0 }, { name: 'ui', range: [0, 1], default: 0 }, { name: 'mv', range: [0, 65535], default: 32639 },
+  const properties = [{ name: 'show', range: [0, 8191], default: 0 }, { name: 'ui', range: [0, 2], default: 0 }, { name: 'mv', range: [0, 65535], default: 32639 },
     { name: 'btn', range: [0, 255], default: 0 }, { name: 'slot', range: [0, 8], default: 0 }, { name: 'cur', range: [0, 16777215], default: 8390656 },
     { name: 'rot', range: [0, 16777215], default: 0 }, { name: 'ref', range: [0, 16777215], default: 0 }];
   // the JSON UI: GeoUI Studio's own renderer (the reference) and labels bound to the HUD's title and subtitle
@@ -240,7 +242,7 @@ function atlasPng(labels) {
 
 // ---- the behaviour pack's script: the properties the pack reads, the UI mode, and every input logged (GDEV …) and checked
 const SCRIPT = `// GeoUI device check (bds-lab: bds/geoui/screen/device.mjs makes this file — change that, not this).
-// /scriptevent gdev:show <bits> · gdev:ui on [lock|speed|free] | off · gdev:mark · gdev:check <what> <label> · gdev:perm <jump|sneak|move|camera> on|off
+// /scriptevent gdev:show <bits> · gdev:ui on [lock|speed|free] | off · gdev:cam 1|0 (the camera frozen alone) · gdev:mark · gdev:check <what> <label> · gdev:perm <jump|sneak|move|camera> on|off
 // gdev:title <text> [subtitle] · gdev:sens <units a degree> · /gdev:t <text> (text typed in the chat as a command)
 // What the input monitor shows and what each check means: bds/addons/geoui_device/TASK.md
 import { world, system, Player, InputButton, ButtonState, InputPermissionCategory, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus } from '@minecraft/server';
@@ -318,6 +320,14 @@ function check(p, what, label) {
 
 system.runInterval(() => {
   for (const p of world.getAllPlayers()) {
+    // (a player leaving, or one not whole yet after a join, never stops the loop with an error every tick: the device check's
+    //  tp right after the game joined again failed with the server's error twice in run 40877717430)
+    if (!p.isValid) continue;
+    try { tickOf(p); } catch (e) { const s = st(p); if (!s.tickErr) { s.tickErr = true; log('tick ' + e); } }
+  }
+}, 1);
+function tickOf(p) {
+  {
     const s = st(p), z = s.seen, ii = p.inputInfo;
     s.tick++;
     const v = ii.getMovementVector(), jump = ii.getButtonState(InputButton.Jump) === ButtonState.Pressed, sneak = ii.getButtonState(InputButton.Sneak) === ButtonState.Pressed;
@@ -347,7 +357,7 @@ system.runInterval(() => {
     setp(p, 'slot', p.selectedSlotIndex);
     setp(p, 'rot', packRot(rot));
   }
-}, 1);
+}
 
 world.afterEvents.playerButtonInput.subscribe((e) => {
   const s = st(e.player);
@@ -368,6 +378,13 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
     if (verb === 'show') { setp(p, 'show', Math.max(0, Math.min(8191, Number(rest[0]) | 0))); log('show ' + rest[0]); }
     else if (verb === 'ui') { if (rest[0] === 'off') uiOff(p); else uiOn(p, rest[1] || 'lock'); }
     else if (verb === 'mark') { s.seen = fresh(); log('mark'); }
+    else if (verb === 'cam') {
+      // (the camera frozen where the head is and the body hidden, as the UI freezes it but with nothing of the UI: the marks then
+      //  have no first-person arm in front of them — it hides GeoUI by depth at the screen's bottom right, RULES R4.11)
+      if (rest[0] === '1') { try { p.camera.setCamera('minecraft:free', { location: p.getHeadLocation(), rotation: p.getRotation() }); } catch (e) { log('camera ' + e); } if (!s.ui) setp(p, 'ui', 2); }
+      else if (!s.ui) { try { p.camera.clear(); } catch (e) { log('camera ' + e); } setp(p, 'ui', 0); }
+      log('cam ' + (rest[0] === '1' ? 1 : 0));
+    }
     else if (verb === 'check') check(p, rest[0], rest[1] || rest[0]);
     else if (verb === 'perm') {
       const cat = { jump: InputPermissionCategory.Jump, sneak: InputPermissionCategory.Sneak, move: InputPermissionCategory.Movement, camera: InputPermissionCategory.Camera }[rest[0]];
@@ -414,8 +431,8 @@ export function expected(W, H, uiScale = 2) {
 
 // ---- a run's measures against the formulas: `node bds/geoui/screen/device.mjs compare <summary.json | run folder>`
 const ANCHOR_HUE = { tl: 'red', t: 'orange', tr: 'yellow', l: 'chartreuse', c: 'green', r: 'spring', bl: 'cyan', b: 'azure', br: 'blue' };
-const QUERY_NAMES = ['head_y_rotation(0)', 'head_x_rotation(0)', 'body_y_rotation', 'body_x_rotation', 'target_y_rotation', 'target_x_rotation',
-  'camera_rotation(1)', 'camera_rotation(0)', 'eye_target_y_rotation', 'eye_target_x_rotation', 'is_local_player x 300'];
+const QUERY_NAMES = ['camera_rotation(0)', 'eye_target_y_rotation', 'camera_rotation(1)', 'eye_target_x_rotation', 'head_y_rotation(0)', 'head_x_rotation(0)',
+  'is_local_player x 300', 'body_y_rotation', 'body_x_rotation', 'target_y_rotation', 'target_x_rotation'];
 const COLOR_RGB = { white: [255, 255, 255], gray: [128, 128, 128], red: [255, 0, 0], green: [0, 255, 0], blue: [0, 0, 255], black: [0, 0, 0] };
 const boxD = (g, w) => Math.max(...['x0', 'y0', 'x1', 'y1'].map((k) => Math.abs(g[k] - w[k])));
 const mid = (b) => ({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 });
@@ -487,10 +504,15 @@ export function compare(measures, opts = {}) {
       //  on top shows — the whole blue one if depth decides, else only its part out of the red one, from the red one's right edge)
       const b = add('手前の青（z −0.5・先に書いた）', 'blue', e['order blue'], '', false);
       add('奥の赤（z 0・後に書いた）', 'red', e['order red']);
-      if (b) {
-        const depth = Math.abs(b.x0 - e['order blue'].x0) <= 3, order = Math.abs(b.x0 - e['order red'].x1) <= 3;
-        say('描く順と奥行き', depth ? '奥行きが効く: 手前（z が小さい）の青が上' : order ? '描いた順: 後に書いた赤が上（奥行きは効かない）' : '分からない（青の左端が式のどちらでもない: 写真で確かめる）');
-      }
+      const depth = b && Math.abs(b.x0 - e['order blue'].x0) <= 3, order = b && Math.abs(b.x0 - e['order red'].x1) <= 3;
+      // (else by the red one's pixels: the blue one's box can take in other blue — run 40877717430's took in the first-person
+      //  arm's — but the red plane short of the overlap is the blue one on top, and whole the red one)
+      const er = e['order red'], eb = e['order blue'], area = (er.x1 - er.x0) * (er.y1 - er.y0);
+      const over = Math.max(0, Math.min(er.x1, eb.x1) - Math.max(er.x0, eb.x0)) * Math.max(0, Math.min(er.y1, eb.y1) - Math.max(er.y0, eb.y0)), n = v.redn;
+      const byRed = !Number.isFinite(n) || !over ? null : Math.abs(n - (area - over)) <= 0.2 * over ? 'depth' : Math.abs(n - area) <= 0.2 * over ? 'order' : null;
+      if (b || byRed) say('描く順と奥行き', depth ? '奥行きが効く: 手前（z が小さい）の青が上' : order ? '描いた順: 後に書いた赤が上（奥行きは効かない）'
+        : byRed === 'depth' ? `奥行きが効く: 赤の画素 ${n} = 赤の板 ${Math.round(area)} − 重なり ${Math.round(over)}（手前の青が重なりを覆う。青の箱は他の青と混ざった）`
+          : byRed === 'order' ? `描いた順: 赤の画素 ${n} = 赤の板 ${Math.round(area)}（重なりも赤。青の箱は他の青と混ざった）` : '分からない（青の左端が式のどちらでもない: 写真で確かめる）');
     }
     if (/^rc/.test(shot)) {
       // (a bar per anchor, 2 + 2 x (pre_animation's count mod 12) units: all alike when it runs once a frame for every renderer)
@@ -557,6 +579,16 @@ js p('A').getProperty('gdev:show')
 = 4095
 scriptevent gdev:show 0
 wait 300
+
+## カメラだけ止める（gdev:cam: 体を隠す。UI のモードではない）
+scriptevent gdev:cam 1
+wait 300
+js p('A').getProperty('gdev:ui')
+= 2
+scriptevent gdev:cam 0
+wait 300
+js p('A').getProperty('gdev:ui')
+= 0
 
 ## UI のモード（動きを禁止）: カメラを止め、歩いても動かず、視点でポインタが動く
 scriptevent gdev:ui on lock
@@ -650,10 +682,12 @@ js JSON.stringify([p('A').getProperty('gdev:ui'), p('A').inputPermissions.isPerm
 /** the real app (Android): the shapes, the safe area and the inputs. Measures: `measure marks` (each hue's box on the screen) */
 export function appTxt() {
   // (in the world: looking straight down (behind the marks only the still ground); adventure: a tap or a click on the ground breaks
-  //  nothing; the HUD's parts hidden one by one, the hotbar kept — the GUI frame is drawn over it)
+  //  nothing; the HUD's parts hidden one by one, the hotbar kept — the GUI frame is drawn over it; the camera frozen where the head
+  //  is (gdev:cam 1, the body hidden): in first person the arm hides GeoUI by depth at the bottom right and its blue joins the
+  //  marks' blue (RULES R4.11 — run 40877717430 lost the right middle on 4:3 to 16:9 and the bottom right everywhere))
   const setup = ['do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）', 'do gamemode adventure @a',
     ...['crosshair', 'health', 'hunger', 'armor', 'progress_bar', 'air_bubbles', 'status_effects', 'item_text', 'tooltips', 'paperdoll', 'touch_controls'].map((h) => `do hud @a hide ${h}`),
-    'do scriptevent gdev:show 0', 'wait 7000'];
+    'do scriptevent gdev:show 0', 'do scriptevent gdev:cam 1', 'wait 7000'];
   const lines = [`# GeoUI の端末の確かめ（bds/geoui/screen/device.mjs が作る）: node lab.mjs app ci -a geoui_device（許可をもらってから）`,
     `# 各画面の大きさで、GeoUI を出す前（shot world）と後を比べ、色ごとの枠を測る（measure marks: 11 色・白・灰の箱 px）。期待の位置は`,
     `# node bds/geoui/screen/device.mjs expect <幅>x<高さ>。入力は gdev:check の PASS / FAIL がサーバーのログに出る（expect server）。`,
@@ -680,7 +714,7 @@ export function appTxt() {
   //  rc bars too without their anchors' squares, so each box is its bar)
   lines.push('section look', 'size reset', 'wait 6000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world');
   for (const [name, bits] of [['colors', BITS.colors], ['glyph', BITS.glyph], ['order', BITS.order], ['rc', BITS.rc]]) lines.push(`do scriptevent gdev:show ${bits}`, 'wait 2000', `shot ${name}`, `measure marks ${name}`);
-  lines.push('');
+  lines.push('do scriptevent gdev:cam 0', 'wait 1500', '');
   lines.push('section text', 'do scriptevent gdev:show 4096', 'do scriptevent gdev:title QZX7JK2W SUBLINE', 'wait 2500', 'shot text',
     'expect text QZX7JK2W', 'expect text ^QZX$', 'expect text ^7JK2W$', 'expect text SUBLINE', 'do scriptevent gdev:title', '');
   // the inputs: first without the lock (does each input arrive at all), then locked, then the camera frozen
@@ -704,13 +738,21 @@ export function appTxt() {
   sec('in-sneak-key', 'press SHIFT_LEFT 400', 'wait 400', ...chk('sneak', 'key-sneak'));
   sec('in-sneak-denied', 'do scriptevent gdev:perm sneak off', 'wait 300', 'press SHIFT_LEFT 400', 'wait 400', ...chk('sneak', 'denied-sneak'), 'do scriptevent gdev:perm sneak on');
   sec('in-wheel', 'mouse scroll 0.5 0.5 1', 'wait 600', ...chk('wheel', 'mouse-wheel'));
-  sec('in-slot-key', 'key 5', 'wait 600', ...chk('slot', 'key-slot'));
+  // (the keyboard's 5 as the device's own keyboard presses it — sendevent, as W A S D and SPACE that arrived: Android's `input
+  //  keyevent` (the virtual keys) did not select a slot in run 40877717430)
+  sec('in-slot-key', 'press 5 200', 'wait 600', ...chk('slot', 'key-slot'));
   sec('in-slot-pad', 'slot next', 'wait 600', ...chk('wheel', 'pad-wheel'));
   sec('in-swing-pad', 'attack 0.3', 'wait 500', ...chk('swing', 'pad-swing'));
   sec('in-swing-mouse', 'mouse tap 0.5 0.5', 'wait 500', ...chk('swing', 'mouse-swing'));
   sec('in-swing-touch', 'tap 0.6 0.4', 'wait 500', ...chk('swing', 'touch-swing'));
-  sec('in-use-pad', 'use 0.3', 'wait 500', ...chk('use', 'pad-use'));
-  sec('in-text', 'chat /gdev:t hello', 'wait 800', ...chk('text', 'chat-text'));
+  // (a touch held: the touch controls' attack is a long press — a tap did not swing in run 40877717430)
+  sec('in-swing-hold', 'hold 0.6 0.4 800', 'wait 500', ...chk('swing', 'touch-hold-swing'));
+  // (something to use in the hand: an empty hand gives no itemUse — run 40877717430)
+  sec('in-use-pad', 'do replaceitem entity @a slot.weapon.mainhand 0 snowball 16', 'wait 500', 'use 0.3', 'wait 500', ...chk('use', 'pad-use'), 'do replaceitem entity @a slot.weapon.mainhand 0 air');
+  // (the chat by the device's keyboard: T opens it, the text key by key, ENTER sends — Android's virtual T opened nothing in run
+  //  40877717430)
+  sec('in-text', 'press T 150', 'wait 1500', ...'/GDEV'.split('').map((c) => `press ${c === '/' ? 'SLASH' : c} 80`), 'press SHIFT+SEMICOLON 80', 'press T 80', 'press SPACE 80',
+    ...'HELLO'.split('').map((c) => `press ${c} 80`), 'wait 300', 'press ENTER 150', 'wait 800', ...chk('text', 'chat-text'));
   sec('in-mode', 'tap 0.6 0.4', 'wait 300', 'press W 200', 'wait 300', 'pad A', 'wait 500', ...chk('mode', 'input-modes'));
   lines.push('section ui-free', 'do scriptevent gdev:ui off', 'wait 500', 'do scriptevent gdev:ui on free', 'wait 2000', '');
   sec('in-key-free-ui', 'press W 700', 'wait 400', ...chk('move', 'free-key-w'), ...chk('home', 'free-snapped'));
@@ -721,7 +763,7 @@ export function appTxt() {
   // (the density and the cut-outs last: the run of 2026-10-23 (39989463030) came back from them in portrait — every shot after
   //  them 720 x 1560 with nothing drawn, every input check after them lost)
   lines.push('section ui-off', 'do scriptevent gdev:ui off', 'do scriptevent gdev:show 0', 'wait 1000', '');
-  lines.push('section density', 'size reset', 'wait 6000');
+  lines.push('section density', 'size reset', 'do scriptevent gdev:cam 1', 'wait 6000');
   for (const dpi of [240, 480]) {
     lines.push(`density ${dpi}`, 'wait 9000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world', `do scriptevent gdev:show ${BITS.anchors | BITS.gui}`, 'wait 2000', `shot gui-dpi${dpi}`, `measure marks gui-dpi${dpi}`);
   }
@@ -734,11 +776,11 @@ export function appTxt() {
   // the first time), the same set-up, then the marks. Two shapes: a tall notch and a punch hole (the corner and double ones
   // the same way, if these show the game's safe area follows the cut-out)
   for (const cut of ['tall', 'hole']) {
-    lines.push(`section cutout-${cut}`, `cutout ${cut}`, 'wait 3000', 'stop', 'launch', 'until title 180000', 'join', 'until joined 300000', ...setup,
+    lines.push(`section cutout-${cut}`, `cutout ${cut}`, 'wait 3000', 'stop', 'launch', 'until title 180000', 'join', 'until joined 300000', 'wait 5000', ...setup,
       'shot world', `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-cut-${cut}`, `measure marks anchors-cut-${cut}`,
       `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', `shot over-cut-${cut}`, `measure marks over-cut-${cut}`, '');
   }
-  lines.push('section end', 'do scriptevent gdev:ui off', 'do scriptevent gdev:show 0', 'do hud @a reset', 'wait 1000', 'shot end', '');
+  lines.push('section end', 'do scriptevent gdev:ui off', 'do scriptevent gdev:cam 0', 'do scriptevent gdev:show 0', 'do hud @a reset', 'wait 1000', 'shot end', '');
   return lines.join('\n');
 }
 
@@ -775,6 +817,7 @@ osu! を作る前に GeoUI の仕様を全部確かめる（bds/geoui/SPEC.md）
 ## Acceptance (one tests.txt \`## \` section each)
 - [ ] 読み込める（プロパティが既定値）
 - [ ] 表示の切り替え（gdev:show のビット）
+- [ ] カメラだけ止める（gdev:cam: 体を隠す。UI のモードではない）
 - [ ] UI のモード（動きを禁止）: カメラを止め、歩いても動かず、視点でポインタが動く
 - [ ] 下を向き続けると水平に戻し、ポインタは跳ばない
 - [ ] UI のモード（動けるまま毎 tick 戻す）: 移動の入力は届き、体は戻る

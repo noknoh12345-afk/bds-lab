@@ -11,6 +11,7 @@
 //            made-up screenshot to the px
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
@@ -238,7 +239,7 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
     const W = 1560, H = 720, e = D.expected(W, H), u = L.K * 0.1 * H;
     const vals = (boxes) => {
       const v = { width: W, height: H, classes: Object.keys(boxes).length };
-      for (const [c, b] of Object.entries(boxes)) Object.assign(v, { [`${c}x0`]: Math.round(b.x0), [`${c}y0`]: Math.round(b.y0), [`${c}x1`]: Math.round(b.x1), [`${c}y1`]: Math.round(b.y1), [`${c}n`]: 100, [`${c}r`]: b.rgb?.[0] ?? 0, [`${c}g`]: b.rgb?.[1] ?? 0, [`${c}b`]: b.rgb?.[2] ?? 0 });
+      for (const [c, b] of Object.entries(boxes)) Object.assign(v, { [`${c}x0`]: Math.round(b.x0), [`${c}y0`]: Math.round(b.y0), [`${c}x1`]: Math.round(b.x1), [`${c}y1`]: Math.round(b.y1), [`${c}n`]: b.n ?? 100, [`${c}r`]: b.rgb?.[0] ?? 0, [`${c}g`]: b.rgb?.[1] ?? 0, [`${c}b`]: b.rgb?.[2] ?? 0 });
       return v;
     };
     const run = (...shots) => D.compare(shots.map(([shot, boxes]) => ({ kind: 'marks', shot, ok: true, values: vals(boxes) }))).rows;
@@ -250,6 +251,11 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
     // order: the whole blue plane on top is depth; only its part out of the red one is the drawing order
     const order = (x0) => said(run(['order', { blue: { ...e['order blue'], x0 }, red: e['order red'] }]), '描く順と奥行き');
     ok(/奥行きが効く/.test(order(e['order blue'].x0)) && /描いた順/.test(order(e['order red'].x1)), 'compare: the order test — the blue plane whole is depth, cut at the red one\'s edge is the drawing order', [order(e['order blue'].x0), order(e['order red'].x1)].join(' / '));
+    // order: by the red plane's pixels when the blue one's box took in other blue (run 40877717430: the arm's)
+    const er = e['order red'], eb = e['order blue'], area = (er.x1 - er.x0) * (er.y1 - er.y0), over = (Math.min(er.x1, eb.x1) - Math.max(er.x0, eb.x0)) * (Math.min(er.y1, eb.y1) - Math.max(er.y0, eb.y0));
+    const byRed = (n) => said(run(['order', { blue: { x0: 500, y0: 300, x1: 1300, y1: 700 }, red: { ...er, n } }]), '描く順と奥行き');
+    ok(/^奥行きが効く: 赤の画素/.test(byRed(Math.round(area - over))) && /^描いた順: 赤の画素/.test(byRed(Math.round(area))) && /^分からない/.test(byRed(Math.round(area / 2))),
+      'compare: the order test read by the red plane\'s pixels — short of the overlap is depth, whole is the drawing order', [byRed(Math.round(area - over)), byRed(Math.round(area))].join(' / '));
     // glyph: as drawn, and mirrored across the screen's middle
     const flip = (b) => ({ ...b, x0: W - b.x1, x1: W - b.x0 });
     const glyph = (f) => said(run(['glyph', { white: f(e['glyph F']), red: f(e['glyph red']), blue: f(e['glyph blue']) }]), 'F の向き');
@@ -259,7 +265,8 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
     ok(/1 フレームに 1 回/.test(rc([6, 6, 6, 6, 6, 6, 6, 22, 2])) && /renderer ごとに動いている/.test(rc([2, 4, 6, 8, 10, 12, 14, 16, 18])), 'compare: the rc bars — one length is once a frame (the bottom\'s azure and blue left out), many lengths per renderer', [rc([6, 6, 6, 6, 6, 6, 6, 22, 2]), rc([2, 4, 6, 8, 10, 12, 14, 16, 18])].join(' / '));
     // query: each bar's length is its value; before and after a turn, the change (the short way round)
     const qb = (degs) => Object.fromEntries(degs.map((d, k) => [D.HUES[k][0], { ...e[`query ${k}`], x1: e[`query ${k}`].x0 + (4 + (56 * d) / 360) * u }]));
-    const qr = run(['query-before', qb([350, 0, 90, 0, 350, 0, 350, 0, 350, 0, 300])], ['query-after', qb([20, 0, 90, 0, 20, 0, 20, 0, 350, 0, 300])]);
+    // (by bar: camera(0), eye target y, camera(1), eye target x, head y, head x, is_local_player, body y, body x, target y, target x)
+    const qr = run(['query-before', qb([350, 350, 0, 0, 350, 0, 300, 90, 0, 350, 0])], ['query-after', qb([20, 350, 0, 0, 20, 0, 300, 90, 0, 20, 0])]);
     // (a px of bar is 360 / 56 / u ≈ 1.5° at 720 px high: the change read to a few degrees)
     const turn = Number((/^([+-]\d+)°/.exec(said(qr, 'q.head_y_rotation(0) の変化')) || [])[1]);
     ok(Math.abs(turn - 30) <= 3 && /^動かない/.test(said(qr, 'q.body_y_rotation の変化')) && /^動かない/.test(said(qr, 'q.eye_target_y_rotation の変化')) && / = 300°/.test(said(qr.filter((x) => x.shot === 'query-after'), 'q.is_local_player x 300')),
@@ -277,12 +284,25 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
     ok(/do scriptevent gdev:show 0\nwait \d+\nshot world\ndo scriptevent gdev:show 256\nwait \d+\nshot query-before\nmeasure marks query-before\nlook left [\d ]+\nwait \d+\nshot query-after\nmeasure marks query-after/.test(sec('in-query')),
       'device app.txt: the query bars measured against a world without them, before and after the turn', sec('in-query'));
     const cuts = ['tall', 'hole'].map((c) => sec(`cutout-${c}`));
-    ok(cuts.every((s, i) => new RegExp(`^section cutout-${['tall', 'hole'][i]}\\ncutout ${['tall', 'hole'][i]}\\nwait \\d+\\nstop\\nlaunch\\nuntil title \\d+\\njoin\\nuntil joined \\d+\\ndo tp @a 0 -60 0 0 90`).test(s) && /\nshot world\n[^]*measure marks anchors-cut-/.test(s)) && /^section over\n[^]*measure marks over$/m.test(sec('over')) && at.indexOf('section over') < at.indexOf('section cutout-'),
+    ok(cuts.every((s, i) => new RegExp(`^section cutout-${['tall', 'hole'][i]}\\ncutout ${['tall', 'hole'][i]}\\nwait \\d+\\nstop\\nlaunch\\nuntil title \\d+\\njoin\\nuntil joined \\d+\\nwait \\d+\\ndo tp @a 0 -60 0 0 90`).test(s) && /\nshot world\n[^]*measure marks anchors-cut-/.test(s)) && /^section over\n[^]*measure marks over$/m.test(sec('over')) && at.indexOf('section over') < at.indexOf('section cutout-'),
       'device app.txt: the edge with no cut-out first, then each cut-out with the game stopped, started and joined again before its marks', cuts.join('\n'));
     // (the game stopped and started right before its first join — in a batch this section is where the add-on starts: the
     //  first joins of a device come back from its snapshot failed three runs in a row on 2026-10-24, the joins after a restart went in)
     ok(/^section join\nstop\nlaunch\nuntil title \d+\nshot title\njoin\nuntil joined \d+\n/.test(sec('join')) && !/^section title$/m.test(at),
       'device app.txt: its first join from a game just started again (stop, launch, the title), no section before it', sec('join').slice(0, 200));
+    // (the marks with the camera frozen — no first-person arm in front of them, RULES R4.11 — from the set-up to the end of the
+    //  looks, and again for the density and the edge; the inputs in first person between)
+    const camOn = (t) => /do scriptevent gdev:cam 1\n/.test(t), camOffAt = (t) => t.indexOf('do scriptevent gdev:cam 0');
+    ok(camOn(sec('join')) && sec('join').indexOf('gdev:cam 1') > sec('join').indexOf('do tp @a') && camOffAt(sec('look')) > sec('look').indexOf('measure marks rc') && camOn(sec('density'))
+      && ['in-key-free', 'in-query', 'in-text'].every((n) => !/gdev:cam/.test(sec(n))) && cuts.every((t) => camOn(t) && t.indexOf('gdev:cam 1') < t.indexOf('measure marks anchors-cut-')) && /gdev:cam 0/.test(sec('end')),
+      'device app.txt: the marks shot with the camera frozen where the head is (the set-up, the density, the cut-outs), given back before the inputs and at the end', [sec('join'), sec('look')].join('\n').slice(-600));
+    ok(/^press 5 \d+$/m.test(sec('in-slot-key')) && !/^key /m.test(sec('in-slot-key')) && /^press T \d+$/m.test(sec('in-text')) && /^press SHIFT\+SEMICOLON \d+$/m.test(sec('in-text')) && /^press ENTER \d+$/m.test(sec('in-text')) && !/^chat /m.test(sec('in-text'))
+      && sec('in-text').split('\n').filter((l) => /^press /.test(l)).map((l) => l.split(' ')[1]).join(' ') === 'T SLASH G D E V SHIFT+SEMICOLON T SPACE H E L L O ENTER'
+      && /replaceitem entity @a slot\.weapon\.mainhand 0 snowball \d+\n[^]*\nuse 0\.3\n/.test(sec('in-use-pad')) && /^hold 0\.6 0\.4 \d+$/m.test(sec('in-swing-hold')),
+      'device app.txt: the digit and the chat by the device\'s own keyboard (/gdev:t hello key by key), a snowball to use, a touch held for the attack', sec('in-text'));
+    const script = D.files().files['bp/scripts/main.js'].toString();
+    ok(/for \(const p of world\.getAllPlayers\(\)\) \{\n\s+[^\n]*\n[^\n]*\n\s+if \(!p\.isValid\) continue;\n\s+try \{ tickOf\(p\); \} catch \(e\)/.test(script) && /verb === 'cam'/.test(script) && /\{ name: 'ui', range: \[0, 2\]/.test(fs.readFileSync(path.join(TOP, 'bds/geoui/screen/device.mjs'), 'utf8')),
+      'device script: the tick loop skips a player not valid and never throws (a leaving player once stopped it every tick); gdev:cam freezes the camera alone (ui 2: the body hidden)');
     const plate = D.scene().planes.find((p) => p.bone === 'gdev_clip' && p.rect.w === 400);
     ok(plate && plate.uv[0] === D.HUES.findIndex(([nm]) => nm === 'rose') + 0.25, 'device: the clip square is rose (a hue no floor has; grey was not found at all on the CI device)', JSON.stringify(plate && plate.uv));
   }

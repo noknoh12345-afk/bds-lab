@@ -16,6 +16,16 @@ js p('A').getProperty('gdev:show')
 scriptevent gdev:show 0
 wait 300
 
+## カメラだけ止める（gdev:cam: 体を隠す。UI のモードではない）
+scriptevent gdev:cam 1
+wait 300
+js p('A').getProperty('gdev:ui')
+= 2
+scriptevent gdev:cam 0
+wait 300
+js p('A').getProperty('gdev:ui')
+= 0
+
 ## UI のモード（動きを禁止）: カメラを止め、歩いても動かず、視点でポインタが動く
 scriptevent gdev:ui on lock
 wait 500

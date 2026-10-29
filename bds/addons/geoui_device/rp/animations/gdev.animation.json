@@ -283,7 +283,7 @@
       "bones": {
         "gdev_qry_0": {
           "scale": [
-            "4 + 56 * math.mod((q.head_y_rotation(0)) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.camera_rotation(0)) + 3600, 360) / 360",
             1,
             1
           ]
@@ -296,7 +296,7 @@
       "bones": {
         "gdev_qry_1": {
           "scale": [
-            "4 + 56 * math.mod((q.head_x_rotation(0)) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.eye_target_y_rotation) + 3600, 360) / 360",
             1,
             1
           ]
@@ -309,7 +309,7 @@
       "bones": {
         "gdev_qry_2": {
           "scale": [
-            "4 + 56 * math.mod((q.body_y_rotation) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.camera_rotation(1)) + 3600, 360) / 360",
             1,
             1
           ]
@@ -322,7 +322,7 @@
       "bones": {
         "gdev_qry_3": {
           "scale": [
-            "4 + 56 * math.mod((q.body_x_rotation) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.eye_target_x_rotation) + 3600, 360) / 360",
             1,
             1
           ]
@@ -335,7 +335,7 @@
       "bones": {
         "gdev_qry_4": {
           "scale": [
-            "4 + 56 * math.mod((q.target_y_rotation) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.head_y_rotation(0)) + 3600, 360) / 360",
             1,
             1
           ]
@@ -348,7 +348,7 @@
       "bones": {
         "gdev_qry_5": {
           "scale": [
-            "4 + 56 * math.mod((q.target_x_rotation) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.head_x_rotation(0)) + 3600, 360) / 360",
             1,
             1
           ]
@@ -361,7 +361,7 @@
       "bones": {
         "gdev_qry_6": {
           "scale": [
-            "4 + 56 * math.mod((q.camera_rotation(1)) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.is_local_player * 300) + 3600, 360) / 360",
             1,
             1
           ]
@@ -374,7 +374,7 @@
       "bones": {
         "gdev_qry_7": {
           "scale": [
-            "4 + 56 * math.mod((q.camera_rotation(0)) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.body_y_rotation) + 3600, 360) / 360",
             1,
             1
           ]
@@ -387,7 +387,7 @@
       "bones": {
         "gdev_qry_8": {
           "scale": [
-            "4 + 56 * math.mod((q.eye_target_y_rotation) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.body_x_rotation) + 3600, 360) / 360",
             1,
             1
           ]
@@ -400,7 +400,7 @@
       "bones": {
         "gdev_qry_9": {
           "scale": [
-            "4 + 56 * math.mod((q.eye_target_x_rotation) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.target_y_rotation) + 3600, 360) / 360",
             1,
             1
           ]
@@ -413,7 +413,7 @@
       "bones": {
         "gdev_qry_10": {
           "scale": [
-            "4 + 56 * math.mod((q.is_local_player * 300) + 3600, 360) / 360",
+            "4 + 56 * math.mod((q.target_x_rotation) + 3600, 360) / 360",
             1,
             1
           ]

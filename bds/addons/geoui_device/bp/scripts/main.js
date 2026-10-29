@@ -1,5 +1,5 @@
 // GeoUI device check (bds-lab: bds/geoui/screen/device.mjs makes this file — change that, not this).
-// /scriptevent gdev:show <bits> · gdev:ui on [lock|speed|free] | off · gdev:mark · gdev:check <what> <label> · gdev:perm <jump|sneak|move|camera> on|off
+// /scriptevent gdev:show <bits> · gdev:ui on [lock|speed|free] | off · gdev:cam 1|0 (the camera frozen alone) · gdev:mark · gdev:check <what> <label> · gdev:perm <jump|sneak|move|camera> on|off
 // gdev:title <text> [subtitle] · gdev:sens <units a degree> · /gdev:t <text> (text typed in the chat as a command)
 // What the input monitor shows and what each check means: bds/addons/geoui_device/TASK.md
 import { world, system, Player, InputButton, ButtonState, InputPermissionCategory, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus } from '@minecraft/server';
@@ -77,6 +77,14 @@ function check(p, what, label) {
 
 system.runInterval(() => {
   for (const p of world.getAllPlayers()) {
+    // (a player leaving, or one not whole yet after a join, never stops the loop with an error every tick: the device check's
+    //  tp right after the game joined again failed with the server's error twice in run 40877717430)
+    if (!p.isValid) continue;
+    try { tickOf(p); } catch (e) { const s = st(p); if (!s.tickErr) { s.tickErr = true; log('tick ' + e); } }
+  }
+}, 1);
+function tickOf(p) {
+  {
     const s = st(p), z = s.seen, ii = p.inputInfo;
     s.tick++;
     const v = ii.getMovementVector(), jump = ii.getButtonState(InputButton.Jump) === ButtonState.Pressed, sneak = ii.getButtonState(InputButton.Sneak) === ButtonState.Pressed;
@@ -106,7 +114,7 @@ system.runInterval(() => {
     setp(p, 'slot', p.selectedSlotIndex);
     setp(p, 'rot', packRot(rot));
   }
-}, 1);
+}
 
 world.afterEvents.playerButtonInput.subscribe((e) => {
   const s = st(e.player);
@@ -127,6 +135,13 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
     if (verb === 'show') { setp(p, 'show', Math.max(0, Math.min(8191, Number(rest[0]) | 0))); log('show ' + rest[0]); }
     else if (verb === 'ui') { if (rest[0] === 'off') uiOff(p); else uiOn(p, rest[1] || 'lock'); }
     else if (verb === 'mark') { s.seen = fresh(); log('mark'); }
+    else if (verb === 'cam') {
+      // (the camera frozen where the head is and the body hidden, as the UI freezes it but with nothing of the UI: the marks then
+      //  have no first-person arm in front of them — it hides GeoUI by depth at the screen's bottom right, RULES R4.11)
+      if (rest[0] === '1') { try { p.camera.setCamera('minecraft:free', { location: p.getHeadLocation(), rotation: p.getRotation() }); } catch (e) { log('camera ' + e); } if (!s.ui) setp(p, 'ui', 2); }
+      else if (!s.ui) { try { p.camera.clear(); } catch (e) { log('camera ' + e); } setp(p, 'ui', 0); }
+      log('cam ' + (rest[0] === '1' ? 1 : 0));
+    }
     else if (verb === 'check') check(p, rest[0], rest[1] || rest[0]);
     else if (verb === 'perm') {
       const cat = { jump: InputPermissionCategory.Jump, sneak: InputPermissionCategory.Sneak, move: InputPermissionCategory.Movement, camera: InputPermissionCategory.Camera }[rest[0]];

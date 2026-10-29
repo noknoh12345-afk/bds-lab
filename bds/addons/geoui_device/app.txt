@@ -24,6 +24,7 @@ do hud @a hide tooltips
 do hud @a hide paperdoll
 do hud @a hide touch_controls
 do scriptevent gdev:show 0
+do scriptevent gdev:cam 1
 wait 7000
 absent clientlog \bERROR\b
 
@@ -209,6 +210,8 @@ do scriptevent gdev:show 512
 wait 2000
 shot rc
 measure marks rc
+do scriptevent gdev:cam 0
+wait 1500
 
 section text
 do scriptevent gdev:show 4096
@@ -349,7 +352,7 @@ expect server GDEV CHECK mouse-wheel PASS
 
 section in-slot-key
 do scriptevent gdev:mark
-key 5
+press 5 200
 wait 600
 do scriptevent gdev:check slot key-slot
 expect server GDEV CHECK key-slot PASS
@@ -382,16 +385,42 @@ wait 500
 do scriptevent gdev:check swing touch-swing
 expect server GDEV CHECK touch-swing PASS
 
+section in-swing-hold
+do scriptevent gdev:mark
+hold 0.6 0.4 800
+wait 500
+do scriptevent gdev:check swing touch-hold-swing
+expect server GDEV CHECK touch-hold-swing PASS
+
 section in-use-pad
 do scriptevent gdev:mark
+do replaceitem entity @a slot.weapon.mainhand 0 snowball 16
+wait 500
 use 0.3
 wait 500
 do scriptevent gdev:check use pad-use
 expect server GDEV CHECK pad-use PASS
+do replaceitem entity @a slot.weapon.mainhand 0 air
 
 section in-text
 do scriptevent gdev:mark
-chat /gdev:t hello
+press T 150
+wait 1500
+press SLASH 80
+press G 80
+press D 80
+press E 80
+press V 80
+press SHIFT+SEMICOLON 80
+press T 80
+press SPACE 80
+press H 80
+press E 80
+press L 80
+press L 80
+press O 80
+wait 300
+press ENTER 150
 wait 800
 do scriptevent gdev:check text chat-text
 expect server GDEV CHECK chat-text PASS
@@ -458,6 +487,7 @@ wait 1000
 
 section density
 size reset
+do scriptevent gdev:cam 1
 wait 6000
 density 240
 wait 9000
@@ -497,6 +527,7 @@ launch
 until title 180000
 join
 until joined 300000
+wait 5000
 do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
 do gamemode adventure @a
 do hud @a hide crosshair
@@ -511,6 +542,7 @@ do hud @a hide tooltips
 do hud @a hide paperdoll
 do hud @a hide touch_controls
 do scriptevent gdev:show 0
+do scriptevent gdev:cam 1
 wait 7000
 shot world
 do scriptevent gdev:show 1
@@ -530,6 +562,7 @@ launch
 until title 180000
 join
 until joined 300000
+wait 5000
 do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
 do gamemode adventure @a
 do hud @a hide crosshair
@@ -544,6 +577,7 @@ do hud @a hide tooltips
 do hud @a hide paperdoll
 do hud @a hide touch_controls
 do scriptevent gdev:show 0
+do scriptevent gdev:cam 1
 wait 7000
 shot world
 do scriptevent gdev:show 1
@@ -557,6 +591,7 @@ measure marks over-cut-hole
 
 section end
 do scriptevent gdev:ui off
+do scriptevent gdev:cam 0
 do scriptevent gdev:show 0
 do hud @a reset
 wait 1000
