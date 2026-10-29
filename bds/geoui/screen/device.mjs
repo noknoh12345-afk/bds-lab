@@ -386,6 +386,8 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
       log('cam ' + (rest[0] === '1' ? 1 : 0));
     }
     else if (verb === 'check') check(p, rest[0], rest[1] || rest[0]);
+    // (the player off the server before the game is started again — the console's kick fails with nobody on it, this does not)
+    else if (verb === 'kick') { try { p.dimension.runCommand('kick "' + p.name + '"'); log('kick ' + p.name); } catch (e) { log('kick ' + e); } }
     else if (verb === 'perm') {
       const cat = { jump: InputPermissionCategory.Jump, sneak: InputPermissionCategory.Sneak, move: InputPermissionCategory.Movement, camera: InputPermissionCategory.Camera }[rest[0]];
       if (cat !== undefined) { p.inputPermissions.setPermissionCategory(cat, rest[1] !== 'off'); log('perm ' + rest[0] + ' ' + (rest[1] !== 'off' ? 'on' : 'off')); }
@@ -677,6 +679,17 @@ scriptevent gdev:ui off
 wait 400
 js JSON.stringify([p('A').getProperty('gdev:ui'), p('A').inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.Movement), p('A').getComponent('minecraft:movement').currentValue > 0])
 = [0,true,true]
+
+## サーバーから出す（gdev:kick: 切り欠きの前。誰もいなくても失敗しない）
+scriptevent gdev:kick
+wait 1500
+~ GDEV kick A
+~ @A disconnected
+js world.getAllPlayers().length
+= 0
+scriptevent gdev:kick
+wait 500
+!~ ^E
 `;
 
 /** the real app (Android): the shapes, the safe area and the inputs. Measures: `measure marks` (each hue's box on the screen) */
@@ -715,7 +728,9 @@ export function appTxt() {
   lines.push('section look', 'size reset', 'wait 6000', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world');
   for (const [name, bits] of [['colors', BITS.colors], ['glyph', BITS.glyph], ['order', BITS.order], ['rc', BITS.rc]]) lines.push(`do scriptevent gdev:show ${bits}`, 'wait 2000', `shot ${name}`, `measure marks ${name}`);
   lines.push('do scriptevent gdev:cam 0', 'wait 1500', '');
-  lines.push('section text', 'do scriptevent gdev:show 4096', 'do scriptevent gdev:title QZX7JK2W SUBLINE', 'wait 2500', 'shot text',
+  // (the world first with the text test on: `measure diff text` then says where the title's letters came, in numbers the public
+  //  summary keeps — the OCR found none of them in run 40924847860 and its picture is sealed)
+  lines.push('section text', 'do scriptevent gdev:show 4096', 'wait 1500', 'shot world', 'do scriptevent gdev:title QZX7JK2W SUBLINE', 'wait 2500', 'shot text', 'measure diff text',
     'expect text QZX7JK2W', 'expect text ^QZX$', 'expect text ^7JK2W$', 'expect text SUBLINE', 'do scriptevent gdev:title', '');
   // the inputs: first without the lock (does each input arrive at all), then locked, then the camera frozen
   const chk = (what, label) => [`do scriptevent gdev:check ${what} ${label}`, `expect server GDEV CHECK ${label} PASS`];
@@ -750,9 +765,13 @@ export function appTxt() {
   // (something to use in the hand: an empty hand gives no itemUse — run 40877717430)
   sec('in-use-pad', 'do replaceitem entity @a slot.weapon.mainhand 0 snowball 16', 'wait 500', 'use 0.3', 'wait 500', ...chk('use', 'pad-use'), 'do replaceitem entity @a slot.weapon.mainhand 0 air');
   // (the chat by the device's keyboard: T opens it, the text key by key, ENTER sends — Android's virtual T opened nothing in run
-  //  40877717430)
-  sec('in-text', 'press T 150', 'wait 1500', ...'/GDEV'.split('').map((c) => `press ${c === '/' ? 'SLASH' : c} 80`), 'press SHIFT+SEMICOLON 80', 'press T 80', 'press SPACE 80',
-    ...'HELLO'.split('').map((c) => `press ${c} 80`), 'wait 300', 'press ENTER 150', 'wait 800', ...chk('text', 'chat-text'));
+  //  40877717430 — and nothing arrived in run 40924847860 either: each step's picture against the world before it says how far it
+  //  got (the chat open, the letters in its box, closed again), the same once more with the chat opened by / itself)
+  const typed = (open, word) => [...(open === 'T' ? ['SLASH'] : []), ...'GDEV'.split(''), 'SHIFT+SEMICOLON', 'T', 'SPACE', ...word.split('')].map((k) => `press ${k} 80`);
+  const chat = (name, open, word, label) => sec(name, 'shot world', `press ${open} 150`, 'wait 1500', `shot ${label}-open`, `measure diff ${label}-open`, ...typed(open, word),
+    'wait 300', `shot ${label}-typed`, `measure diff ${label}-typed`, 'press ENTER 150', 'wait 800', `shot ${label}-sent`, `measure diff ${label}-sent`, ...chk('text', `${label}-text`));
+  chat('in-text', 'T', 'HELLO', 'chat');
+  chat('in-text-slash', 'SLASH', 'HI', 'slash');
   sec('in-mode', 'tap 0.6 0.4', 'wait 300', 'press W 200', 'wait 300', 'pad A', 'wait 500', ...chk('mode', 'input-modes'));
   lines.push('section ui-free', 'do scriptevent gdev:ui off', 'wait 500', 'do scriptevent gdev:ui on free', 'wait 2000', '');
   sec('in-key-free-ui', 'press W 700', 'wait 400', ...chk('move', 'free-key-w'), ...chk('home', 'free-snapped'));
@@ -777,8 +796,9 @@ export function appTxt() {
   // the same way, if these show the game's safe area follows the cut-out)
   for (const cut of ['tall', 'hole']) {
     // (the player sent off the server first: after a game killed in the world the server still held its old session when the
-    //  game joined again, and the set-up's tp failed with the server's error in runs 40877717430 and 40924847860)
-    lines.push(`section cutout-${cut}`, 'do kick @a', 'wait 3000', `cutout ${cut}`, 'wait 3000', 'stop', 'launch', 'until title 180000', 'join', 'until joined 300000', 'wait 5000', ...setup,
+    //  game joined again, and the set-up's tp failed with the server's error in runs 40877717430 and 40924847860. By the pack, not
+    //  the console's `kick @a`: that fails with nobody on the server, and the whole section would be skipped)
+    lines.push(`section cutout-${cut}`, 'do scriptevent gdev:kick', 'wait 3000', `cutout ${cut}`, 'wait 3000', 'stop', 'launch', 'until title 180000', 'join', 'until joined 300000', 'wait 5000', ...setup,
       'shot world', `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-cut-${cut}`, `measure marks anchors-cut-${cut}`,
       `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', `shot over-cut-${cut}`, `measure marks over-cut-${cut}`, '');
   }

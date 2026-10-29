@@ -143,6 +143,8 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
       log('cam ' + (rest[0] === '1' ? 1 : 0));
     }
     else if (verb === 'check') check(p, rest[0], rest[1] || rest[0]);
+    // (the player off the server before the game is started again — the console's kick fails with nobody on it, this does not)
+    else if (verb === 'kick') { try { p.dimension.runCommand('kick "' + p.name + '"'); log('kick ' + p.name); } catch (e) { log('kick ' + e); } }
     else if (verb === 'perm') {
       const cat = { jump: InputPermissionCategory.Jump, sneak: InputPermissionCategory.Sneak, move: InputPermissionCategory.Movement, camera: InputPermissionCategory.Camera }[rest[0]];
       if (cat !== undefined) { p.inputPermissions.setPermissionCategory(cat, rest[1] !== 'off'); log('perm ' + rest[0] + ' ' + (rest[1] !== 'off' ? 'on' : 'off')); }

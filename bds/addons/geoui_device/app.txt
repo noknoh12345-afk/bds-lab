@@ -215,9 +215,12 @@ wait 1500
 
 section text
 do scriptevent gdev:show 4096
+wait 1500
+shot world
 do scriptevent gdev:title QZX7JK2W SUBLINE
 wait 2500
 shot text
+measure diff text
 expect text QZX7JK2W
 expect text ^QZX$
 expect text ^7JK2W$
@@ -404,8 +407,11 @@ do replaceitem entity @a slot.weapon.mainhand 0 air
 
 section in-text
 do scriptevent gdev:mark
+shot world
 press T 150
 wait 1500
+shot chat-open
+measure diff chat-open
 press SLASH 80
 press G 80
 press D 80
@@ -420,10 +426,40 @@ press L 80
 press L 80
 press O 80
 wait 300
+shot chat-typed
+measure diff chat-typed
 press ENTER 150
 wait 800
+shot chat-sent
+measure diff chat-sent
 do scriptevent gdev:check text chat-text
 expect server GDEV CHECK chat-text PASS
+
+section in-text-slash
+do scriptevent gdev:mark
+shot world
+press SLASH 150
+wait 1500
+shot slash-open
+measure diff slash-open
+press G 80
+press D 80
+press E 80
+press V 80
+press SHIFT+SEMICOLON 80
+press T 80
+press SPACE 80
+press H 80
+press I 80
+wait 300
+shot slash-typed
+measure diff slash-typed
+press ENTER 150
+wait 800
+shot slash-sent
+measure diff slash-sent
+do scriptevent gdev:check text slash-text
+expect server GDEV CHECK slash-text PASS
 
 section in-mode
 do scriptevent gdev:mark
@@ -520,7 +556,7 @@ shot over
 measure marks over
 
 section cutout-tall
-do kick @a
+do scriptevent gdev:kick
 wait 3000
 cutout tall
 wait 3000
@@ -557,7 +593,7 @@ shot over-cut-tall
 measure marks over-cut-tall
 
 section cutout-hole
-do kick @a
+do scriptevent gdev:kick
 wait 3000
 cutout hole
 wait 3000

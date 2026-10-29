@@ -287,7 +287,7 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
     ok(/do scriptevent gdev:show 0\nwait \d+\nshot world\ndo scriptevent gdev:show 256\nwait \d+\nshot query-before\nmeasure marks query-before\nlook left [\d ]+\nwait \d+\nshot query-after\nmeasure marks query-after/.test(sec('in-query')),
       'device app.txt: the query bars measured against a world without them, before and after the turn', sec('in-query'));
     const cuts = ['tall', 'hole'].map((c) => sec(`cutout-${c}`));
-    ok(cuts.every((s, i) => new RegExp(`^section cutout-${['tall', 'hole'][i]}\\ndo kick @a\\nwait \\d+\\ncutout ${['tall', 'hole'][i]}\\nwait \\d+\\nstop\\nlaunch\\nuntil title \\d+\\njoin\\nuntil joined \\d+\\nwait \\d+\\ndo tp @a 0 -60 0 0 90`).test(s) && /\nshot world\n[^]*measure marks anchors-cut-/.test(s)) && /^section over\n[^]*measure marks over$/m.test(sec('over')) && at.indexOf('section over') < at.indexOf('section cutout-'),
+    ok(cuts.every((s, i) => new RegExp(`^section cutout-${['tall', 'hole'][i]}\\ndo scriptevent gdev:kick\\nwait \\d+\\ncutout ${['tall', 'hole'][i]}\\nwait \\d+\\nstop\\nlaunch\\nuntil title \\d+\\njoin\\nuntil joined \\d+\\nwait \\d+\\ndo tp @a 0 -60 0 0 90`).test(s) && /\nshot world\n[^]*measure marks anchors-cut-/.test(s)) && /^section over\n[^]*measure marks over$/m.test(sec('over')) && at.indexOf('section over') < at.indexOf('section cutout-'),
       'device app.txt: the edge with no cut-out first, then each cut-out with the game stopped, started and joined again before its marks', cuts.join('\n'));
     // (the game stopped and started right before its first join — in a batch this section is where the add-on starts: the
     //  first joins of a device come back from its snapshot failed three runs in a row on 2026-10-24, the joins after a restart went in)
@@ -303,9 +303,16 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
       && sec('in-text').split('\n').filter((l) => /^press /.test(l)).map((l) => l.split(' ')[1]).join(' ') === 'T SLASH G D E V SHIFT+SEMICOLON T SPACE H E L L O ENTER'
       && /replaceitem entity @a slot\.weapon\.mainhand 0 snowball \d+\n[^]*\nuse 0\.3\n/.test(sec('in-use-pad')) && /^hold 0\.6 0\.4 \d+$/m.test(sec('in-swing-hold')),
       'device app.txt: the digit and the chat by the device\'s own keyboard (/gdev:t hello key by key), a snowball to use, a touch held for the attack', sec('in-text'));
+    // (how far the chat got, in numbers the public summary keeps: each step's picture against the world shot before it — run
+    //  40924847860 sent nothing and its pictures are sealed — and the chat opened by / as a second way in; the title's letters likewise)
+    const steps = (n, l) => new RegExp(`^section ${n}\\ndo scriptevent gdev:mark\\nshot world\\npress \\S+ \\d+\\nwait \\d+\\nshot ${l}-open\\nmeasure diff ${l}-open\\n[^]*\\nshot ${l}-typed\\nmeasure diff ${l}-typed\\npress ENTER \\d+\\nwait \\d+\\nshot ${l}-sent\\nmeasure diff ${l}-sent\\ndo scriptevent gdev:check text ${l}-text\\n`);
+    ok(steps('in-text', 'chat').test(sec('in-text')) && steps('in-text-slash', 'slash').test(sec('in-text-slash'))
+      && sec('in-text-slash').split('\n').filter((l) => /^press /.test(l)).map((l) => l.split(' ')[1]).join(' ') === 'SLASH G D E V SHIFT+SEMICOLON T SPACE H I ENTER'
+      && /^shot world\ndo scriptevent gdev:title QZX7JK2W SUBLINE\nwait \d+\nshot text\nmeasure diff text\nexpect text QZX7JK2W$/m.test(sec('text')),
+      'device app.txt: the chat measured step by step against the world (open, typed, sent), once by T and once by /, and the title\'s letters by a diff', [sec('in-text-slash'), sec('text')].join('\n'));
     const script = D.files().files['bp/scripts/main.js'].toString();
-    ok(/for \(const p of world\.getAllPlayers\(\)\) \{\n\s+[^\n]*\n[^\n]*\n\s+if \(!p\.isValid\) continue;\n\s+try \{ tickOf\(p\); \} catch \(e\)/.test(script) && /verb === 'cam'/.test(script) && /\{ name: 'ui', range: \[0, 2\]/.test(fs.readFileSync(path.join(TOP, 'bds/geoui/screen/device.mjs'), 'utf8')),
-      'device script: the tick loop skips a player not valid and never throws (a leaving player once stopped it every tick); gdev:cam freezes the camera alone (ui 2: the body hidden)');
+    ok(/for \(const p of world\.getAllPlayers\(\)\) \{\n\s+[^\n]*\n[^\n]*\n\s+if \(!p\.isValid\) continue;\n\s+try \{ tickOf\(p\); \} catch \(e\)/.test(script) && /verb === 'cam'/.test(script) && /verb === 'kick'\) \{ try \{ p\.dimension\.runCommand\('kick "' \+ p\.name/.test(script) && /\{ name: 'ui', range: \[0, 2\]/.test(fs.readFileSync(path.join(TOP, 'bds/geoui/screen/device.mjs'), 'utf8')),
+      'device script: the tick loop skips a player not valid and never throws (a leaving player once stopped it every tick); gdev:cam freezes the camera alone (ui 2: the body hidden); gdev:kick sends each player off by name (never an error with nobody on)');
     const plate = D.scene().planes.find((p) => p.bone === 'gdev_clip' && p.rect.w === 400);
     ok(plate && plate.uv[0] === D.HUES.findIndex(([nm]) => nm === 'rose') + 0.25, 'device: the clip square is rose (a hue no floor has; grey was not found at all on the CI device)', JSON.stringify(plate && plate.uv));
   }

@@ -113,3 +113,14 @@ scriptevent gdev:ui off
 wait 400
 js JSON.stringify([p('A').getProperty('gdev:ui'), p('A').inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.Movement), p('A').getComponent('minecraft:movement').currentValue > 0])
 = [0,true,true]
+
+## サーバーから出す（gdev:kick: 切り欠きの前。誰もいなくても失敗しない）
+scriptevent gdev:kick
+wait 1500
+~ GDEV kick A
+~ @A disconnected
+js world.getAllPlayers().length
+= 0
+scriptevent gdev:kick
+wait 500
+!~ ^E
