@@ -570,13 +570,14 @@ function installDeps(dir) {
   return null;
 }
 const protoFam = (v) => { const p = v.split('.').map(Number); return p[0] * 1e6 + p[1] * 1e3 + Math.floor(p[2] / 10) * 10; };   // 1.26.60.x is a new protocol family
-// the players' folder speaks only older Minecraft than this BDS (read from its files: nothing loaded into the process)
+// the players' folder speaks only older Minecraft than this BDS (read from its files: nothing loaded into the process); null: its
+// tables cannot be read (none, or another lab process is installing the folder again right now)
 function depsBehind(dir) {
   try {
     const keys = JSON.parse(fs.readFileSync(path.join(dir, 'node_modules', 'minecraft-data', 'minecraft-data', 'data', 'bedrock', 'common', 'protocolVersions.json'), 'utf8')).filter((e) => e.releaseType === 'release').map((e) => e.minecraftVersion);
     const newest = dataVersion(keys, '9.9.9');
     return !newest || protoFam(bdsVersion()) > protoFam(newest);
-  } catch { return false; }
+  } catch { return null; }
 }
 // A players' folder made before bedrock-protocol spoke this BDS stays that way: CI restores bds/.lab by the BDS version, so the
 // players kept borrowing the older packets for days after bedrock-protocol caught up (Minecraft 1.26.60 added a byte to
@@ -591,10 +592,13 @@ async function freshDeps(dir) {
   const nm = path.join(dir, 'node_modules'), note = dir + '.fresh';
   const have = (p) => { try { return JSON.parse(fs.readFileSync(path.join(nm, p, 'package.json'), 'utf8')).version; } catch { return null; } };
   const recent = () => { try { const n = JSON.parse(fs.readFileSync(note, 'utf8')), ago = Date.now() - n.at; return ago >= 0 && ago < 6 * 3600e3 && n.bp === have('bedrock-protocol') && n.md === have('minecraft-data'); } catch { return false; } };
-  if (!have('bedrock-protocol') || !depsBehind(dir) || recent()) return;
+  // (a folder half made — no bedrock-protocol, tables not readable: another lab process installing it again — is waited for at the
+  //  lock like one behind this BDS: read half made, a join failed with "Cannot find module ...features.json" in CI)
+  const behind = depsBehind(dir);
+  if (have('bedrock-protocol') && (behind === false || (behind && recent()))) return;
   const release = await lock(dir + '.lock');
   try {
-    if (!depsBehind(dir) || recent()) return;   // (another lab process did it while this one waited)
+    if (depsBehind(dir) !== true || recent()) return;   // (another lab process did it while this one waited)
     const latest = (p) => { const r = spawnSync(WIN ? 'npm.cmd' : 'npm', ['view', p, 'version'], { encoding: 'utf8', shell: WIN, timeout: 30000 }); const v = r.status === 0 ? String(r.stdout).trim().split(/\s+/).pop() : ''; return /^\d+\.\d+\.\d+$/.test(v) ? v : null; };
     const bp = latest('bedrock-protocol'), md = bp && latest('minecraft-data');
     if (bp && md && (bp !== have('bedrock-protocol') || md !== have('minecraft-data'))) {
@@ -618,6 +622,8 @@ async function freshDeps(dir) {
 async function realDeps({ loud = false } = {}) {
   const dir = path.join(CACHE, 'node');
   const mod = path.join(dir, 'node_modules', 'bedrock-protocol');
+  // another lab process installing the folder (again) right now: waited for, never read half made
+  if (exists(dir + '.lock')) (await lock(dir + '.lock'))();
   if (!exists(mod) && REAL_DEPS_FAIL) die(REAL_DEPS_FAIL);
   // (an install that failed a moment ago, in another lab process too, is not tried again yet: B.npmFailed)
   const was = !exists(mod) && B.npmFailed(dir, 'bedrock-protocol@latest');
@@ -659,7 +665,7 @@ function warmPlayers() {
   try {
     const dir = path.join(CACHE, 'node');
     // (a folder behind this BDS is left unloaded: the join's freshDeps may install it again first)
-    if (!exists(path.join(dir, 'node_modules', 'bedrock-protocol')) || depsBehind(dir)) return;
+    if (!exists(path.join(dir, 'node_modules', 'bedrock-protocol')) || exists(dir + '.lock') || depsBehind(dir) !== false) return;
     authStub(dir);
     const req = createRequire(path.join(dir, 'package.json')), keys = Object.keys(req('bedrock-protocol/src/options').Versions);
     const ver = dataVersion(keys), newest = dataVersion(keys, '9.9.9');
