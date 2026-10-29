@@ -9,3 +9,6 @@
 
 ## Guessed
 <!-- values decided without asking -->
+
+## Maintenance
+- 2026-10-24 BDS 1.26.52.3: moved to stable APIs

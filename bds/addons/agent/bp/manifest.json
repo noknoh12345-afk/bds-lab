@@ -4,7 +4,7 @@
     "name": "Agent",
     "description": "Agent",
     "uuid": "11bac8a7-bee9-47e7-bc62-b6a54215a1fd",
-    "version": [1, 0, 0],
+    "version": [1, 0, 1],
     "min_engine_version": [1, 26, 52]
   },
   "modules": [
@@ -12,22 +12,22 @@
       "type": "script",
       "language": "javascript",
       "uuid": "446a3e30-7f60-47c5-9386-2ceb7b52cd44",
-      "version": [1, 0, 0],
+      "version": [1, 0, 1],
       "entry": "scripts/main.js"
     }
   ],
   "dependencies": [
     {
       "module_name": "@minecraft/server",
-      "version": "2.11.0-beta"
+      "version": "2.10.0"
     },
     {
       "module_name": "@minecraft/server-ui",
-      "version": "2.3.0-beta"
+      "version": "2.2.0"
     },
     {
       "uuid": "db08caa8-9f82-4a55-975f-f945e6418667",
-      "version": [1, 0, 0]
+      "version": [1, 0, 1]
     }
   ]
 }

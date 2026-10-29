@@ -4,14 +4,14 @@
     "name": "Agent RP",
     "description": "Agent",
     "uuid": "db08caa8-9f82-4a55-975f-f945e6418667",
-    "version": [1, 0, 0],
+    "version": [1, 0, 1],
     "min_engine_version": [1, 26, 52]
   },
   "modules": [
     {
       "type": "resources",
       "uuid": "14d28bb2-d404-45d4-ac75-909a764742c6",
-      "version": [1, 0, 0]
+      "version": [1, 0, 1]
     }
   ]
 }
