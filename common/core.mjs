@@ -544,6 +544,77 @@ function authStub(dir) {
 // an install that failed once in this process fails again at once (no network: every `@X join` of a QA or a test used to
 // run npm again and wait for it to fail, seconds each)
 let REAL_DEPS_FAIL = null;
+// bedrock-protocol (and the minecraft-data it reads) installed into dir from nothing: null, or what npm said
+function installDeps(dir) {
+  fs.mkdirSync(dir, { recursive: true });
+  // prismarine-auth pulls a GitHub-hosted package that newer npm refuses (EALLOWGIT): override it with a placeholder, then authStub()
+  const ph = path.join(dir, 'stub', 'prismarine-auth');
+  fs.mkdirSync(ph, { recursive: true });
+  fs.writeFileSync(path.join(ph, 'package.json'), '{"name":"prismarine-auth","version":"99.0.0","main":"index.js"}');
+  fs.writeFileSync(path.join(ph, 'index.js'), 'module.exports = {};');
+  fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ private: true, overrides: { 'prismarine-auth': 'file:' + ph.replace(/\\/g, '/') } }));
+  const r = spawnSync(WIN ? 'npm.cmd' : 'npm', ['i', 'bedrock-protocol@latest', '--ignore-scripts', '--no-audit', '--no-fund', '--loglevel=error'], { cwd: dir, encoding: 'utf8', shell: WIN, env: { ...process.env, npm_config_allow_git: 'all' } });
+  if (r.status !== 0) return 'npm install bedrock-protocol failed:\n' + (r.stderr || r.stdout).slice(-800);
+  // keep only the minecraft-data this BDS needs (~430MB -> a few MB)
+  try {
+    const md = path.join(dir, 'node_modules', 'minecraft-data', 'minecraft-data', 'data');
+    // keep the tables of every bedrock version from 1.21 on (a real player can join as an older client: `join version=`),
+    // LAB_KEEP_PROTOCOLS=all keeps all; the Java (pc) data never
+    const all = JSON.parse(fs.readFileSync(path.join(md, 'dataPaths.json'), 'utf8')).bedrock, want = all[dataVersion(Object.keys(all))];
+    if (want) {
+      const keep = new Set(Object.entries(all).filter(([v]) => process.env.LAB_KEEP_PROTOCOLS === 'all' || v === dataVersion(Object.keys(all)) || (/^\d+\.\d+\.\d+$/.test(v) && vcmp3(v, '1.21.0') >= 0)).flatMap(([, w]) => Object.values(w)));
+      for (const kind of ['bedrock', 'pc']) for (const v of fs.readdirSync(path.join(md, kind))) if (!keep.has(`${kind}/${v}`) && !['common', 'latest'].includes(v)) fs.rmSync(path.join(md, kind, v), { recursive: true, force: true });
+    }
+    for (const d of ['typescript', 'raknet-native', 'raknet-node']) fs.rmSync(path.join(dir, 'node_modules', d), { recursive: true, force: true });
+  } catch { /* pruning is optional */ }
+  return null;
+}
+const protoFam = (v) => { const p = v.split('.').map(Number); return p[0] * 1e6 + p[1] * 1e3 + Math.floor(p[2] / 10) * 10; };   // 1.26.60.x is a new protocol family
+// the players' folder speaks only older Minecraft than this BDS (read from its files: nothing loaded into the process)
+function depsBehind(dir) {
+  try {
+    const keys = JSON.parse(fs.readFileSync(path.join(dir, 'node_modules', 'minecraft-data', 'minecraft-data', 'data', 'bedrock', 'common', 'protocolVersions.json'), 'utf8')).filter((e) => e.releaseType === 'release').map((e) => e.minecraftVersion);
+    const newest = dataVersion(keys, '9.9.9');
+    return !newest || protoFam(bdsVersion()) > protoFam(newest);
+  } catch { return false; }
+}
+// A players' folder made before bedrock-protocol spoke this BDS stays that way: CI restores bds/.lab by the BDS version, so the
+// players kept borrowing the older packets for days after bedrock-protocol caught up (Minecraft 1.26.60 added a byte to
+// AnimatePacket: every swing and attack was "packet 44 malformed"). So while this BDS is newer than every version the installed
+// tables speak, npm is asked (at most every 6 hours: a note beside the folder) for bedrock-protocol's and minecraft-data's
+// versions; a newer one installs the folder again under the install lock (the old folder comes back if npm fails). Another lab
+// process waits for it at the same lock. LAB_FRESH=0: never ask
+let FRESHED = false;
+async function freshDeps(dir) {
+  if (FRESHED || process.env.LAB_FRESH === '0') return;
+  FRESHED = true;
+  const nm = path.join(dir, 'node_modules'), note = dir + '.fresh';
+  const have = (p) => { try { return JSON.parse(fs.readFileSync(path.join(nm, p, 'package.json'), 'utf8')).version; } catch { return null; } };
+  const recent = () => { try { const n = JSON.parse(fs.readFileSync(note, 'utf8')), ago = Date.now() - n.at; return ago >= 0 && ago < 6 * 3600e3 && n.bp === have('bedrock-protocol') && n.md === have('minecraft-data'); } catch { return false; } };
+  if (!have('bedrock-protocol') || !depsBehind(dir) || recent()) return;
+  const release = await lock(dir + '.lock');
+  try {
+    if (!depsBehind(dir) || recent()) return;   // (another lab process did it while this one waited)
+    const latest = (p) => { const r = spawnSync(WIN ? 'npm.cmd' : 'npm', ['view', p, 'version'], { encoding: 'utf8', shell: WIN, timeout: 30000 }); const v = r.status === 0 ? String(r.stdout).trim().split(/\s+/).pop() : ''; return /^\d+\.\d+\.\d+$/.test(v) ? v : null; };
+    const bp = latest('bedrock-protocol'), md = bp && latest('minecraft-data');
+    if (bp && md && (bp !== have('bedrock-protocol') || md !== have('minecraft-data'))) {
+      const was = `${have('bedrock-protocol')} (minecraft-data ${have('minecraft-data')})`, parts = ['node_modules', 'package.json', 'package-lock.json'];
+      for (const f of parts) { fs.rmSync(path.join(dir, f + '.old'), { recursive: true, force: true }); if (exists(path.join(dir, f))) fs.renameSync(path.join(dir, f), path.join(dir, f + '.old')); }
+      const msg = installDeps(dir);
+      for (const f of parts) {
+        if (msg) { fs.rmSync(path.join(dir, f), { recursive: true, force: true }); if (exists(path.join(dir, f + '.old'))) fs.renameSync(path.join(dir, f + '.old'), path.join(dir, f)); }
+        else fs.rmSync(path.join(dir, f + '.old'), { recursive: true, force: true });
+      }
+      process.stderr.write(msg ? `bedrock-protocol ${was} stays: ${msg.split('\n').slice(0, 2).join(' ')}\n` : `bedrock-protocol ${was} -> ${have('bedrock-protocol')} (minecraft-data ${have('minecraft-data')}): BDS ${bdsVersion()} was newer than its tables\n`);
+    }
+    fs.writeFileSync(note, JSON.stringify({ at: Date.now(), bp: have('bedrock-protocol'), md: have('minecraft-data') }));
+  } finally {
+    release();
+    // anything this process loaded from the folder before is read again from the folder as it is now
+    const cache = createRequire(path.join(dir, 'package.json')).cache;
+    for (const k of Object.keys(cache)) if (k.startsWith(nm + path.sep)) delete cache[k];
+  }
+}
 async function realDeps({ loud = false } = {}) {
   const dir = path.join(CACHE, 'node');
   const mod = path.join(dir, 'node_modules', 'bedrock-protocol');
@@ -552,36 +623,23 @@ async function realDeps({ loud = false } = {}) {
   const was = !exists(mod) && B.npmFailed(dir, 'bedrock-protocol@latest');
   if (was) die((REAL_DEPS_FAIL = was));
   if (!exists(mod)) {
-    fs.mkdirSync(dir, { recursive: true });
-    // prismarine-auth pulls a GitHub-hosted package that newer npm refuses (EALLOWGIT): override it with a placeholder, then authStub()
-    const ph = path.join(dir, 'stub', 'prismarine-auth');
-    fs.mkdirSync(ph, { recursive: true });
-    fs.writeFileSync(path.join(ph, 'package.json'), '{"name":"prismarine-auth","version":"99.0.0","main":"index.js"}');
-    fs.writeFileSync(path.join(ph, 'index.js'), 'module.exports = {};');
-    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ private: true, overrides: { 'prismarine-auth': 'file:' + ph.replace(/\\/g, '/') } }));
-    const r = spawnSync(WIN ? 'npm.cmd' : 'npm', ['i', 'bedrock-protocol@latest', '--ignore-scripts', '--no-audit', '--no-fund', '--loglevel=error'], { cwd: dir, encoding: 'utf8', shell: WIN, env: { ...process.env, npm_config_allow_git: 'all' } });
-    B.npmNote(dir, 'bedrock-protocol@latest', r.status === 0 ? null : 'npm install bedrock-protocol failed:\n' + (r.stderr || r.stdout).slice(-800));
-    if (r.status !== 0) die((REAL_DEPS_FAIL = 'npm install bedrock-protocol failed:\n' + (r.stderr || r.stdout).slice(-800)));
-    // keep only the minecraft-data this BDS needs (~430MB -> a few MB)
+    // one install at a time across lab processes (parallel tests share the folder; freshDeps holds the same lock)
+    const release = await lock(dir + '.lock');
     try {
-      const md = path.join(dir, 'node_modules', 'minecraft-data', 'minecraft-data', 'data');
-      // keep the tables of every bedrock version from 1.21 on (a real player can join as an older client: `join version=`),
-      // LAB_KEEP_PROTOCOLS=all keeps all; the Java (pc) data never
-      const all = JSON.parse(fs.readFileSync(path.join(md, 'dataPaths.json'), 'utf8')).bedrock, want = all[dataVersion(Object.keys(all))];
-      if (want) {
-        const keep = new Set(Object.entries(all).filter(([v]) => process.env.LAB_KEEP_PROTOCOLS === 'all' || v === dataVersion(Object.keys(all)) || (/^\d+\.\d+\.\d+$/.test(v) && vcmp3(v, '1.21.0') >= 0)).flatMap(([, w]) => Object.values(w)));
-        for (const kind of ['bedrock', 'pc']) for (const v of fs.readdirSync(path.join(md, kind))) if (!keep.has(`${kind}/${v}`) && !['common', 'latest'].includes(v)) fs.rmSync(path.join(md, kind, v), { recursive: true, force: true });
+      if (!exists(mod)) {
+        const msg = installDeps(dir);
+        B.npmNote(dir, 'bedrock-protocol@latest', msg);
+        if (msg) die((REAL_DEPS_FAIL = msg));
       }
-      for (const d of ['typescript', 'raknet-native', 'raknet-node']) fs.rmSync(path.join(dir, 'node_modules', d), { recursive: true, force: true });
-    } catch { /* pruning is optional */ }
+    } finally { release(); }
   }
+  await freshDeps(dir);
   authStub(dir);
   const req = createRequire(path.join(dir, 'package.json'));
   const { Versions } = req('bedrock-protocol/src/options');
   const ver = dataVersion(Object.keys(Versions)), newest = dataVersion(Object.keys(Versions), '9.9.9');
-  const fam = (v) => { const p = v.split('.').map(Number); return p[0] * 1e6 + p[1] * 1e3 + Math.floor(p[2] / 10) * 10; };   // 1.26.60.x is a new protocol family
   const versions = Object.keys(Versions).filter((k) => /^\d+\.\d+\.\d+$/.test(k));
-  if (!ver || fam(bdsVersion()) > fam(newest)) {
+  if (!ver || protoFam(bdsVersion()) > protoFam(newest)) {
     // a Minecraft newer than bedrock-protocol (a preview, release day): the players borrow the newest packet data it has and speak
     // the server's own protocol number (read from its RakNet ping at join). Most updates keep the packets that matter, so tests
     // can run on day 0; if the packets did change the joins fail and say so. LAB_BORROW=0: refuse instead, as before
@@ -600,11 +658,12 @@ function warmPlayers() {
   WARMED = true;
   try {
     const dir = path.join(CACHE, 'node');
-    if (!exists(path.join(dir, 'node_modules', 'bedrock-protocol'))) return;
+    // (a folder behind this BDS is left unloaded: the join's freshDeps may install it again first)
+    if (!exists(path.join(dir, 'node_modules', 'bedrock-protocol')) || depsBehind(dir)) return;
     authStub(dir);
     const req = createRequire(path.join(dir, 'package.json')), keys = Object.keys(req('bedrock-protocol/src/options').Versions);
-    const ver = dataVersion(keys), newest = dataVersion(keys, '9.9.9'), fam = (v) => { const p = v.split('.').map(Number); return p[0] * 1e6 + p[1] * 1e3 + Math.floor(p[2] / 10) * 10; };
-    if (!ver || fam(bdsVersion()) > fam(newest)) return;
+    const ver = dataVersion(keys), newest = dataVersion(keys, '9.9.9');
+    if (!ver || protoFam(bdsVersion()) > protoFam(newest)) return;
     createRequire(import.meta.url)('./realplayer.cjs').warm(req, ver);
   } catch { /* the join says what is wrong */ }
 }
