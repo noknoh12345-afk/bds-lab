@@ -39,7 +39,7 @@ on:
         type: boolean
         default: false
       scripteval_world:
-        description: "scripteval 検証で、さらに自分のシングルプレイ world を開き injectInput のオフセットを実機で探す"
+        description: "scripteval 検証で、さらにラボの BDS に入り(app run の参加)、入力の行き先を実測して injectInput で歩けるか試す"
         type: boolean
         default: false
   push:
@@ -153,7 +153,7 @@ jobs:
         run: |
           python3 -m pip install --user -q frida frida-tools 2>/dev/null || pip3 install -q frida frida-tools 2>/dev/null || echo "::warning::frida を入れられません"
           mkdir -p out
-          WORLD=""; [ "${{ inputs.scripteval_world }}" = "true" ] && WORLD="--open-world"
+          WORLD=""; [ "${{ inputs.scripteval_world }}" = "true" ] && WORLD="--world"
           node app/redroid/scripteval.mjs run $WORLD --out out 2>&1 | tee out/scripteval-stdout.txt || true
           { echo "## scripteval (redroid)"; echo '```'; tail -n 40 out/scripteval-stdout.txt 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 

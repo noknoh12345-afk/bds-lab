@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 // import しておく(verify の plan が、これらのファイルが変わったときにこのテストを選ぶため)
 import * as probe from '../app/redroid/scripteval/probe.mjs';
 import * as features from '../app/redroid/scripteval/features.mjs';
+import * as explore from '../app/redroid/scripteval/explore.mjs';
 import { soVaultKey } from '../app/redroid/scripteval.mjs';
 import * as V from '../app/lib/vault.mjs';
 
@@ -26,7 +27,9 @@ ok(soVaultKey({ APP_CACHE_KEY: 'K2' })?.id === V.vaultKey({ APP_CACHE_KEY: 'K2' 
 ok(soVaultKey({}) === null, 'soVaultKey: 鍵が無ければ null');
 
 // ---- 各モジュールの --selftest(偽 REPL / 偽プレイヤーメモリで実走)----
-for (const [name, file] of [['probe', 'probe.mjs'], ['features', 'features.mjs'], ['world', 'world.mjs'], ['studio', 'studio.mjs'], ['orchestrator', '../scripteval.mjs']]) {
+ok(explore.PERTURB.length >= 10 && explore.PERTURB.every((p) => p.name && p.on), 'explore: 入力の一覧(押す言葉つき)');
+
+for (const [name, file] of [['probe', 'probe.mjs'], ['features', 'features.mjs'], ['world', 'world.mjs'], ['explore', 'explore.mjs'], ['studio', 'studio.mjs'], ['orchestrator', '../scripteval.mjs']]) {
   const r = spawnSync(process.execPath, [path.join(SE, file), '--selftest'], { encoding: 'utf8', timeout: 120_000 });
   ok(r.status === 0 && /SELFTEST OK/.test(r.stdout || ''), `${name} --selftest`, (r.stdout || '') + (r.stderr || ''));
 }

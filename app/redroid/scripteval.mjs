@@ -12,9 +12,12 @@
 //
 //   node app/redroid/scripteval.mjs run [--data <準備済みフォルダ>] [--keep] [--abi auto] [--repl-port 25599]
 //                                       [--local-port 25599] [--out <dir>] [--frida-version X]
-//                                       [--open-world] [--no-launch]
-//     --open-world: 注入後に自分のシングルプレイ「own world」を開き(BDS なし=切断されない)、ワールドの中で
-//                   injectInput の実効に要るオフセット(moveVectorX/Z・cameraYaw/Pitch)を mod の読み取り専用 dbg で探す。
+//                                       [--world [--addon agent]] [--no-launch]
+//     --world:      ワールドの中まで。ラボで毎日動いている app run の BDS 参加をそのまま使う(app/scenarios/scripteval-world.txt
+//                   の app run を横で走らせる)。注入はタイトルで済ませてから「端末の準備ができた」と app run に伝え、app run が
+//                   ラボの BDS に入れる。入ったら explore.mjs が入力の行き先を実測(読むだけ)、injectInput で歩けるかも試し、
+//                   logcat の合図(SE_MARK_A / SE_MARK_B / SE_WORLD_DONE)ごとに app run がサーバーから見た位置を控える。
+//                   (--open-world は同じ意味の古い名前。run #10/#11 の自前のワールド開きは画面を判別できず入れなかった)
 //     --no-launch:  画面に触らず、いま起動中のゲームをそのまま使う(常駐の端末を自分でワールドに入れてあるとき)。
 //   node app/redroid/scripteval.mjs --selftest        端末不要(プローブ配線 + 伏字の確認)
 //
@@ -29,9 +32,10 @@ import * as V from '../lib/vault.mjs';
 import { Adb, startPad } from '../lib/android.mjs';
 import { runProbe, summarize, openRepl } from './scripteval/probe.mjs';
 import * as features from './scripteval/features.mjs';
-import * as world from './scripteval/world.mjs';
+import * as explore from './scripteval/explore.mjs';
 import * as studio from './scripteval/studio.mjs';
-import { ocrWords, playScreen, playTab, joinScreen } from '../lib/client.mjs';
+import * as RD from './ready.mjs';
+import { spawn } from 'node:child_process';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const LAB = path.join(HERE, '.lab');
@@ -122,46 +126,48 @@ async function bringUp({ data, port, img = R.GAPPS_TAG, log, state, noLaunch = f
   return { adb, isRoot, resident, boot, game, why: why ?? null, whyNot, readyS: secs(now() - t0) };
 }
 
-/** PLAY→Worlds→(先頭のワールド)→開く、の 1 手を画面の状態から決める(純粋。偽の OCR で試験できる)。
- *  state: client.mjs joinScreen の戻り(title / play-empty / play-lan / prompt-* / generating / loading / connecting / other / blank)
- *  tab: client.mjs playTab の戻り(worlds / realms / null)。戻り: 'A' 押す / 'LB' タブを左へ / 'wait' 待つ */
-export function nextWorldAction(state, tab) {
-  if (/^generating|^loading|^connecting|^downloading/.test(state)) return 'wait';
-  if (state === 'title') return 'A';                               // タイトル → 入る
-  if (state === 'play-empty' || state === 'play-lan') return tab === 'realms' ? 'LB' : 'A'; // Worlds タブで先頭のカードを開く
-  if (state.startsWith('prompt-')) return 'A';                     // 「続ける/パック」等は A
-  return 'A';                                                      // other/blank: 軽く A で促す(回数で頭打ち)
+// ---- ワールドの中へ: app run(ラボの BDS 参加。毎日動いている道)を横で走らせる ----
+const TOP = path.resolve(HERE, '..', '..');
+export const WORLD_SCENARIO = path.join(TOP, 'app', 'scenarios', 'scripteval-world.txt');
+/** app run の 1 行から、サーバーが答えたプレイヤーの位置(where の答え: "名前: (x, y, z)、向き …°")→ {x,y,z,yaw} | null(純粋) */
+export function whereOf(line) {
+  const m = /\((-?\d+(?:\.\d+)?), (-?\d+(?:\.\d+)?), (-?\d+(?:\.\d+)?)\)、向き (-?\d+(?:\.\d+)?)°/.exec(String(line ?? ''));
+  return m ? { x: Number(m[1]), y: Number(m[2]), z: Number(m[3]), yaw: Number(m[4]) } : null;
 }
-
-/** 端末の自分のシングルプレイ「own world」を開く(BDS なし=切断されない)。ready() が真になるまで画面を見て 1 手ずつ。
- *  OCR とコントローラ頼みなので、各手でスクショを残す(外した所が後で分かる)。offline では nextWorldAction を試験する。 */
-async function enterOwnWorld(adb, { log, shotDir, ready, sleep, maxMs = 90_000 }) {
-  const shot = (name) => { try { const p = path.join(shotDir, `world-${name}.png`); fs.writeFileSync(p, adb.screencap()); return path.basename(p); } catch { return null; } };
-  // ocrWords は PNG の「ファイルパス」を取る(中で readFileSync する)。screencap の Buffer を一旦ファイルに書いて渡す。
-  const ocrFile = path.join(shotDir, '_ocr.png');
-  const read = () => { try { fs.writeFileSync(ocrFile, adb.screencap()); return ocrWords(ocrFile); } catch { return []; } };
-  const trail = [];
-  const end = now() + maxMs;
-  shot('00-start');
-  let i = 0;
-  while (now() < end) {
-    if (await ready()) { shot(`${String(i).padStart(2, '0')}-inworld`); return { entered: true, trail, s: secs(now() - (end - maxMs)) }; }
-    const w = read();
-    const ps = playScreen(w);
-    const state = joinScreen(w), tab = ps ? playTab(w) : null;
-    let act = nextWorldAction(state, tab);
-    // Worlds タブにいて、どのワールドのカードにも焦点が無い(footer に "A Play" が出ない)なら、DOWN で先頭のカードへ寄せてから A。
-    if (act === 'A' && ps && tab !== 'realms') act = ps.focused ? 'A' : 'DOWN';
-    trail.push(`${state}${tab ? '/' + tab : ''}:${act}`);
-    log(`world| ${i}: ${state}${tab ? '(' + tab + ')' : ''} → ${act}`);
-    if (act === 'wait') { await sleep(2500); }
-    else { adb.pad(act); await sleep(act === 'A' ? 3500 : 1500); }
-    if (i % 4 === 0) shot(`${String(i).padStart(2, '0')}-${state}`);
-    i++;
-  }
-  shot('99-timeout');
-  return { entered: await ready(), trail, s: secs(maxMs / 1000) };
+/** 公開ログ用に app run の行を整える: 名前(プレイヤー名・ゲーマータグ)は伏せる(純粋) */
+export function scrubAppLine(line) {
+  return String(line ?? '').replace(/([^\s:：]{1,32}): \((-?\d)/g, '<player>: ($2');
 }
+/** lab.mjs app run を子として起こす(標準出力は 1 行ずつ [app] で流し、覚えておく)。env は game.mjs debug と同じ考え方:
+ *  動いている端末をそのまま使い(APP_LIVE_DEVICE)、準備の合図はファイル(APP_DEVICE_READY_FILE)で */
+function startAppRun({ adb, addon, scenario, readyFile, apkDir, early, log, scrubber }) {
+  const env = { ...process.env, APP_SERIAL: adb.serial, APP_LIVE_DEVICE: '1', APP_APK_DIR: apkDir, APP_HOST: '', APP_SHOT: 'adb', APP_SNAPSHOT: '0', APP_DEVICE_READY_FILE: readyFile };
+  for (const k of Object.keys(env)) if (/^GOOGLE_|^MS_|^SCRIPTEVAL_SO_KEY$/.test(k) || k === 'APP_DEVICE') delete env[k];
+  if (!early) env.APP_DEVICE_APKS_LATER = '1';
+  return import('./game.mjs').then(({ bridgeIp }) => {
+    env.APP_HOST = bridgeIp();
+    const lines = [];
+    const child = spawn(process.execPath, [path.join(TOP, 'lab.mjs'), 'app', 'run', '-a', addon, '--scenario', scenario], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+    let exit = null;
+    const done = new Promise((res) => child.on('exit', (status, signal) => { exit = { status, signal }; res(exit); }));
+    const feed = (buf) => { for (const l of String(buf).split('\n')) { if (!l.trim()) continue; const t = scrubber(scrubAppLine(l)); lines.push(t); if (lines.length > 4000) lines.splice(0, 1000); console.log('[app] ' + t); } };
+    child.stdout.on('data', feed); child.stderr.on('data', feed);
+    log(`app run を横で始めました(-a ${addon}、手順 ${path.relative(TOP, scenario)}、BDS は ${env.APP_HOST}): 端末の準備の合図を待っています`);
+    /** 行を待つ: from 番目より後で re に合う行 → その行 | null(時間切れ・app run が終わった) */
+    const waitLine = async (re, { from = 0, ms = 120_000 } = {}) => {
+      const end = Date.now() + ms;
+      for (;;) {
+        const hit = lines.slice(from).find((l) => re.test(l));
+        if (hit) return hit;
+        if (exit || Date.now() > end) return null;
+        await sleep(500);
+      }
+    };
+    return { child, done, lines, waitLine, get exit() { return exit; }, stop: () => { try { child.kill('SIGTERM'); } catch { /* gone */ } } };
+  });
+}
+/** logcat に合図を 1 行(app run の `until log <合図>` が拾う) */
+const signal = (adb, word) => adb.run(['shell', `log -t ScriptEval ${word}`], { timeout: 10_000 });
 
 /** .so の封緘鍵。専用の SCRIPTEVAL_SO_KEY があればそれで(端末の金庫 APP_CACHE_KEY には触らない)。無ければ従来どおり
  *  vaultKey()(APP_CACHE_KEY → GOOGLE_AAS_TOKEN)。seal-so.mjs と同じ決め方にする。 */
@@ -247,6 +253,111 @@ function deviceFacts(adb) {
   };
 }
 
+/** scripteval 自身の logcat の行(タグで拾う。/REPL/i は Play の "replicator" も拾っていた)→ 伏せた行 */
+function seLog(adb, secrets) {
+  const lc = adb.run(['logcat', '-d', '-v', 'brief'], { timeout: 30_000 }).stdout || '';
+  return lc.split('\n').filter((l) => /\b(ScriptEval|scripteval)\b|libscripteval/.test(l)).map((l) => scrub(l.trim(), secrets).slice(0, 300)).slice(-80);
+}
+
+const distXZ = (p, q) => (p && q && Number.isFinite(p.x) && Number.isFinite(q.x) ? Math.round(Math.hypot(q.x - p.x, q.z - p.z) * 100) / 100 : null);
+// (REPL のグローバルに mc は無い: prelude の局所変数。__native.mc を直に。ensure(true) の全走査は 15 秒に 1 回まで)
+const JS_IN_WORLD = `
+const g = globalThis, t = Date.now();
+if (!g.__seScanAt || t - g.__seScanAt > 15000) { g.__seScanAt = t; try { __native.mc.ensure(true); } catch {} }
+let ok = false; try { const r = __native.mc.localPlayer(); ok = !!(r && r[0]); } catch {}
+return ok;`;
+const JS_POS = 'const p = world.getLocalPlayer(); const l = p.location, r = p.getRotation(); return { x: l.x, y: l.y, z: l.z, yaw: r.y, pitch: r.x };';
+
+/** --world の本体: APK を渡して app run を起こし → ワールドに入るのを待ち → 入力の行き先を実測(explore)→ 歩けるかを試す
+ *  (コントローラ = 対照、injectInput = 本題)。合図ごとに app run がサーバーから見た位置を言う → 戻り: report.world */
+async function inWorldStage({ adb, abi, data, localPort, token, outDir, log, secrets, state, addon }) {
+  const W = { inWorld: false, addon };
+  const { pullApks } = await import('./game.mjs');
+  const apkDir = path.join(path.dirname(data), 'apk');
+  const t0 = now();
+  const apks = pullApks(adb, apkDir);
+  log(`APK ${apks.length} 個(${secs(now() - t0)} 秒): app run がゲームの版を読み、合う BDS を用意します`);
+  state.readyFile = path.join(path.dirname(data), 'device-ready.json');
+  fs.rmSync(state.readyFile, { force: true });
+  RD.writeReady(state.readyFile, { serial: adb.serial, ok: true });
+  const app = state.app = await startAppRun({ adb, addon, scenario: WORLD_SCENARIO, readyFile: state.readyFile, apkDir, early: RD.lastApks(apkDir), log, scrubber: (t) => scrub(t, secrets) });
+  const ask = async (body, ms = 30_000) => { const r = await openRepl({ host: '127.0.0.1', port: localPort, token, timeoutMs: ms }); try { return await r.js(body, { timeoutMs: ms }); } finally { r.close(); } };
+
+  // 1) ワールドに入るまで(BDS の用意 + LAN の参加。app run が終わってしまったらやめる)
+  const tw = now(), until = tw + (Number(process.env.SCRIPTEVAL_WORLD_WAIT_MS) || 20 * 60_000);
+  while (now() < until && !app.exit) {
+    let q = null; try { q = await ask(JS_IN_WORLD, 40_000); } catch { /* 繋ぎ直す */ }
+    if (q?.ok && q.value === true) { W.inWorld = true; break; }
+    await sleep(5000);
+  }
+  W.waitS = secs(now() - tw);
+  if (!W.inWorld) { W.why = app.exit ? `app run が先に終わりました(${JSON.stringify(app.exit)})` : `${W.waitS} 秒でワールドに入りませんでした`; log('world: ' + W.why); return W; }
+  log(`ワールドに入りました(${W.waitS} 秒)`);
+  // (app run が参加を終えて最初の where を言い、合図を待つ所まで来てから動かす: 参加中の OCR とコントローラの取り合いを避ける)
+  const first = await app.waitLine(/\)、向き -?\d/, { from: 0, ms: 300_000 });
+  W.firstWhere = whereOf(first);
+  log(`app run は合図待ち(最初の where: ${first ? JSON.stringify(W.firstWhere) : 'なし(時間切れ)'})。入力の行き先を実測します(読むだけ)`);
+  const pd = startPad(adb, { labDir: path.join(SE_DIR, '.lab'), abi });
+  log('world_pad: ' + pd.note);
+  const pad = async (w) => { if (w) adb.pad(w); };
+
+  // 2) 実測(explore.mjs): 雑音 → 入力ごとの follow / persist → 1.0 の全探索 → RTTI の名前
+  const repl = await openRepl({ host: '127.0.0.1', port: localPort, token, timeoutMs: 120_000 });
+  try { W.explore = await explore.explore({ repl, pad, sleep, log: (m) => log('world| ' + scrub(m, secrets)) }); }
+  catch (e) { W.explore = { ok: false, error: String(e.message || e) }; }
+  finally { repl.close(); }
+  try { fs.writeFileSync(path.join(outDir, 'scripteval-explore.json'), JSON.stringify(W.explore, null, 1)); } catch { /* best effort */ }
+  console.log('\n' + scrub(explore.summarize(W.explore), secrets));
+
+  // 3) 歩けるか: 合図 A → コントローラで 2 秒前へ(対照) → 合図 B → injectInput で 2.5 秒前へ(本題) → 合図 DONE。
+  //    合図ごとに app run が where(サーバーから見た位置)。クライアントの位置も REPL で。
+  const pos = async () => { try { return (await ask(JS_POS)).value; } catch { return null; } };
+  const serverAt = async (word) => {
+    const from = app.lines.length;
+    signal(adb, word);
+    const line = await app.waitLine(/\)、向き -?\d/, { from, ms: 120_000 });
+    return whereOf(line);
+  };
+  try {
+    await pad('center'); await sleep(800);
+    const A = { c: await pos(), s: await serverAt('SE_MARK_A') };
+    await pad('LY=-100 wait2000 LY=0'); await sleep(3500);
+    const B = { c: await pos(), s: await serverAt('SE_MARK_B') };
+    const before = (await ask('return { status: agent.status(), go: agent.forward(true) };')).value;
+    await sleep(2500);
+    const after = (await ask('return { stop: agent.stop(), status: agent.status(), tick: client.tick() };')).value;
+    await sleep(1500);
+    const C = { c: await pos(), s: await serverAt('SE_WORLD_DONE') };
+    W.walk = {
+      pad: { clientMoved: distXZ(A.c, B.c), serverMoved: distXZ(A.s, B.s) },
+      inject: { clientMoved: distXZ(B.c, C.c), serverMoved: distXZ(B.s, C.s), before, after },
+      at: { A, B, C },
+    };
+    log(`歩く(対照: コントローラ 2 秒): クライアント ${W.walk.pad.clientMoved} m・サーバー ${W.walk.pad.serverMoved} m`);
+    log(`歩く(injectInput 2.5 秒): クライアント ${W.walk.inject.clientMoved} m・サーバー ${W.walk.inject.serverMoved} m  status=${JSON.stringify(after?.status ?? null)}`);
+  } catch (e) { W.walkError = String(e.message || e); log('walk 失敗: ' + W.walkError.slice(0, 200)); signal(adb, 'SE_WORLD_DONE'); }
+
+  // 4) app run の終わり(BDS を止める)を待つ
+  const ex = await Promise.race([app.done, sleep(240_000).then(() => null)]);
+  if (!ex) { app.stop(); log('app run が終わらないので止めました'); }
+  W.app = { exit: app.exit, tail: app.lines.filter((l) => /✔|✘|PASS|FAIL|E /.test(l)).slice(-30) };
+  return W;
+}
+
+/** SE_EVIDENCE 用に小さく: 入ったか・待った秒・入力ごとの「入力らしい値」の先頭・歩いた距離 */
+function compactWorld(w) {
+  if (!w) return null;
+  const o = { inWorld: w.inWorld, waitS: w.waitS ?? null, why: w.why ?? w.error ?? null };
+  if (w.explore) {
+    o.explore = { ok: w.explore.ok, comps: w.explore.setup?.n ?? null, noise: w.explore.noise ?? null, error: w.explore.error ?? null };
+    o.explore.follow = Object.fromEntries((w.explore.steps ?? []).map((s) => [s.name, (s.rows ?? []).flatMap((row) => row.f.filter(([, a, b, c]) => a === c && b !== 0).slice(0, 2).map(([off, , b]) => `${row.r}+0x${off.toString(16)}=${b}`)).slice(0, 4)]));
+    if (w.explore.scan) o.explore.scan = w.explore.scan.steps.map(([, v]) => v.n);
+  }
+  if (w.walk) o.walk = { pad: w.walk.pad, inject: { clientMoved: w.walk.inject.clientMoved, serverMoved: w.walk.inject.serverMoved } };
+  if (w.app) o.app = w.app.exit;
+  return o;
+}
+
 async function run(o) {
   const port = Number(o.adbPort) || R.PORT;
   const replPort = Number(o.replPort) || 25599;
@@ -270,9 +381,13 @@ async function run(o) {
   // 端末は1台・1コマンドずつ(game.mjs の prep/bench/debug と同じ錠)。止められても端末は片付ける
   const release = R.lock('scripteval');
   let dev = null, cleaned = false;
-  const state = { started: false };
+  const state = { started: false, app: null, readyFile: null };
+  o.world = Boolean(o.world || o.openWorld);
   const cleanup = () => {
     if (cleaned) return; cleaned = true;
+    // (app run が残っていれば: 準備の合図がまだなら「できない」と伝え、止める。BDS は app run 自身が片付ける)
+    if (state.readyFile && !RD.readReady(state.readyFile)) RD.writeReady(state.readyFile, { ok: false, why: 'scripteval の検証が途中で終わりました' });
+    if (state.app && !state.app.exit) state.app.stop();
     // (起こしたのがこのスクリプトなら止める。--keep は端末を残す(次の run がそのまま使う)。常駐の端末には触らない)
     if (state.started && !o.keep) { R.down({ quiet: true }); R.sh('umount', [path.join(data + '.run', 'merged')], { sudo: true, quiet: true }); }
     release();
@@ -376,7 +491,7 @@ async function run(o) {
 
     // 7.55) Studio の見た目(0.3.1「操作」タブ)。端末の :25600 を host へ forward し、この環境の Chrome で開いて撮る。
     //       ベストエフォート(Chrome 無し等は理由を記録して先へ)。撮れた png は out/ に入り成果物になる。
-    if (probe.authed && token) {
+    if (probe.authed && token && (!o.world || o.studio)) {
       try {
         const sfw = await forwardPort(dev.adb, 25600, 25600);
         if (!sfw.ok) note('studio_forward', `失敗: ${sfw.err.slice(0, 100)}`);
@@ -390,43 +505,26 @@ async function run(o) {
       } catch (e) { note('studio_error', String(e.message || e)); }
     }
 
-    // 7.6) ワールドの中: injectInput の実効に要るオフセットを mod の読み取り専用 dbg で探す(ワールドに入っていれば)。
-    //      タイトルのまま(未参加)なら「未参加」を記録して次段へ。探索は一切書き込まない(読むだけ)。
-    if (probe.conclusions?.input_injection_available && token) {
-      try {
-        const repl = await openRepl({ host: '127.0.0.1', port: localPort, token, timeoutMs: 20_000 });
-        try {
-          const inWorld = async () => { const q = await repl.js('const lp = mc.localPlayer(); return !!(lp && lp[0]);'); return q.ok && q.value === true; };
-          // --open-world: BDS なしの自分のシングルプレイ「own world」を開く(切断されない。injectInput が実際にプレイヤーを動かす)。
-          //  コントローラが要るので先に用意。入れたら mod はワールドを見つけ LocalPlayer を検証する。
-          if (!(await inWorld()) && o.openWorld) {
-            const pd = startPad(dev.adb, { labDir: path.join(SE_DIR, '.lab'), abi });
-            note('world_pad', pd.note);
-            const ent = await enterOwnWorld(dev.adb, { log, shotDir: outDir, ready: inWorld, sleep });
-            report.enterWorld = { entered: ent.entered, trail: ent.trail, s: ent.s };
-            note('enter_world', ent.entered ? `入れました(${ent.s} 秒、手順 ${ent.trail.length})` : `入れず(${ent.s} 秒、手順 ${ent.trail.join(' ')})`);
-          }
-          if (await inWorld()) {
-            if (!dev.adb.padReady) { const pd = startPad(dev.adb, { labDir: path.join(SE_DIR, '.lab'), abi }); note('world_pad', pd.note); }
-            report.world = await world.findOffsets({ repl, pad: async (w) => { dev.adb.pad(w); }, sleep, log: (m) => log('world| ' + scrub(m, secrets)) });
-          } else {
-            report.world = { inWorld: false, why: o.openWorld ? 'ワールドに入れませんでした(enterWorld の手順/スクショを見て調整)' : 'タイトル画面(未参加)。--open-world でシングルプレイを開く' };
-          }
-        } finally { repl.close(); }
-        ev.world = { inWorld: report.world.inWorld, found: report.world.found ?? null };
-        console.log('\n' + scrub(world.summarize(report.world), secrets));
-      } catch (e) { note('world_error', String(e.message || e)); }
+    // 7.6) ワールドの中(--world): app run(ラボの BDS 参加)に入れてもらい、入力の行き先を実測し、歩けるかを試す。
+    //      注入は済んでいる(タイトル)。app run は logcat を消してから手順を始めるので、scripteval の初期化の行は今のうちに。
+    if (o.world && probe.conclusions?.js_runtime_runs_in_apk && token) {
+      report.scripteval_log_init = seLog(dev.adb, secrets);
+      for (const l of report.scripteval_log_init.slice(-24)) log('  se| ' + l);
+      try { report.world = await inWorldStage({ adb: dev.adb, abi, data, localPort, token, outDir, log, secrets, state, addon: o.addon || 'agent' }); }
+      catch (e) { report.world = { inWorld: false, error: String(e.message || e) }; note('world_error', report.world.error); }
+      ev.world = compactWorld(report.world);
     }
 
     // 8) scripteval 自身のログ(どこまで初期化が進んだか: preinit / launcher apis / REPL / Studio / RTTI / tick hook)
-    const lc = dev.adb.run(['logcat', '-d', '-v', 'brief'], { timeout: 30_000 }).stdout || '';
-    report.scripteval_log = lc.split('\n').filter((l) => /ScriptEval|scripteval|REPL|launcher apis|RTTI|Studio|tick hook|libscripteval/i.test(l)).map((l) => scrub(l.trim(), secrets).slice(0, 300)).slice(-60);
+    report.scripteval_log = seLog(dev.adb, secrets);
     for (const l of report.scripteval_log.slice(-40)) log('  se| ' + l);
     ev.log_lines = report.scripteval_log.length;
 
     const result = !probe.reachable ? 'repl_unreachable'
       : !probe.conclusions?.js_runtime_runs_in_apk ? 'repl_reachable'
-      : report.world?.inWorld && Object.keys(report.world.found ?? {}).length ? 'offsets_found'
+      : report.world?.walk?.inject?.serverMoved > 0.5 ? 'inject_walks'
+      : report.world?.explore?.ok ? 'world_measured'
+      : report.world?.inWorld ? 'in_world'
       : probe.conclusions?.input_injection_available ? 'injectinput_present'
       : 'js_runtime_up';
     console.log('\n' + scrub(summarize(probe), secrets));
@@ -442,7 +540,7 @@ function writeReport(outDir, report, log) {
   log('report: ' + f + ' (result=' + (report.result || '?') + ')');
 }
 
-const BOOL_FLAGS = ['--selftest', '--keep', '--no-launch', '--open-world'];
+const BOOL_FLAGS = ['--selftest', '--keep', '--no-launch', '--open-world', '--world', '--studio'];
 function parseArgs(a) { const o = {}; const rest = []; for (let i = 0; i < a.length; i++) { const k = a[i]; if (BOOL_FLAGS.includes(k)) o[k.slice(2).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = true; else if (k.startsWith('--')) o[k.slice(2).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = a[++i]; else rest.push(k); } o._ = rest; return o; }
 
 async function selftest() {
@@ -460,17 +558,17 @@ async function selftest() {
   t('listening: 無い port は偽', listening(tcp, 25600) === false);
   t('listening: ESTABLISHED だけなら偽', listening('   1: 0100007F:63FF 0100007F:9C40 01 0', 25599) === false);
   t('resolveData: 明示 > REDROID_DATA', resolveData('/x/y', { REDROID_DATA: '/z' }) === '/x/y' && resolveData(undefined, { REDROID_DATA: '/z' }) === '/z');
-  // world opener の 1 手の判断(純粋): タイトル→A、Worlds で A、Realms なら LB、読み込み中は wait
-  t('nextWorldAction: title → A', nextWorldAction('title', null) === 'A');
-  t('nextWorldAction: play-empty + worlds → A', nextWorldAction('play-empty', 'worlds') === 'A');
-  t('nextWorldAction: play-lan + realms → LB', nextWorldAction('play-lan', 'realms') === 'LB');
-  t('nextWorldAction: generating → wait', nextWorldAction('generating', null) === 'wait');
-  t('nextWorldAction: prompt-packs → A', nextWorldAction('prompt-packs', null) === 'A');
+  // --world: app run の where の答え(サーバーから見た位置)を読む・名前を伏せる(純粋)
+  const w = whereOf('    ✔ 14 where → <player>: (3.5, -60, -12.2)、向き -91.3°（東）・上下 0°、体力 20/20、手に なし、overworld');
+  t('whereOf: 位置と向きを読む', w && w.x === 3.5 && w.y === -60 && w.z === -12.2 && w.yaw === -91.3);
+  t('whereOf: 位置の無い行は null', whereOf('    ✔ 13 until log SE_MARK_A') === null);
+  t('scrubAppLine: プレイヤー名を伏せる', scrubAppLine('where → Steve123: (1.5, -60, 2)、向き 0°') === 'where → <player>: (1.5, -60, 2)、向き 0°');
+  t('WORLD_SCENARIO: 合図を待つ手順がある', /until log SE_MARK_A[\s\S]*until log SE_MARK_B[\s\S]*until log SE_WORLD_DONE/.test(fs.readFileSync(WORLD_SCENARIO, 'utf8')));
   // 専用鍵: SCRIPTEVAL_SO_KEY が APP_CACHE_KEY より優先(両方あっても SO_KEY を使う)
   t('soVaultKey: SCRIPTEVAL_SO_KEY を使う', soVaultKey({ SCRIPTEVAL_SO_KEY: 'K1', APP_CACHE_KEY: 'K2' })?.id === V.vaultKey({ APP_CACHE_KEY: 'K1' }).id);
   t('soVaultKey: 無ければ従来どおり', soVaultKey({ APP_CACHE_KEY: 'K2' })?.id === V.vaultKey({ APP_CACHE_KEY: 'K2' }).id);
   // 各モジュール自身の selftest(偽 REPL で実プロトコル・機能・オフセット探索)
-  for (const m of ['probe.mjs', 'features.mjs', 'world.mjs', 'studio.mjs']) {
+  for (const m of ['probe.mjs', 'features.mjs', 'world.mjs', 'explore.mjs', 'studio.mjs']) {
     const r = spawnSync(process.execPath, [path.join(SE_DIR, m), '--selftest'], { encoding: 'utf8' });
     t(`${m} --selftest`, r.status === 0 && /SELFTEST OK/.test(r.stdout));
   }
