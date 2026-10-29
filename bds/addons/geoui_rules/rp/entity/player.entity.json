@@ -24,7 +24,7 @@
         "grl_pal": "geometry.grl_pal"
       },
       "scripts": {
-        "scale": "variable.is_paperdoll ? 0.9375 : (q.is_in_ui ? ((v.grl_sc ?? 9375) / 10000) / ((((v.grl_comp ?? 0) > 0) && q.model_scale > 0.05) ? q.model_scale : 1) : 0.9375)",
+        "scale": "variable.is_paperdoll ? 0.9375 : (q.is_in_ui ? ((v.grl_sc ?? 9375) / 10000) / (((v.grl_comp ?? 0) > 1.5) ? ((v.grl_body ?? 10000) / 10000) : ((((v.grl_comp ?? 0) > 0) && q.model_scale > 0.05) ? q.model_scale : 1)) : 0.9375)",
         "initialize": [
           "variable.is_holding_right = 0.0;",
           "variable.is_blinking = 0.0;",
@@ -47,7 +47,10 @@
           "v.grl_sc = variable.is_paperdoll ? 9375 : q.property('grl:sc');",
           "v.grl_comp = variable.is_paperdoll ? 0 : q.property('grl:comp');",
           "v.grl_gain = (variable.is_paperdoll ? 1000 : q.property('grl:gain')) / 1000;",
-          "v.grl_ov = (variable.is_paperdoll ? 0 : q.property('grl:ov')) / 1000;"
+          "v.grl_ov = (variable.is_paperdoll ? 0 : q.property('grl:ov')) / 1000;",
+          "v.grl_zsel = variable.is_paperdoll ? 0 : q.property('grl:zsel');",
+          "v.grl_hide = variable.is_paperdoll ? 0 : q.property('grl:hide');",
+          "v.grl_body = variable.is_paperdoll ? 10000 : q.property('grl:body');"
         ],
         "animate": [
           {
@@ -148,13 +151,13 @@
           "controller.render.player.first_person_spectator": "variable.is_first_person && query.is_spectator"
         },
         {
-          "controller.render.player.third_person_spectator": "!variable.is_first_person && !variable.map_face_icon && query.is_spectator"
+          "controller.render.player.third_person_spectator": "(!variable.is_first_person && !variable.map_face_icon && query.is_spectator) && !(q.is_local_player && !q.is_in_ui && (v.grl_hide > 0))"
         },
         {
           "controller.render.player.first_person": "variable.is_first_person && !query.is_spectator"
         },
         {
-          "controller.render.player.third_person": "!variable.is_first_person && !variable.map_face_icon && !query.is_spectator"
+          "controller.render.player.third_person": "(!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) && !(q.is_local_player && !q.is_in_ui && (v.grl_hide > 0))"
         },
         {
           "controller.render.player.map": "variable.map_face_icon"

@@ -15,6 +15,9 @@
         },
         {
           "grl_b_emis": "material.grl_emissive"
+        },
+        {
+          "grl_c_fade": "material.grl_fade"
         }
       ],
       "textures": [

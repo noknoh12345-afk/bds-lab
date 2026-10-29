@@ -12,7 +12,7 @@
           "type": "int",
           "range": [
             0,
-            255
+            1023
           ],
           "default": 0
         },
@@ -30,7 +30,7 @@
           "type": "int",
           "range": [
             0,
-            1
+            2
           ],
           "default": 0
         },
@@ -51,6 +51,33 @@
             1000
           ],
           "default": 0
+        },
+        "grl:zsel": {
+          "client_sync": true,
+          "type": "int",
+          "range": [
+            0,
+            7
+          ],
+          "default": 0
+        },
+        "grl:hide": {
+          "client_sync": true,
+          "type": "int",
+          "range": [
+            0,
+            1
+          ],
+          "default": 0
+        },
+        "grl:body": {
+          "client_sync": true,
+          "type": "int",
+          "range": [
+            1000,
+            40000
+          ],
+          "default": 10000
         }
       }
     },

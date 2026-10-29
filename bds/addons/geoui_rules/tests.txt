@@ -36,6 +36,42 @@ wait 300
 ~ GRL anim stop
 !~ GRL .*error
 
+## 3 本目の口（奥行きの選び・止めたカメラ・サーバーが送る体の大きさ）
+js JSON.stringify([p('A').getProperty('grl:zsel'), p('A').getProperty('grl:hide'), p('A').getProperty('grl:body')])
+= [0,0,10000]
+scriptevent grl:show 448
+scriptevent grl:zsel 3
+scriptevent grl:comp 2
+wait 300
+js JSON.stringify([p('A').getProperty('grl:show'), p('A').getProperty('grl:zsel'), p('A').getProperty('grl:comp')])
+= [448,3,2]
+scriptevent grl:zsel 9
+~ GRL zsel <0…7>
+scriptevent grl:small 1
+wait 600
+scriptevent grl:body
+wait 300
+js p('A').getProperty('grl:body')
+= 5000
+scriptevent grl:cam 1
+wait 300
+js p('A').getProperty('grl:hide')
+= 1
+scriptevent grl:cam 0
+scriptevent grl:small 0
+wait 600
+scriptevent grl:body
+scriptevent grl:zsel 0
+scriptevent grl:comp 0
+scriptevent grl:show 0
+wait 300
+~ GRL cam 1
+~ GRL cam 0
+~ GRL body 0.5$
+!~ GRL .*error
+js JSON.stringify([p('A').getProperty('grl:zsel'), p('A').getProperty('grl:comp'), p('A').getProperty('grl:hide'), p('A').getProperty('grl:body')])
+= [0,0,0,10000]
+
 ## 体の大きさ（minecraft:scale 0.5、他のアドオンがするように）
 scriptevent grl:small 1
 wait 600

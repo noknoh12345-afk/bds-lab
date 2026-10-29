@@ -1,294 +1,280 @@
 {
- "version": 2,
+ "version": 3,
  "made": "bds/geoui/screen/rules.mjs",
  "note": "Written before the run. verdict compares the run with these numbers.",
- "earlier": "bds/geoui/rules-history/run-40055307539/",
- "bright": {
-  "shots": {
-   "plain": "bright-plain",
-   "gain": "bright-gain",
-   "ov": "bright-ov"
-  },
-  "gain": 1.32,
-  "ov": 0.24,
-  "ids": [
-   "ref255",
-   "ref128",
-   "fd255",
-   "fd128",
-   "ov255",
-   "ov128",
-   "em255",
-   "em255h",
-   "em255z",
-   "em128z"
+ "earlier": [
+  "bds/geoui/rules-history/run-40055307539/",
+  "bds/geoui/rules-history/run-40061560812/"
+ ],
+ "arm": {
+  "shots": [
+   "arm-z0",
+   "arm-z1",
+   "arm-z2",
+   "arm-z3",
+   "arm-z4",
+   "arm-z5",
+   "arm-z6"
   ],
-  "lit": {
-   "g255": 193.035,
-   "g128": 96.896
-  },
-  "emissive": {
-   "lerp": {
-    "em255": 193.035,
-    "em255h": 223.896,
-    "em255z": 253.056,
-    "em128z": 127.0242
-   },
-   "full": {
-    "em255": 255,
-    "em255h": 255,
-    "em255z": 255,
-    "em128z": 128
-   },
-   "none": {
-    "em255": 193.035,
-    "em255h": 193.035,
-    "em255z": 193.035,
-    "em128z": 96.896
-   },
-   "why": "lerp: the light lerp(1, 0.757, alpha) — the texture's alpha marks how much is lit (vanilla entity_emissive_alpha: the less alpha the more it glows); full: no light at all; none: USE_EMISSIVE does nothing"
-  },
-  "colour": {
-   "unclamped": {
-    "fd255": 255,
-    "fd128": 127.9027
-   },
-   "clamped": {
-    "fd255": 193.035,
-    "fd128": 96.896
-   },
-   "cutoutUnchanged": {
-    "ref255": 193.035,
-    "ref128": 96.896
-   }
-  },
-  "overlay": {
-   "after": {
-    "ov255": 207.9066,
-    "ov128": 134.841
-   },
-   "before": {
-    "ov255": 193.035,
-    "ov128": 119.9694
-   },
-   "none": {
-    "ov255": 193.035,
-    "ov128": 96.896
-   },
-   "cutoutUnchanged": {
-    "ref128": 96.896
-   }
-  }
- },
- "depth": {
-  "shot": "depth",
   "zs": [
    -150,
    -100,
-   -60,
-   -30,
+   -50,
    0,
-   30,
-   60,
+   50,
    100,
    150
   ],
-  "ifDrawn": 193.035,
-  "overlap": {
-   "ifPlusZFar": "green",
-   "ifPlusZNear": "red"
-  },
-  "boards": {
-   "ifDrawn": 72.672
-  },
-  "expect": "pack.js puts the nearer of two planes at the smaller z (toward the camera is negative): green in front; every square of ±60 drawn (R4.3 measured the grid's markers at ±60)"
- },
- "tilt": {
-  "shot": "tilt-noon",
-  "planes": [
+  "places": [
    {
-    "id": "ry-45b",
-    "rot": [
-     0,
-     -45,
-     0
-    ],
-    "x": -150,
-    "y": 135
-   },
-   {
-    "id": "ry-60",
-    "rot": [
-     0,
-     -60,
-     0
-    ],
+    "id": "p0",
     "x": -120,
-    "y": 135
+    "y": 175
    },
    {
-    "id": "ry-30",
-    "rot": [
-     0,
-     -30,
-     0
-    ],
-    "x": -90,
-    "y": 135
-   },
-   {
-    "id": "ry-15",
-    "rot": [
-     0,
-     -15,
-     0
-    ],
-    "x": -60,
-    "y": 135
-   },
-   {
-    "id": "flat",
-    "rot": [
-     0,
-     0,
-     0
-    ],
-    "x": -30,
-    "y": 135,
-    "v1": 194
-   },
-   {
-    "id": "ry15",
-    "rot": [
-     0,
-     15,
-     0
-    ],
-    "x": 0,
-    "y": 135
-   },
-   {
-    "id": "ry30",
-    "rot": [
-     0,
-     30,
-     0
-    ],
-    "x": 30,
-    "y": 135
-   },
-   {
-    "id": "ry45",
-    "rot": [
-     0,
-     45,
-     0
-    ],
-    "x": 60,
-    "y": 135,
-    "v1": 148
-   },
-   {
-    "id": "ry60",
-    "rot": [
-     0,
-     60,
-     0
-    ],
-    "x": 90,
-    "y": 135
-   },
-   {
-    "id": "ry-45",
-    "rot": [
-     0,
-     -45,
-     0
-    ],
+    "id": "p1",
     "x": 120,
-    "y": 135,
-    "v1": null
+    "y": 135
    },
    {
-    "id": "flatb",
-    "rot": [
-     0,
-     0,
-     0
-    ],
+    "id": "p2",
     "x": 150,
     "y": 135
    },
    {
-    "id": "rx-60",
-    "rot": [
-     -60,
-     0,
-     0
-    ],
-    "x": -120,
-    "y": 95
+    "id": "p3",
+    "x": 80,
+    "y": 75
    },
    {
-    "id": "rx-45",
+    "id": "p4",
+    "x": 120,
+    "y": 75
+   }
+  ],
+  "sky": "p0",
+  "ifDrawn": 193.035,
+  "seen": {
+   "p1": "z 0 hidden in runs 40055307539 and 40061560812",
+   "p2": "z 0 hidden (40061560812)",
+   "p3": "z 60 drawn over it (40061560812)",
+   "p4": "z 100 hidden (40061560812)"
+  },
+  "ifDepth": "at every place the drawn depths are the smaller ones — drawn up to a z*, hidden beyond it (p3: z* at least 50; p1, p2: below 0); p0 every z",
+  "ifOrder": "p1–p4 hidden at every z (whatever is there is drawn after GeoUI); p0 every z",
+  "camera": {
+   "shot": "arm-cam",
+   "against": "the first-person world",
+   "ifArm": "the change all at the bottom right (x 1000 and more, y 330 and more), p1–p4 in it: the arm gone"
+  },
+  "free": {
+   "shot": "arm-free",
+   "z": 0,
+   "ifArm": "p1–p4 drawn (193)",
+   "ifNot": "p1–p4 hidden as in first person"
+  }
+ },
+ "colours": {
+  "shots": {
+   "2": "colours-200",
+   "1.32": "colours-132"
+  },
+  "ids": [
+   "c_g255",
+   "c_g192",
+   "c_g128",
+   "c_g64",
+   "c_red",
+   "c_green",
+   "c_blue",
+   "c_yellow",
+   "c_orange"
+  ],
+  "cap": 236,
+  "perChannel": {
+   "2": {
+    "c_g255": [
+     236,
+     236,
+     236
+    ],
+    "c_g192": [
+     236,
+     236,
+     236
+    ],
+    "c_g128": [
+     195.792,
+     195.792,
+     195.792
+    ],
+    "c_g64": [
+     98.896,
+     98.896,
+     98.896
+    ],
+    "c_red": [
+     236,
+     2,
+     2
+    ],
+    "c_green": [
+     2,
+     236,
+     2
+    ],
+    "c_blue": [
+     2,
+     2,
+     236
+    ],
+    "c_yellow": [
+     236,
+     236,
+     2
+    ],
+    "c_orange": [
+     236,
+     195.792,
+     2
+    ]
+   },
+   "1.32": {
+    "c_g255": [
+     236,
+     236,
+     236
+    ],
+    "c_g192": [
+     193.8541,
+     193.8541,
+     193.8541
+    ],
+    "c_g128": [
+     129.9027,
+     129.9027,
+     129.9027
+    ],
+    "c_g64": [
+     65.9514,
+     65.9514,
+     65.9514
+    ],
+    "c_red": [
+     236,
+     2,
+     2
+    ],
+    "c_green": [
+     2,
+     236,
+     2
+    ],
+    "c_blue": [
+     2,
+     2,
+     236
+    ],
+    "c_yellow": [
+     236,
+     236,
+     2
+    ],
+    "c_orange": [
+     236,
+     129.9027,
+     2
+    ]
+   }
+  },
+  "hueKept": {
+   "2": {
+    "c_orange": [
+     236,
+     119.0685,
+     1.2163
+    ]
+   },
+   "1.32": {
+    "c_orange": [
+     236,
+     119.3781,
+     1.838
+    ]
+   }
+  }
+ },
+ "ov1": {
+  "shot": "bright-ov1",
+  "ov": 1,
+  "ids": [
+   "ov255",
+   "ov128"
+  ],
+  "ifFree": {
+   "ov255": 255,
+   "ov128": 255
+  },
+  "ifHeld": {
+   "ov255": 236,
+   "ov128": 236
+  },
+  "cutoutUnchanged": {
+   "ref255": 193.035
+  }
+ },
+ "fine": {
+  "shot": "tilt-fine",
+  "planes": [
+   {
+    "id": "ry1",
     "rot": [
-     -45,
      0,
+     1,
      0
     ],
-    "x": -90,
-    "y": 95,
-    "v1": 107
+    "x": -140,
+    "y": 175
    },
    {
-    "id": "rx-30",
+    "id": "ry5",
     "rot": [
-     -30,
      0,
+     5,
      0
     ],
-    "x": -60,
-    "y": 95
+    "x": -110,
+    "y": 175
    },
    {
-    "id": "rx-15",
+    "id": "rx-1",
     "rot": [
-     -15,
+     -1,
      0,
      0
     ],
-    "x": -30,
-    "y": 95
+    "x": -80,
+    "y": 175
    },
    {
-    "id": "flatc",
+    "id": "rx1",
     "rot": [
-     0,
+     1,
      0,
      0
     ],
-    "x": 0,
-    "y": 95
+    "x": -50,
+    "y": 175
    },
    {
-    "id": "rx15",
+    "id": "rx5",
     "rot": [
-     15,
+     5,
      0,
      0
     ],
-    "x": 30,
-    "y": 95
-   },
-   {
-    "id": "rx30",
-    "rot": [
-     30,
-     0,
-     0
-    ],
-    "x": 60,
-    "y": 95
+    "x": -20,
+    "y": 175
    },
    {
     "id": "rx45",
@@ -297,9 +283,8 @@
      0,
      0
     ],
-    "x": 90,
-    "y": 95,
-    "v1": 235
+    "x": 10,
+    "y": 175
    },
    {
     "id": "rx60",
@@ -308,39 +293,34 @@
      0,
      0
     ],
-    "x": 120,
-    "y": 95
+    "x": 40,
+    "y": 175
+   },
+   {
+    "id": "flatf",
+    "rot": [
+     0,
+     0,
+     0
+    ],
+    "x": 70,
+    "y": 175
    }
   ],
-  "boardIfDrawn": 72.672
- },
- "invisible": {
-  "shot": "ramp-invisible",
-  "ids": [
-   "g255",
-   "g0"
-  ],
-  "ifDrawn": {
-   "g255": 193.035,
-   "g0": 0
+  "bySign": {
+   "ry1": 148,
+   "ry5": 148,
+   "rx-1": 107,
+   "rx1": 235,
+   "rx5": 235,
+   "rx45": 235,
+   "rx60": 235,
+   "flatf": 194
   },
-  "expect": "not drawn (run 40055307539 found no grid)"
+  "ifSmooth": "the light turns with the angle: 1° within 3 of flat (194)"
  },
- "hurt": {
-  "shots": [
-   "bright-hurt1",
-   "bright-hurt2",
-   "bright-hurt3"
-  ],
-  "ids": [
-   "ref255",
-   "ov255"
-  ],
-  "ifNoFlash": 193.035,
-  "expect": "no red on either (is_hurt_color a 0; the cutout material has no USE_OVERLAY)"
- },
- "comp": {
-  "shot": "cal-comp",
+ "body": {
+  "shot": "cal-body",
   "cancels": {
    "unitsPerScreenH": 170.6667,
    "centreY": 134.9333
@@ -350,59 +330,127 @@
    "centreY": 245.8667
   }
  },
- "light": {
-  "conditions": [
-   "nightvision",
-   "box"
-  ],
-  "flat": 0.757,
-  "board": 72.672,
-  "expect": "the same 0.757 as at noon and at midnight (the UI has a light of its own)"
- },
- "gui": [
+ "gui3": [
   {
-   "shot": "gui-1100x1000",
-   "W": 1100,
-   "H": 1000,
-   "A": 3,
-   "B": 4
-  },
-  {
-   "shot": "gui-960x540",
-   "W": 960,
-   "H": 540,
-   "A": 2,
-   "B": 2
-  },
-  {
-   "shot": "gui-1279x960",
-   "W": 1279,
+   "shot": "gui-1290x960",
+   "W": 1290,
    "H": 960,
-   "A": 3,
-   "B": 4
+   "C": [
+    3,
+    4
+   ]
   },
   {
-   "shot": "gui-1280x960",
-   "W": 1280,
+   "shot": "gui-1300x960",
+   "W": 1300,
    "H": 960,
-   "A": 4,
-   "B": 4
+   "C": [
+    3,
+    4
+   ]
   },
   {
-   "shot": "gui-1920x959",
+   "shot": "gui-1320x960",
+   "W": 1320,
+   "H": 960,
+   "C": [
+    3,
+    4
+   ]
+  },
+  {
+   "shot": "gui-1340x960",
+   "W": 1340,
+   "H": 960,
+   "C": [
+    3,
+    4
+   ]
+  },
+  {
+   "shot": "gui-1360x960",
+   "W": 1360,
+   "H": 960,
+   "C": [
+    3,
+    4
+   ]
+  },
+  {
+   "shot": "gui-1920x760",
    "W": 1920,
-   "H": 959,
-   "A": 3,
-   "B": 3
+   "H": 760,
+   "C": [
+    3,
+    4
+   ]
   },
   {
-   "shot": "gui-2560x1440",
-   "W": 2560,
-   "H": 1440,
-   "A": 6,
-   "B": 6
+   "shot": "gui-1920x800",
+   "W": 1920,
+   "H": 800,
+   "C": [
+    3,
+    4
+   ]
+  },
+  {
+   "shot": "gui-1920x840",
+   "W": 1920,
+   "H": 840,
+   "C": [
+    3,
+    4
+   ]
+  },
+  {
+   "shot": "gui-1920x880",
+   "W": 1920,
+   "H": 880,
+   "C": [
+    3,
+    4
+   ]
+  },
+  {
+   "shot": "gui-1920x920",
+   "W": 1920,
+   "H": 920,
+   "C": [
+    3,
+    4
+   ]
+  },
+  {
+   "shot": "gui-1920x950",
+   "W": 1920,
+   "H": 950,
+   "C": [
+    3,
+    4
+   ]
+  },
+  {
+   "shot": "gui-3840x2160",
+   "W": 3840,
+   "H": 2160,
+   "C": [
+    4,
+    4
+   ]
   }
  ],
+ "cBounds": {
+  "W0": [
+   320,
+   341.3333
+  ],
+  "H0": [
+   180,
+   239.75
+  ],
+  "cap": 4
+ },
  "control": [
   {
    "shot": "cal-s0_9375",

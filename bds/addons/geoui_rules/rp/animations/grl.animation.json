@@ -22,6 +22,36 @@
         },
         "grl_depth": {
           "scale": "(math.mod(math.floor(v.grl_show / 32), 2) > 0.5) ? 1 : 0"
+        },
+        "grl_arm": {
+          "scale": "(math.mod(math.floor(v.grl_show / 64), 2) > 0.5) ? 1 : 0"
+        },
+        "grl_arm_z0": {
+          "scale": "(math.abs(v.grl_zsel - 0) < 0.5) ? 1 : 0"
+        },
+        "grl_arm_z1": {
+          "scale": "(math.abs(v.grl_zsel - 1) < 0.5) ? 1 : 0"
+        },
+        "grl_arm_z2": {
+          "scale": "(math.abs(v.grl_zsel - 2) < 0.5) ? 1 : 0"
+        },
+        "grl_arm_z3": {
+          "scale": "(math.abs(v.grl_zsel - 3) < 0.5) ? 1 : 0"
+        },
+        "grl_arm_z4": {
+          "scale": "(math.abs(v.grl_zsel - 4) < 0.5) ? 1 : 0"
+        },
+        "grl_arm_z5": {
+          "scale": "(math.abs(v.grl_zsel - 5) < 0.5) ? 1 : 0"
+        },
+        "grl_arm_z6": {
+          "scale": "(math.abs(v.grl_zsel - 6) < 0.5) ? 1 : 0"
+        },
+        "grl_colours": {
+          "scale": "(math.mod(math.floor(v.grl_show / 128), 2) > 0.5) ? 1 : 0"
+        },
+        "grl_fine": {
+          "scale": "(math.mod(math.floor(v.grl_show / 256), 2) > 0.5) ? 1 : 0"
         }
       }
     }

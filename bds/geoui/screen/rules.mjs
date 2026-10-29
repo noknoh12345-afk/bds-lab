@@ -12,14 +12,20 @@
 //   units below the panel's middle at any scale · R4.8 the entity's minecraft:scale multiplies the unit · R2.3 sneaking, the sleeping
 //   and swimming animations, a boat and the third-person views move nothing of GeoUI's · R3.7 a flat plane facing the camera comes
 //   out 0.757 x its colour, the same at noon and at midnight
-// What it left open, and this pack's run decides (app.txt, in this order):
-//   R3.11 white as white: the controller's colour above 1 on the colour-mask material, an overlay colour with USE_OVERLAY, an emissive
-//         material (USE_EMISSIVE) with the texture's alpha · R4.10 how far in depth planes are drawn (two rows of squares from z −150
-//         to 150; which of two planes 10 apart is in front; long boards at z 0 and 50 — run 40055307539 saw the world where boards at
-//         50 and 100 should have been) · R3.12 the light by the plane's direction (turned −60…60° about y and about x; one turned −45°
-//         about y was not drawn at all) · R3.9 invisibility · R3.8 the hurt flash (3 tries, with and without USE_OVERLAY) · R4.9
-//         cancelling the body's scale (scripts.scale / q.model_scale in the UI) · R3.7 the light with night vision and in a closed box ·
-//         R5.3 the GUI scale's rule on 6 screens · and the scales 0.9375 and 1 again as a control
+// Decided by run 40061560812 (the second; bds/geoui/rules-history/run-40061560812/): R3.11 white stops at 236 (the colour 1.32 on the
+//   colour-mask material: grey 128 as it is, white 236; emissive alpha 8: 234; the overlay mixes after the light) · R4.10 the smaller z
+//   in front, every z from −150 to 150 drawn · R3.12 a tilt's light by its sign, not its angle · R3.9 not drawn while invisible ·
+//   R3.8 no red · R4.9 q.model_scale is 1 in the UI (cancels nothing) · R5.3 neither min(⌊W/320⌋, ⌊H/240⌋) nor ⌊H/240⌋ · and found R4.11:
+//   every plane put at the screen's bottom right hidden (the first-person arm, as far as the numbers go). Its probe is
+//   rules-history/run-40061560812/ (app.txt and predictions.json); this file still reads it (PROBES keeps every box it measured).
+// What they left open, and this pack's third run decides (app.txt, in this order):
+//   R4.11 the bottom right: white squares at z −150…150 at the places the second run lost (and one in the open sky), then the same
+//         under GeoUI Screen's frozen camera (minecraft:free at the head, the body hidden) — the arm or not, by depth or by order ·
+//   R3.11 colours on the colour-mask material at the colour 1.32 and 2 (white, greys, red, green, blue, yellow, orange: each channel
+//         as it is up to 236?) and the white overlay at 1 (255 or 236?) · R3.12 tilts of 1° and 5°, and 45° and 60° about x where the
+//         arm is not · R4.9 the body's scale sent by the server (EntityScaleComponent.value as a property) and divided by ·
+//   R5.3 the GUI scale on 12 screens that pin min(4, ⌊W/W0⌋, ⌊H/H0⌋)'s W0, H0 and its cap · and the control again (the scales 0.9375
+//         and 1, the black board at z 100 — the second run lost them to a `shot world` of another size)
 // The calibration grid is GeoUI Builder's (bds/geoui/calib.mjs markers: `measure geoui` reads it), drawn in the same frame as
 // GeoUI Studio's renderer (10 % x 10 %, top_middle, 110 % down) with every centre fix 0.
 import fs from 'node:fs';
@@ -40,9 +46,10 @@ const LAB_OWN = new Set(['lab.mjs', 'tsconfig.json']);
 const GREYS = [0, 32, 64, 96, 128, 160, 192, 224, 255];
 const PAL = [['white', [255, 255, 255]], ['red', [255, 0, 0]], ['green', [0, 255, 0]], ['blue', [0, 0, 255]], ['yellow', [255, 255, 0]], ['cyan', [0, 255, 255]],
   ['black', [0, 0, 0]], ['violet', [128, 0, 255]], ...GREYS.map((g) => [`g${g}`, [g, g, g]]),
-  ['w_a128', [255, 255, 255, 128]], ['w_a8', [255, 255, 255, 8]], ['g128_a8', [128, 128, 128, 8]]];
+  ['w_a128', [255, 255, 255, 128]], ['w_a8', [255, 255, 255, 8]], ['g128_a8', [128, 128, 128, 8]], ['orange', [255, 128, 0]]];
 const PI = Object.fromEntries(PAL.map(([n], i) => [n, i]));
-export const BITS = { cal: 1, ramp: 2, tilt: 4, gui: 8, bright: 16, depth: 32 };
+/** grl:show's bits (the third run's: arm 64, colours 128, fine 256 — the property's range 0…1023) */
+export const BITS = { cal: 1, ramp: 2, tilt: 4, gui: 8, bright: 16, depth: 32, arm: 64, colours: 128, fine: 256 };
 /** run 40055307539's scales, and the two this run measures again as a control */
 export const SCALES = [0.9375, 0.5, 0.75, 1, 1.5], CONTROL_SCALES = [0.9375, 1];
 /** the 6 screens of the GUI scale's rule (landscape px) */
@@ -81,6 +88,43 @@ export const DEPTH = [...DEPTH_Z.map((z, i) => ({ id: `sky${z}`, row: 'sky', z, 
   .map((d) => ({ ...d, w: 12, h: 12 }));
 export const OVERLAP = { red: { x: -9, y: 135, w: 30, h: 12, z: 5 }, green: { x: 9, y: 135, w: 30, h: 12, z: -5 } };
 export const BOARDS = [{ id: 'board0', z: 0, x: 0, y: 110, w: 300, h: 8 }, { id: 'board50', z: 50, x: 0, y: 160, w: 300, h: 8 }];
+// ---- the third run's
+/** R4.11, the bottom right: white squares at seven depths (one depth a shot: grl:zsel), at the places the second run lost or half lost —
+ *  p1 run 40055307539's right45 (hidden at z 0 in both runs), p2 the flat plane beside it (hidden at z 0), p3 where the second run's
+ *  square at z 60 was drawn over what is there, p4 where its z 100 was hidden — and p0 in the open sky (every z drawn there: R4.10) */
+export const ARM_Z = [-150, -100, -50, 0, 50, 100, 150];
+export const ARM_PLACES = [{ id: 'p0', x: -120, y: 175 }, { id: 'p1', x: 120, y: 135 }, { id: 'p2', x: 150, y: 135 }, { id: 'p3', x: 80, y: 75 }, { id: 'p4', x: 120, y: 75 }]
+  .map((p) => ({ ...p, w: 12, h: 12 }));
+/** R3.11 again: colours on the colour-mask material (fade) — the controller's colour 1.32 and 2 — in the open sky, away from the arm */
+export const COLOURS = ['g255', 'g192', 'g128', 'g64', 'red', 'green', 'blue', 'yellow', 'orange'].map((c, i) => ({ id: `c_${c}`, c, x: -120 + 40 * (i % 5), y: i < 5 ? 185 : 145, w: 24, h: 24 }));
+/** R3.12 again: tilts of 1° and 5° (does the light turn with the angle near flat?), 45° and 60° about x away from the arm, a flat one */
+export const FINE = [['ry1', [0, 1, 0]], ['ry5', [0, 5, 0]], ['rx-1', [-1, 0, 0]], ['rx1', [1, 0, 0]], ['rx5', [5, 0, 0]], ['rx45', [45, 0, 0]], ['rx60', [60, 0, 0]], ['flatf', [0, 0, 0]]]
+  .map(([id, rot], i) => ({ id, rot, x: -140 + 30 * i, y: 175, w: 24, h: 24 }));
+/** R5.3 again: at 960 high (⌊960/H0⌋ ≥ 4) the widths that pin W0, at 1920 wide (⌊1920/W0⌋ = 5) the heights that pin H0, and a 4K screen
+ *  for the cap */
+export const GUI3_SIZES = [[1290, 960], [1300, 960], [1320, 960], [1340, 960], [1360, 960], [1920, 760], [1920, 800], [1920, 840], [1920, 880], [1920, 920], [1920, 950], [3840, 2160]];
+/** the GUI scales measured before the third run (run 39989463030's 10 screens, run 40061560812's 6): [W, H, scale] */
+export const GUI_MEASURED = [[1024, 768, 3], [1104, 920, 3], [1280, 800, 3], [1560, 720, 3], [1920, 1080, 4], [2160, 1080, 4], [2340, 1080, 4], [2400, 1080, 4], [2520, 1080, 4], [3840, 1080, 4],
+  [1100, 1000, 3], [960, 540, 2], [1279, 960, 3], [1280, 960, 3], [1920, 959, 4], [2560, 1440, 4]];
+/** R5.3's rule C: min(cap, ⌊W/W0⌋, ⌊H/H0⌋) — the 16 screens hold it for 320 < W0 ≤ 1024/3, 180 < H0 ≤ 959/4 and a cap of 4 */
+export const guiRuleC = (W, H, w0, h0, cap = 4) => Math.min(cap, Math.floor(W / w0), Math.floor(H / h0));
+export const C_BOUNDS = { W0: [320, 1024 / 3], H0: [180, 959 / 4], cap: 4 };
+/** the values C can take on a screen within C_BOUNDS (the lower bounds open, the upper closed) */
+export function guiRuleCRange(W, H, b = C_BOUNDS) {
+  const lo = Math.min(b.cap, Math.floor(W / b.W0[1]), Math.floor(H / b.H0[1])), hi = Math.min(b.cap, Math.ceil(W / b.W0[0]) - 1, Math.ceil(H / b.H0[0]) - 1);
+  return [lo, hi];
+}
+/** the W0 and H0 (on a 0.05 grid in C_BOUNDS) that hold rule C on every [W, H, scale] given: their ranges, or null when none does */
+export function guiRuleCFit(screens, b = C_BOUNDS) {
+  let w = null, h = null;
+  for (let i = 1, w0 = b.W0[0] + 0.05; w0 <= b.W0[1] + 1e-9; i++, w0 = b.W0[0] + 0.05 * i) {
+    for (let j = 1, h0 = b.H0[0] + 0.05; h0 <= b.H0[1] + 1e-9; j++, h0 = b.H0[0] + 0.05 * j) {
+      if (!screens.every(([W, H, u]) => guiRuleC(W, H, w0, h0, b.cap) === u)) continue;
+      w = w ? [Math.min(w[0], w0), Math.max(w[1], w0)] : [w0, w0]; h = h ? [Math.min(h[0], h0), Math.max(h[1], h0)] : [h0, h0];
+    }
+  }
+  return w ? { W0: w.map((x) => Math.round(x * 100) / 100), H0: h.map((x) => Math.round(x * 100) / 100) } : null;
+}
 
 // ---- the scene
 export function scene() {
@@ -119,9 +163,27 @@ export function scene() {
   plane('grl_depth', OVERLAP.red, 'red', OVERLAP.red.z);
   plane('grl_depth', OVERLAP.green, 'green', OVERLAP.green.z);
   for (const b of BOARDS) plane('grl_depth', b, 'g96', b.z);
+  // the bottom right (bit 64): a bone per depth, shown when grl:zsel picks it; its squares at every place
+  bones.push({ name: 'grl_arm', group: 'cal', scale: showIf(BITS.arm) });
+  ARM_Z.forEach((z, k) => {
+    bones.push({ name: `grl_arm_z${k}`, group: 'cal', parent: 'grl_arm', scale: `(math.abs(v.grl_zsel - ${k}) < 0.5) ? 1 : 0` });
+    for (const p of ARM_PLACES) plane(`grl_arm_z${k}`, p, 'white', z);
+  });
+  // colours on the colour-mask material (bit 128): a fade bone of their own
+  bones.push({ name: 'grl_colours', group: 'cal', scale: showIf(BITS.colours) });
+  bones.push({ name: 'grl_c_fade', group: 'cal', parent: 'grl_colours', material: 'fade' });
+  for (const c of COLOURS) plane('grl_c_fade', c, c.c);
+  // the small tilts (bit 256), each turned about its middle like the second run's
+  bones.push({ name: 'grl_fine', group: 'cal', scale: showIf(BITS.fine) });
+  for (const t of FINE) {
+    const b = `grl_fine_${t.id.replace('-', 'm')}`;
+    bones.push({ name: b, group: 'cal', parent: 'grl_fine', pivot: [t.x, -t.y], rotation: t.rot });
+    plane(b, t, 'white');
+  }
   const R = (n, def) => `variable.is_paperdoll ? ${def} : q.property('grl:${n}')`;
   const pre = [`v.grl_show = ${R('show', 0)};`, `v.grl_sc = ${R('sc', SC_DEFAULT)};`, `v.grl_comp = ${R('comp', 0)};`,
-    `v.grl_gain = (${R('gain', 1000)}) / 1000;`, `v.grl_ov = (${R('ov', 0)}) / 1000;`];
+    `v.grl_gain = (${R('gain', 1000)}) / 1000;`, `v.grl_ov = (${R('ov', 0)}) / 1000;`,
+    `v.grl_zsel = ${R('zsel', 0)};`, `v.grl_hide = ${R('hide', 0)};`, `v.grl_body = ${R('body', 10000)};`];
   // GeoUI Studio's renderer (10 % x 10 % at 110 % from the top's middle): the frame `measure geoui` reads the grid in
   const studio = { grl_studio: { type: 'panel', size: ['10%', '10%'], offset: [0, '110%'], anchor_from: 'top_middle', anchor_to: 'top_middle',
     controls: [{ grl_r_studio: { type: 'custom', renderer: 'live_player_renderer', layer: 1, bindings: [{ binding_name: '#hud_visible', binding_name_override: '#visible' }] } }] } };
@@ -134,11 +196,15 @@ export function scene() {
     ns: NS, name: 'GeoUI Rules Probe', description: 'GeoUI の規則を本物の画面で決める（bds-lab: bds/geoui/RULES.md）', seed: 'grl-1',
     uuids: { rp: 'd4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d11', rpMod: 'd4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d12', bp: 'd4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d13', bpData: 'd4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d14', bpScript: 'd4b9f2e3-5c8a-4d2a-8f1b-6e7a8b9c0d15' },
     scale: { mode: 'height', s: 0.1 }, groups, bones, planes, textures: [{ id: 'pal', width: 32, height: 2, png }], pre, initialize: [],
-    properties: [{ name: 'show', range: [0, 255], default: 0 }, { name: 'sc', range: [1000, 40000], default: SC_DEFAULT }, { name: 'comp', range: [0, 1], default: 0 },
-      { name: 'gain', range: [0, 4000], default: 1000 }, { name: 'ov', range: [0, 1000], default: 0 }],
-    // (the player's scale in the UI only — the paper doll and the world keep the vanilla 0.9375; with comp, divided by the entity's
-    //  own scale: R4.9 — whether q.model_scale is that scale is what the run decides; none under 0.05 is divided by)
-    scaleScript: `variable.is_paperdoll ? 0.9375 : (q.is_in_ui ? ((v.grl_sc ?? ${SC_DEFAULT}) / 10000) / ((((v.grl_comp ?? 0) > 0) && q.model_scale > 0.05) ? q.model_scale : 1) : 0.9375)`,
+    properties: [{ name: 'show', range: [0, 1023], default: 0 }, { name: 'sc', range: [1000, 40000], default: SC_DEFAULT }, { name: 'comp', range: [0, 2], default: 0 },
+      { name: 'gain', range: [0, 4000], default: 1000 }, { name: 'ov', range: [0, 1000], default: 0 },
+      { name: 'zsel', range: [0, 7], default: 0 }, { name: 'hide', range: [0, 1], default: 0 }, { name: 'body', range: [1000, 40000], default: 10000 }],
+    // (the player's scale in the UI only — the paper doll and the world keep the vanilla 0.9375; divided by the entity's own scale:
+    //  comp 1 by q.model_scale (R4.9: the second run found it 1 in the UI — cancels nothing; none under 0.05 is divided by), comp 2 by
+    //  grl:body, the scale the server reads off minecraft:scale (EntityScaleComponent.value) and sends — the third run decides it)
+    scaleScript: `variable.is_paperdoll ? 0.9375 : (q.is_in_ui ? ((v.grl_sc ?? ${SC_DEFAULT}) / 10000) / (((v.grl_comp ?? 0) > 1.5) ? ((v.grl_body ?? 10000) / 10000) : ((((v.grl_comp ?? 0) > 0) && q.model_scale > 0.05) ? q.model_scale : 1)) : 0.9375)`,
+    // (GeoUI Screen's frozen camera hides the player's own body from it: the third run's free camera does the same — grl:cam)
+    hideLocalPlayer: 'v.grl_hide > 0',
     // (R3.11: the controller's colour above 1, and a white overlay — on whichever material takes them)
     rcPatch: { color: { r: 'v.grl_gain ?? 1', g: 'v.grl_gain ?? 1', b: 'v.grl_gain ?? 1', a: 1 }, overlay_color: { r: 1, g: 1, b: 1, a: 'v.grl_ov ?? 0' } },
     extraMaterials: EXTRA_MATERIALS,
@@ -180,34 +246,43 @@ export const PROBES = {
     { id: 'overlap', box: at({ x: 0, y: 135, w: 8, h: 8 }, 0) }, { id: 'redOnly', box: at({ x: -17, y: 135, w: 8, h: 8 }, 0) }, { id: 'greenOnly', box: at({ x: 17, y: 135, w: 8, h: 8 }, 0) },
     ...BOARDS.flatMap((b) => [-100, 100].map((x) => ({ id: `${b.id}@${x}`, box: at({ x, y: b.y, w: 12, h: 4 }, 0) })))],
   calBoard: [{ id: 'board100', box: at({ x: 0, y: 200, w: 16, h: 16 }, 0) }],
+  // (the third run's)
+  arm: ARM_PLACES.map((p) => ({ id: p.id, box: at(p) })),
+  colours: COLOURS.map((c) => ({ id: c.id, box: at(c) })),
+  fine: FINE.map((t) => ({ id: t.id, box: at(t, 0.3) })),
 };
 
 // ---- the predictions (written before the run)
 export function predictions() {
   const H = (s) => r4(16 / (0.1 * s));
-  const emis = (g, a) => r4(g * (1 - (a / 255) * (1 - LIGHT)));
+  // (a colour on the colour-mask material at the controller's colour g: each channel 0.757 x g x its value + 2 (the light's offset),
+  //  held at 236 — white stopped there at 1.32 in run 40061560812 while grey 128 came out as it was put in)
+  const CAP = 236, fadeOut = (v, g) => r4(Math.min(CAP, LIGHT * g * v + 2));
+  const rgb = (name) => PAL.find(([n]) => n === name)[1].slice(0, 3);
   return {
-    version: 2, made: 'bds/geoui/screen/rules.mjs', note: 'Written before the run. verdict compares the run with these numbers.',
-    earlier: 'bds/geoui/rules-history/run-40055307539/',
-    // R3.11: grey of each patch (a GeoUI plane is one flat colour; the world through it is not)
-    bright: { shots: { plain: 'bright-plain', gain: 'bright-gain', ov: 'bright-ov' }, gain: 1.32, ov: 0.24, ids: BRIGHT.map((b) => b.id),
-      lit: { g255: lit(255), g128: lit(128) },
-      emissive: { lerp: { em255: lit(255), em255h: emis(255, 128), em255z: emis(255, 8), em128z: emis(128, 8) }, full: { em255: 255, em255h: 255, em255z: 255, em128z: 128 }, none: { em255: lit(255), em255h: lit(255), em255z: lit(255), em128z: lit(128) },
-        why: 'lerp: the light lerp(1, 0.757, alpha) — the texture\'s alpha marks how much is lit (vanilla entity_emissive_alpha: the less alpha the more it glows); full: no light at all; none: USE_EMISSIVE does nothing' },
-      colour: { unclamped: { fd255: 255, fd128: r4(Math.min(255, LIGHT * 1.32 * 128)) }, clamped: { fd255: lit(255), fd128: lit(128) }, cutoutUnchanged: { ref255: lit(255), ref128: lit(128) } },
-      overlay: { after: { ov255: r4(LIGHT * 255 * 0.76 + 255 * 0.24), ov128: r4(LIGHT * 128 * 0.76 + 255 * 0.24) }, before: { ov255: r4(LIGHT * (255 * 0.76 + 255 * 0.24)), ov128: r4(LIGHT * (128 * 0.76 + 255 * 0.24)) },
-        none: { ov255: lit(255), ov128: lit(128) }, cutoutUnchanged: { ref128: lit(128) } } },
-    // R4.10: which squares are drawn (lit white if so), which of the two planes is in front, whether the long boards are drawn
-    depth: { shot: 'depth', zs: DEPTH_Z, ifDrawn: lit(255), overlap: { ifPlusZFar: 'green', ifPlusZNear: 'red' }, boards: { ifDrawn: lit(96) },
-      expect: 'pack.js puts the nearer of two planes at the smaller z (toward the camera is negative): green in front; every square of ±60 drawn (R4.3 measured the grid\'s markers at ±60)' },
-    // R3.12: run 40055307539's values where it measured them; none for the new turns (values to fit the light to)
-    tilt: { shot: 'tilt-noon', planes: TILT.map((t) => ({ id: t.id, rot: t.rot, x: t.x, y: t.y, ...(Object.prototype.hasOwnProperty.call(TILT_V1, t.id) ? { v1: TILT_V1[t.id] } : {}) })), boardIfDrawn: lit(96) },
-    invisible: { shot: 'ramp-invisible', ids: ['g255', 'g0'], ifDrawn: { g255: lit(255), g0: 0 }, expect: 'not drawn (run 40055307539 found no grid)' },
-    hurt: { shots: ['bright-hurt1', 'bright-hurt2', 'bright-hurt3'], ids: ['ref255', 'ov255'], ifNoFlash: lit(255), expect: 'no red on either (is_hurt_color a 0; the cutout material has no USE_OVERLAY)' },
-    // R4.9: with comp, scripts.scale / q.model_scale — if q.model_scale is the entity's minecraft:scale (0.5), the body's scale cancels
-    comp: { shot: 'cal-comp', cancels: { unitsPerScreenH: H(0.9375), centreY: r4(centreOf(0.9375)) }, notCancelled: { unitsPerScreenH: H(0.9375 * 0.5), centreY: r4(centreOf(0.9375 * 0.5)) } },
-    light: { conditions: ['nightvision', 'box'], flat: LIGHT, board: lit(96), expect: 'the same 0.757 as at noon and at midnight (the UI has a light of its own)' },
-    gui: GUI_SIZES.map(([W, Hh]) => ({ shot: `gui-${W}x${Hh}`, W, H: Hh, A: guiRuleA(W, Hh), B: guiRuleB(W, Hh) })),
+    version: 3, made: 'bds/geoui/screen/rules.mjs', note: 'Written before the run. verdict compares the run with these numbers.',
+    earlier: ['bds/geoui/rules-history/run-40055307539/', 'bds/geoui/rules-history/run-40061560812/'],
+    // R4.11: per place, which depths are drawn (lit white if so) — first person, then GeoUI Screen's frozen camera (minecraft:free)
+    arm: { shots: ARM_Z.map((z, k) => `arm-z${k}`), zs: ARM_Z, places: ARM_PLACES.map(({ id, x, y }) => ({ id, x, y })), sky: 'p0', ifDrawn: lit(255),
+      seen: { p1: 'z 0 hidden in runs 40055307539 and 40061560812', p2: 'z 0 hidden (40061560812)', p3: 'z 60 drawn over it (40061560812)', p4: 'z 100 hidden (40061560812)' },
+      ifDepth: 'at every place the drawn depths are the smaller ones — drawn up to a z*, hidden beyond it (p3: z* at least 50; p1, p2: below 0); p0 every z',
+      ifOrder: 'p1–p4 hidden at every z (whatever is there is drawn after GeoUI); p0 every z',
+      camera: { shot: 'arm-cam', against: 'the first-person world', ifArm: 'the change all at the bottom right (x 1000 and more, y 330 and more), p1–p4 in it: the arm gone' },
+      free: { shot: 'arm-free', z: 0, ifArm: 'p1–p4 drawn (193)', ifNot: 'p1–p4 hidden as in first person' } },
+    // R3.11: each patch's channels at the controller's colour 1.32 and 2, if each channel is held at 236 by itself (per channel); held as
+    // a whole colour (its hue kept) orange's green would be half its red (118 at 1.32) where per channel it is 130
+    colours: { shots: { '1.32': 'colours-132', 2: 'colours-200' }, ids: COLOURS.map((c) => c.id), cap: CAP,
+      perChannel: Object.fromEntries([1.32, 2].map((g) => [String(g), Object.fromEntries(COLOURS.map((c) => [c.id, rgb(c.c).map((v) => fadeOut(v, g))]))])),
+      hueKept: Object.fromEntries([1.32, 2].map((g) => { const c = rgb('orange').map((v) => LIGHT * g * v + 2), k = Math.min(1, CAP / Math.max(...c)); return [String(g), { c_orange: c.map((x) => r4(x * k)) }]; })) },
+    // R3.11: the white overlay at 1 on USE_OVERLAY (it mixed after the light at 0.24): all the overlay's colour — 255, or held at 236
+    ov1: { shot: 'bright-ov1', ov: 1, ids: ['ov255', 'ov128'], ifFree: { ov255: 255, ov128: 255 }, ifHeld: { ov255: CAP, ov128: CAP }, cutoutUnchanged: { ref255: lit(255) } },
+    // R3.12: by the tilt's sign (the second run: about y ±15…±60° 148, about x −15…−60° 107, +15 and +30° 235)
+    fine: { shot: 'tilt-fine', planes: FINE.map(({ id, rot, x, y }) => ({ id, rot, x, y })), bySign: { ry1: 148, ry5: 148, 'rx-1': 107, rx1: 235, rx5: 235, rx45: 235, rx60: 235, flatf: 194 },
+      ifSmooth: 'the light turns with the angle: 1° within 3 of flat (194)' },
+    // R4.9: scripts.scale / grl:body (the server's minecraft:scale 0.5) with comp 2 — cancelled, the grid as at the vanilla scale
+    body: { shot: 'cal-body', cancels: { unitsPerScreenH: H(0.9375), centreY: r4(centreOf(0.9375)) }, notCancelled: { unitsPerScreenH: H(0.9375 * 0.5), centreY: r4(centreOf(0.9375 * 0.5)) } },
+    // R5.3: rule C's values on each screen within its bounds (one value: C says it; two: the screen pins W0 or H0); the cap 4 at 4K
+    gui3: GUI3_SIZES.map(([W, Hh]) => ({ shot: `gui-${W}x${Hh}`, W, H: Hh, C: guiRuleCRange(W, Hh) })), cBounds: { W0: [320, r4(1024 / 3)], H0: [180, r4(959 / 4)], cap: 4 },
     control: CONTROL_SCALES.map((s) => ({ shot: `cal-s${tag(s)}`, scale: s, unitsPerScreenH: H(s), centreY: r4(centreOf(s)) })),
     calBoard: { shot: 'cal-s0_9375', ifDrawn: 0 },
   };
@@ -215,9 +290,11 @@ export function predictions() {
 
 // ---- the behaviour pack's script
 const SCRIPT = `// GeoUI rules probe (bds-lab: bds/geoui/screen/rules.mjs makes this file — change that, not this).
-// /scriptevent grl:show <bits> · grl:scale <s> (the player's scale in the UI) · grl:comp 0|1 (divided by q.model_scale) · grl:gain <x>
-// (the controller's colour) · grl:ov <a> (a white overlay) · grl:sneak 0|1 · grl:anim <animation>|stop · grl:small 0|1 (minecraft:scale 0.5
-// by an event, as another add-on would) · grl:state
+// /scriptevent grl:show <bits> · grl:scale <s> (the player's scale in the UI) · grl:comp 0|1|2 (divided by q.model_scale | by grl:body)
+// · grl:body (grl:body = minecraft:scale's value, as the server reads it) · grl:gain <x> (the controller's colour) · grl:ov <a> (a white
+// overlay) · grl:zsel <0…7> (the depth the bottom right's squares are at) · grl:cam 1|0 (GeoUI Screen's frozen camera: minecraft:free at
+// the head, the body hidden) · grl:sneak 0|1 · grl:anim <animation>|stop · grl:small 0|1 (minecraft:scale 0.5 by an event, as another
+// add-on would) · grl:state
 import { world, system, Player } from '@minecraft/server';
 const log = (s) => console.warn('GRL ' + s);
 const num = (v, lo, hi) => { const x = Number(v); return Number.isFinite(x) && x >= lo && x <= hi ? x : null; };
@@ -226,9 +303,17 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
   const players = e.sourceEntity instanceof Player ? [e.sourceEntity] : world.getAllPlayers();
   for (const p of players) {
     try {
-      if (verb === 'show') { p.setProperty('grl:show', Math.max(0, Math.min(255, parseInt(args[0], 10) || 0))); log('show ' + p.getProperty('grl:show')); }
+      if (verb === 'show') { p.setProperty('grl:show', Math.max(0, Math.min(1023, parseInt(args[0], 10) || 0))); log('show ' + p.getProperty('grl:show')); }
       else if (verb === 'scale') { const s = num(args[0], 0.1, 4); if (s === null) { log('scale <0.1…4>'); continue; } p.setProperty('grl:sc', Math.round(s * 10000)); log('scale ' + s); }
-      else if (verb === 'comp') { p.setProperty('grl:comp', args[0] === '1' ? 1 : 0); log('comp ' + p.getProperty('grl:comp')); }
+      else if (verb === 'comp') { p.setProperty('grl:comp', args[0] === '2' ? 2 : args[0] === '1' ? 1 : 0); log('comp ' + p.getProperty('grl:comp')); }
+      else if (verb === 'body') { const sc = p.getComponent('minecraft:scale'), v = sc ? sc.value : 1; p.setProperty('grl:body', Math.round(Math.max(0.1, Math.min(4, v)) * 10000)); log('body ' + v); }
+      else if (verb === 'zsel') { const k = parseInt(args[0], 10); if (!(k >= 0 && k <= 7)) { log('zsel <0…7>'); continue; } p.setProperty('grl:zsel', k); log('zsel ' + k); }
+      else if (verb === 'cam') {
+        // (as GeoUI Screen freezes it: minecraft:free where the head is, looking where it looks; the body hidden from it)
+        if (args[0] === '1') { p.camera.setCamera('minecraft:free', { location: p.getHeadLocation(), rotation: p.getRotation() }); p.setProperty('grl:hide', 1); }
+        else { p.camera.clear(); p.setProperty('grl:hide', 0); }
+        log('cam ' + (args[0] === '1' ? 1 : 0));
+      }
       else if (verb === 'gain') { const g = num(args[0], 0, 4); if (g === null) { log('gain <0…4>'); continue; } p.setProperty('grl:gain', Math.round(g * 1000)); log('gain ' + g); }
       else if (verb === 'ov') { const a = num(args[0], 0, 1); if (a === null) { log('ov <0…1>'); continue; } p.setProperty('grl:ov', Math.round(a * 1000)); log('ov ' + a); }
       else if (verb === 'sneak') { p.isSneaking = args[0] === '1'; log('sneak ' + p.isSneaking); }
@@ -237,7 +322,7 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
         p.playAnimation(args[0] === 'stop' ? 'animation.humanoid.base_pose' : args[0], { controller: 'grl_pose', blendOutTime: 0 });
         log('anim ' + args[0]);
       } else if (verb === 'small') { p.triggerEvent(args[0] === '1' ? 'grl:small' : 'grl:normal'); log('small ' + args[0]); }
-      else if (verb === 'state') { const sc = p.getComponent('minecraft:scale'); log('state ' + JSON.stringify({ show: p.getProperty('grl:show'), sc: p.getProperty('grl:sc'), comp: p.getProperty('grl:comp'), gain: p.getProperty('grl:gain'), ov: p.getProperty('grl:ov'), sneaking: p.isSneaking, scale: sc ? sc.value : 1 })); }
+      else if (verb === 'state') { const sc = p.getComponent('minecraft:scale'); log('state ' + JSON.stringify({ show: p.getProperty('grl:show'), sc: p.getProperty('grl:sc'), comp: p.getProperty('grl:comp'), gain: p.getProperty('grl:gain'), ov: p.getProperty('grl:ov'), zsel: p.getProperty('grl:zsel'), hide: p.getProperty('grl:hide'), body: p.getProperty('grl:body'), sneaking: p.isSneaking, scale: sc ? sc.value : 1 })); }
       else log('unknown ' + verb);
     } catch (err) { log(verb + ' error ' + err); }
   }
@@ -248,42 +333,37 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
 //      the control last
 const HUD_OFF = ['crosshair', 'health', 'hunger', 'armor', 'progress_bar', 'air_bubbles', 'status_effects', 'item_text', 'tooltips', 'paperdoll', 'touch_controls'];
 export function appTxt() {
-  const lines = [`# GeoUI の規則を決める 2 本目（bds/geoui/screen/rules.mjs が作る。予測は predictions.json: 走らせる前にコミットしたもの）`,
-    `# 1 本目（run 40055307539）で決まった事と、その予測・手順は bds/geoui/rules-history/run-40055307539/`,
+  const lines = [`# GeoUI の規則を決める 3 本目（bds/geoui/screen/rules.mjs が作る。予測は predictions.json: 走らせる前にコミットしたもの）`,
+    `# 1 本目・2 本目（run 40055307539・40061560812）で決まった事と、その予測・手順は bds/geoui/rules-history/run-<番号>/`,
     `# node lab.mjs app ci -a geoui_rules --screen 720x1560 --knobs "APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"（人の許可をもらってから）→ node bds/geoui/screen/rules.mjs verdict <summary.json>`, '',
-    'section title', 'launch', 'until title 600000', 'shot title', '',
+    // (the game stopped and started again first: the prepared device's first join from its snapshot failed often in the device and
+    //  HTML runs — app/DESIGN.md)
+    'section title', 'stop', 'launch', 'until title 600000', 'shot title', '',
     'section join', 'join', 'until joined 900000', 'do tp @a 0 -60 0 0 0', 'do gamemode adventure @a', 'do time set noon', 'do weather clear',
     ...HUD_OFF.map((h) => `do hud @a hide ${h}`), 'do scriptevent grl:show 0', 'wait 6000', 'absent clientlog \\bERROR\\b', ''];
   const world = ['do scriptevent grl:show 0', 'wait 1500', 'shot world'];
   const measure = (shot, list) => list.map((p) => `measure color ${shot} ${p.box.join(' ')}`);
   const cal = (shot) => ['wait 1500', `shot ${shot}`, `measure geoui ${shot}`];
-  // R3.11: white as white — as it is, the controller's colour at 1.32, a white overlay at 0.24
-  lines.push('section brighten', ...world, `do scriptevent grl:show ${BITS.bright}`, 'wait 1500', 'shot bright-plain', ...measure('bright-plain', PROBES.bright),
-    'do scriptevent grl:gain 1.32', 'wait 1500', 'shot bright-gain', ...measure('bright-gain', PROBES.bright),
-    'do scriptevent grl:gain 1', 'do scriptevent grl:ov 0.24', 'wait 1500', 'shot bright-ov', ...measure('bright-ov', PROBES.bright),
+  // R4.11: the bottom right — seven depths in first person; the camera frozen as GeoUI Screen freezes it (what changed: the arm gone?);
+  // the squares at z 0 under it
+  lines.push('section arm', ...world, `do scriptevent grl:show ${BITS.arm}`);
+  ARM_Z.forEach((z, k) => lines.push(`do scriptevent grl:zsel ${k}`, 'wait 1200', `shot arm-z${k}`, ...measure(`arm-z${k}`, PROBES.arm)));
+  lines.push('do scriptevent grl:show 0', 'do scriptevent grl:cam 1', 'wait 2500', 'shot arm-cam', 'measure diff arm-cam', 'shot world',
+    `do scriptevent grl:zsel ${ARM_Z.indexOf(0)}`, `do scriptevent grl:show ${BITS.arm}`, 'wait 1500', 'shot arm-free', ...measure('arm-free', PROBES.arm),
+    'do scriptevent grl:show 0', 'do scriptevent grl:cam 0', 'do scriptevent grl:zsel 0', 'wait 2500', '');
+  // R3.11: colours on the colour-mask material at the controller's colour 1.32 and 2; the white overlay at 1
+  lines.push('section colours', ...world, 'do scriptevent grl:gain 1.32', `do scriptevent grl:show ${BITS.colours}`, 'wait 1500', 'shot colours-132', ...measure('colours-132', PROBES.colours),
+    'do scriptevent grl:gain 2', 'wait 1500', 'shot colours-200', ...measure('colours-200', PROBES.colours), 'do scriptevent grl:gain 1', 'do scriptevent grl:show 0', '');
+  lines.push('section overlay-1', ...world, 'do scriptevent grl:ov 1', `do scriptevent grl:show ${BITS.bright}`, 'wait 1500', 'shot bright-ov1', ...measure('bright-ov1', PROBES.bright),
     'do scriptevent grl:ov 0', 'do scriptevent grl:show 0', '');
-  // R4.10: depth — squares from z −150 to 150, two planes 10 apart, two long boards
-  lines.push('section depth', ...world, `do scriptevent grl:show ${BITS.depth}`, 'wait 1500', 'shot depth', ...measure('depth', PROBES.depth), 'measure diff depth', 'do scriptevent grl:show 0', '');
-  // R3.12: the light by the plane's direction (and run 40055307539's right45 again)
-  lines.push('section tilt', ...world, `do scriptevent grl:show ${BITS.tilt}`, 'wait 1500', 'shot tilt-noon', ...measure('tilt-noon', PROBES.tilt), 'do scriptevent grl:show 0', '');
-  // R3.9: invisibility (the ramp: big opaque patches)
-  lines.push('section invisible', ...world, `do scriptevent grl:show ${BITS.ramp}`, 'do effect @a invisibility 60 0 true', 'wait 1500', 'shot ramp-invisible',
-    ...measure('ramp-invisible', PROBES.invisible), 'measure diff ramp-invisible', 'do effect @a clear', 'do scriptevent grl:show 0', '');
-  // R3.8: the hurt flash, three tries (it lasts about half a second), on a plane without USE_OVERLAY and one with
-  lines.push('section hurt', ...world, `do scriptevent grl:show ${BITS.bright}`, 'wait 1500');
-  for (const k of [1, 2, 3]) lines.push('do damage @a 1', `shot bright-hurt${k}`, ...measure(`bright-hurt${k}`, PROBES.hurt), 'wait 1200');
-  lines.push('do effect @a instant_health 1 1 true', 'do scriptevent grl:show 0', '');
-  // R4.9: cancelling the body's scale
-  lines.push('section comp', `do scriptevent grl:show ${BITS.cal}`, 'do scriptevent grl:small 1', 'do scriptevent grl:comp 1', ...cal('cal-comp'),
-    'do scriptevent grl:comp 0', 'do scriptevent grl:small 0', 'do scriptevent grl:show 0', 'wait 1000', '');
-  // R3.7: the light with night vision at midnight, and in a closed stone box (no sky, no light)
-  const light = (cond, setup, undo) => lines.push(`section light-${cond}`, ...setup, ...world, `do scriptevent grl:show ${BITS.ramp}`, 'wait 1500',
-    `shot ramp-${cond}`, ...measure(`ramp-${cond}`, PROBES.ramp), 'do scriptevent grl:show 0', ...undo, '');
-  light('nightvision', ['do time set midnight', 'do effect @a night_vision 60 0 true'], ['do effect @a clear', 'do time set noon']);
-  light('box', ['do fill -2 -61 -2 2 -56 2 stone hollow', 'do tp @a 0 -60 0 0 0'], ['do fill -2 -60 -2 2 -56 2 air', 'do fill -2 -61 -2 2 -61 2 grass_block', 'do tp @a 0 -60 0 0 0']);
-  // R5.3: the GUI scale on 6 screens (the real hotbar hidden: the whole frame is seen)
+  // R3.12: tilts of 1° and 5°, 45° and 60° about x where the arm is not
+  lines.push('section fine', ...world, `do scriptevent grl:show ${BITS.fine}`, 'wait 1500', 'shot tilt-fine', ...measure('tilt-fine', PROBES.fine), 'do scriptevent grl:show 0', '');
+  // R4.9: the body's scale sent by the server, divided by in the UI
+  lines.push('section body', `do scriptevent grl:show ${BITS.cal}`, 'do scriptevent grl:small 1', 'wait 1000', 'do scriptevent grl:body', 'do scriptevent grl:comp 2', ...cal('cal-body'),
+    'do scriptevent grl:comp 0', 'do scriptevent grl:small 0', 'wait 1000', 'do scriptevent grl:body', 'do scriptevent grl:show 0', 'wait 1000', '');
+  // R5.3: the GUI scale on 12 screens (the real hotbar hidden: the whole frame is seen)
   lines.push('section gui', 'do hud @a hide hotbar', '');
-  for (const [w, h] of GUI_SIZES) lines.push(`section gui-${w}x${h}`, `size ${w}x${h}`, 'wait 9000', ...world,
+  for (const [w, h] of GUI3_SIZES) lines.push(`section gui-${w}x${h}`, `size ${w}x${h}`, 'wait 9000', ...world,
     `do scriptevent grl:show ${BITS.gui}`, 'wait 2000', `shot gui-${w}x${h}`, `measure marks gui-${w}x${h}`, '');
   // the control: run 40055307539's scales again, as it saw them (the hotbar shown), and the calibration's black board (z 100) — against
   // a `shot world` of this size (run 40061560812 measured the board against the last GUI screen's and lost it and the rest)
@@ -438,6 +518,86 @@ export function verdict(summary, pr = predictions(), appText = null) {
     if (gm.length) out.push({ rule: 'R5.3', claim: 'GUI の倍率 = min(⌊幅/320⌋, ⌊高さ/240⌋)（A）か ⌊高さ/240⌋（B）か', result: aOk && !bOk ? 'A' : bOk && !aOk ? 'B' : aOk && bOk ? 'A と B を分ける画面が測れていない' : 'どちらでもない',
       detail: gm.map((x) => `${x.p.W}x${x.p.H}: ${x.ui.toFixed(2)}（A ${x.p.A}・B ${x.p.B}）`).join(' / ') });
   }
+  // ---- the third run's: R4.11 the bottom right
+  if (pr.arm) {
+    const shots = pr.arm.shots.map((s) => read(s, PROBES.arm));
+    if (shots.some(any)) {
+      const row = (id) => pr.arm.zs.map((z, k) => ({ z, o: shots[k][id] || { kind: 'none' } })).filter((x) => x.o.kind !== 'none');
+      const drawnZ = (id) => row(id).filter((x) => x.o.kind === 'drawn').map((x) => x.z);
+      // (by depth: at each place the drawn ones are the smaller z — once one is hidden, every farther one is)
+      const monotone = (id) => { const r = row(id), i = r.findIndex((x) => x.o.kind !== 'drawn'); return i < 0 || r.slice(i).every((x) => x.o.kind !== 'drawn'); };
+      const armIds = pr.arm.places.map((p) => p.id).filter((id) => id !== pr.arm.sky);
+      const sky = row(pr.arm.sky), skyAll = sky.length > 0 && sky.every((x) => x.o.kind === 'drawn');
+      const someDrawn = armIds.some((id) => drawnZ(id).length > 0), someHidden = armIds.some((id) => drawnZ(id).length < row(id).length);
+      const how = !someHidden ? 'どこも全部描かれた（右下を隠す物が無かった）' : !someDrawn ? '描く順（右下の所はどの z も隠れる）' : armIds.every(monotone) ? '奥行き（小さい z から描かれ、ある z から先が隠れる）' : 'どちらでもない（奥行きの順でない）';
+      const free = read(pr.arm.free.shot, PROBES.arm), freeSeen = armIds.filter((id) => free[id] && free[id].kind !== 'none'), freeDrawn = freeSeen.filter((id) => free[id].kind === 'drawn');
+      const cam = by(pr.arm.camera.shot, 'diff')[0], cv = cam && cam.ok ? cam.values : null;
+      // (where the frozen camera changed the picture: all of it at the bottom right — the arm gone — or elsewhere too)
+      const camSays = cv ? `止めたカメラで変わった所 ${(100 * cv.share).toFixed(2)} %・(${cv.x0}, ${cv.y0})–(${cv.x1}, ${cv.y1})${cv.x0 >= 1000 && cv.y0 >= 330 ? '（全部右下）' : ''}` : '止めたカメラの違いは測れなかった';
+      const freeSays = !freeSeen.length ? '止めたカメラの四角は測れなかった' : freeDrawn.length === freeSeen.length ? `止めたカメラでは右下も全部描かれた（${freeDrawn.length} か所）` : `止めたカメラでも ${freeSeen.filter((id) => free[id].kind !== 'drawn').join(' ')} が隠れた`;
+      const firstPerson = (id) => { const m = by(pr.arm.shots[pr.arm.zs.indexOf(0)], 'color')[PROBES.arm.findIndex((p) => p.id === id)]; return m && m.ok ? `rgb(${[m.values.br, m.values.bg, m.values.bb].map(Math.round)})` : '—'; };
+      const freeWorld = (id) => { const m = by(pr.arm.free.shot, 'color')[PROBES.arm.findIndex((p) => p.id === id)]; return m && m.ok ? `rgb(${[m.values.br, m.values.bg, m.values.bb].map(Math.round)})` : '—'; };
+      out.push({ rule: 'R4.11', claim: '画面の右下で GeoUI を隠す物（1 人称の腕か・奥行きか描く順か）', result: `${how}・${freeSays}${skyAll ? '' : '（空の所でも隠れた）'}`,
+        detail: [...pr.arm.places.map((p) => `${p.id}: ${row(p.id).map((x) => `${x.z} ${say(x.o)}`).join(' ')}${free[p.id] ? ` | 止めたカメラ ${say(free[p.id])}` : ''}`),
+          camSays, `ワールドの色（1 人称 → 止めたカメラ）: ${armIds.map((id) => `${id} ${firstPerson(id)} → ${freeWorld(id)}`).join(' ')}`].join(' / ') });
+    }
+  }
+  // ---- the third run's: R3.11 colours at the controller's colour, the white overlay at 1
+  if (pr.colours) {
+    const rows3 = [];
+    let worst = 0, n = 0, orange = null;
+    for (const [g, shot] of Object.entries(pr.colours.shots)) {
+      const o = read(shot, PROBES.colours, { grey: false }), want = pr.colours.perChannel[g];
+      if (!any(o)) continue;
+      const parts = pr.colours.ids.map((id) => {
+        const x = o[id]; if (!x || x.kind !== 'drawn') return `${id.slice(2)} ${say(x)}`;
+        const got = [x.v.r, x.v.g, x.v.b], d = Math.max(...got.map((v, i) => Math.abs(v - want[id][i]))); worst = Math.max(worst, d); n++;
+        if (id === 'c_orange' && g === '1.32') orange = got;
+        return `${id.slice(2)} (${got.map(Math.round).join(',')})`;
+      });
+      rows3.push(`色 ${g}: ${parts.join(' ')}`);
+    }
+    if (n) {
+      const hk = pr.colours.hueKept && pr.colours.hueKept['1.32'] && pr.colours.hueKept['1.32'].c_orange, pc = pr.colours.perChannel['1.32'].c_orange;
+      const orangeSays = orange && hk ? (Math.abs(orange[1] - pc[1]) < Math.abs(orange[1] - hk[1]) ? 'チャンネルごと' : '色の全体で（色合いを保って）') : '—';
+      out.push({ rule: 'R3.11', claim: 'fade と色の倍率で、色は入れた色のまま出るか（236 で止まるのはチャンネルごとか）', result: worst <= 4 ? `入れた色のまま（チャンネルごとに 236 で止まる: 予測との差 ${worst.toFixed(1)} 以内）` : `予測と ${worst.toFixed(1)} 違う（止まり方: ${orangeSays}）`,
+        detail: `${rows3.join(' / ')} / 橙の緑で見る止まり方: ${orangeSays}` });
+    }
+  }
+  if (pr.ov1) {
+    const o = read(pr.ov1.shot, PROBES.bright), v = pr.ov1.ids.map((id) => (o[id] && o[id].kind === 'drawn' ? o[id].g : null));
+    if (v.some((x) => x !== null)) {
+      const near = (x) => (x === null ? null : Math.abs(x - pr.ov1.ifFree.ov255) <= 4 ? '255（止まらない）' : Math.abs(x - pr.ov1.ifHeld.ov255) <= 4 ? '236（止まる）' : 'どちらでもない');
+      out.push({ rule: 'R3.11', claim: '白の重ねる色を 1 にすると、255 か 236 か', result: near(v[0]) === near(v[1]) ? near(v[0]) : `白と灰で違う（${near(v[0])}・${near(v[1])}）`,
+        detail: `${pr.ov1.ids.map((id, i) => `${id} ${v[i] === null ? say(o[id]) : v[i].toFixed(0)}`).join(' ')}・cutout の白 ${say(o.ref255)}` });
+    }
+  }
+  // ---- the third run's: R3.12 small tilts
+  if (pr.fine) {
+    const o = read(pr.fine.shot, PROBES.fine);
+    if (any(o)) {
+      const ids = pr.fine.planes.map((t) => t.id), got = Object.fromEntries(ids.map((id) => [id, o[id] && o[id].kind === 'drawn' ? o[id].g : null]));
+      const bySign = ids.every((id) => got[id] !== null && Math.abs(got[id] - pr.fine.bySign[id]) <= 4), smooth = ['ry1', 'rx-1', 'rx1'].every((id) => got[id] !== null && Math.abs(got[id] - pr.fine.bySign.flatf) <= 3);
+      out.push({ rule: 'R3.12', claim: '1°・5° の傾き・x のまわりに 45°・60°（右下でない所）', result: bySign ? '向きの符号で決まる（1° でも）' : smooth ? '角度で変わる（1° は平らと同じ）' : 'どちらでもない',
+        detail: ids.map((id) => `${id} ${got[id] === null ? say(o[id]) : got[id].toFixed(0)}`).join(' ') });
+    }
+  }
+  // ---- the third run's: R4.9 the body's scale from the server
+  if (pr.body) {
+    const v = geo(pr.body.shot);
+    if (v) out.push({ rule: 'R4.9', claim: 'サーバーが読んだ体の大きさ（grl:body）で scripts.scale を割ると打ち消せる', result: Math.abs(pct(v.unitsPerScreenH, pr.body.cancels.unitsPerScreenH)) < 0.6 ? '打ち消せる' : Math.abs(pct(v.unitsPerScreenH, pr.body.notCancelled.unitsPerScreenH)) < 0.6 ? '打ち消せない' : 'どちらでもない',
+      detail: `高さ ${v.unitsPerScreenH.toFixed(2)}・中心 ${v.centreY.toFixed(2)}（打ち消せれば ${pr.body.cancels.unitsPerScreenH}・${pr.body.cancels.centreY}、そうでなければ ${pr.body.notCancelled.unitsPerScreenH}・${pr.body.notCancelled.centreY}）` });
+  }
+  // ---- the third run's: R5.3 rule C on 12 more screens
+  if (Array.isArray(pr.gui3)) {
+    const gm = pr.gui3.map((p) => { const m = by(p.shot, 'marks')[0], v = m && m.ok ? m.values : null; return { p, ui: v && Number.isFinite(v.violetx0) ? (v.violetx1 - v.violetx0) / 182 : null }; }).filter((x) => x.ui !== null);
+    if (gm.length) {
+      const inRange = gm.every((x) => Math.abs(x.ui - Math.round(x.ui)) < 0.1 && Math.round(x.ui) >= x.p.C[0] && Math.round(x.ui) <= x.p.C[1]);
+      const fitC = inRange ? guiRuleCFit([...GUI_MEASURED, ...gm.map((x) => [x.p.W, x.p.H, Math.round(x.ui)])]) : null;
+      out.push({ rule: 'R5.3', claim: 'GUI の倍率 = min(4, ⌊幅/W0⌋, ⌊高さ/H0⌋)（C）', result: !inRange ? 'C ではない（C の取れる値の外）' : fitC ? `C: W0 ${fitC.W0[0]}〜${fitC.W0[1]}・H0 ${fitC.H0[0]}〜${fitC.H0[1]}（0.05 刻み）` : 'C ではない（どの W0・H0 も全部の画面には合わない）',
+        detail: gm.map((x) => `${x.p.W}x${x.p.H}: ${x.ui.toFixed(2)}（C ${x.p.C[0] === x.p.C[1] ? x.p.C[0] : `${x.p.C[0]}〜${x.p.C[1]}`}）`).join(' / ') });
+    }
+  }
   // ---- the control
   if (Array.isArray(pr.control)) {
     const c = pr.control.map((p) => ({ p, v: geo(p.shot) })).filter((x) => x.v);
@@ -489,6 +649,42 @@ wait 300
 ~ GRL anim stop
 !~ GRL .*error
 
+## 3 本目の口（奥行きの選び・止めたカメラ・サーバーが送る体の大きさ）
+js JSON.stringify([p('A').getProperty('grl:zsel'), p('A').getProperty('grl:hide'), p('A').getProperty('grl:body')])
+= [0,0,10000]
+scriptevent grl:show 448
+scriptevent grl:zsel 3
+scriptevent grl:comp 2
+wait 300
+js JSON.stringify([p('A').getProperty('grl:show'), p('A').getProperty('grl:zsel'), p('A').getProperty('grl:comp')])
+= [448,3,2]
+scriptevent grl:zsel 9
+~ GRL zsel <0…7>
+scriptevent grl:small 1
+wait 600
+scriptevent grl:body
+wait 300
+js p('A').getProperty('grl:body')
+= 5000
+scriptevent grl:cam 1
+wait 300
+js p('A').getProperty('grl:hide')
+= 1
+scriptevent grl:cam 0
+scriptevent grl:small 0
+wait 600
+scriptevent grl:body
+scriptevent grl:zsel 0
+scriptevent grl:comp 0
+scriptevent grl:show 0
+wait 300
+~ GRL cam 1
+~ GRL cam 0
+~ GRL body 0.5$
+!~ GRL .*error
+js JSON.stringify([p('A').getProperty('grl:zsel'), p('A').getProperty('grl:comp'), p('A').getProperty('grl:hide'), p('A').getProperty('grl:body')])
+= [0,0,0,10000]
+
 ## 体の大きさ（minecraft:scale 0.5、他のアドオンがするように）
 scriptevent grl:small 1
 wait 600
@@ -533,12 +729,17 @@ const TASK = `# geoui_rules — GeoUI の規則を本物の画面で決める
 - R2.3: しゃがむ・眠る・泳ぐのアニメーション・ボート・三人称で GeoUI は動かない
 - R3.7: カメラを向いた板の色 = 0.757 x 入れた色（まっすぐ・昼も夜も同じ）
 
+## 2 本目で決まった事（run 40061560812: bds/geoui/rules-history/run-40061560812/）
+- R3.11: 白は 236 で止まる（fade に色 1.32 で灰 128 は入れた色のまま・emissive のアルファ 8 で 234・重ねる色は光の後）
+- R4.10: 小さい z が手前、z −150〜150 の全部が描かれる · R3.12: 傾けた板の明るさは角度でなく向きの符号
+- R3.9: 透明化の間は描かれない · R3.8: ダメージの赤はかからない · R4.9: UI の中の q.model_scale は 1（打ち消せない）
+- R5.3: GUI の倍率は min(⌊幅/320⌋, ⌊高さ/240⌋) でも ⌊高さ/240⌋ でもない · R4.11（見つけた）: 画面の右下に置いた板は 9 か所とも隠れた
+
 ## What it decides now (app.txt)
-- R3.11 白を白に: cutout（基準）・fade に render controller の色 1.32・USE_OVERLAY の材質に overlay_color 0.24・USE_EMISSIVE の材質とテクスチャのアルファ
-- R4.10 奥行き: z −150〜150 の四角（空の前・地面の前）・10 離れた 2 枚の前後・z 0 と 50 の長い板
-- R3.12 面の向き: y と x のまわりに −60〜60° 傾けた板（1 本目で描かれなかった右 45° を同じ所と左端で）
-- R3.9 透明化 · R3.8 ダメージの点滅（3 回、USE_OVERLAY の有り無し）· R4.9 体の大きさを打ち消す（scale / q.model_scale）
-- R3.7 暗視・閉じた箱 · R5.3 GUI の倍率の決まり（6 画面）· 対照: scale 0.9375・1 と目盛りの黒い板（z 100）
+- R4.11 右下: 白い四角を z −150〜150 の 7 つの奥行きで、2 本目に隠れた所（と空の所）に。次に GeoUI Screen と同じ止めたカメラ（minecraft:free・体を隠す）で
+- R3.11 色: fade に色 1.32 と 2 で白・灰・赤・緑・青・黄・橙（チャンネルごとに 236 で止まるか）、白の重ねる色を 1 に（255 か 236 か）
+- R3.12 1°・5° の傾きと、x のまわりに 45°・60° を右下でない所で · R4.9 サーバーが読んだ体の大きさ（grl:body）で割る
+- R5.3 GUI の倍率を 12 画面で（min(4, ⌊幅/W0⌋, ⌊高さ/H0⌋) の W0・H0・上限）· 対照: scale 0.9375・1 と目盛りの黒い板（z 100）
 
 ## Run
 \`node lab.mjs app ci -a geoui_rules --screen 720x1560 --knobs "APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"\`（人の許可をもらってから。1 本目と同じ 1560 x 720 の画面: 測る箱はこの画面の px。knobs も 1 本目と同じ: サインインしない準備済みの端末がキャッシュにある。knobs なしの run 40059578622 はサインインありの端末を作り直そうとして 10 分で止まった）→ \`node bds/geoui/screen/rules.mjs verdict <summary.json>\`。
@@ -547,6 +748,7 @@ const TASK = `# geoui_rules — GeoUI の規則を本物の画面で決める
 - [ ] 読み込める（プロパティが既定値）
 - [ ] 表示と UI の中の scale・打ち消し・色の倍率・重ねる色を変える
 - [ ] サーバーからしゃがませる・アニメーション
+- [ ] 3 本目の口（奥行きの選び・止めたカメラ・サーバーが送る体の大きさ）
 - [ ] 体の大きさ（minecraft:scale 0.5、他のアドオンがするように）
 - [ ] 乗り物（ボートに乗る・降りる）
 - [ ] 閉じた箱を作って壊す（app.txt の light-box と同じコマンド）
