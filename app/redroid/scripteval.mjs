@@ -268,6 +268,43 @@ let ok = false; try { const r = __native.mc.localPlayer(); ok = !!(r && r[0]); }
 return ok;`;
 const JS_POS = 'const p = world.getLocalPlayer(); const l = p.location, r = p.getRotation(); return { x: l.x, y: l.y, z: l.z, yaw: r.y, pitch: r.x };';
 
+/** 次の段(ゲームの入力の流れに入る所)のための下調べ: 取り出した APK の libminecraftpe.so が外から借りる関数の名前
+ *  (NDK の入力・ループ・ウィンドウ・EGL/GL・JNI)と、必要とするライブラリ。中身は出さない(関数名だけ・ここで読むだけ) */
+export function soImports(apkDir, abi, { sh = R.sh } = {}) {
+  const out = { lib: null, needed: [], imports: {}, exports: {} };
+  const apks = fs.existsSync(apkDir) ? fs.readdirSync(apkDir).filter((f) => f.endsWith('.apk')) : [];
+  const entry = `lib/${abi}/libminecraftpe.so`;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'se-imp-'));
+  try {
+    for (const a of apks) {
+      const list = sh('unzip', ['-Z1', path.join(apkDir, a)], { quiet: true, timeout: 60_000 }).stdout || '';
+      if (!list.split('\n').includes(entry)) continue;
+      const so = path.join(tmp, 'libminecraftpe.so');
+      if (sh('sh', ['-c', `unzip -p '${path.join(apkDir, a)}' '${entry}' > '${so}'`], { quiet: true, timeout: 300_000 }).status !== 0) continue;
+      out.lib = { apk: a, bytes: fs.statSync(so).size };
+      const dyn = sh('readelf', ['-d', '-W', so], { quiet: true, timeout: 120_000 }).stdout || '';
+      out.needed = [...dyn.matchAll(/\(NEEDED\)\s+Shared library: \[([^\]]+)\]/g)].map((m) => m[1]);
+      const syms = sh('readelf', ['--dyn-syms', '-W', so], { quiet: true, timeout: 300_000 }).stdout || '';
+      const und = [], def = [];
+      for (const l of syms.split('\n')) {
+        const f = l.trim().split(/\s+/);
+        if (f.length < 8 || !/^\d+:$/.test(f[0])) continue;
+        const name = f[7].replace(/@.*$/, '');
+        (f[6] === 'UND' ? und : def).push(name);
+      }
+      const pick = (names, re) => names.filter((n) => re.test(n)).sort();
+      out.imports = {
+        input: pick(und, /^A(InputQueue|InputEvent|KeyEvent|MotionEvent)_/), looper: pick(und, /^ALooper_/), activity: pick(und, /^ANativeActivity_|^ANativeWindow_|^AConfiguration_/),
+        egl: pick(und, /^egl/), gl: pick(und, /^gl[A-Z]/).length, jni: pick(und, /^JNI_|^_ZN7_JNIEnv/), dl: pick(und, /^(dlopen|dlsym|dladdr|dl_iterate_phdr|android_dlopen_ext)$/),
+        total: und.length,
+      };
+      out.exports = { total: def.length, nativeActivity: def.filter((n) => /^ANativeActivity_onCreate$|^android_main$|^JNI_OnLoad$/.test(n)), java: def.filter((n) => /^Java_/.test(n)).length };
+      break;
+    }
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+  return out;
+}
+
 /** --world の本体: APK を渡して app run を起こし → ワールドに入るのを待ち → 入力の行き先を実測(explore)→ 歩けるかを試す
  *  (コントローラ = 対照、injectInput = 本題)。合図ごとに app run がサーバーから見た位置を言う → 戻り: report.world */
 async function inWorldStage({ adb, abi, data, localPort, token, outDir, log, secrets, state, addon }) {
@@ -277,6 +314,13 @@ async function inWorldStage({ adb, abi, data, localPort, token, outDir, log, sec
   const t0 = now();
   const apks = pullApks(adb, apkDir);
   log(`APK ${apks.length} 個(${secs(now() - t0)} 秒): app run がゲームの版を読み、合う BDS を用意します`);
+  try {
+    W.imports = soImports(apkDir, abi);
+    const I = W.imports.imports ?? {};
+    log(`imports| ${W.imports.lib ? `${W.imports.lib.apk} ${Math.round(W.imports.lib.bytes / 1e6)} MB` : 'libminecraftpe.so が見つかりません'}・NEEDED ${W.imports.needed.join(' ')}`);
+    for (const k of ['input', 'looper', 'activity', 'egl', 'jni', 'dl']) if (I[k]?.length) log(`imports| ${k}: ${I[k].join(' ')}`);
+    log(`imports| gl ${I.gl ?? 0} 個・借りる関数 ${I.total ?? 0}・出す関数 ${W.imports.exports?.total ?? 0}(${(W.imports.exports?.nativeActivity ?? []).join(' ')}・Java_ ${W.imports.exports?.java ?? 0})`);
+  } catch (e) { log('imports| 調べられず: ' + String(e.message || e).slice(0, 160)); }
   state.readyFile = path.join(path.dirname(data), 'device-ready.json');
   fs.rmSync(state.readyFile, { force: true });
   RD.writeReady(state.readyFile, { serial: adb.serial, ok: true });
@@ -563,6 +607,18 @@ async function selftest() {
   t('whereOf: 位置と向きを読む', w && w.x === 3.5 && w.y === -60 && w.z === -12.2 && w.yaw === -91.3);
   t('whereOf: 位置の無い行は null', whereOf('    ✔ 13 until log SE_MARK_A') === null);
   t('scrubAppLine: プレイヤー名を伏せる', scrubAppLine('where → Steve123: (1.5, -60, 2)、向き 0°') === 'where → <player>: (1.5, -60, 2)、向き 0°');
+  // soImports: 小さな .so(入力の関数を借りる)を APK(zip)に入れて、名前が読めるか(readelf・cc・zip がある所だけ)
+  const have = (b) => R.sh('sh', ['-c', `command -v ${b}`], { quiet: true }).status === 0;
+  if (['readelf', 'cc', 'zip', 'unzip'].every(have)) {
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'se-imp-t-')), lib = path.join(d, 'lib', 'x86_64');
+    fs.mkdirSync(lib, { recursive: true });
+    fs.writeFileSync(path.join(d, 'g.c'), 'int AInputQueue_getEvent(void*, void**); int ALooper_pollAll(int, int*, int*, void**); void ANativeActivity_onCreate(void* a, void* s, int n) { void* e; AInputQueue_getEvent(a, &e); ALooper_pollAll(0, 0, 0, 0); }\n');
+    const cc = R.sh('cc', ['-shared', '-fPIC', '-o', path.join(lib, 'libminecraftpe.so'), path.join(d, 'g.c')], { quiet: true });
+    const zp = R.sh('sh', ['-c', `cd '${d}' && zip -q -r split.apk lib`], { quiet: true });
+    const r = cc.status === 0 && zp.status === 0 ? soImports(d, 'x86_64') : null;
+    t('soImports: 借りる入力・ループの関数と出す関数を読む', r && r.imports.input.includes('AInputQueue_getEvent') && r.imports.looper.includes('ALooper_pollAll') && r.exports.nativeActivity.includes('ANativeActivity_onCreate'));
+    fs.rmSync(d, { recursive: true, force: true });
+  } else console.log('- soImports: readelf/cc/zip が無いので飛ばします');
   t('WORLD_SCENARIO: 合図を待つ手順がある', /until log SE_MARK_A[\s\S]*until log SE_MARK_B[\s\S]*until log SE_WORLD_DONE/.test(fs.readFileSync(WORLD_SCENARIO, 'utf8')));
   // 専用鍵: SCRIPTEVAL_SO_KEY が APP_CACHE_KEY より優先(両方あっても SO_KEY を使う)
   t('soVaultKey: SCRIPTEVAL_SO_KEY を使う', soVaultKey({ SCRIPTEVAL_SO_KEY: 'K1', APP_CACHE_KEY: 'K2' })?.id === V.vaultKey({ APP_CACHE_KEY: 'K1' }).id);
