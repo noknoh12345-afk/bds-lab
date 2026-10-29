@@ -1,0 +1,143 @@
+name: scripteval-build
+# ScriptEval の mod を lab 自身がソースから再ビルドして封緘する。ソースは app/redroid/scripteval/mod-src/。
+# NDK r27c で x86_64 / arm64-v8a をビルド → inject_input コアの単体テスト → SCRIPTEVAL_SO_KEY(Secrets)で封緘 →
+# app/redroid/scripteval/libscripteval-<abi>.so.bin を commit（素の .so はコミットしない＝app guard）。
+# これで redroid 検証(redroid.yml の scripteval 入力)が、その封緘 .bin を開いて実機に載せる。
+# 安くしておく: 自分で回す(workflow_dispatch)か、コミットメッセージに [scripteval build] がある push だけ。
+run-name: "scripteval-build ${{ inputs.abi || 'all' }} ${{ github.sha }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      abi:
+        description: which ABI(s) to build and seal
+        type: choice
+        options: [all, x86_64, arm64-v8a]
+        default: all
+      rebuild_studio:
+        description: "Studio の dist も npm で作り直す(操作タブ等を変えたとき。既定は同梱の dist を使う)"
+        type: boolean
+        default: false
+      commit:
+        description: 封緘した .bin をこのブランチに commit する
+        type: boolean
+        default: true
+  push:
+    branches: [main, 'claude/scripteval', 'claude/scripteval-*']
+    paths: ['app/redroid/scripteval/mod-src/**', '.github/workflows/scripteval-build.yml']
+
+concurrency:
+  group: scripteval-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  NDK_VERSION: android-ndk-r27c
+  SRC: app/redroid/scripteval/mod-src
+
+jobs:
+  build:
+    name: build + seal (${{ inputs.abi || 'all' }})
+    # push では [scripteval build] を含むコミットのときだけ(CI 分の節約)
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[scripteval build]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.ref_name }}
+          persist-credentials: true
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with: { node-version: 22 }
+
+      - name: tools (cmake, ninja)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake ninja-build >/dev/null
+          cmake --version | head -1; ninja --version
+
+      - name: NDK (cached)
+        id: ndk
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/ndk/${{ env.NDK_VERSION }}
+          key: ndk-${{ env.NDK_VERSION }}
+
+      - name: get the NDK if not cached
+        if: steps.ndk.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/ndk && cd ~/ndk
+          curl -fsSL -o ndk.zip "https://dl.google.com/android/repository/${NDK_VERSION}-linux.zip"
+          unzip -q ndk.zip && rm ndk.zip
+          test -x "$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+
+      - name: QuickJS-ng (cached, downloaded by CPM)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ env.SRC }}/cpm-cache
+          key: quickjs-ng-v0.17.0
+
+      - name: inject_input core selftest (no device)
+        run: |
+          g++ -std=c++17 -DINJECT_INPUT_SELFTEST "$SRC/src/inject_input.cpp" -o /tmp/iitest
+          /tmp/iitest | tail -3
+          /tmp/iitest >/dev/null   # exit code gates the build
+
+      - name: rebuild Studio dist (optional)
+        if: inputs.rebuild_studio
+        run: |
+          cd "$SRC/studio" && npm ci && npm run build
+          ls -l dist/index.html.gz
+
+      - name: build the mod (NDK, both ABIs or the chosen one)
+        run: |
+          NDK=~/ndk/$NDK_VERSION
+          want='${{ inputs.abi || "all" }}'
+          abis="x86_64 arm64-v8a"; [ "$want" != "all" ] && [ -n "$want" ] && abis="$want"
+          for abi in $abis; do
+            echo "::group::build $abi"
+            cmake -S "$SRC" -B "$SRC/build-$abi" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
+              -DANDROID_ABI="$abi" -DANDROID_PLATFORM=android-24
+            cmake --build "$SRC/build-$abi"
+            ls -l "$SRC/build-$abi/libscripteval.so"
+            # 公開シンボルは mod_init / mod_preinit だけであること(それ以外が出ていたら止める)
+            syms=$($NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm -D --defined-only "$SRC/build-$abi/libscripteval.so" | awk '$2=="T"||$2=="t"{print $3}' | sort -u)
+            echo "exported: $syms"
+            [ "$(echo "$syms" | tr '\n' ' ' | xargs)" = "mod_init mod_preinit" ] || { echo "::error::unexpected exported symbols: $syms"; exit 1; }
+            echo "::endgroup::"
+          done
+
+      - name: seal the .so (SCRIPTEVAL_SO_KEY) and stage the .bin
+        id: seal
+        env:
+          SCRIPTEVAL_SO_KEY: ${{ secrets.SCRIPTEVAL_SO_KEY }}
+          APP_CACHE_KEY: ${{ secrets.APP_CACHE_KEY }}
+          GOOGLE_AAS_TOKEN: ${{ secrets.GOOGLE_AAS_TOKEN }}
+        run: |
+          if [ -z "$SCRIPTEVAL_SO_KEY$APP_CACHE_KEY$GOOGLE_AAS_TOKEN" ]; then
+            echo "::error::封緘鍵がありません(SCRIPTEVAL_SO_KEY か APP_CACHE_KEY/GOOGLE_AAS_TOKEN を Secrets に)"; exit 1
+          fi
+          want='${{ inputs.abi || "all" }}'
+          abis="x86_64 arm64-v8a"; [ "$want" != "all" ] && [ -n "$want" ] && abis="$want"
+          for abi in $abis; do
+            node app/redroid/scripteval/seal-so.mjs "$abi" "$SRC/build-$abi/libscripteval.so"
+          done
+          ls -l app/redroid/scripteval/libscripteval-*.so.bin
+          { echo "## scripteval-build"; echo '```'; \
+            for abi in $abis; do printf '%s  %s bytes  sha256(.so)=%s\n' "$abi" \
+              "$(stat -c%s "$SRC/build-$abi/libscripteval.so")" \
+              "$(sha256sum "$SRC/build-$abi/libscripteval.so" | cut -c1-16)"; done; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: commit the sealed .bin
+        if: github.event_name == 'push' || inputs.commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/redroid/scripteval/libscripteval-*.so.bin
+          if git diff --cached --quiet; then echo "封緘 .bin に変化なし"; exit 0; fi
+          git commit -m "scripteval: ソースから再ビルドした .so を封緘(scripteval-build)"
+          git push origin HEAD:${{ github.ref_name }}
