@@ -102,6 +102,7 @@ cd bedrock-samples && git sparse-checkout set resource_pack/ui resource_pack/ent
 | R5.4 | gui の 1 単位 = 1 JSON UI px: 182 x 22 の枠が本物のホットバーと同じ幅・同じ所 | 測った（run 39989463030） | ゲームの HUD と同じ倍率で置ける |
 | R5.5 | タイトルの文字は `#hud_title_text_string`・`#hud_subtitle_text_string`（global）、HUD の表示は `#hud_visible` | 一次資料（`hud_screen.json`） | サーバーの文字をラベルで GeoUI に（SPEC 10 章。描画は要実測） |
 | R5.6 | 寄せ先ごとの renderer の offset、グループの置き場所、映り込みの式 | 式（`layout.ghosts`。`pack.js` が 13 画面 x GUI の倍率 2・3 で調べる） | gui のグループは原点の下の帯 |
+| R5.7 | **HUD のホットバーは GeoUI の上に描かれる**: 下の真ん中の寄せ先の四角（1560 x 720 で (763, 686)–(797, 720)）はホットバーの下になり、4:3・折りたたみではホットバーの下の 3〜4 行だけが見えた。GUI の倍率の枠（182 x 22、R5.4）も本物のホットバーの下の数行だけが見える | 測った（run 40961440806、止めたカメラ・1 人称の体を隠して。写真で要確認） | HUD の GeoUI をホットバーの所（下の真ん中）に置かない。置くなら、その間 `/hud @a hide hotbar`（GeoUI Screen のスロットの無いページはもう隠している） |
 
 ## 6. 画面
 

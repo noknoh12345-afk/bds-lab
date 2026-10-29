@@ -460,10 +460,11 @@ export function compare(measures, opts = {}) {
     if (/^(anchors|gui-dpi)/.test(shot)) {
       const g = {};
       // (the bottom's middle and right: azure and blue are in the world too — the sky, water, and at the bottom right the first-person
-      //  arm's blue (RULES R4.11: it hides GeoUI planes there) — and their boxes take them in: shown, not counted in the worst error)
+      //  arm's blue (RULES R4.11: it hides GeoUI planes there) — and their boxes take them in; the hotbar is drawn over the bottom
+      //  middle's square (pictures before run 40961440806 had it shown): shown, not counted in the worst error)
       for (const [k, c] of Object.entries(ANCHOR_HUE)) {
         const blue = k === 'b' || k === 'br';
-        g[k] = add(`寄せ先 ${k}`, c, e[`anchor ${k}`], blue ? '（ワールドの青・右下の 1 人称の腕と混ざることがある（RULES R4.11）: いちばん大きいずれに数えない）' : '', !blue);
+        g[k] = add(`寄せ先 ${k}`, c, e[`anchor ${k}`], blue ? '（ホットバーの下になり、ワールドの青・右下の 1 人称の腕と混ざることがある（RULES R4.11）: いちばん大きいずれに数えない）' : '', !blue);
       }
       // (the viewport's edges, read off the corner squares: 0 when the HUD reaches the screen's edge. Not off the bottom-right one:
       //  blue and azure are in the world too — the sky, water — and its box takes them in)
@@ -713,11 +714,14 @@ export function appTxt() {
     'absent clientlog \\bERROR\\b', ''];
   const sizes = [['default', null], ['4x3', '1024x768'], ['fold', '1104x920'], ['16x10', '1280x800'], ['16x9', '1920x1080'], ['18x9', '2160x1080'], ['195x9', '2340x1080'],
     ['20x9', '2400x1080'], ['21x9', '2520x1080'], ['32x9', '3840x1080']];
+  // (the anchors with the hotbar hidden: it is drawn over GeoUI, and the bottom middle's square under it showed a few rows only in
+  //  run 40961440806. Shown again — and the world shot again — for the box: its gui frame is the hotbar's own)
   for (const [id, sz] of sizes) {
     lines.push(`section size-${id}`);
     if (sz) lines.push(`size ${sz}`, 'wait 9000');
-    lines.push('do scriptevent gdev:show 0', 'wait 1500', 'shot world',
+    lines.push('do hud @a hide hotbar', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world',
       `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-${id}`, `measure marks anchors-${id}`,
+      'do hud @a reset hotbar', 'do scriptevent gdev:show 0', 'wait 1500', 'shot world',
       `do scriptevent gdev:show ${BITS.box | BITS.gui | BITS.ref}`, 'wait 2000', `shot box-${id}`, `measure marks box-${id}`);
     if (id === 'default' || id === '4x3' || id === '32x9') lines.push(`do scriptevent gdev:show ${BITS.clip}`, 'wait 2000', `shot clip-${id}`, `measure marks clip-${id}`);
     lines.push('');
@@ -795,11 +799,13 @@ export function appTxt() {
   // the first time), the same set-up, then the marks. Two shapes: a tall notch and a punch hole (the corner and double ones
   // the same way, if these show the game's safe area follows the cut-out)
   for (const cut of ['tall', 'hole']) {
-    // (the player sent off the server first: after a game killed in the world the server still held its old session when the
-    //  game joined again, and the set-up's tp failed with the server's error in runs 40877717430 and 40924847860. By the pack, not
-    //  the console's `kick @a`: that fails with nobody on the server, and the whole section would be skipped)
-    lines.push(`section cutout-${cut}`, 'do scriptevent gdev:kick', 'wait 3000', `cutout ${cut}`, 'wait 3000', 'stop', 'launch', 'until title 180000', 'join', 'until joined 300000', 'wait 5000', ...setup,
-      'shot world', `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-cut-${cut}`, `measure marks anchors-cut-${cut}`,
+    // (the player sent off the server first — by the pack: the console's `kick @a` fails with nobody on the server and the whole
+    //  section would be skipped. The set-up's tp after the join again failed with the server's error in runs 40877717430,
+    //  40924847860 and 40961440806 (the kick too): the game is stopped before the overlay changes and started after Android has
+    //  had 10 s for it — changed under a running game, Android re-creates it, and it may have left the server again right after
+    //  joining. `testfor @a` first: its line failing says nobody is on the server, rather than the tp failing for its own reason)
+    lines.push(`section cutout-${cut}`, 'do scriptevent gdev:kick', 'wait 3000', 'stop', `cutout ${cut}`, 'wait 10000', 'launch', 'until title 180000', 'join', 'until joined 300000', 'wait 5000', 'do testfor @a', ...setup,
+      'do hud @a hide hotbar', 'wait 1000', 'shot world', `do scriptevent gdev:show ${BITS.anchors}`, 'wait 2000', `shot anchors-cut-${cut}`, `measure marks anchors-cut-${cut}`, 'do hud @a reset hotbar',
       `do scriptevent gdev:show ${BITS.over}`, 'wait 2000', `shot over-cut-${cut}`, `measure marks over-cut-${cut}`, '');
   }
   lines.push('section end', 'do scriptevent gdev:ui off', 'do scriptevent gdev:cam 0', 'do scriptevent gdev:show 0', 'do hud @a reset', 'wait 1000', 'shot end', '');

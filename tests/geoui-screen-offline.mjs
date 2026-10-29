@@ -287,8 +287,14 @@ function GROUP_OFF(g) { return Math.round(Math.hypot(g.origin[0], g.origin[1]));
     ok(/do scriptevent gdev:show 0\nwait \d+\nshot world\ndo scriptevent gdev:show 256\nwait \d+\nshot query-before\nmeasure marks query-before\nlook left [\d ]+\nwait \d+\nshot query-after\nmeasure marks query-after/.test(sec('in-query')),
       'device app.txt: the query bars measured against a world without them, before and after the turn', sec('in-query'));
     const cuts = ['tall', 'hole'].map((c) => sec(`cutout-${c}`));
-    ok(cuts.every((s, i) => new RegExp(`^section cutout-${['tall', 'hole'][i]}\\ndo scriptevent gdev:kick\\nwait \\d+\\ncutout ${['tall', 'hole'][i]}\\nwait \\d+\\nstop\\nlaunch\\nuntil title \\d+\\njoin\\nuntil joined \\d+\\nwait \\d+\\ndo tp @a 0 -60 0 0 90`).test(s) && /\nshot world\n[^]*measure marks anchors-cut-/.test(s)) && /^section over\n[^]*measure marks over$/m.test(sec('over')) && at.indexOf('section over') < at.indexOf('section cutout-'),
+    ok(cuts.every((s, i) => new RegExp(`^section cutout-${['tall', 'hole'][i]}\\ndo scriptevent gdev:kick\\nwait \\d+\\nstop\\ncutout ${['tall', 'hole'][i]}\\nwait \\d+\\nlaunch\\nuntil title \\d+\\njoin\\nuntil joined \\d+\\nwait \\d+\\ndo testfor @a\\ndo tp @a 0 -60 0 0 90`).test(s) && /\nshot world\n[^]*measure marks anchors-cut-/.test(s)) && /^section over\n[^]*measure marks over$/m.test(sec('over')) && at.indexOf('section over') < at.indexOf('section cutout-'),
       'device app.txt: the edge with no cut-out first, then each cut-out with the game stopped, started and joined again before its marks', cuts.join('\n'));
+    // (the anchors with the hotbar hidden — it is drawn over GeoUI, the bottom middle's square under it — and shown again, with
+    //  a world shot of its own, for the box whose gui frame is the hotbar's)
+    const sizes = at.split(/\n(?=section )/).filter((s) => s.startsWith('section size-'));
+    ok(sizes.length === 10 && sizes.every((s) => /\ndo hud @a hide hotbar\ndo scriptevent gdev:show 0\nwait \d+\nshot world\n[^]*\nmeasure marks anchors-\S+\ndo hud @a reset hotbar\ndo scriptevent gdev:show 0\nwait \d+\nshot world\n[^]*\nmeasure marks box-/.test(s))
+      && cuts.every((t) => /do hud @a hide hotbar\nwait \d+\nshot world\n[^]*measure marks anchors-cut-\S+\ndo hud @a reset hotbar\n/.test(t)),
+      'device app.txt: the anchors shot with the hotbar hidden (each size and cut-out), the box with it shown and a world of its own', sizes[1]);
     // (the game stopped and started right before its first join — in a batch this section is where the add-on starts: the
     //  first joins of a device come back from its snapshot failed three runs in a row on 2026-10-24, the joins after a restart went in)
     ok(/^section join\nstop\nlaunch\nuntil title \d+\nshot title\njoin\nuntil joined \d+\n/.test(sec('join')) && !/^section title$/m.test(at),

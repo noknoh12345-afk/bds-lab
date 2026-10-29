@@ -29,6 +29,7 @@ wait 7000
 absent clientlog \bERROR\b
 
 section size-default
+do hud @a hide hotbar
 do scriptevent gdev:show 0
 wait 1500
 shot world
@@ -36,6 +37,10 @@ do scriptevent gdev:show 1
 wait 2000
 shot anchors-default
 measure marks anchors-default
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
 do scriptevent gdev:show 38
 wait 2000
 shot box-default
@@ -48,6 +53,7 @@ measure marks clip-default
 section size-4x3
 size 1024x768
 wait 9000
+do hud @a hide hotbar
 do scriptevent gdev:show 0
 wait 1500
 shot world
@@ -55,6 +61,10 @@ do scriptevent gdev:show 1
 wait 2000
 shot anchors-4x3
 measure marks anchors-4x3
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
 do scriptevent gdev:show 38
 wait 2000
 shot box-4x3
@@ -67,6 +77,7 @@ measure marks clip-4x3
 section size-fold
 size 1104x920
 wait 9000
+do hud @a hide hotbar
 do scriptevent gdev:show 0
 wait 1500
 shot world
@@ -74,6 +85,10 @@ do scriptevent gdev:show 1
 wait 2000
 shot anchors-fold
 measure marks anchors-fold
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
 do scriptevent gdev:show 38
 wait 2000
 shot box-fold
@@ -82,6 +97,7 @@ measure marks box-fold
 section size-16x10
 size 1280x800
 wait 9000
+do hud @a hide hotbar
 do scriptevent gdev:show 0
 wait 1500
 shot world
@@ -89,6 +105,10 @@ do scriptevent gdev:show 1
 wait 2000
 shot anchors-16x10
 measure marks anchors-16x10
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
 do scriptevent gdev:show 38
 wait 2000
 shot box-16x10
@@ -97,6 +117,7 @@ measure marks box-16x10
 section size-16x9
 size 1920x1080
 wait 9000
+do hud @a hide hotbar
 do scriptevent gdev:show 0
 wait 1500
 shot world
@@ -104,6 +125,10 @@ do scriptevent gdev:show 1
 wait 2000
 shot anchors-16x9
 measure marks anchors-16x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
 do scriptevent gdev:show 38
 wait 2000
 shot box-16x9
@@ -112,6 +137,7 @@ measure marks box-16x9
 section size-18x9
 size 2160x1080
 wait 9000
+do hud @a hide hotbar
 do scriptevent gdev:show 0
 wait 1500
 shot world
@@ -119,6 +145,10 @@ do scriptevent gdev:show 1
 wait 2000
 shot anchors-18x9
 measure marks anchors-18x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
 do scriptevent gdev:show 38
 wait 2000
 shot box-18x9
@@ -127,6 +157,7 @@ measure marks box-18x9
 section size-195x9
 size 2340x1080
 wait 9000
+do hud @a hide hotbar
 do scriptevent gdev:show 0
 wait 1500
 shot world
@@ -134,6 +165,10 @@ do scriptevent gdev:show 1
 wait 2000
 shot anchors-195x9
 measure marks anchors-195x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
 do scriptevent gdev:show 38
 wait 2000
 shot box-195x9
@@ -142,6 +177,7 @@ measure marks box-195x9
 section size-20x9
 size 2400x1080
 wait 9000
+do hud @a hide hotbar
 do scriptevent gdev:show 0
 wait 1500
 shot world
@@ -149,6 +185,10 @@ do scriptevent gdev:show 1
 wait 2000
 shot anchors-20x9
 measure marks anchors-20x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
 do scriptevent gdev:show 38
 wait 2000
 shot box-20x9
@@ -157,6 +197,7 @@ measure marks box-20x9
 section size-21x9
 size 2520x1080
 wait 9000
+do hud @a hide hotbar
 do scriptevent gdev:show 0
 wait 1500
 shot world
@@ -164,6 +205,10 @@ do scriptevent gdev:show 1
 wait 2000
 shot anchors-21x9
 measure marks anchors-21x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
 do scriptevent gdev:show 38
 wait 2000
 shot box-21x9
@@ -172,6 +217,7 @@ measure marks box-21x9
 section size-32x9
 size 3840x1080
 wait 9000
+do hud @a hide hotbar
 do scriptevent gdev:show 0
 wait 1500
 shot world
@@ -179,6 +225,10 @@ do scriptevent gdev:show 1
 wait 2000
 shot anchors-32x9
 measure marks anchors-32x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
 do scriptevent gdev:show 38
 wait 2000
 shot box-32x9
@@ -558,14 +608,15 @@ measure marks over
 section cutout-tall
 do scriptevent gdev:kick
 wait 3000
-cutout tall
-wait 3000
 stop
+cutout tall
+wait 10000
 launch
 until title 180000
 join
 until joined 300000
 wait 5000
+do testfor @a
 do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
 do gamemode adventure @a
 do hud @a hide crosshair
@@ -582,11 +633,14 @@ do hud @a hide touch_controls
 do scriptevent gdev:show 0
 do scriptevent gdev:cam 1
 wait 7000
+do hud @a hide hotbar
+wait 1000
 shot world
 do scriptevent gdev:show 1
 wait 2000
 shot anchors-cut-tall
 measure marks anchors-cut-tall
+do hud @a reset hotbar
 do scriptevent gdev:show 8
 wait 2000
 shot over-cut-tall
@@ -595,14 +649,15 @@ measure marks over-cut-tall
 section cutout-hole
 do scriptevent gdev:kick
 wait 3000
-cutout hole
-wait 3000
 stop
+cutout hole
+wait 10000
 launch
 until title 180000
 join
 until joined 300000
 wait 5000
+do testfor @a
 do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
 do gamemode adventure @a
 do hud @a hide crosshair
@@ -619,11 +674,14 @@ do hud @a hide touch_controls
 do scriptevent gdev:show 0
 do scriptevent gdev:cam 1
 wait 7000
+do hud @a hide hotbar
+wait 1000
 shot world
 do scriptevent gdev:show 1
 wait 2000
 shot anchors-cut-hole
 measure marks anchors-cut-hole
+do hud @a reset hotbar
 do scriptevent gdev:show 8
 wait 2000
 shot over-cut-hole

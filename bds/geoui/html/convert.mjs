@@ -170,18 +170,28 @@ shot page-play
 changed 0.2
 measure diff page-play
 
+# (D・S は 150 ms: 押し続けて 8 tick（400 ms）で焦点は繰り返し動き、300 ms では近すぎる。run 40961440806 では決定も数字のキーの
+#  ページも届かず、写真は封じられている: 各段の絵をその前のページ（shot world）と比べた数を公開のまとめに残す — 焦点が動いたか・スロットが替わったか)
 section keys
-press D 300
+shot world
+press D 150
 wait 800
-press S 300
+shot keys-right
+measure diff keys-right
+press S 150
 wait 800
 shot keys-focus
+measure diff keys-focus
 press SPACE 200
 wait 800
 until server GEOUI event 5000
 
 section tabs
+shot world
 press 2 200
+wait 800
+shot slot-2
+measure diff slot-2
 until server GEOUI page 5000
 wait 1500
 shot page-items
