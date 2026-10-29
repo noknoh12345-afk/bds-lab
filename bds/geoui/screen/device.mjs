@@ -440,11 +440,11 @@ export function compare(measures, opts = {}) {
     const say = (what, note) => rows.push({ shot, what, note, summary: true });
     if (/^(anchors|gui-dpi)/.test(shot)) {
       const g = {};
-      // (the bottom's middle and right: azure and blue are in the world too — the sky, water — and their boxes take them in: shown,
-      //  not counted in the worst error)
+      // (the bottom's middle and right: azure and blue are in the world too — the sky, water, and at the bottom right the first-person
+      //  arm's blue (RULES R4.11: it hides GeoUI planes there) — and their boxes take them in: shown, not counted in the worst error)
       for (const [k, c] of Object.entries(ANCHOR_HUE)) {
         const blue = k === 'b' || k === 'br';
-        g[k] = add(`寄せ先 ${k}`, c, e[`anchor ${k}`], blue ? '（ワールドの青と混ざることがある: いちばん大きいずれに数えない）' : '', !blue);
+        g[k] = add(`寄せ先 ${k}`, c, e[`anchor ${k}`], blue ? '（ワールドの青・右下の 1 人称の腕と混ざることがある（RULES R4.11）: いちばん大きいずれに数えない）' : '', !blue);
       }
       // (the viewport's edges, read off the corner squares: 0 when the HUD reaches the screen's edge. Not off the bottom-right one:
       //  blue and azure are in the world too — the sky, water — and its box takes them in)
