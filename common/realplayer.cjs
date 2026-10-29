@@ -662,8 +662,19 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   // item stack ids: a number (1.26.40+) or, in older tables, a variant {type: 'item_stack_net_id', id}; requests carry the number
   const netId = (x) => (x && typeof x === 'object' ? x.id : x);
   const stackReq = (actions, names = []) => { if (process.env.LAB_PKT) say('send item_stack_request ' + JSON.stringify(actions, (k, v) => (typeof v === 'bigint' ? String(v) : v))); client.queue('item_stack_request', { requests: [{ request_id: reqId, actions, custom_names: names, cause: -1 }] }); askedAt.set(reqId, tick); reqId -= 2; };
-  // binary action codes (the legacy byte) for each request action
-  const LEGACY = { take: 0, place: 1, swap: 2, drop: 3, destroy: 4, consume: 5, create: 6, lab_table_combine: 9, beacon_payment: 10, mine_block: 11, craft_recipe: 12, craft_recipe_auto: 13, craft_creative: 14, optional: 15, craft_grindstone_request: 16, craft_loom_request: 17, non_implemented: 18, results_deprecated: 19 };
+  // binary action codes (the legacy byte: Mojang's ItemStackRequestActionType, which BDS checks against the action the list
+  // place picked) for each request action, from this version's own list: the place in it, + 2 from the 8th on (7 and 8, the old
+  // container actions, are gone). 1.26.60 put a reserved action before the last two (results 19 → 20: every craft was "packet 147
+  // malformed: wrong const value for member Action type"). Fixed numbers where the list is not found or the rule does not hold
+  const LEGACY = (() => {
+    const fixed = { take: 0, place: 1, swap: 2, drop: 3, destroy: 4, consume: 5, create: 6, lab_table_combine: 9, beacon_payment: 10, mine_block: 11, craft_recipe: 12, craft_recipe_auto: 13, craft_creative: 14, optional: 15, craft_grindstone_request: 16, craft_loom_request: 17, non_implemented: 18, results_deprecated: 19 };
+    const find = (n) => { if (Array.isArray(n)) { if (n[0] === 'mapper' && Object.values(n[1]?.mappings ?? {}).includes('results_deprecated')) return n[1].mappings; for (const x of n) { const m = find(x); if (m) return m; } } else if (n && typeof n === 'object') for (const v of Object.values(n)) { const m = find(v); if (m) return m; } return null; };
+    try {
+      const m = find(require('node:module').createRequire(req.resolve('bedrock-protocol'))('minecraft-data')('bedrock_' + version).protocol.types.ItemStackRequest);
+      const o = Object.fromEntries(Object.entries(m ?? {}).map(([i, n]) => [n, +i < 7 ? +i : +i + 2]));
+      return o.take === 0 && o.consume === 5 && o.craft_recipe === 12 && o.results_deprecated >= 19 ? o : fixed;
+    } catch { return fixed; }
+  })();
   const slotInfo = (container, slot, item, dyn) => ({ slot_type: { container_id: container, dynamic_container_id: dyn }, slot, stack_id: netId(item?.stack_id) ?? 0 });
   // screens keep their slots in the player's "ui" window at fixed places (crafting 28-40, result 50)
   const UI_SLOTS = {
@@ -689,8 +700,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     if (to < 0) return 'inventory full';
     const id = reqId, r = waitResponse(id);
     stackReq([...craft,
-      ...consumes.map(([c, slot, n]) => ({ type_id: 'consume', legacy_type_id: 5, count: n, source: { slot_type: { container_id: c }, slot, stack_id: netId(inv.ui[slot]?.stack_id) ?? 0 } })),
-      { type_id: 'place', legacy_type_id: 1, count: outCount, source: { slot_type: { container_id: 'creative_output' }, slot: 50, stack_id: id }, destination: slotInfo(to < 9 ? 'hotbar' : 'inventory', to, null) }], names);
+      ...consumes.map(([c, slot, n]) => ({ type_id: 'consume', legacy_type_id: LEGACY.consume, count: n, source: { slot_type: { container_id: c }, slot, stack_id: netId(inv.ui[slot]?.stack_id) ?? 0 } })),
+      { type_id: 'place', legacy_type_id: LEGACY.place, count: outCount, source: { slot_type: { container_id: 'creative_output' }, slot: 50, stack_id: id }, destination: slotInfo(to < 9 ? 'hotbar' : 'inventory', to, null) }], names);
     const st = await r;
     await sync();
     return st;
@@ -725,8 +736,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     const empty = [...Array(36).keys()].filter((i) => !inv.slots[i]?.network_id);
     const src = (i) => ({ slot_type: { container_id: 'crafting_input' }, slot: i, stack_id: netId(inv.ui[i].stack_id) ?? 0 });
     let st = 'none';
-    if (empty.length >= left.length) { const r = waitResponse(reqId); stackReq(left.map((i, j) => ({ type_id: 'place', legacy_type_id: 1, count: inv.ui[i].count, source: src(i), destination: slotInfo(empty[j] < 9 ? 'hotbar' : 'inventory', empty[j], null) }))); st = await r; }
-    if (st !== 'ok') { const r = waitResponse(reqId); stackReq(left.map((i) => ({ type_id: 'drop', legacy_type_id: 3, count: inv.ui[i].count, source: src(i), randomly: false }))); st = await r; }
+    if (empty.length >= left.length) { const r = waitResponse(reqId); stackReq(left.map((i, j) => ({ type_id: 'place', legacy_type_id: LEGACY.place, count: inv.ui[i].count, source: src(i), destination: slotInfo(empty[j] < 9 ? 'hotbar' : 'inventory', empty[j], null) }))); st = await r; }
+    if (st !== 'ok') { const r = waitResponse(reqId); stackReq(left.map((i) => ({ type_id: 'drop', legacy_type_id: LEGACY.drop, count: inv.ui[i].count, source: src(i), randomly: false }))); st = await r; }
     for (const i of left) inv.ui[i] = undefined;   // (refused both ways: the grid was empty already, what was known of it was old)
     if (st === 'ok') say(`craft: took ${left.length} stack(s) left in the crafting grid back out`);
     await sync();
@@ -1777,7 +1788,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         if (a[1] === undefined) {
           const it = heldItem();
           if (!it.network_id) return say('drop: hand is empty');
-          stackReq([{ type_id: 'drop', legacy_type_id: 3, count: Math.min(num(a[0], 1), it.count), source: slotInfo('hotbar', inv.selected, it), randomly: false }]);
+          stackReq([{ type_id: 'drop', legacy_type_id: LEGACY.drop, count: Math.min(num(a[0], 1), it.count), source: slotInfo('hotbar', inv.selected, it), randomly: false }]);
           await ticks(4); resync(); return ticks(4);
         }
         const opened = !box;
@@ -1786,7 +1797,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           const src = slotRef(a[1]);
           if (!src.item?.network_id) return say(`drop: ${a[1]} is empty`);
           const r = waitResponse(reqId);
-          stackReq([{ type_id: 'drop', legacy_type_id: 3, count: Math.min(num(a[0], 1), src.item.count), source: slotInfo(src.c, src.slot, src.item, src.dyn), randomly: false }]);
+          stackReq([{ type_id: 'drop', legacy_type_id: LEGACY.drop, count: Math.min(num(a[0], 1), src.item.count), source: slotInfo(src.c, src.slot, src.item, src.dyn), randomly: false }]);
           const st = await r;
           if (st !== 'ok') say(`drop rejected: ${st}`);
         } finally { if (opened && box) { client.queue('container_close', { window_id: box.window, window_type: box.type, server: false }); box = null; } }
@@ -1860,7 +1871,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           const n = Math.min(num(a[2], src.item.count), src.item.count);
           movingItem = src.item;
           const sameItem = dst.item?.network_id === src.item.network_id;
-          const put = (slot, item) => { const r = waitResponse(reqId); stackReq([{ type_id: 'place', legacy_type_id: 1, count: n, source: slotInfo(src.c, src.slot, src.item, src.dyn), destination: slotInfo(dst.c, slot, item, dst.dyn) }]); return r; };
+          const put = (slot, item) => { const r = waitResponse(reqId); stackReq([{ type_id: 'place', legacy_type_id: LEGACY.place, count: n, source: slotInfo(src.c, src.slot, src.item, src.dyn), destination: slotInfo(dst.c, slot, item, dst.dyn) }]); return r; };
           if (dst.c === 'dynamic') {   // a click on the bundle: onto a stack of the same item if it fits, else the next free place
             const same = dst.list.findIndex((x) => x?.network_id === src.item.network_id);
             res = same >= 0 ? await put(same, dst.list[same]) : 'none';
@@ -1868,8 +1879,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
             if (res === 'ok') say(`moved ${iname(src.item).replace(/\*\d+$/, '')}*${n} ${a[0]} -> ${a[1]}`); else say(`move rejected: ${res === 'status 55' || res === 'status 50' ? 'the bundle is full' : res}`);
           } else {
           const id = reqId, r = waitResponse(id);
-          if (dst.item?.network_id && !sameItem) stackReq([{ type_id: 'swap', legacy_type_id: 2, source: slotInfo(src.c, src.slot, src.item, src.dyn), destination: slotInfo(dst.c, dst.slot, dst.item) }]);
-          else stackReq([{ type_id: 'place', legacy_type_id: 1, count: n, source: slotInfo(src.c, src.slot, src.item, src.dyn), destination: slotInfo(dst.c, dst.slot, dst.item?.network_id ? dst.item : null) }]);
+          if (dst.item?.network_id && !sameItem) stackReq([{ type_id: 'swap', legacy_type_id: LEGACY.swap, source: slotInfo(src.c, src.slot, src.item, src.dyn), destination: slotInfo(dst.c, dst.slot, dst.item) }]);
+          else stackReq([{ type_id: 'place', legacy_type_id: LEGACY.place, count: n, source: slotInfo(src.c, src.slot, src.item, src.dyn), destination: slotInfo(dst.c, dst.slot, dst.item?.network_id ? dst.item : null) }]);
           res = await r;
           if (res === 'ok') say(`moved ${iname(src.item).replace(/\*\d+$/, '')}*${n} ${a[0]} -> ${a[1]}`);
           else say(`move rejected: ${res}`);
@@ -1885,7 +1896,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const k = num(a[0], 0), o = enchantOptions[k];
         if (!o) return say('enchant: no such option (move the item to box:0 and lapis to box:1 first)');
         await sync();
-        const res = await finish([{ type_id: 'craft_recipe', legacy_type_id: 12, recipe_network_id: unzig(o.option_id), times_crafted: 1 }],
+        const res = await finish([{ type_id: 'craft_recipe', legacy_type_id: LEGACY.craft_recipe, recipe_network_id: unzig(o.option_id), times_crafted: 1 }],
           [['enchanting_lapis', 15, k + 1], ['enchanting_input', 14, 1]], 1);   // option i costs i+1 lapis (and i+1 levels)
         return say(res === 'ok' ? `enchanted: ${o.name.trim()}` : `enchant rejected: ${res}`);
       }
@@ -1897,7 +1908,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         let res;
         // how much material a repair eats depends on the damage: the server refuses any other count, so try 1..4
         for (let n = mat ? 1 : 0; n <= Math.min(mat, 4); n++) {
-          res = await finish([{ type_id: 'optional', legacy_type_id: 15, recipe_network_id: 0, filtered_string_index: text ? 0 : -1 }],
+          res = await finish([{ type_id: 'optional', legacy_type_id: LEGACY.optional, recipe_network_id: 0, filtered_string_index: text ? 0 : -1 }],
             [['anvil_input', 1, 1], ...(n ? [['anvil_material', 2, n]] : [])], 1, text ? [text] : []);
           if (res === 'ok' || !mat) break;
         }
@@ -1909,7 +1920,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const want = (a[0] ?? '').includes(':') ? a[0] : 'minecraft:' + a[0], src = itemNames.get(inv.ui[3]?.network_id);
         const r = special.stonecutter.find((x) => itemNames.get(x.out.network_id) === want && (!src || x.input?.[0]?.name === src));
         if (!r) return say(`cut: no stonecutter recipe ${src ?? '?'} -> ${want}`);
-        const res = await finish([{ type_id: 'craft_recipe', legacy_type_id: 12, recipe_network_id: r.net, times_crafted: 1 }], [['stonecutter_input', 3, r.input?.[0]?.count || 1]], r.out.count);
+        const res = await finish([{ type_id: 'craft_recipe', legacy_type_id: LEGACY.craft_recipe, recipe_network_id: r.net, times_crafted: 1 }], [['stonecutter_input', 3, r.input?.[0]?.count || 1]], r.out.count);
         return say(res === 'ok' ? `cut ${want}*${r.out.count}` : `cut rejected: ${res}`);
       }
       case 'carto': {     // carto: cartography table open, paper in box:0 (+ compass in box:1 = locator map)
@@ -1925,7 +1936,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           if (mr) { r = { net: mr.net, id: m[1] }; out = m[2]; }
         }
         if (!r) return say(`carto: no cartography recipe for ${names || 'nothing'}`);
-        const res = await finish([{ type_id: 'craft_recipe', legacy_type_id: 12, recipe_network_id: r.net, times_crafted: 1 }], [['cartography_input', 12, 1], ...(inv.ui[13]?.network_id ? [['cartography_additional', 13, 1]] : [])], out);
+        const res = await finish([{ type_id: 'craft_recipe', legacy_type_id: LEGACY.craft_recipe, recipe_network_id: r.net, times_crafted: 1 }], [['cartography_input', 12, 1], ...(inv.ui[13]?.network_id ? [['cartography_additional', 13, 1]] : [])], out);
         return say(res === 'ok' ? `carto -> ${r.id.replace('minecraft:cartography_table_', '')}` : `carto rejected: ${res}`);
       }
       case 'smith': {     // smith: smithing table open, base in box:0, material in box:1, template in box:2
@@ -1937,7 +1948,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           ?? special.smithing.find((x) => x.trim && x.tpl?.name === nm(53))
           ?? (/_armor_trim_smithing_template$/.test(nm(53) ?? '') ? special.smithing.find((x) => x.trim) : undefined);   // (trims name the template and the armor by tags)
         if (!r) return say(`smith: no smithing recipe for ${nm(51)} + ${nm(52)} + ${nm(53)}`);
-        const res = await finish([{ type_id: 'craft_recipe', legacy_type_id: 12, recipe_network_id: r.net, times_crafted: 1 }], [['smithing_table_input', 51, 1], ['smithing_table_material', 52, 1], ['smithing_table_template', 53, 1]], 1);
+        const res = await finish([{ type_id: 'craft_recipe', legacy_type_id: LEGACY.craft_recipe, recipe_network_id: r.net, times_crafted: 1 }], [['smithing_table_input', 51, 1], ['smithing_table_material', 52, 1], ['smithing_table_template', 53, 1]], 1);
         return say(res === 'ok' ? `smithed ${r.trim ? 'trim' : itemNames.get(r.out?.network_id) ?? '?'}` : `smith rejected: ${res}`);
       }
       case 'grind': {     // grind [cost]: grindstone open, item(s) in box:0 and/or box:1 -> disenchant / repair-combine
@@ -1947,13 +1958,13 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const first = inv.ui[16]?.network_id ? inv.ui[16] : inv.ui[17];
         if (!first?.network_id) return say('grind: put an item in box:0 or box:1 first');
         const cons = [...(inv.ui[16]?.network_id ? [['grindstone_input', 16, 1]] : []), ...(inv.ui[17]?.network_id ? [['grindstone_additional', 17, 1]] : [])];
-        const res = await finish([{ type_id: 'craft_grindstone_request', legacy_type_id: 16, recipe_network_id: netId(first.stack_id) ?? 0, times_crafted: 1, cost: num(a[0], 0) }], cons, 1);
+        const res = await finish([{ type_id: 'craft_grindstone_request', legacy_type_id: LEGACY.craft_grindstone_request, recipe_network_id: netId(first.stack_id) ?? 0, times_crafted: 1, cost: num(a[0], 0) }], cons, 1);
         return say(res === 'ok' ? 'ground' : `grind rejected: ${res}`);
       }
       case 'loom': {      // loom <pattern id>: loom open, banner box:0, dye box:1 (pattern item box:2 when needed)
         if (box?.type !== 'loom') return say('loom: open a loom first');
         await sync();
-        const res = await finish([{ type_id: 'craft_loom_request', legacy_type_id: 17, pattern: a[0] ?? 'bo', times_crafted: 1 }], [['loom_input', 9, 1], ['loom_dye', 10, 1]], 1);
+        const res = await finish([{ type_id: 'craft_loom_request', legacy_type_id: LEGACY.craft_loom_request, pattern: a[0] ?? 'bo', times_crafted: 1 }], [['loom_input', 9, 1], ['loom_dye', 10, 1]], 1);
         return say(res === 'ok' ? `loom pattern ${a[0] ?? 'bo'}` : `loom rejected: ${res}`);
       }
       case 'trade': {     // trade <index|item> | trade pay <item>: villager screen open (interact); pays from the inventory like the client's auto-fill
@@ -1973,7 +1984,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           await bot.act('move', [String(i), 'box:' + k, String(buy.Count ?? 1)]);
         }
         const cons = [['trade2_ingredient1', 4, o.buyA?.Count ?? 1], ...(o.buyB?.Name ? [['trade2_ingredient2', 5, o.buyB.Count ?? 1]] : [])];
-        const res = await finish([{ type_id: 'craft_recipe', legacy_type_id: 12, recipe_network_id: o.netId, times_crafted: 1 }], cons, o.sell?.Count ?? 1);
+        const res = await finish([{ type_id: 'craft_recipe', legacy_type_id: LEGACY.craft_recipe, recipe_network_id: o.netId, times_crafted: 1 }], cons, o.sell?.Count ?? 1);
         return say(res === 'ok' ? `traded -> ${o.sell?.Count ?? 1} ${o.sell?.Name}` : `trade rejected: ${res}`);
       }
       case 'beacon': {    // beacon <primary> [secondary]: beacon open, payment item in box:0 (effect names: speed haste resistance jump_boost strength regeneration)
@@ -1982,8 +1993,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const pe = EFF[a[0]] ?? num(a[0], 1), se = a[1] ? EFF[a[1]] ?? num(a[1], 0) : 0;
         await sync();
         const id = reqId, r = waitResponse(id);
-        stackReq([{ type_id: 'beacon_payment', legacy_type_id: 10, primary_effect: pe, secondary_effect: se },
-          { type_id: 'destroy', legacy_type_id: 4, count: 1, source: { slot_type: { container_id: 'beacon_payment' }, slot: 27, stack_id: netId(inv.ui[27]?.stack_id) ?? 0 } }]);   // the payment is destroyed, not consumed
+        stackReq([{ type_id: 'beacon_payment', legacy_type_id: LEGACY.beacon_payment, primary_effect: pe, secondary_effect: se },
+          { type_id: 'destroy', legacy_type_id: LEGACY.destroy, count: 1, source: { slot_type: { container_id: 'beacon_payment' }, slot: 27, stack_id: netId(inv.ui[27]?.stack_id) ?? 0 } }]);   // the payment is destroyed, not consumed
         const st = await r;
         await sync();
         return say(st === 'ok' ? `beacon set ${a[0]}${a[1] ? ' + ' + a[1] : ''}` : `beacon rejected: ${st}`);
@@ -2056,7 +2067,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const n = num(a[1], 1);
         const opened = !box;   // the creative menu is part of the inventory screen
         if (opened) { client.queue('interact', { action_id: 'open_inventory', target_entity_id: rid, has_position: false }); await boxWait(); }
-        const res = await finish([{ type_id: 'craft_creative', legacy_type_id: 14, item_id: entry, times_crafted: 1 }], [], n);
+        const res = await finish([{ type_id: 'craft_creative', legacy_type_id: LEGACY.craft_creative, item_id: entry, times_crafted: 1 }], [], n);
         if (opened && box) { client.queue('container_close', { window_id: box.window, window_type: box.type, server: false }); box = null; }
         return say(res === 'ok' ? `creative ${want}*${n}` : `creative rejected: ${res}`);
       }
@@ -2121,7 +2132,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         if (to < 0) return say(`${action}: no free slot`);
         const dk = dstKind ?? boxKind(to);
         const n = Math.min(num(a[1], it.count), it.count), what = iname(it).replace(/\*\d+$/, '');
-        stackReq([{ type_id: 'place', legacy_type_id: 1, count: n, source: slotInfo(srcKind === 'hotbar_and_inventory' ? (from < 9 ? 'hotbar' : 'inventory') : srcKind, from, it), destination: slotInfo(dk, to, dst[to]?.network_id ? dst[to] : null) }]);
+        stackReq([{ type_id: 'place', legacy_type_id: LEGACY.place, count: n, source: slotInfo(srcKind === 'hotbar_and_inventory' ? (from < 9 ? 'hotbar' : 'inventory') : srcKind, from, it), destination: slotInfo(dk, to, dst[to]?.network_id ? dst[to] : null) }]);
         await ticks(4); resync(); await ticks(4);
         return say(action === 'take' ? `took ${what}*${n} -> slot ${to}` : `put ${what}*${n} -> container slot ${to}`);
       }
@@ -2177,7 +2188,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         }
         const shut = () => { if (opened && box) client.queue('container_close', { window_id: box.window, window_type: box.type, server: false }); if (opened) box = null; };
         const r1 = waitResponse(reqId);
-        stackReq(plan.cells.flatMap((c) => c.src.map((u) => ({ type_id: 'place', legacy_type_id: 1, count: u.n, source: slotInfo(u.i < 9 ? 'hotbar' : 'inventory', u.i, u.it), destination: { slot_type: { container_id: 'crafting_input' }, slot: c.cell, stack_id: 0 } }))));
+        stackReq(plan.cells.flatMap((c) => c.src.map((u) => ({ type_id: 'place', legacy_type_id: LEGACY.place, count: u.n, source: slotInfo(u.i < 9 ? 'hotbar' : 'inventory', u.i, u.it), destination: { slot_type: { container_id: 'crafting_input' }, slot: c.cell, stack_id: 0 } }))));
         const g1 = await r1;
         if (g1 !== 'ok') {
           shut(); await sync();
@@ -2196,14 +2207,14 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const id2 = reqId, r2 = waitResponse(id2);
         const outSrc = { slot_type: { container_id: 'creative_output' }, slot: 50, stack_id: id2 };
         const leftovers = [];
-        for (let k = left, j = 0; k > 0 && j < emptyAfter.length; j++) { const n = Math.min(k, stacksTo); leftovers.push({ type_id: 'place', legacy_type_id: 1, count: n, source: outSrc, destination: slotInfo('hotbar_and_inventory', emptyAfter[j], null) }); k -= n; }
+        for (let k = left, j = 0; k > 0 && j < emptyAfter.length; j++) { const n = Math.min(k, stacksTo); leftovers.push({ type_id: 'place', legacy_type_id: LEGACY.place, count: n, source: outSrc, destination: slotInfo('hotbar_and_inventory', emptyAfter[j], null) }); k -= n; }
         stackReq([
-          { type_id: 'craft_recipe', legacy_type_id: 12, recipe_network_id: plan.r.net, times_crafted: times },
-          { type_id: 'results_deprecated', legacy_type_id: 19, result_items: [resultsLegacy ? o : { type: 'name', legacy_type: 1, name: want, metadata: o.metadata ?? 0, count: o.count, block_runtime_id: o.block_runtime_id ?? 0, extra: { has_nbt: 0, can_place_on: [], can_destroy: [] } }], times_crafted: times },
-          ...plan.cells.map((c) => ({ type_id: 'consume', legacy_type_id: 5, count: c.n, source: { slot_type: { container_id: 'crafting_input' }, slot: c.cell, stack_id: ids.get(c.cell) ?? 0 } })),
-          ...(left ? [{ type_id: 'create', legacy_type_id: 6, result_slot_id: 0 }] : []),
-          { type_id: 'place', legacy_type_id: 1, count: total, source: outSrc, destination: slotInfo('hotbar_and_inventory', free, null) },
-          ...(left ? [{ type_id: 'create', legacy_type_id: 6, result_slot_id: 1 }, ...leftovers] : []),
+          { type_id: 'craft_recipe', legacy_type_id: LEGACY.craft_recipe, recipe_network_id: plan.r.net, times_crafted: times },
+          { type_id: 'results_deprecated', legacy_type_id: LEGACY.results_deprecated, result_items: [resultsLegacy ? o : { type: 'name', legacy_type: 1, name: want, metadata: o.metadata ?? 0, count: o.count, block_runtime_id: o.block_runtime_id ?? 0, extra: { has_nbt: 0, can_place_on: [], can_destroy: [] } }], times_crafted: times },
+          ...plan.cells.map((c) => ({ type_id: 'consume', legacy_type_id: LEGACY.consume, count: c.n, source: { slot_type: { container_id: 'crafting_input' }, slot: c.cell, stack_id: ids.get(c.cell) ?? 0 } })),
+          ...(left ? [{ type_id: 'create', legacy_type_id: LEGACY.create, result_slot_id: 0 }] : []),
+          { type_id: 'place', legacy_type_id: LEGACY.place, count: total, source: outSrc, destination: slotInfo('hotbar_and_inventory', free, null) },
+          ...(left ? [{ type_id: 'create', legacy_type_id: LEGACY.create, result_slot_id: 1 }, ...leftovers] : []),
         ]);
         const st = await r2;
         if (st !== 'ok') {   // refused: what went into the grid is taken back out (as a person drags it out) into empty slots of the
@@ -2214,8 +2225,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           const cells = plan.cells.filter((c) => ids.get(c.cell) !== undefined);
           const src = (c) => ({ slot_type: { container_id: 'crafting_input' }, slot: c.cell, stack_id: ids.get(c.cell) });
           let back = 'none';
-          if (cells.length && empty.length >= cells.length) { const r3 = waitResponse(reqId); stackReq(cells.map((c, j) => ({ type_id: 'place', legacy_type_id: 1, count: c.n, source: src(c), destination: slotInfo(empty[j] < 9 ? 'hotbar' : 'inventory', empty[j], null) }))); back = await r3; }
-          if (cells.length && back !== 'ok') { const r4 = waitResponse(reqId); stackReq(cells.map((c) => ({ type_id: 'drop', legacy_type_id: 3, count: c.n, source: src(c), randomly: false }))); await r4; }
+          if (cells.length && empty.length >= cells.length) { const r3 = waitResponse(reqId); stackReq(cells.map((c, j) => ({ type_id: 'place', legacy_type_id: LEGACY.place, count: c.n, source: src(c), destination: slotInfo(empty[j] < 9 ? 'hotbar' : 'inventory', empty[j], null) }))); back = await r3; }
+          if (cells.length && back !== 'ok') { const r4 = waitResponse(reqId); stackReq(cells.map((c) => ({ type_id: 'drop', legacy_type_id: LEGACY.drop, count: c.n, source: src(c), randomly: false }))); await r4; }
         }
         shut(); await sync();
         return say(st === 'ok' ? `crafted ${want}*${total} -> slot ${free}` : `craft rejected: ${st}`);
@@ -2233,7 +2244,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
             const to = inv.slots.findIndex((x, i) => i < 36 && !x?.network_id);
             if (to < 0) { say(`close: inventory full, ${iname(it)} stays in the ${box.type}`); continue; }
             const r = waitResponse(reqId);
-            stackReq([{ type_id: 'place', legacy_type_id: 1, count: it.count, source: { slot_type: { container_id: c }, slot, stack_id: netId(it.stack_id) ?? 0 }, destination: slotInfo(to < 9 ? 'hotbar' : 'inventory', to, null) }]);
+            stackReq([{ type_id: 'place', legacy_type_id: LEGACY.place, count: it.count, source: { slot_type: { container_id: c }, slot, stack_id: netId(it.stack_id) ?? 0 }, destination: slotInfo(to < 9 ? 'hotbar' : 'inventory', to, null) }]);
             await r; await sync();
           }
         }

@@ -40,7 +40,11 @@ const FAKE_BLOCKS = [...new Map(['air', 'grass_block', 'dirt', 'stone', 'craftin
 const NOT_SOLID = /^(air|water|lava|fire|short_grass|fern|poppy|dandelion|torch|lever|.*button|.*pressure_plate|trip_wire|wheat|carrots|potatoes|beetroot|reeds|sweet_berry_bush|cave_vines.*|oak_sapling|.*rail|redstone_wire|frame|standing_sign|standing_banner|candle|flower_pot)$/;
 put('node_modules/minecraft-data/package.json', '{"name":"minecraft-data","main":"index.js"}');
 put('node_modules/minecraft-data/index.js', `const S = ${JSON.stringify(FAKE_BLOCKS)}; const solid = ${NOT_SOLID};
-module.exports = () => ({ blockStates: S, blockCollisionShapes: { blocks: Object.fromEntries(S.map((s) => [s.name, [solid.test(s.name) ? 0 : 1]])), shapes: { 0: [], 1: [[0, 0, 0, 1, 1, 1]] } }, entitiesArray: [] });`);
+// (1.26.60's item stack actions as minecraft-data lists them: a reserved one before the last two)
+const ACTIONS_1_26_60 = ['take', 'place', 'swap', 'drop', 'destroy', 'consume', 'create', 'lab_table_combine', 'beacon_payment', 'mine_block', 'craft_recipe', 'craft_recipe_auto', 'craft_creative', 'optional', 'craft_grindstone_request', 'craft_loom_request', 'craft_reserved', 'non_implemented', 'results_deprecated'];
+const REQ_1_26_60 = ['container', [{ name: 'request_id', type: 'zigzag32' }, { name: 'actions', type: ['array', { countType: 'varint', type: ['container', [{ name: 'type_id', type: ['mapper', { type: 'varint', mappings: Object.fromEntries(ACTIONS_1_26_60.map((n, i) => [i, n])) }] }, { name: 'legacy_type_id', type: 'u8' }]] }] }]];
+module.exports = (v) => ({ blockStates: S, blockCollisionShapes: { blocks: Object.fromEntries(S.map((s) => [s.name, [solid.test(s.name) ? 0 : 1]])), shapes: { 0: [], 1: [[0, 0, 0, 1, 1, 1]] } }, entitiesArray: [],
+  ...(v === 'bedrock_1.26.60' ? { protocol: { types: { ItemStackRequest: REQ_1_26_60 } } } : {}) });`);
 // the runtime id the client derives for a block (FNV-1a of its NBT; the fake prismarine-nbt writes JSON)
 const blockId = (b) => { let h = 0x811c9dc5; for (const c of Buffer.from(JSON.stringify({ type: 'compound', name: '', value: { name: { type: 'string', value: 'minecraft:' + b.name }, states: { type: 'compound', value: b.states } } }))) { h ^= c; h = Math.imul(h, 0x01000193) >>> 0; } return h | 0; };
 const req = createRequire(path.join(T, 'package.json'));
@@ -429,6 +433,30 @@ const W = { sleep: (ms) => new Promise((r) => setTimeout(r, ms)) };
   t0 = Date.now(); await bot.act('cmd', ['/lab:x']); const plain = Date.now() - t0;
   check(plain >= 550 && !sent('command_request').some((p) => p.command === '/list'), `cmd without it: the whole wait (${plain} ms), nothing sent behind`, JSON.stringify(sent('command_request').map((p) => p.command)));
   delete process.env.LAB_CMD_WAIT_MS;
+}
+
+// the item stack actions' bytes come from the version's own list: 1.26.60 put a reserved action before the last two, so the
+// craft results byte went 19 → 20 (every craft on BDS 1.26.60 was kicked: "packet 147 malformed: wrong const value for member
+// Action type"); with no list (here: 1.26.50) the fixed numbers as before
+{
+  const acts = JSON.stringify([{ type_id: 'craft_recipe', recipe_network_id: 1, times_crafted: 1 }, { type_id: 'non_implemented' }, { type_id: 'results_deprecated', result_items: [], times_crafted: 1 }]);
+  const codes = (cl, from) => cl.sent.slice(from).filter(([n]) => n === 'item_stack_request').map(([, p]) => p.requests[0].actions.map((x) => `${x.type_id}=${x.legacy_type_id}`).join(' '));
+  const k0 = C.sent.length;
+  await bot.act('request', [acts]);
+  const d = await createRealPlayer({ req, port: 1, name: 'D', version: '1.26.60', emit: () => {}, timeoutMs: 3000 });
+  const C3 = globalThis.__fakeClient;
+  C3.on('queued', (n, p) => {
+    if (n === 'inventory_transaction' && p.transaction?.transaction_type === 'inventory_mismatch') setTimeout(() => C3.emit('inventory_content', { window_id: 'inventory', input: slots }), 2);
+    if (n === 'item_stack_request') for (const r of p.requests) setTimeout(() => C3.emit('item_stack_response', { responses: [{ status: 'ok', request_id: r.request_id, containers: [] }] }), 2);
+  });
+  C3.emit('inventory_content', { window_id: 'inventory', input: slots });
+  await new Promise((r) => setTimeout(r, 300));
+  const k3 = C3.sent.length;
+  await d.act('request', [acts]);
+  const was = codes(C, k0), now = codes(C3, k3);
+  check(was.join() === 'craft_recipe=12 non_implemented=18 results_deprecated=19' && now.join() === 'craft_recipe=12 non_implemented=19 results_deprecated=20',
+    'item stack actions: their bytes from the version\'s list (1.26.60: non_implemented 19, results 20), the fixed ones without it', `${was.join()} | ${now.join()}`);
+  d.close();
 }
 
 console.log(`\n${bad ? 'FAIL' : 'PASS'} ${good}/${good + bad}`);
