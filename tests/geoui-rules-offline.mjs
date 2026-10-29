@@ -11,7 +11,10 @@
 //              public summary read back to what RULES.md records — the unit scale / 16, the origin 24 model units, the body's scale
 //              followed, the poses still, the light 0.757, right45 not drawn, invisibility not drawn; run 40061560812 (the second) the
 //              same way — white held at 236, every depth drawn with the smaller z in front, a tilt's light by its sign, the bottom right
-//              hiding every plane there (R4.11), invisible, no red, not cancelled, the GUI scale neither A nor B (16 screens)
+//              hiding every plane there (R4.11), invisible, no red, not cancelled, the GUI scale neither A nor B (16 screens); run
+//              40881294595 (the third): the arm hiding by depth and gone under the frozen camera, colours held at 236 channel by channel
+//              (the overlay at 1 too), a tilt's light turning with the angle and spent by 15°, the server's body scale cancelling, C to
+//              1080p (4K at 5), the control the same on Minecraft 1.26.60
 //              The second run's predictions as committed: they parted the GUI scale's two rules and the emissive, colour, overlay and
 //              depth alternatives.
 //   predict    the third run's predictions: the bottom right by depth or by order, the arm or not under the frozen camera; colours
@@ -195,6 +198,37 @@ const built = P.build(R.scene(), { core: G }), f = built.files;
     'R5.3: the 16 screens — neither A nor B; min(4, ⌊W / W0⌋, ⌊H / H0⌋) fits them for 320 < W0 ≤ 341.3, 180 < H0 ≤ 239.75 (and only with the cap of 4: 2560 x 1440 is 4)', JSON.stringify(gui));
 }
 function sum1Of() { return JSON.parse(fs.readFileSync(path.join(HIST, 'summary.json'), 'utf8')); }
+
+// ---- history: run 40881294595 (the third run, its predictions and app.txt as committed before it — never rewritten after)
+{
+  const H3 = path.join(TOP, 'bds/geoui/rules-history/run-40881294595');
+  const pr3 = JSON.parse(fs.readFileSync(path.join(H3, 'predictions.json'), 'utf8'));
+  const sum3 = JSON.parse(fs.readFileSync(path.join(H3, 'summary.json'), 'utf8')), app3 = fs.readFileSync(path.join(H3, 'app.txt'), 'utf8');
+  ok(pr3.version === 3 && sum3.ok === true && sum3.steps === 344 && sum3.failed_lines.length === 0 && sum3.measures.length === 93 && sum3.measures.every((m) => m.ok)
+    && (app3.match(/^measure /gm) || []).length === 93 && sum3.app === '1.26.60.4' && sum3.bds === '1.26.60.6',
+    'its public summary: every step and all 93 measures (Minecraft 1.26.60.4 against BDS 1.26.60.6)');
+  const rows = R.verdict(sum3, pr3, app3), d = (id) => get(rows, id).detail, byClaim = (re) => rows.find((x) => re.test(x.claim)) || { result: '', detail: '' };
+  ok(get(rows, 'R4.11').result === '奥行き（小さい z から描かれ、ある z から先が隠れる）・止めたカメラでは右下も全部描かれた（4 か所）'
+    && /p0: -150 194 -100 194 -50 194 0 194 50 194 100 194 150 194 \| 止めたカメラ 194/.test(d('R4.11')) && /p3: -150 194 -100 194 -50 194 0 194 50 194 100 描かれない 150 描かれない \| 止めたカメラ 194/.test(d('R4.11'))
+    && ['p1', 'p2', 'p4'].every((id) => new RegExp(`${id}: -150 描かれない -100 描かれない -50 描かれない 0 描かれない 50 描かれない 100 描かれない 150 描かれない \\| 止めたカメラ 194`).test(d('R4.11'))),
+    'R4.11: the first-person arm hides by depth — where it is far (p3) z −150 … 50 drawn, 100 and 150 hidden; where it is near (p1, p2, p4) even z −150; the sky every z; the frozen camera none', d('R4.11'));
+  const worlds = [...d('R4.11').matchAll(/(p\d) rgb\((\d+),(\d+),(\d+)\) → rgb\((\d+),(\d+),(\d+)\)/g)].map((m) => ({ id: m[1], fp: m.slice(2, 5).map(Number), free: m.slice(5, 8).map(Number) }));
+  ok(worlds.length === 4 && worlds.every((w) => (w.fp[2] > w.fp[0] + 15 && w.fp[0] < 60) || (w.fp[0] > w.fp[1] && w.fp[2] > w.fp[0])) && worlds.every((w) => (w.free[1] > w.free[0] && w.free[1] > w.free[2] - 50)),
+    'what was there in first person was the arm\'s blue and lavender at the four places; under the frozen camera the sky and the grass', JSON.stringify(worlds));
+  ok(byClaim(/^fade と色の倍率/).result === '入れた色のまま（チャンネルごとに 236 で止まる: 予測との差 1.0 以内）' && /橙の緑で見る止まり方: チャンネルごと/.test(byClaim(/^fade と色の倍率/).detail)
+    && /色 1\.32: g255 \(236,236,236\) g192 \(193,193,194\) g128 \(130,130,130\)/.test(byClaim(/^fade と色の倍率/).detail) && /orange \(236,195,3\)/.test(byClaim(/^fade と色の倍率/).detail)
+    && byClaim(/重ねる色を 1/).result === '236（止まる）',
+    'R3.11: colours on fade at 1.32 and 2 come out channel by channel as predicted (within 1.0), held at 236 each; the white overlay at 1 is 236 too', byClaim(/^fade と色の倍率/).detail);
+  ok(get(rows, 'R3.12').result === 'どちらでもない' && d('R3.12') === 'ry1 188 ry5 156 rx-1 167 rx1 216 rx5 233 rx45 235 rx60 235 flatf 194',
+    'R3.12: neither by sign alone nor flat at 1° — 1° about y 188, 5° 156; about x −1° 167, +1° 216, +5° 233: it turns with the angle and is spent by 15°', d('R3.12'));
+  ok(get(rows, 'R4.9').result === '打ち消せる' && /高さ 171\.29・中心 135\.00/.test(d('R4.9')) && get(rows, '対照').result === '同じ' && /cal-s1: 高さ 160\.000・中心 128\.000/.test(d('対照')) && /黒い板 2$/.test(d('対照')),
+    'R4.9: divided by the scale the server read, the body\'s half size cancels (171.29 as at the vanilla scale); the control the same on 1.26.60 (scale 1: 160.000, 128.000), the black board drawn');
+  const g3 = sum3.measures.filter((m) => m.kind === 'marks').map((m) => [m.values.width, m.values.height, Math.round((m.values.violetx1 - m.values.violetx0) / 182)]);
+  const all = [...R.GUI_MEASURED, ...g3], no4k = all.filter(([W, H]) => !(W === 3840 && H === 2160)), fit = R.guiRuleCFit(no4k);
+  ok(get(rows, 'R5.3').result === 'C ではない（C の取れる値の外）' && /3840x2160: 5\.00/.test(d('R5.3')) && g3.filter(([, , u]) => u === 4).length === 3
+    && fit && fit.W0[0] > 340 && fit.W0[1] <= 1024 / 3 && fit.H0[0] > 210 && fit.H0[1] <= 220 && [4, 5, 6, 99].every((cap) => R.guiRuleCFit(all, { ...R.C_BOUNDS, cap }) === null),
+    `R5.3: the 27 screens to 1080p hold C with W0 ${fit && fit.W0.join('…')} and H0 ${fit && fit.H0.join('…')}; 3840 x 2160 is 5 — no cap holds 2560 x 1440 at 4 and 4K at 5`, JSON.stringify(g3));
+}
 
 // ---- the second run's predictions, as committed before it (bds/geoui/rules-history/run-40061560812/): what they could tell apart
 const PR2 = JSON.parse(fs.readFileSync(path.join(TOP, 'bds/geoui/rules-history/run-40061560812/predictions.json'), 'utf8'));
