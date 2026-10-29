@@ -7,7 +7,9 @@
 //              never in place of a proved one; the texture's alpha where the emissive test needs it; planes at the depths asked
 //   history    run 40055307539 (bds/geoui/rules-history/run-40055307539/): its predictions as they were committed before it, and its
 //              public summary read back to what RULES.md records — the unit scale / 16, the origin 24 model units, the body's scale
-//              followed, the poses still, the light 0.757, right45 not drawn, invisibility not drawn
+//              followed, the poses still, the light 0.757, right45 not drawn, invisibility not drawn; run 40061560812 (the second) the
+//              same way — white held at 236, every depth drawn with the smaller z in front, a tilt's light by its sign, the bottom right
+//              hiding every plane there (R4.11), invisible, no red, not cancelled, the GUI scale neither A nor B (16 screens)
 //   predict    this run's predictions: the GUI scale's two rules — both hold on the 10 screens measured (run 39989463030) and part on
 //              the 6 the probe adds; emissive, colour, overlay and depth alternatives that a run can tell apart
 //   frame      Studio's frame in px: the screen's middle is the model's (0, centreOf(scale)) — what run 40055307539 measured at every
@@ -118,6 +120,55 @@ const built = P.build(R.scene(), { core: G }), f = built.files;
   ok(L.D === 24 && L.K === 0.9375 / 16, 'layout.js holds what it decided: D = 24, K = 0.9375 / 16');
 }
 
+// ---- history: run 40061560812 (the second run, its predictions and app.txt as committed before it — never rewritten after)
+{
+  const H2 = path.join(TOP, 'bds/geoui/rules-history/run-40061560812');
+  const pr2 = JSON.parse(fs.readFileSync(path.join(H2, 'predictions.json'), 'utf8'));
+  const sum2 = JSON.parse(fs.readFileSync(path.join(H2, 'summary.json'), 'utf8')), app2 = fs.readFileSync(path.join(H2, 'app.txt'), 'utf8');
+  ok(pr2.version === 2 && sum2.measures.length === 114 && sum2.measures.every((m) => m.ok) && JSON.stringify(sum2.failed_lines) === '[330]' && sum2.failed_codes[0] === 'measure-size-mismatch'
+    && /^measure color cal-s0_9375 /.test(app2.split('\n')[329]) && /^size 2560x1440$/m.test(app2) && app2.lastIndexOf('shot world') < app2.indexOf('section control'),
+    'its public summary: every measure but the last two — line 330 measured the black board against the `shot world` of the 2560 x 1440 screen, and the control stopped there');
+  const rows = R.verdict(sum2, pr2, app2), d = (id) => get(rows, id).detail;
+  ok(get(rows, 'R3.11').result === '出せる道は無かった' && /lerp（アルファ 8 の白 → 234）/.test(d('R3.11')) && /白 236（cutout の灰 128 は 98）/.test(d('R3.11')) && /overlay 0\.24: after（灰 128 → 134）/.test(d('R3.11'))
+    && /em255 194 em255h 215 em255z 234 em128z 描かれない/.test(d('R3.11')),
+    'R3.11: white never reached 255 — the colour 1.32 on fade 236, emissive alpha 8 234 (alpha 128 215), the overlay after the light; alpha 8 grey 128 unseen (the bottom right)', d('R3.11'));
+  const fd128 = sum2.measures.find((m) => m.shot === 'bright-gain' && m.values.rx0 === 1001 && m.values.ry0 === 202).values;
+  ok(Math.abs((fd128.r + fd128.g + fd128.b) / 3 - 128) < 3, `fade with the colour 1.32 shows grey 128 as it is (${((fd128.r + fd128.g + fd128.b) / 3).toFixed(1)}): only white is held back, at 236`);
+  ok(get(rows, 'R4.10').result === '描かれた z: -150 -100 -60 -30 0 30 60 100 150・小さい z が手前（pack.js の通り）' && /空の前: -150 194 -100 194 -60 194 -30 194 0 194 30 194 60 194 100 194 150 194 \//.test(d('R4.10'))
+    && /重なり rgb\(2,194,3\)/.test(d('R4.10')) && /board0@-100 75 board0@100 描かれない board50@-100 75 board50@100 75/.test(d('R4.10')),
+    'R4.10: every square from z −150 to 150 drawn over the sky, the smaller z in front (green), the long boards at z 0 and 50 to both ends (but where the bottom right hides them)', d('R4.10'));
+  ok(/nightvision: 出る色 = 0\.7530 x 入れた色 \+ 2\.0（z 50 の板 74）/.test(d('R3.7')) && /box: 出る色 = 0\.7531 x 入れた色 \+ 2\.4（z 50 の板 75）/.test(d('R3.7')),
+    'R3.7: the same light with night vision at midnight and in a closed box (0.753) as at noon and midnight (0.754, 0.757): the UI\'s own', d('R3.7'));
+  const tilt = Object.fromEntries([...d('R3.12').matchAll(/(\S+) (\d+|描かれない)(?= |$)/g)].map((m) => [m[1], m[2] === '描かれない' ? null : Number(m[2])]));
+  ok(['ry-45b', 'ry-60', 'ry-30', 'ry-15', 'ry15', 'ry30', 'ry45'].every((k) => tilt[k] >= 147 && tilt[k] <= 150) && ['rx-60', 'rx-45', 'rx-30', 'rx-15'].every((k) => tilt[k] >= 105 && tilt[k] <= 109)
+    && tilt.rx15 === 235 && tilt.rx30 === 235 && tilt.flat === 194 && tilt.flatc === 194 && get(rows, 'R3.12').result === '描かれない面: ry60 ry-45 flatb rx45 rx60',
+    'R3.12: a tilt\'s light is its sign\'s, not its angle\'s (about y ±15…±60° 148, about x −15…−60° 107, +15 and +30° 235); −45° about y on the far left drawn, where run 40055307539 lost it not (nor the flat plane beside it)', JSON.stringify(tilt));
+  ok(get(rows, 'R3.9').result === '描かれない' && get(rows, 'R3.8').result.startsWith('赤くならなかった（3 回とも') && get(rows, 'R4.9').result.startsWith('打ち消せない') && /q\.model_scale は 0\.999/.test(d('R4.9'))
+    && get(rows, 'R5.3').result === 'どちらでもない' && get(rows, '対照').result === '同じ' && /黒い板 —/.test(d('対照')),
+    'R3.9 not drawn while invisible; R3.8 no red, three times; R4.9 not cancelled (q.model_scale 1 in the UI); R5.3 neither A nor B; the control the same as run 40055307539 (the black board unmeasured)', JSON.stringify(rows.map((x) => [x.rule, x.result])));
+  // the bottom right (R4.11): every grey plane measured at x ≥ 1139 and y ≥ 339 px hidden, every other drawn; the world there flat blue and
+  // lavender, darker at midnight (run 40055307539, the same place); invisibility changed the screen there only
+  const coloured = new Set(R.PROBES.depth.filter((p) => ['overlap', 'redOnly', 'greenOnly'].includes(p.id)).map((p) => p.box.join(' ')));
+  const seen = sum2.measures.filter((m) => m.kind === 'color' && m.shot !== 'ramp-invisible').map((m) => { const v = m.values; return { v, kind: R.look(v, { grey: !coloured.has([v.rx0, v.ry0, v.rx1, v.ry1].join(' ')) && !/hurt/.test(m.shot) }).kind }; });
+  const corner = (v) => v.rx0 >= 1139 && v.ry0 >= 339, hidden = seen.filter((x) => x.kind !== 'drawn');
+  const places = new Set(hidden.map((x) => `${x.v.rx0} ${x.v.ry0}`));
+  ok(hidden.length === 11 && places.size === 9 && hidden.every((x) => corner(x.v)) && seen.filter((x) => corner(x.v)).every((x) => x.kind !== 'drawn') && seen.filter((x) => !corner(x.v)).length > 80,
+    `the bottom right: the grey planes measured at x ≥ 1139 and y ≥ 339 px all hidden (${places.size} places, ${hidden.length} measures), the ${seen.filter((x) => !corner(x.v)).length} others all drawn`);
+  const w = (m) => m.values, r45 = (s) => w(s.measures.find((m) => m.shot === 'tilt-noon' && m.values.rx0 === 1266 && m.values.ry0 === 339) || s.measures.find((m) => m.shot === 'tilt-noon' && m.values.rx0 === 1266 && m.values.ry0 === 340));
+  const mid1 = sum1Of().measures.find((m) => m.shot === 'tilt-midnight' && m.values.rx0 === 1266).values, inv = sum2.measures.find((m) => m.shot === 'ramp-invisible' && m.kind === 'diff').values;
+  ok(r45(sum2).bb > r45(sum2).br + 50 && r45(sum1Of()).bb > r45(sum1Of()).br + 50 && mid1.bb < r45(sum1Of()).bb / 2 && inv.x0 >= 500 && inv.y0 >= 400 && inv.b1x0 >= 1300 && inv.b2x0 >= 1000 && inv.share < 0.05,
+    'what is there without GeoUI: blue in both runs, darker at midnight (the world\'s light on it); under invisibility only the bottom right changed (4.25 %) — the first-person arm, as far as the numbers go');
+  // R5.3: the 16 screens measured — A and B each miss some; min(4, ⌊W / W0⌋, ⌊H / H0⌋) holds for 320 < W0 ≤ 341.3 and 180 < H0 ≤ 239.75 only
+  const gui = [[1024, 768, 3], [1104, 920, 3], [1280, 800, 3], [1560, 720, 3], [1920, 1080, 4], [2160, 1080, 4], [2340, 1080, 4], [2400, 1080, 4], [2520, 1080, 4], [3840, 1080, 4],
+    ...sum2.measures.filter((m) => m.kind === 'marks' && /^gui-/.test(m.shot)).map((m) => [m.values.width, m.values.height, Math.round((m.values.violetx1 - m.values.violetx0) / 182)])];
+  const C = (w0, h0) => gui.every(([W, Hh, u]) => Math.min(4, Math.floor(W / w0), Math.floor(Hh / h0)) === u);
+  ok(gui.length === 16 && JSON.stringify(gui.slice(10)) === '[[1100,1000,3],[960,540,2],[1279,960,3],[1280,960,3],[1920,959,4],[2560,1440,4]]'
+    && !gui.every(([W, Hh, u]) => R.guiRuleA(W, Hh) === u) && !gui.every(([W, Hh, u]) => R.guiRuleB(W, Hh) === u)
+    && C(320.5, 239.75) && C(341.3, 180.5) && C(330, 230) && !C(320, 230) && !C(342, 230) && !C(330, 240) && !C(330, 180) && !gui.every(([W, Hh, u]) => Math.min(Math.floor(W / 330), Math.floor(Hh / 230)) === u),
+    'R5.3: the 16 screens — neither A nor B; min(4, ⌊W / W0⌋, ⌊H / H0⌋) fits them for 320 < W0 ≤ 341.3, 180 < H0 ≤ 239.75 (and only with the cap of 4: 2560 x 1440 is 4)', JSON.stringify(gui));
+}
+function sum1Of() { return JSON.parse(fs.readFileSync(path.join(HIST, 'summary.json'), 'utf8')); }
+
 // ---- predict
 const pr = R.predictions();
 {
@@ -150,6 +201,18 @@ const pr = R.predictions();
     'the way to run it is run 40055307539\'s: the same screen and the same knobs (without them run 40059578622 made a signed-in device and stopped at the sign-in)');
   const shots = [...app.matchAll(/^shot (\S+)/gm)].map((m) => m[1]), measured = [...app.matchAll(/^measure \w+ (\S+)/gm)].map((m) => m[1]);
   ok(measured.every((s) => shots.includes(s)) && measured.every((s) => app.indexOf(`shot ${s}\n`) < app.indexOf(`measure`, app.indexOf(`shot ${s}\n`))), 'every measured shot is taken first in app.txt');
+  const sizeWrong = (txt) => {
+    // (color, marks and diff compare with the newest `shot world`: taken at another `size`, the app stops the run there — measure-size-mismatch)
+    let size = 'reset', worldAt = null; const bad = [];
+    txt.split('\n').forEach((l, i) => {
+      if (/^size /.test(l)) size = l.slice(5);
+      if (l === 'shot world') worldAt = size;
+      if (/^measure (color|marks|diff) /.test(l) && worldAt !== size) bad.push(i + 1);
+    });
+    return bad;
+  };
+  const old2 = fs.readFileSync(path.join(TOP, 'bds/geoui/rules-history/run-40061560812/app.txt'), 'utf8');
+  ok(sizeWrong(app).length === 0 && JSON.stringify(sizeWrong(old2)) === '[330]', 'every colour, marks and diff measure has a `shot world` of its own size before it (run 40061560812\'s line 330 had not)', JSON.stringify(sizeWrong(app)));
   const count = (re) => (app.match(re) || []).length, P2 = R.PROBES;
   ok(count(/^measure color /gm) === 3 * P2.bright.length + P2.depth.length + P2.tilt.length + P2.invisible.length + 3 * P2.hurt.length + 2 * P2.ramp.length + P2.calBoard.length
     && count(/^measure geoui /gm) === 1 + R.CONTROL_SCALES.length && count(/^measure marks /gm) === R.GUI_SIZES.length && count(/^measure diff /gm) === 2,

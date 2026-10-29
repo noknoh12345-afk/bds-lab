@@ -322,6 +322,9 @@ do hud @a hide item_text
 do hud @a hide tooltips
 do hud @a hide paperdoll
 do hud @a hide touch_controls
+do scriptevent grl:show 0
+wait 1500
+shot world
 do scriptevent grl:show 1
 do scriptevent grl:scale 0.9375
 wait 1500

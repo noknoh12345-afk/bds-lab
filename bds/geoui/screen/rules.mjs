@@ -285,8 +285,9 @@ export function appTxt() {
   lines.push('section gui', 'do hud @a hide hotbar', '');
   for (const [w, h] of GUI_SIZES) lines.push(`section gui-${w}x${h}`, `size ${w}x${h}`, 'wait 9000', ...world,
     `do scriptevent grl:show ${BITS.gui}`, 'wait 2000', `shot gui-${w}x${h}`, `measure marks gui-${w}x${h}`, '');
-  // the control: run 40055307539's scales again, as it saw them (the hotbar shown), and the calibration's black board (z 100)
-  lines.push('section control', 'size reset', 'wait 6000', 'do hud @a reset', ...HUD_OFF.map((h) => `do hud @a hide ${h}`), `do scriptevent grl:show ${BITS.cal}`);
+  // the control: run 40055307539's scales again, as it saw them (the hotbar shown), and the calibration's black board (z 100) — against
+  // a `shot world` of this size (run 40061560812 measured the board against the last GUI screen's and lost it and the rest)
+  lines.push('section control', 'size reset', 'wait 6000', 'do hud @a reset', ...HUD_OFF.map((h) => `do hud @a hide ${h}`), ...world, `do scriptevent grl:show ${BITS.cal}`);
   for (const s of CONTROL_SCALES) {
     lines.push(`do scriptevent grl:scale ${s}`, ...cal(`cal-s${tag(s)}`));
     if (s === 0.9375) lines.push(...measure(`cal-s${tag(s)}`, PROBES.calBoard));
@@ -299,12 +300,17 @@ export function appTxt() {
 // ---- reading a run: each hypothesis held, fell, or was not measured
 const grey = (v) => (v ? (v.r + v.g + v.b) / 3 : null);
 /** what a colour box shows: a GeoUI plane is one flat colour (its spread under 2.5) unlike the world; the world's own colour (the
- *  newest `shot world`, same box) means nothing was drawn there */
-export function look(v) {
+ *  newest `shot world`, same box) means nothing was drawn there. o.grey: the plane is grey (r = g = b) — a flat colour that is not
+ *  grey is something else in front of it, not the plane (run 40061560812: the bottom right's flat blue and lavender, a little off
+ *  the world's picture as it moved, read as drawn planes of 35 and 166 before) */
+export function look(v, o = {}) {
   if (!v || !Number.isFinite(v.r)) return { kind: 'none' };
   const g = grey(v), off = Number.isFinite(v.br) ? Math.abs(v.r - v.br) + Math.abs(v.g - v.bg) + Math.abs(v.b - v.bb) : Infinity;
-  return { kind: off < 15 || (Number.isFinite(v.spread) && v.spread > 2.5) ? 'world' : 'drawn', g, v };
+  const notGrey = !!o.grey && Math.max(v.r, v.g, v.b) - Math.min(v.r, v.g, v.b) > 8;
+  return { kind: off < 15 || (Number.isFinite(v.spread) && v.spread > 2.5) || notGrey ? 'world' : 'drawn', g, v };
 }
+/** the boxes whose plane is not grey (the depth's red and green) */
+const COLOURED = new Set(['overlap', 'redOnly', 'greenOnly']);
 const say = (o) => (o && o.kind === 'drawn' ? o.g.toFixed(0) : o && o.kind === 'world' ? '描かれない' : '—');
 const nearest = (x, table) => Object.entries(table).sort((a, b) => Math.abs(x - a[1]) - Math.abs(x - b[1]))[0];
 const fit = (pts) => { const n = pts.length, sx = pts.reduce((s, p) => s + p[0], 0), sy = pts.reduce((s, p) => s + p[1], 0), sxx = pts.reduce((s, p) => s + p[0] * p[0], 0), sxy = pts.reduce((s, p) => s + p[0] * p[1], 0); const a = (n * sxy - sx * sy) / (n * sxx - sx * sx); return { a, b: (sy - a * sx) / n }; };
@@ -319,8 +325,9 @@ export function verdict(summary, pr = predictions(), appText = null) {
   const by = (shot, kind) => measures.filter((m) => m.shot === shot && (!kind || m.kind === kind));
   const geo = (shot) => { const m = by(shot, 'geoui')[0]; return m && m.ok ? m.values : null; };
   const pct = (a, b) => 100 * (a - b) / b;
-  /** a shot's colour boxes by id (in the order app.txt measured them) */
-  const read = (shot, list) => { const ms = by(shot, 'color'); return Object.fromEntries(list.map((p, i) => [p.id, look(ms[i] && ms[i].ok ? ms[i].values : null)])); };
+  /** a shot's colour boxes by id (in the order app.txt measured them); grey planes but the depth's red and green (o.grey false: the
+   *  hurt flash, whose red is the question) */
+  const read = (shot, list, o = {}) => { const ms = by(shot, 'color'); return Object.fromEntries(list.map((p, i) => [p.id, look(ms[i] && ms[i].ok ? ms[i].values : null, { grey: o.grey !== false && !COLOURED.has(p.id) })])); };
   const any = (o) => Object.values(o).some((x) => x.kind !== 'none');
   // ---- version 1 (run 40055307539): scale, origin, the body's scale, poses
   if (Array.isArray(pr.scale)) {
@@ -381,7 +388,7 @@ export function verdict(summary, pr = predictions(), appText = null) {
     const ms = by(`ramp-${cond}`, 'color');
     if (!ms.length) continue;
     const pts = RAMP.map((r, i) => [r.grey, ms[i] && ms[i].ok ? grey(ms[i].values) : null]).filter((p) => p[1] !== null && p[0] > 0), f = pts.length >= 3 ? fit(pts) : null;
-    const board = ms[RAMP.length] ? say(look(ms[RAMP.length].ok ? ms[RAMP.length].values : null)) : null;
+    const board = ms[RAMP.length] ? say(look(ms[RAMP.length].ok ? ms[RAMP.length].values : null, { grey: true })) : null;
     rows.push(`${cond}: ${f ? `出る色 = ${f.a.toFixed(4)} x 入れた色 ${f.b >= 0 ? '+' : '−'} ${Math.abs(f.b).toFixed(1)}` : '—'}${board ? `（z 50 の板 ${board}）` : ''}`);
   }
   if (rows.length) out.push({ rule: 'R3.7', claim: '板の色にかかる光（時刻・暗視・閉じた箱）', result: '値（下）', detail: rows.join(' / ') });
@@ -390,10 +397,10 @@ export function verdict(summary, pr = predictions(), appText = null) {
   for (const cond of ['noon', 'midnight']) {
     const ms = by(`tilt-${cond}`, 'color');
     if (!ms.length) continue;
-    tiltRows.push(`${cond}: ${tiltIds.map((id, i) => `${id} ${say(look(ms[i] && ms[i].ok ? ms[i].values : null))}`).join(' ')}`);
+    tiltRows.push(`${cond}: ${tiltIds.map((id, i) => `${id} ${say(look(ms[i] && ms[i].ok ? ms[i].values : null, { grey: true }))}`).join(' ')}`);
   }
   if (tiltRows.length) {
-    const ms = by('tilt-noon', 'color'), seen = (id) => { const i = tiltIds.indexOf(id); return i >= 0 && ms[i] && ms[i].ok ? look(ms[i].values) : { kind: 'none' }; };
+    const ms = by('tilt-noon', 'color'), seen = (id) => { const i = tiltIds.indexOf(id); return i >= 0 && ms[i] && ms[i].ok ? look(ms[i].values, { grey: true }) : { kind: 'none' }; };
     const gone = tiltIds.filter((id) => seen(id).kind === 'world');
     out.push({ rule: 'R3.12', claim: '面の向きで明るさが変わる（傾けた板）', result: gone.length ? `描かれない面: ${gone.join(' ')}` : '全部描かれた', detail: tiltRows.join(' / ') });
   }
@@ -409,7 +416,7 @@ export function verdict(summary, pr = predictions(), appText = null) {
   }
   // ---- R3.8 the hurt flash
   if (pr.hurt && Array.isArray(pr.hurt.shots)) {
-    const hs = pr.hurt.shots.map((s) => read(s, PROBES.hurt)).filter(any);
+    const hs = pr.hurt.shots.map((s) => read(s, PROBES.hurt, { grey: false })).filter(any);
     if (hs.length) {
       const red = (o) => o.kind === 'drawn' && o.v.r - (o.v.g + o.v.b) / 2 > 20;
       const reds = hs.flatMap((o) => pr.hurt.ids.filter((id) => red(o[id])));
