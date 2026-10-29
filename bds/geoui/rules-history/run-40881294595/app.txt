@@ -1,0 +1,369 @@
+# GeoUI の規則を決める 3 本目（bds/geoui/screen/rules.mjs が作る。予測は predictions.json: 走らせる前にコミットしたもの）
+# 1 本目・2 本目（run 40055307539・40061560812）で決まった事と、その予測・手順は bds/geoui/rules-history/run-<番号>/
+# node lab.mjs app ci -a geoui_rules --screen 720x1560 --knobs "APP_SIGNIN=0 APP_LAN_JOIN_MS=420000"（人の許可をもらってから）→ node bds/geoui/screen/rules.mjs verdict <summary.json>
+
+section title
+stop
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 900000
+do tp @a 0 -60 0 0 0
+do gamemode adventure @a
+do time set noon
+do weather clear
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do scriptevent grl:show 0
+wait 6000
+absent clientlog \bERROR\b
+
+section arm
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 64
+do scriptevent grl:zsel 0
+wait 1200
+shot arm-z0
+measure color arm-z0 261 178 286 204
+measure color arm-z0 1274 347 1299 372
+measure color arm-z0 1400 347 1425 372
+measure color arm-z0 1105 600 1130 626
+measure color arm-z0 1274 600 1299 626
+do scriptevent grl:zsel 1
+wait 1200
+shot arm-z1
+measure color arm-z1 261 178 286 204
+measure color arm-z1 1274 347 1299 372
+measure color arm-z1 1400 347 1425 372
+measure color arm-z1 1105 600 1130 626
+measure color arm-z1 1274 600 1299 626
+do scriptevent grl:zsel 2
+wait 1200
+shot arm-z2
+measure color arm-z2 261 178 286 204
+measure color arm-z2 1274 347 1299 372
+measure color arm-z2 1400 347 1425 372
+measure color arm-z2 1105 600 1130 626
+measure color arm-z2 1274 600 1299 626
+do scriptevent grl:zsel 3
+wait 1200
+shot arm-z3
+measure color arm-z3 261 178 286 204
+measure color arm-z3 1274 347 1299 372
+measure color arm-z3 1400 347 1425 372
+measure color arm-z3 1105 600 1130 626
+measure color arm-z3 1274 600 1299 626
+do scriptevent grl:zsel 4
+wait 1200
+shot arm-z4
+measure color arm-z4 261 178 286 204
+measure color arm-z4 1274 347 1299 372
+measure color arm-z4 1400 347 1425 372
+measure color arm-z4 1105 600 1130 626
+measure color arm-z4 1274 600 1299 626
+do scriptevent grl:zsel 5
+wait 1200
+shot arm-z5
+measure color arm-z5 261 178 286 204
+measure color arm-z5 1274 347 1299 372
+measure color arm-z5 1400 347 1425 372
+measure color arm-z5 1105 600 1130 626
+measure color arm-z5 1274 600 1299 626
+do scriptevent grl:zsel 6
+wait 1200
+shot arm-z6
+measure color arm-z6 261 178 286 204
+measure color arm-z6 1274 347 1299 372
+measure color arm-z6 1400 347 1425 372
+measure color arm-z6 1105 600 1130 626
+measure color arm-z6 1274 600 1299 626
+do scriptevent grl:show 0
+do scriptevent grl:cam 1
+wait 2500
+shot arm-cam
+measure diff arm-cam
+shot world
+do scriptevent grl:zsel 3
+do scriptevent grl:show 64
+wait 1500
+shot arm-free
+measure color arm-free 261 178 286 204
+measure color arm-free 1274 347 1299 372
+measure color arm-free 1400 347 1425 372
+measure color arm-free 1105 600 1130 626
+measure color arm-free 1274 600 1299 626
+do scriptevent grl:show 0
+do scriptevent grl:cam 0
+do scriptevent grl:zsel 0
+wait 2500
+
+section colours
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:gain 1.32
+do scriptevent grl:show 128
+wait 1500
+shot colours-132
+measure color colours-132 248 123 299 174
+measure color colours-132 417 123 468 174
+measure color colours-132 586 123 637 174
+measure color colours-132 755 123 805 174
+measure color colours-132 923 123 974 174
+measure color colours-132 248 292 299 343
+measure color colours-132 417 292 468 343
+measure color colours-132 586 292 637 343
+measure color colours-132 755 292 805 343
+do scriptevent grl:gain 2
+wait 1500
+shot colours-200
+measure color colours-200 248 123 299 174
+measure color colours-200 417 123 468 174
+measure color colours-200 586 123 637 174
+measure color colours-200 755 123 805 174
+measure color colours-200 923 123 974 174
+measure color colours-200 248 292 299 343
+measure color colours-200 417 292 468 343
+measure color colours-200 586 292 637 343
+measure color colours-200 755 292 805 343
+do scriptevent grl:gain 1
+do scriptevent grl:show 0
+
+section overlay-1
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:ov 1
+do scriptevent grl:show 16
+wait 1500
+shot bright-ov1
+measure color bright-ov1 242 202 305 265
+measure color bright-ov1 495 202 559 265
+measure color bright-ov1 748 202 812 265
+measure color bright-ov1 1001 202 1065 265
+measure color bright-ov1 1255 202 1318 265
+measure color bright-ov1 242 455 305 518
+measure color bright-ov1 495 455 559 518
+measure color bright-ov1 748 455 812 518
+measure color bright-ov1 1001 455 1065 518
+measure color bright-ov1 1255 455 1318 518
+do scriptevent grl:ov 0
+do scriptevent grl:show 0
+
+section fine
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 256
+wait 1500
+shot tilt-fine
+measure color tilt-fine 169 171 210 211
+measure color tilt-fine 296 171 336 211
+measure color tilt-fine 422 171 463 211
+measure color tilt-fine 549 171 589 211
+measure color tilt-fine 675 171 716 211
+measure color tilt-fine 802 171 842 211
+measure color tilt-fine 929 171 969 211
+measure color tilt-fine 1055 171 1096 211
+do scriptevent grl:show 0
+
+section body
+do scriptevent grl:show 1
+do scriptevent grl:small 1
+wait 1000
+do scriptevent grl:body
+do scriptevent grl:comp 2
+wait 1500
+shot cal-body
+measure geoui cal-body
+do scriptevent grl:comp 0
+do scriptevent grl:small 0
+wait 1000
+do scriptevent grl:body
+do scriptevent grl:show 0
+wait 1000
+
+section gui
+do hud @a hide hotbar
+
+section gui-1290x960
+size 1290x960
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1290x960
+measure marks gui-1290x960
+
+section gui-1300x960
+size 1300x960
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1300x960
+measure marks gui-1300x960
+
+section gui-1320x960
+size 1320x960
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1320x960
+measure marks gui-1320x960
+
+section gui-1340x960
+size 1340x960
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1340x960
+measure marks gui-1340x960
+
+section gui-1360x960
+size 1360x960
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1360x960
+measure marks gui-1360x960
+
+section gui-1920x760
+size 1920x760
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1920x760
+measure marks gui-1920x760
+
+section gui-1920x800
+size 1920x800
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1920x800
+measure marks gui-1920x800
+
+section gui-1920x840
+size 1920x840
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1920x840
+measure marks gui-1920x840
+
+section gui-1920x880
+size 1920x880
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1920x880
+measure marks gui-1920x880
+
+section gui-1920x920
+size 1920x920
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1920x920
+measure marks gui-1920x920
+
+section gui-1920x950
+size 1920x950
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-1920x950
+measure marks gui-1920x950
+
+section gui-3840x2160
+size 3840x2160
+wait 9000
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 8
+wait 2000
+shot gui-3840x2160
+measure marks gui-3840x2160
+
+section control
+size reset
+wait 6000
+do hud @a reset
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do scriptevent grl:show 0
+wait 1500
+shot world
+do scriptevent grl:show 1
+do scriptevent grl:scale 0.9375
+wait 1500
+shot cal-s0_9375
+measure geoui cal-s0_9375
+measure color cal-s0_9375 746 52 814 119
+do scriptevent grl:scale 1
+wait 1500
+shot cal-s1
+measure geoui cal-s1
+do scriptevent grl:scale 0.9375
+
+section end
+do scriptevent grl:show 0
+do hud @a reset
+do time set noon
+shot end
