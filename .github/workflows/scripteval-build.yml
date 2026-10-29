@@ -105,8 +105,8 @@ jobs:
             cmake --build "$SRC/build-$abi"
             ls -l "$SRC/build-$abi/libscripteval.so"
             # 公開シンボルは mod_init / mod_preinit だけであること(それ以外が出ていたら止める)
-            syms=$($NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm -D --defined-only "$SRC/build-$abi/libscripteval.so" | awk '$2=="T"||$2=="t"{print $3}' | sort -u)
-            echo "exported: $syms"
+            syms=$($NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm -D --defined-only "$SRC/build-$abi/libscripteval.so" | awk '$2=="T"||$2=="t"{print $3}' | sed 's/@@.*//' | sort -u)
+            echo "exported: $(echo "$syms" | tr '\n' ' ')"
             [ "$(echo "$syms" | tr '\n' ' ' | xargs)" = "mod_init mod_preinit" ] || { echo "::error::unexpected exported symbols: $syms"; exit 1; }
             echo "::endgroup::"
           done
