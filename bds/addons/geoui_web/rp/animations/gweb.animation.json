@@ -391,7 +391,7 @@
         },
         "gweb_ptr_r": {
           "position": [
-            "-72.5 + v.gweb_px * 145",
+            "-289.125 + v.gweb_px * 578.25",
             "90 - v.gweb_py * 180",
             "0"
           ],
@@ -399,7 +399,7 @@
         },
         "gweb_ring_r": {
           "position": [
-            "-72.5 + v.gweb_px * 145",
+            "-289.125 + v.gweb_px * 578.25",
             "90 - v.gweb_py * 180",
             "0"
           ],
@@ -407,7 +407,7 @@
         },
         "gweb_tip_r": {
           "position": [
-            "-72.5 + v.gweb_px * 145",
+            "-289.125 + v.gweb_px * 578.25",
             "90 - v.gweb_py * 180",
             "0"
           ],
@@ -583,7 +583,7 @@
         },
         "gweb_ptr_z": {
           "position": [
-            "-289.125 + v.gweb_px * 578.25",
+            "(v.gweb_px - 0.5) * v.gweb_asp * 0.18",
             "90 - v.gweb_py * 180",
             "0"
           ],
@@ -591,7 +591,7 @@
         },
         "gweb_ring_z": {
           "position": [
-            "-289.125 + v.gweb_px * 578.25",
+            "(v.gweb_px - 0.5) * v.gweb_asp * 0.18",
             "90 - v.gweb_py * 180",
             "0"
           ],
@@ -599,7 +599,7 @@
         },
         "gweb_tip_z": {
           "position": [
-            "-289.125 + v.gweb_px * 578.25",
+            "(v.gweb_px - 0.5) * v.gweb_asp * 0.18",
             "90 - v.gweb_py * 180",
             "0"
           ],
