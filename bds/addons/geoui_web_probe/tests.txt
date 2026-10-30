@@ -30,17 +30,36 @@ scriptevent gwp:urls 0=/quad/200x100.png 5=/solid/00ff00/64x64.png
 wait 1000
 ~ @A title: ~gu~0ahttp://\S+/quad/200x100\.png +http://\S+/solid/00ff00/64x64\.png
 
-## F1: HUD を全部隠し、プロパティで腕と持ち物、ゲームモードはそのまま
+## F1: HUD を全部隠し、プロパティで腕と持ち物、カメラ gwp:eye（目の所の 3 人称: 1 人称の持ち物を描かない）、ゲームモードはそのまま
 gamemode survival A
 scriptevent gwp:f1 1
 wait 1000
+~ GWP CAMERA gwp:eye
+!~ GWP SCHEME
 js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length, p('A').getGameMode()])
 = [1,13,"Survival"]
 ~ @A title: ~gu~1a
 scriptevent gwp:f1 0
 wait 1000
+~ GWP CAMERA clear
+!~ GWP SCHEME
 js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length])
 = [0,0]
+
+## カメラだけ（part cam）と、向きの読み（rot）
+scriptevent gwp:part cam 1
+wait 500
+scriptevent gwp:rot
+tp A 0 -60 0 90 0
+wait 500
+scriptevent gwp:rot
+scriptevent gwp:part cam 0
+wait 500
+~ GWP CAMERA gwp:eye
+~ GWP ROT y=
+~ GWP TURNED
+~ GWP CAMERA clear
+!~ GWP SCHEME
 
 ## F1 でも携帯の操作ボタンは残せる（touch）
 scriptevent gwp:f1 touch
