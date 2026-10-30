@@ -424,7 +424,7 @@ var Session = class {
     const db = x < 0 ? mid + (lo - mid) * Math.min(1, -x / 3) : mid + (hi - mid) * Math.min(1, x / 3);
     return Math.pow(10, db / 20);
   }
-  /** commands of this tick waiting for the budget: [priority, voice, pitch (-1 none), fade duration, level (-1 none)] */
+  /** commands of this tick waiting for the budget: [priority, voice (< 0: noise band -1-v), pitch (-1 none), fade duration, level (-1 none)] */
   queue = [];
   deferred = 0;
   send(v, hz, dur, level) {
@@ -452,6 +452,10 @@ var Session = class {
     this.apply(v, p, dur ?? 0, L);
   }
   apply(v, p, dur, L) {
+    if (v < 0) {
+      this.applyNoise(-1 - v, L);
+      return;
+    }
     for (const t of this.targets) {
       const s = t.osc[v];
       if (!s) continue;
@@ -470,7 +474,7 @@ var Session = class {
       this.calls += this.targets.length;
     }
   }
-  /** the queued commands, most important first, up to the budget (a command is a setPitch or a fade, per listener) */
+  /** the queued commands, most important first, up to the budget (a command is a setPitch or a fade of a voice or a noise band, per listener) */
   flush() {
     if (!this.queue.length) return;
     this.queue.sort((a, b) => b[0] - a[0] || a[1] - b[1]);
@@ -522,8 +526,8 @@ var Session = class {
       const b0 = this.s.budget;
       this.s.budget = 0;
       for (let v = 0; v < this.V; v++) this.send(v, 0, FADE_SMOOTH, SILENT);
-      this.s.budget = b0;
       for (let b = 0; b < d.M; b++) this.noise(b, SILENT);
+      this.s.budget = b0;
       this.ending = 1;
       return;
     }
@@ -544,7 +548,6 @@ var Session = class {
       const hz = f0 && f1 ? Math.sqrt(f0 * f1) : f1 || f0;
       this.send(v, hz, FADE_SMOOTH, a1 * gain * this.eqGain((f1 || f0) * r));
     }
-    this.flush();
     if (Math.abs(this.lastNP - r) > 1e-4) {
       this.lastNP = r;
       for (const t of this.targets) for (const s of t.nz) {
@@ -560,6 +563,7 @@ var Session = class {
       const c = Math.sqrt(NOISE_BANDS[b][0] * NOISE_BANDS[b][1]) * r;
       this.noise(b, this.s.noise ? a * this.s.volume * this.eqGain(c) / NOISE_RMS[b] : SILENT);
     }
+    this.flush();
     if (this.s.bursts && sp > 0) {
       for (let m = Math.ceil(ph - 1e-9); m < ph2 - 1e-9 && m < d.F; m++) {
         for (let e = d.evIdx[m]; e < d.evIdx[m + 1]; e++) {
@@ -598,6 +602,14 @@ var Session = class {
     L = Math.min(10, Math.max(SILENT, L));
     const last = this.lastNL[b];
     if (L / last < DB025 && last / L < DB025) return;
+    if (this.s.budget) {
+      const loud = Math.max(0, 80 + 20 * Math.log10(Math.max(L, last)));
+      this.queue.push([Math.abs(20 * Math.log10(L / last)) * loud, -1 - b, -1, FADE_SMOOTH, L]);
+      return;
+    }
+    this.applyNoise(b, L);
+  }
+  applyNoise(b, L) {
     this.lastNL[b] = L;
     for (const t of this.targets) {
       const s = t.nz[b];

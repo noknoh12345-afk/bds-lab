@@ -25,8 +25,8 @@
 - [x] 死んで復活しても音を作り直して鳴り続ける（## the voices are rebuilt after a respawn）
 - [x] リモコンでメニューが開く（## the remote opens the player）
 - [x] 新しいプレイヤーにリモコンを配る（## a new player gets the remote）
-- [ ] 実機クライアントを測る較正プログラム（## calibration programs for measuring a real client (tools/rig)）— 2026-10-30 に追加。この版はまだ BDS で go を通していない（下の「この版の状態」）
-- [ ] 軽量モード: 16 声・1 リスナーあたり 24 命令/tick（知覚上の優先度で選ぶ）（## light mode for Realms and many players: 16 voices and a command budget）— 同上
+- [x] 実機クライアントを測る較正プログラム（## calibration programs for measuring a real client (tools/rig)）
+- [x] 軽量モード: 16 声・1 リスナーあたり 24 命令/tick（知覚上の優先度で選ぶ）（## light mode for Realms and many players: 16 voices and a command budget）
 - [x] 曲の一覧（## the library lists the demo song and the generated ones）
 
 ## Guessed
@@ -43,9 +43,11 @@
 - 1 人ヘッドホン再生: 56 インスタンス、平均 16–30 命令/tick（最大 89）、スクリプト 1.5–1.8 ms/tick。QA（3 人・再接続・/reload・再起動）で 2 ms/tick 以内
 
 ## この版の状態（2026-10-30, mp3 同等化の作業）
+
+引き継ぎ（進み具合・数字の出どころ・失敗・次の手順・落とし穴）: HANDOFF.md。先頭の WIP コミット（軽量モードの予算にノイズ帯域を含める）は go 未実施。
 - 変換器はアナリシス v2 が既定（tools/spectral.py と web/core.js、13 曲でバイト単位一致: `python3 tools/parity.py`、v1 も 13/13）。v1 は `--analysis v1`
 - 追加したもの: /spectral:calib（tools/rig の較正プログラム）、/spectral:mode quality|light（命令の予算 = レート制御）、tools/rig（測定リグ）、tools/emu（較正できるクライアントの模型）、tools/metrics（ViSQOL v3 の移植ほか）、corpus/（試験曲 13 曲の出典）、tools/abx（聴き比べページ）
-- **この版はまだ `node lab.mjs go` を通していない**: 作業したセッションでは BDS をダウンロードできず（minecraft.net への接続が拒否）、push もできなかった。`node lab.mjs check`（ビルド・型・スキーマ）は通る。tests.txt に 2 節を足した
+- `node lab.mjs go`: GitHub Actions の unit（run 41042008040）で **DONE dist/Spectral_Player.mcaddon（test 96/96, qa clean）**。tests.txt に 2 節を足した
 - 数値はすべてエミュレーター上（SPEC.md）。実機の録音での測定は tools/rig を実機で回してから
 
 ## Tools

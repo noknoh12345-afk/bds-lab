@@ -250,6 +250,7 @@ until calib stereo done 15000
 wait 2000
 @A cmd /spectral:status
 ~ @A status: playing demo .* voices 16 instances 24 .* quality light budget 24
+~ @A status: playing demo .* peak ([0-9]|1[0-9]|2[0-4]) ms/tick
 @A cmd /spectral:mode quality
 ~ @A quality full: every voice, no command budget
 wait 300
