@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/web/make.mjs",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "ゲームの中のウェブの WebSocket 版: どのワールドでも /connect で"
+}
