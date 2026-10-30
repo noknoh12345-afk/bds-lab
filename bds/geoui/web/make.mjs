@@ -19,10 +19,18 @@ const G = require('../geoui_builder.js'), L = require('../screen/layout.js'), P 
 export const NS = 'gweb', NAME = 'geoui_web', OUT = path.join(TOP, 'bds', 'addons', NAME);
 const DESIGN_H = 720, G_UNITS = 0.25, BAR = 0.1;
 
-// the screen shapes: a letter of the title channel each ('a' = none), a contain box of the shape (DESIGN_H design px high)
+// the screen shapes: a letter of the title channel each ('a' = none), a contain box of the shape (DESIGN_H design px high).
+// Every letter the channel has (25): the common shapes exactly (b–i as before, then 1:1・5:4・3:2・5:3・3:4・64:27 ultrawide・iPad Pro 11・
+// the folds' inner screens) and the gaps between them filled on a log scale (no two neighbours more than 10.7 % apart: any screen from
+// 3:4 to 32:9 gets a page within 2.6 % of its shape on each side, the rest the game's black — the backdrop, R10.19). /web:size <W>x<H>
+// (or a ratio) picks the nearest (runtime.js layoutFor)
 export const LAYOUTS = {
   b: { name: '16:9', aspect: 16 / 9 }, c: { name: '4:3', aspect: 4 / 3 }, d: { name: '16:10', aspect: 16 / 10 }, e: { name: '18:9', aspect: 2 },
   f: { name: '19.5:9', aspect: 19.5 / 9 }, g: { name: '20:9', aspect: 20 / 9 }, h: { name: '21:9', aspect: 21 / 9 }, i: { name: '32:9', aspect: 32 / 9 },
+  j: { name: '1:1', aspect: 1 }, k: { name: '5:4', aspect: 5 / 4 }, l: { name: '3:2', aspect: 3 / 2 }, m: { name: '5:3', aspect: 5 / 3 },
+  n: { name: '3:4', aspect: 3 / 4 }, o: { name: '64:27', aspect: 64 / 27 }, p: { name: 'iPad Pro 11', aspect: 2388 / 1668 }, q: { name: '折りたたみ（内側）', aspect: 2208 / 1840 },
+  r: { name: '0.81', aspect: 0.806 }, s: { name: '0.87', aspect: 0.866 }, t: { name: '0.93', aspect: 0.931 }, u: { name: '1.10', aspect: 1.095 },
+  v: { name: '1.89', aspect: 1.886 }, w: { name: '2.49', aspect: 2.494 }, x: { name: '2.62', aspect: 2.623 }, y: { name: '2.90', aspect: 2.903 }, z: { name: '3.21', aspect: 3.213 },
 };
 export function config() {
   const layouts = {};
@@ -363,18 +371,21 @@ GeoUI で（URL の画像で絵を出す）。本物の解像度で確かめる�
 //      shape — where the page, the toolbar's ✕ and the pointer's tip land, and whether a click still lands (app-aspects.txt;
 //      run it with the workflow's scenario bds/addons/geoui_web/app-aspects.txt)
 // (9 本目: the 20:9 screen with a 16:9 page first, before the screen is resized — 8 本目 showed the world beside it, not the black)
+// (11 本目: every letter — screens of shapes in between, the browser sized by the screen's own W x H: the nearest layout)
+const nearest = (W, H) => R.layoutFor(config(), `${W}x${H}`);
 export const ASPECTS = [
   { id: 'box', screen: [2400, 1080], size: '16:9', lay: 'b' },
   { id: '169', screen: [1920, 1080], size: '16:9', lay: 'b' },
   { id: '43', screen: [2048, 1536], size: '4:3', lay: 'c' },
   { id: '219', screen: [2560, 1080], size: '21:9', lay: 'h' },
+  ...[[2340, 1080], [2388, 1668], [2208, 1840], [1280, 1024], [3440, 1440], [1440, 1440]].map(([W, H]) => ({ id: `s${W}x${H}`, screen: [W, H], size: `${W}x${H}`, lay: nearest(W, H) })),
 ];
 function aspectsTxt() {
   const f = (b) => `(${b.x0.toFixed(1)}, ${b.y0.toFixed(1)})–(${b.x1.toFixed(1)}, ${b.y1.toFixed(1)})`;
   const parts = ASPECTS.map((a) => {
     const [W, H] = a.screen, e = expected(W, H, a.lay), c = expected(W, H, a.lay, 0.5, 0.6);
     return `section ${a.id}
-# ${W}x${H}・${a.size}（並べ方 ${a.lay}）: ページ ${f(e.page)}、ツールバー ${f(e.toolbar)}、ポインタの先 ${f(e.tip)}${a.id === 'box' ? '（20:9 の画面に 16:9: 左右は黒）' : ''}
+# ${W}x${H}・${a.size}（並べ方 ${a.lay} = ${config().layouts[a.lay].name}）: ページ ${f(e.page)}、ツールバー ${f(e.toolbar)}、ポインタの先 ${f(e.tip)}${a.id === 'box' ? '（20:9 の画面に 16:9: 左右は黒）' : ''}
 do scriptevent gweb:close
 wait 2000
 size ${W}x${H}
