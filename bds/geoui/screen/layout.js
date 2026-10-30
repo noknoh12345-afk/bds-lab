@@ -287,7 +287,12 @@
       if (!ch) throw new Error('backdrop はタイトルの通り道（urlImages・f1・layout）と使います');
       const b = scene.backdrop, lays = String(b.layouts || '');
       for (const L of lays) if (!CHANNEL.layouts.includes(L)) throw new Error(`backdrop の layouts「${lays}」は a〜z の文字`);
-      const show = lays ? `(${[...lays].map((L) => layoutExpr(ch, L)).join(' or ')})` : isChannelExpr(ch);
+      // (one short sum, not an `or` of two comparisons a layout: the layout's letter (the 6 characters less the 5 before it) taken
+      //  out of the backdrop's letters changes them when it is one of them. 8 本目・9 本目: the `or` of 8 layouts (16 comparisons)
+      //  never showed — the world beside a 16:9 page on a 20:9 screen — while the probe's one-layout backdrop did, F1 and the
+      //  frozen camera or not: R10.19)
+      const letter = `(('%.${ch.prefix.length + 2}s' * ${T}) - ('%.${ch.prefix.length + 1}s' * ${T}))`;
+      const show = lays ? `(${isChannelExpr(ch)} and (not (('${lays}' - ${letter}) = '${lays}')))` : isChannelExpr(ch);
       controls.unshift({ [`${ns}_backdrop`]: { type: 'image', texture: b.texture || 'textures/ui/Black.png', fill: true, size: ['200%', '200%'], alpha: num(b.alpha, 1), layer: num(b.layer, -5),
         bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: show, target_property_name: '#visible' }] } });
     }
