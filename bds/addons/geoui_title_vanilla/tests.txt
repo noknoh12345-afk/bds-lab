@@ -1,0 +1,6 @@
+# geoui_title_vanilla（bds/geoui/web/probe.mjs が作る）: 何も入っていないパック。題名がプレイヤーに届くことだけ（絵は app.txt）
+
+## 題名がプレイヤーに届く
+@A join
+title A title HELLO
+~ @A title: HELLO
