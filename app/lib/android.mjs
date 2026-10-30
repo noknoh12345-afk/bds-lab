@@ -243,7 +243,7 @@ export const PAD_ON_DEVICE = '/data/local/tmp/lab-pad', PAD_FIFO = '/data/local/
 export const padBinary = (labDir, { cc, abi = 'x86_64' } = {}) => deviceBinary(labDir, 'pad', { abi, env: cc ? { ...process.env, CC: cc } : process.env });
 /** the controller plugged into the device (root: /dev/uinput), once: → { ok, note }. adb.pad() uses it from then on */
 export function startPad(adb, { labDir, abi = adb.abi ?? 'x86_64' }) {
-  if (adb.run(['shell', 'pidof lab-pad || true'], { timeout: 15_000 }).stdout.trim()) { adb.padReady = true; return { ok: true, note: 'コントローラーはつながっています' }; }
+  if (adb.run(['shell', 'pidof lab-pad || true'], { timeout: 15_000 }).stdout.trim()) { adb.padReady = true; return padSeen(adb, 'コントローラーはつながっています'); }
   const bin = process.env.APP_PAD_BIN || padBinary(labDir, { abi });
   if (typeof bin !== 'string') return { ok: false, note: bin.error };
   const p = adb.run(['push', bin, PAD_ON_DEVICE], { timeout: 60_000 });
@@ -251,7 +251,28 @@ export function startPad(adb, { labDir, abi = adb.abi ?? 'x86_64' }) {
   adb.run(['shell', asRoot(adb, `chmod 755 ${PAD_ON_DEVICE}; setsid nohup ${PAD_ON_DEVICE} ${PAD_FIFO} > /data/local/tmp/lab-pad.log 2>&1 < /dev/null & sleep 1`)], { timeout: 20_000 });
   const pid = adb.run(['shell', 'pidof lab-pad || true'], { timeout: 15_000 }).stdout.trim();
   adb.padReady = Boolean(pid);
-  return pid ? { ok: true, note: `コントローラー（Xbox Wireless Controller、uinput）をつなぎました（pid ${pid}）` } : { ok: false, note: `コントローラーが動きません: ${adb.run(['shell', 'cat /data/local/tmp/lab-pad.log'], { timeout: 15_000 }).stdout.trim().slice(0, 160)}` };
+  return pid ? padSeen(adb, `コントローラー（Xbox Wireless Controller、uinput）をつなぎました（pid ${pid}）`) : { ok: false, note: `コントローラーが動きません: ${adb.run(['shell', 'cat /data/local/tmp/lab-pad.log'], { timeout: 15_000 }).stdout.trim().slice(0, 160)}` };
+}
+// (an Android in a container — redroid: the controller is the host kernel's, and its /dev/input node never appears in the
+//  container's own /dev, so Android's input reader never had it and every button went nowhere — redroid runs 41042894189 and
+//  40987335231: A on the title for minutes and PLAY never opened, while the shell's D-pad moved the focus (the controller's
+//  hints came up only after those). So the input reader's list is read: the controller not in it → its node made from sysfs
+//  (/sys/class/input/eventN: major:minor) → still not in it: the shell's presses, buttons held, as on a device without root.
+//  A list that cannot be read changes nothing. APP_PAD_SEEN=0: not looked at)
+const PAD_NAME = 'Xbox Wireless Controller';
+function padSeen(adb, note) {
+  if (process.env.APP_PAD_SEEN === '0') return { ok: true, note };
+  const listed = () => {
+    const o = adb.run(['shell', 'dumpsys input'], { timeout: 20_000 }).stdout ?? '';
+    return /Event Hub State|Input Reader State/.test(o) ? o.includes(PAD_NAME) : null;
+  };
+  const look = (n) => { for (let i = 0; i < n; i++) { const s = listed(); if (s !== false) return s; spawnSync('sleep', ['1']); } return false; };
+  const first = look(3);
+  if (first !== false) return { ok: true, note };
+  const made = adb.run(['shell', asRoot(adb, `mkdir -p /dev/input; for d in /sys/class/input/event*; do [ "$(cat $d/device/name 2>/dev/null)" = "${PAD_NAME}" ] || continue; e=\${d##*/}; [ -e /dev/input/$e ] && continue; IFS=: read ma mi < $d/dev && mknod /dev/input/$e c $ma $mi && chown root:input /dev/input/$e && chmod 660 /dev/input/$e && echo $e; done; true`)], { timeout: 20_000 }).stdout.trim().split(/\s+/).filter(Boolean);
+  if (made.length && look(5) !== false) return { ok: true, note: `${note}。Android の入力の一覧に無かったので /dev/input/${made.join(',')} を作りました（コンテナの Android）` };
+  adb.padReady = false; adb.padLong = process.env.APP_PAD_LONG !== '0';
+  return { ok: false, note: `${note}。ただし Android の入力の一覧（dumpsys input）に出ません${made.length ? `（/dev/input/${made.join(',')} を作っても）` : ''}: シェルの入力で押します（ボタンは長押し）` };
 }
 /** what the lab put on a person's device, gone: its relay and controller stopped (as root when they ran as root: the copy of
  *  the content logs too), then every file the lab may have left removed as the shell (it owns /data/local/tmp: a file a root
