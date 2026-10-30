@@ -1,6 +1,6 @@
 # geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（5 本目）。
 # 1〜4 本目（run 40998593826・41001422618・41004077706・41008713796）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
-# 実行: node lab.mjs app ci --batch geoui_web_title_ctl,geoui_web_probe,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
+# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_title_vanilla,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に。5 本目は参加が戻されて測れず: 6 本目も同じ手順）
 
 section join
 stop
