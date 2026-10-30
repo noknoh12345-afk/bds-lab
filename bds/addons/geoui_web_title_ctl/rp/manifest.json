@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Web Title Control RP",
+    "description": "GeoUI: the title control — the probe with the game title left alone (bds-lab bds/geoui/web/probe.mjs)",
+    "uuid": "88c5b0c8-2720-40a9-8f28-167288544ff3",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "295b5d41-5d48-4224-ba06-16efaa4eb012",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}
