@@ -35,7 +35,7 @@
             },
             {
               "binding_type": "view",
-              "source_property_name": "(((('%.6s' * #hud_title_text_string) = '~gu~0b') or (('%.6s' * #hud_title_text_string) = '~gu~1b')))",
+              "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not (('b' - (('%.6s' * #hud_title_text_string) - ('%.5s' * #hud_title_text_string))) = 'b')))",
               "target_property_name": "#visible"
             }
           ]
