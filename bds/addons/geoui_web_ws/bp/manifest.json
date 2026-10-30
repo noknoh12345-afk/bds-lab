@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Web (WebSocket) BP",
+    "description": "The web in the game over /connect (any world): every site, Chrome-like, full-screen in F1 (bds-lab bds/geoui/web)",
+    "uuid": "3fdccda0-ce8c-4a93-b7ea-36b2ba71f025",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "de7aa62f-b2d6-488a-aeb7-fbb55e26cba0",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "27237a68-8763-4339-8340-4d2adc2716db",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "35141c30-2f40-4b43-8f08-9a0292d171d5",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.5.0"
+    }
+  ]
+}
