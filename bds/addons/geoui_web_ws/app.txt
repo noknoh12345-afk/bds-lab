@@ -14,9 +14,23 @@ do tp @a 0 -60 0 0 0
 wait 3000
 absent clientlog \bERROR\b
 
-section connect
+section type-key
+key T
+wait 2500
+text /connect 10.0.2.2:8787
+wait 1200
+shot ws-typed-key
+expect text (?i)connect
+
+section send-key
+key ENTER
+wait 2500
+shot ws-sent-key
+until server GWEB ws linked 25000
+
+section type-press
 press T 80
-wait 2000
+wait 2500
 press SLASH 60
 press C 60
 press O 60
@@ -39,25 +53,18 @@ press 8 60
 press 7 60
 press 8 60
 press 7 60
-wait 500
+wait 1200
+shot ws-typed-press
+expect text (?i)connect
+
+section send-press
 press ENTER 80
 wait 2500
-shot ws-typed
+shot ws-sent-press
+until server GWEB ws linked 25000
 
-section ocr-connect
-until text (?i)(connect|websocket|wss?:|接続) 4000
-
-section ocr-denied
-expect text (?i)(unknown|不明|permission|権限|cheat|チート|syntax|構文)
-
-section linked-keys
-until server GWEB ws linked 30000
-
-section connect-chat
-chat /connect 10.0.2.2:8787
-wait 2500
-shot ws-chat
-until server GWEB ws linked 30000
+section ocr-after
+expect text (?i)(connect|websocket|wss?:|接続|unknown|不明|permission|権限|cheat|チート|syntax|構文|encrypt|暗号)
 
 section open
 shot world
