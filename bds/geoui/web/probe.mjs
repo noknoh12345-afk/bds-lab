@@ -23,6 +23,9 @@ const G = require('../geoui_builder.js'), L = require('../screen/layout.js'), P 
 export const NS = 'gwp', NAME = 'geoui_web_probe', OUT = path.join(TOP, 'bds', 'addons', NAME);
 // the title's control (5 本目): the same pack with the game's title left alone (titleHide none), its own pack ids
 export const CTL_NAME = 'geoui_web_title_ctl', CTL_OUT = path.join(TOP, 'bds', 'addons', CTL_NAME);
+// the vanilla control (6 本目): no resource pack, no script — only a behaviour pack with nothing in it: does the lab's camera see
+// the game's own title at all (the control above saw none: run 41015216177)
+export const VAN_NAME = 'geoui_title_vanilla', VAN_OUT = path.join(TOP, 'bds', 'addons', VAN_NAME);
 export const SLOTS = 6, WIDTH = 160;
 
 // ---- the scene: images (slot: where) and GeoUI's marks (bits of gwp:show)
@@ -397,7 +400,7 @@ function appTxt() {
   //  対照は geoui_web_title_ctl: 題名を隠さない同じパック）・F1 の持ち物（ボーンでは動かない: カメラ gwp:eye で 1 人称を止める）)
   return `# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（5 本目）。
 # 1〜4 本目（run 40998593826・41001422618・41004077706・41008713796）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
-# 実行: node lab.mjs app ci --batch geoui_web_title_ctl,geoui_web_probe,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
+# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_title_vanilla,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に。5 本目は参加が戻されて測れず: 6 本目も同じ手順）
 
 ${JOIN}
 ${TITLE}
@@ -544,6 +547,94 @@ export function ctlFiles() {
   return { files: out, stats: built.stats };
 }
 
+/** the vanilla control's app.txt: the same join (no script: no service check) and the same titles, with the console only */
+function vanAppTxt() {
+  return `# geoui_title_vanilla（bds/geoui/web/probe.mjs が作る）: 題名の対照の対照（6 本目）。リソースパックもスクリプトも無い。
+# ここでも HELLO が写らないなら、このラボの写し方では題名が写らない（題名の隠し方の問題ではない）。
+# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_title_vanilla,geoui_web
+
+section join
+stop
+launch
+until title 600000
+join
+until joined 900000
+size 2400x1080
+wait 9000
+do tp @a 0 -60 0 0 90
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+wait 3000
+absent clientlog \\bERROR\\b
+
+section title
+do title @a times 10 70 20
+wait 2000
+shot world
+do title @a title HELLO
+wait 1500
+shot van-title
+measure diff van-title 900 300 1500 700
+measure diff van-title
+wait 6000
+shot world
+do title @a times 0 200 0
+do title @a title WWWWWWWWWWWW
+wait 1000
+shot van-title-big
+measure diff van-title-big
+do title @a subtitle hello-subtitle
+wait 1000
+shot van-sub
+measure diff van-sub
+do title @a actionbar ACTIONBAR-VANILLA
+wait 1000
+shot van-actionbar
+measure diff van-actionbar
+do title @a reset
+`;
+}
+const VAN_TESTS = `# geoui_title_vanilla（bds/geoui/web/probe.mjs が作る）: 何も入っていないパック。題名がプレイヤーに届くことだけ（絵は app.txt）
+
+## 題名がプレイヤーに届く
+@A join
+title A title HELLO
+~ @A title: HELLO
+`;
+const VAN_TASK = `# geoui_title_vanilla — 題名の対照（GeoUI の 6 本目）
+
+## Request
+GeoUI の探りでも、題名を隠さない対照（geoui_web_title_ctl）でも、普通の題名（\`/title @a title HELLO\`）が写らなかった（bds/geoui/RULES.md R10.14、
+run 41015216177）。リソースパックもスクリプトも無いワールドで同じ題名を出し、このラボの写し方で題名が写るかを見る。
+作り方: \`node bds/geoui/web/probe.mjs\`（このフォルダはそれが書く。手で直さない）。
+
+## What it is
+- 中身の無いビヘイビアパックだけ。app.txt で題名・大きな題名・サブタイトル・アクションバーを出して写す。
+`;
+/** every file of the vanilla control */
+export function vanFiles() {
+  // (fixed pack ids of its own: no other pack of the lab has them)
+  const ids = { bp: 'b7a1c0de-6c1e-4f5a-9b2e-3d1a7e5c0f61', data: 'c2e4f6a8-1b3d-4e5f-8a7b-9c0d1e2f3a4b' };
+  const out = {};
+  out['bp/manifest.json'] = JSON.stringify({ format_version: 2, header: { name: 'GeoUI Title Vanilla BP', description: 'bds-lab: the title control with nothing in it (bds/geoui/web/probe.mjs)', uuid: ids.bp, version: [1, 0, 0], min_engine_version: [1, 26, 50] },
+    modules: [{ type: 'data', uuid: ids.data, version: [1, 0, 0] }] }, null, 2);
+  out['tests.txt'] = VAN_TESTS;
+  out['app.txt'] = vanAppTxt();
+  out['TASK.md'] = VAN_TASK;
+  out['imported.json'] = JSON.stringify({ from: 'bds/geoui/web/probe.mjs', bp: [1, 0, 0], request: '題名の対照の対照: 何も入っていないパックで題名が写るか' }, null, 2) + '\n';
+  return { files: out, stats: { groups: 0, bones: 0, planes: 0, properties: 0 } };
+}
+
 /** every file of the add-on */
 export function files() {
   const built = P.build(scene(), { core: G });
@@ -566,7 +657,7 @@ function main(argv) {
   }
   const check = argv.includes('--check');
   let bad = false;
-  for (const [name, out, make] of [[NAME, OUT, files], [CTL_NAME, CTL_OUT, ctlFiles]]) {
+  for (const [name, out, make] of [[NAME, OUT, files], [CTL_NAME, CTL_OUT, ctlFiles], [VAN_NAME, VAN_OUT, vanFiles]]) {
     const { files: F, stats } = make(), r = writeUnit(out, F, { check });
     if (check) {
       if (!r.ok) { console.error(`bds/addons/${name} は probe.mjs が作る物と違います: ${r.bad.join(' ')}\n→ node bds/geoui/web/probe.mjs`); bad = true; }
