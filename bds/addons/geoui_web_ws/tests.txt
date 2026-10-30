@@ -1,0 +1,34 @@
+# geoui_web_ws（bds/geoui/web/make.mjs が作る）: ゲームの中のウェブの WebSocket 版 — @minecraft/server-net なし。サービスはプレイヤーの
+# /connect（mcws.mjs）で /web:pump を打ち、その出力（スクリプトの送りたい要求）を受け取り、次の pump で答えを返す。ここではサービスの代わりに
+# プレイヤーが /web:pump を打つ（中身はサービスが送るものと同じ base64url の JSON）。
+
+## つながる: /web:pump に名前と空の出力
+@A join
+@A cmd /web:pump "eyJoIjp7ImJhc2UiOiJodHRwOi8vMTAuMC4yLjI6ODc4NyIsInYiOiJ0ZXN0In19"
+~ @A cmd: \{"n":"A","o":\[\]\}
+~ GWEB ws linked .*10\.0\.2\.2
+
+## ブラウザを開く: 最初の要求（POST /s、持ち主はプレイヤー）が出力に
+scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+wait 300
+@A cmd /web:pump "e30"
+~ @A .*"o":\[\[1,"POST","/s",\{"owner":
+!~ GWEB open failed
+
+## 答えを pump で: 題名の通り道にページと道具の絵（F1）、次の要求はページの変わり目を待つ GET
+@A cmd /web:pump "eyJyIjpbWzEsMjAwLHsib2siOnRydWUsInNpZCI6IlMxIiwiZnJhbWUiOjEsImJhciI6MSwidyI6MTkyMCwiaCI6MTA4MCwiYmFySCI6MTA4LCJ1cmwiOiJodHRwOi8veC8iLCJ0aXRsZSI6IlQiLCJ0YWJzIjoxLCJ0YWIiOjAsImZvY3VzIjoicGFnZSIsImZyYW1lVXJsIjoiaHR0cDovLzEwLjAuMi4yOjg3ODcvcy9TMS9mLzEucG5nIiwiYmFyVXJsIjoiaHR0cDovLzEwLjAuMi4yOjg3ODcvcy9TMS9iLzEucG5nIn1dXX0"
+wait 300
+~ @A title: ~gu~.*s/S1/f/1\.png
+@A cmd /web:pump "e30"
+~ @A .*\[2,"GET","/s/S1/next
+
+## 長い答えは分けて: 3 つに分けた pump の最後で出力（途中は空）
+@A cmd /web:pump "9:1/3:eyJyIjpbWzIsMjAwLHsib2siOnRydWUsInNpZCI6IlMxIiwiZnJhbWUiOjEs"
+@A cmd /web:pump "9:2/3:ImJhciI6MSwidyI6MTkyMCwiaCI6MTA4MCwiYmFySCI6MTA4LCJ1cmwiOiJo"
+@A cmd /web:pump "9:3/3:dHRwOi8veC8iLCJ0aXRsZSI6IlQiLCJ0YWJzIjoxLCJ0YWIiOjAsImZvY3VzIjoicGFnZSIsImZyYW1lVXJsIjoiaHR0cDovLzEwLjAuMi4yOjg3ODcvcy9TMS9mLzEucG5nIiwiYmFyVXJsIjoiaHR0cDovLzEwLjAuMi4yOjg3ODcvcy9TMS9iLzEucG5nIn1dXX0"
+~ @A cmd: \{"n":"A","o":\[
+
+## 閉じる
+@A cmd /web:close
+wait 300
+~ GWEB close
