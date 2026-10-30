@@ -1,0 +1,3 @@
+pack.name=GeoUI Web Title Control
+pack.description=GeoUI: the title control — the probe with the game title left alone (bds-lab bds/geoui/web/probe.mjs)
+entity.minecraft:player.name=プレイヤー
