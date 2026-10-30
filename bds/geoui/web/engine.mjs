@@ -53,6 +53,30 @@ export async function loadBrowser({ log = () => {} } = {}) {
   throw new Error(`ブラウザを起動できません: ${String(last?.message ?? last).split('\n')[0]}（Chrome を入れるか GEOUI_WEB_CHROME=<場所>）`);
 }
 
+/** Playwright made ready before the first session, without blocking the service (the service starts this at boot: the first
+ *  `npm i` of a busy CI runner took longer than a first page may wait — verify run 41008736742 passed only alone). No browser is
+ *  started. → 'have' | 'fetched' | 'no (why)' */
+export async function prefetchBrowser({ log = () => {} } = {}) {
+  try { createRequire(import.meta.url)('playwright'); return 'have'; } catch { /* not here */ }
+  try { createRequire(path.join(TOP, 'package.json'))('playwright-core'); return 'have'; } catch { /* not here */ }
+  const dir = path.join(TOP, 'app', '.lab', 'browser', 'pw');
+  if (fs.existsSync(path.join(dir, 'node_modules', 'playwright-core', 'package.json'))) return 'have';
+  try {
+    const { PW_VERSION } = await import(pathToFileURL(path.join(TOP, 'app', 'lib', 'playwright-login.mjs')).href);
+    const { cleanEnv } = await import(pathToFileURL(path.join(TOP, 'app', 'lib', 'apk.mjs')).href);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ private: true, dependencies: { 'playwright-core': PW_VERSION } }));
+    log('GeoUI Web: Playwright を先に入れています（初回だけ）…');
+    const { spawn } = await import('node:child_process');
+    const WIN = process.platform === 'win32';
+    const code = await new Promise((resolve) => {
+      const c = spawn(WIN ? 'npm.cmd' : 'npm', ['i', '--no-audit', '--no-fund', '--loglevel=error'], { cwd: dir, stdio: 'ignore', shell: WIN, env: cleanEnv() });
+      c.on('exit', resolve); c.on('error', () => resolve(-1));
+    });
+    return code === 0 && fs.existsSync(path.join(dir, 'node_modules', 'playwright-core', 'package.json')) ? 'fetched' : `no (npm ${code})`;
+  } catch (e) { return `no (${String(e.message || e).slice(0, 60)})`; }
+}
+
 // ---- what may be opened: any http(s) site; the machine's own and private addresses only when allowed (a player must not reach
 //      the server's own network through it): GEOUI_WEB_ALLOW_PRIVATE=1, or the service's own pages
 export function isPrivateHost(host) {

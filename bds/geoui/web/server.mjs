@@ -6,6 +6,7 @@
 //
 //   node bds/geoui/web/server.mjs [--port 8787] [--host 0.0.0.0] [--public http://<this machine>:8787] [--idle <s>] [--key <k>]
 //        [--fonts]   (a Japanese font fetched first when the machine has none: CI)
+//        (run this way, Playwright is made ready at once in the background — no browser started: engine.mjs prefetchBrowser)
 //
 // HTTP (JSON in and out). The actions come from this machine (the BDS beside it) — from elsewhere only with the key (--key,
 // header x-geoui-key). The pictures are for anyone who has their address (the session id in it is random: the address is the key).
@@ -88,12 +89,15 @@ export async function startServer(o = {}) {
   let engine = null, enginePromise = null, last = Date.now(), port = opt.port, fonts = opt.fonts ? 'checking' : 'not checked', tunnel = opt.tunnel || '', tunnelPid = 0;
   const cache = new Map(), counts = new Map(), hits = [];
   const fontsReady = opt.fonts ? ensureFonts(opt.log).then((r) => { fonts = r; }, () => { fonts = 'no'; }) : Promise.resolve();
+  // (opt.prefetch: Playwright installed now, in the background, so the first session does not wait for it — a first session
+  //  waits for this, never two installs at once)
+  const prefetchReady = opt.prefetch ? import('./engine.mjs').then((m) => m.prefetchBrowser({ log: opt.log })).then((r) => { if (r !== 'have') opt.log(`GeoUI Web: Playwright ${r}`); }, () => {}) : Promise.resolve();
   const getEngine = () => {
     // (a browser that went away — it crashed, or was killed — is started again; its sessions are gone with it)
     if (engine && engine.browser && typeof engine.browser.isConnected === 'function' && !engine.browser.isConnected()) { engine = null; enginePromise = null; }
     if (engine) return Promise.resolve(engine);
     if (!enginePromise) {
-      enginePromise = fontsReady.then(() => import('./engine.mjs')).then((m) => m.createEngine({ log: opt.log, ownOrigin: `http://127.0.0.1:${port}`, home: opt.home || `http://127.0.0.1:${port}/demo/start.html`, frameW: opt.frameW, frameH: opt.frameH, lookMs: opt.lookMs, lookMaxMs: opt.lookMaxMs }))
+      enginePromise = Promise.all([fontsReady, prefetchReady]).then(() => import('./engine.mjs')).then((m) => m.createEngine({ log: opt.log, ownOrigin: `http://127.0.0.1:${port}`, home: opt.home || `http://127.0.0.1:${port}/demo/start.html`, frameW: opt.frameW, frameH: opt.frameH, lookMs: opt.lookMs, lookMaxMs: opt.lookMaxMs }))
         .then((e) => { engine = e; return e; }, (e) => { enginePromise = null; throw e; });
     }
     return enginePromise;
@@ -225,7 +229,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const a = process.argv.slice(2), arg = (k, d) => { const i = a.indexOf(k); return i >= 0 ? a[i + 1] : d; };
   const key = arg('--key', process.env.GEOUI_WEB_KEY || '');
   const s = await startServer({ port: Number(arg('--port', process.env.GEOUI_WEB_PORT || 8787)), host: arg('--host', '0.0.0.0'), public: arg('--public', process.env.GEOUI_WEB_PUBLIC || ''),
-    idle: Number(arg('--idle', 0)), key, fonts: a.includes('--fonts'), log: (l) => console.log(l) });
+    idle: Number(arg('--idle', 0)), key, fonts: a.includes('--fonts'), prefetch: true, log: (l) => console.log(l) });
   console.log(`GEOUI_WEB listening ${s.url} public ${process.env.GEOUI_WEB_PUBLIC || arg('--public', '') || `http://${lanIp()}:${s.port}`}${key ? ' (key)' : ''}`);
   const stop = () => s.close().finally(() => process.exit(0));
   process.on('SIGTERM', stop); process.on('SIGINT', stop);
