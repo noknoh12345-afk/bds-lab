@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Web (WebSocket) RP",
+    "description": "The web in the game over /connect (any world): every site, Chrome-like, full-screen in F1 (bds-lab bds/geoui/web)",
+    "uuid": "35141c30-2f40-4b43-8f08-9a0292d171d5",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "c0895265-95d1-4ac6-89cb-32db25e3f934",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}
