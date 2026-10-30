@@ -123,9 +123,10 @@ const DEFAULTS: Settings = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voice
 // each one matters (rate control); starting, seeking and ending a song are not held back
 const LIGHT_VOICES = 16, LIGHT_BUDGET = 24;
 // how many sounds a client plays at once, measured on a real one (SPEC.md: Minecraft 1.26.60.4 on Android 14 heard 32, the
-// quietest or oldest going first — a song's 48 voices and 8 noise bands were over it, and 24 voices scored better than 48 on
-// that client on every song tried, +0.17..+0.52 ViSQOL). A phone gets the voices that fit beside the noise bands; platforms
-// not measured yet keep every voice of the song. A count the player sets (/spectral:voices, the sound form) is theirs
+// quietest or oldest going first — a song's 48 voices and 8 noise bands were over it. 24 voices beat 48 on the 4 songs played
+// side by side, +0.17..+0.52 ViSQOL; over all 13 test songs the medians were 1.99 both, 2.05 with the bursts sent ahead, at a
+// third fewer commands). A phone gets the voices that fit beside the noise bands; platforms not measured yet keep every voice
+// of the song. A count the player sets (/spectral:voices, the sound form) is theirs
 const CLIENT_SOUNDS: Partial<Record<string, number>> = { Mobile: 32 };
 function platformVoices(p: Player): number {
   let kind = '';

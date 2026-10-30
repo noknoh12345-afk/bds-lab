@@ -19,7 +19,7 @@ import make_abx as MA                       # prepare(), mp3(), song_json(), pag
 C, MT, E = MA.C, MA.MT, MA.E
 SR = 48000
 # (prefix of the recordings in --rec → the file suffix and label of each reference beside A and B; B is --b)
-REFS = {'c': ('ceil', '天井（実機で元の音を鳴らした録音）'), 'g': ('old', '前の既定（48 声、実機）'), 'm': ('m24', '24 声（打撃音は前の送り方、実機）'),
+REFS = {'c': ('ceil', '天井（実機で元の音を鳴らした録音）'), 'g': ('old', '前の既定（48 声、実機）'), 'm': ('m24', '24 声・打撃音は声と同じ tick（実機）'),
         'l': ('light', '軽量モード（実機）'), 'emu': ('emu', 'エミュレーター（同じ曲）')}
 
 
@@ -100,8 +100,9 @@ def main():
         songs.append({'id': sid, 'title': s['title'], 'category': s['category'], 'credit': f"{s['author']} · {s['license']}",
                       'scores': sc, 'refs': [[REFS[p][0], REFS[p][1]] for p in refs]})
         print(json.dumps({'song': sid, 'refs': refs, 'game': sc.get('game', {}).get('visqol'), 'ceiling': sc['ceiling']}), flush=True)
+    which = {'g': '前の既定（48 声）', 'm': '電話の既定（24 声、打撃音は声と同じ tick）', 'n': '出荷する版（電話の既定 24 声、打撃音を 1 tick 先に送る）'}[a.b]
     data = {'songs': songs, 'credits': C.credits(),
-            'notice': 'B は実機の録音です（redroid の Android 14・Play から入れた Minecraft、録音は scrcpy の AudioPlaybackCapture 48 kHz）。'
+            'notice': f'B は{which}を実機で鳴らした録音です（redroid の Android 14・Play から入れた Minecraft 1.26.60.4、録音は scrcpy の AudioPlaybackCapture 48 kHz）。'
                       'A と B は元の音に合わせて音量（RMS）と時間をそろえ、B は MP3 256 kb/s（参考は 192 kb/s）にしてあります。参考の「天井」は、元の音をそのまま OGG で'
                       'ゲームに鳴らさせて同じ録り方で録ったもの（同じクライアント・同じ録音経路でできる最良）。' + ' / '.join(devices),
             'metricNote': 'ViSQOL は v3 audio モード（公式の適合試験と 1e-13 で一致する numpy 移植）を、実行の中で録音の WAV に当てた値（実測）。'
@@ -110,6 +111,7 @@ def main():
             'scoreLabel': 'ViSQOL（実機の録音）', 'bLabel': 'ゲーム（実機の録音）', 'v1Key': 'emu',
             'columns': ['曲', 'ABX 正解', 'p', '判定', '天井（実機）', 'B（実機）', '天井との差', 'エミュ→録音', '軽量（実機）', '命令/tick', 'kbps']}
     html = open(os.path.join(HERE, 'page.html'), encoding='utf-8').read().replace('/*DATA*/{}', json.dumps(data, ensure_ascii=False))
+    html = html.replace('Spectral Player ABX', 'Spectral Player 実機 ABX')
     open(os.path.join(a.out, 'index.html'), 'w', encoding='utf-8').write(html)
     json.dump({s['id']: s['scores'] for s in songs}, open(os.path.join(a.out, 'scores.json'), 'w'), indent=1, ensure_ascii=False)
     print('->', a.out, len(songs), 'songs')

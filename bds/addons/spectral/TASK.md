@@ -54,7 +54,7 @@
 - 測定リグ（app/lib の audio 動詞）: `audio song`（試験曲を送る）・`audio ceiling`（天井のユニットをその場で作る）・`audio export`
   （録音を暗号化してログへ）・`audio info` / `audio volume`（端末の音量）・`audio analyze … emu:<曲>`（エミュレーターと録音）。
   redroid の join（uinput が見えない → シェルの長押し）と launch（monkey が起動しない → am start）も直した
-- 天井との差 0.3 以内は 13 曲中 2 曲（48 声）。完了の条件には届いていない: 制約と残りの差は SPEC.md の終わりと HANDOFF.md
+- 実機の ViSQOL の中央値（13 曲）: 天井 3.09、48 声 1.99、出荷（電話の既定 24 声＋打撃音を先に）2.05、軽量 2.15。天井との差 0.3 以内はどれも 13 曲中 2 曲で、完了の条件には届いていない: 制約と残りの差は SPEC.md と HANDOFF.md。実録音の ABX: https://claude.ai/artifact/WqeA3C2ut45LtzVhhjxpqG
 
 ## Tools
 - tools/spectral.py: MP3 → 曲データ（--ts で src/songs/*.ts）。--preview でアドオンと同じ tick 規則の試聴 WAV/MP3。既定はアナリシス v2（部分音のトラック → 声部、ノイズ帯域と打撃音の帯域を NSIM-lite で合成して選ぶ）、`--analysis v1` で前の版
