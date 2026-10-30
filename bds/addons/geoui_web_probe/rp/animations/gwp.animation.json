@@ -1,0 +1,71 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.gwp.ui": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gwp_frame": {
+          "scale": "(math.mod(math.floor(v.gwp_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gwp_cross": {
+          "scale": "(math.mod(math.floor(v.gwp_show / 4), 2) > 0.5) ? 1 : 0"
+        },
+        "gwp_r0": {
+          "position": [
+            6,
+            -6,
+            0
+          ],
+          "scale": [
+            "v.gwp_r0 * 0.1",
+            "3",
+            "1"
+          ]
+        },
+        "gwp_r1": {
+          "position": [
+            6,
+            -11,
+            0
+          ],
+          "scale": [
+            "v.gwp_r1 * 0.1",
+            "3",
+            "1"
+          ]
+        },
+        "gwp_r2": {
+          "position": [
+            6,
+            -16,
+            0
+          ],
+          "scale": [
+            "v.gwp_r2 * 0.1",
+            "3",
+            "1"
+          ]
+        }
+      }
+    },
+    "animation.gwp.f1": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "rightArm": {
+          "scale": 0
+        },
+        "leftArm": {
+          "scale": 0
+        },
+        "rightItem": {
+          "scale": 0
+        },
+        "leftItem": {
+          "scale": 0
+        }
+      }
+    }
+  }
+}

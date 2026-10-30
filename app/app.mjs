@@ -466,8 +466,11 @@ const appTransport = () => (process.env.APP_TRANSPORT === 'raknet' ? 'raknet' : 
 /** the BDS settings every app run uses: the transport; LAN visibility (its name and version in the answer to a ping); the
  *  script watchdog that does not take a machine the emulator keeps busy for a hang (APP_WATCHDOG_MS); no script debugger
  *  attached (traces and coverage are the BDS lab's; here it is only load — APP_DEBUGGER=1 keeps it) */
-function bdsForApp() {
-  return { LAB_LAN_VISIBLE: '1', LAB_WATCHDOG_MS: process.env.APP_WATCHDOG_MS ?? '60000', ...(appTransport() === 'lan' ? { LAB_TRANSPORT: 'lan' } : {}), ...(process.env.APP_DEBUGGER === '1' ? {} : { LAB_NO_DEBUGGER: '1' }) };
+function bdsForApp(webHost) {
+  // (GEOUI_WEB_HOST: the name the game uses for this machine — the emulator's 10.0.2.2, redroid's bridge, a phone's view of this
+  //  PC — for the pictures of a unit with GeoUI Web: bds/geoui/web/lab.mjs)
+  return { LAB_LAN_VISIBLE: '1', LAB_WATCHDOG_MS: process.env.APP_WATCHDOG_MS ?? '60000', ...(appTransport() === 'lan' ? { LAB_TRANSPORT: 'lan' } : {}), ...(process.env.APP_DEBUGGER === '1' ? {} : { LAB_NO_DEBUGGER: '1' }),
+    GEOUI_WEB_HOST: process.env.GEOUI_WEB_HOST || webHost || process.env.APP_HOST || '10.0.2.2' };
 }
 function knownBds() { return readJson(path.join(TOP, 'common', 'data', 'bds-versions.json'))?.linux ?? null; }
 function currentAddon(a) {
@@ -922,7 +925,8 @@ async function runCmd(args) {
     // the game does not even start to connect: "Unable to connect to world", seen through the device's relay)
     // (the script watchdog: the emulator keeps this machine busy — a script that waits for the CPU is not the addon hanging,
     // and a "hang" must not stop the server under the game: APP_WATCHDOG_MS, 0 = BDS's own 10 s)
-    const up = bds(['up'], { LAB_ADDON: addon, LAB_PORT: String(wantPort), LAB_TAIL: serverLog, LAB_TEXTUREPACK_REQUIRED: '1', LAB_LIVE_IDLE: '240', ...bdsForApp() });
+    const webHost = process.env.APP_HOST || (REAL ? real?.path?.hostIp : '10.0.2.2');
+    const up = bds(['up'], { LAB_ADDON: addon, LAB_PORT: String(wantPort), LAB_TAIL: serverLog, LAB_TEXTUREPACK_REQUIRED: '1', LAB_LIVE_IDLE: '240', ...bdsForApp(webHost) });
     serverUp = true;
     let liveAddon = addon;   // (the addon the server runs now: a batch's `addon` steps change it)
     if (!up.ok) { up.lines.slice(-8).forEach((l) => log('      ' + l)); fail('BDS が起動しませんでした（上の行）', `アドオンの誤りなら、まず node lab.mjs bds go -a ${addon} を通してください。`); }
@@ -1036,7 +1040,7 @@ async function runCmd(args) {
         if (!fs.existsSync(path.join(ADDONS, name, 'bp', 'manifest.json')) && !fs.existsSync(path.join(ADDONS, name, 'rp', 'manifest.json'))) throw new Error(`bds/addons/${name} がありません`);
         const t1 = Date.now();
         bds(['down'], { LAB_ADDON: liveAddon }, 60_000);
-        const up2 = bds(['up'], { LAB_ADDON: name, LAB_PORT: String(port), LAB_TAIL: serverLog, LAB_TEXTUREPACK_REQUIRED: '1', LAB_LIVE_IDLE: '240', ...bdsForApp() });
+        const up2 = bds(['up'], { LAB_ADDON: name, LAB_PORT: String(port), LAB_TAIL: serverLog, LAB_TEXTUREPACK_REQUIRED: '1', LAB_LIVE_IDLE: '240', ...bdsForApp(webHost) });
         if (!up2.ok) throw Object.assign(new Error(`BDS が ${name} で起動しませんでした: ${up2.lines.slice(-3).join(' / ')}`), { fatal: true });
         const p2 = Number(readJson(BDS_LIVE)?.port) || port;
         if (p2 !== port) throw Object.assign(new Error(`BDS が ${name} でポート ${p2} を取りました（${port} が使用中）: 端末の中継は ${port} 向けです`), { fatal: true });

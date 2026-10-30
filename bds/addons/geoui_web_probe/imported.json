@@ -1,0 +1,14 @@
+{
+  "from": "bds/geoui/web/probe.mjs",
+  "rp": [
+    1,
+    0,
+    0
+  ],
+  "bp": [
+    1,
+    0,
+    0
+  ],
+  "request": "URL の画像（profile_image_renderer）と F1 を本物のゲームで測る"
+}

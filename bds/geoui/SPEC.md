@@ -396,3 +396,55 @@ node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu
 | `html/` | HTML → GeoUI（`capture.mjs`・`scene.mjs`・`runtime.js`・`convert.mjs`・見本 `examples/menu.html`） |
 | `app/lib/measure.mjs` の `marks` | スクショの色ごとの箱を測る（`measure marks <shot>`） |
 | `tests/geoui-screen-offline.mjs`・`tests/geoui-html-offline.mjs` | 式と JSON UI・パック・焦点・入力・端末のパック、変換器（パックの Molang をゲームと同じに動かした見た目・main.js そのもの） |
+
+## 17. URL の画像・F1・ウェブ（GeoUI Web）
+
+**URL の画像**: JSON UI の `profile_image_renderer` は `#profile_image_options` に `{"type":7,"url":"…"}` を入れると、その URL の絵（PNG）を
+ゲームが取りに行って描く（zelisce の SAPI-with-URL-Images と同じ使い方: サーバーのフォームのボタンの絵）。GeoUI はこれを HUD に置く:
+`scene.urlImages`（`{ id, group, rect, slot, layer?, above? }`）の 1 枚ずつが、そのグループの renderer と同じ四角いパネルの中の兄弟の
+コントロールで、大きさと位置はパネルの % → 板と同じ式で、グループの単位の `rect` の所に出る（`layout.urlImageControl`。13 画面 x 4 つの
+決め方 x 9 つの寄せ先で式と 1e-3 px 以内: `tests/geoui-web-offline.mjs`）。絵は renderer（layer 1）の下（layer 0）: ポインタなど GeoUI の板が上。
+
+**題名の通り道**: サーバーが 1 人ずつに渡せて HUD の JSON UI が読める文字は題名（`#hud_title_text_string`、R5.5）だけなので、題名を
+`~gu~` + F1 の旗（`0`/`1`）+ 並べ方の文字（`a`〜`z`）+ 枠ごとに決まった幅（既定 230 文字）の URL（後ろは空白）にして送り、JSON UI が
+`'%.Ns' * 文字`（先頭 N 文字）・`文字 - 部分`（部分を全部抜く）で枠 k を取り出す（`layout.slotExpr`）。ゲームの題名は通り道の間は隠す。
+スクリプトの側は `screen/channel.js`（F1・並べ方・URL・送り直し: 題名には時間があり、ほかのパックの題名に上書きされるので 2 秒ごと）。
+URL に空白・`"`・`\` は入れられない（%20 などに）。
+
+**F1**（ゲームモードは変えない）: `scene.f1` で (1) HUD の 13 の部品を API で隠す（`hideAllExcept`。携帯の操作ボタンは残すこともできる）、
+(2) 残りの HUD（会話・題名・アクションバー・ボスバー・サイドバー…: `root_panel` の中身）は通り道の F1 の旗で隠す（GeoUI の viewport は
+`root_panel` の親の `hud_content` に移すので GeoUI は残る）、(3) 腕と持ち物は `<ns>:f1` のプロパティでボーン（rightArm・leftArm・
+rightItem・leftItem）を大きさ 0、体は render controller で自分からだけ隠す（世界の中だけ: 持ち物の画面の人形やほかの人からは見える）。
+
+**並べ方（layout）**: グループに `layout: 'b'` を付けると、通り道がその文字の間だけ描かれる（renderer も URL の画像も）。
+`scene.backdrop`（`{ layouts: 'bc' }`）は、その並べ方の間だけ画面全体（切り欠きの所も）をゲームの黒（`textures/ui/Black.png`、layer −5）で覆う。
+
+**GeoUI Web**（`bds/geoui/web/`）: 本物の Chromium（Playwright）が人ごとの場所でページを開き、画面を番号付きの PNG にする
+（`engine.mjs`: タブ・戻る・進む・再読み込み・アドレス欄・クリック・ドラッグ・ホイール・文字・キー・拡大、Chrome に似せたツールバーも絵で）。
+`server.mjs` がその絵と操作の窓口（BDS のスクリプトから `@minecraft/server-net` で操作、ゲームは絵を URL で取りに来る）。動くサイト・
+スクリプトで描くサイトもそのまま（Chromium が動かす）: 変わり続けるページは 250 ms ごと、止まっているページは次第に 1.5 秒ごとまで見直す。
+このサーバーの中の場所（127.0.0.1・10.x・192.168.x…）は開かない（`GEOUI_WEB_ALLOW_PRIVATE=1` で開く）。操作はこの機械からだけ（BDS が横に
+いる）。ラボは `geoui-web.json` のあるアドオンの BDS の横にサービスを起こす（`lab.mjs`。アプリのラボは端末から見たこの機械の名前
+`GEOUI_WEB_HOST` を渡す: エミュレータは 10.0.2.2）。`"tunnel"` で cloudflared の https の入り口も（CI だけなら `"ci"`）。
+
+### 予測（run の前に書いた: `bds/addons/geoui_web_probe`、`--screen 1080x2400` = 2400 x 1080 の本物のスマホの解像度）
+
+期待の位置は `node bds/geoui/web/probe.mjs expect 2400x1080`（高さに合わせる: 1 単位 = 6.328 px、HUD は画面いっぱい）。
+
+| 区切り | 確かめること | 予測 |
+|---|---|---|
+| http | LAN の http（10.0.2.2:8787）の絵が HUD に出るか・どこに | **五分五分**: ゲームの取得が Android の平文の http の禁止に従うなら出ない。出るなら赤が main の (946.9, 286.9)–(1453.1, 793.1) に ±2 px、紫の枠 (921.6, 261.6)–(1478.4, 818.4) ±1 px の内側、白い十字 (1162, 502)–(1238, 578) は赤の上に出る |
+| https-ext | 外の https（placehold.co）の絵 | **出る**: 緑が left の (50.6, 381.8)–(367.0, 698.2) に ±2 px |
+| https-own | ラボのサービスの https（cloudflared のトンネル） | **出る**（正しい証明書の https）: 青が right の (2033.0, 381.8)–(2349.4, 698.2) |
+| latency | 題名を変えてからゲームが取りに来るまで（橙の棒: 10 ms が 0.63 px） | 50〜300 ms。取りに来た 0.2 秒後の絵にはまだ無く、1.7 秒後には黄色が出ている |
+| switch | 赤 → 青に変えて 0.3・1・3 秒後 | 0.3 秒は赤か何も無し、1 秒と 3 秒は青 |
+| loading | 次の絵が届くまで（8 秒遅らせる）何が出るか | 前の絵（赤）が残る（自信は低い: 消える・人の顔の絵などもありうる） |
+| under | 枠 0 の下に枠 5（layer −1）を重ね、枠 0 を読み込み中にする | 枠 0 が読み込み中の間は下の赤が見え、届いた後は青が覆う |
+| cache | 同じ URL に戻したとき取りに来るか（水色の棒: 1 回 12.7 px） | 取りに来ない（1 回だけ）・戻した 0.3 秒後にはもう水色 |
+| big | 1280x720・2400x1080・4096x2304 の 4 色の絵・2400x1080 の雑音（約 7.8 MB）を 80 x 80 単位の枠に | 1280x720 と 2400x1080 は枠いっぱいに引き伸ばされて出る（4 色の箱がそれぞれ枠の 1/4）。4096x2304 は出ないかもしれない。雑音は出る（時間がかかる） |
+| aspect | 200x100 の 4 色を 80 x 20 単位の枠に | 引き伸ばす（枠いっぱい、4 色の箱が 40 x 10 単位ずつ） |
+| cycle | 0.3 秒ごとに 40 枚の違う URL | 40 回とも取りに来る（薔薇色の棒 40 x 6.3 px）・最後の絵（空色）が出る |
+| layout | 並べ方 b の間だけ lay の枠（橙）と黒い背景 | 並べ方なし・c では出ない。b では橙が (757.0, 843.8)–(1643.0, 1033.6)、画面の 80 % 超が変わる（黒） |
+| title | 通り道の間、ゲームの題名を隠すか・普通の題名は出るか | 隠れる（上の帯は変わらず、OCR に solid・gu~ が無い）。普通の題名 HELLO は出る |
+| persist | 題名の時間（1 秒）が過ぎ、送り直さない時 | 絵は残る（題名の文字は次の題名まで残る見込み: 自信は中） |
+| f1 | HUD・会話・アクションバー・手と剣、ゲームモードはそのまま | F1 の間は F1 の基準と変わらない（< 0.3 %、会話とアクションバーを出しても）。F1 を切ると変わる（> 2 %、右下の手の所 > 5 %） |

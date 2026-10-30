@@ -1323,6 +1323,17 @@ async function writePacks(world, settings = {}, live = false) {
   writeJson(path.join(world, 'world_resource_packs.json'), rps);
   return packHash();
 }
+// GeoUI Web (bds/geoui/web): the service the unit's script asks for pages and the game fetches pictures from, started beside the
+// BDS once (GEOUI_WEB_HOST: the name the game uses for this machine — the app lab passes it)
+async function geouiWeb() {
+  try {
+    const { ensureService } = await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'web', 'lab.mjs')).href);
+    // ("tunnel": true — an https address by cloudflared as well; "ci" — only on CI, where the app lab plays: bds/geoui/web/lab.mjs)
+    let conf = {}; try { conf = readJson(path.join(ADDON, 'geoui-web.json')) ?? {}; } catch { /* {} */ }
+    const r = await ensureService({ logFile: path.join(LAB, 'geoui-web.log'), tunnel: conf.tunnel === true || (conf.tunnel === 'ci' && !!process.env.CI) || process.env.GEOUI_WEB_TUNNEL === '1' });
+    if (!r.ok) LOG.push(`[0-0-0 0:0:0 WARN] ${r.why}`);
+  } catch (e) { LOG.push(`[0-0-0 0:0:0 WARN] GeoUI Web: ${String(e.message).split('\n')[0]}`); }
+}
 // what a script-only /reload cannot pick up: everything in the packs except scripts/
 function packHash() {
   const h = crypto.createHash('sha1');
@@ -1363,6 +1374,8 @@ class Engine {
       LOG.push(this.ok ? '[0-0-0 0:0:0 INFO] BDS crashed while starting and started the second time (not the addon: the same addon loaded)' : '[0-0-0 0:0:0 ERROR] BDS crashed while starting, twice: the addon (a script at load, a pack file) or the world makes it crash');
     }
     if (this.ok && F.afterReady) this.ok = (await F.afterReady(L(), this)) !== false;
+    // (a unit's own service beside its BDS: GeoUI Web when it has geoui-web.json — bds/geoui/web/lab.mjs; kept between boots)
+    if (this.ok && ADDON && exists(path.join(ADDON, 'geoui-web.json'))) await geouiWeb();
     return this.ok;
   }
   async onAttach() {

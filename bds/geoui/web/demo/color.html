@@ -1,0 +1,12 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Color</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;cursor:pointer}#n{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font:600 3vh system-ui,sans-serif;color:rgba(0,0,0,.25)}</style></head>
+<body><div id="n"></div>
+<script>
+// one colour over the whole page (the in-game check measures where the page is drawn); a click goes to the next of 11 hues
+const HUES = ['ff0000', 'ff8000', 'ffff00', '80ff00', '00ff00', '00ff80', '00ffff', '0080ff', '0000ff', '8000ff', 'ff0080'];
+const c = (new URLSearchParams(location.search).get('c') || 'ff0000').toLowerCase();
+document.body.style.background = '#' + c;
+document.getElementById('n').textContent = c;
+document.body.addEventListener('click', () => { const i = HUES.indexOf(c); location.href = 'color.html?c=' + HUES[(i + 1) % HUES.length]; });
+</script></body></html>

@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>長いページ</title>
+<style>body{margin:0;font-family:system-ui,'Noto Sans CJK JP',sans-serif}section{height:60vh;display:flex;align-items:center;justify-content:center;font:600 8vh system-ui;color:#fff}</style></head>
+<body>
+<script>
+const H = ['#e53935', '#fb8c00', '#fdd835', '#7cb342', '#43a047', '#00897b', '#00acc1', '#1e88e5', '#3949ab', '#8e24aa', '#d81b60'];
+for (let i = 0; i < 30; i++) { const s = document.createElement('section'); s.style.background = H[i % H.length]; s.textContent = `${i + 1}`; s.id = `s${i + 1}`; document.body.appendChild(s); }
+</script></body></html>

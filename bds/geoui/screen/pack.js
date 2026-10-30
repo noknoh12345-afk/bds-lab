@@ -21,7 +21,11 @@
 //   patchPlayer({ rp, bp }) (last changes to the two player definitions: component groups, events …),
 //   rcPatch (keys merged into every GeoUI render controller: color, overlay_color … as Molang),
 //   extraMaterials { name: definition } (materials not proved yet, for an experiment's bones only — never one of MATS' names:
-//   a probe tries them, RULES.md says what they did; what holds moves into MATS)
+//   a probe tries them, RULES.md says what they did; what holds moves into MATS),
+//   f1 (true: F1 without the game mode changed — the property <ns>:f1 hides the local player's arms and held items (bones at
+//   scale 0) and body (render controllers), the HUD by the title channel: layout.js, channel.js),
+//   urlImages [{ id, group, rect {x, y, w, h} (local units), slot, above? }] (images the game fetches by URL: layout.js),
+//   channel { width } (the title channel's field width), modules [{ module_name, version }] (more script modules: server-net …)
 // }
 (function (root) {
   'use strict';
@@ -197,6 +201,8 @@
       animations[`animation.${ns}.${clean(a.name, 'a')}`] = { loop: true, animation_length: 1, bones: a.bones };
       return { key, full: `animation.${ns}.${clean(a.name, 'a')}`, cond: a.condition || 'q.is_in_ui' };
     });
+    // (F1: the local player's arms and what they hold at scale 0 — an item is drawn at its hand's bone, so it goes with it)
+    if (scene.f1) animations[`animation.${ns}.f1`] = { loop: true, animation_length: 1, bones: Object.fromEntries(['rightArm', 'leftArm', 'rightItem', 'leftItem'].map((b) => [b, { scale: 0 }])) };
     files[`rp/animations/${ns}.animation.json`] = J({ format_version: '1.8.0', animations });
     files[`rp/render_controllers/${ns}.render_controllers.json`] = J({ format_version: '1.8.0', render_controllers: controllers });
     files[`rp/materials/entity.material`] = J(materialsFile(ns, used, extraMats));
@@ -212,14 +218,24 @@
     d.scripts.pre_animation = [...d.scripts.pre_animation, ...(scene.pre || [])];
     d.animations[`${ns}_ui`] = `animation.${ns}.ui`;
     for (const a of extraAnims) d.animations[a.key] = a.full;
-    d.scripts.animate = [{ [`${ns}_ui`]: 'q.is_in_ui' }, ...extraAnims.map((a) => ({ [a.key]: a.cond })), ...d.scripts.animate];
+    // F1 (no game mode change): the arms and the held items in the world only (the inventory's doll and the GeoUI renderers are
+    // in a UI); the property read where the paper doll is guarded (it has no properties)
+    const f1Var = `v.${ns}_f1`;
+    if (scene.f1) {
+      d.scripts.initialize = [...d.scripts.initialize, `${f1Var} = 0;`];
+      d.scripts.pre_animation = [...d.scripts.pre_animation, `${f1Var} = variable.is_paperdoll ? 0 : q.property('${ns}:f1');`];
+      d.animations[`${ns}_f1`] = `animation.${ns}.f1`;
+    }
+    d.scripts.animate = [{ [`${ns}_ui`]: 'q.is_in_ui' }, ...extraAnims.map((a) => ({ [a.key]: a.cond })), ...(scene.f1 ? [{ [`${ns}_f1`]: `${f1Var} > 0 && q.is_local_player && !q.is_in_ui` }] : []), ...d.scripts.animate];
+    // (the player's own body hidden from itself: hideLocalPlayer (a frozen camera sees through it) and F1 (spectator-like). In
+    //  the world only, for the local player only — the inventory's doll and everyone else still see it. The first-person
+    //  controllers too: the frozen camera may keep the first-person view, whose arm hides GeoUI by depth — RULES R4.11)
+    const hides = [scene.hideLocalPlayer, scene.f1 ? `${f1Var} > 0` : null].filter((x) => x !== undefined && x !== null && String(x).trim() !== '');
     d.render_controllers = [...rcList, ...d.render_controllers.map((rc) => {
-      if (!scene.hideLocalPlayer) return rc;
-      // (the player's own body hidden from its own frozen camera: in the world only, for the local player only — the inventory's
-      //  doll and everyone else still see it. The first-person controllers too: the frozen camera may keep the first-person view,
-      //  whose arm hides GeoUI by depth — RULES R4.11; run 40924847860 still saw blue below a camera frozen looking down)
+      if (!hides.length) return rc;
       const [k, v] = Object.entries(rc)[0];
-      return /^controller\.render\.player\.(first|third)_person/.test(k) ? { [k]: `(${v}) && !(q.is_local_player && !q.is_in_ui && (${scene.hideLocalPlayer}))` } : rc;
+      const any = hides.length === 1 ? hides[0] : hides.map((h) => `(${h})`).join(' || ');
+      return /^controller\.render\.player\.(first|third)_person/.test(k) ? { [k]: `(${v}) && !(q.is_local_player && !q.is_in_ui && (${any}))` } : rc;
     })];
     const be = JSON.parse(G.VANILLA_BP_PLAYER);
     if (typeof scene.patchPlayer === 'function') scene.patchPlayer({ rp: ce, bp: be });
@@ -235,7 +251,9 @@
     files['rp/texts/ja_JP.lang'] = `${langOf('ja_JP')}entity.minecraft:player.name=プレイヤー\n`;
     // ---- the behaviour pack
     const props = {};
-    for (const p of scene.properties || []) {
+    const propList = [...(scene.properties || [])];
+    if (scene.f1 && !propList.some((p) => p.name === 'f1')) propList.push({ name: 'f1', range: [0, 1], default: 0 });
+    for (const p of propList) {
       if (!/^[a-z0-9_]{1,32}$/.test(p.name)) throw new Error(`プロパティの名前「${p.name}」は英小文字・数字・_`);
       props[`${ns}:${p.name}`] = { client_sync: true, type: 'int', range: p.range, default: p.default ?? p.range[0] };
     }
@@ -246,7 +264,7 @@
     const serverVersion = scene.serverVersion || '2.5.0';
     const needs = apiNeeds([scene.script || '', ...Object.values(scene.extraScripts || {})].join('\n'));
     if (scene.script && vnum(needs.need) > vnum(serverVersion)) warnings.push(`スクリプトが @minecraft/server ${needs.need} の API（${needs.uses.join('・')}）を使うのに ${serverVersion} を宣言しています`);
-    const deps = [{ uuid: U.rp, version }, { module_name: '@minecraft/server', version: serverVersion }];
+    const deps = [{ uuid: U.rp, version }, { module_name: '@minecraft/server', version: serverVersion }, ...(scene.modules || []).map((m) => ({ module_name: m.module_name, version: m.version }))];
     files['bp/manifest.json'] = J({ format_version: 2, header: { name: `${name} BP`, description: desc, uuid: U.bp, version, min_engine_version: minEngine },
       modules: [{ type: 'data', uuid: U.bpData, version: [1, 0, 0] }, ...(scene.script ? [{ type: 'script', language: 'javascript', uuid: U.bpScript, entry: 'scripts/main.js', version: [1, 0, 0] }] : [])],
       dependencies: scene.script ? deps : deps.slice(0, 1) });

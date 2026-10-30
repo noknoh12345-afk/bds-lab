@@ -1,0 +1,258 @@
+# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像が HUD に出るか・どこに・どれだけ速く・F1。
+# 予測は SPEC.md 14 章（回す前に書いたもの）。期待の位置: node bds/geoui/web/probe.mjs expect <幅>x<高さ>
+# 実行: node lab.mjs app ci -a geoui_web_probe --screen 1080x2400（本物のスマホの解像度）
+
+section join
+stop
+launch
+until title 600000
+join
+until joined 900000
+do tp @a 0 -60 0 0 90
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do scriptevent gwp:info
+wait 6000
+expect server GWP CHECK svc PASS
+absent clientlog \bERROR\b
+
+section http
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 0 /solid/ff0000/64x64.png
+wait 5000
+shot http-red
+measure marks http-red
+do scriptevent gwp:show 5
+wait 2000
+shot http-frame
+measure marks http-frame
+
+section https-ext
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 1 https://placehold.co/64x64/00ff00/00ff00.png
+wait 8000
+shot https-green
+measure marks https-green
+
+section https-own
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 2 ~/solid/0000ff/64x64.png
+wait 10000
+shot tunnel-blue
+measure marks tunnel-blue
+
+section latency
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:lat 0 /solid/ffff00/64x64.png
+until server GWP LAT 25000
+wait 200
+shot lat-fetch
+measure marks lat-fetch
+wait 1500
+shot lat-later
+measure marks lat-later
+do scriptevent gwp:show 0
+wait 1000
+shot readout-lat
+measure marks readout-lat
+
+section switch
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 0 /solid/ff0000/64x64.png
+wait 5000
+do scriptevent gwp:url 0 /solid/0000ff/64x64.png
+wait 300
+shot sw-300
+measure marks sw-300
+wait 700
+shot sw-1000
+measure marks sw-1000
+wait 2000
+shot sw-3000
+measure marks sw-3000
+
+section loading
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 0 /solid/ff0000/64x64.png
+wait 5000
+do scriptevent gwp:url 0 /slow/8000/solid/0000ff/64x64.png?s=1
+wait 3000
+shot load-mid
+measure marks load-mid
+wait 9000
+shot load-end
+measure marks load-end
+
+section under
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 5 /solid/ff0000/64x64.png
+wait 5000
+do scriptevent gwp:url 0 /slow/8000/solid/0000ff/64x64.png?s=2
+wait 3000
+shot under-mid
+measure marks under-mid
+wait 9000
+shot under-end
+measure marks under-end
+
+section cache
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:mark
+do scriptevent gwp:url 0 /solid/00ffff/64x64.png?k=1
+wait 4000
+do scriptevent gwp:url 0 /solid/00ff80/64x64.png?k=2
+wait 4000
+do scriptevent gwp:url 0 /solid/00ffff/64x64.png?k=1
+wait 300
+shot cache-back
+measure marks cache-back
+wait 3000
+do scriptevent gwp:count /solid/00ffff/64x64.png?k=1
+wait 1000
+do scriptevent gwp:url 0 -
+wait 1500
+shot readout-count
+measure marks readout-count
+
+section big
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 0 /quad/1280x720.png
+wait 6000
+shot big-1280
+measure marks big-1280
+do scriptevent gwp:url 0 /quad/2400x1080.png
+wait 6000
+shot big-2400
+measure marks big-2400
+do scriptevent gwp:url 0 /quad/4096x2304.png
+wait 8000
+shot big-4096
+measure marks big-4096
+do scriptevent gwp:url 0 /noise/2400x1080.png
+wait 10000
+shot big-noise
+measure diff big-noise
+
+section aspect
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 3 /quad/200x100.png
+wait 5000
+shot aspect-top
+measure marks aspect-top
+
+section cycle
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:cycle 40 6 0
+until server GWP CYCLE 60000
+wait 1500
+shot cycle-end
+measure marks cycle-end
+do scriptevent gwp:url 0 -
+wait 1500
+shot readout-cycle
+measure marks readout-cycle
+
+section layout
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 4 /solid/ff8000/64x64.png
+wait 4000
+shot lay-none
+measure marks lay-none
+do scriptevent gwp:layout b
+wait 3000
+shot lay-b
+measure marks lay-b
+measure diff lay-b
+do scriptevent gwp:layout c
+wait 2000
+shot lay-c
+measure marks lay-c
+
+section title
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 0 /solid/ff0000/64x64.png
+wait 4000
+shot title-channel
+measure diff title-channel 0 0 2400 280
+absent text solid
+absent text gu~
+do scriptevent gwp:reset
+wait 1500
+do scriptevent gwp:raw HELLO
+wait 1200
+shot title-raw
+expect text HELLO
+
+section persist
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:stay 20 100000
+do scriptevent gwp:url 0 /solid/00ff00/64x64.png
+wait 9000
+shot persist
+measure marks persist
+
+section f1
+do scriptevent gwp:reset
+do hud @a reset
+do replaceitem entity @a slot.weapon.mainhand 0 diamond_sword
+do tp @a 0 -60 0 0 60
+wait 3000
+do scriptevent gwp:f1 1
+wait 3000
+shot world
+do scriptevent gwp:f1 0
+wait 3000
+shot f1-off
+measure diff f1-off
+measure diff f1-off 1400 600 2400 1080
+do scriptevent gwp:f1 1
+wait 3000
+shot f1-on
+measure diff f1-on
+measure diff f1-on 1400 600 2400 1080
+do say hello-1
+do say hello-2
+do title @a actionbar ACTION
+wait 1500
+shot f1-chat
+measure diff f1-chat
+do scriptevent gwp:f1 0
+wait 2000

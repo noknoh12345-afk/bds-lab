@@ -1,0 +1,63 @@
+# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: URL の画像と F1 の、サーバーの側。絵は app.txt（本物のアプリ）。
+# サービス（bds/geoui/web/server.mjs）はラボが BDS の横に起こす（geoui-web.json）。
+
+## サービスに届く（@minecraft/server-net）
+scriptevent gwp:info
+wait 1500
+~ GWP INFO public=http://\S+ tunnel=\S+ fonts=
+~ GWP CHECK svc PASS
+
+## URL を送ると、題名の通り道の決まった枠に入る（プレイヤーが見る題名）
+@A join
+wait 1500
+scriptevent gwp:url 0 /solid/ff0000/64x64.png
+wait 1000
+~ GWP URL slot=0 http://\S+/solid/ff0000/64x64.png
+~ @A title: ~gu~0ahttp://\S+/solid/ff0000/64x64\.png
+
+## 2 つの枠を一度に・枠 5 は枠 0 と同じ所の下
+scriptevent gwp:urls 0=/quad/200x100.png 5=/solid/00ff00/64x64.png
+wait 1000
+~ @A title: ~gu~0ahttp://\S+/quad/200x100\.png +http://\S+/solid/00ff00/64x64\.png
+
+## F1: HUD を全部隠し、プロパティで腕と持ち物、ゲームモードはそのまま
+gamemode survival A
+scriptevent gwp:f1 1
+wait 1000
+js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length, p('A').getGameMode()])
+= [1,13,"Survival"]
+~ @A title: ~gu~1a
+scriptevent gwp:f1 0
+wait 1000
+js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length])
+= [0,0]
+
+## F1 でも携帯の操作ボタンは残せる（touch）
+scriptevent gwp:f1 touch
+wait 1000
+js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length, p('A').onScreenDisplay.isForcedHidden(3)])
+= [1,12,false]
+scriptevent gwp:f1 0
+
+## 並べ方（layout）の文字
+scriptevent gwp:layout b
+wait 1000
+~ @A title: ~gu~0b
+
+## reset: 全部戻り、題名も消える
+scriptevent gwp:reset
+wait 1000
+~ GWP RESET
+js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length, p('A').getProperty('gwp:show')])
+= [0,0,0]
+
+## 数を画面に（readout）
+scriptevent gwp:readout 2 1234
+wait 500
+js p('A').getProperty('gwp:r2')
+= 1234
+
+## 何枚も変える（cycle）: プレイヤーが取りに来ないので取りに来た数は 0
+scriptevent gwp:cycle 5 2 0
+wait 2500
+~ GWP CYCLE n=5 fetched=0

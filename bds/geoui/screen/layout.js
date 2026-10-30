@@ -158,12 +158,76 @@
     return { origin: [r6(G[0] + r.x), r6(G[1] - r.y - r.h), r6(z)], size: [r6(r.w), r6(r.h), 0] };
   }
 
+  // ---- the title channel: strings from the server to the HUD's JSON UI, one player at a time ------------------------------
+  // The title is the one string a server sets for one player that the HUD's JSON UI can read (#hud_title_text_string, global:
+  // RULES.md R5.5). GeoUI writes it as PREFIX + a flag (F1 on: '1', off: '0') + a layout letter (which of the scene's layouts
+  // shows: 'a' … 'z', see group.layout) + one fixed-width field per URL slot (spaces after the URL; a URL has none), and the
+  // HUD's own title is hidden while it starts with PREFIX. JSON UI reads field k as: the string without its first P characters
+  // (P = PREFIX + flag + letter + k fields: that prefix occurs once, at the start), cut to the field's width, spaces taken out.
+  const CHANNEL = Object.freeze({ prefix: '~gu~', width: 230, maxSlots: 8, layouts: 'abcdefghijklmnopqrstuvwxyz' });
+  /** the channel a scene uses, or null: { prefix, width, slots, f1, head } (head: the characters before the first field) */
+  function channelOf(scene) {
+    const imgs = scene.urlImages || [], lays = (scene.groups || []).some((g) => g.layout !== undefined && g.layout !== null);
+    if (!imgs.length && !scene.f1 && !lays) return null;
+    const width = Math.round(num(scene.channel && scene.channel.width, CHANNEL.width));
+    if (width < 16 || width > 1000) throw new Error(`タイトルの通り道の枠の幅 ${width} は 16〜1000 文字`);
+    const slots = imgs.length ? Math.max(...imgs.map((u) => Math.round(num(u.slot, 0)))) + 1 : 0;
+    if (slots > CHANNEL.maxSlots) throw new Error(`URL の画像の枠は ${CHANNEL.maxSlots} 個まで（slot 0〜${CHANNEL.maxSlots - 1}）`);
+    for (const u of imgs) if (!(Number.isInteger(u.slot ?? 0) && (u.slot ?? 0) >= 0)) throw new Error(`URL の画像 ${u.id} の slot は 0 以上の整数`);
+    for (const g of scene.groups || []) if (g.layout !== undefined && g.layout !== null && !(String(g.layout).length === 1 && CHANNEL.layouts.includes(String(g.layout)))) throw new Error(`グループ ${g.id} の layout「${g.layout}」は a〜z の 1 文字`);
+    return { prefix: CHANNEL.prefix, width, slots, f1: !!scene.f1, head: CHANNEL.prefix.length + 2 };
+  }
+  /** the title text that carries { f1, layout, urls } (what the script sends; JSON UI reads it back with slotExpr) */
+  function channelText(ch, state = {}) {
+    const lay = state.layout === undefined || state.layout === null || state.layout === '' ? 'a' : String(state.layout);
+    if (!(lay.length === 1 && CHANNEL.layouts.includes(lay))) throw new Error(`layout「${lay}」は a〜z の 1 文字`);
+    let s = ch.prefix + (state.f1 ? '1' : '0') + lay;
+    const urls = state.urls || [];
+    for (let k = 0; k < ch.slots; k++) {
+      const u = String(urls[k] || '');
+      if (u.length > ch.width) throw new Error(`URL が枠（${ch.width} 文字）より長い: ${u.length} 文字`);
+      if (/[\s"\\]/.test(u)) throw new Error('URL に空白・" ・\\ は入れられません（%20 などに）');
+      s += u + ' '.repeat(ch.width - u.length);
+    }
+    return s;
+  }
+  const T = '#hud_title_text_string';
+  /** JSON UI: slot k's URL out of the title (an empty string when the slot is empty) */
+  function slotExpr(ch, k) {
+    const P = ch.prefix.length + 2 + k * ch.width;
+    return `(('%.${ch.width}s' * (${T} - ('%.${P}s' * ${T}))) - ' ')`;
+  }
+  /** JSON UI: the title is the channel's / the channel says F1 / the channel shows layout L (either flag) */
+  const isChannelExpr = (ch) => `(('%.${ch.prefix.length}s' * ${T}) = '${ch.prefix}')`;
+  const f1Expr = (ch) => `(('%.${ch.prefix.length + 1}s' * ${T}) = '${ch.prefix}1')`;
+  const layoutExpr = (ch, L) => `((('%.${ch.prefix.length + 2}s' * ${T}) = '${ch.prefix}0${L}') or (('%.${ch.prefix.length + 2}s' * ${T}) = '${ch.prefix}1${L}'))`;
+  /** a URL image (profile_image_renderer with {"type":7,"url":…}: an image the game fetches by its URL — shown only while the
+   *  channel has a URL in its slot, and with the HUD), the size of a rect in its group's local units, put where the group's
+   *  renderer draws that rect: it is a sibling of the renderer in the group's square panel, and a square's side is what one
+   *  model unit follows (K x side), so size = 100 K w % of the square and the offset, in % of its own size, is (G + x) / w */
+  function urlImageControl(g, u, ch, followHud) {
+    const r = u.rect;
+    if (!r || !(r.w > 0) || !(r.h > 0)) throw new Error(`URL の画像 ${u.id} の rect（x, y, w, h: グループの単位）が要ります`);
+    const G = g.origin, dx = (G[0] + r.x) / r.w, dy = (r.y + D - G[1]) / r.h;
+    const slot = Math.round(num(u.slot, 0)), url = slotExpr(ch, slot);
+    const show = `(${isChannelExpr(ch)} and (not (${url} = ''))${followHud ? ' and #hud_visible' : ''})`;
+    return { type: 'custom', renderer: 'profile_image_renderer', layer: u.layer !== undefined && u.layer !== null ? num(u.layer, 0) : u.above ? 2 : 0,
+      size: [pct(100 * K * r.w), pct(100 * K * r.h)], anchor_from: 'center', anchor_to: 'top_left', offset: [`${r6(100 * dx)}%x`, `${r6(100 * dy)}%y`],
+      bindings: [
+        { binding_name: T, binding_type: 'global' },
+        ...(followHud ? [{ binding_name: '#hud_visible', binding_type: 'global' }] : []),
+        { binding_type: 'view', source_property_name: `('{"type":7,"url":"' + ${url} + '"}')`, target_property_name: '#profile_image_options' },
+        { binding_type: 'view', source_property_name: show, target_property_name: '#visible' },
+      ] };
+  }
+
   // ---- the JSON UI: a viewport panel in the HUD's root panel, one renderer per group ------------------------------------
   const pct = (v) => `${r6(v)}%`;
-  /** the square panel of a group (size, and for contain the two panels that make min(width, height) a square) */
-  function squareOf(g, ns, renderer) {
+  /** the square panel of a group (size, and for contain the two panels that make min(width, height) a square); extra: more
+   *  controls beside the renderer (URL images) */
+  function squareOf(g, ns, renderer, extra = []) {
     const off = offsetOf(g.origin);
-    const sq = (size, extra) => Object.assign({ type: 'panel', size, anchor_from: g.anchor, anchor_to: 'center', offset: off, controls: [{ [`${ns}_r_${g.id}`]: renderer }] }, extra || {});
+    const sq = (size, more) => Object.assign({ type: 'panel', size, anchor_from: g.anchor, anchor_to: 'center', offset: off, controls: [{ [`${ns}_r_${g.id}`]: renderer }, ...extra] }, more || {});
     const m = g.scale;
     if (m.mode === 'height') return sq(['100%y', pct(100 * m.s)]);
     if (m.mode === 'width') return sq([pct(100 * m.s), '100%x']);
@@ -181,22 +245,47 @@
   }
   /** the hud_screen.json the pack adds (namespace hud): a viewport panel at the front of root_panel — the HUD's size, made the
    *  safe area again when the game compresses the HUD's width ($compress_hud_width: 90 %) — and the groups' renderers in it
-   *  (a group with clip: inside a panel that clips_children). opts.followHud: hidden with the HUD (F1) */
+   *  (a group with clip: inside a panel that clips_children). opts.followHud: hidden with the HUD (the game's own F1).
+   *  With the title channel (scene.urlImages, scene.f1): the URL images beside their groups' renderers, and the HUD's own
+   *  title hidden while it is the channel's. With scene.f1: the viewport moves out to hud_content (root_panel's parent, the
+   *  same box) and root_panel — the whole of the game's own HUD: hotbar, chat, titles, boss bars, the sidebar … — is hidden
+   *  while the channel says F1; GeoUI stays */
   function hudScreen(scene, opts = {}) {
-    const ns = scene.ns, groups = groupsOf(scene), followHud = opts.followHud !== false;
+    const ns = scene.ns, groups = groupsOf(scene), followHud = opts.followHud !== false, ch = channelOf(scene);
     const renderer = () => Object.assign({ type: 'custom', renderer: 'live_player_renderer', layer: 1, size: ['100%', '100%'] },
       followHud ? { bindings: [{ binding_name: '#hud_visible', binding_name_override: '#visible' }] } : {});
+    const ids = new Set(groups.map((g) => g.id)), seenImg = new Set();
+    for (const u of scene.urlImages || []) {
+      if (!/^[a-z0-9_]{1,24}$/.test(String(u.id))) throw new Error(`URL の画像の名前「${u.id}」は英小文字・数字・_ で 24 文字まで`);
+      if (seenImg.has(u.id)) throw new Error(`URL の画像 ${u.id} が 2 つあります`);
+      seenImg.add(u.id);
+      if (!ids.has(u.group)) throw new Error(`URL の画像 ${u.id} のグループ「${u.group}」がありません`);
+    }
     const controls = groups.filter((g) => g.renderer !== false).map((g) => {
-      let panel = squareOf(g, ns, renderer());
+      const imgs = (scene.urlImages || []).filter((u) => u.group === g.id).map((u) => ({ [`${ns}_url_${u.id}`]: urlImageControl(g, u, ch, followHud) }));
+      let panel = squareOf(g, ns, renderer(), imgs);
       if (g.clip) {
         // the clip box: its own size and anchor on the viewport; the group's renderer inside it, anchored as before (to the box)
         const c = g.clip;
         panel = { type: 'panel', size: c.size || ['100%', '100%'], anchor_from: anchorName(c.anchor || 'center'), anchor_to: anchorName(c.anchor || 'center'),
           offset: c.offset || [0, 0], clips_children: true, controls: [{ [`${ns}_g_${g.id}`]: panel }] };
-        return { [`${ns}_clip_${g.id}`]: Object.assign(panel, g.layer !== undefined ? { layer: g.layer } : {}) };
       }
-      return { [`${ns}_g_${g.id}`]: Object.assign(panel, g.layer !== undefined ? { layer: g.layer } : {}) };
+      if (g.layer !== undefined) panel.layer = g.layer;
+      // (a group of a layout: drawn — its renderer, its URL images — only while the channel shows that layout's letter)
+      if (ch && g.layout !== undefined && g.layout !== null) panel.bindings = [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: layoutExpr(ch, g.layout), target_property_name: '#visible' }];
+      return { [`${ns}_${g.clip ? 'clip' : 'g'}_${g.id}`]: panel };
     });
+    // (a backdrop over the whole screen, cut-outs too — the HUD's own black, at 200 % as the game's own modal shade — while the
+    //  channel shows one of its layouts: what a full-screen GeoUI covers the world with; layer −5: under the URL images (0, or
+    //  their own layer: a picture kept under the next one) and the renderers (1))
+    if (scene.backdrop) {
+      if (!ch) throw new Error('backdrop はタイトルの通り道（urlImages・f1・layout）と使います');
+      const b = scene.backdrop, lays = String(b.layouts || '');
+      for (const L of lays) if (!CHANNEL.layouts.includes(L)) throw new Error(`backdrop の layouts「${lays}」は a〜z の文字`);
+      const show = lays ? `(${[...lays].map((L) => layoutExpr(ch, L)).join(' or ')})` : isChannelExpr(ch);
+      controls.unshift({ [`${ns}_backdrop`]: { type: 'image', texture: b.texture || 'textures/ui/Black.png', fill: true, size: ['200%', '200%'], alpha: num(b.alpha, 1), layer: num(b.layer, -5),
+        bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: show, target_property_name: '#visible' }] } });
+    }
     // (extra controls of the scene's own: a renderer placed some other way, a label bound to a HUD text — as they are)
     for (const c of scene.extraControls || []) controls.push(c);
     const vp = {
@@ -205,7 +294,22 @@
       controls,
     };
     const out = { namespace: 'hud', [`${ns}_vp`]: vp };
-    out.root_panel = { modifications: [{ array_name: 'controls', operation: 'insert_front', value: [{ [`${ns}_vp@hud.${ns}_vp`]: {} }] }] };
+    const host = ch && ch.f1 ? 'hud_content' : 'root_panel';
+    out[host] = { modifications: [{ array_name: 'controls', operation: 'insert_front', value: [{ [`${ns}_vp@hud.${ns}_vp`]: {} }] }] };
+    if (ch) {
+      // (the HUD's title, made by its factory from hud.hud_title_text: hidden while the title is the channel's)
+      out.hud_title_text = { bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: `(not ${isChannelExpr(ch)})`, target_property_name: '#visible' }] };
+    }
+    if (ch && ch.f1) {
+      // (root_panel's own three bindings as the game has them, and its #visible also off while the channel says F1)
+      out.root_panel = { bindings: [
+        { binding_name: '#hud_visible', binding_type: 'global' },
+        { binding_name: T, binding_type: 'global' },
+        { binding_type: 'view', source_property_name: `(#hud_visible and (not ${f1Expr(ch)}))`, target_property_name: '#visible' },
+        { binding_name: '#hud_alpha', binding_name_override: '#alpha', binding_type: 'global' },
+        { binding_name: '#hud_propagate_alpha', binding_name_override: '#propagateAlpha', binding_type: 'global' },
+      ] };
+    }
     return out;
   }
 
@@ -237,7 +341,7 @@
   S.layout = {
     K, K_MEASURED, K_ERR, D, D_ERR, BAND_Y, GROUP_DX, GROUP_DY, GUI_Y, GUI_DX, GUI_DY, ANCHORS, ANCHOR_NAMES, MODES, DEVICES,
     anchorName, modeOf, sidePx, unitPx, viewportUnits, groupOrigin, guiOrigin, offsetOf, groupsOf, anchorPx, localToScreen, rectToScreen, rectToModel, ghosts,
-    squareOf, hudScreen, deviceTable,
+    squareOf, hudScreen, deviceTable, CHANNEL, channelOf, channelText, slotExpr, isChannelExpr, f1Expr, layoutExpr, urlImageControl,
   };
   if (typeof module === 'object' && module && module.exports) module.exports = S.layout;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

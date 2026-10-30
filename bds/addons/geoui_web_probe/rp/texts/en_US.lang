@@ -1,0 +1,3 @@
+pack.name=GeoUI Web Probe
+pack.description=GeoUI: URL images and F1 measured on the real game (bds-lab bds/geoui/web/probe.mjs)
+entity.minecraft:player.name=Player
