@@ -167,7 +167,10 @@
   const CHANNEL = Object.freeze({ prefix: '~gu~', width: 230, maxSlots: 8, layouts: 'abcdefghijklmnopqrstuvwxyz' });
   /** the channel a scene uses, or null: { prefix, width, slots, f1, head } (head: the characters before the first field) */
   function channelOf(scene) {
-    const imgs = scene.urlImages || [], lays = (scene.groups || []).some((g) => g.layout !== undefined && g.layout !== null);
+    // (every user of a slot: URL images in groups, URL images that fill a part of the viewport, the screen's-shape probes, the
+    //  edge markers)
+    const imgs = [...(scene.urlImages || []), ...(scene.fillImages || []), ...(scene.aspectProbe ? [{ id: 'aspect probe', slot: scene.aspectProbe.slot }] : []), ...(scene.edgeMarkers ? [{ id: 'edge markers', slot: scene.edgeMarkers.slot }] : [])];
+    const lays = (scene.groups || []).some((g) => g.layout !== undefined && g.layout !== null);
     if (!imgs.length && !scene.f1 && !lays) return null;
     const width = Math.round(num(scene.channel && scene.channel.width, CHANNEL.width));
     if (width < 16 || width > 1000) throw new Error(`タイトルの通り道の枠の幅 ${width} は 16〜1000 文字`);
@@ -224,6 +227,52 @@
         { binding_type: 'view', source_property_name: `('{"type":7,"url":"' + ${url} + '"}')`, target_property_name: '#profile_image_options' },
         { binding_type: 'view', source_property_name: show, target_property_name: '#visible' },
       ] };
+  }
+
+  /** a URL image that fills a part of the viewport by JSON UI's own % — no group, no renderer unit, so it is exact on every
+   *  aspect ratio, cut-out and safe area (the game lays it out): { id, slot, layout?, anchor, w, h (shares of the viewport), layer? }.
+   *  Anchored at the same point of itself and of the viewport (no offset: e.g. a toolbar top_middle 1 x 0.1, a page bottom_middle
+   *  1 x 0.9). Shown while the channel has a URL in its slot (and shows its layout, and the HUD) */
+  function fillImageControl(u, ch, followHud) {
+    const w = num(u.w, 0), h = num(u.h, 0);
+    if (!(w > 0 && w <= 1 && h > 0 && h <= 1)) throw new Error(`URL の画像 ${u.id} の w・h はビューポートの割合（0 より大きく 1 まで）`);
+    const anchor = anchorName(u.anchor || 'center'), slot = Math.round(num(u.slot, 0)), url = slotExpr(ch, slot);
+    const conds = [isChannelExpr(ch), `(not (${url} = ''))`, ...(u.layout ? [layoutExpr(ch, u.layout)] : []), ...(followHud ? ['#hud_visible'] : [])];
+    return { type: 'custom', renderer: 'profile_image_renderer', layer: u.layer !== undefined && u.layer !== null ? num(u.layer, 0) : 0,
+      size: [pct(100 * w), pct(100 * h)], anchor_from: anchor, anchor_to: anchor,
+      bindings: [
+        { binding_name: T, binding_type: 'global' },
+        ...(followHud ? [{ binding_name: '#hud_visible', binding_type: 'global' }] : []),
+        { binding_type: 'view', source_property_name: `('{"type":7,"url":"' + ${url} + '"}')`, target_property_name: '#profile_image_options' },
+        { binding_type: 'view', source_property_name: `(${conds.join(' and ')})`, target_property_name: '#visible' },
+      ] };
+  }
+  /** the screen's shape measured by the game: { slot, aspects: [a0 < a1 < …] }. While the slot holds an http base URL, n tiny URL
+   *  images: the k-th sits at the right edge of a box a_k x the viewport's height, centred — inside the viewport only when the
+   *  viewport is at least a_k wide — and its URL is the base + '/<k>.png'. Two sets: 'c' inside a panel that clips to the viewport,
+   *  'u' not clipped (only the screen's own edge). Which of them the game fetches tells the shape — if it fetches only what it draws
+   *  (SPEC 17 章 12 本目) */
+  function aspectProbeControl(ap, ch, ns) {
+    const url = slotExpr(ch, Math.round(num(ap.slot, 0))), as = ap.aspects || [];
+    if (!as.length || as.some((a, i) => !(a > 0) || (i && a <= as[i - 1]))) throw new Error('aspectProbe.aspects は大きくなっていく正の数');
+    const show = `(${isChannelExpr(ch)} and (('%.4s' * ${url}) = 'http'))`;
+    const set = (tag, clip) => ({ type: 'panel', size: ['100%', '100%'], clips_children: clip, layer: -8,
+      controls: as.map((a, k) => ({ [`${ns}_asp${tag}${k}`]: { type: 'panel', size: [`${r6(100 * a)}%y`, '100%'], anchor_from: 'center', anchor_to: 'center',
+        controls: [{ [`${ns}_asp${tag}${k}_i`]: { type: 'custom', renderer: 'profile_image_renderer', size: [2, 2], anchor_from: 'right_middle', anchor_to: 'right_middle',
+          bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: `('{"type":7,"url":"' + ${url} + '/${tag}${k}.png"}')`, target_property_name: '#profile_image_options' }] } }] } })) });
+    return { type: 'panel', size: ['100%', '100%'], layer: -8, controls: [{ [`${ns}_aspc`]: set('c', true) }, { [`${ns}_aspu`]: set('u', false) }],
+      bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: show, target_property_name: '#visible' }] };
+  }
+  /** the viewport's two side edges marked (to set the screen's shape by hand: the pointer's tip on a mark): { slot, texture, uv?,
+   *  uvSize?, w, h (JSON UI px), text? } — shown while the slot holds exactly 'fit' */
+  function edgeMarkersControl(em, ch, ns) {
+    const url = slotExpr(ch, Math.round(num(em.slot, 0))), show = `(${isChannelExpr(ch)} and (${url} = 'fit'))`;
+    const bar = (anchor) => Object.assign({ type: 'image', texture: em.texture, size: [num(em.w, 6), num(em.h, 60)], anchor_from: anchor, anchor_to: anchor, layer: 3 },
+      em.uv ? { uv: em.uv, uv_size: em.uvSize || [8, 8] } : {});
+    const controls = [{ [`${ns}_fit_l`]: bar('left_middle') }, { [`${ns}_fit_r`]: bar('right_middle') }];
+    if (em.text) controls.push({ [`${ns}_fit_t`]: { type: 'label', text: String(em.text), color: [1, 1, 1], shadow: true, anchor_from: 'top_middle', anchor_to: 'top_middle', offset: [0, 24], layer: 3 } });
+    return { type: 'panel', size: ['100%', '100%'], layer: 3, controls,
+      bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: show, target_property_name: '#visible' }] };
   }
 
   // ---- the JSON UI: a viewport panel in the HUD's root panel, one renderer per group ------------------------------------
@@ -296,6 +345,16 @@
       controls.unshift({ [`${ns}_backdrop`]: { type: 'image', texture: b.texture || 'textures/ui/Black.png', fill: true, size: ['200%', '200%'], alpha: num(b.alpha, 1), layer: num(b.layer, -5),
         bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: show, target_property_name: '#visible' }] } });
     }
+    // (URL images laid out by JSON UI's own % — exact on every aspect ratio; the screen's-shape probes; the edge marks)
+    for (const u of scene.fillImages || []) {
+      if (!/^[a-z0-9_]{1,24}$/.test(String(u.id))) throw new Error(`URL の画像の名前「${u.id}」は英小文字・数字・_ で 24 文字まで`);
+      if (seenImg.has(u.id)) throw new Error(`URL の画像 ${u.id} が 2 つあります`);
+      seenImg.add(u.id);
+      if (!ch) throw new Error('fillImages はタイトルの通り道と使います');
+      controls.push({ [`${ns}_fill_${u.id}`]: fillImageControl(u, ch, followHud) });
+    }
+    if (scene.aspectProbe) controls.push({ [`${ns}_aspect`]: aspectProbeControl(scene.aspectProbe, ch, ns) });
+    if (scene.edgeMarkers) controls.push({ [`${ns}_fit`]: edgeMarkersControl(scene.edgeMarkers, ch, ns) });
     // (extra controls of the scene's own: a renderer placed some other way, a label bound to a HUD text — as they are)
     for (const c of scene.extraControls || []) controls.push(c);
     const vp = {
@@ -366,6 +425,7 @@
     K, K_MEASURED, K_ERR, D, D_ERR, BAND_Y, GROUP_DX, GROUP_DY, GUI_Y, GUI_DX, GUI_DY, ANCHORS, ANCHOR_NAMES, MODES, DEVICES,
     anchorName, modeOf, sidePx, unitPx, viewportUnits, groupOrigin, guiOrigin, offsetOf, groupsOf, anchorPx, localToScreen, rectToScreen, rectToModel, ghosts,
     squareOf, hudScreen, deviceTable, CHANNEL, channelOf, channelText, slotExpr, isChannelExpr, f1Expr, layoutExpr, urlImageControl,
+    fillImageControl, aspectProbeControl, edgeMarkersControl,
   };
   if (typeof module === 'object' && module && module.exports) module.exports = S.layout;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
