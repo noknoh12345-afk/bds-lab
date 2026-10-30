@@ -297,6 +297,16 @@ addSong(genMeta("shepard", "Shepard\u2013Risset glissando", 40, 10), void 0, (d)
 var DEFAULTS = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voices: 64, noise: true, bursts: true, viz: true, loop: false, budget: 0, mode: "quality" };
 var LIGHT_VOICES = 16;
 var LIGHT_BUDGET = 24;
+var CLIENT_SOUNDS = { Mobile: 32 };
+function platformVoices(p) {
+  let kind = "";
+  try {
+    kind = String(p.clientSystemInfo.platformType);
+  } catch {
+  }
+  const n = CLIENT_SOUNDS[kind];
+  return n ? Math.max(4, n - NOISE_BANDS.length) : DEFAULTS.voices;
+}
 var Session = class {
   constructor(owner, song, d, mode, s) {
     this.owner = owner;
@@ -671,7 +681,7 @@ var Session = class {
 var fmt = (s) => `${Math.floor(Math.abs(s) / 60)}:${String(Math.floor(Math.abs(s) % 60)).padStart(2, "0")}`;
 var dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 var sessions = /* @__PURE__ */ new Map();
-var settingsOf = (p) => ({ ...DEFAULTS, ...load(p, "spectral:settings", {}) });
+var settingsOf = (p) => ({ ...DEFAULTS, voices: platformVoices(p), ...load(p, "spectral:settings", {}) });
 var keep = (p, s) => save(p, "spectral:settings", s);
 system2.runInterval(() => {
   for (const [id, s] of sessions) {
@@ -812,9 +822,10 @@ cmd("spectral:layers", "Noise bands and drum bursts on/off", { noise: "bool", bu
 cmd("spectral:freeze", "Freeze the sound where it is (an endless drone) / thaw", {}, freezeFor);
 cmd("spectral:mode", "quality: every voice, every command \xB7 light (Realms, many players): 16 voices, at most 24 commands per tick per listener", { mode: ["quality", "light"] }, async (p, a) => {
   const s = settingsOf(p), light = a.mode === "light";
+  const full = platformVoices(p);
   s.mode = light ? "light" : "quality";
   s.budget = light ? LIGHT_BUDGET : 0;
-  s.voices = light ? LIGHT_VOICES : 64;
+  s.voices = light ? LIGHT_VOICES : full;
   s.bursts = !light;
   keep(p, s);
   const m = mine(p);
@@ -824,7 +835,7 @@ cmd("spectral:mode", "quality: every voice, every command \xB7 light (Realms, ma
     m.s.bursts = s.bursts;
     await m.setVoices(s.voices);
   }
-  return light ? `\xA7bquality light: ${LIGHT_VOICES} voices, \u2264${LIGHT_BUDGET} commands/tick per listener, no bursts` : "\xA7bquality full: every voice, no command budget";
+  return light ? `\xA7bquality light: ${LIGHT_VOICES} voices, \u2264${LIGHT_BUDGET} commands/tick per listener, no bursts` : `\xA7bquality full: ${full === DEFAULTS.voices ? "every voice" : `${full} voices (as many sounds as this client plays at once)`}, no command budget`;
 });
 cmd("spectral:loop", "Loop the song on/off", {}, (p) => {
   const s = settingsOf(p);
