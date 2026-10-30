@@ -1,5 +1,5 @@
-# geoui_web（bds/geoui/web/make.mjs が作る）: どの画面の形でもぴったり（12 本目）— 箱（/web:size box）と、ぴったり（開いた時にゲームが
-# 形を測る: 小さな URL の画像のどれを取りに来たか）と、端に合わせる（/web:fit）。期待の位置: node bds/geoui/web/make.mjs expect <幅>x<高さ> <並べ方|z>
+# geoui_web（bds/geoui/web/make.mjs が作る）: どの画面の形でもぴったり（13 本目）— ぴったり（開いた時にゲームが形を測る: 小さな URL の画像の
+# どれを取りに来たか、と /web:size）と、箱（/web:size box）と、端に合わせる（/web:fit）。期待の位置: node bds/geoui/web/make.mjs expect <幅>x<高さ> <並べ方|z>
 # 実行: アプリのワークフローの scenario に bds/addons/geoui_web/app-aspects.txt
 
 section join
@@ -13,6 +13,72 @@ wait 9000
 do tp @a 0 -60 0 0 0
 wait 3000
 absent clientlog \bERROR\b
+
+section x2400x1080
+# 2400x1080（2.2222）・ぴったり: 開くと形を測る（プローブの見込み 2.2222）→ ページ (0.0, 108.0)–(2400.0, 1080.0)、ポインタの先 (1200.0, 540.0)–(1200.0, 540.0)、クリックの所 (1200.0, 648.0)–(1200.0, 648.0)
+do scriptevent gweb:close
+wait 2000
+size 2400x1080
+wait 6000
+do scriptevent gweb:size auto
+do scriptevent gweb:res 1080
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 9000
+do scriptevent gweb:debug 1
+wait 1500
+shot x2400x1080-open
+measure marks x2400x1080-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot x2400x1080-click
+measure marks x2400x1080-click
+until server GWEB aspect .*"asp":2\.2222,"why":"probe- 2000
+
+section d-probe
+expect server GWEB probe
+
+section d-c-drawn
+expect server GWEB probe .*"c":112,
+
+section d-c-all
+expect server GWEB probe .*"c":160,
+
+section d-c-none
+expect server GWEB probe .*"c":0,
+
+section d-u-drawn
+expect server GWEB probe .*"u":112,
+
+section d-u-all
+expect server GWEB probe .*"u":160,
+
+section d-c-top
+expect server GWEB probe .*"cTop":2\.222
+
+section d-u-top
+expect server GWEB probe .*"uTop":2\.222
+
+section d-aspect
+expect server GWEB aspect .*"why":"probe
+
+section exact-size
+# 2400x1080・/web:size 2400x1080（測らずに）: ページ (0.0, 108.0)–(2400.0, 1080.0)、黒なし
+do scriptevent gweb:close
+wait 2000
+do scriptevent gweb:size 2400x1080 1080
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 6000
+do scriptevent gweb:debug 1
+wait 1500
+shot exact-size
+measure marks exact-size
 
 section box
 # 2400x1080・box 16:9（並べ方 b = 16:9）: ページ (240.0, 108.0)–(2160.0, 1080.0)、ポインタの先 (1200.0, 540.0)–(1200.0, 540.0)、クリックの所 (1200.0, 648.0)–(1200.0, 648.0)
@@ -61,32 +127,6 @@ until server GWEB page .*c=8000ff 20000
 wait 3000
 shot box219-click
 measure marks box219-click
-
-section x2400x1080
-# 2400x1080（2.2222）・ぴったり: 開くと形を測る（プローブの見込み 2.2222）→ ページ (0.0, 108.0)–(2400.0, 1080.0)、ポインタの先 (1200.0, 540.0)–(1200.0, 540.0)、クリックの所 (1200.0, 648.0)–(1200.0, 648.0)
-do scriptevent gweb:close
-wait 2000
-size 2400x1080
-wait 6000
-do scriptevent gweb:size auto
-do scriptevent gweb:res 1080
-wait 1000
-shot world
-do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
-until server GWEB page .*c=0000ff 60000
-wait 9000
-do scriptevent gweb:debug 1
-wait 1500
-shot x2400x1080-open
-measure marks x2400x1080-open
-do scriptevent gweb:pointer 0.5 0.6
-wait 1500
-attack 0.3
-until server GWEB page .*c=8000ff 20000
-wait 3000
-shot x2400x1080-click
-measure marks x2400x1080-click
-until server GWEB aspect .*"asp":2\.2222,"why":"probe- 2000
 
 section x1920x1080
 # 1920x1080（1.7778）・ぴったり: 開くと形を測る（プローブの見込み 1.7778）→ ページ (0.0, 108.0)–(1920.0, 1080.0)、ポインタの先 (960.0, 540.0)–(960.0, 540.0)、クリックの所 (960.0, 648.0)–(960.0, 648.0)
