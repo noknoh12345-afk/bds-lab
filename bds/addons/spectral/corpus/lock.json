@@ -1,0 +1,106 @@
+{
+ "piano_gymnopedie": {
+  "source_sha256": "8cba6bb3da51066ad39520ec218a327bb6222d8fb32bc52f28a1e90b67756f70",
+  "excerpt_sha256": "db612c9d22dff5c861a9814ec6dd95b857dc08aecdda47f71ffbf4e0701d46e0",
+  "seconds": 20.02,
+  "sample_rate": 44100,
+  "channels": 2,
+  "kbps": 321
+ },
+ "piano_chopin_op66": {
+  "source_sha256": "8ec107d05c7420ba3f43651cff8139920de5d2a40aed8a6b50174ca4f1c1e6af",
+  "excerpt_sha256": "710f394856488f130babe0cb26eb6d8d610f5d694e4877bbb30809cd11371b84",
+  "seconds": 20.0,
+  "sample_rate": 48000,
+  "channels": 2,
+  "kbps": 180
+ },
+ "vocal_stars": {
+  "source_sha256": "c2a51264a26ce99a530b00607626931eb0be3895ecd6e8d8d1e89c7fc97e9448",
+  "excerpt_sha256": "078b7be3b1c64f216173cc1e58347e98474de6d72cf6e0e53015addcc9841ba8",
+  "seconds": 20.02,
+  "sample_rate": 48000,
+  "channels": 2,
+  "kbps": 141
+ },
+ "vocal_name_of_love": {
+  "source_sha256": "ed4f1a946fd8eb2937c1a0c08c4280cf02ff472e9997eb663b1f42db3a37be0e",
+  "excerpt_sha256": "81d0494e99f3950fa1ff7ed03a816a9b6319181ec22932eb145d85c388b0a78d",
+  "seconds": 20.01,
+  "sample_rate": 44100,
+  "channels": 2,
+  "kbps": 135
+ },
+ "choir_how_long": {
+  "source_sha256": "b443d9c133a7d011f77263cef7d8da6855f39752b6dca017c19dfb5c4ecb253c",
+  "excerpt_sha256": "c9265f214d27a8c398971dc25e99db67ed6c265c9b7015209c7841fe2a164835",
+  "seconds": 20.02,
+  "sample_rate": 44100,
+  "channels": 2,
+  "kbps": 186
+ },
+ "drums_round": {
+  "source_sha256": "5c860a22d090edafa6d0e1bb28b66458ca6eca8b3d262a78ea3a2086d4fa9057",
+  "excerpt_sha256": "b5aeea12acbec498d9e42bdaeaaa38e30ca424345247748c7e9f296099233d96",
+  "seconds": 20.02,
+  "sample_rate": 44100,
+  "channels": 2,
+  "kbps": 321
+ },
+ "rock_big": {
+  "source_sha256": "1faf8048f3c772667a6f9d56a10a3803a0385efe09531c91fe72c4cf66c0a15e",
+  "excerpt_sha256": "ee06a10ed397418f8b753b204134f1a177d9cb8d5dfa524a54ad76a2f5a7743e",
+  "seconds": 20.02,
+  "sample_rate": 44100,
+  "channels": 2,
+  "kbps": 192
+ },
+ "edm_detection": {
+  "source_sha256": "746f7b1d4dad9c949a67bc063e0ca79da34452c69cd98f4ab9c16a712e92e951",
+  "excerpt_sha256": "30d3b14a22c21b7aa992a8b220d2ef32c37449df0c5abfcd7b83be3348c04a39",
+  "seconds": 20.02,
+  "sample_rate": 44100,
+  "channels": 2,
+  "kbps": 257
+ },
+ "orchestra_five_armies": {
+  "source_sha256": "f56746c90756db04675a80ebd29e22253177a6fcc16f56602da62af9eae8d733",
+  "excerpt_sha256": "ef60db3ab455ee9abf8992f547eaf586e5dac7c1e9910a1a163acfc2e747e9ce",
+  "seconds": 20.02,
+  "sample_rate": 44100,
+  "channels": 2,
+  "kbps": 321
+ },
+ "funk_funkorama": {
+  "source_sha256": "6be229815d85a0b99382b944d31098b882702c04ac7ad899e44ab7f8ba89b5ad",
+  "excerpt_sha256": "87017f2dca4a9834da3c8cac6aac839015fe5b8ca87443fe24549232664b444e",
+  "seconds": 20.02,
+  "sample_rate": 44100,
+  "channels": 2,
+  "kbps": 321
+ },
+ "speech_ja_soseki": {
+  "source_sha256": "0de235a91f7cc3eeecaa49e0d177ee7735618befb4671f120c518b9ce8bd3747",
+  "excerpt_sha256": "58f807ed446657b4a7a8d3077a43fc38865625c71868892c691ac6429d35da89",
+  "seconds": 20.0,
+  "sample_rate": 44100,
+  "channels": 1,
+  "kbps": 128
+ },
+ "speech_en_wordsworth": {
+  "source_sha256": "7c126728624e6f12dc45d6623f9913166a4e5b7fa51cb52ab2465040c3693da5",
+  "excerpt_sha256": "3a9dc43369d6b507bc8a56a9870bb6752d6131774ecec0e3e116afe82fef78f7",
+  "seconds": 20.02,
+  "sample_rate": 44100,
+  "channels": 1,
+  "kbps": 128
+ },
+ "demo_selfmade": {
+  "source_sha256": "14d0c8f33c58c9f000a97847394ba1d4605b1e4e589e6b626979d314f5884de2",
+  "excerpt_sha256": "250776d8a53a259583cecdc9a144e3fd24afa5d5139fc08e4e6f2cdccecf1e08",
+  "seconds": 20.01,
+  "sample_rate": 44100,
+  "channels": 2,
+  "kbps": 193
+ }
+}

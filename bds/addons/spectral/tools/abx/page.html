@@ -1,0 +1,293 @@
+<title>Spectral Player ABX</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* layout: a listening bench — song rail on the left, the A / B / X console on the right; stacks on phones */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #18211f; --muted: #5d6b67; --line: #d5ddda;
+  --a: #0e7a6d; --b: #b45309; --x: #4338ca; --good: #15803d; --bad: #b91c1c; --warn: #a16207;
+  --display: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --body: "Noto Sans JP", "Hiragino Sans", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111816; --panel: #18211f; --ink: #e6efec; --muted: #9db0aa; --line: #2c3a36;
+  --a: #34d3bd; --b: #f59e0b; --x: #a5b4fc; --good: #4ade80; --bad: #f87171; --warn: #facc15; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111816; --panel: #18211f; --ink: #e6efec; --muted: #9db0aa; --line: #2c3a36;
+  --a: #34d3bd; --b: #f59e0b; --x: #a5b4fc; --good: #4ade80; --bad: #f87171; --warn: #facc15; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px; }
+h1 { font-family: var(--display); font-size: clamp(22px, 3.2vw, 30px); margin: 0; text-wrap: balance; letter-spacing: .01em; }
+h2 { font-family: var(--display); font-size: 18px; margin: 0; }
+.lede { color: var(--muted); max-width: 70ch; margin: 4px 0 0; }
+.notice { border: 1px solid var(--warn); border-left-width: 4px; background: var(--panel); padding: 10px 14px; border-radius: 6px; max-width: 90ch; }
+.notice b { color: var(--warn); }
+.grid { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 820px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.rail { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px; display: grid; gap: 2px; }
+.song { all: unset; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 8px 10px; border-radius: 6px; }
+.song:hover { background: color-mix(in srgb, var(--a) 8%, transparent); }
+.song:focus-visible { outline: 2px solid var(--x); outline-offset: 1px; }
+.song[aria-current="true"] { background: color-mix(in srgb, var(--a) 15%, transparent); }
+.song .t { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.song .c { color: var(--muted); font-size: 12px; grid-column: 1; }
+.song .r { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-family: var(--mono); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+.pill { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-family: var(--mono); border: 1px solid var(--line); }
+.pill.rec { border-color: var(--good); color: var(--good); }
+.pill.emu { border-color: var(--warn); color: var(--warn); }
+.console { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
+.credit { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.pads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.pad { font-family: var(--display); font-weight: 700; font-size: 28px; padding: 16px 8px; border-radius: 8px; border: 2px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; display: grid; gap: 2px; justify-items: center; }
+.pad small { font-family: var(--body); font-size: 12px; font-weight: 500; color: var(--muted); }
+.pad[data-k="A"] { border-color: var(--a); } .pad[data-k="B"] { border-color: var(--b); } .pad[data-k="X"] { border-color: var(--x); }
+.pad[aria-pressed="true"][data-k="A"] { background: color-mix(in srgb, var(--a) 18%, var(--bg)); }
+.pad[aria-pressed="true"][data-k="B"] { background: color-mix(in srgb, var(--b) 18%, var(--bg)); }
+.pad[aria-pressed="true"][data-k="X"] { background: color-mix(in srgb, var(--x) 18%, var(--bg)); }
+.pad:focus-visible, button:focus-visible { outline: 2px solid var(--x); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button.act { font: inherit; font-weight: 700; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+button.act.primary { background: var(--x); border-color: var(--x); color: var(--panel); }
+button.act:disabled { opacity: .45; cursor: default; }
+.bar { position: relative; height: 34px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; touch-action: none; cursor: pointer; }
+.bar .sel { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--x) 14%, transparent); border-left: 2px solid var(--x); border-right: 2px solid var(--x); }
+.bar .head2 { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); }
+.bar canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.meta { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tally { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+.big { font-family: var(--mono); font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.verdict { font-weight: 700; }
+.verdict.yes { color: var(--bad); } .verdict.no { color: var(--good); }
+.refs { display: flex; flex-wrap: wrap; gap: 8px; }
+.refs button { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.refs button[aria-pressed="true"] { border-color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.tablewrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 700; color: var(--muted); font-size: 12px; letter-spacing: .03em; }
+td.num { font-family: var(--mono); }
+.drop { border: 2px dashed var(--line); border-radius: 8px; padding: 12px 14px; color: var(--muted); }
+.drop.over { border-color: var(--x); color: var(--ink); }
+.drop label { color: var(--x); cursor: pointer; text-decoration: underline; }
+footer { color: var(--muted); font-size: 12px; display: grid; gap: 4px; }
+footer li { overflow-wrap: anywhere; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Spectral Player ABX</h1>
+    <p class="lede">元の MP3（A）と、ゲームが鳴らした音（B）を聴き比べます。X は毎回 A か B のどちらかに入れ替わります。X がどちらかを当てる試行を重ね、偶然では説明できないほど当たるなら「区別できる」と判定します。</p>
+  </header>
+  <div class="notice" id="notice"><b>B の中身:</b> <span id="noticeText"></span></div>
+
+  <div class="grid">
+    <nav class="rail" id="rail" aria-label="試験曲"></nav>
+    <section class="console" id="console" aria-live="polite">
+      <div class="head">
+        <div><h2 id="songTitle"></h2><div class="credit" id="songCredit"></div></div>
+        <div class="meta" id="songScores"></div>
+      </div>
+      <div class="pads" role="group" aria-label="再生">
+        <button class="pad" data-k="A" id="padA" aria-pressed="false">A<small>元の MP3</small></button>
+        <button class="pad" data-k="X" id="padX" aria-pressed="false">X<small>A か B のどちらか</small></button>
+        <button class="pad" data-k="B" id="padB" aria-pressed="false">B<small id="bLabel">ゲーム</small></button>
+      </div>
+      <div class="bar" id="bar" title="ドラッグで聴く区間を選ぶ"><canvas id="wave"></canvas><div class="sel" id="sel"></div><div class="head2" id="ph"></div></div>
+      <div class="row meta"><span id="selText"></span><span>· 切り替えても再生位置はそのまま · キー: A / B / X、Space 停止</span></div>
+      <div class="row">
+        <button class="act" id="ansA" disabled>X は A</button>
+        <button class="act" id="ansB" disabled>X は B</button>
+        <button class="act" id="stop">停止</button>
+        <button class="act" id="reset">この曲の結果を消す</button>
+      </div>
+      <div class="tally"><span class="big" id="score">0 / 0</span><span id="pval" class="meta"></span><span id="verdict" class="verdict"></span></div>
+      <div>
+        <div class="meta" style="margin-bottom:6px">参考（ABX の外）: 同じ箇所を別の版で</div>
+        <div class="refs" id="refs"></div>
+      </div>
+      <div class="drop" id="drop">実機の録音があれば、この枠にファイルを落とすか <label for="files">選ぶ</label>。名前が曲の ID（例 <code>drums_round.wav</code>）なら、その曲の B が録音に入れ替わります（このブラウザの中だけ）。<input id="files" type="file" accept="audio/*" multiple hidden></div>
+    </section>
+  </div>
+
+  <section>
+    <h2 style="margin-bottom:8px">結果と指標</h2>
+    <div class="tablewrap"><table id="summary"><thead><tr>
+      <th>曲</th><th>ABX 正解</th><th>p</th><th>判定</th><th>天井</th><th>B (v2)</th><th>天井との差</th><th>v1</th><th>軽量</th><th>命令/tick</th><th>kbps</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div class="row" style="margin-top:8px"><button class="act" id="copy">結果をテキストでコピー</button><span class="meta" id="copied"></span></div>
+    <p class="meta" id="metricNote"></p>
+  </section>
+
+  <footer>
+    <div>試験曲の出典とライセンス（20 秒の抜粋。市販曲は含みません）:</div>
+    <ul id="credits"></ul>
+  </footer>
+</div>
+
+<script>
+const DATA = /*DATA*/{};
+const $ = (id) => document.getElementById(id);
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage refused: results live only in this tab */ } } };
+const results = store.get('spectral-abx-results', {});
+const replaced = {};                      // song id -> object URL of a real recording dropped here
+let ctx = null, cur = null, buffers = {}, src = null, playing = null, startAt = 0, offset = 0, x = null, sel = [0, 1], raf = 0;
+
+$('noticeText').textContent = DATA.notice;
+$('metricNote').textContent = DATA.metricNote;
+const fmt = (v, d = 2) => (v === null || v === undefined ? '–' : Number(v).toFixed(d));
+function binomP(k, n) { let p = 0; for (let i = k; i <= n; i++) p += comb(n, i); return p / 2 ** n; }
+function comb(n, k) { let r = 1; for (let i = 1; i <= k; i++) r = (r * (n - k + i)) / i; return r; }
+
+function renderRail() {
+  $('rail').innerHTML = '';
+  for (const s of DATA.songs) {
+    const r = results[s.id] || { ok: 0, n: 0 };
+    const b = document.createElement('button');
+    b.className = 'song'; b.setAttribute('aria-current', String(cur && cur.id === s.id));
+    b.innerHTML = `<span class="t"></span><span class="r">${r.n ? r.ok + '/' + r.n : ''}</span><span class="c"></span>`;
+    b.querySelector('.t').textContent = s.title; b.querySelector('.c').textContent = s.category;
+    b.onclick = () => select(s.id);
+    $('rail').append(b);
+  }
+}
+function renderSummary() {
+  const tb = $('summary').querySelector('tbody'); tb.innerHTML = '';
+  for (const s of DATA.songs) {
+    const r = results[s.id] || { ok: 0, n: 0 }, p = r.n ? binomP(r.ok, r.n) : null, sc = s.scores || {};
+    const v = (k) => (sc[k] && sc[k].visqol !== undefined ? sc[k].visqol : null);
+    const tr = document.createElement('tr');
+    const cells = [s.title, r.n ? `${r.ok} / ${r.n}` : '–', p === null ? '–' : p.toFixed(3), r.n < 8 ? '試行が足りない' : p < 0.05 ? '区別できる' : '区別できない',
+      fmt(sc.ceiling), fmt(v('game')), v('game') !== null && sc.ceiling ? fmt(sc.ceiling - v('game')) : '–', fmt(v('v1')), fmt(v('light')),
+      sc.game ? sc.game.calls_per_tick.mean : '–', sc.game ? sc.game.kbps : '–'];
+    cells.forEach((c, i) => { const td = document.createElement('td'); td.textContent = c; if (i > 0) td.className = 'num'; tr.append(td); });
+    tb.append(tr);
+  }
+}
+function renderCredits() { $('credits').innerHTML = ''; for (const c of DATA.credits) { const li = document.createElement('li'); li.textContent = c; $('credits').append(li); } }
+
+async function decode(url) {
+  ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+  const ab = await (await fetch(url)).arrayBuffer();
+  return await ctx.decodeAudioData(ab);
+}
+async function select(id) {
+  stop();
+  cur = DATA.songs.find((s) => s.id === id);
+  renderRail();
+  $('songTitle').textContent = cur.title;
+  $('songCredit').textContent = `${cur.category} · ${cur.credit}`;
+  const sc = cur.scores || {};
+  $('songScores').textContent = sc.game ? `ViSQOL（エミュレーター）: 天井 ${fmt(sc.ceiling)} · B ${fmt(sc.game.visqol)} · 差 ${fmt(sc.ceiling - sc.game.visqol)}` : '';
+  $('bLabel').textContent = replaced[id] ? '実機の録音' : 'ゲーム（エミュレーター）';
+  buffers = {}; x = null; sel = [0, 1];
+  $('refs').innerHTML = '';
+  for (const [k, label] of [['v1', '旧版 v1'], ['light', '軽量モード']]) {
+    const b = document.createElement('button'); b.textContent = label; b.dataset.k = k; b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => play(k); $('refs').append(b);
+  }
+  newTrial(); tally(); drawSel();
+}
+async function buffer(k) {
+  if (buffers[k]) return buffers[k];
+  const url = k === 'B' && replaced[cur.id] ? replaced[cur.id] : `audio/${cur.id}.${{ A: 'orig', B: 'game', v1: 'v1', light: 'light' }[k]}.mp3`;
+  buffers[k] = await decode(url);
+  if (k === 'A') drawWave(buffers[k]);
+  return buffers[k];
+}
+function newTrial() { x = Math.random() < 0.5 ? 'A' : 'B'; $('ansA').disabled = $('ansB').disabled = true; }
+async function play(k) {
+  if (!cur) return;
+  const real = k === 'X' ? x : k;
+  const buf = await buffer(real);
+  const dur = buf.duration, t0 = sel[0] * dur, t1 = sel[1] * dur;
+  let pos = playing ? ctx.currentTime - startAt + offset : t0;
+  if (pos < t0 || pos >= t1) pos = t0;
+  if (src) { try { src.stop(); } catch { /* already stopped */ } }
+  src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.loopStart = t0; src.loopEnd = t1;
+  src.connect(ctx.destination); src.start(0, pos);
+  startAt = ctx.currentTime; offset = pos; playing = k;
+  for (const p of ['A', 'B', 'X']) $('pad' + p).setAttribute('aria-pressed', String(p === k));
+  for (const b of $('refs').children) b.setAttribute('aria-pressed', String(b.dataset.k === k));
+  if (k === 'X') $('ansA').disabled = $('ansB').disabled = false;
+  cancelAnimationFrame(raf); tick();
+}
+function tick() {
+  if (!playing || !cur) return;
+  const buf = buffers[playing === 'X' ? x : playing]; if (!buf) return;
+  const dur = buf.duration, t0 = sel[0] * dur, t1 = sel[1] * dur;
+  let p = ctx.currentTime - startAt + offset; if (p >= t1) p = t0 + ((p - t0) % (t1 - t0));
+  $('ph').style.left = `${(p / dur) * 100}%`;
+  raf = requestAnimationFrame(tick);
+}
+function stop() { if (src) { try { src.stop(); } catch { /* already stopped */ } } src = null; playing = null; for (const p of ['A', 'B', 'X']) $('pad' + p).setAttribute('aria-pressed', 'false'); cancelAnimationFrame(raf); }
+function answer(g) {
+  const r = results[cur.id] || { ok: 0, n: 0, log: [] };
+  r.n++; if (g === x) r.ok++; r.log = (r.log || []).concat([{ x, g, t: Date.now() }]).slice(-200);
+  results[cur.id] = r; store.set('spectral-abx-results', results);
+  newTrial(); tally(); renderRail(); renderSummary();
+  if (playing === 'X') stop();
+}
+function tally() {
+  const r = results[cur.id] || { ok: 0, n: 0 };
+  $('score').textContent = `${r.ok} / ${r.n}`;
+  if (!r.n) { $('pval').textContent = '16 回以上を目安に'; $('verdict').textContent = ''; return; }
+  const p = binomP(r.ok, r.n);
+  $('pval').textContent = `p = ${p.toFixed(4)}（全部当てずっぽうでこれ以上当たる確率）`;
+  $('verdict').className = 'verdict ' + (r.n >= 8 && p < 0.05 ? 'yes' : 'no');
+  $('verdict').textContent = r.n < 8 ? '' : p < 0.05 ? '区別できる' : 'まだ区別できたとは言えない';
+}
+function drawSel() {
+  $('sel').style.left = `${sel[0] * 100}%`; $('sel').style.width = `${(sel[1] - sel[0]) * 100}%`;
+  const d = buffers.A ? buffers.A.duration : 20;
+  $('selText').textContent = `区間 ${(sel[0] * d).toFixed(1)}–${(sel[1] * d).toFixed(1)} 秒`;
+}
+function drawWave(buf) {
+  const c = $('wave'), w = c.clientWidth * devicePixelRatio, h = c.clientHeight * devicePixelRatio; c.width = w; c.height = h;
+  const g = c.getContext('2d'), d = buf.getChannelData(0), step = Math.max(1, Math.floor(d.length / w));
+  g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted');
+  for (let i = 0; i < w; i++) { let m = 0; for (let j = i * step; j < (i + 1) * step && j < d.length; j += 8) m = Math.max(m, Math.abs(d[j])); const y = m * h * 0.9; g.fillRect(i, (h - y) / 2, 1, Math.max(1, y)); }
+}
+// choose a passage by dragging on the bar
+(() => {
+  let a = null; const bar = $('bar');
+  const at = (e) => Math.min(1, Math.max(0, (e.clientX - bar.getBoundingClientRect().left) / bar.clientWidth));
+  bar.addEventListener('pointerdown', (e) => { a = at(e); bar.setPointerCapture(e.pointerId); });
+  bar.addEventListener('pointermove', (e) => { if (a === null) return; const b = at(e); sel = [Math.min(a, b), Math.max(a, b)]; if (sel[1] - sel[0] < 0.02) sel = [0, 1]; drawSel(); });
+  bar.addEventListener('pointerup', (e) => { const b = at(e); if (Math.abs(b - a) < 0.01) sel = [0, 1]; a = null; drawSel(); if (playing) play(playing); });
+})();
+for (const k of ['A', 'B', 'X']) $('pad' + k).onclick = () => play(k);
+$('ansA').onclick = () => answer('A'); $('ansB').onclick = () => answer('B');
+$('stop').onclick = stop;
+$('reset').onclick = () => { delete results[cur.id]; store.set('spectral-abx-results', results); tally(); renderRail(); renderSummary(); };
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest('input, textarea')) return;
+  const k = e.key.toUpperCase();
+  if (k === 'A' || k === 'B' || k === 'X') { e.preventDefault(); play(k); }
+  if (e.key === ' ') { e.preventDefault(); stop(); }
+});
+$('copy').onclick = async () => {
+  const lines = DATA.songs.map((s) => { const r = results[s.id] || { ok: 0, n: 0 }; return `${s.id}\t${r.ok}/${r.n}\tp=${r.n ? binomP(r.ok, r.n).toFixed(4) : '-'}\tB=${replaced[s.id] ? 'recording' : 'emulator'}`; });
+  const txt = 'Spectral Player ABX\n' + lines.join('\n');
+  try { await navigator.clipboard.writeText(txt); $('copied').textContent = 'コピーしました'; } catch { $('copied').textContent = txt; }
+};
+// real recordings dropped on the page replace B (in this browser only)
+function takeFiles(files) {
+  for (const f of files) {
+    const id = f.name.replace(/\.[^.]+$/, '');
+    if (!DATA.songs.some((s) => s.id === id)) continue;
+    if (replaced[id]) URL.revokeObjectURL(replaced[id]);
+    replaced[id] = URL.createObjectURL(f);
+    if (cur && cur.id === id) select(id);
+  }
+}
+const drop = $('drop');
+drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); takeFiles(e.dataTransfer.files); });
+$('files').addEventListener('change', (e) => takeFiles(e.target.files));
+renderCredits(); renderSummary(); select(DATA.songs[0].id);
+</script>

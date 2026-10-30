@@ -1,0 +1,3 @@
+pack.name=Spectral Player
+pack.description=MP3を正弦波の加算合成でリアルタイム再生する音楽プレイヤー
+item.spectral:remote.name=Spectral Remote

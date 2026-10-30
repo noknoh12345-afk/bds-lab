@@ -1,0 +1,9 @@
+{
+  "resource_pack_name": "spectral",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "spectral_remote": {
+      "textures": "textures/items/remote"
+    }
+  }
+}

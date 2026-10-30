@@ -1,0 +1,525 @@
+<title>Spectral Converter</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* layout: an instrument rack — the partial map (what Minecraft will play) is the wide display, the controls are a narrow column beside it; one column on phones.
+   palette: the three layers of a Minecraft amethyst geode — calcite ground, smooth-basalt ink, amethyst signal — with copper for drum bursts. */
+:root {
+  --bg: #ecebe7;          /* calcite */
+  --panel: #f7f6f3;
+  --ink: #2c2e33;         /* smooth basalt */
+  --muted: #6c6873;
+  --line: #d4d0ca;
+  --amethyst: #7447c9;
+  --amethyst-2: #a98ae6;
+  --copper: #b05f37;
+  --ok: #2f7d5b;
+  --err: #b1353b;
+  --spec-lo: #ecebe7;     /* spectrogram floor */
+  --spec-hi: #3a3c43;     /* spectrogram peak */
+  --font-display: "DotGothic16", "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1b1c20; --panel: #23252a; --ink: #e9e7e3; --muted: #a29eaa; --line: #383a41;
+  --amethyst: #b28dff; --amethyst-2: #7b5bc4; --copper: #dc8c62; --ok: #59b88c; --err: #e06a6f;
+  --spec-lo: #1b1c20; --spec-hi: #d9d6d0; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #1b1c20; --panel: #23252a; --ink: #e9e7e3; --muted: #a29eaa; --line: #383a41;
+  --amethyst: #b28dff; --amethyst-2: #7b5bc4; --copper: #dc8c62; --ok: #59b88c; --err: #e06a6f;
+  --spec-lo: #1b1c20; --spec-hi: #d9d6d0; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(26px, 4.4vw, 40px); line-height: 1.1; margin: 0; letter-spacing: 0.02em; }
+h1 b { color: var(--amethyst); font-weight: 400; }
+.tag { color: var(--muted); margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-weight: 400; font-size: 17px; margin: 0; letter-spacing: 0.04em; }
+.rack { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .rack { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 14px; min-width: 0; }
+
+/* display */
+.display-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 14px; }
+.now { font-weight: 700; font-size: 17px; min-width: 0; overflow-wrap: anywhere; }
+.now small { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 6px; }
+.stage { position: relative; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: var(--spec-lo); }
+.stage canvas { display: block; width: 100%; }
+#map { height: clamp(220px, 34vw, 380px); }
+#strip { height: 46px; border-top: 1px solid var(--line); }
+#head { position: absolute; inset: 0; pointer-events: none; }
+.axis { display: flex; justify-content: space-between; font-family: var(--font-data); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+.transport { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ab { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 3px; background: var(--bg); }
+.ab button { border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 14px; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.ab button[aria-pressed="true"] { background: var(--amethyst); color: var(--panel); }
+.ab button:disabled { opacity: 0.45; cursor: default; }
+.time { font-family: var(--font-data); font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.stat { background: var(--panel); padding: 8px 10px; display: grid; gap: 2px; }
+.stat span { font-size: 12px; color: var(--muted); }
+.stat b { font-family: var(--font-data); font-weight: 500; font-size: 16px; font-variant-numeric: tabular-nums; }
+
+/* controls */
+button.main, .filebtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--amethyst); background: var(--amethyst); color: var(--panel);
+  font: inherit; font-weight: 700; padding: 10px 14px; border-radius: var(--r); cursor: pointer; text-align: center; }
+button.ghost { border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; padding: 8px 12px; border-radius: var(--r); cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, .filebtn:focus-within { outline: 2px solid var(--amethyst); outline-offset: 2px; }
+button.main:disabled { opacity: 0.5; cursor: default; }
+.drop { border: 1.5px dashed var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 8px; text-align: center; color: var(--muted); font-size: 13px; }
+.drop.over { border-color: var(--amethyst); color: var(--ink); }
+.filebtn input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.tracks { display: grid; gap: 8px; }
+.track { border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 8px; background: var(--bg); cursor: pointer; }
+.track[aria-current="true"] { border-color: var(--amethyst); background: var(--panel); }
+.track .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.track label { display: grid; gap: 2px; font-size: 12px; color: var(--muted); min-width: 0; }
+.track input, .track select { font: inherit; font-size: 14px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; min-width: 0; width: 100%; }
+.track input.mono { font-family: var(--font-data); font-size: 13px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; font-family: var(--font-data); }
+.chip.ok { color: var(--ok); } .chip.busy { color: var(--amethyst); } .chip.err { color: var(--err); }
+.bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--amethyst); transition: width 0.15s linear; }
+.msg { font-size: 13px; color: var(--muted); margin: 0; }
+.msg.err { color: var(--err); }
+.steps { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; font-size: 14px; }
+.steps code, .cheat code { font-family: var(--font-data); font-size: 12.5px; background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; overflow-wrap: anywhere; }
+.cheat { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: 13px; margin: 0; }
+.cheat dt { white-space: nowrap; } .cheat dd { margin: 0; color: var(--muted); }
+.how { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.how p { margin: 0; font-size: 14px; max-width: 65ch; }
+.how h3 { margin: 0 0 4px; font-size: 14px; font-weight: 700; }
+.how .k { color: var(--amethyst); }
+.note { font-size: 12.5px; color: var(--muted); margin: 0; }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Spectral <b>Converter</b></h1>
+    <p class="tag">MP3 を、統合版で鳴る正弦波の曲パックに。ゲーム内と同じ合成で先に試聴できます。</p>
+  </header>
+
+  <div class="rack">
+    <section class="panel" aria-label="パーシャルマップ">
+      <div class="display-head">
+        <div class="now" id="now">Demo (original)<small id="nowSub">デモ曲・48 ボイス</small></div>
+        <div class="legend" aria-hidden="true">
+          <span><i style="background: var(--amethyst)"></i>正弦波ボイス</span>
+          <span><i style="background: var(--amethyst-2)"></i>ノイズ帯域</span>
+          <span><i style="background: var(--copper)"></i>打撃音</span>
+        </div>
+      </div>
+      <div class="stage" id="stage">
+        <canvas id="map" aria-label="原曲のスペクトログラムの上に、ゲームが鳴らす正弦波ボイスの軌跡を重ねた図"></canvas>
+        <canvas id="strip" aria-label="8 本のノイズ帯域の強さと、打撃音の位置"></canvas>
+        <canvas id="head"></canvas>
+      </div>
+      <div class="axis" aria-hidden="true"><span id="ax0">0:00</span><span>縦軸 40 Hz – 16 kHz（対数）</span><span id="ax1">0:23</span></div>
+      <div class="transport">
+        <div class="ab" role="group" aria-label="試聴">
+          <button id="playGame" aria-pressed="false">▶ ゲーム内の音</button>
+          <button id="playOrig" aria-pressed="false">▶ 原曲</button>
+        </div>
+        <button class="ghost" id="stopBtn">■ 止める</button>
+        <span class="time" id="time">0:00.0 / 0:22.9</span>
+      </div>
+      <p class="msg" id="playMsg">再生中に切り替えると同じ位置で聴き比べられます。図をタップすると、その位置へ移ります。</p>
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <aside class="panel" aria-label="曲パック">
+      <h2>曲パック</h2>
+      <div class="drop" id="drop">
+        <label class="filebtn" for="file">＋ 音声ファイルを追加<input id="file" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.aac" multiple></label>
+        <span>MP3・WAV・M4A など。ここへドロップしても追加できます。解析はこの端末の中だけで行います。</span>
+      </div>
+      <div class="tracks" id="tracks"></div>
+      <button class="main" id="savePack">曲パックを保存 (.mcpack.zip)</button>
+      <p class="msg" id="packMsg"></p>
+      <ol class="steps">
+        <li>本体の Spectral Player（下のボタン）を一度取り込む</li>
+        <li>保存した曲パックの名前の末尾 <code>.zip</code> を消し、<code>.mcpack</code> にして開く</li>
+        <li>ワールドのビヘイビアーパックで、本体と曲パックの両方を有効にする</li>
+        <li>ゲーム内で <code>/spectral:songs</code> → <code>/spectral:play &lt;ID&gt;</code></li>
+      </ol>
+      <button class="ghost" id="saveAddon">本体アドオンを保存 (.mcaddon.zip)</button>
+      <p class="note">統合版 1.26.60 以降。曲パックは本体と別のビヘイビアーパックなので、曲を足しても本体は入れ替え不要です。</p>
+    </aside>
+  </div>
+
+  <section class="panel" aria-label="ゲーム内のコマンド">
+    <h2>ゲーム内の操作</h2>
+    <dl class="cheat">
+      <dt><code>/spectral:play &lt;ID&gt; [phones|speaker]</code></dt><dd>ヘッドホン（自分についてくる）か、その場に置く 3D スピーカー（近くの全員に聞こえる）で再生</dd>
+      <dt><code>/spectral:speed 0.5</code></dt><dd>音程を変えずに速さだけ変える。0 で凍結、マイナスで逆再生</dd>
+      <dt><code>/spectral:pitch 7</code></dt><dd>速さを変えずに半音単位で移調</dd>
+      <dt><code>/spectral:eq 6 0 -12</code></dt><dd>低音・中音・高音を dB で</dd>
+      <dt><code>/spectral:voices 24</code></dt><dd>使う正弦波ボイスの数（端末の負荷と音質の釣り合い）</dd>
+      <dt><code>/spectral:freeze</code></dt><dd>今の響きを止めたまま鳴らし続ける</dd>
+      <dt><code>/spectral:probe 64</code></dt><dd>端末が同時に鳴らせる数を耳で調べる（倍音を 0.25 秒ごとに 1 本ずつ足す）</dd>
+      <dt>リモコン</dt><dd>最初に参加したときに配られるアイテム。曲選び・一時停止・±10 秒・音の設定</dd>
+    </dl>
+  </section>
+
+  <section class="how" aria-label="しくみ">
+    <div><h3><span class="k">常駐発振器</span> 鳴らし直さない正弦波</h3><p>1760 Hz の正弦波ループを 1 ボイスにつき 1 回だけ鳴らし、以後は毎 tick <code>setPitch</code> と <code>fade</code> で動かします。位相が途切れないので、伸ばした音はきれいな正弦波のままです。</p></div>
+    <div><h3><span class="k">ノイズ帯域</span> 正弦波に乗らない成分</h3><p>ボイスが拾わなかったエネルギーを 8 本の帯域ノイズのループで補います。シンバルや息の音、ボイス数を超えた倍音がここに入ります。</p></div>
+    <div><h3><span class="k">サブティック打撃音</span> 50 ms より細かい拍</h3><p>tick は 50 ms 刻みですが、先頭に 0 / 12.5 / 25 / 37.5 ms の無音を持つ 4 種の打撃音ファイルを選ぶことで、ドラムの頭を tick の間に置きます。</p></div>
+  </section>
+</div>
+
+<script>/*CORE*/</script>
+<script>
+'use strict';
+const C = window.SpectralCore;
+const DEMO_SONG = /*DEMO_SONG*/;
+const DEMO_MP3 = '/*DEMO_MP3*/';
+const ADDON = '/*ADDON_B64*/';   // dist/Spectral_Player.mcaddon from bds-lab (test and qa passed)
+const RESERVED = new Set(['demo', 'shepard', 'probe']);
+const $ = (id) => document.getElementById(id);
+const fmt = (s, tenth) => { s = Math.max(0, s); const m = Math.floor(s / 60), r = s - m * 60; return m + ':' + (tenth ? r.toFixed(1).padStart(4, '0') : String(Math.floor(r)).padStart(2, '0')); };
+const slug = (t) => (t.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 24) || 'song');
+const tracks = []; let current = null, seq = 0;
+
+// ------------------------------------------------------------ tracks
+function uniqueId(base, self) {
+  let id = base, n = 2;
+  while (RESERVED.has(id) || tracks.some((t) => t !== self && t.id === id)) id = base + '_' + n++;
+  return id;
+}
+function addTrack(t) { t.key = ++seq; tracks.push(t); renderTracks(); }
+function renderTracks() {
+  const box = $('tracks'); box.textContent = '';
+  for (const t of tracks) {
+    const el = document.createElement('div');
+    el.className = 'track'; el.setAttribute('aria-current', String(t === current)); el.tabIndex = 0;
+    const chip = t.state === 'ok' ? `<span class="chip ok">${(t.song.bytes.length / 1024).toFixed(0)} KB</span>` : t.state === 'err' ? '<span class="chip err">失敗</span>' : '<span class="chip busy">解析中</span>';
+    el.innerHTML = `
+      <div class="row"><label>曲名<input id="ti${t.key}" value=""></label>${chip}</div>
+      <div class="grid2"><label>アーティスト<input id="ar${t.key}" value=""></label><label>ID（コマンド用）<input class="mono" id="id${t.key}" value=""></label></div>
+      <div class="row"><label>正弦波ボイス<select id="vo${t.key}">${[16, 24, 32, 48, 64, 96].map((v) => `<option value="${v}" ${v === t.voices ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      ${t.demo ? '<span class="note">同梱のデモ（本体に入っています）</span>' : `<button class="ghost" id="rm${t.key}">外す</button>`}</div>
+      ${t.state === 'busy' ? `<div class="bar"><i id="pg${t.key}" style="width:${Math.round((t.progress || 0) * 100)}%"></i></div>` : ''}
+      ${t.error ? `<p class="msg err">${t.error}</p>` : ''}`;
+    box.appendChild(el);
+    $('ti' + t.key).value = t.title; $('ar' + t.key).value = t.artist; $('id' + t.key).value = t.id;
+    $('ti' + t.key).addEventListener('change', (e) => { t.title = e.target.value.trim() || t.title; if (t === current) showNow(); });
+    $('ar' + t.key).addEventListener('change', (e) => { t.artist = e.target.value.trim(); });
+    $('id' + t.key).addEventListener('change', (e) => { t.id = uniqueId(slug(e.target.value), t); e.target.value = t.id; });
+    $('vo' + t.key).addEventListener('change', (e) => { t.voices = +e.target.value; if (!t.demo || t.x) analyse(t); });
+    if (!t.demo) $('rm' + t.key)?.addEventListener('click', (e) => { e.stopPropagation(); tracks.splice(tracks.indexOf(t), 1); if (current === t) select(tracks[0] ?? null); renderTracks(); });
+    el.addEventListener('click', (e) => { if (e.target.closest('input,select,button')) return; select(t); });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === el) select(t); });
+  }
+  $('savePack').disabled = !tracks.some((t) => t.state === 'ok' && !t.demo);
+  $('savePack').textContent = tracks.some((t) => !t.demo) ? `曲パックを保存 (.mcpack.zip)` : '曲を追加すると曲パックを保存できます';
+}
+
+async function decodeFile(buf) {
+  const ctx = new OfflineAudioContext(1, 1, 44100);
+  const ab = await ctx.decodeAudioData(buf);
+  const x = new Float32Array(ab.length);
+  for (let c = 0; c < ab.numberOfChannels; c++) { const d = ab.getChannelData(c); for (let i = 0; i < x.length; i++) x[i] += d[i] / ab.numberOfChannels; }
+  return { x, orig: ab };
+}
+async function analyse(t) {
+  t.state = 'busy'; t.progress = 0; t.error = ''; t.game = null; renderTracks();
+  const run = (t.run = (t.run || 0) + 1);
+  try {
+    const r = await C.convert(t.x, { voices: t.voices, title: t.title, artist: t.artist, id: t.id, progress: async (f) => {
+      t.progress = f; const bar = $('pg' + t.key); if (bar) bar.style.width = Math.round(f * 100) + '%';
+      await new Promise((res) => setTimeout(res, 0));
+    } });
+    if (run !== t.run) return;
+    t.song = r; t.dec = C.decode(r.bytes, r.meta); t.state = 'ok';
+  } catch (e) { t.state = 'err'; t.error = '解析できませんでした: ' + (e.message || e); }
+  renderTracks();
+  if (t === current) { stopPlay(); showNow(); draw(); }
+}
+async function addFiles(files) {
+  for (const f of files) {
+    const title = f.name.replace(/\.[^.]+$/, '');
+    const t = { title, artist: '', id: uniqueId(slug(title)), voices: 48, state: 'busy', progress: 0 };
+    addTrack(t);
+    if (!current || current.demo) select(t);
+    try { const d = await decodeFile(await f.arrayBuffer()); t.x = d.x; t.orig = d.orig; }
+    catch { t.state = 'err'; t.error = 'この形式は読めませんでした。MP3 か WAV で試してください。'; renderTracks(); continue; }
+    if (t === current) draw();
+    await analyse(t);
+  }
+}
+$('file').addEventListener('change', (e) => { addFiles([...e.target.files]); e.target.value = ''; });
+const drop = $('drop');
+['dragenter', 'dragover'].forEach((ev) => document.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((ev) => document.addEventListener(ev, (e) => { e.preventDefault(); if (ev === 'drop' || e.target === document.documentElement) drop.classList.remove('over'); }));
+document.addEventListener('drop', (e) => { const fs = [...(e.dataTransfer?.files || [])].filter((f) => /audio|\.(mp3|wav|m4a|ogg|flac|aac)$/i.test(f.type + f.name)); if (fs.length) addFiles(fs); });
+
+// ------------------------------------------------------------ the display
+function select(t) { stopPlay(); current = t; renderTracks(); showNow(); draw(); }
+function showNow() {
+  const t = current; if (!t) { $('now').textContent = '曲がありません'; $('stats').textContent = ''; return; }
+  $('now').innerHTML = ''; $('now').append(t.title);
+  const sub = document.createElement('small'); sub.textContent = t.demo ? 'デモ曲・48 ボイス' : `${t.voices} ボイス・ID ${t.id}`; $('now').append(sub);
+  const st = $('stats'); st.textContent = '';
+  if (t.state !== 'ok') return;
+  const m = t.song.meta, s = t.song.stats, kbps = (t.song.bytes.length * 8 / 1000 / m.seconds);
+  const rows = [['長さ', fmt(m.seconds) + ` · ${m.frames} 枠`], ['データ量', `${(t.song.bytes.length / 1024).toFixed(1)} KB`], ['データ速度', `${kbps.toFixed(1)} kbps`],
+    ['平均の発音ボイス', `${s.activeAvg.toFixed(1)} / ${m.voices}`], ['tick あたりの命令', `${s.changesPerTick.toFixed(1)} 回`], ['打撃音', `${s.events} 発`]];
+  for (const [k, v] of rows) { const d = document.createElement('div'); d.className = 'stat'; d.innerHTML = `<span>${k}</span><b>${v}</b>`; st.appendChild(d); }
+  $('ax1').textContent = fmt(m.seconds); $('time').textContent = `0:00.0 / ${fmt(m.seconds, true)}`;
+}
+const tok = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function rgb(hex) { const h = hex.replace('#', ''); const v = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
+const F_LO = Math.log2(40), F_HI = Math.log2(16000);
+function sizeCanvas(cv) { const r = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.max(1, Math.round(r.width * dpr)); cv.height = Math.max(1, Math.round(r.height * dpr)); return cv.getContext('2d'); }
+function spectroImage(t, W, H) {
+  // one FFT per column: the original's spectrum on the same log axis
+  const key = W + 'x' + H + tok('--spec-lo') + tok('--spec-hi');
+  if (t.img && t.imgKey === key) return t.img;
+  const x = t.x, n = 4096, re = new Float64Array(n), im = new Float64Array(n), win = new Float64Array(n);
+  for (let i = 0; i < n; i++) win[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (n - 1));
+  const img = new ImageData(W, H), lo = rgb(tok('--spec-lo')), hi = rgb(tok('--spec-hi'));
+  const rowBin = new Float64Array(H);
+  for (let y = 0; y < H; y++) rowBin[y] = Math.pow(2, F_HI - ((y + 0.5) / H) * (F_HI - F_LO)) / (44100 / n);
+  const col = new Float64Array(n / 2 + 1);
+  for (let c = 0; c < W; c++) {
+    const center = Math.floor(((c + 0.5) / W) * x.length);
+    for (let i = 0; i < n; i++) { const j = center - n / 2 + i; re[i] = j >= 0 && j < x.length ? x[j] * win[i] : 0; im[i] = 0; }
+    C.fft(re, im);
+    for (let b = 0; b <= n / 2; b++) col[b] = 10 * Math.log10(re[b] * re[b] + im[b] * im[b] + 1e-12);
+    for (let y = 0; y < H; y++) {
+      const b = Math.min(n / 2, Math.max(1, Math.round(rowBin[y])));
+      const v = Math.max(0, Math.min(1, (col[b] - 0) / 62));
+      const g = v * v, o = (y * W + c) * 4;
+      img.data[o] = lo[0] + (hi[0] - lo[0]) * g; img.data[o + 1] = lo[1] + (hi[1] - lo[1]) * g; img.data[o + 2] = lo[2] + (hi[2] - lo[2]) * g; img.data[o + 3] = 255;
+    }
+  }
+  t.img = img; t.imgKey = key; return img;
+}
+function draw() {
+  const t = current, map = $('map'), strip = $('strip');
+  const g = sizeCanvas(map), s = sizeCanvas(strip); sizeCanvas($('head'));
+  const W = map.width, H = map.height;
+  g.fillStyle = tok('--spec-lo'); g.fillRect(0, 0, W, H); s.fillStyle = tok('--spec-lo'); s.fillRect(0, 0, strip.width, strip.height);
+  if (!t) return;
+  if (t.x) g.putImageData(spectroImage(t, W, H), 0, 0);
+  if (t.state !== 'ok') return;
+  const d = t.dec, F = d.F, N = d.N, M = d.M, X = (k) => (k / (F - 1)) * W, Y = (f) => (1 - (Math.log2(f) - F_LO) / (F_HI - F_LO)) * H;
+  // voices: one path per loudness step
+  const am = tok('--amethyst'), dpr = W / map.getBoundingClientRect().width;
+  g.lineCap = 'round'; g.lineWidth = Math.max(1, 1.4 * dpr); g.strokeStyle = am;
+  const steps = 6, paths = Array.from({ length: steps }, () => new Path2D());
+  let peak = 1e-9; for (let i = 0; i < d.am.length; i++) peak = Math.max(peak, d.am[i]);
+  for (let v = 0; v < N; v++) for (let k = 0; k < F - 1; k++) {
+    const a0 = d.am[k * N + v], a1 = d.am[(k + 1) * N + v]; if (a0 <= 0 || a1 <= 0) continue;
+    const db = 20 * Math.log10(Math.max(a0, a1) / peak); if (db < -54) continue;
+    const st = Math.min(steps - 1, Math.floor(((db + 54) / 54) * steps));
+    paths[st].moveTo(X(k), Y(d.fq[k * N + v])); paths[st].lineTo(X(k + 1), Y(d.fq[(k + 1) * N + v]));
+  }
+  paths.forEach((p, i) => { g.globalAlpha = 0.18 + (0.82 * (i + 1)) / steps; g.stroke(p); });
+  g.globalAlpha = 1;
+  // strip: 8 noise bands (top) and the bursts (bottom row)
+  const SW = strip.width, SH = strip.height, bandH = (SH * 0.72) / M, a2 = rgb(tok('--amethyst-2'));
+  let np = 1e-9; for (let i = 0; i < d.nz.length; i++) np = Math.max(np, d.nz[i]);
+  for (let b = 0; b < M; b++) for (let k = 0; k < F; k++) {
+    const v = d.nz[k * M + b]; if (v <= 0) continue;
+    const db = 20 * Math.log10(v / np); if (db < -48) continue;
+    s.fillStyle = `rgba(${a2[0]},${a2[1]},${a2[2]},${(0.15 + 0.85 * (1 + db / 48)).toFixed(3)})`;
+    s.fillRect(Math.floor((k / F) * SW), Math.floor((M - 1 - b) * bandH), Math.ceil(SW / F) + 1, Math.ceil(bandH));
+  }
+  s.fillStyle = tok('--copper');
+  for (const [k, sub, band] of d.events) s.fillRect(Math.round(((k + sub / 4) / F) * SW), SH * 0.76 + band * SH * 0.08, Math.max(1, dpr), SH * 0.07);
+}
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(draw, 150); });
+const mq = matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener?.('change', () => { if (current) current.img = null; draw(); });
+new MutationObserver(() => { if (current) current.img = null; draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// ------------------------------------------------------------ playback: the original and the in-game synthesis
+let actx = null, src = null, which = null, startedAt = 0, offset = 0, raf = 0;
+const ctxNow = () => (actx ??= new AudioContext());
+function bandNoise(sr, n, lo, hi, seed) {
+  let s = seed >>> 0; const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const re = new Float64Array(n), im = new Float64Array(n);
+  for (let k = 1; k < n / 2; k++) { const f = (k * sr) / n; if (f < lo || f >= hi) continue; const ph = rnd() * 2 * Math.PI; re[k] = Math.cos(ph); im[k] = Math.sin(ph); re[n - k] = re[k]; im[n - k] = -im[k]; }
+  for (let i = 0; i < n; i++) im[i] = -im[i];
+  C.fft(re, im);
+  let e = 0; for (let i = 0; i < n; i++) e += re[i] * re[i];
+  const g = 1 / Math.sqrt(e / n), out = new Float32Array(n); for (let i = 0; i < n; i++) out[i] = re[i] * g; return out;
+}
+async function renderGame(t) {
+  if (t.game) return t.game;
+  const d = t.dec, sr = 48000, T = 0.05, len = Math.ceil((d.F + 4) * T * sr);
+  const oc = new OfflineAudioContext(1, len, sr);
+  const SIL = C.SILENT, CENT = Math.pow(2, 1 / 2400) - 1, DB = Math.pow(10, 0.25 / 20);
+  const sched = C.schedule(d);
+  sched.forEach((cmds) => {
+    if (!cmds) return;
+    const o = oc.createOscillator(), gn = oc.createGain(); o.type = 'sine'; o.connect(gn).connect(oc.destination);
+    gn.gain.setValueAtTime(SIL, 0); o.frequency.setValueAtTime(1760, 0);
+    let lp = -1, ll = SIL;
+    for (const [tick, hz, dur, level] of cmds) {
+      const at = tick * T;
+      if (hz > 0 && !(lp > 0 && Math.abs(hz / lp - 1) < CENT)) { o.frequency.setValueAtTime(hz, at); lp = hz; }
+      if (dur >= 0) {
+        const L = Math.max(SIL, level);
+        if (dur === C.FADE_SMOOTH && L / ll < DB && ll / L < DB) continue;
+        gn.gain.setValueAtTime(ll, at); gn.gain.linearRampToValueAtTime(L, at + dur); ll = L;
+      }
+    }
+    o.start(0); o.stop(len / sr);
+  });
+  for (let b = 0; b < d.M; b++) {
+    const [lo, hi] = C.NOISE_EDGES.slice(b, b + 2), buf = oc.createBuffer(1, 65536, sr); buf.copyToChannel(bandNoise(sr, 65536, lo, hi, 100 + b), 0);
+    const s = oc.createBufferSource(); s.buffer = buf; s.loop = true; const gn = oc.createGain(); s.connect(gn).connect(oc.destination);
+    gn.gain.setValueAtTime(SIL, 0); let ll = SIL;
+    for (let k = 0; k < d.F; k++) {
+      const L = Math.max(SIL, k + 1 < d.F ? d.nz[(k + 1) * d.M + b] : 0);
+      if (L / ll < DB && ll / L < DB) continue;
+      gn.gain.setValueAtTime(ll, k * T); gn.gain.linearRampToValueAtTime(L, k * T + C.FADE_SMOOTH); ll = L;
+    }
+    s.start(0);
+  }
+  const bursts = C.BURST_BANDS.map(([lo, hi], b) => {
+    const n = Math.round(0.12 * sr), raw = bandNoise(sr, 8192, lo, hi, 1 + b), y = new Float32Array(n), dec = [22, 45, 75][b];
+    for (let i = 0; i < n; i++) { const tt = i / sr; y[i] = raw[i % 8192] * Math.exp(-tt * dec) * Math.min(1, tt / 0.0015); }
+    let e = 0; const m = Math.round(0.01 * sr); for (let i = 0; i < m; i++) e += y[i] * y[i];
+    const g = 1 / Math.sqrt(e / m); for (let i = 0; i < n; i++) y[i] *= g;
+    const buf = oc.createBuffer(1, n, sr); buf.copyToChannel(y, 0); return buf;
+  });
+  for (const [k, sub, b, a] of d.events) {
+    const s = oc.createBufferSource(); s.buffer = bursts[b]; const gn = oc.createGain(); gn.gain.value = a; s.connect(gn).connect(oc.destination); s.start(k * T + sub * 0.0125);
+  }
+  t.game = await oc.startRendering();
+  matchLevels(t);
+  return t.game;
+}
+function rms(buf) { const x = buf.getChannelData(0); let e = 0; for (let i = 0; i < x.length; i += 4) e += x[i] * x[i]; return Math.sqrt(e / (x.length / 4)) || 1e-9; }
+function matchLevels(t) {
+  if (!t.game || !t.orig) return;
+  const gx = t.game.getChannelData(0), target = rms(t.orig) / rms(t.game);
+  let pk = 0; for (let i = 0; i < gx.length; i++) pk = Math.max(pk, Math.abs(gx[i] * target));
+  const g = target / Math.max(1, pk / 0.98); for (let i = 0; i < gx.length; i++) gx[i] *= g;
+}
+function stopPlay(keep) {
+  if (src) { try { src.onended = null; src.stop(); } catch {} src = null; }
+  if (!keep) { which = null; offset = 0; }
+  cancelAnimationFrame(raf); drawHead();
+  $('playGame').setAttribute('aria-pressed', 'false'); $('playOrig').setAttribute('aria-pressed', 'false');
+}
+function position() { return src ? ctxNow().currentTime - startedAt : offset; }
+async function play(kind) {
+  const t = current; if (!t || t.state !== 'ok') return;
+  const at = which ? position() : offset;
+  stopPlay(true);
+  const ctx = ctxNow(); await ctx.resume();
+  let buf;
+  if (kind === 'game') { $('playMsg').textContent = 'ゲーム内の音を合成しています…'; buf = await renderGame(t); }
+  else buf = t.orig;
+  if (!buf) { $('playMsg').textContent = '原曲はこの曲では聴けません。'; return; }
+  $('playMsg').textContent = kind === 'game' ? '常駐発振器 + ノイズ帯域 + 打撃音（アドオンと同じ tick の規則で合成）' : '原曲';
+  which = kind; offset = Math.min(at, buf.duration - 0.05);
+  src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination);
+  src.onended = () => { stopPlay(); };
+  startedAt = ctx.currentTime - offset; src.start(0, offset);
+  $(kind === 'game' ? 'playGame' : 'playOrig').setAttribute('aria-pressed', 'true');
+  const tick = () => { drawHead(); raf = requestAnimationFrame(tick); }; tick();
+}
+function drawHead() {
+  const cv = $('head'), g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height);
+  const t = current; if (!t || t.state !== 'ok') return;
+  const p = position(), x = (p / t.song.meta.seconds) * cv.width;
+  g.fillStyle = tok('--copper'); g.fillRect(Math.round(x), 0, Math.max(1, Math.round(cv.width / cv.getBoundingClientRect().width * 1.5)), cv.height);
+  $('time').textContent = `${fmt(p, true)} / ${fmt(t.song.meta.seconds, true)}`;
+}
+$('playGame').addEventListener('click', () => play('game'));
+$('playOrig').addEventListener('click', () => play('orig'));
+$('stopBtn').addEventListener('click', () => stopPlay());
+$('stage').addEventListener('click', (e) => {
+  const t = current; if (!t || t.state !== 'ok') return;
+  const r = $('stage').getBoundingClientRect(), p = ((e.clientX - r.left) / r.width) * t.song.meta.seconds;
+  if (which) { const k = which; offset = p; which = null; stopPlay(true); offset = p; play(k); } else { offset = p; drawHead(); }
+});
+
+// ------------------------------------------------------------ the song pack (.mcpack as .zip) and the add-on
+function crc32(b) { let c, t = crc32.t; if (!t) { t = crc32.t = new Uint32Array(256); for (let n = 0; n < 256; n++) { c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } }
+  c = 0xffffffff; for (let i = 0; i < b.length; i++) c = t[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+function zip(files) {   // stored (no compression) zip
+  const enc = new TextEncoder(), parts = [], dir = []; let off = 0;
+  for (const [name, data] of files) {
+    const nb = enc.encode(name), d = typeof data === 'string' ? enc.encode(data) : data, crc = crc32(d);
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+    h.setUint32(14, crc, true); h.setUint32(18, d.length, true); h.setUint32(22, d.length, true); h.setUint16(26, nb.length, true);
+    parts.push(new Uint8Array(h.buffer), nb, d);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint32(16, crc, true); c.setUint32(20, d.length, true); c.setUint32(24, d.length, true); c.setUint16(28, nb.length, true); c.setUint32(42, off, true);
+    dir.push(new Uint8Array(c.buffer), nb); off += 30 + nb.length + d.length;
+  }
+  const size = dir.reduce((n, p) => n + p.length, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, size, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...dir, new Uint8Array(e.buffer)], { type: 'application/zip' });
+}
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = (Math.random() * 16) | 0; return (c === 'x' ? r : (r & 3) | 8).toString(16); }));
+async function packIcon(titles) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d');
+  g.fillStyle = '#2c2e33'; g.fillRect(0, 0, 64, 64);
+  g.strokeStyle = '#b28dff'; g.lineWidth = 3;
+  for (let i = 0; i < 5; i++) { g.beginPath(); for (let x = 0; x <= 64; x += 2) g.lineTo(x, 32 + Math.sin(x / (4 + i * 2) + i) * (22 - i * 4)); g.globalAlpha = 1 - i * 0.17; g.stroke(); }
+  const b = await new Promise((r) => cv.toBlob(r, 'image/png')); return new Uint8Array(await b.arrayBuffer());
+}
+async function saver() { try { return await window.claude?.use?.('downloads'); } catch { return null; } }
+async function savePack() {
+  const list = tracks.filter((t) => t.state === 'ok' && !t.demo).map((t) => ({ meta: { ...t.song.meta, title: t.title, artist: t.artist, id: t.id }, data: C.toB64(t.song.bytes) }));
+  if (!list.length) return;
+  const name = list.length === 1 ? list[0].meta.title : `${list[0].meta.title} ほか ${list.length - 1} 曲`;
+  const manifest = C.songPackManifest(name, list, uuid);
+  const blob = zip([['manifest.json', JSON.stringify(manifest, null, 2)], ['pack_icon.png', await packIcon()], ['scripts/main.js', C.songPackScript(list)]]);
+  const fname = `Spectral Songs - ${slug(name)}.mcpack.zip`;
+  const dl = await saver();
+  if (!dl) { $('packMsg').className = 'msg err'; $('packMsg').textContent = 'この表示ではファイルを保存できません。claude.ai でこのページを開き直してください。'; return; }
+  try { await dl.save({ filename: fname, data: blob }); $('packMsg').className = 'msg'; $('packMsg').textContent = `保存しました: ${fname}（末尾の .zip を消して .mcpack に）`; }
+  catch (e) { $('packMsg').className = e.code === 'declined' ? 'msg' : 'msg err'; $('packMsg').textContent = e.code === 'declined' ? '保存を取りやめました。' : `保存できませんでした (${e.code || e.message})。`; }
+}
+async function saveAddon() {
+  const dl = await saver();
+  if (!dl) { $('packMsg').className = 'msg err'; $('packMsg').textContent = 'この表示ではファイルを保存できません。claude.ai でこのページを開き直してください。'; return; }
+  try {
+    await dl.save({ filename: 'Spectral Player.mcaddon.zip', data: new Blob([C.fromB64(ADDON)], { type: 'application/zip' }) });
+    $('packMsg').className = 'msg'; $('packMsg').textContent = '保存しました: Spectral Player.mcaddon.zip（末尾の .zip を消して .mcaddon に）';
+  } catch (e) { $('packMsg').className = e.code === 'declined' ? 'msg' : 'msg err'; $('packMsg').textContent = e.code === 'declined' ? '保存を取りやめました。' : `保存できませんでした (${e.code || e.message})。`; }
+}
+$('savePack').addEventListener('click', savePack);
+$('saveAddon').addEventListener('click', saveAddon);
+
+// ------------------------------------------------------------ start with the demo (its song data is the one the add-on ships)
+(async () => {
+  const demo = { title: DEMO_SONG.meta.title, artist: DEMO_SONG.meta.artist, id: 'demo', voices: 48, demo: true, state: 'ok' };
+  demo.song = { meta: DEMO_SONG.meta, bytes: C.fromB64(DEMO_SONG.data), stats: {} };
+  demo.dec = C.decode(demo.song.bytes, demo.song.meta);
+  const d = demo.dec; let act = 0; for (let i = 0; i < d.am.length; i++) if (d.am[i] > 0) act++;
+  let ch = 0; const lastA = new Float64Array(d.N), lastF = new Float64Array(d.N);
+  demo.song.stats = { activeAvg: act / d.F, events: d.events.length, changesPerTick: 0 };
+  for (let k = 0; k < d.F; k++) for (let v = 0; v < d.N; v++) {
+    const i = k * d.N + v, a = d.am[i], f = d.fq[i];
+    if (a !== lastA[v] || (a > 0 && f !== lastF[v]) || d.att[i]) ch++;
+    lastA[v] = a; if (a > 0) lastF[v] = f;
+  }
+  demo.song.stats.changesPerTick = ch / d.F;
+  addTrack(demo); select(demo);
+  try {
+    const bin = C.fromB64(DEMO_MP3);
+    const r = await decodeFile(bin.buffer.slice(bin.byteOffset, bin.byteOffset + bin.byteLength));
+    demo.x = r.x; demo.orig = r.orig; if (current === demo) draw();
+  } catch { $('playMsg').textContent = 'この端末ではデモの原曲を読めませんでした。ゲーム内の音は聴けます。'; }
+})();
+</script>

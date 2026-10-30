@@ -1,0 +1,259 @@
+## a new player gets the remote
+@A join
+wait 1500
+js inv(p('A'))
+~ spectral:remote\*1
+
+## the library lists the demo song and the generated ones
+@A cmd /spectral:songs
+~ @A ♪ demo — Demo \(original\) \(0:22, 48 voices\)
+~ @A ♪ shepard — Shepard–Risset glissando
+~ @A \d+ songs — /spectral:play
+
+## play starts 48 sine voices and 8 noise bands as looping sound instances
+@A cmd /spectral:play demo
+~ @A ▶ Demo \(original\) — Spectral Player \(0:22, 48/48 voices, headphones\)
+wait 1000
+@A cmd /spectral:status
+~ @A status: playing demo .* mode phones voices 48 instances 56 speed 1
+
+## it plays in real time: 20 frames a second, a spectrum on the action bar
+wait 2000
+@A cmd /spectral:status
+~ @A status: playing demo 0:0[2-4]/0:22 frame (4\d|5\d|6\d|7\d)/460
+~ @A actionbar: [▁▂▃▄▅▆▇█]{24}
+
+## pause holds the playhead, resume goes on
+@A cmd /spectral:pause
+~ @A ⏸ paused
+wait 1200
+@A cmd /spectral:status
+~ @A status: paused demo
+@A cmd /spectral:pause
+~ @A ▶ resumed
+
+## seek jumps to a time
+@A cmd /spectral:seek 10
+~ @A ⇥ 0:10
+wait 600
+@A cmd /spectral:status
+~ @A status: playing demo 0:1[01]/0:22 frame 2[0-2]\d/460
+
+## speed stretches time without changing pitch, 0 freezes, negative plays backwards
+@A cmd /spectral:speed 0.5
+~ @A speed 0.5x
+@A cmd /spectral:seek 4
+wait 2050
+@A cmd /spectral:status
+~ @A status: playing demo 0:0[45]/0:22 frame (9\d|10\d|11\d)/460 .* speed 0.5
+@A cmd /spectral:freeze
+~ @A ❄ frozen
+wait 1000
+@A cmd /spectral:status
+~ @A status: frozen demo
+@A cmd /spectral:freeze
+~ @A ▶ thawed
+@A cmd /spectral:speed -1
+~ @A speed -1x
+@A cmd /spectral:seek 12
+wait 2050
+@A cmd /spectral:status
+~ @A status: playing demo 0:(09|10)/0:22 .* speed -1
+@A cmd /spectral:speed 1
+~ @A speed 1x
+
+## transpose, EQ and volume apply while playing
+@A cmd /spectral:pitch 7
+~ @A pitch \+7 st
+@A cmd /spectral:eq 6 0 -12
+~ @A eq 6 / 0 / -12 dB
+@A cmd /spectral:volume 150
+~ @A volume 150%
+wait 300
+@A cmd /spectral:status
+~ @A status: playing demo .* semis 7 volume 150%
+@A cmd /spectral:pitch 0
+~ @A pitch \+0 st
+@A cmd /spectral:eq 0 0 0
+~ @A eq 0 / 0 / 0 dB
+
+## fewer voices on the fly (quality against load)
+@A cmd /spectral:voices 16
+~ @A voices 16
+wait 300
+@A cmd /spectral:status
+~ @A status: playing demo .* voices 16 instances 24
+@A cmd /spectral:voices 64
+~ @A voices 64
+wait 300
+@A cmd /spectral:status
+~ @A status: playing demo .* voices 48 instances 56
+
+## settings are kept for the next song
+@A cmd /spectral:stop
+~ @A ■ stopped
+@A cmd /spectral:status
+= @A status: idle
+@A cmd /spectral:play demo
+~ @A ▶ Demo
+wait 500
+@A cmd /spectral:status
+~ @A status: playing demo .* volume 150%
+@A cmd /spectral:volume 100
+~ @A volume 100%
+
+## layers, loop and the spectrum can be switched
+@A cmd /spectral:layers false true
+~ @A noise off, bursts on
+@A cmd /spectral:layers true true
+~ @A noise on, bursts on
+@A cmd /spectral:viz
+~ @A spectrum off
+wait 400
+@A cmd /spectral:viz
+~ @A spectrum on
+@A cmd /spectral:loop
+~ @A loop on
+@A cmd /spectral:seek 22.5
+~ @A ⇥ 0:22
+wait 1500
+@A cmd /spectral:status
+~ @A status: playing demo 0:0[0-2]/0:22
+@A cmd /spectral:loop
+~ @A loop off
+
+## the song ends by itself
+@A cmd /spectral:seek 21.5
+until ■ Demo \(original\) — end 6000
+@A cmd /spectral:status
+= @A status: idle
+
+## a second player listens in on the same headphones
+@B join
+wait 1500
+@A cmd /spectral:play demo
+~ @A ▶ Demo
+@B cmd /spectral:join A
+~ @B ♪ listening with A
+wait 600
+@A cmd /spectral:status
+~ @A status: playing demo .* instances 112
+~ @B actionbar: [▁▂▃▄▅▆▇█]{24}
+
+## the speaker plays in 3D at a spot for everyone near it
+@A cmd /spectral:play demo speaker
+~ @A ▶ Demo \(original\) — Spectral Player \(0:22, 48/48 voices, speaker\)
+wait 1200
+@A cmd /spectral:status
+~ @A status: playing demo .* mode speaker voices 48 instances 56
+~ @B actionbar: [▁▂▃▄▅▆▇█]{24}
+@A cmd /spectral:stop
+~ @A ■ stopped
+
+## a song pack arrives over script events (a command block can send one, 2048 characters a part)
+scriptevent spectral:song {"id":"tiny","i":0,"n":2,"meta":{"format":"spectral-player/1","title":"Tiny chord","artist":"","fps":20,"frames":25,"voices":8,"base":1760.0,"noise":[[180,360],[360,720],[720,1440],[1440,2880],[2880,5000],[5000,8000],[8000,12000],[12000,17000]],"bursts":3,"sub":4,"seconds":1.2,"amp":[-90.0,0.75],"nz":[-100.0,0.5],"id":"tiny"},"data":"P2oQcGS8fcVaaqtOX6U0WKBDT1RzcjIWAwAAAD/5EHDzvH0AAAAASEE+CAEEBAMAA3gQcHK8fQAAAwgBAgECAAAAAAQIBAECAQADdxBwcbx9AAADCAEBAwMAA3YQcHC8fQAAAwYDAgMAAAN1EHBvvH0AAAQHAAIEAwADdBBwbrx9AAAGBgEABAMAA3MQcG28fQAAAgcAAAEDAANyEHBsvH0AAAAHAQECAQABcRBwAAAACQICAAMAAmu8fQAAAAgBAQICAANwEH"}
+scriptevent spectral:song {"id":"tiny","i":1,"n":2,"data":"BqvH0AAAAHAAMCAgADbxBwabx9AAAEBgMCAgIAA24QcGi8fQAAAgUBAQICAANtEHBnvH0AAAAGAwMCAgADbBBwZrx9AAAABwIABAIAA2sQcGW8fQAAAAYBAgMCAAFqEHAAAAAJAQADAgACZLx9AAACBQAAAwEAA2kQcGO8fQAAAgYCAgMDAANoEHBivH0AAAAIAQEBAgADZxBwYbx9AAAABgEBBAAAA2YQcGC8fU4AAAgAAAMDAANe/W9Yyn1zeH9lW1JNSAA="}
+~ ♪ song pack: Tiny chord \(0:01\) — /spectral:play tiny
+@A cmd /spectral:play tiny
+~ @A ▶ Tiny chord \(0:01, 8/8 voices, headphones\)
+until ■ Tiny chord — end 5000
+
+## a whole song in one script event from another pack (no 2048 limit between scripts)
+js system.sendScriptEvent('spectral:echo', 'x'.repeat(1048576))
+~ echo 1048576
+
+## generated songs: an endless Shepard–Risset glissando and the voice-limit probe
+@A cmd /spectral:play shepard
+~ @A ▶ Shepard–Risset glissando — generated \(0:40, 10/10 voices, headphones\)
+wait 800
+@A cmd /spectral:status
+~ @A status: playing shepard .* voices 10 instances 18
+@A cmd /spectral:probe 32
+~ @A ▶ voice probe ×32 — generated
+~ @A one more harmonic every 0.25 s
+@A cmd /spectral:stop
+~ @A ■ stopped
+
+## the menu command and the console can reach the player
+@A cmd /spectral:menu
+until form 5000
+~ @A form action: title\("Spectral Player"\)
+@A form close
+spectral:library
+~ library \d+:.*\bdemo\b
+~ library \d+:.*\bshepard\b
+
+## the song list in the menu starts a song
+@A cmd /spectral:menu
+until form 5000
+@A form 0
+until Songs 5000
+~ @A form action: title\("Songs"\)
+@A form 1
+until form 5000
+@A form 0
+until ▶ Demo 5000
+~ @A ▶ Demo \(original\) — Spectral Player \(0:22, 48/48 voices, headphones\)
+
+## the sound form sets everything at once
+@A cmd /spectral:menu
+until form 5000
+@A form 6
+until Sound 5000
+~ @A form modal: title\("Sound"\)
+@A form [120, 30, 2, 3, 0, -6, 32, true, false, true, false]
+~ @A volume 120% · speed 1.5x · pitch 2 st · eq 3/0/-6 dB · voices 32
+wait 300
+@A cmd /spectral:status
+~ @A status: playing demo .* voices 32 instances 40 speed 1.5 semis 2 volume 120%
+@A cmd /spectral:menu
+until form 5000
+@A form 6
+until Sound 5000
+@A form [100, 20, 0, 0, 0, 0, 64, true, true, true, false]
+~ @A volume 100% · speed 1x · pitch 0 st · eq 0/0/0 dB · voices 64
+
+## the voices are rebuilt after a respawn
+kill A
+wait 500
+@A respawn
+wait 1500
+@A cmd /spectral:status
+~ @A status: playing demo .* instances 56 .* rebuilds 1
+@A cmd /spectral:stop
+~ @A ■ stopped
+
+## the remote opens the player
+give A spectral:remote
+wait 300
+@A select spectral:remote
+@A use
+until form 5000
+~ @A form action: title\("Spectral Player"\)
+@A form close
+
+## calibration programs for measuring a real client (tools/rig)
+@A cmd /spectral:calib list
+~ @A calib: voices \(\d+ s\), fade \(\d+ s\), timing \(\d+ s\), seek \(\d+ s\), pitch \(\d+ s\), stereo \(\d+ s\), mixer \(\d+ s\), throughput \(\d+ s\) · all
+@A cmd /spectral:calib stereo
+~ @A ▶ calib stereo \(7 s\)
+until calib stereo done 15000
+~ @A calib stereo done \(0 errors\)
+@A cmd /spectral:calib nothing
+~ @A no calibration program "nothing"
+
+## light mode for Realms and many players: 16 voices and a command budget
+@A cmd /spectral:mode light
+~ @A quality light: 16 voices, ≤24 commands/tick per listener, no bursts
+@A cmd /spectral:play demo
+~ @A ▶ Demo \(original\)
+wait 2000
+@A cmd /spectral:status
+~ @A status: playing demo .* voices 16 instances 24 .* quality light budget 24
+@A cmd /spectral:mode quality
+~ @A quality full: every voice, no command budget
+wait 300
+@A cmd /spectral:status
+~ @A status: playing demo .* voices 48 instances 56 .* quality quality budget none
+@A cmd /spectral:stop
+~ @A ■ stopped

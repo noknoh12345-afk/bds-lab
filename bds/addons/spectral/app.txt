@@ -1,0 +1,39 @@
+# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
+#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音は app/runs/<実行>/audio/*.wav。
+# 録った後:  python3 bds/addons/spectral/tools/rig/analyze.py app/runs/<実行>/audio/calib.wav all --spec
+#           （端末の限界値を tools/emu/spec.json に「measured」として書く → エミュレーターがそれを使う）
+# 曲の録音（ABX 用）は audio/demo.wav ほか。天井（元の音をそのまま OGG で鳴らしたもの）は tools/rig/README の手順で。
+# 注意: この app.txt と app/lib/audiorec.mjs（scrcpy で録音）は、書いた時点で実機では一度も動かしていません。
+
+section title
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 300000
+wait 5000
+do time set noon
+do gamerule dodaylightcycle false
+do weather clear
+
+section calib
+audio start calib
+do spectral:calib all
+until server spectral calib\] end throughput 300000
+wait 2000
+audio stop
+
+section demo
+audio start demo
+chat /spectral:play demo
+wait 27000
+audio stop
+
+section probe
+audio start probe32
+chat /spectral:probe 32
+wait 12000
+chat /spectral:stop
+audio stop

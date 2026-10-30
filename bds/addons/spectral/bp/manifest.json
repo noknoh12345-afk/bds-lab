@@ -1,0 +1,49 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Spectral Player",
+    "description": "MP3\u3092\u6b63\u5f26\u6ce2\u306e\u52a0\u7b97\u5408\u6210\u3067\u30ea\u30a2\u30eb\u30bf\u30a4\u30e0\u518d\u751f\u3059\u308b\u97f3\u697d\u30d7\u30ec\u30a4\u30e4\u30fc",
+    "uuid": "03c28995-e982-476d-ac5e-38c6d5231f97",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      60
+    ]
+  },
+  "modules": [
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "3e46060d-48ef-461a-9234-9cadf68501c9",
+      "version": [
+        1,
+        0,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.11.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.3.0"
+    },
+    {
+      "uuid": "0079b728-ca9a-41ab-b21f-9a4661ad7334",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

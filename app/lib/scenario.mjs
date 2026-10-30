@@ -29,6 +29,8 @@
 //   key <キー>                   キーを押す（A〜Z 0〜9 F1〜F12 ENTER ESCAPE BACK TAB SPACE SLASH UP など、または番号）
 //   press <キー>[+<キー>…] [ミリ秒]   キーを押したままにする（例 press W 2000 で歩く、press SHIFT+W 1500）
 //   hold <x> <y> [ミリ秒]        長押し                                record start|stop   画面を録画（recordings/*.mp4）
+//   audio start [名前] / audio stop   端末が鳴らす音を録音（scrcpy、Android 11 以上。audio/<名前>.wav。bds/addons/spectral の測定リグ）
+//   audio analyze <名前> <calib の名前|all|song:<曲>> [比べる録音…]   録音を測る（tools/rig: 数はログと報告に。録音は実行のフォルダに）
 //   perf [ミリ秒]                ゲームのメモリと、その間の毎秒のフレーム数
 //   changed [割合]               いまの画面が `shot world` の画面（何も開いていないワールド）と違う（画面が本当に開いた）。既定 3%
 //   network delay <ミリ秒|none> / network speed <full|lte|hsdpa|umts|edge|gprs|kbps>   端末の回線を遅くする（読み込み中の画面・切断を試す）
@@ -79,10 +81,10 @@ const JOIN_OCR_MS = Number(process.env.APP_JOIN_OCR_MS) || 4000;
 const JOIN_RETRIES = Math.max(0, Number(process.env.APP_JOIN_RETRIES ?? 2) || 0);
 export const KEYS = ANDROID_KEYS;
 const VERBS = new Set(['launch', 'stop', 'join', 'wait', 'shot', 'tap', 'swipe', 'key', 'text', 'do', 'addon', 'until', 'expect', 'absent', 'pull', 'push', 'sh', 'section', 'chat', 'press', 'hold', 'record', 'perf', 'changed', 'network', 'size', 'density', 'cutout',
-  'mouse', 'pad', 'screen', 'background', 'foreground', 'trim', 'measure', ...GAME_VERBS]);
+  'mouse', 'pad', 'screen', 'background', 'foreground', 'trim', 'measure', 'audio', ...GAME_VERBS]);
 // a game controller's buttons (Android key names): the game's UI moves its focus with them, a path touch never takes
 // steps that leave the game as it is (the rest act on it)
-const STILL = new Set(['launch', 'until', 'wait', 'shot', 'section', 'do', 'addon', 'expect', 'absent', 'changed', 'perf', 'record', 'pull', 'sh', 'where', 'items', 'measure']);
+const STILL = new Set(['launch', 'until', 'wait', 'shot', 'section', 'do', 'addon', 'expect', 'absent', 'changed', 'perf', 'record', 'audio', 'pull', 'sh', 'where', 'items', 'measure']);
 export const PAD = { A: 'BUTTON_A', B: 'BUTTON_B', X: 'BUTTON_X', Y: 'BUTTON_Y', L1: 'BUTTON_L1', R1: 'BUTTON_R1', L2: 'BUTTON_L2', R2: 'BUTTON_R2', START: 'BUTTON_START', SELECT: 'BUTTON_SELECT',
   THUMBL: 'BUTTON_THUMBL', THUMBR: 'BUTTON_THUMBR', UP: 'DPAD_UP', DOWN: 'DPAD_DOWN', LEFT: 'DPAD_LEFT', RIGHT: 'DPAD_RIGHT' };
 // the scenario's names for the controller's buttons → the device controller's words (app/relay/lab-pad.c)
@@ -175,6 +177,8 @@ function check(s) {
   if (s.verb === 'press' && (!a[0] || a[0].split('+').some((k) => linuxKey(k) === null) || (a[1] !== undefined && Number.isNaN(num(a[1]))))) return '書き方: press <キー>[+<キー>…] [ミリ秒]（例 press W 2000）';
   if (s.verb === 'hold' && (a.length < 2 || a.slice(0, 3).some((x) => Number.isNaN(num(x))))) return '書き方: hold <x> <y> [ミリ秒]';
   if (s.verb === 'record' && !['start', 'stop'].includes(a[0])) return '書き方: record start|stop';
+  if (s.verb === 'audio' && a[0] === 'analyze' && !(a.length >= 3 && a.slice(1).every((x) => /^[\w.:-]+$/.test(x)))) return '書き方: audio analyze <名前> <calib の名前|all|song:<曲>> [比べる録音の名前…]';
+  if (s.verb === 'audio' && a[0] !== 'analyze' && (!['start', 'stop'].includes(a[0]) || (a[1] !== undefined && !/^[\w.-]+$/.test(a[1])))) return '書き方: audio start [名前] / audio stop / audio analyze …（名前は英数字と _ . - だけ）';
   if (s.verb === 'perf' && a[0] !== undefined && Number.isNaN(num(a[0]))) return '書き方: perf [ミリ秒]';
   if (s.verb === 'changed' && a[0] !== undefined && !(num(a[0]) > 0 && num(a[0]) < 1)) return '書き方: changed [0〜1 の割合]（例 changed 0.05）';
   if (s.verb === 'network' && !((a[0] === 'delay' && /^(none|\d+)$/.test(a[1] ?? '')) || (a[0] === 'speed' && /^(full|lte|hsdpa|umts|edge|gprs|\d+)$/.test(a[1] ?? '')))) return '書き方: network delay <ミリ秒|none> / network speed <full|lte|hsdpa|umts|edge|gprs|kbps>';
@@ -302,6 +306,7 @@ export async function runScenario(steps, ctx) {
   fs.mkdirSync(shotsDir, { recursive: true });
   const srvTail = new Tail(server.logFile), logTail = new Tail(ctx.logcatFile);
   const results = [], shots = [], dialogs = ctx.dialogs ?? [], began = Date.now(), perf = [], recordings = [], measures = [];
+  let audioRec = null;
   let n = 0, size = null, last = null, lastLook = 0, recN = 0, kbd, touched = false, ocrLast = null;
   // (what a step adds to its result beside its note — a join's trail, when the server said the player connected — taken by
   //  the loop below and cleared for the next step)
@@ -610,6 +615,28 @@ export async function runScenario(steps, ctx) {
         if (r.status !== 0) throw new Error(`録画を取り出せません: ${(r.stderr || r.stdout).trim().slice(0, 200)}`);
         recordings.push(dst);
         return '→ ' + path.relative(runDir, dst);
+      }
+      case 'audio': {
+        const AR = await import('./audiorec.mjs');
+        if (a[0] === 'analyze') {
+          const wav = (nm) => path.join(runDir, 'audio', `${nm}.wav`);
+          const r = AR.analyze({ labDir: ctx.labDir ?? process.cwd(), wav: wav(a[1]), what: a[2], refs: a.slice(3).map(wav) });
+          // (numbers only, measured from the game's sound: they go to the job log too, where a public run shows them)
+          process.stdout.write(`[spectral rig] ${a[1]} ${a[2]}: ${JSON.stringify(r.json)}\n`);
+          fs.appendFileSync(doLog, `audio analyze ${a.slice(1).join(' ')}\n${JSON.stringify(r.json, null, 1)}\n`);
+          return r.line.slice(0, 400);
+        }
+        if (a[0] === 'start') {
+          if (audioRec) throw new Error('audio start が二重です（先に audio stop）');
+          const out = path.join(runDir, 'audio', `${a[1] ?? `audio-${recordings.length + 1}`}.wav`);
+          audioRec = AR.start({ adb, out, labDir: ctx.labDir ?? process.cwd() });
+          await sleep(1500);                         // (scrcpy's server starts on the device before it hears anything)
+          return '録音 → ' + path.relative(runDir, out);
+        }
+        if (!audioRec) throw new Error('audio stop の前に audio start がありません');
+        const r = await AR.stop(audioRec); audioRec = null;
+        recordings.push(r.file);
+        return `→ ${path.relative(runDir, r.file)}（${r.seconds} 秒）`;
       }
       case 'perf': {
         const ms = num(a[0]) || 3000;

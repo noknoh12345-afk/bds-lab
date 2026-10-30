@@ -1,0 +1,65 @@
+{
+ "piano_gymnopedie": {
+  "visqol": 1.7669,
+  "mrstft": 1.3595,
+  "third_oct_db": 1.684,
+  "onset_ms": 15.0,
+  "onset_recall": 0.16
+ },
+ "piano_chopin_op66": {
+  "visqol": 2.6719,
+  "mrstft": 1.5437,
+  "third_oct_db": 2.184,
+  "onset_ms": 17.5,
+  "onset_recall": 0.145
+ },
+ "vocal_stars": {
+  "visqol": 3.1247,
+  "mrstft": 1.6092,
+  "third_oct_db": 3.152,
+  "onset_ms": 25.0,
+  "onset_recall": 0.214
+ },
+ "vocal_name_of_love": {
+  "visqol": 4.0324,
+  "mrstft": 2.1086,
+  "third_oct_db": 2.873,
+  "onset_ms": 20.0,
+  "onset_recall": 0.114
+ },
+ "choir_how_long": {
+  "visqol": 3.3595,
+  "mrstft": 1.1659,
+  "third_oct_db": 2.201,
+  "onset_ms": 20.0,
+  "onset_recall": 0.086
+ },
+ "drums_round": {
+  "visqol": 1.7621,
+  "mrstft": 1.6615,
+  "third_oct_db": 4.081,
+  "onset_ms": 27.5,
+  "onset_recall": 0.138
+ },
+ "rock_big": {
+  "visqol": 3.6458,
+  "mrstft": 1.5062,
+  "third_oct_db": 3.102,
+  "onset_ms": 27.5,
+  "onset_recall": 0.366
+ },
+ "edm_detection": {
+  "visqol": 3.7149,
+  "mrstft": 1.3786,
+  "third_oct_db": 4.427,
+  "onset_ms": 25.0,
+  "onset_recall": 0.361
+ },
+ "orchestra_five_armies": {
+  "visqol": 3.5086,
+  "mrstft": 1.0692,
+  "third_oct_db": 2.655,
+  "onset_ms": 30.0,
+  "onset_recall": 0.138
+ }
+}

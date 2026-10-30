@@ -1,0 +1,93 @@
+{
+ "piano_gymnopedie": {
+  "visqol": 4.2708,
+  "mrstft": 1.316,
+  "third_oct_db": 1.63,
+  "onset_ms": 17.5,
+  "onset_recall": 0.72
+ },
+ "piano_chopin_op66": {
+  "visqol": 2.5905,
+  "mrstft": 1.4456,
+  "third_oct_db": 2.639,
+  "onset_ms": 8.75,
+  "onset_recall": 0.29
+ },
+ "vocal_stars": {
+  "visqol": 2.8844,
+  "mrstft": 1.4812,
+  "third_oct_db": 5.447,
+  "onset_ms": 15.0,
+  "onset_recall": 0.757
+ },
+ "vocal_name_of_love": {
+  "visqol": 4.2996,
+  "mrstft": 1.7087,
+  "third_oct_db": 3.084,
+  "onset_ms": 8.75,
+  "onset_recall": 0.343
+ },
+ "drums_round": {
+  "visqol": 2.1778,
+  "mrstft": 1.568,
+  "third_oct_db": 6.153,
+  "onset_ms": 17.5,
+  "onset_recall": 0.269
+ },
+ "choir_how_long": {
+  "visqol": 1.801,
+  "mrstft": 1.2321,
+  "third_oct_db": 3.423,
+  "onset_ms": 27.5,
+  "onset_recall": 0.043
+ },
+ "edm_detection": {
+  "visqol": 3.0031,
+  "mrstft": 1.9641,
+  "third_oct_db": 9.369,
+  "onset_ms": 15.0,
+  "onset_recall": 0.932
+ },
+ "rock_big": {
+  "visqol": 2.7641,
+  "mrstft": 1.6339,
+  "third_oct_db": 6.666,
+  "onset_ms": 12.5,
+  "onset_recall": 0.693
+ },
+ "orchestra_five_armies": {
+  "visqol": 2.4538,
+  "mrstft": 1.487,
+  "third_oct_db": 3.861,
+  "onset_ms": 12.5,
+  "onset_recall": 0.45
+ },
+ "funk_funkorama": {
+  "visqol": 2.8281,
+  "mrstft": 2.2262,
+  "third_oct_db": 8.436,
+  "onset_ms": 12.5,
+  "onset_recall": 0.681
+ },
+ "speech_ja_soseki": {
+  "visqol": 2.3446,
+  "mrstft": 1.5207,
+  "third_oct_db": 9.391,
+  "onset_ms": 15.0,
+  "onset_recall": 0.661
+ },
+ "speech_en_wordsworth": {
+  "visqol": 2.2279,
+  "mrstft": 1.6371,
+  "third_oct_db": 6.061,
+  "onset_ms": 15.0,
+  "onset_recall": 0.7
+ },
+ "demo_selfmade": {
+  "visqol": 2.8423,
+  "mrstft": 1.6079,
+  "third_oct_db": 4.071,
+  "onset_ms": 20.0,
+  "onset_recall": 0.485
+ }
+}

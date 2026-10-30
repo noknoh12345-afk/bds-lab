@@ -1,0 +1,51 @@
+{
+ "piano_chopin_op66": {
+  "visqol": 2.6647,
+  "mrstft": 1.4107,
+  "third_oct_db": 2.589,
+  "onset_ms": 6.25,
+  "onset_recall": 0.194
+ },
+ "piano_gymnopedie": {
+  "visqol": 4.2518,
+  "mrstft": 1.3131,
+  "third_oct_db": 1.588,
+  "onset_ms": 18.75,
+  "onset_recall": 0.72
+ },
+ "vocal_stars": {
+  "visqol": 2.9473,
+  "mrstft": 1.4065,
+  "third_oct_db": 4.938,
+  "onset_ms": 15.0,
+  "onset_recall": 0.686
+ },
+ "vocal_name_of_love": {
+  "visqol": 4.302,
+  "mrstft": 1.7048,
+  "third_oct_db": 3.033,
+  "onset_ms": 7.5,
+  "onset_recall": 0.343
+ },
+ "drums_round": {
+  "visqol": 2.1327,
+  "mrstft": 1.5446,
+  "third_oct_db": 5.515,
+  "onset_ms": 10.0,
+  "onset_recall": 0.31
+ },
+ "choir_how_long": {
+  "visqol": 1.937,
+  "mrstft": 1.0757,
+  "third_oct_db": 2.401,
+  "onset_ms": 30.0,
+  "onset_recall": 0.043
+ },
+ "rock_big": {
+  "visqol": 3.208,
+  "mrstft": 1.4233,
+  "third_oct_db": 5.129,
+  "onset_ms": 13.75,
+  "onset_recall": 0.495
+ }
+}
