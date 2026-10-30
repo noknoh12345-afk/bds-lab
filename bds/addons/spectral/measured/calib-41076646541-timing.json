@@ -1,0 +1,28 @@
+{
+ "run": "41076646541",
+ "source": "the calib recording exported by audio export (Opus 192 kb/s), the timing program read with tools/rig/analyze.py cross_time",
+ "what": "when the setVolume steps of voice B (3 kHz, 0.4 <-> 0.1 every tick) land, against the click grid (one-shot playSound clicks of the same ticks)",
+ "windows": {
+  "centre -50 ms, \u00b145 ms": {
+   "n": 197,
+   "mean_ms": -49.13,
+   "sd_ms": 7.28,
+   "p5_ms": -61.26,
+   "p50_ms": -49.23,
+   "p95_ms": -37.73
+  },
+  "centre -25 ms, \u00b145 ms": {
+   "n": 197,
+   "mean_ms": -49.13,
+   "sd_ms": 7.28,
+   "p5_ms": -61.26,
+   "p50_ms": -49.23,
+   "p95_ms": -37.73
+  },
+  "centre 0 ms, \u00b145 ms": {
+   "n": 83,
+   "note": "most steps fall before the window: the old window (-15..+35 ms) answered its own start (-15 ms) for all 199 in the run"
+  }
+ },
+ "reading": "the SoundInstance commands of a tick land ~49 ms (about one tick) before the one-shot playSound of the same tick; the spread (sd 7.3 ms) includes the clicks own (sd 5-6 ms)"
+}

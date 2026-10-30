@@ -1,0 +1,987 @@
+{
+ "voices": {
+  "limit": 32,
+  "counts": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   18,
+   18,
+   17,
+   21,
+   20,
+   23,
+   23,
+   22,
+   25,
+   27,
+   28,
+   29,
+   30,
+   31,
+   31,
+   30,
+   31,
+   31,
+   30,
+   28,
+   30,
+   31,
+   32,
+   30,
+   30,
+   32,
+   30,
+   32,
+   31,
+   32,
+   32,
+   28,
+   32,
+   31,
+   30,
+   30,
+   31,
+   31,
+   32,
+   30,
+   30,
+   32,
+   30,
+   32,
+   30,
+   32,
+   31,
+   30,
+   32,
+   32,
+   31,
+   32,
+   32,
+   32,
+   31,
+   31,
+   31,
+   31,
+   32,
+   32,
+   30,
+   28,
+   32,
+   31,
+   32,
+   32,
+   31,
+   31,
+   32,
+   32,
+   32,
+   31,
+   32,
+   32,
+   31,
+   29,
+   31,
+   28,
+   32,
+   31,
+   30,
+   32,
+   29,
+   32,
+   32,
+   32,
+   32,
+   30,
+   32,
+   32,
+   29,
+   32,
+   31,
+   28,
+   32,
+   28,
+   31,
+   30,
+   30,
+   31,
+   32,
+   27,
+   29,
+   28,
+   32,
+   30,
+   30,
+   30,
+   32,
+   31,
+   31
+  ],
+  "missing_at_128_equal": [
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49
+  ],
+  "gone_at_128_rising": [
+   10,
+   11,
+   19,
+   21,
+   27,
+   28,
+   29,
+   30,
+   32,
+   33,
+   34,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44
+  ],
+  "policy": "quietest (or oldest) goes",
+  "grid": {
+   "offset": 66887.374,
+   "rate": 2400.038,
+   "clicks": 39,
+   "of": 40,
+   "late_clicks": [],
+   "click_jitter_ms": 6.199,
+   "click_resid_ms_max": 11.757,
+   "tick_ms": 50.001
+  }
+ },
+ "fade": {
+  "steps": [
+   {
+    "requested_s": 0.0,
+    "from": 0.0076,
+    "to": 0.0008,
+    "measured_s": 0.0008,
+    "lands_ms": 32.09
+   },
+   {
+    "requested_s": 0.0,
+    "from": 0.0008,
+    "to": 0.0075,
+    "measured_s": 0.0008,
+    "lands_ms": 27.3
+   },
+   {
+    "requested_s": 0.002,
+    "from": 0.0075,
+    "to": 0.0008,
+    "measured_s": 0.002,
+    "lands_ms": 44.47
+   },
+   {
+    "requested_s": 0.002,
+    "from": 0.0008,
+    "to": 0.0075,
+    "measured_s": 0.002,
+    "lands_ms": 39.8
+   },
+   {
+    "requested_s": 0.005,
+    "from": 0.0075,
+    "to": 0.0008,
+    "measured_s": 0.005,
+    "lands_ms": 35.15
+   },
+   {
+    "requested_s": 0.005,
+    "from": 0.0008,
+    "to": 0.0075,
+    "measured_s": 0.0049,
+    "lands_ms": 30.51
+   },
+   {
+    "requested_s": 0.01,
+    "from": 0.0076,
+    "to": 0.0008,
+    "measured_s": 0.01,
+    "lands_ms": 25.81,
+    "mid": 0.0042,
+    "mid_linear": 0.0042,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.01,
+    "from": 0.0008,
+    "to": 0.0075,
+    "measured_s": 0.01,
+    "lands_ms": 21.2,
+    "mid": 0.0042,
+    "mid_linear": 0.0041,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.02,
+    "from": 0.0076,
+    "to": 0.0008,
+    "measured_s": 0.0201,
+    "lands_ms": 16.42,
+    "mid": 0.0042,
+    "mid_linear": 0.0042,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.02,
+    "from": 0.0008,
+    "to": 0.0076,
+    "measured_s": 0.02,
+    "lands_ms": 11.87,
+    "mid": 0.0042,
+    "mid_linear": 0.0042,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.05,
+    "from": 0.0076,
+    "to": 0.0008,
+    "measured_s": 0.0505,
+    "lands_ms": 27.99,
+    "mid": 0.0042,
+    "mid_linear": 0.0042,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.05,
+    "from": 0.0008,
+    "to": 0.0076,
+    "measured_s": 0.0503,
+    "lands_ms": 23.88,
+    "mid": 0.0042,
+    "mid_linear": 0.0042,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.1,
+    "from": 0.0076,
+    "to": 0.0008,
+    "measured_s": 0.1008,
+    "lands_ms": 18.66,
+    "mid": 0.0041,
+    "mid_linear": 0.0042,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.1,
+    "from": 0.0008,
+    "to": 0.0075,
+    "measured_s": 0.0994,
+    "lands_ms": 14.27,
+    "mid": 0.0041,
+    "mid_linear": 0.0041,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.2,
+    "from": 0.0075,
+    "to": 0.0008,
+    "measured_s": 0.2019,
+    "lands_ms": 8.34,
+    "mid": 0.0042,
+    "mid_linear": 0.0041,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.2,
+    "from": 0.0008,
+    "to": 0.0075,
+    "measured_s": 0.1998,
+    "lands_ms": 5.19,
+    "mid": 0.0042,
+    "mid_linear": 0.0041,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.4,
+    "from": 0.0076,
+    "to": 0.0008,
+    "measured_s": 0.4076,
+    "lands_ms": -6.94,
+    "mid": 0.0043,
+    "mid_linear": 0.0042,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   },
+   {
+    "requested_s": 0.4,
+    "from": 0.0008,
+    "to": 0.0076,
+    "measured_s": 0.3991,
+    "lands_ms": -2.42,
+    "mid": 0.0042,
+    "mid_linear": 0.0042,
+    "mid_db": 0.0024,
+    "shape": "linear"
+   }
+  ],
+  "shape": "linear",
+  "fade_min_ms": 1.4,
+  "duration_ratio": 1.007,
+  "grid": {
+   "offset": 3386298.995,
+   "rate": 2407.979,
+   "clicks": 5,
+   "of": 12,
+   "late_clicks": [],
+   "click_jitter_ms": 4.118,
+   "click_resid_ms_max": 7.206,
+   "tick_ms": 50.166
+  }
+ },
+ "timing": {
+  "pitch_lands_ms": {
+   "mean": -6.72,
+   "std": 40.14,
+   "p5": -44.47,
+   "p95": 43.98,
+   "n": 85
+  },
+  "volume_lands_ms": {
+   "mean": -18.22,
+   "std": 36.2,
+   "p5": -44.44,
+   "p95": 43.5,
+   "n": 83
+  },
+  "pitch_minus_volume_ms": {
+   "mean": 5.24,
+   "std": 22.74
+  },
+  "grid": {
+   "offset": 4031758.93,
+   "rate": 2400.188,
+   "clicks": 12,
+   "of": 12,
+   "late_clicks": [],
+   "click_jitter_ms": 5.359,
+   "click_resid_ms_max": 8.838,
+   "tick_ms": 50.004
+  }
+ },
+ "seek": {
+  "loop": [
+   {
+    "tick": 40,
+    "target_s": 0.0,
+    "found_s": -0.05121,
+    "late_ms": 51.21,
+    "match": 0.999
+   },
+   {
+    "tick": 60,
+    "target_s": 0.1234,
+    "found_s": 0.0904,
+    "late_ms": 33.0,
+    "match": 0.994
+   },
+   {
+    "tick": 80,
+    "target_s": 0.25,
+    "found_s": 0.21467,
+    "late_ms": 35.33,
+    "match": 0.998
+   },
+   {
+    "tick": 100,
+    "target_s": 0.5,
+    "found_s": 0.46194,
+    "late_ms": 38.06,
+    "match": 0.997
+   },
+   {
+    "tick": 120,
+    "target_s": 0.731,
+    "found_s": 0.69019,
+    "late_ms": 40.81,
+    "match": 0.998
+   },
+   {
+    "tick": 140,
+    "target_s": 0.9,
+    "found_s": 0.85646,
+    "late_ms": 43.54,
+    "match": 0.998
+   }
+  ],
+  "oneshot": [
+   {
+    "tick": 170,
+    "target_s": 0.0,
+    "found_s": 0.16335,
+    "late_ms": -163.35,
+    "match": 0.166
+   },
+   {
+    "tick": 194,
+    "target_s": 0.1234,
+    "found_s": 0.06996,
+    "late_ms": 53.44,
+    "match": 1.001
+   },
+   {
+    "tick": 218,
+    "target_s": 0.25,
+    "found_s": 0.20221,
+    "late_ms": 47.79,
+    "match": 0.923
+   },
+   {
+    "tick": 242,
+    "target_s": 0.5,
+    "found_s": 0.45746,
+    "late_ms": 42.54,
+    "match": 0.997
+   },
+   {
+    "tick": 266,
+    "target_s": 0.731,
+    "found_s": 0.69373,
+    "late_ms": 37.27,
+    "match": 0.997
+   },
+   {
+    "tick": 290,
+    "target_s": 0.9,
+    "found_s": 0.84665,
+    "late_ms": 53.35,
+    "match": 0.998
+   }
+  ],
+  "loop_summary": {
+   "late_ms_mean": 40.33,
+   "late_ms_std": 5.96,
+   "n": 6
+  },
+  "oneshot_summary": {
+   "late_ms_mean": 46.88,
+   "late_ms_std": 6.28,
+   "n": 5
+  },
+  "grid": {
+   "offset": 4663148.749,
+   "rate": 2399.843,
+   "clicks": 14,
+   "of": 14,
+   "late_clicks": [],
+   "click_jitter_ms": 6.084,
+   "click_resid_ms_max": 10.049,
+   "tick_ms": 49.997
+  }
+ },
+ "pitch": {
+  "points": [
+   {
+    "event": "spectral.osc",
+    "pitch": 0.01,
+    "expected_hz": 17.6,
+    "found_hz": 17.6,
+    "error_cents": 0.04,
+    "level": 0.0045,
+    "spur_db": -53.9
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 0.02,
+    "expected_hz": 35.2,
+    "found_hz": 35.203,
+    "error_cents": 0.14,
+    "level": 0.0045,
+    "spur_db": -49.3
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 0.05,
+    "expected_hz": 88.0,
+    "found_hz": 88.0,
+    "error_cents": -0.0,
+    "level": 0.0045,
+    "spur_db": -49.0
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 0.1,
+    "expected_hz": 176.0,
+    "found_hz": 175.994,
+    "error_cents": -0.06,
+    "level": 0.0045,
+    "spur_db": -41.4
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 0.2,
+    "expected_hz": 352.0,
+    "found_hz": 351.999,
+    "error_cents": -0.01,
+    "level": 0.0045,
+    "spur_db": -53.9
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 0.5,
+    "expected_hz": 880.0,
+    "found_hz": 879.998,
+    "error_cents": -0.0,
+    "level": 0.0045,
+    "spur_db": -62.6
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 1.0,
+    "expected_hz": 1760.0,
+    "found_hz": 1760.0,
+    "error_cents": 0.0,
+    "level": 0.0045,
+    "spur_db": -65.7
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 2.0,
+    "expected_hz": 3520.0,
+    "found_hz": 3520.002,
+    "error_cents": 0.0,
+    "level": 0.0043,
+    "spur_db": -65.5
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 4.0,
+    "expected_hz": 7040.0,
+    "found_hz": 7039.999,
+    "error_cents": -0.0,
+    "level": 0.0036,
+    "spur_db": -12.2
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 6.0,
+    "expected_hz": 10560.0,
+    "found_hz": 10560.0,
+    "error_cents": -0.0,
+    "level": 0.0027,
+    "spur_db": -3.2
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 8.0,
+    "expected_hz": 14080.0,
+    "found_hz": 14080.009,
+    "error_cents": 0.0,
+    "level": 0.0017,
+    "spur_db": 4.8
+   },
+   {
+    "event": "spectral.osc",
+    "pitch": 10.0,
+    "expected_hz": 17600.0,
+    "found_hz": 17600.0,
+    "error_cents": 0.0,
+    "level": 0.0008,
+    "spur_db": 14.1
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 0.01,
+    "expected_hz": 2.2,
+    "skip": "outside 15 Hz .. Nyquist"
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 0.02,
+    "expected_hz": 4.4,
+    "skip": "outside 15 Hz .. Nyquist"
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 0.05,
+    "expected_hz": 11.0,
+    "skip": "outside 15 Hz .. Nyquist"
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 0.1,
+    "expected_hz": 22.0,
+    "found_hz": 22.001,
+    "error_cents": 0.07,
+    "level": 0.0045,
+    "spur_db": -46.6
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 0.2,
+    "expected_hz": 44.0,
+    "found_hz": 44.001,
+    "error_cents": 0.03,
+    "level": 0.0046,
+    "spur_db": -49.5
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 0.5,
+    "expected_hz": 110.0,
+    "found_hz": 109.998,
+    "error_cents": -0.03,
+    "level": 0.0046,
+    "spur_db": -52.9
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 1.0,
+    "expected_hz": 220.0,
+    "found_hz": 219.996,
+    "error_cents": -0.03,
+    "level": 0.0046,
+    "spur_db": -51.5
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 2.0,
+    "expected_hz": 440.0,
+    "found_hz": 439.998,
+    "error_cents": -0.01,
+    "level": 0.0046,
+    "spur_db": -45.6
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 4.0,
+    "expected_hz": 880.0,
+    "found_hz": 880.0,
+    "error_cents": -0.0,
+    "level": 0.0046,
+    "spur_db": -59.7
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 6.0,
+    "expected_hz": 1320.0,
+    "found_hz": 1320.0,
+    "error_cents": -0.0,
+    "level": 0.0045,
+    "spur_db": -60.5
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 8.0,
+    "expected_hz": 1760.0,
+    "found_hz": 1759.999,
+    "error_cents": -0.0,
+    "level": 0.0045,
+    "spur_db": -60.0
+   },
+   {
+    "event": "spectral.osc220",
+    "pitch": 10.0,
+    "expected_hz": 2200.0,
+    "found_hz": 2199.997,
+    "error_cents": -0.0,
+    "level": 0.0045,
+    "spur_db": -44.6
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 0.01,
+    "expected_hz": 70.4,
+    "found_hz": 70.401,
+    "error_cents": 0.03,
+    "level": 0.0042,
+    "spur_db": -30.6
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 0.02,
+    "expected_hz": 140.8,
+    "found_hz": 140.803,
+    "error_cents": 0.03,
+    "level": 0.0043,
+    "spur_db": -30.6
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 0.05,
+    "expected_hz": 352.0,
+    "found_hz": 351.995,
+    "error_cents": -0.03,
+    "level": 0.0043,
+    "spur_db": -30.8
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 0.1,
+    "expected_hz": 704.0,
+    "found_hz": 703.989,
+    "error_cents": -0.03,
+    "level": 0.0043,
+    "spur_db": -31.5
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 0.2,
+    "expected_hz": 1408.0,
+    "found_hz": 1407.998,
+    "error_cents": -0.0,
+    "level": 0.0042,
+    "spur_db": -33.3
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 0.5,
+    "expected_hz": 3520.0,
+    "found_hz": 3520.0,
+    "error_cents": 0.0,
+    "level": 0.0039,
+    "spur_db": -67.8
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 1.0,
+    "expected_hz": 7040.0,
+    "found_hz": 7039.993,
+    "error_cents": -0.0,
+    "level": 0.0033,
+    "spur_db": -12.2
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 2.0,
+    "expected_hz": 14080.0,
+    "found_hz": 14079.997,
+    "error_cents": -0.0,
+    "level": 0.0015,
+    "spur_db": 4.9
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 4.0,
+    "expected_hz": 28160.0,
+    "skip": "outside 15 Hz .. Nyquist"
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 6.0,
+    "expected_hz": 42240.0,
+    "skip": "outside 15 Hz .. Nyquist"
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 8.0,
+    "expected_hz": 56320.0,
+    "skip": "outside 15 Hz .. Nyquist"
+   },
+   {
+    "event": "spectral.osc7040",
+    "pitch": 10.0,
+    "expected_hz": 70400.0,
+    "skip": "outside 15 Hz .. Nyquist"
+   }
+  ],
+  "grid": {
+   "offset": 5471733.195,
+   "rate": 2400.216,
+   "clicks": 16,
+   "of": 16,
+   "late_clicks": [],
+   "click_jitter_ms": 6.322,
+   "click_resid_ms_max": 10.913,
+   "tick_ms": 50.004
+  }
+ },
+ "stereo": {
+  "left_file_L_dB": -44.4,
+  "left_file_R_dB": -240.0,
+  "right_file_L_dB": -111.5,
+  "right_file_R_dB": -44.5,
+  "separation_dB": 67.0,
+  "grid": {
+   "offset": 6482202.835,
+   "rate": 2400.578,
+   "clicks": 9,
+   "of": 9,
+   "late_clicks": [],
+   "click_jitter_ms": 5.176,
+   "click_resid_ms_max": 8.819,
+   "tick_ms": 50.012
+  }
+ },
+ "mixer": {
+  "levels": [
+   {
+    "volume": 0.005,
+    "sum_peak_in": 0.072,
+    "tone_rms": 0.00026,
+    "distortion_db": -26.1,
+    "gain_db": 0.0
+   },
+   {
+    "volume": 0.01,
+    "sum_peak_in": 0.144,
+    "tone_rms": 0.00052,
+    "distortion_db": -30.0,
+    "gain_db": 0.0
+   },
+   {
+    "volume": 0.02,
+    "sum_peak_in": 0.288,
+    "tone_rms": 0.00104,
+    "distortion_db": -34.0,
+    "gain_db": 0.0
+   },
+   {
+    "volume": 0.04,
+    "sum_peak_in": 0.576,
+    "tone_rms": 0.00208,
+    "distortion_db": -6.3,
+    "gain_db": 0.0
+   },
+   {
+    "volume": 0.08,
+    "sum_peak_in": 1.152,
+    "tone_rms": 0.00418,
+    "distortion_db": -37.8,
+    "gain_db": 0.04
+   },
+   {
+    "volume": 0.12,
+    "sum_peak_in": 1.728,
+    "tone_rms": 0.00625,
+    "distortion_db": -37.2,
+    "gain_db": 0.01
+   },
+   {
+    "volume": 0.18,
+    "sum_peak_in": 2.592,
+    "tone_rms": 0.00936,
+    "distortion_db": -36.4,
+    "gain_db": 0.0
+   },
+   {
+    "volume": 0.25,
+    "sum_peak_in": 3.6,
+    "tone_rms": 0.01305,
+    "distortion_db": -21.7,
+    "gain_db": 0.03
+   },
+   {
+    "volume": 0.35,
+    "sum_peak_in": 5.04,
+    "tone_rms": 0.01782,
+    "distortion_db": -24.8,
+    "gain_db": -0.18
+   },
+   {
+    "volume": 0.5,
+    "sum_peak_in": 7.2,
+    "tone_rms": 0.02287,
+    "distortion_db": -15.7,
+    "gain_db": -1.11
+   }
+  ],
+  "behaviour": "clip",
+  "category_db": {
+   "ui": 0.0,
+   "music": -0.0,
+   "record": -0.0
+  },
+  "grid": {
+   "offset": 6825213.015,
+   "rate": 2400.008,
+   "clicks": 10,
+   "of": 11,
+   "late_clicks": [],
+   "click_jitter_ms": 5.345,
+   "click_resid_ms_max": 8.717,
+   "tick_ms": 50.0
+  }
+ },
+ "throughput": {
+  "counts": [
+   {
+    "commands": 16,
+    "spread_ms": 1.62,
+    "late_ms_max": 0.64,
+    "lands_ms": 65.24,
+    "heard": 16
+   },
+   {
+    "commands": 32,
+    "spread_ms": 72.41,
+    "late_ms_max": 1.39,
+    "lands_ms": 62.68,
+    "heard": 30
+   },
+   {
+    "commands": 64,
+    "spread_ms": 3.43,
+    "late_ms_max": 2.23,
+    "lands_ms": 43.39,
+    "heard": 30
+   },
+   {
+    "commands": 128,
+    "spread_ms": 50.34,
+    "late_ms_max": 1.26,
+    "lands_ms": 42.69,
+    "heard": 31
+   }
+  ],
+  "grid": {
+   "offset": 7300306.162,
+   "rate": 2404.368,
+   "clicks": 9,
+   "of": 9,
+   "late_clicks": [],
+   "click_jitter_ms": 4.662,
+   "click_resid_ms_max": 8.612,
+   "tick_ms": 50.091
+  }
+ }
+}
