@@ -4,7 +4,7 @@
 // /web:zoom <%> · /web:size <16:9|20:9|…|WxH> [height] · /web:res <height> · /web:sens <n> · /web:click · /web:f1 [on|off]
 // (operators: /web:service <URL> · /web:public <lan|tunnel|URL>). /scriptevent gweb:<the same> for the tests. The head's turns are the
 // mouse, a swing (left click, a tap) a click, jump the button held (drag), sneak back (held: close), W / S and the hotbar the wheel.
-import { world, system, Player, InputButton, ButtonState, HudElement, HudVisibility, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus } from '@minecraft/server';
+import { world, system, Player, InputButton, ButtonState, HudElement, HudVisibility, ControlScheme, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus } from '@minecraft/server';
 import { http, HttpRequest, HttpRequestMethod } from '@minecraft/server-net';
 import './screen_nav.js';
 import './screen_input.js';
@@ -309,8 +309,14 @@ const chIo = {
   prop: (p, k, v) => p.setProperty(k, v),
   hideHud: (p, keep) => { const before = p.onScreenDisplay.getHiddenHudElements(); p.onScreenDisplay.hideAllExcept(keep.map((k) => HudElement[k]).filter((v) => v !== undefined)); return before; },
   restoreHud: (p, before) => { p.onScreenDisplay.resetHudElementsVisibility(); if (before && before.length) p.onScreenDisplay.setHudVisibility(HudVisibility.Hide, before); },
+  // (F1's camera: the pack's <ns>:eye — a third-person camera at the eyes draws no first-person held item (RULES R10.13); the
+  //  player turns with it (LockedPlayerRelativeStrafe). Off: cleared, the game's own scheme back)
+  camera: (p, id) => {
+    if (id) { p.camera.setCamera(id); try { p.setControlScheme(ControlScheme.LockedPlayerRelativeStrafe); } catch (e) { /* (an older game) */ } }
+    else { p.camera.clear(); try { p.setControlScheme(); } catch (e) { /* (an older game) */ } }
+  },
 };
-const ch = GS.channel.create({ ns: NS, slots: CFG.slotCount, width: CFG.width, refreshTicks: CFG.refreshTicks }, chIo);
+const ch = GS.channel.create({ ns: NS, slots: CFG.slotCount, width: CFG.width, refreshTicks: CFG.refreshTicks, camera: CFG.f1Camera === false ? null : NS + ':eye' }, chIo);
 const engine = createBrowsers(CFG, {
   players: () => world.getAllPlayers(),
   sample: (p) => {
