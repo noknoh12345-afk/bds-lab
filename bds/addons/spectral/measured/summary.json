@@ -14,10 +14,16 @@
     "run": "41068618513"
    },
    "light": {
-    "visqol": 1.5978,
-    "onset_recall": 0.28,
-    "third_oct_db": 8.285,
-    "run": "41068618513"
+    "visqol": 1.5982,
+    "onset_recall": 0.16,
+    "third_oct_db": 8.289,
+    "run": "41083086951"
+   },
+   "mobile": {
+    "visqol": 1.6236,
+    "onset_recall": 0.6,
+    "third_oct_db": 3.047,
+    "run": "41083086951"
    }
   },
   "vocal_stars": {
@@ -32,6 +38,18 @@
     "onset_recall": 0.729,
     "third_oct_db": 6.678,
     "run": "41068618513"
+   },
+   "mobile": {
+    "visqol": 2.3711,
+    "onset_recall": 0.657,
+    "third_oct_db": 6.364,
+    "run": "41083086951"
+   },
+   "light": {
+    "visqol": 2.3117,
+    "onset_recall": 0.486,
+    "third_oct_db": 7.729,
+    "run": "41083086951"
    }
   },
   "drums_round": {
@@ -46,6 +64,18 @@
     "onset_recall": 0.131,
     "third_oct_db": 7.606,
     "run": "41068618513"
+   },
+   "mobile": {
+    "visqol": 1.5099,
+    "onset_recall": 0.076,
+    "third_oct_db": 5.468,
+    "run": "41083086951"
+   },
+   "light": {
+    "visqol": 1.6054,
+    "onset_recall": 0.234,
+    "third_oct_db": 5.619,
+    "run": "41083086951"
    }
   },
   "rock_big": {
@@ -62,16 +92,22 @@
     "run": "41068618513"
    },
    "light": {
-    "visqol": 2.8402,
-    "onset_recall": 0.733,
-    "third_oct_db": 6.763,
-    "run": "41068618513"
+    "visqol": 2.7949,
+    "onset_recall": 0.713,
+    "third_oct_db": 6.841,
+    "run": "41083086951"
    },
    "voices24": {
     "visqol": 2.5657,
     "onset_recall": 0.97,
     "third_oct_db": 6.316,
     "run": "41076646541"
+   },
+   "mobile": {
+    "visqol": 1.9936,
+    "onset_recall": 0.96,
+    "third_oct_db": 6.799,
+    "run": "41083086951"
    }
   },
   "edm_detection": {
@@ -86,6 +122,18 @@
     "onset_recall": 0.827,
     "third_oct_db": 11.891,
     "run": "41068618513"
+   },
+   "mobile": {
+    "visqol": 2.6313,
+    "onset_recall": 0.835,
+    "third_oct_db": 10.972,
+    "run": "41083086951"
+   },
+   "light": {
+    "visqol": 2.67,
+    "onset_recall": 0.256,
+    "third_oct_db": 13.674,
+    "run": "41083086951"
    }
   },
   "orchestra_five_armies": {
@@ -100,6 +148,18 @@
     "onset_recall": 0.163,
     "third_oct_db": 5.642,
     "run": "41068618513"
+   },
+   "mobile": {
+    "visqol": 1.6672,
+    "onset_recall": 0.188,
+    "third_oct_db": 6.892,
+    "run": "41083086951"
+   },
+   "light": {
+    "visqol": 2.1469,
+    "onset_recall": 0.225,
+    "third_oct_db": 10.801,
+    "run": "41083086951"
    }
   },
   "speech_en_wordsworth": {
@@ -116,10 +176,16 @@
     "run": "41068618513"
    },
    "light": {
-    "visqol": 2.3402,
-    "onset_recall": 0.215,
-    "third_oct_db": 10.996,
-    "run": "41068618513"
+    "visqol": 2.1677,
+    "onset_recall": 0.292,
+    "third_oct_db": 12.51,
+    "run": "41083086951"
+   },
+   "mobile": {
+    "visqol": 2.0599,
+    "onset_recall": 0.177,
+    "third_oct_db": 7.247,
+    "run": "41083086951"
    }
   },
   "piano_chopin_op66": {
@@ -140,6 +206,18 @@
     "onset_recall": 0.097,
     "third_oct_db": 6.701,
     "run": "41076646541"
+   },
+   "mobile": {
+    "visqol": 1.789,
+    "onset_recall": 0.081,
+    "third_oct_db": 6.79,
+    "run": "41083086951"
+   },
+   "light": {
+    "visqol": 1.7817,
+    "onset_recall": 0.145,
+    "third_oct_db": 10.56,
+    "run": "41083086951"
    }
   },
   "vocal_name_of_love": {
@@ -154,6 +232,18 @@
     "onset_recall": 0.486,
     "third_oct_db": 3.874,
     "run": "41076646541"
+   },
+   "mobile": {
+    "visqol": 3.4177,
+    "onset_recall": 0.371,
+    "third_oct_db": 4.837,
+    "run": "41083086951"
+   },
+   "light": {
+    "visqol": 3.2665,
+    "onset_recall": 0.257,
+    "third_oct_db": 7.877,
+    "run": "41083086951"
    }
   },
   "choir_how_long": {
@@ -174,6 +264,18 @@
     "onset_recall": 0.129,
     "third_oct_db": 5.19,
     "run": "41076646541"
+   },
+   "mobile": {
+    "visqol": 1.5557,
+    "onset_recall": 0.1,
+    "third_oct_db": 5.235,
+    "run": "41083086951"
+   },
+   "light": {
+    "visqol": 1.7156,
+    "onset_recall": 0.143,
+    "third_oct_db": 8.475,
+    "run": "41083086951"
    }
   },
   "funk_funkorama": {
@@ -194,6 +296,18 @@
     "onset_recall": 0.326,
     "third_oct_db": 8.878,
     "run": "41076646541"
+   },
+   "mobile": {
+    "visqol": 1.8626,
+    "onset_recall": 0.541,
+    "third_oct_db": 9.574,
+    "run": "41083086951"
+   },
+   "light": {
+    "visqol": 1.812,
+    "onset_recall": 0.311,
+    "third_oct_db": 8.975,
+    "run": "41083086951"
    }
   },
   "speech_ja_soseki": {
@@ -208,6 +322,18 @@
     "onset_recall": 0.57,
     "third_oct_db": 10.458,
     "run": "41076646541"
+   },
+   "mobile": {
+    "visqol": 2.0888,
+    "onset_recall": 0.465,
+    "third_oct_db": 8.173,
+    "run": "41083086951"
+   },
+   "light": {
+    "visqol": 2.279,
+    "onset_recall": 0.333,
+    "third_oct_db": 9.966,
+    "run": "41083086951"
    }
   },
   "demo_selfmade": {
@@ -222,10 +348,41 @@
     "onset_recall": 0.67,
     "third_oct_db": 7.105,
     "run": "41076646541"
+   },
+   "mobile": {
+    "visqol": 2.1737,
+    "onset_recall": 0.564,
+    "third_oct_db": 5.986,
+    "run": "41083086951"
+   },
+   "light": {
+    "visqol": 2.1193,
+    "onset_recall": 0.34,
+    "third_oct_db": 8.079,
+    "run": "41083086951"
    }
   }
  },
- "repeats": {},
+ "repeats": {
+  "piano_gymnopedie": {
+   "light": [
+    1.5978,
+    1.5982
+   ]
+  },
+  "rock_big": {
+   "light": [
+    2.8402,
+    2.7949
+   ]
+  },
+  "speech_en_wordsworth": {
+   "light": [
+    2.3402,
+    2.1677
+   ]
+  }
+ },
  "runs": {
   "ceiling": [
    "41068618513",
@@ -236,10 +393,14 @@
    "41076646541"
   ],
   "light": [
-   "41068618513"
+   "41068618513",
+   "41083086951"
   ],
   "voices24": [
    "41076646541"
+  ],
+  "mobile": [
+   "41083086951"
   ]
  },
  "medians": {
@@ -255,9 +416,13 @@
    "n": 4,
    "visqol": 1.865
   },
+  "mobile": {
+   "n": 13,
+   "visqol": 1.994
+  },
   "light": {
-   "n": 3,
-   "visqol": 2.34
+   "n": 13,
+   "visqol": 2.147
   }
  },
  "gaps": {
@@ -271,10 +436,15 @@
    "median": 0.891,
    "within_0.3": 0
   },
+  "mobile": {
+   "n": 13,
+   "median": 1.002,
+   "within_0.3": 2
+  },
   "light": {
-   "n": 3,
-   "median": 0.751,
-   "within_0.3": 1
+   "n": 13,
+   "median": 0.923,
+   "within_0.3": 2
   }
  }
 }
