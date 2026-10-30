@@ -23,8 +23,10 @@
 //   extraMaterials { name: definition } (materials not proved yet, for an experiment's bones only — never one of MATS' names:
 //   a probe tries them, RULES.md says what they did; what holds moves into MATS),
 //   f1 (true: F1 without the game mode changed — the property <ns>:f1 hides the local player's arms and held items (the arms'
-//   bones moved far below and at scale 0: a first-person item follows its arm's position, not its scale — RULES R10.13) and
-//   body (render controllers), the HUD by the title channel: layout.js, channel.js),
+//   bones moved far below and at scale 0 — which hides the empty hand's arm only: a first-person held item follows neither the
+//   arm's position nor its scale, RULES R10.13) and body (render controllers), the HUD by the title channel: layout.js,
+//   channel.js; and the camera preset <ns>:eye (bp/cameras/presets: follow_orbit at the eyes, radius 0.1 — no first-person
+//   pass, so no held item: channel.js sets it with cfg.camera; f1Camera: false leaves it out),
 //   urlImages [{ id, group, rect {x, y, w, h} (local units), slot, above? }] (images the game fetches by URL: layout.js),
 //   channel { width } (the title channel's field width), modules [{ module_name, version }] (more script modules: server-net …)
 // }
@@ -274,6 +276,12 @@
     if (Object.keys(props).length > 32) warnings.push(`プロパティが ${Object.keys(props).length} 個: ゲームの上限は 32 個`);
     if (Object.keys(props).length) be['minecraft:entity'].description.properties = props;
     files['bp/entities/player.json'] = J(be);
+    // (F1's camera: a third-person camera at the eyes. inherit_from follow_orbit (radius 0.1, the eye height 1.62 above the feet,
+    //  no view offset) — read by BDS 1.26.60.6 and set by `camera A set <ns>:eye`; extend_player_rendering is not in its schema
+    //  (the whole preset was refused with it))
+    if (scene.f1 && scene.f1Camera !== false) {
+      files[`bp/cameras/presets/${ns}_eye.json`] = J({ format_version: '1.21.50', 'minecraft:camera_preset': { identifier: `${ns}:eye`, inherit_from: 'minecraft:follow_orbit', radius: 0.1, entity_offset: [0, 1.62, 0], view_offset: [0, 0] } });
+    }
     files['bp/loot_tables/empty.json'] = J({ pools: [] });
     const serverVersion = scene.serverVersion || '2.5.0';
     const needs = apiNeeds([scene.script || '', ...Object.values(scene.extraScripts || {})].join('\n'));
