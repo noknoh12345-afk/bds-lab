@@ -1,6 +1,6 @@
 # geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（5 本目）。
 # 1〜4 本目（run 40998593826・41001422618・41004077706・41008713796）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
-# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_title_vanilla,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に。5 本目は参加が戻されて測れず: 6 本目も同じ手順）
+# 実行: node lab.mjs app ci -a geoui_web_probe（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に。9 本目は背景の黒の区切りを足した）
 
 section join
 stop
@@ -114,6 +114,33 @@ measure diff cam-look
 do scriptevent gwp:rot
 until server GWP TURNED 5000
 do scriptevent gwp:f1 0
+wait 3000
+
+section backdrop
+do scriptevent gwp:reset
+do hud @a reset
+do tp @a 0 -60 0 0 30
+wait 3000
+shot world
+do scriptevent gwp:layout b
+wait 3000
+shot bd-b
+measure marks bd-b
+do scriptevent gwp:f1 1
+wait 3000
+shot bd-f1
+measure marks bd-f1
+do scriptevent gwp:f1 0
+do scriptevent gwp:part free 1
+wait 3000
+shot bd-free
+measure marks bd-free
+do scriptevent gwp:f1 1
+wait 3000
+shot bd-free-f1
+measure marks bd-free-f1
+do scriptevent gwp:part free 0
+do scriptevent gwp:reset
 wait 3000
 
 section f1-chat
