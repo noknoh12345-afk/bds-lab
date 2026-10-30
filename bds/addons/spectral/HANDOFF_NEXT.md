@@ -80,4 +80,4 @@ ORIGINAL_HANDOFF_PROMPT.md（最初の依頼の原文入り）を先に読むこ
 - Bash の `&` で起こしたものはターンの後で止まる: 長い実験は run_in_background で
 - `grep -v` をパイプに挟むと結果がバッファされて見えない: `--line-buffered`
 - tools/sim/.gitignore には `log_*.json` が要る（消すと log_calib_all.json が未追跡で出る）
-- ViSQOL 1 回 ~16 秒・変換 1 曲 ~14 秒。scratch/cache は 1.7 GB（zip に入れていない、作り直せる）
+- ViSQOL 1 回 ~16 秒・変換 1 曲 ~14 秒。描画のキャッシュ（corpus/renders/exp/cache の *.npy・*.log.json）は作り直せるので zip に入れていない
