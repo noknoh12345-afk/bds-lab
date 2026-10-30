@@ -51,6 +51,31 @@
  "resampler": {
   "value": "ideal",
   "status": "measured",
-  "note": "redroid run 41076646541 /spectral:calib all (the WAV in the run): spurs follow the output frequency alone (1.76 kHz: -37.5 dB from osc x1 and osc220 x8): not the setPitch resampler but the recording path (44.1 kHz mix to 48 kHz capture)"
+  "note": "redroid run 41076646541 /spectral:calib all (the WAV in the run): setPitch is exact (0.12 cent) and the spurs follow the output frequency alone — they are the game's 24 kHz mix (mix_sr), not the setPitch resampler"
+ },
+ "mix_sr": {
+  "value": 24000,
+  "status": "measured",
+  "note": "redroid run 41076646541, the pitch program (exported recording, Opus 192k): a 7040 Hz tone comes with an image at 16960 Hz (-12.2 dB), 10560 Hz with 13440 Hz (-3.2 dB); a 14080 Hz tone mostly sounds at 9920 Hz (+4.8 dB over it), 17600 Hz at 6400 Hz (+14.1 dB): 24000 Hz - f each time. The game mixes at 24 kHz reading each voice linearly (no anti-aliasing) and the mix is interpolated linearly to 48 kHz (tone levels -1.9/-4.4 dB at 7040/10560 Hz = cos^2(pi f/48000)). With out_gain_db and out_bits this path gives the 13 songs' ceilings (the originals played as sounds) to ViSQOL within 0.06 on average (tools/rig/path_check.py)"
+ },
+ "out_up": {
+  "value": "linear",
+  "status": "measured",
+  "note": "the same: images at 24000 Hz - f at cos^2 levels (x2 linear interpolation)"
+ },
+ "out_gain_db": {
+  "value": -32.5,
+  "status": "measured",
+  "note": "redroid runs 41068618513/41076646541: the 13 ceiling recordings against their originals, -32.47..-32.55 dB"
+ },
+ "out_bits": {
+  "value": 16,
+  "status": "measured",
+  "note": "scrcpy 3.1 captures raw 16-bit PCM; the game's output is 16-bit as well (taken as such: the ceilings fit with it)"
+ },
+ "voice_rank": {
+  "value": "energy",
+  "status": "measured",
+  "note": "which voices go beyond max_voices: the gain times the sound's RMS predicts the 13 songs played with 48 voices (run 41068618513/41076646541) better than the channel volume alone (ViSQOL error 0.24 against 0.30, correlation 0.93 against 0.88)"
  }
 }

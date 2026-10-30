@@ -24,11 +24,16 @@ def read(log):
     return out
 
 
+# the recordings' prefixes (app.txt: audio start <prefix>_<song>) → the way the song was played
+WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile', 'n': 'mobile_ahead', 'r': 'mobile_ahead_again',
+        'a': 'shipped_same_run', 'b': 'improved', 'x': 'improved_drums_behind', 'y': 'improved_drums_noise', 'z': 'improved_alt'}
+
+
 def songs(res):
     """per song: the game's and the ceiling's ViSQOL against the original, the gap, and the emulator against the recording"""
     rows = {}
     for rec, by in res.items():
-        m = re.match(r'([gclvmnr])_(.+)$', rec)
+        m = re.match(r'([gclvmnrabxyz])_(.+)$', rec)
         if not m:
             continue
         kind, sid = m.groups()
@@ -36,7 +41,7 @@ def songs(res):
         s = by.get(f'song:{sid}', {})
         v = next((x for x in s.values() if isinstance(x, dict) and ('visqol' in x or 'error' in x)), None) if isinstance(s, dict) else None
         if v:
-            r[{'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile', 'n': 'mobile_ahead', 'r': 'mobile_ahead_again'}[kind]] = v
+            r[WAYS[kind]] = v
         e = by.get(f'emu:{sid}')
         if e and 'emu_vs_recording' in e:
             r['emu_vs_recording'] = e['emu_vs_recording']

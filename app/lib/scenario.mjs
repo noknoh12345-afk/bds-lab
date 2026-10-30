@@ -32,7 +32,8 @@
 //   audio start [名前] / audio stop   端末が鳴らす音を録音（scrcpy、Android 11 以上。audio/<名前>.wav。bds/addons/spectral の測定リグ）
 //   audio analyze <名前> <calib の名前|all|song:<曲>|emu:<曲>> [比べる録音…]   録音を測る（tools/rig: 数はログと報告に。録音は実行の
 //                                フォルダに。emu: は同じ曲をエミュレーターで鳴らしたものと比べる — 先に audio song <曲>）
-//   audio song <曲>               試験曲（corpus）をここで変換し、サーバーのコンソールから spectral:song の script event で送る
+//   audio song <曲>[,<曲>…] [suffix=<字>] [<設定>=<値>…]  試験曲（corpus）をここで変換し（いくつもなら並行で）、サーバーのコンソールから
+//                                 spectral:song の script event で送る。suffix= は <曲><字> の名前で、ほかは変換器の設定（同じ run で比べる）
 //   audio ceiling <アドオン> <曲,曲,…>   天井（元の音を OGG のまま鳴らすだけのアドオン）を bds/addons/<アドオン> に作る: 次に addon <アドオン>
 //   audio export <名前> [kbps]    録音を Opus にし、tools/rig/rec_public.pem で暗号化してログへ（`[spectral rec]` の行。秘密鍵の持ち主だけが開ける）
 //   audio info                   端末の音の設定（メディアの音量・ミキサー・ゲームの audio_ の設定）をログへ（`[spectral rig] device audio`）
@@ -184,7 +185,8 @@ function check(s) {
   if (s.verb === 'hold' && (a.length < 2 || a.slice(0, 3).some((x) => Number.isNaN(num(x))))) return '書き方: hold <x> <y> [ミリ秒]';
   if (s.verb === 'record' && !['start', 'stop'].includes(a[0])) return '書き方: record start|stop';
   if (s.verb === 'audio' && a[0] === 'analyze' && !(a.length >= 3 && a.slice(1).every((x) => /^[\w.:-]+$/.test(x)))) return '書き方: audio analyze <名前> <calib の名前|all|song:<曲>|emu:<曲>> [比べる録音の名前…]';
-  if (s.verb === 'audio' && a[0] === 'song' && !(a.length === 2 && /^[\w.-]+$/.test(a[1]))) return '書き方: audio song <曲>（corpus/manifest.json の id）';
+  if (s.verb === 'audio' && a[0] === 'song' && !(a.length >= 2 && /^[\w.-]+(,[\w.-]+)*$/.test(a[1]) && a.slice(2).every((x) => /^(suffix=[\w.-]+|[a-z_]+=[\w.+-]+)$/.test(x))))
+    return '書き方: audio song <曲>[,<曲>…] [suffix=<付ける字>] [<変換器の設定>=<値> …]（曲は corpus/manifest.json の id。いくつも並べると並行して変換）';
   if (s.verb === 'audio' && a[0] === 'ceiling' && !(a.length === 3 && /^[A-Za-z0-9_-]{1,64}$/.test(a[1]) && /^[\w.-]+(,[\w.-]+)*$/.test(a[2]))) return '書き方: audio ceiling <アドオンの名前> <曲,曲,…>';
   if (s.verb === 'audio' && a[0] === 'export' && !(a.length >= 2 && a.length <= 3 && /^[\w.-]+$/.test(a[1]) && (a[2] === undefined || num(a[2]) >= 16))) return '書き方: audio export <名前> [kbps]（録音を Opus で暗号化してログへ。開けるのは tools/rig/rec_public.pem の秘密鍵の持ち主だけ）';
   if (s.verb === 'audio' && a[0] === 'info' && a.length !== 1) return '書き方: audio info（端末の音の設定をログへ）';
@@ -638,13 +640,22 @@ export async function runScenario(steps, ctx) {
           return r.line.slice(0, 400);
         }
         if (a[0] === 'song') {
-          // (one `do` with all the parts: each `do` is a lab process of its own — 27 parts for a 20 s song in ~11 s)
-          const sp = AR.songParts({ labDir: ctx.labDir ?? process.cwd(), id: a[1], out: path.join(runDir, 'audio', `song-${a[1]}.json`) });
-          const r = await server.do(sp.parts.map((m) => `scriptevent spectral:song ${m}`));
-          fs.appendFileSync(doLog, `audio song ${a[1]}: ${sp.parts.length} parts, ${sp.bytes} bytes, ${sp.seconds} s, ${sp.kbps} kbps\n${r.lines.filter((l) => !/^> /.test(l)).slice(-4).join('\n')}\n`);
-          if (!r.ok) throw new Error(`曲 ${a[1]} を送れません: ${r.lines.filter((l) => /^E |FAIL/.test(l)).slice(0, 3).join(' | ') || r.lines.slice(-2).join(' | ')}`);
-          if (!r.lines.some((l) => l.includes('song pack:') && l.includes(`/spectral:play ${a[1]}`))) throw new Error(`曲 ${a[1]} が届いた知らせがありません（${r.lines.slice(-2).join(' | ').slice(0, 200)}）`);
-          return `曲 ${a[1]}（${sp.seconds} 秒、${sp.kbps} kbps）を ${sp.parts.length} 個の script event で送りました`;
+          // (one `do` with all the parts of a song: each `do` is a lab process of its own — 27 parts for a 20 s song in ~11 s.
+          // Several songs are converted in parallel; `suffix=` sends them under <id><suffix>, other k=v are converter options,
+          // e.g. an earlier analysis kept behind an option, to compare the two in the same run)
+          const ids = a[1].split(','), kv = Object.fromEntries(a.slice(2).map((x) => x.split('=')));
+          const suffix = kv.suffix ?? ''; delete kv.suffix;
+          const opts = Object.fromEntries(Object.entries(kv).map(([k, v]) => [k, /^[-+]?\d+(\.\d+)?$/.test(v) ? Number(v) : v]));
+          const list = AR.songParts({ labDir: ctx.labDir ?? process.cwd(), ids, opts, suffix, out: path.join(runDir, 'audio', `song-${ids.length > 1 ? 'batch-' + Date.now() : ids[0] + suffix}.json`) });
+          const said = [];
+          for (const sp of list) {
+            const r = await server.do(sp.parts.map((m) => `scriptevent spectral:song ${m}`));
+            fs.appendFileSync(doLog, `audio song ${sp.id}${Object.keys(opts).length ? ' ' + JSON.stringify(opts) : ''}: ${sp.parts.length} parts, ${sp.bytes} bytes, ${sp.seconds} s, ${sp.kbps} kbps\n${r.lines.filter((l) => !/^> /.test(l)).slice(-4).join('\n')}\n`);
+            if (!r.ok) throw new Error(`曲 ${sp.id} を送れません: ${r.lines.filter((l) => /^E |FAIL/.test(l)).slice(0, 3).join(' | ') || r.lines.slice(-2).join(' | ')}`);
+            if (!r.lines.some((l) => l.includes('song pack:') && l.includes(`/spectral:play ${sp.id}`))) throw new Error(`曲 ${sp.id} が届いた知らせがありません（${r.lines.slice(-2).join(' | ').slice(0, 200)}）`);
+            said.push(`${sp.id}（${sp.seconds} 秒、${sp.kbps} kbps、${sp.parts.length} 個）`);
+          }
+          return `曲 ${said.join('・')} を script event で送りました`;
         }
         if (a[0] === 'info') {
           const d = AR.deviceAudio(adb, ctx.pkg);

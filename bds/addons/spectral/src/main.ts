@@ -10,7 +10,7 @@
 import { world, system, Player, Dimension, Vector3, SoundInstance } from '@minecraft/server';
 import { ModalFormData } from '@minecraft/server-ui';
 import { cmd, cmdAny, menu, ask, onItem, give, item, once, load, save } from './kit';
-import { OSC_AMP, BASE_HZ, NOISE_RMS, NOISE_BANDS, BURST_RMS, SUB } from './assets';
+import { OSC_AMP, BASE_HZ, NOISE_RMS, NOISE_BANDS, BURST_RMS, BURST_BANDS, SUB } from './assets';
 import demo from './songs/demo';
 import programs, { Program } from './calib_programs';
 
@@ -115,9 +115,16 @@ addSong(genMeta('shepard', 'Shepard–Risset glissando', 40, 10), undefined, (d)
 
 // ------------------------------------------------------------------ playback sessions
 type Mode = 'phones' | 'speaker';
-interface Settings { volume: number; speed: number; semis: number; eq: [number, number, number]; voices: number; noise: boolean; bursts: boolean; viz: boolean; loop: boolean; budget?: number; mode?: Mode2; }
+interface Settings {
+  volume: number; speed: number; semis: number; eq: [number, number, number]; voices: number; noise: boolean; bursts: boolean; viz: boolean; loop: boolean; budget?: number; mode?: Mode2;
+  /** the client's sound engine: hf = the highest frequency it can play (half the rate it mixes at; 0 = no limit), fold = the
+   *  voices not played go into the noise bands (their energy, not lost), sounds = at most this many audible sounds at once */
+  hf?: number; fold?: boolean; sounds?: number;
+  /** drums: ticks the one-shot bursts go before the tick of their frame (1, 0, -1), or none and the noise bands attack */
+  burstLead?: number; attacks?: boolean;
+}
 type Mode2 = 'quality' | 'light';
-const DEFAULTS: Settings = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voices: 64, noise: true, bursts: true, viz: true, loop: false, budget: 0, mode: 'quality' };
+const DEFAULTS: Settings = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voices: 64, noise: true, bursts: true, viz: true, loop: false, budget: 0, mode: 'quality', hf: 0, fold: false, sounds: 0 };
 // light mode (Realms, many listeners): the 16 strongest voices (songs keep their voices loudest first, so this is the base
 // layer), and at most LIGHT_BUDGET commands per tick per listener (voices and noise bands together), chosen by how much
 // each one matters (rate control); starting, seeking and ending a song are not held back
@@ -127,14 +134,25 @@ const LIGHT_VOICES = 16, LIGHT_BUDGET = 24;
 // side by side, +0.17..+0.52 ViSQOL; over all 13 test songs the medians were 1.99 both, 2.05 with the bursts sent ahead, at a
 // third fewer commands). A phone gets the voices that fit beside the noise bands; platforms not measured yet keep every voice
 // of the song. A count the player sets (/spectral:voices, the sound form) is theirs
-const CLIENT_SOUNDS: Partial<Record<string, number>> = { Mobile: 32 };
-function platformVoices(p: Player): number {
+interface Client { sounds: number; mixHz: number; fold: boolean; limit: boolean; }
+const CLIENTS: Partial<Record<string, Client>> = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false } };
+function clientOf(p: Player): Client | undefined {
   let kind = '';
   try { kind = String(p.clientSystemInfo.platformType); } catch { /* not known (an older client) */ }
-  const n = CLIENT_SOUNDS[kind];
-  return n ? Math.max(4, n - NOISE_BANDS.length) : DEFAULTS.voices;
+  return CLIENTS[kind];
 }
-interface Target { player?: Player; dim?: Dimension; loc?: Vector3; osc: SoundInstance[]; nz: SoundInstance[]; }
+/** noise bands a client can play: under a mixing rate of mixHz a band that starts above half of it only folds down */
+const bandsFor = (hf: number) => NOISE_BANDS.filter((b) => !hf || b[0] < hf).length;
+function platformVoices(p: Player): number {
+  const c = clientOf(p);
+  return c ? Math.max(4, c.sounds - bandsFor(c.mixHz / 2)) : DEFAULTS.voices;
+}
+/** what a client's own engine asks for (measured): the voices that fit, its frequency limit, folding, the sound budget */
+function platformEngine(p: Player): Partial<Settings> {
+  const c = clientOf(p);
+  return c ? { voices: platformVoices(p), hf: c.mixHz ? Math.round(c.mixHz / 2 * 0.958) : 0, fold: c.fold, sounds: c.limit ? c.sounds : 0 } : {};
+}
+interface Target { player?: Player; dim?: Dimension; loc?: Vector3; osc: SoundInstance[]; nz: (SoundInstance | undefined)[]; }
 
 class Session {
   ph = 0; paused = false; frozen = false; ending = 0; started = false; warm = 0; burstTo = -1;
@@ -145,6 +163,12 @@ class Session {
     this.lastP = new Float32Array(d.N).fill(-1); this.lastL = new Float32Array(d.N).fill(SILENT); this.lastNL = new Float32Array(d.M).fill(SILENT);
   }
   get V() { return Math.min(this.s.voices, this.d.N); }
+  /** a noise band this client can play (under its frequency limit) */
+  bandOn(b: number) { return !this.s.hf || NOISE_BANDS[b][0] * this.ratio < this.s.hf; }
+  /** ticks at which the bursts sent so far have finished (the sound budget counts them while they play) */
+  burstEnds: number[] = [];
+  /** bursts held for the next tick (s.burstLead -1) */
+  pendingBursts: [number, number, number][] = [];
   get ratio() { return Math.pow(2, this.s.semis / 12); }
   ev(name: string) { return this.mode === 'speaker' ? name + '_3d' : name; }
 
@@ -163,7 +187,11 @@ class Session {
       for (let i = 0; i < 16 && t.osc.length < want; i++) t.osc.push(this.loop(t, 'spectral.osc'));
       await system.waitTicks(1);
     }
-    while (t.nz.length < M) t.nz.push(this.loop(t, 'spectral.n' + t.nz.length));
+    for (let b = 0; b < M; b++) {
+      if (this.bandOn(b) && !t.nz[b]) t.nz[b] = this.loop(t, 'spectral.n' + b);
+      else if (!this.bandOn(b) && t.nz[b]) { try { t.nz[b]!.stop(); } catch { /* gone */ } t.nz[b] = undefined; }
+    }
+    t.nz.length = M;
   }
   async addListener(p: Player) {
     if (this.mode !== 'phones' || this.targets.some((t) => t.player?.id === p.id)) return;
@@ -175,14 +203,14 @@ class Session {
   /** bring a target that joined late (or was rebuilt) to the current levels */
   resync(t: Target) {
     for (let v = 0; v < t.osc.length; v++) { if (this.lastP[v] > 0) t.osc[v].setPitch(this.lastP[v]); t.osc[v].setVolume(this.lastL[v]); }
-    for (let b = 0; b < t.nz.length; b++) { t.nz[b].setPitch(this.lastNP); t.nz[b].setVolume(this.lastNL[b]); }
+    for (let b = 0; b < t.nz.length; b++) { const x = t.nz[b]; if (!x) continue; x.setPitch(this.lastNP); x.setVolume(this.lastNL[b]); }
   }
   async start() {
     for (const t of this.targets) await this.build(t);
     this.warm = 2; this.started = true;
   }
   stop() {
-    for (const t of this.targets) { for (const s of [...t.osc, ...t.nz]) { try { s.stop(); } catch { /* gone */ } } t.osc = []; t.nz = []; }
+    for (const t of this.targets) { for (const s of [...t.osc, ...t.nz]) { try { s?.stop(); } catch { /* gone */ } } t.osc = []; t.nz = []; }
     this.targets = [];
   }
   /** a voice count change while playing: grow or shrink the instance set */
@@ -278,6 +306,19 @@ class Session {
     return m < to - 1e-9 && m < d.F && d.att[m * d.N + v] && d.amp[m * d.N + v] > 0 ? m : -1;
   }
 
+  /** under a sound budget (s.sounds): is there room for one more burst beside the voices and bands that are sounding and
+   *  the bursts still playing (a burst lasts BURST_LEN after up to 37.5 ms of silence and the ~49 ms a one-shot lands late)?
+   *  Takes the room when there is */
+  roomForBurst(): boolean {
+    const now = this.ticks;
+    this.burstEnds = this.burstEnds.filter((t) => t > now);
+    let n = this.burstEnds.length;
+    for (let v = 0; v < this.V; v++) if (this.lastL[v] > SILENT * 4) n++;
+    for (let b = 0; b < this.d.M; b++) if (this.bandOn(b) && this.lastNL[b] > SILENT * 4) n++;
+    if (n + 1 > this.s.sounds!) return false;
+    this.burstEnds.push(now + 5);
+    return true;
+  }
   tick() {
     if (!this.started || this.paused || this.ending) return;
     const t0 = Date.now();
@@ -296,7 +337,19 @@ class Session {
       this.ending = 1; return;
     }
     const q2 = Math.max(0, Math.min(d.F - 1, ph2));
+    // a voice above what the client can play (hf) is not played: under a mixing rate of 24 kHz it would only fold down to
+    // 24 kHz - f. With `fold`, its energy and that of the voices not played at all go into the noise band they fall in
+    const hf = this.s.hf ?? 0, extra = this.s.fold ? new Float32Array(d.M) : undefined;
+    const fold = (f: number, a: number) => {
+      if (!extra || a <= 0) return;
+      for (let b = 0; b < d.M; b++) if (f >= NOISE_BANDS[b][0] && f < NOISE_BANDS[b][1]) { extra[b] += (a * a) / 2; return; }
+    };
+    if (extra) for (let v = this.V; v < N; v++) { const [a1, f1] = this.at(v, q2); fold(f1, a1); }
     for (let v = 0; v < this.V; v++) {
+      if (hf) {
+        const [a1, f1] = this.at(v, q2);
+        if (a1 > 0 && f1 * r >= hf) { this.send(v, 0, FADE_SMOOTH, SILENT); fold(f1, a1); continue; }
+      }
       const m = sp > 0 && sp <= 1.5 ? this.attackAt(v, ph, ph2) : -1;
       if (m >= 0) {                                   // attack lands now
         const f = d.freq[m * N + v];
@@ -313,39 +366,80 @@ class Session {
       this.send(v, hz, FADE_SMOOTH, a1 * gain * this.eqGain((f1 || f0) * r));
     }
     // noise bands (under a budget they wait in the same queue as the voices)
-    if (Math.abs(this.lastNP - r) > 1e-4) { this.lastNP = r; for (const t of this.targets) for (const s of t.nz) { try { s.setPitch(r); } catch { /* gone */ } } }
+    if (Math.abs(this.lastNP - r) > 1e-4) {
+      this.lastNP = r;
+      for (const t of this.targets) { if (this.s.hf) this.build(t); for (const s of t.nz) { try { s?.setPitch(r); } catch { /* gone */ } } }
+    }
+    // (s.attacks: a drum onset's frame is reached at its own tick in a 12 ms fade — the tick before holds — with the energy the
+    // converter took out of the band for the burst given back: the bursts' attack without one-shots)
+    const att = this.s.attacks && this.s.bursts && this.s.noise && sp > 0 && sp <= 1.5;
+    const onset = (from: number, to: number, b: number): [number, number] => {      // [frame, energy] of the first onset in [from, to)
+      for (let m = Math.ceil(from - 1e-9); m < to - 1e-9 && m < d.F; m++) {
+        let e = 0;
+        for (let x = d.evIdx[m]; x < d.evIdx[m + 1]; x++) { const bb = BURST_BANDS[d.evBand[x]]; if (NOISE_BANDS[b][0] < bb[1] && NOISE_BANDS[b][1] > bb[0]) e += (d.evAmp[x] * d.evAmp[x] * 0.35) / 3; }
+        if (e > 0) return [m, e];
+      }
+      return [-1, 0];
+    };
     for (let b = 0; b < d.M; b++) {
+      if (!this.bandOn(b)) continue;
       const i = Math.floor(q2), j = Math.min(i + 1, d.F - 1), tt = q2 - i;
-      const a = d.nz[i * d.M + b] * (1 - tt) + d.nz[j * d.M + b] * tt;
+      let a = d.nz[i * d.M + b] * (1 - tt) + d.nz[j * d.M + b] * tt;
+      if (extra && extra[b] > 0) a = Math.sqrt(a * a + extra[b]);
       const c = Math.sqrt(NOISE_BANDS[b][0] * NOISE_BANDS[b][1]) * r;
+      if (att) {
+        const [mNow, eNow] = onset(ph, ph2, b);
+        if (eNow > 0) {
+          const lv = Math.sqrt(d.nz[mNow * d.M + b] ** 2 + eNow + (extra ? extra[b] : 0));
+          this.noiseAttack(b, (lv * this.s.volume * this.eqGain(c)) / NOISE_RMS[b]);
+          continue;
+        }
+        if (onset(ph2, ph2 + sp, b)[1] > 0) continue;                      // the next tick attacks: hold
+      }
       this.noise(b, this.s.noise ? (a * this.s.volume * this.eqGain(c)) / NOISE_RMS[b] : SILENT);
     }
     this.flush();
-    // bursts with sub-tick offsets, sent a tick ahead: on a real client a one-shot playSound sounds ~49 ms (sd 7) after the
-    // SoundInstance commands of its tick (SPEC.md, run 41076646541), so the next tick's bursts go now and land with their
-    // voices (sent with the voices, the drums came a tick late and their onsets were mostly missed). Right after a start or a
-    // seek the bursts of this tick go too, late by that tick
-    if (this.s.bursts && sp > 0) {
-      const to = ph2 + sp;
-      for (let m = Math.ceil(Math.max(ph, this.burstTo) - 1e-9); m < to - 1e-9 && m < d.F; m++) {
-        const base = m < ph2 - 1e-9 ? ph : ph2;
-        for (let e = d.evIdx[m]; e < d.evIdx[m + 1]; e++) {
+    // drum bursts: one-shots with sub-tick offsets. When they go (s.burstLead, ticks before the tick of their frame): the
+    // timing calibration had a one-shot sound ~49 ms after the SoundInstance commands of its tick (run 41076646541), so the
+    // shipped engine sent them a tick ahead (1); in the songs themselves the one-shots came ~45 ms BEFORE the voices of
+    // their tick (runs 41083086951 and 41089050799, SPEC.md), so 0 or -1 may land closer. s.attacks: no one-shots at all,
+    // the noise bands rise in a 12 ms fade at the onset's tick instead (the same path and timing as the voices)
+    const lead = this.s.burstLead ?? 1;
+    if (this.s.bursts && !this.s.attacks && sp > 0) {
+      const play: [number, number, number][] = [];
+      const add = (m: number, base: number) => {
+        const evs: number[] = [];
+        for (let e = d.evIdx[m]; e < d.evIdx[m + 1]; e++) evs.push(e);
+        if (this.s.sounds) evs.sort((x, y) => d.evAmp[y] - d.evAmp[x] || x - y);      // under a sound budget the loudest go first
+        for (const e of evs) {
           const off = Math.round((((m + d.evSub[e] / SUB) - base) / sp) * SUB);
           const sub = Math.max(0, Math.min(SUB - 1, off)), band = d.evBand[e];
           const c = band === 0 ? 90 : band === 1 ? 900 : 8000;
-          const vol = Math.min(10, (d.evAmp[e] * this.s.volume * this.eqGain(c * r)) / BURST_RMS[band]);
-          for (const t of this.targets) {
-            try {
-              if (t.player) t.player.playSound(`spectral.b${band}_${sub}`, { volume: vol, pitch: r });
-              else t.dim!.playSound(`spectral.b${band}_${sub}_3d`, t.loc!, { volume: 1, pitch: r }).setVolume(vol);   // range of volume 1, level as multiplier
-            } catch { /* gone */ }
-            this.calls++;
-          }
-          if (this.mode === 'speaker' && band === 0) { try { this.targets[0].dim!.spawnParticle('minecraft:note_particle', { x: this.targets[0].loc!.x, y: this.targets[0].loc!.y + 1.2, z: this.targets[0].loc!.z }); } catch { /* unloaded */ } }
+          play.push([band, sub, Math.min(10, (d.evAmp[e] * this.s.volume * this.eqGain(c * r)) / BURST_RMS[band])]);
         }
+      };
+      if (lead >= 1) {
+        // the next tick's bursts go now (and right after a start or a seek those of this tick too, late by that tick)
+        const to = ph2 + sp;
+        for (let m = Math.ceil(Math.max(ph, this.burstTo) - 1e-9); m < to - 1e-9 && m < d.F; m++) add(m, m < ph2 - 1e-9 ? ph : ph2);
+      } else {
+        for (let m = Math.ceil(ph - 1e-9); m < ph2 - 1e-9 && m < d.F; m++) add(m, ph);
       }
-    }
-    this.burstTo = this.s.bursts && sp > 0 ? ph2 + sp : -1;
+      let go = play;
+      if (lead < 0) { go = this.pendingBursts; this.pendingBursts = play; }
+      for (const [band, sub, vol] of go) {
+        if (this.s.sounds && !this.roomForBurst()) continue;
+        for (const t of this.targets) {
+          try {
+            if (t.player) t.player.playSound(`spectral.b${band}_${sub}`, { volume: vol, pitch: r });
+            else t.dim!.playSound(`spectral.b${band}_${sub}_3d`, t.loc!, { volume: 1, pitch: r }).setVolume(vol);   // range of volume 1, level as multiplier
+          } catch { /* gone */ }
+          this.calls++;
+        }
+        if (this.mode === 'speaker' && band === 0) { try { this.targets[0].dim!.spawnParticle('minecraft:note_particle', { x: this.targets[0].loc!.x, y: this.targets[0].loc!.y + 1.2, z: this.targets[0].loc!.z }); } catch { /* unloaded */ } }
+      }
+    } else this.pendingBursts = [];
+    this.burstTo = this.s.bursts && !this.s.attacks && sp > 0 && lead >= 1 ? ph2 + sp : -1;
     this.ph = Math.max(0, Math.min(d.F - 1, ph2));
     if (this.s.viz && (this.ticks & 1) === 0) this.viz();
     const ms = Date.now() - t0;
@@ -362,6 +456,12 @@ class Session {
       return;
     }
     this.applyNoise(b, L);
+  }
+  /** a noise band's attack (s.attacks): a 12 ms fade now, never held back by a budget */
+  private noiseAttack(b: number, L: number) {
+    L = Math.min(10, Math.max(SILENT, L));
+    this.lastNL[b] = L;
+    for (const t of this.targets) { const s = t.nz[b]; if (s) { try { s.fade(FADE_ATTACK, L); } catch { /* gone */ } this.calls++; } }
   }
   private applyNoise(b: number, L: number) {
     this.lastNL[b] = L;
@@ -400,17 +500,18 @@ class Session {
   }
   status(): string {
     const m = this.song.meta, avg = this.ticks ? this.ms / this.ticks : 0, calls = this.ticks ? this.totalCalls / this.ticks : 0;
-    const inst = this.targets.reduce((n, t) => n + t.osc.length + t.nz.length, 0);
+    const inst = this.targets.reduce((n, t) => n + t.osc.length + t.nz.filter((x) => x).length, 0);
     return `status: ${this.paused ? 'paused' : this.frozen ? 'frozen' : 'playing'} ${m.id} ${fmt(this.ph / 20)}/${fmt(m.seconds)} frame ${Math.round(this.ph)}/${this.d.F} ` +
       `mode ${this.mode} voices ${this.V} instances ${inst} speed ${this.s.speed} semis ${this.s.semis} volume ${Math.round(this.s.volume * 100)}% ` +
-      `calls/tick ${calls.toFixed(1)} peak ${this.peakCalls} ms/tick ${avg.toFixed(2)} rebuilds ${this.rebuilds} quality ${this.s.mode ?? 'quality'} budget ${this.s.budget || 'none'} deferred ${this.deferred}`;
+      `calls/tick ${calls.toFixed(1)} peak ${this.peakCalls} ms/tick ${avg.toFixed(2)} rebuilds ${this.rebuilds} quality ${this.s.mode ?? 'quality'} budget ${this.s.budget || 'none'} deferred ${this.deferred} ` +
+      `engine hf ${this.s.hf || 'none'} fold ${this.s.fold ? 'on' : 'off'} sounds ${this.s.sounds || 'any'} drums ${!this.s.bursts ? 'off' : this.s.attacks ? 'noise' : ['behind', 'tick', 'ahead'][Math.max(-1, Math.min(1, this.s.burstLead ?? 1)) + 1]}`;
   }
 }
 const fmt = (s: number) => `${Math.floor(Math.abs(s) / 60)}:${String(Math.floor(Math.abs(s) % 60)).padStart(2, '0')}`;
 const dist = (a: Vector3, b: Vector3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
 const sessions = new Map<string, Session>();
-const settingsOf = (p: Player): Settings => ({ ...DEFAULTS, voices: platformVoices(p), ...load<Partial<Settings>>(p, 'spectral:settings', {}) });
+const settingsOf = (p: Player): Settings => ({ ...DEFAULTS, ...platformEngine(p), ...load<Partial<Settings>>(p, 'spectral:settings', {}) });
 const keep = (p: Player, s: Settings) => save(p, 'spectral:settings', s);
 
 system.runInterval(() => {
@@ -442,7 +543,7 @@ function stopFor(p: Player) { const s = mine(p); if (!s) return none; s.stop(); 
 function pauseFor(p: Player) {
   const s = mine(p); if (!s) return none;
   s.paused = !s.paused;
-  for (const t of s.targets) for (const x of [...t.osc, ...t.nz]) { try { s.paused ? x.pause() : x.resume(); } catch { /* gone */ } }
+  for (const t of s.targets) for (const x of [...t.osc, ...t.nz]) { try { if (s.paused) x?.pause(); else x?.resume(); } catch { /* gone */ } }
   return s.paused ? '§e⏸ paused' : '§a▶ resumed';
 }
 function freezeFor(p: Player) { const s = mine(p); if (!s) return none; s.frozen = !s.frozen; return s.frozen ? '§b❄ frozen' : '§a▶ thawed'; }
@@ -484,6 +585,23 @@ cmd('spectral:mode', 'quality: every voice, every command · light (Realms, many
   return light ? `§bquality light: ${LIGHT_VOICES} voices, ≤${LIGHT_BUDGET} commands/tick per listener, no bursts`
     : `§bquality full: ${full === DEFAULTS.voices ? 'every voice' : `${full} voices (as many sounds as this client plays at once)`}, no command budget`;
 });
+cmd('spectral:engine', 'The client\'s sound engine (measuring): highest frequency it plays in Hz (0 = no limit), fold the voices not played into the noise, at most this many sounds at once (0 = no limit), at most this many commands a tick (0 = no limit)',
+  { hf: 'int', fold: 'bool', sounds: 'int', 'budget?': 'int' }, async (p, a) => {
+    const s = settingsOf(p); s.hf = Math.max(0, Math.min(24000, a.hf)); s.fold = a.fold; s.sounds = Math.max(0, Math.min(255, a.sounds));
+    if (a.budget !== undefined) s.budget = Math.max(0, Math.min(1000, a.budget));
+    keep(p, s);
+    const m = mine(p);
+    if (m) { m.s.hf = s.hf; m.s.fold = s.fold; m.s.sounds = s.sounds; m.s.budget = s.budget; for (const t of m.targets) await m.build(t); }
+    return `§bengine: hf ${s.hf || 'none'} · fold ${s.fold ? 'on' : 'off'} · sounds ${s.sounds || 'no limit'} · budget ${s.budget || 'none'}`;
+  });
+cmd('spectral:drums', 'Drum attacks: one-shot bursts a tick ahead / in their tick / a tick behind, or the noise bands attack (no one-shots), or off',
+  { how: ['ahead', 'tick', 'behind', 'noise', 'off'] }, (p, a) => {
+    const s = settingsOf(p), how = a.how as string;
+    s.bursts = how !== 'off'; s.attacks = how === 'noise'; s.burstLead = how === 'tick' ? 0 : how === 'behind' ? -1 : 1;
+    keep(p, s);
+    const m = mine(p); if (m) { m.s.bursts = s.bursts; m.s.attacks = s.attacks; m.s.burstLead = s.burstLead; }
+    return `§bdrums: ${how}`;
+  });
 cmd('spectral:loop', 'Loop the song on/off', {}, (p) => { const s = settingsOf(p); s.loop = !s.loop; keep(p, s); const m = mine(p); if (m) m.s.loop = s.loop; return `§bloop ${s.loop ? 'on' : 'off'}`; });
 cmd('spectral:viz', 'Spectrum on the action bar on/off', {}, (p) => { const s = settingsOf(p); s.viz = !s.viz; keep(p, s); const m = mine(p); if (m) m.s.viz = s.viz; return `§bspectrum ${s.viz ? 'on' : 'off'}`; });
 cmd('spectral:join', 'Listen in on another player\'s headphones', { who: 'player' }, async (p, a) => {
@@ -631,7 +749,7 @@ world.afterEvents.playerSpawn.subscribe((e) => {
 world.afterEvents.playerDimensionChange.subscribe((e) => { const s = mine(e.player); if (s?.mode === 'phones') rebuild(s, e.player); });
 async function rebuild(s: Session, p: Player) {
   const t = s.targets.find((t) => t.player?.id === p.id); if (!t) return;
-  for (const x of [...t.osc, ...t.nz]) { try { x.stop(); } catch { /* gone */ } }
+  for (const x of [...t.osc, ...t.nz]) { try { x?.stop(); } catch { /* gone */ } }
   t.osc = []; t.nz = [];
   await s.build(t); s.resync(t); s.rebuilds++;
 }

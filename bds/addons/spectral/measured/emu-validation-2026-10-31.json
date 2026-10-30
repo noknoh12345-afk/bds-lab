@@ -1,0 +1,255 @@
+{
+ "what": "the emulator (tools/emu/client.py, spec.json with the measured 24 kHz client path: render(path=True)) against the real recordings of the same song data and the same add-on build (ViSQOL v3 against the original, in-run WAV for the real side)",
+ "status": "emulated vs measured",
+ "one_shot_latency_ms": 49.1,
+ "configs": {
+  "g": {
+   "what": "48 voices, bursts with their tick (old build e4ed470~1), runs 41068618513/41076646541",
+   "median_emu": 2.006,
+   "median_real": 1.993,
+   "mean_abs_diff": 0.242,
+   "mean_diff": 0.205,
+   "corr": 0.934,
+   "songs": {
+    "piano_chopin_op66": {
+     "emu": 1.9311,
+     "real": 1.6365
+    },
+    "piano_gymnopedie": {
+     "emu": 1.727,
+     "real": 1.6335
+    },
+    "vocal_name_of_love": {
+     "emu": 3.531,
+     "real": 3.4519
+    },
+    "vocal_stars": {
+     "emu": 2.6947,
+     "real": 2.1849
+    },
+    "choir_how_long": {
+     "emu": 1.4928,
+     "real": 1.3945
+    },
+    "drums_round": {
+     "emu": 1.6838,
+     "real": 1.4433
+    },
+    "rock_big": {
+     "emu": 2.3511,
+     "real": 2.0453
+    },
+    "edm_detection": {
+     "emu": 2.69,
+     "real": 2.748
+    },
+    "orchestra_five_armies": {
+     "emu": 2.0064,
+     "real": 1.4248
+    },
+    "funk_funkorama": {
+     "emu": 1.8648,
+     "real": 1.7231
+    },
+    "speech_ja_soseki": {
+     "emu": 2.4293,
+     "real": 2.1256
+    },
+    "speech_en_wordsworth": {
+     "emu": 1.8082,
+     "real": 1.9934
+    },
+    "demo_selfmade": {
+     "emu": 2.4929,
+     "real": 2.2389
+    }
+   }
+  },
+  "m": {
+   "what": "24 voices (/spectral:voices 24), same build, run 41083086951",
+   "median_emu": 2.461,
+   "median_real": 1.994,
+   "mean_abs_diff": 0.278,
+   "mean_diff": 0.271,
+   "corr": 0.874,
+   "songs": {
+    "piano_gymnopedie": {
+     "emu": 1.7167,
+     "real": 1.6236
+    },
+    "piano_chopin_op66": {
+     "emu": 2.0709,
+     "real": 1.789
+    },
+    "vocal_stars": {
+     "emu": 2.559,
+     "real": 2.3711
+    },
+    "vocal_name_of_love": {
+     "emu": 3.4249,
+     "real": 3.4177
+    },
+    "choir_how_long": {
+     "emu": 1.753,
+     "real": 1.5557
+    },
+    "drums_round": {
+     "emu": 1.6933,
+     "real": 1.5099
+    },
+    "rock_big": {
+     "emu": 2.5889,
+     "real": 1.9936
+    },
+    "edm_detection": {
+     "emu": 2.7487,
+     "real": 2.6313
+    },
+    "orchestra_five_armies": {
+     "emu": 2.6039,
+     "real": 1.6672
+    },
+    "funk_funkorama": {
+     "emu": 1.8196,
+     "real": 1.8626
+    },
+    "speech_ja_soseki": {
+     "emu": 2.4613,
+     "real": 2.0888
+    },
+    "speech_en_wordsworth": {
+     "emu": 2.3234,
+     "real": 2.0599
+    },
+    "demo_selfmade": {
+     "emu": 2.5047,
+     "real": 2.1737
+    }
+   }
+  },
+  "l": {
+   "what": "light mode (16 voices, 24 commands/tick, no bursts), same build, run 41083086951",
+   "median_emu": 2.454,
+   "median_real": 2.147,
+   "mean_abs_diff": 0.17,
+   "mean_diff": 0.166,
+   "corr": 0.965,
+   "songs": {
+    "piano_chopin_op66": {
+     "emu": 2.0303,
+     "real": 1.7817
+    },
+    "piano_gymnopedie": {
+     "emu": 1.6871,
+     "real": 1.5982
+    },
+    "vocal_stars": {
+     "emu": 2.4541,
+     "real": 2.3117
+    },
+    "vocal_name_of_love": {
+     "emu": 3.4163,
+     "real": 3.2665
+    },
+    "drums_round": {
+     "emu": 1.6689,
+     "real": 1.6054
+    },
+    "choir_how_long": {
+     "emu": 1.8246,
+     "real": 1.7156
+    },
+    "edm_detection": {
+     "emu": 2.7091,
+     "real": 2.67
+    },
+    "rock_big": {
+     "emu": 2.8566,
+     "real": 2.7949
+    },
+    "orchestra_five_armies": {
+     "emu": 2.5751,
+     "real": 2.1469
+    },
+    "funk_funkorama": {
+     "emu": 1.7913,
+     "real": 1.812
+    },
+    "speech_en_wordsworth": {
+     "emu": 2.4364,
+     "real": 2.1677
+    },
+    "speech_ja_soseki": {
+     "emu": 2.4699,
+     "real": 2.279
+    },
+    "demo_selfmade": {
+     "emu": 2.5132,
+     "real": 2.1193
+    }
+   }
+  },
+  "n": {
+   "what": "phone default 24 voices, bursts a tick ahead (e4ed470), run 41089050799",
+   "median_emu": 2.501,
+   "median_real": 2.048,
+   "mean_abs_diff": 0.337,
+   "mean_diff": 0.337,
+   "corr": 0.865,
+   "songs": {
+    "piano_gymnopedie": {
+     "emu": 1.7108,
+     "real": 1.5646
+    },
+    "vocal_stars": {
+     "emu": 2.5472,
+     "real": 2.0479
+    },
+    "piano_chopin_op66": {
+     "emu": 2.0709,
+     "real": 1.8022
+    },
+    "vocal_name_of_love": {
+     "emu": 3.4249,
+     "real": 3.421
+    },
+    "choir_how_long": {
+     "emu": 1.753,
+     "real": 1.5759
+    },
+    "drums_round": {
+     "emu": 1.7027,
+     "real": 1.4947
+    },
+    "rock_big": {
+     "emu": 3.0116,
+     "real": 1.9807
+    },
+    "orchestra_five_armies": {
+     "emu": 2.6039,
+     "real": 2.0835
+    },
+    "edm_detection": {
+     "emu": 3.022,
+     "real": 2.5254
+    },
+    "funk_funkorama": {
+     "emu": 1.9663,
+     "real": 1.9122
+    },
+    "speech_ja_soseki": {
+     "emu": 2.5005,
+     "real": 2.1913
+    },
+    "speech_en_wordsworth": {
+     "emu": 2.3234,
+     "real": 2.2127
+    },
+    "demo_selfmade": {
+     "emu": 2.7801,
+     "real": 2.2291
+    }
+   }
+  }
+ }
+}

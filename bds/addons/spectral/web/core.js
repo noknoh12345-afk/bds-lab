@@ -188,21 +188,26 @@
     }
     return out;
   }
-  function chooseTracks(tracks, F, N, minFrames = MIN_TRACK, margin = 1) {
+  function chooseTracks(tracks, F, N, minFrames = MIN_TRACK, margin = 1, salience = null, groups = null) {
     const cand = [];
     tracks.forEach((t, ti) => {
       if (t.a.length < minFrames) return;
-      let sal = 0; for (let i = 0; i < t.a.length; i++) sal += t.a[i] * aWeight(t.f[i]);
+      let sal = 0;
+      if (salience) sal = salience[ti]; else for (let i = 0; i < t.a.length; i++) sal += t.a[i] * aWeight(t.f[i]);
       cand.push([sal, ti]);
     });
     cand.sort((p, q) => q[0] - p[0] || p[1] - q[1]);
-    const busy = Array.from({ length: N }, () => new Uint8Array(F + 2)), placed = [];
-    for (const [, ti] of cand) {
-      const t = tracks[ti], lo = Math.max(0, t.k0 - margin), hi = Math.min(F, t.k0 + t.a.length + margin);
-      for (let v = 0; v < N; v++) {
-        const b = busy[v]; let free = true;
-        for (let i = lo; i < hi; i++) if (b[i]) { free = false; break; }
-        if (free) { for (let i = lo; i < hi; i++) b[i] = 1; placed.push([v, ti]); break; }
+    const busy = Array.from({ length: N }, () => new Uint8Array(F + 2)), placed = [], taken = new Uint8Array(tracks.length);
+    // groups: [[first voice, end voice, allowed(track index) or null], ...] filled one after the other (tools/spectral.py)
+    for (const [v0, v1, ok] of groups ?? [[0, N, null]]) {
+      for (const [, ti] of cand) {
+        if (taken[ti] || (ok && !ok(ti))) continue;
+        const t = tracks[ti], lo = Math.max(0, t.k0 - margin), hi = Math.min(F, t.k0 + t.a.length + margin);
+        for (let v = v0; v < v1; v++) {
+          const b = busy[v]; let free = true;
+          for (let i = lo; i < hi; i++) if (b[i]) { free = false; break; }
+          if (free) { for (let i = lo; i < hi; i++) b[i] = 1; placed.push([v, ti]); taken[ti] = 1; break; }
+        }
       }
     }
     const fq = new Float64Array(F * N), am = new Float64Array(F * N), att = new Uint8Array(F * N);
@@ -213,6 +218,72 @@
       for (let i = 1; i < a.length; i++) if (a[i - 1] > 0 && a[i] > a[i - 1] * 2.8) att[(k0 + i) * N + v] = 1;
     }
     return { fq, am, att, placed: placed.length };
+  }
+  // ---------------------------------------------------------------- ERB bands (ViSQOL's 32 from 50 Hz): power per frame, track salience, noise fit
+  // (tools/spectral.py erb_band_power, erb_salience, fit_noise)
+  const ERB_N = 32;
+  const ERB_EDGES = (() => {
+    const lo = 21.4 * Math.log10(1 + 0.00437 * 50), hi = 21.4 * Math.log10(1 + 0.00437 * (SR / 2)), e = [];
+    for (let i = 0; i <= ERB_N; i++) e.push((Math.pow(10, (lo + ((hi - lo) * i) / ERB_N) / 21.4) - 1) / 0.00437);
+    return e;
+  })();
+  /** the frame's power in each ERB band from one resolution (over its own range; the outer ones down to 0 and up to SR/2) */
+  function erbAdd(R, P, k) {
+    const scale = 2 / (R.nfft * R.sw2);
+    for (let j = 0; j < ERB_N; j++) {
+      const blo = Math.max(ERB_EDGES[j], R.flo > FMIN ? R.flo : 0), bhi = Math.min(ERB_EDGES[j + 1], R.fhi < FMAX ? R.fhi : SR / 2);
+      if (bhi <= blo) continue;
+      let s = 0; for (let i = Math.floor(blo / R.binhz); i < Math.floor(bhi / R.binhz); i++) s += R.pw[i];
+      P[k * ERB_N + j] += s * scale;
+    }
+  }
+  /** numpy.searchsorted(ERB_EDGES, f) - 1: the band f falls in (edges[j] < f <= edges[j+1]) */
+  const erbBand = (f) => { let j = 0; while (j <= ERB_N && ERB_EDGES[j] < f) j++; return j - 1; };
+  function erbSalience(tracks, P, F, floorDb = 45) {
+    const top = new Float64Array(F), thr = Math.pow(10, -floorDb / 10);
+    for (let k = 0; k < F; k++) { let m = -Infinity; for (let j = 0; j < ERB_N; j++) m = Math.max(m, P[k * ERB_N + j]); top[k] = m; }
+    return tracks.map((t) => {
+      let s = 0;
+      for (let i = 0; i < t.a.length; i++) {
+        const k = t.k0 + i; if (k >= F || t.a[i] <= 0) continue;
+        const j = erbBand(t.f[i]); if (j < 0 || j >= ERB_N) continue;
+        const e = P[k * ERB_N + j]; if (e <= top[k] * thr) continue;
+        s += Math.min(1, (0.5 * t.a[i] * t.a[i]) / Math.max(e, 1e-30));
+      }
+      return s;
+    });
+  }
+  /** noise band levels that, with the voices, give each ERB band of each frame the original's power (relative least squares,
+   *  coordinate descent on non-negative band powers, a fixed number of sweeps) -> band RMS (F x M) */
+  function fitNoise(P, fq, am, F, N, edges, floorDb = 45, sweeps = 60) {
+    const M = edges.length - 1, J = ERB_N, D = new Float64Array(M * J), thr = Math.pow(10, -floorDb / 10);
+    for (let b = 0; b < M; b++) for (let j = 0; j < J; j++) {
+      const ov = Math.min(edges[b + 1], ERB_EDGES[j + 1]) - Math.max(edges[b], ERB_EDGES[j]);
+      if (ov > 0) D[b * J + j] = ov / (edges[b + 1] - edges[b]);
+    }
+    const out = new Float64Array(F * M), pv = new Float64Array(J), w = new Float64Array(J), r = new Float64Array(J), cur = new Float64Array(J), n = new Float64Array(M);
+    for (let k = 0; k < F; k++) {
+      pv.fill(0);
+      for (let v = 0; v < N; v++) {
+        const a = am[k * N + v]; if (!(a > 0)) continue;
+        const j = erbBand(fq[k * N + v]); if (j >= 0 && j < J) pv[j] += 0.5 * (a * a);
+      }
+      let top = -Infinity; for (let j = 0; j < J; j++) top = Math.max(top, P[k * J + j]);
+      if (!(top > 0)) continue;
+      const eps = top * thr;
+      for (let j = 0; j < J; j++) { const p = P[k * J + j]; w[j] = 1 / ((p + eps) * (p + eps)); r[j] = Math.max(p - pv[j], 0); }
+      n.fill(0); cur.fill(0);
+      for (let it = 0; it < sweeps; it++) for (let b = 0; b < M; b++) {
+        let den = 0; for (let j = 0; j < J; j++) { const d = D[b * J + j]; den += w[j] * d * d; }
+        if (den <= 0) continue;
+        let num = 0; for (let j = 0; j < J; j++) { const d = D[b * J + j]; num += w[j] * d * (r[j] - (cur[j] - d * n[b])); }
+        const nb = Math.max(0, num / den);
+        for (let j = 0; j < J; j++) cur[j] += D[b * J + j] * (nb - n[b]);
+        n[b] = nb;
+      }
+      for (let b = 0; b < M; b++) out[k * M + b] = Math.sqrt(n[b]);
+    }
+    return out;
   }
   const ampVal = (c) => (c === 0 ? 0 : Math.pow(10, (AMP_FLOOR_DB + (c - 1) * AMP_STEP_DB) / 20));
   const pitchVal = (c) => 16 * Math.pow(2, c / 6000);
@@ -379,14 +450,18 @@
   /** x: Float32Array mono at 44.1 kHz. progress(fraction) may be async-awaited to keep a page responsive. */
   async function convert(x, opts = {}) {
     const N = opts.voices ?? 48, hyst = 2.0, progress = opts.progress ?? (() => {}), analysis = opts.analysis ?? 'v2';
+    const residual = opts.residual ?? 'all', salienceKind = opts.salience ?? 'a';   // tools/spectral.py convert(residual=, salience=, nested=, hf=)
+    const nested = opts.nested ?? 0, hfLimit = opts.hf ?? 0;
+    let groups = null;
     const allPeaks = [];
     const F = Math.ceil(x.length / HOP) + 1, M = NOISE_EDGES.length - 1;
     const res = RES.map(makeRes);
     const fq = new Float64Array(F * N), am = new Float64Array(F * N), att = new Uint8Array(F * N), nz = new Float64Array(F * M);
     let prevF = new Float64Array(N), prevA = new Float64Array(N), sal = new Float64Array(N);
+    const PE = analysis === 'v2' && (residual === 'fit' || salienceKind === 'erb') ? new Float64Array(F * ERB_N) : null;   // ERB band power per frame
     for (let k = 0; k < F; k++) {
       const pk = [];
-      for (const R of res) { spectrum(R, x, k); peaksOf(R, pk); }
+      for (const R of res) { spectrum(R, x, k); peaksOf(R, pk); if (PE) erbAdd(R, PE, k); }
       pk.sort((a, b) => b[1] - a[1]); pk.length = Math.min(pk.length, MAX_PER_FRAME);
       if (analysis === 'v2') {
         allPeaks.push(pk);
@@ -460,7 +535,10 @@
     }
     let placedN = 0;
     if (analysis === 'v2') {
-      const ch = chooseTracks(trackPartials(allPeaks), F, N);
+      const tracks = trackPartials(allPeaks);
+      const median = (a) => { const b = [...a].sort((p, q) => p - q), n = b.length; return n % 2 ? b[(n - 1) / 2] : (b[n / 2 - 1] + b[n / 2]) / 2; };
+      if (nested && nested < N) groups = [[0, nested, (ti) => !hfLimit || median(tracks[ti].f) < hfLimit], [nested, N, null]];
+      const ch = chooseTracks(tracks, F, N, MIN_TRACK, 1, salienceKind === 'erb' ? erbSalience(tracks, PE, F) : null, groups);
       fq.set(ch.fq); am.set(ch.am); att.set(ch.att); placedN = ch.placed;
       await progress(0.7);
     } else {
@@ -469,12 +547,38 @@
     }
     // most energetic voices first
     const energy = new Float64Array(N); for (let k = 0; k < F; k++) for (let v = 0; v < N; v++) energy[v] += am[k * N + v] ** 2;
-    const order = [...Array(N).keys()].sort((i, j) => energy[j] - energy[i] || i - j);
+    const byE = (a) => a.sort((i, j) => energy[j] - energy[i] || i - j);
+    const order = groups ? [...byE([...Array(nested).keys()]), ...byE([...Array(N - nested).keys()].map((i) => i + nested))] : byE([...Array(N).keys()]);
     const P = (src, T) => { const o = new T(F * N); for (let k = 0; k < F; k++) for (let v = 0; v < N; v++) o[k * N + v] = src[k * N + order[v]]; return o; };
     const fq2 = P(fq, Float64Array), am2 = P(am, Float64Array), att2 = P(att, Uint8Array);
     await progress(0.75);
     let ev = [], noiseBands = null, nsimBest = null, burstBands = null;
     if (analysis === 'v2') {
+      if (residual === 'fit') nz.set(fitNoise(PE, fq2, am2, F, N, NOISE_EDGES));
+      else if (residual === 'voiced') {
+        // tools/spectral.py residual_noise: the band power with the main lobes of the VOICES only taken out (a second pass over
+        // the frames: the unvoiced peaks stay in the noise), bands under 720 Hz x 0.5
+        for (let k = 0; k < F; k++) {
+          const pwb = new Float64Array(M);
+          for (const R of res) {
+            spectrum(R, x, k);
+            const row = R.pw, scale = 2 / (R.nfft * R.sw2);
+            for (let v = 0; v < N; v++) {
+              if (am2[k * N + v] <= 0) continue;
+              const b = Math.round(fq2[k * N + v] / R.binhz);
+              for (let i = Math.max(b - R.ml, 0); i <= Math.min(b + R.ml, R.nb - 1); i++) row[i] = 0;
+            }
+            for (let bi = 0; bi < M; bi++) {
+              const blo = Math.max(NOISE_EDGES[bi], R.flo), bhi = Math.min(NOISE_EDGES[bi + 1], R.fhi);
+              if (bhi <= blo) continue;
+              let s2 = 0; for (let i = Math.floor(blo / R.binhz); i < Math.floor(bhi / R.binhz); i++) s2 += row[i];
+              pwb[bi] += s2 * scale;
+            }
+          }
+          for (let bi = 0; bi < M; bi++) nz[k * M + bi] = Math.sqrt(Math.max(pwb[bi], 0)) * (NOISE_EDGES[bi + 1] <= 720 ? 0.5 : 1);
+          if ((k & 15) === 15) await progress(0.7 + (0.05 * k) / F);
+        }
+      }
       let pk0 = 1e-9;
       for (let k = 0; k < F; k++) { let s2 = 0; for (let v = 0; v < N; v++) s2 += am2[k * N + v] * 0.55; for (let b = 0; b < M; b++) s2 += nz[k * M + b]; pk0 = Math.max(pk0, s2); }
       const g0 = (0.9 / pk0) * Math.pow(10, (opts.gainDb ?? 0) / 20);

@@ -18,9 +18,11 @@ import corpus as C
 import spectral as S
 
 
-def convert(song_id, voices=48):
-    x, meta, blob, stats = S.convert(C.excerpt_path(song_id), voices, title=song_id, artist='corpus')
-    meta['id'] = song_id
+def convert(song_id, voices=48, opts=None, as_id=None):
+    """opts: the converter's own options (tools/spectral.py convert: residual, salience, ...) — an earlier analysis kept
+    behind an option can be sent beside the current one under another id (as_id) and compared in the same run"""
+    x, meta, blob, stats = S.convert(C.excerpt_path(song_id), voices, title=as_id or song_id, artist='corpus', **(opts or {}))
+    meta['id'] = as_id or song_id
     return {'meta': meta, 'data': base64.b64encode(blob).decode()}
 
 
@@ -48,13 +50,15 @@ def fetched(song_id):
     return p
 
 
-def parts(song_id, voices=48, size=1800):
+def parts(song_id, voices=48, size=1800, opts=None, suffix=''):
     """a test song as the server console's script events for Spectral Player (the app run's `audio song <id>`): spectral:song
-    messages of at most `size` characters (/scriptevent takes 2048) — the first carries the meta, each a slice of the data"""
+    messages of at most `size` characters (/scriptevent takes 2048) — the first carries the meta, each a slice of the data.
+    opts / suffix: converter options, and the id the song goes under (<id><suffix>)"""
     fetched(song_id)
-    s = convert(song_id, voices)
+    sid = song_id + suffix
+    s = convert(song_id, voices, opts, sid)
     meta, data = s['meta'], s['data']
-    msg = lambda i, n, chunk, m=None: json.dumps({'id': song_id, 'i': i, 'n': n, **({'meta': m} if m else {}), 'data': chunk}, separators=(',', ':'))
+    msg = lambda i, n, chunk, m=None: json.dumps({'id': sid, 'i': i, 'n': n, **({'meta': m} if m else {}), 'data': chunk}, separators=(',', ':'))
     room = size - len(msg(999, 999, ''))
     first = size - len(msg(999, 999, '', meta))
     if first < 200:
@@ -62,7 +66,7 @@ def parts(song_id, voices=48, size=1800):
     chunks = [data[:first]] + [data[k: k + room] for k in range(first, len(data), room)]
     out = [msg(i, len(chunks), c, meta if i == 0 else None) for i, c in enumerate(chunks)]
     assert all(len(m) <= size for m in out) and ''.join(chunks) == data
-    return {'id': song_id, 'parts': out, 'bytes': len(base64.b64decode(data)), 'seconds': meta.get('seconds'),
+    return {'id': sid, 'parts': out, 'bytes': len(base64.b64decode(data)), 'seconds': meta.get('seconds'),
             'kbps': round(len(base64.b64decode(data)) * 8 / max(1e-9, meta.get('seconds') or 1) / 1000, 1)}
 
 
@@ -103,12 +107,22 @@ def write_unit(unit_dir, ids):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--songs'); ap.add_argument('--out', default=os.path.join(UNIT, 'dist', 'rig')); ap.add_argument('--voices', type=int, default=48)
-    ap.add_argument('--parts', help='one song as console script events (JSON: parts, bytes, seconds, kbps)')
+    ap.add_argument('--parts', help='songs (a,b,..) as console script events (JSON: parts, bytes, seconds, kbps; several: {"songs": [...]}, converted in parallel)')
+    ap.add_argument('--opts', help='--parts: the converter\'s options as JSON (e.g. {"residual": "all"})')
+    ap.add_argument('--suffix', default='', help='--parts: send each song as <id><suffix>')
     ap.add_argument('--unit', help='write the ceiling as a lab unit folder (bds/addons/<name>) for the songs')
     ap.add_argument('--json', help='--parts: write the JSON here instead of printing it')
     a = ap.parse_args()
     if a.parts:
-        res = json.dumps(parts(a.parts, a.voices), ensure_ascii=False)
+        ids = a.parts.split(',')
+        opts = json.loads(a.opts) if a.opts else None
+        if len(ids) == 1:
+            res = json.dumps(parts(ids[0], a.voices, opts=opts, suffix=a.suffix), ensure_ascii=False)
+        else:
+            from concurrent.futures import ProcessPoolExecutor
+            with ProcessPoolExecutor(max_workers=max(1, min(len(ids), os.cpu_count() or 1))) as ex:
+                got = list(ex.map(parts, ids, [a.voices] * len(ids), [1800] * len(ids), [opts] * len(ids), [a.suffix] * len(ids)))
+            res = json.dumps({'songs': got}, ensure_ascii=False)
         if a.json:
             open(a.json, 'w', encoding='utf-8').write(res)
         else:

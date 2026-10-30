@@ -78,12 +78,17 @@ export function pythonFor(labDir) {
 /** a test song (the unit's corpus/manifest.json) converted on this machine and cut into the server console's script events
  *  for the add-on (tools/rig/songpack.py --parts: spectral:song messages, each within /scriptevent's 2048 characters)
  *  → { id, parts: [message…], bytes, seconds, kbps } (also written to `out`) */
-export function songParts({ labDir, addon = 'spectral', id, out }) {
+export function songParts({ labDir, addon = 'spectral', id, ids, out, opts, suffix = '' }) {
   const unit = path.join(labDir, 'bds', 'addons', addon), py = pythonFor(labDir);
+  const list = ids ?? [id];
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  const r = spawnSync(py, [path.join(unit, 'tools', 'rig', 'songpack.py'), '--parts', id, '--json', out], { encoding: 'utf8', timeout: 900_000, maxBuffer: 64e6, cwd: unit });
-  if (r.status !== 0) throw new Error(`曲 ${id} を変換できません: ${(r.stderr || r.stdout).trim().split('\n').slice(-3).join(' | ').slice(0, 400)}`);
-  return JSON.parse(fs.readFileSync(out, 'utf8'));
+  const args = [path.join(unit, 'tools', 'rig', 'songpack.py'), '--parts', list.join(','), '--json', out];
+  if (opts && Object.keys(opts).length) args.push('--opts', JSON.stringify(opts));
+  if (suffix) args.push('--suffix', suffix);
+  const r = spawnSync(py, args, { encoding: 'utf8', timeout: 1_800_000, maxBuffer: 64e6, cwd: unit });
+  if (r.status !== 0) throw new Error(`曲 ${list.join(',')} を変換できません: ${(r.stderr || r.stdout).trim().split('\n').slice(-3).join(' | ').slice(0, 400)}`);
+  const j = JSON.parse(fs.readFileSync(out, 'utf8'));
+  return ids ? (j.songs ?? [j]) : j;
 }
 
 /** the ceiling: a unit bds/addons/<name> that plays each song's original excerpt as an ordinary sound (OGG, category ui, 2D)
@@ -123,7 +128,23 @@ export function deviceAudio(adb, pkg) {
     mixer: { sample_rate: pick(/Sample rate: (\d+)/g), hal_frames: pick(/HAL frame count: (\d+)/g), normal_frames: pick(/Normal frame count: (\d+)/g),
       master_volume: pick(/Master volume: ([\d.]+)/g), master_mute: pick(/Master mute: (\w+)/g) },
     game_options: opts,
+    // the game's own tracks as AudioFlinger lists them (the SRate column: the rate the game hands its sound over at; on
+    // redroid the game was found to mix at 24 kHz from its sound — SPEC.md), each output thread with its rate
+    tracks: gameTracks(af, shOut(adb, `pidof ${pkg} 2>/dev/null`).trim().split(/\s+/).filter(Boolean)),
   };
+}
+function gameTracks(af, pids) {
+  const out = [];
+  for (const sec of af.split(/\n(?=Output thread |Input thread )/)) {
+    const head = /^(Output|Input) thread (\S+)[^\n]*/.exec(sec);
+    if (!head) continue;
+    const rate = /Sample rate: (\d+)/.exec(sec)?.[1] ?? null;
+    const hdr = sec.split('\n').find((l) => /\bSRate\b/.test(l));
+    const rows = sec.split('\n').filter((l) => pids.some((p) => new RegExp(`\\s${p}\\s`).test(` ${l} `)) && /\d{4,6}/.test(l));
+    if (rows.length) out.push({ thread: head[0].slice(0, 80), sample_rate: rate, header: hdr ? hdr.replace(/\s+/g, ' ').trim().slice(0, 200) : null,
+      rows: rows.slice(0, 6).map((l) => l.replace(/\s+/g, ' ').trim().slice(0, 200)) });
+  }
+  return out;
 }
 /** the levels a measurement wants: Android's media volume at its top, the game's audio options at 1 and its background music
  *  (category music: not the add-on's) at `music` — the game stopped first (`stop`: it writes its options back as it ends),

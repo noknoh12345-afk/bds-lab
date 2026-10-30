@@ -567,29 +567,38 @@ def track_partials(peaks, max_dev=60.0, gap=TRACK_GAP):
     return out
 
 
-def choose_tracks(tracks, n_frames, n_voices, min_frames=MIN_TRACK, margin=1):
+def choose_tracks(tracks, n_frames, n_voices, min_frames=MIN_TRACK, margin=1, salience=None, groups=None):
     """weighted interval scheduling, greedy by A-weighted salience: a track gets the first voice that is free over its
-    whole life (+-1 frame); tracks that fit nowhere are not voices"""
+    whole life (+-1 frame); tracks that fit nowhere are not voices.
+    salience: a list (one value per track) instead of the A-weighted one. groups: [(voices, allowed(track index))...]:
+    the voices are filled group by group, each from the tracks its test allows that no earlier group took"""
     cand = []
     for ti, (k0, f, a) in enumerate(tracks):
         if len(a) < min_frames:
             continue
-        sal = 0.0
-        for i in range(len(a)):
-            sal += a[i] * float(a_weight(np.float64(f[i])))
+        if salience is not None:
+            sal = salience[ti]
+        else:
+            sal = 0.0
+            for i in range(len(a)):
+                sal += a[i] * float(a_weight(np.float64(f[i])))
         cand.append((sal, ti))
     cand.sort(key=lambda c: (-c[0], c[1]))
     busy = [bytearray(n_frames + 2) for _ in range(n_voices)]
     placed = []
-    for sal, ti in cand:
+    taken = set()
+    for (vs, ok) in (groups or [(range(n_voices), None)]):
+      for sal, ti in cand:
+        if ti in taken or (ok is not None and not ok(ti)):
+            continue
         k0, f, a = tracks[ti]
         lo, hi = max(0, k0 - margin), min(n_frames, k0 + len(a) + margin)
-        for v in range(n_voices):
+        for v in vs:
             b = busy[v]
             if not any(b[lo:hi]):
                 for i in range(lo, hi):
                     b[i] = 1
-                placed.append((v, ti))
+                placed.append((v, ti)); taken.add(ti)
                 break
     fq = np.zeros((n_frames, n_voices)); am = np.zeros((n_frames, n_voices)); att = np.zeros((n_frames, n_voices), bool)
     for v, ti in placed:
@@ -602,6 +611,89 @@ def choose_tracks(tracks, n_frames, n_voices, min_frames=MIN_TRACK, margin=1):
             if a[i - 1] > 0 and a[i] > a[i - 1] * 2.8:
                 att[k0 + i, v] = True
     return fq, am, att, len(placed)
+
+
+def erb_band_power(spectra, n_frames, n_bands=32, lo=50.0):
+    """power per ERB band (ViSQOL's 32 bands from 50 Hz) per frame from the resolution spectra (each over its own range)
+    -> (centres, edges, P[k, j])"""
+    e_lo = 21.4 * math.log10(1 + 0.00437 * lo); e_hi = 21.4 * math.log10(1 + 0.00437 * (SR / 2))
+    edges = [(10 ** ((e_lo + (e_hi - e_lo) * i / n_bands) / 21.4) - 1) / 0.00437 for i in range(n_bands + 1)]
+    P = np.zeros((n_frames, n_bands))
+    for (pw, nfft, sw2, ml, flo, fhi) in spectra:
+        binhz = SR / nfft
+        scale = 2.0 / (nfft * sw2)
+        for j in range(n_bands):
+            blo, bhi = max(edges[j], flo if flo > FMIN else 0.0), min(edges[j + 1], fhi if fhi < FMAX else SR / 2)
+            if bhi <= blo:
+                continue
+            P[:, j] += pw[:, int(blo / binhz):int(bhi / binhz)].sum(1) * scale
+    return edges, P
+
+
+def erb_salience(tracks, spectra, n_frames, floor_db=45.0):
+    """how much of its ERB band each track explains, summed over its frames (a track that is its band's sound counts 1
+    a frame wherever it is: bass the same as treble, as ViSQOL's equal bands see it). Frames whose band is more than
+    floor_db under the loudest band of the frame do not count (ViSQOL floors them)"""
+    edges, P = erb_band_power(spectra, n_frames)
+    top = P.max(1)
+    out = []
+    for (k0, f, a) in tracks:
+        s = 0.0
+        for i in range(len(a)):
+            k = k0 + i
+            if k >= n_frames or a[i] <= 0:
+                continue
+            j = int(np.searchsorted(edges, f[i]) - 1)
+            if j < 0 or j >= P.shape[1]:
+                continue
+            e = P[k, j]
+            if e <= top[k] * 10 ** (-floor_db / 10):
+                continue
+            s += min(1.0, 0.5 * a[i] * a[i] / max(e, 1e-30))
+        out.append(s)
+    return out
+
+
+def fit_noise(spectra, fq, am, n_frames, edges=None, floor_db=45.0, sweeps=60):
+    """noise band levels that, with the voices, give each ERB band of each frame the original's power (least squares in
+    relative power: every band counts the same, as in ViSQOL; bands more than floor_db under the frame's loudest are
+    floored). Coordinate descent on non-negative band powers, a fixed number of sweeps -> band RMS (F, M)"""
+    edges = edges or NOISE_EDGES
+    eb, Po = erb_band_power(spectra, n_frames)
+    J = Po.shape[1]; M = len(edges) - 1
+    D = np.zeros((M, J))
+    for b in range(M):
+        for j in range(J):
+            ov = min(edges[b + 1], eb[j + 1]) - max(edges[b], eb[j])
+            if ov > 0:
+                D[b, j] = ov / (edges[b + 1] - edges[b])
+    Pv = np.zeros((n_frames, J))
+    for k in range(n_frames):
+        for v in np.nonzero(am[k] > 0)[0]:
+            j = int(np.searchsorted(eb, fq[k, v]) - 1)
+            if 0 <= j < J:
+                Pv[k, j] += 0.5 * am[k, v] ** 2
+    out = np.zeros((n_frames, M))
+    for k in range(n_frames):
+        top = Po[k].max()
+        if top <= 0:
+            continue
+        eps = top * 10 ** (-floor_db / 10)
+        w = 1.0 / (Po[k] + eps) ** 2
+        r = np.maximum(Po[k] - Pv[k], 0.0)
+        n = np.zeros(M)
+        cur = np.zeros(J)                      # D^T n
+        for _ in range(sweeps):
+            for b in range(M):
+                d = D[b]
+                den = float((w * d * d).sum())
+                if den <= 0:
+                    continue
+                res = r - (cur - d * n[b])
+                nb = max(0.0, float((w * d * res).sum()) / den)
+                cur += d * (nb - n[b]); n[b] = nb
+        out[k] = np.sqrt(n)
+    return out
 
 
 def stochastic_residual(spectra, peaks, n_frames, low_cut=0.5):
@@ -780,11 +872,25 @@ def choose_noise_bands(x, fq, am, att, nz, gain, margin=NSIM_MARGIN):
     return keep, best, cur
 
 
+BURST_TILT = 0.0      # dB per octave across a burst's band (0: white, -3: pink)
+
+
+def tilted(y, lo, hi, tilt_db_oct):
+    """y (a band noise) with a spectral tilt of tilt_db_oct dB per octave about the band's geometric centre, unit RMS"""
+    if not tilt_db_oct:
+        return y
+    n = len(y)
+    f = np.arange(n // 2 + 1) * (SR / n)
+    g = (np.maximum(f, 1.0) / math.sqrt(lo * hi)) ** (tilt_db_oct / 6.020599913279624)
+    z = np.fft.irfft(np.fft.rfft(y) * g, n)
+    return z / math.sqrt(float(np.mean(z * z)) + 1e-30)
+
+
 def check_burst(bnd, n_len):
     """a burst of band bnd for the converter's render: band noise under the decay of tools/make_rp_assets.py's bursts,
     its first 10 ms at unit RMS (the engine plays the RP's burst so that those 10 ms have the event's level)"""
     lo, hi = BURST_BANDS[bnd]
-    y = check_noise(lo, hi, 8192, seed=50 + bnd)[:n_len]
+    y = tilted(check_noise(lo, hi, 8192, seed=50 + bnd), lo, hi, BURST_TILT)[:n_len]
     decay = [22.0, 45.0, 75.0][bnd]
     t = np.arange(n_len) / SR
     y = y * np.exp(-t * decay) * np.clip(t / 0.0015, 0, 1)
@@ -822,21 +928,41 @@ def choose_bursts(x, cur, events, gain, margin=NSIM_MARGIN):
     return keep, best
 
 
-def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=None, analysis='v2'):
+def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=None, analysis='v2', residual='all', salience='a',
+            nested=0, hf=0.0, burst_tilt=None, noise_edges=None):
+    """residual: 'all' (every peak's lobe out of the noise) | 'voiced' (only the voices'). salience: 'a' (A-weighted) |
+    'erb' (share of its ERB band). nested: the first `nested` voices are chosen from the tracks under hf Hz (a client that
+    plays only those and mixes at 2*hf gets the best of them), the rest from all"""
+    global BURST_TILT, NOISE_EDGES
+    if burst_tilt is not None:
+        BURST_TILT = burst_tilt
+    if noise_edges is not None:
+        NOISE_EDGES = list(noise_edges)
     x = load_audio(path)
     if max_seconds: x = x[: int(max_seconds * SR)]
     n_frames = int(math.ceil(len(x) / HOP)) + 1
     peaks, spectra = find_peaks(x, n_frames)
     info = {}
+    groups = None
     if analysis == 'v2':
-        fq, am, att, info['placed'] = choose_tracks(track_partials(peaks), n_frames, n_voices)
+        tracks = track_partials(peaks)
+        sal = erb_salience(tracks, spectra, n_frames) if salience == 'erb' else None
+        if nested and nested < n_voices:
+            lowf = lambda ti: (not hf) or float(np.median(tracks[ti][1])) < hf
+            groups = [(range(nested), lowf), (range(nested, n_voices), None)]
+        fq, am, att, info['placed'] = choose_tracks(tracks, n_frames, n_voices, salience=sal, groups=groups)
     else:
         fq, am, att = allocate(peaks, n_voices)
-    # most energetic voices first: an in-game voice cap then drops the least important ones
-    order = np.argsort(-(am ** 2).sum(0), kind='stable')
+    # most energetic voices first: an in-game voice cap then drops the least important ones (nested: within each group)
+    if groups:
+        e = (am ** 2).sum(0)
+        order = np.concatenate([nested * 0 + np.argsort(-e[:nested], kind='stable'), nested + np.argsort(-e[nested:], kind='stable')])
+    else:
+        order = np.argsort(-(am ** 2).sum(0), kind='stable')
     fq, am, att = fq[:, order], am[:, order], att[:, order]
     if analysis == 'v2':
-        nz = stochastic_residual(spectra, peaks, n_frames)
+        nz = (stochastic_residual(spectra, peaks, n_frames) if residual == 'all' else
+              fit_noise(spectra, fq, am, n_frames) if residual == 'fit' else residual_noise(spectra, fq, am, n_frames))
         peak0 = max(1e-9, float(np.max(am.sum(1) * 0.55 + nz.sum(1))))
         g0 = (0.9 / peak0) * 10 ** (gain_db / 20)
         keep, info['nsim_lite'], cur = choose_noise_bands(x, fq, am, att, nz, g0)

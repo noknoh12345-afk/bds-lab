@@ -259,6 +259,36 @@ wait 300
 @A cmd /spectral:stop
 ~ @A ■ stopped
 
+## the client's sound engine and the drum attacks can be set (for measuring a client)
+@A cmd /spectral:play demo
+~ @A ▶ Demo \(original\)
+wait 1000
+@A cmd /spectral:engine 11500 true 32 24
+= @A engine: hf 11500 · fold on · sounds 32 · budget 24
+wait 300
+@A cmd /spectral:status
+~ @A status: playing demo .* voices 48 instances 55 .* budget 24 .* engine hf 11500 fold on sounds 32 drums ahead
+@A cmd /spectral:drums noise
+= @A drums: noise
+@A cmd /spectral:drums behind
+= @A drums: behind
+@A cmd /spectral:drums tick
+= @A drums: tick
+@A cmd /spectral:drums off
+= @A drums: off
+wait 300
+@A cmd /spectral:status
+~ @A status: playing demo .* drums off
+@A cmd /spectral:engine 0 false 0 0
+= @A engine: hf none · fold off · sounds no limit · budget none
+@A cmd /spectral:drums ahead
+= @A drums: ahead
+wait 300
+@A cmd /spectral:status
+~ @A status: playing demo .* voices 48 instances 56 .* budget none .* engine hf none fold off sounds any drums ahead
+@A cmd /spectral:stop
+~ @A ■ stopped
+
 ## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands
 @C join platform=mobile
 @C cmd /spectral:play demo

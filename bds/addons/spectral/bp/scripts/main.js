@@ -150,6 +150,7 @@ var BASE_HZ = 1760;
 var NOISE_RMS = [0.181311, 0.180788, 0.179998, 0.179116, 0.178403, 0.177544, 0.177018, 0.175986];
 var NOISE_BANDS = [[180, 360], [360, 720], [720, 1440], [1440, 2880], [2880, 5e3], [5e3, 8e3], [8e3, 12e3], [12e3, 17e3]];
 var BURST_RMS = [0.3, 0.3, 0.3];
+var BURST_BANDS = [[30, 200], [200, 4e3], [4e3, 16e3]];
 var SUB = 4;
 
 // addons/spectral/src/songs/demo.ts
@@ -294,18 +295,26 @@ addSong(genMeta("shepard", "Shepard\u2013Risset glissando", 40, 10), void 0, (d)
     }
   }
 });
-var DEFAULTS = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voices: 64, noise: true, bursts: true, viz: true, loop: false, budget: 0, mode: "quality" };
+var DEFAULTS = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voices: 64, noise: true, bursts: true, viz: true, loop: false, budget: 0, mode: "quality", hf: 0, fold: false, sounds: 0 };
 var LIGHT_VOICES = 16;
 var LIGHT_BUDGET = 24;
-var CLIENT_SOUNDS = { Mobile: 32 };
-function platformVoices(p) {
+var CLIENTS = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false } };
+function clientOf(p) {
   let kind = "";
   try {
     kind = String(p.clientSystemInfo.platformType);
   } catch {
   }
-  const n = CLIENT_SOUNDS[kind];
-  return n ? Math.max(4, n - NOISE_BANDS.length) : DEFAULTS.voices;
+  return CLIENTS[kind];
+}
+var bandsFor = (hf) => NOISE_BANDS.filter((b) => !hf || b[0] < hf).length;
+function platformVoices(p) {
+  const c = clientOf(p);
+  return c ? Math.max(4, c.sounds - bandsFor(c.mixHz / 2)) : DEFAULTS.voices;
+}
+function platformEngine(p) {
+  const c = clientOf(p);
+  return c ? { voices: platformVoices(p), hf: c.mixHz ? Math.round(c.mixHz / 2 * 0.958) : 0, fold: c.fold, sounds: c.limit ? c.sounds : 0 } : {};
 }
 var Session = class {
   constructor(owner, song, d, mode, s) {
@@ -344,6 +353,14 @@ var Session = class {
   get V() {
     return Math.min(this.s.voices, this.d.N);
   }
+  /** a noise band this client can play (under its frequency limit) */
+  bandOn(b) {
+    return !this.s.hf || NOISE_BANDS[b][0] * this.ratio < this.s.hf;
+  }
+  /** ticks at which the bursts sent so far have finished (the sound budget counts them while they play) */
+  burstEnds = [];
+  /** bursts held for the next tick (s.burstLead -1) */
+  pendingBursts = [];
   get ratio() {
     return Math.pow(2, this.s.semis / 12);
   }
@@ -364,7 +381,17 @@ var Session = class {
       for (let i = 0; i < 16 && t.osc.length < want; i++) t.osc.push(this.loop(t, "spectral.osc"));
       await system2.waitTicks(1);
     }
-    while (t.nz.length < M) t.nz.push(this.loop(t, "spectral.n" + t.nz.length));
+    for (let b = 0; b < M; b++) {
+      if (this.bandOn(b) && !t.nz[b]) t.nz[b] = this.loop(t, "spectral.n" + b);
+      else if (!this.bandOn(b) && t.nz[b]) {
+        try {
+          t.nz[b].stop();
+        } catch {
+        }
+        t.nz[b] = void 0;
+      }
+    }
+    t.nz.length = M;
   }
   async addListener(p) {
     if (this.mode !== "phones" || this.targets.some((t2) => t2.player?.id === p.id)) return;
@@ -380,8 +407,10 @@ var Session = class {
       t.osc[v].setVolume(this.lastL[v]);
     }
     for (let b = 0; b < t.nz.length; b++) {
-      t.nz[b].setPitch(this.lastNP);
-      t.nz[b].setVolume(this.lastNL[b]);
+      const x = t.nz[b];
+      if (!x) continue;
+      x.setPitch(this.lastNP);
+      x.setVolume(this.lastNL[b]);
     }
   }
   async start() {
@@ -393,7 +422,7 @@ var Session = class {
     for (const t of this.targets) {
       for (const s of [...t.osc, ...t.nz]) {
         try {
-          s.stop();
+          s?.stop();
         } catch {
         }
       }
@@ -516,6 +545,19 @@ var Session = class {
     const m = Math.ceil(from - 1e-9), d = this.d;
     return m < to - 1e-9 && m < d.F && d.att[m * d.N + v] && d.amp[m * d.N + v] > 0 ? m : -1;
   }
+  /** under a sound budget (s.sounds): is there room for one more burst beside the voices and bands that are sounding and
+   *  the bursts still playing (a burst lasts BURST_LEN after up to 37.5 ms of silence and the ~49 ms a one-shot lands late)?
+   *  Takes the room when there is */
+  roomForBurst() {
+    const now = this.ticks;
+    this.burstEnds = this.burstEnds.filter((t) => t > now);
+    let n = this.burstEnds.length;
+    for (let v = 0; v < this.V; v++) if (this.lastL[v] > SILENT * 4) n++;
+    for (let b = 0; b < this.d.M; b++) if (this.bandOn(b) && this.lastNL[b] > SILENT * 4) n++;
+    if (n + 1 > this.s.sounds) return false;
+    this.burstEnds.push(now + 5);
+    return true;
+  }
   tick() {
     if (!this.started || this.paused || this.ending) return;
     const t0 = Date.now();
@@ -544,7 +586,27 @@ var Session = class {
       return;
     }
     const q2 = Math.max(0, Math.min(d.F - 1, ph2));
+    const hf = this.s.hf ?? 0, extra = this.s.fold ? new Float32Array(d.M) : void 0;
+    const fold = (f, a) => {
+      if (!extra || a <= 0) return;
+      for (let b = 0; b < d.M; b++) if (f >= NOISE_BANDS[b][0] && f < NOISE_BANDS[b][1]) {
+        extra[b] += a * a / 2;
+        return;
+      }
+    };
+    if (extra) for (let v = this.V; v < N; v++) {
+      const [a1, f1] = this.at(v, q2);
+      fold(f1, a1);
+    }
     for (let v = 0; v < this.V; v++) {
+      if (hf) {
+        const [a12, f12] = this.at(v, q2);
+        if (a12 > 0 && f12 * r >= hf) {
+          this.send(v, 0, FADE_SMOOTH, SILENT);
+          fold(f12, a12);
+          continue;
+        }
+      }
       const m = sp > 0 && sp <= 1.5 ? this.attackAt(v, ph, ph2) : -1;
       if (m >= 0) {
         const f = d.freq[m * N + v];
@@ -562,47 +624,90 @@ var Session = class {
     }
     if (Math.abs(this.lastNP - r) > 1e-4) {
       this.lastNP = r;
-      for (const t of this.targets) for (const s of t.nz) {
-        try {
-          s.setPitch(r);
-        } catch {
+      for (const t of this.targets) {
+        if (this.s.hf) this.build(t);
+        for (const s of t.nz) {
+          try {
+            s?.setPitch(r);
+          } catch {
+          }
         }
       }
     }
+    const att = this.s.attacks && this.s.bursts && this.s.noise && sp > 0 && sp <= 1.5;
+    const onset = (from, to, b) => {
+      for (let m = Math.ceil(from - 1e-9); m < to - 1e-9 && m < d.F; m++) {
+        let e = 0;
+        for (let x = d.evIdx[m]; x < d.evIdx[m + 1]; x++) {
+          const bb = BURST_BANDS[d.evBand[x]];
+          if (NOISE_BANDS[b][0] < bb[1] && NOISE_BANDS[b][1] > bb[0]) e += d.evAmp[x] * d.evAmp[x] * 0.35 / 3;
+        }
+        if (e > 0) return [m, e];
+      }
+      return [-1, 0];
+    };
     for (let b = 0; b < d.M; b++) {
+      if (!this.bandOn(b)) continue;
       const i = Math.floor(q2), j = Math.min(i + 1, d.F - 1), tt = q2 - i;
-      const a = d.nz[i * d.M + b] * (1 - tt) + d.nz[j * d.M + b] * tt;
+      let a = d.nz[i * d.M + b] * (1 - tt) + d.nz[j * d.M + b] * tt;
+      if (extra && extra[b] > 0) a = Math.sqrt(a * a + extra[b]);
       const c = Math.sqrt(NOISE_BANDS[b][0] * NOISE_BANDS[b][1]) * r;
+      if (att) {
+        const [mNow, eNow] = onset(ph, ph2, b);
+        if (eNow > 0) {
+          const lv = Math.sqrt(d.nz[mNow * d.M + b] ** 2 + eNow + (extra ? extra[b] : 0));
+          this.noiseAttack(b, lv * this.s.volume * this.eqGain(c) / NOISE_RMS[b]);
+          continue;
+        }
+        if (onset(ph2, ph2 + sp, b)[1] > 0) continue;
+      }
       this.noise(b, this.s.noise ? a * this.s.volume * this.eqGain(c) / NOISE_RMS[b] : SILENT);
     }
     this.flush();
-    if (this.s.bursts && sp > 0) {
-      const to = ph2 + sp;
-      for (let m = Math.ceil(Math.max(ph, this.burstTo) - 1e-9); m < to - 1e-9 && m < d.F; m++) {
-        const base = m < ph2 - 1e-9 ? ph : ph2;
-        for (let e = d.evIdx[m]; e < d.evIdx[m + 1]; e++) {
+    const lead = this.s.burstLead ?? 1;
+    if (this.s.bursts && !this.s.attacks && sp > 0) {
+      const play2 = [];
+      const add = (m, base) => {
+        const evs = [];
+        for (let e = d.evIdx[m]; e < d.evIdx[m + 1]; e++) evs.push(e);
+        if (this.s.sounds) evs.sort((x, y) => d.evAmp[y] - d.evAmp[x] || x - y);
+        for (const e of evs) {
           const off = Math.round((m + d.evSub[e] / SUB - base) / sp * SUB);
           const sub = Math.max(0, Math.min(SUB - 1, off)), band = d.evBand[e];
           const c = band === 0 ? 90 : band === 1 ? 900 : 8e3;
-          const vol = Math.min(10, d.evAmp[e] * this.s.volume * this.eqGain(c * r) / BURST_RMS[band]);
-          for (const t of this.targets) {
-            try {
-              if (t.player) t.player.playSound(`spectral.b${band}_${sub}`, { volume: vol, pitch: r });
-              else t.dim.playSound(`spectral.b${band}_${sub}_3d`, t.loc, { volume: 1, pitch: r }).setVolume(vol);
-            } catch {
-            }
-            this.calls++;
+          play2.push([band, sub, Math.min(10, d.evAmp[e] * this.s.volume * this.eqGain(c * r) / BURST_RMS[band])]);
+        }
+      };
+      if (lead >= 1) {
+        const to = ph2 + sp;
+        for (let m = Math.ceil(Math.max(ph, this.burstTo) - 1e-9); m < to - 1e-9 && m < d.F; m++) add(m, m < ph2 - 1e-9 ? ph : ph2);
+      } else {
+        for (let m = Math.ceil(ph - 1e-9); m < ph2 - 1e-9 && m < d.F; m++) add(m, ph);
+      }
+      let go = play2;
+      if (lead < 0) {
+        go = this.pendingBursts;
+        this.pendingBursts = play2;
+      }
+      for (const [band, sub, vol] of go) {
+        if (this.s.sounds && !this.roomForBurst()) continue;
+        for (const t of this.targets) {
+          try {
+            if (t.player) t.player.playSound(`spectral.b${band}_${sub}`, { volume: vol, pitch: r });
+            else t.dim.playSound(`spectral.b${band}_${sub}_3d`, t.loc, { volume: 1, pitch: r }).setVolume(vol);
+          } catch {
           }
-          if (this.mode === "speaker" && band === 0) {
-            try {
-              this.targets[0].dim.spawnParticle("minecraft:note_particle", { x: this.targets[0].loc.x, y: this.targets[0].loc.y + 1.2, z: this.targets[0].loc.z });
-            } catch {
-            }
+          this.calls++;
+        }
+        if (this.mode === "speaker" && band === 0) {
+          try {
+            this.targets[0].dim.spawnParticle("minecraft:note_particle", { x: this.targets[0].loc.x, y: this.targets[0].loc.y + 1.2, z: this.targets[0].loc.z });
+          } catch {
           }
         }
       }
-    }
-    this.burstTo = this.s.bursts && sp > 0 ? ph2 + sp : -1;
+    } else this.pendingBursts = [];
+    this.burstTo = this.s.bursts && !this.s.attacks && sp > 0 && lead >= 1 ? ph2 + sp : -1;
     this.ph = Math.max(0, Math.min(d.F - 1, ph2));
     if (this.s.viz && (this.ticks & 1) === 0) this.viz();
     const ms = Date.now() - t0;
@@ -623,6 +728,21 @@ var Session = class {
       return;
     }
     this.applyNoise(b, L);
+  }
+  /** a noise band's attack (s.attacks): a 12 ms fade now, never held back by a budget */
+  noiseAttack(b, L) {
+    L = Math.min(10, Math.max(SILENT, L));
+    this.lastNL[b] = L;
+    for (const t of this.targets) {
+      const s = t.nz[b];
+      if (s) {
+        try {
+          s.fade(FADE_ATTACK, L);
+        } catch {
+        }
+        this.calls++;
+      }
+    }
   }
   applyNoise(b, L) {
     this.lastNL[b] = L;
@@ -679,14 +799,14 @@ var Session = class {
   }
   status() {
     const m = this.song.meta, avg = this.ticks ? this.ms / this.ticks : 0, calls = this.ticks ? this.totalCalls / this.ticks : 0;
-    const inst = this.targets.reduce((n, t) => n + t.osc.length + t.nz.length, 0);
-    return `status: ${this.paused ? "paused" : this.frozen ? "frozen" : "playing"} ${m.id} ${fmt(this.ph / 20)}/${fmt(m.seconds)} frame ${Math.round(this.ph)}/${this.d.F} mode ${this.mode} voices ${this.V} instances ${inst} speed ${this.s.speed} semis ${this.s.semis} volume ${Math.round(this.s.volume * 100)}% calls/tick ${calls.toFixed(1)} peak ${this.peakCalls} ms/tick ${avg.toFixed(2)} rebuilds ${this.rebuilds} quality ${this.s.mode ?? "quality"} budget ${this.s.budget || "none"} deferred ${this.deferred}`;
+    const inst = this.targets.reduce((n, t) => n + t.osc.length + t.nz.filter((x) => x).length, 0);
+    return `status: ${this.paused ? "paused" : this.frozen ? "frozen" : "playing"} ${m.id} ${fmt(this.ph / 20)}/${fmt(m.seconds)} frame ${Math.round(this.ph)}/${this.d.F} mode ${this.mode} voices ${this.V} instances ${inst} speed ${this.s.speed} semis ${this.s.semis} volume ${Math.round(this.s.volume * 100)}% calls/tick ${calls.toFixed(1)} peak ${this.peakCalls} ms/tick ${avg.toFixed(2)} rebuilds ${this.rebuilds} quality ${this.s.mode ?? "quality"} budget ${this.s.budget || "none"} deferred ${this.deferred} engine hf ${this.s.hf || "none"} fold ${this.s.fold ? "on" : "off"} sounds ${this.s.sounds || "any"} drums ${!this.s.bursts ? "off" : this.s.attacks ? "noise" : ["behind", "tick", "ahead"][Math.max(-1, Math.min(1, this.s.burstLead ?? 1)) + 1]}`;
   }
 };
 var fmt = (s) => `${Math.floor(Math.abs(s) / 60)}:${String(Math.floor(Math.abs(s) % 60)).padStart(2, "0")}`;
 var dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 var sessions = /* @__PURE__ */ new Map();
-var settingsOf = (p) => ({ ...DEFAULTS, voices: platformVoices(p), ...load(p, "spectral:settings", {}) });
+var settingsOf = (p) => ({ ...DEFAULTS, ...platformEngine(p), ...load(p, "spectral:settings", {}) });
 var keep = (p, s) => save(p, "spectral:settings", s);
 system2.runInterval(() => {
   for (const [id, s] of sessions) {
@@ -744,7 +864,8 @@ function pauseFor(p) {
   s.paused = !s.paused;
   for (const t of s.targets) for (const x of [...t.osc, ...t.nz]) {
     try {
-      s.paused ? x.pause() : x.resume();
+      if (s.paused) x?.pause();
+      else x?.resume();
     } catch {
     }
   }
@@ -842,6 +963,47 @@ cmd("spectral:mode", "quality: every voice, every command \xB7 light (Realms, ma
   }
   return light ? `\xA7bquality light: ${LIGHT_VOICES} voices, \u2264${LIGHT_BUDGET} commands/tick per listener, no bursts` : `\xA7bquality full: ${full === DEFAULTS.voices ? "every voice" : `${full} voices (as many sounds as this client plays at once)`}, no command budget`;
 });
+cmd(
+  "spectral:engine",
+  "The client's sound engine (measuring): highest frequency it plays in Hz (0 = no limit), fold the voices not played into the noise, at most this many sounds at once (0 = no limit), at most this many commands a tick (0 = no limit)",
+  { hf: "int", fold: "bool", sounds: "int", "budget?": "int" },
+  async (p, a) => {
+    const s = settingsOf(p);
+    s.hf = Math.max(0, Math.min(24e3, a.hf));
+    s.fold = a.fold;
+    s.sounds = Math.max(0, Math.min(255, a.sounds));
+    if (a.budget !== void 0) s.budget = Math.max(0, Math.min(1e3, a.budget));
+    keep(p, s);
+    const m = mine(p);
+    if (m) {
+      m.s.hf = s.hf;
+      m.s.fold = s.fold;
+      m.s.sounds = s.sounds;
+      m.s.budget = s.budget;
+      for (const t of m.targets) await m.build(t);
+    }
+    return `\xA7bengine: hf ${s.hf || "none"} \xB7 fold ${s.fold ? "on" : "off"} \xB7 sounds ${s.sounds || "no limit"} \xB7 budget ${s.budget || "none"}`;
+  }
+);
+cmd(
+  "spectral:drums",
+  "Drum attacks: one-shot bursts a tick ahead / in their tick / a tick behind, or the noise bands attack (no one-shots), or off",
+  { how: ["ahead", "tick", "behind", "noise", "off"] },
+  (p, a) => {
+    const s = settingsOf(p), how = a.how;
+    s.bursts = how !== "off";
+    s.attacks = how === "noise";
+    s.burstLead = how === "tick" ? 0 : how === "behind" ? -1 : 1;
+    keep(p, s);
+    const m = mine(p);
+    if (m) {
+      m.s.bursts = s.bursts;
+      m.s.attacks = s.attacks;
+      m.s.burstLead = s.burstLead;
+    }
+    return `\xA7bdrums: ${how}`;
+  }
+);
 cmd("spectral:loop", "Loop the song on/off", {}, (p) => {
   const s = settingsOf(p);
   s.loop = !s.loop;
@@ -1058,7 +1220,7 @@ async function rebuild(s, p) {
   if (!t) return;
   for (const x of [...t.osc, ...t.nz]) {
     try {
-      x.stop();
+      x?.stop();
     } catch {
     }
   }

@@ -41,6 +41,12 @@ DEFAULT_SPEC = {
     'category_gain_db': {'value': {'ui': 0.0, 'record': 0.0, 'music': 0.0}, 'status': 'assumed', 'note': 'volume settings per category'},
     'stereo': {'value': 'keep', 'status': 'assumed', 'note': 'keep | mono (is3D false stereo files)'},
     'oneshot_latency_ms': {'value': 0.0, 'status': 'assumed', 'note': 'a one-shot playSound sounds this much after the SoundInstance commands of its tick'},
+    'voice_rank': {'value': 'energy', 'status': 'assumed', 'note': 'beyond max_voices, which are not heard: energy (gain x the sound\'s RMS) | volume (the channel volume alone, as FMOD ranks audibility)'},
+    'voice_block': {'value': 1024, 'status': 'assumed', 'note': 'samples between the mixer\'s choices of which voices are heard'},
+    'mix_sr': {'value': 0, 'status': 'assumed', 'note': 'the rate the game mixes at (0 = output_sr). Each voice is read linearly at this rate with no anti-aliasing: content above mix_sr/2 folds to mix_sr - f'},
+    'out_up': {'value': 'linear', 'status': 'assumed', 'note': 'how the mix gets to output_sr: linear interpolation (images at mix_sr - f, a cos^2 droop) | ideal'},
+    'out_gain_db': {'value': 0.0, 'status': 'assumed', 'note': 'level of the game\'s output against the files (what the recorder hears)'},
+    'out_bits': {'value': 0, 'status': 'assumed', 'note': 'the recording\'s word length (16: the mix and the capture are 16-bit PCM; 0 = float)'},
 }
 
 
@@ -238,12 +244,39 @@ def _instance_signal(s, land, total, spec, assets, sr, gain_only=False):
             break
     g = gain_curve(s['cmds'], land, total, spec, sr)[t0:t_end] * 10 ** (spec['category_gain_db'].get(cat, 0.0) / 20)
     if gain_only:
-        return t0, g * float(np.sqrt(np.mean(src ** 2)))
+        return t0, g if gain_only == 'volume' else g * float(np.sqrt(np.mean(src ** 2)))
     y = read(src, pos, spec['resampler'], loop)
     return t0, y * g[:, None]
 
 
-def render(log, spec=None, assets=None, seed=0, seconds=None):
+def client_path(y, spec, sr=None):
+    """what a recorder hears of the emulator's ideal mix y (n, 2) at output_sr: the game's mixing rate (each voice read
+    linearly there: for a rate that divides output_sr, the even samples of the ideal render are exactly that read), its
+    output level, 16-bit words, and the interpolation back up to output_sr"""
+    sr = sr or spec['output_sr']
+    ms = int(spec.get('mix_sr') or 0)
+    g = 10 ** (float(spec.get('out_gain_db') or 0.0) / 20)
+    bits = int(spec.get('out_bits') or 0)
+    q = (lambda v: np.round(np.clip(v, -1, 1 - 2.0 ** (1 - bits)) * 2.0 ** (bits - 1)) / 2.0 ** (bits - 1)) if bits else (lambda v: v)
+    if not ms or ms >= sr:
+        return q(y * g)
+    if sr % ms:
+        raise ValueError(f'mix_sr {ms} must divide output_sr {sr}')
+    k = sr // ms
+    z = q(y[::k] * g)
+    n = len(z) * k
+    if spec.get('out_up', 'linear') == 'ideal':
+        from scipy.signal import resample_poly
+        up = resample_poly(z, k, 1, axis=0)[:n]
+    else:
+        pos = np.arange(n) / k
+        i0 = np.floor(pos).astype(np.int64); fr = (pos - i0)[:, None]
+        i1 = np.minimum(i0 + 1, len(z) - 1)
+        up = z[i0] + (z[i1] - z[i0]) * fr
+    return q(up)
+
+
+def render(log, spec=None, assets=None, seed=0, seconds=None, path=False):
     spec = spec or load_spec()[0]
     assets = assets or Assets()
     sr = spec['output_sr']
@@ -256,11 +289,12 @@ def render(log, spec=None, assets=None, seed=0, seconds=None):
     out = np.zeros((total, 2))
     lim = spec['max_voices']
     if lim:
-        blk = 1024; nb = total // blk + 1
+        blk = int(spec.get('voice_block', 1024)); nb = total // blk + 1
+        by_volume = spec.get('voice_rank', 'energy') == 'volume'
         ids = list(inst)
         loud = np.zeros((len(ids), nb))
         for i, iid in enumerate(ids):           # pass 1: how audible each voice is, block by block
-            t0, a = _instance_signal(inst[iid], land, total, spec, assets, sr, gain_only=True)
+            t0, a = _instance_signal(inst[iid], land, total, spec, assets, sr, gain_only='volume' if by_volume else True)
             if len(a):
                 e = np.zeros(nb * blk); e[t0:t0 + len(a)] = a
                 loud[i] = e.reshape(nb, blk).mean(1)
@@ -290,7 +324,7 @@ def render(log, spec=None, assets=None, seed=0, seconds=None):
             cur = need if need < cur else need + (cur - need) * a
             g[i] = cur
         out = out * g[:, None]
-    return out
+    return client_path(out, spec) if path else out
 
 
 if __name__ == '__main__':

@@ -10,7 +10,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 UNIT = os.path.dirname(os.path.dirname(HERE))
 # (the ways, in the order of the table: key in measured/redroid-*.json → label)
 WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24', '24 声'), ('mobile', '電話の既定 24 声'),
-        ('light', '軽量 16 声'), ('mobile_ahead', '電話の既定＋打撃音を先に'), ('mobile_ahead_again', '同（もう一度）')]
+        ('light', '軽量 16 声'), ('mobile_ahead', '電話の既定＋打撃音を先に'), ('mobile_ahead_again', '同（もう一度）'),
+        ('shipped_same_run', '出荷版（同じ run でもう一度）'), ('improved', '改良版'), ('improved_drums_behind', '改良版＋打撃音を 1 tick 後に'),
+        ('improved_drums_noise', '改良版＋打撃をノイズで'), ('improved_alt', '改良版（別案）')]
 
 
 def main():

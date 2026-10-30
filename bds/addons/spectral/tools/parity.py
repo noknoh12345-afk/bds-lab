@@ -9,6 +9,7 @@ import corpus as C, spectral as S
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('--analysis', default='v2'); ap.add_argument('--songs'); ap.add_argument('--voices', type=int, default=48)
+    ap.add_argument('--opts', default='{}', help='the converter\'s options for both (JSON, e.g. {"residual": "fit", "salience": "erb"})')
     a = ap.parse_args()
     ids = a.songs.split(',') if a.songs else [s['id'] for s in C.manifest()['songs']]
     bad = 0
@@ -17,9 +18,9 @@ def main():
             path = C.excerpt_path(i)
             f32 = os.path.join(d, i + '.f32')
             subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', path, '-f', 'f32le', '-ac', '1', '-ar', str(S.SR), f32], check=True)
-            js = subprocess.Popen(['node', os.path.join(HERE, 'parity_run.cjs'), f32, str(a.voices), a.analysis, os.path.join(d, i + '.js.json')])
+            js = subprocess.Popen(['node', os.path.join(HERE, 'parity_run.cjs'), f32, str(a.voices), a.analysis, os.path.join(d, i + '.js.json'), a.opts])
             t0 = time.time()
-            x, meta, blob, stats = S.convert(path, a.voices, title='t', artist='', analysis=a.analysis)
+            x, meta, blob, stats = S.convert(path, a.voices, title='t', artist='', analysis=a.analysis, **json.loads(a.opts))
             meta['id'] = 't'
             tp = time.time() - t0
             js.wait()

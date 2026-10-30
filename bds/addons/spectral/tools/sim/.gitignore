@@ -1,2 +1,3 @@
 .addon.mjs
+.addon.*.mjs
 log_*.json
