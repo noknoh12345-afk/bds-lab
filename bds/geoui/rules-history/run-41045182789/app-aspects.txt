@@ -1,0 +1,298 @@
+# geoui_web（bds/geoui/web/make.mjs が作る）: どの画面の形でもぴったり（12 本目）— 箱（/web:size box）と、ぴったり（開いた時にゲームが
+# 形を測る: 小さな URL の画像のどれを取りに来たか）と、端に合わせる（/web:fit）。期待の位置: node bds/geoui/web/make.mjs expect <幅>x<高さ> <並べ方|z>
+# 実行: アプリのワークフローの scenario に bds/addons/geoui_web/app-aspects.txt
+
+section join
+stop
+launch
+until title 600000
+join
+until joined 900000
+size 2400x1080
+wait 9000
+do tp @a 0 -60 0 0 0
+wait 3000
+absent clientlog \bERROR\b
+
+section box
+# 2400x1080・box 16:9（並べ方 b = 16:9）: ページ (240.0, 108.0)–(2160.0, 1080.0)、ポインタの先 (1200.0, 540.0)–(1200.0, 540.0)、クリックの所 (1200.0, 648.0)–(1200.0, 648.0)
+do scriptevent gweb:close
+wait 2000
+size 2400x1080
+wait 6000
+do scriptevent gweb:size box 16:9 1080
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 5000
+do scriptevent gweb:debug 1
+wait 1500
+shot box-open
+measure marks box-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot box-click
+measure marks box-click
+
+section box219
+# 3440x1440・box 3440x1440（並べ方 o = 64:27）: ページ (13.0, 144.0)–(3427.0, 1440.0)、ポインタの先 (1720.0, 720.0)–(1720.0, 720.0)、クリックの所 (1720.0, 864.0)–(1720.0, 864.0)
+do scriptevent gweb:close
+wait 2000
+size 3440x1440
+wait 6000
+do scriptevent gweb:size box 3440x1440 1440
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 5000
+do scriptevent gweb:debug 1
+wait 1500
+shot box219-open
+measure marks box219-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot box219-click
+measure marks box219-click
+
+section x2400x1080
+# 2400x1080（2.2222）・ぴったり: 開くと形を測る（プローブの見込み 2.2222）→ ページ (0.0, 108.0)–(2400.0, 1080.0)、ポインタの先 (1200.0, 540.0)–(1200.0, 540.0)、クリックの所 (1200.0, 648.0)–(1200.0, 648.0)
+do scriptevent gweb:close
+wait 2000
+size 2400x1080
+wait 6000
+do scriptevent gweb:size auto
+do scriptevent gweb:res 1080
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 9000
+do scriptevent gweb:debug 1
+wait 1500
+shot x2400x1080-open
+measure marks x2400x1080-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot x2400x1080-click
+measure marks x2400x1080-click
+until server GWEB aspect .*"asp":2\.2222,"why":"probe- 2000
+
+section x1920x1080
+# 1920x1080（1.7778）・ぴったり: 開くと形を測る（プローブの見込み 1.7778）→ ページ (0.0, 108.0)–(1920.0, 1080.0)、ポインタの先 (960.0, 540.0)–(960.0, 540.0)、クリックの所 (960.0, 648.0)–(960.0, 648.0)
+do scriptevent gweb:close
+wait 2000
+size 1920x1080
+wait 6000
+do scriptevent gweb:size auto
+do scriptevent gweb:res 1080
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 9000
+do scriptevent gweb:debug 1
+wait 1500
+shot x1920x1080-open
+measure marks x1920x1080-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot x1920x1080-click
+measure marks x1920x1080-click
+until server GWEB aspect .*"asp":1\.7778,"why":"probe- 2000
+
+section x2048x1536
+# 2048x1536（1.3333）・ぴったり: 開くと形を測る（プローブの見込み 1.3333）→ ページ (0.0, 153.6)–(2048.0, 1536.0)、ポインタの先 (1024.0, 768.0)–(1024.0, 768.0)、クリックの所 (1024.0, 921.6)–(1024.0, 921.6)
+do scriptevent gweb:close
+wait 2000
+size 2048x1536
+wait 6000
+do scriptevent gweb:size auto
+do scriptevent gweb:res 1440
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 9000
+do scriptevent gweb:debug 1
+wait 1500
+shot x2048x1536-open
+measure marks x2048x1536-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot x2048x1536-click
+measure marks x2048x1536-click
+until server GWEB aspect .*"asp":1\.3333,"why":"probe- 2000
+
+section x3440x1440
+# 3440x1440（2.3889）・ぴったり: 開くと形を測る（プローブの見込み 2.3889）→ ページ (0.0, 144.0)–(3440.0, 1440.0)、ポインタの先 (1720.0, 720.0)–(1720.0, 720.0)、クリックの所 (1720.0, 864.0)–(1720.0, 864.0)
+do scriptevent gweb:close
+wait 2000
+size 3440x1440
+wait 6000
+do scriptevent gweb:size auto
+do scriptevent gweb:res 1440
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 9000
+do scriptevent gweb:debug 1
+wait 1500
+shot x3440x1440-open
+measure marks x3440x1440-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot x3440x1440-click
+measure marks x3440x1440-click
+until server GWEB aspect .*"asp":2\.3889,"why":"probe- 2000
+
+section x1440x1440
+# 1440x1440（1.0000）・ぴったり: 開くと形を測る（プローブの見込み 1）→ ページ (0.0, 144.0)–(1440.0, 1440.0)、ポインタの先 (720.0, 720.0)–(720.0, 720.0)、クリックの所 (720.0, 864.0)–(720.0, 864.0)
+do scriptevent gweb:close
+wait 2000
+size 1440x1440
+wait 6000
+do scriptevent gweb:size auto
+do scriptevent gweb:res 1440
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 9000
+do scriptevent gweb:debug 1
+wait 1500
+shot x1440x1440-open
+measure marks x1440x1440-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot x1440x1440-click
+measure marks x1440x1440-click
+until server GWEB aspect .*"asp":1,"why":"probe- 2000
+
+section x2208x1840
+# 2208x1840（1.2000）・ぴったり: 開くと形を測る（プローブの見込み 1.2）→ ページ (0.0, 184.0)–(2208.0, 1840.0)、ポインタの先 (1104.0, 920.0)–(1104.0, 920.0)、クリックの所 (1104.0, 1104.0)–(1104.0, 1104.0)
+do scriptevent gweb:close
+wait 2000
+size 2208x1840
+wait 6000
+do scriptevent gweb:size auto
+do scriptevent gweb:res 1440
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 9000
+do scriptevent gweb:debug 1
+wait 1500
+shot x2208x1840-open
+measure marks x2208x1840-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot x2208x1840-click
+measure marks x2208x1840-click
+until server GWEB aspect .*"asp":1\.2,"why":"probe- 2000
+
+section x1280x1024
+# 1280x1024（1.2500）・ぴったり: 開くと形を測る（プローブの見込み 1.25）→ ページ (0.0, 102.4)–(1280.0, 1024.0)、ポインタの先 (640.0, 512.0)–(640.0, 512.0)、クリックの所 (640.0, 614.4)–(640.0, 614.4)
+do scriptevent gweb:close
+wait 2000
+size 1280x1024
+wait 6000
+do scriptevent gweb:size auto
+do scriptevent gweb:res 1024
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 9000
+do scriptevent gweb:debug 1
+wait 1500
+shot x1280x1024-open
+measure marks x1280x1024-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot x1280x1024-click
+measure marks x1280x1024-click
+until server GWEB aspect .*"asp":1\.25,"why":"probe- 2000
+
+section x2340x1080
+# 2340x1080（2.1667）・ぴったり: 開くと形を測る（プローブの見込み 2.1667）→ ページ (0.0, 108.0)–(2340.0, 1080.0)、ポインタの先 (1170.0, 540.0)–(1170.0, 540.0)、クリックの所 (1170.0, 648.0)–(1170.0, 648.0)
+do scriptevent gweb:close
+wait 2000
+size 2340x1080
+wait 6000
+do scriptevent gweb:size auto
+do scriptevent gweb:res 1080
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 9000
+do scriptevent gweb:debug 1
+wait 1500
+shot x2340x1080-open
+measure marks x2340x1080-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot x2340x1080-click
+measure marks x2340x1080-click
+until server GWEB aspect .*"asp":2\.1667,"why":"probe- 2000
+
+section fit
+# 2400x1080: /web:fit の印（左右の端）、ポインタの先を右の端に（marking の箱の 0.746914）→ 形 2.2222
+do scriptevent gweb:close
+wait 2000
+size 2400x1080
+wait 6000
+do scriptevent gweb:size box 16:9
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 4000
+do scriptevent gweb:fit
+wait 2500
+shot fit-marks
+measure marks fit-marks
+do scriptevent gweb:pointer 0.746914 0.5
+wait 1000
+attack 0.3
+until server GWEB aspect .*"asp":2\.2222,"why":"fit" 10000
+wait 6000
+shot fit-done
+measure marks fit-done
+
+section end
+do scriptevent gweb:close
+wait 2000
+size 2400x1080
