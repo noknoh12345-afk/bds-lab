@@ -365,18 +365,23 @@ function jsonui(expr, vars) {
   const CFG = M.config(), sc = M.scene(), hud = L.hudScreen(sc, { followHud: true }), ch = L.channelOf(sc), top = Object.fromEntries(hud.gweb_vp.controls.map((c) => Object.entries(c)[0]));
   const T = '#hud_title_text_string', visOf = (ctl, t) => jsonui(ctl.bindings.find((b) => b.target_property_name === '#visible').source_property_name, { [T]: t, '#hud_visible': true });
   const optOf = (ctl, t) => jsonui(ctl.bindings.find((b) => b.target_property_name === '#profile_image_options').source_property_name, { [T]: t });
-  const page = top.gweb_fill_z_page, bar = top.gweb_fill_z_bar, tz = L.channelText(ch, { layout: 'z', urls: ['http://h/f.png', 'http://h/b.png'] }), tb = L.channelText(ch, { layout: 'b', urls: ['http://h/f.png', 'http://h/b.png'] });
-  ok(page && bar && page.size.join() === '100%,90%' && page.anchor_from === 'bottom_middle' && page.anchor_to === 'bottom_middle' && !page.offset && bar.size.join() === '100%,10%' && bar.anchor_from === 'top_middle'
-    && visOf(page, tz) && !visOf(page, tb) && !visOf(page, L.channelText(ch, { layout: 'z' })) && optOf(page, tz) === '{"type":7,"url":"http://h/f.png"}' && top.gweb_fill_z_pu.layer === -1,
-  'exact: the page (bottom 90 %) and the toolbar (top 10 %) laid out by JSON UI\'s own % of the viewport — no offset, every shape — shown only in the exact layout with a URL');
+  const fz = top.gweb_fill_z, inz = Object.fromEntries((fz ? fz.controls : []).map((c) => Object.entries(c)[0]));
+  const page = inz.gweb_fill_z_page, bar = inz.gweb_fill_z_bar, tz = L.channelText(ch, { layout: 'z', urls: ['http://h/f.png', 'http://h/b.png'] }), tb = L.channelText(ch, { layout: 'b', urls: ['http://h/f.png', 'http://h/b.png'] });
+  const exprOf = (ctl) => ctl.bindings.find((b) => b.target_property_name === '#visible').source_property_name;
+  ok(fz && fz.size.join() === '100%,100%' && visOf(fz, tz) && !visOf(fz, tb) && page && bar && page.size.join() === '100%,90%' && page.anchor_from === 'bottom_middle' && page.anchor_to === 'bottom_middle' && !page.offset && bar.size.join() === '100%,10%' && bar.anchor_from === 'top_middle'
+    && visOf(page, tz) && !visOf(page, L.channelText(ch, { layout: 'z' })) && optOf(page, tz) === '{"type":7,"url":"http://h/f.png"}' && inz.gweb_fill_z_pu.layer === -1
+    && exprOf(page).length < 200 && !/ or /.test(exprOf(page)),
+  'exact: the page (bottom 90 %) and the toolbar (top 10 %) laid out by JSON UI\'s own % of the viewport — no offset, every shape — in a panel shown only in the exact layout; each image\'s own expression short (no `or`: R10.19)', exprOf(page || { bindings: [{ target_property_name: '#visible', source_property_name: '' }] }));
   const ap = top.gweb_aspect, setC = ap.controls[0].gweb_aspc, setU = ap.controls[1].gweb_aspu, n = CFG.aspects.length;
-  const probe = (set, tag, k) => set.controls[k][`gweb_asp${tag}${k}`], img = (set, tag, k) => probe(set, tag, k).controls[0][`gweb_asp${tag}${k}_i`];
+  const probe = (set, tag, k) => set.controls.find((c) => c[`gweb_asp${tag}${k}`])[`gweb_asp${tag}${k}`], img = (set, tag, k) => probe(set, tag, k).controls[0][`gweb_asp${tag}${k}_i`];
+  const orderOf = (set, tag) => set.controls.map((c) => Number(Object.keys(c)[0].slice(`gweb_asp${tag}`.length)));
   const tp = L.channelText(ch, { layout: 'g', urls: ['', '', '', '', 'http://h/asp/N1'] });
   ok(n === 160 && setC.clips_children === true && setU.clips_children === false && setC.controls.length === n && setU.controls.length === n
     && probe(setC, 'c', 0).size[0] === `${Math.round(CFG.aspects[0] * 100 * 1e6) / 1e6}%y` && probe(setC, 'c', n - 1).size.join() === `${Math.round(CFG.aspects[n - 1] * 100 * 1e6) / 1e6}%y,100%` && img(setC, 'c', 7).anchor_from === 'right_middle' && img(setC, 'c', 7).size.join() === '2,2'
     && optOf(img(setC, 'c', 7), tp) === '{"type":7,"url":"http://h/asp/N1/c7.png"}' && optOf(img(setU, 'u', 159), tp) === '{"type":7,"url":"http://h/asp/N1/u159.png"}'
-    && visOf(ap, tp) && !visOf(ap, tz) && !visOf(ap, L.channelText(ch, { layout: 'g', urls: ['', '', '', '', 'fit'] })),
-  'exact: the aspect probe — 160 tiny URL images each at the right edge of a box a_k x the height (one set clipped to the viewport, one not), URL base/<c|u><k>.png, shown while the slot has an http base');
+    && visOf(ap, tp) && !visOf(ap, tz) && !visOf(ap, L.channelText(ch, { layout: 'g', urls: ['', '', '', '', 'fit'] }))
+    && orderOf(setC, 'c').slice().sort((x, y) => x - y).every((k, i) => k === i) && orderOf(setC, 'c').filter((k, i) => k === i).length < 10 && orderOf(setC, 'c').join() === orderOf(setU, 'u').join(),
+  'exact: the aspect probe — 160 tiny URL images each at the right edge of a box a_k x the height (one set clipped to the viewport, one not), URL base/<c|u><k>.png, shown while the slot has an http base; listed in a fixed shuffled order (a game fetching them as listed cannot fake a run from 0)');
   const em = top.gweb_fit, tf = L.channelText(ch, { layout: 'z', urls: ['', '', '', '', 'fit'] });
   ok(em && visOf(em, tf) && !visOf(em, tp) && !visOf(em, tz) && em.controls[0].gweb_fit_l.anchor_from === 'left_middle' && em.controls[1].gweb_fit_r.anchor_from === 'right_middle' && em.controls[1].gweb_fit_r.texture === 'textures/gweb/atlas',
     'exact: the edge marks (left and right of the viewport) shown while the slot says fit');
