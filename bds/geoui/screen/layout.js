@@ -237,7 +237,9 @@
     const w = num(u.w, 0), h = num(u.h, 0);
     if (!(w > 0 && w <= 1 && h > 0 && h <= 1)) throw new Error(`URL の画像 ${u.id} の w・h はビューポートの割合（0 より大きく 1 まで）`);
     const anchor = anchorName(u.anchor || 'center'), slot = Math.round(num(u.slot, 0)), url = slotExpr(ch, slot);
-    const conds = [isChannelExpr(ch), `(not (${url} = ''))`, ...(u.layout ? [layoutExpr(ch, u.layout)] : []), ...(followHud ? ['#hud_visible'] : [])];
+    // (the layout is not in this expression: a panel of the layout holds the images (fillPanels) — the same short expression as a
+    //  group's URL image: run 41045182789 showed none with the layout's `or` in it too, R10.19)
+    const conds = [isChannelExpr(ch), `(not (${url} = ''))`, ...(followHud ? ['#hud_visible'] : [])];
     return { type: 'custom', renderer: 'profile_image_renderer', layer: u.layer !== undefined && u.layer !== null ? num(u.layer, 0) : 0,
       size: [pct(100 * w), pct(100 * h)], anchor_from: anchor, anchor_to: anchor,
       bindings: [
@@ -256,8 +258,13 @@
     const url = slotExpr(ch, Math.round(num(ap.slot, 0))), as = ap.aspects || [];
     if (!as.length || as.some((a, i) => !(a > 0) || (i && a <= as[i - 1]))) throw new Error('aspectProbe.aspects は大きくなっていく正の数');
     const show = `(${isChannelExpr(ch)} and (('%.4s' * ${url}) = 'http'))`;
+    // (in a shuffled order — a fixed one, the same every build: a game that fetched them one after another as listed, not only the
+    //  ones it draws, would give a run from 0 when cut short; shuffled, only drawing gives a run)
+    const order = as.map((a, k) => k);
+    let seed = 0x2545f491;
+    for (let i = order.length - 1; i > 0; i--) { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; const j = seed % (i + 1); [order[i], order[j]] = [order[j], order[i]]; }
     const set = (tag, clip) => ({ type: 'panel', size: ['100%', '100%'], clips_children: clip, layer: -8,
-      controls: as.map((a, k) => ({ [`${ns}_asp${tag}${k}`]: { type: 'panel', size: [`${r6(100 * a)}%y`, '100%'], anchor_from: 'center', anchor_to: 'center',
+      controls: order.map((k) => ({ [`${ns}_asp${tag}${k}`]: { type: 'panel', size: [`${r6(100 * as[k])}%y`, '100%'], anchor_from: 'center', anchor_to: 'center',
         controls: [{ [`${ns}_asp${tag}${k}_i`]: { type: 'custom', renderer: 'profile_image_renderer', size: [2, 2], anchor_from: 'right_middle', anchor_to: 'right_middle',
           bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: `('{"type":7,"url":"' + ${url} + '/${tag}${k}.png"}')`, target_property_name: '#profile_image_options' }] } }] } })) });
     return { type: 'panel', size: ['100%', '100%'], layer: -8, controls: [{ [`${ns}_aspc`]: set('c', true) }, { [`${ns}_aspu`]: set('u', false) }],
@@ -346,12 +353,22 @@
         bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: show, target_property_name: '#visible' }] } });
     }
     // (URL images laid out by JSON UI's own % — exact on every aspect ratio; the screen's-shape probes; the edge marks)
+    // (fill images in a panel a layout — the whole viewport, shown while the channel shows that layout — so each image's own
+    //  expression stays short)
+    const fillPanels = new Map();
     for (const u of scene.fillImages || []) {
       if (!/^[a-z0-9_]{1,24}$/.test(String(u.id))) throw new Error(`URL の画像の名前「${u.id}」は英小文字・数字・_ で 24 文字まで`);
       if (seenImg.has(u.id)) throw new Error(`URL の画像 ${u.id} が 2 つあります`);
       seenImg.add(u.id);
       if (!ch) throw new Error('fillImages はタイトルの通り道と使います');
-      controls.push({ [`${ns}_fill_${u.id}`]: fillImageControl(u, ch, followHud) });
+      const lay = u.layout ? String(u.layout) : '';
+      if (!fillPanels.has(lay)) {
+        const panel = { type: 'panel', size: ['100%', '100%'], controls: [] };
+        if (lay) panel.bindings = [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: layoutExpr(ch, lay), target_property_name: '#visible' }];
+        fillPanels.set(lay, panel);
+        controls.push({ [`${ns}_fill${lay ? `_${lay}` : ''}`]: panel });
+      }
+      fillPanels.get(lay).controls.push({ [`${ns}_fill_${u.id}`]: fillImageControl(u, ch, followHud) });
     }
     if (scene.aspectProbe) controls.push({ [`${ns}_aspect`]: aspectProbeControl(scene.aspectProbe, ch, ns) });
     if (scene.edgeMarkers) controls.push({ [`${ns}_fit`]: edgeMarkersControl(scene.edgeMarkers, ch, ns) });
