@@ -54,7 +54,7 @@ export function config() {
     ns: NS, cmd: 'web', layouts, fill: FILL, barFrac: BAR, slots: { page: 0, bar: 1, pageUnder: 2, barUnder: 3, asp: 4 }, slotCount: 5, width: 160, buffer: true, bufferTicks: 2, frameTicks: 14, refreshTicks: 200,
     // (the screen's shape: measured when the browser opens and none is known (autoAspect) — the probes shown detectTicks, then the
     //  service asked which the game fetched; fitW: the widest shape the pointer may reach while the edges are being marked)
-    aspects: PROBE_ASPECTS, commonAspects: COMMON_ASPECTS, autoAspect: true, detectTicks: 50, fitW: 4.5,
+    aspects: PROBE_ASPECTS, commonAspects: COMMON_ASPECTS, autoAspect: true, detectTicks: 100, fitW: 4.5,
     sens: 4, wheelPx: 120, scrollPx: 90, scrollEvery: 3, holdClose: 30, moveEvery: 3, res: 1080, maxRes: 1440,
     service: 'http://127.0.0.1:8787', public: 'lan', mobileLayout: 'g', defaultLayout: 'b',
     // (F1's camera (<ns>:eye) off while the browser is open: with it on, the pad's RT click never reached the page — run
@@ -543,13 +543,38 @@ wait 6000
 shot fit-done
 measure marks fit-done
 `;
-  return `# geoui_web（bds/geoui/web/make.mjs が作る）: どの画面の形でもぴったり（12 本目）— 箱（/web:size box）と、ぴったり（開いた時にゲームが
-# 形を測る: 小さな URL の画像のどれを取りに来たか）と、端に合わせる（/web:fit）。期待の位置: node bds/geoui/web/make.mjs expect <幅>x<高さ> <並べ方|z>
+  // (13 本目: the first browser opened with no shape known at 2400x1080, then what the probe saw — each a section of one line
+  //  (expect: the whole log; only this one probe has run yet) — then exact by /web:size alone (the page by JSON UI's %, whatever the
+  //  probe did), then the boxes, the other screens, the edges)
+  const n0 = PROBE_ASPECTS.filter((a) => a <= 2400 / 1080 + 1e-9).length;
+  const diag = [
+    ['d-probe', 'GWEB probe'], ['d-c-drawn', `GWEB probe .*"c":${n0},`], ['d-c-all', 'GWEB probe .*"c":160,'], ['d-c-none', 'GWEB probe .*"c":0,'],
+    ['d-u-drawn', `GWEB probe .*"u":${n0},`], ['d-u-all', 'GWEB probe .*"u":160,'], ['d-c-top', 'GWEB probe .*"cTop":2\\.222'], ['d-u-top', 'GWEB probe .*"uTop":2\\.222'],
+    ['d-aspect', 'GWEB aspect .*"why":"probe'],
+  ].map(([id, re]) => `section ${id}\nexpect server ${re}\n`).join('\n');
+  const sizeExact = `section exact-size
+# 2400x1080・/web:size 2400x1080（測らずに）: ページ ${f(expected(2400, 1080, FILL).page)}、黒なし
+do scriptevent gweb:close
+wait 2000
+do scriptevent gweb:size 2400x1080 1080
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 6000
+do scriptevent gweb:debug 1
+wait 1500
+shot exact-size
+measure marks exact-size
+`;
+  return `# geoui_web（bds/geoui/web/make.mjs が作る）: どの画面の形でもぴったり（13 本目）— ぴったり（開いた時にゲームが形を測る: 小さな URL の画像の
+# どれを取りに来たか、と /web:size）と、箱（/web:size box）と、端に合わせる（/web:fit）。期待の位置: node bds/geoui/web/make.mjs expect <幅>x<高さ> <並べ方|z>
 # 実行: アプリのワークフローの scenario に bds/addons/geoui_web/app-aspects.txt
 
 ${JOIN_TXT}
+${exact[0]}
+${diag}
+${sizeExact}
 ${boxes.join('\n')}
-${exact.join('\n')}
+${exact.slice(1).join('\n')}
 ${fit}
 section end
 do scriptevent gweb:close
@@ -602,7 +627,7 @@ function wsAppTxt() {
   //  — 3 本目; a key held through the keyboard device is a real key press. ':' is shift + ;)
   const keys = [];
   for (const ch of '/connect 10.0.2.2:8787') keys.push(ch === '/' ? 'SLASH' : ch === ' ' ? 'SPACE' : ch === '.' ? 'PERIOD' : ch === ':' ? 'SHIFT+SEMICOLON' : ch.toUpperCase());
-  return `# geoui_web_ws（bds/geoui/web/make.mjs が作る）: WebSocket 版を本物のアプリで（12 本目）— プレイヤーが /connect 10.0.2.2:8787 を打つと、
+  return `# geoui_web_ws（bds/geoui/web/make.mjs が作る）: WebSocket 版を本物のアプリで（13 本目: 12 本目はつながらず — キーで打てたか・ゲームの答えを文字で見る、だめならチャットで）— プレイヤーが /connect 10.0.2.2:8787 を打つと、
 # ゲームがサービスに WebSocket でつながり（暗号化はゲームが求めれば）、サービスが /web:pump でスクリプトとやりとりする。@minecraft/server-net なし。
 # 実行: node lab.mjs app ci --batch geoui_web,geoui_web_ws（geoui_web は app-aspects.txt を scenario に、または単独）
 
@@ -613,7 +638,23 @@ wait 2000
 ${keys.map((k) => `press ${k} 60`).join('\n')}
 wait 500
 press ENTER 80
-until server GWEB ws linked 40000
+wait 2500
+shot ws-typed
+
+section ocr-connect
+until text (?i)(connect|websocket|wss?:|接続) 4000
+
+section ocr-denied
+expect text (?i)(unknown|不明|permission|権限|cheat|チート|syntax|構文)
+
+section linked-keys
+until server GWEB ws linked 30000
+
+section connect-chat
+chat /connect 10.0.2.2:8787
+wait 2500
+shot ws-chat
+until server GWEB ws linked 30000
 
 section open
 shot world
