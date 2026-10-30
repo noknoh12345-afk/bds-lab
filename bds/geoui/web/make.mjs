@@ -359,6 +359,68 @@ GeoUI で（URL の画像で絵を出す）。本物の解像度で確かめる�
 3. スニークを 1.5 秒押し続けると閉じ、HUD が元に戻る。
 `;
 
+// ---- the real app on other screens (8 本目): the game's screen set to each shape's real resolution and the browser to that
+//      shape — where the page, the toolbar's ✕ and the pointer's tip land, and whether a click still lands (app-aspects.txt;
+//      run it with the workflow's scenario bds/addons/geoui_web/app-aspects.txt)
+export const ASPECTS = [
+  { id: '169', screen: [1920, 1080], size: '16:9', lay: 'b' },
+  { id: '43', screen: [2048, 1536], size: '4:3', lay: 'c' },
+  { id: '219', screen: [2560, 1080], size: '21:9', lay: 'h' },
+  { id: 'box', screen: [2400, 1080], size: '16:9', lay: 'b' },
+];
+function aspectsTxt() {
+  const f = (b) => `(${b.x0.toFixed(1)}, ${b.y0.toFixed(1)})–(${b.x1.toFixed(1)}, ${b.y1.toFixed(1)})`;
+  const parts = ASPECTS.map((a) => {
+    const [W, H] = a.screen, e = expected(W, H, a.lay), c = expected(W, H, a.lay, 0.5, 0.6);
+    return `section ${a.id}
+# ${W}x${H}・${a.size}（並べ方 ${a.lay}）: ページ ${f(e.page)}、ツールバー ${f(e.toolbar)}、ポインタの先 ${f(e.tip)}${a.id === 'box' ? '（20:9 の画面に 16:9: 左右は黒）' : ''}
+do scriptevent gweb:close
+wait 2000
+size ${W}x${H}
+wait 6000
+do scriptevent gweb:size ${a.size} ${H}
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 5000
+do scriptevent gweb:debug 1
+wait 1500
+shot ${a.id}-open
+measure marks ${a.id}-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot ${a.id}-click
+measure marks ${a.id}-click
+# （クリックの所: ${f(c.tip)}）
+`;
+  });
+  return `# geoui_web（bds/geoui/web/make.mjs が作る）: ほかの画面の形の本物の解像度で、ゲームの中のウェブの場所とクリック（8 本目）。
+# 期待の位置: node bds/geoui/web/make.mjs expect <幅>x<高さ> <並べ方>。実行: アプリのワークフローの scenario に bds/addons/geoui_web/app-aspects.txt
+
+section join
+stop
+launch
+until title 600000
+join
+until joined 900000
+size 2400x1080
+wait 9000
+do tp @a 0 -60 0 0 0
+wait 3000
+absent clientlog \\bERROR\\b
+
+${parts.join('\n')}
+section end
+do scriptevent gweb:close
+wait 2000
+size 2400x1080
+`;
+}
+
 /** every file of the add-on */
 export function files() {
   const built = P.build(scene(), { core: G });
@@ -366,6 +428,7 @@ export function files() {
   const out = packFiles(built);
   out['tests.txt'] = TESTS;
   out['app.txt'] = appTxt();
+  out['app-aspects.txt'] = aspectsTxt();
   out['TASK.md'] = TASK;
   out['geoui-web.json'] = JSON.stringify({ service: 'bds/geoui/web/server.mjs', tunnel: false }, null, 2) + '\n';
   out['imported.json'] = JSON.stringify({ from: 'bds/geoui/web/make.mjs', rp: [1, 0, 0], bp: [1, 0, 0], request: 'ゲームの中のウェブ: F1 で全画面、全部のサイト、ほぼ Chrome の操作' }, null, 2) + '\n';
