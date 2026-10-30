@@ -362,11 +362,12 @@ GeoUI で（URL の画像で絵を出す）。本物の解像度で確かめる�
 // ---- the real app on other screens (8 本目): the game's screen set to each shape's real resolution and the browser to that
 //      shape — where the page, the toolbar's ✕ and the pointer's tip land, and whether a click still lands (app-aspects.txt;
 //      run it with the workflow's scenario bds/addons/geoui_web/app-aspects.txt)
+// (9 本目: the 20:9 screen with a 16:9 page first, before the screen is resized — 8 本目 showed the world beside it, not the black)
 export const ASPECTS = [
+  { id: 'box', screen: [2400, 1080], size: '16:9', lay: 'b' },
   { id: '169', screen: [1920, 1080], size: '16:9', lay: 'b' },
   { id: '43', screen: [2048, 1536], size: '4:3', lay: 'c' },
   { id: '219', screen: [2560, 1080], size: '21:9', lay: 'h' },
-  { id: 'box', screen: [2400, 1080], size: '16:9', lay: 'b' },
 ];
 function aspectsTxt() {
   const f = (b) => `(${b.x0.toFixed(1)}, ${b.y0.toFixed(1)})–(${b.x1.toFixed(1)}, ${b.y1.toFixed(1)})`;
