@@ -4,51 +4,31 @@
     "name": "GeoUI Web Probe BP",
     "description": "GeoUI: URL images and F1 measured on the real game (bds-lab bds/geoui/web/probe.mjs)",
     "uuid": "18026a1b-7272-4e1e-b73f-f6e1002fa6fc",
-    "version": [
-      1,
-      0,
-      0
-    ],
-    "min_engine_version": [
-      1,
-      26,
-      50
-    ]
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 26, 50]
   },
   "modules": [
     {
       "type": "data",
       "uuid": "1083cf02-a2d4-405d-83d3-788c8734d817",
-      "version": [
-        1,
-        0,
-        0
-      ]
+      "version": [1, 0, 0]
     },
     {
       "type": "script",
       "language": "javascript",
       "uuid": "66ea86ad-c3da-4ce6-89c0-afe33c85d0ec",
       "entry": "scripts/main.js",
-      "version": [
-        1,
-        0,
-        0
-      ]
+      "version": [1, 0, 0]
     }
   ],
   "dependencies": [
     {
       "uuid": "c8f55beb-923e-4e2e-a832-e8b17b2e2d0c",
-      "version": [
-        1,
-        0,
-        0
-      ]
+      "version": [1, 0, 0]
     },
     {
       "module_name": "@minecraft/server",
-      "version": "2.5.0"
+      "version": "2.11.0"
     },
     {
       "module_name": "@minecraft/server-net",

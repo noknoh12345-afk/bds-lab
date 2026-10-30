@@ -7,3 +7,6 @@ geoui_web_probe で普通の題名（`/title @a title HELLO`）がどのやり�
 ## What it is
 - geoui_web_probe と同じ（URL の画像・F1・`/scriptevent gwp:…`）。違いはゲームの題名を隠さないことだけ: 通り道の題名（`~gu~…`）も画面に文字で出る。
 - 写るなら原因は題名の隠し方（probe は 5 本目から hud_title_text_area の置き換え）、写らないならラボ・写し方の側。
+
+## Maintenance
+- 2026-10-30 BDS 1.26.61.1: moved to stable APIs

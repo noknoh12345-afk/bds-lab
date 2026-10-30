@@ -4,51 +4,31 @@
     "name": "GeoUI Web Title Control BP",
     "description": "GeoUI: the title control — the probe with the game title left alone (bds-lab bds/geoui/web/probe.mjs)",
     "uuid": "a9c83758-fa2f-4eb9-adca-63823d75e883",
-    "version": [
-      1,
-      0,
-      0
-    ],
-    "min_engine_version": [
-      1,
-      26,
-      50
-    ]
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 26, 50]
   },
   "modules": [
     {
       "type": "data",
       "uuid": "a7ac36cd-1110-447e-a752-b7732aa36ba4",
-      "version": [
-        1,
-        0,
-        0
-      ]
+      "version": [1, 0, 0]
     },
     {
       "type": "script",
       "language": "javascript",
       "uuid": "3afba8ae-b9bd-4cd1-a81b-b6308cbac4d3",
       "entry": "scripts/main.js",
-      "version": [
-        1,
-        0,
-        0
-      ]
+      "version": [1, 0, 0]
     }
   ],
   "dependencies": [
     {
       "uuid": "88c5b0c8-2720-40a9-8f28-167288544ff3",
-      "version": [
-        1,
-        0,
-        0
-      ]
+      "version": [1, 0, 0]
     },
     {
       "module_name": "@minecraft/server",
-      "version": "2.5.0"
+      "version": "2.11.0"
     },
     {
       "module_name": "@minecraft/server-net",

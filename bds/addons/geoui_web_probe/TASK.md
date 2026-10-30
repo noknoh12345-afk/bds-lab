@@ -18,3 +18,6 @@ URL の画像（profile_image_renderer の {"type":7,"url":…}）を GeoUI に�
 1. ワールドで `/scriptevent gwp:url 0 /solid/ff0000/64x64.png` → 真ん中に赤い四角。`/scriptevent gwp:show 5` → 紫の枠の内側にぴったり、白い十字が赤の上。
 2. `/scriptevent gwp:url 1 https://placehold.co/64x64/00ff00/00ff00.png` → 左に緑。http が出ず https だけ出るなら、その端末は平文の http を取りに行かない。
 3. `/scriptevent gwp:f1 1` → HUD・会話・手と持ち物が全部消える（ゲームモードはそのまま）。`/scriptevent gwp:f1 0` で戻る。
+
+## Maintenance
+- 2026-10-30 BDS 1.26.61.1: moved to stable APIs
