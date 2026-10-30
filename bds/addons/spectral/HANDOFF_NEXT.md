@@ -11,8 +11,19 @@ ORIGINAL_HANDOFF_PROMPT.md（最初の依頼の原文入り）を先に読むこ
 - **このコミットは `node lab.mjs go` を通していない**（`node lab.mjs check spectral` と `node lab.mjs sim -a spectral` は通過）。
   最初に `node lab.mjs go`（bds/vendor/bedrock-server.zip はコミットしない: zip はリポジトリの外に置き LAB_BDS_ZIP で指す。
   check が bds/vendor/bds-version.txt を書き換えたら `git checkout -- bds/vendor/bds-version.txt`）
-- zip の scratch/ に実験の道具と結果（cache は除く）、recAll/ に実機の録音（run A–D の復号済み Opus）。秘密鍵は入れていない
-  （次に録音を出すときは HANDOFF.md の手順で鍵を作り直し、tools/rig/rec_public.pem を入れ替える）
+- **実験の道具はリポジトリに入った**: tools/exp/（README.md・run_exp.py・summ.py・make_app.py ほか、パスはユニットからの相対）。
+  これまでの結果は tools/exp/results/（b1 = アドオンの鳴らし方、b2 = 変換器の選択肢、val1 = エミュ対実機、ceiling_* = 経路だけ）
+- **zip から戻すもの**（新しいセッションで最初に）:
+  1. `git fetch origin addon/spectral && git checkout addon/spectral`（無ければ zip の repo/addon-spectral.bundle から:
+     `git fetch <zip>/repo/addon-spectral.bundle HEAD:addon/spectral`）
+  2. zip の recAll/*.opus → `bds/addons/spectral/corpus/renders/rec/`（実機の録音、run A–D、復号済み。gitignore 済み）
+  3. zip の exp_cache/*.song.json → `bds/addons/spectral/corpus/renders/exp/cache/`（変換済みの曲。今のコードと同じ鍵なので
+     変換 14 秒/曲を飛ばせる）
+  4. 試験曲の元（corpus/audio）は `python3 tools/corpus.py`（取り直し、sha256 で確認）。BDS は go が取ってくる
+     （取れなければ bds/vendor に置かず LAB_BDS_ZIP で指す）
+  5. 秘密鍵は入れていない。新しい録音を出すときは HANDOFF.md の手順で鍵を作り直し、tools/rig/rec_public.pem を入れ替える
+     （古い run のログは `gh api repos/noknoh12345-afk/bds-lab/actions/jobs/<job>/logs` で取り直せるが、開くには前の鍵が要る。
+     復号済みの録音は recAll にある）
 
 ## このセッションで分かったこと（すべて実測から）
 1. **録る経路 = ゲームが 24 kHz で混ぜている**。較正の録音で 7040 Hz の音に 16960 Hz の像（−12.2 dB）、10560→13440（−3.2）、
@@ -50,12 +61,13 @@ ORIGINAL_HANDOFF_PROMPT.md（最初の依頼の原文入り）を先に読むこ
 
 ## 次にやること（順に）
 1. `node lab.mjs go` を通す。parity（既定と voiced）を確かめる
-2. scratch/run_exp.py で残りを評価（8 曲→13 曲）: c_fit・c_erb・c_erbfit・c_nest（batch2.sh）、voiced＋drums noise、voiced＋分割を
-   細かくしたノイズ（scratch/make_layout.py の nzB: 180…4000,5000,6300,8000,10000,12000,17000 の 11 帯域＋21 声）、命令の予算 24/32。
-   実験は scratch/exp.py（song_pack → song_log → render(spec) → path24 → ViSQOL）。1 件 ~25 秒、2 並列
+2. `tools/exp/batch_next.sh`（13 曲: 出荷・voiced/fit＋打撃音なし・voiced＋drums noise/behind・命令の予算 24・軽量）を走らせ、
+   `python3 tools/exp/summ.py tools/exp/results/next.jsonl` で比べる。次にノイズの分割を細かくする案（tools/exp/make_layout.py:
+   `SRCBASE=src python3 make_layout.py nzB '[180,360,720,1440,2880,4000,5000,6300,8000,10000,12000,17000]'` → bundles に
+   build_exp.mjs で src_nzB/main.ts、変換器は conv の noise_edges、rp は rp_nzB、声 21）と nested。1 件 ~25 秒、2 並列
 3. 勝った組み合わせを既定に（変換器の既定と web/core.js、電話の CLIENTS）。tests.txt の電話の節も合わせる。go → push
 4. **実機で同じ run の A/B**（redroid.yml, addon spectral, mode run。app.yml が走っていないことを確かめてから）:
-   scratch/make_app.py で app.txt を作る。A = 出荷版（`audio song … suffix=_a residual=all salience=a`、`spectral:voices 24`・
+   tools/exp/make_app.py で app.txt を作る。A = 出荷版（`audio song … suffix=_a residual=all salience=a`、`spectral:voices 24`・
    `spectral:drums ahead`・`spectral:engine 0 false 0 0`）13 曲、B = 改良版 13 曲（打撃音なし）、C = 改良版＋`drums behind`（打撃音の
    ある 8 曲: demo drums edm funk gymnopedie rock speech_ja vocal_stars）。app run の上限は 40 分（app/redroid/game.mjs）: 34 曲で
    約 36 分。録音の受け取りは HANDOFF.md（鍵を作り直してから）

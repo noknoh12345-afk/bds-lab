@@ -1,0 +1,26 @@
+{"song": "piano_gymnopedie", "gain_db": -32.47, "v_rec": 1.6961}
+{"song": "piano_chopin_op66", "gain_db": -32.5, "v_rec": 2.1185}
+{"song": "vocal_stars", "gain_db": -32.55, "v_rec": 3.4346}
+{"song": "vocal_name_of_love", "gain_db": -32.49, "v_rec": 3.0891}
+{"song": "choir_how_long", "gain_db": -32.48, "v_rec": 2.8174}
+{"song": "drums_round", "gain_db": -32.47, "v_rec": 2.3208}
+{"song": "rock_big", "gain_db": -32.54, "v_rec": 3.9661}
+{"song": "edm_detection", "gain_db": -32.53, "v_rec": 3.8753}
+{"song": "orchestra_five_armies", "gain_db": -32.51, "v_rec": 3.022}
+{"song": "funk_funkorama", "gain_db": -32.53, "v_rec": 2.5953}
+{"song": "speech_ja_soseki", "gain_db": -32.48, "v_rec": 2.7332}
+{"song": "speech_en_wordsworth", "gain_db": -32.5, "v_rec": 2.9812}
+{"song": "demo_selfmade", "gain_db": -32.53, "v_rec": 3.2759}
+{"song": "piano_gymnopedie", "gain_db": -32.47, "model": {}, "v_model": 1.7346}
+{"song": "piano_chopin_op66", "gain_db": -32.5, "model": {}, "v_model": 2.5459}
+{"song": "vocal_stars", "gain_db": -32.55, "model": {}, "v_model": 3.9756}
+{"song": "vocal_name_of_love", "gain_db": -32.49, "model": {}, "v_model": 3.0577}
+{"song": "choir_how_long", "gain_db": -32.48, "model": {}, "v_model": 4.3775}
+{"song": "drums_round", "gain_db": -32.47, "model": {}, "v_model": 2.4535}
+{"song": "rock_big", "gain_db": -32.54, "model": {}, "v_model": 4.5675}
+{"song": "edm_detection", "gain_db": -32.53, "model": {}, "v_model": 4.6425}
+{"song": "orchestra_five_armies", "gain_db": -32.51, "model": {}, "v_model": 4.4036}
+{"song": "funk_funkorama", "gain_db": -32.53, "model": {}, "v_model": 4.4202}
+{"song": "speech_ja_soseki", "gain_db": -32.48, "model": {}, "v_model": 3.3018}
+{"song": "speech_en_wordsworth", "gain_db": -32.5, "model": {}, "v_model": 3.5665}
+{"song": "demo_selfmade", "gain_db": -32.53, "model": {}, "v_model": 3.6849}
