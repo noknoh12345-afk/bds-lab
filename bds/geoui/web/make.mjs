@@ -114,7 +114,7 @@ export function scene(o = {}) {
     planes.push({ bone: `gweb_tip_${k}`, texture: 'atlas', rect: { x: -0.6, y: -0.6, w: 1.2, h: 1.2 }, z: -1.5, uv: [1, 41, 6, 6] });
   }
   const Rd = (n) => `variable.is_paperdoll ? 0 : q.property('gweb:${n}')`;
-  return {
+  const sc = {
     ns: NS, name: ws ? 'GeoUI Web (WebSocket)' : 'GeoUI Web', seed: ws ? 'gweb-ws' : 'gweb',
     description: ws ? 'The web in the game over /connect (any world): every site, Chrome-like, full-screen in F1 (bds-lab bds/geoui/web)' : 'The web in the game: every site, Chrome-like, full-screen in F1 (bds-lab bds/geoui/web)',
     scale: { mode: 'height', s: 0.1 }, groups,
@@ -135,6 +135,34 @@ export function scene(o = {}) {
       'screen_channel.js': fs.readFileSync(path.join(HERE, '..', 'screen', 'channel.js'), 'utf8'),
     },
   };
+  sc.extraControls = fillTestControls(L.channelOf(sc), CFG);
+  return sc;
+}
+
+/** 14 本目の実験: the page's URL image (slot 0) drawn four ways outside a GeoUI group, in the four corners (a quarter of the
+ *  screen each), while the shape's slot says 'filltest' — which of them the game draws (the exact layout's images did not show:
+ *  12・13 本目), each with a rose mark (a plain image) in the same parent, to tell a hidden parent from an image not drawn.
+ *   ft1 top_left    panel 100 % > image 25 % x 25 %                     (the exact layout's way)
+ *   ft2 top_right   image 25 % x 25 % straight in the viewport
+ *   ft3 bottom_left panel 100 % > image 120 x 60 JSON UI px             (a size in px, as the game's own uses)
+ *   ft4 bottom_right panel 25 % x 25 % > image 100 %, anchored centre → top_left with an offset of −50 % of itself (a group's way) */
+function fillTestControls(ch, CFG) {
+  const T = '#hud_title_text_string', url = L.slotExpr(ch, CFG.slots.page), gateSlot = L.slotExpr(ch, CFG.slots.asp);
+  const gate = [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: `(${L.isChannelExpr(ch)} and (${gateSlot} = 'filltest'))`, target_property_name: '#visible' }];
+  const img = (more) => Object.assign({ type: 'custom', renderer: 'profile_image_renderer', layer: 2, bindings: [{ binding_name: T, binding_type: 'global' },
+    { binding_type: 'view', source_property_name: `('{"type":7,"url":"' + ${url} + '"}')`, target_property_name: '#profile_image_options' }] }, more);
+  const mark = (anchor) => ({ type: 'image', texture: `textures/${NS}/atlas`, uv: [0, 40], uv_size: [8, 8], size: [10, 10], anchor_from: anchor, anchor_to: anchor, layer: 6 });
+  return [
+    { [`${NS}_ft`]: { type: 'panel', size: ['100%', '100%'], layer: 2, bindings: gate, controls: [
+      { [`${NS}_ft1`]: img({ size: ['25%', '25%'], anchor_from: 'top_left', anchor_to: 'top_left' }) }, { [`${NS}_ft1m`]: mark('top_left') },
+      { [`${NS}_ft3`]: img({ size: [120, 60], anchor_from: 'bottom_left', anchor_to: 'bottom_left' }) }, { [`${NS}_ft3m`]: mark('bottom_left') },
+    ] } },
+    { [`${NS}_ft2`]: img({ size: ['25%', '25%'], anchor_from: 'top_right', anchor_to: 'top_right', bindings: [...gate, { binding_type: 'view', source_property_name: `('{"type":7,"url":"' + ${url} + '"}')`, target_property_name: '#profile_image_options' }] }) },
+    { [`${NS}_ft2m`]: Object.assign(mark('top_right'), { bindings: gate }) },
+    { [`${NS}_ft4`]: { type: 'panel', size: ['25%', '25%'], anchor_from: 'bottom_right', anchor_to: 'bottom_right', layer: 2, bindings: gate, controls: [
+      { [`${NS}_ft4i`]: img({ size: ['100%', '100%'], anchor_from: 'center', anchor_to: 'top_left', offset: ['-50%x', '-50%y'] }) }, { [`${NS}_ft4m`]: mark('bottom_right') },
+    ] } },
+  ];
 }
 
 /** where the page, the toolbar and the pointer's tip (at nx, ny) are on a W x H screen for a layout (px) */
@@ -551,7 +579,31 @@ measure marks fit-done
     ['d-probe', 'GWEB probe'], ['d-c-drawn', `GWEB probe .*"c":${n0},`], ['d-c-all', 'GWEB probe .*"c":160,'], ['d-c-none', 'GWEB probe .*"c":0,'],
     ['d-u-drawn', `GWEB probe .*"u":${n0},`], ['d-u-all', 'GWEB probe .*"u":160,'], ['d-c-top', 'GWEB probe .*"cTop":2\\.222'], ['d-u-top', 'GWEB probe .*"uTop":2\\.222'],
     ['d-aspect', 'GWEB aspect .*"why":"probe'],
+    // (where the clipped set stopped: its widest fetched probe, in ranges)
+    ['d-cmax-0-49', 'GWEB probe .*"cMax":([0-9]|[1-4][0-9]),'], ['d-cmax-50-89', 'GWEB probe .*"cMax":([5-8][0-9]),'], ['d-cmax-90-105', 'GWEB probe .*"cMax":(9[0-9]|10[0-5]),'],
+    ['d-cmax-106-110', 'GWEB probe .*"cMax":(10[6-9]|110),'], ['d-cmax-111', 'GWEB probe .*"cMax":111,'], ['d-cmax-112-118', 'GWEB probe .*"cMax":(11[2-8]),'],
+    ['d-cmax-119-129', 'GWEB probe .*"cMax":(119|12[0-9]),'], ['d-cmax-130-159', 'GWEB probe .*"cMax":(1[3-5][0-9]),'],
+    ['d-ccount-lt-cmax', 'GWEB probe .*"c":([0-9]{1,2}|1[0-5][0-9]),.*"cTop":null'],
   ].map(([id, re]) => `section ${id}\nexpect server ${re}\n`).join('\n');
+  // (the page's URL image drawn four ways outside a group, in the corners — measured a corner at a time; the page itself in a 1:1 box
+  //  in the middle, so the corners are free)
+  const q = [['ft1', 0, 0, 600, 270], ['ft2', 1800, 0, 2400, 270], ['ft3', 0, 810, 600, 1080], ['ft4', 1800, 810, 2400, 1080]];
+  const fillTest = `section filltest
+# 2400x1080: ページ（青）を 1:1 の箱で真ん中に、ページの URL の画像を 4 通りに四隅へ（ft1 左上: パネル 100 % > 25 %、ft2 右上: ビューポートに直に、
+# ft3 左下: パネル > 120 x 60 px、ft4 右下: パネル 25 % > 100 %・グループと同じ寄せ方）、それぞれの隅に rose の印（ふつうの画像）
+do scriptevent gweb:close
+wait 2000
+do scriptevent gweb:size box 1440x1440 1080
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 4000
+do scriptevent gweb:filltest
+wait 4000
+shot filltest
+measure marks filltest
+${q.map(([id, x0, y0, x1, y1]) => `measure marks filltest ${x0} ${y0} ${x1} ${y1}`).join('\n')}
+do scriptevent gweb:filltest 0
+`;
   const sizeExact = `section exact-size
 # 2400x1080・/web:size 2400x1080（測らずに）: ページ ${f(expected(2400, 1080, FILL).page)}、黒なし
 do scriptevent gweb:close
@@ -572,6 +624,7 @@ measure marks exact-size
 ${JOIN_TXT}
 ${exact[0]}
 ${diag}
+${fillTest}
 ${sizeExact}
 ${boxes.join('\n')}
 ${exact.slice(1).join('\n')}
@@ -632,29 +685,36 @@ function wsAppTxt() {
 # 実行: node lab.mjs app ci --batch geoui_web,geoui_web_ws（geoui_web は app-aspects.txt を scenario に、または単独）
 
 ${JOIN_TXT}
-section connect
+section type-key
+key T
+wait 2500
+text /connect 10.0.2.2:8787
+wait 1200
+shot ws-typed-key
+expect text (?i)connect
+
+section send-key
+key ENTER
+wait 2500
+shot ws-sent-key
+until server GWEB ws linked 25000
+
+section type-press
 press T 80
-wait 2000
+wait 2500
 ${keys.map((k) => `press ${k} 60`).join('\n')}
-wait 500
+wait 1200
+shot ws-typed-press
+expect text (?i)connect
+
+section send-press
 press ENTER 80
 wait 2500
-shot ws-typed
+shot ws-sent-press
+until server GWEB ws linked 25000
 
-section ocr-connect
-until text (?i)(connect|websocket|wss?:|接続) 4000
-
-section ocr-denied
-expect text (?i)(unknown|不明|permission|権限|cheat|チート|syntax|構文)
-
-section linked-keys
-until server GWEB ws linked 30000
-
-section connect-chat
-chat /connect 10.0.2.2:8787
-wait 2500
-shot ws-chat
-until server GWEB ws linked 30000
+section ocr-after
+expect text (?i)(connect|websocket|wss?:|接続|unknown|不明|permission|権限|cheat|チート|syntax|構文|encrypt|暗号)
 
 section open
 shot world
