@@ -40,3 +40,17 @@
 {"song": "speech_en_wordsworth", "var": "c_erbfit", "v": 2.2833, "cpt": 34.8}
 {"song": "piano_chopin_op66", "var": "c_nest", "v": 2.0346, "cpt": 37.9}
 {"song": "vocal_stars", "var": "c_nest", "v": 2.7199, "cpt": 38.3}
+{"song": "choir_how_long", "var": "c_nest", "v": 1.7835, "cpt": 39.3}
+{"song": "rock_big", "var": "c_nest", "v": 1.8473, "cpt": 40.4}
+{"song": "orchestra_five_armies", "var": "c_nest", "v": 2.7736, "cpt": 41.4}
+{"song": "edm_detection", "var": "c_nest", "v": 2.7624, "cpt": 43.8}
+{"song": "funk_funkorama", "var": "c_nest", "v": 1.749, "cpt": 41.3}
+{"song": "speech_en_wordsworth", "var": "c_nest", "v": 2.3455, "cpt": 34.8}
+{"song": "piano_chopin_op66", "var": "light", "v": 2.0303, "cpt": 23.2}
+{"song": "vocal_stars", "var": "light", "v": 2.4541, "cpt": 21.7}
+{"song": "choir_how_long", "var": "light", "v": 1.8246, "cpt": 23.6}
+{"song": "rock_big", "var": "light", "v": 2.8566, "cpt": 23.8}
+{"song": "orchestra_five_armies", "var": "light", "v": 2.5751, "cpt": 23.7}
+{"song": "edm_detection", "var": "light", "v": 2.7091, "cpt": 23.4}
+{"song": "speech_en_wordsworth", "var": "light", "v": 2.4364, "cpt": 19.2}
+{"song": "funk_funkorama", "var": "light", "v": 1.7913, "cpt": 23.5}
