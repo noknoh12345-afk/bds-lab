@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Title Vanilla BP",
+    "description": "bds-lab: the title control with nothing in it (bds/geoui/web/probe.mjs)",
+    "uuid": "b7a1c0de-6c1e-4f5a-9b2e-3d1a7e5c0f61",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "c2e4f6a8-1b3d-4e5f-8a7b-9c0d1e2f3a4b",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}
