@@ -2881,7 +2881,9 @@ async function lintUiPack(warns) {
   const J = await import('./jsonui.mjs');
   let v = vanillaRp();
   const tex = v?.textures() ?? null;
-  if (!tex) v = null;
+  // (the sparse checkout of ui/ can be missing when it failed or another lab process is making it: unchecked then, not a crash —
+  //  verify run 41037713169: ENOENT scandir samples/resource_pack/ui for two GeoUI add-ons in a row)
+  if (!tex || !exists(path.join(v.root, 'ui'))) v = null;
   const van = v ? J.vanillaUiIndex(path.join(v.root, 'ui'), tex) : null;
   if (!v) warns.push('rp/ui: vanilla UI not checked (needs git + github.com): only this pack\'s own names resolved');
   const w = J.lintUi(RP, van);
