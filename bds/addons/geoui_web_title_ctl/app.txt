@@ -1,0 +1,57 @@
+# geoui_web_title_ctl（bds/geoui/web/probe.mjs が作る）: 題名の対照（5 本目）。geoui_web_probe と同じパックで、ゲームの題名を隠さない
+# （titleHide: none）。ここで HELLO が写るなら、写らないのは題名の隠し方のせい。写らないなら、このラボ・この写し方のせい。
+# 実行: node lab.mjs app ci --batch geoui_web_title_ctl,geoui_web_probe,geoui_web
+
+section join
+stop
+launch
+until title 600000
+join
+until joined 900000
+size 2400x1080
+wait 9000
+do tp @a 0 -60 0 0 90
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do scriptevent gwp:info
+wait 6000
+expect server GWP CHECK svc PASS
+absent clientlog \bERROR\b
+
+section title
+do scriptevent gwp:reset
+do title @a times 10 70 20
+wait 2000
+shot world
+do title @a title HELLO
+wait 1500
+shot title-first
+measure diff title-first 900 300 1500 700
+wait 6000
+shot world
+do scriptevent gwp:url 1 /solid/00ff00/64x64.png
+wait 3000
+shot title-chan
+measure diff title-chan 900 300 1500 700
+do title @a title HELLO
+wait 1500
+shot title-plain
+measure diff title-plain 900 300 1500 700
+wait 6000
+do scriptevent gwp:raw HELLO
+wait 1500
+shot title-api
+measure diff title-api 900 300 1500 700
+do scriptevent gwp:reset
+do title @a reset
+wait 2000
