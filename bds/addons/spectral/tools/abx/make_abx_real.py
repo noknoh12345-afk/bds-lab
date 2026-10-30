@@ -18,7 +18,9 @@ sys.path.insert(0, HERE)
 import make_abx as MA                       # prepare(), mp3(), song_json(), page data helpers
 C, MT, E = MA.C, MA.MT, MA.E
 SR = 48000
-REFS = [('ceil', '天井（実機で元の音を鳴らした録音）'), ('light', '軽量モード（実機）'), ('emu', 'エミュレーター（同じ曲）')]
+# (prefix of the recordings in --rec → the file suffix and label of each reference beside A and B; B is --b)
+REFS = {'c': ('ceil', '天井（実機で元の音を鳴らした録音）'), 'g': ('old', '前の既定（48 声、実機）'), 'm': ('m24', '24 声（打撃音は前の送り方、実機）'),
+        'l': ('light', '軽量モード（実機）'), 'emu': ('emu', 'エミュレーター（同じ曲）')}
 
 
 def load(path):
@@ -54,6 +56,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--rec', required=True); ap.add_argument('--runs', required=True)
     ap.add_argument('--out', default=os.path.join(UNIT, 'dist', 'abx_real'))
+    ap.add_argument('--b', default='g', help='prefix of the recordings that are B (g: the default of runs 41068618513/41076646541, n: the phone default with bursts ahead)')
+    ap.add_argument('--refs', default='c,l,emu', help='references beside A and B, in order (c g m l emu)')
     a = ap.parse_args()
     os.makedirs(os.path.join(a.out, 'audio'), exist_ok=True)
     rows, devices = {}, []
@@ -64,30 +68,37 @@ def main():
             rows.setdefault(sid, {}).update(r)
     man = {s['id']: s for s in C.manifest()['songs']}
     songs = []
-    for sid in [s for s in man if os.path.exists(os.path.join(a.rec, f'g_{s}.opus'))]:
+    want = a.refs.split(',')
+    for sid in [s for s in man if os.path.exists(os.path.join(a.rec, f'{a.b}_{s}.opus'))]:
         ref_st = C.load(sid, SR, stereo=True)
         shutil.copy(C.excerpt_path(sid), os.path.join(a.out, 'audio', f'{sid}.orig.mp3'))
-        MA.mp3(os.path.join(a.out, 'audio', f'{sid}.game.mp3'), MA.prepare(ref_st, load(os.path.join(a.rec, f'g_{sid}.opus'))), kbps=320)
-        refs = []
-        for k, rec in (('ceil', 'c'), ('light', 'l')):
-            f = os.path.join(a.rec, f'{rec}_{sid}.opus')
+        MA.mp3(os.path.join(a.out, 'audio', f'{sid}.game.mp3'), MA.prepare(ref_st, load(os.path.join(a.rec, f'{a.b}_{sid}.opus'))), kbps=320)
+        refs, run = [], None
+        for pre in want:
+            k = REFS[pre][0]
+            if pre == 'emu':
+                y, run = emu_render(sid)
+                MA.mp3(os.path.join(a.out, 'audio', f'{sid}.emu.mp3'), MA.prepare(ref_st, y), kbps=320)
+                refs.append(pre)
+                continue
+            f = os.path.join(a.rec, f'{pre}_{sid}.opus')
             if os.path.exists(f):
                 MA.mp3(os.path.join(a.out, 'audio', f'{sid}.{k}.mp3'), MA.prepare(ref_st, load(f)), kbps=320)
-                refs.append(k)
-        y, run = emu_render(sid)
-        MA.mp3(os.path.join(a.out, 'audio', f'{sid}.emu.mp3'), MA.prepare(ref_st, y), kbps=320)
-        refs.append('emu')
+                refs.append(pre)
+        if run is None:
+            _, run = emu_render(sid)
         r = rows.get(sid, {})
+        bkey = {'g': 'game', 'm': 'mobile', 'n': 'mobile_ahead'}[a.b]
         sc = {'ceiling': r.get('ceiling', {}).get('visqol')}
-        if 'visqol' in r.get('game', {}):
-            sc['game'] = {**r['game'], 'calls_per_tick': run['calls_per_tick'], 'kbps': run['kbps']}
+        if 'visqol' in r.get(bkey, {}):
+            sc['game'] = {**r[bkey], 'calls_per_tick': run['calls_per_tick'], 'kbps': run['kbps']}
         if 'visqol' in r.get('light', {}):
             sc['light'] = r['light']
         if 'emu_vs_recording' in r:
             sc['emu'] = r['emu_vs_recording']
         s = man[sid]
         songs.append({'id': sid, 'title': s['title'], 'category': s['category'], 'credit': f"{s['author']} · {s['license']}",
-                      'scores': sc, 'refs': [[k, lbl] for k, lbl in REFS if k in refs]})
+                      'scores': sc, 'refs': [[REFS[p][0], REFS[p][1]] for p in refs]})
         print(json.dumps({'song': sid, 'refs': refs, 'game': sc.get('game', {}).get('visqol'), 'ceiling': sc['ceiling']}), flush=True)
     data = {'songs': songs, 'credits': C.credits(),
             'notice': 'B は実機の録音です（redroid の Android 14・Play から入れた Minecraft、録音は scrcpy の AudioPlaybackCapture 48 kHz）。'
