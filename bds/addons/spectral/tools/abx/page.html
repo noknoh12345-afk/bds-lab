@@ -155,13 +155,14 @@ function renderRail() {
   }
 }
 function renderSummary() {
+  if (DATA.columns) $('summary').querySelectorAll('thead th').forEach((th, i) => { if (DATA.columns[i]) th.textContent = DATA.columns[i]; });
   const tb = $('summary').querySelector('tbody'); tb.innerHTML = '';
   for (const s of DATA.songs) {
     const r = results[s.id] || { ok: 0, n: 0 }, p = r.n ? binomP(r.ok, r.n) : null, sc = s.scores || {};
     const v = (k) => (sc[k] && sc[k].visqol !== undefined ? sc[k].visqol : null);
     const tr = document.createElement('tr');
     const cells = [s.title, r.n ? `${r.ok} / ${r.n}` : '–', p === null ? '–' : p.toFixed(3), r.n < 8 ? '試行が足りない' : p < 0.05 ? '区別できる' : '区別できない',
-      fmt(sc.ceiling), fmt(v('game')), v('game') !== null && sc.ceiling ? fmt(sc.ceiling - v('game')) : '–', fmt(v('v1')), fmt(v('light')),
+      fmt(sc.ceiling), fmt(v('game')), v('game') !== null && sc.ceiling ? fmt(sc.ceiling - v('game')) : '–', fmt(v(DATA.v1Key || 'v1')), fmt(v('light')),
       sc.game ? sc.game.calls_per_tick.mean : '–', sc.game ? sc.game.kbps : '–'];
     cells.forEach((c, i) => { const td = document.createElement('td'); td.textContent = c; if (i > 0) td.className = 'num'; tr.append(td); });
     tb.append(tr);
@@ -181,11 +182,11 @@ async function select(id) {
   $('songTitle').textContent = cur.title;
   $('songCredit').textContent = `${cur.category} · ${cur.credit}`;
   const sc = cur.scores || {};
-  $('songScores').textContent = sc.game ? `ViSQOL（エミュレーター）: 天井 ${fmt(sc.ceiling)} · B ${fmt(sc.game.visqol)} · 差 ${fmt(sc.ceiling - sc.game.visqol)}` : '';
-  $('bLabel').textContent = replaced[id] ? '実機の録音' : 'ゲーム（エミュレーター）';
+  $('songScores').textContent = sc.game ? `${DATA.scoreLabel || 'ViSQOL（エミュレーター）'}: 天井 ${fmt(sc.ceiling)} · B ${fmt(sc.game.visqol)} · 差 ${fmt(sc.ceiling - sc.game.visqol)}` : '';
+  $('bLabel').textContent = replaced[id] ? '実機の録音' : (DATA.bLabel || 'ゲーム（エミュレーター）');
   buffers = {}; x = null; sel = [0, 1];
   $('refs').innerHTML = '';
-  for (const [k, label] of [['v1', '旧版 v1'], ['light', '軽量モード']]) {
+  for (const [k, label] of (cur.refs || DATA.refs || [['v1', '旧版 v1'], ['light', '軽量モード']])) {
     const b = document.createElement('button'); b.textContent = label; b.dataset.k = k; b.setAttribute('aria-pressed', 'false');
     b.onclick = () => play(k); $('refs').append(b);
   }
@@ -193,7 +194,7 @@ async function select(id) {
 }
 async function buffer(k) {
   if (buffers[k]) return buffers[k];
-  const url = k === 'B' && replaced[cur.id] ? replaced[cur.id] : `audio/${cur.id}.${{ A: 'orig', B: 'game', v1: 'v1', light: 'light' }[k]}.mp3`;
+  const url = k === 'B' && replaced[cur.id] ? replaced[cur.id] : `audio/${cur.id}.${{ A: 'orig', B: 'game' }[k] || k}.mp3`;
   buffers[k] = await decode(url);
   if (k === 'A') drawWave(buffers[k]);
   return buffers[k];

@@ -661,6 +661,26 @@
     "onset_ms": 2.5,
     "onset_recall": 0.95
    },
+   "light": {
+    "visqol": 2.7759,
+    "mrstft": 2.0371,
+    "third_oct_db": 5.932,
+    "onset_ms": 12.5,
+    "onset_recall": 0.742,
+    "recorded_s": 20.52,
+    "peak_db": -42.7,
+    "rms_db": -60.7,
+    "seconds": 24.51,
+    "active_share": 0.331,
+    "top_hz": [
+     83.5,
+     122.4,
+     166.2,
+     209.3,
+     415.2
+    ],
+    "top_share": 0.328
+   },
    "ceiling": {
     "visqol": 3.9548,
     "mrstft": 1.1165,

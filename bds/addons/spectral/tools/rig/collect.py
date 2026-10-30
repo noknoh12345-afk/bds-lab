@@ -28,22 +28,22 @@ def songs(res):
     """per song: the game's and the ceiling's ViSQOL against the original, the gap, and the emulator against the recording"""
     rows = {}
     for rec, by in res.items():
-        m = re.match(r'([gc])_(.+)$', rec)
+        m = re.match(r'([gcl])_(.+)$', rec)
         if not m:
             continue
         kind, sid = m.groups()
         r = rows.setdefault(sid, {})
         s = by.get(f'song:{sid}', {})
-        v = next((x for x in s.values() if isinstance(x, dict) and 'visqol' in x), None) if isinstance(s, dict) else None
+        v = next((x for x in s.values() if isinstance(x, dict) and ('visqol' in x or 'error' in x)), None) if isinstance(s, dict) else None
         if v:
-            r['game' if kind == 'g' else 'ceiling'] = v
+            r[{'g': 'game', 'c': 'ceiling', 'l': 'light'}[kind]] = v
         e = by.get(f'emu:{sid}')
         if e and 'emu_vs_recording' in e:
             r['emu_vs_recording'] = e['emu_vs_recording']
             if 'emu_vs_original' in e:
                 r['emu_vs_original'] = e['emu_vs_original']
     for r in rows.values():
-        if 'game' in r and 'ceiling' in r:
+        if 'visqol' in r.get('game', {}) and 'visqol' in r.get('ceiling', {}):
             r['gap'] = round(r['ceiling']['visqol'] - r['game']['visqol'], 4)
     return rows
 
@@ -59,17 +59,20 @@ def main():
     rows = songs(res)
     doc = {'run': a.run, 'device': a.device, 'source': 'job log [spectral rig] lines (recordings of the real client)', 'results': res, 'songs': rows}
     gaps = [r['gap'] for r in rows.values() if 'gap' in r]
+    # (a recording that is not a song — the calibration, the device's audio — is not a row)
     if gaps:
         doc['summary'] = {'songs': len(gaps), 'gap_median': round(statistics.median(gaps), 4), 'within_0.3': sum(g <= 0.3 for g in gaps),
                           'game_median': round(statistics.median(r['game']['visqol'] for r in rows.values() if 'gap' in r), 4),
                           'ceiling_median': round(statistics.median(r['ceiling']['visqol'] for r in rows.values() if 'gap' in r), 4)}
     os.makedirs(os.path.join(UNIT, 'measured'), exist_ok=True)
     out = os.path.join(UNIT, 'measured', f'redroid-{a.run}.json')
+    if os.path.exists(out):                     # (notes written by hand beside the numbers stay)
+        doc['notes'] = json.load(open(out, encoding='utf-8')).get('notes', [])
     json.dump(doc, open(out, 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
-    print(f'{"song":24s} {"game":>7s} {"ceiling":>8s} {"gap":>6s} {"emu~rec":>8s}')
+    print(f'{"song":24s} {"game":>7s} {"ceiling":>8s} {"gap":>6s} {"light":>7s} {"emu~rec":>8s}')
     for sid, r in sorted(rows.items()):
-        f = lambda k: f"{r[k]['visqol']:.3f}" if k in r else '-'
-        print(f"{sid:24s} {f('game'):>7s} {f('ceiling'):>8s} {r.get('gap', float('nan')):6.3f} {f('emu_vs_recording'):>8s}")
+        f = lambda k: f"{r[k]['visqol']:.3f}" if 'visqol' in r.get(k, {}) else ('err' if k in r else '-')
+        print(f"{sid:24s} {f('game'):>7s} {f('ceiling'):>8s} {r.get('gap', float('nan')):6.3f} {f('light'):>7s} {f('emu_vs_recording'):>8s}")
     if 'summary' in doc:
         print(json.dumps(doc['summary']))
     print('→', os.path.relpath(out, UNIT))
