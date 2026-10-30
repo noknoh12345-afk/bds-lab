@@ -103,12 +103,8 @@ sine = S.sine_loop(SR, 1.0, S.BASE) * OSC_AMP
 ogg('oscL', np.stack([sine, np.zeros_like(sine)], 1), q='10')
 ogg('oscR', np.stack([np.zeros_like(sine), sine], 1), q='10')
 
-# ---- the ceiling for the rig: the demo's original as an ordinary sound (self-made: tools/make_demo_song.py). What any
-# in-game playback of the demo can at best sound like through the same client and recorder (tools/rig, SPEC.md)
-if not os.path.exists(os.path.join(snd, 'ceiling_demo.ogg')):
-    with tempfile.TemporaryDirectory() as d:
-        subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'make_demo_song.py'), os.path.join(d, 'demo')], check=True, capture_output=True)
-        subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', os.path.join(d, 'demo.wav'), '-ar', str(SR), '-c:a', 'libvorbis', '-q:a', '8', os.path.join(snd, 'ceiling_demo.ogg')], check=True)
+# (the ceiling — a song's original as an ordinary sound — is not in this pack: the pack stays song-independent. The rig makes
+#  it where it records, as a unit of its own: tools/rig/songpack.py --unit, the app scenario's `audio ceiling`)
 
 defs = {}
 def ev(name, path, d3):
@@ -124,7 +120,6 @@ for d3 in (False, True):
         for s in range(S.SUB): ev('spectral.b%d_%d' % (b, s), 'sounds/spectral/b%d_%d' % (b, s), d3)
 for nm in ('sync', 'chirp', 'chirp1', 'osc220', 'osc7040', 'oscL', 'oscR'):
     ev('spectral.' + nm, 'sounds/spectral/' + nm, False)
-defs['spectral.ceiling_demo'] = {'category': 'ui', 'sounds': [{'name': 'sounds/spectral/ceiling_demo', 'is3D': False, 'volume': 1.0, 'stream': True}]}
 for cat in ('music', 'record'):
     defs['spectral.osc_' + cat] = {'category': cat, 'sounds': [{'name': 'sounds/spectral/osc', 'is3D': False, 'volume': 1.0}]}
 with open(os.path.join(unit, 'rp', 'sounds', 'sound_definitions.json'), 'w') as f:

@@ -533,17 +533,6 @@
     }
    ]
   },
-  "spectral.ceiling_demo": {
-   "category": "ui",
-   "sounds": [
-    {
-     "name": "sounds/spectral/ceiling_demo",
-     "is3D": false,
-     "volume": 1.0,
-     "stream": true
-    }
-   ]
-  },
   "spectral.osc_music": {
    "category": "music",
    "sounds": [
