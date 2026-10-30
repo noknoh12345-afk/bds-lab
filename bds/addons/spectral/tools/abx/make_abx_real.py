@@ -6,7 +6,7 @@ light mode, and the emulator's render of the same song (tools/emu with spec.json
 
   python3 tools/abx/make_abx_real.py --rec <dir of decoded .opus> --runs <run>[,<run>…] [--out dist/abx_real]
 
-Level matched to the original (RMS) and time aligned (ViSQOL's global alignment), MP3 320 kb/s. The scores are the runs'
+Level matched to the original (RMS) and time aligned (ViSQOL's global alignment); B as MP3 256 kb/s, the references 192 kb/s. The scores are the runs'
 own (measured/redroid-<run>.json: the recordings' WAVs in the run, not these files); kbps of the song data and commands per
 tick come from the converter and the bundle in the mock (the same song data the run sent).
 """
@@ -72,18 +72,18 @@ def main():
     for sid in [s for s in man if os.path.exists(os.path.join(a.rec, f'{a.b}_{s}.opus'))]:
         ref_st = C.load(sid, SR, stereo=True)
         shutil.copy(C.excerpt_path(sid), os.path.join(a.out, 'audio', f'{sid}.orig.mp3'))
-        MA.mp3(os.path.join(a.out, 'audio', f'{sid}.game.mp3'), MA.prepare(ref_st, load(os.path.join(a.rec, f'{a.b}_{sid}.opus'))), kbps=320)
+        MA.mp3(os.path.join(a.out, 'audio', f'{sid}.game.mp3'), MA.prepare(ref_st, load(os.path.join(a.rec, f'{a.b}_{sid}.opus'))), kbps=256)
         refs, run = [], None
         for pre in want:
             k = REFS[pre][0]
             if pre == 'emu':
                 y, run = emu_render(sid)
-                MA.mp3(os.path.join(a.out, 'audio', f'{sid}.emu.mp3'), MA.prepare(ref_st, y), kbps=320)
+                MA.mp3(os.path.join(a.out, 'audio', f'{sid}.emu.mp3'), MA.prepare(ref_st, y), kbps=192)
                 refs.append(pre)
                 continue
             f = os.path.join(a.rec, f'{pre}_{sid}.opus')
             if os.path.exists(f):
-                MA.mp3(os.path.join(a.out, 'audio', f'{sid}.{k}.mp3'), MA.prepare(ref_st, load(f)), kbps=320)
+                MA.mp3(os.path.join(a.out, 'audio', f'{sid}.{k}.mp3'), MA.prepare(ref_st, load(f)), kbps=192)
                 refs.append(pre)
         if run is None:
             _, run = emu_render(sid)
@@ -102,7 +102,7 @@ def main():
         print(json.dumps({'song': sid, 'refs': refs, 'game': sc.get('game', {}).get('visqol'), 'ceiling': sc['ceiling']}), flush=True)
     data = {'songs': songs, 'credits': C.credits(),
             'notice': 'B は実機の録音です（redroid の Android 14・Play から入れた Minecraft、録音は scrcpy の AudioPlaybackCapture 48 kHz）。'
-                      'A と B は元の音に合わせて音量（RMS）と時間をそろえ、MP3 320 kb/s にしてあります。参考の「天井」は、元の音をそのまま OGG で'
+                      'A と B は元の音に合わせて音量（RMS）と時間をそろえ、B は MP3 256 kb/s（参考は 192 kb/s）にしてあります。参考の「天井」は、元の音をそのまま OGG で'
                       'ゲームに鳴らさせて同じ録り方で録ったもの（同じクライアント・同じ録音経路でできる最良）。' + ' / '.join(devices),
             'metricNote': 'ViSQOL は v3 audio モード（公式の適合試験と 1e-13 で一致する numpy 移植）を、実行の中で録音の WAV に当てた値（実測）。'
                           '「エミュ→録音」は同じ曲を tools/emu で鳴らしたものと録音の ViSQOL（エミュレーターの較正の基準 4.5）。ViSQOL は音程の有無に'
