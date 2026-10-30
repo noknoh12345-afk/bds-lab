@@ -58,12 +58,31 @@ wait 600
 js const v = p('A').getProperty('gweb:ptr'), x = v % 4096, y = Math.floor(v / 4096); JSON.stringify([x > 2300, y > 2150])
 = [true,true]
 
-## 画面の形と解像度: 20:9・高さ 1080（本物のスマホ）
-@A cmd /web:size 2400x1080
+## 画面の形と解像度: 箱（/web:size box 2400x1080）— いちばん近い箱 g
+@A cmd /web:size box 2400x1080
 wait 1500
 ~ @A title: ~gu~1g
 scriptevent gweb:state
-~ GWEB state .*"layout":"g","w":2400,"h":1080
+~ GWEB state .*"layout":"g"
+
+## 画面の形と解像度: 自分の画面 2400x1080 — ぴったり（z）、絵は 2400 x 1080、形のプロパティ 2222
+@A cmd /web:size 2400x1080
+wait 1500
+~ @A title: ~gu~1z
+~ GWEB aspect .*"asp":2\.2222,"why":"size"
+scriptevent gweb:state
+~ GWEB state .*"layout":"z","w":2400,"h":1080
+js p('A').getProperty('gweb:asp')
+= 2222
+
+## 端に合わせる（/web:fit）: 印が出て（形の枠に fit）、右の端でクリック → 形 2.2222
+scriptevent gweb:fit
+wait 500
+~ @A title: ~gu~1z.*fit
+scriptevent gweb:pointer 0.746914 0.5
+scriptevent gweb:click
+wait 500
+~ GWEB aspect .*"asp":2\.2222,"why":"fit"
 
 ## スニークを長く: 閉じる（F1 も戻り、題名も消える）
 @A sneak on
