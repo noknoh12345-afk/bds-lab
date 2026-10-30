@@ -3,11 +3,10 @@
 #   数はジョブのログの `[spectral rig] <録音> <何>: {...}` の行（audio analyze）。録音そのものは `audio export` が Opus にして
 #   tools/rig/rec_public.pem で暗号化し `[spectral rec]` の行でログへ（開けるのはその秘密鍵の持ち主だけ: tools/rig/rec_decode.mjs）。
 # 音量: audio volume がメディアの音量を最大・ゲームの audio_ を 1（BGM 0）に（既定のままでは録音が元より約 39 dB 小さかった）。
-# 試験曲: audio song がここで変換してコンソールから spectral:song で送り、execute as で /spectral:play（g_ = quality、v_ = 24 声）。
-# 天井: audio ceiling が元の抜粋を OGG のまま鳴らすだけのアドオン（bds/addons/spectral_ceil、実行の場で作る・コミットしない）を
-#   作り、addon で BDS をそれで起動し直して入り直し、同じクライアント・同じ録音で鳴らす（c_<曲>）。天井との差 = 両方の ViSQOL の差。
-# emu:<曲> = 同じ曲を tools/emu（spec.json = 実測で較正したクライアント）で鳴らしたものと録音の ViSQOL（依頼の較正の基準: 4.5 以上）。
-# 2 回目（SONGS_B）: 残りの 6 曲・較正（WAV のまま、直したクリック合わせで）・24 声（+ノイズ 8 = 32 本: 実測の同時発音数）との比べ 4 曲。
+# 試験曲: audio song がここで変換してコンソールから spectral:song で送り、execute as で /spectral:play。
+# 3 回目: 13 曲を、電話の新しい既定（同時発音数 32 に収まる 24 声 + ノイズ 8: m_）と軽量モード（16 声: l_）で。天井（c_）は
+#   run 41068618513・41076646541 で全曲を録ってある（同じ端末・同じ録り方）。天井を録るなら: audio ceiling spectral_ceil <曲,…> →
+#   section の頭で addon spectral_ceil・join・until joined → 曲ごとに do scriptevent spectral:ceiling <曲>（その前の版の app.txt）。
 
 section title
 audio info
@@ -19,14 +18,19 @@ audio info
 shot title
 
 section prep
+audio song piano_gymnopedie
 audio song piano_chopin_op66
+audio song vocal_stars
 audio song vocal_name_of_love
 audio song choir_how_long
+audio song drums_round
+audio song rock_big
+audio song edm_detection
+audio song orchestra_five_armies
 audio song funk_funkorama
 audio song speech_ja_soseki
+audio song speech_en_wordsworth
 audio song demo_selfmade
-audio song rock_big
-audio ceiling spectral_ceil piano_chopin_op66,vocal_name_of_love,choir_how_long,funk_funkorama,speech_ja_soseki,demo_selfmade
 
 section join
 join
@@ -36,128 +40,164 @@ do time set noon
 do gamerule dodaylightcycle false
 do weather clear
 
-section calib
-audio start calib
-do spectral:calib all
-until server spectral calib\] end throughput 300000
-wait 2000
+section mobile
+audio start m_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie
+wait 23000
 audio stop
-audio analyze calib all
-audio export calib 192
-
-section songs
-audio start g_piano_chopin_op66
+audio analyze m_piano_gymnopedie song:piano_gymnopedie
+audio export m_piano_gymnopedie 160
+audio start m_piano_chopin_op66
 do execute as @a run spectral:play piano_chopin_op66
 wait 23000
 audio stop
-audio analyze g_piano_chopin_op66 song:piano_chopin_op66
-audio analyze g_piano_chopin_op66 emu:piano_chopin_op66
-audio export g_piano_chopin_op66 160
-audio start g_vocal_name_of_love
+audio analyze m_piano_chopin_op66 song:piano_chopin_op66
+audio export m_piano_chopin_op66 160
+audio start m_vocal_stars
+do execute as @a run spectral:play vocal_stars
+wait 23000
+audio stop
+audio analyze m_vocal_stars song:vocal_stars
+audio export m_vocal_stars 160
+audio start m_vocal_name_of_love
 do execute as @a run spectral:play vocal_name_of_love
 wait 23000
 audio stop
-audio analyze g_vocal_name_of_love song:vocal_name_of_love
-audio analyze g_vocal_name_of_love emu:vocal_name_of_love
-audio export g_vocal_name_of_love 160
-audio start g_choir_how_long
+audio analyze m_vocal_name_of_love song:vocal_name_of_love
+audio export m_vocal_name_of_love 160
+audio start m_choir_how_long
 do execute as @a run spectral:play choir_how_long
 wait 23000
 audio stop
-audio analyze g_choir_how_long song:choir_how_long
-audio analyze g_choir_how_long emu:choir_how_long
-audio export g_choir_how_long 160
-audio start g_funk_funkorama
-do execute as @a run spectral:play funk_funkorama
+audio analyze m_choir_how_long song:choir_how_long
+audio export m_choir_how_long 160
+audio start m_drums_round
+do execute as @a run spectral:play drums_round
 wait 23000
 audio stop
-audio analyze g_funk_funkorama song:funk_funkorama
-audio analyze g_funk_funkorama emu:funk_funkorama
-audio export g_funk_funkorama 160
-audio start g_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki
-wait 23000
-audio stop
-audio analyze g_speech_ja_soseki song:speech_ja_soseki
-audio analyze g_speech_ja_soseki emu:speech_ja_soseki
-audio export g_speech_ja_soseki 160
-audio start g_demo_selfmade
-do execute as @a run spectral:play demo_selfmade
-wait 23000
-audio stop
-audio analyze g_demo_selfmade song:demo_selfmade
-audio analyze g_demo_selfmade emu:demo_selfmade
-audio export g_demo_selfmade 160
-
-section voices24
-do execute as @a run spectral:voices 24
-audio start v_rock_big
+audio analyze m_drums_round song:drums_round
+audio export m_drums_round 160
+audio start m_rock_big
 do execute as @a run spectral:play rock_big
 wait 23000
 audio stop
-audio analyze v_rock_big song:rock_big
-audio export v_rock_big 160
-audio start v_funk_funkorama
+audio analyze m_rock_big song:rock_big
+audio export m_rock_big 160
+audio start m_edm_detection
+do execute as @a run spectral:play edm_detection
+wait 23000
+audio stop
+audio analyze m_edm_detection song:edm_detection
+audio export m_edm_detection 160
+audio start m_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies
+wait 23000
+audio stop
+audio analyze m_orchestra_five_armies song:orchestra_five_armies
+audio export m_orchestra_five_armies 160
+audio start m_funk_funkorama
 do execute as @a run spectral:play funk_funkorama
 wait 23000
 audio stop
-audio analyze v_funk_funkorama song:funk_funkorama
-audio export v_funk_funkorama 160
-audio start v_choir_how_long
-do execute as @a run spectral:play choir_how_long
+audio analyze m_funk_funkorama song:funk_funkorama
+audio export m_funk_funkorama 160
+audio start m_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki
 wait 23000
 audio stop
-audio analyze v_choir_how_long song:choir_how_long
-audio export v_choir_how_long 160
-audio start v_piano_chopin_op66
+audio analyze m_speech_ja_soseki song:speech_ja_soseki
+audio export m_speech_ja_soseki 160
+audio start m_speech_en_wordsworth
+do execute as @a run spectral:play speech_en_wordsworth
+wait 23000
+audio stop
+audio analyze m_speech_en_wordsworth song:speech_en_wordsworth
+audio export m_speech_en_wordsworth 160
+audio start m_demo_selfmade
+do execute as @a run spectral:play demo_selfmade
+wait 23000
+audio stop
+audio analyze m_demo_selfmade song:demo_selfmade
+audio export m_demo_selfmade 160
+
+section light
+do execute as @a run spectral:mode light
+audio start l_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie
+wait 23000
+audio stop
+audio analyze l_piano_gymnopedie song:piano_gymnopedie
+audio export l_piano_gymnopedie 160
+audio start l_piano_chopin_op66
 do execute as @a run spectral:play piano_chopin_op66
 wait 23000
 audio stop
-audio analyze v_piano_chopin_op66 song:piano_chopin_op66
-audio export v_piano_chopin_op66 160
-do execute as @a run spectral:voices 64
-
-section ceiling
-addon spectral_ceil
-join
-until joined 300000
-wait 5000
-audio start c_piano_chopin_op66
-do scriptevent spectral:ceiling piano_chopin_op66
-wait 22000
+audio analyze l_piano_chopin_op66 song:piano_chopin_op66
+audio export l_piano_chopin_op66 160
+audio start l_vocal_stars
+do execute as @a run spectral:play vocal_stars
+wait 23000
 audio stop
-audio analyze c_piano_chopin_op66 song:piano_chopin_op66
-audio export c_piano_chopin_op66 160
-audio start c_vocal_name_of_love
-do scriptevent spectral:ceiling vocal_name_of_love
-wait 22000
+audio analyze l_vocal_stars song:vocal_stars
+audio export l_vocal_stars 160
+audio start l_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love
+wait 23000
 audio stop
-audio analyze c_vocal_name_of_love song:vocal_name_of_love
-audio export c_vocal_name_of_love 160
-audio start c_choir_how_long
-do scriptevent spectral:ceiling choir_how_long
-wait 22000
+audio analyze l_vocal_name_of_love song:vocal_name_of_love
+audio export l_vocal_name_of_love 160
+audio start l_choir_how_long
+do execute as @a run spectral:play choir_how_long
+wait 23000
 audio stop
-audio analyze c_choir_how_long song:choir_how_long
-audio export c_choir_how_long 160
-audio start c_funk_funkorama
-do scriptevent spectral:ceiling funk_funkorama
-wait 22000
+audio analyze l_choir_how_long song:choir_how_long
+audio export l_choir_how_long 160
+audio start l_drums_round
+do execute as @a run spectral:play drums_round
+wait 23000
 audio stop
-audio analyze c_funk_funkorama song:funk_funkorama
-audio export c_funk_funkorama 160
-audio start c_speech_ja_soseki
-do scriptevent spectral:ceiling speech_ja_soseki
-wait 22000
+audio analyze l_drums_round song:drums_round
+audio export l_drums_round 160
+audio start l_rock_big
+do execute as @a run spectral:play rock_big
+wait 23000
 audio stop
-audio analyze c_speech_ja_soseki song:speech_ja_soseki
-audio export c_speech_ja_soseki 160
-audio start c_demo_selfmade
-do scriptevent spectral:ceiling demo_selfmade
-wait 22000
+audio analyze l_rock_big song:rock_big
+audio export l_rock_big 160
+audio start l_edm_detection
+do execute as @a run spectral:play edm_detection
+wait 23000
 audio stop
-audio analyze c_demo_selfmade song:demo_selfmade
-audio export c_demo_selfmade 160
-
-# 1 回目（SONGS_A, run 41068618513）: piano_gymnopedie vocal_stars drums_round rock_big edm_detection orchestra_five_armies
-#   speech_en_wordsworth（較正・3 曲の軽量モードも）
+audio analyze l_edm_detection song:edm_detection
+audio export l_edm_detection 160
+audio start l_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies
+wait 23000
+audio stop
+audio analyze l_orchestra_five_armies song:orchestra_five_armies
+audio export l_orchestra_five_armies 160
+audio start l_funk_funkorama
+do execute as @a run spectral:play funk_funkorama
+wait 23000
+audio stop
+audio analyze l_funk_funkorama song:funk_funkorama
+audio export l_funk_funkorama 160
+audio start l_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki
+wait 23000
+audio stop
+audio analyze l_speech_ja_soseki song:speech_ja_soseki
+audio export l_speech_ja_soseki 160
+audio start l_speech_en_wordsworth
+do execute as @a run spectral:play speech_en_wordsworth
+wait 23000
+audio stop
+audio analyze l_speech_en_wordsworth song:speech_en_wordsworth
+audio export l_speech_en_wordsworth 160
+audio start l_demo_selfmade
+do execute as @a run spectral:play demo_selfmade
+wait 23000
+audio stop
+audio analyze l_demo_selfmade song:demo_selfmade
+audio export l_demo_selfmade 160
+do execute as @a run spectral:mode quality

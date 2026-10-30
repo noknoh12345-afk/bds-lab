@@ -122,6 +122,17 @@ const DEFAULTS: Settings = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voice
 // layer), and at most LIGHT_BUDGET commands per tick per listener (voices and noise bands together), chosen by how much
 // each one matters (rate control); starting, seeking and ending a song are not held back
 const LIGHT_VOICES = 16, LIGHT_BUDGET = 24;
+// how many sounds a client plays at once, measured on a real one (SPEC.md: Minecraft 1.26.60.4 on Android 14 heard 32, the
+// quietest or oldest going first — a song's 48 voices and 8 noise bands were over it, and 24 voices scored better than 48 on
+// that client on every song tried, +0.17..+0.52 ViSQOL). A phone gets the voices that fit beside the noise bands; platforms
+// not measured yet keep every voice of the song. A count the player sets (/spectral:voices, the sound form) is theirs
+const CLIENT_SOUNDS: Partial<Record<string, number>> = { Mobile: 32 };
+function platformVoices(p: Player): number {
+  let kind = '';
+  try { kind = String(p.clientSystemInfo.platformType); } catch { /* not known (an older client) */ }
+  const n = CLIENT_SOUNDS[kind];
+  return n ? Math.max(4, n - NOISE_BANDS.length) : DEFAULTS.voices;
+}
 interface Target { player?: Player; dim?: Dimension; loc?: Vector3; osc: SoundInstance[]; nz: SoundInstance[]; }
 
 class Session {
@@ -391,7 +402,7 @@ const fmt = (s: number) => `${Math.floor(Math.abs(s) / 60)}:${String(Math.floor(
 const dist = (a: Vector3, b: Vector3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
 const sessions = new Map<string, Session>();
-const settingsOf = (p: Player): Settings => ({ ...DEFAULTS, ...load<Partial<Settings>>(p, 'spectral:settings', {}) });
+const settingsOf = (p: Player): Settings => ({ ...DEFAULTS, voices: platformVoices(p), ...load<Partial<Settings>>(p, 'spectral:settings', {}) });
 const keep = (p: Player, s: Settings) => save(p, 'spectral:settings', s);
 
 system.runInterval(() => {
@@ -457,11 +468,13 @@ cmd('spectral:layers', 'Noise bands and drum bursts on/off', { noise: 'bool', bu
 cmd('spectral:freeze', 'Freeze the sound where it is (an endless drone) / thaw', {}, freezeFor);
 cmd('spectral:mode', 'quality: every voice, every command · light (Realms, many players): 16 voices, at most 24 commands per tick per listener', { mode: ['quality', 'light'] }, async (p, a) => {
   const s = settingsOf(p), light = a.mode === 'light';
-  s.mode = light ? 'light' : 'quality'; s.budget = light ? LIGHT_BUDGET : 0; s.voices = light ? LIGHT_VOICES : 64; s.bursts = !light;
+  const full = platformVoices(p);
+  s.mode = light ? 'light' : 'quality'; s.budget = light ? LIGHT_BUDGET : 0; s.voices = light ? LIGHT_VOICES : full; s.bursts = !light;
   keep(p, s);
   const m = mine(p);
   if (m) { m.s.mode = s.mode; m.s.budget = s.budget; m.s.bursts = s.bursts; await m.setVoices(s.voices); }
-  return light ? `§bquality light: ${LIGHT_VOICES} voices, ≤${LIGHT_BUDGET} commands/tick per listener, no bursts` : '§bquality full: every voice, no command budget';
+  return light ? `§bquality light: ${LIGHT_VOICES} voices, ≤${LIGHT_BUDGET} commands/tick per listener, no bursts`
+    : `§bquality full: ${full === DEFAULTS.voices ? 'every voice' : `${full} voices (as many sounds as this client plays at once)`}, no command budget`;
 });
 cmd('spectral:loop', 'Loop the song on/off', {}, (p) => { const s = settingsOf(p); s.loop = !s.loop; keep(p, s); const m = mine(p); if (m) m.s.loop = s.loop; return `§bloop ${s.loop ? 'on' : 'off'}`; });
 cmd('spectral:viz', 'Spectrum on the action bar on/off', {}, (p) => { const s = settingsOf(p); s.viz = !s.viz; keep(p, s); const m = mine(p); if (m) m.s.viz = s.viz; return `§bspectrum ${s.viz ? 'on' : 'off'}`; });

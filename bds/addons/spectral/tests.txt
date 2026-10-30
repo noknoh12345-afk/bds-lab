@@ -258,3 +258,22 @@ wait 300
 ~ @A status: playing demo .* voices 48 instances 56 .* quality quality budget none
 @A cmd /spectral:stop
 ~ @A ■ stopped
+
+## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands
+@C join platform=mobile
+@C cmd /spectral:play demo
+~ @C ▶ Demo \(original\) — Spectral Player \(0:22, 24/48 voices, headphones\)
+wait 1000
+@C cmd /spectral:status
+~ @C status: playing demo .* mode phones voices 24 instances 32
+@C cmd /spectral:mode light
+~ @C quality light: 16 voices
+@C cmd /spectral:mode quality
+~ @C quality full: 24 voices \(as many sounds as this client plays at once\), no command budget
+@C cmd /spectral:voices 48
+~ @C voices 48
+wait 300
+@C cmd /spectral:status
+~ @C status: playing demo .* voices 48 instances 56
+@C cmd /spectral:stop
+~ @C ■ stopped
