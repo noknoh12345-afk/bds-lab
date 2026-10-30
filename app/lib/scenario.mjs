@@ -30,7 +30,8 @@
 //   press <キー>[+<キー>…] [ミリ秒]   キーを押したままにする（例 press W 2000 で歩く、press SHIFT+W 1500）
 //   hold <x> <y> [ミリ秒]        長押し                                record start|stop   画面を録画（recordings/*.mp4）
 //   audio start [名前] / audio stop   端末が鳴らす音を録音（scrcpy、Android 11 以上。audio/<名前>.wav。bds/addons/spectral の測定リグ）
-//   audio analyze <名前> <calib の名前|all|song:<曲>> [比べる録音…]   録音を測る（tools/rig: 数はログと報告に。録音は実行のフォルダに）
+//   audio analyze <名前> <calib の名前|all|song:<曲>|emu:<曲>> [比べる録音…]   録音を測る（tools/rig: 数はログと報告に。録音は実行の
+//                                フォルダに。emu: は同じ曲をエミュレーターで鳴らしたものと比べる — 先に audio song <曲>）
 //   audio song <曲>               試験曲（corpus）をここで変換し、サーバーのコンソールから spectral:song の script event で送る
 //   audio ceiling <アドオン> <曲,曲,…>   天井（元の音を OGG のまま鳴らすだけのアドオン）を bds/addons/<アドオン> に作る: 次に addon <アドオン>
 //   perf [ミリ秒]                ゲームのメモリと、その間の毎秒のフレーム数
@@ -179,7 +180,7 @@ function check(s) {
   if (s.verb === 'press' && (!a[0] || a[0].split('+').some((k) => linuxKey(k) === null) || (a[1] !== undefined && Number.isNaN(num(a[1]))))) return '書き方: press <キー>[+<キー>…] [ミリ秒]（例 press W 2000）';
   if (s.verb === 'hold' && (a.length < 2 || a.slice(0, 3).some((x) => Number.isNaN(num(x))))) return '書き方: hold <x> <y> [ミリ秒]';
   if (s.verb === 'record' && !['start', 'stop'].includes(a[0])) return '書き方: record start|stop';
-  if (s.verb === 'audio' && a[0] === 'analyze' && !(a.length >= 3 && a.slice(1).every((x) => /^[\w.:-]+$/.test(x)))) return '書き方: audio analyze <名前> <calib の名前|all|song:<曲>> [比べる録音の名前…]';
+  if (s.verb === 'audio' && a[0] === 'analyze' && !(a.length >= 3 && a.slice(1).every((x) => /^[\w.:-]+$/.test(x)))) return '書き方: audio analyze <名前> <calib の名前|all|song:<曲>|emu:<曲>> [比べる録音の名前…]';
   if (s.verb === 'audio' && a[0] === 'song' && !(a.length === 2 && /^[\w.-]+$/.test(a[1]))) return '書き方: audio song <曲>（corpus/manifest.json の id）';
   if (s.verb === 'audio' && a[0] === 'ceiling' && !(a.length === 3 && /^[A-Za-z0-9_-]{1,64}$/.test(a[1]) && /^[\w.-]+(,[\w.-]+)*$/.test(a[2]))) return '書き方: audio ceiling <アドオンの名前> <曲,曲,…>';
   if (s.verb === 'audio' && !['analyze', 'song', 'ceiling'].includes(a[0]) && (!['start', 'stop'].includes(a[0]) || (a[1] !== undefined && !/^[\w.-]+$/.test(a[1])))) return '書き方: audio start [名前] / audio stop / audio analyze … / audio song <曲> / audio ceiling <アドオン> <曲,…>（名前は英数字と _ . - だけ）';

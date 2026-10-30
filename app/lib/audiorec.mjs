@@ -107,6 +107,11 @@ export function analyze({ labDir, addon = 'spectral', wav, what, refs = [] }) {
   if (what.startsWith('song:')) {
     const ref = refFile(unit, what.slice(5), py);
     args = [path.join(unit, 'tools', 'rig', 'score_song.py'), ref, wav, ...refs, '--json', out];
+  } else if (what.startsWith('emu:')) {
+    // (the emulator with tools/emu/spec.json against this recording: the song as `audio song` sent it, beside the recording)
+    const song = path.join(path.dirname(wav), `song-${what.slice(4)}.json`);
+    if (!fs.existsSync(song)) throw new Error(`emu:${what.slice(4)} には先に audio song ${what.slice(4)} が要ります（${path.basename(song)} がありません）`);
+    args = [path.join(unit, 'tools', 'rig', 'emu_check.py'), song, wav, '--json', out];
   } else args = [path.join(unit, 'tools', 'rig', 'analyze.py'), wav, what, '--json', out];
   const r = spawnSync(py, args, { encoding: 'utf8', timeout: 1_800_000, maxBuffer: 64e6, cwd: unit });
   if (r.status !== 0) throw new Error(`解析に失敗しました: ${(r.stderr || r.stdout).trim().split('\n').slice(-3).join(' | ').slice(0, 400)}`);
@@ -145,5 +150,6 @@ function summarize(j) {
   if (j.mixer) parts.push(`mixer ${j.mixer.behaviour} music ${n(j.mixer.category_db?.music)} record ${n(j.mixer.category_db?.record)}dB`);
   if (j.throughput) parts.push(`128 cmds spread ${n(j.throughput.counts?.at(-1)?.spread_ms)}ms`);
   for (const [k, v] of Object.entries(j)) if (v && typeof v === 'object' && 'visqol' in v) parts.push(`${k} ViSQOL ${n(v.visqol, 3)}`);
+  if (j.emu_vs_recording) parts.push(`spec ${Object.values(j.spec ?? {}).filter((s) => s === 'measured').length}/${Object.keys(j.spec ?? {}).length} measured`);
   return parts.join(' · ');
 }
