@@ -393,7 +393,9 @@ node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu
 | `screen/rules.mjs` | 規則を決める実験のパック（`bds/addons/geoui_rules`）・実験の前の予測（`predict`）・結果の読み方（`verdict`。前の実行は `--predictions --app`） |
 | `rules-history/run-<番号>/` | 回した実験の、その時の予測・手順（app.txt）・公開のまとめ（summary.json） |
 | `RULES.md` | 規則の台帳（全段の規則・出どころ・状態・決める実験） |
-| `html/` | HTML → GeoUI（`capture.mjs`・`scene.mjs`・`runtime.js`・`convert.mjs`・見本 `examples/menu.html`） |
+| `html/` | HTML → GeoUI（`capture.mjs`・`scene.mjs`・`runtime.js`・`convert.mjs`・見本 `examples/menu.html`。ページは URL でも） |
+| `screen/channel.js` | 題名の通り道（F1・並べ方・URL の画像を 1 人ずつ: 17 章） |
+| `web/` | GeoUI Web（`engine.mjs` Chromium・`server.mjs` サービス・`lab.mjs` ラボがサービスを起こす・`runtime.js` パックの中のブラウザ・`make.mjs` → `bds/addons/geoui_web`・`probe.mjs` → `bds/addons/geoui_web_probe`・`demo/` 確かめのページ）: 17 章、[web/README.md](web/README.md) |
 | `app/lib/measure.mjs` の `marks` | スクショの色ごとの箱を測る（`measure marks <shot>`） |
 | `tests/geoui-screen-offline.mjs`・`tests/geoui-html-offline.mjs` | 式と JSON UI・パック・焦点・入力・端末のパック、変換器（パックの Molang をゲームと同じに動かした見た目・main.js そのもの） |
 
@@ -425,7 +427,7 @@ rightItem・leftItem）を大きさ 0、体は render controller で自分から
 スクリプトで描くサイトもそのまま（Chromium が動かす）: 変わり続けるページは 250 ms ごと、止まっているページは次第に 1.5 秒ごとまで見直す。
 このサーバーの中の場所（127.0.0.1・10.x・192.168.x…）は開かない（`GEOUI_WEB_ALLOW_PRIVATE=1` で開く）。操作はこの機械からだけ（BDS が横に
 いる）。ラボは `geoui-web.json` のあるアドオンの BDS の横にサービスを起こす（`lab.mjs`。アプリのラボは端末から見たこの機械の名前
-`GEOUI_WEB_HOST` を渡す: エミュレータは 10.0.2.2）。`"tunnel"` で cloudflared の https の入り口も（CI だけなら `"ci"`）。
+`GEOUI_WEB_HOST` を渡す: エミュレータは 10.0.2.2）。`"tunnel"` で cloudflared の https の入り口も（アプリのラボの時だけなら `"app"`）。
 
 ### 予測（run の前に書いた: `bds/addons/geoui_web_probe`、参加の後 `size 2400x1080` = 本物の 20:9 のスマホの解像度で）
 
@@ -497,3 +499,40 @@ GeoUI Web のページとツールバーは二重の枠（今の絵を下へ →
 | web type | 欄を押して `/web:t Steve` | 題名が「入力フォーム — Steve」に（サーバーの GWEB page の行） |
 | web site | ja.wikipedia.org・youtube.com | どちらも開き（GWEB page に wikipedia・youtube）、絵が出る（違い > 30 %） |
 | web close | スニークを長く | 閉じて HUD に戻る（違い > 50 %） |
+
+### 2 本目の結果（run 41001422618、2026-10-30、Minecraft 1.26.60.4、ゲームの画面 2400 x 1080）
+
+手順 251 個のうち落ちたのは 2 つ（GeoUI Web の文字の確かめ・閉じる確かめ、どちらも待ちきれず）。測り 46 個。
+
+| 区切り | 予測 | 結果 |
+|---|---|---|
+| clear | 消える | **当たり**: 空の通り道（`~gu~0a`）を送ると 1.5 秒後に赤なし |
+| title | HELLO が出る | **外れ: 出ない**（真ん中の帯で変わったのは腕の所だけ）。1 本目の OCR も読めなかった: ゲームの題名を通り道の間だけ隠す binding が、普通の題名まで隠している見込み → `binding_condition: always` を付けた（ゲームの見える・見えないの binding と同じ）: 3 本目で確かめる |
+| timeout | 2・4 秒は出る、6 秒は出ない | **6 秒も出た**（送り直しなし。1 本目の 8 秒は 2 秒ごとの送り直しの中で出なかった） |
+| under-slow | 1.5 秒後は下の赤、6.5 秒後は青 | **当たり**（R10.5 の後半の「両方消えた」は、送り直しの中の失敗の時だけ: 送り直しなしでは起きない） |
+| frames-buffered | どの写真にも色 | **当たり**: 0.3 秒ごとに 40 枚、二重の枠では 3 枚とも main に色（水色・青緑・緑） |
+| frames-plain | 少なくとも 1 枚は消える | **当たり**: 一重の枠では 3 枚目で main が消えた（2 枚目は 1 枚目と同じ水色のまま: 入れ替えが追いつかない） |
+| f1-parts | API でホットバーと十字、旗でホットバーと会話、プロパティで手 | API で**ホットバー（違い 56 %）・十字・携帯の操作ボタン**が消えた。旗（`~gu~1a`）で**ホットバーと携帯の操作ボタン**が消え、十字は残った（`root_panel` の外）。会話の所（左上）も変わった（会話が出たのか、ボタンが消えたのかは写真で）。**プロパティでは手の所が 0 % → 1 人称の腕と剣は消えなかった** → 1 人称の描き方の条件を `q.is_local_player && !q.is_in_ui` に頼らず F1 だけに、腕のアニメーションも `variable.is_first_person` で（3 本目） |
+| f1-all | F1 で全部消え、戻すと戻る | F1 でホットバーと操作ボタンが消え、戻すと**全部戻った**（違い 0 %: 空の通り道で `root_panel` も戻る） |
+| web open | ページ (0, 108)–(2400, 1080) ±2 px、印 (1200, 540) ±4 px | **当たり**: 青いページが **(0, 108)–(2400, 1080) ちょうど**、ツールバーが上の 108 px（✕ の赤 (2350, 71)–(2364, 85)）、ポインタの先の印 (1197, 537)–(1204, 544) = **(1200.5, 540.5)** |
+| web pointer | (600, 540) へ、スティックで右へ | **当たり**: (597, 537)–(604, 544) → 右スティックで (1749, 537)–(1757, 544) へ |
+| web click | RT で紫に | **当たり**: パッドの RT（腕の振り）で色のページが紫に（全面 2332368 px）。印は (1200, 648) = ポインタ 0.6 の所 |
+| web back | 青に戻る | **外れ: 白**（ページ全面が白）。ラボの `sneak 0.3` は R3 を 2 回押す（しゃがむ・立つの切り替え: app/lib/play.mjs）→ 戻るが 2 回で、最初の白いページ（about:blank）まで戻った見込み（サーバーで確かめると、戻る 1 回は青）→ 3 本目は `sneak`（1 回） |
+| web scroll | 下へ動く（> 10 %） | 違い 90 %（スティックの後ろ・RB のどちらも） |
+| web dynamic | 3 秒で絵が変わる（> 0.5 %） | 違い 90 %: 4 秒たっても前のページだった見込み → 0.25 秒ごとに変わるページで、ゲームが取りに行く前に次の絵に替わり続けた（R10.4: 取りに来るまで約 0.4 秒）→ 絵は 0.7 秒は上に置いてから替える形に（`frameTicks`） |
+| web type | 題名に Steve | **待ちきれず**: チャットの `/web:t Steve`（ラボの `cmd`）が届いたかは不明 → 3 本目は文字を scriptevent で入れ、チャットは別の区切りで |
+| web site | wikipedia・youtube が開く | **当たり**: どちらも GWEB page に来て、絵が出た（違い 90 %） |
+| web close | スニーク長押しで閉じる | **待ちきれず**: `sneak 2.5` は R3 を 2 回押すだけ（長押しでない）→ 3 本目はツールバーの ✕ を押して閉じる（Chrome と同じ） |
+
+### 3 本目の予測（回す前に書いた: `--batch geoui_web_probe,geoui_web`）
+
+| 区切り | 予測 |
+|---|---|
+| title | HELLO が出る（真ん中の帯で腕以外にも違い） |
+| f1-wool | 赤い羊毛を持つと右下に赤が出る（対照）。プロパティ（腕）で赤が消え、戻すと出る。F1 全部でも消える |
+| f1-chat | F1 の間は会話・アクションバーを出しても変わらない（違い < 0.5 %）。F1 を切るとホットバーが戻る |
+| web back | `sneak`（1 回）で青に戻る |
+| web dynamic | 3 秒の間に時計とアニメの所だけ変わる（違い 0.5〜30 %） |
+| web type | scriptevent の文字で題名に Steve |
+| web chat | チャットの `/web:t Alex` が届く（五分五分: ラボのチャットの打ち方しだい） |
+| web close | ツールバーの ✕ を押すと閉じ、HUD に戻る |

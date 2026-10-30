@@ -28,7 +28,7 @@ export function config() {
   const layouts = {};
   for (const [k, l] of Object.entries(LAYOUTS)) { const Dw = Math.round(DESIGN_H * l.aspect); layouts[k] = { name: l.name, aspect: l.aspect, Dw, Bw: Dw * G_UNITS, Bh: DESIGN_H * G_UNITS }; }
   return {
-    ns: NS, cmd: 'web', layouts, barFrac: BAR, slots: { page: 0, bar: 1, pageUnder: 2, barUnder: 3 }, slotCount: 4, width: 160, buffer: true, bufferTicks: 2, refreshTicks: 200,
+    ns: NS, cmd: 'web', layouts, barFrac: BAR, slots: { page: 0, bar: 1, pageUnder: 2, barUnder: 3 }, slotCount: 4, width: 160, buffer: true, bufferTicks: 2, frameTicks: 14, refreshTicks: 200,
     sens: 4, wheelPx: 120, scrollPx: 90, scrollEvery: 3, holdClose: 30, moveEvery: 3, res: DESIGN_H, maxRes: 1440,
     service: 'http://127.0.0.1:8787', public: 'lan', mobileLayout: 'g', defaultLayout: 'b',
   };
@@ -102,7 +102,7 @@ const TESTS = `# geoui_web（bds/geoui/web/make.mjs が作る）: ゲームの�
 @A join
 wait 1000
 @A cmd /web:open "http://127.0.0.1:8787/demo/color.html?c=ff0000"
-until GWEB page .*color\\.html\\?c=ff0000 30000
+until GWEB page .*color\\.html\\?c=ff0000 150000
 until @A title: ~gu~1bhttp 10000
 ~ GWEB open .*"layout":"b","w":1280,"h":720
 ~ @A title: ~gu~1bhttp://\\S+/s/[0-9a-f]{32}/f/\\d+\\.png +http://\\S+/s/[0-9a-f]{32}/b/\\d+\\.png
@@ -237,7 +237,7 @@ shot click-violet
 measure marks click-violet
 
 section back
-sneak 0.3
+sneak
 until server GWEB page .*c=0000ff 20000
 wait 3000
 shot back-blue
@@ -273,7 +273,7 @@ do scriptevent gweb:pointer 0.2 0.144
 wait 500
 attack 0.3
 wait 1000
-cmd /web:t Steve
+do scriptevent gweb:t Steve
 until server GWEB page .*Steve 20000
 wait 3000
 shot typed
@@ -290,14 +290,32 @@ until server GWEB page .*youtube 60000
 wait 8000
 shot youtube
 measure diff youtube
+do scriptevent gweb:go https://noknoh12345-afk.github.io/bds-lab/
+until server GWEB page .*github\\.io 60000
+wait 8000
+shot panel
+measure diff panel
+
+section chat
+do scriptevent gweb:go http://127.0.0.1:8787/demo/form.html
+until server GWEB page .*form\\.html 20000
+do scriptevent gweb:pointer 0.2 0.144
+wait 500
+attack 0.3
+wait 1000
+cmd /web:t Alex
+until server GWEB page .*Alex 20000
 
 section close
+do scriptevent gweb:pointer 0.9837 0.0723
+wait 1500
 shot world
-sneak 2.5
+attack 0.3
 until server GWEB close 10000
 wait 3000
 shot closed
 measure diff closed
+measure diff closed 700 940 1700 1080
 `;
 }
 
@@ -330,7 +348,7 @@ export function files() {
   out['tests.txt'] = TESTS;
   out['app.txt'] = appTxt();
   out['TASK.md'] = TASK;
-  out['geoui-web.json'] = JSON.stringify({ service: 'bds/geoui/web/server.mjs', tunnel: 'ci' }, null, 2) + '\n';
+  out['geoui-web.json'] = JSON.stringify({ service: 'bds/geoui/web/server.mjs', tunnel: false }, null, 2) + '\n';
   out['imported.json'] = JSON.stringify({ from: 'bds/geoui/web/make.mjs', rp: [1, 0, 0], bp: [1, 0, 0], request: 'ゲームの中のウェブ: F1 で全画面、全部のサイト、ほぼ Chrome の操作' }, null, 2) + '\n';
   return { files: out, stats: built.stats };
 }

@@ -48,7 +48,7 @@ shot click-violet
 measure marks click-violet
 
 section back
-sneak 0.3
+sneak
 until server GWEB page .*c=0000ff 20000
 wait 3000
 shot back-blue
@@ -84,7 +84,7 @@ do scriptevent gweb:pointer 0.2 0.144
 wait 500
 attack 0.3
 wait 1000
-cmd /web:t Steve
+do scriptevent gweb:t Steve
 until server GWEB page .*Steve 20000
 wait 3000
 shot typed
@@ -101,11 +101,29 @@ until server GWEB page .*youtube 60000
 wait 8000
 shot youtube
 measure diff youtube
+do scriptevent gweb:go https://noknoh12345-afk.github.io/bds-lab/
+until server GWEB page .*github\.io 60000
+wait 8000
+shot panel
+measure diff panel
+
+section chat
+do scriptevent gweb:go http://127.0.0.1:8787/demo/form.html
+until server GWEB page .*form\.html 20000
+do scriptevent gweb:pointer 0.2 0.144
+wait 500
+attack 0.3
+wait 1000
+cmd /web:t Alex
+until server GWEB page .*Alex 20000
 
 section close
+do scriptevent gweb:pointer 0.9837 0.0723
+wait 1500
 shot world
-sneak 2.5
+attack 0.3
 until server GWEB close 10000
 wait 3000
 shot closed
 measure diff closed
+measure diff closed 700 940 1700 1080

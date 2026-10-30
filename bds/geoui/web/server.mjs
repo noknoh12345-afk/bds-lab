@@ -7,8 +7,8 @@
 //   node bds/geoui/web/server.mjs [--port 8787] [--host 0.0.0.0] [--public http://<this machine>:8787] [--idle <s>] [--key <k>]
 //        [--fonts]   (a Japanese font fetched first when the machine has none: CI)
 //
-// HTTP (JSON in and out). The actions come from this machine (the BDS beside it) — from elsewhere only with the key (header
-// x-geoui-key). The pictures are for anyone who has their address (the session id in it is random: the address is the key).
+// HTTP (JSON in and out). The actions come from this machine (the BDS beside it) — from elsewhere only with the key (--key,
+// header x-geoui-key). The pictures are for anyone who has their address (the session id in it is random: the address is the key).
 //   GET  /info                        { ok, name, version, public, sessions, browser }
 //   POST /s          { owner, url?, w?, h? }   a player's session (made, or the one it has) → state
 //   POST /s/<sid>    { op, … }                 an action (engine.mjs: click down up move wheel type key go back forward reload
@@ -89,6 +89,8 @@ export async function startServer(o = {}) {
   const cache = new Map(), counts = new Map(), hits = [];
   const fontsReady = opt.fonts ? ensureFonts(opt.log).then((r) => { fonts = r; }, () => { fonts = 'no'; }) : Promise.resolve();
   const getEngine = () => {
+    // (a browser that went away — it crashed, or was killed — is started again; its sessions are gone with it)
+    if (engine && engine.browser && typeof engine.browser.isConnected === 'function' && !engine.browser.isConnected()) { engine = null; enginePromise = null; }
     if (engine) return Promise.resolve(engine);
     if (!enginePromise) {
       enginePromise = fontsReady.then(() => import('./engine.mjs')).then((m) => m.createEngine({ log: opt.log, ownOrigin: `http://127.0.0.1:${port}`, home: opt.home || `http://127.0.0.1:${port}/demo/start.html`, frameW: opt.frameW, frameH: opt.frameH, lookMs: opt.lookMs, lookMaxMs: opt.lookMaxMs }))
@@ -110,7 +112,7 @@ export async function startServer(o = {}) {
     res.end(buf);
   };
   const readBody = (req) => new Promise((resolve) => { let b = ''; req.on('data', (c) => { b += c; if (b.length > 1e6) req.destroy(); }); req.on('end', () => { try { resolve(b ? JSON.parse(b) : {}); } catch { resolve(null); } }); });
-  const keyOk = (req) => (opt.key ? req.headers['x-geoui-key'] === opt.key : isLocal(req));
+  const keyOk = (req) => isLocal(req) || (!!opt.key && req.headers['x-geoui-key'] === opt.key);
   const dims = (w, h) => [Math.max(1, Math.min(opt.maxPx, Number(w))), Math.max(1, Math.min(opt.maxPx, Number(h)))];
   const cached = (k, make) => { if (!cache.has(k)) { if (cache.size > 48) cache.clear(); cache.set(k, make()); } return cache.get(k); };
   const server = http.createServer(async (req, res) => {
@@ -164,7 +166,7 @@ export async function startServer(o = {}) {
         return png ? send(res, 200, png, 'image/png') : send(res, 404, { ok: false, error: 'no such frame' });
       }
       if (parts[0] === 's') {
-        if (!keyOk(req)) return send(res, 403, { ok: false, error: opt.key ? 'key' : 'actions come from this machine only (or with --key)' });
+        if (!keyOk(req)) return send(res, 403, { ok: false, error: 'actions come from this machine only (or with --key)' });
         if (req.method === 'POST' && parts.length === 1) {
           const b = await readBody(req);
           if (!b || !b.owner) return send(res, 400, { ok: false, error: 'owner' });

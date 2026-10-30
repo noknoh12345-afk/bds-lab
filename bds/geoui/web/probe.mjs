@@ -278,11 +278,10 @@ wait 2500
 
 // ---- the real app (the lab's CI device): every number out through measure (the pictures stay sealed)
 function appTxt() {
-  // (2 本目: 1 本目（run 40998593826: rules-history）で決まらなかったこと — 空の通り道・F1 の 3 つの部分・待てる時間・遅い絵の下・
-  //  二重の枠で絵を入れ替え続けた時に消える間があるか)
-  return `# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（2 本目）。
-# 1 本目（run 40998593826）の結果と手順は bds/geoui/rules-history/run-40998593826。予測は SPEC.md 17 章（回す前に書いたもの）。
-# 期待の位置: node bds/geoui/web/probe.mjs expect 2400x1080
+  // (3 本目: 2 本目（run 41001422618）で残ったこと — 普通の題名が出るか（題名を隠す binding に always）・F1 の手と持ち物（1 人称の
+  //  描き方の条件を F1 だけに: 赤い羊毛を持って色で見る）・F1 の間の会話)
+  return `# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（3 本目）。
+# 1・2 本目（run 40998593826・41001422618）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
 # 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
 
 section join
@@ -311,20 +310,9 @@ wait 6000
 expect server GWP CHECK svc PASS
 absent clientlog \\bERROR\\b
 
-section clear
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 0 /solid/ff0000/64x64.png
-wait 4000
-shot clear-before
-measure marks clear-before
-do scriptevent gwp:reset
-wait 1500
-shot clear-after
-measure marks clear-after
-
 section title
+do scriptevent gwp:url 0 /solid/ff0000/64x64.png
+wait 3000
 do scriptevent gwp:reset
 wait 2000
 shot world
@@ -332,124 +320,55 @@ do scriptevent gwp:raw HELLO
 wait 1500
 shot title-raw
 measure diff title-raw 300 100 2100 800
-do scriptevent gwp:reset
-wait 1500
-
-section timeout
+measure diff title-raw 900 300 1500 700
 do scriptevent gwp:reset
 wait 2000
-shot world
-do scriptevent gwp:url 0 /slow/2000/solid/ff0000/64x64.png?t=1
-wait 5000
-shot slow-2000
-measure marks slow-2000
-do scriptevent gwp:url 0 /slow/4000/solid/00ff00/64x64.png?t=2
-wait 7000
-shot slow-4000
-measure marks slow-4000
-do scriptevent gwp:url 0 /slow/6000/solid/0000ff/64x64.png?t=3
-wait 9000
-shot slow-6000
-measure marks slow-6000
 
-section under-slow
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 5 /solid/ff0000/64x64.png
-wait 4000
-do scriptevent gwp:url 0 /slow/3000/solid/0000ff/64x64.png?u=1
-wait 1500
-shot under-slow-mid
-measure marks under-slow-mid
-wait 5000
-shot under-slow-end
-measure marks under-slow-end
-
-section frames-buffered
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:frames 40 6 1 300
-wait 2000
-shot fb-1
-measure marks fb-1
-wait 1700
-shot fb-2
-measure marks fb-2
-wait 1300
-shot fb-3
-measure marks fb-3
-until server GWP FRAMES n=40 buffered=true 60000
-
-section frames-plain
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:frames 40 6 0 300
-wait 2000
-shot fp-1
-measure marks fp-1
-wait 1700
-shot fp-2
-measure marks fp-2
-wait 1300
-shot fp-3
-measure marks fp-3
-until server GWP FRAMES n=40 buffered=false 60000
-
-section f1-parts
+section f1-wool
 do scriptevent gwp:reset
 do hud @a reset
-do replaceitem entity @a slot.weapon.mainhand 0 diamond_sword
-do tp @a 0 -60 0 0 60
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0 -60 0 0 30
 wait 4000
 shot world
-do scriptevent gwp:part api 1
-wait 2500
-shot f1-api
-measure diff f1-api 700 940 1700 1080
-measure diff f1-api 1150 490 1250 590
-measure diff f1-api 1500 500 2400 1080
-do scriptevent gwp:part api 0
-wait 2500
-do scriptevent gwp:part flag 1
-do say hello-flag
-wait 2500
-shot f1-flag
-measure diff f1-flag 700 940 1700 1080
-measure diff f1-flag 1150 490 1250 590
-measure diff f1-flag 1500 500 2400 1080
-measure diff f1-flag 0 0 1000 400
-do scriptevent gwp:part flag 0
-wait 2500
+do replaceitem entity @a slot.weapon.mainhand 0 red_wool
+wait 3000
+shot wool-shown
+measure marks wool-shown
 do scriptevent gwp:part arm 1
-wait 2500
-shot f1-arm
-measure diff f1-arm 700 940 1700 1080
-measure diff f1-arm 1500 500 2400 1080
+wait 3000
+shot wool-arm
+measure marks wool-arm
 do scriptevent gwp:part arm 0
-wait 2500
-shot f1-arm-back
-measure diff f1-arm-back 1500 500 2400 1080
-
-section f1-all
-do scriptevent gwp:reset
 wait 3000
-shot world
+shot wool-back
+measure marks wool-back
 do scriptevent gwp:f1 1
-do say hello-f1
 wait 3000
-shot f1-on
-measure diff f1-on
-measure diff f1-on 700 940 1700 1080
-measure diff f1-on 1500 500 2400 1080
+shot wool-f1
+measure marks wool-f1
 do scriptevent gwp:f1 0
 wait 3000
-shot f1-back
-measure diff f1-back
-measure diff f1-back 700 940 1700 1080
-measure diff f1-back 1500 500 2400 1080
+
+section f1-chat
+do scriptevent gwp:reset
+do hud @a reset
+wait 2000
+do scriptevent gwp:f1 1
+wait 3000
+shot world
+do say chat-in-f1-one
+do say chat-in-f1-two
+do title @a actionbar ACTIONBAR-IN-F1
+wait 1500
+shot f1-chat
+measure diff f1-chat
+measure diff f1-chat 0 0 1200 500
+do scriptevent gwp:f1 0
+wait 3000
+shot f1-off
+measure diff f1-off
+measure diff f1-off 700 940 1700 1080
 `;
 }
 
@@ -482,7 +401,7 @@ export function files() {
   out['tests.txt'] = TESTS;
   out['app.txt'] = appTxt();
   out['TASK.md'] = TASK;
-  out['geoui-web.json'] = JSON.stringify({ service: 'bds/geoui/web/server.mjs', tunnel: 'ci' }, null, 2) + '\n';
+  out['geoui-web.json'] = JSON.stringify({ service: 'bds/geoui/web/server.mjs', tunnel: 'app' }, null, 2) + '\n';
   out['imported.json'] = JSON.stringify({ from: 'bds/geoui/web/probe.mjs', rp: [1, 0, 0], bp: [1, 0, 0], request: 'URL の画像（profile_image_renderer）と F1 を本物のゲームで測る' }, null, 2) + '\n';
   return { files: out, stats: built.stats };
 }

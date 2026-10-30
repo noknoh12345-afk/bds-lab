@@ -226,16 +226,22 @@
       d.scripts.pre_animation = [...d.scripts.pre_animation, `${f1Var} = variable.is_paperdoll ? 0 : q.property('${ns}:f1');`];
       d.animations[`${ns}_f1`] = `animation.${ns}.f1`;
     }
-    d.scripts.animate = [{ [`${ns}_ui`]: 'q.is_in_ui' }, ...extraAnims.map((a) => ({ [a.key]: a.cond })), ...(scene.f1 ? [{ [`${ns}_f1`]: `${f1Var} > 0 && q.is_local_player && !q.is_in_ui` }] : []), ...d.scripts.animate];
+    // (F1's arms and items: in first person — the game's own variable, true only for the local player in its first-person view —
+    //  or the local player in the world. q.is_local_player && !q.is_in_ui alone did not hide the first-person arm: run 41001422618)
+    d.scripts.animate = [{ [`${ns}_ui`]: 'q.is_in_ui' }, ...extraAnims.map((a) => ({ [a.key]: a.cond })), ...(scene.f1 ? [{ [`${ns}_f1`]: `${f1Var} > 0 && (variable.is_first_person || (q.is_local_player && !q.is_in_ui))` }] : []), ...d.scripts.animate];
     // (the player's own body hidden from itself: hideLocalPlayer (a frozen camera sees through it) and F1 (spectator-like). In
     //  the world only, for the local player only — the inventory's doll and everyone else still see it. The first-person
     //  controllers too: the frozen camera may keep the first-person view, whose arm hides GeoUI by depth — RULES R4.11)
     const hides = [scene.hideLocalPlayer, scene.f1 ? `${f1Var} > 0` : null].filter((x) => x !== undefined && x !== null && String(x).trim() !== '');
+    const hideLocal = scene.hideLocalPlayer !== undefined && scene.hideLocalPlayer !== null && String(scene.hideLocalPlayer).trim() !== '' ? String(scene.hideLocalPlayer) : null;
     d.render_controllers = [...rcList, ...d.render_controllers.map((rc) => {
       if (!hides.length) return rc;
       const [k, v] = Object.entries(rc)[0];
+      if (!/^controller\.render\.player\.(first|third)_person/.test(k)) return rc;
+      // (F1 in first person: the first-person controllers draw only the local player's own view — F1 alone hides them there)
+      if (scene.f1 && /^controller\.render\.player\.first_person/.test(k)) return { [k]: `(${v}) && !(${hideLocal ? `(q.is_local_player && !q.is_in_ui && (${hideLocal})) || ` : ''}(${f1Var} > 0))` };
       const any = hides.length === 1 ? hides[0] : hides.map((h) => `(${h})`).join(' || ');
-      return /^controller\.render\.player\.(first|third)_person/.test(k) ? { [k]: `(${v}) && !(q.is_local_player && !q.is_in_ui && (${any}))` } : rc;
+      return { [k]: `(${v}) && !(q.is_local_player && !q.is_in_ui && (${any}))` };
     })];
     const be = JSON.parse(G.VANILLA_BP_PLAYER);
     if (typeof scene.patchPlayer === 'function') scene.patchPlayer({ rp: ce, bp: be });

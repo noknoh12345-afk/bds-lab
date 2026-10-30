@@ -24,8 +24,11 @@ GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付�
 | `../addons/geoui_bb/` | このプラグインで Studio のひな形「スコア＆ゲージ」を作り直した書き出し（本物の BDS: DONE 22/22・本物のアプリ: `app.txt`） |
 | `../addons/geoui_calib/` | 較正の目盛り（本物の BDS: DONE 3/3・本物のアプリ: `app.txt`） |
 | `screen/` | **GeoUI Screen**: SPEC.md の式（`layout.js`）・パックを作る（`pack.js`）・向きつきの焦点の移動（`nav.js`）・フォームなしの入力（`input.js`）・端末の確かめのパック（`device.mjs` → `../addons/geoui_device`） |
-| `html/` | **HTML → GeoUI**: ページをブラウザで状態ごとに撮り（`capture.mjs`）、アトラスとボーンにして（`scene.mjs`）、フォームなしで動かす（`runtime.js`）。`node bds/geoui/html/convert.mjs <page.html> --out <フォルダ>`。見本 `../addons/geoui_html_demo` |
+| `html/` | **HTML → GeoUI**: ページをブラウザで状態ごとに撮り（`capture.mjs`）、アトラスとボーンにして（`scene.mjs`）、フォームなしで動かす（`runtime.js`）。`node bds/geoui/html/convert.mjs <page.html か https://…> --out <フォルダ>`（どのサイトも URL で: 見えている操作できる物を 120 個まで）。見本 `../addons/geoui_html_demo` |
+| `web/` | **GeoUI Web**（[web/README.md](web/README.md)）: ゲームの中のウェブ。本物の Chromium がどのサイトも（動くサイトも）開き、F1（HUD・腕・持ち物を消す、ゲームモードはそのまま）の全画面に URL の画像で出す。Chrome のようにタブ・戻る・アドレス欄・クリック・ドラッグ・スクロール・文字。`../addons/geoui_web`（`make.mjs`）と、本物のアプリで測る探り `../addons/geoui_web_probe`（`probe.mjs`） |
+| `screen/channel.js` | **題名の通り道**（URL の画像・F1・並べ方を 1 人ずつ HUD へ: SPEC.md 17 章） |
 | `../../tests/geoui-screen-offline.mjs`・`geoui-html-offline.mjs` | 式と JSON UI の配置・パック・焦点・入力、変換器（パックの Molang をゲームと同じに動かした見た目・main.js そのもの）（CI） |
+| `../../tests/geoui-web-offline.mjs` | URL の画像の置き場所・題名の通り道を JSON UI の式どおりに読み戻す・並べ方と背景・F1・サービス・ブラウザの中身（作り物の世界で）（CI） |
 | `../addons/geoui_osu_pixel/`・`geoui_osu_skin/` | タイムラインで作った osu!（キューブで組んだドット絵の模型 / 公式の素材。ラボの曲「Cubic Pulse」。失敗・Mods・結果・自己ベスト・検証ツアー・メニュー `/geoui:osu`）。本物の BDS: `tests.txt`・本物のアプリ: `app.txt`（ツアー 1 回）（`node bds/geoui/timeline/demo.mjs` が作る） |
 
 ## 使い方

@@ -5,24 +5,31 @@
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
 ### 🌐 GeoUI: URL の画像・F1（ゲームモードはそのまま）・ゲームの中のウェブ（GeoUI Web）
-- **URL の画像**（[bds/geoui/SPEC.md](bds/geoui/SPEC.md) 17 章）: JSON UI の `profile_image_renderer` に `{"type":7,"url":…}` を入れるとゲームがその絵を
-  取りに行って描く（zelisce の SAPI-with-URL-Images の使い方）。GeoUI は `scene.urlImages` で HUD のどのグループのどの四角にも置ける（板と同じ式で、
-  13 画面 x 4 つの決め方 x 9 つの寄せ先で 1e-3 px 以内）。URL はサーバーが 1 人ずつ渡せる唯一の文字 = 題名に「通り道」として載せ
-  （`~gu~` + F1 の旗 + 並べ方の文字 + 決まった幅の枠）、JSON UI が `'%.Ns' *` と `-` で取り出す（`bds/geoui/screen/channel.js`・`layout.js`）。
-  ゲームの題名は通り道の間は隠す。新しい URL = 新しい絵なので、URL を変えるだけで絵が変わる。
+- **URL の画像**（[bds/geoui/SPEC.md](bds/geoui/SPEC.md) 17 章・[RULES.md](bds/geoui/RULES.md) 10 章）: JSON UI の `profile_image_renderer` に
+  `{"type":7,"url":…}` を入れるとゲームがその絵を取りに行って描く（zelisce の SAPI-with-URL-Images の使い方）。GeoUI は `scene.urlImages` で HUD の
+  どのグループのどの四角にも置ける（板と同じ式）。URL はサーバーが 1 人ずつ渡せる唯一の文字 = 題名に「通り道」として載せ（`~gu~` + F1 の旗 +
+  並べ方の文字 + 決まった幅の枠）、JSON UI が `'%.Ns' *` と `-` で取り出す（`bds/geoui/screen/channel.js`・`layout.js`）。ゲームの題名は通り道の間は隠す。
+- **本物のアプリで測った**（run 40998593826、ゲームの画面 2400 x 1080 = 本物の 20:9 のスマホの解像度）: LAN の **http も https も出る**（cloudflared の
+  トンネルも）、場所は式と **1 px 以内**、GeoUI の板はその上、**4096 x 2304・7.8 MB の PNG まで出る**（枠いっぱいに引き伸ばす）、同じ URL は取り直さない、
+  題名を変えてから約 380 ms で取りに来る。**新しい URL の絵は届くまで透明**（8 秒かかる絵は出ない）→ 入れ替え続ける絵は二重の枠（前の絵を下に
+  置いてから上を替える）。**題名の文字は題名の時間の後も `title clear` の後も残る** → 通り道を空にするのは空の通り道の題名（`~gu~0a`）。
+  予測・手順・公開のまとめは `bds/geoui/rules-history/run-40998593826/`。
 - **F1**: HUD の 13 の部品（API）と残りの HUD（会話・題名など: 通り道の旗で `root_panel` ごと）、腕と持ち物（プロパティでボーンを 0 に）、
-  自分の体を隠す。ゲームモードは変えない（`scene.f1`）。携帯の操作ボタンだけ残すこともできる。
-- **並べ方（layout）と背景**: グループを通り道の文字で出し分け（画面の比ごとの並べ方）、その間は画面全体をゲームの黒で覆う（`scene.backdrop`）。
-- **GeoUI Web**（`bds/geoui/web/`）: 本物の Chromium がどのサイトも開き（動くサイト・スクリプトで描くサイトも）、画面を番号付きの PNG に
-  （`engine.mjs`: タブ・戻る・進む・再読み込み・アドレス欄・クリック・ドラッグ・ホイール・文字・キー・拡大・Chrome に似せたツールバー）。
-  `server.mjs` が BDS のスクリプト（`@minecraft/server-net`）からの操作と、ゲームが取りに来る絵の窓口。サーバーの中の場所は開かない・操作は
-  この機械からだけ。ラボは `geoui-web.json` のあるアドオンの BDS の横にサービスを起こす（`lab.mjs`、アプリのラボは端末から見たこの機械の名前
-  `GEOUI_WEB_HOST` を渡す。CI では日本語のフォントも入れる。`"tunnel"` で cloudflared の https の入り口も）。
-- **本物のアプリで測る**: `bds/addons/geoui_web_probe`（`node bds/geoui/web/probe.mjs`）: http・https・トンネルの絵が出るか、場所、取りに来るまでの
-  時間、読み込み中に何が出るか、同じ URL を取り直すか、大きな絵、40 枚の入れ替え、並べ方、題名を隠すか、題名の時間の後、F1。予測は回す前に
-  SPEC.md 17 章へ。BDS の試験 14/14（サービスに届く・通り道の文字・F1 で HUD 13 部品とプロパティ、ゲームモードはそのまま）。
-- 試験 `tests/geoui-web-offline.mjs`（28: 絵の置き場所・通り道を JSON UI の式どおりに計算して読み戻す・並べ方と背景・F1 の HUD とプレイヤー・
-  サービスの絵と記録と操作の許し・アドレスの決まり・探りのアドオンが作った物のまま）。
+  自分の体を隠す。ゲームモードは変えない（`scene.f1`、`/web:f1`）。携帯の操作ボタンだけ残すこともできる。
+- **並べ方（layout）と背景**: グループを通り道の文字で出し分け（画面の形ごとの並べ方）、その間は画面全体をゲームの黒で覆う（`scene.backdrop`）。
+- **GeoUI Web**（`bds/geoui/web/`・[README](bds/geoui/web/README.md)）: 本物の Chromium がどのサイトも開き（動くサイト・スクリプトで描くサイトも）、
+  画面を番号付きの PNG に（`engine.mjs`: タブ・戻る・進む・再読み込み・アドレス欄・クリック・ドラッグ・ホイール・文字・キー・拡大・Chrome に似せた
+  ツールバー）。`server.mjs` が BDS のスクリプト（`@minecraft/server-net`）からの操作と、ゲームが取りに来る絵の窓口（長く待つ問い `/next` で、
+  ページが自分で変わってもすぐ届く）。サーバーの中の場所は開かない・操作はこの機械からだけ。ラボは `geoui-web.json` のあるアドオンの BDS の横に
+  サービスを起こす（`lab.mjs`。アプリのラボは端末から見たこの機械の名前 `GEOUI_WEB_HOST` を渡す。CI では日本語のフォントも入れる。
+  `"tunnel"` で cloudflared の https の入り口も: `"app"` はアプリのラボの時だけ）。
+- **`bds/addons/geoui_web`**（`node bds/geoui/web/make.mjs`）: `/web:open` で F1 の全画面のブラウザ。画面の形ごとの並べ方（16:9・4:3・16:10・18:9・
+  19.5:9・20:9・21:9・32:9: 携帯は 20:9 から）、`/web:size 20:9 1080` で本物の解像度の絵。視点 = ポインタ・攻撃 = クリック・ジャンプ = 押したまま・
+  スニーク = 戻る（長押しで閉じる）・W/S とホットバー = ホイール・`/web:t 言葉` = 文字（検索の欄なら Enter も）・`/web:go`・`/web:tab` など。
+  ページとツールバーは二重の枠。BDS の試験 22/22（本物の Chromium で開く・クリック・腕の振り・戻る・進む・文字・タブ・ポインタ・形・閉じる・F1 だけ）。
+- **HTML → GeoUI をどのサイトにも**: `node bds/geoui/html/convert.mjs https://… --out <フォルダ>`（見えている操作できる物を 120 個まで、ほかは絵のまま）。
+- 試験 `tests/geoui-web-offline.mjs`（37: 絵の置き場所・通り道を JSON UI の式どおりに計算して読み戻す・並べ方と背景・F1 の HUD とプレイヤー・
+  サービスの絵と記録と操作の許し・アドレスの決まり・ブラウザの中身を作り物の世界とサービスで・2 つのアドオンが作った物のまま）。
 
 ### 🔧 本物のプレイヤー: 古いままのキャッシュの bedrock-protocol を入れ直す（Minecraft 1.26.60 で腕を振ると蹴られていた）
 - CI の verify が 10 月 27 日から赤かった理由の 1 つ: CI は `bds/.lab` を BDS の版ごとに取っておくので、プレイヤーの部品はその日の bedrock-protocol

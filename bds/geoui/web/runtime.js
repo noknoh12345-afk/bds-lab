@@ -7,8 +7,9 @@
 // ({ nav, input, channel }: screen/*.js, carried by the pack beside it).
 //
 // CFG (make.mjs): { ns, layouts: { <letter>: { aspect, Bw, Bh } } (each layout a GeoUI group: a box Bw x Bh units), barFrac,
-//   slots: { page, bar, pageUnder, barUnder }, buffer (the last picture kept under the next one while it loads), sens, wheelPx,
-//   scrollPx, scrollEvery, holdClose, moveEvery, res (the frame's height in px), maxRes, service, public }
+//   slots: { page, bar, pageUnder, barUnder }, buffer (the last picture kept under the next one while it loads), bufferTicks,
+//   frameTicks (a picture stays on top at least so long), sens, wheelPx, scrollPx, scrollEvery, holdClose, moveEvery, res (the
+//   frame's height in px), maxRes, service, public }
 (function (root) {
   'use strict';
   const W = root.GeoUIWeb = root.GeoUIWeb || {};
@@ -40,7 +41,7 @@
     function st(p) {
       let s = players.get(p.id);
       if (!s) {
-        s = { open: false, gen: 0, sid: null, frame: 0, bar: 0, urls: { page: '', bar: '' }, under: { page: '', bar: '' }, pend: { page: null, bar: null }, layout: null, res: null, w: 0, h: 0, barH: 0, url: '', title: '', focus: 'page',
+        s = { open: false, gen: 0, sid: null, frame: 0, bar: 0, urls: { page: '', bar: '' }, under: { page: '', bar: '' }, pend: { page: null, bar: null }, latest: { page: null, bar: null }, topAt: { page: -1e9, bar: -1e9 }, layout: null, res: null, w: 0, h: 0, barH: 0, url: '', title: '', focus: 'page',
           tabs: 0, tab: 0, ctl: null, q: [], busy: false, errors: 0, tick: 0, moveT: -99, moveDue: false, scrollT: 0, sneakT: -1, flash: 0, last: {}, starting: false };
         players.set(p.id, s);
       }
@@ -92,22 +93,37 @@
     /** a state from the service: the pictures (a newer frame or toolbar: one title for both), what is shown, a dialog, quit */
     function apply(p, s, j) {
       if (!j || !j.sid || j.sid !== s.sid) return;
-      // (a new URL's picture is clear until it arrives — RULES R10.4 — so each is two layers: now the picture shown is put under
-      //  (it was fetched: it shows at once), bufferTicks later the new one goes on top, the old one showing through while it loads)
-      const now = {};
+      // (the newest picture of each kind is kept; tick() puts it on — two layers, paced: see show())
       for (const kind of ['page', 'bar']) {
         const n = kind === 'page' ? j.frame : j.bar, url = kind === 'page' ? j.frameUrl : j.barUrl;
         if (!(n > (kind === 'page' ? s.frame : s.bar)) || !url) continue;
         if (kind === 'page') s.frame = n; else s.bar = n;
-        if (!CFG.buffer || !s.urls[kind]) { now[CFG.slots[kind]] = url; s.urls[kind] = url; s.pend[kind] = null; continue; }
-        if (s.under[kind] !== s.urls[kind]) { now[CFG.slots[`${kind}Under`]] = s.urls[kind]; s.under[kind] = s.urls[kind]; }
-        s.pend[kind] = { url, at: s.pend[kind] ? s.pend[kind].at : s.tick + CFG.bufferTicks };
+        s.latest[kind] = url;
       }
-      if (Object.keys(now).length) { try { ch.urls(p, now); } catch (e) { io.log(`url ${e}`); } }
       if (j.url !== s.url || j.title !== s.title) io.log(`page ${JSON.stringify({ player: p.name, url: j.url, title: j.title, tabs: j.tabs, frame: j.frame })}`);
       s.url = j.url; s.title = j.title || ''; s.focus = j.focus; s.tabs = j.tabs; s.tab = j.tab; s.w = j.w || s.w; s.h = j.h || s.h; s.barH = j.barH || s.barH;
       if (j.dialog) io.say(p, `§e${j.dialog.type === 'blocked' ? '⛔' : j.dialog.type === 'error' ? '⚠' : '💬'} ${String(j.dialog.message).slice(0, 120)}`);
       if (j.quit) close(p);
+    }
+    /** the newest pictures onto the screen. A new URL's picture is clear until it arrives (RULES R10.4), so each is two layers: the
+     *  picture on top is copied under (it has arrived: it shows at once), bufferTicks later the new one goes on top, the old one
+     *  showing through while it loads (R10.5). And paced: a picture stays on top frameTicks before the next replaces it — the game
+     *  starts a fetch about 0.4 s after the title changes, so pictures replaced faster than that would never arrive (a page that
+     *  changes by itself, run 41001422618) */
+    function show(p, s) {
+      const out = {};
+      for (const kind of ['page', 'bar']) {
+        const top = CFG.slots[kind], under = CFG.slots[`${kind}Under`], q = s.pend[kind];
+        if (q && s.tick >= q.at) { out[top] = q.url; s.urls[kind] = q.url; s.pend[kind] = null; s.topAt[kind] = s.tick; }
+        const next = s.latest[kind];
+        if (!next || s.pend[kind] || next === s.urls[kind]) { if (next === s.urls[kind]) s.latest[kind] = null; continue; }
+        if (!CFG.buffer || !s.urls[kind]) { out[top] = next; s.urls[kind] = next; s.topAt[kind] = s.tick; s.latest[kind] = null; continue; }
+        if (s.tick - s.topAt[kind] < CFG.frameTicks) continue;
+        if (s.under[kind] !== s.urls[kind]) { out[under] = s.urls[kind]; s.under[kind] = s.urls[kind]; }
+        s.pend[kind] = { url: next, at: s.tick + CFG.bufferTicks };
+        s.latest[kind] = null;
+      }
+      if (Object.keys(out).length) { try { ch.urls(p, out); } catch (e) { io.log(`url ${e}`); } }
     }
     /** the session again (the service started again, or closed it as idle): the same page */
     async function reconnect(p, s, gen) {
@@ -142,7 +158,7 @@
       s.open = true; s.starting = true; const gen = ++s.gen;
       s.layout = layoutOf(p, s); s.res = resOf(p, s);
       const f = frameOf(CFG, s.layout, s.res);
-      s.w = f.w; s.h = f.h; s.barH = f.barH; s.sid = null; s.frame = 0; s.bar = 0; s.urls = { page: '', bar: '' }; s.under = { page: '', bar: '' }; s.pend = { page: null, bar: null }; s.q = []; s.errors = 0;
+      s.w = f.w; s.h = f.h; s.barH = f.barH; s.sid = null; s.frame = 0; s.bar = 0; s.urls = { page: '', bar: '' }; s.under = { page: '', bar: '' }; s.pend = { page: null, bar: null }; s.latest = { page: null, bar: null }; s.topAt = { page: -1e9, bar: -1e9 }; s.q = []; s.errors = 0;
       let sens = CFG.sens;
       try { const k = Number(io.load(p, `${ns}:sens`)); if (k > 0) sens = k; } catch (e) { /* (default) */ }
       s.ctl = GS.input.createController({ bounds: box(s), sens, targets: [], recentre: true });
@@ -214,10 +230,7 @@
         // (the pointer to the page — its hover — at most every moveEvery ticks)
         if (s.moveDue && s.tick - s.moveT >= CFG.moveEvery) { queue(p, s, Object.assign({ op: 'move' }, at(s))); s.moveT = s.tick; s.moveDue = false; }
         if (s.flash > 0) s.flash--;
-        // (the new pictures due on top: their old ones are under them by now)
-        const due = {};
-        for (const kind of ['page', 'bar']) { const q = s.pend[kind]; if (q && s.tick >= q.at) { due[CFG.slots[kind]] = q.url; s.urls[kind] = q.url; s.pend[kind] = null; } }
-        if (Object.keys(due).length) { try { ch.urls(p, due); } catch (e) { io.log(`url ${e}`); } }
+        show(p, s);
         syncPointer(p, s);
       }
     }

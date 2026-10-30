@@ -5,8 +5,8 @@
 // service itself (http://127.0.0.1:8787/info): nothing to tell it.
 //   import { ensureService } from 'bds/geoui/web/lab.mjs'
 //   await ensureService({ log, logFile, tunnel }) → { ok, url, public, tunnel, started, why? }
-// tunnel (geoui-web.json "tunnel": true, or GEOUI_WEB_TUNNEL=1): an https address from cloudflared's quick tunnel as well, said by
-// the service's /info (the add-on chooses: x-geoui-public: tunnel)
+// tunnel (geoui-web.json "tunnel": true — "app": only while the app lab plays —, or GEOUI_WEB_TUNNEL=1): an https address from
+// cloudflared's quick tunnel as well, said by the service's /info (the add-on chooses: x-geoui-public: tunnel)
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';

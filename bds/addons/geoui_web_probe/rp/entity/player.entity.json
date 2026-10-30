@@ -52,7 +52,7 @@
             "gwp_ui": "q.is_in_ui"
           },
           {
-            "gwp_f1": "v.gwp_f1 > 0 && q.is_local_player && !q.is_in_ui"
+            "gwp_f1": "v.gwp_f1 > 0 && (variable.is_first_person || (q.is_local_player && !q.is_in_ui))"
           },
           "root"
         ],
@@ -147,13 +147,13 @@
           "controller.render.gwp_atlas": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
-          "controller.render.player.first_person_spectator": "(variable.is_first_person && query.is_spectator) && !(q.is_local_player && !q.is_in_ui && (v.gwp_f1 > 0))"
+          "controller.render.player.first_person_spectator": "(variable.is_first_person && query.is_spectator) && !((v.gwp_f1 > 0))"
         },
         {
           "controller.render.player.third_person_spectator": "(!variable.is_first_person && !variable.map_face_icon && query.is_spectator) && !(q.is_local_player && !q.is_in_ui && (v.gwp_f1 > 0))"
         },
         {
-          "controller.render.player.first_person": "(variable.is_first_person && !query.is_spectator) && !(q.is_local_player && !q.is_in_ui && (v.gwp_f1 > 0))"
+          "controller.render.player.first_person": "(variable.is_first_person && !query.is_spectator) && !((v.gwp_f1 > 0))"
         },
         {
           "controller.render.player.third_person": "(!variable.is_first_person && !variable.map_face_icon && !query.is_spectator) && !(q.is_local_player && !q.is_in_ui && (v.gwp_f1 > 0))"

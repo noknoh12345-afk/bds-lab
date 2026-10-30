@@ -1828,12 +1828,14 @@
     "bindings": [
       {
         "binding_name": "#hud_title_text_string",
-        "binding_type": "global"
+        "binding_type": "global",
+        "binding_condition": "always"
       },
       {
         "binding_type": "view",
         "source_property_name": "(not (('%.4s' * #hud_title_text_string) = '~gu~'))",
-        "target_property_name": "#visible"
+        "target_property_name": "#visible",
+        "binding_condition": "always"
       }
     ]
   },

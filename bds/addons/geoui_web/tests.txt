@@ -5,7 +5,7 @@
 @A join
 wait 1000
 @A cmd /web:open "http://127.0.0.1:8787/demo/color.html?c=ff0000"
-until GWEB page .*color\.html\?c=ff0000 30000
+until GWEB page .*color\.html\?c=ff0000 150000
 until @A title: ~gu~1bhttp 10000
 ~ GWEB open .*"layout":"b","w":1280,"h":720
 ~ @A title: ~gu~1bhttp://\S+/s/[0-9a-f]{32}/f/\d+\.png +http://\S+/s/[0-9a-f]{32}/b/\d+\.png

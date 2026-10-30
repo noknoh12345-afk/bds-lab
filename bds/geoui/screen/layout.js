@@ -298,7 +298,9 @@
     out[host] = { modifications: [{ array_name: 'controls', operation: 'insert_front', value: [{ [`${ns}_vp@hud.${ns}_vp`]: {} }] }] };
     if (ch) {
       // (the HUD's title, made by its factory from hud.hud_title_text: hidden while the title is the channel's)
-      out.hud_title_text = { bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: `(not ${isChannelExpr(ch)})`, target_property_name: '#visible' }] };
+      // (binding_condition always: the factory makes this control when a title comes — a plain title after the channel's was not
+      //  shown without it: run 41001422618's title-raw — and the game's own visibility bindings say always too)
+      out.hud_title_text = { bindings: [{ binding_name: T, binding_type: 'global', binding_condition: 'always' }, { binding_type: 'view', source_property_name: `(not ${isChannelExpr(ch)})`, target_property_name: '#visible', binding_condition: 'always' }] };
     }
     if (ch && ch.f1) {
       // (root_panel's own three bindings as the game has them, and its #visible also off while the channel says F1)

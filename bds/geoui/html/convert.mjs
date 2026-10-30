@@ -3,9 +3,10 @@
 // 「HTML から GeoUI へ」). The three steps: capture.mjs (a real Chromium draws the page, every control in every state),
 // scene.mjs (the pictures into atlases and bones, the Molang, the properties), runtime.js (the behaviour pack's script: the
 // head's turns a mouse, W A S D the arrows with nav.js, jump Enter, sneak Escape, the hotbar the wheel and keys 1–9).
-//   node bds/geoui/html/convert.mjs <page.html> --out <add-on folder> [--ns gh] [--name "…"] [--design 1280x720] [--dpr 2]
-//        [--hold free|speed|lock] [--capture <folder>]     the page captured (into --capture, default <out>/../<name>.capture
-//                                                         is not kept: a temporary one) and made into the add-on
+//   node bds/geoui/html/convert.mjs <page.html | https://…> --out <add-on folder> [--ns gh] [--name "…"] [--design 1280x720]
+//        [--dpr 2] [--hold free|speed|lock] [--capture <folder>] [--max-controls n]
+//                                                         the page (a file, or any site by its URL: capture.mjs) captured
+//                                                         (into --capture, else a temporary folder) and made into the add-on
 //   node bds/geoui/html/convert.mjs --from <capture folder> --out <add-on folder> [...]
 //                                                         from a capture already taken (no browser)
 //   node bds/geoui/html/convert.mjs --sample [--check]    the lab's sample: bds/geoui/html/examples/menu.html (its capture is
@@ -305,13 +306,13 @@ async function main(argv) {
   }
   const input = argv.find((a, i) => !a.startsWith('--') && !(i > 0 && argv[i - 1].startsWith('--') && !['--check'].includes(argv[i - 1])));
   const out = val('--out'), from = val('--from');
-  if ((!input && !from) || !out) { console.error('node bds/geoui/html/convert.mjs <page.html> --out <add-on folder> [--ns gh] [--name "…"] [--design 1280x720] [--dpr 2] [--hold free|speed|lock]\n   or --from <capture folder> --out <folder> · --sample [--check] [--recapture]'); process.exit(2); }
+  if ((!input && !from) || !out) { console.error('node bds/geoui/html/convert.mjs <page.html | https://…> --out <add-on folder> [--ns gh] [--name "…"] [--design 1280x720] [--dpr 2] [--hold free|speed|lock] [--max-controls n]\n   or --from <capture folder> --out <folder> · --sample [--check] [--recapture]'); process.exit(2); }
   let dir = from;
   if (!dir) {
     const { capture } = await import('./capture.mjs');
     dir = val('--capture') || fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-capture-'));
-    const c = await capture(input, dir, { design: val('--design'), dpr: val('--dpr') });
-    console.log(`撮った: ページ ${c.pages.length}・操作できる物 ${c.controls.length}・動く物 ${c.dynamic.length}（${dir}）`);
+    const c = await capture(input, dir, { design: val('--design'), dpr: val('--dpr'), maxControls: val('--max-controls') });
+    console.log(`撮った: ページ ${c.pages.length}・操作できる物 ${c.controls.length}${c.dropped ? `（ほか ${c.dropped} 個は絵のまま: --max-controls）` : ''}・動く物 ${c.dynamic.length}（${dir}）`);
   }
   const r = addonFiles(dir, { ns: val('--ns') || 'gh', name: val('--name'), hold: val('--hold'), sens: val('--sens'), filter: val('--filter') });
   const bad = writeAddon(path.resolve(out), r.files, check);

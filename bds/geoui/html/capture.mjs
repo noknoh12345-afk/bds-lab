@@ -10,9 +10,12 @@
 //             alone would show the first value's thumb) —, a number's digits 0–9 at each of its places
 // and every control's box, kind, action and group (what nav.js moves the focus over). Nothing is guessed from the CSS: the
 // browser draws it, the lab cuts it out. The capture is a folder (capture.json + PNGs) the rest reads with no browser:
-//   node bds/geoui/html/capture.mjs <page.html> <out folder> [--design 1280x720] [--dpr 2]
+//   node bds/geoui/html/capture.mjs <page.html | https://…> <out folder> [--design 1280x720] [--dpr 2] [--max-controls n]
+// Any site works as well (a URL: its scripts run, the capture waits for the network to be quiet): the controls taken are the
+// ones in the design box, at most --max-controls (120 for a URL) — the rest stay in the base picture, drawn as they are. A site
+// that changes by itself is a picture of one moment here: for the live site, GeoUI Web (bds/geoui/web) shows it as it is.
 // Needs Playwright and a Chromium: GEOUI_NODE_MODULES (default /opt/npm-tools/node_modules) and CHROMIUM (default
-// /opt/pw-browsers/chromium), the same two bds/geoui/bbpage.mjs uses.
+// /opt/pw-browsers/chromium), the same two bds/geoui/bbpage.mjs uses — else the ones GeoUI Web finds (web/engine.mjs).
 /* global document, getComputedStyle */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -104,28 +107,47 @@ html.geoui-solo * { visibility: hidden !important; }
 html.geoui-solo .geoui-on, html.geoui-solo .geoui-on * { visibility: visible !important; }
 `;
 
-/** capture a page into dir: capture.json and the PNGs it names */
+/** the browser: the configured Playwright and Chromium, else the ones GeoUI Web finds (its loader tries the machine's Chrome too) */
+async function launch() {
+  try {
+    const { chromium, exe } = browserDeps();
+    return await chromium.launch({ executablePath: exe, args: ['--font-render-hinting=none', '--disable-lcd-text', '--force-color-profile=srgb', '--disable-gpu'] });
+  } catch (e) {
+    const { loadBrowser } = await import('../web/engine.mjs');
+    return (await loadBrowser()).browser;
+  }
+}
+const isUrl = (s) => /^https?:\/\//i.test(String(s));
+/** a page by its file or URL (a URL: until the network is quiet, at most 30 s) */
+async function open(page, src) {
+  if (!isUrl(src)) return page.goto(pathToFileURL(path.resolve(src)).href);
+  await page.goto(src, { waitUntil: 'networkidle', timeout: 30000 }).catch(async () => { await page.waitForLoadState('load', { timeout: 10000 }).catch(() => {}); });
+  return null;
+}
+
+/** capture a page (a file or a URL) into dir: capture.json and the PNGs it names */
 export async function capture(htmlFile, dir, opts = {}) {
-  const { chromium, exe } = browserDeps();
-  const browser = await chromium.launch({ executablePath: exe, args: ['--font-render-hinting=none', '--disable-lcd-text', '--force-color-profile=srgb', '--disable-gpu'] });
+  const browser = await launch();
   try {
     fs.mkdirSync(dir, { recursive: true });
     const dpr = Number(opts.dpr) || 2;
     // the design size: the option, else the page's own, else 1280 x 720
     const probe = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-    await probe.goto(pathToFileURL(path.resolve(htmlFile)).href);
+    await open(probe, htmlFile);
     const said = await probe.evaluate(() => document.body.getAttribute('data-geoui-design'));
     await probe.close();
     const [Dw, Dh] = String(opts.design || said || '1280x720').split('x').map(Number);
     const page = await browser.newPage({ viewport: { width: Dw, height: Dh }, deviceScaleFactor: dpr });
-    await page.goto(pathToFileURL(path.resolve(htmlFile)).href);
+    await open(page, htmlFile);
     await page.addStyleTag({ content: CSS });
     await page.evaluate(async () => { await document.fonts.ready; });
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
     const first = await page.evaluate(() => [...document.querySelectorAll('[data-geoui-page]')].map((e) => e.getAttribute('data-geoui-page')));
     const pages = first.length ? first : [null];
-    const out = { version: 1, source: path.basename(htmlFile), design: { w: Dw, h: Dh }, dpr, pages: [], controls: [], dynamic: [], background: null, title: '' };
+    const out = { version: 1, source: isUrl(htmlFile) ? String(htmlFile) : path.basename(htmlFile), design: { w: Dw, h: Dh }, dpr, pages: [], controls: [], dynamic: [], background: null, title: '' };
+    // (a site's controls: the ones in the design box, at most maxControls — the others drawn in the base as they are)
+    const maxControls = Number(opts.maxControls) || (isUrl(htmlFile) ? 120 : Infinity);
     const shot = async (name, clip) => {
       const buf = await page.screenshot({ clip, omitBackground: true, type: 'png' });
       fs.writeFileSync(path.join(dir, name), buf);
@@ -138,6 +160,13 @@ export async function capture(htmlFile, dir, opts = {}) {
     for (const pid of pages) {
       await setPage(pid);
       const a = await page.evaluate(analyse, { control: CONTROL, dynamic: DYNAMIC });
+      const inBox = (r) => r.w > 1 && r.h > 1 && r.x < Dw && r.y < Dh && r.x + r.w > 0 && r.y + r.h > 0;
+      const kept = a.controls.filter((c) => inBox(c.rect)).slice(0, maxControls), keep = new Set([...kept.map((c) => c.key), ...a.dynamic.map((d) => d.key)]);
+      if (kept.length < a.controls.length) {
+        await page.evaluate((k) => { for (const e of document.querySelectorAll('[data-geoui-idx]')) if (!k.includes(e.getAttribute('data-geoui-idx'))) e.removeAttribute('data-geoui-idx'); }, [...keep]);
+        out.dropped = (out.dropped || 0) + a.controls.length - kept.length;
+        a.controls = kept;
+      }
       out.background = out.background || a.background; out.title = out.title || a.title; out.start = out.start || a.start;
       // the base: no controls, no dynamic parts, no background colour
       await html('geoui-clear', true); await html('geoui-base', true);
@@ -236,7 +265,7 @@ export async function capture(htmlFile, dir, opts = {}) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [html, dir] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
   const val = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : undefined; };
-  if (!html || !dir) { console.error('node bds/geoui/html/capture.mjs <page.html> <out folder> [--design 1280x720] [--dpr 2]'); process.exit(2); }
-  const c = await capture(html, dir, { design: val('--design'), dpr: val('--dpr') });
+  if (!html || !dir) { console.error('node bds/geoui/html/capture.mjs <page.html | https://…> <out folder> [--design 1280x720] [--dpr 2] [--max-controls n]'); process.exit(2); }
+  const c = await capture(html, dir, { design: val('--design'), dpr: val('--dpr'), maxControls: val('--max-controls') });
   console.log(`OK ${dir}: ページ ${c.pages.length}・操作できる物 ${c.controls.length}・動く物 ${c.dynamic.length}（${c.design.w}x${c.design.h} @${c.dpr}x）`);
 }

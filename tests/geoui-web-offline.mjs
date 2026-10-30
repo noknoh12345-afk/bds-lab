@@ -219,11 +219,12 @@ function jsonui(expr, vars) {
   const ce = JSON.parse(pk.files['rp/entity/player.entity.json'])['minecraft:client_entity'].description, an = JSON.parse(pk.files['rp/animations/ff.animation.json']).animations['animation.ff.f1'];
   const rcs = Object.fromEntries(ce.render_controllers.map((x) => Object.entries(x)[0]));
   ok(JSON.stringify(an.bones) === JSON.stringify({ rightArm: { scale: 0 }, leftArm: { scale: 0 }, rightItem: { scale: 0 }, leftItem: { scale: 0 } }) && ce.animations.ff_f1 === 'animation.ff.f1'
-    && ce.scripts.animate.some((x) => x.ff_f1 === 'v.ff_f1 > 0 && q.is_local_player && !q.is_in_ui') && ce.scripts.pre_animation.includes("v.ff_f1 = variable.is_paperdoll ? 0 : q.property('ff:f1');"),
-  'F1 player: the arms and held items at scale 0 for the local player in the world (not in a UI), the property read where the paper doll is guarded');
-  ok(['first_person', 'third_person', 'first_person_spectator', 'third_person_spectator'].every((k) => rcs[`controller.render.player.${k}`].endsWith(') && !(q.is_local_player && !q.is_in_ui && ((v.ff_h > 0) || (v.ff_f1 > 0)))'))
+    && ce.scripts.animate.some((x) => x.ff_f1 === 'v.ff_f1 > 0 && (variable.is_first_person || (q.is_local_player && !q.is_in_ui))') && ce.scripts.pre_animation.includes("v.ff_f1 = variable.is_paperdoll ? 0 : q.property('ff:f1');"),
+  'F1 player: the arms and held items at scale 0 in first person and for the local player in the world (not in a UI), the property read where the paper doll is guarded');
+  ok(['third_person', 'third_person_spectator'].every((k) => rcs[`controller.render.player.${k}`].endsWith(') && !(q.is_local_player && !q.is_in_ui && ((v.ff_h > 0) || (v.ff_f1 > 0)))'))
+    && ['first_person', 'first_person_spectator'].every((k) => rcs[`controller.render.player.${k}`].endsWith(') && !((q.is_local_player && !q.is_in_ui && (v.ff_h > 0)) || (v.ff_f1 > 0))'))
     && rcs['controller.render.player.map'] === 'variable.map_face_icon',
-  'F1 player: its body hidden from itself in the world (first and third person, with hideLocalPlayer), the map icon as it was', JSON.stringify(rcs));
+  'F1 player: its body hidden from itself in the world (third person: the local player out of a UI; first person: F1 alone — the first-person view is the local player\'s own), the map icon as it was', JSON.stringify(rcs));
   const be = JSON.parse(pk.files['bp/entities/player.json'])['minecraft:entity'].description.properties, man = JSON.parse(pk.files['bp/manifest.json']);
   ok(be['ff:f1'] && be['ff:f1'].range.join() === '0,1' && be['ff:f1'].client_sync && man.dependencies.some((d) => d.module_name === '@minecraft/server-net' && d.version === '1.0.0-beta'),
     'F1 player: the property ff:f1 (0..1, synced to the client); a scene\'s extra script module in the manifest');
@@ -295,17 +296,17 @@ function jsonui(expr, vars) {
   const slots = () => GS.channel.read({ slots: 4, width: 160 }, titles[titles.length - 1]);
   await B.open(P, 'http://127.0.0.1:8787/demo/color.html');
   await flush();
+  B.tick();
   let r = slots();
   ok(B.isOpen(P) && r.f1 && r.layout === 'g' && r.urls[0] === 'http://h/s/S1/f/1.png' && r.urls[1] === 'http://h/s/S1/b/1.png' && !r.urls[2] && logs.includes('hide except TouchControls') && props['gweb:f1'] === 1 && props['gweb:flg'] === 1,
     'browser: opening on a phone (touch): F1 but its touch controls, layout 20:9, the page and the toolbar on top, the pointer shown', JSON.stringify(r));
-  // a new frame: first the shown one under (at once), then the new one on top two ticks later
+  // a new frame: kept until the one on top has had frameTicks; then the shown one under first, the new one on top two ticks later
   frame = 2; nextResolve(); await flush();
-  r = slots();
-  const midTop = r.urls[0], midUnder = r.urls[2];
-  B.tick(); B.tick(); B.tick();
-  r = slots();
-  ok(midTop === 'http://h/s/S1/f/1.png' && midUnder === 'http://h/s/S1/f/1.png' && r.urls[0] === 'http://h/s/S1/f/2.png' && r.urls[2] === 'http://h/s/S1/f/1.png',
-    'browser: a new frame is two-layered — the shown one copied under first, the new one on top bufferTicks later (the old shows through while it loads: R10.5)', JSON.stringify({ midTop, midUnder, r }));
+  const seen = [];
+  for (let i = 0; i < 20; i++) { B.tick(); const x = slots(); seen.push(`${x.urls[0].slice(-5)}|${(x.urls[2] || '-').slice(-5)}`); }
+  const firstUnder = seen.findIndex((x) => x === '1.png|1.png'), firstTop = seen.findIndex((x) => x === '2.png|1.png');
+  ok(seen[0] === '1.png|-' && firstUnder >= 12 && firstTop === firstUnder + 2,
+    'browser: a new frame waits until the one on top has been there frameTicks (the game must get to fetch it), then the shown one is copied under and the new one goes on top two ticks later (R10.4, R10.5)', seen.join(' '));
   // the pointer: the head turned right and down → the pointer's share; a swing clicks there
   smp.rot = { x: 10, y: 20 }; B.tick(); B.tick(); B.tick(); B.tick(); await flush();
   const ptr = props['gweb:ptr'], px = (ptr % 4096) / 4095, py = Math.floor(ptr / 4096) / 4095;

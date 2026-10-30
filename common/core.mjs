@@ -1328,9 +1328,10 @@ async function writePacks(world, settings = {}, live = false) {
 async function geouiWeb() {
   try {
     const { ensureService } = await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'web', 'lab.mjs')).href);
-    // ("tunnel": true — an https address by cloudflared as well; "ci" — only on CI, where the app lab plays: bds/geoui/web/lab.mjs)
+    // ("tunnel": true — an https address by cloudflared as well; "app" — only when the app lab plays (it names this machine for
+    //  the game: GEOUI_WEB_HOST): bds/geoui/web/lab.mjs)
     let conf = {}; try { conf = readJson(path.join(ADDON, 'geoui-web.json')) ?? {}; } catch { /* {} */ }
-    const r = await ensureService({ logFile: path.join(LAB, 'geoui-web.log'), tunnel: conf.tunnel === true || (conf.tunnel === 'ci' && !!process.env.CI) || process.env.GEOUI_WEB_TUNNEL === '1' });
+    const r = await ensureService({ logFile: path.join(LAB, 'geoui-web.log'), tunnel: conf.tunnel === true || (conf.tunnel === 'app' && !!process.env.GEOUI_WEB_HOST) || process.env.GEOUI_WEB_TUNNEL === '1' });
     if (!r.ok) LOG.push(`[0-0-0 0:0:0 WARN] ${r.why}`);
   } catch (e) { LOG.push(`[0-0-0 0:0:0 WARN] GeoUI Web: ${String(e.message).split('\n')[0]}`); }
 }
