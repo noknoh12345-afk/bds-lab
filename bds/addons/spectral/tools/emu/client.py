@@ -40,6 +40,7 @@ DEFAULT_SPEC = {
     'limiter_db': {'value': -1.0, 'status': 'assumed', 'note': 'limiter threshold when mix = limiter'},
     'category_gain_db': {'value': {'ui': 0.0, 'record': 0.0, 'music': 0.0}, 'status': 'assumed', 'note': 'volume settings per category'},
     'stereo': {'value': 'keep', 'status': 'assumed', 'note': 'keep | mono (is3D false stereo files)'},
+    'oneshot_latency_ms': {'value': 0.0, 'status': 'assumed', 'note': 'a one-shot playSound sounds this much after the SoundInstance commands of its tick'},
 }
 
 
@@ -198,7 +199,7 @@ def _instance_signal(s, land, total, spec, assets, sr, gain_only=False):
     elif spec['stereo'] == 'mono':
         src = np.repeat(src.mean(1, keepdims=True), 2, 1)
     loop = s['loop'] == -1 or s['loop'] > 0
-    t0 = land[s['t0']]
+    t0 = land[s['t0']] + (0 if loop else int(round(spec.get('oneshot_latency_ms', 0.0) * sr / 1000)))
     marks = []
     for c in s['cmds'][1:]:
         if c[1] == 'pitch':

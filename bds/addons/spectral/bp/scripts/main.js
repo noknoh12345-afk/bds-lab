@@ -329,6 +329,7 @@ var Session = class {
   ending = 0;
   started = false;
   warm = 0;
+  burstTo = -1;
   targets = [];
   lastP;
   lastL;
@@ -421,6 +422,7 @@ var Session = class {
   }
   seek(frame) {
     this.ph = Math.max(0, Math.min(this.d.F - 1, Math.round(frame)));
+    this.burstTo = -1;
     const b = this.s.budget;
     this.s.budget = 0;
     for (let v = 0; v < this.V; v++) this.send(v, 0, FADE_ATTACK, SILENT);
@@ -575,9 +577,11 @@ var Session = class {
     }
     this.flush();
     if (this.s.bursts && sp > 0) {
-      for (let m = Math.ceil(ph - 1e-9); m < ph2 - 1e-9 && m < d.F; m++) {
+      const to = ph2 + sp;
+      for (let m = Math.ceil(Math.max(ph, this.burstTo) - 1e-9); m < to - 1e-9 && m < d.F; m++) {
+        const base = m < ph2 - 1e-9 ? ph : ph2;
         for (let e = d.evIdx[m]; e < d.evIdx[m + 1]; e++) {
-          const off = Math.round((m + d.evSub[e] / SUB - ph) / sp * SUB);
+          const off = Math.round((m + d.evSub[e] / SUB - base) / sp * SUB);
           const sub = Math.max(0, Math.min(SUB - 1, off)), band = d.evBand[e];
           const c = band === 0 ? 90 : band === 1 ? 900 : 8e3;
           const vol = Math.min(10, d.evAmp[e] * this.s.volume * this.eqGain(c * r) / BURST_RMS[band]);
@@ -598,6 +602,7 @@ var Session = class {
         }
       }
     }
+    this.burstTo = this.s.bursts && sp > 0 ? ph2 + sp : -1;
     this.ph = Math.max(0, Math.min(d.F - 1, ph2));
     if (this.s.viz && (this.ticks & 1) === 0) this.viz();
     const ms = Date.now() - t0;

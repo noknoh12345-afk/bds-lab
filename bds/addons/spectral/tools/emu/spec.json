@@ -2,45 +2,55 @@
  "fade_shape": {
   "value": "linear",
   "status": "measured",
-  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid)"
+  "note": "measured: redroid run 41076646541 /spectral:calib all (the WAV in the run)"
  },
  "fade_min_ms": {
   "value": 0.8,
   "status": "measured",
-  "note": "redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid): a fade of 0 s took 0.8 ms; 2/5/10/20 ms fades took 2.1/5.1/10.0/20.2 ms"
+  "note": "redroid run 41076646541 /spectral:calib all (the WAV in the run): a fade of 0 s took 0.8 ms; 2/5/10/20/50 ms took 2.0/5.0/10.0/19.9/49.9 ms"
  },
  "jitter_ms": {
-  "value": 18.57,
+  "value": 7.3,
   "status": "measured",
-  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid) (spread of setVolume landings over ticks)"
+  "note": "the same: sd of the command landings against the click grid (the clicks themselves wander sd 5-6 ms)"
  },
  "max_voices": {
-  "value": 33,
+  "value": 32,
   "status": "measured",
-  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid) (quietest (or oldest) goes); heard at most 29-33 at once, the quietest (or oldest) goes"
+  "note": "measured: redroid run 41076646541 /spectral:calib all (the WAV in the run) (quietest (or oldest) goes) — 32 heard at once, the quietest or oldest goes"
  },
  "stereo": {
   "value": "keep",
   "status": "measured",
-  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid)"
+  "note": "measured: redroid run 41076646541 /spectral:calib all (the WAV in the run)"
  },
  "mix": {
   "value": "none",
   "status": "measured",
-  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid)"
+  "note": "redroid run 41076646541 /spectral:calib all (the WAV in the run): flat to sums ~5x the file level (the game plays ~30 dB under it), -0.1 dB at 5x, -1.0 dB at 7x"
  },
  "category_gain_db": {
   "value": {
-   "ui": 0.0,
-   "music": 0.0,
-   "record": -0.1
+   "ui": 0,
+   "music": 0,
+   "record": 0
   },
   "status": "measured",
-  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid)"
+  "note": "measured: redroid run 41076646541 /spectral:calib all (the WAV in the run)"
  },
  "latency_ms": {
-  "value": 3.7,
+  "value": 0.0,
   "status": "measured",
-  "note": "redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid): setVolume lands this far after the click grid (mean)"
+  "note": "commands as the time origin; the one-shots measured against them (oneshot_latency_ms)"
+ },
+ "oneshot_latency_ms": {
+  "value": 49.1,
+  "status": "measured",
+  "note": "redroid run 41076646541, the timing program re-read from its exported recording (Opus 192k) with a window round -50 ms: setVolume of 197 ticks landed 49.1 ms (sd 7.3) before the one-shot clicks of the same ticks"
+ },
+ "resampler": {
+  "value": "ideal",
+  "status": "measured",
+  "note": "redroid run 41076646541 /spectral:calib all (the WAV in the run): spurs follow the output frequency alone (1.76 kHz: -37.5 dB from osc x1 and osc220 x8): not the setPitch resampler but the recording path (44.1 kHz mix to 48 kHz capture)"
  }
 }

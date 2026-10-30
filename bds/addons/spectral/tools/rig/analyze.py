@@ -157,6 +157,21 @@ def step_time(sig, t0, t1, lo, hi):
     return float(t0 + i - 1 + fr)
 
 
+def cross_time(sig, t0, t1, lo, hi):
+    """the first crossing of the midpoint from lo's side to hi's inside [t0, t1) (samples), sub-sample: unlike step_time it
+    never answers the window's own start when the step came before it (run 41076646541's timing sat at the window edge)"""
+    mid = 0.5 * (lo + hi)
+    seg = sig[int(t0): int(t1)]
+    tgt = (seg >= mid) if hi > lo else (seg <= mid)
+    idx = np.nonzero(tgt[1:] & ~tgt[:-1])[0]
+    if not len(idx):
+        return None
+    i = idx[0] + 1
+    a, b = seg[i - 1], seg[i]
+    fr = (mid - a) / (b - a) if b != a else 0.0
+    return float(t0 + i - 1 + fr)
+
+
 # ---------------------------------------------------------------- programs
 def a_fade(x, prog, g):
     m = x.mean(1)
@@ -212,7 +227,8 @@ def a_timing(x, prog, g):
     for s in pa:
         tk = s[0]; tgt = s[3] * F_OSC
         lo, hi = (1000.0, 1500.0) if tgt > 1250 else (1500.0, 1000.0)
-        t = step_time(inst, at(g, tk) - 0.3 * TICK, at(g, tk) + 0.7 * TICK, lo, hi)
+        # (each voice turns every tick, so the same direction comes every 100 ms: a window of ±0.9 tick holds one of them)
+        t = cross_time(inst, at(g, tk) - 0.9 * TICK, at(g, tk) + 0.9 * TICK, lo, hi)
         if t is not None:
             la.append((tk, (t - at(g, tk)) / SR * 1000))
     hi_l = np.percentile(eb[int(at(g, pb[0][0])): int(at(g, pb[-1][0]))], 95)
@@ -220,7 +236,7 @@ def a_timing(x, prog, g):
     for s in pb:
         tk = s[0]
         lo, hi = (lo_l, hi_l) if s[3] > 0.25 else (hi_l, lo_l)
-        t = step_time(eb, at(g, tk) - 0.3 * TICK, at(g, tk) + 0.7 * TICK, lo, hi)
+        t = cross_time(eb, at(g, tk) - 0.9 * TICK, at(g, tk) + 0.9 * TICK, lo, hi)
         if t is not None:
             lb.append((tk, (t - at(g, tk)) / SR * 1000))
     A = np.array([v for _, v in la]); B = np.array([v for _, v in lb])

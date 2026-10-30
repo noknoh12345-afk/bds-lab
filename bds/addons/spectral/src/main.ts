@@ -136,7 +136,7 @@ function platformVoices(p: Player): number {
 interface Target { player?: Player; dim?: Dimension; loc?: Vector3; osc: SoundInstance[]; nz: SoundInstance[]; }
 
 class Session {
-  ph = 0; paused = false; frozen = false; ending = 0; started = false; warm = 0;
+  ph = 0; paused = false; frozen = false; ending = 0; started = false; warm = 0; burstTo = -1;
   targets: Target[] = [];
   lastP: Float32Array; lastL: Float32Array; lastNL: Float32Array; lastNP = 1;
   calls = 0; ticks = 0; ms = 0; peakCalls = 0; vizText = ''; rebuilds = 0;
@@ -196,6 +196,7 @@ class Session {
   }
   seek(frame: number) {
     this.ph = Math.max(0, Math.min(this.d.F - 1, Math.round(frame)));
+    this.burstTo = -1;
     // fall silent for a tick; the next tick fades in at the new place
     const b = this.s.budget; this.s.budget = 0;
     for (let v = 0; v < this.V; v++) this.send(v, 0, FADE_ATTACK, SILENT);
@@ -319,11 +320,16 @@ class Session {
       this.noise(b, this.s.noise ? (a * this.s.volume * this.eqGain(c)) / NOISE_RMS[b] : SILENT);
     }
     this.flush();
-    // bursts with sub-tick offsets
+    // bursts with sub-tick offsets, sent a tick ahead: on a real client a one-shot playSound sounds ~49 ms (sd 7) after the
+    // SoundInstance commands of its tick (SPEC.md, run 41076646541), so the next tick's bursts go now and land with their
+    // voices (sent with the voices, the drums came a tick late and their onsets were mostly missed). Right after a start or a
+    // seek the bursts of this tick go too, late by that tick
     if (this.s.bursts && sp > 0) {
-      for (let m = Math.ceil(ph - 1e-9); m < ph2 - 1e-9 && m < d.F; m++) {
+      const to = ph2 + sp;
+      for (let m = Math.ceil(Math.max(ph, this.burstTo) - 1e-9); m < to - 1e-9 && m < d.F; m++) {
+        const base = m < ph2 - 1e-9 ? ph : ph2;
         for (let e = d.evIdx[m]; e < d.evIdx[m + 1]; e++) {
-          const off = Math.round((((m + d.evSub[e] / SUB) - ph) / sp) * SUB);
+          const off = Math.round((((m + d.evSub[e] / SUB) - base) / sp) * SUB);
           const sub = Math.max(0, Math.min(SUB - 1, off)), band = d.evBand[e];
           const c = band === 0 ? 90 : band === 1 ? 900 : 8000;
           const vol = Math.min(10, (d.evAmp[e] * this.s.volume * this.eqGain(c * r)) / BURST_RMS[band]);
@@ -338,6 +344,7 @@ class Session {
         }
       }
     }
+    this.burstTo = this.s.bursts && sp > 0 ? ph2 + sp : -1;
     this.ph = Math.max(0, Math.min(d.F - 1, ph2));
     if (this.s.viz && (this.ticks & 1) === 0) this.viz();
     const ms = Date.now() - t0;
