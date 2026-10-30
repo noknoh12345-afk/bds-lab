@@ -249,7 +249,7 @@ const createBrowsers = function createBrowsers(CFG, io, GS, ch) {
         poll(p, s, gen);
         pump(p, s);
         // (no shape known yet: the game measures it now — the browser exact a moment later, else the box stays)
-        if (CFG.autoAspect && CFG.fill && !s.asp) startDetect(p, s);
+        if (CFG.autoAspect && CFG.fill && !s.asp && !s.boxed) startDetect(p, s);
         return '';
       } catch (e) {
         if (s.gen !== gen) return '';
@@ -385,6 +385,7 @@ const createBrowsers = function createBrowsers(CFG, io, GS, ch) {
           return '';
         }
         case 'debug': { s.debug = args[0] !== '0'; if (s.open) syncPointer(p, s); return ''; }
+        case 'filltest': { const n = need(); if (n) return n; try { ch.urls(p, { [CFG.slots.asp]: args[0] === '0' ? '' : 'filltest' }); } catch (e) { return String(e.message || e); } return ''; }
         case 'sens': { const v = Number(args[0]); if (!(v > 0 && v <= 50)) return `/${cmd}:sens <0.1〜50（1 度で動く単位）>`; if (s.ctl) s.ctl.cfg.sens = v; try { io.save(p, `${ns}:sens`, v); } catch (e) { /* (now only) */ } return ''; }
         case 'pointer': { const n = need(); if (n) return n; const nx = Number(args[0]), ny = Number(args[1]); if (!(nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1)) return `${ns}: pointer <0〜1> <0〜1>`; const b = box(s); s.ctl.pointerTo(b.x0 + nx * (b.x1 - b.x0), b.y0 + ny * (b.y1 - b.y0)); s.moveDue = true; syncPointer(p, s); return ''; }
         case 'f1': {
