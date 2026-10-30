@@ -43,6 +43,7 @@
           "variable.riding_y_offset = query.is_riding_any_entity_of_type('minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat', 'minecraft:strider') ? -3.0 : 0.0;",
           "v.gweb_ptr = variable.is_paperdoll ? 0 : q.property('gweb:ptr');",
           "v.gweb_flg = variable.is_paperdoll ? 0 : q.property('gweb:flg');",
+          "v.gweb_asp = variable.is_paperdoll ? 0 : q.property('gweb:asp');",
           "v.gweb_px = math.mod(v.gweb_ptr, 4096) / 4095;",
           "v.gweb_py = math.floor(v.gweb_ptr / 4096) / 4095;",
           "v.gweb_f1 = variable.is_paperdoll ? 0 : q.property('gweb:f1');"
