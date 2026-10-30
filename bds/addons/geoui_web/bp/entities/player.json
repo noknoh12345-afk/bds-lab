@@ -25,6 +25,15 @@
           ],
           "default": 0
         },
+        "gweb:asp": {
+          "client_sync": true,
+          "type": "int",
+          "range": [
+            0,
+            10000
+          ],
+          "default": 1778
+        },
         "gweb:f1": {
           "client_sync": true,
           "type": "int",
