@@ -21,6 +21,8 @@ const require = createRequire(import.meta.url);
 const HERE = path.dirname(fileURLToPath(import.meta.url)), TOP = path.resolve(HERE, '..', '..', '..');
 const G = require('../geoui_builder.js'), L = require('../screen/layout.js'), P = require('../screen/pack.js');
 export const NS = 'gwp', NAME = 'geoui_web_probe', OUT = path.join(TOP, 'bds', 'addons', NAME);
+// the title's control (5 本目): the same pack with the game's title left alone (titleHide none), its own pack ids
+export const CTL_NAME = 'geoui_web_title_ctl', CTL_OUT = path.join(TOP, 'bds', 'addons', CTL_NAME);
 export const SLOTS = 6, WIDTH = 160;
 
 // ---- the scene: images (slot: where) and GeoUI's marks (bits of gwp:show)
@@ -99,15 +101,16 @@ export function expected(W, H) {
 const SCRIPT = `// GeoUI Web probe (bds-lab: bds/geoui/web/probe.mjs makes this file — change that, not this).
 // /scriptevent gwp:<verb> — info · url <slot> <URL | /path (the service's own) | ~/path (through its tunnel) | -> · f1 0|1|touch ·
 // layout <letter|-> · show <bits> · stay <ticks> [refresh ticks] · raw <title> · reset · mark · lat <slot> <URL…> · count <URL…> ·
-// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm 0|1 (F1's parts alone) · fx 0|1|2 (the
+// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm|cam 0|1 (F1's parts alone) · fx 0|1|2 (the
 // first-person hand one way at a time: 1 scale 0, 2 moved down) ·
 // frames <n> <ticks> <buffered 0|1> <ms> (a browser's pictures) — every answer is a line GWP … in the server's log
-import { world, system, HudElement, HudVisibility } from '@minecraft/server';
+import { world, system, HudElement, HudVisibility, ControlScheme } from '@minecraft/server';
 import { http, HttpRequest, HttpRequestMethod } from '@minecraft/server-net';
 import './screen_channel.js';
 const NS = 'gwp', SVC = 'http://127.0.0.1:8787';
 const log = (s) => console.warn('GWP ' + s);
 let svc = null, stay = 0, mark = 0, seq = 0;
+const lastYaw = new Map();
 const io = {
   // (the channel's title: no time (stay 0: its control ends at once — channel.js), or the old way (stay > 0, 2・3 本目) to compare)
   title: (p, t) => p.onScreenDisplay.setTitle(t, { stayDuration: stay, fadeInDuration: 0, fadeOutDuration: 0 }),
@@ -115,8 +118,15 @@ const io = {
   prop: (p, k, v) => p.setProperty(k, v),
   hideHud: (p, keep) => { const before = p.onScreenDisplay.getHiddenHudElements(); p.onScreenDisplay.hideAllExcept(keep.map((k) => HudElement[k]).filter((v) => v !== undefined)); return before; },
   restoreHud: (p, before) => { p.onScreenDisplay.resetHudElementsVisibility(); if (before && before.length) p.onScreenDisplay.setHudVisibility(HudVisibility.Hide, before); },
+  // (F1's camera (5 本目): the pack's gwp:eye — follow_orbit at the eyes; the player turns with it (LockedPlayerRelativeStrafe, a
+  //  scheme follow_orbit takes). Off: the camera cleared, the scheme back to the game's)
+  camera: (p, id) => {
+    if (id) { p.camera.setCamera(id); try { p.setControlScheme(ControlScheme.LockedPlayerRelativeStrafe); } catch (e) { log('SCHEME ' + e); } }
+    else { p.camera.clear(); try { p.setControlScheme(); } catch (e) { log('SCHEME ' + e); } }
+    log('CAMERA ' + (id || 'clear'));
+  },
 };
-const ch = globalThis.GeoUIScreen.channel.create({ ns: NS, slots: ${SLOTS}, width: ${WIDTH}, refreshTicks: 0 }, io);
+const ch = globalThis.GeoUIScreen.channel.create({ ns: NS, slots: ${SLOTS}, width: ${WIDTH}, refreshTicks: 0, camera: NS + ':eye' }, io);
 const players = () => world.getAllPlayers();
 async function getJson(p) {
   const r = await http.request(new HttpRequest(SVC + p).setMethod(HttpRequestMethod.Get).setTimeout(10));
@@ -137,6 +147,12 @@ async function hitsSince(t) { const h = await getJson('/hits?since=' + (t - 1));
 async function setUrl(slot, u) { const f = await full(u); for (const p of players()) ch.url(p, slot, f); log('URL slot=' + slot + ' ' + (f || '-')); return f; }
 async function verb(v, a) {
   switch (v) {
+    case 'rot': {
+      // (5 本目: whether the player still turns with the look while F1's camera is on — the rotation now, and TURNED when it moved
+      //  more than 20° since the last rot)
+      for (const p of players()) { const r = p.getRotation(), y0 = lastYaw.get(p.id); lastYaw.set(p.id, r.y); const d = y0 === undefined ? 0 : Math.abs(((r.y - y0 + 540) % 360) - 180); log('ROT y=' + r.y.toFixed(1) + ' x=' + r.x.toFixed(1) + ' d=' + d.toFixed(1)); if (d > 20) log('TURNED ' + d.toFixed(1)); }
+      return;
+    }
     case 'info': {
       const i = await info();
       if (i) log('INFO public=' + i.public + ' tunnel=' + (i.tunnel || '-') + ' fonts=' + i.fonts + ' version=' + i.version);
@@ -191,6 +207,7 @@ async function verb(v, a) {
         if (a[0] === 'api') { if (on) p.onScreenDisplay.hideAllExcept([]); else p.onScreenDisplay.resetHudElementsVisibility(); }
         else if (a[0] === 'flag') io.title(p, on ? '~gu~1a' : '~gu~0a');
         else if (a[0] === 'arm') p.setProperty(NS + ':f1', on ? 1 : 0);
+        else if (a[0] === 'cam') io.camera(p, on ? NS + ':eye' : null);
       }
       log('PART ' + a.join(' '));
       return;
@@ -255,17 +272,36 @@ scriptevent gwp:urls 0=/quad/200x100.png 5=/solid/00ff00/64x64.png
 wait 1000
 ~ @A title: ~gu~0ahttp://\\S+/quad/200x100\\.png +http://\\S+/solid/00ff00/64x64\\.png
 
-## F1: HUD を全部隠し、プロパティで腕と持ち物、ゲームモードはそのまま
+## F1: HUD を全部隠し、プロパティで腕と持ち物、カメラ gwp:eye（目の所の 3 人称: 1 人称の持ち物を描かない）、ゲームモードはそのまま
 gamemode survival A
 scriptevent gwp:f1 1
 wait 1000
+~ GWP CAMERA gwp:eye
+!~ GWP SCHEME
 js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length, p('A').getGameMode()])
 = [1,13,"Survival"]
 ~ @A title: ~gu~1a
 scriptevent gwp:f1 0
 wait 1000
+~ GWP CAMERA clear
+!~ GWP SCHEME
 js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length])
 = [0,0]
+
+## カメラだけ（part cam）と、向きの読み（rot）
+scriptevent gwp:part cam 1
+wait 500
+scriptevent gwp:rot
+tp A 0 -60 0 90 0
+wait 500
+scriptevent gwp:rot
+scriptevent gwp:part cam 0
+wait 500
+~ GWP CAMERA gwp:eye
+~ GWP ROT y=
+~ GWP TURNED
+~ GWP CAMERA clear
+!~ GWP SCHEME
 
 ## F1 でも携帯の操作ボタンは残せる（touch）
 scriptevent gwp:f1 touch
@@ -298,15 +334,7 @@ wait 2500
 ~ GWP CYCLE n=5 fetched=0
 `;
 
-// ---- the real app (the lab's CI device): every number out through measure (the pictures stay sealed)
-function appTxt() {
-  // (4 本目: 3 本目（run 41004077706）で残ったこと — 普通の題名（通り道の題名を時間なしに: 隠れたまま残る題名の部品が次の題名を
-  //  隠していた見込み）・F1 の手と持ち物（1 人称の持ち物は腕の位置に付いて動くが大きさ 0 は効かない見込み: 腕を下へ動かす）)
-  return `# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（4 本目）。
-# 1〜3 本目（run 40998593826・41001422618・41004077706）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
-# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
-
-section join
+const JOIN = `section join
 stop
 launch
 until title 600000
@@ -331,11 +359,19 @@ do scriptevent gwp:info
 wait 6000
 expect server GWP CHECK svc PASS
 absent clientlog \\bERROR\\b
-
-section title
+`;
+// (the title section, the same in the probe and the control: a vanilla title before anything of the channel (title-first), the
+//  channel's title, then plain and API titles after it)
+const TITLE = `section title
 do scriptevent gwp:reset
 do title @a times 10 70 20
 wait 2000
+shot world
+do title @a title HELLO
+wait 1500
+shot title-first
+measure diff title-first 900 300 1500 700
+wait 6000
 shot world
 do scriptevent gwp:url 1 /solid/00ff00/64x64.png
 wait 3000
@@ -350,19 +386,21 @@ do scriptevent gwp:raw HELLO
 wait 1500
 shot title-api
 measure diff title-api 900 300 1500 700
-do title @a clear
-wait 1000
-do scriptevent gwp:stay 600
-do scriptevent gwp:url 1 /solid/0000ff/64x64.png
-wait 3000
-do title @a title HELLO
-wait 1500
-shot title-old
-measure diff title-old 900 300 1500 700
 do scriptevent gwp:reset
 do title @a reset
 wait 2000
+`;
 
+// ---- the real app (the lab's CI device): every number out through measure (the pictures stay sealed)
+function appTxt() {
+  // (5 本目: 4 本目（run 41008713796）で残ったこと — 普通の題名（hud_title_text に触らず、root_panel の hud_title_text_area を置き換える。
+  //  対照は geoui_web_title_ctl: 題名を隠さない同じパック）・F1 の持ち物（ボーンでは動かない: カメラ gwp:eye で 1 人称を止める）)
+  return `# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（5 本目）。
+# 1〜4 本目（run 40998593826・41001422618・41004077706・41008713796）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
+# 実行: node lab.mjs app ci --batch geoui_web_title_ctl,geoui_web_probe,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
+
+${JOIN}
+${TITLE}
 section f1-hand
 do scriptevent gwp:reset
 do hud @a reset
@@ -378,27 +416,15 @@ do replaceitem entity @a slot.weapon.mainhand 0 red_wool
 wait 3000
 shot wool-shown
 measure marks wool-shown 1600 600 2400 1080
-do scriptevent gwp:fx 1
-wait 2500
-shot wool-scale
-measure marks wool-scale 1600 600 2400 1080
-do scriptevent gwp:fx 2
-wait 2500
-shot wool-move
-measure marks wool-move 1600 600 2400 1080
-do scriptevent gwp:fx 0
-do scriptevent gwp:part arm 1
-wait 2500
-shot wool-arm
-measure marks wool-arm 1600 600 2400 1080
-do scriptevent gwp:part arm 0
-wait 2500
-shot wool-back
-measure marks wool-back 1600 600 2400 1080
-do replaceitem entity @a slot.weapon.mainhand 0 blue_wool
+do scriptevent gwp:part cam 1
 wait 3000
-shot blue-held
-measure marks blue-held 1600 600 2400 1080
+shot wool-cam
+measure marks wool-cam 1600 600 2400 1080
+measure diff wool-cam
+do scriptevent gwp:part cam 0
+wait 3000
+shot wool-cam-off
+measure marks wool-cam-off 1600 600 2400 1080
 do replaceitem entity @a slot.weapon.mainhand 0 air
 wait 3000
 shot hand-empty
@@ -411,11 +437,29 @@ do replaceitem entity @a slot.weapon.mainhand 0 red_wool
 wait 3000
 shot wool-f1
 measure marks wool-f1 1600 600 2400 1080
+measure diff wool-f1
 do scriptevent gwp:f1 0
 wait 3000
 shot wool-f1-off
 measure marks wool-f1-off 1600 600 2400 1080
 do replaceitem entity @a slot.weapon.mainhand 0 air
+
+section f1-look
+do scriptevent gwp:reset
+do tp @a 0 -60 0 0 30
+do scriptevent gwp:f1 1
+wait 3000
+do scriptevent gwp:rot
+wait 500
+shot world
+look right 600 60
+wait 2000
+shot cam-look
+measure diff cam-look
+do scriptevent gwp:rot
+until server GWP TURNED 5000
+do scriptevent gwp:f1 0
+wait 3000
 
 section f1-chat
 do scriptevent gwp:reset
@@ -439,6 +483,16 @@ measure diff f1-off 700 940 1700 1080
 `;
 }
 
+/** the control's app.txt: the same pack with the game's title left alone (titleHide none) — is a title seen at all by the lab */
+function ctlAppTxt() {
+  return `# geoui_web_title_ctl（bds/geoui/web/probe.mjs が作る）: 題名の対照（5 本目）。geoui_web_probe と同じパックで、ゲームの題名を隠さない
+# （titleHide: none）。ここで HELLO が写るなら、写らないのは題名の隠し方のせい。写らないなら、このラボ・この写し方のせい。
+# 実行: node lab.mjs app ci --batch geoui_web_title_ctl,geoui_web_probe,geoui_web
+
+${JOIN}
+${TITLE}`;
+}
+
 const TASK = `# geoui_web_probe — URL の画像と F1 を本物のゲームで測る
 
 ## Request
@@ -451,7 +505,7 @@ URL の画像（profile_image_renderer の {"type":7,"url":…}）を GeoUI に�
 - \`/scriptevent gwp:url <枠> <URL>\`: その枠に絵を出す。\`/path\` はラボのサービス（bds/geoui/web/server.mjs）の絵（/solid/rrggbb/WxH.png・/quad/WxH.png・
   /noise/WxH.png・/slow/<ミリ秒>/…）、\`~/path\` はそのトンネル（https）、\`-\` で消す。題名（タイトル）の通り道で送る（layout.js・channel.js）。
 - \`gwp:show 1\` = main の外の紫の枠（GeoUI の印: 絵がその中にぴったり入るか）、\`gwp:show 4\` = 真ん中の白い十字（絵の上に GeoUI が描かれるか）。
-- \`gwp:f1 1\`: F1（HUD の 13 の部品を API で、残りの HUD（会話・題名など）を通り道の旗で隠し、腕と持ち物はプロパティで画面の下へ動かし大きさ 0）。\`gwp:f1 touch\`: 携帯の操作ボタンは残す。
+- \`gwp:f1 1\`: F1（HUD の 13 の部品を API で、残りの HUD（会話・題名など）を通り道の旗で隠し、空の手の腕はプロパティ（render controller）で、持ち物はカメラ \`gwp:eye\`（目の所の 3 人称: 1 人称を描かない）で消す）。\`gwp:f1 touch\`: 携帯の操作ボタンは残す。\`gwp:part cam 1\`: カメラだけ。\`gwp:rot\`: 向き（20° より回ったら TURNED）。
 - \`gwp:fx 1\`・\`gwp:fx 2\`: 1 人称の手の消し方を 1 つずつ（1: 大きさ 0 だけ、2: 下へ動かすだけ）。青い羊毛を持つと、プロパティなしで腕が下へ（4 本目の実験）。
 - \`gwp:layout b\`: 並べ方 b（lay の枠と、画面全体の黒い背景）。\`gwp:lat\`・\`gwp:count\`・\`gwp:cycle\`: サービスが記録した、ゲームが絵を取りに来た時刻と回数（左上の棒の長さにも出る）。
 
@@ -460,6 +514,35 @@ URL の画像（profile_image_renderer の {"type":7,"url":…}）を GeoUI に�
 2. \`/scriptevent gwp:url 1 https://placehold.co/64x64/00ff00/00ff00.png\` → 左に緑。http が出ず https だけ出るなら、その端末は平文の http を取りに行かない。
 3. \`/scriptevent gwp:f1 1\` → HUD・会話・手と持ち物が全部消える（ゲームモードはそのまま）。\`/scriptevent gwp:f1 0\` で戻る。
 `;
+
+/** the control's scene: the probe's, with the game's title left alone and its own name and pack ids */
+export function ctlScene() {
+  return Object.assign(scene(), { titleHide: 'none', name: 'GeoUI Web Title Control', seed: 'gwp-title-ctl',
+    description: 'GeoUI: the title control — the probe with the game title left alone (bds-lab bds/geoui/web/probe.mjs)' });
+}
+const CTL_TASK = `# geoui_web_title_ctl — 題名の対照（GeoUI の 5 本目）
+
+## Request
+geoui_web_probe で普通の題名（\`/title @a title HELLO\`）がどのやり方でも写らなかった（bds/geoui/RULES.md R10.14）。同じパックでゲームの題名を
+隠さない物（titleHide: none）を本物のアプリで回し、HELLO が写るかを見る。作り方: \`node bds/geoui/web/probe.mjs\`（このフォルダはそれが書く。手で直さない）。
+
+## What it is
+- geoui_web_probe と同じ（URL の画像・F1・\`/scriptevent gwp:…\`）。違いはゲームの題名を隠さないことだけ: 通り道の題名（\`~gu~…\`）も画面に文字で出る。
+- 写るなら原因は題名の隠し方（probe は 5 本目から hud_title_text_area の置き換え）、写らないならラボ・写し方の側。
+`;
+
+/** every file of the control add-on */
+export function ctlFiles() {
+  const built = P.build(ctlScene(), { core: G });
+  if (built.warnings.length) throw new Error(built.warnings.join('\n'));
+  const out = packFiles(built);
+  out['tests.txt'] = TESTS;
+  out['app.txt'] = ctlAppTxt();
+  out['TASK.md'] = CTL_TASK;
+  out['geoui-web.json'] = JSON.stringify({ service: 'bds/geoui/web/server.mjs', tunnel: 'app' }, null, 2) + '\n';
+  out['imported.json'] = JSON.stringify({ from: 'bds/geoui/web/probe.mjs', rp: [1, 0, 0], bp: [1, 0, 0], request: '題名の対照: probe と同じパックでゲームの題名を隠さない' }, null, 2) + '\n';
+  return { files: out, stats: built.stats };
+}
 
 /** every file of the add-on */
 export function files() {
@@ -481,11 +564,15 @@ function main(argv) {
     for (const [k, b] of Object.entries(expected(Number(m[1]), Number(m[2])))) console.log(`${k.padEnd(44)} (${b.x0.toFixed(1)}, ${b.y0.toFixed(1)})–(${b.x1.toFixed(1)}, ${b.y1.toFixed(1)})`);
     return;
   }
-  const { files: F, stats } = files(), check = argv.includes('--check');
-  const r = writeUnit(OUT, F, { check });
-  if (check) {
-    if (!r.ok) { console.error(`bds/addons/${NAME} は probe.mjs が作る物と違います: ${r.bad.join(' ')}\n→ node bds/geoui/web/probe.mjs`); process.exit(1); }
-    console.log(`OK bds/addons/${NAME} is what probe.mjs makes`);
-  } else console.log(`OK bds/addons/${NAME}: グループ ${stats.groups}・ボーン ${stats.bones}・面 ${stats.planes}・プロパティ ${stats.properties}`);
+  const check = argv.includes('--check');
+  let bad = false;
+  for (const [name, out, make] of [[NAME, OUT, files], [CTL_NAME, CTL_OUT, ctlFiles]]) {
+    const { files: F, stats } = make(), r = writeUnit(out, F, { check });
+    if (check) {
+      if (!r.ok) { console.error(`bds/addons/${name} は probe.mjs が作る物と違います: ${r.bad.join(' ')}\n→ node bds/geoui/web/probe.mjs`); bad = true; }
+      else console.log(`OK bds/addons/${name} is what probe.mjs makes`);
+    } else console.log(`OK bds/addons/${name}: グループ ${stats.groups}・ボーン ${stats.bones}・面 ${stats.planes}・プロパティ ${stats.properties}`);
+  }
+  if (bad) process.exit(1);
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main(process.argv.slice(2));
