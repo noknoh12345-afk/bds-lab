@@ -1,0 +1,134 @@
+# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（4 本目）。
+# 1〜3 本目（run 40998593826・41001422618・41004077706）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
+# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
+
+section join
+stop
+launch
+until title 600000
+join
+until joined 900000
+size 2400x1080
+wait 9000
+do tp @a 0 -60 0 0 90
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do scriptevent gwp:info
+wait 6000
+expect server GWP CHECK svc PASS
+absent clientlog \bERROR\b
+
+section title
+do scriptevent gwp:reset
+do title @a times 10 70 20
+wait 2000
+shot world
+do scriptevent gwp:url 1 /solid/00ff00/64x64.png
+wait 3000
+shot title-chan
+measure diff title-chan 900 300 1500 700
+do title @a title HELLO
+wait 1500
+shot title-plain
+measure diff title-plain 900 300 1500 700
+wait 6000
+do scriptevent gwp:raw HELLO
+wait 1500
+shot title-api
+measure diff title-api 900 300 1500 700
+do title @a clear
+wait 1000
+do scriptevent gwp:stay 600
+do scriptevent gwp:url 1 /solid/0000ff/64x64.png
+wait 3000
+do title @a title HELLO
+wait 1500
+shot title-old
+measure diff title-old 900 300 1500 700
+do scriptevent gwp:reset
+do title @a reset
+wait 2000
+
+section f1-hand
+do scriptevent gwp:reset
+do hud @a reset
+do hud @a hide hotbar
+do hud @a hide touch_controls
+do hud @a hide crosshair
+do hud @a hide item_text
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0 -60 0 0 30
+wait 4000
+shot world
+do replaceitem entity @a slot.weapon.mainhand 0 red_wool
+wait 3000
+shot wool-shown
+measure marks wool-shown 1600 600 2400 1080
+do scriptevent gwp:fx 1
+wait 2500
+shot wool-scale
+measure marks wool-scale 1600 600 2400 1080
+do scriptevent gwp:fx 2
+wait 2500
+shot wool-move
+measure marks wool-move 1600 600 2400 1080
+do scriptevent gwp:fx 0
+do scriptevent gwp:part arm 1
+wait 2500
+shot wool-arm
+measure marks wool-arm 1600 600 2400 1080
+do scriptevent gwp:part arm 0
+wait 2500
+shot wool-back
+measure marks wool-back 1600 600 2400 1080
+do replaceitem entity @a slot.weapon.mainhand 0 blue_wool
+wait 3000
+shot blue-held
+measure marks blue-held 1600 600 2400 1080
+do replaceitem entity @a slot.weapon.mainhand 0 air
+wait 3000
+shot hand-empty
+measure diff hand-empty 1600 600 2400 1080
+do scriptevent gwp:f1 1
+wait 3000
+shot hand-f1
+measure diff hand-f1 1600 600 2400 1080
+do replaceitem entity @a slot.weapon.mainhand 0 red_wool
+wait 3000
+shot wool-f1
+measure marks wool-f1 1600 600 2400 1080
+do scriptevent gwp:f1 0
+wait 3000
+shot wool-f1-off
+measure marks wool-f1-off 1600 600 2400 1080
+do replaceitem entity @a slot.weapon.mainhand 0 air
+
+section f1-chat
+do scriptevent gwp:reset
+do hud @a reset
+wait 2000
+do scriptevent gwp:f1 1
+wait 3000
+shot world
+do say chat-in-f1-one
+do say chat-in-f1-two
+do title @a actionbar ACTIONBAR-IN-F1
+wait 1500
+shot f1-chat
+measure diff f1-chat
+measure diff f1-chat 0 0 1200 500
+do scriptevent gwp:f1 0
+wait 3000
+shot f1-off
+measure diff f1-off
+measure diff f1-off 700 940 1700 1080
