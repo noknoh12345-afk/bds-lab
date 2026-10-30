@@ -1,0 +1,639 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.gweb.ui": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gweb_ptr_b": {
+          "position": [
+            "-160 + v.gweb_px * 320",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_b": {
+          "position": [
+            "-160 + v.gweb_px * 320",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_b": {
+          "position": [
+            "-160 + v.gweb_px * 320",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_c": {
+          "position": [
+            "-120 + v.gweb_px * 240",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_c": {
+          "position": [
+            "-120 + v.gweb_px * 240",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_c": {
+          "position": [
+            "-120 + v.gweb_px * 240",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_d": {
+          "position": [
+            "-144 + v.gweb_px * 288",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_d": {
+          "position": [
+            "-144 + v.gweb_px * 288",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_d": {
+          "position": [
+            "-144 + v.gweb_px * 288",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_e": {
+          "position": [
+            "-180 + v.gweb_px * 360",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_e": {
+          "position": [
+            "-180 + v.gweb_px * 360",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_e": {
+          "position": [
+            "-180 + v.gweb_px * 360",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_f": {
+          "position": [
+            "-195 + v.gweb_px * 390",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_f": {
+          "position": [
+            "-195 + v.gweb_px * 390",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_f": {
+          "position": [
+            "-195 + v.gweb_px * 390",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_g": {
+          "position": [
+            "-200 + v.gweb_px * 400",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_g": {
+          "position": [
+            "-200 + v.gweb_px * 400",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_g": {
+          "position": [
+            "-200 + v.gweb_px * 400",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_h": {
+          "position": [
+            "-210 + v.gweb_px * 420",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_h": {
+          "position": [
+            "-210 + v.gweb_px * 420",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_h": {
+          "position": [
+            "-210 + v.gweb_px * 420",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_i": {
+          "position": [
+            "-320 + v.gweb_px * 640",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_i": {
+          "position": [
+            "-320 + v.gweb_px * 640",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_i": {
+          "position": [
+            "-320 + v.gweb_px * 640",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_j": {
+          "position": [
+            "-90 + v.gweb_px * 180",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_j": {
+          "position": [
+            "-90 + v.gweb_px * 180",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_j": {
+          "position": [
+            "-90 + v.gweb_px * 180",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_k": {
+          "position": [
+            "-112.5 + v.gweb_px * 225",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_k": {
+          "position": [
+            "-112.5 + v.gweb_px * 225",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_k": {
+          "position": [
+            "-112.5 + v.gweb_px * 225",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_l": {
+          "position": [
+            "-135 + v.gweb_px * 270",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_l": {
+          "position": [
+            "-135 + v.gweb_px * 270",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_l": {
+          "position": [
+            "-135 + v.gweb_px * 270",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_m": {
+          "position": [
+            "-150 + v.gweb_px * 300",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_m": {
+          "position": [
+            "-150 + v.gweb_px * 300",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_m": {
+          "position": [
+            "-150 + v.gweb_px * 300",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_n": {
+          "position": [
+            "-67.5 + v.gweb_px * 135",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_n": {
+          "position": [
+            "-67.5 + v.gweb_px * 135",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_n": {
+          "position": [
+            "-67.5 + v.gweb_px * 135",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_o": {
+          "position": [
+            "-213.375 + v.gweb_px * 426.75",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_o": {
+          "position": [
+            "-213.375 + v.gweb_px * 426.75",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_o": {
+          "position": [
+            "-213.375 + v.gweb_px * 426.75",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_p": {
+          "position": [
+            "-128.875 + v.gweb_px * 257.75",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_p": {
+          "position": [
+            "-128.875 + v.gweb_px * 257.75",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_p": {
+          "position": [
+            "-128.875 + v.gweb_px * 257.75",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_q": {
+          "position": [
+            "-108 + v.gweb_px * 216",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_q": {
+          "position": [
+            "-108 + v.gweb_px * 216",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_q": {
+          "position": [
+            "-108 + v.gweb_px * 216",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_r": {
+          "position": [
+            "-289.125 + v.gweb_px * 578.25",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_r": {
+          "position": [
+            "-289.125 + v.gweb_px * 578.25",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_r": {
+          "position": [
+            "-289.125 + v.gweb_px * 578.25",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_s": {
+          "position": [
+            "-78 + v.gweb_px * 156",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_s": {
+          "position": [
+            "-78 + v.gweb_px * 156",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_s": {
+          "position": [
+            "-78 + v.gweb_px * 156",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_t": {
+          "position": [
+            "-83.75 + v.gweb_px * 167.5",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_t": {
+          "position": [
+            "-83.75 + v.gweb_px * 167.5",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_t": {
+          "position": [
+            "-83.75 + v.gweb_px * 167.5",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_u": {
+          "position": [
+            "-98.5 + v.gweb_px * 197",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_u": {
+          "position": [
+            "-98.5 + v.gweb_px * 197",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_u": {
+          "position": [
+            "-98.5 + v.gweb_px * 197",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_v": {
+          "position": [
+            "-169.75 + v.gweb_px * 339.5",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_v": {
+          "position": [
+            "-169.75 + v.gweb_px * 339.5",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_v": {
+          "position": [
+            "-169.75 + v.gweb_px * 339.5",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_w": {
+          "position": [
+            "-224.5 + v.gweb_px * 449",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_w": {
+          "position": [
+            "-224.5 + v.gweb_px * 449",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_w": {
+          "position": [
+            "-224.5 + v.gweb_px * 449",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_x": {
+          "position": [
+            "-236.125 + v.gweb_px * 472.25",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_x": {
+          "position": [
+            "-236.125 + v.gweb_px * 472.25",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_x": {
+          "position": [
+            "-236.125 + v.gweb_px * 472.25",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_y": {
+          "position": [
+            "-261.25 + v.gweb_px * 522.5",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_y": {
+          "position": [
+            "-261.25 + v.gweb_px * 522.5",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_y": {
+          "position": [
+            "-261.25 + v.gweb_px * 522.5",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        },
+        "gweb_ptr_z": {
+          "position": [
+            "(v.gweb_px - 0.5) * v.gweb_asp * 0.18",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "(math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gweb_ring_z": {
+          "position": [
+            "(v.gweb_px - 0.5) * v.gweb_asp * 0.18",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && ((math.mod(math.floor(v.gweb_flg / 2), 2) > 0.5) || (math.mod(math.floor(v.gweb_flg / 4), 2) > 0.5))) ? 1 : 0"
+        },
+        "gweb_tip_z": {
+          "position": [
+            "(v.gweb_px - 0.5) * v.gweb_asp * 0.18",
+            "90 - v.gweb_py * 180",
+            "0"
+          ],
+          "scale": "((math.mod(math.floor(v.gweb_flg / 1), 2) > 0.5) && (math.mod(math.floor(v.gweb_flg / 8), 2) > 0.5)) ? 1 : 0"
+        }
+      }
+    },
+    "animation.gweb.f1": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "rightarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ],
+          "scale": 0
+        },
+        "leftarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ],
+          "scale": 0
+        },
+        "rightitem": {
+          "scale": 0
+        },
+        "leftitem": {
+          "scale": 0
+        }
+      }
+    }
+  }
+}
