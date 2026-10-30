@@ -15,7 +15,7 @@ ORIGINAL_HANDOFF_PROMPT.md（最初の依頼の原文入り）を先に読むこ
   これまでの結果は tools/exp/results/（b1 = アドオンの鳴らし方、b2 = 変換器の選択肢、val1 = エミュ対実機、ceiling_* = 経路だけ）
 - **zip から戻すもの**（新しいセッションで最初に）:
   1. `git fetch origin addon/spectral && git checkout addon/spectral`（無ければ zip の repo/addon-spectral.bundle から:
-     `git fetch <zip>/repo/addon-spectral.bundle HEAD:addon/spectral`）
+     `git fetch <zip>/repo/addon-spectral.bundle addon/spectral:addon/spectral`、前提は febd73c~4 を持つ origin の clone）
   2. zip の recAll/*.opus → `bds/addons/spectral/corpus/renders/rec/`（実機の録音、run A–D、復号済み。gitignore 済み）
   3. zip の exp_cache/*.song.json → `bds/addons/spectral/corpus/renders/exp/cache/`（変換済みの曲。今のコードと同じ鍵なので
      変換 14 秒/曲を飛ばせる）
