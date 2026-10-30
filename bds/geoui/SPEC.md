@@ -427,7 +427,7 @@ rightItem・leftItem）を大きさ 0、体は render controller で自分から
 いる）。ラボは `geoui-web.json` のあるアドオンの BDS の横にサービスを起こす（`lab.mjs`。アプリのラボは端末から見たこの機械の名前
 `GEOUI_WEB_HOST` を渡す: エミュレータは 10.0.2.2）。`"tunnel"` で cloudflared の https の入り口も（CI だけなら `"ci"`）。
 
-### 予測（run の前に書いた: `bds/addons/geoui_web_probe`、`--screen 1080x2400` = 2400 x 1080 の本物のスマホの解像度）
+### 予測（run の前に書いた: `bds/addons/geoui_web_probe`、参加の後 `size 2400x1080` = 本物の 20:9 のスマホの解像度で）
 
 期待の位置は `node bds/geoui/web/probe.mjs expect 2400x1080`（高さに合わせる: 1 単位 = 6.328 px、HUD は画面いっぱい）。
 

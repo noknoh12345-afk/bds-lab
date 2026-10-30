@@ -1,6 +1,6 @@
 # geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像が HUD に出るか・どこに・どれだけ速く・F1。
 # 予測は SPEC.md 14 章（回す前に書いたもの）。期待の位置: node bds/geoui/web/probe.mjs expect <幅>x<高さ>
-# 実行: node lab.mjs app ci -a geoui_web_probe --screen 1080x2400（本物のスマホの解像度）
+# 実行: node lab.mjs app ci -a geoui_web_probe（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度にして測る）
 
 section join
 stop
@@ -8,6 +8,8 @@ launch
 until title 600000
 join
 until joined 900000
+size 2400x1080
+wait 9000
 do tp @a 0 -60 0 0 90
 do hud @a hide crosshair
 do hud @a hide health
