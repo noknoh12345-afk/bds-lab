@@ -17196,6 +17196,254 @@
             }
           ]
         }
+      },
+      {
+        "gweb_ft": {
+          "type": "panel",
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "layer": 2,
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and ((('%.160s' * (#hud_title_text_string - ('%.646s' * #hud_title_text_string))) - ' ') = 'filltest'))",
+              "target_property_name": "#visible"
+            }
+          ],
+          "controls": [
+            {
+              "gweb_ft1": {
+                "type": "custom",
+                "renderer": "profile_image_renderer",
+                "layer": 2,
+                "bindings": [
+                  {
+                    "binding_name": "#hud_title_text_string",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                    "target_property_name": "#profile_image_options"
+                  }
+                ],
+                "size": [
+                  "25%",
+                  "25%"
+                ],
+                "anchor_from": "top_left",
+                "anchor_to": "top_left"
+              }
+            },
+            {
+              "gweb_ft1m": {
+                "type": "image",
+                "texture": "textures/gweb/atlas",
+                "uv": [
+                  0,
+                  40
+                ],
+                "uv_size": [
+                  8,
+                  8
+                ],
+                "size": [
+                  10,
+                  10
+                ],
+                "anchor_from": "top_left",
+                "anchor_to": "top_left",
+                "layer": 6
+              }
+            },
+            {
+              "gweb_ft3": {
+                "type": "custom",
+                "renderer": "profile_image_renderer",
+                "layer": 2,
+                "bindings": [
+                  {
+                    "binding_name": "#hud_title_text_string",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                    "target_property_name": "#profile_image_options"
+                  }
+                ],
+                "size": [
+                  120,
+                  60
+                ],
+                "anchor_from": "bottom_left",
+                "anchor_to": "bottom_left"
+              }
+            },
+            {
+              "gweb_ft3m": {
+                "type": "image",
+                "texture": "textures/gweb/atlas",
+                "uv": [
+                  0,
+                  40
+                ],
+                "uv_size": [
+                  8,
+                  8
+                ],
+                "size": [
+                  10,
+                  10
+                ],
+                "anchor_from": "bottom_left",
+                "anchor_to": "bottom_left",
+                "layer": 6
+              }
+            }
+          ]
+        }
+      },
+      {
+        "gweb_ft2": {
+          "type": "custom",
+          "renderer": "profile_image_renderer",
+          "layer": 2,
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and ((('%.160s' * (#hud_title_text_string - ('%.646s' * #hud_title_text_string))) - ' ') = 'filltest'))",
+              "target_property_name": "#visible"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+              "target_property_name": "#profile_image_options"
+            }
+          ],
+          "size": [
+            "25%",
+            "25%"
+          ],
+          "anchor_from": "top_right",
+          "anchor_to": "top_right"
+        }
+      },
+      {
+        "gweb_ft2m": {
+          "type": "image",
+          "texture": "textures/gweb/atlas",
+          "uv": [
+            0,
+            40
+          ],
+          "uv_size": [
+            8,
+            8
+          ],
+          "size": [
+            10,
+            10
+          ],
+          "anchor_from": "top_right",
+          "anchor_to": "top_right",
+          "layer": 6,
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and ((('%.160s' * (#hud_title_text_string - ('%.646s' * #hud_title_text_string))) - ' ') = 'filltest'))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gweb_ft4": {
+          "type": "panel",
+          "size": [
+            "25%",
+            "25%"
+          ],
+          "anchor_from": "bottom_right",
+          "anchor_to": "bottom_right",
+          "layer": 2,
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and ((('%.160s' * (#hud_title_text_string - ('%.646s' * #hud_title_text_string))) - ' ') = 'filltest'))",
+              "target_property_name": "#visible"
+            }
+          ],
+          "controls": [
+            {
+              "gweb_ft4i": {
+                "type": "custom",
+                "renderer": "profile_image_renderer",
+                "layer": 2,
+                "bindings": [
+                  {
+                    "binding_name": "#hud_title_text_string",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                    "target_property_name": "#profile_image_options"
+                  }
+                ],
+                "size": [
+                  "100%",
+                  "100%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "top_left",
+                "offset": [
+                  "-50%x",
+                  "-50%y"
+                ]
+              }
+            },
+            {
+              "gweb_ft4m": {
+                "type": "image",
+                "texture": "textures/gweb/atlas",
+                "uv": [
+                  0,
+                  40
+                ],
+                "uv_size": [
+                  8,
+                  8
+                ],
+                "size": [
+                  10,
+                  10
+                ],
+                "anchor_from": "bottom_right",
+                "anchor_to": "bottom_right",
+                "layer": 6
+              }
+            }
+          ]
+        }
       }
     ]
   },
