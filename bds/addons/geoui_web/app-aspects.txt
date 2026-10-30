@@ -67,6 +67,52 @@ expect server GWEB probe .*"uTop":2\.222
 section d-aspect
 expect server GWEB aspect .*"why":"probe
 
+section d-cmax-0-49
+expect server GWEB probe .*"cMax":([0-9]|[1-4][0-9]),
+
+section d-cmax-50-89
+expect server GWEB probe .*"cMax":([5-8][0-9]),
+
+section d-cmax-90-105
+expect server GWEB probe .*"cMax":(9[0-9]|10[0-5]),
+
+section d-cmax-106-110
+expect server GWEB probe .*"cMax":(10[6-9]|110),
+
+section d-cmax-111
+expect server GWEB probe .*"cMax":111,
+
+section d-cmax-112-118
+expect server GWEB probe .*"cMax":(11[2-8]),
+
+section d-cmax-119-129
+expect server GWEB probe .*"cMax":(119|12[0-9]),
+
+section d-cmax-130-159
+expect server GWEB probe .*"cMax":(1[3-5][0-9]),
+
+section d-ccount-lt-cmax
+expect server GWEB probe .*"c":([0-9]{1,2}|1[0-5][0-9]),.*"cTop":null
+
+section filltest
+# 2400x1080: ページ（青）を 1:1 の箱で真ん中に、ページの URL の画像を 4 通りに四隅へ（ft1 左上: パネル 100 % > 25 %、ft2 右上: ビューポートに直に、
+# ft3 左下: パネル > 120 x 60 px、ft4 右下: パネル 25 % > 100 %・グループと同じ寄せ方）、それぞれの隅に rose の印（ふつうの画像）
+do scriptevent gweb:close
+wait 2000
+do scriptevent gweb:size box 1440x1440 1080
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 4000
+do scriptevent gweb:filltest
+wait 4000
+shot filltest
+measure marks filltest
+measure marks filltest 0 0 600 270
+measure marks filltest 1800 0 2400 270
+measure marks filltest 0 810 600 1080
+measure marks filltest 1800 810 2400 1080
+do scriptevent gweb:filltest 0
+
 section exact-size
 # 2400x1080・/web:size 2400x1080（測らずに）: ページ (0.0, 108.0)–(2400.0, 1080.0)、黒なし
 do scriptevent gweb:close
