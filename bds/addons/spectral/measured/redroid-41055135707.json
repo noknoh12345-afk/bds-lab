@@ -178,5 +178,7 @@
   "demo (chat /spectral:play demo): third_oct_db 85 — the energy in very few bands (a 1760 Hz tone against the same original gives 91)",
   "g_piano_gymnopedie (chat): silent recording (score_song crashed on it; fixed: a silent recording is reported); the other 6 songs of the section were not played",
   "ceilings: the 7 originals as OGG through the same client and recorder; low ViSQOL with small 1/3-octave errors (the capture path is to be looked at)"
- ]
+ ],
+ "comparable": false,
+ "why_not_comparable": "recorded before audio volume (Android media 5/15, the game audio_main 0.5): every recording ~39 dB under the original, 16-bit quantisation noise over the quiet songs"
 }

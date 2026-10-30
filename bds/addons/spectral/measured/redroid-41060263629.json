@@ -718,5 +718,7 @@
   "setPitch lands on the real client: the demo played from the console (execute as) has its strongest frequencies at 219/440/523/659/588 Hz (1/3 oct error 6.2 dB, run 41055135707 by chat: 85 dB)",
   "calib all: voices/fade/timing analysed but the sync clicks of seek/pitch/stereo/mixer/throughput were not found at this level (errors); not used for the spec",
   "recordings: exported (audio export) and decoded here; not committed"
- ]
+ ],
+ "comparable": false,
+ "why_not_comparable": "recorded before audio volume (Android media 5/15, the game audio_main 0.5): every recording ~39 dB under the original, 16-bit quantisation noise over the quiet songs"
 }
