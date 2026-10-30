@@ -31,6 +31,9 @@ export function config() {
     ns: NS, cmd: 'web', layouts, barFrac: BAR, slots: { page: 0, bar: 1, pageUnder: 2, barUnder: 3 }, slotCount: 4, width: 160, buffer: true, bufferTicks: 2, frameTicks: 14, refreshTicks: 200,
     sens: 4, wheelPx: 120, scrollPx: 90, scrollEvery: 3, holdClose: 30, moveEvery: 3, res: 1080, maxRes: 1440,
     service: 'http://127.0.0.1:8787', public: 'lan', mobileLayout: 'g', defaultLayout: 'b',
+    // (F1's camera (<ns>:eye) off in the browser: with it on, the pad's RT click never reached the page and the look moved the
+    //  pointer less — run 41015216177 (5 本目): click・back・type・close timed out, ptr-look 1588 against 1906 in 4 本目)
+    f1Camera: false,
   };
 }
 
