@@ -358,6 +358,22 @@ function jsonui(expr, vars) {
     'browser: /web:size chooses the layout and the height (2400x1080 → 20:9 at 1080); a command that needs the browser says so; a shape it cannot read is refused', JSON.stringify({ sz, needs, bad }));
 }
 
+// ---- F1's camera: cfg.camera set on F1, cleared off and on reset; { camera: false } leaves it out (the browser: RULES R10.18)
+{
+  const calls = [], io = { title() {}, prop() {}, hideHud: () => [], restoreHud() {}, camera: (p, id) => calls.push(`${p.id}:${id}`) };
+  const ch = C.create({ ns: 'cc', slots: 0, width: 16, refreshTicks: 0, camera: 'cc:eye' }, io), A = { id: 'A' }, B = { id: 'B' };
+  ch.f1(A, true); ch.f1(A, false); ch.f1(B, true, { camera: false }); ch.f1(B, false); ch.f1(A, true); ch.reset(A);
+  const none = []; C.create({ ns: 'cc', slots: 0, width: 16, refreshTicks: 0 }, Object.assign({}, io, { camera: (p, id) => none.push(id) })).f1(A, true);
+  ok(calls.join() === 'A:cc:eye,A:null,B:null,A:cc:eye,A:null' && none.length === 0,
+    'F1 camera: set on F1, cleared off and on reset; an F1 with camera false does not set it; no cfg.camera, no camera', calls.join());
+  const pk = P.build({ ns: 'cc', scale: { mode: 'height', s: 0.1 }, groups: [{ id: 'm', anchor: 'center' }], f1: true, textures: [{ id: 't', width: 4, height: 4, png: Buffer.alloc(0) }], bones: [{ name: 'cc_b', group: 'm' }], planes: [] }, { core });
+  const cam = JSON.parse(pk.files['bp/cameras/presets/cc_eye.json'])['minecraft:camera_preset'];
+  const off = P.build({ ns: 'cc', scale: { mode: 'height', s: 0.1 }, groups: [{ id: 'm', anchor: 'center' }], f1: true, f1Camera: false, textures: [{ id: 't', width: 4, height: 4, png: Buffer.alloc(0) }], bones: [{ name: 'cc_b', group: 'm' }], planes: [] }, { core });
+  ok(cam.identifier === 'cc:eye' && cam.inherit_from === 'minecraft:follow_orbit' && cam.radius === 0.1 && cam.entity_offset.join() === '0,1.62,0' && cam.view_offset.join() === '0,0' && !('extend_player_rendering' in cam)
+    && !off.files['bp/cameras/presets/cc_eye.json'],
+  'F1 camera: the pack makes <ns>:eye (follow_orbit at the eyes, radius 0.1, no extend_player_rendering); f1Camera false leaves it out');
+}
+
 // ---- the probe and the web add-ons are what probe.mjs and make.mjs make (bds/addons/geoui_web_probe, geoui_web)
 {
   const { spawnSync } = await import('node:child_process');
