@@ -1,4 +1,4 @@
-# geoui_web_ws（bds/geoui/web/make.mjs が作る）: WebSocket 版を本物のアプリで（12 本目）— プレイヤーが /connect 10.0.2.2:8787 を打つと、
+# geoui_web_ws（bds/geoui/web/make.mjs が作る）: WebSocket 版を本物のアプリで（13 本目: 12 本目はつながらず — キーで打てたか・ゲームの答えを文字で見る、だめならチャットで）— プレイヤーが /connect 10.0.2.2:8787 を打つと、
 # ゲームがサービスに WebSocket でつながり（暗号化はゲームが求めれば）、サービスが /web:pump でスクリプトとやりとりする。@minecraft/server-net なし。
 # 実行: node lab.mjs app ci --batch geoui_web,geoui_web_ws（geoui_web は app-aspects.txt を scenario に、または単独）
 
@@ -41,7 +41,23 @@ press 8 60
 press 7 60
 wait 500
 press ENTER 80
-until server GWEB ws linked 40000
+wait 2500
+shot ws-typed
+
+section ocr-connect
+until text (?i)(connect|websocket|wss?:|接続) 4000
+
+section ocr-denied
+expect text (?i)(unknown|不明|permission|権限|cheat|チート|syntax|構文)
+
+section linked-keys
+until server GWEB ws linked 30000
+
+section connect-chat
+chat /connect 10.0.2.2:8787
+wait 2500
+shot ws-chat
+until server GWEB ws linked 30000
 
 section open
 shot world
