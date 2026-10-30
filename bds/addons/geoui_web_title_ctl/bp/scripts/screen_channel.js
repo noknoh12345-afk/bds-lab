@@ -24,8 +24,9 @@
 //   ch.drop(player)                  a player who left
 // io = { title(p, text) (no time: see above), times(p) (the game's own title durations back: `title @s times 10 70 20`; optional),
 //        prop(p, name, value), hideHud(p, keep) → what was hidden before, restoreHud(p, before),
-//        camera(p, id | null) (optional, with cfg.camera — the pack's '<ns>:eye' preset: F1 sets it, off clears it. The first-person
-//        held item is not moved by any bone (RULES R10.13): a third-person camera at the eyes draws no first-person hand at all) }
+//        camera(p, id | null) (optional, with cfg.camera — the pack's '<ns>:eye' preset: F1 sets it, off clears it — ch.f1(p, true,
+//        { camera: false }) leaves it out. The first-person held item is not moved by any bone (RULES R10.13): a third-person camera
+//        at the eyes draws no first-person hand at all — measured, R10.17) }
 (function (root) {
   'use strict';
   const S = root.GeoUIScreen = root.GeoUIScreen || {};
@@ -96,7 +97,8 @@
         if (on) { try { s.hudBefore = io.hideHud(p, (opts && opts.keep) || []) || []; } catch (e) { s.hudBefore = []; } }
         else { try { io.restoreHud(p, s.hudBefore || []); } catch (e) { /* (gone) */ } s.hudBefore = null; }
         if (cfg.ns) { try { io.prop(p, `${cfg.ns}:f1`, on ? 1 : 0); } catch (e) { /* (a pack without the property) */ } }
-        cam(p, on);
+        // (opts.camera false: this F1 without the camera — a browser whose pad clicks the camera stops: RULES R10.18)
+        if (!on || !(opts && opts.camera === false)) cam(p, on);
         send(p, s, true);
       },
       /** which layout's groups show ('' or null: none — the letter 'a') */
