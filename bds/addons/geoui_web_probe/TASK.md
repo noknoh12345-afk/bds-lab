@@ -10,7 +10,7 @@ URL の画像（profile_image_renderer の {"type":7,"url":…}）を GeoUI に�
 - `/scriptevent gwp:url <枠> <URL>`: その枠に絵を出す。`/path` はラボのサービス（bds/geoui/web/server.mjs）の絵（/solid/rrggbb/WxH.png・/quad/WxH.png・
   /noise/WxH.png・/slow/<ミリ秒>/…）、`~/path` はそのトンネル（https）、`-` で消す。題名（タイトル）の通り道で送る（layout.js・channel.js）。
 - `gwp:show 1` = main の外の紫の枠（GeoUI の印: 絵がその中にぴったり入るか）、`gwp:show 4` = 真ん中の白い十字（絵の上に GeoUI が描かれるか）。
-- `gwp:f1 1`: F1（HUD の 13 の部品を API で、残りの HUD（会話・題名など）を通り道の旗で隠し、腕と持ち物はプロパティで画面の下へ動かし大きさ 0）。`gwp:f1 touch`: 携帯の操作ボタンは残す。
+- `gwp:f1 1`: F1（HUD の 13 の部品を API で、残りの HUD（会話・題名など）を通り道の旗で隠し、空の手の腕はプロパティ（render controller）で、持ち物はカメラ `gwp:eye`（目の所の 3 人称: 1 人称を描かない）で消す）。`gwp:f1 touch`: 携帯の操作ボタンは残す。`gwp:part cam 1`: カメラだけ。`gwp:rot`: 向き（20° より回ったら TURNED）。
 - `gwp:fx 1`・`gwp:fx 2`: 1 人称の手の消し方を 1 つずつ（1: 大きさ 0 だけ、2: 下へ動かすだけ）。青い羊毛を持つと、プロパティなしで腕が下へ（4 本目の実験）。
 - `gwp:layout b`: 並べ方 b（lay の枠と、画面全体の黒い背景）。`gwp:lat`・`gwp:count`・`gwp:cycle`: サービスが記録した、ゲームが絵を取りに来た時刻と回数（左上の棒の長さにも出る）。
 
