@@ -1,15 +1,16 @@
 // GeoUI Web probe (bds-lab: bds/geoui/web/probe.mjs makes this file — change that, not this).
 // /scriptevent gwp:<verb> — info · url <slot> <URL | /path (the service's own) | ~/path (through its tunnel) | -> · f1 0|1|touch ·
 // layout <letter|-> · show <bits> · stay <ticks> [refresh ticks] · raw <title> · reset · mark · lat <slot> <URL…> · count <URL…> ·
-// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm 0|1 (F1's parts alone) · fx 0|1|2 (the
+// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm|cam 0|1 (F1's parts alone) · fx 0|1|2 (the
 // first-person hand one way at a time: 1 scale 0, 2 moved down) ·
 // frames <n> <ticks> <buffered 0|1> <ms> (a browser's pictures) — every answer is a line GWP … in the server's log
-import { world, system, HudElement, HudVisibility } from '@minecraft/server';
+import { world, system, HudElement, HudVisibility, ControlScheme } from '@minecraft/server';
 import { http, HttpRequest, HttpRequestMethod } from '@minecraft/server-net';
 import './screen_channel.js';
 const NS = 'gwp', SVC = 'http://127.0.0.1:8787';
 const log = (s) => console.warn('GWP ' + s);
 let svc = null, stay = 0, mark = 0, seq = 0;
+const lastYaw = new Map();
 const io = {
   // (the channel's title: no time (stay 0: its control ends at once — channel.js), or the old way (stay > 0, 2・3 本目) to compare)
   title: (p, t) => p.onScreenDisplay.setTitle(t, { stayDuration: stay, fadeInDuration: 0, fadeOutDuration: 0 }),
@@ -17,8 +18,15 @@ const io = {
   prop: (p, k, v) => p.setProperty(k, v),
   hideHud: (p, keep) => { const before = p.onScreenDisplay.getHiddenHudElements(); p.onScreenDisplay.hideAllExcept(keep.map((k) => HudElement[k]).filter((v) => v !== undefined)); return before; },
   restoreHud: (p, before) => { p.onScreenDisplay.resetHudElementsVisibility(); if (before && before.length) p.onScreenDisplay.setHudVisibility(HudVisibility.Hide, before); },
+  // (F1's camera (5 本目): the pack's gwp:eye — follow_orbit at the eyes; the player turns with it (LockedPlayerRelativeStrafe, a
+  //  scheme follow_orbit takes). Off: the camera cleared, the scheme back to the game's)
+  camera: (p, id) => {
+    if (id) { p.camera.setCamera(id); try { p.setControlScheme(ControlScheme.LockedPlayerRelativeStrafe); } catch (e) { log('SCHEME ' + e); } }
+    else { p.camera.clear(); try { p.setControlScheme(); } catch (e) { log('SCHEME ' + e); } }
+    log('CAMERA ' + (id || 'clear'));
+  },
 };
-const ch = globalThis.GeoUIScreen.channel.create({ ns: NS, slots: 6, width: 160, refreshTicks: 0 }, io);
+const ch = globalThis.GeoUIScreen.channel.create({ ns: NS, slots: 6, width: 160, refreshTicks: 0, camera: NS + ':eye' }, io);
 const players = () => world.getAllPlayers();
 async function getJson(p) {
   const r = await http.request(new HttpRequest(SVC + p).setMethod(HttpRequestMethod.Get).setTimeout(10));
@@ -39,6 +47,12 @@ async function hitsSince(t) { const h = await getJson('/hits?since=' + (t - 1));
 async function setUrl(slot, u) { const f = await full(u); for (const p of players()) ch.url(p, slot, f); log('URL slot=' + slot + ' ' + (f || '-')); return f; }
 async function verb(v, a) {
   switch (v) {
+    case 'rot': {
+      // (5 本目: whether the player still turns with the look while F1's camera is on — the rotation now, and TURNED when it moved
+      //  more than 20° since the last rot)
+      for (const p of players()) { const r = p.getRotation(), y0 = lastYaw.get(p.id); lastYaw.set(p.id, r.y); const d = y0 === undefined ? 0 : Math.abs(((r.y - y0 + 540) % 360) - 180); log('ROT y=' + r.y.toFixed(1) + ' x=' + r.x.toFixed(1) + ' d=' + d.toFixed(1)); if (d > 20) log('TURNED ' + d.toFixed(1)); }
+      return;
+    }
     case 'info': {
       const i = await info();
       if (i) log('INFO public=' + i.public + ' tunnel=' + (i.tunnel || '-') + ' fonts=' + i.fonts + ' version=' + i.version);
@@ -93,6 +107,7 @@ async function verb(v, a) {
         if (a[0] === 'api') { if (on) p.onScreenDisplay.hideAllExcept([]); else p.onScreenDisplay.resetHudElementsVisibility(); }
         else if (a[0] === 'flag') io.title(p, on ? '~gu~1a' : '~gu~0a');
         else if (a[0] === 'arm') p.setProperty(NS + ':f1', on ? 1 : 0);
+        else if (a[0] === 'cam') io.camera(p, on ? NS + ':eye' : null);
       }
       log('PART ' + a.join(' '));
       return;
