@@ -1032,7 +1032,7 @@ async function runCmd(args) {
       },
       // (the device came back from its snapshot with the game on its title: `until title` takes it as it is)
       atTitle: () => Boolean(emu.warm && launched && !process.env.APP_LIVE_DEVICE && ready?.stamp && !ready.stamp.firstScreen),
-      server: { joinUri, lan, logFile: serverLog, do: async (c) => bds(['do', c], { LAB_ADDON: liveAddon }, 5 * 60_000) },
+      server: { joinUri, lan, logFile: serverLog, do: async (c) => bds(['do', ...[].concat(c)], { LAB_ADDON: liveAddon }, 5 * 60_000) },
       // (`addon <name>`: the server down and up again with that addon — the same port, the same log, the relay as it is; the
       //  game is left as it is: the next join takes it in. The batch's times go in the result: st.batch)
       switchAddon: async (name) => {

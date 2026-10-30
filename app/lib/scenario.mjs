@@ -31,6 +31,8 @@
 //   hold <x> <y> [ミリ秒]        長押し                                record start|stop   画面を録画（recordings/*.mp4）
 //   audio start [名前] / audio stop   端末が鳴らす音を録音（scrcpy、Android 11 以上。audio/<名前>.wav。bds/addons/spectral の測定リグ）
 //   audio analyze <名前> <calib の名前|all|song:<曲>> [比べる録音…]   録音を測る（tools/rig: 数はログと報告に。録音は実行のフォルダに）
+//   audio song <曲>               試験曲（corpus）をここで変換し、サーバーのコンソールから spectral:song の script event で送る
+//   audio ceiling <アドオン> <曲,曲,…>   天井（元の音を OGG のまま鳴らすだけのアドオン）を bds/addons/<アドオン> に作る: 次に addon <アドオン>
 //   perf [ミリ秒]                ゲームのメモリと、その間の毎秒のフレーム数
 //   changed [割合]               いまの画面が `shot world` の画面（何も開いていないワールド）と違う（画面が本当に開いた）。既定 3%
 //   network delay <ミリ秒|none> / network speed <full|lte|hsdpa|umts|edge|gprs|kbps>   端末の回線を遅くする（読み込み中の画面・切断を試す）
@@ -178,7 +180,9 @@ function check(s) {
   if (s.verb === 'hold' && (a.length < 2 || a.slice(0, 3).some((x) => Number.isNaN(num(x))))) return '書き方: hold <x> <y> [ミリ秒]';
   if (s.verb === 'record' && !['start', 'stop'].includes(a[0])) return '書き方: record start|stop';
   if (s.verb === 'audio' && a[0] === 'analyze' && !(a.length >= 3 && a.slice(1).every((x) => /^[\w.:-]+$/.test(x)))) return '書き方: audio analyze <名前> <calib の名前|all|song:<曲>> [比べる録音の名前…]';
-  if (s.verb === 'audio' && a[0] !== 'analyze' && (!['start', 'stop'].includes(a[0]) || (a[1] !== undefined && !/^[\w.-]+$/.test(a[1])))) return '書き方: audio start [名前] / audio stop / audio analyze …（名前は英数字と _ . - だけ）';
+  if (s.verb === 'audio' && a[0] === 'song' && !(a.length === 2 && /^[\w.-]+$/.test(a[1]))) return '書き方: audio song <曲>（corpus/manifest.json の id）';
+  if (s.verb === 'audio' && a[0] === 'ceiling' && !(a.length === 3 && /^[A-Za-z0-9_-]{1,64}$/.test(a[1]) && /^[\w.-]+(,[\w.-]+)*$/.test(a[2]))) return '書き方: audio ceiling <アドオンの名前> <曲,曲,…>';
+  if (s.verb === 'audio' && !['analyze', 'song', 'ceiling'].includes(a[0]) && (!['start', 'stop'].includes(a[0]) || (a[1] !== undefined && !/^[\w.-]+$/.test(a[1])))) return '書き方: audio start [名前] / audio stop / audio analyze … / audio song <曲> / audio ceiling <アドオン> <曲,…>（名前は英数字と _ . - だけ）';
   if (s.verb === 'perf' && a[0] !== undefined && Number.isNaN(num(a[0]))) return '書き方: perf [ミリ秒]';
   if (s.verb === 'changed' && a[0] !== undefined && !(num(a[0]) > 0 && num(a[0]) < 1)) return '書き方: changed [0〜1 の割合]（例 changed 0.05）';
   if (s.verb === 'network' && !((a[0] === 'delay' && /^(none|\d+)$/.test(a[1] ?? '')) || (a[0] === 'speed' && /^(full|lte|hsdpa|umts|edge|gprs|\d+)$/.test(a[1] ?? '')))) return '書き方: network delay <ミリ秒|none> / network speed <full|lte|hsdpa|umts|edge|gprs|kbps>';
@@ -625,6 +629,20 @@ export async function runScenario(steps, ctx) {
           process.stdout.write(`[spectral rig] ${a[1]} ${a[2]}: ${JSON.stringify(r.json)}\n`);
           fs.appendFileSync(doLog, `audio analyze ${a.slice(1).join(' ')}\n${JSON.stringify(r.json, null, 1)}\n`);
           return r.line.slice(0, 400);
+        }
+        if (a[0] === 'song') {
+          // (one `do` with all the parts: each `do` is a lab process of its own — 27 parts for a 20 s song in ~11 s)
+          const sp = AR.songParts({ labDir: ctx.labDir ?? process.cwd(), id: a[1], out: path.join(runDir, 'audio', `song-${a[1]}.json`) });
+          const r = await server.do(sp.parts.map((m) => `scriptevent spectral:song ${m}`));
+          fs.appendFileSync(doLog, `audio song ${a[1]}: ${sp.parts.length} parts, ${sp.bytes} bytes, ${sp.seconds} s, ${sp.kbps} kbps\n${r.lines.filter((l) => !/^> /.test(l)).slice(-4).join('\n')}\n`);
+          if (!r.ok) throw new Error(`曲 ${a[1]} を送れません: ${r.lines.filter((l) => /^E |FAIL/.test(l)).slice(0, 3).join(' | ') || r.lines.slice(-2).join(' | ')}`);
+          if (!r.lines.some((l) => l.includes('song pack:') && l.includes(`/spectral:play ${a[1]}`))) throw new Error(`曲 ${a[1]} が届いた知らせがありません（${r.lines.slice(-2).join(' | ').slice(0, 200)}）`);
+          return `曲 ${a[1]}（${sp.seconds} 秒、${sp.kbps} kbps）を ${sp.parts.length} 個の script event で送りました`;
+        }
+        if (a[0] === 'ceiling') {
+          const c = AR.ceiling({ labDir: ctx.labDir ?? process.cwd(), name: a[1], ids: a[2].split(',') });
+          fs.appendFileSync(doLog, `audio ceiling ${a[1]}: ${c.songs.join(',')} (${c.mb} MB)\n`);
+          return `天井 bds/addons/${a[1]}（${c.songs.length} 曲、${c.mb} MB）: 次に addon ${a[1]}`;
         }
         if (a[0] === 'start') {
           if (audioRec) throw new Error('audio start が二重です（先に audio stop）');

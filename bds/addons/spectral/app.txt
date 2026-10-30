@@ -1,14 +1,25 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
-#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音は app/runs/<実行>/audio/*.wav。
-# 録った後:  python3 bds/addons/spectral/tools/rig/analyze.py app/runs/<実行>/audio/calib.wav all --spec
-#           （端末の限界値を tools/emu/spec.json に「measured」として書く → エミュレーターがそれを使う）
-# 曲の録音（ABX 用）は audio/demo.wav ほか。天井（元の音をそのまま OGG で鳴らしたもの）は tools/rig/README の手順で。
-# 注意: この app.txt と app/lib/audiorec.mjs（scrcpy で録音）は、書いた時点で実機では一度も動かしていません。
+#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音は app/runs/<実行>/audio/*.wav（封じた成果物）。
+#   数はジョブのログの `[spectral rig] <録音> <何>: {...}` の行（audio analyze が出す。公開のリポジトリでも数だけは見える）。
+# 試験曲: audio song がここで変換してコンソールから spectral:song で送り、/spectral:play で鳴らす（g_<曲>）。
+# 天井: audio ceiling が元の抜粋を OGG のまま鳴らすだけのアドオン（bds/addons/spectral_ceil、実行の場で作る・コミットしない）を
+#   作り、addon で BDS をそれで起動し直して入り直し、同じクライアント・同じ録音で鳴らす（c_<曲>）。天井との差 = 両方の ViSQOL の差。
+# 一度で 40 分に収まるよう曲は 2 組に分ける（SONGS_A: ここ、SONGS_B: 下の注釈）。重い変換は join の前、解析は録音の後ごと。
 
 section title
 launch
 until title 600000
 shot title
+
+section prep
+audio song piano_gymnopedie
+audio song vocal_stars
+audio song drums_round
+audio song rock_big
+audio song edm_detection
+audio song orchestra_five_armies
+audio song speech_en_wordsworth
+audio ceiling spectral_ceil piano_gymnopedie,vocal_stars,drums_round,rock_big,edm_detection,orchestra_five_armies,speech_en_wordsworth
 
 section join
 join
@@ -24,12 +35,51 @@ do spectral:calib all
 until server spectral calib\] end throughput 300000
 wait 2000
 audio stop
+audio analyze calib all
 
 section demo
 audio start demo
 chat /spectral:play demo
 wait 27000
 audio stop
+audio analyze demo song:demo
+
+section songs
+audio start g_piano_gymnopedie
+chat /spectral:play piano_gymnopedie
+wait 23000
+audio stop
+audio analyze g_piano_gymnopedie song:piano_gymnopedie
+audio start g_vocal_stars
+chat /spectral:play vocal_stars
+wait 23000
+audio stop
+audio analyze g_vocal_stars song:vocal_stars
+audio start g_drums_round
+chat /spectral:play drums_round
+wait 23000
+audio stop
+audio analyze g_drums_round song:drums_round
+audio start g_rock_big
+chat /spectral:play rock_big
+wait 23000
+audio stop
+audio analyze g_rock_big song:rock_big
+audio start g_edm_detection
+chat /spectral:play edm_detection
+wait 23000
+audio stop
+audio analyze g_edm_detection song:edm_detection
+audio start g_orchestra_five_armies
+chat /spectral:play orchestra_five_armies
+wait 23000
+audio stop
+audio analyze g_orchestra_five_armies song:orchestra_five_armies
+audio start g_speech_en_wordsworth
+chat /spectral:play speech_en_wordsworth
+wait 23000
+audio stop
+audio analyze g_speech_en_wordsworth song:speech_en_wordsworth
 
 section probe
 audio start probe32
@@ -37,3 +87,47 @@ chat /spectral:probe 32
 wait 12000
 chat /spectral:stop
 audio stop
+
+section ceiling
+addon spectral_ceil
+join
+until joined 300000
+wait 5000
+audio start c_piano_gymnopedie
+do scriptevent spectral:ceiling piano_gymnopedie
+wait 22000
+audio stop
+audio analyze c_piano_gymnopedie song:piano_gymnopedie
+audio start c_vocal_stars
+do scriptevent spectral:ceiling vocal_stars
+wait 22000
+audio stop
+audio analyze c_vocal_stars song:vocal_stars
+audio start c_drums_round
+do scriptevent spectral:ceiling drums_round
+wait 22000
+audio stop
+audio analyze c_drums_round song:drums_round
+audio start c_rock_big
+do scriptevent spectral:ceiling rock_big
+wait 22000
+audio stop
+audio analyze c_rock_big song:rock_big
+audio start c_edm_detection
+do scriptevent spectral:ceiling edm_detection
+wait 22000
+audio stop
+audio analyze c_edm_detection song:edm_detection
+audio start c_orchestra_five_armies
+do scriptevent spectral:ceiling orchestra_five_armies
+wait 22000
+audio stop
+audio analyze c_orchestra_five_armies song:orchestra_five_armies
+audio start c_speech_en_wordsworth
+do scriptevent spectral:ceiling speech_en_wordsworth
+wait 22000
+audio stop
+audio analyze c_speech_en_wordsworth song:speech_en_wordsworth
+
+# SONGS_B（2 回目の実行で上の 7 曲と入れ替える）: piano_chopin_op66 vocal_name_of_love choir_how_long funk_funkorama
+#   speech_ja_soseki demo_selfmade

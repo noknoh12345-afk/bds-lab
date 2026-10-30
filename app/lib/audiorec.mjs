@@ -74,6 +74,29 @@ export function pythonFor(labDir) {
   return py;
 }
 
+/** a test song (the unit's corpus/manifest.json) converted on this machine and cut into the server console's script events
+ *  for the add-on (tools/rig/songpack.py --parts: spectral:song messages, each within /scriptevent's 2048 characters)
+ *  → { id, parts: [message…], bytes, seconds, kbps } (also written to `out`) */
+export function songParts({ labDir, addon = 'spectral', id, out }) {
+  const unit = path.join(labDir, 'bds', 'addons', addon), py = pythonFor(labDir);
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  const r = spawnSync(py, [path.join(unit, 'tools', 'rig', 'songpack.py'), '--parts', id, '--json', out], { encoding: 'utf8', timeout: 900_000, maxBuffer: 64e6, cwd: unit });
+  if (r.status !== 0) throw new Error(`曲 ${id} を変換できません: ${(r.stderr || r.stdout).trim().split('\n').slice(-3).join(' | ').slice(0, 400)}`);
+  return JSON.parse(fs.readFileSync(out, 'utf8'));
+}
+
+/** the ceiling: a unit bds/addons/<name> that plays each song's original excerpt as an ordinary sound (OGG, category ui, 2D)
+ *  on /scriptevent spectral:ceiling <id> — made here (songpack.py --unit; the excerpts are never committed), for `addon <name>`
+ *  → { unit, songs, mb } */
+export function ceiling({ labDir, addon = 'spectral', name, ids }) {
+  const unit = path.join(labDir, 'bds', 'addons', addon), py = pythonFor(labDir), dir = path.join(labDir, 'bds', 'addons', name);
+  if (path.resolve(dir) === path.resolve(unit)) throw new Error('天井のアドオンに測る本体と同じ名前は使えません');
+  if (fs.existsSync(dir) && !fs.existsSync(path.join(dir, 'rp', 'sounds', 'spectral_ceiling'))) throw new Error(`bds/addons/${name} は天井のアドオンではありません（別の名前に）`);
+  const r = spawnSync(py, [path.join(unit, 'tools', 'rig', 'songpack.py'), '--unit', dir, '--songs', ids.join(',')], { encoding: 'utf8', timeout: 1_800_000, maxBuffer: 64e6, cwd: unit });
+  if (r.status !== 0) throw new Error(`天井を作れません: ${(r.stderr || r.stdout).trim().split('\n').slice(-3).join(' | ').slice(0, 400)}`);
+  return JSON.parse(r.stdout.trim().split('\n').pop());
+}
+
 /** what a recording says, measured by bds/addons/<addon>/tools/rig (analyze.py for calibration programs, score_song.py for a
  *  song against its original). → { json, line }: line is one short summary; json is also written beside the recording */
 export function analyze({ labDir, addon = 'spectral', wav, what, refs = [] }) {
