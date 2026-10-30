@@ -482,8 +482,18 @@ export async function runScenario(steps, ctx) {
       // the classic menu known by its "©Mojang AB" and the skin's name, its buttons' words not read (the CI device): Play has
       // the focus once it is on — A turns it on, A presses it (never B here: B is the menu's Exit)
       else if (classicTitleWords(ws) || (newTries >= 2 && titleWords(ws))) {
-        tr.add('title-blind', ws); log(`${s.line} タイトル（ボタンの文字は読めず）: ゲームパッド A（Play）`); padKey('A'); opened(); titleA++;
-        if (titleA > 6) throw Object.assign(new Error(`タイトルの Play が押せません（A を ${titleA - 1} 回）（画面の文字: ${said}）（道筋: ${tr.text()}）`), { trail: tr.text() });
+        // 最初の数回は実績のある blind A（CI のエミュレータは焦点がもう Play にある）。それでも PLAY が開かないとき
+        // （redroid: uinput の A が届かない／焦点が Play に無い等）だけ、他の入力に回す。失敗回数で切り分けるので
+        // エミュレータの通る道（1〜2 回の A で開く）は変わらない。
+        if (titleA < 3) { tr.add('title-blind', ws); log(`${s.line} タイトル（ボタンの文字は読めず）: ゲームパッド A（Play）`); padKey('A'); }
+        else {
+          const step = (titleA - 3) % 3;
+          if (step === 0) { tr.add('title-blind-key', ws); log(`${s.line} まだタイトル: シェルの gamepad keyevent（KEYCODE_BUTTON_A / DPAD_CENTER）`); adb.shell(['input', 'keyevent', 'KEYCODE_BUTTON_A']); adb.shell(['input', 'keyevent', 'KEYCODE_DPAD_CENTER']); }
+          else if (step === 1) { tr.add('title-blind-move', ws); log(`${s.line} まだタイトル: 焦点を動かして A（DOWN→A）`); padKey('DOWN'); await sleep(Math.min(padWait, 1200)); padKey('A'); }
+          else { tr.add('title-blind-tap', ws); let d = null; try { d = decode(last); } catch { /* undecodable */ } const x = Math.round((d?.w ?? 1560) * 0.5), y = Math.round((d?.h ?? 720) * 0.58); log(`${s.line} まだタイトル: 画面中央あたりをタップ（${x}, ${y}）`); tapAt(x, y); }
+        }
+        opened(); titleA++;
+        if (titleA > 9) throw Object.assign(new Error(`タイトルの Play が押せません（${titleA - 1} 回）（画面の文字: ${said}）（道筋: ${tr.text()}）`), { trail: tr.text() });
       }
       // (a store's screen — "Get more packs …", reached by an A on a screen not known: run 39583733131's trail went round
       //  it for minutes — B out of it, never A)
