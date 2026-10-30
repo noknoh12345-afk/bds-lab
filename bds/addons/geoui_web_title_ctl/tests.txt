@@ -1,0 +1,92 @@
+# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: URL の画像と F1 の、サーバーの側。絵は app.txt（本物のアプリ）。
+# サービス（bds/geoui/web/server.mjs）はラボが BDS の横に起こす（geoui-web.json）。
+
+## サービスに届く（@minecraft/server-net）
+scriptevent gwp:info
+wait 1500
+~ GWP INFO public=http://\S+ tunnel=\S+ fonts=
+~ GWP CHECK svc PASS
+
+## URL を送ると、題名の通り道の決まった枠に入る（プレイヤーが見る題名）
+@A join
+wait 1500
+scriptevent gwp:url 0 /solid/ff0000/64x64.png
+wait 1000
+~ GWP URL slot=0 http://\S+/solid/ff0000/64x64.png
+~ @A title: ~gu~0ahttp://\S+/solid/ff0000/64x64\.png
+
+## 通り道の題名は時間なし（その題名はすぐ終わる）、2 tick 後にゲームの題名の時間（10・70・20）を戻す: 時間を付けない普通の題名のため
+@A watch set_title
+scriptevent gwp:url 3 /solid/0000ff/64x64.png
+wait 1000
+@A watch off
+~ @A saw set_title {"type":"set_durations","text":"","fade_in_time":0,"stay_time":0,"fade_out_time":0
+~ @A saw set_title {"type":"set_title","text":"~gu~0ahttp
+~ @A saw set_title {"type":"set_durations","text":"","fade_in_time":10,"stay_time":70,"fade_out_time":20
+scriptevent gwp:url 3 -
+
+## 2 つの枠を一度に・枠 5 は枠 0 と同じ所の下
+scriptevent gwp:urls 0=/quad/200x100.png 5=/solid/00ff00/64x64.png
+wait 1000
+~ @A title: ~gu~0ahttp://\S+/quad/200x100\.png +http://\S+/solid/00ff00/64x64\.png
+
+## F1: HUD を全部隠し、プロパティで腕と持ち物、カメラ gwp:eye（目の所の 3 人称: 1 人称の持ち物を描かない）、ゲームモードはそのまま
+gamemode survival A
+scriptevent gwp:f1 1
+wait 1000
+~ GWP CAMERA gwp:eye
+!~ GWP SCHEME
+js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length, p('A').getGameMode()])
+= [1,13,"Survival"]
+~ @A title: ~gu~1a
+scriptevent gwp:f1 0
+wait 1000
+~ GWP CAMERA clear
+!~ GWP SCHEME
+js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length])
+= [0,0]
+
+## カメラだけ（part cam）と、向きの読み（rot）
+scriptevent gwp:part cam 1
+wait 500
+scriptevent gwp:rot
+tp A 0 -60 0 90 0
+wait 500
+scriptevent gwp:rot
+scriptevent gwp:part cam 0
+wait 500
+~ GWP CAMERA gwp:eye
+~ GWP ROT y=
+~ GWP TURNED
+~ GWP CAMERA clear
+!~ GWP SCHEME
+
+## F1 でも携帯の操作ボタンは残せる（touch）
+scriptevent gwp:f1 touch
+wait 1000
+js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length, p('A').onScreenDisplay.isForcedHidden(3)])
+= [1,12,false]
+scriptevent gwp:f1 0
+
+## 並べ方（layout）の文字
+scriptevent gwp:layout b
+wait 1000
+~ @A title: ~gu~0b
+
+## reset: 全部戻り、題名も消える
+scriptevent gwp:reset
+wait 1000
+~ GWP RESET
+js JSON.stringify([p('A').getProperty('gwp:f1'), p('A').onScreenDisplay.getHiddenHudElements().length, p('A').getProperty('gwp:show')])
+= [0,0,0]
+
+## 数を画面に（readout）
+scriptevent gwp:readout 2 1234
+wait 500
+js p('A').getProperty('gwp:r2')
+= 1234
+
+## 何枚も変える（cycle）: プレイヤーが取りに来ないので取りに来た数は 0
+scriptevent gwp:cycle 5 2 0
+wait 2500
+~ GWP CYCLE n=5 fetched=0
