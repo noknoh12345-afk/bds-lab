@@ -1,0 +1,132 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.gwp.ui": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "gwp_frame": {
+          "scale": "(math.mod(math.floor(v.gwp_show / 1), 2) > 0.5) ? 1 : 0"
+        },
+        "gwp_cross": {
+          "scale": "(math.mod(math.floor(v.gwp_show / 4), 2) > 0.5) ? 1 : 0"
+        },
+        "gwp_r0": {
+          "position": [
+            6,
+            -6,
+            0
+          ],
+          "scale": [
+            "v.gwp_r0 * 0.1",
+            "3",
+            "1"
+          ]
+        },
+        "gwp_r1": {
+          "position": [
+            6,
+            -11,
+            0
+          ],
+          "scale": [
+            "v.gwp_r1 * 0.1",
+            "3",
+            "1"
+          ]
+        },
+        "gwp_r2": {
+          "position": [
+            6,
+            -16,
+            0
+          ],
+          "scale": [
+            "v.gwp_r2 * 0.1",
+            "3",
+            "1"
+          ]
+        }
+      }
+    },
+    "animation.gwp.fx_scale": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "rightarm": {
+          "scale": 0
+        },
+        "leftarm": {
+          "scale": 0
+        },
+        "rightitem": {
+          "scale": 0
+        },
+        "leftitem": {
+          "scale": 0
+        }
+      }
+    },
+    "animation.gwp.fx_move": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "rightarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ]
+        },
+        "leftarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ]
+        }
+      }
+    },
+    "animation.gwp.fx_blue": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "rightarm": {
+          "position": [
+            0,
+            "query.get_equipped_item_name('main_hand') == 'blue_wool' ? -100 : 0",
+            0
+          ]
+        }
+      }
+    },
+    "animation.gwp.f1": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "rightarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ],
+          "scale": 0
+        },
+        "leftarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ],
+          "scale": 0
+        },
+        "rightitem": {
+          "scale": 0
+        },
+        "leftitem": {
+          "scale": 0
+        }
+      }
+    }
+  }
+}
