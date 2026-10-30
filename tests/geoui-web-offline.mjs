@@ -383,6 +383,25 @@ function jsonui(expr, vars) {
   'F1 camera: the pack makes <ns>:eye (follow_orbit at the eyes, radius 0.1, no extend_player_rendering); f1Camera false leaves it out');
 }
 
+// ---- every screen: the browser's shapes use every letter of the channel, and any screen from 3:4 to 32:9 gets a page of its shape
+//      within 2.6 % a side (the rest the backdrop); the page lands where the formula says on each (1e-3 px)
+{
+  const M = await import('../bds/geoui/web/make.mjs'), RT = require('../bds/geoui/web/runtime.js'), CFG = M.config();
+  const ks = Object.keys(CFG.layouts), as = ks.map((k) => CFG.layouts[k].aspect).sort((a, b) => a - b);
+  const gap = Math.max(...as.slice(1).map((a, i) => a / as[i] - 1));
+  let worst = 0, worstAt = '';
+  for (let r = 0.75; r <= 32 / 9 + 1e-9; r *= 1.003) {
+    const H = 1080, W = Math.round(H * r), k = RT.layoutFor(CFG, `${W}x${H}`), e = M.expected(W, H, k).page;
+    const fill = Math.max((e.x1 - e.x0) / W, (e.y1 - e.y0 + (e.y0 - M.expected(W, H, k).toolbar.y0)) / H);
+    const lost = 1 - fill; if (lost > worst) { worst = lost; worstAt = `${W}x${H} ${k}`; }
+  }
+  ok(ks.length === 25 && ks.join('') === 'bcdefghijklmnopqrstuvwxyz' && gap < 0.108 && worst < 0.052,
+    'every screen: 25 shapes (b–z), neighbours at most 10.7 % apart, any screen 3:4–32:9 loses at most 5.2 % of one side to the backdrop', JSON.stringify({ gap, worst, worstAt }));
+  const named = { '2340x1080': 'f', '2388x1668': 'p', '2208x1840': 'q', '1280x1024': 'k', '3440x1440': 'o', '1440x1440': 'j', '2560x1600': 'd', '2732x2048': 'c', '1179x2556': 'n' };
+  ok(Object.entries(named).every(([s2, k]) => RT.layoutFor(CFG, s2) === k), 'every screen: common resolutions pick their own shape (19.5:9, iPad Pro, folds, 5:4, ultrawide, 1:1, 16:10, iPad, a phone held upright)',
+    JSON.stringify(Object.keys(named).map((s2) => [s2, RT.layoutFor(CFG, s2)])));
+}
+
 // ---- the probe and the web add-ons are what probe.mjs and make.mjs make (bds/addons/geoui_web_probe, geoui_web)
 {
   const { spawnSync } = await import('node:child_process');
