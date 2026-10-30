@@ -134,11 +134,17 @@ export function setVolumes(adb, pkg, { music = 0 } = {}) {
     shOut(adb, `cmd media_session volume --stream 3 --set ${before.max} 2>&1 || media volume --stream 3 --set ${before.max} 2>&1`);
     done.push(`media ${before.index}→${mediaVolume(adb).index}/${before.max}`);
   }
-  const f = gameOptions(pkg), was = shOut(adb, `grep -E '^audio_' ${f} 2>/dev/null`).trim();
-  if (was) {
-    adb.run(['shell', `sed -i -E 's/^(audio_[a-z_]+):[0-9.]+$/\\1:1/; s/^audio_music:[0-9.]+$/audio_music:${music}/' ${f}`], { timeout: 30_000 });
-    const now = shOut(adb, `grep -E '^audio_' ${f} 2>/dev/null`).trim();
-    if (now !== was) done.push(`options ${was.split('\n').length} 項目（music ${music}）`);
+  // (written back through `cat >` — the file the game owns stays its own: a sed -i, as root, would leave a new file root owns)
+  const f = gameOptions(pkg), text = shOut(adb, `cat ${f} 2>/dev/null`);
+  if (/^audio_/m.test(text)) {
+    const patched = text.replace(/^(audio_[a-z_]+):[0-9.]+(\r?)$/gm, (all, k, cr) => `${k}:${k === 'audio_music' ? music : 1}${cr}`);
+    if (patched !== text) {
+      const owner = shOut(adb, `stat -c %U:%G ${f} 2>/dev/null`).trim();
+      const w = adb.run(['shell', `cat > ${f}`], { input: patched, timeout: 30_000 });
+      const after = shOut(adb, `stat -c %U:%G ${f} 2>/dev/null`).trim();
+      if (w.status !== 0 || (owner && after !== owner)) throw new Error(`ゲームの設定を書けません（${owner} → ${after}）: ${(w.stderr || '').trim().slice(0, 200)}`);
+      done.push(`options（audio_ を 1、music ${music}、持ち主 ${after || '?'} のまま）`);
+    }
   }
   return done.length ? done.join('・') : '変えるものなし';
 }

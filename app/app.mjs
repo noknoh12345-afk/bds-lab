@@ -995,7 +995,13 @@ async function runCmd(args) {
     const res = await runScenario(steps, {
       adb, runDir, decode: pngDecode, pkg: K.PACKAGE, baseDir: path.dirname(scenarioFile), logcatFile, clientLog,
       log: (s) => log('      ' + s.replace(/\n/g, '\n      '), /^[✘⚠]/.test(s)),
-      launch: () => adb.shell(['monkey', '-p', K.PACKAGE, '-c', 'android.intent.category.LAUNCHER', '1']),
+      // (monkey's LAUNCHER intent does not start the game on redroid — run 41065460620: `stop` then `launch`, and the app never
+      //  came; app/redroid starts it by its activity: the activity when monkey has not started it within a few seconds)
+      launch: () => {
+        const r = adb.shell(['monkey', '-p', K.PACKAGE, '-c', 'android.intent.category.LAUNCHER', '1']);
+        for (let i = 0; i < 6 && !(adb.pid() > 0); i++) spawnSync('sleep', ['0.5']);
+        return adb.pid() > 0 ? r : adb.shell(['am', 'start', '-n', `${K.PACKAGE}/.MainActivity`]);
+      },
       started: () => { launched = true; },    // launch, or join (the deep link starts the app too)
       stopped: () => { launched = false; },   // stop: not running is expected until the next launch
       alive: () => !launched || adb.pid() > 0,

@@ -1,0 +1,49 @@
+{
+ "run": "41065460620",
+ "when": "before audio volume (the defaults of the prepared device)",
+ "device_audio": {
+  "media_volume": {
+   "line": "[V] volume is 5 in range [0..15]",
+   "index": 5,
+   "max": 15
+  },
+  "stream_music": "- STREAM_MUSIC: Muted: false Muted Internally: false Min: 0 Max: 15 streamVolume:5 Current: 2 (speaker): 5, 80 (bt_a2dp): 2, 100 (bt_a2dp_hp): 2, 4000000 (usb_headset): 3, 20000000 (ble_headset): 2, 20000002 (ble_broadcast): 2, 40000000 (default): 5 Devices: speaker(2) Volume Group: AUDIO_STREAM_MUS",
+  "focus": [],
+  "mixer": {
+   "sample_rate": [
+    "44100",
+    "16000",
+    "48000"
+   ],
+   "hal_frames": [
+    "441",
+    "320",
+    "1024"
+   ],
+   "normal_frames": [
+    "896"
+   ],
+   "master_volume": [
+    "1.000000"
+   ],
+   "master_mute": [
+    "off"
+   ]
+  },
+  "game_options": {
+   "audio_main": "0.5",
+   "audio_sound": "1",
+   "audio_music": "0.3",
+   "audio_ambient": "1",
+   "audio_block": "1",
+   "audio_hostile": "1",
+   "audio_neutral": "1",
+   "audio_record": "1",
+   "audio_player": "1",
+   "audio_weather": "1",
+   "audio_texttospeech": "1",
+   "volumetric_fog_quality": "1"
+  }
+ },
+ "reading": "Android media volume 5/15 on the speaker, the game's audio_main 0.5 (audio_music 0.3): with the recorder after both, the ~39 dB under the original of runs 41055135707/41060263629"
+}
