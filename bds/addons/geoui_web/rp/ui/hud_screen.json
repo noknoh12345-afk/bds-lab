@@ -35,7 +35,7 @@
             },
             {
               "binding_type": "view",
-              "source_property_name": "(((('%.6s' * #hud_title_text_string) = '~gu~0b') or (('%.6s' * #hud_title_text_string) = '~gu~1b')) or ((('%.6s' * #hud_title_text_string) = '~gu~0c') or (('%.6s' * #hud_title_text_string) = '~gu~1c')) or ((('%.6s' * #hud_title_text_string) = '~gu~0d') or (('%.6s' * #hud_title_text_string) = '~gu~1d')) or ((('%.6s' * #hud_title_text_string) = '~gu~0e') or (('%.6s' * #hud_title_text_string) = '~gu~1e')) or ((('%.6s' * #hud_title_text_string) = '~gu~0f') or (('%.6s' * #hud_title_text_string) = '~gu~1f')) or ((('%.6s' * #hud_title_text_string) = '~gu~0g') or (('%.6s' * #hud_title_text_string) = '~gu~1g')) or ((('%.6s' * #hud_title_text_string) = '~gu~0h') or (('%.6s' * #hud_title_text_string) = '~gu~1h')) or ((('%.6s' * #hud_title_text_string) = '~gu~0i') or (('%.6s' * #hud_title_text_string) = '~gu~1i')))",
+              "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not (('bcdefghi' - (('%.6s' * #hud_title_text_string) - ('%.5s' * #hud_title_text_string))) = 'bcdefghi')))",
               "target_property_name": "#visible"
             }
           ]
