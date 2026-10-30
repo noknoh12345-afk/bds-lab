@@ -1,0 +1,46 @@
+{
+ "fade_shape": {
+  "value": "linear",
+  "status": "measured",
+  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid)"
+ },
+ "fade_min_ms": {
+  "value": 0.8,
+  "status": "measured",
+  "note": "redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid): a fade of 0 s took 0.8 ms; 2/5/10/20 ms fades took 2.1/5.1/10.0/20.2 ms"
+ },
+ "jitter_ms": {
+  "value": 18.57,
+  "status": "measured",
+  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid) (spread of setVolume landings over ticks)"
+ },
+ "max_voices": {
+  "value": 33,
+  "status": "measured",
+  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid) (quietest (or oldest) goes); heard at most 29-33 at once, the quietest (or oldest) goes"
+ },
+ "stereo": {
+  "value": "keep",
+  "status": "measured",
+  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid)"
+ },
+ "mix": {
+  "value": "none",
+  "status": "measured",
+  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid)"
+ },
+ "category_gain_db": {
+  "value": {
+   "ui": 0.0,
+   "music": 0.0,
+   "record": -0.1
+  },
+  "status": "measured",
+  "note": "measured: redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid)"
+ },
+ "latency_ms": {
+  "value": 3.7,
+  "status": "measured",
+  "note": "redroid run 41068618513 /spectral:calib all (recording exported as Opus 96 kb/s, analysed with the fixed click grid): setVolume lands this far after the click grid (mean)"
+ }
+}

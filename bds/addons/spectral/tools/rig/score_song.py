@@ -59,6 +59,12 @@ def levels(y):
                 break
         out['top_hz'] = [round(p, 1) for p in picks]
         out['top_share'] = round(float(np.sum(f[np.abs(hz - picks[0]) < 20] ** 2) / np.sum(f ** 2)), 3)
+        # (1/3-octave levels from 25 Hz, dB under the loudest band: where a recording and its original part — run 41068618513's
+        #  rock had +12 dB at 5.7 kHz and 18 kHz the emulator did not, from Opus copies; these come from the WAV)
+        p2 = f ** 2
+        edges = [25 * 2 ** (k / 3) for k in range(31)]
+        b = np.array([10 * math.log10(float(p2[(hz >= lo) & (hz < hi)].sum()) + 1e-30) for lo, hi in zip(edges[:-1], edges[1:])])
+        out['bands_db'] = [round(float(v), 1) for v in b - b.max()]
     return out
 
 

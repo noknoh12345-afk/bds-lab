@@ -1,0 +1,1463 @@
+{
+ "run": "41068618513",
+ "device": "redroid (Android 14 x86_64), Minecraft from Play",
+ "source": "job log [spectral rig] lines (recordings of the real client)",
+ "results": {
+  "device": {
+   "audio": {
+    "media_volume": {
+     "line": "[V] volume is 15 in range [0..15]",
+     "index": 15,
+     "max": 15
+    },
+    "stream_music": "- STREAM_MUSIC: Muted: false Muted Internally: false Min: 0 Max: 15 streamVolume:15 Current: 2 (speaker): 15, 80 (bt_a2dp): 2, 100 (bt_a2dp_hp): 2, 4000000 (usb_headset): 3, 20000000 (ble_headset): 2, 20000002 (ble_broadcast): 2, 40000000 (default): 5 Devices: speaker(2) Volume Group: AUDIO_STREAM_M",
+    "focus": [],
+    "mixer": {
+     "sample_rate": [
+      "44100",
+      "16000",
+      "48000"
+     ],
+     "hal_frames": [
+      "441",
+      "320",
+      "1024"
+     ],
+     "normal_frames": [
+      "896"
+     ],
+     "master_volume": [
+      "1.000000"
+     ],
+     "master_mute": [
+      "off"
+     ]
+    },
+    "game_options": {
+     "audio_main": "1",
+     "audio_sound": "1",
+     "audio_music": "0",
+     "audio_ambient": "1",
+     "audio_block": "1",
+     "audio_hostile": "1",
+     "audio_neutral": "1",
+     "audio_record": "1",
+     "audio_player": "1",
+     "audio_weather": "1",
+     "audio_texttospeech": "1",
+     "volumetric_fog_quality": "1"
+    }
+   }
+  },
+  "calib": {
+   "all": {
+    "voices": {
+     "limit": 54,
+     "counts": [
+      0,
+      0,
+      3,
+      4,
+      5,
+      5,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      12,
+      14,
+      13,
+      13,
+      16,
+      18,
+      19,
+      20,
+      19,
+      21,
+      22,
+      23,
+      15,
+      3,
+      27,
+      19,
+      25,
+      22,
+      28,
+      26,
+      26,
+      29,
+      35,
+      6,
+      33,
+      33,
+      35,
+      12,
+      3,
+      36,
+      42,
+      38,
+      25,
+      30,
+      38,
+      42,
+      43,
+      45,
+      41,
+      50,
+      53,
+      54,
+      0,
+      0,
+      1,
+      1,
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      3,
+      4,
+      3,
+      4,
+      3,
+      4,
+      3,
+      4,
+      3,
+      4,
+      3,
+      4,
+      3,
+      4,
+      3,
+      3,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      25,
+      25,
+      0,
+      0,
+      15,
+      15,
+      7,
+      7,
+      26,
+      12,
+      6,
+      8,
+      24,
+      8,
+      6,
+      12,
+      12,
+      6,
+      8,
+      26,
+      6,
+      9,
+      26
+     ],
+     "missing_at_128_equal": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+     ],
+     "gone_at_128_rising": [],
+     "policy": null,
+     "grid": {
+      "offset": 3362100.603,
+      "rate": 2398.235,
+      "clicks": 4,
+      "of": 40,
+      "click_jitter_ms": 10.329,
+      "click_resid_ms_max": 14.925,
+      "tick_ms": 49.963
+     }
+    },
+    "fade": {
+     "steps": [
+      {
+       "requested_s": 0,
+       "from": 0,
+       "to": 0.0002
+      },
+      {
+       "requested_s": 0,
+       "from": 0.0002,
+       "to": 0.0002,
+       "measured_s": 0,
+       "lands_ms": -19.74
+      },
+      {
+       "requested_s": 0.002,
+       "from": 0.0004,
+       "to": 0.0004,
+       "measured_s": 0,
+       "lands_ms": -19.61
+      },
+      {
+       "requested_s": 0.002,
+       "from": 0.0008,
+       "to": 0.0016,
+       "measured_s": 0.0003,
+       "lands_ms": -17.89
+      },
+      {
+       "requested_s": 0.005,
+       "from": 0.0015,
+       "to": 0.0031,
+       "measured_s": 0.0049,
+       "lands_ms": -20.49
+      },
+      {
+       "requested_s": 0.005,
+       "from": 0.0048,
+       "to": 0.0049
+      },
+      {
+       "requested_s": 0.01,
+       "from": 0.0076,
+       "to": 0.0069
+      },
+      {
+       "requested_s": 0.01,
+       "from": 0.0102,
+       "to": 0.0107
+      },
+      {
+       "requested_s": 0.02,
+       "from": 0.0142,
+       "to": 0.0193,
+       "measured_s": 0.0018,
+       "lands_ms": -19.52
+      },
+      {
+       "requested_s": 0.02,
+       "from": 0,
+       "to": 0.0045,
+       "measured_s": 0.0008,
+       "lands_ms": 136.45
+      },
+      {
+       "requested_s": 0.05,
+       "from": 0.0045,
+       "to": 0,
+       "measured_s": 0.0008,
+       "lands_ms": 104.5
+      },
+      {
+       "requested_s": 0.05,
+       "from": 0.0045,
+       "to": 0.0045
+      },
+      {
+       "requested_s": 0.1,
+       "from": 0.0045,
+       "to": 0.0045,
+       "measured_s": 0.0003,
+       "lands_ms": -17.13
+      },
+      {
+       "requested_s": 0.1,
+       "from": 0,
+       "to": 0,
+       "measured_s": 0.0052,
+       "lands_ms": 195.66
+      },
+      {
+       "requested_s": 0.2,
+       "from": 0,
+       "to": 0,
+       "measured_s": 0,
+       "lands_ms": -19.96
+      },
+      {
+       "requested_s": 0.2,
+       "from": 0,
+       "to": 0,
+       "measured_s": 0.0052,
+       "lands_ms": 53
+      },
+      {
+       "requested_s": 0.4,
+       "from": 0,
+       "to": 0.0001,
+       "measured_s": 0.005,
+       "lands_ms": 290.46
+      },
+      {
+       "requested_s": 0.4,
+       "from": 0.0001,
+       "to": 0.0001
+      }
+     ],
+     "shape": null,
+     "fade_min_ms": 0,
+     "duration_ratio": 0.014,
+     "grid": {
+      "offset": 6801238.333,
+      "rate": 2432,
+      "clicks": 3,
+      "of": 12,
+      "click_jitter_ms": 5.028,
+      "click_resid_ms_max": 7.111,
+      "tick_ms": 50.667
+     }
+    },
+    "timing": {
+     "pitch_lands_ms": {
+      "mean": -14.82,
+      "std": 0.37,
+      "p5": -15,
+      "p95": -14.17,
+      "n": 22
+     },
+     "volume_lands_ms": {
+      "mean": -14.79,
+      "std": 0.35,
+      "p5": -15,
+      "p95": -13.84,
+      "n": 22
+     },
+     "pitch_minus_volume_ms": {
+      "mean": -0.03,
+      "std": 0.44
+     },
+     "grid": {
+      "offset": 7642966.333,
+      "rate": 2432,
+      "clicks": 3,
+      "of": 12,
+      "click_jitter_ms": 5.028,
+      "click_resid_ms_max": 7.111,
+      "tick_ms": 50.667
+     }
+    },
+    "seek": {
+     "error": "analyze: the first three sync clicks (4 ticks apart) are not in the recording"
+    },
+    "pitch": {
+     "error": "analyze: the first three sync clicks (4 ticks apart) are not in the recording"
+    },
+    "stereo": {
+     "error": "analyze: the first three sync clicks (4 ticks apart) are not in the recording"
+    },
+    "mixer": {
+     "error": "analyze: the first three sync clicks (4 ticks apart) are not in the recording"
+    },
+    "throughput": {
+     "error": "analyze: the first three sync clicks (4 ticks apart) are not in the recording"
+    }
+   }
+  },
+  "g_piano_gymnopedie": {
+   "song:piano_gymnopedie": {
+    "g_piano_gymnopedie.wav": {
+     "visqol": 1.6335,
+     "mrstft": 1.3497,
+     "third_oct_db": 2.493,
+     "onset_ms": 17.5,
+     "onset_recall": 0.52,
+     "recorded_s": 20.04,
+     "peak_db": -28.9,
+     "rms_db": -48.2,
+     "seconds": 24.45,
+     "active_share": 0.775,
+     "top_hz": [
+      195.3,
+      554.4,
+      219.6,
+      488.7,
+      881
+     ],
+     "top_share": 0.184
+    }
+   },
+   "emu:piano_gymnopedie": {
+    "emu_vs_recording": {
+     "visqol": 2.1272,
+     "mrstft": 1.2308,
+     "third_oct_db": 1.566,
+     "onset_ms": 13.75,
+     "onset_recall": 0.529
+    },
+    "recorded_s": 20.04,
+    "rendered_s": 23.5,
+    "mode": "quality",
+    "calls_per_tick": {
+     "mean": 40.9,
+     "p95": 55,
+     "max": 75
+    },
+    "spec": {
+     "output_sr": "assumed",
+     "latency_ms": "assumed",
+     "jitter_ms": "assumed",
+     "frame_ms": "assumed",
+     "block": "assumed",
+     "fade_shape": "assumed",
+     "fade_min_ms": "assumed",
+     "vol_ramp_ms": "assumed",
+     "resampler": "assumed",
+     "max_voices": "assumed",
+     "mix": "assumed",
+     "limiter_db": "assumed",
+     "category_gain_db": "assumed",
+     "stereo": "assumed"
+    }
+   }
+  },
+  "g_vocal_stars": {
+   "song:vocal_stars": {
+    "g_vocal_stars.wav": {
+     "visqol": 2.1849,
+     "mrstft": 1.9614,
+     "third_oct_db": 6.678,
+     "onset_ms": 15,
+     "onset_recall": 0.729,
+     "recorded_s": 19.66,
+     "peak_db": -32.8,
+     "rms_db": -52,
+     "seconds": 24.34,
+     "active_share": 0.63,
+     "top_hz": [
+      220,
+      439.9,
+      246.9,
+      196.7,
+      493.5
+     ],
+     "top_share": 0.207
+    }
+   },
+   "emu:vocal_stars": {
+    "emu_vs_recording": {
+     "visqol": 2.1634,
+     "mrstft": 1.3571,
+     "third_oct_db": 4.774,
+     "onset_ms": 20,
+     "onset_recall": 0.846
+    },
+    "recorded_s": 19.66,
+    "rendered_s": 23.5,
+    "mode": "quality",
+    "calls_per_tick": {
+     "mean": 64.5,
+     "p95": 85,
+     "max": 91
+    },
+    "spec": {
+     "output_sr": "assumed",
+     "latency_ms": "assumed",
+     "jitter_ms": "assumed",
+     "frame_ms": "assumed",
+     "block": "assumed",
+     "fade_shape": "assumed",
+     "fade_min_ms": "assumed",
+     "vol_ramp_ms": "assumed",
+     "resampler": "assumed",
+     "max_voices": "assumed",
+     "mix": "assumed",
+     "limiter_db": "assumed",
+     "category_gain_db": "assumed",
+     "stereo": "assumed"
+    }
+   }
+  },
+  "g_drums_round": {
+   "song:drums_round": {
+    "g_drums_round.wav": {
+     "visqol": 1.4433,
+     "mrstft": 1.8189,
+     "third_oct_db": 7.606,
+     "onset_ms": 27.5,
+     "onset_recall": 0.131,
+     "recorded_s": 20.08,
+     "peak_db": -26.5,
+     "rms_db": -50.9,
+     "seconds": 24.45,
+     "active_share": 0.725,
+     "top_hz": [
+      104,
+      77.3,
+      138,
+      162.8,
+      55.1
+     ],
+     "top_share": 0.509
+    }
+   },
+   "emu:drums_round": {
+    "emu_vs_recording": {
+     "visqol": 1.3809,
+     "mrstft": 1.6753,
+     "third_oct_db": 6.815,
+     "onset_ms": 35,
+     "onset_recall": 0.248
+    },
+    "recorded_s": 20.08,
+    "rendered_s": 23.5,
+    "mode": "quality",
+    "calls_per_tick": {
+     "mean": 55.3,
+     "p95": 77,
+     "max": 83
+    },
+    "spec": {
+     "output_sr": "assumed",
+     "latency_ms": "assumed",
+     "jitter_ms": "assumed",
+     "frame_ms": "assumed",
+     "block": "assumed",
+     "fade_shape": "assumed",
+     "fade_min_ms": "assumed",
+     "vol_ramp_ms": "assumed",
+     "resampler": "assumed",
+     "max_voices": "assumed",
+     "mix": "assumed",
+     "limiter_db": "assumed",
+     "category_gain_db": "assumed",
+     "stereo": "assumed"
+    }
+   }
+  },
+  "g_rock_big": {
+   "song:rock_big": {
+    "g_rock_big.wav": {
+     "visqol": 2.0453,
+     "mrstft": 2.3251,
+     "third_oct_db": 8.927,
+     "onset_ms": 7.5,
+     "onset_recall": 0.98,
+     "recorded_s": 20.14,
+     "peak_db": -26.5,
+     "rms_db": -52.7,
+     "seconds": 24.43,
+     "active_share": 0.82,
+     "top_hz": [
+      83.6,
+      167.8,
+      121.9,
+      208.4,
+      2484.4
+     ],
+     "top_share": 0.207
+    }
+   },
+   "emu:rock_big": {
+    "emu_vs_recording": {
+     "visqol": 2.2763,
+     "mrstft": 1.6841,
+     "third_oct_db": 7.29,
+     "onset_ms": 10,
+     "onset_recall": 0.979
+    },
+    "recorded_s": 20.14,
+    "rendered_s": 23.5,
+    "mode": "quality",
+    "calls_per_tick": {
+     "mean": 75,
+     "p95": 87,
+     "max": 93
+    },
+    "spec": {
+     "output_sr": "assumed",
+     "latency_ms": "assumed",
+     "jitter_ms": "assumed",
+     "frame_ms": "assumed",
+     "block": "assumed",
+     "fade_shape": "assumed",
+     "fade_min_ms": "assumed",
+     "vol_ramp_ms": "assumed",
+     "resampler": "assumed",
+     "max_voices": "assumed",
+     "mix": "assumed",
+     "limiter_db": "assumed",
+     "category_gain_db": "assumed",
+     "stereo": "assumed"
+    }
+   }
+  },
+  "g_edm_detection": {
+   "song:edm_detection": {
+    "g_edm_detection.wav": {
+     "visqol": 2.748,
+     "mrstft": 1.9871,
+     "third_oct_db": 11.891,
+     "onset_ms": 15,
+     "onset_recall": 0.827,
+     "recorded_s": 20.14,
+     "peak_db": -30,
+     "rms_db": -47.7,
+     "seconds": 24.53,
+     "active_share": 0.812,
+     "top_hz": [
+      42.2,
+      129.5,
+      155.7,
+      192.6,
+      519.9
+     ],
+     "top_share": 0.624
+    }
+   },
+   "emu:edm_detection": {
+    "emu_vs_recording": {
+     "visqol": 2.9431,
+     "mrstft": 1.6348,
+     "third_oct_db": 9.2,
+     "onset_ms": 25,
+     "onset_recall": 0.425
+    },
+    "recorded_s": 20.14,
+    "rendered_s": 23.5,
+    "mode": "quality",
+    "calls_per_tick": {
+     "mean": 77.9,
+     "p95": 94,
+     "max": 101
+    },
+    "spec": {
+     "output_sr": "assumed",
+     "latency_ms": "assumed",
+     "jitter_ms": "assumed",
+     "frame_ms": "assumed",
+     "block": "assumed",
+     "fade_shape": "assumed",
+     "fade_min_ms": "assumed",
+     "vol_ramp_ms": "assumed",
+     "resampler": "assumed",
+     "max_voices": "assumed",
+     "mix": "assumed",
+     "limiter_db": "assumed",
+     "category_gain_db": "assumed",
+     "stereo": "assumed"
+    }
+   }
+  },
+  "g_orchestra_five_armies": {
+   "song:orchestra_five_armies": {
+    "g_orchestra_five_armies.wav": {
+     "visqol": 1.4248,
+     "mrstft": 1.4064,
+     "third_oct_db": 5.642,
+     "onset_ms": 30,
+     "onset_recall": 0.163,
+     "recorded_s": 20.39,
+     "peak_db": -30.7,
+     "rms_db": -49.2,
+     "seconds": 24.47,
+     "active_share": 0.816,
+     "top_hz": [
+      35.7,
+      109.4,
+      657.3,
+      1049.8,
+      349.6
+     ],
+     "top_share": 0.249
+    }
+   },
+   "emu:orchestra_five_armies": {
+    "emu_vs_recording": {
+     "visqol": 1.6376,
+     "mrstft": 1.1284,
+     "third_oct_db": 3.551,
+     "onset_ms": 12.5,
+     "onset_recall": 0.395
+    },
+    "recorded_s": 20.39,
+    "rendered_s": 23.5,
+    "mode": "quality",
+    "calls_per_tick": {
+     "mean": 72.5,
+     "p95": 83,
+     "max": 91
+    },
+    "spec": {
+     "output_sr": "assumed",
+     "latency_ms": "assumed",
+     "jitter_ms": "assumed",
+     "frame_ms": "assumed",
+     "block": "assumed",
+     "fade_shape": "assumed",
+     "fade_min_ms": "assumed",
+     "vol_ramp_ms": "assumed",
+     "resampler": "assumed",
+     "max_voices": "assumed",
+     "mix": "assumed",
+     "limiter_db": "assumed",
+     "category_gain_db": "assumed",
+     "stereo": "assumed"
+    }
+   }
+  },
+  "g_speech_en_wordsworth": {
+   "song:speech_en_wordsworth": {
+    "g_speech_en_wordsworth.wav": {
+     "visqol": 1.9934,
+     "mrstft": 2.0853,
+     "third_oct_db": 8.528,
+     "onset_ms": 16.25,
+     "onset_recall": 0.415,
+     "recorded_s": 20,
+     "peak_db": -33.1,
+     "rms_db": -55,
+     "seconds": 24.36,
+     "active_share": 0.457,
+     "top_hz": [
+      165.3,
+      69.9,
+      245.4,
+      391,
+      356.5
+     ],
+     "top_share": 0.144
+    }
+   },
+   "emu:speech_en_wordsworth": {
+    "emu_vs_recording": {
+     "visqol": 1.7929,
+     "mrstft": 1.5124,
+     "third_oct_db": 5.29,
+     "onset_ms": 7.5,
+     "onset_recall": 0.608
+    },
+    "recorded_s": 20,
+    "rendered_s": 23.5,
+    "mode": "quality",
+    "calls_per_tick": {
+     "mean": 50.9,
+     "p95": 83,
+     "max": 91
+    },
+    "spec": {
+     "output_sr": "assumed",
+     "latency_ms": "assumed",
+     "jitter_ms": "assumed",
+     "frame_ms": "assumed",
+     "block": "assumed",
+     "fade_shape": "assumed",
+     "fade_min_ms": "assumed",
+     "vol_ramp_ms": "assumed",
+     "resampler": "assumed",
+     "max_voices": "assumed",
+     "mix": "assumed",
+     "limiter_db": "assumed",
+     "category_gain_db": "assumed",
+     "stereo": "assumed"
+    }
+   }
+  },
+  "l_piano_gymnopedie": {
+   "song:piano_gymnopedie": {
+    "l_piano_gymnopedie.wav": {
+     "visqol": 1.5978,
+     "mrstft": 1.4501,
+     "third_oct_db": 8.285,
+     "onset_ms": 25,
+     "onset_recall": 0.28,
+     "recorded_s": 20.1,
+     "peak_db": -32.6,
+     "rms_db": -48.4,
+     "seconds": 24.6,
+     "active_share": 0.759,
+     "top_hz": [
+      195.4,
+      554.5,
+      488.8,
+      277,
+      219.7
+     ],
+     "top_share": 0.188
+    }
+   }
+  },
+  "l_rock_big": {
+   "song:rock_big": {
+    "l_rock_big.wav": {
+     "visqol": 2.8402,
+     "mrstft": 2.0257,
+     "third_oct_db": 6.763,
+     "onset_ms": 12.5,
+     "onset_recall": 0.733,
+     "recorded_s": 20.34,
+     "peak_db": -36.1,
+     "rms_db": -54.9,
+     "seconds": 24.45,
+     "active_share": 0.799,
+     "top_hz": [
+      83.3,
+      122.2,
+      166.5,
+      209.1,
+      63.2
+     ],
+     "top_share": 0.334
+    }
+   }
+  },
+  "l_speech_en_wordsworth": {
+   "song:speech_en_wordsworth": {
+    "l_speech_en_wordsworth.wav": {
+     "visqol": 2.3402,
+     "mrstft": 2.3276,
+     "third_oct_db": 10.996,
+     "onset_ms": 16.25,
+     "onset_recall": 0.215,
+     "recorded_s": 20.1,
+     "peak_db": -32.7,
+     "rms_db": -55.6,
+     "seconds": 24.43,
+     "active_share": 0.426,
+     "top_hz": [
+      163.9,
+      388.1,
+      70.3,
+      247,
+      700.3
+     ],
+     "top_share": 0.186
+    }
+   }
+  },
+  "c_piano_gymnopedie": {
+   "song:piano_gymnopedie": {
+    "c_piano_gymnopedie.wav": {
+     "visqol": 1.7644,
+     "mrstft": 1.0667,
+     "third_oct_db": 0.158,
+     "onset_ms": 0,
+     "onset_recall": 0.96,
+     "recorded_s": 20.04,
+     "peak_db": -36.9,
+     "rms_db": -53.7,
+     "seconds": 23.64,
+     "active_share": 0.581,
+     "top_hz": [
+      195.4,
+      554.8,
+      488.8,
+      219.6,
+      881.5
+     ],
+     "top_share": 0.183
+    }
+   }
+  },
+  "c_vocal_stars": {
+   "song:vocal_stars": {
+    "c_vocal_stars.wav": {
+     "visqol": 3.3734,
+     "mrstft": 1.0078,
+     "third_oct_db": 0.639,
+     "onset_ms": 0,
+     "onset_recall": 0.943,
+     "recorded_s": 19.57,
+     "peak_db": -37.9,
+     "rms_db": -54.9,
+     "seconds": 23.47,
+     "active_share": 0.62,
+     "top_hz": [
+      219.9,
+      439.9,
+      246.6,
+      196.4,
+      392.7
+     ],
+     "top_share": 0.212
+    }
+   }
+  },
+  "c_drums_round": {
+   "song:drums_round": {
+    "c_drums_round.wav": {
+     "visqol": 2.4157,
+     "mrstft": 0.8657,
+     "third_oct_db": 0.158,
+     "onset_ms": 0,
+     "onset_recall": 0.931,
+     "recorded_s": 20.03,
+     "peak_db": -30,
+     "rms_db": -48.9,
+     "seconds": 23.42,
+     "active_share": 0.744,
+     "top_hz": [
+      106.9,
+      79.5,
+      161.2,
+      136,
+      205.9
+     ],
+     "top_share": 0.545
+    }
+   }
+  },
+  "c_rock_big": {
+   "song:rock_big": {
+    "c_rock_big.wav": {
+     "visqol": 3.9743,
+     "mrstft": 1.0948,
+     "third_oct_db": 0.613,
+     "onset_ms": 0,
+     "onset_recall": 0.95,
+     "recorded_s": 20.02,
+     "peak_db": -31,
+     "rms_db": -49.1,
+     "seconds": 23.32,
+     "active_share": 0.863,
+     "top_hz": [
+      80.2,
+      167.6,
+      59.5,
+      121.6,
+      203.2
+     ],
+     "top_share": 0.294
+    }
+   }
+  },
+  "c_edm_detection": {
+   "song:edm_detection": {
+    "c_edm_detection.wav": {
+     "visqol": 3.8849,
+     "mrstft": 0.7377,
+     "third_oct_db": 0.838,
+     "onset_ms": 0,
+     "onset_recall": 1,
+     "recorded_s": 20.03,
+     "peak_db": -30.1,
+     "rms_db": -42.4,
+     "seconds": 23.36,
+     "active_share": 0.863,
+     "top_hz": [
+      42.7,
+      128,
+      64,
+      153.6,
+      89.6
+     ],
+     "top_share": 0.627
+    }
+   }
+  },
+  "c_orchestra_five_armies": {
+   "song:orchestra_five_armies": {
+    "c_orchestra_five_armies.wav": {
+     "visqol": 3.2295,
+     "mrstft": 0.6402,
+     "third_oct_db": 0.33,
+     "onset_ms": 0,
+     "onset_recall": 0.825,
+     "recorded_s": 20.04,
+     "peak_db": -30.7,
+     "rms_db": -45.2,
+     "seconds": 23.34,
+     "active_share": 0.863,
+     "top_hz": [
+      36.7,
+      1050.1,
+      109.5,
+      657,
+      349.7
+     ],
+     "top_share": 0.207
+    }
+   }
+  },
+  "c_speech_en_wordsworth": {
+   "song:speech_en_wordsworth": {
+    "c_speech_en_wordsworth.wav": {
+     "visqol": 3.091,
+     "mrstft": 1.5319,
+     "third_oct_db": 0.316,
+     "onset_ms": 0,
+     "onset_recall": 0.838,
+     "recorded_s": 20.01,
+     "peak_db": -36.6,
+     "rms_db": -51.2,
+     "seconds": 23.42,
+     "active_share": 0.556,
+     "top_hz": [
+      70.1,
+      161.7,
+      246,
+      391,
+      589.5
+     ],
+     "top_share": 0.078
+    }
+   }
+  }
+ },
+ "songs": {
+  "piano_gymnopedie": {
+   "game": {
+    "visqol": 1.6335,
+    "mrstft": 1.3497,
+    "third_oct_db": 2.493,
+    "onset_ms": 17.5,
+    "onset_recall": 0.52,
+    "recorded_s": 20.04,
+    "peak_db": -28.9,
+    "rms_db": -48.2,
+    "seconds": 24.45,
+    "active_share": 0.775,
+    "top_hz": [
+     195.3,
+     554.4,
+     219.6,
+     488.7,
+     881
+    ],
+    "top_share": 0.184
+   },
+   "emu_vs_recording": {
+    "visqol": 2.1272,
+    "mrstft": 1.2308,
+    "third_oct_db": 1.566,
+    "onset_ms": 13.75,
+    "onset_recall": 0.529
+   },
+   "light": {
+    "visqol": 1.5978,
+    "mrstft": 1.4501,
+    "third_oct_db": 8.285,
+    "onset_ms": 25,
+    "onset_recall": 0.28,
+    "recorded_s": 20.1,
+    "peak_db": -32.6,
+    "rms_db": -48.4,
+    "seconds": 24.6,
+    "active_share": 0.759,
+    "top_hz": [
+     195.4,
+     554.5,
+     488.8,
+     277,
+     219.7
+    ],
+    "top_share": 0.188
+   },
+   "ceiling": {
+    "visqol": 1.7644,
+    "mrstft": 1.0667,
+    "third_oct_db": 0.158,
+    "onset_ms": 0,
+    "onset_recall": 0.96,
+    "recorded_s": 20.04,
+    "peak_db": -36.9,
+    "rms_db": -53.7,
+    "seconds": 23.64,
+    "active_share": 0.581,
+    "top_hz": [
+     195.4,
+     554.8,
+     488.8,
+     219.6,
+     881.5
+    ],
+    "top_share": 0.183
+   },
+   "gap": 0.1309
+  },
+  "vocal_stars": {
+   "game": {
+    "visqol": 2.1849,
+    "mrstft": 1.9614,
+    "third_oct_db": 6.678,
+    "onset_ms": 15,
+    "onset_recall": 0.729,
+    "recorded_s": 19.66,
+    "peak_db": -32.8,
+    "rms_db": -52,
+    "seconds": 24.34,
+    "active_share": 0.63,
+    "top_hz": [
+     220,
+     439.9,
+     246.9,
+     196.7,
+     493.5
+    ],
+    "top_share": 0.207
+   },
+   "emu_vs_recording": {
+    "visqol": 2.1634,
+    "mrstft": 1.3571,
+    "third_oct_db": 4.774,
+    "onset_ms": 20,
+    "onset_recall": 0.846
+   },
+   "ceiling": {
+    "visqol": 3.3734,
+    "mrstft": 1.0078,
+    "third_oct_db": 0.639,
+    "onset_ms": 0,
+    "onset_recall": 0.943,
+    "recorded_s": 19.57,
+    "peak_db": -37.9,
+    "rms_db": -54.9,
+    "seconds": 23.47,
+    "active_share": 0.62,
+    "top_hz": [
+     219.9,
+     439.9,
+     246.6,
+     196.4,
+     392.7
+    ],
+    "top_share": 0.212
+   },
+   "gap": 1.1885
+  },
+  "drums_round": {
+   "game": {
+    "visqol": 1.4433,
+    "mrstft": 1.8189,
+    "third_oct_db": 7.606,
+    "onset_ms": 27.5,
+    "onset_recall": 0.131,
+    "recorded_s": 20.08,
+    "peak_db": -26.5,
+    "rms_db": -50.9,
+    "seconds": 24.45,
+    "active_share": 0.725,
+    "top_hz": [
+     104,
+     77.3,
+     138,
+     162.8,
+     55.1
+    ],
+    "top_share": 0.509
+   },
+   "emu_vs_recording": {
+    "visqol": 1.3809,
+    "mrstft": 1.6753,
+    "third_oct_db": 6.815,
+    "onset_ms": 35,
+    "onset_recall": 0.248
+   },
+   "ceiling": {
+    "visqol": 2.4157,
+    "mrstft": 0.8657,
+    "third_oct_db": 0.158,
+    "onset_ms": 0,
+    "onset_recall": 0.931,
+    "recorded_s": 20.03,
+    "peak_db": -30,
+    "rms_db": -48.9,
+    "seconds": 23.42,
+    "active_share": 0.744,
+    "top_hz": [
+     106.9,
+     79.5,
+     161.2,
+     136,
+     205.9
+    ],
+    "top_share": 0.545
+   },
+   "gap": 0.9724
+  },
+  "rock_big": {
+   "game": {
+    "visqol": 2.0453,
+    "mrstft": 2.3251,
+    "third_oct_db": 8.927,
+    "onset_ms": 7.5,
+    "onset_recall": 0.98,
+    "recorded_s": 20.14,
+    "peak_db": -26.5,
+    "rms_db": -52.7,
+    "seconds": 24.43,
+    "active_share": 0.82,
+    "top_hz": [
+     83.6,
+     167.8,
+     121.9,
+     208.4,
+     2484.4
+    ],
+    "top_share": 0.207
+   },
+   "emu_vs_recording": {
+    "visqol": 2.2763,
+    "mrstft": 1.6841,
+    "third_oct_db": 7.29,
+    "onset_ms": 10,
+    "onset_recall": 0.979
+   },
+   "light": {
+    "visqol": 2.8402,
+    "mrstft": 2.0257,
+    "third_oct_db": 6.763,
+    "onset_ms": 12.5,
+    "onset_recall": 0.733,
+    "recorded_s": 20.34,
+    "peak_db": -36.1,
+    "rms_db": -54.9,
+    "seconds": 24.45,
+    "active_share": 0.799,
+    "top_hz": [
+     83.3,
+     122.2,
+     166.5,
+     209.1,
+     63.2
+    ],
+    "top_share": 0.334
+   },
+   "ceiling": {
+    "visqol": 3.9743,
+    "mrstft": 1.0948,
+    "third_oct_db": 0.613,
+    "onset_ms": 0,
+    "onset_recall": 0.95,
+    "recorded_s": 20.02,
+    "peak_db": -31,
+    "rms_db": -49.1,
+    "seconds": 23.32,
+    "active_share": 0.863,
+    "top_hz": [
+     80.2,
+     167.6,
+     59.5,
+     121.6,
+     203.2
+    ],
+    "top_share": 0.294
+   },
+   "gap": 1.929
+  },
+  "edm_detection": {
+   "game": {
+    "visqol": 2.748,
+    "mrstft": 1.9871,
+    "third_oct_db": 11.891,
+    "onset_ms": 15,
+    "onset_recall": 0.827,
+    "recorded_s": 20.14,
+    "peak_db": -30,
+    "rms_db": -47.7,
+    "seconds": 24.53,
+    "active_share": 0.812,
+    "top_hz": [
+     42.2,
+     129.5,
+     155.7,
+     192.6,
+     519.9
+    ],
+    "top_share": 0.624
+   },
+   "emu_vs_recording": {
+    "visqol": 2.9431,
+    "mrstft": 1.6348,
+    "third_oct_db": 9.2,
+    "onset_ms": 25,
+    "onset_recall": 0.425
+   },
+   "ceiling": {
+    "visqol": 3.8849,
+    "mrstft": 0.7377,
+    "third_oct_db": 0.838,
+    "onset_ms": 0,
+    "onset_recall": 1,
+    "recorded_s": 20.03,
+    "peak_db": -30.1,
+    "rms_db": -42.4,
+    "seconds": 23.36,
+    "active_share": 0.863,
+    "top_hz": [
+     42.7,
+     128,
+     64,
+     153.6,
+     89.6
+    ],
+    "top_share": 0.627
+   },
+   "gap": 1.1369
+  },
+  "orchestra_five_armies": {
+   "game": {
+    "visqol": 1.4248,
+    "mrstft": 1.4064,
+    "third_oct_db": 5.642,
+    "onset_ms": 30,
+    "onset_recall": 0.163,
+    "recorded_s": 20.39,
+    "peak_db": -30.7,
+    "rms_db": -49.2,
+    "seconds": 24.47,
+    "active_share": 0.816,
+    "top_hz": [
+     35.7,
+     109.4,
+     657.3,
+     1049.8,
+     349.6
+    ],
+    "top_share": 0.249
+   },
+   "emu_vs_recording": {
+    "visqol": 1.6376,
+    "mrstft": 1.1284,
+    "third_oct_db": 3.551,
+    "onset_ms": 12.5,
+    "onset_recall": 0.395
+   },
+   "ceiling": {
+    "visqol": 3.2295,
+    "mrstft": 0.6402,
+    "third_oct_db": 0.33,
+    "onset_ms": 0,
+    "onset_recall": 0.825,
+    "recorded_s": 20.04,
+    "peak_db": -30.7,
+    "rms_db": -45.2,
+    "seconds": 23.34,
+    "active_share": 0.863,
+    "top_hz": [
+     36.7,
+     1050.1,
+     109.5,
+     657,
+     349.7
+    ],
+    "top_share": 0.207
+   },
+   "gap": 1.8047
+  },
+  "speech_en_wordsworth": {
+   "game": {
+    "visqol": 1.9934,
+    "mrstft": 2.0853,
+    "third_oct_db": 8.528,
+    "onset_ms": 16.25,
+    "onset_recall": 0.415,
+    "recorded_s": 20,
+    "peak_db": -33.1,
+    "rms_db": -55,
+    "seconds": 24.36,
+    "active_share": 0.457,
+    "top_hz": [
+     165.3,
+     69.9,
+     245.4,
+     391,
+     356.5
+    ],
+    "top_share": 0.144
+   },
+   "emu_vs_recording": {
+    "visqol": 1.7929,
+    "mrstft": 1.5124,
+    "third_oct_db": 5.29,
+    "onset_ms": 7.5,
+    "onset_recall": 0.608
+   },
+   "light": {
+    "visqol": 2.3402,
+    "mrstft": 2.3276,
+    "third_oct_db": 10.996,
+    "onset_ms": 16.25,
+    "onset_recall": 0.215,
+    "recorded_s": 20.1,
+    "peak_db": -32.7,
+    "rms_db": -55.6,
+    "seconds": 24.43,
+    "active_share": 0.426,
+    "top_hz": [
+     163.9,
+     388.1,
+     70.3,
+     247,
+     700.3
+    ],
+    "top_share": 0.186
+   },
+   "ceiling": {
+    "visqol": 3.091,
+    "mrstft": 1.5319,
+    "third_oct_db": 0.316,
+    "onset_ms": 0,
+    "onset_recall": 0.838,
+    "recorded_s": 20.01,
+    "peak_db": -36.6,
+    "rms_db": -51.2,
+    "seconds": 23.42,
+    "active_share": 0.556,
+    "top_hz": [
+     70.1,
+     161.7,
+     246,
+     391,
+     589.5
+    ],
+    "top_share": 0.078
+   },
+   "gap": 1.0976
+  }
+ },
+ "summary": {
+  "songs": 7,
+  "gap_median": 1.1369,
+  "within_0.3": 1,
+  "game_median": 1.9934,
+  "ceiling_median": 3.2295
+ },
+ "notes": [
+  "volumes before: Android media 5/15, the game audio_main 0.5, audio_music 0.3; set to 15/15, 1, 0 for this run (audio volume): the recordings rose only ~6-9 dB (the media volume does not reach AudioPlaybackCapture; audio_main does): the game itself plays ~30 dB under the file level",
+  "calib all in the run: 5 of 8 programs lost (the very first click of the run came ~100 ms late, the click grid anchored 70 s on). Analysed again here from the exported recording (Opus 96 kb/s) with the fixed grid: measured/calib-41068618513-from-opus96.json",
+  "from that analysis: voices heard at once ~32 (the quietest or oldest goes), fades linear in amplitude and as long as asked from 2 ms (a 0 s fade 0.8 ms), setVolume/setPitch land 3.7 ms after the click grid with sd 18.6 ms, seekTo lands with a constant offset (~45 ms, sd ~5 ms), setPitch exact to 0.3 cent, stereo files kept (67 dB separation), the mixer linear (no clip or limiter up to sums 7x full scale), ui/music/record equal",
+  "pitch spurs of the 1760 Hz loop: <= -46 dB up to pitch 2, -12/-3/+5/+14 dB at pitch 4/6/8/10 — from the Opus copy: to be checked on the WAV",
+  "rock 1/3-octave levels (Opus copies): the ceiling follows the original within 1-3 dB to 14 kHz; the game lacks 10-16 dB below 60 Hz and has 5-9 dB too much at 1-4 kHz (the emulator too: the converter), and +12 dB at 5.7 kHz and 18 kHz (the real client only)",
+  "light mode (16 voices + 8 bands, no bursts) beat quality (48 + 8 + bursts) on rock (2.840 vs 2.045) and speech (2.340 vs 1.993): more than ~32 instances at once are beyond the client"
+ ]
+}

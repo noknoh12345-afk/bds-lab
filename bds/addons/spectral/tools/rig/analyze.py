@@ -84,9 +84,21 @@ def fit_grid(prog, cand):
         if abs(d1 - 4 * TICK) < 0.45 * 4 * TICK and abs(d2 - 4 * TICK) < 0.45 * 4 * TICK and abs(times[i + 2] - times[i] - 8 * TICK) < 1.0 * TICK:
             best = i
             break
-    if best is None:
-        raise SystemExit('analyze: the first three sync clicks (4 ticks apart) are not in the recording')
-    a = float(np.median(times[best: best + 3] - TICK * np.array([0, 4, 8])))
+    # (a real client — redroid run 41068618513 — played the very first click of a run ~100 ms late, the sound loaded on its
+    #  first play: the first three were 85 ms and 213 ms apart, and the anchor fell on the next program's clicks, 70 s on.
+    #  So the anchor is also tried as the grid most clicks agree with: each candidate taken as each of the first clicks)
+    def agree(a):
+        return sum(1 for t in ticks if len(times) and np.min(np.abs(times - (a + TICK * t))) < 0.3 * TICK)
+    a3 = float(np.median(times[best: best + 3] - TICK * np.array([0, 4, 8]))) if best is not None else None
+    trials = [a3] if a3 is not None else []
+    trials += [times[i] - TICK * k for i in range(len(times)) for k in ticks[:6]]
+    scored = [(agree(a), -abs(a - trials[0]) if a3 is not None else 0, a) for a in trials]
+    n_best, _, a_best = max(scored) if scored else (0, 0, None)
+    if a_best is None or n_best < 3 or (a3 is not None and agree(a3) >= n_best):
+        if best is None:
+            raise SystemExit('analyze: the first three sync clicks (4 ticks apart) are not in the recording')
+        a_best = a3
+    a = float(a_best)
     b = TICK
     pairs = []
     for t in ticks:
@@ -100,7 +112,14 @@ def fit_grid(prog, cand):
     tt = np.array([p[0] for p in pairs], float); ss = np.array([p[1] for p in pairs])
     b, a = np.polyfit(tt, ss, 1)
     res = ss - (a + b * tt)
-    return {'offset': float(a), 'rate': float(b), 'clicks': len(pairs), 'of': len(ticks),
+    # (one click far off the line — the first one, late — is left out of the line and counted apart)
+    late = np.abs(res) > max(3 * np.median(np.abs(res)) * 1.4826, 0.1 * TICK) if len(res) >= 6 else np.zeros(len(res), bool)
+    if late.any() and (~late).sum() >= 4:
+        b, a = np.polyfit(tt[~late], ss[~late], 1)
+        res = ss - (a + b * tt)
+    outliers = [{'tick': int(t), 'ms': round(float(r) / SR * 1000, 2)} for t, r, l in zip(tt, res, late) if l]
+    res = res[~late] if late.any() and (~late).sum() >= 4 else res
+    return {'offset': float(a), 'rate': float(b), 'clicks': len(pairs), 'of': len(ticks), 'late_clicks': outliers,
             'click_jitter_ms': float(np.std(res) / SR * 1000), 'click_resid_ms_max': float(np.max(np.abs(res)) / SR * 1000),
             'tick_ms': float(b / SR * 1000)}
 
