@@ -1,0 +1,162 @@
+{
+ "when": "2026-10-30T11:26:10.298Z",
+ "window_ms": 12000,
+ "reps": 3,
+ "phases": [
+  {
+   "name": "idle",
+   "seconds": 12.44,
+   "tps": 20.25,
+   "bytes_per_s": 67262,
+   "packets_per_s": 84.7
+  },
+  {
+   "name": "quality",
+   "seconds": 12.45,
+   "tps": 20.25,
+   "bytes_per_s": 77663,
+   "packets_per_s": 123.8,
+   "calls_per_tick": 42,
+   "peak": 93,
+   "line": "status: playing demo 0:14/0:22 frame 284/460 mode phones voices 48 instances 56 speed 1 semis 0 volume 100% calls/tick 42.0 peak 93 ms/tick 1.12 rebuilds 0 quality quality budget none deferred 0"
+  },
+  {
+   "name": "light",
+   "seconds": 12.45,
+   "tps": 20.25,
+   "bytes_per_s": 74469,
+   "packets_per_s": 127.1,
+   "calls_per_tick": 20.1,
+   "peak": 24,
+   "line": "status: playing demo 0:14/0:22 frame 291/460 mode phones voices 16 instances 24 speed 1 semis 0 volume 100% calls/tick 20.1 peak 24 ms/tick 0.32 rebuilds 0 quality light budget 24 deferred 399"
+  },
+  {
+   "name": "quality+spectrum",
+   "seconds": 12.45,
+   "tps": 20.25,
+   "bytes_per_s": 80013,
+   "packets_per_s": 122.9,
+   "calls_per_tick": 41.9,
+   "peak": 93,
+   "line": "status: playing demo 0:14/0:22 frame 287/460 mode phones voices 48 instances 56 speed 1 semis 0 volume 100% calls/tick 41.9 peak 93 ms/tick 1.31 rebuilds 0 quality quality budget none deferred 0"
+  },
+  {
+   "name": "idle",
+   "seconds": 12.45,
+   "tps": 20.25,
+   "bytes_per_s": 67253,
+   "packets_per_s": 85.6
+  },
+  {
+   "name": "quality",
+   "seconds": 12.45,
+   "tps": 20.25,
+   "bytes_per_s": 77636,
+   "packets_per_s": 123.6,
+   "calls_per_tick": 41.8,
+   "peak": 93,
+   "line": "status: playing demo 0:14/0:22 frame 288/460 mode phones voices 48 instances 56 speed 1 semis 0 volume 100% calls/tick 41.8 peak 93 ms/tick 1.14 rebuilds 0 quality quality budget none deferred 0"
+  },
+  {
+   "name": "light",
+   "seconds": 12.45,
+   "tps": 20.25,
+   "bytes_per_s": 73337,
+   "packets_per_s": 123.5,
+   "calls_per_tick": 20.1,
+   "peak": 24,
+   "line": "status: playing demo 0:14/0:22 frame 290/460 mode phones voices 16 instances 24 speed 1 semis 0 volume 100% calls/tick 20.1 peak 24 ms/tick 0.32 rebuilds 0 quality light budget 24 deferred 393"
+  },
+  {
+   "name": "quality+spectrum",
+   "seconds": 12.51,
+   "tps": 20.33,
+   "bytes_per_s": 81259,
+   "packets_per_s": 134.7,
+   "calls_per_tick": 41.8,
+   "peak": 93,
+   "line": "status: playing demo 0:14/0:22 frame 289/460 mode phones voices 48 instances 56 speed 1 semis 0 volume 100% calls/tick 41.8 peak 93 ms/tick 1.36 rebuilds 0 quality quality budget none deferred 0"
+  },
+  {
+   "name": "idle",
+   "seconds": 12.5,
+   "tps": 20.33,
+   "bytes_per_s": 66935,
+   "packets_per_s": 84.7
+  },
+  {
+   "name": "quality",
+   "seconds": 12.5,
+   "tps": 20.33,
+   "bytes_per_s": 77465,
+   "packets_per_s": 124.1,
+   "calls_per_tick": 41.8,
+   "peak": 93,
+   "line": "status: playing demo 0:14/0:22 frame 290/460 mode phones voices 48 instances 56 speed 1 semis 0 volume 100% calls/tick 41.8 peak 93 ms/tick 1.28 rebuilds 0 quality quality budget none deferred 0"
+  },
+  {
+   "name": "light",
+   "seconds": 12.5,
+   "tps": 20.33,
+   "bytes_per_s": 74370,
+   "packets_per_s": 128.1,
+   "calls_per_tick": 20.1,
+   "peak": 24,
+   "line": "status: playing demo 0:14/0:22 frame 290/460 mode phones voices 16 instances 24 speed 1 semis 0 volume 100% calls/tick 20.1 peak 24 ms/tick 0.58 rebuilds 0 quality light budget 24 deferred 393"
+  },
+  {
+   "name": "quality+spectrum",
+   "seconds": 12.5,
+   "tps": 20.33,
+   "bytes_per_s": 79870,
+   "packets_per_s": 123.8,
+   "calls_per_tick": 41.8,
+   "peak": 93,
+   "line": "status: playing demo 0:14/0:22 frame 288/460 mode phones voices 48 instances 56 speed 1 semis 0 volume 100% calls/tick 41.8 peak 93 ms/tick 1.35 rebuilds 0 quality quality budget none deferred 0"
+  },
+  {
+   "name": "idle",
+   "seconds": 12.45,
+   "tps": 20.25,
+   "bytes_per_s": 67148,
+   "packets_per_s": 84.4
+  }
+ ],
+ "received": {
+  "update_sound_data": 4422,
+  "play_sound": 77,
+  "server_frames": 125,
+  "server_calls": 3988
+ },
+ "idle": {
+  "bytes_per_s": 67150,
+  "sd": 132,
+  "n": 4
+ },
+ "summary": {
+  "quality": {
+   "extra_bytes_per_s": 10438,
+   "sd": 88,
+   "commands_per_s": 848.9,
+   "bytes_per_command": 12.3,
+   "calls_per_tick": 41.9,
+   "peak": 93
+  },
+  "light": {
+   "extra_bytes_per_s": 6909,
+   "sd": 512,
+   "commands_per_s": 407.6,
+   "bytes_per_command": 17,
+   "calls_per_tick": 20.1,
+   "peak": 24
+  },
+  "quality+spectrum": {
+   "extra_bytes_per_s": 13231,
+   "sd": 624,
+   "commands_per_s": 849.4,
+   "bytes_per_command": 15.6,
+   "calls_per_tick": 41.8,
+   "peak": 93
+  }
+ }
+}
