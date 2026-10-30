@@ -1,0 +1,151 @@
+{
+  "materials": {
+    "version": "1.0.0",
+    "gweb_base": {
+      "vertexShader": "shaders/entity.vertex",
+      "vrGeometryShader": "shaders/entity.geometry",
+      "fragmentShader": "shaders/entity.fragment",
+      "vertexFields": [
+        {
+          "field": "Position"
+        },
+        {
+          "field": "Normal"
+        },
+        {
+          "field": "UV0"
+        }
+      ],
+      "variants": [
+        {
+          "skinning": {
+            "+defines": [
+              "USE_SKINNING"
+            ],
+            "vertexFields": [
+              {
+                "field": "Position"
+              },
+              {
+                "field": "BoneId0"
+              },
+              {
+                "field": "Normal"
+              },
+              {
+                "field": "UV0"
+              }
+            ]
+          }
+        },
+        {
+          "skinning_color": {
+            "+defines": [
+              "USE_SKINNING"
+            ],
+            "vertexFields": [
+              {
+                "field": "Position"
+              },
+              {
+                "field": "BoneId0"
+              },
+              {
+                "field": "Color"
+              },
+              {
+                "field": "Normal"
+              },
+              {
+                "field": "UV0"
+              }
+            ]
+          }
+        }
+      ],
+      "msaaSupport": "Both",
+      "+samplerStates": [
+        {
+          "samplerIndex": 0,
+          "textureFilter": "Point"
+        }
+      ]
+    },
+    "gweb_bases": {
+      "vertexShader": "shaders/entity.vertex",
+      "vrGeometryShader": "shaders/entity.geometry",
+      "fragmentShader": "shaders/entity.fragment",
+      "vertexFields": [
+        {
+          "field": "Position"
+        },
+        {
+          "field": "Normal"
+        },
+        {
+          "field": "UV0"
+        }
+      ],
+      "variants": [
+        {
+          "skinning": {
+            "+defines": [
+              "USE_SKINNING"
+            ],
+            "vertexFields": [
+              {
+                "field": "Position"
+              },
+              {
+                "field": "BoneId0"
+              },
+              {
+                "field": "Normal"
+              },
+              {
+                "field": "UV0"
+              }
+            ]
+          }
+        },
+        {
+          "skinning_color": {
+            "+defines": [
+              "USE_SKINNING"
+            ],
+            "vertexFields": [
+              {
+                "field": "Position"
+              },
+              {
+                "field": "BoneId0"
+              },
+              {
+                "field": "Color"
+              },
+              {
+                "field": "Normal"
+              },
+              {
+                "field": "UV0"
+              }
+            ]
+          }
+        }
+      ],
+      "msaaSupport": "Both",
+      "+samplerStates": [
+        {
+          "samplerIndex": 0,
+          "textureFilter": "Bilinear"
+        }
+      ]
+    },
+    "gweb_cutout:gweb_base": {
+      "+defines": [
+        "USE_UV_ANIM",
+        "ALPHA_TEST"
+      ]
+    }
+  }
+}
