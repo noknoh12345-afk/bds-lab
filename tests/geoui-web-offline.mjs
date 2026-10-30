@@ -358,6 +358,15 @@ function jsonui(expr, vars) {
     'browser: /web:size chooses the layout and the height (2400x1080 → 20:9 at 1080); a command that needs the browser says so; a shape it cannot read is refused', JSON.stringify({ sz, needs, bad }));
 }
 
+// ---- the backdrop of many layouts: one short sum (8 本目・9 本目: an `or` of 16 comparisons never showed in the game — R10.19)
+{
+  const scene = { ns: 'bk', scale: { mode: 'height', s: 0.1 }, groups: 'bcdefghi'.split('').map((L) => ({ id: `l_${L}`, layout: L })), urlImages: [{ id: 'p', group: 'l_b', rect: { x: 0, y: 0, w: 1, h: 1 } }], f1: true, backdrop: { layouts: 'bcdefghi' } };
+  const hud = L.hudScreen(scene), ch = L.channelOf(scene), bd = hud.bk_vp.controls[0].bk_backdrop, expr = bd.bindings.find((b) => b.target_property_name === '#visible').source_property_name;
+  const v = (t) => jsonui(expr, { '#hud_title_text_string': t });
+  ok('bcdefghi'.split('').every((Lt) => v(L.channelText(ch, { layout: Lt })) && v(L.channelText(ch, { layout: Lt, f1: true }))) && !v(L.channelText(ch, {})) && !v(L.channelText(ch, { f1: true })) && !v('Hello') && !v('') && expr.length < 200 && (expr.match(/ or /g) || []).length === 0,
+    'backdrop of 8 layouts: shown for each of b–i (F1 or not), not for a, a plain title or none — one short sum, no `or`', expr);
+}
+
 // ---- F1's camera: cfg.camera set on F1, cleared off and on reset; { camera: false } leaves it out (the browser: RULES R10.18)
 {
   const calls = [], io = { title() {}, prop() {}, hideHud: () => [], restoreHud() {}, camera: (p, id) => calls.push(`${p.id}:${id}`) };
