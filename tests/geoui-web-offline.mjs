@@ -320,9 +320,9 @@ function jsonui(expr, vars) {
   const io = { players: () => [P], sample: () => Object.assign({}, smp), setProp: (p, k, v) => { props[k] = v; }, freeze: (p, on) => logs.push(`freeze ${on}`), setRotation: () => {},
     say: (p, t) => says.push(t), log: (l) => logs.push(l), http, touch: () => true, platform: () => 'Mobile', load: () => undefined, save: () => {}, wait: () => Promise.resolve() };
   const chIo = { title: (p, t) => titles.push(t), prop: (p, k, v) => { props[k] = v; }, hideHud: (p, keep) => { logs.push(`hide except ${keep.join()}`); return []; }, restoreHud: () => logs.push('restore') };
-  const ch = GS.channel.create({ ns: 'gweb', slots: 4, width: 160, refreshTicks: 0 }, chIo), B = RT.createBrowsers(CFG, io, GS, ch);
+  const ch = GS.channel.create({ ns: 'gweb', slots: CFG.slotCount, width: 160, refreshTicks: 0 }, chIo), B = RT.createBrowsers(CFG, io, GS, ch);
   const flush = () => new Promise((r) => setTimeout(r, 5));
-  const slots = () => GS.channel.read({ slots: 4, width: 160 }, titles[titles.length - 1]);
+  const slots = () => GS.channel.read({ slots: CFG.slotCount, width: 160 }, titles[titles.length - 1]);
   await B.open(P, 'http://127.0.0.1:8787/demo/color.html');
   await flush();
   B.tick();
@@ -353,9 +353,168 @@ function jsonui(expr, vars) {
   r = slots();
   ok(!B.isOpen(P) && titles[titles.length - 1] === GS.channel.EMPTY && logs.includes('restore') && logs.includes('freeze false') && props['gweb:flg'] === 0 && props['gweb:f1'] === 0,
     'browser: sneak held 1.5 s closes it: the empty channel (no picture, no F1), the HUD and the camera back, the pointer gone');
-  const sz = B.command(P, 'size', ['2400x1080']), needs = B.command(P, 't', ['x']), bad = B.command(P, 'size', ['huge']);
-  ok(sz === '' && B.state(P).layout === 'g' && B.state(P).res === 1080 && needs.includes('/web:open') && bad.includes('/web:size'),
-    'browser: /web:size chooses the layout and the height (2400x1080 → 20:9 at 1080); a command that needs the browser says so; a shape it cannot read is refused', JSON.stringify({ sz, needs, bad }));
+  const box = B.command(P, 'size', ['box', '2400x1080']), boxLay = B.state(P).layout, sz = B.command(P, 'size', ['2400x1080']), needs = B.command(P, 't', ['x']), bad = B.command(P, 'size', ['huge']);
+  ok(box === '' && boxLay === 'g' && sz === '' && Math.abs(B.state(P).asp - 2400 / 1080) < 1e-9 && B.state(P).res === 1080 && needs.includes('/web:open') && bad.includes('/web:size'),
+    'browser: /web:size box <shape> is the nearest box; /web:size <W>x<H> is the screen\'s own shape (exact) and the height; a command that needs the browser says so; a shape it cannot read is refused', JSON.stringify({ box, boxLay, sz, asp: B.state(P).asp, needs, bad }));
+}
+
+// ---- every aspect ratio exactly: the page by JSON UI's own %, the pointer across by the shape; the shape measured by the game
+//      (the aspect probe), typed (/web:size), or marked (/web:fit)
+{
+  const GS = globalThis.GeoUIScreen, RT = require('../bds/geoui/web/runtime.js'), M = await import('../bds/geoui/web/make.mjs');
+  const CFG = M.config(), sc = M.scene(), hud = L.hudScreen(sc, { followHud: true }), ch = L.channelOf(sc), top = Object.fromEntries(hud.gweb_vp.controls.map((c) => Object.entries(c)[0]));
+  const T = '#hud_title_text_string', visOf = (ctl, t) => jsonui(ctl.bindings.find((b) => b.target_property_name === '#visible').source_property_name, { [T]: t, '#hud_visible': true });
+  const optOf = (ctl, t) => jsonui(ctl.bindings.find((b) => b.target_property_name === '#profile_image_options').source_property_name, { [T]: t });
+  const page = top.gweb_fill_z_page, bar = top.gweb_fill_z_bar, tz = L.channelText(ch, { layout: 'z', urls: ['http://h/f.png', 'http://h/b.png'] }), tb = L.channelText(ch, { layout: 'b', urls: ['http://h/f.png', 'http://h/b.png'] });
+  ok(page && bar && page.size.join() === '100%,90%' && page.anchor_from === 'bottom_middle' && page.anchor_to === 'bottom_middle' && !page.offset && bar.size.join() === '100%,10%' && bar.anchor_from === 'top_middle'
+    && visOf(page, tz) && !visOf(page, tb) && !visOf(page, L.channelText(ch, { layout: 'z' })) && optOf(page, tz) === '{"type":7,"url":"http://h/f.png"}' && top.gweb_fill_z_pu.layer === -1,
+  'exact: the page (bottom 90 %) and the toolbar (top 10 %) laid out by JSON UI\'s own % of the viewport — no offset, every shape — shown only in the exact layout with a URL');
+  const ap = top.gweb_aspect, setC = ap.controls[0].gweb_aspc, setU = ap.controls[1].gweb_aspu, n = CFG.aspects.length;
+  const probe = (set, tag, k) => set.controls[k][`gweb_asp${tag}${k}`], img = (set, tag, k) => probe(set, tag, k).controls[0][`gweb_asp${tag}${k}_i`];
+  const tp = L.channelText(ch, { layout: 'g', urls: ['', '', '', '', 'http://h/asp/N1'] });
+  ok(n === 160 && setC.clips_children === true && setU.clips_children === false && setC.controls.length === n && setU.controls.length === n
+    && probe(setC, 'c', 0).size[0] === `${Math.round(CFG.aspects[0] * 100 * 1e6) / 1e6}%y` && probe(setC, 'c', n - 1).size.join() === `${Math.round(CFG.aspects[n - 1] * 100 * 1e6) / 1e6}%y,100%` && img(setC, 'c', 7).anchor_from === 'right_middle' && img(setC, 'c', 7).size.join() === '2,2'
+    && optOf(img(setC, 'c', 7), tp) === '{"type":7,"url":"http://h/asp/N1/c7.png"}' && optOf(img(setU, 'u', 159), tp) === '{"type":7,"url":"http://h/asp/N1/u159.png"}'
+    && visOf(ap, tp) && !visOf(ap, tz) && !visOf(ap, L.channelText(ch, { layout: 'g', urls: ['', '', '', '', 'fit'] })),
+  'exact: the aspect probe — 160 tiny URL images each at the right edge of a box a_k x the height (one set clipped to the viewport, one not), URL base/<c|u><k>.png, shown while the slot has an http base');
+  const em = top.gweb_fit, tf = L.channelText(ch, { layout: 'z', urls: ['', '', '', '', 'fit'] });
+  ok(em && visOf(em, tf) && !visOf(em, tp) && !visOf(em, tz) && em.controls[0].gweb_fit_l.anchor_from === 'left_middle' && em.controls[1].gweb_fit_r.anchor_from === 'right_middle' && em.controls[1].gweb_fit_r.texture === 'textures/gweb/atlas',
+    'exact: the edge marks (left and right of the viewport) shown while the slot says fit');
+  const as = CFG.aspects, mid = (k) => Math.sqrt(as[k] * as[k + 1]), upto = (k) => Array.from({ length: k + 1 }, (_, i) => i);
+  ok(Math.abs(RT.aspectFromProbes(as, upto(80)) - mid(80)) < 1e-12 && RT.aspectFromProbes(as, upto(159)) === null && RT.aspectFromProbes(as, []) === null && RT.aspectFromProbes(as, [0, 1, 3]) === null
+    && as.every((a, i) => !i || (a / as[i - 1] - 1 < 0.0125)) && as[0] <= 0.56 && as[n - 1] >= 3.99,
+  'exact: the shape from the probes — between the widest fetched and the next (to ±0.62 %); none when all, none or not a run from 0 were fetched');
+  // the engine: no shape known → measured on opening; the browser exact afterwards; /web:size; /web:fit
+  const titles = [], props = {}, acts = [], says = [], logs = [], saved = {};
+  let fetched = null;
+  const stateJ = (w = 2400, h = 1080) => ({ ok: true, sid: 'S1', frame: 1, bar: 1, w, h, barH: Math.round(h * 0.1), url: 'http://x/', title: 'T', tabs: 1, tab: 0, focus: 'page', frameUrl: 'http://10.0.2.2:8787/s/S1/f/1.png', barUrl: 'http://10.0.2.2:8787/s/S1/b/1.png' });
+  const http = async (method, p, body) => {
+    if (method === 'POST' && p === '/s') return { status: 200, json: stateJ() };
+    if (method === 'POST' && p === '/s/S1') { acts.push(body); return { status: 200, json: stateJ(body.w, body.h) }; }
+    if (p.startsWith('/s/S1/next')) return new Promise(() => {});
+    if (method === 'GET' && p.startsWith('/asp/')) { logs.push(`asked ${p}`); return { status: 200, json: fetched }; }
+    return { status: 404, json: null };
+  };
+  const P = { id: 'p2', name: 'B', isValid: true };
+  const smp = { rot: { x: 0, y: 0 }, move: { x: 0, y: 0 }, jump: false, sneak: false, slot: 0, mode: 'Gamepad', swings: 0, uses: 0 };
+  const io = { players: () => [P], sample: () => Object.assign({}, smp), setProp: (p, k, v) => { props[k] = v; }, freeze: () => {}, setRotation: () => {},
+    say: (p, t) => says.push(t), log: (l) => logs.push(l), http, touch: () => false, platform: () => 'Desktop', load: (p, k) => saved[k], save: (p, k, v) => { saved[k] = v; }, wait: () => Promise.resolve() };
+  const chIo = { title: (p, t) => titles.push(t), prop: (p, k, v) => { props[k] = v; }, hideHud: () => [], restoreHud: () => {} };
+  const chn = GS.channel.create({ ns: 'gweb', slots: CFG.slotCount, width: 160, refreshTicks: 0 }, chIo), B = RT.createBrowsers(CFG, io, GS, chn);
+  const flush = () => new Promise((r) => setTimeout(r, 5)), last = () => GS.channel.read({ slots: CFG.slotCount, width: 160 }, titles[titles.length - 1]);
+  await B.open(P, 'http://x/'); await flush(); B.tick();
+  const r0 = last(), nonce = (/\/asp\/([\w-]+)$/.exec(r0.urls[4] || '') || [])[1];
+  ok(r0.layout === 'b' && nonce && r0.urls[4] === `http://10.0.2.2:8787/asp/${nonce}`, 'exact: no shape known — the box of the device (16:9) and the aspect probe shown at once, its base where the game fetches the frames', JSON.stringify(r0));
+  fetched = { c: upto(98), u: upto(101) };
+  for (let i = 0; i < CFG.detectTicks + 2; i++) B.tick();
+  await flush(); B.tick();
+  const r1 = last(), st = B.state(P), want = mid(98), resize = acts.filter((a) => a.op === 'resize').pop();
+  ok(logs.includes(`asked /asp/${nonce}`) && Math.abs(st.asp - want) < 1e-9 && st.layout === 'z' && r1.layout === 'z' && !r1.urls[4] && saved['gweb:asp'] === st.asp && props['gweb:asp'] === Math.round(want * 1000)
+    && resize && resize.h === 1080 && Math.abs(resize.w - Math.round(1080 * want / 2) * 2) <= 0,
+  'exact: detectTicks later the service is asked; the clipped set gives the shape (between the widest fetched and the next), kept; the browser exact (the frame that shape at 1080), the probe gone, the pointer put across by it', JSON.stringify({ asp: st.asp, want, resize, slot: r1.urls[4] }));
+  // the pointer at the right edge of the exact box: its share 1 → drawn at asp x Bh / 2 (the Molang of the bones)
+  B.command(P, 'pointer', ['1', '0.5']);
+  const ptr = props['gweb:ptr'], px = (ptr % 4096) / 4095, drawn = (px - 0.5) * props['gweb:asp'] * (CFG.layouts.z.Bh / 1000);
+  ok(Math.abs(drawn - want * CFG.layouts.z.Bh / 2) < 0.2, 'exact: the pointer at the share 1 is drawn at the screen\'s edge (asp x Bh / 2 units: the edge of a screen that shape)', JSON.stringify({ drawn, edge: want * CFG.layouts.z.Bh / 2 }));
+  // /web:fit: the edges marked, the pointer's tip on the right edge of a 2.4 screen, a click → the shape 2.4
+  const why = B.command(P, 'fit', []);
+  const r2 = last();
+  B.state(P).ctl.pointerTo(2.4 * CFG.layouts.z.Bh / 2, 0);
+  smp.swings = 1; B.tick(); smp.swings = 0; await flush(); B.tick();
+  const r3 = last();
+  ok(why === '' && r2.urls[4] === 'fit' && Math.abs(B.state(P).asp - 2.4) < 1e-6 && !B.state(P).fitting && !r3.urls[4] && saved['gweb:asp'] === B.state(P).asp,
+    'exact: /web:fit marks the edges (the slot says fit); the pointer\'s tip on the right edge and a click → the shape (2.4), kept, the marks gone', JSON.stringify({ why, asp: B.state(P).asp, slot: r3.urls[4] }));
+  // a shape kept: the next opening is exact at once (no probe)
+  B.close(P); titles.length = 0;
+  await B.open(P, 'http://x/'); await flush(); B.tick();
+  const r4 = last();
+  ok(r4.layout === 'z' && !r4.urls[4], 'exact: a shape kept — the next browser is exact at once, nothing measured again', JSON.stringify(r4));
+  // the probes that say nothing (the game fetched them all): the box stays, the player told how to set it
+  saved['gweb:asp'] = undefined; B.close(P); says.length = 0;
+  const P3 = P; B.state(P3).asp = null;
+  await B.open(P3, 'http://x/'); await flush(); B.tick();
+  fetched = { c: upto(159), u: upto(159) };
+  for (let i = 0; i < CFG.detectTicks + 2; i++) B.tick();
+  await flush(); B.tick();
+  ok(B.state(P3).layout === 'b' && !B.state(P3).asp && says.some((t) => t.includes('/web:fit')), 'exact: probes that say nothing (every one fetched) — the box stays and the player is told /web:fit or /web:size', JSON.stringify({ lay: B.state(P3).layout, says }));
+}
+
+// ---- the game's WebSocket (/connect): a fake game over TCP (the frames, the encryption handshake and stream, commands answered by
+//      the REAL wsLink of the pack's WebSocket build) — the service's requests made through it, a chat line typed
+{
+  const net = await import('node:net'), crypto = await import('node:crypto');
+  const W = await import('../bds/geoui/web/mcws.mjs'), { startServer } = await import('../bds/geoui/web/server.mjs'), RT = require('../bds/geoui/web/runtime.js');
+  async function fakeGame(port, { encrypt, link, player, chatLines = [] }) {
+    const sock = net.connect(port, '127.0.0.1');
+    await new Promise((r) => sock.once('connect', r));
+    const key = crypto.randomBytes(16).toString('base64');
+    sock.write(`GET / HTTP/1.1\r\nHost: 10.0.2.2:${port}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${key}\r\nSec-WebSocket-Version: 13\r\n${encrypt ? `Sec-WebSocket-Protocol: ${W.SUBPROTOCOL}\r\n` : ''}\r\n`);
+    const st = { head: '', open: false, accept: '', proto: '', cipher: null, cmds: [], subs: [], pumps: 0 };
+    const reader = W.frameReader();
+    const send = (obj) => { const b = Buffer.from(JSON.stringify(obj)); sock.write(W.encodeFrame(1, st.cipher ? st.cipher.enc.update(b) : b, true)); };
+    const answer = (id, body) => send({ header: { version: 1, requestId: id, messagePurpose: 'commandResponse' }, body });
+    const onMsg = (buf) => {
+      const j = JSON.parse((st.cipher ? st.cipher.dec.update(buf) : buf).toString('utf8')), h = j.header;
+      if (h.messagePurpose === 'subscribe') { st.subs.push(j.body.eventName); if (chatLines.length) setTimeout(() => { for (const m of chatLines) send({ header: { version: 1, requestId: crypto.randomUUID(), messagePurpose: 'event', eventName: 'PlayerMessage' }, body: { message: m, sender: player.name, type: 'chat' } }); }, 30); return; }
+      const line = j.body.commandLine; st.cmds.push(line.slice(0, 40));
+      let mm;
+      if ((mm = /^enableencryption "([^"]+)" "([^"]+)"$/.exec(line))) {
+        const kp = W.newKeyPair(), salt = Buffer.from(mm[2], 'base64');
+        answer(h.requestId, { statusCode: 0, publicKey: kp.der.toString('base64') });
+        st.cipher = W.cipherPair(W.sessionKey(kp.privateKey, mm[1], salt));
+        return;
+      }
+      if ((mm = /^web:pump "([^"]*)"$/.exec(line))) { st.pumps++; const out = link.pump(player, mm[1]); answer(h.requestId, out ? { statusCode: 0, statusMessage: out } : { statusCode: 0 }); return; }
+      answer(h.requestId, { statusCode: -2147483648, statusMessage: 'unknown' });
+    };
+    sock.on('data', (c) => {
+      if (!st.open) {
+        st.head += c.toString('latin1');
+        const i = st.head.indexOf('\r\n\r\n'); if (i < 0) return;
+        st.accept = (/Sec-WebSocket-Accept: (\S+)/i.exec(st.head) || [])[1]; st.proto = (/Sec-WebSocket-Protocol: (\S+)/i.exec(st.head) || [])[1] || '';
+        st.open = true; const rest = Buffer.from(st.head.slice(i + 4), 'latin1'); if (!rest.length) return; c = rest;
+      }
+      for (const f of reader.push(c)) if (f.opcode === 1 || f.opcode === 2) onMsg(f.payload);
+    });
+    st.close = () => sock.destroy(); st.key = key;
+    return st;
+  }
+  const svc = await startServer({ port: 0, pumpMs: 30, pumpMax: 60, log: () => {} });
+  try {
+    for (const encrypt of [true, false]) {
+      let tick = 0;
+      const chatsSeen = [], logs = [];
+      const link = RT.wsLink({ tick: () => tick, log: (l) => logs.push(l), run: (fn) => fn(), chat: (p, t) => chatsSeen.push(t) });
+      const P = { id: `p${encrypt}`, name: encrypt ? 'Alex' : 'Steve' };
+      const game = await fakeGame(svc.port, { encrypt, link, player: P, chatLines: ['!hello world', 'just talking', '!!'] });
+      const iv = setInterval(() => { tick++; }, 5);
+      for (let i = 0; i < 100 && !link.linked(P.id); i++) await new Promise((r) => setTimeout(r, 10));
+      const t0 = Date.now(), r = await link.call('GET', '/info', undefined, P), rtt = Date.now() - t0;
+      const asp = await link.call('GET', '/asp/none', undefined, P);
+      await new Promise((rr) => setTimeout(rr, 120));
+      const info = await (await fetch(`${svc.url}/info`)).json();
+      clearInterval(iv);
+      const me = (info.ws || []).find((l) => l.player === P.name);
+      ok(game.accept === W.acceptKey(game.key) && game.proto === (encrypt ? W.SUBPROTOCOL : '') && (encrypt ? game.cmds[0].startsWith('enableencryption') : !game.cmds.some((c) => c.startsWith('enableencryption')))
+        && game.subs.includes('PlayerMessage') && link.linked(P.id) && link.base(P.id) === `http://10.0.2.2:${svc.port}` && logs.some((l) => l.startsWith('ws linked'))
+        && r.status === 200 && r.json && r.json.ok && r.json.public === `http://10.0.2.2:${svc.port}` && asp.status === 200 && Array.isArray(asp.json.c)
+        && me && me.encrypt === encrypt && me.requests >= 2 && game.pumps >= 3 && chatsSeen.join('|') === 'hello world|\n',
+      `WebSocket (${encrypt ? 'encrypted: enableencryption, then AES-256-CFB8 each way' : 'plain'}): the upgrade (accept key${encrypt ? ', the subprotocol' : ''}), PlayerMessage subscribed, /web:pump as the player — the script's requests made by the service (its pictures' address the one the game used: 10.0.2.2), answered in a later pump (split in parts when long), chat lines with ! typed (!! = Enter)`,
+      JSON.stringify({ accept: game.accept === W.acceptKey(game.key), proto: game.proto, cmds: game.cmds.slice(0, 3), subs: game.subs, linked: link.linked(P.id), base: link.base(P.id), status: r.status, pub: r.json && r.json.public, me, pumps: game.pumps, chatsSeen, rtt }));
+      game.close();
+    }
+    // a request with no link is refused at once (the player told how to connect); one never answered is given up
+    let tick = 0;
+    const link = RT.wsLink({ tick: () => tick, log: () => {}, run: (fn) => fn(), chat: () => {} });
+    const noLink = await link.call('GET', '/info', undefined, { id: 'x', name: 'X' }).then(() => 'answered', (e) => String(e.message));
+    link.pump({ id: 'y', name: 'Y' }, '');
+    const lost = link.call('GET', '/info', undefined, { id: 'y', name: 'Y' }).then(() => 'answered', (e) => String(e.message));
+    tick = 1000; link.sweep();
+    ok(noLink.includes('/connect') && (await lost).includes('no answer'), 'WebSocket: no link — refused at once with how to connect; a request never answered is given up (the caller sees an error)', JSON.stringify({ noLink, lost: await lost }));
+    const parts = W.pumpLines('web', { r: [[1, 200, { a: 'x'.repeat(300) }]] }, 7, 100);
+    ok(parts.length > 3 && parts.every((l) => /^web:pump "7:\d+\/\d+:[\w-]+"$/.test(l)) && W.pumpLines('web', { h: { base: 'http://x' } }, 1)[0].startsWith('web:pump "'),
+      'WebSocket: pump data longer than the limit goes in parts (seq:i/n:part), each a command line with no space, quote or slash in its data');
+  } finally { await svc.close(); }
 }
 
 // ---- the backdrop of many layouts: one short sum (8 本目・9 本目: an `or` of 16 comparisons never showed in the game — R10.19)
@@ -383,20 +542,19 @@ function jsonui(expr, vars) {
   'F1 camera: the pack makes <ns>:eye (follow_orbit at the eyes, radius 0.1, no extend_player_rendering); f1Camera false leaves it out');
 }
 
-// ---- every screen: the browser's shapes use every letter of the channel, and any screen from 3:4 to 32:9 gets a page of its shape
-//      within 2.6 % a side (the rest the backdrop); the page lands where the formula says on each (1e-3 px)
+// ---- every screen before its shape is known: 24 boxes (b–y) and the exact layout (z); any landscape screen 1:1–32:9 gets a box of
+//      its shape within 4.9 % a side (the rest the backdrop); the page lands where the formula says on each
 {
   const M = await import('../bds/geoui/web/make.mjs'), RT = require('../bds/geoui/web/runtime.js'), CFG = M.config();
-  const ks = Object.keys(CFG.layouts), as = ks.map((k) => CFG.layouts[k].aspect).sort((a, b) => a - b);
+  const ks = Object.keys(CFG.layouts), boxes = ks.filter((k) => !CFG.layouts[k].fill), as = boxes.map((k) => CFG.layouts[k].aspect).sort((a, b) => a - b).filter((a) => a >= 1);
   const gap = Math.max(...as.slice(1).map((a, i) => a / as[i] - 1));
   let worst = 0, worstAt = '';
-  for (let r = 0.75; r <= 32 / 9 + 1e-9; r *= 1.003) {
-    const H = 1080, W = Math.round(H * r), k = RT.layoutFor(CFG, `${W}x${H}`), e = M.expected(W, H, k).page;
-    const fill = Math.max((e.x1 - e.x0) / W, (e.y1 - e.y0 + (e.y0 - M.expected(W, H, k).toolbar.y0)) / H);
-    const lost = 1 - fill; if (lost > worst) { worst = lost; worstAt = `${W}x${H} ${k}`; }
+  for (let r = 1; r <= 32 / 9 + 1e-9; r *= 1.003) {
+    const H = 1080, W = Math.round(H * r), k = RT.layoutFor(CFG, `${W}x${H}`), e = M.expected(W, H, k);
+    const lost = 1 - Math.min((e.page.x1 - e.page.x0) / W, (e.page.y1 - e.toolbar.y0) / H); if (lost > worst) { worst = lost; worstAt = `${W}x${H} ${k}`; }
   }
-  ok(ks.length === 25 && ks.join('') === 'bcdefghijklmnopqrstuvwxyz' && gap < 0.108 && worst < 0.052,
-    'every screen: 25 shapes (b–z), neighbours at most 10.7 % apart, any screen 3:4–32:9 loses at most 5.2 % of one side to the backdrop', JSON.stringify({ gap, worst, worstAt }));
+  ok(ks.length === 25 && boxes.join('') === 'bcdefghijklmnopqrstuvwxy' && CFG.layouts.z.fill && CFG.fill === 'z' && gap < 0.108 && worst < 0.049,
+    'every screen: 24 boxes (b–y) and the exact layout z; landscape boxes at most 10.7 % apart, any screen 1:1–32:9 loses at most 4.9 % of one side to the backdrop until its shape is known', JSON.stringify({ gap, worst, worstAt }));
   const named = { '2340x1080': 'f', '2388x1668': 'p', '2208x1840': 'q', '1280x1024': 'k', '3440x1440': 'o', '1440x1440': 'j', '2560x1600': 'd', '2732x2048': 'c', '1179x2556': 'n' };
   ok(Object.entries(named).every(([s2, k]) => RT.layoutFor(CFG, s2) === k), 'every screen: common resolutions pick their own shape (19.5:9, iPad Pro, folds, 5:4, ultrawide, 1:1, 16:10, iPad, a phone held upright)',
     JSON.stringify(Object.keys(named).map((s2) => [s2, RT.layoutFor(CFG, s2)])));
