@@ -1824,22 +1824,41 @@
       }
     ]
   },
-  "hud_title_text": {
-    "bindings": [
+  "root_panel": {
+    "modifications": [
       {
-        "binding_name": "#hud_title_text_string",
-        "binding_type": "global",
-        "binding_condition": "always"
+        "control_name": "hud_title_text_area",
+        "operation": "insert_after",
+        "value": [
+          {
+            "gweb_title_area": {
+              "type": "panel",
+              "factory": {
+                "name": "hud_title_text_factory",
+                "control_ids": {
+                  "hud_title_text": "hud_title_text@hud.hud_title_text"
+                }
+              },
+              "bindings": [
+                {
+                  "binding_name": "#hud_title_text_string",
+                  "binding_type": "global"
+                },
+                {
+                  "binding_type": "view",
+                  "source_property_name": "(not (('%.4s' * #hud_title_text_string) = '~gu~'))",
+                  "target_property_name": "#visible"
+                }
+              ]
+            }
+          }
+        ]
       },
       {
-        "binding_type": "view",
-        "source_property_name": "(not (('%.4s' * #hud_title_text_string) = '~gu~'))",
-        "target_property_name": "#visible",
-        "binding_condition": "always"
+        "control_name": "hud_title_text_area",
+        "operation": "remove"
       }
-    ]
-  },
-  "root_panel": {
+    ],
     "bindings": [
       {
         "binding_name": "#hud_visible",
