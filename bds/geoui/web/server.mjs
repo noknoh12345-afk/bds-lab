@@ -21,9 +21,14 @@
 //   GET  /noise/<w>x<h>.png (a big file: every pixel its own)   /count/<name>/<w>x<h>.png (the next of 11 hues at each fetch)
 //   GET  /slow/<ms>/<one of those>    the same after a wait (what the game shows while a picture is on its way)
 //   GET  /hits?since=<ms>             what was fetched: [{ t, path, ua }] (the game's fetches, timed — for the checks)
+//   GET  /asp/<nonce>/<c|u><k>.png    the aspect probe's tiny pictures (clear, 2 x 2): which the game fetched is written down
+//   GET  /asp/<nonce>                 { c: [k…], u: [k…] } — the probes of that nonce the game fetched (the script: the screen's shape)
 //   GET  /demo/<file>                 the demo pages      POST /quit (this machine only) the service ends
 //   POST /tunnel { url }              (this machine only) the https address a tunnel gives it (lab.mjs): /info says it, and
 //                                     a request with x-geoui-public: tunnel gets its pictures' addresses there
+// WebSocket (mcws.mjs): the game's own /connect <this machine>:8787 — the link for worlds with no @minecraft/server-net (the pack's
+// WebSocket build, geoui_web_ws): the service runs /web:pump as that player, its output the script's requests (made here as if from
+// this machine, the pictures' address the one the game used), the next pump the answers. --no-ws: none.
 // A state carries frameUrl and barUrl as the game must fetch them: the base is x-geoui-public when the request says it (the
 // script knows what its players can reach), else --public, else this machine's LAN address.
 import http from 'node:http';
@@ -32,6 +37,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { encodePng } from '../png.mjs';
+import { attachMcws } from './mcws.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const VERSION = '1.1.0';
@@ -87,7 +93,8 @@ export async function ensureFonts(log = () => {}) {
 export async function startServer(o = {}) {
   const opt = Object.assign({ port: Number(process.env.GEOUI_WEB_PORT) || 8787, host: '0.0.0.0', idle: 0, key: process.env.GEOUI_WEB_KEY || '', log: () => {}, maxPx: 4096 }, o);
   let engine = null, enginePromise = null, last = Date.now(), port = opt.port, fonts = opt.fonts ? 'checking' : 'not checked', tunnel = opt.tunnel || '', tunnelPid = 0;
-  const cache = new Map(), counts = new Map(), hits = [];
+  const cache = new Map(), counts = new Map(), hits = [], probes = new Map();
+  const CLEAR = encodePng({ width: 2, height: 2, data: Buffer.alloc(16) });
   const fontsReady = opt.fonts ? ensureFonts(opt.log).then((r) => { fonts = r; }, () => { fonts = 'no'; }) : Promise.resolve();
   // (opt.prefetch: Playwright installed now, in the background, so the first session does not wait for it — a first session
   //  waits for this, never two installs at once)
@@ -130,7 +137,8 @@ export async function startServer(o = {}) {
       const slow = /^\/slow\/(\d{1,5})(\/.+\.png)$/.exec(pathname);
       if (req.method === 'GET' && slow) { await new Promise((r) => setTimeout(r, Math.min(20000, Number(slow[1])))); pathname = slow[2]; res.__fresh = true; }
       const parts = pathname.split('/').filter(Boolean);
-      if (req.method === 'GET' && pathname === '/info') return send(res, 200, { ok: true, name: 'geoui-web', version: VERSION, public: publicOf(req), sessions: engine ? engine.sessions.size : 0, browser: !!engine, fonts, tunnel, now: Date.now() });
+      if (req.method === 'GET' && pathname === '/info') return send(res, 200, { ok: true, name: 'geoui-web', version: VERSION, public: publicOf(req), sessions: engine ? engine.sessions.size : 0, browser: !!engine, fonts, tunnel, now: Date.now(),
+        ws: mcws ? [...mcws.links].map((l) => ({ player: l.player, remote: l.remote, encrypt: l.encrypt, base: l.base, pumps: l.pumps, requests: l.requests })) : null });
       if (req.method === 'GET' && pathname === '/hits') { const since = Number(u.searchParams.get('since')) || 0; return send(res, 200, { ok: true, now: Date.now(), hits: hits.filter((h) => h.t > since) }); }
       if (req.method === 'POST' && pathname === '/tunnel') {
         if (!isLocal(req)) return send(res, 403, { ok: false, error: 'local only' });
@@ -147,6 +155,18 @@ export async function startServer(o = {}) {
         return undefined;
       }
       let m;
+      // (the aspect probe: a clear picture, and which of them the game fetched — only those it drew, if it fetches no others)
+      if (req.method === 'GET' && (m = /^\/asp\/([\w-]{1,24})\/([cu])(\d{1,4})\.png$/.exec(pathname))) {
+        let e = probes.get(m[1]);
+        if (!e) { if (probes.size > 200) probes.delete(probes.keys().next().value); e = { t: Date.now(), c: new Set(), u: new Set() }; probes.set(m[1], e); }
+        e[m[2]].add(Number(m[3]));
+        res.__fresh = true;
+        return send(res, 200, CLEAR, 'image/png');
+      }
+      if (req.method === 'GET' && (m = /^\/asp\/([\w-]{1,24})$/.exec(pathname))) {
+        const e = probes.get(m[1]);
+        return send(res, 200, { ok: true, c: e ? [...e.c].sort((a, b) => a - b) : [], u: e ? [...e.u].sort((a, b) => a - b) : [] });
+      }
       if (req.method === 'GET' && (m = /^\/solid\/([0-9a-fA-F]{6})\/(\d{1,4})x(\d{1,4})\.png$/.exec(pathname))) { const [w, h] = dims(m[2], m[3]); return send(res, 200, cached(pathname, () => solidPng(w, h, hex(m[1]))), 'image/png'); }
       if (req.method === 'GET' && (m = /^\/split\/([0-9a-fA-F]{6})\/([0-9a-fA-F]{6})\/(\d{1,4})x(\d{1,4})\.png$/.exec(pathname))) { const [w, h] = dims(m[3], m[4]); return send(res, 200, cached(pathname, () => solidPng(w, h, hex(m[1]), hex(m[2]))), 'image/png'); }
       if (req.method === 'GET' && (m = /^\/quad\/(\d{1,4})x(\d{1,4})\.png$/.exec(pathname))) { const [w, h] = dims(m[1], m[2]); return send(res, 200, cached(pathname, () => quadPng(w, h)), 'image/png'); }
@@ -202,6 +222,8 @@ export async function startServer(o = {}) {
   server.keepAliveTimeout = 65000;
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(opt.port, opt.host, resolve); });
   port = server.address().port;
+  // (the game's WebSocket: /connect <this machine>:<port> — a link a player's game)
+  const mcws = opt.ws === false ? null : attachMcws(server, { port, log: opt.log, cmd: opt.cmd || 'web', version: VERSION, idleMs: opt.pumpMs || 100, pumpMax: opt.pumpMax });
   // (what changes by itself: sessions looked at again when due; the service ends itself after idle seconds with no request)
   let polling = false, closed = false;
   const timer = setInterval(async () => {
@@ -213,10 +235,11 @@ export async function startServer(o = {}) {
   }, 100);
   timer.unref?.();
   const api = {
-    server, port, url: `http://127.0.0.1:${port}`, key: opt.key, hits, get engine() { return engine; },
+    server, port, url: `http://127.0.0.1:${port}`, key: opt.key, hits, mcws, get engine() { return engine; },
     async close() {
       if (closed) return;
       closed = true; clearInterval(timer);
+      if (mcws) mcws.close();
       if (tunnelPid) { try { process.kill(tunnelPid); } catch { /* gone */ } }
       if (engine) await engine.close();
       await new Promise((r) => { server.close(r); server.closeAllConnections?.(); });
@@ -229,8 +252,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const a = process.argv.slice(2), arg = (k, d) => { const i = a.indexOf(k); return i >= 0 ? a[i + 1] : d; };
   const key = arg('--key', process.env.GEOUI_WEB_KEY || '');
   const s = await startServer({ port: Number(arg('--port', process.env.GEOUI_WEB_PORT || 8787)), host: arg('--host', '0.0.0.0'), public: arg('--public', process.env.GEOUI_WEB_PUBLIC || ''),
-    idle: Number(arg('--idle', 0)), key, fonts: a.includes('--fonts'), prefetch: true, log: (l) => console.log(l) });
+    idle: Number(arg('--idle', 0)), key, fonts: a.includes('--fonts'), prefetch: true, ws: !a.includes('--no-ws'), log: (l) => console.log(l) });
   console.log(`GEOUI_WEB listening ${s.url} public ${process.env.GEOUI_WEB_PUBLIC || arg('--public', '') || `http://${lanIp()}:${s.port}`}${key ? ' (key)' : ''}`);
+  if (s.mcws) console.log(`GEOUI_WEB WebSocket: ゲームで /connect ${lanIp()}:${s.port}`);
   const stop = () => s.close().finally(() => process.exit(0));
   process.on('SIGTERM', stop); process.on('SIGINT', stop);
 }
