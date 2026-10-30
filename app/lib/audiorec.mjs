@@ -4,6 +4,7 @@
 // device when it was written (the session that wrote it had no game): the first run tells whether redroid's audio path lets
 // AudioPlaybackCapture hear the game.
 import { spawn, spawnSync } from 'node:child_process';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -95,6 +96,27 @@ export function ceiling({ labDir, addon = 'spectral', name, ids }) {
   const r = spawnSync(py, [path.join(unit, 'tools', 'rig', 'songpack.py'), '--unit', dir, '--songs', ids.join(',')], { encoding: 'utf8', timeout: 1_800_000, maxBuffer: 64e6, cwd: unit });
   if (r.status !== 0) throw new Error(`天井を作れません: ${(r.stderr || r.stdout).trim().split('\n').slice(-3).join(' | ').slice(0, 400)}`);
   return JSON.parse(r.stdout.trim().split('\n').pop());
+}
+
+/** a recording sent out through the job's log, readable only with the private key of the unit's tools/rig/rec_public.pem
+ *  (the redroid workflow's artifacts carry no recordings, and a public lab seals what they do carry): Opus at `kbps`, then
+ *  AES-256-GCM with a key of its own, that key sealed by RSA-OAEP (SHA-256) to the public key — the log shows nothing but
+ *  ciphertext. → { lines: ["<i>/<n> <base64>"…], kb, sha256 (of the Opus file) }; tools/rig/rec_decode.mjs puts them together */
+export function exportLines({ labDir, addon = 'spectral', wav, kbps = 128 }) {
+  const unit = path.join(labDir, 'bds', 'addons', addon), pubFile = path.join(unit, 'tools', 'rig', 'rec_public.pem');
+  if (!fs.existsSync(pubFile)) throw new Error(`公開鍵がありません: ${path.relative(labDir, pubFile)}`);
+  if (!fs.existsSync(wav)) throw new Error(`録音がありません: ${path.basename(wav)}`);
+  pythonFor(labDir);                                       // (ffmpeg, from apt when missing)
+  const opus = wav.replace(/\.wav$/, '.opus');
+  const r = spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', wav, '-c:a', 'libopus', '-b:a', `${kbps}k`, opus], { encoding: 'utf8', timeout: 600_000 });
+  if (r.status !== 0) throw new Error(`Opus にできません: ${(r.stderr || '').trim().slice(-300)}`);
+  const data = fs.readFileSync(opus), key = crypto.randomBytes(32), iv = crypto.randomBytes(12);
+  const c = crypto.createCipheriv('aes-256-gcm', key, iv), enc = Buffer.concat([c.update(data), c.final()]), tag = c.getAuthTag();
+  const ek = crypto.publicEncrypt({ key: fs.readFileSync(pubFile, 'utf8'), padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' }, key);
+  const len = Buffer.alloc(2); len.writeUInt16BE(ek.length);
+  const b64 = Buffer.concat([Buffer.from('SPR1'), len, ek, iv, tag, enc]).toString('base64'), size = 8_000, n = Math.ceil(b64.length / size);
+  const lines = Array.from({ length: n }, (_, i) => `${i + 1}/${n} ${b64.slice(i * size, (i + 1) * size)}`);
+  return { lines, kb: Math.round(data.length / 1024), sha256: crypto.createHash('sha256').update(data).digest('hex') };
 }
 
 /** what a recording says, measured by bds/addons/<addon>/tools/rig (analyze.py for calibration programs, score_song.py for a
