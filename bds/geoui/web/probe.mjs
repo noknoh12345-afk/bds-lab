@@ -104,7 +104,7 @@ export function expected(W, H) {
 const SCRIPT = `// GeoUI Web probe (bds-lab: bds/geoui/web/probe.mjs makes this file — change that, not this).
 // /scriptevent gwp:<verb> — info · url <slot> <URL | /path (the service's own) | ~/path (through its tunnel) | -> · f1 0|1|touch ·
 // layout <letter|-> · show <bits> · stay <ticks> [refresh ticks] · raw <title> · reset · mark · lat <slot> <URL…> · count <URL…> ·
-// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm|cam 0|1 (F1's parts alone) · fx 0|1|2 (the
+// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm|cam|free 0|1 (F1's parts alone; free: the browser's frozen camera) · fx 0|1|2 (the
 // first-person hand one way at a time: 1 scale 0, 2 moved down) ·
 // frames <n> <ticks> <buffered 0|1> <ms> (a browser's pictures) — every answer is a line GWP … in the server's log
 import { world, system, HudElement, HudVisibility, ControlScheme } from '@minecraft/server';
@@ -211,6 +211,7 @@ async function verb(v, a) {
         else if (a[0] === 'flag') io.title(p, on ? '~gu~1a' : '~gu~0a');
         else if (a[0] === 'arm') p.setProperty(NS + ':f1', on ? 1 : 0);
         else if (a[0] === 'cam') io.camera(p, on ? NS + ':eye' : null);
+        else if (a[0] === 'free') { if (on) p.camera.setCamera('minecraft:free', { location: p.getHeadLocation(), rotation: p.getRotation() }); else p.camera.clear(); }
       }
       log('PART ' + a.join(' '));
       return;
@@ -400,7 +401,7 @@ function appTxt() {
   //  対照は geoui_web_title_ctl: 題名を隠さない同じパック）・F1 の持ち物（ボーンでは動かない: カメラ gwp:eye で 1 人称を止める）)
   return `# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（5 本目）。
 # 1〜4 本目（run 40998593826・41001422618・41004077706・41008713796）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
-# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_title_vanilla,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に。5 本目は参加が戻されて測れず: 6 本目も同じ手順）
+# 実行: node lab.mjs app ci -a geoui_web_probe（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に。9 本目は背景の黒の区切りを足した）
 
 ${JOIN}
 ${TITLE}
@@ -462,6 +463,33 @@ measure diff cam-look
 do scriptevent gwp:rot
 until server GWP TURNED 5000
 do scriptevent gwp:f1 0
+wait 3000
+
+section backdrop
+do scriptevent gwp:reset
+do hud @a reset
+do tp @a 0 -60 0 0 30
+wait 3000
+shot world
+do scriptevent gwp:layout b
+wait 3000
+shot bd-b
+measure marks bd-b
+do scriptevent gwp:f1 1
+wait 3000
+shot bd-f1
+measure marks bd-f1
+do scriptevent gwp:f1 0
+do scriptevent gwp:part free 1
+wait 3000
+shot bd-free
+measure marks bd-free
+do scriptevent gwp:f1 1
+wait 3000
+shot bd-free-f1
+measure marks bd-free-f1
+do scriptevent gwp:part free 0
+do scriptevent gwp:reset
 wait 3000
 
 section f1-chat
