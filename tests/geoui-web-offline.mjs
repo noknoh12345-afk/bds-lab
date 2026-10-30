@@ -215,12 +215,32 @@ function jsonui(expr, vars) {
   const scene = { ns: 'ff', scale: { mode: 'height', s: 0.1 }, groups: [{ id: 'm', anchor: 'center' }], f1: true, urlImages: [{ id: 'p', group: 'm', rect: { x: -10, y: -10, w: 20, h: 20 } }] };
   const hud = L.hudScreen(scene);
   const rp = hud.root_panel.bindings, vis = rp.find((b) => b.target_property_name === '#visible');
-  ok(hud.hud_content.modifications[0].value[0]['ff_vp@hud.ff_vp'] && !hud.root_panel.modifications
+  ok(hud.hud_content.modifications[0].value[0]['ff_vp@hud.ff_vp'] && !(hud.root_panel.modifications || []).some((m) => m.array_name === 'controls' || JSON.stringify(m.value || '').includes('ff_vp'))
     && rp.some((b) => b.binding_name === '#hud_visible' && b.binding_type === 'global' && !b.binding_name_override)
     && rp.some((b) => b.binding_name === '#hud_alpha' && b.binding_name_override === '#alpha') && rp.some((b) => b.binding_name === '#hud_propagate_alpha' && b.binding_name_override === '#propagateAlpha')
     && vis.source_property_name === "(#hud_visible and (not (('%.5s' * #hud_title_text_string) = '~gu~1')))" && jsonui(vis.source_property_name, { '#hud_visible': true, '#hud_title_text_string': '~gu~1a' }) === false && jsonui(vis.source_property_name, { '#hud_visible': true, '#hud_title_text_string': '~gu~0b' }) === true,
   'F1 HUD: the viewport in hud_content (root_panel\'s box); root_panel keeps its own bindings and is hidden while the channel says F1', JSON.stringify(rp));
-  ok(hud.hud_title_text.bindings[1].source_property_name === "(not (('%.4s' * #hud_title_text_string) = '~gu~'))", 'F1 HUD: the game\'s own title hidden while it is the channel\'s');
+  {
+    // (the game's own title hidden while it is the channel's: by default (5 本目) hud_title_text untouched and root_panel's
+    //  hud_title_text_area put back with the same factory and a #visible binding; 'text' the 2〜4 本目 way; 'none' the control)
+    const mods = hud.root_panel.modifications || [], ins = mods.find((m) => m.operation === 'insert_after'), area = ins && ins.value[0].ff_title_area;
+    const avis = area && area.bindings.find((b) => b.target_property_name === '#visible').source_property_name;
+    ok(!hud.hud_title_text && ins && ins.control_name === 'hud_title_text_area' && mods.some((m) => m.operation === 'remove' && m.control_name === 'hud_title_text_area')
+      && mods.indexOf(ins) < mods.findIndex((m) => m.operation === 'remove')
+      && area.factory.name === 'hud_title_text_factory' && area.factory.control_ids.hud_title_text === 'hud_title_text@hud.hud_title_text'
+      && area.bindings[0].binding_name === '#hud_title_text_string' && area.bindings[0].binding_type === 'global'
+      && avis === "(not (('%.4s' * #hud_title_text_string) = '~gu~'))" && jsonui(avis, { '#hud_title_text_string': '~gu~0a' }) === false && jsonui(avis, { '#hud_title_text_string': 'HELLO' }) === true
+      && jsonui(avis, { '#hud_title_text_string': '' }) === true && rp.length === 5,
+    'F1 HUD: the game\'s own title hidden while it is the channel\'s — hud_title_text untouched, its area in root_panel put back with the same factory and a #visible binding (root_panel\'s F1 bindings kept)', JSON.stringify(mods));
+    const old = L.hudScreen(Object.assign({}, scene, { titleHide: 'text' })), none = L.hudScreen(Object.assign({}, scene, { titleHide: 'none' }));
+    const noMods = (h) => !(h.root_panel.modifications || []).some((m) => m.control_name === 'hud_title_text_area');
+    ok(old.hud_title_text.bindings[1].source_property_name === "(not (('%.4s' * #hud_title_text_string) = '~gu~'))" && noMods(old) && !none.hud_title_text && noMods(none)
+      && (() => { try { L.hudScreen(Object.assign({}, scene, { titleHide: 'x' })); return false; } catch { return true; } })(),
+    'F1 HUD: titleHide text (2〜4 本目: bindings on hud_title_text) and none (the control: the title left alone); anything else refused');
+    const noF1 = L.hudScreen({ ns: 'nf', groups: [{ id: 'm' }], urlImages: [{ id: 'p', group: 'm', rect: { x: 0, y: 0, w: 1, h: 1 } }] }), nm = noF1.root_panel.modifications;
+    ok(nm.length === 3 && nm[0].operation === 'insert_front' && nm[1].operation === 'insert_after' && nm[2].operation === 'remove' && !noF1.root_panel.bindings,
+      'URL images without F1: the viewport first in root_panel, then the title area put back; root_panel\'s own bindings untouched', JSON.stringify(nm));
+  }
   const plain = L.hudScreen({ ns: 'pp', groups: [{ id: 'm' }] });
   ok(plain.root_panel.modifications && !plain.hud_content && !plain.hud_title_text, 'without F1 or URL images: the viewport stays in root_panel, nothing of the game\'s HUD changed');
   const pk = P.build(Object.assign({}, scene, { textures: [{ id: 't', width: 4, height: 4, png: Buffer.alloc(0) }], bones: [{ name: 'ff_b', group: 'm' }], planes: [], hideLocalPlayer: 'v.ff_h > 0',
