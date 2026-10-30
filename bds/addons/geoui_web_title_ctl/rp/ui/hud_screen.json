@@ -1,0 +1,523 @@
+{
+  "namespace": "hud",
+  "gwp_vp": {
+    "type": "panel",
+    "$gwp_vp_size|default": [
+      "100%",
+      "100%"
+    ],
+    "size": "$gwp_vp_size",
+    "variables": [
+      {
+        "requires": "($compress_hud_width)",
+        "$gwp_vp_size": [
+          "111.111111%",
+          "100%"
+        ]
+      }
+    ],
+    "controls": [
+      {
+        "gwp_backdrop": {
+          "type": "image",
+          "texture": "textures/ui/Black.png",
+          "fill": true,
+          "size": [
+            "200%",
+            "200%"
+          ],
+          "alpha": 1,
+          "layer": -5,
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "(((('%.6s' * #hud_title_text_string) = '~gu~0b') or (('%.6s' * #hud_title_text_string) = '~gu~1b')))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gwp_g_c": {
+          "type": "panel",
+          "size": [
+            "100%y",
+            "10%"
+          ],
+          "anchor_from": "center",
+          "anchor_to": "center",
+          "offset": [
+            "17578.125%x",
+            "6890.625%y"
+          ],
+          "controls": [
+            {
+              "gwp_r_c": {
+                "type": "custom",
+                "renderer": "live_player_renderer",
+                "layer": 1,
+                "size": [
+                  "100%",
+                  "100%"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_name_override": "#visible"
+                  }
+                ]
+              }
+            },
+            {
+              "gwp_url_main": {
+                "type": "custom",
+                "renderer": "profile_image_renderer",
+                "layer": 0,
+                "size": [
+                  "468.75%",
+                  "468.75%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "top_left",
+                "offset": [
+                  "-3800%x",
+                  "-1520%y"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_title_text_string",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                    "target_property_name": "#profile_image_options"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                    "target_property_name": "#visible"
+                  }
+                ]
+              }
+            },
+            {
+              "gwp_url_under": {
+                "type": "custom",
+                "renderer": "profile_image_renderer",
+                "layer": -1,
+                "size": [
+                  "468.75%",
+                  "468.75%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "top_left",
+                "offset": [
+                  "-3800%x",
+                  "-1520%y"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_title_text_string",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.806s' * #hud_title_text_string))) - ' ') + '\"}')",
+                    "target_property_name": "#profile_image_options"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.806s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                    "target_property_name": "#visible"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "gwp_g_l": {
+          "type": "panel",
+          "size": [
+            "100%y",
+            "10%"
+          ],
+          "anchor_from": "left_middle",
+          "anchor_to": "center",
+          "offset": [
+            "8789.0625%x",
+            "6890.625%y"
+          ],
+          "controls": [
+            {
+              "gwp_r_l": {
+                "type": "custom",
+                "renderer": "live_player_renderer",
+                "layer": 1,
+                "size": [
+                  "100%",
+                  "100%"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_name_override": "#visible"
+                  }
+                ]
+              }
+            },
+            {
+              "gwp_url_left": {
+                "type": "custom",
+                "renderer": "profile_image_renderer",
+                "layer": 0,
+                "size": [
+                  "292.96875%",
+                  "292.96875%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "top_left",
+                "offset": [
+                  "-2984%x",
+                  "-2402%y"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_title_text_string",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') + '\"}')",
+                    "target_property_name": "#profile_image_options"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                    "target_property_name": "#visible"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "gwp_g_r": {
+          "type": "panel",
+          "size": [
+            "100%y",
+            "10%"
+          ],
+          "anchor_from": "right_middle",
+          "anchor_to": "center",
+          "offset": [
+            "0%x",
+            "6890.625%y"
+          ],
+          "controls": [
+            {
+              "gwp_r_r": {
+                "type": "custom",
+                "renderer": "live_player_renderer",
+                "layer": 1,
+                "size": [
+                  "100%",
+                  "100%"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_name_override": "#visible"
+                  }
+                ]
+              }
+            },
+            {
+              "gwp_url_right": {
+                "type": "custom",
+                "renderer": "profile_image_renderer",
+                "layer": 0,
+                "size": [
+                  "292.96875%",
+                  "292.96875%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "top_left",
+                "offset": [
+                  "-116%x",
+                  "-2402%y"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_title_text_string",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') + '\"}')",
+                    "target_property_name": "#profile_image_options"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                    "target_property_name": "#visible"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "gwp_g_t": {
+          "type": "panel",
+          "size": [
+            "100%y",
+            "10%"
+          ],
+          "anchor_from": "top_middle",
+          "anchor_to": "center",
+          "offset": [
+            "-8789.0625%x",
+            "6890.625%y"
+          ],
+          "controls": [
+            {
+              "gwp_r_t": {
+                "type": "custom",
+                "renderer": "live_player_renderer",
+                "layer": 1,
+                "size": [
+                  "100%",
+                  "100%"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_name_override": "#visible"
+                  }
+                ]
+              }
+            },
+            {
+              "gwp_url_top": {
+                "type": "custom",
+                "renderer": "profile_image_renderer",
+                "layer": 0,
+                "size": [
+                  "468.75%",
+                  "117.1875%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "top_left",
+                "offset": [
+                  "1825%x",
+                  "-5850%y"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_title_text_string",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') + '\"}')",
+                    "target_property_name": "#profile_image_options"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                    "target_property_name": "#visible"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "gwp_g_lb": {
+          "type": "panel",
+          "size": [
+            "100%y",
+            "10%"
+          ],
+          "anchor_from": "center",
+          "anchor_to": "center",
+          "offset": [
+            "-17578.125%x",
+            "6890.625%y"
+          ],
+          "controls": [
+            {
+              "gwp_r_lb": {
+                "type": "custom",
+                "renderer": "live_player_renderer",
+                "layer": 1,
+                "size": [
+                  "100%",
+                  "100%"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_name_override": "#visible"
+                  }
+                ]
+              }
+            },
+            {
+              "gwp_url_lay": {
+                "type": "custom",
+                "renderer": "profile_image_renderer",
+                "layer": 0,
+                "size": [
+                  "820.3125%",
+                  "175.78125%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "top_left",
+                "offset": [
+                  "2092.857143%x",
+                  "-3760%y"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_title_text_string",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_type": "global"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.646s' * #hud_title_text_string))) - ' ') + '\"}')",
+                    "target_property_name": "#profile_image_options"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.646s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                    "target_property_name": "#visible"
+                  }
+                ]
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.6s' * #hud_title_text_string) = '~gu~0b') or (('%.6s' * #hud_title_text_string) = '~gu~1b'))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gwp_g_rd": {
+          "type": "panel",
+          "size": [
+            "100%y",
+            "10%"
+          ],
+          "anchor_from": "top_left",
+          "anchor_to": "center",
+          "offset": [
+            "17578.125%x",
+            "10406.25%y"
+          ],
+          "controls": [
+            {
+              "gwp_r_rd": {
+                "type": "custom",
+                "renderer": "live_player_renderer",
+                "layer": 1,
+                "size": [
+                  "100%",
+                  "100%"
+                ],
+                "bindings": [
+                  {
+                    "binding_name": "#hud_visible",
+                    "binding_name_override": "#visible"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "hud_content": {
+    "modifications": [
+      {
+        "array_name": "controls",
+        "operation": "insert_front",
+        "value": [
+          {
+            "gwp_vp@hud.gwp_vp": {}
+          }
+        ]
+      }
+    ]
+  },
+  "root_panel": {
+    "bindings": [
+      {
+        "binding_name": "#hud_visible",
+        "binding_type": "global"
+      },
+      {
+        "binding_name": "#hud_title_text_string",
+        "binding_type": "global"
+      },
+      {
+        "binding_type": "view",
+        "source_property_name": "(#hud_visible and (not (('%.5s' * #hud_title_text_string) = '~gu~1')))",
+        "target_property_name": "#visible"
+      },
+      {
+        "binding_name": "#hud_alpha",
+        "binding_name_override": "#alpha",
+        "binding_type": "global"
+      },
+      {
+        "binding_name": "#hud_propagate_alpha",
+        "binding_name_override": "#propagateAlpha",
+        "binding_type": "global"
+      }
+    ]
+  }
+}
