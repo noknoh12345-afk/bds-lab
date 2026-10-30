@@ -23,7 +23,9 @@
 //   ch.tick(tick)                    every tick (or every few): sends again what is due
 //   ch.drop(player)                  a player who left
 // io = { title(p, text) (no time: see above), times(p) (the game's own title durations back: `title @s times 10 70 20`; optional),
-//        prop(p, name, value), hideHud(p, keep) → what was hidden before, restoreHud(p, before) }
+//        prop(p, name, value), hideHud(p, keep) → what was hidden before, restoreHud(p, before),
+//        camera(p, id | null) (optional, with cfg.camera — the pack's '<ns>:eye' preset: F1 sets it, off clears it. The first-person
+//        held item is not moved by any bone (RULES R10.13): a third-person camera at the eyes draws no first-person hand at all) }
 (function (root) {
   'use strict';
   const S = root.GeoUIScreen = root.GeoUIScreen || {};
@@ -63,6 +65,8 @@
     // (the player object kept: tick() sends to it again; a player who left is invalid and dropped)
     const of = (p) => { let s = st.get(p.id); if (!s) { s = { f1: false, flag: true, layout: '', urls: [], sent: null, at: -1e9, timesAt: null, hudBefore: null, player: p }; st.set(p.id, s); } s.player = p; return s; };
     // (a title sent: the game's own durations back a little later — after the channel's title has ended — for plain titles)
+    // (F1's camera: cfg.camera the preset, io.camera what sets and clears it — both optional)
+    const cam = (p, on) => { if (cfg.camera && typeof io.camera === 'function') { try { io.camera(p, on ? cfg.camera : null); } catch (e) { /* (a player leaving, a pack without it) */ } } };
     const sentOne = (s) => { if (typeof io.times === 'function') s.timesAt = now + Math.max(1, cfg.timesTicks | 0); };
     // (what the title says: F1's flag only when F1 hides root_panel too)
     const said = (s) => ({ f1: s.f1 && s.flag, layout: s.layout, urls: s.urls });
@@ -92,6 +96,7 @@
         if (on) { try { s.hudBefore = io.hideHud(p, (opts && opts.keep) || []) || []; } catch (e) { s.hudBefore = []; } }
         else { try { io.restoreHud(p, s.hudBefore || []); } catch (e) { /* (gone) */ } s.hudBefore = null; }
         if (cfg.ns) { try { io.prop(p, `${cfg.ns}:f1`, on ? 1 : 0); } catch (e) { /* (a pack without the property) */ } }
+        cam(p, on);
         send(p, s, true);
       },
       /** which layout's groups show ('' or null: none — the letter 'a') */
@@ -123,7 +128,7 @@
       /** everything off at once (F1 off, no layout, no URL): the title cleared */
       reset(p) {
         const s = of(p);
-        if (s.f1) { try { io.restoreHud(p, s.hudBefore || []); } catch (e) { /* (gone) */ } s.hudBefore = null; if (cfg.ns) { try { io.prop(p, `${cfg.ns}:f1`, 0); } catch (e) { /* (none) */ } } }
+        if (s.f1) { try { io.restoreHud(p, s.hudBefore || []); } catch (e) { /* (gone) */ } s.hudBefore = null; if (cfg.ns) { try { io.prop(p, `${cfg.ns}:f1`, 0); } catch (e) { /* (none) */ } } cam(p, false); }
         s.f1 = false; s.flag = true; s.layout = ''; s.urls = [];
         send(p, s, true);
       },
