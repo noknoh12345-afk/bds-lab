@@ -1,7 +1,7 @@
 // GeoUI Web probe (bds-lab: bds/geoui/web/probe.mjs makes this file — change that, not this).
 // /scriptevent gwp:<verb> — info · url <slot> <URL | /path (the service's own) | ~/path (through its tunnel) | -> · f1 0|1|touch ·
 // layout <letter|-> · show <bits> · stay <ticks> [refresh ticks] · raw <title> · reset · mark · lat <slot> <URL…> · count <URL…> ·
-// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm|cam 0|1 (F1's parts alone) · fx 0|1|2 (the
+// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm|cam|free 0|1 (F1's parts alone; free: the browser's frozen camera) · fx 0|1|2 (the
 // first-person hand one way at a time: 1 scale 0, 2 moved down) ·
 // frames <n> <ticks> <buffered 0|1> <ms> (a browser's pictures) — every answer is a line GWP … in the server's log
 import { world, system, HudElement, HudVisibility, ControlScheme } from '@minecraft/server';
@@ -108,6 +108,7 @@ async function verb(v, a) {
         else if (a[0] === 'flag') io.title(p, on ? '~gu~1a' : '~gu~0a');
         else if (a[0] === 'arm') p.setProperty(NS + ':f1', on ? 1 : 0);
         else if (a[0] === 'cam') io.camera(p, on ? NS + ':eye' : null);
+        else if (a[0] === 'free') { if (on) p.camera.setCamera('minecraft:free', { location: p.getHeadLocation(), rotation: p.getRotation() }); else p.camera.clear(); }
       }
       log('PART ' + a.join(' '));
       return;
