@@ -1,0 +1,93 @@
+# geoui_web_ws（bds/geoui/web/make.mjs が作る）: WebSocket 版を本物のアプリで（13 本目: 12 本目はつながらず — キーで打てたか・ゲームの答えを文字で見る、だめならチャットで）— プレイヤーが /connect 10.0.2.2:8787 を打つと、
+# ゲームがサービスに WebSocket でつながり（暗号化はゲームが求めれば）、サービスが /web:pump でスクリプトとやりとりする。@minecraft/server-net なし。
+# 実行: node lab.mjs app ci --batch geoui_web,geoui_web_ws（geoui_web は app-aspects.txt を scenario に、または単独）
+
+section join
+stop
+launch
+until title 600000
+join
+until joined 900000
+size 2400x1080
+wait 9000
+do tp @a 0 -60 0 0 0
+wait 3000
+absent clientlog \bERROR\b
+
+section connect
+press T 80
+wait 2000
+press SLASH 60
+press C 60
+press O 60
+press N 60
+press N 60
+press E 60
+press C 60
+press T 60
+press SPACE 60
+press 1 60
+press 0 60
+press PERIOD 60
+press 0 60
+press PERIOD 60
+press 2 60
+press PERIOD 60
+press 2 60
+press SHIFT+SEMICOLON 60
+press 8 60
+press 7 60
+press 8 60
+press 7 60
+wait 500
+press ENTER 80
+wait 2500
+shot ws-typed
+
+section ocr-connect
+until text (?i)(connect|websocket|wss?:|接続) 4000
+
+section ocr-denied
+expect text (?i)(unknown|不明|permission|権限|cheat|チート|syntax|構文)
+
+section linked-keys
+until server GWEB ws linked 30000
+
+section connect-chat
+chat /connect 10.0.2.2:8787
+wait 2500
+shot ws-chat
+until server GWEB ws linked 30000
+
+section open
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 9000
+do scriptevent gweb:debug 1
+wait 1500
+shot ws-open
+measure marks ws-open
+
+section click
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot ws-click
+measure marks ws-click
+
+section site
+do scriptevent gweb:go https://ja.wikipedia.org/wiki/Minecraft
+until server GWEB page .*wikipedia 60000
+wait 8000
+shot ws-wiki
+measure diff ws-wiki
+
+section close
+do scriptevent gweb:close
+until server GWEB close 10000
+wait 3000
+shot ws-closed
+measure diff ws-closed
