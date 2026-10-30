@@ -14,11 +14,31 @@
   'use strict';
   const W = root.GeoUIWeb = root.GeoUIWeb || {};
 
-  /** the frame for a layout and a height: { w, h, barH } (w even, the layout's aspect) */
-  function frameOf(CFG, lay, res) {
+  /** the frame for a layout and a height: { w, h, barH } (w even, the layout's aspect — or, for the exact layout, the screen's: asp) */
+  function frameOf(CFG, lay, res, asp) {
     const L = CFG.layouts[lay], h = Math.max(360, Math.min(CFG.maxRes || 1440, Math.round(Number(res) || CFG.res || 720)));
-    const w = Math.round(h * L.aspect / 2) * 2;
+    const a = L.fill ? (Number(asp) > 0 ? Number(asp) : 16 / 9) : L.aspect;
+    const w = Math.min(3840, Math.round(h * a / 2) * 2);
     return { w, h, barH: Math.round(h * CFG.barFrac) };
+  }
+  /** a shape as a number: a screen's width / height, or 'W:H' / 'WxH' text (null when it is none) */
+  function aspectOf(a) {
+    let r = Number(a);
+    const m = /^(\d+(?:\.\d+)?)\s*[:x×]\s*(\d+(?:\.\d+)?)$/i.exec(String(a || '').trim());
+    if (m) r = Number(m[1]) / Number(m[2]);
+    return r > 0 && r < 100 ? r : null;
+  }
+  /** the screen's shape from the aspect probe's fetches (CFG.aspects: the k-th probe is inside a screen at least aspects[k] wide):
+   *  fetched — the k's of one set the game fetched. The shape lies between the widest fetched and the next; null unless the
+   *  fetches are just the ones from 0 up to some k (the game fetched only what it drew) and that k is not the last */
+  function aspectFromProbes(aspects, fetched, commons) {
+    const ks = [...new Set((fetched || []).map(Number).filter((k) => Number.isInteger(k) && k >= 0 && k < aspects.length))].sort((a, b) => a - b);
+    if (!ks.length) return null;
+    const top = ks[ks.length - 1];
+    if (top >= aspects.length - 1 || ks.length !== top + 1) return null;
+    // (a common shape inside that step — 16:9, 20:9, 4:3, 3440x1440 … — is the screen's, exactly; else the step's middle: ±0.62 %)
+    const lo = aspects[top], hi = aspects[top + 1], c = (commons || []).filter((a) => a >= lo - 1e-9 && a < hi);
+    return c.length === 1 ? c[0] : Math.sqrt(lo * hi);
   }
   /** the layout whose aspect is nearest (a screen's width / height, or 'W:H' / 'WxH' text) */
   function layoutFor(CFG, a) {
@@ -27,12 +47,13 @@
     if (m) r = Number(m[1]) / Number(m[2]);
     if (!(r > 0)) return null;
     let best = null, bd = Infinity;
-    for (const [k, L] of Object.entries(CFG.layouts)) { const d = Math.abs(Math.log(L.aspect / r)); if (d < bd) { bd = d; best = k; } }
+    for (const [k, L] of Object.entries(CFG.layouts)) { if (L.fill) continue; const d = Math.abs(Math.log(L.aspect / r)); if (d < bd) { bd = d; best = k; } }
     return best;
   }
 
   /** the engine. io: { players(), sample(p) → { rot, move, jump, sneak, slot, mode, swings, uses } | null, setProp(p, name, v),
-   *  freeze(p, on), setRotation(p, rot), say(p, text), log(line), http(method, path, body) → Promise<{ status, json }>,
+   *  freeze(p, on), setRotation(p, rot), say(p, text), log(line), http(method, path, body, p) → Promise<{ status, json }> (p: the
+   *  player it is for — the WebSocket build sends it through that player's link),
    *  touch(p) → true for a player on a touch screen, platform(p), load(p, key), save(p, key, v), wait(ticks) → Promise } and ch:
    *  the title channel (GS.channel.create) */
   function createBrowsers(CFG, io, GS, ch) {
@@ -42,13 +63,18 @@
       let s = players.get(p.id);
       if (!s) {
         s = { open: false, gen: 0, sid: null, frame: 0, bar: 0, urls: { page: '', bar: '' }, under: { page: '', bar: '' }, pend: { page: null, bar: null }, latest: { page: null, bar: null }, topAt: { page: -1e9, bar: -1e9 }, layout: null, res: null, w: 0, h: 0, barH: 0, url: '', title: '', focus: 'page',
-          tabs: 0, tab: 0, ctl: null, q: [], busy: false, errors: 0, tick: 0, moveT: -99, moveDue: false, scrollT: 0, sneakT: -1, flash: 0, last: {}, starting: false };
+          tabs: 0, tab: 0, ctl: null, q: [], busy: false, errors: 0, tick: 0, moveT: -99, moveDue: false, scrollT: 0, sneakT: -1, flash: 0, last: {}, starting: false,
+          asp: null, fitting: false, detect: null, base: '' };
         players.set(p.id, s);
       }
       return s;
     }
     const set = (p, s, name, v) => { if (s.last[name] === v) return; s.last[name] = v; io.setProp(p, `${ns}:${name}`, v); };
-    const box = (s) => { const L = CFG.layouts[s.layout]; return { x0: -L.Bw / 2, y0: -L.Bh / 2, x1: L.Bw / 2, y1: L.Bh / 2 }; };
+    const isFill = (s) => !!(CFG.layouts[s.layout] && CFG.layouts[s.layout].fill);
+    /** the pointer's box in its group's units: a fixed box, or (exact) the screen — its height Bh, its width the shape's; while the
+     *  edges are being marked, as wide as the widest shape (fitW) so the pointer can reach any screen's edge */
+    const widthOf = (s) => (s.fitting ? CFG.fitW || 4.5 : s.asp || 16 / 9);
+    const box = (s) => { const L = CFG.layouts[s.layout]; const bw = L.fill ? L.Bh * widthOf(s) : L.Bw; return { x0: -bw / 2, y0: -L.Bh / 2, x1: bw / 2, y1: L.Bh / 2 }; };
     /** the pointer as a share of the frame (0…1 each way) */
     function share(s) { const b = box(s), [x, y] = s.ctl.state.pointer; return [clamp((x - b.x0) / (b.x1 - b.x0), 0, 1), clamp((y - b.y0) / (b.y1 - b.y0), 0, 1)]; }
     const at = (s) => { const [nx, ny] = share(s); return { x: Math.round(nx * (s.w - 1)), y: Math.round(ny * (s.h - 1)) }; };
@@ -56,14 +82,70 @@
       const [nx, ny] = share(s);
       set(p, s, 'ptr', Math.round(nx * PX) + Math.round(ny * PX) * 4096);
       set(p, s, 'flg', s.open ? 1 | (s.flash > 0 ? 2 : 0) | (s.ctl.state.held.jump ? 4 : 0) | (s.debug ? 8 : 0) : 0);
+      if (isFill(s)) set(p, s, 'asp', Math.round(widthOf(s) * 1000));
     }
     /** the layout a player's browser opens in: what they chose, else by their device (a phone: 20:9, else 16:9) */
+    function aspOf(p, s) {
+      if (s.asp) return s.asp;
+      let kept = null;
+      try { kept = Number(io.load(p, `${ns}:asp`)); } catch (e) { /* (none) */ }
+      return kept > 0.2 && kept < 10 ? kept : null;
+    }
     function layoutOf(p, s) {
-      if (s.layout && CFG.layouts[s.layout]) return s.layout;
+      // (the screen's shape known: exact; else what they chose, else by their device)
+      if (CFG.fill && aspOf(p, s) && !s.boxed) return CFG.fill;
+      if (s.layout && CFG.layouts[s.layout] && !CFG.layouts[s.layout].fill) return s.layout;
       let kept = null;
       try { kept = io.load(p, `${ns}:layout`); } catch (e) { /* (none) */ }
-      if (kept && CFG.layouts[kept]) return kept;
+      if (kept && CFG.layouts[kept] && !CFG.layouts[kept].fill) return kept;
       return io.platform(p) === 'Mobile' ? (CFG.mobileLayout || 'g') : (CFG.defaultLayout || 'b');
+    }
+    /** the screen's shape is now asp (measured, typed, or marked): kept, and the browser exact at once if it is open */
+    function setAspect(p, s, asp, why) {
+      s.asp = asp; s.boxed = false;
+      try { io.save(p, `${ns}:asp`, asp); } catch (e) { /* (this time only) */ }
+      io.log(`aspect ${JSON.stringify({ player: p.name, asp: Math.round(asp * 10000) / 10000, why })}`);
+      if (s.open && CFG.fill) relayout(p, s, CFG.fill);
+    }
+    /** the browser in another layout (or the same with a new shape): the frame resized, the pointer kept where it was on the page */
+    function relayout(p, s, lay) {
+      const old = s.ctl ? share(s) : [0.5, 0.5];
+      s.layout = lay;
+      const f = frameOf(CFG, s.layout, s.res, s.asp);
+      s.w = f.w; s.h = f.h; s.barH = f.barH;
+      if (s.ctl) { s.ctl.cfg.bounds = box(s); const b = box(s); s.ctl.pointerTo(b.x0 + old[0] * (b.x1 - b.x0), b.y0 + old[1] * (b.y1 - b.y0)); }
+      ch.layout(p, s.layout);
+      if (s.sid) queue(p, s, { op: 'resize', w: f.w, h: f.h });
+      syncPointer(p, s);
+    }
+    /** the edges marked: the pointer's tip is on one — the shape is twice its distance from the middle over the height */
+    function finishFit(p, s) {
+      const L = CFG.layouts[s.layout], x = Math.abs(s.ctl.state.pointer[0]), asp = (2 * x) / L.Bh;
+      s.fitting = false;
+      try { ch.urls(p, { [CFG.slots.asp]: '' }); } catch (e) { /* (closed) */ }
+      if (asp > 0.3 && asp < (CFG.fitW || 4.5)) setAspect(p, s, Math.round(asp * 10000) / 10000, 'fit'); else { io.say(p, '§7端に合わせられませんでした'); relayout(p, s, s.layout); }
+    }
+    /** the aspect probe: the tiny URL images shown (their base in the shape's slot), detectTicks later the service asked which the
+     *  game fetched → the shape (aspectFromProbes), or none (the game fetched them all, or none: the boxes stay) */
+    function startDetect(p, s) {
+      if (!CFG.slots || CFG.slots.asp === undefined || !s.base || s.detect || s.fitting) return;
+      const nonce = Math.floor(Math.random() * 0x7fffffff).toString(36) + (s.tick % 1000).toString(36);
+      s.detect = { nonce, at: s.tick + (CFG.detectTicks || 50), asked: false };
+      try { ch.urls(p, { [CFG.slots.asp]: `${s.base}/asp/${nonce}` }); } catch (e) { io.log(`asp ${e}`); s.detect = null; }
+    }
+    async function finishDetect(p, s) {
+      const d = s.detect, gen = s.gen;
+      d.asked = true;
+      try {
+        const r = await io.http('GET', `/asp/${d.nonce}`, undefined, p);
+        if (s.gen !== gen || s.detect !== d) return;
+        const j = r.json || {}, a = aspectFromProbes(CFG.aspects, j.c, CFG.commonAspects), b = aspectFromProbes(CFG.aspects, j.u, CFG.commonAspects);
+        io.log(`probe ${JSON.stringify({ player: p.name, c: (j.c || []).length, u: (j.u || []).length, cTop: a, uTop: b })}`);
+        const asp = a || b;
+        if (asp) setAspect(p, s, asp, a ? 'probe-clip' : 'probe-screen');
+        else io.say(p, `§7画面の形を測れませんでした（/${cmd}:fit で端に合わせるか /${cmd}:size <幅>x<高さ>）`);
+      } catch (e) { io.log(`probe ${e}`); }
+      if (s.detect === d) { s.detect = null; try { ch.urls(p, { [CFG.slots.asp]: '' }); } catch (e) { /* (closed) */ } }
     }
     function resOf(p, s) {
       if (s.res) return s.res;
@@ -84,7 +166,7 @@
       const a = s.q.shift(), gen = s.gen;
       s.busy = true;
       try {
-        const r = await io.http('POST', `/s/${s.sid}`, a);
+        const r = await io.http('POST', `/s/${s.sid}`, a, p);
         if (s.gen !== gen) return;
         if (r.status === 404) { await reconnect(p, s, gen); return; }
         if (r.status === 200) { apply(p, s, r.json); s.errors = 0; } else io.log(`act ${a.op} ${r.status}`);
@@ -100,6 +182,7 @@
         if (kind === 'page') s.frame = n; else s.bar = n;
         s.latest[kind] = url;
       }
+      if (j.frameUrl && !s.base) { const m = /^(https?:\/\/[^/]+)\//.exec(j.frameUrl); if (m) s.base = m[1]; }
       if (j.url !== s.url || j.title !== s.title) io.log(`page ${JSON.stringify({ player: p.name, url: j.url, title: j.title, tabs: j.tabs, frame: j.frame })}`);
       s.url = j.url; s.title = j.title || ''; s.focus = j.focus; s.tabs = j.tabs; s.tab = j.tab; s.w = j.w || s.w; s.h = j.h || s.h; s.barH = j.barH || s.barH;
       if (j.dialog) io.say(p, `§e${j.dialog.type === 'blocked' ? '⛔' : j.dialog.type === 'error' ? '⚠' : '💬'} ${String(j.dialog.message).slice(0, 120)}`);
@@ -127,7 +210,7 @@
     }
     /** the session again (the service started again, or closed it as idle): the same page */
     async function reconnect(p, s, gen) {
-      const r = await io.http('POST', '/s', { owner: p.id, url: s.url || undefined, w: s.w, h: s.h });
+      const r = await io.http('POST', '/s', { owner: p.id, url: s.url || undefined, w: s.w, h: s.h }, p);
       if (s.gen !== gen) return;
       if (r.status !== 200 || !r.json.sid) throw new Error(`service ${r.status}`);
       s.sid = r.json.sid; s.frame = 0; s.bar = 0;
@@ -137,7 +220,7 @@
     async function poll(p, s, gen) {
       while (s.open && s.gen === gen) {
         try {
-          const r = await io.http('GET', `/s/${s.sid}/next?f=${s.frame}&b=${s.bar}&t=8000`);
+          const r = await io.http('GET', `/s/${s.sid}/next?f=${s.frame}&b=${s.bar}&t=8000`, undefined, p);
           if (s.gen !== gen) return;
           if (r.status === 404) { await reconnect(p, s, gen); continue; }
           if (r.status !== 200) throw new Error(`service ${r.status}`);
@@ -156,8 +239,8 @@
       const s = st(p);
       if (s.open) { if (url) queue(p, s, { op: 'go', url }); return ''; }
       s.open = true; s.starting = true; const gen = ++s.gen;
-      s.layout = layoutOf(p, s); s.res = resOf(p, s);
-      const f = frameOf(CFG, s.layout, s.res);
+      s.asp = aspOf(p, s); s.layout = layoutOf(p, s); s.res = resOf(p, s); s.fitting = false; s.detect = null; s.base = '';
+      const f = frameOf(CFG, s.layout, s.res, s.asp);
       s.w = f.w; s.h = f.h; s.barH = f.barH; s.sid = null; s.frame = 0; s.bar = 0; s.urls = { page: '', bar: '' }; s.under = { page: '', bar: '' }; s.pend = { page: null, bar: null }; s.latest = { page: null, bar: null }; s.topAt = { page: -1e9, bar: -1e9 }; s.q = []; s.errors = 0;
       let sens = CFG.sens;
       try { const k = Number(io.load(p, `${ns}:sens`)); if (k > 0) sens = k; } catch (e) { /* (default) */ }
@@ -172,7 +255,7 @@
       syncPointer(p, s);
       io.log(`open ${JSON.stringify({ player: p.name, layout: s.layout, w: s.w, h: s.h })}`);
       try {
-        const r = await io.http('POST', '/s', { owner: p.id, url: url || undefined, w: s.w, h: s.h });
+        const r = await io.http('POST', '/s', { owner: p.id, url: url || undefined, w: s.w, h: s.h }, p);
         if (s.gen !== gen) return '';
         if (r.status !== 200 || !r.json || !r.json.sid) throw new Error(r.json && r.json.error ? r.json.error : `HTTP ${r.status}`);
         s.sid = r.json.sid;
@@ -180,6 +263,8 @@
         s.starting = false;
         poll(p, s, gen);
         pump(p, s);
+        // (no shape known yet: the game measures it now — the browser exact a moment later, else the box stays)
+        if (CFG.autoAspect && CFG.fill && !s.asp) startDetect(p, s);
         return '';
       } catch (e) {
         if (s.gen !== gen) return '';
@@ -192,7 +277,7 @@
     function close(p) {
       const s = st(p);
       if (!s.open) return;
-      s.open = false; s.starting = false; s.gen++; s.q = [];
+      s.open = false; s.starting = false; s.gen++; s.q = []; s.fitting = false; s.detect = null;
       try { ch.reset(p); } catch (e) { /* (gone) */ }
       io.freeze(p, false);
       s.flash = 0; set(p, s, 'flg', 0);
@@ -208,6 +293,18 @@
         if (!smp) continue;
         const out = s.ctl.step({ tick: s.tick, rot: smp.rot, move: null, jump: smp.jump, sneak: smp.sneak, slot: smp.slot, swings: smp.swings || 0, uses: smp.uses || 0, mode: smp.mode });
         for (const a of out.actions) if (a.type === 'setRotation') io.setRotation(p, a.rotation);
+        if (s.detect && !s.detect.asked && s.tick >= s.detect.at) finishDetect(p, s);
+        // (marking the edges: a click puts the screen's edge where the pointer's tip is — the shape is twice its distance from the
+        //  middle over the height; a sneak gives up)
+        if (s.fitting) {
+          for (const e of out.events) {
+            if ((e.type === 'click' && e.source === 'swing') || (e.type === 'down' && e.button === 'primary')) { finishFit(p, s); break; }
+            if (e.type === 'down' && e.button === 'secondary') { s.fitting = false; try { ch.urls(p, { [CFG.slots.asp]: '' }); } catch (x2) { /* (closed) */ } relayout(p, s, s.layout); break; }
+          }
+          s.sneakT = -1;
+          show(p, s); syncPointer(p, s);
+          continue;
+        }
         let moved = false;
         for (const e of out.events) {
           if (e.type === 'pointer') moved = true;
@@ -248,34 +345,58 @@
         case 'enter': { const n = need(); if (n) return n; queue(p, s, { op: 'key', key: 'Enter' }); return ''; }
         case 'key': { const n = need(); if (n) return n; if (!/^[\w+\-=[\]\\;',./`]{1,40}$/.test(text)) return `/${cmd}:key <Enter|Tab|Backspace|Escape|ArrowDown|Control+A …>`; queue(p, s, { op: 'key', key: text }); return ''; }
         case 'back': case 'forward': case 'reload': case 'home': case 'stop': { const n = need(); if (n) return n; queue(p, s, { op: verb }); return ''; }
-        case 'click': { const n = need(); if (n) return n; queue(p, s, Object.assign({ op: 'click', button: args[0] === 'right' ? 'right' : 'left' }, at(s))); s.flash = 6; return ''; }
+        case 'click': { const n = need(); if (n) return n; if (s.fitting) { finishFit(p, s); return ''; } queue(p, s, Object.assign({ op: 'click', button: args[0] === 'right' ? 'right' : 'left' }, at(s))); s.flash = 6; return ''; }
         case 'tab': { const n = need(); if (n) return n; const k = Number(args[0]); if (!(k >= 1)) return `/${cmd}:tab <番号（1〜）>`; queue(p, s, { op: 'tab', n: k - 1 }); return ''; }
         case 'newtab': { const n = need(); if (n) return n; queue(p, s, { op: 'newtab', url: text || undefined }); return ''; }
         case 'closetab': { const n = need(); if (n) return n; queue(p, s, Object.assign({ op: 'closetab' }, args[0] ? { n: Number(args[0]) - 1 } : {})); return ''; }
         case 'zoom': { const n = need(); if (n) return n; const z = Number(args[0]); if (!(z >= 25 && z <= 500)) return `/${cmd}:zoom <25〜500（%）>`; queue(p, s, { op: 'zoom', pct: z }); return ''; }
         case 'address': { const n = need(); if (n) return n; queue(p, s, { op: 'address', text }); return ''; }
         case 'size': case 'res': {
-          // (the screen's shape: the nearest layout — and the picture's height: the screen's own px for a sharp page)
-          let lay = s.layout, res = s.res;
+          // /size <W>x<H> | <W>:<H> | 16:9 …: the screen's own shape — the browser exact (fills it); /size auto: measured again;
+          // /size fit: the edges marked by hand; /size box <shape>: a box of that shape in the middle (the rest black). And the
+          // picture's height: the screen's own px for a sharp page (/res <px>)
+          let res = s.res;
           if (verb === 'size') {
+            const a0 = String(args[0] || '').toLowerCase();
+            if (a0 === 'auto') { s.asp = null; try { io.save(p, `${ns}:asp`, undefined); } catch (e) { /* (none) */ } s.boxed = false; if (s.open) { s.detect = null; startDetect(p, s); } return ''; }
+            if (a0 === 'fit') return command(p, 'fit', []);
+            if (a0 === 'box') {
+              const lay = layoutFor(CFG, args[1]);
+              if (!lay) return `/${cmd}:size box <16:9|4:3|…|幅x高さ>`;
+              s.boxed = true;
+              try { io.save(p, `${ns}:layout`, lay); } catch (e) { /* (this time only) */ }
+              if (s.open) relayout(p, s, lay); else s.layout = lay;
+              io.say(p, `§7画面 ${CFG.layouts[lay].name}（箱）`);
+              return '';
+            }
+            const asp = aspectOf(args[0]);
+            if (!asp) return `/${cmd}:size <幅>x<高さ>|<幅>:<高さ>|auto|fit|box <形> [絵の高さ px]`;
             const m = /^(\d{3,4})\s*[x×]\s*(\d{3,4})$/i.exec(args[0] || '');
-            lay = layoutFor(CFG, args[0]);
-            if (!lay) return `/${cmd}:size <16:9|4:3|16:10|18:9|19.5:9|20:9|21:9|32:9|幅x高さ> [高さ px]`;
             if (m) res = Math.min(CFG.maxRes, Number(m[2]));
             if (args[1]) res = Number(args[1]);
-          } else { res = Number(args[0]); if (!(res >= 360 && res <= CFG.maxRes)) return `/${cmd}:res <360〜${CFG.maxRes}（絵の高さ px）>`; }
-          s.layout = lay; s.res = Math.max(360, Math.min(CFG.maxRes, Number(res) || CFG.res));
-          try { io.save(p, `${ns}:layout`, s.layout); io.save(p, `${ns}:res`, s.res); } catch (e) { /* (this time only) */ }
-          if (s.open) {
-            const f = frameOf(CFG, s.layout, s.res), old = share(s);
-            s.w = f.w; s.h = f.h; s.barH = f.barH;
-            s.ctl.cfg.bounds = box(s);
-            const b = box(s); s.ctl.pointerTo(b.x0 + old[0] * (b.x1 - b.x0), b.y0 + old[1] * (b.y1 - b.y0));
-            ch.layout(p, s.layout);
-            queue(p, s, { op: 'resize', w: f.w, h: f.h });
+            s.res = Math.max(360, Math.min(CFG.maxRes, Number(res) || CFG.res));
+            try { io.save(p, `${ns}:res`, s.res); } catch (e) { /* (this time only) */ }
+            if (CFG.fill) setAspect(p, s, asp, 'size');
+            else { const lay = layoutFor(CFG, args[0]); if (s.open) relayout(p, s, lay); else s.layout = lay; }
+          } else {
+            res = Number(args[0]); if (!(res >= 360 && res <= CFG.maxRes)) return `/${cmd}:res <360〜${CFG.maxRes}（絵の高さ px）>`;
+            s.res = res;
+            try { io.save(p, `${ns}:res`, s.res); } catch (e) { /* (this time only) */ }
+            if (s.open) relayout(p, s, s.layout);
           }
-          const f = frameOf(CFG, s.layout, s.res);
-          io.say(p, `§7画面 ${CFG.layouts[s.layout].name}・絵 ${f.w}x${f.h}`);
+          const f = frameOf(CFG, s.layout || CFG.defaultLayout || 'b', s.res, s.asp);
+          io.say(p, `§7画面 ${s.layout && CFG.layouts[s.layout] && CFG.layouts[s.layout].fill ? `ぴったり ${Math.round((s.asp || 0) * 1000) / 1000}` : CFG.layouts[s.layout || CFG.defaultLayout || 'b'].name}・絵 ${f.w}x${f.h}`);
+          return '';
+        }
+        case 'fit': {
+          // (the screen's edges marked: the pointer's tip on the left or right mark, a click — the shape from where it is)
+          const n = need(); if (n) return n;
+          if (!CFG.fill) return `${ns}: この版は端に合わせられません`;
+          s.detect = null; s.fitting = true;
+          if (!isFill(s)) { s.layout = CFG.fill; ch.layout(p, s.layout); }
+          s.ctl.cfg.bounds = box(s); s.ctl.pointerTo(0, 0);
+          try { ch.urls(p, { [CFG.slots.asp]: 'fit' }); } catch (e) { io.log(`fit ${e}`); }
+          syncPointer(p, s);
           return '';
         }
         case 'debug': { s.debug = args[0] !== '0'; if (s.open) syncPointer(p, s); return ''; }
@@ -295,13 +416,77 @@
     }
     /** a player who left: what the engine held for them is dropped (their choices stay in the world) */
     function forget(p) { const s = players.get(p.id); if (s) { s.gen++; s.open = false; } players.delete(p.id); }
-    return { open, close, tick, command, forget, state: st, isOpen: (p) => st(p).open, apply };
+    return { open, close, tick, command, forget, state: st, isOpen: (p) => st(p).open, apply, box, share };
   }
 
-  /** the pack's script: the engine wired to @minecraft/server and @minecraft/server-net */
-  function scriptOf(CFG) {
+  /** the WebSocket build's link (its source goes into the script as it is; the tests run it with a fake world): the outbox of
+   *  requests to the service a player at a time, answered through /web:pump — the command the service runs as that player over the
+   *  game's WebSocket (mcws.mjs). env: { tick() → the current tick, log(line), run(fn) (later, where the world may change) } */
+  function wsLink(env) {
+    const links = new Map(), outbox = new Map(), waiting = new Map(), parts = new Map();
+    let seq = 0;
+    const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    function bytes(s) { const out = []; let acc = 0, bits = 0; for (const ch of String(s)) { const v = B64.indexOf(ch === '+' ? '-' : ch === '/' ? '_' : ch); if (v < 0) continue; acc = ((acc << 6) | v) & 0xffffff; bits += 6; if (bits >= 8) { bits -= 8; out.push((acc >> bits) & 255); } } return out; }
+    function utf8(b) {
+      let s = '', i = 0;
+      while (i < b.length) {
+        const c = b[i++];
+        if (c < 128) s += String.fromCharCode(c);
+        else if (c < 224) s += String.fromCharCode(((c & 31) << 6) | (b[i++] & 63));
+        else if (c < 240) s += String.fromCharCode(((c & 15) << 12) | ((b[i++] & 63) << 6) | (b[i++] & 63));
+        else { const cp = ((c & 7) << 18) | ((b[i++] & 63) << 12) | ((b[i++] & 63) << 6) | (b[i++] & 63); s += String.fromCodePoint(cp); }
+      }
+      return s;
+    }
+    const fresh = (id) => { const l = links.get(id); return !!l && env.tick() - l.at < 200; };
+    /** a request for player p: into p's outbox, answered by a later pump (rejected when p has no link, or no answer in time) */
+    function call(method, path, body, p) {
+      if (!p) return Promise.reject(new Error('no player'));
+      if (!fresh(p.id)) return Promise.reject(new Error('WebSocket でつないでください: /connect <サービスのアドレス>:8787'));
+      const id = ++seq, q = outbox.get(p.id) || [];
+      q.push([id, method, path, body === undefined ? null : body]);
+      outbox.set(p.id, q);
+      return new Promise((resolve, reject) => waiting.set(id, { resolve, reject, at: env.tick(), max: path.indexOf('/next') >= 0 ? 600 : 400, who: p.id }));
+    }
+    /** /web:pump <data> from p (its answers to p's requests, and the link's address the first time) → the command's output: p's
+     *  outbox (as much as fits; m: 1 when more waits), or '' for a part that is not the last */
+    function pump(p, data) {
+      let d = String(data || '');
+      const m = /^(\d+):(\d+)\/(\d+):(.*)$/.exec(d);
+      if (m) {
+        const key = `${p.id}:${m[1]}`, arr = parts.get(key) || [];
+        arr[Number(m[2]) - 1] = m[4]; parts.set(key, arr);
+        if (arr.filter((x) => x !== undefined).length < Number(m[3])) return '';
+        d = arr.join(''); parts.delete(key);
+        if (parts.size > 20) parts.clear();
+      }
+      const obj = d ? JSON.parse(utf8(bytes(d))) : {};
+      const was = links.get(p.id);
+      links.set(p.id, { at: env.tick(), base: (obj.h && obj.h.base) || (was && was.base) || '' });
+      if (obj.h && !was) env.log(`ws linked ${JSON.stringify({ player: p.name, base: obj.h.base })}`);
+      const answers = obj.r || [], chats = obj.c || [];
+      if (answers.length || chats.length) env.run(() => {
+        for (const [id, status, json] of answers) { const w = waiting.get(id); if (w) { waiting.delete(id); w.resolve({ status, json }); } }
+        for (const t of chats) env.chat(p, t);
+      });
+      const q = outbox.get(p.id) || [], out = [];
+      let len = 0;
+      while (q.length && len < 1500) { const x = q.shift(); out.push(x); len += JSON.stringify(x).length; }
+      return JSON.stringify(Object.assign({ n: p.name, o: out }, q.length ? { m: 1 } : {}));
+    }
+    /** every few ticks: requests too old are given up (their callers see an error) */
+    function sweep() {
+      const now = env.tick();
+      for (const [id, w] of waiting) if (now - w.at > w.max) { waiting.delete(id); w.reject(new Error('no answer over the WebSocket')); }
+    }
+    return { call, pump, sweep, linked: fresh, base: (id) => (links.get(id) || {}).base || '', waiting, outbox };
+  }
+
+  /** the pack's script: the engine wired to @minecraft/server and @minecraft/server-net (or, transport 'ws', to the game's
+   *  WebSocket: wsLink — no @minecraft/server-net, any world) */
+  function scriptOf(CFG, o = {}) {
     // (a command takes 8 parameters at most: the first word and 7 more — a sentence without quotes)
-    const words = Array.from({ length: 7 }, (_, i) => `w${i + 2}`), C = CFG.cmd || CFG.ns;
+    const words = Array.from({ length: 7 }, (_, i) => `w${i + 2}`), C = CFG.cmd || CFG.ns, ws = o.transport === 'ws';
     return `// GeoUI Web (bds-lab bds/geoui/web) — the web in the game: made by bds/geoui/web/make.mjs (change that, not this file).
 // /${C}:open [URL] · /${C}:close · /${C}:go <URL or words> · /${C}:t <words> (typed; Enter in a search box) · /${C}:enter ·
 // /${C}:key <key> · /${C}:back · /${C}:forward · /${C}:reload · /${C}:home · /${C}:tab <n> · /${C}:newtab [URL] · /${C}:closetab [n] ·
@@ -309,19 +494,24 @@
 // (operators: /${C}:service <URL> · /${C}:public <lan|tunnel|URL>). /scriptevent ${CFG.ns}:<the same> for the tests. The head's turns are the
 // mouse, a swing (left click, a tap) a click, jump the button held (drag), sneak back (held: close), W / S and the hotbar the wheel.
 import { world, system, Player, InputButton, ButtonState, HudElement, HudVisibility, ControlScheme, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus } from '@minecraft/server';
-import { http, HttpRequest, HttpRequestMethod } from '@minecraft/server-net';
+${ws ? '// (the WebSocket build: no @minecraft/server-net — the service is reached through each player\'s /connect: wsLink)' : "import { http, HttpRequest, HttpRequestMethod } from '@minecraft/server-net';"}
 import './screen_nav.js';
 import './screen_input.js';
 import './screen_channel.js';
 const CFG = ${JSON.stringify(CFG)};
 const frameOf = ${frameOf.toString()};
 const layoutFor = ${layoutFor.toString()};
+const aspectOf = ${aspectOf.toString()};
+const aspectFromProbes = ${aspectFromProbes.toString()};
 const createBrowsers = ${createBrowsers.toString()};
 const GS = globalThis.GeoUIScreen;
 const NS = CFG.ns;
 const log = (s) => console.warn('GWEB ' + s);
 const held = new Map(), pend = new Map();
-const service = () => String(world.getDynamicProperty(NS + ':service') || CFG.service);
+${ws ? `const wsLink = ${wsLink.toString()};
+const link = wsLink({ tick: () => system.currentTick, log, run: (fn) => system.run(fn), chat: (p, t) => { if (!p.isValid) return; if (t === '\\n') engine.command(p, 'enter', []); else engine.command(p, 't', String(t).split(' ')); } });
+const call = link.call;
+system.runInterval(() => link.sweep(), 20);` : `const service = () => String(world.getDynamicProperty(NS + ':service') || CFG.service);
 const publicMode = () => String(world.getDynamicProperty(NS + ':public') || CFG.public || 'lan');
 async function call(method, path, body) {
   const req = new HttpRequest(service() + path).setMethod(method === 'POST' ? HttpRequestMethod.Post : method === 'DELETE' ? HttpRequestMethod.Delete : HttpRequestMethod.Get).setTimeout(path.includes('/next') ? 20 : 30);
@@ -332,7 +522,7 @@ async function call(method, path, body) {
   const r = await http.request(req);
   let json = null; try { json = JSON.parse(r.body); } catch (e) { /* (not JSON) */ }
   return { status: r.status, json };
-}
+}`}
 const chIo = {
   // (the channel's title has no time: its control ends at once, so the next plain title shows — RULES R10.14; the game's own
   //  durations come back a little later for titles that set none)
@@ -422,13 +612,18 @@ system.beforeEvents.startup.subscribe((e) => {
   add('newtab', 'GeoUI Web: a new tab (a URL)', [], [str('url')], verb('newtab'));
   add('closetab', 'GeoUI Web: close the tab (this one, or that number)', [], [{ name: 'n', type: CustomCommandParamType.Integer }], verb('closetab'));
   add('zoom', 'GeoUI Web: zoom (25-500 %)', [{ name: 'pct', type: CustomCommandParamType.Integer }], [], verb('zoom'));
-  add('size', 'GeoUI Web: the screen\\'s shape (16:9 20:9 … or WxH) and the picture\\'s height', [str('shape')], [{ name: 'height', type: CustomCommandParamType.Integer }], verb('size'));
+  add('size', 'GeoUI Web: your screen\\'s shape (WxH, "16:9" …, auto, fit) — or box <shape> — and the picture\\'s height', [str('shape')], [str('more'), str('height')], verb('size'));
   add('res', 'GeoUI Web: the picture\\'s height in px (sharper, heavier)', [{ name: 'height', type: CustomCommandParamType.Integer }], [], verb('res'));
   add('sens', 'GeoUI Web: the pointer\\'s speed', [{ name: 'n', type: CustomCommandParamType.Float }], [], verb('sens'));
   add('click', 'GeoUI Web: click at the pointer (right: the right button)', [], [str('button')], verb('click'));
   add('f1', 'F1: hide the whole HUD, the arm and the held item (the game mode stays)', [], [str('on_off')], verb('f1'));
-  add('service', 'GeoUI Web: the service\\'s address (operators)', [], [str('url')], (p, a) => { world.setDynamicProperty(NS + ':service', a[0] || undefined); return ''; }, true);
-  add('public', 'GeoUI Web: the pictures\\' address — lan, tunnel or a URL (operators)', [], [str('mode')], (p, a) => { world.setDynamicProperty(NS + ':public', a[0] || undefined); return ''; }, true);
+  ${ws ? `// (the WebSocket link: the service runs /${C}:pump as the player over the game's WebSocket — its output is the player's outbox)
+  reg.registerCommand({ name: ${JSON.stringify(C)} + ':pump', description: 'GeoUI Web: the WebSocket link (the service runs it over /connect)', permissionLevel: CommandPermissionLevel.Any, mandatoryParameters: [str('data')] }, (o, data) => {
+    const p = who(o);
+    if (!p) return { status: CustomCommandStatus.Failure, message: 'players only' };
+    try { const msg = link.pump(p, data); return msg ? { status: CustomCommandStatus.Success, message: msg } : { status: CustomCommandStatus.Success }; } catch (x) { return { status: CustomCommandStatus.Failure, message: 'pump ' + x }; }
+  });` : `add('service', 'GeoUI Web: the service\\'s address (operators)', [], [str('url')], (p, a) => { world.setDynamicProperty(NS + ':service', a[0] || undefined); return ''; }, true);
+  add('public', 'GeoUI Web: the pictures\\' address — lan, tunnel or a URL (operators)', [], [str('mode')], (p, a) => { world.setDynamicProperty(NS + ':public', a[0] || undefined); return ''; }, true);`}
 });
 // (a player who left: the browser forgotten; one who comes back: the camera, the HUD and the title as the game has them)
 world.afterEvents.playerLeave.subscribe((e) => { engine.forget({ id: e.playerId }); ch.drop({ id: e.playerId }); held.delete(e.playerId); pend.delete(e.playerId); });
@@ -446,6 +641,6 @@ world.afterEvents.entityDie.subscribe((e) => { if (e.deadEntity instanceof Playe
 `;
   }
 
-  W.runtime = { frameOf, layoutFor, createBrowsers, scriptOf };
+  W.runtime = { frameOf, layoutFor, aspectOf, aspectFromProbes, createBrowsers, wsLink, scriptOf };
   if (typeof module === 'object' && module && module.exports) module.exports = W.runtime;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
