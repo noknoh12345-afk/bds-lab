@@ -409,7 +409,9 @@ node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu
 
 **題名の通り道**: サーバーが 1 人ずつに渡せて HUD の JSON UI が読める文字は題名（`#hud_title_text_string`、R5.5）だけなので、題名を
 `~gu~` + F1 の旗（`0`/`1`）+ 並べ方の文字（`a`〜`z`）+ 枠ごとに決まった幅（既定 230 文字）の URL（後ろは空白）にして送り、JSON UI が
-`'%.Ns' * 文字`（先頭 N 文字）・`文字 - 部分`（部分を全部抜く）で枠 k を取り出す（`layout.slotExpr`）。ゲームの題名は通り道の間は隠す。
+`'%.Ns' * 文字`（先頭 N 文字）・`文字 - 部分`（部分を全部抜く）で枠 k を取り出す（`layout.slotExpr`）。ゲームの題名は通り道の間は隠す
+（5 本目から `hud_title_text` には触らず、`root_panel` の中の `hud_title_text_area` を同じファクトリー + `#visible` の view binding の
+パネルに置き換える: `scene.titleHide` = `area`（既定）・`text`（2〜4 本目のやり方: 普通の題名も写らなかった R10.14）・`none`（隠さない: 対照））。
 スクリプトの側は `screen/channel.js`（F1・並べ方・URL・送り直し: ほかのパックの題名に上書きされるので、何か出している間は 10 秒ごと）。
 通り道の題名は時間なし（fade in・stay・fade out 0: その題名の部品はすぐ終わり、文字だけ残る R10.7。部品が隠れたまま残ると次の普通の
 題名まで隠れる: R10.14）、2 tick 後にゲームの題名の時間を戻す（R10.16）。URL に空白・`"`・`\` は入れられない（%20 などに）。
@@ -417,8 +419,11 @@ node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu
 **F1**（ゲームモードは変えない）: `scene.f1` で (1) HUD の 13 の部品を API で隠す（`hideAllExcept`。携帯の操作ボタンは残すこともできる）、
 (2) 残りの HUD（会話・題名・アクションバー・ボスバー・サイドバー…: `root_panel` の中身）は通り道の F1 の旗で隠す（GeoUI の viewport は
 `root_panel` の親の `hud_content` に移すので GeoUI は残る。携帯（タッチ）では操作ボタンも `root_panel` の中なので旗は送らない: R10.12）、
-(3) 腕と持ち物は `<ns>:f1` のプロパティで腕のボーン（rightarm・leftarm）を 100 単位下へ動かし大きさも 0（1 人称の持ち物は腕の位置に
-付いて動くが大きさは使わない: R10.13）、体は render controller で自分からだけ隠す（世界の中だけ: 持ち物の画面の人形やほかの人からは見える）。
+(3) 空の手の 1 人称の腕と体は `<ns>:f1` のプロパティで render controller が自分からだけ隠す（世界の中だけ: 持ち物の画面の人形やほかの人
+からは見える）。**1 人称の持ち物はどのボーンのアニメーションでも動かない**（R10.13）ので、F1 の間はカメラのプリセット `<ns>:eye`
+（`bp/cameras/presets`: `minecraft:follow_orbit` を継いで半径 0.1・目の高さ 1.62・視点のずれ 0 = 目の所の 3 人称）に替え、1 人称の描き方
+そのものを止める（`channel.js` の `cfg.camera` と `io.camera`: F1 で `camera.setCamera`＋`setControlScheme(LockedPlayerRelativeStrafe)`、
+切る時 `camera.clear()`。5 本目で測る）。
 
 **並べ方（layout）**: グループに `layout: 'b'` を付けると、通り道がその文字の間だけ描かれる（renderer も URL の画像も）。
 `scene.backdrop`（`{ layouts: 'bc' }`）は、その並べ方の間だけ画面全体（切り欠きの所も）をゲームの黒（`textures/ui/Black.png`、layer −5）で覆う。
@@ -581,3 +586,58 @@ GeoUI Web のページとツールバーは二重の枠（今の絵を下へ →
 | web open〜site | （3 本目と同じ） | 同じ |
 | web close | ✕ を押す | 閉じる（GWEB close）・HUD に戻る（違い > 50 %） |
 | web after | 閉じた後の `/title @a title HELLO`・`gweb:f1 on` で赤い羊毛 | HELLO が出る。F1 で赤が消え、off で戻る |
+
+### 4 本目の結果（run 41008713796、2026-10-30、Minecraft 1.26.60.4、ゲームの画面 2400 x 1080）
+
+手順 258 個すべて通った（落ちた区切りなし）。公開のまとめは `bds/geoui/rules-history/run-41008713796/summary.json`。
+
+| 区切り | 予測 | 結果 |
+|---|---|---|
+| title-chan | 見えない | **当たり**: 真ん中の帯 (900,300)–(1500,700) の違い 0 % |
+| title-plain | 出る | **外れ: 出ない**（0 %）。通り道を時間なしにしても、時間を付けない `/title @a title HELLO` は写らない |
+| title-api | 出る | **外れ: 出ない**（0 %: fade in 0・stay 200 の API の題名も） |
+| title-old | 出ない（自信は中） | 当たり（0 %）。ただし title-plain・title-api も 0 % なので、R10.14 の仮説 H1（隠れた部品の使い回し）・H3（fade in 0）は**外れ**。この 4 つでは区別がつかない |
+| web-title | 閉じた後の HELLO が出る | **外れ: 出ない**（0 %） |
+| wool-shown | 赤い羊毛が右下に（対照） | 当たり: 赤 125437 px @(1600,786)–(2178,1080) |
+| wool-scale | `fx 1`（大きさ 0 だけ）で消えない | **当たり**: 赤 125437 px（1 px も変わらない） |
+| wool-move | `fx 2`（腕を下へだけ）で赤が消える | **外れ: 消えない**（赤 125437 px） |
+| wool-arm | F1 のプロパティで消える | **外れ: 消えない**（赤 125437 px）。`part arm 0` の後（wool-back）も同じ |
+| blue-held | 青い羊毛（プロパティなしで下へ）が見えない | **外れ: 見える**（青 125180 px、同じ場所）→ プロパティの届き方ではなく、**1 人称の持ち物はボーンのアニメーション（大きさも位置も）を使わない** |
+| hand-f1 | 空の手で F1 → 腕が消える（> 20 %） | **当たり**: 右下の違い 22.934 %（(1600,660)–(2044,1080)）。空の手の腕は render controller の条件で消える |
+| wool-f1 | F1 で赤なし | **外れ: 赤が残る**（132084 px）。wool-f1-off で 125437 px に戻る（腕の分だけ違う） |
+| f1-chat | 会話・アクションバーで変わらない | **当たり**: 全体も左上も 0 % |
+| f1-off | ホットバーが戻る | **当たり**: 下の真ん中 17.665 % |
+| web open〜site | 3 本目と同じ | **当たり**: 開く 99.988 %・印・ポインタ（左 (597..604)・視点 (1906..1913)）・クリックで紫・戻るで青・スクロール 89.986 %・ホイール 89.984 %・動くページ 0.696 %（83 か所）・文字 89.868 %・wikipedia 89.898 %・youtube 90.090 %・管理パネル 28.970 % |
+| web close | 閉じる・HUD に戻る（> 50 %） | **当たり**: 全体 96.741 %、下の帯 74.568 % |
+| web after | F1 で赤が消える | **外れ**: hand-f1 の写真でも赤 132084 px が残る（F1 で腕の分だけ増える） |
+
+分かったこと: (1) **1 人称の持ち物は、腕と持ち物のボーンの大きさでも位置でも、プロパティがあってもなくても動かない**（R10.13）。消すにはカメラ
+（1 人称の描き方そのものを止める）しかない見込み → 5 本目はカメラのプリセット。(2) **普通の題名はどのやり方でも写らない**（R10.14）。原因は
+「このパックの `hud_title_text` の上書き」か「このラボの写し方」のどちらか — **対照（題名に触らないパックで同じ HELLO）がまだ無い** → 5 本目に対照を足す。
+
+### 5 本目の予測（回す前に書いた: `--batch geoui_web_title_ctl,geoui_web_probe,geoui_web`、ゲームの画面 2400 x 1080）
+
+4 本目を受けて直したこと: (1) 題名は `hud_title_text` に触らず、`root_panel` の `hud_title_text_area` を同じファクトリー + `#visible` の
+パネル（`gwp_title_area`）に置き換える（`insert_after` してから元を `remove`）。**対照** `geoui_web_title_ctl` = 探りと同じパックで題名を
+隠さない（`titleHide: none`）。どちらも参加の後、通り道を送る前の普通の題名（title-first）から測る。(2) F1 の持ち物はカメラ `gwp:eye`
+（follow_orbit を継いだ目の所・半径 0.1）で消す（`gwp:part cam 1` でカメラだけも）。BDS 1.26.61.1 の試験でプリセットが読め、
+`camera.setCamera`・`setControlScheme` が通ることは確かめた（`node lab.mjs bds test -a geoui_web_probe` 26/26）。
+
+| 区切り | 確かめること | 予測 |
+|---|---|---|
+| ctl title-first | 対照: 何も送る前の `/title @a title HELLO` | **出る**（真ん中の帯の違い > 0.1 %）。出なければ、このラボ・この写し方では題名が写らない（以下の題名の予測は全部「分からない」に） |
+| ctl title-chan | 対照: 通り道の題名（隠さない） | 通り道の文字（`~gu~0a…`）が帯に出る（> 0.1 %） |
+| ctl title-plain・title-api | 対照: 通り道の後の HELLO | 出る（> 0.1 %） |
+| probe title-first | 置き換えたパネルで、何も送る前の HELLO | **出る**（> 0.1 %）: 自信は中（`control_name` の `insert_after`・`remove` の書き方が効かないと、元のまま = 出るが通り道も見える、または何も出ない） |
+| probe title-chan | 通り道の題名 | 見えない（帯 0 %） |
+| probe title-plain・title-api | 通り道の後の HELLO | **出る**（> 0.1 %） |
+| wool-shown | 赤い羊毛（対照） | 右下に赤（4 本目と同じ 約 125437 px） |
+| wool-cam | カメラだけ（`part cam 1`） | **赤が消える**（右下の赤 < 1000 px）。画面全体は変わる（視点が目の所の 3 人称に: 違い > 1 %）。自信は中（follow_orbit の半径 0.1 で 1 人称に戻されることがあれば消えない） |
+| wool-cam-off | カメラを戻す | 赤が戻る（約 125437 px） |
+| hand-f1 | 空の手で F1（腕・カメラ） | 右下が変わる（> 20 %） |
+| wool-f1 | F1 で赤い羊毛 | **赤が消える**（< 1000 px）。F1 を切ると戻る（wool-f1-off 約 125437 px） |
+| cam-look | F1（カメラ）の間に右スティックで右へ | 画面が回る（違い > 30 %）、`gwp:rot` で向きが 20° より回る（`until server GWP TURNED`） |
+| f1-chat・f1-off | （4 本目と同じ） | 同じ（0 %・ホットバーが戻る） |
+| web open〜close | （4 本目と同じ。開く時に F1 = カメラも） | 同じ。**ptr-look**: カメラの間も右スティックでポインタが右へ動く（4 本目の (1906..1913, 537..544) と同じ所 ±50 px）。自信は中 |
+| web web-title | 閉じた後の HELLO | **出る**（> 0.1 %） |
+| web hand-f1 | `gweb:f1 on` で赤い羊毛 | **赤が消える**（< 1000 px）、off で戻る |
