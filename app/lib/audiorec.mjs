@@ -138,7 +138,9 @@ export function analyze({ labDir, addon = 'spectral', wav, what, refs = [] }) {
   const r = spawnSync(py, args, { encoding: 'utf8', timeout: 1_800_000, maxBuffer: 64e6, cwd: unit });
   if (r.status !== 0) throw new Error(`解析に失敗しました: ${(r.stderr || r.stdout).trim().split('\n').slice(-3).join(' | ').slice(0, 400)}`);
   const json = JSON.parse(fs.readFileSync(out, 'utf8'));
-  return { json, out, line: summarize(json) };
+  // (a summary that cannot be made never loses the numbers: run 41055135707's calib all was measured, then lost to it)
+  let line; try { line = summarize(json); } catch (e) { line = `（要約できません: ${e.message}）`; }
+  return { json, out, line };
 }
 
 /** the original of a song the rig knows: demo = tools/make_demo_song.py (deterministic), else corpus/audio/<id>.mp3 */
@@ -167,7 +169,8 @@ function summarize(j) {
   if (j.fade) parts.push(`fade ${j.fade.shape ?? '?'} min ${n(j.fade.fade_min_ms)}ms ratio ${n(j.fade.duration_ratio, 2)}`);
   if (j.timing) parts.push(`lands vol ${n(j.timing.volume_lands_ms?.mean)}±${n(j.timing.volume_lands_ms?.std)}ms pitch-vol ${n(j.timing.pitch_minus_volume_ms?.mean)}ms`);
   if (j.seek) parts.push(`seek loop late ${n(j.seek.loop_summary?.late_ms_mean)}ms one-shot ${n(j.seek.oneshot_summary?.late_ms_mean)}ms`);
-  if (j.pitch) { const ps = j.pitch.points.filter((p) => typeof p.spur_db === 'number'); parts.push(`pitch worst spur ${n(Math.max(...ps.map((p) => p.spur_db)))}dB`); }
+  if (j.pitch) { const ps = (j.pitch.points ?? []).filter((p) => typeof p.spur_db === 'number'); parts.push(ps.length ? `pitch worst spur ${n(Math.max(...ps.map((p) => p.spur_db)))}dB` : `pitch ${j.pitch.error ? 'error' : '-'}`); }
+  for (const [k, v] of Object.entries(j)) if (v && typeof v === 'object' && typeof v.error === 'string') parts.push(`${k}: ${v.error.slice(0, 60)}`);
   if (j.stereo) parts.push(`stereo ${n(j.stereo.separation_dB)}dB`);
   if (j.mixer) parts.push(`mixer ${j.mixer.behaviour} music ${n(j.mixer.category_db?.music)} record ${n(j.mixer.category_db?.record)}dB`);
   if (j.throughput) parts.push(`128 cmds spread ${n(j.throughput.counts?.at(-1)?.spread_ms)}ms`);

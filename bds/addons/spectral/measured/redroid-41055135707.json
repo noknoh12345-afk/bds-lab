@@ -1,0 +1,182 @@
+{
+ "run": "41055135707",
+ "device": "redroid (Android 14 x86_64), Minecraft from Play",
+ "source": "job log [spectral rig] lines (recordings of the real client)",
+ "results": {
+  "demo": {
+   "song:demo": {
+    "demo.wav": {
+     "visqol": 2.1064,
+     "mrstft": 4.9428,
+     "third_oct_db": 85.338,
+     "onset_ms": 12.5,
+     "onset_recall": 0.333,
+     "recorded_s": 18.3
+    }
+   }
+  },
+  "c_piano_gymnopedie": {
+   "song:piano_gymnopedie": {
+    "c_piano_gymnopedie.wav": {
+     "visqol": 1.6054,
+     "mrstft": 1.3134,
+     "third_oct_db": 0.162,
+     "onset_ms": 0,
+     "onset_recall": 0.84,
+     "recorded_s": 20.04
+    }
+   }
+  },
+  "c_vocal_stars": {
+   "song:vocal_stars": {
+    "c_vocal_stars.wav": {
+     "visqol": 3.2832,
+     "mrstft": 1.1134,
+     "third_oct_db": 0.648,
+     "onset_ms": 0,
+     "onset_recall": 0.914,
+     "recorded_s": 20.52
+    }
+   }
+  },
+  "c_drums_round": {
+   "song:drums_round": {
+    "c_drums_round.wav": {
+     "visqol": 2.0853,
+     "mrstft": 1.0466,
+     "third_oct_db": 0.166,
+     "onset_ms": 0,
+     "onset_recall": 0.89,
+     "recorded_s": 20.14
+    }
+   }
+  },
+  "c_rock_big": {
+   "song:rock_big": {
+    "c_rock_big.wav": {
+     "visqol": 3.9548,
+     "mrstft": 1.1165,
+     "third_oct_db": 0.609,
+     "onset_ms": 0,
+     "onset_recall": 0.95,
+     "recorded_s": 20.03
+    }
+   }
+  },
+  "c_edm_detection": {
+   "song:edm_detection": {
+    "c_edm_detection.wav": {
+     "visqol": 3.8856,
+     "mrstft": 0.7571,
+     "third_oct_db": 0.836,
+     "onset_ms": 0,
+     "onset_recall": 1,
+     "recorded_s": 20.03
+    }
+   }
+  },
+  "c_orchestra_five_armies": {
+   "song:orchestra_five_armies": {
+    "c_orchestra_five_armies.wav": {
+     "visqol": 3.0109,
+     "mrstft": 0.6738,
+     "third_oct_db": 0.323,
+     "onset_ms": 0,
+     "onset_recall": 0.75,
+     "recorded_s": 20.03
+    }
+   }
+  },
+  "c_speech_en_wordsworth": {
+   "song:speech_en_wordsworth": {
+    "c_speech_en_wordsworth.wav": {
+     "visqol": 2.8409,
+     "mrstft": 1.6909,
+     "third_oct_db": 0.312,
+     "onset_ms": 0,
+     "onset_recall": 0.769,
+     "recorded_s": 20.01
+    }
+   }
+  }
+ },
+ "songs": {
+  "piano_gymnopedie": {
+   "ceiling": {
+    "visqol": 1.6054,
+    "mrstft": 1.3134,
+    "third_oct_db": 0.162,
+    "onset_ms": 0,
+    "onset_recall": 0.84,
+    "recorded_s": 20.04
+   }
+  },
+  "vocal_stars": {
+   "ceiling": {
+    "visqol": 3.2832,
+    "mrstft": 1.1134,
+    "third_oct_db": 0.648,
+    "onset_ms": 0,
+    "onset_recall": 0.914,
+    "recorded_s": 20.52
+   }
+  },
+  "drums_round": {
+   "ceiling": {
+    "visqol": 2.0853,
+    "mrstft": 1.0466,
+    "third_oct_db": 0.166,
+    "onset_ms": 0,
+    "onset_recall": 0.89,
+    "recorded_s": 20.14
+   }
+  },
+  "rock_big": {
+   "ceiling": {
+    "visqol": 3.9548,
+    "mrstft": 1.1165,
+    "third_oct_db": 0.609,
+    "onset_ms": 0,
+    "onset_recall": 0.95,
+    "recorded_s": 20.03
+   }
+  },
+  "edm_detection": {
+   "ceiling": {
+    "visqol": 3.8856,
+    "mrstft": 0.7571,
+    "third_oct_db": 0.836,
+    "onset_ms": 0,
+    "onset_recall": 1,
+    "recorded_s": 20.03
+   }
+  },
+  "orchestra_five_armies": {
+   "ceiling": {
+    "visqol": 3.0109,
+    "mrstft": 0.6738,
+    "third_oct_db": 0.323,
+    "onset_ms": 0,
+    "onset_recall": 0.75,
+    "recorded_s": 20.03
+   }
+  },
+  "speech_en_wordsworth": {
+   "ceiling": {
+    "visqol": 2.8409,
+    "mrstft": 1.6909,
+    "third_oct_db": 0.312,
+    "onset_ms": 0,
+    "onset_recall": 0.769,
+    "recorded_s": 20.01
+   }
+  }
+ },
+ "notes": [
+  "join: ok (37.7 s) after the startPad fix (0fabd41): the uinput controller was not in Android's input list even with /dev/input/event2 made; the shell's long presses worked",
+  "calib all: recorded and analysed, the numbers lost to a crash in the summary (fixed: audiorec.mjs summarize)",
+  "demo (chat /spectral:play demo): third_oct_db 85 — the energy in very few bands (a 1760 Hz tone against the same original gives 91)",
+  "g_piano_gymnopedie (chat): silent recording (score_song crashed on it; fixed: a silent recording is reported); the other 6 songs of the section were not played",
+  "ceilings: the 7 originals as OGG through the same client and recorder; low ViSQOL with small 1/3-octave errors (the capture path is to be looked at)"
+ ]
+}

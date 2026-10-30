@@ -35,6 +35,33 @@ def active(y, ref_len, floor_db=-50.0):
     return y[a: min(b, a + ref_len + int(0.5 * SR))]
 
 
+def levels(y):
+    """how loud a recording is as a whole: peak and RMS in dBFS, the share of 100 ms blocks above -60 dBFS, and the strongest
+    frequencies (a whole recording that is one tone — every voice at the loop's own pitch — shows as one peak)"""
+    k = int(0.1 * SR)
+    n = len(y) // k
+    peak = float(np.max(np.abs(y))) if len(y) else 0.0
+    rms = float(np.sqrt(np.mean(y * y))) if len(y) else 0.0
+    db = lambda v: round(20 * math.log10(v), 1) if v > 0 else -200.0
+    out = {'peak_db': db(peak), 'rms_db': db(rms), 'seconds': round(len(y) / SR, 2)}
+    if n:
+        e = np.sqrt((y[: n * k].reshape(n, k) ** 2).mean(1))
+        out['active_share'] = round(float(np.mean(e > 10 ** (-60 / 20))), 3)
+    if peak > 0 and len(y) >= 8192:
+        f = np.abs(np.fft.rfft(y * np.hanning(len(y))))
+        hz = np.fft.rfftfreq(len(y), 1 / SR)
+        top = np.argsort(f)[::-1]
+        picks = []
+        for i in top:
+            if all(abs(hz[i] - p) > 20 for p in picks):
+                picks.append(float(hz[i]))
+            if len(picks) == 5:
+                break
+        out['top_hz'] = [round(p, 1) for p in picks]
+        out['top_share'] = round(float(np.sum(f[np.abs(hz - picks[0]) < 20] ** 2) / np.sum(f ** 2)), 3)
+    return out
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     out = sys.argv[sys.argv.index('--json') + 1] if '--json' in sys.argv else None
@@ -43,9 +70,19 @@ def main():
     ref = load(args[0])
     res = {}
     for rec in args[1:]:
-        y = active(load(rec), len(ref))
-        r = MT.report(ref, y)
+        whole = load(rec)
+        lv = levels(whole)
+        y = active(whole, len(ref))
+        # (a silent or nearly silent recording is a finding, not a crash: run 41055135707's first song came back all zeros)
+        if lv['peak_db'] < -90:
+            res[os.path.basename(rec)] = {'error': 'silent recording', **lv}
+            continue
+        try:
+            r = MT.report(ref, y)
+        except Exception as e:
+            r = {'error': f'{type(e).__name__}: {e}'}
         r['recorded_s'] = round(len(y) / SR, 2)
+        r.update(lv)
         res[os.path.basename(rec)] = r
     txt = json.dumps(res, ensure_ascii=False)
     if out:

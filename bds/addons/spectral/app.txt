@@ -1,10 +1,9 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
-#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音は app/runs/<実行>/audio/*.wav（封じた成果物）。
-#   数はジョブのログの `[spectral rig] <録音> <何>: {...}` の行（audio analyze が出す。公開のリポジトリでも数だけは見える）。
-# 試験曲: audio song がここで変換してコンソールから spectral:song で送り、/spectral:play で鳴らす（g_<曲>）。
-# 天井: audio ceiling が元の抜粋を OGG のまま鳴らすだけのアドオン（bds/addons/spectral_ceil、実行の場で作る・コミットしない）を
-#   作り、addon で BDS をそれで起動し直して入り直し、同じクライアント・同じ録音で鳴らす（c_<曲>）。天井との差 = 両方の ViSQOL の差。
-# 一度で 40 分に収まるよう曲は 2 組に分ける（SONGS_A: ここ、SONGS_B: 下の注釈）。重い変換は join の前、解析は録音の後ごと。
+#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音は app/runs/<実行>/audio/*.wav（成果物には入らない）。
+#   数はジョブのログの `[spectral rig] <録音> <何>: {...}` の行（audio analyze）。録音そのものは `audio export` が Opus にして
+#   tools/rig/rec_public.pem で暗号化し `[spectral rec]` の行でログへ（開けるのはその秘密鍵の持ち主だけ: tools/rig/rec_decode.mjs）。
+# いまは原因を見る短い版（run 41055135707: デモが 1 つの音の高さに集まり、最初の試験曲は無音だった）: 較正・デモ・試験曲 2 曲
+#   （再生はコンソールの execute as で: チャットの打ち込みを外す）・軽量モード 1 曲・天井 2 曲を、どれも書き出す。
 
 section title
 launch
@@ -13,13 +12,8 @@ shot title
 
 section prep
 audio song piano_gymnopedie
-audio song vocal_stars
-audio song drums_round
 audio song rock_big
-audio song edm_detection
-audio song orchestra_five_armies
-audio song speech_en_wordsworth
-audio ceiling spectral_ceil piano_gymnopedie,vocal_stars,drums_round,rock_big,edm_detection,orchestra_five_armies,speech_en_wordsworth
+audio ceiling spectral_ceil piano_gymnopedie,rock_big
 
 section join
 join
@@ -36,57 +30,41 @@ until server spectral calib\] end throughput 300000
 wait 2000
 audio stop
 audio analyze calib all
+audio export calib 96
 
 section demo
 audio start demo
-chat /spectral:play demo
+do execute as @a run spectral:play demo
 wait 27000
 audio stop
 audio analyze demo song:demo
+audio export demo 160
 
 section songs
 audio start g_piano_gymnopedie
-chat /spectral:play piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie
 wait 23000
 audio stop
 audio analyze g_piano_gymnopedie song:piano_gymnopedie
-audio start g_vocal_stars
-chat /spectral:play vocal_stars
-wait 23000
-audio stop
-audio analyze g_vocal_stars song:vocal_stars
-audio start g_drums_round
-chat /spectral:play drums_round
-wait 23000
-audio stop
-audio analyze g_drums_round song:drums_round
+audio analyze g_piano_gymnopedie emu:piano_gymnopedie
+audio export g_piano_gymnopedie 160
 audio start g_rock_big
-chat /spectral:play rock_big
+do execute as @a run spectral:play rock_big
 wait 23000
 audio stop
 audio analyze g_rock_big song:rock_big
-audio start g_edm_detection
-chat /spectral:play edm_detection
-wait 23000
-audio stop
-audio analyze g_edm_detection song:edm_detection
-audio start g_orchestra_five_armies
-chat /spectral:play orchestra_five_armies
-wait 23000
-audio stop
-audio analyze g_orchestra_five_armies song:orchestra_five_armies
-audio start g_speech_en_wordsworth
-chat /spectral:play speech_en_wordsworth
-wait 23000
-audio stop
-audio analyze g_speech_en_wordsworth song:speech_en_wordsworth
+audio analyze g_rock_big emu:rock_big
+audio export g_rock_big 160
 
-section probe
-audio start probe32
-chat /spectral:probe 32
-wait 12000
-chat /spectral:stop
+section light
+do execute as @a run spectral:mode light
+audio start l_rock_big
+do execute as @a run spectral:play rock_big
+wait 23000
 audio stop
+audio analyze l_rock_big song:rock_big
+audio export l_rock_big 160
+do execute as @a run spectral:mode quality
 
 section ceiling
 addon spectral_ceil
@@ -98,36 +76,10 @@ do scriptevent spectral:ceiling piano_gymnopedie
 wait 22000
 audio stop
 audio analyze c_piano_gymnopedie song:piano_gymnopedie
-audio start c_vocal_stars
-do scriptevent spectral:ceiling vocal_stars
-wait 22000
-audio stop
-audio analyze c_vocal_stars song:vocal_stars
-audio start c_drums_round
-do scriptevent spectral:ceiling drums_round
-wait 22000
-audio stop
-audio analyze c_drums_round song:drums_round
+audio export c_piano_gymnopedie 160
 audio start c_rock_big
 do scriptevent spectral:ceiling rock_big
 wait 22000
 audio stop
 audio analyze c_rock_big song:rock_big
-audio start c_edm_detection
-do scriptevent spectral:ceiling edm_detection
-wait 22000
-audio stop
-audio analyze c_edm_detection song:edm_detection
-audio start c_orchestra_five_armies
-do scriptevent spectral:ceiling orchestra_five_armies
-wait 22000
-audio stop
-audio analyze c_orchestra_five_armies song:orchestra_five_armies
-audio start c_speech_en_wordsworth
-do scriptevent spectral:ceiling speech_en_wordsworth
-wait 22000
-audio stop
-audio analyze c_speech_en_wordsworth song:speech_en_wordsworth
-
-# SONGS_B（2 回目の実行で上の 7 曲と入れ替える）: piano_chopin_op66 vocal_name_of_love choir_how_long funk_funkorama
-#   speech_ja_soseki demo_selfmade
+audio export c_rock_big 160
