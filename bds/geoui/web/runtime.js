@@ -166,7 +166,8 @@
       s.ctl.reset(smp.rot, smp.slot); s.ctl.pointerTo(0, 0);
       io.freeze(p, true);
       // (a touch screen keeps its pad — drawn in root_panel: the channel's F1 flag stays off for it, the API hides the rest)
-      ch.f1(p, true, io.touch(p) ? { keep: ['TouchControls'], flag: false } : undefined);
+      // (the browser's F1 without the camera by default (CFG.f1Camera): with it the pad's RT click did not reach the page — R10.18)
+      ch.f1(p, true, Object.assign({ camera: CFG.f1Camera !== false }, io.touch(p) ? { keep: ['TouchControls'], flag: false } : {}));
       ch.layout(p, s.layout);
       syncPointer(p, s);
       io.log(`open ${JSON.stringify({ player: p.name, layout: s.layout, w: s.w, h: s.h })}`);
@@ -347,7 +348,8 @@ const chIo = {
     else { p.camera.clear(); try { p.setControlScheme(); } catch (e) { /* (an older game) */ } }
   },
 };
-const ch = GS.channel.create({ ns: NS, slots: CFG.slotCount, width: CFG.width, refreshTicks: CFG.refreshTicks, camera: CFG.f1Camera === false ? null : NS + ':eye' }, chIo);
+// (F1's camera <ns>:eye: /web:f1 (F1 alone) uses it — the held item gone, R10.17; the browser's F1 only when CFG.f1Camera)
+const ch = GS.channel.create({ ns: NS, slots: CFG.slotCount, width: CFG.width, refreshTicks: CFG.refreshTicks, camera: NS + ':eye' }, chIo);
 const engine = createBrowsers(CFG, {
   players: () => world.getAllPlayers(),
   sample: (p) => {
