@@ -65,8 +65,16 @@ export function scene() {
     scale: { mode: 'height', s: 0.1 }, groups,
     textures: [{ id: 'atlas', width: 16, height: 4, png: Buffer.from(encodePng({ width: 16, height: 4, data: atlas })) }],
     bones, planes,
-    properties: [{ name: 'show', range: [0, 255], default: 0 }, ...READOUT.map(([k]) => ({ name: k, range: [0, 100000], default: 0 }))],
-    pre: [`v.gwp_show = ${R('show')};`, ...READOUT.map(([k]) => `v.gwp_${k} = ${R(k)};`)],
+    properties: [{ name: 'show', range: [0, 255], default: 0 }, ...READOUT.map(([k]) => ({ name: k, range: [0, 100000], default: 0 })), { name: 'fx', range: [0, 3], default: 0 }],
+    pre: [`v.gwp_show = ${R('show')};`, ...READOUT.map(([k]) => `v.gwp_${k} = ${R(k)};`), `v.gwp_fx = ${R('fx')};`],
+    // (the first-person hand, one way at a time (4 本目): fx 1 — the arms and items at scale 0 only; fx 2 — the arms moved down
+    //  only; blue wool in the hand — the arm moved down with no property at all (whether a property reaches the first-person
+    //  pass). F1 itself (f1: true) does both, in pack.js)
+    animations: [
+      { name: 'fx_scale', condition: 'v.gwp_fx == 1', bones: { rightarm: { scale: 0 }, leftarm: { scale: 0 }, rightitem: { scale: 0 }, leftitem: { scale: 0 } } },
+      { name: 'fx_move', condition: 'v.gwp_fx == 2', bones: { rightarm: { position: [0, -100, 0] }, leftarm: { position: [0, -100, 0] } } },
+      { name: 'fx_blue', condition: '1.0', bones: { rightarm: { position: [0, "query.get_equipped_item_name('main_hand') == 'blue_wool' ? -100 : 0", 0] } } },
+    ],
     urlImages: Object.entries(IMAGES).map(([id, u]) => Object.assign({ id }, u)),
     channel: { width: WIDTH }, f1: true, backdrop: { layouts: 'b' },
     modules: [{ module_name: '@minecraft/server-net', version: '1.0.0-beta' }],
@@ -91,16 +99,19 @@ export function expected(W, H) {
 const SCRIPT = `// GeoUI Web probe (bds-lab: bds/geoui/web/probe.mjs makes this file — change that, not this).
 // /scriptevent gwp:<verb> — info · url <slot> <URL | /path (the service's own) | ~/path (through its tunnel) | -> · f1 0|1|touch ·
 // layout <letter|-> · show <bits> · stay <ticks> [refresh ticks] · raw <title> · reset · mark · lat <slot> <URL…> · count <URL…> ·
-// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm 0|1 (F1's parts alone) ·
+// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm 0|1 (F1's parts alone) · fx 0|1|2 (the
+// first-person hand one way at a time: 1 scale 0, 2 moved down) ·
 // frames <n> <ticks> <buffered 0|1> <ms> (a browser's pictures) — every answer is a line GWP … in the server's log
 import { world, system, HudElement, HudVisibility } from '@minecraft/server';
 import { http, HttpRequest, HttpRequestMethod } from '@minecraft/server-net';
 import './screen_channel.js';
 const NS = 'gwp', SVC = 'http://127.0.0.1:8787';
 const log = (s) => console.warn('GWP ' + s);
-let svc = null, stay = 600, mark = 0, seq = 0;
+let svc = null, stay = 0, mark = 0, seq = 0;
 const io = {
+  // (the channel's title: no time (stay 0: its control ends at once — channel.js), or the old way (stay > 0, 2・3 本目) to compare)
   title: (p, t) => p.onScreenDisplay.setTitle(t, { stayDuration: stay, fadeInDuration: 0, fadeOutDuration: 0 }),
+  times: (p) => { if (stay === 0) p.runCommand('title @s times 10 70 20'); },
   prop: (p, k, v) => p.setProperty(k, v),
   hideHud: (p, keep) => { const before = p.onScreenDisplay.getHiddenHudElements(); p.onScreenDisplay.hideAllExcept(keep.map((k) => HudElement[k]).filter((v) => v !== undefined)); return before; },
   restoreHud: (p, before) => { p.onScreenDisplay.resetHudElementsVisibility(); if (before && before.length) p.onScreenDisplay.setHudVisibility(HudVisibility.Hide, before); },
@@ -137,9 +148,10 @@ async function verb(v, a) {
     case 'f1': { for (const p of players()) ch.f1(p, a[0] !== '0', a[0] === 'touch' ? { keep: ['TouchControls'] } : undefined); log('F1 ' + a[0]); return; }
     case 'layout': { for (const p of players()) ch.layout(p, a[0] && a[0] !== '-' ? a[0] : ''); log('LAYOUT ' + (a[0] || '-')); return; }
     case 'show': { for (const p of players()) p.setProperty(NS + ':show', Number(a[0]) || 0); return; }
-    case 'stay': { stay = Math.max(1, Number(a[0]) || 600); ch.cfg.refreshTicks = Math.max(0, Number(a[1]) || 0); log('STAY ' + stay + ' refresh ' + ch.cfg.refreshTicks); for (const p of players()) { const t = ch.text(p); if (t.trim().length > 6) io.title(p, t); } return; }
+    case 'fx': { for (const p of players()) p.setProperty(NS + ':fx', Math.max(0, Math.min(3, Number(a[0]) || 0))); log('FX ' + (a[0] || 0)); return; }
+    case 'stay': { stay = Math.max(0, Number(a[0]) || 0); ch.cfg.refreshTicks = Math.max(0, Number(a[1]) || 0); log('STAY ' + stay + ' refresh ' + ch.cfg.refreshTicks); for (const p of players()) { const t = ch.text(p); if (t.trim().length > 6) io.title(p, t); } return; }
     case 'raw': { for (const p of players()) p.onScreenDisplay.setTitle(a.join(' '), { stayDuration: 200, fadeInDuration: 0, fadeOutDuration: 0 }); return; }
-    case 'reset': { for (const p of players()) { ch.reset(p); p.setProperty(NS + ':show', 0); } for (const k of [0, 1, 2]) readout(k, 0); stay = 600; ch.cfg.refreshTicks = 0; log('RESET'); return; }
+    case 'reset': { for (const p of players()) { ch.reset(p); p.setProperty(NS + ':show', 0); } for (const k of [0, 1, 2]) readout(k, 0); stay = 0; ch.cfg.refreshTicks = 0; log('RESET'); return; }
     case 'mark': { mark = Date.now(); for (const k of [0, 1, 2]) readout(k, 0); log('MARK'); return; }
     case 'readout': return void readout(Number(a[0]) || 0, Number(a[1]) || 0);
     case 'lat': {
@@ -228,6 +240,16 @@ wait 1000
 ~ GWP URL slot=0 http://\\S+/solid/ff0000/64x64.png
 ~ @A title: ~gu~0ahttp://\\S+/solid/ff0000/64x64\\.png
 
+## 通り道の題名は時間なし（その題名はすぐ終わる）、2 tick 後にゲームの題名の時間（10・70・20）を戻す: 時間を付けない普通の題名のため
+@A watch set_title
+scriptevent gwp:url 3 /solid/0000ff/64x64.png
+wait 1000
+@A watch off
+~ @A saw set_title \{"type":"set_durations","text":"","fade_in_time":0,"stay_time":0,"fade_out_time":0
+~ @A saw set_title \{"type":"set_title","text":"~gu~0ahttp
+~ @A saw set_title \{"type":"set_durations","text":"","fade_in_time":10,"stay_time":70,"fade_out_time":20
+scriptevent gwp:url 3 -
+
 ## 2 つの枠を一度に・枠 5 は枠 0 と同じ所の下
 scriptevent gwp:urls 0=/quad/200x100.png 5=/solid/00ff00/64x64.png
 wait 1000
@@ -278,10 +300,10 @@ wait 2500
 
 // ---- the real app (the lab's CI device): every number out through measure (the pictures stay sealed)
 function appTxt() {
-  // (3 本目: 2 本目（run 41001422618）で残ったこと — 普通の題名が出るか（題名を隠す binding に always）・F1 の手と持ち物（1 人称の
-  //  描き方の条件を F1 だけに: 赤い羊毛を持って色で見る）・F1 の間の会話)
-  return `# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（3 本目）。
-# 1・2 本目（run 40998593826・41001422618）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
+  // (4 本目: 3 本目（run 41004077706）で残ったこと — 普通の題名（通り道の題名を時間なしに: 隠れたまま残る題名の部品が次の題名を
+  //  隠していた見込み）・F1 の手と持ち物（1 人称の持ち物は腕の位置に付いて動くが大きさ 0 は効かない見込み: 腕を下へ動かす）)
+  return `# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（4 本目）。
+# 1〜3 本目（run 40998593826・41001422618・41004077706）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
 # 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
 
 section join
@@ -311,22 +333,43 @@ expect server GWP CHECK svc PASS
 absent clientlog \\bERROR\\b
 
 section title
-do scriptevent gwp:url 0 /solid/ff0000/64x64.png
-wait 3000
 do scriptevent gwp:reset
+do title @a times 10 70 20
 wait 2000
 shot world
+do scriptevent gwp:url 1 /solid/00ff00/64x64.png
+wait 3000
+shot title-chan
+measure diff title-chan 900 300 1500 700
+do title @a title HELLO
+wait 1500
+shot title-plain
+measure diff title-plain 900 300 1500 700
+wait 6000
 do scriptevent gwp:raw HELLO
 wait 1500
-shot title-raw
-measure diff title-raw 300 100 2100 800
-measure diff title-raw 900 300 1500 700
+shot title-api
+measure diff title-api 900 300 1500 700
+do title @a clear
+wait 1000
+do scriptevent gwp:stay 600
+do scriptevent gwp:url 1 /solid/0000ff/64x64.png
+wait 3000
+do title @a title HELLO
+wait 1500
+shot title-old
+measure diff title-old 900 300 1500 700
 do scriptevent gwp:reset
+do title @a reset
 wait 2000
 
-section f1-wool
+section f1-hand
 do scriptevent gwp:reset
 do hud @a reset
+do hud @a hide hotbar
+do hud @a hide touch_controls
+do hud @a hide crosshair
+do hud @a hide item_text
 do replaceitem entity @a slot.weapon.mainhand 0 air
 do tp @a 0 -60 0 0 30
 wait 4000
@@ -334,21 +377,45 @@ shot world
 do replaceitem entity @a slot.weapon.mainhand 0 red_wool
 wait 3000
 shot wool-shown
-measure marks wool-shown
+measure marks wool-shown 1600 600 2400 1080
+do scriptevent gwp:fx 1
+wait 2500
+shot wool-scale
+measure marks wool-scale 1600 600 2400 1080
+do scriptevent gwp:fx 2
+wait 2500
+shot wool-move
+measure marks wool-move 1600 600 2400 1080
+do scriptevent gwp:fx 0
 do scriptevent gwp:part arm 1
-wait 3000
+wait 2500
 shot wool-arm
-measure marks wool-arm
+measure marks wool-arm 1600 600 2400 1080
 do scriptevent gwp:part arm 0
-wait 3000
+wait 2500
 shot wool-back
-measure marks wool-back
+measure marks wool-back 1600 600 2400 1080
+do replaceitem entity @a slot.weapon.mainhand 0 blue_wool
+wait 3000
+shot blue-held
+measure marks blue-held 1600 600 2400 1080
+do replaceitem entity @a slot.weapon.mainhand 0 air
+wait 3000
+shot hand-empty
+measure diff hand-empty 1600 600 2400 1080
 do scriptevent gwp:f1 1
 wait 3000
+shot hand-f1
+measure diff hand-f1 1600 600 2400 1080
+do replaceitem entity @a slot.weapon.mainhand 0 red_wool
+wait 3000
 shot wool-f1
-measure marks wool-f1
+measure marks wool-f1 1600 600 2400 1080
 do scriptevent gwp:f1 0
 wait 3000
+shot wool-f1-off
+measure marks wool-f1-off 1600 600 2400 1080
+do replaceitem entity @a slot.weapon.mainhand 0 air
 
 section f1-chat
 do scriptevent gwp:reset
@@ -384,7 +451,8 @@ URL の画像（profile_image_renderer の {"type":7,"url":…}）を GeoUI に�
 - \`/scriptevent gwp:url <枠> <URL>\`: その枠に絵を出す。\`/path\` はラボのサービス（bds/geoui/web/server.mjs）の絵（/solid/rrggbb/WxH.png・/quad/WxH.png・
   /noise/WxH.png・/slow/<ミリ秒>/…）、\`~/path\` はそのトンネル（https）、\`-\` で消す。題名（タイトル）の通り道で送る（layout.js・channel.js）。
 - \`gwp:show 1\` = main の外の紫の枠（GeoUI の印: 絵がその中にぴったり入るか）、\`gwp:show 4\` = 真ん中の白い十字（絵の上に GeoUI が描かれるか）。
-- \`gwp:f1 1\`: F1（HUD の 13 の部品を API で、残りの HUD（会話・題名など）を通り道の旗で隠し、腕と持ち物はプロパティで大きさ 0）。\`gwp:f1 touch\`: 携帯の操作ボタンは残す。
+- \`gwp:f1 1\`: F1（HUD の 13 の部品を API で、残りの HUD（会話・題名など）を通り道の旗で隠し、腕と持ち物はプロパティで画面の下へ動かし大きさ 0）。\`gwp:f1 touch\`: 携帯の操作ボタンは残す。
+- \`gwp:fx 1\`・\`gwp:fx 2\`: 1 人称の手の消し方を 1 つずつ（1: 大きさ 0 だけ、2: 下へ動かすだけ）。青い羊毛を持つと、プロパティなしで腕が下へ（4 本目の実験）。
 - \`gwp:layout b\`: 並べ方 b（lay の枠と、画面全体の黒い背景）。\`gwp:lat\`・\`gwp:count\`・\`gwp:cycle\`: サービスが記録した、ゲームが絵を取りに来た時刻と回数（左上の棒の長さにも出る）。
 
 ## 人が見ること（携帯・PC で、横向きで）

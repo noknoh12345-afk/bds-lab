@@ -22,8 +22,9 @@
 //   rcPatch (keys merged into every GeoUI render controller: color, overlay_color … as Molang),
 //   extraMaterials { name: definition } (materials not proved yet, for an experiment's bones only — never one of MATS' names:
 //   a probe tries them, RULES.md says what they did; what holds moves into MATS),
-//   f1 (true: F1 without the game mode changed — the property <ns>:f1 hides the local player's arms and held items (bones at
-//   scale 0) and body (render controllers), the HUD by the title channel: layout.js, channel.js),
+//   f1 (true: F1 without the game mode changed — the property <ns>:f1 hides the local player's arms and held items (the arms'
+//   bones moved far below and at scale 0: a first-person item follows its arm's position, not its scale — RULES R10.13) and
+//   body (render controllers), the HUD by the title channel: layout.js, channel.js),
 //   urlImages [{ id, group, rect {x, y, w, h} (local units), slot, above? }] (images the game fetches by URL: layout.js),
 //   channel { width } (the title channel's field width), modules [{ module_name, version }] (more script modules: server-net …)
 // }
@@ -201,8 +202,15 @@
       animations[`animation.${ns}.${clean(a.name, 'a')}`] = { loop: true, animation_length: 1, bones: a.bones };
       return { key, full: `animation.${ns}.${clean(a.name, 'a')}`, cond: a.condition || 'q.is_in_ui' };
     });
-    // (F1: the local player's arms and what they hold at scale 0 — an item is drawn at its hand's bone, so it goes with it)
-    if (scene.f1) animations[`animation.${ns}.f1`] = { loop: true, animation_length: 1, bones: Object.fromEntries(['rightArm', 'leftArm', 'rightItem', 'leftItem'].map((b) => [b, { scale: 0 }])) };
+    // (F1: the local player's arms and what they hold gone. The first-person item follows its arm's position — the game's own
+    //  swap_item animation dips it with the arm's y — but not the arm's scale: scale 0 alone left a held block and a sword in
+    //  sight (run 41001422618・41004077706), so the arms also go 100 units (6 blocks) down, out of the view, as the swap does)
+    if (scene.f1) {
+      const F1_DROP = [0, -100, 0];
+      // (the bone names as the game's own player animations write them: lower case)
+      animations[`animation.${ns}.f1`] = { loop: true, animation_length: 1, bones: {
+        rightarm: { position: F1_DROP, scale: 0 }, leftarm: { position: F1_DROP, scale: 0 }, rightitem: { scale: 0 }, leftitem: { scale: 0 } } };
+    }
     files[`rp/animations/${ns}.animation.json`] = J({ format_version: '1.8.0', animations });
     files[`rp/render_controllers/${ns}.render_controllers.json`] = J({ format_version: '1.8.0', render_controllers: controllers });
     files[`rp/materials/entity.material`] = J(materialsFile(ns, used, extraMats));

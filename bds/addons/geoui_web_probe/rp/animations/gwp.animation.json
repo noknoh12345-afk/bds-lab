@@ -49,20 +49,81 @@
         }
       }
     },
+    "animation.gwp.fx_scale": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "rightarm": {
+          "scale": 0
+        },
+        "leftarm": {
+          "scale": 0
+        },
+        "rightitem": {
+          "scale": 0
+        },
+        "leftitem": {
+          "scale": 0
+        }
+      }
+    },
+    "animation.gwp.fx_move": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "rightarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ]
+        },
+        "leftarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ]
+        }
+      }
+    },
+    "animation.gwp.fx_blue": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "rightarm": {
+          "position": [
+            0,
+            "query.get_equipped_item_name('main_hand') == 'blue_wool' ? -100 : 0",
+            0
+          ]
+        }
+      }
+    },
     "animation.gwp.f1": {
       "loop": true,
       "animation_length": 1,
       "bones": {
-        "rightArm": {
+        "rightarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ],
           "scale": 0
         },
-        "leftArm": {
+        "leftarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ],
           "scale": 0
         },
-        "rightItem": {
+        "rightitem": {
           "scale": 0
         },
-        "leftItem": {
+        "leftitem": {
           "scale": 0
         }
       }

@@ -15,6 +15,16 @@ wait 1000
 ~ GWP URL slot=0 http://\S+/solid/ff0000/64x64.png
 ~ @A title: ~gu~0ahttp://\S+/solid/ff0000/64x64\.png
 
+## 通り道の題名は時間なし（その題名はすぐ終わる）、2 tick 後にゲームの題名の時間（10・70・20）を戻す: 時間を付けない普通の題名のため
+@A watch set_title
+scriptevent gwp:url 3 /solid/0000ff/64x64.png
+wait 1000
+@A watch off
+~ @A saw set_title {"type":"set_durations","text":"","fade_in_time":0,"stay_time":0,"fade_out_time":0
+~ @A saw set_title {"type":"set_title","text":"~gu~0ahttp
+~ @A saw set_title {"type":"set_durations","text":"","fade_in_time":10,"stay_time":70,"fade_out_time":20
+scriptevent gwp:url 3 -
+
 ## 2 つの枠を一度に・枠 5 は枠 0 と同じ所の下
 scriptevent gwp:urls 0=/quad/200x100.png 5=/solid/00ff00/64x64.png
 wait 1000

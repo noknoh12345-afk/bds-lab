@@ -203,16 +203,26 @@
       "loop": true,
       "animation_length": 1,
       "bones": {
-        "rightArm": {
+        "rightarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ],
           "scale": 0
         },
-        "leftArm": {
+        "leftarm": {
+          "position": [
+            0,
+            -100,
+            0
+          ],
           "scale": 0
         },
-        "rightItem": {
+        "rightitem": {
           "scale": 0
         },
-        "leftItem": {
+        "leftitem": {
           "scale": 0
         }
       }

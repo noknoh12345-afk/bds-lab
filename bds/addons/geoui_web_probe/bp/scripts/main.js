@@ -1,16 +1,19 @@
 // GeoUI Web probe (bds-lab: bds/geoui/web/probe.mjs makes this file — change that, not this).
 // /scriptevent gwp:<verb> — info · url <slot> <URL | /path (the service's own) | ~/path (through its tunnel) | -> · f1 0|1|touch ·
 // layout <letter|-> · show <bits> · stay <ticks> [refresh ticks] · raw <title> · reset · mark · lat <slot> <URL…> · count <URL…> ·
-// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm 0|1 (F1's parts alone) ·
+// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm 0|1 (F1's parts alone) · fx 0|1|2 (the
+// first-person hand one way at a time: 1 scale 0, 2 moved down) ·
 // frames <n> <ticks> <buffered 0|1> <ms> (a browser's pictures) — every answer is a line GWP … in the server's log
 import { world, system, HudElement, HudVisibility } from '@minecraft/server';
 import { http, HttpRequest, HttpRequestMethod } from '@minecraft/server-net';
 import './screen_channel.js';
 const NS = 'gwp', SVC = 'http://127.0.0.1:8787';
 const log = (s) => console.warn('GWP ' + s);
-let svc = null, stay = 600, mark = 0, seq = 0;
+let svc = null, stay = 0, mark = 0, seq = 0;
 const io = {
+  // (the channel's title: no time (stay 0: its control ends at once — channel.js), or the old way (stay > 0, 2・3 本目) to compare)
   title: (p, t) => p.onScreenDisplay.setTitle(t, { stayDuration: stay, fadeInDuration: 0, fadeOutDuration: 0 }),
+  times: (p) => { if (stay === 0) p.runCommand('title @s times 10 70 20'); },
   prop: (p, k, v) => p.setProperty(k, v),
   hideHud: (p, keep) => { const before = p.onScreenDisplay.getHiddenHudElements(); p.onScreenDisplay.hideAllExcept(keep.map((k) => HudElement[k]).filter((v) => v !== undefined)); return before; },
   restoreHud: (p, before) => { p.onScreenDisplay.resetHudElementsVisibility(); if (before && before.length) p.onScreenDisplay.setHudVisibility(HudVisibility.Hide, before); },
@@ -47,9 +50,10 @@ async function verb(v, a) {
     case 'f1': { for (const p of players()) ch.f1(p, a[0] !== '0', a[0] === 'touch' ? { keep: ['TouchControls'] } : undefined); log('F1 ' + a[0]); return; }
     case 'layout': { for (const p of players()) ch.layout(p, a[0] && a[0] !== '-' ? a[0] : ''); log('LAYOUT ' + (a[0] || '-')); return; }
     case 'show': { for (const p of players()) p.setProperty(NS + ':show', Number(a[0]) || 0); return; }
-    case 'stay': { stay = Math.max(1, Number(a[0]) || 600); ch.cfg.refreshTicks = Math.max(0, Number(a[1]) || 0); log('STAY ' + stay + ' refresh ' + ch.cfg.refreshTicks); for (const p of players()) { const t = ch.text(p); if (t.trim().length > 6) io.title(p, t); } return; }
+    case 'fx': { for (const p of players()) p.setProperty(NS + ':fx', Math.max(0, Math.min(3, Number(a[0]) || 0))); log('FX ' + (a[0] || 0)); return; }
+    case 'stay': { stay = Math.max(0, Number(a[0]) || 0); ch.cfg.refreshTicks = Math.max(0, Number(a[1]) || 0); log('STAY ' + stay + ' refresh ' + ch.cfg.refreshTicks); for (const p of players()) { const t = ch.text(p); if (t.trim().length > 6) io.title(p, t); } return; }
     case 'raw': { for (const p of players()) p.onScreenDisplay.setTitle(a.join(' '), { stayDuration: 200, fadeInDuration: 0, fadeOutDuration: 0 }); return; }
-    case 'reset': { for (const p of players()) { ch.reset(p); p.setProperty(NS + ':show', 0); } for (const k of [0, 1, 2]) readout(k, 0); stay = 600; ch.cfg.refreshTicks = 0; log('RESET'); return; }
+    case 'reset': { for (const p of players()) { ch.reset(p); p.setProperty(NS + ':show', 0); } for (const k of [0, 1, 2]) readout(k, 0); stay = 0; ch.cfg.refreshTicks = 0; log('RESET'); return; }
     case 'mark': { mark = Date.now(); for (const k of [0, 1, 2]) readout(k, 0); log('MARK'); return; }
     case 'readout': return void readout(Number(a[0]) || 0, Number(a[1]) || 0);
     case 'lat': {

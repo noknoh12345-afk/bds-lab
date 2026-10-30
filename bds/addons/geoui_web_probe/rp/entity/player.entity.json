@@ -45,11 +45,21 @@
           "v.gwp_r0 = variable.is_paperdoll ? 0 : q.property('gwp:r0');",
           "v.gwp_r1 = variable.is_paperdoll ? 0 : q.property('gwp:r1');",
           "v.gwp_r2 = variable.is_paperdoll ? 0 : q.property('gwp:r2');",
+          "v.gwp_fx = variable.is_paperdoll ? 0 : q.property('gwp:fx');",
           "v.gwp_f1 = variable.is_paperdoll ? 0 : q.property('gwp:f1');"
         ],
         "animate": [
           {
             "gwp_ui": "q.is_in_ui"
+          },
+          {
+            "gwp_fx_scale": "v.gwp_fx == 1"
+          },
+          {
+            "gwp_fx_move": "v.gwp_fx == 2"
+          },
+          {
+            "gwp_fx_blue": "1.0"
           },
           {
             "gwp_f1": "v.gwp_f1 > 0 && (variable.is_first_person || (q.is_local_player && !q.is_in_ui))"
@@ -140,6 +150,9 @@
         "third_person_melee_spear_attack": "animation.player.melee_spear_attack",
         "third_person_melee_spear_controller": "controller.animation.player.melee_spear",
         "gwp_ui": "animation.gwp.ui",
+        "gwp_fx_scale": "animation.gwp.fx_scale",
+        "gwp_fx_move": "animation.gwp.fx_move",
+        "gwp_fx_blue": "animation.gwp.fx_blue",
         "gwp_f1": "animation.gwp.f1"
       },
       "render_controllers": [

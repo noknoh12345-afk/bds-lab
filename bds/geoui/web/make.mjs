@@ -296,16 +296,6 @@ wait 8000
 shot panel
 measure diff panel
 
-section chat
-do scriptevent gweb:go http://127.0.0.1:8787/demo/form.html
-until server GWEB page .*form\\.html 20000
-do scriptevent gweb:pointer 0.2 0.144
-wait 500
-attack 0.3
-wait 1000
-cmd /web:t Alex
-until server GWEB page .*Alex 20000
-
 section close
 do scriptevent gweb:pointer 0.9837 0.0723
 wait 1500
@@ -316,6 +306,30 @@ wait 3000
 shot closed
 measure diff closed
 measure diff closed 700 940 1700 1080
+
+section after
+do tp @a 0 -60 0 0 90
+wait 3000
+shot world
+do title @a title HELLO
+wait 1500
+shot web-title
+measure diff web-title 900 300 1500 700
+wait 5000
+do tp @a 0 -60 0 0 30
+do replaceitem entity @a slot.weapon.mainhand 0 red_wool
+wait 3000
+shot hand-shown
+measure marks hand-shown 1600 600 2400 1080
+do scriptevent gweb:f1 on
+wait 3000
+shot hand-f1
+measure marks hand-f1 1600 600 2400 1080
+do scriptevent gweb:f1 off
+wait 3000
+shot hand-back
+measure marks hand-back 1600 600 2400 1080
+do replaceitem entity @a slot.weapon.mainhand 0 air
 `;
 }
 

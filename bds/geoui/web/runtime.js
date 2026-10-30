@@ -165,7 +165,8 @@
       const smp = io.sample(p) || {};
       s.ctl.reset(smp.rot, smp.slot); s.ctl.pointerTo(0, 0);
       io.freeze(p, true);
-      ch.f1(p, true, io.touch(p) ? { keep: ['TouchControls'] } : undefined);
+      // (a touch screen keeps its pad — drawn in root_panel: the channel's F1 flag stays off for it, the API hides the rest)
+      ch.f1(p, true, io.touch(p) ? { keep: ['TouchControls'], flag: false } : undefined);
       ch.layout(p, s.layout);
       syncPointer(p, s);
       io.log(`open ${JSON.stringify({ player: p.name, layout: s.layout, w: s.w, h: s.h })}`);
@@ -283,7 +284,7 @@
           // (F1 alone, the browser closed: the HUD, the arm and the held item hidden — a spectator's view without its game mode)
           if (s.open) return `${ns}: ブラウザを開いている間は F1 のまま`;
           const on = args[0] === 'on' ? true : args[0] === 'off' ? false : !ch.state(p).f1;
-          ch.f1(p, on, io.touch(p) ? { keep: ['TouchControls'] } : undefined);
+          ch.f1(p, on, io.touch(p) ? { keep: ['TouchControls'], flag: false } : undefined);
           if (!on) ch.reset(p);
           io.say(p, on ? `§7F1（もう一度 /${cmd}:f1 で戻る）` : '');
           return '';
@@ -332,7 +333,10 @@ async function call(method, path, body) {
   return { status: r.status, json };
 }
 const chIo = {
-  title: (p, t) => p.onScreenDisplay.setTitle(t, { stayDuration: 600, fadeInDuration: 0, fadeOutDuration: 0 }),
+  // (the channel's title has no time: its control ends at once, so the next plain title shows — RULES R10.14; the game's own
+  //  durations come back a little later for titles that set none)
+  title: (p, t) => p.onScreenDisplay.setTitle(t, { stayDuration: 0, fadeInDuration: 0, fadeOutDuration: 0 }),
+  times: (p) => { p.runCommand('title @s times 10 70 20'); },
   prop: (p, k, v) => p.setProperty(k, v),
   hideHud: (p, keep) => { const before = p.onScreenDisplay.getHiddenHudElements(); p.onScreenDisplay.hideAllExcept(keep.map((k) => HudElement[k]).filter((v) => v !== undefined)); return before; },
   restoreHud: (p, before) => { p.onScreenDisplay.resetHudElementsVisibility(); if (before && before.length) p.onScreenDisplay.setHudVisibility(HudVisibility.Hide, before); },

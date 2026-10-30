@@ -8,16 +8,22 @@
 // PREFIX. The text stays after its title's time and after `title clear` (RULES R10.7: the game keeps the last title's text), so
 // nothing on is the empty channel (PREFIX + '0a'), sent once; another pack's title replaces it all the same, so while anything is
 // on the text is sent again every refreshTicks (0: never).
+// The channel's own title is sent with no time at all (io.title: fade in 0, stay 0, fade out 0): the game's title control for it
+// ends at once, so a plain title after it is a new control the game shows (a channel title still on screen, hidden, kept the
+// next plain title hidden too: RULES R10.14). The game keeps the last durations for titles that set none (`/title @a title …`),
+// so timesTicks (2) ticks later io.times puts the game's own ones back (10, 70, 20 ticks).
 //
 //   const ch = GeoUIScreen.channel.create({ ns: 'gweb', slots: 2, width: 230 }, io)
 //   ch.f1(player, true)              F1 on: the HUD hidden (the HUD elements by the API, the rest by the channel), the arm and the
 //                                    held item gone (the pack's <ns>:f1 property: layout/pack.js) — the game mode is not changed.
-//                                    ch.f1(player, true, { keep: ['TouchControls'] }) leaves those HUD elements (a phone's pad)
+//                                    ch.f1(player, true, { keep: ['TouchControls'], flag: false }) leaves those HUD elements (a
+//                                    phone's pad) and the rest of the HUD (flag: false — the pad is drawn in root_panel: RULES R10.12)
 //   ch.layout(player, 'b')           the scene's groups of layout 'b' show (and only those of all the layouts)
 //   ch.url(player, 0, 'http://…')    slot 0 shows that image ('' hides it); a new URL is a new image (the game fetches it again)
 //   ch.tick(tick)                    every tick (or every few): sends again what is due
 //   ch.drop(player)                  a player who left
-// io = { title(p, text), prop(p, name, value), hideHud(p, keep) → what was hidden before, restoreHud(p, before) }
+// io = { title(p, text) (no time: see above), times(p) (the game's own title durations back: `title @s times 10 70 20`; optional),
+//        prop(p, name, value), hideHud(p, keep) → what was hidden before, restoreHud(p, before) }
 (function (root) {
   'use strict';
   const S = root.GeoUIScreen = root.GeoUIScreen || {};
@@ -51,26 +57,30 @@
   }
 
   function create(cfg0, io) {
-    const cfg = Object.assign({ slots: 0, width: 230, refreshTicks: 200 }, cfg0 || {});
+    const cfg = Object.assign({ slots: 0, width: 230, refreshTicks: 200, timesTicks: 2 }, cfg0 || {});
     const st = new Map();
     let now = 0;
     // (the player object kept: tick() sends to it again; a player who left is invalid and dropped)
-    const of = (p) => { let s = st.get(p.id); if (!s) { s = { f1: false, layout: '', urls: [], sent: null, at: -1e9, hudBefore: null, player: p }; st.set(p.id, s); } s.player = p; return s; };
+    const of = (p) => { let s = st.get(p.id); if (!s) { s = { f1: false, flag: true, layout: '', urls: [], sent: null, at: -1e9, timesAt: null, hudBefore: null, player: p }; st.set(p.id, s); } s.player = p; return s; };
+    // (a title sent: the game's own durations back a little later — after the channel's title has ended — for plain titles)
+    const sentOne = (s) => { if (typeof io.times === 'function') s.timesAt = now + Math.max(1, cfg.timesTicks | 0); };
+    // (what the title says: F1's flag only when F1 hides root_panel too)
+    const said = (s) => ({ f1: s.f1 && s.flag, layout: s.layout, urls: s.urls });
     const active = (s) => s.f1 || !!s.layout || s.urls.some((u) => u);
     function send(p, s, force) {
       if (!active(s)) {
         // (the empty channel, once: `title clear` would leave the last text — and its pictures, its F1 — in the HUD)
-        if (s.sent !== null && s.sent !== EMPTY) { try { io.title(p, EMPTY); s.sent = EMPTY; s.at = now; } catch (e) { /* (a player leaving) */ } }
+        if (s.sent !== null && s.sent !== EMPTY) { try { io.title(p, EMPTY); s.sent = EMPTY; s.at = now; sentOne(s); } catch (e) { /* (a player leaving) */ } }
         return;
       }
-      const t = text(cfg, s);
+      const t = text(cfg, said(s));
       if (!force && t === s.sent && (!(cfg.refreshTicks > 0) || now - s.at < cfg.refreshTicks)) return;
-      try { io.title(p, t); s.sent = t; s.at = now; } catch (e) { /* (the next tick) */ }
+      try { io.title(p, t); s.sent = t; s.at = now; sentOne(s); } catch (e) { /* (the next tick) */ }
     }
     return {
       cfg,
       state(p) { const s = of(p); return { f1: s.f1, layout: s.layout || 'a', urls: s.urls.slice() }; },
-      text(p) { return text(cfg, of(p)); },
+      text(p) { return text(cfg, said(of(p))); },
       /** F1 on or off for one player: the HUD's elements (the API; opts.keep: ones left), the rest of the HUD (the channel), the
        *  arm and the item (prop) */
       f1(p, on, opts) {
@@ -78,6 +88,7 @@
         on = !!on;
         if (s.f1 === on) return;
         s.f1 = on;
+        s.flag = !(on && opts && opts.flag === false);
         if (on) { try { s.hudBefore = io.hideHud(p, (opts && opts.keep) || []) || []; } catch (e) { s.hudBefore = []; } }
         else { try { io.restoreHud(p, s.hudBefore || []); } catch (e) { /* (gone) */ } s.hudBefore = null; }
         if (cfg.ns) { try { io.prop(p, `${cfg.ns}:f1`, on ? 1 : 0); } catch (e) { /* (a pack without the property) */ } }
@@ -113,7 +124,7 @@
       reset(p) {
         const s = of(p);
         if (s.f1) { try { io.restoreHud(p, s.hudBefore || []); } catch (e) { /* (gone) */ } s.hudBefore = null; if (cfg.ns) { try { io.prop(p, `${cfg.ns}:f1`, 0); } catch (e) { /* (none) */ } } }
-        s.f1 = false; s.layout = ''; s.urls = [];
+        s.f1 = false; s.flag = true; s.layout = ''; s.urls = [];
         send(p, s, true);
       },
       /** every tick (or less often): what is due is sent again */
@@ -121,7 +132,9 @@
         now = typeof t === 'number' ? t : now + 1;
         for (const [id, s] of st) {
           if (s.player && s.player.isValid === false) { st.delete(id); continue; }
-          if (s.player) send(s.player, s, false);
+          if (!s.player) continue;
+          send(s.player, s, false);
+          if (s.timesAt !== null && now >= s.timesAt) { s.timesAt = null; try { io.times(s.player); } catch (e) { /* (a player leaving) */ } }
         }
       },
       drop(p) { st.delete(p.id); },
