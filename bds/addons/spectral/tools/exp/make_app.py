@@ -9,14 +9,15 @@ SONGS=['piano_gymnopedie','piano_chopin_op66','vocal_stars','vocal_name_of_love'
        'orchestra_five_armies','funk_funkorama','speech_ja_soseki','speech_en_wordsworth','demo_selfmade']
 def make(arms, header, wait_ms=23000, calib=(), ceiling=None):
     L=[*header, '', 'section title', 'audio info', 'stop', 'audio volume 0', 'launch', 'until title 600000', 'audio info', 'shot title', '', 'section prep']
-    sent=set()
+    sent={}                      # (suffix, converter options) -> every song an arm plays with them, in order
     for a in arms:
         key=(a.get('suffix',''), json.dumps(a.get('conv',{}),sort_keys=True))
-        if key in sent: continue
-        sent.add(key)
-        songs=a.get('songs',SONGS)
+        got=sent.setdefault(key, {'arm': a, 'songs': []})
+        got['songs']+=[x for x in a.get('songs',SONGS) if x not in got['songs']]
+    for (suffix, _), got in sent.items():
+        a=got['arm']; songs=[x for x in SONGS if x in got['songs']]
         opts=' '.join(f'{k}={v}' for k,v in a.get('conv',{}).items())
-        L.append(f"audio song {','.join(songs)}" + (f" suffix={a['suffix']}" if a.get('suffix') else '') + (f' {opts}' if opts else ''))
+        L.append(f"audio song {','.join(songs)}" + (f" suffix={suffix}" if suffix else '') + (f' {opts}' if opts else ''))
     if ceiling:
         cs=[]
         for c in ceiling['arms']:

@@ -26,12 +26,22 @@ const DB025 = Math.pow(10, 0.25 / 20);    // 0.25 dB: smaller level moves are no
 export interface Meta {
   id: string; title: string; artist?: string; fps: number; frames: number; voices: number; base: number;
   noise: number[][]; bursts: number; sub: number; seconds: number; amp: [number, number]; nz: [number, number];
+  /** the noise bands' fade lengths, tick by tick (tools/spectral.py fit_noise_fades): ms = the lengths a code means, data =
+   *  base64 of 2-bit codes, 4 bands a byte, a frame's bands together (frame k = the fade sent at tick k). A song without it
+   *  ramps every band over the tick (50 ms) */
+  nzd?: { ms: number[]; data: string };
+  /** the voices' fade lengths the same way (tools/spectral.py fit_voice_fades): 2-bit codes, 4 voices a byte */
+  vd?: { ms: number[]; data: string };
 }
 interface Song { meta: Meta; data?: string; gen?: (d: Decoded) => void; dec?: Decoded; decoding?: Promise<Decoded>; }
 interface Decoded {
   F: number; N: number; M: number;
   freq: Float32Array; amp: Float32Array; att: Uint8Array; nz: Float32Array;
   evIdx: Uint32Array; evBand: Uint8Array; evSub: Uint8Array; evAmp: Float32Array;
+  /** meta.nzd unpacked: the fade length (s) of band b at tick k = nzdS[nzd[k * M + b]] */
+  nzd?: Uint8Array; nzdS?: number[];
+  /** meta.vd unpacked: the fade length (s) of voice v at tick k = vdS[vd[k * N + v]] */
+  vd?: Uint8Array; vdS?: number[];
 }
 const songs = new Map<string, Song>();
 export function addSong(meta: Meta, data?: string, gen?: (d: Decoded) => void) { songs.set(meta.id, { meta, data, gen }); }
@@ -80,6 +90,21 @@ function* decodeJob(song: Song, out: { d?: Decoded }): Generator<void, void, voi
   d.evIdx[F] = evB.length;
   d.evBand = Uint8Array.from(evB); d.evSub = Uint8Array.from(evS); d.evAmp = Float32Array.from(evA);
   if (p !== b.length) throw new Error(`song ${m.id}: ${b.length - p} bytes left after decoding`);
+  const codes2 = (f: { ms: number[]; data: string } | undefined, n: number): [Uint8Array, number[]] | undefined => {
+    if (!f || f.ms?.length !== 4) return undefined;
+    const s2 = f.data, raw = new Uint8Array((s2.length * 3) >> 2), per = (n + 3) >> 2;
+    let n2 = 0;
+    for (let i = 0; i < s2.length; i += 4) {
+      const q = (B64[s2.charCodeAt(i)] << 18) | (B64[s2.charCodeAt(i + 1)] << 12) | (B64[s2.charCodeAt(i + 2)] << 6) | B64[s2.charCodeAt(i + 3)];
+      raw[n2++] = q >> 16; if (s2[i + 2] !== '=') raw[n2++] = (q >> 8) & 255; if (s2[i + 3] !== '=') raw[n2++] = q & 255;
+    }
+    if (n2 < F * per) return undefined;
+    const c = new Uint8Array(F * n);
+    for (let k = 0; k < F; k++) for (let j = 0; j < n; j++) c[k * n + j] = (raw[k * per + (j >> 2)] >> (2 * (j & 3))) & 3;
+    return [c, f.ms.map((x) => x / 1000)];
+  };
+  const nzc = codes2(m.nzd, M); if (nzc) [d.nzd, d.nzdS] = nzc;
+  const vc = codes2(m.vd, N); if (vc) [d.vd, d.vdS] = vc;
   out.d = d;
 }
 function decoded(song: Song): Promise<Decoded> {
@@ -139,8 +164,12 @@ const LOUD_EVENT_DB = 20 * Math.log10(4);          // the _l events' definition 
 // side by side, +0.17..+0.52 ViSQOL; over all 13 test songs the medians were 1.99 both, 2.05 with the bursts sent ahead, at a
 // third fewer commands). A phone gets the voices that fit beside the noise bands; platforms not measured yet keep every voice
 // of the song. A count the player sets (/spectral:voices, the sound form) is theirs
-interface Client { sounds: number; mixHz: number; fold: boolean; limit: boolean; }
-const CLIENTS: Partial<Record<string, Client>> = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false } };
+// drums: whether the one-shot drum bursts play by default. On the phone they do not (run 41142205810, the same run, 13 songs: the
+// converter's residual 'voiced' with no bursts beat the shipped version — bursts a tick ahead — by +0.18 ViSQOL median, 11 of 13
+// songs, rock 1.95 -> 3.04; bursts a tick behind were worse on 3 of 4 songs: a one-shot's delay against the SoundInstance
+// commands changes from song to song)
+interface Client { sounds: number; mixHz: number; fold: boolean; limit: boolean; drums?: boolean; }
+const CLIENTS: Partial<Record<string, Client>> = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false, drums: false } };
 function clientOf(p: Player): Client | undefined {
   let kind = '';
   try { kind = String(p.clientSystemInfo.platformType); } catch { /* not known (an older client) */ }
@@ -155,7 +184,7 @@ function platformVoices(p: Player): number {
 /** what a client's own engine asks for (measured): the voices that fit, its frequency limit, folding, the sound budget */
 function platformEngine(p: Player): Partial<Settings> {
   const c = clientOf(p);
-  return c ? { voices: platformVoices(p), hf: c.mixHz ? Math.round(c.mixHz / 2 * 0.958) : 0, fold: c.fold, sounds: c.limit ? c.sounds : 0 } : {};
+  return c ? { voices: platformVoices(p), hf: c.mixHz ? Math.round(c.mixHz / 2 * 0.958) : 0, fold: c.fold, sounds: c.limit ? c.sounds : 0, bursts: c.drums ?? true } : {};
 }
 interface Target { player?: Player; dim?: Dimension; loc?: Vector3; osc: SoundInstance[]; nz: (SoundInstance | undefined)[]; }
 
@@ -263,7 +292,8 @@ class Session {
   /** commands of this tick waiting for the budget: [priority, voice (< 0: noise band -1-v), pitch (-1 none), fade duration, level (-1 none)] */
   private queue: [number, number, number, number, number][] = [];
   deferred = 0;
-  private send(v: number, hz: number, dur: number | undefined, level: number) {
+  /** attack: a note's start (always sent, first under a budget); a fitted fade (meta.vd) of the same length is not one */
+  private send(v: number, hz: number, dur: number | undefined, level: number, attack = dur === FADE_ATTACK) {
     let p = -1;
     if (hz > 0) {
       p = Math.min(P_MAX, Math.max(P_MIN, (hz * this.ratio) / BASE_HZ));
@@ -273,7 +303,7 @@ class Session {
     if (dur !== undefined) {
       L = Math.min(10, Math.max(SILENT, level));
       const last = this.lastL[v];
-      if (dur === FADE_SMOOTH && L / last < DB025 && last / L < DB025) L = -1;
+      if (!attack && L / last < DB025 && last / L < DB025) L = -1;
     }
     if (p < 0 && L < 0) return;
     if (this.s.budget) {
@@ -283,14 +313,17 @@ class Session {
       const dDb = L >= 0 ? Math.abs(20 * Math.log10(L / last)) : 0;
       const loud = Math.max(0, 80 + 20 * Math.log10(Math.max(lv, last)));
       const dCents = p > 0 && this.lastP[v] > 0 ? Math.abs(1200 * Math.log2(p / this.lastP[v])) : p > 0 ? 100 : 0;
-      const prio = (dur === FADE_ATTACK ? 1e6 : 0) + dDb * loud + Math.min(dCents, 200) * loud * 0.05;
+      const prio = (attack ? 1e6 : 0) + dDb * loud + Math.min(dCents, 200) * loud * 0.05;
       this.queue.push([prio, v, p, dur ?? 0, L]);
       return;
     }
     this.apply(v, p, dur ?? 0, L);
   }
+  /** fades shorter than a tick that are not attacks (a song's fitted fades), sent so far */
+  shortFades = 0;
   private apply(v: number, p: number, dur: number, L: number) {
-    if (v < 0) { this.applyNoise(-1 - v, L); return; }
+    if (L >= 0 && dur > 0 && dur < FADE_SMOOTH && dur !== FADE_ATTACK) this.shortFades += this.targets.length;
+    if (v < 0) { this.applyNoise(-1 - v, L, dur || FADE_SMOOTH); return; }
     for (const t of this.targets) {
       const s = t.osc[v]; if (!s) continue;
       try { if (p > 0) s.setPitch(p); if (L >= 0) s.fade(dur, L); } catch { /* listener gone: cleaned up below */ }
@@ -370,6 +403,12 @@ class Session {
         const [a1, f1] = this.at(v, q2);
         if (a1 > 0 && f1 * r >= hf) { this.send(v, 0, FADE_SMOOTH, SILENT); fold(f1, a1); continue; }
       }
+      if (d.vd && sp === 1 && Number.isInteger(ph)) {
+        // a song with fitted fades (meta.vd): the fade of this tick to frame ph+1, its own length (an attack is a short one)
+        const [a0, f0] = this.at(v, ph), [a1, f1] = this.at(v, q2);
+        this.send(v, f0 && f1 ? Math.sqrt(f0 * f1) : f1 || f0, d.vdS![d.vd[ph * N + v]], a1 * gain * this.eqGain((f1 || f0) * r), false);
+        continue;
+      }
       const m = sp > 0 && sp <= 1.5 ? this.attackAt(v, ph, ph2) : -1;
       if (m >= 0) {                                   // attack lands now
         const f = d.freq[m * N + v];
@@ -416,7 +455,9 @@ class Session {
         }
         if (onset(ph2, ph2 + sp, b)[1] > 0) continue;                      // the next tick attacks: hold
       }
-      this.noise(b, this.s.noise ? (a * this.s.volume * lv * this.eqGain(c)) / NOISE_RMS[b] : SILENT);
+      // a song with fitted fades (meta.nzd) gives each band its own fade length at speed 1 (whole frames)
+      const dur = d.nzd && sp === 1 && Number.isInteger(ph) ? d.nzdS![d.nzd[ph * d.M + b]] : FADE_SMOOTH;
+      this.noise(b, this.s.noise ? (a * this.s.volume * lv * this.eqGain(c)) / NOISE_RMS[b] : SILENT, dur);
     }
     this.flush();
     // drum bursts: one-shots with sub-tick offsets. When they go (s.burstLead, ticks before the tick of their frame): the
@@ -466,16 +507,16 @@ class Session {
     this.ticks++; this.ms += ms; this.peakCalls = Math.max(this.peakCalls, this.calls); this.totalCalls += this.calls; this.calls = 0;
   }
   totalCalls = 0;
-  private noise(b: number, L: number) {
+  private noise(b: number, L: number, dur = FADE_SMOOTH) {
     L = Math.min(10, Math.max(SILENT, L));
     const last = this.lastNL[b];
     if (L / last < DB025 && last / L < DB025) return;
     if (this.s.budget) {
       const loud = Math.max(0, 80 + 20 * Math.log10(Math.max(L, last)));
-      this.queue.push([Math.abs(20 * Math.log10(L / last)) * loud, -1 - b, -1, FADE_SMOOTH, L]);
+      this.queue.push([Math.abs(20 * Math.log10(L / last)) * loud, -1 - b, -1, dur, L]);
       return;
     }
-    this.applyNoise(b, L);
+    this.applyNoise(b, L, dur);
   }
   /** a noise band's attack (s.attacks): a 12 ms fade now, never held back by a budget */
   private noiseAttack(b: number, L: number) {
@@ -483,9 +524,10 @@ class Session {
     this.lastNL[b] = L;
     for (const t of this.targets) { const s = t.nz[b]; if (s) { try { s.fade(FADE_ATTACK, L); } catch { /* gone */ } this.calls++; } }
   }
-  private applyNoise(b: number, L: number) {
+  private applyNoise(b: number, L: number, dur = FADE_SMOOTH) {
     this.lastNL[b] = L;
-    for (const t of this.targets) { const s = t.nz[b]; if (s) { try { s.fade(FADE_SMOOTH, L); } catch { /* gone */ } this.calls++; } }
+    if (dur < FADE_SMOOTH) this.shortFades += this.targets.length;
+    for (const t of this.targets) { const s = t.nz[b]; if (s) { try { s.fade(dur, L); } catch { /* gone */ } this.calls++; } }
   }
 
   /** a 24-column spectrum on the action bar, from the voice levels and noise bands */
@@ -525,15 +567,24 @@ class Session {
       `mode ${this.mode} voices ${this.V} instances ${inst} speed ${this.s.speed} semis ${this.s.semis} volume ${Math.round(this.s.volume * 100)}% ` +
       `calls/tick ${calls.toFixed(1)} peak ${this.peakCalls} ms/tick ${avg.toFixed(2)} rebuilds ${this.rebuilds} quality ${this.s.mode ?? 'quality'} budget ${this.s.budget || 'none'} deferred ${this.deferred} ` +
       `engine hf ${this.s.hf || 'none'} fold ${this.s.fold ? 'on' : 'off'} sounds ${this.s.sounds || 'any'} drums ${!this.s.bursts ? 'off' : this.s.attacks ? 'noise' : ['behind', 'tick', 'ahead'][Math.max(-1, Math.min(1, this.s.burstLead ?? 1)) + 1]} ` +
-      `level ${this.s.level ? `+${this.s.level} dB ${this.builtLoud ? 'events' : 'volume'}` : 'none'}`;
+      `level ${this.s.level ? `+${this.s.level} dB ${this.builtLoud ? 'events' : 'volume'}` : 'none'} ` +
+      `fades ${this.d.vd || this.d.nzd ? `fitted (${[this.d.vd ? 'voices' : '', this.d.nzd ? 'noise' : ''].filter((x) => x).join(' and ')}) short ${this.shortFades}` : 'ramps'}`;
   }
 }
 const fmt = (s: number) => `${Math.floor(Math.abs(s) / 60)}:${String(Math.floor(Math.abs(s) % 60)).padStart(2, '0')}`;
 const dist = (a: Vector3, b: Vector3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
 const sessions = new Map<string, Session>();
-const settingsOf = (p: Player): Settings => ({ ...DEFAULTS, ...platformEngine(p), ...load<Partial<Settings>>(p, 'spectral:settings', {}) });
-const keep = (p: Player, s: Settings) => save(p, 'spectral:settings', s);
+// (settings are saved whole whenever one changes, so a saved value may only be the default of its time: rev 2 = saved by this
+// version. A phone's drums saved before it (rev 1) were the old default, not a choice: the client's default replaces them)
+const SETTINGS_REV = 2;
+const settingsOf = (p: Player): Settings => {
+  const plat = platformEngine(p), saved = load<Partial<Settings> & { rev?: number }>(p, 'spectral:settings', {});
+  if (plat.bursts === false && (saved.rev ?? 1) < SETTINGS_REV) { delete saved.bursts; delete saved.burstLead; delete saved.attacks; }
+  delete saved.rev;
+  return { ...DEFAULTS, ...plat, ...saved };
+};
+const keep = (p: Player, s: Settings) => save(p, 'spectral:settings', { ...s, rev: SETTINGS_REV });
 
 system.runInterval(() => {
   for (const [id, s] of sessions) {
@@ -599,7 +650,7 @@ cmd('spectral:freeze', 'Freeze the sound where it is (an endless drone) / thaw',
 cmd('spectral:mode', 'quality: every voice, every command · light (Realms, many players): 16 voices, at most 24 commands per tick per listener', { mode: ['quality', 'light'] }, async (p, a) => {
   const s = settingsOf(p), light = a.mode === 'light';
   const full = platformVoices(p);
-  s.mode = light ? 'light' : 'quality'; s.budget = light ? LIGHT_BUDGET : 0; s.voices = light ? LIGHT_VOICES : full; s.bursts = !light;
+  s.mode = light ? 'light' : 'quality'; s.budget = light ? LIGHT_BUDGET : 0; s.voices = light ? LIGHT_VOICES : full; s.bursts = !light && (platformEngine(p).bursts ?? true);
   keep(p, s);
   const m = mine(p);
   if (m) { m.s.mode = s.mode; m.s.budget = s.budget; m.s.bursts = s.bursts; await m.setVoices(s.voices); }

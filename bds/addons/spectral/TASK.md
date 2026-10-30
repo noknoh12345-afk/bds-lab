@@ -28,7 +28,9 @@
 - [x] 実機クライアントを測る較正プログラム（## calibration programs for measuring a real client (tools/rig)）
 - [x] 軽量モード: 16 声・1 リスナーあたり 24 命令/tick（知覚上の優先度で選ぶ）（## light mode for Realms and many players: 16 voices and a command budget）
 - [x] 曲の一覧（## the library lists the demo song and the generated ones）
-- [x] 電話は実測の同時発音数（32）に収まる声の数が既定（## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands）
+- [x] 電話は実測の同時発音数（32）に収まる声の数が既定、打撃音（ワンショット）は既定で鳴らさない（同じ run の実測で打撃音なしが上）（## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, and no drum bursts (measured: better without)）
+- [x] ファイルより大きく鳴らす: ゲームはどの音もファイルより 32.5 dB 小さく 16 bit で鳴らすので、静かな曲の下限は量子化（## louder than the files: a level in dB, by setVolume or by the loud sound events (the game plays every sound 32.5 dB under its file)）
+- [x] 変換器が tick ごとに選んだ長さのフェードで声とノイズ帯域を鳴らす（## a song with fitted fades (tools/spectral.py nz_fade, v_fade): each voice and noise band fades as long as the converter chose, tick by tick）
 
 ## Guessed
 <!-- values decided without asking -->

@@ -1,0 +1,20 @@
+{"header": [
+ "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+ "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+ "#   `audio export` が Opus にして tools/rig/rec_public.pem で暗号化した `[spectral rec]` の行（tools/rig/rec_decode.mjs で開く）。",
+ "# 6 回目（tools/exp/make_app.py で作成）: ファイルより大きく鳴らせるか、と tick ごとに合わせたフェード。ゲームはどの音もファイルより",
+ "#   32.5 dB 小さく 16 bit で鳴らすので静かな曲の天井は量子化で決まる（エミュレーター: +12 dB で天井の中央値 3.11 → 3.90）。",
+ "#   calib loud = setVolume 0.125〜8 と、定義の音量 4 の音（spectral.osc_v4）の実際の大きさ",
+ "#   f_ = 改良版＋フェードを元の 10 ms の包絡に合わせる（変換器 nz_fade・v_fade）6 曲、h_ = f と同じ＋/spectral:level 12（setVolume）13 曲、",
+ "#   k_ = h を音量 4 の音（_l）で 2 曲、q_ = 天井を playSound の音量 4 で 10 曲、e_ = 天井を定義の音量 4 の音で 2 曲（同じ大きさの天井）"
+],
+"calib": ["loud"],
+"arms": [
+ {"pre": "f", "suffix": "_f", "conv": {"residual": "voiced", "nz_fade": "true", "v_fade": "true"}, "cmds": ["spectral:voices 24", "spectral:drums off", "spectral:engine 0 false 0 0", "spectral:level 0"], "songs": ["rock_big", "edm_detection", "funk_funkorama", "speech_en_wordsworth", "orchestra_five_armies", "demo_selfmade"], "export": 128},
+ {"pre": "h", "suffix": "_f", "conv": {"residual": "voiced", "nz_fade": "true", "v_fade": "true"}, "cmds": ["spectral:level 12 volume"], "export": 160},
+ {"pre": "k", "suffix": "_f", "conv": {"residual": "voiced", "nz_fade": "true", "v_fade": "true"}, "cmds": ["spectral:level 12 events"], "songs": ["piano_gymnopedie", "speech_en_wordsworth"], "export": 128}
+],
+"ceiling": {"arms": [
+ {"pre": "q", "args": "4", "songs": ["piano_gymnopedie", "piano_chopin_op66", "vocal_stars", "vocal_name_of_love", "choir_how_long", "drums_round", "funk_funkorama", "speech_ja_soseki", "speech_en_wordsworth", "demo_selfmade"], "export": 160},
+ {"pre": "e", "args": "4 d4", "songs": ["piano_gymnopedie", "speech_en_wordsworth"], "export": 128}
+]}}

@@ -450,7 +450,7 @@
   /** x: Float32Array mono at 44.1 kHz. progress(fraction) may be async-awaited to keep a page responsive. */
   async function convert(x, opts = {}) {
     const N = opts.voices ?? 48, hyst = 2.0, progress = opts.progress ?? (() => {}), analysis = opts.analysis ?? 'v2';
-    const residual = opts.residual ?? 'all', salienceKind = opts.salience ?? 'a';   // tools/spectral.py convert(residual=, salience=, nested=, hf=)
+    const residual = opts.residual ?? 'voiced', salienceKind = opts.salience ?? 'a';   // tools/spectral.py convert(residual=, salience=, nested=, hf=): the same defaults
     const nested = opts.nested ?? 0, hfLimit = opts.hf ?? 0;
     let groups = null;
     const allPeaks = [];
@@ -590,6 +590,10 @@
       burstBands = rb.keep.map((x) => (x ? '1' : '0')).join(''); if (rb.best > nsimBest) nsimBest = rb.best;
     } else ev = onsets(x, F);
     await progress(0.9);
+    // (tools/spectral.py nz_fade: the bands' fades follow the 10 ms envelope; the bursts' energy stays in the noise)
+    let nzd = null, vd = null, fs = null;
+    if (opts.v_fade) { fs = fineSpec(x, F); vd = fitVoiceFades(fs, fq2, am2, F, N); }
+    if (opts.nz_fade) { nzd = fitNoiseFades(fs ?? fineSpec(x, F), nz, F, M); ev = []; }
     for (const [k, , b, a] of ev) {
       const [lo, hi] = BURST_BANDS[b], e = a * a * 0.35;
       for (let bi = 0; bi < M; bi++) if (NOISE_EDGES[bi] < hi && NOISE_EDGES[bi + 1] > lo && k < F) nz[k * M + bi] = Math.sqrt(Math.max(nz[k * M + bi] ** 2 - e / 3, 0));
@@ -604,9 +608,107 @@
       noise: NOISE_EDGES.slice(0, -1).map((e, i) => [e, NOISE_EDGES[i + 1]]), bursts: BURST_BANDS.length, sub: SUB,
       seconds: Math.round((x.length / SR) * 100) / 100, amp: [AMP_FLOOR_DB, AMP_STEP_DB], nz: [NZ_FLOOR_DB, NZ_STEP_DB], analysis, id: opts.id ?? 'song',
     };
+    if (nzd) meta.nzd = { ms: NZ_FADES_MS, data: toB64(nzd) };
+    if (vd) meta.vd = { ms: NZ_FADES_MS, data: toB64(vd) };
     return { meta, bytes: enc.bytes, stats: { ...enc.stats, events: ev.length, activeAvg: avgActive(am2, F, N), noiseBands, burstBands, nsimLite: nsimBest, placed: placedN } };
   }
   const avgActive = (am, F, N) => { let c = 0; for (let i = 0; i < F * N; i++) if (am[i] > 0) c++; return c / F; };
+
+  // ---------------------------------------------------------------- the noise bands' fades (tools/spectral.py fit_noise_fades)
+  const NZ_FADES_MS = [5, 12, 25, 50], FINE_HOP = 441, FINE_NFFT = 1024, FADE_GAIN = 0.9, FADE_MARGIN_DB2 = 1.0;
+  /** per tick and noise band one fade(d, v), linear from where the band is to v over d ms and then held, chosen to follow the
+   *  band's 10 ms envelope over the tick; returns the fade codes packed 2 bits a band, 4 bands a byte (nz is changed in place:
+   *  nz[k+1] = v of tick k) */
+  /** the 10 ms STFT power (20 ms Hann, zero-padded to FINE_NFFT) of x: nfine frames x nb bins */
+  function fineSpec(x, F) {
+    const nw = 2 * FINE_HOP, per = HOP / FINE_HOP, nfine = F * per + per + 2, nb = FINE_NFFT / 2 + 1;
+    const w = new Float64Array(nw); for (let i = 0; i < nw; i++) w[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (nw - 1));
+    const P = new Float64Array(nfine * nb), re = new Float64Array(FINE_NFFT), im = new Float64Array(FINE_NFFT);
+    for (let j = 0; j < nfine; j++) {
+      re.fill(0); im.fill(0);
+      const c = j * FINE_HOP - nw / 2;
+      for (let i = 0; i < nw; i++) { const t = c + i; re[i] = t >= 0 && t < x.length ? x[t] * w[i] : 0; }
+      fft(re, im);
+      for (let i = 0; i < nb; i++) P[j * nb + i] = re[i] * re[i] + im[i] * im[i];
+    }
+    return { P, nfine, nb, per };
+  }
+  const fadeL = (a) => 20 * Math.log10(Math.max(a, 1e-7));
+  const fadeInterp = (t, ys) => { if (t <= 0) return ys[0]; if (t >= ys.length - 1) return ys[ys.length - 1]; const i = Math.floor(t), f = t - i; return ys[i] + (ys[i + 1] - ys[i]) * f; };
+  /** one tick's fade: from cur, the longest of NZ_FADES_MS unless a shorter one follows the 5 points tgt[q0+1..q0+5] clearly better */
+  function fitTick(r, q0, per, cur) {
+    let best = null;
+    for (let ci = NZ_FADES_MS.length - 1; ci >= 0; ci--) {       // the longest fade first: a shorter one must follow clearly better
+      const d = NZ_FADES_MS[ci] / 1000;
+      let sl = 0, nl = 0;
+      for (let q = 1; q <= per; q++) if (q * (FINE_HOP / SR) >= d - 1e-9) { sl += fadeL(r[q0 + q]); nl++; }
+      const v = Math.pow(10, (nl ? sl / nl : fadeL(r[q0 + per])) / 20);
+      let err = 0;
+      for (let q = 1; q <= per; q++) {
+        const t = q * (FINE_HOP / SR), g = cur + (v - cur) * Math.min(1, t / d), dd = fadeL(g) - fadeL(r[q0 + q]);
+        err += dd * dd;
+      }
+      if (best === null || err < best[0] * FADE_GAIN - FADE_MARGIN_DB2) best = [err, ci, v];
+    }
+    return best;
+  }
+  const pack2 = (codes, F, n) => {
+    const per4 = (n + 3) >> 2, packed = new Uint8Array(F * per4);
+    for (let k = 0; k < F; k++) for (let j = 0; j < n; j++) packed[k * per4 + (j >> 2)] |= codes[k * n + j] << (2 * (j & 3));
+    return packed;
+  };
+  /** tools/spectral.py fit_voice_fades: am changed in place (am[k+1] = v of tick k), the codes packed */
+  function fitVoiceFades(fs, fq, am, F, N) {
+    const { P, nfine, nb, per } = fs, binhz = SR / FINE_NFFT;
+    const codes = new Uint8Array(F * N).fill(3);
+    const a = new Float64Array(F), a2 = new Float64Array(F), E = new Float64Array(nfine), Ef = new Float64Array(F), r = new Float64Array(nfine);
+    for (let v = 0; v < N; v++) {
+      let any = false;
+      for (let k = 0; k < F; k++) { a[k] = am[k * N + v]; a2[k] = a[k] * a[k]; if (a[k] > 0) any = true; }
+      if (!any) continue;
+      for (let j = 0; j < nfine; j++) {
+        const fr = Math.min(F - 1, Math.round(j / per));
+        if (a[fr] > 0) {
+          const bi = Math.max(1, Math.min(nb - 2, Math.round(fq[fr * N + v] / binhz)));
+          E[j] = P[j * nb + bi - 1] + P[j * nb + bi] + P[j * nb + bi + 1] + 1e-20;
+        } else E[j] = 0 + 1e-20;
+      }
+      for (let k = 0; k < F; k++) { let s = 0, c = 0; for (let j = Math.max(0, k * per - 2); j < k * per + 3; j++) { s += E[j]; c++; } Ef[k] = s / c; }
+      for (let j = 0; j < nfine; j++) { const tf = j / per; r[j] = Math.sqrt(Math.max((E[j] / fadeInterp(tf, Ef)) * fadeInterp(tf, a2), 0)); }
+      let cur = 0;
+      for (let k = 0; k < F - 1; k++) {
+        if (a[k + 1] <= 0) { cur = 0; continue; }
+        const best = fitTick(r, k * per, per, cur);
+        codes[k * N + v] = best[1]; am[(k + 1) * N + v] = best[2]; cur = best[2];
+      }
+    }
+    return pack2(codes, F, N);
+  }
+  function fitNoiseFades(fs, nz, F, M) {
+    const { P, nfine, nb, per } = fs, binhz = SR / FINE_NFFT;
+    const codes = new Uint8Array(F * M);
+    const L = fadeL, interp = fadeInterp;
+    for (let b = 0; b < M; b++) {
+      let any = false; for (let k = 0; k < F; k++) if (nz[k * M + b] > 0) { any = true; break; }
+      if (!any) continue;
+      const i0 = Math.floor(NOISE_EDGES[b] / binhz), i1 = Math.max(i0 + 1, Math.floor(NOISE_EDGES[b + 1] / binhz));
+      const e = new Float64Array(nfine);
+      for (let j = 0; j < nfine; j++) { let s = 0; for (let i = i0; i < i1; i++) s += P[j * nb + i]; e[j] = s + 1e-20; }
+      const ef = new Float64Array(F), n2 = new Float64Array(F);
+      for (let k = 0; k < F; k++) {
+        let s = 0, c = 0; for (let j = Math.max(0, k * per - 2); j < k * per + 3; j++) { s += e[j]; c++; }
+        ef[k] = s / c; n2[k] = nz[k * M + b] * nz[k * M + b];
+      }
+      const r = new Float64Array(nfine);
+      for (let j = 0; j < nfine; j++) { const tf = j / per; r[j] = Math.sqrt(Math.max((e[j] / interp(tf, ef)) * interp(tf, n2), 0)); }
+      let cur = nz[b];
+      for (let k = 0; k < F - 1; k++) {
+        const best = fitTick(r, k * per, per, cur);
+        codes[k * M + b] = best[1]; nz[(k + 1) * M + b] = best[2]; cur = best[2];
+      }
+    }
+    return pack2(codes, F, M);
+  }
 
   // ---------------------------------------------------------------- encode / decode (identical layout to the Python)
   const ampCode = (a) => (a <= 0 ? 0 : Math.max(1, Math.min(127, Math.round((20 * Math.log10(a) - AMP_FLOOR_DB) / AMP_STEP_DB) + 1)));

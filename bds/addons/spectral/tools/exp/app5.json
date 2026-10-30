@@ -1,0 +1,16 @@
+{"header": [
+ "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+ "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+ "#   `audio export` が Opus にして tools/rig/rec_public.pem で暗号化した `[spectral rec]` の行（tools/rig/rec_decode.mjs で開く）。",
+ "# 5 回目（tools/exp/make_app.py で作成）: 同じ run で出荷版と改良版を比べる。",
+ "#   a_ = 出荷版（変換器 residual all・電話の既定 24 声・打撃音を 1 tick 先）13 曲",
+ "#   b_ = 改良版の候補（変換器 residual voiced・24 声・打撃音なし）13 曲。エミュレーターでは 10 曲の中央値 +0.139・9/10 勝ち",
+ "#   x_ = b と同じ曲データで打撃音を 1 tick 後に（曲の録音では打撃音が声より 45 ms 早かった: その補正）打撃音のある 4 曲",
+ "#   z_ = b に命令の予算 24/tick（命令の多い 4 曲: 1 tick の命令が多いと次のフレームにずれる、の確かめ）"
+],
+"arms": [
+ {"pre": "a", "suffix": "_a", "conv": {"residual": "all", "salience": "a"}, "cmds": ["spectral:voices 24", "spectral:drums ahead", "spectral:engine 0 false 0 0"], "export": 160},
+ {"pre": "b", "suffix": "_v", "conv": {"residual": "voiced"}, "cmds": ["spectral:voices 24", "spectral:drums off", "spectral:engine 0 false 0 0"], "export": 160},
+ {"pre": "x", "suffix": "_v", "conv": {"residual": "voiced"}, "cmds": ["spectral:drums behind"], "songs": ["drums_round", "funk_funkorama", "rock_big", "edm_detection"], "export": 128},
+ {"pre": "z", "suffix": "_v", "conv": {"residual": "voiced"}, "cmds": ["spectral:drums off", "spectral:engine 0 false 0 24"], "songs": ["rock_big", "edm_detection", "orchestra_five_armies", "piano_chopin_op66"], "export": 128}
+]}

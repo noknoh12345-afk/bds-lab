@@ -30,6 +30,18 @@
     "onset_recall": 0.56,
     "third_oct_db": 4.462,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 1.5748,
+    "onset_recall": 0.44,
+    "third_oct_db": 4.527,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 1.6346,
+    "onset_recall": 0.4,
+    "third_oct_db": 3.255,
+    "run": "41142205810"
    }
   },
   "vocal_stars": {
@@ -62,6 +74,18 @@
     "onset_recall": 0.643,
     "third_oct_db": 6.628,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 2.3771,
+    "onset_recall": 0.614,
+    "third_oct_db": 5.84,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 2.62,
+    "onset_recall": 0.543,
+    "third_oct_db": 5.702,
+    "run": "41142205810"
    }
   },
   "drums_round": {
@@ -100,6 +124,24 @@
     "onset_recall": 0.655,
     "third_oct_db": 5.407,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 1.4781,
+    "onset_recall": 0.621,
+    "third_oct_db": 5.793,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 1.5881,
+    "onset_recall": 0.193,
+    "third_oct_db": 4.818,
+    "run": "41142205810"
+   },
+   "improved_drums_behind": {
+    "visqol": 1.5388,
+    "onset_recall": 0.503,
+    "third_oct_db": 5.877,
+    "run": "41142205810"
    }
   },
   "rock_big": {
@@ -144,6 +186,30 @@
     "onset_recall": 0.574,
     "third_oct_db": 7.833,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 1.9538,
+    "onset_recall": 0.683,
+    "third_oct_db": 7.829,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 3.0355,
+    "onset_recall": 0.713,
+    "third_oct_db": 5.227,
+    "run": "41142205810"
+   },
+   "improved_drums_behind": {
+    "visqol": 2.7205,
+    "onset_recall": 0.812,
+    "third_oct_db": 6.833,
+    "run": "41142205810"
+   },
+   "improved_alt": {
+    "visqol": 2.7447,
+    "onset_recall": 0.525,
+    "third_oct_db": 6.222,
+    "run": "41142205810"
    }
   },
   "edm_detection": {
@@ -176,6 +242,30 @@
     "onset_recall": 0.812,
     "third_oct_db": 10.071,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 2.5157,
+    "onset_recall": 0.406,
+    "third_oct_db": 11.465,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 2.8823,
+    "onset_recall": 0.248,
+    "third_oct_db": 9.671,
+    "run": "41142205810"
+   },
+   "improved_drums_behind": {
+    "visqol": 2.4787,
+    "onset_recall": 0.579,
+    "third_oct_db": 9.517,
+    "run": "41142205810"
+   },
+   "improved_alt": {
+    "visqol": 2.6279,
+    "onset_recall": 0.293,
+    "third_oct_db": 8.945,
+    "run": "41142205810"
    }
   },
   "orchestra_five_armies": {
@@ -208,6 +298,24 @@
     "onset_recall": 0.237,
     "third_oct_db": 6.789,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 1.6172,
+    "onset_recall": 0.25,
+    "third_oct_db": 7.038,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 2.562,
+    "onset_recall": 0.212,
+    "third_oct_db": 7.335,
+    "run": "41142205810"
+   },
+   "improved_alt": {
+    "visqol": 2.5719,
+    "onset_recall": 0.275,
+    "third_oct_db": 7.215,
+    "run": "41142205810"
    }
   },
   "speech_en_wordsworth": {
@@ -240,6 +348,18 @@
     "onset_recall": 0.238,
     "third_oct_db": 6.912,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 2.084,
+    "onset_recall": 0.138,
+    "third_oct_db": 7.206,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 2.2947,
+    "onset_recall": 0.238,
+    "third_oct_db": 7.85,
+    "run": "41142205810"
    }
   },
   "piano_chopin_op66": {
@@ -278,6 +398,24 @@
     "onset_recall": 0.04,
     "third_oct_db": 6.716,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 1.8144,
+    "onset_recall": 0.089,
+    "third_oct_db": 6.676,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 1.8871,
+    "onset_recall": 0.137,
+    "third_oct_db": 6.521,
+    "run": "41142205810"
+   },
+   "improved_alt": {
+    "visqol": 1.749,
+    "onset_recall": 0.105,
+    "third_oct_db": 6.782,
+    "run": "41142205810"
    }
   },
   "vocal_name_of_love": {
@@ -310,6 +448,18 @@
     "onset_recall": 0.343,
     "third_oct_db": 4.752,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 3.4355,
+    "onset_recall": 0.314,
+    "third_oct_db": 4.834,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 3.4134,
+    "onset_recall": 0.314,
+    "third_oct_db": 4.949,
+    "run": "41142205810"
    }
   },
   "choir_how_long": {
@@ -348,6 +498,18 @@
     "onset_recall": 0.1,
     "third_oct_db": 5.153,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 1.6305,
+    "onset_recall": 0.1,
+    "third_oct_db": 5.183,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 1.8129,
+    "onset_recall": 0.129,
+    "third_oct_db": 5.085,
+    "run": "41142205810"
    }
   },
   "funk_funkorama": {
@@ -392,6 +554,24 @@
     "onset_recall": 0.756,
     "third_oct_db": 8.422,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 1.8634,
+    "onset_recall": 0.719,
+    "third_oct_db": 8.963,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 1.6592,
+    "onset_recall": 0.341,
+    "third_oct_db": 8.194,
+    "run": "41142205810"
+   },
+   "improved_drums_behind": {
+    "visqol": 1.9214,
+    "onset_recall": 0.867,
+    "third_oct_db": 8.968,
+    "run": "41142205810"
    }
   },
   "speech_ja_soseki": {
@@ -424,6 +604,18 @@
     "onset_recall": 0.518,
     "third_oct_db": 10.41,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 1.9636,
+    "onset_recall": 0.5,
+    "third_oct_db": 10.403,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 2.4045,
+    "onset_recall": 0.281,
+    "third_oct_db": 8.132,
+    "run": "41142205810"
    }
   },
   "demo_selfmade": {
@@ -456,6 +648,18 @@
     "onset_recall": 0.521,
     "third_oct_db": 7.683,
     "run": "41089050799"
+   },
+   "shipped_same_run": {
+    "visqol": 2.1083,
+    "onset_recall": 0.404,
+    "third_oct_db": 8.364,
+    "run": "41142205810"
+   },
+   "improved": {
+    "visqol": 2.1777,
+    "onset_recall": 0.372,
+    "third_oct_db": 5.512,
+    "run": "41142205810"
    }
   }
  },
@@ -503,6 +707,18 @@
   ],
   "mobile_ahead_again": [
    "41089050799"
+  ],
+  "shipped_same_run": [
+   "41142205810"
+  ],
+  "improved": [
+   "41142205810"
+  ],
+  "improved_alt": [
+   "41142205810"
+  ],
+  "improved_drums_behind": [
+   "41142205810"
   ]
  },
  "medians": {
@@ -533,6 +749,22 @@
   "mobile_ahead_again": {
    "n": 3,
    "visqol": 1.932
+  },
+  "shipped_same_run": {
+   "n": 13,
+   "visqol": 1.954
+  },
+  "improved": {
+   "n": 13,
+   "visqol": 2.295
+  },
+  "improved_drums_behind": {
+   "n": 4,
+   "visqol": 2.2
+  },
+  "improved_alt": {
+   "n": 4,
+   "visqol": 2.6
   }
  },
  "gaps": {
@@ -564,6 +796,26 @@
   "mobile_ahead_again": {
    "n": 3,
    "median": 0.812,
+   "within_0.3": 0
+  },
+  "shipped_same_run": {
+   "n": 13,
+   "median": 0.996,
+   "within_0.3": 2
+  },
+  "improved": {
+   "n": 13,
+   "median": 0.796,
+   "within_0.3": 2
+  },
+  "improved_drums_behind": {
+   "n": 4,
+   "median": 1.065,
+   "within_0.3": 0
+  },
+  "improved_alt": {
+   "n": 4,
+   "median": 0.944,
    "within_0.3": 0
   }
  }
