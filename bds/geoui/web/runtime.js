@@ -140,7 +140,8 @@
         const r = await io.http('GET', `/asp/${d.nonce}`, undefined, p);
         if (s.gen !== gen || s.detect !== d) return;
         const j = r.json || {}, a = aspectFromProbes(CFG.aspects, j.c, CFG.commonAspects), b = aspectFromProbes(CFG.aspects, j.u, CFG.commonAspects);
-        io.log(`probe ${JSON.stringify({ player: p.name, c: (j.c || []).length, u: (j.u || []).length, cTop: a, uTop: b })}`);
+        const mx = (l) => (l && l.length ? Math.max(...l) : -1);
+        io.log(`probe ${JSON.stringify({ player: p.name, c: (j.c || []).length, u: (j.u || []).length, cMax: mx(j.c), uMax: mx(j.u), cTop: a, uTop: b })}`);
         const asp = a || b;
         if (asp) setAspect(p, s, asp, a ? 'probe-clip' : 'probe-screen');
         else io.say(p, `§7画面の形を測れませんでした（/${cmd}:fit で端に合わせるか /${cmd}:size <幅>x<高さ>）`);
@@ -463,7 +464,7 @@
       const obj = d ? JSON.parse(utf8(bytes(d))) : {};
       const was = links.get(p.id);
       links.set(p.id, { at: env.tick(), base: (obj.h && obj.h.base) || (was && was.base) || '' });
-      if (obj.h && !was) env.log(`ws linked ${JSON.stringify({ player: p.name, base: obj.h.base })}`);
+      if (obj.h) env.log(`ws linked ${JSON.stringify({ player: p.name, base: obj.h.base, again: !!was })}`);
       const answers = obj.r || [], chats = obj.c || [];
       if (answers.length || chats.length) env.run(() => {
         for (const [id, status, json] of answers) { const w = waiting.get(id); if (w) { waiting.delete(id); w.resolve({ status, json }); } }
