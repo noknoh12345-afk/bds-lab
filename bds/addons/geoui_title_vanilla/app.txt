@@ -1,0 +1,53 @@
+# geoui_title_vanilla（bds/geoui/web/probe.mjs が作る）: 題名の対照の対照（6 本目）。リソースパックもスクリプトも無い。
+# ここでも HELLO が写らないなら、このラボの写し方では題名が写らない（題名の隠し方の問題ではない）。
+# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_title_vanilla,geoui_web
+
+section join
+stop
+launch
+until title 600000
+join
+until joined 900000
+size 2400x1080
+wait 9000
+do tp @a 0 -60 0 0 90
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+wait 3000
+absent clientlog \bERROR\b
+
+section title
+do title @a times 10 70 20
+wait 2000
+shot world
+do title @a title HELLO
+wait 1500
+shot van-title
+measure diff van-title 900 300 1500 700
+measure diff van-title
+wait 6000
+shot world
+do title @a times 0 200 0
+do title @a title WWWWWWWWWWWW
+wait 1000
+shot van-title-big
+measure diff van-title-big
+do title @a subtitle hello-subtitle
+wait 1000
+shot van-sub
+measure diff van-sub
+do title @a actionbar ACTIONBAR-VANILLA
+wait 1000
+shot van-actionbar
+measure diff van-actionbar
+do title @a reset
