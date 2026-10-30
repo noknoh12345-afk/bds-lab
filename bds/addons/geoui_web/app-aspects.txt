@@ -13,6 +13,31 @@ do tp @a 0 -60 0 0 0
 wait 3000
 absent clientlog \bERROR\b
 
+section box
+# 2400x1080・16:9（並べ方 b）: ページ (240.0, 108.0)–(2160.0, 1080.0)、ツールバー (240.0, 0.0)–(2160.0, 108.0)、ポインタの先 (1200.0, 540.0)–(1200.0, 540.0)（20:9 の画面に 16:9: 左右は黒）
+do scriptevent gweb:close
+wait 2000
+size 2400x1080
+wait 6000
+do scriptevent gweb:size 16:9 1080
+wait 1000
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 5000
+do scriptevent gweb:debug 1
+wait 1500
+shot box-open
+measure marks box-open
+do scriptevent gweb:pointer 0.5 0.6
+wait 1500
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot box-click
+measure marks box-click
+# （クリックの所: (1200.0, 648.0)–(1200.0, 648.0)）
+
 section 169
 # 1920x1080・16:9（並べ方 b）: ページ (0.0, 108.0)–(1920.0, 1080.0)、ツールバー (0.0, 0.0)–(1920.0, 108.0)、ポインタの先 (960.0, 540.0)–(960.0, 540.0)
 do scriptevent gweb:close
@@ -87,31 +112,6 @@ wait 3000
 shot 219-click
 measure marks 219-click
 # （クリックの所: (1280.0, 648.0)–(1280.0, 648.0)）
-
-section box
-# 2400x1080・16:9（並べ方 b）: ページ (240.0, 108.0)–(2160.0, 1080.0)、ツールバー (240.0, 0.0)–(2160.0, 108.0)、ポインタの先 (1200.0, 540.0)–(1200.0, 540.0)（20:9 の画面に 16:9: 左右は黒）
-do scriptevent gweb:close
-wait 2000
-size 2400x1080
-wait 6000
-do scriptevent gweb:size 16:9 1080
-wait 1000
-shot world
-do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
-until server GWEB page .*c=0000ff 60000
-wait 5000
-do scriptevent gweb:debug 1
-wait 1500
-shot box-open
-measure marks box-open
-do scriptevent gweb:pointer 0.5 0.6
-wait 1500
-attack 0.3
-until server GWEB page .*c=8000ff 20000
-wait 3000
-shot box-click
-measure marks box-click
-# （クリックの所: (1200.0, 648.0)–(1200.0, 648.0)）
 
 section end
 do scriptevent gweb:close
