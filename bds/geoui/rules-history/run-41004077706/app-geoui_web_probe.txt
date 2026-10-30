@@ -1,0 +1,89 @@
+# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（3 本目）。
+# 1・2 本目（run 40998593826・41001422618）の結果と手順は bds/geoui/rules-history/。予測は SPEC.md 17 章（回す前に書いたもの）。
+# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
+
+section join
+stop
+launch
+until title 600000
+join
+until joined 900000
+size 2400x1080
+wait 9000
+do tp @a 0 -60 0 0 90
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do hud @a hide hotbar
+do scriptevent gwp:info
+wait 6000
+expect server GWP CHECK svc PASS
+absent clientlog \bERROR\b
+
+section title
+do scriptevent gwp:url 0 /solid/ff0000/64x64.png
+wait 3000
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:raw HELLO
+wait 1500
+shot title-raw
+measure diff title-raw 300 100 2100 800
+measure diff title-raw 900 300 1500 700
+do scriptevent gwp:reset
+wait 2000
+
+section f1-wool
+do scriptevent gwp:reset
+do hud @a reset
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0 -60 0 0 30
+wait 4000
+shot world
+do replaceitem entity @a slot.weapon.mainhand 0 red_wool
+wait 3000
+shot wool-shown
+measure marks wool-shown
+do scriptevent gwp:part arm 1
+wait 3000
+shot wool-arm
+measure marks wool-arm
+do scriptevent gwp:part arm 0
+wait 3000
+shot wool-back
+measure marks wool-back
+do scriptevent gwp:f1 1
+wait 3000
+shot wool-f1
+measure marks wool-f1
+do scriptevent gwp:f1 0
+wait 3000
+
+section f1-chat
+do scriptevent gwp:reset
+do hud @a reset
+wait 2000
+do scriptevent gwp:f1 1
+wait 3000
+shot world
+do say chat-in-f1-one
+do say chat-in-f1-two
+do title @a actionbar ACTIONBAR-IN-F1
+wait 1500
+shot f1-chat
+measure diff f1-chat
+measure diff f1-chat 0 0 1200 500
+do scriptevent gwp:f1 0
+wait 3000
+shot f1-off
+measure diff f1-off
+measure diff f1-off 700 940 1700 1080

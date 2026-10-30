@@ -24,8 +24,10 @@
 1. Node 22 と Chrome（か Chromium）を入れる。Playwright が無ければ、初回に自分で取りに行きます。
 2. `node bds/geoui/web/server.mjs`（既定でポート 8787。`--public http://<この機械の LAN のアドレス>:8787` は、空けると自分で探します）。
 3. BDS の `config/default/permissions.json` の `allowed_modules` に `@minecraft/server-net` を足し、`geoui_web` の 2 つのパックを入れる。
-4. 端末（携帯・PC）は、その機械に LAN で届くこと（同じ Wi-Fi）。外から遊ぶ人には https の入り口:
-   `GEOUI_WEB_TUNNEL=1` でラボが cloudflared の一時的な入り口（`https://….trycloudflare.com`）を作る → ゲームで `/web:public tunnel`。
+4. 端末（携帯・PC）は、その機械に LAN で届くこと（同じ Wi-Fi）。Android のゲームは LAN の http の絵を取りに行く（測った: RULES R10.2）。
+   外から遊ぶ人と、平文の http を取りに行かない端末（iPhone・iPad は App Transport Security で断る見込み: 未確認）には https の入り口:
+   `GEOUI_WEB_TUNNEL=1` でラボが cloudflared の一時的な入り口（`https://….trycloudflare.com`）を作る → ゲームで `/web:public tunnel`
+   （https のトンネルの絵も Android で出た: run 40998593826）。
 
 ## 操作
 
@@ -41,10 +43,10 @@
 | `/web:go 言葉か URL`・`/web:open "https://…"` | 開く（URL は `"` で囲むか、`example.com` のように https:// なしで） |
 | `/web:key Enter`・`/web:enter`・`/web:back`・`/web:forward`・`/web:reload`・`/web:home` | キー・移動 |
 | `/web:tab 2`・`/web:newtab`・`/web:closetab`・`/web:zoom 150` | タブ・拡大 |
-| `/web:size 20:9 1080`・`/web:res 1080` | 画面の形（16:9・4:3・16:10・18:9・19.5:9・20:9・21:9・32:9）と絵の高さ（本物の解像度でくっきり） |
+| `/web:size 20:9`・`/web:size 2400x1080`・`/web:res 720` | 画面の形（16:9・4:3・16:10・18:9・19.5:9・20:9・21:9・32:9）と絵の高さ（既定は本物の解像度 1080 px: 20:9 なら 2400 x 1080。軽くするなら 720） |
 | `/web:f1 on` / `off` | F1 だけ（ブラウザなし）: HUD・腕・持ち物を消す |
 
-携帯は最初から 20:9、ほかは 16:9 で開きます（`/web:size` で変えたものは覚えます）。
+携帯は最初から 20:9、ほかは 16:9 で開きます（`/web:size` で変えたものは覚えます）。絵は高さ 1080 px（本物の解像度）。
 
 ## 守り
 

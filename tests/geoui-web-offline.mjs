@@ -274,9 +274,9 @@ function jsonui(expr, vars) {
   const GS = globalThis.GeoUIScreen, RT = require('../bds/geoui/web/runtime.js');
   const { config } = await import('../bds/geoui/web/make.mjs');
   const CFG = config();
-  ok(JSON.stringify(RT.frameOf(CFG, 'b', 720)) === '{"w":1280,"h":720,"barH":72}' && JSON.stringify(RT.frameOf(CFG, 'g', 1080)) === '{"w":2400,"h":1080,"barH":108}'
+  ok(JSON.stringify(RT.frameOf(CFG, 'b', 720)) === '{"w":1280,"h":720,"barH":72}' && JSON.stringify(RT.frameOf(CFG, 'g', 1080)) === '{"w":2400,"h":1080,"barH":108}' && JSON.stringify(RT.frameOf(CFG, 'g')) === '{"w":2400,"h":1080,"barH":108}'
     && RT.layoutFor(CFG, '20:9') === 'g' && RT.layoutFor(CFG, '2400x1080') === 'g' && RT.layoutFor(CFG, '1024x768') === 'c' && RT.layoutFor(CFG, '2556x1179') === 'f' && RT.layoutFor(CFG, 'x') === null,
-  'browser: the frame for a layout and a height (20:9 at 1080 = 2400 x 1080), the nearest layout for a screen');
+  'browser: the frame for a layout and a height (20:9 at 1080 = 2400 x 1080: the real resolution by default), the nearest layout for a screen');
   const titles = [], props = {}, acts = [], says = [], logs = [];
   let frame = 0, bar = 0, nextResolve = null;
   const stateJ = () => ({ ok: true, sid: 'S1', frame, bar, w: 1280, h: 720, barH: 72, url: 'http://x/', title: 'T', tabs: 1, tab: 0, focus: 'page', frameUrl: `http://h/s/S1/f/${frame}.png`, barUrl: `http://h/s/S1/b/${bar}.png` });

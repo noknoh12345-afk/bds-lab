@@ -7,7 +7,7 @@ wait 1000
 @A cmd /web:open "http://127.0.0.1:8787/demo/color.html?c=ff0000"
 until GWEB page .*color\.html\?c=ff0000 150000
 until @A title: ~gu~1bhttp 10000
-~ GWEB open .*"layout":"b","w":1280,"h":720
+~ GWEB open .*"layout":"b","w":1920,"h":1080
 ~ @A title: ~gu~1bhttp://\S+/s/[0-9a-f]{32}/f/\d+\.png +http://\S+/s/[0-9a-f]{32}/b/\d+\.png
 js JSON.stringify([p('A').getProperty('gweb:f1'), p('A').getProperty('gweb:flg') % 2, p('A').onScreenDisplay.getHiddenHudElements().length, p('A').getGameMode()])
 = [1,1,13,"Survival"]
@@ -36,7 +36,7 @@ until GWEB page .*c=ff8000 20000
 ## 文字: 欄を押して /web:t（欄が 2 つのフォームなので Enter は押さない）
 @A cmd /web:go "http://127.0.0.1:8787/demo/form.html"
 until GWEB page .*form\.html 20000
-scriptevent gweb:pointer 0.289 0.166
+scriptevent gweb:pointer 0.289 0.144
 @A cmd /web:click
 wait 500
 @A cmd /web:t Steve

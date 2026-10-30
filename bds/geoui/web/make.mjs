@@ -29,7 +29,7 @@ export function config() {
   for (const [k, l] of Object.entries(LAYOUTS)) { const Dw = Math.round(DESIGN_H * l.aspect); layouts[k] = { name: l.name, aspect: l.aspect, Dw, Bw: Dw * G_UNITS, Bh: DESIGN_H * G_UNITS }; }
   return {
     ns: NS, cmd: 'web', layouts, barFrac: BAR, slots: { page: 0, bar: 1, pageUnder: 2, barUnder: 3 }, slotCount: 4, width: 160, buffer: true, bufferTicks: 2, frameTicks: 14, refreshTicks: 200,
-    sens: 4, wheelPx: 120, scrollPx: 90, scrollEvery: 3, holdClose: 30, moveEvery: 3, res: DESIGN_H, maxRes: 1440,
+    sens: 4, wheelPx: 120, scrollPx: 90, scrollEvery: 3, holdClose: 30, moveEvery: 3, res: 1080, maxRes: 1440,
     service: 'http://127.0.0.1:8787', public: 'lan', mobileLayout: 'g', defaultLayout: 'b',
   };
 }
@@ -104,7 +104,7 @@ wait 1000
 @A cmd /web:open "http://127.0.0.1:8787/demo/color.html?c=ff0000"
 until GWEB page .*color\\.html\\?c=ff0000 150000
 until @A title: ~gu~1bhttp 10000
-~ GWEB open .*"layout":"b","w":1280,"h":720
+~ GWEB open .*"layout":"b","w":1920,"h":1080
 ~ @A title: ~gu~1bhttp://\\S+/s/[0-9a-f]{32}/f/\\d+\\.png +http://\\S+/s/[0-9a-f]{32}/b/\\d+\\.png
 js JSON.stringify([p('A').getProperty('gweb:f1'), p('A').getProperty('gweb:flg') % 2, p('A').onScreenDisplay.getHiddenHudElements().length, p('A').getGameMode()])
 = [1,1,13,"Survival"]
@@ -133,7 +133,7 @@ until GWEB page .*c=ff8000 20000
 ## 文字: 欄を押して /web:t（欄が 2 つのフォームなので Enter は押さない）
 @A cmd /web:go "http://127.0.0.1:8787/demo/form.html"
 until GWEB page .*form\\.html 20000
-scriptevent gweb:pointer 0.289 0.166
+scriptevent gweb:pointer 0.289 0.144
 @A cmd /web:click
 wait 500
 @A cmd /web:t Steve
@@ -328,7 +328,8 @@ GeoUI で（URL の画像で絵を出す）。本物の解像度で確かめる�
 ## What it is
 - \`/web:open [URL]\` でブラウザ（ラボが BDS の横に起こすサービス bds/geoui/web/server.mjs の Chromium）。画面は F1 の全画面: ツールバー
   （タブ・戻る・進む・再読み込み・ホーム・アドレス欄・✕）とページは URL の画像、ポインタは GeoUI。画面の形ごとの並べ方（16:9・4:3・16:10・
-  18:9・19.5:9・20:9・21:9・32:9）、携帯は 20:9、ほかは 16:9 から。\`/web:size 20:9 1080\` で形と絵の高さ（本物の解像度）。
+  18:9・19.5:9・20:9・21:9・32:9）、携帯は 20:9、ほかは 16:9 から。絵は本物の解像度（高さ 1080 px: 20:9 なら 2400 x 1080）、
+  \`/web:size 20:9 1440\`・\`/web:res 720\` で形と絵の高さを変える。
 - 操作: 視点 = マウス・攻撃（左クリック・タップ）= クリック・ジャンプ = ボタンを押したまま（ドラッグ）・スニーク = 戻る（1.5 秒で閉じる）・
   W / S と ホットバー = ホイール・\`/web:t <言葉>\` = 文字（検索の欄なら Enter も）・\`/web:key <キー>\`・\`/web:go <URL か言葉>\`・\`/web:tab\`・
   \`/web:newtab\`・\`/web:zoom\`・\`/web:f1\`（F1 だけ）。
