@@ -175,7 +175,12 @@
     if (slots > CHANNEL.maxSlots) throw new Error(`URL の画像の枠は ${CHANNEL.maxSlots} 個まで（slot 0〜${CHANNEL.maxSlots - 1}）`);
     for (const u of imgs) if (!(Number.isInteger(u.slot ?? 0) && (u.slot ?? 0) >= 0)) throw new Error(`URL の画像 ${u.id} の slot は 0 以上の整数`);
     for (const g of scene.groups || []) if (g.layout !== undefined && g.layout !== null && !(String(g.layout).length === 1 && CHANNEL.layouts.includes(String(g.layout)))) throw new Error(`グループ ${g.id} の layout「${g.layout}」は a〜z の 1 文字`);
-    return { prefix: CHANNEL.prefix, width, slots, f1: !!scene.f1, head: CHANNEL.prefix.length + 2 };
+    // titleHide: how the game's own title is hidden while it is the channel's — 'area' (the default since 5 本目: hud_title_text
+    // untouched, root_panel's hud_title_text_area put back with the same factory and a #visible view binding), 'text' (2〜4 本目:
+    // bindings added to hud_title_text — no plain title was seen after it: R10.14), 'none' (not hidden: the control)
+    const titleHide = scene.titleHide === undefined ? 'area' : String(scene.titleHide);
+    if (!['area', 'text', 'none'].includes(titleHide)) throw new Error(`titleHide「${titleHide}」は area・text・none のどれか`);
+    return { prefix: CHANNEL.prefix, width, slots, f1: !!scene.f1, head: CHANNEL.prefix.length + 2, titleHide };
   }
   /** the title text that carries { f1, layout, urls } (what the script sends; JSON UI reads it back with slotExpr) */
   function channelText(ch, state = {}) {
@@ -296,21 +301,33 @@
     const out = { namespace: 'hud', [`${ns}_vp`]: vp };
     const host = ch && ch.f1 ? 'hud_content' : 'root_panel';
     out[host] = { modifications: [{ array_name: 'controls', operation: 'insert_front', value: [{ [`${ns}_vp@hud.${ns}_vp`]: {} }] }] };
-    if (ch) {
-      // (the HUD's title, made by its factory from hud.hud_title_text: hidden while the title is the channel's)
-      // (binding_condition always: the factory makes this control when a title comes — a plain title after the channel's was not
-      //  shown without it: run 41001422618's title-raw — and the game's own visibility bindings say always too)
+    if (ch && ch.titleHide === 'text') {
+      // (2〜4 本目: the HUD's title, made by its factory from hud.hud_title_text: hidden while the title is the channel's. No plain
+      //  title was seen with it in any way (run 41008713796: title-plain・title-api・web-title 0 %): R10.14)
       out.hud_title_text = { bindings: [{ binding_name: T, binding_type: 'global', binding_condition: 'always' }, { binding_type: 'view', source_property_name: `(not ${isChannelExpr(ch)})`, target_property_name: '#visible', binding_condition: 'always' }] };
+    }
+    if (ch && ch.titleHide === 'area') {
+      // (5 本目: hud.hud_title_text is left as the game has it. The plain panel root_panel holds the title's factory in
+      //  (hud_title_text_area) is put back after itself with the same factory and a #visible view binding on the title string —
+      //  the form root_panel's own F1 binding has, measured to work (R10.15) — and the game's own is removed: every title the
+      //  factory makes is inside this panel, shown unless the title is the channel's)
+      const area = { type: 'panel', factory: { name: 'hud_title_text_factory', control_ids: { hud_title_text: 'hud_title_text@hud.hud_title_text' } },
+        bindings: [{ binding_name: T, binding_type: 'global' }, { binding_type: 'view', source_property_name: `(not ${isChannelExpr(ch)})`, target_property_name: '#visible' }] };
+      out.root_panel = out.root_panel || {};
+      out.root_panel.modifications = (out.root_panel.modifications || []).concat([
+        { control_name: 'hud_title_text_area', operation: 'insert_after', value: [{ [`${ns}_title_area`]: area }] },
+        { control_name: 'hud_title_text_area', operation: 'remove' },
+      ]);
     }
     if (ch && ch.f1) {
       // (root_panel's own three bindings as the game has them, and its #visible also off while the channel says F1)
-      out.root_panel = { bindings: [
+      out.root_panel = Object.assign(out.root_panel || {}, { bindings: [
         { binding_name: '#hud_visible', binding_type: 'global' },
         { binding_name: T, binding_type: 'global' },
         { binding_type: 'view', source_property_name: `(#hud_visible and (not ${f1Expr(ch)}))`, target_property_name: '#visible' },
         { binding_name: '#hud_alpha', binding_name_override: '#alpha', binding_type: 'global' },
         { binding_name: '#hud_propagate_alpha', binding_name_override: '#propagateAlpha', binding_type: 'global' },
-      ] };
+      ] });
     }
     return out;
   }
