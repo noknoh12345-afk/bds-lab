@@ -35,6 +35,8 @@
 //   audio song <曲>               試験曲（corpus）をここで変換し、サーバーのコンソールから spectral:song の script event で送る
 //   audio ceiling <アドオン> <曲,曲,…>   天井（元の音を OGG のまま鳴らすだけのアドオン）を bds/addons/<アドオン> に作る: 次に addon <アドオン>
 //   audio export <名前> [kbps]    録音を Opus にし、tools/rig/rec_public.pem で暗号化してログへ（`[spectral rec]` の行。秘密鍵の持ち主だけが開ける）
+//   audio info                   端末の音の設定（メディアの音量・ミキサー・ゲームの audio_ の設定）をログへ（`[spectral rig] device audio`）
+//   audio volume [BGM 0〜1]      メディアの音量を最大、ゲームの audio_ を 1・BGM を指定に（stop の後、launch の前に）
 //   perf [ミリ秒]                ゲームのメモリと、その間の毎秒のフレーム数
 //   changed [割合]               いまの画面が `shot world` の画面（何も開いていないワールド）と違う（画面が本当に開いた）。既定 3%
 //   network delay <ミリ秒|none> / network speed <full|lte|hsdpa|umts|edge|gprs|kbps>   端末の回線を遅くする（読み込み中の画面・切断を試す）
@@ -185,7 +187,9 @@ function check(s) {
   if (s.verb === 'audio' && a[0] === 'song' && !(a.length === 2 && /^[\w.-]+$/.test(a[1]))) return '書き方: audio song <曲>（corpus/manifest.json の id）';
   if (s.verb === 'audio' && a[0] === 'ceiling' && !(a.length === 3 && /^[A-Za-z0-9_-]{1,64}$/.test(a[1]) && /^[\w.-]+(,[\w.-]+)*$/.test(a[2]))) return '書き方: audio ceiling <アドオンの名前> <曲,曲,…>';
   if (s.verb === 'audio' && a[0] === 'export' && !(a.length >= 2 && a.length <= 3 && /^[\w.-]+$/.test(a[1]) && (a[2] === undefined || num(a[2]) >= 16))) return '書き方: audio export <名前> [kbps]（録音を Opus で暗号化してログへ。開けるのは tools/rig/rec_public.pem の秘密鍵の持ち主だけ）';
-  if (s.verb === 'audio' && !['analyze', 'song', 'ceiling', 'export'].includes(a[0]) && (!['start', 'stop'].includes(a[0]) || (a[1] !== undefined && !/^[\w.-]+$/.test(a[1])))) return '書き方: audio start [名前] / audio stop / audio analyze … / audio song <曲> / audio ceiling <アドオン> <曲,…>（名前は英数字と _ . - だけ）';
+  if (s.verb === 'audio' && a[0] === 'info' && a.length !== 1) return '書き方: audio info（端末の音の設定をログへ）';
+  if (s.verb === 'audio' && a[0] === 'volume' && !(a.length <= 2 && (a[1] === undefined || (num(a[1]) >= 0 && num(a[1]) <= 1)))) return '書き方: audio volume [BGM の音量 0〜1]（stop の後・launch の前に。既定 0）';
+  if (s.verb === 'audio' && !['analyze', 'song', 'ceiling', 'export', 'info', 'volume'].includes(a[0]) && (!['start', 'stop'].includes(a[0]) || (a[1] !== undefined && !/^[\w.-]+$/.test(a[1])))) return '書き方: audio start [名前] / audio stop / audio analyze … / audio song <曲> / audio ceiling <アドオン> <曲,…>（名前は英数字と _ . - だけ）';
   if (s.verb === 'perf' && a[0] !== undefined && Number.isNaN(num(a[0]))) return '書き方: perf [ミリ秒]';
   if (s.verb === 'changed' && a[0] !== undefined && !(num(a[0]) > 0 && num(a[0]) < 1)) return '書き方: changed [0〜1 の割合]（例 changed 0.05）';
   if (s.verb === 'network' && !((a[0] === 'delay' && /^(none|\d+)$/.test(a[1] ?? '')) || (a[0] === 'speed' && /^(full|lte|hsdpa|umts|edge|gprs|\d+)$/.test(a[1] ?? '')))) return '書き方: network delay <ミリ秒|none> / network speed <full|lte|hsdpa|umts|edge|gprs|kbps>';
@@ -642,6 +646,13 @@ export async function runScenario(steps, ctx) {
           if (!r.lines.some((l) => l.includes('song pack:') && l.includes(`/spectral:play ${a[1]}`))) throw new Error(`曲 ${a[1]} が届いた知らせがありません（${r.lines.slice(-2).join(' | ').slice(0, 200)}）`);
           return `曲 ${a[1]}（${sp.seconds} 秒、${sp.kbps} kbps）を ${sp.parts.length} 個の script event で送りました`;
         }
+        if (a[0] === 'info') {
+          const d = AR.deviceAudio(adb, ctx.pkg);
+          process.stdout.write(`[spectral rig] device audio: ${JSON.stringify(d)}\n`);
+          fs.appendFileSync(doLog, `audio info\n${JSON.stringify(d, null, 1)}\n`);
+          return `media ${d.media_volume.index ?? '?'}/${d.media_volume.max ?? '?'} mixer ${d.mixer.sample_rate.join(',')} Hz options ${Object.entries(d.game_options).map(([k, v]) => `${k}=${v}`).join(' ').slice(0, 160)}`;
+        }
+        if (a[0] === 'volume') return AR.setVolumes(adb, ctx.pkg, { music: a[1] === undefined ? 0 : num(a[1]) });
         if (a[0] === 'export') {
           // (into the job's log as ciphertext only: the private key is not in the repository — tools/rig/rec_decode.mjs)
           const e = AR.exportLines({ labDir: ctx.labDir ?? process.cwd(), wav: path.join(runDir, 'audio', `${a[1]}.wav`), kbps: num(a[2]) || 128 });

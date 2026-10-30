@@ -98,6 +98,51 @@ export function ceiling({ labDir, addon = 'spectral', name, ids }) {
   return JSON.parse(r.stdout.trim().split('\n').pop());
 }
 
+// ---- the device's audio settings (run 41060263629: every recording, the ceiling too, came in ~39 dB under the original)
+const gameOptions = (pkg) => `/data/data/${pkg}/games/com.mojang/minecraftpe/options.txt`;
+const shOut = (adb, c) => adb.run(['shell', c], { timeout: 30_000 }).stdout ?? '';
+/** Android's media volume as `cmd media_session` (or the older `media`) says it → { line, index, max } */
+function mediaVolume(adb) {
+  const line = (shOut(adb, 'cmd media_session volume --stream 3 --get 2>&1') || shOut(adb, 'media volume --stream 3 --get 2>&1')).trim().split('\n').pop() ?? '';
+  const m = /volume is (\d+) in range \[(\d+)\.\.(\d+)\]/.exec(line);
+  return { line: line.slice(0, 120), index: m ? Number(m[1]) : null, max: m ? Number(m[3]) : null };
+}
+/** what stands between the game's sound and the recorder (settings and numbers only, for the job's log): Android's media
+ *  volume and its stream state, who holds the audio focus (package names), the mixer's rate and buffers, the game's options */
+export function deviceAudio(adb, pkg) {
+  const audio = shOut(adb, 'dumpsys audio 2>/dev/null'), af = shOut(adb, 'dumpsys media.audio_flinger 2>/dev/null');
+  const pick = (re) => [...new Set([...af.matchAll(re)].map((m) => m[1]))].slice(0, 4);
+  const music = /- STREAM_MUSIC:[\s\S]*?(?=\n- STREAM_|\n\n|$)/.exec(audio)?.[0];
+  const focusBlock = /Audio Focus stack entries[\s\S]*?(?=\n\n|$)/.exec(audio)?.[0] ?? '';
+  const opts = Object.fromEntries(shOut(adb, `cat ${gameOptions(pkg)} 2>/dev/null`).split('\n')
+    .map((l) => /^((?:audio|sound|music)[\w]*|[\w]*volume[\w]*):(.*)$/i.exec(l.trim())).filter(Boolean).map((m) => [m[1], m[2].trim()]));
+  return {
+    media_volume: mediaVolume(adb),
+    stream_music: music ? music.replace(/\s+/g, ' ').slice(0, 300) : null,
+    focus: [...new Set([...focusBlock.matchAll(/pack: ([\w.]+)/g)].map((m) => m[1]))],
+    mixer: { sample_rate: pick(/Sample rate: (\d+)/g), hal_frames: pick(/HAL frame count: (\d+)/g), normal_frames: pick(/Normal frame count: (\d+)/g),
+      master_volume: pick(/Master volume: ([\d.]+)/g), master_mute: pick(/Master mute: (\w+)/g) },
+    game_options: opts,
+  };
+}
+/** the levels a measurement wants: Android's media volume at its top, the game's audio options at 1 and its background music
+ *  (category music: not the add-on's) at `music` — the game stopped first (`stop`: it writes its options back as it ends),
+ *  started again after (`launch`) → what was changed */
+export function setVolumes(adb, pkg, { music = 0 } = {}) {
+  const before = mediaVolume(adb), done = [];
+  if (before.max !== null && before.index !== before.max) {
+    shOut(adb, `cmd media_session volume --stream 3 --set ${before.max} 2>&1 || media volume --stream 3 --set ${before.max} 2>&1`);
+    done.push(`media ${before.index}→${mediaVolume(adb).index}/${before.max}`);
+  }
+  const f = gameOptions(pkg), was = shOut(adb, `grep -E '^audio_' ${f} 2>/dev/null`).trim();
+  if (was) {
+    adb.run(['shell', `sed -i -E 's/^(audio_[a-z_]+):[0-9.]+$/\\1:1/; s/^audio_music:[0-9.]+$/audio_music:${music}/' ${f}`], { timeout: 30_000 });
+    const now = shOut(adb, `grep -E '^audio_' ${f} 2>/dev/null`).trim();
+    if (now !== was) done.push(`options ${was.split('\n').length} 項目（music ${music}）`);
+  }
+  return done.length ? done.join('・') : '変えるものなし';
+}
+
 /** a recording sent out through the job's log, readable only with the private key of the unit's tools/rig/rec_public.pem
  *  (the redroid workflow's artifacts carry no recordings, and a public lab seals what they do carry): Opus at `kbps`, then
  *  AES-256-GCM with a key of its own, that key sealed by RSA-OAEP (SHA-256) to the public key — the log shows nothing but

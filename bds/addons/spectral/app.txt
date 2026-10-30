@@ -2,12 +2,16 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音は app/runs/<実行>/audio/*.wav（成果物には入らない）。
 #   数はジョブのログの `[spectral rig] <録音> <何>: {...}` の行（audio analyze）。録音そのものは `audio export` が Opus にして
 #   tools/rig/rec_public.pem で暗号化し `[spectral rec]` の行でログへ（開けるのはその秘密鍵の持ち主だけ: tools/rig/rec_decode.mjs）。
-# いまは原因を見る短い版（run 41055135707: デモが 1 つの音の高さに集まり、最初の試験曲は無音だった）: 較正・デモ・試験曲 2 曲
-#   （再生はコンソールの execute as で: チャットの打ち込みを外す）・軽量モード 1 曲・天井 2 曲を、どれも書き出す。
+# いまは原因を見る短い版（run 41055135707: デモが 1 つの音の高さに集まり、最初の試験曲は無音。run 41060263629: 録音がどれも元より約 39 dB 小さい）:
+#   音の設定をログに出し、メディアの音量を最大・ゲームの audio_ を 1（BGM は 0）にしてから、較正・デモ・試験曲 2 曲（execute as で再生）・軽量モード・天井 2 曲を録って書き出す。
 
 section title
+audio info
+stop
+audio volume 0
 launch
 until title 600000
+audio info
 shot title
 
 section prep
