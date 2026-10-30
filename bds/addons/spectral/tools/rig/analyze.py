@@ -18,6 +18,7 @@ What each program measures (see programs.py):
   stereo      left-only and right-only files with is3D false: channel separation
   mixer       16 summed sines up to a sum past full scale: clip, limiter or compressor; ui / music / record levels
   throughput  16 .. 256 commands in one tick: do they land in the same block
+  loud        setVolume 0.125 .. 8 on one sine, and a sound event with volume 4: can a sound be louder than its file
 """
 import argparse, json, math, os, subprocess, sys
 import numpy as np
@@ -368,6 +369,28 @@ def a_mixer(x, prog, g):
     return {'levels': rows, 'behaviour': kind, 'category_db': {c: round(20 * math.log10(v / ref + 1e-12), 1) for c, v in cats.items()}}
 
 
+def a_loud(x, prog, g):
+    """the 1 kHz level of every setVolume step of programs.loud against the first one: a client that follows a volume over 1
+    gives +6 dB a doubling; one that stops at 1 stays flat from there. The second sound event (definition volume 4) against
+    the first at the same setVolume: +12 dB if the definition's volume multiplies"""
+    m = x.mean(1) if np.allclose(x[:, 0], x[:, 1]) else x[:, 0]
+    b = prog['body']
+
+    def level(t):
+        seg = band(m[int(at(g, b + t + 3)): int(at(g, b + t + 9))], 1000, 60)
+        return float(np.sqrt(np.mean(seg ** 2)))
+    vols = P.LOUD
+    a = [level(i * 10) for i in range(len(vols))]
+    t = len(vols) * 10 + 5
+    d = [level(t + i * 10) for i in range(4)]
+    ref = a[0] or 1e-12
+    rows = [{'volume': v, 'db': round(20 * math.log10(x_ / ref + 1e-12), 2), 'expected_db': round(20 * math.log10(v / vols[0]), 2)} for v, x_ in zip(vols, a)]
+    rows4 = [{'volume': v, 'db_vs_osc': round(20 * math.log10(x_ / (a[i] or 1e-12) + 1e-12), 2)} for i, (v, x_) in enumerate(zip(vols[:4], d))]
+    follows = [r['volume'] for r in rows if abs(r['db'] - r['expected_db']) <= 1.0]
+    return {'set_volume': rows, 'follows_up_to': max(follows) if follows else None, 'definition_volume_4': rows4,
+            'peak_dbfs': round(20 * math.log10(max(a + d) * math.sqrt(2) + 1e-12), 1)}
+
+
 def a_voices(x, prog, g):
     m = x.mean(1)
     n = 128
@@ -436,7 +459,7 @@ def a_throughput(x, prog, g):
 
 
 ANALYSE = {'fade': a_fade, 'timing': a_timing, 'seek': a_seek, 'pitch': a_pitch, 'stereo': a_stereo, 'mixer': a_mixer,
-           'voices': a_voices, 'throughput': a_throughput}
+           'voices': a_voices, 'throughput': a_throughput, 'loud': a_loud}
 
 
 def analyse(x, prog):

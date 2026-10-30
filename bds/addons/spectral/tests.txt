@@ -234,11 +234,15 @@ until form 5000
 
 ## calibration programs for measuring a real client (tools/rig)
 @A cmd /spectral:calib list
-~ @A calib: voices \(\d+ s\), fade \(\d+ s\), timing \(\d+ s\), seek \(\d+ s\), pitch \(\d+ s\), stereo \(\d+ s\), mixer \(\d+ s\), throughput \(\d+ s\) · all
+~ @A calib: voices \(\d+ s\), fade \(\d+ s\), timing \(\d+ s\), seek \(\d+ s\), pitch \(\d+ s\), stereo \(\d+ s\), mixer \(\d+ s\), throughput \(\d+ s\), loud \(\d+ s\) · all
 @A cmd /spectral:calib stereo
 ~ @A ▶ calib stereo \(7 s\)
 until calib stereo done 15000
 ~ @A calib stereo done \(0 errors\)
+@A cmd /spectral:calib loud
+~ @A ▶ calib loud \(8 s\)
+until calib loud done 15000
+~ @A calib loud done \(0 errors\)
 @A cmd /spectral:calib nothing
 ~ @A no calibration program "nothing"
 
@@ -286,6 +290,28 @@ wait 300
 wait 300
 @A cmd /spectral:status
 ~ @A status: playing demo .* voices 48 instances 56 .* budget none .* engine hf none fold off sounds any drums ahead
+@A cmd /spectral:stop
+~ @A ■ stopped
+
+## louder than the files: a level in dB, by setVolume or by the loud sound events (the game plays every sound 32.5 dB under its file)
+@A cmd /spectral:play demo
+~ @A ▶ Demo \(original\)
+wait 1000
+@A cmd /spectral:level 12
+= @A level: +12 dB by setVolume
+wait 300
+@A cmd /spectral:status
+~ @A status: playing demo .* voices 48 instances 56 .* level \+12 dB volume
+@A cmd /spectral:level 12 events
+= @A level: +12 dB by the loud sound events
+wait 500
+@A cmd /spectral:status
+~ @A status: playing demo .* voices 48 instances 56 .* level \+12 dB events
+@A cmd /spectral:level 0
+= @A level: as the files
+wait 500
+@A cmd /spectral:status
+~ @A status: playing demo .* voices 48 instances 56 .* level none
 @A cmd /spectral:stop
 ~ @A ■ stopped
 

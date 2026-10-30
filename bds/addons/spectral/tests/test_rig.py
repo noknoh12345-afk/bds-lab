@@ -65,5 +65,10 @@ check('hidden: loop seek lands (late by about the frame/block)', s['loop_summary
 r = run('throughput', **HIDDEN)
 c = r['throughput']['counts']
 check('hidden: 128 commands of one tick land within one frame', all(x['spread_ms'] < 17 for x in c), [(x['commands'], x['spread_ms']) for x in c])
+r = run('loud', mix='none')
+check('unclipped client: setVolume followed up to 8 (+36 dB)', r['loud']['follows_up_to'] == 8.0, r['loud']['set_volume'])
+check('unclipped client: the definition volume 4 adds 12 dB', all(abs(x['db_vs_osc'] - 12.04) < 0.5 for x in r['loud']['definition_volume_4']), r['loud']['definition_volume_4'])
+r = run('loud')
+check('client that clips at full scale: setVolume followed up to 1 only', r['loud']['follows_up_to'] == 1.0, r['loud']['follows_up_to'])
 print(f"\n{len(fails)} failed" if fails else '\nall passed')
 sys.exit(1 if fails else 0)

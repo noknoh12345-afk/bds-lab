@@ -122,6 +122,15 @@ for nm in ('sync', 'chirp', 'chirp1', 'osc220', 'osc7040', 'oscL', 'oscR'):
     ev('spectral.' + nm, 'sounds/spectral/' + nm, False)
 for cat in ('music', 'record'):
     defs['spectral.osc_' + cat] = {'category': cat, 'sounds': [{'name': 'sounds/spectral/osc', 'is3D': False, 'volume': 1.0}]}
+# the calibration's loud program: the same sine under a definition volume of 4 (does the client play a sound louder than its file?)
+defs['spectral.osc_v4'] = {'category': 'ui', 'sounds': [{'name': 'sounds/spectral/osc', 'is3D': False, 'volume': 4.0}]}
+# the headphones' sounds 12 dB over their files (definition volume 4: /spectral:level ... events), for a client that plays a
+# definition's volume but not a setVolume over 1. The game plays everything 32.5 dB under the files into 16 bits (SPEC.md)
+LOUD_EVENTS = ['spectral.osc'] + ['spectral.n%d' % b for b in range(len(noise_rms))] + \
+    ['spectral.b%d_%d' % (b, s) for b in range(len(burst_rms)) for s in range(S.SUB)]
+for name in LOUD_EVENTS:
+    d = defs[name]['sounds'][0]
+    defs[name + '_l'] = {'category': 'ui', 'sounds': [{'name': d['name'], 'is3D': False, 'volume': 4.0}]}
 with open(os.path.join(unit, 'rp', 'sounds', 'sound_definitions.json'), 'w') as f:
     json.dump({'format_version': '1.20.20', 'sound_definitions': defs}, f, indent=1)
 

@@ -552,6 +552,226 @@
      "volume": 1.0
     }
    ]
+  },
+  "spectral.osc_v4": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/osc",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.osc_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/osc",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.n0_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/n0",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.n1_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/n1",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.n2_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/n2",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.n3_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/n3",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.n4_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/n4",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.n5_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/n5",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.n6_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/n6",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.n7_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/n7",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b0_0_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b0_0",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b0_1_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b0_1",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b0_2_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b0_2",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b0_3_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b0_3",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b1_0_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b1_0",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b1_1_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b1_1",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b1_2_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b1_2",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b1_3_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b1_3",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b2_0_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b2_0",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b2_1_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b2_1",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b2_2_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b2_2",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
+  },
+  "spectral.b2_3_l": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/b2_3",
+     "is3D": false,
+     "volume": 4.0
+    }
+   ]
   }
  }
 }

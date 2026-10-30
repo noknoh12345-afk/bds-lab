@@ -165,7 +165,33 @@ def throughput():
     return program('throughput', 'how many commands one tick can carry', t, slots, steps)
 
 
-ALL = [voices, fade, timing, seek, pitch, stereo, mixer, throughput]
+LOUD = [0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0]
+
+
+def loud():
+    """can a sound be louder than its file? The game plays everything 32.5 dB under the files and the recording is 16-bit,
+    so a quiet song's ceiling is its quantisation (SPEC.md). A 1 kHz sine stepped through setVolume 0.125 .. 8 (10 ticks each),
+    then the same file under an event whose definition says volume 4 (spectral.osc_v4) at setVolume 0.125 .. 1: the level of
+    each step against the first (6 dB a doubling as long as the client follows)"""
+    slots = [['spectral.osc', 1], ['spectral.osc_v4', 1]]
+    steps = [[0, 'play', 0, LOUD[0], 1000 / F_OSC]]
+    t = 0
+    for v in LOUD[1:]:
+        t += 10
+        steps.append([t, 'vol', 0, v])
+    t += 10
+    steps.append([t, 'stop', 0])
+    t += 5
+    steps.append([t, 'play', 1, LOUD[0], 1000 / F_OSC])
+    for v in LOUD[1:4]:
+        t += 10
+        steps.append([t, 'vol', 1, v])
+    t += 10
+    steps.append([t, 'stop', 1])
+    return program('loud', 'louder than the file: setVolume over 1, and a sound event with volume 4', t + 10, slots, steps)
+
+
+ALL = [voices, fade, timing, seek, pitch, stereo, mixer, throughput, loud]
 
 
 def build():

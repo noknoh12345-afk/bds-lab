@@ -122,6 +122,10 @@ interface Settings {
   hf?: number; fold?: boolean; sounds?: number;
   /** drums: ticks the one-shot bursts go before the tick of their frame (1, 0, -1), or none and the noise bands attack */
   burstLead?: number; attacks?: boolean;
+  /** louder than the files, in dB: the game plays every sound 32.5 dB under its file into 16 bits, so a quiet song's floor is
+   *  quantisation (SPEC.md). levelVia 'volume': every level sent that much higher (setVolume over 1); 'events': the headphones
+   *  play the _l sound events (their definitions say volume 4 = +12 dB), the rest by setVolume */
+  level?: number; levelVia?: 'volume' | 'events';
 }
 type Mode2 = 'quality' | 'light';
 const DEFAULTS: Settings = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voices: 64, noise: true, bursts: true, viz: true, loop: false, budget: 0, mode: 'quality', hf: 0, fold: false, sounds: 0 };
@@ -129,6 +133,7 @@ const DEFAULTS: Settings = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voice
 // layer), and at most LIGHT_BUDGET commands per tick per listener (voices and noise bands together), chosen by how much
 // each one matters (rate control); starting, seeking and ending a song are not held back
 const LIGHT_VOICES = 16, LIGHT_BUDGET = 24;
+const LOUD_EVENT_DB = 20 * Math.log10(4);          // the _l events' definition volume 4
 // how many sounds a client plays at once, measured on a real one (SPEC.md: Minecraft 1.26.60.4 on Android 14 heard 32, the
 // quietest or oldest going first — a song's 48 voices and 8 noise bands were over it. 24 voices beat 48 on the 4 songs played
 // side by side, +0.17..+0.52 ViSQOL; over all 13 test songs the medians were 1.99 both, 2.05 with the bursts sent ahead, at a
@@ -170,7 +175,13 @@ class Session {
   /** bursts held for the next tick (s.burstLead -1) */
   pendingBursts: [number, number, number][] = [];
   get ratio() { return Math.pow(2, this.s.semis / 12); }
-  ev(name: string) { return this.mode === 'speaker' ? name + '_3d' : name; }
+  ev(name: string) { return this.mode === 'speaker' ? name + '_3d' : this.loudEvents ? name + '_l' : name; }
+  /** the headphones play the _l events (s.level by 'events') */
+  get loudEvents() { return this.mode === 'phones' && (this.s.level ?? 0) > 0 && this.s.levelVia === 'events'; }
+  /** the factor every level is sent with: s.level, less what the _l events already add */
+  get lv() { return Math.pow(10, ((this.s.level ?? 0) - (this.loudEvents ? LOUD_EVENT_DB : 0)) / 20); }
+  /** the events the instances of the targets were built with (a level change to or from 'events' rebuilds them) */
+  builtLoud = false;
 
   /** start one looping instance at silence */
   private loop(t: Target, name: string): SoundInstance {
@@ -183,6 +194,7 @@ class Session {
   /** create the voices of one target over a few ticks (a burst of 70 starts in one tick is avoided) */
   async build(t: Target) {
     const want = this.V, M = this.d.M;
+    this.builtLoud = this.loudEvents;
     while (t.osc.length < want) {
       for (let i = 0; i < 16 && t.osc.length < want; i++) t.osc.push(this.loop(t, 'spectral.osc'));
       await system.waitTicks(1);
@@ -199,6 +211,14 @@ class Session {
     this.targets.push(t);
     await this.build(t);
     this.resync(t);
+  }
+  /** every target's instances made again (the level moved to or from the loud events) */
+  async rebuildAll() {
+    for (const t of this.targets) {
+      for (const x of [...t.osc, ...t.nz]) { try { x?.stop(); } catch { /* gone */ } }
+      t.osc = []; t.nz = [];
+      await this.build(t); this.resync(t);
+    }
   }
   /** bring a target that joined late (or was rebuilt) to the current levels */
   resync(t: Target) {
@@ -327,7 +347,7 @@ class Session {
     if (!this.targets.length) { this.ending = -1; return; }
     if (this.warm > 0) { this.warm--; return; }
     const d = this.d, N = d.N, sp = this.frozen ? 0 : this.s.speed, ph = this.ph, ph2 = ph + sp;
-    const gain = this.s.volume / OSC_AMP, r = this.ratio;
+    const gain = (this.s.volume * this.lv) / OSC_AMP, r = this.ratio, lv = this.lv;
     if ((sp > 0 && ph >= d.F - 1) || (sp < 0 && ph <= 0)) {
       if (this.s.loop) { this.seek(sp > 0 ? 0 : d.F - 1); return; }
       const b0 = this.s.budget; this.s.budget = 0;
@@ -390,13 +410,13 @@ class Session {
       if (att) {
         const [mNow, eNow] = onset(ph, ph2, b);
         if (eNow > 0) {
-          const lv = Math.sqrt(d.nz[mNow * d.M + b] ** 2 + eNow + (extra ? extra[b] : 0));
-          this.noiseAttack(b, (lv * this.s.volume * this.eqGain(c)) / NOISE_RMS[b]);
+          const la = Math.sqrt(d.nz[mNow * d.M + b] ** 2 + eNow + (extra ? extra[b] : 0));
+          this.noiseAttack(b, (la * this.s.volume * lv * this.eqGain(c)) / NOISE_RMS[b]);
           continue;
         }
         if (onset(ph2, ph2 + sp, b)[1] > 0) continue;                      // the next tick attacks: hold
       }
-      this.noise(b, this.s.noise ? (a * this.s.volume * this.eqGain(c)) / NOISE_RMS[b] : SILENT);
+      this.noise(b, this.s.noise ? (a * this.s.volume * lv * this.eqGain(c)) / NOISE_RMS[b] : SILENT);
     }
     this.flush();
     // drum bursts: one-shots with sub-tick offsets. When they go (s.burstLead, ticks before the tick of their frame): the
@@ -415,7 +435,7 @@ class Session {
           const off = Math.round((((m + d.evSub[e] / SUB) - base) / sp) * SUB);
           const sub = Math.max(0, Math.min(SUB - 1, off)), band = d.evBand[e];
           const c = band === 0 ? 90 : band === 1 ? 900 : 8000;
-          play.push([band, sub, Math.min(10, (d.evAmp[e] * this.s.volume * this.eqGain(c * r)) / BURST_RMS[band])]);
+          play.push([band, sub, Math.min(10, (d.evAmp[e] * this.s.volume * lv * this.eqGain(c * r)) / BURST_RMS[band])]);
         }
       };
       if (lead >= 1) {
@@ -431,7 +451,7 @@ class Session {
         if (this.s.sounds && !this.roomForBurst()) continue;
         for (const t of this.targets) {
           try {
-            if (t.player) t.player.playSound(`spectral.b${band}_${sub}`, { volume: vol, pitch: r });
+            if (t.player) t.player.playSound(this.ev(`spectral.b${band}_${sub}`), { volume: vol, pitch: r });
             else t.dim!.playSound(`spectral.b${band}_${sub}_3d`, t.loc!, { volume: 1, pitch: r }).setVolume(vol);   // range of volume 1, level as multiplier
           } catch { /* gone */ }
           this.calls++;
@@ -504,7 +524,8 @@ class Session {
     return `status: ${this.paused ? 'paused' : this.frozen ? 'frozen' : 'playing'} ${m.id} ${fmt(this.ph / 20)}/${fmt(m.seconds)} frame ${Math.round(this.ph)}/${this.d.F} ` +
       `mode ${this.mode} voices ${this.V} instances ${inst} speed ${this.s.speed} semis ${this.s.semis} volume ${Math.round(this.s.volume * 100)}% ` +
       `calls/tick ${calls.toFixed(1)} peak ${this.peakCalls} ms/tick ${avg.toFixed(2)} rebuilds ${this.rebuilds} quality ${this.s.mode ?? 'quality'} budget ${this.s.budget || 'none'} deferred ${this.deferred} ` +
-      `engine hf ${this.s.hf || 'none'} fold ${this.s.fold ? 'on' : 'off'} sounds ${this.s.sounds || 'any'} drums ${!this.s.bursts ? 'off' : this.s.attacks ? 'noise' : ['behind', 'tick', 'ahead'][Math.max(-1, Math.min(1, this.s.burstLead ?? 1)) + 1]}`;
+      `engine hf ${this.s.hf || 'none'} fold ${this.s.fold ? 'on' : 'off'} sounds ${this.s.sounds || 'any'} drums ${!this.s.bursts ? 'off' : this.s.attacks ? 'noise' : ['behind', 'tick', 'ahead'][Math.max(-1, Math.min(1, this.s.burstLead ?? 1)) + 1]} ` +
+      `level ${this.s.level ? `+${this.s.level} dB ${this.builtLoud ? 'events' : 'volume'}` : 'none'}`;
   }
 }
 const fmt = (s: number) => `${Math.floor(Math.abs(s) / 60)}:${String(Math.floor(Math.abs(s) % 60)).padStart(2, '0')}`;
@@ -601,6 +622,14 @@ cmd('spectral:drums', 'Drum attacks: one-shot bursts a tick ahead / in their tic
     keep(p, s);
     const m = mine(p); if (m) { m.s.bursts = s.bursts; m.s.attacks = s.attacks; m.s.burstLead = s.burstLead; }
     return `§bdrums: ${how}`;
+  });
+cmd('spectral:level', 'Louder than the files (the game plays every sound 32.5 dB under its file, into 16 bits): dB, by setVolume or by the loud sound events (definition volume 4)',
+  { db: 'float', 'via?': ['volume', 'events'] }, async (p, a) => {
+    const s = settingsOf(p); s.level = Math.max(0, Math.min(18, Math.round(a.db * 10) / 10)); s.levelVia = a.via === 'events' ? 'events' : 'volume';
+    keep(p, s);
+    const m = mine(p);
+    if (m) { m.s.level = s.level; m.s.levelVia = s.levelVia; if (m.loudEvents !== m.builtLoud) await m.rebuildAll(); }
+    return s.level ? `§blevel: +${s.level} dB by ${s.levelVia === 'events' ? 'the loud sound events' : 'setVolume'}` : '§blevel: as the files';
   });
 cmd('spectral:loop', 'Loop the song on/off', {}, (p) => { const s = settingsOf(p); s.loop = !s.loop; keep(p, s); const m = mine(p); if (m) m.s.loop = s.loop; return `§bloop ${s.loop ? 'on' : 'off'}`; });
 cmd('spectral:viz', 'Spectrum on the action bar on/off', {}, (p) => { const s = settingsOf(p); s.viz = !s.viz; keep(p, s); const m = mine(p); if (m) m.s.viz = s.viz; return `§bspectrum ${s.viz ? 'on' : 'off'}`; });

@@ -84,8 +84,10 @@ def write_unit(unit_dir, ids):
         subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', fetched(i), '-ar', '48000', '-c:a', 'libvorbis', '-q:a', '8', f], check=True)
         size += os.path.getsize(f)
         defs[f'spectral_ceiling.{i}'] = {'category': 'ui', 'sounds': [{'name': f'sounds/spectral_ceiling/{i}', 'is3D': False, 'volume': 1.0, 'stream': True}]}
+        # the same file under a definition volume of 4 (the loud ceiling, if the client takes a definition's volume over 1)
+        defs[f'spectral_ceiling4.{i}'] = {'category': 'ui', 'sounds': [{'name': f'sounds/spectral_ceiling/{i}', 'is3D': False, 'volume': 4.0, 'stream': True}]}
     rpm = manifest('Spectral Ceiling RP', 'the test songs as plain sounds (the ceiling)', 'rp', [])
-    bpm = manifest('Spectral Ceiling', 'plays a test song as a plain sound: /scriptevent spectral:ceiling <id>', 'bp',
+    bpm = manifest('Spectral Ceiling', 'plays a test song as a plain sound: /scriptevent spectral:ceiling <id> [volume] [d4]', 'bp',
                    [{'module_name': '@minecraft/server', 'version': '2.11.0'}, {'uuid': rpm['header']['uuid'], 'version': [1, 0, 0]}])
     files = {'rp/manifest.json': json.dumps(rpm, indent=1),
              'rp/sounds/sound_definitions.json': json.dumps({'format_version': '1.20.20', 'sound_definitions': defs}, indent=1),
@@ -94,9 +96,13 @@ def write_unit(unit_dir, ids):
                                     "import { world, system } from '@minecraft/server';\n"
                                     "system.afterEvents.scriptEventReceive.subscribe((e) => {\n"
                                     "  if (e.id !== 'spectral:ceiling') return;\n"
+                                    "  // <id> [volume] [d4]: the playSound volume (1 = the file's level; the game plays it 32.5 dB under the file), d4 = the\n"
+                                    "  // event whose definition says volume 4 (a sound louder than its file: the loud ceiling)\n"
+                                    "  const [id, v, d] = e.message.split(' ');\n"
+                                    "  const vol = Number(v) > 0 ? Number(v) : 1, ev = (d === 'd4' ? 'spectral_ceiling4.' : 'spectral_ceiling.') + id;\n"
                                     "  const ps = world.getAllPlayers();\n"
-                                    "  for (const p of ps) p.playSound('spectral_ceiling.' + e.message, { volume: 1 });\n"
-                                    "  console.warn(`[spectral ceiling] ${e.message} to ${ps.length} player(s)`);\n"
+                                    "  for (const p of ps) p.playSound(ev, { volume: vol });\n"
+                                    "  console.warn(`[spectral ceiling] ${ev} volume ${vol} to ${ps.length} player(s)`);\n"
                                     "});\n")}
     for name, text in files.items():
         with open(os.path.join(unit_dir, name), 'w', encoding='utf-8') as fh:

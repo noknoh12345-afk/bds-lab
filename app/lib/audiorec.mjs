@@ -246,6 +246,7 @@ function summarize(j) {
   if (j.stereo) parts.push(`stereo ${n(j.stereo.separation_dB)}dB`);
   if (j.mixer) parts.push(`mixer ${j.mixer.behaviour} music ${n(j.mixer.category_db?.music)} record ${n(j.mixer.category_db?.record)}dB`);
   if (j.throughput) parts.push(`128 cmds spread ${n(j.throughput.counts?.at(-1)?.spread_ms)}ms`);
+  if (j.loud) parts.push(`loud: setVolume followed up to ${j.loud.follows_up_to ?? '-'} · definition volume 4 ${n(j.loud.definition_volume_4?.[0]?.db_vs_osc)}dB`);
   for (const [k, v] of Object.entries(j)) if (v && typeof v === 'object' && 'visqol' in v) parts.push(`${k} ViSQOL ${n(v.visqol, 3)}`);
   if (j.emu_vs_recording) parts.push(`spec ${Object.values(j.spec ?? {}).filter((s) => s === 'measured').length}/${Object.keys(j.spec ?? {}).length} measured`);
   return parts.join(' · ');

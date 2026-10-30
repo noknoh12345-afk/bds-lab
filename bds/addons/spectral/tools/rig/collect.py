@@ -26,14 +26,16 @@ def read(log):
 
 # the recordings' prefixes (app.txt: audio start <prefix>_<song>) → the way the song was played
 WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile', 'n': 'mobile_ahead', 'r': 'mobile_ahead_again',
-        'a': 'shipped_same_run', 'b': 'improved', 'x': 'improved_drums_behind', 'y': 'improved_drums_noise', 'z': 'improved_alt'}
+        'a': 'shipped_same_run', 'b': 'improved', 'x': 'improved_drums_behind', 'y': 'improved_drums_noise', 'z': 'improved_alt',
+        # louder than the files (/spectral:level 12): by setVolume, by the loud sound events; the ceiling at volume 4 / its d4 event
+        'h': 'improved_loud', 'k': 'improved_loud_events', 'q': 'ceiling_loud', 'e': 'ceiling_loud_events'}
 
 
 def songs(res):
     """per song: the game's and the ceiling's ViSQOL against the original, the gap, and the emulator against the recording"""
     rows = {}
     for rec, by in res.items():
-        m = re.match(r'([gclvmnrabxyz])_(.+)$', rec)
+        m = re.match(r'([gclvmnrabxyzhkqe])_(.+)$', rec)
         if not m:
             continue
         kind, sid = m.groups()
