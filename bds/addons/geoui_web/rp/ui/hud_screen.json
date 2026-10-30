@@ -1,0 +1,1867 @@
+{
+  "namespace": "hud",
+  "gweb_vp": {
+    "type": "panel",
+    "$gweb_vp_size|default": [
+      "100%",
+      "100%"
+    ],
+    "size": "$gweb_vp_size",
+    "variables": [
+      {
+        "requires": "($compress_hud_width)",
+        "$gweb_vp_size": [
+          "111.111111%",
+          "100%"
+        ]
+      }
+    ],
+    "controls": [
+      {
+        "gweb_backdrop": {
+          "type": "image",
+          "texture": "textures/ui/Black.png",
+          "fill": true,
+          "size": [
+            "200%",
+            "200%"
+          ],
+          "alpha": 1,
+          "layer": -5,
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "(((('%.6s' * #hud_title_text_string) = '~gu~0b') or (('%.6s' * #hud_title_text_string) = '~gu~1b')) or ((('%.6s' * #hud_title_text_string) = '~gu~0c') or (('%.6s' * #hud_title_text_string) = '~gu~1c')) or ((('%.6s' * #hud_title_text_string) = '~gu~0d') or (('%.6s' * #hud_title_text_string) = '~gu~1d')) or ((('%.6s' * #hud_title_text_string) = '~gu~0e') or (('%.6s' * #hud_title_text_string) = '~gu~1e')) or ((('%.6s' * #hud_title_text_string) = '~gu~0f') or (('%.6s' * #hud_title_text_string) = '~gu~1f')) or ((('%.6s' * #hud_title_text_string) = '~gu~0g') or (('%.6s' * #hud_title_text_string) = '~gu~1g')) or ((('%.6s' * #hud_title_text_string) = '~gu~0h') or (('%.6s' * #hud_title_text_string) = '~gu~1h')) or ((('%.6s' * #hud_title_text_string) = '~gu~0i') or (('%.6s' * #hud_title_text_string) = '~gu~1i')))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gweb_g_l_b": {
+          "type": "panel",
+          "size": [
+            "5.333333%",
+            "9.481481%"
+          ],
+          "controls": [
+            {
+              "gweb_mid_l_b": {
+                "type": "panel",
+                "size": [
+                  "100%y",
+                  "100%"
+                ],
+                "max_size": [
+                  "100%",
+                  "100%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "controls": [
+                  {
+                    "gweb_sq_l_b": {
+                      "type": "panel",
+                      "size": [
+                        "100%",
+                        "100%x"
+                      ],
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "offset": [
+                        "17578.125%x",
+                        "6890.625%y"
+                      ],
+                      "controls": [
+                        {
+                          "gweb_r_l_b": {
+                            "type": "custom",
+                            "renderer": "live_player_renderer",
+                            "layer": 1,
+                            "size": [
+                              "100%",
+                              "100%"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_name_override": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_b_page": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "1875%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-987.5%x",
+                              "-770.37037%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_b_bar": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "1875%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-987.5%x",
+                              "-7033.333333%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_b_pu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "1875%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-987.5%x",
+                              "-770.37037%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_b_bu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "1875%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-987.5%x",
+                              "-7033.333333%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.6s' * #hud_title_text_string) = '~gu~0b') or (('%.6s' * #hud_title_text_string) = '~gu~1b'))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gweb_g_l_c": {
+          "type": "panel",
+          "size": [
+            "7.111111%",
+            "9.481481%"
+          ],
+          "controls": [
+            {
+              "gweb_mid_l_c": {
+                "type": "panel",
+                "size": [
+                  "100%y",
+                  "100%"
+                ],
+                "max_size": [
+                  "100%",
+                  "100%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "controls": [
+                  {
+                    "gweb_sq_l_c": {
+                      "type": "panel",
+                      "size": [
+                        "100%",
+                        "100%x"
+                      ],
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "offset": [
+                        "8789.0625%x",
+                        "6890.625%y"
+                      ],
+                      "controls": [
+                        {
+                          "gweb_r_l_c": {
+                            "type": "custom",
+                            "renderer": "live_player_renderer",
+                            "layer": 1,
+                            "size": [
+                              "100%",
+                              "100%"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_name_override": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_c_page": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "1406.25%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-675%x",
+                              "-770.37037%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_c_bar": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "1406.25%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-675%x",
+                              "-7033.333333%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_c_pu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "1406.25%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-675%x",
+                              "-770.37037%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_c_bu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "1406.25%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-675%x",
+                              "-7033.333333%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.6s' * #hud_title_text_string) = '~gu~0c') or (('%.6s' * #hud_title_text_string) = '~gu~1c'))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gweb_g_l_d": {
+          "type": "panel",
+          "size": [
+            "5.925926%",
+            "9.481481%"
+          ],
+          "controls": [
+            {
+              "gweb_mid_l_d": {
+                "type": "panel",
+                "size": [
+                  "100%y",
+                  "100%"
+                ],
+                "max_size": [
+                  "100%",
+                  "100%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "controls": [
+                  {
+                    "gweb_sq_l_d": {
+                      "type": "panel",
+                      "size": [
+                        "100%",
+                        "100%x"
+                      ],
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "offset": [
+                        "0%x",
+                        "6890.625%y"
+                      ],
+                      "controls": [
+                        {
+                          "gweb_r_l_d": {
+                            "type": "custom",
+                            "renderer": "live_player_renderer",
+                            "layer": 1,
+                            "size": [
+                              "100%",
+                              "100%"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_name_override": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_d_page": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "1687.5%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-50%x",
+                              "-770.37037%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_d_bar": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "1687.5%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-50%x",
+                              "-7033.333333%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_d_pu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "1687.5%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-50%x",
+                              "-770.37037%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_d_bu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "1687.5%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-50%x",
+                              "-7033.333333%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.6s' * #hud_title_text_string) = '~gu~0d') or (('%.6s' * #hud_title_text_string) = '~gu~1d'))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gweb_g_l_e": {
+          "type": "panel",
+          "size": [
+            "4.740741%",
+            "9.481481%"
+          ],
+          "controls": [
+            {
+              "gweb_mid_l_e": {
+                "type": "panel",
+                "size": [
+                  "100%y",
+                  "100%"
+                ],
+                "max_size": [
+                  "100%",
+                  "100%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "controls": [
+                  {
+                    "gweb_sq_l_e": {
+                      "type": "panel",
+                      "size": [
+                        "100%",
+                        "100%x"
+                      ],
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "offset": [
+                        "-8789.0625%x",
+                        "6890.625%y"
+                      ],
+                      "controls": [
+                        {
+                          "gweb_r_l_e": {
+                            "type": "custom",
+                            "renderer": "live_player_renderer",
+                            "layer": 1,
+                            "size": [
+                              "100%",
+                              "100%"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_name_override": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_e_page": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "2109.375%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "366.666667%x",
+                              "-770.37037%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_e_bar": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "2109.375%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "366.666667%x",
+                              "-7033.333333%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_e_pu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "2109.375%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "366.666667%x",
+                              "-770.37037%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_e_bu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "2109.375%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "366.666667%x",
+                              "-7033.333333%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.6s' * #hud_title_text_string) = '~gu~0e') or (('%.6s' * #hud_title_text_string) = '~gu~1e'))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gweb_g_l_f": {
+          "type": "panel",
+          "size": [
+            "4.376068%",
+            "9.481481%"
+          ],
+          "controls": [
+            {
+              "gweb_mid_l_f": {
+                "type": "panel",
+                "size": [
+                  "100%y",
+                  "100%"
+                ],
+                "max_size": [
+                  "100%",
+                  "100%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "controls": [
+                  {
+                    "gweb_sq_l_f": {
+                      "type": "panel",
+                      "size": [
+                        "100%",
+                        "100%x"
+                      ],
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "offset": [
+                        "-17578.125%x",
+                        "6890.625%y"
+                      ],
+                      "controls": [
+                        {
+                          "gweb_r_l_f": {
+                            "type": "custom",
+                            "renderer": "live_player_renderer",
+                            "layer": 1,
+                            "size": [
+                              "100%",
+                              "100%"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_name_override": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_f_page": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "2285.15625%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "719.230769%x",
+                              "-770.37037%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_f_bar": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "2285.15625%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "719.230769%x",
+                              "-7033.333333%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_f_pu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "2285.15625%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "719.230769%x",
+                              "-770.37037%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_f_bu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "2285.15625%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "719.230769%x",
+                              "-7033.333333%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.6s' * #hud_title_text_string) = '~gu~0f') or (('%.6s' * #hud_title_text_string) = '~gu~1f'))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gweb_g_l_g": {
+          "type": "panel",
+          "size": [
+            "4.266667%",
+            "9.481481%"
+          ],
+          "controls": [
+            {
+              "gweb_mid_l_g": {
+                "type": "panel",
+                "size": [
+                  "100%y",
+                  "100%"
+                ],
+                "max_size": [
+                  "100%",
+                  "100%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "controls": [
+                  {
+                    "gweb_sq_l_g": {
+                      "type": "panel",
+                      "size": [
+                        "100%",
+                        "100%x"
+                      ],
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "offset": [
+                        "17578.125%x",
+                        "10406.25%y"
+                      ],
+                      "controls": [
+                        {
+                          "gweb_r_l_g": {
+                            "type": "custom",
+                            "renderer": "live_player_renderer",
+                            "layer": 1,
+                            "size": [
+                              "100%",
+                              "100%"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_name_override": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_g_page": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "2343.75%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-800%x",
+                              "-1140.740741%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_g_bar": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "2343.75%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-800%x",
+                              "-10366.666667%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_g_pu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "2343.75%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-800%x",
+                              "-1140.740741%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_g_bu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "2343.75%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-800%x",
+                              "-10366.666667%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.6s' * #hud_title_text_string) = '~gu~0g') or (('%.6s' * #hud_title_text_string) = '~gu~1g'))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gweb_g_l_h": {
+          "type": "panel",
+          "size": [
+            "4.063492%",
+            "9.481481%"
+          ],
+          "controls": [
+            {
+              "gweb_mid_l_h": {
+                "type": "panel",
+                "size": [
+                  "100%y",
+                  "100%"
+                ],
+                "max_size": [
+                  "100%",
+                  "100%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "controls": [
+                  {
+                    "gweb_sq_l_h": {
+                      "type": "panel",
+                      "size": [
+                        "100%",
+                        "100%x"
+                      ],
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "offset": [
+                        "8789.0625%x",
+                        "10406.25%y"
+                      ],
+                      "controls": [
+                        {
+                          "gweb_r_l_h": {
+                            "type": "custom",
+                            "renderer": "live_player_renderer",
+                            "layer": 1,
+                            "size": [
+                              "100%",
+                              "100%"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_name_override": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_h_page": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "2460.9375%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-407.142857%x",
+                              "-1140.740741%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_h_bar": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "2460.9375%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-407.142857%x",
+                              "-10366.666667%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_h_pu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "2460.9375%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-407.142857%x",
+                              "-1140.740741%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_h_bu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "2460.9375%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-407.142857%x",
+                              "-10366.666667%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.6s' * #hud_title_text_string) = '~gu~0h') or (('%.6s' * #hud_title_text_string) = '~gu~1h'))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "gweb_g_l_i": {
+          "type": "panel",
+          "size": [
+            "2.666667%",
+            "9.481481%"
+          ],
+          "controls": [
+            {
+              "gweb_mid_l_i": {
+                "type": "panel",
+                "size": [
+                  "100%y",
+                  "100%"
+                ],
+                "max_size": [
+                  "100%",
+                  "100%"
+                ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "controls": [
+                  {
+                    "gweb_sq_l_i": {
+                      "type": "panel",
+                      "size": [
+                        "100%",
+                        "100%x"
+                      ],
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "offset": [
+                        "0%x",
+                        "10406.25%y"
+                      ],
+                      "controls": [
+                        {
+                          "gweb_r_l_i": {
+                            "type": "custom",
+                            "renderer": "live_player_renderer",
+                            "layer": 1,
+                            "size": [
+                              "100%",
+                              "100%"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_name_override": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_i_page": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "3750%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-50%x",
+                              "-1140.740741%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.6s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_i_bar": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": 0,
+                            "size": [
+                              "3750%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-50%x",
+                              "-10366.666667%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.166s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_i_pu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "3750%",
+                              "949.21875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-50%x",
+                              "-1140.740741%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.326s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "gweb_url_i_bu": {
+                            "type": "custom",
+                            "renderer": "profile_image_renderer",
+                            "layer": -1,
+                            "size": [
+                              "3750%",
+                              "105.46875%"
+                            ],
+                            "anchor_from": "center",
+                            "anchor_to": "top_left",
+                            "offset": [
+                              "-50%x",
+                              "-10366.666667%y"
+                            ],
+                            "bindings": [
+                              {
+                                "binding_name": "#hud_title_text_string",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_name": "#hud_visible",
+                                "binding_type": "global"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "('{\"type\":7,\"url\":\"' + (('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') + '\"}')",
+                                "target_property_name": "#profile_image_options"
+                              },
+                              {
+                                "binding_type": "view",
+                                "source_property_name": "((('%.4s' * #hud_title_text_string) = '~gu~') and (not ((('%.160s' * (#hud_title_text_string - ('%.486s' * #hud_title_text_string))) - ' ') = '')) and #hud_visible)",
+                                "target_property_name": "#visible"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "bindings": [
+            {
+              "binding_name": "#hud_title_text_string",
+              "binding_type": "global"
+            },
+            {
+              "binding_type": "view",
+              "source_property_name": "((('%.6s' * #hud_title_text_string) = '~gu~0i') or (('%.6s' * #hud_title_text_string) = '~gu~1i'))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "hud_content": {
+    "modifications": [
+      {
+        "array_name": "controls",
+        "operation": "insert_front",
+        "value": [
+          {
+            "gweb_vp@hud.gweb_vp": {}
+          }
+        ]
+      }
+    ]
+  },
+  "hud_title_text": {
+    "bindings": [
+      {
+        "binding_name": "#hud_title_text_string",
+        "binding_type": "global"
+      },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not (('%.4s' * #hud_title_text_string) = '~gu~'))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+  "root_panel": {
+    "bindings": [
+      {
+        "binding_name": "#hud_visible",
+        "binding_type": "global"
+      },
+      {
+        "binding_name": "#hud_title_text_string",
+        "binding_type": "global"
+      },
+      {
+        "binding_type": "view",
+        "source_property_name": "(#hud_visible and (not (('%.5s' * #hud_title_text_string) = '~gu~1')))",
+        "target_property_name": "#visible"
+      },
+      {
+        "binding_name": "#hud_alpha",
+        "binding_name_override": "#alpha",
+        "binding_type": "global"
+      },
+      {
+        "binding_name": "#hud_propagate_alpha",
+        "binding_name_override": "#propagateAlpha",
+        "binding_type": "global"
+      }
+    ]
+  }
+}

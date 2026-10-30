@@ -5,8 +5,9 @@
 // The server can set one string per player that the HUD's JSON UI reads: the title (#hud_title_text_string). layout.js writes
 // the JSON UI side; this writes the title: PREFIX + '1' or '0' (F1) + a layout letter ('a' … 'z'; 'a' when none is chosen) +
 // one field of `width` characters per URL slot (the URL, then spaces). The HUD's own title is hidden while it starts with
-// PREFIX. A title lasts its stay time and another pack's title replaces it, so the text is sent again every refreshTicks while
-// anything is on.
+// PREFIX. The text stays after its title's time and after `title clear` (RULES R10.7: the game keeps the last title's text), so
+// nothing on is the empty channel (PREFIX + '0a'), sent once; another pack's title replaces it all the same, so while anything is
+// on the text is sent again every refreshTicks (0: never).
 //
 //   const ch = GeoUIScreen.channel.create({ ns: 'gweb', slots: 2, width: 230 }, io)
 //   ch.f1(player, true)              F1 on: the HUD hidden (the HUD elements by the API, the rest by the channel), the arm and the
@@ -16,11 +17,11 @@
 //   ch.url(player, 0, 'http://…')    slot 0 shows that image ('' hides it); a new URL is a new image (the game fetches it again)
 //   ch.tick(tick)                    every tick (or every few): sends again what is due
 //   ch.drop(player)                  a player who left
-// io = { title(p, text), clear(p), prop(p, name, value), hideHud(p, keep) → what was hidden before, restoreHud(p, before) }
+// io = { title(p, text), prop(p, name, value), hideHud(p, keep) → what was hidden before, restoreHud(p, before) }
 (function (root) {
   'use strict';
   const S = root.GeoUIScreen = root.GeoUIScreen || {};
-  const PREFIX = '~gu~', LAYOUTS = 'abcdefghijklmnopqrstuvwxyz';
+  const PREFIX = '~gu~', LAYOUTS = 'abcdefghijklmnopqrstuvwxyz', EMPTY = PREFIX + '0a';
 
   /** the title text for { f1, layout, urls } on a channel { width, slots } (the same as layout.js channelText) */
   function text(cfg, st) {
@@ -50,7 +51,7 @@
   }
 
   function create(cfg0, io) {
-    const cfg = Object.assign({ slots: 0, width: 230, refreshTicks: 40 }, cfg0 || {});
+    const cfg = Object.assign({ slots: 0, width: 230, refreshTicks: 200 }, cfg0 || {});
     const st = new Map();
     let now = 0;
     // (the player object kept: tick() sends to it again; a player who left is invalid and dropped)
@@ -58,11 +59,12 @@
     const active = (s) => s.f1 || !!s.layout || s.urls.some((u) => u);
     function send(p, s, force) {
       if (!active(s)) {
-        if (s.sent !== null) { try { io.clear(p); } catch (e) { /* (a player leaving) */ } s.sent = null; }
+        // (the empty channel, once: `title clear` would leave the last text — and its pictures, its F1 — in the HUD)
+        if (s.sent !== null && s.sent !== EMPTY) { try { io.title(p, EMPTY); s.sent = EMPTY; s.at = now; } catch (e) { /* (a player leaving) */ } }
         return;
       }
       const t = text(cfg, s);
-      if (!force && t === s.sent && now - s.at < cfg.refreshTicks) return;
+      if (!force && t === s.sent && (!(cfg.refreshTicks > 0) || now - s.at < cfg.refreshTicks)) return;
       try { io.title(p, t); s.sent = t; s.at = now; } catch (e) { /* (the next tick) */ }
     }
     return {
@@ -126,6 +128,6 @@
     };
   }
 
-  S.channel = { PREFIX, LAYOUTS, text, read, create };
+  S.channel = { PREFIX, LAYOUTS, EMPTY, text, read, create };
   if (typeof module === 'object' && module && module.exports) module.exports = S.channel;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

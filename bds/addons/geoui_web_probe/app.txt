@@ -1,6 +1,7 @@
-# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像が HUD に出るか・どこに・どれだけ速く・F1。
-# 予測は SPEC.md 14 章（回す前に書いたもの）。期待の位置: node bds/geoui/web/probe.mjs expect <幅>x<高さ>
-# 実行: node lab.mjs app ci -a geoui_web_probe（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度にして測る）
+# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（2 本目）。
+# 1 本目（run 40998593826）の結果と手順は bds/geoui/rules-history/run-40998593826。予測は SPEC.md 17 章（回す前に書いたもの）。
+# 期待の位置: node bds/geoui/web/probe.mjs expect 2400x1080
+# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
 
 section join
 stop
@@ -28,233 +29,142 @@ wait 6000
 expect server GWP CHECK svc PASS
 absent clientlog \bERROR\b
 
-section http
+section clear
 do scriptevent gwp:reset
 wait 2000
 shot world
 do scriptevent gwp:url 0 /solid/ff0000/64x64.png
-wait 5000
-shot http-red
-measure marks http-red
-do scriptevent gwp:show 5
-wait 2000
-shot http-frame
-measure marks http-frame
-
-section https-ext
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 1 https://placehold.co/64x64/00ff00/00ff00.png
-wait 8000
-shot https-green
-measure marks https-green
-
-section https-own
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 2 ~/solid/0000ff/64x64.png
-wait 10000
-shot tunnel-blue
-measure marks tunnel-blue
-
-section latency
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:lat 0 /solid/ffff00/64x64.png
-until server GWP LAT 25000
-wait 200
-shot lat-fetch
-measure marks lat-fetch
-wait 1500
-shot lat-later
-measure marks lat-later
-do scriptevent gwp:show 0
-wait 1000
-shot readout-lat
-measure marks readout-lat
-
-section switch
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 0 /solid/ff0000/64x64.png
-wait 5000
-do scriptevent gwp:url 0 /solid/0000ff/64x64.png
-wait 300
-shot sw-300
-measure marks sw-300
-wait 700
-shot sw-1000
-measure marks sw-1000
-wait 2000
-shot sw-3000
-measure marks sw-3000
-
-section loading
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 0 /solid/ff0000/64x64.png
-wait 5000
-do scriptevent gwp:url 0 /slow/8000/solid/0000ff/64x64.png?s=1
-wait 3000
-shot load-mid
-measure marks load-mid
-wait 9000
-shot load-end
-measure marks load-end
-
-section under
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 5 /solid/ff0000/64x64.png
-wait 5000
-do scriptevent gwp:url 0 /slow/8000/solid/0000ff/64x64.png?s=2
-wait 3000
-shot under-mid
-measure marks under-mid
-wait 9000
-shot under-end
-measure marks under-end
-
-section cache
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:mark
-do scriptevent gwp:url 0 /solid/00ffff/64x64.png?k=1
 wait 4000
-do scriptevent gwp:url 0 /solid/00ff80/64x64.png?k=2
-wait 4000
-do scriptevent gwp:url 0 /solid/00ffff/64x64.png?k=1
-wait 300
-shot cache-back
-measure marks cache-back
-wait 3000
-do scriptevent gwp:count /solid/00ffff/64x64.png?k=1
-wait 1000
-do scriptevent gwp:url 0 -
+shot clear-before
+measure marks clear-before
+do scriptevent gwp:reset
 wait 1500
-shot readout-count
-measure marks readout-count
-
-section big
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 0 /quad/1280x720.png
-wait 6000
-shot big-1280
-measure marks big-1280
-do scriptevent gwp:url 0 /quad/2400x1080.png
-wait 6000
-shot big-2400
-measure marks big-2400
-do scriptevent gwp:url 0 /quad/4096x2304.png
-wait 8000
-shot big-4096
-measure marks big-4096
-do scriptevent gwp:url 0 /noise/2400x1080.png
-wait 10000
-shot big-noise
-measure diff big-noise
-
-section aspect
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 3 /quad/200x100.png
-wait 5000
-shot aspect-top
-measure marks aspect-top
-
-section cycle
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:cycle 40 6 0
-until server GWP CYCLE 60000
-wait 1500
-shot cycle-end
-measure marks cycle-end
-do scriptevent gwp:url 0 -
-wait 1500
-shot readout-cycle
-measure marks readout-cycle
-
-section layout
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 4 /solid/ff8000/64x64.png
-wait 4000
-shot lay-none
-measure marks lay-none
-do scriptevent gwp:layout b
-wait 3000
-shot lay-b
-measure marks lay-b
-measure diff lay-b
-do scriptevent gwp:layout c
-wait 2000
-shot lay-c
-measure marks lay-c
+shot clear-after
+measure marks clear-after
 
 section title
 do scriptevent gwp:reset
 wait 2000
 shot world
-do scriptevent gwp:url 0 /solid/ff0000/64x64.png
-wait 4000
-shot title-channel
-measure diff title-channel 0 0 2400 280
-absent text solid
-absent text gu~
+do scriptevent gwp:raw HELLO
+wait 1500
+shot title-raw
+measure diff title-raw 300 100 2100 800
 do scriptevent gwp:reset
 wait 1500
-do scriptevent gwp:raw HELLO
-wait 1200
-shot title-raw
-expect text HELLO
 
-section persist
+section timeout
 do scriptevent gwp:reset
 wait 2000
 shot world
-do scriptevent gwp:stay 20 100000
-do scriptevent gwp:url 0 /solid/00ff00/64x64.png
+do scriptevent gwp:url 0 /slow/2000/solid/ff0000/64x64.png?t=1
+wait 5000
+shot slow-2000
+measure marks slow-2000
+do scriptevent gwp:url 0 /slow/4000/solid/00ff00/64x64.png?t=2
+wait 7000
+shot slow-4000
+measure marks slow-4000
+do scriptevent gwp:url 0 /slow/6000/solid/0000ff/64x64.png?t=3
 wait 9000
-shot persist
-measure marks persist
+shot slow-6000
+measure marks slow-6000
 
-section f1
+section under-slow
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 5 /solid/ff0000/64x64.png
+wait 4000
+do scriptevent gwp:url 0 /slow/3000/solid/0000ff/64x64.png?u=1
+wait 1500
+shot under-slow-mid
+measure marks under-slow-mid
+wait 5000
+shot under-slow-end
+measure marks under-slow-end
+
+section frames-buffered
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:frames 40 6 1 300
+wait 2000
+shot fb-1
+measure marks fb-1
+wait 1700
+shot fb-2
+measure marks fb-2
+wait 1300
+shot fb-3
+measure marks fb-3
+until server GWP FRAMES n=40 buffered=true 60000
+
+section frames-plain
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:frames 40 6 0 300
+wait 2000
+shot fp-1
+measure marks fp-1
+wait 1700
+shot fp-2
+measure marks fp-2
+wait 1300
+shot fp-3
+measure marks fp-3
+until server GWP FRAMES n=40 buffered=false 60000
+
+section f1-parts
 do scriptevent gwp:reset
 do hud @a reset
 do replaceitem entity @a slot.weapon.mainhand 0 diamond_sword
 do tp @a 0 -60 0 0 60
-wait 3000
-do scriptevent gwp:f1 1
+wait 4000
+shot world
+do scriptevent gwp:part api 1
+wait 2500
+shot f1-api
+measure diff f1-api 700 940 1700 1080
+measure diff f1-api 1150 490 1250 590
+measure diff f1-api 1500 500 2400 1080
+do scriptevent gwp:part api 0
+wait 2500
+do scriptevent gwp:part flag 1
+do say hello-flag
+wait 2500
+shot f1-flag
+measure diff f1-flag 700 940 1700 1080
+measure diff f1-flag 1150 490 1250 590
+measure diff f1-flag 1500 500 2400 1080
+measure diff f1-flag 0 0 1000 400
+do scriptevent gwp:part flag 0
+wait 2500
+do scriptevent gwp:part arm 1
+wait 2500
+shot f1-arm
+measure diff f1-arm 700 940 1700 1080
+measure diff f1-arm 1500 500 2400 1080
+do scriptevent gwp:part arm 0
+wait 2500
+shot f1-arm-back
+measure diff f1-arm-back 1500 500 2400 1080
+
+section f1-all
+do scriptevent gwp:reset
 wait 3000
 shot world
-do scriptevent gwp:f1 0
-wait 3000
-shot f1-off
-measure diff f1-off
-measure diff f1-off 1400 600 2400 1080
 do scriptevent gwp:f1 1
+do say hello-f1
 wait 3000
 shot f1-on
 measure diff f1-on
-measure diff f1-on 1400 600 2400 1080
-do say hello-1
-do say hello-2
-do title @a actionbar ACTION
-wait 1500
-shot f1-chat
-measure diff f1-chat
+measure diff f1-on 700 940 1700 1080
+measure diff f1-on 1500 500 2400 1080
 do scriptevent gwp:f1 0
-wait 2000
+wait 3000
+shot f1-back
+measure diff f1-back
+measure diff f1-back 700 940 1700 1080
+measure diff f1-back 1500 500 2400 1080

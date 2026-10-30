@@ -1,0 +1,111 @@
+# geoui_web（bds/geoui/web/make.mjs が作る）: 本物のアプリで、ゲームの中のウェブ（ページ・ツールバー・ポインタ）が全画面に出て、
+# 端末の入力で動くか。期待の位置: node bds/geoui/web/make.mjs expect 2400x1080 g
+# 実行: node lab.mjs app ci -a geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
+
+section join
+stop
+launch
+until title 600000
+join
+until joined 900000
+size 2400x1080
+wait 9000
+do tp @a 0 -60 0 0 0
+do scriptevent gweb:size 20:9 1080
+wait 6000
+absent clientlog \bERROR\b
+
+section open
+shot world
+do scriptevent gweb:open http://127.0.0.1:8787/demo/color.html?c=0000ff
+until server GWEB page .*c=0000ff 60000
+wait 5000
+shot open-blue
+measure marks open-blue
+measure diff open-blue
+do scriptevent gweb:debug 1
+wait 1500
+shot open-tip
+measure marks open-tip
+
+section pointer
+do scriptevent gweb:pointer 0.25 0.5
+wait 1500
+shot ptr-left
+measure marks ptr-left
+look right 600 60
+wait 1500
+shot ptr-look
+measure marks ptr-look
+
+section click
+do scriptevent gweb:pointer 0.5 0.6
+wait 800
+attack 0.3
+until server GWEB page .*c=8000ff 20000
+wait 3000
+shot click-violet
+measure marks click-violet
+
+section back
+sneak 0.3
+until server GWEB page .*c=0000ff 20000
+wait 3000
+shot back-blue
+measure marks back-blue
+
+section scroll
+do scriptevent gweb:go http://127.0.0.1:8787/demo/scroll.html
+until server GWEB page .*scroll\.html 20000
+wait 4000
+shot world
+walk back 1.5
+wait 3000
+shot scrolled
+measure diff scrolled
+slot next
+wait 3000
+shot wheel
+measure diff wheel
+
+section dynamic
+do scriptevent gweb:go http://127.0.0.1:8787/demo/dynamic.html
+until server GWEB page .*dynamic\.html 20000
+wait 4000
+shot world
+wait 3000
+shot dyn-later
+measure diff dyn-later
+
+section type
+do scriptevent gweb:go http://127.0.0.1:8787/demo/form.html
+until server GWEB page .*form\.html 20000
+do scriptevent gweb:pointer 0.2 0.144
+wait 500
+attack 0.3
+wait 1000
+cmd /web:t Steve
+until server GWEB page .*Steve 20000
+wait 3000
+shot typed
+measure diff typed
+
+section site
+do scriptevent gweb:go https://ja.wikipedia.org/wiki/Minecraft
+until server GWEB page .*wikipedia 60000
+wait 6000
+shot wiki
+measure diff wiki
+do scriptevent gweb:go https://www.youtube.com/
+until server GWEB page .*youtube 60000
+wait 8000
+shot youtube
+measure diff youtube
+
+section close
+shot world
+sneak 2.5
+until server GWEB close 10000
+wait 3000
+shot closed
+measure diff closed

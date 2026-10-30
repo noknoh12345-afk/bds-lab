@@ -1,0 +1,88 @@
+# geoui_web（bds/geoui/web/make.mjs が作る）: ゲームの中のウェブ — サービス（Chromium）にページを開かせ、F1 で全画面に出す。
+# サービスはラボが BDS の横に起こす（geoui-web.json）。ページは GWEB page の行（URL・題名）で読む。絵は app.txt（本物のアプリ）。
+
+## 開く: セッションができ、F1（HUD 13 部品・プロパティ）、題名の通り道に並べ方 b とページ・ツールバーの絵
+@A join
+wait 1000
+@A cmd /web:open "http://127.0.0.1:8787/demo/color.html?c=ff0000"
+until GWEB page .*color\.html\?c=ff0000 30000
+until @A title: ~gu~1bhttp 10000
+~ GWEB open .*"layout":"b","w":1280,"h":720
+~ @A title: ~gu~1bhttp://\S+/s/[0-9a-f]{32}/f/\d+\.png +http://\S+/s/[0-9a-f]{32}/b/\d+\.png
+js JSON.stringify([p('A').getProperty('gweb:f1'), p('A').getProperty('gweb:flg') % 2, p('A').onScreenDisplay.getHiddenHudElements().length, p('A').getGameMode()])
+= [1,1,13,"Survival"]
+
+## クリック（ポインタの所）: 色のページは次の色へ
+scriptevent gweb:pointer 0.5 0.6
+@A cmd /web:click
+until GWEB page .*c=ff8000 20000
+
+## 腕の振り（左クリック・タップ）もクリック
+@A swing
+until GWEB page .*c=ffff00 20000
+
+## 戻る・進む
+@A cmd /web:back
+until GWEB page .*c=ff8000 20000
+@A cmd /web:forward
+until GWEB page .*c=ffff00 20000
+
+## スニークを短く: 戻る
+@A sneak on
+wait 300
+@A sneak off
+until GWEB page .*c=ff8000 20000
+
+## 文字: 欄を押して /web:t（欄が 2 つのフォームなので Enter は押さない）
+@A cmd /web:go "http://127.0.0.1:8787/demo/form.html"
+until GWEB page .*form\.html 20000
+scriptevent gweb:pointer 0.289 0.166
+@A cmd /web:click
+wait 500
+@A cmd /web:t Steve
+until GWEB page .*入力フォーム — Steve 20000
+
+## タブ: 新しいタブで開き、閉じる
+@A cmd /web:newtab "http://127.0.0.1:8787/demo/scroll.html"
+until GWEB page .*"tabs":2 20000
+@A cmd /web:closetab
+until GWEB page .*"tabs":1 20000
+
+## 頭を回すとポインタが動く（右へ・下へ）
+scriptevent gweb:pointer 0.5 0.5
+wait 200
+js const v = p('A').getProperty('gweb:ptr'); JSON.stringify([v % 4096, Math.floor(v / 4096)])
+= [2048,2048]
+@A turn 10 5 4
+wait 600
+js const v = p('A').getProperty('gweb:ptr'), x = v % 4096, y = Math.floor(v / 4096); JSON.stringify([x > 2300, y > 2150])
+= [true,true]
+
+## 画面の形と解像度: 20:9・高さ 1080（本物のスマホ）
+@A cmd /web:size 2400x1080
+wait 1500
+~ @A title: ~gu~1g
+scriptevent gweb:state
+~ GWEB state .*"layout":"g","w":2400,"h":1080
+
+## スニークを長く: 閉じる（F1 も戻り、題名も消える）
+@A sneak on
+until GWEB close 8000
+@A sneak off
+js JSON.stringify([p('A').getProperty('gweb:f1'), p('A').getProperty('gweb:flg'), p('A').onScreenDisplay.getHiddenHudElements().length])
+= [0,0,0]
+
+## F1 だけ（ブラウザなし）: HUD・腕・持ち物を消す、ゲームモードはそのまま
+@A cmd /web:f1 on
+wait 500
+js JSON.stringify([p('A').getProperty('gweb:f1'), p('A').onScreenDisplay.getHiddenHudElements().length, p('A').getGameMode()])
+= [1,13,"Survival"]
+@A cmd /web:f1 off
+wait 500
+js JSON.stringify([p('A').getProperty('gweb:f1'), p('A').onScreenDisplay.getHiddenHudElements().length])
+= [0,0]
+
+## このサーバーの中の場所は開かない
+@A cmd /web:open "http://192.168.1.1/"
+wait 3000
+@A cmd /web:close

@@ -12,6 +12,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const G = require('../bds/geoui/geoui_builder.js');
 const L = require('../bds/geoui/screen/layout.js'), P = require('../bds/geoui/screen/pack.js'), C = require('../bds/geoui/screen/channel.js');
+// (the in-game browser's engine runs here with a fake world: runtime.js)
 const core = globalThis.GeoUICore || G;
 
 let n = 0, fails = 0;
@@ -157,19 +158,24 @@ function jsonui(expr, vars) {
     && throws(() => C.text({ slots: 0 }, { layout: 'B' })) && throws(() => L.channelText(ch, { layout: 'ab' })),
   'channel: a URL longer than its field, or with a space or a quote, and a layout that is not one letter a–z are refused (the JSON UI could not carry them)');
   // the per-player state: sent once when it changes, again every refreshTicks, cleared when nothing is on
-  const sent = [], io = { title: (p, x) => sent.push(`T${p.id}:${x.slice(4, 6)}${x.slice(6).trim().length}`), clear: (p) => sent.push(`C${p.id}`), prop: (p, k, v) => sent.push(`P${p.id}:${k}=${v}`),
+  const sent = [], io = { title: (p, x) => sent.push(x === C.EMPTY ? `E${p.id}` : `T${p.id}:${x.slice(4, 6)}${x.slice(6).trim().length}`), prop: (p, k, v) => sent.push(`P${p.id}:${k}=${v}`),
     hideHud: (p, keep) => { sent.push(`H${p.id}:${keep.join()}`); return ['hotbar']; }, restoreHud: (p, b) => sent.push(`R${p.id}:${b.join()}`) };
   const c = C.create({ ns: 'zz', slots: 2, width: 64, refreshTicks: 10 }, io), A = { id: 'a', isValid: true }, B = { id: 'b', isValid: true };
   c.f1(A, true, { keep: ['TouchControls'] }); c.f1(A, true); c.url(A, 1, 'http://h/1.png'); c.url(B, 0, 'http://h/2.png');
   for (let t2 = 1; t2 <= 10; t2++) c.tick(t2);
   B.isValid = false; c.tick(11);
   c.f1(A, false); c.url(A, 1, '');
-  ok(JSON.stringify(sent) === JSON.stringify(['Ha:TouchControls', 'Pa:zz:f1=1', 'Ta:1a0', 'Ta:1a14', 'Tb:0a14', 'Ta:1a14', 'Tb:0a14', 'Ra:hotbar', 'Pa:zz:f1=0', 'Ta:0a14', 'Ca']),
-    'channel: F1 on hides the HUD (but what is kept) and sets the property, once; each change is sent at once, the same again after refreshTicks; a player who left is dropped; off gives the HUD back; nothing on clears the title', JSON.stringify(sent));
+  ok(JSON.stringify(sent) === JSON.stringify(['Ha:TouchControls', 'Pa:zz:f1=1', 'Ta:1a0', 'Ta:1a14', 'Tb:0a14', 'Ta:1a14', 'Tb:0a14', 'Ra:hotbar', 'Pa:zz:f1=0', 'Ta:0a14', 'Ea']),
+    'channel: F1 on hides the HUD (but what is kept) and sets the property, once; each change is sent at once, the same again after refreshTicks; a player who left is dropped; off gives the HUD back; nothing on sends the empty channel (`title clear` keeps the text: R10.7)', JSON.stringify(sent));
+  sent.length = 0;
+  const N = C.create({ ns: 'zz', slots: 1, width: 64, refreshTicks: 0 }, io), E = { id: 'e', isValid: true };
+  N.url(E, 0, 'http://h/1.png'); for (let t2 = 1; t2 <= 500; t2++) N.tick(t2); N.url(E, 0, ''); N.tick(501); N.tick(900);
+  ok(JSON.stringify(sent) === JSON.stringify(['Te:0a14', 'Ee']) && C.read({ slots: 1, width: 64 }, C.EMPTY).channel && C.read({ slots: 1, width: 64 }, C.EMPTY).urls[0] === '',
+    'channel: refreshTicks 0 never sends the same text again; the empty channel is sent once and reads as no picture', JSON.stringify(sent));
   sent.length = 0;
   const D = { id: 'd', isValid: true };
   c.layout(D, 'b'); c.urls(D, { 0: 'http://h/p.png', 1: 'http://h/t.png' }); c.urls(D, { 0: 'http://h/p.png', 1: 'http://h/t.png' }); c.f1(D, true); c.reset(D);
-  ok(JSON.stringify(sent) === JSON.stringify(['Td:0b0', 'Td:0b78', 'Hd:', 'Pd:zz:f1=1', 'Td:1b78', 'Rd:hotbar', 'Pd:zz:f1=0', 'Cd']) && C.read({ slots: 2, width: 64 }, c.text(D)).layout === 'a',
+  ok(JSON.stringify(sent) === JSON.stringify(['Td:0b0', 'Td:0b78', 'Hd:', 'Pd:zz:f1=1', 'Td:1b78', 'Rd:hotbar', 'Pd:zz:f1=0', 'Ed']) && C.read({ slots: 2, width: 64 }, c.text(D)).layout === 'a',
     'channel: a layout alone keeps the title; two slots change in one title (the same pair again sends nothing); reset gives everything back at once and clears it', JSON.stringify(sent));
 }
 
@@ -261,11 +267,74 @@ function jsonui(expr, vars) {
   void solidPng; void quadPng;
 }
 
-// ---- the probe add-on is what probe.mjs makes (bds/addons/geoui_web_probe)
+// ---- the in-game browser's engine (runtime.js) with a fake world and a fake service: open, frames two-layered, input → actions
+{
+  require('../bds/geoui/screen/nav.js'); require('../bds/geoui/screen/input.js');
+  const GS = globalThis.GeoUIScreen, RT = require('../bds/geoui/web/runtime.js');
+  const { config } = await import('../bds/geoui/web/make.mjs');
+  const CFG = config();
+  ok(JSON.stringify(RT.frameOf(CFG, 'b', 720)) === '{"w":1280,"h":720,"barH":72}' && JSON.stringify(RT.frameOf(CFG, 'g', 1080)) === '{"w":2400,"h":1080,"barH":108}'
+    && RT.layoutFor(CFG, '20:9') === 'g' && RT.layoutFor(CFG, '2400x1080') === 'g' && RT.layoutFor(CFG, '1024x768') === 'c' && RT.layoutFor(CFG, '2556x1179') === 'f' && RT.layoutFor(CFG, 'x') === null,
+  'browser: the frame for a layout and a height (20:9 at 1080 = 2400 x 1080), the nearest layout for a screen');
+  const titles = [], props = {}, acts = [], says = [], logs = [];
+  let frame = 0, bar = 0, nextResolve = null;
+  const stateJ = () => ({ ok: true, sid: 'S1', frame, bar, w: 1280, h: 720, barH: 72, url: 'http://x/', title: 'T', tabs: 1, tab: 0, focus: 'page', frameUrl: `http://h/s/S1/f/${frame}.png`, barUrl: `http://h/s/S1/b/${bar}.png` });
+  const http = async (method, p, body) => {
+    if (method === 'POST' && p === '/s') { frame = 1; bar = 1; return { status: 200, json: stateJ() }; }
+    if (method === 'POST' && p === '/s/S1') { acts.push(body); if (body.op === 'click') frame++; return { status: 200, json: stateJ() }; }
+    if (p.startsWith('/s/S1/next')) return new Promise((r) => { nextResolve = () => r({ status: 200, json: stateJ() }); });
+    return { status: 404, json: null };
+  };
+  const P = { id: 'p1', name: 'A', isValid: true };
+  let smp = { rot: { x: 0, y: 0 }, move: { x: 0, y: 0 }, jump: false, sneak: false, slot: 0, mode: 'Touch', swings: 0, uses: 0 };
+  const io = { players: () => [P], sample: () => Object.assign({}, smp), setProp: (p, k, v) => { props[k] = v; }, freeze: (p, on) => logs.push(`freeze ${on}`), setRotation: () => {},
+    say: (p, t) => says.push(t), log: (l) => logs.push(l), http, touch: () => true, platform: () => 'Mobile', load: () => undefined, save: () => {}, wait: () => Promise.resolve() };
+  const chIo = { title: (p, t) => titles.push(t), prop: (p, k, v) => { props[k] = v; }, hideHud: (p, keep) => { logs.push(`hide except ${keep.join()}`); return []; }, restoreHud: () => logs.push('restore') };
+  const ch = GS.channel.create({ ns: 'gweb', slots: 4, width: 160, refreshTicks: 0 }, chIo), B = RT.createBrowsers(CFG, io, GS, ch);
+  const flush = () => new Promise((r) => setTimeout(r, 5));
+  const slots = () => GS.channel.read({ slots: 4, width: 160 }, titles[titles.length - 1]);
+  await B.open(P, 'http://127.0.0.1:8787/demo/color.html');
+  await flush();
+  let r = slots();
+  ok(B.isOpen(P) && r.f1 && r.layout === 'g' && r.urls[0] === 'http://h/s/S1/f/1.png' && r.urls[1] === 'http://h/s/S1/b/1.png' && !r.urls[2] && logs.includes('hide except TouchControls') && props['gweb:f1'] === 1 && props['gweb:flg'] === 1,
+    'browser: opening on a phone (touch): F1 but its touch controls, layout 20:9, the page and the toolbar on top, the pointer shown', JSON.stringify(r));
+  // a new frame: first the shown one under (at once), then the new one on top two ticks later
+  frame = 2; nextResolve(); await flush();
+  r = slots();
+  const midTop = r.urls[0], midUnder = r.urls[2];
+  B.tick(); B.tick(); B.tick();
+  r = slots();
+  ok(midTop === 'http://h/s/S1/f/1.png' && midUnder === 'http://h/s/S1/f/1.png' && r.urls[0] === 'http://h/s/S1/f/2.png' && r.urls[2] === 'http://h/s/S1/f/1.png',
+    'browser: a new frame is two-layered — the shown one copied under first, the new one on top bufferTicks later (the old shows through while it loads: R10.5)', JSON.stringify({ midTop, midUnder, r }));
+  // the pointer: the head turned right and down → the pointer's share; a swing clicks there
+  smp.rot = { x: 10, y: 20 }; B.tick(); B.tick(); B.tick(); B.tick(); await flush();
+  const ptr = props['gweb:ptr'], px = (ptr % 4096) / 4095, py = Math.floor(ptr / 4096) / 4095;
+  smp.swings = 1; B.tick(); smp.swings = 0; await flush();
+  const click = acts.find((a) => a.op === 'click'), move = acts.find((a) => a.op === 'move');
+  ok(px > 0.6 && py > 0.6 && move && click && Math.abs(click.x - Math.round(px * 1279)) <= 1 && Math.abs(click.y - Math.round(py * 719)) <= 1,
+    'browser: turning the head moves the pointer (right, down), its hover goes to the page, a swing clicks at it (frame px)', JSON.stringify({ px, py, click, move }));
+  // W held: the wheel; a short sneak: back; a long one: close
+  smp.move = { x: 0, y: -1 }; for (let i = 0; i < 7; i++) B.tick(); smp.move = { x: 0, y: 0 }; await flush();
+  smp.sneak = true; B.tick(); smp.sneak = false; B.tick(); await flush();
+  const wheel = acts.filter((a) => a.op === 'wheel'), back = acts.find((a) => a.op === 'back');
+  ok(wheel.length >= 1 && wheel.every((w) => w.dy > 0) && wheel.reduce((n, w) => n + w.dy, 0) >= 180 && back,
+    'browser: S held scrolls down (a step every 3 ticks), a short sneak is back', JSON.stringify({ wheel, back }));
+  smp.sneak = true; for (let i = 0; i < 32; i++) B.tick(); smp.sneak = false; B.tick();
+  r = slots();
+  ok(!B.isOpen(P) && titles[titles.length - 1] === GS.channel.EMPTY && logs.includes('restore') && logs.includes('freeze false') && props['gweb:flg'] === 0 && props['gweb:f1'] === 0,
+    'browser: sneak held 1.5 s closes it: the empty channel (no picture, no F1), the HUD and the camera back, the pointer gone');
+  const sz = B.command(P, 'size', ['2400x1080']), needs = B.command(P, 't', ['x']), bad = B.command(P, 'size', ['huge']);
+  ok(sz === '' && B.state(P).layout === 'g' && B.state(P).res === 1080 && needs.includes('/web:open') && bad.includes('/web:size'),
+    'browser: /web:size chooses the layout and the height (2400x1080 → 20:9 at 1080); a command that needs the browser says so; a shape it cannot read is refused', JSON.stringify({ sz, needs, bad }));
+}
+
+// ---- the probe and the web add-ons are what probe.mjs and make.mjs make (bds/addons/geoui_web_probe, geoui_web)
 {
   const { spawnSync } = await import('node:child_process');
   const r = spawnSync(process.execPath, [new URL('../bds/geoui/web/probe.mjs', import.meta.url).pathname, '--check'], { encoding: 'utf8' });
   ok(r.status === 0, 'probe: bds/addons/geoui_web_probe is what bds/geoui/web/probe.mjs makes', r.stderr || r.stdout);
+  const w = spawnSync(process.execPath, [new URL('../bds/geoui/web/make.mjs', import.meta.url).pathname, '--check'], { encoding: 'utf8' });
+  ok(w.status === 0, 'web: bds/addons/geoui_web is what bds/geoui/web/make.mjs makes', w.stderr || w.stdout);
 }
 
 console.log(`\n${fails ? 'FAIL' : 'PASS'} geoui-web-offline (${n - fails}/${n})`);

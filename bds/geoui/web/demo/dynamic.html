@@ -12,7 +12,7 @@ canvas{background:#0b0e11;border-radius:12px;width:100%;max-width:420px}h2{margi
 <script>
 const pad = (n) => String(n).padStart(2, '0');
 setInterval(() => { const d = new Date(); document.getElementById('clock').textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }, 250);
-let n = 0; document.getElementById('inc').addEventListener('click', () => { document.getElementById('count').textContent = ++n; });
+let n = 0; document.getElementById('inc').addEventListener('click', () => { document.getElementById('count').textContent = ++n; document.title = '動くページ — ' + n; });
 const cv = document.getElementById('cv'), g = cv.getContext('2d');
 (function draw(t) { g.clearRect(0, 0, cv.width, cv.height); for (let i = 0; i < 6; i++) { const x = 210 + Math.cos(t / 700 + i) * 150, y = 110 + Math.sin(t / 500 + i * 2) * 80; g.fillStyle = `hsl(${(i * 60 + t / 20) % 360} 90% 60%)`; g.beginPath(); g.arc(x, y, 16, 0, 7); g.fill(); } requestAnimationFrame(draw); })(0);
 let k = 0; setInterval(() => { const li = document.createElement('li'); li.textContent = `新しい行 #${++k}（${new Date().toLocaleTimeString('ja-JP')}）`; const f = document.getElementById('feed'); f.prepend(li); while (f.children.length > 6) f.lastChild.remove(); }, 3000);

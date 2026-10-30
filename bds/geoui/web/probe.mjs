@@ -91,7 +91,8 @@ export function expected(W, H) {
 const SCRIPT = `// GeoUI Web probe (bds-lab: bds/geoui/web/probe.mjs makes this file — change that, not this).
 // /scriptevent gwp:<verb> — info · url <slot> <URL | /path (the service's own) | ~/path (through its tunnel) | -> · f1 0|1|touch ·
 // layout <letter|-> · show <bits> · stay <ticks> [refresh ticks] · raw <title> · reset · mark · lat <slot> <URL…> · count <URL…> ·
-// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) — every answer is a line GWP … in the server's log
+// readout <k> <n> · cycle <n> <ticks> <slot> (n different pictures) · part api|flag|arm 0|1 (F1's parts alone) ·
+// frames <n> <ticks> <buffered 0|1> <ms> (a browser's pictures) — every answer is a line GWP … in the server's log
 import { world, system, HudElement, HudVisibility } from '@minecraft/server';
 import { http, HttpRequest, HttpRequestMethod } from '@minecraft/server-net';
 import './screen_channel.js';
@@ -100,12 +101,11 @@ const log = (s) => console.warn('GWP ' + s);
 let svc = null, stay = 600, mark = 0, seq = 0;
 const io = {
   title: (p, t) => p.onScreenDisplay.setTitle(t, { stayDuration: stay, fadeInDuration: 0, fadeOutDuration: 0 }),
-  clear: (p) => p.runCommand('title @s clear'),
   prop: (p, k, v) => p.setProperty(k, v),
   hideHud: (p, keep) => { const before = p.onScreenDisplay.getHiddenHudElements(); p.onScreenDisplay.hideAllExcept(keep.map((k) => HudElement[k]).filter((v) => v !== undefined)); return before; },
   restoreHud: (p, before) => { p.onScreenDisplay.resetHudElementsVisibility(); if (before && before.length) p.onScreenDisplay.setHudVisibility(HudVisibility.Hide, before); },
 };
-const ch = globalThis.GeoUIScreen.channel.create({ ns: NS, slots: ${SLOTS}, width: ${WIDTH}, refreshTicks: 40 }, io);
+const ch = globalThis.GeoUIScreen.channel.create({ ns: NS, slots: ${SLOTS}, width: ${WIDTH}, refreshTicks: 0 }, io);
 const players = () => world.getAllPlayers();
 async function getJson(p) {
   const r = await http.request(new HttpRequest(SVC + p).setMethod(HttpRequestMethod.Get).setTimeout(10));
@@ -137,9 +137,9 @@ async function verb(v, a) {
     case 'f1': { for (const p of players()) ch.f1(p, a[0] !== '0', a[0] === 'touch' ? { keep: ['TouchControls'] } : undefined); log('F1 ' + a[0]); return; }
     case 'layout': { for (const p of players()) ch.layout(p, a[0] && a[0] !== '-' ? a[0] : ''); log('LAYOUT ' + (a[0] || '-')); return; }
     case 'show': { for (const p of players()) p.setProperty(NS + ':show', Number(a[0]) || 0); return; }
-    case 'stay': { stay = Math.max(1, Number(a[0]) || 600); ch.cfg.refreshTicks = Math.max(1, Number(a[1]) || 40); log('STAY ' + stay + ' refresh ' + ch.cfg.refreshTicks); for (const p of players()) { const t = ch.text(p); if (t.trim().length > 6) io.title(p, t); } return; }
+    case 'stay': { stay = Math.max(1, Number(a[0]) || 600); ch.cfg.refreshTicks = Math.max(0, Number(a[1]) || 0); log('STAY ' + stay + ' refresh ' + ch.cfg.refreshTicks); for (const p of players()) { const t = ch.text(p); if (t.trim().length > 6) io.title(p, t); } return; }
     case 'raw': { for (const p of players()) p.onScreenDisplay.setTitle(a.join(' '), { stayDuration: 200, fadeInDuration: 0, fadeOutDuration: 0 }); return; }
-    case 'reset': { for (const p of players()) { ch.reset(p); p.setProperty(NS + ':show', 0); } for (const k of [0, 1, 2]) readout(k, 0); stay = 600; ch.cfg.refreshTicks = 40; log('RESET'); return; }
+    case 'reset': { for (const p of players()) { ch.reset(p); p.setProperty(NS + ':show', 0); } for (const k of [0, 1, 2]) readout(k, 0); stay = 600; ch.cfg.refreshTicks = 0; log('RESET'); return; }
     case 'mark': { mark = Date.now(); for (const k of [0, 1, 2]) readout(k, 0); log('MARK'); return; }
     case 'readout': return void readout(Number(a[0]) || 0, Number(a[1]) || 0);
     case 'lat': {
@@ -170,6 +170,33 @@ async function verb(v, a) {
       let got = -1;
       try { got = (await hitsSince(t0)).filter((h) => h.path.includes('cyc=')).length; } catch (e) { log('hits ' + e); }
       readout(2, got * 10); log('CYCLE n=' + n + ' fetched=' + got);
+      return;
+    }
+    case 'part': {
+      // (F1's three parts one at a time: api — the HUD's elements; flag — the channel's F1 flag (root_panel); arm — the property)
+      const on = a[1] === '1';
+      for (const p of players()) {
+        if (a[0] === 'api') { if (on) p.onScreenDisplay.hideAllExcept([]); else p.onScreenDisplay.resetHudElementsVisibility(); }
+        else if (a[0] === 'flag') io.title(p, on ? '~gu~1a' : '~gu~0a');
+        else if (a[0] === 'arm') p.setProperty(NS + ':f1', on ? 1 : 0);
+      }
+      log('PART ' + a.join(' '));
+      return;
+    }
+    case 'frames': {
+      // (a browser's pictures: n new ones, one every few ticks, each fetched slowly (ms) — with the two layers (the shown one put
+      //  under, the new one on top two ticks later) or without)
+      const n = Math.max(1, Math.min(200, Number(a[0]) || 20)), every = Math.max(1, Number(a[1]) || 5), buffered = a[2] !== '0', ms = Math.max(0, Number(a[3]) || 0);
+      const HUES = ['ff0000', 'ff8000', 'ffff00', '80ff00', '00ff00', '00ff80', '00ffff', '0080ff', '0000ff', '8000ff', 'ff0080'];
+      let shown = '';
+      for (let i = 0; i < n; i++) {
+        const u = await full((ms ? '/slow/' + ms : '') + '/solid/' + HUES[i % HUES.length] + '/64x64.png?fr=' + (++seq));
+        if (buffered && shown) { for (const p of players()) ch.url(p, 5, shown); await system.waitTicks(2); }
+        for (const p of players()) ch.url(p, 0, u);
+        shown = u;
+        await system.waitTicks(Math.max(1, every - (buffered ? 2 : 0)));
+      }
+      log('FRAMES n=' + n + ' buffered=' + buffered + ' ms=' + ms);
       return;
     }
     default: log('unknown verb ' + v);
@@ -251,9 +278,12 @@ wait 2500
 
 // ---- the real app (the lab's CI device): every number out through measure (the pictures stay sealed)
 function appTxt() {
-  return `# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像が HUD に出るか・どこに・どれだけ速く・F1。
-# 予測は SPEC.md 14 章（回す前に書いたもの）。期待の位置: node bds/geoui/web/probe.mjs expect <幅>x<高さ>
-# 実行: node lab.mjs app ci -a geoui_web_probe（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度にして測る）
+  // (2 本目: 1 本目（run 40998593826: rules-history）で決まらなかったこと — 空の通り道・F1 の 3 つの部分・待てる時間・遅い絵の下・
+  //  二重の枠で絵を入れ替え続けた時に消える間があるか)
+  return `# geoui_web_probe（bds/geoui/web/probe.mjs が作る）: 本物のアプリで、URL の画像と F1 を測る（2 本目）。
+# 1 本目（run 40998593826）の結果と手順は bds/geoui/rules-history/run-40998593826。予測は SPEC.md 17 章（回す前に書いたもの）。
+# 期待の位置: node bds/geoui/web/probe.mjs expect 2400x1080
+# 実行: node lab.mjs app ci --batch geoui_web_probe,geoui_web（参加したらゲームの画面を 2400x1080 = 本物の 20:9 のスマホの解像度に）
 
 section join
 stop
@@ -281,236 +311,145 @@ wait 6000
 expect server GWP CHECK svc PASS
 absent clientlog \\bERROR\\b
 
-section http
+section clear
 do scriptevent gwp:reset
 wait 2000
 shot world
 do scriptevent gwp:url 0 /solid/ff0000/64x64.png
-wait 5000
-shot http-red
-measure marks http-red
-do scriptevent gwp:show 5
-wait 2000
-shot http-frame
-measure marks http-frame
-
-section https-ext
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 1 https://placehold.co/64x64/00ff00/00ff00.png
-wait 8000
-shot https-green
-measure marks https-green
-
-section https-own
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 2 ~/solid/0000ff/64x64.png
-wait 10000
-shot tunnel-blue
-measure marks tunnel-blue
-
-section latency
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:lat 0 /solid/ffff00/64x64.png
-until server GWP LAT 25000
-wait 200
-shot lat-fetch
-measure marks lat-fetch
-wait 1500
-shot lat-later
-measure marks lat-later
-do scriptevent gwp:show 0
-wait 1000
-shot readout-lat
-measure marks readout-lat
-
-section switch
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 0 /solid/ff0000/64x64.png
-wait 5000
-do scriptevent gwp:url 0 /solid/0000ff/64x64.png
-wait 300
-shot sw-300
-measure marks sw-300
-wait 700
-shot sw-1000
-measure marks sw-1000
-wait 2000
-shot sw-3000
-measure marks sw-3000
-
-section loading
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 0 /solid/ff0000/64x64.png
-wait 5000
-do scriptevent gwp:url 0 /slow/8000/solid/0000ff/64x64.png?s=1
-wait 3000
-shot load-mid
-measure marks load-mid
-wait 9000
-shot load-end
-measure marks load-end
-
-section under
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 5 /solid/ff0000/64x64.png
-wait 5000
-do scriptevent gwp:url 0 /slow/8000/solid/0000ff/64x64.png?s=2
-wait 3000
-shot under-mid
-measure marks under-mid
-wait 9000
-shot under-end
-measure marks under-end
-
-section cache
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:mark
-do scriptevent gwp:url 0 /solid/00ffff/64x64.png?k=1
 wait 4000
-do scriptevent gwp:url 0 /solid/00ff80/64x64.png?k=2
-wait 4000
-do scriptevent gwp:url 0 /solid/00ffff/64x64.png?k=1
-wait 300
-shot cache-back
-measure marks cache-back
-wait 3000
-do scriptevent gwp:count /solid/00ffff/64x64.png?k=1
-wait 1000
-do scriptevent gwp:url 0 -
+shot clear-before
+measure marks clear-before
+do scriptevent gwp:reset
 wait 1500
-shot readout-count
-measure marks readout-count
-
-section big
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 0 /quad/1280x720.png
-wait 6000
-shot big-1280
-measure marks big-1280
-do scriptevent gwp:url 0 /quad/2400x1080.png
-wait 6000
-shot big-2400
-measure marks big-2400
-do scriptevent gwp:url 0 /quad/4096x2304.png
-wait 8000
-shot big-4096
-measure marks big-4096
-do scriptevent gwp:url 0 /noise/2400x1080.png
-wait 10000
-shot big-noise
-measure diff big-noise
-
-section aspect
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 3 /quad/200x100.png
-wait 5000
-shot aspect-top
-measure marks aspect-top
-
-section cycle
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:cycle 40 6 0
-until server GWP CYCLE 60000
-wait 1500
-shot cycle-end
-measure marks cycle-end
-do scriptevent gwp:url 0 -
-wait 1500
-shot readout-cycle
-measure marks readout-cycle
-
-section layout
-do scriptevent gwp:reset
-wait 2000
-shot world
-do scriptevent gwp:url 4 /solid/ff8000/64x64.png
-wait 4000
-shot lay-none
-measure marks lay-none
-do scriptevent gwp:layout b
-wait 3000
-shot lay-b
-measure marks lay-b
-measure diff lay-b
-do scriptevent gwp:layout c
-wait 2000
-shot lay-c
-measure marks lay-c
+shot clear-after
+measure marks clear-after
 
 section title
 do scriptevent gwp:reset
 wait 2000
 shot world
-do scriptevent gwp:url 0 /solid/ff0000/64x64.png
-wait 4000
-shot title-channel
-measure diff title-channel 0 0 2400 280
-absent text solid
-absent text gu~
+do scriptevent gwp:raw HELLO
+wait 1500
+shot title-raw
+measure diff title-raw 300 100 2100 800
 do scriptevent gwp:reset
 wait 1500
-do scriptevent gwp:raw HELLO
-wait 1200
-shot title-raw
-expect text HELLO
 
-section persist
+section timeout
 do scriptevent gwp:reset
 wait 2000
 shot world
-do scriptevent gwp:stay 20 100000
-do scriptevent gwp:url 0 /solid/00ff00/64x64.png
+do scriptevent gwp:url 0 /slow/2000/solid/ff0000/64x64.png?t=1
+wait 5000
+shot slow-2000
+measure marks slow-2000
+do scriptevent gwp:url 0 /slow/4000/solid/00ff00/64x64.png?t=2
+wait 7000
+shot slow-4000
+measure marks slow-4000
+do scriptevent gwp:url 0 /slow/6000/solid/0000ff/64x64.png?t=3
 wait 9000
-shot persist
-measure marks persist
+shot slow-6000
+measure marks slow-6000
 
-section f1
+section under-slow
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:url 5 /solid/ff0000/64x64.png
+wait 4000
+do scriptevent gwp:url 0 /slow/3000/solid/0000ff/64x64.png?u=1
+wait 1500
+shot under-slow-mid
+measure marks under-slow-mid
+wait 5000
+shot under-slow-end
+measure marks under-slow-end
+
+section frames-buffered
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:frames 40 6 1 300
+wait 2000
+shot fb-1
+measure marks fb-1
+wait 1700
+shot fb-2
+measure marks fb-2
+wait 1300
+shot fb-3
+measure marks fb-3
+until server GWP FRAMES n=40 buffered=true 60000
+
+section frames-plain
+do scriptevent gwp:reset
+wait 2000
+shot world
+do scriptevent gwp:frames 40 6 0 300
+wait 2000
+shot fp-1
+measure marks fp-1
+wait 1700
+shot fp-2
+measure marks fp-2
+wait 1300
+shot fp-3
+measure marks fp-3
+until server GWP FRAMES n=40 buffered=false 60000
+
+section f1-parts
 do scriptevent gwp:reset
 do hud @a reset
 do replaceitem entity @a slot.weapon.mainhand 0 diamond_sword
 do tp @a 0 -60 0 0 60
-wait 3000
-do scriptevent gwp:f1 1
+wait 4000
+shot world
+do scriptevent gwp:part api 1
+wait 2500
+shot f1-api
+measure diff f1-api 700 940 1700 1080
+measure diff f1-api 1150 490 1250 590
+measure diff f1-api 1500 500 2400 1080
+do scriptevent gwp:part api 0
+wait 2500
+do scriptevent gwp:part flag 1
+do say hello-flag
+wait 2500
+shot f1-flag
+measure diff f1-flag 700 940 1700 1080
+measure diff f1-flag 1150 490 1250 590
+measure diff f1-flag 1500 500 2400 1080
+measure diff f1-flag 0 0 1000 400
+do scriptevent gwp:part flag 0
+wait 2500
+do scriptevent gwp:part arm 1
+wait 2500
+shot f1-arm
+measure diff f1-arm 700 940 1700 1080
+measure diff f1-arm 1500 500 2400 1080
+do scriptevent gwp:part arm 0
+wait 2500
+shot f1-arm-back
+measure diff f1-arm-back 1500 500 2400 1080
+
+section f1-all
+do scriptevent gwp:reset
 wait 3000
 shot world
-do scriptevent gwp:f1 0
-wait 3000
-shot f1-off
-measure diff f1-off
-measure diff f1-off 1400 600 2400 1080
 do scriptevent gwp:f1 1
+do say hello-f1
 wait 3000
 shot f1-on
 measure diff f1-on
-measure diff f1-on 1400 600 2400 1080
-do say hello-1
-do say hello-2
-do title @a actionbar ACTION
-wait 1500
-shot f1-chat
-measure diff f1-chat
+measure diff f1-on 700 940 1700 1080
+measure diff f1-on 1500 500 2400 1080
 do scriptevent gwp:f1 0
-wait 2000
+wait 3000
+shot f1-back
+measure diff f1-back
+measure diff f1-back 700 940 1700 1080
+measure diff f1-back 1500 500 2400 1080
 `;
 }
 

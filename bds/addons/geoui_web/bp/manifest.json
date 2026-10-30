@@ -1,0 +1,58 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "GeoUI Web BP",
+    "description": "The web in the game: every site, Chrome-like, full-screen in F1 (bds-lab bds/geoui/web)",
+    "uuid": "6012ed5f-17ea-4246-b4be-bf8d37c48ae4",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "4cacf7da-83d1-4f65-a37a-1e547734275f",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "72244cc7-5206-4db0-9ee9-9d05cd7e704e",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "ab8acf0f-3629-4a56-be81-88bd1862b5f4",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.5.0"
+    },
+    {
+      "module_name": "@minecraft/server-net",
+      "version": "1.0.0-beta"
+    }
+  ]
+}

@@ -1,0 +1,869 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.gweb_atlas",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 475,
+        "visible_bounds_height": 325,
+        "visible_bounds_offset": [
+          0,
+          0,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "gweb_root",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "gweb_ptr_b",
+          "parent": "gweb_root",
+          "pivot": [
+            -3000,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -3000,
+                1194.4,
+                -1
+              ],
+              "size": [
+                3.6,
+                5.6,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    22,
+                    34
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ring_b",
+          "parent": "gweb_root",
+          "pivot": [
+            -3000,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -3002.5,
+                1197.5,
+                -0.5
+              ],
+              "size": [
+                5,
+                5,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    0
+                  ],
+                  "uv_size": [
+                    24,
+                    24
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_tip_b",
+          "parent": "gweb_root",
+          "pivot": [
+            -3000,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -3000.6,
+                1199.4,
+                -1.5
+              ],
+              "size": [
+                1.2,
+                1.2,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    1,
+                    41
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ptr_c",
+          "parent": "gweb_root",
+          "pivot": [
+            -1500,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1500,
+                1194.4,
+                -1
+              ],
+              "size": [
+                3.6,
+                5.6,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    22,
+                    34
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ring_c",
+          "parent": "gweb_root",
+          "pivot": [
+            -1500,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1502.5,
+                1197.5,
+                -0.5
+              ],
+              "size": [
+                5,
+                5,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    0
+                  ],
+                  "uv_size": [
+                    24,
+                    24
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_tip_c",
+          "parent": "gweb_root",
+          "pivot": [
+            -1500,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1500.6,
+                1199.4,
+                -1.5
+              ],
+              "size": [
+                1.2,
+                1.2,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    1,
+                    41
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ptr_d",
+          "parent": "gweb_root",
+          "pivot": [
+            0,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                1194.4,
+                -1
+              ],
+              "size": [
+                3.6,
+                5.6,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    22,
+                    34
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ring_d",
+          "parent": "gweb_root",
+          "pivot": [
+            0,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -2.5,
+                1197.5,
+                -0.5
+              ],
+              "size": [
+                5,
+                5,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    0
+                  ],
+                  "uv_size": [
+                    24,
+                    24
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_tip_d",
+          "parent": "gweb_root",
+          "pivot": [
+            0,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -0.6,
+                1199.4,
+                -1.5
+              ],
+              "size": [
+                1.2,
+                1.2,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    1,
+                    41
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ptr_e",
+          "parent": "gweb_root",
+          "pivot": [
+            1500,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                1500,
+                1194.4,
+                -1
+              ],
+              "size": [
+                3.6,
+                5.6,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    22,
+                    34
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ring_e",
+          "parent": "gweb_root",
+          "pivot": [
+            1500,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                1497.5,
+                1197.5,
+                -0.5
+              ],
+              "size": [
+                5,
+                5,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    0
+                  ],
+                  "uv_size": [
+                    24,
+                    24
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_tip_e",
+          "parent": "gweb_root",
+          "pivot": [
+            1500,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                1499.4,
+                1199.4,
+                -1.5
+              ],
+              "size": [
+                1.2,
+                1.2,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    1,
+                    41
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ptr_f",
+          "parent": "gweb_root",
+          "pivot": [
+            3000,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                3000,
+                1194.4,
+                -1
+              ],
+              "size": [
+                3.6,
+                5.6,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    22,
+                    34
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ring_f",
+          "parent": "gweb_root",
+          "pivot": [
+            3000,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                2997.5,
+                1197.5,
+                -0.5
+              ],
+              "size": [
+                5,
+                5,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    0
+                  ],
+                  "uv_size": [
+                    24,
+                    24
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_tip_f",
+          "parent": "gweb_root",
+          "pivot": [
+            3000,
+            1200,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                2999.4,
+                1199.4,
+                -1.5
+              ],
+              "size": [
+                1.2,
+                1.2,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    1,
+                    41
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ptr_g",
+          "parent": "gweb_root",
+          "pivot": [
+            -3000,
+            1800,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -3000,
+                1794.4,
+                -1
+              ],
+              "size": [
+                3.6,
+                5.6,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    22,
+                    34
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ring_g",
+          "parent": "gweb_root",
+          "pivot": [
+            -3000,
+            1800,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -3002.5,
+                1797.5,
+                -0.5
+              ],
+              "size": [
+                5,
+                5,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    0
+                  ],
+                  "uv_size": [
+                    24,
+                    24
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_tip_g",
+          "parent": "gweb_root",
+          "pivot": [
+            -3000,
+            1800,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -3000.6,
+                1799.4,
+                -1.5
+              ],
+              "size": [
+                1.2,
+                1.2,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    1,
+                    41
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ptr_h",
+          "parent": "gweb_root",
+          "pivot": [
+            -1500,
+            1800,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1500,
+                1794.4,
+                -1
+              ],
+              "size": [
+                3.6,
+                5.6,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    22,
+                    34
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ring_h",
+          "parent": "gweb_root",
+          "pivot": [
+            -1500,
+            1800,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1502.5,
+                1797.5,
+                -0.5
+              ],
+              "size": [
+                5,
+                5,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    0
+                  ],
+                  "uv_size": [
+                    24,
+                    24
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_tip_h",
+          "parent": "gweb_root",
+          "pivot": [
+            -1500,
+            1800,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1500.6,
+                1799.4,
+                -1.5
+              ],
+              "size": [
+                1.2,
+                1.2,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    1,
+                    41
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ptr_i",
+          "parent": "gweb_root",
+          "pivot": [
+            0,
+            1800,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                1794.4,
+                -1
+              ],
+              "size": [
+                3.6,
+                5.6,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    22,
+                    34
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_ring_i",
+          "parent": "gweb_root",
+          "pivot": [
+            0,
+            1800,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -2.5,
+                1797.5,
+                -0.5
+              ],
+              "size": [
+                5,
+                5,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    0
+                  ],
+                  "uv_size": [
+                    24,
+                    24
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "gweb_tip_i",
+          "parent": "gweb_root",
+          "pivot": [
+            0,
+            1800,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -0.6,
+                1799.4,
+                -1.5
+              ],
+              "size": [
+                1.2,
+                1.2,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    1,
+                    41
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
