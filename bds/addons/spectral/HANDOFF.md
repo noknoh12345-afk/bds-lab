@@ -68,6 +68,14 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
    **10 回目の実機（run 41197478510）**で d_（9 回目と同じデータ: run をまたいだばらつき）と e_（+10 dB で詰めて +10 dB で）を曲ごとに
    交互に、kl_ / kr_（near = follow と同じ、聞く人ごとの 3D）で左右
 
+9. **10 回目の実機**（run 41197478510、実測）: 9 回目と同じデータの d_ は曲ごとの差の中央値 +0.002（run をまたいでもほぼ同じ）。
+   聞く人ごとの 3D（near）の左右 +42.3 / −41.0 dB。e_ は手順の誤りで +6 dB のまま鳴った（make_app.py を直した）
+10. **まとめ録り**（ユーザーの依頼「録音取得早くして一括で再生録音できるようにして」「続けて流さずに一括で再生して録音する方法または
+    類似する方法」）: 電話は 1 度に 1 曲（同時 32 音を 1 曲が使い切る・録音は混ざった 1 本）なので同時には録れない。代わりに
+    (1) 実機は 1 本の録音に何曲も（audio mark → stop が切り分け → analyze-all が並行）、曲の送りも速く（1 回の do に何曲も）、
+    (2) 模型でまとめて（tools/exp/batch_play.py: 実時間を待たない、推測）。**11 回目（run 41200540880）がまとめ録りの最初の実行**:
+    d_ / e_（+10 dB、今度は本当に）26 本・3D の距離 3 / 12 / 24 ブロック・同じ run の天井 13 曲、42 本を 6 本の録音で
+
 ## いまの状態
 
 - ブランチ addon/spectral（最後に push したコミットは git log で）。`node lab.mjs go`（ローカルの BDS 1.26.61.1: lab の api が取ってきたもの。
@@ -79,10 +87,12 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## 次にやること
 
-1. 10 回目の結果（run 41197478510）: `gh api repos/noknoh12345-afk/bds-lab/actions/jobs/<job>/logs > job.log`、
-   `python3 tools/rig/collect.py job.log --run 41197478510`、`python3 tools/rig/fetch_rec.py 41197478510`、`python3 tools/rig/dropouts.py <録音>`。
-   d_ の 9 回目と 10 回目の差（ばらつき）、e_ − d_（レベル: 上がって歪みが聞こえなければ既定を +10 に。src/main.ts CLIENTS と
-   tools/spectral.py CL_LEVEL_DB・web/core.js をいっしょに）、kl_ / kr_ の lr_db（聞く人ごとの 3D でも左右が出るか）
+1. **11 回目の結果（run 41200540880、まとめ録りの最初）**: 引き継ぎ zip の scratch/run11.sh（ログ → collect.py → fetch_rec.py → dropouts →
+   表 → 聴き比べのページ）。まず**まとめ録りが働いたか**: ジョブのログに `[spectral rig]` が 42 行（d_/e_ 26・ka_/kb_/kc_ 3・c_ 13）、
+   `audio stop` の行の「目印で N 本に切り分けました」、切り分けた録音が曲ごとに 1 曲だけ入っているか（dropouts.py・recorded_s ≈ 20 s）。
+   働かなければ app/lib/scenario.mjs・audiorec.mjs cut を直す（tests/results-public-offline.mjs の 10 節）か、app11.json の batch を 0 に。
+   次に e_ − d_（+10 dB を +10 dB で: 上がって歪みが聞こえなければ既定を +10 に — src/main.ts CLIENTS・tools/spectral.py CL_LEVEL_DB・
+   web/core.js を一緒に、py と js のバイト一致 tools/parity.py）、天井（同じ run）から 0.3 以内の曲の数、ka/kb/kc の大きさと lr_db
 2. 本物の Discord で bridge を（トークンとサーバー: ユーザーが用意。tools/live/README.md の手順）
 3. ライブの変換を良くする（実機で前もっての変換より 0.09–0.18 低い）: 先を 1 フレームだけ見る（遅れ +50 ms）、フレームごとの軽い合成による分析
 4. 遠い曲（合唱・ドラム・デモ）: 同じ run で 2 回録って、ばらつきと差を分ける
