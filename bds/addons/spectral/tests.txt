@@ -316,8 +316,8 @@ wait 500
 ~ @A ■ stopped
 
 ## a song with fitted fades (tools/spectral.py nz_fade, v_fade): each voice and noise band fades as long as the converter chose, tick by tick
-scriptevent spectral:song {"id":"tinyfade","i":0,"n":2,"meta":{"format":"spectral-player/1","title":"Tiny fades","artist":"","fps":20,"frames":25,"voices":8,"base":1760.0,"noise":[[180,360],[360,720],[720,1440],[1440,2880],[2880,5000],[5000,8000],[8000,12000],[12000,17000]],"bursts":3,"sub":4,"seconds":1.2,"amp":[-90.0,0.75],"nz":[-100.0,0.5],"analysis":"v2","nzd":{"ms":[5,12,25,50],"data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"vd":{"ms":[5,12,25,50],"data":"///////////6//X//////////////09ZDwCfqa86j3/v//////////////////////8="},"id":"tinyfade"},"data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADBfhvAtl9AAAAAAAAAAAAA3kQcHPGfQAAAAAAAAAAAAN4EHByxn0AAAAAAAAAAAADdxBwccZ9AAAAAAAAAAAAA3UQcG/GfQAAAAAAAAAAAAN0EHBuxn0AAAAAAAAAAAADchBwbMZ9AAAAAAAAAAAA/3EQcGvGfYHgpoWHuIX9u435vYV4qoLKwAAAAAAAAAAAAP9vEHBpxn1aJ6dbh7hdOrxdNL5ZsqpYbcAAAAAAAAAAAAD/bhBw"}
-scriptevent spectral:song {"id":"tinyfade","i":1,"n":2,"data":"aMZ9OxWnRm64Rjq8SMu9R+WqROPAAAAAAAAAAAAA/2wQcGfGfSgVpzVuuDSWuzbvvSUQqzLjwAAAAAAAAAAAAP9rEHBlxn0cp6cokbchbLoAG5+qJGfAAAAAAAAAAAAA32oQcGTGfRb8pwAAAAAAAAAAAAAAAAAHaBBwYsZ9AAAAAAAAAAAAAANnEHBhxn0AAAAAAAAAAAADZRBwX8Z9AAAAAAAAAAAAA2QQcF7GfQAAAAAAAAAAAANiEHBcxn0AAAAAAAAAAAADYRBwW8Z9AAAAAAAAAAAAA1b5b1DYfQAAAAAAAAAAAA=="}
+scriptevent spectral:song {"id":"tinyfade","i":0,"n":2,"meta":{"format":"spectral-player/2","title":"Tiny fades","artist":"","fps":20,"frames":25,"voices":8,"base":1760.0,"noise":[[180,360],[360,720],[720,1440],[1440,2880],[2880,5000],[5000,8000],[8000,12000],[12000,17000]],"bursts":3,"sub":4,"seconds":1.2,"amp":[-90.0,0.75],"nz":[-100.0,0.5],"analysis":"v2","fd":{"ms":[5,12,25,50],"v":50,"nz":50},"id":"tinyfade"},"data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADBfhvAtl9AAAAAAAAAAAAA3kQcHPGfQAAAAAAAAAAAAN4EHByxn0AAAAAAAAAAAADdxBwccZ9AAAAAAAAAAAAA3UQcG/GfQAAAAAAAAAAAAN0EHBuxn0AAAAAAAAAAAADchBwbMZ9AAAAAAAAAAAA/3EQcGvGfYHgpoWHuIX9u435vYV4qoLKwAAAAAAAAAAAAP9vEHBpxn1aJ6dbh7hdOrxdNL5ZsqpYbcAAAAAAAAAAAAD/bhBwaMZ9OxWnRm64Rjq8SMu9R+WqROPAAAAAAAAAAAAA/2wQcGfGfSgVpzVuuDSWuzbvvSUQqzLjwAAAAAAAAA"}
+scriptevent spectral:song {"id":"tinyfade","i":1,"n":2,"data":"AAAP9rEHBlxn0cp6cokbchbLoAG5+qJGfAAAAAAAAAAAAA32oQcGTGfRb8pwAAAAAAAAAAAAAAAAAHaBBwYsZ9AAAAAAAAAAAAAANnEHBhxn0AAAAAAAAAAAADZRBwX8Z9AAAAAAAAAAAAA2QQcF7GfQAAAAAAAAAAAANiEHBcxn0AAAAAAAAAAAADYRBwW8Z9AAAAAAAAAAAAA1b5b1DYfQAAAAAAAAAAAP//////////+v/1//////////////9PWQ8An6mvOo9/7///////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}
 ~ ♪ song pack: Tiny fades \(0:01\) — /spectral:play tinyfade
 @A cmd /spectral:play tinyfade
 ~ @A ▶ Tiny fades \(0:01, 8/8 voices, headphones\)
@@ -326,7 +326,7 @@ wait 800
 ~ @A status: playing tinyfade .* fades fitted \(voices and noise\) short [1-9]\d*$
 until ■ Tiny fades — end 5000
 
-## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, and no drum bursts (measured: better without)
+## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, no drum bursts (measured: better without), and every level 6 dB over the files (the phone plays them 32.5 dB under, into 16 bits)
 @C join platform=mobile
 @C cmd /spectral:play demo
 ~ @C ▶ Demo \(original\) — Spectral Player \(0:22, 24/48 voices, headphones\)
@@ -334,6 +334,7 @@ wait 1000
 @C cmd /spectral:status
 ~ @C status: playing demo .* mode phones voices 24 instances 32
 ~ @C status: playing demo .* drums off
+~ @C status: playing demo .* level \+6 dB volume
 @C cmd /spectral:mode light
 ~ @C quality light: 16 voices
 @C cmd /spectral:mode quality

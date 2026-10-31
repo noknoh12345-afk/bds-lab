@@ -43,11 +43,16 @@ def render(logp, spec_over=None, rp=None, seed=0):
         start=min(e[1] for e in log if e[0] in ('fade','vol'))
         np.save(p, y[start*2400:].astype(np.float32))
     return np.load(p).astype(np.float64)
-def path24(y, gain_db=-32.5, q=True):
+def path24(y, gain_db=-32.5, q=True, clip=None, pre_db=0.0):
     """the measured client path (redroid run 41076646541): the game mixes at 24 kHz (each voice read linearly: no
-    anti-aliasing, content above 12 kHz folds to 24 kHz - f), -32.5 dB, 16 bit, then x2 linear interpolation to 48 kHz"""
+    anti-aliasing, content above 12 kHz folds to 24 kHz - f), -32.5 dB, 16 bit, then x2 linear interpolation to 48 kHz.
+    clip: the mix clipped at that many file units first (run 41147544874's calib loud: a sine of 0.91 at setVolume 4 and 8
+    fits a hard clip at 2.0 exactly; the 16-sine mixer calib fits 1.6-1.8); pre_db: the mix played that much louder first
+    (the original at setVolume 2: +6.02)"""
     m = y.mean(1) if y.ndim==2 else y
-    m = m[::2]*10**(gain_db/20)
+    m = m[::2]*10**(pre_db/20)
+    if clip: m = np.clip(m, -clip, clip)
+    m = m*10**(gain_db/20)
     if q: m=q16(m)
     m = lin_resample(m, 24000, 48000)
     return q16(m) if q else m

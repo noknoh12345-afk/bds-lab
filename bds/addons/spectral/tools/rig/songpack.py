@@ -21,7 +21,10 @@ import spectral as S
 def convert(song_id, voices=48, opts=None, as_id=None):
     """opts: the converter's own options (tools/spectral.py convert: residual, salience, ...) — an earlier analysis kept
     behind an option can be sent beside the current one under another id (as_id) and compared in the same run"""
-    x, meta, blob, stats = S.convert(C.excerpt_path(song_id), voices, title=as_id or song_id, artist='corpus', **(opts or {}))
+    # (an app run's `audio song ... k=v` sends every value as text or a number: true / false are the switches, e.g. the shipped
+    # version's nz_fade=false v_fade=false)
+    opts = {k: (v == 'true') if v in ('true', 'false') else v for k, v in (opts or {}).items()}
+    x, meta, blob, stats = S.convert(C.excerpt_path(song_id), voices, title=as_id or song_id, artist='corpus', **opts)
     meta['id'] = as_id or song_id
     return {'meta': meta, 'data': base64.b64encode(blob).decode()}
 
@@ -101,7 +104,8 @@ def write_unit(unit_dir, ids):
                                     "  const [id, v, d] = e.message.split(' ');\n"
                                     "  const vol = Number(v) > 0 ? Number(v) : 1, ev = (d === 'd4' ? 'spectral_ceiling4.' : 'spectral_ceiling.') + id;\n"
                                     "  const ps = world.getAllPlayers();\n"
-                                    "  for (const p of ps) p.playSound(ev, { volume: vol });\n"
+                                    "  // (over 1 also by setVolume on the instance: the add-on's own way, measured exact up to 2 — calib loud)\n"
+                                    "  for (const p of ps) { const si = p.playSound(ev, { volume: vol }); if (vol > 1) si?.setVolume?.(vol); }\n"
                                     "  console.warn(`[spectral ceiling] ${ev} volume ${vol} to ${ps.length} player(s)`);\n"
                                     "});\n")}
     for name, text in files.items():

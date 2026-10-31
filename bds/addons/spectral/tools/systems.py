@@ -22,7 +22,7 @@ def v1_preview(song):
     """tools/spectral.py as shipped: 48 voices, offline renderer with the add-on's tick rules (speed 1)"""
     import spectral as S
     x, meta, blob, stats = S.convert(C.excerpt_path(song), 48)
-    fq, am, att, nz, ev = S.decode(blob, meta['frames'], meta['voices'], len(meta['noise']))
+    fq, am, att, nz, ev = S.decode(blob, meta['frames'], meta['voices'], len(meta['noise']), S.song_tail(meta))
     return S.render(fq, am, att, nz, ev)
 
 
@@ -33,7 +33,7 @@ def _v1_voices(n):
     def f(song):
         import spectral as S
         x, meta, blob, stats = S.convert(C.excerpt_path(song), n)
-        fq, am, att, nz, ev = S.decode(blob, meta['frames'], meta['voices'], len(meta['noise']))
+        fq, am, att, nz, ev = S.decode(blob, meta['frames'], meta['voices'], len(meta['noise']), S.song_tail(meta))
         return S.render(fq, am, att, nz, ev)
     f.__doc__ = f'tools/spectral.py as shipped with {n} voices (offline renderer)'
     return f
@@ -133,7 +133,7 @@ def v2_shipped(song):
     """tools/spectral.py as now shipped (analysis v2), decoded and played by the offline renderer (the add-on's tick rules)"""
     import spectral as S
     x, meta, blob, stats = S.convert(C.excerpt_path(song), 48)
-    fq, am, att, nz, ev = S.decode(blob, meta['frames'], meta['voices'], len(meta['noise']))
+    fq, am, att, nz, ev = S.decode(blob, meta['frames'], meta['voices'], len(meta['noise']), S.song_tail(meta))
     import json as _j
     _j.dump({'noise_bands': stats.get('noise_bands'), 'bytes': len(blob), 'kbps': round(len(blob) * 8 / meta['seconds'] / 1000, 2),
              'changes_per_tick': round(stats['changes'] / meta['frames'], 1)}, open(os.path.join(os.path.dirname(HERE), 'corpus', 'renders', 'v2_shipped', song + '.info.json'), 'w'))

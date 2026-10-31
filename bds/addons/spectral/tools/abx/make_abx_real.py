@@ -20,7 +20,16 @@ C, MT, E = MA.C, MA.MT, MA.E
 SR = 48000
 # (prefix of the recordings in --rec → the file suffix and label of each reference beside A and B; B is --b)
 REFS = {'c': ('ceil', '天井（実機で元の音を鳴らした録音）'), 'g': ('old', '前の既定（48 声、実機）'), 'm': ('m24', '24 声・打撃音は声と同じ tick（実機）'),
-        'l': ('light', '軽量モード（実機）'), 'emu': ('emu', 'エミュレーター（同じ曲）')}
+        'l': ('light', '軽量モード（実機）'), 'emu': ('emu', 'エミュレーター（同じ曲）'),
+        'a': ('ship', '出荷版（打撃音を 1 tick 先、実機）'), 'n': ('ship4', '出荷版（4 回目の run、実機）'), 'b': ('impr', '改良版（residual voiced・打撃音なし、実機）'),
+        'f': ('fades', '最終の変換をレベル 0 で（tick ごとのフェード、実機）'), 'h': ('loud', '改良版＋フェード＋12 dB（実機）'),
+        'q': ('ceil6', '天井を 6 dB 大きく（音量 2、最終の既定と同じ大きさ、実機）'), 's': ('ship7', '出荷版（7 回目の run、実機）'),
+        'w': ('final', '最終の既定（実機）')}
+# (B's prefix → its key in measured/redroid-<run>.json and how the page names it)
+BWAYS = {'g': ('game', '前の既定（48 声）'), 'm': ('mobile', '電話の既定（24 声、打撃音は声と同じ tick）'),
+         'n': ('mobile_ahead', '出荷する版（電話の既定 24 声、打撃音を 1 tick 先に送る）'), 'b': ('improved', '改良版（変換器 residual voiced、打撃音なし、24 声）'),
+         'f': ('improved_fades', '改良版＋tick ごとに合わせたフェード'), 'h': ('improved_loud', '改良版＋フェード＋ファイルより 12 dB 大きく'),
+         'w': ('final', '最終の既定（変換器 residual voiced・tick ごとに合わせたフェード、打撃音なし、24 声、ファイルより 6 dB 大きく）')}
 
 
 def load(path):
@@ -69,7 +78,8 @@ def main():
     man = {s['id']: s for s in C.manifest()['songs']}
     songs = []
     want = a.refs.split(',')
-    for sid in [s for s in man if os.path.exists(os.path.join(a.rec, f'{a.b}_{s}.opus'))]:
+    # (a song whose original excerpt is not here — corpus.py fetch could not reach its source — is left out)
+    for sid in [s for s in man if os.path.exists(os.path.join(a.rec, f'{a.b}_{s}.opus')) and os.path.exists(C.excerpt_path(s))]:
         ref_st = C.load(sid, SR, stereo=True)
         shutil.copy(C.excerpt_path(sid), os.path.join(a.out, 'audio', f'{sid}.orig.mp3'))
         MA.mp3(os.path.join(a.out, 'audio', f'{sid}.game.mp3'), MA.prepare(ref_st, load(os.path.join(a.rec, f'{a.b}_{sid}.opus'))), kbps=256)
@@ -88,7 +98,7 @@ def main():
         if run is None:
             _, run = emu_render(sid)
         r = rows.get(sid, {})
-        bkey = {'g': 'game', 'm': 'mobile', 'n': 'mobile_ahead'}[a.b]
+        bkey = BWAYS[a.b][0]
         sc = {'ceiling': r.get('ceiling', {}).get('visqol')}
         if 'visqol' in r.get(bkey, {}):
             sc['game'] = {**r[bkey], 'calls_per_tick': run['calls_per_tick'], 'kbps': run['kbps']}
@@ -100,7 +110,7 @@ def main():
         songs.append({'id': sid, 'title': s['title'], 'category': s['category'], 'credit': f"{s['author']} · {s['license']}",
                       'scores': sc, 'refs': [[REFS[p][0], REFS[p][1]] for p in refs]})
         print(json.dumps({'song': sid, 'refs': refs, 'game': sc.get('game', {}).get('visqol'), 'ceiling': sc['ceiling']}), flush=True)
-    which = {'g': '前の既定（48 声）', 'm': '電話の既定（24 声、打撃音は声と同じ tick）', 'n': '出荷する版（電話の既定 24 声、打撃音を 1 tick 先に送る）'}[a.b]
+    which = BWAYS[a.b][1]
     data = {'songs': songs, 'credits': C.credits(),
             'notice': f'B は{which}を実機で鳴らした録音です（redroid の Android 14・Play から入れた Minecraft 1.26.60.4、録音は scrcpy の AudioPlaybackCapture 48 kHz）。'
                       'A と B は元の音に合わせて音量（RMS）と時間をそろえ、B は MP3 256 kb/s（参考は 192 kb/s）にしてあります。参考の「天井」は、元の音をそのまま OGG で'

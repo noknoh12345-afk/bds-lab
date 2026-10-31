@@ -28,14 +28,17 @@ def read(log):
 WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile', 'n': 'mobile_ahead', 'r': 'mobile_ahead_again',
         'a': 'shipped_same_run', 'b': 'improved', 'x': 'improved_drums_behind', 'y': 'improved_drums_noise', 'z': 'improved_alt',
         # louder than the files (/spectral:level 12): by setVolume, by the loud sound events; the ceiling at volume 4 / its d4 event
-        'h': 'improved_loud', 'k': 'improved_loud_events', 'q': 'ceiling_loud', 'e': 'ceiling_loud_events'}
+        'h': 'improved_loud', 'k': 'improved_loud_events', 'q': 'ceiling_loud', 'e': 'ceiling_loud_events',
+        # the fades the converter fitted tick by tick (nz_fade, v_fade) at the files' level; the final default (run 7: the phone's
+        # defaults, +6 dB by setVolume) and the shipped version in the same run (s; the ceiling at volume 2 is q there)
+        'f': 'improved_fades', 'w': 'final', 's': 'shipped_run7'}
 
 
 def songs(res):
     """per song: the game's and the ceiling's ViSQOL against the original, the gap, and the emulator against the recording"""
     rows = {}
     for rec, by in res.items():
-        m = re.match(r'([gclvmnrabxyzhkqe])_(.+)$', rec)
+        m = re.match(r'([gclvmnrabxyzhkqefws])_(.+)$', rec)
         if not m:
             continue
         kind, sid = m.groups()

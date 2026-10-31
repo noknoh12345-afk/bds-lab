@@ -374,8 +374,9 @@ def encode(fq, am, att, nz, events, gain):
             out.append((b << 2) | sub); out.append(nz_code(a * gain))
     return bytes(out), stats
 
-def decode(blob, F, N, M):
-    """Reference decoder (the add-on's TypeScript decoder mirrors this)."""
+def decode(blob, F, N, M, tail=0):
+    """Reference decoder (the add-on's TypeScript decoder mirrors this). tail: bytes after the frames that are not frames (a
+    format 2 song's fade codes, meta.fd: song_tail)"""
     fq = np.zeros((F, N)); am = np.zeros((F, N)); att = np.zeros((F, N), bool)
     nz = np.zeros((F, M)); events = []
     p = 0; cur_f = np.zeros(N); cur_a = np.zeros(N)
@@ -398,8 +399,15 @@ def decode(blob, F, N, M):
         for _ in range(ne):
             bb = blob[p]; ac = blob[p + 1]; p += 2
             events.append((k, bb & 3, bb >> 2, nz_val(ac)))
-    assert p == len(blob), (p, len(blob))
+    assert p == len(blob) - tail, (p, len(blob), tail)
     return fq, am, att, nz, events
+
+
+def song_tail(meta):
+    """the bytes after the frames of a song's data: format 2 carries the fitted fades there (meta.fd: v bytes of the voices'
+    codes, then nz bytes of the noise bands')"""
+    fd = meta.get('fd') or {}
+    return int(fd.get('v', 0)) + int(fd.get('nz', 0))
 
 # ------------------------------------------------------------------ engine schedule (mirrored by the add-on)
 FADE_SMOOTH = 0.050
@@ -992,18 +1000,20 @@ def fit_voice_fades(x, fq, am):
     return out, bytes(packed)
 
 
-def fit_noise_fades(x, nz):
+def fit_noise_fades(x, nz, hop=None):
     """per tick k and noise band b: one fade(d, v) — linear from the level the band is at to v over d ms, then held — chosen
     to follow the band's 10 ms envelope over the tick (squared dB error). The residual's fine shape is the whole band's
     (a 20 ms STFT) scaled to the frame levels nz. Returns nz with nz[k+1] = v of tick k, and the fade codes (2 bits per band
     per frame, 4 bands a byte; frame k = the fade sent at tick k)"""
     F, M = nz.shape
-    nw = 2 * FINE_HOP; w = np.hanning(nw); hop = FINE_HOP; per = HOP // hop        # 5 fine points per tick
+    hop = hop or FINE_HOP
+    nw = 2 * hop; w = np.hanning(nw); per = HOP // hop        # 5 fine points per tick (FINE_HOP)
+    nfft = FINE_NFFT if hop == FINE_HOP else 1 << (nw - 1).bit_length()
     nfine = F * per + per + 2
     xp = np.pad(x, (nw // 2, nw // 2 + nfine * hop + nw))
     idx = np.arange(nfine)[:, None] * hop + np.arange(nw)[None, :]
-    P = np.abs(np.fft.rfft(xp[idx] * w, n=FINE_NFFT, axis=1)) ** 2
-    binhz = SR / FINE_NFFT
+    P = np.abs(np.fft.rfft(xp[idx] * w, n=nfft, axis=1)) ** 2
+    binhz = SR / nfft
     out = nz.copy(); codes = np.zeros((F, M), np.uint8)
     ds = [d / 1000.0 for d in NZ_FADES_MS]
     L = lambda a: 20 * np.log10(np.maximum(a, 1e-7))
@@ -1012,7 +1022,8 @@ def fit_noise_fades(x, nz):
             continue
         lo, hi = NOISE_EDGES[b], NOISE_EDGES[b + 1]
         e = P[:, int(lo / binhz):max(int(lo / binhz) + 1, int(hi / binhz))].cumsum(1)[:, -1] + 1e-20     # band power per 10 ms (summed in order)
-        ef = np.array([e[max(0, k * per - 2):k * per + 3].mean() for k in range(F)])         # the same over each frame
+        h2 = per // 2                                                                        # (2 for the 10 ms grid)
+        ef = np.array([e[max(0, k * per - h2):k * per + h2 + 1].mean() for k in range(F)])   # the same over each frame
         tf = np.arange(nfine) / per                                                          # fine points in frames
         shape = e / np.interp(tf, np.arange(F), ef)
         r = np.sqrt(np.maximum(shape * np.interp(tf, np.arange(F), nz[:, b] ** 2), 0))        # the residual's fine envelope
@@ -1042,19 +1053,27 @@ def fit_noise_fades(x, nz):
     return out, bytes(packed)
 
 
+_DEFAULTS = {'FADE_GAIN': FADE_GAIN, 'FADE_MARGIN_DB2': FADE_MARGIN_DB2, 'BURST_TILT': BURST_TILT, 'NOISE_EDGES': list(NOISE_EDGES)}
+
+
 def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=None, analysis='v2', residual='voiced', salience='a',
-            nested=0, hf=0.0, burst_tilt=None, noise_edges=None, nz_fade=False, v_fade=False):
+            nested=0, hf=0.0, burst_tilt=None, noise_edges=None, nz_fade=True, v_fade=True, rank='energy', fade_gain=None,
+            fade_margin=None, nz_hop=None, low_cut=0.5, nsim_margin=NSIM_MARGIN):
     """residual: 'voiced' (default: only the voices' main lobes out of the noise, so the peaks no voice plays stay in the noise
     bands) | 'all' (every peak's lobe out: the version before 2026-10-31) | 'fit' (ERB least squares). Through the validated
     client model (tools/exp/results/next.jsonl, 10 songs, 24 voices, no drum bursts) 'voiced' scored +0.139 ViSQOL over the
     shipped version (median, 9 of 10 songs up; emulated, not a recording). salience: 'a' (A-weighted) |
     'erb' (share of its ERB band). nested: the first `nested` voices are chosen from the tracks under hf Hz (a client that
-    plays only those and mixes at 2*hf gets the best of them), the rest from all"""
-    global BURST_TILT, NOISE_EDGES
-    if burst_tilt is not None:
-        BURST_TILT = burst_tilt
-    if noise_edges is not None:
-        NOISE_EDGES = list(noise_edges)
+    plays only those and mixes at 2*hf gets the best of them), the rest from all.
+    v_fade / nz_fade (default on, format 2): every voice and noise band gets the fade (5/12/25/50 ms) that follows the
+    original's 10 ms envelope best at each tick, and the bursts' energy stays in the noise bands (no one-shots). Through the
+    client model: +0.073 ViSQOL median over residual 'voiced' alone (8 of 10 songs up; emulated, not a recording)"""
+    global BURST_TILT, NOISE_EDGES, FADE_GAIN, FADE_MARGIN_DB2
+    # (these options set module globals: each conversion sets all of them, so one never leaks into the next in a process)
+    FADE_GAIN = float(fade_gain) if fade_gain is not None else _DEFAULTS['FADE_GAIN']
+    FADE_MARGIN_DB2 = float(fade_margin) if fade_margin is not None else _DEFAULTS['FADE_MARGIN_DB2']
+    BURST_TILT = burst_tilt if burst_tilt is not None else _DEFAULTS['BURST_TILT']
+    NOISE_EDGES = list(noise_edges) if noise_edges is not None else list(_DEFAULTS['NOISE_EDGES'])
     x = load_audio(path)
     if max_seconds: x = x[: int(max_seconds * SR)]
     n_frames = int(math.ceil(len(x) / HOP)) + 1
@@ -1075,14 +1094,17 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
         e = (am ** 2).sum(0)
         order = np.concatenate([nested * 0 + np.argsort(-e[:nested], kind='stable'), nested + np.argsort(-e[nested:], kind='stable')])
     else:
-        order = np.argsort(-(am ** 2).sum(0), kind='stable')
+        # rank: 'energy' (the sum of squared amplitudes) | 'a' (A-weighted energy) | 'dur' (frames sounding, then energy)
+        key = ((am * a_weight(np.maximum(fq, 1.0))) ** 2).sum(0) if rank == 'a' else \
+            (am > 0).sum(0) * 1e6 + (am ** 2).sum(0) / max(1e-30, float((am ** 2).sum())) if rank == 'dur' else (am ** 2).sum(0)
+        order = np.argsort(-key, kind='stable')
     fq, am, att = fq[:, order], am[:, order], att[:, order]
     if analysis == 'v2':
         nz = (stochastic_residual(spectra, peaks, n_frames) if residual == 'all' else
-              fit_noise(spectra, fq, am, n_frames) if residual == 'fit' else residual_noise(spectra, fq, am, n_frames))
+              fit_noise(spectra, fq, am, n_frames) if residual == 'fit' else residual_noise(spectra, fq, am, n_frames, low_cut))
         peak0 = max(1e-9, float(np.max(am.sum(1) * 0.55 + nz.sum(1))))
         g0 = (0.9 / peak0) * 10 ** (gain_db / 20)
-        keep, info['nsim_lite'], cur = choose_noise_bands(x, fq, am, att, nz, g0)
+        keep, info['nsim_lite'], cur = choose_noise_bands(x, fq, am, att, nz, g0, nsim_margin)
         for b in range(nz.shape[1]):
             if not keep[b]:
                 nz[:, b] = 0.0
@@ -1103,7 +1125,7 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
     if nz_fade:
         # the noise bands' fades follow the original's 10 ms envelope (the bursts' energy stays in the noise: a client that
         # plays no one-shots gets the attacks from the bands themselves)
-        nz, nzd = fit_noise_fades(x, nz)
+        nz, nzd = fit_noise_fades(x, nz, nz_hop)
         ev = []
     # bursts take their energy out of the noise layer of the frame they land in
     for (k, sub, b, a) in ev:
@@ -1116,17 +1138,21 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
     peak = max(1e-9, float(np.max(am.sum(1) * 0.55 + nz.sum(1))))
     gain = (0.9 / peak) * 10 ** (gain_db / 20)
     blob, stats = encode(fq, am, att, nz, ev, gain)
+    # format 2: the fitted fades after the frames in the data (the voices' codes, then the noise bands'), their lengths in meta.fd —
+    # in the data, not the meta, so a song pack's first script event (the meta) stays under /scriptevent's 2048 characters
+    fd = None
+    if vd is not None or nzd is not None:
+        fd = {'ms': NZ_FADES_MS, 'v': len(vd or b''), 'nz': len(nzd or b'')}
+        blob = blob + (vd or b'') + (nzd or b'')
     meta = {
-        'format': 'spectral-player/1', 'title': title or os.path.splitext(os.path.basename(path))[0], 'artist': artist,
+        'format': 'spectral-player/2' if fd else 'spectral-player/1', 'title': title or os.path.splitext(os.path.basename(path))[0], 'artist': artist,
         'fps': FPS, 'frames': n_frames, 'voices': n_voices, 'base': BASE,
         'noise': [[NOISE_EDGES[i], NOISE_EDGES[i + 1]] for i in range(len(NOISE_EDGES) - 1)],
         'bursts': len(BURST_BANDS), 'sub': SUB, 'seconds': round(len(x) / SR, 2),
         'amp': [AMP_FLOOR_DB, AMP_STEP_DB], 'nz': [NZ_FLOOR_DB, NZ_STEP_DB], 'analysis': analysis,
     }
-    if nzd is not None:
-        meta['nzd'] = {'ms': NZ_FADES_MS, 'data': base64.b64encode(nzd).decode()}
-    if vd is not None:
-        meta['vd'] = {'ms': NZ_FADES_MS, 'data': base64.b64encode(vd).decode()}
+    if fd:
+        meta['fd'] = fd
     stats.update(info)
     return x, meta, blob, stats
 
@@ -1144,7 +1170,7 @@ def main():
     meta['id'] = args.id or ''.join(c if c.isalnum() else '_' for c in meta['title'].lower())[:32]
     F, N, M = meta['frames'], meta['voices'], len(meta['noise'])
     # round trip check
-    fq, am, att, nz, ev = decode(blob, F, N, M)
+    fq, am, att, nz, ev = decode(blob, F, N, M, song_tail(meta))
     b64 = base64.b64encode(blob).decode()
     with open(out + '.song.json', 'w') as fh:
         json.dump({'meta': meta, 'data': b64}, fh, separators=(',', ':'))

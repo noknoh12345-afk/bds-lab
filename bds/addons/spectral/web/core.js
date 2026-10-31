@@ -592,8 +592,9 @@
     await progress(0.9);
     // (tools/spectral.py nz_fade: the bands' fades follow the 10 ms envelope; the bursts' energy stays in the noise)
     let nzd = null, vd = null, fs = null;
-    if (opts.v_fade) { fs = fineSpec(x, F); vd = fitVoiceFades(fs, fq2, am2, F, N); }
-    if (opts.nz_fade) { nzd = fitNoiseFades(fs ?? fineSpec(x, F), nz, F, M); ev = []; }
+    // (default on, as tools/spectral.py: v_fade / nz_fade false turns them off)
+    if (opts.v_fade ?? true) { fs = fineSpec(x, F); vd = fitVoiceFades(fs, fq2, am2, F, N); }
+    if (opts.nz_fade ?? true) { nzd = fitNoiseFades(fs ?? fineSpec(x, F), nz, F, M); ev = []; }
     for (const [k, , b, a] of ev) {
       const [lo, hi] = BURST_BANDS[b], e = a * a * 0.35;
       for (let bi = 0; bi < M; bi++) if (NOISE_EDGES[bi] < hi && NOISE_EDGES[bi + 1] > lo && k < F) nz[k * M + bi] = Math.sqrt(Math.max(nz[k * M + bi] ** 2 - e / 3, 0));
@@ -608,8 +609,14 @@
       noise: NOISE_EDGES.slice(0, -1).map((e, i) => [e, NOISE_EDGES[i + 1]]), bursts: BURST_BANDS.length, sub: SUB,
       seconds: Math.round((x.length / SR) * 100) / 100, amp: [AMP_FLOOR_DB, AMP_STEP_DB], nz: [NZ_FLOOR_DB, NZ_STEP_DB], analysis, id: opts.id ?? 'song',
     };
-    if (nzd) meta.nzd = { ms: NZ_FADES_MS, data: toB64(nzd) };
-    if (vd) meta.vd = { ms: NZ_FADES_MS, data: toB64(vd) };
+    // format 2 (tools/spectral.py): the fitted fades after the frames in the data, their lengths in meta.fd
+    if (nzd || vd) {
+      meta.format = 'spectral-player/2';
+      meta.fd = { ms: NZ_FADES_MS, v: vd ? vd.length : 0, nz: nzd ? nzd.length : 0 };
+      const all = new Uint8Array(enc.bytes.length + meta.fd.v + meta.fd.nz);
+      all.set(enc.bytes, 0); if (vd) all.set(vd, enc.bytes.length); if (nzd) all.set(nzd, enc.bytes.length + meta.fd.v);
+      enc.bytes = all;
+    }
     return { meta, bytes: enc.bytes, stats: { ...enc.stats, events: ev.length, activeAvg: avgActive(am2, F, N), noiseBands, burstBands, nsimLite: nsimBest, placed: placedN } };
   }
   const avgActive = (am, F, N) => { let c = 0; for (let i = 0; i < F * N; i++) if (am[i] > 0) c++; return c / F; };
@@ -755,7 +762,8 @@
       const ne = bytes[p++];
       for (let e = 0; e < ne; e++) { const bb = bytes[p++]; events.push([k, bb & 3, bb >> 2, nv(bytes[p++])]); }
     }
-    if (p !== bytes.length) throw new Error('decode: ' + (bytes.length - p) + ' bytes left');
+    const tail = meta.fd ? (meta.fd.v || 0) + (meta.fd.nz || 0) : 0;      // (format 2: the fitted fades follow the frames)
+    if (p !== bytes.length - tail) throw new Error('decode: ' + (bytes.length - tail - p) + ' bytes left');
     return { F, N, M, fq, am, att, nz, events };
   }
 

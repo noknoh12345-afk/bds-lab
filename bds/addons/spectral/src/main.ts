@@ -19,28 +19,29 @@ const SILENT = 1e-4;            // voices never go to 0 so the client keeps ever
 const FADE_SMOOTH = 0.05;       // one tick: linear ramp that lands on the next frame
 const FADE_ATTACK = 0.012;      // attacks land 12 ms after the tick
 const P_MIN = 0.01, P_MAX = 10; // SoundInstance.setPitch bounds
-const CENT = Math.pow(2, 1 / 2400) - 1;   // half a cent: smaller pitch moves are not sent
-const DB025 = Math.pow(10, 0.25 / 20);    // 0.25 dB: smaller level moves are not sent
+// smaller pitch and level moves are not sent: 3 cents and 0.75 dB, under what an ear tells apart. Through the measured client model
+// (tools/exp/results/next.jsonl, vnfade_thr against vnfade10, 10 songs) these cut the commands by 10-30 % and scored the same or
+// higher (an analysis track's jitter of a cent or two is not sent as a warble); half a cent and 0.25 dB before 2026-10-31
+const CENT = Math.pow(2, 3 / 1200) - 1;
+const DB025 = Math.pow(10, 0.75 / 20);
 
 // ------------------------------------------------------------------ song data
 export interface Meta {
   id: string; title: string; artist?: string; fps: number; frames: number; voices: number; base: number;
   noise: number[][]; bursts: number; sub: number; seconds: number; amp: [number, number]; nz: [number, number];
-  /** the noise bands' fade lengths, tick by tick (tools/spectral.py fit_noise_fades): ms = the lengths a code means, data =
-   *  base64 of 2-bit codes, 4 bands a byte, a frame's bands together (frame k = the fade sent at tick k). A song without it
-   *  ramps every band over the tick (50 ms) */
-  nzd?: { ms: number[]; data: string };
-  /** the voices' fade lengths the same way (tools/spectral.py fit_voice_fades): 2-bit codes, 4 voices a byte */
-  vd?: { ms: number[]; data: string };
+  /** format 2: the fitted fades (tools/spectral.py fit_voice_fades, fit_noise_fades) follow the frames in the data — v bytes of
+   *  the voices' codes, then nz bytes of the noise bands' (2 bits each, 4 a byte, a frame's together: frame k = the fade sent at
+   *  tick k), ms = the lengths a code means. A song without it (format 1) ramps over the tick (50 ms) */
+  fd?: { ms: number[]; v: number; nz: number };
 }
 interface Song { meta: Meta; data?: string; gen?: (d: Decoded) => void; dec?: Decoded; decoding?: Promise<Decoded>; }
 interface Decoded {
   F: number; N: number; M: number;
   freq: Float32Array; amp: Float32Array; att: Uint8Array; nz: Float32Array;
   evIdx: Uint32Array; evBand: Uint8Array; evSub: Uint8Array; evAmp: Float32Array;
-  /** meta.nzd unpacked: the fade length (s) of band b at tick k = nzdS[nzd[k * M + b]] */
+  /** the noise bands' fitted fades unpacked: the fade length (s) of band b at tick k = nzdS[nzd[k * M + b]] */
   nzd?: Uint8Array; nzdS?: number[];
-  /** meta.vd unpacked: the fade length (s) of voice v at tick k = vdS[vd[k * N + v]] */
+  /** the voices' the same way: vdS[vd[k * N + v]] */
   vd?: Uint8Array; vdS?: number[];
 }
 const songs = new Map<string, Song>();
@@ -89,22 +90,21 @@ function* decodeJob(song: Song, out: { d?: Decoded }): Generator<void, void, voi
   }
   d.evIdx[F] = evB.length;
   d.evBand = Uint8Array.from(evB); d.evSub = Uint8Array.from(evS); d.evAmp = Float32Array.from(evA);
-  if (p !== b.length) throw new Error(`song ${m.id}: ${b.length - p} bytes left after decoding`);
-  const codes2 = (f: { ms: number[]; data: string } | undefined, n: number): [Uint8Array, number[]] | undefined => {
-    if (!f || f.ms?.length !== 4) return undefined;
-    const s2 = f.data, raw = new Uint8Array((s2.length * 3) >> 2), per = (n + 3) >> 2;
-    let n2 = 0;
-    for (let i = 0; i < s2.length; i += 4) {
-      const q = (B64[s2.charCodeAt(i)] << 18) | (B64[s2.charCodeAt(i + 1)] << 12) | (B64[s2.charCodeAt(i + 2)] << 6) | B64[s2.charCodeAt(i + 3)];
-      raw[n2++] = q >> 16; if (s2[i + 2] !== '=') raw[n2++] = (q >> 8) & 255; if (s2[i + 3] !== '=') raw[n2++] = q & 255;
-    }
-    if (n2 < F * per) return undefined;
+  // format 2: the fitted fades after the frames (meta.fd: the voices' codes, then the noise bands')
+  const fd = m.fd, fv = fd ? fd.v | 0 : 0, fn = fd ? fd.nz | 0 : 0;
+  if (p !== b.length - fv - fn) throw new Error(`song ${m.id}: ${b.length - fv - fn - p} bytes left after decoding`);
+  const codes2 = (at: number, len: number, n: number): Uint8Array | undefined => {
+    const per = (n + 3) >> 2;
+    if (!len || len !== F * per) return undefined;
     const c = new Uint8Array(F * n);
-    for (let k = 0; k < F; k++) for (let j = 0; j < n; j++) c[k * n + j] = (raw[k * per + (j >> 2)] >> (2 * (j & 3))) & 3;
-    return [c, f.ms.map((x) => x / 1000)];
+    for (let k = 0; k < F; k++) for (let j = 0; j < n; j++) c[k * n + j] = (b[at + k * per + (j >> 2)] >> (2 * (j & 3))) & 3;
+    return c;
   };
-  const nzc = codes2(m.nzd, M); if (nzc) [d.nzd, d.nzdS] = nzc;
-  const vc = codes2(m.vd, N); if (vc) [d.vd, d.vdS] = vc;
+  if (fd && fd.ms?.length === 4) {
+    const ms = fd.ms.map((x) => x / 1000);
+    d.vd = codes2(p, fv, N); if (d.vd) d.vdS = ms;
+    d.nzd = codes2(p + fv, fn, M); if (d.nzd) d.nzdS = ms;
+  }
   out.d = d;
 }
 function decoded(song: Song): Promise<Decoded> {
@@ -168,8 +168,12 @@ const LOUD_EVENT_DB = 20 * Math.log10(4);          // the _l events' definition 
 // converter's residual 'voiced' with no bursts beat the shipped version — bursts a tick ahead — by +0.18 ViSQOL median, 11 of 13
 // songs, rock 1.95 -> 3.04; bursts a tick behind were worse on 3 of 4 songs: a one-shot's delay against the SoundInstance
 // commands changes from song to song)
-interface Client { sounds: number; mixHz: number; fold: boolean; limit: boolean; drums?: boolean; }
-const CLIENTS: Partial<Record<string, Client>> = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false, drums: false } };
+// level: how much louder than the files the headphones play by default (dB, by setVolume). The phone plays every sound
+// 32.5 dB under its file into 16 bits (most songs' floor is that quantisation), and clips the mix at about 2 file units
+// (run 41147544874's calib loud: a sine of 0.91 at setVolume 2 exact, at 4 and 8 a hard clip at 2.0; the mixer calib's 16
+// sines fit 1.7): +6 dB doubles every level and keeps the loudest moments of the test songs under it
+interface Client { sounds: number; mixHz: number; fold: boolean; limit: boolean; drums?: boolean; level?: number; }
+const CLIENTS: Partial<Record<string, Client>> = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false, drums: false, level: 6 } };
 function clientOf(p: Player): Client | undefined {
   let kind = '';
   try { kind = String(p.clientSystemInfo.platformType); } catch { /* not known (an older client) */ }
@@ -184,7 +188,8 @@ function platformVoices(p: Player): number {
 /** what a client's own engine asks for (measured): the voices that fit, its frequency limit, folding, the sound budget */
 function platformEngine(p: Player): Partial<Settings> {
   const c = clientOf(p);
-  return c ? { voices: platformVoices(p), hf: c.mixHz ? Math.round(c.mixHz / 2 * 0.958) : 0, fold: c.fold, sounds: c.limit ? c.sounds : 0, bursts: c.drums ?? true } : {};
+  return c ? { voices: platformVoices(p), hf: c.mixHz ? Math.round(c.mixHz / 2 * 0.958) : 0, fold: c.fold, sounds: c.limit ? c.sounds : 0, bursts: c.drums ?? true,
+    ...(c.level ? { level: c.level, levelVia: 'volume' as const } : {}) } : {};
 }
 interface Target { player?: Player; dim?: Dimension; loc?: Vector3; osc: SoundInstance[]; nz: (SoundInstance | undefined)[]; }
 
@@ -207,8 +212,9 @@ class Session {
   ev(name: string) { return this.mode === 'speaker' ? name + '_3d' : this.loudEvents ? name + '_l' : name; }
   /** the headphones play the _l events (s.level by 'events') */
   get loudEvents() { return this.mode === 'phones' && (this.s.level ?? 0) > 0 && this.s.levelVia === 'events'; }
-  /** the factor every level is sent with: s.level, less what the _l events already add */
-  get lv() { return Math.pow(10, ((this.s.level ?? 0) - (this.loudEvents ? LOUD_EVENT_DB : 0)) / 20); }
+  /** the factor every level is sent with: s.level, less what the _l events already add (the headphones only: a 3D speaker's
+   *  volume also sets how far it carries) */
+  get lv() { return this.mode === 'phones' ? Math.pow(10, ((this.s.level ?? 0) - (this.loudEvents ? LOUD_EVENT_DB : 0)) / 20) : 1; }
   /** the events the instances of the targets were built with (a level change to or from 'events' rebuilds them) */
   builtLoud = false;
 
@@ -292,7 +298,7 @@ class Session {
   /** commands of this tick waiting for the budget: [priority, voice (< 0: noise band -1-v), pitch (-1 none), fade duration, level (-1 none)] */
   private queue: [number, number, number, number, number][] = [];
   deferred = 0;
-  /** attack: a note's start (always sent, first under a budget); a fitted fade (meta.vd) of the same length is not one */
+  /** attack: a note's start (always sent, first under a budget); a fitted fade (format 2) of the same length is not one */
   private send(v: number, hz: number, dur: number | undefined, level: number, attack = dur === FADE_ATTACK) {
     let p = -1;
     if (hz > 0) {
@@ -379,6 +385,9 @@ class Session {
     this.targets = this.targets.filter((t) => !t.player || t.player.isValid);
     if (!this.targets.length) { this.ending = -1; return; }
     if (this.warm > 0) { this.warm--; return; }
+    // a song with fitted fades plays them on whole frames: back at speed 1 after another speed, the playhead goes to the nearest
+    // frame (under half a frame, 25 ms)
+    if ((this.d.vd || this.d.nzd) && this.s.speed === 1 && !this.frozen && !Number.isInteger(this.ph)) this.ph = Math.round(this.ph);
     const d = this.d, N = d.N, sp = this.frozen ? 0 : this.s.speed, ph = this.ph, ph2 = ph + sp;
     const gain = (this.s.volume * this.lv) / OSC_AMP, r = this.ratio, lv = this.lv;
     if ((sp > 0 && ph >= d.F - 1) || (sp < 0 && ph <= 0)) {
@@ -404,7 +413,7 @@ class Session {
         if (a1 > 0 && f1 * r >= hf) { this.send(v, 0, FADE_SMOOTH, SILENT); fold(f1, a1); continue; }
       }
       if (d.vd && sp === 1 && Number.isInteger(ph)) {
-        // a song with fitted fades (meta.vd): the fade of this tick to frame ph+1, its own length (an attack is a short one)
+        // a song with fitted fades (format 2): the fade of this tick to frame ph+1, its own length (an attack is a short one)
         const [a0, f0] = this.at(v, ph), [a1, f1] = this.at(v, q2);
         this.send(v, f0 && f1 ? Math.sqrt(f0 * f1) : f1 || f0, d.vdS![d.vd[ph * N + v]], a1 * gain * this.eqGain((f1 || f0) * r), false);
         continue;
@@ -455,7 +464,7 @@ class Session {
         }
         if (onset(ph2, ph2 + sp, b)[1] > 0) continue;                      // the next tick attacks: hold
       }
-      // a song with fitted fades (meta.nzd) gives each band its own fade length at speed 1 (whole frames)
+      // a song with fitted fades (format 2) gives each band its own fade length at speed 1 (whole frames)
       const dur = d.nzd && sp === 1 && Number.isInteger(ph) ? d.nzdS![d.nzd[ph * d.M + b]] : FADE_SMOOTH;
       this.noise(b, this.s.noise ? (a * this.s.volume * lv * this.eqGain(c)) / NOISE_RMS[b] : SILENT, dur);
     }
