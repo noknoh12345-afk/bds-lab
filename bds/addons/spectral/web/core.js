@@ -764,18 +764,37 @@
     }
     const tail = meta.fd ? (meta.fd.v || 0) + (meta.fd.nz || 0) : 0;      // (format 2: the fitted fades follow the frames)
     if (p !== bytes.length - tail) throw new Error('decode: ' + (bytes.length - tail - p) + ' bytes left');
-    return { F, N, M, fq, am, att, nz, events };
+    // format 2: the fade length (s) of voice v at tick k = fms[vd[k * N + v]], of noise band b = fms[nzd[k * M + b]] (src/main.ts decodeJob)
+    let vd = null, nzd = null, fms = null;
+    if (meta.fd && meta.fd.ms && meta.fd.ms.length === 4) {
+      fms = meta.fd.ms.map((x) => x / 1000);
+      const codes = (at, len, n) => {
+        const per = (n + 3) >> 2; if (!len || len !== F * per) return null;
+        const c = new Uint8Array(F * n);
+        for (let k = 0; k < F; k++) for (let j = 0; j < n; j++) c[k * n + j] = (bytes[at + k * per + (j >> 2)] >> (2 * (j & 3))) & 3;
+        return c;
+      };
+      vd = codes(p, meta.fd.v || 0, N); nzd = codes(p + (meta.fd.v || 0), meta.fd.nz || 0, M);
+    }
+    return { F, N, M, fq, am, att, nz, events, vd, nzd, fms };
   }
 
   // ---------------------------------------------------------------- engine schedule (src/main.ts tick rules, speed 1)
   /** per voice: list of {T, hz, dur, level} commands exactly as the add-on sends them */
   function schedule(dec) {
-    const { F, N, fq, am, att } = dec, voices = [];
+    const { F, N, fq, am, att, vd, fms } = dec, voices = [];
     for (let v = 0; v < N; v++) {
       const cmds = []; let any = false;
       for (let T = 0; T < F; T++) {
         const a = (k) => (k >= 0 && k < F ? am[k * N + v] : 0), f = (k) => fq[k * N + v], A = (k) => k < F && att[k * N + v] && a(k) > 0;
         if (a(T) > 0) any = true;
+        if (vd) {
+          // format 2: every tick fades to the next frame in its own fitted length (no attack rule), the last one to silence
+          const fa = a(T) > 0 ? f(T) : 0, fb = T + 1 < F && a(T + 1) > 0 ? f(T + 1) : 0;
+          if (T + 1 < F) cmds.push([T, fa && fb ? Math.sqrt(fa * fb) : fb || fa, fms[vd[T * N + v]], a(T + 1)]);
+          else cmds.push([T, 0, FADE_SMOOTH, 0]);
+          continue;
+        }
         if (A(T)) { cmds.push([T, f(T), FADE_ATTACK, a(T)]); continue; }
         if (A(T + 1)) { cmds.push([T, a(T) > 0 ? f(T) : 0, -1, 0]); continue; }
         const fa = a(T) > 0 ? f(T) : 0, fb = T + 1 < F && a(T + 1) > 0 ? f(T + 1) : 0;

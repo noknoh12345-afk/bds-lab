@@ -59,6 +59,7 @@ h2 { font-family: var(--font-display); font-weight: 400; font-size: 17px; margin
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
 .legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
 .transport { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.transport .phone { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; cursor: pointer; }
 .ab { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 3px; background: var(--bg); }
 .ab button { border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 14px; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
 .ab button[aria-pressed="true"] { background: var(--amethyst); color: var(--panel); }
@@ -132,6 +133,7 @@ button.main:disabled { opacity: 0.5; cursor: default; }
           <button id="playOrig" aria-pressed="false">▶ 原曲</button>
         </div>
         <button class="ghost" id="stopBtn">■ 止める</button>
+        <label class="phone"><input type="checkbox" id="phone"> 電話の聞こえ方（24 声）</label>
         <span class="time" id="time">0:00.0 / 0:22.9</span>
       </div>
       <p class="msg" id="playMsg">再生中に切り替えると同じ位置で聴き比べられます。図をタップすると、その位置へ移ります。</p>
@@ -234,7 +236,7 @@ async function decodeFile(buf) {
   return { x, orig: ab };
 }
 async function analyse(t) {
-  t.state = 'busy'; t.progress = 0; t.error = ''; t.game = null; renderTracks();
+  t.state = 'busy'; t.progress = 0; t.error = ''; t.game = null; t.gamePhone = null; renderTracks();
   const run = (t.run = (t.run || 0) + 1);
   try {
     const r = await C.convert(t.x, { voices: t.voices, title: t.title, artist: t.artist, id: t.id, progress: async (f) => {
@@ -357,14 +359,17 @@ function bandNoise(sr, n, lo, hi, seed) {
   let e = 0; for (let i = 0; i < n; i++) e += re[i] * re[i];
   const g = 1 / Math.sqrt(e / n), out = new Float32Array(n); for (let i = 0; i < n; i++) out[i] = re[i] * g; return out;
 }
-async function renderGame(t) {
-  if (t.game) return t.game;
+// phone: what a phone plays (its client sounds 32 at once: the song's first 24 voices beside the 8 noise bands, src/main.ts)
+async function renderGame(t, phone = false) {
+  const key = phone ? 'gamePhone' : 'game';
+  if (t[key]) return t[key];
   const d = t.dec, sr = 48000, T = 0.05, len = Math.ceil((d.F + 4) * T * sr);
   const oc = new OfflineAudioContext(1, len, sr);
-  const SIL = C.SILENT, CENT = Math.pow(2, 1 / 2400) - 1, DB = Math.pow(10, 0.25 / 20);
+  // (the add-on leaves out pitch moves under 3 cents and level moves under 0.75 dB)
+  const SIL = C.SILENT, CENT = Math.pow(2, 3 / 1200) - 1, DB = Math.pow(10, 0.75 / 20);
   const sched = C.schedule(d);
-  sched.forEach((cmds) => {
-    if (!cmds) return;
+  sched.forEach((cmds, v) => {
+    if (!cmds || (phone && v >= 24)) return;
     const o = oc.createOscillator(), gn = oc.createGain(); o.type = 'sine'; o.connect(gn).connect(oc.destination);
     gn.gain.setValueAtTime(SIL, 0); o.frequency.setValueAtTime(1760, 0);
     let lp = -1, ll = SIL;
@@ -373,7 +378,7 @@ async function renderGame(t) {
       if (hz > 0 && !(lp > 0 && Math.abs(hz / lp - 1) < CENT)) { o.frequency.setValueAtTime(hz, at); lp = hz; }
       if (dur >= 0) {
         const L = Math.max(SIL, level);
-        if (dur === C.FADE_SMOOTH && L / ll < DB && ll / L < DB) continue;
+        if (!(dur === C.FADE_ATTACK && !d.vd) && L / ll < DB && ll / L < DB) continue;
         gn.gain.setValueAtTime(ll, at); gn.gain.linearRampToValueAtTime(L, at + dur); ll = L;
       }
     }
@@ -386,7 +391,9 @@ async function renderGame(t) {
     for (let k = 0; k < d.F; k++) {
       const L = Math.max(SIL, k + 1 < d.F ? d.nz[(k + 1) * d.M + b] : 0);
       if (L / ll < DB && ll / L < DB) continue;
-      gn.gain.setValueAtTime(ll, k * T); gn.gain.linearRampToValueAtTime(L, k * T + C.FADE_SMOOTH); ll = L;
+      // (a song in format 2 fades each band in its own fitted length, 5-50 ms)
+      const dur = d.nzd && k + 1 < d.F ? d.fms[d.nzd[k * d.M + b]] : C.FADE_SMOOTH;
+      gn.gain.setValueAtTime(ll, k * T); gn.gain.linearRampToValueAtTime(L, k * T + dur); ll = L;
     }
     s.start(0);
   }
@@ -400,14 +407,14 @@ async function renderGame(t) {
   for (const [k, sub, b, a] of d.events) {
     const s = oc.createBufferSource(); s.buffer = bursts[b]; const gn = oc.createGain(); gn.gain.value = a; s.connect(gn).connect(oc.destination); s.start(k * T + sub * 0.0125);
   }
-  t.game = await oc.startRendering();
-  matchLevels(t);
-  return t.game;
+  t[key] = await oc.startRendering();
+  matchLevels(t, t[key]);
+  return t[key];
 }
 function rms(buf) { const x = buf.getChannelData(0); let e = 0; for (let i = 0; i < x.length; i += 4) e += x[i] * x[i]; return Math.sqrt(e / (x.length / 4)) || 1e-9; }
-function matchLevels(t) {
-  if (!t.game || !t.orig) return;
-  const gx = t.game.getChannelData(0), target = rms(t.orig) / rms(t.game);
+function matchLevels(t, buf = t.game) {
+  if (!buf || !t.orig) return;
+  const gx = buf.getChannelData(0), target = rms(t.orig) / rms(buf);
   let pk = 0; for (let i = 0; i < gx.length; i++) pk = Math.max(pk, Math.abs(gx[i] * target));
   const g = target / Math.max(1, pk / 0.98); for (let i = 0; i < gx.length; i++) gx[i] *= g;
 }
@@ -424,10 +431,11 @@ async function play(kind) {
   stopPlay(true);
   const ctx = ctxNow(); await ctx.resume();
   let buf;
-  if (kind === 'game') { $('playMsg').textContent = 'ゲーム内の音を合成しています…'; buf = await renderGame(t); }
+  const phone = $('phone').checked;
+  if (kind === 'game') { $('playMsg').textContent = 'ゲーム内の音を合成しています…'; buf = await renderGame(t, phone); }
   else buf = t.orig;
   if (!buf) { $('playMsg').textContent = '原曲はこの曲では聴けません。'; return; }
-  $('playMsg').textContent = kind === 'game' ? '常駐発振器 + ノイズ帯域 + 打撃音（アドオンと同じ tick の規則で合成）' : '原曲';
+  $('playMsg').textContent = kind === 'game' ? `正弦波ボイス ${phone ? Math.min(24, t.dec.N) : t.dec.N} 本 + ノイズ帯域 ${t.dec.M} 本${t.dec.events.length ? ' + 打撃音' : ''}（アドオンと同じ tick の規則と、曲ごとに合わせたフェードで合成）` : '原曲';
   which = kind; offset = Math.min(at, buf.duration - 0.05);
   src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination);
   src.onended = () => { stopPlay(); };
@@ -445,6 +453,7 @@ function drawHead() {
 $('playGame').addEventListener('click', () => play('game'));
 $('playOrig').addEventListener('click', () => play('orig'));
 $('stopBtn').addEventListener('click', () => stopPlay());
+$('phone').addEventListener('change', () => { if (which === 'game') play('game'); });   // (switches in place, at the same position)
 $('stage').addEventListener('click', (e) => {
   const t = current; if (!t || t.state !== 'ok') return;
   const r = $('stage').getBoundingClientRect(), p = ((e.clientX - r.left) / r.width) * t.song.meta.seconds;
