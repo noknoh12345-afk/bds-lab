@@ -21,3 +21,4 @@ GeoUI で（URL の画像で絵を出す）。本物の解像度で確かめる�
 
 ## Maintenance
 - 2026-10-30 BDS 1.26.61.1: moved to stable APIs
+- 2026-10-31 BDS 1.26.61.1: moved to stable APIs

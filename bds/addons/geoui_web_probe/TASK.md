@@ -21,3 +21,4 @@ URL の画像（profile_image_renderer の {"type":7,"url":…}）を GeoUI に�
 
 ## Maintenance
 - 2026-10-30 BDS 1.26.61.1: moved to stable APIs
+- 2026-10-31 BDS 1.26.61.1: moved to stable APIs

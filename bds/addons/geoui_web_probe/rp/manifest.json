@@ -4,26 +4,14 @@
     "name": "GeoUI Web Probe RP",
     "description": "GeoUI: URL images and F1 measured on the real game (bds-lab bds/geoui/web/probe.mjs)",
     "uuid": "c8f55beb-923e-4e2e-a832-e8b17b2e2d0c",
-    "version": [
-      1,
-      0,
-      0
-    ],
-    "min_engine_version": [
-      1,
-      26,
-      50
-    ]
+    "version": [1, 0, 1],
+    "min_engine_version": [1, 26, 50]
   },
   "modules": [
     {
       "type": "resources",
       "uuid": "6a616676-71f5-4a97-9454-56e8c894f251",
-      "version": [
-        1,
-        0,
-        0
-      ]
+      "version": [1, 0, 1]
     }
   ]
 }

@@ -10,3 +10,4 @@ geoui_web_probe で普通の題名（`/title @a title HELLO`）がどのやり�
 
 ## Maintenance
 - 2026-10-30 BDS 1.26.61.1: moved to stable APIs
+- 2026-10-31 BDS 1.26.61.1: moved to stable APIs
