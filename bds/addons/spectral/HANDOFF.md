@@ -76,6 +76,9 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
     (2) 模型でまとめて（tools/exp/batch_play.py: 実時間を待たない、推測）。**11 回目（run 41200540880）がまとめ録りの最初の実行**:
     d_ / e_（+10 dB、今度は本当に）26 本・3D の距離 3 / 12 / 24 ブロック・同じ run の天井 13 曲、42 本を 6 本の録音で
 
+11. **11 回目の実機**（run 41200540880、実測、まとめ録りで 42 本）: **+10 dB は +6 dB より 10/13 で上（中央値 +0.11）、同じ run の天井から
+    0.3 以内 12/13（+6 dB は 10/13）**。3D は 24 ブロックで無音（作るときの volume 1 では 16 ブロックほどまで: 推測）。表: SPEC.md
+
 ## いまの状態
 
 - ブランチ addon/spectral（最後に push したコミットは git log で）。`node lab.mjs go`（ローカルの BDS 1.26.61.1: lab の api が取ってきたもの。
@@ -87,7 +90,12 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## 次にやること
 
-1. **11 回目の結果（run 41200540880、まとめ録りの最初）**: 引き継ぎ zip の scratch/run11.sh（ログ → collect.py → fetch_rec.py → dropouts →
+0. **11 回目は集め終わった**（SPEC.md の 11 回目、measured/redroid-41200540880.json）。次は **電話の既定のレベルを +10 dB に**するか決める:
+   実測で 10/13 上・天井から 0.3 以内 12/13。下がるのは話し声と歌（夏目漱石 −0.10・Name of Love −0.07）。変えるなら src/main.ts の CLIENTS・
+   tools/spectral.py の CL_LEVEL_DB・web/core.js をいっしょに（py と js のバイト一致 tools/parity.py）、tests.txt の電話の節の +6 dB の行、
+   デモ曲の作り直し（src/songs/demo.ts、web/build.py のデモ）、`node lab.mjs go`。歪みは聴き比べ（dist/compare_run11: d と e）で確かめる。
+   3D の届く距離: LivePlayer.loop の playSound の volume を上げて 3 / 12 / 24 / 48 ブロックを測り、FOLLOW_RANGE を合わせる
+1. （済み）**11 回目の結果（run 41200540880、まとめ録りの最初）**: 引き継ぎ zip の scratch/run11.sh（ログ → collect.py → fetch_rec.py → dropouts →
    表 → 聴き比べのページ）。まず**まとめ録りが働いたか**: ジョブのログに `[spectral rig]` が 42 行（d_/e_ 26・ka_/kb_/kc_ 3・c_ 13）、
    `audio stop` の行の「目印で N 本に切り分けました」、切り分けた録音が曲ごとに 1 曲だけ入っているか（dropouts.py・recorded_s ≈ 20 s）。
    働かなければ app/lib/scenario.mjs・audiorec.mjs cut を直す（tests/results-public-offline.mjs の 10 節）か、app11.json の batch を 0 に。
