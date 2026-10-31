@@ -374,7 +374,7 @@ wait 300
 @A cmd /spectral:live nothing phones
 ~ @A no live stream "nothing"
 
-## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice)
+## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice, nobody hears a talker who left)
 @A cmd /spectral:live_demo demo phones
 ~ @A ● live demo demo_demo: Demo \(original\) \(460 frames, 24 voices\) → phones:A
 wait 1500
@@ -403,5 +403,15 @@ wait 1200
 ~ @A live demo_demo: \d+ frames, 24 voices, follow A listeners 0
 @A cmd /spectral:live demo_demo stop
 ~ @A ■ live demo_demo
-tp A 0 -60 0
+tp A 28 -60 0
+tp D 31 -60 0
+scriptevent spectral:live {"id":"t2","m":{"N":2,"M":8,"amp":[-90,0.75],"nz":[-100,0.5],"fd":[5,12,25,50]},"s":0,"f":"A2QQcAAAAAAAAAAAAA///w==","at":"follow:D"}
+wait 600
+@A cmd /spectral:live
+~ @A live t2: 1 frames, 2 voices, follow D listeners 1
 @D leave
+wait 1000
+@A cmd /spectral:live
+~ @A live t2: 1 frames, 2 voices, follow D listeners 0
+scriptevent spectral:live {"id":"t2","end":true}
+tp A 0 -60 0

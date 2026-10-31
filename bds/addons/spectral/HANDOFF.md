@@ -49,27 +49,42 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
      @discordjs/voice（暗号化・DAVE）・prism-media・opusscript）。--bds でサーバーを自分で起動してコンソールへ、--stdout、--lab。
      Discord なしの試験 tools/live/test_bridge.mjs（同じ Opus を同じ復号器で）。本物の Discord ではまだ試していない（トークンがない）
    - ローカルの本物の BDS で: 20 秒の声を実時間で 400 フレーム送って 400 届いた（bridge --fake --lab）。tests.txt に 2 節
-4. 内蔵のデモ曲（src/songs/demo.ts）を新しい既定で変換し直した。変換ページ（web/）は「仕上げ」（5 回 / 2 回 / なし / ライブの変換）を
-   選べる。ライブの変換を選ぶと、Discord の声と同じ道（先を見ない 50 ms ずつ）でその曲を作り、ゲーム内の音で聞ける
-5. 9 回目の実機（tools/exp/app9.json → app.txt、曲は前もって変換した tools/exp/packs/run9 = 模型で採点したデータそのもの、変換を
-   40 分の外へ）: d_（新しい既定）と t_（8 回目の既定）を曲ごとに交互に 13 曲ずつ、i_ ライブの変換 3 曲、jp_ ライブの道、jl_ / jr_ 3D で
-   左右（lr_db）
+4. 内蔵のデモ曲（src/songs/demo.ts）を新しい既定で変換し直した。変換ページ（web/、claude.ai の Spectral Converter）は「仕上げ」
+   （5 回 / 2 回 / なし / ライブの変換）を選べる。ライブの変換を選ぶと、Discord の声と同じ道（先を見ない 50 ms ずつ、24 声まで）で
+   その曲を作り、ゲーム内の音で聞ける。ページは本体 1.1.0 を入れて出し直した（ヘッドレスの Chromium で 3 つの仕上げと再生を確かめた）
+5. **版 1.1.0**（同じ UUID、前の版の上に更新として入る）。説明文にライブと 3D。follow / near は**聞く人それぞれの 3D の音**
+   （player.playSound に location）。ライブの道: ひと続き（4 tick 何も来なかったあと）の最初のフレームから鳴らす、番号 0 にメタがあれば
+   新しいストリーム、黙っている声の音程は新しいフレームから。橋渡し: 120 ms 声が来なければ無音 2 フレーム、文の間は同じストリーム、
+   チャンネルを出たら終わり、声の接続が切れて戻らなければエラーで終わる。試験 147/147（follow の節は B・C・D の 3 人が聞き、離れると減る）
+6. **9 回目の実機**（run 41187515049、実測）: 新しい既定 d_ は 8 回目の既定 t_ より **13 曲中 11 曲で上、差の中央値 +0.09・平均 +0.14**
+   （同じ run の中）。ライブの道 2.90（曲として 2.91）、3D の左右 lr_db +37.3 / −46.1 dB、ライブの変換は前もっての変換より 0.09–0.18 低い。
+   表: SPEC.md。聴き比べのページ（claude.ai の「Spectral Player 9 回目の聴き比べ」: tools/abx/make_compare_real.py --a t --b d
+   --refs c,jp,i,jl,jr）。録音は鍵なしでそのまま取れた（tools/rig/fetch_rec.py）
+7. tools/rig/dropouts.py の時間合わせを曲の頭（＋250 ms 以内の相互相関）に: tools/exp/common.aligned は繰り返しの多い曲（EDM）で
+   別の小節に合わせることがあり、無い「抜け」を出した。本当の抜けは d_ のファンクの終わり近くの約 0.5 秒だけ
+8. エミュレーター（推測）: 新しい既定で +8 / +10 dB（tools/exp/results/level2.jsonl）: +10 は 13 曲中 9 曲で上・中央値 +0.02・平均 +0.16
+   （ドラム +1.27・ショパン +0.31・デモ +0.28、下がるのは合唱 −0.12・Name of Love −0.11 ほか）。クリップの歪みは前の推測で話し声 −21 dB。
+   **10 回目の実機（run 41197478510）**で d_（9 回目と同じデータ: run をまたいだばらつき）と e_（+10 dB で詰めて +10 dB で）を曲ごとに
+   交互に、kl_ / kr_（near = follow と同じ、聞く人ごとの 3D）で左右
 
 ## いまの状態
 
-- ブランチ addon/spectral。`node lab.mjs go`（ローカルの BDS 1.26.61.1: lab の api が取ってきたもの。zip はリポジトリの外）
-- 8 回目（run 41170496546、実測）: 合成による分析 t_ の中央値 **3.04**（天井 3.09）、天井から 0.3 以内 **8/13**。svr の重み o_（8 曲）は
-  ロック 3.74（t_ 2.77）・デモ 2.38（t_ 3.04）とばらつきが大きい。同じ run の 7 回目の既定 w_ はロック 2.80（7 回目の run では 3.32）:
-  **run をまたぐと同じ設定で 0.5 動く**。比べるのは同じ run の中だけ（表: SPEC.md）
+- ブランチ addon/spectral（最後に push したコミットは git log で）。`node lab.mjs go`（ローカルの BDS 1.26.61.1: lab の api が取ってきたもの。
+  zip はリポジトリの外）: DONE（test 147/147, qa clean）
+- 9 回目（run 41187515049、実測）: 新しい既定 d_ の中央値 **2.91**、天井（1–2 回目の run、目安）から 0.3 以内 **9/13**。同じデータの t_ が
+  8 回目 3.04（デモ）→ 9 回目 2.36: **run をまたぐと同じデータで 0.7 動く**。比べるのは同じ run の中だけ（表: SPEC.md）
+- verify.yml は addon/spectral で前から tests/scratch-offline.mjs が落ちている（このユニットと関係なく、手元でも同じ。main には
+  このブランチにない直しがある）。1b2e37d では tests/make-offline.mjs も一度落ちたが、手元では通る（時間の揺れ）
 
 ## 次にやること
 
-1. 9 回目の結果: `python3 tools/rig/collect.py job.log --run <id>`、`python3 tools/rig/fetch_rec.py <id>`、SPEC.md の表、録音の聴き比べ
-   （tools/abx/make_compare_real.py）。jl / jr の lr_db で 3D の左右が出ているか
-2. レベル: 新しい既定で +8 / +10 dB をエミュレーター（clip 2.0）で。上がって歪みが小さければ実機の 10 回目で
-3. 遠い曲（合唱・EDM・オーケストラ・ロック・ドラム）: 同じ run で 2 回録って、ばらつきと差を分ける
-4. 本物の Discord で bridge を（トークンとサーバー: ユーザーが用意）
-5. 変換ページ（claude.ai の Spectral Converter）を新しい既定とライブの変換で出し直す
+1. 10 回目の結果（run 41197478510）: `gh api repos/noknoh12345-afk/bds-lab/actions/jobs/<job>/logs > job.log`、
+   `python3 tools/rig/collect.py job.log --run 41197478510`、`python3 tools/rig/fetch_rec.py 41197478510`、`python3 tools/rig/dropouts.py <録音>`。
+   d_ の 9 回目と 10 回目の差（ばらつき）、e_ − d_（レベル: 上がって歪みが聞こえなければ既定を +10 に。src/main.ts CLIENTS と
+   tools/spectral.py CL_LEVEL_DB・web/core.js をいっしょに）、kl_ / kr_ の lr_db（聞く人ごとの 3D でも左右が出るか）
+2. 本物の Discord で bridge を（トークンとサーバー: ユーザーが用意。tools/live/README.md の手順）
+3. ライブの変換を良くする（実機で前もっての変換より 0.09–0.18 低い）: 先を 1 フレームだけ見る（遅れ +50 ms）、フレームごとの軽い合成による分析
+4. 遠い曲（合唱・ドラム・デモ）: 同じ run で 2 回録って、ばらつきと差を分ける
 
 ## 実機で測るしくみ（redroid.yml, addon spectral, mode run → app.txt）
 

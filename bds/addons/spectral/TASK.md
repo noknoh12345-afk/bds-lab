@@ -12,7 +12,8 @@
    スピーカー: その場から 3D で近くの全員に）・`/spectral:stop`。速度（音程そのまま・逆再生）・移調・EQ・音量・声の数は鳴らしながら
 4. **ライブ（近接ボイスチャット・立体音響）**: `/spectral:live` が流れている声の一覧。Discord のボイスチャンネルの声を、つないだ
    プレイヤーの位置から 3D で（近づくと大きく、向きで左右、その人に付いて動く）: tools/live/README.md の bridge.mjs。
-   試し: `/spectral:live_demo demo follow`
+   試し: `/spectral:live_demo demo near`（その場に置いて、近くの人それぞれが 3D で聞く）・`/spectral:live_demo demo follow <誰>`（その人から:
+   本人には聞こえない）
 5. **電話**は同時に 32 音しか鳴らない（実測）ので自動で 24 声＋ノイズ 8、ファイルより 6 dB 大きく。Realms や人が多いときは
    `/spectral:mode light`（16 声・1 人 1 tick 24 命令まで）
 
@@ -45,7 +46,7 @@
 - [x] ファイルより大きく鳴らす: ゲームはどの音もファイルより 32.5 dB 小さく 16 bit で鳴らすので、静かな曲の下限は量子化（## louder than the files: a level in dB, by setVolume or by the loud sound events (the game plays every sound 32.5 dB under its file)）
 - [x] 変換器が tick ごとに選んだ長さのフェードで声とノイズ帯域を鳴らす（## a song with fitted fades (tools/spectral.py nz_fade, v_fade): each voice and noise band fades as long as the converter chose, tick by tick）
 - [x] ライブ: 声（ボイスチャット・マイク）をその場で受け取り、届いた順に鳴らす。script event `spectral:live`、ジッターバッファ 2 tick、届かなかったフレームは数えて埋める、送り手が始め直したら新しいストリーム、終わり（## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), starts again when its sender does, and ends）
-- [x] ライブの道で曲を 1 フレームずつ送る（ボイスチャットの橋渡しと同じ形）: ヘッドホンに、そして歩く人から 3D で（音がその人に付いて動く・48 ブロック以内の人それぞれに・話す本人には聞こえない: 近接ボイスチャット・立体音響）（## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice)）
+- [x] ライブの道で曲を 1 フレームずつ送る（ボイスチャットの橋渡しと同じ形）: ヘッドホンに、そして歩く人から 3D で（音がその人に付いて動く・48 ブロック以内の人それぞれに・話す本人には聞こえない・いなくなった人の声は誰にも聞こえない: 近接ボイスチャット・立体音響）（## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice, nobody hears a talker who left)）
 
 ## Guessed
 <!-- values decided without asking -->
@@ -64,18 +65,22 @@
 - 別のビヘイビアーパック（曲パック）からの script event は本体に届く（LAB_UTILITIES で 2 パック同時に確認）
 - 1 人ヘッドホン再生: 56 インスタンス、平均 16–30 命令/tick（最大 89）、スクリプト 1.5–1.8 ms/tick。QA（3 人・再接続・/reload・再起動）で 2 ms/tick 以内
 
-## この版の状態（2026-10-31 4 回目のセッション、実機での測定）
+## この版の状態（2026-10-31 4 回目のセッション、版 1.1.0、実機での測定）
 
 引き継ぎ: HANDOFF.md。実機の限界値と曲の成績: SPEC.md（実測と推測を分けた）、数の元: measured/。
 - 実機（redroid の Android 14 に Play が入れた Minecraft 1.26.60.4、改造なし）で録って測った: 同時発音数 32、fade は振幅で直線・指定どおり、
-  ゲームは 24 kHz で混ぜて素材より −32.5 dB・16 bit、setVolume は 2 まで指定どおりでその上はクリップ、seekTo は一定のずれ（σ 6 ms）
+  ゲームは 24 kHz で混ぜて素材より −32.5 dB・16 bit、setVolume は 2 まで指定どおりでその上はクリップ、seekTo は一定のずれ（σ 6 ms）、
+  **3D の音は左右がはっきり分かれる**（6 ブロック左で +37 dB・右で −46 dB）
 - 変換器の既定: 合成による分析（変換の中で実機の模型を通して tick ごとの音量とフェードを選ぶ）を、帯域を ViSQOL の MOS が頼る重さで、
-  5 回、音量を保って（エミュレーター 13 曲で 8 回目の既定より 13/13 で上、中央値 3.247 → 3.329: 推測）。py と js はバイト一致
-- 実機の ViSQOL の中央値（8 回目 run 41170496546、13 曲）: 合成による分析 **3.04**（天井 3.09、0.3 以内 **8/13**）。9 回目で新しい既定を
-  同じ run で比べる。`node lab.mjs go`（ローカルの BDS 1.26.61.1）: **DONE dist/Spectral_Player.mcaddon（test 144/144, qa clean）**
-- ライブ: 声などを 50 ms ずつその場で受け取って鳴らす（script event spectral:live）。ヘッドホン・3D スピーカー・動く人から 3D（近接ボイス
-  チャット）。web/live.js がその場の変換、tools/live/bridge.mjs が Discord のボイスチャンネルをつなぐ（tools/live/README.md）
+  5 回、音量を保って。py と js はバイト一致
+- **実機の ViSQOL（9 回目 run 41187515049、13 曲、同じ run の中で）: 新しい既定 中央値 2.91、8 回目の既定より 11/13 で上（差の中央値 +0.09・
+  平均 +0.14）**。天井（1–2 回目の run、目安）から 0.3 以内 9/13。run をまたぐと同じデータで 0.7 動くことがある（デモ）ので、比べるのは
+  同じ run の中だけ。`node lab.mjs go`（ローカルの BDS 1.26.61.1）: **DONE dist/Spectral_Player.mcaddon（test 147/147, qa clean）**
+- ライブ: 声などを 50 ms ずつその場で受け取って鳴らす（script event spectral:live）。ヘッドホン・3D スピーカー・その場に聞く人ごとの 3D（near）・
+  動く人から 3D（follow: 近接ボイスチャット）。実機でライブの道は曲として鳴らすのと同じ質（2.90 / 2.91）。web/live.js がその場の変換
+  （実機で前もっての変換より 0.09–0.18 低い）、tools/live/bridge.mjs が Discord のボイスチャンネルをつなぐ（tools/live/README.md）
 - 録音: 実行の成果物の public/spectral/rec/ に平文の Opus（鍵なし）。管理パネルでサインインして聞ける、notify.yml が Discord に送る
+  （9 回目の 32 本を tools/rig/fetch_rec.py でそのまま取れた）
 
 ## Tools
 - tools/spectral.py: MP3 → 曲データ（--ts で src/songs/*.ts）。--preview でアドオンと同じ tick 規則の試聴 WAV/MP3。既定はアナリシス v2（部分音のトラック → 声部、ノイズ帯域と打撃音の帯域を NSIM-lite で合成して選ぶ）、`--analysis v1` で前の版

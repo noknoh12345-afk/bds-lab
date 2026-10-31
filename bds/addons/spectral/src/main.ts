@@ -194,7 +194,7 @@ function platformEngine(p: Player): Partial<Settings> {
   return c ? { voices: platformVoices(p), hf: c.mixHz ? Math.round(c.mixHz / 2 * 0.958) : 0, fold: c.fold, sounds: c.limit ? c.sounds : 0, bursts: c.drums ?? true,
     ...(c.level ? { level: c.level, levelVia: 'volume' as const } : {}) } : {};
 }
-interface Target { player?: Player; dim?: Dimension; loc?: Vector3; osc: SoundInstance[]; nz: (SoundInstance | undefined)[]; }
+interface Target { player?: Player; dim?: Dimension; loc?: Vector3; osc: SoundInstance[]; nz: (SoundInstance | undefined)[]; gone?: boolean; }
 
 class Session {
   ph = 0; paused = false; frozen = false; ending = 0; started = false; warm = 0; burstTo = -1;
@@ -894,8 +894,19 @@ class LivePlayer {
   }
   async build(t: Target) {
     const { N, M } = this.st.meta;
-    while (t.osc.length < N) { for (let i = 0; i < 16 && t.osc.length < N; i++) t.osc.push(this.loop(t, 'spectral.osc')); await system.waitTicks(1); }
-    for (let b = 0; b < M; b++) if (!t.nz[b]) t.nz[b] = this.loop(t, 'spectral.n' + b);
+    try {
+      while (t.osc.length < N) {
+        for (let i = 0; i < 16 && t.osc.length < N; i++) t.osc.push(this.loop(t, 'spectral.osc'));
+        await system.waitTicks(1);
+        // (the listener went away, or the stream stopped, while their sounds were made: what was made stops, nothing more)
+        if (t.gone) { this.drop(t); return; }
+      }
+      for (let b = 0; b < M; b++) if (!t.nz[b]) t.nz[b] = this.loop(t, 'spectral.n' + b);
+    } catch { this.drop(t); }      // (the listener left the game in between: their client is gone)
+  }
+  private drop(t: Target) {
+    t.gone = true;
+    for (const x of [...t.osc, ...t.nz]) { try { x?.stop(); } catch { /* gone */ } }
   }
   async start() {
     if (this.at.kind === 'phones') {
@@ -922,7 +933,7 @@ class LivePlayer {
     const near = world.getPlayers().filter((q) => q.isValid && q.name !== who && q.dimension.id === w.dim.id && dist(q.location, w.loc) <= FOLLOW_RANGE);
     for (const t of [...this.targets]) {
       if (near.some((q) => q.id === t.player?.id)) continue;
-      for (const x of [...t.osc, ...t.nz]) { try { x?.stop(); } catch { /* gone */ } }
+      this.drop(t);
       this.targets.splice(this.targets.indexOf(t), 1);
     }
     for (const q of near) {
@@ -933,7 +944,7 @@ class LivePlayer {
     }
   }
   stop() {
-    for (const t of this.targets) for (const x of [...t.osc, ...t.nz]) { try { x?.stop(); } catch { /* gone */ } }
+    for (const t of this.targets) this.drop(t);
     for (const [x] of this.dying) { try { x.stop(); } catch { /* gone */ } }
     this.targets = []; this.dying = [];
   }
@@ -961,7 +972,8 @@ class LivePlayer {
     this.dying = this.dying.filter(([x, at]) => { if (at > now) return true; try { x.stop(); } catch { /* gone */ } return false; });
     if (this.at.kind !== 'follow' && this.at.kind !== 'near') return;
     const w = this.where();
-    if (!w) return;
+    // (the talker is not in the world — left, or not joined yet: nobody hears them until they are back, then listen() again)
+    if (!w) { if (this.at.kind === 'follow' && this.targets.length) this.stop(); return; }
     if (this.ticks % 10 === 0 || w.dim.id !== this.dim) { this.dim = w.dim.id; this.listen(w); }
     if (this.at.kind === 'follow' && !this.moving.length && dist(w.loc, this.anchor ?? w.loc) > FOLLOW_MOVE) {
       this.anchor = w.loc; this.moves++;
@@ -999,7 +1011,7 @@ class LivePlayer {
   tick() {
     if (!this.started) return;
     this.ticks++;
-    this.targets = this.targets.filter((t) => !t.player || t.player.isValid);
+    this.targets = this.targets.filter((t) => { if (!t.player || t.player.isValid) return true; t.gone = true; return false; });
     this.follow();
     const st = this.st, { N, M, fd } = st.meta, fdS = fd.map((x) => x / 1000);
     if (st.w < 0) return;
@@ -1096,7 +1108,13 @@ system.runInterval(() => {
 }, 1);
 cmdAny('spectral:live', 'Live streams (a voice chat, a microphone): the list, or one played on headphones, as a 3D speaker here, 3D here for each listener (near), from a player in 3D as they move (follow), or stopped',
   { 'stream?': 'string', 'place?': ['phones', 'speaker', 'near', 'follow', 'stop'], 'who?': 'player' }, async (p, a) => {
-    if (!a.stream) return lives.size ? [...lives.values()].map((st) => `live ${st.id}: ${st.frames} frames, ${st.meta.N} voices${st.gaps ? `, ${st.gaps} lost` : ''}${st.player ? ', ' + st.player.status() : ', not playing'}`).join('\n') : 'live: no stream (tools/live/bridge.mjs, or /spectral:live_demo)';
+    if (!a.stream) {
+      if (!lives.size) return 'live: no stream (tools/live/bridge.mjs, or /spectral:live_demo)';
+      // (a line a stream, a message each: several people talking at once are each listed as their own line)
+      const lines = [...lives.values()].map((st) => `live ${st.id}: ${st.frames} frames, ${st.meta.N} voices${st.gaps ? `, ${st.gaps} lost` : ''}${st.player ? ', ' + st.player.status() : ', not playing'}`);
+      if (p) for (const l of lines.slice(0, -1)) p.sendMessage(l);
+      return p ? lines[lines.length - 1] : lines.join('\n');
+    }
     const st = lives.get(a.stream); if (!st) return `§cno live stream "${a.stream}"`;
     const who: Player | undefined = a.who?.[0] ?? p;
     if (a.place === 'stop') { st.player?.stop(); st.player = undefined; return `§7■ live ${st.id}`; }

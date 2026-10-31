@@ -60,6 +60,24 @@
     "onset_recall": 0.68,
     "third_oct_db": 3.332,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 3.3275,
+    "onset_recall": 0.68,
+    "third_oct_db": 3.707,
+    "run": "41187515049"
+   },
+   "refined_svr": {
+    "visqol": 3.3349,
+    "onset_recall": 0.88,
+    "third_oct_db": 4.128,
+    "run": "41170496546"
+   },
+   "refined_svr5": {
+    "visqol": 3.5128,
+    "onset_recall": 0.76,
+    "third_oct_db": 4.793,
+    "run": "41187515049"
    }
   },
   "vocal_stars": {
@@ -116,6 +134,24 @@
     "onset_recall": 0.686,
     "third_oct_db": 5.664,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 3.0076,
+    "onset_recall": 0.7,
+    "third_oct_db": 7.18,
+    "run": "41187515049"
+   },
+   "refined_svr": {
+    "visqol": 3.3107,
+    "onset_recall": 0.729,
+    "third_oct_db": 7.567,
+    "run": "41170496546"
+   },
+   "refined_svr5": {
+    "visqol": 3.3725,
+    "onset_recall": 0.743,
+    "third_oct_db": 7.372,
+    "run": "41187515049"
    }
   },
   "drums_round": {
@@ -190,6 +226,18 @@
     "onset_recall": 0.379,
     "third_oct_db": 5.738,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 2.0351,
+    "onset_recall": 0.669,
+    "third_oct_db": 4.256,
+    "run": "41187515049"
+   },
+   "refined_svr5": {
+    "visqol": 2.0191,
+    "onset_recall": 0.634,
+    "third_oct_db": 5.068,
+    "run": "41187515049"
    }
   },
   "rock_big": {
@@ -266,10 +314,28 @@
     "run": "41158185476"
    },
    "final": {
-    "visqol": 3.3216,
-    "onset_recall": 0.832,
-    "third_oct_db": 4.407,
-    "run": "41158185476"
+    "visqol": 2.7964,
+    "onset_recall": 0.535,
+    "third_oct_db": 5.494,
+    "run": "41170496546"
+   },
+   "refined": {
+    "visqol": 3.6871,
+    "onset_recall": 0.812,
+    "third_oct_db": 4.699,
+    "run": "41187515049"
+   },
+   "refined_svr": {
+    "visqol": 3.7441,
+    "onset_recall": 0.851,
+    "third_oct_db": 4.968,
+    "run": "41170496546"
+   },
+   "refined_svr5": {
+    "visqol": 3.7423,
+    "onset_recall": 0.842,
+    "third_oct_db": 7.243,
+    "run": "41187515049"
    }
   },
   "edm_detection": {
@@ -338,6 +404,18 @@
     "onset_recall": 0.226,
     "third_oct_db": 9.479,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 3.6688,
+    "onset_recall": 0.677,
+    "third_oct_db": 7.841,
+    "run": "41187515049"
+   },
+   "refined_svr5": {
+    "visqol": 3.8436,
+    "onset_recall": 0.684,
+    "third_oct_db": 10.2,
+    "run": "41187515049"
    }
   },
   "orchestra_five_armies": {
@@ -400,6 +478,18 @@
     "onset_recall": 0.5,
     "third_oct_db": 7.446,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 3.4708,
+    "onset_recall": 0.65,
+    "third_oct_db": 8.613,
+    "run": "41187515049"
+   },
+   "refined_svr5": {
+    "visqol": 3.5067,
+    "onset_recall": 0.65,
+    "third_oct_db": 8.861,
+    "run": "41187515049"
    }
   },
   "speech_en_wordsworth": {
@@ -462,6 +552,30 @@
     "onset_recall": 0.546,
     "third_oct_db": 8.501,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 2.7855,
+    "onset_recall": 0.538,
+    "third_oct_db": 9.927,
+    "run": "41187515049"
+   },
+   "refined_svr": {
+    "visqol": 3.0397,
+    "onset_recall": 0.538,
+    "third_oct_db": 7.13,
+    "run": "41170496546"
+   },
+   "refined_svr5": {
+    "visqol": 2.734,
+    "onset_recall": 0.546,
+    "third_oct_db": 9.371,
+    "run": "41187515049"
+   },
+   "live_encoder": {
+    "visqol": 2.6465,
+    "onset_recall": 0.692,
+    "third_oct_db": 10.033,
+    "run": "41187515049"
    }
   },
   "piano_chopin_op66": {
@@ -536,6 +650,24 @@
     "onset_recall": 0.435,
     "third_oct_db": 6.859,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 2.273,
+    "onset_recall": 0.468,
+    "third_oct_db": 7.114,
+    "run": "41187515049"
+   },
+   "refined_svr": {
+    "visqol": 2.2716,
+    "onset_recall": 0.444,
+    "third_oct_db": 9.411,
+    "run": "41170496546"
+   },
+   "refined_svr5": {
+    "visqol": 2.3515,
+    "onset_recall": 0.5,
+    "third_oct_db": 9.33,
+    "run": "41187515049"
    }
   },
   "vocal_name_of_love": {
@@ -588,10 +720,28 @@
     "run": "41158185476"
    },
    "final": {
-    "visqol": 3.4808,
-    "onset_recall": 0.314,
-    "third_oct_db": 4.349,
-    "run": "41158185476"
+    "visqol": 3.4468,
+    "onset_recall": 0.543,
+    "third_oct_db": 5.78,
+    "run": "41170496546"
+   },
+   "refined": {
+    "visqol": 3.4894,
+    "onset_recall": 0.543,
+    "third_oct_db": 4.545,
+    "run": "41187515049"
+   },
+   "refined_svr5": {
+    "visqol": 3.5946,
+    "onset_recall": 0.457,
+    "third_oct_db": 6.359,
+    "run": "41187515049"
+   },
+   "live_encoder": {
+    "visqol": 3.4857,
+    "onset_recall": 0.571,
+    "third_oct_db": 3.636,
+    "run": "41187515049"
    }
   },
   "choir_how_long": {
@@ -654,6 +804,24 @@
     "onset_recall": 0.286,
     "third_oct_db": 5.338,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 2.2346,
+    "onset_recall": 0.514,
+    "third_oct_db": 5.861,
+    "run": "41187515049"
+   },
+   "refined_svr": {
+    "visqol": 2.2944,
+    "onset_recall": 0.514,
+    "third_oct_db": 5.886,
+    "run": "41170496546"
+   },
+   "refined_svr5": {
+    "visqol": 2.4251,
+    "onset_recall": 0.514,
+    "third_oct_db": 6.19,
+    "run": "41187515049"
    }
   },
   "funk_funkorama": {
@@ -734,6 +902,24 @@
     "onset_recall": 0.348,
     "third_oct_db": 8.189,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 2.0511,
+    "onset_recall": 0.504,
+    "third_oct_db": 9.671,
+    "run": "41187515049"
+   },
+   "refined_svr": {
+    "visqol": 2.6884,
+    "onset_recall": 0.822,
+    "third_oct_db": 7.722,
+    "run": "41170496546"
+   },
+   "refined_svr5": {
+    "visqol": 2.6301,
+    "onset_recall": 0.748,
+    "third_oct_db": 11.242,
+    "run": "41187515049"
    }
   },
   "speech_ja_soseki": {
@@ -790,6 +976,42 @@
     "onset_recall": 0.561,
     "third_oct_db": 8.767,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 2.8954,
+    "onset_recall": 0.518,
+    "third_oct_db": 9.532,
+    "run": "41187515049"
+   },
+   "refined_svr5": {
+    "visqol": 2.9143,
+    "onset_recall": 0.605,
+    "third_oct_db": 11.155,
+    "run": "41187515049"
+   },
+   "live_encoder": {
+    "visqol": 2.7303,
+    "onset_recall": 0.772,
+    "third_oct_db": 9.351,
+    "run": "41187515049"
+   },
+   "live_phones": {
+    "visqol": 2.9039,
+    "onset_recall": 0.5,
+    "third_oct_db": 11.568,
+    "run": "41187515049"
+   },
+   "live_3d_left": {
+    "visqol": 2.5156,
+    "onset_recall": 0.465,
+    "third_oct_db": 11.496,
+    "run": "41187515049"
+   },
+   "live_3d_right": {
+    "visqol": 2.4856,
+    "onset_recall": 0.412,
+    "third_oct_db": 10.779,
+    "run": "41187515049"
    }
   },
   "demo_selfmade": {
@@ -846,6 +1068,24 @@
     "onset_recall": 0.532,
     "third_oct_db": 5.935,
     "run": "41158185476"
+   },
+   "refined": {
+    "visqol": 2.3588,
+    "onset_recall": 0.521,
+    "third_oct_db": 7.082,
+    "run": "41187515049"
+   },
+   "refined_svr": {
+    "visqol": 2.3792,
+    "onset_recall": 0.489,
+    "third_oct_db": 8.995,
+    "run": "41170496546"
+   },
+   "refined_svr5": {
+    "visqol": 2.4537,
+    "onset_recall": 0.596,
+    "third_oct_db": 10.659,
+    "run": "41187515049"
    }
   }
  },
@@ -854,18 +1094,98 @@
    "light": [
     1.5978,
     1.5982
+   ],
+   "refined": [
+    3.3651,
+    3.3275
    ]
   },
   "rock_big": {
    "light": [
     2.8402,
     2.7949
+   ],
+   "final": [
+    3.3216,
+    2.7964
+   ],
+   "refined": [
+    2.7652,
+    3.6871
    ]
   },
   "speech_en_wordsworth": {
    "light": [
     2.3402,
     2.1677
+   ],
+   "refined": [
+    3.0562,
+    2.7855
+   ]
+  },
+  "vocal_name_of_love": {
+   "final": [
+    3.4808,
+    3.4468
+   ],
+   "refined": [
+    3.4993,
+    3.4894
+   ]
+  },
+  "piano_chopin_op66": {
+   "refined": [
+    2.2573,
+    2.273
+   ]
+  },
+  "vocal_stars": {
+   "refined": [
+    3.2207,
+    3.0076
+   ]
+  },
+  "choir_how_long": {
+   "refined": [
+    1.8654,
+    2.2346
+   ]
+  },
+  "drums_round": {
+   "refined": [
+    2.032,
+    2.0351
+   ]
+  },
+  "edm_detection": {
+   "refined": [
+    3.1173,
+    3.6688
+   ]
+  },
+  "orchestra_five_armies": {
+   "refined": [
+    2.4235,
+    3.4708
+   ]
+  },
+  "funk_funkorama": {
+   "refined": [
+    2.559,
+    2.0511
+   ]
+  },
+  "speech_ja_soseki": {
+   "refined": [
+    3.2566,
+    2.8954
+   ]
+  },
+  "demo_selfmade": {
+   "refined": [
+    3.0444,
+    2.3588
    ]
   }
  },
@@ -910,10 +1230,33 @@
    "41158185476"
   ],
   "final": [
-   "41158185476"
+   "41158185476",
+   "41170496546"
   ],
   "final_loud10": [
    "41158185476"
+  ],
+  "refined": [
+   "41170496546",
+   "41187515049"
+  ],
+  "refined_svr": [
+   "41170496546"
+  ],
+  "refined_svr5": [
+   "41187515049"
+  ],
+  "live_encoder": [
+   "41187515049"
+  ],
+  "live_phones": [
+   "41187515049"
+  ],
+  "live_3d_left": [
+   "41187515049"
+  ],
+  "live_3d_right": [
+   "41187515049"
   ]
  },
  "medians": {
@@ -972,6 +1315,34 @@
   "final_loud10": {
    "n": 5,
    "visqol": 2.451
+  },
+  "refined": {
+   "n": 13,
+   "visqol": 2.895
+  },
+  "refined_svr": {
+   "n": 8,
+   "visqol": 2.864
+  },
+  "refined_svr5": {
+   "n": 13,
+   "visqol": 2.914
+  },
+  "live_encoder": {
+   "n": 3,
+   "visqol": 2.73
+  },
+  "live_phones": {
+   "n": 1,
+   "visqol": 2.904
+  },
+  "live_3d_left": {
+   "n": 1,
+   "visqol": 2.516
+  },
+  "live_3d_right": {
+   "n": 1,
+   "visqol": 2.486
   }
  },
  "gaps": {
@@ -1039,6 +1410,41 @@
    "n": 5,
    "median": -0.035,
    "within_0.3": 3
+  },
+  "refined": {
+   "n": 13,
+   "median": 0.287,
+   "within_0.3": 7
+  },
+  "refined_svr": {
+   "n": 8,
+   "median": 0.059,
+   "within_0.3": 6
+  },
+  "refined_svr5": {
+   "n": 13,
+   "median": 0.001,
+   "within_0.3": 9
+  },
+  "live_encoder": {
+   "n": 3,
+   "median": 0.077,
+   "within_0.3": 2
+  },
+  "live_phones": {
+   "n": 1,
+   "median": -0.097,
+   "within_0.3": 1
+  },
+  "live_3d_left": {
+   "n": 1,
+   "median": 0.292,
+   "within_0.3": 1
+  },
+  "live_3d_right": {
+   "n": 1,
+   "median": 0.322,
+   "within_0.3": 0
   }
  }
 }
