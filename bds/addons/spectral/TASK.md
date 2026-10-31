@@ -46,18 +46,20 @@
 - 別のビヘイビアーパック（曲パック）からの script event は本体に届く（LAB_UTILITIES で 2 パック同時に確認）
 - 1 人ヘッドホン再生: 56 インスタンス、平均 16–30 命令/tick（最大 89）、スクリプト 1.5–1.8 ms/tick。QA（3 人・再接続・/reload・再起動）で 2 ms/tick 以内
 
-## この版の状態（2026-10-31, 実機での測定）
+## この版の状態（2026-10-31 12:20 JST, 実機での測定）
 
-引き継ぎ: HANDOFF.md。実機の限界値と曲の成績: SPEC.md（実測と仮定の列を分けた）、数の元: measured/。
+引き継ぎ: HANDOFF.md（ユーザーの最後の依頼が未着手で載っている）。実機の限界値と曲の成績: SPEC.md（実測と推測を分けた）、数の元: measured/。
 - 実機（redroid の Android 14 に Play が入れた Minecraft 1.26.60.4、改造なし）で録って測った: 同時発音数 32（静かなもの・古いもの
-  から消える）、fade は振幅で直線・指定どおり（最短 0.8 ms）、ワンショットは同じ tick の命令より 49 ms 遅い、seekTo は一定のずれ
-  （σ 6 ms）、ステレオ 67 dB、ミキサーは素材の 5 倍の和まで平ら、1 命令 12.3 B
-- 変えたこと（実測から）: 電話の既定を 24 声に（48 声より実機で 4 曲とも上）、打撃音を 1 tick 先に送る、出荷する RP から曲の天井
-  （462 KB）を外した。`node lab.mjs go`（ローカルの BDS 1.26.61.1）: **DONE dist/Spectral_Player.mcaddon（test 104/104, qa clean）**
-- 測定リグ（app/lib の audio 動詞）: `audio song`（試験曲を送る）・`audio ceiling`（天井のユニットをその場で作る）・`audio export`
-  （録音を暗号化してログへ）・`audio info` / `audio volume`（端末の音量）・`audio analyze … emu:<曲>`（エミュレーターと録音）。
-  redroid の join（uinput が見えない → シェルの長押し）と launch（monkey が起動しない → am start）も直した
-- 実機の ViSQOL の中央値（13 曲）: 天井 3.09、48 声 1.99、出荷（電話の既定 24 声＋打撃音を先に）2.05、軽量 2.15。天井との差 0.3 以内はどれも 13 曲中 2 曲で、完了の条件には届いていない: 制約と残りの差は SPEC.md と HANDOFF.md。実録音の ABX: https://claude.ai/artifact/WqeA3C2ut45LtzVhhjxpqG
+  から消える）、fade は振幅で直線・指定どおり（最短 0.8 ms）、ゲームは 24 kHz で混ぜて素材より −32.5 dB・16 bit、setVolume は 2 まで
+  指定どおりでその上はミックスがファイル単位で約 2.0 でクリップ、seekTo は一定のずれ（σ 6 ms）、ステレオ 67 dB、1 命令 12.3 B
+- 最終の既定（電話）: 変換器 residual voiced＋tick ごとに合わせたフェード（曲データの形式 2）、24 声＋ノイズ 8、打撃音なし、
+  どの音もファイルより +6 dB（setVolume）、3 セント・0.75 dB 未満の変化は送らない。`node lab.mjs go`（ローカルの BDS 1.26.61.1）:
+  **DONE dist/Spectral_Player.mcaddon（test 134/134, qa clean）**
+- 実機の ViSQOL の中央値（13 曲、7 回目 run 41158185476 の同じ run）: 出荷版 1.95 → **最終の既定 2.77**（曲ごとの差の中央値 +0.36、
+  13 曲中 11 曲で上）。天井（音量 1）3.09 との差の中央値 0.55、0.3 以内 **4/13**（完了の条件「全曲 0.3 以内」には届いていない）。
+  +10 dB（5 曲）は +6 dB より 5 曲とも上（中央値 +0.21、3/5 が 0.3 以内）だが、クリップの歪みが増える（推測）ので既定は +6
+- 変換ページ（web/、claude.ai の Spectral Converter）: ブラウザで MP3 を変換し、アドオン本体のコード（bp/scripts/main.js をモックで）が
+  送る命令を、実機で測ったクライアントの模型（web/game.js = tools/emu の移植）で音にして原曲と聴き比べる。曲パックと本体を保存できる
 
 ## Tools
 - tools/spectral.py: MP3 → 曲データ（--ts で src/songs/*.ts）。--preview でアドオンと同じ tick 規則の試聴 WAV/MP3。既定はアナリシス v2（部分音のトラック → 声部、ノイズ帯域と打撃音の帯域を NSIM-lite で合成して選ぶ）、`--analysis v1` で前の版
@@ -66,5 +68,6 @@
 - tools/rig/: 実機の測定リグ（programs.py → src/calib_programs.ts、analyze.py、synth.py、songpack.py）。`python3 tests/test_rig.py` が解析を合成クライアントで試験する
 - tools/emu/client.py: 命令列を、未知の挙動をパラメーター（spec.json）にしたクライアントの模型で鳴らす
 - tools/make_rp_assets.py: rp/sounds と sound_definitions.json と src/assets.ts を作る
-- web/: ブラウザ変換ページ（core.js は tools/spectral.py とバイト単位で同じ出力）。`python3 web/build.py <song.json> <demo.mp3> <addon.mcaddon>`
+- web/: ブラウザ変換ページ（core.js は tools/spectral.py とバイト単位で同じ出力、tools/parity.py）。ゲーム内の音は web/game.js（ワーカー:
+  web/build_engine.mjs が作る本体＋モックで命令を出し、実機の模型で音にする）。`python3 web/build.py <song.json> <demo.mp3> <addon.mcaddon>` → web/dist/index.html
 - tools/sim/: 実際のバンドル bp/scripts/main.js を @minecraft/server のモックで tick ごとに動かし、SoundInstance への全命令を記録 → render_log.py でクライアントと同じ規則で音にする（デモ: 原曲との 1/3 オクターブ誤差 3.05 dB、オフライン試聴 3.04 dB とほぼ同じ）
