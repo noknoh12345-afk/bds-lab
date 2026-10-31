@@ -38,7 +38,10 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         # run 9: the analysis by synthesis with the bands weighted as ViSQOL's MOS leans on them, five sweeps, the level held (d);
         # the live encoder's own frames played as a song (i: web/live.js, causal, as a voice chat sends them); a song played over
         # the live path (jp: /spectral:live_demo on headphones), and as a 3D speaker to the listener's left / right (jl / jr)
-        'd': 'refined_svr5', 'i': 'live_encoder', 'jp': 'live_phones', 'jl': 'live_3d_left', 'jr': 'live_3d_right'}
+        'd': 'refined_svr5', 'i': 'live_encoder', 'jp': 'live_phones', 'jl': 'live_3d_left', 'jr': 'live_3d_right',
+        # run 10: the same conversion fitted at +10 dB and played at +10 dB (e); the live path as each listener's own 3D sounds
+        # (near: what follow plays) to the listener's left / right (kl / kr)
+        'e': 'refined_svr5_loud10', 'kl': 'live_near_left', 'kr': 'live_near_right'}
 
 
 def songs(res):

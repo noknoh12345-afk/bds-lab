@@ -26,7 +26,10 @@ WAYS = {'w': ('final', '+6 dB', '最終の既定（ファイルより +6 dB、�
         'd': ('refined_svr5', '新しい既定', '合成による分析・高い帯域を重く・5 回・大きさを保つ（9 回目の新しい既定）'),
         'i': ('live_encoder', 'ライブ', 'ライブの変換（ボイスチャットと同じ: 50 ms ずつ、先を見ない）'),
         'jp': ('live_phones', 'ライブの道', 'ライブの道（1 フレームずつ script event、ヘッドホン）'),
-        'jl': ('live_3d_left', '3D 左', '3D のスピーカーで左 6 ブロックから'), 'jr': ('live_3d_right', '3D 右', '3D のスピーカーで右 6 ブロックから')}
+        'jl': ('live_3d_left', '3D 左', '3D のスピーカーで左 6 ブロックから'), 'jr': ('live_3d_right', '3D 右', '3D のスピーカーで右 6 ブロックから'),
+        'e': ('refined_svr5_loud10', '+10 dB', '新しい既定を +10 dB で詰めて +10 dB で'),
+        'kl': ('live_near_left', '人ごと 3D 左', '聞く人それぞれの 3D の音（near: follow と同じ）で左 6 ブロックから'),
+        'kr': ('live_near_right', '人ごと 3D 右', '聞く人それぞれの 3D の音（near: follow と同じ）で右 6 ブロックから')}
 # (the clip's distortion on the emulator's renders, a hard clip at 2.0 file units — tools/exp/README.md; estimated, not measured)
 CLIP_NOTE = {'w': 'クリップの歪み（推測）: 全曲 −44 dB 未満', 'u': 'クリップの歪み（推測）: 話し声 −21 dB、ピアノ −26 dB まで'}
 
