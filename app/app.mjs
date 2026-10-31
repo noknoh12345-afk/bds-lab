@@ -40,6 +40,7 @@ import * as SI from './lib/signin.mjs';
 import * as WD from './lib/world.mjs';
 import * as Dev from './lib/device.mjs';
 import * as M from './lib/measure.mjs';
+import * as PO from './lib/publicout.mjs';
 import { stepCode, cleanCode, cleanTrail, lanSeconds } from './lib/failcodes.mjs';
 import { gridOverlay } from './lib/screen.mjs';
 import { autoOauthToken, browserCandidates, canShowWindow } from './lib/login.mjs';
@@ -2579,18 +2580,33 @@ async function notifyCmd(args) {
     // (a hostrun's files were made on a lender's runner: the lender could have changed them — not handed on as the person's)
     const lent = /(^|\/)hostrun\.ya?ml$/.test(String(run.path ?? '')) || run.name === 'hostrun';
     const maxBytes = Math.min(25, Math.max(1, Number(process.env.LAB_NOTIFY_MAX_MB) || 10)) * 1e6;
-    files = await RF.runFiles({ base, repo, run: id, token: process.env.GITHUB_TOKEN, policy: own && !lent ? process.env.LAB_NOTIFY_FILES : 'off', maxBytes });
+    files = await RF.runFiles({ base, repo, run: id, token: process.env.GITHUB_TOKEN, policy: own && !lent ? process.env.LAB_NOTIFY_FILES : 'off', maxBytes, audio: own && !lent && RF.audioOn(process.env.LAB_NOTIFY_AUDIO) });
     if (files.why) out(`W 成果物: ${files.why}`);
     if (!own) out(`成果物は添えません（${run.head_repository.full_name} の変更から: このリポジトリのコードではありません）`);
     else if (lent) out('成果物は添えません（貸し手のランナーで作ったもの: 配るものは自分の Actions で作り直してください）');
     msg = RM.runMessage({ run, jobs, annotations, panel: RM.panelRunUrl(RM.panelUrl(repo, process.env), repo, id), files });
   } else msg = { content: o.opts['--text'] || 'bds-lab: Discord への通知の試し', buttons: [], ok: !['failed', 'connect', 'secrets'].includes(o.opts['--kind']) };
   const att = files.attach.map((f) => ({ name: f.name, data: f.data }));
+  // (the run's published recordings, after its message: as many messages as Discord's limits take — lib/runfiles.mjs)
+  const sound = files.audio?.length ? RF.audioGroups(files.audio, { order: Object.keys(files.audioIndex ?? {}), maxBytes: Math.min(9e6, Math.min(25, Math.max(1, Number(process.env.LAB_NOTIFY_MAX_MB) || 10)) * 1e6 - 1e6) }) : { groups: [], tooBig: [] };
+  const soundMsg = (g, i) => {
+    const head = `🎵 録音 ${i + 1}/${sound.groups.length}（実行 ${String(o.opts['--run'] ?? '').replace(/\D/g, '')}・${files.audio.length} 本）`;
+    const lines = g.map((f) => RF.audioLine(f.name, files.audioIndex?.[f.name]));
+    if (i === sound.groups.length - 1 && sound.tooBig.length) lines.push(`（大きすぎて送れないもの: ${sound.tooBig.map((f) => `${f.name} ${RF.mb(f.size)}`).join('・')}。実行のページの成果物から）`);
+    let text = [head, ...lines].join('\n');
+    if (text.length > Dc.LIMIT) text = text.slice(0, Dc.LIMIT - 2) + '…';
+    return { content: text, files: g.map((f) => ({ name: f.name, data: f.data })) };
+  };
   if (!dc.missing) {
     const b = Dc.bot({ token: dc.token, userId: dc.userId });
     try { await b.send({ content: msg.content, files: att, ...(msg.buttons.length ? { components: [Dc.row(...msg.buttons.map((x) => ({ type: 2, style: 5, label: x.label, url: x.url })))] } : {}) }); }
     catch (e) { fail(`Discord に送れません: ${e.message}`); }
     out(`OK Discord の DM に送りました${att.length ? `（${att.map((f) => f.name).join('・')}）` : ''}`);
+    let sent = 0;
+    for (const [i, g] of sound.groups.entries()) {
+      try { await b.send(soundMsg(g, i)); sent += g.length; } catch (e) { out(`W 録音 ${i + 1}/${sound.groups.length} を送れません: ${e.message}`); }
+    }
+    if (sound.groups.length) out(`OK 録音 ${sent}/${files.audio.length} 本を ${sound.groups.length} 通で送りました`);
     return;
   }
   const { notify } = await import(pathToFileURL(path.join(TOP, 'common', 'notify.mjs')).href);
@@ -2605,6 +2621,12 @@ async function notifyCmd(args) {
   const sent = await notify(first.replace(/^\S+\s/, ''), [...(calls.length ? [calls.join(' ')] : []), ...rest, ...msg.buttons.map((x) => x.url)], { ok: msg.ok !== false, out, files: att });
   if (!sent) fail('LAB_NOTIFY_WEBHOOK に送れませんでした');
   out(`OK Webhook に送りました${att.length && /discord(app)?\.com\/api\/webhooks/.test(hook) ? `（${att.map((f) => f.name).join('・')}）` : ''}`);
+  // (the recordings: only a Discord webhook takes files — Slack and ntfy get the run's message alone)
+  if (sound.groups.length && /discord(app)?\.com\/api\/webhooks/.test(hook)) {
+    let n = 0;
+    for (const [i, g] of sound.groups.entries()) { const m = soundMsg(g, i), [h0, ...ls] = m.content.split('\n'); if (await notify(h0, ls, { ok: true, out, files: m.files })) n += g.length; }
+    out(`OK 録音 ${n}/${files.audio.length} 本を Webhook に送りました`);
+  }
 }
 
 // ---- checks / ci: a run through the GitHub API alone (lib/ghresults.mjs) ----
@@ -2665,17 +2687,40 @@ async function checksCmd(args) {
       ...(r?.media && num(r.media.sent) !== null ? { media: { sent: num(r.media.sent), failed: num(r.media.failed) ?? 0, late: r.media.late === true } } : {}),
     };
   };
-  // the run folders under a folder: itself when it holds files, else each folder in it (app/runs: every run of the job)
-  const runFolders = (d) => { const es = fs.readdirSync(d, { withFileTypes: true }); return es.some((e) => e.isFile()) ? [d] : es.filter((e) => e.isDirectory()).map((e) => path.join(d, e.name)); };
+  // the run folders under a folder: itself when it holds files, else each folder in it (app/runs: every run of the job). A
+  // folder named public is never a run folder: what a run publishes (lib/publicout.mjs)
+  const PUBLIC = 'public', HELD = 'public-sealed';
+  const runFolders = (d) => { const es = fs.readdirSync(d, { withFileTypes: true }).filter((e) => e.name !== PUBLIC); return es.some((e) => e.isFile()) ? [d] : es.filter((e) => e.isDirectory()).map((e) => path.join(d, e.name)); };
   if (o.opts['--seal']) {
     const top = path.resolve(o.opts['--seal']);
     if (!fs.existsSync(top)) { out(`${rel(top)} がありません（封じるものはありません）`); return; }
     if (String(process.env.APP_REPO_VISIBILITY ?? '').toLowerCase() === 'private') { out('private のリポジトリ: 結果は封じません（今まで通り）'); return; }
-    const key = V.vaultKey();
-    for (const d of runFolders(top)) {
-      const entries = fs.readdirSync(d).filter((e) => e !== SEALED && e !== SUMMARY && !e.endsWith('.part'));
-      if (!entries.length) continue;
-      const s = summaryOf(d);
+    const key = V.vaultKey(), secrets = PO.secretsOf(process.env, key);
+    // public/: only sound files and their index stay in the clear (game sound the run published: lib/audiorec.mjs publish).
+    // Anything else there — or a file with one of the job's secrets in it — is sealed with its run (moved into public-sealed/),
+    // or left out when the public/ is not in a run folder
+    const pubOf = (d, inRun) => {
+      const dir = path.join(d, PUBLIC);
+      if (!fs.existsSync(dir)) return [];
+      const p = PO.planPublic(dir, secrets);
+      for (const f of p.out) {
+        const from = path.join(dir, f);
+        if (inRun) { const to = path.join(d, HELD, f); fs.mkdirSync(path.dirname(to), { recursive: true }); fs.renameSync(from, to); } else fs.rmSync(from, { force: true });
+      }
+      if (p.out.length) out(`W ${rel(dir)}: 公開できないファイル ${p.out.length} 個は${inRun ? '封じる方へ' : '出しません'}（音のファイルと index.json だけが公開）`);
+      if (p.keep.length) out(`OK ${rel(dir)}: 公開 ${p.keep.length} ファイル（音と index.json、平文のまま）`);
+      return p.keep;
+    };
+    const folders = runFolders(top);
+    if (!folders.includes(top)) pubOf(top, false);
+    for (const d of folders) {
+      const pub = pubOf(d, true);
+      const entries = fs.readdirSync(d).filter((e) => e !== SEALED && e !== SUMMARY && e !== PUBLIC && !e.endsWith('.part'));
+      if (!entries.length) {
+        if (pub.length && fs.existsSync(path.join(d, SUMMARY))) { const s0 = JSON.parse(readT(path.join(d, SUMMARY)) || '{}'); fs.writeFileSync(path.join(d, SUMMARY), JSON.stringify({ ...s0, public: pub }, null, 2) + '\n'); }
+        continue;
+      }
+      const s = { ...summaryOf(d), ...(pub.length ? { public: pub } : {}) };
       // (a seal that fails — an unreadable file, a full disk — leaves nothing in the clear either: the summary only)
       let sealed = false;
       if (key) try { await V.seal({ base: d, entries, outFile: path.join(d, SEALED), key }); sealed = true; } catch (e) { fs.rmSync(path.join(d, SEALED), { force: true }); out(`W ${rel(d)}: 封じられません（${String(e?.message ?? e).split('\n')[0].slice(0, 200)}）: 中身は出しません`); }

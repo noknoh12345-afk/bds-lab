@@ -534,6 +534,10 @@ await t('app notify: a finished run told as a DM with link buttons and its .mcad
   const { spawn } = await import('node:child_process');
   const SH = await imp('common/share.mjs');
   const got = { dm: [], hook: [] }, zip = SH.zip([['Coins.mcaddon', Buffer.from('ADDON-BYTES')]], '');
+  // (a redroid run's artifact: its published recordings in public/ beside the sealed results — lib/audiorec.mjs publish)
+  const recIndex = { format: 'bds-lab-recordings/1', addon: 'spectral', recordings: [{ name: 't_rock_big', file: 't_rock_big.opus', kb: 1, measured: { song_rock_big: { visqol: 2.7652, third_oct_db: 5.14, onset_recall: 0.772 } } }, { name: 'c_rock_big', file: 'c_rock_big.opus', kb: 1, measured: {} }] };
+  const recZip = SH.zip([['summary.json', Buffer.from('{}')], ['results.sealed', Buffer.from('BDSLABV1x')], ['public/spectral/rec/index.json', Buffer.from(JSON.stringify(recIndex))],
+    ['public/spectral/rec/c_rock_big.opus', Buffer.from('OggS-CEILING')], ['public/spectral/rec/t_rock_big.opus', Buffer.from('OggS-GAME')], ['notpublic.opus', Buffer.from('OggS-NOT')]], '');
   // (Discord takes files as multipart: the message in payload_json, each file a part)
   const body = (req, b) => {
     if (!String(req.headers['content-type']).startsWith('multipart/')) return { json: b ? JSON.parse(b) : null, files: [] };
@@ -545,8 +549,11 @@ await t('app notify: a finished run told as a DM with link buttons and its .mcad
     let b = ''; req.setEncoding('utf8'); req.on('data', (d) => { b += d; });
     req.on('end', () => {
       const send = (code, j) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(j)); };
-      if (/^\/gh\/repos\/o\/r\/actions\/runs\/(5|6|8|9)\/artifacts/.test(req.url)) return send(200, arts(req.url.split('/')[7]));
+      if (/^\/gh\/repos\/o\/r\/actions\/runs\/(5|6|8|9|10)\/artifacts/.test(req.url)) return send(200, arts(req.url.split('/')[7]));
+      if (req.url === '/gh/repos/o/r/actions/artifacts/10/zip') { res.writeHead(200, { 'content-type': 'application/zip' }); return res.end(recZip); }
       if (/^\/gh\/repos\/o\/r\/actions\/artifacts\/\d+\/zip$/.test(req.url)) { res.writeHead(200, { 'content-type': 'application/zip' }); return res.end(zip); }
+      if (req.url === '/gh/repos/o/r/actions/runs/10') return send(200, { id: 10, status: 'completed', conclusion: 'failure', event: 'workflow_dispatch', name: 'redroid', path: '.github/workflows/redroid.yml', head_branch: 'addon/spectral', html_url: 'https://github.com/o/r/actions/runs/10', run_started_at: '2026-10-31T00:00:00Z', updated_at: '2026-10-31T00:50:00Z', actor: { login: 'me' } });
+      if (/^\/gh\/repos\/o\/r\/actions\/runs\/10\/jobs/.test(req.url)) return send(200, { jobs: [] });
       if (req.url === '/gh/repos/o/r/actions/runs/8') return send(200, { id: 8, status: 'completed', conclusion: 'success', event: 'pull_request', name: 'verify', head_branch: 'patch-1', html_url: 'https://github.com/o/r/actions/runs/8', run_started_at: '2026-10-08T00:00:00Z', updated_at: '2026-10-08T00:03:00Z', actor: { login: 'someone' }, head_repository: { full_name: 'someone/r' } });
       if (req.url === '/gh/repos/o/r/actions/runs/9') return send(200, { id: 9, status: 'completed', conclusion: 'success', event: 'workflow_dispatch', name: 'hostrun', path: '.github/workflows/hostrun.yml', head_branch: 'main', html_url: 'https://github.com/o/r/actions/runs/9', run_started_at: '2026-10-08T00:00:00Z', updated_at: '2026-10-08T00:03:00Z', actor: { login: 'me' } });
       if (/^\/gh\/repos\/o\/r\/actions\/runs\/(6|8|9)\/jobs/.test(req.url)) return send(200, { jobs: [] });
@@ -578,6 +585,19 @@ await t('app notify: a finished run told as a DM with link buttons and its .mcad
   ok(fork.code === 0 && got.dm.length === 3 && !got.dm[2].files.length && /成果物は添えません（someone\/r の変更から/.test(fork.o) && !/📦/.test(got.dm[2].body.content), `a fork's pull request: told, its files never handed on\n${fork.o}`);
   const lent = await run(['--run', '9'], dc);
   ok(lent.code === 0 && !got.dm.at(-1).files.length && /貸し手のランナーで作ったもの/.test(lent.o) && !/📦/.test(got.dm.at(-1).body.content), `a hostrun's files (made on a lender's runner) are never handed on\n${lent.o}`);
+  // a run's published recordings: after its message, in messages of their own (the index's order, its numbers), never a sound
+  // file outside public/; LAB_NOTIFY_AUDIO=off: none
+  const n0 = got.dm.length, rec = await run(['--run', '10'], dc);
+  const recMsgs = got.dm.slice(n0);
+  ok(rec.code === 0 && recMsgs.length === 2 && JSON.stringify(recMsgs[1].files) === JSON.stringify(['t_rock_big.opus=OggS-GAME', 'c_rock_big.opus=OggS-CEILING'])
+    && /^🎵 録音 1\/1（実行 10・2 本）\n- t_rock_big: ViSQOL 2\.765 · 1\/3 oct 5\.1 dB · onsets 77%\n- c_rock_big$/.test(recMsgs[1].body.content) && /OK 録音 2\/2 本を 1 通で送りました/.test(rec.o),
+    `the recordings after the run's message\n${rec.o}\n${JSON.stringify(recMsgs.map((m) => [m.body.content, m.files]))}`);
+  const n1 = got.dm.length, recOff = await run(['--run', '10'], { ...dc, LAB_NOTIFY_AUDIO: 'off' });
+  ok(recOff.code === 0 && got.dm.length === n1 + 1 && !/録音/.test(recOff.o), `LAB_NOTIFY_AUDIO=off: the run's message alone\n${recOff.o}`);
+  const RFm = await imp('app/lib/runfiles.mjs'), big = (i, n) => ({ name: `r${i}.opus`, size: n });
+  const g = RFm.audioGroups([...Array.from({ length: 23 }, (_, i) => big(i, 400_000)), big(99, 9_500_000)], { maxBytes: 9e6 });
+  eq([g.groups.map((x) => x.length), g.tooBig.map((x) => x.name)], [[10, 10, 3], ['r99.opus']], 'ten a message within the limit; one too large by itself named');
+  eq(RFm.audioGroups(Array.from({ length: 30 }, (_, i) => big(i, 2_000_000)), { maxBytes: 9e6 }).groups.map((x) => x.length), Array(7).fill(4).concat([2]), 'within the bytes: four of 2 MB a message');
   const off = await run(['--run', '5'], { ...dc, LAB_NOTIFY_FILES: 'off' });
   ok(off.code === 0 && !got.dm.at(-1).files.length && /成果物（1）/.test(JSON.stringify(got.dm.at(-1).body.components)), 'LAB_NOTIFY_FILES=off: no file, the button still');
   const dhook = await run(['--run', '5'], { LAB_NOTIFY_WEBHOOK: `http://127.0.0.1:${port}/discord.com/api/webhooks/1/abc` });
@@ -601,6 +621,8 @@ await t('app notify: a finished run told as a DM with link buttons and its .mcad
   } finally { fsm.rmSync(pdir, { recursive: true, force: true }); }
   const none = await run(['--run', '5'], {});
   ok(none.code === 0 && /通知先がありません/.test(none.o), none.o);
+  const n2 = got.hook.length, recHook = await run(['--run', '10'], { LAB_NOTIFY_WEBHOOK: `http://127.0.0.1:${port}/discord.com/api/webhooks/1/abc` });
+  ok(recHook.code === 0 && got.hook.length === n2 + 2 && JSON.stringify(got.hook.at(-1).files) === JSON.stringify(['t_rock_big.opus=OggS-GAME', 'c_rock_big.opus=OggS-CEILING']) && /OK 録音 2\/2 本を Webhook に送りました/.test(recHook.o), `a Discord webhook gets the recordings too\n${recHook.o}`);
   srv.close();
 });
 

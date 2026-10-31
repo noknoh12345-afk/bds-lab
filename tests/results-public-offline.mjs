@@ -308,5 +308,42 @@ fs.rmSync(tmp, { recursive: true, force: true });
   ok(sum5.includes('| OCR | 使えなかった（画面の文字を読めず、LAN の参加は見ずに押した） |') && /joined-no-ocr/.test(sum5) && !sum6.includes('| OCR |'), 'the check says a run without OCR', `${sum5.slice(0, 900)}\n${sum6.slice(0, 600)}`);
 }
 
+// ---- 9. what a run publishes (public/: lib/audiorec.mjs publish → lib/publicout.mjs): sound files and their index in the clear,
+// anything else there sealed with the run, a file with a secret in it sealed too, the index rebuilt from its own fields ----
+{
+  const OGG = Buffer.concat([Buffer.from('OggS'), crypto.randomBytes(4000)]), TOKEN = 'ya29.fake-google-token-0123456789';
+  const top = path.join(tmp, 'pub-out'), rec = path.join(top, 'public', 'spectral', 'rec');
+  w(path.join(top, 'report.md'), `# app: PASS — spectral\n${SCREEN}\n`);
+  w(path.join(rec, 't_rock_big.opus'), OGG);
+  w(path.join(rec, 'leak.opus'), Buffer.concat([Buffer.from('OggS'), Buffer.from(TOKEN), crypto.randomBytes(100)]));
+  w(path.join(rec, 'fake.opus'), Buffer.from(`${EMAIL} not a sound`));
+  w(path.join(rec, 'notes.txt'), `${SCREEN} ${EMAIL}\n`);
+  w(path.join(rec, 'index.json'), JSON.stringify({ format: 'bds-lab-recordings/1', addon: 'spectral', note: EMAIL, recordings: [
+    { name: 't_rock_big', file: 't_rock_big.opus', kbps: 160, kb: 4, seconds: 24.5, sha256: 'a'.repeat(64), measured: { song_rock_big: { visqol: 2.7652, why: SCREEN, onset_recall: 0.77 } }, extra: EMAIL },
+    { name: 'leak', file: 'leak.opus', kb: 1, measured: {} }, { name: `x ${EMAIL}`, file: 'x.opus' }] }));
+  const r9 = await lab(['checks', '--seal', top], { ...PUB, GOOGLE_AAS_TOKEN: TOKEN });
+  const left = tree(top).map((l) => l.split(' ')[0]);
+  ok(r9.status === 0 && JSON.stringify(left) === JSON.stringify(['public/spectral/rec/index.json', 'public/spectral/rec/t_rock_big.opus', 'results.sealed', 'summary.json']), 'public/: the sound file and its index stay in the clear, the rest of the run is sealed', `${r9.text}\n${left.join('\n')}`);
+  ok(fs.readFileSync(path.join(rec, 't_rock_big.opus')).equals(OGG), 'the sound file: the same bytes');
+  const idx = fs.readFileSync(path.join(rec, 'index.json'), 'utf8'), ix = JSON.parse(idx);
+  ok(JSON.stringify(ix.recordings) === JSON.stringify([{ name: 't_rock_big', file: 't_rock_big.opus', kbps: 160, kb: 4, seconds: 24.5, sha256: 'a'.repeat(64), measured: { song_rock_big: { visqol: 2.7652, onset_recall: 0.77 } } }]) && ![EMAIL, SCREEN, TOKEN].some((x) => idx.includes(x)),
+    'the index: its own fields only (a word, the e-mail, a recording whose file did not stay: gone)', idx);
+  const sum9 = JSON.parse(fs.readFileSync(path.join(top, 'summary.json'), 'utf8'));
+  ok(JSON.stringify(sum9.public) === JSON.stringify([{ file: 'spectral/rec/index.json', kb: 0 }, { file: 'spectral/rec/t_rock_big.opus', kb: 4 }]) && /公開できないファイル 3 個は封じる方へ/.test(r9.text), 'summary.json names what is public; the three that could not be are said', `${JSON.stringify(sum9.public)}\n${r9.text}`);
+  const back9 = path.join(tmp, 'pub-open'); fs.cpSync(top, back9, { recursive: true });
+  const r9b = await lab(['checks', '--open', back9], { APP_CACHE_KEY: KEY, GITHUB_ACTIONS: undefined });
+  ok(r9b.status === 0 && fs.readFileSync(path.join(back9, 'public-sealed', 'spectral', 'rec', 'leak.opus')).includes(Buffer.from(TOKEN)) && fs.existsSync(path.join(back9, 'public-sealed', 'spectral', 'rec', 'notes.txt')) && fs.existsSync(path.join(back9, 'report.md')),
+    'what could not be public was sealed with the run, not lost (opened with the key: public-sealed/)', r9b.text);
+  // a public/ beside run folders (not in one): checked the same, what may not be public left out
+  const top2 = path.join(tmp, 'pub-top'); makeRun(top2, '20261031-170000-spectral');
+  w(path.join(top2, 'public', 'spectral', 'rec', 'a.opus'), OGG); w(path.join(top2, 'public', 'spectral', 'rec', 'b.txt'), `${EMAIL}\n`);
+  const r10 = await lab(['checks', '--seal', top2], PUB), left2 = tree(top2).map((l) => l.split(' ')[0]);
+  ok(r10.status === 0 && JSON.stringify(left2) === JSON.stringify(['20261031-170000-spectral/results.sealed', '20261031-170000-spectral/summary.json', 'public/spectral/rec/a.opus']) && /出しません/.test(r10.text), 'a public/ beside the run folders: never taken for a run, its text left out', `${r10.text}\n${left2.join('\n')}`);
+  // private: nothing changes (public/ too)
+  const top3 = path.join(tmp, 'pub-priv'); w(path.join(top3, 'report.md'), 'x\n'); w(path.join(top3, 'public', 'spectral', 'rec', 'n.txt'), 'x\n');
+  const r11 = await lab(['checks', '--seal', top3], { APP_REPO_VISIBILITY: 'private', APP_CACHE_KEY: KEY });
+  ok(r11.status === 0 && fs.existsSync(path.join(top3, 'public', 'spectral', 'rec', 'n.txt')) && fs.existsSync(path.join(top3, 'report.md')), 'private: as before', r11.text);
+}
+
 console.log(fails ? `✘ ${fails} failed` : '✔ all passed');
 process.exit(fails ? 1 : 0);

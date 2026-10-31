@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The ABX page with real recordings: A = the original MP3 excerpt, B = what the game played on a real client (a redroid
-run of app.txt: the recordings exported through the job log by `audio export` and opened by tools/rig/rec_decode.mjs), and
+run of app.txt: the recordings `audio export` published in the run's artifact, fetched by tools/rig/fetch_rec.py), and
 beside them, outside the ABX: the ceiling (the original played as an ordinary sound through the same client and recorder),
 light mode, and the emulator's render of the same song (tools/emu with spec.json).
 

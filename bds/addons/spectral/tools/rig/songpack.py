@@ -57,9 +57,17 @@ def parts(song_id, voices=48, size=1800, opts=None, suffix=''):
     """a test song as the server console's script events for Spectral Player (the app run's `audio song <id>`): spectral:song
     messages of at most `size` characters (/scriptevent takes 2048) — the first carries the meta, each a slice of the data.
     opts / suffix: converter options, and the id the song goes under (<id><suffix>)"""
-    fetched(song_id)
     sid = song_id + suffix
-    s = convert(song_id, voices, opts, sid)
+    opts = dict(opts or {})
+    pack = opts.pop('pack', None)
+    if pack:
+        # (a song converted beforehand — tools/exp/make_packs.py: the very data the client model scored, and no converter run in
+        # the app run's 40 minutes): <unit>/<pack>/<id><suffix>.song.json
+        s = json.load(open(os.path.join(UNIT, pack, f'{sid}.song.json'), encoding='utf-8'))
+        s = {'meta': {**s['meta'], 'id': sid}, 'data': s['data']}
+    else:
+        fetched(song_id)
+        s = convert(song_id, voices, opts, sid)
     meta, data = s['meta'], s['data']
     msg = lambda i, n, chunk, m=None: json.dumps({'id': sid, 'i': i, 'n': n, **({'meta': m} if m else {}), 'data': chunk}, separators=(',', ':'))
     room = size - len(msg(999, 999, ''))

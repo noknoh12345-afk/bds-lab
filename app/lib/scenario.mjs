@@ -33,9 +33,11 @@
 //   audio analyze <名前> <calib の名前|all|song:<曲>|emu:<曲>> [比べる録音…]   録音を測る（tools/rig: 数はログと報告に。録音は実行の
 //                                フォルダに。emu: は同じ曲をエミュレーターで鳴らしたものと比べる — 先に audio song <曲>）
 //   audio song <曲>[,<曲>…] [suffix=<字>] [<設定>=<値>…]  試験曲（corpus）をここで変換し（いくつもなら並行で）、サーバーのコンソールから
-//                                 spectral:song の script event で送る。suffix= は <曲><字> の名前で、ほかは変換器の設定（同じ run で比べる）
+//                                 spectral:song の script event で送る。suffix= は <曲><字> の名前で、ほかは変換器の設定（同じ run で比べる）。
+//                                 pack=<ユニットの中のフォルダ>: 前に変換した <曲><字>.song.json をそのまま送る（変換しない）
 //   audio ceiling <アドオン> <曲,曲,…>   天井（元の音を OGG のまま鳴らすだけのアドオン）を bds/addons/<アドオン> に作る: 次に addon <アドオン>
-//   audio export <名前> [kbps]    録音を Opus にし、tools/rig/rec_public.pem で暗号化してログへ（`[spectral rec]` の行。秘密鍵の持ち主だけが開ける）
+//   audio export <名前> [kbps]    録音を Opus にして公開する（GitHub では実行の成果物の public/<アドオン>/rec/: 管理パネルでサインインした人が
+//                                聞け、notify.yml が Discord に送る。鍵は要らない。ここでは実行のフォルダの public/）
 //   audio info                   端末の音の設定（メディアの音量・ミキサー・ゲームの audio_ の設定）をログへ（`[spectral rig] device audio`）
 //   audio volume [BGM 0〜1]      メディアの音量を最大、ゲームの audio_ を 1・BGM を指定に（stop の後、launch の前に）
 //   perf [ミリ秒]                ゲームのメモリと、その間の毎秒のフレーム数
@@ -185,10 +187,10 @@ function check(s) {
   if (s.verb === 'hold' && (a.length < 2 || a.slice(0, 3).some((x) => Number.isNaN(num(x))))) return '書き方: hold <x> <y> [ミリ秒]';
   if (s.verb === 'record' && !['start', 'stop'].includes(a[0])) return '書き方: record start|stop';
   if (s.verb === 'audio' && a[0] === 'analyze' && !(a.length >= 3 && a.slice(1).every((x) => /^[\w.:-]+$/.test(x)))) return '書き方: audio analyze <名前> <calib の名前|all|song:<曲>|emu:<曲>> [比べる録音の名前…]';
-  if (s.verb === 'audio' && a[0] === 'song' && !(a.length >= 2 && /^[\w.-]+(,[\w.-]+)*$/.test(a[1]) && a.slice(2).every((x) => /^(suffix=[\w.-]+|[a-z_]+=[\w.+-]+)$/.test(x))))
-    return '書き方: audio song <曲>[,<曲>…] [suffix=<付ける字>] [<変換器の設定>=<値> …]（曲は corpus/manifest.json の id。いくつも並べると並行して変換）';
+  if (s.verb === 'audio' && a[0] === 'song' && !(a.length >= 2 && /^[\w.-]+(,[\w.-]+)*$/.test(a[1]) && a.slice(2).every((x) => /^(suffix=[\w.-]+|pack=[\w-]+(\/[\w-]+)*|[a-z_]+=[\w.+-]+)$/.test(x))))
+    return '書き方: audio song <曲>[,<曲>…] [suffix=<付ける字>] [pack=<前に変換した曲のフォルダ>] [<変換器の設定>=<値> …]（曲は corpus/manifest.json の id。いくつも並べると並行して変換）';
   if (s.verb === 'audio' && a[0] === 'ceiling' && !(a.length === 3 && /^[A-Za-z0-9_-]{1,64}$/.test(a[1]) && /^[\w.-]+(,[\w.-]+)*$/.test(a[2]))) return '書き方: audio ceiling <アドオンの名前> <曲,曲,…>';
-  if (s.verb === 'audio' && a[0] === 'export' && !(a.length >= 2 && a.length <= 3 && /^[\w.-]+$/.test(a[1]) && (a[2] === undefined || num(a[2]) >= 16))) return '書き方: audio export <名前> [kbps]（録音を Opus で暗号化してログへ。開けるのは tools/rig/rec_public.pem の秘密鍵の持ち主だけ）';
+  if (s.verb === 'audio' && a[0] === 'export' && !(a.length >= 2 && a.length <= 3 && /^[\w.-]+$/.test(a[1]) && (a[2] === undefined || num(a[2]) >= 16))) return '書き方: audio export <名前> [kbps]（録音を Opus にして公開: 実行の成果物の public/。管理パネルと Discord で聞ける）';
   if (s.verb === 'audio' && a[0] === 'info' && a.length !== 1) return '書き方: audio info（端末の音の設定をログへ）';
   if (s.verb === 'audio' && a[0] === 'volume' && !(a.length <= 2 && (a[1] === undefined || (num(a[1]) >= 0 && num(a[1]) <= 1)))) return '書き方: audio volume [BGM の音量 0〜1]（stop の後・launch の前に。既定 0）';
   if (s.verb === 'audio' && !['analyze', 'song', 'ceiling', 'export', 'info', 'volume'].includes(a[0]) && (!['start', 'stop'].includes(a[0]) || (a[1] !== undefined && !/^[\w.-]+$/.test(a[1])))) return '書き方: audio start [名前] / audio stop / audio analyze … / audio song <曲> / audio ceiling <アドオン> <曲,…>（名前は英数字と _ . - だけ）';
@@ -665,11 +667,13 @@ export async function runScenario(steps, ctx) {
         }
         if (a[0] === 'volume') return AR.setVolumes(adb, ctx.pkg, { music: a[1] === undefined ? 0 : num(a[1]) });
         if (a[0] === 'export') {
-          // (into the job's log as ciphertext only: the private key is not in the repository — tools/rig/rec_decode.mjs)
-          const e = AR.exportLines({ labDir: ctx.labDir ?? process.cwd(), wav: path.join(runDir, 'audio', `${a[1]}.wav`), kbps: num(a[2]) || 128 });
-          for (const l of e.lines) process.stdout.write(`[spectral rec] ${a[1]} ${l}\n`);
-          fs.appendFileSync(doLog, `audio export ${a[1]}: ${e.lines.length} lines, ${e.kb} KB Opus, sha256 ${e.sha256}\n`);
-          return `${a[1]} を暗号化してログへ（${e.lines.length} 行、Opus ${e.kb} KB、sha256 ${e.sha256.slice(0, 12)}）`;
+          // (published: an Opus file in the run's public folder — on GitHub the job's artifact, played in the management panel
+          // by whoever signs in, and sent to the person's Discord by notify.yml; no key anywhere — lib/audiorec.mjs publish)
+          const dir = AR.publicDir(runDir), e = AR.publish({ labDir: ctx.labDir ?? process.cwd(), wav: path.join(runDir, 'audio', `${a[1]}.wav`), kbps: num(a[2]) || 128, dir });
+          const rel = path.relative(process.env.GITHUB_WORKSPACE || ctx.labDir || process.cwd(), e.file).split(path.sep).join('/');
+          process.stdout.write(`[spectral rec] ${a[1]} ${rel} ${e.kb} KB sha256 ${e.sha256}\n`);
+          fs.appendFileSync(doLog, `audio export ${a[1]}: ${rel}, ${e.kb} KB Opus, sha256 ${e.sha256}\n`);
+          return `${a[1]} を公開（${rel}、Opus ${e.kb} KB）`;
         }
         if (a[0] === 'ceiling') {
           const c = AR.ceiling({ labDir: ctx.labDir ?? process.cwd(), name: a[1], ids: a[2].split(',') });

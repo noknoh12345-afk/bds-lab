@@ -5,7 +5,7 @@ original's 2.5-9 kHz band is matched to the recording's nearest one within 150 m
 
   python3 tools/rig/burst_timing.py --rec <dir of decoded recordings> --prefix m[,n,...] [--songs a,b] [--json out.json]
 
-The recordings are what `audio export` put in a run's log, opened by tools/rig/rec_decode.mjs (<prefix>_<song>.opus). The
+The recordings are what `audio export` published in a run's artifact (tools/rig/fetch_rec.py: <prefix>_<song>.opus). The
 ceiling (prefix c) is the check of the method itself: its onsets come out at 0 ms.
 """
 import argparse, json, os, subprocess, sys

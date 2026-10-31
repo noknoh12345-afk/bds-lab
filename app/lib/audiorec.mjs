@@ -170,25 +170,44 @@ export function setVolumes(adb, pkg, { music = 0 } = {}) {
   return done.length ? done.join('・') : '変えるものなし';
 }
 
-/** a recording sent out through the job's log, readable only with the private key of the unit's tools/rig/rec_public.pem
- *  (the redroid workflow's artifacts carry no recordings, and a public lab seals what they do carry): Opus at `kbps`, then
- *  AES-256-GCM with a key of its own, that key sealed by RSA-OAEP (SHA-256) to the public key — the log shows nothing but
- *  ciphertext. → { lines: ["<i>/<n> <base64>"…], kb, sha256 (of the Opus file) }; tools/rig/rec_decode.mjs puts them together */
-export function exportLines({ labDir, addon = 'spectral', wav, kbps = 128 }) {
-  const unit = path.join(labDir, 'bds', 'addons', addon), pubFile = path.join(unit, 'tools', 'rig', 'rec_public.pem');
-  if (!fs.existsSync(pubFile)) throw new Error(`公開鍵がありません: ${path.relative(labDir, pubFile)}`);
+// ---- a run's recordings, published: Opus files any signed-in person can play (the management panel's viewer plays the run's
+// artifact, its sound files too) and that notify.yml sends to the person's Discord (lib/runfiles.mjs publicAudio). In the clear on
+// purpose — game sound only (the device's output while the game plays), no account, no screen — and checked again on the way out:
+// `app checks --seal` keeps public/ in the clear only for sound files and the index (lib/publicout.mjs), the rest is sealed
+/** where a run's published files go: APP_PUBLIC_DIR, else (GitHub Actions) <workspace>/out/public — the job's results folder,
+ *  uploaded as its artifact (redroid.yml) — else <run folder>/public */
+export function publicDir(runDir, env = process.env) {
+  if (env.APP_PUBLIC_DIR) return path.resolve(env.APP_PUBLIC_DIR);
+  if (env.GITHUB_ACTIONS === 'true' && env.GITHUB_WORKSPACE) return path.join(env.GITHUB_WORKSPACE, 'out', 'public');
+  return path.join(runDir, 'public');
+}
+// (the numbers of a recording's measurements that go in the index: lib/publicout.mjs keeps these alone)
+export const MEASURED = ['visqol', 'mrstft', 'third_oct_db', 'onset_ms', 'onset_recall', 'peak_db', 'rms_db', 'active_share', 'recorded_s', 'seconds', 'lr_db'];
+/** a recording published: Opus at `kbps` into <dir>/<addon>/rec/<name>.opus, and its line in index.json there — name, size,
+ *  sha256, and the numbers `audio analyze` measured on it (the <name>.<what>.json beside the recording) → { file, kb, sha256 } */
+export function publish({ labDir, addon = 'spectral', wav, kbps = 128, dir }) {
   if (!fs.existsSync(wav)) throw new Error(`録音がありません: ${path.basename(wav)}`);
   pythonFor(labDir);                                       // (ffmpeg, from apt when missing)
-  const opus = wav.replace(/\.wav$/, '.opus');
-  const r = spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', wav, '-c:a', 'libopus', '-b:a', `${kbps}k`, opus], { encoding: 'utf8', timeout: 600_000 });
+  const name = path.basename(wav).replace(/\.wav$/, ''), recDir = path.join(dir, addon, 'rec'), opus = path.join(recDir, `${name}.opus`);
+  fs.mkdirSync(recDir, { recursive: true });
+  // (-map_metadata -1: no tags of the WAV's, only the encoder's own)
+  const r = spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', wav, '-map_metadata', '-1', '-c:a', 'libopus', '-b:a', `${kbps}k`, opus], { encoding: 'utf8', timeout: 600_000 });
   if (r.status !== 0) throw new Error(`Opus にできません: ${(r.stderr || '').trim().slice(-300)}`);
-  const data = fs.readFileSync(opus), key = crypto.randomBytes(32), iv = crypto.randomBytes(12);
-  const c = crypto.createCipheriv('aes-256-gcm', key, iv), enc = Buffer.concat([c.update(data), c.final()]), tag = c.getAuthTag();
-  const ek = crypto.publicEncrypt({ key: fs.readFileSync(pubFile, 'utf8'), padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' }, key);
-  const len = Buffer.alloc(2); len.writeUInt16BE(ek.length);
-  const b64 = Buffer.concat([Buffer.from('SPR1'), len, ek, iv, tag, enc]).toString('base64'), size = 8_000, n = Math.ceil(b64.length / size);
-  const lines = Array.from({ length: n }, (_, i) => `${i + 1}/${n} ${b64.slice(i * size, (i + 1) * size)}`);
-  return { lines, kb: Math.round(data.length / 1024), sha256: crypto.createHash('sha256').update(data).digest('hex') };
+  const data = fs.readFileSync(opus), sha256 = crypto.createHash('sha256').update(data).digest('hex');
+  const measured = {};
+  for (const f of fs.readdirSync(path.dirname(wav)).filter((x) => x.startsWith(`${name}.`) && x.endsWith('.json')).sort()) {
+    let j; try { j = JSON.parse(fs.readFileSync(path.join(path.dirname(wav), f), 'utf8')); } catch { continue; }
+    // (score_song.py: one object per recording it scored; analyze.py: the programs' sections — only the song's numbers go)
+    const v = Object.values(j ?? {}).find((x) => x && typeof x === 'object' && typeof x.visqol === 'number');
+    if (v) measured[f.slice(name.length + 1, -5)] = Object.fromEntries(MEASURED.filter((k) => Number.isFinite(v[k])).map((k) => [k, v[k]]));
+  }
+  const idxFile = path.join(recDir, 'index.json');
+  let idx = { format: 'bds-lab-recordings/1', addon, recordings: [] };
+  try { const o = JSON.parse(fs.readFileSync(idxFile, 'utf8')); if (Array.isArray(o?.recordings)) idx = o; } catch { /* the first one */ }
+  const seconds = Math.round(((fs.statSync(wav).size - 44) / 192000) * 10) / 10;
+  idx.recordings = [...idx.recordings.filter((x) => x.name !== name), { name, file: `${name}.opus`, kbps, kb: Math.round(data.length / 1024), seconds, sha256, measured }];
+  fs.writeFileSync(idxFile, JSON.stringify(idx, null, 1) + '\n');
+  return { file: opus, kb: Math.round(data.length / 1024), sha256 };
 }
 
 /** what a recording says, measured by bds/addons/<addon>/tools/rig (analyze.py for calibration programs, score_song.py for a

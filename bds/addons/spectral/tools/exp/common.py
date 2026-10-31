@@ -5,7 +5,7 @@ U=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  
 sys.path[:0]=[U+'/tools', U+'/tools/metrics', U+'/tools/rig', U+'/tools/emu']
 import corpus as C, metrics as MT, score_song as SS
 from scipy.signal import butter, sosfiltfilt, resample_poly
-# decoded real recordings (<prefix>_<song>.opus from tools/rig/rec_decode.mjs; the handoff zip's recAll/): SPECTRAL_REC
+# real recordings (<prefix>_<song>.opus: tools/rig/fetch_rec.py <run> from the run's artifact; older runs: the handoff zip): SPECTRAL_REC
 S=os.environ.get('SPECTRAL_REC', os.path.join(U, 'corpus', 'renders', 'rec'))
 SR=48000
 SONGS=[s['id'] for s in C.manifest()['songs']]
