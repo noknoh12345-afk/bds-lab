@@ -59,7 +59,8 @@ h2 { font-family: var(--font-display); font-weight: 400; font-size: 17px; margin
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
 .legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
 .transport { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.transport .phone { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; cursor: pointer; }
+.transport .phone { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.transport .phone select { font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; max-width: 100%; }
 .ab { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 3px; background: var(--bg); }
 .ab button { border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 14px; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
 .ab button[aria-pressed="true"] { background: var(--amethyst); color: var(--panel); }
@@ -133,7 +134,10 @@ button.main:disabled { opacity: 0.5; cursor: default; }
           <button id="playOrig" aria-pressed="false">▶ 原曲</button>
         </div>
         <button class="ghost" id="stopBtn">■ 止める</button>
-        <label class="phone"><input type="checkbox" id="phone"> 電話の聞こえ方（24 声）</label>
+        <label class="phone">聞く端末 <select id="client">
+          <option value="phone" selected>電話（実機で測った鳴り方）</option>
+          <option value="pc">PC（測っていない・仮定）</option>
+        </select></label>
         <span class="time" id="time">0:00.0 / 0:22.9</span>
       </div>
       <p class="msg" id="playMsg">再生中に切り替えると同じ位置で聴き比べられます。図をタップすると、その位置へ移ります。</p>
@@ -177,7 +181,7 @@ button.main:disabled { opacity: 0.5; cursor: default; }
   <section class="how" aria-label="しくみ">
     <div><h3><span class="k">常駐発振器</span> 鳴らし直さない正弦波</h3><p>1760 Hz の正弦波ループを 1 ボイスにつき 1 回だけ鳴らし、以後は毎 tick <code>setPitch</code> と <code>fade</code> で動かします。位相が途切れないので、伸ばした音はきれいな正弦波のままです。</p></div>
     <div><h3><span class="k">ノイズ帯域</span> 正弦波に乗らない成分</h3><p>ボイスが拾わなかったエネルギーを 8 本の帯域ノイズのループで補います。シンバルや息の音、ボイス数を超えた倍音がここに入ります。</p></div>
-    <div><h3><span class="k">サブティック打撃音</span> 50 ms より細かい拍</h3><p>tick は 50 ms 刻みですが、先頭に 0 / 12.5 / 25 / 37.5 ms の無音を持つ 4 種の打撃音ファイルを選ぶことで、ドラムの頭を tick の間に置きます。</p></div>
+    <div><h3><span class="k">tick ごとのフェード</span> 50 ms より細かい立ち上がり</h3><p>命令は 50 ms ごとですが、変換器が tick ごとに 5 / 12 / 25 / 50 ms のどの長さで次の値へ動くかを、元の音の 10 ms ごとの包絡に合わせて選びます。ドラムの頭や子音は、正弦波とノイズ帯域の短いフェードで鳴ります。</p></div>
   </section>
 </div>
 
@@ -188,6 +192,11 @@ const C = window.SpectralCore;
 const DEMO_SONG = /*DEMO_SONG*/;
 const DEMO_MP3 = '/*DEMO_MP3*/';
 const ADDON = '/*ADDON_B64*/';   // dist/Spectral_Player.mcaddon from bds-lab (test and qa passed)
+// the game's own sound (web/game.js in a worker): the add-on's bundle bp/scripts/main.js with the recording mock
+// (web/build_engine.mjs), the measured client model, and the RP's sound files the client plays (16-bit, as decoded)
+const ENGINE_SRC = /*ENGINE_SRC*/;
+const GAME_SRC = /*GAME_SRC*/;
+const RP_PCM = /*RP_PCM*/;
 const RESERVED = new Set(['demo', 'shepard', 'probe']);
 const $ = (id) => document.getElementById(id);
 const fmt = (s, tenth) => { s = Math.max(0, s); const m = Math.floor(s / 60), r = s - m * 60; return m + ':' + (tenth ? r.toFixed(1).padStart(4, '0') : String(Math.floor(r)).padStart(2, '0')); };
@@ -236,7 +245,7 @@ async function decodeFile(buf) {
   return { x, orig: ab };
 }
 async function analyse(t) {
-  t.state = 'busy'; t.progress = 0; t.error = ''; t.game = null; t.gamePhone = null; renderTracks();
+  t.state = 'busy'; t.progress = 0; t.error = ''; t.games = {}; renderTracks();
   const run = (t.run = (t.run || 0) + 1);
   try {
     const r = await C.convert(t.x, { voices: t.voices, title: t.title, artist: t.artist, id: t.id, progress: async (f) => {
@@ -350,66 +359,43 @@ new MutationObserver(() => { if (current) current.img = null; draw(); }).observe
 // ------------------------------------------------------------ playback: the original and the in-game synthesis
 let actx = null, src = null, which = null, startedAt = 0, offset = 0, raf = 0;
 const ctxNow = () => (actx ??= new AudioContext());
-function bandNoise(sr, n, lo, hi, seed) {
-  let s = seed >>> 0; const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-  const re = new Float64Array(n), im = new Float64Array(n);
-  for (let k = 1; k < n / 2; k++) { const f = (k * sr) / n; if (f < lo || f >= hi) continue; const ph = rnd() * 2 * Math.PI; re[k] = Math.cos(ph); im[k] = Math.sin(ph); re[n - k] = re[k]; im[n - k] = -im[k]; }
-  for (let i = 0; i < n; i++) im[i] = -im[i];
-  C.fft(re, im);
-  let e = 0; for (let i = 0; i < n; i++) e += re[i] * re[i];
-  const g = 1 / Math.sqrt(e / n), out = new Float32Array(n); for (let i = 0; i < n; i++) out[i] = re[i] * g; return out;
+let rpDecoded = null;
+function rpSounds() {
+  if (rpDecoded) return rpDecoded;
+  rpDecoded = {};
+  for (const [name, [sr, b64]] of Object.entries(RP_PCM)) {
+    const bytes = C.fromB64(b64), i16 = new Int16Array(bytes.buffer, bytes.byteOffset, bytes.length >> 1), f = new Float32Array(i16.length);
+    for (let i = 0; i < i16.length; i++) f[i] = i16[i] / 32768;
+    rpDecoded[name] = { pcm: f, sr };
+  }
+  return rpDecoded;
 }
-// phone: what a phone plays (its client sounds 32 at once: the song's first 24 voices beside the 8 noise bands, src/main.ts)
-async function renderGame(t, phone = false) {
-  const key = phone ? 'gamePhone' : 'game';
-  if (t[key]) return t[key];
-  const d = t.dec, sr = 48000, T = 0.05, len = Math.ceil((d.F + 4) * T * sr);
-  const oc = new OfflineAudioContext(1, len, sr);
-  // (the add-on leaves out pitch moves under 3 cents and level moves under 0.75 dB)
-  const SIL = C.SILENT, CENT = Math.pow(2, 3 / 1200) - 1, DB = Math.pow(10, 0.75 / 20);
-  const sched = C.schedule(d);
-  sched.forEach((cmds, v) => {
-    if (!cmds || (phone && v >= 24)) return;
-    const o = oc.createOscillator(), gn = oc.createGain(); o.type = 'sine'; o.connect(gn).connect(oc.destination);
-    gn.gain.setValueAtTime(SIL, 0); o.frequency.setValueAtTime(1760, 0);
-    let lp = -1, ll = SIL;
-    for (const [tick, hz, dur, level] of cmds) {
-      const at = tick * T;
-      if (hz > 0 && !(lp > 0 && Math.abs(hz / lp - 1) < CENT)) { o.frequency.setValueAtTime(hz, at); lp = hz; }
-      if (dur >= 0) {
-        const L = Math.max(SIL, level);
-        if (!(dur === C.FADE_ATTACK && !d.vd) && L / ll < DB && ll / L < DB) continue;
-        gn.gain.setValueAtTime(ll, at); gn.gain.linearRampToValueAtTime(L, at + dur); ll = L;
-      }
-    }
-    o.start(0); o.stop(len / sr);
+const CLIENT_NOTE = {
+  phone: '電話のクライアントで測った鳴り方（24 kHz で混ぜる・同時 32 音・約 2.0 でクリップ・16 bit）',
+  pc: '測っていない PC の鳴り方（48 kHz で混ぜる・数の上限なし・浮動小数点と仮定）',
+};
+/** the song as the game plays it: the add-on's own code makes the commands, the client model plays them (a worker each time) */
+function renderGame(t, client) {
+  t.games = t.games || {};
+  if (t.games[client]) return Promise.resolve(t.games[client]);
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(new Blob([ENGINE_SRC, '\n', GAME_SRC], { type: 'text/javascript' }));
+    const w = new Worker(url);
+    const song = t.demo ? null : { meta: { ...t.song.meta, id: t.id }, data: C.toB64(t.song.bytes) };
+    w.onmessage = (e) => {
+      const m = e.data;
+      if (m.progress !== undefined) { $('playMsg').textContent = (m.stage === 'add-on' ? 'アドオンが命令を送っています… ' : 'クライアントの鳴り方で音にしています… ') + Math.round(m.progress * 100) + '%'; return; }
+      w.terminate(); URL.revokeObjectURL(url);
+      if (m.error) { reject(new Error(m.error)); return; }
+      const buf = new AudioBuffer({ length: m.pcm.length, numberOfChannels: 1, sampleRate: 48000 });
+      buf.copyToChannel(m.pcm, 0);
+      matchLevels(t, buf);
+      t.games[client] = { buf, info: m.info };
+      resolve(t.games[client]);
+    };
+    w.onerror = (e) => { w.terminate(); reject(new Error(e.message || 'worker')); };
+    w.postMessage({ song, songId: t.demo ? 'demo' : t.id, client, rp: rpSounds() });
   });
-  for (let b = 0; b < d.M; b++) {
-    const [lo, hi] = C.NOISE_EDGES.slice(b, b + 2), buf = oc.createBuffer(1, 65536, sr); buf.copyToChannel(bandNoise(sr, 65536, lo, hi, 100 + b), 0);
-    const s = oc.createBufferSource(); s.buffer = buf; s.loop = true; const gn = oc.createGain(); s.connect(gn).connect(oc.destination);
-    gn.gain.setValueAtTime(SIL, 0); let ll = SIL;
-    for (let k = 0; k < d.F; k++) {
-      const L = Math.max(SIL, k + 1 < d.F ? d.nz[(k + 1) * d.M + b] : 0);
-      if (L / ll < DB && ll / L < DB) continue;
-      // (a song in format 2 fades each band in its own fitted length, 5-50 ms)
-      const dur = d.nzd && k + 1 < d.F ? d.fms[d.nzd[k * d.M + b]] : C.FADE_SMOOTH;
-      gn.gain.setValueAtTime(ll, k * T); gn.gain.linearRampToValueAtTime(L, k * T + dur); ll = L;
-    }
-    s.start(0);
-  }
-  const bursts = C.BURST_BANDS.map(([lo, hi], b) => {
-    const n = Math.round(0.12 * sr), raw = bandNoise(sr, 8192, lo, hi, 1 + b), y = new Float32Array(n), dec = [22, 45, 75][b];
-    for (let i = 0; i < n; i++) { const tt = i / sr; y[i] = raw[i % 8192] * Math.exp(-tt * dec) * Math.min(1, tt / 0.0015); }
-    let e = 0; const m = Math.round(0.01 * sr); for (let i = 0; i < m; i++) e += y[i] * y[i];
-    const g = 1 / Math.sqrt(e / m); for (let i = 0; i < n; i++) y[i] *= g;
-    const buf = oc.createBuffer(1, n, sr); buf.copyToChannel(y, 0); return buf;
-  });
-  for (const [k, sub, b, a] of d.events) {
-    const s = oc.createBufferSource(); s.buffer = bursts[b]; const gn = oc.createGain(); gn.gain.value = a; s.connect(gn).connect(oc.destination); s.start(k * T + sub * 0.0125);
-  }
-  t[key] = await oc.startRendering();
-  matchLevels(t, t[key]);
-  return t[key];
 }
 function rms(buf) { const x = buf.getChannelData(0); let e = 0; for (let i = 0; i < x.length; i += 4) e += x[i] * x[i]; return Math.sqrt(e / (x.length / 4)) || 1e-9; }
 function matchLevels(t, buf = t.game) {
@@ -431,11 +417,19 @@ async function play(kind) {
   stopPlay(true);
   const ctx = ctxNow(); await ctx.resume();
   let buf;
-  const phone = $('phone').checked;
-  if (kind === 'game') { $('playMsg').textContent = 'ゲーム内の音を合成しています…'; buf = await renderGame(t, phone); }
+  const client = $('client').value;
+  let info = null;
+  if (kind === 'game') {
+    $('playMsg').textContent = 'アドオンが命令を送っています…';
+    try { const g = await renderGame(t, client); buf = g.buf; info = g.info; }
+    catch (e) { $('playMsg').textContent = 'ゲーム内の音を作れませんでした: ' + (e.message || e); return; }
+    if (current !== t) return;
+  }
   else buf = t.orig;
   if (!buf) { $('playMsg').textContent = '原曲はこの曲では聴けません。'; return; }
-  $('playMsg').textContent = kind === 'game' ? `正弦波ボイス ${phone ? Math.min(24, t.dec.N) : t.dec.N} 本 + ノイズ帯域 ${t.dec.M} 本${t.dec.events.length ? ' + 打撃音' : ''}（アドオンと同じ tick の規則と、曲ごとに合わせたフェードで合成）` : '原曲';
+  $('playMsg').textContent = kind === 'game'
+    ? `アドオン本体のコードが送った命令（${info.callsPerTick.toFixed(1)} 回/tick、正弦波 ${info.voices} 本＋ノイズ ${info.instances - info.voices} 本）を、${CLIENT_NOTE[client]}で音にしたもの`
+    : '原曲';
   which = kind; offset = Math.min(at, buf.duration - 0.05);
   src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination);
   src.onended = () => { stopPlay(); };
@@ -453,7 +447,7 @@ function drawHead() {
 $('playGame').addEventListener('click', () => play('game'));
 $('playOrig').addEventListener('click', () => play('orig'));
 $('stopBtn').addEventListener('click', () => stopPlay());
-$('phone').addEventListener('change', () => { if (which === 'game') play('game'); });   // (switches in place, at the same position)
+$('client').addEventListener('change', () => { if (which === 'game') play('game'); });   // (switches in place, at the same position)
 $('stage').addEventListener('click', (e) => {
   const t = current; if (!t || t.state !== 'ok') return;
   const r = $('stage').getBoundingClientRect(), p = ((e.clientX - r.left) / r.width) * t.song.meta.seconds;

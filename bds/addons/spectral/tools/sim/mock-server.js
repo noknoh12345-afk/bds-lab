@@ -42,7 +42,11 @@ export function _startup() {
   system.beforeEvents.startup._fire({ customCommandRegistry: { registerCommand: (d, cb) => { commands[d.name] = cb; }, registerEnum() {} },
     itemComponentRegistry: { registerCustomComponent() {} }, blockComponentRegistry: { registerCustomComponent() {} } });
 }
-const flush = () => new Promise((r) => setImmediate(r));
+// (Node's setImmediate; in a browser or a worker — the converter page plays songs through this mock — a MessageChannel does the same)
+const immediate = typeof setImmediate === 'function' ? setImmediate : (() => {
+  const ch = new MessageChannel(), q = []; ch.port1.onmessage = () => q.shift()(); return (f) => { q.push(f); ch.port2.postMessage(0); };
+})();
+const flush = () => new Promise((r) => immediate(r));
 export async function _step() {
   for (let i = 0; i < jobs.length; i++) { const g = jobs[i]; for (;;) { const r = g.next(); if (r.done) { jobs.splice(i--, 1); break; } } }
   await flush();
