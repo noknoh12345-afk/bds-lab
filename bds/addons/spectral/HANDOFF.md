@@ -110,6 +110,28 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 3. ライブの変換を良くする（実機で前もっての変換より 0.09–0.18 低い）: 先を 1 フレームだけ見る（遅れ +50 ms）、フレームごとの軽い合成による分析
 4. 遠い曲（合唱・ドラム・デモ）: 同じ run で 2 回録って、ばらつきと差を分ける
 
+## 予約したタスク: 実機を続ける（ユーザーの依頼「さらにタスク予約してapp回して」2026-10-31 22:26）
+
+Claude の予約したタスク「Spectral Player の実機を続ける」が 1 時間ごとに新しいセッションで動き、毎回この節に従う（人でも同じ手順で続けられる）:
+1. リポジトリ: noknoh12345-afk/bds-lab を push できる形で（Claude なら add_repo、access push）clone し `git checkout addon/spectral`
+2. `gh run list --repo noknoh12345-afk/bds-lab --workflow redroid.yml --branch addon/spectral --limit 1 --json databaseId,status,conclusion`
+3. 走っている（queued / in_progress）→ そう報告して終わる。**取り消さない**
+4. 終わっていて `bds/addons/spectral/measured/redroid-<id>.json` がない → 集める:
+   `JOB=$(gh run view <id> --repo noknoh12345-afk/bds-lab --json jobs -q '.jobs[0].databaseId')`、
+   `gh api repos/noknoh12345-afk/bds-lab/actions/jobs/$JOB/logs > /tmp/job.log`、ユニットで `python3 tools/rig/collect.py /tmp/job.log --run <id>`、
+   `python3 tools/rig/run_report.py <id> --md` → SPEC.md の「曲の成績」のいちばん上に「### <id>（自動の続き、app.txt のまま）」の節で
+   その表と行（**実測**）、下の「自動の続きの記録」に 1 行。`git checkout -- bds/vendor/bds-version.txt`、コミット・push（addon/spectral だけ）
+5. 次を始める: 下の記録で「始めた」が **2 本未満**、redroid が走っていない、`gh run list --repo noknoh12345-afk/bds-lab --workflow app.yml --limit 3`
+   に走っているものがない → `gh workflow run redroid.yml --repo noknoh12345-afk/bds-lab --ref addon/spectral -f addon=spectral -f mode=run`
+   （app.txt = 12 回目の計画のまま: +6 / +8 / +10 dB と 3D の届く距離の繰り返し = ばらつき）→ その id を記録に足してコミット・push
+6. 始めた 2 本がどちらも集まったら終わり: 報告して、予約したタスクを止める（Claude なら update_trigger で enabled=false）
+7. 毎回、日本語で短く報告（集めた数は実測、始めた run の id）
+- この手順ではアドオンのコード・既定・試験を変えない（レベルの既定を決めるのは人か作業のセッション）。.github・auto/policy.json・auto/STOP・
+  .env に触れない。corpus の音声・キャッシュ・bds/vendor/bedrock-server.zip をコミットしない
+
+### 自動の続きの記録
+- （まだなし）12 回目 run 41205071937 はこのセッションが始めた（自動の続きの 2 本には数えない）
+
 ## 実機で測るしくみ（redroid.yml, addon spectral, mode run → app.txt）
 
 - 端末: redroid の Android 14 に Play が入れた Minecraft 1.26.60.4。BDS はランナー上の 1.26.60.6。ジョブの上限 75 分、**app run の上限 40 分**
