@@ -869,7 +869,7 @@ class LiveStream {
 }
 
 class LivePlayer {
-  targets: Target[] = []; p = -1; playing = false; idle = 0; underruns = 0; skips = 0; moves = 0; calls = 0; ticks = 0; started = false;
+  targets: Target[] = []; p = -1; playing = false; idle = 0; underruns = 0; skips = 0; moves = 0; calls = 0; ticks = 0; started = false; ms = 0;
   lastP: Float32Array; lastL: Float32Array; lastNL: Float32Array;
   anchor?: Vector3; moving: number[] = []; dying: [SoundInstance, number][] = [];
   constructor(public st: LiveStream, public at: LiveAt) {
@@ -1008,7 +1008,9 @@ class LivePlayer {
       for (let b = 0; b < t.nz.length; b++) { try { t.nz[b]?.setVolume(this.lastNL[b]); } catch { /* gone */ } }
     }
   }
-  tick() {
+  /** a tick, its script time counted (ms/tick in the status: Date.now's milliseconds, averaged) */
+  tick() { const t0 = Date.now(); try { this.step(); } finally { this.ms += Date.now() - t0; } }
+  private step() {
     if (!this.started) return;
     this.ticks++;
     this.targets = this.targets.filter((t) => { if (!t.player || t.player.isValid) return true; t.gone = true; return false; });
@@ -1043,7 +1045,7 @@ class LivePlayer {
   status() {
     const where = this.at.kind === 'phones' ? `phones ${this.at.who.join(',')}` : this.at.kind === 'follow' ? `follow ${this.at.who} listeners ${this.targets.length}`
       : `${this.at.kind} ${Math.round(this.at.loc.x)} ${Math.round(this.at.loc.y)} ${Math.round(this.at.loc.z)}${this.at.kind === 'near' ? ` listeners ${this.targets.length}` : ''}`;
-    return `${where} delay ${!this.playing ? '-' : this.st.w - this.p} ticks underruns ${this.underruns} skips ${this.skips} moves ${this.moves} calls/tick ${(this.ticks ? this.calls / this.ticks : 0).toFixed(1)}`;
+    return `${where} delay ${!this.playing ? '-' : this.st.w - this.p} ticks underruns ${this.underruns} skips ${this.skips} moves ${this.moves} calls/tick ${(this.ticks ? this.calls / this.ticks : 0).toFixed(1)} ms/tick ${(this.ticks ? this.ms / this.ticks : 0).toFixed(2)}`;
   }
 }
 const lives = new Map<string, LiveStream>();

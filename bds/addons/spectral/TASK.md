@@ -88,7 +88,9 @@
 - tools/eval.py / tools/systems.py: 試験曲で方式を採点（ViSQOL ほか、corpus/results/）。tools/abx/make_abx.py: 聴き比べの音声と ABX ページ（dist/abx/）
 - tools/rig/: 実機の測定リグ（programs.py → src/calib_programs.ts、analyze.py、synth.py、songpack.py、fetch_rec.py = 実行の録音を手元へ）。`python3 tests/test_rig.py` が解析を合成クライアントで試験する
 - tools/live/: ライブ（encoder.mjs = ファイルをライブのフレームに / 曲に、bridge.mjs = Discord の声をプレイヤーの位置から 3D で、test_bridge.mjs）。web/live.js がその場の変換
-- tools/exp/: クライアントの模型を通した実験（run_exp.py・score_pack.py・make_packs.py = 実機の run 用に前もって変換した曲・make_app.py = app.txt）
+- tools/exp/: クライアントの模型を通した実験（run_exp.py・score_pack.py・make_packs.py = 実機の run 用に前もって変換した曲・make_app.py = app.txt、
+  `"batch": N` で 1 本の録音に N 曲（audio mark → audio stop が切り分け → audio analyze-all が並行して測る）・**batch_play.py = app の JSON の全曲を
+  模型でまとめて「録音」と採点（実時間を待たない、推測: 9 回目で実機と相関 0.91、良い方の選び 12/13 一致）**）
 - tools/emu/client.py: 命令列を、未知の挙動をパラメーター（spec.json）にしたクライアントの模型で鳴らす
 - tools/make_rp_assets.py: rp/sounds と sound_definitions.json と src/assets.ts を作る
 - web/: ブラウザ変換ページ（core.js は tools/spectral.py とバイト単位で同じ出力、tools/parity.py）。ゲーム内の音は web/game.js（ワーカー:

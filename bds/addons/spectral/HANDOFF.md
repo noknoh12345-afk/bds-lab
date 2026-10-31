@@ -92,8 +92,16 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 - 端末: redroid の Android 14 に Play が入れた Minecraft 1.26.60.4。BDS はランナー上の 1.26.60.6。ジョブの上限 75 分、**app run の上限 40 分**
 - app.txt は tools/exp/make_app.py（`python3 tools/exp/make_app.py tools/exp/app9.json app.txt`）。腕（arm）ごとに前置き・曲 id の後ろの字・
   変換器の設定・前に打つ命令・pack（前もって変換した曲: tools/exp/make_packs.py）・play（spectral:play 以外、例 live_demo）。
-  interleave: 同じ命令の腕を曲ごとに交互に
-- 曲は `audio song <曲,…> [suffix=_x] [pack=<フォルダ>] [設定=値 …]`（pack なしは join の前に変換: 合成による分析 5 回は重い）
+  interleave: 腕を曲ごとに交互に（命令の違う腕は、その曲の前に spectral:stop と違う命令だけ: 10 回目まではこれがなく、e_ が +6 dB で鳴った）。
+  **batch: N**（11 回目から）: 1 本の録音に N 曲まで — `audio start` → 曲ごとに `audio mark <名前>`・play・wait → `audio stop` が目印で
+  audio/<名前>.wav に切り分ける（録音の遅れは壁の時計とファイルの長さの差、切れ目は曲のあとの静かな所へ）→ `audio analyze-all` が
+  並行して測る（app/lib/scenario.mjs・audiorec.mjs cut）。1 曲 45 秒（うち待ち 22 秒）が約 25 秒に。40 分で切れたら失うのはその 1 本の録音だけ
+- **電話は 1 度に 1 曲しか鳴らせない**（同時 32 音を 1 曲が使い切り、録音は混ざった 1 本）: 何曲もを同時に録ることはできない。
+  実時間を待たずに全部を見るのは模型: `python3 tools/exp/batch_play.py <app の JSON> [--ceiling]`（アドオンの本体をモックで、
+  実機の鳴り方の模型で「録音」に、rig の score_song.py で採点、Opus・index.json・scores.json。9 回目の 40 本で 7.6 分（2 コア）。
+  実機より平均 0.27 高く、相関 0.91、どちらが良いかは 13 曲中 12 曲で実機と同じ。3D はない）→ `tools/abx/make_compare_real.py --scores`
+- 曲は `audio song <曲,…> [suffix=_x] [pack=<フォルダ>] [設定=値 …]`（pack なしは join の前に変換: 合成による分析 5 回は重い）。
+  いくつもの曲の部分を 1 回の do で 25 ms ずつ（前は 300 ms ずつで 29 曲 7 分）
 - 録音: `audio export <録音> [kbps]` → 成果物 redroid-game の public/spectral/rec/（平文）。`python3 tools/rig/fetch_rec.py <run>`
 - 集計: `gh api repos/<owner>/<repo>/actions/jobs/<job>/logs > job.log` → `python3 tools/rig/collect.py job.log --run <id>` →
   `python3 tools/rig/summary.py --md`
