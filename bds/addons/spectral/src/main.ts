@@ -224,8 +224,8 @@ class Session {
   /** start one looping instance at silence */
   private loop(t: Target, name: string): SoundInstance {
     if (t.player) return t.player.playSound(this.ev(name), { volume: SILENT, pitch: 1, loopCount: -1 });
-    // 3D: the play volume also sets the audible range, so start at 1 and silence it in the same tick
-    const s = t.dim!.playSound(this.ev(name), t.loc!, { volume: 1, pitch: 1, loopCount: -1 });
+    // 3D: the play volume also sets the audible range, so start at RANGE_3D and silence it in the same tick
+    const s = t.dim!.playSound(this.ev(name), t.loc!, { volume: RANGE_3D, pitch: 1, loopCount: -1 });
     s.setVolume(SILENT);
     return s;
   }
@@ -808,6 +808,9 @@ const LIVE_IDLE = 4;            // ticks without a new frame: the voice falls si
 const FOLLOW_MOVE = 1.5;        // blocks a followed player moves before the sound moves with them
 const FOLLOW_STEP = 8;          // sounds moved a tick (each with a crossfade of a tick)
 const FOLLOW_RANGE = 48;        // blocks: who hears a talker (the 3D sounds' own max_distance)
+/** the volume a 3D sound is made at (spectral:range): the client takes its audible distance from it — measured, run 41200540880:
+ *  made at 1, a listener's own 3D sound is faint at 12 blocks and silent at 24. Its level is set after, by setVolume */
+let RANGE_3D = 1;
 
 class LiveStream {
   w = -1; frames = 0; gaps = 0; lastAt = 0;
@@ -888,7 +891,7 @@ class LivePlayer {
     if (t.player && !at) return t.player.playSound(this.ev(name), { volume: SILENT, pitch: 1, loopCount: -1 });
     // (3D: the play volume also sets the audible range, so 1 and silenced in the same tick; a listener's own 3D sound — follow —
     // at the talker's place, heard by that listener alone)
-    const s = t.player ? t.player.playSound(this.ev(name), { location: at, volume: 1, pitch: 1, loopCount: -1 }) : t.dim!.playSound(this.ev(name), at!, { volume: 1, pitch: 1, loopCount: -1 });
+    const s = t.player ? t.player.playSound(this.ev(name), { location: at, volume: RANGE_3D, pitch: 1, loopCount: -1 }) : t.dim!.playSound(this.ev(name), at!, { volume: RANGE_3D, pitch: 1, loopCount: -1 });
     s.setVolume(SILENT);
     return s;
   }
@@ -1126,6 +1129,10 @@ cmdAny('spectral:live', 'Live streams (a voice chat, a microphone): the list, or
   });
 /** a song sent as a live stream, frame by frame as a voice chat would (the whole live path in the add-on itself: the frames are
  *  written as bytes and read back) */
+cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (1 = as made so far; the client takes the distance from it)', { 'volume?': 'float' }, (_p, a) => {
+  if (a.volume !== undefined) RANGE_3D = Math.max(0.25, Math.min(16, a.volume));
+  return `range: 3D sounds made at volume ${RANGE_3D} (new speakers and live listeners; their level is set after)`;
+});
 cmdAny('spectral:live_demo', 'Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)',
   { song: 'string', 'to?': ['phones', 'speaker', 'near', 'follow'], 'who?': 'player', 'voices?': 'int', 'at?': 'string' }, async (p, a) => {
     const song = songs.get(a.song); if (!song) return `§cno song "${a.song}"`;

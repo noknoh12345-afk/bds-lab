@@ -415,3 +415,11 @@ wait 1000
 ~ @A live t2: 1 frames, 2 voices, follow D listeners 0
 scriptevent spectral:live {"id":"t2","end":true}
 tp A 0 -60 0
+
+## 3D sounds can reach farther: the volume they are made at (spectral:range)
+@A cmd /spectral:range
+~ @A range: 3D sounds made at volume 1 \(
+@A cmd /spectral:range 4
+~ @A range: 3D sounds made at volume 4 \(
+spectral:range 1
+~ range: 3D sounds made at volume 1 \(

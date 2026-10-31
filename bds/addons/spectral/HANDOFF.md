@@ -79,6 +79,10 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 11. **11 回目の実機**（run 41200540880、実測、まとめ録りで 42 本）: **+10 dB は +6 dB より 10/13 で上（中央値 +0.11）、同じ run の天井から
     0.3 以内 12/13（+6 dB は 10/13）**。3D は 24 ブロックで無音（作るときの volume 1 では 16 ブロックほどまで: 推測）。表: SPEC.md
 
+12. **3D の届く距離の設定** `/spectral:range <音量>`（3D の音を作るときの音量: クライアントは届く距離をそこから取る。既定 1 = いままでどおり。
+    試験 ## 3D sounds can reach farther）。**12 回目の実機**（tools/exp/app12.json: d +6 / f +8 / e +10 dB を曲ごとに交互に 39 本、
+    3D 24 ブロックを作る音量 1 / 2 / 4・40 ブロックを 4 で 4 本、まとめ録り）。集計は引き継ぎ zip の scratch/run12.sh（RUN=<id>）
+
 ## いまの状態
 
 - ブランチ addon/spectral（最後に push したコミットは git log で）。`node lab.mjs go`（ローカルの BDS 1.26.61.1: lab の api が取ってきたもの。

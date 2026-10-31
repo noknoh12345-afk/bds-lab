@@ -47,6 +47,7 @@
 - [x] 変換器が tick ごとに選んだ長さのフェードで声とノイズ帯域を鳴らす（## a song with fitted fades (tools/spectral.py nz_fade, v_fade): each voice and noise band fades as long as the converter chose, tick by tick）
 - [x] ライブ: 声（ボイスチャット・マイク）をその場で受け取り、届いた順に鳴らす。script event `spectral:live`、ジッターバッファ 2 tick、届かなかったフレームは数えて埋める、送り手が始め直したら新しいストリーム、終わり（## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), starts again when its sender does, and ends）
 - [x] ライブの道で曲を 1 フレームずつ送る（ボイスチャットの橋渡しと同じ形）: ヘッドホンに、そして歩く人から 3D で（音がその人に付いて動く・48 ブロック以内の人それぞれに・話す本人には聞こえない・いなくなった人の声は誰にも聞こえない: 近接ボイスチャット・立体音響）（## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice, nobody hears a talker who left)）
+- [x] 3D の音の届く距離: 作るときの音量で決まる（実機で、音量 1 で作った聞く人ごとの 3D の音は 12 ブロックで小さく 24 ブロックで無音）ので変えられる（## 3D sounds can reach farther: the volume they are made at (spectral:range)）
 
 ## Guessed
 <!-- values decided without asking -->

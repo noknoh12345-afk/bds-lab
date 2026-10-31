@@ -31,7 +31,10 @@ WAYS = {'w': ('final', '+6 dB', '最終の既定（ファイルより +6 dB、�
         'kl': ('live_near_left', '人ごと 3D 左', '聞く人それぞれの 3D の音（near: follow と同じ）で左 6 ブロックから'),
         'kr': ('live_near_right', '人ごと 3D 右', '聞く人それぞれの 3D の音（near: follow と同じ）で右 6 ブロックから'),
         'ka': ('live_near_left3', '左 3', '聞く人ごとの 3D で左 3 ブロックから'), 'kb': ('live_near_left12', '左 12', '聞く人ごとの 3D で左 12 ブロックから'),
-        'kc': ('live_near_left24', '左 24', '聞く人ごとの 3D で左 24 ブロックから')}
+        'kc': ('live_near_left24', '左 24', '聞く人ごとの 3D で左 24 ブロックから'),
+        'f': ('refined_svr5_loud8', '+8 dB', '新しい既定を +8 dB で詰めて +8 dB で'),
+        'ra': ('live_near24_range1', '24・音量 1', '3D 24 ブロック、作る音量 1'), 'rb': ('live_near24_range2', '24・音量 2', '3D 24 ブロック、作る音量 2'),
+        'rc': ('live_near24_range4', '24・音量 4', '3D 24 ブロック、作る音量 4'), 'rd': ('live_near40_range4', '40・音量 4', '3D 40 ブロック、作る音量 4')}
 # (the clip's distortion on the emulator's renders, a hard clip at 2.0 file units — tools/exp/README.md; estimated, not measured)
 CLIP_NOTE = {'w': 'クリップの歪み（推測）: 全曲 −44 dB 未満', 'u': 'クリップの歪み（推測）: 話し声 −21 dB、ピアノ −26 dB まで'}
 

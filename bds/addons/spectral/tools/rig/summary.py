@@ -20,7 +20,9 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('refined_svr5', '合成による分析・高い帯域を重く・5 回・音量を保つ'), ('live_encoder', 'ライブの変換（声をその場で）'), ('live_phones', 'ライブの道（ヘッドホン）'),
         ('live_3d_left', 'ライブ・3D で左'), ('live_3d_right', 'ライブ・3D で右'),
         ('refined_svr5_loud10', '新しい既定を +10 dB で'), ('live_near_left', 'ライブ・聞く人ごとの 3D で左'), ('live_near_right', 'ライブ・聞く人ごとの 3D で右'),
-        ('live_near_left3', 'ライブ・3D 左 3 ブロック'), ('live_near_left12', 'ライブ・3D 左 12 ブロック'), ('live_near_left24', 'ライブ・3D 左 24 ブロック')]
+        ('live_near_left3', 'ライブ・3D 左 3 ブロック'), ('live_near_left12', 'ライブ・3D 左 12 ブロック'), ('live_near_left24', 'ライブ・3D 左 24 ブロック'),
+        ('refined_svr5_loud8', '新しい既定を +8 dB で'), ('live_near24_range1', '3D 24 ブロック・音量 1'), ('live_near24_range2', '3D 24 ブロック・音量 2'),
+        ('live_near24_range4', '3D 24 ブロック・音量 4'), ('live_near40_range4', '3D 40 ブロック・音量 4')]
 
 
 def main():

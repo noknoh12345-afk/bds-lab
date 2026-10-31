@@ -404,7 +404,7 @@ var Session = class {
   /** start one looping instance at silence */
   loop(t, name) {
     if (t.player) return t.player.playSound(this.ev(name), { volume: SILENT, pitch: 1, loopCount: -1 });
-    const s = t.dim.playSound(this.ev(name), t.loc, { volume: 1, pitch: 1, loopCount: -1 });
+    const s = t.dim.playSound(this.ev(name), t.loc, { volume: RANGE_3D, pitch: 1, loopCount: -1 });
     s.setVolume(SILENT);
     return s;
   }
@@ -1261,6 +1261,7 @@ var LIVE_IDLE = 4;
 var FOLLOW_MOVE = 1.5;
 var FOLLOW_STEP = 8;
 var FOLLOW_RANGE = 48;
+var RANGE_3D = 1;
 var LiveStream = class {
   constructor(id, meta) {
     this.id = id;
@@ -1417,7 +1418,7 @@ var LivePlayer = class {
   }
   loop(t, name, at = t.loc) {
     if (t.player && !at) return t.player.playSound(this.ev(name), { volume: SILENT, pitch: 1, loopCount: -1 });
-    const s = t.player ? t.player.playSound(this.ev(name), { location: at, volume: 1, pitch: 1, loopCount: -1 }) : t.dim.playSound(this.ev(name), at, { volume: 1, pitch: 1, loopCount: -1 });
+    const s = t.player ? t.player.playSound(this.ev(name), { location: at, volume: RANGE_3D, pitch: 1, loopCount: -1 }) : t.dim.playSound(this.ev(name), at, { volume: RANGE_3D, pitch: 1, loopCount: -1 });
     s.setVolume(SILENT);
     return s;
   }
@@ -1780,6 +1781,10 @@ cmdAny(
     return livePlay(st, at);
   }
 );
+cmdAny("spectral:range", "How far 3D sounds reach: the volume they are made at (1 = as made so far; the client takes the distance from it)", { "volume?": "float" }, (_p, a) => {
+  if (a.volume !== void 0) RANGE_3D = Math.max(0.25, Math.min(16, a.volume));
+  return `range: 3D sounds made at volume ${RANGE_3D} (new speakers and live listeners; their level is set after)`;
+});
 cmdAny(
   "spectral:live_demo",
   "Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)",
