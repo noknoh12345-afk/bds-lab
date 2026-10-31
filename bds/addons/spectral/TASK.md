@@ -76,7 +76,7 @@
   5 回、音量を保って。py と js はバイト一致
 - **実機の ViSQOL（9 回目 run 41187515049、13 曲、同じ run の中で）: 新しい既定 中央値 2.91、8 回目の既定より 11/13 で上（差の中央値 +0.09・
   平均 +0.14）**。天井（1–2 回目の run、目安）から 0.3 以内 9/13。run をまたぐと同じデータで 0.7 動くことがある（デモ）ので、比べるのは
-  同じ run の中だけ。`node lab.mjs go`（ローカルの BDS 1.26.61.1）: **DONE dist/Spectral_Player.mcaddon（test 149/149, qa clean）**
+  同じ run の中だけ。`node lab.mjs go`（ローカルの BDS 1.26.61.1）: **DONE dist/Spectral_Player.mcaddon（test 152/152, qa clean）**
 - **11 回目（run 41200540880、実測、まとめ録り）: 同じ変換を +10 dB で詰めて +10 dB で鳴らすと 10/13 で上（中央値 +0.11）、同じ run の
   天井から 0.3 以内 12/13**（+6 dB は 10/13）。既定はまだ +6 dB（変えるかは HANDOFF.md の次にやること）
 - ライブ: 声などを 50 ms ずつその場で受け取って鳴らす（script event spectral:live）。ヘッドホン・3D スピーカー・その場に聞く人ごとの 3D（near）・

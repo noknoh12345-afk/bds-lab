@@ -81,12 +81,13 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 12. **3D の届く距離の設定** `/spectral:range <音量>`（3D の音を作るときの音量: クライアントは届く距離をそこから取る。既定 1 = いままでどおり。
     試験 ## 3D sounds can reach farther）。**12 回目の実機**（tools/exp/app12.json: d +6 / f +8 / e +10 dB を曲ごとに交互に 39 本、
-    3D 24 ブロックを作る音量 1 / 2 / 4・40 ブロックを 4 で 4 本、まとめ録り）。集計は引き継ぎ zip の scratch/run12.sh（RUN=<id>）
+    3D 24 ブロックを作る音量 1 / 2 / 4・40 ブロックを 4 で 4 本、まとめ録り）: **run 41205071937**（22:19 JST に始めた）。集計は引き継ぎ zip の scratch/run12.sh
+    （`RUN=41205071937 U=<ユニット> bash run12.sh`）
 
 ## いまの状態
 
 - ブランチ addon/spectral（最後に push したコミットは git log で）。`node lab.mjs go`（ローカルの BDS 1.26.61.1: lab の api が取ってきたもの。
-  zip はリポジトリの外）: DONE（test 149/149, qa clean）
+  zip はリポジトリの外）: DONE（test 152/152, qa clean）
 - 9 回目（run 41187515049、実測）: 新しい既定 d_ の中央値 **2.91**、天井（1–2 回目の run、目安）から 0.3 以内 **9/13**。同じデータの t_ が
   8 回目 3.04（デモ）→ 9 回目 2.36: **run をまたぐと同じデータで 0.7 動く**。比べるのは同じ run の中だけ（表: SPEC.md）
 - verify.yml は addon/spectral で前から tests/scratch-offline.mjs が落ちている（このユニットと関係なく、手元でも同じ。main には
