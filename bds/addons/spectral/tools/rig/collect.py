@@ -34,15 +34,21 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'f': 'improved_fades', 'w': 'final', 's': 'shipped_run7', 'u': 'final_loud10',
         # run 8: the converter's analysis by synthesis through the client model (tools/spectral.py refine_client) at the phone's
         # defaults (+6 dB), at +10 dB, and with the bands weighted as ViSQOL's MOS mapping leans on them (refine_weights=svr)
-        't': 'refined', 'p': 'refined_loud10', 'o': 'refined_svr'}
+        't': 'refined', 'p': 'refined_loud10', 'o': 'refined_svr',
+        # run 9: the analysis by synthesis with the bands weighted as ViSQOL's MOS leans on them, five sweeps, the level held (d);
+        # the live encoder's own frames played as a song (i: web/live.js, causal, as a voice chat sends them); a song played over
+        # the live path (jp: /spectral:live_demo on headphones), and as a 3D speaker to the listener's left / right (jl / jr)
+        'd': 'refined_svr5', 'i': 'live_encoder', 'jp': 'live_phones', 'jl': 'live_3d_left', 'jr': 'live_3d_right'}
 
 
 def songs(res):
     """per song: the game's and the ceiling's ViSQOL against the original, the gap, and the emulator against the recording"""
     rows = {}
     for rec, by in res.items():
-        m = re.match(r'([gclvmnrabxyzhkqefwsutpo])_(.+)$', rec)
-        if not m:
+        m = re.match(r'([a-z]{1,2})_(.+)$', rec)
+        if not m or m.group(1) not in WAYS:
+            m = re.match(r'([a-z])_(.+)$', rec)
+        if not m or m.group(1) not in WAYS:
             continue
         kind, sid = m.groups()
         r = rows.setdefault(sid, {})

@@ -12,7 +12,7 @@ tools/emu/client.py の既定）を列で分け、実測の出どころ（run �
 | 録音 | scrcpy 3.1 `--audio-source=output`（AudioPlaybackCapture）、raw 48 kHz 16 bit ステレオ。Android のミキサーは 44.1 kHz |
 | 操作 | redroid では lab-pad の uinput コントローラーが Android の入力の一覧に出ない（/dev/input にノードを作っても）ので、シェルの長押し入力（app/lib/android.mjs の startPad） |
 | 音量 | `audio volume`: Android のメディア音量 15/15、ゲームの audio_main 1・audio_music 0（BGM が録音に入らないように）。準備した端末の既定は 5/15・0.5・0.3（measured/device-audio-41065460620.json） |
-| 数の出し方 | app.txt の `audio analyze`（tools/rig/analyze.py・score_song.py・emu_check.py）がジョブのログに `[spectral rig]` の行で出す。録音そのものは `audio export`（Opus にして tools/rig/rec_public.pem で暗号化、tools/rig/rec_decode.mjs で開く） |
+| 数の出し方 | app.txt の `audio analyze`（tools/rig/analyze.py・score_song.py・emu_check.py）がジョブのログに `[spectral rig]` の行で出す。録音そのものは `audio export`（Opus にして実行の成果物の public/spectral/rec/ に平文で: 管理パネルでサインインして聞ける・notify.yml が Discord に送る・tools/rig/fetch_rec.py で取る。8 回目までは暗号化してログへ） |
 | 集めたもの | measured/redroid-<run>.json（tools/rig/collect.py）、measured/summary.json（tools/rig/summary.py）、measured/calib-*.json、measured/device-audio-*.json、measured/traffic-*.json |
 
 ## 限界値（端末: 上の redroid の Android 14・Minecraft 1.26.60.4）
@@ -40,7 +40,34 @@ tools/emu/client.py の既定）を列で分け、実測の出どころ（run �
 
 ## 曲の成績（実測: 実機の録音の ViSQOL v3）
 
-### いまの版（7 回目、run 41158185476: 出荷版と最終の既定を同じ run で）
+### 8 回目（run 41170496546: 合成による分析、3 回目のセッション）
+
+| 曲 | 天井（音量 1） | 7 回目の最終の既定（run 7） | **t_ 合成による分析**（8 回目） | o_ 同・高い帯域を重く（svr） | w_ 7 回目の既定（8 回目の同じ run） |
+|---|---|---|---|---|---|
+| choir_how_long | 2.75 | 1.96 | 1.87 | 2.29 | – |
+| demo_selfmade | 3.27 | 2.23 | 3.04 | 2.38 | – |
+| drums_round | 2.42 | 1.83 | 2.03 | – | – |
+| edm_detection | 3.88 | 2.81 | 3.12 | – | – |
+| funk_funkorama | 2.61 | 1.60 | 2.56 | 2.69 | – |
+| orchestra_five_armies | 3.23 | 2.77 | 2.42 | – | – |
+| piano_chopin_op66 | 2.33 | 2.16 | 2.26 | 2.27 | – |
+| piano_gymnopedie | 1.76 | 3.37 | 3.37 | 3.33 | – |
+| rock_big | 3.97 | 3.32 | 2.77 | 3.74 | 2.80 |
+| speech_en_wordsworth | 3.09 | 2.62 | 3.06 | 3.04 | – |
+| speech_ja_soseki | 2.81 | 2.77 | 3.26 | – | – |
+| vocal_name_of_love | 3.09 | 3.48 | 3.50 | – | 3.45 |
+| vocal_stars | 3.37 | 2.83 | 3.22 | 3.31 | – |
+| **中央値** | **3.09**（13） | **2.77**（13） | **3.04**（13） | 2.86（8） | 3.12（2） |
+| 天井との差の中央値（0.3 以内の曲） | – | 0.55（4/13） | **0.15（8/13）** | – | – |
+
+- t_ = 変換の中で実機の模型を通して tick ごとの音量とフェードを選び直した曲（tools/spectral.py refine_client: 同じ重さ、2 回）を電話の既定
+  （24 声・打撃音なし・+6 dB）で。o_ = 帯域の重みを ViSQOL の MOS が頼る 6.7 kHz より上に寄せたもの（8 曲）。w_ = 7 回目の既定（3 曲の予定、
+  40 分で 2 曲）。23 本（予定 24）
+- **run をまたいだ差は信用できない**: 同じ 7 回目の既定のロックが 7 回目 3.32・8 回目 2.80。8 回目の中でもロックは t_ 2.77・o_ 3.74・w_ 2.80、
+  デモは t_ 3.04・o_ 2.38（o_ のデモは音のある時間が 75%、t_ は 82%: 録音の抜けか）。o_ − t_ は 8 曲で中央値 +0.05（5/8 で上）
+- 録音そのものはこの run の鍵（前のセッションの中だけ）でしか開けない。数は measured/redroid-41170496546.json
+
+### 7 回目（run 41158185476: 出荷版と最終の既定を同じ run で）
 
 | 曲 | 天井（音量 1） | 出荷版 | 改良版（5 回目） | **最終の既定**（+6 dB） | 同 +10 dB |
 |---|---|---|---|---|---|

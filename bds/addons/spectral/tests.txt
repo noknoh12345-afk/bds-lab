@@ -349,3 +349,40 @@ wait 300
 ~ @C status: playing demo .* voices 48 instances 56
 @C cmd /spectral:stop
 ~ @C ■ stopped
+
+## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), and ends
+scriptevent spectral:live {"id":"t1","m":{"N":2,"M":8,"amp":[-90,0.75],"nz":[-100,0.5],"fd":[5,12,25,50]},"s":0,"f":"A2QQcAAAAAAAAAAAAA///wNkEHAAAAAAAAAAAAAP//8DZBBwAAAAAAAAAAAAD///","at":"phones:A"}
+wait 600
+@A cmd /spectral:live
+~ @A live t1: 3 frames, 2 voices, phones A delay
+scriptevent spectral:live {"id":"t1","s":3,"f":"A2QQcAAAAAAAAAAAAA///wNkEHAAAAAAAAAAAAAP//8DZBBwAAAAAAAAAAAAD///"}
+wait 300
+@A cmd /spectral:live
+~ @A live t1: 6 frames, 2 voices, phones A
+scriptevent spectral:live {"id":"t1","s":10,"f":"A2QQcAAAAAAAAAAAAA///w=="}
+wait 300
+@A cmd /spectral:live
+~ @A live t1: 7 frames, 2 voices, 4 lost, phones A
+scriptevent spectral:live {"id":"t1","end":true}
+wait 300
+@A cmd /spectral:live
+~ @A live: no stream
+@A cmd /spectral:live nothing phones
+~ @A no live stream "nothing"
+
+## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them)
+@A cmd /spectral:live_demo demo phones
+~ @A ● live demo demo_demo: Demo \(original\) \(460 frames, 24 voices\) → phones:A
+wait 1500
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, phones A delay [1-4] ticks underruns 0 skips 0 moves 0
+@A cmd /spectral:live demo_demo follow
+~ @A ● live demo_demo: follow A delay
+wait 600
+tp A 12 -60 0
+wait 1500
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, follow A delay [1-4] ticks underruns 0 skips 0 moves [1-9]
+@A cmd /spectral:live demo_demo stop
+~ @A ■ live demo_demo
+tp A 0 -60 0

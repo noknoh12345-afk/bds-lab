@@ -1076,14 +1076,17 @@ CL_OUT_DB, CL_BITS, CL_MIX = -32.5, 16, 24000
 CL_TICK, CL_HOP, CL_WIN = 50, 20, 80          # ms: a tick, ViSQOL's hop and frame
 CL_Q = 64                         # the objective's grid: 1/64 of ViSQOL's dB
 CL_FLOOR = 45                     # ViSQOL's floors: -45, and 45 under the frame's loudest band
-CL_SWEEPS = 2
+CL_SWEEPS = 5                     # (tools/exp/results/refine2.jsonl: 5 sweeps with the level held beat 2, 10 of 13 songs)
 CL_VSTEPS = [-12, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4]       # a voice's level codes tried around its own (0.75 dB each)
 CL_NSTEPS = [-16, -12, -8, -6, -4, -2, 0, 2, 4, 6]             # a noise band's (0.5 dB each)
 CL_WEIGHTS = [1000] * 32          # per band (integers)
 # a named set of band weights (refine_weights='svr': what ViSQOL's MOS mapping leans on — its SVR's slope per band, measured on
 # run 7's recordings, plus 0.05 everywhere: the bands from 6.7 kHz up count 3-11 times as much)
 CL_WEIGHT_SETS = {'svr': [100, 70, 50, 50, 50, 50, 70, 80, 70, 70, 70, 70, 70, 60, 60, 60, 60, 60, 60, 50, 50, 50, 50, 120, 330, 390, 480,
-                          560, 570, 460, 390, 280]}
+                          560, 570, 460, 390, 280], 'uni': CL_WEIGHTS}
+CL_WEIGHTS_DEFAULT = 'svr'        # the default since 2026-10-31 (fourth session): svr, 5 sweeps, the level held beat run 8's default on all
+                                  # 13 songs through the client model, median +0.108 (tools/exp/results/refine2.jsonl, emulated)
+CL_HOLD = True
 CL_OBJECTIVE = 'nsim'             # 'nsim': ViSQOL's own similarity (NSIM, 3x3 neighbourhoods of the dB spectrograms) | 'sq': squared dB
 CL_W3 = [[0.0113033910173052, 0.0838251475442633, 0.0113033910173052], [0.0838251475442633, 0.619485845753726, 0.0838251475442633],
          [0.0113033910173052, 0.0838251475442633, 0.0113033910173052]]       # ViSQOL's NSIM window
@@ -1225,7 +1228,7 @@ def _qdb(P, s2):
 
 
 def refine_client(x, fq, am, vcodes, nz, ncodes, gain, n_voices=CL_VOICES, level_db=CL_LEVEL_DB, sweeps=CL_SWEEPS, weights=None,
-                  info=None, objective=None):
+                  info=None, objective=None, hold=CL_HOLD):
     """each tick's level and fade of the voices the phone plays and of the noise bands, chosen so that the song as the client
     plays it (ClientModel) comes closest to the original in ViSQOL's bands. am, nz: the converter's levels (before `gain`), with
     vcodes / ncodes the fade codes (F, N) / (F, M) of fit_voice_fades / fit_noise_fades. Returns new am, vcodes, nz, ncodes"""
@@ -1319,7 +1322,7 @@ def refine_client(x, fq, am, vcodes, nz, ncodes, gain, n_voices=CL_VOICES, level
     R = R[:, :nfr]
     Rq0 = np.maximum(_qdb(R, 1.0), -CL_FLOOR * CL_Q)
     px = float(np.cumsum(x * x)[-1]) / max(1, len(x))
-    weights = CL_WEIGHT_SETS[weights] if isinstance(weights, str) else weights
+    weights = CL_WEIGHT_SETS[weights] if isinstance(weights, str) else weights if weights is not None else CL_WEIGHT_SETS[CL_WEIGHTS_DEFAULT]
     w_int = np.array(weights or CL_WEIGHTS, np.int64)[:, None]
     widx = np.arange(CL_WIN)
 
@@ -1359,8 +1362,25 @@ def refine_client(x, fq, am, vcodes, nz, ncodes, gain, n_voices=CL_VOICES, level
     objective = objective or CL_OBJECTIVE
     wf = np.array(weights or CL_WEIGHTS, float) / 1000.0
     hist = []
+    tot0 = None
     for sw in range(sweeps + 1):
         P, tot = power()
+        if hold and tot0 is not None:
+            # (hold: the playback's power back where it started, every code moved alike. ViSQOL scales the playback to the
+            # original's power, and a sweep's choices are made at the scale it started with: what a sweep takes from the bands
+            # the scale then gives back to all of them, and sweep after sweep the song sank toward the 16-bit floor)
+            dl = 10 * math.log10(tot0 / tot)
+            cv = int(math.floor(dl / AMP_STEP_DB + 0.5)); cn = int(math.floor(dl / NZ_STEP_DB + 0.5))
+            if cv or cn:
+                amc[:] = np.where(amc > 0, np.clip(amc + cv, 1, 127), 0)
+                nzc[:] = np.where(nzc > 0, np.clip(nzc + cn, 1, 255), 0)
+                for s in range(S):
+                    run(s, 0, floor_[s], _f32(CL_SILENT))
+                P, tot = power()
+        if tot0 is None:
+            tot0 = tot
+        if info is not None:
+            info.setdefault('refine_db', []).append(round(10 * math.log10(tot / tot0), 2))
         s2 = px / tot
         Dq = np.maximum(_qdb(P, s2), -CL_FLOOR * CL_Q)
         fl = np.maximum(Rq0.max(0), Dq.max(0)) - CL_FLOOR * CL_Q
@@ -1504,7 +1524,7 @@ _DEFAULTS = {'FADE_GAIN': FADE_GAIN, 'FADE_MARGIN_DB2': FADE_MARGIN_DB2, 'BURST_
 def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=None, analysis='v2', residual='voiced', salience='a',
             nested=0, hf=0.0, burst_tilt=None, noise_edges=None, nz_fade=True, v_fade=True, rank='energy', fade_gain=None,
             fade_margin=None, nz_hop=None, low_cut=0.5, nsim_margin=NSIM_MARGIN, refine=True, refine_voices=CL_VOICES,
-            refine_level=CL_LEVEL_DB, refine_sweeps=CL_SWEEPS, refine_weights=None, refine_objective=None):
+            refine_level=CL_LEVEL_DB, refine_sweeps=CL_SWEEPS, refine_weights=None, refine_objective=None, refine_hold=CL_HOLD):
     """residual: 'voiced' (default: only the voices' main lobes out of the noise, so the peaks no voice plays stay in the noise
     bands) | 'all' (every peak's lobe out: the version before 2026-10-31) | 'fit' (ERB least squares). Through the validated
     client model (tools/exp/results/next.jsonl, 10 songs, 24 voices, no drum bursts) 'voiced' scored +0.139 ViSQOL over the
@@ -1517,7 +1537,11 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
     refine (default on, needs v_fade and nz_fade): analysis by synthesis through the client model (refine_client) — every tick's
     level and fade of the phone's refine_voices voices and of the noise bands chosen so that the song as the phone plays it
     (refine_level dB over the files) comes closest to the original in ViSQOL's own bands. Through the validated client model
-    (10 songs, 2026-10-31 third session): median 2.939 -> 3.103, all 10 songs up, fewer commands a tick (emulated, not a recording)"""
+    (10 songs, 2026-10-31 third session): median 2.939 -> 3.103, all 10 songs up, fewer commands a tick (emulated, not a recording).
+    By default (2026-10-31, fourth session) five sweeps (refine_sweeps), the bands weighted as ViSQOL's MOS mapping leans on them
+    (refine_weights 'svr'; 'uni' = every band alike) and the playback's power held where it started after each sweep (refine_hold:
+    without it the song sank toward the 16-bit floor sweep after sweep): 13 of 13 songs over run 8's default (2 sweeps, 'uni', no
+    hold), median +0.108 (tools/exp/results/refine2.jsonl, emulated)"""
     global BURST_TILT, NOISE_EDGES, FADE_GAIN, FADE_MARGIN_DB2
     # (these options set module globals: each conversion sets all of them, so one never leaks into the next in a process)
     FADE_GAIN = float(fade_gain) if fade_gain is not None else _DEFAULTS['FADE_GAIN']
@@ -1591,7 +1615,7 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
         # analysis by synthesis: each tick's levels and fades as the client model plays them against the original
         am, vc, nz, nc = refine_client(x, fq, am, unpack2(vd, n_frames, n_voices), nz, unpack2(nzd, n_frames, len(NOISE_EDGES) - 1), gain,
                                        n_voices=refine_voices, level_db=refine_level, sweeps=refine_sweeps, weights=refine_weights, info=info,
-                                       objective=refine_objective)
+                                       objective=refine_objective, hold=refine_hold)
         vd, nzd = pack2(vc), pack2(nc)
     blob, stats = encode(fq, am, att, nz, ev, gain)
     # format 2: the fitted fades after the frames in the data (the voices' codes, then the noise bands'), their lengths in meta.fd —

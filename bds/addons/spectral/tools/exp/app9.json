@@ -1,0 +1,21 @@
+{"header": [
+ "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+ "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+ "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+ "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+ "# 9 回目（tools/exp/make_app.py tools/exp/app9.json）: 曲は前もって変換したもの（tools/exp/packs/run9: クライアントの模型で採点したデータそのもの）。",
+ "#   d_ = 合成による分析を、帯域の重みを ViSQOL の MOS が頼る高い帯域に寄せ（svr）、掃き出し 5 回、音量を保って（新しい既定の候補）13 曲",
+ "#   t_ = 8 回目の既定（合成による分析、同じ重さ、2 回）13 曲 — d_ と曲ごとに交互に（40 分で切れても組が残る）",
+ "#   i_ = ライブの変換（web/live.js: その場の 50 ms ずつ、先を見ない。声のチャットが送るのと同じ）を曲として 3 曲",
+ "#   jp_ = d_ の夏目漱石をライブの道で（/spectral:live_demo: 1 フレームずつ script event、ジッターバッファ 2 tick）ヘッドホンに",
+ "#   jl_ / jr_ = 同じものを 3D のスピーカーで、聞く人の左 6 ブロック / 右 6 ブロックから（南を向いて: 左が +x）。lr_db が左右の差"
+],
+"interleave": ["d", "t"],
+"arms": [
+ {"pre": "d", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "cmds": ["spectral:voices 24", "spectral:drums off", "spectral:engine 0 false 0 0", "spectral:level 6 volume"], "export": 160},
+ {"pre": "t", "suffix": "_t", "conv": {}, "pack": "tools/exp/packs/run9", "cmds": ["spectral:voices 24", "spectral:drums off", "spectral:engine 0 false 0 0", "spectral:level 6 volume"], "export": 160},
+ {"pre": "jp", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "songs": ["speech_ja_soseki"], "play": "spectral:live_demo {song} phones", "cmds": ["tp @s 0 -60 0 0 0"], "export": 160},
+ {"pre": "jl", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "songs": ["speech_ja_soseki"], "play": "spectral:live_demo {song} speaker @s 24 \"speaker:6,-58.5,0,overworld\"", "cmds": ["tp @s 0 -60 0 0 0"], "export": 160},
+ {"pre": "jr", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "songs": ["speech_ja_soseki"], "play": "spectral:live_demo {song} speaker @s 24 \"speaker:-6,-58.5,0,overworld\"", "cmds": ["tp @s 0 -60 0 0 0"], "export": 160},
+ {"pre": "i", "suffix": "_i", "conv": {"live": "encoder"}, "pack": "tools/exp/packs/run9", "songs": ["speech_ja_soseki", "speech_en_wordsworth", "vocal_name_of_love"], "cmds": ["spectral:voices 24", "spectral:drums off", "spectral:engine 0 false 0 0", "spectral:level 6 volume"], "export": 160}
+]}

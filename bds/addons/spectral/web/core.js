@@ -613,6 +613,7 @@
       // (the options also by tools/spectral.py's names, for tools/parity.py)
       refined = await refineClient(x, F, N, M, fq2, am2, vc, nz, nc, gain, { voices: opts.refineVoices ?? opts.refine_voices, level: opts.refineLevel ?? opts.refine_level,
         sweeps: opts.refineSweeps ?? opts.refine_sweeps, weights: opts.refineWeights ?? opts.refine_weights, objective: opts.refineObjective ?? opts.refine_objective,
+        hold: opts.refineHold ?? opts.refine_hold,
         progress: (f) => progress0(REFINE_SHARE + (1 - REFINE_SHARE) * f) });
       vd = pack2(vc, F, N); nzd = pack2(nc, F, M);
     }
@@ -738,10 +739,10 @@
   // difference counted in whole 1/64ths of a dB, so both converters choose the same)
   const CL_VOICES = 24, CL_LEVEL_DB = 6, CL_OSC_AMP = 0.9, CL_SILENT = 1e-4, CL_SEND_DB = 0.75, CL_SEND_CENTS = 3;
   const CL_NOISE_RMS = [0.181311, 0.180788, 0.179998, 0.179116, 0.178403, 0.177544, 0.177018, 0.175986], NOISE_RMS_ALL = 0.18;
-  const CL_OUT_DB = -32.5, CL_BITS = 16, CL_TICK = 50, CL_HOP = 20, CL_WIN = 80, CL_Q = 64, CL_FLOOR = 45, CL_SWEEPS = 2;
+  const CL_OUT_DB = -32.5, CL_BITS = 16, CL_TICK = 50, CL_HOP = 20, CL_WIN = 80, CL_Q = 64, CL_FLOOR = 45, CL_SWEEPS = 5;
   const CL_VSTEPS = [-12, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4], CL_NSTEPS = [-16, -12, -8, -6, -4, -2, 0, 2, 4, 6];
-  const CL_WEIGHTS = new Array(32).fill(1000), REFINE_SHARE = 0.45, CL_OBJECTIVE = 'nsim';
-  const CL_WEIGHT_SETS = { svr: [100, 70, 50, 50, 50, 50, 70, 80, 70, 70, 70, 70, 70, 60, 60, 60, 60, 60, 60, 50, 50, 50, 50, 120, 330, 390, 480, 560, 570, 460, 390, 280] };
+  const CL_WEIGHTS = new Array(32).fill(1000), REFINE_SHARE = 0.45, CL_OBJECTIVE = 'nsim', CL_WEIGHTS_DEFAULT = 'svr', CL_HOLD = true;
+  const CL_WEIGHT_SETS = { svr: [100, 70, 50, 50, 50, 50, 70, 80, 70, 70, 70, 70, 70, 60, 60, 60, 60, 60, 60, 50, 50, 50, 50, 120, 330, 390, 480, 560, 570, 460, 390, 280], uni: CL_WEIGHTS };
   const CL_W3 = [[0.0113033910173052, 0.0838251475442633, 0.0113033910173052], [0.0838251475442633, 0.619485845753726, 0.0838251475442633],
     [0.0113033910173052, 0.0838251475442633, 0.0113033910173052]];
   const CL_C1 = 0.01 * 0.01, CL_C3 = (0.03 * 0.03) / 2;
@@ -934,7 +935,7 @@
     for (let j = 0; j < 32; j++) for (let m = 0; m < nfr; m++) Rq0[j * nfr + m] = Math.max(qdb(tb.R[j * tb.nfr + m], 1), -CL_FLOOR * CL_Q);
     let px = 0; for (let i = 0; i < x.length; i++) px += x[i] * x[i];
     px = px / Math.max(1, x.length);
-    const W = typeof opts.weights === 'string' ? CL_WEIGHT_SETS[opts.weights] : opts.weights ?? CL_WEIGHTS, dur = (x.length * 1000) / SR;
+    const wsel = opts.weights ?? CL_WEIGHTS_DEFAULT, W = typeof wsel === 'string' ? CL_WEIGHT_SETS[wsel] : wsel, dur = (x.length * 1000) / SR;
     /** power of sound s in frames m0..m1 from its envelope e (ms t0 .. t0 + e.length), added (sign 1) or taken (sign -1) into P */
     const addContrib = (P, s, m0, m1, e, eOff, t0, n, sign) => {
       const isv = s < Nc, E = new Float64Array(F);
@@ -980,9 +981,24 @@
     const fl = new Int32Array(nfr), Rq = new Int32Array(32 * nfr), Dcur = new Int32Array(32 * nfr);
     const seg = new Float64Array(2 * CL_TICK), old = new Float64Array(32 * nfr);
     let Dc = new Int32Array(0);
-    const objective = opts.objective ?? CL_OBJECTIVE, wf = W.map((w) => w / 1000);
+    const objective = opts.objective ?? CL_OBJECTIVE, wf = W.map((w) => w / 1000), hold = opts.hold ?? CL_HOLD, dbs = [];
+    let tot0 = null;
     for (let sw = 0; sw <= sweeps; sw++) {
-      const { P, tot } = power(), s2 = px / tot;
+      let { P, tot } = power();
+      if (hold && tot0 !== null) {
+        // (hold, as tools/spectral.py: the playback's power back where it started, every code moved alike — the scale ViSQOL
+        // gives the playback would otherwise sink the song toward the 16-bit floor sweep after sweep)
+        const dl = 10 * Math.log10(tot0 / tot), cv = Math.floor(dl / AMP_STEP_DB + 0.5), cn = Math.floor(dl / NZ_STEP_DB + 0.5);
+        if (cv || cn) {
+          for (let i = 0; i < amc.length; i++) if (amc[i] > 0) amc[i] = Math.min(127, Math.max(1, amc[i] + cv));
+          for (let i = 0; i < nzc.length; i++) if (nzc[i] > 0) nzc[i] = Math.min(255, Math.max(1, nzc[i] + cn));
+          for (let s = 0; s < S; s++) run(s, 0, floor[s], f32(CL_SILENT), false);
+          ({ P, tot } = power());
+        }
+      }
+      if (tot0 === null) tot0 = tot;
+      dbs.push(Math.round(1000 * Math.log10(tot / tot0)) / 100);
+      const s2 = px / tot;
       for (let m = 0; m < nfr; m++) {
         let mx = -Infinity;
         for (let j = 0; j < 32; j++) { mx = Math.max(mx, Rq0[j * nfr + m], Math.max(qdb(P[j * nfr + m], s2), -CL_FLOOR * CL_Q)); }
@@ -1121,7 +1137,7 @@
       for (let v = 0; v < Nc; v++) { const c = amc[k * Nc + v]; am[k * N + v] = c ? ampVal(c) / gain : 0; vcodes[k * N + v] = vcod[k * Nc + v]; }
       for (let b = 0; b < M; b++) { const c = nzc[k * M + b]; nz[k * M + b] = c ? nzVal(c) / gain : 0; ncodes[k * M + b] = ncod[k * M + b]; }
     }
-    return { loss: hist, changes };
+    return { loss: hist, changes, db: dbs };
   }
 
   // ---------------------------------------------------------------- encode / decode (identical layout to the Python)

@@ -1221,6 +1221,11 @@ system2.afterEvents.scriptEventReceive.subscribe((e) => {
     world2.sendMessage(`echo ${e.message.length}`);
     return;
   }
+  if (e.id === "spectral:live") {
+    const why = liveMessage(e.message);
+    if (why) console.warn(`[spectral] live: ${why}`);
+    return;
+  }
   if (e.id !== "spectral:song") return;
   let m;
   try {
@@ -1249,6 +1254,530 @@ system2.afterEvents.scriptEventReceive.subscribe((e) => {
     world2.sendMessage(`\xA7d\u266A song pack: ${s.meta.title} (${fmt(s.meta.seconds)}) \u2014 /spectral:play ${m.id}`);
   }
 });
+var LIVE_CAP = 512;
+var LIVE_DELAY = 2;
+var LIVE_LATE = 6;
+var LIVE_IDLE = 4;
+var FOLLOW_MOVE = 1.5;
+var FOLLOW_STEP = 8;
+var LiveStream = class {
+  constructor(id, meta) {
+    this.id = id;
+    this.meta = meta;
+    const { N, M } = meta;
+    this.freq = new Float32Array(LIVE_CAP * N);
+    this.amp = new Float32Array(LIVE_CAP * N);
+    this.att = new Uint8Array(LIVE_CAP * N);
+    this.nz = new Float32Array(LIVE_CAP * M);
+    this.vd = new Uint8Array(LIVE_CAP * N).fill(3);
+    this.nzd = new Uint8Array(LIVE_CAP * M).fill(3);
+    this.curF = new Float32Array(N);
+    this.curA = new Float32Array(N);
+    const [aF, aS] = meta.amp, [nF, nS] = meta.nz;
+    for (let c = 1; c < 128; c++) this.ampV[c] = Math.pow(10, (aF + (c - 1) * aS) / 20);
+    for (let c = 1; c < 256; c++) this.nzV[c] = Math.pow(10, (nF + (c - 1) * nS) / 20);
+  }
+  id;
+  meta;
+  w = -1;
+  frames = 0;
+  gaps = 0;
+  lastAt = 0;
+  freq;
+  amp;
+  att;
+  nz;
+  vd;
+  nzd;
+  curF;
+  curA;
+  ampV = new Float32Array(128);
+  nzV = new Float32Array(256);
+  player;
+  /** a frame's state copied to slot k (a gap: the frames that never came hold the last one, silent noise) */
+  store(k, nzRow, vf, nf) {
+    const { N, M } = this.meta, i = (k % LIVE_CAP + LIVE_CAP) % LIVE_CAP;
+    this.freq.set(this.curF, i * N);
+    this.amp.set(this.curA, i * N);
+    for (let j = 0; j < M; j++) {
+      this.nz[i * M + j] = nzRow ? this.nzV[nzRow[j]] : 0;
+      this.nzd[i * M + j] = nf ? nf[j] : 3;
+    }
+    for (let v = 0; v < N; v++) this.vd[i * N + v] = vf ? vf[v] : 3;
+  }
+  /** frames from number `seq` on → how many were read (a broken frame stops the reading: the rest of that message is lost) */
+  push(seq, b) {
+    const { N, M } = this.meta, nb = N + 7 >> 3, fv = N + 3 >> 2, fn = M + 3 >> 2;
+    let p = 0, k = seq, n = 0;
+    const nzRow = new Uint8Array(M), vf = new Uint8Array(N), nf = new Uint8Array(M);
+    while (p < b.length) {
+      if (k > this.w + 1 && this.w >= 0) {
+        for (let g = this.w + 1; g < k && g < this.w + 1 + LIVE_CAP; g++) {
+          this.store(g);
+          this.gaps++;
+        }
+      }
+      const mp = p;
+      p += nb;
+      if (p > b.length) break;
+      const i = (k % LIVE_CAP + LIVE_CAP) % LIVE_CAP;
+      let bad = false;
+      for (let v = 0; v < N; v++) {
+        this.att[i * N + v] = 0;
+        if (!(b[mp + (v >> 3)] >> (v & 7) & 1)) continue;
+        if (p >= b.length) {
+          bad = true;
+          break;
+        }
+        const x = b[p++], ac = x & 127;
+        this.curA[v] = this.ampV[ac];
+        if (ac) {
+          if (p + 2 > b.length) {
+            bad = true;
+            break;
+          }
+          this.curF[v] = 16 * Math.pow(2, (b[p] | b[p + 1] << 8) / 6e3);
+          p += 2;
+        }
+        if (x & 128) this.att[i * N + v] = 1;
+      }
+      if (bad || p + M + fv + fn > b.length) break;
+      for (let j = 0; j < M; j++) nzRow[j] = b[p++];
+      for (let v = 0; v < N; v++) vf[v] = b[p + (v >> 2)] >> 2 * (v & 3) & 3;
+      p += fv;
+      for (let j = 0; j < M; j++) nf[j] = b[p + (j >> 2)] >> 2 * (j & 3) & 3;
+      p += fn;
+      this.store(k, nzRow, vf, nf);
+      this.w = Math.max(this.w, k);
+      this.frames++;
+      n++;
+      k++;
+    }
+    this.lastAt = system2.currentTick;
+    return n;
+  }
+  slot(k) {
+    return (k % LIVE_CAP + LIVE_CAP) % LIVE_CAP;
+  }
+};
+var LivePlayer = class {
+  constructor(st, at) {
+    this.st = st;
+    this.at = at;
+    this.lastP = new Float32Array(st.meta.N).fill(-1);
+    this.lastL = new Float32Array(st.meta.N).fill(SILENT);
+    this.lastNL = new Float32Array(st.meta.M).fill(SILENT);
+  }
+  st;
+  at;
+  targets = [];
+  p = -1;
+  idle = 0;
+  underruns = 0;
+  skips = 0;
+  moves = 0;
+  calls = 0;
+  ticks = 0;
+  started = false;
+  lastP;
+  lastL;
+  lastNL;
+  anchor;
+  moving = [];
+  dying = [];
+  get three() {
+    return this.at.kind !== "phones";
+  }
+  ev(name) {
+    return this.three ? name + "_3d" : name;
+  }
+  /** the level over the files: headphones as the listener's own setting (a phone +6 dB), a 3D sound 1 (its volume is its range) */
+  lv = 1;
+  where() {
+    if (this.at.kind === "speaker") {
+      try {
+        return { dim: world2.getDimension(this.at.dim), loc: this.at.loc };
+      } catch {
+        return void 0;
+      }
+    }
+    if (this.at.kind === "follow") {
+      const who = this.at.who, q = world2.getPlayers({ name: who })[0];
+      if (!q?.isValid) return void 0;
+      const l = q.getHeadLocation();
+      return { dim: q.dimension, loc: { x: l.x, y: l.y, z: l.z } };
+    }
+    return void 0;
+  }
+  loop(t, name) {
+    if (t.player) return t.player.playSound(this.ev(name), { volume: SILENT, pitch: 1, loopCount: -1 });
+    const s = t.dim.playSound(this.ev(name), t.loc, { volume: 1, pitch: 1, loopCount: -1 });
+    s.setVolume(SILENT);
+    return s;
+  }
+  async build(t) {
+    const { N, M } = this.st.meta;
+    while (t.osc.length < N) {
+      for (let i = 0; i < 16 && t.osc.length < N; i++) t.osc.push(this.loop(t, "spectral.osc"));
+      await system2.waitTicks(1);
+    }
+    for (let b = 0; b < M; b++) if (!t.nz[b]) t.nz[b] = this.loop(t, "spectral.n" + b);
+  }
+  async start() {
+    if (this.at.kind === "phones") {
+      for (const name of this.at.who) {
+        const q = world2.getPlayers({ name })[0];
+        if (q) this.targets.push({ player: q, osc: [], nz: [] });
+      }
+      const first = this.targets[0]?.player;
+      if (first) this.lv = Math.pow(10, (settingsOf(first).level ?? 0) / 20);
+    } else {
+      const w = this.where();
+      if (w) {
+        this.targets.push({ dim: w.dim, loc: w.loc, osc: [], nz: [] });
+        this.anchor = w.loc;
+      }
+    }
+    for (const t of this.targets) await this.build(t);
+    this.started = true;
+  }
+  stop() {
+    for (const t of this.targets) for (const x of [...t.osc, ...t.nz]) {
+      try {
+        x?.stop();
+      } catch {
+      }
+    }
+    for (const [x] of this.dying) {
+      try {
+        x.stop();
+      } catch {
+      }
+    }
+    this.targets = [];
+    this.dying = [];
+  }
+  sendVoice(v, hz, dur, L, force = false) {
+    let p = -1;
+    if (hz > 0) {
+      p = Math.min(P_MAX, Math.max(P_MIN, hz / BASE_HZ));
+      if (this.lastP[v] > 0 && Math.abs(p / this.lastP[v] - 1) < CENT) p = -1;
+    }
+    L = Math.min(10, Math.max(SILENT, L));
+    const last = this.lastL[v];
+    if (!force && L / last < DB025 && last / L < DB025) L = -1;
+    if (p < 0 && L < 0) return;
+    for (const t of this.targets) {
+      const s = t.osc[v];
+      if (!s) continue;
+      try {
+        if (p > 0) s.setPitch(p);
+        if (L >= 0) s.fade(dur, L);
+      } catch {
+      }
+      this.calls++;
+    }
+    if (p > 0) this.lastP[v] = p;
+    if (L >= 0) this.lastL[v] = L;
+  }
+  sendNoise(b, dur, L) {
+    L = Math.min(10, Math.max(SILENT, L));
+    const last = this.lastNL[b];
+    if (L / last < DB025 && last / L < DB025) return;
+    for (const t of this.targets) {
+      const s = t.nz[b];
+      if (s) {
+        try {
+          s.fade(dur, L);
+        } catch {
+        }
+        this.calls++;
+      }
+    }
+    this.lastNL[b] = L;
+  }
+  /** the followed player moved: the sounds go to the new place a few a tick, each crossfaded over a tick */
+  follow() {
+    const now = system2.currentTick;
+    this.dying = this.dying.filter(([x, at]) => {
+      if (at > now) return true;
+      try {
+        x.stop();
+      } catch {
+      }
+      return false;
+    });
+    if (this.at.kind !== "follow" || !this.targets.length) return;
+    const w = this.where(), t = this.targets[0];
+    if (!w) return;
+    if (w.dim.id !== t.dim.id) {
+      this.stop();
+      this.targets.push({ dim: w.dim, loc: w.loc, osc: [], nz: [] });
+      this.anchor = w.loc;
+      this.build(this.targets[0]).then(() => this.resync());
+      return;
+    }
+    if (!this.moving.length && dist(w.loc, this.anchor ?? w.loc) > FOLLOW_MOVE) {
+      this.anchor = w.loc;
+      this.moves++;
+      this.moving = [...t.osc.keys(), ...t.nz.map((_, b) => -1 - b)];
+    }
+    for (let n = 0; n < FOLLOW_STEP && this.moving.length; n++) {
+      const i = this.moving.shift(), voice = i >= 0;
+      const old = voice ? t.osc[i] : t.nz[-1 - i];
+      let s;
+      try {
+        s = t.dim.playSound(this.ev(voice ? "spectral.osc" : "spectral.n" + (-1 - i)), this.anchor, { volume: 1, pitch: 1, loopCount: -1 });
+      } catch {
+        continue;
+      }
+      try {
+        s.setVolume(SILENT);
+        if (voice && this.lastP[i] > 0) s.setPitch(this.lastP[i]);
+        s.fade(FADE_SMOOTH, voice ? this.lastL[i] : this.lastNL[-1 - i]);
+        old?.fade(FADE_SMOOTH, SILENT);
+      } catch {
+      }
+      if (old) this.dying.push([old, now + 2]);
+      if (voice) t.osc[i] = s;
+      else t.nz[-1 - i] = s;
+      this.calls += 4;
+    }
+    t.loc = this.anchor;
+  }
+  resync() {
+    for (const t of this.targets) {
+      for (let v = 0; v < t.osc.length; v++) {
+        try {
+          if (this.lastP[v] > 0) t.osc[v].setPitch(this.lastP[v]);
+          t.osc[v].setVolume(this.lastL[v]);
+        } catch {
+        }
+      }
+      for (let b = 0; b < t.nz.length; b++) {
+        try {
+          t.nz[b]?.setVolume(this.lastNL[b]);
+        } catch {
+        }
+      }
+    }
+  }
+  tick() {
+    if (!this.started) return;
+    this.ticks++;
+    this.targets = this.targets.filter((t) => !t.player || t.player.isValid);
+    this.follow();
+    const st = this.st, { N, M, fd } = st.meta, fdS = fd.map((x) => x / 1e3);
+    if (st.w < 0) return;
+    if (this.p < 0) {
+      if (st.w < LIVE_DELAY) return;
+      this.p = st.w - LIVE_DELAY;
+    }
+    if (st.w - this.p > LIVE_DELAY + LIVE_LATE) {
+      this.p = st.w - LIVE_DELAY;
+      this.skips++;
+    }
+    if (this.p + 1 > st.w) {
+      if (++this.idle === LIVE_IDLE) {
+        this.underruns++;
+        for (let v = 0; v < N; v++) this.sendVoice(v, 0, FADE_SMOOTH, SILENT);
+        for (let b = 0; b < M; b++) this.sendNoise(b, FADE_SMOOTH, SILENT);
+      }
+      if (this.idle >= LIVE_IDLE) this.p = -1;
+      return;
+    }
+    this.idle = 0;
+    const i0 = st.slot(this.p), i1 = st.slot(this.p + 1), gain = this.lv / OSC_AMP;
+    for (let v = 0; v < N; v++) {
+      const a0 = st.amp[i0 * N + v], f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;
+      this.sendVoice(v, f0 && f1 ? Math.sqrt(f0 * f1) : f1 || f0, fdS[st.vd[i1 * N + v]], a1 * gain, st.att[i1 * N + v] === 1);
+    }
+    for (let b = 0; b < M; b++) this.sendNoise(b, fdS[st.nzd[i1 * M + b]], st.nz[i1 * M + b] * this.lv / NOISE_RMS[b]);
+    this.p++;
+  }
+  status() {
+    const where = this.at.kind === "phones" ? `phones ${this.at.who.join(",")}` : this.at.kind === "follow" ? `follow ${this.at.who}` : `speaker ${Math.round(this.at.loc.x)} ${Math.round(this.at.loc.y)} ${Math.round(this.at.loc.z)}`;
+    return `${where} delay ${this.p < 0 ? "-" : this.st.w - this.p} ticks underruns ${this.underruns} skips ${this.skips} moves ${this.moves} calls/tick ${(this.ticks ? this.calls / this.ticks : 0).toFixed(1)}`;
+  }
+};
+var lives = /* @__PURE__ */ new Map();
+var LIVE_ID = /^[\w.-]{1,40}$/;
+function liveAt(s, by) {
+  if (!s) return void 0;
+  const [kind, rest = ""] = s.split(":", 2).length === 2 ? [s.slice(0, s.indexOf(":")), s.slice(s.indexOf(":") + 1)] : [s, ""];
+  if (kind === "follow") {
+    const who = rest || by?.name;
+    return who ? { kind, who } : void 0;
+  }
+  if (kind === "phones") {
+    const who = rest ? rest.split(",").filter((x) => x) : by ? [by.name] : [];
+    return who.length ? { kind, who } : void 0;
+  }
+  if (kind === "speaker") {
+    if (!rest && by) {
+      const l = by.location;
+      return { kind, dim: by.dimension.id, loc: { x: l.x, y: l.y + 1, z: l.z } };
+    }
+    const n = rest.split(","), [x, y, z] = n.slice(0, 3).map(Number);
+    return [x, y, z].every(Number.isFinite) ? { kind, dim: n[3] || "overworld", loc: { x, y, z } } : void 0;
+  }
+  return void 0;
+}
+async function livePlay(st, at) {
+  st.player?.stop();
+  const lp = new LivePlayer(st, at);
+  st.player = lp;
+  await lp.start();
+  return `\xA7a\u25CF live ${st.id}: ${lp.status()}`;
+}
+function liveB64(s) {
+  let len = s.length * 3 >> 2;
+  if (s.endsWith("==")) len -= 2;
+  else if (s.endsWith("=")) len -= 1;
+  const b = new Uint8Array(Math.max(0, len));
+  for (let i = 0, o = 0; i < s.length; i += 4) {
+    const n = B64[s.charCodeAt(i)] << 18 | B64[s.charCodeAt(i + 1)] << 12 | B64[s.charCodeAt(i + 2)] << 6 | B64[s.charCodeAt(i + 3)];
+    if (o < len) b[o++] = n >> 16;
+    if (o < len) b[o++] = n >> 8 & 255;
+    if (o < len) b[o++] = n & 255;
+  }
+  return b;
+}
+var liveMetaOk = (m) => m && m.N > 0 && m.N <= 128 && m.M === NOISE_BANDS.length && Array.isArray(m.amp) && Array.isArray(m.nz) && Array.isArray(m.fd) && m.fd.length === 4;
+function liveMessage(text) {
+  let m;
+  try {
+    m = JSON.parse(text);
+  } catch {
+    return "bad message";
+  }
+  if (!m.id || !LIVE_ID.test(m.id)) return "bad id";
+  let st = lives.get(m.id);
+  if (m.end) {
+    st?.player?.stop();
+    lives.delete(m.id);
+    return `end ${m.id}`;
+  }
+  if (m.m) {
+    if (!liveMetaOk(m.m)) return "bad meta";
+    if (!st || st.meta.N !== m.m.N) {
+      st?.player?.stop();
+      st = new LiveStream(m.id, m.m);
+      lives.set(m.id, st);
+    }
+  }
+  if (!st) return `no meta yet for ${m.id}`;
+  if (typeof m.f === "string" && Number.isInteger(m.s)) st.push(m.s, liveB64(m.f));
+  const at = liveAt(m.at);
+  if (at && (!st.player || JSON.stringify(st.player.at) !== JSON.stringify(at))) livePlay(st, at);
+  return void 0;
+}
+system2.runInterval(() => {
+  for (const [id, st] of lives) {
+    const lp = st.player;
+    if (lp) {
+      try {
+        lp.tick();
+      } catch (e) {
+        console.warn(`[spectral] live ${id}: ${e}`);
+        lp.stop();
+        st.player = void 0;
+      }
+    }
+    if (system2.currentTick - st.lastAt > 20 * 60) {
+      lp?.stop();
+      lives.delete(id);
+    }
+  }
+}, 1);
+cmdAny(
+  "spectral:live",
+  "Live streams (a voice chat, a microphone): the list, or one played on headphones, as a 3D speaker here, from a player in 3D as they move (follow), or stopped",
+  { "stream?": "string", "place?": ["phones", "speaker", "follow", "stop"], "who?": "player" },
+  async (p, a) => {
+    if (!a.stream) return lives.size ? [...lives.values()].map((st2) => `live ${st2.id}: ${st2.frames} frames, ${st2.meta.N} voices${st2.gaps ? `, ${st2.gaps} lost` : ""}${st2.player ? ", " + st2.player.status() : ", not playing"}`).join("\n") : "live: no stream (tools/live/bridge.mjs, or /spectral:live_demo)";
+    const st = lives.get(a.stream);
+    if (!st) return `\xA7cno live stream "${a.stream}"`;
+    const who = a.who?.[0] ?? p;
+    if (a.place === "stop") {
+      st.player?.stop();
+      st.player = void 0;
+      return `\xA77\u25A0 live ${st.id}`;
+    }
+    const at = liveAt(a.place ?? "phones", who);
+    if (!at) return "\xA7cwho? (a player for phones / follow, or run it as a player)";
+    return livePlay(st, at);
+  }
+);
+cmdAny(
+  "spectral:live_demo",
+  "Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)",
+  { song: "string", "to?": ["phones", "speaker", "follow"], "who?": "player", "voices?": "int", "at?": "string" },
+  async (p, a) => {
+    const song = songs.get(a.song);
+    if (!song) return `\xA7cno song "${a.song}"`;
+    let d;
+    try {
+      d = await decoded(song);
+    } catch (e) {
+      return `\xA7csong ${a.song}: ${e}`;
+    }
+    const who = a.who?.[0] ?? p;
+    const N = Math.max(1, Math.min(d.N, a.voices ?? 24)), M = d.M, id = `demo_${a.song}`.slice(0, 40);
+    const meta = { N, M, amp: song.meta.amp, nz: song.meta.nz, fd: song.meta.fd?.ms ?? [50, 50, 50, 50], title: song.meta.title };
+    const [aF, aS] = meta.amp, [nF, nS] = meta.nz;
+    const ac = (x) => x <= 0 ? 0 : Math.max(1, Math.min(127, Math.round((20 * Math.log10(x) - aF) / aS) + 1));
+    const nc = (x) => {
+      if (x <= 0) return 0;
+      const c = Math.round((20 * Math.log10(x) - nF) / nS) + 1;
+      return c > 0 ? Math.min(255, c) : 0;
+    };
+    const pc = (f) => Math.max(0, Math.min(65535, Math.round(6e3 * Math.log2(f / 16))));
+    const frame = (k2) => {
+      const out = [], mask = new Array(N + 7 >> 3).fill(0), body = [];
+      for (let v = 0; v < N; v++) {
+        const c = ac(d.amp[k2 * d.N + v]);
+        mask[v >> 3] |= 1 << (v & 7);
+        body.push(c | (d.att[k2 * d.N + v] ? 128 : 0));
+        if (c) {
+          const q = pc(d.freq[k2 * d.N + v]);
+          body.push(q & 255, q >> 8);
+        }
+      }
+      out.push(...mask, ...body);
+      for (let j = 0; j < M; j++) out.push(nc(d.nz[k2 * M + j]));
+      const fv = new Array(N + 3 >> 2).fill(0), fn = new Array(M + 3 >> 2).fill(0);
+      for (let v = 0; v < N; v++) fv[v >> 2] |= (d.vd && k2 > 0 ? d.vd[(k2 - 1) * d.N + v] : 3) << 2 * (v & 3);
+      for (let j = 0; j < M; j++) fn[j >> 2] |= (d.nzd && k2 > 0 ? d.nzd[(k2 - 1) * M + j] : 3) << 2 * (j & 3);
+      return [...out, ...fv, ...fn];
+    };
+    const b64 = (b) => {
+      const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+      let s = "";
+      for (let i = 0; i < b.length; i += 3) {
+        const n = b[i] << 16 | (b[i + 1] ?? 0) << 8 | (b[i + 2] ?? 0);
+        s += A[n >> 18] + A[n >> 12 & 63] + (i + 1 < b.length ? A[n >> 6 & 63] : "=") + (i + 2 < b.length ? A[n & 63] : "=");
+      }
+      return s;
+    };
+    const at = a.to === "speaker" ? who ? `speaker:${Math.round(who.location.x)},${Math.round(who.location.y + 1)},${Math.round(who.location.z)},${who.dimension.id.replace("minecraft:", "")}` : void 0 : who ? `${a.to ?? "phones"}:${who.name}` : void 0;
+    if (a.at !== void 0 && !liveAt(a.at)) return `\xA7cat: speaker:x,y,z[,dimension] | follow:<name> | phones:<name> (${a.at})`;
+    const place = a.at ?? at;
+    if (!place) return "\xA7cwho? (run it as a player, or name one)";
+    let k = 0;
+    liveMessage(JSON.stringify({ id, m: meta, s: 0, f: b64(frame(k++)), at: place }));
+    const job = system2.runInterval(() => {
+      if (k >= d.F) {
+        system2.clearRun(job);
+        system2.runTimeout(() => liveMessage(JSON.stringify({ id, end: true })), 20);
+        return;
+      }
+      liveMessage(JSON.stringify({ id, s: k, f: b64(frame(k)) }));
+      k++;
+    }, 1);
+    return `\xA7a\u25CF live demo ${id}: ${song.meta.title} (${d.F} frames, ${N} voices) \u2192 ${place}`;
+  }
+);
 onItem("spectral:remote", { onUse(e) {
   openMenu(e.source);
 } });
@@ -1331,5 +1860,6 @@ world2.afterEvents.worldLoad.subscribe(() => system2.sendScriptEvent("spectral:h
 cmdAny("spectral:library", "Song count (console too)", {}, () => `library ${songs.size}: ${[...songs.keys()].join(" ")}`);
 addSong(demo_default.meta, demo_default.data);
 export {
-  addSong
+  addSong,
+  liveMessage
 };

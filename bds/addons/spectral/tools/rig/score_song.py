@@ -20,6 +20,14 @@ def load(path):
     return np.frombuffer(raw, np.float32).astype(np.float64)
 
 
+def balance(path):
+    """left against right (dB of their RMS): where a 3D sound was heard from (0 = in front, behind or in the head; + left)"""
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', path, '-f', 'f32le', '-ac', '2', '-ar', str(SR), '-'], check=True, capture_output=True).stdout
+    st = np.frombuffer(raw, np.float32).astype(np.float64).reshape(-1, 2)
+    l, r = float(np.sqrt(np.mean(st[:, 0] ** 2))), float(np.sqrt(np.mean(st[:, 1] ** 2)))
+    return round(20 * math.log10(l / r), 2) if l > 0 and r > 0 else None
+
+
 def active(y, ref_len, floor_db=-50.0):
     """the part of a recording where sound is (sync clicks before a song are 1 s ahead of it and fall outside)"""
     k = int(0.01 * SR)
@@ -89,6 +97,10 @@ def main():
             r = {'error': f'{type(e).__name__}: {e}'}
         r['recorded_s'] = round(len(y) / SR, 2)
         r.update(lv)
+        try:
+            r['lr_db'] = balance(rec)
+        except Exception:
+            pass
         res[os.path.basename(rec)] = r
     txt = json.dumps(res, ensure_ascii=False)
     if out:

@@ -31,6 +31,8 @@
 - [x] 電話は実測の同時発音数（32）に収まる声の数が既定、打撃音（ワンショット）は既定で鳴らさない（同じ run の実測で打撃音なしが上）、どの音もファイルより 6 dB 大きく（## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, no drum bursts (measured: better without), and every level 6 dB over the files (the phone plays them 32.5 dB under, into 16 bits)）
 - [x] ファイルより大きく鳴らす: ゲームはどの音もファイルより 32.5 dB 小さく 16 bit で鳴らすので、静かな曲の下限は量子化（## louder than the files: a level in dB, by setVolume or by the loud sound events (the game plays every sound 32.5 dB under its file)）
 - [x] 変換器が tick ごとに選んだ長さのフェードで声とノイズ帯域を鳴らす（## a song with fitted fades (tools/spectral.py nz_fade, v_fade): each voice and noise band fades as long as the converter chose, tick by tick）
+- [x] ライブ: 声（ボイスチャット・マイク）をその場で受け取り、届いた順に鳴らす。script event `spectral:live`、ジッターバッファ 2 tick、届かなかったフレームは数えて埋める、終わり（## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), and ends）
+- [x] ライブの道で曲を 1 フレームずつ送る（ボイスチャットの橋渡しと同じ形）: ヘッドホンに、そして歩く人から 3D で（音がその人に付いて動く: 近接ボイスチャット・立体音響）（## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them)）
 
 ## Guessed
 <!-- values decided without asking -->
@@ -40,32 +42,34 @@
 - ヘッドホンは category ui・is3D false（範囲制限なしで本人に付いてくる）、スピーカーは category record・3D・max_distance 48
 - 打撃音: 低/中/高の 3 帯域 × 先頭無音 0/12.5/25/37.5 ms の 4 ファイル
 - デモ曲は自作の合成曲（第三者の素材なし）: tools/make_demo_song.py
+- ライブ: 1 フレーム = 50 ms、届いた最新の 2 tick 後ろを鳴らす（100 ms のジッターバッファ）、8 tick より遅れたら先へ飛ぶ、4 tick 何も来なければ黙る。3D で人に付いていくときは 1.5 ブロック動いたら 1 tick に 8 音ずつ、1 tick のクロスフェードで移す（SoundInstance は場所を変えられないため）
+- ボイスチャットの橋渡し（tools/live/bridge.mjs）の既定は 1 人 16 声＋ノイズ 8（2 人が同時に話しても電話の 32 音にほぼ収まる）。Discord で /mc <ゲーマータグ> とつないだ人だけをゲームで鳴らす
 
 ## Measured on this BDS (1.26.61.1, real clients)
 - `/scriptevent` の本文は 2048 文字まで（それを超えると "Message length exceeds (2048) character limit!"）。`system.sendScriptEvent` はスクリプト間なら 8,388,608 文字でも届いた
 - 別のビヘイビアーパック（曲パック）からの script event は本体に届く（LAB_UTILITIES で 2 パック同時に確認）
 - 1 人ヘッドホン再生: 56 インスタンス、平均 16–30 命令/tick（最大 89）、スクリプト 1.5–1.8 ms/tick。QA（3 人・再接続・/reload・再起動）で 2 ms/tick 以内
 
-## この版の状態（2026-10-31 12:20 JST, 実機での測定）
+## この版の状態（2026-10-31 4 回目のセッション、実機での測定）
 
-引き継ぎ: HANDOFF.md（ユーザーの最後の依頼が未着手で載っている）。実機の限界値と曲の成績: SPEC.md（実測と推測を分けた）、数の元: measured/。
-- 実機（redroid の Android 14 に Play が入れた Minecraft 1.26.60.4、改造なし）で録って測った: 同時発音数 32（静かなもの・古いもの
-  から消える）、fade は振幅で直線・指定どおり（最短 0.8 ms）、ゲームは 24 kHz で混ぜて素材より −32.5 dB・16 bit、setVolume は 2 まで
-  指定どおりでその上はミックスがファイル単位で約 2.0 でクリップ、seekTo は一定のずれ（σ 6 ms）、ステレオ 67 dB、1 命令 12.3 B
-- 最終の既定（電話）: 変換器 residual voiced＋tick ごとに合わせたフェード（曲データの形式 2）、24 声＋ノイズ 8、打撃音なし、
-  どの音もファイルより +6 dB（setVolume）、3 セント・0.75 dB 未満の変化は送らない。`node lab.mjs go`（ローカルの BDS 1.26.61.1）:
-  **DONE dist/Spectral_Player.mcaddon（test 134/134, qa clean）**
-- 実機の ViSQOL の中央値（13 曲、7 回目 run 41158185476 の同じ run）: 出荷版 1.95 → **最終の既定 2.77**（曲ごとの差の中央値 +0.36、
-  13 曲中 11 曲で上）。天井（音量 1）3.09 との差の中央値 0.55、0.3 以内 **4/13**（完了の条件「全曲 0.3 以内」には届いていない）。
-  +10 dB（5 曲）は +6 dB より 5 曲とも上（中央値 +0.21、3/5 が 0.3 以内）だが、クリップの歪みが増える（推測）ので既定は +6
-- 変換ページ（web/、claude.ai の Spectral Converter）: ブラウザで MP3 を変換し、アドオン本体のコード（bp/scripts/main.js をモックで）が
-  送る命令を、実機で測ったクライアントの模型（web/game.js = tools/emu の移植）で音にして原曲と聴き比べる。曲パックと本体を保存できる
+引き継ぎ: HANDOFF.md。実機の限界値と曲の成績: SPEC.md（実測と推測を分けた）、数の元: measured/。
+- 実機（redroid の Android 14 に Play が入れた Minecraft 1.26.60.4、改造なし）で録って測った: 同時発音数 32、fade は振幅で直線・指定どおり、
+  ゲームは 24 kHz で混ぜて素材より −32.5 dB・16 bit、setVolume は 2 まで指定どおりでその上はクリップ、seekTo は一定のずれ（σ 6 ms）
+- 変換器の既定: 合成による分析（変換の中で実機の模型を通して tick ごとの音量とフェードを選ぶ）を、帯域を ViSQOL の MOS が頼る重さで、
+  5 回、音量を保って（エミュレーター 13 曲で 8 回目の既定より 13/13 で上、中央値 3.247 → 3.329: 推測）。py と js はバイト一致
+- 実機の ViSQOL の中央値（8 回目 run 41170496546、13 曲）: 合成による分析 **3.04**（天井 3.09、0.3 以内 **8/13**）。9 回目で新しい既定を
+  同じ run で比べる。`node lab.mjs go`（ローカルの BDS 1.26.61.1）: **DONE dist/Spectral_Player.mcaddon（test 144/144, qa clean）**
+- ライブ: 声などを 50 ms ずつその場で受け取って鳴らす（script event spectral:live）。ヘッドホン・3D スピーカー・動く人から 3D（近接ボイス
+  チャット）。web/live.js がその場の変換、tools/live/bridge.mjs が Discord のボイスチャンネルをつなぐ（tools/live/README.md）
+- 録音: 実行の成果物の public/spectral/rec/ に平文の Opus（鍵なし）。管理パネルでサインインして聞ける、notify.yml が Discord に送る
 
 ## Tools
 - tools/spectral.py: MP3 → 曲データ（--ts で src/songs/*.ts）。--preview でアドオンと同じ tick 規則の試聴 WAV/MP3。既定はアナリシス v2（部分音のトラック → 声部、ノイズ帯域と打撃音の帯域を NSIM-lite で合成して選ぶ）、`--analysis v1` で前の版
 - tools/parity.py: web/core.js と tools/spectral.py の出力がバイト単位で同じかを試験曲すべてで確かめる
 - tools/eval.py / tools/systems.py: 試験曲で方式を採点（ViSQOL ほか、corpus/results/）。tools/abx/make_abx.py: 聴き比べの音声と ABX ページ（dist/abx/）
-- tools/rig/: 実機の測定リグ（programs.py → src/calib_programs.ts、analyze.py、synth.py、songpack.py）。`python3 tests/test_rig.py` が解析を合成クライアントで試験する
+- tools/rig/: 実機の測定リグ（programs.py → src/calib_programs.ts、analyze.py、synth.py、songpack.py、fetch_rec.py = 実行の録音を手元へ）。`python3 tests/test_rig.py` が解析を合成クライアントで試験する
+- tools/live/: ライブ（encoder.mjs = ファイルをライブのフレームに / 曲に、bridge.mjs = Discord の声をプレイヤーの位置から 3D で、test_bridge.mjs）。web/live.js がその場の変換
+- tools/exp/: クライアントの模型を通した実験（run_exp.py・score_pack.py・make_packs.py = 実機の run 用に前もって変換した曲・make_app.py = app.txt）
 - tools/emu/client.py: 命令列を、未知の挙動をパラメーター（spec.json）にしたクライアントの模型で鳴らす
 - tools/make_rp_assets.py: rp/sounds と sound_definitions.json と src/assets.ts を作る
 - web/: ブラウザ変換ページ（core.js は tools/spectral.py とバイト単位で同じ出力、tools/parity.py）。ゲーム内の音は web/game.js（ワーカー:

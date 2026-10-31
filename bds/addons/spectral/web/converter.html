@@ -80,6 +80,8 @@ button.main:disabled { opacity: 0.5; cursor: default; }
 .drop { border: 1.5px dashed var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 8px; text-align: center; color: var(--muted); font-size: 13px; }
 .drop.over { border-color: var(--amethyst); color: var(--ink); }
 .filebtn input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.quality { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 13px; }
+.quality select { max-width: 100%; font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line, #ccc); background: transparent; color: inherit; }
 .tracks { display: grid; gap: 8px; }
 .track { border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 8px; background: var(--bg); cursor: pointer; }
 .track[aria-current="true"] { border-color: var(--amethyst); background: var(--panel); }
@@ -150,6 +152,13 @@ button.main:disabled { opacity: 0.5; cursor: default; }
         <label class="filebtn" for="file">＋ 音声ファイルを追加<input id="file" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.aac" multiple></label>
         <span>MP3・WAV・M4A など。ここへドロップしても追加できます。解析はこの端末の中だけで行います。</span>
       </div>
+      <label class="quality">変換の仕上げ
+        <select id="sweeps" aria-label="変換の仕上げ">
+          <option value="5" selected>いちばん良い（実機の模型で 5 回詰める・20 秒の曲で 3 分ほど）</option>
+          <option value="2">速い（2 回・少し劣る）</option>
+          <option value="0">仕上げなし（すぐ・前の版）</option>
+        </select>
+      </label>
       <div class="tracks" id="tracks"></div>
       <button class="main" id="savePack">曲パックを保存 (.mcpack.zip)</button>
       <p class="msg" id="packMsg"></p>
@@ -249,7 +258,8 @@ async function analyse(t) {
   t.state = 'busy'; t.progress = 0; t.error = ''; t.games = {}; renderTracks();
   const run = (t.run = (t.run || 0) + 1);
   try {
-    const r = await C.convert(t.x, { voices: t.voices, title: t.title, artist: t.artist, id: t.id, progress: async (f) => {
+    const sw = Number(($('sweeps') || {}).value ?? 5);
+    const r = await C.convert(t.x, { voices: t.voices, title: t.title, artist: t.artist, id: t.id, ...(sw ? { refineSweeps: sw } : { refine: false }), progress: async (f) => {
       t.progress = f; const bar = $('pg' + t.key); if (bar) bar.style.width = Math.round(f * 100) + '%';
       await new Promise((res) => setTimeout(res, 0));
     } });
