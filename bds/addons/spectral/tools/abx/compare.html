@@ -153,7 +153,7 @@ let ctx = null, buffers = {}, cur = null, way = 'orig', curKey = 'orig', src = n
 let x = null, answered = false;
 
 $('title').textContent = DATA.title;
-$('lede').textContent = `電話（redroid の Android 14 に Play が入れた Minecraft 1.26.60.4、改造なし）で同じ run に録った「${DATA.aName}」と「${DATA.bName}」を、`
+$('lede').textContent = (DATA.emulated ? `実機の模型（電話の鳴り方を測って作ったもの: 実機の録音ではない）でまとめて鳴らした「${DATA.aName}」と「${DATA.bName}」を、` : `電話（redroid の Android 14 に Play が入れた Minecraft 1.26.60.4、改造なし）で同じ run に録った「${DATA.aName}」と「${DATA.bName}」を、`)
   + '元の音・天井と並べて聴き比べます。どれも元の音と同じ大きさ（RMS）にそろえ、時間を合わせてあります。'
   + '大きく鳴らすほどゲームの 16 bit の量子化の雑音が下がり、ミックスがファイル単位で約 2.0 を超えた所はクリップします。';
 $('blind-help').textContent = `X は「${DATA.aName}」か「${DATA.bName}」のどちらかです（毎回でたらめに選びます）。何度でも聴き直して、どちらかを選んでください。`
@@ -222,7 +222,10 @@ function drawTable() {
   }
   t.append(body);
   const med = diffs.length ? [...diffs].sort((a, b) => a - b)[Math.floor((diffs.length - 1) / 2)] : null;
-  $('table-note').textContent = `実測: run ${DATA.runs.join(', ')} の中で、録音の WAV に当てた ViSQOL v3（このページの MP3 ではない）。天井は元の音をそのままゲームに鳴らさせた録音（run 41068618513・41076646541）。`
+  if (DATA.emulated) { $('table-h').textContent = 'ViSQOL（実機の模型の「録音」・推測）'; document.querySelector('.eyebrow').textContent = 'Spectral Player · 実機の模型（推測）'; }
+  $('table-note').textContent = DATA.emulated
+    ? `推測: 実機の模型（tools/exp/batch_play.py: アドオンの本体をモックで動かし、測った鳴り方 — 24 kHz で混ぜる・同時 32 音・2.0 でクリップ・16 bit — で音にした「録音」）に当てた ViSQOL v3。実機の録音ではない（9 回目の照らし合わせでは実機より平均 0.27 高く、相関 0.91、どちらが良いかは 13 曲中 12 曲で実機と同じ）。天井も模型（元の音をその鳴り方に通したもの）。`
+    : `実測: run ${DATA.runs.join(', ')} の中で、録音の WAV に当てた ViSQOL v3（このページの MP3 ではない）。天井は元の音をそのままゲームに鳴らさせた録音（run 41068618513・41076646541）。`
     + (diffs.length ? `${DATA.bName} が ${diffs.filter((d) => d > 0).length}/${diffs.length} 曲で上。` : '')
     + '1 回の録音の差 0.2 未満は差と言えません。クリップの歪みはエミュレーターの推測です。';
 }

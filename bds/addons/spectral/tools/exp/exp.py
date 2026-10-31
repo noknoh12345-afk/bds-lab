@@ -26,6 +26,7 @@ def song_log(sp, play):
         if play.get('voices'): cmd+=['--voices', str(play['voices'])]
         if play.get('bundle'): cmd+=['--bundle', play['bundle']]
         for c in play.get('cmds', []): cmd+=['--cmd', c]
+        if play.get('play'): cmd+=['--play', play['play']]          # (another way in, e.g. 'spectral:live_demo {id} phones')
         r=subprocess.run(cmd, cwd=U, capture_output=True, text=True, timeout=1200)
         if r.returncode: raise RuntimeError(r.stderr[-500:])
         json.dump(json.loads(r.stdout.strip().split('\n')[-1]), open(p+'.info','w'))

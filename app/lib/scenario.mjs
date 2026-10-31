@@ -30,8 +30,11 @@
 //   press <キー>[+<キー>…] [ミリ秒]   キーを押したままにする（例 press W 2000 で歩く、press SHIFT+W 1500）
 //   hold <x> <y> [ミリ秒]        長押し                                record start|stop   画面を録画（recordings/*.mp4）
 //   audio start [名前] / audio stop   端末が鳴らす音を録音（scrcpy、Android 11 以上。audio/<名前>.wav。bds/addons/spectral の測定リグ）
+//   audio mark <名前>            録音の途中に目印: audio stop がその録音を目印ごとに audio/<名前>.wav に切り分ける（1 本の録音で
+//                                何曲も: 曲ごとに録音を止め・測り・書き出す待ちがない。切り分けたものは start/stop で録ったものと同じに使える）
 //   audio analyze <名前> <calib の名前|all|song:<曲>|emu:<曲>> [比べる録音…]   録音を測る（tools/rig: 数はログと報告に。録音は実行の
 //                                フォルダに。emu: は同じ曲をエミュレーターで鳴らしたものと比べる — 先に audio song <曲>）
+//   audio analyze-all <名前>=<何を> …   いくつもの録音を並行して測る（CPU の数 − 1 ずつ。行は audio analyze と同じ）
 //   audio song <曲>[,<曲>…] [suffix=<字>] [<設定>=<値>…]  試験曲（corpus）をここで変換し（いくつもなら並行で）、サーバーのコンソールから
 //                                 spectral:song の script event で送る。suffix= は <曲><字> の名前で、ほかは変換器の設定（同じ run で比べる）。
 //                                 pack=<ユニットの中のフォルダ>: 前に変換した <曲><字>.song.json をそのまま送る（変換しない）
@@ -193,7 +196,9 @@ function check(s) {
   if (s.verb === 'audio' && a[0] === 'export' && !(a.length >= 2 && a.length <= 3 && /^[\w.-]+$/.test(a[1]) && (a[2] === undefined || num(a[2]) >= 16))) return '書き方: audio export <名前> [kbps]（録音を Opus にして公開: 実行の成果物の public/。管理パネルと Discord で聞ける）';
   if (s.verb === 'audio' && a[0] === 'info' && a.length !== 1) return '書き方: audio info（端末の音の設定をログへ）';
   if (s.verb === 'audio' && a[0] === 'volume' && !(a.length <= 2 && (a[1] === undefined || (num(a[1]) >= 0 && num(a[1]) <= 1)))) return '書き方: audio volume [BGM の音量 0〜1]（stop の後・launch の前に。既定 0）';
-  if (s.verb === 'audio' && !['analyze', 'song', 'ceiling', 'export', 'info', 'volume'].includes(a[0]) && (!['start', 'stop'].includes(a[0]) || (a[1] !== undefined && !/^[\w.-]+$/.test(a[1])))) return '書き方: audio start [名前] / audio stop / audio analyze … / audio song <曲> / audio ceiling <アドオン> <曲,…>（名前は英数字と _ . - だけ）';
+  if (s.verb === 'audio' && a[0] === 'mark' && !(a.length === 2 && /^[\w.-]+$/.test(a[1]))) return '書き方: audio mark <名前>（audio start と audio stop の間に。stop がそこから次の目印までを audio/<名前>.wav に切り分ける）';
+  if (s.verb === 'audio' && a[0] === 'analyze-all' && !(a.length >= 2 && a.slice(1).every((x) => /^[\w.-]+=[\w.:-]+$/.test(x)))) return '書き方: audio analyze-all <名前>=<calib の名前|all|song:<曲>|emu:<曲>> …（並行して測る）';
+  if (s.verb === 'audio' && !['analyze', 'analyze-all', 'mark', 'song', 'ceiling', 'export', 'info', 'volume'].includes(a[0]) && (!['start', 'stop'].includes(a[0]) || (a[1] !== undefined && !/^[\w.-]+$/.test(a[1])))) return '書き方: audio start [名前] / audio stop / audio mark <名前> / audio analyze … / audio analyze-all … / audio song <曲> / audio ceiling <アドオン> <曲,…>（名前は英数字と _ . - だけ）';
   if (s.verb === 'perf' && a[0] !== undefined && Number.isNaN(num(a[0]))) return '書き方: perf [ミリ秒]';
   if (s.verb === 'changed' && a[0] !== undefined && !(num(a[0]) > 0 && num(a[0]) < 1)) return '書き方: changed [0〜1 の割合]（例 changed 0.05）';
   if (s.verb === 'network' && !((a[0] === 'delay' && /^(none|\d+)$/.test(a[1] ?? '')) || (a[0] === 'speed' && /^(full|lte|hsdpa|umts|edge|gprs|\d+)$/.test(a[1] ?? '')))) return '書き方: network delay <ミリ秒|none> / network speed <full|lte|hsdpa|umts|edge|gprs|kbps>';
@@ -641,6 +646,33 @@ export async function runScenario(steps, ctx) {
           fs.appendFileSync(doLog, `audio analyze ${a.slice(1).join(' ')}\n${JSON.stringify(r.json, null, 1)}\n`);
           return r.line.slice(0, 400);
         }
+        if (a[0] === 'analyze-all') {
+          // (the recordings of a batch measured side by side: each its own python, as many at once as the machine has CPUs less one)
+          const wav = (nm) => path.join(runDir, 'audio', `${nm}.wav`);
+          const jobs = a.slice(1).map((x) => { const i = x.indexOf('='); return { name: x.slice(0, i), what: x.slice(i + 1) }; });
+          const width = Math.max(1, Math.min(jobs.length, (await import('node:os')).cpus().length - 1));
+          const said = [], failed = [];
+          let next = 0;
+          const worker = async () => {
+            for (let j; (j = jobs[next++]);) {
+              try {
+                const r = await AR.analyzeAsync({ labDir: ctx.labDir ?? process.cwd(), wav: wav(j.name), what: j.what });
+                process.stdout.write(`[spectral rig] ${j.name} ${j.what}: ${JSON.stringify(r.json)}\n`);
+                fs.appendFileSync(doLog, `audio analyze ${j.name} ${j.what}\n${JSON.stringify(r.json, null, 1)}\n`);
+                said.push(j.name);
+              } catch (e) { failed.push(`${j.name}: ${String(e.message).slice(0, 160)}`); }
+            }
+          };
+          await Promise.all(Array.from({ length: width }, worker));
+          if (failed.length) throw new Error(`${failed.length} 本を測れません: ${failed.slice(0, 3).join(' | ')}`);
+          return `${said.length} 本を並行して測りました（${width} ずつ）`;
+        }
+        if (a[0] === 'mark') {
+          if (!audioRec) throw new Error('audio mark の前に audio start がありません');
+          const at = Date.now() - audioRec.began;
+          (audioRec.marks ??= []).push({ name: a[1], at });
+          return `目印 ${a[1]}（録音を始めて ${(at / 1000).toFixed(1)} 秒）`;
+        }
         if (a[0] === 'song') {
           // (one `do` with all the parts of a song: each `do` is a lab process of its own — 27 parts for a 20 s song in ~11 s.
           // Several songs are converted in parallel; `suffix=` sends them under <id><suffix>, other k=v are converter options,
@@ -649,12 +681,28 @@ export async function runScenario(steps, ctx) {
           const suffix = kv.suffix ?? ''; delete kv.suffix;
           const opts = Object.fromEntries(Object.entries(kv).map(([k, v]) => [k, /^[-+]?\d+(\.\d+)?$/.test(v) ? Number(v) : v]));
           const list = AR.songParts({ labDir: ctx.labDir ?? process.cwd(), ids, opts, suffix, out: path.join(runDir, 'audio', `song-${ids.length > 1 ? 'batch-' + Date.now() : ids[0] + suffix}.json`) });
-          const said = [];
+          // (fast: the parts of several songs in one `do`, 25 ms a command — 300 ms each was 15 s a song, 7 minutes for 29 songs.
+          // A `do` carries ~400 KB of commands at most (the command line's limit); the add-on's "song pack:" lines are checked over
+          // all of them and one more short `do` after, which collects the last ones)
+          const said = [], lines = [];
+          let batch = [], size = 0;
+          const flush = async () => {
+            if (!batch.length) return;
+            const r = await server.do(['-w', '25', ...batch]);
+            lines.push(...r.lines);
+            if (!r.ok) throw new Error(`曲を送れません: ${r.lines.filter((l) => /^E |FAIL/.test(l)).slice(0, 3).join(' | ') || r.lines.slice(-2).join(' | ')}`);
+            batch = []; size = 0;
+          };
           for (const sp of list) {
-            const r = await server.do(sp.parts.map((m) => `scriptevent spectral:song ${m}`));
-            fs.appendFileSync(doLog, `audio song ${sp.id}${Object.keys(opts).length ? ' ' + JSON.stringify(opts) : ''}: ${sp.parts.length} parts, ${sp.bytes} bytes, ${sp.seconds} s, ${sp.kbps} kbps\n${r.lines.filter((l) => !/^> /.test(l)).slice(-4).join('\n')}\n`);
-            if (!r.ok) throw new Error(`曲 ${sp.id} を送れません: ${r.lines.filter((l) => /^E |FAIL/.test(l)).slice(0, 3).join(' | ') || r.lines.slice(-2).join(' | ')}`);
-            if (!r.lines.some((l) => l.includes('song pack:') && l.includes(`/spectral:play ${sp.id}`))) throw new Error(`曲 ${sp.id} が届いた知らせがありません（${r.lines.slice(-2).join(' | ').slice(0, 200)}）`);
+            const cmds = sp.parts.map((m) => `scriptevent spectral:song ${m}`), n = cmds.reduce((k, c) => k + c.length + 1, 0);
+            if (size + n > 400_000) await flush();
+            batch.push(...cmds); size += n;
+          }
+          await flush();
+          lines.push(...(await server.do(['spectral:library'])).lines);
+          for (const sp of list) {
+            fs.appendFileSync(doLog, `audio song ${sp.id}${Object.keys(opts).length ? ' ' + JSON.stringify(opts) : ''}: ${sp.parts.length} parts, ${sp.bytes} bytes, ${sp.seconds} s, ${sp.kbps} kbps\n`);
+            if (!lines.some((l) => l.includes('song pack:') && l.includes(`/spectral:play ${sp.id}`))) throw new Error(`曲 ${sp.id} が届いた知らせがありません（${lines.slice(-2).join(' | ').slice(0, 200)}）`);
             said.push(`${sp.id}（${sp.seconds} 秒、${sp.kbps} kbps、${sp.parts.length} 個）`);
           }
           return `曲 ${said.join('・')} を script event で送りました`;
@@ -688,9 +736,14 @@ export async function runScenario(steps, ctx) {
           return '録音 → ' + path.relative(runDir, out);
         }
         if (!audioRec) throw new Error('audio stop の前に audio start がありません');
+        const marks = audioRec.marks ?? [];
         const r = await AR.stop(audioRec); audioRec = null;
         recordings.push(r.file);
-        return `→ ${path.relative(runDir, r.file)}（${r.seconds} 秒）`;
+        if (!marks.length) return `→ ${path.relative(runDir, r.file)}（${r.seconds} 秒）`;
+        // (one recording, many songs: cut at the marks into audio/<name>.wav, each as if it had been recorded on its own)
+        const parts = AR.cut({ file: r.file, marks, wallMs: r.wallMs, dir: path.join(runDir, 'audio') });
+        fs.appendFileSync(doLog, `audio stop ${path.basename(r.file)}: ${r.seconds} s, the capture began ${parts.lagMs} ms after the recorder; ${parts.list.map((x) => `${x.name} ${x.from}-${x.to} s`).join(', ')}\n`);
+        return `→ ${path.relative(runDir, r.file)}（${r.seconds} 秒）を目印で ${parts.list.length} 本に切り分けました`;
       }
       case 'perf': {
         const ms = num(a[0]) || 3000;

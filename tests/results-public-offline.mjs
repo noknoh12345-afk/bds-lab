@@ -345,5 +345,30 @@ fs.rmSync(tmp, { recursive: true, force: true });
   ok(r11.status === 0 && fs.existsSync(path.join(top3, 'public', 'spectral', 'rec', 'n.txt')) && fs.existsSync(path.join(top3, 'report.md')), 'private: as before', r11.text);
 }
 
+// ---- 10. one recording, many songs (audio mark → audio stop: lib/audiorec.mjs cut): three tones with silence between, the
+// capture begun 700 ms after the recorder, the marks just before each tone — each part has its own tone and none of the others;
+// and the scenario takes `audio mark` / `audio analyze-all` (and refuses them wrong) ----
+{
+  const AR = await import(path.join(TOP, 'app', 'lib', 'audiorec.mjs')), S = await import(path.join(TOP, 'app', 'lib', 'scenario.mjs'));
+  const rate = 48000, sec = (x) => Math.round(x * rate), tones = [[1.0, 3.0, 440], [5.0, 7.5, 880], [9.0, 11.0, 1760]], total = 12.0;
+  const data = Buffer.alloc(sec(total) * 4);
+  for (const [a, b, f] of tones) for (let i = sec(a); i < sec(b); i++) { const v = Math.round(12000 * Math.sin((2 * Math.PI * f * i) / rate)); data.writeInt16LE(v, i * 4); data.writeInt16LE(v, i * 4 + 2); }
+  const fmt = Buffer.alloc(16); fmt.writeUInt16LE(1, 0); fmt.writeUInt16LE(2, 2); fmt.writeUInt32LE(rate, 4); fmt.writeUInt32LE(rate * 4, 8); fmt.writeUInt16LE(4, 12); fmt.writeUInt16LE(16, 14);
+  const dir = path.join(tmp, 'cut'); fs.mkdirSync(dir, { recursive: true });
+  const big = path.join(dir, 'batch.wav'); AR.writeWav(big, { fmt }, data);
+  const lag = 700, marks = tones.map(([a], i) => ({ name: `s${i}`, at: Math.round(a * 1000) - 200 + lag }));
+  const c = AR.cut({ file: big, marks, wallMs: total * 1000 + lag, dir });
+  const hz = (file) => {   // (the tone a part holds: zero crossings of the left channel over its sounding samples)
+    const w2 = AR.readWav(file), n = w2.data.length / 4; let cross = 0, loud = 0, prev = 0;
+    for (let i = 0; i < n; i++) { const v = w2.data.readInt16LE(i * 4); if (Math.abs(v) > 100) loud++; if ((prev < 0 && v >= 0) || (prev >= 0 && v < 0)) cross++; prev = v; }
+    return { hz: loud ? Math.round((cross / 2) / (loud / rate)) : 0, loud: +(loud / rate).toFixed(2) };
+  };
+  const got = c.list.map((x) => ({ ...x, ...hz(path.join(dir, `${x.name}.wav`)) }));
+  ok(c.lagMs === lag && got.length === 3 && got.every((g, i) => Math.abs(g.hz - tones[i][2]) <= tones[i][2] * 0.02 && Math.abs(g.loud - (tones[i][1] - tones[i][0])) < 0.02),
+    'a recording cut at its marks: each part its own song whole, nothing of the next (the capture\'s lag from the wall time)', JSON.stringify({ lag: c.lagMs, got }));
+  const p = S.parseScenario('audio start batch\naudio mark d_rock_big\naudio stop\naudio analyze-all d_rock_big=song:rock_big t_rock_big=song:rock_big\naudio mark\naudio mark a b\naudio analyze-all x\naudio analyze-all a=b;c');
+  ok(p.steps.length === 4 && p.errors.length === 4 && p.errors.every((e) => /書き方: audio (mark|analyze-all)/.test(e)), 'the scenario: audio mark <name>, audio analyze-all <name>=<what> …; wrong ones refused', JSON.stringify(p.errors));
+}
+
 console.log(fails ? `✘ ${fails} failed` : '✔ all passed');
 process.exit(fails ? 1 : 0);

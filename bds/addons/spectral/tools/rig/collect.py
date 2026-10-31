@@ -41,7 +41,9 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'd': 'refined_svr5', 'i': 'live_encoder', 'jp': 'live_phones', 'jl': 'live_3d_left', 'jr': 'live_3d_right',
         # run 10: the same conversion fitted at +10 dB and played at +10 dB (e); the live path as each listener's own 3D sounds
         # (near: what follow plays) to the listener's left / right (kl / kr)
-        'e': 'refined_svr5_loud10', 'kl': 'live_near_left', 'kr': 'live_near_right'}
+        'e': 'refined_svr5_loud10', 'kl': 'live_near_left', 'kr': 'live_near_right',
+        # run 11: the same 3D for each listener to the left at 3, 12 and 24 blocks (how far: level and left / right)
+        'ka': 'live_near_left3', 'kb': 'live_near_left12', 'kc': 'live_near_left24'}
 
 
 def songs(res):

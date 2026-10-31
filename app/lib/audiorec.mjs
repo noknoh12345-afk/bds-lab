@@ -48,8 +48,10 @@ export function start({ adb, out, labDir }) {
   return { child, out, began: Date.now(), log: () => log };
 }
 
-/** stops it (SIGINT: scrcpy closes the file properly) and checks the file; → { file, seconds } */
+/** stops it (SIGINT: scrcpy closes the file properly) and checks the file; → { file, seconds, wallMs } (wallMs: from start() to
+ *  this stop, against which the file's length tells how late the capture began — cut() uses it) */
 export async function stop(h) {
+  const wallMs = Date.now() - h.began;
   if (h.child.exitCode === null) {
     h.child.kill('SIGINT');
     await new Promise((res) => { const t = setTimeout(() => { h.child.kill('SIGKILL'); res(); }, 10_000); h.child.on('exit', () => { clearTimeout(t); res(); }); });
@@ -57,7 +59,53 @@ export async function stop(h) {
   const size = fs.existsSync(h.out) ? fs.statSync(h.out).size : 0;
   if (size < 1000) throw new Error(`録音がありません（${size} バイト）。scrcpy の出力: ${h.log().trim().split('\n').slice(-4).join(' | ').slice(0, 400)}`);
   // 48 kHz stereo 16-bit from scrcpy's raw codec: bytes / 192000 = seconds
-  return { file: h.out, seconds: Math.round((size - 44) / 192000 * 10) / 10 };
+  return { file: h.out, seconds: Math.round((size - 44) / 192000 * 10) / 10, wallMs };
+}
+
+/** a WAV file's PCM: { fmt (the 16 bytes of its fmt chunk), data: Buffer, rate, channels, bits } (scrcpy writes a plain RIFF) */
+export function readWav(file) {
+  const b = fs.readFileSync(file);
+  if (b.toString('ascii', 0, 4) !== 'RIFF' || b.toString('ascii', 8, 12) !== 'WAVE') throw new Error(`${path.basename(file)} is not a WAV file`);
+  let p = 12, fmt = null, data = null;
+  while (p + 8 <= b.length) {
+    const id = b.toString('ascii', p, p + 4); let n = b.readUInt32LE(p + 4);
+    if (id === 'data' && (n === 0 || n === 0xffffffff || p + 8 + n > b.length)) n = b.length - p - 8;   // (a file whose header was not finished)
+    if (id === 'fmt ') fmt = b.subarray(p + 8, p + 8 + 16);
+    if (id === 'data') { data = b.subarray(p + 8, p + 8 + n); break; }
+    p += 8 + n + (n & 1);
+  }
+  if (!fmt || !data) throw new Error(`${path.basename(file)}: no fmt / data chunk`);
+  return { fmt: Buffer.from(fmt), data, channels: fmt.readUInt16LE(2), rate: fmt.readUInt32LE(4), bits: fmt.readUInt16LE(14) };
+}
+export function writeWav(file, w, data) {
+  const h = Buffer.alloc(44);
+  h.write('RIFF', 0, 'ascii'); h.writeUInt32LE(36 + data.length, 4); h.write('WAVE', 8, 'ascii');
+  h.write('fmt ', 12, 'ascii'); h.writeUInt32LE(16, 16); w.fmt.copy(h, 20, 0, 16);
+  h.write('data', 36, 'ascii'); h.writeUInt32LE(data.length, 40);
+  fs.writeFileSync(file, Buffer.concat([h, data]));
+}
+
+/** one recording with marks (audio mark: { name, at: ms after start() }) → <dir>/<name>.wav for each, from half a second before
+ *  its mark to 0.3 s before the next one (the last: to the end). The capture begins some time after the recorder (scrcpy's
+ *  server starts on the device): that lag is the wall time less the file's length, and the marks move by it. Pure but for the
+ *  files; → { lagMs, list: [{ name, from, to }] } (seconds in the recording) */
+export function cut({ file, marks, wallMs, dir }) {
+  const w = readWav(file), frame = w.channels * (w.bits / 8), total = w.data.length / frame / w.rate;
+  const lagMs = Math.max(0, Math.round(wallMs - total * 1000));
+  // (a boundary between two songs moved to the quietest 50 ms within 1.5 s before it: the gap after a song, should the
+  // capture's clock not be the wall's — measured: no drift, no gaps, but a cut through a song would spoil two parts)
+  const rms = (t) => { const a = Math.max(0, Math.floor(t * w.rate)), n = Math.floor(0.05 * w.rate); let e = 0, k = 0;
+    for (let i = a; i < a + n && (i + 1) * frame <= w.data.length; i++) { const v = w.data.readInt16LE(i * frame); e += v * v; k++; } return k ? e / k : Infinity; };
+  const quiet = (t) => { let best = t, bv = Infinity; for (let x = t - 1.5; x <= t; x += 0.05) { if (x < 0) continue; const v = rms(x); if (v < bv) { bv = v; best = x + 0.025; } } return best; };
+  const list = [];
+  marks.forEach((m, i) => {
+    const from = Math.max(0, (m.at - lagMs) / 1000 - 0.5), to = i + 1 < marks.length ? Math.min(total, quiet((marks[i + 1].at - lagMs) / 1000 - 0.3)) : total;
+    if (!(to > from)) return;
+    const a = Math.floor(from * w.rate) * frame, b = Math.floor(to * w.rate) * frame;
+    writeWav(path.join(dir, `${m.name}.wav`), w, w.data.subarray(a, b));
+    list.push({ name: m.name, from: Math.round(from * 100) / 100, to: Math.round(to * 100) / 100 });
+  });
+  return { lagMs, list };
 }
 
 // ---- analysis on this machine (the run's report and log carry the numbers; the recordings stay in the run folder)
@@ -232,6 +280,35 @@ export function analyze({ labDir, addon = 'spectral', wav, what, refs = [] }) {
   // (a summary that cannot be made never loses the numbers: run 41055135707's calib all was measured, then lost to it)
   let line; try { line = summarize(json); } catch (e) { line = `（要約できません: ${e.message}）`; }
   return { json, out, line };
+}
+
+/** analyze() without blocking: the same python, the same files, a promise (audio analyze-all runs several side by side) */
+export function analyzeAsync({ labDir, addon = 'spectral', wav, what, refs = [] }) {
+  const unit = path.join(labDir, 'bds', 'addons', addon);
+  const py = pythonFor(labDir);
+  const out = wav.replace(/\.wav$/, '') + `.${what.replace(/[^\w.-]/g, '_')}.json`;
+  let args;
+  if (what.startsWith('song:')) args = [path.join(unit, 'tools', 'rig', 'score_song.py'), refFile(unit, what.slice(5), py), wav, ...refs, '--json', out];
+  else if (what.startsWith('emu:')) {
+    const song = path.join(path.dirname(wav), `song-${what.slice(4)}.json`);
+    if (!fs.existsSync(song)) return Promise.reject(new Error(`emu:${what.slice(4)} には先に audio song ${what.slice(4)} が要ります`));
+    args = [path.join(unit, 'tools', 'rig', 'emu_check.py'), song, wav, '--json', out];
+  } else args = [path.join(unit, 'tools', 'rig', 'analyze.py'), wav, what, '--json', out];
+  return new Promise((resolve, reject) => {
+    const child = spawn(py, args, { cwd: unit, stdio: ['ignore', 'pipe', 'pipe'] });
+    let err = '';
+    child.stdout.on('data', () => {}); child.stderr.on('data', (d) => { err += d; });
+    const t = setTimeout(() => child.kill('SIGKILL'), 1_800_000);
+    child.on('exit', (code) => {
+      clearTimeout(t);
+      if (code !== 0) return reject(new Error(`解析に失敗しました: ${err.trim().split('\n').slice(-3).join(' | ').slice(0, 400)}`));
+      try {
+        const json = JSON.parse(fs.readFileSync(out, 'utf8'));
+        let line; try { line = summarize(json); } catch (e) { line = `（要約できません: ${e.message}）`; }
+        resolve({ json, out, line });
+      } catch (e) { reject(e); }
+    });
+  });
 }
 
 /** the original of a song the rig knows: demo = tools/make_demo_song.py (deterministic), else corpus/audio/<id>.mp3 */
