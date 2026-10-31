@@ -40,14 +40,18 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
    開けない: ログの数は measured/redroid-41170496546.json）
 3. **ライブ（声をその場で）と 3D**（src/main.ts の LiveStream / LivePlayer、web/live.js、tools/live/）:
    - script event `spectral:live` でフレームが届くたびに鳴らす（2 tick のジッターバッファ、遅れすぎたら飛ぶ、黙ったら止む）。場所は
-     ヘッドホン・その場の 3D スピーカー・**動く人から 3D（follow: 1.5 ブロック動いたら 1 tick に 8 音ずつクロスフェードで付いていく）**
+     ヘッドホン・その場の 3D スピーカー（全員で 1 組の音）・near（その場に、聞く人それぞれの 3D の音）・**動く人から 3D（follow: 48 ブロック
+     以内のほかの人それぞれに、その人だけが聞く 3D の音を話す人の位置に。話す本人には聞こえない。1.5 ブロック動いたら 1 tick に 8 音ずつ
+     クロスフェードで付いていく）**。SoundInstance は場所を変えられないので、動きは音の置き直し
    - web/live.js LiveEncoder: 50 ms ごとに直近 43 ms だけで（先を見ない）フレームを作る。エミュレーター（推測）で話し声 2.92 / 2.86
      （前もって変換する変換器の合成前 2.99 / 2.92）
    - tools/live/bridge.mjs: **Discord のボイスチャンネル → その人がつないだプレイヤーの位置から 3D**（/mc <ゲーマータグ>、discord.js・
      @discordjs/voice（暗号化・DAVE）・prism-media・opusscript）。--bds でサーバーを自分で起動してコンソールへ、--stdout、--lab。
      Discord なしの試験 tools/live/test_bridge.mjs（同じ Opus を同じ復号器で）。本物の Discord ではまだ試していない（トークンがない）
    - ローカルの本物の BDS で: 20 秒の声を実時間で 400 フレーム送って 400 届いた（bridge --fake --lab）。tests.txt に 2 節
-4. 9 回目の実機（tools/exp/app9.json → app.txt、曲は前もって変換した tools/exp/packs/run9 = 模型で採点したデータそのもの、変換を
+4. 内蔵のデモ曲（src/songs/demo.ts）を新しい既定で変換し直した。変換ページ（web/）は「仕上げ」（5 回 / 2 回 / なし / ライブの変換）を
+   選べる。ライブの変換を選ぶと、Discord の声と同じ道（先を見ない 50 ms ずつ）でその曲を作り、ゲーム内の音で聞ける
+5. 9 回目の実機（tools/exp/app9.json → app.txt、曲は前もって変換した tools/exp/packs/run9 = 模型で採点したデータそのもの、変換を
    40 分の外へ）: d_（新しい既定）と t_（8 回目の既定）を曲ごとに交互に 13 曲ずつ、i_ ライブの変換 3 曲、jp_ ライブの道、jl_ / jr_ 3D で
    左右（lr_db）
 

@@ -350,7 +350,7 @@ wait 300
 @C cmd /spectral:stop
 ~ @C ■ stopped
 
-## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), and ends
+## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), starts again when its sender does, and ends
 scriptevent spectral:live {"id":"t1","m":{"N":2,"M":8,"amp":[-90,0.75],"nz":[-100,0.5],"fd":[5,12,25,50]},"s":0,"f":"A2QQcAAAAAAAAAAAAA///wNkEHAAAAAAAAAAAAAP//8DZBBwAAAAAAAAAAAAD///","at":"phones:A"}
 wait 600
 @A cmd /spectral:live
@@ -363,6 +363,10 @@ scriptevent spectral:live {"id":"t1","s":10,"f":"A2QQcAAAAAAAAAAAAA///w=="}
 wait 300
 @A cmd /spectral:live
 ~ @A live t1: 7 frames, 2 voices, 4 lost, phones A
+scriptevent spectral:live {"id":"t1","m":{"N":2,"M":8,"amp":[-90,0.75],"nz":[-100,0.5],"fd":[5,12,25,50]},"s":0,"f":"A2QQcAAAAAAAAAAAAA///w=="}
+wait 300
+@A cmd /spectral:live
+~ @A live t1: 1 frames, 2 voices, phones A
 scriptevent spectral:live {"id":"t1","end":true}
 wait 300
 @A cmd /spectral:live
@@ -370,19 +374,34 @@ wait 300
 @A cmd /spectral:live nothing phones
 ~ @A no live stream "nothing"
 
-## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them)
+## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice)
 @A cmd /spectral:live_demo demo phones
 ~ @A ● live demo demo_demo: Demo \(original\) \(460 frames, 24 voices\) → phones:A
 wait 1500
 @A cmd /spectral:live
 ~ @A live demo_demo: \d+ frames, 24 voices, phones A delay [1-4] ticks underruns 0 skips 0 moves 0
+@D join
+wait 1500
+tp B -4 -60 4
+tp C 4 -60 -4
+tp D 4 -60 4
 @A cmd /spectral:live demo_demo follow
-~ @A ● live demo_demo: follow A delay
+~ @A ● live demo_demo: follow A listeners 3 delay
 wait 600
 tp A 12 -60 0
 wait 1500
 @A cmd /spectral:live
-~ @A live demo_demo: \d+ frames, 24 voices, follow A delay [1-4] ticks underruns 0 skips 0 moves [1-9]
+~ @A live demo_demo: \d+ frames, 24 voices, follow A listeners 3 delay [1-4] ticks underruns 0 skips 0 moves [1-9]
+tp D -32 -60 -32
+wait 1200
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, follow A listeners 2 delay
+tp B -32 -60 31
+tp C -32 -60 -31
+wait 1200
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, follow A listeners 0
 @A cmd /spectral:live demo_demo stop
 ~ @A ■ live demo_demo
 tp A 0 -60 0
+@D leave

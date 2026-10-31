@@ -157,6 +157,7 @@ button.main:disabled { opacity: 0.5; cursor: default; }
           <option value="5" selected>いちばん良い（実機の模型で 5 回詰める・20 秒の曲で 3 分ほど）</option>
           <option value="2">速い（2 回・少し劣る）</option>
           <option value="0">仕上げなし（すぐ・前の版）</option>
+          <option value="live">ライブの変換（ボイスチャットの声と同じ: 50 ms ずつ、先を見ない・24 声）</option>
         </select>
       </label>
       <div class="tracks" id="tracks"></div>
@@ -196,6 +197,7 @@ button.main:disabled { opacity: 0.5; cursor: default; }
 </div>
 
 <script>/*CORE*/</script>
+<script>/*LIVE*/</script>
 <script>
 'use strict';
 const C = window.SpectralCore;
@@ -258,8 +260,8 @@ async function analyse(t) {
   t.state = 'busy'; t.progress = 0; t.error = ''; t.games = {}; renderTracks();
   const run = (t.run = (t.run || 0) + 1);
   try {
-    const sw = Number(($('sweeps') || {}).value ?? 5);
-    const r = await C.convert(t.x, { voices: t.voices, title: t.title, artist: t.artist, id: t.id, ...(sw ? { refineSweeps: sw } : { refine: false }), progress: async (f) => {
+    const how = ($('sweeps') || {}).value ?? '5', sw = Number(how);
+    const r = how === 'live' ? await liveConvert(t) : await C.convert(t.x, { voices: t.voices, title: t.title, artist: t.artist, id: t.id, ...(sw ? { refineSweeps: sw } : { refine: false }), progress: async (f) => {
       t.progress = f; const bar = $('pg' + t.key); if (bar) bar.style.width = Math.round(f * 100) + '%';
       await new Promise((res) => setTimeout(res, 0));
     } });
@@ -268,6 +270,20 @@ async function analyse(t) {
   } catch (e) { t.state = 'err'; t.error = '解析できませんでした: ' + (e.message || e); }
   renderTracks();
   if (t === current) { stopPlay(); showNow(); draw(); }
+}
+/** the live encoder (web/live.js: what a voice chat sends, 50 ms at a time with no look-ahead) on a whole track, as a song */
+async function liveConvert(t) {
+  const L = window.SpectralLive, x44 = t.x, n = Math.floor((x44.length * 48000) / C.SR), x = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const p = (i * C.SR) / 48000, j = Math.floor(p), f = p - j; x[i] = (x44[j] ?? 0) * (1 - f) + (x44[j + 1] ?? 0) * f; }
+  const enc = new L.LiveEncoder({ voices: 24 }); enc.collect = true;
+  for (let i = 0; i < n; i += 48000) { enc.push(x.subarray(i, i + 48000)); t.progress = i / n; const bar = $('pg' + t.key); if (bar) bar.style.width = Math.round(t.progress * 100) + '%'; await new Promise((res) => setTimeout(res, 0)); }
+  enc.push(new Float32Array(L.WIN));
+  const s = L.toSong(enc, { id: t.id, title: t.title, seconds: Math.round((x44.length / C.SR) * 100) / 100 });
+  // (the statistics the page shows for a song: voices sounding, level changes a tick)
+  let act = 0, chg = 0;
+  enc.frames.forEach((f, k) => { for (let v = 0; v < f.a.length; v++) { if (f.a[v] > 0) act++; if (k && f.a[v] !== enc.frames[k - 1].a[v]) chg++; } });
+  const nf = Math.max(1, enc.frames.length);
+  return { meta: { ...s.meta, artist: t.artist || 'live' }, bytes: C.fromB64(s.data), stats: { live: true, activeAvg: act / nf, changesPerTick: chg / nf, events: 0 } };
 }
 async function addFiles(files) {
   for (const f of files) {

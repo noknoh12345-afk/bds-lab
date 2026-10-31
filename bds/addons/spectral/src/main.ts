@@ -800,16 +800,19 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
 // the M noise bands' codes, then the fade codes (2 bits) of the N voices and of the M bands — tools/live/encoder.mjs (web/live.js)
 // makes them from audio as it comes (a causal analysis of each 50 ms); tools/live/bridge.mjs brings a Discord voice channel in.
 export interface LiveMeta { N: number; M: number; amp: [number, number]; nz: [number, number]; fd: number[]; title?: string; }
-type LiveAt = { kind: 'phones'; who: string[] } | { kind: 'speaker'; dim: string; loc: Vector3 } | { kind: 'follow'; who: string };
+type LiveAt = { kind: 'phones'; who: string[] } | { kind: 'speaker' | 'near'; dim: string; loc: Vector3 } | { kind: 'follow'; who: string };
 const LIVE_CAP = 512;           // frames kept (25.6 s)
 const LIVE_DELAY = 2;           // ticks behind the newest frame
 const LIVE_LATE = 6;            // further behind than this over the delay: jump ahead (the latency stays bounded)
 const LIVE_IDLE = 4;            // ticks without a new frame: the voice falls silent (a talker stopped)
 const FOLLOW_MOVE = 1.5;        // blocks a followed player moves before the sound moves with them
 const FOLLOW_STEP = 8;          // sounds moved a tick (each with a crossfade of a tick)
+const FOLLOW_RANGE = 48;        // blocks: who hears a talker (the 3D sounds' own max_distance)
 
 class LiveStream {
   w = -1; frames = 0; gaps = 0; lastAt = 0;
+  /** the first frame of the latest talkspurt (frames after LIVE_IDLE ticks without a message): where the player starts again */
+  burst = 0;
   freq: Float32Array; amp: Float32Array; att: Uint8Array; nz: Float32Array; vd: Uint8Array; nzd: Uint8Array;
   curF: Float32Array; curA: Float32Array; ampV = new Float32Array(128); nzV = new Float32Array(256);
   player?: LivePlayer;
@@ -833,6 +836,7 @@ class LiveStream {
   push(seq: number, b: Uint8Array): number {
     const { N, M } = this.meta, nb = (N + 7) >> 3, fv = (N + 3) >> 2, fn = (M + 3) >> 2;
     let p = 0, k = seq, n = 0;
+    if (seq > this.w && (this.w < 0 || system.currentTick - this.lastAt >= LIVE_IDLE)) this.burst = seq;
     const nzRow = new Uint8Array(M), vf = new Uint8Array(N), nf = new Uint8Array(M);
     while (p < b.length) {
       if (k > this.w + 1 && this.w >= 0) { for (let g = this.w + 1; g < k && g < this.w + 1 + LIVE_CAP; g++) { this.store(g); this.gaps++; } }
@@ -865,7 +869,7 @@ class LiveStream {
 }
 
 class LivePlayer {
-  targets: Target[] = []; p = -1; idle = 0; underruns = 0; skips = 0; moves = 0; calls = 0; ticks = 0; started = false;
+  targets: Target[] = []; p = -1; playing = false; idle = 0; underruns = 0; skips = 0; moves = 0; calls = 0; ticks = 0; started = false;
   lastP: Float32Array; lastL: Float32Array; lastNL: Float32Array;
   anchor?: Vector3; moving: number[] = []; dying: [SoundInstance, number][] = [];
   constructor(public st: LiveStream, public at: LiveAt) {
@@ -876,13 +880,15 @@ class LivePlayer {
   /** the level over the files: headphones as the listener's own setting (a phone +6 dB), a 3D sound 1 (its volume is its range) */
   lv = 1;
   where(): { dim: Dimension; loc: Vector3 } | undefined {
-    if (this.at.kind === 'speaker') { try { return { dim: world.getDimension(this.at.dim), loc: this.at.loc }; } catch { return undefined; } }
+    if (this.at.kind === 'speaker' || this.at.kind === 'near') { try { return { dim: world.getDimension(this.at.dim), loc: this.at.loc }; } catch { return undefined; } }
     if (this.at.kind === 'follow') { const who = this.at.who, q = world.getPlayers({ name: who })[0]; if (!q?.isValid) return undefined; const l = q.getHeadLocation(); return { dim: q.dimension, loc: { x: l.x, y: l.y, z: l.z } }; }
     return undefined;
   }
-  private loop(t: Target, name: string): SoundInstance {
-    if (t.player) return t.player.playSound(this.ev(name), { volume: SILENT, pitch: 1, loopCount: -1 });
-    const s = t.dim!.playSound(this.ev(name), t.loc!, { volume: 1, pitch: 1, loopCount: -1 });
+  private loop(t: Target, name: string, at = t.loc): SoundInstance {
+    if (t.player && !at) return t.player.playSound(this.ev(name), { volume: SILENT, pitch: 1, loopCount: -1 });
+    // (3D: the play volume also sets the audible range, so 1 and silenced in the same tick; a listener's own 3D sound — follow —
+    // at the talker's place, heard by that listener alone)
+    const s = t.player ? t.player.playSound(this.ev(name), { location: at, volume: 1, pitch: 1, loopCount: -1 }) : t.dim!.playSound(this.ev(name), at!, { volume: 1, pitch: 1, loopCount: -1 });
     s.setVolume(SILENT);
     return s;
   }
@@ -896,11 +902,35 @@ class LivePlayer {
       for (const name of this.at.who) { const q = world.getPlayers({ name })[0]; if (q) this.targets.push({ player: q, osc: [], nz: [] }); }
       const first = this.targets[0]?.player;
       if (first) this.lv = Math.pow(10, (settingsOf(first).level ?? 0) / 20);
-    } else {
+    } else if (this.at.kind === 'speaker') {
       const w = this.where(); if (w) { this.targets.push({ dim: w.dim, loc: w.loc, osc: [], nz: [] }); this.anchor = w.loc; }
+    } else {
+      // (follow / near: listen() builds each listener's sounds as they come near)
+      const w = this.where(); if (w) { this.anchor = w.loc; this.dim = w.dim.id; this.listen(w); }
+      this.started = true;
+      return;
     }
     for (const t of this.targets) await this.build(t);
     this.started = true;
+  }
+  /** follow: everyone within reach of the talker hears them (FOLLOW_RANGE blocks, the same dimension), each with sounds of their
+   *  own at the talker's place — the talker never hears their own voice; who comes near is added, who goes away loses theirs */
+  private listen(w: { dim: Dimension; loc: Vector3 }) {
+    if (this.at.kind !== 'follow' && this.at.kind !== 'near') return;
+    // (near: the same per-listener 3D sounds at a fixed spot, every player within reach — what follow does, without a talker)
+    const who = this.at.kind === 'follow' ? this.at.who : undefined;
+    const near = world.getPlayers().filter((q) => q.isValid && q.name !== who && q.dimension.id === w.dim.id && dist(q.location, w.loc) <= FOLLOW_RANGE);
+    for (const t of [...this.targets]) {
+      if (near.some((q) => q.id === t.player?.id)) continue;
+      for (const x of [...t.osc, ...t.nz]) { try { x?.stop(); } catch { /* gone */ } }
+      this.targets.splice(this.targets.indexOf(t), 1);
+    }
+    for (const q of near) {
+      if (this.targets.some((t) => t.player?.id === q.id)) continue;
+      const t: Target = { player: q, loc: this.anchor ?? w.loc, osc: [], nz: [] };
+      this.targets.push(t);
+      this.build(t).then(() => this.resync(t));
+    }
   }
   stop() {
     for (const t of this.targets) for (const x of [...t.osc, ...t.nz]) { try { x?.stop(); } catch { /* gone */ } }
@@ -929,33 +959,39 @@ class LivePlayer {
   private follow() {
     const now = system.currentTick;
     this.dying = this.dying.filter(([x, at]) => { if (at > now) return true; try { x.stop(); } catch { /* gone */ } return false; });
-    if (this.at.kind !== 'follow' || !this.targets.length) return;
-    const w = this.where(), t = this.targets[0];
+    if (this.at.kind !== 'follow' && this.at.kind !== 'near') return;
+    const w = this.where();
     if (!w) return;
-    if (w.dim.id !== t.dim!.id) { this.stop(); this.targets.push({ dim: w.dim, loc: w.loc, osc: [], nz: [] }); this.anchor = w.loc; this.build(this.targets[0]).then(() => this.resync()); return; }
-    if (!this.moving.length && dist(w.loc, this.anchor ?? w.loc) > FOLLOW_MOVE) {
+    if (this.ticks % 10 === 0 || w.dim.id !== this.dim) { this.dim = w.dim.id; this.listen(w); }
+    if (this.at.kind === 'follow' && !this.moving.length && dist(w.loc, this.anchor ?? w.loc) > FOLLOW_MOVE) {
       this.anchor = w.loc; this.moves++;
-      this.moving = [...t.osc.keys(), ...t.nz.map((_, b) => -1 - b)];
+      const N = this.st.meta.N, M = this.st.meta.M;
+      this.moving = [...Array(N).keys(), ...Array.from({ length: M }, (_, b) => -1 - b)];
     }
+    // (FOLLOW_STEP sounds a tick, for every listener: each moved one starts at the new place silent, rises in a tick as the old
+    // one falls, and the old one stops two ticks later)
     for (let n = 0; n < FOLLOW_STEP && this.moving.length; n++) {
       const i = this.moving.shift()!, voice = i >= 0;
-      const old = voice ? t.osc[i] : t.nz[-1 - i];
-      let s: SoundInstance;
-      try { s = t.dim!.playSound(this.ev(voice ? 'spectral.osc' : 'spectral.n' + (-1 - i)), this.anchor!, { volume: 1, pitch: 1, loopCount: -1 }); } catch { continue; }
-      try {
-        s.setVolume(SILENT);
-        if (voice && this.lastP[i] > 0) s.setPitch(this.lastP[i]);
-        s.fade(FADE_SMOOTH, voice ? this.lastL[i] : this.lastNL[-1 - i]);
-        old?.fade(FADE_SMOOTH, SILENT);
-      } catch { /* gone */ }
-      if (old) this.dying.push([old, now + 2]);
-      if (voice) t.osc[i] = s; else t.nz[-1 - i] = s;
-      this.calls += 4;
+      for (const t of this.targets) {
+        const old = voice ? t.osc[i] : t.nz[-1 - i];
+        if (!old) continue;
+        let s: SoundInstance;
+        try { s = this.loop(t, voice ? 'spectral.osc' : 'spectral.n' + (-1 - i), this.anchor); } catch { continue; }
+        try {
+          if (voice && this.lastP[i] > 0) s.setPitch(this.lastP[i]);
+          s.fade(FADE_SMOOTH, voice ? this.lastL[i] : this.lastNL[-1 - i]);
+          old.fade(FADE_SMOOTH, SILENT);
+        } catch { /* gone */ }
+        this.dying.push([old, now + 2]);
+        if (voice) t.osc[i] = s; else t.nz[-1 - i] = s;
+        this.calls += 4;
+      }
     }
-    t.loc = this.anchor;
+    for (const t of this.targets) t.loc = this.anchor;
   }
-  resync() {
-    for (const t of this.targets) {
+  dim = '';
+  resync(only?: Target) {
+    for (const t of only ? [only] : this.targets) {
       for (let v = 0; v < t.osc.length; v++) { try { if (this.lastP[v] > 0) t.osc[v].setPitch(this.lastP[v]); t.osc[v].setVolume(this.lastL[v]); } catch { /* gone */ } }
       for (let b = 0; b < t.nz.length; b++) { try { t.nz[b]?.setVolume(this.lastNL[b]); } catch { /* gone */ } }
     }
@@ -967,12 +1003,18 @@ class LivePlayer {
     this.follow();
     const st = this.st, { N, M, fd } = st.meta, fdS = fd.map((x) => x / 1000);
     if (st.w < 0) return;
-    if (this.p < 0) { if (st.w < LIVE_DELAY) return; this.p = st.w - LIVE_DELAY; }
+    if (!this.playing) {
+      // (from the first frame of the talkspurt — its rise is not lost, and the last sentence's frames are not heard again — once
+      // a jitter buffer's worth has come; further behind than that, from LIVE_DELAY frames behind the newest)
+      const first = Math.max(st.burst, st.w - LIVE_DELAY + 1);
+      if (st.w - first + 1 < LIVE_DELAY) return;
+      this.p = first - 1; this.playing = true;
+    }
     if (st.w - this.p > LIVE_DELAY + LIVE_LATE) { this.p = st.w - LIVE_DELAY; this.skips++; }
     if (this.p + 1 > st.w) {
       // no frame yet: hold; a talker who stopped falls silent
       if (++this.idle === LIVE_IDLE) { this.underruns++; for (let v = 0; v < N; v++) this.sendVoice(v, 0, FADE_SMOOTH, SILENT); for (let b = 0; b < M; b++) this.sendNoise(b, FADE_SMOOTH, SILENT); }
-      if (this.idle >= LIVE_IDLE) this.p = -1;
+      if (this.idle >= LIVE_IDLE) this.playing = false;
       return;
     }
     this.idle = 0;
@@ -980,26 +1022,28 @@ class LivePlayer {
     // it makes it, without waiting for the next one)
     const i0 = st.slot(this.p), i1 = st.slot(this.p + 1), gain = this.lv / OSC_AMP;
     for (let v = 0; v < N; v++) {
-      const a0 = st.amp[i0 * N + v], f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;
+      const a0 = this.lastL[v] > SILENT ? st.amp[i0 * N + v] : 0, f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;
       this.sendVoice(v, f0 && f1 ? Math.sqrt(f0 * f1) : f1 || f0, fdS[st.vd[i1 * N + v]], a1 * gain, st.att[i1 * N + v] === 1);
     }
     for (let b = 0; b < M; b++) this.sendNoise(b, fdS[st.nzd[i1 * M + b]], (st.nz[i1 * M + b] * this.lv) / NOISE_RMS[b]);
     this.p++;
   }
   status() {
-    const where = this.at.kind === 'phones' ? `phones ${this.at.who.join(',')}` : this.at.kind === 'follow' ? `follow ${this.at.who}` : `speaker ${Math.round(this.at.loc.x)} ${Math.round(this.at.loc.y)} ${Math.round(this.at.loc.z)}`;
-    return `${where} delay ${this.p < 0 ? '-' : this.st.w - this.p} ticks underruns ${this.underruns} skips ${this.skips} moves ${this.moves} calls/tick ${(this.ticks ? this.calls / this.ticks : 0).toFixed(1)}`;
+    const where = this.at.kind === 'phones' ? `phones ${this.at.who.join(',')}` : this.at.kind === 'follow' ? `follow ${this.at.who} listeners ${this.targets.length}`
+      : `${this.at.kind} ${Math.round(this.at.loc.x)} ${Math.round(this.at.loc.y)} ${Math.round(this.at.loc.z)}${this.at.kind === 'near' ? ` listeners ${this.targets.length}` : ''}`;
+    return `${where} delay ${!this.playing ? '-' : this.st.w - this.p} ticks underruns ${this.underruns} skips ${this.skips} moves ${this.moves} calls/tick ${(this.ticks ? this.calls / this.ticks : 0).toFixed(1)}`;
   }
 }
 const lives = new Map<string, LiveStream>();
 const LIVE_ID = /^[\w.-]{1,40}$/;
-/** "follow:Name" | "phones:A,B" | "speaker:x,y,z[,dimension]" → where a stream plays */
+/** "follow:Name" | "phones:A,B" | "speaker:x,y,z[,dimension]" (one 3D sound for everyone) | "near:x,y,z[,dimension]" (each listener
+ *  their own 3D sound there, as follow) → where a stream plays */
 function liveAt(s: string | undefined, by?: Player): LiveAt | undefined {
   if (!s) return undefined;
   const [kind, rest = ''] = s.split(':', 2).length === 2 ? [s.slice(0, s.indexOf(':')), s.slice(s.indexOf(':') + 1)] : [s, ''];
   if (kind === 'follow') { const who = rest || by?.name; return who ? { kind, who } : undefined; }
   if (kind === 'phones') { const who = rest ? rest.split(',').filter((x) => x) : by ? [by.name] : []; return who.length ? { kind, who } : undefined; }
-  if (kind === 'speaker') {
+  if (kind === 'speaker' || kind === 'near') {
     if (!rest && by) { const l = by.location; return { kind, dim: by.dimension.id, loc: { x: l.x, y: l.y + 1, z: l.z } }; }
     const n = rest.split(','), [x, y, z] = n.slice(0, 3).map(Number);
     return [x, y, z].every(Number.isFinite) ? { kind, dim: n[3] || 'overworld', loc: { x, y, z } } : undefined;
@@ -1030,13 +1074,15 @@ export function liveMessage(text: string): string | undefined {
   if (!m.id || !LIVE_ID.test(m.id)) return 'bad id';
   let st = lives.get(m.id);
   if (m.end) { st?.player?.stop(); lives.delete(m.id); return `end ${m.id}`; }
+  let was: LiveAt | undefined;
   if (m.m) {
     if (!liveMetaOk(m.m)) return 'bad meta';
-    if (!st || st.meta.N !== m.m.N) { st?.player?.stop(); st = new LiveStream(m.id, m.m); lives.set(m.id, st); }
+    // (frame 0 with a meta: a sender's first message — a sender that started again with the same id begins a new stream)
+    if (!st || st.meta.N !== m.m.N || m.s === 0) { was = st?.player?.at; st?.player?.stop(); st = new LiveStream(m.id, m.m); lives.set(m.id, st); }
   }
   if (!st) return `no meta yet for ${m.id}`;
   if (typeof m.f === 'string' && Number.isInteger(m.s)) st.push(m.s!, liveB64(m.f));
-  const at = liveAt(m.at);
+  const at = liveAt(m.at) ?? was;
   if (at && (!st.player || JSON.stringify(st.player.at) !== JSON.stringify(at))) livePlay(st, at);
   return undefined;
 }
@@ -1048,8 +1094,8 @@ system.runInterval(() => {
     if (system.currentTick - st.lastAt > 20 * 60) { lp?.stop(); lives.delete(id); }
   }
 }, 1);
-cmdAny('spectral:live', 'Live streams (a voice chat, a microphone): the list, or one played on headphones, as a 3D speaker here, from a player in 3D as they move (follow), or stopped',
-  { 'stream?': 'string', 'place?': ['phones', 'speaker', 'follow', 'stop'], 'who?': 'player' }, async (p, a) => {
+cmdAny('spectral:live', 'Live streams (a voice chat, a microphone): the list, or one played on headphones, as a 3D speaker here, 3D here for each listener (near), from a player in 3D as they move (follow), or stopped',
+  { 'stream?': 'string', 'place?': ['phones', 'speaker', 'near', 'follow', 'stop'], 'who?': 'player' }, async (p, a) => {
     if (!a.stream) return lives.size ? [...lives.values()].map((st) => `live ${st.id}: ${st.frames} frames, ${st.meta.N} voices${st.gaps ? `, ${st.gaps} lost` : ''}${st.player ? ', ' + st.player.status() : ', not playing'}`).join('\n') : 'live: no stream (tools/live/bridge.mjs, or /spectral:live_demo)';
     const st = lives.get(a.stream); if (!st) return `§cno live stream "${a.stream}"`;
     const who: Player | undefined = a.who?.[0] ?? p;
@@ -1061,7 +1107,7 @@ cmdAny('spectral:live', 'Live streams (a voice chat, a microphone): the list, or
 /** a song sent as a live stream, frame by frame as a voice chat would (the whole live path in the add-on itself: the frames are
  *  written as bytes and read back) */
 cmdAny('spectral:live_demo', 'Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)',
-  { song: 'string', 'to?': ['phones', 'speaker', 'follow'], 'who?': 'player', 'voices?': 'int', 'at?': 'string' }, async (p, a) => {
+  { song: 'string', 'to?': ['phones', 'speaker', 'near', 'follow'], 'who?': 'player', 'voices?': 'int', 'at?': 'string' }, async (p, a) => {
     const song = songs.get(a.song); if (!song) return `§cno song "${a.song}"`;
     let d: Decoded; try { d = await decoded(song); } catch (e) { return `§csong ${a.song}: ${e}`; }
     const who: Player | undefined = a.who?.[0] ?? p;
@@ -1087,7 +1133,7 @@ cmdAny('spectral:live_demo', 'Send a song as a live stream, frame by frame as a 
       return [...out, ...fv, ...fn];
     };
     const b64 = (b: number[]) => { const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'; let s = ''; for (let i = 0; i < b.length; i += 3) { const n = (b[i] << 16) | ((b[i + 1] ?? 0) << 8) | (b[i + 2] ?? 0); s += A[n >> 18] + A[(n >> 12) & 63] + (i + 1 < b.length ? A[(n >> 6) & 63] : '=') + (i + 2 < b.length ? A[n & 63] : '='); } return s; };
-    const at = a.to === 'speaker' ? (who ? `speaker:${Math.round(who.location.x)},${Math.round(who.location.y + 1)},${Math.round(who.location.z)},${who.dimension.id.replace('minecraft:', '')}` : undefined)
+    const at = a.to === 'speaker' || a.to === 'near' ? (who ? `${a.to}:${Math.round(who.location.x)},${Math.round(who.location.y + 1)},${Math.round(who.location.z)},${who.dimension.id.replace('minecraft:', '')}` : undefined)
       : who ? `${a.to ?? 'phones'}:${who.name}` : undefined;
     // (at: a place of its own — "speaker:x,y,z[,dimension]", "follow:<name>", "phones:<name>" — over to / who)
     if (a.at !== undefined && !liveAt(a.at)) return `§cat: speaker:x,y,z[,dimension] | follow:<name> | phones:<name> (${a.at})`;

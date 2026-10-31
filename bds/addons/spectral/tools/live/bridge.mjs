@@ -44,16 +44,25 @@ export function monoOf(pcm) {
 /** a talker: their voice in (mono float, any chunks) → the console lines out, through `send` (one frame a message: the lowest
  *  latency; a message is ~150 characters, /scriptevent takes 2048) */
 export class Talker {
-  constructor({ id, gamertag, voices = 16, send }) {
+  /** quietMs: a pause that long without their voice (Discord sends nothing while someone is silent) is the end of a sentence */
+  constructor({ id, gamertag, voices = 16, send, quietMs = 120 }) {
     this.id = id; this.at = `follow:${gamertag}`; this.enc = new L.LiveEncoder({ voices }); this.send = send; this.seq = 0; this.first = true;
+    this.quietMs = quietMs; this.timer = undefined; this.quiets = 0;
   }
   push(mono) {
+    this.frames(mono);
+    if (this.quietMs) { clearTimeout(this.timer); this.timer = setTimeout(() => this.quiet(), this.quietMs); this.timer.unref?.(); }
+  }
+  frames(mono) {
     for (const f of this.enc.push(mono)) {
       this.send(`scriptevent spectral:live ${L.message(this.id, this.seq++, [f], this.first ? { meta: this.enc.meta(), at: this.at } : {})}`);
       this.first = false;
     }
   }
-  end() { this.send(`scriptevent spectral:live ${JSON.stringify({ id: this.id, end: true })}`); }
+  /** the end of a sentence: two frames of silence, so the voice fades out as the encoder decides (not cut when the frames stop)
+   *  and the next sentence starts from a clean window, its first sounds marked as rises */
+  quiet() { this.timer = undefined; this.quiets++; this.frames(new Float32Array(2 * L.HOP)); }
+  end() { clearTimeout(this.timer); this.timer = undefined; this.send(`scriptevent spectral:live ${JSON.stringify({ id: this.id, end: true })}`); }
 }
 export const streamId = (userId) => `vc_${String(userId).slice(-12)}`;
 
@@ -106,30 +115,43 @@ async function main() {
   catch { console.error('cd tools/live && npm install (discord.js, @discordjs/voice, prism-media, opusscript)'); process.exit(2); }
   const { Client, GatewayIntentBits, ApplicationCommandOptionType } = djs;
   const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
-  const talkers = new Map(), unlinked = new Set();
+  // (a talker's stream lives on between their sentences — the add-on falls silent after 4 ticks without a frame and picks up again —
+  // and ends when they leave the channel: no new stream, no new sounds in the game for every sentence)
+  const talkers = new Map(), listening = new Set(), unlinked = new Set();
   client.on('interactionCreate', async (it) => {
     if (!it.isChatInputCommand?.() || it.commandName !== 'mc') return;
     const tag = it.options.getString('gamertag');
     const ok = link(o.links, it.user.id, tag);
-    await it.reply({ content: ok ? `🎧 ${tag} とつなぎました: Minecraft でその人の位置からあなたの声が聞こえます` : 'ゲーマータグは英数字・空白・_ - で 32 字まで', ephemeral: true }).catch(() => {});
+    await it.reply({ content: ok ? `🎧 ${tag} とつなぎました: Minecraft でその人の位置からあなたの声が聞こえます` : 'ゲーマータグは英数字・空白・_ - で 32 字まで', flags: 64 /* ephemeral */ }).catch(() => {});
   });
   client.once('ready', async () => {
     const guild = await client.guilds.fetch(o.guild);
     await guild.commands.create({ name: 'mc', description: 'Minecraft のプレイヤーとつなぐ（その人の位置から声が聞こえる）', options: [{ type: ApplicationCommandOptionType.String, name: 'gamertag', description: 'Minecraft のゲーマータグ', required: true }] });
     const conn = voice.joinVoiceChannel({ channelId: o.channel, guildId: o.guild, adapterCreator: guild.voiceAdapterCreator, selfDeaf: false, selfMute: true });
     await voice.entersState(conn, voice.VoiceConnectionStatus.Ready, 30_000);
+    // (a dropped voice connection: Discord moving it is a reconnect within seconds; otherwise the bridge ends with an error —
+    // a supervisor such as systemd or pm2 starts it again)
+    conn.on(voice.VoiceConnectionStatus.Disconnected, async () => {
+      try { await Promise.race([voice.entersState(conn, voice.VoiceConnectionStatus.Signalling, 5_000), voice.entersState(conn, voice.VoiceConnectionStatus.Connecting, 5_000)]); }
+      catch { console.error('[bridge] the voice connection was lost'); for (const t of talkers.values()) t.end(); conn.destroy(); process.exit(1); }
+    });
     console.error(`[bridge] in the voice channel ${o.channel} of ${guild.name}: /mc <gamertag> links a person`);
     conn.receiver.speaking.on('start', (userId) => {
-      if (talkers.has(userId)) return;
+      if (listening.has(userId)) return;
       const tag = readLinks(o.links)[userId];
       if (!tag) { if (!unlinked.has(userId)) { unlinked.add(userId); console.error(`[bridge] ${userId} is not linked (/mc <gamertag>): not played`); } return; }
-      const t = new Talker({ id: streamId(userId), gamertag: tag, voices: o.voices, send });
+      let t = talkers.get(userId);
+      if (!t || t.at !== `follow:${tag}`) { t?.end(); t = new Talker({ id: streamId(userId), gamertag: tag, voices: o.voices, send }); talkers.set(userId, t); }
       const opus = conn.receiver.subscribe(userId, { end: { behavior: voice.EndBehaviorType.AfterSilence, duration: 1000 } });
       const dec = new prism.opus.Decoder({ rate: 48000, channels: 2, frameSize: 960 });
-      talkers.set(userId, t);
+      listening.add(userId);
       opus.pipe(dec).on('data', (pcm) => t.push(monoOf(pcm)));
-      const done = () => { if (talkers.get(userId) === t) { talkers.delete(userId); t.end(); } };
+      const done = () => listening.delete(userId);
       opus.once('end', done); opus.once('close', done); dec.once('error', (e) => { console.error(`[bridge] ${tag}: ${e.message}`); done(); });
+    });
+    // (someone who leaves the voice channel: their stream ends)
+    client.on('voiceStateUpdate', (before, after) => {
+      if (before.channelId === o.channel && after.channelId !== o.channel) { const t = talkers.get(before.id); if (t) { t.end(); talkers.delete(before.id); } }
     });
   });
   await client.login(token);

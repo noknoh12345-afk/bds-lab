@@ -7,3 +7,5 @@
 {"song": "speech_ja_soseki", "var": "live_c", "v": 2.8591, "cpt": 37.3, "voices": 24}
 {"song": "speech_ja_soseki", "var": "live_d", "v": 2.918, "cpt": 37.4, "voices": 24}
 {"song": "speech_en_wordsworth", "var": "live_d", "v": 2.8604, "cpt": 41.2, "voices": 24}
+{"song": "speech_ja_soseki", "var": "live_e16", "v": 2.8922, "cpt": 28.8, "voices": 16}
+{"song": "speech_en_wordsworth", "var": "live_e16", "v": 2.8474, "cpt": 30, "voices": 16}

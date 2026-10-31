@@ -3,6 +3,19 @@
 ## Request
 マイクラ統合版でフーリエ変換して正弦波で再生してみた、という作品がある。bds-lab を使い、統合版の限界を攻めて、極限まで可能性を持たせた動的再生 MP3 アドオンを作る。
 
+## 使い方（遊ぶ人へ）
+1. **本体**: `Spectral_Player.mcaddon`（bds-lab の dist/、変換ページの「本体アドオンを保存」）を開き、ワールドでビヘイビアーパックと
+   リソースパックを有効に（実験的な機能は要らない）。サーバーなら `node lab.mjs deploy <BDS のフォルダ>`。版は 1.1.0（同じ UUID のまま上げたので、前の版を入れていても更新として入る）
+2. **曲**: 変換ページ（web/dist/index.html。claude.ai の Spectral Converter）に MP3 などを落とす → 「ゲーム内の音」で試聴 →
+   「曲パックを保存」→ 末尾の .zip を消した .mcpack を開き、ワールドで本体と一緒に有効に。手元なら `python3 tools/spectral.py <曲> --ts`
+3. **ゲームで**: 最初に配られるスペクトル・リモコンか `/spectral:menu`。`/spectral:play <曲> phones|speaker`（ヘッドホン: 自分に付いてくる／
+   スピーカー: その場から 3D で近くの全員に）・`/spectral:stop`。速度（音程そのまま・逆再生）・移調・EQ・音量・声の数は鳴らしながら
+4. **ライブ（近接ボイスチャット・立体音響）**: `/spectral:live` が流れている声の一覧。Discord のボイスチャンネルの声を、つないだ
+   プレイヤーの位置から 3D で（近づくと大きく、向きで左右、その人に付いて動く）: tools/live/README.md の bridge.mjs。
+   試し: `/spectral:live_demo demo follow`
+5. **電話**は同時に 32 音しか鳴らない（実測）ので自動で 24 声＋ノイズ 8、ファイルより 6 dB 大きく。Realms や人が多いときは
+   `/spectral:mode light`（16 声・1 人 1 tick 24 命令まで）
+
 ## Acceptance (one tests.txt `## ` section each)
 - [x] MP3 を解析した曲データを正弦波の加算合成で再生する。正弦波 1 本 = 常駐ループの SoundInstance 1 つ（## play starts 48 sine voices and 8 noise bands as looping sound instances）
 - [x] 実時間で 20 枠/秒進み、スペクトルをアクションバーに出す（## it plays in real time: 20 frames a second, a spectrum on the action bar）
@@ -31,8 +44,8 @@
 - [x] 電話は実測の同時発音数（32）に収まる声の数が既定、打撃音（ワンショット）は既定で鳴らさない（同じ run の実測で打撃音なしが上）、どの音もファイルより 6 dB 大きく（## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, no drum bursts (measured: better without), and every level 6 dB over the files (the phone plays them 32.5 dB under, into 16 bits)）
 - [x] ファイルより大きく鳴らす: ゲームはどの音もファイルより 32.5 dB 小さく 16 bit で鳴らすので、静かな曲の下限は量子化（## louder than the files: a level in dB, by setVolume or by the loud sound events (the game plays every sound 32.5 dB under its file)）
 - [x] 変換器が tick ごとに選んだ長さのフェードで声とノイズ帯域を鳴らす（## a song with fitted fades (tools/spectral.py nz_fade, v_fade): each voice and noise band fades as long as the converter chose, tick by tick）
-- [x] ライブ: 声（ボイスチャット・マイク）をその場で受け取り、届いた順に鳴らす。script event `spectral:live`、ジッターバッファ 2 tick、届かなかったフレームは数えて埋める、終わり（## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), and ends）
-- [x] ライブの道で曲を 1 フレームずつ送る（ボイスチャットの橋渡しと同じ形）: ヘッドホンに、そして歩く人から 3D で（音がその人に付いて動く: 近接ボイスチャット・立体音響）（## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them)）
+- [x] ライブ: 声（ボイスチャット・マイク）をその場で受け取り、届いた順に鳴らす。script event `spectral:live`、ジッターバッファ 2 tick、届かなかったフレームは数えて埋める、送り手が始め直したら新しいストリーム、終わり（## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), starts again when its sender does, and ends）
+- [x] ライブの道で曲を 1 フレームずつ送る（ボイスチャットの橋渡しと同じ形）: ヘッドホンに、そして歩く人から 3D で（音がその人に付いて動く・48 ブロック以内の人それぞれに・話す本人には聞こえない: 近接ボイスチャット・立体音響）（## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice)）
 
 ## Guessed
 <!-- values decided without asking -->
@@ -44,6 +57,7 @@
 - デモ曲は自作の合成曲（第三者の素材なし）: tools/make_demo_song.py
 - ライブ: 1 フレーム = 50 ms、届いた最新の 2 tick 後ろを鳴らす（100 ms のジッターバッファ）、8 tick より遅れたら先へ飛ぶ、4 tick 何も来なければ黙る。3D で人に付いていくときは 1.5 ブロック動いたら 1 tick に 8 音ずつ、1 tick のクロスフェードで移す（SoundInstance は場所を変えられないため）
 - ボイスチャットの橋渡し（tools/live/bridge.mjs）の既定は 1 人 16 声＋ノイズ 8（2 人が同時に話しても電話の 32 音にほぼ収まる）。Discord で /mc <ゲーマータグ> とつないだ人だけをゲームで鳴らす
+- 文の切れ目: 120 ms 声が来なければ橋渡しが無音を 2 フレーム送る。アドオンは 4 tick 何も来なかったあとのフレームをひと続きの始まりとし、その最初のフレームから鳴らす。番号 0 のフレームにメタがあれば新しいストリーム（送り手の始め直し）
 
 ## Measured on this BDS (1.26.61.1, real clients)
 - `/scriptevent` の本文は 2048 文字まで（それを超えると "Message length exceeds (2048) character limit!"）。`system.sendScriptEvent` はスクリプト間なら 8,388,608 文字でも届いた
