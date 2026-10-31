@@ -9,7 +9,8 @@ import argparse, json, os, statistics as st
 UNIT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # (key in measured/redroid-<run>.json, column label, which run: 'this' = --run, or a run id)
 COLS = [('ceiling_loud', '天井＋6 dB（音量 2）', 'this'), ('shipped_run7', '出荷版', 'this'), ('improved', '改良版（5 回目）', '41142205810'),
-        ('improved_fades', '最終の変換・レベル 0', 'this'), ('final', '**最終の既定**（+6 dB）', 'this'), ('final_loud10', '同 +10 dB', 'this')]
+        ('improved_fades', '最終の変換・レベル 0', 'this'), ('final', '7 回目の既定（+6 dB）', 'this'), ('final_loud10', '同 +10 dB', 'this'),
+        ('refined', '**合成による分析**（+6 dB）', 'this'), ('refined_svr', '同・高い帯域を重く', 'this'), ('refined_loud10', '同 +10 dB', 'this')]
 
 
 def main():

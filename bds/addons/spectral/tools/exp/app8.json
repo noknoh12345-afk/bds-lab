@@ -1,0 +1,14 @@
+{"header": [
+ "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+ "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+ "#   `audio export` が Opus にして tools/rig/rec_public.pem で暗号化した `[spectral rec]` の行（tools/rig/rec_decode.mjs で開く）。",
+ "# 8 回目（tools/exp/make_app.py で作成）: 変換の中で実機の模型を通して最適化した曲（合成による分析、tools/spectral.py refine_client）。",
+ "#   t_ = 新しい既定（合成による分析: 帯域を同じ重さで、電話の既定: 24 声・打撃音なし・+6 dB）13 曲",
+ "#   o_ = 合成による分析の帯域の重みを ViSQOL の MOS が頼る高い帯域に寄せたもの（refine_weights=svr）8 曲",
+ "#   w_ = 7 回目の既定（合成による分析なし: refine=false）を同じ +6 dB で 3 曲（run をまたいだ比べの確かめ）"
+],
+"arms": [
+ {"pre": "t", "suffix": "", "conv": {}, "cmds": ["spectral:voices 24", "spectral:drums off", "spectral:engine 0 false 0 0", "spectral:level 6 volume"], "export": 160},
+ {"pre": "o", "suffix": "_o", "conv": {"refine_weights": "svr"}, "songs": ["piano_gymnopedie", "piano_chopin_op66", "vocal_stars", "choir_how_long", "rock_big", "funk_funkorama", "speech_en_wordsworth", "demo_selfmade"], "export": 160},
+ {"pre": "w", "suffix": "_w", "conv": {"refine": "false"}, "songs": ["vocal_name_of_love", "rock_big", "speech_ja_soseki"], "export": 128}
+]}

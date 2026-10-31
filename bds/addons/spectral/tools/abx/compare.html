@@ -1,0 +1,337 @@
+<title>Spectral Player レベル比較</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=JetBrains+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* layout: one listening column — the song, its transport, the versions as a row of meters, then the blind test and your verdict */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #18202c; --muted: #5a6575; --line: #d3d9e1;
+  --a: #2b67ad; --b: #a8620c; --ok: #2c7a4c; --bad: #b3261e; --soft: #e3e8ee;
+  --display: 'DotGothic16', 'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  --body: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10141a; --surface: #171c24; --ink: #e6eaf0; --muted: #9aa4b2; --line: #29313c;
+  --a: #7fb0ea; --b: #e2a65a; --ok: #6cc495; --bad: #f08a80; --soft: #1f2630; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #10141a; --surface: #171c24; --ink: #e6eaf0; --muted: #9aa4b2; --line: #29313c;
+  --a: #7fb0ea; --b: #e2a65a; --ok: #6cc495; --bad: #f08a80; --soft: #1f2630; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.7; }
+main { max-width: 780px; margin: 0 auto; grid-template-columns: minmax(0, 1fr); padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1.25; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+h2 { font-size: 17px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 64ch; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.songs { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--ink); background: var(--soft); font-weight: 700; }
+.chip .done { color: var(--ok); margin-left: 4px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--a); outline-offset: 2px; }
+.songhead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; }
+.songhead .meta { color: var(--muted); font-size: 13px; }
+.transport { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+.play { font: inherit; font-weight: 700; width: 92px; padding: 9px 0; border-radius: 8px; border: 1px solid var(--ink); background: var(--ink); color: var(--surface); cursor: pointer; }
+.play:disabled { opacity: .45; cursor: default; }
+input[type=range] { width: 100%; accent-color: var(--ink); }
+.ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.way { font: inherit; text-align: left; padding: 12px 12px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; display: grid; gap: 4px; min-width: 0; }
+.way[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.way .name { font-weight: 700; font-size: 16px; }
+.way .score { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.way .bar { height: 6px; border-radius: 3px; background: var(--soft); overflow: hidden; }
+.way .bar i { display: block; height: 100%; background: var(--muted); }
+.way.wa .name { color: var(--a); } .way.wa .bar i { background: var(--a); }
+.way.wb .name { color: var(--b); } .way.wb .bar i { background: var(--b); }
+.way .note { font-size: 12px; color: var(--muted); line-height: 1.45; }
+.kbd { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.blind { display: grid; gap: 10px; }
+.brow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn[aria-pressed="true"] { border-color: var(--ink); background: var(--soft); }
+.btn.x { font-weight: 700; border-color: var(--ink); }
+.btn.ga { color: var(--a); border-color: color-mix(in srgb, var(--a) 55%, var(--line)); }
+.btn.gb { color: var(--b); border-color: color-mix(in srgb, var(--b) 55%, var(--line)); }
+.verdict { min-height: 1.7em; font-weight: 700; }
+.verdict.ok { color: var(--ok); } .verdict.bad { color: var(--bad); }
+.tally { color: var(--muted); font-size: 13px; }
+.prefs { display: flex; flex-wrap: wrap; gap: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 500; color: var(--muted); font-size: 12px; }
+td.num, th.num { text-align: right; padding-right: 12px; }
+.scroll { overflow-x: auto; }
+.summary { font-family: var(--mono); font-size: 13px; white-space: pre-wrap; background: var(--soft); border-radius: 8px; padding: 12px; margin: 0; overflow-x: auto; }
+.small { font-size: 13px; color: var(--muted); }
+.credits { font-size: 12px; color: var(--muted); display: grid; gap: 2px; overflow-wrap: anywhere; min-width: 0; }
+.status { font-size: 13px; color: var(--muted); }
+@media (max-width: 480px) { h1 { font-size: 25px; } .transport { grid-template-columns: auto 1fr; } .transport .time { grid-column: 1 / -1; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<main>
+  <header style="display:grid;gap:8px">
+    <div class="eyebrow">Spectral Player · 実機の録音</div>
+    <h1 id="title">Spectral Player レベル比較</h1>
+    <p class="lede" id="lede"></p>
+  </header>
+
+  <section class="panel" aria-labelledby="songs-h">
+    <h2 id="songs-h">曲</h2>
+    <div class="songs" id="songs" role="group" aria-label="曲を選ぶ"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="song-title">
+    <div class="songhead">
+      <h2 id="song-title">–</h2>
+      <span class="meta" id="song-meta"></span>
+    </div>
+    <div class="transport">
+      <button class="play" id="play" type="button" disabled>再生</button>
+      <input id="pos" type="range" min="0" max="20" step="0.01" value="0" aria-label="位置">
+      <span class="time num" id="time">0.0 / 0.0 s</span>
+    </div>
+    <div class="ways" id="ways" role="group" aria-label="聴く版"></div>
+    <p class="kbd">キー: スペース = 再生／停止、1–4 = 版を切り替え（同じ位置のまま）、X = ブラインドの X</p>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="panel blind" aria-labelledby="blind-h">
+    <h2 id="blind-h">ブラインド: X はどちら？</h2>
+    <p class="small" id="blind-help"></p>
+    <div class="brow">
+      <button class="btn ga" id="hearA" type="button"></button>
+      <button class="btn gb" id="hearB" type="button"></button>
+      <button class="btn x" id="hearX" type="button">X を聴く</button>
+    </div>
+    <div class="brow">
+      <span class="small">X は</span>
+      <button class="btn ga" id="isA" type="button"></button>
+      <button class="btn gb" id="isB" type="button"></button>
+      <button class="btn" id="nextX" type="button">次の X</button>
+    </div>
+    <p class="verdict" id="verdict" aria-live="polite"></p>
+    <p class="tally num" id="tally"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="pref-h">
+    <h2 id="pref-h">この曲ではどちらがよいか</h2>
+    <div class="prefs" id="prefs" role="group" aria-label="好み"></div>
+    <p class="small">選んだものはこのブラウザにだけ残ります。下の「まとめ」を写して送ってください。</p>
+  </section>
+
+  <section class="panel" aria-labelledby="table-h">
+    <h2 id="table-h">ViSQOL（実機の録音・実測）</h2>
+    <div class="scroll"><table id="table"></table></div>
+    <p class="small" id="table-note"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="sum-h">
+    <div class="songhead"><h2 id="sum-h">まとめ</h2><button class="btn" id="copy" type="button">写す</button></div>
+    <pre class="summary" id="summary"></pre>
+  </section>
+
+  <footer class="credits" id="credits"></footer>
+</main>
+
+<script>
+const DATA = /*DATA*/{};
+const $ = (id) => document.getElementById(id);
+const fmt = (v) => (v == null ? '–' : v.toFixed(2));
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+                set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* not kept */ } } };
+const KEY = 'spectral-compare-' + DATA.a + '-' + DATA.b + '-' + DATA.runs.join('_');
+const prefs = store.get(KEY + '-prefs', {});
+const blind = store.get(KEY + '-blind', {});      // song → { n, ok }
+
+let ctx = null, buffers = {}, cur = null, way = 'orig', curKey = 'orig', src = null, gain = null, startedAt = 0, offset = 0, playing = false, raf = 0;
+let x = null, answered = false;
+
+$('title').textContent = DATA.title;
+$('lede').textContent = `電話（redroid の Android 14 に Play が入れた Minecraft 1.26.60.4、改造なし）で同じ run に録った「${DATA.aName}」と「${DATA.bName}」を、`
+  + '元の音・天井と並べて聴き比べます。どれも元の音と同じ大きさ（RMS）にそろえ、時間を合わせてあります。'
+  + '大きく鳴らすほどゲームの 16 bit の量子化の雑音が下がり、ミックスがファイル単位で約 2.0 を超えた所はクリップします。';
+$('blind-help').textContent = `X は「${DATA.aName}」か「${DATA.bName}」のどちらかです（毎回でたらめに選びます）。何度でも聴き直して、どちらかを選んでください。`
+  + '10 回中 9 回以上当たれば、聞き分けられていると言えます（でたらめに当たる確率 1% 程度）。';
+$('hearA').textContent = DATA.aName + ' を聴く'; $('hearB').textContent = DATA.bName + ' を聴く';
+$('isA').textContent = DATA.aName; $('isB').textContent = DATA.bName;
+$('credits').append(...['試験曲の出どころ:', ...DATA.credits].map((t) => Object.assign(document.createElement('div'), { textContent: t })));
+
+function songById(id) { return DATA.songs.find((s) => s.id === id); }
+function waysOf(s) { return [{ k: 'orig', short: '原曲', long: '元の MP3（抜粋そのまま）', visqol: null, clip: '' }, ...s.ways]; }
+
+function drawSongs() {
+  const el = $('songs'); el.replaceChildren();
+  for (const s of DATA.songs) {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.setAttribute('aria-pressed', String(cur && cur.id === s.id));
+    b.textContent = s.title;
+    if (prefs[s.id]) { const d = document.createElement('span'); d.className = 'done'; d.textContent = '✓'; d.setAttribute('aria-label', '選んだ'); b.append(d); }
+    b.onclick = () => pick(s.id);
+    el.append(b);
+  }
+}
+function drawWays() {
+  const el = $('ways'); el.replaceChildren();
+  const ws = waysOf(cur);
+  ws.forEach((w, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'way' + (w.k === DATA.a ? ' wa' : w.k === DATA.b ? ' wb' : '');
+    b.setAttribute('aria-pressed', String(way === w.k));
+    const name = Object.assign(document.createElement('span'), { className: 'name', textContent: `${i + 1}. ${w.short}` });
+    const score = Object.assign(document.createElement('span'), { className: 'score', textContent: w.visqol == null ? (w.k === 'orig' ? '基準' : 'ViSQOL –') : `ViSQOL ${fmt(w.visqol)}` });
+    const bar = document.createElement('span'); bar.className = 'bar';
+    const fill = document.createElement('i'); fill.style.width = w.visqol == null ? (w.k === 'orig' ? '100%' : '0') : `${Math.max(0, Math.min(1, (w.visqol - 1) / 4)) * 100}%`;
+    bar.append(fill);
+    const note = Object.assign(document.createElement('span'), { className: 'note', textContent: w.long + (w.clip ? '。' + w.clip : '') });
+    b.append(name, score, bar, note);
+    b.onclick = () => choose(w.k);
+    el.append(b);
+  });
+}
+function drawPrefs() {
+  const el = $('prefs'); el.replaceChildren();
+  for (const [k, label, cls] of [[DATA.a, DATA.aName + ' がよい', 'ga'], ['same', '差がわからない', ''], [DATA.b, DATA.bName + ' がよい', 'gb']]) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn ' + cls; b.textContent = label;
+    b.setAttribute('aria-pressed', String(prefs[cur.id] === k));
+    b.onclick = () => { prefs[cur.id] = k; store.set(KEY + '-prefs', prefs); drawPrefs(); drawSongs(); drawSummary(); };
+    el.append(b);
+  }
+}
+function drawTable() {
+  const t = $('table'); t.replaceChildren();
+  const heads = ['曲', '天井', DATA.aName, DATA.bName, `${DATA.bName} − ${DATA.aName}`];
+  const tr = document.createElement('tr');
+  heads.forEach((h, i) => tr.append(Object.assign(document.createElement('th'), { textContent: h, className: i ? 'num' : '' })));
+  const head = document.createElement('thead'); head.append(tr); t.append(head);
+  const body = document.createElement('tbody');
+  const diffs = [];
+  for (const s of DATA.songs) {
+    const g = (k) => s.ways.find((w) => w.k === k)?.visqol ?? null;
+    const c = g('c'), va = g(DATA.a), vb = g(DATA.b), d = va != null && vb != null ? vb - va : null;
+    if (d != null) diffs.push(d);
+    const r = document.createElement('tr');
+    [s.title, fmt(c), fmt(va), fmt(vb), d == null ? '–' : (d >= 0 ? '+' : '') + d.toFixed(2)].forEach((v, i) => r.append(Object.assign(document.createElement('td'), { textContent: v, className: i ? 'num' : '' })));
+    body.append(r);
+  }
+  t.append(body);
+  const med = diffs.length ? [...diffs].sort((a, b) => a - b)[Math.floor((diffs.length - 1) / 2)] : null;
+  $('table-note').textContent = `実測: run ${DATA.runs.join(', ')} の中で、録音の WAV に当てた ViSQOL v3（このページの MP3 ではない）。天井は元の音をそのままゲームに鳴らさせた録音（run 41068618513・41076646541）。`
+    + (diffs.length ? `${DATA.bName} が ${diffs.filter((d) => d > 0).length}/${diffs.length} 曲で上。` : '')
+    + '1 回の録音の差 0.2 未満は差と言えません。クリップの歪みはエミュレーターの推測です。';
+}
+function binomP(n, k) { let p = 0; for (let i = k; i <= n; i++) { let c = 1; for (let j = 0; j < i; j++) c = c * (n - j) / (j + 1); p += c / 2 ** n; } return p; }
+function drawTally() {
+  const b = blind[cur.id] || { n: 0, ok: 0 };
+  const all = Object.values(blind).reduce((s, v) => ({ n: s.n + v.n, ok: s.ok + v.ok }), { n: 0, ok: 0 });
+  $('tally').textContent = `この曲 ${b.ok}/${b.n}` + (b.n ? `（p ${binomP(b.n, b.ok).toFixed(3)}）` : '') + ` · 全部 ${all.ok}/${all.n}` + (all.n ? `（p ${binomP(all.n, all.ok).toFixed(3)}）` : '');
+}
+function drawSummary() {
+  const lines = [`${DATA.title}（run ${DATA.runs.join(', ')}）`];
+  for (const s of DATA.songs) {
+    const p = prefs[s.id], b = blind[s.id];
+    const pw = p === DATA.a ? DATA.aName : p === DATA.b ? DATA.bName : p === 'same' ? '差がわからない' : '未選択';
+    lines.push(`${s.id}: ${pw}` + (b && b.n ? `、ブラインド ${b.ok}/${b.n}` : ''));
+  }
+  $('summary').textContent = lines.join('\n');
+}
+
+// ---- audio: every version of a song decoded once, switched at the same position ----
+// (made at once for decoding; resumed only from a press — a browser keeps sound off until the viewer acts)
+function makeCtx() { if (!ctx) { ctx = new (window.AudioContext || window.webkitAudioContext)(); gain = ctx.createGain(); gain.connect(ctx.destination); } }
+async function ensureCtx() { makeCtx(); if (ctx.state === 'suspended') { try { await ctx.resume(); } catch { /* stays off */ } } }
+async function load(s) {
+  if (buffers[s.id]) return buffers[s.id];
+  const out = {};
+  $('status').textContent = '読み込み中…';
+  $('play').disabled = true;
+  makeCtx();
+  await Promise.all(waysOf(s).map(async (w) => {
+    const r = await fetch(`audio/${s.id}.${w.k}.mp3`);
+    if (!r.ok) throw new Error(`audio/${s.id}.${w.k}.mp3: HTTP ${r.status}`);
+    out[w.k] = await ctx.decodeAudioData(await r.arrayBuffer());
+  }));
+  buffers[s.id] = out;
+  return out;
+}
+function length() { const b = buffers[cur?.id]?.orig; return b ? b.duration : 20; }
+function now() { return playing ? offset + (ctx.currentTime - startedAt) : offset; }
+function startAt(k, at) {
+  const buf = buffers[cur.id]?.[k]; if (!buf) return;
+  if (src) { const old = src, g = old._g; g.gain.setTargetAtTime(0, ctx.currentTime, 0.004); old.stop(ctx.currentTime + 0.03); }
+  const g = ctx.createGain(); g.connect(gain); g.gain.value = 0; g.gain.setTargetAtTime(1, ctx.currentTime, 0.004);
+  const s = ctx.createBufferSource(); s.buffer = buf; s.connect(g); s._g = g;
+  const pos = Math.max(0, Math.min(at, buf.duration - 0.01));
+  s.start(ctx.currentTime, pos);
+  s.onended = () => { if (src === s && playing && now() >= buf.duration - 0.05) { playing = false; offset = 0; src = null; tick(); $('play').textContent = '再生'; } };
+  src = s; curKey = k; startedAt = ctx.currentTime; offset = pos; playing = true;
+  $('play').textContent = '停止';
+  cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
+}
+function stop() {
+  if (!playing) return;
+  offset = now(); playing = false;
+  if (src) { const g = src._g; g.gain.setTargetAtTime(0, ctx.currentTime, 0.004); src.stop(ctx.currentTime + 0.03); src = null; }
+  $('play').textContent = '再生';
+}
+function tick() {
+  const t = Math.min(now(), length());
+  $('pos').max = length().toFixed(2); $('pos').value = t;
+  $('time').textContent = `${t.toFixed(1)} / ${length().toFixed(1)} s`;
+  if (playing) raf = requestAnimationFrame(tick);
+}
+async function choose(k, fromX = false) {
+  if (!fromX) { way = k; const i = waysOf(cur).findIndex((w) => w.k === k); [...$('ways').children].forEach((b, j) => b.setAttribute('aria-pressed', String(j === i))); }
+  await ensureCtx();
+  if (!buffers[cur.id]) return;
+  startAt(k, playing ? now() : offset);
+  $('status').textContent = fromX ? 'X を再生中' : `${waysOf(cur).find((w) => w.k === k).short} を再生中`;
+}
+async function pick(id) {
+  stop(); cur = songById(id); way = 'orig'; offset = 0;
+  $('song-title').textContent = cur.title; $('song-meta').textContent = `${cur.category} · ${cur.credit}`;
+  drawSongs(); drawWays(); drawPrefs(); drawTally(); newX(); tick();
+  try { await load(cur); $('status').textContent = '準備できました。再生を押してください。'; $('play').disabled = false; }
+  catch (e) { $('status').textContent = `読み込めませんでした（${e.message}）。ページを開き直してください。`; }
+}
+function newX() { x = Math.random() < 0.5 ? DATA.a : DATA.b; answered = false; $('verdict').textContent = ''; $('verdict').className = 'verdict'; }
+function answer(k) {
+  if (answered) return;
+  answered = true;
+  const ok = k === x, b = blind[cur.id] || { n: 0, ok: 0 };
+  b.n++; if (ok) b.ok++; blind[cur.id] = b; store.set(KEY + '-blind', blind);
+  $('verdict').textContent = ok ? `当たり: X は ${x === DATA.a ? DATA.aName : DATA.bName}` : `はずれ: X は ${x === DATA.a ? DATA.aName : DATA.bName}`;
+  $('verdict').className = 'verdict ' + (ok ? 'ok' : 'bad');
+  drawTally(); drawSummary();
+}
+
+$('play').onclick = async () => { await ensureCtx(); if (playing) stop(); else startAt(way, offset >= length() - 0.05 ? 0 : offset); };
+$('pos').oninput = () => { const t = Number($('pos').value); if (playing) startAt(curKey, t); else { offset = t; tick(); } };
+$('hearA').onclick = () => choose(DATA.a);
+$('hearB').onclick = () => choose(DATA.b);
+$('hearX').onclick = () => { if (!playing) offset = offset >= length() - 0.05 ? 0 : offset; choose(x, true); };
+$('isA').onclick = () => answer(DATA.a);
+$('isB').onclick = () => answer(DATA.b);
+$('nextX').onclick = () => newX();
+$('copy').onclick = async () => {
+  const text = $('summary').textContent;
+  try { await navigator.clipboard.writeText(text); $('copy').textContent = '写しました'; setTimeout(() => { $('copy').textContent = '写す'; }, 1500); }
+  catch { const r = document.createRange(); r.selectNodeContents($('summary')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $('copy').textContent = '選びました（コピーしてください）'; }
+};
+document.addEventListener('keydown', (e) => {
+  if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName) && e.target.type !== 'range') return;
+  if (e.key === ' ') { e.preventDefault(); $('play').click(); }
+  const n = Number(e.key);
+  if (n >= 1 && n <= waysOf(cur).length) choose(waysOf(cur)[n - 1].k);
+  if (e.key === 'x' || e.key === 'X') $('hearX').click();
+});
+
+drawTable(); drawSummary();
+if (DATA.songs.length) pick(DATA.songs[0].id);
+</script>

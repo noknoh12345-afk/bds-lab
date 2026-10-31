@@ -1053,12 +1053,458 @@ def fit_noise_fades(x, nz, hop=None):
     return out, bytes(packed)
 
 
+# ------------------------------------------------------------------ analysis by synthesis through the client model
+# The song is played, in here, the way the phone plays it (measured: SPEC.md, tools/emu/spec.json): the first CL_VOICES voices
+# and the noise bands, every level CL_LEVEL_DB over the files, the engine's own rules (src/main.ts: a level moving less than
+# 0.75 dB or a pitch less than 3 cents is not sent; the fades as fitted, linear in amplitude), and the client path — the game
+# mixes at 24 kHz reading each sound linearly (content over 12 kHz folds to 24 kHz - f), the mix x2 to 48 kHz by linear
+# interpolation (a sound at f is heard at f by cos^4(pi f / 48 kHz) and at 24 kHz - f by sin^4 of it, in power), and the
+# output 32.5 dB under the files in 16 bits (a floor). What comes out is measured the way ViSQOL v3 measures it: its 32
+# gammatone bands (50 Hz up, the filters' own |H|^2), 80 ms Hann frames every 20 ms, 10 log10 of a band's RMS, its floors
+# (-45, and 45 under the frame's loudest band), the whole scaled to the original's level. The original goes through the same
+# bands (80 ms STFT frames weighted by |H|^2). Then each tick's level and fade of every sound is chosen, in turn, to bring
+# the two spectrograms closest (the squared difference, weighted per band): two sweeps of coordinate descent. The squared
+# difference is counted in whole 1/64ths of those dB (integers), so tools/spectral.py and web/core.js choose the same.
+CL_VOICES = 24                    # the phone's voices beside the 8 noise bands (32 sounds at once, measured)
+CL_LEVEL_DB = 6.0                 # the phone's level over the files (src/main.ts CLIENTS)
+CL_OSC_AMP = 0.9                  # src/assets.ts: the sine loop's peak
+CL_NOISE_RMS = [0.181311, 0.180788, 0.179998, 0.179116, 0.178403, 0.177544, 0.177018, 0.175986]   # src/assets.ts
+CL_SILENT = 1e-4
+CL_SEND_DB = 0.75                 # src/main.ts DB025: a smaller level move is not sent
+CL_SEND_CENTS = 3.0               # src/main.ts CENT
+CL_OUT_DB, CL_BITS, CL_MIX = -32.5, 16, 24000
+CL_TICK, CL_HOP, CL_WIN = 50, 20, 80          # ms: a tick, ViSQOL's hop and frame
+CL_Q = 64                         # the objective's grid: 1/64 of ViSQOL's dB
+CL_FLOOR = 45                     # ViSQOL's floors: -45, and 45 under the frame's loudest band
+CL_SWEEPS = 2
+CL_VSTEPS = [-12, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4]       # a voice's level codes tried around its own (0.75 dB each)
+CL_NSTEPS = [-16, -12, -8, -6, -4, -2, 0, 2, 4, 6]             # a noise band's (0.5 dB each)
+CL_WEIGHTS = [1000] * 32          # per band (integers)
+# a named set of band weights (refine_weights='svr': what ViSQOL's MOS mapping leans on — its SVR's slope per band, measured on
+# run 7's recordings, plus 0.05 everywhere: the bands from 6.7 kHz up count 3-11 times as much)
+CL_WEIGHT_SETS = {'svr': [100, 70, 50, 50, 50, 50, 70, 80, 70, 70, 70, 70, 70, 60, 60, 60, 60, 60, 60, 50, 50, 50, 50, 120, 330, 390, 480,
+                          560, 570, 460, 390, 280]}
+CL_OBJECTIVE = 'nsim'             # 'nsim': ViSQOL's own similarity (NSIM, 3x3 neighbourhoods of the dB spectrograms) | 'sq': squared dB
+CL_W3 = [[0.0113033910173052, 0.0838251475442633, 0.0113033910173052], [0.0838251475442633, 0.619485845753726, 0.0838251475442633],
+         [0.0113033910173052, 0.0838251475442633, 0.0113033910173052]]       # ViSQOL's NSIM window
+CL_C1, CL_C3 = 0.01 * 0.01, 0.03 * 0.03 / 2
+
+
+def nsim_valid(r, d):
+    """ViSQOL's NSIM map (intensity x structure over 3x3 weighted neighbourhoods) of dB maps r, d (..., rows, cols), 'valid': the
+    first and last row and column are only neighbours -> (..., rows-2, cols-2). Each sum in a fixed order (as web/core.js)"""
+    R, C = r.shape[-2] - 2, r.shape[-1] - 2
+
+    def conv(x):
+        out = 0.0
+        for i in range(3):
+            for j in range(3):
+                out = out + x[..., i:i + R, j:j + C] * CL_W3[i][j]
+        return out
+    mr, md = conv(r), conv(d)
+    sr2 = conv(r * r) - mr * mr; sd2 = conv(d * d) - md * md; srd = conv(r * d) - mr * md
+    inten = (2 * mr * md + CL_C1) / (mr * mr + md * md + CL_C1)
+    sdd = sr2 * sd2
+    struct = (srd + CL_C3) / np.where(sdd < 0, CL_C3, np.sqrt(np.maximum(sdd, 0.0)) + CL_C3)
+    return inten * struct
+
+
+def _f32(x):
+    return float(np.float32(x))
+
+
+def gt_h2(freqs):
+    """|H_j(f)|^2 of ViSQOL's 32 gammatone filters (visqol: EquivalentRectangularBandwidth::MakeFilters at 48 kHz from 50 Hz,
+    four biquads a band, the gain that makes the centre 1), row 0 the lowest band -> (32, len(freqs)). Real arithmetic only
+    (as web/core.js)"""
+    sr = 48000.0; T = 1.0 / sr; nb = 32
+    earQ, minBW = 9.26449, 24.7
+    a = -(earQ * minBW); b = -math.log(sr / 2 + earQ * minBW); c = math.log(50.0 + earQ * minBW); d = sr / 2 + earQ * minBW
+    e = (b + c) / nb
+    om = 2 * math.pi * np.asarray(freqs, float) / sr
+    co, si = np.cos(om), np.sin(om)
+    out = np.zeros((nb, len(om)))
+    s1, s2 = math.sqrt(3 + 2 ** 1.5), math.sqrt(3 - 2 ** 1.5)
+
+    def mag2(A1s, B1, B2, co, si):
+        num = 1.0
+        for A1 in A1s:
+            num = num * (T * T + A1 * A1 + 2 * T * A1 * co)
+        dr = (1 + B2) * co + B1; di = (1 - B2) * si
+        den = dr * dr + di * di
+        return num / (den * den * den * den)
+    for i in range(nb):
+        cf = a + math.exp((i + 1) * e) * d
+        erb = cf / earQ + minBW
+        B = 1.019 * 2 * math.pi * erb
+        ebt = math.exp(B * T)
+        B1 = -2 * math.cos(2 * cf * math.pi * T) / ebt
+        B2 = math.exp(-2 * B * T)
+        b1 = math.sin(cf * 2 * math.pi * T) * T
+        bp, bn = b1 * 2 * s1, b1 * 2 * s2
+        aa = math.cos(cf * 2 * math.pi * T) * 2 * T
+        A1s = (-(aa / ebt + bp / ebt) / 2, -(aa / ebt - bp / ebt) / 2, -(aa / ebt + bn / ebt) / 2, -(aa / ebt - bn / ebt) / 2)
+        oc = 2 * math.pi * cf / sr
+        g2 = mag2(A1s, B1, B2, math.cos(oc), math.sin(oc))
+        out[nb - 1 - i] = mag2(A1s, B1, B2, co, si) / g2
+    return out
+
+
+class ClientModel:
+    """the measured client path as band responses: a sine's and each noise band's power in ViSQOL's bands, the 16-bit floor"""
+    def __init__(self, edges):
+        self.edges = list(edges)
+        sr = 48000.0
+        # the 80 ms Hann frame squared, per ms (ViSQOL's window at 48 kHz)
+        L = 3840; i = np.arange(L)
+        w = 0.5 - 0.5 * np.cos(2 * math.pi * i / (L - 1))
+        self.w2 = (w * w).reshape(CL_WIN, L // CL_WIN).cumsum(1)[:, -1] / (L // CL_WIN)       # (sums in order, as web/core.js)
+        self.mw2 = float(np.cumsum(self.w2)[-1]) / CL_WIN
+        # noise bands: the RP's band noise (raised-cosine edges a 1/6 octave wide) folded at 12 kHz, then x2 linear
+        df = 2.0
+        g = np.arange(0, 6001) * df                       # 0 .. 12 kHz in the 24 kHz mix
+        gm = 24000.0 - g
+        c4 = np.cos(math.pi * g / sr) ** 4; s4 = np.sin(math.pi * g / sr) ** 4
+        Hd, Hi = gt_h2(g), gt_h2(gm)
+        M = len(self.edges) - 1
+        self.noise = np.zeros((M, 32)); self.noise_tot = np.zeros(M)
+        full = np.arange(0, 12001) * df                   # 0 .. 24 kHz at 48 kHz (the loops' own rate)
+        for bnd in range(M):
+            lo, hi = self.edges[bnd], self.edges[bnd + 1]
+            e = np.ones(len(full))
+            for cc, dd in ((lo, -1), (hi, 1)):
+                oc = np.log2(np.maximum(full, 1.0) / cc) * dd
+                e = e * np.where(oc < -1 / 12, 1.0, np.where(oc > 1 / 12, 0.0, 0.5 + 0.5 * np.cos(math.pi * (oc + 1 / 12) * 6)))
+            S2 = e * e; S2[0] = 0.0
+            S2 = S2 / np.cumsum(S2)[-1]
+            Mg = S2[:6001] + S2[12000 - np.arange(6001)]    # S(g) + S(24 kHz - g)
+            self.noise[bnd] = (Hd * (Mg * c4)[None, :]).cumsum(1)[:, -1] + (Hi * (Mg * s4)[None, :]).cumsum(1)[:, -1]
+            self.noise_tot[bnd] = float(np.cumsum(Mg * (c4 + s4))[-1])
+        # the 16-bit floor in file units: the mix quantised 32.5 dB under the files (white to 12 kHz, then x2 linear), and again at 48 kHz
+        q = (2.0 ** (1 - CL_BITS)) ** 2 / 12 / 10 ** (CL_OUT_DB / 10)
+        Ho = gt_h2(np.arange(0, 12001) * df)
+        self.qfloor = (q / 12000 * df) * ((Hd * c4[None, :]).cumsum(1)[:, -1] + (Hi * s4[None, :]).cumsum(1)[:, -1]) + (q / 24000 * df) * Ho.cumsum(1)[:, -1]
+        self.qfloor_tot = q * float(np.cumsum(c4 + s4)[-1]) / 6001 + q
+
+    def sines(self, f):
+        """sine() for an array of frequencies (all > 0): (32, n) band power, (n,) full-band power"""
+        f = np.asarray(f, float)
+        fp = np.where(f <= 12000, f, 24000 - f)
+        c4 = np.cos(math.pi * fp / 48000) ** 4; s4 = np.sin(math.pi * fp / 48000) ** 4
+        hd, hi = gt_h2(fp), gt_h2(24000 - fp)
+        return 0.5 * (c4[None, :] * hd + s4[None, :] * hi), 0.5 * (c4 + s4)
+
+    def sine(self, f):
+        """(32,) band power and the full-band power of a sine of amplitude 1 played at f Hz (0: none)"""
+        if f <= 0:
+            return np.zeros(32), 0.0
+        fp = f if f <= 12000 else 24000 - f
+        c4 = math.cos(math.pi * fp / 48000) ** 4; s4 = math.sin(math.pi * fp / 48000) ** 4
+        h = gt_h2([fp, 24000 - fp])
+        return 0.5 * (c4 * h[:, 0] + s4 * h[:, 1]), 0.5 * (c4 + s4)
+
+
+def target_bands(x):
+    """the original (SR) in ViSQOL's bands: (32, frames) band power, frame m = 80 ms from 20 m ms (STFT, |H|^2 weights)"""
+    L = int(round(SR * 0.08)); hop = int(round(SR * 0.02)); nfft = 4096
+    i = np.arange(L); w = 0.5 - 0.5 * np.cos(2 * math.pi * i / (L - 1))
+    nfr = 1 + (len(x) - L) // hop if len(x) >= L else 0
+    if nfr <= 0:
+        return np.zeros((32, 0))
+    idx = np.arange(nfr)[:, None] * hop + np.arange(L)[None, :]
+    P = np.abs(np.fft.rfft(x[idx] * w, n=nfft, axis=1)) ** 2
+    H = gt_h2(np.arange(nfft // 2 + 1) * (SR / nfft))
+    H[:, 0] = 0.0; H[:, -1] = 0.0
+    sc = 2.0 / (L * nfft)
+    return np.stack([sc * (P * H[j][None, :]).cumsum(1)[:, -1] for j in range(32)])
+
+
+def _qdb(P, s2):
+    """ViSQOL's dB (10 log10 of the RMS) on the objective's integer grid"""
+    return np.floor(CL_Q * 5.0 * np.log10(np.maximum(P * s2, 1e-30)) + 0.5).astype(np.int64)
+
+
+def refine_client(x, fq, am, vcodes, nz, ncodes, gain, n_voices=CL_VOICES, level_db=CL_LEVEL_DB, sweeps=CL_SWEEPS, weights=None,
+                  info=None, objective=None):
+    """each tick's level and fade of the voices the phone plays and of the noise bands, chosen so that the song as the client
+    plays it (ClientModel) comes closest to the original in ViSQOL's bands. am, nz: the converter's levels (before `gain`), with
+    vcodes / ncodes the fade codes (F, N) / (F, M) of fit_voice_fades / fit_noise_fades. Returns new am, vcodes, nz, ncodes"""
+    F, N = am.shape; M = nz.shape[1]
+    Nc = min(n_voices, N)
+    cm = ClientModel(NOISE_EDGES)
+    lv = 10 ** (level_db / 20)
+    gv = (1.0 * lv) / CL_OSC_AMP                                  # src/main.ts: (volume * lv) / OSC_AMP
+    nrms = CL_NOISE_RMS if M == len(CL_NOISE_RMS) else [NOISE_RMS] * M
+    dsend = 10 ** (CL_SEND_DB / 20); csend = 2 ** (CL_SEND_CENTS / 1200) - 1
+    fades = [float(d) for d in NZ_FADES_MS]
+    # codes as the engine decodes them (Float32Array): the song data's own quantisation
+    amc = np.zeros((F, Nc), np.int64); nzc = np.zeros((F, M), np.int64)
+    for k in range(F):
+        for v in range(Nc):
+            amc[k, v] = amp_code(am[k, v] * gain)
+        for b in range(M):
+            nzc[k, b] = nz_code(nz[k, b] * gain)
+    vcod = np.array(vcodes[:, :Nc], np.int64); ncod = np.array(ncodes, np.int64)
+    aval = [0.0] + [_f32(amp_val(c)) for c in range(1, 128)]
+    nval = [0.0] + [_f32(nz_val(c)) for c in range(1, 256)]
+    S = Nc + M
+    floor_ = [CL_SILENT * CL_OSC_AMP] * Nc + [CL_SILENT * nrms[b] for b in range(M)]
+
+    def level_of(s, c):
+        """the SoundInstance level the engine sends for code c of sound s, and the amplitude (file units) it gives"""
+        if s < Nc:
+            L = min(10.0, max(CL_SILENT, aval[c] * gv))
+            return L, L * CL_OSC_AMP
+        b = s - Nc
+        L = min(10.0, max(CL_SILENT, ((nval[c] * 1.0) * lv) / nrms[b]))
+        return L, L * nrms[b]
+    # the pitch each voice is at in each tick (the engine's geometric mean of frames k and k+1, its 3-cent rule) and its response
+    G = np.zeros((S, F, 32)); Gt = np.zeros((S, F))
+    hzs, where = [], []
+    for v in range(Nc):
+        lastP = -1.0
+        for k in range(F):
+            if k < F - 1:
+                # (the song data's pitch, as the engine decodes it)
+                f0 = _f32(pitch_val(pitch_code(fq[k, v]))) if amc[k, v] > 0 and fq[k, v] > 0 else 0.0
+                f1 = _f32(pitch_val(pitch_code(fq[k + 1, v]))) if amc[k + 1, v] > 0 and fq[k + 1, v] > 0 else 0.0
+                hz = math.sqrt(f0 * f1) if f0 and f1 else (f1 or f0)
+                if hz > 0:
+                    p = min(10.0, max(0.01, hz / BASE))
+                    if not (lastP > 0 and abs(p / lastP - 1) < csend):
+                        lastP = _f32(p)
+            if lastP > 0:
+                hzs.append(lastP * BASE); where.append((v, k))
+    if hzs:
+        Gs, Gts = cm.sines(np.array(hzs))
+        for i, (v, k) in enumerate(where):
+            G[v, k] = Gs[:, i]; Gt[v, k] = Gts[i]
+    for b in range(M):
+        G[Nc + b, :] = cm.noise[b][None, :]; Gt[Nc + b, :] = cm.noise_tot[b]
+    nms = (F + 1) * CL_TICK
+    env = np.zeros((S, nms))
+    t_start = np.zeros((S, F + 1)); t_last = np.zeros((S, F + 1))       # each tick's starting amplitude and last level sent
+    u = np.arange(CL_TICK) + 0.5
+
+    def code_of(s, k):
+        return int(amc[k, s]) if s < Nc else int(nzc[k, s - Nc])
+
+    def fade_of(s, k):
+        return fades[int(vcod[k, s]) if s < Nc else int(ncod[k, s - Nc])]
+
+    def run(s, k0, cur, lastL, stop_same=False):
+        """the engine from tick k0 on (target frame k+1, the last tick fades out over 50 ms) -> env[s]; with stop_same, stops
+        once a tick starts as it did before (the rest is unchanged) -> the last ms written"""
+        for k in range(k0, F):
+            if stop_same and k > k0 + 1 and cur == t_start[s, k] and lastL == t_last[s, k]:
+                return k * CL_TICK
+            t_start[s, k] = cur; t_last[s, k] = lastL
+            if k == F - 1:
+                L, A = (CL_SILENT, floor_[s]); d = 50.0
+            else:
+                L, A = level_of(s, code_of(s, k + 1)); d = fade_of(s, k)
+            t0 = k * CL_TICK
+            if L / lastL < dsend and lastL / L < dsend:
+                env[s, t0:t0 + CL_TICK] = cur
+                continue
+            env[s, t0:t0 + CL_TICK] = cur + (A - cur) * np.minimum(1.0, u / d)
+            cur = A; lastL = _f32(L)
+        t_start[s, F] = cur; t_last[s, F] = lastL
+        return nms
+    for s in range(S):
+        run(s, 0, floor_[s], _f32(CL_SILENT))
+    # the original in the same bands
+    R = target_bands(x)
+    nfr = min(R.shape[1], (nms - CL_WIN) // CL_HOP + 1)
+    R = R[:, :nfr]
+    Rq0 = np.maximum(_qdb(R, 1.0), -CL_FLOOR * CL_Q)
+    px = float(np.cumsum(x * x)[-1]) / max(1, len(x))
+    weights = CL_WEIGHT_SETS[weights] if isinstance(weights, str) else weights
+    w_int = np.array(weights or CL_WEIGHTS, np.int64)[:, None]
+    widx = np.arange(CL_WIN)
+
+    def contrib(s, frames, e, t0):
+        """(32, len(frames)) power of sound s in those frames from envelope e (starting at ms t0; zero outside it)"""
+        n = len(e)
+        idx = frames[:, None] * CL_HOP + widx[None, :] - t0
+        ok = (idx >= 0) & (idx < n)
+        ii = np.clip(idx, 0, n - 1)
+        e2w = np.where(ok, e[ii] ** 2, 0.0) * cm.w2[None, :]
+        if s >= Nc:
+            return G[s, 0][:, None] * (e2w.cumsum(1)[:, -1] / CL_WIN)[None, :]
+        tick = np.minimum((ii + t0) // CL_TICK, F - 1)
+        first = np.where(ok, tick, F).min(1)
+        out = np.zeros((32, len(frames)))
+        for r in range(3):
+            kk = np.minimum(first + r, F - 1)
+            E = np.where(ok & (tick == (first + r)[:, None]), e2w, 0.0).cumsum(1)[:, -1] / CL_WIN
+            out += (G[s, kk] * E[:, None]).T
+        return out
+
+    def power():
+        P = np.repeat((cm.qfloor * cm.mw2)[:, None], nfr, 1)
+        frames = np.arange(nfr)
+        tot = cm.qfloor_tot
+        dur = len(x) * 1000.0 / SR
+        for s in range(S):
+            P += contrib(s, frames, env[s], 0)
+            tk = np.minimum(np.arange(nms) // CL_TICK, F - 1)
+            tot += float(np.cumsum(env[s] ** 2 * Gt[s, tk])[-1]) / dur
+        return P, tot
+
+    def frames_of(ta, tb):
+        m0 = max(0, -(-(ta - CL_WIN + 1) // CL_HOP)); m1 = min(nfr - 1, (tb - 1) // CL_HOP)
+        return np.arange(m0, m1 + 1)
+    vsteps = np.array(CL_VSTEPS, np.int64); nsteps = np.array(CL_NSTEPS, np.int64)
+    objective = objective or CL_OBJECTIVE
+    wf = np.array(weights or CL_WEIGHTS, float) / 1000.0
+    hist = []
+    for sw in range(sweeps + 1):
+        P, tot = power()
+        s2 = px / tot
+        Dq = np.maximum(_qdb(P, s2), -CL_FLOOR * CL_Q)
+        fl = np.maximum(Rq0.max(0), Dq.max(0)) - CL_FLOOR * CL_Q
+        Rq = np.maximum(Rq0, fl[None, :])
+        Dcur = np.maximum(Dq, fl[None, :])                      # the playback's dB grid as it stands (kept up to date)
+        lowq = int(min(Rq.min(), Dcur.min()))
+        if objective == 'nsim':
+            rr = np.concatenate([Rq[:, :1], Rq, Rq[:, -1:]], 1); dd = np.concatenate([Dcur[:, :1], Dcur, Dcur[:, -1:]], 1)
+            rr = np.concatenate([rr[:1], rr, rr[-1:]], 0); dd = np.concatenate([dd[:1], dd, dd[-1:]], 0)
+            hist.append(float(np.mean(nsim_valid((rr - lowq) / CL_Q, (dd - lowq) / CL_Q))))
+        else:
+            hist.append(float((w_int * (Dcur - Rq) ** 2).sum()) / (1000.0 * CL_Q * CL_Q * Rq.size))
+        if sw == sweeps:
+            break
+        changed = 0
+        for k in range(F - 1):
+            frames = frames_of(k * CL_TICK, (k + 2) * CL_TICK)
+            if not len(frames):
+                continue
+            idx = frames[:, None] * CL_HOP + widx[None, :] - k * CL_TICK
+            ok = (idx >= 0) & (idx < 2 * CL_TICK)
+            wk = np.where(ok & (idx < CL_TICK), cm.w2[None, :], 0.0) / CL_WIN
+            wk1 = np.where(ok & (idx >= CL_TICK), cm.w2[None, :], 0.0) / CL_WIN
+            ii = np.clip(idx, 0, 2 * CL_TICK - 1)
+            flk = fl[frames][None, :]; Rk = Rq[:, frames]
+            for s in range(S):
+                c0 = code_of(s, k + 1)
+                if c0 <= 0:
+                    continue
+                isv = s < Nc
+                hi = 127 if isv else 255
+                codes = np.unique(np.clip(c0 + (vsteps if isv else nsteps), 1, hi))
+                cand_c = np.concatenate([np.repeat(codes, 4), [0]]); cand_f = np.concatenate([np.tile(np.arange(4), len(codes)), [3]])
+                C = len(cand_c)
+                cur, lastL = t_start[s, k], t_last[s, k]
+                # this tick for every candidate, then the next tick (its own target and fade) from where each left the sound
+                LA = [level_of(s, int(c)) for c in cand_c]
+                Lk = np.array([a for a, _ in LA]); Ak = np.array([b for _, b in LA])
+                sent0 = ~((Lk / lastL < dsend) & (lastL / Lk < dsend))
+                dk = np.array([fades[int(f)] for f in cand_f])
+                e0 = np.where(sent0[:, None], cur + (Ak - cur)[:, None] * np.minimum(1.0, u[None, :] / dk[:, None]), cur)
+                end0 = np.where(sent0, Ak, cur)
+                last0 = np.where(sent0, np.array([_f32(v) for v in Lk]), lastL)
+                if k + 1 == F - 1:
+                    L1, A1 = (CL_SILENT, floor_[s]); d1 = 50.0
+                else:
+                    L1, A1 = level_of(s, code_of(s, k + 2)); d1 = fade_of(s, k + 1)
+                sent1 = ~((L1 / last0 < dsend) & (last0 / L1 < dsend))
+                e1 = np.where(sent1[:, None], end0[:, None] + (A1 - end0)[:, None] * np.minimum(1.0, u[None, :] / d1), end0[:, None])
+                seg2 = np.concatenate([e0, e1], 1)[:, ii] ** 2              # (C, frames, 80)
+                if isv:
+                    Ek = (seg2 * wk[None]).cumsum(2)[..., -1]; Ek1 = (seg2 * wk1[None]).cumsum(2)[..., -1]
+                    con = Ek[:, None, :] * G[s, k][None, :, None] + Ek1[:, None, :] * G[s, k + 1][None, :, None]
+                else:
+                    con = (seg2 * (wk + wk1)[None]).cumsum(2)[..., -1][:, None, :] * G[s, 0][None, :, None]
+                cs2 = env[s, k * CL_TICK:(k + 2) * CL_TICK][ii] ** 2
+                if isv:
+                    old = (cs2 * wk).cumsum(1)[:, -1][None, :] * G[s, k][:, None] + (cs2 * wk1).cumsum(1)[:, -1][None, :] * G[s, k + 1][:, None]
+                else:
+                    old = (cs2 * (wk + wk1)).cumsum(1)[:, -1][None, :] * G[s, 0][:, None]
+                base = P[:, frames] - old
+                Dc = np.maximum(np.maximum(_qdb(base[None] + con, s2), -CL_FLOOR * CL_Q), flk[None])
+                Dn = Dcur[:, frames]
+                f0c = int(vcod[k, s]) if isv else int(ncod[k, s - Nc])
+                if objective == 'nsim':
+                    # ViSQOL's similarity over the bands a candidate can change (and their neighbours) and the frames whose
+                    # neighbourhoods reach the changed ones; the rest is the same for every candidate
+                    chg = (Dc != Dn[None]).any(axis=(0, 2))
+                    if not chg.any():
+                        continue
+                    jl = int(np.argmax(chg)); jh = 31 - int(np.argmax(chg[::-1]))
+                    ja, jb = max(0, jl - 1), min(31, jh + 1)
+                    m0, m1 = int(frames[0]), int(frames[-1])
+                    ea, eb = max(0, m0 - 1), min(nfr - 1, m1 + 1)
+                    rows = np.clip(np.arange(ja - 1, jb + 2), 0, 31); cols = np.clip(np.arange(ea - 1, eb + 2), 0, nfr - 1)
+                    rr = (Rq[rows][:, cols] - lowq) / CL_Q
+                    dn = Dcur[rows][:, cols]
+                    dc = np.repeat(dn[None], C, 0)
+                    inside = (cols >= m0) & (cols <= m1)
+                    dc[:, :, inside] = Dc[:, rows][:, :, cols[inside] - m0]
+                    ws = wf[ja:jb + 1][:, None]
+                    Lc = -(ws[None] * nsim_valid(rr[None], (dc - lowq) / CL_Q)).reshape(C, -1).cumsum(1)[:, -1]
+                    Ln = -float((ws * nsim_valid(rr, (dn - lowq) / CL_Q)).reshape(-1).cumsum()[-1])
+                else:
+                    Lc = (w_int[None] * (Dc - Rk[None]) ** 2).sum((1, 2))
+                    Ln = int((w_int * (Dn - Rk) ** 2).sum())
+                bi = int(np.argmin(Lc))
+                if Lc[bi] < Ln and (int(cand_c[bi]) != c0 or int(cand_f[bi]) != f0c):
+                    if isv:
+                        amc[k + 1, s] = cand_c[bi]; vcod[k, s] = cand_f[bi]
+                    else:
+                        nzc[k + 1, s - Nc] = cand_c[bi]; ncod[k, s - Nc] = cand_f[bi]
+                    old_env = env[s].copy()
+                    t_end = run(s, k, cur, lastL, stop_same=True)
+                    ta = k * CL_TICK
+                    mf = frames_of(ta, t_end)
+                    if len(mf):
+                        P[:, mf] += contrib(s, mf, env[s, ta:t_end], ta) - contrib(s, mf, old_env[ta:t_end], ta)
+                        Dcur[:, mf] = np.maximum(np.maximum(_qdb(P[:, mf], s2), -CL_FLOOR * CL_Q), fl[None, mf])
+                    changed += 1
+        if info is not None:
+            info.setdefault('refine_changes', []).append(changed)
+    if info is not None:
+        info['refine_loss'] = [round(h, 3) for h in hist]
+    am2 = am.copy(); nz2 = nz.copy()
+    for k in range(F):
+        for v in range(Nc):
+            am2[k, v] = amp_val(int(amc[k, v])) / gain if amc[k, v] else 0.0
+        for b in range(M):
+            nz2[k, b] = nz_val(int(nzc[k, b])) / gain if nzc[k, b] else 0.0
+    vc2 = np.array(vcodes, np.uint8).copy(); vc2[:, :Nc] = vcod
+    return am2, vc2, nz2, np.array(ncod, np.uint8)
+
+
+def unpack2(packed, F, n):
+    """2-bit codes, 4 a byte (fit_voice_fades / fit_noise_fades) -> (F, n)"""
+    per = (n + 3) // 4
+    c = np.zeros((F, n), np.uint8)
+    for k in range(F):
+        for j in range(n):
+            c[k, j] = (packed[k * per + (j >> 2)] >> (2 * (j & 3))) & 3
+    return c
+
+
+def pack2(c):
+    F, n = c.shape
+    out = bytearray()
+    for k in range(F):
+        for j in range(0, n, 4):
+            byte = 0
+            for i in range(4):
+                if j + i < n:
+                    byte |= int(c[k, j + i]) << (2 * i)
+            out.append(byte)
+    return bytes(out)
+
+
 _DEFAULTS = {'FADE_GAIN': FADE_GAIN, 'FADE_MARGIN_DB2': FADE_MARGIN_DB2, 'BURST_TILT': BURST_TILT, 'NOISE_EDGES': list(NOISE_EDGES)}
 
 
 def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=None, analysis='v2', residual='voiced', salience='a',
             nested=0, hf=0.0, burst_tilt=None, noise_edges=None, nz_fade=True, v_fade=True, rank='energy', fade_gain=None,
-            fade_margin=None, nz_hop=None, low_cut=0.5, nsim_margin=NSIM_MARGIN):
+            fade_margin=None, nz_hop=None, low_cut=0.5, nsim_margin=NSIM_MARGIN, refine=True, refine_voices=CL_VOICES,
+            refine_level=CL_LEVEL_DB, refine_sweeps=CL_SWEEPS, refine_weights=None, refine_objective=None):
     """residual: 'voiced' (default: only the voices' main lobes out of the noise, so the peaks no voice plays stay in the noise
     bands) | 'all' (every peak's lobe out: the version before 2026-10-31) | 'fit' (ERB least squares). Through the validated
     client model (tools/exp/results/next.jsonl, 10 songs, 24 voices, no drum bursts) 'voiced' scored +0.139 ViSQOL over the
@@ -1067,7 +1513,11 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
     plays only those and mixes at 2*hf gets the best of them), the rest from all.
     v_fade / nz_fade (default on, format 2): every voice and noise band gets the fade (5/12/25/50 ms) that follows the
     original's 10 ms envelope best at each tick, and the bursts' energy stays in the noise bands (no one-shots). Through the
-    client model: +0.073 ViSQOL median over residual 'voiced' alone (8 of 10 songs up; emulated, not a recording)"""
+    client model: +0.073 ViSQOL median over residual 'voiced' alone (8 of 10 songs up; emulated, not a recording).
+    refine (default on, needs v_fade and nz_fade): analysis by synthesis through the client model (refine_client) — every tick's
+    level and fade of the phone's refine_voices voices and of the noise bands chosen so that the song as the phone plays it
+    (refine_level dB over the files) comes closest to the original in ViSQOL's own bands. Through the validated client model
+    (10 songs, 2026-10-31 third session): median 2.939 -> 3.103, all 10 songs up, fewer commands a tick (emulated, not a recording)"""
     global BURST_TILT, NOISE_EDGES, FADE_GAIN, FADE_MARGIN_DB2
     # (these options set module globals: each conversion sets all of them, so one never leaks into the next in a process)
     FADE_GAIN = float(fade_gain) if fade_gain is not None else _DEFAULTS['FADE_GAIN']
@@ -1137,6 +1587,12 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
     # normalise: loudest frame (sum of voice amps + noise) -> about 0.9
     peak = max(1e-9, float(np.max(am.sum(1) * 0.55 + nz.sum(1))))
     gain = (0.9 / peak) * 10 ** (gain_db / 20)
+    if refine and vd is not None and nzd is not None:
+        # analysis by synthesis: each tick's levels and fades as the client model plays them against the original
+        am, vc, nz, nc = refine_client(x, fq, am, unpack2(vd, n_frames, n_voices), nz, unpack2(nzd, n_frames, len(NOISE_EDGES) - 1), gain,
+                                       n_voices=refine_voices, level_db=refine_level, sweeps=refine_sweeps, weights=refine_weights, info=info,
+                                       objective=refine_objective)
+        vd, nzd = pack2(vc), pack2(nc)
     blob, stats = encode(fq, am, att, nz, ev, gain)
     # format 2: the fitted fades after the frames in the data (the voices' codes, then the noise bands'), their lengths in meta.fd —
     # in the data, not the meta, so a song pack's first script event (the meta) stays under /scriptevent's 2048 characters

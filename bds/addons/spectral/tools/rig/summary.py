@@ -15,7 +15,8 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('improved_drums_noise', '改良版＋打撃をノイズで'), ('improved_alt', '改良版＋命令の予算 24'),
         ('improved_loud', '改良版＋12 dB（setVolume）'), ('improved_loud_events', '改良版＋12 dB（音量 4 の音）'),
         ('ceiling_loud', '天井＋6 dB（音量 2）'), ('ceiling_loud_events', '天井＋12 dB（音量 4 の音）'),
-        ('shipped_run7', '出荷版（7 回目の run）'), ('improved_fades', '改良版＋tick ごとのフェード'), ('final', '最終の既定（＋6 dB）'), ('final_loud10', '最終の既定を＋10 dB で')]
+        ('shipped_run7', '出荷版（7 回目の run）'), ('improved_fades', '改良版＋tick ごとのフェード'), ('final', '最終の既定（＋6 dB）'), ('final_loud10', '最終の既定を＋10 dB で'),
+        ('refined', '合成による分析（模型を通して最適化、＋6 dB）'), ('refined_svr', '合成による分析・高い帯域を重く'), ('refined_loud10', '合成による分析を＋10 dB で')]
 
 
 def main():

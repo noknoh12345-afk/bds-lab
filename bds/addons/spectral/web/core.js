@@ -449,7 +449,10 @@
   // ---------------------------------------------------------------- whole conversion
   /** x: Float32Array mono at 44.1 kHz. progress(fraction) may be async-awaited to keep a page responsive. */
   async function convert(x, opts = {}) {
-    const N = opts.voices ?? 48, hyst = 2.0, progress = opts.progress ?? (() => {}), analysis = opts.analysis ?? 'v2';
+    // (refine, default on as tools/spectral.py: the analysis by synthesis through the client model takes about half the time,
+    // so the stages before it report 0 .. REFINE_SHARE and it the rest)
+    const refineOn = opts.refine ?? true, progress0 = opts.progress ?? (() => {});
+    const N = opts.voices ?? 48, hyst = 2.0, progress = refineOn ? (f) => progress0(f * REFINE_SHARE) : progress0, analysis = opts.analysis ?? 'v2';
     const residual = opts.residual ?? 'voiced', salienceKind = opts.salience ?? 'a';   // tools/spectral.py convert(residual=, salience=, nested=, hf=): the same defaults
     const nested = opts.nested ?? 0, hfLimit = opts.hf ?? 0;
     let groups = null;
@@ -602,8 +605,19 @@
     let peak = 1e-9;
     for (let k = 0; k < F; k++) { let s = 0; for (let v = 0; v < N; v++) s += am2[k * N + v] * 0.55; for (let b = 0; b < M; b++) s += nz[k * M + b]; peak = Math.max(peak, s); }
     const gain = (0.9 / peak) * Math.pow(10, (opts.gainDb ?? 0) / 20);
+    let refined = null;
+    if (refineOn && vd && nzd) {
+      // analysis by synthesis through the client model (tools/spectral.py refine_client): every tick's levels and fades
+      const unpack = (packed, n) => { const per4 = (n + 3) >> 2, c = new Uint8Array(F * n); for (let k = 0; k < F; k++) for (let j = 0; j < n; j++) c[k * n + j] = (packed[k * per4 + (j >> 2)] >> (2 * (j & 3))) & 3; return c; };
+      const vc = unpack(vd, N), nc = unpack(nzd, M);
+      // (the options also by tools/spectral.py's names, for tools/parity.py)
+      refined = await refineClient(x, F, N, M, fq2, am2, vc, nz, nc, gain, { voices: opts.refineVoices ?? opts.refine_voices, level: opts.refineLevel ?? opts.refine_level,
+        sweeps: opts.refineSweeps ?? opts.refine_sweeps, weights: opts.refineWeights ?? opts.refine_weights, objective: opts.refineObjective ?? opts.refine_objective,
+        progress: (f) => progress0(REFINE_SHARE + (1 - REFINE_SHARE) * f) });
+      vd = pack2(vc, F, N); nzd = pack2(nc, F, M);
+    }
     const enc = encode(F, N, M, fq2, am2, att2, nz, ev, gain);
-    await progress(1);
+    await progress0(1);
     const meta = {
       format: 'spectral-player/1', title: opts.title ?? 'song', artist: opts.artist ?? '', fps: FPS, frames: F, voices: N, base: BASE,
       noise: NOISE_EDGES.slice(0, -1).map((e, i) => [e, NOISE_EDGES[i + 1]]), bursts: BURST_BANDS.length, sub: SUB,
@@ -617,7 +631,7 @@
       all.set(enc.bytes, 0); if (vd) all.set(vd, enc.bytes.length); if (nzd) all.set(nzd, enc.bytes.length + meta.fd.v);
       enc.bytes = all;
     }
-    return { meta, bytes: enc.bytes, stats: { ...enc.stats, events: ev.length, activeAvg: avgActive(am2, F, N), noiseBands, burstBands, nsimLite: nsimBest, placed: placedN } };
+    return { meta, bytes: enc.bytes, stats: { ...enc.stats, events: ev.length, activeAvg: avgActive(am2, F, N), noiseBands, burstBands, nsimLite: nsimBest, placed: placedN, ...(refined ? { refineLoss: refined.loss, refineChanges: refined.changes } : {}) } };
   }
   const avgActive = (am, F, N) => { let c = 0; for (let i = 0; i < F * N; i++) if (am[i] > 0) c++; return c / F; };
 
@@ -715,6 +729,399 @@
       }
     }
     return pack2(codes, F, M);
+  }
+
+  // ---------------------------------------------------------------- analysis by synthesis through the client model
+  // (tools/spectral.py refine_client, line for line: the song as the phone plays it — its 24 voices and the noise bands, +6 dB,
+  // the engine's send rules, the 24 kHz mix with its folding, x2 linear, the 16-bit floor — measured in ViSQOL's 32 gammatone
+  // bands against the original, each tick's level and fade of every sound chosen to bring them closest; the squared
+  // difference counted in whole 1/64ths of a dB, so both converters choose the same)
+  const CL_VOICES = 24, CL_LEVEL_DB = 6, CL_OSC_AMP = 0.9, CL_SILENT = 1e-4, CL_SEND_DB = 0.75, CL_SEND_CENTS = 3;
+  const CL_NOISE_RMS = [0.181311, 0.180788, 0.179998, 0.179116, 0.178403, 0.177544, 0.177018, 0.175986], NOISE_RMS_ALL = 0.18;
+  const CL_OUT_DB = -32.5, CL_BITS = 16, CL_TICK = 50, CL_HOP = 20, CL_WIN = 80, CL_Q = 64, CL_FLOOR = 45, CL_SWEEPS = 2;
+  const CL_VSTEPS = [-12, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4], CL_NSTEPS = [-16, -12, -8, -6, -4, -2, 0, 2, 4, 6];
+  const CL_WEIGHTS = new Array(32).fill(1000), REFINE_SHARE = 0.45, CL_OBJECTIVE = 'nsim';
+  const CL_WEIGHT_SETS = { svr: [100, 70, 50, 50, 50, 50, 70, 80, 70, 70, 70, 70, 70, 60, 60, 60, 60, 60, 60, 50, 50, 50, 50, 120, 330, 390, 480, 560, 570, 460, 390, 280] };
+  const CL_W3 = [[0.0113033910173052, 0.0838251475442633, 0.0113033910173052], [0.0838251475442633, 0.619485845753726, 0.0838251475442633],
+    [0.0113033910173052, 0.0838251475442633, 0.0113033910173052]];
+  const CL_C1 = 0.01 * 0.01, CL_C3 = (0.03 * 0.03) / 2;
+  /** tools/spectral.py nsim_valid, in two halves: nsimRef once for the reference map r (rows x cols, Float64Array row-major)
+   *  -> its 3x3 means and variances over the inner (rows-2) x (cols-2); nsimSum for a map d against it -> ViSQOL's NSIM of each
+   *  inner cell, weighted per inner row by ws and summed row by row in order. Every sum in the order of tools/spectral.py */
+  const W3f = CL_W3.flat();
+  function nsimRef(r, rows, cols) {
+    const R = rows - 2, C = cols - 2, mr = new Float64Array(R * C), sr2 = new Float64Array(R * C);
+    for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) {
+      let m = 0, q2 = 0;
+      for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) { const q = (i + a) * cols + j + b, w = W3f[a * 3 + b]; m = m + r[q] * w; q2 = q2 + (r[q] * r[q]) * w; }
+      mr[i * C + j] = m; sr2[i * C + j] = q2 - m * m;
+    }
+    return { r, rows, cols, mr, sr2 };
+  }
+  function nsimSum(ref, d, ws) {
+    const { r, rows, cols, mr, sr2 } = ref, R = rows - 2, C = cols - 2;
+    let acc = 0;
+    for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) {
+      let md = 0, qd = 0, qrd = 0;
+      for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) {
+        const q = (i + a) * cols + j + b, w = W3f[a * 3 + b], dv = d[q];
+        md = md + dv * w; qd = qd + (dv * dv) * w; qrd = qrd + (r[q] * dv) * w;
+      }
+      const m = mr[i * C + j], sd2 = qd - md * md, srd = qrd - m * md;
+      const inten = (2 * m * md + CL_C1) / (m * m + md * md + CL_C1), sdd = sr2[i * C + j] * sd2;
+      const struct = (srd + CL_C3) / (sdd < 0 ? CL_C3 : Math.sqrt(Math.max(sdd, 0)) + CL_C3);
+      acc = acc + ws[i] * (inten * struct);
+    }
+    return acc;
+  }
+  const nsimValidSum = (r, d, rows, cols, ws) => nsimSum(nsimRef(r, rows, cols), d, ws);
+  const f32 = Math.fround;
+  /** |H_j(f)|^2 of ViSQOL's 32 gammatone filters (48 kHz, from 50 Hz, the centre at 1), row 0 the lowest: Float64Array(32 * n) */
+  function gtH2(freqs) {
+    const sr = 48000, T = 1 / sr, nb = 32, n = freqs.length, earQ = 9.26449, minBW = 24.7;
+    const a = -(earQ * minBW), b = -Math.log(sr / 2 + earQ * minBW), c = Math.log(50 + earQ * minBW), d = sr / 2 + earQ * minBW, e = (b + c) / nb;
+    const s1 = Math.sqrt(3 + 2 ** 1.5), s2 = Math.sqrt(3 - 2 ** 1.5);
+    const co = new Float64Array(n), si = new Float64Array(n);
+    for (let i = 0; i < n; i++) { const om = (2 * Math.PI * freqs[i]) / sr; co[i] = Math.cos(om); si[i] = Math.sin(om); }
+    const mag2 = (A1s, B1, B2, cs, sn) => {
+      let num = 1;
+      for (const A1 of A1s) num = num * (T * T + A1 * A1 + 2 * T * A1 * cs);
+      const dr = (1 + B2) * cs + B1, di = (1 - B2) * sn, den = dr * dr + di * di;
+      return num / (den * den * den * den);
+    };
+    const out = new Float64Array(nb * n);
+    for (let i = 0; i < nb; i++) {
+      const cf = a + Math.exp((i + 1) * e) * d, erb = cf / earQ + minBW, B = 1.019 * 2 * Math.PI * erb, ebt = Math.exp(B * T);
+      const B1 = (-2 * Math.cos(2 * cf * Math.PI * T)) / ebt, B2 = Math.exp(-2 * B * T);
+      const b1 = Math.sin(cf * 2 * Math.PI * T) * T, bp = b1 * 2 * s1, bn = b1 * 2 * s2, aa = Math.cos(cf * 2 * Math.PI * T) * 2 * T;
+      const A1s = [-(aa / ebt + bp / ebt) / 2, -(aa / ebt - bp / ebt) / 2, -(aa / ebt + bn / ebt) / 2, -(aa / ebt - bn / ebt) / 2];
+      const oc = (2 * Math.PI * cf) / sr, g2 = mag2(A1s, B1, B2, Math.cos(oc), Math.sin(oc)), row = (nb - 1 - i) * n;
+      for (let k = 0; k < n; k++) out[row + k] = mag2(A1s, B1, B2, co[k], si[k]) / g2;
+    }
+    return out;
+  }
+  /** the measured client path as band responses (tools/spectral.py ClientModel) */
+  function clientModel(edges) {
+    const sr = 48000, L = 3840, w2 = new Float64Array(CL_WIN);
+    for (let u = 0; u < CL_WIN; u++) { let s = 0; for (let i = u * 48; i < u * 48 + 48; i++) { const w = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (L - 1)); s += w * w; } w2[u] = s / 48; }
+    let mw = 0; for (let u = 0; u < CL_WIN; u++) mw += w2[u];
+    const mw2 = mw / CL_WIN, df = 2, NG = 6001;
+    const g = new Float64Array(NG), gm = new Float64Array(NG), c4 = new Float64Array(NG), s4 = new Float64Array(NG);
+    for (let i = 0; i < NG; i++) { g[i] = i * df; gm[i] = 24000 - g[i]; c4[i] = Math.cos((Math.PI * g[i]) / sr) ** 4; s4[i] = Math.sin((Math.PI * g[i]) / sr) ** 4; }
+    const Hd = gtH2(g), Hi = gtH2(gm), M = edges.length - 1, noise = [], noiseTot = new Float64Array(M);
+    const NF = 12001, full = new Float64Array(NF); for (let i = 0; i < NF; i++) full[i] = i * df;
+    for (let bnd = 0; bnd < M; bnd++) {
+      const lo = edges[bnd], hi = edges[bnd + 1], S2 = new Float64Array(NF);
+      for (let i = 0; i < NF; i++) {
+        let e = 1;
+        for (const [cc, dd] of [[lo, -1], [hi, 1]]) {
+          const oc = Math.log2(Math.max(full[i], 1) / cc) * dd;
+          e = e * (oc < -1 / 12 ? 1 : oc > 1 / 12 ? 0 : 0.5 + 0.5 * Math.cos(Math.PI * (oc + 1 / 12) * 6));
+        }
+        S2[i] = e * e;
+      }
+      S2[0] = 0;
+      let tot = 0; for (let i = 0; i < NF; i++) tot += S2[i];
+      for (let i = 0; i < NF; i++) S2[i] = S2[i] / tot;
+      const Mg = new Float64Array(NG); for (let i = 0; i < NG; i++) Mg[i] = S2[i] + S2[12000 - i];
+      const row = new Float64Array(32);
+      for (let j = 0; j < 32; j++) {
+        let sd = 0, si2 = 0;
+        for (let i = 0; i < NG; i++) sd += Hd[j * NG + i] * (Mg[i] * c4[i]);
+        for (let i = 0; i < NG; i++) si2 += Hi[j * NG + i] * (Mg[i] * s4[i]);
+        row[j] = sd + si2;
+      }
+      noise.push(row);
+      let nt = 0; for (let i = 0; i < NG; i++) nt += Mg[i] * (c4[i] + s4[i]);
+      noiseTot[bnd] = nt;
+    }
+    const q = (2 ** (1 - CL_BITS)) ** 2 / 12 / Math.pow(10, CL_OUT_DB / 10), Ho = gtH2(full), qfloor = new Float64Array(32);
+    for (let j = 0; j < 32; j++) {
+      let sd = 0, si2 = 0, so = 0;
+      for (let i = 0; i < NG; i++) sd += Hd[j * NG + i] * c4[i];
+      for (let i = 0; i < NG; i++) si2 += Hi[j * NG + i] * s4[i];
+      for (let i = 0; i < NF; i++) so += Ho[j * NF + i];
+      qfloor[j] = (q / 12000 * df) * (sd + si2) + (q / 24000 * df) * so;
+    }
+    let cs = 0; for (let i = 0; i < NG; i++) cs += c4[i] + s4[i];
+    const qfloorTot = (q * cs) / NG + q;
+    /** a sine of amplitude 1 at f Hz: [band power (32), full-band power] */
+    const sine = (f) => {
+      if (f <= 0) return [new Float64Array(32), 0];
+      const fp = f <= 12000 ? f : 24000 - f, cc = Math.cos((Math.PI * fp) / 48000) ** 4, ss = Math.sin((Math.PI * fp) / 48000) ** 4;
+      const h = gtH2([fp, 24000 - fp]), out = new Float64Array(32);
+      for (let j = 0; j < 32; j++) out[j] = 0.5 * (cc * h[j * 2] + ss * h[j * 2 + 1]);
+      return [out, 0.5 * (cc + ss)];
+    };
+    return { w2, mw2, noise, noiseTot, qfloor, qfloorTot, sine };
+  }
+  /** the original in ViSQOL's bands (tools/spectral.py target_bands): { R: Float64Array(32 * nfr), nfr } */
+  function targetBands(x) {
+    const L = Math.round(SR * 0.08), hop = Math.round(SR * 0.02), nfft = 4096, nb = nfft / 2 + 1;
+    const nfr = x.length >= L ? 1 + Math.floor((x.length - L) / hop) : 0;
+    const w = new Float64Array(L); for (let i = 0; i < L; i++) w[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (L - 1));
+    const fb = new Float64Array(nb); for (let i = 0; i < nb; i++) fb[i] = i * (SR / nfft);
+    const H = gtH2(fb); for (let j = 0; j < 32; j++) { H[j * nb] = 0; H[j * nb + nb - 1] = 0; }
+    const R = new Float64Array(32 * nfr), re = new Float64Array(nfft), im = new Float64Array(nfft), P = new Float64Array(nb), sc = 2 / (L * nfft);
+    for (let m = 0; m < nfr; m++) {
+      re.fill(0); im.fill(0);
+      for (let i = 0; i < L; i++) re[i] = x[m * hop + i] * w[i];
+      fft(re, im);
+      for (let i = 0; i < nb; i++) P[i] = re[i] * re[i] + im[i] * im[i];
+      for (let j = 0; j < 32; j++) { let s = 0; for (let i = 0; i < nb; i++) s += P[i] * H[j * nb + i]; R[j * nfr + m] = sc * s; }
+    }
+    return { R, nfr };
+  }
+  const qdb = (P, s2) => Math.floor(CL_Q * 5 * Math.log10(Math.max(P * s2, 1e-30)) + 0.5);
+  /** tools/spectral.py refine_client: am (F*N) and nz (F*M) changed in place (the converter's levels, before gain); vcodes
+   *  (F*N) and ncodes (F*M) the fade codes, changed in place. Returns { loss: [...], changes: [...] } */
+  async function refineClient(x, F, N, M, fq, am, vcodes, nz, ncodes, gain, opts = {}) {
+    const progress = opts.progress ?? (() => {});
+    const Nc = Math.min(opts.voices ?? CL_VOICES, N), lv = Math.pow(10, (opts.level ?? CL_LEVEL_DB) / 20), sweeps = opts.sweeps ?? CL_SWEEPS;
+    const cm = clientModel(NOISE_EDGES), gv = (1 * lv) / CL_OSC_AMP;
+    const nrms = M === CL_NOISE_RMS.length ? CL_NOISE_RMS : new Array(M).fill(NOISE_RMS_ALL);
+    const dsend = Math.pow(10, CL_SEND_DB / 20), csend = Math.pow(2, CL_SEND_CENTS / 1200) - 1, fades = NZ_FADES_MS.map((d) => d);
+    const amc = new Int32Array(F * Nc), nzc = new Int32Array(F * M);
+    for (let k = 0; k < F; k++) { for (let v = 0; v < Nc; v++) amc[k * Nc + v] = ampCode(am[k * N + v] * gain); for (let b = 0; b < M; b++) nzc[k * M + b] = nzCode(nz[k * M + b] * gain); }
+    const vcod = new Int32Array(F * Nc); for (let k = 0; k < F; k++) for (let v = 0; v < Nc; v++) vcod[k * Nc + v] = vcodes[k * N + v];
+    const ncod = Int32Array.from(ncodes);
+    const aval = new Float64Array(128), nval = new Float64Array(256);
+    for (let c = 1; c < 128; c++) aval[c] = f32(ampVal(c));
+    for (let c = 1; c < 256; c++) nval[c] = f32(nzVal(c));
+    const S = Nc + M, floor = new Float64Array(S);
+    for (let s = 0; s < S; s++) floor[s] = s < Nc ? CL_SILENT * CL_OSC_AMP : CL_SILENT * nrms[s - Nc];
+    const levelOf = (s, c) => {
+      if (s < Nc) { const L = Math.min(10, Math.max(CL_SILENT, aval[c] * gv)); return [L, L * CL_OSC_AMP]; }
+      const b = s - Nc, L = Math.min(10, Math.max(CL_SILENT, ((nval[c] * 1) * lv) / nrms[b]));
+      return [L, L * nrms[b]];
+    };
+    // each voice's pitch per tick (the engine's geometric mean, its 3-cent rule) and its band response
+    const G = new Float64Array(S * F * 32), Gt = new Float64Array(S * F);
+    for (let v = 0; v < Nc; v++) {
+      let lastP = -1;
+      for (let k = 0; k < F; k++) {
+        if (k < F - 1) {
+          const q0 = fq[k * N + v], q1 = fq[(k + 1) * N + v];
+          const f0 = amc[k * Nc + v] > 0 && q0 > 0 ? f32(pitchVal(pitchCode(q0))) : 0, f1 = amc[(k + 1) * Nc + v] > 0 && q1 > 0 ? f32(pitchVal(pitchCode(q1))) : 0;
+          const hz = f0 && f1 ? Math.sqrt(f0 * f1) : f1 || f0;
+          if (hz > 0) { const p = Math.min(10, Math.max(0.01, hz / BASE)); if (!(lastP > 0 && Math.abs(p / lastP - 1) < csend)) lastP = f32(p); }
+        }
+        if (lastP > 0) { const [r, t] = cm.sine(lastP * BASE); G.set(r, (v * F + k) * 32); Gt[v * F + k] = t; }
+      }
+    }
+    for (let b = 0; b < M; b++) for (let k = 0; k < F; k++) { G.set(cm.noise[b], ((Nc + b) * F + k) * 32); Gt[(Nc + b) * F + k] = cm.noiseTot[b]; }
+    const nms = (F + 1) * CL_TICK, env = new Float64Array(S * nms), tStart = new Float64Array(S * (F + 1)), tLast = new Float64Array(S * (F + 1));
+    const codeOf = (s, k) => (s < Nc ? amc[k * Nc + s] : nzc[k * M + s - Nc]);
+    const fadeOf = (s, k) => fades[s < Nc ? vcod[k * Nc + s] : ncod[k * M + s - Nc]];
+    const run = (s, k0, cur, lastL, stopSame) => {
+      const base = s * nms;
+      for (let k = k0; k < F; k++) {
+        if (stopSame && k > k0 + 1 && cur === tStart[s * (F + 1) + k] && lastL === tLast[s * (F + 1) + k]) return k * CL_TICK;
+        tStart[s * (F + 1) + k] = cur; tLast[s * (F + 1) + k] = lastL;
+        let L, A, d;
+        if (k === F - 1) { L = CL_SILENT; A = floor[s]; d = 50; } else { [L, A] = levelOf(s, codeOf(s, k + 1)); d = fadeOf(s, k); }
+        const t0 = base + k * CL_TICK;
+        if (L / lastL < dsend && lastL / L < dsend) { for (let u = 0; u < CL_TICK; u++) env[t0 + u] = cur; continue; }
+        for (let u = 0; u < CL_TICK; u++) env[t0 + u] = cur + (A - cur) * Math.min(1, (u + 0.5) / d);
+        cur = A; lastL = f32(L);
+      }
+      tStart[s * (F + 1) + F] = cur; tLast[s * (F + 1) + F] = lastL;
+      return nms;
+    };
+    for (let s = 0; s < S; s++) run(s, 0, floor[s], f32(CL_SILENT), false);
+    const tb = targetBands(x), nfr = Math.min(tb.nfr, Math.floor((nms - CL_WIN) / CL_HOP) + 1);
+    const Rq0 = new Int32Array(32 * nfr);
+    for (let j = 0; j < 32; j++) for (let m = 0; m < nfr; m++) Rq0[j * nfr + m] = Math.max(qdb(tb.R[j * tb.nfr + m], 1), -CL_FLOOR * CL_Q);
+    let px = 0; for (let i = 0; i < x.length; i++) px += x[i] * x[i];
+    px = px / Math.max(1, x.length);
+    const W = typeof opts.weights === 'string' ? CL_WEIGHT_SETS[opts.weights] : opts.weights ?? CL_WEIGHTS, dur = (x.length * 1000) / SR;
+    /** power of sound s in frames m0..m1 from its envelope e (ms t0 .. t0 + e.length), added (sign 1) or taken (sign -1) into P */
+    const addContrib = (P, s, m0, m1, e, eOff, t0, n, sign) => {
+      const isv = s < Nc, E = new Float64Array(F);
+      for (let m = m0; m <= m1; m++) {
+        if (isv) {
+          let k0 = F, k1 = -1;
+          for (let w = 0; w < CL_WIN; w++) {
+            const t = m * CL_HOP + w - t0; if (t < 0 || t >= n) continue;
+            const v = e[eOff + t], kk = Math.min(Math.floor((t + t0) / CL_TICK), F - 1);
+            E[kk] += v * v * cm.w2[w]; if (kk < k0) k0 = kk; if (kk > k1) k1 = kk;
+          }
+          for (let kk = k0; kk <= k1; kk++) {
+            const val = E[kk] / CL_WIN; E[kk] = 0;
+            if (val === 0) continue;
+            const g = (s * F + kk) * 32;
+            for (let j = 0; j < 32; j++) P[j * nfr + m] += sign * G[g + j] * val;
+          }
+        } else {
+          let acc = 0;
+          for (let w = 0; w < CL_WIN; w++) { const t = m * CL_HOP + w - t0; if (t < 0 || t >= n) continue; const v = e[eOff + t]; acc += v * v * cm.w2[w]; }
+          const val = acc / CL_WIN, g = s * F * 32;
+          for (let j = 0; j < 32; j++) P[j * nfr + m] += sign * G[g + j] * val;
+        }
+      }
+    };
+    const tmpA = new Float64Array(32 * nfr), tmpB = new Float64Array(32 * nfr);
+    const power = () => {
+      const P = new Float64Array(32 * nfr);
+      for (let j = 0; j < 32; j++) for (let m = 0; m < nfr; m++) P[j * nfr + m] = cm.qfloor[j] * cm.mw2;
+      let tot = cm.qfloorTot;
+      for (let s = 0; s < S; s++) {
+        // (as tools/spectral.py: the sound's contribution summed over its ticks first, then added)
+        tmpA.fill(0); addContrib(tmpA, s, 0, nfr - 1, env, s * nms, 0, nms, 1);
+        for (let i = 0; i < 32 * nfr; i++) P[i] += tmpA[i];
+        let acc = 0;
+        for (let t = 0; t < nms; t++) { const v = env[s * nms + t]; acc += v * v * Gt[s * F + Math.min(Math.floor(t / CL_TICK), F - 1)]; }
+        tot += acc / dur;
+      }
+      return { P, tot };
+    };
+    const framesOf = (ta, tb2) => [Math.max(0, Math.ceil((ta - CL_WIN + 1) / CL_HOP)), Math.min(nfr - 1, Math.floor((tb2 - 1) / CL_HOP))];
+    const hist = [], changes = [], u05 = new Float64Array(CL_TICK); for (let u = 0; u < CL_TICK; u++) u05[u] = u + 0.5;
+    const fl = new Int32Array(nfr), Rq = new Int32Array(32 * nfr), Dcur = new Int32Array(32 * nfr);
+    const seg = new Float64Array(2 * CL_TICK), old = new Float64Array(32 * nfr);
+    let Dc = new Int32Array(0);
+    const objective = opts.objective ?? CL_OBJECTIVE, wf = W.map((w) => w / 1000);
+    for (let sw = 0; sw <= sweeps; sw++) {
+      const { P, tot } = power(), s2 = px / tot;
+      for (let m = 0; m < nfr; m++) {
+        let mx = -Infinity;
+        for (let j = 0; j < 32; j++) { mx = Math.max(mx, Rq0[j * nfr + m], Math.max(qdb(P[j * nfr + m], s2), -CL_FLOOR * CL_Q)); }
+        fl[m] = mx - CL_FLOOR * CL_Q;
+        for (let j = 0; j < 32; j++) { Rq[j * nfr + m] = Math.max(Rq0[j * nfr + m], fl[m]); Dcur[j * nfr + m] = Math.max(Math.max(qdb(P[j * nfr + m], s2), -CL_FLOOR * CL_Q), fl[m]); }
+      }
+      let lowq = Infinity; for (let i = 0; i < 32 * nfr; i++) lowq = Math.min(lowq, Rq[i], Dcur[i]);
+      if (objective === 'nsim') {
+        // (the whole map, edges replicated: its mean NSIM)
+        const rr = new Float64Array(34 * (nfr + 2)), dd = new Float64Array(34 * (nfr + 2));
+        for (let i = 0; i < 34; i++) for (let j = 0; j < nfr + 2; j++) {
+          const a = Math.min(31, Math.max(0, i - 1)) * nfr + Math.min(nfr - 1, Math.max(0, j - 1));
+          rr[i * (nfr + 2) + j] = (Rq[a] - lowq) / CL_Q; dd[i * (nfr + 2) + j] = (Dcur[a] - lowq) / CL_Q;
+        }
+        hist.push(nsimValidSum(rr, dd, 34, nfr + 2, new Array(32).fill(1)) / (32 * nfr));
+      } else {
+        let L0 = 0;
+        for (let j = 0; j < 32; j++) for (let m = 0; m < nfr; m++) { const dd = Dcur[j * nfr + m] - Rq[j * nfr + m]; L0 += W[j] * dd * dd; }
+        hist.push(L0 / (1000 * CL_Q * CL_Q * 32 * nfr));
+      }
+      if (sw === sweeps) break;
+      let changed = 0;
+      for (let k = 0; k < F - 1; k++) {
+        if ((k & 15) === 15) await progress((sw + k / F) / sweeps);
+        const [m0, m1] = framesOf(k * CL_TICK, (k + 2) * CL_TICK);
+        if (m1 < m0) continue;
+        const nf = m1 - m0 + 1;
+        for (let s = 0; s < S; s++) {
+          const c0 = codeOf(s, k + 1);
+          if (c0 <= 0) continue;
+          const isv = s < Nc, hi = isv ? 127 : 255, steps = isv ? CL_VSTEPS : CL_NSTEPS;
+          const codes = [...new Set(steps.map((d) => Math.min(hi, Math.max(1, c0 + d))))].sort((p, q) => p - q);
+          const cur = tStart[s * (F + 1) + k], lastL = tLast[s * (F + 1) + k];
+          let L1, A1, d1;
+          if (k + 1 === F - 1) { L1 = CL_SILENT; A1 = floor[s]; d1 = 50; } else { [L1, A1] = levelOf(s, codeOf(s, k + 2)); d1 = fadeOf(s, k + 1); }
+          // the frames' power without this sound over ticks k and k+1
+          // (this sound's current power in those frames over ticks k and k+1: the candidates' own formula, as tools/spectral.py)
+          const eb = s * nms + k * CL_TICK;
+          for (let m = m0; m <= m1; m++) {
+            let ek = 0, ek1 = 0, ea = 0;
+            for (let w = 0; w < CL_WIN; w++) {
+              const t = m * CL_HOP + w - k * CL_TICK; if (t < 0 || t >= 2 * CL_TICK) continue;
+              const v = env[eb + t] * env[eb + t] * (cm.w2[w] / CL_WIN);
+              if (t < CL_TICK) ek += v; else ek1 += v;
+              ea += v;
+            }
+            const gk = (s * F + (isv ? k : 0)) * 32, gk1 = (s * F + (isv ? k + 1 : 0)) * 32;
+            for (let j = 0; j < 32; j++) old[j * nfr + m] = isv ? ek * G[gk + j] + ek1 * G[gk1 + j] : ea * G[gk + j];
+          }
+          let best = -1, bestL = Infinity, bestC = 0, bestF = 0;
+          const fc0 = isv ? vcod[k * Nc + s] : ncod[k * M + s - Nc];
+          const nC = codes.length * 4 + 1;
+          if (Dc.length < nC * 32 * nf) Dc = new Int32Array(nC * 32 * nf * 2);
+          for (let ci = 0; ci < nC; ci++) {
+            const c = ci < nC - 1 ? codes[ci >> 2] : 0, fcode = ci < nC - 1 ? ci & 3 : 3;
+            const [Lk, Ak] = levelOf(s, c), sent0 = !(Lk / lastL < dsend && lastL / Lk < dsend), dk = fades[fcode];
+            for (let u = 0; u < CL_TICK; u++) seg[u] = sent0 ? cur + (Ak - cur) * Math.min(1, u05[u] / dk) : cur;
+            const end0 = sent0 ? Ak : cur, last0 = sent0 ? f32(Lk) : lastL, sent1 = !(L1 / last0 < dsend && last0 / L1 < dsend);
+            for (let u = 0; u < CL_TICK; u++) seg[CL_TICK + u] = sent1 ? end0 + (A1 - end0) * Math.min(1, u05[u] / d1) : end0;
+            for (let m = m0; m <= m1; m++) {
+              let ek = 0, ek1 = 0, ea = 0;
+              for (let w = 0; w < CL_WIN; w++) {
+                const t = m * CL_HOP + w - k * CL_TICK; if (t < 0 || t >= 2 * CL_TICK) continue;
+                const v = seg[t] * seg[t] * (cm.w2[w] / CL_WIN);
+                if (t < CL_TICK) ek += v; else ek1 += v;
+                ea += v;
+              }
+              const gk = (s * F + (isv ? k : 0)) * 32, gk1 = (s * F + (isv ? k + 1 : 0)) * 32;
+              for (let j = 0; j < 32; j++) {
+                const con = isv ? ek * G[gk + j] + ek1 * G[gk1 + j] : ea * G[gk + j];
+                Dc[(ci * 32 + j) * nf + (m - m0)] = Math.max(Math.max(qdb((P[j * nfr + m] - old[j * nfr + m]) + con, s2), -CL_FLOOR * CL_Q), fl[m]);
+              }
+            }
+          }
+          let Ln = 0;
+          if (objective === 'nsim') {
+            // ViSQOL's similarity over the bands a candidate can change (and their neighbours) and the frames whose neighbourhoods
+            // reach the changed ones (tools/spectral.py)
+            let jl = -1, jh = -1;
+            for (let j = 0; j < 32; j++) {
+              let ch = false;
+              for (let ci = 0; ci < nC && !ch; ci++) for (let m = 0; m < nf; m++) if (Dc[(ci * 32 + j) * nf + m] !== Dcur[j * nfr + m0 + m]) { ch = true; break; }
+              if (ch) { if (jl < 0) jl = j; jh = j; }
+            }
+            if (jl < 0) continue;
+            const ja = Math.max(0, jl - 1), jb = Math.min(31, jh + 1), ea = Math.max(0, m0 - 1), eb = Math.min(nfr - 1, m1 + 1);
+            const nr = jb - ja + 3, ncol = eb - ea + 3;
+            const rows = [], colsI = [];
+            for (let i = ja - 1; i <= jb + 1; i++) rows.push(Math.min(31, Math.max(0, i)));
+            for (let i = ea - 1; i <= eb + 1; i++) colsI.push(Math.min(nfr - 1, Math.max(0, i)));
+            const rr = new Float64Array(nr * ncol), dn = new Float64Array(nr * ncol), dc = new Float64Array(nr * ncol), ws = [];
+            for (let i = ja; i <= jb; i++) ws.push(wf[i]);
+            for (let i = 0; i < nr; i++) for (let j = 0; j < ncol; j++) {
+              rr[i * ncol + j] = (Rq[rows[i] * nfr + colsI[j]] - lowq) / CL_Q; dn[i * ncol + j] = (Dcur[rows[i] * nfr + colsI[j]] - lowq) / CL_Q;
+            }
+            const ref = nsimRef(rr, nr, ncol);
+            Ln = -nsimSum(ref, dn, ws);
+            for (let ci = 0; ci < nC; ci++) {
+              for (let i = 0; i < nr; i++) for (let j = 0; j < ncol; j++) {
+                const col = colsI[j];
+                dc[i * ncol + j] = col >= m0 && col <= m1 ? (Dc[(ci * 32 + rows[i]) * nf + (col - m0)] - lowq) / CL_Q : dn[i * ncol + j];
+              }
+              const Lc = -nsimSum(ref, dc, ws);
+              if (Lc < bestL) { bestL = Lc; best = ci; bestC = ci < nC - 1 ? codes[ci >> 2] : 0; bestF = ci < nC - 1 ? ci & 3 : 3; }
+            }
+          } else {
+            for (let m = m0; m <= m1; m++) for (let j = 0; j < 32; j++) { const dd = Dcur[j * nfr + m] - Rq[j * nfr + m]; Ln += W[j] * dd * dd; }
+            for (let ci = 0; ci < nC; ci++) {
+              let Lc = 0;
+              for (let m = m0; m <= m1; m++) for (let j = 0; j < 32; j++) { const dd = Dc[(ci * 32 + j) * nf + (m - m0)] - Rq[j * nfr + m]; Lc += W[j] * dd * dd; }
+              if (Lc < bestL) { bestL = Lc; best = ci; bestC = ci < nC - 1 ? codes[ci >> 2] : 0; bestF = ci < nC - 1 ? ci & 3 : 3; }
+            }
+          }
+          if (best >= 0 && bestL < Ln && (bestC !== c0 || bestF !== fc0)) {
+            if (isv) { amc[(k + 1) * Nc + s] = bestC; vcod[k * Nc + s] = bestF; } else { nzc[(k + 1) * M + s - Nc] = bestC; ncod[k * M + s - Nc] = bestF; }
+            const ta = k * CL_TICK, oldEnv = env.slice(s * nms + ta, s * nms + nms);
+            const tEnd = run(s, k, cur, lastL, true);
+            const [n0, n1] = framesOf(ta, tEnd);
+            if (n1 >= n0) {
+              // P += new - old over those frames (as tools/spectral.py)
+              for (let j = 0; j < 32; j++) for (let m = n0; m <= n1; m++) { tmpA[j * nfr + m] = 0; tmpB[j * nfr + m] = 0; }
+              addContrib(tmpA, s, n0, n1, env, s * nms + ta, ta, tEnd - ta, 1);
+              addContrib(tmpB, s, n0, n1, oldEnv, 0, ta, tEnd - ta, 1);
+              for (let j = 0; j < 32; j++) for (let m = n0; m <= n1; m++) {
+                P[j * nfr + m] += tmpA[j * nfr + m] - tmpB[j * nfr + m];
+                Dcur[j * nfr + m] = Math.max(Math.max(qdb(P[j * nfr + m], s2), -CL_FLOOR * CL_Q), fl[m]);
+              }
+            }
+            changed++;
+          }
+        }
+      }
+      changes.push(changed);
+    }
+    for (let k = 0; k < F; k++) {
+      for (let v = 0; v < Nc; v++) { const c = amc[k * Nc + v]; am[k * N + v] = c ? ampVal(c) / gain : 0; vcodes[k * N + v] = vcod[k * Nc + v]; }
+      for (let b = 0; b < M; b++) { const c = nzc[k * M + b]; nz[k * M + b] = c ? nzVal(c) / gain : 0; ncodes[k * M + b] = ncod[k * M + b]; }
+    }
+    return { loss: hist, changes };
   }
 
   // ---------------------------------------------------------------- encode / decode (identical layout to the Python)
@@ -831,6 +1238,6 @@
       dependencies: [{ module_name: '@minecraft/server', version: '2.11.0' }] };
   }
 
-  const api = { trackPartials, chooseTracks, nsimLite, nsimSpec, checkNoise, checkRenderSines, songPackScript, songPackManifest, SR, FPS, HOP, BASE, NOISE_EDGES, BURST_BANDS, SUB, FADE_SMOOTH, FADE_ATTACK, SILENT, convert, encode, decode, schedule, onsets, fft, toB64, fromB64 };
+  const api = { refineClient, clientModel, targetBands, gtH2, trackPartials, chooseTracks, nsimLite, nsimSpec, checkNoise, checkRenderSines, songPackScript, songPackManifest, SR, FPS, HOP, BASE, NOISE_EDGES, BURST_BANDS, SUB, FADE_SMOOTH, FADE_ATTACK, SILENT, convert, encode, decode, schedule, onsets, fft, toB64, fromB64 };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.SpectralCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

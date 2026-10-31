@@ -45,3 +45,13 @@ emu-validation-2026-10-31.json: correlation 0.87–0.97 over 13 songs × 4 ways)
   +6 dB: median +0.022, mean +0.030, 7 songs up and 2 down against the 8 bands (demo +0.16, speech_en +0.07). It needs a second
   set of noise loops in the RP (songs made with 8 bands must keep playing) and the converter's default edges in py and js: the
   next candidate, not done
+- the converter's analysis by synthesis through the client model (tools/spectral.py refine_client, web/core.js refineClient;
+  2026-10-31, third session): the song as the phone plays it (its 24 voices and the noise bands, +6 dB, the engine's send rules,
+  the 24 kHz mix with its folding, x2 linear, the 16-bit floor) measured in ViSQOL's own 32 gammatone bands against the original;
+  each tick's level code and fade of every sound chosen in turn, two sweeps. results/refine.jsonl (10 songs, play as the phone's
+  default, clip 2.0): base (the final default of run 7) median 2.939 -> nsim_uni (ViSQOL's NSIM over the bands a change reaches,
+  every band the same weight: the new default) 3.217, 9 of 10 songs up; nsim_svr (the bands weighted as ViSQOL's MOS mapping
+  leans on them, refine_weights=svr) 3.252, 10 of 10. results/refine_proto.jsonl: the first prototype (squared dB difference
+  2.939 -> 3.103, all 10 up; NSIM with the svr weights 3.359). What the mapping leans on: the slope of ViSQOL's SVR per band, on
+  run 7's recordings — the 9 bands from 6.7 kHz up carry almost all of it (0.28-0.52 MOS per unit of NSIM), the 23 below ~0.
+  What was lost was NSIM's structure (the bands' fine movement over 60 ms), not its intensity (the levels)

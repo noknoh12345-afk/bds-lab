@@ -31,14 +31,17 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'h': 'improved_loud', 'k': 'improved_loud_events', 'q': 'ceiling_loud', 'e': 'ceiling_loud_events',
         # the fades the converter fitted tick by tick (nz_fade, v_fade) at the files' level; the final default (run 7: the phone's
         # defaults, +6 dB by setVolume) and the shipped version in the same run (s; the ceiling at volume 2 is q there)
-        'f': 'improved_fades', 'w': 'final', 's': 'shipped_run7', 'u': 'final_loud10'}
+        'f': 'improved_fades', 'w': 'final', 's': 'shipped_run7', 'u': 'final_loud10',
+        # run 8: the converter's analysis by synthesis through the client model (tools/spectral.py refine_client) at the phone's
+        # defaults (+6 dB), at +10 dB, and with the bands weighted as ViSQOL's MOS mapping leans on them (refine_weights=svr)
+        't': 'refined', 'p': 'refined_loud10', 'o': 'refined_svr'}
 
 
 def songs(res):
     """per song: the game's and the ceiling's ViSQOL against the original, the gap, and the emulator against the recording"""
     rows = {}
     for rec, by in res.items():
-        m = re.match(r'([gclvmnrabxyzhkqefwsu])_(.+)$', rec)
+        m = re.match(r'([gclvmnrabxyzhkqefwsutpo])_(.+)$', rec)
         if not m:
             continue
         kind, sid = m.groups()
