@@ -493,3 +493,36 @@
 {"song": "drums_round", "var": "orig_l6c17", "v": 3.6528}
 {"song": "rock_big", "var": "orig_l6c17", "v": 3.9881}
 {"song": "edm_detection", "var": "orig_l6c17", "v": 3.8868}
+{"song": "orchestra_five_armies", "var": "orig_l6c17", "v": 3.314}
+{"song": "edm_detection", "var": "f2_l10c17", "v": 3.1602, "cpt": 42.6, "voices": 24}
+{"song": "orchestra_five_armies", "var": "f2_l10c17", "v": 2.9994, "cpt": 36.7, "voices": 24}
+{"song": "funk_funkorama", "var": "orig_l6c17", "v": 2.7591}
+{"song": "speech_ja_soseki", "var": "orig_l6c17", "v": 3.304}
+{"song": "funk_funkorama", "var": "f2_l10c17", "v": 2.0337, "cpt": 39.9, "voices": 24}
+{"song": "speech_ja_soseki", "var": "f2_l10c17", "v": 3.0015, "cpt": 31.2, "voices": 24}
+{"song": "speech_en_wordsworth", "var": "orig_l6c17", "v": 3.5608}
+{"song": "demo_selfmade", "var": "orig_l6c17", "v": 3.5485}
+{"song": "piano_gymnopedie", "var": "orig_l0", "v": 1.7662}
+{"song": "demo_selfmade", "var": "f2_l10c17", "v": 2.9943, "cpt": 27, "voices": 24}
+{"song": "speech_en_wordsworth", "var": "f2_l10c17", "v": 3.0399, "cpt": 33.1, "voices": 24}
+{"song": "piano_chopin_op66", "var": "orig_l0", "v": 2.426}
+{"song": "drums_round", "var": "orig_l0", "v": 2.3478}
+{"song": "rock_big", "var": "orig_l0", "v": 3.9871}
+{"song": "piano_chopin_op66", "var": "f2_l12c17", "v": 2.3276, "cpt": 29.8, "voices": 24}
+{"song": "piano_gymnopedie", "var": "f2_l12c17", "v": 3.3599, "cpt": 22, "voices": 24}
+{"song": "edm_detection", "var": "orig_l0", "v": 3.896}
+{"song": "orchestra_five_armies", "var": "orig_l0", "v": 3.2865}
+{"song": "drums_round", "var": "f2_l12c17", "v": 2.8891, "cpt": 38.5, "voices": 24}
+{"song": "rock_big", "var": "f2_l12c17", "v": 3.3266, "cpt": 43, "voices": 24}
+{"song": "funk_funkorama", "var": "orig_l0", "v": 2.5978}
+{"song": "speech_ja_soseki", "var": "orig_l0", "v": 2.9912}
+{"song": "speech_en_wordsworth", "var": "orig_l0", "v": 3.2263}
+{"song": "demo_selfmade", "var": "orig_l0", "v": 3.2342}
+{"song": "edm_detection", "var": "f2_l12c17", "v": 3.1621, "cpt": 42.6, "voices": 24}
+{"song": "orchestra_five_armies", "var": "f2_l12c17", "v": 2.9967, "cpt": 36.6, "voices": 24}
+{"song": "funk_funkorama", "var": "f2_l12c17", "v": 2.0463, "cpt": 39.9, "voices": 24}
+{"song": "speech_ja_soseki", "var": "f2_l12c17", "v": 2.9961, "cpt": 31.2, "voices": 24}
+{"song": "demo_selfmade", "var": "f2_l12c17", "v": 2.9757, "cpt": 26.9, "voices": 24}
+{"song": "speech_en_wordsworth", "var": "f2_l12c17", "v": 3.2171, "cpt": 33.1, "voices": 24}
+{"song": "piano_gymnopedie", "var": "f2_l10c20", "v": 3.4697, "cpt": 22.1, "voices": 24}
+{"song": "piano_chopin_op66", "var": "f2_l10c20", "v": 2.42, "cpt": 29.9, "voices": 24}

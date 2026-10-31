@@ -1,0 +1,82 @@
+{
+ "run": "41147544874",
+ "program": "loud",
+ "source": "the WAV in the run (tools/rig/analyze.py a_loud: the 1 kHz level of each setVolume step, from its [spectral rig] line)",
+ "client": "redroid Android 14, Minecraft 1.26.60.4 (Play, unmodified), BDS 1.26.60.6",
+ "loud": {
+  "set_volume": [
+   {
+    "volume": 0.125,
+    "db": 0,
+    "expected_db": 0
+   },
+   {
+    "volume": 0.25,
+    "db": 6.02,
+    "expected_db": 6.02
+   },
+   {
+    "volume": 0.5,
+    "db": 12.05,
+    "expected_db": 12.04
+   },
+   {
+    "volume": 1,
+    "db": 18.06,
+    "expected_db": 18.06
+   },
+   {
+    "volume": 2,
+    "db": 24.08,
+    "expected_db": 24.08
+   },
+   {
+    "volume": 4,
+    "db": 26.56,
+    "expected_db": 30.1
+   },
+   {
+    "volume": 8,
+    "db": 26.93,
+    "expected_db": 36.12
+   }
+  ],
+  "follows_up_to": 2,
+  "definition_volume_4": [
+   {
+    "volume": 0.125,
+    "db_vs_osc": 12.03
+   },
+   {
+    "volume": 0.25,
+    "db_vs_osc": 12.04
+   },
+   {
+    "volume": 0.5,
+    "db_vs_osc": 12.04
+   },
+   {
+    "volume": 1,
+    "db_vs_osc": 8.51
+   }
+  ],
+  "peak_dbfs": -27.7
+ },
+ "grid": {
+  "offset": 80256.68356702533,
+  "rate": 2401.9732089814433,
+  "clicks": 6,
+  "of": 10,
+  "late_clicks": [],
+  "click_jitter_ms": 5.074469111916899,
+  "click_resid_ms_max": 7.196329064059682,
+  "tick_ms": 50.041108520446734
+ },
+ "reading": {
+  "set_volume": "exact up to 2 (+24.08 dB over 0.125); at 4 +26.56 (30.10 expected), at 8 +26.93 (36.12)",
+  "definition_volume_4": "the event whose definition says volume 4: +12.04 dB at setVolume 0.125-0.5, +8.51 at 1 (the product 4 shrinks the same 3.5 dB as setVolume 4)",
+  "model": "a hard clip of the mix at 2.0 file units: the 0.91 sine (spectral.osc) loses -3.59 / -9.25 dB of its fundamental at 4 / 8 (measured -3.54 / -9.19); 1.8: -4.41 / -10.15; tanh 2.0: -4.49 / -9.44",
+  "peak_dbfs": "the loudest step's 1 kHz amplitude, not the waveform's peak",
+  "used": "the phone's default level (src/main.ts CLIENTS) and tools/exp/exp.py path24(clip=)"
+ }
+}

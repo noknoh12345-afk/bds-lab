@@ -171,7 +171,10 @@ const LOUD_EVENT_DB = 20 * Math.log10(4);          // the _l events' definition 
 // level: how much louder than the files the headphones play by default (dB, by setVolume). The phone plays every sound
 // 32.5 dB under its file into 16 bits (most songs' floor is that quantisation), and clips the mix at about 2 file units
 // (run 41147544874's calib loud: a sine of 0.91 at setVolume 2 exact, at 4 and 8 a hard clip at 2.0; the mixer calib's 16
-// sines fit 1.7): +6 dB doubles every level and keeps the loudest moments of the test songs under it
+// sines fit 1.7): +6 dB doubles every level and keeps the test songs' loudest moments under it. Through the client model with
+// that clip (tools/exp, 10 songs, emulated): +6 dB raised the median ViSQOL 2.59 -> 2.94 (quiet songs most: the 16-bit floor);
+// +8 / +10 dB scored a little higher (2.98 / 3.00) but clipped the loudest songs' peaks (clip distortion -29 / -21 dB on the
+// speech, under -44 dB at +6). /spectral:level sets more
 interface Client { sounds: number; mixHz: number; fold: boolean; limit: boolean; drums?: boolean; level?: number; }
 const CLIENTS: Partial<Record<string, Client>> = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false, drums: false, level: 6 } };
 function clientOf(p: Player): Client | undefined {

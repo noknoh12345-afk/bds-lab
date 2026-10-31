@@ -5,13 +5,15 @@
  "# 7 回目（tools/exp/make_app.py で作成）: 出荷版と最終の既定を同じ run で。",
  "#   s_ = 出荷版の変換（residual all・フェードなし・形式 1）を電話の 24 声・打撃音 1 tick 先・レベル 0 で 13 曲",
  "#   w_ = 最終の既定（residual voiced・tick ごとに合わせたフェード・形式 2、電話の既定: 24 声・打撃音なし・+6 dB を setVolume で）13 曲",
- "#   f_ = w と同じ曲データをレベル 0 で 6 曲（+6 dB の分を分けて見る。5 回目の b_ と比べるとフェードの分）",
+ "#   u_ = w と同じで +10 dB（エミュレーターでは +6 → +10 dB でドラム 1.95 → 2.83 ほか。ただしクリップの歪みが −21〜−44 dB に）6 曲",
+ "#   f_ = w と同じ曲データをレベル 0 で 4 曲（+6 dB の分を分けて見る。5 回目の b_ と比べるとフェードの分）",
  "#   q_ = 天井を playSound の音量 2（+6 dB: w_ と同じ大きさ。ミックスは約 2 でクリップする）13 曲。音量 1 の天井 c_ は前の run の録音"
 ],
 "arms": [
  {"pre": "s", "suffix": "_a", "conv": {"residual": "all", "salience": "a", "nz_fade": "false", "v_fade": "false"}, "cmds": ["spectral:voices 24", "spectral:drums ahead", "spectral:engine 0 false 0 0", "spectral:level 0"], "export": 160},
  {"pre": "w", "suffix": "", "conv": {}, "cmds": ["spectral:voices 24", "spectral:drums off", "spectral:engine 0 false 0 0", "spectral:level 6 volume"], "export": 160},
- {"pre": "f", "suffix": "", "conv": {}, "cmds": ["spectral:level 0"], "songs": ["rock_big", "edm_detection", "funk_funkorama", "speech_en_wordsworth", "orchestra_five_armies", "demo_selfmade"], "export": 128}
+ {"pre": "u", "suffix": "", "conv": {}, "cmds": ["spectral:level 10 volume"], "songs": ["piano_gymnopedie", "piano_chopin_op66", "drums_round", "funk_funkorama", "speech_en_wordsworth", "demo_selfmade"], "export": 128},
+ {"pre": "f", "suffix": "", "conv": {}, "cmds": ["spectral:level 0"], "songs": ["rock_big", "edm_detection", "speech_en_wordsworth", "demo_selfmade"], "export": 128}
 ],
 "ceiling": {"arms": [
  {"pre": "q", "args": "2", "export": 160}

@@ -24,7 +24,7 @@ REFS = {'c': ('ceil', '天井（実機で元の音を鳴らした録音）'), 'g
         'a': ('ship', '出荷版（打撃音を 1 tick 先、実機）'), 'n': ('ship4', '出荷版（4 回目の run、実機）'), 'b': ('impr', '改良版（residual voiced・打撃音なし、実機）'),
         'f': ('fades', '最終の変換をレベル 0 で（tick ごとのフェード、実機）'), 'h': ('loud', '改良版＋フェード＋12 dB（実機）'),
         'q': ('ceil6', '天井を 6 dB 大きく（音量 2、最終の既定と同じ大きさ、実機）'), 's': ('ship7', '出荷版（7 回目の run、実機）'),
-        'w': ('final', '最終の既定（実機）')}
+        'u': ('loud10', '最終の既定を +10 dB で（実機）'), 'w': ('final', '最終の既定（実機）')}
 # (B's prefix → its key in measured/redroid-<run>.json and how the page names it)
 BWAYS = {'g': ('game', '前の既定（48 声）'), 'm': ('mobile', '電話の既定（24 声、打撃音は声と同じ tick）'),
          'n': ('mobile_ahead', '出荷する版（電話の既定 24 声、打撃音を 1 tick 先に送る）'), 'b': ('improved', '改良版（変換器 residual voiced、打撃音なし、24 声）'),
