@@ -55,7 +55,8 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 5. **版 1.1.0**（同じ UUID、前の版の上に更新として入る）。説明文にライブと 3D。follow / near は**聞く人それぞれの 3D の音**
    （player.playSound に location）。ライブの道: ひと続き（4 tick 何も来なかったあと）の最初のフレームから鳴らす、番号 0 にメタがあれば
    新しいストリーム、黙っている声の音程は新しいフレームから。橋渡し: 120 ms 声が来なければ無音 2 フレーム、文の間は同じストリーム、
-   チャンネルを出たら終わり、声の接続が切れて戻らなければエラーで終わる。試験 147/147（follow の節は B・C・D の 3 人が聞き、離れると減る）
+   チャンネルを出たら終わり、声の接続が切れて戻らなければエラーで終わる。試験 149/149（follow の節は B・C・D の 3 人が聞き、離れると減る。D を追うストリームは D が抜けると誰にも聞こえない）。
+   聞く人の音を作る途中でその人が離れても音を残さない、/spectral:live は流れごとに 1 行
 6. **9 回目の実機**（run 41187515049、実測）: 新しい既定 d_ は 8 回目の既定 t_ より **13 曲中 11 曲で上、差の中央値 +0.09・平均 +0.14**
    （同じ run の中）。ライブの道 2.90（曲として 2.91）、3D の左右 lr_db +37.3 / −46.1 dB、ライブの変換は前もっての変換より 0.09–0.18 低い。
    表: SPEC.md。聴き比べのページ（claude.ai の「Spectral Player 9 回目の聴き比べ」: tools/abx/make_compare_real.py --a t --b d
@@ -70,7 +71,7 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 ## いまの状態
 
 - ブランチ addon/spectral（最後に push したコミットは git log で）。`node lab.mjs go`（ローカルの BDS 1.26.61.1: lab の api が取ってきたもの。
-  zip はリポジトリの外）: DONE（test 147/147, qa clean）
+  zip はリポジトリの外）: DONE（test 149/149, qa clean）
 - 9 回目（run 41187515049、実測）: 新しい既定 d_ の中央値 **2.91**、天井（1–2 回目の run、目安）から 0.3 以内 **9/13**。同じデータの t_ が
   8 回目 3.04（デモ）→ 9 回目 2.36: **run をまたぐと同じデータで 0.7 動く**。比べるのは同じ run の中だけ（表: SPEC.md）
 - verify.yml は addon/spectral で前から tests/scratch-offline.mjs が落ちている（このユニットと関係なく、手元でも同じ。main には
