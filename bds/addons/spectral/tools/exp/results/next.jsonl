@@ -526,3 +526,53 @@
 {"song": "speech_en_wordsworth", "var": "f2_l12c17", "v": 3.2171, "cpt": 33.1, "voices": 24}
 {"song": "piano_gymnopedie", "var": "f2_l10c20", "v": 3.4697, "cpt": 22.1, "voices": 24}
 {"song": "piano_chopin_op66", "var": "f2_l10c20", "v": 2.42, "cpt": 29.9, "voices": 24}
+{"song": "rock_big", "var": "f2_l10c20", "v": 3.3241, "cpt": 43, "voices": 24}
+{"song": "drums_round", "var": "f2_l10c20", "v": 2.8571, "cpt": 38.5, "voices": 24}
+{"song": "edm_detection", "var": "f2_l10c20", "v": 3.1607, "cpt": 42.6, "voices": 24}
+{"song": "orchestra_five_armies", "var": "f2_l10c20", "v": 2.9989, "cpt": 36.7, "voices": 24}
+{"song": "speech_ja_soseki", "var": "f2_l10c20", "v": 2.9975, "cpt": 31.2, "voices": 24}
+{"song": "funk_funkorama", "var": "f2_l10c20", "v": 2.0332, "cpt": 39.9, "voices": 24}
+{"song": "demo_selfmade", "var": "f2_l10c20", "v": 3.0024, "cpt": 27, "voices": 24}
+{"song": "speech_en_wordsworth", "var": "f2_l10c20", "v": 3.0816, "cpt": 33.1, "voices": 24}
+{"song": "piano_gymnopedie", "var": "orig_l10c17", "v": 4.1554}
+{"song": "piano_chopin_op66", "var": "orig_l10c17", "v": 3.3553}
+{"song": "drums_round", "var": "orig_l10c17", "v": 3.8871}
+{"song": "rock_big", "var": "orig_l10c17", "v": 3.9761}
+{"song": "edm_detection", "var": "orig_l10c17", "v": 3.8323}
+{"song": "orchestra_five_armies", "var": "orig_l10c17", "v": 3.2863}
+{"song": "funk_funkorama", "var": "orig_l10c17", "v": 2.7773}
+{"song": "speech_ja_soseki", "var": "orig_l10c17", "v": 3.4642}
+{"song": "speech_en_wordsworth", "var": "orig_l10c17", "v": 3.8393}
+{"song": "demo_selfmade", "var": "orig_l10c17", "v": 3.895}
+{"song": "piano_gymnopedie", "var": "f3_l12c20", "v": 2.9051, "cpt": 22.1, "voices": 24}
+{"song": "piano_chopin_op66", "var": "f3_l12c20", "v": 2.2037, "cpt": 29.9, "voices": 24}
+{"song": "rock_big", "var": "f3_l12c20", "v": 3.3214, "cpt": 43, "voices": 24}
+{"song": "drums_round", "var": "f3_l12c20", "v": 1.9893, "cpt": 38.2, "voices": 24}
+{"song": "edm_detection", "var": "f3_l12c20", "v": 3.1106, "cpt": 42.6, "voices": 24}
+{"song": "orchestra_five_armies", "var": "f3_l12c20", "v": 2.9235, "cpt": 36.6, "voices": 24}
+{"song": "speech_ja_soseki", "var": "f3_l12c20", "v": 2.8963, "cpt": 31, "voices": 24}
+{"song": "funk_funkorama", "var": "f3_l12c20", "v": 1.9805, "cpt": 39.9, "voices": 24}
+{"song": "speech_en_wordsworth", "var": "f3_l12c20", "v": 3.0513, "cpt": 33.1, "voices": 24}
+{"song": "demo_selfmade", "var": "f3_l12c20", "v": 2.909, "cpt": 27, "voices": 24}
+{"song": "piano_gymnopedie", "var": "f3_l10c20", "v": 3.038, "cpt": 22.1, "voices": 24}
+{"song": "piano_chopin_op66", "var": "f3_l10c20", "v": 2.2081, "cpt": 29.8, "voices": 24}
+{"song": "drums_round", "var": "f3_l10c20", "v": 1.9476, "cpt": 38.2, "voices": 24}
+{"song": "rock_big", "var": "f3_l10c20", "v": 3.3256, "cpt": 43, "voices": 24}
+{"song": "edm_detection", "var": "f3_l10c20", "v": 3.1151, "cpt": 42.6, "voices": 24}
+{"song": "orchestra_five_armies", "var": "f3_l10c20", "v": 2.9413, "cpt": 36.7, "voices": 24}
+{"song": "funk_funkorama", "var": "f3_l10c20", "v": 1.973, "cpt": 39.9, "voices": 24}
+{"song": "speech_ja_soseki", "var": "f3_l10c20", "v": 2.929, "cpt": 31, "voices": 24}
+{"song": "speech_en_wordsworth", "var": "f3_l10c20", "v": 3.0072, "cpt": 33.1, "voices": 24}
+{"song": "demo_selfmade", "var": "f3_l10c20", "v": 2.9375, "cpt": 27, "voices": 24}
+{"song": "piano_gymnopedie", "var": "f3_l15c20", "v": 2.8696, "cpt": 22.1, "voices": 24}
+{"song": "piano_chopin_op66", "var": "f3_l15c20", "v": 2.2089, "cpt": 29.9, "voices": 24}
+{"song": "piano_chopin_op66", "var": "lo10f_l6c20", "v": 2.2473, "cpt": 28.5, "voices": 22}
+{"song": "piano_gymnopedie", "var": "lo10f_l6c20", "v": 3.4353, "cpt": 20.2, "voices": 22}
+{"song": "drums_round", "var": "lo10f_l6c20", "v": 1.9396, "cpt": 36.8, "voices": 22}
+{"song": "rock_big", "var": "lo10f_l6c20", "v": 3.351, "cpt": 40.3, "voices": 22}
+{"song": "edm_detection", "var": "lo10f_l6c20", "v": 3.173, "cpt": 41.6, "voices": 22}
+{"song": "orchestra_five_armies", "var": "lo10f_l6c20", "v": 2.9876, "cpt": 33.9, "voices": 22}
+{"song": "funk_funkorama", "var": "lo10f_l6c20", "v": 1.918, "cpt": 38, "voices": 22}
+{"song": "speech_ja_soseki", "var": "lo10f_l6c20", "v": 3.016, "cpt": 31, "voices": 22}
+{"song": "speech_en_wordsworth", "var": "lo10f_l6c20", "v": 2.9928, "cpt": 32.7, "voices": 22}
+{"song": "demo_selfmade", "var": "lo10f_l6c20", "v": 2.9212, "cpt": 23.7, "voices": 22}

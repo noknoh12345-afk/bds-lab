@@ -37,28 +37,19 @@ def load(path):
     return np.frombuffer(raw, np.float32).astype(np.float64).reshape(-1, 2)
 
 
-def emu_render(sid, mode='quality'):
-    """the emulator's render with the current spec.json (cached by the spec's own hash), and the bundle's commands per tick"""
-    spec = open(E.SPEC_PATH, 'rb').read() if os.path.exists(E.SPEC_PATH) else b''
-    key = hashlib.sha256(spec).hexdigest()[:10]
-    wav, info = os.path.join(MA.CACHE, f'{sid}.v2.{mode}.{key}.wav'), os.path.join(MA.CACHE, f'{sid}.v2.{mode}.{key}.json')
-    from scipy.io import wavfile
-    if not os.path.exists(wav):
-        os.makedirs(MA.CACHE, exist_ok=True)
-        sj = MA.song_json(sid, 'v2')
-        r = subprocess.run(['node', os.path.join(UNIT, 'tools', 'sim', 'run_song.mjs'), sj, mode], check=True, capture_output=True, text=True, cwd=UNIT)
-        run = json.loads(r.stdout.strip().split('\n')[-1])
-        log = json.load(open(os.path.join(UNIT, run['out'])))
-        os.remove(os.path.join(UNIT, run['out']))
-        spec_v, _ = E.load_spec()
-        y = E.render(log, spec_v)
-        start = min(e[1] for e in log if e[0] in ('fade', 'vol'))
-        wavfile.write(wav, SR, y[start * 2400:].astype(np.float32))
-        sjd = json.load(open(sj))
-        run['kbps'] = round(len(base64.b64decode(sjd['data'])) * 8 / sjd['meta']['seconds'] / 1000, 2)
-        json.dump(run, open(info, 'w'))
-    _, y = wavfile.read(wav)
-    return np.asarray(y, np.float64), json.load(open(info))
+def emu_render(sid, play):
+    """the same song through the validated client model (tools/exp: the converter as it is now, the add-on's bundle in the mock
+    with `play` — the phone's way by default —, tools/emu with spec.json, the measured client path), cached by their code; and
+    the commands per tick and the song data's kbps"""
+    sys.path.insert(0, os.path.join(UNIT, 'tools', 'exp'))
+    import exp as X
+    sp = X.song_pack(sid, {})
+    lg = X.song_log(sp, play)
+    y = X.path24(X.render(lg, {'oneshot_latency_ms': -45}), clip=2.0)
+    info = json.load(open(lg + '.info'))
+    sj = json.load(open(sp))
+    run = {'calls_per_tick': info['calls_per_tick'], 'kbps': round(len(base64.b64decode(sj['data'])) * 8 / sj['meta']['seconds'] / 1000, 2)}
+    return np.stack([y, y], 1), run
 
 
 def main():
@@ -67,6 +58,8 @@ def main():
     ap.add_argument('--out', default=os.path.join(UNIT, 'dist', 'abx_real'))
     ap.add_argument('--b', default='g', help='prefix of the recordings that are B (g: the default of runs 41068618513/41076646541, n: the phone default with bursts ahead)')
     ap.add_argument('--refs', default='c,l,emu', help='references beside A and B, in order (c g m l emu)')
+    ap.add_argument('--play', default='{"mode":"quality","voices":24,"cmds":["spectral:drums off","spectral:level 6"]}',
+                    help='how the emulator plays the song (tools/exp play: the phone\'s way by default) for the emu reference and the commands per tick')
     a = ap.parse_args()
     os.makedirs(os.path.join(a.out, 'audio'), exist_ok=True)
     rows, devices = {}, []
@@ -87,7 +80,7 @@ def main():
         for pre in want:
             k = REFS[pre][0]
             if pre == 'emu':
-                y, run = emu_render(sid)
+                y, run = emu_render(sid, json.loads(a.play))
                 MA.mp3(os.path.join(a.out, 'audio', f'{sid}.emu.mp3'), MA.prepare(ref_st, y), kbps=192)
                 refs.append(pre)
                 continue
@@ -96,7 +89,7 @@ def main():
                 MA.mp3(os.path.join(a.out, 'audio', f'{sid}.{k}.mp3'), MA.prepare(ref_st, load(f)), kbps=192)
                 refs.append(pre)
         if run is None:
-            _, run = emu_render(sid)
+            _, run = emu_render(sid, json.loads(a.play))
         r = rows.get(sid, {})
         bkey = BWAYS[a.b][0]
         sc = {'ceiling': r.get('ceiling', {}).get('visqol')}
