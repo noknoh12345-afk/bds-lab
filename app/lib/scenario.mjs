@@ -681,14 +681,15 @@ export async function runScenario(steps, ctx) {
           const suffix = kv.suffix ?? ''; delete kv.suffix;
           const opts = Object.fromEntries(Object.entries(kv).map(([k, v]) => [k, /^[-+]?\d+(\.\d+)?$/.test(v) ? Number(v) : v]));
           const list = AR.songParts({ labDir: ctx.labDir ?? process.cwd(), ids, opts, suffix, out: path.join(runDir, 'audio', `song-${ids.length > 1 ? 'batch-' + Date.now() : ids[0] + suffix}.json`) });
-          // (fast: the parts of several songs in one `do`, 25 ms a command — 300 ms each was 15 s a song, 7 minutes for 29 songs.
+          // (fast: the parts of several songs in one `do` with no pause after each — only the lab's sync, ~140 ms a command on the
+          // local BDS: 137 parts of 4 songs in 18.6 s; with the default 300 ms pause it was ~15 s a song, 7 minutes for 29 songs.
           // A `do` carries ~400 KB of commands at most (the command line's limit); the add-on's "song pack:" lines are checked over
           // all of them and one more short `do` after, which collects the last ones)
           const said = [], lines = [];
           let batch = [], size = 0;
           const flush = async () => {
             if (!batch.length) return;
-            const r = await server.do(['-w', '25', ...batch]);
+            const r = await server.do(['-w', '0', ...batch]);
             lines.push(...r.lines);
             if (!r.ok) throw new Error(`曲を送れません: ${r.lines.filter((l) => /^E |FAIL/.test(l)).slice(0, 3).join(' | ') || r.lines.slice(-2).join(' | ')}`);
             batch = []; size = 0;
