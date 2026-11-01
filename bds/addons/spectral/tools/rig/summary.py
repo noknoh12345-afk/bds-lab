@@ -62,7 +62,9 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('live_3d_enc_plain_again', '3D の話し手・ライブの変換（もう一度）'), ('live_near24_enc_plain', '24 ブロック・ライブの変換'), ('live_near24_enc_refined', '24 ブロック・分析つき'),
         ('live_3d_still_r23', '止まった話す人（23 回目）'), ('live_3d_run_cut2', '歩きの速さ・cut 2 音'), ('live_3d_run_cut2_again', '同（もう一度）'),
         ('live_3d_run_cut4', '歩きの速さ・cut 4 音'), ('live_3d_run_cut4_again', '同（もう一度）'), ('live_3d_run_hold8', '歩きの速さ・1.2.0'),
-        ('live_3d_run_hold8_again', '同（もう一度）'), ('live_3d_run_enc_plain', '歩きの速さ・ライブの変換'), ('live_3d_run_enc_refined', '歩きの速さ・その場の分析つき')]
+        ('live_3d_run_hold8_again', '同（もう一度）'), ('live_3d_run_enc_plain', '歩きの速さ・ライブの変換'), ('live_3d_run_enc_refined', '歩きの速さ・その場の分析つき'),
+        ('live_enc16_plain', 'ライブの変換 16 声'), ('live_enc16_refined', 'ライブの変換 16 声＋分析'), ('live_enc16_refined_again', '同（もう一度）'),
+        ('live_enc16_plain_again', 'ライブの変換 16 声（もう一度）'), ('live_enc_refined_r24', 'ライブの変換 24 声＋分析（24 回目）')]
 
 
 def main():

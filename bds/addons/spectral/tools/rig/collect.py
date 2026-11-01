@@ -95,7 +95,9 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         # run 23: a talker walking at a player's pace (3 blocks a step): standing (hg), cut 2 a tick (ha, hf), cut 4 (hb, he), 1.2.0 (hc, hd),
         # and the live encoder plain / refined, cut 2 (hh, hi)
         'hg': 'live_3d_still_r23', 'ha': 'live_3d_run_cut2', 'hf': 'live_3d_run_cut2_again', 'hb': 'live_3d_run_cut4', 'he': 'live_3d_run_cut4_again',
-        'hc': 'live_3d_run_hold8', 'hd': 'live_3d_run_hold8_again', 'hh': 'live_3d_run_enc_plain', 'hi': 'live_3d_run_enc_refined'}
+        'hc': 'live_3d_run_hold8', 'hd': 'live_3d_run_hold8_again', 'hh': 'live_3d_run_enc_plain', 'hi': 'live_3d_run_enc_refined',
+        # run 24: the bridge's 16 voices on phones, plain (ca, cd) and refined (cb, cc), and 24 refined (ce)
+        'ca': 'live_enc16_plain', 'cb': 'live_enc16_refined', 'cc': 'live_enc16_refined_again', 'cd': 'live_enc16_plain_again', 'ce': 'live_enc_refined_r24'}
 
 
 def songs(res):

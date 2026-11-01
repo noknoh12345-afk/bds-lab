@@ -1,0 +1,120 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# 24 回目（tools/exp/make_app.py tools/exp/app24.json）: Discord の橋渡しの既定の 16 声で、その場の合成による分析（ヘッドホン、ライブの道）。",
+  "#   曲ごとに ca_（16 声そのまま）→ cb_（16 声分析つき）→ cc_（同）→ cd_（16 声そのまま）→ ce_（24 声分析つき: 20 回目の曲）。曲は tools/exp/packs/live24"
+ ],
+ "batch": 13,
+ "interleave": [
+  "ca",
+  "cb",
+  "cc",
+  "cd",
+  "ce"
+ ],
+ "arms": [
+  {
+   "pre": "ca",
+   "suffix": "_l16",
+   "conv": {
+    "live": "encoder",
+    "refine": 0,
+    "voices": 16
+   },
+   "pack": "tools/exp/packs/live24",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} phones @s 16",
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ],
+   "export": 160
+  },
+  {
+   "pre": "cb",
+   "suffix": "_r16",
+   "conv": {
+    "live": "encoder",
+    "refine": 2,
+    "voices": 16
+   },
+   "pack": "tools/exp/packs/live24",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} phones @s 16",
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ],
+   "export": 160
+  },
+  {
+   "pre": "cc",
+   "suffix": "_r16",
+   "conv": {
+    "live": "encoder",
+    "refine": 2,
+    "voices": 16
+   },
+   "pack": "tools/exp/packs/live24",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} phones @s 16",
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ],
+   "export": 160
+  },
+  {
+   "pre": "cd",
+   "suffix": "_l16",
+   "conv": {
+    "live": "encoder",
+    "refine": 0,
+    "voices": 16
+   },
+   "pack": "tools/exp/packs/live24",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} phones @s 16",
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ],
+   "export": 160
+  },
+  {
+   "pre": "ce",
+   "suffix": "_lr",
+   "conv": {
+    "live": "encoder",
+    "refine": 2,
+    "voices": 24
+   },
+   "pack": "tools/exp/packs/live20",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} phones @s 24",
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ],
+   "export": 160
+  }
+ ]
+}
