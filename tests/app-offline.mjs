@@ -111,8 +111,10 @@ await t('scenario: every step parses; errors name the line', () => {
   eq(r.steps.find((s) => s.line === 12).args, ['server', 'DEMO .* picked (x|y)', '3000']);
   eq(r.steps.find((s) => s.line === 10).args, ['scriptevent x:y a b']);
   eq(r.steps.find((s) => s.every).every.ms, 1000);
-  const bad = S.parseScenario('tap 1\nfly\nuntil server\nuntil joined x\nshot a b/c\nuntil stable ; every 10 wait 5\nexpect nothing x');
-  eq(bad.errors.map((e) => e.split(':')[0]), ['1', '2', '3', '4', '5', '6', '7']);
+  // (tap text / tap below: the rest of the line is the regex, spaces and all)
+  eq(S.parseScenario('tap text (?i)^paste the song\ntap below (?i)^song text$').steps.map((s) => s.args), [['text', '(?i)^paste the song'], ['below', '(?i)^song text$']]);
+  const bad = S.parseScenario('tap 1\nfly\nuntil server\nuntil joined x\nshot a b/c\nuntil stable ; every 10 wait 5\nexpect nothing x\ntap below\ntap below (x');
+  eq(bad.errors.map((e) => e.split(':')[0]), ['1', '2', '3', '4', '5', '6', '7', '8', '9']);
 });
 await t('scenario: screens (stable, blank)', () => {
   const img = (f) => { const w = 32, h = 32, d = Buffer.alloc(w * h * 4); for (let i = 0; i < w * h; i++) { const c = f(i % w, Math.floor(i / w)); d[i * 4] = c[0]; d[i * 4 + 1] = c[1]; d[i * 4 + 2] = c[2]; d[i * 4 + 3] = 255; } return pngEncode({ w, h, data: d }); };

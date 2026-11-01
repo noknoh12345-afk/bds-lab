@@ -1,0 +1,470 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# 29 回目（tools/exp/make_app.py tools/exp/app29.json）: 1.3.0 の「曲をテキストで貼り付け」を本物のクライアントで、もう一度（28 回目は貼れなかった:",
+  "#   pz_ の録音が無音。封じた結果は見られないので、どこまで進んだかを ck_<名前> の短い録音の公開（[spectral rec] の行）で平文に残す）。",
+  "#   probe: フォームの文字を OCR で読めるか（Submit・題・見出し・トグル・灰色の例文）。paste_ta は例文を押して、tb・tc・td は見出し「Song text」の下を押して",
+  "#   （tap below、リグに足した）入力欄へ。曲のテキスト（SPA1、英数字）を 200 文字ずつ打つ（text はリグで時間切れを文字数に合わせ、打ち切れなければ失敗に）:",
+  "#   ta 400・tb 357 文字（0.5 秒）・tc 1004（1 秒）・td 3317（5 秒 8 声）。tf は tc を例文の側でもう一度。",
+  "#   それぞれの結果（貼れた・全部届いた・断られた・100 文字で切れた）を区切りごとに確かめて ck_ を残し、最後に貼った tc・td を鳴らして録る",
+  "#   `shot world` は何も開いていないワールド: 区切りが失敗したら、リグがそこまで戻るで閉じる（28 回目は撮っていなかったので開いたまま）"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "sections": [
+  {
+   "title": "world",
+   "lines": [
+    "wait 3000",
+    "shot world"
+   ]
+  },
+  {
+   "title": "probe",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "wait 4000",
+    "shot probe_form",
+    "audio start ck_probe_opened",
+    "wait 400",
+    "audio stop",
+    "audio export ck_probe_opened 16",
+    "expect text (?i)submit",
+    "audio start ck_probe_submit",
+    "wait 400",
+    "audio stop",
+    "audio export ck_probe_submit 16",
+    "expect text (?i)paste a song",
+    "audio start ck_probe_title",
+    "wait 400",
+    "audio stop",
+    "audio export ck_probe_title 16",
+    "expect text (?i)song text",
+    "audio start ck_probe_label",
+    "wait 400",
+    "audio stop",
+    "audio export ck_probe_label 16",
+    "expect text (?i)keep it",
+    "audio start ck_probe_toggle",
+    "wait 400",
+    "audio stop",
+    "audio export ck_probe_toggle 16",
+    "expect text (?i)here",
+    "audio start ck_probe_placeholder",
+    "wait 400",
+    "audio stop",
+    "audio export ck_probe_placeholder 16",
+    "key BACK",
+    "wait 2000"
+   ]
+  },
+  {
+   "title": "paste_ta",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "wait 4000",
+    "shot paste_ta_form",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "shot paste_ta_focus",
+    "audio start ck_paste_ta_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_ta_tapped 16",
+    "text SPA1.1.1.a04c4a88.283:AQUKBAgPMsLET9gFcHpfdGEMUGFzdGUgdGVzdCBBBGxpdmUAr0_6M-ZipwZ05i2LJ3wPyPizE8wPuYjZhGiW7279By6VCz322PskK8tHi-bMH88bgwDpOGUsPYv6Pm9RBcj7FuqYHDMYC0maDMXmwXxp1hsnY1o6UHd2qxjUAxmJ2XSLf9",
+    "wait 300",
+    "text HVXCs0idm1eUH-uRghUv-3-3F9BuT_dJmwdlPWC6iLxTcdCDwFjaP2Nhjz21uuZhvASIb6_1nZCyTJJfYtjC_D_8O-tf1imWSQcdUHxWCazkfeyK1LyKQOEpFTeenTey0W5zpVvU0F8hP5f2ZmyK-hxRdIqK-EySbIow_5d5qGn95k7enjW2Ffdl6w1VycM8UqKU6QEg",
+    "wait 300",
+    "audio start ck_paste_ta_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_ta_typed 16",
+    "shot paste_ta_typed",
+    "key ENTER",
+    "wait 2000",
+    "shot paste_ta_ready",
+    "tap text (?i)^submit$",
+    "until server spectral\\] (pasted|paste refused) 180000",
+    "audio start ck_paste_ta_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_ta_answer 16",
+    "wait 1500",
+    "shot paste_ta_done"
+   ]
+  },
+  {
+   "title": "paste_tb",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "wait 4000",
+    "shot paste_tb_form",
+    "tap below (?i)^song text$",
+    "wait 2500",
+    "shot paste_tb_focus",
+    "audio start ck_paste_tb_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_tb_tapped 16",
+    "text SPA1.1.1.b2ac59ba.251:AQUKAwgPMgkvgjQFcHpfdGIMUGFzdGUgdGVzdCBCBGxpdmUAr0_6M-ZipwZ05i2LJV330i6sbFq_aCLZzm2CkTxtwYiIPPej-uQ8nRtEp9Jbapvqp6G_gXIQ2X8c6QMBhiB5PJpih6_77SKyWJRw1PCS4WA_d9IltUIEiqFnxlUxrIN6w_",
+    "wait 300",
+    "text wzzIUlA91-43b5VsRwJgZJuWuCpZSoTsIRHurptynVJyMKqc07Qap01yOkkhuTREzkRjLSMZQ4_P-so4TlK35td7rkPXhxiWaeYvDT43S_h298CCHJW-T8JoAtGdw2czo3s_yU2bjhN43_FD1C2pQyZIetroI",
+    "wait 300",
+    "audio start ck_paste_tb_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_tb_typed 16",
+    "shot paste_tb_typed",
+    "key ENTER",
+    "wait 2000",
+    "shot paste_tb_ready",
+    "tap text (?i)^submit$",
+    "until server spectral\\] (pasted|paste refused) 180000",
+    "audio start ck_paste_tb_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_tb_answer 16",
+    "wait 1500",
+    "shot paste_tb_done"
+   ]
+  },
+  {
+   "title": "paste_tc",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "wait 4000",
+    "shot paste_tc_form",
+    "tap below (?i)^song text$",
+    "wait 2500",
+    "shot paste_tc_focus",
+    "audio start ck_paste_tc_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_tc_tapped 16",
+    "text SPA1.1.1.08b069eb.736:AQUUCAgPZB7QdzsFcHpfdGMMUGFzdGUgdGVzdCBDBGxpdmUAr0_6M-ZipwZ05i2LJ3wPyPnXcyPKfBQheIaabnkyvlT4fkoUo6bfEDRMEYdflqpAVIWjMRcmhtm3sSnnmOQsVTHye4DTN_hVaBl2T_75oocVt1cGulU2PUBQuVFfWQFKf7",
+    "wait 300",
+    "text B0F51kI1mD1mfX0kiRle5rzoqseiuy0tw896n47e1Fm7VK0zIVg15Ni1WgPOJzUQ9lo99MeGnG0KbY4uU-_iJ21tK-vaWDxQo1N1zbplzLb9YU5d2d_SBEbq9B1oSV0yXpWRvK54k3AwpOZlfih9dfmVUk9UCHSK9_o6HX4t6Ru2Ei9BONz0rycDbkExC7tA7KYzXZFI",
+    "wait 300",
+    "text o4i1o8UswM0D7PC9oW52xd9neGCDTepGsXl_ENeg1Ok2pNMGJIbNWVUtEimOroJb0xjNY7mMfhzaVk6_L5DQLEWo1azf_dtR34k6I4pH2o-X7gzT8gjRDJP6AGED6dbrSxOViTASd9LdH0N7SDIeDqvOSSTInwICJRb94a-aJU7kVXfx0yhm4ixN59buA5fvldoUuqPy",
+    "wait 300",
+    "text aLhryDsBy23tVwFfYnMOt8lXBrrneBZZOdOMx8gGnMTWAu6bM6Kkokd1j631uyDMvKROnL7AmfUmZoGz1Os0RXCqAWjtjwzfy9jEpzBfe4FzQ0Jhm1L13q-np7_uuMcMAIrS8cWeNzckOyIV-BrhtpxxU8a5Exy-9W15q_nX4veSgZtGiM9HVVzkA4hxdkvUwPazbBxh",
+    "wait 300",
+    "text bMo5L3moEz3LNPrjOZYbSB-1Q1A3U5fC6qKC-4KtByC6jNxygFq14Z0eJJ4u2ttmI9mikDZN7KFxmxrAulPEmvXty6kxlIA4p0jGmktdzP9BuDcl2k0YxIETKz5CsRfnTuszMkp0wxX9UWbunmFB_Nmehfzc2oqirXK8O1rILC15GawsPfVtLpkPdgGPZih3WfcIFC9A",
+    "wait 300",
+    "text m5AA",
+    "wait 300",
+    "audio start ck_paste_tc_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_tc_typed 16",
+    "shot paste_tc_typed",
+    "key ENTER",
+    "wait 2000",
+    "shot paste_tc_ready",
+    "tap text (?i)^submit$",
+    "until server spectral\\] (pasted|paste refused) 180000",
+    "audio start ck_paste_tc_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_tc_answer 16",
+    "wait 1500",
+    "shot paste_tc_done"
+   ]
+  },
+  {
+   "title": "paste_tf",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "wait 4000",
+    "shot paste_tf_form",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "shot paste_tf_focus",
+    "audio start ck_paste_tf_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_tf_tapped 16",
+    "text SPA1.1.1.9ee81aec.736:AQUUCAgPZB7QdzsFcHpfdGYMUGFzdGUgdGVzdCBGBGxpdmUAr0_6M-ZipwZ05i2LJ3wPyPnXcyPKfBQheIaabnkyvlT4fkoUo6bfEDRMEYdflqpAVIWjMRcmhtm3sSnnmOQsVTHye4DTN_hVaBl2T_75oocVt1cGulU2PUBQuVFfWQFKf7",
+    "wait 300",
+    "text B0F51kI1mD1mfX0kiRle5rzoqseiuy0tw896n47e1Fm7VK0zIVg15Ni1WgPOJzUQ9lo99MeGnG0KbY4uU-_iJ21tK-vaWDxQo1N1zbplzLb9YU5d2d_SBEbq9B1oSV0yXpWRvK54k3AwpOZlfih9dfmVUk9UCHSK9_o6HX4t6Ru2Ei9BONz0rycDbkExC7tA7KYzXZFI",
+    "wait 300",
+    "text o4i1o8UswM0D7PC9oW52xd9neGCDTepGsXl_ENeg1Ok2pNMGJIbNWVUtEimOroJb0xjNY7mMfhzaVk6_L5DQLEWo1azf_dtR34k6I4pH2o-X7gzT8gjRDJP6AGED6dbrSxOViTASd9LdH0N7SDIeDqvOSSTInwICJRb94a-aJU7kVXfx0yhm4ixN59buA5fvldoUuqPy",
+    "wait 300",
+    "text aLhryDsBy23tVwFfYnMOt8lXBrrneBZZOdOMx8gGnMTWAu6bM6Kkokd1j631uyDMvKROnL7AmfUmZoGz1Os0RXCqAWjtjwzfy9jEpzBfe4FzQ0Jhm1L13q-np7_uuMcMAIrS8cWeNzckOyIV-BrhtpxxU8a5Exy-9W15q_nX4veSgZtGiM9HVVzkA4hxdkvUwPazbBxh",
+    "wait 300",
+    "text bMo5L3moEz3LNPrjOZYbSB-1Q1A3U5fC6qKC-4KtByC6jNxygFq14Z0eJJ4u2ttmI9mikDZN7KFxmxrAulPEmvXty6kxlIA4p0jGmktdzP9BuDcl2k0YxIETKz5CsRfnTuszMkp0wxX9UWbunmFB_Nmehfzc2oqirXK8O1rILC15GawsPfVtLpkPdgGPZih3WfcIFC9A",
+    "wait 300",
+    "text m5AA",
+    "wait 300",
+    "audio start ck_paste_tf_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_tf_typed 16",
+    "shot paste_tf_typed",
+    "key ENTER",
+    "wait 2000",
+    "shot paste_tf_ready",
+    "tap text (?i)^submit$",
+    "until server spectral\\] (pasted|paste refused) 180000",
+    "audio start ck_paste_tf_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_tf_answer 16",
+    "wait 1500",
+    "shot paste_tf_done"
+   ]
+  },
+  {
+   "title": "paste_td",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "wait 4000",
+    "shot paste_td_form",
+    "tap below (?i)^song text$",
+    "wait 2500",
+    "shot paste_td_focus",
+    "audio start ck_paste_td_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_td_tapped 16",
+    "text SPA1.1.1.2e13a41d.2470:AQVkCAgP9AMCo86GBXB6X3RkDFBhc3RlIHRlc3QgRARsaXZlAK9P-jPmYqcGdOYtiyd8D8j513MjynwUIXiGmm55Mr5U-H5KFKOm3xA0TBGHX5aqQFSFozEXJobZt7Ep55jkLFUx8nuA0zf4VWgZdk_--aKHFbdXBrpVNj1AULlRX1kBS",
+    "wait 300",
+    "text n-wdBedZCNZg9Zn19JIkZXua86KrHorstLcPPep-O3tRZu1StMyFYNeTYtVoDzic1EPZaPfTHhpxtCm2OLlPv4idtbSvr2lg8UKNTdc26Zcy2_WFOXdnf0gRG6vQdaEldMl6VkbyueJNwMKTmZX4ofXX5lVJPVAh0ivf6Oh1-LekbthIvQTjc9K8nA25BMQu7QOymM12",
+    "wait 300",
+    "text RSKOItaPFLMDNA-zwvaFudsXfZ3hgg03qRrF5fxDXoNTpNqTTBiSGzVlVLRIpjq6CW9MYzWO5jH4c2lZOvy-Q0CxFqNWs3_3bUd-JOiOKR9qPl-4M0_II0QyT-gBhA-nW60sTlYkwEnfS3R9De0gyHg6rzkkkyJ8CAiUW_eGvmiVO5FV38dMoZuIsTefW7gOX75XaFLq",
+    "wait 300",
+    "text j8mi4a8g7Actt7VcBX2JzDrfJVwa653gWWTnTjMfIBpzE1gLumzOipKJHdY-t9bsgzLykTpy-wJn1JmaBs9TrNEVwqgFo7Y8M38vYxKcwX3uBc0NCYZtS9d6vp6e_7rjHDACK0vHFnjc3JDsiFfga4baccVPGuRMcvvVteav51-L3koGbRojPR1Vc5AOIcXZL1MD2s2w",
+    "wait 300",
+    "text cYWzKOS95qBM9yzT64zmWG0gftUNQN1OXwuqigvuCrQcguozccoBateGdHiSeLtrbZiPZopA2TeyhcZsawLpTxJr17cupMZSH2Si8B517vC08bZTE_QgZqa6GGo8d0Wzvk2blmsbUwypIHDyI8DuoWkIlakBQNpkW8dnpEm-ASnSy8lew3vkYLcYgDYXKKSHq3qVRI9F",
+    "wait 300",
+    "text Vdf8S0GAaZOKw2E6blDC6a2z_y6MTA1Hm1LVPrrsTxIgGkCntjX8dZ3XVLWD1irYyZx1Kfi16mD2Tx3ZmLkpjBSL7TwawUkGIsRqrF-iGoHhB_h8GBhKMFEumw9l6xBZdHI4xMi7Jx_iWw-6JocN_xE-8wviiLJIfJ7IXtrkW9YlGXvAbe3zTpQcMtdyebskmM8jN9fM",
+    "wait 300",
+    "text MF3_bhLCyd0zFpJOnlAsqjZK77i4KNmFrmTHcJlP_vmCvuXEr4qX1HXK8Qx61ny5LEx0tRX2oYZ26FfR3VB7v8UH4RZvdGA8S3ZByVtVaygOBqEtHTzt7IUmEZZUhKVh1Cr7jR1mrES1WRqHD-wCSaMKpkJdbcHlsyxEIuIzut5DQ21MaLO76h4Ui9rNMXpFykjQqzRn",
+    "wait 300",
+    "text wgme1NkgeOXmUGr17Zg93X5YQfdi91kpxlQAQ_8oWUcCntSzSoTzJgcqeK-thVhhn2h9VCxCAZq7gPYhXYaJw9bpAPxvjDi2HJ2sbOf8Hs2nzy5B4ySBVoiaPsWTKRowga9IiVnDSQlCE5oKSVU-tYWPC-tkFIsx_8zmL5bCQldkxYz6uznFiLYIwrmlc0gH5iFly2x9",
+    "wait 300",
+    "text HfyjgrCKlYR0EfaJVn2ul1bNCJbq6E-Dls_ap9RhuGhQw06hE-ETJUw1L8JlznIA6GDrYf6Ru26BcOHjQHXlxLObIuEiM2p_lx_AEr4kQgQFGZJnEQggnlCNu01cwDoBElpIXbvWh5a6mL3dwQexwc2CeFer3OJdoulJ53cfHfjqvuVCAqEMO34drv0LPNf_qEzQMCly",
+    "wait 300",
+    "text hcoyfdL57ixfhGCpHM_nYTx6qOqyTlMVfIs8X0NWl-PZpEvqXCD9vmT8nFpBzf48mmGjTEX1OoSFofG5POE0puuubRZAT51Izh1dYE_z2nnmQe537uIbbngXht23DsM6ALB2aRf9iR5pDizrhnnZ_FfE4Uw61jMcyvkvlbR5I5EJvcasAVf64gnuJ-Lyxw88LuGf3vwR",
+    "wait 300",
+    "text AfqK_NaRlbuLMqMduAbV7WSihL84iov8Md_CDmlRIKfi2om-yHnJIap-WTaVe81p78knCXb1tWnQzuAFPoZocYRcZ-OatZgVXVCG2IvMknCGTWjtSo0kM9EGroVLtMfmYg2PYYh7CNU1-neLB6oCQxSiJdPYMr9pnnawgrdJt2lDTjr14iqI_VxPGA4t_lwnl1qHKFXM",
+    "wait 300",
+    "text 9Q3IgYQ-abQxUvIuLDdUY30GvuU0jfsAw1D9gvysh3-n8s1U5ij5iRXXayY8zuMEHBfeRnG31qWykrDRYiUPdv9Zqo2XZvCPKmR63tCIQBk48uXePOt-bHyG4Xo-0-DcK6DEUOFPgldT0K1JXRPv9ibL6rfftNYzfAPIx9o-IWJBP0k8EcvHdepUKAS9mtHCYnkL9R_B",
+    "wait 300",
+    "text 4Fl7Vg69fyIJEce61uzJ_FUmrrd21WaZxoF8BDh8daQkXsxcf9myz0AFyxeT0H67NyRp4QTV1ewJnAhbBELhCqt2KIkmhrxCfcPBvBrHfGSwliZh_G5rS8j0tNLp7ZbDCiLlBL4KpTseO3k2l07AtMcjgwCbzikGbbTjHh7f566hIsmUfdI7skKsZa5x_WvAKBWGIA3t",
+    "wait 300",
+    "text 8Y-GZT9CsnQecjkdfqsoa8yH4nEpktcOJLFdMnO7ZZzbtu8SDawXhab4871IlDslkJ9ATI5KCwqa83YvqyZ3NKQq4OXe5neA6ga_b3mShH_JTRJaLLuBc_HIukROaBAI_qwjzk6ZIb0k9ELOJSv93C3Q_RiY2kKyf-r3SFG3k-2jNOT2jENcj2lehveE3gXfnIyDTsjQ",
+    "wait 300",
+    "text kM9CjKvsw_pcRVZ7aQShheXW1yj5NGgSNjkAi-ltNM8FM8RXiUREbHdgQb0XwMOs4VHlN_50Pxplgka67q3oPYSURKEaGrcmzFiookeum2969iUf01QIfblsMIEp6kfDPAuWocHBsykrr3pK1_OQQQgojF9YIjz4fEB6MqzD05WyLGpM8o7mgag96sqydgtt9kLx6fCR",
+    "wait 300",
+    "text aWz-ErJLaKnBpicJzYXAc_WpIMJts0MxN9gzGyRSTDLH6aznKDBU3r4sk1LMcnRlpopVb28ECofasY6g3X98sSM7ryPKoKojp9kW1CTEMl8XbLDK_LAvwuOu13Hyht4QWVeQyeucX8-aKdyBThRO-0o9ZR3abxFWoju1M7TfQXcskOz1PpmkNQt8Ost3s1nkbE9X3XeT",
+    "wait 300",
+    "text CqNTPFqjIAHbknHmBHxarGzwTZ4VJm4lYrwLAC0buXg8DKEMqAXYfrz-P68LpmwmshaYo7A3O-MOSNI-UgALU2Bo3xJJot5z4v0MRMniWlJVj84O0TUAA",
+    "wait 300",
+    "audio start ck_paste_td_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_td_typed 16",
+    "shot paste_td_typed",
+    "key ENTER",
+    "wait 2000",
+    "shot paste_td_ready",
+    "tap text (?i)^submit$",
+    "until server spectral\\] (pasted|paste refused) 180000",
+    "audio start ck_paste_td_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_paste_td_answer 16",
+    "wait 1500",
+    "shot paste_td_done"
+   ]
+  },
+  {
+   "title": "ok_ta",
+   "lines": [
+    "expect server spectral\\] pasted pz_ta \\(",
+    "audio start ck_ok_ta",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_ta 16"
+   ]
+  },
+  {
+   "title": "ok_tb",
+   "lines": [
+    "expect server spectral\\] pasted pz_tb \\(",
+    "audio start ck_ok_tb",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_tb 16"
+   ]
+  },
+  {
+   "title": "ok_tc",
+   "lines": [
+    "expect server spectral\\] pasted pz_tc \\(",
+    "audio start ck_ok_tc",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_tc 16"
+   ]
+  },
+  {
+   "title": "ok_tf",
+   "lines": [
+    "expect server spectral\\] pasted pz_tf \\(",
+    "audio start ck_ok_tf",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_tf 16"
+   ]
+  },
+  {
+   "title": "ok_td",
+   "lines": [
+    "expect server spectral\\] pasted pz_td \\(",
+    "audio start ck_ok_td",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_td 16"
+   ]
+  },
+  {
+   "title": "whole_ta",
+   "lines": [
+    "expect server spectral\\] paste part 1/1 of \\w+: 400 characters",
+    "audio start ck_whole_ta",
+    "wait 400",
+    "audio stop",
+    "audio export ck_whole_ta 16"
+   ]
+  },
+  {
+   "title": "refused_ta",
+   "lines": [
+    "expect server spectral\\] paste refused \\(400 characters",
+    "audio start ck_refused_ta",
+    "wait 400",
+    "audio stop",
+    "audio export ck_refused_ta 16"
+   ]
+  },
+  {
+   "title": "whole_tb",
+   "lines": [
+    "expect server spectral\\] paste part 1/1 of \\w+: 357 characters",
+    "audio start ck_whole_tb",
+    "wait 400",
+    "audio stop",
+    "audio export ck_whole_tb 16"
+   ]
+  },
+  {
+   "title": "refused_tb",
+   "lines": [
+    "expect server spectral\\] paste refused \\(357 characters",
+    "audio start ck_refused_tb",
+    "wait 400",
+    "audio stop",
+    "audio export ck_refused_tb 16"
+   ]
+  },
+  {
+   "title": "whole_tc",
+   "lines": [
+    "expect server spectral\\] paste part 1/1 of \\w+: 1004 characters",
+    "audio start ck_whole_tc",
+    "wait 400",
+    "audio stop",
+    "audio export ck_whole_tc 16"
+   ]
+  },
+  {
+   "title": "refused_tc",
+   "lines": [
+    "expect server spectral\\] paste refused \\(1004 characters",
+    "audio start ck_refused_tc",
+    "wait 400",
+    "audio stop",
+    "audio export ck_refused_tc 16"
+   ]
+  },
+  {
+   "title": "whole_td",
+   "lines": [
+    "expect server spectral\\] paste part 1/1 of \\w+: 3317 characters",
+    "audio start ck_whole_td",
+    "wait 400",
+    "audio stop",
+    "audio export ck_whole_td 16"
+   ]
+  },
+  {
+   "title": "refused_td",
+   "lines": [
+    "expect server spectral\\] paste refused \\(3317 characters",
+    "audio start ck_refused_td",
+    "wait 400",
+    "audio stop",
+    "audio export ck_refused_td 16"
+   ]
+  },
+  {
+   "title": "cut100",
+   "lines": [
+    "expect server spectral\\] paste refused \\(100 characters",
+    "audio start ck_cut100",
+    "wait 400",
+    "audio stop",
+    "audio export ck_cut100 16"
+   ]
+  },
+  {
+   "title": "refused_any",
+   "lines": [
+    "expect server spectral\\] paste refused",
+    "audio start ck_refused_any",
+    "wait 400",
+    "audio stop",
+    "audio export ck_refused_any 16"
+   ]
+  },
+  {
+   "title": "ui_log",
+   "lines": [
+    "absent clientlog (?i)server_form",
+    "audio start ck_ui_log_clean",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ui_log_clean 16"
+   ]
+  },
+  {
+   "title": "pzc_speech_ja_soseki",
+   "lines": [
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio start pzc_speech_ja_soseki",
+    "do execute as @a run spectral:play pz_tc",
+    "wait 3500",
+    "audio stop",
+    "audio export pzc_speech_ja_soseki 96"
+   ]
+  },
+  {
+   "title": "pzd_speech_ja_soseki",
+   "lines": [
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio start pzd_speech_ja_soseki",
+    "do execute as @a run spectral:play pz_td",
+    "wait 7500",
+    "audio stop",
+    "audio export pzd_speech_ja_soseki 96"
+   ]
+  }
+ ],
+ "arms": []
+}

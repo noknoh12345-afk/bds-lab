@@ -1,0 +1,133 @@
+{
+ "run": "41360797147",
+ "device": "redroid (Android 14 x86_64), Minecraft from Play",
+ "source": "job log [spectral rig] lines (recordings of the real client)",
+ "results": {
+  "device": {
+   "audio": {
+    "media_volume": {
+     "line": "[V] volume is 15 in range [0..15]",
+     "index": 15,
+     "max": 15
+    },
+    "stream_music": "- STREAM_MUSIC: Muted: false Muted Internally: false Min: 0 Max: 15 streamVolume:15 Current: 2 (speaker): 15, 80 (bt_a2dp): 2, 100 (bt_a2dp_hp): 2, 4000000 (usb_headset): 3, 20000000 (ble_headset): 2, 20000002 (ble_broadcast): 2, 40000000 (default): 5 Devices: speaker(2) Volume Group: AUDIO_STREAM_M",
+    "focus": [],
+    "mixer": {
+     "sample_rate": [
+      "44100",
+      "48000"
+     ],
+     "hal_frames": [
+      "441",
+      "1024"
+     ],
+     "normal_frames": [
+      "896"
+     ],
+     "master_volume": [
+      "1.000000"
+     ],
+     "master_mute": [
+      "off"
+     ]
+    },
+    "game_options": {
+     "audio_main": "1",
+     "audio_sound": "1",
+     "audio_music": "0",
+     "audio_ambient": "1",
+     "audio_block": "1",
+     "audio_hostile": "1",
+     "audio_neutral": "1",
+     "audio_record": "1",
+     "audio_player": "1",
+     "audio_weather": "1",
+     "audio_texttospeech": "1",
+     "volumetric_fog_quality": "1"
+    },
+    "tracks": [
+     {
+      "thread": "Output thread 0x7afa417f3940, name AudioOut_D, tid 207, type 0 (MIXER):",
+      "sample_rate": "44100",
+      "header": "Type Id Active Client Session Port Id S Flags Format Chn mask SRate ST Usg CT G db L dB R dB VS dB Server FrmCnt FrmRdy F Underruns Flushed BitPerfect Latency",
+      "rows": [
+       "F1 60 yes 3480 1993 13 A 0x000 00000005 00000003 44100 3 e 2 0 0 0 0 0007B471 3528r 3528 f 0 0 false unavail",
+       "11-01 23:16:28.634 removeTrack_l (0x7af8fe410d50) 58 no 3480 1977 11 T 0x000 00000005 00000003 44100 3 e 2 -inf 0 0 0 00000000 1796 0 I 0 0 false new",
+       "11-01 23:16:28.672 removeTrack_l (0x7af8fe410d50) F1 59 no 3480 1985 12 T 0x200 00000005 00000003 44100 3 e 2 -inf 0 0 0 00000000 3528 0 I 0 0 false new",
+       "11-01 23:16:28.694 AT::add (0x7af8fe410d50) F1 60 no 3480 1993 13 A 0x000 00000005 00000003 44100 3 e 2 -inf 0 0 0 00000000 3528r 0 f 0* 0 false new"
+      ]
+     }
+    ]
+   }
+  },
+  "pz_speech_ja_soseki": {
+   "song:speech_ja_soseki": {
+    "pz_speech_ja_soseki.wav": {
+     "error": "silent recording",
+     "peak_db": -200,
+     "rms_db": -200,
+     "seconds": 24.1,
+     "active_share": 0
+    }
+   }
+  },
+  "pr_speech_ja_soseki": {
+   "song:speech_ja_soseki": {
+    "pr_speech_ja_soseki.wav": {
+     "visqol": 3.1516,
+     "mrstft": 1.4846,
+     "third_oct_db": 8.274,
+     "onset_ms": 12.5,
+     "onset_recall": 0.728,
+     "recorded_s": 19.74,
+     "peak_db": -26.5,
+     "rms_db": -34.7,
+     "seconds": 22.34,
+     "active_share": 0.619,
+     "top_hz": [
+      146.8,
+      181.2,
+      125.5,
+      291.1,
+      364.2
+     ],
+     "top_share": 0.387,
+     "bands_db": [
+      -34.2,
+      -32.7,
+      -32.5,
+      -30.2,
+      -25.3,
+      -16.1,
+      -7.6,
+      0,
+      -3.6,
+      -8.1,
+      -5.2,
+      -6.2,
+      -8.2,
+      -11,
+      -12.9,
+      -18.1,
+      -18.6,
+      -18.7,
+      -22.4,
+      -26.6,
+      -27.5,
+      -28.1,
+      -34.1,
+      -39,
+      -42.2,
+      -44.6,
+      -46.4,
+      -48.8,
+      -49.8,
+      -50.6
+     ],
+     "lr_db": 0
+    }
+   }
+  }
+ },
+ "songs": {}
+}

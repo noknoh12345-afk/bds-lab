@@ -25,6 +25,7 @@
 //                                失敗してもその区切りを飛ばして次の区切りから続ける（開いている画面は戻るで閉じる）
 //   chat <文字>                  チャットを開いて打って送る（/ で始めればクライアントのプレイヤーとしてのコマンド）
 //   tap text <正規表現>          画面の文字を読んで（OCR）、その文字を押す（例 tap text (?i)^play$）
+//   tap below <正規表現>         その文字の下（文字の高さの 2 倍下）を押す: フォームの入力欄は見出しの下の箱（中の灰色の文字は OCR が読めないことがある）
 //   until text <正規表現> [ミリ秒]   画面にその文字が出るまで待つ（OCR）
 //   key <キー>                   キーを押す（A〜Z 0〜9 F1〜F12 ENTER ESCAPE BACK TAB SPACE SLASH UP など、または番号）
 //   press <キー>[+<キー>…] [ミリ秒]   キーを押したままにする（例 press W 2000 で歩く、press SHIFT+W 1500）
@@ -149,7 +150,7 @@ export function parseScenario(text) {
     const one = (s) => {
       const verb = s.split(/\s+/)[0], rest = s.slice(verb.length).trim();
       const args = ['do', 'text', 'sh', 'chat', 'cmd'].includes(verb) ? [rest] : ['until', 'expect', 'absent'].includes(verb) ? splitRegexArgs(rest)
-        : verb === 'tap' && /^text\s/.test(rest) ? ['text', rest.slice(5).trim()] : rest ? rest.split(/\s+/) : [];
+        : verb === 'tap' && /^(text|below)\s/.test(rest) ? [rest.split(/\s/, 1)[0], rest.replace(/^\S+\s+/, '').trim()] : rest ? rest.split(/\s+/) : [];
       return { line, verb, args, raw: s };
     };
     const st = one(main);
@@ -179,8 +180,8 @@ function check(s) {
   if (!VERBS.has(s.verb)) return `知らない手順「${s.verb}」です（使えるもの: ${[...VERBS].join(' ')}）`;
   if (s.verb === 'wait' && !(num(a[0]) >= 0)) return '書き方: wait <ミリ秒>';
   if (s.verb === 'shot' && (a.length !== 1 || !/^[\w.-]+$/.test(a[0]))) return '書き方: shot <名前>（名前は英数字と _ . - だけ、空白なし）';
-  if (s.verb === 'tap' && a[0] === 'text') { if (!a[1]) return '書き方: tap text <正規表現>'; try { rx(a[1]); } catch (e) { return `正規表現の誤り: ${e.message}`; } }
-  else if (s.verb === 'tap' && (a.length !== 2 || a.some((x) => Number.isNaN(num(x))))) return '書き方: tap <x> <y>（例 tap 0.5 0.62） / tap text <正規表現>';
+  if (s.verb === 'tap' && (a[0] === 'text' || a[0] === 'below')) { if (!a[1]) return `書き方: tap ${a[0]} <正規表現>`; try { rx(a[1]); } catch (e) { return `正規表現の誤り: ${e.message}`; } }
+  else if (s.verb === 'tap' && (a.length !== 2 || a.some((x) => Number.isNaN(num(x))))) return '書き方: tap <x> <y>（例 tap 0.5 0.62） / tap text <正規表現> / tap below <正規表現>';
   if (s.verb === 'swipe' && (a.length < 4 || a.slice(0, 5).some((x) => Number.isNaN(num(x))))) return '書き方: swipe <x1> <y1> <x2> <y2> [ミリ秒]';
   if (s.verb === 'key' && !(a[0] && androidKey(a[0]) !== null)) return '書き方: key <A〜Z|0〜9|F1〜F12|ENTER|ESCAPE|BACK|TAB|SPACE|SLASH|UP|DOWN|LEFT|RIGHT など|番号>';
   if (['do', 'text', 'sh', 'chat'].includes(s.verb) && !a[0]) return `${s.verb} の後ろに中身が要ります`;
@@ -595,18 +596,26 @@ export async function runScenario(steps, ctx) {
     }
     switch (s.verb) {
       case 'tap': {
-        if (a[0] === 'text') {
+        if (a[0] === 'text' || a[0] === 'below') {
           const ws = ocrNow(), hit = findText(ws, rx(a[1]));
           if (!hit) throw new Error(`画面に /${a[1]}/ の文字が見つかりません（読めた文字: ${seenWords(ws)}）`);
-          tapAt(hit.x, hit.y);
-          return `「${hit.text}」(${hit.x}, ${hit.y})`;
+          // (below: two of its heights under the words' middle — a form's text box is the box under its title)
+          const y = a[0] === 'below' ? Math.round(hit.y + 2 * (hit.box[3] - hit.box[1])) : hit.y;
+          tapAt(hit.x, y);
+          return `「${hit.text}」${a[0] === 'below' ? 'の下' : ''}(${hit.x}, ${y})`;
         }
         const [x, y] = px(num(a[0]), num(a[1])); tapAt(x, y); return `(${x}, ${y})`;
       }
       case 'swipe': { const [x1, y1] = px(num(a[0]), num(a[1])), [x2, y2] = px(num(a[2]), num(a[3])); adb.shell(['input', 'swipe', String(x1), String(y1), String(x2), String(y2), String(num(a[4]) || 300)]); return `(${x1}, ${y1}) → (${x2}, ${y2})`; }
       case 'hold': { const [x, y] = px(num(a[0]), num(a[1])), ms = num(a[2]) || 1000; adb.shell(['input', 'swipe', String(x), String(y), String(x), String(y), String(ms)], { timeout: ms + 30_000 }); return `(${x}, ${y}) ${ms}ms`; }
       case 'key': { adb.shell(['input', 'keyevent', String(androidKey(a[0]))]); return ''; }
-      case 'text': adb.shell(['input', 'text', inputText(a[0])]); return '';
+      case 'text': {
+        // (input text hands the game one key at a time and waits until it took each — about a frame a key, so a long text takes
+        // minutes: the time allowed grows with the text, and a text cut short by it fails the step instead of going on half typed)
+        const t0 = Date.now(), r = adb.shell(['input', 'text', inputText(a[0])], { timeout: 60_000 + 300 * a[0].length });
+        if (r.status !== 0) throw new Error(`${a[0].length} 文字を打ち切れませんでした（${Math.round((Date.now() - t0) / 1000)} 秒）: ${(r.stderr || r.stdout).trim().slice(0, 160) || 'adb の時間切れ'}`);
+        return `${a[0].length} 文字（${((Date.now() - t0) / 1000).toFixed(1)} 秒）`;
+      }
       case 'chat': {
         // T opens the chat (the device's keyboard), the text goes in, ENTER sends it (a leading / makes it the player's command)
         adb.shell(['input', 'keyevent', String(ANDROID_KEYS.T)]); await sleep(1500);
