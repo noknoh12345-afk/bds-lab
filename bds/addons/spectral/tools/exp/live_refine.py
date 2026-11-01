@@ -1,9 +1,9 @@
 """How much would the converter's analysis by synthesis (tools/spectral.py refine_client) add to a live encoding? A live song
 (tools/live/encoder.mjs --song) refined offline — the whole song, its future included, as the converter refines — and written as
 another song for score_pack.py. An upper bound for a refinement the live encoder could do as it goes (emulated, not recordings).
-The live frames lag the converter's by 28.7 ms (each is the 2048 samples before the frame's end: its centre 1024 samples before
-the end, the converter's frames are centred on their time), so the original is taken that much later.
-  cd tools/exp && python3 live_refine.py <song id> <live song.json> <out song.json> [sweeps 5] [level dB 10] [lag samples at 44.1 kHz, 1265 = 28.7 ms]"""
+The live frames lag the converter's (each is the 2048 samples before the frame's end, the converter's are centred on their time),
+so the original is taken 50 ms later (the lag with the model's best NSIM).
+  cd tools/exp && python3 live_refine.py <song id> <live song.json> <out song.json> [sweeps 5] [level dB 10] [lag samples at 44.1 kHz, 2205 = 50 ms]"""
 import sys, os, json, base64
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -23,8 +23,9 @@ if __name__ == '__main__':
     fd = meta['fd']; vd = blob[len(blob) - tail: len(blob) - tail + fd['v']]; nzd = blob[len(blob) - fd['nz']:]
     vc, nc = SP.unpack2(vd, F, N), SP.unpack2(nzd, F, M)
     x = C.load(sid, SP.SR)                    # (the converter's rate, 44.1 kHz: refine_client's bands and ticks are in it)
-    # (samples at that rate: the live frame's centre, 1024 of 48 kHz before its end, against the converter's, on its time)
-    lag = int(sys.argv[6]) if len(sys.argv) > 6 else int(round((2400 - 1024) / 48000 * SP.SR))
+    # (samples at that rate: the original's time against the playback's — a live frame is its 43 ms before its end, and played in
+    # the tick before it. 50 ms gave the model's best NSIM before refining: 0.61, against 0.55 at 28.7 ms and 0.39 at 0)
+    lag = int(sys.argv[6]) if len(sys.argv) > 6 else int(round(0.050 * SP.SR))
     x = np.concatenate([x[lag:], np.zeros(lag)]) if lag >= 0 else np.concatenate([np.zeros(-lag), x[:lag]])
     info = {}
     am2, vc2, nz2, nc2 = SP.refine_client(x, fq, am, vc, nz, nc, 1.0, n_voices=N, level_db=level, sweeps=sweeps, weights='svr', info=info, hold=True)

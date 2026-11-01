@@ -82,7 +82,9 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'yd': 'live_3d_walk_hold2_resend3', 'yi': 'live_3d_walk_hold2_resend3_again', 'ye': 'live_3d_walk_steer6',
         'yh': 'live_3d_walk_steer6_again', 'yf': 'live_3d_walk_steer6_resend3', 'yg': 'live_3d_walk_steer6_resend3_again',
         # run 20: the live encoder as it was (za, zd) and with its refinement as it goes (zb, zc: web/live.js LiveRefiner), the live path on phones
-        'za': 'live_enc_plain', 'zb': 'live_enc_refined', 'zc': 'live_enc_refined_again', 'zd': 'live_enc_plain_again'}
+        'za': 'live_enc_plain', 'zb': 'live_enc_refined', 'zc': 'live_enc_refined_again', 'zd': 'live_enc_plain_again',
+        # and a talker walking (0.01): the sounds moved after 1.5 blocks (zf, zi) or 3 (zg, zh)
+        'zf': 'live_3d_walk_q001_move15', 'zi': 'live_3d_walk_q001_move15_again', 'zg': 'live_3d_walk_q001_move3', 'zh': 'live_3d_walk_q001_move3_again'}
 
 
 def songs(res):

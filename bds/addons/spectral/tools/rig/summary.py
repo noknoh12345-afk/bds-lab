@@ -52,7 +52,9 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('live_3d_walk_steer6', '速く歩く話す人・0.01・steer で 6 tick 後に引き継ぐ'), ('live_3d_walk_steer6_again', '同（もう一度）'),
         ('live_3d_walk_steer6_resend3', '速く歩く話す人・0.01・steer 6 tick＋送り直す'), ('live_3d_walk_steer6_resend3_again', '同（もう一度）'),
         ('live_enc_plain', 'ライブの変換（20 回目）'), ('live_enc_refined', 'ライブの変換＋その場の合成による分析'), ('live_enc_refined_again', '同（もう一度）'),
-        ('live_enc_plain_again', 'ライブの変換（もう一度）')]
+        ('live_enc_plain_again', 'ライブの変換（もう一度）'),
+        ('live_3d_walk_q001_move15', '速く歩く話す人・0.01・1.5 ブロック（20 回目）'), ('live_3d_walk_q001_move15_again', '同（もう一度）'),
+        ('live_3d_walk_q001_move3', '速く歩く話す人・0.01・3 ブロック'), ('live_3d_walk_q001_move3_again', '同（もう一度）')]
 
 
 def main():
