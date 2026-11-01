@@ -67,7 +67,9 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('live_enc16_plain_again', 'ライブの変換 16 声（もう一度）'), ('live_enc_refined_r24', 'ライブの変換 24 声＋分析（24 回目）'),
         ('live_3d_still_x0', '止まった話す人 x=0'), ('live_3d_still_x6', '止まった話す人 x=6'), ('live_3d_still_xm6', '止まった話す人 x=-6'),
         ('live_3d_still_x3', '止まった話す人 x=3'), ('live_3d_still_xm3', '止まった話す人 x=-3'), ('live_3d_walk_cut2_r25', '歩く話す人 cut 2（25 回目）'),
-        ('live_3d_walk_cut2_r25_again', '同（もう一度）')]
+        ('live_3d_walk_cut2_r25_again', '同（もう一度）'),
+        ('final_songs_phones', '5 回目の最後の既定: 曲をヘッドホンで'), ('final_live_phones', '同: ライブの変換をヘッドホンで'), ('final_3d_still', '同: 止まった話し手'),
+        ('final_3d_walk', '同: 歩く話し手'), ('final_3d_run', '同: 歩く速さの話し手')]
 
 
 def main():

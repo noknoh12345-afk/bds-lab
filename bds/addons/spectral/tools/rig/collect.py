@@ -100,7 +100,10 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'ca': 'live_enc16_plain', 'cb': 'live_enc16_refined', 'cc': 'live_enc16_refined_again', 'cd': 'live_enc16_plain_again', 'ce': 'live_enc_refined_r24',
         # run 25: a talker standing at places along the walk (ja x=0, jb x=6, jc x=-6, jd x=3, jf x=-3) and walking with cut 2 (je, jg)
         'ja': 'live_3d_still_x0', 'jb': 'live_3d_still_x6', 'jc': 'live_3d_still_xm6', 'jd': 'live_3d_still_x3', 'jf': 'live_3d_still_xm3',
-        'je': 'live_3d_walk_cut2_r25', 'jg': 'live_3d_walk_cut2_r25_again'}
+        'je': 'live_3d_walk_cut2_r25', 'jg': 'live_3d_walk_cut2_r25_again',
+        # run 26: the session's last defaults as they are: songs on phones (fa), the live encoder refined on phones (fb), a talker standing (fc),
+        # walking 2 blocks a step (fd) and 3 (fe)
+        'fa': 'final_songs_phones', 'fb': 'final_live_phones', 'fc': 'final_3d_still', 'fd': 'final_3d_walk', 'fe': 'final_3d_run'}
 
 
 def songs(res):
