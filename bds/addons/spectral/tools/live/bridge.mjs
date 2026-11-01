@@ -7,7 +7,7 @@
 //   cd tools/live && npm install          (discord.js, @discordjs/voice — with Discord's voice encryption and DAVE — prism-media,
 //                                          opusscript: package.json)
 //   DISCORD_BOT_TOKEN=… node tools/live/bridge.mjs --guild <server id> --channel <voice channel id> [--links links.json]
-//        [--bds <folder with bedrock_server>] [--stdout] [--lab [live.json]] [--voices 16] [--refine 2] [--fake <audio> --as <gamertag>]
+//        [--bds <folder with bedrock_server>] [--stdout] [--lab [live.json]] [--voices 16] [--refine 2|0] [--fake <audio> --as <gamertag>]
 //
 // In Discord: /mc <gamertag> links you (the bot's own command, in that server). Where the frames go:
 //   --bds <folder>   starts the server itself and writes them into its console (what you type still reaches the server)
@@ -89,7 +89,7 @@ function sinkOf(o) {
 
 async function main() {
   const argv = process.argv.slice(2), opt = (k, d) => { const i = argv.indexOf(k); return i < 0 ? d : argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true; };
-  const o = { guild: opt('--guild'), channel: opt('--channel'), links: path.resolve(opt('--links', path.join(here, 'links.json'))), bds: opt('--bds'), lab: opt('--lab'), voices: Number(opt('--voices', 16)), refine: Number(opt('--refine', 0)), fake: opt('--fake'), as: opt('--as') };
+  const o = { guild: opt('--guild'), channel: opt('--channel'), links: path.resolve(opt('--links', path.join(here, 'links.json'))), bds: opt('--bds'), lab: opt('--lab'), voices: Number(opt('--voices', 16)), refine: Number(opt('--refine', 2)), fake: opt('--fake'), as: opt('--as') };
   if (o.lab === true) o.lab = path.join(here, '..', '..', '..', '..', '.lab', 'live.json');
   const send = sinkOf(o);
   if (o.fake) {
