@@ -100,9 +100,13 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
    **20 回目の実機**（tools/exp/app20.json、**run 41290363885**、075a04e）: ライブの変換のまま / その場の合成による分析つき（下の 10.）をヘッドホンで 3 曲
    ×（za_ zb_ zc_ zd_）、歩く話し手を 1.5 / 3 ブロックで作り直す（zf_ zi_ / zg_ zh_）。**集めた（実測、SPEC.md の 20 回目）: 分析つきが 2 組とも 3 曲すべてで上、
    中央値 +0.26**（2.82 → 3.16 / 3.20）→ **ライブの変換の既定を分析つきに**（encoder.mjs・bridge.mjs の `--refine` 既定 2）。3 ブロックの作り直しは +0.03 で既定は 1.5 のまま
-   **21 回目の実機**（tools/exp/app21.json、**run 41292284148**、2260f6e、18:15 JST に始めた）: 32 音の上限を確かめる — 止まった 24 声 / 8 声（pa_ / pb_）、
+   **21 回目の実機**（tools/exp/app21.json、**run 41292284148**、2260f6e）: 32 音の上限を確かめる — 止まった 24 声 / 8 声（pa_ / pb_）、
    歩く 8 声（pc_ / ph_: 作り直しの間も 32 音まで）、歩く 24 声（pd_ / pg_）、歩く 24 声で古い音をすぐ止めて 1 tick に 2 音ずつ（pe_ / pf_:
-   `/spectral:handover cut 1.5 2 0 2`）。集めるのは scratch/run21.sh（`RUN=41292284148 U=<ユニット> bash run21.sh`）
+   `/spectral:handover cut 1.5 2 0 2`）。**集めた（実測、SPEC.md の 21 回目）: 32 音を超えないと抜けない**（8 声 2.74 / 2.74・cut 2.77 / 2.73 で抜け 0、
+   1.2.0 の 24 声 2.68 / 2.68 で 500 / 950 ms 抜け、6 dB 小さい）→ **follow の引き継ぎの既定を cut・1 tick に 2 音に**（HANDOVER_CUT・FOLLOW_STEP）。
+   go: test 175/175, qa clean。tools/rig/gaps.py（声が 100 ms 以上抜けた所）
+   **22 回目の実機**（tools/exp/app22.json、**run 41293745813**、1fdcda8）: その場の合成による分析を 3D で（止まった話し手 ba_–bd_・bg_、near 24 ブロック be_ / bf_）。
+   集めるのは scratch/run22.sh
 10. **ライブの変換に合成による分析は効くか**（エミュレーター、推測）: tools/exp/live_refine.py がライブのフレームを変換器の refine_client で後から（先も見て）
    5 回掃き出し、tools/exp/score_pack.py（SPECTRAL_BUNDLE・SPECTRAL_LEVEL で 1.2.0 の +10 dB）が採点する。注意: refine_client は変換器の 44.1 kHz の
    音で動く（48 kHz を渡すと時間がずれ、模型の NSIM が 0.13 しか出ない）。ライブのフレームは変換器のフレームより遅れているので、模型の NSIM が一番高い
@@ -192,10 +196,9 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## 次にやること
 
-0. 21 回目（run 41292284148）を集める（scratch/run21.sh）: 歩く 8 声（pc_ / ph_）の音節の抜け（tools/rig/gaps.py の gap_ms、3.85 秒・9.2 秒・17.0 秒あたり）が
-   24 声（pd_ / pg_）より少なく、止まった 8 声（pb_）との差も小さければ、32 音の上限が原因。cut（pe_ / pf_）が 24 声より良ければその既定を
-   （src/main.ts HANDOVER_CUT・FOLLOW_STEP、試験の talker の節の返事も）。本物の歩き（4.3 ブロック/秒）は 1.5 ブロックで 0.35 秒ごとの作り直し: 17–21 回目の 2 倍
-1. 22 回目（tools/exp/app22.json、scratch/run22.sh）: その場の合成による分析は 3D（止まった話し手の follow、near 24 ブロック）でも効くか
+0. 22 回目（run 41293745813、scratch/run22.sh）を集める: その場の合成による分析は 3D（止まった話し手の follow、near 24 ブロック）でも効くか
+1. cut の既定を本物の歩きの速さ（4.3 ブロック/秒: 3 ブロックずつ約 0.7 秒）で確かめる（1 tick に 2 / 4 音、1.2.0 の hold と比べる）。
+   2 人が同時に話すと 2 × 32 音で 32 音を超える（話し手の声の数を自動で減らす案: 近くの話し手の数で 24 → 12 声）
 2. 本物の Discord で bridge を（トークンとサーバー: ユーザーが用意。tools/live/README.md の手順。既定で `--refine 2`）。何人もが同時に話すと
    1 人ずつの分析が Node の 1 本のスレッドに載る（24 声 1 人で実時間の約 3 割）: 多いならワーカーに分ける
 3. 遠くで静かに作ると下がる理由（16 回目の 24 ブロック）は大きさではなく音色の側（推測）。0.01 の near（止まった音）は測っていない

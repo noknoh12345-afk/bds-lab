@@ -818,7 +818,7 @@ const LIVE_IDLE = 4;            // ticks without a new frame: the voice falls si
 /** blocks a followed talker moves before the sounds move with them (spectral:handover's second value; 1.5 by default): every move
  *  makes the talker's sounds again for each listener (a low thump for each: tools/rig/low_bursts.py) */
 let FOLLOW_MOVE = 1.5;
-let FOLLOW_STEP = 8;            // sounds moved a tick (each handed over two ticks later: SETTLE_TICKS; spectral:handover's fifth value)
+let FOLLOW_STEP = 2;            // sounds moved a tick (each handed over two ticks later: SETTLE_TICKS; spectral:handover's fifth value; 8 until run 41292284148)
 const FOLLOW_RANGE = 48;        // blocks: the farthest a talker is heard (the 3D sounds' own max_distance)
 /** the volume a 3D sound is made at (spectral:range): the client takes its audible distance from it, 16 blocks a unit, and
  *  plays it no louder for it. Measured, a listener's own 3D sound to their left (runs 41200540880 and 41205071937, the level
@@ -837,10 +837,12 @@ const SETTLE_TICKS = 2;
  *  41272459953 and 41277993333) or keep following the voice (true, spectral:handover steer: to measure — a voice that ends or starts
  *  a syllable in those two ticks is not held as it was) */
 let HANDOVER_STEER = false;
-/** a followed talker moved: the old sound stopped as its new one is made (spectral:handover cut) — a talker's 32 sounds and their
- *  32 new ones are more than a phone plays at once (32, measured): to see whether the client's choice of what to drop is what
- *  silences a syllable after a move (run 41288535848: 300-350 ms, whatever the handover) */
-let HANDOVER_CUT = false;
+/** a followed talker moved: the old sound stopped as its new one is made (spectral:handover cut, the default since run
+ *  41292284148). A talker's 32 sounds and their new ones are more than a phone plays at once (32, measured), and the client then
+ *  drops some: measured, a talker walking 2 blocks a step with 24 voices — the old sounds kept until the handover (1.2.0): ViSQOL
+ *  2.68 / 2.68, the voice lost for 500 / 950 ms (syllables just after a move, tools/rig/gaps.py) and 6 dB quieter; stopped at once,
+ *  2 a tick: 2.77 / 2.73, nothing lost; 8 voices (16 sounds, never over 32), kept: 2.74 / 2.74, nothing lost */
+let HANDOVER_CUT = true;
 /** a followed talker moved: ticks until the new sounds take over (spectral:handover's third value; SETTLE_TICKS by default) and how
  *  many times after that their state is sent again, every 2 ticks (its fourth; 0 by default). Measured, run 41286094409: after a
  *  move the new sounds stayed silent for 300-400 ms at the start of a syllable (hold and steer alike, run 41284187721 too) — what
