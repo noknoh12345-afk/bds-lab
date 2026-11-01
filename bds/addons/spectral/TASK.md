@@ -17,7 +17,8 @@
    （`/spectral:range <音量> [レベル dB] [静かに作る]`: 16 ブロック × 音量、既定 3。レベルは 3D の音をファイルより大きく、既定 +10 dB:
    遠くで声の静かな所が 16 bit の床に消えないように。静かに作るは既定 on（follow の声だけ）: 歩く話し手の音を作り直すときの低い「トン」を消す）
 5. **電話**は同時に 32 音しか鳴らない（実測）ので自動で 24 声＋ノイズ 8、ファイルより 10 dB 大きく（実測で +6 dB より良い）。Realms や人が多いときは
-   `/spectral:mode light`（16 声・1 人 1 tick 24 命令まで）
+   `/spectral:mode light`（16 声・1 人 1 tick 24 命令まで）。何人もの話し手が近くにいると、聞く人ごとにその 32 音を話し手で分ける
+   （`/spectral:share`、既定 on: 2 人なら 1 人 10 声＋ノイズの上の 6 帯域）
 
 ## Acceptance (one tests.txt `## ` section each)
 - [x] MP3 を解析した曲データを正弦波の加算合成で再生する。正弦波 1 本 = 常駐ループの SoundInstance 1 つ（## play starts 48 sine voices and 8 noise bands as looping sound instances）
@@ -50,6 +51,7 @@
 - [x] ライブ: 声（ボイスチャット・マイク）をその場で受け取り、届いた順に鳴らす。script event `spectral:live`、ジッターバッファ 2 tick、届かなかったフレームは数えて埋める、送り手が始め直したら新しいストリーム、終わり（## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), starts again when its sender does, and ends）
 - [x] ライブの道で曲を 1 フレームずつ送る（ボイスチャットの橋渡しと同じ形）: ヘッドホンに、そして歩く人から 3D で（音がその人に付いて動く・48 ブロック以内の人それぞれに・話す本人には聞こえない・いなくなった人の声は誰にも聞こえない: 近接ボイスチャット・立体音響）（## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice, nobody hears a talker who left)）
 - [x] 名札のエンティティ（防具立て・ペット・NPC）の声を follow で追える（## a voice can follow an entity with a name tag (an NPC, a pet) as it follows a player: everyone within reach hears it, it moves with it, and nobody hears it once it is gone）
+- [x] 何人もが同時に話す: 聞く人ごとに、その人が聞くライブのストリームでクライアントの同時の音（電話 32、実測）を分ける。1 人なら全部、2 人なら足りない分を一番低いノイズ帯域から（/spectral:share、既定 on。分けないと超えた分はクライアントが落とす）（## the live streams a listener hears share the sounds their client plays at once …: one talker near a phone has all their stream's sounds ／ ## two talkers near a phone ／ ## sharing off ／ ## sharing on, a client with no measured limit given one ／ ## the other talker gone）
 - [x] 3D の音は 48 ブロックまで届き、ファイルより 10 dB 大きく鳴る: 届く距離は作るときの音量で決まる（実機で 16 ブロック × 音量、音量を上げても大きくはならない）ので音量 3 で作り、音を作るのは届く人にだけ。レベルは setVolume で（実機で 3D でも 1 を超えて効く。24 ブロックで ViSQOL 2.38 → 2.79）（## 3D sounds reach 48 blocks (made at volume 3: the client takes the distance from it, 16 blocks a unit, measured) and play 10 dB over the files (measured: a far voice keeps its quiet parts), and only the players they reach get sounds (spectral:range)）
 
 ## Guessed
