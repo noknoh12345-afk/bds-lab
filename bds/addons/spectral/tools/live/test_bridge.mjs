@@ -9,7 +9,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { Talker, monoOf, link, readLinks, streamId } from './bridge.mjs';
+import { Talker, WorkerPool, monoOf, link, readLinks, streamId } from './bridge.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url)), require = createRequire(import.meta.url);
 const prism = require('prism-media');
@@ -74,6 +74,26 @@ tr.end();
 const rf = framesOf(rl.map((l) => JSON.parse(l.replace(/^scriptevent spectral:live /, ''))), 16, 8);
 ok(rf.length === 42 && tr.quiets === 1 && rf.every((f) => f.whole), `refined: as many frames (${rf.length}), every one whole, the pause flushed`);
 ok(loud(rf[19]) && !loud(rf[21]) && loud(rf[22]) && rf[22].rise.length > 0, `refined: the first sentence fades out (frame 21: silent), the second starts with rises (frame 22: ${rf[22]?.rise.length} voices rise)`);
+// each talker's encoder in a worker thread of its own (the bridge's default with the refinement on more than one core): the very
+// same lines as on the main thread, in the same order — the whole speech, and the two sentences with the pause between them
+const wl = [], ml = [];
+const tw = new Talker({ id: 'vc_w', gamertag: 'Steve', voices: 16, send: (l) => wl.push(l), quietMs: 0, refine: 2, worker: true });
+const tm = new Talker({ id: 'vc_w', gamertag: 'Steve', voices: 16, send: (l) => ml.push(l), quietMs: 0, refine: 2 });
+for (const h of heard) { tw.push(h); tm.push(h); }
+tw.end(); tm.end(); await tw.done;
+ok(wl.length === ml.length && wl.length > 100 && wl.every((l, i) => l === ml[i]), `in a worker thread: the same ${wl.length} lines as on the main thread (refined), the end last`);
+const ql = [], tq = new Talker({ id: 'vc_refine', gamertag: 'Steve', voices: 16, send: (l) => ql.push(l), quietMs: 60, refine: 2, worker: true });
+tq.push(pcm.subarray(48000, 96000));
+await new Promise((r) => setTimeout(r, 200));
+tq.push(pcm.subarray(96000, 144000));
+tq.end(); await tq.done;
+ok(tq.quiets === 1 && ql.length === rl.length && ql.every((l, i) => l === rl[i]), `in a worker thread with a pause: the same ${ql.length} lines as on the main thread`);
+// a thread from the pool (made ahead and compiled on a made-up voice of its own: the bridge's way) gives the same lines too
+const pool = new WorkerPool({ voices: 16, refine: 2 }), pl2 = [];
+const tpw = new Talker({ id: 'vc_w', gamertag: 'Steve', voices: 16, send: (l) => pl2.push(l), quietMs: 0, refine: 2, worker: pool });
+for (const h of heard) tpw.push(h);
+tpw.end(); await tpw.done; pool.close();
+ok(pl2.length === ml.length && pl2.every((l, i) => l === ml[i]), `a warmed thread from the pool: the same ${pl2.length} lines`);
 // links: /mc <gamertag>
 const lf = path.join(tmp, 'links.json');
 ok(link(lf, '123456789012345678', 'Steve') && link(lf, '223456789012345678', 'Alex Two') && !link(lf, 'nope', 'Steve') && !link(lf, '323456789012345678', 'bad;name') && !link(lf, '423456789012345678', 'x'.repeat(33)), 'links: a Discord id and a gamertag, nothing else');
