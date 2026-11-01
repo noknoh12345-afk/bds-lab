@@ -5,7 +5,7 @@
 
 ## 使い方（遊ぶ人へ）
 1. **本体**: `Spectral_Player.mcaddon`（bds-lab の dist/、変換ページの「本体アドオンを保存」）を開き、ワールドでビヘイビアーパックと
-   リソースパックを有効に（実験的な機能は要らない）。サーバーなら `node lab.mjs deploy <BDS のフォルダ>`。版は 1.1.0（同じ UUID のまま上げたので、前の版を入れていても更新として入る）
+   リソースパックを有効に（実験的な機能は要らない）。サーバーなら `node lab.mjs deploy <BDS のフォルダ>`。版は 1.2.0（同じ UUID のまま上げたので、前の版を入れていても更新として入る）
 2. **曲**: 変換ページ（web/dist/index.html。claude.ai の Spectral Converter）に MP3 などを落とす → 「ゲーム内の音」で試聴 →
    「曲パックを保存」→ 末尾の .zip を消した .mcpack を開き、ワールドで本体と一緒に有効に。手元なら `python3 tools/spectral.py <曲> --ts`
 3. **ゲームで**: 最初に配られるスペクトル・リモコンか `/spectral:menu`。`/spectral:play <曲> phones|speaker`（ヘッドホン: 自分に付いてくる／
@@ -13,8 +13,8 @@
 4. **ライブ（近接ボイスチャット・立体音響）**: `/spectral:live` が流れている声の一覧。Discord のボイスチャンネルの声を、つないだ
    プレイヤーの位置から 3D で（近づくと大きく、向きで左右、その人に付いて動く）: tools/live/README.md の bridge.mjs。
    試し: `/spectral:live_demo demo near`（その場に置いて、近くの人それぞれが 3D で聞く）・`/spectral:live_demo demo follow <誰>`（その人から:
-   本人には聞こえない）
-5. **電話**は同時に 32 音しか鳴らない（実測）ので自動で 24 声＋ノイズ 8、ファイルより 6 dB 大きく。Realms や人が多いときは
+   本人には聞こえない）。3D の音は 48 ブロックまで届く（`/spectral:range <音量>`: 16 ブロック × 音量、既定 3）
+5. **電話**は同時に 32 音しか鳴らない（実測）ので自動で 24 声＋ノイズ 8、ファイルより 10 dB 大きく（実測で +6 dB より良い）。Realms や人が多いときは
    `/spectral:mode light`（16 声・1 人 1 tick 24 命令まで）
 
 ## Acceptance (one tests.txt `## ` section each)
@@ -42,22 +42,22 @@
 - [x] 実機クライアントを測る較正プログラム（## calibration programs for measuring a real client (tools/rig)）
 - [x] 軽量モード: 16 声・1 リスナーあたり 24 命令/tick（知覚上の優先度で選ぶ）（## light mode for Realms and many players: 16 voices and a command budget）
 - [x] 曲の一覧（## the library lists the demo song and the generated ones）
-- [x] 電話は実測の同時発音数（32）に収まる声の数が既定、打撃音（ワンショット）は既定で鳴らさない（同じ run の実測で打撃音なしが上）、どの音もファイルより 6 dB 大きく（## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, no drum bursts (measured: better without), and every level 6 dB over the files (the phone plays them 32.5 dB under, into 16 bits)）
+- [x] 電話は実測の同時発音数（32）に収まる声の数が既定、打撃音（ワンショット）は既定で鳴らさない（同じ run の実測で打撃音なしが上）、どの音もファイルより 10 dB 大きく（実機の 2 回の run で +6 dB より 13 曲中 10 曲で上）（## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, no drum bursts (measured: better without), and every level 10 dB over the files (the phone plays them 32.5 dB under, into 16 bits; measured: +10 dB beat +6 dB on 10 of 13 songs in two runs)）
 - [x] ファイルより大きく鳴らす: ゲームはどの音もファイルより 32.5 dB 小さく 16 bit で鳴らすので、静かな曲の下限は量子化（## louder than the files: a level in dB, by setVolume or by the loud sound events (the game plays every sound 32.5 dB under its file)）
 - [x] 変換器が tick ごとに選んだ長さのフェードで声とノイズ帯域を鳴らす（## a song with fitted fades (tools/spectral.py nz_fade, v_fade): each voice and noise band fades as long as the converter chose, tick by tick）
 - [x] ライブ: 声（ボイスチャット・マイク）をその場で受け取り、届いた順に鳴らす。script event `spectral:live`、ジッターバッファ 2 tick、届かなかったフレームは数えて埋める、送り手が始め直したら新しいストリーム、終わり（## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), starts again when its sender does, and ends）
 - [x] ライブの道で曲を 1 フレームずつ送る（ボイスチャットの橋渡しと同じ形）: ヘッドホンに、そして歩く人から 3D で（音がその人に付いて動く・48 ブロック以内の人それぞれに・話す本人には聞こえない・いなくなった人の声は誰にも聞こえない: 近接ボイスチャット・立体音響）（## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice, nobody hears a talker who left)）
-- [x] 3D の音の届く距離: 作るときの音量で決まる（実機で、音量 1 で作った聞く人ごとの 3D の音は 12 ブロックで小さく 24 ブロックで無音）ので変えられる（## 3D sounds can reach farther: the volume they are made at (spectral:range)）
+- [x] 3D の音は 48 ブロックまで届く: 届く距離は作るときの音量で決まる（実機で 16 ブロック × 音量、音量を上げても大きくはならない）ので音量 3 で作り、音を作るのは届く人にだけ（## 3D sounds reach 48 blocks (made at volume 3: the client takes the distance from it, 16 blocks a unit, measured), and only the players they reach get sounds (spectral:range)）
 
 ## Guessed
 <!-- values decided without asking -->
 - 正弦波の元音: 1760 Hz（setPitch 0.01–10 で 17.6 Hz–17.6 kHz を 1 本で覆う）
 - 既定のボイス数: 曲データの数（変換時 48）、/spectral:voices で 1–128。ただし電話（platformType Mobile）は実測の同時発音数 32 − ノイズ 8 = 24（SPEC.md。測っていないデスクトップ・コンソールは今までどおり）
-- 電話の既定のレベル +6 dB（setVolume）: 実測のクリップ（ファイル単位で約 2.0）の下に試験曲の一番大きいところが収まる値。+8・+10 dB はエミュレーターの ViSQOL では少し上だが、話し声とピアノの山がクリップする（SPEC.md、tools/exp/README.md）。/spectral:level で 0–18 dB
-- ヘッドホンは category ui・is3D false（範囲制限なしで本人に付いてくる）、スピーカーは category record・3D・max_distance 48
+- 電話の既定のレベル +10 dB（setVolume、1.2.0 から。1.1.0 までは +6 dB）: 実機の 11・12 回目の run で +6 dB より 13 曲中 10 曲で上（中央値 +0.11 / +0.06）、+8 dB は間。いちばん大きいところはクリップする（ファイル単位で約 2.0）が ViSQOL は下がらなかった。前に +6 dB 向けに変換した曲も +10 dB で良くなる（エミュレーター、推測）（SPEC.md）。/spectral:level で 0–18 dB
+- ヘッドホンは category ui・is3D false（範囲制限なしで本人に付いてくる）、スピーカーは category record・3D・min_distance 3・max_distance 48。3D の音は音量 3（48 ブロック）・高さ P_MIN（17.6 Hz）で作り同じ tick に無音にする（実機で、作った直後 100–200 ms は作ったときの音量と高さで鳴る: 高さ 1 なら 1760 Hz の「ピッ」）。状態は 2 tick 後にもう一度送る
 - 打撃音: 低/中/高の 3 帯域 × 先頭無音 0/12.5/25/37.5 ms の 4 ファイル
 - デモ曲は自作の合成曲（第三者の素材なし）: tools/make_demo_song.py
-- ライブ: 1 フレーム = 50 ms、届いた最新の 2 tick 後ろを鳴らす（100 ms のジッターバッファ）、8 tick より遅れたら先へ飛ぶ、4 tick 何も来なければ黙る。3D で人に付いていくときは 1.5 ブロック動いたら 1 tick に 8 音ずつ、1 tick のクロスフェードで移す（SoundInstance は場所を変えられないため）
+- ライブ: 1 フレーム = 50 ms、届いた最新の 2 tick 後ろを鳴らす（100 ms のジッターバッファ）、8 tick より遅れたら先へ飛ぶ、4 tick 何も来なければ黙る。3D で人に付いていくときは 1.5 ブロック動いたら 1 tick に 8 音ずつ新しい場所に作り、2 tick 後に古い音から 1 tick のクロスフェードで引き継ぐ（SoundInstance は場所を変えられないため。新しい音が命令どおりに鳴り出すのを待つ）
 - ボイスチャットの橋渡し（tools/live/bridge.mjs）の既定は 1 人 16 声＋ノイズ 8（2 人が同時に話しても電話の 32 音にほぼ収まる）。Discord で /mc <ゲーマータグ> とつないだ人だけをゲームで鳴らす
 - 文の切れ目: 120 ms 声が来なければ橋渡しが無音を 2 フレーム送る。アドオンは 4 tick 何も来なかったあとのフレームをひと続きの始まりとし、その最初のフレームから鳴らす。番号 0 のフレームにメタがあれば新しいストリーム（送り手の始め直し）
 
@@ -66,7 +66,7 @@
 - 別のビヘイビアーパック（曲パック）からの script event は本体に届く（LAB_UTILITIES で 2 パック同時に確認）
 - 1 人ヘッドホン再生: 56 インスタンス、平均 16–30 命令/tick（最大 89）、スクリプト 1.5–1.8 ms/tick。QA（3 人・再接続・/reload・再起動）で 2 ms/tick 以内
 
-## この版の状態（2026-10-31 4 回目のセッション、版 1.1.0、実機での測定）
+## この版の状態（2026-11-01 5 回目のセッション、版 1.2.0、実機での測定）
 
 引き継ぎ: HANDOFF.md。実機の限界値と曲の成績: SPEC.md（実測と推測を分けた）、数の元: measured/。
 - 実機（redroid の Android 14 に Play が入れた Minecraft 1.26.60.4、改造なし）で録って測った: 同時発音数 32、fade は振幅で直線・指定どおり、
@@ -76,9 +76,13 @@
   5 回、音量を保って。py と js はバイト一致
 - **実機の ViSQOL（9 回目 run 41187515049、13 曲、同じ run の中で）: 新しい既定 中央値 2.91、8 回目の既定より 11/13 で上（差の中央値 +0.09・
   平均 +0.14）**。天井（1–2 回目の run、目安）から 0.3 以内 9/13。run をまたぐと同じデータで 0.7 動くことがある（デモ）ので、比べるのは
-  同じ run の中だけ。`node lab.mjs go`（ローカルの BDS 1.26.61.1）: **DONE dist/Spectral_Player.mcaddon（test 152/152, qa clean）**
+  同じ run の中だけ。`node lab.mjs go`（ローカルの BDS 1.26.61.1）: **DONE dist/Spectral_Player.mcaddon（test 156/156, qa clean）**（1.2.0）
 - **11 回目（run 41200540880、実測、まとめ録り）: 同じ変換を +10 dB で詰めて +10 dB で鳴らすと 10/13 で上（中央値 +0.11）、同じ run の
-  天井から 0.3 以内 12/13**（+6 dB は 10/13）。既定はまだ +6 dB（変えるかは HANDOFF.md の次にやること）
+  天井から 0.3 以内 12/13**（+6 dB は 10/13）。**12 回目（run 41205071937）でも +10 dB は 10/13 で上（中央値 +0.06・平均 +0.16）、+8 dB は間**
+  → **1.2.0 で電話の既定を +10 dB に**（src/main.ts CLIENTS・変換器の CL_LEVEL_DB、py と js）
+- **3D（実測）**: 距離が倍で 6 dB 下がり（min_distance 3 から）、届くのは 16 ブロック × 作る音量まで（音量を上げても大きくならない）→ 1.2.0 で
+  作る音量 3 = 48 ブロック（FOLLOW_RANGE）、音を作るのは届く人だけ。どの 3D の録音も頭に約 100 ms の 1760 Hz の「ピッ」があった（作った直後は
+  作ったときの音量と高さで鳴る）→ 1.2.0 で 3D の音は高さ P_MIN で作り、2 tick 後に状態を送り直す（効いたかは 13 回目で測る）
 - ライブ: 声などを 50 ms ずつその場で受け取って鳴らす（script event spectral:live）。ヘッドホン・3D スピーカー・その場に聞く人ごとの 3D（near）・
   動く人から 3D（follow: 近接ボイスチャット）。実機でライブの道は曲として鳴らすのと同じ質（2.90 / 2.91）。web/live.js がその場の変換
   （実機で前もっての変換より 0.09–0.18 低い）、tools/live/bridge.mjs が Discord のボイスチャンネルをつなぐ（tools/live/README.md）

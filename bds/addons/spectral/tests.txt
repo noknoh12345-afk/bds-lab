@@ -326,7 +326,7 @@ wait 800
 ~ @A status: playing tinyfade .* fades fitted \(voices and noise\) short [1-9]\d*$
 until ■ Tiny fades — end 5000
 
-## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, no drum bursts (measured: better without), and every level 6 dB over the files (the phone plays them 32.5 dB under, into 16 bits)
+## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, no drum bursts (measured: better without), and every level 10 dB over the files (the phone plays them 32.5 dB under, into 16 bits; measured: +10 dB beat +6 dB on 10 of 13 songs in two runs)
 @C join platform=mobile
 @C cmd /spectral:play demo
 ~ @C ▶ Demo \(original\) — Spectral Player \(0:22, 24/48 voices, headphones\)
@@ -334,7 +334,7 @@ wait 1000
 @C cmd /spectral:status
 ~ @C status: playing demo .* mode phones voices 24 instances 32
 ~ @C status: playing demo .* drums off
-~ @C status: playing demo .* level \+6 dB volume
+~ @C status: playing demo .* level \+10 dB volume
 @C cmd /spectral:mode light
 ~ @C quality light: 16 voices
 @C cmd /spectral:mode quality
@@ -416,10 +416,25 @@ wait 1000
 scriptevent spectral:live {"id":"t2","end":true}
 tp A 0 -60 0
 
-## 3D sounds can reach farther: the volume they are made at (spectral:range)
+## 3D sounds reach 48 blocks (made at volume 3: the client takes the distance from it, 16 blocks a unit, measured), and only the players they reach get sounds (spectral:range)
 @A cmd /spectral:range
-~ @A range: 3D sounds made at volume 1 \(
+~ @A range: 3D sounds made at volume 3, heard to 48 blocks \(
 @A cmd /spectral:range 4
-~ @A range: 3D sounds made at volume 4 \(
+~ @A range: 3D sounds made at volume 4, heard to 48 blocks \(
 spectral:range 1
-~ range: 3D sounds made at volume 1 \(
+~ range: 3D sounds made at volume 1, heard to 16 blocks \(
+scriptevent spectral:live {"id":"t3","m":{"N":2,"M":8,"amp":[-90,0.75],"nz":[-100,0.5],"fd":[5,12,25,50]},"s":0,"f":"A2QQcAAAAAAAAAAAAA///w==","at":"near:0,-59,0"}
+wait 600
+@A cmd /spectral:live
+~ @A live t3: 1 frames, 2 voices, near 0 -59 0 listeners 1
+tp A 20 -60 0
+wait 1000
+@A cmd /spectral:live
+~ @A live t3: 1 frames, 2 voices, near 0 -59 0 listeners 0
+spectral:range 3
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(
+wait 1000
+@A cmd /spectral:live
+~ @A live t3: 1 frames, 2 voices, near 0 -59 0 listeners 3
+scriptevent spectral:live {"id":"t3","end":true}
+tp A 0 -60 0

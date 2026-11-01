@@ -171,12 +171,16 @@ const LOUD_EVENT_DB = 20 * Math.log10(4);          // the _l events' definition 
 // level: how much louder than the files the headphones play by default (dB, by setVolume). The phone plays every sound
 // 32.5 dB under its file into 16 bits (most songs' floor is that quantisation), and clips the mix at about 2 file units
 // (run 41147544874's calib loud: a sine of 0.91 at setVolume 2 exact, at 4 and 8 a hard clip at 2.0; the mixer calib's 16
-// sines fit 1.7): +6 dB doubles every level and keeps the test songs' loudest moments under it. Through the client model with
-// that clip (tools/exp, 10 songs, emulated): +6 dB raised the median ViSQOL 2.59 -> 2.94 (quiet songs most: the 16-bit floor);
-// +8 / +10 dB scored a little higher (2.98 / 3.00) but clipped the loudest songs' peaks (clip distortion -29 / -21 dB on the
-// speech, under -44 dB at +6). /spectral:level sets more
+// sines fit 1.7). Through the client model with that clip (tools/exp, emulated) +6 dB raised the median ViSQOL 2.59 -> 2.94 (quiet
+// songs most: the 16-bit floor) and was the default until 1.2.0. Measured since (the real phone, the same run, 13 songs, the
+// converter tuned to the level it plays at): +10 dB against +6 dB up on 10 of 13 songs in run 41200540880 (median +0.11) and
+// again in run 41205071937 (median +0.06, mean +0.16; +8 dB between them, median +0.06), within 0.3 of the ceiling 12/13 and
+// 10/13 against 10/13 and 8/13; drums +1.0 and Chopin +0.6 in both runs, the one steady loss Name of Love -0.07 (still above
+// its ceiling). Songs converted for +6 dB gain about as much at +10 (emulated: median 3.33 -> 3.45, 9 of 13 up): what the level
+// buys is the 16-bit floor further under the quiet passages. The clip of the loudest moments (its distortion -21 dB on the
+// speech at +10, emulated) did not cost ViSQOL on the phone. /spectral:level sets another
 interface Client { sounds: number; mixHz: number; fold: boolean; limit: boolean; drums?: boolean; level?: number; }
-const CLIENTS: Partial<Record<string, Client>> = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false, drums: false, level: 6 } };
+const CLIENTS: Partial<Record<string, Client>> = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false, drums: false, level: 10 } };
 function clientOf(p: Player): Client | undefined {
   let kind = '';
   try { kind = String(p.clientSystemInfo.platformType); } catch { /* not known (an older client) */ }
@@ -224,8 +228,9 @@ class Session {
   /** start one looping instance at silence */
   private loop(t: Target, name: string): SoundInstance {
     if (t.player) return t.player.playSound(this.ev(name), { volume: SILENT, pitch: 1, loopCount: -1 });
-    // 3D: the play volume also sets the audible range, so start at RANGE_3D and silence it in the same tick
-    const s = t.dim!.playSound(this.ev(name), t.loc!, { volume: RANGE_3D, pitch: 1, loopCount: -1 });
+    // 3D: the play volume also sets the audible range, so start at RANGE_3D — at P_MIN, under hearing, for the ticks it plays as
+    // made (SETTLE_TICKS) — and silence it in the same tick; build() sends the state again
+    const s = t.dim!.playSound(this.ev(name), t.loc!, { volume: RANGE_3D, pitch: P_MIN, loopCount: -1 });
     s.setVolume(SILENT);
     return s;
   }
@@ -242,6 +247,11 @@ class Session {
       else if (!this.bandOn(b) && t.nz[b]) { try { t.nz[b]!.stop(); } catch { /* gone */ } t.nz[b] = undefined; }
     }
     t.nz.length = M;
+    // (3D: made at P_MIN and played as made for SETTLE_TICKS — the state now, and again once they play)
+    if (!t.player) {
+      try { this.resync(t); } catch { /* gone */ }
+      system.runTimeout(() => { if (this.targets.includes(t)) { try { this.resync(t); } catch { /* gone */ } } }, SETTLE_TICKS);
+    }
   }
   async addListener(p: Player) {
     if (this.mode !== 'phones' || this.targets.some((t) => t.player?.id === p.id)) return;
@@ -806,11 +816,21 @@ const LIVE_DELAY = 2;           // ticks behind the newest frame
 const LIVE_LATE = 6;            // further behind than this over the delay: jump ahead (the latency stays bounded)
 const LIVE_IDLE = 4;            // ticks without a new frame: the voice falls silent (a talker stopped)
 const FOLLOW_MOVE = 1.5;        // blocks a followed player moves before the sound moves with them
-const FOLLOW_STEP = 8;          // sounds moved a tick (each with a crossfade of a tick)
-const FOLLOW_RANGE = 48;        // blocks: who hears a talker (the 3D sounds' own max_distance)
-/** the volume a 3D sound is made at (spectral:range): the client takes its audible distance from it — measured, run 41200540880:
- *  made at 1, a listener's own 3D sound is faint at 12 blocks and silent at 24. Its level is set after, by setVolume */
-let RANGE_3D = 1;
+const FOLLOW_STEP = 8;          // sounds moved a tick (each handed over two ticks later: SETTLE_TICKS)
+const FOLLOW_RANGE = 48;        // blocks: the farthest a talker is heard (the 3D sounds' own max_distance)
+/** the volume a 3D sound is made at (spectral:range): the client takes its audible distance from it, 16 blocks a unit, and
+ *  plays it no louder for it. Measured, a listener's own 3D sound to their left (runs 41200540880 and 41205071937, the level
+ *  against the original): made at 1, -31.7 dB at 3 blocks, -42.5 at 12, silent at 24; made at 2, -48.0 at 24; made at 4, -49.2
+ *  at 24 and -53.5 at 40 — one law for all, within 1.5 dB of 6 dB less a doubling of the distance from the definitions'
+ *  min_distance 3, cut off past 16 blocks times the volume (bracketed: made at 1, heard at 12 and not at 24). 3 reaches
+ *  FOLLOW_RANGE. Its level is set after, by setVolume */
+let RANGE_3D = 3;
+/** how far a talker (follow) or a spot (near) is heard: the 3D sounds' reach, at most FOLLOW_RANGE (nobody farther gets sounds) */
+const reach3D = () => Math.min(FOLLOW_RANGE, 16 * RANGE_3D);
+/** ticks a new 3D sound plays as it was made (measured: every 3D recording of runs 9 to 12 starts with 100 ms of the 1760 Hz loop
+ *  at full volume — the silence sent with it came late). So 3D sounds are made at P_MIN (17.6 Hz, under hearing) and their state
+ *  is sent again this many ticks later */
+const SETTLE_TICKS = 2;
 
 class LiveStream {
   w = -1; frames = 0; gaps = 0; lastAt = 0;
@@ -875,12 +895,14 @@ class LivePlayer {
   targets: Target[] = []; p = -1; playing = false; idle = 0; underruns = 0; skips = 0; moves = 0; calls = 0; ticks = 0; started = false; ms = 0;
   lastP: Float32Array; lastL: Float32Array; lastNL: Float32Array;
   anchor?: Vector3; moving: number[] = []; dying: [SoundInstance, number][] = [];
+  /** follow: sounds made at the new place, each taking over from its old one at tick `at` (SETTLE_TICKS later); i < 0: band -1-i */
+  handover: { t: Target; i: number; s: SoundInstance; old: SoundInstance; at: number }[] = [];
   constructor(public st: LiveStream, public at: LiveAt) {
     this.lastP = new Float32Array(st.meta.N).fill(-1); this.lastL = new Float32Array(st.meta.N).fill(SILENT); this.lastNL = new Float32Array(st.meta.M).fill(SILENT);
   }
   get three() { return this.at.kind !== 'phones'; }
   ev(name: string) { return this.three ? name + '_3d' : name; }
-  /** the level over the files: headphones as the listener's own setting (a phone +6 dB), a 3D sound 1 (its volume is its range) */
+  /** the level over the files: headphones as the listener's own setting (a phone +10 dB), a 3D sound 1 (its volume is its range) */
   lv = 1;
   where(): { dim: Dimension; loc: Vector3 } | undefined {
     if (this.at.kind === 'speaker' || this.at.kind === 'near') { try { return { dim: world.getDimension(this.at.dim), loc: this.at.loc }; } catch { return undefined; } }
@@ -889,9 +911,9 @@ class LivePlayer {
   }
   private loop(t: Target, name: string, at = t.loc): SoundInstance {
     if (t.player && !at) return t.player.playSound(this.ev(name), { volume: SILENT, pitch: 1, loopCount: -1 });
-    // (3D: the play volume also sets the audible range, so 1 and silenced in the same tick; a listener's own 3D sound — follow —
-    // at the talker's place, heard by that listener alone)
-    const s = t.player ? t.player.playSound(this.ev(name), { location: at, volume: RANGE_3D, pitch: 1, loopCount: -1 }) : t.dim!.playSound(this.ev(name), at!, { volume: RANGE_3D, pitch: 1, loopCount: -1 });
+    // (3D: the play volume also sets the audible range, so RANGE_3D — at P_MIN, under hearing, for the ticks it plays as made —
+    // and silenced in the same tick; a listener's own 3D sound — follow, near — at the talker's place, heard by that listener alone)
+    const s = t.player ? t.player.playSound(this.ev(name), { location: at, volume: RANGE_3D, pitch: P_MIN, loopCount: -1 }) : t.dim!.playSound(this.ev(name), at!, { volume: RANGE_3D, pitch: P_MIN, loopCount: -1 });
     s.setVolume(SILENT);
     return s;
   }
@@ -905,11 +927,20 @@ class LivePlayer {
         if (t.gone) { this.drop(t); return; }
       }
       for (let b = 0; b < M; b++) if (!t.nz[b]) t.nz[b] = this.loop(t, 'spectral.n' + b);
-    } catch { this.drop(t); }      // (the listener left the game in between: their client is gone)
+    } catch { this.drop(t); return; }      // (the listener left the game in between: their client is gone)
+    this.settle(t);
+  }
+  /** a target's sounds were made: the stream's state now, and for 3D sounds (made at P_MIN, played as made for a while) again
+   *  SETTLE_TICKS later */
+  private settle(t: Target) {
+    this.resync(t);
+    if (!this.three) return;
+    system.runTimeout(() => { if (!t.gone && this.targets.includes(t)) this.resync(t); }, SETTLE_TICKS);
   }
   private drop(t: Target) {
     t.gone = true;
     for (const x of [...t.osc, ...t.nz]) { try { x?.stop(); } catch { /* gone */ } }
+    this.handover = this.handover.filter((h) => { if (h.t !== t) return true; try { h.old.stop(); } catch { /* gone */ } return false; });
   }
   async start() {
     if (this.at.kind === 'phones') {
@@ -927,13 +958,13 @@ class LivePlayer {
     for (const t of this.targets) await this.build(t);
     this.started = true;
   }
-  /** follow: everyone within reach of the talker hears them (FOLLOW_RANGE blocks, the same dimension), each with sounds of their
+  /** follow: everyone within reach of the talker hears them (reach3D() blocks, the same dimension), each with sounds of their
    *  own at the talker's place — the talker never hears their own voice; who comes near is added, who goes away loses theirs */
   private listen(w: { dim: Dimension; loc: Vector3 }) {
     if (this.at.kind !== 'follow' && this.at.kind !== 'near') return;
     // (near: the same per-listener 3D sounds at a fixed spot, every player within reach — what follow does, without a talker)
-    const who = this.at.kind === 'follow' ? this.at.who : undefined;
-    const near = world.getPlayers().filter((q) => q.isValid && q.name !== who && q.dimension.id === w.dim.id && dist(q.location, w.loc) <= FOLLOW_RANGE);
+    const who = this.at.kind === 'follow' ? this.at.who : undefined, r = reach3D();
+    const near = world.getPlayers().filter((q) => q.isValid && q.name !== who && q.dimension.id === w.dim.id && dist(q.location, w.loc) <= r);
     for (const t of [...this.targets]) {
       if (near.some((q) => q.id === t.player?.id)) continue;
       this.drop(t);
@@ -943,13 +974,14 @@ class LivePlayer {
       if (this.targets.some((t) => t.player?.id === q.id)) continue;
       const t: Target = { player: q, loc: this.anchor ?? w.loc, osc: [], nz: [] };
       this.targets.push(t);
-      this.build(t).then(() => this.resync(t));
+      this.build(t);
     }
   }
   stop() {
     for (const t of this.targets) this.drop(t);
     for (const [x] of this.dying) { try { x.stop(); } catch { /* gone */ } }
-    this.targets = []; this.dying = [];
+    for (const h of this.handover) { try { h.old.stop(); } catch { /* gone */ } }
+    this.targets = []; this.dying = []; this.handover = [];
   }
   private sendVoice(v: number, hz: number, dur: number, L: number, force = false) {
     let p = -1;
@@ -969,10 +1001,26 @@ class LivePlayer {
     for (const t of this.targets) { const s = t.nz[b]; if (s) { try { s.fade(dur, L); } catch { /* gone */ } this.calls++; } }
     this.lastNL[b] = L;
   }
-  /** the followed player moved: the sounds go to the new place a few a tick, each crossfaded over a tick */
+  /** the followed player moved: the sounds go to the new place a few a tick. A new 3D sound plays as made (P_MIN, under hearing)
+   *  for a while, so its old one sounds on until SETTLE_TICKS later: then the new one gets the stream's state again and the old
+   *  one fades out over a tick and stops */
   private follow() {
     const now = system.currentTick;
     this.dying = this.dying.filter(([x, at]) => { if (at > now) return true; try { x.stop(); } catch { /* gone */ } return false; });
+    this.handover = this.handover.filter((h) => {
+      if (h.at > now) return true;
+      if ((h.i >= 0 ? h.t.osc[h.i] : h.t.nz[-1 - h.i]) === h.s && !h.t.gone) {
+        try {
+          if (h.i >= 0) { if (this.lastP[h.i] > 0) h.s.setPitch(this.lastP[h.i]); h.s.setVolume(this.lastL[h.i]); }
+          else { h.s.setPitch(1); h.s.setVolume(this.lastNL[-1 - h.i]); }
+        } catch { /* gone */ }
+        this.calls += 2;
+      }
+      try { h.old.fade(FADE_SMOOTH, SILENT); } catch { /* gone */ }
+      this.calls++;
+      this.dying.push([h.old, now + 2]);
+      return false;
+    });
     if (this.at.kind !== 'follow' && this.at.kind !== 'near') return;
     const w = this.where();
     // (the talker is not in the world — left, or not joined yet: nobody hears them until they are back, then listen() again)
@@ -983,8 +1031,8 @@ class LivePlayer {
       const N = this.st.meta.N, M = this.st.meta.M;
       this.moving = [...Array(N).keys(), ...Array.from({ length: M }, (_, b) => -1 - b)];
     }
-    // (FOLLOW_STEP sounds a tick, for every listener: each moved one starts at the new place silent, rises in a tick as the old
-    // one falls, and the old one stops two ticks later)
+    // (FOLLOW_STEP sounds a tick, for every listener: each moved one is made at the new place and steered from now on — what it
+    // is sent waits until it plays — while the old one keeps sounding until the handover above)
     for (let n = 0; n < FOLLOW_STEP && this.moving.length; n++) {
       const i = this.moving.shift()!, voice = i >= 0;
       for (const t of this.targets) {
@@ -993,11 +1041,11 @@ class LivePlayer {
         let s: SoundInstance;
         try { s = this.loop(t, voice ? 'spectral.osc' : 'spectral.n' + (-1 - i), this.anchor); } catch { continue; }
         try {
-          if (voice && this.lastP[i] > 0) s.setPitch(this.lastP[i]);
+          if (!voice) s.setPitch(1);
+          else if (this.lastP[i] > 0) s.setPitch(this.lastP[i]);
           s.fade(FADE_SMOOTH, voice ? this.lastL[i] : this.lastNL[-1 - i]);
-          old.fade(FADE_SMOOTH, SILENT);
         } catch { /* gone */ }
-        this.dying.push([old, now + 2]);
+        this.handover.push({ t, i, s, old, at: now + SETTLE_TICKS });
         if (voice) t.osc[i] = s; else t.nz[-1 - i] = s;
         this.calls += 4;
       }
@@ -1008,7 +1056,8 @@ class LivePlayer {
   resync(only?: Target) {
     for (const t of only ? [only] : this.targets) {
       for (let v = 0; v < t.osc.length; v++) { try { if (this.lastP[v] > 0) t.osc[v].setPitch(this.lastP[v]); t.osc[v].setVolume(this.lastL[v]); } catch { /* gone */ } }
-      for (let b = 0; b < t.nz.length; b++) { try { t.nz[b]?.setVolume(this.lastNL[b]); } catch { /* gone */ } }
+      // (3D noise loops are made at P_MIN: a live stream plays them at 1)
+      for (let b = 0; b < t.nz.length; b++) { try { if (this.three) t.nz[b]?.setPitch(1); t.nz[b]?.setVolume(this.lastNL[b]); } catch { /* gone */ } }
     }
   }
   /** a tick, its script time counted (ms/tick in the status: Date.now's milliseconds, averaged) */
@@ -1129,9 +1178,9 @@ cmdAny('spectral:live', 'Live streams (a voice chat, a microphone): the list, or
   });
 /** a song sent as a live stream, frame by frame as a voice chat would (the whole live path in the add-on itself: the frames are
  *  written as bytes and read back) */
-cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (1 = as made so far; the client takes the distance from it)', { 'volume?': 'float' }, (_p, a) => {
+cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit)', { 'volume?': 'float' }, (_p, a) => {
   if (a.volume !== undefined) RANGE_3D = Math.max(0.25, Math.min(16, a.volume));
-  return `range: 3D sounds made at volume ${RANGE_3D} (new speakers and live listeners; their level is set after)`;
+  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (new speakers and live listeners; their level is set after)`;
 });
 cmdAny('spectral:live_demo', 'Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)',
   { song: 'string', 'to?': ['phones', 'speaker', 'near', 'follow'], 'who?': 'player', 'voices?': 'int', 'at?': 'string' }, async (p, a) => {

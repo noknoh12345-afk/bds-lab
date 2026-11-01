@@ -1,0 +1,28 @@
+{"header": [
+ "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+ "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+ "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+ "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+ "# 13 回目（tools/exp/make_app.py tools/exp/app13.json）: 本体 1.2.0（電話の既定 +10 dB、3D の音は高さ P_MIN で作る、届く距離 48 ブロック）。",
+ "#   先に 3D（40 分で切れても残るように）: 夏目漱石をライブの道で、",
+ "#   na_ / nb_ / nc_ = 聞く人ごとの 3D（near）で左 3 / 24 / 46 ブロック、作る音量 3（既定）: 作った直後の「ピッ」が消えたか（11 回目の ka_ と比べる）・48 ブロックまで届くか",
+ "#   nf_ = 同じく左 3 ブロック、作る音量 1: 音量 3 と同じ大きさか（音量は届く距離だけ）",
+ "#   nd_ = 全員で 1 組のスピーカーで左 6 ブロック（9 回目の jl_ と同じ置き方、dimension.playSound の道）",
+ "#   ne_ = スピーカーで左 52 ブロック、作る音量 4（16 × 4 = 64 ブロック）: 音の定義の max_distance 48 で切れるか",
+ "#   それから曲ごとに交互に（まとめ録り batch 13、前もって変換した曲 tools/exp/packs/run9・run10）:",
+ "#   d_ = 1.1.0 までの既定（+6 dB 向けの曲を +6 dB で）・o_ = 同じ曲を +10 dB で（前に変換した曲が 1.2.0 でどうなるか）・",
+ "#   e_ = +10 dB 向けの曲を +10 dB で（1.2.0 で変換した曲）。d_ と e_ は 11・12 回目と同じデータ（3 回目の同じ run の比べ）"
+],
+"batch": 13,
+"interleave": ["d", "o", "e"],
+"arms": [
+ {"pre": "na", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "songs": ["speech_ja_soseki"], "play": "spectral:live_demo {song} near @s 24 \"near:3,-58.5,0,overworld\"", "cmds": ["tp @s 0 -60 0 0 0", "spectral:range 3"], "export": 160},
+ {"pre": "nb", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "songs": ["speech_ja_soseki"], "play": "spectral:live_demo {song} near @s 24 \"near:24,-58.5,0,overworld\"", "cmds": ["tp @s 0 -60 0 0 0", "spectral:range 3"], "export": 160},
+ {"pre": "nc", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "songs": ["speech_ja_soseki"], "play": "spectral:live_demo {song} near @s 24 \"near:46,-58.5,0,overworld\"", "cmds": ["tp @s 0 -60 0 0 0", "spectral:range 3"], "export": 160},
+ {"pre": "nf", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "songs": ["speech_ja_soseki"], "play": "spectral:live_demo {song} near @s 24 \"near:3,-58.5,0,overworld\"", "cmds": ["tp @s 0 -60 0 0 0", "spectral:range 1"], "export": 160},
+ {"pre": "nd", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "songs": ["speech_ja_soseki"], "play": "spectral:live_demo {song} speaker @s 24 \"speaker:6,-58.5,0,overworld\"", "cmds": ["tp @s 0 -60 0 0 0", "spectral:range 3"], "export": 160},
+ {"pre": "ne", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "songs": ["speech_ja_soseki"], "play": "spectral:live_demo {song} speaker @s 24 \"speaker:52,-58.5,0,overworld\"", "cmds": ["tp @s 0 -60 0 0 0", "spectral:range 4"], "export": 160},
+ {"pre": "d", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "cmds": ["spectral:voices 24", "spectral:drums off", "spectral:engine 0 false 0 0", "spectral:level 6 volume"], "export": 160},
+ {"pre": "o", "suffix": "_d", "conv": {"refine_weights": "svr", "refine_sweeps": 5, "refine_hold": true}, "pack": "tools/exp/packs/run9", "cmds": ["spectral:voices 24", "spectral:drums off", "spectral:engine 0 false 0 0", "spectral:level 10 volume"], "export": 160},
+ {"pre": "e", "suffix": "_e", "conv": {"refine_level": 10}, "pack": "tools/exp/packs/run10", "cmds": ["spectral:voices 24", "spectral:drums off", "spectral:engine 0 false 0 0", "spectral:level 10 volume"], "export": 160}
+]}
