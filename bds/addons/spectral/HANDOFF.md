@@ -106,7 +106,10 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
    1.2.0 の 24 声 2.68 / 2.68 で 500 / 950 ms 抜け、6 dB 小さい）→ **follow の引き継ぎの既定を cut・1 tick に 2 音に**（HANDOVER_CUT・FOLLOW_STEP）。
    go: test 175/175, qa clean。tools/rig/gaps.py（声が 100 ms 以上抜けた所）
    **22 回目の実機**（tools/exp/app22.json、**run 41293745813**、1fdcda8）: その場の合成による分析を 3D で（止まった話し手 ba_–bd_・bg_、near 24 ブロック be_ / bf_）。
-   集めるのは scratch/run22.sh
+   **集めた（実測、SPEC.md の 22 回目）: 3D の話し手でも 3 曲 × 2 組すべてで上（中央値 +0.32: 3.05 → 3.43 ほか）**、24 ブロックは 2 曲で上・歌は −0.13
+   **23 回目の実機**（tools/exp/app23.json、**run 41295422615**、59d111d、19:00 JST に始めた）: 新しい既定（cut・2 音）を本物の歩きの速さ（3 ブロックずつ）で、
+   cut 4 音・1.2.0 と比べる（hg_ 止まった・ha_ / hf_ cut 2・hb_ / he_ cut 4・hc_ / hd_ 1.2.0）、歩く話し手でライブのまま / 分析つき（hh_ / hi_）。
+   集めるのは scratch/run23.sh
 10. **ライブの変換に合成による分析は効くか**（エミュレーター、推測）: tools/exp/live_refine.py がライブのフレームを変換器の refine_client で後から（先も見て）
    5 回掃き出し、tools/exp/score_pack.py（SPECTRAL_BUNDLE・SPECTRAL_LEVEL で 1.2.0 の +10 dB）が採点する。注意: refine_client は変換器の 44.1 kHz の
    音で動く（48 kHz を渡すと時間がずれ、模型の NSIM が 0.13 しか出ない）。ライブのフレームは変換器のフレームより遅れているので、模型の NSIM が一番高い
@@ -196,7 +199,7 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## 次にやること
 
-0. 22 回目（run 41293745813、scratch/run22.sh）を集める: その場の合成による分析は 3D（止まった話し手の follow、near 24 ブロック）でも効くか
+0. 23 回目（run 41295422615、scratch/run23.sh）を集める。
 1. cut の既定を本物の歩きの速さ（4.3 ブロック/秒: 3 ブロックずつ約 0.7 秒）で確かめる（1 tick に 2 / 4 音、1.2.0 の hold と比べる）。
    2 人が同時に話すと 2 × 32 音で 32 音を超える（話し手の声の数を自動で減らす案: 近くの話し手の数で 24 → 12 声）
 2. 本物の Discord で bridge を（トークンとサーバー: ユーザーが用意。tools/live/README.md の手順。既定で `--refine 2`）。何人もが同時に話すと
