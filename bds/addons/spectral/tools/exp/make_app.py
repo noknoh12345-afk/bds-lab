@@ -3,7 +3,8 @@
     pack: a folder of songs converted beforehand with those options (make_packs.py; then nothing is converted in the run),
     cmds: commands before the arm (run as the player), songs: list (default all 13), export: kbps or 0,
     play: what starts a song ("spectral:play {song}" by default; e.g. "spectral:live_demo {song} phones"),
-    during: [[ms, server command], ...] run while the song plays, each ms after the one before (e.g. a talker moved: "tp @e[name=talker] 3 -59 0")}
+    during: [[ms, server command], ...] run while the song plays, each ms after the one before (e.g. a talker moved: "tp @e[name=talker] 3 -59 0");
+    wait: this arm's ms for its song, during included (each `do` also takes ~0.6 s of its own on the device)}
    interleave: prefixes of arms with the same commands, recorded song by song (a run cut short keeps whole pairs)
    calib: calibration programs recorded first (["loud"]); ceiling: {"arms": [{pre, args ("4" = playSound volume 4, "4 d4" = the
    event whose definition says volume 4), songs}]} — the originals as plain sounds (songpack.py --unit), last: the BDS restarts
@@ -42,7 +43,7 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
             'audio stop', f'audio analyze calib {prog}', 'audio export calib 192']
     def waits(a):
         """the song's wait, with the arm's `during` commands in it"""
-        out, left = [], wait_ms
+        out, left = [], a.get('wait', wait_ms)         # (an arm's own wait: during commands take time of their own)
         for ms, c in a.get('during', []):
             out+=[f'wait {ms}', f'do {c}']; left-=ms
         return out + [f'wait {max(0, left)}']

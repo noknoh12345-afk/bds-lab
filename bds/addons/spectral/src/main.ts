@@ -831,6 +831,10 @@ const reach3D = () => Math.min(FOLLOW_RANGE, 16 * RANGE_3D);
  *  at full volume — the silence sent with it came late). So 3D sounds are made at P_MIN (17.6 Hz, under hearing) and their state
  *  is sent again this many ticks later */
 const SETTLE_TICKS = 2;
+/** a followed talker moved (follow): until their handover the old sounds hold their last level (false, 1.2.0 as measured in runs
+ *  41272459953 and 41277993333) or keep following the voice (true, spectral:handover steer: to measure — a voice that ends or starts
+ *  a syllable in those two ticks is not held as it was) */
+let HANDOVER_STEER = false;
 /** how much louder than the files 3D sounds are steered (dB, spectral:range's second number; +10 by default since 1.2.0, as the
  *  headphones' level). A far 3D voice loses its quiet parts under the phone's 16-bit floor, and the level lifts them — measured,
  *  run 41270487804, a listener's own 3D sound to the left, 0 / +6 / +10 dB: at 3 blocks -30.7 / -23.9 / -20.3 dB (setVolume over
@@ -1035,6 +1039,8 @@ class LivePlayer {
     if (!force && L / last < DB025 && last / L < DB025) L = -1;
     if (p < 0 && L < 0) return;
     for (const t of this.targets) { const s = t.osc[v]; if (!s) continue; try { if (p > 0) s.setPitch(p); if (L >= 0) s.fade(dur, L); } catch { /* gone */ } this.calls++; }
+    // (HANDOVER_STEER: the sounds a move left behind follow the voice too, until their handover)
+    if (HANDOVER_STEER) for (const h of this.handover) { if (h.i !== v) continue; try { if (p > 0) h.old.setPitch(p); if (L >= 0) h.old.fade(dur, L); } catch { /* gone */ } this.calls++; }
     if (p > 0) this.lastP[v] = p;
     if (L >= 0) this.lastL[v] = L;
   }
@@ -1043,6 +1049,7 @@ class LivePlayer {
     const last = this.lastNL[b];
     if (L / last < DB025 && last / L < DB025) return;
     for (const t of this.targets) { const s = t.nz[b]; if (s) { try { s.fade(dur, L); } catch { /* gone */ } this.calls++; } }
+    if (HANDOVER_STEER) for (const h of this.handover) { if (h.i !== -1 - b) continue; try { h.old.fade(dur, L); } catch { /* gone */ } this.calls++; }
     this.lastNL[b] = L;
   }
   /** the followed player moved: the sounds go to the new place a few a tick. A new 3D sound plays as made (P_MIN, under hearing)
@@ -1227,6 +1234,10 @@ cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (
   if (a.level !== undefined) LEVEL_3D_DB = Math.max(0, Math.min(18, Math.round(a.level * 10) / 10));
   if (a.quiet !== undefined) QUIET_3D = Boolean(a.quiet);
   return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : 'as the files'}${QUIET_3D ? ', followed voices made quietly' : ''}; new speakers and live streams)`;
+});
+cmdAny('spectral:handover', 'A voice that follows a talker who moves: until the new sounds take over, the old ones hold their last level (hold, the default) or keep following the voice (steer)', { 'old?': ['hold', 'steer'] }, (_p, a) => {
+  if (a.old !== undefined) HANDOVER_STEER = a.old === 'steer';
+  return `handover: the old sounds ${HANDOVER_STEER ? 'follow the voice' : 'hold their last level'} until they fade (a voice that follows a talker who moves)`;
 });
 cmdAny('spectral:live_demo', 'Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)',
   { song: 'string', 'to?': ['phones', 'speaker', 'near', 'follow'], 'who?': 'player', 'voices?': 'int', 'at?': 'string' }, async (p, a) => {

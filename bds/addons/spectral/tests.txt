@@ -463,6 +463,16 @@ tp @e[name=talker] 6 -60 0
 wait 1000
 @A cmd /spectral:live
 ~ @A live t4: 1 frames, 2 voices, follow talker listeners 1 delay .* moves [1-9]
+spectral:handover
+~ handover: the old sounds hold their last level
+spectral:handover steer
+~ handover: the old sounds follow the voice
+tp @e[name=talker] 8 -60 0
+wait 1000
+@A cmd /spectral:live
+~ @A live t4: 1 frames, 2 voices, follow talker listeners 1 delay .* moves [2-9]
+spectral:handover hold
+~ handover: the old sounds hold their last level
 kill @e[name=talker]
 wait 1000
 @A cmd /spectral:live

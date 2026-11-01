@@ -67,7 +67,10 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         # run 16: the defaults (made quietly, +10 dB) against made as before, the same run: near 3 blocks (ua / ub), 24 blocks (uc / ud);
         # a talker standing made quietly (ug), walking made quietly / as before (ue / uf)
         'ua': 'live_near3_quiet_default', 'ub': 'live_near3_loud_made', 'uc': 'live_near24_quiet_default', 'ud': 'live_near24_loud_made',
-        'ug': 'live_3d_follow_still_quiet', 'ue': 'live_3d_follow_walking_quiet_default', 'uf': 'live_3d_follow_walking_loud_made'}
+        'ug': 'live_3d_follow_still_quiet', 'ue': 'live_3d_follow_walking_quiet_default', 'uf': 'live_3d_follow_walking_loud_made',
+        # run 17: the handover of a talker walking 2 blocks a step (a move every ~0.7 s): standing (vt), the old sounds held (vh / wh),
+        # steered with the voice (vs / ws)
+        'vt': 'live_3d_follow_still_r17', 'vh': 'live_3d_walk_hold', 'wh': 'live_3d_walk_hold_again', 'vs': 'live_3d_walk_steer', 'ws': 'live_3d_walk_steer_again'}
 
 
 def songs(res):

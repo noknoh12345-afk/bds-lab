@@ -1278,6 +1278,7 @@ var FOLLOW_RANGE = 48;
 var RANGE_3D = 3;
 var reach3D = () => Math.min(FOLLOW_RANGE, 16 * RANGE_3D);
 var SETTLE_TICKS = 2;
+var HANDOVER_STEER = false;
 var LEVEL_3D_DB = 10;
 var QUIET_3D = true;
 var Q3D = 0.1;
@@ -1603,6 +1604,15 @@ var LivePlayer = class {
       }
       this.calls++;
     }
+    if (HANDOVER_STEER) for (const h of this.handover) {
+      if (h.i !== v) continue;
+      try {
+        if (p > 0) h.old.setPitch(p);
+        if (L >= 0) h.old.fade(dur, L);
+      } catch {
+      }
+      this.calls++;
+    }
     if (p > 0) this.lastP[v] = p;
     if (L >= 0) this.lastL[v] = L;
   }
@@ -1619,6 +1629,14 @@ var LivePlayer = class {
         }
         this.calls++;
       }
+    }
+    if (HANDOVER_STEER) for (const h of this.handover) {
+      if (h.i !== -1 - b) continue;
+      try {
+        h.old.fade(dur, L);
+      } catch {
+      }
+      this.calls++;
     }
     this.lastNL[b] = L;
   }
@@ -1892,6 +1910,10 @@ cmdAny("spectral:range", "How far 3D sounds reach: the volume they are made at (
   if (a.level !== void 0) LEVEL_3D_DB = Math.max(0, Math.min(18, Math.round(a.level * 10) / 10));
   if (a.quiet !== void 0) QUIET_3D = Boolean(a.quiet);
   return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : "as the files"}${QUIET_3D ? ", followed voices made quietly" : ""}; new speakers and live streams)`;
+});
+cmdAny("spectral:handover", "A voice that follows a talker who moves: until the new sounds take over, the old ones hold their last level (hold, the default) or keep following the voice (steer)", { "old?": ["hold", "steer"] }, (_p, a) => {
+  if (a.old !== void 0) HANDOVER_STEER = a.old === "steer";
+  return `handover: the old sounds ${HANDOVER_STEER ? "follow the voice" : "hold their last level"} until they fade (a voice that follows a talker who moves)`;
 });
 cmdAny(
   "spectral:live_demo",
