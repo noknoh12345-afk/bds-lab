@@ -754,7 +754,9 @@ def check_noise(lo, hi, n=65536, seed=1):
 
 
 def check_render_sines(fq, am, att, n_samples):
-    """sine voices as the engine plays them at speed 1 (tick_commands), at SR, values already quantised"""
+    """sine voices as the engine plays them at speed 1 (tick_commands), at SR, values already quantised. Each tick writes only its
+    own samples (and a ramp past them), the rest is filled as the next writes come: the same values as writing every tick to the
+    end, without the time that took growing with the square of the song's length (a 3.5-minute song: 15 minutes in this alone)"""
     F, N = am.shape
     tick = HOP
     out = np.zeros(n_samples)
@@ -764,6 +766,8 @@ def check_render_sines(fq, am, att, n_samples):
             continue
         env = np.full(n_samples, SILENT); cur = SILENT
         freq = np.zeros(n_samples); cur_p = BASE
+        held, held_v = 0, SILENT            # (env from `held` on is the last fade's target, until the next fade writes over it)
+        end = 0
         for T in range(F):
             p_hz, d, tgt = tick_commands(f, a, at, T)
             s0 = T * tick
@@ -771,33 +775,45 @@ def check_render_sines(fq, am, att, n_samples):
                 break
             if p_hz:
                 cur_p = p_hz
-            freq[s0:] = cur_p
+            end = min(n_samples, s0 + tick)
+            freq[s0:end] = cur_p
             if d is not None:
+                if held < s0:
+                    env[held:s0] = held_v
                 tg = max(tgt, SILENT)
                 n = max(1, int(d * SR))
                 e = min(n_samples, s0 + n)
                 env[s0:e] = cur + (tg - cur) * (np.arange(1, e - s0 + 1) / n)
-                env[e:] = tg
+                held, held_v = e, tg
                 cur = tg
+        freq[end:] = cur_p
+        if held < n_samples:
+            env[held:] = held_v
         out += np.sin(2 * np.pi * np.cumsum(freq) / SR) * env
     return out
 
 
 def check_render_noise(col, loop, n_samples):
-    """one noise band: the loop under 50 ms ramps to the next frame's level (values already quantised)"""
+    """one noise band: the loop under 50 ms ramps to the next frame's level (values already quantised; each tick writes its own
+    samples and its ramp, as check_render_sines)"""
     F = len(col)
     sig = np.tile(loop, n_samples // len(loop) + 1)[:n_samples]
     env = np.full(n_samples, SILENT); cur = SILENT
     n = int(FADE_SMOOTH * SR)
+    held, held_v = 0, SILENT
     for T in range(F):
         s0 = T * HOP
         if s0 >= n_samples:
             break
+        if held < s0:
+            env[held:s0] = held_v
         tg = max(col[T + 1] if T + 1 < F else 0.0, SILENT)
         e = min(n_samples, s0 + n)
         env[s0:e] = cur + (tg - cur) * (np.arange(1, e - s0 + 1) / n)
-        env[e:] = tg
+        held, held_v = e, tg
         cur = tg
+    if held < n_samples:
+        env[held:] = held_v
     return sig * env
 
 
