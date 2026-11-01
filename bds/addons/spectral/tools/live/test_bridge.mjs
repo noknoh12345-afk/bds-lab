@@ -64,6 +64,16 @@ const pf = framesOf(pl.map((l) => JSON.parse(l.replace(/^scriptevent spectral:li
 const loud = (f) => f.amp.some((c) => c > 0) || f.nz.some((c) => c > 0);
 ok(pf.length === 42 && tp.quiets === 1 && pf.every((f) => f.whole), `a pause: two frames of silence between the sentences (${pf.length} frames for 1 s + the pause + 1 s, ${tp.quiets} pause)`);
 ok(loud(pf[19]) && !loud(pf[21]) && loud(pf[22]) && pf[22].rise.length > 0, `the first sentence fades out (frame 21: silent), the second starts with rises (frame 22: ${pf[22]?.rise.length} voices rise)`);
+// the refinement as it goes (refine 2: its frames 2 frames later): the same sentences — as many frames, the pause's end flushed
+// (the first sentence fades out, the second starts with rises), every frame whole
+const rl = [], tr = new Talker({ id: 'vc_refine', gamertag: 'Steve', voices: 16, send: (l) => rl.push(l), quietMs: 60, refine: 2 });
+tr.push(pcm.subarray(48000, 96000));
+await new Promise((r) => setTimeout(r, 200));
+tr.push(pcm.subarray(96000, 144000));
+tr.end();
+const rf = framesOf(rl.map((l) => JSON.parse(l.replace(/^scriptevent spectral:live /, ''))), 16, 8);
+ok(rf.length === 42 && tr.quiets === 1 && rf.every((f) => f.whole), `refined: as many frames (${rf.length}), every one whole, the pause flushed`);
+ok(loud(rf[19]) && !loud(rf[21]) && loud(rf[22]) && rf[22].rise.length > 0, `refined: the first sentence fades out (frame 21: silent), the second starts with rises (frame 22: ${rf[22]?.rise.length} voices rise)`);
 // links: /mc <gamertag>
 const lf = path.join(tmp, 'links.json');
 ok(link(lf, '123456789012345678', 'Steve') && link(lf, '223456789012345678', 'Alex Two') && !link(lf, 'nope', 'Steve') && !link(lf, '323456789012345678', 'bad;name') && !link(lf, '423456789012345678', 'x'.repeat(33)), 'links: a Discord id and a gamertag, nothing else');

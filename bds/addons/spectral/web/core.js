@@ -1254,6 +1254,9 @@
       dependencies: [{ module_name: '@minecraft/server', version: '2.11.0' }] };
   }
 
-  const api = { refineClient, clientModel, targetBands, gtH2, trackPartials, chooseTracks, nsimLite, nsimSpec, checkNoise, checkRenderSines, songPackScript, songPackManifest, SR, FPS, HOP, BASE, NOISE_EDGES, BURST_BANDS, SUB, FADE_SMOOTH, FADE_ATTACK, SILENT, convert, encode, decode, schedule, onsets, fft, toB64, fromB64 };
+  // (the client model's constants and ViSQOL's NSIM for web/live.js: its refinement as it goes, LiveRefiner)
+  const CL = { TICK: CL_TICK, HOP: CL_HOP, WIN: CL_WIN, Q: CL_Q, FLOOR: CL_FLOOR, VSTEPS: CL_VSTEPS, NSTEPS: CL_NSTEPS, WEIGHT_SETS: CL_WEIGHT_SETS,
+    OSC_AMP: CL_OSC_AMP, NOISE_RMS: CL_NOISE_RMS, SILENT: CL_SILENT, SEND_DB: CL_SEND_DB, SEND_CENTS: CL_SEND_CENTS, FADES: NZ_FADES_MS, LEVEL_DB: CL_LEVEL_DB };
+  const api = { CL, nsimRef, nsimSum, refineClient, clientModel, targetBands, gtH2, trackPartials, chooseTracks, nsimLite, nsimSpec, checkNoise, checkRenderSines, songPackScript, songPackManifest, SR, FPS, HOP, BASE, NOISE_EDGES, BURST_BANDS, SUB, FADE_SMOOTH, FADE_ATTACK, SILENT, convert, encode, decode, schedule, onsets, fft, toB64, fromB64 };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.SpectralCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

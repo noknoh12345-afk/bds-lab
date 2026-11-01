@@ -4,3 +4,15 @@
 {"song": "vocal_name_of_love", "var": "ideal5", "v": 3.253, "cpt": 19.4, "voices": 24}
 {"song": "speech_ja_soseki", "var": "ideal5", "v": 2.6859, "cpt": 19.2, "voices": 24}
 {"song": "speech_en_wordsworth", "var": "ideal5", "v": 3.0299, "cpt": 20.9, "voices": 24}
+{"song": "vocal_name_of_love", "var": "ideal5_lag50", "v": 3.689, "cpt": 33.6, "voices": 24}
+{"song": "speech_ja_soseki", "var": "ideal5_lag50", "v": 3.2401, "cpt": 32.5, "voices": 24}
+{"song": "speech_en_wordsworth", "var": "ideal5_lag50", "v": 3.5718, "cpt": 34.2, "voices": 24}
+{"song": "vocal_name_of_love", "var": "sweep1_lag50", "v": 3.5964, "cpt": 34.4, "voices": 24}
+{"song": "speech_ja_soseki", "var": "sweep1_lag50", "v": 3.1977, "cpt": 35.1, "voices": 24}
+{"song": "speech_en_wordsworth", "var": "sweep1_lag50", "v": 3.5031, "cpt": 38.6, "voices": 24}
+{"song": "speech_ja_soseki", "var": "refine2", "v": 3.1352, "cpt": 35.7, "voices": 24}
+{"song": "speech_en_wordsworth", "var": "refine2", "v": 3.4347, "cpt": 39.3, "voices": 24}
+{"song": "vocal_name_of_love", "var": "refine2", "v": 3.6944, "cpt": 33.6, "voices": 24}
+{"song": "vocal_name_of_love", "var": "refine3", "v": 3.6642, "cpt": 33.7, "voices": 24}
+{"song": "speech_ja_soseki", "var": "refine3", "v": 3.1118, "cpt": 35.7, "voices": 24}
+{"song": "speech_en_wordsworth", "var": "refine3", "v": 3.4469, "cpt": 39.2, "voices": 24}

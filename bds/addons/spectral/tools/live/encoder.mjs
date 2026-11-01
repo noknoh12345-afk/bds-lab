@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The live encoder on a file (web/live.js, the same code the Discord bridge and a microphone run): any audio ffmpeg reads →
 // Spectral Player live frames, as a voice chat would send them.
-//   node tools/live/encoder.mjs <audio> --song <out.song.json> [--voices 16] [--id <id>] [--title <t>]
+//   node tools/live/encoder.mjs <audio> --song <out.song.json> [--voices 16] [--refine 2] [--id <id>] [--title <t>]
 //        a song (format 2) made of the live frames: /spectral:play it, score it in tools/exp, send it with the rig (audio song pack=)
 //   node tools/live/encoder.mjs <audio> --live <stream id> [--at follow:<player>|phones:<player>|speaker:x,y,z] [--realtime] [--frames 2]
 //        the server console's lines (scriptevent spectral:live …) on stdout, paced as the sound plays with --realtime: pipe them into
@@ -25,17 +25,18 @@ export function load(f) {
   return new Float32Array(r.stdout.buffer, r.stdout.byteOffset, r.stdout.byteLength / 4);
 }
 const x = load(file), voices = Number(opt('--voices', 16));
-const enc = new L.LiveEncoder({ voices, win: Number(opt('--win', 2048)), nzWin: Number(opt('--nzwin', 0)) });
+// (--refine 2: the refinement as it goes, web/live.js LiveRefiner — its frames 2 frames (100 ms) later; --level: the listener's dB)
+const enc = new L.LiveEncoder({ voices, win: Number(opt('--win', 2048)), nzWin: Number(opt('--nzwin', 0)), refine: Number(opt('--refine', 0)), level: Number(opt('--level', 10)) });
 if (opt('--song')) {
   enc.collect = true;
-  enc.push(x); enc.push(new Float32Array(L.WIN));          // (the tail: the last sound's frames)
+  enc.push(x); enc.push(new Float32Array(L.WIN)); enc.flush();          // (the tail: the last sound's frames)
   const id = opt('--id', path.basename(file).replace(/\.[^.]+$/, '').replace(/[^\w]/g, '_').slice(0, 32));
   const s = L.toSong(enc, { id, title: opt('--title', id), seconds: Math.round((x.length / L.SR) * 100) / 100 });
   fs.writeFileSync(opt('--song'), JSON.stringify(s));
   console.log(JSON.stringify({ id, frames: s.meta.frames, voices, bytes: Math.round((s.data.length * 3) / 4), kbps: +(((s.data.length * 3) / 4) * 8 / (x.length / L.SR) / 1000).toFixed(1) }));
 } else {
   const id = opt('--live'), at = opt('--at'), per = Math.max(1, Number(opt('--frames', 2))), rt = flag('--realtime');
-  const frames = [...enc.push(x), ...enc.push(new Float32Array(L.WIN))];
+  const frames = [...enc.push(x), ...enc.push(new Float32Array(L.WIN)), ...enc.flush()];
   const t0 = Date.now();
   for (let k = 0; k < frames.length; k += per) {
     const msg = L.message(id, k, frames.slice(k, k + per), k === 0 ? { meta: enc.meta(), at } : {});

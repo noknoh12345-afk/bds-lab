@@ -50,8 +50,12 @@
   class LiveEncoder {
     /** voices: sine voices a frame may use (a talker: 16 leave room for another in the 32 sounds a phone plays at once);
      *  agc: the slow automatic gain (off: `gain` fixed). The input is 48 kHz mono (a voice chat's own rate; ffmpeg -ar 48000) */
-    constructor({ voices = 16, agc = true, gain = 1, keyEvery = 20, win = 2048, nzWin = 0 } = {}) {
+    constructor({ voices = 16, agc = true, gain = 1, keyEvery = 20, win = 2048, nzWin = 0, refine = 0, level = 10 } = {}) {
       this.N = voices; this.M = NOISE_EDGES.length - 1; this.agc = agc; this.gain = gain; this.peak = 0.25; this.keyEvery = keyEvery;
+      // (refine: frames of look-ahead for the refinement as it goes, LiveRefiner — 2 = +100 ms; 0 = none; level: the listener's
+      // level over the files it plays for, +10 dB: a phone's, and 3D's)
+      this.refiner = refine > 0 ? new LiveRefiner(voices, NOISE_EDGES.length - 1, { ahead: refine, level }) : null;
+      this.out = 0;
       // (win: the voices' window; nzWin: the noise bands' own shorter window, 0 = the voices' — their energy less the voices')
       this.W = win; this.NW = nzWin;
       this.ring = new Float32Array(WIN); this.at = 0; this.pending = 0; this.k = 0;
@@ -73,12 +77,22 @@
       const out = [];
       for (let i = 0; i < x.length; i++) {
         this.ring[this.at] = x[i]; this.at = (this.at + 1) % WIN;
-        if (++this.pending === HOP) { this.pending = 0; out.push(this.frame()); }
+        if (++this.pending === HOP) { this.pending = 0; for (const f of this.frame()) out.push(f); }
       }
       return out;
     }
-    /** one frame from the last WIN samples */
+    /** the frames the refinement still holds (its look-ahead), at the end of a stream or a talkspurt */
+    flush() { return this.refiner ? this.refiner.flush().map((f) => this.pack(f)) : []; }
+    /** the last HOP samples' frame: [] or [bytes] (with the refinement, the frame of `refine` frames before) */
     frame() {
+      const fr = this.analyse();
+      if (!this.refiner) return [this.pack(fr)];
+      const x = new Float32Array(HOP);
+      for (let i = 0; i < HOP; i++) x[i] = this.ring[(this.at - HOP + i + WIN) % WIN];
+      return this.refiner.frame(fr, x).map((f) => this.pack(f));
+    }
+    /** one frame's analysis from the last WIN samples: the codes as they would be sent { a, p (Hz, 0: none), att, nz, vf, nf } */
+    analyse() {
       const { N, M, re, im, mag, win, ring } = this, WN = this.W, off0 = WIN - WN;
       for (let i = 0; i < WN; i++) { re[i] = ring[(this.at + off0 + i) % WIN] * win[i]; im[i] = 0; }
       fft(re, im);
@@ -130,12 +144,26 @@
       let sum = 0; for (let v = 0; v < N; v++) sum += nA[v] * 0.55; for (let b = 0; b < M; b++) sum += nz[b];
       if (this.agc) { this.peak = Math.max(sum, this.peak * 0.998, 1e-4); this.gain = Math.min(1000, 0.9 / this.peak); }
       const g = this.gain;
-      // the frame: the voices that changed (all of them in a key frame), the bands, the fades into this frame
-      const key = this.k % this.keyEvery === 0, mask = new Uint8Array((N + 7) >> 3), body = [], vfade = new Uint8Array(N), nfade = new Uint8Array(M);
+      // the codes: the voices' levels and pitches, the bands, the fades into this frame
+      const a = new Int32Array(N), p = new Float64Array(N), vfade = new Uint8Array(N), nfade = new Uint8Array(M), nzc = new Int32Array(M);
       for (let v = 0; v < N; v++) {
-        const c = ampCode(nA[v] * g), pc = c ? pitchCode(nF[v]) : this.sent.p[v];
+        a[v] = ampCode(nA[v] * g); p[v] = a[v] ? nF[v] : 0;
         const was = vA[v] > 0 ? 20 * Math.log10(vA[v] * g) : -200, now = nA[v] > 0 ? 20 * Math.log10(nA[v] * g) : -200, dd = now - was;
         vfade[v] = att[v] ? 0 : nA[v] <= 0 ? 1 : Math.abs(dd) > 9 ? 1 : Math.abs(dd) > 4 ? 2 : 3;
+      }
+      for (let b = 0; b < M; b++) {
+        nzc[b] = nzCode(nz[b] * g);
+        const dd = 20 * Math.log10((nz[b] + 1e-9) / (this.nzLast[b] + 1e-9));
+        nfade[b] = dd > 6 ? 0 : dd > 3 ? 1 : dd < -6 ? 2 : 3;
+      }
+      this.vF = nF; this.vA = nA; this.nzLast = nz; this.k++;
+      return { a, p, att, nz: nzc, vf: vfade, nf: nfade };
+    }
+    /** a frame's codes → its bytes: the voices that changed (all of them in a key frame), the bands, the fades into this frame */
+    pack({ a, p, att, nz, vf, nf }) {
+      const { N, M } = this, key = this.out % this.keyEvery === 0, mask = new Uint8Array((N + 7) >> 3), body = [];
+      for (let v = 0; v < N; v++) {
+        const c = a[v], pc = c ? pitchCode(p[v]) : this.sent.p[v];
         const pitchMoved = c && Math.abs(pc - this.sent.p[v]) > 15;       // 3 cents
         if (key || c !== this.sent.a[v] || pitchMoved || att[v]) {
           mask[v >> 3] |= 1 << (v & 7);
@@ -144,20 +172,277 @@
           this.sent.a[v] = c;
         }
       }
-      const nzc = new Uint8Array(M);
-      for (let b = 0; b < M; b++) {
-        nzc[b] = nzCode(nz[b] * g);
-        const dd = 20 * Math.log10((nz[b] + 1e-9) / (this.nzLast[b] + 1e-9));
-        nfade[b] = dd > 6 ? 0 : dd > 3 ? 1 : dd < -6 ? 2 : 3;
-      }
       const fv = new Uint8Array((N + 3) >> 2), fn = new Uint8Array((M + 3) >> 2);
-      for (let v = 0; v < N; v++) fv[v >> 2] |= vfade[v] << (2 * (v & 3));
-      for (let b = 0; b < M; b++) fn[b >> 2] |= nfade[b] << (2 * (b & 3));
+      for (let v = 0; v < N; v++) fv[v >> 2] |= vf[v] << (2 * (v & 3));
+      for (let b = 0; b < M; b++) fn[b >> 2] |= nf[b] << (2 * (b & 3));
       const bytes = new Uint8Array(mask.length + body.length + M + fv.length + fn.length);
-      let o = 0; bytes.set(mask, o); o += mask.length; bytes.set(body, o); o += body.length; bytes.set(nzc, o); o += M; bytes.set(fv, o); o += fv.length; bytes.set(fn, o);
-      this.vF = nF; this.vA = nA; this.nzLast = nz; this.k++;
-      if (this.collect) this.frames.push({ a: Array.from(nA, (x) => ampCode(x * g)), f: Array.from(nF), att: Array.from(att), nz: Array.from(nzc), vf: Array.from(vfade), nf: Array.from(nfade) });
+      let o = 0; bytes.set(mask, o); o += mask.length; bytes.set(body, o); o += body.length;
+      for (let b = 0; b < M; b++) bytes[o + b] = nz[b];
+      o += M; bytes.set(fv, o); o += fv.length; bytes.set(fn, o);
+      this.out++;
+      if (this.collect) this.frames.push({ a: Array.from(a), f: Array.from(p), att: Array.from(att), nz: Array.from(nz), vf: Array.from(vf), nf: Array.from(nf) });
       return bytes;
+    }
+  }
+
+  // ---- the refinement as it goes: web/core.js's analysis by synthesis (tools/spectral.py refine_client: each tick's level and
+  // fade of every sound chosen so that the frame as the measured client plays it comes closest to the original in ViSQOL's 32
+  // bands, by its NSIM) in one forward pass, each tick decided once the original around it has come — `ahead` frames later.
+  // Emulated (tools/exp/live_refine.py: refine_client's first sweep on live frames, the whole song at once), it lifted the live
+  // encoder's songs through the client model 2.88 -> 3.20, 3.05 -> 3.50 and 3.45 -> 3.60 (two speeches and a song, +10 dB)
+  function coreLib() {
+    if (root.SpectralCore) return root.SpectralCore;
+    if (typeof module !== 'undefined' && module.exports && typeof require === 'function') { try { return require('./core.js'); } catch (e) { /* not beside */ } }
+    return null;
+  }
+  const f32 = Math.fround;
+  const pitchVal = (c) => 16 * Math.pow(2, c / 6000);
+  class LiveRefiner {
+    /** N voices, M bands; ahead: frames of look-ahead (2: +100 ms, the frames whose ViSQOL windows meet the tick; 3: +150 ms,
+     *  those of the next tick too, as refine_client); level: dB over the files the listener plays (+10); lagMs: the original's
+     *  time against the playback's (a live frame is its 43 ms before its end, and played in the tick before it: 50 ms) */
+    constructor(N, M, { ahead = 2, level = 10, lagMs = 50, weights = 'svr' } = {}) {
+      const C = coreLib();
+      if (!C || !C.CL) throw new Error('the refinement needs web/core.js (window.SpectralCore, or beside this file)');
+      const K = C.CL;
+      this.C = C; this.K = K; this.N = N; this.M = M; this.S = N + M; this.ahead = Math.max(2, Math.min(3, ahead | 0)); this.lag = lagMs;
+      this.cm = C.clientModel(NOISE_EDGES);
+      this.lv = Math.pow(10, level / 20); this.gv = this.lv / K.OSC_AMP;
+      this.nrms = M === K.NOISE_RMS.length ? K.NOISE_RMS : new Array(M).fill(0.18);
+      this.aval = new Float64Array(128); for (let c = 1; c < 128; c++) this.aval[c] = f32(ampVal(c));
+      this.nval = new Float64Array(256); for (let c = 1; c < 256; c++) this.nval[c] = f32(nzVal(c));
+      this.dsend = Math.pow(10, K.SEND_DB / 20); this.csend = Math.pow(2, K.SEND_CENTS / 1200) - 1;
+      this.ws = K.WEIGHT_SETS[weights].map((w) => w / 1000);
+      this.floorA = new Float64Array(this.S);
+      for (let s = 0; s < this.S; s++) this.floorA[s] = s < N ? K.SILENT * K.OSC_AMP : K.SILENT * this.nrms[s - N];
+      // the decided state at the start of the next tick to decide (each sound's amplitude and the level it was last sent; each
+      // voice's pitch as last sent), and the decided ticks' envelopes and band responses (3 back, for the windows that reach them)
+      this.cur = Float64Array.from(this.floorA); this.last = new Float64Array(this.S).fill(f32(K.SILENT)); this.lastP = new Float64Array(N).fill(-1);
+      this.hist = [];                                    // [{ env: Float64Array(S * TICK), G: Float64Array(S * 32), Gt }] oldest first
+      this.frames = [];                                  // the frames from this.base on: decided (one), then the pending ones
+      this.base = 0; this.k = -1;                        // this.k: the last tick decided (-1: none)
+      // the original: its samples from this.a0 on, and its ViSQOL bands per window (m → 32 powers)
+      this.audio = new Float32Array(0); this.a0 = 0; this.n = 0; this.ref = new Map();
+      const L = 3840, nfft = 4096, nb = nfft / 2 + 1;
+      this.rw = new Float64Array(L); for (let i = 0; i < L; i++) this.rw[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (L - 1));
+      const fb = new Float64Array(nb); for (let i = 0; i < nb; i++) fb[i] = (i * SR) / nfft;
+      this.H = C.gtH2(fb); for (let j = 0; j < 32; j++) { this.H[j * nb] = 0; this.H[j * nb + nb - 1] = 0; }
+      this.re = new Float64Array(nfft); this.im = new Float64Array(nfft); this.P2 = new Float64Array(nb);
+      // the playback's and the original's power so far (ViSQOL scales the playback to the original's: the objective's s2)
+      this.px = 0; this.pn = 0; this.tot = 0; this.tn = 0;
+      this.sineCache = new Map();
+    }
+    sine(hz) {
+      const key = Math.round(hz * 100);
+      let g = this.sineCache.get(key);
+      if (!g) { g = this.cm.sine(hz); if (this.sineCache.size > 4096) this.sineCache.clear(); this.sineCache.set(key, g); }
+      return g;
+    }
+    levelOf(s, c) {
+      const K = this.K;
+      if (s < this.N) { const L = Math.min(10, Math.max(K.SILENT, this.aval[c] * this.gv)); return [L, L * K.OSC_AMP]; }
+      const b = s - this.N, L = Math.min(10, Math.max(K.SILENT, (this.nval[c] * this.lv) / this.nrms[b]));
+      return [L, L * this.nrms[b]];
+    }
+    code(fr, s) { return s < this.N ? fr.a[s] : fr.nz[s - this.N]; }
+    fade(fr, s) { return this.K.FADES[s < this.N ? fr.vf[s] : fr.nf[s - this.N]]; }
+    /** frame j (from the encoder's analysis) and the HOP samples that completed it → the frames now final ([] while it looks ahead) */
+    frame(fr, x) {
+      this.addAudio(x);
+      this.frames.push(fr);
+      // (tick k is decided once frame k + 1 + ahead is in, then frame k + 1 is final; frame 0 is played from silence as it is)
+      const out = [], j = this.base + this.frames.length - 1;
+      if (this.k < 0 && this.base === 0 && j === this.ahead) out.push(this.frames[0]);
+      while (j >= this.k + 2 + this.ahead && this.frames.length > 1) { this.decide(this.k + 1); out.push(this.frames[1]); this.drop(); }
+      return out;
+    }
+    /** the frames still held (the end of a stream or of a talkspurt), each decided with what has come: the original after it as
+     *  silence. The next frames go on from the last one */
+    flush() {
+      const out = [];
+      const end = this.base + this.frames.length - 1;
+      if (end < 0) return out;
+      if (this.k < 0 && this.base === 0 && end < this.ahead) out.push(this.frames[0]);
+      while (this.k + 1 < end) { this.decide(this.k + 1); out.push(this.frames[1]); this.drop(); }
+      return out;
+    }
+    drop() { this.frames.shift(); this.base++; }
+    addAudio(x) {
+      const keep = Math.round(SR * 0.6), all = new Float32Array(Math.min(this.audio.length, keep) + x.length);
+      const from = Math.max(0, this.audio.length - keep);
+      all.set(this.audio.subarray(from)); all.set(x, this.audio.length - from);
+      this.a0 += from; this.audio = all; this.n += x.length;
+      for (let i = 0; i < x.length; i++) this.px += x[i] * x[i];
+      this.pn += x.length;
+    }
+    /** the original's 32 band powers in the ViSQOL window of playback frame m (80 ms from 20 m ms, `lag` ms later in the original) */
+    refBands(m) {
+      let r = this.ref.get(m);
+      if (r) return r;
+      const L = 3840, nfft = 4096, nb = nfft / 2 + 1, t0 = Math.round(((m * 20 + this.lag) * SR) / 1000) - this.a0;
+      const { re, im, P2, H } = this;
+      re.fill(0); im.fill(0);
+      for (let i = 0; i < L; i++) { const q = t0 + i; re[i] = q >= 0 && q < this.audio.length ? this.audio[q] * this.rw[i] : 0; }
+      fft(re, im);
+      for (let i = 0; i < nb; i++) P2[i] = re[i] * re[i] + im[i] * im[i];
+      r = new Float64Array(32);
+      const sc = 2 / (L * nfft);
+      for (let j = 0; j < 32; j++) { let acc = 0; for (let i = 0; i < nb; i++) acc += P2[i] * H[j * nb + i]; r[j] = sc * acc; }
+      // (kept once the window has all come: a flush judges with what has)
+      if (t0 + L <= this.audio.length) { this.ref.set(m, r); if (this.ref.size > 64) this.ref.delete(this.ref.keys().next().value); }
+      return r;
+    }
+    /** a sound's envelope (amplitude per ms) over ticks from `cur`/`last`, toward the codes and fades of the frames given: { env, cur, last } */
+    run(s, cur, last, targets, env, off) {
+      const T = this.K.TICK, dsend = this.dsend;
+      for (const [c, d] of targets) {
+        const [L, A] = this.levelOf(s, c);
+        if (L / last < dsend && last / L < dsend) { for (let u = 0; u < T; u++) env[off + u] = cur; off += T; continue; }
+        for (let u = 0; u < T; u++) env[off + u] = cur + (A - cur) * Math.min(1, (u + 0.5) / d);
+        cur = A; last = f32(L); off += T;
+      }
+      return [cur, last];
+    }
+    /** tick k (toward frame k+1): every sound's level and fade chosen against the original, one after another (refine_client's
+     *  candidates: its codes around its own, each of the 4 fades, and off) */
+    decide(k) {
+      const { N, M, S, K, cm } = this, T = K.TICK, Q = K.Q, FL = K.FLOOR * Q, A = this.ahead;
+      const fr = (kk) => this.frames[Math.min(kk - this.base, this.frames.length - 1)];
+      // the ticks the windows of the frames to judge reach: 3 decided ones before k (hist), k .. k + A (k on: from the state now)
+      const nh = this.hist.length, t0 = k - nh, nT = nh + A + 1;
+      const env = new Float64Array(S * nT * T), G = new Float64Array(S * nT * 32), Gt = new Float64Array(S * nT);
+      for (let h = 0; h < nh; h++) {
+        const H = this.hist[h];
+        for (let s = 0; s < S; s++) { env.set(H.env.subarray(s * T, s * T + T), (s * nT + h) * T); G.set(H.G.subarray(s * 32, s * 32 + 32), (s * nT + h) * 32); Gt[s * nT + h] = H.Gt[s]; }
+      }
+      // the pitch each voice is at in ticks k .. k + A (the engine's geometric mean of the two frames, its 3-cent rule) and its response
+      for (let v = 0; v < N; v++) {
+        let lp = this.lastP[v];
+        for (let i = 0; i <= A; i++) {
+          const f0 = fr(k + i), f1 = fr(k + i + 1);
+          const q0 = f0.a[v] > 0 && f0.p[v] > 0 ? f32(pitchVal(pitchCode(f0.p[v]))) : 0, q1 = f1.a[v] > 0 && f1.p[v] > 0 ? f32(pitchVal(pitchCode(f1.p[v]))) : 0;
+          const hz = q0 && q1 ? Math.sqrt(q0 * q1) : q1 || q0;
+          if (hz > 0) { const pp = Math.min(10, Math.max(0.01, hz / BASE)); if (!(lp > 0 && Math.abs(pp / lp - 1) < this.csend)) lp = f32(pp); }
+          if (lp > 0) { const [g, gt] = this.sine(lp * BASE); G.set(g, (v * nT + nh + i) * 32); Gt[v * nT + nh + i] = gt; }
+        }
+      }
+      for (let b = 0; b < M; b++) for (let i = 0; i <= A; i++) { G.set(cm.noise[b], ((N + b) * nT + nh + i) * 32); Gt[(N + b) * nT + nh + i] = cm.noiseTot[b]; }
+      // every sound from the decided state toward the frames as they stand
+      const tg = (s, i0) => { const out = []; for (let i = i0; i <= A; i++) { const f = fr(k + i + 1); out.push([this.code(f, s), this.fade(f, s)]); } return out; };
+      for (let s = 0; s < S; s++) this.run(s, this.cur[s], this.last[s], tg(s, 0), env, (s * nT + nh) * T);
+      // the frames to judge: those whose windows meet ticks k .. k + A - 2, and one each side for the 3x3 neighbourhoods
+      const ta = k * T, tb = (k + A - 1) * T;
+      const m0 = Math.ceil((ta - K.WIN + 1) / K.HOP), m1 = Math.floor((tb - 1) / K.HOP), ma = m0 - 1, mb = m1 + 1, nf = mb - ma + 1;
+      // a sound's power in those frames from its envelope over ticks i0.. (null: the stored one)
+      const w2 = cm.w2, P = new Float64Array(32 * nf), tickE = new Float64Array(nT);
+      const contrib = (s, e, eoff, out, sign, i0 = 0) => {
+        // e: the sound's envelope over all nT ticks (offset eoff); only ticks i0.. counted (the ones a candidate changes)
+        const lo = i0 * T;
+        for (let m = ma; m <= mb; m++) {
+          tickE.fill(0);
+          for (let w = 0; w < K.WIN; w++) {
+            const t = m * K.HOP + w - t0 * T; if (t < lo || t >= nT * T) continue;
+            const v = e[eoff + t]; tickE[(t / T) | 0] += v * v * w2[w];
+          }
+          for (let i = i0; i < nT; i++) {
+            const val = tickE[i] / K.WIN; if (val === 0) continue;
+            const g = (s * nT + i) * 32;
+            for (let j = 0; j < 32; j++) out[j * nf + (m - ma)] += sign * G[g + j] * val;
+          }
+        }
+      };
+      for (let j = 0; j < 32; j++) for (let m = 0; m < nf; m++) P[j * nf + m] = cm.qfloor[j] * cm.mw2;
+      for (let s = 0; s < S; s++) contrib(s, env, s * nT * T, P, 1);
+      // the scale ViSQOL gives the playback (the original's power over the playback's, so far: at least the frames judged)
+      let tw = 0, tn = 0;
+      for (let s = 0; s < S; s++) for (let i = nh; i < nT; i++) { let acc = 0; for (let u = 0; u < T; u++) { const v = env[(s * nT + i) * T + u]; acc += v * v; } tw += acc * Gt[s * nT + i]; }
+      tn = (nT - nh) * T;
+      const pxm = this.pn ? this.px / this.pn : 0, totm = cm.qfloorTot + (this.tn > 2000 ? this.tot / this.tn : (this.tot + tw) / (this.tn + tn));
+      const s2 = totm > 0 ? pxm / totm : 1;
+      const qdb = (p) => Math.floor(Q * 5 * Math.log10(Math.max(p * s2, 1e-30)) + 0.5);
+      const R = new Int32Array(32 * nf), D = new Int32Array(32 * nf), fl = new Int32Array(nf);
+      for (let m = 0; m < nf; m++) {
+        const r = this.refBands(ma + m);
+        let mx = -Infinity;
+        for (let j = 0; j < 32; j++) { const rq = Math.max(Math.floor(Q * 5 * Math.log10(Math.max(r[j], 1e-30)) + 0.5), -FL); R[j * nf + m] = rq; mx = Math.max(mx, rq, Math.max(qdb(P[j * nf + m]), -FL)); }
+        fl[m] = mx - FL;
+        for (let j = 0; j < 32; j++) { R[j * nf + m] = Math.max(R[j * nf + m], fl[m]); D[j * nf + m] = Math.max(Math.max(qdb(P[j * nf + m]), -FL), fl[m]); }
+      }
+      const lowq = -FL;
+      // each sound in turn: its candidates for tick k, the ticks after it run again from where each leaves the sound
+      const fk1 = fr(k + 1), segE = new Float64Array((A + 1) * T), con = new Float64Array(32 * nf), old = new Float64Array(32 * nf);
+      const one = new Float64Array(S * nT * T);
+      for (let s = 0; s < S; s++) {
+        const c0 = this.code(fk1, s);
+        if (c0 <= 0) continue;
+        const isv = s < N, hi = isv ? 127 : 255, steps = isv ? K.VSTEPS : K.NSTEPS;
+        const codes = [...new Set(steps.map((d) => Math.min(hi, Math.max(1, c0 + d))))].sort((p, q) => p - q);
+        const fc0 = isv ? fk1.vf[s] : fk1.nf[s - N];
+        const rest = tg(s, 1);
+        old.fill(0); contrib(s, env, s * nT * T, old, 1, nh);
+        const nC = codes.length * 4 + 1, Dc = new Int32Array(nC * 32 * nf);
+        const base = new Float64Array(32 * nf); for (let i = 0; i < 32 * nf; i++) base[i] = P[i] - old[i];
+        // (the bands this sound reaches in ticks k .. k + A: over -90 dB of its loudest; the others stay as they are for every candidate)
+        let gmax = 0; for (let i = nh; i < nT; i++) for (let j = 0; j < 32; j++) gmax = Math.max(gmax, G[(s * nT + i) * 32 + j]);
+        const act = [];
+        for (let j = 0; j < 32; j++) { let g = 0; for (let i = nh; i < nT; i++) g = Math.max(g, G[(s * nT + i) * 32 + j]); if (g > gmax * 1e-9) act.push(j); }
+        for (let ci = 0; ci < nC; ci++) {
+          const c = ci < nC - 1 ? codes[ci >> 2] : 0, fcode = ci < nC - 1 ? ci & 3 : 3;
+          // (this sound's envelope with the candidate: ticks k .. k + A run again; the ones before are the same for all)
+          this.run(s, this.cur[s], this.last[s], [[c, K.FADES[fcode]], ...rest], one, (s * nT + nh) * T);
+          con.fill(0); contrib(s, one, s * nT * T, con, 1, nh);
+          for (let j = 0; j < 32; j++) for (let m = 0; m < nf; m++) Dc[(ci * 32 + j) * nf + m] = D[j * nf + m];
+          for (const j of act) for (let m = 0; m < nf; m++) Dc[(ci * 32 + j) * nf + m] = Math.max(Math.max(qdb(base[j * nf + m] + con[j * nf + m]), -FL), fl[m]);
+        }
+        // ViSQOL's similarity over the bands a candidate changes (and their neighbours), the judged frames (and theirs)
+        let jl = -1, jh = -1;
+        for (const j of act) {
+          let ch = false;
+          for (let ci = 0; ci < nC && !ch; ci++) for (let m = 0; m < nf; m++) if (Dc[(ci * 32 + j) * nf + m] !== D[j * nf + m]) { ch = true; break; }
+          if (ch) { if (jl < 0) jl = j; jh = j; }
+        }
+        if (jl < 0) continue;
+        const ja = Math.max(0, jl - 1), jb = Math.min(31, jh + 1), rows = [];
+        for (let i = ja - 1; i <= jb + 1; i++) rows.push(Math.min(31, Math.max(0, i)));
+        const nr = rows.length, ncol = nf, rr = new Float64Array(nr * ncol), dn = new Float64Array(nr * ncol), dc = new Float64Array(nr * ncol), wsr = [];
+        for (let i = ja; i <= jb; i++) wsr.push(this.ws[i]);
+        for (let i = 0; i < nr; i++) for (let m = 0; m < ncol; m++) { rr[i * ncol + m] = (R[rows[i] * nf + m] - lowq) / Q; dn[i * ncol + m] = (D[rows[i] * nf + m] - lowq) / Q; }
+        const ref = this.C.nsimRef(rr, nr, ncol), Ln = -this.C.nsimSum(ref, dn, wsr);
+        let best = -1, bestL = Infinity;
+        for (let ci = 0; ci < nC; ci++) {
+          for (let i = 0; i < nr; i++) for (let m = 0; m < ncol; m++) dc[i * ncol + m] = (Dc[(ci * 32 + rows[i]) * nf + m] - lowq) / Q;
+          const Lc = -this.C.nsimSum(ref, dc, wsr);
+          if (Lc < bestL) { bestL = Lc; best = ci; }
+        }
+        const bc = best < nC - 1 ? codes[best >> 2] : 0, bf = best < nC - 1 ? best & 3 : 3;
+        if (best >= 0 && bestL < Ln && (bc !== c0 || bf !== fc0)) {
+          // (taken: the frame's code and fade, this sound's envelope and the frames' power and dB as they now stand)
+          if (isv) { fk1.a[s] = bc; fk1.vf[s] = bf; if (!bc) fk1.p[s] = 0; } else { fk1.nz[s - N] = bc; fk1.nf[s - N] = bf; }
+          this.run(s, this.cur[s], this.last[s], tg(s, 0), env, (s * nT + nh) * T);
+          con.fill(0); contrib(s, env, s * nT * T, con, 1, nh);
+          for (let i = 0; i < 32 * nf; i++) { P[i] = base[i] + con[i]; D[i] = Math.max(Math.max(qdb(P[i]), -FL), fl[i % nf]); }
+        }
+      }
+      // tick k is decided: its envelopes and responses kept (3 back), the state after it, the playback's power
+      const H = { env: new Float64Array(S * T), G: new Float64Array(S * 32), Gt: new Float64Array(S) };
+      let acc = 0;
+      for (let s = 0; s < S; s++) {
+        const [c1, l1] = this.run(s, this.cur[s], this.last[s], [[this.code(fk1, s), this.fade(fk1, s)]], H.env, s * T);
+        this.cur[s] = c1; this.last[s] = l1;
+        H.G.set(G.subarray((s * nT + nh) * 32, (s * nT + nh) * 32 + 32), s * 32); H.Gt[s] = Gt[s * nT + nh];
+        let e2 = 0; for (let u = 0; u < T; u++) { const v = H.env[s * T + u]; e2 += v * v; }
+        acc += e2 * H.Gt[s];
+      }
+      this.tot += acc; this.tn += T;
+      // (the voices' pitch as the engine leaves it after tick k: frames k and k + 1 as decided)
+      const f0 = fr(k);
+      for (let v = 0; v < N; v++) {
+        const q0 = f0.a[v] > 0 && f0.p[v] > 0 ? f32(pitchVal(pitchCode(f0.p[v]))) : 0, q1 = fk1.a[v] > 0 && fk1.p[v] > 0 ? f32(pitchVal(pitchCode(fk1.p[v]))) : 0;
+        const hz = q0 && q1 ? Math.sqrt(q0 * q1) : q1 || q0;
+        if (hz > 0) { const pp = Math.min(10, Math.max(0.01, hz / BASE)); if (!(this.lastP[v] > 0 && Math.abs(pp / this.lastP[v] - 1) < this.csend)) this.lastP[v] = f32(pp); }
+      }
+      this.hist.push(H); if (this.hist.length > 3) this.hist.shift();
+      this.k = k;
     }
   }
 
@@ -203,6 +488,6 @@
     return { meta, data: b64(data) };
   }
 
-  const api = { LiveEncoder, message, toSong, b64, ampCode, nzCode, pitchCode, ampVal, nzVal, SR, HOP, WIN, FPS, NOISE_EDGES, AMP, NZ, FADES };
+  const api = { LiveEncoder, LiveRefiner, message, toSong, b64, ampCode, nzCode, pitchCode, ampVal, nzVal, SR, HOP, WIN, FPS, NOISE_EDGES, AMP, NZ, FADES };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.SpectralLive = api;
 })(typeof window !== 'undefined' ? window : globalThis);
