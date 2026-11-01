@@ -455,6 +455,8 @@ spectral:range 3 10 true
 ~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.1\);
 spectral:range 3 10 true 0.01
 ~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.01\);
+execute as @a[name=A] run spectral:range 3 10 true 0.01
+~ @A range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.01\);
 
 ## a voice can follow an entity with a name tag (an NPC, a pet) as it follows a player: everyone within reach hears it, it moves with it (after as many blocks as set), and nobody hears it once it is gone
 spectral:range 3 10 true 0.001

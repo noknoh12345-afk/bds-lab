@@ -1270,6 +1270,7 @@ cmdAny('spectral:live', 'Live streams (a voice chat, a microphone): the list, or
   });
 /** a song sent as a live stream, frame by frame as a voice chat would (the whole live path in the add-on itself: the frames are
  *  written as bytes and read back) */
+// (spectral:range and spectral:handover set every stream on the server: operators only)
 cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), how much louder than the files they play (dB, +10 by default), whether voices that follow a talker are made quietly (on by default) and how quietly (the definition volume: 0.1, 0.01 or 0.001)', { 'volume?': 'float', 'level?': 'float', 'quiet?': 'bool', 'made?': 'float' }, (_p, a) => {
   if (a.volume !== undefined) RANGE_3D = Math.max(0.25, Math.min(16, a.volume));
   if (a.level !== undefined) LEVEL_3D_DB = Math.max(0, Math.min(18, Math.round(a.level * 10) / 10));
@@ -1277,15 +1278,15 @@ cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (
   // (the nearest of the quiet events' definition volumes)
   if (a.made !== undefined) Q3D = [0.1, 0.01, 0.001].reduce((x, y) => (Math.abs(Math.log10(Math.max(1e-6, a.made!)) - Math.log10(y)) < Math.abs(Math.log10(Math.max(1e-6, a.made!)) - Math.log10(x)) ? y : x));
   return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : 'as the files'}${QUIET_3D ? `, followed voices made quietly (${Q3D})` : ''}; new speakers and live streams)`;
-});
-cmdAny('spectral:handover', 'A voice that follows a talker who moves: until the new sounds take over, the old ones hold their last level (hold, the default), keep following the voice (steer) or stop at once (cut); how far the talker moves before the sounds move (blocks, 1.5 by default); the ticks until the new ones take over (2), how many times their state is sent again after that, every 2 ticks (0), and how many sounds move a tick (8)', { 'old?': ['hold', 'steer', 'cut'], 'move?': 'float', 'settle?': 'int', 'resend?': 'int', 'step?': 'int' }, (_p, a) => {
+}, true);
+cmdAny('spectral:handover', 'A voice that follows a talker who moves: the old sounds stop as the new ones are made (cut, the default: a talker never has more sounds than a phone plays at once), hold their last level until the new ones take over (hold) or keep following the voice (steer); how far the talker moves before the sounds move (blocks, 1.5 by default); the ticks until the new ones take over (2), how many times their state is sent again after that, every 2 ticks (0), and how many sounds move a tick (2)', { 'old?': ['hold', 'steer', 'cut'], 'move?': 'float', 'settle?': 'int', 'resend?': 'int', 'step?': 'int' }, (_p, a) => {
   if (a.old !== undefined) { HANDOVER_STEER = a.old === 'steer'; HANDOVER_CUT = a.old === 'cut'; }
   if (a.step !== undefined) FOLLOW_STEP = Math.max(1, Math.min(64, Math.round(a.step)));
   if (a.move !== undefined) FOLLOW_MOVE = Math.max(0.5, Math.min(16, a.move));
   if (a.settle !== undefined) HANDOVER_TICKS = Math.max(1, Math.min(20, Math.round(a.settle)));
   if (a.resend !== undefined) HANDOVER_RESEND = Math.max(0, Math.min(10, Math.round(a.resend)));
   return `handover: the old sounds ${HANDOVER_CUT ? 'stop as the new ones are made' : HANDOVER_STEER ? 'follow the voice until they fade' : 'hold their last level until they fade'}, the sounds move after ${FOLLOW_MOVE} blocks, ${FOLLOW_STEP} a tick, the new ones take over after ${HANDOVER_TICKS} ticks and get their state again ${HANDOVER_RESEND} times (a voice that follows a talker who moves)`;
-});
+}, true);
 cmdAny('spectral:live_demo', 'Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)',
   { song: 'string', 'to?': ['phones', 'speaker', 'near', 'follow'], 'who?': 'player', 'voices?': 'int', 'at?': 'string' }, async (p, a) => {
     const song = songs.get(a.song); if (!song) return `§cno song "${a.song}"`;
