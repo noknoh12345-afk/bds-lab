@@ -582,7 +582,7 @@ until Pasted in parts 8000
 ~ @A ♪ part 1 of 3 in \(2/3\) — paste part 3
 ~ @A form modal: title\("Spectral Player: paste a song"\) label\("1 of 3 parts in: paste the next part\."\)
 
-## a text that is not a song, a broken one and a cut one are refused with why
+## a text that is not a song, a broken one and a cut one are refused with why (one stopped at 100 characters: the game's text box without this pack's)
 @A cmd /spectral:paste
 until form
 @A form ["hello", true]
@@ -598,6 +598,11 @@ until form
 @A form ["SPZ1.1.1.7ebc1387.456:乁悀渠巈乙疪泄塰晜蕆捽牥楛纵侅腴杙倆徕筯凔蔆掍色晛倅侱潹杜済朿蠌讪紅嚄忐煤挹峢燫屻捓蝅褸穝臁寒棾匰笼璷嗳糭彽磲煩籎訵蚴妊彠櫌权勲嗋呑荦蒂薦秫么筗跁扏厉视裄徂臄嫃曰姅浭擛殬覎倴溨篹掐畩艘溆芀壴嗦泴薊悗謽偏煇竢獕盕蘋誻洪諝煹敤訬俼健趏蕞挥嚾谼犩蕐蒧枧蜟趠纭应宯滽缼栛豟蚝賝夨囉旮內従禧糂衷憻泰暚葍擎璗浨惰玡畊厡彪稑烑熡綪汕姗埝怃蘧倫嫭孊表荊蓴穲蘼桯姠唕嬀弤媧竡擲庶睸忴褢變囔杋脍攞碸巸賚拖蠘詂悈悘漩賓欏譛衝尡唅紨芓寛诡嬈耗尭芹禧昞聠徸愽薸乸梬悸桢毶汵袃暧漨嘜伣卂扃稿", true]
 until cut short 5000
 ~ @A the text is cut short: copy it again, whole
+@A cmd /spectral:paste
+until form
+@A form ["SPZ1.1.1.7ebc1387.456:乁悀渠巈乙疪泄塰晜蕆捽牥楛纵侅腴杙倆徕筯凔蔆掍色晛倅侱潹杜済朿蠌讪紅嚄忐煤挹峢燫屻捓蝅褸穝臁寒棾匰笼璷嗳糭彽磲煩籎訵蚴妊彠櫌权勲嗋呑荦蒂薦秫么筗跁扏厉视裄徂", true]
+until took only 5000
+~ @A the text box took only 100 characters \(the game's own limit\): Spectral Player's resource pack lets it take 30000 — accept the server's resource packs \(or add the pack to the world\) and paste it again
 
 ## the pasted songs kept in the world are there after a restart (their text read back when they play)
 restart

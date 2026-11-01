@@ -1742,6 +1742,7 @@ async function pasted(p, text, keep2) {
     part = readPart(text);
   } catch (e) {
     console.warn(`[spectral] paste refused (${text.length} characters from ${p.name}): ${errText(e)}`);
+    if (text.trim().length === 100 && /^SP[ZA]1\./.test(text.trim())) return { say: `\xA7cthe text box took only 100 characters (the game's own limit): Spectral Player's resource pack lets it take ${FIELD_CHARS} \u2014 accept the server's resource packs (or add the pack to the world) and paste it again` };
     return { say: `\xA7c${errText(e)}` };
   }
   console.warn(`[spectral] paste part ${part.i}/${part.n} of ${part.key}: ${text.length} characters from ${p.name}`);

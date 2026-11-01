@@ -179,7 +179,7 @@ button.main:disabled { opacity: 0.5; cursor: default; }
       <button class="ghost" id="saveAddon">本体アドオンを保存 (.mcaddon.zip)</button>
       <p class="note">統合版 1.26.60 以降。曲パックは本体と別のビヘイビアーパックなので、曲を足しても本体は入れ替え不要です。</p>
       <h2 class="sub">ゲームで貼り付け（テキスト）</h2>
-      <p class="note">曲パックを入れられないとき（Realms・スマホだけ）は、選んでいる曲をテキストにして、ゲームの <code>/spectral:paste</code>（リモコンの「📋 Paste a song」）に貼り付けます。1 回に 30000 文字まで（本体のリソースパックで入力欄を広げています）。長い曲はパートに分かれるので、1 から順に貼り付けます。</p>
+      <p class="note">曲パックを入れられないとき（Realms・スマホだけ）は、選んでいる曲をテキストにして、ゲームの <code>/spectral:paste</code>（リモコンの「📋 Paste a song」）に貼り付けます。1 回に 30000 文字まで（本体のリソースパックで入力欄を広げています。100 文字で止まるときは、そのリソースパックがゲームに入っていません: サーバーのリソースパックを受け入れるか、ワールドに入れてください）。長い曲はパートに分かれるので、1 から順に貼り付けます。</p>
       <label class="quality">声の数<select id="pxVoices"><option value="16">16（いちばん短い）</option><option value="24" selected>24（スマホが鳴らす数）</option><option value="32">32</option><option value="0">すべて</option></select></label>
       <label class="quality">音程の細かさ<select id="pxQ"><option value="15" selected>3 セント（短い・本体が送る最小の変化）</option><option value="5">1 セント</option><option value="1">そのまま（元の曲と同じ）</option></select></label>
       <label class="quality">文字<select id="pxEnc"><option value="cjk" selected>漢字（1 文字に 14 bit・いちばん短い）</option><option value="ascii">英数字（互換用・約 2.3 倍長い）</option></select></label>

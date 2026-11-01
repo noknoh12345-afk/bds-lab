@@ -858,7 +858,13 @@ function decodePayload(payload: Uint8Array): Promise<{ meta: SongMeta; bytes: Ui
 async function pasted(p: Player, text: string, keep: boolean): Promise<{ say: string; more?: boolean }> {
   let part: Part;
   // (each paste in the server's log too: how many characters came — a text field that cut them would show here)
-  try { part = readPart(text); } catch (e) { console.warn(`[spectral] paste refused (${text.length} characters from ${p.name}): ${errText(e)}`); return { say: `§c${errText(e)}` }; }
+  try { part = readPart(text); } catch (e) {
+    console.warn(`[spectral] paste refused (${text.length} characters from ${p.name}): ${errText(e)}`);
+    // (a song text stopped at 100 characters: the game's own text box — this pack's rp/ui/server_form.json, which lets it take
+    // FIELD_CHARS, is not on that player's game: the server's resource packs declined, or the world without the pack)
+    if (text.trim().length === 100 && /^SP[ZA]1\./.test(text.trim())) return { say: `§cthe text box took only 100 characters (the game's own limit): Spectral Player's resource pack lets it take ${FIELD_CHARS} — accept the server's resource packs (or add the pack to the world) and paste it again` };
+    return { say: `§c${errText(e)}` };
+  }
   console.warn(`[spectral] paste part ${part.i}/${part.n} of ${part.key}: ${text.length} characters from ${p.name}`);
   let pend = pending.get(p.id);
   if (!pend || pend.key !== part.key || pend.n !== part.n || system.currentTick - pend.at > 20 * 600) { pend = { key: part.key, n: part.n, parts: [], at: 0 }; pending.set(p.id, pend); }
