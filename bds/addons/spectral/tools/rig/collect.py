@@ -91,7 +91,11 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'pg': 'live_3d_walk_v24_again', 'pe': 'live_3d_walk_v24_cut2', 'pf': 'live_3d_walk_v24_cut2_again',
         # run 22: the live encoder plain / refined as it goes in 3D — a talker standing 3 blocks ahead (ba, bd plain; bb, bc refined), near 24 blocks (be, bf)
         'ba': 'live_3d_enc_plain', 'bb': 'live_3d_enc_refined', 'bc': 'live_3d_enc_refined_again', 'bd': 'live_3d_enc_plain_again',
-        'be': 'live_near24_enc_plain', 'bf': 'live_near24_enc_refined', 'bg': 'live_3d_enc_plain_first'}
+        'be': 'live_near24_enc_plain', 'bf': 'live_near24_enc_refined', 'bg': 'live_3d_enc_plain_first',
+        # run 23: a talker walking at a player's pace (3 blocks a step): standing (hg), cut 2 a tick (ha, hf), cut 4 (hb, he), 1.2.0 (hc, hd),
+        # and the live encoder plain / refined, cut 2 (hh, hi)
+        'hg': 'live_3d_still_r23', 'ha': 'live_3d_run_cut2', 'hf': 'live_3d_run_cut2_again', 'hb': 'live_3d_run_cut4', 'he': 'live_3d_run_cut4_again',
+        'hc': 'live_3d_run_hold8', 'hd': 'live_3d_run_hold8_again', 'hh': 'live_3d_run_enc_plain', 'hi': 'live_3d_run_enc_refined'}
 
 
 def songs(res):
