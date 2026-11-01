@@ -4,8 +4,11 @@
     cmds: commands before the arm (run as the player), songs: list (default all 13), export: kbps or 0,
     play: what starts a song ("spectral:play {song}" by default; e.g. "spectral:live_demo {song} phones"),
     during: [[ms, server command], ...] run while the song plays, each ms after the one before (e.g. a talker moved: "tp @e[name=talker] 3 -59 0");
-    wait: this arm's ms for its song, during included (each `do` also takes ~0.6 s of its own on the device)}
+    wait: this arm's ms for its song, during included (each `do` also takes ~0.6 s of its own on the device),
+    with: commands run right after the one that starts the song (each ~0.6 s after the one before: e.g. a second talker's stream),
+    also: [[song, suffix], ...] more songs sent from the arm's pack for those commands}
    interleave: prefixes of arms with the same commands, recorded song by song (a run cut short keeps whole pairs)
+   setup: commands run once as the player after joining, before any section (e.g. talkers summoned: armor stands with names)
    calib: calibration programs recorded first (["loud"]); ceiling: {"arms": [{pre, args ("4" = playSound volume 4, "4 d4" = the
    event whose definition says volume 4), songs}]} — the originals as plain sounds (songpack.py --unit), last: the BDS restarts
    with that unit
@@ -18,13 +21,16 @@
 import json, sys
 SONGS=['piano_gymnopedie','piano_chopin_op66','vocal_stars','vocal_name_of_love','choir_how_long','drums_round','rock_big','edm_detection',
        'orchestra_five_armies','funk_funkorama','speech_ja_soseki','speech_en_wordsworth','demo_selfmade']
-def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, batch=0):
+def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, batch=0, setup=()):
     L=[*header, '', 'section title', 'audio info', 'stop', 'audio volume 0', 'launch', 'until title 600000', 'audio info', 'shot title', '', 'section prep']
     sent={}                      # (suffix, converter options) -> every song an arm plays with them, in order
     for a in arms:
         key=(a.get('suffix',''), json.dumps(a.get('conv',{}),sort_keys=True))
         got=sent.setdefault(key, {'arm': a, 'songs': []})
         got['songs']+=[x for x in a.get('songs',SONGS) if x not in got['songs']]
+        for x, suf in a.get('also', []):
+            g2=sent.setdefault((suf, json.dumps(a.get('conv',{}),sort_keys=True)), {'arm': a, 'songs': []})
+            if x not in g2['songs']: g2['songs'].append(x)
     for (suffix, _), got in sent.items():
         a=got['arm']; songs=[x for x in SONGS if x in got['songs']]
         opts=' '.join(f'{k}={v}' for k,v in a.get('conv',{}).items())
@@ -38,6 +44,7 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
             cs+=[x for x in c.get('songs',SONGS) if x not in cs]
         L.append(f"audio ceiling spectral_ceil {','.join(cs)}")
     L+=['', 'section join', 'join', 'until joined 300000', 'wait 5000', 'do time set noon', 'do gamerule dodaylightcycle false', 'do weather clear']
+    L+=[f'do execute as @a run {c}' for c in setup]
     for prog in calib:
         L+=['', f'section calib_{prog}', 'audio start calib', f'do spectral:calib {prog}', f'until server spectral calib\\] end {prog} 300000', 'wait 2000',
             'audio stop', f'audio analyze calib {prog}', 'audio export calib 192']
@@ -60,7 +67,7 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
                 out+=cmds(a, k == 0); cur=a.get('cmds',[])
                 name=f"{a['pre']}_{s}"
                 play=a.get('play', 'spectral:play {song}').format(song=s + a.get('suffix',''))
-                out+=[f'audio start {name}', f"do execute as @a run {play}", *waits(a), 'audio stop', f'audio analyze {name} song:{s}']
+                out+=[f'audio start {name}', f"do execute as @a run {play}", *[f"do execute as @a run {c}" for c in a.get('with', [])], *waits(a), 'audio stop', f'audio analyze {name} song:{s}']
                 if a.get('export',160): out.append(f"audio export {name} {a.get('export',160)}")
             return out
         for b0 in range(0, len(plan), batch):
@@ -71,7 +78,7 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
                 if k: out+=cmds(a, False); cur=a.get('cmds',[])
                 name=f"{a['pre']}_{s}"
                 play=a.get('play', 'spectral:play {song}').format(song=s + a.get('suffix',''))
-                out+=[f'audio mark {name}', f"do execute as @a run {play}", *waits(a)]
+                out+=[f'audio mark {name}', f"do execute as @a run {play}", *[f"do execute as @a run {c}" for c in a.get('with', [])], *waits(a)]
             out+=['audio stop', 'audio analyze-all ' + ' '.join(f"{a['pre']}_{s}=song:{s}" for a, s in part)]
             out+=[f"audio export {a['pre']}_{s} {a.get('export',160)}" for a, s in part if a.get('export',160)]
         return out
@@ -104,4 +111,4 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
     return '\n'.join(L)+'\n'
 if __name__=='__main__':
     spec=json.load(open(sys.argv[1]))
-    open(sys.argv[2],'w').write(make(spec['arms'], spec['header'], spec.get('wait_ms',23000), spec.get('calib',()), spec.get('ceiling'), spec.get('interleave'), spec.get('batch',0)))
+    open(sys.argv[2],'w').write(make(spec['arms'], spec['header'], spec.get('wait_ms',23000), spec.get('calib',()), spec.get('ceiling'), spec.get('interleave'), spec.get('batch',0), spec.get('setup',())))

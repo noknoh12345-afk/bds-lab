@@ -1286,6 +1286,62 @@ var LEVEL_3D_DB = 10;
 var QUIET_3D = true;
 var Q3D = 0.01;
 var Q3D_EVENTS = { "0.1": "_3q", "0.01": "_3r", "0.001": "_3s" };
+var SHARE = true;
+var SHARE_ANY = 0;
+var SHARE_VMIN = 3;
+var soundsOf = (p) => clientOf(p)?.sounds ?? SHARE_ANY;
+function fill(need, lim) {
+  const order = need.map((_, i) => i).sort((a, b) => need[a] - need[b]), out = need.map(() => 0);
+  let left = lim;
+  order.forEach((i, k) => {
+    const g = Math.max(0, Math.min(need[i], Math.floor(left / (order.length - k))));
+    out[i] = g;
+    left -= g;
+  });
+  return out;
+}
+function shareSounds() {
+  const by = /* @__PURE__ */ new Map();
+  for (const st of lives.values()) {
+    const lp = st.player;
+    if (!lp) continue;
+    for (const t of lp.targets) {
+      if (!t.player || t.gone) continue;
+      const l = by.get(t.player.id);
+      if (l) l.push([lp, t]);
+      else by.set(t.player.id, [[lp, t]]);
+    }
+  }
+  for (const list of by.values()) {
+    let lim = 0;
+    try {
+      lim = SHARE ? soundsOf(list[0][1].player) : 0;
+    } catch {
+    }
+    const need = list.map(([lp]) => lp.st.meta.N + lp.st.meta.M), give2 = lim > 0 ? fill(need, lim) : need;
+    list.forEach(([lp, t], j) => {
+      const { N, M } = lp.st.meta, s = give2[j];
+      let nv = N, nb = M;
+      if (s < N + M) {
+        nb = Math.max(0, M - 2);
+        nv = s - nb;
+        if (nv > N) {
+          nv = N;
+          nb = Math.min(M, s - N);
+        }
+        while (nv < Math.min(SHARE_VMIN, N) && nb > 0) {
+          nb--;
+          nv++;
+        }
+        nv = Math.max(0, Math.min(N, nv));
+        nb = Math.max(0, Math.min(M, nb));
+      }
+      t.nv = nv;
+      t.nb = nb;
+      lp.trim(t);
+    });
+  }
+}
 var LiveStream = class {
   constructor(id, meta) {
     this.id = id;
@@ -1485,21 +1541,66 @@ var LivePlayer = class {
     s.setVolume(this.floor);
     return s;
   }
+  /** the voices and noise bands a target plays: its share of its listener's sounds (shareSounds), else all of the stream's */
+  nvOf(t) {
+    return Math.min(this.st.meta.N, t.nv ?? this.st.meta.N);
+  }
+  nbOf(t) {
+    return Math.min(this.st.meta.M, t.nb ?? this.st.meta.M);
+  }
+  /** the lowest noise band a target plays (its share keeps the top ones: the high bands carry speech) */
+  low(t) {
+    return this.st.meta.M - this.nbOf(t);
+  }
+  /** a target's sounds over its share stop: its last voices, its lowest noise bands */
+  trim(t) {
+    const nv = this.nvOf(t), lo = this.low(t);
+    while (t.osc.length > nv) {
+      const s = t.osc.pop();
+      try {
+        s?.stop();
+      } catch {
+      }
+      this.calls++;
+    }
+    for (let b = 0; b < lo && b < t.nz.length; b++) {
+      const s = t.nz[b];
+      if (!s) continue;
+      try {
+        s.stop();
+      } catch {
+      }
+      t.nz[b] = void 0;
+      this.calls++;
+    }
+  }
+  /** a target with fewer sounds than its share (a new one, or a share that grew) */
+  short(t) {
+    if (t.osc.length < this.nvOf(t)) return true;
+    for (let b = this.low(t); b < this.st.meta.M; b++) if (!t.nz[b]) return true;
+    return false;
+  }
+  /** a target's sounds made (16 a tick), up to its share — after the share is worked out again, so that another stream's sounds
+   *  over it stop before these are made — then settled */
   async build(t) {
-    const { N, M } = this.st.meta;
+    if (t.building) return;
+    t.building = true;
     try {
-      while (t.osc.length < N) {
-        for (let i = 0; i < 16 && t.osc.length < N; i++) t.osc.push(this.loop(t, "spectral.osc"));
+      shareSounds();
+      while (t.osc.length < this.nvOf(t)) {
+        for (let i = 0; i < 16 && t.osc.length < this.nvOf(t); i++) t.osc.push(this.loop(t, "spectral.osc"));
         await system2.waitTicks(1);
         if (t.gone) {
           this.drop(t);
           return;
         }
       }
-      for (let b = 0; b < M; b++) if (!t.nz[b]) t.nz[b] = this.loop(t, "spectral.n" + b);
+      for (let b = this.low(t); b < this.st.meta.M; b++) if (!t.nz[b]) t.nz[b] = this.loop(t, "spectral.n" + b);
     } catch {
       this.drop(t);
       return;
+    } finally {
+      t.building = false;
     }
     this.settle(t);
   }
@@ -1792,6 +1893,7 @@ var LivePlayer = class {
       return false;
     });
     this.follow();
+    for (const t of this.targets) if (!t.building && !t.gone && this.short(t)) this.build(t);
     const st = this.st, { N, M, fd } = st.meta, fdS = fd.map((x) => x / 1e3);
     if (st.w < 0) return;
     if (!this.playing) {
@@ -1824,7 +1926,8 @@ var LivePlayer = class {
   }
   status() {
     const where = this.at.kind === "phones" ? `phones ${this.at.who.join(",")}` : this.at.kind === "follow" ? `follow ${this.at.who} listeners ${this.targets.length}` : `${this.at.kind} ${Math.round(this.at.loc.x)} ${Math.round(this.at.loc.y)} ${Math.round(this.at.loc.z)}${this.at.kind === "near" ? ` listeners ${this.targets.length}` : ""}`;
-    return `${where} delay ${!this.playing ? "-" : this.st.w - this.p} ticks underruns ${this.underruns} skips ${this.skips} moves ${this.moves} calls/tick ${(this.ticks ? this.calls / this.ticks : 0).toFixed(1)} ms/tick ${(this.ticks ? this.ms / this.ticks : 0).toFixed(2)}`;
+    const { N, M } = this.st.meta, shared = [...new Set(this.targets.filter((t) => this.nvOf(t) < N || this.nbOf(t) < M).map((t) => `${this.nvOf(t)}+${this.nbOf(t)}`))];
+    return `${where}${shared.length ? ` sharing ${shared.join("/")} sounds` : ""} delay ${!this.playing ? "-" : this.st.w - this.p} ticks underruns ${this.underruns} skips ${this.skips} moves ${this.moves} calls/tick ${(this.ticks ? this.calls / this.ticks : 0).toFixed(1)} ms/tick ${(this.ticks ? this.ms / this.ticks : 0).toFixed(2)}`;
   }
 };
 var lives = /* @__PURE__ */ new Map();
@@ -1902,6 +2005,7 @@ function liveMessage(text) {
   return void 0;
 }
 system2.runInterval(() => {
+  if (lives.size && system2.currentTick % 5 === 0) shareSounds();
   for (const [id, st] of lives) {
     const lp = st.player;
     if (lp) {
@@ -1960,6 +2064,12 @@ cmdAny("spectral:handover", "A voice that follows a talker who moves: the old so
   if (a.settle !== void 0) HANDOVER_TICKS = Math.max(1, Math.min(20, Math.round(a.settle)));
   if (a.resend !== void 0) HANDOVER_RESEND = Math.max(0, Math.min(10, Math.round(a.resend)));
   return `handover: the old sounds ${HANDOVER_CUT ? "stop as the new ones are made" : HANDOVER_STEER ? "follow the voice until they fade" : "hold their last level until they fade"}, the sounds move after ${FOLLOW_MOVE} blocks, ${FOLLOW_STEP} a tick, the new ones take over after ${HANDOVER_TICKS} ticks and get their state again ${HANDOVER_RESEND} times (a voice that follows a talker who moves)`;
+}, true);
+cmdAny("spectral:share", "Whether the live streams a listener hears share the sounds their client plays at once (on by default: a phone plays 32, and over them it drops some), and how many a client with no measured limit plays (0: no limit)", { "share?": ["on", "off"], "sounds?": "int" }, (_p, a) => {
+  if (a.share !== void 0) SHARE = a.share === "on";
+  if (a.sounds !== void 0) SHARE_ANY = Math.max(0, Math.min(1024, Math.round(a.sounds)));
+  shareSounds();
+  return SHARE ? `share: on, the live streams a listener hears share the sounds their client plays at once (a phone ${CLIENTS.Mobile?.sounds ?? 0}, other clients ${SHARE_ANY || "no limit"})` : "share: off, every live stream plays all its voices to every listener";
 }, true);
 cmdAny(
   "spectral:live_demo",

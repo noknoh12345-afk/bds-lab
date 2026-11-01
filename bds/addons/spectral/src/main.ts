@@ -198,7 +198,9 @@ function platformEngine(p: Player): Partial<Settings> {
   return c ? { voices: platformVoices(p), hf: c.mixHz ? Math.round(c.mixHz / 2 * 0.958) : 0, fold: c.fold, sounds: c.limit ? c.sounds : 0, bursts: c.drums ?? true,
     ...(c.level ? { level: c.level, levelVia: 'volume' as const } : {}) } : {};
 }
-interface Target { player?: Player; dim?: Dimension; loc?: Vector3; osc: SoundInstance[]; nz: (SoundInstance | undefined)[]; gone?: boolean; }
+/** a listener's (or a spot's) sounds. nv / nb: the voices and noise bands a live stream plays them (shareSounds: fewer when their
+ *  client's sounds are shared with other streams; unset, all of the stream's), building: their sounds are being made */
+interface Target { player?: Player; dim?: Dimension; loc?: Vector3; osc: SoundInstance[]; nz: (SoundInstance | undefined)[]; gone?: boolean; nv?: number; nb?: number; building?: boolean; }
 
 class Session {
   ph = 0; paused = false; frozen = false; ending = 0; started = false; warm = 0; burstTo = -1;
@@ -871,6 +873,58 @@ let QUIET_3D = true;
  *  0, 0); a talker standing, 0.1 / 0.001: 3.09 / 3.23 at the same level (setVolume 1000 times up plays as asked) */
 let Q3D = 0.01;
 const Q3D_EVENTS: Record<string, string> = { '0.1': '_3q', '0.01': '_3r', '0.001': '_3s' };
+/** the live streams a listener hears with sounds of their own (follow, near, phones) share what the listener's client plays at once
+ *  (spectral:share, operators; on by default). A phone plays 32 sounds (measured), a talker's stream takes 24 (16 voices, 8 noise
+ *  bands: tools/live/bridge.mjs), and over 32 the client drops some — measured, one walking talker over it lost syllables for
+ *  0.1-0.4 s and 6 dB (run 41292284148). Each stream gets an equal part (water filling: what a small one leaves goes to the
+ *  others); a part short of the whole stream gives up its two lowest noise bands (180-720 Hz: its voices are there), then plays
+ *  its first voices (a live encoder gives a starting voice the lowest free slot, the strongest peaks first), at least SHARE_VMIN
+ *  (more low bands go for them). Emulated (tools/exp/trim_song.py, a 16-voice stream, a phone at +10 dB; ViSQOL of the two speech
+ *  songs and a sung one): all 24 sounds 3.44 / 3.12 / 3.56; 16 sounds as 10 voices + 6 bands 3.41 / 3.12 / 3.51 (8 + 8: 3.41 /
+ *  3.10 / 3.50); 10 sounds as 4 + 6 3.29 / 3.03 / 3.40 (2 + 8: 3.09 / 2.98 / 3.43); 8 sounds as 3 + 5 3.22 / 3.00 / 3.43 (the top
+ *  bands instead, 2 voices + the 6 lowest: 2.58 / 2.37 / 3.49 — the high bands carry speech) */
+let SHARE = true;
+/** the sounds a client with no measured limit plays at once, for sharing (spectral:share's second value; 0: no limit, all voices) */
+let SHARE_ANY = 0;
+const SHARE_VMIN = 3;
+const soundsOf = (p: Player) => clientOf(p)?.sounds ?? SHARE_ANY;
+/** water filling: each gets what it needs, or an equal part of what is left once the smaller needs are met */
+function fill(need: number[], lim: number): number[] {
+  const order = need.map((_, i) => i).sort((a, b) => need[a] - need[b]), out = need.map(() => 0);
+  let left = lim;
+  order.forEach((i, k) => { const g = Math.max(0, Math.min(need[i], Math.floor(left / (order.length - k)))); out[i] = g; left -= g; });
+  return out;
+}
+/** each listener's share of every live stream they hear (Target nv / nb). What is over a new share stops now — before the sounds a
+ *  new stream or listener needs are made (LivePlayer.build calls this first) — and what a larger share adds is made by the
+ *  stream's own tick */
+function shareSounds() {
+  const by = new Map<string, [LivePlayer, Target][]>();
+  for (const st of lives.values()) {
+    const lp = st.player; if (!lp) continue;
+    for (const t of lp.targets) {
+      if (!t.player || t.gone) continue;
+      const l = by.get(t.player.id); if (l) l.push([lp, t]); else by.set(t.player.id, [[lp, t]]);
+    }
+  }
+  for (const list of by.values()) {
+    let lim = 0; try { lim = SHARE ? soundsOf(list[0][1].player!) : 0; } catch { /* gone */ }
+    const need = list.map(([lp]) => lp.st.meta.N + lp.st.meta.M), give = lim > 0 ? fill(need, lim) : need;
+    list.forEach(([lp, t], j) => {
+      const { N, M } = lp.st.meta, s = give[j];
+      let nv = N, nb = M;
+      if (s < N + M) {
+        // (the two lowest noise bands go first, then the voices that fit; under SHARE_VMIN voices, more low bands go for them)
+        nb = Math.max(0, M - 2); nv = s - nb;
+        if (nv > N) { nv = N; nb = Math.min(M, s - N); }
+        while (nv < Math.min(SHARE_VMIN, N) && nb > 0) { nb--; nv++; }
+        nv = Math.max(0, Math.min(N, nv)); nb = Math.max(0, Math.min(M, nb));
+      }
+      t.nv = nv; t.nb = nb;
+      lp.trim(t);
+    });
+  }
+}
 
 class LiveStream {
   w = -1; frames = 0; gaps = 0; lastAt = 0;
@@ -987,17 +1041,39 @@ class LivePlayer {
     s.setVolume(this.floor);
     return s;
   }
+  /** the voices and noise bands a target plays: its share of its listener's sounds (shareSounds), else all of the stream's */
+  nvOf(t: Target) { return Math.min(this.st.meta.N, t.nv ?? this.st.meta.N); }
+  nbOf(t: Target) { return Math.min(this.st.meta.M, t.nb ?? this.st.meta.M); }
+  /** the lowest noise band a target plays (its share keeps the top ones: the high bands carry speech) */
+  low(t: Target) { return this.st.meta.M - this.nbOf(t); }
+  /** a target's sounds over its share stop: its last voices, its lowest noise bands */
+  trim(t: Target) {
+    const nv = this.nvOf(t), lo = this.low(t);
+    while (t.osc.length > nv) { const s = t.osc.pop(); try { s?.stop(); } catch { /* gone */ } this.calls++; }
+    for (let b = 0; b < lo && b < t.nz.length; b++) { const s = t.nz[b]; if (!s) continue; try { s.stop(); } catch { /* gone */ } t.nz[b] = undefined; this.calls++; }
+  }
+  /** a target with fewer sounds than its share (a new one, or a share that grew) */
+  private short(t: Target) {
+    if (t.osc.length < this.nvOf(t)) return true;
+    for (let b = this.low(t); b < this.st.meta.M; b++) if (!t.nz[b]) return true;
+    return false;
+  }
+  /** a target's sounds made (16 a tick), up to its share — after the share is worked out again, so that another stream's sounds
+   *  over it stop before these are made — then settled */
   async build(t: Target) {
-    const { N, M } = this.st.meta;
+    if (t.building) return;
+    t.building = true;
     try {
-      while (t.osc.length < N) {
-        for (let i = 0; i < 16 && t.osc.length < N; i++) t.osc.push(this.loop(t, 'spectral.osc'));
+      shareSounds();
+      while (t.osc.length < this.nvOf(t)) {
+        for (let i = 0; i < 16 && t.osc.length < this.nvOf(t); i++) t.osc.push(this.loop(t, 'spectral.osc'));
         await system.waitTicks(1);
         // (the listener went away, or the stream stopped, while their sounds were made: what was made stops, nothing more)
         if (t.gone) { this.drop(t); return; }
       }
-      for (let b = 0; b < M; b++) if (!t.nz[b]) t.nz[b] = this.loop(t, 'spectral.n' + b);
+      for (let b = this.low(t); b < this.st.meta.M; b++) if (!t.nz[b]) t.nz[b] = this.loop(t, 'spectral.n' + b);
     } catch { this.drop(t); return; }      // (the listener left the game in between: their client is gone)
+    finally { t.building = false; }
     this.settle(t);
   }
   /** a target's sounds were made: the stream's state now, and for 3D sounds (made at P_MIN, played as made for a while) again
@@ -1159,6 +1235,8 @@ class LivePlayer {
     this.ticks++;
     this.targets = this.targets.filter((t) => { if (!t.player || t.player.isValid) return true; t.gone = true; return false; });
     this.follow();
+    // (a share that grew — another stream stopped, its talker went away, sharing was turned off: the sounds it adds)
+    for (const t of this.targets) if (!t.building && !t.gone && this.short(t)) this.build(t);
     const st = this.st, { N, M, fd } = st.meta, fdS = fd.map((x) => x / 1000);
     if (st.w < 0) return;
     if (!this.playing) {
@@ -1189,7 +1267,9 @@ class LivePlayer {
   status() {
     const where = this.at.kind === 'phones' ? `phones ${this.at.who.join(',')}` : this.at.kind === 'follow' ? `follow ${this.at.who} listeners ${this.targets.length}`
       : `${this.at.kind} ${Math.round(this.at.loc.x)} ${Math.round(this.at.loc.y)} ${Math.round(this.at.loc.z)}${this.at.kind === 'near' ? ` listeners ${this.targets.length}` : ''}`;
-    return `${where} delay ${!this.playing ? '-' : this.st.w - this.p} ticks underruns ${this.underruns} skips ${this.skips} moves ${this.moves} calls/tick ${(this.ticks ? this.calls / this.ticks : 0).toFixed(1)} ms/tick ${(this.ticks ? this.ms / this.ticks : 0).toFixed(2)}`;
+    // (listeners who get fewer sounds than the stream has: its share of their client's — voices + noise bands, each share once)
+    const { N, M } = this.st.meta, shared = [...new Set(this.targets.filter((t) => this.nvOf(t) < N || this.nbOf(t) < M).map((t) => `${this.nvOf(t)}+${this.nbOf(t)}`))];
+    return `${where}${shared.length ? ` sharing ${shared.join('/')} sounds` : ''} delay ${!this.playing ? '-' : this.st.w - this.p} ticks underruns ${this.underruns} skips ${this.skips} moves ${this.moves} calls/tick ${(this.ticks ? this.calls / this.ticks : 0).toFixed(1)} ms/tick ${(this.ticks ? this.ms / this.ticks : 0).toFixed(2)}`;
   }
 }
 const lives = new Map<string, LiveStream>();
@@ -1245,6 +1325,8 @@ export function liveMessage(text: string): string | undefined {
   return undefined;
 }
 system.runInterval(() => {
+  // (the shares again every 5 ticks: a stream or a listener that went is given back; a new one works them out as it is built)
+  if (lives.size && system.currentTick % 5 === 0) shareSounds();
   for (const [id, st] of lives) {
     const lp = st.player;
     if (lp) { try { lp.tick(); } catch (e) { console.warn(`[spectral] live ${id}: ${e}`); lp.stop(); st.player = undefined; } }
@@ -1270,7 +1352,7 @@ cmdAny('spectral:live', 'Live streams (a voice chat, a microphone): the list, or
   });
 /** a song sent as a live stream, frame by frame as a voice chat would (the whole live path in the add-on itself: the frames are
  *  written as bytes and read back) */
-// (spectral:range and spectral:handover set every stream on the server: operators only)
+// (spectral:range, spectral:handover and spectral:share set every stream on the server: operators only)
 cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), how much louder than the files they play (dB, +10 by default), whether voices that follow a talker are made quietly (on by default) and how quietly (the definition volume: 0.1, 0.01 or 0.001)', { 'volume?': 'float', 'level?': 'float', 'quiet?': 'bool', 'made?': 'float' }, (_p, a) => {
   if (a.volume !== undefined) RANGE_3D = Math.max(0.25, Math.min(16, a.volume));
   if (a.level !== undefined) LEVEL_3D_DB = Math.max(0, Math.min(18, Math.round(a.level * 10) / 10));
@@ -1287,7 +1369,14 @@ cmdAny('spectral:handover', 'A voice that follows a talker who moves: the old so
   if (a.resend !== undefined) HANDOVER_RESEND = Math.max(0, Math.min(10, Math.round(a.resend)));
   return `handover: the old sounds ${HANDOVER_CUT ? 'stop as the new ones are made' : HANDOVER_STEER ? 'follow the voice until they fade' : 'hold their last level until they fade'}, the sounds move after ${FOLLOW_MOVE} blocks, ${FOLLOW_STEP} a tick, the new ones take over after ${HANDOVER_TICKS} ticks and get their state again ${HANDOVER_RESEND} times (a voice that follows a talker who moves)`;
 }, true);
-cmdAny('spectral:live_demo', 'Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)',
+cmdAny('spectral:share', 'Whether the live streams a listener hears share the sounds their client plays at once (on by default: a phone plays 32, and over them it drops some), and how many a client with no measured limit plays (0: no limit)', { 'share?': ['on', 'off'], 'sounds?': 'int' }, (_p, a) => {
+  if (a.share !== undefined) SHARE = a.share === 'on';
+  if (a.sounds !== undefined) SHARE_ANY = Math.max(0, Math.min(1024, Math.round(a.sounds)));
+  shareSounds();
+  return SHARE ? `share: on, the live streams a listener hears share the sounds their client plays at once (a phone ${CLIENTS.Mobile?.sounds ?? 0}, other clients ${SHARE_ANY || 'no limit'})`
+    : 'share: off, every live stream plays all its voices to every listener';
+}, true);
+cmdAny('spectral:live_demo','Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)',
   { song: 'string', 'to?': ['phones', 'speaker', 'near', 'follow'], 'who?': 'player', 'voices?': 'int', 'at?': 'string' }, async (p, a) => {
     const song = songs.get(a.song); if (!song) return `§cno song "${a.song}"`;
     let d: Decoded; try { d = await decoded(song); } catch (e) { return `§csong ${a.song}: ${e}`; }

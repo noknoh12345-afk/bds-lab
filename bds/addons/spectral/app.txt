@@ -2,9 +2,10 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# 26 回目（tools/exp/make_app.py tools/exp/app26.json）: 5 回目のセッションの最後の既定をそのまま（設定の命令なし）で通しに: fa_ = 曲をヘッドホンで
-#   （spectral:play、3 曲）、fb_ = ライブの変換（その場の分析つき）をヘッドホンで 3 曲、fc_ = 止まった話し手、fd_ = 2 ブロックずつ歩く話し手、fe_ = 3 ブロックずつ
-#   （歩く速さ）。話し手の声はその場の分析つき（tools/exp/packs/live20 の _lr）
+# 27 回目（tools/exp/make_app.py tools/exp/app27.json）: 何人もが同時に話す（近接 VC）。名札の防具立て t1（左前 -2,3）・t2（右前 2,3）・t3（前 0,4）が
+#   話し手、聞き手は 0 -60 0。声はその場の分析つき 16 声（tools/live/bridge.mjs の既定、tools/exp/packs/duo）。電話の同時 32 音を話し手で分けるか（spectral:share on）、
+#   分けないか（off）: ga/gb = 2 人が同時に（off/on）、gc/gd/gg = t1/t2/t3 が 1 人だけ、ge/gf = 2 人が交互に（t2 が 9.5 秒、t1 がその後 9.5 秒: 黙った話し手の音が
+#   32 音を超えるとき）、gh/gi = 3 人が同時に（off/on）。gj–go はくり返し。数は tools/rig/duo_score.py（元と 1 人だけの録音を重ねたものと比べる）
 
 section title
 audio info
@@ -16,8 +17,9 @@ audio info
 shot title
 
 section prep
-audio song vocal_name_of_love,rock_big,speech_ja_soseki suffix=_d pack=tools/exp/packs/run9
-audio song vocal_name_of_love,speech_ja_soseki,speech_en_wordsworth suffix=_lr pack=tools/exp/packs/live20
+audio song vocal_name_of_love,speech_ja_soseki,speech_en_wordsworth suffix=_r16 pack=tools/exp/packs/duo
+audio song speech_ja_soseki suffix=_late pack=tools/exp/packs/duo
+audio song speech_en_wordsworth suffix=_early pack=tools/exp/packs/duo
 
 section join
 join
@@ -26,192 +28,117 @@ wait 5000
 do time set noon
 do gamerule dodaylightcycle false
 do weather clear
-
-section fa
 do execute as @a run tp @s 0 -60 0 0 0
-audio start fa_1
-audio mark fa_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_d
+do execute as @a run summon armor_stand t1 -2 -60 3
+do execute as @a run summon armor_stand t2 2 -60 3
+do execute as @a run summon armor_stand t3 0 -60 4
+
+section ga_gb_gc_gd_ge_gf_gg_gh_gi_gj_gk_gl_gm_gn_go
+do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run spectral:share on
+audio start ga_gb_gc_gd_ge_gf_gg_gh_gi_gj_gk_gl_gm_gn_go_1
+audio mark gg_vocal_name_of_love
+do execute as @a run spectral:live_demo vocal_name_of_love_r16 follow @s 16 "follow:t3"
 wait 23000
-audio mark fa_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_d
+do execute as @a run spectral:stop
+do execute as @a run spectral:share off
+audio mark ga_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_r16 follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_r16 follow @s 16 "follow:t2"
 wait 23000
-audio mark fa_rock_big
-do execute as @a run spectral:play rock_big_d
+do execute as @a run spectral:stop
+do execute as @a run spectral:share on
+audio mark gb_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_r16 follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_r16 follow @s 16 "follow:t2"
+wait 23000
+audio mark gc_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_r16 follow @s 16 "follow:t1"
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:share off
+audio mark ge_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_late follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_early follow @s 16 "follow:t2"
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:share on
+audio mark gf_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_late follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_early follow @s 16 "follow:t2"
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:share off
+audio mark gh_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_r16 follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_r16 follow @s 16 "follow:t2"
+do execute as @a run spectral:live_demo vocal_name_of_love_r16 follow @s 16 "follow:t3"
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:share on
+audio mark gi_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_r16 follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_r16 follow @s 16 "follow:t2"
+do execute as @a run spectral:live_demo vocal_name_of_love_r16 follow @s 16 "follow:t3"
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:share off
+audio mark gj_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_r16 follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_r16 follow @s 16 "follow:t2"
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:share on
+audio mark gk_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_r16 follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_r16 follow @s 16 "follow:t2"
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:share off
+audio mark gl_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_late follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_early follow @s 16 "follow:t2"
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:share on
+audio mark gm_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_late follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_early follow @s 16 "follow:t2"
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:share off
+audio mark gn_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_r16 follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_r16 follow @s 16 "follow:t2"
+do execute as @a run spectral:live_demo vocal_name_of_love_r16 follow @s 16 "follow:t3"
 wait 23000
 audio stop
-audio analyze-all fa_speech_ja_soseki=song:speech_ja_soseki fa_vocal_name_of_love=song:vocal_name_of_love fa_rock_big=song:rock_big
-audio export fa_speech_ja_soseki 160
-audio export fa_vocal_name_of_love 160
-audio export fa_rock_big 160
-
-section fb
-do execute as @a run tp @s 0 -60 0 0 0
-audio start fb_1
-audio mark fb_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_lr phones @s 24
+audio analyze-all gg_vocal_name_of_love=song:vocal_name_of_love ga_speech_ja_soseki=song:speech_ja_soseki gb_speech_ja_soseki=song:speech_ja_soseki gc_speech_ja_soseki=song:speech_ja_soseki ge_speech_ja_soseki=song:speech_ja_soseki gf_speech_ja_soseki=song:speech_ja_soseki gh_speech_ja_soseki=song:speech_ja_soseki gi_speech_ja_soseki=song:speech_ja_soseki gj_speech_ja_soseki=song:speech_ja_soseki gk_speech_ja_soseki=song:speech_ja_soseki gl_speech_ja_soseki=song:speech_ja_soseki gm_speech_ja_soseki=song:speech_ja_soseki gn_speech_ja_soseki=song:speech_ja_soseki
+audio export gg_vocal_name_of_love 160
+audio export ga_speech_ja_soseki 160
+audio export gb_speech_ja_soseki 160
+audio export gc_speech_ja_soseki 160
+audio export ge_speech_ja_soseki 160
+audio export gf_speech_ja_soseki 160
+audio export gh_speech_ja_soseki 160
+audio export gi_speech_ja_soseki 160
+audio export gj_speech_ja_soseki 160
+audio export gk_speech_ja_soseki 160
+audio export gl_speech_ja_soseki 160
+audio export gm_speech_ja_soseki 160
+audio export gn_speech_ja_soseki 160
+do execute as @a run spectral:stop
+do execute as @a run spectral:share on
+audio start ga_gb_gc_gd_ge_gf_gg_gh_gi_gj_gk_gl_gm_gn_go_2
+audio mark go_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_r16 follow @s 16 "follow:t1"
+do execute as @a run spectral:live_demo speech_en_wordsworth_r16 follow @s 16 "follow:t2"
+do execute as @a run spectral:live_demo vocal_name_of_love_r16 follow @s 16 "follow:t3"
 wait 23000
-audio mark fb_speech_en_wordsworth
-do execute as @a run spectral:live_demo speech_en_wordsworth_lr phones @s 24
-wait 23000
-audio mark fb_vocal_name_of_love
-do execute as @a run spectral:live_demo vocal_name_of_love_lr phones @s 24
-wait 23000
-audio stop
-audio analyze-all fb_speech_ja_soseki=song:speech_ja_soseki fb_speech_en_wordsworth=song:speech_en_wordsworth fb_vocal_name_of_love=song:vocal_name_of_love
-audio export fb_speech_ja_soseki 160
-audio export fb_speech_en_wordsworth 160
-audio export fb_vocal_name_of_love 160
-
-section fc
-do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run summon armor_stand talker 0 -60 3
-audio start fc_1
-audio mark fc_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_lr follow @s 24 "follow:talker"
+audio mark gd_speech_en_wordsworth
+do execute as @a run spectral:live_demo speech_en_wordsworth_r16 follow @s 16 "follow:t2"
 wait 23000
 audio stop
-audio analyze-all fc_speech_ja_soseki=song:speech_ja_soseki
-audio export fc_speech_ja_soseki 160
-
-section fd
-do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run tp @e[name=talker] 6 -60 3
-audio start fd_1
-audio mark fd_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_lr follow @s 24 "follow:talker"
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 3000
-audio stop
-audio analyze-all fd_speech_ja_soseki=song:speech_ja_soseki
-audio export fd_speech_ja_soseki 160
-
-section fe
-do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run tp @e[name=talker] 6 -60 3
-audio start fe_1
-audio mark fe_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_lr follow @s 24 "follow:talker"
-wait 100
-do tp @e[name=talker] 3 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -3 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -3 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 3 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 3 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -3 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -3 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 3 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 3 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -3 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -3 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 3 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 3 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -3 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -3 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 3000
-audio stop
-audio analyze-all fe_speech_ja_soseki=song:speech_ja_soseki
-audio export fe_speech_ja_soseki 160
+audio analyze-all go_speech_ja_soseki=song:speech_ja_soseki gd_speech_en_wordsworth=song:speech_en_wordsworth
+audio export go_speech_ja_soseki 160
+audio export gd_speech_en_wordsworth 160

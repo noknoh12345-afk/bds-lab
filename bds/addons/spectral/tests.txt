@@ -501,3 +501,56 @@ wait 1000
 scriptevent spectral:live {"id":"t6","end":true}
 spectral:range 3 10 true 0.01
 ~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.01\);
+
+## the live streams a listener hears share the sounds their client plays at once (a phone 32, measured: over them it drops some, and a walking talker lost syllables): one talker near a phone has all their stream's sounds
+spectral:share
+~ share: on, the live streams a listener hears share the sounds their client plays at once \(a phone 32, other clients no limit\)
+tp A 0 -60 0
+tp B 0 -60 -4
+tp C 0 -60 4
+summon armor_stand ta 3 -60 2
+summon armor_stand tb -3 -60 2
+wait 300
+@A cmd /spectral:live_demo demo follow @s 24 "follow:ta"
+~ @A ● live demo demo_demo: Demo \(original\) \(460 frames, 24 voices\) → follow:ta
+wait 1000
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, follow ta listeners 3 delay
+!~ sharing
+
+## two talkers near a phone: each stream gets what fits beside the other's (the small one all of its 10 sounds, the other 22: 16 voices and its 6 highest noise bands), on the phone only
+scriptevent spectral:live {"id":"s1","m":{"N":2,"M":8,"amp":[-90,0.75],"nz":[-100,0.5],"fd":[5,12,25,50]},"s":0,"f":"A2QQcAAAAAAAAAAAAA///w==","at":"follow:tb"}
+wait 1000
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, follow ta listeners 3 sharing 16\+6 sounds delay
+~ @A live s1: 1 frames, 2 voices, follow tb listeners 3 delay
+
+## sharing off: every stream plays all its voices again
+spectral:share off
+~ share: off, every live stream plays all its voices to every listener
+wait 600
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, follow ta listeners 3 delay
+!~ sharing
+
+## sharing on, a client with no measured limit given one (16): the shares on every listener (8 sounds a stream: the small one 2 voices and 6 bands, the other 3 and 5)
+spectral:share on 16
+~ share: on, the live streams a listener hears share the sounds their client plays at once \(a phone 32, other clients 16\)
+wait 600
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, follow ta listeners 3 sharing (3\+5/16\+6|16\+6/3\+5) sounds delay
+~ @A live s1: 1 frames, 2 voices, follow tb listeners 3 sharing 2\+6 sounds delay
+
+## the other talker gone: the stream that stays gets all its sounds back
+spectral:share on 0
+~ share: on, the live streams a listener hears share the sounds their client plays at once \(a phone 32, other clients no limit\)
+kill @e[name=tb]
+wait 1200
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, follow ta listeners 3 delay
+~ @A live s1: 1 frames, 2 voices, follow tb listeners 0
+!~ sharing
+scriptevent spectral:live {"id":"s1","end":true}
+@A cmd /spectral:live demo_demo stop
+~ @A ■ live demo_demo
+kill @e[name=ta]

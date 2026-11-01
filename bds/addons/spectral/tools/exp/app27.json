@@ -1,0 +1,436 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# 27 回目（tools/exp/make_app.py tools/exp/app27.json）: 何人もが同時に話す（近接 VC）。名札の防具立て t1（左前 -2,3）・t2（右前 2,3）・t3（前 0,4）が",
+  "#   話し手、聞き手は 0 -60 0。声はその場の分析つき 16 声（tools/live/bridge.mjs の既定、tools/exp/packs/duo）。電話の同時 32 音を話し手で分けるか（spectral:share on）、",
+  "#   分けないか（off）: ga/gb = 2 人が同時に（off/on）、gc/gd/gg = t1/t2/t3 が 1 人だけ、ge/gf = 2 人が交互に（t2 が 9.5 秒、t1 がその後 9.5 秒: 黙った話し手の音が",
+  "#   32 音を超えるとき）、gh/gi = 3 人が同時に（off/on）。gj–go はくり返し。数は tools/rig/duo_score.py（元と 1 人だけの録音を重ねたものと比べる）"
+ ],
+ "batch": 13,
+ "setup": [
+  "tp @s 0 -60 0 0 0",
+  "summon armor_stand t1 -2 -60 3",
+  "summon armor_stand t2 2 -60 3",
+  "summon armor_stand t3 0 -60 4"
+ ],
+ "interleave": [
+  "ga",
+  "gb",
+  "gc",
+  "gd",
+  "ge",
+  "gf",
+  "gg",
+  "gh",
+  "gi",
+  "gj",
+  "gk",
+  "gl",
+  "gm",
+  "gn",
+  "go"
+ ],
+ "arms": [
+  {
+   "pre": "ga",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share off"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_r16 follow @s 16 \"follow:t2\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_r16"
+    ]
+   ]
+  },
+  {
+   "pre": "gb",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share on"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_r16 follow @s 16 \"follow:t2\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_r16"
+    ]
+   ]
+  },
+  {
+   "pre": "gc",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share on"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\""
+  },
+  {
+   "pre": "gd",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_en_wordsworth"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share on"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t2\""
+  },
+  {
+   "pre": "ge",
+   "suffix": "_late",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share off"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_early follow @s 16 \"follow:t2\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_early"
+    ]
+   ]
+  },
+  {
+   "pre": "gf",
+   "suffix": "_late",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share on"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_early follow @s 16 \"follow:t2\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_early"
+    ]
+   ]
+  },
+  {
+   "pre": "gg",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "vocal_name_of_love"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share on"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t3\""
+  },
+  {
+   "pre": "gh",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share off"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_r16 follow @s 16 \"follow:t2\"",
+    "spectral:live_demo vocal_name_of_love_r16 follow @s 16 \"follow:t3\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_r16"
+    ],
+    [
+     "vocal_name_of_love",
+     "_r16"
+    ]
+   ]
+  },
+  {
+   "pre": "gi",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share on"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_r16 follow @s 16 \"follow:t2\"",
+    "spectral:live_demo vocal_name_of_love_r16 follow @s 16 \"follow:t3\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_r16"
+    ],
+    [
+     "vocal_name_of_love",
+     "_r16"
+    ]
+   ]
+  },
+  {
+   "pre": "gj",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share off"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_r16 follow @s 16 \"follow:t2\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_r16"
+    ]
+   ]
+  },
+  {
+   "pre": "gk",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share on"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_r16 follow @s 16 \"follow:t2\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_r16"
+    ]
+   ]
+  },
+  {
+   "pre": "gl",
+   "suffix": "_late",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share off"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_early follow @s 16 \"follow:t2\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_early"
+    ]
+   ]
+  },
+  {
+   "pre": "gm",
+   "suffix": "_late",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share on"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_early follow @s 16 \"follow:t2\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_early"
+    ]
+   ]
+  },
+  {
+   "pre": "gn",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share off"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_r16 follow @s 16 \"follow:t2\"",
+    "spectral:live_demo vocal_name_of_love_r16 follow @s 16 \"follow:t3\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_r16"
+    ],
+    [
+     "vocal_name_of_love",
+     "_r16"
+    ]
+   ]
+  },
+  {
+   "pre": "go",
+   "suffix": "_r16",
+   "pack": "tools/exp/packs/duo",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:share on"
+   ],
+   "play": "spectral:live_demo {song} follow @s 16 \"follow:t1\"",
+   "with": [
+    "spectral:live_demo speech_en_wordsworth_r16 follow @s 16 \"follow:t2\"",
+    "spectral:live_demo vocal_name_of_love_r16 follow @s 16 \"follow:t3\""
+   ],
+   "also": [
+    [
+     "speech_en_wordsworth",
+     "_r16"
+    ],
+    [
+     "vocal_name_of_love",
+     "_r16"
+    ]
+   ]
+  }
+ ]
+}

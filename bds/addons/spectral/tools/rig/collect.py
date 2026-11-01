@@ -103,7 +103,13 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'je': 'live_3d_walk_cut2_r25', 'jg': 'live_3d_walk_cut2_r25_again',
         # run 26: the session's last defaults as they are: songs on phones (fa), the live encoder refined on phones (fb), a talker standing (fc),
         # walking 2 blocks a step (fd) and 3 (fe)
-        'fa': 'final_songs_phones', 'fb': 'final_live_phones', 'fc': 'final_3d_still', 'fd': 'final_3d_walk', 'fe': 'final_3d_run'}
+        'fa': 'final_songs_phones', 'fb': 'final_live_phones', 'fc': 'final_3d_still', 'fd': 'final_3d_walk', 'fe': 'final_3d_run',
+        # run 27: several talkers at once (t1 left front, t2 right front, t3 front), the phone's 32 sounds shared (on) or not (off). The
+        # rig's own ViSQOL is against the first talker's song alone: tools/rig/duo_score.py scores the mixes
+        'ga': 'talkers2_share_off', 'gb': 'talkers2_share_on', 'gc': 'talker_alone_t1', 'gd': 'talker_alone_t2', 'ge': 'talkers_turns_share_off',
+        'gf': 'talkers_turns_share_on', 'gg': 'talker_alone_t3', 'gh': 'talkers3_share_off', 'gi': 'talkers3_share_on', 'gj': 'talkers2_share_off_again',
+        'gk': 'talkers2_share_on_again', 'gl': 'talkers_turns_share_off_again', 'gm': 'talkers_turns_share_on_again', 'gn': 'talkers3_share_off_again',
+        'go': 'talkers3_share_on_again'}
 
 
 def songs(res):
