@@ -1,4 +1,4 @@
-# 引き継ぎ: Spectral Player（2026-10-31、4 回目のセッション）
+# 引き継ぎ: Spectral Player（2026-11-01、5 回目のセッション。4 回目の記録も下に）
 
 依頼の原文は引き継ぎ zip の ORIGINAL_HANDOFF_PROMPT.md。要点: 判定は**実クライアントの録音だけ**。天井 = 元曲 → OGG を同じ
 クライアント/録音系で鳴らしたもの。ViSQOL v3 audio 48 kHz で各曲が天井から 0.3 MOS 以内、中央値も報告。補助指標
@@ -9,9 +9,10 @@ auto/STOP・.env に触れない／既存機能を壊さない／**実測と推�
 Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。redroid は app.yml が走っている間は待つ。
 進捗は節目ごとに日本語で短く報告する。
 
-## ユーザーの依頼（このセッション、原文）
+## ユーザーの依頼（原文）
 
-- 「セッション切れて続きがないけど続きをして」（3 回目のセッションの続き: 掃き出し 5 回・音量の癖）
+- 5 回目（2026-11-01 11:17 JST）: 「続き」（4 回目の最後の報告を貼って: 12 回目を集めて、電話のレベルと 3D の届く距離を決める）
+- 4 回目（2026-10-31）: 「セッション切れて続きがないけど続きをして」（3 回目のセッションの続き: 掃き出し 5 回・音量の癖）
 - 「さらに完璧にしてmp3として完成させてdiscrodの音声を反映する近接vcとかも作れるほどのクオリティにしてちゃんと立体音響みたいなやつも出来るぐらいのmodクオリティにして」
 - 「質問無しでそのまま完成させて」「pushを許可するGitHub関連許可」
 - 前からの続き（2 回目の終わり）: 録音を Discord にも／bds-lab の web で鍵なし・アカウントでログインしていれば見える／さらに改善して完成／
@@ -21,7 +22,34 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 続けて送る／web は録音を成果物の public/ に平文で置く（GitHub にログインしていれば管理パネルで聞ける。中身はゲームの音だけ）／
 電話のレベルは +6 dB のまま（エミュレーターで +8 / +10 をもう一度確かめる: 下の「次にやること」）。.github は変えていない。
 
-## このセッションでしたこと
+## 5 回目のセッション（2026-11-01）でしたこと
+
+1. **12 回目（run 41205071937）を集めた**（43 本、実測。表と注は SPEC.md の 12 回目）: +10 dB は +6 dB より 10/13 で上（中央値 +0.06・平均 +0.16）、
+   +8 dB は間（+6 dB より中央値 +0.06、+10 dB に勝ったのは 4 曲、話し声と歌を救うことはなかった）。11 回目と合わせて 2 回とも 10/13 で上
+2. **本体 1.2.0**（同じ UUID）:
+   - 電話の既定のレベルを **+10 dB** に（src/main.ts CLIENTS）。変換器の実機の模型も +10 dB（tools/spectral.py と web/core.js の CL_LEVEL_DB、
+     parity 2/2 でバイト一致）。デモ曲を作り直した。前に +6 dB 向けに変換した曲を +10 dB で鳴らしても良くなる（エミュレーター、推測:
+     中央値 3.33 → 3.45、9/13 で上。+10 dB 向けに変換した曲は 3.46）
+   - **3D の届く距離**（実測、11・12 回目）: 距離が倍で 6 dB 下がり（定義の min_distance 3 から、1.5 dB 以内）、聞こえるのは 16 ブロック × 作る音量まで
+     （音量を上げても大きくはならない）。RANGE_3D を **3（48 ブロック = FOLLOW_RANGE）** に、follow / near で音を作るのは reach3D() の内の人だけ
+     （`/spectral:range` の返事に届く距離）
+   - **3D の音の頭の「ピッ」を直した**: 9–12 回目のどの 3D の録音も、話し声の前に約 100 ms の 1760 Hz（−35〜−47 dB、話し声より 18–32 dB 大きい）と
+     約 100 ms のノイズ帯域から始まっていた（tools/rig/start_burst.py）。3D の音は届く距離のために音量 RANGE_3D で作り同じ tick に無音にしていたが、
+     作った直後は作ったときの音量と高さで鳴る。→ 3D の音は**高さ P_MIN（17.6 Hz）で作り**、SETTLE_TICKS（2）後に状態を送り直す（LivePlayer.settle、
+     Session.build）。ライブのノイズ帯域の高さ 1 は resync で。follow で動いたときの作り直しは、新しい音を作ってすぐ命令を送り、古い音は
+     2 tick 鳴らしたままにしてから新しい音に状態を送り直し、古い音を 1 tick で消す（handover）
+   - 試験: 電話の節を +10 dB に、3D の節（range 1 で近くの 1 人だけ・20 ブロック離れると 0 人・range 3 で 3 人）。go: **test 156/156, qa clean**
+3. **13 回目の実機**（tools/exp/app13.json → app.txt、**run 41266897044**、11:52 JST に始めた）: 1.2.0 で 3D の頭と届く距離（na_ 3 ブロック・
+   nb_ 24・nc_ 46 を音量 3、nf_ 3 ブロックを音量 1、nd_ スピーカー 6 ブロック、ne_ スピーカー 52 ブロックを音量 4）、それから曲ごとに交互に
+   d_（+6 dB 向けの曲を +6）・o_（同じ曲を +10 = 前に変換した曲が 1.2.0 で）・e_（+10 向けの曲を +10）
+4. tools/rig/start_burst.py（3D の録音の頭: 最初の 250 ms の 200 Hz より上の一番大きい 10 ms を、その後の曲の 95 パーセンタイルと比べる。
+   1760 Hz の線、200 Hz より下も）。collect.py・run_report.py に 13 回目の頭（o は 8 回目の o の名前を上書き）
+5. 変換ページを 1.2.0 で作り直した（headless Chromium でライブ・なし・5 回の変換とゲーム内の音、エラーなし）。前のセッションの claude.ai の
+   artifact はこのアカウントから開けなかったので新しく出した: Spectral Converter https://claude.ai/artifact/X8UwVjtaT2aRem8hsnhmJ9
+6. 4 回目の最後に予約したはずのタスクはアカウントに見つからず、1 度も動いていなかった（下の記録）。13 回目はこのセッションが自分への
+   知らせ（send_later、12:41 JST）で集める
+
+## 4 回目のセッション（2026-10-31）でしたこと
 
 1. **合成による分析を詰めた**（tools/spectral.py refine_client・web/core.js refineClient、py と js のバイト一致）:
    - 掃き出しを重ねると曲が沈む癖: ViSQOL は再生を元の曲のパワーにそろえてから比べるが、1 回の掃き出しはその前の倍率のまま選ぶ。
@@ -86,31 +114,35 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## いまの状態
 
-- ブランチ addon/spectral（最後に push したコミットは git log で）。`node lab.mjs go`（ローカルの BDS 1.26.61.1: lab の api が取ってきたもの。
-  zip はリポジトリの外）: DONE（test 152/152, qa clean）
-- 9 回目（run 41187515049、実測）: 新しい既定 d_ の中央値 **2.91**、天井（1–2 回目の run、目安）から 0.3 以内 **9/13**。同じデータの t_ が
-  8 回目 3.04（デモ）→ 9 回目 2.36: **run をまたぐと同じデータで 0.7 動く**。比べるのは同じ run の中だけ（表: SPEC.md）
+- ブランチ addon/spectral（push 済み、最後のコミットは git log で）。**本体 1.2.0**。`node lab.mjs go`（ローカルの BDS 1.26.61.1: lab の api が
+  取ってきたもの。zip はリポジトリの外: LAB_BDS_ZIP）: **DONE（test 156/156, qa clean）**
+- 電話の既定: 24 声＋ノイズ 8・打撃音なし・ファイルより **+10 dB**。変換器の既定: 合成による分析（+10 dB の実機の模型）・svr の重み・5 回・
+  大きさを保つ。3D: 作る音量 3 = 48 ブロック、高さ P_MIN で作る
+- 実測の成績（同じ run の中で）: 12 回目の +10 dB 中央値 3.02（天井から 0.3 以内 10/13）、11 回目 3.25（12/13）。run をまたぐと同じデータでも
+  曲ごとに平均 0.27 動く（11 回目の数がずれていた）: 比べるのは同じ run の中だけ
+- 13 回目（run 41266897044）が走っている / 集めた（SPEC.md にその節があれば集めた）
 - verify.yml は addon/spectral で前から tests/scratch-offline.mjs が落ちている（このユニットと関係なく、手元でも同じ。main には
-  このブランチにない直しがある）。1b2e37d では tests/make-offline.mjs も一度落ちたが、手元では通る（時間の揺れ）
+  このブランチにない直しがある）
 
 ## 次にやること
 
-0. **11 回目は集め終わった**（SPEC.md の 11 回目、measured/redroid-41200540880.json）。次は **電話の既定のレベルを +10 dB に**するか決める:
-   実測で 10/13 上・天井から 0.3 以内 12/13。下がるのは話し声と歌（夏目漱石 −0.10・Name of Love −0.07）。変えるなら src/main.ts の CLIENTS・
-   tools/spectral.py の CL_LEVEL_DB・web/core.js をいっしょに（py と js のバイト一致 tools/parity.py）、tests.txt の電話の節の +6 dB の行、
-   デモ曲の作り直し（src/songs/demo.ts、web/build.py のデモ）、`node lab.mjs go`。歪みは聴き比べ（dist/compare_run11: d と e）で確かめる。
-   3D の届く距離: LivePlayer.loop の playSound の volume を上げて 3 / 12 / 24 / 48 ブロックを測り、FOLLOW_RANGE を合わせる
-1. （済み）**11 回目の結果（run 41200540880、まとめ録りの最初）**: 引き継ぎ zip の scratch/run11.sh（ログ → collect.py → fetch_rec.py → dropouts →
-   表 → 聴き比べのページ）。まず**まとめ録りが働いたか**: ジョブのログに `[spectral rig]` が 42 行（d_/e_ 26・ka_/kb_/kc_ 3・c_ 13）、
-   `audio stop` の行の「目印で N 本に切り分けました」、切り分けた録音が曲ごとに 1 曲だけ入っているか（dropouts.py・recorded_s ≈ 20 s）。
-   働かなければ app/lib/scenario.mjs・audiorec.mjs cut を直す（tests/results-public-offline.mjs の 10 節）か、app11.json の batch を 0 に。
-   次に e_ − d_（+10 dB を +10 dB で: 上がって歪みが聞こえなければ既定を +10 に — src/main.ts CLIENTS・tools/spectral.py CL_LEVEL_DB・
-   web/core.js を一緒に、py と js のバイト一致 tools/parity.py）、天井（同じ run）から 0.3 以内の曲の数、ka/kb/kc の大きさと lr_db
+0. **13 回目（run 41266897044）を集める**（SPEC.md に 13 回目の節がなければ）: 引き継ぎ zip の scratch/run13.sh（`RUN=41266897044 U=<ユニット> bash run13.sh`:
+   ログ → collect.py → fetch_rec.py（corpus/renders/rec13）→ run_report.py → start_burst.py → 抜け）。見るもの:
+   (1) **3D の頭**: start_burst.py の start_over_song_db が na_ / nb_ / nc_ / nf_ / nd_ で 0 より十分下か（1.1.0 までは +18〜+32 dB）、
+   start_db_under200（P_MIN で作った音）が聞こえる大きさでないか。残っていたら: 音の定義の volume を小さくして setVolume で戻す
+   （setVolume は 8 まで効く: SPEC.md の限界値）を実機で測る — 届く距離は作る音量で決まるので作る音量は下げられない。
+   (2) **届く距離**: nb_（24）・nc_（46）が鳴る、nf_（音量 1）が na_（音量 3）と同じ大きさ、ne_（52 ブロック・音量 4）が無音なら定義の max_distance 48 で切れる。
+   (3) o_ − d_（前に変換した曲が 1.2.0 で良くなるか: エミュレーターは +0.08）、e_ − d_（3 回目）、e_ − o_
+1. follow で話す人が動くときの引き継ぎ（handover）は実機で録っていない（端末のプレイヤーは 1 人で、話す人が要る）。BDS の模擬プレイヤー
+   （gametest の SimulatedPlayer）を話す人にできるか、できなければ near で聞く人を動かす録音で代わりに
 2. 本物の Discord で bridge を（トークンとサーバー: ユーザーが用意。tools/live/README.md の手順）
 3. ライブの変換を良くする（実機で前もっての変換より 0.09–0.18 低い）: 先を 1 フレームだけ見る（遅れ +50 ms）、フレームごとの軽い合成による分析
-4. 遠い曲（合唱・ドラム・デモ）: 同じ run で 2 回録って、ばらつきと差を分ける
+4. 天井から 0.3 に届かない曲（12 回目の +10 dB で合唱 0.42・デモ 0.80・ファンク 0.36）: 模型（batch_play.py）で案を比べ、良いものだけ実機で
+5. 遠い 3D で静かな所が消える（24・40 ブロックで 6–7 秒がデジタルの 0）: どの大きさから消えるかを測る
 
 ## 予約したタスク: 実機を続ける（ユーザーの依頼「さらにタスク予約してapp回して」2026-10-31 22:26）
+
+**このタスクはアカウントに見つからず、1 度も動いていない**（下の記録）。手順は人や次のセッションが手で続けるときのために残す。
 
 Claude の予約したタスク「Spectral Player の実機を続ける」が 1 時間ごとに新しいセッションで動き、毎回この節に従う（人でも同じ手順で続けられる）:
 1. リポジトリ: noknoh12345-afk/bds-lab を push できる形で（Claude なら add_repo、access push）clone し `git checkout addon/spectral`
@@ -123,7 +155,7 @@ Claude の予約したタスク「Spectral Player の実機を続ける」が 1 
    その表と行（**実測**）、下の「自動の続きの記録」に 1 行。`git checkout -- bds/vendor/bds-version.txt`、コミット・push（addon/spectral だけ）
 5. 次を始める: 下の記録で「始めた」が **2 本未満**、redroid が走っていない、`gh run list --repo noknoh12345-afk/bds-lab --workflow app.yml --limit 3`
    に走っているものがない → `gh workflow run redroid.yml --repo noknoh12345-afk/bds-lab --ref addon/spectral -f addon=spectral -f mode=run`
-   （app.txt = 12 回目の計画のまま: +6 / +8 / +10 dB と 3D の届く距離の繰り返し = ばらつき）→ その id を記録に足してコミット・push
+   （app.txt = いまの計画のまま: 13 回目の tools/exp/app13.json = 1.2.0 の 3D と d / o / e の繰り返し = ばらつき）→ その id を記録に足してコミット・push
 6. 始めた 2 本がどちらも集まったら終わり: 報告して、予約したタスクを止める（Claude なら update_trigger で enabled=false）
 7. 毎回、日本語で短く報告（集めた数は実測、始めた run の id）
 - この手順ではアドオンのコード・既定・試験を変えない（レベルの既定を決めるのは人か作業のセッション）。.github・auto/policy.json・auto/STOP・

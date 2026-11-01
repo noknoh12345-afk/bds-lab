@@ -10,7 +10,7 @@ which repeats to 4 digits run to run: run 41200540880), and the 3D recordings (l
 import argparse, json, os, statistics as st
 HERE = os.path.dirname(os.path.abspath(__file__))
 UNIT = os.path.dirname(os.path.dirname(HERE))
-THREE_D = ('jl', 'jr', 'kl', 'kr', 'ka', 'kb', 'kc', 'ra', 'rb', 'rc', 'rd')
+THREE_D = ('jl', 'jr', 'kl', 'kr', 'ka', 'kb', 'kc', 'ra', 'rb', 'rc', 'rd', 'na', 'nb', 'nc', 'nd', 'ne', 'nf')
 
 
 def load(run):

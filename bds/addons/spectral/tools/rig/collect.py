@@ -46,7 +46,12 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'ka': 'live_near_left3', 'kb': 'live_near_left12', 'kc': 'live_near_left24',
         # run 12: the same conversion fitted and played at +8 dB (f); the 3D sounds made at volume 1 / 2 / 4 (spectral:range) heard
         # from 24 blocks (ra / rb / rc) and at volume 4 from 40 (rd)
-        'f': 'refined_svr5_loud8', 'ra': 'live_near24_range1', 'rb': 'live_near24_range2', 'rc': 'live_near24_range4', 'rd': 'live_near40_range4'}
+        'f': 'refined_svr5_loud8', 'ra': 'live_near24_range1', 'rb': 'live_near24_range2', 'rc': 'live_near24_range4', 'rd': 'live_near40_range4',
+        # run 13 (1.2.0: 3D sounds made at P_MIN, the range 3 by default): the songs made for +6 dB played at +10 dB (o, not run 8's);
+        # each listener's own 3D sound to the left at 3 / 24 / 46 blocks made at volume 3 (na / nb / nc), at 3 blocks made at 1 (nf);
+        # the one 3D speaker for everyone at 6 blocks (nd, as run 9's jl) and at 52 blocks made at 4 (ne: past the definitions' 48)
+        'o': 'refined_svr5_at10', 'na': 'live_near3_range3', 'nb': 'live_near24_range3', 'nc': 'live_near46_range3', 'nf': 'live_near3_range1',
+        'nd': 'live_3d_speaker6_range3', 'ne': 'live_3d_speaker52_range4'}
 
 
 def songs(res):

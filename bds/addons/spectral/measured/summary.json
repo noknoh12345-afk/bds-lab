@@ -2,10 +2,10 @@
  "songs": {
   "piano_gymnopedie": {
    "ceiling": {
-    "visqol": 1.7644,
+    "visqol": 1.7643,
     "onset_recall": 0.96,
     "third_oct_db": 0.158,
-    "run": "41068618513"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 1.6335,
@@ -74,10 +74,22 @@
     "run": "41170496546"
    },
    "refined_svr5": {
-    "visqol": 3.5128,
-    "onset_recall": 0.76,
-    "third_oct_db": 4.793,
-    "run": "41187515049"
+    "visqol": 3.509,
+    "onset_recall": 0.64,
+    "third_oct_db": 5.439,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 3.6548,
+    "onset_recall": 0.88,
+    "third_oct_db": 3.612,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 3.6304,
+    "onset_recall": 0.84,
+    "third_oct_db": 4.386,
+    "run": "41205071937"
    }
   },
   "vocal_stars": {
@@ -85,7 +97,7 @@
     "visqol": 3.3734,
     "onset_recall": 0.943,
     "third_oct_db": 0.639,
-    "run": "41068618513"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 2.1849,
@@ -148,10 +160,22 @@
     "run": "41170496546"
    },
    "refined_svr5": {
-    "visqol": 3.3725,
+    "visqol": 3.366,
+    "onset_recall": 0.757,
+    "third_oct_db": 7.457,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 3.4004,
+    "onset_recall": 0.771,
+    "third_oct_db": 7.592,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 3.4388,
     "onset_recall": 0.743,
-    "third_oct_db": 7.372,
-    "run": "41187515049"
+    "third_oct_db": 7.432,
+    "run": "41205071937"
    }
   },
   "drums_round": {
@@ -159,7 +183,7 @@
     "visqol": 2.4157,
     "onset_recall": 0.931,
     "third_oct_db": 0.158,
-    "run": "41068618513"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 1.4433,
@@ -234,10 +258,22 @@
     "run": "41187515049"
    },
    "refined_svr5": {
-    "visqol": 2.0191,
-    "onset_recall": 0.634,
-    "third_oct_db": 5.068,
-    "run": "41187515049"
+    "visqol": 2.0112,
+    "onset_recall": 0.648,
+    "third_oct_db": 5.052,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 3.0202,
+    "onset_recall": 0.621,
+    "third_oct_db": 6.491,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 2.2303,
+    "onset_recall": 0.676,
+    "third_oct_db": 5.454,
+    "run": "41205071937"
    }
   },
   "rock_big": {
@@ -245,7 +281,7 @@
     "visqol": 3.9743,
     "onset_recall": 0.95,
     "third_oct_db": 0.613,
-    "run": "41068618513"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 2.0453,
@@ -332,10 +368,22 @@
     "run": "41170496546"
    },
    "refined_svr5": {
-    "visqol": 3.7423,
+    "visqol": 3.7705,
+    "onset_recall": 0.851,
+    "third_oct_db": 7.072,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 3.7393,
+    "onset_recall": 0.733,
+    "third_oct_db": 7.51,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 3.7384,
     "onset_recall": 0.842,
-    "third_oct_db": 7.243,
-    "run": "41187515049"
+    "third_oct_db": 6.88,
+    "run": "41205071937"
    }
   },
   "edm_detection": {
@@ -343,7 +391,7 @@
     "visqol": 3.8849,
     "onset_recall": 1,
     "third_oct_db": 0.838,
-    "run": "41068618513"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 2.748,
@@ -412,18 +460,30 @@
     "run": "41187515049"
    },
    "refined_svr5": {
+    "visqol": 3.8308,
+    "onset_recall": 0.647,
+    "third_oct_db": 10.309,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud10": {
     "visqol": 3.8436,
-    "onset_recall": 0.684,
-    "third_oct_db": 10.2,
-    "run": "41187515049"
+    "onset_recall": 0.617,
+    "third_oct_db": 9.701,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 3.7952,
+    "onset_recall": 0.729,
+    "third_oct_db": 10.237,
+    "run": "41205071937"
    }
   },
   "orchestra_five_armies": {
    "ceiling": {
-    "visqol": 3.2295,
+    "visqol": 3.2298,
     "onset_recall": 0.825,
     "third_oct_db": 0.33,
-    "run": "41068618513"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 1.4248,
@@ -486,18 +546,30 @@
     "run": "41187515049"
    },
    "refined_svr5": {
-    "visqol": 3.5067,
-    "onset_recall": 0.65,
-    "third_oct_db": 8.861,
-    "run": "41187515049"
+    "visqol": 3.4841,
+    "onset_recall": 0.688,
+    "third_oct_db": 8.584,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 3.2648,
+    "onset_recall": 0.613,
+    "third_oct_db": 10.628,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 3.5996,
+    "onset_recall": 0.825,
+    "third_oct_db": 8.86,
+    "run": "41205071937"
    }
   },
   "speech_en_wordsworth": {
    "ceiling": {
-    "visqol": 3.091,
+    "visqol": 3.0909,
     "onset_recall": 0.838,
     "third_oct_db": 0.316,
-    "run": "41068618513"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 1.9934,
@@ -566,16 +638,28 @@
     "run": "41170496546"
    },
    "refined_svr5": {
-    "visqol": 2.734,
-    "onset_recall": 0.546,
-    "third_oct_db": 9.371,
-    "run": "41187515049"
+    "visqol": 2.7598,
+    "onset_recall": 0.492,
+    "third_oct_db": 9.725,
+    "run": "41205071937"
    },
    "live_encoder": {
     "visqol": 2.6465,
     "onset_recall": 0.692,
     "third_oct_db": 10.033,
     "run": "41187515049"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 2.9236,
+    "onset_recall": 0.546,
+    "third_oct_db": 9.931,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 2.821,
+    "onset_recall": 0.492,
+    "third_oct_db": 11.267,
+    "run": "41205071937"
    }
   },
   "piano_chopin_op66": {
@@ -583,7 +667,7 @@
     "visqol": 2.3269,
     "onset_recall": 0.863,
     "third_oct_db": 0.21,
-    "run": "41076646541"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 1.6365,
@@ -664,10 +748,22 @@
     "run": "41170496546"
    },
    "refined_svr5": {
-    "visqol": 2.3515,
-    "onset_recall": 0.5,
-    "third_oct_db": 9.33,
-    "run": "41187515049"
+    "visqol": 2.3316,
+    "onset_recall": 0.556,
+    "third_oct_db": 9.216,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 2.961,
+    "onset_recall": 0.629,
+    "third_oct_db": 8.006,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 2.658,
+    "onset_recall": 0.645,
+    "third_oct_db": 8.137,
+    "run": "41205071937"
    }
   },
   "vocal_name_of_love": {
@@ -675,7 +771,7 @@
     "visqol": 3.0899,
     "onset_recall": 0.714,
     "third_oct_db": 0.419,
-    "run": "41076646541"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 3.4519,
@@ -732,24 +828,36 @@
     "run": "41187515049"
    },
    "refined_svr5": {
-    "visqol": 3.5946,
-    "onset_recall": 0.457,
-    "third_oct_db": 6.359,
-    "run": "41187515049"
+    "visqol": 3.5949,
+    "onset_recall": 0.429,
+    "third_oct_db": 6.771,
+    "run": "41205071937"
    },
    "live_encoder": {
     "visqol": 3.4857,
     "onset_recall": 0.571,
     "third_oct_db": 3.636,
     "run": "41187515049"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 3.5326,
+    "onset_recall": 0.429,
+    "third_oct_db": 6.229,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 3.5484,
+    "onset_recall": 0.543,
+    "third_oct_db": 6.377,
+    "run": "41205071937"
    }
   },
   "choir_how_long": {
    "ceiling": {
-    "visqol": 2.7488,
+    "visqol": 2.749,
     "onset_recall": 0.629,
     "third_oct_db": 0.302,
-    "run": "41076646541"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 1.3945,
@@ -818,10 +926,22 @@
     "run": "41170496546"
    },
    "refined_svr5": {
-    "visqol": 2.4251,
-    "onset_recall": 0.514,
-    "third_oct_db": 6.19,
-    "run": "41187515049"
+    "visqol": 2.0621,
+    "onset_recall": 0.529,
+    "third_oct_db": 6.105,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 2.3325,
+    "onset_recall": 0.486,
+    "third_oct_db": 5.968,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 2.406,
+    "onset_recall": 0.614,
+    "third_oct_db": 6.53,
+    "run": "41205071937"
    }
   },
   "funk_funkorama": {
@@ -829,7 +949,7 @@
     "visqol": 2.6083,
     "onset_recall": 0.896,
     "third_oct_db": 2.317,
-    "run": "41076646541"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 1.7231,
@@ -916,10 +1036,22 @@
     "run": "41170496546"
    },
    "refined_svr5": {
-    "visqol": 2.6301,
-    "onset_recall": 0.748,
-    "third_oct_db": 11.242,
-    "run": "41187515049"
+    "visqol": 2.1668,
+    "onset_recall": 0.526,
+    "third_oct_db": 11.205,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 2.2501,
+    "onset_recall": 0.526,
+    "third_oct_db": 12.227,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 2.1944,
+    "onset_recall": 0.667,
+    "third_oct_db": 12.036,
+    "run": "41205071937"
    }
   },
   "speech_ja_soseki": {
@@ -927,7 +1059,7 @@
     "visqol": 2.8074,
     "onset_recall": 0.842,
     "third_oct_db": 0.349,
-    "run": "41076646541"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 2.1256,
@@ -984,10 +1116,10 @@
     "run": "41187515049"
    },
    "refined_svr5": {
-    "visqol": 2.9143,
-    "onset_recall": 0.605,
-    "third_oct_db": 11.155,
-    "run": "41187515049"
+    "visqol": 2.8557,
+    "onset_recall": 0.43,
+    "third_oct_db": 11.015,
+    "run": "41205071937"
    },
    "live_encoder": {
     "visqol": 2.7303,
@@ -1012,6 +1144,60 @@
     "onset_recall": 0.412,
     "third_oct_db": 10.779,
     "run": "41187515049"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 2.8776,
+    "onset_recall": 0.579,
+    "third_oct_db": 10.973,
+    "run": "41205071937"
+   },
+   "live_near_left": {
+    "visqol": 2.5558,
+    "onset_recall": 0.43,
+    "third_oct_db": 10.96,
+    "run": "41197478510"
+   },
+   "live_near_right": {
+    "visqol": 1.9791,
+    "onset_recall": 0.447,
+    "third_oct_db": 11.214,
+    "run": "41197478510"
+   },
+   "live_near_left3": {
+    "visqol": 2.9033,
+    "onset_recall": 0.535,
+    "third_oct_db": 10.542,
+    "run": "41200540880"
+   },
+   "live_near_left12": {
+    "visqol": 2.14,
+    "onset_recall": 0.456,
+    "third_oct_db": 10.371,
+    "run": "41200540880"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 2.8486,
+    "onset_recall": 0.5,
+    "third_oct_db": 12.187,
+    "run": "41205071937"
+   },
+   "live_near24_range2": {
+    "visqol": 2.4218,
+    "onset_recall": 0.316,
+    "third_oct_db": 10.337,
+    "run": "41205071937"
+   },
+   "live_near24_range4": {
+    "visqol": 2.5325,
+    "onset_recall": 0.261,
+    "third_oct_db": 55.368,
+    "run": "41205071937"
+   },
+   "live_near40_range4": {
+    "visqol": 2.5625,
+    "onset_recall": 0.298,
+    "third_oct_db": 11.965,
+    "run": "41205071937"
    }
   },
   "demo_selfmade": {
@@ -1019,7 +1205,7 @@
     "visqol": 3.265,
     "onset_recall": 0.957,
     "third_oct_db": 0.739,
-    "run": "41076646541"
+    "run": "41200540880"
    },
    "game": {
     "visqol": 2.2389,
@@ -1082,10 +1268,22 @@
     "run": "41170496546"
    },
    "refined_svr5": {
-    "visqol": 2.4537,
-    "onset_recall": 0.596,
-    "third_oct_db": 10.659,
-    "run": "41187515049"
+    "visqol": 2.3973,
+    "onset_recall": 0.543,
+    "third_oct_db": 10.852,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud10": {
+    "visqol": 2.4615,
+    "onset_recall": 0.606,
+    "third_oct_db": 9.173,
+    "run": "41205071937"
+   },
+   "refined_svr5_loud8": {
+    "visqol": 2.4611,
+    "onset_recall": 0.511,
+    "third_oct_db": 9.901,
+    "run": "41205071937"
    }
   }
  },
@@ -1098,6 +1296,21 @@
    "refined": [
     3.3651,
     3.3275
+   ],
+   "refined_svr5": [
+    3.5128,
+    3.5241,
+    3.5157,
+    3.509
+   ],
+   "ceiling": [
+    1.7644,
+    1.7643
+   ],
+   "refined_svr5_loud10": [
+    3.502,
+    3.6243,
+    3.6548
    ]
   },
   "rock_big": {
@@ -1112,6 +1325,21 @@
    "refined": [
     2.7652,
     3.6871
+   ],
+   "refined_svr5": [
+    3.7423,
+    3.751,
+    2.8207,
+    3.7705
+   ],
+   "ceiling": [
+    3.9743,
+    3.9743
+   ],
+   "refined_svr5_loud10": [
+    3.7284,
+    3.825,
+    3.7393
    ]
   },
   "speech_en_wordsworth": {
@@ -1122,6 +1350,21 @@
    "refined": [
     3.0562,
     2.7855
+   ],
+   "refined_svr5": [
+    2.734,
+    2.7552,
+    3.0929,
+    2.7598
+   ],
+   "ceiling": [
+    3.091,
+    3.0909
+   ],
+   "refined_svr5_loud10": [
+    2.7932,
+    3.251,
+    2.9236
    ]
   },
   "vocal_name_of_love": {
@@ -1132,67 +1375,218 @@
    "refined": [
     3.4993,
     3.4894
+   ],
+   "refined_svr5": [
+    3.5946,
+    3.5961,
+    3.5994,
+    3.5949
+   ],
+   "ceiling": [
+    3.0899,
+    3.0899
+   ],
+   "refined_svr5_loud10": [
+    3.5942,
+    3.5274,
+    3.5326
    ]
   },
   "piano_chopin_op66": {
    "refined": [
     2.2573,
     2.273
+   ],
+   "refined_svr5": [
+    2.3515,
+    2.356,
+    2.355,
+    2.3316
+   ],
+   "ceiling": [
+    2.3269,
+    2.3269
+   ],
+   "refined_svr5_loud10": [
+    2.3407,
+    2.9299,
+    2.961
    ]
   },
   "vocal_stars": {
    "refined": [
     3.2207,
     3.0076
+   ],
+   "refined_svr5": [
+    3.3725,
+    3.3741,
+    3.1297,
+    3.366
+   ],
+   "ceiling": [
+    3.3734,
+    3.3734
+   ],
+   "refined_svr5_loud10": [
+    3.2642,
+    3.1933,
+    3.4004
    ]
   },
   "choir_how_long": {
    "refined": [
     1.8654,
     2.2346
+   ],
+   "refined_svr5": [
+    2.4251,
+    2.4223,
+    2.0391,
+    2.0621
+   ],
+   "ceiling": [
+    2.7488,
+    2.749
+   ],
+   "refined_svr5_loud10": [
+    2.3686,
+    2.0219,
+    2.3325
    ]
   },
   "drums_round": {
    "refined": [
     2.032,
     2.0351
+   ],
+   "refined_svr5": [
+    2.0191,
+    2.0036,
+    1.9651,
+    2.0112
+   ],
+   "ceiling": [
+    2.4157,
+    2.4157
+   ],
+   "refined_svr5_loud10": [
+    1.9444,
+    2.978,
+    3.0202
    ]
   },
   "edm_detection": {
    "refined": [
     3.1173,
     3.6688
+   ],
+   "refined_svr5": [
+    3.8436,
+    3.7728,
+    3.7727,
+    3.8308
+   ],
+   "ceiling": [
+    3.8849,
+    3.8849
+   ],
+   "refined_svr5_loud10": [
+    3.8309,
+    3.8533,
+    3.8436
    ]
   },
   "orchestra_five_armies": {
    "refined": [
     2.4235,
     3.4708
+   ],
+   "refined_svr5": [
+    3.5067,
+    3.5208,
+    3.5031,
+    3.4841
+   ],
+   "ceiling": [
+    3.2295,
+    3.2298
+   ],
+   "refined_svr5_loud10": [
+    3.5402,
+    3.7067,
+    3.2648
    ]
   },
   "funk_funkorama": {
    "refined": [
     2.559,
     2.0511
+   ],
+   "refined_svr5": [
+    2.6301,
+    2.855,
+    2.7591,
+    2.1668
+   ],
+   "ceiling": [
+    2.6083,
+    2.6083
+   ],
+   "refined_svr5_loud10": [
+    2.8219,
+    2.8373,
+    2.2501
    ]
   },
   "speech_ja_soseki": {
    "refined": [
     3.2566,
     2.8954
+   ],
+   "refined_svr5": [
+    2.9143,
+    2.9063,
+    3.2997,
+    2.8557
+   ],
+   "ceiling": [
+    2.8074,
+    2.8074
+   ],
+   "refined_svr5_loud10": [
+    2.8642,
+    3.1948,
+    2.8776
    ]
   },
   "demo_selfmade": {
    "refined": [
     3.0444,
     2.3588
+   ],
+   "refined_svr5": [
+    2.4537,
+    2.37,
+    3.1399,
+    2.3973
+   ],
+   "ceiling": [
+    3.265,
+    3.265
+   ],
+   "refined_svr5_loud10": [
+    2.3779,
+    3.4397,
+    2.4615
    ]
   }
  },
  "runs": {
   "ceiling": [
    "41068618513",
-   "41076646541"
+   "41076646541",
+   "41200540880"
   ],
   "game": [
    "41068618513",
@@ -1244,7 +1638,10 @@
    "41170496546"
   ],
   "refined_svr5": [
-   "41187515049"
+   "41187515049",
+   "41197478510",
+   "41200540880",
+   "41205071937"
   ],
   "live_encoder": [
    "41187515049"
@@ -1257,6 +1654,35 @@
   ],
   "live_3d_right": [
    "41187515049"
+  ],
+  "refined_svr5_loud10": [
+   "41197478510",
+   "41200540880",
+   "41205071937"
+  ],
+  "live_near_left": [
+   "41197478510"
+  ],
+  "live_near_right": [
+   "41197478510"
+  ],
+  "live_near_left3": [
+   "41200540880"
+  ],
+  "live_near_left12": [
+   "41200540880"
+  ],
+  "refined_svr5_loud8": [
+   "41205071937"
+  ],
+  "live_near24_range2": [
+   "41205071937"
+  ],
+  "live_near24_range4": [
+   "41205071937"
+  ],
+  "live_near40_range4": [
+   "41205071937"
   ]
  },
  "medians": {
@@ -1326,7 +1752,7 @@
   },
   "refined_svr5": {
    "n": 13,
-   "visqol": 2.914
+   "visqol": 2.856
   },
   "live_encoder": {
    "n": 3,
@@ -1343,6 +1769,42 @@
   "live_3d_right": {
    "n": 1,
    "visqol": 2.486
+  },
+  "refined_svr5_loud10": {
+   "n": 13,
+   "visqol": 3.02
+  },
+  "live_near_left": {
+   "n": 1,
+   "visqol": 2.556
+  },
+  "live_near_right": {
+   "n": 1,
+   "visqol": 1.979
+  },
+  "live_near_left3": {
+   "n": 1,
+   "visqol": 2.903
+  },
+  "live_near_left12": {
+   "n": 1,
+   "visqol": 2.14
+  },
+  "refined_svr5_loud8": {
+   "n": 13,
+   "visqol": 2.849
+  },
+  "live_near24_range2": {
+   "n": 1,
+   "visqol": 2.422
+  },
+  "live_near24_range4": {
+   "n": 1,
+   "visqol": 2.533
+  },
+  "live_near40_range4": {
+   "n": 1,
+   "visqol": 2.562
   }
  },
  "gaps": {
@@ -1423,8 +1885,8 @@
   },
   "refined_svr5": {
    "n": 13,
-   "median": 0.001,
-   "within_0.3": 9
+   "median": 0.054,
+   "within_0.3": 8
   },
   "live_encoder": {
    "n": 3,
@@ -1445,6 +1907,51 @@
    "n": 1,
    "median": 0.322,
    "within_0.3": 0
+  },
+  "refined_svr5_loud10": {
+   "n": 13,
+   "median": -0.027,
+   "within_0.3": 10
+  },
+  "live_near_left": {
+   "n": 1,
+   "median": 0.252,
+   "within_0.3": 1
+  },
+  "live_near_right": {
+   "n": 1,
+   "median": 0.828,
+   "within_0.3": 0
+  },
+  "live_near_left3": {
+   "n": 1,
+   "median": -0.096,
+   "within_0.3": 1
+  },
+  "live_near_left12": {
+   "n": 1,
+   "median": 0.667,
+   "within_0.3": 0
+  },
+  "refined_svr5_loud8": {
+   "n": 13,
+   "median": 0.09,
+   "within_0.3": 10
+  },
+  "live_near24_range2": {
+   "n": 1,
+   "median": 0.386,
+   "within_0.3": 0
+  },
+  "live_near24_range4": {
+   "n": 1,
+   "median": 0.275,
+   "within_0.3": 1
+  },
+  "live_near40_range4": {
+   "n": 1,
+   "median": 0.245,
+   "within_0.3": 1
   }
  }
 }

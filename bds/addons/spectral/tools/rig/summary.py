@@ -22,7 +22,11 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('refined_svr5_loud10', '新しい既定を +10 dB で'), ('live_near_left', 'ライブ・聞く人ごとの 3D で左'), ('live_near_right', 'ライブ・聞く人ごとの 3D で右'),
         ('live_near_left3', 'ライブ・3D 左 3 ブロック'), ('live_near_left12', 'ライブ・3D 左 12 ブロック'), ('live_near_left24', 'ライブ・3D 左 24 ブロック'),
         ('refined_svr5_loud8', '新しい既定を +8 dB で'), ('live_near24_range1', '3D 24 ブロック・音量 1'), ('live_near24_range2', '3D 24 ブロック・音量 2'),
-        ('live_near24_range4', '3D 24 ブロック・音量 4'), ('live_near40_range4', '3D 40 ブロック・音量 4')]
+        ('live_near24_range4', '3D 24 ブロック・音量 4'), ('live_near40_range4', '3D 40 ブロック・音量 4'),
+        ('refined_svr5_at10', '+6 dB 向けの曲を +10 dB で（1.2.0 の電話）'), ('live_near3_range3', '1.2.0 の 3D 3 ブロック・音量 3'),
+        ('live_near24_range3', '1.2.0 の 3D 24 ブロック・音量 3'), ('live_near46_range3', '1.2.0 の 3D 46 ブロック・音量 3'),
+        ('live_near3_range1', '1.2.0 の 3D 3 ブロック・音量 1'), ('live_3d_speaker6_range3', '1.2.0 のスピーカー 6 ブロック'),
+        ('live_3d_speaker52_range4', '1.2.0 のスピーカー 52 ブロック・音量 4')]
 
 
 def main():
