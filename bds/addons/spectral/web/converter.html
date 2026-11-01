@@ -44,7 +44,9 @@ h1 b { color: var(--amethyst); font-weight: 400; }
 h2 { font-family: var(--font-display); font-weight: 400; font-size: 17px; margin: 0; letter-spacing: 0.04em; }
 .rack { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
 @media (max-width: 860px) { .rack { grid-template-columns: minmax(0, 1fr); } }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+/* (a select is as wide as its longest option unless held: the side column stays its own width) */
+select, input { max-width: 100%; }
 
 /* display */
 .display-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 14px; }
