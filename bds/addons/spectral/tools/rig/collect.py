@@ -70,7 +70,12 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'ug': 'live_3d_follow_still_quiet', 'ue': 'live_3d_follow_walking_quiet_default', 'uf': 'live_3d_follow_walking_loud_made',
         # run 17: the handover of a talker walking 2 blocks a step (a move every ~0.7 s): standing (vt), the old sounds held (vh / wh),
         # steered with the voice (vs / ws)
-        'vt': 'live_3d_follow_still_r17', 'vh': 'live_3d_walk_hold', 'wh': 'live_3d_walk_hold_again', 'vs': 'live_3d_walk_steer', 'ws': 'live_3d_walk_steer_again'}
+        'vt': 'live_3d_follow_still_r17', 'vh': 'live_3d_walk_hold', 'wh': 'live_3d_walk_hold_again', 'vs': 'live_3d_walk_steer', 'ws': 'live_3d_walk_steer_again',
+        # run 18: the quiet events' definition volume (0.1 / 0.01 / 0.001, spectral:range's fourth value) for a talker standing (ta, tb)
+        # and walking as in run 17 (wa .. wf), and moving the sounds after 3 blocks (wg, wi)
+        'ta': 'live_3d_still_q01', 'tb': 'live_3d_still_q0001', 'wa': 'live_3d_walk_q01', 'wb': 'live_3d_walk_q001', 'wc': 'live_3d_walk_q0001',
+        'wd': 'live_3d_walk_q0001_again', 'we': 'live_3d_walk_q001_again', 'wf': 'live_3d_walk_q01_again', 'wg': 'live_3d_walk_q01_move3',
+        'wi': 'live_3d_walk_q0001_move3'}
 
 
 def songs(res):

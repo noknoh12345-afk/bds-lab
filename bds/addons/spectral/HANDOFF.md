@@ -80,6 +80,12 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
    **実機の 1 回ごとに**: ① `gh workflow run notify.yml --ref addon/spectral -f run=<redroid の id>`（このブランチの notify が録音を送る。
    自動の notify は main のコードで録音を送らない）② `gh workflow run unit.yml --ref addon/spectral -f job=go -f unit=spectral`（その版の
    .mcaddon）③ `gh workflow run notify.yml --ref addon/spectral -f message="<進捗>"`（1 行目の最初の語は webhook の印に置き換わるので絵文字から）
+9. **歩く話し手の引き継ぎ**（16:00 の「続き」から）: `/spectral:handover [hold|steer] [ブロック]`（古い音を最後の大きさのまま止めるか声に付いていかせるか、
+   何ブロック動いたら作り直すか）、`/spectral:range` の 4 つ目（静かに作る音の定義の音量 0.1 / 0.01 / 0.001 = _3q / _3r / _3s の音）、
+   tools/rig/envelope.py（250 Hz–4 kHz の 4 帯域で 10 ms の大きさが元にどれだけ付いていくか）、make_app.py の腕ごとの wait。
+   **17 回目の実機**（tools/exp/app17.json、**run 41284187721**、5a4f6ec）: 話し手を 3 ブロック前で 2 ブロックずつ左右に（約 0.7 秒に 1 回の作り直し）。
+   **集めた（実測、SPEC.md の 17 回目）**: 止まったまま 3.19、歩くと hold 2.52 / 2.42・steer 2.36 / 2.47 → **steer は見分けられない、既定は hold のまま**。
+   歩いて下がる主な原因は作り直しのたびの低い「トン」（20 秒で 44–46 回、合わせて 4 秒余り、一番大きいもので 60–250 Hz が −36 dB、声の大きい所は −50 dB）
 
 ## 4 回目のセッション（2026-10-31）でしたこと
 

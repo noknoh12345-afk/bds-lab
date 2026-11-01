@@ -815,7 +815,9 @@ const LIVE_CAP = 512;           // frames kept (25.6 s)
 const LIVE_DELAY = 2;           // ticks behind the newest frame
 const LIVE_LATE = 6;            // further behind than this over the delay: jump ahead (the latency stays bounded)
 const LIVE_IDLE = 4;            // ticks without a new frame: the voice falls silent (a talker stopped)
-const FOLLOW_MOVE = 1.5;        // blocks a followed player moves before the sound moves with them
+/** blocks a followed talker moves before the sounds move with them (spectral:handover's second value; 1.5 by default): every move
+ *  makes the talker's sounds again for each listener (a low thump for each: tools/rig/low_bursts.py) */
+let FOLLOW_MOVE = 1.5;
 const FOLLOW_STEP = 8;          // sounds moved a tick (each handed over two ticks later: SETTLE_TICKS)
 const FOLLOW_RANGE = 48;        // blocks: the farthest a talker is heard (the 3D sounds' own max_distance)
 /** the volume a 3D sound is made at (spectral:range): the client takes its audible distance from it, 16 blocks a unit, and
@@ -850,7 +852,11 @@ let LEVEL_3D_DB = 10;
  *  stays put does not need it and loses a little far off (24 blocks 2.57 / 2.82, 46 blocks 2.16 / 2.47; 3 blocks +0.05 / -0.06):
  *  near and speaker streams are made as before. The voice's floor stays SILENT in what is heard */
 let QUIET_3D = true;
-const Q3D = 0.1;
+/** the definition volume of the quiet events (spectral:range's fourth value): 0.1 (_3q, 1.2.0), 0.01 (_3r) or 0.001 (_3s) — the
+ *  add-on steers them 1/Q3D times up. Measured, run 41284187721: a talker walking 2 blocks a step (a move every ~0.7 s) made at
+ *  0.1 left a low thump at every move (44 in 20 s, up to -36 dB at 60-250 Hz where the voice's loud parts over 250 Hz are -50 dB) */
+let Q3D = 0.1;
+const Q3D_EVENTS: Record<string, string> = { '0.1': '_3q', '0.01': '_3r', '0.001': '_3s' };
 
 class LiveStream {
   w = -1; frames = 0; gaps = 0; lastAt = 0;
@@ -918,17 +924,19 @@ class LivePlayer {
   /** follow: sounds made at the new place, each taking over from its old one at tick `at` (SETTLE_TICKS later); i < 0: band -1-i */
   handover: { t: Target; i: number; s: SoundInstance; old: SoundInstance; at: number }[] = [];
   constructor(public st: LiveStream, public at: LiveAt) {
-    this.q3 = QUIET_3D && at.kind === 'follow';
+    this.q = QUIET_3D && at.kind === 'follow' ? Q3D : 1;
     this.lastP = new Float32Array(st.meta.N).fill(-1); this.lastL = new Float32Array(st.meta.N).fill(this.floor); this.lastNL = new Float32Array(st.meta.M).fill(this.floor);
   }
   get three() { return this.at.kind !== 'phones'; }
-  /** made quietly (QUIET_3D, a stream that follows a talker; set when it starts playing here) */
-  q3: boolean;
-  ev(name: string) { return this.three ? name + (this.q3 ? '_3q' : '_3d') : name; }
-  /** the highest level sent (10 file units, or 10 over the quiet events' Q3D) */
-  get cap() { return this.q3 ? 10 / Q3D : 10; }
-  /** the lowest level sent: SILENT as heard (made quietly, 1/Q3D times it — the loops kept alive at the same level either way) */
-  get floor() { return this.q3 ? SILENT / Q3D : SILENT; }
+  /** the definition volume of its 3D sounds: Q3D made quietly (QUIET_3D, a stream that follows a talker; set when it starts playing
+   *  here), else 1 */
+  q: number;
+  get q3() { return this.q < 1; }
+  ev(name: string) { return this.three ? name + (this.q3 ? Q3D_EVENTS[String(this.q)] ?? '_3q' : '_3d') : name; }
+  /** the highest level sent (10 file units, or 10 over the quiet events' definition volume) */
+  get cap() { return 10 / this.q; }
+  /** the lowest level sent: SILENT as heard (made quietly, 1/q times it — the loops kept alive at the same level either way) */
+  get floor() { return SILENT / this.q; }
   /** the level over the files: headphones as the listener's own setting (a phone +10 dB), 3D sounds LEVEL_3D_DB (their play volume is
    *  their range) */
   lv = 1;
@@ -995,10 +1003,10 @@ class LivePlayer {
       if (first) this.lv = Math.pow(10, (settingsOf(first).level ?? 0) / 20);
     } else if (this.at.kind === 'speaker') {
       const w = this.where(); if (w) { this.targets.push({ dim: w.dim, loc: w.loc, osc: [], nz: [] }); this.anchor = w.loc; }
-      this.lv = Math.pow(10, LEVEL_3D_DB / 20) / (this.q3 ? Q3D : 1);
+      this.lv = Math.pow(10, LEVEL_3D_DB / 20) / this.q;
     } else {
       // (follow / near: listen() builds each listener's sounds as they come near)
-      this.lv = Math.pow(10, LEVEL_3D_DB / 20) / (this.q3 ? Q3D : 1);
+      this.lv = Math.pow(10, LEVEL_3D_DB / 20) / this.q;
       const w = this.where(); if (w) { this.anchor = w.loc; this.dim = w.dim.id; this.listen(w); }
       this.started = true;
       return;
@@ -1229,15 +1237,18 @@ cmdAny('spectral:live', 'Live streams (a voice chat, a microphone): the list, or
   });
 /** a song sent as a live stream, frame by frame as a voice chat would (the whole live path in the add-on itself: the frames are
  *  written as bytes and read back) */
-cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), how much louder than the files they play (dB, +10 by default), and whether voices that follow a talker are made quietly (on by default)', { 'volume?': 'float', 'level?': 'float', 'quiet?': 'bool' }, (_p, a) => {
+cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), how much louder than the files they play (dB, +10 by default), whether voices that follow a talker are made quietly (on by default) and how quietly (the definition volume: 0.1, 0.01 or 0.001)', { 'volume?': 'float', 'level?': 'float', 'quiet?': 'bool', 'made?': 'float' }, (_p, a) => {
   if (a.volume !== undefined) RANGE_3D = Math.max(0.25, Math.min(16, a.volume));
   if (a.level !== undefined) LEVEL_3D_DB = Math.max(0, Math.min(18, Math.round(a.level * 10) / 10));
   if (a.quiet !== undefined) QUIET_3D = Boolean(a.quiet);
-  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : 'as the files'}${QUIET_3D ? ', followed voices made quietly' : ''}; new speakers and live streams)`;
+  // (the nearest of the quiet events' definition volumes)
+  if (a.made !== undefined) Q3D = [0.1, 0.01, 0.001].reduce((x, y) => (Math.abs(Math.log10(Math.max(1e-6, a.made!)) - Math.log10(y)) < Math.abs(Math.log10(Math.max(1e-6, a.made!)) - Math.log10(x)) ? y : x));
+  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : 'as the files'}${QUIET_3D ? `, followed voices made quietly (${Q3D})` : ''}; new speakers and live streams)`;
 });
-cmdAny('spectral:handover', 'A voice that follows a talker who moves: until the new sounds take over, the old ones hold their last level (hold, the default) or keep following the voice (steer)', { 'old?': ['hold', 'steer'] }, (_p, a) => {
+cmdAny('spectral:handover', 'A voice that follows a talker who moves: until the new sounds take over, the old ones hold their last level (hold, the default) or keep following the voice (steer); and how far the talker moves before the sounds move (blocks, 1.5 by default)', { 'old?': ['hold', 'steer'], 'move?': 'float' }, (_p, a) => {
   if (a.old !== undefined) HANDOVER_STEER = a.old === 'steer';
-  return `handover: the old sounds ${HANDOVER_STEER ? 'follow the voice' : 'hold their last level'} until they fade (a voice that follows a talker who moves)`;
+  if (a.move !== undefined) FOLLOW_MOVE = Math.max(0.5, Math.min(16, a.move));
+  return `handover: the old sounds ${HANDOVER_STEER ? 'follow the voice' : 'hold their last level'} until they fade, the sounds move after ${FOLLOW_MOVE} blocks (a voice that follows a talker who moves)`;
 });
 cmdAny('spectral:live_demo', 'Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)',
   { song: 'string', 'to?': ['phones', 'speaker', 'near', 'follow'], 'who?': 'player', 'voices?': 'int', 'at?': 'string' }, async (p, a) => {

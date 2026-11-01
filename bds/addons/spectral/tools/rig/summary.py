@@ -41,7 +41,11 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('live_3d_follow_walking_loud_made', '歩く話す人・ふつうに作る（16 回目）'),
         ('live_3d_follow_still_r17', '止まった話す人（17 回目）'), ('live_3d_walk_hold', '速く歩く話す人・古い音はそのまま（hold）'),
         ('live_3d_walk_steer', '速く歩く話す人・古い音も声に付く（steer）'), ('live_3d_walk_steer_again', '同 steer（もう一度）'),
-        ('live_3d_walk_hold_again', '同 hold（もう一度）')]
+        ('live_3d_walk_hold_again', '同 hold（もう一度）'),
+        ('live_3d_still_q01', '止まった話す人・定義の音量 0.1（18 回目）'), ('live_3d_still_q0001', '止まった話す人・定義の音量 0.001'),
+        ('live_3d_walk_q01', '速く歩く話す人・0.1'), ('live_3d_walk_q001', '速く歩く話す人・0.01'), ('live_3d_walk_q0001', '速く歩く話す人・0.001'),
+        ('live_3d_walk_q0001_again', '同 0.001（もう一度）'), ('live_3d_walk_q001_again', '同 0.01（もう一度）'), ('live_3d_walk_q01_again', '同 0.1（もう一度）'),
+        ('live_3d_walk_q01_move3', '速く歩く話す人・0.1・3 ブロックで作り直す'), ('live_3d_walk_q0001_move3', '速く歩く話す人・0.001・3 ブロックで作り直す')]
 
 
 def main():
