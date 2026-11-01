@@ -432,25 +432,25 @@ wait 1000
 @A cmd /spectral:live
 ~ @A live t3: 1 frames, 2 voices, near 0 -59 0 listeners 0
 spectral:range 3
-~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, live streams made quietly;
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly;
 wait 1000
 @A cmd /spectral:live
 ~ @A live t3: 1 frames, 2 voices, near 0 -59 0 listeners 3
 scriptevent spectral:live {"id":"t3","end":true}
 tp A 0 -60 0
 spectral:range 3 6
-~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+6 dB, live streams made quietly;
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+6 dB, followed voices made quietly;
 @A cmd /spectral:range 3 0 false
 ~ @A range: 3D sounds made at volume 3, heard to 48 blocks \(level as the files;
 spectral:range 3 0 true
-~ range: 3D sounds made at volume 3, heard to 48 blocks \(level as the files, live streams made quietly;
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(level as the files, followed voices made quietly;
 scriptevent spectral:live {"id":"t5","m":{"N":2,"M":8,"amp":[-90,0.75],"nz":[-100,0.5],"fd":[5,12,25,50]},"s":0,"f":"A2QQcAAAAAAAAAAAAA///w==","at":"near:0,-59,0"}
 wait 600
 @A cmd /spectral:live
 ~ @A live t5: 1 frames, 2 voices, near 0 -59 0 listeners [1-9]
 scriptevent spectral:live {"id":"t5","end":true}
 spectral:range 3 10 true
-~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, live streams made quietly;
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly;
 
 ## a voice can follow an entity with a name tag (an NPC, a pet) as it follows a player: everyone within reach hears it, it moves with it, and nobody hears it once it is gone
 summon armor_stand talker 3 -60 0

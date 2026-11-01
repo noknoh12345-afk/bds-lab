@@ -1388,6 +1388,7 @@ var LivePlayer = class {
   constructor(st, at) {
     this.st = st;
     this.at = at;
+    this.q3 = QUIET_3D && at.kind === "follow";
     this.lastP = new Float32Array(st.meta.N).fill(-1);
     this.lastL = new Float32Array(st.meta.N).fill(this.floor);
     this.lastNL = new Float32Array(st.meta.M).fill(this.floor);
@@ -1416,8 +1417,8 @@ var LivePlayer = class {
   get three() {
     return this.at.kind !== "phones";
   }
-  /** made quietly (QUIET_3D when the stream started playing here) */
-  q3 = QUIET_3D;
+  /** made quietly (QUIET_3D, a stream that follows a talker; set when it starts playing here) */
+  q3;
   ev(name) {
     return this.three ? name + (this.q3 ? "_3q" : "_3d") : name;
   }
@@ -1886,11 +1887,11 @@ cmdAny(
     return livePlay(st, at);
   }
 );
-cmdAny("spectral:range", "How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), how much louder than the files they play (dB, 0 by default), and whether live streams make them quietly (off by default)", { "volume?": "float", "level?": "float", "quiet?": "bool" }, (_p, a) => {
+cmdAny("spectral:range", "How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), how much louder than the files they play (dB, +10 by default), and whether voices that follow a talker are made quietly (on by default)", { "volume?": "float", "level?": "float", "quiet?": "bool" }, (_p, a) => {
   if (a.volume !== void 0) RANGE_3D = Math.max(0.25, Math.min(16, a.volume));
   if (a.level !== void 0) LEVEL_3D_DB = Math.max(0, Math.min(18, Math.round(a.level * 10) / 10));
   if (a.quiet !== void 0) QUIET_3D = Boolean(a.quiet);
-  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : "as the files"}${QUIET_3D ? ", live streams made quietly" : ""}; new speakers and live streams)`;
+  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : "as the files"}${QUIET_3D ? ", followed voices made quietly" : ""}; new speakers and live streams)`;
 });
 cmdAny(
   "spectral:live_demo",
