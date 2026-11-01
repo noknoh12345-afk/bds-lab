@@ -837,6 +837,12 @@ const SETTLE_TICKS = 2;
  *  41272459953 and 41277993333) or keep following the voice (true, spectral:handover steer: to measure — a voice that ends or starts
  *  a syllable in those two ticks is not held as it was) */
 let HANDOVER_STEER = false;
+/** a followed talker moved: ticks until the new sounds take over (spectral:handover's third value; SETTLE_TICKS by default) and how
+ *  many times after that their state is sent again, every 2 ticks (its fourth; 0 by default). Measured, run 41286094409: after a
+ *  move the new sounds stayed silent for 300-400 ms at the start of a syllable (hold and steer alike, run 41284187721 too) — what
+ *  is sent to a sound the client has not started yet seems lost, and the add-on sends only what changes */
+let HANDOVER_TICKS = SETTLE_TICKS;
+let HANDOVER_RESEND = 0;
 /** how much louder than the files 3D sounds are steered (dB, spectral:range's second number; +10 by default since 1.2.0, as the
  *  headphones' level). A far 3D voice loses its quiet parts under the phone's 16-bit floor, and the level lifts them — measured,
  *  run 41270487804, a listener's own 3D sound to the left, 0 / +6 / +10 dB: at 3 blocks -30.7 / -23.9 / -20.3 dB (setVolume over
@@ -852,10 +858,12 @@ let LEVEL_3D_DB = 10;
  *  stays put does not need it and loses a little far off (24 blocks 2.57 / 2.82, 46 blocks 2.16 / 2.47; 3 blocks +0.05 / -0.06):
  *  near and speaker streams are made as before. The voice's floor stays SILENT in what is heard */
 let QUIET_3D = true;
-/** the definition volume of the quiet events (spectral:range's fourth value): 0.1 (_3q, 1.2.0), 0.01 (_3r) or 0.001 (_3s) — the
- *  add-on steers them 1/Q3D times up. Measured, run 41284187721: a talker walking 2 blocks a step (a move every ~0.7 s) made at
- *  0.1 left a low thump at every move (44 in 20 s, up to -36 dB at 60-250 Hz where the voice's loud parts over 250 Hz are -50 dB) */
-let Q3D = 0.1;
+/** the definition volume of the quiet events (spectral:range's fourth value): 0.1 (_3q, 1.2.0), 0.01 (_3r, the default) or 0.001
+ *  (_3s) — the add-on steers them 1/Q3D times up. Measured: a talker walking 2 blocks a step (a move every ~0.7 s) made at 0.1 left
+ *  a low thump at every move (run 41284187721: 44 in 20 s, up to -36 dB at 60-250 Hz where the voice's loud parts over 250 Hz are
+ *  -50 dB); run 41286094409, the same walk: 0.1 / 0.01 / 0.001 ViSQOL 2.39, 2.36 / 2.66, 2.65 / 2.28, 2.33 (thumps 57, 54 / 4, 0 /
+ *  0, 0); a talker standing, 0.1 / 0.001: 3.09 / 3.23 at the same level (setVolume 1000 times up plays as asked) */
+let Q3D = 0.01;
 const Q3D_EVENTS: Record<string, string> = { '0.1': '_3q', '0.01': '_3r', '0.001': '_3s' };
 
 class LiveStream {
@@ -923,6 +931,8 @@ class LivePlayer {
   anchor?: Vector3; moving: number[] = []; dying: [SoundInstance, number][] = [];
   /** follow: sounds made at the new place, each taking over from its old one at tick `at` (SETTLE_TICKS later); i < 0: band -1-i */
   handover: { t: Target; i: number; s: SoundInstance; old: SoundInstance; at: number }[] = [];
+  /** follow: sounds a move made that get their state again (HANDOVER_RESEND times, every 2 ticks after their handover) */
+  resends: { t: Target; i: number; s: SoundInstance; left: number; at: number }[] = [];
   constructor(public st: LiveStream, public at: LiveAt) {
     this.q = QUIET_3D && at.kind === 'follow' ? Q3D : 1;
     this.lastP = new Float32Array(st.meta.N).fill(-1); this.lastL = new Float32Array(st.meta.N).fill(this.floor); this.lastNL = new Float32Array(st.meta.M).fill(this.floor);
@@ -1037,7 +1047,7 @@ class LivePlayer {
     for (const t of this.targets) this.drop(t);
     for (const [x] of this.dying) { try { x.stop(); } catch { /* gone */ } }
     for (const h of this.handover) { try { h.old.stop(); } catch { /* gone */ } }
-    this.targets = []; this.dying = []; this.handover = [];
+    this.targets = []; this.dying = []; this.handover = []; this.resends = [];
   }
   private sendVoice(v: number, hz: number, dur: number, L: number, force = false) {
     let p = -1;
@@ -1078,7 +1088,20 @@ class LivePlayer {
       try { h.old.fade(FADE_SMOOTH, this.floor); } catch { /* gone */ }
       this.calls++;
       this.dying.push([h.old, now + 2]);
+      if (HANDOVER_RESEND > 0) this.resends.push({ t: h.t, i: h.i, s: h.s, left: HANDOVER_RESEND, at: now + 2 });
       return false;
+    });
+    // (the state again to the sounds a move made, every 2 ticks, while they are still the ones playing that voice)
+    this.resends = this.resends.filter((r) => {
+      if (r.at > now) return true;
+      if ((r.i >= 0 ? r.t.osc[r.i] : r.t.nz[-1 - r.i]) !== r.s || r.t.gone) return false;
+      try {
+        if (r.i >= 0) { if (this.lastP[r.i] > 0) r.s.setPitch(this.lastP[r.i]); r.s.setVolume(this.lastL[r.i]); }
+        else { r.s.setPitch(1); r.s.setVolume(this.lastNL[-1 - r.i]); }
+      } catch { /* gone */ }
+      this.calls += 2;
+      r.at = now + 2;
+      return --r.left > 0;
     });
     if (this.at.kind !== 'follow' && this.at.kind !== 'near') return;
     const w = this.where();
@@ -1104,7 +1127,7 @@ class LivePlayer {
           else if (this.lastP[i] > 0) s.setPitch(this.lastP[i]);
           s.fade(FADE_SMOOTH, voice ? this.lastL[i] : this.lastNL[-1 - i]);
         } catch { /* gone */ }
-        this.handover.push({ t, i, s, old, at: now + SETTLE_TICKS });
+        this.handover.push({ t, i, s, old, at: now + HANDOVER_TICKS });
         if (voice) t.osc[i] = s; else t.nz[-1 - i] = s;
         this.calls += 4;
       }
@@ -1245,10 +1268,12 @@ cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (
   if (a.made !== undefined) Q3D = [0.1, 0.01, 0.001].reduce((x, y) => (Math.abs(Math.log10(Math.max(1e-6, a.made!)) - Math.log10(y)) < Math.abs(Math.log10(Math.max(1e-6, a.made!)) - Math.log10(x)) ? y : x));
   return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : 'as the files'}${QUIET_3D ? `, followed voices made quietly (${Q3D})` : ''}; new speakers and live streams)`;
 });
-cmdAny('spectral:handover', 'A voice that follows a talker who moves: until the new sounds take over, the old ones hold their last level (hold, the default) or keep following the voice (steer); and how far the talker moves before the sounds move (blocks, 1.5 by default)', { 'old?': ['hold', 'steer'], 'move?': 'float' }, (_p, a) => {
+cmdAny('spectral:handover', 'A voice that follows a talker who moves: until the new sounds take over, the old ones hold their last level (hold, the default) or keep following the voice (steer); how far the talker moves before the sounds move (blocks, 1.5 by default); the ticks until the new ones take over (2) and how many times their state is sent again after that, every 2 ticks (0)', { 'old?': ['hold', 'steer'], 'move?': 'float', 'settle?': 'int', 'resend?': 'int' }, (_p, a) => {
   if (a.old !== undefined) HANDOVER_STEER = a.old === 'steer';
   if (a.move !== undefined) FOLLOW_MOVE = Math.max(0.5, Math.min(16, a.move));
-  return `handover: the old sounds ${HANDOVER_STEER ? 'follow the voice' : 'hold their last level'} until they fade, the sounds move after ${FOLLOW_MOVE} blocks (a voice that follows a talker who moves)`;
+  if (a.settle !== undefined) HANDOVER_TICKS = Math.max(1, Math.min(20, Math.round(a.settle)));
+  if (a.resend !== undefined) HANDOVER_RESEND = Math.max(0, Math.min(10, Math.round(a.resend)));
+  return `handover: the old sounds ${HANDOVER_STEER ? 'follow the voice' : 'hold their last level'} until they fade, the sounds move after ${FOLLOW_MOVE} blocks, the new ones take over after ${HANDOVER_TICKS} ticks and get their state again ${HANDOVER_RESEND} times (a voice that follows a talker who moves)`;
 });
 cmdAny('spectral:live_demo', 'Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)',
   { song: 'string', 'to?': ['phones', 'speaker', 'near', 'follow'], 'who?': 'player', 'voices?': 'int', 'at?': 'string' }, async (p, a) => {

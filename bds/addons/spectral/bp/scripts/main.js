@@ -1279,9 +1279,11 @@ var RANGE_3D = 3;
 var reach3D = () => Math.min(FOLLOW_RANGE, 16 * RANGE_3D);
 var SETTLE_TICKS = 2;
 var HANDOVER_STEER = false;
+var HANDOVER_TICKS = SETTLE_TICKS;
+var HANDOVER_RESEND = 0;
 var LEVEL_3D_DB = 10;
 var QUIET_3D = true;
-var Q3D = 0.1;
+var Q3D = 0.01;
 var Q3D_EVENTS = { "0.1": "_3q", "0.01": "_3r", "0.001": "_3s" };
 var LiveStream = class {
   constructor(id, meta) {
@@ -1416,6 +1418,8 @@ var LivePlayer = class {
   dying = [];
   /** follow: sounds made at the new place, each taking over from its old one at tick `at` (SETTLE_TICKS later); i < 0: band -1-i */
   handover = [];
+  /** follow: sounds a move made that get their state again (HANDOVER_RESEND times, every 2 ticks after their handover) */
+  resends = [];
   get three() {
     return this.at.kind !== "phones";
   }
@@ -1588,6 +1592,7 @@ var LivePlayer = class {
     this.targets = [];
     this.dying = [];
     this.handover = [];
+    this.resends = [];
   }
   sendVoice(v, hz, dur, L, force = false) {
     let p = -1;
@@ -1679,7 +1684,25 @@ var LivePlayer = class {
       }
       this.calls++;
       this.dying.push([h.old, now + 2]);
+      if (HANDOVER_RESEND > 0) this.resends.push({ t: h.t, i: h.i, s: h.s, left: HANDOVER_RESEND, at: now + 2 });
       return false;
+    });
+    this.resends = this.resends.filter((r) => {
+      if (r.at > now) return true;
+      if ((r.i >= 0 ? r.t.osc[r.i] : r.t.nz[-1 - r.i]) !== r.s || r.t.gone) return false;
+      try {
+        if (r.i >= 0) {
+          if (this.lastP[r.i] > 0) r.s.setPitch(this.lastP[r.i]);
+          r.s.setVolume(this.lastL[r.i]);
+        } else {
+          r.s.setPitch(1);
+          r.s.setVolume(this.lastNL[-1 - r.i]);
+        }
+      } catch {
+      }
+      this.calls += 2;
+      r.at = now + 2;
+      return --r.left > 0;
     });
     if (this.at.kind !== "follow" && this.at.kind !== "near") return;
     const w = this.where();
@@ -1714,7 +1737,7 @@ var LivePlayer = class {
           s.fade(FADE_SMOOTH, voice ? this.lastL[i] : this.lastNL[-1 - i]);
         } catch {
         }
-        this.handover.push({ t, i, s, old, at: now + SETTLE_TICKS });
+        this.handover.push({ t, i, s, old, at: now + HANDOVER_TICKS });
         if (voice) t.osc[i] = s;
         else t.nz[-1 - i] = s;
         this.calls += 4;
@@ -1917,10 +1940,12 @@ cmdAny("spectral:range", "How far 3D sounds reach: the volume they are made at (
   if (a.made !== void 0) Q3D = [0.1, 0.01, 1e-3].reduce((x, y) => Math.abs(Math.log10(Math.max(1e-6, a.made)) - Math.log10(y)) < Math.abs(Math.log10(Math.max(1e-6, a.made)) - Math.log10(x)) ? y : x);
   return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : "as the files"}${QUIET_3D ? `, followed voices made quietly (${Q3D})` : ""}; new speakers and live streams)`;
 });
-cmdAny("spectral:handover", "A voice that follows a talker who moves: until the new sounds take over, the old ones hold their last level (hold, the default) or keep following the voice (steer); and how far the talker moves before the sounds move (blocks, 1.5 by default)", { "old?": ["hold", "steer"], "move?": "float" }, (_p, a) => {
+cmdAny("spectral:handover", "A voice that follows a talker who moves: until the new sounds take over, the old ones hold their last level (hold, the default) or keep following the voice (steer); how far the talker moves before the sounds move (blocks, 1.5 by default); the ticks until the new ones take over (2) and how many times their state is sent again after that, every 2 ticks (0)", { "old?": ["hold", "steer"], "move?": "float", "settle?": "int", "resend?": "int" }, (_p, a) => {
   if (a.old !== void 0) HANDOVER_STEER = a.old === "steer";
   if (a.move !== void 0) FOLLOW_MOVE = Math.max(0.5, Math.min(16, a.move));
-  return `handover: the old sounds ${HANDOVER_STEER ? "follow the voice" : "hold their last level"} until they fade, the sounds move after ${FOLLOW_MOVE} blocks (a voice that follows a talker who moves)`;
+  if (a.settle !== void 0) HANDOVER_TICKS = Math.max(1, Math.min(20, Math.round(a.settle)));
+  if (a.resend !== void 0) HANDOVER_RESEND = Math.max(0, Math.min(10, Math.round(a.resend)));
+  return `handover: the old sounds ${HANDOVER_STEER ? "follow the voice" : "hold their last level"} until they fade, the sounds move after ${FOLLOW_MOVE} blocks, the new ones take over after ${HANDOVER_TICKS} ticks and get their state again ${HANDOVER_RESEND} times (a voice that follows a talker who moves)`;
 });
 cmdAny(
   "spectral:live_demo",

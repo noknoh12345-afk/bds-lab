@@ -432,29 +432,29 @@ wait 1000
 @A cmd /spectral:live
 ~ @A live t3: 1 frames, 2 voices, near 0 -59 0 listeners 0
 spectral:range 3
-~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.1\);
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.01\);
 wait 1000
 @A cmd /spectral:live
 ~ @A live t3: 1 frames, 2 voices, near 0 -59 0 listeners 3
 scriptevent spectral:live {"id":"t3","end":true}
 tp A 0 -60 0
 spectral:range 3 6
-~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+6 dB, followed voices made quietly \(0\.1\);
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+6 dB, followed voices made quietly \(0\.01\);
 @A cmd /spectral:range 3 0 false
 ~ @A range: 3D sounds made at volume 3, heard to 48 blocks \(level as the files;
 spectral:range 3 0 true
-~ range: 3D sounds made at volume 3, heard to 48 blocks \(level as the files, followed voices made quietly \(0\.1\);
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(level as the files, followed voices made quietly \(0\.01\);
 scriptevent spectral:live {"id":"t5","m":{"N":2,"M":8,"amp":[-90,0.75],"nz":[-100,0.5],"fd":[5,12,25,50]},"s":0,"f":"A2QQcAAAAAAAAAAAAA///w==","at":"near:0,-59,0"}
 wait 600
 @A cmd /spectral:live
 ~ @A live t5: 1 frames, 2 voices, near 0 -59 0 listeners [1-9]
 scriptevent spectral:live {"id":"t5","end":true}
-spectral:range 3 10 true 0.02
-~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.01\);
-spectral:range 3 10 true
-~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.01\);
-spectral:range 3 10 true 0.1
+spectral:range 3 10 true 0.2
 ~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.1\);
+spectral:range 3 10 true
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.1\);
+spectral:range 3 10 true 0.01
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.01\);
 
 ## a voice can follow an entity with a name tag (an NPC, a pet) as it follows a player: everyone within reach hears it, it moves with it (after as many blocks as set), and nobody hears it once it is gone
 spectral:range 3 10 true 0.001
@@ -477,8 +477,8 @@ tp @e[name=talker] 8 -60 0
 wait 1000
 @A cmd /spectral:live
 ~ @A live t4: 1 frames, 2 voices, follow talker listeners 1 delay .* moves [2-9]
-spectral:handover hold 3
-~ handover: the old sounds hold their last level until they fade, the sounds move after 3 blocks
+spectral:handover hold 3 6 3
+~ handover: the old sounds hold their last level until they fade, the sounds move after 3 blocks, the new ones take over after 6 ticks and get their state again 3 times
 scriptevent spectral:live {"id":"t4","end":true}
 scriptevent spectral:live {"id":"t6","m":{"N":2,"M":8,"amp":[-90,0.75],"nz":[-100,0.5],"fd":[5,12,25,50]},"s":0,"f":"A2QQcAAAAAAAAAAAAA///w==","at":"follow:talker"}
 wait 800
@@ -490,12 +490,12 @@ tp @e[name=talker] 12 -60 0
 wait 1000
 @A cmd /spectral:live
 ~ @A live t6: 1 frames, 2 voices, follow talker listeners 1 delay .* moves 1 calls
-spectral:handover hold 1.5
-~ handover: the old sounds hold their last level until they fade, the sounds move after 1\.5 blocks
+spectral:handover hold 1.5 2 0
+~ handover: the old sounds hold their last level until they fade, the sounds move after 1\.5 blocks, the new ones take over after 2 ticks and get their state again 0 times
 kill @e[name=talker]
 wait 1000
 @A cmd /spectral:live
 ~ @A live t6: 1 frames, 2 voices, follow talker listeners 0
 scriptevent spectral:live {"id":"t6","end":true}
-spectral:range 3 10 true 0.1
-~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.1\);
+spectral:range 3 10 true 0.01
+~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+10 dB, followed voices made quietly \(0\.01\);

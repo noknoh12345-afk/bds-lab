@@ -45,7 +45,12 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('live_3d_still_q01', '止まった話す人・定義の音量 0.1（18 回目）'), ('live_3d_still_q0001', '止まった話す人・定義の音量 0.001'),
         ('live_3d_walk_q01', '速く歩く話す人・0.1'), ('live_3d_walk_q001', '速く歩く話す人・0.01'), ('live_3d_walk_q0001', '速く歩く話す人・0.001'),
         ('live_3d_walk_q0001_again', '同 0.001（もう一度）'), ('live_3d_walk_q001_again', '同 0.01（もう一度）'), ('live_3d_walk_q01_again', '同 0.1（もう一度）'),
-        ('live_3d_walk_q01_move3', '速く歩く話す人・0.1・3 ブロックで作り直す'), ('live_3d_walk_q0001_move3', '速く歩く話す人・0.001・3 ブロックで作り直す')]
+        ('live_3d_walk_q01_move3', '速く歩く話す人・0.1・3 ブロックで作り直す'), ('live_3d_walk_q0001_move3', '速く歩く話す人・0.001・3 ブロックで作り直す'),
+        ('live_3d_still_q001', '止まった話す人・0.01（19 回目）'), ('live_3d_still_q01_r19', '止まった話す人・0.1（19 回目）'),
+        ('live_3d_walk_hold2', '速く歩く話す人・0.01・1.2.0 の引き継ぎ'), ('live_3d_walk_hold2_again', '同（もう一度）'),
+        ('live_3d_walk_hold2_resend3', '速く歩く話す人・0.01・状態を 3 回送り直す'), ('live_3d_walk_hold2_resend3_again', '同（もう一度）'),
+        ('live_3d_walk_steer6', '速く歩く話す人・0.01・steer で 6 tick 後に引き継ぐ'), ('live_3d_walk_steer6_again', '同（もう一度）'),
+        ('live_3d_walk_steer6_resend3', '速く歩く話す人・0.01・steer 6 tick＋送り直す'), ('live_3d_walk_steer6_resend3_again', '同（もう一度）')]
 
 
 def main():

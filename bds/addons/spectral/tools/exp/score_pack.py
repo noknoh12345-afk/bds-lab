@@ -10,7 +10,10 @@ if __name__ == '__main__':
     import warnings; warnings.filterwarnings('ignore')
     sid, sp = sys.argv[1], os.path.abspath(sys.argv[2])
     name = sys.argv[3] if len(sys.argv) > 3 else os.path.basename(sp)
-    play = {'mode': 'quality', 'voices': int(json.load(open(sp))['meta']['voices']), 'bundle': W + '/bundles/real.js', 'cmds': ['spectral:drums off', 'spectral:level 6']}
+    # (SPECTRAL_BUNDLE: another build of the add-on, e.g. bp/scripts/main.js; SPECTRAL_LEVEL: the phone's level in dB — 6 as before,
+    # 10 as 1.2.0 plays a phone)
+    play = {'mode': 'quality', 'voices': int(json.load(open(sp))['meta']['voices']), 'bundle': os.environ.get('SPECTRAL_BUNDLE', W + '/bundles/real.js'),
+            'cmds': ['spectral:drums off', f"spectral:level {os.environ.get('SPECTRAL_LEVEL', '6')}"]}
     lg = song_log(sp, play)
     y = render(lg, {'oneshot_latency_ms': -45})
     o = C.load(sid, SR)

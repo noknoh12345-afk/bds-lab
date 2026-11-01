@@ -2,10 +2,10 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# 18 回目（tools/exp/make_app.py tools/exp/app18.json）: 歩く話し手の作り直しの「トン」を小さく。話し手（名札の防具立て talker）の声を
-#   定義の音量 0.1（_3q、1.2.0）・0.01（_3r）・0.001（_3s）の音で作り、その分だけ setVolume で上げる（spectral:range 3 10 true <定義の音量>）。
-#   ta_ / tb_ = 止まったまま 0.1 / 0.001（setVolume を 1000 倍まで上げて同じ大きさで鳴るか）、wa_ wb_ wc_ wd_ we_ wf_ = 17 回目と同じ道を
-#   0.1 / 0.01 / 0.001 / 0.001 / 0.01 / 0.1、wg_ / wi_ = 3 ブロック動いてから作り直す（spectral:handover hold 3）を 0.1 / 0.001
+# 19 回目（tools/exp/make_app.py tools/exp/app19.json）: 作り直した音が鳴り出すまで声が抜ける（18 回目: 0.3–0.4 秒）のを直す試し。
+#   どれも定義の音量 0.01（新しい既定）。ya_ / yb_ = 止まった話し手 0.01 / 0.1。歩く話し手（17・18 回目と同じ道）: yc_ / yj_ = 1.2.0 の引き継ぎ
+#   （hold、2 tick）、yd_ / yi_ = その後 2 tick ごとに状態を 3 回送り直す、ye_ / yh_ = 古い音も声に付いて 6 tick 後に引き継ぐ（steer）、
+#   yf_ / yg_ = その両方（spectral:handover <hold|steer> 1.5 <tick> <送り直す回数>）
 
 section title
 audio info
@@ -27,112 +27,39 @@ do time set noon
 do gamerule dodaylightcycle false
 do weather clear
 
-section ta
+section ya
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10 true 0.1
-do execute as @a run spectral:handover hold 1.5
+do execute as @a run spectral:range 3 10 true 0.01
+do execute as @a run spectral:handover hold 1.5 2 0
 do execute as @a run summon armor_stand talker 0 -60 3
-audio start ta_1
-audio mark ta_speech_ja_soseki
+audio start ya_1
+audio mark ya_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
 wait 23000
 audio stop
-audio analyze-all ta_speech_ja_soseki=song:speech_ja_soseki
-audio export ta_speech_ja_soseki 160
+audio analyze-all ya_speech_ja_soseki=song:speech_ja_soseki
+audio export ya_speech_ja_soseki 160
 
-section tb
+section yb
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10 true 0.001
-do execute as @a run spectral:handover hold 1.5
+do execute as @a run spectral:range 3 10 true 0.1
+do execute as @a run spectral:handover hold 1.5 2 0
 do execute as @a run tp @e[name=talker] 0 -60 3
-audio start tb_1
-audio mark tb_speech_ja_soseki
+audio start yb_1
+audio mark yb_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
 wait 23000
 audio stop
-audio analyze-all tb_speech_ja_soseki=song:speech_ja_soseki
-audio export tb_speech_ja_soseki 160
+audio analyze-all yb_speech_ja_soseki=song:speech_ja_soseki
+audio export yb_speech_ja_soseki 160
 
-section wa
-do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10 true 0.1
-do execute as @a run spectral:handover hold 1.5
-do execute as @a run tp @e[name=talker] 6 -60 3
-audio start wa_1
-audio mark wa_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 3000
-audio stop
-audio analyze-all wa_speech_ja_soseki=song:speech_ja_soseki
-audio export wa_speech_ja_soseki 160
-
-section wb
+section yc
 do execute as @a run tp @s 0 -60 0 0 0
 do execute as @a run spectral:range 3 10 true 0.01
-do execute as @a run spectral:handover hold 1.5
+do execute as @a run spectral:handover hold 1.5 2 0
 do execute as @a run tp @e[name=talker] 6 -60 3
-audio start wb_1
-audio mark wb_speech_ja_soseki
+audio start yc_1
+audio mark yc_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
 wait 100
 do tp @e[name=talker] 4 -60 3
@@ -196,162 +123,16 @@ wait 100
 do tp @e[name=talker] -6 -60 3
 wait 3000
 audio stop
-audio analyze-all wb_speech_ja_soseki=song:speech_ja_soseki
-audio export wb_speech_ja_soseki 160
+audio analyze-all yc_speech_ja_soseki=song:speech_ja_soseki
+audio export yc_speech_ja_soseki 160
 
-section wc
-do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10 true 0.001
-do execute as @a run spectral:handover hold 1.5
-do execute as @a run tp @e[name=talker] 6 -60 3
-audio start wc_1
-audio mark wc_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 3000
-audio stop
-audio analyze-all wc_speech_ja_soseki=song:speech_ja_soseki
-audio export wc_speech_ja_soseki 160
-
-section wd
-do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10 true 0.001
-do execute as @a run spectral:handover hold 1.5
-do execute as @a run tp @e[name=talker] 6 -60 3
-audio start wd_1
-audio mark wd_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 6 -60 3
-wait 100
-do tp @e[name=talker] 4 -60 3
-wait 100
-do tp @e[name=talker] 2 -60 3
-wait 100
-do tp @e[name=talker] 0 -60 3
-wait 100
-do tp @e[name=talker] -2 -60 3
-wait 100
-do tp @e[name=talker] -4 -60 3
-wait 100
-do tp @e[name=talker] -6 -60 3
-wait 3000
-audio stop
-audio analyze-all wd_speech_ja_soseki=song:speech_ja_soseki
-audio export wd_speech_ja_soseki 160
-
-section we
+section yd
 do execute as @a run tp @s 0 -60 0 0 0
 do execute as @a run spectral:range 3 10 true 0.01
-do execute as @a run spectral:handover hold 1.5
+do execute as @a run spectral:handover hold 1.5 2 3
 do execute as @a run tp @e[name=talker] 6 -60 3
-audio start we_1
-audio mark we_speech_ja_soseki
+audio start yd_1
+audio mark yd_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
 wait 100
 do tp @e[name=talker] 4 -60 3
@@ -415,16 +196,16 @@ wait 100
 do tp @e[name=talker] -6 -60 3
 wait 3000
 audio stop
-audio analyze-all we_speech_ja_soseki=song:speech_ja_soseki
-audio export we_speech_ja_soseki 160
+audio analyze-all yd_speech_ja_soseki=song:speech_ja_soseki
+audio export yd_speech_ja_soseki 160
 
-section wf
+section ye
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10 true 0.1
-do execute as @a run spectral:handover hold 1.5
+do execute as @a run spectral:range 3 10 true 0.01
+do execute as @a run spectral:handover steer 1.5 6 0
 do execute as @a run tp @e[name=talker] 6 -60 3
-audio start wf_1
-audio mark wf_speech_ja_soseki
+audio start ye_1
+audio mark ye_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
 wait 100
 do tp @e[name=talker] 4 -60 3
@@ -488,16 +269,16 @@ wait 100
 do tp @e[name=talker] -6 -60 3
 wait 3000
 audio stop
-audio analyze-all wf_speech_ja_soseki=song:speech_ja_soseki
-audio export wf_speech_ja_soseki 160
+audio analyze-all ye_speech_ja_soseki=song:speech_ja_soseki
+audio export ye_speech_ja_soseki 160
 
-section wg
+section yf
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10 true 0.1
-do execute as @a run spectral:handover hold 3
+do execute as @a run spectral:range 3 10 true 0.01
+do execute as @a run spectral:handover steer 1.5 6 3
 do execute as @a run tp @e[name=talker] 6 -60 3
-audio start wg_1
-audio mark wg_speech_ja_soseki
+audio start yf_1
+audio mark yf_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
 wait 100
 do tp @e[name=talker] 4 -60 3
@@ -561,16 +342,16 @@ wait 100
 do tp @e[name=talker] -6 -60 3
 wait 3000
 audio stop
-audio analyze-all wg_speech_ja_soseki=song:speech_ja_soseki
-audio export wg_speech_ja_soseki 160
+audio analyze-all yf_speech_ja_soseki=song:speech_ja_soseki
+audio export yf_speech_ja_soseki 160
 
-section wi
+section yg
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10 true 0.001
-do execute as @a run spectral:handover hold 3
+do execute as @a run spectral:range 3 10 true 0.01
+do execute as @a run spectral:handover steer 1.5 6 3
 do execute as @a run tp @e[name=talker] 6 -60 3
-audio start wi_1
-audio mark wi_speech_ja_soseki
+audio start yg_1
+audio mark yg_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
 wait 100
 do tp @e[name=talker] 4 -60 3
@@ -634,5 +415,224 @@ wait 100
 do tp @e[name=talker] -6 -60 3
 wait 3000
 audio stop
-audio analyze-all wi_speech_ja_soseki=song:speech_ja_soseki
-audio export wi_speech_ja_soseki 160
+audio analyze-all yg_speech_ja_soseki=song:speech_ja_soseki
+audio export yg_speech_ja_soseki 160
+
+section yh
+do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run spectral:range 3 10 true 0.01
+do execute as @a run spectral:handover steer 1.5 6 0
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio start yh_1
+audio mark yh_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 3000
+audio stop
+audio analyze-all yh_speech_ja_soseki=song:speech_ja_soseki
+audio export yh_speech_ja_soseki 160
+
+section yi
+do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run spectral:range 3 10 true 0.01
+do execute as @a run spectral:handover hold 1.5 2 3
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio start yi_1
+audio mark yi_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 3000
+audio stop
+audio analyze-all yi_speech_ja_soseki=song:speech_ja_soseki
+audio export yi_speech_ja_soseki 160
+
+section yj
+do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run spectral:range 3 10 true 0.01
+do execute as @a run spectral:handover hold 1.5 2 0
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio start yj_1
+audio mark yj_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 4 -60 3
+wait 100
+do tp @e[name=talker] 2 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -2 -60 3
+wait 100
+do tp @e[name=talker] -4 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 3000
+audio stop
+audio analyze-all yj_speech_ja_soseki=song:speech_ja_soseki
+audio export yj_speech_ja_soseki 160

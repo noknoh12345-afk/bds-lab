@@ -75,7 +75,12 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         # and walking as in run 17 (wa .. wf), and moving the sounds after 3 blocks (wg, wi)
         'ta': 'live_3d_still_q01', 'tb': 'live_3d_still_q0001', 'wa': 'live_3d_walk_q01', 'wb': 'live_3d_walk_q001', 'wc': 'live_3d_walk_q0001',
         'wd': 'live_3d_walk_q0001_again', 'we': 'live_3d_walk_q001_again', 'wf': 'live_3d_walk_q01_again', 'wg': 'live_3d_walk_q01_move3',
-        'wi': 'live_3d_walk_q0001_move3'}
+        'wi': 'live_3d_walk_q0001_move3',
+        # run 19 (all made at 0.01): a talker standing at 0.01 / 0.1 (ya, yb); walking: the 1.2.0 handover (yc, yj), its state sent again
+        # 3 times (yd, yi), steered and handed over after 6 ticks (ye, yh), both (yf, yg)
+        'ya': 'live_3d_still_q001', 'yb': 'live_3d_still_q01_r19', 'yc': 'live_3d_walk_hold2', 'yj': 'live_3d_walk_hold2_again',
+        'yd': 'live_3d_walk_hold2_resend3', 'yi': 'live_3d_walk_hold2_resend3_again', 'ye': 'live_3d_walk_steer6',
+        'yh': 'live_3d_walk_steer6_again', 'yf': 'live_3d_walk_steer6_resend3', 'yg': 'live_3d_walk_steer6_resend3_again'}
 
 
 def songs(res):
