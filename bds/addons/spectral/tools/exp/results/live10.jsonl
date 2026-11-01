@@ -16,3 +16,9 @@
 {"song": "vocal_name_of_love", "var": "refine3", "v": 3.6642, "cpt": 33.7, "voices": 24}
 {"song": "speech_ja_soseki", "var": "refine3", "v": 3.1118, "cpt": 35.7, "voices": 24}
 {"song": "speech_en_wordsworth", "var": "refine3", "v": 3.4469, "cpt": 39.2, "voices": 24}
+{"song": "vocal_name_of_love", "var": "v16plain", "v": 3.3557, "cpt": 27.7, "voices": 16}
+{"song": "speech_en_wordsworth", "var": "v16plain", "v": 3.0508, "cpt": 30, "voices": 16}
+{"song": "speech_ja_soseki", "var": "v16plain", "v": 2.8533, "cpt": 28.8, "voices": 16}
+{"song": "vocal_name_of_love", "var": "v16refine", "v": 3.5628, "cpt": 28.1, "voices": 16}
+{"song": "speech_en_wordsworth", "var": "v16refine", "v": 3.4408, "cpt": 29, "voices": 16}
+{"song": "speech_ja_soseki", "var": "v16refine", "v": 3.1234, "cpt": 27.9, "voices": 16}
