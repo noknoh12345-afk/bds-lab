@@ -54,7 +54,10 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('live_enc_plain', 'ライブの変換（20 回目）'), ('live_enc_refined', 'ライブの変換＋その場の合成による分析'), ('live_enc_refined_again', '同（もう一度）'),
         ('live_enc_plain_again', 'ライブの変換（もう一度）'),
         ('live_3d_walk_q001_move15', '速く歩く話す人・0.01・1.5 ブロック（20 回目）'), ('live_3d_walk_q001_move15_again', '同（もう一度）'),
-        ('live_3d_walk_q001_move3', '速く歩く話す人・0.01・3 ブロック'), ('live_3d_walk_q001_move3_again', '同（もう一度）')]
+        ('live_3d_walk_q001_move3', '速く歩く話す人・0.01・3 ブロック'), ('live_3d_walk_q001_move3_again', '同（もう一度）'),
+        ('live_3d_still_v24', '止まった話す人・24 声（21 回目）'), ('live_3d_still_v8', '止まった話す人・8 声'), ('live_3d_walk_v8', '速く歩く話す人・8 声'),
+        ('live_3d_walk_v8_again', '同（もう一度）'), ('live_3d_walk_v24', '速く歩く話す人・24 声（21 回目）'), ('live_3d_walk_v24_again', '同（もう一度）'),
+        ('live_3d_walk_v24_cut2', '速く歩く話す人・24 声・古い音をすぐ止め 2 音ずつ'), ('live_3d_walk_v24_cut2_again', '同（もう一度）')]
 
 
 def main():

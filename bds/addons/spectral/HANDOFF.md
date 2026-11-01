@@ -94,12 +94,22 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
    クライアントが鳴らし始める前に送った命令が失われ、アドオンは変わった分しか送らないため、と推測）→ `/spectral:handover` の 3 つ目（引き継ぐまでの tick、
    既定 2）と 4 つ目（引き継いだ後 2 tick ごとに状態を送り直す回数、既定 0）。go: test 175/175, qa clean
    **19 回目の実機**（tools/exp/app19.json、**run 41288535848**、7dc5399、17:40 JST に始めた）: どれも 0.01。止まった話し手 0.01 / 0.1（ya_ / yb_）、歩く話し手を
-   1.2.0 の引き継ぎ（yc_ / yj_）・送り直す 3 回（yd_ / yi_）・steer で 6 tick 後に引き継ぐ（ye_ / yh_）・その両方（yf_ / yg_）。集めるのは引き継ぎ zip の
-   scratch/run19.sh（`RUN=41288535848 U=<ユニット> bash run19.sh`）
+   1.2.0 の引き継ぎ（yc_ / yj_）・送り直す 3 回（yd_ / yi_）・steer で 6 tick 後に引き継ぐ（ye_ / yh_）・その両方（yf_ / yg_）。**集めた（実測、SPEC.md の
+   19 回目）**: どれも見分けられない（2.67 / 2.71・2.64 / 2.75・2.53 / 2.71・2.58 / 2.64）→ 引き継ぎの既定は 1.2.0 のまま。3.75 秒の音節の頭は**どの形でも
+   300–350 ms 抜ける**（送り直しても古い音を付けておいても）→ 命令が失われるのではなく、作り直しの間に 1 人で 32 音を超えるのが原因と推測
+   **20 回目の実機**（tools/exp/app20.json、**run 41290363885**、075a04e）: ライブの変換のまま / その場の合成による分析つき（下の 10.）をヘッドホンで 3 曲
+   ×（za_ zb_ zc_ zd_）、歩く話し手を 1.5 / 3 ブロックで作り直す（zf_ zi_ / zg_ zh_）。集めるのは scratch/run20.sh
+   **21 回目の計画**（tools/exp/app21.json）: 32 音の上限を確かめる — 止まった 24 声 / 8 声（pa_ / pb_）、歩く 8 声（pc_ / ph_: 作り直しの間も 32 音まで）、
+   歩く 24 声（pd_ / pg_）、歩く 24 声で古い音をすぐ止めて 1 tick に 2 音ずつ（pe_ / pf_: `/spectral:handover cut 1.5 2 0 2`）。集めるのは scratch/run21.sh
 10. **ライブの変換に合成による分析は効くか**（エミュレーター、推測）: tools/exp/live_refine.py がライブのフレームを変換器の refine_client で後から（先も見て）
    5 回掃き出し、tools/exp/score_pack.py（SPECTRAL_BUNDLE・SPECTRAL_LEVEL で 1.2.0 の +10 dB）が採点する。注意: refine_client は変換器の 44.1 kHz の
    音で動く（48 kHz を渡すと時間がずれ、模型の NSIM が 0.13 しか出ない）。ライブのフレームは変換器のフレームより遅れているので、模型の NSIM が一番高い
-   遅れ 50 ms で合わせる。結果は tools/exp/results/live10.jsonl（ライブのまま base: 夏目漱石 2.88・ワーズワース 3.05・Name of Love 3.45）
+   遅れ 50 ms で合わせる。結果は tools/exp/results/live10.jsonl（ライブのまま base: 夏目漱石 2.88・ワーズワース 3.05・Name of Love 3.45）。
+   **後から 5 回掃き出すと 3.24・3.57・3.69、前から 1 回だけでも 3.20・3.50・3.60** → 1 回の前向きの掃き出しは 2–3 フレーム先しか見ないので、その場でできる:
+   **web/live.js LiveRefiner**（`LiveEncoder({ refine: 2 })`、tools/live/encoder.mjs と bridge.mjs の `--refine 2`。2 フレーム先 = 遅れ +100 ms、
+   文の切れ目で flush。web/core.js の clientModel・gtH2・nsimRef・nsimSum・CL を使う）: **3.14・3.43・3.69**（3 フレーム先でも 3.11・3.45・3.66）。
+   refine 0 は前とバイト一致。24 声 1 人で実時間の約 3 割の計算。tools/live/test_bridge.mjs に refine の 2 項目（文の切れ目・フレームの数）。
+   **既定はまだ 0**（20 回目の実機で決める）
 
 ## 4 回目のセッション（2026-10-31）でしたこと
 

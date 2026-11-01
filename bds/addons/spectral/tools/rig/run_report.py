@@ -10,7 +10,7 @@ which repeats to 4 digits run to run: run 41200540880), and the 3D recordings (l
 import argparse, json, os, statistics as st
 HERE = os.path.dirname(os.path.abspath(__file__))
 UNIT = os.path.dirname(os.path.dirname(HERE))
-THREE_D = ('jl', 'jr', 'kl', 'kr', 'ka', 'kb', 'kc', 'ra', 'rb', 'rc', 'rd', 'na', 'nb', 'nc', 'nd', 'ne', 'nf', 'la', 'lb', 'lc', 'ld', 'le', 'lf', 'lg', 'lh', 'ls', 'mg', 'mf', 'qd', 'qa', 'qb', 'qc', 'qg', 'qf', 'qe', 'xg', 'xh', 'ua', 'ub', 'uc', 'ud', 'ug', 'ue', 'uf', 'vt', 'vh', 'wh', 'vs', 'ws', 'ta', 'tb', 'wa', 'wb', 'wc', 'wd', 'we', 'wf', 'wg', 'wi', 'ya', 'yb', 'yc', 'yd', 'ye', 'yf', 'yg', 'yh', 'yi', 'yj', 'zf', 'zg', 'zh', 'zi')
+THREE_D = ('jl', 'jr', 'kl', 'kr', 'ka', 'kb', 'kc', 'ra', 'rb', 'rc', 'rd', 'na', 'nb', 'nc', 'nd', 'ne', 'nf', 'la', 'lb', 'lc', 'ld', 'le', 'lf', 'lg', 'lh', 'ls', 'mg', 'mf', 'qd', 'qa', 'qb', 'qc', 'qg', 'qf', 'qe', 'xg', 'xh', 'ua', 'ub', 'uc', 'ud', 'ug', 'ue', 'uf', 'vt', 'vh', 'wh', 'vs', 'ws', 'ta', 'tb', 'wa', 'wb', 'wc', 'wd', 'we', 'wf', 'wg', 'wi', 'ya', 'yb', 'yc', 'yd', 'ye', 'yf', 'yg', 'yh', 'yi', 'yj', 'zf', 'zg', 'zh', 'zi', 'pa', 'pb', 'pc', 'pd', 'pe', 'pf', 'pg', 'ph')
 
 
 def load(run):

@@ -84,7 +84,11 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         # run 20: the live encoder as it was (za, zd) and with its refinement as it goes (zb, zc: web/live.js LiveRefiner), the live path on phones
         'za': 'live_enc_plain', 'zb': 'live_enc_refined', 'zc': 'live_enc_refined_again', 'zd': 'live_enc_plain_again',
         # and a talker walking (0.01): the sounds moved after 1.5 blocks (zf, zi) or 3 (zg, zh)
-        'zf': 'live_3d_walk_q001_move15', 'zi': 'live_3d_walk_q001_move15_again', 'zg': 'live_3d_walk_q001_move3', 'zh': 'live_3d_walk_q001_move3_again'}
+        'zf': 'live_3d_walk_q001_move15', 'zi': 'live_3d_walk_q001_move15_again', 'zg': 'live_3d_walk_q001_move3', 'zh': 'live_3d_walk_q001_move3_again',
+        # run 21 (0.01): a talker standing with 24 / 8 voices (pa, pb); walking with 8 voices (pc, ph: never over the phone's 32 sounds),
+        # 24 (pd, pg), 24 with the old sounds stopped at once and 2 moved a tick (pe, pf: spectral:handover cut)
+        'pa': 'live_3d_still_v24', 'pb': 'live_3d_still_v8', 'pc': 'live_3d_walk_v8', 'ph': 'live_3d_walk_v8_again', 'pd': 'live_3d_walk_v24',
+        'pg': 'live_3d_walk_v24_again', 'pe': 'live_3d_walk_v24_cut2', 'pf': 'live_3d_walk_v24_cut2_again'}
 
 
 def songs(res):
