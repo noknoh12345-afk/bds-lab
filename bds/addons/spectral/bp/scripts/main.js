@@ -1741,8 +1741,10 @@ async function pasted(p, text, keep2) {
   try {
     part = readPart(text);
   } catch (e) {
+    console.warn(`[spectral] paste refused (${text.length} characters from ${p.name}): ${errText(e)}`);
     return { say: `\xA7c${errText(e)}` };
   }
+  console.warn(`[spectral] paste part ${part.i}/${part.n} of ${part.key}: ${text.length} characters from ${p.name}`);
   let pend = pending.get(p.id);
   if (!pend || pend.key !== part.key || pend.n !== part.n || system2.currentTick - pend.at > 20 * 600) {
     pend = { key: part.key, n: part.n, parts: [], at: 0 };
@@ -1760,6 +1762,7 @@ async function pasted(p, text, keep2) {
     payload = joinParts(pend.parts);
     got = await decodePayload(payload);
   } catch (e) {
+    console.warn(`[spectral] paste refused (${pend.key}): ${errText(e)}`);
     return { say: `\xA7cthe song text is broken: ${errText(e)}` };
   }
   const meta = { ...got.meta, id: pasteId(got.meta.id, pend.key) };
@@ -1769,12 +1772,13 @@ async function pasted(p, text, keep2) {
     const why = keepPasted(meta.id, meta.title, p.name, payload);
     note = why ? ` \xA7c(not kept in the world: ${why})` : " \xA77(kept in this world)";
   }
+  console.warn(`[spectral] pasted ${meta.id} (${meta.title}, ${meta.seconds} s, ${meta.voices} voices, ${payload.length} bytes in ${pend.n} part${pend.n > 1 ? "s" : ""}) from ${p.name}${keep2 ? "" : ", not kept"}`);
   return { say: `\xA7d\u266A ${meta.title} (${fmt(meta.seconds)}, ${meta.voices} voices) \u2014 /spectral:play ${meta.id}${note}` };
 }
 async function pasteForm(p) {
   for (; ; ) {
     const pend = pending.get(p.id), live = pend && system2.currentTick - pend.at <= 20 * 600 ? pend : void 0;
-    const f = new ModalFormData2().title("Spectral Player: paste a song").label(live ? `\xA7e${live.parts.length} of ${live.n} parts in\xA7r: paste the next part.` : `The song text from the converter page (SPZ1.\u2026, up to ${FIELD_CHARS} characters a part). A long song comes in parts: paste them one after another.`).textField("Song text", "SPZ1.1.1.\u2026").toggle("Keep it in this world", { defaultValue: true });
+    const f = new ModalFormData2().title("Spectral Player: paste a song").label(live ? `\xA7e${live.parts.length} of ${live.n} parts in\xA7r: paste the next part.` : `The song text from the converter page (SPZ1.\u2026, up to ${FIELD_CHARS} characters a part). A long song comes in parts: paste them one after another.`).textField("Song text", "Paste the song text here (SPZ1.\u2026)").toggle("Keep it in this world", { defaultValue: true });
     const r = await ask(p, f);
     if (!r || r.canceled || !r.formValues) return;
     const text = r.formValues.find((v) => typeof v === "string");

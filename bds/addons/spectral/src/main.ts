@@ -857,7 +857,9 @@ function decodePayload(payload: Uint8Array): Promise<{ meta: SongMeta; bytes: Ui
 /** one pasted text: a part kept until the song is whole; whole, the song decoded, added and (keep) kept in the world */
 async function pasted(p: Player, text: string, keep: boolean): Promise<{ say: string; more?: boolean }> {
   let part: Part;
-  try { part = readPart(text); } catch (e) { return { say: `§c${errText(e)}` }; }
+  // (each paste in the server's log too: how many characters came — a text field that cut them would show here)
+  try { part = readPart(text); } catch (e) { console.warn(`[spectral] paste refused (${text.length} characters from ${p.name}): ${errText(e)}`); return { say: `§c${errText(e)}` }; }
+  console.warn(`[spectral] paste part ${part.i}/${part.n} of ${part.key}: ${text.length} characters from ${p.name}`);
   let pend = pending.get(p.id);
   if (!pend || pend.key !== part.key || pend.n !== part.n || system.currentTick - pend.at > 20 * 600) { pend = { key: part.key, n: part.n, parts: [], at: 0 }; pending.set(p.id, pend); }
   if (!pend.parts.some((x) => x.i === part.i)) pend.parts.push(part);
@@ -868,11 +870,12 @@ async function pasted(p: Player, text: string, keep: boolean): Promise<{ say: st
   }
   pending.delete(p.id);
   let payload: Uint8Array, got: { meta: SongMeta; bytes: Uint8Array };
-  try { payload = joinParts(pend.parts); got = await decodePayload(payload); } catch (e) { return { say: `§cthe song text is broken: ${errText(e)}` }; }
+  try { payload = joinParts(pend.parts); got = await decodePayload(payload); } catch (e) { console.warn(`[spectral] paste refused (${pend.key}): ${errText(e)}`); return { say: `§cthe song text is broken: ${errText(e)}` }; }
   const meta = { ...got.meta, id: pasteId(got.meta.id, pend.key) } as unknown as Meta;
   songs.set(meta.id, { meta, bytes: got.bytes, pasted: p.name });
   let note = '';
   if (keep) { const why = keepPasted(meta.id, meta.title, p.name, payload); note = why ? ` §c(not kept in the world: ${why})` : ' §7(kept in this world)'; }
+  console.warn(`[spectral] pasted ${meta.id} (${meta.title}, ${meta.seconds} s, ${meta.voices} voices, ${payload.length} bytes in ${pend.n} part${pend.n > 1 ? 's' : ''}) from ${p.name}${keep ? '' : ', not kept'}`);
   return { say: `§d♪ ${meta.title} (${fmt(meta.seconds)}, ${meta.voices} voices) — /spectral:play ${meta.id}${note}` };
 }
 /** the paste form, again for each part a long song still wants */
@@ -882,7 +885,7 @@ async function pasteForm(p: Player) {
     const f = new ModalFormData().title('Spectral Player: paste a song')
       .label(live ? `§e${live.parts.length} of ${live.n} parts in§r: paste the next part.`
         : `The song text from the converter page (SPZ1.…, up to ${FIELD_CHARS} characters a part). A long song comes in parts: paste them one after another.`)
-      .textField('Song text', 'SPZ1.1.1.…')
+      .textField('Song text', 'Paste the song text here (SPZ1.…)')
       .toggle('Keep it in this world', { defaultValue: true });
     const r = await ask(p, f);
     if (!r || r.canceled || !r.formValues) return;

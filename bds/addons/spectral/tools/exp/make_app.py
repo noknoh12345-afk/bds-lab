@@ -9,6 +9,8 @@
     also: [[song, suffix], ...] more songs sent from the arm's pack for those commands}
    interleave: prefixes of arms with the same commands, recorded song by song (a run cut short keeps whole pairs)
    setup: commands run once as the player after joining, before any section (e.g. talkers summoned: armor stands with names)
+   sections: [{title, lines: [...]}] the rig's own steps (app/lib/scenario.mjs: tap text, text, until server, shot ...) after the
+   setup, before the arms (e.g. a song pasted into a form on the device)
    calib: calibration programs recorded first (["loud"]); ceiling: {"arms": [{pre, args ("4" = playSound volume 4, "4 d4" = the
    event whose definition says volume 4), songs}]} — the originals as plain sounds (songpack.py --unit), last: the BDS restarts
    with that unit
@@ -21,7 +23,7 @@
 import json, sys
 SONGS=['piano_gymnopedie','piano_chopin_op66','vocal_stars','vocal_name_of_love','choir_how_long','drums_round','rock_big','edm_detection',
        'orchestra_five_armies','funk_funkorama','speech_ja_soseki','speech_en_wordsworth','demo_selfmade']
-def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, batch=0, setup=()):
+def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, batch=0, setup=(), sections=()):
     L=[*header, '', 'section title', 'audio info', 'stop', 'audio volume 0', 'launch', 'until title 600000', 'audio info', 'shot title', '', 'section prep']
     sent={}                      # (suffix, converter options) -> every song an arm plays with them, in order
     for a in arms:
@@ -45,6 +47,8 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
         L.append(f"audio ceiling spectral_ceil {','.join(cs)}")
     L+=['', 'section join', 'join', 'until joined 300000', 'wait 5000', 'do time set noon', 'do gamerule dodaylightcycle false', 'do weather clear']
     L+=[f'do execute as @a run {c}' for c in setup]
+    for sec in sections:
+        L+=['', f"section {sec['title']}", *sec['lines']]
     for prog in calib:
         L+=['', f'section calib_{prog}', 'audio start calib', f'do spectral:calib {prog}', f'until server spectral calib\\] end {prog} 300000', 'wait 2000',
             'audio stop', f'audio analyze calib {prog}', 'audio export calib 192']
@@ -111,4 +115,4 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
     return '\n'.join(L)+'\n'
 if __name__=='__main__':
     spec=json.load(open(sys.argv[1]))
-    open(sys.argv[2],'w').write(make(spec['arms'], spec['header'], spec.get('wait_ms',23000), spec.get('calib',()), spec.get('ceiling'), spec.get('interleave'), spec.get('batch',0), spec.get('setup',())))
+    open(sys.argv[2],'w').write(make(spec['arms'], spec['header'], spec.get('wait_ms',23000), spec.get('calib',()), spec.get('ceiling'), spec.get('interleave'), spec.get('batch',0), spec.get('setup',()), spec.get('sections',())))
