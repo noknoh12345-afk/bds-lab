@@ -131,6 +131,13 @@ LOUD_EVENTS = ['spectral.osc'] + ['spectral.n%d' % b for b in range(len(noise_rm
 for name in LOUD_EVENTS:
     d = defs[name]['sounds'][0]
     defs[name + '_l'] = {'category': 'ui', 'sounds': [{'name': d['name'], 'is3D': False, 'volume': 4.0}]}
+# 3D sounds made quietly (definition volume Q3D, src/main.ts QUIET_3D): a new 3D sound plays as it was made for 100-200 ms (SPEC.md),
+# the loops all in phase — 16 of them at full volume clip into a low thump even at P_MIN; at 0.1 they stay under the clip, and
+# the add-on steers them 10 times up (setVolume plays a sound louder than its file: SPEC.md)
+Q3D = 0.1
+for name in ['spectral.osc'] + ['spectral.n%d' % b for b in range(len(noise_rms))]:
+    d = defs[name + '_3d']
+    defs[name + '_3q'] = {**{k: v for k, v in d.items() if k != 'sounds'}, 'sounds': [{**d['sounds'][0], 'volume': Q3D}]}
 with open(os.path.join(unit, 'rp', 'sounds', 'sound_definitions.json'), 'w') as f:
     json.dump({'format_version': '1.20.20', 'sound_definitions': defs}, f, indent=1)
 

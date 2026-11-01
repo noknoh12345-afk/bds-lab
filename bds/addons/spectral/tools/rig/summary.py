@@ -30,7 +30,11 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('live_near3_level0', '3D 3 ブロック・レベル 0'), ('live_near3_level6', '3D 3 ブロック・+6 dB'), ('live_near3_level10', '3D 3 ブロック・+10 dB'),
         ('live_near24_level0', '3D 24 ブロック・レベル 0'), ('live_near24_level6', '3D 24 ブロック・+6 dB'), ('live_near24_level10', '3D 24 ブロック・+10 dB'),
         ('live_near46_level0', '3D 46 ブロック・レベル 0'), ('live_near46_level10', '3D 46 ブロック・+10 dB'), ('live_3d_song_speaker', '曲のスピーカー（その場）'),
-        ('live_3d_follow_still', 'follow・止まった話す人'), ('live_3d_follow_walking', 'follow・歩く話す人')]
+        ('live_3d_follow_still', 'follow・止まった話す人'), ('live_3d_follow_walking', 'follow・歩く話す人'),
+        ('live_near3_made_loud', '3D 3 ブロック・ふつうに作る'), ('live_near3_quiet', '3D 3 ブロック・静かに作る'), ('live_near24_quiet', '3D 24 ブロック・静かに'),
+        ('live_near46_quiet', '3D 46 ブロック・静かに'), ('live_near24_quiet_range16', '3D 24 ブロック・静かに・音量 16'),
+        ('live_3d_follow_walking_loud', '歩く話す人・ふつうに作る'), ('live_3d_follow_walking_quiet', '歩く話す人・静かに作る'),
+        ('live_near46_level0_again', '3D 46 ブロック・レベル 0（もう一度）'), ('live_near46_level10_again', '3D 46 ブロック・+10 dB（もう一度）')]
 
 
 def main():

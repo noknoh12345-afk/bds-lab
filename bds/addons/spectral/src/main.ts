@@ -831,12 +831,19 @@ const reach3D = () => Math.min(FOLLOW_RANGE, 16 * RANGE_3D);
  *  at full volume — the silence sent with it came late). So 3D sounds are made at P_MIN (17.6 Hz, under hearing) and their state
  *  is sent again this many ticks later */
 const SETTLE_TICKS = 2;
-/** how much louder than the files 3D sounds are steered (dB, spectral:range's second number; 0 = as so far, the default). A far
- *  3D voice loses its quiet parts under the phone's 16-bit floor — measured, run 41205071937: the 10 ms the original has 40-50 dB
- *  under its loudest are digital zeros a third of the time at 24 blocks and more than half at 40 (19 % at 12, none at 3) — which
- *  is what the headphones' +10 dB lifts. For measuring it on a phone first: the level is applied to 3D sounds by setVolume, as
- *  the headphones' is */
-let LEVEL_3D_DB = 0;
+/** how much louder than the files 3D sounds are steered (dB, spectral:range's second number; +10 by default since 1.2.0, as the
+ *  headphones' level). A far 3D voice loses its quiet parts under the phone's 16-bit floor, and the level lifts them — measured,
+ *  run 41270487804, a listener's own 3D sound to the left, 0 / +6 / +10 dB: at 3 blocks -30.7 / -23.9 / -20.3 dB (setVolume over
+ *  1 is played louder in 3D too), ViSQOL 3.16 / 3.17 / 3.20 (no loss to the clip); at 24 blocks ViSQOL 2.38 / 2.60 / 2.79, the 10 ms
+ *  the original has 40-50 dB under its loudest a digital zero 42 % / – / 5 % of the time; at 46 blocks 68 % -> 33 % (ViSQOL 2.62 ->
+ *  2.46 there, the one pair against it). It also puts the low thump of a new sound (SETTLE_TICKS) 12-15 dB further under the voice */
+let LEVEL_3D_DB = 10;
+/** live streams in 3D made quietly (spectral:range's third value; off by default, to be measured on a phone): the _3q events play
+ *  the same loops at definition volume Q3D and the add-on steers them 1/Q3D times up. A new 3D sound plays as made for 100-200 ms —
+ *  at P_MIN its loops, all in phase and at full volume, still clip into a low thump (run 41266897044: 60-250 Hz at -48..-69 dB for
+ *  ~0.1 s); made at 0.1 their sum stays under the mix's clip */
+let QUIET_3D = false;
+const Q3D = 0.1;
 
 class LiveStream {
   w = -1; frames = 0; gaps = 0; lastAt = 0;
@@ -907,7 +914,11 @@ class LivePlayer {
     this.lastP = new Float32Array(st.meta.N).fill(-1); this.lastL = new Float32Array(st.meta.N).fill(SILENT); this.lastNL = new Float32Array(st.meta.M).fill(SILENT);
   }
   get three() { return this.at.kind !== 'phones'; }
-  ev(name: string) { return this.three ? name + '_3d' : name; }
+  /** made quietly (QUIET_3D when the stream started playing here) */
+  q3 = QUIET_3D;
+  ev(name: string) { return this.three ? name + (this.q3 ? '_3q' : '_3d') : name; }
+  /** the highest level sent (10 file units, or 10 over the quiet events' Q3D) */
+  get cap() { return this.q3 ? 10 / Q3D : 10; }
   /** the level over the files: headphones as the listener's own setting (a phone +10 dB), 3D sounds LEVEL_3D_DB (their play volume is
    *  their range) */
   lv = 1;
@@ -974,10 +985,10 @@ class LivePlayer {
       if (first) this.lv = Math.pow(10, (settingsOf(first).level ?? 0) / 20);
     } else if (this.at.kind === 'speaker') {
       const w = this.where(); if (w) { this.targets.push({ dim: w.dim, loc: w.loc, osc: [], nz: [] }); this.anchor = w.loc; }
-      this.lv = Math.pow(10, LEVEL_3D_DB / 20);
+      this.lv = Math.pow(10, LEVEL_3D_DB / 20) / (this.q3 ? Q3D : 1);
     } else {
       // (follow / near: listen() builds each listener's sounds as they come near)
-      this.lv = Math.pow(10, LEVEL_3D_DB / 20);
+      this.lv = Math.pow(10, LEVEL_3D_DB / 20) / (this.q3 ? Q3D : 1);
       const w = this.where(); if (w) { this.anchor = w.loc; this.dim = w.dim.id; this.listen(w); }
       this.started = true;
       return;
@@ -1013,7 +1024,7 @@ class LivePlayer {
   private sendVoice(v: number, hz: number, dur: number, L: number, force = false) {
     let p = -1;
     if (hz > 0) { p = Math.min(P_MAX, Math.max(P_MIN, hz / BASE_HZ)); if (this.lastP[v] > 0 && Math.abs(p / this.lastP[v] - 1) < CENT) p = -1; }
-    L = Math.min(10, Math.max(SILENT, L));
+    L = Math.min(this.cap, Math.max(SILENT, L));
     const last = this.lastL[v];
     if (!force && L / last < DB025 && last / L < DB025) L = -1;
     if (p < 0 && L < 0) return;
@@ -1022,7 +1033,7 @@ class LivePlayer {
     if (L >= 0) this.lastL[v] = L;
   }
   private sendNoise(b: number, dur: number, L: number) {
-    L = Math.min(10, Math.max(SILENT, L));
+    L = Math.min(this.cap, Math.max(SILENT, L));
     const last = this.lastNL[b];
     if (L / last < DB025 && last / L < DB025) return;
     for (const t of this.targets) { const s = t.nz[b]; if (s) { try { s.fade(dur, L); } catch { /* gone */ } this.calls++; } }
@@ -1205,10 +1216,11 @@ cmdAny('spectral:live', 'Live streams (a voice chat, a microphone): the list, or
   });
 /** a song sent as a live stream, frame by frame as a voice chat would (the whole live path in the add-on itself: the frames are
  *  written as bytes and read back) */
-cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), and how much louder than the files they play (dB, 0 by default)', { 'volume?': 'float', 'level?': 'float' }, (_p, a) => {
+cmdAny('spectral:range', 'How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), how much louder than the files they play (dB, 0 by default), and whether live streams make them quietly (off by default)', { 'volume?': 'float', 'level?': 'float', 'quiet?': 'bool' }, (_p, a) => {
   if (a.volume !== undefined) RANGE_3D = Math.max(0.25, Math.min(16, a.volume));
   if (a.level !== undefined) LEVEL_3D_DB = Math.max(0, Math.min(18, Math.round(a.level * 10) / 10));
-  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : 'as the files'}; new speakers and live streams)`;
+  if (a.quiet !== undefined) QUIET_3D = Boolean(a.quiet);
+  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : 'as the files'}${QUIET_3D ? ', live streams made quietly' : ''}; new speakers and live streams)`;
 });
 cmdAny('spectral:live_demo', 'Send a song as a live stream, frame by frame as a voice chat bridge would (tests the live path)',
   { song: 'string', 'to?': ['phones', 'speaker', 'near', 'follow'], 'who?': 'player', 'voices?': 'int', 'at?': 'string' }, async (p, a) => {

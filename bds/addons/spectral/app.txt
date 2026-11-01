@@ -2,12 +2,13 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# 14 回目（tools/exp/make_app.py tools/exp/app14.json）: 3D の音のレベル（/spectral:range 3 <dB>）。遠くでは話し声の静かな所が 16 bit の床に消える
-#   （12 回目: 24 ブロックで元の −40〜−50 dB の所の 3–4 割がデジタルの 0）ので、ヘッドホンの +10 dB と同じことを 3D にも。夏目漱石をライブの道で、
-#   聞く人ごとの 3D（near）で左に: la_ / lb_ / lc_ = 3 ブロックで 0 / +6 / +10 dB（近くでクリップしないか）、ld_ / le_ / lf_ = 24 ブロックで 0 / +6 / +10、
-#   lg_ / lh_ = 46 ブロックで 0 / +10。ls_ = 曲のスピーカー（spectral:play … speaker、その場で: 1.2.0 の Session の 3D の作り方の頭）
-#   mg_ = 話す人を名札「talker」の防具立てにして follow（3 ブロック前、止まったまま）、mf_ = 同じ防具立てを 0.5 秒ごとに 1 ブロックずつ左右に
-#        （3 ブロック前を x = 6 … −6 で往復、約 1 秒ごとに音の作り直し = 1.2.0 の引き継ぎ）: 動く話す人の音が途切れたり「ピッ」と鳴ったりしないか
+# 15 回目（tools/exp/make_app.py tools/exp/app15.json）: 3D の既定のレベル +10 dB（14 回目: 24 ブロックで ViSQOL 2.38 → 2.79）と、ライブの 3D の音を
+#   静かに作る（/spectral:range 3 10 true: 定義の音量 0.1 の _3q の音を 10 倍に操る。13 回目: 高さ P_MIN で作っても、揃ったループの和がクリップして
+#   約 0.1 秒の低い「トン」が残る）。夏目漱石をライブの道で、qd_ = 3 ブロック・ふつうに作る、qa_ / qb_ / qc_ = 3 / 24 / 46 ブロック・静かに作る
+#   （頭の音・大きさ・届く距離が定義の音量で縮まないか）、qg_ = 24 ブロック・静かに・作る音量 16（qb_ が無音なら距離が縮んだ証拠）、
+#   xg_ / xh_ = 46 ブロックで 0 / +10 dB（14 回目の lg_ / lh_ のくり返し: そこだけ +10 dB の ViSQOL が低かった）、
+#   mg_ = 名札の防具立て「talker」を 3 ブロック前に置いて follow（止まったまま）、qf_ / qe_ = 同じ防具立てを 0.5 秒ごとに 1 ブロックずつ左右に
+#   （約 1 秒ごとに音の作り直し = 引き継ぎ）、ふつうに / 静かに作って。14 回目は防具立てが無いときの kill がエラーで止まった（直した）
 
 section title
 audio info
@@ -29,112 +30,86 @@ do time set noon
 do gamerule dodaylightcycle false
 do weather clear
 
-section la
+section qd
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 0
-audio start la_1
-audio mark la_speech_ja_soseki
+do execute as @a run spectral:range 3 10 false
+audio start qd_1
+audio mark qd_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d near @s 24 "near:3,-58.5,0,overworld"
 wait 23000
 audio stop
-audio analyze-all la_speech_ja_soseki=song:speech_ja_soseki
-audio export la_speech_ja_soseki 160
+audio analyze-all qd_speech_ja_soseki=song:speech_ja_soseki
+audio export qd_speech_ja_soseki 160
 
-section lb
+section qa
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 6
-audio start lb_1
-audio mark lb_speech_ja_soseki
+do execute as @a run spectral:range 3 10 true
+audio start qa_1
+audio mark qa_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d near @s 24 "near:3,-58.5,0,overworld"
 wait 23000
 audio stop
-audio analyze-all lb_speech_ja_soseki=song:speech_ja_soseki
-audio export lb_speech_ja_soseki 160
+audio analyze-all qa_speech_ja_soseki=song:speech_ja_soseki
+audio export qa_speech_ja_soseki 160
 
-section lc
+section qb
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10
-audio start lc_1
-audio mark lc_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_d near @s 24 "near:3,-58.5,0,overworld"
-wait 23000
-audio stop
-audio analyze-all lc_speech_ja_soseki=song:speech_ja_soseki
-audio export lc_speech_ja_soseki 160
-
-section ld
-do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 0
-audio start ld_1
-audio mark ld_speech_ja_soseki
+do execute as @a run spectral:range 3 10 true
+audio start qb_1
+audio mark qb_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d near @s 24 "near:24,-58.5,0,overworld"
 wait 23000
 audio stop
-audio analyze-all ld_speech_ja_soseki=song:speech_ja_soseki
-audio export ld_speech_ja_soseki 160
+audio analyze-all qb_speech_ja_soseki=song:speech_ja_soseki
+audio export qb_speech_ja_soseki 160
 
-section le
+section qc
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 6
-audio start le_1
-audio mark le_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_d near @s 24 "near:24,-58.5,0,overworld"
-wait 23000
-audio stop
-audio analyze-all le_speech_ja_soseki=song:speech_ja_soseki
-audio export le_speech_ja_soseki 160
-
-section lf
-do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10
-audio start lf_1
-audio mark lf_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_d near @s 24 "near:24,-58.5,0,overworld"
-wait 23000
-audio stop
-audio analyze-all lf_speech_ja_soseki=song:speech_ja_soseki
-audio export lf_speech_ja_soseki 160
-
-section lg
-do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 0
-audio start lg_1
-audio mark lg_speech_ja_soseki
+do execute as @a run spectral:range 3 10 true
+audio start qc_1
+audio mark qc_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d near @s 24 "near:46,-58.5,0,overworld"
 wait 23000
 audio stop
-audio analyze-all lg_speech_ja_soseki=song:speech_ja_soseki
-audio export lg_speech_ja_soseki 160
+audio analyze-all qc_speech_ja_soseki=song:speech_ja_soseki
+audio export qc_speech_ja_soseki 160
 
-section lh
+section qg
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 10
-audio start lh_1
-audio mark lh_speech_ja_soseki
+do execute as @a run spectral:range 16 10 true
+audio start qg_1
+audio mark qg_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_d near @s 24 "near:24,-58.5,0,overworld"
+wait 23000
+audio stop
+audio analyze-all qg_speech_ja_soseki=song:speech_ja_soseki
+audio export qg_speech_ja_soseki 160
+
+section xg
+do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run spectral:range 3 0 false
+audio start xg_1
+audio mark xg_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d near @s 24 "near:46,-58.5,0,overworld"
 wait 23000
 audio stop
-audio analyze-all lh_speech_ja_soseki=song:speech_ja_soseki
-audio export lh_speech_ja_soseki 160
+audio analyze-all xg_speech_ja_soseki=song:speech_ja_soseki
+audio export xg_speech_ja_soseki 160
 
-section ls
+section xh
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 0
-do execute as @a run spectral:voices 24
-do execute as @a run spectral:drums off
-do execute as @a run spectral:engine 0 false 0 0
-audio start ls_1
-audio mark ls_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_d speaker
+do execute as @a run spectral:range 3 10 false
+audio start xh_1
+audio mark xh_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_d near @s 24 "near:46,-58.5,0,overworld"
 wait 23000
 audio stop
-audio analyze-all ls_speech_ja_soseki=song:speech_ja_soseki
-audio export ls_speech_ja_soseki 160
+audio analyze-all xh_speech_ja_soseki=song:speech_ja_soseki
+audio export xh_speech_ja_soseki 160
 
 section mg
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 0
-do execute as @a run kill @e[type=armor_stand]
+do execute as @a run spectral:range 3 10 false
 do execute as @a run summon armor_stand talker 0 -60 3
 audio start mg_1
 audio mark mg_speech_ja_soseki
@@ -144,13 +119,12 @@ audio stop
 audio analyze-all mg_speech_ja_soseki=song:speech_ja_soseki
 audio export mg_speech_ja_soseki 160
 
-section mf
+section qf
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:range 3 0
-do execute as @a run kill @e[type=armor_stand]
-do execute as @a run summon armor_stand talker 6 -60 3
-audio start mf_1
-audio mark mf_speech_ja_soseki
+do execute as @a run spectral:range 3 10 false
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio start qf_1
+audio mark qf_speech_ja_soseki
 do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
 wait 500
 do tp @e[name=talker] 6 -60 3
@@ -234,5 +208,97 @@ wait 500
 do tp @e[name=talker] -3 -60 3
 wait 3000
 audio stop
-audio analyze-all mf_speech_ja_soseki=song:speech_ja_soseki
-audio export mf_speech_ja_soseki 160
+audio analyze-all qf_speech_ja_soseki=song:speech_ja_soseki
+audio export qf_speech_ja_soseki 160
+
+section qe
+do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run spectral:range 3 10 true
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio start qe_1
+audio mark qe_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_d follow @s 24 "follow:talker"
+wait 500
+do tp @e[name=talker] 6 -60 3
+wait 500
+do tp @e[name=talker] 5 -60 3
+wait 500
+do tp @e[name=talker] 4 -60 3
+wait 500
+do tp @e[name=talker] 3 -60 3
+wait 500
+do tp @e[name=talker] 2 -60 3
+wait 500
+do tp @e[name=talker] 1 -60 3
+wait 500
+do tp @e[name=talker] 0 -60 3
+wait 500
+do tp @e[name=talker] -1 -60 3
+wait 500
+do tp @e[name=talker] -2 -60 3
+wait 500
+do tp @e[name=talker] -3 -60 3
+wait 500
+do tp @e[name=talker] -4 -60 3
+wait 500
+do tp @e[name=talker] -5 -60 3
+wait 500
+do tp @e[name=talker] -6 -60 3
+wait 500
+do tp @e[name=talker] -5 -60 3
+wait 500
+do tp @e[name=talker] -4 -60 3
+wait 500
+do tp @e[name=talker] -3 -60 3
+wait 500
+do tp @e[name=talker] -2 -60 3
+wait 500
+do tp @e[name=talker] -1 -60 3
+wait 500
+do tp @e[name=talker] 0 -60 3
+wait 500
+do tp @e[name=talker] 1 -60 3
+wait 500
+do tp @e[name=talker] 2 -60 3
+wait 500
+do tp @e[name=talker] 3 -60 3
+wait 500
+do tp @e[name=talker] 4 -60 3
+wait 500
+do tp @e[name=talker] 5 -60 3
+wait 500
+do tp @e[name=talker] 6 -60 3
+wait 500
+do tp @e[name=talker] 5 -60 3
+wait 500
+do tp @e[name=talker] 4 -60 3
+wait 500
+do tp @e[name=talker] 3 -60 3
+wait 500
+do tp @e[name=talker] 2 -60 3
+wait 500
+do tp @e[name=talker] 1 -60 3
+wait 500
+do tp @e[name=talker] 0 -60 3
+wait 500
+do tp @e[name=talker] -1 -60 3
+wait 500
+do tp @e[name=talker] -2 -60 3
+wait 500
+do tp @e[name=talker] -3 -60 3
+wait 500
+do tp @e[name=talker] -4 -60 3
+wait 500
+do tp @e[name=talker] -5 -60 3
+wait 500
+do tp @e[name=talker] -6 -60 3
+wait 500
+do tp @e[name=talker] -5 -60 3
+wait 500
+do tp @e[name=talker] -4 -60 3
+wait 500
+do tp @e[name=talker] -3 -60 3
+wait 3000
+audio stop
+audio analyze-all qe_speech_ja_soseki=song:speech_ja_soseki
+audio export qe_speech_ja_soseki 160

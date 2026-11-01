@@ -1306,6 +1306,60 @@
     "onset_recall": 0.412,
     "third_oct_db": 8.259,
     "run": "41266897044"
+   },
+   "live_near3_level0": {
+    "visqol": 3.1621,
+    "onset_recall": 0.667,
+    "third_oct_db": 8.354,
+    "run": "41270487804"
+   },
+   "live_near3_level6": {
+    "visqol": 3.1674,
+    "onset_recall": 0.711,
+    "third_oct_db": 8.166,
+    "run": "41270487804"
+   },
+   "live_near3_level10": {
+    "visqol": 3.1955,
+    "onset_recall": 0.711,
+    "third_oct_db": 7.539,
+    "run": "41270487804"
+   },
+   "live_near24_level0": {
+    "visqol": 2.377,
+    "onset_recall": 0.509,
+    "third_oct_db": 8.28,
+    "run": "41270487804"
+   },
+   "live_near24_level6": {
+    "visqol": 2.6,
+    "onset_recall": 0.57,
+    "third_oct_db": 8.24,
+    "run": "41270487804"
+   },
+   "live_near24_level10": {
+    "visqol": 2.7928,
+    "onset_recall": 0.632,
+    "third_oct_db": 8.317,
+    "run": "41270487804"
+   },
+   "live_near46_level0": {
+    "visqol": 2.621,
+    "onset_recall": 0.287,
+    "third_oct_db": 55.497,
+    "run": "41270487804"
+   },
+   "live_near46_level10": {
+    "visqol": 2.4645,
+    "onset_recall": 0.553,
+    "third_oct_db": 7.933,
+    "run": "41270487804"
+   },
+   "live_3d_song_speaker": {
+    "visqol": 2.9522,
+    "onset_recall": 0.658,
+    "third_oct_db": 8.263,
+    "run": "41270487804"
    }
   },
   "demo_selfmade": {
@@ -1846,6 +1900,33 @@
   ],
   "live_3d_speaker52_range4": [
    "41266897044"
+  ],
+  "live_near3_level0": [
+   "41270487804"
+  ],
+  "live_near3_level6": [
+   "41270487804"
+  ],
+  "live_near3_level10": [
+   "41270487804"
+  ],
+  "live_near24_level0": [
+   "41270487804"
+  ],
+  "live_near24_level6": [
+   "41270487804"
+  ],
+  "live_near24_level10": [
+   "41270487804"
+  ],
+  "live_near46_level0": [
+   "41270487804"
+  ],
+  "live_near46_level10": [
+   "41270487804"
+  ],
+  "live_3d_song_speaker": [
+   "41270487804"
   ]
  },
  "medians": {
@@ -1996,6 +2077,42 @@
   "live_3d_speaker52_range4": {
    "n": 1,
    "visqol": 2.425
+  },
+  "live_near3_level0": {
+   "n": 1,
+   "visqol": 3.162
+  },
+  "live_near3_level6": {
+   "n": 1,
+   "visqol": 3.167
+  },
+  "live_near3_level10": {
+   "n": 1,
+   "visqol": 3.196
+  },
+  "live_near24_level0": {
+   "n": 1,
+   "visqol": 2.377
+  },
+  "live_near24_level6": {
+   "n": 1,
+   "visqol": 2.6
+  },
+  "live_near24_level10": {
+   "n": 1,
+   "visqol": 2.793
+  },
+  "live_near46_level0": {
+   "n": 1,
+   "visqol": 2.621
+  },
+  "live_near46_level10": {
+   "n": 1,
+   "visqol": 2.465
+  },
+  "live_3d_song_speaker": {
+   "n": 1,
+   "visqol": 2.952
   }
  },
  "gaps": {
@@ -2178,6 +2295,51 @@
    "n": 1,
    "median": 0.382,
    "within_0.3": 0
+  },
+  "live_near3_level0": {
+   "n": 1,
+   "median": -0.355,
+   "within_0.3": 1
+  },
+  "live_near3_level6": {
+   "n": 1,
+   "median": -0.36,
+   "within_0.3": 1
+  },
+  "live_near3_level10": {
+   "n": 1,
+   "median": -0.388,
+   "within_0.3": 1
+  },
+  "live_near24_level0": {
+   "n": 1,
+   "median": 0.43,
+   "within_0.3": 0
+  },
+  "live_near24_level6": {
+   "n": 1,
+   "median": 0.207,
+   "within_0.3": 1
+  },
+  "live_near24_level10": {
+   "n": 1,
+   "median": 0.015,
+   "within_0.3": 1
+  },
+  "live_near46_level0": {
+   "n": 1,
+   "median": 0.186,
+   "within_0.3": 1
+  },
+  "live_near46_level10": {
+   "n": 1,
+   "median": 0.343,
+   "within_0.3": 0
+  },
+  "live_3d_song_speaker": {
+   "n": 1,
+   "median": -0.145,
+   "within_0.3": 1
   }
  }
 }

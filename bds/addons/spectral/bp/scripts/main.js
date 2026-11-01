@@ -1278,7 +1278,9 @@ var FOLLOW_RANGE = 48;
 var RANGE_3D = 3;
 var reach3D = () => Math.min(FOLLOW_RANGE, 16 * RANGE_3D);
 var SETTLE_TICKS = 2;
-var LEVEL_3D_DB = 0;
+var LEVEL_3D_DB = 10;
+var QUIET_3D = false;
+var Q3D = 0.1;
 var LiveStream = class {
   constructor(id, meta) {
     this.id = id;
@@ -1414,8 +1416,14 @@ var LivePlayer = class {
   get three() {
     return this.at.kind !== "phones";
   }
+  /** made quietly (QUIET_3D when the stream started playing here) */
+  q3 = QUIET_3D;
   ev(name) {
-    return this.three ? name + "_3d" : name;
+    return this.three ? name + (this.q3 ? "_3q" : "_3d") : name;
+  }
+  /** the highest level sent (10 file units, or 10 over the quiet events' Q3D) */
+  get cap() {
+    return this.q3 ? 10 / Q3D : 10;
   }
   /** the level over the files: headphones as the listener's own setting (a phone +10 dB), 3D sounds LEVEL_3D_DB (their play volume is
    *  their range) */
@@ -1519,9 +1527,9 @@ var LivePlayer = class {
         this.targets.push({ dim: w.dim, loc: w.loc, osc: [], nz: [] });
         this.anchor = w.loc;
       }
-      this.lv = Math.pow(10, LEVEL_3D_DB / 20);
+      this.lv = Math.pow(10, LEVEL_3D_DB / 20) / (this.q3 ? Q3D : 1);
     } else {
-      this.lv = Math.pow(10, LEVEL_3D_DB / 20);
+      this.lv = Math.pow(10, LEVEL_3D_DB / 20) / (this.q3 ? Q3D : 1);
       const w = this.where();
       if (w) {
         this.anchor = w.loc;
@@ -1576,7 +1584,7 @@ var LivePlayer = class {
       p = Math.min(P_MAX, Math.max(P_MIN, hz / BASE_HZ));
       if (this.lastP[v] > 0 && Math.abs(p / this.lastP[v] - 1) < CENT) p = -1;
     }
-    L = Math.min(10, Math.max(SILENT, L));
+    L = Math.min(this.cap, Math.max(SILENT, L));
     const last = this.lastL[v];
     if (!force && L / last < DB025 && last / L < DB025) L = -1;
     if (p < 0 && L < 0) return;
@@ -1594,7 +1602,7 @@ var LivePlayer = class {
     if (L >= 0) this.lastL[v] = L;
   }
   sendNoise(b, dur, L) {
-    L = Math.min(10, Math.max(SILENT, L));
+    L = Math.min(this.cap, Math.max(SILENT, L));
     const last = this.lastNL[b];
     if (L / last < DB025 && last / L < DB025) return;
     for (const t of this.targets) {
@@ -1874,10 +1882,11 @@ cmdAny(
     return livePlay(st, at);
   }
 );
-cmdAny("spectral:range", "How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), and how much louder than the files they play (dB, 0 by default)", { "volume?": "float", "level?": "float" }, (_p, a) => {
+cmdAny("spectral:range", "How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), how much louder than the files they play (dB, 0 by default), and whether live streams make them quietly (off by default)", { "volume?": "float", "level?": "float", "quiet?": "bool" }, (_p, a) => {
   if (a.volume !== void 0) RANGE_3D = Math.max(0.25, Math.min(16, a.volume));
   if (a.level !== void 0) LEVEL_3D_DB = Math.max(0, Math.min(18, Math.round(a.level * 10) / 10));
-  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : "as the files"}; new speakers and live streams)`;
+  if (a.quiet !== void 0) QUIET_3D = Boolean(a.quiet);
+  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : "as the files"}${QUIET_3D ? ", live streams made quietly" : ""}; new speakers and live streams)`;
 });
 cmdAny(
   "spectral:live_demo",

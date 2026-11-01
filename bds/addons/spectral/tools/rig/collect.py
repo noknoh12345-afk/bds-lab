@@ -57,7 +57,13 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         # following a name-tagged armor stand 3 blocks ahead, standing (mg) and walking left and right a block every 0.5 s (mf)
         'la': 'live_near3_level0', 'lb': 'live_near3_level6', 'lc': 'live_near3_level10', 'ld': 'live_near24_level0',
         'le': 'live_near24_level6', 'lf': 'live_near24_level10', 'lg': 'live_near46_level0', 'lh': 'live_near46_level10',
-        'ls': 'live_3d_song_speaker', 'mg': 'live_3d_follow_still', 'mf': 'live_3d_follow_walking'}
+        'ls': 'live_3d_song_speaker', 'mg': 'live_3d_follow_still', 'mf': 'live_3d_follow_walking',
+        # run 15: live 3D made quietly (the _3q events, spectral:range 3 0 true): near at 3 blocks made as before (qd) and quietly (qa),
+        # quietly at 24 / 46 blocks (qb / qc) and at 24 made at 16 (qg); a walking talker made as before (qf) and quietly (qe)
+        'qd': 'live_near3_made_loud', 'qa': 'live_near3_quiet', 'qb': 'live_near24_quiet', 'qc': 'live_near46_quiet',
+        'qg': 'live_near24_quiet_range16', 'qf': 'live_3d_follow_walking_loud', 'qe': 'live_3d_follow_walking_quiet',
+        # (and run 14's 46 blocks again, 0 / +10 dB: xg / xh; mg as in run 14, at +10 dB)
+        'xg': 'live_near46_level0_again', 'xh': 'live_near46_level10_again'}
 
 
 def songs(res):

@@ -13,8 +13,9 @@
 4. **ライブ（近接ボイスチャット・立体音響）**: `/spectral:live` が流れている声の一覧。Discord のボイスチャンネルの声を、つないだ
    プレイヤーの位置から 3D で（近づくと大きく、向きで左右、その人に付いて動く）: tools/live/README.md の bridge.mjs。
    試し: `/spectral:live_demo demo near`（その場に置いて、近くの人それぞれが 3D で聞く）・`/spectral:live_demo demo follow <誰>`（その人から:
-   本人には聞こえない）。3D の音は 48 ブロックまで届く（`/spectral:range <音量> [レベル dB]`: 16 ブロック × 音量、既定 3。レベルは 3D の音を
-   ファイルより大きく: 既定 0、遠くで静かな所が 16 bit の床に消えるのを実機で測るため）
+   本人には聞こえない）。名札をつけたエンティティ（防具立て・ペット）も follow の話し手にできる。3D の音は 48 ブロックまで届く
+   （`/spectral:range <音量> [レベル dB] [静かに作る]`: 16 ブロック × 音量、既定 3。レベルは 3D の音をファイルより大きく、既定 +10 dB:
+   遠くで声の静かな所が 16 bit の床に消えないように。静かに作るは実験中で既定は off）
 5. **電話**は同時に 32 音しか鳴らない（実測）ので自動で 24 声＋ノイズ 8、ファイルより 10 dB 大きく（実測で +6 dB より良い）。Realms や人が多いときは
    `/spectral:mode light`（16 声・1 人 1 tick 24 命令まで）
 
@@ -48,7 +49,8 @@
 - [x] 変換器が tick ごとに選んだ長さのフェードで声とノイズ帯域を鳴らす（## a song with fitted fades (tools/spectral.py nz_fade, v_fade): each voice and noise band fades as long as the converter chose, tick by tick）
 - [x] ライブ: 声（ボイスチャット・マイク）をその場で受け取り、届いた順に鳴らす。script event `spectral:live`、ジッターバッファ 2 tick、届かなかったフレームは数えて埋める、送り手が始め直したら新しいストリーム、終わり（## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), starts again when its sender does, and ends）
 - [x] ライブの道で曲を 1 フレームずつ送る（ボイスチャットの橋渡しと同じ形）: ヘッドホンに、そして歩く人から 3D で（音がその人に付いて動く・48 ブロック以内の人それぞれに・話す本人には聞こえない・いなくなった人の声は誰にも聞こえない: 近接ボイスチャット・立体音響）（## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice, nobody hears a talker who left)）
-- [x] 3D の音は 48 ブロックまで届く: 届く距離は作るときの音量で決まる（実機で 16 ブロック × 音量、音量を上げても大きくはならない）ので音量 3 で作り、音を作るのは届く人にだけ（## 3D sounds reach 48 blocks (made at volume 3: the client takes the distance from it, 16 blocks a unit, measured), and only the players they reach get sounds (spectral:range)）
+- [x] 名札のエンティティ（防具立て・ペット・NPC）の声を follow で追える（## a voice can follow an entity with a name tag (an NPC, a pet) as it follows a player: everyone within reach hears it, it moves with it, and nobody hears it once it is gone）
+- [x] 3D の音は 48 ブロックまで届き、ファイルより 10 dB 大きく鳴る: 届く距離は作るときの音量で決まる（実機で 16 ブロック × 音量、音量を上げても大きくはならない）ので音量 3 で作り、音を作るのは届く人にだけ。レベルは setVolume で（実機で 3D でも 1 を超えて効く。24 ブロックで ViSQOL 2.38 → 2.79）（## 3D sounds reach 48 blocks (made at volume 3: the client takes the distance from it, 16 blocks a unit, measured) and play 10 dB over the files (measured: a far voice keeps its quiet parts), and only the players they reach get sounds (spectral:range)）
 
 ## Guessed
 <!-- values decided without asking -->

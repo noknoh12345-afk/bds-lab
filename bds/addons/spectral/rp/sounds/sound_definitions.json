@@ -772,6 +772,114 @@
      "volume": 4.0
     }
    ]
+  },
+  "spectral.osc_3q": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/osc",
+     "is3D": true,
+     "volume": 0.1
+    }
+   ]
+  },
+  "spectral.n0_3q": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/n0",
+     "is3D": true,
+     "volume": 0.1
+    }
+   ]
+  },
+  "spectral.n1_3q": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/n1",
+     "is3D": true,
+     "volume": 0.1
+    }
+   ]
+  },
+  "spectral.n2_3q": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/n2",
+     "is3D": true,
+     "volume": 0.1
+    }
+   ]
+  },
+  "spectral.n3_3q": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/n3",
+     "is3D": true,
+     "volume": 0.1
+    }
+   ]
+  },
+  "spectral.n4_3q": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/n4",
+     "is3D": true,
+     "volume": 0.1
+    }
+   ]
+  },
+  "spectral.n5_3q": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/n5",
+     "is3D": true,
+     "volume": 0.1
+    }
+   ]
+  },
+  "spectral.n6_3q": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/n6",
+     "is3D": true,
+     "volume": 0.1
+    }
+   ]
+  },
+  "spectral.n7_3q": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/n7",
+     "is3D": true,
+     "volume": 0.1
+    }
+   ]
   }
  }
 }
