@@ -51,7 +51,13 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         # each listener's own 3D sound to the left at 3 / 24 / 46 blocks made at volume 3 (na / nb / nc), at 3 blocks made at 1 (nf);
         # the one 3D speaker for everyone at 6 blocks (nd, as run 9's jl) and at 52 blocks made at 4 (ne: past the definitions' 48)
         'o': 'refined_svr5_at10', 'na': 'live_near3_range3', 'nb': 'live_near24_range3', 'nc': 'live_near46_range3', 'nf': 'live_near3_range1',
-        'nd': 'live_3d_speaker6_range3', 'ne': 'live_3d_speaker52_range4'}
+        'nd': 'live_3d_speaker6_range3', 'ne': 'live_3d_speaker52_range4',
+        # run 14: 3D sounds louder than the files (spectral:range 3 <dB>) — near to the left at 3 blocks 0 / +6 / +10 dB (la / lb / lc), 24
+        # blocks (ld / le / lf), 46 blocks 0 / +10 (lg / lh); a song played as a speaker (ls, the song player's 3D sounds); a voice
+        # following a name-tagged armor stand 3 blocks ahead, standing (mg) and walking left and right a block every 0.5 s (mf)
+        'la': 'live_near3_level0', 'lb': 'live_near3_level6', 'lc': 'live_near3_level10', 'ld': 'live_near24_level0',
+        'le': 'live_near24_level6', 'lf': 'live_near24_level10', 'lg': 'live_near46_level0', 'lh': 'live_near46_level10',
+        'ls': 'live_3d_song_speaker', 'mg': 'live_3d_follow_still', 'mf': 'live_3d_follow_walking'}
 
 
 def songs(res):

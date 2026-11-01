@@ -442,3 +442,20 @@ spectral:range 3 6
 ~ range: 3D sounds made at volume 3, heard to 48 blocks \(level \+6 dB;
 @A cmd /spectral:range 3 0
 ~ @A range: 3D sounds made at volume 3, heard to 48 blocks \(level as the files;
+
+## a voice can follow an entity with a name tag (an NPC, a pet) as it follows a player: everyone within reach hears it, it moves with it, and nobody hears it once it is gone
+summon armor_stand talker 3 -60 0
+wait 300
+scriptevent spectral:live {"id":"t4","m":{"N":2,"M":8,"amp":[-90,0.75],"nz":[-100,0.5],"fd":[5,12,25,50]},"s":0,"f":"A2QQcAAAAAAAAAAAAA///w==","at":"follow:talker"}
+wait 800
+@A cmd /spectral:live
+~ @A live t4: 1 frames, 2 voices, follow talker listeners 3 delay
+tp @e[name=talker] 6 -60 0
+wait 1000
+@A cmd /spectral:live
+~ @A live t4: 1 frames, 2 voices, follow talker listeners 1 delay .* moves [1-9]
+kill @e[name=talker]
+wait 1000
+@A cmd /spectral:live
+~ @A live t4: 1 frames, 2 voices, follow talker listeners 0
+scriptevent spectral:live {"id":"t4","end":true}

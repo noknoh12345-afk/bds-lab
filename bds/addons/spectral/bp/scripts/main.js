@@ -1429,10 +1429,29 @@ var LivePlayer = class {
       }
     }
     if (this.at.kind === "follow") {
-      const who = this.at.who, q = world2.getPlayers({ name: who })[0];
-      if (!q?.isValid) return void 0;
-      const l = q.getHeadLocation();
-      return { dim: q.dimension, loc: { x: l.x, y: l.y, z: l.z } };
+      const who = this.at.who, q = world2.getPlayers({ name: who })[0], e = q?.isValid ? q : this.named(who);
+      if (!e) return void 0;
+      const l = e.getHeadLocation();
+      return { dim: e.dimension, loc: { x: l.x, y: l.y, z: l.z } };
+    }
+    return void 0;
+  }
+  /** follow: no player of that name — an entity with that name tag (an armor stand, a pet, an NPC that talks), looked for at most
+   *  every 10 ticks while there is none */
+  talker;
+  lookedAt = -100;
+  named(who) {
+    if (this.talker?.isValid && this.talker.nameTag === who) return this.talker;
+    this.talker = void 0;
+    const now = system2.currentTick;
+    if (now - this.lookedAt < 10) return void 0;
+    this.lookedAt = now;
+    for (const id of ["overworld", "nether", "the_end"]) {
+      try {
+        const x = world2.getDimension(id).getEntities({ name: who })[0];
+        if (x) return this.talker = x;
+      } catch {
+      }
     }
     return void 0;
   }

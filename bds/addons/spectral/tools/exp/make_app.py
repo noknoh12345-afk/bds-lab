@@ -2,7 +2,8 @@
    {pre: recording prefix, suffix: song id suffix ('' = current converter), conv: converter options for that suffix,
     pack: a folder of songs converted beforehand with those options (make_packs.py; then nothing is converted in the run),
     cmds: commands before the arm (run as the player), songs: list (default all 13), export: kbps or 0,
-    play: what starts a song ("spectral:play {song}" by default; e.g. "spectral:live_demo {song} phones")}
+    play: what starts a song ("spectral:play {song}" by default; e.g. "spectral:live_demo {song} phones"),
+    during: [[ms, server command], ...] run while the song plays, each ms after the one before (e.g. a talker moved: "tp @e[name=talker] 3 -59 0")}
    interleave: prefixes of arms with the same commands, recorded song by song (a run cut short keeps whole pairs)
    calib: calibration programs recorded first (["loud"]); ceiling: {"arms": [{pre, args ("4" = playSound volume 4, "4 d4" = the
    event whose definition says volume 4), songs}]} — the originals as plain sounds (songpack.py --unit), last: the BDS restarts
@@ -39,6 +40,12 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
     for prog in calib:
         L+=['', f'section calib_{prog}', 'audio start calib', f'do spectral:calib {prog}', f'until server spectral calib\\] end {prog} 300000', 'wait 2000',
             'audio stop', f'audio analyze calib {prog}', 'audio export calib 192']
+    def waits(a):
+        """the song's wait, with the arm's `during` commands in it"""
+        out, left = [], wait_ms
+        for ms, c in a.get('during', []):
+            out+=[f'wait {ms}', f'do {c}']; left-=ms
+        return out + [f'wait {max(0, left)}']
     def section(title, plan):
         """plan: [(arm, song)] in the order they are recorded → the section's lines (each arm's commands when they change)"""
         out, cur = ['', f'section {title}'], None
@@ -52,7 +59,7 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
                 out+=cmds(a, k == 0); cur=a.get('cmds',[])
                 name=f"{a['pre']}_{s}"
                 play=a.get('play', 'spectral:play {song}').format(song=s + a.get('suffix',''))
-                out+=[f'audio start {name}', f"do execute as @a run {play}", f'wait {wait_ms}', 'audio stop', f'audio analyze {name} song:{s}']
+                out+=[f'audio start {name}', f"do execute as @a run {play}", *waits(a), 'audio stop', f'audio analyze {name} song:{s}']
                 if a.get('export',160): out.append(f"audio export {name} {a.get('export',160)}")
             return out
         for b0 in range(0, len(plan), batch):
@@ -63,7 +70,7 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
                 if k: out+=cmds(a, False); cur=a.get('cmds',[])
                 name=f"{a['pre']}_{s}"
                 play=a.get('play', 'spectral:play {song}').format(song=s + a.get('suffix',''))
-                out+=[f'audio mark {name}', f"do execute as @a run {play}", f'wait {wait_ms}']
+                out+=[f'audio mark {name}', f"do execute as @a run {play}", *waits(a)]
             out+=['audio stop', 'audio analyze-all ' + ' '.join(f"{a['pre']}_{s}=song:{s}" for a, s in part)]
             out+=[f"audio export {a['pre']}_{s} {a.get('export',160)}" for a, s in part if a.get('export',160)]
         return out

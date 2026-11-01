@@ -13,7 +13,8 @@
 4. **ライブ（近接ボイスチャット・立体音響）**: `/spectral:live` が流れている声の一覧。Discord のボイスチャンネルの声を、つないだ
    プレイヤーの位置から 3D で（近づくと大きく、向きで左右、その人に付いて動く）: tools/live/README.md の bridge.mjs。
    試し: `/spectral:live_demo demo near`（その場に置いて、近くの人それぞれが 3D で聞く）・`/spectral:live_demo demo follow <誰>`（その人から:
-   本人には聞こえない）。3D の音は 48 ブロックまで届く（`/spectral:range <音量>`: 16 ブロック × 音量、既定 3）
+   本人には聞こえない）。3D の音は 48 ブロックまで届く（`/spectral:range <音量> [レベル dB]`: 16 ブロック × 音量、既定 3。レベルは 3D の音を
+   ファイルより大きく: 既定 0、遠くで静かな所が 16 bit の床に消えるのを実機で測るため）
 5. **電話**は同時に 32 音しか鳴らない（実測）ので自動で 24 声＋ノイズ 8、ファイルより 10 dB 大きく（実測で +6 dB より良い）。Realms や人が多いときは
    `/spectral:mode light`（16 声・1 人 1 tick 24 命令まで）
 
@@ -93,7 +94,7 @@
 - tools/spectral.py: MP3 → 曲データ（--ts で src/songs/*.ts）。--preview でアドオンと同じ tick 規則の試聴 WAV/MP3。既定はアナリシス v2（部分音のトラック → 声部、ノイズ帯域と打撃音の帯域を NSIM-lite で合成して選ぶ）、`--analysis v1` で前の版
 - tools/parity.py: web/core.js と tools/spectral.py の出力がバイト単位で同じかを試験曲すべてで確かめる
 - tools/eval.py / tools/systems.py: 試験曲で方式を採点（ViSQOL ほか、corpus/results/）。tools/abx/make_abx.py: 聴き比べの音声と ABX ページ（dist/abx/）
-- tools/rig/: 実機の測定リグ（programs.py → src/calib_programs.ts、analyze.py、synth.py、songpack.py、fetch_rec.py = 実行の録音を手元へ）。`python3 tests/test_rig.py` が解析を合成クライアントで試験する
+- tools/rig/: 実機の測定リグ（programs.py → src/calib_programs.ts、analyze.py、synth.py、songpack.py、fetch_rec.py = 実行の録音を手元へ、collect.py・run_report.py = run の表、dropouts.py = 抜け、start_burst.py = 3D の録音の頭）。`python3 tests/test_rig.py` が解析を合成クライアントで試験する
 - tools/live/: ライブ（encoder.mjs = ファイルをライブのフレームに / 曲に、bridge.mjs = Discord の声をプレイヤーの位置から 3D で、test_bridge.mjs）。web/live.js がその場の変換
 - tools/exp/: クライアントの模型を通した実験（run_exp.py・score_pack.py・make_packs.py = 実機の run 用に前もって変換した曲・make_app.py = app.txt、
   `"batch": N` で 1 本の録音に N 曲（audio mark → audio stop が切り分け → audio analyze-all が並行して測る）・**batch_play.py = app の JSON の全曲を

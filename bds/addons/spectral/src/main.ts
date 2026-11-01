@@ -7,7 +7,7 @@
 // leading silence, so they land between ticks. Songs are data (a few kB/s), not sounds: the resource pack never
 // changes, new songs arrive as song packs over script events, and playback is fully dynamic (seek, time-stretch,
 // transpose, EQ, freeze, reverse, 3D speaker).  tools/spectral.py renders the very same tick rules offline.
-import { world, system, Player, Dimension, Vector3, SoundInstance } from '@minecraft/server';
+import { world, system, Player, Entity, Dimension, Vector3, SoundInstance } from '@minecraft/server';
 import { ModalFormData } from '@minecraft/server-ui';
 import { cmd, cmdAny, menu, ask, onItem, give, item, once, load, save } from './kit';
 import { OSC_AMP, BASE_HZ, NOISE_RMS, NOISE_BANDS, BURST_RMS, BURST_BANDS, SUB } from './assets';
@@ -913,7 +913,25 @@ class LivePlayer {
   lv = 1;
   where(): { dim: Dimension; loc: Vector3 } | undefined {
     if (this.at.kind === 'speaker' || this.at.kind === 'near') { try { return { dim: world.getDimension(this.at.dim), loc: this.at.loc }; } catch { return undefined; } }
-    if (this.at.kind === 'follow') { const who = this.at.who, q = world.getPlayers({ name: who })[0]; if (!q?.isValid) return undefined; const l = q.getHeadLocation(); return { dim: q.dimension, loc: { x: l.x, y: l.y, z: l.z } }; }
+    if (this.at.kind === 'follow') {
+      const who = this.at.who, q = world.getPlayers({ name: who })[0], e: Entity | undefined = q?.isValid ? q : this.named(who);
+      if (!e) return undefined;
+      const l = e.getHeadLocation(); return { dim: e.dimension, loc: { x: l.x, y: l.y, z: l.z } };
+    }
+    return undefined;
+  }
+  /** follow: no player of that name — an entity with that name tag (an armor stand, a pet, an NPC that talks), looked for at most
+   *  every 10 ticks while there is none */
+  private talker?: Entity; private lookedAt = -100;
+  private named(who: string): Entity | undefined {
+    if (this.talker?.isValid && this.talker.nameTag === who) return this.talker;
+    this.talker = undefined;
+    const now = system.currentTick;
+    if (now - this.lookedAt < 10) return undefined;
+    this.lookedAt = now;
+    for (const id of ['overworld', 'nether', 'the_end']) {
+      try { const x = world.getDimension(id).getEntities({ name: who })[0]; if (x) return (this.talker = x); } catch { /* not loaded */ }
+    }
     return undefined;
   }
   private loop(t: Target, name: string, at = t.loc): SoundInstance {

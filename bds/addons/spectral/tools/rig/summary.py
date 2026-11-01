@@ -26,7 +26,11 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('refined_svr5_at10', '+6 dB 向けの曲を +10 dB で（1.2.0 の電話）'), ('live_near3_range3', '1.2.0 の 3D 3 ブロック・音量 3'),
         ('live_near24_range3', '1.2.0 の 3D 24 ブロック・音量 3'), ('live_near46_range3', '1.2.0 の 3D 46 ブロック・音量 3'),
         ('live_near3_range1', '1.2.0 の 3D 3 ブロック・音量 1'), ('live_3d_speaker6_range3', '1.2.0 のスピーカー 6 ブロック'),
-        ('live_3d_speaker52_range4', '1.2.0 のスピーカー 52 ブロック・音量 4')]
+        ('live_3d_speaker52_range4', '1.2.0 のスピーカー 52 ブロック・音量 4'),
+        ('live_near3_level0', '3D 3 ブロック・レベル 0'), ('live_near3_level6', '3D 3 ブロック・+6 dB'), ('live_near3_level10', '3D 3 ブロック・+10 dB'),
+        ('live_near24_level0', '3D 24 ブロック・レベル 0'), ('live_near24_level6', '3D 24 ブロック・+6 dB'), ('live_near24_level10', '3D 24 ブロック・+10 dB'),
+        ('live_near46_level0', '3D 46 ブロック・レベル 0'), ('live_near46_level10', '3D 46 ブロック・+10 dB'), ('live_3d_song_speaker', '曲のスピーカー（その場）'),
+        ('live_3d_follow_still', 'follow・止まった話す人'), ('live_3d_follow_walking', 'follow・歩く話す人')]
 
 
 def main():
