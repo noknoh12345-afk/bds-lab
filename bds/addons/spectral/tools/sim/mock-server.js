@@ -6,6 +6,7 @@ export const CustomCommandParamType = { Integer: 'int', Float: 'float', String: 
 export const CommandPermissionLevel = { Any: 0, GameDirectors: 1 };
 export const CustomCommandStatus = { Success: 0, Failure: 1 };
 export const DisplaySlotId = { Sidebar: 'sidebar', List: 'list', BelowName: 'belowname' };
+export const PlayerPermissionLevel = { Visitor: 0, Member: 1, Operator: 2, Custom: 3 };
 export class ItemStack { constructor(id, n = 1) { this.typeId = id; this.amount = n; } setLore() {} clone() { return new ItemStack(this.typeId, this.amount); } }
 let nid = 0;
 export class SoundInstance {
@@ -24,7 +25,8 @@ export class Player {
 let players = [];
 export const _setPlayers = (p) => { players = p; };
 export const world = { afterEvents: { worldLoad: subs(), playerSpawn: subs(), playerDimensionChange: subs(), playerLeave: subs() }, beforeEvents: {},
-  getPlayers: () => players, getAllPlayers: () => players, sendMessage: (m) => log.push(['world', tick, m]), scoreboard: {} };
+  getPlayers: () => players, getAllPlayers: () => players, sendMessage: (m) => log.push(['world', tick, m]), scoreboard: {},
+  _dp: new Map(), getDynamicProperty(k) { return this._dp.get(k); }, setDynamicProperty(k, v) { if (v === undefined) this._dp.delete(k); else this._dp.set(k, v); } };
 const intervals = [], timeouts = [], jobs = [];
 export const commands = {};
 export const system = {

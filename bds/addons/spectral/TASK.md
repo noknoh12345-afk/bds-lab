@@ -5,9 +5,13 @@
 
 ## 使い方（遊ぶ人へ）
 1. **本体**: `Spectral_Player.mcaddon`（bds-lab の dist/、変換ページの「本体アドオンを保存」）を開き、ワールドでビヘイビアーパックと
-   リソースパックを有効に（実験的な機能は要らない）。サーバーなら `node lab.mjs deploy <BDS のフォルダ>`。版は 1.2.0（同じ UUID のまま上げたので、前の版を入れていても更新として入る）
+   リソースパックを有効に（実験的な機能は要らない）。サーバーなら `node lab.mjs deploy <BDS のフォルダ>`。版は 1.3.0（同じ UUID のまま上げたので、前の版を入れていても更新として入る。1.3.0: 何人もの話し手で音を分ける・曲をテキストで貼り付け）
 2. **曲**: 変換ページ（web/dist/index.html。claude.ai の Spectral Converter）に MP3 などを落とす → 「ゲーム内の音」で試聴 →
    「曲パックを保存」→ 末尾の .zip を消した .mcpack を開き、ワールドで本体と一緒に有効に。手元なら `python3 tools/spectral.py <曲> --ts`
+2b. **曲パックを入れられないとき（Realms・スマホだけ）はテキストで**: 変換ページの「ゲームで貼り付け」→「選んでいる曲をテキストに」→ コピーして、ゲームの
+   `/spectral:paste`（リモコンの「📋 Paste a song」）のフォームに貼り付ける。長い曲はパート（1 回 30000 文字まで: 本体のリソースパックの
+   rp/ui/server_form.json がフォームの入力欄を 100 → 30000 文字に広げる）に分かれ、フォームが次のパートを待つ。登録した曲はワールドに残る
+   （`/spectral:forget <ID>` で消す）。20 秒の曲は 24 声・音程 3 セントで 4,500–10,600 文字、3 分半の曲は 3 パート。手元なら `node tools/songtext.mjs <曲.song.json>`
 3. **ゲームで**: 最初に配られるスペクトル・リモコンか `/spectral:menu`。`/spectral:play <曲> phones|speaker`（ヘッドホン: 自分に付いてくる／
    スピーカー: その場から 3D で近くの全員に）・`/spectral:stop`。速度（音程そのまま・逆再生）・移調・EQ・音量・声の数は鳴らしながら
 4. **ライブ（近接ボイスチャット・立体音響）**: `/spectral:live` が流れている声の一覧。Discord のボイスチャンネルの声を、つないだ
@@ -51,6 +55,7 @@
 - [x] ライブ: 声（ボイスチャット・マイク）をその場で受け取り、届いた順に鳴らす。script event `spectral:live`、ジッターバッファ 2 tick、届かなかったフレームは数えて埋める、送り手が始め直したら新しいストリーム、終わり（## a live stream plays while its frames arrive (spectral:live script events from the console, a jitter buffer of 2 ticks), starts again when its sender does, and ends）
 - [x] ライブの道で曲を 1 フレームずつ送る（ボイスチャットの橋渡しと同じ形）: ヘッドホンに、そして歩く人から 3D で（音がその人に付いて動く・48 ブロック以内の人それぞれに・話す本人には聞こえない・いなくなった人の声は誰にも聞こえない: 近接ボイスチャット・立体音響）（## a song sent as a live stream frame by frame, as a voice chat bridge sends one: on headphones, then in 3D from a player who walks (the sound moves with them, the talker does not hear their own voice, nobody hears a talker who left)）
 - [x] 名札のエンティティ（防具立て・ペット・NPC）の声を follow で追える（## a voice can follow an entity with a name tag (an NPC, a pet) as it follows a player: everyone within reach hears it, it moves with it, and nobody hears it once it is gone）
+- [x] 曲をテキストでゲームに入れる: 変換ページ・tools/songtext.mjs が曲を SPZ1 のテキスト（項目ごとの範囲符号、1 文字に 14 bit、30000 文字ごとのパート）にし、`/spectral:paste` のフォームに貼り付けると登録・再生でき、ワールドに残る（再起動の後も）。壊れた・途中で切れたテキストはチェックサムで断る（## a song pasted as text into a form joins the songs, plays and stays in the world … ／ ## a long song comes in parts ／ ## a text that is not a song, a broken one and a cut one are refused with why ／ ## the pasted songs kept in the world are there after a restart ／ ## a pasted song is forgotten）
 - [x] 何人もが同時に話す: 聞く人ごとに、その人が聞くライブのストリームでクライアントの同時の音（電話 32、実測）を分ける。1 人なら全部、2 人なら足りない分を一番低いノイズ帯域から（/spectral:share、既定 on。分けないと超えた分はクライアントが落とす）（## the live streams a listener hears share the sounds their client plays at once …: one talker near a phone has all their stream's sounds ／ ## two talkers near a phone ／ ## sharing off ／ ## sharing on, a client with no measured limit given one ／ ## the other talker gone）
 - [x] 3D の音は 48 ブロックまで届き、ファイルより 10 dB 大きく鳴る: 届く距離は作るときの音量で決まる（実機で 16 ブロック × 音量、音量を上げても大きくはならない）ので音量 3 で作り、音を作るのは届く人にだけ。レベルは setVolume で（実機で 3D でも 1 を超えて効く。24 ブロックで ViSQOL 2.38 → 2.79）（## 3D sounds reach 48 blocks (made at volume 3: the client takes the distance from it, 16 blocks a unit, measured) and play 10 dB over the files (measured: a far voice keeps its quiet parts), and only the players they reach get sounds (spectral:range)）
 

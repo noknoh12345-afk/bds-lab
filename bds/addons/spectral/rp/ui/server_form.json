@@ -1,0 +1,6 @@
+{
+  "namespace": "server_form",
+  "custom_input": {
+    "$max_text_edit_length": 30000
+  }
+}

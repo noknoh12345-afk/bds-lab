@@ -12,6 +12,9 @@ import subprocess
 unit = os.path.dirname(here)
 subprocess.run(['node', os.path.join(here, 'build_engine.mjs'), os.path.join(here, 'dist', 'engine.js')], check=True)
 engine = open(os.path.join(here, 'dist', 'engine.js')).read()
+# the song text for pasting in the game: the add-on's own src/songtext.ts (web/build_text.mjs)
+subprocess.run(['node', os.path.join(here, 'build_text.mjs'), os.path.join(here, 'dist', 'songtext.js')], check=True)
+text_js = open(os.path.join(here, 'dist', 'songtext.js')).read().replace('</script', '<\\/script')
 game = open(os.path.join(here, 'game.js')).read()
 defs = json.load(open(os.path.join(unit, 'rp', 'sounds', 'sound_definitions.json')))['sound_definitions']
 rp = {}
@@ -21,9 +24,9 @@ for name in ['osc'] + [f'n{b}' for b in range(8)] + [f'b{b}_{s}' for b in range(
     pcm = subprocess.run(['ffmpeg', '-v', 'error', '-i', f, '-f', 's16le', '-ac', '1', '-'], check=True, capture_output=True).stdout
     rp[name] = [sr, base64.b64encode(pcm).decode()]
 js = lambda v: json.dumps(v, separators=(',', ':'), ensure_ascii=False).replace('</', '<\\/')   # (no '</script' in the page's scripts)
-out = (src.replace('/*CORE*/', core).replace('/*LIVE*/', live).replace('/*DEMO_SONG*/', json.dumps(song, separators=(',', ':'), ensure_ascii=False)).replace('/*DEMO_MP3*/', mp3)
+out = (src.replace('/*CORE*/', core).replace('/*LIVE*/', live).replace('/*TEXT*/', text_js).replace('/*DEMO_SONG*/', json.dumps(song, separators=(',', ':'), ensure_ascii=False)).replace('/*DEMO_MP3*/', mp3)
        .replace('/*ADDON_B64*/', addon).replace('/*ENGINE_SRC*/', js(engine)).replace('/*GAME_SRC*/', js(game)).replace('/*RP_PCM*/', js(rp)))
-for k in ('/*ADDON_B64*/', '/*CORE*/', '/*LIVE*/', '/*DEMO_SONG*/', '/*DEMO_MP3*/', '/*ENGINE_SRC*/', '/*GAME_SRC*/', '/*RP_PCM*/'):
+for k in ('/*ADDON_B64*/', '/*CORE*/', '/*LIVE*/', '/*TEXT*/', '/*DEMO_SONG*/', '/*DEMO_MP3*/', '/*ENGINE_SRC*/', '/*GAME_SRC*/', '/*RP_PCM*/'):
     assert k not in out, k
 os.makedirs(os.path.join(here, 'dist'), exist_ok=True)
 open(os.path.join(here, 'dist', 'index.html'), 'w').write(out)

@@ -554,3 +554,71 @@ scriptevent spectral:live {"id":"s1","end":true}
 @A cmd /spectral:live demo_demo stop
 ~ @A ■ live demo_demo
 kill @e[name=ta]
+
+## a song pasted as text into a form joins the songs, plays and stays in the world (SPZ1, the converter page's 「ゲームで貼り付け」 or tools/songtext.mjs: its fields range-coded, 14 bits a character; this pack's rp/ui/server_form.json lets a form's text field take 30000 characters, 100 in vanilla)
+@A cmd /spectral:paste
+until form
+@A form ["SPZ1.1.1.7ebc1387.456:乁悀渠巈乙疪泄塰晜蕆捽牥楛纵侅腴杙倆徕筯凔蔆掍色晛倅侱潹杜済朿蠌讪紅嚄忐煤挹峢燫屻捓蝅褸穝臁寒棾匰笼璷嗳糭彽磲煩籎訵蚴妊彠櫌权勲嗋呑荦蒂薦秫么筗跁扏厉视裄徂臄嫃曰姅浭擛殬覎倴溨篹掐畩艘溆芀壴嗦泴薊悗謽偏煇竢獕盕蘋誻洪諝煹敤訬俼健趏蕞挥嚾谼犩蕐蒧枧蜟趠纭应宯滽缼栛豟蚝賝夨囉旮內従禧糂衷憻泰暚葍擎璗浨惰玡畊厡彪稑烑熡綪汕姗埝怃蘧倫嫭孊表荊蓴穲蘼桯姠唕嬀弤媧竡擲庶睸忴褢變囔杋脍攞碸巸賚拖蠘詂悈悘漩賓欏譛衝尡唅紨芓寛诡嬈耗尭芹禧昞聠徸愽薸乸梬悸桢毶汵袃暧漨嘜伣卂扃稿捻悉沵抉蛑塝孎莖乑崍捽檋擊済蓦媛謲汢垸篵涎膢盞籂晚礆朗緢援猀", true]
+until Pasted demo 8000
+~ @A ♪ Pasted demo \(0:02, 8 voices\) — /spectral:play paste_demo \(kept in this world\)
+@A cmd /spectral:songs
+~ @A ♪ paste_demo — Pasted demo \(0:02, 8 voices, pasted by A\)
+~ @A \d+ songs — /spectral:play <id> \[phones\|speaker\] · /spectral:paste adds one
+@A cmd /spectral:play paste_demo
+~ @A ▶ Pasted demo — Spectral Player \(0:02, \d+/8 voices, headphones\)
+@A cmd /spectral:stop
+
+## a long song comes in parts: the form opens again for the next one, the parts in any order
+@A cmd /spectral:paste
+until form
+@A form ["SPZ1.2.3.811b2205.297:孒箽夜簏咛胸俅慀剉儩褸掼爭硞剽峈絢瀵呒諃揇碮凾嶶猵粆崐洨箎甁莬璦肿帱幘亊貴悒掝峑劁儂藆役奓峀纒爈璊缷貽巪笭紋注沋狀蒀愮胃蔩娉访娺帷掤废拢誃幰宯萓舉裟荖莸猋柖皼侴从伹暋尺俴瞪絶膳湦沍跮僐笮憛萂犊僩涸敋歿晃岍睡桟旧扃噕汮揭褷膅檭揀摋猓屓楄窂蕂媉夷煢夷穜姡膎膺苒杦稱籹侁賰瑏峅艓獵宣紳卋縎毢抄窺蝸癲蝛敟渊畑袅袯禲跟羱朅侤箋獲爎賎臑菉淒療絈儲樔憍夐", true]
+until 1 of 3 parts in 5000
+@A form ["SPZ1.1.3.811b2205.297:乁懀渠嶬亮婗帼奰晜蕆捽繡檝唰譁潳欙摂侥簠樘攧忌嵓標搷忉潬嘔哆句獲両狿瘳蒪訔瀑啂宑拤覊嶬蟭捏猗竢罷崄蕉秸拂苲棜淎覵叶秊宦蜻绗烐簩厁脱猌懈洬杇掛栋沚綬伢荟贅弼搧紛礑吋崐脍燀紕讵業蒳簸囒傢藥摂殧形倛怀秐涙觓氩塟苴圾嬞膊捖煗港胭誫腶寥殓纰嗰垗谿歹抔烻蛲悧歃條璟牿貃債偐蒾凷勱癯蝿灷襴窠焥涸宝呎粞褋矝峭见火朵椺桝计姂撆欨撅厪繆奆岆販蝔絜畵嘏溜嚬膴茫瞠", true]
+until 2 of 3 parts in 5000
+@A form ["SPZ1.3.3.811b2205.190:蓒亿樄睙攠汄蘹繕詭瑭艈涪磀廠臷疠眇纎质蠵卥薵貢荕眀搄舴洐萌苳緁泊诶幋熝繗勬抑穕厭皛穔爔囧犚焨奾菛訠瑻幄桞峯繥冣磬茾縋苟购帎嗰啷肜暚矈莁眕浉墛漍菝喽謸攈焏蘵脛嗶宷绖莳携们蜕梊劘窒嬥榠薻眰岺匉惡莿衧瞻纐譎袞坚椳拦瘊啌壠欹湀", true]
+until Pasted in parts 8000
+~ @A ♪ Pasted in parts \(0:03, 8 voices\) — /spectral:play paste_parts \(kept in this world\)
+~ @A ♪ part 2 of 3 in \(1/3\) — paste part 1
+~ @A ♪ part 1 of 3 in \(2/3\) — paste part 3
+~ @A form modal: title\("Spectral Player: paste a song"\) label\("1 of 3 parts in: paste the next part\."\)
+
+## a text that is not a song, a broken one and a cut one are refused with why
+@A cmd /spectral:paste
+until form
+@A form ["hello", true]
+until song text 5000
+~ @A this is not a song text \(it starts with SPZ1\. or SPA1\.\)
+@A cmd /spectral:paste
+until form
+@A form ["SPZ1.1.1.7ebc1387.456:乁悀渠巈乙疪泄塰晜蕆捽牥楛纵侅腴杙倆徕筯凔蔆掍色晛倅侱潹杜済朿蠌讪紅嚄忐煤挹峢燬屻捓蝅褸穝臁寒棾匰笼璷嗳糭彽磲煩籎訵蚴妊彠櫌权勲嗋呑荦蒂薦秫么筗跁扏厉视裄徂臄嫃曰姅浭擛殬覎倴溨篹掐畩艘溆芀壴嗦泴薊悗謽偏煇竢獕盕蘋誻洪諝煹敤訬俼健趏蕞挥嚾谼犩蕐蒧枧蜟趠纭应宯滽缼栛豟蚝賝夨囉旮內従禧糂衷憻泰暚葍擎璗浨惰玡畊厡彪稑烑熡綪汕姗埝怃蘧倫嫭孊表荊蓴穲蘼桯姠唕嬀弤媧竡擲庶睸忴褢變囔杋脍攞碸巸賚拖蠘詂悈悘漩賓欏譛衝尡唅紨芓寛诡嬈耗尭芹禧昞聠徸愽薸乸梬悸桢毶汵袃暧漨嘜伣卂扃稿捻悉沵抉蛑塝孎莖乑崍捽檋擊済蓦媛謲汢垸篵涎膢盞籂晚礆朗緢援猀", true]
+until broken 5000
+~ @A the song text is broken: the text is broken \(its check sum\): copy it again, whole
+@A cmd /spectral:paste
+until form
+@A form ["SPZ1.1.1.7ebc1387.456:乁悀渠巈乙疪泄塰晜蕆捽牥楛纵侅腴杙倆徕筯凔蔆掍色晛倅侱潹杜済朿蠌讪紅嚄忐煤挹峢燫屻捓蝅褸穝臁寒棾匰笼璷嗳糭彽磲煩籎訵蚴妊彠櫌权勲嗋呑荦蒂薦秫么筗跁扏厉视裄徂臄嫃曰姅浭擛殬覎倴溨篹掐畩艘溆芀壴嗦泴薊悗謽偏煇竢獕盕蘋誻洪諝煹敤訬俼健趏蕞挥嚾谼犩蕐蒧枧蜟趠纭应宯滽缼栛豟蚝賝夨囉旮內従禧糂衷憻泰暚葍擎璗浨惰玡畊厡彪稑烑熡綪汕姗埝怃蘧倫嫭孊表荊蓴穲蘼桯姠唕嬀弤媧竡擲庶睸忴褢變囔杋脍攞碸巸賚拖蠘詂悈悘漩賓欏譛衝尡唅紨芓寛诡嬈耗尭芹禧昞聠徸愽薸乸梬悸桢毶汵袃暧漨嘜伣卂扃稿", true]
+until cut short 5000
+~ @A the text is cut short: copy it again, whole
+
+## the pasted songs kept in the world are there after a restart (their text read back when they play)
+restart
+@A cmd /spectral:songs
+~ @A ♪ paste_demo — Pasted demo \(0:02, 8 voices, pasted by A\)
+~ @A ♪ paste_parts — Pasted in parts \(0:03, 8 voices, pasted by A\)
+@A cmd /spectral:play paste_parts
+~ @A ▶ Pasted in parts — Spectral Player \(0:03, \d+/8 voices, headphones\)
+wait 800
+@A cmd /spectral:status
+~ @A status: playing paste_parts
+@A cmd /spectral:stop
+
+## a pasted song is forgotten (by the one who pasted it or an operator), from the world too
+@A cmd /spectral:forget paste_demo
+~ @A ♪ forgot Pasted demo \(paste_demo\)
+@A cmd /spectral:forget demo
+~ @A no pasted song "demo"
+restart
+@A cmd /spectral:songs
+!~ paste_demo —
+~ @A ♪ paste_parts — Pasted in parts
+@A cmd /spectral:forget paste_parts
+~ @A ♪ forgot Pasted in parts \(paste_parts\)

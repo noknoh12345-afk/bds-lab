@@ -7,12 +7,13 @@
 // leading silence, so they land between ticks. Songs are data (a few kB/s), not sounds: the resource pack never
 // changes, new songs arrive as song packs over script events, and playback is fully dynamic (seek, time-stretch,
 // transpose, EQ, freeze, reverse, 3D speaker).  tools/spectral.py renders the very same tick rules offline.
-import { world, system, Player, Entity, Dimension, Vector3, SoundInstance } from '@minecraft/server';
+import { world, system, Player, Entity, Dimension, Vector3, SoundInstance, PlayerPermissionLevel } from '@minecraft/server';
 import { ModalFormData } from '@minecraft/server-ui';
 import { cmd, cmdAny, menu, ask, onItem, give, item, once, load, save } from './kit';
 import { OSC_AMP, BASE_HZ, NOISE_RMS, NOISE_BANDS, BURST_RMS, BURST_BANDS, SUB } from './assets';
 import demo from './songs/demo';
 import programs, { Program } from './calib_programs';
+import { readPart, joinParts, decodeSongJob, songHeader, payloadText, payloadFrom, Part, SongMeta, FIELD_CHARS } from './songtext';
 
 // ------------------------------------------------------------------ constants (same as tools/spectral.py)
 const SILENT = 1e-4;            // voices never go to 0 so the client keeps every loop alive
@@ -34,7 +35,8 @@ export interface Meta {
    *  tick k), ms = the lengths a code means. A song without it (format 1) ramps over the tick (50 ms) */
   fd?: { ms: number[]; v: number; nz: number };
 }
-interface Song { meta: Meta; data?: string; gen?: (d: Decoded) => void; dec?: Decoded; decoding?: Promise<Decoded>; }
+/** a song: its data as base64 (song packs, the built-in demo) or as bytes (a song pasted as text: src/songtext.ts), or made by gen */
+interface Song { meta: Meta; data?: string; bytes?: Uint8Array; spz?: Uint8Array; gen?: (d: Decoded) => void; dec?: Decoded; decoding?: Promise<Decoded>; pasted?: string; }
 interface Decoded {
   F: number; N: number; M: number;
   freq: Float32Array; amp: Float32Array; att: Uint8Array; nz: Float32Array;
@@ -58,13 +60,22 @@ function* decodeJob(song: Song, out: { d?: Decoded }): Generator<void, void, voi
     evIdx: new Uint32Array(F + 1), evBand: new Uint8Array(0), evSub: new Uint8Array(0), evAmp: new Float32Array(0),
   };
   if (song.gen) { song.gen(d); out.d = d; return; }
-  const s = song.data!;
-  let len = (s.length * 3) >> 2; if (s.endsWith('==')) len -= 2; else if (s.endsWith('=')) len -= 1;
-  const b = new Uint8Array(len);
-  for (let i = 0, o = 0; i < s.length; i += 4) {
-    const n = (B64[s.charCodeAt(i)] << 18) | (B64[s.charCodeAt(i + 1)] << 12) | (B64[s.charCodeAt(i + 2)] << 6) | B64[s.charCodeAt(i + 3)];
-    if (o < len) b[o++] = n >> 16; if (o < len) b[o++] = (n >> 8) & 255; if (o < len) b[o++] = n & 255;
-    if ((i & 0xffff) === 0) yield;
+  let b: Uint8Array;
+  if (song.bytes) b = song.bytes;
+  else if (song.spz) {
+    // (a pasted song kept in the world: its text decoded the first time it plays)
+    const got: { bytes?: Uint8Array } = {};
+    yield* decodeSongJob(song.spz, got);
+    b = got.bytes!;
+  } else {
+    const s = song.data!;
+    let len = (s.length * 3) >> 2; if (s.endsWith('==')) len -= 2; else if (s.endsWith('=')) len -= 1;
+    b = new Uint8Array(len);
+    for (let i = 0, o = 0; i < s.length; i += 4) {
+      const n = (B64[s.charCodeAt(i)] << 18) | (B64[s.charCodeAt(i + 1)] << 12) | (B64[s.charCodeAt(i + 2)] << 6) | B64[s.charCodeAt(i + 3)];
+      if (o < len) b[o++] = n >> 16; if (o < len) b[o++] = (n >> 8) & 255; if (o < len) b[o++] = n & 255;
+      if ((i & 0xffff) === 0) yield;
+    }
   }
   const [aF, aS] = m.amp, [nF, nS] = m.nz;
   const ampV = new Float32Array(128); for (let c = 1; c < 128; c++) ampV[c] = Math.pow(10, (aF + (c - 1) * aS) / 20);
@@ -714,8 +725,8 @@ cmd('spectral:join', 'Listen in on another player\'s headphones', { who: 'player
   await s.addListener(p); return `§a♪ listening with ${other!.name}`;
 });
 cmd('spectral:songs', 'List the songs', {}, (p) => {
-  for (const s of songs.values()) p.sendMessage(`§f♪ ${s.meta.id} §7— ${s.meta.title} (${fmt(s.meta.seconds)}, ${s.meta.voices} voices)`);
-  return `§7${songs.size} songs — /spectral:play <id> [phones|speaker]`;
+  for (const s of songs.values()) p.sendMessage(`§f♪ ${s.meta.id} §7— ${s.meta.title} (${fmt(s.meta.seconds)}, ${s.meta.voices} voices${s.pasted ? `, pasted by ${s.pasted}` : ''})`);
+  return `§7${songs.size} songs — /spectral:play <id> [phones|speaker] · /spectral:paste adds one`;
 });
 cmd('spectral:status', 'Playback state and engine load', {}, (p) => mine(p)?.status() ?? 'status: idle');
 cmd('spectral:menu', 'Open the player', {}, (p) => { openMenu(p); });
@@ -800,6 +811,107 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
     if (known?.data === data) return;
     addSong({ ...s.meta, id: m.id }, data);
     world.sendMessage(`§d♪ song pack: ${s.meta.title} (${fmt(s.meta.seconds)}) — /spectral:play ${m.id}`);
+  }
+});
+
+// ------------------------------------------------------------------ songs pasted as text (/spectral:paste, src/songtext.ts)
+// The converter page (「ゲームで貼り付け」) or tools/songtext.mjs gives a song as text: SPZ1, its fields range-coded and written 14
+// bits a character, in numbered parts of at most FIELD_CHARS characters — a form's text field holds that many with this pack's
+// rp/ui/server_form.json ($max_text_edit_length; 100 in vanilla). A player pastes the parts into the form one after another;
+// the song is decoded as a job (its check sum tells a cut or broken text), joins the songs, and is kept in the world (dynamic
+// properties, PASTE_PIECE characters a piece: under the 32,767 a string takes even counted in UTF-8 bytes) for later starts,
+// where only its header is read until it is played.
+const PASTE_INDEX = 'spectral:pasted', PASTE_PIECE = 10000, PASTE_SONGS = 64, PASTE_CHARS = 4000000;
+interface PastedEntry { id: string; title: string; by: string; pieces: number; chars: number }
+const pastedIndex = (): PastedEntry[] => load<PastedEntry[]>(world, PASTE_INDEX, []);
+/** the parts of a song a player has pasted so far (10 minutes) */
+const pending = new Map<string, { key: string; n: number; parts: Part[]; at: number }>();
+const errText = (e: unknown) => String(e instanceof Error ? e.message : e);
+/** a song id from the text's own (a-z 0-9 _), another if a song pack or a built-in song has it */
+function pasteId(want: string, key: string): string {
+  let id = want.toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 32) || `song_${key}`;
+  for (let n = 2; songs.has(id) && !songs.get(id)!.pasted; n++) id = `${id.replace(/_p\d*$/, '')}_p${n}`;
+  return id;
+}
+function forgetPieces(e: PastedEntry) { for (let k = 0; k < e.pieces; k++) world.setDynamicProperty(`spectral:pz:${e.id}:${k}`, undefined); }
+/** a pasted song kept in the world → undefined, or why not */
+function keepPasted(id: string, title: string, by: string, payload: Uint8Array): string | undefined {
+  const text = payloadText(payload), pieces = Math.ceil(text.length / PASTE_PIECE), all = pastedIndex();
+  const old = all.find((e) => e.id === id), rest = all.filter((e) => e.id !== id);
+  if (rest.length >= PASTE_SONGS) return `the world keeps ${PASTE_SONGS} pasted songs: /spectral:forget one first`;
+  const used = rest.reduce((n, e) => n + e.chars, 0);
+  if (used + text.length > PASTE_CHARS) return `the world keeps ${PASTE_CHARS} characters of pasted songs (${used} used): /spectral:forget one first`;
+  try {
+    if (old) forgetPieces(old);
+    for (let k = 0; k < pieces; k++) world.setDynamicProperty(`spectral:pz:${id}:${k}`, text.slice(k * PASTE_PIECE, (k + 1) * PASTE_PIECE));
+    save(world, PASTE_INDEX, [...rest, { id, title, by, pieces, chars: text.length }]);
+  } catch (e) { return errText(e); }
+  return undefined;
+}
+function decodePayload(payload: Uint8Array): Promise<{ meta: SongMeta; bytes: Uint8Array }> {
+  return new Promise((res, rej) => {
+    const got: { meta?: SongMeta; bytes?: Uint8Array } = {};
+    system.runJob((function* () { try { yield* decodeSongJob(payload, got); res(got as { meta: SongMeta; bytes: Uint8Array }); } catch (e) { rej(e); } })());
+  });
+}
+/** one pasted text: a part kept until the song is whole; whole, the song decoded, added and (keep) kept in the world */
+async function pasted(p: Player, text: string, keep: boolean): Promise<{ say: string; more?: boolean }> {
+  let part: Part;
+  try { part = readPart(text); } catch (e) { return { say: `§c${errText(e)}` }; }
+  let pend = pending.get(p.id);
+  if (!pend || pend.key !== part.key || pend.n !== part.n || system.currentTick - pend.at > 20 * 600) { pend = { key: part.key, n: part.n, parts: [], at: 0 }; pending.set(p.id, pend); }
+  if (!pend.parts.some((x) => x.i === part.i)) pend.parts.push(part);
+  pend.at = system.currentTick;
+  if (pend.parts.length < pend.n) {
+    const next = [...Array(pend.n).keys()].map((i) => i + 1).find((i) => !pend!.parts.some((x) => x.i === i));
+    return { say: `§e♪ part ${part.i} of ${part.n} in (${pend.parts.length}/${pend.n}) — paste part ${next}`, more: true };
+  }
+  pending.delete(p.id);
+  let payload: Uint8Array, got: { meta: SongMeta; bytes: Uint8Array };
+  try { payload = joinParts(pend.parts); got = await decodePayload(payload); } catch (e) { return { say: `§cthe song text is broken: ${errText(e)}` }; }
+  const meta = { ...got.meta, id: pasteId(got.meta.id, pend.key) } as unknown as Meta;
+  songs.set(meta.id, { meta, bytes: got.bytes, pasted: p.name });
+  let note = '';
+  if (keep) { const why = keepPasted(meta.id, meta.title, p.name, payload); note = why ? ` §c(not kept in the world: ${why})` : ' §7(kept in this world)'; }
+  return { say: `§d♪ ${meta.title} (${fmt(meta.seconds)}, ${meta.voices} voices) — /spectral:play ${meta.id}${note}` };
+}
+/** the paste form, again for each part a long song still wants */
+async function pasteForm(p: Player) {
+  for (;;) {
+    const pend = pending.get(p.id), live = pend && system.currentTick - pend.at <= 20 * 600 ? pend : undefined;
+    const f = new ModalFormData().title('Spectral Player: paste a song')
+      .label(live ? `§e${live.parts.length} of ${live.n} parts in§r: paste the next part.`
+        : `The song text from the converter page (SPZ1.…, up to ${FIELD_CHARS} characters a part). A long song comes in parts: paste them one after another.`)
+      .textField('Song text', 'SPZ1.1.1.…')
+      .toggle('Keep it in this world', { defaultValue: true });
+    const r = await ask(p, f);
+    if (!r || r.canceled || !r.formValues) return;
+    const text = r.formValues.find((v) => typeof v === 'string') as string | undefined;
+    const keep = r.formValues.find((v) => typeof v === 'boolean') !== false;
+    const out = await pasted(p, text ?? '', keep);
+    p.sendMessage(out.say);
+    if (!out.more) return;
+  }
+}
+cmd('spectral:paste', 'Paste a song as text (the converter page: ゲームで貼り付け): a form, again for each part of a long song', {}, (p) => { pasteForm(p); });
+cmd('spectral:forget', 'Forget a pasted song (the one who pasted it, or an operator)', { song: 'string' }, (p, a) => {
+  const s = songs.get(a.song);
+  if (!s?.pasted) return `§cno pasted song "${a.song}" — /spectral:songs`;
+  if (s.pasted !== p.name && p.playerPermissionLevel !== PlayerPermissionLevel.Operator) return `§c${s.pasted} pasted it: they or an operator can forget it`;
+  songs.delete(a.song);
+  const e = pastedIndex().find((x) => x.id === a.song);
+  if (e) { forgetPieces(e); save(world, PASTE_INDEX, pastedIndex().filter((x) => x.id !== a.song)); }
+  return `§7♪ forgot ${s.meta.title} (${a.song})`;
+});
+// (the pasted songs kept in the world: their headers read at the start, each decoded when it first plays)
+world.afterEvents.worldLoad.subscribe(() => {
+  for (const e of pastedIndex()) {
+    try {
+      let text = '';
+      for (let k = 0; k < e.pieces; k++) { const x = world.getDynamicProperty(`spectral:pz:${e.id}:${k}`); if (typeof x !== 'string') throw new Error(`piece ${k} is missing`); text += x; }
+      const payload = payloadFrom(text), h = songHeader(payload);
+      songs.set(e.id, { meta: { ...h.meta, id: e.id } as unknown as Meta, spz: payload, pasted: e.by });
+    } catch (err) { console.warn(`[spectral] pasted song ${e.id}: ${errText(err)}`); }
   }
 });
 
@@ -1437,6 +1549,7 @@ async function openMenu(p: Player) {
     ['⏩ +10 s', (p) => { const x = mine(p); if (x) p.sendMessage(seekFor(p, x.ph / 20 + 10)); }],
     [s?.frozen ? '▶ Thaw' : '❄ Freeze', (p) => p.sendMessage(freezeFor(p))],
     ['⚙ Sound', settingsForm],
+    ['📋 Paste a song (text)', pasteForm],
   ], title);
 }
 async function settingsForm(p: Player) {

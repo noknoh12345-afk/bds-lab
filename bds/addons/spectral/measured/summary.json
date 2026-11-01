@@ -408,6 +408,12 @@
     "onset_recall": 0.644,
     "third_oct_db": 8.711,
     "run": "41266897044"
+   },
+   "final_songs_phones": {
+    "visqol": 3.8023,
+    "onset_recall": 0.842,
+    "third_oct_db": 7.081,
+    "run": "41299579864"
    }
   },
   "edm_detection": {
@@ -762,6 +768,48 @@
     "onset_recall": 0.692,
     "third_oct_db": 8.518,
     "run": "41293745813"
+   },
+   "live_enc16_plain": {
+    "visqol": 3.0245,
+    "onset_recall": 0.862,
+    "third_oct_db": 9.471,
+    "run": "41296712864"
+   },
+   "live_enc16_refined": {
+    "visqol": 3.4458,
+    "onset_recall": 0.862,
+    "third_oct_db": 9.944,
+    "run": "41296712864"
+   },
+   "live_enc16_refined_again": {
+    "visqol": 3.4287,
+    "onset_recall": 0.892,
+    "third_oct_db": 9.33,
+    "run": "41296712864"
+   },
+   "live_enc16_plain_again": {
+    "visqol": 3.0205,
+    "onset_recall": 0.823,
+    "third_oct_db": 9.968,
+    "run": "41296712864"
+   },
+   "live_enc_refined_r24": {
+    "visqol": 3.4421,
+    "onset_recall": 0.854,
+    "third_oct_db": 8.77,
+    "run": "41296712864"
+   },
+   "final_live_phones": {
+    "visqol": 3.411,
+    "onset_recall": 0.862,
+    "third_oct_db": 8.871,
+    "run": "41299579864"
+   },
+   "talker_alone_t2": {
+    "visqol": 3.4556,
+    "onset_recall": 0.831,
+    "third_oct_db": 9.717,
+    "run": "41311016143"
    }
   },
   "piano_chopin_op66": {
@@ -1024,6 +1072,54 @@
     "onset_recall": 0.629,
     "third_oct_db": 3.308,
     "run": "41293745813"
+   },
+   "live_enc16_plain": {
+    "visqol": 3.3577,
+    "onset_recall": 0.771,
+    "third_oct_db": 2.956,
+    "run": "41296712864"
+   },
+   "live_enc16_refined": {
+    "visqol": 3.6056,
+    "onset_recall": 0.771,
+    "third_oct_db": 3.703,
+    "run": "41296712864"
+   },
+   "live_enc16_refined_again": {
+    "visqol": 3.5952,
+    "onset_recall": 0.771,
+    "third_oct_db": 3.327,
+    "run": "41296712864"
+   },
+   "live_enc16_plain_again": {
+    "visqol": 3.3558,
+    "onset_recall": 0.686,
+    "third_oct_db": 2.855,
+    "run": "41296712864"
+   },
+   "live_enc_refined_r24": {
+    "visqol": 3.6968,
+    "onset_recall": 0.714,
+    "third_oct_db": 3.283,
+    "run": "41296712864"
+   },
+   "final_songs_phones": {
+    "visqol": 3.504,
+    "onset_recall": 0.571,
+    "third_oct_db": 6.012,
+    "run": "41299579864"
+   },
+   "final_live_phones": {
+    "visqol": 3.7137,
+    "onset_recall": 0.657,
+    "third_oct_db": 3.37,
+    "run": "41299579864"
+   },
+   "talker_alone_t3": {
+    "visqol": 3.6668,
+    "onset_recall": 0.743,
+    "third_oct_db": 3.365,
+    "run": "41311016143"
    }
   },
   "choir_how_long": {
@@ -1864,6 +1960,168 @@
     "onset_recall": 0.807,
     "third_oct_db": 7.416,
     "run": "41293745813"
+   },
+   "live_3d_still_r23": {
+    "visqol": 3.0374,
+    "onset_recall": 0.658,
+    "third_oct_db": 8.44,
+    "run": "41295422615"
+   },
+   "live_3d_run_cut2": {
+    "visqol": 2.7094,
+    "onset_recall": 0.652,
+    "third_oct_db": 11.596,
+    "run": "41295422615"
+   },
+   "live_3d_run_cut2_again": {
+    "visqol": 2.6909,
+    "onset_recall": 0.722,
+    "third_oct_db": 11.456,
+    "run": "41295422615"
+   },
+   "live_3d_run_cut4": {
+    "visqol": 2.6383,
+    "onset_recall": 0.687,
+    "third_oct_db": 12.368,
+    "run": "41295422615"
+   },
+   "live_3d_run_cut4_again": {
+    "visqol": 2.6061,
+    "onset_recall": 0.678,
+    "third_oct_db": 13.772,
+    "run": "41295422615"
+   },
+   "live_3d_run_hold8": {
+    "visqol": 2.6233,
+    "onset_recall": 0.67,
+    "third_oct_db": 16.024,
+    "run": "41295422615"
+   },
+   "live_3d_run_hold8_again": {
+    "visqol": 2.6354,
+    "onset_recall": 0.626,
+    "third_oct_db": 16.644,
+    "run": "41295422615"
+   },
+   "live_3d_run_enc_plain": {
+    "visqol": 2.6488,
+    "onset_recall": 0.809,
+    "third_oct_db": 8.89,
+    "run": "41295422615"
+   },
+   "live_3d_run_enc_refined": {
+    "visqol": 2.7923,
+    "onset_recall": 0.73,
+    "third_oct_db": 10.205,
+    "run": "41295422615"
+   },
+   "live_enc16_plain": {
+    "visqol": 2.8676,
+    "onset_recall": 0.772,
+    "third_oct_db": 8.177,
+    "run": "41296712864"
+   },
+   "live_enc16_refined": {
+    "visqol": 3.1093,
+    "onset_recall": 0.693,
+    "third_oct_db": 7.029,
+    "run": "41296712864"
+   },
+   "live_enc16_refined_again": {
+    "visqol": 3.1164,
+    "onset_recall": 0.754,
+    "third_oct_db": 7.862,
+    "run": "41296712864"
+   },
+   "live_enc16_plain_again": {
+    "visqol": 2.8631,
+    "onset_recall": 0.754,
+    "third_oct_db": 7.396,
+    "run": "41296712864"
+   },
+   "live_enc_refined_r24": {
+    "visqol": 3.1754,
+    "onset_recall": 0.781,
+    "third_oct_db": 7.065,
+    "run": "41296712864"
+   },
+   "live_3d_still_x0": {
+    "visqol": 3.1238,
+    "onset_recall": 0.667,
+    "third_oct_db": 8.174,
+    "run": "41298122864"
+   },
+   "live_3d_still_x6": {
+    "visqol": 3.21,
+    "onset_recall": 0.719,
+    "third_oct_db": 8.193,
+    "run": "41298122864"
+   },
+   "live_3d_still_xm6": {
+    "visqol": 3.2066,
+    "onset_recall": 0.719,
+    "third_oct_db": 8.428,
+    "run": "41298122864"
+   },
+   "live_3d_still_x3": {
+    "visqol": 3.0878,
+    "onset_recall": 0.649,
+    "third_oct_db": 8.693,
+    "run": "41298122864"
+   },
+   "live_3d_still_xm3": {
+    "visqol": 3.0853,
+    "onset_recall": 0.64,
+    "third_oct_db": 8.627,
+    "run": "41298122864"
+   },
+   "live_3d_walk_cut2_r25": {
+    "visqol": 2.6542,
+    "onset_recall": 0.617,
+    "third_oct_db": 10.579,
+    "run": "41298122864"
+   },
+   "live_3d_walk_cut2_r25_again": {
+    "visqol": 2.7435,
+    "onset_recall": 0.696,
+    "third_oct_db": 10.879,
+    "run": "41298122864"
+   },
+   "final_songs_phones": {
+    "visqol": 3.2128,
+    "onset_recall": 0.64,
+    "third_oct_db": 8.216,
+    "run": "41299579864"
+   },
+   "final_live_phones": {
+    "visqol": 3.1826,
+    "onset_recall": 0.781,
+    "third_oct_db": 7.23,
+    "run": "41299579864"
+   },
+   "final_3d_still": {
+    "visqol": 3.1973,
+    "onset_recall": 0.833,
+    "third_oct_db": 7.058,
+    "run": "41299579864"
+   },
+   "final_3d_walk": {
+    "visqol": 2.9007,
+    "onset_recall": 0.8,
+    "third_oct_db": 9.741,
+    "run": "41299579864"
+   },
+   "final_3d_run": {
+    "visqol": 2.9452,
+    "onset_recall": 0.757,
+    "third_oct_db": 10.036,
+    "run": "41299579864"
+   },
+   "talker_alone_t1": {
+    "visqol": 3.1792,
+    "onset_recall": 0.702,
+    "third_oct_db": 7.232,
+    "run": "41311016143"
    }
   },
   "demo_selfmade": {
@@ -2623,6 +2881,93 @@
   ],
   "live_near24_enc_refined": [
    "41293745813"
+  ],
+  "live_3d_still_r23": [
+   "41295422615"
+  ],
+  "live_3d_run_cut2": [
+   "41295422615"
+  ],
+  "live_3d_run_cut2_again": [
+   "41295422615"
+  ],
+  "live_3d_run_cut4": [
+   "41295422615"
+  ],
+  "live_3d_run_cut4_again": [
+   "41295422615"
+  ],
+  "live_3d_run_hold8": [
+   "41295422615"
+  ],
+  "live_3d_run_hold8_again": [
+   "41295422615"
+  ],
+  "live_3d_run_enc_plain": [
+   "41295422615"
+  ],
+  "live_3d_run_enc_refined": [
+   "41295422615"
+  ],
+  "live_enc16_plain": [
+   "41296712864"
+  ],
+  "live_enc16_refined": [
+   "41296712864"
+  ],
+  "live_enc16_refined_again": [
+   "41296712864"
+  ],
+  "live_enc16_plain_again": [
+   "41296712864"
+  ],
+  "live_enc_refined_r24": [
+   "41296712864"
+  ],
+  "live_3d_still_x0": [
+   "41298122864"
+  ],
+  "live_3d_still_x6": [
+   "41298122864"
+  ],
+  "live_3d_still_xm6": [
+   "41298122864"
+  ],
+  "live_3d_still_x3": [
+   "41298122864"
+  ],
+  "live_3d_still_xm3": [
+   "41298122864"
+  ],
+  "live_3d_walk_cut2_r25": [
+   "41298122864"
+  ],
+  "live_3d_walk_cut2_r25_again": [
+   "41298122864"
+  ],
+  "final_songs_phones": [
+   "41299579864"
+  ],
+  "final_live_phones": [
+   "41299579864"
+  ],
+  "final_3d_still": [
+   "41299579864"
+  ],
+  "final_3d_walk": [
+   "41299579864"
+  ],
+  "final_3d_run": [
+   "41299579864"
+  ],
+  "talker_alone_t3": [
+   "41311016143"
+  ],
+  "talker_alone_t1": [
+   "41311016143"
+  ],
+  "talker_alone_t2": [
+   "41311016143"
   ]
  },
  "medians": {
@@ -3065,6 +3410,122 @@
   "live_near24_enc_refined": {
    "n": 3,
    "visqol": 3.062
+  },
+  "live_3d_still_r23": {
+   "n": 1,
+   "visqol": 3.037
+  },
+  "live_3d_run_cut2": {
+   "n": 1,
+   "visqol": 2.709
+  },
+  "live_3d_run_cut2_again": {
+   "n": 1,
+   "visqol": 2.691
+  },
+  "live_3d_run_cut4": {
+   "n": 1,
+   "visqol": 2.638
+  },
+  "live_3d_run_cut4_again": {
+   "n": 1,
+   "visqol": 2.606
+  },
+  "live_3d_run_hold8": {
+   "n": 1,
+   "visqol": 2.623
+  },
+  "live_3d_run_hold8_again": {
+   "n": 1,
+   "visqol": 2.635
+  },
+  "live_3d_run_enc_plain": {
+   "n": 1,
+   "visqol": 2.649
+  },
+  "live_3d_run_enc_refined": {
+   "n": 1,
+   "visqol": 2.792
+  },
+  "live_enc16_plain": {
+   "n": 3,
+   "visqol": 3.025
+  },
+  "live_enc16_refined": {
+   "n": 3,
+   "visqol": 3.446
+  },
+  "live_enc16_refined_again": {
+   "n": 3,
+   "visqol": 3.429
+  },
+  "live_enc16_plain_again": {
+   "n": 3,
+   "visqol": 3.021
+  },
+  "live_enc_refined_r24": {
+   "n": 3,
+   "visqol": 3.442
+  },
+  "live_3d_still_x0": {
+   "n": 1,
+   "visqol": 3.124
+  },
+  "live_3d_still_x6": {
+   "n": 1,
+   "visqol": 3.21
+  },
+  "live_3d_still_xm6": {
+   "n": 1,
+   "visqol": 3.207
+  },
+  "live_3d_still_x3": {
+   "n": 1,
+   "visqol": 3.088
+  },
+  "live_3d_still_xm3": {
+   "n": 1,
+   "visqol": 3.085
+  },
+  "live_3d_walk_cut2_r25": {
+   "n": 1,
+   "visqol": 2.654
+  },
+  "live_3d_walk_cut2_r25_again": {
+   "n": 1,
+   "visqol": 2.744
+  },
+  "final_songs_phones": {
+   "n": 3,
+   "visqol": 3.504
+  },
+  "final_live_phones": {
+   "n": 3,
+   "visqol": 3.411
+  },
+  "final_3d_still": {
+   "n": 1,
+   "visqol": 3.197
+  },
+  "final_3d_walk": {
+   "n": 1,
+   "visqol": 2.901
+  },
+  "final_3d_run": {
+   "n": 1,
+   "visqol": 2.945
+  },
+  "talker_alone_t1": {
+   "n": 1,
+   "visqol": 3.179
+  },
+  "talker_alone_t2": {
+   "n": 1,
+   "visqol": 3.456
+  },
+  "talker_alone_t3": {
+   "n": 1,
+   "visqol": 3.667
   }
  },
  "gaps": {
@@ -3612,6 +4073,151 @@
    "n": 3,
    "median": -0.019,
    "within_0.3": 2
+  },
+  "live_3d_still_r23": {
+   "n": 1,
+   "median": -0.23,
+   "within_0.3": 1
+  },
+  "live_3d_run_cut2": {
+   "n": 1,
+   "median": 0.098,
+   "within_0.3": 1
+  },
+  "live_3d_run_cut2_again": {
+   "n": 1,
+   "median": 0.116,
+   "within_0.3": 1
+  },
+  "live_3d_run_cut4": {
+   "n": 1,
+   "median": 0.169,
+   "within_0.3": 1
+  },
+  "live_3d_run_cut4_again": {
+   "n": 1,
+   "median": 0.201,
+   "within_0.3": 1
+  },
+  "live_3d_run_hold8": {
+   "n": 1,
+   "median": 0.184,
+   "within_0.3": 1
+  },
+  "live_3d_run_hold8_again": {
+   "n": 1,
+   "median": 0.172,
+   "within_0.3": 1
+  },
+  "live_3d_run_enc_plain": {
+   "n": 1,
+   "median": 0.159,
+   "within_0.3": 1
+  },
+  "live_3d_run_enc_refined": {
+   "n": 1,
+   "median": 0.015,
+   "within_0.3": 1
+  },
+  "live_enc16_plain": {
+   "n": 3,
+   "median": -0.06,
+   "within_0.3": 3
+  },
+  "live_enc16_refined": {
+   "n": 3,
+   "median": -0.355,
+   "within_0.3": 3
+  },
+  "live_enc16_refined_again": {
+   "n": 3,
+   "median": -0.338,
+   "within_0.3": 3
+  },
+  "live_enc16_plain_again": {
+   "n": 3,
+   "median": -0.056,
+   "within_0.3": 3
+  },
+  "live_enc_refined_r24": {
+   "n": 3,
+   "median": -0.368,
+   "within_0.3": 3
+  },
+  "live_3d_still_x0": {
+   "n": 1,
+   "median": -0.316,
+   "within_0.3": 1
+  },
+  "live_3d_still_x6": {
+   "n": 1,
+   "median": -0.403,
+   "within_0.3": 1
+  },
+  "live_3d_still_xm6": {
+   "n": 1,
+   "median": -0.399,
+   "within_0.3": 1
+  },
+  "live_3d_still_x3": {
+   "n": 1,
+   "median": -0.28,
+   "within_0.3": 1
+  },
+  "live_3d_still_xm3": {
+   "n": 1,
+   "median": -0.278,
+   "within_0.3": 1
+  },
+  "live_3d_walk_cut2_r25": {
+   "n": 1,
+   "median": 0.153,
+   "within_0.3": 1
+  },
+  "live_3d_walk_cut2_r25_again": {
+   "n": 1,
+   "median": 0.064,
+   "within_0.3": 1
+  },
+  "final_songs_phones": {
+   "n": 3,
+   "median": -0.405,
+   "within_0.3": 3
+  },
+  "final_live_phones": {
+   "n": 3,
+   "median": -0.375,
+   "within_0.3": 3
+  },
+  "final_3d_still": {
+   "n": 1,
+   "median": -0.39,
+   "within_0.3": 1
+  },
+  "final_3d_walk": {
+   "n": 1,
+   "median": -0.093,
+   "within_0.3": 1
+  },
+  "final_3d_run": {
+   "n": 1,
+   "median": -0.138,
+   "within_0.3": 1
+  },
+  "talker_alone_t1": {
+   "n": 1,
+   "median": -0.372,
+   "within_0.3": 1
+  },
+  "talker_alone_t2": {
+   "n": 1,
+   "median": -0.365,
+   "within_0.3": 1
+  },
+  "talker_alone_t3": {
+   "n": 1,
+   "median": -0.577,
+   "within_0.3": 1
   }
  }
 }
