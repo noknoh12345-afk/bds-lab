@@ -1,0 +1,164 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# 22 回目（tools/exp/make_app.py tools/exp/app22.json）: その場の合成による分析（20 回目でヘッドホン +0.26）は 3D でも効くか。曲は 20 回目の",
+  "#   tools/exp/packs/live20（_lb ライブのまま / _lr 分析つき）。3 ブロック前に止まった話し手（follow、名札の防具立て）: 曲ごとに ba_ → bb_ → bc_ → bd_",
+  "#   （そのまま・分析・分析・そのまま。最初に bg_ = 話し手を置いて夏目漱石をそのまま 1 本）、それから左 24 ブロックの near で be_ / bf_（そのまま / 分析）"
+ ],
+ "batch": 13,
+ "interleave": [
+  "ba",
+  "bb",
+  "bc",
+  "bd"
+ ],
+ "arms": [
+  {
+   "pre": "bg",
+   "suffix": "_lb",
+   "conv": {
+    "live": "encoder",
+    "refine": 0
+   },
+   "pack": "tools/exp/packs/live20",
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover hold 1.5 2 0 8",
+    "summon armor_stand talker 0 -60 3"
+   ],
+   "export": 160
+  },
+  {
+   "pre": "ba",
+   "suffix": "_lb",
+   "conv": {
+    "live": "encoder",
+    "refine": 0
+   },
+   "pack": "tools/exp/packs/live20",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover hold 1.5 2 0 8"
+   ],
+   "export": 160
+  },
+  {
+   "pre": "bb",
+   "suffix": "_lr",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "pack": "tools/exp/packs/live20",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover hold 1.5 2 0 8"
+   ],
+   "export": 160
+  },
+  {
+   "pre": "bc",
+   "suffix": "_lr",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "pack": "tools/exp/packs/live20",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover hold 1.5 2 0 8"
+   ],
+   "export": 160
+  },
+  {
+   "pre": "bd",
+   "suffix": "_lb",
+   "conv": {
+    "live": "encoder",
+    "refine": 0
+   },
+   "pack": "tools/exp/packs/live20",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover hold 1.5 2 0 8"
+   ],
+   "export": 160
+  },
+  {
+   "pre": "be",
+   "suffix": "_lb",
+   "conv": {
+    "live": "encoder",
+    "refine": 0
+   },
+   "pack": "tools/exp/packs/live20",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} near @s 24 \"near:24,-58.5,0,overworld\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01"
+   ],
+   "export": 160
+  },
+  {
+   "pre": "bf",
+   "suffix": "_lr",
+   "conv": {
+    "live": "encoder",
+    "refine": 2
+   },
+   "pack": "tools/exp/packs/live20",
+   "songs": [
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "vocal_name_of_love"
+   ],
+   "play": "spectral:live_demo {song} near @s 24 \"near:24,-58.5,0,overworld\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01"
+   ],
+   "export": 160
+  }
+ ]
+}

@@ -57,7 +57,9 @@ WAYS = [('ceiling', '天井'), ('game', '48 声（前の既定）'), ('voices24'
         ('live_3d_walk_q001_move3', '速く歩く話す人・0.01・3 ブロック'), ('live_3d_walk_q001_move3_again', '同（もう一度）'),
         ('live_3d_still_v24', '止まった話す人・24 声（21 回目）'), ('live_3d_still_v8', '止まった話す人・8 声'), ('live_3d_walk_v8', '速く歩く話す人・8 声'),
         ('live_3d_walk_v8_again', '同（もう一度）'), ('live_3d_walk_v24', '速く歩く話す人・24 声（21 回目）'), ('live_3d_walk_v24_again', '同（もう一度）'),
-        ('live_3d_walk_v24_cut2', '速く歩く話す人・24 声・古い音をすぐ止め 2 音ずつ'), ('live_3d_walk_v24_cut2_again', '同（もう一度）')]
+        ('live_3d_walk_v24_cut2', '速く歩く話す人・24 声・古い音をすぐ止め 2 音ずつ'), ('live_3d_walk_v24_cut2_again', '同（もう一度）'),
+        ('live_3d_enc_plain', '3D の話し手・ライブの変換（22 回目）'), ('live_3d_enc_refined', '3D の話し手・その場の分析つき'), ('live_3d_enc_refined_again', '同（もう一度）'),
+        ('live_3d_enc_plain_again', '3D の話し手・ライブの変換（もう一度）'), ('live_near24_enc_plain', '24 ブロック・ライブの変換'), ('live_near24_enc_refined', '24 ブロック・分析つき')]
 
 
 def main():

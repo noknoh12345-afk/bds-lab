@@ -88,7 +88,10 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         # run 21 (0.01): a talker standing with 24 / 8 voices (pa, pb); walking with 8 voices (pc, ph: never over the phone's 32 sounds),
         # 24 (pd, pg), 24 with the old sounds stopped at once and 2 moved a tick (pe, pf: spectral:handover cut)
         'pa': 'live_3d_still_v24', 'pb': 'live_3d_still_v8', 'pc': 'live_3d_walk_v8', 'ph': 'live_3d_walk_v8_again', 'pd': 'live_3d_walk_v24',
-        'pg': 'live_3d_walk_v24_again', 'pe': 'live_3d_walk_v24_cut2', 'pf': 'live_3d_walk_v24_cut2_again'}
+        'pg': 'live_3d_walk_v24_again', 'pe': 'live_3d_walk_v24_cut2', 'pf': 'live_3d_walk_v24_cut2_again',
+        # run 22: the live encoder plain / refined as it goes in 3D — a talker standing 3 blocks ahead (ba, bd plain; bb, bc refined), near 24 blocks (be, bf)
+        'ba': 'live_3d_enc_plain', 'bb': 'live_3d_enc_refined', 'bc': 'live_3d_enc_refined_again', 'bd': 'live_3d_enc_plain_again',
+        'be': 'live_near24_enc_plain', 'bf': 'live_near24_enc_refined', 'bg': 'live_3d_enc_plain_first'}
 
 
 def songs(res):
