@@ -1,0 +1,407 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# 25 回目（tools/exp/make_app.py tools/exp/app25.json）: 歩く話し手が止まった話し手より 0.3 低いのは、動くこと自体（距離と左右が変わる）か、作り直しか。",
+  "#   話し手（名札の防具立て）を道の上のいろいろな所に止めて: ja_ x=0（3 ブロック前）・jb_ x=6・jc_ x=-6（6.7 ブロック、横寄り）・jd_ x=3・jf_ x=-3（4.2 ブロック）、",
+  "#   je_ / jg_ = 17–21 回目の道を歩く（新しい既定 cut 2 音）。どれも 24 声・0.01・+10 dB"
+ ],
+ "batch": 13,
+ "arms": [
+  {
+   "pre": "ja",
+   "suffix": "_d",
+   "conv": {
+    "refine_weights": "svr",
+    "refine_sweeps": 5,
+    "refine_hold": true
+   },
+   "pack": "tools/exp/packs/run9",
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover cut 1.5 2 0 2",
+    "summon armor_stand talker 0 -60 3"
+   ]
+  },
+  {
+   "pre": "jb",
+   "suffix": "_d",
+   "conv": {
+    "refine_weights": "svr",
+    "refine_sweeps": 5,
+    "refine_hold": true
+   },
+   "pack": "tools/exp/packs/run9",
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover cut 1.5 2 0 2",
+    "tp @e[name=talker] 6 -60 3"
+   ]
+  },
+  {
+   "pre": "jc",
+   "suffix": "_d",
+   "conv": {
+    "refine_weights": "svr",
+    "refine_sweeps": 5,
+    "refine_hold": true
+   },
+   "pack": "tools/exp/packs/run9",
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover cut 1.5 2 0 2",
+    "tp @e[name=talker] -6 -60 3"
+   ]
+  },
+  {
+   "pre": "jd",
+   "suffix": "_d",
+   "conv": {
+    "refine_weights": "svr",
+    "refine_sweeps": 5,
+    "refine_hold": true
+   },
+   "pack": "tools/exp/packs/run9",
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover cut 1.5 2 0 2",
+    "tp @e[name=talker] 3 -60 3"
+   ]
+  },
+  {
+   "pre": "je",
+   "suffix": "_d",
+   "conv": {
+    "refine_weights": "svr",
+    "refine_sweeps": 5,
+    "refine_hold": true
+   },
+   "pack": "tools/exp/packs/run9",
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover cut 1.5 2 0 2",
+    "tp @e[name=talker] 6 -60 3"
+   ],
+   "during": [
+    [
+     100,
+     "tp @e[name=talker] 4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 0 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -6 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 0 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 6 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 0 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -6 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 0 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 6 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 0 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -6 -60 3"
+    ]
+   ],
+   "wait": 6000
+  },
+  {
+   "pre": "jf",
+   "suffix": "_d",
+   "conv": {
+    "refine_weights": "svr",
+    "refine_sweeps": 5,
+    "refine_hold": true
+   },
+   "pack": "tools/exp/packs/run9",
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover cut 1.5 2 0 2",
+    "tp @e[name=talker] -3 -60 3"
+   ]
+  },
+  {
+   "pre": "jg",
+   "suffix": "_d",
+   "conv": {
+    "refine_weights": "svr",
+    "refine_sweeps": 5,
+    "refine_hold": true
+   },
+   "pack": "tools/exp/packs/run9",
+   "songs": [
+    "speech_ja_soseki"
+   ],
+   "export": 160,
+   "play": "spectral:live_demo {song} follow @s 24 \"follow:talker\"",
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:range 3 10 true 0.01",
+    "spectral:handover cut 1.5 2 0 2",
+    "tp @e[name=talker] 6 -60 3"
+   ],
+   "during": [
+    [
+     100,
+     "tp @e[name=talker] 4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 0 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -6 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 0 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 6 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 0 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -6 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 0 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 6 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] 0 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -2 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -4 -60 3"
+    ],
+    [
+     100,
+     "tp @e[name=talker] -6 -60 3"
+    ]
+   ],
+   "wait": 6000
+  }
+ ]
+}

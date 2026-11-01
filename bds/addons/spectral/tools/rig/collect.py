@@ -97,7 +97,10 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'hg': 'live_3d_still_r23', 'ha': 'live_3d_run_cut2', 'hf': 'live_3d_run_cut2_again', 'hb': 'live_3d_run_cut4', 'he': 'live_3d_run_cut4_again',
         'hc': 'live_3d_run_hold8', 'hd': 'live_3d_run_hold8_again', 'hh': 'live_3d_run_enc_plain', 'hi': 'live_3d_run_enc_refined',
         # run 24: the bridge's 16 voices on phones, plain (ca, cd) and refined (cb, cc), and 24 refined (ce)
-        'ca': 'live_enc16_plain', 'cb': 'live_enc16_refined', 'cc': 'live_enc16_refined_again', 'cd': 'live_enc16_plain_again', 'ce': 'live_enc_refined_r24'}
+        'ca': 'live_enc16_plain', 'cb': 'live_enc16_refined', 'cc': 'live_enc16_refined_again', 'cd': 'live_enc16_plain_again', 'ce': 'live_enc_refined_r24',
+        # run 25: a talker standing at places along the walk (ja x=0, jb x=6, jc x=-6, jd x=3, jf x=-3) and walking with cut 2 (je, jg)
+        'ja': 'live_3d_still_x0', 'jb': 'live_3d_still_x6', 'jc': 'live_3d_still_xm6', 'jd': 'live_3d_still_x3', 'jf': 'live_3d_still_xm3',
+        'je': 'live_3d_walk_cut2_r25', 'jg': 'live_3d_walk_cut2_r25_again'}
 
 
 def songs(res):
