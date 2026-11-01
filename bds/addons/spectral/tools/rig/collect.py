@@ -63,7 +63,11 @@ WAYS = {'g': 'game', 'c': 'ceiling', 'l': 'light', 'v': 'voices24', 'm': 'mobile
         'qd': 'live_near3_made_loud', 'qa': 'live_near3_quiet', 'qb': 'live_near24_quiet', 'qc': 'live_near46_quiet',
         'qg': 'live_near24_quiet_range16', 'qf': 'live_3d_follow_walking_loud', 'qe': 'live_3d_follow_walking_quiet',
         # (and run 14's 46 blocks again, 0 / +10 dB: xg / xh; mg as in run 14, at +10 dB)
-        'xg': 'live_near46_level0_again', 'xh': 'live_near46_level10_again'}
+        'xg': 'live_near46_level0_again', 'xh': 'live_near46_level10_again',
+        # run 16: the defaults (made quietly, +10 dB) against made as before, the same run: near 3 blocks (ua / ub), 24 blocks (uc / ud);
+        # a talker standing made quietly (ug), walking made quietly / as before (ue / uf)
+        'ua': 'live_near3_quiet_default', 'ub': 'live_near3_loud_made', 'uc': 'live_near24_quiet_default', 'ud': 'live_near24_loud_made',
+        'ug': 'live_3d_follow_still_quiet', 'ue': 'live_3d_follow_walking_quiet_default', 'uf': 'live_3d_follow_walking_loud_made'}
 
 
 def songs(res):

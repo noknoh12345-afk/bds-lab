@@ -838,11 +838,13 @@ const SETTLE_TICKS = 2;
  *  the original has 40-50 dB under its loudest a digital zero 42 % / – / 5 % of the time; at 46 blocks 68 % -> 33 % (ViSQOL 2.62 ->
  *  2.46 there, the one pair against it). It also puts the low thump of a new sound (SETTLE_TICKS) 12-15 dB further under the voice */
 let LEVEL_3D_DB = 10;
-/** live streams in 3D made quietly (spectral:range's third value; off by default, to be measured on a phone): the _3q events play
- *  the same loops at definition volume Q3D and the add-on steers them 1/Q3D times up. A new 3D sound plays as made for 100-200 ms —
- *  at P_MIN its loops, all in phase and at full volume, still clip into a low thump (run 41266897044: 60-250 Hz at -48..-69 dB for
- *  ~0.1 s); made at 0.1 their sum stays under the mix's clip */
-let QUIET_3D = false;
+/** live streams in 3D made quietly (spectral:range's third value; on by default): the _3q events play the same loops at
+ *  definition volume Q3D and the add-on steers them 1/Q3D times up. A new 3D sound plays as made for 100-200 ms, and its loops,
+ *  in phase at full volume, clip into a low thump even at P_MIN — every time a talker who walks is followed (8 sounds made a
+ *  tick at each move). Measured, run 41272459953: made quietly the start is 19-23 dB further under the voice (3 / 24 / 46 blocks),
+ *  as loud (-20.7 against -20.3 dB at 3 blocks; -39.1 / -44.5 dB at 24 / 46) and as far (definition volume does not shorten the
+ *  reach); a talker walking 3 blocks ahead ViSQOL 2.41 -> 2.87 (standing 3.09). The voice's floor stays SILENT in what is heard */
+let QUIET_3D = true;
 const Q3D = 0.1;
 
 class LiveStream {
@@ -911,7 +913,7 @@ class LivePlayer {
   /** follow: sounds made at the new place, each taking over from its old one at tick `at` (SETTLE_TICKS later); i < 0: band -1-i */
   handover: { t: Target; i: number; s: SoundInstance; old: SoundInstance; at: number }[] = [];
   constructor(public st: LiveStream, public at: LiveAt) {
-    this.lastP = new Float32Array(st.meta.N).fill(-1); this.lastL = new Float32Array(st.meta.N).fill(SILENT); this.lastNL = new Float32Array(st.meta.M).fill(SILENT);
+    this.lastP = new Float32Array(st.meta.N).fill(-1); this.lastL = new Float32Array(st.meta.N).fill(this.floor); this.lastNL = new Float32Array(st.meta.M).fill(this.floor);
   }
   get three() { return this.at.kind !== 'phones'; }
   /** made quietly (QUIET_3D when the stream started playing here) */
@@ -919,6 +921,8 @@ class LivePlayer {
   ev(name: string) { return this.three ? name + (this.q3 ? '_3q' : '_3d') : name; }
   /** the highest level sent (10 file units, or 10 over the quiet events' Q3D) */
   get cap() { return this.q3 ? 10 / Q3D : 10; }
+  /** the lowest level sent: SILENT as heard (made quietly, 1/Q3D times it — the loops kept alive at the same level either way) */
+  get floor() { return this.q3 ? SILENT / Q3D : SILENT; }
   /** the level over the files: headphones as the listener's own setting (a phone +10 dB), 3D sounds LEVEL_3D_DB (their play volume is
    *  their range) */
   lv = 1;
@@ -950,7 +954,7 @@ class LivePlayer {
     // (3D: the play volume also sets the audible range, so RANGE_3D — at P_MIN, under hearing, for the ticks it plays as made —
     // and silenced in the same tick; a listener's own 3D sound — follow, near — at the talker's place, heard by that listener alone)
     const s = t.player ? t.player.playSound(this.ev(name), { location: at, volume: RANGE_3D, pitch: P_MIN, loopCount: -1 }) : t.dim!.playSound(this.ev(name), at!, { volume: RANGE_3D, pitch: P_MIN, loopCount: -1 });
-    s.setVolume(SILENT);
+    s.setVolume(this.floor);
     return s;
   }
   async build(t: Target) {
@@ -1024,7 +1028,7 @@ class LivePlayer {
   private sendVoice(v: number, hz: number, dur: number, L: number, force = false) {
     let p = -1;
     if (hz > 0) { p = Math.min(P_MAX, Math.max(P_MIN, hz / BASE_HZ)); if (this.lastP[v] > 0 && Math.abs(p / this.lastP[v] - 1) < CENT) p = -1; }
-    L = Math.min(this.cap, Math.max(SILENT, L));
+    L = Math.min(this.cap, Math.max(this.floor, L));
     const last = this.lastL[v];
     if (!force && L / last < DB025 && last / L < DB025) L = -1;
     if (p < 0 && L < 0) return;
@@ -1033,7 +1037,7 @@ class LivePlayer {
     if (L >= 0) this.lastL[v] = L;
   }
   private sendNoise(b: number, dur: number, L: number) {
-    L = Math.min(this.cap, Math.max(SILENT, L));
+    L = Math.min(this.cap, Math.max(this.floor, L));
     const last = this.lastNL[b];
     if (L / last < DB025 && last / L < DB025) return;
     for (const t of this.targets) { const s = t.nz[b]; if (s) { try { s.fade(dur, L); } catch { /* gone */ } this.calls++; } }
@@ -1054,7 +1058,7 @@ class LivePlayer {
         } catch { /* gone */ }
         this.calls += 2;
       }
-      try { h.old.fade(FADE_SMOOTH, SILENT); } catch { /* gone */ }
+      try { h.old.fade(FADE_SMOOTH, this.floor); } catch { /* gone */ }
       this.calls++;
       this.dying.push([h.old, now + 2]);
       return false;
@@ -1117,7 +1121,7 @@ class LivePlayer {
     if (st.w - this.p > LIVE_DELAY + LIVE_LATE) { this.p = st.w - LIVE_DELAY; this.skips++; }
     if (this.p + 1 > st.w) {
       // no frame yet: hold; a talker who stopped falls silent
-      if (++this.idle === LIVE_IDLE) { this.underruns++; for (let v = 0; v < N; v++) this.sendVoice(v, 0, FADE_SMOOTH, SILENT); for (let b = 0; b < M; b++) this.sendNoise(b, FADE_SMOOTH, SILENT); }
+      if (++this.idle === LIVE_IDLE) { this.underruns++; for (let v = 0; v < N; v++) this.sendVoice(v, 0, FADE_SMOOTH, this.floor); for (let b = 0; b < M; b++) this.sendNoise(b, FADE_SMOOTH, this.floor); }
       if (this.idle >= LIVE_IDLE) this.playing = false;
       return;
     }
@@ -1126,7 +1130,7 @@ class LivePlayer {
     // it makes it, without waiting for the next one)
     const i0 = st.slot(this.p), i1 = st.slot(this.p + 1), gain = this.lv / OSC_AMP;
     for (let v = 0; v < N; v++) {
-      const a0 = this.lastL[v] > SILENT ? st.amp[i0 * N + v] : 0, f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;
+      const a0 = this.lastL[v] > this.floor ? st.amp[i0 * N + v] : 0, f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;
       this.sendVoice(v, f0 && f1 ? Math.sqrt(f0 * f1) : f1 || f0, fdS[st.vd[i1 * N + v]], a1 * gain, st.att[i1 * N + v] === 1);
     }
     for (let b = 0; b < M; b++) this.sendNoise(b, fdS[st.nzd[i1 * M + b]], (st.nz[i1 * M + b] * this.lv) / NOISE_RMS[b]);

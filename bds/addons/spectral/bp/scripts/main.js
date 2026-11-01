@@ -1279,7 +1279,7 @@ var RANGE_3D = 3;
 var reach3D = () => Math.min(FOLLOW_RANGE, 16 * RANGE_3D);
 var SETTLE_TICKS = 2;
 var LEVEL_3D_DB = 10;
-var QUIET_3D = false;
+var QUIET_3D = true;
 var Q3D = 0.1;
 var LiveStream = class {
   constructor(id, meta) {
@@ -1389,8 +1389,8 @@ var LivePlayer = class {
     this.st = st;
     this.at = at;
     this.lastP = new Float32Array(st.meta.N).fill(-1);
-    this.lastL = new Float32Array(st.meta.N).fill(SILENT);
-    this.lastNL = new Float32Array(st.meta.M).fill(SILENT);
+    this.lastL = new Float32Array(st.meta.N).fill(this.floor);
+    this.lastNL = new Float32Array(st.meta.M).fill(this.floor);
   }
   st;
   at;
@@ -1424,6 +1424,10 @@ var LivePlayer = class {
   /** the highest level sent (10 file units, or 10 over the quiet events' Q3D) */
   get cap() {
     return this.q3 ? 10 / Q3D : 10;
+  }
+  /** the lowest level sent: SILENT as heard (made quietly, 1/Q3D times it — the loops kept alive at the same level either way) */
+  get floor() {
+    return this.q3 ? SILENT / Q3D : SILENT;
   }
   /** the level over the files: headphones as the listener's own setting (a phone +10 dB), 3D sounds LEVEL_3D_DB (their play volume is
    *  their range) */
@@ -1466,7 +1470,7 @@ var LivePlayer = class {
   loop(t, name, at = t.loc) {
     if (t.player && !at) return t.player.playSound(this.ev(name), { volume: SILENT, pitch: 1, loopCount: -1 });
     const s = t.player ? t.player.playSound(this.ev(name), { location: at, volume: RANGE_3D, pitch: P_MIN, loopCount: -1 }) : t.dim.playSound(this.ev(name), at, { volume: RANGE_3D, pitch: P_MIN, loopCount: -1 });
-    s.setVolume(SILENT);
+    s.setVolume(this.floor);
     return s;
   }
   async build(t) {
@@ -1584,7 +1588,7 @@ var LivePlayer = class {
       p = Math.min(P_MAX, Math.max(P_MIN, hz / BASE_HZ));
       if (this.lastP[v] > 0 && Math.abs(p / this.lastP[v] - 1) < CENT) p = -1;
     }
-    L = Math.min(this.cap, Math.max(SILENT, L));
+    L = Math.min(this.cap, Math.max(this.floor, L));
     const last = this.lastL[v];
     if (!force && L / last < DB025 && last / L < DB025) L = -1;
     if (p < 0 && L < 0) return;
@@ -1602,7 +1606,7 @@ var LivePlayer = class {
     if (L >= 0) this.lastL[v] = L;
   }
   sendNoise(b, dur, L) {
-    L = Math.min(this.cap, Math.max(SILENT, L));
+    L = Math.min(this.cap, Math.max(this.floor, L));
     const last = this.lastNL[b];
     if (L / last < DB025 && last / L < DB025) return;
     for (const t of this.targets) {
@@ -1646,7 +1650,7 @@ var LivePlayer = class {
         this.calls += 2;
       }
       try {
-        h.old.fade(FADE_SMOOTH, SILENT);
+        h.old.fade(FADE_SMOOTH, this.floor);
       } catch {
       }
       this.calls++;
@@ -1746,8 +1750,8 @@ var LivePlayer = class {
     if (this.p + 1 > st.w) {
       if (++this.idle === LIVE_IDLE) {
         this.underruns++;
-        for (let v = 0; v < N; v++) this.sendVoice(v, 0, FADE_SMOOTH, SILENT);
-        for (let b = 0; b < M; b++) this.sendNoise(b, FADE_SMOOTH, SILENT);
+        for (let v = 0; v < N; v++) this.sendVoice(v, 0, FADE_SMOOTH, this.floor);
+        for (let b = 0; b < M; b++) this.sendNoise(b, FADE_SMOOTH, this.floor);
       }
       if (this.idle >= LIVE_IDLE) this.playing = false;
       return;
@@ -1755,7 +1759,7 @@ var LivePlayer = class {
     this.idle = 0;
     const i0 = st.slot(this.p), i1 = st.slot(this.p + 1), gain = this.lv / OSC_AMP;
     for (let v = 0; v < N; v++) {
-      const a0 = this.lastL[v] > SILENT ? st.amp[i0 * N + v] : 0, f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;
+      const a0 = this.lastL[v] > this.floor ? st.amp[i0 * N + v] : 0, f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;
       this.sendVoice(v, f0 && f1 ? Math.sqrt(f0 * f1) : f1 || f0, fdS[st.vd[i1 * N + v]], a1 * gain, st.att[i1 * N + v] === 1);
     }
     for (let b = 0; b < M; b++) this.sendNoise(b, fdS[st.nzd[i1 * M + b]], st.nz[i1 * M + b] * this.lv / NOISE_RMS[b]);
