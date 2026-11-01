@@ -397,7 +397,7 @@ var Session = class {
   /** the factor every level is sent with: s.level, less what the _l events already add (the headphones only: a 3D speaker's
    *  volume also sets how far it carries) */
   get lv() {
-    return this.mode === "phones" ? Math.pow(10, ((this.s.level ?? 0) - (this.loudEvents ? LOUD_EVENT_DB : 0)) / 20) : 1;
+    return this.mode === "phones" ? Math.pow(10, ((this.s.level ?? 0) - (this.loudEvents ? LOUD_EVENT_DB : 0)) / 20) : Math.pow(10, LEVEL_3D_DB / 20);
   }
   /** the events the instances of the targets were built with (a level change to or from 'events' rebuilds them) */
   builtLoud = false;
@@ -1278,6 +1278,7 @@ var FOLLOW_RANGE = 48;
 var RANGE_3D = 3;
 var reach3D = () => Math.min(FOLLOW_RANGE, 16 * RANGE_3D);
 var SETTLE_TICKS = 2;
+var LEVEL_3D_DB = 0;
 var LiveStream = class {
   constructor(id, meta) {
     this.id = id;
@@ -1416,7 +1417,8 @@ var LivePlayer = class {
   ev(name) {
     return this.three ? name + "_3d" : name;
   }
-  /** the level over the files: headphones as the listener's own setting (a phone +10 dB), a 3D sound 1 (its volume is its range) */
+  /** the level over the files: headphones as the listener's own setting (a phone +10 dB), 3D sounds LEVEL_3D_DB (their play volume is
+   *  their range) */
   lv = 1;
   where() {
     if (this.at.kind === "speaker" || this.at.kind === "near") {
@@ -1498,7 +1500,9 @@ var LivePlayer = class {
         this.targets.push({ dim: w.dim, loc: w.loc, osc: [], nz: [] });
         this.anchor = w.loc;
       }
+      this.lv = Math.pow(10, LEVEL_3D_DB / 20);
     } else {
+      this.lv = Math.pow(10, LEVEL_3D_DB / 20);
       const w = this.where();
       if (w) {
         this.anchor = w.loc;
@@ -1851,9 +1855,10 @@ cmdAny(
     return livePlay(st, at);
   }
 );
-cmdAny("spectral:range", "How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit)", { "volume?": "float" }, (_p, a) => {
+cmdAny("spectral:range", "How far 3D sounds reach: the volume they are made at (3 = 48 blocks, the default; the client takes the distance from it, 16 blocks a unit), and how much louder than the files they play (dB, 0 by default)", { "volume?": "float", "level?": "float" }, (_p, a) => {
   if (a.volume !== void 0) RANGE_3D = Math.max(0.25, Math.min(16, a.volume));
-  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (new speakers and live listeners; their level is set after)`;
+  if (a.level !== void 0) LEVEL_3D_DB = Math.max(0, Math.min(18, Math.round(a.level * 10) / 10));
+  return `range: 3D sounds made at volume ${RANGE_3D}, heard to ${reach3D()} blocks (level ${LEVEL_3D_DB ? `+${LEVEL_3D_DB} dB` : "as the files"}; new speakers and live streams)`;
 });
 cmdAny(
   "spectral:live_demo",
