@@ -1,6 +1,6 @@
 # Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。
-# p06（tools/exp/sampler_plans.py p06）: 1 つの tick で始めた音のうちいくつ鳴るか（p04: 束ね 4 で連打の 2 割が落ち、別名では変わらなかった）。
-# K = 1〜12 発のクリックを 1 つの tick に（それぞれ seekTo で 40 ms ずつ: 束ね 12）ヘッドホン・3D、対照に束ね 1。K 音の和音（フルート、同じ seek）ヘッドホン・3D
+# p08（tools/exp/queue/p08_connect.json）: マイクラのまま WebSocket だけ — 本物のクライアントの /connect が Spectral Connect（ラボの BDS の横）
+# につながるか（暗号化も）、チャット・リモコンの手紙・鍵盤の束が届いて鳴るか。録音: チャットの曲・音階（生演奏の間）・手紙の曲
 
 section title
 audio info
@@ -12,7 +12,6 @@ audio info
 shot title
 
 section prep
-audio song burst_k,chord_k pack=tools/exp/packs/notes
 
 section join
 join
@@ -23,40 +22,33 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section per tick
-do execute as @a run spectral:sampler 12 250 28 120
-audio start bk_b12
-do execute as @a run spectral:play burst_k
-wait 19200
+section connect
+do execute as @a run spectral:sampler 2 250 28 120 true
+# /connect: the game to Spectral Connect beside the lab's BDS (lab-service.json: tools/connect/server.mjs on 8790)
+chat /connect ${DEVICE_HOST}:8790
+until server \[spectral\] remote .*: hello 30000
+shot connected
+# a song by the chat (PlayerMessage → the server reads the unit's fur_elise, sends it as script events, spectral:play)
+audio start cn_chat
+chat !spectral tools/exp/packs/notes/fur_elise.song.json
+until server \[spectral\] note 0 piano 30000
+wait 16000
 do execute as @a run spectral:stop
 audio stop
-audio export bk_b12 192
-do execute as @a run spectral:sampler 12 250 28 120
-audio start bk3_b12
-do execute as @a run spectral:play burst_k speaker
-wait 19500
+audio export cn_chat 192
+# the remote's mail (a tag the server reads with /tag @s list): a C major scale on the live keys, 150 ms apart
+audio start cn_scale
+do tag @a add geoui.mail.sr.1.0.1.eyJuIjoic2NhbGUiLCJmIjp7fX0
+until server \[spectral\] live note on 72 20000
+wait 1500
+audio stop
+audio export cn_scale 192
+# a mail that plays a song (the 37 ms clicks)
+audio start cn_mail
+do tag @a add geoui.mail.sr.2.0.1.eyJuIjoicGxheSIsImYiOnsidXJsIjoidG9vbHMvZXhwL3BhY2tzL25vdGVzL2NsaWNrc19wdWxzZS5zb25nLmpzb24ifX0
+until server \[spectral\] note 0 click 20000
+wait 3500
 do execute as @a run spectral:stop
 audio stop
-audio export bk3_b12 192
-do execute as @a run spectral:sampler 1 250 28 120
-audio start bk_b1
-do execute as @a run spectral:play burst_k
-wait 19200
-do execute as @a run spectral:stop
-audio stop
-audio export bk_b1 192
-do execute as @a run spectral:sampler 2 250 28 120
-audio start ck_b2
-do execute as @a run spectral:play chord_k
-wait 19200
-do execute as @a run spectral:stop
-audio stop
-audio export ck_b2 192
-do execute as @a run spectral:sampler 2 250 28 120
-audio start ck3_b2
-do execute as @a run spectral:play chord_k speaker
-wait 19500
-do execute as @a run spectral:stop
-audio stop
-audio export ck3_b2 192
-do execute as @a run spectral:sampler 2 250 28 120
+audio export cn_mail 192
+do execute as @a run spectral:sampler 2 250 28 120 false
