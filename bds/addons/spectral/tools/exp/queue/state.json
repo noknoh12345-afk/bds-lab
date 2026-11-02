@@ -133,10 +133,60 @@
   "tries": 1
  },
  "q05_direction": {
+  "arms": {
+   "od": {
+    "mrstft": 1.392,
+    "n": 3,
+    "rms_db": -44.2,
+    "third_oct_db": 9.219,
+    "visqol": 3.421
+   },
+   "oe": {
+    "mrstft": 1.664,
+    "n": 3,
+    "rms_db": -46.9,
+    "third_oct_db": 9.421,
+    "visqol": 3.551
+   },
+   "on": {
+    "mrstft": 1.389,
+    "n": 3,
+    "rms_db": -44.3,
+    "third_oct_db": 9.145,
+    "visqol": 3.394
+   },
+   "os": {
+    "mrstft": 1.615,
+    "n": 3,
+    "rms_db": -43.3,
+    "third_oct_db": 9.146,
+    "visqol": 3.533
+   },
+   "ou": {
+    "mrstft": 1.521,
+    "n": 3,
+    "rms_db": -43.7,
+    "third_oct_db": 9.135,
+    "visqol": 3.433
+   },
+   "ow": {
+    "mrstft": 1.673,
+    "n": 3,
+    "rms_db": -47.9,
+    "third_oct_db": 9.127,
+    "visqol": 3.494
+   }
+  },
+  "checkpoints": 0,
   "commit": "9d651a9",
+  "conclusion": "success",
+  "ended": "2026-11-02 21:35",
+  "failed_steps": 0,
+  "recordings": 18,
   "run": "41442135393",
   "started": "2026-11-02 21:07",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q06_two_streams": {
   "status": "pending"
