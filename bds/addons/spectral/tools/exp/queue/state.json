@@ -133,7 +133,10 @@
   "tries": 1
  },
  "q05_direction": {
-  "status": "pending"
+  "commit": "9d651a9",
+  "run": "41442135393",
+  "started": "2026-11-02 21:07",
+  "status": "running"
  },
  "q06_two_streams": {
   "status": "pending"
