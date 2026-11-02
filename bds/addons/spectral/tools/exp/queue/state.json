@@ -147,9 +147,18 @@
   "tries": 2
  },
  "p09_speech_units": {
-  "status": "pending"
+  "commit": "5f7685d",
+  "run": "41531478311",
+  "started": "2026-11-03 06:47",
+  "status": "running"
  },
  "p10_sampler_level": {
+  "status": "pending"
+ },
+ "p11_per_tick": {
+  "status": "pending"
+ },
+ "p12_connect2": {
   "status": "pending"
  },
  "q01_same_twice": {
