@@ -1957,6 +1957,7 @@ async function pasted(p, text, keep2) {
     const t = text.trim();
     if (t.length === 100 && /^SP[ZA][12]\./.test(t)) return { say: `\xA7cthe text box took only 100 characters (the game's own limit): Spectral Player's resource pack lets it take a whole part (${FIELD_CHARS} characters) \u2014 accept the server's resource packs (or add the pack to the world) and paste it again` };
     if (t.length === PHONE_CHARS && /^SP[ZA][12]\./.test(t) && /cut short/.test(errText(e))) return { say: `\xA7cthe text box took only ${PHONE_CHARS} characters (a phone's limit): make the text again on the converter page \u2014 its parts are ${FIELD_CHARS} characters at most now \u2014 and paste them one by one` };
+    if (t.length >= 1e3 && t.length < PHONE_CHARS && /^SPZ[12]\./.test(t) && /cut short/.test(errText(e))) return { say: `\xA7cthe text came cut at ${t.length} characters: if the text box cut it, choose \u82F1\u6570\u5B57 (ASCII letters) for the text on the converter page \u2014 a phone takes ${FIELD_CHARS} of those \u2014 and paste it again` };
     return { say: `\xA7c${errText(e)}` };
   }
   console.warn(`[spectral] paste part ${part.i}/${part.n} of ${part.key}: ${text.length} characters from ${p.name}`);

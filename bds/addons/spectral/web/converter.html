@@ -190,7 +190,7 @@ button.main:disabled { opacity: 0.5; cursor: default; }
       <p class="note">曲パックを入れられないとき（Realms・スマホだけ）は、選んでいる曲をテキストにして、ゲームの <code>/spectral:paste</code>（リモコンの「📋 Paste a song」）に貼り付けます。スマホの入力欄に入る長さ（1 回 <span id="partMax">—</span> 文字まで）のパートに分けるので、1 から順に貼り付けます。100 文字で止まるときは、本体のリソースパックがゲームに入っていません（サーバーのリソースパックを受け入れるか、ワールドに入れてください）。</p>
       <div class="grid2">
         <label class="quality">声の数<select id="pxVoices"><option value="16">16（短い）</option><option value="24" selected>24（スマホが鳴らす数）</option><option value="32">32</option><option value="0">すべて</option></select></label>
-        <label class="quality">文字<select id="pxEnc"><option value="cjk" selected>漢字（短い）</option><option value="ascii">英数字（互換用・約 2.5 倍）</option></select></label>
+        <label class="quality">文字<select id="pxEnc"><option value="ascii" selected>英数字（スマホで確かめ済み）</option><option value="cjk">漢字（2.5 分の 1 の文字数・スマホは未確認）</option></select></label>
       </div>
       <button class="main" id="makeText">選んでいる曲をテキストに</button>
       <p class="msg" id="textMsg"></p>
@@ -461,10 +461,10 @@ function showNow() {
   const st = $('stats'); st.textContent = '';
   if (t.state !== 'ok') return;
   const m = t.song.meta, s = t.song.stats, kbps = (t.song.bytes.length * 8 / 1000 / m.seconds);
-  const text = textOf(t, 24, false);
+  const text = textOf(t, 24, true);
   const rows = [['長さ', fmt(m.seconds) + ` · ${m.frames} 枠`], ['データ量', `${(t.song.bytes.length / 1024).toFixed(1)} KB`], ['データ速度', `${kbps.toFixed(1)} kbps`],
     ['平均の発音ボイス', `${s.activeAvg.toFixed(1)} / ${m.voices}`], ['tick あたりの命令', `${s.changesPerTick.toFixed(1)} 回`],
-    ...(text ? [['貼り付け（24 声）', `${text.chars.toLocaleString()} 文字・${text.parts.length} 回`]] : [])];
+    ...(text && !text.error ? [['貼り付け（24 声・英数字）', `${text.chars.toLocaleString()} 文字・${text.parts.length} 回`]] : [])];
   for (const [k, v] of rows) { const d = document.createElement('div'); d.className = 'stat'; d.innerHTML = `<span>${k}</span><b>${v}</b>`; st.appendChild(d); }
 }
 const tok = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();

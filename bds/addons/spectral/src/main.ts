@@ -866,6 +866,9 @@ async function pasted(p: Player, text: string, keep: boolean): Promise<{ say: st
     const t = text.trim();
     if (t.length === 100 && /^SP[ZA][12]\./.test(t)) return { say: `§cthe text box took only 100 characters (the game's own limit): Spectral Player's resource pack lets it take a whole part (${FIELD_CHARS} characters) — accept the server's resource packs (or add the pack to the world) and paste it again` };
     if (t.length === PHONE_CHARS && /^SP[ZA][12]\./.test(t) && /cut short/.test(errText(e))) return { say: `§cthe text box took only ${PHONE_CHARS} characters (a phone's limit): make the text again on the converter page — its parts are ${FIELD_CHARS} characters at most now — and paste them one by one` };
+    // (a kanji text cut short well before a part's end: a text box that counts bytes takes a third of the characters — not measured
+    // on a phone; the ASCII text, measured whole at 4977 characters, fits)
+    if (t.length >= 1000 && t.length < PHONE_CHARS && /^SPZ[12]\./.test(t) && /cut short/.test(errText(e))) return { say: `§cthe text came cut at ${t.length} characters: if the text box cut it, choose 英数字 (ASCII letters) for the text on the converter page — a phone takes ${FIELD_CHARS} of those — and paste it again` };
     return { say: `§c${errText(e)}` };
   }
   console.warn(`[spectral] paste part ${part.i}/${part.n} of ${part.key}: ${text.length} characters from ${p.name}`);
