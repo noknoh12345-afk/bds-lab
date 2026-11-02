@@ -447,10 +447,39 @@
   "tries": 1
  },
  "q13_voices_16_20": {
+  "arms": {
+   "e": {
+    "mrstft": 1.74,
+    "n": 13,
+    "rms_db": -39.2,
+    "third_oct_db": 7.822,
+    "visqol": 2.981
+   },
+   "v16": {
+    "mrstft": 1.813,
+    "n": 13,
+    "rms_db": -39.3,
+    "third_oct_db": 10.909,
+    "visqol": 2.854
+   },
+   "v20": {
+    "mrstft": 1.751,
+    "n": 13,
+    "rms_db": -39.3,
+    "third_oct_db": 9.078,
+    "visqol": 3.064
+   }
+  },
+  "checkpoints": 0,
   "commit": "8ef58d1",
+  "conclusion": "success",
+  "ended": "2026-11-03 04:21",
+  "failed_steps": 0,
+  "recordings": 39,
   "run": "41486252660",
   "started": "2026-11-03 01:56",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q14_spz2_coarse": {
   "status": "pending"
