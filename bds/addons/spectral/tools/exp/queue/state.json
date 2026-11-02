@@ -160,7 +160,10 @@
   "tries": 1
  },
  "p10_sampler_level": {
-  "status": "pending"
+  "commit": "8bf9af1",
+  "run": "41534236021",
+  "started": "2026-11-03 07:05",
+  "status": "running"
  },
  "p11_per_tick": {
   "status": "pending"
