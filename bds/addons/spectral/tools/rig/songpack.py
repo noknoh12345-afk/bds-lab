@@ -81,7 +81,7 @@ def parts(song_id, voices=48, size=1800, opts=None, suffix=''):
             'kbps': round(len(base64.b64decode(data)) * 8 / max(1e-9, meta.get('seconds') or 1) / 1000, 1)}
 
 
-def write_unit(unit_dir, ids):
+def write_unit(unit_dir, ids, rate=48000):
     """the ceiling as a lab unit (bp/ + rp/, plain JS: bds/addons/<name>) for an app run's `addon <name>`: the BDS restarted
     with it and the game joined again, `/scriptevent spectral:ceiling <id>` plays that original excerpt as an ordinary sound
     to every player — category ui, 2D, the headphones' own path. Made where the run is (the excerpts are never committed)"""
@@ -92,7 +92,9 @@ def write_unit(unit_dir, ids):
     defs, size = {}, 0
     for i in ids:
         f = os.path.join(snd, i + '.ogg')
-        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', fetched(i), '-ar', '48000', '-c:a', 'libvorbis', '-q:a', '8', f], check=True)
+        # (rate 24000: the phone's own mixing rate — the resampler's filter takes away what is above 12 kHz, which the phone would
+        # fold down when it reads a 48 kHz file at 24 kHz with no filter of its own: SPEC.md, the ceiling under the songs in q02)
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', fetched(i), '-ar', str(rate), '-c:a', 'libvorbis', '-q:a', '8', f], check=True)
         size += os.path.getsize(f)
         defs[f'spectral_ceiling.{i}'] = {'category': 'ui', 'sounds': [{'name': f'sounds/spectral_ceiling/{i}', 'is3D': False, 'volume': 1.0, 'stream': True}]}
         # the same file under a definition volume of 4 (the loud ceiling, if the client takes a definition's volume over 1)
@@ -148,7 +150,8 @@ def main():
         return
     ids = a.songs.split(',') if a.songs else [s['id'] for s in C.manifest()['songs']]
     if a.unit:
-        print(json.dumps(write_unit(a.unit, ids), ensure_ascii=False))
+        # (a unit whose name ends in 24 is made at 24 kHz: the ceiling as a phone can play it without folding)
+        print(json.dumps(write_unit(a.unit, ids, 24000 if os.path.basename(a.unit.rstrip('/')).endswith('24') else 48000), ensure_ascii=False))
         return
     os.makedirs(a.out, exist_ok=True)
     songs = [convert(i, a.voices) for i in ids]

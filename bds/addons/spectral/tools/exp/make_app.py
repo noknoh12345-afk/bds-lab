@@ -40,11 +40,13 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
             L.append(f"audio song {','.join(songs)}" + (f" suffix={suffix}" if suffix else '') + f" pack={a['pack']}")
         else:
             L.append(f"audio song {','.join(songs)}" + (f" suffix={suffix}" if suffix else '') + (f' {opts}' if opts else ''))
-    if ceiling:
+    # (ceiling: one ceiling unit, spectral_ceil; or a list of them, each {unit, arms} — a unit name ending in 24 is made at 24 kHz)
+    ceilings = (ceiling if isinstance(ceiling, list) else [{'unit': 'spectral_ceil', **ceiling}]) if ceiling else []
+    for ce in ceilings:
         cs=[]
-        for c in ceiling['arms']:
+        for c in ce['arms']:
             cs+=[x for x in c.get('songs',SONGS) if x not in cs]
-        L.append(f"audio ceiling spectral_ceil {','.join(cs)}")
+        L.append(f"audio ceiling {ce['unit']} {','.join(cs)}")
     L+=list(prep)                                       # (more of the prep section: e.g. songs for the sections' own lines)
     L+=['', 'section join', 'join', 'until joined 300000', 'wait 5000', 'do time set noon', 'do gamerule dodaylightcycle false', 'do weather clear']
     L+=[f'do execute as @a run {c}' for c in setup]
@@ -100,9 +102,9 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
             done.update(x['pre'] for x in inter); continue
         L+=section(a['pre'], [(a, s) for s in a.get('songs',SONGS)])
         done.add(a['pre'])
-    if ceiling:
-        L+=['', 'section ceiling', 'addon spectral_ceil', 'join', 'until joined 300000', 'wait 5000']
-        plan=[(c, s) for c in ceiling['arms'] for s in c.get('songs',SONGS)]
+    for ce in ceilings:
+        L+=['', f"section {'ceiling' if ce['unit'] == 'spectral_ceil' else ce['unit']}", f"addon {ce['unit']}", 'join', 'until joined 300000', 'wait 5000']
+        plan=[(c, s) for c in ce['arms'] for s in c.get('songs',SONGS)]
         play=lambda c, s: f"do scriptevent spectral:ceiling {s}" + (f" {c['args']}" if c.get('args') else '')
         if not batch:
             for c, s in plan:
@@ -111,7 +113,7 @@ def make(arms, header, wait_ms=23000, calib=(), ceiling=None, interleave=None, b
                 if c.get('export',160): L.append(f"audio export {name} {c.get('export',160)}")
         for b0 in range(0, len(plan) if batch else 0, batch or 1):
             part=plan[b0:b0 + batch]
-            L.append(f'audio start ceiling_{b0 // batch + 1}')
+            L.append(f"audio start {'ceiling' if ce['unit'] == 'spectral_ceil' else ce['unit']}_{b0 // batch + 1}")
             for c, s in part: L+=[f"audio mark {c['pre']}_{s}", play(c, s), f'wait {wait_ms - 1000}']
             L+=['audio stop', 'audio analyze-all ' + ' '.join(f"{c['pre']}_{s}=song:{s}" for c, s in part)]
             L+=[f"audio export {c['pre']}_{s} {c.get('export',160)}" for c, s in part if c.get('export',160)]

@@ -154,8 +154,23 @@ def p02(work):
     print('plan p02_speech_piano:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
 
 
+def p03():
+    """p03: the recording itself as a phone can play it (24 kHz: nothing above 12 kHz to fold) against the same at 48 kHz (the
+    ceiling of q02, which scored under the sine engine's songs) and the sine engine — 13 songs each, one run"""
+    head = ["# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+            "# p03（tools/exp/sampler_plans.py p03）: 元の曲をそのまま鳴らす（ファイルの曲）を 24 kHz（電話の混ぜ方: 12 kHz より上が無いので折り返さない）と",
+            "# 48 kHz（q02 の天井: 正弦波の曲より低かった）で、同じ run の正弦波の道（e）と。13 曲ずつ"]
+    plan = {'header': head, 'setup': ['tp @s 0 -60 0 0 0'], 'batch': 13,
+            'arms': [{'pre': 'e', 'pack': 'tools/exp/packs/run10', 'suffix': '_e', 'conv': {'pack': 'run10'}, 'export': 160, 'cmds': ['tp @s 0 -60 0 0 0']}],
+            'ceiling': [{'unit': 'spectral_ceil', 'arms': [{'pre': 'c'}]}, {'unit': 'spectral_ceil24', 'arms': [{'pre': 'f'}]}]}
+    json.dump(plan, open(os.path.join(HERE, 'queue', 'p03_file_songs.json'), 'w'), ensure_ascii=False, indent=1)
+    print('plan p03_file_songs')
+
+
 if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv[1] == 'p02':
+    if len(sys.argv) > 1 and sys.argv[1] == 'p03':
+        p03()
+    elif len(sys.argv) > 1 and sys.argv[1] == 'p02':
         p02(sys.argv[2] if len(sys.argv) > 2 else '/tmp/sampler_refs')
     else:
         main()

@@ -1,0 +1,43 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+  "# p03（tools/exp/sampler_plans.py p03）: 元の曲をそのまま鳴らす（ファイルの曲）を 24 kHz（電話の混ぜ方: 12 kHz より上が無いので折り返さない）と",
+  "# 48 kHz（q02 の天井: 正弦波の曲より低かった）で、同じ run の正弦波の道（e）と。13 曲ずつ"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "batch": 13,
+ "arms": [
+  {
+   "pre": "e",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ]
+  }
+ ],
+ "ceiling": [
+  {
+   "unit": "spectral_ceil",
+   "arms": [
+    {
+     "pre": "c"
+    }
+   ]
+  },
+  {
+   "unit": "spectral_ceil24",
+   "arms": [
+    {
+     "pre": "f"
+    }
+   ]
+  }
+ ]
+}
