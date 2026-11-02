@@ -112,10 +112,20 @@
   "tries": 2
  },
  "p06_per_tick": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "7bb971d",
+  "conclusion": "failure",
+  "earlier_runs": [
+   "41524440910"
+  ],
+  "ended": "2026-11-03 06:13",
+  "failed_steps": 0,
+  "recordings": 0,
   "run": "41524440910",
   "started": "2026-11-03 06:01",
-  "status": "running"
+  "status": "pending",
+  "tries": 1
  },
  "p07_limiter": {
   "status": "pending"
