@@ -2,7 +2,7 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 10（tools/exp/queue/q10_live_10min.json）: ライブの道で 10 分（話し声と歌）。ボイスチャットの道（1 フレームずつ）を 10 分続ける: ジッターバッファ・ずれ・抜けが時間とともに増えないか
+# キュー 11（tools/exp/queue/q11_speed_pitch.json）: 速さ 0.5・1.5 倍と移調 ±5（4 曲）。/spectral:speed と /spectral:pitch を実機で（一度も測っていない）。あとで元の曲を同じだけ伸ばした・ずらした音と比べる
 
 section title
 audio info
@@ -14,7 +14,7 @@ audio info
 shot title
 
 section prep
-audio song speech_10min pack=tools/exp/packs/live10
+audio song piano_gymnopedie,vocal_name_of_love,rock_big,speech_ja_soseki suffix=_e pack=tools/exp/packs/run10
 
 section join
 join
@@ -25,9 +25,132 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section live10
-audio start lv_speech_10min
-do execute as @a run spectral:live_demo speech_10min phones @s 24
-wait 605000
+section n1_x05_x15_pu5_pd5
+do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:pitch 0
+audio start n1_x05_x15_pu5_pd5_1
+audio mark n1_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 0.5
+audio mark x05_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+wait 44000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 1.5
+audio mark x15_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+wait 16000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:pitch 5
+audio mark pu5_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:pitch -5
+audio mark pd5_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:pitch 0
+audio mark n1_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 0.5
+audio mark x05_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 44000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 1.5
+audio mark x15_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 16000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:pitch 5
+audio mark pu5_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:pitch -5
+audio mark pd5_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:pitch 0
+audio mark n1_rock_big
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 0.5
+audio mark x05_rock_big
+do execute as @a run spectral:play rock_big_e
+wait 44000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 1.5
+audio mark x15_rock_big
+do execute as @a run spectral:play rock_big_e
+wait 16000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:pitch 5
+audio mark pu5_rock_big
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:pitch -5
+audio mark pd5_rock_big
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:pitch 0
+audio mark n1_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 0.5
+audio mark x05_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 44000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 1.5
+audio mark x15_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 16000
+do execute as @a run spectral:stop
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:pitch 5
+audio mark pu5_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:pitch -5
+audio mark pd5_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 23000
 audio stop
-audio export lv_speech_10min 96
+audio analyze-all n1_piano_gymnopedie=song:piano_gymnopedie x05_piano_gymnopedie=song:piano_gymnopedie x15_piano_gymnopedie=song:piano_gymnopedie pu5_piano_gymnopedie=song:piano_gymnopedie pd5_piano_gymnopedie=song:piano_gymnopedie n1_vocal_name_of_love=song:vocal_name_of_love x05_vocal_name_of_love=song:vocal_name_of_love x15_vocal_name_of_love=song:vocal_name_of_love pu5_vocal_name_of_love=song:vocal_name_of_love pd5_vocal_name_of_love=song:vocal_name_of_love n1_rock_big=song:rock_big x05_rock_big=song:rock_big x15_rock_big=song:rock_big pu5_rock_big=song:rock_big pd5_rock_big=song:rock_big n1_speech_ja_soseki=song:speech_ja_soseki x05_speech_ja_soseki=song:speech_ja_soseki x15_speech_ja_soseki=song:speech_ja_soseki pu5_speech_ja_soseki=song:speech_ja_soseki pd5_speech_ja_soseki=song:speech_ja_soseki
+audio export n1_piano_gymnopedie 160
+audio export x05_piano_gymnopedie 160
+audio export x15_piano_gymnopedie 160
+audio export pu5_piano_gymnopedie 160
+audio export pd5_piano_gymnopedie 160
+audio export n1_vocal_name_of_love 160
+audio export x05_vocal_name_of_love 160
+audio export x15_vocal_name_of_love 160
+audio export pu5_vocal_name_of_love 160
+audio export pd5_vocal_name_of_love 160
+audio export n1_rock_big 160
+audio export x05_rock_big 160
+audio export x15_rock_big 160
+audio export pu5_rock_big 160
+audio export pd5_rock_big 160
+audio export n1_speech_ja_soseki 160
+audio export x05_speech_ja_soseki 160
+audio export x15_speech_ja_soseki 160
+audio export pu5_speech_ja_soseki 160
+audio export pd5_speech_ja_soseki 160
