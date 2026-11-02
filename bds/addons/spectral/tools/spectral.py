@@ -1114,6 +1114,10 @@ CL_WEIGHT_SETS = {'svr': [100, 70, 50, 50, 50, 50, 70, 80, 70, 70, 70, 70, 70, 6
 CL_WEIGHTS_DEFAULT = 'svr'        # the default since 2026-10-31 (fourth session): svr, 5 sweeps, the level held beat run 8's default on all
                                   # 13 songs through the client model, median +0.108 (tools/exp/results/refine2.jsonl, emulated)
 CL_HOLD = True
+# the voices after the phone's, for a client that plays them all (a PC, not measured: web/game.js 'pc' — 48 kHz, no limit on sounds,
+# floating point, no level boost): a second stage with the phone's voices and the noise bands fixed, so a phone hears the same.
+# Since 2026-11-02 the default (4 songs played as the PC model: +0.04 to +0.26, mean +0.13; the phone's part identical, emulated)
+CL_MORE = {'client': 'pc', 'level': 0.0, 'sweeps': 2}
 CL_OBJECTIVE = 'nsim'             # 'nsim': ViSQOL's own similarity (NSIM, 3x3 neighbourhoods of the dB spectrograms) | 'sq': squared dB
 CL_W3 = [[0.0113033910173052, 0.0838251475442633, 0.0113033910173052], [0.0838251475442633, 0.619485845753726, 0.0838251475442633],
          [0.0113033910173052, 0.0838251475442633, 0.0113033910173052]]       # ViSQOL's NSIM window
@@ -1569,7 +1573,7 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
             nested=0, hf=0.0, burst_tilt=None, noise_edges=None, nz_fade=True, v_fade=True, rank='energy', fade_gain=None,
             fade_margin=None, nz_hop=None, low_cut=0.5, nsim_margin=NSIM_MARGIN, refine=True, refine_voices=CL_VOICES,
             refine_level=CL_LEVEL_DB, refine_sweeps=CL_SWEEPS, refine_weights=None, refine_objective=None, refine_hold=CL_HOLD,
-            refine_more=None):
+            refine_more=CL_MORE):
     """residual: 'voiced' (default: only the voices' main lobes out of the noise, so the peaks no voice plays stay in the noise
     bands) | 'all' (every peak's lobe out: the version before 2026-10-31) | 'fit' (ERB least squares). Through the validated
     client model (tools/exp/results/next.jsonl, 10 songs, 24 voices, no drum bursts) 'voiced' scored +0.139 ViSQOL over the
@@ -1587,9 +1591,9 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
     (refine_weights 'svr'; 'uni' = every band alike) and the playback's power held where it started after each sweep (refine_hold:
     without it the song sank toward the 16-bit floor sweep after sweep): 13 of 13 songs over run 8's default (2 sweeps, 'uni', no
     hold), median +0.108 (tools/exp/results/refine2.jsonl, emulated).
-    refine_more = {'client': 'pc', 'level': 0, 'sweeps': 2}: a second stage for the voices after the phone's (a client that plays
-    them all — a PC, not measured: the model of web/game.js 'pc'), chosen with the phone's voices and the noise bands fixed, so what
-    a phone plays does not change (off by default; web/core.js refineMore the same)"""
+    refine_more = {'client': 'pc', 'level': 0, 'sweeps': 2} (CL_MORE, the default; None or False: none): a second stage for the voices
+    after the phone's (a client that plays them all — a PC, not measured: the model of web/game.js 'pc'), chosen with the phone's
+    voices and the noise bands fixed, so what a phone plays does not change (web/core.js refineMore the same)"""
     global BURST_TILT, NOISE_EDGES, FADE_GAIN, FADE_MARGIN_DB2
     # (these options set module globals: each conversion sets all of them, so one never leaks into the next in a process)
     FADE_GAIN = float(fade_gain) if fade_gain is not None else _DEFAULTS['FADE_GAIN']

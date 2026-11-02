@@ -609,7 +609,9 @@
     if (refineOn && vd && nzd) {
       // analysis by synthesis through the client model (tools/spectral.py refine_client): every tick's levels and fades
       const unpack = (packed, n) => { const per4 = (n + 3) >> 2, c = new Uint8Array(F * n); for (let k = 0; k < F; k++) for (let j = 0; j < n; j++) c[k * n + j] = (packed[k * per4 + (j >> 2)] >> (2 * (j & 3))) & 3; return c; };
-      const vc = unpack(vd, N), nc = unpack(nzd, M), rv = opts.refineVoices ?? opts.refine_voices ?? CL_VOICES, more = N > rv ? opts.refineMore ?? opts.refine_more : null;
+      // (refineMore: the second stage for the voices after the phone's — CL_MORE unless given; null or false: none)
+      const vc = unpack(vd, N), nc = unpack(nzd, M), rv = opts.refineVoices ?? opts.refine_voices ?? CL_VOICES, mo = opts.refineMore !== undefined ? opts.refineMore : opts.refine_more;
+      const more = N > rv && mo !== null && mo !== false ? mo ?? CL_MORE : null;
       // (the options also by tools/spectral.py's names, for tools/parity.py)
       refined = await refineClient(x, F, N, M, fq2, am2, vc, nz, nc, gain, { voices: opts.refineVoices ?? opts.refine_voices, level: opts.refineLevel ?? opts.refine_level,
         sweeps: opts.refineSweeps ?? opts.refine_sweeps, weights: opts.refineWeights ?? opts.refine_weights, objective: opts.refineObjective ?? opts.refine_objective,
@@ -745,6 +747,8 @@
   // bands against the original, each tick's level and fade of every sound chosen to bring them closest; the squared
   // difference counted in whole 1/64ths of a dB, so both converters choose the same)
   const CL_VOICES = 24, CL_LEVEL_DB = 10, CL_OSC_AMP = 0.9, CL_SILENT = 1e-4, CL_SEND_DB = 0.75, CL_SEND_CENTS = 3;
+  // (tools/spectral.py CL_MORE: the default second stage — the voices after the phone's for a PC as assumed, the phone's part fixed)
+  const CL_MORE = { client: 'pc', level: 0, sweeps: 2 };
   const CL_NOISE_RMS = [0.181311, 0.180788, 0.179998, 0.179116, 0.178403, 0.177544, 0.177018, 0.175986], NOISE_RMS_ALL = 0.18;
   const CL_OUT_DB = -32.5, CL_BITS = 16, CL_TICK = 50, CL_HOP = 20, CL_WIN = 80, CL_Q = 64, CL_FLOOR = 45, CL_SWEEPS = 5;
   const CL_VSTEPS = [-12, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4], CL_NSTEPS = [-16, -12, -8, -6, -4, -2, 0, 2, 4, 6];
