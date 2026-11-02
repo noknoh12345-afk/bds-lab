@@ -2,12 +2,9 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# 33 回目（tools/exp/make_app.py tools/exp/app33.json）: 新しい曲のテキスト SPZ2 は音質を変えないか（実測）。13 曲を曲ごとに交互に: o_ = 曲パックの曲
-#   そのまま（tools/exp/packs/run10 の _e、48 声: 電話が鳴らすのは最初の 24 声）、z_ = 同じ曲を SPZ2 にしてから戻したもの（tools/exp/packs/spz2 の _z、
-#   24 声: 大きさ 1.5 dB・音程 10 セント・ノイズ 1 dB の格子と音程の平滑）。差が run の中のゆらぎに収まるかを ViSQOL ほかで
-#   それから貼り付けの確かめ（32 回目は 33630〜104774 文字がどれも貼れなかった: 3 つはサーバーが断り、どの切れ目の長さにも当たらない = 打った文字が
-#   落ちたか、入力欄の別の上限。最初の 1 つは返事なし）: 小さな 320 文字（最初の 1 回の取りこぼし避け）、30000 の内の 28011 文字を 200 文字ずつ。断られたら
-#   その理由（cut short・文字・check sum）と届いた文字数の幅を ck で。リソースパックの入力欄は 30000 に戻した
+# 34 回目（tools/exp/make_app.py tools/exp/app34.json）: 電話の入力欄の本当の上限（33 回目: 28011 文字のうち届いたのは 1 万文字未満、31 回目の 3318 は
+#   全部届いた。プロトコルのクライアントからなら 29028 文字の漢字も BDS に全部届く = 上限はクライアントの側）。小さな貼り付けを 2 回（最初の 1 回の取りこぼし
+#   避け）の後、15142 文字を 200 文字ずつ打って送り、断られたときの文字数を桁ごとの ck（thousands_*・hundreds_*・tens_*・units_*）で読む
 
 section title
 audio info
@@ -19,8 +16,6 @@ audio info
 shot title
 
 section prep
-audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_e pack=tools/exp/packs/run10
-audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_z pack=tools/exp/packs/spz2
 
 section join
 join
@@ -36,57 +31,93 @@ do execute as @a run tp @s 0 -60 0 0 70
 wait 12000
 shot world
 
-section warm
+section warm1
 do execute as @a run spectral:paste
 until text (?i)submit 20000
 wait 1000
-audio start ck_warm_open
+audio start ck_warm1_open
 wait 400
 audio stop
-audio export ck_warm_open 16
+audio export ck_warm1_open 16
 tap text (?i)^(here|paste the song)
 wait 2500
-audio start ck_warm_tapped
+audio start ck_warm1_tapped
 wait 400
 audio stop
-audio export ck_warm_tapped 16
+audio export ck_warm1_tapped 16
 text SPA2.1.1.65900b13.223:AgUKBAgCMgIyWXemcAdwel93YXJtB1dhcm0gdXAEbGl2ZQDP-Rq4ADkHmCpNlqDa7dT0Tlg-bE2qK8jjmIFvg3KYhOQ66ptuZhMYzG3xMLRGjXU1K9-bNPWUuNtoiK0VcPE5_3BzVx3w-clSWhGJ3icqGbZMQ2Toz2hCOU79MEfUpYt3Ra
 wait 300
 text 6LI3cv7zk06WGBu3obldH30gDcstZcm9OOhw5CK568e-4vH-72-32SNg9J-U89q99g_2WATJVldzvh1m7wbEzzySOwSfp_hV5T4XcnEYvHRZr-pu5yhUgAAA
 wait 300
 wait 2000
-audio start ck_warm_typed
+audio start ck_warm1_typed
 wait 400
 audio stop
-audio export ck_warm_typed 16
+audio export ck_warm1_typed 16
 expect text (?i)submit
 tap text (?i)submit
-audio start ck_warm_submit_tapped
+audio start ck_warm1_submit_tapped
 wait 400
 audio stop
-audio export ck_warm_submit_tapped 16
-until server spectral\] (pasted|paste refused) 120000
-audio start ck_warm_answer
+audio export ck_warm1_submit_tapped 16
+until server spectral\] (pasted|paste refused) 60000
+audio start ck_warm1_answer
 wait 400
 audio stop
-audio export ck_warm_answer 16
+audio export ck_warm1_answer 16
 wait 1500
 
-section near
+section warm2
 do execute as @a run spectral:paste
 until text (?i)submit 20000
 wait 1000
-audio start ck_near_open
+audio start ck_warm2_open
 wait 400
 audio stop
-audio export ck_near_open 16
+audio export ck_warm2_open 16
 tap text (?i)^(here|paste the song)
 wait 2500
-audio start ck_near_tapped
+audio start ck_warm2_tapped
 wait 400
 audio stop
-audio export ck_near_tapped 16
-text SPA2.1.1.c3067f84.20990:AgXcBhgIAjICzCHHADcHBnB6X240MwpOZWFyIDMwMDAwBmNvcnB1cwCP9rMlM2tdXpf0uT3Vs4Q2wTMCn6rFtHn8xdqUH4nFXWNaDf3RJUfDbxlXeRYJ4aXvVS78OquNQf4K5FdcHwFHdEHUScvFVSpOUUOcsLcNlNwkjIJ_N0u4ppsh
+audio export ck_warm2_tapped 16
+text SPA2.1.1.65900b13.223:AgUKBAgCMgIyWXemcAdwel93YXJtB1dhcm0gdXAEbGl2ZQDP-Rq4ADkHmCpNlqDa7dT0Tlg-bE2qK8jjmIFvg3KYhOQ66ptuZhMYzG3xMLRGjXU1K9-bNPWUuNtoiK0VcPE5_3BzVx3w-clSWhGJ3icqGbZMQ2Toz2hCOU79MEfUpYt3Ra
+wait 300
+text 6LI3cv7zk06WGBu3obldH30gDcstZcm9OOhw5CK568e-4vH-72-32SNg9J-U89q99g_2WATJVldzvh1m7wbEzzySOwSfp_hV5T4XcnEYvHRZr-pu5yhUgAAA
+wait 300
+wait 2000
+audio start ck_warm2_typed
+wait 400
+audio stop
+audio export ck_warm2_typed 16
+expect text (?i)submit
+tap text (?i)submit
+audio start ck_warm2_submit_tapped
+wait 400
+audio stop
+audio export ck_warm2_submit_tapped 16
+until server spectral\] (pasted|paste refused) 60000
+audio start ck_warm2_answer
+wait 400
+audio stop
+audio export ck_warm2_answer 16
+wait 1500
+
+section capfind
+do execute as @a run spectral:paste
+until text (?i)submit 20000
+wait 1000
+audio start ck_capfind_open
+wait 400
+audio stop
+audio export ck_capfind_open 16
+tap text (?i)^(here|paste the song)
+wait 2500
+audio start ck_capfind_tapped
+wait 400
+audio stop
+audio export ck_capfind_tapped 16
+text SPA2.1.1.bfcc3b4c.11338:AgXMAxgIAjIC_BEVwrWQBnB6X2NhcApDYXAgZmluZGVyBmNvcnB1cwCP9rMlM2tdXpf0uT3Vs4Q2wTMCn6rFtHn8xdqUH4nFXWNaDf3RJUfDbxlXeRYJ4aXvVS78OquNQf4K5FdcHwFHdEHUScvFVSpOUUOcsLcNlNwkjIJ_N0u4ppsh
 wait 300
 text bfK2D_DZcPwq8botY3PHqWZp90OjywvdDVYHz1NK2Ks_e65JOxY9lD4Z9k_N8ifYWohYFtOxcLuj8a3fFIzI7ch70fspzXEkye-R_8WCNb4ViIkq5BuM1aEhn0Tx_fD8WV-JKUSpXO-lu5NzThrkzOwjpPtlfGqNECdwvGDh4xnlcs5FcTKSXhwcbG6t2a6YIZZX5-pL
 wait 300
@@ -212,200 +243,336 @@ text wlid12fZ248rUtS67GbaNdZhSNeGCn0l3tEHCDkWwHPEtTeVFwiJ9apkSp3uPUqFJStgSrfBZ5R
 wait 300
 text 3NTz1wTBaxnLxwzOqNw9kRN4zXiarzyCDE6TpyWEN_GTLHP-S9Sx3I1QdGKkDWqn5oDjaS2LY3dh6TKFMLlX-q1DCTgpduAju4phW1rukxE3Mn1MNxX2MnBCocKl3L00QDimn-0-pvWKzL5kyZPeUuqqzLUvz3Oac6ScSqkzR2Y87rwEHaNy6qflZIh0M65uK9laJnyV
 wait 300
-text FQEdB7jpHDkfd5ZCD0C9LMUYBN-8yJD4T0r96sCeFcSxRdo8b2lYwByBwPLtGRPWtZcaW1VCgzOyrc2gMyixWF9z11NxsAMoIbpk4Hi6ydNaqfmJPep-K3CWEjRpzw1lnvL6kYyOoYr6yhNyhMyD0aPjdfJSEaM7-Z5K-hOYxRxOGIizzfyvo82goxsF-etAlQndrXVq
+text FQEdB7jpHDkfd5ZCD0C9LMUYBN-8yJD4T0r96sCeFcSxRdo8b2lYwByBwPLtGRPWtZcaW1VCgzOyrc2gMyixWF9z11NxsAMoIbpk4Hi7C7jwFpvnQeF_qPD-pHUGec5v16tJ6yDeyRRIz2P-LIaVNSQfKvJJkb-LJNUCpZiGzKoPBmjsfQCHGHXJwZKO5j399RJLF0hf
 wait 300
-text qLz7U1aR45YTbx1B6ZKXwLp-5V8k6puEdvcdG7yE6n4tTc6lunxs4lMbw6Lic7VHn_2pwgVAVJL-91Dt69IcVvByrxMV5l3XkSgPdo7eIVcMyg6ahQYtLYqhPIov9DiqLAtM2dVdQfbHhwFxyratafbGrM4tDn-F5T6yvZWYIhK4M0t7d0AJ7WCF0R3OpYAwW2dqCfUw
+text A1cOA9p4D5CtNCBrLtgcAJfONct_O60rv0PtGgQ_5ncYTu4GP8bdwfGgKIT0rqqAfALChPlkxF65pW_AfQ57LKDRUzcspDH4pK5Ekyz41bX67RMm6vVEn48In9dEAXV7xnes3N-3-pAUKknRysudiuVETyOtAj5QCG2Ex2Ii1XF1JVRH7ESIG5t-Jp4DrJ21PiwFRGXl
 wait 300
-text JOE4U72hqEfsjsGpi7IOqVzYWHRhesgG7cbuR9K0Dk-CzJ-6FX3JPx61ZicaHkDAE8RYme5C497w8t9aYSuQuB_DJfMOYASbWel0cgphoOUcYTc9izIcUms0-kj7IJkkT4OeZMDfWfALkSx0iwe6Ef_PHjCdry7cnaQ4Od9T-TShCVIJFLL3vthjUBenYz-GQF4Ty2zV
+text N4RhV_Jy6rMx_6TnCq_d37sJr0q_wrdPqiE--cDnh_-3nGtWNlFzPdSnyad24FyvA0KdWFpsL0bOBLaKsGtKLOZBAFwvv94ivU0htBE5GcX3ZNwUdffNCdJ0XJEM0SuZ77U1LieaIBtwvSxbu8lwiD4_s57WKY6mwiAYEUq059xjyNluU8kib3oPf7IceEgQjHJdrYoN
 wait 300
-text 2VFnSTZlu9FU1tG2m5-6sV6fWvPbYGZMJj2YCNxRZykdrIQJ8tfbUCfn8RCo1EQgX-aEq7fKBhCdjgIaz7Lg4EWylxZlu78Xh-kV0_U1jb-P_wrE6tvJ4sOZoSO-wLSEdCKTtCpPLRhGQNo9NYF_zXaRBul5Fl8UVx8Bf2lxSe4eobbVEsfNmcZ0Ebn9U4mtmEo2MyBo
+text bAW0reJ_gv_ogUba-CtCmno7cGeXHgjU0J0C4tkEmEoUCVu5BpNKla4mi4b3411OiimfcYY1x1VRhJn_F84VysKrKqEpxqUKEd2L-N_7iJY4D_gJCxw6PVPCtZdZBdv59jvERt1D3ghuzUp21cIAdkPEWwpYz6a1uSevC3gQXrNOGqPxpPxN97yLiGr2deEfVE9JoXTV
 wait 300
-text Vv2GHbR6r-AIoQXudSugUuVx5aedS8tzq6zWgBOXBEMBz-vKgTWAyy1YHELBDL6xTrCpwWGZzc--W9FZ9Zy0WHNWKafCWYS4lEE2IRna3TXeVrjUvRcQFf3JKXnSkXFy6aHCBK6341c4Aclgs78p1j-2E_hlNgE-EGmNe19KniD6VQ5k3lRpmZIifTeAVS2cnF1uEKR0
+text a3F3aqL-9UU_VBpEPe6y5DfYGozCFGFDzF7Rjd-lxBvaFOC97KWBSlT894FKvmL5yfph9jlI8-zAX6AMBzUEBI8uIBnrKHWGUD57UJA82Z1e7l10wubFRNVkD1yUMY0SVRmoex0kZb7nHrJgGF_GU7_jg0sJTRmDVc5-9XvZ-JDimRpLO8UZ4ksgjCef3Rips_bK2wLh
 wait 300
-text QNWFFW4GLQ3heWA5vsZO5uJxAKLejIJfrOZIfFFB5sfJcAYN27EzC96JVNWHEMa2YHI4BoDrP_o3R6udZteIZfTItTRIQ5tYf7FZWybJPoLLoMVar4Jit3oALBmCS9Wp7fTjLrRkPCHXdz22EhCPlIahrf7xruIwxZjyk7YFIR6clseWubAJVIBjM_OH9UYIhAPfhoVS
+text KmH7U2MsaJNNLlnByuMVucwpOJ4kmVmCdRDc2iEPyOjA7baFalcjzwVvqs0tWCS1j0g1nkVm8BLFs5-5xmx6MJFPUjlEdDW78UvxdbIhBrXwdTfmVKSCE6UAKRzfyVd7fix0OaqEnudF4-K_00qGNVlKhH8KcYAnIsXgSp9NXGJKWHIsXaAzAoeP87n5sPj3lYOWOHIn
 wait 300
-text wGFNFRQV69OgzJnBvv9SMrSi8N9qjHRRbgLeayGSVx261IxXw7g-WOCL_WJvv2vNDmN3_pIFOyMyBXBuoI2Vk7wZMa730jYbhgOZAHgtRHc7Xt0_SLRJIeW7DnKIKs1dRlLoBl9_BcpVYo9RArCv2liI49Ql9qGRopA_Qw1dsS-as9Yn5qUESx7rx9begzYF9z4_HlQS
+text GS4YrJmlFwrn83ENABzwuJLCjYV5_Q8WsJoVMpHhdwMFHcCZWFj-USlgn4n4Y2zGCNmznubzmD__Nh7id3mOwYAcbCHb-f4vo0gVMZAiT2c37lO1pJ2twJbU68dSzRr75PzvgWyJ30KS8sivYG7NFWWEowlZcjzNq4ABf79adPKwZq-EYuDS96V32MG_TEf7PTI6r-_F
 wait 300
-text b3V43rBqSU7w0MP8NwOOtoo9VoS-OxRvkjihl8sA5Acxe_e8Abwmg-z4SUb1m7E7aTCNfrsP7rBxb16460WLikE2mniEmlmaItzllFLNyB7mYrWfxOnXyW9pe7lDwxnMX0vLAuwFUYCxI-YZN-Tk8Hw1XEgaTerVICSgfnPE7c5aQwxhzzIzvAyjQMKYzgff-8-bRwnr
+text bIJrF16kHhccA54WDl14Lk1aRtUa-Wbl_aWWopbZgvt8UoonrbtxR9hqFhzJLUXwTeQ7tMaEVcR3AuPqfoaHOEAaBMtFWOONQ1HrPits-8ZpUN0XQ2-A-iYx6rSFXa4KX43Kosf3o97wBscGHEtPPIs1j0KiNAQwl2ITOpnnFlOf03bzzJQP-JJ_nxXflcotDSkm7vzR
 wait 300
-text jFJrB-JnYCbSGRGqeKPYDgndqj9n-HMgvj5cRHbEGN9UkeMMRr2eP7t_kZ-8mE-sAe4OEaqaG-mEyNxbdFShTc16SPLV0_DuUUvW8y7qMg-QPUheFjBpZzBdBBJIwg_4EuHBVx6VUGpfQAEvu0e1NJxiXj8-8D22HuAHP-4d72GU0w25IrNChPQKTKRdD6GHdVNSVBj3
+text wUpP3-gsu_BacVp8IIyfTCV7fhYsjcK41RxauVePRC2DPizEwD71XOFjgc5Btq0hdNkgoWaxqg0EGT3K264lqlTzPMWeQDwF4Sn_LuA3BCTDprNPcmrkufUn48w03asAKmRQw_ODeK3TVn3A2mE0pwS0QxDjW_V7fR06KOVMyAMCuSF96OzZJowJeiQSuoGL_c88PrZV
 wait 300
-text vLX1eXFGDqmV2kGQcbj1rD0Wwo6fHf1bkujbKpJjiFzmhG48O9GW5WnnTIyVnsvjtDikYVaDsaXkqTDPgPS7kueC_tlgW2BZXUpYfilOOwOHhaYqQwfRiK5zZQliQvVfvxLK93Yl2029ye0FGPLC1cKTwBkBS53tM239mM78OZco7-WrH9RGWH1BINhhluI14ZfD6WBh
+text e5GUiKdsoZ6GYsYIz_2z_qSha6xtDxcuPVuKcoJLufUC3otPBCAiiEyaUpxnha-_ZfHEFzqPhkgO1dlHJVCDkwkBsVGsS6M8dcmAV9qBRjaNWDf-tySoS1mswQ26uADAPZf-RCX5BA4ZCiUN3qRoo-iHICR0tyrWCro4r9wOQic0JWf1GVGx_mWLHcXTPD1hJyDut4Wt
 wait 300
-text iF6tr3dtYuIdUkP8ukQoGrifBrdpimFgCw2uEjf2bEwAx_WWY5y63zH62qqBKMXRWRitmW-knmLmNh8yLe5fljJDM7IgRVHplguOKQIa-jC-1yaxUNQe8g1EhT7ak72lytReFObGAs4VbxyUM5vof8jCiqrc_UxPuqzZIfNPsKL2yZYZ00NRC_dGoCkWv_t-CTQW1fY_
+text BF6i1sn04ozPMuJtKu6atpUSIt1M_tj3nOSdooqkk3UDJ5hezkvbE4crOLCZfH0ZfYKzdx5InZVZs8wwmpk7xtecx6PILX6EeIMwFavpai2eFnK0f6SfQQzYEkDUaUq6gnLnvDrLHbsxn0IpNwaeW4hfccnTGH7nZoQol1CTrHS1UJE3fOJB2I3MZ_CISJmklTwEluY4
 wait 300
-text 371Wnzzzn7vkPRHpp4o4Og3bnHbO5r2laVW0SVo1IdkWTXaR9dE2ZgMFF2XgeUqq77Jp9vIJ-7kV4Jqdx1NoxGsZC1Vk-HXJSwWiLtI6UPUqJVqf9Wed8iSVAi3CSVIrkd30pNuagWrooYvxdEQKrcoatNZbFZH0_tVoZP8TeRJaI0M3c5a1PGz2vCFR84iGuQuTUxeE
+text rXUxDBaIc8TMCzpx4kdP-gkQxZEAet6YrXrHpmXkmqZ5_XQ4bUsO-5lR7WXEFfvD0hyWvDGyUeENqjllf9HsqFvDlfRGE2jxy6lRdDygBemGc3Etyxhq03WHwA49WDZ9bVYN6Uhd16FwcJjluqmp-K1-W7PYsgH5Fp-VciIdKyivWvj3T1JB-rnsj7cOAsXoMiTPb5BR
 wait 300
-text mHZ7Kk9igTlDyGt-g7Km2BP5sYTcpUzTtTd7uMglWVpkUS-YamD8P5hn_mpvfsGbwj5bgZgoeCSFIVB_hPDqnBt3abb2OTGtgUB5bjMyOYDwZjzXWKznYF51b_ew63YAHg5QcEoXob9GP0wFd7fFkYIQAJkyctYzyj_27boaBisfV4FF1UNb2fE6D4Z-E9mUN_sl8i9Z
-wait 300
-text MeeHYT39OMdmjwNdAvrOgHEV25tnRdhMp3mUABTRBGj57KAYhg7gYFACzHJ5xI9jmhnqhkQ5TCpGi5zkUPjCYwMRnL8x2hpEatimeheOSdUx7yyTj2arTAE5QSvw8mulFO7QvvSsi28Y0PeWD1oOPQHo7E5Ol3-iMyc2crXeTR811ZSGy7563rV1WmecUO45Czf0iUQY
-wait 300
-text 6BQAtOKIqvj1q7uxgxpdBoeLO5nYwFqcGB_hf1QTa5uxhtDtxDiwLudomgh78QG_khNL9lT3E8EviDm3kgC98GB_ZhryB8WTYgno1GXPc-fCV6qKa0EUgOBkMAVENRUjyPzr3gHkcpFhzJGyRncf1XmE6pjATavLvXPfmX0ywGrRlw5Wjg6cp49VsdQTrL5XacvXkefb
-wait 300
-text HzrCHu5iNX97wQlJ3pXia6cK7o0ixD7Q9LCxhdb89hzRHAzFT0GUvsaivDmOIDuN4hvi8yaL5RspZqKrQXXQE2r6Hyr7rDwzWnGPfeTz90190gZvt6mImtRbD0P5AD5aJFTh3AUxB1_BUyWOISzGTuxPt0_rhcDGh1WYQ4c1YZ3wM9IfLyrkOeM3EqrawWcG8DM_6qw4
-wait 300
-text n3R4Jykr0iJBsBUXDdhg87RiwBeh7AETPYjeM0prVMPBn_1PU9RG8wKA7vyadVC5UxdSohvdCL6tb2MAdPHWAxzz42rHsaBO7qMsyKANsFrfFhaqV_ndwVJQpVo9srBVgB2R76Ofd03axLiY2T7ICl1lPNufUD9U4qcKsAVqBJNofLXCNh2mxld86s0kUmJzPv7WS30s
-wait 300
-text 76CFba4EALT7icSlbX8F8D2aofKWlQcoDKYV0uKvZL2csdH4Wyp6NLKMWLoPES1bBwtOLnNgtGZC1_eXIhX3IinTylLPUQ_E9xyBVNVdP9quZeROAyi8fzQjBxdkdoK2KoMYBQIwzbXLKqYBzg8FVIT1PAWNmOLQW0_EJ9kc0SWvK3X-D9A9HdTZ2m0IhAs3yc9Hbnbp
-wait 300
-text RB33UXL2NjSg9yM6PYqDkQahbn5SYM1dTZq4C6QD1OE_pe_Qv0LhWxdNDFs4uJkFW-bRSGcUriHklvmWzvyb3Hi0Nq9n1udnWdkonrVXZRpGuoOXaAAr9uCjgq8k5tSqs1U-SKNvzEcrol_bY8_JFDQWzrffakG_dqsUrupH_aHqGzz5WGkBl7oC6AUVCia4ErWoxds3
-wait 300
-text E_oCYFBAgEwB3-YrH-rIwdLfnM6q52vIsiHoge_7T7dUmQujwGKeE1tambd1-ERczFX3AfWgqUzuGqzIA43xd_9wfwIK4sn1HlwOPFxfn1vkJBzsOpqzI2EvWXs5Zk2-FpHD8s28GBO0C4VGMnl0LclTmpjcwo0_IiM42-UeTJGbn4TAgLbC8dGmkGit-5sDSa5Ed0Sb
-wait 300
-text tOdEeO7oVUmOg09x3WP5og_8ldxdZ784xuaZJRT5PJc4fX2qkeKDowhp8LUAkVQn9s_2vF1a9mA8ZW1E2lL_U6msDqcYlGQBEbmSv9rOG6muhHfYvReb7sSGYn5Lxd8NADRl69PrPcmzWOIgaupDw10tJg7UF6stFyYuMW2ctxgyW_SUIhlIwvagsk2vDsATWaY4rl9I
-wait 300
-text D3_XHH6YO6xO0vy6BIqwFeuEc8GkQAir8mXuAg6s5dBOzmqcD_ApLgjz1CejJqWxTK1QKpecCPXUinBsoJEj8PueDAMu4MtLmWMN2Rn8bfgkPB66G5sbr4V-kC0DBB2iPOrzgq7SIclTGCRzBpbRv3eZxP0k7Jpsf5mQ6aF6gVBorvUAmRmvpoKaI9qRlIIp-8F5VbDZ
-wait 300
-text tTCiFS-EEJm1-jtmP9nc3FOvawury5Qov-gogyFldZnK0yqJ8ehlUBzuYQcwOGouwn22upZhlHIcN9scla_qkE24f38NIj8aRZVozZffonJEiRiN6c116QUJd8mCqK5LVqfjgtILWEbiaI7AS1Ci0d4NEwnYMpYy1l6dFEzhu7CXS9GSGZKvB7IAiTjZTE6-W42bI8ei
-wait 300
-text ZTyIZKHr9-Y_urUuhIzfAO_-KwXvFEKqbM0MTWqUcTuzc5_WJWobmSzVrQ0LHfOFpNPiyPqeEGwnSw29evG0skajn__LenGCbJeY_K3avAst-4eZS-RtERDQai90qIiV9ehRmHi-wnwf6tE2a3XIk39-pTcRDuX_WHKSDFQlx7mvZvQkvmbo5XW--VcrTyvODTIZtght
-wait 300
-text VHYAZ4L-GMakXlsbbLsvKexzMqPemaq44SsIURAIDHdZeE6AkRuh-htlM-29rg-z-9WiHShhdKgFJ-cJnUKwpulx4p_PvVE90flGSG9gX8dVyztxGWaZe2qO9NYjvin-nBOoPD5VNFIJDbxIUf0LEPFg85gSLqCYf_LlYFsM9itUWgnLEmAsENqhd6Wu8Xs50oKgcb-y
-wait 300
-text s7V3m25jgPyySMM4MKLRVom83wDJRYc1_TX0AFial6250LGVuE1vRTV11JRhslcpogM1X8Gj-gCHobOHSGu2f3WOnmi5TaHak71anxMGauDYU-Um8FUbAD66icjj6YFqFwhAsNncXs221TyqCJBJ2iqPHGZccAJwlSvFJ-Zk8GSGs4pGbdmjiXXK36on111reKYgwS6S
-wait 300
-text Tp3YZzNxwJDKwUgT-BbxRXiBl1Fz1M29_IbwHYWsYWq-z0N6RgWbvgxu3MHWcpNEGsUeAhUu8NVH637fOP8zzl-PdTaWbFf8B0fRMiAFt6kZjhzdFjH6D8vWVHBioTwyL3PUU9Tmk5hPna-7sL3EknCq8LOSnrFrfWNR-H64omJqpiOaMjdMtedw2vl8TfcduPJCTYUW
-wait 300
-text 9OwaolqM5abTxc-6CR1XOkojHf9aodAXDU03h8eiSZDtyfza__ur01mMFispl_SdOE-kTRhvZmz_12ZVW0zRQOWPsP4CH7IT-U4vphuVgjCIUOE8UGFqBx-IaQsekNdBM_BnUQ7Qb-Aays4WP-zhTHjQgYaerF6DwvjrB9IZjIalSVifdZUqZsCry1NMNKDxdGXpfUkh
-wait 300
-text OL_KgAcIR8e9qGAL107jSY6iFpNdaL_9WmN5oHtgzlqI77UCnjV7YpKCBZSTfn3yk9Wz6qkm9_kRO1VPmykwXo5xyUeaOfwmXS7kV_76aBja1f6SNwwn_JBnx360_QmLcD8708neyaGa6kqw2CbYatr4v037DES7ONbWX6hmSkAKGIcXgZvt5FsweV08uggU8zw0Zkvh
-wait 300
-text NRNdgNp_KJTGD_jHhivHtYq03bLr60pij5RBTWvAD2COwWyB_lpFe_BnWYQyn1dsZYAj6k0Q0hK5dmjMNO1t5GdnE0k0t8gOyZ5qwdCwQeMKjudzb3M0_NwgHmyxeiYwcN2OvPhLTlKNwGrewW4otoVPRwID6Hwl0jZDzdBj-q5Fi8fLs5y0zUejwFeU_TewcLho7ncU
-wait 300
-text ijvdLwIcblUHZEn-ONTrKUBRaKxjYyAvaVb1OaiFP60QatkDeGCt1OlMGOQ1ZmiJLdvtldPXi5ObcpWtmrugYxZ1DihbRvGvoSeKAd6k2KCjN0NIHFrgLCFY_etOK-woAa9b9IBYZJA8iEidwV3VkSsoutP-CEwBXF1R7mBYUOEG1b_s16G3cXkXqx1K6BmqvVr-ORFI
-wait 300
-text NgzdjNGcAN4jfQECs_OmEoK6cQKqWPTP4TXH1B3jPJsq6YHiqqUDBZhsdPc9s54UUmJmGeJlr10cwkfGFSoZzGAg8h93FK9zpxtc72JYJU391ZcC9REgjy-bB19CxOC4RYj5U9i3omNEMe97JtY3UIlxWh1a3c1yyZjAed4MkrDJKvpIuq1i3d2zBQvqJ7-N1UFjF1mW
-wait 300
-text pFMsQohU2biMN_XnJ6xats4WKkOvMeAy_Y7VD8aUWT91wL5wTOVrPec35oJRnvs7xe1Z-7SZ4dLT5Do6cqZTS2-LHIakflGIcnnCDL0qOXkKUIf1kw4bq7KfmjjHlZL-V7hSyDfgTyxn1L5JzOQ-F9wdqcyoBrVbDVOZUoSiuVRAlZsILwgJX36PevRWcbbBAo9FMvhD
-wait 300
-text 0QtV0uiuI1JMlA2cv4_X9nvZPW1QpwcVqt6NHeE_E5B0yosBCYSKgHGAxLDe_XZJHmBBL6epkcbvyAuoa6rt7P1DvZLpFAt9QihCMwriow6ZDQZRceUCh8aAjTgDmOq7RsFb83TZU4vamWYHg2cDp8g_QlCWHKUP6tPI6rAQku_zWLj6QGXSyX_d63dxCk3Fec6jyfqi
-wait 300
-text mzGlQTwgwXdiLtzv07Qjc4tF6H2qyiUy_cl8IafVz0QTWNDZ6iA9-SlfdDHJFO8Af3KdMx9eFOpXr7qcsl_8bqv5tvBgDwbZeL3P1DX5PQhilPRpsSXijmXBKYPOgyxm0Kw2FhiN0Tv83u3ftoM6C8dtzIFrbMaCIKVcqgE-mxzIZbKzeDHC5mDNPXNR0m8Sxgw3MY-d
-wait 300
-text eOTS9hX7yLSgAO_JTzVlzau8WNvOsNRz1u4mi8sJxkWyuUJf1BzKQiaOYowZmDTGs0Aiyzw8fN2QW17vvj2fQsL9fNd_yDuWNydnxLLwend3bVmaYsgxOU8X9pmatM-oynf5V4-TdYDB52dczEzVZfKP7ae9QHcCnlVe5U4jcdUtRwevrtRlVLWJFgsa5l-u6shxjh8Q
-wait 300
-text XZsp27wh-mcUl9tQ7xf1IW3CCcdW-Wxz57nwvUEk0IFjFSKExNjYytxVmABXpR0PmD4INPsGxykuqRACnExQmOPWMzwy91o_RFazrjUSgnXuO4k3phxTruMxpnpAv6OLpojHKQYgHKWJwhfP6mtgKCRIMD8-jv6Qu7nNXiKoVRFqosAnYOcDjgAsxUE2qe01FFU--F5j
-wait 300
-text qgBDAT1QI4hhp8KK4CtRhDzNA_0P12akYRxFLli46d1BkakMpgp5BSHjIKA6sYSeZl8nFItEU5PW2GoOtslfWEBnGAC6YdtXLzb2QczmT4aga9vJQiPZ3kNoFQLQu9DwTgFYa5hqinfq6sGGuIrLxTYFmUf-7LvZAFmHzy0Ha9u2pdPDWnwEC9aVk2ox4meAM3XaO1MR
-wait 300
-text DZ60XjYwguB5CMl2WMxRoGKw9WiH4wmr7Qgm2VSbRVWMa2YC28e0LLm_oh6LLHthHgvyQDbZKPuXAcDec-IaalKrkFFs8wfKqMPXrIIOUU5s_Fz0Gb1GhQey5_n3icQ5uxnOBYrPEUedIS3pmJQjvapi4owCjNVuBTFBwTeBIDYvhvUNuh3HYYu3Na0JvBT_c52L-hDN
-wait 300
-text OsmpHmBh-2gPJjGR1FigdBwy7X7baUWM9ZJqvh0nDYodN6snF4Gl7ISSqnQhGPkXT7TcgfQ1hXfwsXBwvG07PgHvGNOIHh2U-su8gXddXy-zaGlZZSOdC2yzOCWevpc5DgFY3vcYLJvRFn1BKoK82TjBri1dCXzu3zegW5dr2HYIV1zHm-B0RTrYlnWo_Fa9hwt1CWHu
-wait 300
-text CvZ947yFNSkswfMyFLfx2J4ofT9fcWSzSM2F3QlyrgGIidxqDeiICc1NpItjcqQ4wshVq-9CCubHDGDreFjU3bIcfAMslDo_oGCUeL3VWUEwRPZngV8GK-OaalJBk3ZyeF12phPmbOQmQxLQq2dzZudeN3TWHsouSMbFtf757_1tZbI8FCsO0ltSFwWMTUU2DKpIK1zV
-wait 300
-text U0fsFnJaIYwE4yzSVFKKwmpITtgQKfxdSLpfCuS1nJf_8zTXDRTPrAFeAGewG-dqNxWTtdNnR1_7nYJJvXnT7x4SGh_X-12oleYpczqgFn4JE6bK8JisZDYz0qkXNT3NMY9L0fXFupcWTw3yvi79jxYE5I0TLUmST1pbYZns9ig3s0P8-pB9JQLhs4q3woK4u7MGSsP5
-wait 300
-text gKaakPRnYaOLbm75JS40b1ESKDmXNpwFgPhHGX6pmZP7ckfod2l5ayQqE2VkZUs-br7i1XSl_Ec2CGAHshPr_Sef9WEGq_-ZyikPDroz556cRfD5uJkTJCxM7hc4zlSTuqguAUC9w9yumpoL-ZBmMzrRS_vgV8sprKAqs1pfKbR15alMvyfo8VN9ppillnp1YmEEZyXz
-wait 300
-text ZNhxKcwiPgi70rafpXQ5VEFhXvxHBMWsejZ-pB8GT9OgMCn5MS3rGjbhXq1HpcfnienMqSaKxys0lgZwzXL4HKAt1j4mc5m_Mo1mRLhGFiFrPc-6c_eUeVtBj68OlURJT6-9vzJIPHE2e-ctvNij4YuD8aszTyvNQILa0LXu-Mfiw-9Bv32OqY3Y4xOvZuX6QpRV5oIX
-wait 300
-text dLKoYto8IE5Sg-bi347I6WDpvZFOLIlgUlRPxMFFwjUpw4cKBhIKuOJGU0e4aaeFI5h5XTqo7WIGWjVj2SKghrtCPmELJhazYj0yXXmBQfaciSTiGyLm9iLeDqGyucLc8UtwYM2x0B6M5fyoq68aPqZxW32r19EFPtDwj2CcmceunWAG52EIs4Hk4QoBoBKB8sAc332E
-wait 300
-text gTULqljQmUEy8iYJ0jk0uPMmCHYAs-QPTz1xN0q7fWqpz7htWLbZUaIdKMB71nacVq4V5qkO84LPZ5uYTBuRaX28-Yte9fxP-uMj6V7Q6pId5LJ6GdA7dEyR99Wd9cc-dEpr-OgsjDWGHc1-VuMy0YOfKOylCiZmMq-NAcj6QX-klTTYxveap4D8g95A9m7Mzhk_Kr61
-wait 300
-text HJ3ZJMVRnHGaUsyY7U1fnlXsldhts_hQzzqeq20biFxsqwAkdpAS4YegSkjlhckulnXTeZ3U0ikGElziLZuOAiGj7J3Ld3MzQ16yBtM0pBVZWgGLSJVe1B5TSlFVLmk4H1HPEJudF6v5WzQhXgMUMcNcFYrDDI2VcpTKaYlWwH9czoXBxYS03l-_68xg3cuzI-ZNczkX
-wait 300
-text v851KobCtl5ZuAyuQzd395P6b551UXVhoTVgAD6zjrV3p-hvu0MGPKfGHA-FTCDmLm-he_PAmrBbz6CkB_m7NCwELoQmpuKJEIAkJ7kLJqNsGI3HSZeugWI1TKh-CnzHatVRKfq2ZLxRzwSMzbrl-_Y1VxhZ5wFKVAM5dVRb7rQ4w6B2b1i0sXdm98EDKhda4e3syDld
-wait 300
-text 0pB25PTPPBPw-aetzEPHU8GDxWjDgADeEoPaq4mT-8DWVD5aTXpI3L-KJHPvGV2IsVqcDEoLIFIT21sBLJOUss0pyZjajKueU6JBBqP2NoCGPVG2jqlSQ9bqhbjj1l05cKyDJ5x8RKcCs74Uletiy-UgXd87NBAZ29JT7-mDMJqqdVZm-M7zUiIn_kKczftgFSwxGf7D
-wait 300
-text up-OHT3O9pyQBihUlhb6PJK-kL6n6-2a9f8_ZhvCuMgO4gRl19gu1IAm0aNwnhECFehbpqbS9zC3BuqrO19-3XqprPNTixUayeUHRyefO5lujEtJctVypdTZNDbSDya3Zeg9JlEWHsKkOaiWy_iXXzXqwdq7jzMC2dFen4jt6NNT5C6ws1cZVZ_LX0FFFp0NzK54-jRO
-wait 300
-text 0YbUzIm9jhhhcY3ObBezKAOsUGSIlyhM0GLUmwcNBAhffBSbTFqP0MLqEAfyPvxtynvzXN2YSqZZvAMICG0vSVjfRCQj-6VJDwKejR08ZLuOcBezNASEverkoU6Fper01WhComXO6FhQWGe6O1UnVgXNRtDOvJjN-yftOniHTXGOyFp173AlCO7EVXh9VtWnl6iru9Wg
-wait 300
-text z1xxqNjkNCWmM-jsGSjmbXomfzXckyI18cUmmOVL5X0I7aLUKrjcdlnVAmGWVbMEqWCdv9w-iMaDJhp1RKSSBxaNgbDHtcow2s3TTGsW2w0HkQpQ-lAaynSowflB66VrK0On67_O0qgAQrEPiywV6fIK99hf7-fJWZIjJgBrxA5yUxeMe-0fiAs9njf5_w5RZCY-H-2h
-wait 300
-text uOi63mQiFiF9o7JwnDX-PUHiGdgR7mJ7tL8CdOXtpv_cyRHksZmT7MTMpApjqW9ZD6wYuBg7gPSeJTimZPdpYogD5zpxCQqgIuJXrR9_MCPqsoCEj5j4SOvZooAzbNl8nPmUXjf_MKYW7upmdRTbv2EbfZtZec_eKg0sS8tulKs5dddTYbCqyPbU49MWNNuECIgCn0kg
-wait 300
-text fB0S_0K01R6oxhmgaNikwRok-YAmG3kPoK1dicR5IcGdg9zl-xCPqeb9vkbYuHwYqAphmKPFFkK0UD9ptBc-kqfYhAwhght_pwBl01sYXnWCQAxutGzT6xbANPwZVgaKIYCDduB2GXe-ylpcx_rzORc1WvVIXi4aLw8FIHcFE2FRMUTxFxkig799ePWAIoGkpvLiKcBQ
-wait 300
-text gI7aCqNeKjT-d1779nlQJNBEqrl5bYO5lYZDM2M5jt52q8gbLW6Wcqeed-sOiVA78qEfK5Rg1R9H9tU2azeYMSEUoryb3ByKHBW2l7dlOjuuXoE39yzNemCdtUBjKXkzzjcCcmiU9sjOaZvqyvS3hZ2igCUkvUaG_EBhGhLgbM-ktnkbRgsTcS7Qb7EEveYaRPz7ItMy
-wait 300
-text Nu-Gq1-UpvQdAhgnNuIHkuan5EnLisPhRLWL-VETb7riyuwQyhbBdkLu8WajNs4BVfPHaW5oFlDVe_kSNOtKjS50Ld6fNmmP6mjk-QB7CG-d4kDBw3si3WZyuTE-zDv2Quxh2wxWZYYnwb_mBzG524dt30MGyngUJ_3TN4xDkM1ESllWswbe_0XTeOpjPnapCqlOyxpJ
-wait 300
-text kixFuSU0rNoNM9bh4Eb_WH3Rm9t0fXD3nmrS1tHX7-FQKACdlyUDif4rnMwyC6wohijWVOlFIoE6GkvD_c_h70X0wslvmn52sFJaOL0TnQYy6mzr5v11KOGsTEtqNgh2jZUqWZVND7Gt3IUp2kdy-uMusJ8H6TvgHU_qSNvvjzsH1RrgS7Y0aIs9CtkLyZdjUuDIS91Z
-wait 300
-text iyW3onliwSU_msMr-ls0gOnqstUexJ08rZLEQ74FqVszjWgdAR_QoTLHhNhfgX0alzCeldcdn5kAWw42assxpka8ivTzEe4vX9dvejlxVgjTR01cNXKpKXKSdotXejEZMXkHoMY7W-2RVrfHVQpNprwlPtq46vA1SKYkDMgZ-aKpesvRnAFIFiphnodEKNgN0I2_Op-M
-wait 300
-text Qz5uUdI1ltip417YZVxVdQ6Csy-HEkcPGxTt-FCp4CtyrkfqQ-KHCeW3l9cE3oJVreZwdXFTM6T2J5qhArXDLiDeRiCfJCiI6lGjDz1ZujQhIzMMJDOJNUzpoa5A7NTBKucOYkHvUmwyz5SumEaiuQthS_OI6LhuF4m1MkU5kLpdtx9YWWFGkMQbqNtDsDPiX1lTAxYz
-wait 300
-text 62Iq1Wjk7yCL1ojsCSWEsaZBEOqBI2j7Gm0qDEGposWfPxWTHpnPhlINTJ6Ast1Mk3OWDMJVcT6p6rnt-1pQzFkgbUuVsD0gZnWPbRocscERzoFdN27ctHBpA8TSw6n6NqVhjRTBczJGXqOtQlwevqyY3ZwsvgU_Yarm5cxfO6pY7vcV3OXDlDm3jZkvXnyvesYAwSXT
-wait 300
-text nyBPfUWyqnyLBGgX4wskuytvHNLs5QdlzaVE1xPmPB6c8T2Gfaw1y1QTxonewt2_N-6rjE9-KI789z0kiugPI6MUKer0yZWV5hFpPZz946vE5xhG94lNN3_5nQokvSXPCWEkW-CleM74B2YlA9y0SzJYgLG8GwsGvslbsO2n_VSehb4qjtHSRE2UDHECTFbeuBhDKGl7
-wait 300
-text ZszuzKaIYcICU4v6vFGoHX2PeGxtr1pSEM6ffu5VutnfPxVtRK6UdIXJQ9Jlls3W77cvpygAXgHb4Ale1XGzXZHrjYtkzKfZxDv0wHC8Pl2Zyk-H6tR1UhJ8i_r810y4JWhDqvkvEUN3kb9p8Bd4ggI6mlTiwg1DfLteImchVBCOYpM0dfpPQ531shj2lfesbhymNFLZ
-wait 300
-text N9CjN3b298HXFKGVUmubdgNvV4XCm_pLb46LzU9lXF6sVPAyqvfq5RlDVT_LS6l5CyThts7eIOOkaAivithNgujYuL-Jp6l2lYujcU5-6caOzusTXqDuPsLVI4xS8XRpODlL4e4LiTIkboYAy2cL039VCu5-c8vJerBYWrmiX_ft7K5mzM7_QFJesAZkAd_S4YS3xKbB
-wait 300
-text s6Aczb3XF5GJIIqJSbi5uL3cYeJD7lCygHruuNuIaBtdBgBM0QFdIFZDXBrtHH_lWWk6YwJXPBgpspf1l4ycpA6-fdJbexa2R_iVxO7llsqtwsFfrGnMMyfMZCThAHD45mdNLgWR-_hv18oxVcsBZ2V7pIl_0HyKxlX7_Ar8Yood5ealOCnRSJZ4O2XMbAI2MBa867Zh
-wait 300
-text nzWo5j5VFj6WvHAE7NiJAGdX3It42ErW3GTpRHSd3bshlEdEAEYVpp-EzGbTC-iBwMUV4KQgzmVBpyMLDNNdLmrjAT9xMPT2GOdNpoDRJdJSpgQaRT4wkst_EKVPDEMqYrHEWH9H1t0oN1BLRph2C75vo6eakPQrzhwNFrc7RFT09BfZXlUu_DYyP6e-qtSnRBEQ-vDl
-wait 300
-text zg8B1h7SYdvQcokXFsjq1aRcmQyed8UgMTVfEeg8DVZcaRrtJIEaJ2FAXajPusDsR0mt_0wGAuEdzo1FGFiMqgt-nyeONHmnDzFwBHjKyGmQGVPaCml6C3NFxR8zq46D_Nc8LhQjCXQ0B2pOJpIPvjMXDOr1tjsKRx9ZES8ic-fxN0fHqFIADHuLbFkvpZgC78s2Amjb
-wait 300
-text 6aLtsb7tKKyGbGEG9Ye32sqV5-qOPkbuzWziOyKVusy9AvQDoODxNMmVMMiSbE3U4x2JNzaUuJXgaYQYv0Hpf2TP1c75EeUeFfUnQSawVmQFPPVSC4t1fUhsZtsOMqY4Go87b5FctjColaw1zinEjKZkA6u74YN5GnNoudYCoDPZeqVDmOAHI3JvWTiYPm-gxBtvLRZm
-wait 300
-text -HR-EPpMoagBn90swygVyNxjQB6V67hpE91nMokEWlYbC_YfVW_Jh0MeB9eIDqiQICCkZDJqtN0foEm-v4G0K20N95DVcfyf0TC-EffBxWzf2pLzQ9StvmOK1ahNFuCauGMsAbFJBvL_OMVO3ww7HJKy54KWT-eLE1TebzcU5TsBVPUbe5KdEghw9ldgJ3TAmkoMwibf
-wait 300
-text WlmWgrMSapol7MFdvASFCfV-YqRpUBsXjODic9-HPzPTPTNKx-ZluSowOd9dMxz0yTIsK0bQB4XJW_VADituZJyM1mQ1UvFDp9JoadIyi-s3TuAhuR6wH4Y7Ywc71Q3JsM13S4crQTs1A6uOOzf-EEvvdtRJJx1bIeN2f5H4Fs79WEPqHWlnocp7A-FQjVQeCfEoxtP3
-wait 300
-text W2iWvAuWWjCAc2Ees9ADD2PZDx5OIMyYISFKS5IjULLeswgjsXcynnsQAA3CJgTZ29iWcaSW5EmSAKxe4ZJthSIGnM-lgDBvX0SZy2ehPpHr7sYUfzaB18ZotflMEO225D7XaPrDhFL4rFuyERz94ZsCDsoSLX5SGDoPZ_KEZpl6tPJ7rMBP79sbzynmj9cVuv2xL842
-wait 300
-text 4bmtjI_B1GYM_wwGBDc7gMqcsPJduXXLSk8vDVL3FUp9_5n7HUFUchVUmh_0gkU-OY4hE-KzALoGtKdHK1rsK8V7Ayv7RpvnJxR9q21nllzBAPaXEIQEPym-ndR_OlnbXjDmHXH0wgevs5ajHH4Pm-xc86sthjOpwNtOffJqlfFwSlSum7_kHy61Uvxx6KKI2KZL48Jc
-wait 300
-text lbtlA4nBzPBSv1uvRYfrWhVved7daZE3V0CF6l3_JUwCmxuWGAIbtoj6ccnGcaesyXKxSHc-dzpawpDZ2mqOjX9ejKuBpN7BQDKLIrpFPBftPcK7r7IUgUFR6AgIXj5S7EdvrwSAP2pNuhu2AYNsH-MZMNplaCiGMijK2yaT9nPSJ0b3GkORAOVfHgOkGd616LiMLnYc
-wait 300
-text 4-zDqOp6MAiASGM3DBEaDTo-F83B_x5TLuLDt8gDB1FrBGgtKZ6-Y_JXXHobe1GTTX3FPUKMc_VjDhkx3CkqujfFAwUeWjnLF0uu7r8BLgrMIiZ7flppC7fzo4dBhiaWiprM897Cx_RVNOUV2xRRvvbm8RDVPe_40mhiShfBrCM-3j31II9hhVa86VlEhFVtfFJBV7K7
-wait 300
-text eceo6-vD-hnwPVekL4FlqQge815cKVWi2ggrCGHF5m7K06iZavVRR2MEctLbqMZ7jgHVwSsBEeCjnsGpyvjYWfcikFExd3S90xRm0shovPmquunlows-wQ4OWHivg4fQYyTAmfKt3EGOsgu1o_FsfwbkmLfVYmxFzU5kPYWzZ1sP3XJGM6FkweSZFY74I6cn_1dyb49n
-wait 300
-text mJCERTIeY2_zmSVnXR6NUJ3w7f-j2zZU08_L2QtgJrYXZCZ86RentLY4Hwb0WveEjYJsAM0Rmr6aEwLf1zyvCSugECvBAnq_TOB6fdkE_bhKb3cfO-GMOHACSFdjHtztkcLk2U7eAphHNqm739FZwkQvgCwbjMrXm0JjZZgctNIl_7d9_lPRrRG2gWKRx0YEs67GWmxz
-wait 300
-text h7yb7iPBshPRKG97q7T8t-a0COFEtJtE2gzsmS-856oYPPWp4nWAYPGtqOdv3nwMHAQnMcWq4C8ZJkY5skr_hC3fK6FKkkw_Rl9viaERT8B2h6kYvXfzVin9fPvMwW_HdbnVOsTCTELYIM79sz-WXNYEWGC0s6GXI8AkNGtMFXALu7YI7SK7UrZxcjhaUiiEZquJQCsE
-wait 300
-text Ddzj7CjI9LaBgZZOrChBciIOB0DlZQRnIauxQXC87jRI5Iz6qDRQX9U2A4IY4i-dx9kKnpnBhLa4jJCWO0M8P9WCyJ9mYG5cfEf47k_q3cYzqAtijwzVg-t9nlaeq2xOcQJjQ4iyiD0xgqDJghQgC0QNSAEdRksIf9xx2NoFTG-rRzTF1o_2lhcXFMJSMDzZH8kA9Tod
-wait 300
-text lniA6ll36tw
+text SbTBhrt6fyCNyuoZAzSj0-bkAx21h7FADQlpKbgGJErLpboiokSPCAgjvD4SYUbQjFfYWx98tB2PnKb0_sI8VxdJ9IRh050jZq2_QgBjrs2UyCHRPRDfzxA6C0OkNic6lIPJbV_BAIergA
 wait 300
 wait 2000
-audio start ck_near_typed
+audio start ck_capfind_typed
 wait 400
 audio stop
-audio export ck_near_typed 16
+audio export ck_capfind_typed 16
 expect text (?i)submit
 tap text (?i)submit
-audio start ck_near_submit_tapped
+audio start ck_capfind_submit_tapped
 wait 400
 audio stop
-audio export ck_near_submit_tapped 16
-until server spectral\] (pasted|paste refused) 120000
-audio start ck_near_answer
+audio export ck_capfind_submit_tapped 16
+until server spectral\] (pasted|paste refused) 60000
+audio start ck_capfind_answer
 wait 400
 audio stop
-audio export ck_near_answer 16
+audio export ck_capfind_answer 16
 wait 1500
 
-section ok_warm
-expect server spectral\] pasted pz_warm \(
-audio start ck_ok_warm
+section th1
+expect server spectral\] paste refused \(1\d{3} characters
+audio start ck_thousands_1
 wait 400
 audio stop
-audio export ck_ok_warm 16
+audio export ck_thousands_1 16
 
-section ok_near
-expect server spectral\] pasted pz_n43 \(
-audio start ck_ok_near
+section th2
+expect server spectral\] paste refused \(2\d{3} characters
+audio start ck_thousands_2
 wait 400
 audio stop
-audio export ck_ok_near 16
+audio export ck_thousands_2 16
 
-section whole_near
-expect server spectral\] paste part 1/1 of \w+: 28011 characters
-audio start ck_whole_near
+section th3
+expect server spectral\] paste refused \(3\d{3} characters
+audio start ck_thousands_3
 wait 400
 audio stop
-audio export ck_whole_near 16
+audio export ck_thousands_3 16
+
+section th4
+expect server spectral\] paste refused \(4\d{3} characters
+audio start ck_thousands_4
+wait 400
+audio stop
+audio export ck_thousands_4 16
+
+section th5
+expect server spectral\] paste refused \(5\d{3} characters
+audio start ck_thousands_5
+wait 400
+audio stop
+audio export ck_thousands_5 16
+
+section th6
+expect server spectral\] paste refused \(6\d{3} characters
+audio start ck_thousands_6
+wait 400
+audio stop
+audio export ck_thousands_6 16
+
+section th7
+expect server spectral\] paste refused \(7\d{3} characters
+audio start ck_thousands_7
+wait 400
+audio stop
+audio export ck_thousands_7 16
+
+section th8
+expect server spectral\] paste refused \(8\d{3} characters
+audio start ck_thousands_8
+wait 400
+audio stop
+audio export ck_thousands_8 16
+
+section th9
+expect server spectral\] paste refused \(9\d{3} characters
+audio start ck_thousands_9
+wait 400
+audio stop
+audio export ck_thousands_9 16
+
+section hu0
+expect server spectral\] paste refused \(\d0\d\d characters
+audio start ck_hundreds_0
+wait 400
+audio stop
+audio export ck_hundreds_0 16
+
+section hu1
+expect server spectral\] paste refused \(\d1\d\d characters
+audio start ck_hundreds_1
+wait 400
+audio stop
+audio export ck_hundreds_1 16
+
+section hu2
+expect server spectral\] paste refused \(\d2\d\d characters
+audio start ck_hundreds_2
+wait 400
+audio stop
+audio export ck_hundreds_2 16
+
+section hu3
+expect server spectral\] paste refused \(\d3\d\d characters
+audio start ck_hundreds_3
+wait 400
+audio stop
+audio export ck_hundreds_3 16
+
+section hu4
+expect server spectral\] paste refused \(\d4\d\d characters
+audio start ck_hundreds_4
+wait 400
+audio stop
+audio export ck_hundreds_4 16
+
+section hu5
+expect server spectral\] paste refused \(\d5\d\d characters
+audio start ck_hundreds_5
+wait 400
+audio stop
+audio export ck_hundreds_5 16
+
+section hu6
+expect server spectral\] paste refused \(\d6\d\d characters
+audio start ck_hundreds_6
+wait 400
+audio stop
+audio export ck_hundreds_6 16
+
+section hu7
+expect server spectral\] paste refused \(\d7\d\d characters
+audio start ck_hundreds_7
+wait 400
+audio stop
+audio export ck_hundreds_7 16
+
+section hu8
+expect server spectral\] paste refused \(\d8\d\d characters
+audio start ck_hundreds_8
+wait 400
+audio stop
+audio export ck_hundreds_8 16
+
+section hu9
+expect server spectral\] paste refused \(\d9\d\d characters
+audio start ck_hundreds_9
+wait 400
+audio stop
+audio export ck_hundreds_9 16
+
+section te0
+expect server spectral\] paste refused \(\d\d0\d characters
+audio start ck_tens_0
+wait 400
+audio stop
+audio export ck_tens_0 16
+
+section te1
+expect server spectral\] paste refused \(\d\d1\d characters
+audio start ck_tens_1
+wait 400
+audio stop
+audio export ck_tens_1 16
+
+section te2
+expect server spectral\] paste refused \(\d\d2\d characters
+audio start ck_tens_2
+wait 400
+audio stop
+audio export ck_tens_2 16
+
+section te3
+expect server spectral\] paste refused \(\d\d3\d characters
+audio start ck_tens_3
+wait 400
+audio stop
+audio export ck_tens_3 16
+
+section te4
+expect server spectral\] paste refused \(\d\d4\d characters
+audio start ck_tens_4
+wait 400
+audio stop
+audio export ck_tens_4 16
+
+section te5
+expect server spectral\] paste refused \(\d\d5\d characters
+audio start ck_tens_5
+wait 400
+audio stop
+audio export ck_tens_5 16
+
+section te6
+expect server spectral\] paste refused \(\d\d6\d characters
+audio start ck_tens_6
+wait 400
+audio stop
+audio export ck_tens_6 16
+
+section te7
+expect server spectral\] paste refused \(\d\d7\d characters
+audio start ck_tens_7
+wait 400
+audio stop
+audio export ck_tens_7 16
+
+section te8
+expect server spectral\] paste refused \(\d\d8\d characters
+audio start ck_tens_8
+wait 400
+audio stop
+audio export ck_tens_8 16
+
+section te9
+expect server spectral\] paste refused \(\d\d9\d characters
+audio start ck_tens_9
+wait 400
+audio stop
+audio export ck_tens_9 16
+
+section un0
+expect server spectral\] paste refused \(\d{3}0 characters
+audio start ck_units_0
+wait 400
+audio stop
+audio export ck_units_0 16
+
+section un1
+expect server spectral\] paste refused \(\d{3}1 characters
+audio start ck_units_1
+wait 400
+audio stop
+audio export ck_units_1 16
+
+section un2
+expect server spectral\] paste refused \(\d{3}2 characters
+audio start ck_units_2
+wait 400
+audio stop
+audio export ck_units_2 16
+
+section un3
+expect server spectral\] paste refused \(\d{3}3 characters
+audio start ck_units_3
+wait 400
+audio stop
+audio export ck_units_3 16
+
+section un4
+expect server spectral\] paste refused \(\d{3}4 characters
+audio start ck_units_4
+wait 400
+audio stop
+audio export ck_units_4 16
+
+section un5
+expect server spectral\] paste refused \(\d{3}5 characters
+audio start ck_units_5
+wait 400
+audio stop
+audio export ck_units_5 16
+
+section un6
+expect server spectral\] paste refused \(\d{3}6 characters
+audio start ck_units_6
+wait 400
+audio stop
+audio export ck_units_6 16
+
+section un7
+expect server spectral\] paste refused \(\d{3}7 characters
+audio start ck_units_7
+wait 400
+audio stop
+audio export ck_units_7 16
+
+section un8
+expect server spectral\] paste refused \(\d{3}8 characters
+audio start ck_units_8
+wait 400
+audio stop
+audio export ck_units_8 16
+
+section un9
+expect server spectral\] paste refused \(\d{3}9 characters
+audio start ck_units_9
+wait 400
+audio stop
+audio export ck_units_9 16
+
+section n5
+expect server spectral\] paste refused \(\d{5} characters
+audio start ck_n5
+wait 400
+audio stop
+audio export ck_n5 16
+
+section n3
+expect server spectral\] paste refused \(\d{1,3} characters
+audio start ck_n3
+wait 400
+audio stop
+audio export ck_n3 16
 
 section cut_short
 expect server spectral\] paste refused \(\d+ characters from \S+\): the text is cut short
@@ -414,54 +581,12 @@ wait 400
 audio stop
 audio export ck_cut_short 16
 
-section bad_char
-expect server spectral\] paste refused \(\d+ characters from \S+\): a character
-audio start ck_bad_char
+section ok_warm
+expect server spectral\] pasted pz_warm \(
+audio start ck_ok_warm
 wait 400
 audio stop
-audio export ck_bad_char 16
-
-section checksum
-expect server spectral\] paste refused \([0-9a-f]{8}\): .*check sum
-audio start ck_checksum
-wait 400
-audio stop
-audio export ck_checksum 16
-
-section len_lt_10k
-expect server spectral\] paste refused \(\d{1,4} characters
-audio start ck_len_lt_10k
-wait 400
-audio stop
-audio export ck_len_lt_10k 16
-
-section len_10_20k
-expect server spectral\] paste refused \(1\d{4} characters
-audio start ck_len_10_20k
-wait 400
-audio stop
-audio export ck_len_10_20k 16
-
-section len_20_27k
-expect server spectral\] paste refused \(2[0-6]\d{3} characters
-audio start ck_len_20_27k
-wait 400
-audio stop
-audio export ck_len_20_27k 16
-
-section len_27_28k
-expect server spectral\] paste refused \(27\d{3} characters
-audio start ck_len_27_28k
-wait 400
-audio stop
-audio export ck_len_27_28k 16
-
-section len_28k
-expect server spectral\] paste refused \(28\d{3} characters
-audio start ck_len_28k
-wait 400
-audio stop
-audio export ck_len_28k 16
+audio export ck_ok_warm 16
 
 section refused_any
 expect server spectral\] paste refused
@@ -469,116 +594,3 @@ audio start ck_refused_any
 wait 400
 audio stop
 audio export ck_refused_any 16
-
-section o_z
-do execute as @a run tp @s 0 -60 0 0 0
-audio start o_z_1
-audio mark o_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e
-wait 23000
-audio mark z_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_z
-wait 23000
-audio mark o_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_e
-wait 23000
-audio mark z_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_z
-wait 23000
-audio mark o_vocal_stars
-do execute as @a run spectral:play vocal_stars_e
-wait 23000
-audio mark z_vocal_stars
-do execute as @a run spectral:play vocal_stars_z
-wait 23000
-audio mark o_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e
-wait 23000
-audio mark z_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_z
-wait 23000
-audio mark o_choir_how_long
-do execute as @a run spectral:play choir_how_long_e
-wait 23000
-audio mark z_choir_how_long
-do execute as @a run spectral:play choir_how_long_z
-wait 23000
-audio mark o_drums_round
-do execute as @a run spectral:play drums_round_e
-wait 23000
-audio mark z_drums_round
-do execute as @a run spectral:play drums_round_z
-wait 23000
-audio mark o_rock_big
-do execute as @a run spectral:play rock_big_e
-wait 23000
-audio stop
-audio analyze-all o_piano_gymnopedie=song:piano_gymnopedie z_piano_gymnopedie=song:piano_gymnopedie o_piano_chopin_op66=song:piano_chopin_op66 z_piano_chopin_op66=song:piano_chopin_op66 o_vocal_stars=song:vocal_stars z_vocal_stars=song:vocal_stars o_vocal_name_of_love=song:vocal_name_of_love z_vocal_name_of_love=song:vocal_name_of_love o_choir_how_long=song:choir_how_long z_choir_how_long=song:choir_how_long o_drums_round=song:drums_round z_drums_round=song:drums_round o_rock_big=song:rock_big
-audio export o_piano_gymnopedie 160
-audio export z_piano_gymnopedie 160
-audio export o_piano_chopin_op66 160
-audio export z_piano_chopin_op66 160
-audio export o_vocal_stars 160
-audio export z_vocal_stars 160
-audio export o_vocal_name_of_love 160
-audio export z_vocal_name_of_love 160
-audio export o_choir_how_long 160
-audio export z_choir_how_long 160
-audio export o_drums_round 160
-audio export z_drums_round 160
-audio export o_rock_big 160
-audio start o_z_2
-audio mark z_rock_big
-do execute as @a run spectral:play rock_big_z
-wait 23000
-audio mark o_edm_detection
-do execute as @a run spectral:play edm_detection_e
-wait 23000
-audio mark z_edm_detection
-do execute as @a run spectral:play edm_detection_z
-wait 23000
-audio mark o_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e
-wait 23000
-audio mark z_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_z
-wait 23000
-audio mark o_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_e
-wait 23000
-audio mark z_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_z
-wait 23000
-audio mark o_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e
-wait 23000
-audio mark z_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_z
-wait 23000
-audio mark o_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_e
-wait 23000
-audio mark z_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_z
-wait 23000
-audio mark o_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_e
-wait 23000
-audio mark z_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_z
-wait 23000
-audio stop
-audio analyze-all z_rock_big=song:rock_big o_edm_detection=song:edm_detection z_edm_detection=song:edm_detection o_orchestra_five_armies=song:orchestra_five_armies z_orchestra_five_armies=song:orchestra_five_armies o_funk_funkorama=song:funk_funkorama z_funk_funkorama=song:funk_funkorama o_speech_ja_soseki=song:speech_ja_soseki z_speech_ja_soseki=song:speech_ja_soseki o_speech_en_wordsworth=song:speech_en_wordsworth z_speech_en_wordsworth=song:speech_en_wordsworth o_demo_selfmade=song:demo_selfmade z_demo_selfmade=song:demo_selfmade
-audio export z_rock_big 160
-audio export o_edm_detection 160
-audio export z_edm_detection 160
-audio export o_orchestra_five_armies 160
-audio export z_orchestra_five_armies 160
-audio export o_funk_funkorama 160
-audio export z_funk_funkorama 160
-audio export o_speech_ja_soseki 160
-audio export z_speech_ja_soseki 160
-audio export o_speech_en_wordsworth 160
-audio export z_speech_en_wordsworth 160
-audio export o_demo_selfmade 160
-audio export z_demo_selfmade 160

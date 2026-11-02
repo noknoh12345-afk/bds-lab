@@ -1,0 +1,730 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# 34 回目（tools/exp/make_app.py tools/exp/app34.json）: 電話の入力欄の本当の上限（33 回目: 28011 文字のうち届いたのは 1 万文字未満、31 回目の 3318 は",
+  "#   全部届いた。プロトコルのクライアントからなら 29028 文字の漢字も BDS に全部届く = 上限はクライアントの側）。小さな貼り付けを 2 回（最初の 1 回の取りこぼし",
+  "#   避け）の後、15142 文字を 200 文字ずつ打って送り、断られたときの文字数を桁ごとの ck（thousands_*・hundreds_*・tens_*・units_*）で読む"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 70"
+ ],
+ "sections": [
+  {
+   "title": "world",
+   "lines": [
+    "do execute as @a run tp @s 0 -60 0 0 70",
+    "wait 12000",
+    "shot world"
+   ]
+  },
+  {
+   "title": "warm1",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "until text (?i)submit 20000",
+    "wait 1000",
+    "audio start ck_warm1_open",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm1_open 16",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "audio start ck_warm1_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm1_tapped 16",
+    "text SPA2.1.1.65900b13.223:AgUKBAgCMgIyWXemcAdwel93YXJtB1dhcm0gdXAEbGl2ZQDP-Rq4ADkHmCpNlqDa7dT0Tlg-bE2qK8jjmIFvg3KYhOQ66ptuZhMYzG3xMLRGjXU1K9-bNPWUuNtoiK0VcPE5_3BzVx3w-clSWhGJ3icqGbZMQ2Toz2hCOU79MEfUpYt3Ra",
+    "wait 300",
+    "text 6LI3cv7zk06WGBu3obldH30gDcstZcm9OOhw5CK568e-4vH-72-32SNg9J-U89q99g_2WATJVldzvh1m7wbEzzySOwSfp_hV5T4XcnEYvHRZr-pu5yhUgAAA",
+    "wait 300",
+    "wait 2000",
+    "audio start ck_warm1_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm1_typed 16",
+    "expect text (?i)submit",
+    "tap text (?i)submit",
+    "audio start ck_warm1_submit_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm1_submit_tapped 16",
+    "until server spectral\\] (pasted|paste refused) 60000",
+    "audio start ck_warm1_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm1_answer 16",
+    "wait 1500"
+   ]
+  },
+  {
+   "title": "warm2",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "until text (?i)submit 20000",
+    "wait 1000",
+    "audio start ck_warm2_open",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm2_open 16",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "audio start ck_warm2_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm2_tapped 16",
+    "text SPA2.1.1.65900b13.223:AgUKBAgCMgIyWXemcAdwel93YXJtB1dhcm0gdXAEbGl2ZQDP-Rq4ADkHmCpNlqDa7dT0Tlg-bE2qK8jjmIFvg3KYhOQ66ptuZhMYzG3xMLRGjXU1K9-bNPWUuNtoiK0VcPE5_3BzVx3w-clSWhGJ3icqGbZMQ2Toz2hCOU79MEfUpYt3Ra",
+    "wait 300",
+    "text 6LI3cv7zk06WGBu3obldH30gDcstZcm9OOhw5CK568e-4vH-72-32SNg9J-U89q99g_2WATJVldzvh1m7wbEzzySOwSfp_hV5T4XcnEYvHRZr-pu5yhUgAAA",
+    "wait 300",
+    "wait 2000",
+    "audio start ck_warm2_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm2_typed 16",
+    "expect text (?i)submit",
+    "tap text (?i)submit",
+    "audio start ck_warm2_submit_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm2_submit_tapped 16",
+    "until server spectral\\] (pasted|paste refused) 60000",
+    "audio start ck_warm2_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm2_answer 16",
+    "wait 1500"
+   ]
+  },
+  {
+   "title": "capfind",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "until text (?i)submit 20000",
+    "wait 1000",
+    "audio start ck_capfind_open",
+    "wait 400",
+    "audio stop",
+    "audio export ck_capfind_open 16",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "audio start ck_capfind_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_capfind_tapped 16",
+    "text SPA2.1.1.bfcc3b4c.11338:AgXMAxgIAjIC_BEVwrWQBnB6X2NhcApDYXAgZmluZGVyBmNvcnB1cwCP9rMlM2tdXpf0uT3Vs4Q2wTMCn6rFtHn8xdqUH4nFXWNaDf3RJUfDbxlXeRYJ4aXvVS78OquNQf4K5FdcHwFHdEHUScvFVSpOUUOcsLcNlNwkjIJ_N0u4ppsh",
+    "wait 300",
+    "text bfK2D_DZcPwq8botY3PHqWZp90OjywvdDVYHz1NK2Ks_e65JOxY9lD4Z9k_N8ifYWohYFtOxcLuj8a3fFIzI7ch70fspzXEkye-R_8WCNb4ViIkq5BuM1aEhn0Tx_fD8WV-JKUSpXO-lu5NzThrkzOwjpPtlfGqNECdwvGDh4xnlcs5FcTKSXhwcbG6t2a6YIZZX5-pL",
+    "wait 300",
+    "text QFdgRfSOq2BfMFcsO1HG1PfgiZYrIvZLZdoXbw2fn1tAVvquHzy6Hx4bFOWuEzWY2TARtRYsULWyTaZEr0RDAHvMOFSXPsCjmpwhhpZKAAxXrMj-PV5NNwko2FvOYLN-yEAK2RO8stpf-b3rsxGkc19pvhU1RRkmsAJXEcysr9mFl_9HRZdErawjYEGFt8g_iol3CiJB",
+    "wait 300",
+    "text UwfheRn_Z5UyoQP0CvW3B9bZqdUg_dqzwJg90MqA0u_wl4sSEBdGfvdm2mX5NZWTKyZwH11kdcgRA1-s1NyU40gGQ5dyKIhb_9n-uSTwK9N6lGxhqWrKk8b325UTKwEZ4Wsm0lYDasBR0bz4PVF6QlAS2pT5k1aX1GeuyfMLHpbKq8KU9uCR-dUGmn0yLLM-2ML73pkC",
+    "wait 300",
+    "text BczbXJkxKCq00sx8PZagm8-2rgEU-SOP4T5-1LX644s3hDcVpy_D3-lfcl3r9AFDQdw3aCbceLS4bvnM382-uA_uS_95hERetTrFxVFZAjAU-JWg3U0EswbWZ3-1i9iZofbZ204atc-QHFjq_3D3-wQtrW0OGRMur54t4L-SfPhFDaC-EABUPNyKk6CPPEmIBiJyx4UM",
+    "wait 300",
+    "text 9_k-k5sqlTJiQ2pbIeYc9Asuo35S64LX-k7jNizvkBipNv3Ii_ioGXz_thrSlwMkelGPvFJc7QGwRzwiHl30Uf8UZ-4YCCfn2tD8xIEyl_0EgrDUJdHD2mLEBJ2IJt3_-TSrunbz2Ex3x5eCZYLNRvCMib6oDHGzmR7vEHlUBYewbGCwbtE_DDMC7mfw7Q5cAcYa9jbs",
+    "wait 300",
+    "text 1fMLzVjdb-1Q8L0qt0UubvxdoQrayToDVAJVdQsbLMMsgC6U81-Bs2OZdernBzAh9AkqJ0_D1-Qkyak6p5ESUHpdG2Oa-Bn5jy8JSGBzBmDPKAfnQmK0WmmAFGureLDrgcqWVRrnpXjVC9fWwxUE9gNZIJsgq7FX4LnEzq38JHCtByz9wY8IttpjcdIuk7D_0rmbFMSX",
+    "wait 300",
+    "text 1lYw5vtObOKAkGDBlvcFix4-r-nUUOolxD0WQKHoWzhDV1Kvm2U7iuZU5XkrEnpFC7zl5BE4P6WJk7jnZs2Xi4RNo16AZJ9VKa7ozJiEvF9s_cyKJAMVf7vJPysokFJ9M-S0ZTEQCkoByUH9GT-gDrxfyHPEIOUuiZLRjwRsKK0maw8-X8n4ezDWv_VSfQIQAeh3h4Hx",
+    "wait 300",
+    "text -GrwkdlEYXz9a_m4OtUuMoG1wzdlnt5v2rFBZi-wzZUHYjyOxQU3D545upWQQnhK0Q1rcYKn7CqXM97Dy-rjNsoD6N_2DD0AIrRcy4NeugKIBGo9V6Xa26yr2OfjLpovWpuZBn4zfhrz-qxd5yAhwvyiqGeA_0K-7IjY9J6qsn4cGur_Ur4KjDDW9PGmgAGOrhBBvx5w",
+    "wait 300",
+    "text RveoqAUxJreGxS9LzhRQZMswylh-4n9TQPNTd6MGYc-4mnfLeleId7t5hC7izUxKRA2IPaL9f4JUmolFbHbL-IxJh1gbyv466NrbsLfi53ABZqzmy7KKXziuzMQ1pEdUNow7IOzYE1LjSH_8c9TXZT-cZ2i8jlDRjpqhMFhTgV4xYltxeAVaiA1BReZ2W05EgG-W1KW-",
+    "wait 300",
+    "text Baefd8Yb8xGTuqF4uLfjNLDH0orPP6O_yVz-pHwI4IV1BlKAZZLongzJ9jCVoLg8CV4NhXll1mH8bdUCY79MwVoI42mciYadY58GhsOfNgIajUA1KHs8JjoZ0jwcbw7I6h_f7ew_rAbIziySDRfGio5k8dijGgq16cjxDBzu1ZpRgh4BQfPN-pBob5eL5-IhQRrat5Xx",
+    "wait 300",
+    "text rHr6AxR-Xup-ohWT7sJSDxyn8i0bENrNI8QZvpNBwzsG9tipk2SPWB8AIcnFrN5MMe_THCL0SfWkIuqdSjIIu7JYJxF65Ox49-JyWIKw0DBQ3OrB_GA0_ksGtgDmksK1zzoVls5lYYoWY9ICY_fdLzDsRLe8FdIsarmSNjyaGDMffEVrFaYsuJpGWHi6w3oLAdWnidDj",
+    "wait 300",
+    "text f9knJPdeofzMuflgqm-prsfhYwUiLibeoqYC1X3-CeN6iyaN4htNJQWL0HwFc2GUQVaI0P8_CtyYdSAQar7LTsLt4wHkHwO9cK_6894MunplOnCiQ4gmzWqJBQoGLjWs3mPEbhA6DUvnsNRwnrFZeIxWpMewNl9vts5FWFOF9bGrCJhio62G5cq_6CUgPh8UxXhcC7ai",
+    "wait 300",
+    "text 0gU1Z9nbQuMkzXQwpgy8mmMy9QPZIkMB0mRqij5BYnhnztCnB1-PzJsLE_Oi2ToDI1W8vPSlRCTensk9uvRsXzV9NZ00wS4AhKenLVtCReo7GtsBG4egPbfL9lLIkSheH193iSZL4z1JqN2B4tyxoJ2gUo7IMBFHI3z_4bKiFNXmf8JtNI9cbJ7P89MZLtRKPH4AybaD",
+    "wait 300",
+    "text MmdlivXUh5sbBHCc--vWDT-uQUy2dt28fccngHN8run3EuXOIwGymXoxttYEvCR1Ggg1rxQsvAOI_a7lOSy1-odIAXYtdD4Gb-vGNptqCPJqNLZfPmfLrnBPix86eKRYIqMJFni5hRY1SmbusyppSjp3X91VIfLBA-72pCBL7XOyFvltO9VlWxvjncBnw1KNPambPzB-",
+    "wait 300",
+    "text oc4chepGreseEJ1Q4zTTDh4PDz6PyS5hanCfy7oYdiX2PfLf0yPR8flqkmgT7jF-FHtZOoqI9U-Bk0JyZPViJbOdvU_hoiK7EsyYem4AR65PoK0nOIGe72R9jLmvAUn1fw7FdPQ9cCvsCGmcN5uQCWNbJFVRKrItZCmS-RuB5pvBWhoEU2bw-6YCF1gZRRhfasY5afKP",
+    "wait 300",
+    "text yhFWJPbXSHwz_jhFAWkSQfoOCTGUfcXCef-8MVjlOG24QBHpcWFNbHaqu_GwlRHF90ZIfxWzwpDPalEbfk9z3QiXawLDHmKJ02Bk61cvBPXOg0-hZFOb3MQukQv6vMSzgM_Ks_U4T_N1ZHRJmh4n7Pmx_zpt0wHwYyglEjjiqqV-QqzTAJ_rEENMh19Hda1LHpGQUc3S",
+    "wait 300",
+    "text -QH4JlgjOWAo_7G0RvalTKRdS8yI1mb0Bh_8QXha8y8DqvRut-CrTwNHC3ODkKB__WoHr0ZSQ1_UbnGF3pCYM7fGU0vxnnLETh6veEfWt4-aE29xKuoKiQJ_FKs9AbckrSwvjYfANqiBVqd3KK57tKi_bGgskAk4h5V1-H3hUGKPi_xZnMoemvBhJcYnBYcxur980SgK",
+    "wait 300",
+    "text 9pnwAT3bWUltb8qL8hZhNuJmmgctn6-IU7Bpgs-3XJ8gPRWHniyrlcQdWVQ-iXSn-yclsLyxX1N2FZv3GwNe5bqfsZELIb6dDLKJmGb2cu6SbEv355u3BUOMp4EhtKeq-uttoSUvYrjhY2lFmqOVk8KJajZt27K0STD0LVuB14kmD-pBOaNsBCLDKrSyENja5FnlsB9k",
+    "wait 300",
+    "text v0WGCyVbHxUVekg2ZVf2taw0DB1kl2oEG1oGN-V6nFml2N-sI6ckChZds0of6QD_svzPja7Q-_TI384dr9PlzuH-l_cg2_u56qFSCl6Th0u6pjAra0h4PjKrWRRZlGhFwUnTCpf_MYBrVgUlbKf-zzSPDid7YBMgpeQPz3w9U5qmG9eaJf0FGE1HnkBKn0jN00hy-S7p",
+    "wait 300",
+    "text 8sscKb9YZnxydyXcHNBg60KF5_oqzrPS4SSCiz6_UQt-yeR4gFBJnpZFCns3StcWRe_Y-sPSKm54olVk-_ub-Tp_cpESKurFQcUkdmDHN5c_EsGGKEdUUX6ph7du0ZY4vnLNmk8rFXz9ckAa7UID-sf8gaHo_XmnqzSuHjLxT3mES7aUvGzeDTnW376fikv5uJelpq1C",
+    "wait 300",
+    "text NEhZF_eD4u4NPz97d2-0OniNAds9YtDn4_HVdtj-nD_rIMSmsyFtRXjwpyXUYyVNKibYeIUauIljTsZd97idI5_d3BrsRwAEzvj1Q3Mb7pzLLtLGOyt7AgSZLNz68bmxv9LWtdAziD3UkR7KKiQyezq7h0gDuIMo4G-g__ndUJXYL4K_Rr-wgyA3fqZvp6W5J1G0KSo3",
+    "wait 300",
+    "text 2ajcFKqCiFFDr-_LJruTABJdDWRLSryrABoG5Zl3IiEpSKtwFbYkMe-5Zz5eCIOXMPkaUf0m-KLmAkGy2rULF-kGLQZNxXm9Imk5OCOTUYCKEyU5K2QJ2rSlLo-xudak9rec8CJIPKYNja9Cw8isiP3i_f6YL5ONP24mG_LFWQaCqQIw0Joxvwd_40fj_VGJtMicknlv",
+    "wait 300",
+    "text _GN9GEBHL82RfXbjED8J604yI_lqMTwrliOlAE20icySpKhlp3ZrK6fSeIRARXuXPQVW0GwbPM6_8CI_Z_e9xgSddf4xBeJirnO3-QLEiR1wwFRfea8uoZzI59IhvSXyHSOw6Std7RKdjz-jzskjykFBmp0al-itL6S5UsyVtg3sgD_om1kcg2CmF3Yxe4HXZfwqrEgm",
+    "wait 300",
+    "text s83AME33a1c8tQao09Qnejcgj_3oo4QT-Wiawo9HiZsjpprOnh6mb6sITJjCWuTo1XtqyA19ROyDAadr3_2bIbsYyJCDzxsXxPWD4-GWu45wtkrOVDv1HIdTZuYqJnLtiKMGYU6zhxP5q5yGEzRBS5Rx6AmhciQvXM7N480YEV1g5xj6oxP6UiRw0lRI1TM-yoDp0_Cn",
+    "wait 300",
+    "text 7HLDbDb-5Rxstcgg7ecP-R2Blyg1ypPeY6kGzRhJ01CzBL93vdvVreq0i1176h_D9UiYwarSfQvOrDcawSbqYokeXtXilqwtMHuLn_oBH48sEZwha_1p-hO602nhxwdjQUdvTI8qcCMC4FnntLkZ4_ym3S5pwcFMlNwvmKgvNOXzn22F0BPi_FU62sP_L0tKHomo6SnB",
+    "wait 300",
+    "text As_-XWWxnC7k--V0seq8Iq37uaGH0rGfQg-RAofgPzezljhkc9UQSFpw_5jsB_ydnLB7hvr3l-I89H3KcPx-jQHKPemo8uF751M9V0xEVKRE3miMawCYxyr3OzkIOs4Cya4J9NUPHxSrmQioIPvcthyW5t6UBwrb1Y34PrTzdLeWQ7gor1bID0qNk_aUvzGZmxAKKgbk",
+    "wait 300",
+    "text 1m75sgxVEbO9EsURjE2Y3rv8fsSzyLoDAZRAzU-aYNY6vubiWHG3eO3GUYcaRhTL2Qgb2BZH61_6a_tIL7k1X0jFfovCyM7CRgyfyfgTZDm-t_kXMY2cQf9GkFZjHPhzR2SpOGQvEvdH2yhTYkD5mu2Sn7vhEa4VmKwSYwhlo2kPnt8F9lBIqq2kU2ldhHYqXPBRex6d",
+    "wait 300",
+    "text 4exdbOxBB2DpEiBg6JSfMrxXPWAi-Xo_UIvDcp_cPNhp-zQn32UUprJoIfCVecDSKMqVrmzzHf1kyIFX_VkGh5-P00KncdrA4taqZJrbxt4ql4qPEgMQmd4dvnZp487stptRPGj9q81Sa0Y7mjv8FTnyyTw-Afm_302RuYgmDh4u_FL1eEdxIJ-9vEo6hJ-cqRWZWhjA",
+    "wait 300",
+    "text 6L0aff8HS2RVRbaDhO1EVi8takc5NKiSBfEB3TWWqrjqhvpukiyX85aZGyVXX1n_G2E1RP-RGcWGzxIhLvsWN-pX732-8bemcefa6ya979Maz6AxODm4BcJ4Ue9skUR0Fw2jGftZiFBubnQrwrhSZZGu4uNLaDsWeSJdQcF7X_2IF6lYyGjqqlF30K9Rn3J6miAaqBH4",
+    "wait 300",
+    "text Hk-gw1kzzopO-aY2vLfGWr5rNY9n5i8weDJV_H4ZIP-iN67uVUmwlS8BF1zhYg3EA1a_nR6Gm89t-thK7LG7HqS9ZBOQIeFdiYUAlyLJdlJ0NNASpcBSsi3th6vX3jfNo5ds-9IddRQwsElwHkOMKuAdTdLto2w2JVn699err6XbUWOT3DzJPbM5O8ht1f80MfP5z-Gn",
+    "wait 300",
+    "text mT1-sTIP6tngznMKWyRsajfd1w7C1VczGmwBzmyQ140yCf6WzYmcMpMkpVC3an8ksRPpvw9HHmxhG6pXVuZEkvnbcKS18Ze_x5ZF7HJsj6ER2dx-p5iusPjmcOqZUJZqz1CFEsSMEFb0BLmbLUI0r5DIFrn1N2GvaGgAEHl7a3OfQ5hptarmAC3lKi_6eJMJjShOomKb",
+    "wait 300",
+    "text qlZ9M8U7au6b7lJrOknQYUYjE2z9x9yIuyhfoUjO8YU_sQ8TcM4qJpxfh-cfj_-FW8ehztaFJ3E0hJqgg4MCqFJKrtkewKsVmlrLkgGwKJoGbDSBd5TldMDC8ixrlQCh0ovZwNwVCMIHkZii6G6ixl9NfksLO-yQQwdUr779eRP08Shgscrc2Tzl_WJIZLxmrTXRmnoR",
+    "wait 300",
+    "text OI_xu_dhOS0mnjpOB_8D6RbX0RtvD_-rf78wHswbKyNtSfNLYqY_5nqipy3sxkR2f4f9Zey_6KXoYGoXqEDqvijYBjJ_bpQesMZ3BAWKrMd0HPzqZSY93blh6hT1xTix0J7wPKsqwYByJiuxZclyxOHiArIBwRpDrnwMHTDAAcxhCeSepWkTD_xzby1--TOQx89xaYbU",
+    "wait 300",
+    "text qZ6sM22kYuSFQueidBcH0qjW4Rk4Zrw-GLgCVqrs_T8znV6ShnUkVUVWuB6lAclqYTy5BZrcNNYjK3yA3qLMpHaLnLZdFtS-z-qivkymzQ-jKUYxPCWqusSvD3tdL3yfh9ZiuC1F0h7lZ2_kel-SZ1CE_UHywfLKEenW00Ih8S_eqN5Rl2m3JdUrvgnToDAm0g-yDDGh",
+    "wait 300",
+    "text JxQ5WfcAz-1jW-5KQ9CToUdv-NRFqLeUjaLt1HB5FsD6HrIszPTmiyK9es-QlLhXPltHbhfCQ1x7F03r6uk1GGkxxYtPAidzSpD0Cqi6PRt4BD5Gc9KAFdtHSxB9Tn4pZFeNIoF3rLvcyBf8FELWtUFDPQLlRNYwg2StCSmpLn-dX88a8K7ObUrfgZ1HGZY7ucqgCO6z",
+    "wait 300",
+    "text 39ljTfbF6KfZeDv9qxsfBYiiVGzYl3bmVmj3GU6yBBOeVeQ08tD2DinEO9tmlA0bTgTmzfgi7bZj7eOHTVXB7h7w294XzcqQPlUdWhB8RTFj-_0Be2V0hE0m8OTHPwZzLyGcnHn0Jw88zM_N6ucjnFz1s-P8qAq80xEO9bOP3f8XFRFRX5hPJjg1Eb3Mhxs4pEtS9_Hd",
+    "wait 300",
+    "text 7F_LOvz-QLvz6rbeC6Fqfzwa3QFx1Y_ThpgOaG938KO45GC7UCeDg0p8EMzdaVXfdUhzob-oQqCmyZn13X-N5sheprCaSnhOiE8mmKrbKTYOOjDvLSL0r1xn7G_2bnyp92ixSY5j3JnJrZWkTnEzpF3tMQZ6wVnI-hu6WUwQ1N9LSA_liKmB4BY1AKsw1uA4c1IEa0Yu",
+    "wait 300",
+    "text Qs7A7tCzbdTkTcsese1_XoS98cFjYikrMUNox68QwSR93Le8FpfOJxnpq3oyYP3cOdgkp6ZrwVpQ07mfhPepfBwaswGjMOalUWm-68N96fUO5mp5RJ6f6I-oV5ubDYdQOflnGWFeC0cLXhpQtvjKg4XfBzaXl0YdnApNtNWCnClZfa2sRsNCjd8YkQOOoAFrVU-pb7lQ",
+    "wait 300",
+    "text SrXQaziTCagoO1ruM1CcqWtorp_1n162byTZ6r9D_vj-Wa2yqi0YEMlHKKPByDh49v7zdotohbp_yF7ZEBMDH6euEslp2kRCC7FCiwRcaWC4ckdqR50wNO_itwcGpdqlI6GaYHZo9jEap1vAnk6ckBbV3dFkCJ-B-XqpzxbQ05KVFMYiKJOT-FTD4ifTNCu57Z_q8cid",
+    "wait 300",
+    "text 2USN77vH4-tV-FcPX02ztgAO4GwT77YA94FIZIX0FWcoKUzP4ZAZalValV0P91R__dRdTQpB-LhaIrrMSkaUrTsIDCy4SeD-FO_ZzUaCV13Juc2pOWiG3cupVh5f02Rpjdawb3aIU4G9TLENf62dLwwTTR7ifnlQnLGU9xRMK3WCJjvOQo1XE3qTtJ74oEfMZPZg8JrH",
+    "wait 300",
+    "text 274hpjCTvRkiUPsFF2Lk9vNExvx8YPcGQvkYdK6XSdxsZLj7rCHG-i9Doz_9W4NrK6DAWaAXmlsV9dQzU34q9WvykHh9ZQCGR9sqIWaXNr8epdXBul6G7fuqRWMIyU-WnjgQxfpL5SW7k5kKuaCb5GbY61U_eFWUi6tcpVbAhZ1P6o8lpb6ByP5y_XLcGt48fZ7G4PxI",
+    "wait 300",
+    "text h5RdmM_IlCffcj3RBF_cphvwERZ6YeS_axqk-Ci1Uzkc6_AjJCGZTB7faCp-9e5JJyU2S6eQpvZR6JZPFIVvCnXRtpytb9miVAnzy5TdR85NySE5oHyqT-V-8uzQxMLInUgLPpy0sXrHE3QuRESOFzDucc0KY0YDjZ1zRxuKHZP0oekxSDZb_hwXn0EMHTFtCIcWAKL7",
+    "wait 300",
+    "text V03ThQbc4x1a6So1ENZjHEQcG2_F-193fuUMDibe9qPy9pZKwbewHaglSBLL8YjemlLxzjZOFRK90EErHM8QuI0bxQxJ0uy_J4FNSzb-94v-a4zHiSAT-tRM2B_2jzn9o36LA3CQAIvf8HcaKLeEaTmRNnz-3D-aJnpim8WLKc85IU7sPKV_JAy2WvEHxMvr5TgWrLOg",
+    "wait 300",
+    "text hbLX57d7TRlw45-CF-vsy34zYENg8OhovBbuxRLfVwmZhbu0NkB57gU9KWPxoj-QZ3LJuPaIe6x_ND2DBh8cBETfiiSRZn_k7VNWQ2aJMQbAkHawrKmWjHeW6rgVGxRJsY8V8y2FzKcRklg4U9JXlsFrGTPs4zjVpjV-SMqhZL7XebAy6CTQdCXSgLqBXZ8NaVuiuC8-",
+    "wait 300",
+    "text HUIFd-F7KvbQVc1R1_lcweg5JkfTkzw46Y5hTRfb-BmaoVzoduzwnUFBoHLP6ZxaCW2SBqju5LNnZc5wKvYa7oR3nFHCG4z0VKRjT2z-K1ognjKDvafkIyCCW7ZmfI0O6bJTcANJcKQ81OCvmg0P9jeT3TEAwI-xphqG-DP8BJ0XKeBnLLXD_DtAMDodcd0CMszeY3BP",
+    "wait 300",
+    "text ICVT37p7JiXIhoX4Tal4msvGfrRg8LXZEiHhvB2aB8p49OEsxj48z_b-cp2ZanNU3uC9BoiIRKuL2ktAzoV0RMcFsW16sUuP2yTWpebuQCnoQgUnURHEBHuAS0kbHv6M3urd4ncmFB6lrGFcqivejqISZI_H1DeKOY4HWRu8GFvmGUYecXaYuuSa6-i7HZMAlWZIOL9R",
+    "wait 300",
+    "text AxMPGnrMGZIvgKwJ4-bf2hedp-KvR42n567j5OIB57Buxpw6sek27x1VXEbH-yVZiW4qRkCkfomXZJMQAznRpdcYLSlY-grRUBYhgy4a33TAUeLDSJlk1chYESVRQDSX6dlUUzK-g8EQ3IiAhK5An3p6HKrptvYShAQej5C4jm-KmSCpfUweDHpt-jC9ysIKqYMTma0I",
+    "wait 300",
+    "text t1liYgFW5hJV2cjdrIdvZRybXzi7YkcooHkeyELRyCrsJuTVVcXOCwsCbCZyEAMcafgS9khqmgKuGxmWLu_epaq4Hmm9f6k5fzV5kjMrqCI0H4weUJGcBFoB0uEq5tdee7rkVgJb6hYuWFbY9qNkYxm8o79sVbPEq6evquTtVIcMWzFLnI0t1L6_O8wAT7FAVtdRIgcb",
+    "wait 300",
+    "text 5wmAAAZdc1OOS1sQx1BO2Cfckj-dTVR8Z_KzjWwx3hf9Ib9_ph36UEE1lUhlJU9KtjPD7668YjV8tLTpj3rcZctiCVFA4ANfUfFhlGWpsFH6c_Ul-4mNMO65_M7LXfrwLrESrFcEGIh4wB_-8nSkxuORUFArM5RkaFMMjCz50CIlgx2gKIA1eLKrUzpJ-J_oKa7zX5d0",
+    "wait 300",
+    "text bIpYFKPccfhmPXqcd3_-YHQFAzVCtLTT8YACIHUXYX_BiH0C45klnE5kqHrMvrZKrlfQkX50haNHka4IobzonSzSprko4nMYLcpO4Cyoniotx6TFlhPJshPJdW9wvkSkxXPF99Ukp6lS88v47PBQ3S6USn3O5OCh3opjEHOVTO8M1f-rOxa-sYGbkglZCw5affuyCS18",
+    "wait 300",
+    "text eoUE1YonJAECvAsJ96T17sxRhxdbPMsf5OQNQeNtloQl59joi9GhrNtkCl0PhDgh43W2D1BEaw1dz5ZO-z3xR7gEVai4A1wlLq5YK3d5vxwVcPjAfw8jujrGGc8yMr9txSLJqkhAWqYmaigvraLuK0VRMSMr7IpSgxKfTQ4Md1-coGygbv0jxvG3Qj2ObVR2he_9hA5i",
+    "wait 300",
+    "text mssRrIkMB2Jk4BnFvu_I0sLFpQo2rkzOe8PYs_lrN6xJCjIW38FR53M0fkFh072nfuJOyW3wnO-Wtdex1ODDS5hcrgP_s9RgmNHbH6xsVLVkIK6cOKE9Fg9SLfR16zJgh-S6mJSVVsVmU-AEigS0hfs70tJwQcTu5yw66nHjG6P9B-QnADovfOWIbQH9EVubEP_S7ulE",
+    "wait 300",
+    "text 1K9Y-CN-FIuyg0jOH9EERraA3GAmtDn58nWSCyMhxfRXoGMDUZOvHUW6-jTWllk6WGA4Zsmup8rQy6tIr8zq3thNCT-KYwZilVfp1gCT5R_a13zit-IoY-gwdz-CvqYRxH3GBwtkLVJjGmlZ35aSchm1wZqrMCg0E4bgdppIWzt8yP-AogVVKF87Uk-SivBCrPufWC5X",
+    "wait 300",
+    "text vUVvPz9VY8DAxrpXNsGPKafy0nmSDt9mBqHAosFDS4meJAGSqIib5f5Wz1uXrx1qFHoWX28j5GmcFssvxI0ay1xt_pRwPOEparnV9ZRkts2kSRVFlPYEzBr2oE6VB3n43LcnlakYtdRlARaZSfMFPztoQ7n2cyC48v-_3HbbC8jJniceE7itVhYk3gyxHPn2knDUdmsw",
+    "wait 300",
+    "text VuPVgzNkf88WQAB0-wr5N8Ud7YYCOuNtXAycVY-7N9tzDSjOJEsNWt2WEgiMVey63LInE4D6iaaTono-AVmoKtzieOxZYQIrBe1oHyQfwUWg_UC0ub8EevI5CQvy_vEmSJriG8cXszJCArUROJC-DmW0IU2hXHB_qRG4dOyyXo-fSJFnrVL9KmJ5rXaxlsHAMuUgm3EX",
+    "wait 300",
+    "text zzG5CAo40FtS8_ce2mV0KD1uFtjkdEWVObN53PMa30PbZeH8kRpLQdjo3Gshh1sAN0ZRire2vnU-ze1_YxTD-EO0W8YxcIFvrP3mXukeoEnypacZe9Z8jza1Pig3HGQdbQCKkY4esT-Yar-uHcAPYYcQXDjwRJH7xYHFvhXJ3ro4emOJrVUk9xWvmZrf3ZHPuEZdsvpY",
+    "wait 300",
+    "text B17SWuzO00O6PHrZS2FlvluzxMUUBWFVyz8HEdfnRWTfnc1_IcV3SxwUu76WpbBJKX6vrfEpmNjXc3Gsf3QEQ8Tr5TqoApvhwf8c7X43Q-PmCTPqs3a6zRhJv6jm8WAkS2_O1AcMKVyNJHg0wIv9px9GIyWsoodUWOdOpJhR9whlnCN1azhSrluVn532_41gOPLUT6Wv",
+    "wait 300",
+    "text AGnuEIsKgwIx7leUwO9Gl0lQWHCa_A7DERD09iZaXmIywD08NPTKmPocxGzI7CdAkGsGzi6EK6_g6qDSIh6VxGwIMPmZ0iKCNf4nsBUISxBURynwU6ldmqchhhmvgRq-gAH8VuP5aMJ-uqWfHumlce0i-C2LslstyxySk9Kkx9dwwcoSjgorAjJClbLFlYOyZVpK24vw",
+    "wait 300",
+    "text H0XDEtS4k_1q4qIeCGzwJfw6FxvgDKyL1FNBMWtqz2mja_3Tc-r_E768Cye44cz0vymuQp2wCLV7WWRMO2WGJraJZBwBdJRDqo6sxwUDxDnbAYKp-ak6f0eLiaWkmld_wUTBzkisKH9dROTehsYCMSU3dXjaYzZclXAa9rqoJwODFWVSpf6dJxFSYAYJb6a-RSOw3hXL",
+    "wait 300",
+    "text sL9MIyyHo8MybyBq00nJ58tHPip4yX2FnCZFRX8tO1zwnLLJHkED8UHR4QDDy9MkxPMxCa_G1uBYm6mdu9LSkdqUJXhsfqRsGYv4mvVk51Cp5lGdxTZuCnvWf7Nof-2RTKSuMaSKTSoWy_7IyRiCxNIqhiCwkJjqos0EIOGikh6ixMO-XRTCBoqrIDUbMUB1LUHJ7oG0",
+    "wait 300",
+    "text wlid12fZ248rUtS67GbaNdZhSNeGCn0l3tEHCDkWwHPEtTeVFwiJ9apkSp3uPUqFJStgSrfBZ5RyZNqd4VvdoIuF6fidn_zHpxPBLz3O5W9TmlA_4Dn0aieRTMkm0orN5FmvFcFqfnL-LODlVrcMPj0VadpV3A17528NUSqD3_n2vyMsi0j84UMMWvnEGXJ90avsjoKp",
+    "wait 300",
+    "text 3NTz1wTBaxnLxwzOqNw9kRN4zXiarzyCDE6TpyWEN_GTLHP-S9Sx3I1QdGKkDWqn5oDjaS2LY3dh6TKFMLlX-q1DCTgpduAju4phW1rukxE3Mn1MNxX2MnBCocKl3L00QDimn-0-pvWKzL5kyZPeUuqqzLUvz3Oac6ScSqkzR2Y87rwEHaNy6qflZIh0M65uK9laJnyV",
+    "wait 300",
+    "text FQEdB7jpHDkfd5ZCD0C9LMUYBN-8yJD4T0r96sCeFcSxRdo8b2lYwByBwPLtGRPWtZcaW1VCgzOyrc2gMyixWF9z11NxsAMoIbpk4Hi7C7jwFpvnQeF_qPD-pHUGec5v16tJ6yDeyRRIz2P-LIaVNSQfKvJJkb-LJNUCpZiGzKoPBmjsfQCHGHXJwZKO5j399RJLF0hf",
+    "wait 300",
+    "text A1cOA9p4D5CtNCBrLtgcAJfONct_O60rv0PtGgQ_5ncYTu4GP8bdwfGgKIT0rqqAfALChPlkxF65pW_AfQ57LKDRUzcspDH4pK5Ekyz41bX67RMm6vVEn48In9dEAXV7xnes3N-3-pAUKknRysudiuVETyOtAj5QCG2Ex2Ii1XF1JVRH7ESIG5t-Jp4DrJ21PiwFRGXl",
+    "wait 300",
+    "text N4RhV_Jy6rMx_6TnCq_d37sJr0q_wrdPqiE--cDnh_-3nGtWNlFzPdSnyad24FyvA0KdWFpsL0bOBLaKsGtKLOZBAFwvv94ivU0htBE5GcX3ZNwUdffNCdJ0XJEM0SuZ77U1LieaIBtwvSxbu8lwiD4_s57WKY6mwiAYEUq059xjyNluU8kib3oPf7IceEgQjHJdrYoN",
+    "wait 300",
+    "text bAW0reJ_gv_ogUba-CtCmno7cGeXHgjU0J0C4tkEmEoUCVu5BpNKla4mi4b3411OiimfcYY1x1VRhJn_F84VysKrKqEpxqUKEd2L-N_7iJY4D_gJCxw6PVPCtZdZBdv59jvERt1D3ghuzUp21cIAdkPEWwpYz6a1uSevC3gQXrNOGqPxpPxN97yLiGr2deEfVE9JoXTV",
+    "wait 300",
+    "text a3F3aqL-9UU_VBpEPe6y5DfYGozCFGFDzF7Rjd-lxBvaFOC97KWBSlT894FKvmL5yfph9jlI8-zAX6AMBzUEBI8uIBnrKHWGUD57UJA82Z1e7l10wubFRNVkD1yUMY0SVRmoex0kZb7nHrJgGF_GU7_jg0sJTRmDVc5-9XvZ-JDimRpLO8UZ4ksgjCef3Rips_bK2wLh",
+    "wait 300",
+    "text KmH7U2MsaJNNLlnByuMVucwpOJ4kmVmCdRDc2iEPyOjA7baFalcjzwVvqs0tWCS1j0g1nkVm8BLFs5-5xmx6MJFPUjlEdDW78UvxdbIhBrXwdTfmVKSCE6UAKRzfyVd7fix0OaqEnudF4-K_00qGNVlKhH8KcYAnIsXgSp9NXGJKWHIsXaAzAoeP87n5sPj3lYOWOHIn",
+    "wait 300",
+    "text GS4YrJmlFwrn83ENABzwuJLCjYV5_Q8WsJoVMpHhdwMFHcCZWFj-USlgn4n4Y2zGCNmznubzmD__Nh7id3mOwYAcbCHb-f4vo0gVMZAiT2c37lO1pJ2twJbU68dSzRr75PzvgWyJ30KS8sivYG7NFWWEowlZcjzNq4ABf79adPKwZq-EYuDS96V32MG_TEf7PTI6r-_F",
+    "wait 300",
+    "text bIJrF16kHhccA54WDl14Lk1aRtUa-Wbl_aWWopbZgvt8UoonrbtxR9hqFhzJLUXwTeQ7tMaEVcR3AuPqfoaHOEAaBMtFWOONQ1HrPits-8ZpUN0XQ2-A-iYx6rSFXa4KX43Kosf3o97wBscGHEtPPIs1j0KiNAQwl2ITOpnnFlOf03bzzJQP-JJ_nxXflcotDSkm7vzR",
+    "wait 300",
+    "text wUpP3-gsu_BacVp8IIyfTCV7fhYsjcK41RxauVePRC2DPizEwD71XOFjgc5Btq0hdNkgoWaxqg0EGT3K264lqlTzPMWeQDwF4Sn_LuA3BCTDprNPcmrkufUn48w03asAKmRQw_ODeK3TVn3A2mE0pwS0QxDjW_V7fR06KOVMyAMCuSF96OzZJowJeiQSuoGL_c88PrZV",
+    "wait 300",
+    "text e5GUiKdsoZ6GYsYIz_2z_qSha6xtDxcuPVuKcoJLufUC3otPBCAiiEyaUpxnha-_ZfHEFzqPhkgO1dlHJVCDkwkBsVGsS6M8dcmAV9qBRjaNWDf-tySoS1mswQ26uADAPZf-RCX5BA4ZCiUN3qRoo-iHICR0tyrWCro4r9wOQic0JWf1GVGx_mWLHcXTPD1hJyDut4Wt",
+    "wait 300",
+    "text BF6i1sn04ozPMuJtKu6atpUSIt1M_tj3nOSdooqkk3UDJ5hezkvbE4crOLCZfH0ZfYKzdx5InZVZs8wwmpk7xtecx6PILX6EeIMwFavpai2eFnK0f6SfQQzYEkDUaUq6gnLnvDrLHbsxn0IpNwaeW4hfccnTGH7nZoQol1CTrHS1UJE3fOJB2I3MZ_CISJmklTwEluY4",
+    "wait 300",
+    "text rXUxDBaIc8TMCzpx4kdP-gkQxZEAet6YrXrHpmXkmqZ5_XQ4bUsO-5lR7WXEFfvD0hyWvDGyUeENqjllf9HsqFvDlfRGE2jxy6lRdDygBemGc3Etyxhq03WHwA49WDZ9bVYN6Uhd16FwcJjluqmp-K1-W7PYsgH5Fp-VciIdKyivWvj3T1JB-rnsj7cOAsXoMiTPb5BR",
+    "wait 300",
+    "text SbTBhrt6fyCNyuoZAzSj0-bkAx21h7FADQlpKbgGJErLpboiokSPCAgjvD4SYUbQjFfYWx98tB2PnKb0_sI8VxdJ9IRh050jZq2_QgBjrs2UyCHRPRDfzxA6C0OkNic6lIPJbV_BAIergA",
+    "wait 300",
+    "wait 2000",
+    "audio start ck_capfind_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_capfind_typed 16",
+    "expect text (?i)submit",
+    "tap text (?i)submit",
+    "audio start ck_capfind_submit_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_capfind_submit_tapped 16",
+    "until server spectral\\] (pasted|paste refused) 60000",
+    "audio start ck_capfind_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_capfind_answer 16",
+    "wait 1500"
+   ]
+  },
+  {
+   "title": "th1",
+   "lines": [
+    "expect server spectral\\] paste refused \\(1\\d{3} characters",
+    "audio start ck_thousands_1",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_1 16"
+   ]
+  },
+  {
+   "title": "th2",
+   "lines": [
+    "expect server spectral\\] paste refused \\(2\\d{3} characters",
+    "audio start ck_thousands_2",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_2 16"
+   ]
+  },
+  {
+   "title": "th3",
+   "lines": [
+    "expect server spectral\\] paste refused \\(3\\d{3} characters",
+    "audio start ck_thousands_3",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_3 16"
+   ]
+  },
+  {
+   "title": "th4",
+   "lines": [
+    "expect server spectral\\] paste refused \\(4\\d{3} characters",
+    "audio start ck_thousands_4",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_4 16"
+   ]
+  },
+  {
+   "title": "th5",
+   "lines": [
+    "expect server spectral\\] paste refused \\(5\\d{3} characters",
+    "audio start ck_thousands_5",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_5 16"
+   ]
+  },
+  {
+   "title": "th6",
+   "lines": [
+    "expect server spectral\\] paste refused \\(6\\d{3} characters",
+    "audio start ck_thousands_6",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_6 16"
+   ]
+  },
+  {
+   "title": "th7",
+   "lines": [
+    "expect server spectral\\] paste refused \\(7\\d{3} characters",
+    "audio start ck_thousands_7",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_7 16"
+   ]
+  },
+  {
+   "title": "th8",
+   "lines": [
+    "expect server spectral\\] paste refused \\(8\\d{3} characters",
+    "audio start ck_thousands_8",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_8 16"
+   ]
+  },
+  {
+   "title": "th9",
+   "lines": [
+    "expect server spectral\\] paste refused \\(9\\d{3} characters",
+    "audio start ck_thousands_9",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_9 16"
+   ]
+  },
+  {
+   "title": "hu0",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d0\\d\\d characters",
+    "audio start ck_hundreds_0",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_0 16"
+   ]
+  },
+  {
+   "title": "hu1",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d1\\d\\d characters",
+    "audio start ck_hundreds_1",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_1 16"
+   ]
+  },
+  {
+   "title": "hu2",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d2\\d\\d characters",
+    "audio start ck_hundreds_2",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_2 16"
+   ]
+  },
+  {
+   "title": "hu3",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d3\\d\\d characters",
+    "audio start ck_hundreds_3",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_3 16"
+   ]
+  },
+  {
+   "title": "hu4",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d4\\d\\d characters",
+    "audio start ck_hundreds_4",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_4 16"
+   ]
+  },
+  {
+   "title": "hu5",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d5\\d\\d characters",
+    "audio start ck_hundreds_5",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_5 16"
+   ]
+  },
+  {
+   "title": "hu6",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d6\\d\\d characters",
+    "audio start ck_hundreds_6",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_6 16"
+   ]
+  },
+  {
+   "title": "hu7",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d7\\d\\d characters",
+    "audio start ck_hundreds_7",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_7 16"
+   ]
+  },
+  {
+   "title": "hu8",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d8\\d\\d characters",
+    "audio start ck_hundreds_8",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_8 16"
+   ]
+  },
+  {
+   "title": "hu9",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d9\\d\\d characters",
+    "audio start ck_hundreds_9",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_9 16"
+   ]
+  },
+  {
+   "title": "te0",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d0\\d characters",
+    "audio start ck_tens_0",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_0 16"
+   ]
+  },
+  {
+   "title": "te1",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d1\\d characters",
+    "audio start ck_tens_1",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_1 16"
+   ]
+  },
+  {
+   "title": "te2",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d2\\d characters",
+    "audio start ck_tens_2",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_2 16"
+   ]
+  },
+  {
+   "title": "te3",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d3\\d characters",
+    "audio start ck_tens_3",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_3 16"
+   ]
+  },
+  {
+   "title": "te4",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d4\\d characters",
+    "audio start ck_tens_4",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_4 16"
+   ]
+  },
+  {
+   "title": "te5",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d5\\d characters",
+    "audio start ck_tens_5",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_5 16"
+   ]
+  },
+  {
+   "title": "te6",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d6\\d characters",
+    "audio start ck_tens_6",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_6 16"
+   ]
+  },
+  {
+   "title": "te7",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d7\\d characters",
+    "audio start ck_tens_7",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_7 16"
+   ]
+  },
+  {
+   "title": "te8",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d8\\d characters",
+    "audio start ck_tens_8",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_8 16"
+   ]
+  },
+  {
+   "title": "te9",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d9\\d characters",
+    "audio start ck_tens_9",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_9 16"
+   ]
+  },
+  {
+   "title": "un0",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{3}0 characters",
+    "audio start ck_units_0",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_0 16"
+   ]
+  },
+  {
+   "title": "un1",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{3}1 characters",
+    "audio start ck_units_1",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_1 16"
+   ]
+  },
+  {
+   "title": "un2",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{3}2 characters",
+    "audio start ck_units_2",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_2 16"
+   ]
+  },
+  {
+   "title": "un3",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{3}3 characters",
+    "audio start ck_units_3",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_3 16"
+   ]
+  },
+  {
+   "title": "un4",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{3}4 characters",
+    "audio start ck_units_4",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_4 16"
+   ]
+  },
+  {
+   "title": "un5",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{3}5 characters",
+    "audio start ck_units_5",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_5 16"
+   ]
+  },
+  {
+   "title": "un6",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{3}6 characters",
+    "audio start ck_units_6",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_6 16"
+   ]
+  },
+  {
+   "title": "un7",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{3}7 characters",
+    "audio start ck_units_7",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_7 16"
+   ]
+  },
+  {
+   "title": "un8",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{3}8 characters",
+    "audio start ck_units_8",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_8 16"
+   ]
+  },
+  {
+   "title": "un9",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{3}9 characters",
+    "audio start ck_units_9",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_9 16"
+   ]
+  },
+  {
+   "title": "n5",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{5} characters",
+    "audio start ck_n5",
+    "wait 400",
+    "audio stop",
+    "audio export ck_n5 16"
+   ]
+  },
+  {
+   "title": "n3",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{1,3} characters",
+    "audio start ck_n3",
+    "wait 400",
+    "audio stop",
+    "audio export ck_n3 16"
+   ]
+  },
+  {
+   "title": "cut_short",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d+ characters from \\S+\\): the text is cut short",
+    "audio start ck_cut_short",
+    "wait 400",
+    "audio stop",
+    "audio export ck_cut_short 16"
+   ]
+  },
+  {
+   "title": "ok_warm",
+   "lines": [
+    "expect server spectral\\] pasted pz_warm \\(",
+    "audio start ck_ok_warm",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_warm 16"
+   ]
+  },
+  {
+   "title": "refused_any",
+   "lines": [
+    "expect server spectral\\] paste refused",
+    "audio start ck_refused_any",
+    "wait 400",
+    "audio stop",
+    "audio export ck_refused_any 16"
+   ]
+  }
+ ],
+ "arms": []
+}
