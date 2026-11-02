@@ -2,7 +2,7 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 09（tools/exp/queue/q09_long_song.json）: 4 分 20 秒の 1 曲（13 曲を続けたもの）を通しで。長い曲を最後まで: 途中の音切れ・ずれ・スクリプトの遅れ（曲は 20 秒の抜粋でしか測っていない）。あとで 20 秒ずつ元の曲と比べる
+# キュー 10（tools/exp/queue/q10_live_10min.json）: ライブの道で 10 分（話し声と歌）。ボイスチャットの道（1 フレームずつ）を 10 分続ける: ジッターバッファ・ずれ・抜けが時間とともに増えないか
 
 section title
 audio info
@@ -14,7 +14,7 @@ audio info
 shot title
 
 section prep
-audio song long_all pack=tools/exp/packs/long
+audio song speech_10min pack=tools/exp/packs/live10
 
 section join
 join
@@ -25,9 +25,9 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section long
-audio start lg_long_all
-do execute as @a run spectral:play long_all
-wait 266000
+section live10
+audio start lv_speech_10min
+do execute as @a run spectral:live_demo speech_10min phones @s 24
+wait 605000
 audio stop
-audio export lg_long_all 160
+audio export lv_speech_10min 96
