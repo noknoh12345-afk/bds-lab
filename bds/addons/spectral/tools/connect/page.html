@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja" data-style="ore">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spectral Connect</title>
+<!-- the lab's OreUI, as it is: its colours (panel/styles.css), its pixel letters (panel/fonts) and its pressables, cards and
+     fields (panel/panel.css) — served by tools/connect/server.mjs from the lab's panel/ -->
+<link rel="stylesheet" href="/panel/styles.css">
+<link rel="stylesheet" href="/panel/fonts/fonts.css">
+<link rel="stylesheet" href="/panel/panel.css">
+<style>
+  main { max-width: 720px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: var(--fs-l); margin: 8px 0 12px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  input[type=text] { width: 100%; }
+  .muted { color: var(--muted); }
+  .small { font-size: var(--fs-s); }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+  table { width: 100%; border-collapse: collapse; } td { padding: 6px 4px; border-top: var(--u) solid var(--div); vertical-align: top; }
+  td.url { word-break: break-all; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Spectral Connect</h1>
+  <section class="card">
+    <h2>ゲーム</h2>
+    <div id="games" class="muted">待っています…</div>
+    <p class="small muted">マイクラのまま: ワールド（チート on・オペレーター）で <b id="cmd">/connect …</b>。曲は Spectral Player が鳴らします。
+      チャットで <b>!spectral &lt;URL か ファイル&gt;</b> でも。</p>
+  </section>
+  <section class="card">
+    <h2>曲にして流す</h2>
+    <label class="small muted" for="url">URL（権利のあるものだけ: 自分の・CC ライセンス）か、このパソコンのファイル（音・MIDI）</label>
+    <input id="url" type="text" placeholder="https://… ・ /home/me/song.mp3 ・ /home/me/piece.mid" autocomplete="off">
+    <div class="row">
+      <button id="go" class="primary">流す（ヘッドホン）</button>
+      <button id="speaker">その場のスピーカーで</button>
+    </div>
+  </section>
+  <section class="card">
+    <h2>いま</h2>
+    <div class="row">
+      <button data-c="spectral:pause">一時停止・再開</button>
+      <button data-c="spectral:seek 0">頭へ</button>
+      <button data-c="spectral:status">状態</button>
+      <button class="danger" data-c="spectral:stop">止める</button>
+    </div>
+    <p id="said" class="small muted"></p>
+  </section>
+  <section class="card">
+    <h2>頼んだもの</h2>
+    <table id="jobs"><tr><td class="muted">まだありません</td></tr></table>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+$('cmd').textContent = `/connect ${location.hostname}:${location.port || 80}`;
+const post = (u, b) => fetch(u, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) }).then((r) => r.json());
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+$('go').onclick = () => $('url').value.trim() && post('/api/play', { url: $('url').value.trim() });
+$('speaker').onclick = () => $('url').value.trim() && post('/api/play', { url: $('url').value.trim(), where: 'speaker' });
+for (const b of document.querySelectorAll('[data-c]')) b.onclick = async () => { const r = await post('/api/command', { line: b.dataset.c }); $('said').textContent = r.statusMessage ?? r.error ?? ''; };
+const STEP = { queued: '待ち', downloading: '取り込み', converting: '曲にする', sending: '送る', playing: '流している', failed: 'だめでした' };
+async function poll() {
+  try {
+    const s = await (await fetch('/api/state')).json();
+    $('games').innerHTML = s.games.length ? s.games.map((g) => `<span class="ok">■</span> ${esc(g.name)}（送った命令 ${g.commands}）`).join('<br>') : '<span class="warn">■</span> まだつながっていません';
+    if (s.jobs.length) $('jobs').innerHTML = s.jobs.map((j) => `<tr><td>${j.id}</td><td class="url">${esc(j.title || j.url)}</td>`
+      + `<td class="${j.step === 'failed' ? 'bad' : j.step === 'playing' ? 'ok' : ''}">${STEP[j.step] ?? esc(j.step)}${j.parts ? ` ${j.sent}/${j.parts}` : ''}</td>`
+      + `<td class="small muted">${esc(j.error ?? j.result ?? '')}</td></tr>`).join('');
+  } catch { /* (the server restarts) */ }
+  setTimeout(poll, 1000);
+}
+poll();
+</script>
+</body>
+</html>
