@@ -245,6 +245,9 @@ var RcDec = class {
   next() {
     return this.p < this.b.length ? this.b[this.p++] : 0;
   }
+  next2() {
+    return this.next();
+  }
   bit(P, i) {
     const p = P[i], bound = Math.floor(this.range / 2048) * p;
     let b;
@@ -265,15 +268,52 @@ var RcDec = class {
     return b;
   }
 };
+var LIM2 = 80;
+var DIV2 = Array.from({ length: LIM2 + 1 }, (_, n) => Math.floor(65536 / (n + 1.6)));
+var probs2 = (n) => {
+  const P = new Uint16Array(2 * n);
+  for (let i = 0; i < n; i++) P[2 * i] = 32768;
+  return P;
+};
+function adapt2(P, i, b) {
+  const p = P[2 * i], n = P[2 * i + 1];
+  let q = p + Math.floor(((b ? 0 : 65536) - p) * DIV2[n] / 65536);
+  q = q < 64 ? 64 : q > 65472 ? 65472 : q;
+  P[2 * i] = q;
+  if (n < LIM2) P[2 * i + 1] = n + 1;
+}
+var RcDec2 = class extends RcDec {
+  bit2(P, i) {
+    const bound = Math.floor(this.range / 65536) * P[2 * i];
+    let b;
+    if (this.code < bound) {
+      this.range = bound;
+      b = 0;
+    } else {
+      this.range -= bound;
+      this.code -= bound;
+      b = 1;
+    }
+    adapt2(P, i, b);
+    while (this.range < 16777216) {
+      this.range *= 256;
+      this.code = this.code * 256 + this.next2();
+    }
+    return b;
+  }
+};
 var probs = (n) => new Uint16Array(n).fill(1024);
 var wrapDec = (d) => ({ bit(P, i) {
   return d.bit(P, i);
 } });
+var wrapDec2 = (d) => ({ bit(P, i) {
+  return d.bit2(P, i);
+} });
 var Tree = class {
-  constructor(bits, ctxs = 1) {
+  constructor(bits, ctxs = 1, mk = probs) {
     this.bits = bits;
     this.ctxs = ctxs;
-    this.P = probs(ctxs << bits);
+    this.P = mk(ctxs << bits);
   }
   bits;
   ctxs;
@@ -293,12 +333,13 @@ var Ints = class {
   s;
   pre;
   man;
-  raw = probs(1);
-  constructor(ctxs) {
-    this.z = probs(ctxs);
-    this.s = probs(ctxs);
-    this.pre = probs(ctxs * 32);
-    this.man = probs(ctxs * 32 * 4);
+  raw;
+  constructor(ctxs, mk = probs) {
+    this.z = mk(ctxs);
+    this.s = mk(ctxs);
+    this.pre = mk(ctxs * 32);
+    this.man = mk(ctxs * 32 * 4);
+    this.raw = mk(1);
   }
   uint(rc, ctx, v = 0) {
     const x = v + 1, nb0 = 32 - Math.clz32(x);
@@ -449,11 +490,158 @@ function* codeFrames(rc, f, out, put) {
     for (const x of row) out.push(x);
   }
 }
+var Models2 = class {
+  start = probs2(48);
+  att0 = probs2(3);
+  cont = probs2(48);
+  stop = probs2(8);
+  same = probs2(8);
+  pon = new Ints(3, probs2);
+  ab = new Tree(7, 4, probs2);
+  ad = new Ints(14, probs2);
+  pd = new Ints(6, probs2);
+  nz;
+  ev = probs2(1);
+  ne = new Tree(4, 1, probs2);
+  eb = new Tree(8, 1, probs2);
+  ea = new Tree(8, 1, probs2);
+  vf = new Tree(2, 32, probs2);
+  nf;
+  constructor(M) {
+    this.nz = new Ints(Math.max(1, M) * 3, probs2);
+    this.nf = new Tree(2, Math.max(1, M) * 4, probs2);
+  }
+};
+var ageB = (n) => n <= 1 ? 0 : n === 2 ? 1 : n <= 4 ? 2 : 3;
+var regB = (p16) => p16 < 22800 ? 0 : p16 < 34800 ? 1 : p16 < 46800 ? 2 : 3;
+function* codeFrames2(rc, f, out, put) {
+  const { F, N, M, g } = f, md = new Models2(M), nb = N + 7 >> 3;
+  const maxA = Math.floor(127 / g.qa), maxP = Math.floor(65535 / g.qp), maxN = Math.floor(255 / g.qn);
+  const lastA = new Uint8Array(N), lastP = new Uint16Array(N), lastDa = new Int16Array(N), lastDp = new Int32Array(N), age = new Uint16Array(N), offFor = new Uint16Array(N).fill(99);
+  const wroteA = new Int16Array(N).fill(-1), wroteP = new Int32Array(N).fill(-1), lastNi = new Uint8Array(M), lastNd = new Int16Array(M);
+  const acs = new Uint8Array(F * N), ats = new Uint8Array(F * N);
+  const chk = (c, what) => {
+    if (!c) throw new Error(`${what} out of range (the text is broken)`);
+  };
+  for (let k = 0; k < F; k++) {
+    const mask = new Uint8Array(nb), body = [];
+    let starts = 0;
+    for (let v = 0; v < N; v++) {
+      const i = k * N + v, grp = v < 8 ? 0 : v < 16 ? 1 : 2;
+      let a = 0, p = lastP[v], at = 0;
+      if (lastA[v] === 0) {
+        const ob = offFor[v] <= 1 ? 0 : offFor[v] <= 4 ? 1 : offFor[v] < 99 ? 2 : 3;
+        const st = rc.bit(md.start, (Math.min(3, starts) * 3 + grp) * 4 + ob, put ? put.ai[i] ? 1 : 0 : 0);
+        if (st) {
+          starts++;
+          at = rc.bit(md.att0, grp, put ? put.at[i] : 0);
+          p = lastP[v] + md.pon.sint(rc, ob === 3 ? 2 : ob === 0 ? 0 : 1, put ? put.pi[i] - lastP[v] : 0);
+          chk(p >= 0 && p <= maxP, "a pitch");
+          a = md.ab.code(rc, regB(p * g.qp), put ? put.ai[i] : 0);
+          chk(a >= 1 && a <= maxA, "a level");
+          lastDa[v] = 0;
+          lastDp[v] = 0;
+          age[v] = 1;
+        }
+      } else {
+        const ab4 = lastA[v] * g.qa < 32 ? 0 : lastA[v] * g.qa < 64 ? 1 : lastA[v] * g.qa < 96 ? 2 : 3;
+        const going = rc.bit(md.cont, (ageB(age[v]) * 3 + grp) * 4 + ab4, put ? put.ai[i] && !put.at[i] ? 1 : 0 : 0);
+        let restart = 0;
+        if (!going) restart = rc.bit(md.stop, ageB(age[v]) * 2 + (lastA[v] * g.qa < 48 ? 0 : 1), put ? put.ai[i] ? 1 : 0 : 0);
+        if (going || restart) {
+          at = restart ? 1 : 0;
+          const ca = restart ? 12 + (lastA[v] * g.qa < 64 ? 0 : 1) : bucket(lastDa[v]) * 2 + (lastDa[v] < 0 ? 1 : 0);
+          const da = md.ad.sint(rc, ca, put ? put.ai[i] - lastA[v] : 0);
+          a = lastA[v] + da;
+          chk(a >= 1 && a <= maxA, "a level");
+          const cp = restart ? 5 : Math.min(3, Math.floor((32 - Math.clz32(Math.abs(lastDp[v]))) / 2)) + (regB(lastP[v] * g.qp) >= 2 ? 1 : 0);
+          let dp;
+          if (!restart && age[v] >= 2 && lastDp[v] !== 0 && rc.bit(md.same, (age[v] & 1) * 4 + Math.min(3, bucket(lastDp[v])), put ? put.pi[i] - lastP[v] === lastDp[v] ? 1 : 0 : 0)) dp = lastDp[v];
+          else dp = md.pd.sint(rc, Math.min(5, cp), put ? put.pi[i] - lastP[v] : 0);
+          p = lastP[v] + dp;
+          chk(p >= 0 && p <= maxP, "a pitch");
+          lastDa[v] = restart ? 0 : da;
+          lastDp[v] = restart ? 0 : dp;
+          age[v] = restart ? 1 : Math.min(6e4, age[v] + 1);
+        }
+      }
+      if (a === 0) {
+        offFor[v] = lastA[v] ? 1 : Math.min(98, offFor[v] + 1);
+        age[v] = 0;
+      } else offFor[v] = 0;
+      lastA[v] = a;
+      lastP[v] = p;
+      acs[i] = a;
+      ats[i] = at;
+      const A = a * g.qa, P = p * g.qp;
+      if (at || A !== Math.max(0, wroteA[v]) || A && P !== wroteP[v]) {
+        mask[v >> 3] |= 1 << (v & 7);
+        if (A) {
+          body.push(at << 7 | A, P & 255, P >> 8);
+          wroteP[v] = P;
+        } else body.push(at << 7);
+        wroteA[v] = A;
+      }
+    }
+    for (const x of mask) out.push(x);
+    for (const x of body) out.push(x);
+    for (let j = 0; j < M; j++) {
+      const d = md.nz.sint(rc, j * 3 + (lastNd[j] === 0 ? 0 : Math.abs(lastNd[j]) <= 2 ? 1 : 2), put ? put.ni[k * M + j] - lastNi[j] : 0), c = lastNi[j] + d;
+      chk(c >= 0 && c <= maxN, "a noise level");
+      lastNd[j] = d;
+      lastNi[j] = c;
+      out.push(c * g.qn);
+    }
+    const ev = put ? put.ev[k] : [];
+    let ne = 0;
+    if (rc.bit(md.ev, 0, ev.length ? 1 : 0)) ne = md.ne.code(rc, 0, ev.length / 2);
+    out.push(ne);
+    for (let e = 0; e < ne; e++) {
+      out.push(md.eb.code(rc, 0, ev[2 * e]));
+      out.push(md.ea.code(rc, 0, ev[2 * e + 1]));
+    }
+    if ((k & 7) === 7) yield;
+  }
+  if (!f.fd) return;
+  const per = N + 3 >> 2, lastF = new Uint8Array(N).fill(3);
+  for (let k = 0; k < F; k++) {
+    const row = new Uint8Array(per);
+    for (let v = 0; v < N; v++) {
+      const a0 = acs[k * N + v], a1 = k + 1 < F ? acs[(k + 1) * N + v] : a0;
+      let c = 3;
+      if (a0 || a1) {
+        const dd = a1 === a0 ? 0 : a1 && a0 ? Math.abs(a1 - a0) * g.qa <= 4 ? 1 : 2 : 3;
+        const ctx = (dd * 4 + lastF[v]) * 2 + (k + 1 < F && ats[(k + 1) * N + v] ? 1 : 0);
+        c = md.vf.code(rc, ctx, put ? put.vd[k * N + v] : 0);
+        lastF[v] = c;
+      }
+      row[v >> 2] |= c << 2 * (v & 3);
+    }
+    for (const x of row) out.push(x);
+    if ((k & 31) === 31) yield;
+  }
+  const pn = M + 3 >> 2, lastN = new Uint8Array(M).fill(3);
+  for (let k = 0; k < F; k++) {
+    const row = new Uint8Array(pn);
+    for (let j = 0; j < M; j++) {
+      const c = md.nf.code(rc, j * 4 + lastN[j], put ? put.nzd[k * M + j] : 0);
+      lastN[j] = c;
+      row[j >> 2] |= c << 2 * (j & 3);
+    }
+    for (const x of row) out.push(x);
+  }
+}
 function songHeader(payload) {
   const r = new In(payload);
   const ver = r.byte();
-  if (ver !== 1) throw new Error(`a song text of version ${ver} (this add-on reads 1)`);
-  const flags = r.varint(), F = r.varint(), N = r.varint(), M = r.varint(), q = r.varint(), cs = r.varint(), crc = r.u32();
+  if (ver !== 1 && ver !== 2) throw new Error(`a song text of version ${ver} (this add-on reads 1 and 2: a newer add-on reads it)`);
+  const flags = r.varint(), F = r.varint(), N = r.varint(), M = r.varint();
+  let q = 1, grid;
+  if (ver === 2) {
+    grid = { qa: r.varint(), qp: r.varint(), qn: r.varint() };
+    if (!(grid.qa >= 1 && grid.qa <= 64 && grid.qp >= 1 && grid.qp <= 6e3 && grid.qn >= 1 && grid.qn <= 64)) throw new Error("the text is broken (its grids)");
+  } else q = r.varint();
+  const cs = r.varint(), crc = r.u32();
   if (!(F > 0 && F < 1e6 && N > 0 && N <= 128 && M > 0 && M <= 32 && q > 0 && q < 256)) throw new Error("the text is broken (its sizes)");
   const id = r.str(), title = r.str(), artist = flags & 4 ? r.str() : void 0;
   let extra = {};
@@ -481,16 +669,36 @@ function songHeader(payload) {
   };
   if (meta.noise.length !== M) throw new Error("the text is broken (its noise bands)");
   if (flags & 1) meta.fd = { ms: extra.ms ?? DEF.ms, v: F * (N + 3 >> 2), nz: F * (M + 3 >> 2) };
-  return { meta, crc, at: r.p, q };
+  return { meta, crc, at: r.p, q, grid, version: ver };
 }
 function* decodeSongJob(payload, got) {
   const h = songHeader(payload), m = h.meta;
   const blob = new Blob();
-  yield* codeFrames(wrapDec(new RcDec(payload, h.at)), { F: m.frames, N: m.voices, M: m.noise.length, q: h.q, fd: !!m.fd }, blob);
+  if (h.version === 2) yield* codeFrames2(wrapDec2(new RcDec2(payload, h.at)), { F: m.frames, N: m.voices, M: m.noise.length, g: h.grid, fd: !!m.fd }, blob);
+  else yield* codeFrames(wrapDec(new RcDec(payload, h.at)), { F: m.frames, N: m.voices, M: m.noise.length, q: h.q, fd: !!m.fd }, blob);
   const bytes = Uint8Array.from(blob.b);
   if (crc32(bytes) !== h.crc) throw new Error("the text is broken (its check sum): copy it again, whole");
   got.meta = m;
   got.bytes = bytes;
+}
+var U15 = (c) => c >= 13312 && c < 19904 ? c - 13312 : c >= 19968 && c < 40960 ? c - 19968 + 6592 : c >= 44032 && c < 49216 ? c - 44032 + 27584 : -1;
+function fromW(s, len, bits, val) {
+  const out = new Uint8Array(len);
+  let acc = 0, n = 0, o = 0;
+  for (let i = 0; i < s.length && o < len; i++) {
+    const v = val(s.charCodeAt(i));
+    if (v < 0) throw new Error("a character that is not part of a song text");
+    acc = acc * 2 ** bits + v;
+    n += bits;
+    while (n >= 8 && o < len) {
+      n -= 8;
+      const x = Math.floor(acc / 2 ** n);
+      out[o++] = x;
+      acc -= x * 2 ** n;
+    }
+  }
+  if (o < len) throw new Error("the text is cut short: copy it again, whole");
+  return out;
 }
 var B64U = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 var CJK0 = 19968;
@@ -546,12 +754,12 @@ function fromB64(s, len) {
 }
 function readPart(text) {
   const s = text.replace(/\s+/g, "");
-  const m = /^(SPZ1|SPA1)\.(\d{1,3})\.(\d{1,3})\.([0-9a-f]{8})\.(\d{1,8}):/.exec(s);
-  if (!m) throw new Error(s.length ? "this is not a song text (it starts with SPZ1. or SPA1.)" : "nothing was pasted");
+  const m = /^(SPZ[12]|SPA[12])\.(\d{1,3})\.(\d{1,3})\.([0-9a-f]{8})\.(\d{1,8}):/.exec(s);
+  if (!m) throw new Error(s.length ? "this is not a song text (it starts with SPZ2. or SPA2.)" : "nothing was pasted");
   const i = Number(m[2]), n = Number(m[3]), len = Number(m[5]);
   if (!(i >= 1 && i <= n)) throw new Error("the part number is broken");
   const body = s.slice(m[0].length);
-  return { key: m[4], i, n, bytes: m[1] === "SPA1" ? fromB64(body, len) : fromCJK(body, len) };
+  return { key: m[4], i, n, bytes: m[1].startsWith("SPA") ? fromB64(body, len) : m[1] === "SPZ2" ? fromW(body, len, 15, U15) : fromCJK(body, len) };
 }
 function joinParts(parts) {
   const n = parts[0].n, byI = new Map(parts.map((p) => [p.i, p]));

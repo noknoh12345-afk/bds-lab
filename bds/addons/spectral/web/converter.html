@@ -117,7 +117,7 @@ button.main:disabled { opacity: 0.5; cursor: default; }
 <div class="wrap">
   <header>
     <h1>Spectral <b>Converter</b></h1>
-    <p class="tag">MP3 を、統合版で鳴る正弦波の曲パックに。ゲーム内と同じ合成で先に試聴できます。</p>
+    <p class="tag">MP3 などの音声ファイル（MIDI も）を、統合版で鳴る正弦波の曲パックに。ゲーム内と同じ合成で先に試聴できます。</p>
   </header>
 
   <div class="rack">
@@ -155,8 +155,8 @@ button.main:disabled { opacity: 0.5; cursor: default; }
     <aside class="panel" aria-label="曲パック">
       <h2>曲パック</h2>
       <div class="drop" id="drop">
-        <label class="filebtn" for="file">＋ 音声ファイルを追加<input id="file" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.aac" multiple></label>
-        <span>MP3・WAV・M4A など。ここへドロップしても追加できます。解析はこの端末の中だけで行います。</span>
+        <label class="filebtn" for="file">＋ 音声ファイルを追加<input id="file" type="file" accept="audio/*,video/*,/*EXTS*/" multiple></label>
+        <span>MP3・WAV・M4A・AAC・OGG・Opus・FLAC・AIFF・CAF・AU・WMA・AMR・APE・WavPack・AC3・DTS・MIDI・動画の音（MP4・MOV・MKV・AVI…）など、ほぼどの形式でも。ここへドロップしても追加できます。解析はこの端末の中だけで行います（ブラウザが読めない形式は、初回だけ変換用の ffmpeg を読み込みます）。</span>
       </div>
       <label class="quality">変換の仕上げ
         <select id="sweeps" aria-label="変換の仕上げ">
@@ -214,6 +214,7 @@ button.main:disabled { opacity: 0.5; cursor: default; }
 <script>/*CORE*/</script>
 <script>/*LIVE*/</script>
 <script>/*TEXT*/</script>
+<script>/*DECODERS*/</script>
 <script>
 'use strict';
 const C = window.SpectralCore;
@@ -250,7 +251,7 @@ function renderTracks() {
       <div class="row"><label>正弦波ボイス<select id="vo${t.key}">${[16, 24, 32, 48, 64, 96].map((v) => `<option value="${v}" ${v === t.voices ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       ${t.demo ? '<span class="note">同梱のデモ（本体に入っています）</span>' : `<button class="ghost" id="rm${t.key}">外す</button>`}</div>
       ${t.state === 'busy' ? `<div class="bar"><i id="pg${t.key}" style="width:${Math.round((t.progress || 0) * 100)}%"></i></div>` : ''}
-      ${t.error ? `<p class="msg err">${t.error}</p>` : ''}`;
+      ${t.error ? `<p class="msg err">${t.error}</p>` : t.note ? `<p class="msg">${t.note}</p>` : ''}`;
     box.appendChild(el);
     $('ti' + t.key).value = t.title; $('ar' + t.key).value = t.artist; $('id' + t.key).value = t.id;
     $('ti' + t.key).addEventListener('change', (e) => { t.title = e.target.value.trim() || t.title; if (t === current) showNow(); });
@@ -265,12 +266,36 @@ function renderTracks() {
   $('savePack').textContent = tracks.some((t) => !t.demo) ? `曲パックを保存 (.mcpack.zip)` : '曲を追加すると曲パックを保存できます';
 }
 
-async function decodeFile(buf) {
-  const ctx = new OfflineAudioContext(1, 1, 44100);
-  const ab = await ctx.decodeAudioData(buf);
+/** a file → 44.1 kHz: the browser's own decoder first (MP3, AAC/M4A, Ogg Vorbis/Opus, FLAC, WAV PCM, WebM and the sound of videos —
+ *  what this browser has), then this page's (web/decoders.js: WAV of any codec, AIFF/AIFC, AU, CAF, VOC, and MIDI played by its
+ *  synthesiser), then ffmpeg in WebAssembly (WMA, AMR, APE, WavPack, AC3, DTS, …: fetched the first time, about 31 MB) */
+async function decodeFile(buf, note = () => {}) {
+  const D = window.SpectralDecoders, bytes = new Uint8Array(buf.slice(0));
+  let ab = null, how = '';
+  try { ab = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(buf.slice(0)); how = 'browser'; } catch { /* not one it reads */ }
+  if (!ab) {
+    let r = null, why = '';
+    try { r = D.decode(bytes); } catch (e) { why = e.message; }
+    if (!r) {
+      note(`ブラウザが読めない形式${why ? `（${why}）` : ''}: ffmpeg（WebAssembly、初回だけ約 31 MB）を読み込んで変換しています…`);
+      r = await D.ffmpeg(bytes, { log: (m) => note('ffmpeg: ' + m.slice(0, 120)) });
+    }
+    ab = await toBuffer44(r); how = r.format;
+  }
   const x = new Float32Array(ab.length);
   for (let c = 0; c < ab.numberOfChannels; c++) { const d = ab.getChannelData(c); for (let i = 0; i < x.length; i++) x[i] += d[i] / ab.numberOfChannels; }
-  return { x, orig: ab };
+  return { x, orig: ab, how };
+}
+/** decoded channels at any rate → an AudioBuffer at 44.1 kHz (the browser's resampler; rates it cannot take, by line first) */
+async function toBuffer44(r) {
+  let { sampleRate: sr, channels: ch } = r;
+  if (!ch.length || !ch[0].length) throw new Error('音が入っていません');
+  if (sr < 3000 || sr > 384000) { const to = 44100, n = Math.floor((ch[0].length * to) / sr); ch = ch.map((x) => Float32Array.from({ length: n }, (_, i) => { const p = (i * sr) / to, j = Math.floor(p), f = p - j; return (x[j] ?? 0) * (1 - f) + (x[j + 1] ?? 0) * f; })); sr = to; }
+  const nch = Math.min(ch.length, 32), len = Math.ceil((ch[0].length * 44100) / sr);
+  const off = new OfflineAudioContext(nch, len, 44100), src = off.createBufferSource(), b = off.createBuffer(nch, ch[0].length, sr);
+  for (let c = 0; c < nch; c++) b.copyToChannel(ch[c], c);
+  src.buffer = b; src.connect(off.destination); src.start();
+  return off.startRendering();
 }
 async function analyse(t) {
   t.state = 'busy'; t.progress = 0; t.error = ''; t.games = {}; renderTracks();
@@ -308,8 +333,10 @@ async function addFiles(files) {
     const t = { title, artist: '', id: uniqueId(slug(title)), voices: 48, state: 'busy', progress: 0 };
     addTrack(t);
     if (!current || current.demo) select(t);
-    try { const d = await decodeFile(await f.arrayBuffer()); t.x = d.x; t.orig = d.orig; }
-    catch { t.state = 'err'; t.error = 'この形式は読めませんでした。MP3 か WAV で試してください。'; renderTracks(); continue; }
+    try {
+      const d = await decodeFile(await f.arrayBuffer(), (m) => { t.note = m; renderTracks(); });
+      t.x = d.x; t.orig = d.orig; t.how = d.how; t.note = d.how === 'browser' ? '' : `読んだ形式: ${d.how}`;
+    } catch (e) { t.state = 'err'; t.error = `この形式は読めませんでした（${e.message || e}）。ほかの形式に書き出して試してください。`; renderTracks(); continue; }
     if (t === current) draw();
     await analyse(t);
   }
@@ -318,7 +345,11 @@ $('file').addEventListener('change', (e) => { addFiles([...e.target.files]); e.t
 const drop = $('drop');
 ['dragenter', 'dragover'].forEach((ev) => document.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach((ev) => document.addEventListener(ev, (e) => { e.preventDefault(); if (ev === 'drop' || e.target === document.documentElement) drop.classList.remove('over'); }));
-document.addEventListener('drop', (e) => { const fs = [...(e.dataTransfer?.files || [])].filter((f) => /audio|\.(mp3|wav|m4a|ogg|flac|aac)$/i.test(f.type + f.name)); if (fs.length) addFiles(fs); });
+document.addEventListener('drop', (e) => {
+  const ext = new Set(window.SpectralDecoders.EXTS);
+  const fs = [...(e.dataTransfer?.files || [])].filter((f) => /^(audio|video)\//.test(f.type) || ext.has((f.name.match(/\.[^.]+$/) || [''])[0].toLowerCase()));
+  if (fs.length) addFiles(fs);
+});
 
 // ------------------------------------------------------------ the display
 function select(t) { stopPlay(); current = t; renderTracks(); showNow(); draw(); }

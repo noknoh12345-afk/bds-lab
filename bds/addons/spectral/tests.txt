@@ -568,6 +568,21 @@ until Pasted demo 8000
 ~ @A ▶ Pasted demo — Spectral Player \(0:02, \d+/8 voices, headphones\)
 @A cmd /spectral:stop
 
+## the newer song text pastes the same way: SPZ2 (the song on grids an ear does not tell from it — level 1.5 dB, pitch 10 cents, noise 1 dB — its fields predicted better, 15 bits a character: this one 209 characters where SPZ1 took 283) and SPA2, the same in ASCII
+@A cmd /spectral:paste
+until form
+@A form ["SPZ2.1.1.e99db467.349:㔂繂㔀坠䩀㧴總祋汰鄝䂫뚆徫焈仠閳湲赈䂌謖륁籽嬠馣湹䱛㠊㫆㿋䧈㔟뤏䱱霫蝊舥呈믘䮸䵘垃㻰뇐㷂덶嫶军厮䁨簄俼掐蕃寍寷繘惉鞱넠猱縲厃炳莍鯜犯诡适㶼衕㧕坚秎九兼蔚㘰嚳䎘䟾䖛丬疻隵䍉老鴺鉗䪮䶖飙埃筥佬霷钋崗渗捶胷泤軭뾻韋겺夽蒦녂彃㚣歾畓뽛䬄絕瘏㮺㓌圃㻔張碭泛鉃䈀眐慭䱭㠡岵굇㲩锹櫄궼酱聺家詆閥䎦惬廦謓㟧箤뛲凥봝鰠桬蘋㣒䮂跅葦㤥檟櫳酪떨铫蝢발如䜀邉㶻㯽航伸工㔲鬕놽䧆鋈妲䢹䢉掌鷏礧鏏熟燄鑀", true]
+until Pasted demo 2 8000
+~ @A ♪ Pasted demo 2 \(0:02, 8 voices\) — /spectral:play paste_demo2 \(kept in this world\)
+@A cmd /spectral:paste
+until form
+@A form ["SPA2.1.1.57d61a44.348:AgUoCAgCMgLIAX0k_sULcGFzdGVfYXNjaWkMUGFzdGVkIGFzY2lpD1NwZWN0cmFsIFBsYXllcgCP-M8w44uumFTeVAEe5gvcGVhGhivDjICcLmbJrY6tn24Y0R8Q3eL1CiBp41PbyhhZE43HhwPvGT5H0N45z03POPm-vQ28ITeVBULqoxqLHGh06eUNoEYInMfME_4jNmeyC94nUeky8HR9XhctXGZbJMo4OOSmyzF74EtRruddebTLdxSWq3-944vY9JP2gzcQJWBgqNufQRP-NlwSSKwc8PdAMxFhitRV6xG1xN3gMcAQtBaWmG0IQqHXaDiKnB8toTa-XTGYdJ3asDYWUfTLKxVTVtMHzx2TtZHaX5u5-BoWUcsJpF4KzC0CYKStl9tZ3Srq0YKumRe9xKhEwC4kibsP-zeo18KaUCZZtXi-lca9EJXIpclIlemaY-Jz3496vvYT", true]
+until Pasted ascii 8000
+~ @A ♪ Pasted ascii \(0:02, 8 voices\) — /spectral:play paste_ascii \(kept in this world\)
+@A cmd /spectral:play paste_demo2
+~ @A ▶ Pasted demo 2 — Spectral Player \(0:02, \d+/8 voices, headphones\)
+@A cmd /spectral:stop
+
 ## a long song comes in parts: the form opens again for the next one, the parts in any order
 @A cmd /spectral:paste
 until form
@@ -587,7 +602,7 @@ until Pasted in parts 8000
 until form
 @A form ["hello", true]
 until song text 5000
-~ @A this is not a song text \(it starts with SPZ1\. or SPA1\.\)
+~ @A this is not a song text \(it starts with SPZ2\. or SPA2\.\)
 @A cmd /spectral:paste
 until form
 @A form ["SPZ1.1.1.7ebc1387.456:乁悀渠巈乙疪泄塰晜蕆捽牥楛纵侅腴杙倆徕筯凔蔆掍色晛倅侱潹杜済朿蠌讪紅嚄忐煤挹峢燬屻捓蝅褸穝臁寒棾匰笼璷嗳糭彽磲煩籎訵蚴妊彠櫌权勲嗋呑荦蒂薦秫么筗跁扏厉视裄徂臄嫃曰姅浭擛殬覎倴溨篹掐畩艘溆芀壴嗦泴薊悗謽偏煇竢獕盕蘋誻洪諝煹敤訬俼健趏蕞挥嚾谼犩蕐蒧枧蜟趠纭应宯滽缼栛豟蚝賝夨囉旮內従禧糂衷憻泰暚葍擎璗浨惰玡畊厡彪稑烑熡綪汕姗埝怃蘧倫嫭孊表荊蓴穲蘼桯姠唕嬀弤媧竡擲庶睸忴褢變囔杋脍攞碸巸賚拖蠘詂悈悘漩賓欏譛衝尡唅紨芓寛诡嬈耗尭芹禧昞聠徸愽薸乸梬悸桢毶汵袃暧漨嘜伣卂扃稿捻悉沵抉蛑塝孎莖乑崍捽檋擊済蓦媛謲汢垸篵涎膢盞籂晚礆朗緢援猀", true]

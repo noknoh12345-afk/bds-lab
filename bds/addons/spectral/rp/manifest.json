@@ -4,11 +4,7 @@
     "name": "Spectral Player RP",
     "description": "MP3を正弦波の加算合成でリアルタイム再生する音楽プレイヤー。声をその場で鳴らすライブ（近接ボイスチャット・立体音響）つき",
     "uuid": "0079b728-ca9a-41ab-b21f-9a4661ad7334",
-    "version": [
-      1,
-      3,
-      0
-    ],
+    "version": [1, 4, 0],
     "min_engine_version": [
       1,
       26,
@@ -19,11 +15,7 @@
     {
       "type": "resources",
       "uuid": "052cc83b-21a7-4ba4-a78c-650f1c6f7982",
-      "version": [
-        1,
-        3,
-        0
-      ]
+      "version": [1, 4, 0]
     }
   ]
 }
