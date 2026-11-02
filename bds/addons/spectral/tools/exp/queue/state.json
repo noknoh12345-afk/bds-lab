@@ -56,7 +56,10 @@
   "tries": 1
  },
  "q03_phones_vs_speaker": {
-  "status": "pending"
+  "commit": "05af20c",
+  "run": "41433969762",
+  "started": "2026-11-02 20:05",
+  "status": "running"
  },
  "q04_distance": {
   "status": "pending"
