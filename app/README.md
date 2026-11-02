@@ -128,7 +128,7 @@ node lab.mjs app screen                   # 押した結果を見る
 | `tap 0.5 0.62` | 押す（割合。1 より大きい数ならピクセル） |
 | `swipe 0.2 0.5 0.8 0.5` | なぞる |
 | `key BACK` | キーを押す（BACK ENTER ESCAPE TAB DPAD_UP など） |
-| `text hello` | 文字を打つ（英数字と記号だけ） |
+| `text hello` | 文字を打つ。英数字と記号は端末のキーで、それ以外（漢字・かな）は放送で文字を受け取る入力メソッド ADBKeyBoard（GPL-2.0。決まった版を取って sha256 を確かめ、打つ間だけ切り替える: app/lib/unitext.mjs、`APP_ADB_IME_APK` で手元の APK）で |
 | `do <コマンド>` | サーバーのコンソールで実行（`scriptevent`、`give`、`js …` など tests.txt と同じ） |
 | `addon <名前>` | BDS をそのアドオン（`bds/addons/<名前>`）で起動し直す（同じポート。ゲームは動いたままで切れるので、次の `join` で入り直す）。バッチ（下）が join の前に入れる |
 | `until title [ミリ秒]` | ゲームのタイトル画面まで待つ（ゲームが前面・Android のダイアログなし・赤い起動画面でも真っ黒でもない・落ち着いている）。最初の起動の「WELCOME TO MINECRAFT!」（Microsoft サインインの誘い）などは、OCR で読めれば「Maybe later」で抜けて待ち続ける |

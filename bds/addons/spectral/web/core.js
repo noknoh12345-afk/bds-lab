@@ -609,12 +609,19 @@
     if (refineOn && vd && nzd) {
       // analysis by synthesis through the client model (tools/spectral.py refine_client): every tick's levels and fades
       const unpack = (packed, n) => { const per4 = (n + 3) >> 2, c = new Uint8Array(F * n); for (let k = 0; k < F; k++) for (let j = 0; j < n; j++) c[k * n + j] = (packed[k * per4 + (j >> 2)] >> (2 * (j & 3))) & 3; return c; };
-      const vc = unpack(vd, N), nc = unpack(nzd, M);
+      const vc = unpack(vd, N), nc = unpack(nzd, M), rv = opts.refineVoices ?? opts.refine_voices ?? CL_VOICES, more = N > rv ? opts.refineMore ?? opts.refine_more : null;
       // (the options also by tools/spectral.py's names, for tools/parity.py)
       refined = await refineClient(x, F, N, M, fq2, am2, vc, nz, nc, gain, { voices: opts.refineVoices ?? opts.refine_voices, level: opts.refineLevel ?? opts.refine_level,
         sweeps: opts.refineSweeps ?? opts.refine_sweeps, weights: opts.refineWeights ?? opts.refine_weights, objective: opts.refineObjective ?? opts.refine_objective,
         hold: opts.refineHold ?? opts.refine_hold,
-        progress: (f) => progress0(REFINE_SHARE + (1 - REFINE_SHARE) * f) });
+        progress: (f) => progress0(REFINE_SHARE + (1 - REFINE_SHARE) * f * (more ? 0.6 : 1)) });
+      if (more) {
+        // (a second stage, refineMore = { client: 'pc', level: 0, sweeps: 2 } as tools/spectral.py refine_more: the voices after the
+        // phone's, for a client that plays them all, chosen with the phone's and the noise bands fixed — a phone's part unchanged)
+        await refineClient(x, F, N, M, fq2, am2, vc, nz, nc, gain, { voices: N, fixed: rv, client: more.client ?? 'pc', level: more.level ?? 0, sweeps: more.sweeps ?? 2,
+          weights: opts.refineWeights ?? opts.refine_weights, objective: opts.refineObjective ?? opts.refine_objective,
+          progress: (f) => progress0(REFINE_SHARE + (1 - REFINE_SHARE) * (0.6 + 0.4 * f)) });
+      }
       vd = pack2(vc, F, N); nzd = pack2(nc, F, M);
     }
     const enc = encode(F, N, M, fq2, am2, att2, nz, ev, gain);
@@ -802,7 +809,8 @@
     return out;
   }
   /** the measured client path as band responses (tools/spectral.py ClientModel) */
-  function clientModel(edges) {
+  /** client 'pc': a PC as assumed (not measured; web/game.js 'pc'): the mix at 48 kHz (nothing folds), floating point (no floor) */
+  function clientModel(edges, client = 'phone') {
     const sr = 48000, L = 3840, w2 = new Float64Array(CL_WIN);
     for (let u = 0; u < CL_WIN; u++) { let s = 0; for (let i = u * 48; i < u * 48 + 48; i++) { const w = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (L - 1)); s += w * w; } w2[u] = s / 48; }
     let mw = 0; for (let u = 0; u < CL_WIN; u++) mw += w2[u];
@@ -811,6 +819,7 @@
     for (let i = 0; i < NG; i++) { g[i] = i * df; gm[i] = 24000 - g[i]; c4[i] = Math.cos((Math.PI * g[i]) / sr) ** 4; s4[i] = Math.sin((Math.PI * g[i]) / sr) ** 4; }
     const Hd = gtH2(g), Hi = gtH2(gm), M = edges.length - 1, noise = [], noiseTot = new Float64Array(M);
     const NF = 12001, full = new Float64Array(NF); for (let i = 0; i < NF; i++) full[i] = i * df;
+    const Hf = client === 'pc' ? gtH2(full) : null;
     for (let bnd = 0; bnd < M; bnd++) {
       const lo = edges[bnd], hi = edges[bnd + 1], S2 = new Float64Array(NF);
       for (let i = 0; i < NF; i++) {
@@ -824,6 +833,11 @@
       S2[0] = 0;
       let tot = 0; for (let i = 0; i < NF; i++) tot += S2[i];
       for (let i = 0; i < NF; i++) S2[i] = S2[i] / tot;
+      if (Hf) {
+        const row = new Float64Array(32);
+        for (let j = 0; j < 32; j++) { let sd = 0; for (let i = 0; i < NF; i++) sd += Hf[j * NF + i] * S2[i]; row[j] = sd; }
+        noise.push(row); noiseTot[bnd] = 1; continue;
+      }
       const Mg = new Float64Array(NG); for (let i = 0; i < NG; i++) Mg[i] = S2[i] + S2[12000 - i];
       const row = new Float64Array(32);
       for (let j = 0; j < 32; j++) {
@@ -845,10 +859,17 @@
       qfloor[j] = (q / 12000 * df) * (sd + si2) + (q / 24000 * df) * so;
     }
     let cs = 0; for (let i = 0; i < NG; i++) cs += c4[i] + s4[i];
-    const qfloorTot = (q * cs) / NG + q;
+    let qfloorTot = (q * cs) / NG + q;
+    if (Hf) { qfloor.fill(0); qfloorTot = 0; }
     /** a sine of amplitude 1 at f Hz: [band power (32), full-band power] */
     const sine = (f) => {
       if (f <= 0) return [new Float64Array(32), 0];
+      if (Hf) {
+        if (f >= 24000) return [new Float64Array(32), 0];
+        const h = gtH2([f]), out = new Float64Array(32);
+        for (let j = 0; j < 32; j++) out[j] = 0.5 * h[j] * 1;
+        return [out, 0.5];
+      }
       const fp = f <= 12000 ? f : 24000 - f, cc = Math.cos((Math.PI * fp) / 48000) ** 4, ss = Math.sin((Math.PI * fp) / 48000) ** 4;
       const h = gtH2([fp, 24000 - fp]), out = new Float64Array(32);
       for (let j = 0; j < 32; j++) out[j] = 0.5 * (cc * h[j * 2] + ss * h[j * 2 + 1]);
@@ -879,7 +900,9 @@
   async function refineClient(x, F, N, M, fq, am, vcodes, nz, ncodes, gain, opts = {}) {
     const progress = opts.progress ?? (() => {});
     const Nc = Math.min(opts.voices ?? CL_VOICES, N), lv = Math.pow(10, (opts.level ?? CL_LEVEL_DB) / 20), sweeps = opts.sweeps ?? CL_SWEEPS;
-    const cm = clientModel(NOISE_EDGES), gv = (1 * lv) / CL_OSC_AMP;
+    // (fixed > 0: the first `fixed` voices and the noise bands are played as they are and never changed — a second stage, the
+    // voices a client with more sounds plays after the phone's — and the power is not held: most of it is fixed)
+    const fixed = opts.fixed ?? 0, cm = clientModel(NOISE_EDGES, opts.client ?? 'phone'), gv = (1 * lv) / CL_OSC_AMP;
     const nrms = M === CL_NOISE_RMS.length ? CL_NOISE_RMS : new Array(M).fill(NOISE_RMS_ALL);
     const dsend = Math.pow(10, CL_SEND_DB / 20), csend = Math.pow(2, CL_SEND_CENTS / 1200) - 1, fades = NZ_FADES_MS.map((d) => d);
     const amc = new Int32Array(F * Nc), nzc = new Int32Array(F * M);
@@ -981,7 +1004,7 @@
     const fl = new Int32Array(nfr), Rq = new Int32Array(32 * nfr), Dcur = new Int32Array(32 * nfr);
     const seg = new Float64Array(2 * CL_TICK), old = new Float64Array(32 * nfr);
     let Dc = new Int32Array(0);
-    const objective = opts.objective ?? CL_OBJECTIVE, wf = W.map((w) => w / 1000), hold = opts.hold ?? CL_HOLD, dbs = [];
+    const objective = opts.objective ?? CL_OBJECTIVE, wf = W.map((w) => w / 1000), hold = fixed ? false : opts.hold ?? CL_HOLD, dbs = [];
     let tot0 = null;
     for (let sw = 0; sw <= sweeps; sw++) {
       let { P, tot } = power();
@@ -1027,6 +1050,7 @@
         if (m1 < m0) continue;
         const nf = m1 - m0 + 1;
         for (let s = 0; s < S; s++) {
+          if (fixed && (s < fixed || s >= Nc)) continue;
           const c0 = codeOf(s, k + 1);
           if (c0 <= 0) continue;
           const isv = s < Nc, hi = isv ? 127 : 255, steps = isv ? CL_VSTEPS : CL_NSTEPS;

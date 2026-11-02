@@ -120,6 +120,44 @@ await t('scenario: every step parses; errors name the line', () => {
   const bad = S.parseScenario('tap 1\nfly\nuntil server\nuntil joined x\nshot a b/c\nuntil stable ; every 10 wait 5\nexpect nothing x\ntap below\ntap below (x');
   eq(bad.errors.map((e) => e.split(':')[0]), ['1', '2', '3', '4', '5', '6', '7', '8', '9']);
 });
+await t('text beyond ASCII: an input method types it (ADBKeyBoard: fetched, hash checked, switched in and back)', async () => {
+  const U = await imp('app/lib/unitext.mjs');
+  ok(U.needsIme('SPZ2.1.1.0:丁丂七') && U.needsIme('こんにちは') && !U.needsIme('SPA2.1.1.0:AbC-_') && !U.needsIme('hi there'), 'needsIme: beyond printable ASCII only');
+  // (pieces of whole code points, each the base64 of its UTF-8: a 4-byte character is never split)
+  const text = '丁'.repeat(1499) + '😀' + '一'.repeat(10), pieces = U.b64Chunks(text);
+  eq(pieces.map((b) => Array.from(Buffer.from(b, 'base64').toString('utf8')).length), [1500, 10]);
+  eq(pieces.map((b) => Buffer.from(b, 'base64').toString('utf8')).join(''), text);
+  // (the APK: a wrong one is refused; the pinned one (here a stand-in with its hash swapped in) is kept for the next time)
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ime-'));
+  let fetched = 0;
+  const bytes = Buffer.from('not the apk');
+  await U.imeApk({ dir, fetchImpl: async () => { fetched++; return { ok: true, arrayBuffer: async () => bytes }; } }).then(() => ok(false, 'a wrong APK was taken'), (e) => ok(/sha256/.test(e.message), e.message));
+  // (the device: a fake adb that records what it was asked and answers as a device does)
+  const calls = [], dev = { prev: 'com.android.inputmethod.latin/.LatinIME', ime: '', typed: '' };
+  const adb = {
+    run(args) { calls.push(args.join(' ')); return { status: 0, stdout: 'Success', stderr: '' }; },
+    shell(w) {
+      calls.push(w.join(' '));
+      if (w[0] === 'pm') return { status: 0, stdout: '', stderr: '' };
+      if (w[0] === 'settings') return { status: 0, stdout: dev.prev + '\n', stderr: '' };
+      if (w[0] === 'ime' && w[1] === 'set') { dev.ime = w[2]; return { status: 0, stdout: `Input method ${w[2]} selected`, stderr: '' }; }
+      if (w[0] === 'am') { if (dev.ime === U.ADB_IME.id) dev.typed += Buffer.from(w[6], 'base64').toString('utf8'); return { status: 0, stdout: 'Broadcasting: Intent { act=ADB_INPUT_B64 flg=0x400000 (has extras) }\nBroadcast completed: result=0', stderr: '' }; }
+      return { status: 0, stdout: '', stderr: '' };
+    },
+  };
+  const how = await U.typeWithIme(adb, text, { sleep: async () => {}, apk: async () => '/x/ADBKeyboard.apk' });
+  eq([dev.typed === text, dev.ime, how], [true, dev.prev, '入力メソッド経由で 2 回']);
+  ok(calls.includes('install -r -g /x/ADBKeyboard.apk') && calls.includes(`ime enable ${U.ADB_IME.id}`), 'installed and enabled once');
+  // (the second text: no install again, the same switch in and back)
+  calls.length = 0; dev.typed = '';
+  await U.typeWithIme(adb, 'かな', { sleep: async () => {}, apk: async () => { throw new Error('fetched again'); } });
+  eq([dev.typed, dev.ime, calls.filter((c) => /^(install|pm)/.test(c)).length], ['かな', dev.prev, 0]);
+  // (a broadcast that fails still gives the device its own keyboard back)
+  const adb2 = { ...adb, shell(w) { if (w[0] === 'am') return { status: 1, stdout: '', stderr: 'boom' }; return adb.shell(w); } };
+  await U.typeWithIme(adb2, '漢字', { sleep: async () => {}, apk: async () => '/x/a.apk' }).then(() => ok(false, 'a failed broadcast passed'), (e) => ok(/送れません/.test(e.message), e.message));
+  eq(dev.ime, dev.prev);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
 await t('scenario: screens (stable, blank)', () => {
   const img = (f) => { const w = 32, h = 32, d = Buffer.alloc(w * h * 4); for (let i = 0; i < w * h; i++) { const c = f(i % w, Math.floor(i / w)); d[i * 4] = c[0]; d[i * 4 + 1] = c[1]; d[i * 4 + 2] = c[2]; d[i * 4 + 3] = 255; } return pngEncode({ w, h, data: d }); };
   const a = img((x) => [x * 8, 0, 0]), b = img((x) => [x * 8, 0, 0]), c = img((x) => [255 - x * 8, 50, 0]);

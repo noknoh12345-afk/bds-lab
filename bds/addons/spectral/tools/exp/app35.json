@@ -1,0 +1,779 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# 35 回目（tools/exp/make_app.py tools/exp/app35.json）: 漢字の曲テキストは電話の入力欄に何文字入るか（34 回目: 英数字は 5000 文字ちょうどで",
+  "#   切れた。漢字が文字で数えられるなら 5000、UTF-8 のバイトなら 1666）。漢字は入力メソッド（app/lib/unitext.mjs）で 1 度に入れる。",
+  "#   1 部だけの曲テキスト 4 つ: 漢字 1593 文字（入力の道の確かめ）・4994 文字・5984 文字、英数字 4977 文字。届いた / 断られた文字数を ck で"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 70"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "world",
+   "lines": [
+    "do execute as @a run tp @s 0 -60 0 0 70",
+    "wait 12000",
+    "shot world"
+   ]
+  },
+  {
+   "title": "warm1",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "until text (?i)submit 20000",
+    "wait 1000",
+    "audio start ck_warm1_open",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm1_open 16",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "audio start ck_warm1_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm1_tapped 16",
+    "text SPA2.1.1.65900b13.223:AgUKBAgCMgIyWXemcAdwel93YXJtB1dhcm0gdXAEbGl2ZQDP-Rq4ADkHmCpNlqDa7dT0Tlg-bE2qK8jjmIFvg3KYhOQ66ptuZhMYzG3xMLRGjXU1K9-bNPWUuNtoiK0VcPE5_3BzVx3w-clSWhGJ3icqGbZMQ2Toz2hCOU79MEfUpYt3Ra",
+    "wait 300",
+    "text 6LI3cv7zk06WGBu3obldH30gDcstZcm9OOhw5CK568e-4vH-72-32SNg9J-U89q99g_2WATJVldzvh1m7wbEzzySOwSfp_hV5T4XcnEYvHRZr-pu5yhUgAAA",
+    "wait 300",
+    "wait 2000",
+    "audio start ck_warm1_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm1_typed 16",
+    "expect text (?i)submit",
+    "tap text (?i)submit",
+    "audio start ck_warm1_submit_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm1_submit_tapped 16",
+    "until server spectral\\] (pasted|paste refused) 60000",
+    "audio start ck_warm1_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm1_answer 16",
+    "wait 1500"
+   ]
+  },
+  {
+   "title": "warm2",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "until text (?i)submit 20000",
+    "wait 1000",
+    "audio start ck_warm2_open",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm2_open 16",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "audio start ck_warm2_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm2_tapped 16",
+    "text SPA2.1.1.65900b13.223:AgUKBAgCMgIyWXemcAdwel93YXJtB1dhcm0gdXAEbGl2ZQDP-Rq4ADkHmCpNlqDa7dT0Tlg-bE2qK8jjmIFvg3KYhOQ66ptuZhMYzG3xMLRGjXU1K9-bNPWUuNtoiK0VcPE5_3BzVx3w-clSWhGJ3icqGbZMQ2Toz2hCOU79MEfUpYt3Ra",
+    "wait 300",
+    "text 6LI3cv7zk06WGBu3obldH30gDcstZcm9OOhw5CK568e-4vH-72-32SNg9J-U89q99g_2WATJVldzvh1m7wbEzzySOwSfp_hV5T4XcnEYvHRZr-pu5yhUgAAA",
+    "wait 300",
+    "wait 2000",
+    "audio start ck_warm2_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm2_typed 16",
+    "expect text (?i)submit",
+    "tap text (?i)submit",
+    "audio start ck_warm2_submit_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm2_submit_tapped 16",
+    "until server spectral\\] (pasted|paste refused) 60000",
+    "audio start ck_warm2_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_warm2_answer 16",
+    "wait 1500"
+   ]
+  },
+  {
+   "title": "c16",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "until text (?i)submit 20000",
+    "wait 1000",
+    "audio start ck_c16_open",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c16_open 16",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "audio start ck_c16_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c16_tapped 16",
+    "text SPZ2.1.1.72df243c.2942:㔂郆㔀坠䧐䓏睥聈旵众驦靃㑃䆩誀敶䰘㖘긮孇忘㐓星駫秽橨㟸壝甍畡뗮㒈䱘諙愒桔뿣瓃㚄릒棧箓坘矠圇镥榖睘芗䰚걾뀤揦讛鎷偝杯㗿辥䠸곮漓梱뿳둁悿䚑嵄끻묋䳲蝔㫌篐䫽䊸䛰合枤钃裿鮎髨祤杨몼閙癑踎䡊绹䡮묄鴮㡳寕鵐鱸緻镙酫㭷薞놿뛤㒯뵈獿橭酥渲昑锈疍驮沗녰澼䘺懙깲䐃噧놁敊㜷蹽끦뾕䠨醤礑攦阠韨萾鵯紫酽鄌렓䂆謦付蒢롭鼉뎍板㭼胐䚻揢烖悓䙲긡谊㦹擋㔨뼒㦱砒뺄鮧끑뀋渱㘒렉䈃䓴㡜濺㥞椁嶓絼㸤藙裢䴊谉出挵橃遭븗揅紥䬟佑徑뵬甕㘃닁鐚䓳鸓撯餣挐䒤梔昵䂸纓驚粛땹騏瀙밬欝崤㘤婆纠믊똞渧斆顶䌾顾癬㑼徟痞䓞莘끶推䥡妿绕厘楬䘸鴧饯㜩践袤錑鈟桤㖵泂孬鳠騏玵軑㩝濈㧻闞䔱䝵颦筗弼닌鋜㰳浸開䜙顔㜱擮䚏银閦彣遾받豑䥂簭㽷㡜㺿䮢晫䐁둤鮜荋餯瀌놚戅朁㛑㫎궋屭鱰脝塈嶐寶䂬禽爆黯鱻贌㩍㛪벶䄒鄜橷䰐榅놙找듐洟隰爑岏낥仴颴䆏疣뷝饬䝶踯䰺熶桑굃糍넬爒䍞꽚柘띾态㿜棔紐塺恻悂雞珵譒偖唇눅꺕骺覴婸븫낿給佐咜灼薫淧벡릈䕎롞悛銠蠒輓놮偆觿닅랇唥鱂㒂旁㸖鈄꿦辤穄焃㪂䘢彄㜐炳僙儅颭砮㶵嗉芤邎믁瘷寕囅娔甜났尷㐝㡈㥉䥈隀幯恝醤乻捏猠醴睃怙袏롰똞띃䵗䐨挗똀燙鐇柞㓑碪鷦鎸亞腫鲻姻耴苔뾒넫毉丵방䃷䧗隰䓊幟亞饐劸交걿炜鋧鱣罕蠓떭蛧䋇驏岚䓋晇䙘뼆㹬㦟띪䉗꺴㤀댔砹葸迲剏䫼垝忠䁑㲥낎㳤꾉롚㦵恡䘈垱歶电덑跦妓癨㨭劘庈賋堜뼶깎릮肽뇒꽍诗艩㜐䫇똫瞐鳏頒齃瀆倯돳㐜㖿剕齡旸릟仨륍뵉괽䫤肍돬沸䧆䢕镵磍㹯鵊㠰醇䕕敵䗙堦鋔㸃会賶䢤瑆葩蠬郪撸㘯巛屇䑎吼藑弋擥뛻树㿚䎊빌䭰盉岛催䒨榡꿷冚椅酁窸泿铕浹夀㻒崍艫䁪橂䂴㨝菶䩄菖彈愐㗳蔽蘺麟朅售薕鞚惌汬繃咶匫娅聮䶻瀔茵䧒倿缭酋뿯炏妋䨃䔬鵢詤析懜㪉뗧涭䫐멤攦丝댏荠뀝勛酴毉鈪률砞䑭賃餶䡪熫瓏墀喐秆敤髗鋌㫘砛春뺎東蓁딟廖忦津藋昑账邥灣發碟궇堈遯렧煟빏櫩뾎制㷖뿲믩滥꾁祁轳蕖㪐紹鐈镬䒁帳䔛啼䮇閔鉀椻晎鴅满肌関띝蹞㟠㜂橍뗟晼蛿䀤壒돱䫨굹滞㛅蚢鿷躲곡頾簖堺돠缩䃼䋤娏孲駸䤦䭍杆檭謕謊詤괗렦颙堳偶萖條㣷租껋㶩鯙鮢蚁訫鼏匸瘸뇘곌梳踄䅽邅繅뚐䎏뫘肩瑭潠羳檋摱䓷㺋鮖覃崎뮽臛槖楮顒黥맺甲軕㥋肦唙侵妿䇖銾䜈欚䌈钷馗뷡舚鐓깾閚崟㑵錰忟郪阣覇㓡㐭㽣濠䛏뾉놘乲带闳㱇䝜䄉㬯謃蚄襶鈬磘鱓䆽臮颡㰻䱶㚒畛失뱹䕅뚏魵꿺㣒烣넹䠔悿䬄駦诋堟鍞梗艌嵻爸바蘪豻暐覩装쀥孿聅卡됅㐡攮뾍璴䞬碶駲䜗暽럥㓑山䆻䦊龺冒迟蕮陇麋끍䳏뻩犧䬷欿䮛臼㬖狦밮䣋循憥滜땠붻犘吕犠䁒仗晕障㞲㼞䙮灬倩豼鯆苉沊踷龽鿥蝤뇐羰輇䇼蔓鎸騛䁤㰛礧痬멓惧庖䡺㝇䘌祠候弇䃥賸丈灩稟꽿钣肞齺乾毯茕鯈磉䰋䧆痬걶艚踬䥻它驛縏㗚酘嚓鹍䚁䆠茖涡咱媚抃箧云庣롗綜塣릩갡겵煐嫛後뼡翷㙍輦牤뛲庌䆶氇䆲䫛症揘洮疴䀀崌鵽讔灾랳曬爘蒣鬦䉰걡뎮豱檟韪尔鎳敕䯨㶊瞹萯劻哨䀪秏洵䭢覵뽭涖骢醘饽鏞㽶炯䢷㡊紑㘙倆䌤裱狧依鲈䄱驗輗벴噘衭됸배㿾墕굉聀渽뜸㺤氲剸觤穌饄鏛聒颕均䅋誇盙鮑蕊憗덟낛缱勥酺㘵䰝㼴㱫虽顆㝏뜓煪杈뵉珽䰈䧯㱉머蟊隅紓㿤㪧癠䟞㚓넧霄鳰朲㕔蝤燘杨恄呟뜲嬋櫤侌璅䅍들괚뱜嵲뙀搠妷卹簥䉭䛐弊蠂诰梊昏뿦完㽥谱䣎傂籮㳹瘖龒㭘䇋笅眐娩剌䟕楪봲欬걁岲믧饞绽陝䭸穖曧뵂鳹傀餤栂澪囂蝜甲镡櫇畿勆雇땲㟽㶓俽뢬熚륅彵赙馱覘輬㷿肰赖头業圄㹶嗻뫇㬪藜澁뚜딦曗뤯痯繩靬갴嘻鹕却뤄랢䛶蹎듁㕘㵷㚻陖寚㒩扞鰮羅捘埉穧댚㶲븝髣鲷乗넭幩덿殐䦈掠㘕鞿봒븀臷崌莑뉊뵭唢鰅郴䎲㦓窖闻擫譞朲掹敒愸遺艹禀療险廐歈긝烡剺蠗끝譀悳䆪挢㡐㠽夽觴塎铭릥蒻陿룞疵砖僫朧郾䇙鐇槽귎抬榔밪膝僟帝床랣丛鍘磋뾣總㭅䜛袤麃鵷녟齦恥抐伨䣛翼淸柶飫鉕㤚抽䄌㢏㢓菢環蟮鿦杮蛻䕿倩寺妺觅램椉뉄㠽偅꿋旉陂啤執鴷僡㩚꾴뿨玸䤌撋㽭宋睍覗䥲牨讏婄僼럖쀾䩎褥嬫豜澝龃뤎궀㽒䛙檰阾朷驾뿴鑄瘛倞徃銗嵮먜꿍纅皆聎褧槭焱嶚社벃肹嬿驫坂暰㹪䫌筻萻㨿棠迧䮰䦾䔎怱尠䝓榓奧럕犟䁓㓦鹅檘䫬與瞘㧤艆毹沅丝銩曊葝糃遻밲溺귈楌둁慄뼶듞蒯䣏褓枎煌坷䤥䠋袶렴悑䯇䝕멟㗙徚㾮侏噜둎㪖誎疚뷂떃嫒㖍嚇襆뫶㽙騿玅䂙庍嗔纲댃喫勲霎鿟㬠䓞忟黫铛纄紖捙롿냰吧諆봷랟翊歧僘辫酩聬뎾揱龜簛諺鱒顈꺃䓯륢䱋溌魐䈞蛕酜禐酨鴌潄辷鱝䓭忕矤袵濇㐀",
+    "wait 1000",
+    "wait 2000",
+    "audio start ck_c16_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c16_typed 16",
+    "expect text (?i)submit",
+    "tap text (?i)submit",
+    "audio start ck_c16_submit_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c16_submit_tapped 16",
+    "until server spectral\\] (pasted|paste refused) 60000",
+    "audio start ck_c16_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c16_answer 16",
+    "wait 1500"
+   ]
+  },
+  {
+   "title": "c50",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "until text (?i)submit 20000",
+    "wait 1000",
+    "audio start ck_c50_open",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c50_open 16",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "audio start ck_c50_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c50_tapped 16",
+    "text SPZ2.1.1.80f56a55.9320:㔂鵀睁㐣䐕葮謍唸㠱軚갦蝃㖀嗍褖呵䰘䀁肭띧㞫聂吷桢鲿溱劻㶋淸褐垇븬䊭豮㬂晙蜺焎垱偻倆鍩呵跴捣骀㬨垐妜䍘懫㽩鎖녘畆滕誻堌떋憎偍떩夬䅿㞩橹닁隭缘愃暯䈇뮹鉌杄㞋궙䉇蹒벺綞刻搦擝冸䁇䎵䢣䚩訒焤蟇䅊秉祒陪慂蹋敐盁쀰繘脐넚孈軹衤䎙敫寸藱嫣喇魼䛰鄉鎫뼱丬䨼硦貺閭赋㿋郶蜝꼔莝㷉驯眰晃묪仯誥綒鵗땸멧軒蠚䀇뛁荰杴錪뚊椿詷韠䯉岎롈魻旒䖚譛嚵火蜥愢䶵駽궪䇌嫤葴梢䯑붡뫝砡癗䀟飼䱒餻瑻䉭黽匄깚蓌꺏㯞揣瀶昝靕㬦棏蒴齩勄㦌늈炢滮唊麸缂덍䃯嬥嵇餎넚䍺뀂囇땍㑏隼綎栗됣䯻缷둲䗱湫椗奱秸鵩姉똑릘丑땍凕嶻真討帾溁秭涐佞奢伨㯾붸䶝髜霜冕爡熕圭懓㡨抨壁㔭亀撸媎귥湇䃖㟌鋋㮷搆銤蕀宐㕲磪㩚吲뗋肵㻜瓞范緿椙鋻韂怿顪눜懖烲湠㶨軛갠騍㧫牀蹯榦矂蠈貨럯䀫녅藎垶뎘㪄伻彁뺎垄䜶聕沺䨕讂歛躛敌㕦缻櫼轗䟨汊簉壐匋䮡库蔡偈踲䚰鎦귗珧뻨躸랆됈䪩䵬㑦缎镋䬽椊枤剞鄡搜觑綇䙬꼹徢䕆䮥꼀輯甿䎲坛벰眕돎埕梌㐔㮓池敡㸜僻鷟巠磯굥珥㰗냿斱럮米䖏㻛披扆鎝긥眆㗿鯘骩匒搞嘒珝慈圃鈰铲㞵㷿걂㣌䂯矆鈼꿯㮄禯濐縜蛣衱䌎娌嶴뿮萾䧦塅猽逤㼡봪渂딷䲐諣뻣殔乥眢偢夞橿㳚똮軌垫畋㨠벪坰噞蘉瑐鰏䡝拝莬弿軵硓现檎应砘鯲椊靔匭麋溠꼢㺬鯬涚뜌艦䚔榖땰䛉姪䊴哢鎃媞㔠屋餈襎豮巹鴯澢朴꿨骄䭘頔緐巻脈㷸归믃府儵缰㢻䅻屏醵噀렟릏緑挩疞傩劻斤䣎篙姥䟇惊悝欮怲䉹玩꾷긝늏㿯㑡㔇算뒫譏䨦卪觸묋遷験睥똸䳇㑄穵䨳玩蔶賵膩抦鱱息毓됾昻뱋秎羱劅惬䵪黥虁䜇娊帨뮢鵂䢿䴇崰㰷鯒濉嚤骹僺䥄讳랃桱隸뽞活圽낙㖇鱀꺾鬞靬䢡枠㲐欍鏸番鮚䣗꿊鼬鿳嗛뢸濌殖瑬嘦遝呻뎤뵯词㱂䂐蕓鮱爙襰堲掞銵侁㝊髯䢡愪宝弄㴥蝹鯶勢뮥陰䮾䏐锶㩾珟碦瘭鸷汞璤蜟瘩敡鐡絯绯볾韮㤁蒫똹㛘頕蕍㰟㟕뵨稯獡佀䚿릵蹯鿊껔胟銒煨錷냓啋墩樦觖讟䲻旎䮸䓭碨㩊棇㡁汼芾夡㦬籉桽傣榃䉤眮㨄泥뙫绝㹎円赬䪠燇縭똨埙摱醔㨃띘묺憭晵㾡囜鬦뇣岠崛絀亣橷껈貱쀈晤䓨㿠晀堜䗊雘㼋듙㷀겉絊匓蜱帜叁鱮靣枚掖覎瑶㐐琛㚒䵛魷䛱栝亜靽䴥㱯䇮觽鱒磎䆆갻蘬衚䍄굿氝븦豢裥뽷뚎殑蛨睞䚚煮嵂妜苖谥㕢薷髠芮㡼꼹끥賢䈪戤朼喋늽鈶辯렂冭㟢띝籢滬帼嵄臀䁋辀淃鮿砛麡鿂䄸䋈锄硑絺皚燸臿㞟咉䬅幀㮻䱬䄹㢋怉鄵旳韆迄䱱涨幂떞隕㜅늭達湛鸭泡곃㚨꼷바虆䎷뒆牛볡㞆蛃峺镥樏㡓迋珠亥陛阪潕粅䊑轛猟괄맀敩痓㹈庾伽嫜褳鄱䰥鯊坩瑺䆡崸䌗䗻硟愫塜者亶갫竃袝㷻车觝磉凤먑縚濚䖃듦뭡뮽徿薇膞杶늕昧忑꾴滌䘱芦귺螉情㶝鋖豻㞂兜䏒俑寜䜻暢뗳捠䨼婻殎聄词浏椇뽏飂똆湎䥑矅猐逯菜海浮镜朋㷨刑䲈뮃峙䚀擏藥横輈䎶嶧翙潭䬃垔㥀讞㑿櫃飐놐㥨먧樨눟钡歜韛㲘炞杼箻缹梟记㒓嶺㞨椙袗刮襁㬂暳鲻愻瘒佷貽臧䞞䍛륤梙䨴玔笎琝㮦蛲䠌兟䔍귦魝띶놽瀍련㼿䈑㩠瑲籙捜焕糠某鐝螭鶪瞂䰛뎩巇濾蛤爬䠷궓斡꼌替䣀鰐萈姛遰럋鯁䙚仿茷劂꺜擙豹䐸嫉鴥挘櫵峻봆㘕맃鄏殱몗徜廮憒듁梌䰍㵾玆뇥敤誱㳁檋俥炁鮛藰龅䍶帿멚묑룕逆陾籝論録㢡菒啬桛洆囜梜鹄鵾竔苹羵毄귅㙐鳂㢔㴴뭔怴埭絜瑭㒮簖劫詿떆酳晳汰煙䚸㵌䄙抨鉢残焘꺍鯙黿舥㳖蚼䅑낽㳵㼑鞩粅嘲蟱憀꼎끻㣍㒑涩䩨七㰼吱㕊秎幙乪璝㵟룈痩暁蜿䐿匟결药軓䕗朶罖革挱괭鰼烋譑멃峨抺鳿嫣鼠屔㮤齫国纵䌤徾迊㮂各䯵玩蘃뜜佤䣥䅝㶀璶力施䱏䭁洢飺愥댉꾜䟽埱羼繀䜊慃蓉邼棓劜飸栛稖䋐䆟䄐멢㠻嘩䝛䝊歝㳳訶照䇤隕䒡鴜瞚瀉䏖揞縓劙떧甑覵蠬獻匩㵉耎鸧璢絞朐䵚깆몚刎褻䤜㾯븢記戏殖뾑澞㨭憉辝㛹咩棉뙋녙陶横깰魢稢䵔闩梙慷뀔偩鼘떱겆疊亶褹嵡县筯軶筩꼳㿝㲐殹㸞忯汉䔣仔㫣铓궆興녣繇댟詌蜦䍸붻蛸煋䑯몙驶胫砱罳閚掺謊蟷㹹沝䵣羲洹䚘弢槉䧝靤卺䫦붝丟䱥硦摨㺄咕醦闕妰䬚戔鮂玨蟡벢㺙瞫旱狓譩嬓䈪롏㑳긽㱉㛊睵볯䞒瀑롗郷㵠䏼躕鉪녪尪蠅꼁忽竓竗鍑䪘費䱐趓㓍땆掷䌨놀色繘隮㟑沖䗞㡙稤듀덵瞈븾䨾䢒䅯걉䂎稊糾蛫귑䕷灦䟞靬㱣뙠鳦鰟㟆놨梩煉둳睖蚉迪䃳朚맮霨虢齘橔薮峅峝嗏诠触㽥掫隊并忙뻦뤶輭罨뱠闰㴒警㔊郼䳓맴鱞晉㳠籖噄堳趵鍵烪恈븝牞雎栍鿑緘沧窔䉪颡倹莌膨连蜩븾朵押䝴僙穪대楶귺㼁㷄巜憢㬺啹掙銌帶體䌈箻居뻀樂鞢豯諁냝代됀艾鞻签缤붣侹饃㕙뀠讄䡟昞憁澹믪譆戰꽤䰺䦖軧䄑䂊䖇览冤嘎娲鰇䞦庲䡅誧帚梱諯듥㗵簍갧儺뒞鄋赟隸踊牑禪㼊潅怵䑽慿㴣띏缿瀕奀눪钛拃끗盓墭䖔笁濨嚬侧뉈甌㲾蔆锸誕陲됲谎궮葺攴䤞뼀롄怋蛴拰哓㑞譵洮鰳私廸䖃뱘䞴㭳杘昺哚뺻櫐䜖녏忯死颬樨駴䅔釠睡鈠範蟍嬿銆薉翯趲獟䱦熣뽳迩頞忏䳲껎鵘鈾玅뢼굿鲮鬛缆发粭譥啛몘㻃妀䩍踛녖曠虦慈欮㠕熰菹櫭趗諲譻纈뙧䉽뎰깼吥掷뉨簣馹誴寜載䧛仩봍叶裳䯳紙檥㧔鳨鸹㟎脅聱螬䩉䀶뱔는焒곒䂎䗨䴁榩䃟慘䃧芔轷挈䫊㷃몑뙒䟳璂躚遏鹢䉸䁊骟讗慗伣縣愠褸醇䛵汓陲麤复臎迬筌嬻懎錞罦䊨谖瓉寝擀둨肾䌨峥盌氖契䴮㕌矒䶄冊醊鄥絴槣䉳䃫䒇碾䈏㞅갈拭薎欹煾걃穕岉藁惾뭎䩡迨罿뾔맨耆詷㣍奯厀擈凼䰶笥搡䙗对䀬뻍璎㻟뻷閭䠓軳猑䜋袈㶘䶂止釄霕厨禇疢銙㿅昹喆뮔甉畄駭牕뷦隼눔琤渋鮚羅灒땿齄緃놩䈒舲勎泝塍㔗䅕褋悘䣡귱밟䇹縴䥇鮣淢䑉眿㠝礕爺摣륫뗎櫾韟沁斿艊渨笉罳鲧擺塘䊏姖雳뤖飽眞벿릿䢿䃗操㵉咧薆阜頵䍃陬助巣㓙鿓茅齲닧疾봪孃蟪䋰瀌鶓獭蜗䙗瓨猬燞傏旬项軵머护䉺빃焍괜㹛暠벸뼒墂玗㣡䃥韄䔷毚눻馋㗕薸㟭侫泷礀酸뇘䰢䡠蛂琧罢뫬낻鈜崛䫯簅馻䫉敓喎黆怳羺㟗抶伿塹烩䶏贳黺騛鈿㾢馯崙綷㦩菳竺猋柊勩湰涌㺹鯮䜨铈情賚瑡秆瞣緌漙嶂䅡鈱楆珮䗳驡剙獄腺곇觩䡡벫毘嬹國猠霋缐踵巀䳓顳똗눝嬶뢂鑦捃駱如堨壃鑱嗑鰔殱躖蕿冃兴汘뜴芄덄頎㦭伋鎦彼䤚㻙몓㮲枂㶔爤妜殛稹䱋軮巣栬㙍럎䣎柃炤꺽畩疲公笉襈蛕녱琔祧蹟辝卢玢䒅瑵賚䙟滫鰓峞矙秂毾붽䨾綇䐂騁汒陌罐萎炬㻅䭑蹮㕟簺弻祳䠣㝆作纞乧椊哨꿔려㜏㪩䕚慚歊聎뀂隵圫䞰輔䏺㙹敨縰羻霁躨溹梭钏䁓馘麏輸囥嚂橫募烴㢢騶罼磳㶷䒨눞哭儆䳹鮊䭕憩夼㠾龴散哞鎼㲗礽猺侽䕝偟럦皠못仈䱔覊濟酳獋䯅躄妶祏딳麧洡䬮誦户骴儝㑓諏䀉絶鑲㯑喠硤戓㶻괨㓰뇽鸘鞝㴊㥫䀬뻛籐筥㕙劻길㵪漱餣닸翹黰궈椊庇놣右鏤飤㜉咣鮐됥㹵牑缂浰壙랫㡅斖璹볕밅粣珚潸昈㪱稔噟㾑年뙵뗷桥筑겮柊㵧귒䛄㦫阉僑㢯瓑奔稀房爭䢷끼璨䏁铒嚙䀂㜹厭띮荝뫧壈㻰鶬憰㑛嵇뱲躖脩㥚밡鞰봻껧뤒䶍熶닜稁鹔脻齜圬뵢鍀꿟綐㳓䏁끵轒兄适菓惷依㽒絏碘闹덯楄䤕着뉔됹㕲蔶㓱杌幡懀鳌䑑낱劻䳱䭒銝嬳鍅黚㪕餞琤友䋴輮䜽봛䶂閃䆯視觔獦㜫묺䊕脙箵尅锷㑠넓襚悶蕘燮柂氱㒲녧驍㹀贼뜤뙓몌処軗䔧妷棍蕌晄轢晅秌넑냠듳鄝甛믳氻䄌㭱酩茳起쀚中篙굏崡樵瀛鐁嫏亅뻻峧늄몶㝻創欿쀒葏䌠鐉紗嬕嘙塉䆝羪뻢빨䞊叏뜴讌摤넯㙕贇呞斜㨫劭烝䶵搘㔠봮乞꺽閒晾曏咒吢䕶蔩胣憰凨㝒谔䙺갟痸䄍魓蝳奊䞓裇撸梻釆鹫曱넽뿓廉楒绤贍똣樴蘹䞦倬㐺諬봷瓂逓됲擐躱䎭啞떝䘂㷟鱈꼒敽毳竀멣㨏벴訝蠥뚰鶁럋烕琢滯눡겪紬衽倐땦仦敻钭鎯迬鉙罔鉀뿦湽缏让쀜륹萐䞈浇焑鎬馼榵땾嬦挹椥렼倩㳺沧㵊蜩劖馂摆䮂룚隦骬㡻輊䱡扅櫷䪓䣎끷鈘㗻衱芎幄닑㮪腛䄟辡弧䖁浡믆䎋錣翹鏼騬劜屜렌바㐠韢薷郵鿐㽾薡먬雽늶䳆攀뗿똣鑜눀䶊瓠琁湤姱炴쀍믣蕰덴䎎哹뗵뾋剐揖糙憺䪀㐨蔊릎耟瀟䊉坆㼰糿夝骳覷㷰瘁嬝黙淵熅㫫渵呞궆癞餷務錯䀣鼃躴莬萜䔰뷺錾錴狸密轆佩䈤簽螀缡鴓箞㛼浛鐚揕洤䀿耖羠㗝뚟뢵䤶굱閈㤜鼆沚邜괽벆㷓价櫑먛뾇脹企鷮䯭碂鵗鈴窲誔禄癊娐磈艓慥䪹鶄藧단뇥䅴䴳僫朦緔뽴蒫吱弜醵봆畒攆籚吔挸絩鰰讉堜淍瘍左渍䔣瘎訫杒㦀刋뷒긓轄顑䡵铻㞃浲毆窠撴達璧褵帐漏鯂㲴먩䞮眡韯䬭樯繂릱蛓柰뇠䑫㛂肁䎨洞耞濴뺑鄪꿂粉栤歀矋朚딮軎颺럀窥碠夏饩곒幬予빟䎃辭䚈붚缏骙뱬鸰江㒑饯䔣抌辊䱷㘹緄韬颔晭뺀鿴㽈該導괶裱敳긳䑀焵룗覺摩珖纛燰䅑纗礊珒倰滨蘑啒鼍褈篨顊먠遣箖顣䎚䥥䨳稝褄걝㗇䢁㧺熈㾊㚜䗾邀䎛苠求襺瑖垇诽葛涢뱝끋齄똎䩆봪瀺䓙뀸抐儣琪㹧垮빣㲳声됿庎畗澤몍뵐벥糉㴰烬䚦䭖䛙町㦞믖壢묥㷉剾謲憨籄鴰깛淥嶈擌垤纲벝尗薔꽤㿵伫맴缑闔练霉䩑色䉙韼蕺䱕鷣坚劇뱑蒬㢴圇鎅䉐㽅鈸苘뮂뽮廦滬龾葰篥腨煚몁䧠됤뙫魒궘鍰膬䩹漉奂柀㳳烍绉笮맣鍼꺋䒻狋濘崉懽䮟㒔䖼鞐趮뻆殹㼙㽍㑡뾰뉖밧麻抿褰湺档䱚䙁葄㥷㮚䤯駯뎅适璑擊髌䳻鳑㫭鋋䬵灔懙뷊磒税發唡浙孬奠䵁璷㾈궬誧呩簮廻硤謨躷矋屢禦䧜罼꺖擹鐵뻂愬䝀멪뱁㲜犨궋籔遒㲱颀늎誯燿㶹嶽馡弶뼨뙣膌其驪뜻岽衜뙴괩岸摤嶥犴瀧瀼뺫牽汪瑷鷝蓖떲吜㲞硤瘝㭑멄悤두踽蹘敹䈞㹭楀玶䤃鱗䕕況粞㑛莀映鶔崕㥺吮筚臞멋蜁乚㦯欣篳帲뵳骕땅嫀鱾窇粆趘唊觺楔釒嘗뮦렡椨勐戀原歋唠鎟芝䅪뢯艬匀묤嵏貲浦㿦뢥椓덳韲븐拿瞖泡詍鐝뒖䳳䰻鳒朓䩻笯䲚橼뇃尟彊䍭清䗚걿㘁遱鴶繕䂕佅鲻焀泿允僾塢䈹뚿慗볲䧦峑㮐骠庘榦喩㴜锰곥迺剿묤囼꼄鎦阚萫㣯㕃㦤嚂糟嗪磊朴䬉롤凐榠玠딞둪꽗揚䑆苿諁芴䒊꾮㚰㓑㙴廰墵娻缯闗밬豭樠翳䳁擑댏貅纁벋岇䄳據䞚鏈蒲㿤魾悦皩噍耏煹芌壴㮓飋뤻訿簻鋢括丢㲌롗덊奅挵箛鳃㰻鄪䰸褥狔芟箛鳿盄砗蘻謆냔箿䈪㬈䤒襵綗竦翦镃黒㧴刮訖牐婼㱍롺븤䡅鰒謪㹾䄍枓䛷捍待쀨뙗懆鈏㪴䝐呢裍㪄䱇뢣翔商稳磯눲樮熳襑䄤讃䏾経娰꺮㑪낍뀖費蝨㻁㴸㠈筐䁅崀綳嬳仸氶䊆豚釲寴藤蔯뤆綫㧆骨珘鵅乗낇妲㧉䛘齹鸘婏涥䫘倿籣毼㨟訜멻䆬㷟荷惵怀袅덛搑䌆꿈豠㐆庐嚲䑮橊꺄㡱㐗詹䚢볹淧蒤㘚睎檀렅䣹嗿煓晧䚆霃䄤䁠䜛伀橉敼밚蜱暽呲綰鳫圄鋸賦潇룶酴蹄菒邹筷곆䯕뭫봵奜鑆䏏㦉刷랥㫱朻鈅䝫㤚鮖懨畄困缙벫㫞廐鋟㷬䆶뿖撘栻넵㙾聟赿뮡彿蕈䔽蝋湰肫㨵趏詏諾巋敺儛溆㿈箥㠀愣悡昮䀥꿛扺㻨㽦㪷䈔䈗蒐荄锁箖琖嶡鄷冁刿噍曵瓤㶫㢽䴻铍薗蟱䗘㡢뱓颶颁붓鸻菠铹鐆钉桊鐒䍣饧曭嘕鍡屆漾燂䙟觭碼慞母摸禵屬溼㘅㬱䨼냹塲嵺辄叒뫞躎뗜崐밳䘂噆掻豫䚼뗽龉盕뫱뷘怍矣崴납淛斦繓㒨䒥㻑牟搾狳뵼礐鮉䵓뱍뤵绗锣頌臣輮㺝鶿뎯㕸數瞠椝曐糰檎挚屈㗃鷃먱냩岗댩隹㰜耱壩棵叔阀뗗杩囝椼鸺雘獺岹危趸㥜믮煒矩螓渝靇懹鴣爷犢痵澔僘䧰萣뙻븋蒲窯圚䆻琾疮䵹䛧灘崽㖔丽㰳恭閔镎뾃릪䀕鸦뵲笝껲蒿䕥뵤궏볩䥙鋝댖兵붴䍪䯭桄峒螊顑娏㯨釲㗜预鐯筵郻㺵涍걃墩儼攮긌眰뗫䍰쀪璝봁緸蠈䡤嫠屃辵賬耐㟄㮕侞闁䝠鐎戩㹛鑎汩镭纫脈㓉느㯧酦㥫쀺㛂븳啢鶠뷔悽麟뷥㶤浄饀㽝侢鑃檐醵㸎륛㗾筇辦搲畕瀤竨봵暮芩蜩깧鸙衝낟謗禋끯涗苊醽郆䐧録糶䥽꽳湥狘䭶摭㘼㫱衅憖孕㮘囗味럭麭箛庀璋㲖붏礃誒頭㛉嵷猍䩐濔汩렘㖇煓䱓疡䯠脆螢䮝輤䛋寰弈묝뿚譞愑碗樁腔弋鞈屨㮮雕벾綴鄾綠剰樸逥钂楁読諷놴䐟畞热灘敳间䋿롓祆鰿댦痆砖鮙滸韟粶禱壈䪍缆䮞领뚗닋鳍鶠諂䋦珿賁泴隯븬䵎怿㣉彯䚵卟릕掘䊸㚷甊䡙랣벏觠偎蚭謦滇㨞領맶懱㓼蓨蔝㪰咈딴㱨䍕偍縒釅䎪仝䫹嚲䯝纱蹤뺞嶪㝶㟍䡐售鯗鉆艟걝䤛姬㜭訨뺗谶䔮溽荍뒘聸凞뙍稨㘂㹈䓃蛕砊瀺㧓荷㽛镻뺏痑跊湯黛準䫯竴癐镘彨瘙딈뭇䦜欒峯鼥抳덂烿髴纩䬜㯉䋉㪜朿㶾膦㝗둽氮䲻䲴軻崈渒鳽俤裈㕱㵿枴땋奘㵥介秎譵嬗昘㫾䠘鸩迦璚蜹耿鸕治黥霣㟡渆鉌珞䨫阼侵声뎐杕㧰瀺牦䤫벅匒鱁䳁翫䁄雿눌嚎脚떈䠂仭堅灅竺룅會릭䳳뜑㢵眀隱鉒楫뉚蒂癝鷙溕珆䶘驐㻶롱煤넓괃䜳琽䞲虲疮塦衠곢䝒觾剟灱緫懶㫌纽踋坨㦊絀鏡雔㹩嚦鱪릭騖睥犵鯹랿㺻㯉뜗攌淫䊂덻焇贠攋鐶弤乹㯔㐖韘몄蘝棼䯙菳媋뭎䣤蓔蔄뮅孈괅榘嚜䇩樈調멀둴瞗㕓熥蝰壭땬덺黋뛨啬徶郝柶姧癲酹鏺唚镱괹껶곖伷鏻뙝雎돺陶虯鬤龤䅤齖訟腇廀贊釸㰨麪뽯랣㶵鯱蹿뵌舎照膄䃂䞗譹埐強䓧咴㜫堗궶瞇반룐墼氾㸷曩堬梈锻䑡霭毖獐㔦녫㢈䉈䛟稀곇榼凼塈黾눧噟简䩫糎璢咜㾚犐夋琼뛾麵㣉뼪糹搴龭肉꿬䢥鶟钚汭렳窥屺薩韜䋔䳴껼耚萑衐曠㵌㩌塧갌鼨㮠鉭妜㿍뮘뷫温彐덲崏㔁閔凥秿㼯맾齁厖蕝뷰灘丞긲紝斬祔뽣냾曈䧘뀖鶽臙궨饠泈稦뜲挆발豢㙳紙揘䵞覻븏軿瑇뤢珱䓪髲刕㴐뷆㛕갃馨먩椐르낪溇뻳뻆妁鰿匛撜螆蔾铸炓榎䅣迣䭔䄣虝囜꿅櫗낁밦珘㒾䚹皉漗綏뤒䂹糭颍䳬垴棲䉱橺綧꼑뛜쀷䕥畤苴뫴绣뿼뮏䠪弒驐㴪靰喳㰔胦뻢뮑㵚馛䣦믗뺿憗籸闂髎襟㶱熪명絛㝀뿿䚴丬鷔㣄茢꽡䡹塬恕腌邋랬겈垛㘫䫉鏺鈼蓃她齈锳鑛㻦䖒妬뇩덗䕦客叹뀩潿䦞婌鿑䦂乀㫌社봵㺪䬅꿐葬痜䔏蕇猦烳祥魴璭랎矪䕅礤䍮菣諦丙棖뉺䥞效䊵宆룵꼲周柆砼貭蜕簐啿纨绺䩞憤霅軌簟蒺虝䆚鰶䓪蜳䉡奟覤䵴䋶燯氀㗂瀬赹뫇曧簒䘁蟳㤧荩鈮岇韑객멧㳴㙱螩鲎椊谯撶冡뺂諡萘깆劳曡㺠鐷笻牄腑㙗魯뾦㾩骞攈䨂晒憹긨轮掓喯멵畚鞊빌猣䂷灰蟻겻跊䓉姂䎵녫帑礻㠫歉曲運稲棷荊湃庵壐兗琛毴呎瘥舣䄠乢舷懾㡏귢䖭坉凬艓鱃篖犙镜蟏瓐蚟蒏鼫唶嫳럁縉蛜隅苐㾍릕蕌륢닌歓淬埗䞾疈芝孛蟙贼顤䯆再痆㚹덚䵿韼浼㫣晋謾榰냦㖉椥天沶磃喵藠嶏珡뭖䈅㐉逻뢛糿萣蒌湆羾뉘囈潃뱵暻괇孞醍柏晣菍燕㰖戜䤨꾌甹䰛㬗뮛陨䴯觷鯏묯震늠聄陰㵟㲍귢䞭睺沍㖕韄劫㓳襟阺뿦荁遂捩奸獐嬅騪惰寨釪뿂副嚥婈觯庸㗫壢믴䏛嫩䏕痸摆剢㦏銮彸䠃忛㭾撮揪鎪汲皽嘯寴蟾묶診踯꽊镝嶱垪麆鬶鄔禦蝊款깳荔吿㼻㚋랍㨴㑱궞埾벜黠阒澏搓擋絍讣㴡螽聯皹穣嶤兜깒㪖뱀撽六貦聕慩궂䧈료硼㹿㟄肀䄋輘㯗毝肝馴祈裳吊뙫脟狴㾵詵魦蕚造䑩尅䫚괎镡菇뽼鵭㮄啟钴䑏赗다烧竚䤐岷鲫捾猅렭悊뗥侴楯䳹柂臲㻔㑲傲莞積鑮磱礷㐃괷霳铃빶溑嵕狒嶬㘕渐䈱寇秗㤠勱㡰榉䛌㢱蜒鑥浟橓榍륹捘紙剁䆤爍戹甭馴됎붂뛂洓锿痭蜱躺뚬굽븰贛焄뀽됩瞚捤㲇澖㢤貱颙阻㪏剬䴇㝚椯摚誛蛄鷬䌚瓥跠澨賾叽榃강衫䊌厱幵鳑睌룺㤀耷螹崟땀",
+    "wait 1000",
+    "wait 2000",
+    "audio start ck_c50_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c50_typed 16",
+    "expect text (?i)submit",
+    "tap text (?i)submit",
+    "audio start ck_c50_submit_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c50_submit_tapped 16",
+    "until server spectral\\] (pasted|paste refused) 60000",
+    "audio start ck_c50_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c50_answer 16",
+    "wait 1500"
+   ]
+  },
+  {
+   "title": "c60",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "until text (?i)submit 20000",
+    "wait 1000",
+    "audio start ck_c60_open",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c60_open 16",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "audio start ck_c60_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c60_tapped 16",
+    "text SPZ2.1.1.5ba39481.11175:㔂럀睁㐣䐖豷唒篐㠱軚갦靃㖀嗍褖呶䰘䀁肭띧㞫聂吨鑔䮄늢襟끦蹉䲒爕罻煙瞝꿌熟娀閎禵壟挗冼捊恰朧歜囧襜䑈頸凵利偀䄺獂兇䲗㿐鬈뿆䛘玩浓乗佮橎緖僥獘峧祮踸乹釂鞸瓿帶襭궄沵䰂娖㫅頖둢椈뜝礚뒳荷㲺玏禯䩇뇮뺰漭녔镭腢鱣薮派꺿種噪뵖眹뤒䛁뤮瘪枳걣䂵釡䔃됴仼闽㦄䤬笷鷍䨋뼮彬䛷圈강琰皦䙛躴骆냡䦢渳枓烮䴽観蔤듎挷鉛捽멆桻肿熎哰믯撮啝䯂瓕蠹暕逞檗㴸脟㶇奎汝뢍茧晿긂뱩癕汪갔章㮥稡紺뇳笨蛿곱㑍土萷랡䕇桵㼚煵뚏车랔粄벫熼눊뛷㮰惕疳屖奵륹㼠㿾芳梔趩鞙妎뽾焭䟽溯㡓舸㻉烙目똸澪䄄땠䠤貢驝䜉鄛発磢㓷㳵䅵哖晹䵔㩴嗨趜慔缞岣鷛轷垇囕祾挼硚䬬蒄鱇蘰靁的矰骵轈楄䐲볭丆堎뫮눧冡邴嶽鈛消龮䑮遼㢸䆅䱰꿡낯哷된鋅因縹聴脊痕邲䃗뚨蟴侅볦굼镕紖끤缱棆轡観䚬뼫郫㝿㻻㧿㱇海螌䱗듞蕛普䝈缨凎確㶠焟蔢櫷嘬谉旺騈㯐㜪恿锉鵿缳䵳믮뭄㡬㻀岭枋幎懺阏晗簁㽴峁唃럞鍼䃎闺陈䗢㛊鰕焏徎焴哔䔔䊺鵒匮䟉䵬龴軪㭂봸䌤㰒㫋梮㰃瀱䂊䊫䦝笫㦶㛰鷁坢髾欘彐鯏壕湌貵駙鞚䔷麹茰废攀訔䝴茼榌辘봓玫豚疎鬬뺯㿇綽兌陌剡㩎炍궨跳瘪牘褐㷊鸫斋䶇壏㪉뤫龭騢釣냒묗䓓㬎樦뿽븋埵䮣褢螞䡖箎렍嘊럟栾䉁观䝚窴檉깂玣嵲羈㤭㨶鷳䔝㓲눚깊醠奷귒뤐㵧䍐㓟꾍䰄倿塬噎袪㛹봌㝶돊䙻睩蹲뵌佰脥訟貾㷧栻乍偵렪芨㰶行琎绻埣俅醋㬿虾闪䤠魗㾼偛麓䈸瀗릣牝颠눐㒙뻥僲닫뎆閽檕방伽洳똸諌杨긃㔐뗮耀侅很䧽䳧搮뀒咐搜㳪뻙㬃귲響랬譹㬔䝋갶爝㸪㨚菬䲷綶䜮彂㶓錘뇞蠅㞃狚艡䰼맜뼘娤譥뾝秉侫疎戌脄橒똸第똓摯뀥檱䱕愷秹佭鮽隵棓碧貏檋骙頍䂐뵗仨穮崸弛桘氞뚂馨낱밝뵧槨䭮媵鯑啉鉍鿞穯䖠椊辶륌尠鹡呵隭糶螈㼻끐낖擽蝣롟刹荡㾱꼜딌剡눲溳濲廄뢲눶檝揷䝽噄龽塔鑝渿嘽莄䳝紙灠댰埪괾姲灩䘝橸褥闗絙啨矦沁塯뭶熐筶䟮瘛㙶冫结新糩䞺酔깭꿴訡랰芥揃顱梤获屇樝偠鬍㘲纛㓜勭冖㝗瘱븵㰎鯯饚皔㙨꽿㨞皢嬐鞛恄귰箛鯿鎓䌩癩雼뎼璦㭎嶶鴻言䁲붦穘금營똫铕䦔䫚桭瑋熢玕璁띳夬䜍塛網빪將赣祐䅰泰㪫脌㿜䋦뚔巁砉똻摲餓뼾䨍庒㝆㔀標㖷峼茺椒荴갽珫髥傅瑻缋軽艦띄篜诠끶灄利㓒罤䓊䠎爴굿謌腦별랖繀浫膜䪺㛩贷賧䈄緝譛埄塩孀塋柒杖錵慧䩖爑儱달椿繽頾䩰灡缔皰笼奸뙏垎輮莔㚡躪됡䐴袎帧䏫賣㙞冔淑敖䙱粻㰀諦諰焘萑닧茁놞魍栙啟燕尰㭢郝萶諣吟䠩뮦榤㓱酿䔩뇵揱廐校命禘劽䅉淍穚墻偹䒺㗚뙺㾌瓵悒瀂걊猃뽫鹨沷监圽돥뎌仨紂䴩铈殷舢軁痰牷茂尞閧凝㸠㵘㬅農腌嬋䳽䢵舍딶絧鵏㦈똽阽븞蕲涫姫긾鷍䰓哚䩵䉦幕漅騇讯놏䥚뢥㳔稶洣蒷噇镜龮䗢宩弸頨噐渄靨壕斚赮痨鞟걫鶂班長벡攘赡襦䅫遢筂亨鵮摇耩㽲宯紦耙憲愪꾺륩蘌㰜㫊䠧萆蠏瞉隟꺬㯠樁㕁깫膶竰预㬝䫽㝜㠭䮗璡돎눐㚶椮婔䅲鍎耽挴䰔踭峼襘㓪欂鰺谅鞔䁥竘墔凭酁卆䟕喧勱舍玂鋽㣯芿亾籨庯苭괉뫧參呢菟볕捾伾粿眆犩볼堣隨眯兌齚刨伆鲕둱㢔룏輢姈鱛錟瞜鏩뮆㓠卋㘕䮟腁褯喡멶歝欐佂拰撇欅뢃㸳冤顗牫擟꺅陡蓝䩯囶뭃庥둕䄅檼㬯韫舔꽧鎬蔝败㦙䞂塕両寶㽤㐎娎돾蠑魁蝤鰉꿼媖䑕桄鉨圬䬙槻㼼벴鰤䕰阎遖滕䐋릥蝝㾤멶㴿뾆礊뵩돾滩觟蚲涺㰯錖畁欴敊䜫蕯㔂赼挍隣䬤䳱꾲遄粔壖㴟뮤嵗㶆峡卌䴝勼荬坱鎏뽓䓗裻㵉鈈꼟㖦窕筋㩤鋫項됐犾䦣멪喛峸轔䎠뜞㶡㐖仓沐蓉裐誯漖魴驹㠱㔃臇骤㞄㝼䊛螁吲磅㞨뿗兩꾪뀵渖外㳀疾㯷镯띜뱏张덍䧂甏뵋知愷黫躡鐕䱐㒜뼓㐕돎墣芍嬮磰澣뺧묬鉓뫶䳹妏穉渡匛譔橨瑕澙鷭㠐뀝虭顀灜漿蟱㩙㟇㦑䍊냰荭抇灕橺韠偘樺觑㱪鸌汹䏴塗鼡赑汱羺䀧䰡멖僿蔍獓㾽晥缨뚣宼뉚䚽鬁玕瘋缒畳帠褶幑䏠뻮렡暿鎃딍벀脑鈓欁㾍㢕灜붏鎉葧㰰듻亰拒걨頗렣僝谀枽铷芘䌼꽄隝睹屋欆禓冐协萧䗯긡韭箁际湲㞖嫆鴴譙䗖閿鱏劂剛끨撻䮁畒鋨䙵鵀彂凘醚㣯寒覐陣㹺낄冰綯쀕繞蔡堦燳빲넂胁빼㼒뭽䭹硔꺺拄饇偳掲눢殺낅吠革嬨苋鎰뜝凮抋䃣锏坠뢦惍份仕㓎뜙돍絥鄝뜛裱䈡鲢栒㵇肿뎞뎤歕捾蘭끰䣇掚塽齤뾌芒辙歟飦鎭餢皈毧粸社嗰翳績몮錏㣗胕廿㻌愘塡몃嫅擥끜念瞐㙃珥䂎倚䈂等嚓而硬鿣澣胣媏壤钹孥緑杸蝝놦蔪烄꼍鄓룬眦蜹芬䔹䰞銤琲꺅䣵襙洉梻䴘代櫏颸攎맗䚔朓囨飚䥷矖䍠竳뗍鬾磢秤襵㹛鏓䋷掤缢쀨㱛涹곪雊됏臀䫸帒濮鞡䴋桨듷䒑瓥䨩묵䵘啊糽薐逫悏뺃渏梑鋎뫻㔗镣騸爎跢㟵擾赗㿋俻塹뫵挍餖볐卬䴺꿙疐鹳諱筁坪惀悓㷤鰂覶飧梀撈㽘篣䏡猿쀋缿崌楍瓞銲䞭弚硖嬞缔皠弗輔虇䛆鬥驉㘮蘭䬹塓葮뫐磘걝㒄関䥓뤢梽嫼댖䬛㢍禦涋戚㺮嚌嬌㣁㗏꾘窶板糖灊澬痳㱏䥖桮末馘腀癟踅烢꺫隸砠䮒璟侏똑蚓袏䚱㪛㑑儸㜵菗釅潿説肯儠댏鲅畐䲁揖稱呚摃깼列賦頹簋䥀瞹뱸宑涧㡙邐筤넦媩枨疖葀捱䧚䩛뗠㢹琅䥵秿묐䵦饪孬뫇㦉焛掏둼䨯䚎늧講懭궆㱝뢪먧艄㝚䡠겾啨黠唏귈颪筻蜍䝏蜫赝뜑劃帐洊됧齁姽㞯뇫鵇贔擰䢗卍㘔뗷婓뚵꾪捧㛇渻䞴飚맛䃐䎣疬晰䂲鈞㤻㢼羯录鸍䩨坍衶㭵拹놛㹲腭粛㮯乌縄浰葤뼕犌㗦㸖䗀恅贋㪩记錫暶꼧떵떝㬙研荷缣䛸瞠楖駇筥蛳枿㩫滦谝类澁똢剔䱶偊鿐破锋苩㰴钧믥険딄鐿亗贳鋠衒鈲鋬榦逇뾨㧮寛饰煟櫌殮㢠朂嘆住鞇땢羫曲舢賞幗䎙䩧灥滗龔㡹㨒焚碦牤뒨垘䙋酠幂讞黲뷬䀷㸤롅둩䧔薧鸥例䟺㫍㠇㥞㞊鉔搻㷧栳婗紱뗟榖㰓任㕔궹勒畏鳔뛔灣돷鈱䃤煻벾趀冔煪繝蕶搷멣坶㛿趧駙慉嫏躗㪶㞭䏯蒆㣻髵瀌紞翶荖뛕潾櫺䡅偭皔䘌荸偬铹鱙뷶䀆搙뫟鿀萮루蚹胿巕襵䦠臈䪵䍝罶겅蜙靁䠳偝㕚㽜呹㷽뷸辗都筵橶닐閐蜉鋑鶚㴮韭虭怕䳘鄓菮苈뛇㐷腕䟹筴붉鉲娃诟旀䑚馠떦弭瓦灰茖麟類琾䅊겴噊碮㡵㢧突猞铿螡䗴骄릒視䯦돁锻돜뢈豐亸㣒嘚嘇뽆远冥龓膍渰财辸륆뢐摗㢷杳諡敪舲叾塥觠聯瘉䧖䲓飗殿屦勽窤約겝侑甧㺊昫䚎㽈矘뽅깜蠸憨曘瞏냷扂覤叓䔾踅䬚蜹軄觰矙斱䬤鳖떡拄嬟龚蚌窸霷虻궭抪矼勮劽脵㲆伯䆳压脖끵瑋騺㾅㱮娖㜶㨒楷濊䁖䞪宑揽艁㟔塳峱棯鵭蝎뎖駳悍梖㹨䒲渇蘛诀괪窝竒贪擸㷩贌䳍曓럘艧濚紂䦸熋皊㡆罕냩抒䏮温䝩橨灈䬊뿷灍揑愓蛉辒笛鱬䉸눵餸葛붶돧訰䑮䥘桢뼶뎒肠缭褡芀뉴䢁㙓㬺粓臏跔溠慶뚥珐蕘똴㘌茯慸玃겿驟鍚䰫綼䪫㡗跌乵芾萺讼꽵叚宠虬爡衙껂麆悝권銋鯢㞿뺍㻇既澔穏扚덝䂁附攱薾霦藺芕锣䯱涾枖뉚䀏倞戨검忉俷烌锠㮖醗琯炌舡눵뤵忩諣븓㷡絲樀䤄鰀涝蟝뎎롹赺甁揰錷幫豛轆皮鼱爔暶骓另貿绮䏋釡䣀䲮圚稘䋦䔊搐帾憢芼뼉歯䦿鑢牞薷䟼蠩놁婻㫥鉄猺돢暔똈坶꽇鬥䜽鷑狠꺴䖆㥦㖩䢲嘈䛠訥겥䀂氦枠穋奬弔列饏濯뼒봅鈨靁뚃纟럜눠酣塜孶韫莀蠁䩢削䓌埔붯뚿㢝噃㒝禦挡铽甃玉鶬嵑姭㣖脖䟴藒쀖祂襲勬匓屦过㣀㴘願佳忤潉䨻䪆㚷竁醩㮦瓆荨䯡漫倊燸䒂鈀댍鏽瀛詆箁薚䜢忾똫广㘧䬕叀硝荄剩굢䶸彋䟒묃뀶鍪䮡鈧䊾矼㕦㺋鋁䠨錮䁒筓䒴鋳䵈赠鈊前樄蟶玅됎徶㲒븥㫏邚㟜畅橭猞砵隭㷚㖤䮤珻䵩玩걉彄㭢뺡剌귻谭簓萸缭㧤錭獫煕㱏谤봛兮䂏뗳䯈泌栔臽䮿卬鋭膨嘲쀙爛敕곳锚㔤辇瞲䌆暧㡠宔缆㤠襮澉龜潘兵丳洅櫴㩁禷勔壕䇒蛕㽲㮄絏锐鶿匎觼炏嬼狁還嶈薥趠峽鼩䥇铏菒㨿咄犡邠嬽薌㪵뻚늳躃咕랰椣戛㞆褣䦪므뚌㴸唘㟁㫻铷矼먩蔬朆뛘鰿渡䲁䒍餍弁詂㮯眏倅㬒侁肪卵壙艂析䣹渝傫蝠苎欽斺䅟鶿꽫䪖撟귰繜㛦䈆鎑駜笆悑䲶쀋䱩䫤婗鰟䡷茞끙傿䴦㟔舓螪檮騻댺붖臏럲䫣䯏遹䙣뢖镼憂듚䩊賠婫摐䟬宥곖錊哒㚡安灜躓亢杜氹糴䓭旵嵶烪뽎釁乇䎑㝊鋃䣶瓜뮾델䞎圚鍾뫰匮轞먍梀縺遷歆궛䦛䗜琩鴍饽虷몽匭뗀㡚뼏蟊橛罌쀠㚈矍廦빎庾厵냣哜聘悋狼订鿂蛞뗖놦껵枞䇦谯嵁冘谏㽰鐢呯硯㩢랊䓭䵤驹끳裬瀯婑箐둄檆闯繣鬻盖潾禦泋孁㙋妏焬釲걓刻随榢愕伇圧䞋렸灯基轾뗨帿會檠矩觀뾸阗碭鳹䎱㤧㪧檧럫坈塪먊뭳뺭派庨炁䞺槫驂룢欨佫蚹狴㕯堘萖祘姒뚓㣇돍䧑铦㩚㚂善䟭鎸膥枬㕓嵸蔡熌橡紘龊沺鶁끵겟易鯕끽䅮桩呦䣐婙㩄劁碏霛䘪仪뭶盧炯栒䫪弔读峈떭抪訖炙雬㑠꿏怵䝽딫㽺绐뻚놺믴俛窡䗼㷚㟅梯䡁檊䜬疰槩㗢廮䈚㰂綖每빍槐懿駷貋䮙䃷滧麿玿俐唫떓癃匼㵵㕪黳痐劘淪䆼鵧辍炑緅땤빝뒮委眴澨搧臿鈵霞濳䌞砷䩒讨䎒鏭䚳蔵갉溦䢜䩐㞛艴噴亅億䔗䦍绤灥虢뎍囏꾞㛝먻箓뷙齅涪鯙㗌㒭㥗栯㻓溧韤瞨锨佷鯭柉阛先哒뮓詭뢂딿絽괃謲럧㙗䖩溠峷轨韸떌銏뒥菂驖蟛歇㬺拧堡荤㹰䗷终醕묛轹禒䂰㿐뛸濯咺蒁爇屈邻㼩砽䑨裎砻릅둮䡿猺뇇覫鹲먪瞾㰼뒣覷尪靾壸陿莩撎䑱䃑煐劾冘熣䪦刞齠濏븃澄矛鎘揫懝甗霌犲跋栳罷떥峗備돤饔蜒䈷뾘뻣耗䮈瓦謶筕굪㶻濷떶凯儜毹堥蝻巶蚪㒴䢗䌿䖫荮闉縠뺣磆濶褾撂䣄樯异뗖㘚灨鐣鎃峳奭蘫鮌鯻酙崱娣䥅㞺郥벫뼂槛憗馸鲠䍬뿜㨒蝂蕥㔨纭嵰皫䣒睮䬿匦槔龗냞꽰㞅뿉鶌뮌京薜銡鮊䁈鄗繞詇랾隘䨵葰䀮碫怕揶舰羁縃朿꽲釤宙䲌萂青振唡闯뀔颦㝢猶馭悘怞笃䑢䟘顦醧袡뺏㣀灝鑦㜾䩼䱝紟栌泤䄷痬颊뫌䣒䢇㭄뜟縹㑒熝喑巆釺潛鯤骴斟宙匋礔粉苭嬓꼽氡疿汋䆫鼧煹挪黚覟쀺枇껃訑泠㬁驚㺇片㽺伤孮鹫딚仪伿閁攩肎䟠豳겒䃕䕬묍亩㗾嘉끉歘㸁郑栍弍抱论碪굾錭뎶窷簖杙뒃멜䏌뇜枭㲒㨠늑摖뽬밡帎礯嚐먢咖褞剘袭鷕熷鴏壭腀搒趁尷泱鎗駊命憉呡詎斗娊虂灘獼䠄庹録몞笐듸鉼馢問穌壛幺釸䶑쀁俱直嫅䄙歩卌龶㖊钘鲯䢠导믳扇籹焓啶糄甊孈뗄嘨祻㲴忦뤭볦䵦뎧鈔匚甥錇㷎蟽浊荟까鷃䞕蔟闆䢞牺潃囉忨臗瀘㠕唄䱪黬㖫莞녆搉聉靡禢陭䇤닷鷁判像猟样膞任蟃憿淟灖蒎릆䇃謏隆䌐奬㩤陃녜艭㖽뀚蕘몖䇔䭭奟䡜눟呗뙈椻䓵珴륋叱帜裛蒣高녝몌窪䬂㠖뚞㳷戏䏌眭뽻鯠谅䋀芦痮谧枵賷务竽鍀㺺뗼輼뮏峡㤄娒嶱堿頺觀濗鲵粦귑捂儌䑆塙珗뙯뷶蠍䜌뗓䀖啞传급嫗끵譤查䴔렄宱뫜酸骖制菋坄璼㸏釹繪땭㑤鍪勞䜩漌沺守㼄魁䅫礕穵㘀걷膚鈎䏲䖕娺䎊戒偭鴙駣䩼儮函譭鴢疲궬늉㰀끢裍䯸䋨潿汉孚垚벇碮荓暍媌덷艽昨겐頖仂㑕饰戨獯룈帑镦焆潭뚵볛潗랽绳槼㙸镩橉佴䰞恻呌營㛜啂붣沣㻰势睗㻳心豠羫丧鑩莵뭹齏类泂眷맥滁는咴髇볍瀈㷅友嵴뫲믱矴玷丈㧏䒤굞筃蚿鋶謾꿺魏볬䈐勡档쀫벿靮䁼匇尿뤷誰鑣猖虭鸦됅뀰属榝苬䐾砘筈뱅鬎纞疟轿嬤粎嗴扏䓿弯鄿炙屣뫈咭닾盒些菪湯鈝偹㵟봎뎊碘絮鮉獆䮑쀧䞀눲뉲꽼鉟䯤蠷呋嗆鹴犕荳粞縆驦䁝눬僚䥉䞔먴䥏벉荨㗭詖떏仑戨掓蠌䚱栄擝兖仁塾뚵创輾蠁㖘㽄륋䪼阢鵣聐籇뒹䈮䤓妄飝䶶띛넍䓧鲐狾䆆匽螞奄䓎䙙㴒篈땧㶗挬爷窿櫔䈺뚅徶랦浚紴龸蛱鵟듃钶骚똌蔰㛺蚣䌔澊桚堣珝넏㷌梎动䘑놩铣渠船闒뵉糽갞叠绹融溔㸧刣댑㕊舢礙螡歠㳌毀苍撕喚䮸戽倦闢芣蟦砀㙃貙岋㷺殏䮼뱜女뉰粴鏽輰䔸儐墽늃蚳箍㟱䅋秭舅䓄切濼妠䝌䛷相毈㗧觋錙㧑坋虩㱣뷅烂磿羂蝗硨돰巋浻岌댓涨㐄柕㬮딘껯浏淴短諊鵇蜓俭萊矼䚵雗愚䏃깦胱笹蠁䔱唗栗謩逸䆍㨔緭噚獰婵문唀瓉綡뛴㴑兺䟜滲巃䑒靂赭륶薌䚈뇾窘䧐銜垂蜃啭罐羶媻越鴘磱놛獩枲舢诩䆒讝냉怋寇极笨菎쀽譯笤箤坰鲋름雤喻뗁䃄깑疕維菺髉孺붛沠䖮䤭鷙猲釚郤鿨産斜壑琛兑剘曝㲒歜黒걺癵龣葻碵瑢篱尤誯燿鸋癧蟠烶虵䅲㦪岃瓅뷬扇意빧䏲弰廋륒珹㮟㢸斀蠔椙谟徆䖸俵㵳㙋歁꾕뤞婩醻蠎䦿丂뎂幵虣膫烤歫뗈张믅粓鉟竽搾鎪雓䡽豷䊃旚㯅窳뙁匂铵璃軦腼團勿齩穯潣묝䌡꿭啕硯뽐괽愨벣뫌㳌躅繲㣦鰄桐빭뮶礎겁喘岡떷嚚䊾讙㗾盭旐卞鞈砎蓹瘄楰餔珓붓鯜廙嬕妾惽坅托嗧鬼䜢鵅觖臑뛙䃧鸒㺍㚻扐沜暽殰没冯佞撤㲛熥产漗䥧躖餐邮㯴犦㮽悾䌳甜泽㱿玤硻䔞毉妻뉱錔鄸뇔昋歯갫䣴鯐穬嘴㗕蔝臻㙮乞砅㫗눓酾蠇뮻㿿皦䱴稖筝苏䩽繄洜曑璼껻彌暥뜁逆肿䋕㥶錴껖洌껨綐㭱昵蜘辁昣뾈彰攒㓎涻踋父彎慝굀鐫붠燱隠러뭬俊膥跹雃餦둩毳뽱湼䈡熳䳁彖깣둫㐋铨閑掂愁亻棼鏈獺䠲棥䂥鿇繚窋壋뎗搋뜬塘嬴蚳忐洩鮆菱揵峆뵨葼䀞擕壪喥焪描棩镏䁚돉狘뙚莸椆벹䭇꺄꼝翣珱㧹儝㘡视㺪勄古㺍닃曷億篼饳豪淇澪㜝韝擕绖謿禇虄덒猊憷塊娸䔖끦냌뺘槵덑䔏清眾뵶믺김䱻袃从꾼麪㼉봿廓㠎僿餶缃挷㓑酝绿絉㶂蟰暠懓弶彶뇻봿㒗餭豍荭黏㼹䥛犼㕅甬蚳柇劕沝㞎岧斮䞭豧奻堑寿㚽瑌緟羅급䇠䉤뤔㢡噡婆俦둈믘耍碑㕫됎붞㺻䩛닶譽煓둝痶㙗諿㮆纑륇綯緋缆䬯䎤㰄篣㖝蟭嵳뛨澺㐀灑㤼㶄代䆢뉕珡矈䨢䮉躱䓫趱讈鬽䴟듭䋺䂟鸸糴滰䄺暂㠡䃽蹼紊躈緘燒䨺딖䗞瑙玞㭓睔饂䏱曀㸴垎鯕縟梎麋煆맥㒅芛用롲尙겪靹毄굕떪粮误䌯䲹聒穱滸넏硔坺牐뢍掞봔卣鋵돕粁弿䍾傖痹锤말䠂蒅鷆溼菙䰌鼄圾駦갢냈礴꽊啢㲩뻹誴돕䉷戛㩰銏闓녘戓蘨꼫搗몪绶쀷鷫潬㮀捔떯嵼驨褟弽芷㻧舧빹簔阆䐥㨑锐뾱嗚冝멻蒊䀃뢓䨩抈궧둞釪潥赉뿺伙圗꺢배놼狠琞뽃惐骳夂䕫㬯酗隉珵嫫俿䶣䇧䦞琪飑冄醘罈곴둞䳺몘뺟浲䝎儳跃泅髧䑳럞丶歬轶勔樺봅鳧姽樾韋骰㹟若伯䎧밢듘截枺黢携䲹鐍㯦桫깂䥯뀇獐洊瞪悦뛜碅뭢憟䚨啜棞矬䉧屸郜岼迵溕䰎㙼晧楁徱䅡㣩㞅逌댴꺏浑魛蔦뚮㡒廮镶뵭辨繷墓鄜놀檟狺믅걉軼맣础㳯昴坤篊瘾擠暮겖儒斺䃺뾮굴歴䪚拮諕燠鉗䳤嚐䇫肞慸띒麷畷걱㵺鸖晝鰬㿆懧馿釓袓橇疷㢦䛫鶌䉁甶䜹鬆顐氾䣃妞鶿虗乥䂶䘀莂烶宙蔺鰓䢇儮膱呡礀㾷굡缺埶畺辮瞕鎉蠺䕺뵜樤癃幯狎忥䪸之䁣땋撖韣䠤빩늉爈驈䁂뜇㧿侉允䅟菙軤畴邱㕮鲯峇鱚筞鶈宁庝簽鞔㨟箎뫻렸櫚恢舎㗥貛鮱䜍뱿艍䑱㴠爛毅䨾㿵궜東珽昽伢蓬뷉鲕뿉곌腾砈柀贚䧮物븻駗亨擬忒蒠邸璾㭫酔뼶뜃繛黊襌륯蟚钁怐䘖祕爯덕胵崍꽹贖炍皖䵍湱捒瓇謆蘔整㞫颸䞑拌綱譲蘑㘤䩰㡞䫥趰䉶蜟蕚鿻㮊㝊栧㴋깐䱱䖤紁乚崾㺘䄫䙵楝划궥悴㱽卼韌阨晒轀巯覛擾䢯劃锩鶇杷넖幕隝搻玭鵪佾䶽撁褟慷鯛繵撨噤嗑遇珂闊嶚跤䨍铴㙘记䗠墓锣輕䍃颭偪㩥殛뉢佛괄㛮橑똕賷꿽驌睰耷鉥窃碗䔵韲䝢変鳸뾟鈿䚴렷빭䫌띌䈈匀꿠誦珝疛뮣嘆稛딺뭄暝䨹侎㐵䤯믶㿚誘蘖徺窒灴捃긔岴럠鵎陼벛㲧乆겣䵈梑䖮㪀袋늴䲠㮓鑐갥㻛㯖嫈曚맇跭楎髅卩꾩捞貱볟侃逜舐䊶뙗簮紖廗甿䴴铭됱㕑懞뒠琉韓痺舲녋㱔悄㯐榁䧁㠵责萎䦺綏㟨㸛䵽薓坓穱鎸昙瓦㠅됖䃘荘둍炯搞뒪闾鸶㠚碌隂䧪봏撡㔡淺㯑㷆鴕景뾙猩諵럞븷篚苟繣隚낖㣁攣撾뛏荥鿡幡櫇潩敲坱踶㤜㛚坏䡲㒼禔曞똃䐹뺧鏧藁궄莘笽茶晽䍵緾饔鲔嗞瓯뵯朸뉤뾫巜旁靣张卩㻴䝝朿뼬龺蕽笁굞怑皋訑墛韍䬱듳䂯랛殴頳䐒㕜洭拯鰿軯湗氚긼賅㦩㸢㷣铬귖洙㰞鋒㯦莔漭椻崼㧑릢댨꺗낪벞뗔㛮뽈欃袒覅熓咤蠙躆뎃戔巟謌轧穋볎꽌鳈捣扠뺱憣남翋뤾䜼瀊豶눷鏯㩺硔檎곀柿騻㭜蠴釞慬渟駮癤㘺卪堎觔歎㧤䰆雀뱣钟돻疤垂秨堊낇饎뿝颸掬诲抉蒦렙襥戚賗塁䶣汅修닗䑾붊痌甠隻膥䩢귄몚㤝眀夼镨泋培夂癝甠憚䖵듣煪彡扆룕毓譚䓢䣈铜藒覓㷩㳵덾䳉饓簊䎧㭂闾䘈븹곂㡑栫굠鲆驢馥㶼瑨鍸䯓市랦㚏裄啌랧毭兤㽣끤敯埑覇馌鿌䤊箼䛪壌蒁丷衛丙뫸艳牿彝靇乇旻岥圜役鲭眃㐘彈喃礎룛含唽䪩艑厬겯訐遍뢼苌瀆撸餓鶡䂟㣵辜謋鲙搟旴牃㷦醾렽䃔潑㳭鮟빃怆牎塪맬䇷韫體벑凤緢縙㑔崶剞財㷝贎姺奴佦䴮댁嬙巅뾵袺깣粩豹器䫴㧶堸筟桑氱犝罻找䜼侷䤢襌鹏뙦產麒㛂䞝长鯧韓黤䝳媀籝炋樖볽뮭㴴鹀浪돻鏭俑俌蔞벽嫫뮣惇䦽祜逼泬夘爌庞铋鰕砧眸㑱霈䟹树耞㹅誹屓빎곡눧慇凪扱縞㪮腜吼倖嘂늱藩武纕嚠䲣難뿢둝娭銀送麬滎냎䑁憹褵묯愄뇩䥳鯜뼶濥䠠뱲簀錬䡰垤缜跇莟뀶瑆㶔逺䃖扵哄熇飐똑륕轠뗈肍膢媗贌慿믪鈫竣娛譖鸴뜎溳뉏뉝譊꾜褋洞㫗㼢笉聮쀪桊䁆谸漪䨹婌薐鬗끰붍酰紭儾㷻鵆듥庎谣纳鍯踽굃䤁鯿兢꿏漟塗絍㭗趧硼憨碪鿞罴童簔닕凾檍俥낵㱰澲拹狐䫒䀟涇樾귘漷넧亴貓籝鯹䦁蛚䑫䇔幝舚螉볍赩芫擲㲠颞輛譇玏樏䛑맑䞎乵爩马먲㛘䨻繰俌烒佡銱壌㻟杲圼漩瞑袲璺鮭榶㻕奻鲱幑闁낾卙護灞蚄梴躮꼿斄駪뢼걧獒儿鑖䤃㼠柒帠뀁悐릒㡛볰滒빑玖蛘蜸炜财俵嵿䶪男摲粉떢䉌俽囐抚軥艟닶驅捅䜞辶䤓䳖䴷梕㑋枬룞牤븎撧빎䐨岣걌櫿両䵪궽亡黯儦嶮羌葎菛㤩夬鬫謠뀁籢沧簟㲺乧纵䄏䠝玊唭묢淄略㗒詏綖脐佡欜魸廨瀳爩馪庇갳궉빛飍瓞嗍縝氼蝜賋됇麘頄撉㜮祋뼡敽锥璇涐뙜芒莫穳區䴾闐偀䅩둛萑랒䮊㣶絝䧊裏曟鴆먱뻲뢀䟾傲缑涑改蕫딐颛桠夥摒阓䩕㔞璁僐恮攽䛖롕軔妿惸괊坲䄵煅굁咲鄽䃇谢碍礶襤緊더蓭焍逜竫㙈묠愐诌訸䶂됪㴼䍺有淡개替鴻樑睨鞳砥嵶圏䵾㑫酕轒㾐嗂䚼蒀曅磛囱匑拕俣軭缨㲒蜽珴묏匌䳎鎸厕뗫㶊獣輬㤳棽쀬뵐涇葲뚵䲦僠㤕怗蠼畉裓蔧峳闙떶屺反䳂黃渳뗟运嘒㵒寭別瞘燿됒砆塰罇㗞㫿㴪㫻祊垭淅洼魛䫱菭璷硺鿤뤡们磺响㢩懽렫黵鐂紷種꽚憼瘂꾨䤻詏㫧媠댠狣鈭鈏鏙踡눟뻂놐烮缦덭䡾噄㛙韹镈噍嫯寄杧佱닞䅡",
+    "wait 1000",
+    "wait 2000",
+    "audio start ck_c60_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c60_typed 16",
+    "expect text (?i)submit",
+    "tap text (?i)submit",
+    "audio start ck_c60_submit_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c60_submit_tapped 16",
+    "until server spectral\\] (pasted|paste refused) 60000",
+    "audio start ck_c60_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_c60_answer 16",
+    "wait 1500"
+   ]
+  },
+  {
+   "title": "a50",
+   "lines": [
+    "do execute as @a run spectral:paste",
+    "until text (?i)submit 20000",
+    "wait 1000",
+    "audio start ck_a50_open",
+    "wait 400",
+    "audio stop",
+    "audio export ck_a50_open 16",
+    "tap text (?i)^(here|paste the song)",
+    "wait 2500",
+    "audio start ck_a50_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_a50_tapped 16",
+    "text SPA2.1.1.3b28627b.3715:AgWBARgIAjIChQVcze13CmFzY2lpXzUwMDAKYXNjaWkgNTAwMAZjb3JwdXMAdv0wgP2jQ7WTYUhmh_aWPmPdhaMq7bNZdmJKXJiD9TQmriRviiUv-yZSTCriNCW7yxs7SmDym_8s6qw-TGURDBYiNfcD8Y_BRBcdflheftUUcatw9twHQ",
+    "wait 300",
+    "text NYR_Ih5nZJCzv9_jk1IwsARJPR0mk-zhPyqpu1Q0GoyFR_j9xCBQGJ9fWhIlnR86fRvZjAIFqZAgWewEZZH930jA6ketqfrAbaO_ekoss7qbT45EV_0nP27nGT3bNcz3-rnf6W3WxzlyR0FJYXo8hnXyuxOlJgrzzD9LSFldMy_OFB7CURhKbUJ5IbLPxle639JP3ym7",
+    "wait 300",
+    "text XXiC_nh0aiPEr5oZ4GFBBU_Dh9Li3P9BSecurHs5_s-FKNGNVgnM1IMY31mg7FG31e0_tolzab9gfink7KVF5L4S4Dlp974YWrJ7043nHGuibdTvQwDFqZ-9WaoU6nklks9LDiA-wF9juOXLrQSnkSswU1zuq8OSAFyQBcL3hAJxgviOIgT2Nhi4vbVrOaR2XmDhaW-Y",
+    "wait 300",
+    "text h4-3wzKbfVM4aVSNFwoIU3SHuMyMsm_AWmG-DVnyyupFj93SWN7P9extcDQEN1FFoxnH6BSpcr0KFgFJmzBpvS232Qh9MwlM843NRDfXs98-lou92ifCmyYgj5vDW8n6x1JCf5U3MsEkPOSAjxdgAWfC3cSCkWhkLMcHqflR4EVjJG4rX6IQ0-U-T_ailp8zxap_46jp",
+    "wait 300",
+    "text VYGsVIlij-sHQh0m9VpRu7gpxveqykqb-oLOxqhUx2wDnimAIv-nC56Pn-y-TIqkmnqJGghgO4cic2tC_E5JdfEEZoOBV46Bkqp2mcKwg6bmuDBC0_LOuIAK0VvQPConAQ675ExpLgdZsxTKDNZhYEDV-rTMO018isQAHN4RLTX_j3Nzxy1h4ojx-AI2YSfywnoIzWxh",
+    "wait 300",
+    "text n9H1OWkUoXRaoX2aakw8GQCk0JeZUECIUiTnqWKkzganQM6WaVOSsfUVmK_SEIU_qLq71EnjKnemF18T-V6BkHvly8kKcam93tggvxa7HA-zI0LRyGRF-VUG7qW2-YYLusRel4UQtbKvh5unJGQWbOij-vAVp60rJ8YI2hD4EVNkCp3InpbOcRnhEmPAuVITYN_I2mhk",
+    "wait 300",
+    "text 5AuA0JZbhfBplnt_Odf1ORI5RvBvhYZzIPVl3_oEZPZXP2YvxsfgBwodbvgZPcje2HwoeATt5lXfpe2tcnOgoJg2IT0-cVxrJFAJWY8cJYEOvptn0lyaDgxFYVXpkn3VMkBADMUidsNGvSjlDPr2n_L4x5CNcdY_e0aAd9wfnGt41A07fYgvSYQaqCLhwVDpwN8_Fq7A",
+    "wait 300",
+    "text F8dMeC1II_sWMYfwDc0dBpO0Ysoo74MY1SADLEx_05U2Q_ALtJaE9QrnVOCY1rlnEGPUyKUFy8k_bUH9Up-L3sVpOQmWaltbu17pa8CwcVrOT4gDOP7yTsc-oNEwP5W3ffb_Q_CzUk4ncXYV1TOUh-DmAurDklE1tqMpZemmhNepfjfSqzg_Xxfn4t1VV8TkMET_Ag6r",
+    "wait 300",
+    "text -UPsgT3eGar5RT7Qc5Dy7WJGCPT3O5cenGv2diXJBx5Hj1fopNvIzEKTgX8mPj5OpjcKUFHtSaBybgiT9P8MO1DhBiK3aLzqul0F3GtEp3valFQgaXoRiDVlUKVdhoJY3tD-m8EDWTO2fg1zrV1sdZR8v7L9ZGPA_tCSKws-GWFLr8BO33Bzi2PXOlyWZ7BCx6Vek05V",
+    "wait 300",
+    "text rw2OSNnHgoyQ0DG9lDNlrlDpqtW5l2VcG1Y6Hd3ompUzeaqZbnafDoL6f2rYxKKKsXtRhDEBAqfkapA6FNqYStvBD-EnvDeOocQl8QxYadDZHnse-BLX3cBcwHNMc8GcCdkeYYpY-s5TCRgaFSLykbyGUC1BYM-2Fk_lDZ78u-qbKEMwZD5o5BTJRz2R3AQY6O5D3BSE",
+    "wait 300",
+    "text GV5XZ2I0iNRmjEfReYIokR72sntc6GBB5D6HE9IK5R1k8aeNYcPTYcnEWpno9ahMLuRWk2XoWJwoS8BRtNZAB1adrSeJ65eEeHTuqgLjrQGyghAErU7H8lpa9kjl5-29U5XHKcq1zqDHYnIAWTrW2MlRRdWyi3DVIl16GtC9exiVVc8ELV01hBT0EHv89frwXUZ6NZCX",
+    "wait 300",
+    "text l5CmH_QqMRAiRVumPGFd4d6CeLzMCoe20Aik9Zqu77ft4tLGQCrRyKsIhxlYdnf86tf6rP7z42bq_Ulj_UnRHOvtYrqv5mYt0KKgEmk3sSIJHioAKMn__Iy7i6LBdwd3aAtM8OyH-nU9Q6rIRtBGRvUC-hLlbs1GqoZ49eAWP-xQQMHCRVc_aDuMEGyvJX15_oYHklki",
+    "wait 300",
+    "text UwdyBfAybVjpDAw_JdNTQ0Y6Z1VsGLS_TaU-3mZbAmZlIHRimHdlAW9XG0t97kT7QVti4iW41uL5YIXTR6py3U3_je9S-n9dhOVt7nx_yu9i0xZhMbG3UkjMIo5Zl7juVAQZTGP6chiXv_0xvjUT_I5-Iui4b6nQb-xLgPYYrOB8knbOVX-ciBLevnDBNfy4mK6iAI87",
+    "wait 300",
+    "text lHmFVH8hXyPK8Epb_uC0OH93DqSO0Pz01bVuJo4oaP3vUcfyI5AVvoAPu_oFpFf0L9K2MeUzXgLcCUEIvfFf18EM6nUCc811YHoBvKqksdtvFFc7zU-Yw-UYrfocw7xhc1ZXf1BeK3jFGgIWbgnBDqsmX5Gi0TKJlS1-Xlzcx0tVbD1eFi2WIlfb7kF4_QNOSa9jM0o8",
+    "wait 300",
+    "text x8Fg3B9W9QNtuw2m_WcrK8Hsv_aXlmPgUfIZTCpDU5bfc6hv7XYbCpNCN0zL-tMbo8fGhf-S0nMgdSjOuEovUuMaFsLvLKqDsTkpvnDkFTikh5XQrLb-9FfRwPXhMdePHgso3FOBBf2on4DmxMas-2zn75cRaPzzfsuGV7rI6exhyrJhUR-aLHfX9-FZtFMyhsbWD5gx",
+    "wait 300",
+    "text 9cjtxU4viMSM_xjR8SZRi4nliSs9tQH0HVHxo1xuFBDpi5WrqtBBlwAB4lkAaRJtfWUfBRBcf7w0cQja1bpXWfdJ7DWjCKjmxFFcJSGZXCYYmHo7vsErKRY--dKCdxvWdgrYGJRLqA_4wTpBlqu864AYs3E0wa3q6NstaVeZDnQzOfhhpXruJewIPgFq0uJDiLXly2dJ",
+    "wait 300",
+    "text rabshXMi0qo3HPFG_Zj1CkWomVlgfEyQ8cxOZuxMN3zMZsEipno6kgMaSpXIYNfq0VlAzaYFOh_wrn58JsvnKkHz3MJIKc8rYiAxV-cSrLQAI__wNfVezb-Sne-zzwXSBYAOniTNBbquT0oVTYao__Xotw5aMXd55Mks7p9_S-gIxsb-TtwLkY6JDei2LpFcB4BQSBuC",
+    "wait 300",
+    "text qPKLAa9SEHnpHone_5-tx2_6ktQI2HAgATSUOI9gdnfVguX7nZplmNHaxvYA5w4FgggaaTXk-8eDAkFeMaaohvSja-ailqZxQ71It8z6BaEJ1MjNIt5sbSlXqlKb2hR-TzqVhBZgq-H03MvhyLkOXuOLp8gkEQghcbzwQaenonPno_jYYYtkIGYjaY-hr3Hs1ieMzdXd",
+    "wait 300",
+    "text 6u-PgQhyhOZtxBmnpunA5IVyb48OAvodjBuONwcZsYIsRk1RK1GpJCOBOqqCZim1I3kfxqG2PwH1fzhdgGXYijzdLS2FD8qD5csG4Lxn0vv3vcBN_9aAJqqc5mEGHH_7fnwAvWLEioHmNphzy-VbvLCPvljiYUSKq9R3-8x7yu0D1Zq4FM5BOfHjv2C-eEt-nEGWZuen",
+    "wait 300",
+    "text Vjil66KaJbOQoFFwZxuce2wyWi_sKvq_D4Avs-1kzb6YkaoVnHuqKM4dyeHU71TvNBfl41G_4X8zig9vrqM5Zgoe5tAi2dXv7lfViRTyU9hgYMakG9qkAx4zmJ3rnpmHIKY_4gHyG2SJNVTe0nctH3UWU2vp5GdYWacFZjWLhzI6quX-CrKEsFQ_nyCKhZCKtZmtOYBK",
+    "wait 300",
+    "text UC77yv-R8TscRYkh1_6s5IKX9vHUcHjbORTmWKkk0cPPHRRM-lZdysmxohc-Mf4v1C5kef-Kh_gEuJVkR8TEABPleEsubVGDl8fHn1MSEsR8T2lYoPL4poiPFGSdBFED8z5RRxfwz58zqP-n9C7ky56MDVgvTkVJMA3igZD9leyYxrDapokaqaGeXbmE-Ys9ufc01oAT",
+    "wait 300",
+    "text GQqVKTFuDDjm3y11d8vKsAwxzhrzKcDJOIMp5cukeJL-uTd5wEzsfD-Mso2UNfeIA18RQvoKV9Z-equiRuOQTVdNHdW5OrJ1NnZCRxq84eirxUypMX_R8UkLIkAtD-Xi6Q5qgakm6Gj7aQf933jz1WpMXOz1XaGieRyIhY9h107CLluoi2RHFkproPE_W5JyI9j2KFwn",
+    "wait 300",
+    "text SJaFQoOZkq0OP4l6_anHStKihuks2T8KS3DYIcxqEi03hGNSeWaul8YERqfK0XclOGM-77GWucN95r9AVz-85zFvI-r6ZSB7UI0Jvue9snh7ZT3gfrwIxlxRQnXSJUP831AcZbiMn82974Aaa0h3fZQ60EDM55zW1jyH4R2sGJrEpe-18RR4_qG7z95PvBreatPpoyu7",
+    "wait 300",
+    "text 2da-yPhr5QgB7W9ngnkxL4kyDEMecawVP32qy4cFVA2iAYA2v_8_ZvkM_sj0-0C-SiMlmu0Elj8plaPooVaMZ9hYO3ZDidkmfRaHLwnW3wIpoV5ovJgGfBXPZBpUGiJzMffIWOcILxGuCcNA1k-_P1ei1mQlbCs_APrfoIzsS7cR3NJ9yiNY6BNvpyA5IsNQHXatOwAN",
+    "wait 300",
+    "text I9ZvYIfNTfDK_RvTbFKnRM__dgYb2-tvglx-VrkfSen9NywZKoD1rHLR1pw8ymu0Eg_3VEh8c2jNOS3B5QnucEeMoWgNgG0mfhtISGfs66M7aP5BIEEJRbLBxvGhh44-UFnvDngnGi-Of5XGrAwKofLs4mFKCPfT6qTJnzUsERpI0H-AA",
+    "wait 300",
+    "wait 2000",
+    "audio start ck_a50_typed",
+    "wait 400",
+    "audio stop",
+    "audio export ck_a50_typed 16",
+    "expect text (?i)submit",
+    "tap text (?i)submit",
+    "audio start ck_a50_submit_tapped",
+    "wait 400",
+    "audio stop",
+    "audio export ck_a50_submit_tapped 16",
+    "until server spectral\\] (pasted|paste refused) 60000",
+    "audio start ck_a50_answer",
+    "wait 400",
+    "audio stop",
+    "audio export ck_a50_answer 16",
+    "wait 1500"
+   ]
+  },
+  {
+   "title": "ok_c16",
+   "lines": [
+    "expect server spectral\\] pasted cjk_1600 ",
+    "audio start ck_ok_c16",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_c16 16"
+   ]
+  },
+  {
+   "title": "ok_c50",
+   "lines": [
+    "expect server spectral\\] pasted cjk_5000 ",
+    "audio start ck_ok_c50",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_c50 16"
+   ]
+  },
+  {
+   "title": "ok_c60",
+   "lines": [
+    "expect server spectral\\] pasted cjk_6000 ",
+    "audio start ck_ok_c60",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_c60 16"
+   ]
+  },
+  {
+   "title": "ok_a50",
+   "lines": [
+    "expect server spectral\\] pasted ascii_5000 ",
+    "audio start ck_ok_a50",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_a50 16"
+   ]
+  },
+  {
+   "title": "ok_warm",
+   "lines": [
+    "expect server spectral\\] pasted warm",
+    "audio start ck_ok_warm",
+    "wait 400",
+    "audio stop",
+    "audio export ck_ok_warm 16"
+   ]
+  },
+  {
+   "title": "thousands_1",
+   "lines": [
+    "expect server spectral\\] paste refused \\(1\\d{3} characters",
+    "audio start ck_thousands_1",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_1 16"
+   ]
+  },
+  {
+   "title": "thousands_2",
+   "lines": [
+    "expect server spectral\\] paste refused \\(2\\d{3} characters",
+    "audio start ck_thousands_2",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_2 16"
+   ]
+  },
+  {
+   "title": "thousands_3",
+   "lines": [
+    "expect server spectral\\] paste refused \\(3\\d{3} characters",
+    "audio start ck_thousands_3",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_3 16"
+   ]
+  },
+  {
+   "title": "thousands_4",
+   "lines": [
+    "expect server spectral\\] paste refused \\(4\\d{3} characters",
+    "audio start ck_thousands_4",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_4 16"
+   ]
+  },
+  {
+   "title": "thousands_5",
+   "lines": [
+    "expect server spectral\\] paste refused \\(5\\d{3} characters",
+    "audio start ck_thousands_5",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_5 16"
+   ]
+  },
+  {
+   "title": "thousands_6",
+   "lines": [
+    "expect server spectral\\] paste refused \\(6\\d{3} characters",
+    "audio start ck_thousands_6",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_6 16"
+   ]
+  },
+  {
+   "title": "thousands_7",
+   "lines": [
+    "expect server spectral\\] paste refused \\(7\\d{3} characters",
+    "audio start ck_thousands_7",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_7 16"
+   ]
+  },
+  {
+   "title": "thousands_8",
+   "lines": [
+    "expect server spectral\\] paste refused \\(8\\d{3} characters",
+    "audio start ck_thousands_8",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_8 16"
+   ]
+  },
+  {
+   "title": "thousands_9",
+   "lines": [
+    "expect server spectral\\] paste refused \\(9\\d{3} characters",
+    "audio start ck_thousands_9",
+    "wait 400",
+    "audio stop",
+    "audio export ck_thousands_9 16"
+   ]
+  },
+  {
+   "title": "hundreds_0",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d0\\d\\d characters",
+    "audio start ck_hundreds_0",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_0 16"
+   ]
+  },
+  {
+   "title": "hundreds_1",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d1\\d\\d characters",
+    "audio start ck_hundreds_1",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_1 16"
+   ]
+  },
+  {
+   "title": "hundreds_2",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d2\\d\\d characters",
+    "audio start ck_hundreds_2",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_2 16"
+   ]
+  },
+  {
+   "title": "hundreds_3",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d3\\d\\d characters",
+    "audio start ck_hundreds_3",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_3 16"
+   ]
+  },
+  {
+   "title": "hundreds_4",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d4\\d\\d characters",
+    "audio start ck_hundreds_4",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_4 16"
+   ]
+  },
+  {
+   "title": "hundreds_5",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d5\\d\\d characters",
+    "audio start ck_hundreds_5",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_5 16"
+   ]
+  },
+  {
+   "title": "hundreds_6",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d6\\d\\d characters",
+    "audio start ck_hundreds_6",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_6 16"
+   ]
+  },
+  {
+   "title": "hundreds_7",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d7\\d\\d characters",
+    "audio start ck_hundreds_7",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_7 16"
+   ]
+  },
+  {
+   "title": "hundreds_8",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d8\\d\\d characters",
+    "audio start ck_hundreds_8",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_8 16"
+   ]
+  },
+  {
+   "title": "hundreds_9",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d9\\d\\d characters",
+    "audio start ck_hundreds_9",
+    "wait 400",
+    "audio stop",
+    "audio export ck_hundreds_9 16"
+   ]
+  },
+  {
+   "title": "tens_0",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d0\\d characters",
+    "audio start ck_tens_0",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_0 16"
+   ]
+  },
+  {
+   "title": "tens_1",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d1\\d characters",
+    "audio start ck_tens_1",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_1 16"
+   ]
+  },
+  {
+   "title": "tens_2",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d2\\d characters",
+    "audio start ck_tens_2",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_2 16"
+   ]
+  },
+  {
+   "title": "tens_3",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d3\\d characters",
+    "audio start ck_tens_3",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_3 16"
+   ]
+  },
+  {
+   "title": "tens_4",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d4\\d characters",
+    "audio start ck_tens_4",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_4 16"
+   ]
+  },
+  {
+   "title": "tens_5",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d5\\d characters",
+    "audio start ck_tens_5",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_5 16"
+   ]
+  },
+  {
+   "title": "tens_6",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d6\\d characters",
+    "audio start ck_tens_6",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_6 16"
+   ]
+  },
+  {
+   "title": "tens_7",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d7\\d characters",
+    "audio start ck_tens_7",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_7 16"
+   ]
+  },
+  {
+   "title": "tens_8",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d8\\d characters",
+    "audio start ck_tens_8",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_8 16"
+   ]
+  },
+  {
+   "title": "tens_9",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d9\\d characters",
+    "audio start ck_tens_9",
+    "wait 400",
+    "audio stop",
+    "audio export ck_tens_9 16"
+   ]
+  },
+  {
+   "title": "units_0",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d\\d0 characters",
+    "audio start ck_units_0",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_0 16"
+   ]
+  },
+  {
+   "title": "units_1",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d\\d1 characters",
+    "audio start ck_units_1",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_1 16"
+   ]
+  },
+  {
+   "title": "units_2",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d\\d2 characters",
+    "audio start ck_units_2",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_2 16"
+   ]
+  },
+  {
+   "title": "units_3",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d\\d3 characters",
+    "audio start ck_units_3",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_3 16"
+   ]
+  },
+  {
+   "title": "units_4",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d\\d4 characters",
+    "audio start ck_units_4",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_4 16"
+   ]
+  },
+  {
+   "title": "units_5",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d\\d5 characters",
+    "audio start ck_units_5",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_5 16"
+   ]
+  },
+  {
+   "title": "units_6",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d\\d6 characters",
+    "audio start ck_units_6",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_6 16"
+   ]
+  },
+  {
+   "title": "units_7",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d\\d7 characters",
+    "audio start ck_units_7",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_7 16"
+   ]
+  },
+  {
+   "title": "units_8",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d\\d8 characters",
+    "audio start ck_units_8",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_8 16"
+   ]
+  },
+  {
+   "title": "units_9",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d\\d\\d9 characters",
+    "audio start ck_units_9",
+    "wait 400",
+    "audio stop",
+    "audio export ck_units_9 16"
+   ]
+  },
+  {
+   "title": "n_under1000",
+   "lines": [
+    "expect server spectral\\] paste refused \\(\\d{1,3} characters",
+    "audio start ck_n_under1000",
+    "wait 400",
+    "audio stop",
+    "audio export ck_n_under1000 16"
+   ]
+  },
+  {
+   "title": "refused_any",
+   "lines": [
+    "expect server spectral\\] paste refused",
+    "audio start ck_refused_any",
+    "wait 400",
+    "audio stop",
+    "audio export ck_refused_any 16"
+   ]
+  },
+  {
+   "title": "cut_short",
+   "lines": [
+    "expect server cut short",
+    "audio start ck_cut_short",
+    "wait 400",
+    "audio stop",
+    "audio export ck_cut_short 16"
+   ]
+  },
+  {
+   "title": "not_song",
+   "lines": [
+    "expect server not part of a song text|not a song text",
+    "audio start ck_not_song",
+    "wait 400",
+    "audio stop",
+    "audio export ck_not_song 16"
+   ]
+  }
+ ]
+}

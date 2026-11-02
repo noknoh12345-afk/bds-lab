@@ -13,7 +13,7 @@ import { cmd, cmdAny, menu, ask, onItem, give, item, once, load, save } from './
 import { OSC_AMP, BASE_HZ, NOISE_RMS, NOISE_BANDS, BURST_RMS, BURST_BANDS, SUB } from './assets';
 import demo from './songs/demo';
 import programs, { Program } from './calib_programs';
-import { readPart, joinParts, decodeSongJob, songHeader, payloadText, payloadFrom, Part, SongMeta, FIELD_CHARS } from './songtext';
+import { readPart, joinParts, decodeSongJob, songHeader, payloadText, payloadFrom, Part, SongMeta, FIELD_CHARS, PHONE_CHARS } from './songtext';
 
 // ------------------------------------------------------------------ constants (same as tools/spectral.py)
 const SILENT = 1e-4;            // voices never go to 0 so the client keeps every loop alive
@@ -815,9 +815,9 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
 });
 
 // ------------------------------------------------------------------ songs pasted as text (/spectral:paste, src/songtext.ts)
-// The converter page (「ゲームで貼り付け」) or tools/songtext.mjs gives a song as text: SPZ1, its fields range-coded and written 14
-// bits a character, in numbered parts of at most FIELD_CHARS characters — a form's text field holds that many with this pack's
-// rp/ui/server_form.json ($max_text_edit_length; 100 in vanilla). A player pastes the parts into the form one after another;
+// The converter page (「ゲームで貼り付け」) or tools/songtext.mjs gives a song as text: SPZ2 (SPZ1 is read too), its fields on grids
+// an ear does not tell apart, range-coded and written 15 bits a character (SPA2: 6, in ASCII), in numbered parts of at most FIELD_CHARS characters — what a phone's form text field takes whole (this pack's
+// rp/ui/server_form.json widens it from vanilla's 100; a phone's box stops at 5000 all the same). A player pastes the parts into the form one after another;
 // the song is decoded as a job (its check sum tells a cut or broken text), joins the songs, and is kept in the world (dynamic
 // properties, PASTE_PIECE characters a piece: under the 32,767 a string takes even counted in UTF-8 bytes) for later starts,
 // where only its header is read until it is played.
@@ -860,9 +860,12 @@ async function pasted(p: Player, text: string, keep: boolean): Promise<{ say: st
   // (each paste in the server's log too: how many characters came — a text field that cut them would show here)
   try { part = readPart(text); } catch (e) {
     console.warn(`[spectral] paste refused (${text.length} characters from ${p.name}): ${errText(e)}`);
-    // (a song text stopped at 100 characters: the game's own text box — this pack's rp/ui/server_form.json, which lets it take
-    // FIELD_CHARS, is not on that player's game: the server's resource packs declined, or the world without the pack)
-    if (text.trim().length === 100 && /^SP[ZA]1\./.test(text.trim())) return { say: `§cthe text box took only 100 characters (the game's own limit): Spectral Player's resource pack lets it take ${FIELD_CHARS} — accept the server's resource packs (or add the pack to the world) and paste it again` };
+    // (a song text stopped at 100 characters: the game's own text box — this pack's rp/ui/server_form.json, which widens it, is not
+    // on that player's game: the server's resource packs declined, or the world without the pack. At PHONE_CHARS: a phone's own
+    // box, which stops there whatever the pack says — a text made with longer parts)
+    const t = text.trim();
+    if (t.length === 100 && /^SP[ZA][12]\./.test(t)) return { say: `§cthe text box took only 100 characters (the game's own limit): Spectral Player's resource pack lets it take a whole part (${FIELD_CHARS} characters) — accept the server's resource packs (or add the pack to the world) and paste it again` };
+    if (t.length === PHONE_CHARS && /^SP[ZA][12]\./.test(t) && /cut short/.test(errText(e))) return { say: `§cthe text box took only ${PHONE_CHARS} characters (a phone's limit): make the text again on the converter page — its parts are ${FIELD_CHARS} characters at most now — and paste them one by one` };
     return { say: `§c${errText(e)}` };
   }
   console.warn(`[spectral] paste part ${part.i}/${part.n} of ${part.key}: ${text.length} characters from ${p.name}`);
@@ -890,8 +893,8 @@ async function pasteForm(p: Player) {
     const pend = pending.get(p.id), live = pend && system.currentTick - pend.at <= 20 * 600 ? pend : undefined;
     const f = new ModalFormData().title('Spectral Player: paste a song')
       .label(live ? `§e${live.parts.length} of ${live.n} parts in§r: paste the next part.`
-        : `The song text from the converter page (SPZ1.…, up to ${FIELD_CHARS} characters a part). A long song comes in parts: paste them one after another.`)
-      .textField('Song text', 'Paste the song text here (SPZ1.…)')
+        : `The song text from the converter page (SPZ2.…, up to ${FIELD_CHARS} characters a part). A long song comes in parts: paste them one after another.`)
+      .textField('Song text', 'Paste the song text here (SPZ2.…)')
       .toggle('Keep it in this world', { defaultValue: true });
     const r = await ask(p, f);
     if (!r || r.canceled || !r.formValues) return;

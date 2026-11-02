@@ -171,7 +171,8 @@ var DEF = {
   ms: [5, 12, 25, 50],
   noise: [[180, 360], [360, 720], [720, 1440], [1440, 2880], [2880, 5e3], [5e3, 8e3], [8e3, 12e3], [12e3, 17e3]]
 };
-var FIELD_CHARS = 3e4;
+var FIELD_CHARS = 5e3;
+var PHONE_CHARS = 5e3;
 var CRC;
 function crc32(b) {
   if (!CRC) {
@@ -1953,7 +1954,9 @@ async function pasted(p, text, keep2) {
     part = readPart(text);
   } catch (e) {
     console.warn(`[spectral] paste refused (${text.length} characters from ${p.name}): ${errText(e)}`);
-    if (text.trim().length === 100 && /^SP[ZA]1\./.test(text.trim())) return { say: `\xA7cthe text box took only 100 characters (the game's own limit): Spectral Player's resource pack lets it take ${FIELD_CHARS} \u2014 accept the server's resource packs (or add the pack to the world) and paste it again` };
+    const t = text.trim();
+    if (t.length === 100 && /^SP[ZA][12]\./.test(t)) return { say: `\xA7cthe text box took only 100 characters (the game's own limit): Spectral Player's resource pack lets it take a whole part (${FIELD_CHARS} characters) \u2014 accept the server's resource packs (or add the pack to the world) and paste it again` };
+    if (t.length === PHONE_CHARS && /^SP[ZA][12]\./.test(t) && /cut short/.test(errText(e))) return { say: `\xA7cthe text box took only ${PHONE_CHARS} characters (a phone's limit): make the text again on the converter page \u2014 its parts are ${FIELD_CHARS} characters at most now \u2014 and paste them one by one` };
     return { say: `\xA7c${errText(e)}` };
   }
   console.warn(`[spectral] paste part ${part.i}/${part.n} of ${part.key}: ${text.length} characters from ${p.name}`);
@@ -1990,7 +1993,7 @@ async function pasted(p, text, keep2) {
 async function pasteForm(p) {
   for (; ; ) {
     const pend = pending.get(p.id), live = pend && system2.currentTick - pend.at <= 20 * 600 ? pend : void 0;
-    const f = new ModalFormData2().title("Spectral Player: paste a song").label(live ? `\xA7e${live.parts.length} of ${live.n} parts in\xA7r: paste the next part.` : `The song text from the converter page (SPZ1.\u2026, up to ${FIELD_CHARS} characters a part). A long song comes in parts: paste them one after another.`).textField("Song text", "Paste the song text here (SPZ1.\u2026)").toggle("Keep it in this world", { defaultValue: true });
+    const f = new ModalFormData2().title("Spectral Player: paste a song").label(live ? `\xA7e${live.parts.length} of ${live.n} parts in\xA7r: paste the next part.` : `The song text from the converter page (SPZ2.\u2026, up to ${FIELD_CHARS} characters a part). A long song comes in parts: paste them one after another.`).textField("Song text", "Paste the song text here (SPZ2.\u2026)").toggle("Keep it in this world", { defaultValue: true });
     const r = await ask(p, f);
     if (!r || r.canceled || !r.formValues) return;
     const text = r.formValues.find((v) => typeof v === "string");

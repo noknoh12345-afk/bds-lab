@@ -1181,9 +1181,10 @@ def gt_h2(freqs):
 
 
 class ClientModel:
-    """the measured client path as band responses: a sine's and each noise band's power in ViSQOL's bands, the 16-bit floor"""
-    def __init__(self, edges):
-        self.edges = list(edges)
+    """the measured client path as band responses: a sine's and each noise band's power in ViSQOL's bands, the 16-bit floor.
+    client='pc': a PC as assumed (not measured; web/game.js 'pc'): the mix at 48 kHz (nothing folds), floating point (no floor)"""
+    def __init__(self, edges, client='phone'):
+        self.edges = list(edges); self.client = client
         sr = 48000.0
         # the 80 ms Hann frame squared, per ms (ViSQOL's window at 48 kHz)
         L = 3840; i = np.arange(L)
@@ -1199,6 +1200,7 @@ class ClientModel:
         M = len(self.edges) - 1
         self.noise = np.zeros((M, 32)); self.noise_tot = np.zeros(M)
         full = np.arange(0, 12001) * df                   # 0 .. 24 kHz at 48 kHz (the loops' own rate)
+        Hf = gt_h2(full) if client == 'pc' else None
         for bnd in range(M):
             lo, hi = self.edges[bnd], self.edges[bnd + 1]
             e = np.ones(len(full))
@@ -1207,6 +1209,9 @@ class ClientModel:
                 e = e * np.where(oc < -1 / 12, 1.0, np.where(oc > 1 / 12, 0.0, 0.5 + 0.5 * np.cos(math.pi * (oc + 1 / 12) * 6)))
             S2 = e * e; S2[0] = 0.0
             S2 = S2 / np.cumsum(S2)[-1]
+            if client == 'pc':
+                self.noise[bnd] = (Hf * S2[None, :]).cumsum(1)[:, -1]; self.noise_tot[bnd] = 1.0
+                continue
             Mg = S2[:6001] + S2[12000 - np.arange(6001)]    # S(g) + S(24 kHz - g)
             self.noise[bnd] = (Hd * (Mg * c4)[None, :]).cumsum(1)[:, -1] + (Hi * (Mg * s4)[None, :]).cumsum(1)[:, -1]
             self.noise_tot[bnd] = float(np.cumsum(Mg * (c4 + s4))[-1])
@@ -1215,10 +1220,14 @@ class ClientModel:
         Ho = gt_h2(np.arange(0, 12001) * df)
         self.qfloor = (q / 12000 * df) * ((Hd * c4[None, :]).cumsum(1)[:, -1] + (Hi * s4[None, :]).cumsum(1)[:, -1]) + (q / 24000 * df) * Ho.cumsum(1)[:, -1]
         self.qfloor_tot = q * float(np.cumsum(c4 + s4)[-1]) / 6001 + q
+        if client == 'pc':
+            self.qfloor = np.zeros(32); self.qfloor_tot = 0.0
 
     def sines(self, f):
         """sine() for an array of frequencies (all > 0): (32, n) band power, (n,) full-band power"""
         f = np.asarray(f, float)
+        if self.client == 'pc':
+            return 0.5 * gt_h2(np.minimum(f, 23999.0)) * (f < 24000)[None, :], 0.5 * (f < 24000)
         fp = np.where(f <= 12000, f, 24000 - f)
         c4 = np.cos(math.pi * fp / 48000) ** 4; s4 = np.sin(math.pi * fp / 48000) ** 4
         hd, hi = gt_h2(fp), gt_h2(24000 - fp)
@@ -1228,6 +1237,8 @@ class ClientModel:
         """(32,) band power and the full-band power of a sine of amplitude 1 played at f Hz (0: none)"""
         if f <= 0:
             return np.zeros(32), 0.0
+        if self.client == 'pc':
+            return (0.5 * gt_h2([f])[:, 0], 0.5) if f < 24000 else (np.zeros(32), 0.0)
         fp = f if f <= 12000 else 24000 - f
         c4 = math.cos(math.pi * fp / 48000) ** 4; s4 = math.sin(math.pi * fp / 48000) ** 4
         h = gt_h2([fp, 24000 - fp])
@@ -1255,13 +1266,17 @@ def _qdb(P, s2):
 
 
 def refine_client(x, fq, am, vcodes, nz, ncodes, gain, n_voices=CL_VOICES, level_db=CL_LEVEL_DB, sweeps=CL_SWEEPS, weights=None,
-                  info=None, objective=None, hold=CL_HOLD):
+                  info=None, objective=None, hold=CL_HOLD, fixed=0, client='phone'):
     """each tick's level and fade of the voices the phone plays and of the noise bands, chosen so that the song as the client
     plays it (ClientModel) comes closest to the original in ViSQOL's bands. am, nz: the converter's levels (before `gain`), with
-    vcodes / ncodes the fade codes (F, N) / (F, M) of fit_voice_fades / fit_noise_fades. Returns new am, vcodes, nz, ncodes"""
+    vcodes / ncodes the fade codes (F, N) / (F, M) of fit_voice_fades / fit_noise_fades. Returns new am, vcodes, nz, ncodes.
+    fixed > 0: the first `fixed` voices and the noise bands are played as they are and never changed (a second stage: the voices a
+    client with more sounds plays after the phone's, chosen around those), the power not held (most of it is fixed)"""
     F, N = am.shape; M = nz.shape[1]
     Nc = min(n_voices, N)
-    cm = ClientModel(NOISE_EDGES)
+    cm = ClientModel(NOISE_EDGES, client)
+    if fixed:
+        hold = False
     lv = 10 ** (level_db / 20)
     gv = (1.0 * lv) / CL_OSC_AMP                                  # src/main.ts: (volume * lv) / OSC_AMP
     nrms = CL_NOISE_RMS if M == len(CL_NOISE_RMS) else [NOISE_RMS] * M
@@ -1434,6 +1449,8 @@ def refine_client(x, fq, am, vcodes, nz, ncodes, gain, n_voices=CL_VOICES, level
             ii = np.clip(idx, 0, 2 * CL_TICK - 1)
             flk = fl[frames][None, :]; Rk = Rq[:, frames]
             for s in range(S):
+                if fixed and (s < fixed or s >= Nc):
+                    continue
                 c0 = code_of(s, k + 1)
                 if c0 <= 0:
                     continue
@@ -1551,7 +1568,8 @@ _DEFAULTS = {'FADE_GAIN': FADE_GAIN, 'FADE_MARGIN_DB2': FADE_MARGIN_DB2, 'BURST_
 def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=None, analysis='v2', residual='voiced', salience='a',
             nested=0, hf=0.0, burst_tilt=None, noise_edges=None, nz_fade=True, v_fade=True, rank='energy', fade_gain=None,
             fade_margin=None, nz_hop=None, low_cut=0.5, nsim_margin=NSIM_MARGIN, refine=True, refine_voices=CL_VOICES,
-            refine_level=CL_LEVEL_DB, refine_sweeps=CL_SWEEPS, refine_weights=None, refine_objective=None, refine_hold=CL_HOLD):
+            refine_level=CL_LEVEL_DB, refine_sweeps=CL_SWEEPS, refine_weights=None, refine_objective=None, refine_hold=CL_HOLD,
+            refine_more=None):
     """residual: 'voiced' (default: only the voices' main lobes out of the noise, so the peaks no voice plays stay in the noise
     bands) | 'all' (every peak's lobe out: the version before 2026-10-31) | 'fit' (ERB least squares). Through the validated
     client model (tools/exp/results/next.jsonl, 10 songs, 24 voices, no drum bursts) 'voiced' scored +0.139 ViSQOL over the
@@ -1643,6 +1661,12 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
         am, vc, nz, nc = refine_client(x, fq, am, unpack2(vd, n_frames, n_voices), nz, unpack2(nzd, n_frames, len(NOISE_EDGES) - 1), gain,
                                        n_voices=refine_voices, level_db=refine_level, sweeps=refine_sweeps, weights=refine_weights, info=info,
                                        objective=refine_objective, hold=refine_hold)
+        if refine_more and n_voices > refine_voices:
+            # (a second stage, refine_more = {'client': 'pc', 'level': 0, 'sweeps': 2}: the voices after the phone's, for a client that
+            # plays them all, chosen with the phone's and the noise bands fixed — what a phone plays does not change)
+            am, vc, nz, nc = refine_client(x, fq, am, vc, nz, nc, gain, n_voices=n_voices, fixed=refine_voices, client=refine_more.get('client', 'pc'),
+                                           level_db=refine_more.get('level', 0.0), sweeps=refine_more.get('sweeps', 2), weights=refine_weights,
+                                           objective=refine_objective)
         vd, nzd = pack2(vc), pack2(nc)
     blob, stats = encode(fq, am, att, nz, ev, gain)
     # format 2: the fitted fades after the frames in the data (the voices' codes, then the noise bands'), their lengths in meta.fd —

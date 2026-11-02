@@ -17,8 +17,11 @@ const DEF = {
   noise: [[180, 360], [360, 720], [720, 1440], [1440, 2880], [2880, 5000], [5000, 8000], [8000, 12000], [12000, 17000]],
 };
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-/** a form's text field with this pack (rp/ui/server_form.json $max_text_edit_length; vanilla: 100) */
-export const FIELD_CHARS = 30000;
+/** the characters a part: what a phone's form text box takes whole — it stops at 5000 (measured: run 41393759902, 15142 typed,
+ *  5000 arrived) though this pack's rp/ui/server_form.json lets the box hold 30000 ($max_text_edit_length; vanilla: 100) */
+export const FIELD_CHARS = 5000;
+/** where a phone's text box stops (the same measurement): a text cut there was made for a bigger box */
+export const PHONE_CHARS = 5000;
 
 // ---- CRC-32 (the zip one)
 let CRC: Uint32Array | undefined;

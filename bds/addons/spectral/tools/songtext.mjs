@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // A song as text to paste into the game (/spectral:paste): src/songtext.ts — the same code the add-on decodes with — compiled here
 // on the fly (the lab's esbuild).
-//   node tools/songtext.mjs <song.json> [--voices 24] [--grid qa,qp,qn] [--no-smooth] [--format 1 [--q 15]] [--max 30000] [--ascii]
+//   node tools/songtext.mjs <song.json> [--voices 24] [--grid qa,qp,qn] [--no-smooth] [--format 1 [--q 15]] [--max 5000] [--ascii]
 //        [--seconds 2] [--id x] [--title t] [--out f.txt]
 //        → the text (one part, or numbered parts a line each) on stdout or in --out, and its sizes on stderr. SPZ2 (the default): the
 //        song on the grids GRID (src/songtext.ts: level 1.5 dB, pitch 10 cents, noise 1 dB), 15 bits a character; --format 1: SPZ1
@@ -49,7 +49,7 @@ if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith
     if (opt('--song')) fs.writeFileSync(opt('--song'), JSON.stringify({ meta: got.meta, data: Buffer.from(got.bytes).toString('base64') }));
   } else {
     const f = argv.find((a) => !a.startsWith('--') && argv[argv.indexOf(a) - 1]?.startsWith('--') !== true);
-    if (!f) { console.error('usage: node tools/songtext.mjs <song.json> [--voices 24] [--q 15] [--max 30000] [--ascii] [--seconds s] [--out f.txt] | --decode <txt> | --check <song.json>...'); process.exit(2); }
+    if (!f) { console.error('usage: node tools/songtext.mjs <song.json> [--voices 24] [--q 15] [--max 5000] [--ascii] [--seconds s] [--out f.txt] | --decode <txt> | --check <song.json>...'); process.exit(2); }
     const s = JSON.parse(fs.readFileSync(f, 'utf8')), raw = b64(s.data);
     const sec = opt('--seconds');
     const g = opt('--grid')?.split(',').map(Number);

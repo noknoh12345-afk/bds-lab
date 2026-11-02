@@ -79,6 +79,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { GAME_VERBS, gameStep, playGame, playServer } from './play.mjs';
 import { KIND_NAMES as MEASURE_KINDS, measureShot } from './measure.mjs';
+import { needsIme, typeWithIme } from './unitext.mjs';
 import { makeTrail } from './failcodes.mjs';
 import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, classicTitleWords, newTitleWords, signInOffer, playTab, joinPromptButton, joinRefusal, joinPromptKind, joinScreen, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
 
@@ -619,6 +620,9 @@ export async function runScenario(steps, ctx) {
       case 'hold': { const [x, y] = px(num(a[0]), num(a[1])), ms = num(a[2]) || 1000; adb.shell(['input', 'swipe', String(x), String(y), String(x), String(y), String(ms)], { timeout: ms + 30_000 }); return `(${x}, ${y}) ${ms}ms`; }
       case 'key': { adb.shell(['input', 'keyevent', String(androidKey(a[0]))]); return ''; }
       case 'text': {
+        // (beyond printable ASCII — CJK, Japanese — `input text` has no keys for it: an input method that takes the text from a
+        // broadcast types it instead, app/lib/unitext.mjs)
+        if (needsIme(a[0])) { const t0 = Date.now(), how = await typeWithIme(adb, a[0], { sleep }); return `${Array.from(a[0]).length} 文字（${how}、${((Date.now() - t0) / 1000).toFixed(1)} 秒）`; }
         // (input text hands the game one key at a time and waits until it took each — about a frame a key, so a long text takes
         // minutes: the time allowed grows with the text, and a text cut short by it fails the step instead of going on half typed)
         const t0 = Date.now(), r = adb.shell(['input', 'text', inputText(a[0])], { timeout: 60_000 + 300 * a[0].length });

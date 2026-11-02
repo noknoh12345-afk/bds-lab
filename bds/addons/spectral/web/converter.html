@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
 <style>
 /* layout: an instrument rack — the partial map (what Minecraft will play) is the wide display, the controls are a narrow column beside it; one column on phones.
-   palette: the three layers of a Minecraft amethyst geode — calcite ground, smooth-basalt ink, amethyst signal — with copper for drum bursts. */
+   palette: the three layers of a Minecraft amethyst geode — calcite ground, smooth-basalt ink, amethyst signal — with copper for the playhead. */
 :root {
   --bg: #ecebe7;          /* calcite */
   --panel: #f7f6f3;
@@ -92,7 +92,7 @@ button.main:disabled { opacity: 0.5; cursor: default; }
 .track input, .track select { font: inherit; font-size: 14px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; min-width: 0; width: 100%; }
 .track input.mono { font-family: var(--font-data); font-size: 13px; }
 .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
-.chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; font-family: var(--font-data); }
+.chip { color: var(--muted); font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; font-family: var(--font-data); }
 .chip.ok { color: var(--ok); } .chip.busy { color: var(--amethyst); } .chip.err { color: var(--err); }
 .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
 .bar i { display: block; height: 100%; width: 0; background: var(--amethyst); transition: width 0.15s linear; }
@@ -110,6 +110,12 @@ button.main:disabled { opacity: 0.5; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
 .sub { margin-top: 18px; }
 .parts .part { margin-top: 10px; }
+.track .span { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; color: var(--muted); }
+.cut { display: flex; flex-wrap: wrap; gap: 8px; }
+.cut button:disabled { opacity: 0.45; cursor: default; }
+.textbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.textbar .msg { flex-basis: 100%; }
+.textbar[hidden] { display: none; }
 .parts .part .row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
 .parts textarea { width: 100%; box-sizing: border-box; font-size: 12px; margin-top: 4px; resize: vertical; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; }
 </style>
@@ -127,12 +133,11 @@ button.main:disabled { opacity: 0.5; cursor: default; }
         <div class="legend" aria-hidden="true">
           <span><i style="background: var(--amethyst)"></i>正弦波ボイス</span>
           <span><i style="background: var(--amethyst-2)"></i>ノイズ帯域</span>
-          <span><i style="background: var(--copper)"></i>打撃音</span>
         </div>
       </div>
       <div class="stage" id="stage">
         <canvas id="map" aria-label="原曲のスペクトログラムの上に、ゲームが鳴らす正弦波ボイスの軌跡を重ねた図"></canvas>
-        <canvas id="strip" aria-label="8 本のノイズ帯域の強さと、打撃音の位置"></canvas>
+        <canvas id="strip" aria-label="8 本のノイズ帯域の強さ"></canvas>
         <canvas id="head"></canvas>
       </div>
       <div class="axis" aria-hidden="true"><span id="ax0">0:00</span><span>縦軸 40 Hz – 16 kHz（対数）</span><span id="ax1">0:23</span></div>
@@ -148,7 +153,12 @@ button.main:disabled { opacity: 0.5; cursor: default; }
         </select></label>
         <span class="time" id="time">0:00.0 / 0:22.9</span>
       </div>
-      <p class="msg" id="playMsg">再生中に切り替えると同じ位置で聴き比べられます。図をタップすると、その位置へ移ります。</p>
+      <div class="cut" role="group" aria-label="再生位置で区間を決める">
+        <button class="ghost" id="cutFrom" title="再生位置から後ろだけを曲にする">ここから</button>
+        <button class="ghost" id="cutTo" title="再生位置までを曲にする">ここまで</button>
+        <button class="ghost" id="cutSplit" title="再生位置で 2 曲に分ける">ここで分ける</button>
+      </div>
+      <p class="msg" id="playMsg">再生中に切り替えると同じ位置で聴き比べられます。図をタップすると、その位置へ移ります（「ここから」「ここまで」「ここで分ける」もその位置で）。</p>
       <div class="stats" id="stats"></div>
     </section>
 
@@ -163,8 +173,6 @@ button.main:disabled { opacity: 0.5; cursor: default; }
           <option value="5" selected>いちばん良い（実機の模型で 5 回詰める・20 秒の曲で 3 分ほど）</option>
           <option value="2">速い（2 回・少し劣る）</option>
           <option value="0">仕上げなし（すぐ・前の版）</option>
-          <option value="live">ライブの変換（ボイスチャットの声と同じ: 50 ms ずつ、先を見ない・24 声）</option>
-          <option value="live2">ライブの変換＋その場の仕上げ（2 フレーム先まで見て実機の模型で詰める: 遅れ +100 ms）</option>
         </select>
       </label>
       <div class="tracks" id="tracks"></div>
@@ -179,12 +187,14 @@ button.main:disabled { opacity: 0.5; cursor: default; }
       <button class="ghost" id="saveAddon">本体アドオンを保存 (.mcaddon.zip)</button>
       <p class="note">統合版 1.26.60 以降。曲パックは本体と別のビヘイビアーパックなので、曲を足しても本体は入れ替え不要です。</p>
       <h2 class="sub">ゲームで貼り付け（テキスト）</h2>
-      <p class="note">曲パックを入れられないとき（Realms・スマホだけ）は、選んでいる曲をテキストにして、ゲームの <code>/spectral:paste</code>（リモコンの「📋 Paste a song」）に貼り付けます。1 回に 30000 文字まで（本体のリソースパックで入力欄を広げています。100 文字で止まるときは、そのリソースパックがゲームに入っていません: サーバーのリソースパックを受け入れるか、ワールドに入れてください）。長い曲はパートに分かれるので、1 から順に貼り付けます。</p>
-      <label class="quality">声の数<select id="pxVoices"><option value="16">16（いちばん短い）</option><option value="24" selected>24（スマホが鳴らす数）</option><option value="32">32</option><option value="0">すべて</option></select></label>
-      <label class="quality">細かさ<select id="pxQ"><option value="std" selected>標準（大きさ 1.5 dB・音程 10 セントの格子: 耳で区別できない・短い）</option><option value="raw">そのまま（曲データと 1 ビットも違わない・約 2 倍長い）</option></select></label>
-      <label class="quality">文字<select id="pxEnc"><option value="cjk" selected>漢字（1 文字に 15 bit・いちばん短い）</option><option value="ascii">英数字（互換用・約 2.5 倍長い）</option></select></label>
+      <p class="note">曲パックを入れられないとき（Realms・スマホだけ）は、選んでいる曲をテキストにして、ゲームの <code>/spectral:paste</code>（リモコンの「📋 Paste a song」）に貼り付けます。スマホの入力欄に入る長さ（1 回 <span id="partMax">—</span> 文字まで）のパートに分けるので、1 から順に貼り付けます。100 文字で止まるときは、本体のリソースパックがゲームに入っていません（サーバーのリソースパックを受け入れるか、ワールドに入れてください）。</p>
+      <div class="grid2">
+        <label class="quality">声の数<select id="pxVoices"><option value="16">16（短い）</option><option value="24" selected>24（スマホが鳴らす数）</option><option value="32">32</option><option value="0">すべて</option></select></label>
+        <label class="quality">文字<select id="pxEnc"><option value="cjk" selected>漢字（短い）</option><option value="ascii">英数字（互換用・約 2.5 倍）</option></select></label>
+      </div>
       <button class="main" id="makeText">選んでいる曲をテキストに</button>
       <p class="msg" id="textMsg"></p>
+      <div class="textbar" id="textBar" hidden><button class="main" id="copyNext">コピー</button><button class="ghost" id="saveText">.txt で保存</button><p class="msg" id="copyMsg"></p></div>
       <div class="parts" id="textParts"></div>
     </aside>
   </div>
@@ -212,7 +222,6 @@ button.main:disabled { opacity: 0.5; cursor: default; }
 </div>
 
 <script>/*CORE*/</script>
-<script>/*LIVE*/</script>
 <script>/*TEXT*/</script>
 <script>/*DECODERS*/</script>
 <script>
@@ -238,30 +247,128 @@ function uniqueId(base, self) {
   while (RESERVED.has(id) || tracks.some((t) => t !== self && t.id === id)) id = base + '_' + n++;
   return id;
 }
-function addTrack(t) { t.key = ++seq; tracks.push(t); renderTracks(); }
+// a long file waits for 「変換する」 with the time it will take; a shorter one converts at once
+const AUTO_S = 60, MIN_S = 1;
+function addTrack(t, after) { t.key = ++seq; t.run = 0; if (after) tracks.splice(tracks.indexOf(after) + 1, 0, t); else tracks.push(t); renderTracks(); }
+/** "1:23.4", "83.4", "1:23" (full-width digits too) → seconds */
+const parseTime = (v) => {
+  const m = /^\s*(?:(\d+):)?(\d+(?:\.\d*)?)\s*$/.exec(String(v).replace(/[：]/g, ':').replace(/[０-９．]/g, (c) => (c === '．' ? '.' : String.fromCharCode(c.charCodeAt(0) - 0xfee0))));
+  return m ? (m[1] ? +m[1] * 60 : 0) + +m[2] : NaN;
+};
+/** the part of the file a track converts: seconds s0..s1 of t.x (all of it unless a range is set), 10 ms fades where it was cut */
+function segOf(t) {
+  if (!t?.x) return null;
+  const full = t.x.length / C.SR, [a, b] = t.range ?? [0, full], key = `${a}:${b}`;
+  if (t.seg && t.segKey === key) return t.seg;
+  const i0 = Math.max(0, Math.round(a * C.SR)), i1 = Math.min(t.x.length, Math.round(b * C.SR));
+  let x = t.x.subarray(i0, i1);
+  if (i0 > 0 || i1 < t.x.length) {
+    x = Float32Array.from(x); const n = Math.min(Math.round(0.01 * C.SR), x.length >> 1);
+    for (let i = 0; i < n; i++) { const g = (i + 0.5) / n; if (i0 > 0) x[i] *= g; if (i1 < t.x.length) x[x.length - 1 - i] *= g; }
+  }
+  t.seg = { x, s0: i0 / C.SR, s1: i1 / C.SR }; t.segKey = key; t.img = null;
+  return t.seg;
+}
+/** the length on the display: the converted song's, else the part of the file chosen */
+function lengthOf(t) { if (t?.state === 'ok') return t.song.meta.seconds; const g = segOf(t); return g ? g.s1 - g.s0 : 0; }
+// (seconds of work a second of sound, per setting: Chromium on a 2-core cloud machine, tools/test_page.py — a phone takes longer)
+const WORK = { 5: 9, 2: 4, 0: 0.5 };
+const estimate = (sec) => { const m = (sec * (WORK[$('sweeps').value] ?? 9)) / 60; return m < 1 ? '1 分以内' : `約 ${Math.round(m)} 分`; };
+
+// conversions one at a time, in order; a new range or voice count starts that track's again, a removed track's stops
+const queue = []; let working = false;
+function convertSoon(t) {
+  t.run++; t.state = 'queued'; t.error = ''; t.progress = 0;
+  if (!queue.includes(t)) queue.push(t);
+  renderTracks(); pump();
+}
+async function pump() {
+  if (working) return; working = true;
+  while (queue.length) { const t = queue.shift(); if (!t.removed) await analyse(t); }
+  working = false;
+}
+function rangeChanged(t) {
+  const g = segOf(t);
+  if (g.s1 - g.s0 > AUTO_S) {
+    t.run++; const i = queue.indexOf(t); if (i >= 0) queue.splice(i, 1);
+    t.state = 'wait'; t.song = null; t.dec = null; t.games = {}; renderTracks();
+  } else convertSoon(t);
+  if (t === current) { stopPlay(); showNow(); draw(); }
+}
+/** the chosen track from (or up to) the playhead: its range cut there */
+function cutAt(t, side) {
+  const g = segOf(t), p = position(), at = g.s0 + p;
+  if (!t || t.demo || (side === 'from' ? g.s1 - at : at - g.s0) < MIN_S || p <= 0 && side === 'from') {
+    $('playMsg').textContent = '図をタップして位置を選んでから押してください（残る長さが 1 秒以上になる位置）。'; return;
+  }
+  t.range = side === 'from' ? [at, g.s1] : [g.s0, at]; rangeChanged(t);
+  $('playMsg').textContent = side === 'from' ? `${fmt(at, true)} から後ろを曲にしました。` : `${fmt(at, true)} までを曲にしました。`;
+}
+$('cutFrom').addEventListener('click', () => current && cutAt(current, 'from'));
+$('cutTo').addEventListener('click', () => current && cutAt(current, 'to'));
+$('cutSplit').addEventListener('click', () => current && split(current));
+/** two tracks from one at the playhead (the place tapped on the display): the same file, each its own range and ID */
+function split(t) {
+  const g = segOf(t), p = t === current ? position() : 0, cut = g.s0 + p;
+  if (t !== current || p < 0.5 || g.s1 - cut < 0.5) {
+    if (t !== current) select(t);
+    $('playMsg').textContent = '図をタップして分ける位置を選び、もう一度「ここで分ける」を押してください（両側 0.5 秒以上）。';
+    return;
+  }
+  stopPlay();
+  const base = t.title.replace(/ \(\d+\)$/, ''), num = (u) => (u.title.startsWith(base + ' (') ? +(/ \((\d+)\)$/.exec(u.title)?.[1] ?? 0) : 0);
+  if (!/ \(\d+\)$/.test(t.title)) t.title = base + ' (1)';
+  const b = { title: `${base} (${Math.max(1, ...tracks.map(num)) + 1})`, artist: t.artist, voices: t.voices, x: t.x, orig: t.orig, how: t.how, note: t.note, range: [cut, g.s1], state: 'wait' };
+  b.id = uniqueId(slug(b.title));
+  t.range = [g.s0, cut];
+  addTrack(b, t);
+  rangeChanged(t); rangeChanged(b);
+  $('playMsg').textContent = `${fmt(cut, true)} で 2 曲に分けました（${t.title}・${b.title}）。`;
+}
 function renderTracks() {
   const box = $('tracks'); box.textContent = '';
   for (const t of tracks) {
     const el = document.createElement('div');
     el.className = 'track'; el.setAttribute('aria-current', String(t === current)); el.tabIndex = 0;
-    const chip = t.state === 'ok' ? `<span class="chip ok">${(t.song.bytes.length / 1024).toFixed(0)} KB</span>` : t.state === 'err' ? '<span class="chip err">失敗</span>' : '<span class="chip busy">解析中</span>';
+    const chip = t.state === 'ok' ? `<span class="chip ok">${(t.song.bytes.length / 1024).toFixed(0)} KB</span>` : t.state === 'err' ? '<span class="chip err">失敗</span>'
+      : t.state === 'wait' ? '<span class="chip">未変換</span>' : t.state === 'queued' ? '<span class="chip busy">順番待ち</span>' : '<span class="chip busy">解析中</span>';
+    const g = t.demo ? null : segOf(t), full = g ? t.x.length / C.SR : 0;
     el.innerHTML = `
       <div class="row"><label>曲名<input id="ti${t.key}" value=""></label>${chip}</div>
       <div class="grid2"><label>アーティスト<input id="ar${t.key}" value=""></label><label>ID（コマンド用）<input class="mono" id="id${t.key}" value=""></label></div>
       <div class="row"><label>正弦波ボイス<select id="vo${t.key}">${[16, 24, 32, 48, 64, 96].map((v) => `<option value="${v}" ${v === t.voices ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
       ${t.demo ? '<span class="note">同梱のデモ（本体に入っています）</span>' : `<button class="ghost" id="rm${t.key}">外す</button>`}</div>
+      ${g ? `<div class="row"><label>区間（ファイルは ${fmt(full, true)}）<span class="span"><input class="mono" id="r0${t.key}" inputmode="decimal" aria-label="始め"><span aria-hidden="true">–</span><input class="mono" id="r1${t.key}" inputmode="decimal" aria-label="終わり"></span></label>
+        <button class="ghost" id="all${t.key}" title="ファイル全体に戻す" ${g.s0 <= 0 && g.s1 >= full - 0.005 ? 'disabled' : ''}>全体</button></div>` : ''}
+      ${t.state === 'wait' ? `<button class="main" id="go${t.key}">変換する（${fmt(g.s1 - g.s0)} の曲・${estimate(g.s1 - g.s0)}）</button>` : ''}
       ${t.state === 'busy' ? `<div class="bar"><i id="pg${t.key}" style="width:${Math.round((t.progress || 0) * 100)}%"></i></div>` : ''}
       ${t.error ? `<p class="msg err">${t.error}</p>` : t.note ? `<p class="msg">${t.note}</p>` : ''}`;
     box.appendChild(el);
     $('ti' + t.key).value = t.title; $('ar' + t.key).value = t.artist; $('id' + t.key).value = t.id;
-    $('ti' + t.key).addEventListener('change', (e) => { t.title = e.target.value.trim() || t.title; if (t === current) showNow(); });
-    $('ar' + t.key).addEventListener('change', (e) => { t.artist = e.target.value.trim(); });
-    $('id' + t.key).addEventListener('change', (e) => { t.id = uniqueId(slug(e.target.value), t); e.target.value = t.id; });
-    $('vo' + t.key).addEventListener('change', (e) => { t.voices = +e.target.value; if (!t.demo || t.x) analyse(t); });
-    if (!t.demo) $('rm' + t.key)?.addEventListener('click', (e) => { e.stopPropagation(); tracks.splice(tracks.indexOf(t), 1); if (current === t) select(tracks[0] ?? null); renderTracks(); });
-    el.addEventListener('click', (e) => { if (e.target.closest('input,select,button')) return; select(t); });
+    $('ti' + t.key).addEventListener('change', (e) => { t.title = e.target.value.trim() || t.title; t.text = null; if (t === current) showNow(); });
+    $('ar' + t.key).addEventListener('change', (e) => { t.artist = e.target.value.trim(); t.text = null; });
+    $('id' + t.key).addEventListener('change', (e) => { t.id = uniqueId(slug(e.target.value), t); e.target.value = t.id; t.text = null; });
+    $('vo' + t.key).addEventListener('change', (e) => { t.voices = +e.target.value; if (!t.x) return; if (t.state === 'wait') renderTracks(); else convertSoon(t); });
+    if (!t.demo) $('rm' + t.key)?.addEventListener('click', (e) => { e.stopPropagation(); t.removed = true; t.run++; tracks.splice(tracks.indexOf(t), 1); if (current === t) select(tracks[0] ?? null); renderTracks(); });
+    if (g) {
+      const r0 = $('r0' + t.key), r1 = $('r1' + t.key);
+      r0.value = fmt(g.s0, true); r1.value = fmt(g.s1, true);
+      const set = () => {
+        let a = parseTime(r0.value), b = parseTime(r1.value);
+        if (!Number.isFinite(a)) a = g.s0; if (!Number.isFinite(b)) b = g.s1;
+        a = Math.max(0, Math.min(a, full)); b = Math.max(0, Math.min(b, full)); if (b < a) [a, b] = [b, a];
+        if (b - a < MIN_S) { b = Math.min(full, a + MIN_S); a = Math.max(0, b - MIN_S); }
+        if (Math.abs(a - g.s0) < 0.005 && Math.abs(b - g.s1) < 0.005) { r0.value = fmt(g.s0, true); r1.value = fmt(g.s1, true); return; }
+        t.range = [a, b]; rangeChanged(t);
+      };
+      r0.addEventListener('change', set); r1.addEventListener('change', set);
+      $('all' + t.key).addEventListener('click', (e) => { e.stopPropagation(); t.range = null; rangeChanged(t); });
+    }
+    $('go' + t.key)?.addEventListener('click', (e) => { e.stopPropagation(); convertSoon(t); });
+    el.addEventListener('click', (e) => { if (e.target.closest('input,select,button')) return; if (t !== current) select(t); });
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === el) select(t); });
   }
+  for (const id of ['cutFrom', 'cutTo', 'cutSplit']) $(id).disabled = !current || current.demo || !current.x;
   $('savePack').disabled = !tracks.some((t) => t.state === 'ok' && !t.demo);
   $('savePack').textContent = tracks.some((t) => !t.demo) ? `曲パックを保存 (.mcpack.zip)` : '曲を追加すると曲パックを保存できます';
 }
@@ -298,34 +405,22 @@ async function toBuffer44(r) {
   return off.startRendering();
 }
 async function analyse(t) {
-  t.state = 'busy'; t.progress = 0; t.error = ''; t.games = {}; renderTracks();
-  const run = (t.run = (t.run || 0) + 1);
+  const run = t.run, g = segOf(t), sw = Number($('sweeps').value);
+  t.state = 'busy'; t.progress = 0; t.games = {}; renderTracks();
   try {
-    const how = ($('sweeps') || {}).value ?? '5', sw = Number(how);
-    const r = how === 'live' || how === 'live2' ? await liveConvert(t, how === 'live2' ? 2 : 0) : await C.convert(t.x, { voices: t.voices, title: t.title, artist: t.artist, id: t.id, ...(sw ? { refineSweeps: sw } : { refine: false }), progress: async (f) => {
+    const r = await C.convert(g.x, { voices: t.voices, title: t.title, artist: t.artist, id: t.id, ...(sw ? { refineSweeps: sw } : { refine: false }), progress: async (f) => {
+      if (run !== t.run || t.removed) throw new Error('cancelled');
       t.progress = f; const bar = $('pg' + t.key); if (bar) bar.style.width = Math.round(f * 100) + '%';
       await new Promise((res) => setTimeout(res, 0));
     } });
-    if (run !== t.run) return;
-    t.song = r; t.dec = C.decode(r.bytes, r.meta); t.state = 'ok';
-  } catch (e) { t.state = 'err'; t.error = '解析できませんでした: ' + (e.message || e); }
+    if (run !== t.run || t.removed) return;
+    t.song = r; t.dec = C.decode(r.bytes, r.meta); t.state = 'ok'; t.text = null;
+  } catch (e) {
+    if (run !== t.run || t.removed) return;
+    t.state = 'err'; t.error = '解析できませんでした: ' + (e.message || e) + (g.s1 - g.s0 > 180 ? '（長い曲はメモリが足りないことがあります: 区間を短くするか「ここで分ける」で分けてください）' : '');
+  }
   renderTracks();
   if (t === current) { stopPlay(); showNow(); draw(); }
-}
-/** the live encoder (web/live.js: what a voice chat sends, 50 ms at a time with no look-ahead; refine: its refinement as it goes,
- *  that many frames ahead) on a whole track, as a song */
-async function liveConvert(t, refine = 0) {
-  const L = window.SpectralLive, x44 = t.x, n = Math.floor((x44.length * 48000) / C.SR), x = new Float32Array(n);
-  for (let i = 0; i < n; i++) { const p = (i * C.SR) / 48000, j = Math.floor(p), f = p - j; x[i] = (x44[j] ?? 0) * (1 - f) + (x44[j + 1] ?? 0) * f; }
-  const enc = new L.LiveEncoder({ voices: Math.min(24, t.voices), refine }); enc.collect = true;   // (a phone's 24 voices at most, as a voice chat)
-  for (let i = 0; i < n; i += 48000) { enc.push(x.subarray(i, i + 48000)); t.progress = i / n; const bar = $('pg' + t.key); if (bar) bar.style.width = Math.round(t.progress * 100) + '%'; await new Promise((res) => setTimeout(res, 0)); }
-  enc.push(new Float32Array(L.WIN)); enc.flush();
-  const s = L.toSong(enc, { id: t.id, title: t.title, seconds: Math.round((x44.length / C.SR) * 100) / 100 });
-  // (the statistics the page shows for a song: voices sounding, level changes a tick)
-  let act = 0, chg = 0;
-  enc.frames.forEach((f, k) => { for (let v = 0; v < f.a.length; v++) { if (f.a[v] > 0) act++; if (k && f.a[v] !== enc.frames[k - 1].a[v]) chg++; } });
-  const nf = Math.max(1, enc.frames.length);
-  return { meta: { ...s.meta, artist: t.artist || 'live' }, bytes: C.fromB64(s.data), stats: { live: true, activeAvg: act / nf, changesPerTick: chg / nf, events: 0 } };
 }
 async function addFiles(files) {
   for (const f of files) {
@@ -337,8 +432,8 @@ async function addFiles(files) {
       const d = await decodeFile(await f.arrayBuffer(), (m) => { t.note = m; renderTracks(); });
       t.x = d.x; t.orig = d.orig; t.how = d.how; t.note = d.how === 'browser' ? '' : `読んだ形式: ${d.how}`;
     } catch (e) { t.state = 'err'; t.error = `この形式は読めませんでした（${e.message || e}）。ほかの形式に書き出して試してください。`; renderTracks(); continue; }
-    if (t === current) draw();
-    await analyse(t);
+    if (t.removed) continue;
+    t.state = 'wait'; rangeChanged(t);
   }
 }
 $('file').addEventListener('change', (e) => { addFiles([...e.target.files]); e.target.value = ''; });
@@ -352,18 +447,21 @@ document.addEventListener('drop', (e) => {
 });
 
 // ------------------------------------------------------------ the display
-function select(t) { stopPlay(); current = t; renderTracks(); showNow(); draw(); }
+function select(t) { stopPlay(); if (shown && shown.t !== t) clearText(); current = t; renderTracks(); showNow(); draw(); }
 function showNow() {
   const t = current; if (!t) { $('now').textContent = '曲がありません'; $('stats').textContent = ''; return; }
   $('now').innerHTML = ''; $('now').append(t.title);
-  const sub = document.createElement('small'); sub.textContent = t.demo ? 'デモ曲・48 ボイス' : `${t.song?.meta?.voices ?? t.voices} ボイス・ID ${t.id}${t.song?.stats?.live ? '・ライブの変換' : ''}`; $('now').append(sub);
+  const sub = document.createElement('small');
+  sub.textContent = t.demo ? 'デモ曲・48 ボイス' : t.state === 'ok' ? `${t.song.meta.voices} ボイス・ID ${t.id}` : `ID ${t.id}`; $('now').append(sub);
+  const len = lengthOf(t); $('ax1').textContent = fmt(len); $('time').textContent = `0:00.0 / ${fmt(len, true)}`;
   const st = $('stats'); st.textContent = '';
   if (t.state !== 'ok') return;
   const m = t.song.meta, s = t.song.stats, kbps = (t.song.bytes.length * 8 / 1000 / m.seconds);
+  const text = textOf(t, 24, false);
   const rows = [['長さ', fmt(m.seconds) + ` · ${m.frames} 枠`], ['データ量', `${(t.song.bytes.length / 1024).toFixed(1)} KB`], ['データ速度', `${kbps.toFixed(1)} kbps`],
-    ['平均の発音ボイス', `${s.activeAvg.toFixed(1)} / ${m.voices}`], ['tick あたりの命令', `${s.changesPerTick.toFixed(1)} 回`], ['打撃音', `${s.events} 発`]];
+    ['平均の発音ボイス', `${s.activeAvg.toFixed(1)} / ${m.voices}`], ['tick あたりの命令', `${s.changesPerTick.toFixed(1)} 回`],
+    ...(text ? [['貼り付け（24 声）', `${text.chars.toLocaleString()} 文字・${text.parts.length} 回`]] : [])];
   for (const [k, v] of rows) { const d = document.createElement('div'); d.className = 'stat'; d.innerHTML = `<span>${k}</span><b>${v}</b>`; st.appendChild(d); }
-  $('ax1').textContent = fmt(m.seconds); $('time').textContent = `0:00.0 / ${fmt(m.seconds, true)}`;
 }
 const tok = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 function rgb(hex) { const h = hex.replace('#', ''); const v = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
@@ -371,9 +469,9 @@ const F_LO = Math.log2(40), F_HI = Math.log2(16000);
 function sizeCanvas(cv) { const r = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.max(1, Math.round(r.width * dpr)); cv.height = Math.max(1, Math.round(r.height * dpr)); return cv.getContext('2d'); }
 function spectroImage(t, W, H) {
   // one FFT per column: the original's spectrum on the same log axis
-  const key = W + 'x' + H + tok('--spec-lo') + tok('--spec-hi');
+  const x = segOf(t).x, key = W + 'x' + H + tok('--spec-lo') + tok('--spec-hi') + t.segKey;
   if (t.img && t.imgKey === key) return t.img;
-  const x = t.x, n = 4096, re = new Float64Array(n), im = new Float64Array(n), win = new Float64Array(n);
+  const n = 4096, re = new Float64Array(n), im = new Float64Array(n), win = new Float64Array(n);
   for (let i = 0; i < n; i++) win[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (n - 1));
   const img = new ImageData(W, H), lo = rgb(tok('--spec-lo')), hi = rgb(tok('--spec-hi'));
   const rowBin = new Float64Array(H);
@@ -415,8 +513,8 @@ function draw() {
   }
   paths.forEach((p, i) => { g.globalAlpha = 0.18 + (0.82 * (i + 1)) / steps; g.stroke(p); });
   g.globalAlpha = 1;
-  // strip: 8 noise bands (top) and the bursts (bottom row)
-  const SW = strip.width, SH = strip.height, bandH = (SH * 0.72) / M, a2 = rgb(tok('--amethyst-2'));
+  // strip: the 8 noise bands (the lowest at the bottom)
+  const SW = strip.width, SH = strip.height, bandH = SH / M, a2 = rgb(tok('--amethyst-2'));
   let np = 1e-9; for (let i = 0; i < d.nz.length; i++) np = Math.max(np, d.nz[i]);
   for (let b = 0; b < M; b++) for (let k = 0; k < F; k++) {
     const v = d.nz[k * M + b]; if (v <= 0) continue;
@@ -424,8 +522,6 @@ function draw() {
     s.fillStyle = `rgba(${a2[0]},${a2[1]},${a2[2]},${(0.15 + 0.85 * (1 + db / 48)).toFixed(3)})`;
     s.fillRect(Math.floor((k / F) * SW), Math.floor((M - 1 - b) * bandH), Math.ceil(SW / F) + 1, Math.ceil(bandH));
   }
-  s.fillStyle = tok('--copper');
-  for (const [k, sub, band] of d.events) s.fillRect(Math.round(((k + sub / 4) / F) * SW), SH * 0.76 + band * SH * 0.08, Math.max(1, dpr), SH * 0.07);
 }
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(draw, 150); });
 const mq = matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener?.('change', () => { if (current) current.img = null; draw(); });
@@ -472,10 +568,13 @@ function renderGame(t, client) {
     w.postMessage({ song, songId: t.demo ? 'demo' : t.id, client, rp: rpSounds() });
   });
 }
-function rms(buf) { const x = buf.getChannelData(0); let e = 0; for (let i = 0; i < x.length; i += 4) e += x[i] * x[i]; return Math.sqrt(e / (x.length / 4)) || 1e-9; }
-function matchLevels(t, buf = t.game) {
+function rms(buf, s0 = 0, s1 = Infinity) {
+  const x = buf.getChannelData(0), i0 = Math.round(s0 * buf.sampleRate), i1 = Math.min(x.length, Math.round(s1 * buf.sampleRate));
+  let e = 0, n = 0; for (let i = i0; i < i1; i += 4) { e += x[i] * x[i]; n++; } return Math.sqrt(e / Math.max(1, n)) || 1e-9;
+}
+function matchLevels(t, buf) {
   if (!buf || !t.orig) return;
-  const gx = buf.getChannelData(0), target = rms(t.orig) / rms(buf);
+  const seg = segOf(t) ?? { s0: 0, s1: Infinity }, gx = buf.getChannelData(0), target = rms(t.orig, seg.s0, seg.s1) / rms(buf);
   let pk = 0; for (let i = 0; i < gx.length; i++) pk = Math.max(pk, Math.abs(gx[i] * target));
   const g = target / Math.max(1, pk / 0.98); for (let i = 0; i < gx.length; i++) gx[i] *= g;
 }
@@ -487,7 +586,7 @@ function stopPlay(keep) {
 }
 function position() { return src ? ctxNow().currentTime - startedAt : offset; }
 async function play(kind) {
-  const t = current; if (!t || t.state !== 'ok') return;
+  const t = current; if (!t || (kind === 'game' ? t.state !== 'ok' : !t.orig)) return;
   const at = which ? position() : offset;
   stopPlay(true);
   const ctx = ctxNow(); await ctx.resume();
@@ -505,27 +604,29 @@ async function play(kind) {
   $('playMsg').textContent = kind === 'game'
     ? `アドオン本体のコードが送った命令（${info.callsPerTick.toFixed(1)} 回/tick、正弦波 ${info.voices} 本＋ノイズ ${info.instances - info.voices} 本）を、${CLIENT_NOTE[client]}で音にしたもの`
     : '原曲';
-  which = kind; offset = Math.min(at, buf.duration - 0.05);
+  // (the original from where the chosen part starts)
+  const g = kind === 'orig' && segOf(t), s0 = g ? g.s0 : 0, len = g ? g.s1 - g.s0 : buf.duration;
+  which = kind; offset = Math.max(0, Math.min(at, len - 0.05));
   src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination);
   src.onended = () => { stopPlay(); };
-  startedAt = ctx.currentTime - offset; src.start(0, offset);
+  startedAt = ctx.currentTime - offset; src.start(0, s0 + offset, Math.max(0.01, len - offset));
   $(kind === 'game' ? 'playGame' : 'playOrig').setAttribute('aria-pressed', 'true');
   const tick = () => { drawHead(); raf = requestAnimationFrame(tick); }; tick();
 }
 function drawHead() {
   const cv = $('head'), g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height);
-  const t = current; if (!t || t.state !== 'ok') return;
-  const p = position(), x = (p / t.song.meta.seconds) * cv.width;
+  const t = current, len = lengthOf(t); if (!len) return;
+  const p = position(), x = (p / len) * cv.width;
   g.fillStyle = tok('--copper'); g.fillRect(Math.round(x), 0, Math.max(1, Math.round(cv.width / cv.getBoundingClientRect().width * 1.5)), cv.height);
-  $('time').textContent = `${fmt(p, true)} / ${fmt(t.song.meta.seconds, true)}`;
+  $('time').textContent = `${fmt(p, true)} / ${fmt(len, true)}`;
 }
 $('playGame').addEventListener('click', () => play('game'));
 $('playOrig').addEventListener('click', () => play('orig'));
 $('stopBtn').addEventListener('click', () => stopPlay());
 $('client').addEventListener('change', () => { if (which === 'game') play('game'); });   // (switches in place, at the same position)
 $('stage').addEventListener('click', (e) => {
-  const t = current; if (!t || t.state !== 'ok') return;
-  const r = $('stage').getBoundingClientRect(), p = ((e.clientX - r.left) / r.width) * t.song.meta.seconds;
+  const t = current, len = lengthOf(t); if (!len) return;
+  const r = $('stage').getBoundingClientRect(), p = Math.max(0, Math.min(len, ((e.clientX - r.left) / r.width) * len));
   if (which) { const k = which; offset = p; which = null; stopPlay(true); offset = p; play(k); } else { offset = p; drawHead(); }
 });
 
@@ -580,32 +681,74 @@ $('savePack').addEventListener('click', savePack);
 $('saveAddon').addEventListener('click', saveAddon);
 
 // ------------------------------------------------------------ the song as text to paste in the game (src/songtext.ts, the add-on's own decoder)
+const T = window.SpectralText, PART = T.FIELD_CHARS;    // (parts that a phone's text box takes whole: measured, SPEC.md)
+$('partMax').textContent = PART.toLocaleString();
+/** the song's text (SPZ2, or SPA2 in ASCII) with that many voices (0: all), kept on the track until it changes */
+function textOf(t, v, ascii) {
+  if (!t || t.state !== 'ok') return null;
+  const key = `${v}:${ascii}`; t.text ??= {};
+  if (t.text[key]) return t.text[key];
+  try {
+    const meta = { ...t.song.meta, title: t.title, artist: t.artist, id: t.id };
+    const parts = T.toText(T.encodeSong(meta, t.song.bytes, { voices: v || undefined }), { ascii, maxChars: PART });
+    return (t.text[key] = { parts, chars: parts.reduce((n, x) => n + x.length, 0) });
+  } catch (e) { return (t.text[key] = { error: e.message || String(e), parts: [], chars: 0 }); }
+}
+let shown = null, nextPart = 0;
+function clearText() { shown = null; $('textParts').textContent = ''; $('textBar').hidden = true; $('textMsg').textContent = ''; }
+function labelNext() {
+  const n = shown.parts.length;
+  $('copyNext').textContent = n === 1 ? 'コピー' : nextPart < n ? `パート ${nextPart + 1} / ${n} をコピー` : 'もう一度パート 1 から';
+}
 function makeText() {
-  const T = window.SpectralText, t = current;
-  const box = $('textParts'); box.textContent = '';
+  const t = current; clearText();
   if (!t || t.state !== 'ok') { $('textMsg').className = 'msg err'; $('textMsg').textContent = '曲を選んでください（変換が終わったもの）。'; return; }
-  const v = +$('pxVoices').value, raw = $('pxQ').value === 'raw', ascii = $('pxEnc').value === 'ascii';
-  const meta = { ...t.song.meta, title: t.title, artist: t.artist, id: t.id };
-  let parts;
-  // (SPZ2 on its grids by default; SPZ1 with no grid at all for "そのまま")
-  try { parts = T.toText(T.encodeSong(meta, t.song.bytes, raw ? { voices: v || undefined, format: 1, q: 1 } : { voices: v || undefined }), { ascii }); }
-  catch (e) { $('textMsg').className = 'msg err'; $('textMsg').textContent = `テキストにできませんでした: ${e.message}`; return; }
-  const chars = parts.reduce((n, x) => n + x.length, 0);
+  const r = textOf(t, +$('pxVoices').value, $('pxEnc').value === 'ascii');
+  if (r.error) { $('textMsg').className = 'msg err'; $('textMsg').textContent = `テキストにできませんでした: ${r.error}`; return; }
+  const parts = r.parts; shown = { t, parts }; nextPart = 0;
   $('textMsg').className = 'msg';
-  $('textMsg').textContent = `${t.title}: ${parts.length} パート・${chars.toLocaleString()} 文字（曲データ ${(t.song.bytes.length / 1024).toFixed(0)} KB）。` + (parts.length > 1 ? 'ゲームで 1 から順に貼り付けてください（フォームが次のパートを待ちます）。' : 'ゲームで 1 回貼り付ければ登録されます。');
+  $('textMsg').textContent = `${t.title}: ${parts.length} パート・${r.chars.toLocaleString()} 文字（曲データ ${(t.song.bytes.length / 1024).toFixed(0)} KB）。` + (parts.length > 1 ? 'ゲームで 1 から順に貼り付けてください（フォームが次のパートを待ちます）。' : 'ゲームで 1 回貼り付ければ登録されます。');
+  $('textBar').hidden = false; $('copyMsg').textContent = ''; labelNext();
   parts.forEach((text, i) => {
     const el = document.createElement('div'); el.className = 'part';
-    el.innerHTML = `<div class="row"><b>パート ${i + 1} / ${parts.length}</b><span class="note">${text.length.toLocaleString()} 文字</span><button class="ghost">コピー</button></div><textarea readonly rows="3" class="mono"></textarea>`;
+    el.innerHTML = `<div class="row"><b>パート ${i + 1} / ${parts.length}</b><span class="note">${text.length.toLocaleString()} 文字</span><button class="ghost">コピー</button></div><textarea readonly rows="2" class="mono"></textarea>`;
     const ta = el.querySelector('textarea'), btn = el.querySelector('button');
     ta.value = text;
     btn.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(text); btn.textContent = 'コピーしました'; }
       catch { ta.focus(); ta.select(); btn.textContent = '選択しました: コピーしてください'; }
     });
-    box.appendChild(el);
+    $('textParts').appendChild(el);
   });
 }
+/** the parts in order: each press copies the next one */
+$('copyNext').addEventListener('click', async () => {
+  if (!shown) return;
+  const n = shown.parts.length;
+  if (n > 1 && nextPart >= n) { nextPart = 0; labelNext(); $('copyMsg').textContent = ''; return; }
+  const i = n === 1 ? 0 : nextPart, ta = $('textParts').querySelectorAll('textarea')[i];
+  try { await navigator.clipboard.writeText(shown.parts[i]); $('copyMsg').textContent = n === 1 ? 'コピーしました。ゲームで貼り付けてください。' : `パート ${i + 1} / ${n} をコピーしました。ゲームで貼り付けて送ってから、次へ。`; }
+  catch { ta.focus(); ta.select(); $('copyMsg').textContent = `パート ${i + 1} を選択しました: コピーしてください。`; }
+  if (n > 1) nextPart = i + 1;
+  labelNext();
+});
+/** all the parts in one file (a part a paragraph): to carry them to another device */
+$('saveText').addEventListener('click', async () => {
+  if (!shown) return;
+  const dl = await saver(), fname = `${slug(shown.t.title)}.spectral.txt`;
+  if (!dl) { $('copyMsg').textContent = 'この表示ではファイルを保存できません。claude.ai でこのページを開き直してください。'; return; }
+  try { await dl.save({ filename: fname, data: new Blob([shown.parts.join('\n\n') + '\n'], { type: 'text/plain' }) }); $('copyMsg').textContent = `保存しました: ${fname}（1 段落が 1 パート）`; }
+  catch (e) { $('copyMsg').textContent = e.code === 'declined' ? '保存を取りやめました。' : `保存できませんでした (${e.code || e.message || e})`; }
+});
+['pxVoices', 'pxEnc'].forEach((id) => $(id).addEventListener('change', () => { if (shown) makeText(); }));
 $('makeText').addEventListener('click', makeText);
+
+// ------------------------------------------------------------ this browser remembers the choices (nothing else is kept)
+for (const id of ['sweeps', 'client', 'pxVoices', 'pxEnc']) {
+  const el = $(id), key = 'spectral-converter:' + id;
+  try { const v = localStorage.getItem(key); if (v !== null && [...el.options].some((o) => o.value === v)) el.value = v; } catch { /* storage off */ }
+  el.addEventListener('change', () => { try { localStorage.setItem(key, el.value); } catch { /* storage off */ } });
+}
 
 // ------------------------------------------------------------ start with the demo (its song data is the one the add-on ships)
 (async () => {
