@@ -234,8 +234,8 @@
 1. サンプラー＋seekTo（ピアノから）と p01 の実機 — **済**（p01・p04: 束の中は 1 ms、束ねるは 2 に。1 tick に始める数の上限は p06）
 2. 曲ごとのパック（mp3 の質）と p03 — **済**（p03: 48 kHz に。内蔵のエチュードは ViSQOL 3.28）
 3. 質の直し（リミッター・切り替え）と p05 — リミッターは**済**（`/spectral:limit`）、実機は p07（p05 は入る前のアドオンで走った）
-4. 素片の声（読み上げ）と p02、そのあと音素の道の VC — 読み上げは**済**（`/spectral:say`・tools/speech.py）、p02 と Whisper で聞き取り、
-   VC は tools/exp/vc_units.py（声 → Whisper → 素片、話した場所と高さのまま）
+4. 素片の声（読み上げ）と p02、そのあと音素の道の VC — 読み上げは**済**（`/spectral:say`・tools/speech.py）。p02（実機）で前の素は聞き取れず
+   （子音が切れていた）→ 切り直し＋母音を次の子音で止めて手元の Whisper 0.26（p09 が実機）。VC は tools/exp/vc_units.py（0.71: 音素の時刻が要る）
 5. ゲームの中の web、/connect の道 — **済**（Spectral Connect: ラボの OreUI のページ・ゲームの中の GeoUI のリモコン（bds/addons/spectral_remote）、
    変換器を `--ore`・`cmd:` の値・`mail:`（/connect へ）で育てた）。実機の /connect はまだ
 6. 採譜＋分離、生演奏、歌声合成 — 生演奏は**済**（E2: ページの鍵・Web MIDI → 50 ms の束 → 弾いた間のまま。遅れは未実測）

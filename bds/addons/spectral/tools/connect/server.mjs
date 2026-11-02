@@ -29,6 +29,8 @@ const PORT = Number(arg('--port', process.env.PORT ?? 8790));
 const MAX_S = Number(arg('--max', 240));
 // (--idle <s>: end by itself after so long with no game — started by the lab beside a BDS: lab-service.json)
 const IDLE_S = Number(arg('--idle', 0));
+// (--greet: a game that connects hears a short scale on the live keys — a device run's recording then says the connection worked)
+const GREET = process.argv.includes('--greet');
 const MAIL_MS = 700;
 // live notes (the page's keys, a MIDI keyboard by Web MIDI): sent every LIVE_MS, each note LATENCY ms after it was played — the add-on
 // places it to the millisecond by seekTo (src/notes.ts LiveKeys), the batch's clock taking off the wait for the game's tick
@@ -108,6 +110,7 @@ class Game {
     // (the remote: shown as connected, and its mails read; Spectral Player says hello on the player's action bar)
     this.command('scriptevent sr:show ws 1');
     this.command('scriptevent spectral:remote hello');
+    if (GREET) setTimeout(() => this.liveScale(), 1500);
     this.mails = new Map(); this.done = new Set(); this.polling = false; this.live = [];
     this.liveTimer = setInterval(() => this.flushLive(), LIVE_MS);
     this.poll = setInterval(() => this.checkMail().catch((e) => log('mail:', e.message)), MAIL_MS);

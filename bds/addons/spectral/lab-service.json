@@ -1,5 +1,5 @@
 {
   "//": "Spectral Connect beside the lab's BDS (common/core.mjs unitService): the game's /connect reaches it on 8790 — the device run p08 (tools/exp/queue/p08_connect.json) types /connect ${DEVICE_HOST}:8790; it ends itself after an hour with no game",
-  "cmd": ["node", "tools/connect/server.mjs", "--port", "8790", "--idle", "3600"],
+  "cmd": ["node", "tools/connect/server.mjs", "--port", "8790", "--idle", "3600", "--greet"],
   "port": 8790
 }

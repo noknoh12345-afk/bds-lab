@@ -1,0 +1,53 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+  "# p12（p08 のやり直し）: p08 は /connect の後の hello を 30 秒待って止まった（run 41528680880: 何が起きたかは封じた画面だけ）。今度は止まらずに",
+  "# 3 通りの書き方（${DEVICE_HOST}・ws://・172.17.0.1）を試し、つながればサーバーが音階を鳴らす（--greet）ので録音で分かる。チャット・手紙も録る"
+ ],
+ "arms": [],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "sections": [
+  {
+   "title": "connect",
+   "lines": [
+    "do execute as @a run spectral:sampler 2 250 28 300 true",
+    "# /connect without stopping on the way: each attempt recorded (the server plays a scale to a game that connects: --greet)",
+    "audio start cn_connect",
+    "chat /connect ${DEVICE_HOST}:8790",
+    "wait 9000",
+    "shot connect-a",
+    "chat /connect ws://${DEVICE_HOST}:8790",
+    "wait 9000",
+    "shot connect-b",
+    "chat /connect ws://172.17.0.1:8790",
+    "wait 9000",
+    "shot connect-c",
+    "audio stop",
+    "audio export cn_connect 192",
+    "# a song by the chat",
+    "audio start cn_chat",
+    "chat !spectral tools/exp/packs/notes/fur_elise.song.json",
+    "wait 18000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export cn_chat 192",
+    "# the remote's mails: a scale on the live keys, then a song",
+    "audio start cn_scale",
+    "do tag @a add geoui.mail.sr.1.0.1.eyJuIjoic2NhbGUiLCJmIjp7fX0",
+    "wait 4500",
+    "audio stop",
+    "audio export cn_scale 192",
+    "audio start cn_mail",
+    "do tag @a add geoui.mail.sr.2.0.1.eyJuIjoicGxheSIsImYiOnsidXJsIjoidG9vbHMvZXhwL3BhY2tzL25vdGVzL2NsaWNrc19wdWxzZS5zb25nLmpzb24ifX0",
+    "wait 6000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export cn_mail 192",
+    "shot after",
+    "do execute as @a run spectral:sampler 2 250 28 300 false"
+   ]
+  }
+ ]
+}
