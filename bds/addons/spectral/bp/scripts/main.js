@@ -519,7 +519,7 @@ function* codeFrames2(rc, f, out, put) {
   const maxA = Math.floor(127 / g.qa), maxP = Math.floor(65535 / g.qp), maxN = Math.floor(255 / g.qn);
   const lastA = new Uint8Array(N), lastP = new Uint16Array(N), lastDa = new Int16Array(N), lastDp = new Int32Array(N), age = new Uint16Array(N), offFor = new Uint16Array(N).fill(99);
   const wroteA = new Int16Array(N).fill(-1), wroteP = new Int32Array(N).fill(-1), lastNi = new Uint8Array(M), lastNd = new Int16Array(M);
-  const acs = new Uint8Array(F * N), ats = new Uint8Array(F * N);
+  const acs = new Uint8Array(F * N), ats = new Uint8Array(F * N), nzs = new Uint8Array(F * M);
   const chk = (c, what) => {
     if (!c) throw new Error(`${what} out of range (the text is broken)`);
   };
@@ -590,6 +590,7 @@ function* codeFrames2(rc, f, out, put) {
       chk(c >= 0 && c <= maxN, "a noise level");
       lastNd[j] = d;
       lastNi[j] = c;
+      nzs[k * M + j] = c;
       out.push(c * g.qn);
     }
     const ev = put ? put.ev[k] : [];
@@ -609,7 +610,8 @@ function* codeFrames2(rc, f, out, put) {
     for (let v = 0; v < N; v++) {
       const a0 = acs[k * N + v], a1 = k + 1 < F ? acs[(k + 1) * N + v] : a0;
       let c = 3;
-      if (a0 || a1) {
+      if (a0 && a1 === a0 && !(k + 1 < F && ats[(k + 1) * N + v])) c = lastF[v];
+      else if (a0 || a1) {
         const dd = a1 === a0 ? 0 : a1 && a0 ? Math.abs(a1 - a0) * g.qa <= 4 ? 1 : 2 : 3;
         const ctx = (dd * 4 + lastF[v]) * 2 + (k + 1 < F && ats[(k + 1) * N + v] ? 1 : 0);
         c = md.vf.code(rc, ctx, put ? put.vd[k * N + v] : 0);
@@ -624,7 +626,8 @@ function* codeFrames2(rc, f, out, put) {
   for (let k = 0; k < F; k++) {
     const row = new Uint8Array(pn);
     for (let j = 0; j < M; j++) {
-      const c = md.nf.code(rc, j * 4 + lastN[j], put ? put.nzd[k * M + j] : 0);
+      const same = k + 1 < F ? nzs[(k + 1) * M + j] === nzs[k * M + j] : true;
+      const c = same ? lastN[j] : md.nf.code(rc, j * 4 + lastN[j], put ? put.nzd[k * M + j] : 0);
       lastN[j] = c;
       row[j >> 2] |= c << 2 * (j & 3);
     }

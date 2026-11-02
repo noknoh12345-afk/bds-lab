@@ -294,7 +294,7 @@ function* codeFrames2(rc: Rc, f: Frames2, out: Blob, put?: { ai: Uint8Array; pi:
   const maxA = Math.floor(127 / g.qa), maxP = Math.floor(65535 / g.qp), maxN = Math.floor(255 / g.qn);
   const lastA = new Uint8Array(N), lastP = new Uint16Array(N), lastDa = new Int16Array(N), lastDp = new Int32Array(N), age = new Uint16Array(N), offFor = new Uint16Array(N).fill(99);
   const wroteA = new Int16Array(N).fill(-1), wroteP = new Int32Array(N).fill(-1), lastNi = new Uint8Array(M), lastNd = new Int16Array(M);
-  const acs = new Uint8Array(F * N), ats = new Uint8Array(F * N);
+  const acs = new Uint8Array(F * N), ats = new Uint8Array(F * N), nzs = new Uint8Array(F * M);
   const chk = (c: boolean, what: string) => { if (!c) throw new Error(`${what} out of range (the text is broken)`); };
   for (let k = 0; k < F; k++) {
     const mask = new Uint8Array(nb), body: number[] = [];
@@ -350,7 +350,7 @@ function* codeFrames2(rc: Rc, f: Frames2, out: Blob, put?: { ai: Uint8Array; pi:
     for (let j = 0; j < M; j++) {
       const d = md.nz.sint(rc, j * 3 + (lastNd[j] === 0 ? 0 : Math.abs(lastNd[j]) <= 2 ? 1 : 2), put ? put.ni[k * M + j] - lastNi[j] : 0), c = lastNi[j] + d;
       chk(c >= 0 && c <= maxN, 'a noise level');
-      lastNd[j] = d; lastNi[j] = c; out.push(c * g.qn);
+      lastNd[j] = d; lastNi[j] = c; nzs[k * M + j] = c; out.push(c * g.qn);
     }
     const ev = put ? put.ev[k] : [];
     let ne = 0;
@@ -366,7 +366,10 @@ function* codeFrames2(rc: Rc, f: Frames2, out: Blob, put?: { ai: Uint8Array; pi:
     for (let v = 0; v < N; v++) {
       const a0 = acs[k * N + v], a1 = k + 1 < F ? acs[(k + 1) * N + v] : a0;
       let c = 3;
-      if (a0 || a1) {                                       // (silent before and after: nothing to fade, 50 ms written)
+      // (silent before and after: nothing to fade, 50 ms written. The same level after: the add-on sends no fade at all — a level
+      //  that moves less than 0.75 dB is not sent — so the voice's last fade is written, uncoded)
+      if (a0 && a1 === a0 && !(k + 1 < F && ats[(k + 1) * N + v])) c = lastF[v];
+      else if (a0 || a1) {
         const dd = a1 === a0 ? 0 : a1 && a0 ? (Math.abs(a1 - a0) * g.qa <= 4 ? 1 : 2) : 3;
         const ctx = (dd * 4 + lastF[v]) * 2 + (k + 1 < F && ats[(k + 1) * N + v] ? 1 : 0);
         c = md.vf.code(rc, ctx, put ? put.vd![k * N + v] : 0);
@@ -380,7 +383,12 @@ function* codeFrames2(rc: Rc, f: Frames2, out: Blob, put?: { ai: Uint8Array; pi:
   const pn = (M + 3) >> 2, lastN = new Uint8Array(M).fill(3);
   for (let k = 0; k < F; k++) {
     const row = new Uint8Array(pn);
-    for (let j = 0; j < M; j++) { const c = md.nf.code(rc, j * 4 + lastN[j], put ? put.nzd![k * M + j] : 0); lastN[j] = c; row[j >> 2] |= c << (2 * (j & 3)); }
+    for (let j = 0; j < M; j++) {
+      // (a band at the same level the next frame: no fade is sent, its last one written)
+      const same = k + 1 < F ? nzs[(k + 1) * M + j] === nzs[k * M + j] : true;
+      const c = same ? lastN[j] : md.nf.code(rc, j * 4 + lastN[j], put ? put.nzd![k * M + j] : 0);
+      lastN[j] = c; row[j >> 2] |= c << (2 * (j & 3));
+    }
     for (const x of row) out.push(x);
   }
 }
