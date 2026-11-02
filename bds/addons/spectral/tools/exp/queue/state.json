@@ -131,10 +131,20 @@
   "status": "pending"
  },
  "p08_connect": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "e822532",
+  "conclusion": "failure",
+  "earlier_runs": [
+   "41528484426"
+  ],
+  "ended": "2026-11-03 06:28",
+  "failed_steps": 0,
+  "recordings": 0,
   "run": "41528484426",
   "started": "2026-11-03 06:27",
-  "status": "running"
+  "status": "pending",
+  "tries": 1
  },
  "p09_speech_units": {
   "status": "pending"
