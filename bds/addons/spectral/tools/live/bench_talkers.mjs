@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 const U = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const { Talker, WorkerPool, monoOf } = await import(U + '/tools/live/bridge.mjs');
 const k = Number(process.argv[2] || 2), mode = process.argv[3], secs = Number(process.argv[4] || 10);
-const pool = mode === 'pool' ? new WorkerPool({ voices: 16, refine: 2, spare: k }) : null;
+const V = Number(process.env.BENCH_VOICES || 16);
+const pool = mode === 'pool' ? new WorkerPool({ voices: V, refine: 2, spare: k }) : null;
 if (pool) { await new Promise((r) => setTimeout(r, 4000)); pool.spare = 0; }
 const worker = mode === 'pool' ? pool : mode === '1';
 const files = ['speech_ja_soseki', 'speech_en_wordsworth', 'vocal_name_of_love', 'rock_big', 'choir_how_long'];
@@ -19,7 +20,7 @@ let t0 = 0;
 const ts = pcms.map((_, i) => {
   let n = 0;
   // (frame n is due when its 2400 samples are in: (n + 1) * 50 ms after the start, plus the refinement's 2 frames)
-  return new Talker({ id: 'vc_' + i, gamertag: 'P' + i, voices: 16, refine: 2, worker, quietMs: 0, send: (l) => { if (l.includes('"end"')) return; late.push([n, Date.now() - t0 - (n + 3) * 50]); n++; } });
+  return new Talker({ id: 'vc_' + i, gamertag: 'P' + i, voices: V, refine: 2, worker, quietMs: 0, send: (l) => { if (l.includes('"end"')) return; late.push([n, Date.now() - t0 - (n + 3) * 50]); n++; } });
 });
 // (the threads started a second before anyone talks: a talker's thread is made as they are first heard)
 await new Promise((r) => setTimeout(r, Number(process.argv[5] || 0)));

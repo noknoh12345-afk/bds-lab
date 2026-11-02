@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The live encoder on a file (web/live.js, the same code the Discord bridge and a microphone run): any audio ffmpeg reads →
 // Spectral Player live frames, as a voice chat would send them.
-//   node tools/live/encoder.mjs <audio> --song <out.song.json> [--voices 16] [--refine 2|0] [--id <id>] [--title <t>]
+//   node tools/live/encoder.mjs <audio> --song <out.song.json> [--voices 24] [--refine 2|0] [--id <id>] [--title <t>]
 //        a song (format 2) made of the live frames: /spectral:play it, score it in tools/exp, send it with the rig (audio song pack=)
 //   node tools/live/encoder.mjs <audio> --live <stream id> [--at follow:<player>|phones:<player>|speaker:x,y,z] [--realtime] [--frames 2]
 //        the server console's lines (scriptevent spectral:live …) on stdout, paced as the sound plays with --realtime: pipe them into
@@ -24,7 +24,7 @@ export function load(f) {
   if (r.status !== 0) throw new Error(`ffmpeg: ${String(r.stderr).trim().slice(-300)}`);
   return new Float32Array(r.stdout.buffer, r.stdout.byteOffset, r.stdout.byteLength / 4);
 }
-const x = load(file), voices = Number(opt('--voices', 16));
+const x = load(file), voices = Number(opt('--voices', 24));
 // (--refine: the refinement as it goes, web/live.js LiveRefiner — its frames that many frames (2: 100 ms) later, 2 by default since
 // run 41290363885 measured it +0.26 ViSQOL on a phone, 3 songs out of 3 twice; 0: none, the lowest latency; --level: the listener's dB)
 const enc = new L.LiveEncoder({ voices, win: Number(opt('--win', 2048)), nzWin: Number(opt('--nzwin', 0)), refine: Number(opt('--refine', 2)), level: Number(opt('--level', 10)) });

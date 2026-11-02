@@ -29,7 +29,8 @@ if (warm) {
 }
 let enc;
 parentPort.on('message', (m) => {
-  enc ??= new L.LiveEncoder(opts);
+  // (the first message may carry the talker's voice count: a ready thread was warmed for any — bridge.mjs --voices auto)
+  enc ??= new L.LiveEncoder({ ...opts, ...(m.voices ? { voices: m.voices } : {}) });
   let frames = [];
   if (m.push) frames = enc.push(m.push);
   else if (m.quiet) frames = [...enc.push(new Float32Array(2 * L.HOP)), ...enc.flush()];

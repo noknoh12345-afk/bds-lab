@@ -7,7 +7,7 @@
 //   cd tools/live && npm install          (discord.js, @discordjs/voice — with Discord's voice encryption and DAVE — prism-media,
 //                                          opusscript: package.json)
 //   DISCORD_BOT_TOKEN=… node tools/live/bridge.mjs --guild <server id> --channel <voice channel id> [--links links.json]
-//        [--bds <folder with bedrock_server>] [--stdout] [--lab [live.json]] [--voices 16] [--refine 2|0] [--workers on|off]
+//        [--bds <folder with bedrock_server>] [--stdout] [--lab [live.json]] [--voices auto|16|24] [--refine 2|0] [--workers on|off]
 //        [--fake <audio> --as <gamertag>]
 //
 // In Discord: /mc <gamertag> links you (the bot's own command, in that server). Where the frames go:
@@ -71,7 +71,7 @@ export class Talker {
    *  true for a new thread, a WorkerPool for a ready one; done: a promise for the end (its last lines sent) */
   constructor({ id, gamertag, voices = 16, send, quietMs = 120, refine = 0, worker = false }) {
     // (refine: frames of look-ahead for the refinement as it goes, web/live.js LiveRefiner: 2 = +100 ms; 0 = none)
-    this.id = id; this.at = `follow:${gamertag}`; this.send = send; this.seq = 0; this.first = true;
+    this.id = id; this.at = `follow:${gamertag}`; this.send = send; this.seq = 0; this.first = true; this.voices = voices;
     this.quietMs = quietMs; this.timer = undefined; this.quiets = 0;
     if (worker) {
       // (the meta from an encoder without the refinement: the same voices and bands, nothing to compute)
@@ -85,7 +85,8 @@ export class Talker {
     }
   }
   push(mono) {
-    if (this.w) this.w.postMessage({ push: mono }); else this.frames(mono);
+    // (a thread from the pool was warmed for any voice count: the first push tells it this talker's)
+    if (this.w) { this.w.postMessage(this.told ? { push: mono } : { push: mono, voices: this.voices }); this.told = true; } else this.frames(mono);
     if (this.quietMs) { clearTimeout(this.timer); this.timer = setTimeout(() => this.quiet(), this.quietMs); this.timer.unref?.(); }
   }
   frames(mono, flush = false) { this.out(flush ? this.enc.flush() : this.enc.push(mono)); }
@@ -138,10 +139,14 @@ function sinkOf(o) {
 
 async function main() {
   const argv = process.argv.slice(2), opt = (k, d) => { const i = argv.indexOf(k); return i < 0 ? d : argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true; };
-  const o = { guild: opt('--guild'), channel: opt('--channel'), links: path.resolve(opt('--links', path.join(here, 'links.json'))), bds: opt('--bds'), lab: opt('--lab'), voices: Number(opt('--voices', 16)), refine: Number(opt('--refine', 2)), fake: opt('--fake'), as: opt('--as'), workers: opt('--workers', 'auto') };
+  const o = { guild: opt('--guild'), channel: opt('--channel'), links: path.resolve(opt('--links', path.join(here, 'links.json'))), bds: opt('--bds'), lab: opt('--lab'), voices: opt('--voices', 'auto'), refine: Number(opt('--refine', 2)), fake: opt('--fake'), as: opt('--as'), workers: opt('--workers', 'auto') };
   o.workers = o.workers === 'auto' ? o.refine > 0 && os.cpus().length > 1 : o.workers === true || o.workers === 'on';
+  // --voices auto (the default): 24 voices — with the 8 noise bands the 32 sounds a phone plays at once (measured), all of them —
+  // while fewer people talk at once than the machine has cores, else 16 (on 2 cores, three talkers at 24 voices fell behind: frames
+  // 1.1 s late at p95, measured with tools/live/bench_talkers.mjs). The add-on shares a listener's sounds among the streams they hear
+  const voicesFor = (talking) => (o.voices === 'auto' ? (talking < os.cpus().length ? 24 : 16) : Number(o.voices));
   // (a thread ready for the next talker, its code compiled: the pool's)
-  const pool = o.workers ? new WorkerPool({ voices: o.voices, refine: o.refine }) : false;
+  const pool = o.workers ? new WorkerPool({ voices: voicesFor(0), refine: o.refine }) : false;
   if (o.lab === true) o.lab = path.join(here, '..', '..', '..', '..', '.lab', 'live.json');
   const send = sinkOf(o);
   if (o.fake) {
@@ -150,7 +155,7 @@ async function main() {
     const { spawnSync } = await import('node:child_process');
     const r = spawnSync('ffmpeg', ['-v', 'error', '-i', o.fake, '-f', 's16le', '-ac', '2', '-ar', '48000', '-'], { maxBuffer: 1 << 30 });
     if (r.status !== 0) { console.error(String(r.stderr)); process.exit(1); }
-    const t = new Talker({ id: 'vc_fake', gamertag: o.as, voices: o.voices, refine: o.refine, send, worker: pool }), pcm = r.stdout, chunk = 3840, t0 = Date.now();   // 20 ms, as Discord sends
+    const t = new Talker({ id: 'vc_fake', gamertag: o.as, voices: voicesFor(0), refine: o.refine, send, worker: pool }), pcm = r.stdout, chunk = 3840, t0 = Date.now();   // 20 ms, as Discord sends
     for (let i = 0; i < pcm.length; i += chunk) {
       t.push(monoOf(pcm.subarray(i, i + chunk)));
       const wait = t0 + ((i / chunk + 1) * 20) - Date.now(); if (wait > 0) await new Promise((res) => setTimeout(res, wait));
@@ -200,7 +205,7 @@ async function main() {
       const tag = readLinks(o.links)[userId];
       if (!tag) { if (!unlinked.has(userId)) { unlinked.add(userId); console.error(`[bridge] ${userId} is not linked (/mc <gamertag>): not played`); } return; }
       let t = talkers.get(userId);
-      if (!t || t.at !== `follow:${tag}`) { t?.end(); t = new Talker({ id: streamId(userId), gamertag: tag, voices: o.voices, refine: o.refine, send, worker: pool }); talkers.set(userId, t); }
+      if (!t || t.at !== `follow:${tag}`) { t?.end(); t = new Talker({ id: streamId(userId), gamertag: tag, voices: voicesFor(listening.size), refine: o.refine, send, worker: pool }); talkers.set(userId, t); }
       const opus = conn.receiver.subscribe(userId, { end: { behavior: voice.EndBehaviorType.AfterSilence, duration: 1000 } });
       const dec = new prism.opus.Decoder({ rate: 48000, channels: 2, frameSize: 960 });
       listening.add(userId);

@@ -94,6 +94,14 @@ const tpw = new Talker({ id: 'vc_w', gamertag: 'Steve', voices: 16, send: (l) =>
 for (const h of heard) tpw.push(h);
 tpw.end(); await tpw.done; pool.close();
 ok(pl2.length === ml.length && pl2.every((l, i) => l === ml[i]), `a warmed thread from the pool: the same ${pl2.length} lines`);
+// a thread warmed for 16 voices serves a talker of 24 (--voices auto: the first push tells it) as the main thread does
+const pool24 = new WorkerPool({ voices: 16, refine: 2 }), p24 = [], m24 = [];
+const t24w = new Talker({ id: 'vc_w', gamertag: 'Steve', voices: 24, send: (l) => p24.push(l), quietMs: 0, refine: 2, worker: pool24 });
+const t24m = new Talker({ id: 'vc_w', gamertag: 'Steve', voices: 24, send: (l) => m24.push(l), quietMs: 0, refine: 2 });
+for (const h of heard) { t24w.push(h); t24m.push(h); }
+t24w.end(); t24m.end(); await t24w.done; await t24m.done; pool24.close();
+const j24 = JSON.parse(p24[0].slice(p24[0].indexOf('{'))), v24 = j24.m?.N;
+ok(p24.length === m24.length && p24.every((l, i) => l === m24[i]) && p24.length > 0 && v24 === 24, `24 voices on a thread warmed for 16: the same ${p24.length} lines as the main thread (meta: ${v24} voices)`);
 // links: /mc <gamertag>
 const lf = path.join(tmp, 'links.json');
 ok(link(lf, '123456789012345678', 'Steve') && link(lf, '223456789012345678', 'Alex Two') && !link(lf, 'nope', 'Steve') && !link(lf, '323456789012345678', 'bad;name') && !link(lf, '423456789012345678', 'x'.repeat(33)), 'links: a Discord id and a gamertag, nothing else');
