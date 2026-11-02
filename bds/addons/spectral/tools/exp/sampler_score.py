@@ -137,9 +137,9 @@ def main():
     for f in sorted(glob.glob(os.path.join(a.folder, '*'))):
         name = os.path.basename(f).rsplit('.', 1)[0]
         pre = name.split('_')[0]
-        if pre in ('pp', 'p3'):
+        if pre in ('pp', 'p3', 'ap'):          # (p04: ap = the pairs with aliases)
             res[name] = {'pairs': score_pairs(load(f))}
-        elif pre in ('pu', 'u3'):
+        elif pre in ('pu', 'u3', 'au', 'a3'):  # (p04: au, a3 = the pulse with aliases, 2D and 3D)
             res[name] = {'pulse': score_pulse(load(f))}
         else:
             continue
