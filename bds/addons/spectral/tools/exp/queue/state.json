@@ -47,6 +47,12 @@
   "status": "done",
   "tries": 1
  },
+ "p04_aliases": {
+  "commit": "b988795",
+  "run": "41482910293",
+  "started": "2026-11-03 01:35",
+  "status": "running"
+ },
  "q01_same_twice": {
   "arms": {
    "ra": {
