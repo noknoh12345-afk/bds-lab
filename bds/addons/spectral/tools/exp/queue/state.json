@@ -131,9 +131,15 @@
   "status": "pending"
  },
  "p08_connect": {
-  "status": "pending"
+  "commit": "e822532",
+  "run": "41528484426",
+  "started": "2026-11-03 06:27",
+  "status": "running"
  },
  "p09_speech_units": {
+  "status": "pending"
+ },
+ "p10_sampler_level": {
   "status": "pending"
  },
  "q01_same_twice": {
