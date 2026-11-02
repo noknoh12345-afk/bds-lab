@@ -189,10 +189,32 @@
   "tries": 1
  },
  "q06_two_streams": {
+  "arms": {
+   "t1": {
+    "mrstft": 1.816,
+    "n": 13,
+    "rms_db": -39,
+    "third_oct_db": 8.442,
+    "visqol": 3.093
+   },
+   "t2": {
+    "mrstft": 2.352,
+    "n": 13,
+    "rms_db": -44.6,
+    "third_oct_db": 11.954,
+    "visqol": 2.111
+   }
+  },
+  "checkpoints": 0,
   "commit": "2eff640",
+  "conclusion": "success",
+  "ended": "2026-11-02 22:06",
+  "failed_steps": 0,
+  "recordings": 26,
   "run": "41445940726",
   "started": "2026-11-02 21:35",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q07_screen_off": {
   "status": "pending"
