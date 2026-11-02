@@ -2,7 +2,7 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 05（tools/exp/queue/q05_direction.json）: 3D の向き 6 方向（3 曲）。6 ブロック先の東西南北と上下。左右の分かれ方（lr_db）と音質が向きでどう変わるか（前後・上下は今まで測っていない）
+# キュー 06（tools/exp/queue/q06_two_streams.json）: 2 つの音が同時に（64 音の取り合い）。曲を聞いている所にもう 1 つのストリーム（4 ブロック先の別の曲）。電話の 32 音を 2 つで取り合うと聞いている曲はどれだけ崩れるか（多人数のサーバー）
 
 section title
 audio info
@@ -14,7 +14,7 @@ audio info
 shot title
 
 section prep
-audio song vocal_name_of_love,orchestra_five_armies,speech_ja_soseki suffix=_e pack=tools/exp/packs/run10
+audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_e pack=tools/exp/packs/run10
 
 section join
 join
@@ -25,80 +25,128 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section oe_ow_os_on_ou_od
+section t1_t2
 do execute as @a run tp @s 0 -60 0 0 0
-audio start oe_ow_os_on_ou_od_1
-audio mark oe_vocal_name_of_love
-do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:6,-58.5,0,overworld"
+audio start t1_t2_1
+audio mark t1_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
 wait 23000
-audio mark ow_vocal_name_of_love
-do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:-6,-58.5,0,overworld"
+audio mark t2_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 23000
-audio mark os_vocal_name_of_love
-do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:0,-58.5,6,overworld"
+audio mark t1_piano_chopin_op66
+do execute as @a run spectral:play piano_chopin_op66_e
 wait 23000
-audio mark on_vocal_name_of_love
-do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:0,-58.5,-6,overworld"
+audio mark t2_piano_chopin_op66
+do execute as @a run spectral:play piano_chopin_op66_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 23000
-audio mark ou_vocal_name_of_love
-do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:0,-52.5,0,overworld"
+audio mark t1_vocal_stars
+do execute as @a run spectral:play vocal_stars_e
 wait 23000
-audio mark od_vocal_name_of_love
-do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:0,-64.5,0,overworld"
+audio mark t2_vocal_stars
+do execute as @a run spectral:play vocal_stars_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 23000
-audio mark oe_orchestra_five_armies
-do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:6,-58.5,0,overworld"
+audio mark t1_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
 wait 23000
-audio mark ow_orchestra_five_armies
-do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:-6,-58.5,0,overworld"
+audio mark t2_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 23000
-audio mark os_orchestra_five_armies
-do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:0,-58.5,6,overworld"
+audio mark t1_choir_how_long
+do execute as @a run spectral:play choir_how_long_e
 wait 23000
-audio mark on_orchestra_five_armies
-do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:0,-58.5,-6,overworld"
+audio mark t2_choir_how_long
+do execute as @a run spectral:play choir_how_long_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 23000
-audio mark ou_orchestra_five_armies
-do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:0,-52.5,0,overworld"
+audio mark t1_drums_round
+do execute as @a run spectral:play drums_round_e
 wait 23000
-audio mark od_orchestra_five_armies
-do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:0,-64.5,0,overworld"
+audio mark t2_drums_round
+do execute as @a run spectral:play drums_round_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 23000
-audio mark oe_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:6,-58.5,0,overworld"
-wait 23000
-audio mark ow_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:-6,-58.5,0,overworld"
-wait 23000
-audio mark os_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:0,-58.5,6,overworld"
-wait 23000
-audio mark on_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:0,-58.5,-6,overworld"
-wait 23000
-audio mark ou_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:0,-52.5,0,overworld"
-wait 23000
-audio mark od_speech_ja_soseki
-do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:0,-64.5,0,overworld"
+audio mark t1_rock_big
+do execute as @a run spectral:play rock_big_e
 wait 23000
 audio stop
-audio analyze-all oe_vocal_name_of_love=song:vocal_name_of_love ow_vocal_name_of_love=song:vocal_name_of_love os_vocal_name_of_love=song:vocal_name_of_love on_vocal_name_of_love=song:vocal_name_of_love ou_vocal_name_of_love=song:vocal_name_of_love od_vocal_name_of_love=song:vocal_name_of_love oe_orchestra_five_armies=song:orchestra_five_armies ow_orchestra_five_armies=song:orchestra_five_armies os_orchestra_five_armies=song:orchestra_five_armies on_orchestra_five_armies=song:orchestra_five_armies ou_orchestra_five_armies=song:orchestra_five_armies od_orchestra_five_armies=song:orchestra_five_armies oe_speech_ja_soseki=song:speech_ja_soseki ow_speech_ja_soseki=song:speech_ja_soseki os_speech_ja_soseki=song:speech_ja_soseki on_speech_ja_soseki=song:speech_ja_soseki ou_speech_ja_soseki=song:speech_ja_soseki od_speech_ja_soseki=song:speech_ja_soseki
-audio export oe_vocal_name_of_love 160
-audio export ow_vocal_name_of_love 160
-audio export os_vocal_name_of_love 160
-audio export on_vocal_name_of_love 160
-audio export ou_vocal_name_of_love 160
-audio export od_vocal_name_of_love 160
-audio export oe_orchestra_five_armies 160
-audio export ow_orchestra_five_armies 160
-audio export os_orchestra_five_armies 160
-audio export on_orchestra_five_armies 160
-audio export ou_orchestra_five_armies 160
-audio export od_orchestra_five_armies 160
-audio export oe_speech_ja_soseki 160
-audio export ow_speech_ja_soseki 160
-audio export os_speech_ja_soseki 160
-audio export on_speech_ja_soseki 160
-audio export ou_speech_ja_soseki 160
-audio export od_speech_ja_soseki 160
+audio analyze-all t1_piano_gymnopedie=song:piano_gymnopedie t2_piano_gymnopedie=song:piano_gymnopedie t1_piano_chopin_op66=song:piano_chopin_op66 t2_piano_chopin_op66=song:piano_chopin_op66 t1_vocal_stars=song:vocal_stars t2_vocal_stars=song:vocal_stars t1_vocal_name_of_love=song:vocal_name_of_love t2_vocal_name_of_love=song:vocal_name_of_love t1_choir_how_long=song:choir_how_long t2_choir_how_long=song:choir_how_long t1_drums_round=song:drums_round t2_drums_round=song:drums_round t1_rock_big=song:rock_big
+audio export t1_piano_gymnopedie 160
+audio export t2_piano_gymnopedie 160
+audio export t1_piano_chopin_op66 160
+audio export t2_piano_chopin_op66 160
+audio export t1_vocal_stars 160
+audio export t2_vocal_stars 160
+audio export t1_vocal_name_of_love 160
+audio export t2_vocal_name_of_love 160
+audio export t1_choir_how_long 160
+audio export t2_choir_how_long 160
+audio export t1_drums_round 160
+audio export t2_drums_round 160
+audio export t1_rock_big 160
+audio start t1_t2_2
+audio mark t2_rock_big
+do execute as @a run spectral:play rock_big_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 23000
+audio mark t1_edm_detection
+do execute as @a run spectral:play edm_detection_e
+wait 23000
+audio mark t2_edm_detection
+do execute as @a run spectral:play edm_detection_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 23000
+audio mark t1_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_e
+wait 23000
+audio mark t2_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 23000
+audio mark t1_funk_funkorama
+do execute as @a run spectral:play funk_funkorama_e
+wait 23000
+audio mark t2_funk_funkorama
+do execute as @a run spectral:play funk_funkorama_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 23000
+audio mark t1_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 23000
+audio mark t2_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 23000
+audio mark t1_speech_en_wordsworth
+do execute as @a run spectral:play speech_en_wordsworth_e
+wait 23000
+audio mark t2_speech_en_wordsworth
+do execute as @a run spectral:play speech_en_wordsworth_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 23000
+audio mark t1_demo_selfmade
+do execute as @a run spectral:play demo_selfmade_e
+wait 23000
+audio mark t2_demo_selfmade
+do execute as @a run spectral:play demo_selfmade_e
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 23000
+audio stop
+audio analyze-all t2_rock_big=song:rock_big t1_edm_detection=song:edm_detection t2_edm_detection=song:edm_detection t1_orchestra_five_armies=song:orchestra_five_armies t2_orchestra_five_armies=song:orchestra_five_armies t1_funk_funkorama=song:funk_funkorama t2_funk_funkorama=song:funk_funkorama t1_speech_ja_soseki=song:speech_ja_soseki t2_speech_ja_soseki=song:speech_ja_soseki t1_speech_en_wordsworth=song:speech_en_wordsworth t2_speech_en_wordsworth=song:speech_en_wordsworth t1_demo_selfmade=song:demo_selfmade t2_demo_selfmade=song:demo_selfmade
+audio export t2_rock_big 160
+audio export t1_edm_detection 160
+audio export t2_edm_detection 160
+audio export t1_orchestra_five_armies 160
+audio export t2_orchestra_five_armies 160
+audio export t1_funk_funkorama 160
+audio export t2_funk_funkorama 160
+audio export t1_speech_ja_soseki 160
+audio export t2_speech_ja_soseki 160
+audio export t1_speech_en_wordsworth 160
+audio export t2_speech_en_wordsworth 160
+audio export t1_demo_selfmade 160
+audio export t2_demo_selfmade 160
