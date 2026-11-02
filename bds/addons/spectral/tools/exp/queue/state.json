@@ -299,20 +299,56 @@
   "tries": 1
  },
  "q11_speed_pitch": {
-  "arms": {},
+  "arms": {
+   "n1": {
+    "mrstft": 1.554,
+    "n": 4,
+    "rms_db": -39.05,
+    "third_oct_db": 7.083,
+    "visqol": 3.347
+   },
+   "pd5": {
+    "mrstft": 1.979,
+    "n": 4,
+    "rms_db": -39.1,
+    "third_oct_db": 12.037,
+    "visqol": 3.043
+   },
+   "pu5": {
+    "mrstft": 1.986,
+    "n": 4,
+    "rms_db": -39.1,
+    "third_oct_db": 13.316,
+    "visqol": 3.278
+   },
+   "x05": {
+    "mrstft": 2.307,
+    "n": 4,
+    "rms_db": -39.25,
+    "third_oct_db": 20.671,
+    "visqol": 3.073
+   },
+   "x15": {
+    "mrstft": 2.646,
+    "n": 4,
+    "rms_db": -40.0,
+    "third_oct_db": 35.526,
+    "visqol": 2.994
+   }
+  },
   "checkpoints": 0,
   "commit": "bbe6f72",
-  "conclusion": "failure",
+  "conclusion": "success",
   "earlier_runs": [
    "41461005966"
   ],
-  "ended": "2026-11-02 23:21",
+  "ended": "2026-11-02 23:51",
   "failed_steps": 0,
-  "recordings": 0,
+  "recordings": 20,
   "run": "41461226005",
   "started": "2026-11-02 23:21",
-  "status": "running",
-  "tries": 1
+  "status": "done",
+  "tries": 2
  },
  "q12_level_12_14": {
   "status": "pending"
