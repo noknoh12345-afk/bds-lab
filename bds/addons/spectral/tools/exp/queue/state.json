@@ -64,10 +64,20 @@
   "tries": 1
  },
  "p05_limiter": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "190e38a",
+  "conclusion": "failure",
+  "earlier_runs": [
+   "41513809085"
+  ],
+  "ended": "2026-11-03 05:08",
+  "failed_steps": 1,
+  "recordings": 0,
   "run": "41513809085",
   "started": "2026-11-03 04:51",
-  "status": "running"
+  "status": "pending",
+  "tries": 1
  },
  "p06_per_tick": {
   "status": "pending"
