@@ -4,8 +4,11 @@ way MIDI does — a unit a note, its pitch by setPitch, its place to the millise
 synthesiser whose license lets its output be used so: Kokoro-82M (Apache-2.0, hexgrad/Kokoro-82M) by default, or Open JTalk's
 HTS voice Mei (CC BY 3.0, Nagoya Institute of Technology: MMDAgent) with --engine openjtalk.
 
-Each unit is the mora with a long vowel ("カー") spoken slowly; it is cut from the consonant's start to the vowel's end (the
-synthesiser's own phoneme durations), its pitch made level with the WORLD vocoder at the voice's own median and at LAYERS
+Each unit is the mora with a long vowel ("カー") spoken slowly; it is cut from the consonant's start to the vowel's end — found in
+the sound itself (segment(): where the frames stop being like the long vowel at its end), not from the synthesiser's predicted
+durations: Kokoro starts every utterance with a short voiced onset of its own and its durations run about 0.1 s late against its
+audio (measured: サー's /s/ at 0.48-0.56 s, predicted 0.575-0.725), so cut by them the units had lost their consonants (Whisper
+read their speech 0.79-1.0 of the characters wrong), its pitch made level with the WORLD vocoder at the voice's own median and at LAYERS
 semitones round it (setPitch then moves a unit at most 2 semitones, so its formants hardly move), loudness evened, and written
 with the bank's LEAD of silence. `pre` is how long the consonant comes before the vowel: a mora is placed by its vowel (the beat
 of a syllable is its vowel's onset).
@@ -73,19 +76,45 @@ def openjtalk(text, name, speed):
     return y, sr, on, max(on, vow), end
 
 
+def segment(y, sr, has_cons):
+    """(start, vowel onset, end) in samples, from the sound: 10 ms frames, their level and spectral centroid; the long vowel at the
+    end sets what a vowel frame is like (within 8 dB of its level, its centroid within a factor 1.6); the vowel's onset is where,
+    going back from it, frames stop being like it, and the consonant is the run of frames before that which are not (a closure's
+    dip, a fricative's noise, a nasal's murmur) — what comes before (the synthesiser's own onset, vowel-like) is left out. A
+    consonant the frames do not show (a glide) is taken as the 80 ms before the vowel"""
+    fr = int(0.01 * sr)
+    n = max(1, (len(y) - 2 * fr) // fr)
+    win = np.hanning(2 * fr); freqs = np.fft.rfftfreq(2 * fr, 1 / sr)
+    e = np.empty(n); cen = np.empty(n)
+    for i in range(n):
+        w = y[i * fr: i * fr + 2 * fr]
+        e[i] = 10 * np.log10((w ** 2).mean() + 1e-12)
+        S = np.abs(np.fft.rfft(w * win)); cen[i] = (S * freqs).sum() / (S.sum() + 1e-12) + 1.0
+    sound = np.where(e > e.max() - 45)[0]
+    first, last = int(sound[0]), int(sound[-1])
+    tail = np.arange(first + int(0.6 * (last - first)), last + 1)
+    ev, cv = np.median(e[tail]), np.median(cen[tail])
+    like = (e > ev - 8) & (np.abs(np.log(cen / cv)) < np.log(1.6))
+    v = int(tail[0])
+    while v > first and like[v - 1]:
+        v -= 1
+    if not has_cons:
+        return first * fr, first * fr, min(len(y), (last + 3) * fr)
+    c = v
+    while c > first and not like[c - 1]:
+        c -= 1
+    if v - c < 2:
+        c = max(first, v - 8)
+    start = max(first, c - 1)
+    return start * fr, v * fr, min(len(y), (last + 3) * fr)
+
+
 def unit_audio(kana, engine, name, speed):
-    import pyworld as pw
-    from scipy.signal import resample_poly
-    from math import gcd
     text = kana if kana == 'ン' else kana + 'ー'
-    y, sr, t0, tv, t1 = (kokoro if engine == 'kokoro' else openjtalk)(text, name, speed)
-    a = max(0, int(t0) - int(0.01 * sr))
-    # the actual start: the first sound over -40 dB of the unit's peak, a few ms before it
-    seg = y[a: int(t1)]
-    pk = np.abs(seg).max() + 1e-9
-    s0 = int(np.argmax(np.abs(seg) > pk * 0.01))
-    a = a + max(0, s0 - int(0.004 * sr))
-    seg = y[a: int(t1)].copy()
+    y, sr, *_ = (kokoro if engine == 'kokoro' else openjtalk)(text, name, speed)
+    a, tv, b = segment(y, sr, has_cons=kana not in ('ア', 'イ', 'ウ', 'エ', 'オ', 'ン'))
+    seg = y[a: b].copy()
+    nf = int(0.004 * sr); seg[:nf] *= np.linspace(0, 1, nf)             # (a 4 ms fade in: no click at the cut)
     pre = max(0.0, (tv - a) / sr)
     return seg, sr, pre
 

@@ -927,6 +927,8 @@ async function runCmd(args) {
     // (the script watchdog: the emulator keeps this machine busy — a script that waits for the CPU is not the addon hanging,
     // and a "hang" must not stop the server under the game: APP_WATCHDOG_MS, 0 = BDS's own 10 s)
     const webHost = process.env.APP_HOST || (REAL ? real?.path?.hostIp : '10.0.2.2');
+    // (this machine as the device reaches it, for a step that names it: chat /connect ${DEVICE_HOST}:8790 — app/lib/scenario.mjs)
+    process.env.LAB_DEVICE_HOST = bdsForApp(webHost).GEOUI_WEB_HOST;
     const up = bds(['up'], { LAB_ADDON: addon, LAB_PORT: String(wantPort), LAB_TAIL: serverLog, LAB_TEXTUREPACK_REQUIRED: '1', LAB_LIVE_IDLE: '240', ...bdsForApp(webHost) });
     serverUp = true;
     let liveAddon = addon;   // (the addon the server runs now: a batch's `addon` steps change it)

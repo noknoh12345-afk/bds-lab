@@ -702,13 +702,13 @@ until note 103 3000
 until ■ Piano étude \(sampler demo\) — end 8000
 @A cmd /spectral:sampler 4 250 28 120 false
 
-## /spectral:say reads kana aloud with the voice (Kokoro-82M's units, Apache-2.0): a mora a note of its unit, placed by its vowel, its pitch by setPitch from the nearest of the unit's three pitches (a phrase's first mora low, the rest high, the sentence's last falling); what is not kana is not read (the game has no dictionary: tools/speech.py reads kanji)
+## /spectral:say reads kana aloud with the voice (Kokoro-82M's units, Apache-2.0, each cut where its consonant starts in the sound): a mora a note of its unit every 180 ms, placed by its vowel (ト's /t/ 110 ms ahead: on at 2210 ms, started in the bundle at 2200 with 10 ms of silence left), its pitch by setPitch from the nearest of the unit's three pitches (a phrase's first mora low, the rest high, the sentence's last falling); what is not kana is not read (the game has no dictionary: tools/speech.py reads kanji)
 @A cmd /spectral:sampler 4 250 28 120 true
 @A cmd /spectral:say "こんにちは、マインクラフト。"
 ~ @A ▶ こんにちは、マインクラフト。 \(0:02, 12 notes, headphones\)
 ~ \[spectral\] note 0 voice_ja\.27 key 9 pitch 1\.1225 seek 0\.6000 at 0 ms
 until ■ こんにちは、マインクラフト。 — end 6000
-~ \[spectral\] note 11 voice_ja\.87 key 29 pitch 0\.9659 seek 0\.5324 at 1800 ms
+~ \[spectral\] note 11 voice_ja\.87 key 29 pitch 0\.9659 seek 0\.5903 at 2200 ms
 @A cmd /spectral:say "漢字はよめません"
 ~ @A ▶ 漢字はよめません \(0:01, 6 notes, headphones\) \(2 characters not kana: not read\)
 @A cmd /spectral:say ABC
@@ -825,6 +825,9 @@ execute as @a[name=A] run scriptevent spectral:remote stop
 ~ \[spectral\] remote A: stop → ■ stopped
 execute as @a[name=A] run scriptevent spectral:remote volume 100
 ~ \[spectral\] remote A: volume 100 → volume 100%
+execute as @a[name=A] run scriptevent spectral:remote hello
+~ \[spectral\] remote A: hello → Spectral Connect: connected
+~ @A actionbar: Spectral Connect: connected
 
 ## live notes from Spectral Connect (a MIDI keyboard: scriptevent spectral:note as the player, ";" between entries): each placed by its delay into the sample's silence (a C4 64 ms into the 50 ms window plays at 0.6 - 0.064 = 0.536), let go with its instrument's release, a drum by its key
 @A cmd /spectral:sampler 2 250 28 120 true

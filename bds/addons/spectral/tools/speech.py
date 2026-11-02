@@ -80,7 +80,7 @@ def morae(text):
     return out
 
 
-def plan(ms, voice, prog=200, mora_ms=150.0, rng=4.0, overlap=25.0):
+def plan(ms, voice, prog=200, mora_ms=180.0, rng=4.0, overlap=25.0):
     """notes for the morae: each unit started its consonant ahead of its vowel, the vowel on the beat; Tokyo accent (the first mora
     low unless the nucleus is on it, high up to the nucleus, low after it; a flat phrase stays high), each phrase a little lower
     than the one before (a downstep after an accented one), the sentence's last mora lower still"""
@@ -143,7 +143,7 @@ def cer(a, b):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('text'); ap.add_argument('--out'); ap.add_argument('--id', default='speech'); ap.add_argument('--title')
-    ap.add_argument('--mora', type=float, default=150.0); ap.add_argument('--range', type=float, default=4.0)
+    ap.add_argument('--mora', type=float, default=180.0); ap.add_argument('--range', type=float, default=4.0)
     ap.add_argument('--render'); ap.add_argument('--eval', action='store_true'); ap.add_argument('--voice', default='voice_ja')
     a = ap.parse_args()
     B = N.bank()

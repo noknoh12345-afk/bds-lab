@@ -27,6 +27,8 @@ const LAB = path.resolve(UNIT, '..', '..', '..');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const PORT = Number(arg('--port', process.env.PORT ?? 8790));
 const MAX_S = Number(arg('--max', 240));
+// (--idle <s>: end by itself after so long with no game — started by the lab beside a BDS: lab-service.json)
+const IDLE_S = Number(arg('--idle', 0));
 const MAIL_MS = 700;
 // live notes (the page's keys, a MIDI keyboard by Web MIDI): sent every LIVE_MS, each note LATENCY ms after it was played — the add-on
 // places it to the millisecond by seekTo (src/notes.ts LiveKeys), the batch's clock taking off the wait for the game's tick
@@ -41,7 +43,7 @@ function wsAccept(req, socket, onMessage, onClose) {
   socket.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ' + acceptKey + '\r\n\r\n');
   let buf = Buffer.alloc(0), frag = [];
   const send = (text, opcode = 1) => {
-    const data = Buffer.from(text);
+    const data = Buffer.isBuffer(text) ? text : Buffer.from(text);
     const head = data.length < 126 ? Buffer.from([0x80 | opcode, data.length])
       : data.length < 65536 ? Buffer.from([0x80 | opcode, 126, data.length >> 8, data.length & 255])
         : (() => { const h = Buffer.alloc(10); h[0] = 0x80 | opcode; h[1] = 127; h.writeBigUInt64BE(BigInt(data.length), 2); return h; })();
@@ -64,11 +66,32 @@ function wsAccept(req, socket, onMessage, onClose) {
       if (op === 9) { send(data.toString(), 10); continue; }
       if (op === 10) continue;
       frag.push(data);
-      if (fin) { const msg = Buffer.concat(frag).toString(); frag = []; try { onMessage(msg); } catch (e) { log('ws message:', e.message); } }
+      if (fin) { const msg = Buffer.concat(frag); frag = []; try { onMessage(msg); } catch (e) { log('ws message:', e.message); } }
     }
   });
   socket.on('close', onClose); socket.on('error', onClose);
-  return { send: (obj) => send(JSON.stringify(obj)), close: () => socket.end() };
+  return { send: (obj) => send(JSON.stringify(obj)), sendBytes: (b) => send(b, 2), close: () => socket.end() };
+}
+
+// ------------------------------------------------------------------ the game's encryption (its "Require Encrypted Websockets")
+// The server asks with `enableencryption "<its EC public key, SPKI DER, base64>" "<16 bytes of salt, base64>"`; the game answers with
+// its own public key (body.publicKey); both take ECDH on secp384r1, key = SHA-256(salt + secret), iv = the key's first 16 bytes,
+// and from then on every frame either way is AES-256-CFB8 (one stream each way) — as the community's servers do it (mcpews).
+// --plain: never ask (a game with the setting off takes plain frames)
+const PLAIN = process.argv.includes('--plain');
+class Crypt {
+  constructor() {
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'secp384r1' });
+    this.privateKey = privateKey; this.salt = crypto.randomBytes(16);
+    this.publicB64 = publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
+  }
+  /** the game's public key (base64 SPKI DER) → the two streams */
+  complete(theirs) {
+    const pub = crypto.createPublicKey({ key: Buffer.from(theirs, 'base64'), format: 'der', type: 'spki' });
+    const secret = crypto.diffieHellman({ privateKey: this.privateKey, publicKey: pub });
+    const key = crypto.createHash('sha256').update(Buffer.concat([this.salt, secret])).digest(), iv = key.subarray(0, 16);
+    this.enc = crypto.createCipheriv('aes-256-cfb8', key, iv); this.dec = crypto.createDecipheriv('aes-256-cfb8', key, iv);
+  }
 }
 
 // ------------------------------------------------------------------ Minecraft's side of /connect
@@ -77,14 +100,25 @@ class Game {
   constructor(req, socket) {
     this.pending = new Map(); this.name = '?'; this.sent = 0;
     this.ws = wsAccept(req, socket, (m) => this.message(m), () => { games.delete(this); clearInterval(this.poll); clearInterval(this.liveTimer); log('the game left'); });
+    this.crypt = null; this.encrypted = false; this.asking = false; this.waiting = [];
+    if (!PLAIN) this.encrypt();
     games.add(this);
     this.subscribe('PlayerMessage');
     log('a game connected');
-    // (the remote: shown as connected, and its mails read)
+    // (the remote: shown as connected, and its mails read; Spectral Player says hello on the player's action bar)
     this.command('scriptevent sr:show ws 1');
+    this.command('scriptevent spectral:remote hello');
     this.mails = new Map(); this.done = new Set(); this.polling = false; this.live = [];
     this.liveTimer = setInterval(() => this.flushLive(), LIVE_MS);
     this.poll = setInterval(() => this.checkMail().catch((e) => log('mail:', e.message)), MAIL_MS);
+  }
+  /** a scale played on the live keys as a person would (each note when it is due: C4 to C5, 150 ms apart, 140 ms each) — what the
+   *  device's recording of it says of the live path's evenness */
+  liveScale(prog = 0) {
+    [60, 62, 64, 65, 67, 69, 71, 72].forEach((key, i) => {
+      setTimeout(() => this.live.push({ type: 'on', key, vel: 100, prog, at: Date.now() }), i * 150);
+      setTimeout(() => this.live.push({ type: 'off', key, vel: 0, prog, at: Date.now() }), i * 150 + 140);
+    });
   }
   /** the live notes of the last LIVE_MS as one scriptevent: @<now>;on <key> <velocity> <program> <ms from now>;off … */
   flushLive() {
@@ -118,13 +152,36 @@ class Game {
         let mail; try { mail = JSON.parse(Buffer.from([...g.parts.keys()].sort((a, b) => a - b).map((k) => g.parts.get(k)).join(''), 'base64url').toString('utf8')); } catch { log('a mail that does not read'); continue; }
         log(`mail ${g.ns} ${mail.n}: ${JSON.stringify(mail.f).slice(0, 160)}`);
         if ((mail.n === 'play' || mail.n === 'speaker') && mail.f?.url) run({ url: String(mail.f.url).trim(), where: mail.n === 'speaker' ? 'speaker' : undefined }, this).catch(() => {});
+        if (mail.n === 'scale') this.liveScale();
       }
     } finally { this.polling = false; }
   }
-  request(purpose, body) {
+  request(purpose, body, now = false) {
     const requestId = crypto.randomUUID();
-    this.ws.send({ header: { version: 1, requestId, messagePurpose: purpose, messageType: 'commandRequest' }, body });
+    this.out({ header: { version: 1, requestId, messagePurpose: purpose, messageType: 'commandRequest' }, body }, now);
     return requestId;
+  }
+  /** a frame to the game: plain text, or once encrypted the bytes of its stream (while the game is asked, frames wait: one sent
+   *  plain that the game reads after it switched would be noise to it) */
+  out(obj, now = false) {
+    if (this.asking && !now) { this.waiting.push(obj); return; }
+    if (this.encrypted) this.ws.sendBytes(this.crypt.enc.update(Buffer.from(JSON.stringify(obj)))); else this.ws.send(obj);
+  }
+  /** ask the game for encryption: its answer (its public key) turns both streams on; a game that refuses or does not answer in 3 s
+   *  stays plain */
+  encrypt() {
+    this.crypt = new Crypt(); this.asking = true; this.waiting = [];
+    const done = (on, why) => {
+      if (!this.asking) return;
+      this.asking = false; this.encrypted = on; log(on ? 'encrypted' : `plain (${why})`);
+      for (const o of this.waiting.splice(0)) this.out(o);
+    };
+    const id = this.request('commandRequest', { version: 1, commandLine: `enableencryption ${JSON.stringify(this.crypt.publicB64)} ${JSON.stringify(this.crypt.salt.toString('base64'))}`, origin: { type: 'player' } }, true);
+    this.pending.set(id, (body) => {
+      if (!body?.publicKey) { done(false, body?.statusMessage ?? body?.statusCode ?? 'no key'); return; }
+      try { this.crypt.complete(body.publicKey); done(true); } catch (e) { done(false, e.message); }
+    });
+    setTimeout(() => { if (this.asking) { this.pending.delete(id); done(false, 'no answer'); } }, 3000);
   }
   subscribe(eventName) { this.request('subscribe', { eventName }); }
   /** a command as the connected player → its response ({statusCode, statusMessage}) */
@@ -136,7 +193,9 @@ class Game {
       this.sent++;
     });
   }
-  message(text) {
+  message(bytes) {
+    // (once encrypted, every frame from the game is its stream: the switch is its answer, and the frames after it come after it)
+    const text = this.encrypted ? this.crypt.dec.update(bytes).toString() : bytes.toString();
     const m = JSON.parse(text), h = m.header ?? {};
     if (h.messagePurpose === 'commandResponse') { const r = this.pending.get(h.requestId); if (r) { this.pending.delete(h.requestId); r(m.body ?? {}); } return; }
     if (h.messagePurpose === 'event' && (h.eventName === 'PlayerMessage' || m.body?.type === 'chat')) {
@@ -160,6 +219,7 @@ function sh(cmd, args, opts = {}) {
 }
 async function fetchUrl(url, job) {
   if (/^(file:\/\/|\/)/.test(url)) return url.replace(/^file:\/\//, '');           // a file on this machine
+  if (!/^[a-z]+:\/\//i.test(url) && fs.existsSync(path.join(UNIT, url))) return path.join(UNIT, url);   // (one in this unit)
   if (spawnSync('yt-dlp', ['--version']).status !== 0) throw new Error('yt-dlp がありません（pip install yt-dlp）');
   step(job.game, job, 'downloading');
   const out = path.join(WORK, `dl-${job.id}.%(ext)s`);
@@ -170,6 +230,7 @@ async function fetchUrl(url, job) {
 }
 async function convert(file, job) {
   step(job.game, job, 'converting');
+  if (/\.song\.json$/i.test(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));           // (a song already made)
   const id = `c${job.id}`, base = path.join(WORK, id);
   if (/\.(mid|midi|kar|rmi)$/i.test(file) || job.kind === 'notes') {
     await sh('python3', [path.join(UNIT, 'tools', 'notes.py'), file, '--out', base + '.song.json', '--id', id, '--title', job.title ?? path.basename(file)]);
@@ -270,6 +331,10 @@ server.on('upgrade', (req, socket) => {
   if (!/websocket/i.test(req.headers.upgrade ?? '')) { socket.destroy(); return; }
   new Game(req, socket);
 });
+if (IDLE_S > 0) {
+  let since = Date.now();
+  setInterval(() => { if (games.size) since = Date.now(); else if (Date.now() - since > IDLE_S * 1000) { log(`no game for ${IDLE_S} s: ending`); process.exit(0); } }, 5000).unref();
+}
 server.listen(PORT, () => {
   const addrs = Object.values(os.networkInterfaces()).flat().filter((a) => a && a.family === 'IPv4' && !a.internal).map((a) => a.address);
   log(`Spectral Connect on :${PORT} — in the game: /connect ${addrs[0] ?? 'localhost'}:${PORT} · the page: http://${addrs[0] ?? 'localhost'}:${PORT}/`);

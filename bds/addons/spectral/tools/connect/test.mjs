@@ -54,6 +54,7 @@ sock.on('data', (chunk) => {
 await new Promise((r) => setTimeout(r, 500));
 ok(got.some((m) => m.header?.messagePurpose === 'subscribe' && m.body?.eventName === 'PlayerMessage'), 'the server subscribes to chat');
 ok(got.some((m) => m.body?.commandLine === 'scriptevent sr:show ws 1'), 'and tells the remote in the game it is connected');
+ok(got.some((m) => m.body?.commandLine === 'scriptevent spectral:remote hello'), 'and Spectral Player says hello (what the device run waits for)');
 
 // a file through the page's API
 const mid = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'spectral-connect-test-')), 'etude.mid');
@@ -76,7 +77,9 @@ const first = songs.length ? JSON.parse(songs[0].body.commandLine.slice('scripte
 ok(first.meta?.format?.startsWith('spectral-notes/') && first.i === 0, 'a MIDI file goes as a note song (the sampler)');
 ok(songs.every((m) => m.body.commandLine.length <= 1800 + 'scriptevent spectral:song '.length), 'every part fits a script event');
 ok(got.some((m) => m.body?.commandLine === `spectral:play ${first.id}`), 'and then it is played');
-const st = await (await fetch(`http://127.0.0.1:${PORT}/api/state`)).json();
+// (the play command's answer comes back a moment after it went: the page is asked until it has it, at most 2 s)
+let st = {};
+for (let k = 0; k < 20; k++) { st = await (await fetch(`http://127.0.0.1:${PORT}/api/state`)).json(); if (st.jobs[0]?.result) break; await new Promise((r) => setTimeout(r, 100)); }
 ok(st.jobs[0]?.step === 'playing' && st.jobs[0]?.result === '▶ played', `the page sees the job: ${st.jobs[0]?.step} ${st.jobs[0]?.result}`);
 
 // chat: !spectral <file>
@@ -125,6 +128,20 @@ const lm = live && /^scriptevent spectral:note @(\d+);on 60 100 0 (\d+);on 64 90
 ok(lm && Math.abs(Date.now() - Number(lm[1])) < 2000, 'live notes go as one scriptevent with the server\'s clock', live);
 ok(lm && Number(lm[2]) < Number(lm[3]) && Number(lm[3]) - Number(lm[2]) >= 15 && Number(lm[3]) <= 90, 'each a little before 90 ms on, the older one earlier by its age', live);
 
+// a song already made, named inside the unit (what the device run sends: no converting there)
+const before6 = got.length;
+sendFrame(JSON.stringify({ header: { version: 1, messagePurpose: 'event', eventName: 'PlayerMessage' }, body: { message: '!spectral tools/exp/packs/notes/clicks_pulse.song.json', sender: 'Steve', type: 'chat' } }));
+for (let k = 0; k < 80 && !got.slice(before6).some((m) => m.body?.commandLine?.startsWith('spectral:play')); k++) await new Promise((r) => setTimeout(r, 100));
+ok(got.slice(before6).some((m) => m.body?.commandLine === 'spectral:play clicks_pulse'), 'a .song.json in the unit plays as it is (its own id)');
+// the remote's mail scale: a C major scale on the live keys, each note when it is due
+const before7 = got.length;
+const sbody = Buffer.from(JSON.stringify({ n: 'scale', f: {} })).toString('base64url');
+tags.add(`geoui.mail.sr.9.0.1.${sbody}`);
+for (let k = 0; k < 60 && got.slice(before7).filter((m) => /spectral:note .*on 72 /.test(m.body?.commandLine ?? '')).length === 0; k++) await new Promise((r) => setTimeout(r, 100));
+const scale = got.slice(before7).map((m) => m.body?.commandLine ?? '').filter((l) => l.startsWith('scriptevent spectral:note '));
+const ons = scale.flatMap((l) => [...l.matchAll(/on (\d+) 100 0 (\d+)/g)].map((x) => Number(x[1])));
+ok(JSON.stringify(ons) === JSON.stringify([60, 62, 64, 65, 67, 69, 71, 72]) && scale.length >= 6, `the mail scale plays C4 to C5 on the live keys, in ${scale.length} batches`, JSON.stringify(scale.slice(0, 3)));
+
 // the page itself
 const page = await (await fetch(`http://127.0.0.1:${PORT}/`)).text();
 ok(page.includes('Spectral Connect') && page.includes('/panel/styles.css') && page.includes('/panel/panel.css') && page.includes('requestMIDIAccess'), 'the page, in the lab\'s OreUI, with its keys and Web MIDI');
@@ -133,6 +150,51 @@ const raw = await new Promise((r) => http.get({ host: '127.0.0.1', port: PORT, p
 ok(raw === 404, 'nothing outside panel/ is served');
 ok((await fetch(`http://127.0.0.1:${PORT}/api/command`, { method: 'POST', body: JSON.stringify({ line: 'op @a' }) })).status === 400, 'the page sends only Spectral Player\'s own commands');
 
+
+// the game's encryption ("Require Encrypted Websockets"): a second fake game that answers enableencryption with its key — from then on
+// every frame both ways is AES-256-CFB8 (ECDH secp384r1, key = SHA-256(salt + secret), iv = its first 16 bytes)
+{
+  const s2 = net.connect(PORT, '127.0.0.1'), seen = [];
+  let b2 = Buffer.alloc(0), up = false, enc = null, dec = null, keyAnswered = false;
+  s2.write(`GET /mc HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${crypto.randomBytes(16).toString('base64')}\r\nSec-WebSocket-Version: 13\r\n\r\n`);
+  const frame = (payload, op) => {
+    const mask = crypto.randomBytes(4), n = payload.length;
+    const head = n < 126 ? Buffer.from([0x80 | op, 0x80 | n]) : (() => { const h = Buffer.alloc(4); h[0] = 0x80 | op; h[1] = 0x80 | 126; h.writeUInt16BE(n, 2); return h; })();
+    s2.write(Buffer.concat([head, mask, Buffer.from(payload.map((x, i) => x ^ mask[i & 3]))]));
+  };
+  const say = (obj) => { const raw = Buffer.from(JSON.stringify(obj)); if (enc) frame(enc.update(raw), 2); else frame(raw, 1); };
+  s2.on('data', (chunk) => {
+    b2 = Buffer.concat([b2, chunk]);
+    if (!up) { const i = b2.indexOf('\r\n\r\n'); if (i < 0) return; up = true; b2 = b2.subarray(i + 4); }
+    for (;;) {
+      if (b2.length < 2) return;
+      let len = b2[1] & 0x7f, at = 2;
+      if (len === 126) { len = b2.readUInt16BE(2); at = 4; } else if (len === 127) { len = Number(b2.readBigUInt64BE(2)); at = 10; }
+      if (b2.length < at + len) return;
+      const raw = b2.subarray(at, at + len); b2 = b2.subarray(at + len);
+      const m = JSON.parse(dec ? dec.update(raw).toString() : raw.toString());
+      seen.push({ m, encrypted: Boolean(dec) });
+      const line = m.body?.commandLine ?? '';
+      if (line.startsWith('enableencryption ')) {
+        const [pubB64, saltB64] = JSON.parse(`[${line.slice('enableencryption '.length).replace('" "', '","')}]`);
+        const mine = crypto.generateKeyPairSync('ec', { namedCurve: 'secp384r1' });
+        const secret = crypto.diffieHellman({ privateKey: mine.privateKey, publicKey: crypto.createPublicKey({ key: Buffer.from(pubB64, 'base64'), format: 'der', type: 'spki' }) });
+        const key = crypto.createHash('sha256').update(Buffer.concat([Buffer.from(saltB64, 'base64'), secret])).digest();
+        say({ header: { version: 1, requestId: m.header.requestId, messagePurpose: 'commandResponse' }, body: { statusCode: 0, publicKey: mine.publicKey.export({ type: 'spki', format: 'der' }).toString('base64') } });
+        enc = crypto.createCipheriv('aes-256-cfb8', key, key.subarray(0, 16)); dec = crypto.createDecipheriv('aes-256-cfb8', key, key.subarray(0, 16)); keyAnswered = true;
+      } else if (m.header?.messagePurpose === 'commandRequest') {
+        say({ header: { version: 1, requestId: m.header.requestId, messagePurpose: 'commandResponse' }, body: { statusCode: 0, statusMessage: line === 'tag @s list' ? 'Alex has no tags' : 'ok' } });
+      }
+    }
+  });
+  for (let k = 0; k < 40 && !seen.some((x) => x.m.body?.eventName === 'PlayerMessage'); k++) await new Promise((r) => setTimeout(r, 100));
+  ok(keyAnswered, 'the server asks the game for encryption first (enableencryption with its key and salt)');
+  ok(seen.some((x) => x.encrypted && x.m.body?.eventName === 'PlayerMessage') && seen.filter((x) => !x.encrypted).length === 1, 'and everything after the game\'s key comes encrypted (the subscription waited for it)');
+  say({ header: { version: 1, messagePurpose: 'event', eventName: 'PlayerMessage' }, body: { message: '!spectral tools/exp/packs/notes/clicks_pulse.song.json', sender: 'Alex', type: 'chat' } });
+  for (let k = 0; k < 60 && !seen.some((x) => x.m.body?.commandLine === 'spectral:play clicks_pulse'); k++) await new Promise((r) => setTimeout(r, 100));
+  ok(seen.some((x) => x.encrypted && x.m.body?.commandLine === 'spectral:play clicks_pulse'), 'an encrypted chat line is read, and the song goes back encrypted');
+  s2.end();
+}
 
 sock.end(); srv.kill();
 console.log(fails ? `FAIL ${fails}` : 'PASS');

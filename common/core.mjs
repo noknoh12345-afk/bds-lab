@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import dgram from 'node:dgram';
+import net from 'node:net';
 import crypto, { randomUUID } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -1335,6 +1336,22 @@ async function geouiWeb() {
     if (!r.ok) LOG.push(`[0-0-0 0:0:0 WARN] ${r.why}`);
   } catch (e) { LOG.push(`[0-0-0 0:0:0 WARN] GeoUI Web: ${String(e.message).split('\n')[0]}`); }
 }
+// a unit's own service beside its BDS (lab-service.json: {"cmd": ["node", "tools/…/server.mjs", …], "port": 8790}) — started once in
+// the unit's folder when its BDS starts (kept for the next boots: it is not started again while something answers on its port),
+// its output in .lab/<unit>-service.log. Spectral Player's: Spectral Connect, the game's /connect (its own --idle ends it)
+async function unitService() {
+  try {
+    const conf = readJson(path.join(ADDON, 'lab-service.json')) ?? {};
+    const cmd = Array.isArray(conf.cmd) ? conf.cmd.map(String) : null, port = Number(conf.port) || 0;
+    if (!cmd || !cmd.length) return;
+    const answers = () => new Promise((r) => { const c = net.connect(port, '127.0.0.1'); c.once('connect', () => { c.destroy(); r(true); }); c.once('error', () => r(false)); });
+    if (port && await answers()) return;
+    const log = fs.openSync(path.join(LAB, `${path.basename(ADDON)}-service.log`), 'a');
+    const child = spawn(cmd[0], cmd.slice(1), { cwd: ADDON, detached: true, stdio: ['ignore', log, log], env: process.env });
+    child.unref();
+    for (let k = 0; port && k < 25 && !(await answers()); k++) await new Promise((r) => setTimeout(r, 200));
+  } catch (e) { LOG.push(`[0-0-0 0:0:0 WARN] ${path.basename(ADDON)} service: ${String(e.message).split('\n')[0]}`); }
+}
 // what a script-only /reload cannot pick up: everything in the packs except scripts/
 function packHash() {
   const h = crypto.createHash('sha1');
@@ -1377,6 +1394,7 @@ class Engine {
     if (this.ok && F.afterReady) this.ok = (await F.afterReady(L(), this)) !== false;
     // (a unit's own service beside its BDS: GeoUI Web when it has geoui-web.json — bds/geoui/web/lab.mjs; kept between boots)
     if (this.ok && ADDON && exists(path.join(ADDON, 'geoui-web.json'))) await geouiWeb();
+    if (this.ok && ADDON && exists(path.join(ADDON, 'lab-service.json'))) await unitService();
     return this.ok;
   }
   async onAttach() {

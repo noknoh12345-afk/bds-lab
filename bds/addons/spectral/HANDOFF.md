@@ -293,6 +293,15 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
     - **まだ実機でない**: /connect が BDS に入ったクライアントで使えるか・commandRequest でカスタムコマンドと scriptevent が通るか・
       PlayerMessage が来るか・GeoUI のリモコンの見た目（app.txt）・鍵盤の遅れ。リグに WebSocket のサーバーを起こす手が要る
 
+22. **声の素を切り直した**（11-03 朝）: Kokoro は発話の頭に自分の短い有声の音を足し、予測の長さは音より約 0.1 秒遅れる → 予測で切った素は
+    子音が無かった（手元の Whisper で読み上げの誤り 0.79–1.0、実機の p02 も 0.93–1.0）。tools/samples/voice.py の segment() が音から
+    （伸ばした母音に似ていない所 = 子音）切る。手元の Whisper: 180 ms で 0.67（150 ms は不安定）→ 1 モーラ 180 ms を既定に。まだ Kokoro そのもの
+    （0.0–0.04）には遠い: 次は VCV（母音から子音への続き）の素か、Connect で Kokoro の声そのものを送る道。p09 が実機で測る
+23. **実機（p02）: 小さな音は損**: 同じエチュードで正弦波の道（+10 dB）4.14、サンプラー（1.2）2.47。サンプラーとファイルの曲も天井近くへ（次）
+24. **/connect を実機で**（p08）: ラボの BDS の横に単位のサービス（common/core.mjs: lab-service.json → Spectral Connect が 8790）、リグの chat に
+    `${DEVICE_HOST}`（app/lib/scenario.mjs・app/app.mjs: 端末から見たこの機械）。サーバーはゲームの暗号化（enableencryption: ECDH secp384r1・
+    AES-256-CFB8）に対応、`!spectral <ファイル>`・手紙の音階（生演奏の間）・手紙の曲を録る
+
 ## 4 回目のセッション（2026-10-31）でしたこと
 
 1. **合成による分析を詰めた**（tools/spectral.py refine_client・web/core.js refineClient、py と js のバイト一致）:

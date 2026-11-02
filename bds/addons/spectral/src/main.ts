@@ -821,6 +821,7 @@ function remoteVerb(p: Player, words: string[]): string {
       return `§bvolume ${Math.round(st.volume * 100)}%`;
     }
     case 'status': return filePlays.get(p.id)?.status() ?? notePlays.get(p.id)?.status() ?? mine(p)?.status() ?? 'status: idle';
+    case 'hello': return '§aSpectral Connect: connected';
     default: return `§cremote: ${verb ?? ''}?`;
   }
 }
@@ -943,7 +944,8 @@ cmd('spectral:status', 'Playback state and engine load', {}, (p) => filePlays.ge
 cmd('spectral:say', 'Read kana aloud with the voice, mora by mora like notes (kanji: tools/speech.py makes a speech song): headphones, or the speaker for everyone near',
   { text: 'string', 'out?': ['phones', 'speaker'], 'speed?': 'float' }, async (p, a) => {
     if (!VOICES.length) return '§cno voice in this pack';
-    const r = saySong(a.text, 0, 150 / Math.max(0.25, Math.min(4, a.speed ?? 1)));
+    // (180 ms a mora: Whisper read the units' speech best there — 0.67 of the characters wrong at 180, 2.5 at 150, tools/speech.py)
+    const r = saySong(a.text, 0, 180 / Math.max(0.25, Math.min(4, a.speed ?? 1)));
     if (!r) return '§cnothing to say: kana only in the game (tools/speech.py reads kanji, the converter page too)';
     const said = await playNotes(p, r.song, (a.out ?? 'phones') as Mode);
     return r.skipped ? `${said} §7(${r.skipped} characters not kana: not read)` : said;

@@ -214,11 +214,50 @@ def p06():
     print('plan p06_per_tick:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
 
 
+def p09(work):
+    """p09: speech by the voice's units cut again (segment(): the consonants are in them now; 180 ms a mora) on headphones and the
+    speaker, against Kokoro's own speech of the same sentences through the sine engine (what speech can be without units)"""
+    import subprocess
+    sys.path.insert(0, os.path.join(UNIT, 'tools')); sys.path.insert(0, os.path.join(UNIT, 'tools', 'samples'))
+    import speech as SP, voice as V
+    import soundfile as sf
+    B = N.bank(); vs = N.voices(B)
+    os.makedirs(work, exist_ok=True)
+    ids = []
+    for sid, text in SENTENCES.items():
+        notes = SP.plan(SP.morae(text), vs[0], prog=200)
+        song = N.encode(notes, sid, text, 'Spectral Player (speech)')
+        json.dump(song, open(os.path.join(PACK, f'{sid}.song.json'), 'w'), separators=(',', ':'), ensure_ascii=False)
+        N.render(N.decode(song), os.path.join(work, f'{sid}.wav'), master=1.0)
+        y, sr, *_ = V.kokoro(text, 'jf_alpha', 1.0)
+        kw = os.path.join(work, f'kokoro_{sid}.wav'); sf.write(kw, y, sr)
+        out = os.path.join(PACK, f'{sid}_kokoro.song.json')
+        subprocess.run(['python3', os.path.join(UNIT, 'tools', 'spectral.py'), kw, '--voices', '48', '--id', f'{sid}_kokoro',
+                        '--title', f'{sid} (Kokoro, sine)', '--out', out[: -len('.song.json')]], check=True, capture_output=True)
+        ids.append(sid)
+    S = 'spectral:sampler'
+    lines = [f'do execute as @a run {S} 2 250 28 120']
+    for sid in ids:
+        lines += rec(f'sv_{sid}', [], f'spectral:play {sid}', 7000)
+        lines += rec(f'sk_{sid}', [], f'spectral:play {sid}_kokoro', 7000)
+    lines += rec('sv3_speech_hello', [], 'spectral:play speech_hello speaker', 7300)
+    head = ["# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+            "# p09（tools/exp/sampler_plans.py p09）: 声の素片を切り直した（子音が素に入った・1 モーラ 180 ms）読み上げを ヘッドホン・3D で、",
+            "# 同じ文の Kokoro そのままの声を正弦波の道で。録音を手元の Whisper で聞き取り（文字の誤り率）"]
+    songs = ','.join(ids + [f'{x}_kokoro' for x in ids])
+    plan = {'header': head, 'arms': [], 'setup': ['tp @s 0 -60 0 0 0'], 'prep': [f'audio song {songs} pack=tools/exp/packs/notes'],
+            'sections': [{'title': 'speech', 'lines': lines}]}
+    json.dump(plan, open(os.path.join(HERE, 'queue', 'p09_speech_units.json'), 'w'), ensure_ascii=False, indent=1)
+    print('plan p09_speech_units:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'p03':
         p03()
     elif len(sys.argv) > 1 and sys.argv[1] == 'p06':
         p06()
+    elif len(sys.argv) > 1 and sys.argv[1] == 'p09':
+        p09(sys.argv[2] if len(sys.argv) > 2 else '/tmp/speech_refs')
     elif len(sys.argv) > 1 and sys.argv[1] == 'p02':
         p02(sys.argv[2] if len(sys.argv) > 2 else '/tmp/sampler_refs')
     else:

@@ -1,0 +1,47 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+  "# p08（tools/exp/queue/p08_connect.json）: マイクラのまま WebSocket だけ — 本物のクライアントの /connect が Spectral Connect（ラボの BDS の横）",
+  "# につながるか（暗号化も）、チャット・リモコンの手紙・鍵盤の束が届いて鳴るか。録音: チャットの曲・音階（生演奏の間）・手紙の曲"
+ ],
+ "arms": [],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "sections": [
+  {
+   "title": "connect",
+   "lines": [
+    "do execute as @a run spectral:sampler 2 250 28 120 true",
+    "# /connect: the game to Spectral Connect beside the lab's BDS (lab-service.json: tools/connect/server.mjs on 8790)",
+    "chat /connect ${DEVICE_HOST}:8790",
+    "until server \\[spectral\\] remote .*: hello 30000",
+    "shot connected",
+    "# a song by the chat (PlayerMessage → the server reads the unit's fur_elise, sends it as script events, spectral:play)",
+    "audio start cn_chat",
+    "chat !spectral tools/exp/packs/notes/fur_elise.song.json",
+    "until server \\[spectral\\] note 0 piano 30000",
+    "wait 16000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export cn_chat 192",
+    "# the remote's mail (a tag the server reads with /tag @s list): a C major scale on the live keys, 150 ms apart",
+    "audio start cn_scale",
+    "do tag @a add geoui.mail.sr.1.0.1.eyJuIjoic2NhbGUiLCJmIjp7fX0",
+    "until server \\[spectral\\] live note on 72 20000",
+    "wait 1500",
+    "audio stop",
+    "audio export cn_scale 192",
+    "# a mail that plays a song (the 37 ms clicks)",
+    "audio start cn_mail",
+    "do tag @a add geoui.mail.sr.2.0.1.eyJuIjoicGxheSIsImYiOnsidXJsIjoidG9vbHMvZXhwL3BhY2tzL25vdGVzL2NsaWNrc19wdWxzZS5zb25nLmpzb24ifX0",
+    "until server \\[spectral\\] note 0 click 20000",
+    "wait 3500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export cn_mail 192",
+    "do execute as @a run spectral:sampler 2 250 28 120 false"
+   ]
+  }
+ ]
+}

@@ -41,7 +41,7 @@ export function kanaMorae(text: string): { morae: Mora[]; skipped: number; quest
 }
 
 /** a speech song of the kana text for voice v (VOICES[v]); undefined when there is nothing to say */
-export function saySong(text: string, v = 0, moraMs = 150, range = 4): { song: NoteSong; skipped: number } | undefined {
+export function saySong(text: string, v = 0, moraMs = 180, range = 4): { song: NoteSong; skipped: number } | undefined {
   const voice = VOICES[v]; if (!voice) return undefined;
   const { morae, skipped, question } = kanaMorae(text);
   if (!morae.length) return undefined;

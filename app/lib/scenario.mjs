@@ -85,6 +85,8 @@ import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWord
 
 // APP_TIME_SCALE (0..1, tests on the fake device): every fixed pause shorter; deadlines stay in real time
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms * (Math.min(1, Math.max(0, Number(process.env.APP_TIME_SCALE) || 1)))));
+/** ${DEVICE_HOST} in a step's text: this machine as the device reaches it (LAB_DEVICE_HOST, set by the app lab) */
+export const deviceVars = (text, env = process.env) => String(text).replace(/\$\{DEVICE_HOST\}/g, () => env.LAB_DEVICE_HOST || '10.0.2.2');
 export const DEFAULT_MS = { joined: 300_000, stable: 180_000, title: 600_000, server: 60_000, log: 60_000 };
 const STABLE_MS = Number(process.env.APP_STABLE_MS) || 6000;
 const TITLE_CALM_MS = Number(process.env.APP_TITLE_CALM_MS) || 4000;
@@ -632,11 +634,14 @@ export async function runScenario(steps, ctx) {
         return `${a[0].length} 文字（${((Date.now() - t0) / 1000).toFixed(1)} 秒）`;
       }
       case 'chat': {
-        // T opens the chat (the device's keyboard), the text goes in, ENTER sends it (a leading / makes it the player's command)
+        // T opens the chat (the device's keyboard), the text goes in, ENTER sends it (a leading / makes it the player's command).
+        // ${DEVICE_HOST}: this machine as the device reaches it (the app lab sets it: what GeoUI Web's pictures use) — for a
+        // command that names it, as /connect does
+        const said = deviceVars(a[0]);
         adb.shell(['input', 'keyevent', String(ANDROID_KEYS.T)]); await sleep(1500);
-        adb.shell(['input', 'text', inputText(a[0])]); await sleep(500);
+        adb.shell(['input', 'text', inputText(said)]); await sleep(500);
         adb.shell(['input', 'keyevent', String(ANDROID_KEYS.ENTER)]); await sleep(800);
-        return a[0];
+        return said;
       }
       case 'press': {
         const ms = num(a[1]) || 100, dev = keyboard();

@@ -1,0 +1,76 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+  "# p09（tools/exp/sampler_plans.py p09）: 声の素片を切り直した（子音が素に入った・1 モーラ 180 ms）読み上げを ヘッドホン・3D で、",
+  "# 同じ文の Kokoro そのままの声を正弦波の道で。録音を手元の Whisper で聞き取り（文字の誤り率）"
+ ],
+ "arms": [],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song speech_hello,speech_weather,speech_cave,speech_piano,speech_hello_kokoro,speech_weather_kokoro,speech_cave_kokoro,speech_piano_kokoro pack=tools/exp/packs/notes"
+ ],
+ "sections": [
+  {
+   "title": "speech",
+   "lines": [
+    "do execute as @a run spectral:sampler 2 250 28 120",
+    "audio start sv_speech_hello",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sv_speech_hello 192",
+    "audio start sk_speech_hello",
+    "do execute as @a run spectral:play speech_hello_kokoro",
+    "wait 7000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sk_speech_hello 192",
+    "audio start sv_speech_weather",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 7000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sv_speech_weather 192",
+    "audio start sk_speech_weather",
+    "do execute as @a run spectral:play speech_weather_kokoro",
+    "wait 7000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sk_speech_weather 192",
+    "audio start sv_speech_cave",
+    "do execute as @a run spectral:play speech_cave",
+    "wait 7000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sv_speech_cave 192",
+    "audio start sk_speech_cave",
+    "do execute as @a run spectral:play speech_cave_kokoro",
+    "wait 7000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sk_speech_cave 192",
+    "audio start sv_speech_piano",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 7000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sv_speech_piano 192",
+    "audio start sk_speech_piano",
+    "do execute as @a run spectral:play speech_piano_kokoro",
+    "wait 7000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sk_speech_piano 192",
+    "audio start sv3_speech_hello",
+    "do execute as @a run spectral:play speech_hello speaker",
+    "wait 7300",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sv3_speech_hello 192"
+   ]
+  }
+ ]
+}
