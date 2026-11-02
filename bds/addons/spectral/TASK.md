@@ -26,6 +26,12 @@
 5. **電話**は同時に 32 音しか鳴らない（実測）ので自動で 24 声＋ノイズ 8、ファイルより 10 dB 大きく（実測で +6 dB より良い）。Realms や人が多いときは
    `/spectral:mode light`（16 声・1 人 1 tick 24 命令まで）。何人もの話し手が近くにいると、聞く人ごとにその 32 音を話し手で分ける
    （`/spectral:share`、既定 on: 2 人なら 1 人 10 声＋ノイズの上の 6 帯域）
+6. **楽器の音で（MIDI）・録音そのまま・声**（11-03）: `/spectral:play piano_demo`（サンプラー: 本物のピアノの音を 1 ms 単位で置く。
+   `/spectral:sampler` で今の値、既定は 2 tick ずつ束ねる）・`/spectral:play piano_file`（録音そのまま、48 kHz）・`/spectral:say "こんにちは"`。
+   MIDI は `python3 tools/notes.py <曲.mid> --out x.song.json`、録音は `python3 tools/filepack.py <曲> --unit <フォルダ>`（その曲のアドオン）。
+   大きな曲の音割れは `/spectral:limit true`（試し: 実機で p07 が決める）
+7. **マイクラのまま、パソコンから**（11-03）: `node tools/connect/server.mjs` → ゲームで `/connect <パソコン>:8790` → ページ（OreUI）か
+   ゲームの中のリモコン（Spectral Remote: `/sr:open`）から URL・ファイルを曲にして流す、鍵盤（MIDI 鍵盤・画面の鍵）で弾く。tools/connect/README.md
 
 ## Acceptance (one tests.txt `## ` section each)
 - [x] MP3 を解析した曲データを正弦波の加算合成で再生する。正弦波 1 本 = 常駐ループの SoundInstance 1 つ（## play starts 48 sine voices and 8 noise bands as looping sound instances）
