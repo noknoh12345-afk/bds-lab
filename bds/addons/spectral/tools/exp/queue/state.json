@@ -12,6 +12,12 @@
   "status": "done",
   "tries": 1
  },
+ "p03_file_songs": {
+  "commit": "0e02c94",
+  "run": "41475752440",
+  "started": "2026-11-03 00:51",
+  "status": "running"
+ },
  "q01_same_twice": {
   "arms": {
    "ra": {
