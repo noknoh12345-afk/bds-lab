@@ -12,3 +12,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q06_two_streams | 41445940726 | success | 26 | t1 3.093 / 1.816 / 8.44 (13) · t2 2.111 / 2.352 / 11.95 (13) | 0 | 2026-11-02 21:35 → 2026-11-02 22:06 |
 | q07_screen_off | 41450100828 | failure | 2（sn_speech_ja_soseki 273 KB, so_speech_ja_soseki 101 KB） | sn 3.195 / 1.447 / 8.87 (1) · so 2.937 / 1.501 / 9.60 (1) | 1（✘ 46 do execute as @a run spectral:play speech_ja_soseki_e） | 2026-11-02 22:06 → 2026-11-02 22:15 |
 | q08_walking_talker | 41451475311 | success | 12 | ws 3.665 / 1.608 / 8.17 (6) · ww 3.293 / 1.788 / 10.52 (6) | 0 | 2026-11-02 22:16 → 2026-11-02 22:40 |
+| q09_long_song | 41455081012 | success | 1（lg_long_all 4223 KB） | — | 0 | 2026-11-02 22:41 → 2026-11-02 22:56 |

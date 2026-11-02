@@ -273,10 +273,17 @@
   "tries": 1
  },
  "q09_long_song": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "58db7b7",
+  "conclusion": "success",
+  "ended": "2026-11-02 22:56",
+  "failed_steps": 0,
+  "recordings": 1,
   "run": "41455081012",
   "started": "2026-11-02 22:41",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q10_live_10min": {
   "status": "pending"
