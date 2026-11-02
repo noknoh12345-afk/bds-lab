@@ -18,6 +18,7 @@ import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes } from './notes
 import notesDemo from './songs/notes_demo';
 import bandDemo from './songs/band_demo';
 import { saySong } from './say';
+import { FilePlayer, FileMeta } from './files';
 import { VOICES } from './bank';
 
 // ------------------------------------------------------------------ constants (same as tools/spectral.py)
@@ -58,6 +59,10 @@ const noteSongs = new Map<string, NoteSong>();
 export function addNoteSong(meta: NoteMeta, data: string) { noteSongs.set(meta.id, { meta, data }); }
 addNoteSong(notesDemo.meta, notesDemo.data);
 addNoteSong(bandDemo.meta, bandDemo.data);
+/** file songs (src/files.ts, tools/filepack.py): recordings played as themselves, from the parts in an add-on's resource pack */
+const fileSongs = new Map<string, FileMeta>();
+// (the built-in one: the étude rendered through the bank's piano, in this pack's own sounds — rp/sounds/spectral_f/piano_file)
+fileSongs.set('piano_file', { id: 'piano_file', title: 'Piano étude (as recorded)', artist: 'Spectral Player', seconds: 23.484, parts: [[0, 23484]], x: 80, lead: 0.6 });
 
 const B64 = new Uint8Array(128);
 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('').forEach((c, i) => (B64[c.charCodeAt(0)] = i));
@@ -622,6 +627,8 @@ const dist = (a: Vector3, b: Vector3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - 
 const sessions = new Map<string, Session>();
 /** the note songs playing, by player */
 const notePlays = new Map<string, NotePlayer>();
+/** the file songs playing, by player */
+const filePlays = new Map<string, FilePlayer>();
 // (settings are saved whole whenever one changes, so a saved value may only be the default of its time: rev 2 = saved by this
 // version. A phone's drums saved before it (rev 1) were the old default, not a choice: the client's default replaces them)
 const SETTINGS_REV = 2;
@@ -639,6 +646,11 @@ system.runInterval(() => {
     if (s.ending > 0 && ++s.ending > 4) { s.stop(); sessions.delete(id); if (s.owner.isValid) s.owner.sendMessage(`§7■ ${s.song.meta.title} — end`); }
     else if (s.ending < 0) { s.stop(); sessions.delete(id); }
   }
+  for (const [id, s] of filePlays) {
+    try { s.tick(); } catch (e) { console.warn(`[spectral] file song: ${e}`); s.ending = -1; }
+    if (s.ending > 0 && ++s.ending > 2) { s.stop(); filePlays.delete(id); if (s.owner.isValid) s.owner.sendMessage(`§7■ ${s.title} — end`); }
+    else if (s.ending < 0) { s.stop(); filePlays.delete(id); }
+  }
   for (const [id, s] of notePlays) {
     try { s.tick(); } catch (e) { console.warn(`[spectral] notes: ${e}`); s.ending = -1; }
     if (s.ending > 0 && ++s.ending > 2) { s.stop(); notePlays.delete(id); if (s.owner.isValid) s.owner.sendMessage(`§7■ ${s.title} — end`); }
@@ -649,10 +661,13 @@ system.runInterval(() => {
 async function play(p: Player, id: string | undefined, mode: Mode): Promise<string> {
   if (id && !songs.has(id)) {
     const pre = (t: string) => t.toLowerCase().startsWith(id.toLowerCase());
+    const fs = fileSongs.get(id) ?? (noteSongs.has(id) || [...songs.values()].some((x) => pre(x.meta.title)) ? undefined : [...fileSongs.values()].find((x) => pre(x.title)));
+    if (fs) return playFile(p, fs, mode);
     const ns = noteSongs.get(id) ?? ([...songs.values()].some((x) => pre(x.meta.title)) ? undefined : [...noteSongs.values()].find((x) => pre(x.meta.title)));
     if (ns) return playNotes(p, ns, mode);
   }
   const oldN = notePlays.get(p.id); if (oldN) { oldN.stop(); notePlays.delete(p.id); }
+  const oldF = filePlays.get(p.id); if (oldF) { oldF.stop(); filePlays.delete(p.id); }
   const song = id ? songs.get(id) ?? [...songs.values()].find((s) => s.meta.title.toLowerCase().startsWith(id.toLowerCase())) : songs.get('demo');
   if (!song) return `§cno song "${id}" — /spectral:songs`;
   const old = sessions.get(p.id); if (old) { old.stop(); sessions.delete(p.id); }
@@ -671,8 +686,26 @@ async function play(p: Player, id: string | undefined, mode: Mode): Promise<stri
  *  `ahead3d` ms more for a 3D speaker (a 3D sound plays as made for 100-200 ms); at most `voices` notes at once (the phone plays
  *  32 sounds); `volume`: the level of a velocity-127 note */
 const SAMPLER = { place: true, bundle: 4, ahead3d: 250, voices: 28, volume: 1.2, log: false };
+/** how loud a file song plays (setVolume: up to 2 exact on the phone; the game plays a file 32.5 dB under it, into 16 bits) */
+const FILE_LEVEL = 1.8;
+function stopAllFor(p: Player) {
+  const old = sessions.get(p.id); if (old) { old.stop(); sessions.delete(p.id); }
+  const n = notePlays.get(p.id); if (n) { n.stop(); notePlays.delete(p.id); }
+  const f = filePlays.get(p.id); if (f) { f.stop(); filePlays.delete(p.id); }
+}
+async function playFile(p: Player, meta: FileMeta, mode: Mode): Promise<string> {
+  stopAllFor(p);
+  const s = settingsOf(p), c = clientOf(p);
+  const fp = new FilePlayer(p, meta, { where: mode, volume: FILE_LEVEL * s.volume, range3d: RANGE_3D, level3d: Math.pow(10, LEVEL_3D_DB / 20) / 3,
+    ahead: mode === 'speaker' ? SAMPLER.ahead3d : 0, hi: !!c && c.mixHz >= 44100, loop: s.loop, log: SAMPLER.log }, p.dimension, { x: p.location.x, y: p.location.y + 1, z: p.location.z });
+  filePlays.set(p.id, fp);
+  fp.start();
+  console.warn(`[spectral] file song ${meta.id}: ${meta.parts.length} part${meta.parts.length > 1 ? 's' : ''}, ${mode}`);
+  return `§a▶ ${meta.title}${meta.artist ? ' — ' + meta.artist : ''} §7(${fmt(meta.seconds)}, as recorded, ${mode === 'phones' ? 'headphones' : 'speaker'})`;
+}
 async function playNotes(p: Player, song: NoteSong, mode: Mode): Promise<string> {
   const old = sessions.get(p.id); if (old) { old.stop(); sessions.delete(p.id); }
+  const oldF = filePlays.get(p.id); if (oldF) { oldF.stop(); filePlays.delete(p.id); }
   const oldN = notePlays.get(p.id); if (oldN) { oldN.stop(); notePlays.delete(p.id); }
   let nt;
   try { nt = decodeNotes(song); } catch (e) { return `§csong ${song.meta.id} is broken: ${e}`; }
@@ -691,10 +724,12 @@ async function playNotes(p: Player, song: NoteSong, mode: Mode): Promise<string>
 const mine = (p: Player) => sessions.get(p.id);
 const none = '§7nothing is playing — /spectral:play';
 function stopFor(p: Player) {
+  const f = filePlays.get(p.id); if (f) { f.stop(); filePlays.delete(p.id); return '§7■ stopped'; }
   const n = notePlays.get(p.id); if (n) { n.stop(); notePlays.delete(p.id); return '§7■ stopped'; }
   const s = mine(p); if (!s) return none; s.stop(); sessions.delete(p.id); return '§7■ stopped';
 }
 function pauseFor(p: Player) {
+  const f = filePlays.get(p.id); if (f) { f.setPaused(!f.paused); return f.paused ? '§e⏸ paused' : '§a▶ resumed'; }
   const n = notePlays.get(p.id); if (n) { n.setPaused(!n.paused); return n.paused ? '§e⏸ paused' : '§a▶ resumed'; }
   const s = mine(p); if (!s) return none;
   s.paused = !s.paused;
@@ -703,6 +738,7 @@ function pauseFor(p: Player) {
 }
 function freezeFor(p: Player) { const s = mine(p); if (!s) return none; s.frozen = !s.frozen; return s.frozen ? '§b❄ frozen' : '§a▶ thawed'; }
 function seekFor(p: Player, sec: number) {
+  const f = filePlays.get(p.id); if (f) { f.seekMs(Math.max(0, sec) * 1000); return `§b⇥ ${fmt(Math.max(0, sec))}`; }
   const n = notePlays.get(p.id); if (n) { n.seekMs(Math.max(0, sec) * 1000); return `§b⇥ ${fmt(Math.max(0, sec))}`; }
   const s = mine(p); if (!s) return none; s.seek(sec * 20); return `§b⇥ ${fmt(s.ph / 20)}`; }
 
@@ -777,9 +813,10 @@ cmd('spectral:join', 'Listen in on another player\'s headphones', { who: 'player
 cmd('spectral:songs', 'List the songs', {}, (p) => {
   for (const s of songs.values()) p.sendMessage(`§f♪ ${s.meta.id} §7— ${s.meta.title} (${fmt(s.meta.seconds)}, ${s.meta.voices} voices${s.pasted ? `, pasted by ${s.pasted}` : ''})`);
   for (const s of noteSongs.values()) p.sendMessage(`§f♫ ${s.meta.id} §7— ${s.meta.title} (${fmt(s.meta.seconds)}, ${s.meta.notes} notes${s.pasted ? `, pasted by ${s.pasted}` : ''})`);
-  return `§7${songs.size + noteSongs.size} songs — /spectral:play <id> [phones|speaker] · /spectral:paste adds one`;
+  for (const s of fileSongs.values()) p.sendMessage(`§f♬ ${s.id} §7— ${s.title} (${fmt(s.seconds)}, as recorded)`);
+  return `§7${songs.size + noteSongs.size + fileSongs.size} songs — /spectral:play <id> [phones|speaker] · /spectral:paste adds one`;
 });
-cmd('spectral:status', 'Playback state and engine load', {}, (p) => notePlays.get(p.id)?.status() ?? mine(p)?.status() ?? 'status: idle');
+cmd('spectral:status', 'Playback state and engine load', {}, (p) => filePlays.get(p.id)?.status() ?? notePlays.get(p.id)?.status() ?? mine(p)?.status() ?? 'status: idle');
 cmd('spectral:say', 'Read kana aloud with the voice, mora by mora like notes (kanji: tools/speech.py makes a speech song): headphones, or the speaker for everyone near',
   { text: 'string', 'out?': ['phones', 'speaker'], 'speed?': 'float' }, async (p, a) => {
     if (!VOICES.length) return '§cno voice in this pack';
@@ -864,6 +901,15 @@ const partial = new Map<string, { meta?: Meta; parts: string[]; got: number; n: 
 system.afterEvents.scriptEventReceive.subscribe((e) => {
   if (e.id === 'spectral:echo') { world.sendMessage(`echo ${e.message.length}`); return; }
   if (e.id === 'spectral:live') { const why = liveMessage(e.message); if (why) console.warn(`[spectral] live: ${why}`); return; }
+  if (e.id === 'spectral:file') {
+    let m: FileMeta;
+    try { m = JSON.parse(e.message); } catch { console.warn('[spectral] file song: bad message'); return; }
+    if (!m?.id || !Array.isArray(m.parts) || !m.parts.length || !(m.seconds > 0)) { console.warn('[spectral] file song: no parts'); return; }
+    const known = fileSongs.has(m.id);
+    fileSongs.set(m.id, m);
+    if (!known) world.sendMessage(`§d♪ song (as recorded): ${m.title} (${fmt(m.seconds)}) — /spectral:play ${m.id}`);
+    return;
+  }
   if (e.id !== 'spectral:song') return;
   let m: { id: string; i: number; n: number; meta?: Meta; data: string };
   try { m = JSON.parse(e.message); } catch { console.warn('[spectral] song pack: bad message'); return; }
@@ -1673,6 +1719,7 @@ async function rebuild(s: Session, p: Player) {
 world.afterEvents.playerLeave.subscribe((e) => {
   const s = sessions.get(e.playerId); if (s) { s.stop(); sessions.delete(e.playerId); }
   const n = notePlays.get(e.playerId); if (n) { n.stop(); notePlays.delete(e.playerId); }
+  const f = filePlays.get(e.playerId); if (f) { f.stop(); filePlays.delete(e.playerId); }
 });
 world.afterEvents.worldLoad.subscribe(() => system.sendScriptEvent('spectral:hello', '1'));
 

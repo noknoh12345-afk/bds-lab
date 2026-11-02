@@ -35,7 +35,12 @@ def main():
     lg = X.song_log(sp, play)
     y = X.render(lg, {'oneshot_latency_ms': -45, **({} if phone else {'max_voices': 1000})})
     out = X.path24(y, clip=2.0) if phone else (y.mean(1) if y.ndim == 2 else y)
-    res = {'song': meta.get('id'), 'client': a.client, 'voices': voices, 'level_db': level, 'seconds': round(len(out) / X.SR, 2),
+    # the mix before the phone's clip (file units, at its 24 kHz): how often it goes over 2.0, and how loud what the clip cuts off is
+    mix = (y.mean(1) if y.ndim == 2 else y)[::2]
+    cut = mix - np.clip(mix, -2.0, 2.0)
+    clip = {'clip_share': round(float((np.abs(mix) > 2.0).mean()), 5), 'clip_db': round(float(10 * np.log10((cut ** 2).sum() / max(1e-12, (mix ** 2).sum()) + 1e-12)), 1),
+            'mix_peak': round(float(np.abs(mix).max()), 3)}
+    res = {'song': meta.get('id'), 'client': a.client, 'voices': voices, 'level_db': level, 'seconds': round(len(out) / X.SR, 2), **clip,
            'calls_per_tick': json.load(open(lg + '.info')).get('calls_per_tick'), 'status': '推測（エミュレーター）'}
     if a.wav:
         import wave

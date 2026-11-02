@@ -16980,6 +16980,28 @@
      "volume": 1.0
     }
    ]
+  },
+  "spectral.f.piano_file.0": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral_f/piano_file/0",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.f.piano_file.0_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral_f/piano_file/0",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
   }
  }
 }

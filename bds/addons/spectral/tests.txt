@@ -737,3 +737,30 @@ until note 26 4000
 ~ \[spectral\] note 17 vibes\.10 key 76 pitch 1\.0000 seek 0\.5500 at 1200 ms
 until ■ Band \(sampler demo\) — end 15000
 @A cmd /spectral:sampler 4 250 28 120 false
+
+## a recording plays as itself, at mp3's quality (tools/filepack.py: an add-on's resource pack holds its parts at 24 kHz — nothing folds on a phone, which mixes at 24 kHz — and its behaviour pack tells the player; the built-in one is the étude through the bank's piano): each part starts in the tick before it with seekTo into its silence, a seek starts the part from inside, the speaker 250 ms ahead
+@A cmd /spectral:sampler 4 250 28 120 true
+@A cmd /spectral:songs
+~ @A ♬ piano_file — Piano étude \(as recorded\) \(0:23, as recorded\)
+@A cmd /spectral:play piano_file
+~ @A ▶ Piano étude \(as recorded\) — Spectral Player \(0:23, as recorded, headphones\)
+until part 0 of piano_file 2000
+~ \[spectral\] part 0 of piano_file seek 0\.6000 at 0 ms
+@A cmd /spectral:status
+~ @A file song Piano étude \(as recorded\): part 1/1 at \d+\.\d s of 23\.5 · headphones, 24 kHz
+@A cmd /spectral:seek 20
+~ @A ⇥ 0:20
+until seek 20\. 2000
+~ \[spectral\] part 0 of piano_file seek 20\.\d+ at 2\d\d\d\d ms
+@A cmd /spectral:play piano_file speaker
+until part 0 of piano_file seek 0\.3 2000
+~ \[spectral\] part 0 of piano_file seek 0\.3500 at -250 ms
+@A cmd /spectral:stop
+~ @A ■ stopped
+
+## a file song's own add-on announces it (spectral:file, on world load and on spectral:hello)
+scriptevent spectral:file {"id":"f_test","title":"Test file","artist":"","seconds":23.484,"parts":[[0,23484]],"x":80,"lead":0.6}
+~ ♪ song \(as recorded\): Test file \(0:23\) — /spectral:play f_test
+scriptevent spectral:file {"id":"f_bad"}
+~ \[spectral\] file song: no parts
+@A cmd /spectral:sampler 4 250 28 120 false
