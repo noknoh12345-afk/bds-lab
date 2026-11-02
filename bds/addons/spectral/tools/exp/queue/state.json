@@ -84,10 +84,53 @@
   "tries": 1
  },
  "q04_distance": {
+  "arms": {
+   "d16": {
+    "mrstft": 1.759,
+    "n": 6,
+    "rms_db": -53.55,
+    "third_oct_db": 8.918,
+    "visqol": 3.05
+   },
+   "d3": {
+    "mrstft": 1.57,
+    "n": 6,
+    "rms_db": -41.8,
+    "third_oct_db": 7.838,
+    "visqol": 3.547
+   },
+   "d32": {
+    "mrstft": 1.954,
+    "n": 6,
+    "rms_db": -58.75,
+    "third_oct_db": 8.671,
+    "visqol": 2.697
+   },
+   "d48": {
+    "mrstft": 2.03,
+    "n": 6,
+    "rms_db": -62.1,
+    "third_oct_db": 8.913,
+    "visqol": 2.587
+   },
+   "d8": {
+    "mrstft": 1.69,
+    "n": 6,
+    "rms_db": -48.75,
+    "third_oct_db": 8.364,
+    "visqol": 3.501
+   }
+  },
+  "checkpoints": 0,
   "commit": "60f696d",
+  "conclusion": "success",
+  "ended": "2026-11-02 21:07",
+  "failed_steps": 0,
+  "recordings": 30,
   "run": "41438415472",
   "started": "2026-11-02 20:38",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q05_direction": {
   "status": "pending"
