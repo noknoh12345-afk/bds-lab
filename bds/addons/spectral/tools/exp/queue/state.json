@@ -245,7 +245,10 @@
   "tries": 1
  },
  "q08_walking_talker": {
-  "status": "pending"
+  "commit": "20de64f",
+  "run": "41451475311",
+  "started": "2026-11-02 22:16",
+  "status": "running"
  },
  "q09_long_song": {
   "status": "pending"
