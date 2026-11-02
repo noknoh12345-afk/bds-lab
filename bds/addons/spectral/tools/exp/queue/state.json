@@ -351,7 +351,10 @@
   "tries": 2
  },
  "q12_level_12_14": {
-  "status": "pending"
+  "commit": "d130f62",
+  "run": "41465987389",
+  "started": "2026-11-02 23:51",
+  "status": "running"
  },
  "q13_voices_16_20": {
   "status": "pending"
