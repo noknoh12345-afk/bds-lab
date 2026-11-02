@@ -147,10 +147,17 @@
   "tries": 2
  },
  "p09_speech_units": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "5f7685d",
+  "conclusion": "success",
+  "ended": "2026-11-03 07:05",
+  "failed_steps": 0,
+  "recordings": 9,
   "run": "41531478311",
   "started": "2026-11-03 06:47",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "p10_sampler_level": {
   "status": "pending"
