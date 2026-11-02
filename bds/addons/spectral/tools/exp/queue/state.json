@@ -74,20 +74,42 @@
   "tries": 1
  },
  "p05_limiter": {
-  "arms": {},
+  "arms": {
+   "e": {
+    "mrstft": 1.737,
+    "n": 13,
+    "rms_db": -39.2,
+    "third_oct_db": 8.072,
+    "visqol": 2.957
+   },
+   "lm": {
+    "mrstft": 1.74,
+    "n": 13,
+    "rms_db": -40.7,
+    "third_oct_db": 7.866,
+    "visqol": 2.879
+   },
+   "lm14": {
+    "mrstft": 1.725,
+    "n": 13,
+    "rms_db": -39.4,
+    "third_oct_db": 8.244,
+    "visqol": 3.007
+   }
+  },
   "checkpoints": 0,
   "commit": "db7000e",
-  "conclusion": "failure",
+  "conclusion": "success",
   "earlier_runs": [
    "41513809085"
   ],
-  "ended": "2026-11-03 05:08",
-  "failed_steps": 1,
-  "recordings": 0,
+  "ended": "2026-11-03 06:00",
+  "failed_steps": 0,
+  "recordings": 39,
   "run": "41518220137",
   "started": "2026-11-03 05:19",
-  "status": "running",
-  "tries": 1
+  "status": "done",
+  "tries": 2
  },
  "p06_per_tick": {
   "status": "pending"
