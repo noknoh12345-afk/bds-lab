@@ -657,3 +657,45 @@ restart
 ~ @A ♪ paste_parts — Pasted in parts
 @A cmd /spectral:forget paste_parts
 ~ @A ♪ forgot Pasted in parts \(paste_parts\)
+
+## a MIDI song plays with recorded instruments, not sine waves: one piano sample a note at the nearest key, setPitch'd to its own, each placed inside its tick to the millisecond (the notes of 4 ticks started together, seekTo into the sample's 0.6 s of silence: a note 112.5 ms after its bundle's tick on a sample a semitone under starts at 0.6 - 0.1125 × 1.0595 = 0.4808 s)
+@A cmd /spectral:songs
+~ @A ♫ piano_demo — Piano étude \(sampler demo\) \(0:20, 104 notes\)
+@A cmd /spectral:sampler 4 250 28 120 true
+~ @A sampler: placed to the ms, 4 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 120 %
+@A cmd /spectral:play piano_demo
+~ @A ▶ Piano étude \(sampler demo\) — Spectral Player \(0:20, 104 notes, headphones\)
+until note 9 4000
+~ \[spectral\] note 0 piano\.40 key 48 pitch 1\.0000 seek 0\.6000 at 0 ms
+~ \[spectral\] note 2 piano\.48 key 55 pitch 1\.0595 seek 0\.4808 at 200 ms
+~ \[spectral\] note 5 piano\.48 key 55 pitch 1\.0595 seek 0\.4543 at 800 ms
+~ \[spectral\] note 9 piano\.48 key 55 pitch 1\.0595 seek 0\.4278 at 1400 ms
+@A cmd /spectral:status
+~ @A notes Piano étude \(sampler demo\): \d+/104 notes at \d+\.\d s · sounding \d+ \(most \d+, at most 28\) · started \d+, stolen 0, skipped 0
+
+## the speaker starts each note 250 ms earlier still (a 3D sound plays as it was made for 100-200 ms: that passes in the silence), and a player bound to the tick starts every note at the start of its tick (what placing them beats)
+@A cmd /spectral:play piano_demo speaker
+~ @A ▶ Piano étude \(sampler demo\) — Spectral Player \(0:20, 104 notes, speaker\)
+until note 2 3000
+~ \[spectral\] note 0 piano\.40 key 48 pitch 1\.0000 seek 0\.3500 at -250 ms
+~ \[spectral\] note 2 piano\.48 key 55 pitch 1\.0595 seek 0\.2159 at -50 ms
+@A cmd /spectral:sampler 0
+~ @A sampler: tick-bound \(no placement\)
+@A cmd /spectral:play piano_demo
+until note 2 piano 3000
+~ \[spectral\] note 2 piano\.48 key 55 pitch 1\.0595 seek 0\.6000 at 300 ms
+
+## a note song seeks, pauses and ends by itself; the last chord rolled 12 ms a note keeps its roll (bundled, its 8 notes start in one tick each at its own place)
+@A cmd /spectral:sampler 4 250 28 120 true
+@A cmd /spectral:play piano_demo
+@A cmd /spectral:seek 17.4
+~ @A ⇥ 0:17
+until note 103 3000
+~ \[spectral\] note 96 piano\.\d+ key 36 pitch [\d.]+ seek [\d.]+ at 17\d\d\d ms
+~ \[spectral\] note 103 piano\.\d+ key 76 pitch [\d.]+ seek [\d.]+ at 17\d\d\d ms
+@A cmd /spectral:pause
+~ @A ⏸ paused
+@A cmd /spectral:pause
+~ @A ▶ resumed
+until ■ Piano étude \(sampler demo\) — end 8000
+@A cmd /spectral:sampler 4 250 28 120 false

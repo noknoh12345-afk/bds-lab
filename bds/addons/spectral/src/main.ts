@@ -14,6 +14,8 @@ import { OSC_AMP, BASE_HZ, NOISE_RMS, NOISE_BANDS, BURST_RMS, BURST_BANDS, SUB }
 import demo from './songs/demo';
 import programs, { Program } from './calib_programs';
 import { readPart, joinParts, decodeSongJob, songHeader, payloadText, payloadFrom, Part, SongMeta, FIELD_CHARS, PHONE_CHARS } from './songtext';
+import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes } from './notes';
+import notesDemo from './songs/notes_demo';
 
 // ------------------------------------------------------------------ constants (same as tools/spectral.py)
 const SILENT = 1e-4;            // voices never go to 0 so the client keeps every loop alive
@@ -48,6 +50,10 @@ interface Decoded {
 }
 const songs = new Map<string, Song>();
 export function addSong(meta: Meta, data?: string, gen?: (d: Decoded) => void) { songs.set(meta.id, { meta, data, gen }); }
+/** note songs (src/notes.ts, tools/notes.py): a MIDI file's notes, played with the recorded instruments of the bank */
+const noteSongs = new Map<string, NoteSong>();
+export function addNoteSong(meta: NoteMeta, data: string) { noteSongs.set(meta.id, { meta, data }); }
+addNoteSong(notesDemo.meta, notesDemo.data);
 
 const B64 = new Uint8Array(128);
 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('').forEach((c, i) => (B64[c.charCodeAt(0)] = i));
@@ -610,6 +616,8 @@ const fmt = (s: number) => `${Math.floor(Math.abs(s) / 60)}:${String(Math.floor(
 const dist = (a: Vector3, b: Vector3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
 const sessions = new Map<string, Session>();
+/** the note songs playing, by player */
+const notePlays = new Map<string, NotePlayer>();
 // (settings are saved whole whenever one changes, so a saved value may only be the default of its time: rev 2 = saved by this
 // version. A phone's drums saved before it (rev 1) were the old default, not a choice: the client's default replaces them)
 const SETTINGS_REV = 2;
@@ -627,9 +635,20 @@ system.runInterval(() => {
     if (s.ending > 0 && ++s.ending > 4) { s.stop(); sessions.delete(id); if (s.owner.isValid) s.owner.sendMessage(`§7■ ${s.song.meta.title} — end`); }
     else if (s.ending < 0) { s.stop(); sessions.delete(id); }
   }
+  for (const [id, s] of notePlays) {
+    try { s.tick(); } catch (e) { console.warn(`[spectral] notes: ${e}`); s.ending = -1; }
+    if (s.ending > 0 && ++s.ending > 2) { s.stop(); notePlays.delete(id); if (s.owner.isValid) s.owner.sendMessage(`§7■ ${s.title} — end`); }
+    else if (s.ending < 0) { s.stop(); notePlays.delete(id); }
+  }
 }, 1);
 
 async function play(p: Player, id: string | undefined, mode: Mode): Promise<string> {
+  if (id && !songs.has(id)) {
+    const pre = (t: string) => t.toLowerCase().startsWith(id.toLowerCase());
+    const ns = noteSongs.get(id) ?? ([...songs.values()].some((x) => pre(x.meta.title)) ? undefined : [...noteSongs.values()].find((x) => pre(x.meta.title)));
+    if (ns) return playNotes(p, ns, mode);
+  }
+  const oldN = notePlays.get(p.id); if (oldN) { oldN.stop(); notePlays.delete(p.id); }
   const song = id ? songs.get(id) ?? [...songs.values()].find((s) => s.meta.title.toLowerCase().startsWith(id.toLowerCase())) : songs.get('demo');
   if (!song) return `§cno song "${id}" — /spectral:songs`;
   const old = sessions.get(p.id); if (old) { old.stop(); sessions.delete(p.id); }
@@ -644,17 +663,44 @@ async function play(p: Player, id: string | undefined, mode: Mode): Promise<stri
   const m = song.meta;
   return `§a▶ ${m.title}${m.artist ? ' — ' + m.artist : ''} §7(${fmt(m.seconds)}, ${s.V}/${m.voices} voices, ${mode === 'phones' ? 'headphones' : 'speaker'})`;
 }
+/** the sampler (/spectral:sampler): place each note inside its tick by seekTo, the notes of `bundle` ticks started together,
+ *  `ahead3d` ms more for a 3D speaker (a 3D sound plays as made for 100-200 ms); at most `voices` notes at once (the phone plays
+ *  32 sounds); `volume`: the level of a velocity-127 note */
+const SAMPLER = { place: true, bundle: 4, ahead3d: 250, voices: 28, volume: 1.2, log: false };
+async function playNotes(p: Player, song: NoteSong, mode: Mode): Promise<string> {
+  const old = sessions.get(p.id); if (old) { old.stop(); sessions.delete(p.id); }
+  const oldN = notePlays.get(p.id); if (oldN) { oldN.stop(); notePlays.delete(p.id); }
+  let nt;
+  try { nt = decodeNotes(song); } catch (e) { return `§csong ${song.meta.id} is broken: ${e}`; }
+  const s = settingsOf(p);
+  const np = new NotePlayer(p, song, nt, {
+    where: mode, place: SAMPLER.place, bundle: SAMPLER.bundle, ahead: mode === 'speaker' ? SAMPLER.ahead3d : 0,
+    maxVoices: Math.max(1, Math.min(SAMPLER.voices, s.sounds ? s.sounds - 2 : SAMPLER.voices)), volume: SAMPLER.volume * s.volume,
+    range3d: RANGE_3D, level3d: Math.pow(10, LEVEL_3D_DB / 20), semis: s.semis, speed: s.speed > 0 ? s.speed : 1, loop: s.loop, log: SAMPLER.log,
+  }, p.dimension, { x: p.location.x, y: p.location.y + 1, z: p.location.z });
+  notePlays.set(p.id, np);
+  np.start();
+  const m = song.meta;
+  console.warn(`[spectral] notes ${m.id}: ${m.notes} notes, ${mode}, ${SAMPLER.place ? `placed, bundle ${SAMPLER.bundle}` : 'tick-bound'}`);
+  return `§a▶ ${m.title}${m.artist ? ' — ' + m.artist : ''} §7(${fmt(m.seconds)}, ${m.notes} notes, ${mode === 'phones' ? 'headphones' : 'speaker'})`;
+}
 const mine = (p: Player) => sessions.get(p.id);
 const none = '§7nothing is playing — /spectral:play';
-function stopFor(p: Player) { const s = mine(p); if (!s) return none; s.stop(); sessions.delete(p.id); return '§7■ stopped'; }
+function stopFor(p: Player) {
+  const n = notePlays.get(p.id); if (n) { n.stop(); notePlays.delete(p.id); return '§7■ stopped'; }
+  const s = mine(p); if (!s) return none; s.stop(); sessions.delete(p.id); return '§7■ stopped';
+}
 function pauseFor(p: Player) {
+  const n = notePlays.get(p.id); if (n) { n.setPaused(!n.paused); return n.paused ? '§e⏸ paused' : '§a▶ resumed'; }
   const s = mine(p); if (!s) return none;
   s.paused = !s.paused;
   for (const t of s.targets) for (const x of [...t.osc, ...t.nz]) { try { if (s.paused) x?.pause(); else x?.resume(); } catch { /* gone */ } }
   return s.paused ? '§e⏸ paused' : '§a▶ resumed';
 }
 function freezeFor(p: Player) { const s = mine(p); if (!s) return none; s.frozen = !s.frozen; return s.frozen ? '§b❄ frozen' : '§a▶ thawed'; }
-function seekFor(p: Player, sec: number) { const s = mine(p); if (!s) return none; s.seek(sec * 20); return `§b⇥ ${fmt(s.ph / 20)}`; }
+function seekFor(p: Player, sec: number) {
+  const n = notePlays.get(p.id); if (n) { n.seekMs(Math.max(0, sec) * 1000); return `§b⇥ ${fmt(Math.max(0, sec))}`; }
+  const s = mine(p); if (!s) return none; s.seek(sec * 20); return `§b⇥ ${fmt(s.ph / 20)}`; }
 
 // ------------------------------------------------------------------ commands
 cmd('spectral:play', 'Play a song (headphones: follows you; speaker: 3D at this spot for everyone)', { 'song?': 'string', 'where?': ['phones', 'speaker'] },
@@ -726,9 +772,19 @@ cmd('spectral:join', 'Listen in on another player\'s headphones', { who: 'player
 });
 cmd('spectral:songs', 'List the songs', {}, (p) => {
   for (const s of songs.values()) p.sendMessage(`§f♪ ${s.meta.id} §7— ${s.meta.title} (${fmt(s.meta.seconds)}, ${s.meta.voices} voices${s.pasted ? `, pasted by ${s.pasted}` : ''})`);
-  return `§7${songs.size} songs — /spectral:play <id> [phones|speaker] · /spectral:paste adds one`;
+  for (const s of noteSongs.values()) p.sendMessage(`§f♫ ${s.meta.id} §7— ${s.meta.title} (${fmt(s.meta.seconds)}, ${s.meta.notes} notes${s.pasted ? `, pasted by ${s.pasted}` : ''})`);
+  return `§7${songs.size + noteSongs.size} songs — /spectral:play <id> [phones|speaker] · /spectral:paste adds one`;
 });
-cmd('spectral:status', 'Playback state and engine load', {}, (p) => mine(p)?.status() ?? 'status: idle');
+cmd('spectral:status', 'Playback state and engine load', {}, (p) => notePlays.get(p.id)?.status() ?? mine(p)?.status() ?? 'status: idle');
+cmd('spectral:sampler', 'Note songs (MIDI, the instrument bank): notes of this many ticks started together, each placed inside its tick by seekTo (0 = no placement: every note at the start of its tick), ms more ahead for a 3D speaker, at most this many notes at once, level in percent',
+  { bundle: 'int', 'ahead?': 'int', 'voices?': 'int', 'volume?': 'int', 'log?': 'bool' }, (p, a) => {
+    SAMPLER.place = a.bundle > 0; SAMPLER.bundle = Math.max(1, Math.min(40, a.bundle || 1));
+    if (a.ahead !== undefined) SAMPLER.ahead3d = Math.max(0, Math.min(400, a.ahead));
+    if (a.voices !== undefined) SAMPLER.voices = Math.max(1, Math.min(64, a.voices));
+    if (a.volume !== undefined) SAMPLER.volume = Math.max(0, Math.min(200, a.volume)) / 100;
+    if (a.log !== undefined) SAMPLER.log = a.log;
+    return `§bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? 's' : ''} a bundle` : 'tick-bound (no placement)'}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %`;
+  }, true);
 cmd('spectral:menu', 'Open the player', {}, (p) => { openMenu(p); });
 cmd('spectral:probe', 'Voice-limit probe: a 110 Hz saw built one harmonic at a time (listen where it stops getting brighter)', { 'n?': 'int' }, (p, a) => {
   const n = Math.max(1, Math.min(128, a.n ?? 64));
@@ -806,10 +862,11 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
   if (m.meta) s.meta = m.meta;
   if (s.parts[m.i] === undefined) { s.parts[m.i] = m.data; s.got++; }
   if (s.got === s.n && s.meta) {
-    const known = songs.get(m.id), data = s.parts.join('');
+    const known: { data?: string } | undefined = songs.get(m.id) ?? noteSongs.get(m.id), data = s.parts.join('');
     partial.delete(m.id);
     if (known?.data === data) return;
-    addSong({ ...s.meta, id: m.id }, data);
+    if (isNoteMeta(s.meta as { format?: unknown })) addNoteSong({ ...(s.meta as unknown as NoteMeta), id: m.id }, data);
+    else addSong({ ...s.meta, id: m.id }, data);
     world.sendMessage(`§d♪ song pack: ${s.meta.title} (${fmt(s.meta.seconds)}) — /spectral:play ${m.id}`);
   }
 });
@@ -1601,7 +1658,10 @@ async function rebuild(s: Session, p: Player) {
   t.osc = []; t.nz = [];
   await s.build(t); s.resync(t); s.rebuilds++;
 }
-world.afterEvents.playerLeave.subscribe((e) => { const s = sessions.get(e.playerId); if (s) { s.stop(); sessions.delete(e.playerId); } });
+world.afterEvents.playerLeave.subscribe((e) => {
+  const s = sessions.get(e.playerId); if (s) { s.stop(); sessions.delete(e.playerId); }
+  const n = notePlays.get(e.playerId); if (n) { n.stop(); notePlays.delete(e.playerId); }
+});
 world.afterEvents.worldLoad.subscribe(() => system.sendScriptEvent('spectral:hello', '1'));
 
 cmdAny('spectral:library', 'Song count (console too)', {}, () => `library ${songs.size}: ${[...songs.keys()].join(' ')}`);
