@@ -186,7 +186,10 @@
   "tries": 1
  },
  "p12_connect2": {
-  "status": "pending"
+  "commit": "f795b55",
+  "run": "41538782070",
+  "started": "2026-11-03 07:37",
+  "status": "running"
  },
  "q01_same_twice": {
   "arms": {
