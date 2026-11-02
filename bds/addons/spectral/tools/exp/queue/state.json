@@ -56,10 +56,32 @@
   "tries": 1
  },
  "q03_phones_vs_speaker": {
+  "arms": {
+   "hp": {
+    "mrstft": 1.721,
+    "n": 13,
+    "rms_db": -39,
+    "third_oct_db": 7.638,
+    "visqol": 3.251
+   },
+   "hs": {
+    "mrstft": 1.796,
+    "n": 13,
+    "rms_db": -38.8,
+    "third_oct_db": 7.773,
+    "visqol": 3.321
+   }
+  },
+  "checkpoints": 0,
   "commit": "05af20c",
+  "conclusion": "success",
+  "ended": "2026-11-02 20:38",
+  "failed_steps": 0,
+  "recordings": 26,
   "run": "41433969762",
   "started": "2026-11-02 20:05",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q04_distance": {
   "status": "pending"
