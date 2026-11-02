@@ -111,6 +111,10 @@ await t('scenario: every step parses; errors name the line', () => {
   eq(r.steps.find((s) => s.line === 12).args, ['server', 'DEMO .* picked (x|y)', '3000']);
   eq(r.steps.find((s) => s.line === 10).args, ['scriptevent x:y a b']);
   eq(r.steps.find((s) => s.every).every.ms, 1000);
+  // (a failed section's recover: near the world shot → done; else BACK; the same screen as two BACKs ago = the pause screen
+  //  toggled by an old world shot → stay on the nearer of the two)
+  eq([S.recoverChoice({ off: 0.05 }), S.recoverChoice({ off: 0.6 }), S.recoverChoice({ off: 0.3, back2: 0.4, prevOff: 0.9 }),
+    S.recoverChoice({ off: 0.3, back2: 0.01, prevOff: 0.9 }), S.recoverChoice({ off: 0.9, back2: 0.01, prevOff: 0.3 })], ['done', 'back', 'back', 'stay', 'last']);
   // (tap text / tap below: the rest of the line is the regex, spaces and all)
   eq(S.parseScenario('tap text (?i)^paste the song\ntap below (?i)^song text$').steps.map((s) => s.args), [['text', '(?i)^paste the song'], ['below', '(?i)^song text$']]);
   const bad = S.parseScenario('tap 1\nfly\nuntil server\nuntil joined x\nshot a b/c\nuntil stable ; every 10 wait 5\nexpect nothing x\ntap below\ntap below (x');

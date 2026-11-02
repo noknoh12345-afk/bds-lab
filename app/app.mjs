@@ -19,7 +19,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Worker } from 'node:worker_threads';
 import * as K from './lib/apk.mjs';
 import * as D from './lib/android.mjs';
-import { parseScenario, runScenario, batchScenario, BATCH_RE, dialogSummary, KEYS, pngSize, screenDiff, titleLike, blankScreen, WORLD_SHOT } from './lib/scenario.mjs';
+import { parseScenario, runScenario, batchScenario, BATCH_RE, dialogSummary, KEYS, pngSize, screenDiff, recoverChoice, titleLike, blankScreen, WORLD_SHOT } from './lib/scenario.mjs';
 import { GAME_VERBS, gameLine, playGame, playServer } from './lib/play.mjs';
 import { startMonitor, fmtStats, hostNotes, hostStats } from './lib/host.mjs';
 import { annotations, deathExcerpt, ghEscape, guard, logcatDigest, writeReport } from './lib/report.mjs';
@@ -1028,12 +1028,20 @@ async function runCmd(args) {
       // a section failed: close whatever it left open (BACK until the screen is the world again; BACK on the bare world
       // opens the pause screen, which the next BACK closes)
       recover: async () => {
-        for (let k = 0; k < 4; k++) {
+        // (a world shot grown old — the clouds moved, the chat faded — is never matched again: BACK after BACK then opens and
+        //  closes the pause screen, and the fourth left it open, so that every later section met the pause screen (spectral
+        //  run 41364785434). The same screen as two BACKs ago is that toggling: of the two, stay on the one nearer the world)
+        const seen = [];
+        for (let k = 0; k < 5; k++) {
           const d = adb.focus().dialog;
           if (d) { D.answerDialog(adb, d); await sleep(1500); continue; }
           if (!baseline) return;
           let b; try { b = adb.screencap(); } catch { return; }
-          if (screenDiff(baseline, b, pngDecode) < 0.15) return;
+          const off = screenDiff(baseline, b, pngDecode), was = seen.length >= 2 ? seen[seen.length - 2] : null;
+          const next = recoverChoice({ off, back2: was ? screenDiff(was.b, b, pngDecode) : null, prevOff: seen.at(-1)?.off ?? null });
+          if (next === 'done' || next === 'stay') return;
+          if (next === 'last') { adb.shell(['input', 'keyevent', '4']); await sleep(1800); return; }
+          seen.push({ b, off });
           adb.shell(['input', 'keyevent', '4']); await sleep(1800);
         }
       },

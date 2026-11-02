@@ -2,12 +2,11 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# 30 回目（tools/exp/make_app.py tools/exp/app30.json）: 貼り付けの 3 回目。29 回目（run 41362999116）で分かったこと（平文の ck_ の録音から）: フォームは開く、
-#   OCR は Submit と灰色の例文（here / Paste the song）と見出し Song text を読める（題は読めない）、例文を押しても見出しの下を押しても入力欄に入り、
-#   400 文字を 1 秒ほどで打てる。止まったのは打った後の Submit を押すところ（ENTER の後、^submit$）。その後の区切りは入力欄も押せなかった。
-#   → フォームは Submit が読めるまで待つ（until text）、どの区切りも ck_<名前>_open から。打った後に入力欄を離れる 4 通り（ENTER・見出しを押す・
-#   そのまま・戻る）を試して、それぞれ Submit が見えるか（ck_*_submit_seen）・押せたか・サーバーが答えたか。look は打った後に例文が消えたか（文字が入った）。
-#   わざと失敗する手順（zz-never-on-screen-zz）は、リグに開いている画面を閉じさせるため（区切りの終わりに戻るで `shot world` まで）。最後に貼れた曲を鳴らして録る
+# 31 回目（tools/exp/make_app.py tools/exp/app31.json）: 貼り付けの 4 回目 = 30 回目の手順のやり直し。30 回目（run 41364785434）は最初の区切りの後、
+#   どのフォームも開かなかった: 区切りが失敗したときのリグの「戻る」が、古くなった `shot world`（雲が動く・チャットが消える）と一致しないまま 4 回押して、
+#   一時停止の画面を開いたまま終わった（戻るは何も開いていないワールドで一時停止を開き、次で閉じる）。→ リグの recover は、2 回前と同じ画面に戻ったら
+#   （開いて閉じての繰り返し）ワールドに近い方で止める（app/app.mjs、lib/scenario.mjs recoverChoice）。こちらは地面を見下ろして（雲が写らない）、
+#   チャットが消えるのを待ってから `shot world`。大事な区切り（入力欄を離れる 4 通りと長い曲）を先に、わざと失敗する look は最後に、OCR の probe は外した
 
 section title
 audio info
@@ -27,104 +26,12 @@ wait 5000
 do time set noon
 do gamerule dodaylightcycle false
 do weather clear
-do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run tp @s 0 -60 0 0 70
 
 section world
-wait 3000
+do execute as @a run tp @s 0 -60 0 0 70
+wait 12000
 shot world
-
-section probe_label
-do execute as @a run spectral:paste
-until text (?i)submit 20000
-wait 1000
-audio start ck_probe_label_open
-wait 400
-audio stop
-audio export ck_probe_label_open 16
-expect text (?i)song text
-audio start ck_probe_label_read
-wait 400
-audio stop
-audio export ck_probe_label_read 16
-expect text (?i)zz-never-on-screen-zz
-
-section probe_placeholder
-do execute as @a run spectral:paste
-until text (?i)submit 20000
-wait 1000
-audio start ck_probe_placeholder_open
-wait 400
-audio stop
-audio export ck_probe_placeholder_open 16
-expect text (?i)(here|paste the song)
-audio start ck_probe_placeholder_read
-wait 400
-audio stop
-audio export ck_probe_placeholder_read 16
-expect text (?i)zz-never-on-screen-zz
-
-section probe_toggle
-do execute as @a run spectral:paste
-until text (?i)submit 20000
-wait 1000
-audio start ck_probe_toggle_open
-wait 400
-audio stop
-audio export ck_probe_toggle_open 16
-expect text (?i)keep it
-audio start ck_probe_toggle_read
-wait 400
-audio stop
-audio export ck_probe_toggle_read 16
-expect text (?i)zz-never-on-screen-zz
-
-section probe_title
-do execute as @a run spectral:paste
-until text (?i)submit 20000
-wait 1000
-audio start ck_probe_title_open
-wait 400
-audio stop
-audio export ck_probe_title_open 16
-expect text (?i)(spectral|paste a)
-audio start ck_probe_title_read
-wait 400
-audio stop
-audio export ck_probe_title_read 16
-expect text (?i)zz-never-on-screen-zz
-
-section look
-do execute as @a run spectral:paste
-until text (?i)submit 20000
-wait 1000
-audio start ck_look_open
-wait 400
-audio stop
-audio export ck_look_open 16
-tap text (?i)^(here|paste the song)
-wait 2500
-text SPA1.1.1.a1a57e9d.285:AQUKBAgPMsLET9gHcHpfbG9vawxQYXN0ZSB0ZXN0IEwEbGl2ZQCvT_oz5mKnBnTmLYsnfA_I-LMTzA-5iNmEaJbvbv0HLpULPfbY-yQry0eL5swfzxuDAOk4ZSw9i_o-b1EFyPsW6pgcMxgLSZoMxebBfGnWGydjWjpQd3arGNQDGYnZdI
-wait 300
-text t_0dVcKzSJ2bV5Qf65GCFS_7f7cX0G5P90mbB2U9YLqIvFNx0IPAWNo_Y2GPPbW65mG8BIhvr_WdkLJMkl9i2ML8P_w761_WKZZJBx1QfFYJrOR97IrUvIpA4SkVN56dN7LRbnOlW9TQXyE_l_ZmbIr6HFF0ior4TJJsijD_l3moaf3mTt6eNbYV92XrDVXJwzxSopTp
-wait 300
-text AS
-wait 300
-wait 1500
-audio start ck_look_typed
-wait 400
-audio stop
-audio export ck_look_typed 16
-absent text (?i)paste the song
-audio start ck_look_text_in
-wait 400
-audio stop
-audio export ck_look_text_in 16
-expect text (?i)submit
-audio start ck_look_submit_seen
-wait 400
-audio stop
-audio export ck_look_submit_seen 16
-expect text (?i)zz-never-on-screen-zz
 
 section v_enter
 do execute as @a run spectral:paste
@@ -576,6 +483,39 @@ wait 400
 audio stop
 audio export ck_d2_label_answer 16
 wait 1500
+
+section look
+do execute as @a run spectral:paste
+until text (?i)submit 20000
+wait 1000
+audio start ck_look_open
+wait 400
+audio stop
+audio export ck_look_open 16
+tap text (?i)^(here|paste the song)
+wait 2500
+text SPA1.1.1.a1a57e9d.285:AQUKBAgPMsLET9gHcHpfbG9vawxQYXN0ZSB0ZXN0IEwEbGl2ZQCvT_oz5mKnBnTmLYsnfA_I-LMTzA-5iNmEaJbvbv0HLpULPfbY-yQry0eL5swfzxuDAOk4ZSw9i_o-b1EFyPsW6pgcMxgLSZoMxebBfGnWGydjWjpQd3arGNQDGYnZdI
+wait 300
+text t_0dVcKzSJ2bV5Qf65GCFS_7f7cX0G5P90mbB2U9YLqIvFNx0IPAWNo_Y2GPPbW65mG8BIhvr_WdkLJMkl9i2ML8P_w761_WKZZJBx1QfFYJrOR97IrUvIpA4SkVN56dN7LRbnOlW9TQXyE_l_ZmbIr6HFF0ior4TJJsijD_l3moaf3mTt6eNbYV92XrDVXJwzxSopTp
+wait 300
+text AS
+wait 300
+wait 1500
+audio start ck_look_typed
+wait 400
+audio stop
+audio export ck_look_typed 16
+absent text (?i)paste the song
+audio start ck_look_text_in
+wait 400
+audio stop
+audio export ck_look_text_in 16
+expect text (?i)submit
+audio start ck_look_submit_seen
+wait 400
+audio stop
+audio export ck_look_submit_seen 16
+expect text (?i)zz-never-on-screen-zz
 
 section ok_v_enter
 expect server spectral\] pasted pz_va \(

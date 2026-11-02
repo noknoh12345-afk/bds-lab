@@ -257,6 +257,15 @@ export function screenDiff(a, b, decode) {
   }
   return n ? d / n : 1;
 }
+/** a failed section's recover, after each screenshot (pure): off = how far it is from the world shot, back2 = how far from
+ *  the screen two BACKs ago (null: not yet), prevOff = the screen before the last BACK's off. → 'done' (the world), 'back'
+ *  (press BACK, look again), 'stay' (BACK toggles the pause screen open and shut — the world shot grown old: this screen is
+ *  the nearer of the two), 'last' (toggling, the other was nearer: one more BACK and done) */
+export function recoverChoice({ off, back2 = null, prevOff = null, near = 0.15, same = 0.03 }) {
+  if (off < near) return 'done';
+  if (back2 !== null && back2 < same) return prevOff !== null && prevOff < off ? 'last' : 'stay';
+  return 'back';
+}
 /** where two pictures differ (pure but for decoding): the share of sampled pixels that changed, their box (px) and which
  *  of a 4 x 3 grid of the screen they are in ('0110.0000.0110': the rows top to bottom) — numbers only, so a screen that
  *  never held still can say where it moved without showing it (the paper doll's corner, the whole world, the chat) */
