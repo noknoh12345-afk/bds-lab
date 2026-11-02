@@ -1,0 +1,75 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# 33 回目（tools/exp/make_app.py tools/exp/app33.json）: 新しい曲のテキスト SPZ2 は音質を変えないか（実測）。13 曲を曲ごとに交互に: o_ = 曲パックの曲",
+  "#   そのまま（tools/exp/packs/run10 の _e、48 声: 電話が鳴らすのは最初の 24 声）、z_ = 同じ曲を SPZ2 にしてから戻したもの（tools/exp/packs/spz2 の _z、",
+  "#   24 声: 大きさ 1.5 dB・音程 10 セント・ノイズ 1 dB の格子と音程の平滑）。差が run の中のゆらぎに収まるかを ViSQOL ほかで"
+ ],
+ "batch": 13,
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "interleave": [
+  "o",
+  "z"
+ ],
+ "arms": [
+  {
+   "pre": "o",
+   "suffix": "_e",
+   "pack": "tools/exp/packs/run10",
+   "conv": {
+    "pack": "run10"
+   },
+   "songs": [
+    "piano_gymnopedie",
+    "piano_chopin_op66",
+    "vocal_stars",
+    "vocal_name_of_love",
+    "choir_how_long",
+    "drums_round",
+    "rock_big",
+    "edm_detection",
+    "orchestra_five_armies",
+    "funk_funkorama",
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "demo_selfmade"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "pre": "z",
+   "suffix": "_z",
+   "pack": "tools/exp/packs/spz2",
+   "conv": {
+    "pack": "spz2"
+   },
+   "songs": [
+    "piano_gymnopedie",
+    "piano_chopin_op66",
+    "vocal_stars",
+    "vocal_name_of_love",
+    "choir_how_long",
+    "drums_round",
+    "rock_big",
+    "edm_detection",
+    "orchestra_five_armies",
+    "funk_funkorama",
+    "speech_ja_soseki",
+    "speech_en_wordsworth",
+    "demo_selfmade"
+   ],
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ]
+  }
+ ]
+}
