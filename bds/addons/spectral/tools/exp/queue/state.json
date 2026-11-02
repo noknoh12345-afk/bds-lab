@@ -173,7 +173,10 @@
   "tries": 1
  },
  "p11_per_tick": {
-  "status": "pending"
+  "commit": "cf491ad",
+  "run": "41536705472",
+  "started": "2026-11-03 07:22",
+  "status": "running"
  },
  "p12_connect2": {
   "status": "pending"
