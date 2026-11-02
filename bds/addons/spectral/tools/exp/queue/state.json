@@ -13,10 +13,17 @@
   "tries": 1
  },
  "p02_speech_piano": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "7ab87d8",
+  "conclusion": "success",
+  "ended": "2026-11-03 05:19",
+  "failed_steps": 0,
+  "recordings": 11,
   "run": "41516422416",
   "started": "2026-11-03 05:08",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "p03_file_songs": {
   "arms": {
