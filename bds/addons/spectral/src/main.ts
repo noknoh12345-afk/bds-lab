@@ -718,7 +718,9 @@ async function play(p: Player, id: string | undefined, mode: Mode): Promise<stri
 // (bundle 2: measured on the phone, p04 run 41482910293 — Für Elise bundled 2 ticks ViSQOL 3.11, onsets heard 98.6 %, as many as
 //  tick-bound (3.07, 98.6 %); bundled 4, 2.78 and 93.0 % (37 ms clicks: 47 of 60 heard at 4, 58 at 2, 59 at 1 — every note of a
 //  bundle starts in one tick, and the phone lost more of them the more a tick started))
-const SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 1.2, log: false };
+// (volume 3 — +8 dB over the 1.2 before: near the top of the phone's output, where it loses least; p02 measured the étude at 1.2
+//  scoring ViSQOL 2.47 against 4.14 through the sine engine at +10 dB. Each bundle is turned down when it would clip: src/notes.ts)
+const SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, log: false };
 /** how loud a file song plays (setVolume: up to 2 exact on the phone; the game plays a file 32.5 dB under it, into 16 bits) */
 const FILE_LEVEL = 1.8;
 function stopAllFor(p: Player) {

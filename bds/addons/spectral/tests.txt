@@ -662,7 +662,7 @@ restart
 @A cmd /spectral:songs
 ~ @A ♫ piano_demo — Piano étude \(sampler demo\) \(0:20, 104 notes\)
 @A cmd /spectral:sampler
-= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 120 %
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %
 @A cmd /spectral:sampler 4 250 28 120 true
 ~ @A sampler: placed to the ms, 4 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 120 %
 @A cmd /spectral:play piano_demo
@@ -845,3 +845,19 @@ execute as @a[name=A] run scriptevent spectral:note @1000;on 67 100 0 90
 ~ \[spectral\] live note on 67 piano\.\d+ pitch [\d.]+ seek [\d.]+ delay 90 ms
 execute as @a[name=A] run scriptevent spectral:note alloff
 @A cmd /spectral:sampler 2 250 28 120 false
+
+## the sampler plays near the top of the phone's output (level 300 %, measured: quiet notes lose most there) and turns a bundle's new notes down together when they and what still sounds would pass the phone's clip — the last chord's 8 notes in one bundle are turned down, the single notes before it are not
+@A cmd /spectral:sampler 2 250 28 300 true
+@A cmd /spectral:play piano_demo
+@A cmd /spectral:seek 17.4
+until note 103 3000
+~ \[spectral\] note 96 piano\.\d+ key 36 pitch [\d.]+ seek [\d.]+ at 17\d\d\d ms alias \S+ head 0\.\d\d
+~ \[spectral\] note 103 piano\.\d+ key 76 pitch [\d.]+ seek [\d.]+ at 17\d\d\d ms alias \S+ head 0\.\d\d
+@A cmd /spectral:status
+~ @A notes Piano étude \(sampler demo\): .* skipped \d+, [1-9]\d* bundles? turned down
+@A cmd /spectral:stop
+@A cmd /spectral:play piano_demo
+until note 0 2000
+~ \[spectral\] note 0 piano\.\d+ key 48 pitch [\d.]+ seek [\d.]+ at 0 ms alias -$
+@A cmd /spectral:stop
+@A cmd /spectral:sampler 2 250 28 300 false

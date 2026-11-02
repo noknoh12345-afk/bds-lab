@@ -47,7 +47,7 @@ export function saySong(text: string, v = 0, moraMs = 180, range = 4): { song: N
   if (!morae.length) return undefined;
   const idx = new Map(voice.units.map((u, i) => [u, i] as [string, number]));
   const unitOf = (k: string) => idx.get(k) ?? idx.get(k[0]) ?? idx.get(VOWEL_OF[k[k.length - 1]] ?? '');
-  const on: number[] = [], dur: number[] = [], key: number[] = [], vel: number[] = [], cents: number[] = [];
+  const on: number[] = [], dur: number[] = [], key: number[] = [], vel: number[] = [], cents: number[] = [], held: boolean[] = [];
   let t = 300, reg = 0, pos = 0;
   for (let i = 0; i < morae.length; i++) {
     const m = morae[i];
@@ -62,9 +62,13 @@ export function saySong(text: string, v = 0, moraMs = 180, range = 4): { song: N
     if (u !== undefined) {
       const pre = voice.pre[u];
       on.push(t - pre); dur.push(len + pre + (m.pause ? 40 : 25)); key.push(u); vel.push(100); cents.push(Math.round(semis * 100));
+      held.push(m.pause === 0);
     }
     t += len + m.pause;
   }
+  // (a mora's vowel stops as the next one's consonant starts, 10 ms of crossfade: left under the next /s/ /k/ /t/ it blurs it —
+  //  Whisper read the units' speech 0.26 of the characters wrong so, about 0.7-1.2 without: tools/speech.py)
+  for (let i = 0; i + 1 < on.length; i++) if (held[i]) dur[i] = Math.max(40, on[i + 1] - on[i] + 10);
   const t0 = Math.min(...on);
   const dec: Notes = { n: on.length, on: Float64Array.from(on.map((x) => x - t0)), dur: Float32Array.from(dur), key: Uint8Array.from(key),
     vel: Uint8Array.from(vel), prog: new Uint8Array(on.length), cents: Int16Array.from(cents) };

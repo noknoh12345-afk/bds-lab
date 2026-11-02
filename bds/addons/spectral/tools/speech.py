@@ -80,7 +80,7 @@ def morae(text):
     return out
 
 
-def plan(ms, voice, prog=200, mora_ms=180.0, rng=4.0, overlap=25.0):
+def plan(ms, voice, prog=200, mora_ms=180.0, rng=4.0, overlap=25.0, cut=10.0):
     """notes for the morae: each unit started its consonant ahead of its vowel, the vowel on the beat; Tokyo accent (the first mora
     low unless the nucleus is on it, high up to the nucleus, low after it; a flat phrase stays high), each phrase a little lower
     than the one before (a downstep after an accented one), the sentence's last mora lower still"""
@@ -120,7 +120,15 @@ def plan(ms, voice, prog=200, mora_ms=180.0, rng=4.0, overlap=25.0):
             continue
         start = t - pre[u]
         hold = dur + (overlap if nxt is not None and m['pause'] == 0 else 40)
-        notes.append((start, hold + pre[u], u, 64 if m['dev'] else 100, prog, round(semis * 100)))
+        notes.append([start, hold + pre[u], u, 64 if m['dev'] else 100, prog, round(semis * 100), m['pause']])
+    # (cut: a mora's vowel stops as the next one's consonant starts, crossfading `cut` ms — a vowel left sounding under the next
+    #  /s/ /k/ /t/ blurs it; None: each holds to the next vowel's beat + overlap, as before. Whisper on the four sentences of
+    #  tools/exp/sampler_plans.py, 180 ms a mora: 0.26 of the characters wrong at 10 ms, 0.34 at 20, about 0.7-1.2 without)
+    if cut is not None:
+        for a, b in zip(notes, notes[1:]):
+            if a[6] == 0:
+                a[1] = max(40.0, b[0] - a[0] + cut)
+    notes = [tuple(n[:6]) for n in notes]
     t0 = min(n[0] for n in notes)
     return sorted([(s - t0, *rest) for s, *rest in notes], key=lambda n: n[0])
 

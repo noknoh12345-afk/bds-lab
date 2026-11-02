@@ -276,7 +276,22 @@ def write_defs(bank):
     json.dump(d, open(p, 'w'), separators=(',', ':'))
 
 
+def add_peaks(bank):
+    """each sample's peak (after the lead) as its fifth number, read from its file: the add-on keeps a bundle's notes under the
+    phone's clip with it (src/notes.ts: the sampler plays near the top, where the phone's quiet output path loses least)"""
+    import subprocess
+    for inst in bank:
+        for i, row in enumerate(inst['samples']):
+            if len(row) >= 5:
+                continue
+            f = os.path.join(UNIT, 'rp', 'sounds', 'spectral', 'i', inst['id'], f'{i}.ogg')
+            raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', f, '-f', 'f32le', '-ac', '1', '-'], capture_output=True).stdout
+            x = np.frombuffer(raw, np.float32)
+            row.append(round(float(np.abs(x).max()), 4) if len(x) else 0.89)
+
+
 def write_ts(bank):
+    add_peaks(bank)
     gm = [-1] * 128
     for i, inst in enumerate(bank):
         for prog in inst['gm']:
@@ -293,9 +308,9 @@ def write_ts(bank):
 export const LEAD = {LEAD};
 /** the same sample under more event names (sound_definitions.json): spectral.i.<id>.<k><alias> */
 export const ALIASES = {json.dumps([''] + ALIASES)};
-/** one instrument: its samples as [MIDI key, velocity the layer stands for, length (ms, after the lead), RMS of its first 0.3 s]
+/** one instrument: its samples as [MIDI key, velocity the layer stands for, length (ms, after the lead), RMS of its first 0.3 s, peak]
  *  (sound events spectral.i.<id>.<index> and _3d), the fade at note-off (s), whether a held note sustains */
-export interface Inst {{ id: string; name: string; release: number; sustain: boolean; stereo: boolean; samples: [number, number, number, number][]; }}
+export interface Inst {{ id: string; name: string; release: number; sustain: boolean; stereo: boolean; samples: [number, number, number, number, number][]; }}
 export const BANK: Inst[] = [
   {insts}
 ];

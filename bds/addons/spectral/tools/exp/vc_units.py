@@ -57,6 +57,8 @@ def plan_from_speech(path, model, voice):
             semis = float(np.clip(semis, -6, 6))
             notes.append((on - pre[u], step + pre[u] + 25, u, 64 if m['dev'] else 100, 200, round(semis * 100)))
     notes.sort(key=lambda n: n[0])
+    # (each mora's vowel stops as the next consonant starts, 10 ms of crossfade, when they follow on: tools/speech.py plan's cut)
+    notes = [(s, (min(d, n2[0] - s + 10) if n2 and n2[0] - s < d + 60 else d), *r) for (s, d, *r), n2 in zip(notes, notes[1:] + [None])]
     t0 = min(n[0] for n in notes) if notes else 0
     return [(s - t0 + 0.0, *r) for s, *r in notes], res['text'], spk
 

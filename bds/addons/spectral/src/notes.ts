@@ -121,7 +121,12 @@ export interface NoteOpts {
 /** a sounding note. A held note of an instrument that sustains (strings, organ, winds) is handed over before its sample ends to a
  *  new copy of the same sample started at its steady part (relayFrom ms in) — the two crossfade in one tick, so they line up */
 interface Voice { s: SoundInstance; inst: Inst; gain: number; on: number; off: number; end: number; released: boolean; stopAt: number;
-  ev: string; p: number; len: number; relayAt: number; relays: number; }
+  ev: string; p: number; len: number; relayAt: number; relays: number; peak: number; }
+/** the headroom (measured on the phone, p02: the étude through the sampler at 1.2 scored ViSQOL 2.47, through the sine engine at
+ *  +10 dB 4.14 — the phone's output path is 16 bits 32.5 dB under the files, so a quiet note loses its quiet parts): the sampler
+ *  plays near the top, and each bundle's new notes are turned down together when what still sounds (its peaks, a struck note
+ *  falling with HEAD_DECAY_MS) and they would pass HEAD_LIMIT — the phone's mix clips at about 2 file units (measured) */
+const HEAD_LIMIT = 1.9, HEAD_DECAY_MS = 1200;
 /** a sustained note is relayed RELAY_MS before its sample ends, crossfading over RELAY_FADE s, from RELAY_FROM of the sample */
 const RELAY_MS = 350, RELAY_FADE = 0.15, RELAY_FROM = 0.4;
 
@@ -131,7 +136,7 @@ export class NotePlayer {
   /** the tick (from t0) the next bundle starts at */
   nextBundle = -Infinity;
   voices: Voice[] = [];
-  starts = 0; steals = 0; skipped = 0; calls = 0; peakVoices = 0; ticks = 0;
+  starts = 0; steals = 0; skipped = 0; calls = 0; peakVoices = 0; ticks = 0; headDown = 0;
   /** the alias each sample was last started under (a sample started again goes under the next: spectral.i.<id>.<k><alias>) */
   private alias = new Map<number, number>();
   constructor(public owner: Player, public song: NoteSong, public nt: Notes, public o: NoteOpts, public dim: Dimension, public loc: Vector3) {}
@@ -155,11 +160,16 @@ export class NotePlayer {
     this.voices = keep;
     const tk = system.currentTick - this.t0;
     if (!this.o.place) {
-      while (this.idx < this.nt.n && this.nt.on[this.idx] < t + 50 * sp) this.noteOn(this.idx++, t, false);
+      const from = this.idx;
+      while (this.idx < this.nt.n && this.nt.on[this.idx] < t + 50 * sp) this.idx++;
+      const g = this.headroom(from, this.idx, t);
+      for (let i = from; i < this.idx; i++) this.noteOn(i, t, false, g);
     } else if (tk >= this.nextBundle) {
       this.nextBundle = tk + Math.max(1, this.o.bundle);
-      const until = t + (this.o.ahead + Math.max(1, this.o.bundle) * 50) * sp;
-      while (this.idx < this.nt.n && this.nt.on[this.idx] < until) this.noteOn(this.idx++, t);
+      const until = t + (this.o.ahead + Math.max(1, this.o.bundle) * 50) * sp, from = this.idx;
+      while (this.idx < this.nt.n && this.nt.on[this.idx] < until) this.idx++;
+      const g = this.headroom(from, this.idx, t);
+      for (let i = from; i < this.idx; i++) this.noteOn(i, t, true, g);
     }
     this.peakVoices = Math.max(this.peakVoices, this.voices.length);
     if (this.idx >= this.nt.n && this.voices.length === 0) {
@@ -168,12 +178,36 @@ export class NotePlayer {
     }
   }
 
-  private noteOn(i: number, t: number, placed = true) {
-    const nt = this.nt, sp = this.o.speed, code = this.song.meta.programs[nt.prog[i]];
+  /** note i's sample: [instrument, sample, pitch ratio] and its key as played */
+  private choose(i: number): { got: [number, number, number] | undefined; key: number } {
+    const nt = this.nt, code = this.song.meta.programs[nt.prog[i]];
     const drum = code >= 128 && code < 200, voice = code >= 200;
     const cents = (nt.cents ? nt.cents[i] : 0) + (drum ? 0 : voice ? this.o.semis * 100 : 0);
     const key = drum || voice ? nt.key[i] : nt.key[i] + this.o.semis;
-    const got = pick(code, drum || voice ? nt.key[i] : Math.max(0, Math.min(127, Math.round(key))), nt.vel[i], voice ? cents : cents + (key - Math.round(key)) * 100);
+    return { got: pick(code, drum || voice ? nt.key[i] : Math.max(0, Math.min(127, Math.round(key))), nt.vel[i], voice ? cents : cents + (key - Math.round(key)) * 100), key };
+  }
+  /** how much the notes from..to (one bundle) are turned down: 1 while what still sounds and they stay under HEAD_LIMIT */
+  private headroom(from: number, to: number, t: number): number {
+    if (to <= from) return 1;
+    const k3 = this.o.where === 'phones' ? 1 : this.o.level3d;
+    let now = 0, add = 0;
+    for (const v of this.voices) {
+      const age = Math.max(0, t - v.on) / this.o.speed;
+      now += v.gain * k3 * v.peak * (v.inst.sustain && !v.released ? 1 : Math.exp(-age / HEAD_DECAY_MS)) * (v.released ? 0.3 : 1);
+    }
+    for (let i = from; i < to; i++) {
+      const c = this.choose(i).got; if (!c) continue;
+      add += this.o.volume * Math.pow(this.nt.vel[i] / 127, 2) * k3 * (BANK[c[0]].samples[c[1]][4] ?? 0.89);
+    }
+    if (now + add <= HEAD_LIMIT || add <= 0) return 1;
+    this.headDown++;
+    return Math.max(0.25, Math.min(1, (HEAD_LIMIT - Math.min(now, HEAD_LIMIT * 0.75)) / add));
+  }
+
+  private noteOn(i: number, t: number, placed = true, head = 1) {
+    const nt = this.nt, sp = this.o.speed, code = this.song.meta.programs[nt.prog[i]];
+    const voice = code >= 200;
+    const { got, key } = this.choose(i);
     if (!got) { this.skipped++; return; }
     const [ii, j, p] = got, inst = BANK[ii], smp = inst.samples[j];
     if (!(p >= 0.01 && p <= 10)) { this.skipped++; return; }
@@ -181,7 +215,7 @@ export class NotePlayer {
     if (late > smp[2] / p - 30) { this.skipped++; return; }                                    // over before it could sound
     if (late > 0 && nt.on[i] + nt.dur[i] <= t) { this.skipped++; return; }
     while (this.voices.length >= this.o.maxVoices) this.steal(t);
-    const gain = this.o.volume * Math.pow(nt.vel[i] / 127, 2);
+    const gain = this.o.volume * Math.pow(nt.vel[i] / 127, 2) * head;
     const ak = ii * 4096 + j, an = ((this.alias.get(ak) ?? -1) + 1) % ALIASES.length;
     this.alias.set(ak, an);
     const ev = `spectral.i.${inst.id}.${j}${ALIASES[an]}`;
@@ -192,12 +226,12 @@ export class NotePlayer {
       const seek = Math.max(0, LEAD - (delay / 1000) * p + (late / 1000) * p);
       s.seekTo(seek);
       this.calls += 2;
-      if (this.o.log) console.warn(`[spectral] note ${i} ${inst.id}.${j} key ${key} pitch ${p.toFixed(4)} seek ${seek.toFixed(4)} at ${Math.round(t)} ms alias ${ALIASES[an] || '-'}`);
+      if (this.o.log) console.warn(`[spectral] note ${i} ${inst.id}.${j} key ${key} pitch ${p.toFixed(4)} seek ${seek.toFixed(4)} at ${Math.round(t)} ms alias ${ALIASES[an] || '-'}${head < 1 ? ` head ${head.toFixed(2)}` : ''}`);
     } catch { this.skipped++; return; }
     this.starts++;
     const on = nt.on[i];
     const end = on + (smp[2] / p - late + 60) * sp;
-    this.voices.push({ s, inst, gain, on, off: on + nt.dur[i], end, released: false, stopAt: 0, ev: this.o.where === 'phones' ? ev : ev + '_3d', p, len: smp[2],
+    this.voices.push({ s, inst, gain, on, off: on + nt.dur[i], end, released: false, stopAt: 0, ev: this.o.where === 'phones' ? ev : ev + '_3d', p, len: smp[2], peak: smp[4] ?? 0.89,
       // (not in 3D: a new 3D sound plays as made for 100-200 ms — a relay would start loud there)
       relayAt: inst.sustain && smp[2] > 1500 && this.o.where === 'phones' ? end - (RELAY_MS + 60) * sp : Infinity, relays: 0 });
   }
@@ -265,7 +299,7 @@ export class NotePlayer {
   status(): string {
     const m = this.song.meta;
     return `§bnotes §f${m.title}§b: ${this.idx}/${this.nt.n} notes at ${this.position.toFixed(1)} s · sounding ${this.voices.length} (most ${this.peakVoices}, at most ${this.o.maxVoices}) · ` +
-      `started ${this.starts}, stolen ${this.steals}, skipped ${this.skipped} · ${this.ticks ? (this.calls / this.ticks).toFixed(1) : 0} calls/tick · bundle ${this.o.bundle} ticks, ahead ${this.o.ahead} ms · ${this.o.where === 'phones' ? 'headphones' : 'speaker'}`;
+      `started ${this.starts}, stolen ${this.steals}, skipped ${this.skipped}${this.headDown ? `, ${this.headDown} bundle${this.headDown > 1 ? 's' : ''} turned down` : ''} · ${this.ticks ? (this.calls / this.ticks).toFixed(1) : 0} calls/tick · bundle ${this.o.bundle} ticks, ahead ${this.o.ahead} ms · ${this.o.where === 'phones' ? 'headphones' : 'speaker'}`;
   }
 }
 

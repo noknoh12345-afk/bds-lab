@@ -164,6 +164,10 @@ def start(name, st):
     if sh('git', 'ls-files', '--', rel(spec_path)).strip() == '':
         return False, 'the plan is not committed yet (a draft)'
     spec = json.load(open(spec_path))
+    # (the rig takes a section's name of letters, digits, _ . - only: p06's 'per tick' stopped both its runs before they began)
+    bad = [x.get('title') for x in spec.get('sections', []) if not re.fullmatch(r'[A-Za-z0-9_.-]+', str(x.get('title', '')))]
+    if bad:
+        return False, f'a section name the rig refuses: {bad[0]!r} (letters, digits, _ . - only)'
     need = song_files(spec)
     missing = [p for p in need if not os.path.exists(p)]
     if missing:

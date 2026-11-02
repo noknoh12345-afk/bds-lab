@@ -13,7 +13,7 @@
  ],
  "sections": [
   {
-   "title": "per tick",
+   "title": "per_tick",
    "lines": [
     "do execute as @a run spectral:sampler 12 250 28 120",
     "audio start bk_b12",

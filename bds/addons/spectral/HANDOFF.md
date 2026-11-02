@@ -296,7 +296,10 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 22. **声の素を切り直した**（11-03 朝）: Kokoro は発話の頭に自分の短い有声の音を足し、予測の長さは音より約 0.1 秒遅れる → 予測で切った素は
     子音が無かった（手元の Whisper で読み上げの誤り 0.79–1.0、実機の p02 も 0.93–1.0）。tools/samples/voice.py の segment() が音から
     （伸ばした母音に似ていない所 = 子音）切る。手元の Whisper: 180 ms で 0.67（150 ms は不安定）→ 1 モーラ 180 ms を既定に。まだ Kokoro そのもの
-    （0.0–0.04）には遠い: 次は VCV（母音から子音への続き）の素か、Connect で Kokoro の声そのものを送る道。p09 が実機で測る
+    （0.0–0.04）には遠い。**前のモーラの母音を次の子音の頭で止める（10 ms の重ね: tools/speech.py plan の cut、src/say.ts）と 0.26**
+    （「こんにちは 私はマオイフエフトの中で話しています」）。次は VCV（母音から子音への続き）の素か、Connect で Kokoro の声そのものを送る道。p09 が実機で測る
+    - **VC を素片で**（tools/exp/vc_units.py、推測）: 漱石の朗読 20 秒（男声 123 Hz）を Whisper の単語の時刻で素片に → 389 bps、Whisper の誤り 0.71
+      （元は 0.0）。単語の中のモーラを等分しているのが弱い: 音素の時刻（強制アラインメント）が要る
 23. **実機（p02）: 小さな音は損**: 同じエチュードで正弦波の道（+10 dB）4.14、サンプラー（1.2）2.47。サンプラーとファイルの曲も天井近くへ（次）
 24. **/connect を実機で**（p08）: ラボの BDS の横に単位のサービス（common/core.mjs: lab-service.json → Spectral Connect が 8790）、リグの chat に
     `${DEVICE_HOST}`（app/lib/scenario.mjs・app/app.mjs: 端末から見たこの機械）。サーバーはゲームの暗号化（enableencryption: ECDH secp384r1・

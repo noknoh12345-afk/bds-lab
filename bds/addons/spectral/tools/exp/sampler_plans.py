@@ -209,9 +209,14 @@ def p06():
             "# p06（tools/exp/sampler_plans.py p06）: 1 つの tick で始めた音のうちいくつ鳴るか（p04: 束ね 4 で連打の 2 割が落ち、別名では変わらなかった）。",
             "# K = 1〜12 発のクリックを 1 つの tick に（それぞれ seekTo で 40 ms ずつ: 束ね 12）ヘッドホン・3D、対照に束ね 1。K 音の和音（フルート、同じ seek）ヘッドホン・3D"]
     plan = {'header': head, 'arms': [], 'setup': ['tp @s 0 -60 0 0 0'], 'prep': ['audio song burst_k,chord_k pack=tools/exp/packs/notes'],
-            'sections': [{'title': 'per tick', 'lines': lines}]}
-    json.dump(plan, open(os.path.join(HERE, 'queue', 'p06_per_tick.json'), 'w'), ensure_ascii=False, indent=1)
-    print('plan p06_per_tick:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
+            'sections': [{'title': 'per_tick', 'lines': lines}]}
+    # (a section's name: letters, digits, _ . - only — p06's 'per tick' stopped both its runs before they began: run 41526391304;
+    #  queued again as p11)
+    for name in ('p06_per_tick', 'p11_per_tick'):
+        if name == 'p11_per_tick':
+            plan['header'] = plan['header'][:1] + ["# p11（p06 のやり直し: p06 は区切りの名前に空白があり 2 回とも始まる前に止まった）" + plan['header'][1][len('# p06（tools/exp/sampler_plans.py p06）'):]] + plan['header'][2:]
+        json.dump(plan, open(os.path.join(HERE, 'queue', f'{name}.json'), 'w'), ensure_ascii=False, indent=1)
+    print('plan p06_per_tick / p11_per_tick:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
 
 
 def p09(work):
@@ -251,11 +256,32 @@ def p09(work):
     print('plan p09_speech_units:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
 
 
+def p10():
+    """p10: the sampler near the top (volume 3, each bundle turned down before it clips) against the level it had (1.2), on the
+    étude and Für Elise, and the étude through the sine engine (+10 dB: p02 scored it 4.14 against the sampler's 2.47)"""
+    S = 'spectral:sampler'
+    lines = []
+    for vol, tag in ((120, 'v12'), (300, 'v30')):
+        lines += rec(f'pd_{tag}', [f'{S} 2 250 28 {vol}'], 'spectral:play piano_demo', 22500)
+        lines += rec(f'fe_{tag}', [f'{S} 2 250 28 {vol}'], 'spectral:play fur_elise', 15500)
+    lines += rec('ps_piano_demo', [], 'spectral:play piano_demo_sine', 22500)
+    lines += [f'do execute as @a run {S} 2 250 28 300']
+    head = ["# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+            "# p10（tools/exp/sampler_plans.py p10）: サンプラーを天井近くで（音量 300 %、束ごとに割れる前に下げる）と前の 120 % を、エチュードとエリーゼで。",
+            "# 同じエチュードを正弦波の道で（p02: 正弦波 4.14・サンプラー 2.47）"]
+    plan = {'header': head, 'arms': [], 'setup': ['tp @s 0 -60 0 0 0'], 'prep': ['audio song fur_elise,piano_demo_sine pack=tools/exp/packs/notes'],
+            'sections': [{'title': 'level', 'lines': lines}]}
+    json.dump(plan, open(os.path.join(HERE, 'queue', 'p10_sampler_level.json'), 'w'), ensure_ascii=False, indent=1)
+    print('plan p10_sampler_level:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'p03':
         p03()
     elif len(sys.argv) > 1 and sys.argv[1] == 'p06':
         p06()
+    elif len(sys.argv) > 1 and sys.argv[1] == 'p10':
+        p10()
     elif len(sys.argv) > 1 and sys.argv[1] == 'p09':
         p09(sys.argv[2] if len(sys.argv) > 2 else '/tmp/speech_refs')
     elif len(sys.argv) > 1 and sys.argv[1] == 'p02':
