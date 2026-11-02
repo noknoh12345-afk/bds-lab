@@ -1,0 +1,59 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# キュー 13（tools/exp/queue/q13_voices_16_20.json）: 電話の声 16・20・24。模型は 24 声が一番と言う: 実機でも同じか（16・20 はその数に合わせて変換し直したもの）。少ない声は命令も少ない"
+ ],
+ "batch": 13,
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "interleave": [
+  "e",
+  "v20",
+  "v16"
+ ],
+ "arms": [
+  {
+   "pre": "e",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:voices 24"
+   ]
+  },
+  {
+   "pre": "v20",
+   "pack": "tools/exp/packs/v20",
+   "suffix": "_v20",
+   "conv": {
+    "refine_voices": 20
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:voices 20"
+   ]
+  },
+  {
+   "pre": "v16",
+   "pack": "tools/exp/packs/v16",
+   "suffix": "_v16",
+   "conv": {
+    "refine_voices": 16
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:voices 16"
+   ]
+  }
+ ]
+}

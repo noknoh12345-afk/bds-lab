@@ -1,0 +1,53 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# キュー 16（tools/exp/queue/q16_rain_mobs.json）: 雨と動物の音がある中で。本当のワールドでは雨・動物・足音も同じ 32 音を使う: それらがあると曲はどれだけ崩れるか"
+ ],
+ "batch": 13,
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "interleave": [
+  "wc",
+  "wr"
+ ],
+ "arms": [
+  {
+   "pre": "wc",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "weather clear",
+    "kill @e[type=cow]",
+    "kill @e[type=chicken]"
+   ]
+  },
+  {
+   "pre": "wr",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "weather rain",
+    "kill @e[type=cow]",
+    "kill @e[type=chicken]",
+    "summon cow 3 -60 3",
+    "summon cow -3 -60 3",
+    "summon chicken 2 -60 -2",
+    "summon chicken -2 -60 -2"
+   ]
+  }
+ ]
+}

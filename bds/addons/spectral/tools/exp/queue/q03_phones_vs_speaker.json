@@ -1,0 +1,45 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# キュー 03（tools/exp/queue/q03_phones_vs_speaker.json）: ヘッドホンとスピーカー（同じ場所）。同じ曲をヘッドホン（自分に付く）とその場のスピーカー（3D）で。3D にしただけで何が変わるか（距離 0 での 3D の処理の分）"
+ ],
+ "batch": 13,
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "interleave": [
+  "hp",
+  "hs"
+ ],
+ "arms": [
+  {
+   "pre": "hp",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ],
+   "play": "spectral:play {song} phones"
+  },
+  {
+   "pre": "hs",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ],
+   "play": "spectral:play {song} speaker"
+  }
+ ]
+}

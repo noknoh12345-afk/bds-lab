@@ -1,0 +1,45 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# キュー 15（tools/exp/queue/q15_light_mode.json）: 軽量モード（16 声・命令 24/tick 以下）と既定。Realms・人の多いサーバー向けの軽量モードを今の版で（4〜6 回目に古い版で測っただけ）"
+ ],
+ "batch": 13,
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "interleave": [
+  "mq",
+  "ml"
+ ],
+ "arms": [
+  {
+   "pre": "mq",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:mode quality"
+   ]
+  },
+  {
+   "pre": "ml",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:mode light"
+   ]
+  }
+ ]
+}

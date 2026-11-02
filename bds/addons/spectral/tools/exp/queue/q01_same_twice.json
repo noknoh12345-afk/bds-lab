@@ -1,0 +1,43 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは",
+  "#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・",
+  "#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。",
+  "# キュー 01（tools/exp/queue/q01_same_twice.json）: 同じデータを 2 回（run の中のゆらぎ）。同じ曲データを同じ run で 2 回ずつ録る。A/B のどの差が「差」と言えるかの物差し（今まで ±0.05 と見積もっていた）と、模型の誤差 0.074 がそれより大きいか"
+ ],
+ "batch": 13,
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "interleave": [
+  "ra",
+  "rb"
+ ],
+ "arms": [
+  {
+   "pre": "ra",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "pre": "rb",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0"
+   ]
+  }
+ ]
+}
