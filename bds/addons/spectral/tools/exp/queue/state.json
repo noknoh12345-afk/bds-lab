@@ -482,7 +482,10 @@
   "tries": 1
  },
  "q14_spz2_coarse": {
-  "status": "pending"
+  "commit": "4b3fa72",
+  "run": "41509178687",
+  "started": "2026-11-03 04:21",
+  "status": "running"
  },
  "q15_light_mode": {
   "status": "pending"
