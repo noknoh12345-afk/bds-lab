@@ -84,7 +84,10 @@
   "tries": 1
  },
  "q04_distance": {
-  "status": "pending"
+  "commit": "60f696d",
+  "run": "41438415472",
+  "started": "2026-11-02 20:38",
+  "status": "running"
  },
  "q05_direction": {
   "status": "pending"
