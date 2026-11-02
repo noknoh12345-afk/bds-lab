@@ -37,6 +37,17 @@ NZ_STEP_DB = 0.5
 # ------------------------------------------------------------------ io
 def load_audio(path, sr=SR, stereo=False):
     ch = 2 if stereo else 1
+    with open(path, 'rb') as f:
+        head = f.read(12)
+    if head[:4] == b'MThd' or (head[:4] == b'RIFF' and head[8:12] == b'RMID'):
+        # (MIDI: notes, not sound — played first by the converter page's synthesiser, web/decoders.js, through tools/render_midi.mjs)
+        import tempfile
+        tmp = tempfile.NamedTemporaryFile(suffix='.wav', delete=False).name
+        subprocess.run(['node', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'render_midi.mjs'), path, tmp], check=True, capture_output=True)
+        try:
+            return load_audio(tmp, sr, stereo)
+        finally:
+            os.unlink(tmp)
     raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', path, '-f', 'f32le', '-ac', str(ch), '-ar', str(sr), '-'],
                          check=True, capture_output=True).stdout
     x = np.frombuffer(raw, dtype=np.float32).astype(np.float64)
