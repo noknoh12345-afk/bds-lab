@@ -273,7 +273,10 @@
   "tries": 1
  },
  "q09_long_song": {
-  "status": "pending"
+  "commit": "58db7b7",
+  "run": "41455081012",
+  "started": "2026-11-02 22:41",
+  "status": "running"
  },
  "q10_live_10min": {
   "status": "pending"
