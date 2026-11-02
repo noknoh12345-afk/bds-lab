@@ -31,3 +31,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | p08_connect | 41528680880 | failure | 0 | — | 1（✘ 29 until server \[spectral\] remote .*: hello 30000） | 2026-11-03 06:28 → 2026-11-03 06:46 |
 | p09_speech_units | 41531478311 | success | 9 | — | 0 | 2026-11-03 06:47 → 2026-11-03 07:05 |
 | p10_sampler_level | 41534236021 | success | 5 | — | 0 | 2026-11-03 07:05 → 2026-11-03 07:22 |
+| p11_per_tick | 41536705472 | success | 4 | — | 0 | 2026-11-03 07:22 → 2026-11-03 07:36 |
