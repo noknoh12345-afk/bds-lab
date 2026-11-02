@@ -12,6 +12,9 @@
   "status": "done",
   "tries": 1
  },
+ "p02_speech_piano": {
+  "status": "pending"
+ },
  "p03_file_songs": {
   "arms": {
    "c": {
@@ -59,6 +62,15 @@
   "started": "2026-11-03 01:35",
   "status": "done",
   "tries": 1
+ },
+ "p05_limiter": {
+  "commit": "190e38a",
+  "run": "41513809085",
+  "started": "2026-11-03 04:51",
+  "status": "running"
+ },
+ "p06_per_tick": {
+  "status": "pending"
  },
  "q01_same_twice": {
   "arms": {
