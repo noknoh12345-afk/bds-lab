@@ -37,9 +37,10 @@ export async function imeApk({ file = process.env.APP_ADB_IME_APK, dir = path.jo
   fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(f, b);
   return f;
 }
-const ready = new WeakMap();   // adb → { prev: the device's own input method }
-/** types `text` into the focused field through the broadcast input method; returns how it went (for the step's line) */
-export async function typeWithIme(adb, text, { sleep = (ms) => new Promise((r) => setTimeout(r, ms)), apk = imeApk } = {}) {
+const ready = new WeakMap();   // adb → { prev: the device's own input method, on: switched in by `ime on` }
+const defaultSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/** installed and enabled once a run; the device's own input method remembered */
+async function prepare(adb, apk) {
   let st = ready.get(adb);
   if (!st) {
     const listed = adb.shell(['pm', 'list', 'packages', 'com.android.adbkeyboard']);
@@ -49,25 +50,56 @@ export async function typeWithIme(adb, text, { sleep = (ms) => new Promise((r) =
     }
     adb.shell(['ime', 'enable', ADB_IME.id]);
     const prev = adb.shell(['settings', 'get', 'secure', 'default_input_method']).stdout.trim();
-    st = { prev: prev && prev !== 'null' && prev !== ADB_IME.id ? prev : '' };
+    st = { prev: prev && prev !== 'null' && prev !== ADB_IME.id ? prev : '', on: false };
     ready.set(adb, st);
   }
-  // (switched in while the field has the focus: the field binds to it — then each piece is committed as it comes)
-  const set = adb.shell(['ime', 'set', ADB_IME.id]);
-  if (set.status !== 0) throw new Error(`ADBKeyBoard に切り替えられませんでした: ${(set.stderr || set.stdout).trim().slice(0, 160)}`);
-  await sleep(1200);
+  return st;
+}
+function switchTo(adb, id) {
+  const r = adb.shell(['ime', 'set', id]);
+  if (r.status !== 0) throw new Error(`入力メソッドを ${id} に切り替えられませんでした: ${(r.stderr || r.stdout).trim().slice(0, 160)}`);
+}
+/** `ime on`: the broadcast input method from now on — switch it in BEFORE a field takes the focus (35th run: switched in under a
+ *  focused field of the game, the text never reached it), so the field binds to it when it opens */
+export async function imeOn(adb, { sleep = defaultSleep, apk = imeApk } = {}) {
+  const st = await prepare(adb, apk);
+  switchTo(adb, ADB_IME.id); st.on = true; await sleep(1000);
+  return `ADBKeyBoard に（戻す先: ${st.prev || '既定'}）`;
+}
+/** `ime off`: the device's own keyboard back */
+export async function imeOff(adb, { sleep = defaultSleep } = {}) {
+  const st = ready.get(adb);
+  if (!st?.on) return '切り替えていません';
+  if (st.prev) switchTo(adb, st.prev); else adb.shell(['ime', 'reset']);
+  st.on = false; await sleep(800);
+  return st.prev || '既定';
+}
+/** true while `ime on` holds: every `text` goes through the broadcast, ASCII too */
+export const imeIsOn = (adb) => Boolean(ready.get(adb)?.on);
+async function send(adb, text, sleep) {
   const pieces = b64Chunks(text);
-  try {
-    for (const b of pieces) {
-      const r = adb.shell(['am', 'broadcast', '-a', 'ADB_INPUT_B64', '--es', 'msg', b], { timeout: 60_000 });
-      if (r.status !== 0 || !/Broadcast completed/.test(r.stdout)) throw new Error(`文字を送れませんでした: ${(r.stderr || r.stdout).trim().slice(0, 160)}`);
-      await sleep(200);
-    }
-    await sleep(500);
-  } finally {
+  for (const b of pieces) {
+    const r = adb.shell(['am', 'broadcast', '-a', 'ADB_INPUT_B64', '--es', 'msg', b], { timeout: 60_000 });
+    if (r.status !== 0 || !/Broadcast completed/.test(r.stdout)) throw new Error(`文字を送れませんでした: ${(r.stderr || r.stdout).trim().slice(0, 160)}`);
+    await sleep(200);
+  }
+  await sleep(500);
+  return pieces.length;
+}
+/** types `text` into the focused field through the broadcast input method; returns how it went (for the step's line). While
+ *  `ime on` holds it only sends; else it switches in around the typing (under a field that already has the focus: may not reach
+ *  a game's own text box — use `ime on` before opening it) */
+export async function typeWithIme(adb, text, { sleep = defaultSleep, apk = imeApk } = {}) {
+  const st = await prepare(adb, apk);
+  if (st.on) return `入力メソッド経由で ${await send(adb, text, sleep)} 回`;
+  switchTo(adb, ADB_IME.id);
+  await sleep(1200);
+  let n;
+  try { n = await send(adb, text, sleep); }
+  finally {
     // (the device's own keyboard back: the rest of the run sees the screens it was written for)
     if (st.prev) adb.shell(['ime', 'set', st.prev]); else adb.shell(['ime', 'reset']);
     await sleep(800);
   }
-  return `入力メソッド経由で ${pieces.length} 回`;
+  return `入力メソッド経由で ${n} 回`;
 }

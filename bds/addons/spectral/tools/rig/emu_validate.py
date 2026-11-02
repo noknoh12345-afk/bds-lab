@@ -19,22 +19,28 @@ UNIT = os.path.dirname(os.path.dirname(HERE))
 sys.path[:0] = [os.path.join(UNIT, 'tools', 'exp'), os.path.join(UNIT, 'tools', 'metrics'), HERE]
 SONGS = ['piano_gymnopedie', 'piano_chopin_op66', 'vocal_stars', 'vocal_name_of_love', 'choir_how_long', 'drums_round', 'rock_big',
          'edm_detection', 'orchestra_five_armies', 'funk_funkorama', 'speech_ja_soseki', 'speech_en_wordsworth', 'demo_selfmade']
+PHONE = ['spectral:drums off', 'spectral:level 10']                # what 1.2.0+ sends a Mobile client (with 24 voices)
+OLD = ['spectral:voices 24', 'spectral:drums off', 'spectral:engine 0 false 0 0']   # the 4th session's arms set it by hand
 RUNS = {
     # 33rd run: the songs of the pack (48 voices; a phone plays the first 24) and the same through SPZ2 (24 voices)
-    '41385768022': {'rec': 'corpus/renders/rec33', 'arms': {
-        'o': {'song': 'tools/exp/packs/run10/{s}_e.song.json', 'label': 'refined_svr5_at10'},
-        'z': {'song': 'tools/exp/packs/spz2/{s}_z.song.json', 'label': 'improved_alt'}}},
+    '41385768022': {'rec': 'corpus/renders/rec33', 'pairs': [('o', 'z')], 'arms': {
+        'o': {'song': 'tools/exp/packs/run10/{s}_e.song.json', 'label': 'refined_svr5_at10', 'cmds': PHONE},
+        'z': {'song': 'tools/exp/packs/spz2/{s}_z.song.json', 'label': 'improved_alt', 'cmds': PHONE}}},
+    # 12th run: +6 / +8 / +10 dB song by song (each arm's pack refined for its level), the add-on build of that run
+    '41205071937': {'rec': 'corpus/renders/rec12', 'bundle': 'corpus/renders/exp/bundles/r12.js', 'pairs': [('d', 'e'), ('d', 'f')], 'arms': {
+        'd': {'song': 'tools/exp/packs/run9/{s}_d.song.json', 'label': 'refined_svr5', 'cmds': OLD + ['spectral:level 6 volume']},
+        'f': {'song': 'tools/exp/packs/run12/{s}_f.song.json', 'label': 'refined_svr5_loud8', 'cmds': OLD + ['spectral:level 8 volume']},
+        'e': {'song': 'tools/exp/packs/run10/{s}_e.song.json', 'label': 'refined_svr5_loud10', 'cmds': OLD + ['spectral:level 10 volume']}}},
 }
-PLAY = {'mode': 'quality', 'voices': 24, 'cmds': ['spectral:drums off', 'spectral:level 10']}
 
 
 def one(job):
-    """(arm, song, song json, recording) → the emulator's rendering scored against the original and the recording"""
+    """(arm, song, song json, recording, commands, bundle) → the emulator's rendering scored against the original and the recording"""
     import warnings; warnings.filterwarnings('ignore')
     import exp as X, metrics as MT, score_song as SS
-    arm, sid, sp, rec_path = job
+    arm, sid, sp, rec_path, cmds, bundle = job
     t0 = time.time()
-    lg = X.song_log(sp, {**PLAY, 'bundle': os.path.join(UNIT, 'bp', 'scripts', 'main.js')})
+    lg = X.song_log(sp, {'mode': 'quality', 'voices': 24, 'cmds': cmds, 'bundle': bundle})
     y = X.path24(X.render(lg, {'oneshot_latency_ms': -45}), clip=2.0)
     o = X.C.load(sid, X.SR)
     pred = MT.visqol_score(o, y)
@@ -75,7 +81,8 @@ def main():
     cfg = RUNS[a.run]
     meas = json.load(open(os.path.join(UNIT, 'measured', f'redroid-{a.run}.json')))['songs']
     songs = a.songs.split(',') if a.songs else SONGS
-    jobs = [(arm, s, os.path.join(UNIT, c['song'].format(s=s)), os.path.join(UNIT, cfg['rec'], f'{arm}_{s}.opus'))
+    bundle = os.path.join(UNIT, cfg.get('bundle', 'bp/scripts/main.js'))
+    jobs = [(arm, s, os.path.join(UNIT, c['song'].format(s=s)), os.path.join(UNIT, cfg['rec'], f'{arm}_{s}.opus'), c['cmds'], bundle)
             for arm, c in cfg['arms'].items() for s in songs]
     jobs = [j for j in jobs if os.path.exists(j[2]) and os.path.exists(j[3])]
     rows = []
@@ -87,21 +94,23 @@ def main():
     out = {'what': 'the emulator (tools/emu/client.py + spec.json + the measured client path) against the real phone\'s recordings of the same song data: '
                    'emu_vs_rec = ViSQOL of the rendering against the recording; emu_pred = the emulator\'s ViSQOL against the original; '
                    'measured = the rig\'s ViSQOL of the recording against the original (in-run WAV)',
-           'status': '推測（エミュレーター）と実測（録音）を並べたもの', 'run': a.run, 'date': datetime.date.today().isoformat(), 'play': PLAY,
+           'status': '推測（エミュレーター）と実測（録音）を並べたもの', 'run': a.run, 'date': datetime.date.today().isoformat(),
+           'arms': {k: {'song': v['song'], 'cmds': v['cmds']} for k, v in cfg['arms'].items()}, 'bundle': cfg.get('bundle', 'bp/scripts/main.js'),
            'score': stats([r['emu_pred'] for r in ok], [r['measured'] for r in ok]),
            'sound': {'median_emu_vs_rec': round(float(np.median([r['emu_vs_rec'] for r in rows])), 3), 'min': round(min(r['emu_vs_rec'] for r in rows), 3),
                      'max': round(max(r['emu_vs_rec'] for r in rows), 3),
                      'third_db_median': [round(float(v), 2) for v in np.median(np.array([r['third_db'] for r in rows]), 0)]},
            'rows': rows}
-    arms = list(cfg['arms'])
-    if len(arms) == 2:
-        A, B = arms; by = {(r['arm'], r['song']): r for r in ok}
+    by = {(r['arm'], r['song']): r for r in ok}
+    out['choice'] = []
+    for A, B in cfg.get('pairs', []):
         pairs = [(by[(B, s)]['emu_pred'] - by[(A, s)]['emu_pred'], by[(B, s)]['measured'] - by[(A, s)]['measured']) for s in songs if (A, s) in by and (B, s) in by]
         if pairs:
             pe, pm = zip(*pairs)
             same = sum(1 for e, m in pairs if (e > 0) == (m > 0) or (abs(e) < 0.02 and abs(m) < 0.02))
-            out['choice'] = {'pair': f'{B} - {A}', **stats(pe, pm), 'emu_mean': round(float(np.mean(pe)), 4), 'measured_mean': round(float(np.mean(pm)), 4),
-                             'same_direction': f'{same}/{len(pairs)} (or both within 0.02)'}
+            out['choice'].append({'pair': f'{B} - {A}', **stats(pe, pm), 'emu_mean': round(float(np.mean(pe)), 4), 'measured_mean': round(float(np.mean(pm)), 4),
+                                  'emu_better': sum(1 for e in pe if e > 0), 'measured_better': sum(1 for m in pm if m > 0),
+                                  'same_direction': f'{same}/{len(pairs)} (or both within 0.02)'})
     print(json.dumps({k: v for k, v in out.items() if k != 'rows'}, ensure_ascii=False))
     if a.out:
         json.dump(out, open(a.out, 'w'), ensure_ascii=False, indent=1)

@@ -79,7 +79,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { GAME_VERBS, gameStep, playGame, playServer } from './play.mjs';
 import { KIND_NAMES as MEASURE_KINDS, measureShot } from './measure.mjs';
-import { needsIme, typeWithIme } from './unitext.mjs';
+import { needsIme, typeWithIme, imeOn, imeOff, imeIsOn } from './unitext.mjs';
 import { makeTrail } from './failcodes.mjs';
 import { ANDROID_KEYS, androidKey, linuxKey, findText, firstRunButton, titleWords, classicTitleWords, newTitleWords, signInOffer, playTab, joinPromptButton, joinRefusal, joinPromptKind, joinScreen, ownWorldListed, loadingScreen, playScreen, backToTitle, buttonFocused, focusRing, lanCardWord, titlePlay, holdScript, inputText, keyboardDevice, meminfoMb, gameLayer, framesIn, recPath } from './client.mjs';
 
@@ -94,7 +94,7 @@ const JOIN_OCR_MS = Number(process.env.APP_JOIN_OCR_MS) || 4000;
 //  way in again from PLAY this many times before the wait for the world fails)
 const JOIN_RETRIES = Math.max(0, Number(process.env.APP_JOIN_RETRIES ?? 2) || 0);
 export const KEYS = ANDROID_KEYS;
-const VERBS = new Set(['launch', 'stop', 'join', 'wait', 'shot', 'tap', 'swipe', 'key', 'text', 'do', 'addon', 'until', 'expect', 'absent', 'pull', 'push', 'sh', 'section', 'chat', 'press', 'hold', 'record', 'perf', 'changed', 'network', 'size', 'density', 'cutout',
+const VERBS = new Set(['launch', 'stop', 'join', 'wait', 'shot', 'tap', 'swipe', 'key', 'text', 'ime', 'do', 'addon', 'until', 'expect', 'absent', 'pull', 'push', 'sh', 'section', 'chat', 'press', 'hold', 'record', 'perf', 'changed', 'network', 'size', 'density', 'cutout',
   'mouse', 'pad', 'screen', 'background', 'foreground', 'trim', 'measure', 'audio', ...GAME_VERBS]);
 // a game controller's buttons (Android key names): the game's UI moves its focus with them, a path touch never takes
 // steps that leave the game as it is (the rest act on it)
@@ -191,6 +191,7 @@ function check(s) {
   if (s.verb === 'press' && (!a[0] || a[0].split('+').some((k) => linuxKey(k) === null) || (a[1] !== undefined && Number.isNaN(num(a[1]))))) return '書き方: press <キー>[+<キー>…] [ミリ秒]（例 press W 2000）';
   if (s.verb === 'hold' && (a.length < 2 || a.slice(0, 3).some((x) => Number.isNaN(num(x))))) return '書き方: hold <x> <y> [ミリ秒]';
   if (s.verb === 'record' && !['start', 'stop'].includes(a[0])) return '書き方: record start|stop';
+  if (s.verb === 'ime' && !(a.length === 1 && ['on', 'off'].includes(a[0]))) return '書き方: ime on|off（on: 文字を放送で受け取る入力メソッド ADBKeyBoard に。フォームの入力欄を開く前に。off: 端末のキーボードに戻す）';
   if (s.verb === 'audio' && a[0] === 'analyze' && !(a.length >= 3 && a.slice(1).every((x) => /^[\w.:-]+$/.test(x)))) return '書き方: audio analyze <名前> <calib の名前|all|song:<曲>|emu:<曲>> [比べる録音の名前…]';
   if (s.verb === 'audio' && a[0] === 'song' && !(a.length >= 2 && /^[\w.-]+(,[\w.-]+)*$/.test(a[1]) && a.slice(2).every((x) => /^(suffix=[\w.-]+|pack=[\w-]+(\/[\w-]+)*|[a-z_]+=[\w.+-]+)$/.test(x))))
     return '書き方: audio song <曲>[,<曲>…] [suffix=<付ける字>] [pack=<前に変換した曲のフォルダ>] [<変換器の設定>=<値> …]（曲は corpus/manifest.json の id。いくつも並べると並行して変換）';
@@ -619,10 +620,11 @@ export async function runScenario(steps, ctx) {
       case 'swipe': { const [x1, y1] = px(num(a[0]), num(a[1])), [x2, y2] = px(num(a[2]), num(a[3])); adb.shell(['input', 'swipe', String(x1), String(y1), String(x2), String(y2), String(num(a[4]) || 300)]); return `(${x1}, ${y1}) → (${x2}, ${y2})`; }
       case 'hold': { const [x, y] = px(num(a[0]), num(a[1])), ms = num(a[2]) || 1000; adb.shell(['input', 'swipe', String(x), String(y), String(x), String(y), String(ms)], { timeout: ms + 30_000 }); return `(${x}, ${y}) ${ms}ms`; }
       case 'key': { adb.shell(['input', 'keyevent', String(androidKey(a[0]))]); return ''; }
+      case 'ime': return a[0] === 'on' ? await imeOn(adb, { sleep }) : await imeOff(adb, { sleep });
       case 'text': {
         // (beyond printable ASCII — CJK, Japanese — `input text` has no keys for it: an input method that takes the text from a
         // broadcast types it instead, app/lib/unitext.mjs)
-        if (needsIme(a[0])) { const t0 = Date.now(), how = await typeWithIme(adb, a[0], { sleep }); return `${Array.from(a[0]).length} 文字（${how}、${((Date.now() - t0) / 1000).toFixed(1)} 秒）`; }
+        if (needsIme(a[0]) || imeIsOn(adb)) { const t0 = Date.now(), how = await typeWithIme(adb, a[0], { sleep }); return `${Array.from(a[0]).length} 文字（${how}、${((Date.now() - t0) / 1000).toFixed(1)} 秒）`; }
         // (input text hands the game one key at a time and waits until it took each — about a frame a key, so a long text takes
         // minutes: the time allowed grows with the text, and a text cut short by it fails the step instead of going on half typed)
         const t0 = Date.now(), r = adb.shell(['input', 'text', inputText(a[0])], { timeout: 60_000 + 300 * a[0].length });

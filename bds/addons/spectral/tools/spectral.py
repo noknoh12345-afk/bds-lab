@@ -1586,7 +1586,10 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
     By default (2026-10-31, fourth session) five sweeps (refine_sweeps), the bands weighted as ViSQOL's MOS mapping leans on them
     (refine_weights 'svr'; 'uni' = every band alike) and the playback's power held where it started after each sweep (refine_hold:
     without it the song sank toward the 16-bit floor sweep after sweep): 13 of 13 songs over run 8's default (2 sweeps, 'uni', no
-    hold), median +0.108 (tools/exp/results/refine2.jsonl, emulated)"""
+    hold), median +0.108 (tools/exp/results/refine2.jsonl, emulated).
+    refine_more = {'client': 'pc', 'level': 0, 'sweeps': 2}: a second stage for the voices after the phone's (a client that plays
+    them all — a PC, not measured: the model of web/game.js 'pc'), chosen with the phone's voices and the noise bands fixed, so what
+    a phone plays does not change (off by default; web/core.js refineMore the same)"""
     global BURST_TILT, NOISE_EDGES, FADE_GAIN, FADE_MARGIN_DB2
     # (these options set module globals: each conversion sets all of them, so one never leaks into the next in a process)
     FADE_GAIN = float(fade_gain) if fade_gain is not None else _DEFAULTS['FADE_GAIN']

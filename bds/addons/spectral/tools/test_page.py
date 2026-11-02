@@ -94,11 +94,11 @@ with sync_playwright() as p:
     pg.fill(f'#r0{k}', '0:00.5'); pg.dispatch_event(f'#r0{k}', 'change'); pg.fill(f'#r1{k}', '2.5'); pg.dispatch_event(f'#r1{k}', 'change')
     wait_state(pg, n, ['queued', 'busy']); wait_state(pg, n, ['ok', 'err']); r = info(pg, n)
     ok(r['state'] == 'ok' and r['range'] == [0.5, 2.5] and abs(r['seconds'] - 2.0) < 0.06, f'range 0:00.5–2.5 of {n}: {r}')
-    # 「ここから」 at the playhead: tapped at half of it (1.5 s into the file) → 1.5–2.5 s; 「全体」 → the whole file again
+    # 「ここから」 at the playhead: tapped at 40 % of it (1.3 s into the file) → 1.3–2.5 s; 「全体」 → the whole file again
     pg.evaluate("(n) => select(tracks.find((u) => u.title === n))", n)
-    box = pg.locator('#stage').bounding_box(); pg.locator('#stage').click(position={'x': box['width'] * 0.5, 'y': box['height'] * 0.5})
+    box = pg.locator('#stage').bounding_box(); pg.locator('#stage').click(position={'x': box['width'] * 0.4, 'y': box['height'] * 0.5})
     pg.click('#cutFrom'); wait_state(pg, n, ['ok', 'err']); r = info(pg, n)
-    ok(r['state'] == 'ok' and abs(r['range'][0] - 1.5) < 0.02 and r['range'][1] == 2.5 and abs(r['seconds'] - 1.0) < 0.06, f'ここから at 1.5 s: {r}')
+    ok(r['state'] == 'ok' and abs(r['range'][0] - 1.3) < 0.02 and r['range'][1] == 2.5 and abs(r['seconds'] - 1.2) < 0.06, f'ここから at 1.3 s: {r} ({pg.text_content("#playMsg")})')
     pg.click(f'#all{k}'); wait_state(pg, n, ['ok', 'err']); r = info(pg, n)
     ok(r['state'] == 'ok' and r['range'] is None and abs(r['seconds'] - 3.0) < 0.06, f'全体: the whole file again ({r["seconds"]} s, range {r["range"]})')
     # split at the playhead: the AU (3 s) tapped at 40 % → two tracks, 1.2 s and 1.8 s, each its own ID

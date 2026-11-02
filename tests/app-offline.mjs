@@ -156,6 +156,18 @@ await t('text beyond ASCII: an input method types it (ADBKeyBoard: fetched, hash
   const adb2 = { ...adb, shell(w) { if (w[0] === 'am') return { status: 1, stdout: '', stderr: 'boom' }; return adb.shell(w); } };
   await U.typeWithIme(adb2, '漢字', { sleep: async () => {}, apk: async () => '/x/a.apk' }).then(() => ok(false, 'a failed broadcast passed'), (e) => ok(/送れません/.test(e.message), e.message));
   eq(dev.ime, dev.prev);
+  // (ime on: switched in before a field opens and kept — text then only sends, ASCII too; ime off: the device's own back)
+  calls.length = 0; dev.typed = '';
+  await U.imeOn(adb, { sleep: async () => {}, apk: async () => '/x/a.apk' });
+  eq([dev.ime, U.imeIsOn(adb)], [U.ADB_IME.id, true]);
+  await U.typeWithIme(adb, 'SPA2.1.1.0:Ab', { sleep: async () => {} });
+  await U.typeWithIme(adb, '丁丂', { sleep: async () => {} });
+  eq([dev.typed, dev.ime, calls.filter((c) => /^ime set/.test(c)).length], ['SPA2.1.1.0:Ab丁丂', U.ADB_IME.id, 1]);
+  eq(await U.imeOff(adb, { sleep: async () => {} }), dev.prev);
+  eq([dev.ime, U.imeIsOn(adb), await U.imeOff(adb, { sleep: async () => {} })], [dev.prev, false, '切り替えていません']);
+  // (the step: ime on|off and nothing else)
+  eq(S.parseScenario('ime on\nime off').errors, []);
+  eq(S.parseScenario('ime\nime maybe').errors.map((e) => e.split(':')[0]), ['1', '2']);
   fs.rmSync(dir, { recursive: true, force: true });
 });
 await t('scenario: screens (stable, blank)', () => {

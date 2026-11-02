@@ -2,9 +2,9 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# 35 回目（tools/exp/make_app.py tools/exp/app35.json）: 漢字の曲テキストは電話の入力欄に何文字入るか（34 回目: 英数字は 5000 文字ちょうどで
-#   切れた。漢字が文字で数えられるなら 5000、UTF-8 のバイトなら 1666）。漢字は入力メソッド（app/lib/unitext.mjs）で 1 度に入れる。
-#   1 部だけの曲テキスト 4 つ: 漢字 1593 文字（入力の道の確かめ）・4994 文字・5984 文字、英数字 4977 文字。届いた / 断られた文字数を ck で
+# 36 回目（tools/exp/make_app.py tools/exp/app36.json）: 35 回目は漢字が 1 文字も届かなかった（3 つとも 1000 文字未満で断られ、切れた・
+#   別の文字ではない = 空）。入力メソッドを入力欄の下で切り替えたのが原因とみて、今度は欄を開く前に `ime on`。英数字 1593 文字も同じ道で
+#   （道そのものの確かめ）、漢字 1593・4994・5984 文字。届いた / 断られた文字数を ck で
 
 section title
 audio info
@@ -103,7 +103,51 @@ audio stop
 audio export ck_warm2_answer 16
 wait 1500
 
+section i16
+ime on
+wait 1000
+do execute as @a run spectral:paste
+until text (?i)submit 20000
+wait 1000
+audio start ck_i16_open
+wait 400
+audio stop
+audio export ck_i16_open 16
+tap text (?i)^(here|paste the song)
+wait 2500
+audio start ck_i16_tapped
+wait 400
+audio stop
+audio export ck_i16_tapped 16
+text SPA2.1.1.45e358f6.1177:AgVmGAgCMgL-A3ttA2cKYXNjaWlfMTYwMAphc2NpaSAxNjAwBmNvcnB1cwAE2O_jm1STepkPa8rR7JprVeWN3y6Bu7sMO3N8kzlo1F0zl1w5gjk9O6Ir4SeuhT4j959vpSHWSqeVI16u4ElGcGoDushDWlJARL0GryeGImJsvYKDqCu8UkrUbL5AGm8mvyQnrvYipp8N2TziDfp4TlaZG6zmrakX1Ta1TNZqzjQWZw-uiXz3mvAaWYySSFGHy7U6Gp3mNCaETtA3IwRFXoPWOgTUdh8e2PGjMTT3T3F3fEuobdqJqeMcpg38PrkX3AjQS-D5rQBGPSafROsbdKPWUHjbHVeDcGqNJ98YFRA4cGbFORGmfTO7WH0oaGkZ_JKY-z2JIOsNer8Fp72uV-D4eacdV3Vh_ELeZOw2ybxe24D9zVjvV-HCcSnWaIkBTH9G6HrwxHAkuR8N5RToz3tKQtXPyblUQKMEVasmuJQXE9AvEo6NQtdQNthcOVwcKCw4rwzbq3sJiK93D86QisjeHbpzjhLGQzcYh6Wb4SHJMdaSqGtVn7Bn2ODl1qcW3NkFuXux_iC9u_mZYtBxIALYC-Av7cLoZUS2tA1udlxGI1gsp6LV7Y6E8pqTrwgADv2jZlNrQC1ZpUKlM3-evs8tHuHMPM96xf6GosVy4plxjM7CsTwP8XI5jsZ8IyvEDDMaNP2e71qP2Bk41ld4FP523rNI8oi0dMA8EZh0njbBiNDYXOlSZKU1zkWDCRBY9mH0Xkio4TDiZTlxTrQOG5m51H4KXWSeGOYV9HHZyD0-W-ZfIoO-TtljTjn--f6g95AE2qDdY8BT00zmf4m8iQlFUlmrT6RgHvYs1I2MH4VBFA_ho2GYKI491L4ez0qqYMmje8t1cmBvMzaAMrMdp5T_-2SVKhhIKjoySonuWjwfnxpgvVUAGuDupMun7BYRKUHhjxp8iWJonSYtG0GHIyQ3ffpd3TiKqEbIiwduvhKQan5jDHe1Winbtt7ghG1dZVZNkpv93JAYW2vL_h-LVE0KsksypVXrQiWc6robnjc5zGzKmgmUic0UwgN6jjHa6M_cFtWrhSAHzyyNut-deW7gOjxOrWVdfx0s7l-fbIVYUKdNRH0NzQBGToeooKx-vqYDFIDXKic3zGGiIW1Htcsnh-fV8izdH50dHKuUMWQgKF9-StuxJyIE6ALIqo5j-8wmh2XbtPMM_2OFV2KdFWzPHlB8Y6wkZNFfPFhp7aHfCMgyNaatidRJfgcr9vnqfcppXTrTMRd3AxhBOAh9-donGf7OqfUBvj7abWhs2gL9aZ27d8CGEctf6ptWXXQsSUaHD8z9pRrVNprZyNhwUcnb7GGnN6bjaThNaYyL3hMcaVnlEMPgRWI3ferVR4cERZR9vgHS-GajSZhKoyrjpnvzRJ7nTf7G_a1ofRlaM5yXV0Vj3UBiR8-OWcG504vjLUEOt__psWAebVXKB_1BQadoSB-kN4D3e2gWHF1mLoFDlPwMG9kqpt0aLhbH97h4FVIKF9KDo24V1pdmp3retuTzSyoXPgzVXmMmKA
+wait 1000
+wait 2000
+audio start ck_i16_typed
+wait 400
+audio stop
+audio export ck_i16_typed 16
+expect text (?i)submit
+tap text (?i)submit
+audio start ck_i16_submit_tapped
+wait 400
+audio stop
+audio export ck_i16_submit_tapped 16
+until server spectral\] (pasted|paste refused) 60000
+audio start ck_i16_answer
+wait 400
+audio stop
+audio export ck_i16_answer 16
+wait 1500
+ime off
+wait 1000
+
+section i16_back
+ime off
+wait 800
+
 section c16
+ime on
+wait 1000
 do execute as @a run spectral:paste
 until text (?i)submit 20000
 wait 1000
@@ -136,8 +180,16 @@ wait 400
 audio stop
 audio export ck_c16_answer 16
 wait 1500
+ime off
+wait 1000
+
+section c16_back
+ime off
+wait 800
 
 section c50
+ime on
+wait 1000
 do execute as @a run spectral:paste
 until text (?i)submit 20000
 wait 1000
@@ -170,8 +222,16 @@ wait 400
 audio stop
 audio export ck_c50_answer 16
 wait 1500
+ime off
+wait 1000
+
+section c50_back
+ime off
+wait 800
 
 section c60
+ime on
+wait 1000
 do execute as @a run spectral:paste
 until text (?i)submit 20000
 wait 1000
@@ -204,88 +264,19 @@ wait 400
 audio stop
 audio export ck_c60_answer 16
 wait 1500
-
-section a50
-do execute as @a run spectral:paste
-until text (?i)submit 20000
+ime off
 wait 1000
-audio start ck_a50_open
+
+section c60_back
+ime off
+wait 800
+
+section ok_i16
+expect server spectral\] pasted ascii_1600 
+audio start ck_ok_i16
 wait 400
 audio stop
-audio export ck_a50_open 16
-tap text (?i)^(here|paste the song)
-wait 2500
-audio start ck_a50_tapped
-wait 400
-audio stop
-audio export ck_a50_tapped 16
-text SPA2.1.1.3b28627b.3715:AgWBARgIAjIChQVcze13CmFzY2lpXzUwMDAKYXNjaWkgNTAwMAZjb3JwdXMAdv0wgP2jQ7WTYUhmh_aWPmPdhaMq7bNZdmJKXJiD9TQmriRviiUv-yZSTCriNCW7yxs7SmDym_8s6qw-TGURDBYiNfcD8Y_BRBcdflheftUUcatw9twHQ
-wait 300
-text NYR_Ih5nZJCzv9_jk1IwsARJPR0mk-zhPyqpu1Q0GoyFR_j9xCBQGJ9fWhIlnR86fRvZjAIFqZAgWewEZZH930jA6ketqfrAbaO_ekoss7qbT45EV_0nP27nGT3bNcz3-rnf6W3WxzlyR0FJYXo8hnXyuxOlJgrzzD9LSFldMy_OFB7CURhKbUJ5IbLPxle639JP3ym7
-wait 300
-text XXiC_nh0aiPEr5oZ4GFBBU_Dh9Li3P9BSecurHs5_s-FKNGNVgnM1IMY31mg7FG31e0_tolzab9gfink7KVF5L4S4Dlp974YWrJ7043nHGuibdTvQwDFqZ-9WaoU6nklks9LDiA-wF9juOXLrQSnkSswU1zuq8OSAFyQBcL3hAJxgviOIgT2Nhi4vbVrOaR2XmDhaW-Y
-wait 300
-text h4-3wzKbfVM4aVSNFwoIU3SHuMyMsm_AWmG-DVnyyupFj93SWN7P9extcDQEN1FFoxnH6BSpcr0KFgFJmzBpvS232Qh9MwlM843NRDfXs98-lou92ifCmyYgj5vDW8n6x1JCf5U3MsEkPOSAjxdgAWfC3cSCkWhkLMcHqflR4EVjJG4rX6IQ0-U-T_ailp8zxap_46jp
-wait 300
-text VYGsVIlij-sHQh0m9VpRu7gpxveqykqb-oLOxqhUx2wDnimAIv-nC56Pn-y-TIqkmnqJGghgO4cic2tC_E5JdfEEZoOBV46Bkqp2mcKwg6bmuDBC0_LOuIAK0VvQPConAQ675ExpLgdZsxTKDNZhYEDV-rTMO018isQAHN4RLTX_j3Nzxy1h4ojx-AI2YSfywnoIzWxh
-wait 300
-text n9H1OWkUoXRaoX2aakw8GQCk0JeZUECIUiTnqWKkzganQM6WaVOSsfUVmK_SEIU_qLq71EnjKnemF18T-V6BkHvly8kKcam93tggvxa7HA-zI0LRyGRF-VUG7qW2-YYLusRel4UQtbKvh5unJGQWbOij-vAVp60rJ8YI2hD4EVNkCp3InpbOcRnhEmPAuVITYN_I2mhk
-wait 300
-text 5AuA0JZbhfBplnt_Odf1ORI5RvBvhYZzIPVl3_oEZPZXP2YvxsfgBwodbvgZPcje2HwoeATt5lXfpe2tcnOgoJg2IT0-cVxrJFAJWY8cJYEOvptn0lyaDgxFYVXpkn3VMkBADMUidsNGvSjlDPr2n_L4x5CNcdY_e0aAd9wfnGt41A07fYgvSYQaqCLhwVDpwN8_Fq7A
-wait 300
-text F8dMeC1II_sWMYfwDc0dBpO0Ysoo74MY1SADLEx_05U2Q_ALtJaE9QrnVOCY1rlnEGPUyKUFy8k_bUH9Up-L3sVpOQmWaltbu17pa8CwcVrOT4gDOP7yTsc-oNEwP5W3ffb_Q_CzUk4ncXYV1TOUh-DmAurDklE1tqMpZemmhNepfjfSqzg_Xxfn4t1VV8TkMET_Ag6r
-wait 300
-text -UPsgT3eGar5RT7Qc5Dy7WJGCPT3O5cenGv2diXJBx5Hj1fopNvIzEKTgX8mPj5OpjcKUFHtSaBybgiT9P8MO1DhBiK3aLzqul0F3GtEp3valFQgaXoRiDVlUKVdhoJY3tD-m8EDWTO2fg1zrV1sdZR8v7L9ZGPA_tCSKws-GWFLr8BO33Bzi2PXOlyWZ7BCx6Vek05V
-wait 300
-text rw2OSNnHgoyQ0DG9lDNlrlDpqtW5l2VcG1Y6Hd3ompUzeaqZbnafDoL6f2rYxKKKsXtRhDEBAqfkapA6FNqYStvBD-EnvDeOocQl8QxYadDZHnse-BLX3cBcwHNMc8GcCdkeYYpY-s5TCRgaFSLykbyGUC1BYM-2Fk_lDZ78u-qbKEMwZD5o5BTJRz2R3AQY6O5D3BSE
-wait 300
-text GV5XZ2I0iNRmjEfReYIokR72sntc6GBB5D6HE9IK5R1k8aeNYcPTYcnEWpno9ahMLuRWk2XoWJwoS8BRtNZAB1adrSeJ65eEeHTuqgLjrQGyghAErU7H8lpa9kjl5-29U5XHKcq1zqDHYnIAWTrW2MlRRdWyi3DVIl16GtC9exiVVc8ELV01hBT0EHv89frwXUZ6NZCX
-wait 300
-text l5CmH_QqMRAiRVumPGFd4d6CeLzMCoe20Aik9Zqu77ft4tLGQCrRyKsIhxlYdnf86tf6rP7z42bq_Ulj_UnRHOvtYrqv5mYt0KKgEmk3sSIJHioAKMn__Iy7i6LBdwd3aAtM8OyH-nU9Q6rIRtBGRvUC-hLlbs1GqoZ49eAWP-xQQMHCRVc_aDuMEGyvJX15_oYHklki
-wait 300
-text UwdyBfAybVjpDAw_JdNTQ0Y6Z1VsGLS_TaU-3mZbAmZlIHRimHdlAW9XG0t97kT7QVti4iW41uL5YIXTR6py3U3_je9S-n9dhOVt7nx_yu9i0xZhMbG3UkjMIo5Zl7juVAQZTGP6chiXv_0xvjUT_I5-Iui4b6nQb-xLgPYYrOB8knbOVX-ciBLevnDBNfy4mK6iAI87
-wait 300
-text lHmFVH8hXyPK8Epb_uC0OH93DqSO0Pz01bVuJo4oaP3vUcfyI5AVvoAPu_oFpFf0L9K2MeUzXgLcCUEIvfFf18EM6nUCc811YHoBvKqksdtvFFc7zU-Yw-UYrfocw7xhc1ZXf1BeK3jFGgIWbgnBDqsmX5Gi0TKJlS1-Xlzcx0tVbD1eFi2WIlfb7kF4_QNOSa9jM0o8
-wait 300
-text x8Fg3B9W9QNtuw2m_WcrK8Hsv_aXlmPgUfIZTCpDU5bfc6hv7XYbCpNCN0zL-tMbo8fGhf-S0nMgdSjOuEovUuMaFsLvLKqDsTkpvnDkFTikh5XQrLb-9FfRwPXhMdePHgso3FOBBf2on4DmxMas-2zn75cRaPzzfsuGV7rI6exhyrJhUR-aLHfX9-FZtFMyhsbWD5gx
-wait 300
-text 9cjtxU4viMSM_xjR8SZRi4nliSs9tQH0HVHxo1xuFBDpi5WrqtBBlwAB4lkAaRJtfWUfBRBcf7w0cQja1bpXWfdJ7DWjCKjmxFFcJSGZXCYYmHo7vsErKRY--dKCdxvWdgrYGJRLqA_4wTpBlqu864AYs3E0wa3q6NstaVeZDnQzOfhhpXruJewIPgFq0uJDiLXly2dJ
-wait 300
-text rabshXMi0qo3HPFG_Zj1CkWomVlgfEyQ8cxOZuxMN3zMZsEipno6kgMaSpXIYNfq0VlAzaYFOh_wrn58JsvnKkHz3MJIKc8rYiAxV-cSrLQAI__wNfVezb-Sne-zzwXSBYAOniTNBbquT0oVTYao__Xotw5aMXd55Mks7p9_S-gIxsb-TtwLkY6JDei2LpFcB4BQSBuC
-wait 300
-text qPKLAa9SEHnpHone_5-tx2_6ktQI2HAgATSUOI9gdnfVguX7nZplmNHaxvYA5w4FgggaaTXk-8eDAkFeMaaohvSja-ailqZxQ71It8z6BaEJ1MjNIt5sbSlXqlKb2hR-TzqVhBZgq-H03MvhyLkOXuOLp8gkEQghcbzwQaenonPno_jYYYtkIGYjaY-hr3Hs1ieMzdXd
-wait 300
-text 6u-PgQhyhOZtxBmnpunA5IVyb48OAvodjBuONwcZsYIsRk1RK1GpJCOBOqqCZim1I3kfxqG2PwH1fzhdgGXYijzdLS2FD8qD5csG4Lxn0vv3vcBN_9aAJqqc5mEGHH_7fnwAvWLEioHmNphzy-VbvLCPvljiYUSKq9R3-8x7yu0D1Zq4FM5BOfHjv2C-eEt-nEGWZuen
-wait 300
-text Vjil66KaJbOQoFFwZxuce2wyWi_sKvq_D4Avs-1kzb6YkaoVnHuqKM4dyeHU71TvNBfl41G_4X8zig9vrqM5Zgoe5tAi2dXv7lfViRTyU9hgYMakG9qkAx4zmJ3rnpmHIKY_4gHyG2SJNVTe0nctH3UWU2vp5GdYWacFZjWLhzI6quX-CrKEsFQ_nyCKhZCKtZmtOYBK
-wait 300
-text UC77yv-R8TscRYkh1_6s5IKX9vHUcHjbORTmWKkk0cPPHRRM-lZdysmxohc-Mf4v1C5kef-Kh_gEuJVkR8TEABPleEsubVGDl8fHn1MSEsR8T2lYoPL4poiPFGSdBFED8z5RRxfwz58zqP-n9C7ky56MDVgvTkVJMA3igZD9leyYxrDapokaqaGeXbmE-Ys9ufc01oAT
-wait 300
-text GQqVKTFuDDjm3y11d8vKsAwxzhrzKcDJOIMp5cukeJL-uTd5wEzsfD-Mso2UNfeIA18RQvoKV9Z-equiRuOQTVdNHdW5OrJ1NnZCRxq84eirxUypMX_R8UkLIkAtD-Xi6Q5qgakm6Gj7aQf933jz1WpMXOz1XaGieRyIhY9h107CLluoi2RHFkproPE_W5JyI9j2KFwn
-wait 300
-text SJaFQoOZkq0OP4l6_anHStKihuks2T8KS3DYIcxqEi03hGNSeWaul8YERqfK0XclOGM-77GWucN95r9AVz-85zFvI-r6ZSB7UI0Jvue9snh7ZT3gfrwIxlxRQnXSJUP831AcZbiMn82974Aaa0h3fZQ60EDM55zW1jyH4R2sGJrEpe-18RR4_qG7z95PvBreatPpoyu7
-wait 300
-text 2da-yPhr5QgB7W9ngnkxL4kyDEMecawVP32qy4cFVA2iAYA2v_8_ZvkM_sj0-0C-SiMlmu0Elj8plaPooVaMZ9hYO3ZDidkmfRaHLwnW3wIpoV5ovJgGfBXPZBpUGiJzMffIWOcILxGuCcNA1k-_P1ei1mQlbCs_APrfoIzsS7cR3NJ9yiNY6BNvpyA5IsNQHXatOwAN
-wait 300
-text I9ZvYIfNTfDK_RvTbFKnRM__dgYb2-tvglx-VrkfSen9NywZKoD1rHLR1pw8ymu0Eg_3VEh8c2jNOS3B5QnucEeMoWgNgG0mfhtISGfs66M7aP5BIEEJRbLBxvGhh44-UFnvDngnGi-Of5XGrAwKofLs4mFKCPfT6qTJnzUsERpI0H-AA
-wait 300
-wait 2000
-audio start ck_a50_typed
-wait 400
-audio stop
-audio export ck_a50_typed 16
-expect text (?i)submit
-tap text (?i)submit
-audio start ck_a50_submit_tapped
-wait 400
-audio stop
-audio export ck_a50_submit_tapped 16
-until server spectral\] (pasted|paste refused) 60000
-audio start ck_a50_answer
-wait 400
-audio stop
-audio export ck_a50_answer 16
-wait 1500
+audio export ck_ok_i16 16
 
 section ok_c16
 expect server spectral\] pasted cjk_1600 
@@ -308,19 +299,54 @@ wait 400
 audio stop
 audio export ck_ok_c60 16
 
-section ok_a50
-expect server spectral\] pasted ascii_5000 
-audio start ck_ok_a50
-wait 400
-audio stop
-audio export ck_ok_a50 16
-
 section ok_warm
 expect server spectral\] pasted warm
 audio start ck_ok_warm
 wait 400
 audio stop
 audio export ck_ok_warm 16
+
+section zero
+expect server spectral\] paste refused \(0 characters
+audio start ck_zero
+wait 400
+audio stop
+audio export ck_zero 16
+
+section nothing
+expect server nothing was pasted
+audio start ck_nothing
+wait 400
+audio stop
+audio export ck_nothing 16
+
+section cut_short
+expect server cut short
+audio start ck_cut_short
+wait 400
+audio stop
+audio export ck_cut_short 16
+
+section not_song
+expect server not part of a song text|not a song text
+audio start ck_not_song
+wait 400
+audio stop
+audio export ck_not_song 16
+
+section part_broken
+expect server part number is broken
+audio start ck_part_broken
+wait 400
+audio stop
+audio export ck_part_broken 16
+
+section refused_any
+expect server spectral\] paste refused
+audio start ck_refused_any
+wait 400
+audio stop
+audio export ck_refused_any 16
 
 section thousands_1
 expect server spectral\] paste refused \(1\d{3} characters
@@ -595,30 +621,212 @@ wait 400
 audio stop
 audio export ck_units_9 16
 
-section n_under1000
-expect server spectral\] paste refused \(\d{1,3} characters
-audio start ck_n_under1000
+section h3_0
+expect server spectral\] paste refused \(0\d\d characters
+audio start ck_h3_0
 wait 400
 audio stop
-audio export ck_n_under1000 16
+audio export ck_h3_0 16
 
-section refused_any
-expect server spectral\] paste refused
-audio start ck_refused_any
+section h3_1
+expect server spectral\] paste refused \(1\d\d characters
+audio start ck_h3_1
 wait 400
 audio stop
-audio export ck_refused_any 16
+audio export ck_h3_1 16
 
-section cut_short
-expect server cut short
-audio start ck_cut_short
+section h3_2
+expect server spectral\] paste refused \(2\d\d characters
+audio start ck_h3_2
 wait 400
 audio stop
-audio export ck_cut_short 16
+audio export ck_h3_2 16
 
-section not_song
-expect server not part of a song text|not a song text
-audio start ck_not_song
+section h3_3
+expect server spectral\] paste refused \(3\d\d characters
+audio start ck_h3_3
 wait 400
 audio stop
-audio export ck_not_song 16
+audio export ck_h3_3 16
+
+section h3_4
+expect server spectral\] paste refused \(4\d\d characters
+audio start ck_h3_4
+wait 400
+audio stop
+audio export ck_h3_4 16
+
+section h3_5
+expect server spectral\] paste refused \(5\d\d characters
+audio start ck_h3_5
+wait 400
+audio stop
+audio export ck_h3_5 16
+
+section h3_6
+expect server spectral\] paste refused \(6\d\d characters
+audio start ck_h3_6
+wait 400
+audio stop
+audio export ck_h3_6 16
+
+section h3_7
+expect server spectral\] paste refused \(7\d\d characters
+audio start ck_h3_7
+wait 400
+audio stop
+audio export ck_h3_7 16
+
+section h3_8
+expect server spectral\] paste refused \(8\d\d characters
+audio start ck_h3_8
+wait 400
+audio stop
+audio export ck_h3_8 16
+
+section h3_9
+expect server spectral\] paste refused \(9\d\d characters
+audio start ck_h3_9
+wait 400
+audio stop
+audio export ck_h3_9 16
+
+section t3_0
+expect server spectral\] paste refused \(\d0\d characters
+audio start ck_t3_0
+wait 400
+audio stop
+audio export ck_t3_0 16
+
+section t3_1
+expect server spectral\] paste refused \(\d1\d characters
+audio start ck_t3_1
+wait 400
+audio stop
+audio export ck_t3_1 16
+
+section t3_2
+expect server spectral\] paste refused \(\d2\d characters
+audio start ck_t3_2
+wait 400
+audio stop
+audio export ck_t3_2 16
+
+section t3_3
+expect server spectral\] paste refused \(\d3\d characters
+audio start ck_t3_3
+wait 400
+audio stop
+audio export ck_t3_3 16
+
+section t3_4
+expect server spectral\] paste refused \(\d4\d characters
+audio start ck_t3_4
+wait 400
+audio stop
+audio export ck_t3_4 16
+
+section t3_5
+expect server spectral\] paste refused \(\d5\d characters
+audio start ck_t3_5
+wait 400
+audio stop
+audio export ck_t3_5 16
+
+section t3_6
+expect server spectral\] paste refused \(\d6\d characters
+audio start ck_t3_6
+wait 400
+audio stop
+audio export ck_t3_6 16
+
+section t3_7
+expect server spectral\] paste refused \(\d7\d characters
+audio start ck_t3_7
+wait 400
+audio stop
+audio export ck_t3_7 16
+
+section t3_8
+expect server spectral\] paste refused \(\d8\d characters
+audio start ck_t3_8
+wait 400
+audio stop
+audio export ck_t3_8 16
+
+section t3_9
+expect server spectral\] paste refused \(\d9\d characters
+audio start ck_t3_9
+wait 400
+audio stop
+audio export ck_t3_9 16
+
+section u3_0
+expect server spectral\] paste refused \(\d\d0 characters
+audio start ck_u3_0
+wait 400
+audio stop
+audio export ck_u3_0 16
+
+section u3_1
+expect server spectral\] paste refused \(\d\d1 characters
+audio start ck_u3_1
+wait 400
+audio stop
+audio export ck_u3_1 16
+
+section u3_2
+expect server spectral\] paste refused \(\d\d2 characters
+audio start ck_u3_2
+wait 400
+audio stop
+audio export ck_u3_2 16
+
+section u3_3
+expect server spectral\] paste refused \(\d\d3 characters
+audio start ck_u3_3
+wait 400
+audio stop
+audio export ck_u3_3 16
+
+section u3_4
+expect server spectral\] paste refused \(\d\d4 characters
+audio start ck_u3_4
+wait 400
+audio stop
+audio export ck_u3_4 16
+
+section u3_5
+expect server spectral\] paste refused \(\d\d5 characters
+audio start ck_u3_5
+wait 400
+audio stop
+audio export ck_u3_5 16
+
+section u3_6
+expect server spectral\] paste refused \(\d\d6 characters
+audio start ck_u3_6
+wait 400
+audio stop
+audio export ck_u3_6 16
+
+section u3_7
+expect server spectral\] paste refused \(\d\d7 characters
+audio start ck_u3_7
+wait 400
+audio stop
+audio export ck_u3_7 16
+
+section u3_8
+expect server spectral\] paste refused \(\d\d8 characters
+audio start ck_u3_8
+wait 400
+audio stop
+audio export ck_u3_8 16
+
+section u3_9
+expect server spectral\] paste refused \(\d\d9 characters
+audio start ck_u3_9
+wait 400
+audio stop
+audio export ck_u3_9 16

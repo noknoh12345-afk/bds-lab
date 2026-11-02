@@ -68,8 +68,8 @@ select, input { max-width: 100%; }
 .ab button[aria-pressed="true"] { background: var(--amethyst); color: var(--panel); }
 .ab button:disabled { opacity: 0.45; cursor: default; }
 .time { font-family: var(--font-data); font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
-.stat { background: var(--panel); padding: 8px 10px; display: grid; gap: 2px; }
+.stats { display: flex; flex-wrap: wrap; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.stat { flex: 1 1 128px; background: var(--panel); padding: 8px 10px; display: grid; gap: 2px; }   /* (a short last row stretches: no empty cells) */
 .stat span { font-size: 12px; color: var(--muted); }
 .stat b { font-family: var(--font-data); font-weight: 500; font-size: 16px; font-variant-numeric: tabular-nums; }
 
@@ -209,6 +209,7 @@ button.main:disabled { opacity: 0.5; cursor: default; }
       <dt><code>/spectral:voices 24</code></dt><dd>使う正弦波ボイスの数（端末の負荷と音質の釣り合い）</dd>
       <dt><code>/spectral:freeze</code></dt><dd>今の響きを止めたまま鳴らし続ける</dd>
       <dt><code>/spectral:probe 64</code></dt><dd>端末が同時に鳴らせる数を耳で調べる（倍音を 0.25 秒ごとに 1 本ずつ足す）</dd>
+      <dt><code>/spectral:paste</code></dt><dd>曲のテキストを貼り付けるフォーム（長い曲はパートを順に）。<code>/spectral:forget &lt;ID&gt;</code> で貼った曲を消す</dd>
       <dt>リモコン</dt><dd>最初に参加したときに配られるアイテム。曲選び・一時停止・±10 秒・音の設定</dd>
     </dl>
   </section>
