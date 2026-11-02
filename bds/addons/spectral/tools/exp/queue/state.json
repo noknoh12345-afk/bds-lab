@@ -186,10 +186,17 @@
   "tries": 1
  },
  "p12_connect2": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "f795b55",
+  "conclusion": "success",
+  "ended": "2026-11-03 07:54",
+  "failed_steps": 0,
+  "recordings": 4,
   "run": "41538782070",
   "started": "2026-11-03 07:37",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q01_same_twice": {
   "arms": {
