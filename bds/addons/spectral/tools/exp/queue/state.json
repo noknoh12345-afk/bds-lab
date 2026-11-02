@@ -217,10 +217,32 @@
   "tries": 1
  },
  "q07_screen_off": {
+  "arms": {
+   "sn": {
+    "mrstft": 1.447,
+    "n": 1,
+    "rms_db": -39.5,
+    "third_oct_db": 8.868,
+    "visqol": 3.195
+   },
+   "so": {
+    "mrstft": 1.501,
+    "n": 1,
+    "rms_db": -47.4,
+    "third_oct_db": 9.598,
+    "visqol": 2.937
+   }
+  },
+  "checkpoints": 0,
   "commit": "e436ddd",
+  "conclusion": "failure",
+  "ended": "2026-11-02 22:15",
+  "failed_steps": 1,
+  "recordings": 2,
   "run": "41450100828",
   "started": "2026-11-02 22:06",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q08_walking_talker": {
   "status": "pending"
