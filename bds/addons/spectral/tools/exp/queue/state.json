@@ -299,10 +299,20 @@
   "tries": 1
  },
  "q11_speed_pitch": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "f548892",
+  "conclusion": "failure",
+  "earlier_runs": [
+   "41461005966"
+  ],
+  "ended": "2026-11-02 23:21",
+  "failed_steps": 0,
+  "recordings": 0,
   "run": "41461005966",
   "started": "2026-11-02 23:20",
-  "status": "running"
+  "status": "pending",
+  "tries": 1
  },
  "q12_level_12_14": {
   "status": "pending"
