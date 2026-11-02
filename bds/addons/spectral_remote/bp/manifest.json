@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Spectral Remote BP",
+    "description": "remote.html を GeoUI に（bds-lab: bds/geoui/html）",
+    "uuid": "7e759318-50cf-48a5-b54a-fdaed20cca93",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "2bf96ad1-4f9e-4ba2-beaf-ec7b326315bc",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "b0011e30-a801-4613-8de5-427e68cce661",
+      "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "d671f9e8-a078-4e55-bbe1-235e0bbe9c03",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.5.0"
+    }
+  ]
+}

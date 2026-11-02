@@ -129,9 +129,38 @@ def score_pulse(x):
             'grid_ms': round(float(slope * 1000), 3), 'place_sd_ms': round(float(resid.std()), 3), 'place_max_ms': round(float(np.abs(resid).max()), 2)}
 
 
+# ------------------------------------------------------------------ the songs (p02, p04): each recording against the same notes
+# rendered here from the bank's own samples (tools/notes.py render: what the sampler should sound like, every note in its place)
+SONG_OF = {'af': 'fur_elise', 'ad': 'piano_demo', 'pv': 'piano_demo', 'ps': 'piano_demo', 'bd': 'band_demo'}
+
+
+def note_song(sid):
+    """a note song by id: the pack's (tools/exp/packs/notes) or a built-in one (src/songs/*.ts)"""
+    f = os.path.join(UNIT, 'tools', 'exp', 'packs', 'notes', f'{sid}.song.json')
+    if os.path.exists(f):
+        return json.load(open(f))
+    ts = {'piano_demo': 'notes_demo.ts', 'band_demo': 'band_demo.ts'}.get(sid)
+    if ts:
+        return json.loads(open(os.path.join(UNIT, 'src', 'songs', ts)).read().split('export default ', 1)[1].rstrip().rstrip(';'))
+    return None
+
+
+def score_song(rec_path, sid, cache):
+    sys.path[:0] = [os.path.join(UNIT, 'tools'), os.path.join(UNIT, 'tools', 'metrics')]
+    import notes as NO, metrics as MT
+    ref = os.path.join(cache, f'{sid}.ref.wav')
+    if not os.path.exists(ref):
+        song = note_song(sid)
+        if not song:
+            return None
+        NO.render(NO.decode(song), ref)
+    return MT.report(MT.load(ref), MT.load(rec_path))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('folder'); ap.add_argument('--json')
+    ap.add_argument('--songs', help='also the songs (af_, ad_, bd_, sv_/ss_ speech, pv_/ps_ étude) against the notes rendered here: a folder for the renders')
     a = ap.parse_args()
     res = {}
     for f in sorted(glob.glob(os.path.join(a.folder, '*'))):
@@ -141,6 +170,12 @@ def main():
             res[name] = {'pairs': score_pairs(load(f))}
         elif pre in ('pu', 'u3', 'au', 'a3'):  # (p04: au, a3 = the pulse with aliases, 2D and 3D)
             res[name] = {'pulse': score_pulse(load(f))}
+        elif a.songs and (pre in SONG_OF or name.split('_', 1)[-1] in ('speech_hello', 'speech_weather', 'speech_cave', 'speech_piano')):
+            sid = SONG_OF.get(pre) or name.split('_', 1)[1]
+            r = score_song(f, sid, a.songs)
+            if r is None:
+                continue
+            res[name] = {'song': sid, **r}
         else:
             continue
         print(name, json.dumps(res[name], ensure_ascii=False), flush=True)

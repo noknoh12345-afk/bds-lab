@@ -167,9 +167,58 @@ def p03():
     print('plan p03_file_songs')
 
 
+# ------------------------------------------------------------------ p06: how many notes can one tick start (p04: the more a
+# tick started, the more the phone lost — and that was not the same event started again)
+BURST_K = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12]
+
+
+def burst():
+    """groups of K clicks 40 ms apart, each group 100 ms after a multiple of 1.8 s: bundled 12 ticks (600 ms) every group is started
+    in one tick, each click placed by its own seek; bundled 1, one or two a tick (the control)"""
+    out = []
+    for g, K in enumerate(BURST_K):
+        out += [(1800.0 * g + 100 + 40.0 * j, 15, CLICK, 110, 128) for j in range(K)]
+    return out
+
+
+def chord():
+    """groups of K flute notes at once (one tick, one seek: a chord), a semitone apart from C5 up, 700 ms each, every 1.8 s"""
+    out = []
+    for g, K in enumerate(BURST_K):
+        out += [(1800.0 * g + 100, 700, 72 + j, 100, 73) for j in range(K)]
+    return sorted(out)
+
+
+def p06():
+    songs = {'burst_k': ('Clicks K at once in one tick (measuring)', burst()), 'chord_k': ('Chords of K flutes (measuring)', chord())}
+    for sid, (title, notes) in songs.items():
+        song = N.encode(notes, sid, title, 'Spectral Player (measuring)')
+        json.dump(song, open(os.path.join(PACK, f'{sid}.song.json'), 'w'), separators=(',', ':'))
+        json.dump([round(n[0], 3) for n in N.decode(song)], open(os.path.join(PACK, f'{sid}.onsets.json'), 'w'))
+        print(sid, len(notes), 'notes', song['meta']['seconds'], 's')
+    S = 'spectral:sampler'
+    secs = 1.8 * len(BURST_K) + 1.2
+    lines = []
+    lines += rec('bk_b12', [f'{S} 12 250 28 120'], 'spectral:play burst_k', int(secs * 1000))
+    lines += rec('bk3_b12', [f'{S} 12 250 28 120'], 'spectral:play burst_k speaker', int(secs * 1000) + 300)
+    lines += rec('bk_b1', [f'{S} 1 250 28 120'], 'spectral:play burst_k', int(secs * 1000))
+    lines += rec('ck_b2', [f'{S} 2 250 28 120'], 'spectral:play chord_k', int(secs * 1000))
+    lines += rec('ck3_b2', [f'{S} 2 250 28 120'], 'spectral:play chord_k speaker', int(secs * 1000) + 300)
+    lines += [f'do execute as @a run {S} 2 250 28 120']
+    head = ["# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+            "# p06（tools/exp/sampler_plans.py p06）: 1 つの tick で始めた音のうちいくつ鳴るか（p04: 束ね 4 で連打の 2 割が落ち、別名では変わらなかった）。",
+            "# K = 1〜12 発のクリックを 1 つの tick に（それぞれ seekTo で 40 ms ずつ: 束ね 12）ヘッドホン・3D、対照に束ね 1。K 音の和音（フルート、同じ seek）ヘッドホン・3D"]
+    plan = {'header': head, 'arms': [], 'setup': ['tp @s 0 -60 0 0 0'], 'prep': ['audio song burst_k,chord_k pack=tools/exp/packs/notes'],
+            'sections': [{'title': 'per tick', 'lines': lines}]}
+    json.dump(plan, open(os.path.join(HERE, 'queue', 'p06_per_tick.json'), 'w'), ensure_ascii=False, indent=1)
+    print('plan p06_per_tick:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'p03':
         p03()
+    elif len(sys.argv) > 1 and sys.argv[1] == 'p06':
+        p06()
     elif len(sys.argv) > 1 and sys.argv[1] == 'p02':
         p02(sys.argv[2] if len(sys.argv) > 2 else '/tmp/sampler_refs')
     else:

@@ -1,0 +1,60 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.sr.ui": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "sr_ui": {
+          "scale": "v.sr_pg > 0 ? 1 : 0"
+        },
+        "sr_p0": {
+          "scale": "v.sr_pg == 1 ? 1 : 0"
+        },
+        "sr_p1": {
+          "scale": "v.sr_pg == 2 ? 1 : 0"
+        },
+        "sr_hint_w": {
+          "position": [
+            "v.sr_hxw",
+            "-v.sr_hyw",
+            0
+          ],
+          "scale": "(v.sr_hw >= 0 && math.mod(math.floor(v.sr_flg / 2), 2) > 0.5) ? 1 : 0"
+        },
+        "sr_hint_a": {
+          "position": [
+            "v.sr_hxa",
+            "-v.sr_hya",
+            0
+          ],
+          "scale": "(v.sr_ha >= 0 && math.mod(math.floor(v.sr_flg / 2), 2) > 0.5) ? 1 : 0"
+        },
+        "sr_hint_s": {
+          "position": [
+            "v.sr_hxs",
+            "-v.sr_hys",
+            0
+          ],
+          "scale": "(v.sr_hs >= 0 && math.mod(math.floor(v.sr_flg / 2), 2) > 0.5) ? 1 : 0"
+        },
+        "sr_hint_d": {
+          "position": [
+            "v.sr_hxd",
+            "-v.sr_hyd",
+            0
+          ],
+          "scale": "(v.sr_hd >= 0 && math.mod(math.floor(v.sr_flg / 2), 2) > 0.5) ? 1 : 0"
+        },
+        "sr_ptr": {
+          "position": [
+            "v.sr_cx",
+            "-v.sr_cy",
+            0
+          ],
+          "scale": "math.mod(v.sr_flg, 2) > 0.5 ? 1 : 0"
+        }
+      }
+    }
+  }
+}

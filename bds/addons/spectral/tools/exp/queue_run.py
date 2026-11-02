@@ -72,6 +72,12 @@ def save_state(st):
         fh.write('\n')
 
 
+def queue_files(name=None):
+    """the queue's own files a commit takes (never the whole folder: a plan file not committed yet is a draft, left as it is)"""
+    out = [rel(os.path.join(Q, 'RESULTS.md')), rel(os.path.join(Q, 'logs')), rel(STATE)]
+    return out + ([rel(os.path.join(Q, name + '.json'))] if name else [])
+
+
 def commit(paths, msg):
     """add, commit (if anything changed) and push to addon/spectral (the lab's go run leaves bds/vendor/bds-version.txt changed:
     never committed)"""
@@ -153,6 +159,10 @@ def busy():
 
 def start(name, st):
     spec_path = os.path.join(Q, name + '.json')
+    # (a plan runs only once it is committed: a plan file not in git yet is a draft — p05 (run 41513809085) was picked up before the
+    #  add-on code it needed was committed, and the device ran the add-on of the branch without it)
+    if sh('git', 'ls-files', '--', rel(spec_path)).strip() == '':
+        return False, 'the plan is not committed yet (a draft)'
     spec = json.load(open(spec_path))
     need = song_files(spec)
     missing = [p for p in need if not os.path.exists(p)]
@@ -167,7 +177,7 @@ def start(name, st):
     app = os.path.join(UNIT, 'app.txt')
     sh('python3', os.path.join(HERE, 'make_app.py'), spec_path, app)
     title = spec['header'][-1].split('）: ', 1)[-1].split('。')[0][:120]
-    commit([rel(app), rel(Q)], f'spectral queue {name}: on the real device next — {title}')
+    commit([rel(app), *queue_files(name)], f'spectral queue {name}: on the real device next — {title}')
     head = sh('git', 'rev-parse', 'HEAD').strip()
     t0 = datetime.now(timezone.utc).replace(microsecond=0)
     sh('gh', 'workflow', 'run', 'redroid.yml', '--repo', SLUG, '--ref', BRANCH, '-f', 'addon=spectral', '-f', 'mode=run')
@@ -254,7 +264,7 @@ def finish(name, st):
     with open(res, 'a') as fh:
         fh.write(f"| {name} | {rid} | {v.get('conclusion')}{'（もう一度）' if again else ''} | {rec_txt} | {arm_txt} | {fail_txt} | "
                  f"{st[name]['started']} → {st[name]['ended']} |\n")
-    commit([rel(Q), rel(os.path.join(UNIT, 'measured'))], f"spectral queue {name}: run {rid} recorded ({len(recs)} recordings, {v.get('conclusion')})")
+    commit([*queue_files(name), rel(os.path.join(UNIT, 'measured'))], f"spectral queue {name}: run {rid} recorded ({len(recs)} recordings, {v.get('conclusion')})")
     subprocess.run(['gh', 'workflow', 'run', 'notify.yml', '--repo', SLUG, '--ref', BRANCH, '-f', f'run={rid}'], capture_output=True)
     spec = json.load(open(os.path.join(Q, name + '.json')))
     label = f'キュー {int(name[1:3])}/20 {name}' if name.startswith('q') else f'追加の実機 {name}'

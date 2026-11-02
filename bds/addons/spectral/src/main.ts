@@ -14,7 +14,7 @@ import { OSC_AMP, BASE_HZ, NOISE_RMS, NOISE_BANDS, BURST_RMS, BURST_BANDS, SUB }
 import demo from './songs/demo';
 import programs, { Program } from './calib_programs';
 import { readPart, joinParts, decodeSongJob, songHeader, payloadText, payloadFrom, Part, SongMeta, FIELD_CHARS, PHONE_CHARS } from './songtext';
-import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes } from './notes';
+import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes, LiveKeys } from './notes';
 import notesDemo from './songs/notes_demo';
 import bandDemo from './songs/band_demo';
 import { saySong } from './say';
@@ -62,7 +62,7 @@ addNoteSong(bandDemo.meta, bandDemo.data);
 /** file songs (src/files.ts, tools/filepack.py): recordings played as themselves, from the parts in an add-on's resource pack */
 const fileSongs = new Map<string, FileMeta>();
 // (the built-in one: the étude rendered through the bank's piano, in this pack's own sounds — rp/sounds/spectral_f/piano_file)
-fileSongs.set('piano_file', { id: 'piano_file', title: 'Piano étude (as recorded)', artist: 'Spectral Player', seconds: 23.484, parts: [[0, 23484]], x: 80, lead: 0.6 });
+fileSongs.set('piano_file', { id: 'piano_file', title: 'Piano étude (as recorded)', artist: 'Spectral Player', seconds: 23.484, parts: [[0, 23484]], x: 80, lead: 0.6, rate: 48000 });
 
 const B64 = new Uint8Array(128);
 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('').forEach((c, i) => (B64[c.charCodeAt(0)] = i));
@@ -177,7 +177,11 @@ interface Settings {
    *  quantisation (SPEC.md). levelVia 'volume': every level sent that much higher (setVolume over 1); 'events': the headphones
    *  play the _l sound events (their definitions say volume 4 = +12 dB), the rest by setVolume */
   level?: number; levelVia?: 'volume' | 'events';
+  /** keep the mix's peak under the phone's clip (about 2 file units, SPEC.md): each tick's estimated peak over LIMIT turns the
+   *  whole tick down at once, coming back LIM_RELEASE a tick (the 音割れ of loud songs at +10 dB) */
+  limit?: boolean;
 }
+const LIMIT = 1.9, LIM_CREST = 3.2, LIM_RELEASE = Math.pow(10, 1.5 / 20);
 type Mode2 = 'quality' | 'light';
 const DEFAULTS: Settings = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voices: 64, noise: true, bursts: true, viz: true, loop: false, budget: 0, mode: 'quality', hf: 0, fold: false, sounds: 0 };
 // light mode (Realms, many listeners): the 16 strongest voices (songs keep their voices loudest first, so this is the base
@@ -233,6 +237,8 @@ class Session {
   targets: Target[] = [];
   lastP: Float32Array; lastL: Float32Array; lastNL: Float32Array; lastNP = 1;
   calls = 0; ticks = 0; ms = 0; peakCalls = 0; vizText = ''; rebuilds = 0;
+  /** the limiter's gain now, and the ticks it turned down */
+  limG = 1; limited = 0;
   constructor(public owner: Player, public song: Song, public d: Decoded, public mode: Mode, public s: Settings) {
     this.lastP = new Float32Array(d.N).fill(-1); this.lastL = new Float32Array(d.N).fill(SILENT); this.lastNL = new Float32Array(d.M).fill(SILENT);
   }
@@ -329,6 +335,27 @@ class Session {
     this.warm = 1;
   }
 
+  /** the limiter: the mix's peak this tick estimated from its voices (sines of amplitude A: they add up to sum A at most) and noise
+   *  bands (noises of RMS A), the smaller of that sum and LIM_CREST times the mix's RMS; over LIMIT the tick is turned down */
+  private limiter(q: number, hf: number, r: number): number {
+    const d = this.d, vol = this.s.volume * this.lv;
+    let sumA = 0, vpw = 0, npw = 0;
+    for (let v = 0; v < this.V; v++) {
+      const [a, f] = this.at(v, q);
+      if (a <= 0 || (hf && f * r >= hf)) continue;
+      const A = a * vol * this.eqGain(f * r);
+      sumA += A; vpw += (A * A) / 2;
+    }
+    if (this.s.noise) {
+      const i = Math.max(0, Math.min(d.F - 1, Math.floor(q)));
+      for (let b = 0; b < d.M; b++) if (this.bandOn(b)) { const a = d.nz[i * d.M + b] * vol; npw += a * a; }
+    }
+    const peak = Math.min(sumA + 3 * Math.sqrt(npw), LIM_CREST * Math.sqrt(vpw + npw));
+    const want = peak > LIMIT ? LIMIT / peak : 1;
+    this.limG = want < this.limG ? want : Math.min(want, this.limG * LIM_RELEASE);
+    if (this.limG < 0.999) this.limited++;
+    return this.limG;
+  }
   eqGain(f: number) {
     const [lo, mid, hi] = this.s.eq;
     if (lo === 0 && mid === 0 && hi === 0) return 1;
@@ -430,7 +457,8 @@ class Session {
     // frame (under half a frame, 25 ms)
     if ((this.d.vd || this.d.nzd) && this.s.speed === 1 && !this.frozen && !Number.isInteger(this.ph)) this.ph = Math.round(this.ph);
     const d = this.d, N = d.N, sp = this.frozen ? 0 : this.s.speed, ph = this.ph, ph2 = ph + sp;
-    const gain = (this.s.volume * this.lv) / OSC_AMP, r = this.ratio, lv = this.lv;
+    let gain = (this.s.volume * this.lv) / OSC_AMP, lv = this.lv;
+    const r = this.ratio;
     if ((sp > 0 && ph >= d.F - 1) || (sp < 0 && ph <= 0)) {
       if (this.s.loop) { this.seek(sp > 0 ? 0 : d.F - 1); return; }
       const b0 = this.s.budget; this.s.budget = 0;
@@ -443,6 +471,7 @@ class Session {
     // a voice above what the client can play (hf) is not played: under a mixing rate of 24 kHz it would only fold down to
     // 24 kHz - f. With `fold`, its energy and that of the voices not played at all go into the noise band they fall in
     const hf = this.s.hf ?? 0, extra = this.s.fold ? new Float32Array(d.M) : undefined;
+    if (this.s.limit) { const g = this.limiter(q2, hf, r); gain *= g; lv *= g; }
     const fold = (f: number, a: number) => {
       if (!extra || a <= 0) return;
       for (let b = 0; b < d.M; b++) if (f >= NOISE_BANDS[b][0] && f < NOISE_BANDS[b][1]) { extra[b] += (a * a) / 2; return; }
@@ -618,6 +647,7 @@ class Session {
       `calls/tick ${calls.toFixed(1)} peak ${this.peakCalls} ms/tick ${avg.toFixed(2)} rebuilds ${this.rebuilds} quality ${this.s.mode ?? 'quality'} budget ${this.s.budget || 'none'} deferred ${this.deferred} ` +
       `engine hf ${this.s.hf || 'none'} fold ${this.s.fold ? 'on' : 'off'} sounds ${this.s.sounds || 'any'} drums ${!this.s.bursts ? 'off' : this.s.attacks ? 'noise' : ['behind', 'tick', 'ahead'][Math.max(-1, Math.min(1, this.s.burstLead ?? 1)) + 1]} ` +
       `level ${this.s.level ? `+${this.s.level} dB ${this.builtLoud ? 'events' : 'volume'}` : 'none'} ` +
+      `limiter ${this.s.limit ? `on ${this.limited} ticks down, now ${(20 * Math.log10(this.limG)).toFixed(1)} dB` : 'off'} ` +
       `fades ${this.d.vd || this.d.nzd ? `fitted (${[this.d.vd ? 'voices' : '', this.d.nzd ? 'noise' : ''].filter((x) => x).join(' and ')}) short ${this.shortFades}` : 'ramps'}`;
   }
 }
@@ -685,7 +715,10 @@ async function play(p: Player, id: string | undefined, mode: Mode): Promise<stri
 /** the sampler (/spectral:sampler): place each note inside its tick by seekTo, the notes of `bundle` ticks started together,
  *  `ahead3d` ms more for a 3D speaker (a 3D sound plays as made for 100-200 ms); at most `voices` notes at once (the phone plays
  *  32 sounds); `volume`: the level of a velocity-127 note */
-const SAMPLER = { place: true, bundle: 4, ahead3d: 250, voices: 28, volume: 1.2, log: false };
+// (bundle 2: measured on the phone, p04 run 41482910293 — Für Elise bundled 2 ticks ViSQOL 3.11, onsets heard 98.6 %, as many as
+//  tick-bound (3.07, 98.6 %); bundled 4, 2.78 and 93.0 % (37 ms clicks: 47 of 60 heard at 4, 58 at 2, 59 at 1 — every note of a
+//  bundle starts in one tick, and the phone lost more of them the more a tick started))
+const SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 1.2, log: false };
 /** how loud a file song plays (setVolume: up to 2 exact on the phone; the game plays a file 32.5 dB under it, into 16 bits) */
 const FILE_LEVEL = 1.8;
 function stopAllFor(p: Player) {
@@ -742,6 +775,92 @@ function seekFor(p: Player, sec: number) {
   const n = notePlays.get(p.id); if (n) { n.seekMs(Math.max(0, sec) * 1000); return `§b⇥ ${fmt(Math.max(0, sec))}`; }
   const s = mine(p); if (!s) return none; s.seek(sec * 20); return `§b⇥ ${fmt(s.ph / 20)}`; }
 
+// ------------------------------------------------------------------ the remote in the game (a GeoUI page: tools/connect/remote.html made
+// by bds/geoui/html/convert.mjs into bds/addons/spectral_remote, namespace sr). Its buttons send `scriptevent spectral:remote <verb>`
+// as the player (nothing breaks where this pack is not); while it is open (sr:on_open … sr:on_close) the song's place goes back to it
+// each second as that player's own sr:value / sr:show
+const remoteOpen = new Set<string>(), remoteSaid = new Set<string>();
+/** live notes from Spectral Connect (a MIDI keyboard, the page's keys): `scriptevent spectral:note` as the player, entries split by
+ *  ";" — on <key> <velocity> [program] [delay ms] · off <key> [program] [delay ms] · alloff (src/notes.ts LiveKeys) */
+const liveKeys = new Map<string, LiveKeys>();
+//  A batch may start with @<the server's clock, ms>: its notes' delays are then from that moment, and the add-on takes off how much
+//  later than the quickest batch so far this one arrived (the wait for its tick, up to 50 ms) — the server's and the game's clocks
+//  need not agree, only keep their pace (the quickest arrival is the offset; it is let go 1 ms a batch so a drift is followed)
+const liveSync = new Map<string, number>();
+function liveNotes(p: Player, message: string) {
+  let k = liveKeys.get(p.id);
+  if (!k) { k = new LiveKeys(p, SAMPLER.volume, SAMPLER.log); liveKeys.set(p.id, k); }
+  k.volume = SAMPLER.volume * settingsOf(p).volume; k.log = SAMPLER.log;
+  let late = 0;
+  for (const entry of message.split(';')) {
+    const w = entry.trim().split(/\s+/), n = (i: number, d: number) => (Number.isFinite(Number(w[i])) && w[i] !== undefined ? Number(w[i]) : d);
+    if (w[0].startsWith('@')) {
+      const lag = Date.now() - Number(w[0].slice(1));
+      if (!Number.isFinite(lag)) continue;
+      const best = Math.min(lag, (liveSync.get(p.id) ?? lag) + 1);
+      liveSync.set(p.id, best); late = lag - best;
+      if (k.log) console.warn(`[spectral] live batch ${Math.round(late)} ms after the quickest`);
+    } else if (w[0] === 'on') { const why = k.on(n(3, 0), n(1, 60), n(2, 100), n(4, 0) - late); if (why) console.warn(`[spectral] live note: ${why.replace(/§./g, '')}`); }
+    else if (w[0] === 'off') k.off(n(2, 0), n(1, 60), n(3, 0) - late);
+    else if (w[0] === 'alloff') k.allOff();
+  }
+}
+/** what the remote's buttons ask: pause · stop · seek <s> · back <s> · fwd <s> · volume <percent> · play <song> [speaker] · status */
+function remoteVerb(p: Player, words: string[]): string {
+  const [verb, arg, arg2] = words, n = Number(arg);
+  const pos = filePlays.get(p.id)?.position ?? notePlays.get(p.id)?.position ?? ((mine(p)?.ph ?? 0) / 20);
+  switch (verb) {
+    case 'pause': return pauseFor(p);
+    case 'stop': return stopFor(p);
+    case 'seek': return Number.isFinite(n) ? seekFor(p, n) : '§cseek <seconds>';
+    case 'back': return seekFor(p, Math.max(0, pos - (Number.isFinite(n) ? n : 10)));
+    case 'fwd': return seekFor(p, pos + (Number.isFinite(n) ? n : 10));
+    case 'volume': {
+      if (!Number.isFinite(n)) return '§cvolume <percent>';
+      const st = settingsOf(p); st.volume = Math.max(0, Math.min(400, n)) / 100; keep(p, st); const m = mine(p); if (m) m.s.volume = st.volume;
+      return `§bvolume ${Math.round(st.volume * 100)}%`;
+    }
+    case 'status': return filePlays.get(p.id)?.status() ?? notePlays.get(p.id)?.status() ?? mine(p)?.status() ?? 'status: idle';
+    default: return `§cremote: ${verb ?? ''}?`;
+  }
+}
+system.afterEvents.scriptEventReceive.subscribe((e) => {
+  if (e.id === 'sr:on_open' || e.id === 'sr:on_close') {
+    let who = ''; try { who = String(JSON.parse(e.message).player ?? ''); } catch { /* not ours */ }
+    if (who) { if (e.id === 'sr:on_open') { remoteOpen.add(who); remoteSaid.delete(who); } else remoteOpen.delete(who); }
+    return;
+  }
+  if (e.id === 'spectral:note' && e.sourceEntity instanceof Player) { liveNotes(e.sourceEntity, e.message); return; }
+  if (e.id !== 'spectral:remote' || !(e.sourceEntity instanceof Player)) return;
+  const p = e.sourceEntity, words = e.message.trim().split(/\s+/).filter((w) => w);
+  if (words[0] === 'play') {
+    const where = (words[2] === 'speaker' ? 'speaker' : 'phones') as Mode;
+    void play(p, words[1], where).then((said) => { if (p.isValid) p.onScreenDisplay.setActionBar(said); });
+    return;
+  }
+  const said = remoteVerb(p, words);
+  if (p.isValid) p.onScreenDisplay.setActionBar(said);
+  console.warn(`[spectral] remote ${p.name}: ${words.join(' ')} → ${said.replace(/§./g, '')}`);
+}, { namespaces: ['spectral', 'sr'] });
+system.runInterval(() => {
+  if (!remoteOpen.size) return;
+  for (const p of world.getAllPlayers()) {
+    if (!remoteOpen.has(p.name)) continue;
+    const f = filePlays.get(p.id), n = notePlays.get(p.id), s = mine(p);
+    const pos = f?.position ?? n?.position ?? (s ? s.ph / 20 : 0);
+    const len = f?.meta.seconds ?? n?.song.meta.seconds ?? s?.song.meta.seconds ?? 0;
+    const paused = f?.paused ?? n?.paused ?? s?.paused ?? false, on = Boolean(f || n || s);
+    try {
+      p.runCommand(`scriptevent sr:value sec ${Math.floor(pos)}`);
+      p.runCommand(`scriptevent sr:value len ${Math.round(len)}`);
+      p.runCommand(`scriptevent sr:value pos ${len > 0 ? Math.min(100, Math.round((pos / len) * 100)) : 0}`);
+      p.runCommand(`scriptevent sr:show playing ${on && !paused ? 1 : 0}`);
+      p.runCommand(`scriptevent sr:show paused ${on && paused ? 1 : 0}`);
+      if (!remoteSaid.has(p.name)) { remoteSaid.add(p.name); console.warn(`[spectral] remote ${p.name}: open — the place each second (${Math.floor(pos)} of ${Math.round(len)} s${on ? (paused ? ', paused' : ', playing') : ', nothing playing'})`); }
+    } catch { /* (left) */ }
+  }
+}, 20);
+
 // ------------------------------------------------------------------ commands
 cmd('spectral:play', 'Play a song (headphones: follows you; speaker: 3D at this spot for everyone)', { 'song?': 'string', 'where?': ['phones', 'speaker'] },
   (p, a) => play(p, a.song, (a.where ?? 'phones') as Mode));
@@ -768,6 +887,10 @@ cmd('spectral:layers', 'Noise bands and drum bursts on/off', { noise: 'bool', bu
   const s = settingsOf(p); s.noise = a.noise; s.bursts = a.bursts; keep(p, s); const m = mine(p); if (m) { m.s.noise = s.noise; m.s.bursts = s.bursts; } return `§bnoise ${s.noise ? 'on' : 'off'}, bursts ${s.bursts ? 'on' : 'off'}`;
 });
 cmd('spectral:freeze', 'Freeze the sound where it is (an endless drone) / thaw', {}, freezeFor);
+cmd('spectral:limit', 'Keep the loudest moments under the phone\'s clip (no 音割れ): on / off', { on: 'bool' }, (p, a) => {
+  const s = settingsOf(p); s.limit = a.on; keep(p, s); const m = mine(p); if (m) m.s.limit = s.limit;
+  return `§blimiter ${s.limit ? 'on' : 'off'}`;
+});
 cmd('spectral:mode', 'quality: every voice, every command · light (Realms, many players): 16 voices, at most 24 commands per tick per listener', { mode: ['quality', 'light'] }, async (p, a) => {
   const s = settingsOf(p), light = a.mode === 'light';
   const full = platformVoices(p);
@@ -826,8 +949,9 @@ cmd('spectral:say', 'Read kana aloud with the voice, mora by mora like notes (ka
     return r.skipped ? `${said} §7(${r.skipped} characters not kana: not read)` : said;
   });
 cmd('spectral:sampler', 'Note songs (MIDI, the instrument bank): notes of this many ticks started together, each placed inside its tick by seekTo (0 = no placement: every note at the start of its tick), ms more ahead for a 3D speaker, at most this many notes at once, level in percent',
-  { bundle: 'int', 'ahead?': 'int', 'voices?': 'int', 'volume?': 'int', 'log?': 'bool' }, (p, a) => {
-    SAMPLER.place = a.bundle > 0; SAMPLER.bundle = Math.max(1, Math.min(40, a.bundle || 1));
+  { 'bundle?': 'int', 'ahead?': 'int', 'voices?': 'int', 'volume?': 'int', 'log?': 'bool' }, (p, a) => {
+    // (no bundle: only what it is now)
+    if (a.bundle !== undefined) { SAMPLER.place = a.bundle > 0; SAMPLER.bundle = Math.max(1, Math.min(40, a.bundle || 1)); }
     if (a.ahead !== undefined) SAMPLER.ahead3d = Math.max(0, Math.min(400, a.ahead));
     if (a.voices !== undefined) SAMPLER.voices = Math.max(1, Math.min(64, a.voices));
     if (a.volume !== undefined) SAMPLER.volume = Math.max(0, Math.min(200, a.volume)) / 100;
@@ -1720,6 +1844,7 @@ world.afterEvents.playerLeave.subscribe((e) => {
   const s = sessions.get(e.playerId); if (s) { s.stop(); sessions.delete(e.playerId); }
   const n = notePlays.get(e.playerId); if (n) { n.stop(); notePlays.delete(e.playerId); }
   const f = filePlays.get(e.playerId); if (f) { f.stop(); filePlays.delete(e.playerId); }
+  const k = liveKeys.get(e.playerId); if (k) { k.allOff(); liveKeys.delete(e.playerId); }
 });
 world.afterEvents.worldLoad.subscribe(() => system.sendScriptEvent('spectral:hello', '1'));
 

@@ -1,0 +1,85 @@
+# spectral_remote（node bds/geoui/html/convert.mjs bds/addons/spectral/tools/connect/remote.html --out bds/addons/spectral_remote --ns sr
+#   --name "Spectral Remote" --ore で作る）: Spectral Player のリモコンをゲームの中に、フォームなしで（GeoUI: 視点がマウス、W A S D が矢印、
+#   ジャンプで押す、スニークで戻る）。ボタンは scriptevent spectral:remote <verb>（Spectral Player が無くても何も壊れない）、
+#   「つなぐ」は Spectral Connect（/connect の WebSocket）へ URL を手紙で（ページの欄をプレイヤーのタグに: /tag @s list で読まれる）。
+# fha = [焦点, ポインタの下, 押している] の番号（-1 = なし）。
+
+## loads closed
+@A join
+wait 2000
+js JSON.stringify([p('A').getProperty('sr:pg'), p('A').getProperty('sr:fha')])
+= [0,0]
+
+## opens on 「いま」 with the focus on the first control
+scriptevent sr:open
+wait 600
+js p('A').getProperty('sr:pg')
+= 1
+js const v = p('A').getProperty('sr:fha'); JSON.stringify([v % 256 - 1, Math.floor(v / 256) % 256 - 1, Math.floor(v / 65536) - 1])
+= [0,-1,-1]
+
+## a button runs its command as the player (⏯ 一時停止: scriptevent spectral:remote pause — Spectral Player pauses where it is)
+scriptevent sr:focus c5
+wait 300
+@A jump
+wait 600
+~ GEOUI click \{"player":"A","id":"c5"\}
+!~ Unknown command
+
+## the volume slider runs scriptevent spectral:remote volume {value} at each change (the wheel one notch: 100 → 120)
+scriptevent sr:focus vol
+wait 300
+@A hotbar prev
+wait 600
+~ GEOUI change \{"player":"A","id":"vol","value":120\}
+
+## Spectral Player's updates show on the page: the song's place (sr:value sec / len / pos) and whether it plays (sr:show playing)
+execute as @a[name=A] run scriptevent sr:value sec 42
+execute as @a[name=A] run scriptevent sr:value len 180
+execute as @a[name=A] run scriptevent sr:value pos 23
+execute as @a[name=A] run scriptevent sr:show playing 1
+wait 400
+js JSON.stringify([p('A').getProperty('sr:n1'), p('A').getProperty('sr:n2')])
+= [42,180]
+js p('A').getProperty('sr:shw') > 0
+= true
+
+## 「つなぐ」: a URL typed with /sr:t and 「曲にして流す」 puts the page's fields on the player as tags for Spectral Connect (it reads /tag @s list)
+@A slot 1
+wait 600
+js p('A').getProperty('sr:pg')
+= 2
+scriptevent sr:focus url
+wait 300
+@A cmd /sr:t "https://example.com/my-song.mp3"
+wait 300
+scriptevent sr:focus go
+wait 300
+@A jump
+wait 600
+~ GEOUI mail \{"player":"A","id":"go","name":"play","parts":1\}
+tag A list
+~ geoui\.mail\.sr\.1\.0\.1\.[A-Za-z0-9_-]{40,}
+js p('A').getTags().filter((t) => t.startsWith('geoui.mail.sr.1.')).length
+= 1
+
+## a long URL goes in parts of at most 200 characters, and the game keeps each tag whole
+scriptevent sr:focus url
+wait 300
+@A cmd /sr:t "https://example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.mp3"
+wait 300
+scriptevent sr:focus go
+wait 300
+@A jump
+wait 600
+~ GEOUI mail \{"player":"A","id":"go","name":"play","parts":3\}
+js p('A').getTags().filter((t) => t.startsWith('geoui.mail.sr.2.')).map((t) => t.length).sort((a, b) => b - a).join(',')
+~ ^220,220,\d{2,3}$
+
+## the ✕ closes it (the camera and the HUD given back)
+scriptevent sr:focus c2
+wait 300
+@A jump
+wait 600
+js p('A').getProperty('sr:pg')
+= 0

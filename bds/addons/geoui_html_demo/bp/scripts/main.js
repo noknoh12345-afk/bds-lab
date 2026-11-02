@@ -2,7 +2,8 @@
 // /scriptevent ghd:open [page] · ghd:close · ghd:page <id> · ghd:set <name> <number> · ghd:show <name> 0|1 · ghd:sens <units a degree>
 // /ghd:open [page] · /ghd:t <text> (typed into the text field in focus). No form: the turn of the head is the mouse,
 // W A S D (a stick, the touch pad) the arrows, jump Enter, sneak Escape, the hotbar's wheel and keys 1–9; a left click (a swing) clicks.
-// What happens goes out as /scriptevent ghd:on_<open|close|page|click|change|event> <json> (system.sendScriptEvent) for another pack.
+// What happens goes out as /scriptevent ghd:on_<open|close|page|click|change|event|mail> <json> (system.sendScriptEvent) for another pack;
+// a mail:<name> control puts the page's fields on the player as geoui.mail.ghd.<seq>.<k>.<n>.<base64url> tags for a /connect server.
 import { world, system, Player, InputButton, ButtonState, InputPermissionCategory, HudVisibility, HudElement, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus } from '@minecraft/server';
 import './screen_nav.js';
 import './screen_input.js';
@@ -12,6 +13,53 @@ const createScreens = function createScreens(CFG, io, GS) {
     const B = CFG.design ? { x0: -CFG.design.w * CFG.design.g / 2, y0: -CFG.design.h * CFG.design.g / 2, x1: CFG.design.w * CFG.design.g / 2, y1: CFG.design.h * CFG.design.g / 2 } : { x0: -160, y0: -90, x1: 160, y1: 90 };
     const pageIdx = (id) => CFG.pages.findIndex((p) => p.id === id);
     const ctlById = (id) => CFG.controls.find((c) => c.id === id) || null;
+    const MAIL_PART = 200;
+    /** text → UTF-8 → base64url (no padding): written out here (the game's script has no btoa nor TextEncoder) */
+    function b64url(text) {
+      const bytes = [];
+      for (const ch of String(text)) {
+        let c = ch.codePointAt(0);
+        if (c < 0x80) bytes.push(c);
+        else if (c < 0x800) bytes.push(0xc0 | (c >> 6), 0x80 | (c & 63));
+        else if (c < 0x10000) bytes.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
+        else bytes.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 63), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
+      }
+      const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+      let out = '';
+      for (let i = 0; i < bytes.length; i += 3) {
+        const n = (bytes[i] << 16) | ((bytes[i + 1] || 0) << 8) | (bytes[i + 2] || 0);
+        out += A[(n >> 18) & 63] + A[(n >> 12) & 63] + (i + 1 < bytes.length ? A[(n >> 6) & 63] : '') + (i + 2 < bytes.length ? A[n & 63] : '');
+      }
+      return out;
+    }
+    /** a control's value as the page has it now: a slider's number, a checkbox / radio / tab 1 or 0, a text field's words */
+    function valueOf(s, c) {
+      if (!c) return '';
+      if (c.kind === 'slider') return s.values[c.i] ?? 0;
+      if (c.kind === 'text') return s.values[c.i] ?? '';
+      if (c.checked !== null && c.checked !== undefined) return s.checked[c.i] ? 1 : 0;
+      return '';
+    }
+    /** a cmd: with the page's values in it */
+    function fill(s, c, tpl) {
+      // (the pattern in a string: braces in a regex literal throw off tools that count brackets — common/addon-lint.mjs)
+      return String(tpl).replace(new RegExp('\\{(value|field:([^}]+)|b64:([^}]+))\\}', 'g'), (m, all, f, b) => (all === 'value' ? String(valueOf(s, c)) : f !== undefined ? String(valueOf(s, ctlById(f))) : b64url(valueOf(s, ctlById(b)))));
+    }
+    /** mail:<name> — the page's fields as tags for a /connect server (see the header) */
+    function mail(p, s, name) {
+      const f = {};
+      for (const c of CFG.controls) if (c.id && (c.kind === 'text' || c.kind === 'slider' || (c.checked !== null && c.checked !== undefined))) f[c.id] = valueOf(s, c);
+      const body = b64url(JSON.stringify({ n: name, f }));
+      s.mailSeq = ((s.mailSeq || 0) % 999) + 1;
+      const n = Math.max(1, Math.ceil(body.length / MAIL_PART));
+      for (let k = 0; k < n; k++) {
+        const tag = `geoui.mail.${ns}.${s.mailSeq}.${k}.${n}.${body.slice(k * MAIL_PART, (k + 1) * MAIL_PART)}`;
+        if (io.tag) io.tag(p, tag); else io.run(p, `tag @s add "${tag}"`);
+      }
+      return n;
+    }
+    /** a cmd: on a control that changes (a slider, a checkbox, a text field): run at each change, with its value */
+    const onChange = (p, s, c) => { const a = String(c.action || ''); if (a.startsWith('cmd:')) io.run(p, fill(s, c, a.slice(4))); };
     function st(p) {
       let s = players.get(p.id);
       if (!s) {
@@ -95,6 +143,7 @@ const createScreens = function createScreens(CFG, io, GS) {
       const a = String(c.action || '');
       const change = () => { keep(p, s); io.emit(p, 'change', { id: c.id, checked: Boolean(s.checked[c.i]), value: s.values[c.i] }); };
       if (c.kind === 'checkbox' && (!a || a === 'toggle')) { s.checked[c.i] = !s.checked[c.i]; change(); return; }
+      if (c.kind === 'checkbox' && a.startsWith('cmd:')) { s.checked[c.i] = !s.checked[c.i]; change(); onChange(p, s, c); return; }
       if (c.kind === 'radio' || c.kind === 'tab') {
         // (one of its name — a radio — or of its group — a tab — is on)
         for (const o of CFG.controls) if (o !== c && o.kind === c.kind && (c.kind === 'radio' ? o.name && o.name === c.name : o.group === c.group)) s.checked[o.i] = false;
@@ -105,7 +154,8 @@ const createScreens = function createScreens(CFG, io, GS) {
       if (a === 'back') { back(p, s); return; }
       if (a === 'close') { close(p); return; }
       if (a === 'toggle') { s.checked[c.i] = !s.checked[c.i]; change(); return; }
-      if (a.startsWith('cmd:')) { io.run(p, a.slice(4)); io.emit(p, 'click', { id: c.id }); return; }
+      if (a.startsWith('cmd:') && c.kind !== 'text' && c.kind !== 'slider') { io.run(p, fill(s, c, a.slice(4))); io.emit(p, 'click', { id: c.id }); return; }
+      if (a.startsWith('mail:')) { const parts = mail(p, s, a.slice(5)); io.emit(p, 'mail', { id: c.id, name: a.slice(5), parts }); return; }
       if (a.startsWith('set:')) { const [k, v] = a.slice(4).split('='); s.shows[k] = v !== '0' && v !== 'false'; io.emit(p, 'click', { id: c.id }); return; }
       if (a.startsWith('event:')) { io.emit(p, 'event', { name: a.slice(6), id: c.id }); return; }
       if (c.kind === 'radio' || c.kind === 'tab') return;
@@ -116,7 +166,7 @@ const createScreens = function createScreens(CFG, io, GS) {
     function adjust(p, s, c, steps) {
       const step = Number(c.step) > 0 ? Number(c.step) : 1, lo = Number(c.min) || 0, hi = Number.isFinite(Number(c.max)) ? Number(c.max) : 100;
       const v = clamp((s.values[c.i] || 0) + steps * step, lo, hi);
-      if (v !== s.values[c.i]) { s.values[c.i] = v; keep(p, s); io.emit(p, 'change', { id: c.id, value: v }); }
+      if (v !== s.values[c.i]) { s.values[c.i] = v; keep(p, s); io.emit(p, 'change', { id: c.id, value: v }); onChange(p, s, c); }
     }
     function tick() {
       for (const p of io.players()) {
@@ -180,7 +230,7 @@ const createScreens = function createScreens(CFG, io, GS) {
       }
       if (verb === 'sens') { const v = Number(args[0]); if (!(v > 0 && v < 50)) return `${ns}: sens <0.1…50>`; s.ctl.cfg.sens = v; try { io.save && io.save(p, `${ns}:sens`, v); } catch (e) { /* (kept for now) */ } return ''; }
       if (verb === 'focus') { if (ctlById(args[0])) { s.ctl.focus(args[0]); s.via = 'keys'; sync(p, s); return ''; } return `${ns}: ${args[0]} という操作できる物はありません`; }
-      if (verb === 'text') { const c = ctlById(s.ctl.state.focus); const text = args.join(' '); if (c && c.kind === 'text') { s.values[c.i] = text; io.say(p, `${c.label || c.id}: ${text}`); io.emit(p, 'change', { id: c.id, value: text }); return ''; } return `${ns}: 文字を入れる欄に焦点がありません`; }
+      if (verb === 'text') { const c = ctlById(s.ctl.state.focus); const text = args.join(' '); if (c && c.kind === 'text') { s.values[c.i] = text; io.say(p, `${c.label || c.id}: ${text}`); io.emit(p, 'change', { id: c.id, value: text }); onChange(p, s, c); return ''; } return `${ns}: 文字を入れる欄に焦点がありません`; }
       return `${ns}: 知らない命令 ${verb}（open close page show set value sens focus text）`;
     }
     /** a player who left: what the engine held for them is dropped (open or not; their choices stay in the world) */
@@ -233,6 +283,8 @@ const engine = createScreens(CFG, {
   //  to it as that command — open → on_open, not open again)
   emit: (p, name, data) => { const j = JSON.stringify(Object.assign({ player: p.name }, data)); if (CFG.log !== false) console.warn('GEOUI ' + name + ' ' + j); try { system.sendScriptEvent(CFG.ns + ':on_' + name, j); } catch (e) { /* (no listener) */ } },
   run: (p, command) => { if (p.isValid) p.runCommand(command); },
+  // (mail:<name> — the page's fields as tags for a /connect server: tag @s list reads them)
+  tag: (p, t) => { if (p.isValid) p.addTag(t); },
   say: (p, text) => { if (p.isValid) p.onScreenDisplay.setActionBar(text); },
   load: (p, key) => (p.isValid ? p.getDynamicProperty(key) : undefined),
   save: (p, key, v) => { if (p.isValid) p.setDynamicProperty(key, v); },

@@ -259,7 +259,7 @@ offset = [ "<−100·K·G.x>%x", "<100·K·(G.y − D)>%y" ]     （正方形な
 ## 11. HTML から GeoUI へ
 
 ```sh
-node bds/geoui/html/convert.mjs page.html --out bds/addons/<名前> [--ns gh] [--design 1280x720] [--dpr 2] [--hold free|speed|lock]
+node bds/geoui/html/convert.mjs page.html --out bds/addons/<名前> [--ns gh] [--design 1280x720] [--dpr 2] [--hold free|speed|lock] [--ore]
 node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu.html → bds/addons/geoui_html_demo
 ```
 
@@ -276,7 +276,8 @@ node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu
 | `data-geoui-action="page:<id>"` | そのページへ（スニークで戻る） |
 | `back` / `close` / `open:<id>` | 戻る / 閉じる / 履歴に積まずにそのページへ |
 | `event:<名前>` | `/scriptevent <ns>:on_event {"name":…}` を送る（別のパックが受ける） |
-| `cmd:<コマンド>` | プレイヤーとして実行 |
+| `cmd:<コマンド>` | プレイヤーとして実行。ページの値を入れられる: `{value}`（その物の値: スライダーの数・チェックの 1 / 0・文字の欄の言葉）・`{field:<id>}`（ほかの物の値）・`{b64:<id>}`（それを UTF-8 の base64url で）。スライダー・チェック・文字の欄に付けると、変わるたびに実行（`cmd:spectral:volume {value}`。2026-11-03） |
+| `mail:<名前>` | ページの欄（id のある文字の欄・スライダー・チェック: `{"n":名前,"f":{id:値}}`）を UTF-8・base64url にして、プレイヤーのタグ `geoui.mail.<ns>.<番号>.<k>.<n>.<200 文字まで>` に。**ゲームが /connect でつないだ WebSocket のサーバー**がそれを `/tag @s list` で読み `/tag @s remove` で外す — `@minecraft/server-net` の無いワールド（一人で遊ぶワールド・Realms）から GeoUI のページがサーバーへ話す道。`<ns>:on_mail` も出る（2026-11-03、Spectral Connect: bds/addons/spectral/tools/connect/） |
 | `toggle` / `set:<名前>=<値>` | ON / OFF / `data-geoui-show` の部分を出す・隠す |
 | `role="tab"`・`aria-controls="<ページ>"` | タブ（同じ `data-geoui-group` で 1 つ）。そのページへ |
 | `role="switch"`・checkbox | ON / OFF（プレイヤーごとにワールドに残る） |
@@ -291,7 +292,14 @@ node bds/geoui/html/convert.mjs --sample            # 見本: html/examples/menu
 
 - 限度: 操作できる物 255 個（焦点の番号 8 bit）、W A S D の札は 63 個目まで（6 bit）、プロパティ 32 個（ページの数ではなく、操作できる物 24 個ごと・
   スライダーと進み具合 6 個ごとに 1 個）、ボーン 600 本。超えると変換が注意を出す。
-- 文字の入力欄（`input type=text`）は、焦点を当てて `/<ns>:t <文字>`。
+- 文字の入力欄（`input type=text`）は、焦点を当てて `/<ns>:t <文字>`（記号のある URL などは `"…"` で囲む）。
+- **OreUI**（2026-11-03）: `--ore` か `<html data-geoui-ore>` で、ラボの OreUI（panel/ の色 styles.css・ピクセル文字 fonts/fonts.css・押せる物と
+  カード panel.css）をページの CSS の**前に**入れて撮る（ページの CSS が最後に勝つ）。`button`（灰）・`button.primary`（緑）・`button.danger`（赤）・
+  `.card`・`input` がゲームの見た目になる。ファイルのページだけ（サイトは自分の見た目のまま）。見本: bds/addons/spectral/tools/connect/remote.html
+  → bds/addons/spectral_remote（本物の BDS で 15/15）。
+- 作り直し（2026-11-03）: 出す先にもうある単位のファイル（tests.txt・app.txt・TASK.md・README.md・imported.json）は残し、パックの UUID も
+  前のマニフェストのまま（ワールドの中で同じパックのまま新しくなる）。「絵のまま」に数えるのは、そのページに見えていて箱の外か `--max-controls`
+  を超えた物だけ（ほかのページの物は数えない）。
 - 見本 `geoui_html_demo`: ページ 3・操作できる物 25・アトラス 2048x2048 + 2048x128・ボーン 251・プロパティ 9。本物の BDS で 17/17。
 
 ## 12. 端末の確かめ（Android の CI・iPhone などの実機）

@@ -19,6 +19,12 @@
   .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
   table { width: 100%; border-collapse: collapse; } td { padding: 6px 4px; border-top: var(--u) solid var(--div); vertical-align: top; }
   td.url { word-break: break-all; }
+  .keys { position: relative; height: 140px; margin-top: 10px; user-select: none; touch-action: none; }
+  .keys b { position: absolute; top: 0; box-sizing: border-box; border: var(--u) solid var(--deep); }
+  .keys b.w { height: 140px; background: var(--fg); }
+  .keys b.k { height: 86px; background: var(--deep); z-index: 1; }
+  .keys b.on { background: var(--accent) !important; }
+  select { min-height: 44px; font: inherit; color: var(--fg); background: var(--field); border: var(--u) solid var(--line); padding: 0 8px; }
 </style>
 </head>
 <body>
@@ -50,6 +56,18 @@
     <p id="said" class="small muted"></p>
   </section>
   <section class="card">
+    <h2>鍵盤で弾く</h2>
+    <div class="row">
+      <select id="prog">
+        <option value="0">ピアノ</option><option value="48">弦</option><option value="73">フルート</option><option value="11">ビブラフォン</option>
+        <option value="19">オルガン</option><option value="56">トランペット</option><option value="46">ハープ</option><option value="128">ドラム</option>
+      </select>
+      <span id="midi" class="small muted">MIDI 鍵盤: さがしています…</span>
+    </div>
+    <div id="keys" class="keys"></div>
+    <p class="small muted">パソコンのキー A W S E D F T G Y H U J K = ド〜ド（Z・X で 1 オクターブ下・上）。音は弾いてから約 90 ms 後に、弾いた間のまま鳴ります。</p>
+  </section>
+  <section class="card">
     <h2>頼んだもの</h2>
     <table id="jobs"><tr><td class="muted">まだありません</td></tr></table>
   </section>
@@ -74,6 +92,58 @@ async function poll() {
   setTimeout(poll, 1000);
 }
 poll();
+
+// ---- live notes: the page's keys, the computer's keys and a MIDI keyboard (Web MIDI) → /api/notes as they are played (the server
+// sends them every 50 ms, each placed in the game to the millisecond: src/notes.ts LiveKeys)
+let base = 60, queue = [], timer = 0;
+const prog = () => Number($('prog').value);
+function send(type, key, vel = 100, at = performance.now()) {
+  queue.push({ type, key, vel, prog: prog(), at });
+  if (!timer) timer = setTimeout(() => {
+    const now = performance.now(), events = queue.splice(0).map((e) => ({ type: e.type, key: e.key, vel: e.vel, prog: e.prog, age: Math.round(now - e.at) }));
+    timer = 0; post('/api/notes', { events }).catch(() => {});
+  }, 0);
+  const el = document.querySelector(`.keys b[data-k="${key}"]`); if (el) el.classList.toggle('on', type === 'on');
+}
+// two octaves of keys from C, white and black
+(function drawKeys() {
+  const box = $('keys'), whites = [0, 2, 4, 5, 7, 9, 11], W = 100 / 15;
+  box.innerHTML = '';
+  for (let o = 0, x = 0; o < 2; o++) for (let i = 0; i < 12; i++) {
+    const k = base + o * 12 + i, white = whites.includes(i), b = document.createElement('b');
+    b.dataset.k = k; b.className = white ? 'w' : 'k';
+    b.style.left = `${(white ? x : x - 0.3) * W}%`; b.style.width = `${(white ? 1 : 0.6) * W}%`;
+    if (white) x++;
+    b.onpointerdown = (e) => { b.setPointerCapture(e.pointerId); send('on', k); };
+    b.onpointerup = b.onpointercancel = () => send('off', k);
+    box.append(b);
+  }
+  const c = document.createElement('b'); c.dataset.k = base + 24; c.className = 'w'; c.style.left = `${14 * W}%`; c.style.width = `${W}%`;
+  c.onpointerdown = () => send('on', base + 24); c.onpointerup = () => send('off', base + 24); box.append(c);
+})();
+const KEYS = 'awsedftgyhujk', down = new Set();
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.repeat) return;
+  if (e.key === 'z') { base = Math.max(24, base - 12); return; }
+  if (e.key === 'x') { base = Math.min(96, base + 12); return; }
+  const i = KEYS.indexOf(e.key); if (i < 0 || down.has(e.key)) return;
+  down.add(e.key); send('on', base + i);
+});
+addEventListener('keyup', (e) => { const i = KEYS.indexOf(e.key); if (i < 0) return; down.delete(e.key); send('off', base + i); });
+if (navigator.requestMIDIAccess) navigator.requestMIDIAccess().then((m) => {
+  const hook = () => {
+    const ins = [...m.inputs.values()];
+    $('midi').textContent = ins.length ? `MIDI 鍵盤: ${ins.map((x) => x.name).join('・')}` : 'MIDI 鍵盤: つながっていません';
+    for (const input of ins) input.onmidimessage = (ev) => {
+      const [st, key, vel] = ev.data, kind = st & 0xf0, at = ev.timeStamp || performance.now();
+      if (kind === 0x90 && vel > 0) send('on', key, vel, at);
+      else if (kind === 0x80 || (kind === 0x90 && vel === 0)) send('off', key, 0, at);
+      else if (kind === 0xb0 && (key === 123 || key === 120)) send('alloff', 0, 0, at);
+    };
+  };
+  hook(); m.onstatechange = hook;
+}).catch(() => { $('midi').textContent = 'MIDI 鍵盤: このブラウザでは使えません'; });
+else $('midi').textContent = 'MIDI 鍵盤: このブラウザでは使えません（Chrome・Edge）';
 </script>
 </body>
 </html>

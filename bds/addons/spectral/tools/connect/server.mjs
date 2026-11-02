@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 // Spectral Connect — Minecraft as it is, over WebSocket only (the user's request 23:55): no BDS needed. The game connects to this
-// server with /connect <this machine>:8790 (cheats on, an operator); a page here (in a browser, or in the game through GeoUI Web)
-// takes a URL or a file, makes a song of it and sends it to the game — Spectral Player's script events, as a song pack does —
-// and plays it. In the game's chat, `!spectral <url>` does the same.
+// server with /connect <this machine>:8790 (cheats on, an operator); a page here (a browser) takes a URL or a file, makes a song
+// of it and sends it to the game — Spectral Player's script events, as a song pack does — and plays it. In the game's chat,
+// `!spectral <url>` does the same; and the remote in the game (bds/addons/spectral_remote: a GeoUI page made from
+// tools/connect/remote.html) sends its 「曲にして流す」 as a mail — its fields as tags on the player (bds/geoui/html runtime,
+// mail:<name>), read here with /tag @s list each 0.7 s and taken off — and is told each step (scriptevent sr:show st_* / sr:value
+// sent, run as the player).
 //
 // The URL is fetched with yt-dlp on this machine (pip install yt-dlp): only for what you have the rights to (your own videos,
 // CC-licensed ones) — YouTube's terms allow downloading only where they say so.
@@ -24,6 +27,10 @@ const LAB = path.resolve(UNIT, '..', '..', '..');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const PORT = Number(arg('--port', process.env.PORT ?? 8790));
 const MAX_S = Number(arg('--max', 240));
+const MAIL_MS = 700;
+// live notes (the page's keys, a MIDI keyboard by Web MIDI): sent every LIVE_MS, each note LATENCY ms after it was played — the add-on
+// places it to the millisecond by seekTo (src/notes.ts LiveKeys), the batch's clock taking off the wait for the game's tick
+const LIVE_MS = 50, LATENCY = Number(arg('--latency', 90));
 const WORK = fs.mkdtempSync(path.join(os.tmpdir(), 'spectral-connect-'));
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
@@ -69,10 +76,50 @@ const games = new Set();
 class Game {
   constructor(req, socket) {
     this.pending = new Map(); this.name = '?'; this.sent = 0;
-    this.ws = wsAccept(req, socket, (m) => this.message(m), () => { games.delete(this); log('the game left'); });
+    this.ws = wsAccept(req, socket, (m) => this.message(m), () => { games.delete(this); clearInterval(this.poll); clearInterval(this.liveTimer); log('the game left'); });
     games.add(this);
     this.subscribe('PlayerMessage');
     log('a game connected');
+    // (the remote: shown as connected, and its mails read)
+    this.command('scriptevent sr:show ws 1');
+    this.mails = new Map(); this.done = new Set(); this.polling = false; this.live = [];
+    this.liveTimer = setInterval(() => this.flushLive(), LIVE_MS);
+    this.poll = setInterval(() => this.checkMail().catch((e) => log('mail:', e.message)), MAIL_MS);
+  }
+  /** the live notes of the last LIVE_MS as one scriptevent: @<now>;on <key> <velocity> <program> <ms from now>;off … */
+  flushLive() {
+    if (!this.live.length) return;
+    const now = Date.now(), batch = this.live.splice(0), out = [];
+    for (const e of batch) {
+      const r = Math.max(0, Math.round(e.at + LATENCY - now));
+      out.push(e.type === 'on' ? `on ${e.key} ${e.vel} ${e.prog} ${r}` : e.type === 'off' ? `off ${e.key} ${e.prog} ${r}` : 'alloff');
+    }
+    // (a long batch in more than one: a script event takes 2048 characters)
+    for (let i = 0; i < out.length; i += 80) this.command(`scriptevent spectral:note @${now};${out.slice(i, i + 80).join(';')}`);
+    this.liveSent = (this.liveSent ?? 0) + batch.length;
+  }
+  /** the remote's mails (geoui.mail.sr.<seq>.<k>.<n>.<base64url> tags on the player): whole ones taken off and done */
+  async checkMail() {
+    if (this.polling) return;
+    this.polling = true;
+    try {
+      const r = await this.command('tag @s list');
+      const seen = new Map();
+      for (const m of String(r.statusMessage ?? '').matchAll(/geoui\.mail\.([a-z0-9_]+)\.(\d+)\.(\d+)\.(\d+)\.([A-Za-z0-9_-]+)/g)) {
+        const key = `${m[1]}.${m[2]}`, k = Number(m[3]), n = Number(m[4]);
+        if (!seen.has(key)) seen.set(key, { ns: m[1], n, parts: new Map(), tags: [] });
+        const g = seen.get(key); g.parts.set(k, m[5]); g.tags.push(m[0]);
+      }
+      for (const [key, g] of seen) {
+        if (g.parts.size < g.n) continue;
+        for (const t of g.tags) await this.command(`tag @s remove "${t}"`);
+        if (this.done.has(key)) continue;
+        this.done.add(key); if (this.done.size > 200) this.done.delete(this.done.values().next().value);
+        let mail; try { mail = JSON.parse(Buffer.from([...g.parts.keys()].sort((a, b) => a - b).map((k) => g.parts.get(k)).join(''), 'base64url').toString('utf8')); } catch { log('a mail that does not read'); continue; }
+        log(`mail ${g.ns} ${mail.n}: ${JSON.stringify(mail.f).slice(0, 160)}`);
+        if ((mail.n === 'play' || mail.n === 'speaker') && mail.f?.url) run({ url: String(mail.f.url).trim(), where: mail.n === 'speaker' ? 'speaker' : undefined }, this).catch(() => {});
+      }
+    } finally { this.polling = false; }
   }
   request(purpose, body) {
     const requestId = crypto.randomUUID();
@@ -114,7 +161,7 @@ function sh(cmd, args, opts = {}) {
 async function fetchUrl(url, job) {
   if (/^(file:\/\/|\/)/.test(url)) return url.replace(/^file:\/\//, '');           // a file on this machine
   if (spawnSync('yt-dlp', ['--version']).status !== 0) throw new Error('yt-dlp がありません（pip install yt-dlp）');
-  job.step = 'downloading';
+  step(job.game, job, 'downloading');
   const out = path.join(WORK, `dl-${job.id}.%(ext)s`);
   await sh('yt-dlp', ['-x', '--audio-format', 'wav', '--no-playlist', '--download-sections', `*0-${MAX_S}`, '-o', out, url]);
   const f = fs.readdirSync(WORK).find((x) => x.startsWith(`dl-${job.id}.`));
@@ -122,7 +169,7 @@ async function fetchUrl(url, job) {
   return path.join(WORK, f);
 }
 async function convert(file, job) {
-  job.step = 'converting';
+  step(job.game, job, 'converting');
   const id = `c${job.id}`, base = path.join(WORK, id);
   if (/\.(mid|midi|kar|rmi)$/i.test(file) || job.kind === 'notes') {
     await sh('python3', [path.join(UNIT, 'tools', 'notes.py'), file, '--out', base + '.song.json', '--id', id, '--title', job.title ?? path.basename(file)]);
@@ -141,12 +188,21 @@ function parts(song, size = 1800) {
   return chunks.map((c, i) => msg(i, chunks.length, c, i === 0 ? meta : undefined));
 }
 async function sendSong(game, song, job) {
-  job.step = 'sending';
+  step(game, job, 'sending');
   const ps = parts(song);
   for (let i = 0; i < ps.length; i += 8) {                       // (8 at a time: the game answers each)
     await Promise.all(ps.slice(i, i + 8).map((p) => game.command(`scriptevent spectral:song ${p}`)));
     job.sent = Math.min(ps.length, i + 8); job.parts = ps.length;
+    game.command(`scriptevent sr:value sent ${Math.round((job.sent / ps.length) * 100)}`);
   }
+}
+/** a job's step, on the page here and on the remote in the game (sr:show st_<step>: the one now on, the others off) */
+const STEPS = { downloading: 'st_dl', converting: 'st_conv', sending: 'st_send', playing: 'st_play', failed: 'st_fail' };
+function step(game, job, name) {
+  job.step = name;
+  if (!game) return;
+  for (const [k, prop] of Object.entries(STEPS)) game.command(`scriptevent sr:show ${prop} ${k === name ? 1 : 0}`);
+  if (name !== 'sending') game.command(`scriptevent sr:value sent ${name === 'playing' ? 100 : 0}`);
 }
 async function run(req, game) {
   const job = { id: jobs.length + 1, url: req.url, kind: req.kind, title: req.title, step: 'queued', at: Date.now() };
@@ -154,14 +210,15 @@ async function run(req, game) {
   try {
     const g = game ?? [...games][0];
     if (!g) throw new Error('ゲームがつながっていません（ゲームで /connect <このパソコン>:' + PORT + '）');
+    Object.defineProperty(job, 'game', { value: g, enumerable: false });
     const file = await fetchUrl(req.url, job);
     const song = await convert(file, job);
     await sendSong(g, song, job);
-    job.step = 'playing';
+    step(g, job, 'playing');
     const r = await g.command(`spectral:play ${song.meta.id}${req.where === 'speaker' ? ' speaker' : ''}`);
     job.result = r.statusMessage ?? ''; job.song = song.meta.id; job.seconds = song.meta.seconds;
     log(`job ${job.id}: ${song.meta.id} sent in ${job.parts} parts, ${job.result}`);
-  } catch (e) { job.step = 'failed'; job.error = e.message; log(`job ${job.id}:`, e.message); throw e; }
+  } catch (e) { step(job.game, job, 'failed'); job.error = e.message; log(`job ${job.id}:`, e.message); throw e; }
   return job;
 }
 
@@ -187,6 +244,18 @@ const server = http.createServer(async (req, res) => {
     if (!r.url) { json(400, { error: 'url がありません' }); return; }
     run(r).catch(() => {});
     json(202, { queued: jobs.length }); return;
+  }
+  if (req.method === 'POST' && url.pathname === '/api/notes') {
+    // { events: [{ type: 'on' | 'off' | 'alloff', key, vel, prog, age }] } — age: ms since it was played (the page's clock)
+    let body = ''; for await (const c of req) body += c;
+    const g = [...games][0]; if (!g) { json(409, { error: 'no game' }); return; }
+    let r; try { r = JSON.parse(body || '{}'); } catch { json(400, { error: 'bad JSON' }); return; }
+    const now = Date.now(), int = (v, lo, hi, d) => (Number.isFinite(Number(v)) ? Math.max(lo, Math.min(hi, Math.round(Number(v)))) : d);
+    for (const e of Array.isArray(r.events) ? r.events.slice(0, 256) : []) {
+      if (!['on', 'off', 'alloff'].includes(e.type)) continue;
+      g.live.push({ type: e.type, key: int(e.key, 0, 127, 60), vel: int(e.vel, 1, 127, 100), prog: int(e.prog, 0, 299, 0), at: now - int(e.age, 0, 1000, 0) });
+    }
+    json(200, { queued: g.live.length }); return;
   }
   if (req.method === 'POST' && url.pathname === '/api/command') {
     let body = ''; for await (const c of req) body += c;

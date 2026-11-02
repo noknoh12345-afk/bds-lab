@@ -267,6 +267,31 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
       エリーゼのために・エチュード）→ tools/exp/sampler_score.py。p02（声を素片と正弦波の道で・エチュードをサンプラーと正弦波の道で）
       → tools/exp/speech_eval.py（Whisper の文字の誤り率）
     - **IDEAS.md**: 可能性を広げるプロンプトとその結果（23:55 の依頼）。web はゲームの中の web（bds-lab の GeoUI: GeoUI Web・HTML → GeoUI）
+20. **実機で分かったこと → 既定を変えた**（11-03 早朝、p03・p04: SPEC.md「サンプラーと声」の表）:
+    - **束ねるは 2 tick に**（4 から）。1 つの tick で始める音が多いほど電話は落とす（37 ms の連打 60 発: 束ね 4 で 47、2 で 58、1 で 59）。
+      同じ素の別名 a b c では変わらなかった（原因は「同じイベント」ではない）。エリーゼ: 束ね 2 が ViSQOL 3.11・頭 98.6 %（4 は 2.78・93 %）。
+      `/spectral:sampler` だけで今の値。1 tick に始められる数は **p06**（tools/exp/queue/p06_per_tick.json）で測る
+    - **ファイルの曲は 48 kHz に**（24 kHz から）。p03: 同じスペクトルで ViSQOL 3.09 対 2.71。tools/filepack.py `--rate`（既定 48000）、
+      内蔵の piano_file も作り直した（tools/make_file_demo.py）。meta.rate を状態に出す
+    - **音割れ止め** `/spectral:limit true|false`（正弦波の道: 混ぜた音の山を声とノイズの帯から見積もり、2.0 の天井の下へ tick ごとに下げ、
+      1.5 dB/tick で戻す）。既定は切。**p05**（+10 dB 止めなし・+10 dB 止めあり・+14 dB 止めあり、13 曲ずつ）で決める
+21. **Spectral Connect とゲームの中のリモコン**（23:55 の依頼「oreui使ってwebを動かせるように…websocket単体でyoutubeダウンロードして
+    再生までも…geouiを使うこと htmlコンバーターも…改善して」）:
+    - **tools/connect/server.mjs**: ゲームの /connect（WebSocket だけ、BDS なし）。ページ（ラボの OreUI そのもの: panel/ の CSS を配る）で
+      URL かファイル → yt-dlp（権利のあるものだけ）→ MIDI はサンプラー・録音は正弦波の道 → Spectral Player の曲パックのスクリプトイベント
+      （1800 文字ずつ、8 本ずつ）→ `spectral:play`。チャットの `!spectral <url>` でも。tools/connect/test.mjs（にせのゲーム）で 27 項目
+    - **bds/addons/spectral_remote**（GeoUI: tools/connect/remote.html を `bds/geoui/html/convert.mjs … --ore` で）: いま（場所のゲージ・
+      秒・一時停止・±10 秒・止める・音量のスライダー・内蔵の曲）とつなぐ（URL の欄 `/sr:t "<URL>"`・曲にして流す・段階の札・送った割合）。
+      ボタンは `scriptevent spectral:remote <verb>`、Spectral Player は開いている間 1 秒ごとに `sr:value sec / len / pos`・`sr:show playing`
+      を返す。「曲にして流す」は **mail:play**: 欄をプレイヤーのタグに → サーバーが `/tag @s list` で 0.7 秒ごとに読む。本物の BDS で 15/15
+    - **変換器を育てた**（bds/geoui/SPEC.md 11 章）: `--ore`（ラボの OreUI をどのページにも）、`cmd:` に `{value}`・`{field:id}`・`{b64:id}`
+      （スライダー・チェック・文字の欄は変わるたびに）、`mail:<名前>`（/connect のサーバーへ）、作り直しで単位のファイルと UUID を残す、
+      「絵のまま」の数え違いを直した。tests/geoui-html-offline.mjs 60/60
+    - **鍵盤で弾く**（IDEAS の E2）: ページの鍵・パソコンのキー・MIDI 鍵盤（Web MIDI）→ `/api/notes` → 50 ms ごとに
+      `scriptevent spectral:note @<時計>;on …;off …` → src/notes.ts の LiveKeys が各音を約 90 ms 後の弾いた場所へ seekTo で置く
+      （束が tick を待った分は「いちばん早く着いた束」との差で引く）。tools/connect/README.md
+    - **まだ実機でない**: /connect が BDS に入ったクライアントで使えるか・commandRequest でカスタムコマンドと scriptevent が通るか・
+      PlayerMessage が来るか・GeoUI のリモコンの見た目（app.txt）・鍵盤の遅れ。リグに WebSocket のサーバーを起こす手が要る
 
 ## 4 回目のセッション（2026-10-31）でしたこと
 

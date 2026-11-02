@@ -658,9 +658,11 @@ restart
 @A cmd /spectral:forget paste_parts
 ~ @A ♪ forgot Pasted in parts \(paste_parts\)
 
-## a MIDI song plays with recorded instruments, not sine waves: one piano sample a note at the nearest key, setPitch'd to its own, each placed inside its tick to the millisecond (the notes of 4 ticks started together, seekTo into the sample's 0.6 s of silence: a note 112.5 ms after its bundle's tick on a sample a semitone under starts at 0.6 - 0.1125 × 1.0595 = 0.4808 s)
+## a MIDI song plays with recorded instruments, not sine waves: one piano sample a note at the nearest key, setPitch'd to its own, each placed inside its tick to the millisecond (by default the notes of 2 ticks started together — the phone, p04; here 4, seekTo into the sample's 0.6 s of silence: a note 112.5 ms after its bundle's tick on a sample a semitone under starts at 0.6 - 0.1125 × 1.0595 = 0.4808 s)
 @A cmd /spectral:songs
 ~ @A ♫ piano_demo — Piano étude \(sampler demo\) \(0:20, 104 notes\)
+@A cmd /spectral:sampler
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 120 %
 @A cmd /spectral:sampler 4 250 28 120 true
 ~ @A sampler: placed to the ms, 4 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 120 %
 @A cmd /spectral:play piano_demo
@@ -738,7 +740,7 @@ until note 26 4000
 until ■ Band \(sampler demo\) — end 15000
 @A cmd /spectral:sampler 4 250 28 120 false
 
-## a recording plays as itself, at mp3's quality (tools/filepack.py: an add-on's resource pack holds its parts at 24 kHz — nothing folds on a phone, which mixes at 24 kHz — and its behaviour pack tells the player; the built-in one is the étude through the bank's piano): each part starts in the tick before it with seekTo into its silence, a seek starts the part from inside, the speaker 250 ms ahead
+## a recording plays as itself, at mp3's quality (tools/filepack.py: an add-on's resource pack holds its parts at 48 kHz — on the phone better than 24 kHz cut at 11.5 kHz, p03 — and its behaviour pack tells the player; the built-in one is the étude through the bank's piano): each part starts in the tick before it with seekTo into its silence, a seek starts the part from inside, the speaker 250 ms ahead
 @A cmd /spectral:sampler 4 250 28 120 true
 @A cmd /spectral:songs
 ~ @A ♬ piano_file — Piano étude \(as recorded\) \(0:23, as recorded\)
@@ -747,7 +749,7 @@ until ■ Band \(sampler demo\) — end 15000
 until part 0 of piano_file 2000
 ~ \[spectral\] part 0 of piano_file seek 0\.6000 at 0 ms
 @A cmd /spectral:status
-~ @A file song Piano étude \(as recorded\): part 1/1 at \d+\.\d s of 23\.5 · headphones, 24 kHz
+~ @A file song Piano étude \(as recorded\): part 1/1 at \d+\.\d s of 23\.5 · headphones, 48 kHz
 @A cmd /spectral:seek 20
 ~ @A ⇥ 0:20
 until seek 20\. 2000
@@ -775,3 +777,68 @@ until note 11 piano 4000
 ~ \[spectral\] note 11 piano\.48 key 55 pitch 1\.0595 seek 0\.4014 at 2000 ms alias c
 @A cmd /spectral:stop
 @A cmd /spectral:sampler 4 250 28 120 false
+
+## the limiter keeps the mix's loudest moments under the phone's clip (about 2 file units: SPEC.md) — off until it is on, then +12 dB over the demo turns the loudest ticks down at once and lets them back 1.5 dB a tick, which the status says
+@A cmd /spectral:play demo
+~ @A ▶ Demo \(original\)
+wait 600
+@A cmd /spectral:status
+~ @A status: playing demo .* level none limiter off fades (ramps|fitted)
+@A cmd /spectral:limit true
+= @A limiter on
+@A cmd /spectral:level 12
+= @A level: +12 dB by setVolume
+wait 2500
+@A cmd /spectral:status
+~ @A status: playing demo .* level \+12 dB volume limiter on [1-9]\d* ticks down, now -?\d+\.\d dB fades (ramps|fitted)
+@A cmd /spectral:limit false
+= @A limiter off
+wait 300
+@A cmd /spectral:status
+~ @A status: playing demo .* level \+12 dB volume limiter off fades (ramps|fitted)
+@A cmd /spectral:level 0
+= @A level: as the files
+@A cmd /spectral:stop
+~ @A ■ stopped
+
+## the remote in the game (a GeoUI page, bds/addons/spectral_remote: its buttons send scriptevent spectral:remote <verb> as the player) pauses, seeks, sets the volume and starts a song; while it is open (sr:on_open) the song's place goes back to it each second
+@A cmd /spectral:play demo
+~ @A ▶ Demo \(original\)
+wait 600
+execute as @a[name=A] run scriptevent spectral:remote pause
+~ \[spectral\] remote A: pause → ⏸ paused
+~ @A actionbar: ⏸ paused
+execute as @a[name=A] run scriptevent spectral:remote seek 3
+~ \[spectral\] remote A: seek 3 → ⇥ 0:03
+execute as @a[name=A] run scriptevent spectral:remote volume 80
+~ \[spectral\] remote A: volume 80 → volume 80%
+scriptevent sr:on_open {"player":"A","page":"now"}
+wait 1500
+~ \[spectral\] remote A: open — the place each second \(3 of \d+ s, paused\)
+execute as @a[name=A] run scriptevent spectral:remote pause
+~ \[spectral\] remote A: pause → ▶ resumed
+scriptevent sr:on_close {"player":"A"}
+execute as @a[name=A] run scriptevent spectral:remote play piano_demo
+until ▶ Piano étude 3000
+~ @A actionbar: ▶ Piano étude \(sampler demo\)
+execute as @a[name=A] run scriptevent spectral:remote stop
+~ \[spectral\] remote A: stop → ■ stopped
+execute as @a[name=A] run scriptevent spectral:remote volume 100
+~ \[spectral\] remote A: volume 100 → volume 100%
+
+## live notes from Spectral Connect (a MIDI keyboard: scriptevent spectral:note as the player, ";" between entries): each placed by its delay into the sample's silence (a C4 64 ms into the 50 ms window plays at 0.6 - 0.064 = 0.536), let go with its instrument's release, a drum by its key
+@A cmd /spectral:sampler 2 250 28 120 true
+execute as @a[name=A] run scriptevent spectral:note on 60 100 0 64;on 64 90 0 80;on 36 110 128 10
+~ \[spectral\] live note on 60 piano\.\d+ pitch 1\.0000 seek 0\.5360 delay 64 ms
+~ \[spectral\] live note on 64 piano\.\d+ pitch 1\.0000 seek 0\.5200 delay 80 ms
+~ \[spectral\] live note on 36 drums\.\d+ pitch 1\.0000 seek 0\.5900 delay 10 ms
+execute as @a[name=A] run scriptevent spectral:note off 60 0 100;off 64
+~ \[spectral\] live note off 60 after 2 ticks
+~ \[spectral\] live note off 64 after 0 ticks
+execute as @a[name=A] run scriptevent spectral:note on 5 100 128 0
+~ \[spectral\] live note: no sample for program 128 key 5
+execute as @a[name=A] run scriptevent spectral:note @1000;on 67 100 0 90
+~ \[spectral\] live batch 0 ms after the quickest
+~ \[spectral\] live note on 67 piano\.\d+ pitch [\d.]+ seek [\d.]+ delay 90 ms
+execute as @a[name=A] run scriptevent spectral:note alloff
+@A cmd /spectral:sampler 2 250 28 120 false

@@ -176,7 +176,7 @@ const looks = (shown, i) => [...shown.keys()].filter((b) => b.startsWith(`${NS}_
 // ---- script: main.js on a made-up @minecraft/server
 function harness(script, opts = {}) {
   const decl = json('bp/entities/player.json')['minecraft:entity'].description.properties;
-  const out = { sent: [], logs: [], camera: [], hud: [], perms: [], tp: 0, bar: [], msgs: [], runs: [], badProps: [], cmds: {}, rot: [], delivered: 0 };
+  const out = { sent: [], logs: [], camera: [], hud: [], perms: [], tp: 0, bar: [], msgs: [], runs: [], badProps: [], cmds: {}, rot: [], delivered: 0, tags: [] };
   const subs = { script: [], spawn: [], swing: [], use: [], button: [], startup: [] };
   const later = [], queue = [];
   let interval = null;
@@ -196,7 +196,7 @@ function harness(script, opts = {}) {
     inputPermissions: { setPermissionCategory: (cat, on) => out.perms.push([cat, on]) },
     getComponent: (name) => (name === 'minecraft:movement' ? { get currentValue() { return p.speed; }, setCurrentValue: (v) => { p.speed = v; } } : undefined),
     runCommand: (c) => out.runs.push(c), getDynamicProperty: (k) => p.dyn[k], setDynamicProperty: (k, v) => { if (v === undefined) delete p.dyn[k]; else p.dyn[k] = v; },
-    sendMessage: (m) => out.msgs.push(m),
+    sendMessage: (m) => out.msgs.push(m), addTag: (t) => { out.tags.push(t); return true; },
   });
   const mc = {
     world: { getAllPlayers: () => (p.isValid ? [p] : []), afterEvents: { playerSwingStart: { subscribe: (f) => subs.swing.push(f) }, itemUse: { subscribe: (f) => subs.use.push(f) }, playerSpawn: { subscribe: (f) => subs.spawn.push(f) }, playerButtonInput: { subscribe: (f) => subs.button.push(f) } } },
@@ -321,6 +321,40 @@ function harness(script, opts = {}) {
   for (const f of T.subs.spawn) f({ player: T.p, initialSpawn: true });
   T.tick();
   ok(zero && T.p.speed === 0.1 && !(`${NS}:speed` in T.p.dyn), 'hold speed: the speed 0 while open, kept in the world — a player who left then gets it back when they return');
+}
+
+{
+  // the page's values in a cmd: and a mail:<name> for a /connect server (the sample's controls given other actions here)
+  const c2 = JSON.parse(JSON.stringify(cfg)), C = (id) => c2.controls.find((c) => c.id === id || c.key === id);
+  const slider = c2.controls.find((c) => c.kind === 'slider'), box = c2.controls.find((c) => c.kind === 'checkbox'), btn = c2.controls.find((c) => String(c.action).startsWith('event:'));
+  const txt = c2.controls.find((c) => c !== btn && String(c.action).startsWith('event:') && c.page === btn.page);
+  slider.action = 'cmd:spectral:volume {value}'; box.action = 'cmd:say music {value}';
+  Object.assign(txt, { kind: 'text', id: 'url', action: 'cmd:say url {value} / {b64:url}', checked: null }); btn.action = 'mail:play'; btn.id = 'go';
+  const S = harness(R.scriptOf(c2)), { p, out } = S;
+  S.scriptevent(`${NS}:open`, ''); S.tick();
+  S.scriptevent(`${NS}:page`, c2.pages[slider.page].id, p); S.scriptevent(`${NS}:focus`, slider.id, p); S.tick();
+  S.move(1, 0);
+  ok(out.runs.includes(`spectral:volume ${S.last('change').value}`), 'a slider with cmd:spectral:volume {value}: run with its new value at each change', JSON.stringify(out.runs));
+  S.scriptevent(`${NS}:page`, c2.pages[box.page].id, p); S.scriptevent(`${NS}:focus`, box.id, p); S.tick();
+  const was = S.chk(box.i); S.press('jump');
+  ok(S.chk(box.i) === 1 - was && out.runs.includes(`say music ${1 - was}`), 'a checkbox with a cmd: toggles and runs it with 1 or 0', JSON.stringify(out.runs.slice(-2)));
+  S.scriptevent(`${NS}:page`, c2.pages[txt.page].id, p); S.scriptevent(`${NS}:focus`, 'url', p); S.tick();
+  out.cmds[`${NS}:t`].cb({ sourceEntity: p }, 'https://例え.jp/a?b=1&c=ä'); S.tick();
+  const b64 = Buffer.from('https://例え.jp/a?b=1&c=ä').toString('base64url');
+  ok(out.runs.includes(`say url https://例え.jp/a?b=1&c=ä / ${b64}`), 'a text field with a cmd: run when it is typed into, {b64:url} its UTF-8 in base64url', JSON.stringify(out.runs.slice(-1)));
+  S.scriptevent(`${NS}:focus`, 'go', p); S.press('jump');
+  const tags = out.tags.filter((t) => t.startsWith(`geoui.mail.${NS}.`)), m = tags.length ? /^geoui\.mail\.(\w+)\.(\d+)\.(\d+)\.(\d+)\.([A-Za-z0-9_-]+)$/.exec(tags[0]) : null;
+  const mail = m ? JSON.parse(Buffer.from(tags.sort((a, b) => Number(a.split('.')[4]) - Number(b.split('.')[4])).map((t) => t.split('.').slice(6).join('.')).join(''), 'base64url').toString('utf8')) : null;
+  ok(m && m[1] === NS && Number(m[4]) === tags.length && mail && mail.n === 'play' && mail.f.url === 'https://例え.jp/a?b=1&c=ä' && typeof mail.f[slider.id || 'x'] !== 'string',
+    'mail:play: the page\'s fields as geoui.mail.<ns>.<seq>.<k>.<n>.<base64url> tags (a /connect server reads them with /tag @s list)', JSON.stringify([tags[0], mail]));
+  const long = 'https://example.com/' + 'x'.repeat(400);
+  out.cmds[`${NS}:t`].cb({ sourceEntity: p }, long); S.tick();
+  S.scriptevent(`${NS}:focus`, 'url', p); out.cmds[`${NS}:t`].cb({ sourceEntity: p }, long); S.tick();
+  S.scriptevent(`${NS}:focus`, 'go', p); S.press('jump');
+  const t2 = out.tags.filter((t) => t.split('.')[3] === '2');
+  ok(t2.length >= 3 && t2.every((t) => t.length <= 'geoui.mail.ghd.2.0.0.'.length + 200 + 4) && JSON.parse(Buffer.from(t2.map((t) => t.split('.').slice(6).join('.')).join(''), 'base64url').toString()).f.url === long,
+    'a long one in parts of at most 200 characters, numbered, that come back whole', String(t2.length));
+  ok(S.last('mail') && S.last('mail').name === 'play', 'and ghd:on_mail tells another pack it went');
 }
 
 console.log(`\n${fails ? 'FAIL' : 'PASS'} geoui-html-offline (${n - fails}/${n})`);

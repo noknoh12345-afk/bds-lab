@@ -1,10 +1,12 @@
 // File songs (tools/filepack.py): a recording played as itself — mp3's quality, not sine waves. Its parts are sounds of an add-on
-// the song came in (spectral.f.<id>.<k>), 24 kHz (the phone folds everything above 12 kHz: nothing in them does), each with
-// 0.6 s of silence in front. A part starts in the tick before it is due with seekTo into that silence, so that the parts meet
+// the song came in (spectral.f.<id>.<k>), 48 kHz (`rate`; measured on the phone, p03: better than 24 kHz cut at 11.5 kHz — the
+// same spectrum, ViSQOL 3.09 against 2.71), each with 0.6 s of silence in front. A part starts in the tick before it is due with seekTo into that silence, so that the parts meet
 // to the millisecond (they overlap by `x` ms with the fades written in); a seek starts the part it lands in from inside.
 import { system, Player, Dimension, Vector3, SoundInstance } from '@minecraft/server';
 
-export interface FileMeta { id: string; title: string; artist?: string; seconds: number; parts: [number, number][]; x: number; hi?: boolean; lead?: number; }
+export interface FileMeta { id: string; title: string; artist?: string; seconds: number; parts: [number, number][]; x: number; hi?: boolean; lead?: number;
+  /** the parts' sample rate (packs before it: 24000, with a 48 kHz set beside them when `hi`) */
+  rate?: number; }
 export interface FileOpts { where: 'phones' | 'speaker'; volume: number; range3d: number; level3d: number; ahead: number; hi: boolean; loop: boolean; log?: boolean; }
 
 interface Part { k: number; s: SoundInstance; end: number; }
@@ -68,6 +70,6 @@ export class FilePlayer {
   get position() { return Math.max(0, this.now()) / 1000; }
   status(): string {
     return `§bfile song §f${this.meta.title}§b: part ${Math.max(0, this.next - 1) + 1}/${this.meta.parts.length} at ${this.position.toFixed(1)} s of ${this.meta.seconds.toFixed(1)} · ` +
-      `${this.o.where === 'phones' ? (this.o.hi && this.meta.hi ? 'headphones, 48 kHz' : 'headphones, 24 kHz') : 'speaker'} · parts started ${this.starts}`;
+      `${this.o.where === 'phones' ? `headphones, ${this.o.hi && this.meta.hi ? 48 : Math.round((this.meta.rate ?? 24000) / 1000)} kHz` : 'speaker'} · parts started ${this.starts}`;
   }
 }

@@ -1,0 +1,176 @@
+{
+ "run": "41482910293",
+ "device": "redroid (Android 14 x86_64), Minecraft 1.26.60.4",
+ "source": "recordings of the real client (tools/rig/fetch_rec.py) read by tools/exp/sampler_score.py (--songs: against the same notes rendered here)",
+ "status": "実測",
+ "clicks": {
+  "a3_b4": {
+   "pulse": {
+    "clicks": 54,
+    "of": 60,
+    "interval_ms_median": 37.0,
+    "interval_ms_sd": 4.576,
+    "exact_share": 0.816,
+    "interval_ms_min": 29.0,
+    "interval_ms_max": 50.33,
+    "grid_ms": 37.038,
+    "place_sd_ms": 5.888,
+    "place_max_ms": 10.2
+   }
+  },
+  "ap_b4": {
+   "pairs": [
+    {
+     "sent_ms": 1,
+     "heard_ms": 0.3,
+     "error_ms": -0.7,
+     "fit": 0.049
+    },
+    {
+     "sent_ms": 2,
+     "heard_ms": 10.0,
+     "error_ms": 8.0,
+     "fit": 0.053
+    },
+    {
+     "sent_ms": 3,
+     "heard_ms": 7.9,
+     "error_ms": 4.9,
+     "fit": 0.056
+    },
+    {
+     "sent_ms": 5,
+     "heard_ms": 5.75,
+     "error_ms": 0.75,
+     "fit": 0.042
+    },
+    {
+     "sent_ms": 8,
+     "heard_ms": 11.15,
+     "error_ms": 3.15,
+     "fit": 0.043
+    },
+    {
+     "sent_ms": 13,
+     "heard_ms": 6.7,
+     "error_ms": -6.3,
+     "fit": 0.057
+    },
+    {
+     "sent_ms": 21,
+     "heard_ms": 20.9,
+     "error_ms": -0.1,
+     "fit": 0.048
+    },
+    {
+     "sent_ms": 34,
+     "heard_ms": 6.7,
+     "error_ms": -27.3,
+     "fit": 0.052
+    }
+   ]
+  },
+  "au_b1": {
+   "pulse": {
+    "clicks": 59,
+    "of": 60,
+    "interval_ms_median": 36.929,
+    "interval_ms_sd": 8.712,
+    "exact_share": 0.281,
+    "interval_ms_min": 29.66,
+    "interval_ms_max": 51.01,
+    "grid_ms": 36.984,
+    "place_sd_ms": 7.393,
+    "place_max_ms": 14.47
+   }
+  },
+  "au_b2": {
+   "pulse": {
+    "clicks": 58,
+    "of": 60,
+    "interval_ms_median": 37.004,
+    "interval_ms_sd": 5.935,
+    "exact_share": 0.6,
+    "interval_ms_min": 22.33,
+    "interval_ms_max": 43.67,
+    "grid_ms": 37.091,
+    "place_sd_ms": 6.152,
+    "place_max_ms": 10.9
+   }
+  },
+  "au_b4": {
+   "pulse": {
+    "clicks": 47,
+    "of": 60,
+    "interval_ms_median": 36.997,
+    "interval_ms_sd": 5.136,
+    "exact_share": 0.676,
+    "interval_ms_min": 28.99,
+    "interval_ms_max": 50.34,
+    "grid_ms": 36.937,
+    "place_sd_ms": 9.526,
+    "place_max_ms": 23.52
+   }
+  }
+ },
+ "songs": {
+  "ad_b4": {
+   "song": "piano_demo",
+   "visqol": 2.5477,
+   "mrstft": 1.6247,
+   "third_oct_db": 5.89,
+   "onset_ms": 7.5,
+   "onset_recall": 0.902
+  },
+  "af_b0": {
+   "song": "fur_elise",
+   "visqol": 3.0703,
+   "mrstft": 1.3084,
+   "third_oct_db": 1.944,
+   "onset_ms": 5.0,
+   "onset_recall": 0.986
+  },
+  "af_b2": {
+   "song": "fur_elise",
+   "visqol": 3.11,
+   "mrstft": 1.3298,
+   "third_oct_db": 2.288,
+   "onset_ms": 12.5,
+   "onset_recall": 0.986
+  },
+  "af_b4": {
+   "song": "fur_elise",
+   "visqol": 2.7774,
+   "mrstft": 1.5899,
+   "third_oct_db": 9.279,
+   "onset_ms": 5.0,
+   "onset_recall": 0.93
+  },
+  "bd_b4": {
+   "song": "band_demo",
+   "visqol": 3.0776,
+   "mrstft": 1.796,
+   "third_oct_db": 16.658,
+   "onset_ms": 7.5,
+   "onset_recall": 0.667
+  }
+ },
+ "file_song": {
+  "fs_piano": {
+   "song": "piano_demo (the built-in file song: the étude through the bank, 24 kHz then)",
+   "visqol": 3.2766,
+   "mrstft": 0.9227,
+   "third_oct_db": 0.474,
+   "onset_recall": 0.882
+  }
+ },
+ "heard_of_60": {
+  "au_b4": 47,
+  "au_b2": 58,
+  "au_b1": 59,
+  "a3_b4": 54,
+  "p01_pu_b4": 49,
+  "p01_pu_b1": 57,
+  "p01_u3_b4": 55
+ }
+}

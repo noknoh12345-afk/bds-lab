@@ -268,3 +268,46 @@ export class NotePlayer {
       `started ${this.starts}, stolen ${this.steals}, skipped ${this.skipped} · ${this.ticks ? (this.calls / this.ticks).toFixed(1) : 0} calls/tick · bundle ${this.o.bundle} ticks, ahead ${this.o.ahead} ms · ${this.o.where === 'phones' ? 'headphones' : 'speaker'}`;
   }
 }
+
+// ------------------------------------------------------------------ live keys (a MIDI keyboard through Spectral Connect)
+/** notes played as they come — a MIDI keyboard or the page's keys through Spectral Connect (tools/connect: the game's /connect),
+ *  `scriptevent spectral:note on <key> <velocity> [program] [delay ms]` · `off <key> [program] [delay ms]` · `alloff`, run as the
+ *  player. The server sends what was played in each 50 ms with each note's place in it (delay: when it was played, plus a steady
+ *  latency): placed by seekTo into the sample's silence like a song's notes, the rhythm keeps to the millisecond behind that
+ *  latency. A key let go fades with its instrument's release (in its tick) */
+export class LiveKeys {
+  held = new Map<string, { s: SoundInstance; inst: Inst; at: number }>();
+  starts = 0; skipped = 0; calls = 0;
+  private alias = new Map<number, number>();
+  constructor(public owner: Player, public volume: number, public log = false) {}
+  on(code: number, key: number, vel: number, delayMs = 0) {
+    const got = pick(code, key, vel);
+    if (!got) { this.skipped++; return `§cno sample for program ${code} key ${key}`; }
+    const [ii, j, p] = got, inst = BANK[ii];
+    if (!(p >= 0.01 && p <= 10)) { this.skipped++; return '§cout of range'; }
+    const id = `${code}:${key}`, old = this.held.get(id);
+    if (old) { try { old.s.fade(0.03, 0); } catch { /* gone */ } this.held.delete(id); }
+    const ak = ii * 4096 + j, an = ((this.alias.get(ak) ?? -1) + 1) % ALIASES.length;
+    this.alias.set(ak, an);
+    const ev = `spectral.i.${inst.id}.${j}${ALIASES[an]}`, delay = Math.max(0, Math.min(500, delayMs));
+    try {
+      const s = this.owner.playSound(ev, { volume: this.volume * Math.pow(vel / 127, 2), pitch: p });
+      const seek = Math.max(0, LEAD - (delay / 1000) * p);
+      s.seekTo(seek);
+      this.calls += 2; this.starts++;
+      this.held.set(id, { s, inst, at: system.currentTick });
+      if (this.log) console.warn(`[spectral] live note on ${key} ${inst.id}.${j} pitch ${p.toFixed(4)} seek ${seek.toFixed(4)} delay ${Math.round(delay)} ms`);
+    } catch { this.skipped++; return '§cthe sound did not start'; }
+    return '';
+  }
+  off(code: number, key: number, delayMs = 0) {
+    const id = `${code}:${key}`, v = this.held.get(id);
+    if (!v) return;
+    this.held.delete(id);
+    const go = () => { try { v.s.fade(Math.max(0.02, v.inst.release), 0); this.calls++; } catch { /* gone */ } };
+    const ticks = Math.round(Math.max(0, Math.min(500, delayMs)) / 50);
+    if (ticks) system.runTimeout(go, ticks); else go();
+    if (this.log) console.warn(`[spectral] live note off ${key} after ${ticks} ticks`);
+  }
+  allOff() { for (const [, v] of this.held) { try { v.s.fade(0.05, 0); } catch { /* gone */ } } this.held.clear(); }
+}

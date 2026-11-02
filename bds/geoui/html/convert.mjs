@@ -4,7 +4,9 @@
 // scene.mjs (the pictures into atlases and bones, the Molang, the properties), runtime.js (the behaviour pack's script: the
 // head's turns a mouse, W A S D the arrows with nav.js, jump Enter, sneak Escape, the hotbar the wheel and keys 1–9).
 //   node bds/geoui/html/convert.mjs <page.html | https://…> --out <add-on folder> [--ns gh] [--name "…"] [--design 1280x720]
-//        [--dpr 2] [--hold free|speed|lock] [--capture <folder>] [--max-controls n]
+//        [--dpr 2] [--hold free|speed|lock] [--capture <folder>] [--max-controls n] [--ore]
+//                                                         (--ore, or <html data-geoui-ore>: the lab's OreUI — panel/'s colours,
+//                                                          pixel letters, pressables and cards — under the page's own CSS)
 //                                                         the page (a file, or any site by its URL: capture.mjs) captured
 //                                                         (into --capture, else a temporary folder) and made into the add-on
 //   node bds/geoui/html/convert.mjs --from <capture folder> --out <add-on folder> [...]
@@ -19,7 +21,18 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { buildScene } from './scene.mjs';
 const require = createRequire(import.meta.url);
-const LAB_OWN = new Set(['lab.mjs', 'tsconfig.json']);
+// (a unit's own files beside the add-on — the lab's lab.mjs and tsconfig.json, which git ignores, and what the person wrote for the
+//  unit: its tests, the real app's steps, its task — are kept when the page is made into it again)
+const LAB_OWN = new Set(['lab.mjs', 'tsconfig.json', 'tests.txt', 'app.txt', 'TASK.md', 'README.md', 'imported.json']);
+/** the UUIDs of an add-on made here before (its two manifests): the same pack in a world when the page is made again */
+function uuidsOf(out) {
+  try {
+    const bp = JSON.parse(fs.readFileSync(path.join(out, 'bp', 'manifest.json'), 'utf8')), rp = JSON.parse(fs.readFileSync(path.join(out, 'rp', 'manifest.json'), 'utf8'));
+    const mod = (m, t) => (m.modules.find((x) => x.type === t) || {}).uuid;
+    const u = { rp: rp.header.uuid, rpMod: mod(rp, 'resources'), bp: bp.header.uuid, bpData: mod(bp, 'data'), bpScript: mod(bp, 'script') };
+    return Object.values(u).every((x) => typeof x === 'string' && x) ? u : undefined;
+  } catch { return undefined; }
+}
 const HERE = path.dirname(fileURLToPath(import.meta.url)), TOP = path.resolve(HERE, '..', '..', '..');
 const G = require('../geoui_builder.js'), P = require('../screen/pack.js'), R = require('./runtime.js');
 export const SAMPLE = { html: path.join(HERE, 'examples', 'menu.html'), capture: path.join(HERE, 'examples', 'menu.capture'), out: path.join(TOP, 'bds', 'addons', 'geoui_html_demo'), ns: 'ghd', name: 'GeoUI HTML Demo' };
@@ -306,15 +319,15 @@ async function main(argv) {
   }
   const input = argv.find((a, i) => !a.startsWith('--') && !(i > 0 && argv[i - 1].startsWith('--') && !['--check'].includes(argv[i - 1])));
   const out = val('--out'), from = val('--from');
-  if ((!input && !from) || !out) { console.error('node bds/geoui/html/convert.mjs <page.html | https://…> --out <add-on folder> [--ns gh] [--name "…"] [--design 1280x720] [--dpr 2] [--hold free|speed|lock] [--max-controls n]\n   or --from <capture folder> --out <folder> · --sample [--check] [--recapture]'); process.exit(2); }
+  if ((!input && !from) || !out) { console.error('node bds/geoui/html/convert.mjs <page.html | https://…> --out <add-on folder> [--ns gh] [--name "…"] [--design 1280x720] [--dpr 2] [--hold free|speed|lock] [--max-controls n] [--ore]\n   or --from <capture folder> --out <folder> · --sample [--check] [--recapture]'); process.exit(2); }
   let dir = from;
   if (!dir) {
     const { capture } = await import('./capture.mjs');
     dir = val('--capture') || fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-capture-'));
-    const c = await capture(input, dir, { design: val('--design'), dpr: val('--dpr'), maxControls: val('--max-controls') });
+    const c = await capture(input, dir, { design: val('--design'), dpr: val('--dpr'), maxControls: val('--max-controls'), ore: process.argv.includes('--ore') });
     console.log(`撮った: ページ ${c.pages.length}・操作できる物 ${c.controls.length}${c.dropped ? `（ほか ${c.dropped} 個は絵のまま: --max-controls）` : ''}・動く物 ${c.dynamic.length}（${dir}）`);
   }
-  const r = addonFiles(dir, { ns: val('--ns') || 'gh', name: val('--name'), hold: val('--hold'), sens: val('--sens'), filter: val('--filter') });
+  const r = addonFiles(dir, { ns: val('--ns') || 'gh', name: val('--name'), hold: val('--hold'), sens: val('--sens'), filter: val('--filter'), uuids: uuidsOf(path.resolve(out)) });
   const bad = writeAddon(path.resolve(out), r.files, check);
   for (const w of r.warnings) console.warn(`W ${w}`);
   if (check && bad.length) { console.error(`違います: ${bad.join(' ')}`); process.exit(1); }

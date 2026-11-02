@@ -21,8 +21,8 @@ const srv = spawn('node', [path.join(HERE, 'server.mjs'), '--port', String(PORT)
 let srvOut = ''; srv.stdout.on('data', (d) => (srvOut += d)); srv.stderr.on('data', (d) => (srvOut += d));
 await new Promise((r) => { const t = setInterval(() => { if (srvOut.includes('Spectral Connect on')) { clearInterval(t); r(); } }, 100); });
 
-// the fake game: a WebSocket client (masked frames) that answers commands
-const got = [];
+// the fake game: a WebSocket client (masked frames) that answers commands (and keeps the player's tags, as /tag does)
+const got = [], tags = new Set();
 const sock = net.connect(PORT, '127.0.0.1');
 const key = crypto.randomBytes(16).toString('base64');
 sock.write(`GET /mc HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${key}\r\nSec-WebSocket-Version: 13\r\n\r\n`);
@@ -44,12 +44,16 @@ sock.on('data', (chunk) => {
     got.push(m);
     if (m.header?.messagePurpose === 'commandRequest') {
       const line = m.body.commandLine;
-      sendFrame(JSON.stringify({ header: { version: 1, requestId: m.header.requestId, messagePurpose: 'commandResponse' }, body: { statusCode: 0, statusMessage: line.startsWith('spectral:play') ? '▶ played' : 'ok' } }));
+      let said = line.startsWith('spectral:play') ? '▶ played' : 'ok';
+      if (line === 'tag @s list') said = tags.size ? `Steve has ${tags.size} tags: ${[...tags].map((t) => `§a${t}§r`).join(', ')}` : 'Steve has no tags';
+      const rm = /^tag @s remove "(.+)"$/.exec(line); if (rm) tags.delete(rm[1]);
+      sendFrame(JSON.stringify({ header: { version: 1, requestId: m.header.requestId, messagePurpose: 'commandResponse' }, body: { statusCode: 0, statusMessage: said } }));
     }
   }
 });
 await new Promise((r) => setTimeout(r, 500));
 ok(got.some((m) => m.header?.messagePurpose === 'subscribe' && m.body?.eventName === 'PlayerMessage'), 'the server subscribes to chat');
+ok(got.some((m) => m.body?.commandLine === 'scriptevent sr:show ws 1'), 'and tells the remote in the game it is connected');
 
 // a file through the page's API
 const mid = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'spectral-connect-test-')), 'etude.mid');
@@ -83,6 +87,20 @@ ok(got.slice(before).some((m) => m.body?.commandLine?.startsWith('spectral:play'
 const st2 = await (await fetch(`http://127.0.0.1:${PORT}/api/state`)).json();
 ok(st2.games[0]?.name === 'Steve', 'the game is known by its player');
 
+// the remote in the game: its 「曲にして流す」 as a mail (bds/geoui/html runtime mail:play — the page's fields, base64url, on the
+// player's tags in parts): read with /tag @s list, taken off, played, each step told back to the remote
+const body = Buffer.from(JSON.stringify({ n: 'play', f: { url: mid, vol: 100 } })).toString('base64url');
+const before3 = got.length;
+for (let k = 0, n = Math.ceil(body.length / 200); k < n; k++) tags.add(`geoui.mail.sr.7.${k}.${n}.${body.slice(k * 200, (k + 1) * 200)}`);
+for (let k = 0; k < 120 && !got.slice(before3).some((m) => m.body?.commandLine?.startsWith('spectral:play')); k++) await new Promise((r) => setTimeout(r, 250));
+const after3 = got.slice(before3).map((m) => m.body?.commandLine ?? '');
+ok(after3.some((l) => l.startsWith('spectral:play c')), 'a mail from the remote (geoui.mail.sr.… tags) is played');
+ok(tags.size === 0 && after3.some((l) => /^tag @s remove "geoui\.mail\.sr\.7\.0\./.test(l)), 'and taken off the player');
+ok(['st_conv 1', 'st_send 1', 'st_play 1'].every((x) => after3.includes(`scriptevent sr:show ${x}`)) && after3.includes('scriptevent sr:value sent 100'), 'the remote is told each step (sr:show st_conv / st_send / st_play, sr:value sent)');
+tags.add(`geoui.mail.sr.7.0.1.${body.slice(0, 200)}`);                                // (the same mail again: already done)
+const before4 = got.length; await new Promise((r) => setTimeout(r, 1600));
+ok(!got.slice(before4).some((m) => m.body?.commandLine?.startsWith('spectral:play')) && tags.size === 0, 'a mail seen again is taken off but not played twice');
+
 // a recording (the sine engine: tools/spectral.py), a few seconds — in many parts, which put together are the song
 const wav = path.join(path.dirname(mid), 'tones.wav');
 const r1 = spawn('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=4', '-f', 'lavfi', '-i', 'sine=frequency=660:duration=4', '-filter_complex', 'amix=inputs=2', wav]);
@@ -97,9 +115,19 @@ ok(parts2[0]?.meta && !String(parts2[0].meta.format ?? '').startsWith('spectral-
 ok(parts2.map((p) => p.data).join('').length > 1800, 'and the parts together are the whole song');
 ok(got.slice(before2).some((m) => /^spectral:play \S+ speaker$/.test(m.body?.commandLine ?? '')), 'played on the speaker when asked');
 
+// live notes (the page's keys, a MIDI keyboard): /api/notes → every 50 ms one scriptevent spectral:note @<clock>;on …;off …, each note
+// about 90 ms after it was played (its age taken off)
+const before5 = got.length;
+await fetch(`http://127.0.0.1:${PORT}/api/notes`, { method: 'POST', body: JSON.stringify({ events: [{ type: 'on', key: 60, vel: 100, prog: 0, age: 20 }, { type: 'on', key: 64, vel: 90, prog: 0, age: 0 }, { type: 'off', key: 60, prog: 0, age: 0 }] }) });
+for (let k = 0; k < 40 && !got.slice(before5).some((m) => m.body?.commandLine?.startsWith('scriptevent spectral:note ')); k++) await new Promise((r) => setTimeout(r, 25));
+const live = got.slice(before5).map((m) => m.body?.commandLine ?? '').find((l) => l.startsWith('scriptevent spectral:note '));
+const lm = live && /^scriptevent spectral:note @(\d+);on 60 100 0 (\d+);on 64 90 0 (\d+);off 60 0 (\d+)$/.exec(live);
+ok(lm && Math.abs(Date.now() - Number(lm[1])) < 2000, 'live notes go as one scriptevent with the server\'s clock', live);
+ok(lm && Number(lm[2]) < Number(lm[3]) && Number(lm[3]) - Number(lm[2]) >= 15 && Number(lm[3]) <= 90, 'each a little before 90 ms on, the older one earlier by its age', live);
+
 // the page itself
 const page = await (await fetch(`http://127.0.0.1:${PORT}/`)).text();
-ok(page.includes('Spectral Connect') && page.includes('/panel/styles.css') && page.includes('/panel/panel.css'), 'the page, in the lab\'s OreUI');
+ok(page.includes('Spectral Connect') && page.includes('/panel/styles.css') && page.includes('/panel/panel.css') && page.includes('requestMIDIAccess'), 'the page, in the lab\'s OreUI, with its keys and Web MIDI');
 for (const f of ['styles.css', 'panel.css', 'fonts/fonts.css']) ok((await fetch(`http://127.0.0.1:${PORT}/panel/${f}`)).status === 200, `the panel's ${f} is served`);
 const raw = await new Promise((r) => http.get({ host: '127.0.0.1', port: PORT, path: '/panel/../../AGENTS.md' }, (res) => { res.resume(); r(res.statusCode); }));
 ok(raw === 404, 'nothing outside panel/ is served');

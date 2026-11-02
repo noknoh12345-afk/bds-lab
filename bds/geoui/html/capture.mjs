@@ -26,6 +26,24 @@ export const CONTROL = 'button, a[href], input, select, textarea, [tabindex]:not
 export const DYNAMIC = '[data-geoui-value], progress, meter, [data-geoui-gauge], [data-geoui-show]';
 const STATES = { normal: [], hover: ['hover'], focus: ['focus', 'focus-visible', 'focus-within'], active: ['active', 'hover', 'focus', 'focus-visible', 'focus-within'] };
 const FRAMES = 11;
+// (the lab's OreUI — panel/: its colours, its pixel letters, its pressables, cards and fields — for a page that asks for it with
+//  <html data-geoui-ore> or --ore: linked first, so the page's own CSS still has the last word)
+const ORE_CSS = ['styles.css', 'fonts/fonts.css', 'panel.css'];
+const LAB_TOP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+/** OreUI into a page opened from a file (a site keeps its own look) */
+async function withOre(page) {
+  await page.evaluate(async (hrefs) => {
+    const loads = [];
+    for (const h of [...hrefs].reverse()) {
+      const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = h;
+      loads.push(new Promise((r) => { l.onload = r; l.onerror = r; }));
+      document.head.prepend(l);
+    }
+    await Promise.all(loads);
+    if (!document.documentElement.hasAttribute('data-style')) document.documentElement.setAttribute('data-style', 'ore');
+    await document.fonts.ready;
+  }, ORE_CSS.map((f) => pathToFileURL(path.join(LAB_TOP, 'panel', f)).href));
+}
 
 function browserDeps() {
   const nm = process.env.GEOUI_NODE_MODULES || '/opt/npm-tools/node_modules', req = createRequire(path.join(nm, 'x.js'));
@@ -135,10 +153,12 @@ export async function capture(htmlFile, dir, opts = {}) {
     const probe = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     await open(probe, htmlFile);
     const said = await probe.evaluate(() => document.body.getAttribute('data-geoui-design'));
+    const ore = !isUrl(htmlFile) && (opts.ore || await probe.evaluate(() => document.documentElement.hasAttribute('data-geoui-ore')));
     await probe.close();
     const [Dw, Dh] = String(opts.design || said || '1280x720').split('x').map(Number);
     const page = await browser.newPage({ viewport: { width: Dw, height: Dh }, deviceScaleFactor: dpr });
     await open(page, htmlFile);
+    if (ore) await withOre(page);
     await page.addStyleTag({ content: CSS });
     await page.evaluate(async () => { await document.fonts.ready; });
     const cdp = await page.context().newCDPSession(page);
@@ -164,7 +184,8 @@ export async function capture(htmlFile, dir, opts = {}) {
       const kept = a.controls.filter((c) => inBox(c.rect)).slice(0, maxControls), keep = new Set([...kept.map((c) => c.key), ...a.dynamic.map((d) => d.key)]);
       if (kept.length < a.controls.length) {
         await page.evaluate((k) => { for (const e of document.querySelectorAll('[data-geoui-idx]')) if (!k.includes(e.getAttribute('data-geoui-idx'))) e.removeAttribute('data-geoui-idx'); }, [...keep]);
-        out.dropped = (out.dropped || 0) + a.controls.length - kept.length;
+        // (dropped: the ones this page shows but past the design box or --max-controls — not another page's, hidden here)
+        out.dropped = (out.dropped || 0) + a.controls.filter((c) => c.rect.w > 1 && c.rect.h > 1).length - kept.length;
         a.controls = kept;
       }
       out.background = out.background || a.background; out.title = out.title || a.title; out.start = out.start || a.start;
@@ -265,7 +286,7 @@ export async function capture(htmlFile, dir, opts = {}) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [html, dir] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
   const val = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : undefined; };
-  if (!html || !dir) { console.error('node bds/geoui/html/capture.mjs <page.html | https://…> <out folder> [--design 1280x720] [--dpr 2] [--max-controls n]'); process.exit(2); }
-  const c = await capture(html, dir, { design: val('--design'), dpr: val('--dpr'), maxControls: val('--max-controls') });
+  if (!html || !dir) { console.error('node bds/geoui/html/capture.mjs <page.html | https://…> <out folder> [--design 1280x720] [--dpr 2] [--max-controls n] [--ore]'); process.exit(2); }
+  const c = await capture(html, dir, { design: val('--design'), dpr: val('--dpr'), maxControls: val('--max-controls'), ore: process.argv.includes('--ore') });
   console.log(`OK ${dir}: ページ ${c.pages.length}・操作できる物 ${c.controls.length}・動く物 ${c.dynamic.length}（${c.design.w}x${c.design.h} @${c.dpr}x）`);
 }
