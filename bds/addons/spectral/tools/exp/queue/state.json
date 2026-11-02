@@ -160,10 +160,17 @@
   "tries": 1
  },
  "p10_sampler_level": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "8bf9af1",
+  "conclusion": "success",
+  "ended": "2026-11-03 07:22",
+  "failed_steps": 0,
+  "recordings": 5,
   "run": "41534236021",
   "started": "2026-11-03 07:05",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "p11_per_tick": {
   "status": "pending"
