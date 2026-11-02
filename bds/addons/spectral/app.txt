@@ -2,7 +2,7 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 02（tools/exp/queue/q02_ceiling_now.json）: 天井を今の版で（元の曲をそのまま鳴らす）。13 曲の元の音をそのまま SoundInstance で鳴らした「これ以上は無理」の点と、同じ run の今の曲。11 回目の天井は古い版。どの曲にまだ伸びしろがあるか
+# キュー 03（tools/exp/queue/q03_phones_vs_speaker.json）: ヘッドホンとスピーカー（同じ場所）。同じ曲をヘッドホン（自分に付く）とその場のスピーカー（3D）で。3D にしただけで何が変わるか（距離 0 での 3D の処理の分）
 
 section title
 audio info
@@ -15,7 +15,6 @@ shot title
 
 section prep
 audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_e pack=tools/exp/packs/run10
-audio ceiling spectral_ceil piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade
 
 section join
 join
@@ -26,121 +25,115 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section e
+section hp_hs
 do execute as @a run tp @s 0 -60 0 0 0
-audio start e_1
-audio mark e_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e
+audio start hp_hs_1
+audio mark hp_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e phones
 wait 23000
-audio mark e_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_e
+audio mark hs_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e speaker
 wait 23000
-audio mark e_vocal_stars
-do execute as @a run spectral:play vocal_stars_e
+audio mark hp_piano_chopin_op66
+do execute as @a run spectral:play piano_chopin_op66_e phones
 wait 23000
-audio mark e_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e
+audio mark hs_piano_chopin_op66
+do execute as @a run spectral:play piano_chopin_op66_e speaker
 wait 23000
-audio mark e_choir_how_long
-do execute as @a run spectral:play choir_how_long_e
+audio mark hp_vocal_stars
+do execute as @a run spectral:play vocal_stars_e phones
 wait 23000
-audio mark e_drums_round
-do execute as @a run spectral:play drums_round_e
+audio mark hs_vocal_stars
+do execute as @a run spectral:play vocal_stars_e speaker
 wait 23000
-audio mark e_rock_big
-do execute as @a run spectral:play rock_big_e
+audio mark hp_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e phones
 wait 23000
-audio mark e_edm_detection
-do execute as @a run spectral:play edm_detection_e
+audio mark hs_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e speaker
 wait 23000
-audio mark e_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e
+audio mark hp_choir_how_long
+do execute as @a run spectral:play choir_how_long_e phones
 wait 23000
-audio mark e_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_e
+audio mark hs_choir_how_long
+do execute as @a run spectral:play choir_how_long_e speaker
 wait 23000
-audio mark e_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e
+audio mark hp_drums_round
+do execute as @a run spectral:play drums_round_e phones
 wait 23000
-audio mark e_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_e
+audio mark hs_drums_round
+do execute as @a run spectral:play drums_round_e speaker
 wait 23000
-audio mark e_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_e
+audio mark hp_rock_big
+do execute as @a run spectral:play rock_big_e phones
 wait 23000
 audio stop
-audio analyze-all e_piano_gymnopedie=song:piano_gymnopedie e_piano_chopin_op66=song:piano_chopin_op66 e_vocal_stars=song:vocal_stars e_vocal_name_of_love=song:vocal_name_of_love e_choir_how_long=song:choir_how_long e_drums_round=song:drums_round e_rock_big=song:rock_big e_edm_detection=song:edm_detection e_orchestra_five_armies=song:orchestra_five_armies e_funk_funkorama=song:funk_funkorama e_speech_ja_soseki=song:speech_ja_soseki e_speech_en_wordsworth=song:speech_en_wordsworth e_demo_selfmade=song:demo_selfmade
-audio export e_piano_gymnopedie 160
-audio export e_piano_chopin_op66 160
-audio export e_vocal_stars 160
-audio export e_vocal_name_of_love 160
-audio export e_choir_how_long 160
-audio export e_drums_round 160
-audio export e_rock_big 160
-audio export e_edm_detection 160
-audio export e_orchestra_five_armies 160
-audio export e_funk_funkorama 160
-audio export e_speech_ja_soseki 160
-audio export e_speech_en_wordsworth 160
-audio export e_demo_selfmade 160
-
-section ceiling
-addon spectral_ceil
-join
-until joined 300000
-wait 5000
-audio start ceiling_1
-audio mark c_piano_gymnopedie
-do scriptevent spectral:ceiling piano_gymnopedie
-wait 22000
-audio mark c_piano_chopin_op66
-do scriptevent spectral:ceiling piano_chopin_op66
-wait 22000
-audio mark c_vocal_stars
-do scriptevent spectral:ceiling vocal_stars
-wait 22000
-audio mark c_vocal_name_of_love
-do scriptevent spectral:ceiling vocal_name_of_love
-wait 22000
-audio mark c_choir_how_long
-do scriptevent spectral:ceiling choir_how_long
-wait 22000
-audio mark c_drums_round
-do scriptevent spectral:ceiling drums_round
-wait 22000
-audio mark c_rock_big
-do scriptevent spectral:ceiling rock_big
-wait 22000
-audio mark c_edm_detection
-do scriptevent spectral:ceiling edm_detection
-wait 22000
-audio mark c_orchestra_five_armies
-do scriptevent spectral:ceiling orchestra_five_armies
-wait 22000
-audio mark c_funk_funkorama
-do scriptevent spectral:ceiling funk_funkorama
-wait 22000
-audio mark c_speech_ja_soseki
-do scriptevent spectral:ceiling speech_ja_soseki
-wait 22000
-audio mark c_speech_en_wordsworth
-do scriptevent spectral:ceiling speech_en_wordsworth
-wait 22000
-audio mark c_demo_selfmade
-do scriptevent spectral:ceiling demo_selfmade
-wait 22000
+audio analyze-all hp_piano_gymnopedie=song:piano_gymnopedie hs_piano_gymnopedie=song:piano_gymnopedie hp_piano_chopin_op66=song:piano_chopin_op66 hs_piano_chopin_op66=song:piano_chopin_op66 hp_vocal_stars=song:vocal_stars hs_vocal_stars=song:vocal_stars hp_vocal_name_of_love=song:vocal_name_of_love hs_vocal_name_of_love=song:vocal_name_of_love hp_choir_how_long=song:choir_how_long hs_choir_how_long=song:choir_how_long hp_drums_round=song:drums_round hs_drums_round=song:drums_round hp_rock_big=song:rock_big
+audio export hp_piano_gymnopedie 160
+audio export hs_piano_gymnopedie 160
+audio export hp_piano_chopin_op66 160
+audio export hs_piano_chopin_op66 160
+audio export hp_vocal_stars 160
+audio export hs_vocal_stars 160
+audio export hp_vocal_name_of_love 160
+audio export hs_vocal_name_of_love 160
+audio export hp_choir_how_long 160
+audio export hs_choir_how_long 160
+audio export hp_drums_round 160
+audio export hs_drums_round 160
+audio export hp_rock_big 160
+audio start hp_hs_2
+audio mark hs_rock_big
+do execute as @a run spectral:play rock_big_e speaker
+wait 23000
+audio mark hp_edm_detection
+do execute as @a run spectral:play edm_detection_e phones
+wait 23000
+audio mark hs_edm_detection
+do execute as @a run spectral:play edm_detection_e speaker
+wait 23000
+audio mark hp_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_e phones
+wait 23000
+audio mark hs_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_e speaker
+wait 23000
+audio mark hp_funk_funkorama
+do execute as @a run spectral:play funk_funkorama_e phones
+wait 23000
+audio mark hs_funk_funkorama
+do execute as @a run spectral:play funk_funkorama_e speaker
+wait 23000
+audio mark hp_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e phones
+wait 23000
+audio mark hs_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e speaker
+wait 23000
+audio mark hp_speech_en_wordsworth
+do execute as @a run spectral:play speech_en_wordsworth_e phones
+wait 23000
+audio mark hs_speech_en_wordsworth
+do execute as @a run spectral:play speech_en_wordsworth_e speaker
+wait 23000
+audio mark hp_demo_selfmade
+do execute as @a run spectral:play demo_selfmade_e phones
+wait 23000
+audio mark hs_demo_selfmade
+do execute as @a run spectral:play demo_selfmade_e speaker
+wait 23000
 audio stop
-audio analyze-all c_piano_gymnopedie=song:piano_gymnopedie c_piano_chopin_op66=song:piano_chopin_op66 c_vocal_stars=song:vocal_stars c_vocal_name_of_love=song:vocal_name_of_love c_choir_how_long=song:choir_how_long c_drums_round=song:drums_round c_rock_big=song:rock_big c_edm_detection=song:edm_detection c_orchestra_five_armies=song:orchestra_five_armies c_funk_funkorama=song:funk_funkorama c_speech_ja_soseki=song:speech_ja_soseki c_speech_en_wordsworth=song:speech_en_wordsworth c_demo_selfmade=song:demo_selfmade
-audio export c_piano_gymnopedie 160
-audio export c_piano_chopin_op66 160
-audio export c_vocal_stars 160
-audio export c_vocal_name_of_love 160
-audio export c_choir_how_long 160
-audio export c_drums_round 160
-audio export c_rock_big 160
-audio export c_edm_detection 160
-audio export c_orchestra_five_armies 160
-audio export c_funk_funkorama 160
-audio export c_speech_ja_soseki 160
-audio export c_speech_en_wordsworth 160
-audio export c_demo_selfmade 160
+audio analyze-all hs_rock_big=song:rock_big hp_edm_detection=song:edm_detection hs_edm_detection=song:edm_detection hp_orchestra_five_armies=song:orchestra_five_armies hs_orchestra_five_armies=song:orchestra_five_armies hp_funk_funkorama=song:funk_funkorama hs_funk_funkorama=song:funk_funkorama hp_speech_ja_soseki=song:speech_ja_soseki hs_speech_ja_soseki=song:speech_ja_soseki hp_speech_en_wordsworth=song:speech_en_wordsworth hs_speech_en_wordsworth=song:speech_en_wordsworth hp_demo_selfmade=song:demo_selfmade hs_demo_selfmade=song:demo_selfmade
+audio export hs_rock_big 160
+audio export hp_edm_detection 160
+audio export hs_edm_detection 160
+audio export hp_orchestra_five_armies 160
+audio export hs_orchestra_five_armies 160
+audio export hp_funk_funkorama 160
+audio export hs_funk_funkorama 160
+audio export hp_speech_ja_soseki 160
+audio export hs_speech_ja_soseki 160
+audio export hp_speech_en_wordsworth 160
+audio export hs_speech_en_wordsworth 160
+audio export hp_demo_selfmade 160
+audio export hs_demo_selfmade 160
