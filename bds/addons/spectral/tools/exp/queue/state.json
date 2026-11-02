@@ -48,10 +48,17 @@
   "tries": 1
  },
  "p04_aliases": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "b988795",
+  "conclusion": "success",
+  "ended": "2026-11-03 01:55",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "41482910293",
   "started": "2026-11-03 01:35",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q01_same_twice": {
   "arms": {
