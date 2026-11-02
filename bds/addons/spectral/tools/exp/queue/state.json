@@ -13,10 +13,39 @@
   "tries": 1
  },
  "p03_file_songs": {
+  "arms": {
+   "c": {
+    "mrstft": 1.008,
+    "n": 13,
+    "rms_db": -48.8,
+    "third_oct_db": 0.349,
+    "visqol": 3.09
+   },
+   "e": {
+    "mrstft": 1.729,
+    "n": 13,
+    "rms_db": -39.2,
+    "third_oct_db": 7.317,
+    "visqol": 2.989
+   },
+   "f": {
+    "mrstft": 1.025,
+    "n": 13,
+    "rms_db": -48.8,
+    "third_oct_db": 0.314,
+    "visqol": 2.709
+   }
+  },
+  "checkpoints": 0,
   "commit": "0e02c94",
+  "conclusion": "success",
+  "ended": "2026-11-03 01:34",
+  "failed_steps": 0,
+  "recordings": 39,
   "run": "41475752440",
   "started": "2026-11-03 00:51",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q01_same_twice": {
   "arms": {
