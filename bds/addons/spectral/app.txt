@@ -1,6 +1,8 @@
-# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。
-# p12（p08 のやり直し）: p08 は /connect の後の hello を 30 秒待って止まった（run 41528680880: 何が起きたかは封じた画面だけ）。今度は止まらずに
-# 3 通りの書き方（${DEVICE_HOST}・ws://・172.17.0.1）を試し、つながればサーバーが音階を鳴らす（--greet）ので録音で分かる。チャット・手紙も録る
+# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
+#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
+#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
+#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
+# キュー 15（tools/exp/queue/q15_light_mode.json）: 軽量モード（16 声・命令 24/tick 以下）と既定。Realms・人の多いサーバー向けの軽量モードを今の版で（4〜6 回目に古い版で測っただけ）
 
 section title
 audio info
@@ -12,6 +14,7 @@ audio info
 shot title
 
 section prep
+audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_e pack=tools/exp/packs/run10
 
 section join
 join
@@ -22,39 +25,166 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section connect
-do execute as @a run spectral:sampler 2 250 28 300 true
-# /connect without stopping on the way: each attempt recorded (the server plays a scale to a game that connects: --greet)
-audio start cn_connect
-chat /connect ${DEVICE_HOST}:8790
-wait 9000
-shot connect-a
-chat /connect ws://${DEVICE_HOST}:8790
-wait 9000
-shot connect-b
-chat /connect ws://172.17.0.1:8790
-wait 9000
-shot connect-c
-audio stop
-audio export cn_connect 192
-# a song by the chat
-audio start cn_chat
-chat !spectral tools/exp/packs/notes/fur_elise.song.json
-wait 18000
+section mq_ml
+do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run spectral:mode quality
+audio start mq_ml_1
+audio mark mq_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+wait 23000
 do execute as @a run spectral:stop
-audio stop
-audio export cn_chat 192
-# the remote's mails: a scale on the live keys, then a song
-audio start cn_scale
-do tag @a add geoui.mail.sr.1.0.1.eyJuIjoic2NhbGUiLCJmIjp7fX0
-wait 4500
-audio stop
-audio export cn_scale 192
-audio start cn_mail
-do tag @a add geoui.mail.sr.2.0.1.eyJuIjoicGxheSIsImYiOnsidXJsIjoidG9vbHMvZXhwL3BhY2tzL25vdGVzL2NsaWNrc19wdWxzZS5zb25nLmpzb24ifX0
-wait 6000
+do execute as @a run spectral:mode light
+audio mark ml_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+wait 23000
 do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_piano_chopin_op66
+do execute as @a run spectral:play piano_chopin_op66_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_piano_chopin_op66
+do execute as @a run spectral:play piano_chopin_op66_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_vocal_stars
+do execute as @a run spectral:play vocal_stars_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_vocal_stars
+do execute as @a run spectral:play vocal_stars_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_choir_how_long
+do execute as @a run spectral:play choir_how_long_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_choir_how_long
+do execute as @a run spectral:play choir_how_long_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_drums_round
+do execute as @a run spectral:play drums_round_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_drums_round
+do execute as @a run spectral:play drums_round_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_rock_big
+do execute as @a run spectral:play rock_big_e
+wait 23000
 audio stop
-audio export cn_mail 192
-shot after
-do execute as @a run spectral:sampler 2 250 28 300 false
+audio analyze-all mq_piano_gymnopedie=song:piano_gymnopedie ml_piano_gymnopedie=song:piano_gymnopedie mq_piano_chopin_op66=song:piano_chopin_op66 ml_piano_chopin_op66=song:piano_chopin_op66 mq_vocal_stars=song:vocal_stars ml_vocal_stars=song:vocal_stars mq_vocal_name_of_love=song:vocal_name_of_love ml_vocal_name_of_love=song:vocal_name_of_love mq_choir_how_long=song:choir_how_long ml_choir_how_long=song:choir_how_long mq_drums_round=song:drums_round ml_drums_round=song:drums_round mq_rock_big=song:rock_big
+audio export mq_piano_gymnopedie 160
+audio export ml_piano_gymnopedie 160
+audio export mq_piano_chopin_op66 160
+audio export ml_piano_chopin_op66 160
+audio export mq_vocal_stars 160
+audio export ml_vocal_stars 160
+audio export mq_vocal_name_of_love 160
+audio export ml_vocal_name_of_love 160
+audio export mq_choir_how_long 160
+audio export ml_choir_how_long 160
+audio export mq_drums_round 160
+audio export ml_drums_round 160
+audio export mq_rock_big 160
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio start mq_ml_2
+audio mark ml_rock_big
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_edm_detection
+do execute as @a run spectral:play edm_detection_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_edm_detection
+do execute as @a run spectral:play edm_detection_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_funk_funkorama
+do execute as @a run spectral:play funk_funkorama_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_funk_funkorama
+do execute as @a run spectral:play funk_funkorama_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_speech_en_wordsworth
+do execute as @a run spectral:play speech_en_wordsworth_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_speech_en_wordsworth
+do execute as @a run spectral:play speech_en_wordsworth_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode quality
+audio mark mq_demo_selfmade
+do execute as @a run spectral:play demo_selfmade_e
+wait 23000
+do execute as @a run spectral:stop
+do execute as @a run spectral:mode light
+audio mark ml_demo_selfmade
+do execute as @a run spectral:play demo_selfmade_e
+wait 23000
+audio stop
+audio analyze-all ml_rock_big=song:rock_big mq_edm_detection=song:edm_detection ml_edm_detection=song:edm_detection mq_orchestra_five_armies=song:orchestra_five_armies ml_orchestra_five_armies=song:orchestra_five_armies mq_funk_funkorama=song:funk_funkorama ml_funk_funkorama=song:funk_funkorama mq_speech_ja_soseki=song:speech_ja_soseki ml_speech_ja_soseki=song:speech_ja_soseki mq_speech_en_wordsworth=song:speech_en_wordsworth ml_speech_en_wordsworth=song:speech_en_wordsworth mq_demo_selfmade=song:demo_selfmade ml_demo_selfmade=song:demo_selfmade
+audio export ml_rock_big 160
+audio export mq_edm_detection 160
+audio export ml_edm_detection 160
+audio export mq_orchestra_five_armies 160
+audio export ml_orchestra_five_armies 160
+audio export mq_funk_funkorama 160
+audio export ml_funk_funkorama 160
+audio export mq_speech_ja_soseki 160
+audio export ml_speech_ja_soseki 160
+audio export mq_speech_en_wordsworth 160
+audio export ml_speech_en_wordsworth 160
+audio export mq_demo_selfmade 160
+audio export ml_demo_selfmade 160
