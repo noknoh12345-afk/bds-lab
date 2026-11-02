@@ -648,10 +648,32 @@
   "tries": 1
  },
  "q15_light_mode": {
+  "arms": {
+   "ml": {
+    "mrstft": 1.744,
+    "n": 13,
+    "rms_db": -39.4,
+    "third_oct_db": 9.31,
+    "visqol": 3.153
+   },
+   "mq": {
+    "mrstft": 1.746,
+    "n": 13,
+    "rms_db": -39.2,
+    "third_oct_db": 7.559,
+    "visqol": 3.267
+   }
+  },
+  "checkpoints": 0,
   "commit": "6d2e66b",
+  "conclusion": "success",
+  "ended": "2026-11-03 08:25",
+  "failed_steps": 0,
+  "recordings": 26,
   "run": "41541183581",
   "started": "2026-11-03 07:54",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q16_rain_mobs": {
   "status": "pending"
