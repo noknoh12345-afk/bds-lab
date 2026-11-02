@@ -298,8 +298,9 @@ function rangeChanged(t) {
 }
 /** the chosen track from (or up to) the playhead: its range cut there */
 function cutAt(t, side) {
-  const g = segOf(t), p = position(), at = g.s0 + p;
-  if (!t || t.demo || (side === 'from' ? g.s1 - at : at - g.s0) < MIN_S || p <= 0 && side === 'from') {
+  const g = segOf(t); if (!g || t.demo) return;
+  const p = position(), at = g.s0 + p;
+  if ((side === 'from' ? g.s1 - at : at - g.s0) < MIN_S || (p <= 0 && side === 'from')) {
     $('playMsg').textContent = '図をタップして位置を選んでから押してください（残る長さが 1 秒以上になる位置）。'; return;
   }
   t.range = side === 'from' ? [at, g.s1] : [g.s0, at]; rangeChanged(t);
@@ -310,7 +311,8 @@ $('cutTo').addEventListener('click', () => current && cutAt(current, 'to'));
 $('cutSplit').addEventListener('click', () => current && split(current));
 /** two tracks from one at the playhead (the place tapped on the display): the same file, each its own range and ID */
 function split(t) {
-  const g = segOf(t), p = t === current ? position() : 0, cut = g.s0 + p;
+  const g = segOf(t); if (!g || t.demo) return;
+  const p = t === current ? position() : 0, cut = g.s0 + p;
   if (t !== current || p < 0.5 || g.s1 - cut < 0.5) {
     if (t !== current) select(t);
     $('playMsg').textContent = '図をタップして分ける位置を選び、もう一度「ここで分ける」を押してください（両側 0.5 秒以上）。';

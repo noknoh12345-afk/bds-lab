@@ -61,6 +61,9 @@
 - [x] 変換ページはほぼ全ての音声形式を読む: ブラウザが読むもの（MP3・AAC・Ogg・Opus・FLAC・WebM・動画の音）はそのまま、読めないものは web/decoders.js（WAV の全ての一般的な符号: PCM・float・A-law・μ-law・IMA/MS ADPCM、RIFF/RF64/Wave64・AIFF/AIFC・AU・CAF・VOC、MIDI は内蔵の音源で鳴らして）、それでも読めないもの（WMA・AMR・APE・WavPack・AC3・DTS ほか）は ffmpeg（WebAssembly、初回だけ取ってくる）（tools/test_decoders.mjs: 36 種が ffmpeg とサンプル単位で一致 ／ tools/test_page.py: 11 形式が実際のブラウザで変換でき、テキストが本体の復号で読める）
 - [x] 何人もが同時に話す: 聞く人ごとに、その人が聞くライブのストリームでクライアントの同時の音（電話 32、実測）を分ける。1 人なら全部、2 人なら足りない分を一番低いノイズ帯域から（/spectral:share、既定 on。分けないと超えた分はクライアントが落とす）（## the live streams a listener hears share the sounds their client plays at once …: one talker near a phone has all their stream's sounds ／ ## two talkers near a phone ／ ## sharing off ／ ## sharing on, a client with no measured limit given one ／ ## the other talker gone）
 - [x] 3D の音は 48 ブロックまで届き、ファイルより 10 dB 大きく鳴る: 届く距離は作るときの音量で決まる（実機で 16 ブロック × 音量、音量を上げても大きくはならない）ので音量 3 で作り、音を作るのは届く人にだけ。レベルは setVolume で（実機で 3D でも 1 を超えて効く。24 ブロックで ViSQOL 2.38 → 2.79）（## 3D sounds reach 48 blocks (made at volume 3: the client takes the distance from it, 16 blocks a unit, measured) and play 10 dB over the files (measured: a far voice keeps its quiet parts), and only the players they reach get sounds (spectral:range)）
+- [x] 曲のテキストは電話の入力欄に入る長さのパートに分かれる（電話の入力欄は 5000 文字で止まる: 34 回目の実測。英数字 4977 文字の 1 部は貼れる: 35 回目）。5000 文字で切れた古いテキストにはアドオンが理由を言う（## a text that is not a song, a broken one and a cut one are refused with why）
+- [x] 変換ページ: 曲の一部だけ（区間）・再生位置で「ここから」「ここまで」「ここで分ける」、長いファイルは時間の目安を見て「変換する」、変換は 1 つずつ順に（外した曲の変換は止まる）、テキストのパートを順にコピー・.txt で保存（tools/test_page.py）
+- [x] 電話の録音を手元で: tools/emu/phone.py が実機のリグが録るはずの音と成績を出す。tools/rig/emu_validate.py で録音と比べた（33 回目の 26 本: 成績の予測の誤差 平均 0.074・相関 0.958、推測と実測を SPEC.md に分けて）
 
 ## Guessed
 <!-- values decided without asking -->
