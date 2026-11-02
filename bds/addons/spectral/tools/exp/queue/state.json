@@ -1,9 +1,31 @@
 {
  "q01_same_twice": {
+  "arms": {
+   "ra": {
+    "mrstft": 1.722,
+    "n": 13,
+    "rms_db": -38.9,
+    "third_oct_db": 7.419,
+    "visqol": 3.409
+   },
+   "rb": {
+    "mrstft": 1.716,
+    "n": 13,
+    "rms_db": -39.2,
+    "third_oct_db": 7.76,
+    "visqol": 3.257
+   }
+  },
+  "checkpoints": 0,
   "commit": "7d9d869",
+  "conclusion": "success",
+  "ended": "2026-11-02 19:37",
+  "failed_steps": 0,
+  "recordings": 26,
   "run": "41426659110",
   "started": "2026-11-02 19:10",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q02_ceiling_now": {
   "status": "pending"
