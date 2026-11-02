@@ -245,10 +245,32 @@
   "tries": 1
  },
  "q08_walking_talker": {
+  "arms": {
+   "ws": {
+    "mrstft": 1.608,
+    "n": 6,
+    "rms_db": -38.85,
+    "third_oct_db": 8.171,
+    "visqol": 3.665
+   },
+   "ww": {
+    "mrstft": 1.788,
+    "n": 6,
+    "rms_db": -45.0,
+    "third_oct_db": 10.524,
+    "visqol": 3.293
+   }
+  },
+  "checkpoints": 0,
   "commit": "20de64f",
+  "conclusion": "success",
+  "ended": "2026-11-02 22:40",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "41451475311",
   "started": "2026-11-02 22:16",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q09_long_song": {
   "status": "pending"
