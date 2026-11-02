@@ -22,6 +22,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('song'); ap.add_argument('--original'); ap.add_argument('--corpus'); ap.add_argument('--wav'); ap.add_argument('--json')
     ap.add_argument('--voices', type=int); ap.add_argument('--level', type=float); ap.add_argument('--client', default='phone', choices=['phone', 'pc'])
+    ap.add_argument('--limit', action='store_true', help='the add-on\'s limiter on (/spectral:limit true)')
     a = ap.parse_args()
     import numpy as np
     import exp as X, metrics as MT, score_song as SS
@@ -31,7 +32,7 @@ def main():
     voices = a.voices or (min(24, meta['voices']) if phone else meta['voices'])
     level = a.level if a.level is not None else (10 if phone else 0)
     play = {'mode': 'quality', 'voices': voices, 'bundle': os.path.join(UNIT, 'bp', 'scripts', 'main.js'),
-            'cmds': ['spectral:drums off', f'spectral:level {level:g}']}
+            'cmds': ['spectral:drums off', f'spectral:level {level:g}'] + (['spectral:limit true'] if a.limit else [])}
     lg = X.song_log(sp, play)
     y = X.render(lg, {'oneshot_latency_ms': -45, **({} if phone else {'max_voices': 1000})})
     out = X.path24(y, clip=2.0) if phone else (y.mean(1) if y.ndim == 2 else y)
