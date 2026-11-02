@@ -2,7 +2,7 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 07（tools/exp/queue/q07_screen_off.json）: 画面を消す・アプリを裏へ（6 曲）。ボイスチャットや曲を聞きながら画面を消す・ホームに戻ると音は続くか、戻ったとき崩れないか。電話の使われ方そのもの
+# キュー 08（tools/exp/queue/q08_walking_talker.json）: 歩く話し手と止まった話し手（今の版、6 曲）。1.2.0 の歩く話し手（作り直し cut）を今の版で。止まった話し手と同じ run で比べる（23 回目は古い版）
 
 section title
 audio info
@@ -14,7 +14,7 @@ audio info
 shot title
 
 section prep
-audio song speech_ja_soseki,vocal_name_of_love,orchestra_five_armies,rock_big,piano_gymnopedie,edm_detection suffix=_e pack=tools/exp/packs/run10
+audio song piano_gymnopedie,vocal_name_of_love,rock_big,edm_detection,orchestra_five_armies,speech_ja_soseki suffix=_e pack=tools/exp/packs/run10
 
 section join
 join
@@ -24,161 +24,417 @@ do time set noon
 do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run summon armor_stand talker 0 -60 3
 
-section screen
-audio start sn_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e
+section ws_ww
+do execute as @a run tp @s 0 -60 0 0 0
+do execute as @a run tp @e[name=talker] 0 -60 3
+audio start ws_ww_1
+audio mark ws_piano_gymnopedie
+do execute as @a run spectral:live_demo piano_gymnopedie_e follow @s 24 "follow:talker"
 wait 23000
-audio stop
-audio analyze sn_speech_ja_soseki song:speech_ja_soseki
-audio export sn_speech_ja_soseki 160
-audio start so_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e
-wait 3000
-screen off
-wait 14000
-screen on
-wait 6000
-audio stop
-audio analyze so_speech_ja_soseki song:speech_ja_soseki
-audio export so_speech_ja_soseki 160
-audio start sb_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e
-wait 3000
-background
-wait 12000
-foreground
-wait 6000
-audio stop
-audio analyze sb_speech_ja_soseki song:speech_ja_soseki
-audio export sb_speech_ja_soseki 160
-audio start sn_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio mark ww_piano_gymnopedie
+do execute as @a run spectral:live_demo piano_gymnopedie_e follow @s 24 "follow:talker"
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 20200
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 0 -60 3
+audio mark ws_vocal_name_of_love
+do execute as @a run spectral:live_demo vocal_name_of_love_e follow @s 24 "follow:talker"
 wait 23000
-audio stop
-audio analyze sn_vocal_name_of_love song:vocal_name_of_love
-audio export sn_vocal_name_of_love 160
-audio start so_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e
-wait 3000
-screen off
-wait 14000
-screen on
-wait 6000
-audio stop
-audio analyze so_vocal_name_of_love song:vocal_name_of_love
-audio export so_vocal_name_of_love 160
-audio start sb_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e
-wait 3000
-background
-wait 12000
-foreground
-wait 6000
-audio stop
-audio analyze sb_vocal_name_of_love song:vocal_name_of_love
-audio export sb_vocal_name_of_love 160
-audio start sn_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio mark ww_vocal_name_of_love
+do execute as @a run spectral:live_demo vocal_name_of_love_e follow @s 24 "follow:talker"
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 20200
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 0 -60 3
+audio mark ws_rock_big
+do execute as @a run spectral:live_demo rock_big_e follow @s 24 "follow:talker"
 wait 23000
-audio stop
-audio analyze sn_orchestra_five_armies song:orchestra_five_armies
-audio export sn_orchestra_five_armies 160
-audio start so_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e
-wait 3000
-screen off
-wait 14000
-screen on
-wait 6000
-audio stop
-audio analyze so_orchestra_five_armies song:orchestra_five_armies
-audio export so_orchestra_five_armies 160
-audio start sb_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e
-wait 3000
-background
-wait 12000
-foreground
-wait 6000
-audio stop
-audio analyze sb_orchestra_five_armies song:orchestra_five_armies
-audio export sb_orchestra_five_armies 160
-audio start sn_rock_big
-do execute as @a run spectral:play rock_big_e
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio mark ww_rock_big
+do execute as @a run spectral:live_demo rock_big_e follow @s 24 "follow:talker"
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 20200
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 0 -60 3
+audio mark ws_edm_detection
+do execute as @a run spectral:live_demo edm_detection_e follow @s 24 "follow:talker"
 wait 23000
-audio stop
-audio analyze sn_rock_big song:rock_big
-audio export sn_rock_big 160
-audio start so_rock_big
-do execute as @a run spectral:play rock_big_e
-wait 3000
-screen off
-wait 14000
-screen on
-wait 6000
-audio stop
-audio analyze so_rock_big song:rock_big
-audio export so_rock_big 160
-audio start sb_rock_big
-do execute as @a run spectral:play rock_big_e
-wait 3000
-background
-wait 12000
-foreground
-wait 6000
-audio stop
-audio analyze sb_rock_big song:rock_big
-audio export sb_rock_big 160
-audio start sn_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio mark ww_edm_detection
+do execute as @a run spectral:live_demo edm_detection_e follow @s 24 "follow:talker"
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 20200
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 0 -60 3
+audio mark ws_orchestra_five_armies
+do execute as @a run spectral:live_demo orchestra_five_armies_e follow @s 24 "follow:talker"
 wait 23000
-audio stop
-audio analyze sn_piano_gymnopedie song:piano_gymnopedie
-audio export sn_piano_gymnopedie 160
-audio start so_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e
-wait 3000
-screen off
-wait 14000
-screen on
-wait 6000
-audio stop
-audio analyze so_piano_gymnopedie song:piano_gymnopedie
-audio export so_piano_gymnopedie 160
-audio start sb_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e
-wait 3000
-background
-wait 12000
-foreground
-wait 6000
-audio stop
-audio analyze sb_piano_gymnopedie song:piano_gymnopedie
-audio export sb_piano_gymnopedie 160
-audio start sn_edm_detection
-do execute as @a run spectral:play edm_detection_e
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio mark ww_orchestra_five_armies
+do execute as @a run spectral:live_demo orchestra_five_armies_e follow @s 24 "follow:talker"
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 20200
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 0 -60 3
+audio mark ws_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 "follow:talker"
 wait 23000
+do execute as @a run spectral:stop
+do execute as @a run tp @e[name=talker] 6 -60 3
+audio mark ww_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 "follow:talker"
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 6 -60 3
+wait 100
+do tp @e[name=talker] 3 -60 3
+wait 100
+do tp @e[name=talker] 0 -60 3
+wait 100
+do tp @e[name=talker] -3 -60 3
+wait 100
+do tp @e[name=talker] -6 -60 3
+wait 20200
 audio stop
-audio analyze sn_edm_detection song:edm_detection
-audio export sn_edm_detection 160
-audio start so_edm_detection
-do execute as @a run spectral:play edm_detection_e
-wait 3000
-screen off
-wait 14000
-screen on
-wait 6000
-audio stop
-audio analyze so_edm_detection song:edm_detection
-audio export so_edm_detection 160
-audio start sb_edm_detection
-do execute as @a run spectral:play edm_detection_e
-wait 3000
-background
-wait 12000
-foreground
-wait 6000
-audio stop
-audio analyze sb_edm_detection song:edm_detection
-audio export sb_edm_detection 160
+audio analyze-all ws_piano_gymnopedie=song:piano_gymnopedie ww_piano_gymnopedie=song:piano_gymnopedie ws_vocal_name_of_love=song:vocal_name_of_love ww_vocal_name_of_love=song:vocal_name_of_love ws_rock_big=song:rock_big ww_rock_big=song:rock_big ws_edm_detection=song:edm_detection ww_edm_detection=song:edm_detection ws_orchestra_five_armies=song:orchestra_five_armies ww_orchestra_five_armies=song:orchestra_five_armies ws_speech_ja_soseki=song:speech_ja_soseki ww_speech_ja_soseki=song:speech_ja_soseki
+audio export ws_piano_gymnopedie 160
+audio export ww_piano_gymnopedie 160
+audio export ws_vocal_name_of_love 160
+audio export ww_vocal_name_of_love 160
+audio export ws_rock_big 160
+audio export ww_rock_big 160
+audio export ws_edm_detection 160
+audio export ww_edm_detection 160
+audio export ws_orchestra_five_armies 160
+audio export ww_orchestra_five_armies 160
+audio export ws_speech_ja_soseki 160
+audio export ww_speech_ja_soseki 160
