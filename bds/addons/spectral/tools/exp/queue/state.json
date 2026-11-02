@@ -28,7 +28,10 @@
   "tries": 1
  },
  "q02_ceiling_now": {
-  "status": "pending"
+  "commit": "957130c",
+  "run": "41430305681",
+  "started": "2026-11-02 19:37",
+  "status": "running"
  },
  "q03_phones_vs_speaker": {
   "status": "pending"
