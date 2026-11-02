@@ -2,9 +2,12 @@
 """Note songs: a MIDI file as notes (when, how long, which key, how hard, which instrument), played in the game by the
 add-on's sampler (src/notes.ts) with the instrument bank (tools/samples/bank.py) — no sine waves. The format:
 
-  {"meta": {"format": "spectral-notes/1", "id", "title", "artist", "seconds", "notes", "programs": [GM program 0-127 | 128 = drums]},
-   "data": base64 of, note after note in the order they start: varint (start - previous start, in 1/4 ms), varint (length, ms),
-           key (MIDI 0-127), velocity (1-127), program (index into meta.programs)}
+  {"meta": {"format": "spectral-notes/1", "id", "title", "artist", "seconds", "notes",
+            "programs": [GM program 0-127 | 128 = drums | 200 + v = the bank's voice v (src/bank.ts VOICES)]},
+   "data": base64 of a version byte (1, or 2 when notes carry cents), then note after note in the order they start: varint (start -
+           previous start, in 1/4 ms), varint (length, ms), key (MIDI 0-127; a voice's unit), velocity (1-127), program (index into
+           meta.programs), and in version 2 a zigzag varint of cents (an instrument's: off its key; a voice's: its pitch against
+           the voice's own, VOICES[v].f0)}
 
 The sustain pedal (CC64) is played into the lengths; CC7 and CC11 into the velocities; the tempo map into milliseconds.
 --render writes what the notes sound like through the same samples placed exactly (the reference a device recording is scored
@@ -115,23 +118,30 @@ def read_midi(path):
 
 
 def encode(notes, sid, title, artist=''):
+    """notes: (start ms, length ms, key, velocity, program[, cents])"""
     programs = sorted({n[4] for n in notes})
     pidx = {p: i for i, p in enumerate(programs)}
-    out = bytearray([1])                       # version
+    v2 = any(len(n) > 5 and n[5] for n in notes)
+    out = bytearray([2 if v2 else 1])          # version
     prev = 0
-    for s, d, k, v, p in notes:
+    for n in notes:
+        s, d, k, v, p = n[:5]
         q = int(round(s * 4))
         varint(q - prev, out); prev = q
         varint(int(round(min(d, 600000))), out)
         out += bytes([k & 0x7F, max(1, min(127, int(v))), pidx[p]])
+        if v2:
+            c = int(round(n[5] if len(n) > 5 else 0))
+            varint((c << 1) ^ (c >> 31) if c >= 0 else ((-c) << 1) - 1, out)
     seconds = max((s + d for s, d, *_ in notes), default=0) / 1000
-    meta = {'format': FORMAT, 'id': sid, 'title': title, 'artist': artist, 'seconds': round(seconds, 3), 'notes': len(notes), 'programs': programs}
+    meta = {'format': 'spectral-notes/2' if v2 else FORMAT, 'id': sid, 'title': title, 'artist': artist, 'seconds': round(seconds, 3), 'notes': len(notes), 'programs': programs}
     return {'meta': meta, 'data': base64.b64encode(bytes(out)).decode()}
 
 
 def decode(song):
     b = base64.b64decode(song['data'])
-    assert b[0] == 1, 'unknown note data version'
+    assert b[0] in (1, 2), 'unknown note data version'
+    v2 = b[0] == 2
     i, prev, notes, programs = 1, 0, [], song['meta']['programs']
 
     def rv():
@@ -145,7 +155,11 @@ def decode(song):
     while i < len(b):
         prev += rv(); d = rv()
         k, v, p = b[i], b[i + 1], b[i + 2]; i += 3
-        notes.append((prev / 4, d, k, v, programs[p]))
+        if v2:
+            z = rv(); c = (z >> 1) if not z & 1 else -((z + 1) >> 1)
+            notes.append((prev / 4, d, k, v, programs[p], c))
+        else:
+            notes.append((prev / 4, d, k, v, programs[p]))
     return notes
 
 
@@ -168,8 +182,23 @@ def sample(inst, i):
     return _cache[k]
 
 
-def choose(B, prog, key, vel):
-    """the instrument and sample the add-on chooses (src/notes.ts pick): the nearest key, then the nearest velocity layer"""
+def voices(B):
+    return [b for b in B if b.get('voice')]
+
+
+def choose(B, prog, key, vel, cents=0):
+    """the instrument, the sample and the pitch ratio the add-on chooses (src/notes.ts pick): an instrument's nearest key then
+    nearest velocity layer; a voice's unit at the pitch layer nearest its cents"""
+    if prog >= 200:
+        vb = voices(B)[prog - 200]
+        L = vb['voice']['layers']
+        li = min(range(len(L)), key=lambda j: abs(L[j] - cents / 100))
+        return vb, key * len(L) + li, 2 ** ((cents / 100 - L[li]) / 12)
+    inst, j = choose_inst(B, prog, key, vel)
+    return inst, j, 2 ** ((key - inst['samples'][j][0]) / 12 + cents / 1200)
+
+
+def choose_inst(B, prog, key, vel):
     gm = {}
     for i, inst in enumerate(B):
         for p in inst.get('gm', []):
@@ -190,14 +219,14 @@ def render(notes, out, sr=48000, quantize=False, seconds=None, master=0.6):
     lead = 0.6
     total = (max((s + d for s, d, *_ in notes), default=0) / 1000 + 3) if seconds is None else seconds
     y = np.zeros((int(total * sr), 2))
-    for s, d, key, vel, prog in notes:
+    for n in notes:
+        s, d, key, vel, prog = n[:5]
+        cents = n[5] if len(n) > 5 else 0
         if seconds is not None and s / 1000 >= seconds:
             continue
         if quantize:
             s = np.floor(s / 50) * 50
-        inst, j = choose(B, prog, key, vel)
-        root, _, length, _ = inst['samples'][j]
-        p = 2 ** ((key - root) / 12)
+        inst, j, p = choose(B, prog, key, vel, cents)
         x, xsr = sample(inst['id'], j)
         x = x[int(lead * xsr):]
         # read at speed p (linear interpolation, as the game reads a file) into the output rate

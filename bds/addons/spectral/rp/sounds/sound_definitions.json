@@ -3890,6 +3890,7398 @@
      "volume": 1.0
     }
    ]
+  },
+  "spectral.i.voice_ja.0": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/0",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.0_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/0",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.1": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/1",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.1_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/1",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.2": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/2",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.2_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/2",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.3": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/3",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.3_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/3",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.4": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/4",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.4_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/4",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.5": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/5",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.5_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/5",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.6": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/6",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.6_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/6",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.7": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/7",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.7_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/7",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.8": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/8",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.8_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/8",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.9": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/9",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.9_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/9",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.10": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/10",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.10_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/10",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.11": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/11",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.11_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/11",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.12": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/12",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.12_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/12",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.13": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/13",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.13_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/13",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.14": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/14",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.14_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/14",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.15": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/15",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.15_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/15",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.16": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/16",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.16_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/16",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.17": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/17",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.17_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/17",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.18": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/18",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.18_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/18",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.19": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/19",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.19_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/19",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.20": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/20",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.20_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/20",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.21": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/21",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.21_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/21",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.22": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/22",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.22_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/22",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.23": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/23",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.23_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/23",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.24": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/24",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.24_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/24",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.25": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/25",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.25_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/25",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.26": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/26",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.26_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/26",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.27": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/27",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.27_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/27",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.28": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/28",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.28_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/28",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.29": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/29",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.29_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/29",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.30": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/30",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.30_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/30",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.31": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/31",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.31_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/31",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.32": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/32",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.32_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/32",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.33": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/33",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.33_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/33",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.34": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/34",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.34_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/34",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.35": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/35",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.35_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/35",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.36": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/36",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.36_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/36",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.37": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/37",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.37_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/37",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.38": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/38",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.38_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/38",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.39": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/39",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.39_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/39",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.40": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/40",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.40_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/40",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.41": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/41",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.41_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/41",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.42": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/42",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.42_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/42",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.43": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/43",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.43_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/43",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.44": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/44",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.44_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/44",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.45": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/45",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.45_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/45",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.46": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/46",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.46_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/46",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.47": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/47",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.47_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/47",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.48": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/48",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.48_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/48",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.49": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/49",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.49_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/49",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.50": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/50",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.50_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/50",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.51": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/51",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.51_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/51",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.52": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/52",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.52_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/52",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.53": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/53",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.53_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/53",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.54": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/54",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.54_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/54",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.55": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/55",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.55_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/55",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.56": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/56",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.56_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/56",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.57": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/57",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.57_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/57",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.58": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/58",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.58_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/58",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.59": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/59",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.59_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/59",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.60": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/60",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.60_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/60",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.61": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/61",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.61_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/61",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.62": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/62",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.62_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/62",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.63": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/63",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.63_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/63",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.64": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/64",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.64_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/64",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.65": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/65",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.65_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/65",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.66": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/66",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.66_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/66",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.67": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/67",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.67_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/67",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.68": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/68",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.68_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/68",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.69": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/69",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.69_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/69",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.70": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/70",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.70_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/70",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.71": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/71",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.71_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/71",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.72": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/72",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.72_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/72",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.73": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/73",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.73_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/73",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.74": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/74",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.74_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/74",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.75": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/75",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.75_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/75",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.76": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/76",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.76_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/76",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.77": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/77",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.77_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/77",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.78": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/78",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.78_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/78",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.79": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/79",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.79_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/79",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.80": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/80",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.80_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/80",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.81": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/81",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.81_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/81",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.82": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/82",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.82_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/82",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.83": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/83",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.83_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/83",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.84": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/84",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.84_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/84",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.85": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/85",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.85_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/85",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.86": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/86",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.86_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/86",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.87": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/87",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.87_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/87",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.88": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/88",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.88_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/88",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.89": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/89",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.89_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/89",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.90": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/90",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.90_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/90",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.91": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/91",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.91_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/91",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.92": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/92",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.92_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/92",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.93": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/93",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.93_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/93",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.94": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/94",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.94_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/94",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.95": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/95",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.95_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/95",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.96": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/96",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.96_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/96",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.97": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/97",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.97_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/97",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.98": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/98",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.98_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/98",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.99": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/99",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.99_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/99",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.100": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/100",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.100_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/100",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.101": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/101",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.101_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/101",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.102": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/102",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.102_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/102",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.103": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/103",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.103_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/103",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.104": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/104",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.104_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/104",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.105": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/105",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.105_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/105",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.106": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/106",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.106_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/106",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.107": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/107",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.107_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/107",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.108": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/108",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.108_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/108",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.109": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/109",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.109_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/109",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.110": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/110",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.110_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/110",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.111": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/111",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.111_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/111",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.112": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/112",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.112_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/112",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.113": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/113",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.113_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/113",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.114": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/114",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.114_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/114",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.115": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/115",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.115_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/115",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.116": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/116",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.116_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/116",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.117": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/117",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.117_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/117",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.118": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/118",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.118_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/118",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.119": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/119",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.119_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/119",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.120": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/120",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.120_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/120",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.121": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/121",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.121_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/121",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.122": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/122",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.122_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/122",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.123": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/123",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.123_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/123",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.124": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/124",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.124_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/124",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.125": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/125",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.125_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/125",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.126": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/126",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.126_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/126",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.127": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/127",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.127_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/127",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.128": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/128",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.128_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/128",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.129": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/129",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.129_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/129",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.130": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/130",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.130_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/130",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.131": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/131",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.131_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/131",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.132": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/132",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.132_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/132",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.133": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/133",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.133_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/133",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.134": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/134",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.134_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/134",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.135": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/135",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.135_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/135",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.136": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/136",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.136_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/136",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.137": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/137",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.137_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/137",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.138": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/138",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.138_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/138",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.139": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/139",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.139_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/139",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.140": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/140",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.140_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/140",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.141": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/141",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.141_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/141",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.142": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/142",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.142_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/142",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.143": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/143",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.143_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/143",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.144": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/144",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.144_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/144",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.145": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/145",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.145_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/145",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.146": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/146",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.146_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/146",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.147": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/147",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.147_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/147",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.148": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/148",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.148_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/148",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.149": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/149",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.149_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/149",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.150": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/150",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.150_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/150",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.151": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/151",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.151_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/151",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.152": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/152",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.152_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/152",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.153": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/153",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.153_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/153",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.154": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/154",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.154_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/154",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.155": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/155",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.155_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/155",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.156": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/156",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.156_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/156",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.157": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/157",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.157_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/157",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.158": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/158",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.158_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/158",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.159": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/159",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.159_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/159",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.160": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/160",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.160_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/160",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.161": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/161",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.161_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/161",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.162": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/162",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.162_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/162",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.163": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/163",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.163_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/163",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.164": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/164",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.164_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/164",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.165": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/165",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.165_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/165",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.166": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/166",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.166_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/166",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.167": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/167",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.167_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/167",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.168": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/168",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.168_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/168",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.169": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/169",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.169_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/169",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.170": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/170",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.170_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/170",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.171": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/171",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.171_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/171",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.172": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/172",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.172_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/172",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.173": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/173",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.173_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/173",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.174": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/174",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.174_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/174",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.175": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/175",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.175_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/175",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.176": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/176",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.176_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/176",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.177": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/177",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.177_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/177",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.178": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/178",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.178_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/178",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.179": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/179",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.179_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/179",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.180": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/180",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.180_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/180",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.181": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/181",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.181_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/181",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.182": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/182",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.182_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/182",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.183": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/183",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.183_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/183",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.184": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/184",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.184_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/184",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.185": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/185",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.185_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/185",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.186": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/186",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.186_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/186",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.187": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/187",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.187_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/187",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.188": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/188",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.188_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/188",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.189": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/189",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.189_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/189",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.190": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/190",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.190_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/190",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.191": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/191",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.191_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/191",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.192": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/192",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.192_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/192",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.193": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/193",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.193_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/193",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.194": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/194",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.194_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/194",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.195": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/195",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.195_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/195",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.196": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/196",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.196_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/196",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.197": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/197",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.197_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/197",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.198": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/198",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.198_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/198",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.199": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/199",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.199_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/199",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.200": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/200",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.200_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/200",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.201": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/201",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.201_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/201",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.202": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/202",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.202_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/202",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.203": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/203",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.203_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/203",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.204": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/204",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.204_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/204",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.205": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/205",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.205_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/205",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.206": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/206",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.206_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/206",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.207": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/207",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.207_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/207",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.208": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/208",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.208_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/208",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.209": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/209",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.209_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/209",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.210": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/210",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.210_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/210",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.211": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/211",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.211_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/211",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.212": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/212",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.212_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/212",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.213": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/213",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.213_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/213",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.214": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/214",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.214_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/214",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.215": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/215",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.215_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/215",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.216": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/216",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.216_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/216",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.217": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/217",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.217_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/217",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.218": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/218",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.218_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/218",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.219": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/219",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.219_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/219",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.220": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/220",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.220_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/220",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.221": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/221",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.221_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/221",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.222": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/222",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.222_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/222",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.223": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/223",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.223_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/223",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.224": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/224",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.224_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/224",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.225": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/225",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.225_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/225",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.226": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/226",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.226_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/226",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.227": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/227",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.227_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/227",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.228": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/228",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.228_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/228",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.229": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/229",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.229_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/229",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.230": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/230",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.230_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/230",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.231": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/231",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.231_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/231",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.232": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/232",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.232_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/232",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.233": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/233",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.233_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/233",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.234": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/234",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.234_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/234",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.235": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/235",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.235_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/235",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.236": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/236",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.236_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/236",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.237": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/237",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.237_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/237",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.238": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/238",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.238_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/238",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.239": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/239",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.239_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/239",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.240": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/240",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.240_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/240",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.241": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/241",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.241_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/241",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.242": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/242",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.242_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/242",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.243": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/243",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.243_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/243",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.244": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/244",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.244_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/244",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.245": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/245",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.245_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/245",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.246": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/246",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.246_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/246",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.247": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/247",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.247_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/247",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.248": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/248",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.248_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/248",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.249": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/249",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.249_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/249",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.250": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/250",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.250_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/250",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.251": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/251",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.251_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/251",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.252": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/252",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.252_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/252",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.253": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/253",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.253_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/253",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.254": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/254",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.254_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/254",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.255": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/255",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.255_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/255",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.256": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/256",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.256_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/256",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.257": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/257",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.257_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/257",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.258": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/258",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.258_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/258",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.259": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/259",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.259_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/259",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.260": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/260",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.260_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/260",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.261": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/261",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.261_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/261",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.262": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/262",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.262_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/262",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.263": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/263",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.263_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/263",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.264": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/264",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.264_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/264",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.265": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/265",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.265_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/265",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.266": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/266",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.266_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/266",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.267": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/267",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.267_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/267",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.268": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/268",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.268_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/268",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.269": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/269",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.269_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/269",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.270": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/270",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.270_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/270",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.271": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/271",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.271_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/271",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.272": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/272",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.272_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/272",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.273": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/273",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.273_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/273",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.274": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/274",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.274_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/274",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.275": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/275",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.275_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/275",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.276": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/276",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.276_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/276",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.277": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/277",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.277_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/277",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.278": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/278",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.278_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/278",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.279": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/279",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.279_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/279",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.280": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/280",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.280_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/280",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.281": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/281",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.281_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/281",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.282": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/282",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.282_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/282",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.283": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/283",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.283_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/283",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.284": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/284",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.284_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/284",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.285": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/285",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.285_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/285",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.286": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/286",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.286_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/286",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.287": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/287",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.287_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/287",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.288": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/288",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.288_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/288",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.289": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/289",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.289_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/289",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.290": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/290",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.290_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/290",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.291": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/291",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.291_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/291",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.292": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/292",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.292_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/292",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.293": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/293",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.293_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/293",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.294": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/294",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.294_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/294",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.295": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/295",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.295_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/295",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.296": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/296",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.296_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/296",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.297": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/297",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.297_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/297",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.298": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/298",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.298_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/298",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.299": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/299",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.299_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/299",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.300": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/300",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.300_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/300",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.301": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/301",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.301_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/301",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.302": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/302",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.302_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/302",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.303": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/303",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.303_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/303",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.304": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/304",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.304_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/304",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.305": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/305",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.305_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/305",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.306": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/306",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.306_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/306",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.307": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/307",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.307_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/307",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.308": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/308",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.308_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/308",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.309": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/309",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.309_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/309",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.310": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/310",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.310_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/310",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.311": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/311",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.311_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/311",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.312": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/312",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.312_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/312",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.313": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/313",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.313_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/313",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.314": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/314",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.314_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/314",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.315": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/315",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.315_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/315",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.316": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/316",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.316_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/316",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.317": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/317",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.317_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/317",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.318": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/318",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.318_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/318",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.319": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/319",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.319_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/319",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.320": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/320",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.320_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/320",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.321": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/321",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.321_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/321",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.322": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/322",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.322_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/322",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.323": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/323",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.323_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/323",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.324": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/324",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.324_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/324",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.325": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/325",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.325_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/325",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.326": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/326",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.326_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/326",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.327": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/327",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.327_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/327",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.328": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/328",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.328_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/328",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.329": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/329",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.329_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/329",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.330": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/330",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.330_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/330",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.331": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/331",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.331_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/331",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.332": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/332",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.332_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/332",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.333": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/333",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.333_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/333",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.334": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/334",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.334_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/334",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.335": {
+   "category": "ui",
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/335",
+     "is3D": false,
+     "volume": 1.0
+    }
+   ]
+  },
+  "spectral.i.voice_ja.335_3d": {
+   "category": "record",
+   "min_distance": 3.0,
+   "max_distance": 48.0,
+   "sounds": [
+    {
+     "name": "sounds/spectral/i/voice_ja/335",
+     "is3D": true,
+     "volume": 1.0
+    }
+   ]
   }
  }
 }

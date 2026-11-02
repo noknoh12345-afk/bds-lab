@@ -9,13 +9,14 @@
 // bundles: inside one, the notes keep their distances to the millisecond. A 3D sound plays as it was made for 100-200 ms
 // (SPEC.md), so the speaker starts its notes `ahead` ms earlier still, and that time passes in the silence.
 import { system, Player, Dimension, Vector3, SoundInstance } from '@minecraft/server';
-import { BANK, GM, DRUMS, LEAD, Inst } from './bank';
+import { BANK, GM, DRUMS, LEAD, VOICES, Inst } from './bank';
 
 export const NOTES_FORMAT = 'spectral-notes/1';
 export interface NoteMeta { format: string; id: string; title: string; artist?: string; seconds: number; notes: number; programs: number[]; }
 export interface NoteSong { meta: NoteMeta; data?: string; bytes?: Uint8Array; dec?: Notes; pasted?: string; }
-/** a song's notes in the order they start: start (ms), length (ms), key, velocity, program (an index into meta.programs) */
-export interface Notes { n: number; on: Float64Array; dur: Float32Array; key: Uint8Array; vel: Uint8Array; prog: Uint8Array; }
+/** a song's notes in the order they start: start (ms), length (ms), key (a voice's unit), velocity, program (an index into
+ *  meta.programs), cents (version 2: an instrument's off its key; a voice's against the voice's own pitch) */
+export interface Notes { n: number; on: Float64Array; dur: Float32Array; key: Uint8Array; vel: Uint8Array; prog: Uint8Array; cents?: Int16Array; }
 
 export const isNoteMeta = (m: { format?: unknown }) => typeof m.format === 'string' && m.format.startsWith('spectral-notes/');
 
@@ -39,19 +40,22 @@ function b64(s: string): Uint8Array {
 export function decodeNotes(song: NoteSong): Notes {
   if (song.dec) return song.dec;
   const b = song.bytes ?? b64(song.data ?? '');
-  if (b[0] !== 1) throw new Error(`unknown note data (version ${b[0]})`);
+  if (b[0] !== 1 && b[0] !== 2) throw new Error(`unknown note data (version ${b[0]})`);
+  const v2 = b[0] === 2;
   let i = 1;
   const rv = () => { let n = 0, sh = 0; for (;;) { if (i >= b.length) throw new Error('note data cut short'); const c = b[i++]; n += (c & 0x7f) * Math.pow(2, sh); sh += 7; if (!(c & 0x80)) return n; } };
-  const on: number[] = [], dur: number[] = [], key: number[] = [], vel: number[] = [], prog: number[] = [];
+  const on: number[] = [], dur: number[] = [], key: number[] = [], vel: number[] = [], prog: number[] = [], cents: number[] = [];
   let t = 0;
   while (i < b.length) {
     t += rv(); const d = rv();
     if (i + 3 > b.length) throw new Error('note data cut short');
     on.push(t / 4); dur.push(d); key.push(b[i]); vel.push(b[i + 1]); prog.push(b[i + 2]); i += 3;
+    if (v2) { const z = rv(); cents.push(z % 2 ? -(z + 1) / 2 : z / 2); }
   }
   const P = song.meta.programs.length;
   if (prog.some((p) => p >= P)) throw new Error('a note names a program the song does not list');
-  return (song.dec = { n: on.length, on: Float64Array.from(on), dur: Float32Array.from(dur), key: Uint8Array.from(key), vel: Uint8Array.from(vel), prog: Uint8Array.from(prog) });
+  return (song.dec = { n: on.length, on: Float64Array.from(on), dur: Float32Array.from(dur), key: Uint8Array.from(key), vel: Uint8Array.from(vel), prog: Uint8Array.from(prog),
+    ...(v2 ? { cents: Int16Array.from(cents) } : {}) });
 }
 
 // ------------------------------------------------------------------ which sample plays a note
@@ -77,14 +81,21 @@ const nearest: number[][][] = BANK.map((inst) => {
   }
   return t;
 });
-/** [instrument, sample, the sample's key] for a note: drums by their key, the rest the nearest key then the nearest layer */
-export function pick(code: number, key: number, vel: number): [number, number, number] | undefined {
-  if (code >= 128) { const d = DRUMS[key]; if (!d) return undefined; return [d[0], d[1], BANK[d[0]].samples[d[1]][0]]; }
+/** [instrument, sample, pitch ratio] for a note: drums by their key, a voice (program 200 + v) its unit at the pitch layer
+ *  nearest its cents, the rest the nearest key then the nearest velocity layer */
+export function pick(code: number, key: number, vel: number, cents = 0): [number, number, number] | undefined {
+  if (code >= 200) {
+    const v = VOICES[code - 200]; if (!v || key >= v.units.length) return undefined;
+    const st = cents / 100; let l = 0;
+    v.layers.forEach((x, j) => { if (Math.abs(x - st) < Math.abs(v.layers[l] - st)) l = j; });
+    return [v.inst, key * v.layers.length + l, Math.pow(2, (st - v.layers[l]) / 12)];
+  }
+  if (code >= 128) { const d = DRUMS[key]; if (!d) return undefined; return [d[0], d[1], 1]; }
   const ii = instOf(code); if (ii < 0) return undefined;
   const inst = BANK[ii], list = nearest[ii][Math.max(0, Math.min(127, key))];
   let j = list[0];
   for (const c of list) if (Math.abs(inst.samples[c][1] - vel) < Math.abs(inst.samples[j][1] - vel)) j = c;
-  return [ii, j, inst.samples[j][0]];
+  return [ii, j, Math.pow(2, (key - inst.samples[j][0]) / 12 + cents / 1200)];
 }
 
 // ------------------------------------------------------------------ the player
@@ -151,12 +162,12 @@ export class NotePlayer {
 
   private noteOn(i: number, t: number, placed = true) {
     const nt = this.nt, sp = this.o.speed, code = this.song.meta.programs[nt.prog[i]];
-    const drum = code >= 128;
-    const key = drum ? nt.key[i] : nt.key[i] + this.o.semis;
-    const got = pick(code, drum ? nt.key[i] : Math.max(0, Math.min(127, Math.round(key))), nt.vel[i]);
+    const drum = code >= 128 && code < 200, voice = code >= 200;
+    const cents = (nt.cents ? nt.cents[i] : 0) + (drum ? 0 : voice ? this.o.semis * 100 : 0);
+    const key = drum || voice ? nt.key[i] : nt.key[i] + this.o.semis;
+    const got = pick(code, drum || voice ? nt.key[i] : Math.max(0, Math.min(127, Math.round(key))), nt.vel[i], voice ? cents : cents + (key - Math.round(key)) * 100);
     if (!got) { this.skipped++; return; }
-    const [ii, j, root] = got, inst = BANK[ii], smp = inst.samples[j];
-    const p = drum ? 1 : Math.pow(2, (key - root) / 12);
+    const [ii, j, p] = got, inst = BANK[ii], smp = inst.samples[j];
     if (!(p >= 0.01 && p <= 10)) { this.skipped++; return; }
     const delay = placed ? Math.max(0, (nt.on[i] - t) / sp) : 0, late = Math.max(0, (t - nt.on[i]) / sp);   // real ms
     if (late > smp[2] / p - 30) { this.skipped++; return; }                                    // over before it could sound

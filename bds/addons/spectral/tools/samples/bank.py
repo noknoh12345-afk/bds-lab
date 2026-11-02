@@ -48,10 +48,81 @@ INSTRUMENTS = [
      'pattern': r'JHPiano_NoSus_Close_(?P<note>[A-G]#?\d)_(?P<layer>vl\d)_rr1\.wav',
      'layers': {'vl2': 48, 'vl3': 84, 'vl4': 118}, 'maxs': (7.0, 2.6), 'release': 0.18, 'q': '2', 'stereo': True,
      'gm': list(range(0, 8))},
+    # ---- General MIDI's other families (CC0: VSCO 2 CE and VCSL), one velocity layer each (the dynamics from the velocity)
+    {'id': 'strings', 'name': 'Strings (VSCO 2 CE violin and cello sections)', 'release': 0.25, 'q': '1', 'stereo': True, 'maxs': (6.0, 4.0),
+     'sources': [{'repo': 'VSCO-2-CE', 'folder': 'Strings/Violin Section', 'sparse': 'VlnEns_susVib_*_v2.wav', 'pattern': r'VlnEns_susVib_(?P<note>[A-G]#?\d)_v2\.wav', 'from': 55},
+                 {'repo': 'VSCO-2-CE', 'folder': 'Strings/Cello Section', 'sparse': 'susvib_*_v1_1.wav', 'pattern': r'susvib_(?P<note>[A-G]#?\d)_v1_1\.wav'}],
+     'gm': [40, 41, 42, 43, 44, 48, 49, 50, 51, 52, 53, 54, 55, 110]},
+    {'id': 'bass', 'name': 'Contrabass pizzicato (VSCO 2 CE)', 'release': 0.12, 'q': '1', 'maxs': (3.0, 2.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Strings/Solo Contrabass/Pizz', 'sparse': 'BKCtbss_Pizz_*_v1_rr1.wav', 'pattern': r'BKCtbss_Pizz_(?P<note>[A-G]#?\d)_v1_rr1\.wav',
+     'gm': list(range(32, 40))},
+    {'id': 'harp', 'name': 'Harp (VSCO 2 CE)', 'release': 0.6, 'q': '1', 'stereo': True, 'maxs': (5.0, 2.5),
+     'repo': 'VSCO-2-CE', 'folder': 'Strings/Harp', 'sparse': 'KSHarp_*_mf.wav', 'pattern': r'KSHarp_(?P<note>[A-G]#?\d)_mf\.wav', 'gm': [45, 46, 104, 105, 106, 107]},
+    {'id': 'guitar', 'name': 'Strumstick, finger-picked (VCSL)', 'release': 0.3, 'q': '1', 'maxs': (4.0, 2.5),
+     'repo': 'VCSL', 'folder': 'Chordophones/Composite Chordophones/Strumstick/Finger', 'sparse': '*_vl2_rr1.wav',
+     'pattern': r'Strumstick_Finger_Str\d_Main_(?P<note>[A-G]#?\d)_vl2_rr1\.wav', 'gm': [15] + list(range(24, 32))},
+    {'id': 'organ', 'name': 'Pipe organ (VCSL, Rode)', 'release': 0.08, 'q': '1', 'stereo': True, 'maxs': (4.0, 3.0),
+     'repo': 'VCSL', 'folder': 'Aerophones/Edge-blown Aerophones/Pipe Organ/Loud', 'pattern': r'Rode_Man3Open_(?P<note>[A-G]#?\d)\.wav', 'gm': list(range(16, 24))},
+    {'id': 'trumpet', 'name': 'Trumpet (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Brass/Trumpet', 'sparse': 'Sum_SHTrumpet_susvib_*_v2_rr1.wav', 'pattern': r'Sum_SHTrumpet_susvib_(?P<note>[A-G]#?\d)_v2_rr1\.wav',
+     'gm': [56, 59, 61, 62, 63]},
+    {'id': 'horn', 'name': 'French horn (VSCO 2 CE)', 'release': 0.2, 'q': '1', 'maxs': (4.0, 3.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Brass/F Horn', 'sparse': 'MOHorn_sus_*_v1_1.wav', 'pattern': r'MOHorn_sus_(?P<note>[A-G]#?\d)_v1_1\.wav', 'gm': [60]},
+    {'id': 'trombone', 'name': 'Tenor trombone (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Brass/Tenor Trombone', 'sparse': 'tenortbn_sus_*_v2_1.wav', 'pattern': r'tenortbn_sus_(?P<note>[A-G]#?\d)_v2_1\.wav', 'gm': [57]},
+    {'id': 'tuba', 'name': 'Tuba (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Brass/Tuba/sus', 'sparse': 'Tuba3_sus_*_v1_rr1_Mid.wav', 'pattern': r'Tuba3_sus_(?P<note>[A-G]#?\d)_v1_rr1_Mid\.wav', 'gm': [58]},
+    {'id': 'sax', 'name': 'Tenor saxophone (VCSL)', 'release': 0.12, 'q': '1', 'maxs': (3.5, 3.0),
+     'repo': 'VCSL', 'folder': 'Aerophones/Reed Aerophones/Tenor Saxophone/Non-Vibrato', 'sparse': '*_vl2_rr1.wav',
+     'pattern': r'BrettTenor_NV_Main_(?P<note>[A-G]#?\d)_vl2_rr1\.wav', 'gm': [64, 65, 66, 67]},
+    {'id': 'oboe', 'name': 'Oboe (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Oboe/Sus', 'sparse': 'Oboe_Sus_*_v3_Main.wav', 'pattern': r'Oboe_Sus_(?P<note>[A-G]#?\d)_v3_Main\.wav', 'gm': [68, 69, 109, 111]},
+    {'id': 'bassoon', 'name': 'Bassoon (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Bassoon/sus', 'sparse': 'PSBassoon_*_v2_1.wav', 'pattern': r'PSBassoon_(?P<note>[A-G]#?\d)_v2_1\.wav', 'gm': [70]},
+    {'id': 'clarinet', 'name': 'Clarinet (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Clarinet', 'sparse': 'DCClar_susLong_*_v2_rr1_sum.wav', 'pattern': r'DCClar_susLong_(?P<note>[A-G]#?\d)_v2_rr1_sum\.wav', 'gm': [71]},
+    {'id': 'flute', 'name': 'Flute (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Flute', 'sparse': 'LDFlute_susNV_*_v1_1.wav', 'pattern': r'LDFlute_susNV_(?P<note>[A-G]#?\d)_v1_1\.wav', 'gm': list(range(72, 80))},
+    {'id': 'vibes', 'name': 'Vibraphone, hard mallets (VCSL)', 'release': 0.5, 'q': '1', 'maxs': (4.0, 2.5),
+     'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Vibraphone/Hard Mallets', 'sparse': 'Vibes_hard_*_v2_rr1_Main.wav',
+     'pattern': r'Vibes_hard_(?P<note>[A-G]#?\d)_v2_rr1_Main\.wav', 'gm': [8, 11]},
+    {'id': 'marimba', 'name': 'Marimba (VCSL)', 'release': 0.3, 'q': '1', 'maxs': (2.5, 1.5),
+     'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Marimba', 'sparse': 'Marimba_hit_Outrigger_*_med_01.wav',
+     'pattern': r'Marimba_hit_Outrigger_(?P<note>[A-G]#?\d)_med_01\.wav', 'gm': [12, 108, 114]},
+    {'id': 'xylo', 'name': 'Xylophone (VSCO 2 CE)', 'release': 0.2, 'q': '1', 'maxs': (1.5, 1.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Percussion/Xylo', 'pattern': r'Xylo_Medium_(?P<note>[A-G]#?\d)_ff_01_far\.wav', 'gm': [13, 115]},
+    {'id': 'glock', 'name': 'Glockenspiel (VSCO 2 CE)', 'release': 0.6, 'q': '1', 'maxs': (3.0, 2.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Percussion/Glock', 'pattern': r'glock_medium_(?P<note>[A-G]#?\d)\.wav', 'gm': [9, 10, 112]},
+    {'id': 'chimes', 'name': 'Tubular bells (VCSL)', 'release': 1.0, 'q': '1', 'maxs': (5.0, 4.0),
+     'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Tubular Bells 1', 'pattern': r'chimes_(?P<note>[A-G]#?\d)_(?:f|ff|mf)_rr1\.wav', 'gm': [14]},
+    {'id': 'timpani', 'name': 'Timpani (VSCO 2 CE)', 'release': 0.5, 'q': '1', 'maxs': (3.5, 3.0),
+     'repo': 'VSCO-2-CE', 'folder': 'Percussion/Timpani', 'pattern': r'.*?(?P<note>[A-G]#?\d).*?\.wav', 'gm': [47, 116, 117, 118]},
+    {'id': 'drums', 'name': 'Drum kit (VCSL)', 'release': 0.05, 'q': '1', 'maxs': (2.5, 2.5), 'gm': [],
+     'kit': [([35, 36], {'repo': 'VCSL', 'folder': 'Membranophones/Struck Membranophones/Bass Drum 1'}, 'BDrumNew_hit_v3_rr1_Sum.wav'),
+             ([38, 40], {'repo': 'VCSL', 'folder': 'Membranophones/Struck Membranophones/Snare Drum, Modern 1'}, 'Snare2_HitNS_v4_rr1_Mid.wav'),
+             ([37], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Claves'}, 'Claves1_Hit_v2_rr1_Mid.wav'),
+             ([39], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Claps'}, 'Clap_rr1.wav'),
+             ([42, 44], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Hi-Hat Cymbal'}, 'HiHat_HitC_v2_rr1_Mid.wav'),
+             ([46], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Hi-Hat Cymbal'}, 'HiHat_HitO_rr1_Mid.wav'),
+             ([41, 43, 45], {'repo': 'VCSL', 'folder': 'Membranophones/Struck Membranophones/Legacy Toms'}, 'tenor_lower/tenor_f_rr1.wav'),
+             ([47, 48, 50], {'repo': 'VCSL', 'folder': 'Membranophones/Struck Membranophones/Legacy Toms'}, 'tenor_higher/tenorH_f_rr1.wav'),
+             ([49, 52, 55, 57], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Suspended Cymbal 1'}, 'susCymb1_hit_f1.wav'),
+             ([51, 53, 59], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Suspended Cymbal 1'}, 'susCymb1_hit_stick_mp1.wav'),
+             ([54], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Tambourine 1'}, 'Tamb1_Hit_v2_rr1_Mid.wav'),
+             ([56], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Cowbells'}, 'Cowbell1_Hit_v3_rr1_Mid.wav'),
+             ([60, 62], {'repo': 'VCSL', 'folder': 'Membranophones/Struck Membranophones/Bongos'}, 'BongoH_Hit1_v2_rr1_Mid.wav'),
+             ([61, 63, 64], {'repo': 'VCSL', 'folder': 'Membranophones/Struck Membranophones/Conga'}, 'Conga_HitN_v2_rr1_Sum.wav'),
+             ([67, 68], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Agogo Bells'}, 'Agogo_High_v2_rr1_Mid.wav'),
+             ([69], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Cabasa'}, 'Cabasa1_Hit_rr1_Mid.wav'),
+             ([70, 82], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Shaker, Small'}, 'Mid_ShakerDouble_Down_rr1.wav'),
+             ([73, 74], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Guiro'}, 'Guiro_Hit_rr1_Mid.wav'),
+             ([75], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Claves'}, 'Claves2_Hit_v2_rr1_Mid.wav'),
+             ([76, 77], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Woodblock'}, 'wood_click_f_rr1.wav'),
+             ([80, 81], {'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Triangles'}, 'Legacy/1/triangle1_hit_mp.wav')]},
     # a click for measuring (made here, no source): 1.5 ms of noise in a Hann window over a 2 kHz ping of 4 ms — an onset
     # sharp to a sample. General MIDI's wood blocks (drum keys 76, 77) play it
     {'id': 'click', 'name': 'Click (measuring)', 'gen': 'click', 'release': 0.01, 'q': '4', 'stereo': False,
-     'drums': {76: 0, 77: 0}},
+     'drums': {34: 0}},
 ]
 
 
@@ -67,18 +138,26 @@ def gen(kind):
     raise ValueError(kind)
 
 
-def fetch(cache, inst):
-    repo = os.path.join(cache, inst['repo'])
+def fetch(cache, src):
+    """the source's folder, its files checked out (only those `sparse` names, a glob under the folder: the rest are never fetched)"""
+    repo = os.path.join(cache, src['repo'])
     if not os.path.isdir(os.path.join(repo, '.git')):
         os.makedirs(cache, exist_ok=True)
-        subprocess.run(['git', 'clone', '-q', '--depth', '1', '--filter=blob:none', '--no-checkout', REPOS[inst['repo']], repo], check=True)
+        subprocess.run(['git', 'clone', '-q', '--depth', '1', '--filter=blob:none', '--no-checkout', REPOS[src['repo']], repo], check=True)
         subprocess.run(['git', '-C', repo, 'sparse-checkout', 'init', '--no-cone'], check=True)
     have = subprocess.run(['git', '-C', repo, 'sparse-checkout', 'list'], capture_output=True, text=True).stdout.split('\n')
-    want = inst['folder'].rstrip('/') + '/*'
-    if want not in have:
+    want = src['folder'].rstrip('/') + '/' + src.get('sparse', '*')
+    if want not in have and src['folder'].rstrip('/') + '/*' not in have:
         subprocess.run(['git', '-C', repo, 'sparse-checkout', 'add', want], check=True)
         subprocess.run(['git', '-C', repo, 'checkout', '-q', 'HEAD'], check=True)
-    return os.path.join(repo, inst['folder'])
+    return os.path.join(repo, src['folder'])
+
+
+def sources(inst):
+    """an instrument's sources: its own repo/folder/pattern, or a list (sources), each with keys only below / from a key"""
+    if inst.get('sources'):
+        return [{'layers': inst.get('layers'), **x} for x in inst['sources']]
+    return [{k: inst[k] for k in ('repo', 'folder', 'pattern', 'layers', 'sparse') if k in inst}]
 
 
 def read(path):
@@ -135,20 +214,33 @@ def build(inst, cache):
             rows.append([k, v, int(round(len(y) / SR * 1000)), round(float(np.sqrt((y ** 2).mean())), 4)])
         return {'id': inst['id'], 'name': inst['name'], 'release': inst['release'], 'sustain': False, 'stereo': False,
                 'samples': rows, 'gm': inst.get('gm', []), 'drums': inst.get('drums')}, total
-    folder = fetch(cache, inst)
-    pat = re.compile(inst['pattern'])
     found = []
-    for f in sorted(os.listdir(folder)):
-        m = pat.fullmatch(f)
-        if not m:
-            continue
-        layer = m.groupdict().get('layer') or ''
-        if inst.get('layers') and layer not in inst['layers']:
-            continue
-        key = midi_of(m.group('note'))
-        if key is not None:
-            found.append((key, inst['layers'].get(layer, 100) if inst.get('layers') else 100, os.path.join(folder, f)))
-    found.sort()
+    if inst.get('kit'):
+        # a drum kit: (General MIDI keys, source, file) — one sample each, every key of it plays it
+        for keys, src, f in inst['kit']:
+            folder = fetch(cache, src)
+            found.append((keys[0], 100, os.path.join(folder, f)))
+    for src in ([] if inst.get('kit') else sources(inst)):
+        folder = fetch(cache, src)
+        pat = re.compile(src['pattern'])
+        have = {k for k, _, _ in found}
+        for dp, _, fs in os.walk(folder):
+            for f in sorted(fs):
+                rel = os.path.relpath(os.path.join(dp, f), folder)
+                m = pat.fullmatch(rel)
+                if not m:
+                    continue
+                layer = m.groupdict().get('layer') or ''
+                if src.get('layers') and layer not in src['layers']:
+                    continue
+                key = midi_of(m.group('note')) if m.groupdict().get('note') else 60
+                if key is None or key in have or key >= src.get('below', 999) or key < src.get('from', -1):
+                    continue
+                found.append((key, src['layers'].get(layer, 100) if src.get('layers') else 100, os.path.join(dp, f)))
+    if not found:
+        raise SystemExit(f"{inst['id']}: no samples found")
+    if not inst.get('kit'):
+        found.sort()
     xs = [(k, v, trim(read(p), k, inst)) for k, v, p in found]
     top = max(np.abs(y).max() for _, _, y in xs)
     g = 0.89 / top                                       # the loudest sample of the instrument at -1 dBFS
@@ -160,8 +252,11 @@ def build(inst, cache):
         rms = float(np.sqrt((y[: int(0.3 * SR)] ** 2).mean()))
         rows.append([k, v, int(round(len(y) / SR * 1000)), round(rms, 4)])
         print(f"  {inst['id']} {i}: key {k} vel {v} {len(y) / SR:.2f} s", file=sys.stderr)
+    drums = inst.get('drums')
+    if inst.get('kit'):
+        drums = {k: i for i, (keys, _, _) in enumerate(inst['kit']) for k in keys}
     return {'id': inst['id'], 'name': inst['name'], 'release': inst['release'], 'sustain': bool(inst.get('sustain')),
-            'stereo': bool(inst.get('stereo')), 'samples': rows, 'gm': inst.get('gm', []), 'drums': inst.get('drums')}, total
+            'stereo': bool(inst.get('stereo')), 'samples': rows, 'gm': inst.get('gm', []), 'drums': drums}, total
 
 
 def write_defs(bank):
@@ -187,6 +282,8 @@ def write_ts(bank):
     for i, inst in enumerate(bank):
         for key, s in (inst.get('drums') or {}).items():
             drums[int(key)] = [i, s]
+    voices = [{'inst': i, 'id': b['id'], 'units': b['voice']['units'], 'pre': b['voice']['pre'], 'layers': b['voice']['layers'],
+               'f0': b['voice']['f0'], 'source': b['voice'].get('source', '')} for i, b in enumerate(bank) if b.get('voice')]
     insts = ',\n  '.join(json.dumps({k: inst[k] for k in ('id', 'name', 'release', 'sustain', 'stereo', 'samples')}, separators=(',', ':')) for inst in bank)
     ts = f"""// generated by tools/samples/bank.py — the instrument bank in rp/sounds/spectral/i (do not edit)
 /** seconds of silence in front of every sample: a note is placed inside its tick by seekTo(LEAD - delay * pitch) */
@@ -201,6 +298,10 @@ export const BANK: Inst[] = [
 export const GM: number[] = {json.dumps(gm)};
 /** General MIDI drum key (channel 10) -> [instrument, sample] */
 export const DRUMS: Record<number, [number, number]> = {json.dumps(drums)};
+/** a voice (tools/samples/voice.py): its units (one a mora, in katakana) are the samples of BANK[inst], unit u at pitch layer l
+ *  the sample u * layers.length + l; pre: ms the consonant comes before the vowel; layers: semitones off f0 (Hz) each was made at */
+export interface Voice {{ inst: number; id: string; units: string[]; pre: number[]; layers: number[]; f0: number; source: string; }}
+export const VOICES: Voice[] = {json.dumps(voices, ensure_ascii=False)};
 """
     open(os.path.join(UNIT, 'src', 'bank.ts'), 'w').write(ts)
 

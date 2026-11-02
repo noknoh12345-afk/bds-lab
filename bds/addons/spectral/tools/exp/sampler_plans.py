@@ -105,5 +105,57 @@ def main():
     print('plan p01_sampler:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
 
 
+SENTENCES = {'speech_hello': 'こんにちは、私はマインクラフトの中で話しています。',
+             'speech_weather': '今日はいい天気ですね。一緒に遊びましょう！',
+             'speech_cave': '東の森に、ダイヤモンドの洞窟があるらしいよ。',
+             'speech_piano': 'このピアノの音は、本物の楽器を録音したものです。'}
+
+
+def p02(work):
+    """p02: speech by the voice's units (headphones, speaker) against the same speech through the sine engine (what the voice
+    chat path plays today), and the étude by the sampler against the étude through the sine engine. References in `work`"""
+    import subprocess
+    sys.path.insert(0, os.path.join(UNIT, 'tools'))
+    import speech as SP
+    B = N.bank(); vs = N.voices(B)
+    os.makedirs(work, exist_ok=True)
+    ids = []
+    for sid, text in SENTENCES.items():
+        notes = SP.plan(SP.morae(text), vs[0], prog=200)
+        song = N.encode(notes, sid, text, 'Spectral Player (speech)')
+        json.dump(song, open(os.path.join(PACK, f'{sid}.song.json'), 'w'), separators=(',', ':'), ensure_ascii=False)
+        ref = os.path.join(work, f'{sid}.wav')
+        N.render(N.decode(song), ref, master=1.0)
+        ids.append(sid)
+    demo = json.loads(open(os.path.join(UNIT, 'src', 'songs', 'notes_demo.ts')).read().split('export default ', 1)[1].rstrip().rstrip(';'))
+    N.render(N.decode(demo), os.path.join(work, 'piano_demo.wav'))
+    # the same through the sine engine: the converter's default (48 voices; the phone plays 24 of them)
+    for sid in ids + ['piano_demo']:
+        out = os.path.join(PACK, f'{sid}_sine.song.json')
+        subprocess.run(['python3', os.path.join(UNIT, 'tools', 'spectral.py'), os.path.join(work, f'{sid}.wav'), '--voices', '48',
+                        '--id', f'{sid}_sine', '--title', f'{sid} (sine)', '--out', out[: -len('.song.json')]], check=True, capture_output=True)
+        if not os.path.exists(out) and os.path.exists(out + '.song.json'):
+            os.rename(out + '.song.json', out)
+    S = 'spectral:sampler'
+    lines = [f'do execute as @a run {S} 4 250 28 120']
+    for sid in ids:
+        lines += rec(f'sv_{sid}', [], f'spectral:play {sid}', 6500)
+        lines += rec(f'ss_{sid}', [], f'spectral:play {sid}_sine', 6500)
+    lines += rec('sv3_speech_hello', [], 'spectral:play speech_hello speaker', 6800)
+    lines += rec('pv_piano_demo', [], 'spectral:play piano_demo', 22500)
+    lines += rec('ps_piano_demo', [], 'spectral:play piano_demo_sine', 22500)
+    head = ["# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+            "# p02（tools/exp/sampler_plans.py p02）: 声の素片（MIDI と同じ原理の読み上げ、Kokoro-82M の声）を ヘッドホン・3D で、同じ話を正弦波の道で。",
+            "# ピアノのエチュードをサンプラーと正弦波の道で。録音を手元の Whisper で聞き取り（文字の誤り率）と ViSQOL（手元の参照と）"]
+    songs = ','.join(ids + [f'{x}_sine' for x in ids] + ['piano_demo_sine'])
+    plan = {'header': head, 'arms': [], 'setup': ['tp @s 0 -60 0 0 0'], 'prep': [f'audio song {songs} pack=tools/exp/packs/notes'],
+            'sections': [{'title': 'speech', 'lines': lines}]}
+    json.dump(plan, open(os.path.join(HERE, 'queue', 'p02_speech_piano.json'), 'w'), ensure_ascii=False, indent=1)
+    print('plan p02_speech_piano:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
+
+
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == 'p02':
+        p02(sys.argv[2] if len(sys.argv) > 2 else '/tmp/sampler_refs')
+    else:
+        main()

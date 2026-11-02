@@ -16,6 +16,8 @@ import programs, { Program } from './calib_programs';
 import { readPart, joinParts, decodeSongJob, songHeader, payloadText, payloadFrom, Part, SongMeta, FIELD_CHARS, PHONE_CHARS } from './songtext';
 import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes } from './notes';
 import notesDemo from './songs/notes_demo';
+import { saySong } from './say';
+import { VOICES } from './bank';
 
 // ------------------------------------------------------------------ constants (same as tools/spectral.py)
 const SILENT = 1e-4;            // voices never go to 0 so the client keeps every loop alive
@@ -776,6 +778,14 @@ cmd('spectral:songs', 'List the songs', {}, (p) => {
   return `§7${songs.size + noteSongs.size} songs — /spectral:play <id> [phones|speaker] · /spectral:paste adds one`;
 });
 cmd('spectral:status', 'Playback state and engine load', {}, (p) => notePlays.get(p.id)?.status() ?? mine(p)?.status() ?? 'status: idle');
+cmd('spectral:say', 'Read kana aloud with the voice, mora by mora like notes (kanji: tools/speech.py makes a speech song): headphones, or the speaker for everyone near',
+  { text: 'string', 'out?': ['phones', 'speaker'], 'speed?': 'float' }, async (p, a) => {
+    if (!VOICES.length) return '§cno voice in this pack';
+    const r = saySong(a.text, 0, 150 / Math.max(0.25, Math.min(4, a.speed ?? 1)));
+    if (!r) return '§cnothing to say: kana only in the game (tools/speech.py reads kanji, the converter page too)';
+    const said = await playNotes(p, r.song, (a.out ?? 'phones') as Mode);
+    return r.skipped ? `${said} §7(${r.skipped} characters not kana: not read)` : said;
+  });
 cmd('spectral:sampler', 'Note songs (MIDI, the instrument bank): notes of this many ticks started together, each placed inside its tick by seekTo (0 = no placement: every note at the start of its tick), ms more ahead for a 3D speaker, at most this many notes at once, level in percent',
   { bundle: 'int', 'ahead?': 'int', 'voices?': 'int', 'volume?': 'int', 'log?': 'bool' }, (p, a) => {
     SAMPLER.place = a.bundle > 0; SAMPLER.bundle = Math.max(1, Math.min(40, a.bundle || 1));

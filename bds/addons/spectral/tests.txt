@@ -699,3 +699,26 @@ until note 103 3000
 ~ @A ▶ resumed
 until ■ Piano étude \(sampler demo\) — end 8000
 @A cmd /spectral:sampler 4 250 28 120 false
+
+## /spectral:say reads kana aloud with the voice (Kokoro-82M's units, Apache-2.0): a mora a note of its unit, placed by its vowel, its pitch by setPitch from the nearest of the unit's three pitches (a phrase's first mora low, the rest high, the sentence's last falling); what is not kana is not read (the game has no dictionary: tools/speech.py reads kanji)
+@A cmd /spectral:sampler 4 250 28 120 true
+@A cmd /spectral:say "こんにちは、マインクラフト。"
+~ @A ▶ こんにちは、マインクラフト。 \(0:02, 12 notes, headphones\)
+~ \[spectral\] note 0 voice_ja\.27 key 9 pitch 1\.1225 seek 0\.6000 at 0 ms
+until ■ こんにちは、マインクラフト。 — end 6000
+~ \[spectral\] note 11 voice_ja\.87 key 29 pitch 0\.9659 seek 0\.5324 at 1800 ms
+@A cmd /spectral:say "漢字はよめません"
+~ @A ▶ 漢字はよめません \(0:01, 6 notes, headphones\) \(2 characters not kana: not read\)
+@A cmd /spectral:say ABC
+~ @A nothing to say: kana only in the game
+@A cmd /spectral:stop
+
+## a speech song made from text with kanji (tools/speech.py: Open JTalk's accents, notes with cents — format 2) arrives as a song pack and is read the same way
+scriptevent spectral:song {"id":"thanks","i":0,"n":1,"meta":{"format":"spectral-notes/2","id":"thanks","title":"ありがとう","artist":"Spectral Player (speech)","seconds":0.948,"notes":5,"programs":[200]},"data":"AgDMAz5kAJAD9AO5AQBkAI8D2ATPAgpkAI8D2ATPAh1kAI8DsAneAQRkAJ8G"}
+~ ♪ song pack: ありがとう \(0:00\) — /spectral:play thanks
+@A cmd /spectral:play thanks
+~ @A ▶ ありがとう — Spectral Player \(speech\) \(0:00, 5 notes, headphones\)
+until note 4 voice 3000
+~ \[spectral\] note 1 voice_ja\.\d+ key 0 pitch [\d.]+ seek [\d.]+ at
+~ \[spectral\] note 4 voice_ja\.\d+ key 4 pitch [\d.]+ seek [\d.]+ at
+@A cmd /spectral:sampler 4 250 28 120 false

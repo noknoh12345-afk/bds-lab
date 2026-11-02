@@ -796,12 +796,15 @@ import { system as system2 } from "@minecraft/server";
 var LEAD = 0.6;
 var BANK = [
   { "id": "piano", "name": "Grand Piano (Steinway B, VCSL)", "release": 0.18, "sustain": false, "stereo": true, "samples": [[22, 48, 6949, 0.1402], [22, 84, 6949, 0.1522], [22, 118, 6949, 0.1584], [24, 48, 6848, 0.1126], [24, 84, 6848, 0.1146], [24, 118, 6848, 0.1175], [26, 48, 6747, 0.1363], [26, 84, 6747, 0.1504], [26, 118, 6747, 0.1512], [28, 48, 6646, 0.121], [28, 84, 6646, 0.1345], [28, 118, 6646, 0.1384], [30, 48, 6545, 0.1417], [30, 84, 6545, 0.1692], [30, 118, 6545, 0.1722], [32, 48, 6444, 0.1384], [32, 84, 6444, 0.1519], [32, 118, 6444, 0.169], [34, 48, 6342, 0.1729], [34, 84, 6342, 0.1656], [34, 118, 6342, 0.1631], [36, 48, 6241, 0.1405], [36, 84, 6241, 0.1409], [36, 118, 6241, 0.1485], [38, 48, 6140, 0.1651], [38, 84, 6140, 0.1483], [38, 118, 6140, 0.1646], [40, 48, 6039, 0.1671], [40, 84, 6039, 0.1843], [40, 118, 6039, 0.1958], [42, 48, 5938, 0.1495], [42, 84, 5938, 0.1637], [42, 118, 5938, 0.1632], [44, 48, 5837, 0.1102], [44, 84, 5837, 0.1165], [44, 118, 5837, 0.1322], [46, 48, 5736, 0.1043], [46, 84, 5736, 0.1266], [46, 118, 5736, 0.1338], [48, 48, 5634, 0.1058], [48, 84, 5634, 0.1281], [48, 118, 5634, 0.139], [50, 48, 5533, 0.1142], [50, 84, 5533, 0.1272], [50, 118, 5533, 0.1323], [52, 48, 5432, 0.091], [52, 84, 5432, 0.0986], [52, 118, 5432, 0.115], [54, 48, 5331, 0.0994], [54, 84, 5331, 0.1156], [54, 118, 5331, 0.1224], [56, 48, 5230, 0.138], [56, 84, 5230, 0.1366], [56, 118, 5230, 0.1176], [58, 48, 5129, 0.0896], [58, 84, 5129, 0.1154], [58, 118, 5129, 0.1189], [60, 48, 5028, 0.1283], [60, 84, 5028, 0.1477], [60, 118, 5028, 0.1508], [62, 48, 4926, 0.0926], [62, 84, 4926, 0.1012], [62, 118, 4926, 0.1127], [64, 48, 4825, 0.1744], [64, 84, 4825, 0.1406], [64, 118, 4825, 0.143], [66, 48, 4724, 0.0903], [66, 84, 4724, 0.1001], [66, 118, 4724, 0.1016], [68, 48, 4623, 0.1568], [68, 84, 4623, 0.1521], [68, 118, 4623, 0.1595], [70, 48, 4522, 0.1457], [70, 84, 4522, 0.1471], [70, 118, 4522, 0.1493], [72, 48, 4421, 0.141], [72, 84, 4421, 0.1278], [72, 118, 4421, 0.1196], [74, 48, 4320, 0.0954], [74, 84, 4320, 0.1282], [74, 118, 4320, 0.1403], [76, 48, 4218, 0.1674], [76, 84, 4218, 0.1133], [76, 118, 4218, 0.112], [78, 48, 4117, 0.1461], [78, 84, 4117, 0.1148], [78, 118, 4117, 0.1153], [80, 48, 4016, 0.0807], [80, 84, 4016, 0.1116], [80, 118, 4016, 0.1097], [82, 48, 3915, 0.137], [82, 84, 3915, 0.1039], [82, 118, 3915, 0.1051], [84, 48, 3814, 0.0877], [84, 84, 3814, 0.0897], [84, 118, 3814, 0.0921], [86, 48, 3713, 0.0707], [86, 84, 3713, 0.0995], [86, 118, 3713, 0.1106], [88, 48, 3611, 0.1047], [88, 84, 3611, 0.099], [88, 118, 2454, 0.1029], [90, 48, 3510, 0.0624], [90, 84, 2929, 0.0695], [90, 118, 1445, 0.0723], [92, 48, 3409, 0.0622], [92, 84, 3331, 0.0649], [92, 118, 1404, 0.0535], [94, 48, 2541, 0.0619], [94, 84, 1904, 0.0795], [94, 118, 1157, 0.0721], [96, 48, 3207, 0.0502], [96, 84, 2021, 0.0593], [96, 118, 2579, 0.0589], [98, 48, 1490, 0.0357], [98, 84, 1226, 0.0477], [98, 118, 620, 0.048], [100, 48, 2568, 0.0344], [100, 84, 2786, 0.0461], [100, 118, 2542, 0.0562], [102, 48, 1817, 0.0342], [102, 84, 1943, 0.0453], [102, 118, 858, 0.0449], [104, 48, 1330, 0.0498], [104, 84, 1580, 0.0344], [104, 118, 1595, 0.034]] },
-  { "id": "click", "name": "Click (measuring)", "release": 0.01, "sustain": false, "stereo": false, "samples": [[60, 100, 30, 0.0842]] }
+  { "id": "click", "name": "Click (measuring)", "release": 0.01, "sustain": false, "stereo": false, "samples": [[60, 100, 30, 0.0842]] },
+  { "id": "voice_ja", "name": "Voice (Kokoro-82M jf_alpha)", "release": 0.04, "sustain": false, "stereo": false, "samples": [[0, 96, 610, 0.1595], [0, 100, 610, 0.1591], [0, 104, 610, 0.1594], [1, 96, 735, 0.1599], [1, 100, 735, 0.1597], [1, 104, 735, 0.1599], [2, 96, 610, 0.1587], [2, 100, 610, 0.1584], [2, 104, 610, 0.1588], [3, 96, 735, 0.1605], [3, 100, 735, 0.1599], [3, 104, 735, 0.1606], [4, 96, 585, 0.1598], [4, 100, 585, 0.1592], [4, 104, 585, 0.1597], [5, 96, 535, 0.2144], [5, 100, 535, 0.2206], [5, 104, 535, 0.2103], [6, 96, 735, 0.215], [6, 100, 735, 0.2198], [6, 104, 735, 0.2296], [7, 96, 585, 0.1728], [7, 100, 585, 0.1744], [7, 104, 585, 0.1718], [8, 96, 585, 0.196], [8, 100, 585, 0.1994], [8, 104, 585, 0.1909], [9, 96, 660, 0.1739], [9, 100, 660, 0.1742], [9, 104, 660, 0.174], [10, 96, 485, 0.2559], [10, 100, 485, 0.2716], [10, 104, 485, 0.2681], [11, 96, 810, 0.2443], [11, 100, 810, 0.2471], [11, 104, 810, 0.264], [12, 96, 585, 0.1883], [12, 100, 585, 0.1886], [12, 104, 585, 0.186], [13, 96, 560, 0.2178], [13, 100, 560, 0.2261], [13, 104, 560, 0.2097], [14, 96, 635, 0.1931], [14, 100, 635, 0.1979], [14, 104, 635, 0.1898], [15, 96, 485, 0.2487], [15, 100, 485, 0.2582], [15, 104, 485, 0.2733], [16, 96, 685, 0.1815], [16, 100, 685, 0.1829], [16, 104, 685, 0.1883], [17, 96, 435, 0.2121], [17, 100, 435, 0.2129], [17, 104, 435, 0.2083], [18, 96, 560, 0.2009], [18, 100, 560, 0.2057], [18, 104, 560, 0.196], [19, 96, 560, 0.1809], [19, 100, 560, 0.1855], [19, 104, 560, 0.1844], [20, 96, 660, 0.2243], [20, 100, 660, 0.235], [20, 104, 660, 0.2299], [21, 96, 660, 0.1846], [21, 100, 660, 0.1852], [21, 104, 660, 0.1823], [22, 96, 760, 0.1651], [22, 100, 760, 0.1652], [22, 104, 760, 0.1686], [23, 96, 660, 0.223], [23, 100, 660, 0.2297], [23, 104, 660, 0.2161], [24, 96, 585, 0.2106], [24, 100, 585, 0.2204], [24, 104, 585, 0.2023], [25, 96, 685, 0.204], [25, 100, 685, 0.2063], [25, 104, 685, 0.2123], [26, 96, 710, 0.1753], [26, 100, 710, 0.1754], [26, 104, 710, 0.1768], [27, 96, 385, 0.1648], [27, 100, 385, 0.1642], [27, 104, 385, 0.1641], [28, 96, 560, 0.2111], [28, 100, 560, 0.2121], [28, 104, 560, 0.2096], [29, 96, 685, 0.1941], [29, 100, 685, 0.1984], [29, 104, 685, 0.1913], [30, 96, 510, 0.2514], [30, 100, 510, 0.2671], [30, 104, 510, 0.265], [31, 96, 560, 0.2604], [31, 100, 560, 0.2751], [31, 104, 560, 0.2512], [32, 96, 560, 0.2405], [32, 100, 560, 0.2508], [32, 104, 560, 0.2315], [33, 96, 510, 0.2632], [33, 100, 510, 0.2838], [33, 104, 510, 0.295], [34, 96, 685, 0.1867], [34, 100, 685, 0.187], [34, 104, 685, 0.1867], [35, 96, 585, 0.1901], [35, 100, 585, 0.1893], [35, 104, 585, 0.1875], [36, 96, 635, 0.2006], [36, 100, 635, 0.1999], [36, 104, 635, 0.2005], [37, 96, 635, 0.1945], [37, 100, 635, 0.1955], [37, 104, 635, 0.1939], [38, 96, 610, 0.1977], [38, 100, 610, 0.1995], [38, 104, 610, 0.2002], [39, 96, 660, 0.1999], [39, 100, 660, 0.2025], [39, 104, 660, 0.2005], [40, 96, 510, 0.1826], [40, 100, 510, 0.1849], [40, 104, 510, 0.1777], [41, 96, 585, 0.2206], [41, 100, 585, 0.227], [41, 104, 585, 0.2161], [42, 96, 685, 0.1886], [42, 100, 685, 0.1897], [42, 104, 685, 0.187], [43, 96, 535, 0.2301], [43, 100, 535, 0.2371], [43, 104, 535, 0.2329], [44, 96, 1285, 0.1992], [44, 100, 1285, 0.2023], [44, 104, 1285, 0.2057], [45, 96, 735, 0.1828], [45, 100, 735, 0.1837], [45, 104, 735, 0.1804], [46, 96, 710, 0.197], [46, 100, 710, 0.1993], [46, 104, 710, 0.1949], [47, 96, 585, 0.2207], [47, 100, 585, 0.2293], [47, 104, 585, 0.2105], [48, 96, 535, 0.22], [48, 100, 535, 0.2227], [48, 104, 535, 0.2192], [49, 96, 785, 0.2067], [49, 100, 785, 0.2082], [49, 104, 785, 0.217], [50, 96, 560, 0.1961], [50, 100, 560, 0.1998], [50, 104, 560, 0.1904], [51, 96, 610, 0.2074], [51, 100, 610, 0.2125], [51, 104, 610, 0.2034], [52, 96, 635, 0.1904], [52, 100, 635, 0.194], [52, 104, 635, 0.1872], [53, 96, 535, 0.2357], [53, 100, 535, 0.2513], [53, 104, 535, 0.2618], [54, 96, 860, 0.2356], [54, 100, 860, 0.237], [54, 104, 860, 0.2484], [55, 96, 610, 0.2], [55, 100, 610, 0.199], [55, 104, 610, 0.1968], [56, 96, 610, 0.2175], [56, 100, 610, 0.2178], [56, 104, 610, 0.2147], [57, 96, 635, 0.1913], [57, 100, 635, 0.1913], [57, 104, 635, 0.1888], [58, 96, 560, 0.2662], [58, 100, 560, 0.2768], [58, 104, 560, 0.2706], [59, 96, 660, 0.2125], [59, 100, 660, 0.2156], [59, 104, 660, 0.2263], [60, 96, 635, 0.2138], [60, 100, 635, 0.2181], [60, 104, 635, 0.211], [61, 96, 610, 0.2223], [61, 100, 610, 0.2295], [61, 104, 610, 0.234], [62, 96, 910, 0.2207], [62, 100, 910, 0.2227], [62, 104, 910, 0.2395], [63, 96, 460, 0.2643], [63, 100, 460, 0.2354], [63, 104, 460, 0.2551], [64, 96, 660, 0.2115], [64, 100, 660, 0.2131], [64, 104, 660, 0.2101], [65, 96, 635, 0.2098], [65, 100, 635, 0.2137], [65, 104, 635, 0.2078], [66, 96, 560, 0.2149], [66, 100, 560, 0.2188], [66, 104, 560, 0.2141], [67, 96, 135, 0.1806], [67, 100, 135, 0.1775], [67, 104, 135, 0.1929], [68, 96, 585, 0.2876], [68, 100, 585, 0.2952], [68, 104, 585, 0.3037], [69, 96, 610, 0.1996], [69, 100, 610, 0.2049], [69, 104, 610, 0.2046], [70, 96, 860, 0.2027], [70, 100, 860, 0.2112], [70, 104, 860, 0.2166], [71, 96, 560, 0.3998], [71, 100, 560, 0.419], [71, 104, 560, 0.423], [72, 96, 635, 0.3766], [72, 100, 635, 0.4019], [72, 104, 635, 0.3794], [73, 96, 710, 0.2732], [73, 100, 710, 0.2893], [73, 104, 710, 0.2853], [74, 96, 560, 0.2482], [74, 100, 560, 0.2493], [74, 104, 560, 0.2611], [75, 96, 1010, 0.1728], [75, 100, 1010, 0.1732], [75, 104, 1010, 0.1805], [76, 96, 685, 0.1798], [76, 100, 685, 0.1818], [76, 104, 685, 0.1814], [77, 96, 485, 0.2877], [77, 100, 485, 0.3007], [77, 104, 485, 0.3085], [78, 96, 385, 0.1863], [78, 100, 385, 0.187], [78, 104, 385, 0.1856], [79, 96, 585, 0.2118], [79, 100, 585, 0.2229], [79, 104, 585, 0.2021], [80, 96, 560, 0.2309], [80, 100, 560, 0.2405], [80, 104, 560, 0.2246], [81, 96, 385, 0.1775], [81, 100, 385, 0.176], [81, 104, 385, 0.1754], [82, 96, 585, 0.1854], [82, 100, 585, 0.1884], [82, 104, 585, 0.1813], [83, 96, 510, 0.2663], [83, 100, 510, 0.2726], [83, 104, 510, 0.2675], [84, 96, 385, 0.2732], [84, 100, 385, 0.2794], [84, 104, 385, 0.2675], [85, 96, 785, 0.184], [85, 100, 785, 0.1843], [85, 104, 785, 0.1843], [86, 96, 485, 0.2864], [86, 100, 485, 0.2913], [86, 104, 485, 0.2901], [87, 96, 510, 0.191], [87, 100, 510, 0.192], [87, 104, 510, 0.1876], [88, 96, 635, 0.1984], [88, 100, 635, 0.2034], [88, 104, 635, 0.1958], [89, 96, 660, 0.3167], [89, 100, 660, 0.3281], [89, 104, 660, 0.3293], [90, 96, 660, 0.2838], [90, 100, 660, 0.2896], [90, 104, 660, 0.2754], [91, 96, 710, 0.2755], [91, 100, 710, 0.2919], [91, 104, 710, 0.2878], [92, 96, 735, 0.2262], [92, 100, 735, 0.233], [92, 104, 735, 0.2345], [93, 96, 735, 0.201], [93, 100, 735, 0.2021], [93, 104, 735, 0.2013], [94, 96, 685, 0.224], [94, 100, 685, 0.2335], [94, 104, 685, 0.2176], [95, 96, 710, 0.3539], [95, 100, 710, 0.3779], [95, 104, 710, 0.4213], [96, 96, 685, 0.2102], [96, 100, 685, 0.2075], [96, 104, 685, 0.2249], [97, 96, 785, 0.313], [97, 100, 785, 0.3332], [97, 104, 785, 0.3513], [98, 96, 710, 0.3196], [98, 100, 710, 0.3409], [98, 104, 710, 0.3658], [99, 96, 810, 0.2204], [99, 100, 810, 0.2253], [99, 104, 810, 0.2355], [100, 96, 835, 0.2441], [100, 100, 835, 0.2545], [100, 104, 835, 0.2659], [101, 96, 735, 0.2369], [101, 100, 735, 0.2404], [101, 104, 735, 0.2431], [102, 96, 860, 0.2396], [102, 100, 860, 0.2396], [102, 104, 860, 0.2539], [103, 96, 485, 0.2694], [103, 100, 485, 0.2817], [103, 104, 485, 0.3037], [104, 96, 735, 0.2404], [104, 100, 735, 0.241], [104, 104, 735, 0.2407], [105, 96, 785, 0.1871], [105, 100, 785, 0.1876], [105, 104, 785, 0.1887], [106, 96, 610, 0.1888], [106, 100, 610, 0.1899], [106, 104, 610, 0.1855], [107, 96, 710, 0.1781], [107, 100, 710, 0.1782], [107, 104, 710, 0.1744], [108, 96, 685, 0.2009], [108, 100, 685, 0.2036], [108, 104, 685, 0.1981], [109, 96, 835, 0.1595], [109, 100, 835, 0.1591], [109, 104, 835, 0.1593], [110, 96, 635, 0.1715], [110, 100, 635, 0.1719], [110, 104, 635, 0.1707], [111, 96, 485, 0.2485], [111, 100, 485, 0.2349], [111, 104, 485, 0.2325]] }
 ];
 var GM = [0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1];
 var DRUMS = { "76": [1, 0], "77": [1, 0] };
+var VOICES = [{ "inst": 2, "id": "voice_ja", "units": ["\u30A2", "\u30A4", "\u30A6", "\u30A8", "\u30AA", "\u30AB", "\u30AD", "\u30AF", "\u30B1", "\u30B3", "\u30AC", "\u30AE", "\u30B0", "\u30B2", "\u30B4", "\u30B5", "\u30B7", "\u30B9", "\u30BB", "\u30BD", "\u30B6", "\u30B8", "\u30BA", "\u30BC", "\u30BE", "\u30BF", "\u30C1", "\u30C4", "\u30C6", "\u30C8", "\u30C0", "\u30C7", "\u30C9", "\u30CA", "\u30CB", "\u30CC", "\u30CD", "\u30CE", "\u30CF", "\u30D2", "\u30D5", "\u30D8", "\u30DB", "\u30D0", "\u30D3", "\u30D6", "\u30D9", "\u30DC", "\u30D1", "\u30D4", "\u30D7", "\u30DA", "\u30DD", "\u30DE", "\u30DF", "\u30E0", "\u30E1", "\u30E2", "\u30E4", "\u30E6", "\u30E8", "\u30E9", "\u30EA", "\u30EB", "\u30EC", "\u30ED", "\u30EF", "\u30F3", "\u30AD\u30E3", "\u30AD\u30E5", "\u30AD\u30E7", "\u30AE\u30E3", "\u30AE\u30E5", "\u30AE\u30E7", "\u30B7\u30E3", "\u30B7\u30E5", "\u30B7\u30E7", "\u30B8\u30E3", "\u30B8\u30E5", "\u30B8\u30E7", "\u30C1\u30E3", "\u30C1\u30E5", "\u30C1\u30E7", "\u30CB\u30E3", "\u30CB\u30E5", "\u30CB\u30E7", "\u30D2\u30E3", "\u30D2\u30E5", "\u30D2\u30E7", "\u30D3\u30E3", "\u30D3\u30E5", "\u30D3\u30E7", "\u30D4\u30E3", "\u30D4\u30E5", "\u30D4\u30E7", "\u30DF\u30E3", "\u30DF\u30E5", "\u30DF\u30E7", "\u30EA\u30E3", "\u30EA\u30E5", "\u30EA\u30E7", "\u30C6\u30A3", "\u30C7\u30A3", "\u30D5\u30A1", "\u30D5\u30A3", "\u30D5\u30A7", "\u30D5\u30A9", "\u30A6\u30A3", "\u30A6\u30A7", "\u30A6\u30A9", "\u30C8\u30A5", "\u30C9\u30A5"], "pre": [10, 10, 10, 10, 10, 160, 260, 160, 160, 160, 160, 260, 135, 160, 135, 160, 160, 160, 160, 160, 160, 160, 160, 160, 160, 185, 160, 85, 160, 160, 160, 160, 160, 160, 160, 135, 135, 135, 160, 160, 135, 160, 160, 160, 235, 135, 160, 160, 160, 260, 135, 160, 160, 160, 260, 160, 160, 160, 160, 160, 160, 160, 285, 135, 160, 160, 160, 10, 260, 210, 260, 260, 260, 260, 185, 210, 160, 160, 85, 160, 160, 85, 160, 160, 110, 160, 160, 110, 160, 235, 260, 260, 235, 235, 260, 285, 235, 285, 285, 260, 285, 260, 260, 160, 260, 160, 160, 135, 160, 10, 160, 135], "layers": [-4, 0, 4], "f0": 301.85, "source": "Kokoro-82M (Apache-2.0) jf_alpha" }];
 
 // addons/spectral/src/notes.ts
+var NOTES_FORMAT = "spectral-notes/1";
 var isNoteMeta = (m) => typeof m.format === "string" && m.format.startsWith("spectral-notes/");
 var B64 = new Uint8Array(128);
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".split("").forEach((c, i) => B64[c.charCodeAt(0)] = i);
@@ -822,7 +825,8 @@ function b64(s) {
 function decodeNotes(song) {
   if (song.dec) return song.dec;
   const b = song.bytes ?? b64(song.data ?? "");
-  if (b[0] !== 1) throw new Error(`unknown note data (version ${b[0]})`);
+  if (b[0] !== 1 && b[0] !== 2) throw new Error(`unknown note data (version ${b[0]})`);
+  const v2 = b[0] === 2;
   let i = 1;
   const rv = () => {
     let n = 0, sh = 0;
@@ -834,7 +838,7 @@ function decodeNotes(song) {
       if (!(c & 128)) return n;
     }
   };
-  const on = [], dur = [], key = [], vel = [], prog = [];
+  const on = [], dur = [], key = [], vel = [], prog = [], cents = [];
   let t = 0;
   while (i < b.length) {
     t += rv();
@@ -846,10 +850,22 @@ function decodeNotes(song) {
     vel.push(b[i + 1]);
     prog.push(b[i + 2]);
     i += 3;
+    if (v2) {
+      const z = rv();
+      cents.push(z % 2 ? -(z + 1) / 2 : z / 2);
+    }
   }
   const P = song.meta.programs.length;
   if (prog.some((p) => p >= P)) throw new Error("a note names a program the song does not list");
-  return song.dec = { n: on.length, on: Float64Array.from(on), dur: Float32Array.from(dur), key: Uint8Array.from(key), vel: Uint8Array.from(vel), prog: Uint8Array.from(prog) };
+  return song.dec = {
+    n: on.length,
+    on: Float64Array.from(on),
+    dur: Float32Array.from(dur),
+    key: Uint8Array.from(key),
+    vel: Uint8Array.from(vel),
+    prog: Uint8Array.from(prog),
+    ...v2 ? { cents: Int16Array.from(cents) } : {}
+  };
 }
 var FAMILY = [
   ["piano"],
@@ -895,18 +911,28 @@ var nearest = BANK.map((inst) => {
   }
   return t;
 });
-function pick(code, key, vel) {
+function pick(code, key, vel, cents = 0) {
+  if (code >= 200) {
+    const v = VOICES[code - 200];
+    if (!v || key >= v.units.length) return void 0;
+    const st = cents / 100;
+    let l = 0;
+    v.layers.forEach((x, j2) => {
+      if (Math.abs(x - st) < Math.abs(v.layers[l] - st)) l = j2;
+    });
+    return [v.inst, key * v.layers.length + l, Math.pow(2, (st - v.layers[l]) / 12)];
+  }
   if (code >= 128) {
     const d = DRUMS[key];
     if (!d) return void 0;
-    return [d[0], d[1], BANK[d[0]].samples[d[1]][0]];
+    return [d[0], d[1], 1];
   }
   const ii = instOf(code);
   if (ii < 0) return void 0;
   const inst = BANK[ii], list = nearest[ii][Math.max(0, Math.min(127, key))];
   let j = list[0];
   for (const c of list) if (Math.abs(inst.samples[c][1] - vel) < Math.abs(inst.samples[j][1] - vel)) j = c;
-  return [ii, j, inst.samples[j][0]];
+  return [ii, j, Math.pow(2, (key - inst.samples[j][0]) / 12 + cents / 1200)];
 }
 var NotePlayer = class {
   constructor(owner, song, nt, o, dim, loc) {
@@ -980,15 +1006,15 @@ var NotePlayer = class {
   }
   noteOn(i, t, placed = true) {
     const nt = this.nt, sp = this.o.speed, code = this.song.meta.programs[nt.prog[i]];
-    const drum = code >= 128;
-    const key = drum ? nt.key[i] : nt.key[i] + this.o.semis;
-    const got = pick(code, drum ? nt.key[i] : Math.max(0, Math.min(127, Math.round(key))), nt.vel[i]);
+    const drum = code >= 128 && code < 200, voice = code >= 200;
+    const cents = (nt.cents ? nt.cents[i] : 0) + (drum ? 0 : voice ? this.o.semis * 100 : 0);
+    const key = drum || voice ? nt.key[i] : nt.key[i] + this.o.semis;
+    const got = pick(code, drum || voice ? nt.key[i] : Math.max(0, Math.min(127, Math.round(key))), nt.vel[i], voice ? cents : cents + (key - Math.round(key)) * 100);
     if (!got) {
       this.skipped++;
       return;
     }
-    const [ii, j, root] = got, inst = BANK[ii], smp = inst.samples[j];
-    const p = drum ? 1 : Math.pow(2, (key - root) / 12);
+    const [ii, j, p] = got, inst = BANK[ii], smp = inst.samples[j];
     if (!(p >= 0.01 && p <= 10)) {
       this.skipped++;
       return;
@@ -1106,6 +1132,130 @@ var NotePlayer = class {
 
 // addons/spectral/src/songs/notes_demo.ts
 var notes_demo_default = { "meta": { "format": "spectral-notes/1", "id": "piano_demo", "title": "Piano \xE9tude (sampler demo)", "artist": "Spectral Player", "seconds": 20.484, "notes": 104, "programs": [0] }, "data": "AQD0AzBGAADxBExYAOIJ9AM3PgDiCfQDQD4AALgCSlAA4gn0Azc+AAC4AkhQAOIJ9AMwRgAA4glPXADiCfQDNz4A4gn0A0A+AOIJ9AM3PgDiCfQDLUYAAKoHUVoA4gn0AzQ+AOIJ9AM8PgDiCfQDND4AALgCT1AA4gn0Ay1GAADiCUxWAOIJ9AM0PgDiCfQDPD4A4gn0AzQ+AOIJ9AMpRgAA8QRNVgDiCfQDMD4A4gn0Azk+AADxBExQAOIJ9AMwPgDiCfQDKUYAAPEESlAA4gn0AzA+AOIJ9AM5PgAA8QRITgDiCfQDMD4A4gn0AytGAADiCUpWAOIJ9AMyPgDiCfQDOz4A4gn0AzI+AOIJ9AMrRgAAvAFHTADxBLwBSE4A8QT0AzI+AAC8AUpQAPEEvAFMUgDxBPQDOz4AALwBTVQA8QS8AU9WAPEE9AMyPgAAvAFRWADxBLwBU1oA8QT0AyhGAACyBFRaAOIJ9AM3PgDiCfQDPD4AALIET1YA4gn0Azc+AJIJGUo8AFD0AyhGAACyBExSAOIJ9AM3PgDiCfQDPD4AALIESE4A4gn0Azc+AOIJxBMpRgAAxBMwQAAAxBM5QAAA0gRRVADEE9IETVEAxBPSBEhOAMQT0gRFSwDEE/QDK0YAAKwBR1AA8QSsAUpGAPEE9AM1PgAArAFNRgDxBKwBT0YA8QT0Azs+AACsAUdQAPEErAFKRgDxBPQDPj4AAKwBTUYA8QSsAU9GAPEE9AMrRgAArAFHUADxBKwBSkYA8QT0AzU+AACsAU1GAPEErAFPRgDxBPQDOz4AAKwBR1AA8QSsAUpGAPEE9AM+PgAArAFNRgDxBKwBT0YA8QTUFiRgADDUFjBeADDUFjdcADDUFjxaADDUFkBYADDUFkNWADDUFkhUADDUFkxSAA==" };
+
+// addons/spectral/src/say.ts
+var SMALL = "\u30E3\u30E5\u30E7\u30A1\u30A3\u30A5\u30A7\u30A9";
+var FIX = {
+  "\u30C2": "\u30B8",
+  "\u30C5": "\u30BA",
+  "\u30F2": "\u30AA",
+  "\u30F4": "\u30D6",
+  "\u30F4\u30A1": "\u30D0",
+  "\u30F4\u30A3": "\u30D3",
+  "\u30F4\u30A7": "\u30D9",
+  "\u30F4\u30A9": "\u30DC",
+  "\u30F0": "\u30A4",
+  "\u30F1": "\u30A8",
+  "\u30B7\u30A7": "\u30BB",
+  "\u30B8\u30A7": "\u30BC",
+  "\u30C1\u30A7": "\u30C6",
+  "\u30A4\u30A7": "\u30A8",
+  "\u30C4\u30A1": "\u30C1\u30E3",
+  "\u30C4\u30A3": "\u30C1",
+  "\u30C4\u30A7": "\u30C6",
+  "\u30C4\u30A9": "\u30C1\u30E7"
+};
+var VOWEL_OF = {};
+for (const [v, row] of [
+  ["\u30A2", "\u30A2\u30AB\u30AC\u30B5\u30B6\u30BF\u30C0\u30CA\u30CF\u30D0\u30D1\u30DE\u30E4\u30E9\u30EF\u30E3\u30A1"],
+  ["\u30A4", "\u30A4\u30AD\u30AE\u30B7\u30B8\u30C1\u30C2\u30CB\u30D2\u30D3\u30D4\u30DF\u30EA\u30A3"],
+  ["\u30A6", "\u30A6\u30AF\u30B0\u30B9\u30BA\u30C4\u30C5\u30CC\u30D5\u30D6\u30D7\u30E0\u30E6\u30EB\u30E5\u30A5"],
+  ["\u30A8", "\u30A8\u30B1\u30B2\u30BB\u30BC\u30C6\u30C7\u30CD\u30D8\u30D9\u30DA\u30E1\u30EC\u30A7"],
+  ["\u30AA", "\u30AA\u30B3\u30B4\u30BD\u30BE\u30C8\u30C9\u30CE\u30DB\u30DC\u30DD\u30E2\u30E8\u30ED\u30F2\u30E7\u30A9"]
+]) for (const c of row) VOWEL_OF[c] = v;
+function kanaMorae(text) {
+  const kata = [...text].map((c) => {
+    const x = c.charCodeAt(0);
+    return x >= 12353 && x <= 12438 ? String.fromCharCode(x + 96) : c;
+  }).join("");
+  const morae = [];
+  let skipped = 0, start = true, gem = false;
+  const chars = [...kata];
+  for (let i = 0; i < chars.length; i++) {
+    const c = chars[i];
+    if (c === "\u30FC" || c === "\u301C" || c === "~") {
+      if (morae.length) morae[morae.length - 1].long++;
+      continue;
+    }
+    if (c === "\u30C3") {
+      gem = true;
+      continue;
+    }
+    if ("\u3001\uFF0C,".includes(c)) {
+      if (morae.length) morae[morae.length - 1].pause = Math.max(morae[morae.length - 1].pause, 220);
+      start = true;
+      continue;
+    }
+    if ("\u3002\uFF0E.\uFF01!\uFF1F?".includes(c)) {
+      if (morae.length) morae[morae.length - 1].pause = Math.max(morae[morae.length - 1].pause, 420);
+      start = true;
+      continue;
+    }
+    if (c === " " || c === "\u3000") {
+      start = true;
+      continue;
+    }
+    if (c >= "\u30A1" && c <= "\u30FA") {
+      let k = c;
+      if (i + 1 < chars.length && SMALL.includes(chars[i + 1]) && !SMALL.includes(c)) {
+        k = c + chars[i + 1];
+        i++;
+      }
+      if (SMALL.includes(k)) k = String.fromCharCode(k.charCodeAt(0) + 1);
+      morae.push({ kana: FIX[k] ?? k, long: 0, pause: 0, gem, phraseStart: start });
+      start = false;
+      gem = false;
+      continue;
+    }
+    skipped++;
+  }
+  return { morae, skipped, question: /[？?]\s*$/.test(text) };
+}
+function saySong(text, v = 0, moraMs = 150, range = 4) {
+  const voice = VOICES[v];
+  if (!voice) return void 0;
+  const { morae, skipped, question } = kanaMorae(text);
+  if (!morae.length) return void 0;
+  const idx = new Map(voice.units.map((u, i) => [u, i]));
+  const unitOf = (k) => idx.get(k) ?? idx.get(k[0]) ?? idx.get(VOWEL_OF[k[k.length - 1]] ?? "");
+  const on = [], dur = [], key = [], vel = [], cents = [];
+  let t = 300, reg = 0, pos = 0;
+  for (let i = 0; i < morae.length; i++) {
+    const m = morae[i];
+    if (m.phraseStart && i > 0) {
+      reg = morae[i - 1].pause ? Math.max(-1, reg - 0.6) : reg - 0.8;
+      pos = 0;
+    }
+    pos++;
+    if (m.gem) t += moraMs * 0.9;
+    const u = unitOf(m.kana);
+    const len = moraMs * (1 + m.long);
+    const last = i === morae.length - 1 || morae[i].pause >= 420;
+    let semis = reg + (pos > 1 ? range / 2 : -range / 2);
+    if (last) semis = question ? reg + range : reg - range / 2 - 2;
+    if (u !== void 0) {
+      const pre = voice.pre[u];
+      on.push(t - pre);
+      dur.push(len + pre + (m.pause ? 40 : 25));
+      key.push(u);
+      vel.push(100);
+      cents.push(Math.round(semis * 100));
+    }
+    t += len + m.pause;
+  }
+  const t0 = Math.min(...on);
+  const dec = {
+    n: on.length,
+    on: Float64Array.from(on.map((x) => x - t0)),
+    dur: Float32Array.from(dur),
+    key: Uint8Array.from(key),
+    vel: Uint8Array.from(vel),
+    prog: new Uint8Array(on.length),
+    cents: Int16Array.from(cents)
+  };
+  const seconds = Math.max(...on.map((x, i) => x - t0 + dur[i])) / 1e3;
+  return { song: { meta: { format: NOTES_FORMAT, id: "say", title: text.slice(0, 40), seconds, notes: on.length, programs: [200 + v] }, dec }, skipped };
+}
 
 // addons/spectral/src/main.ts
 var SILENT = 1e-4;
@@ -2180,6 +2330,18 @@ cmd("spectral:songs", "List the songs", {}, (p) => {
   return `\xA77${songs.size + noteSongs.size} songs \u2014 /spectral:play <id> [phones|speaker] \xB7 /spectral:paste adds one`;
 });
 cmd("spectral:status", "Playback state and engine load", {}, (p) => notePlays.get(p.id)?.status() ?? mine(p)?.status() ?? "status: idle");
+cmd(
+  "spectral:say",
+  "Read kana aloud with the voice, mora by mora like notes (kanji: tools/speech.py makes a speech song): headphones, or the speaker for everyone near",
+  { text: "string", "out?": ["phones", "speaker"], "speed?": "float" },
+  async (p, a) => {
+    if (!VOICES.length) return "\xA7cno voice in this pack";
+    const r = saySong(a.text, 0, 150 / Math.max(0.25, Math.min(4, a.speed ?? 1)));
+    if (!r) return "\xA7cnothing to say: kana only in the game (tools/speech.py reads kanji, the converter page too)";
+    const said = await playNotes(p, r.song, a.out ?? "phones");
+    return r.skipped ? `${said} \xA77(${r.skipped} characters not kana: not read)` : said;
+  }
+);
 cmd(
   "spectral:sampler",
   "Note songs (MIDI, the instrument bank): notes of this many ticks started together, each placed inside its tick by seekTo (0 = no placement: every note at the start of its tick), ms more ahead for a 3D speaker, at most this many notes at once, level in percent",

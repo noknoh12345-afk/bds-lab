@@ -90,6 +90,22 @@ JavaScript 版 web/game.js）は 1–6 をそのまま持つ: アドオンの本
 - 使い方: `python3 tools/emu/phone.py <曲.song.json> --corpus <曲> --wav out.wav`（電話が録るはずの音と、リグと同じ物差しの成績、1 分ほど）。
   変換ページの「▶ ゲーム内の音」＋「聞く端末: 電話」も同じ模型。実機を回したら `python3 tools/rig/emu_validate.py --run <id>` で模型がずれていないか
 
+## サンプラーと声: MIDI の原理で、tick の外へ（11-03、ユーザーの依頼 11-02 19:53 / 23:55）
+
+**しくみ**（src/notes.ts・src/bank.ts・src/say.ts、tools/notes.py・tools/samples/bank.py・voice.py・tools/speech.py）:
+
+| | どうするか | 実測か |
+|---|---|---|
+| 音の素 | 楽器を録った音（VCSL の Steinway B、CC0: 全音おき 42 鍵 × 強さ 3 段、ステレオ）と声の素片（Kokoro-82M、Apache-2.0: モーラ 112 × 高さ 3 段）。24 kHz（電話は 24 kHz で混ぜる: 折り返さない） | 素材は決まり |
+| 1 音 | 1 つの SoundInstance。いちばん近い鍵（声は単位）の素を setPitch で鍵へ、強さは setVolume（速さの 2 乗）、離鍵は fade | setPitch・fade は実測（上の表） |
+| tick の中の 1 ms | 素の頭に 0.6 秒の無音。音の 1 つ前の tick に始め、**同じ tick に seekTo(0.6 − 遅らせる時間 × pitch)**: 無音の残りの分だけ遅れて鳴る | seekTo が始めの tick で効くのは実測（波形の一致 0.997–1.0）。1 ms の精度は **p01 で測る** |
+| 束ねる | 4 tick（200 ms）先までの音を 1 つの tick で始める。同じ tick の命令は 1.4 ms 以内に一緒に効く（実測）ので、束の中の音どうしの間は崩れない。tick ごとのばらつき（σ 7.3 ms、実測）は束の境目だけに | 束の効き目は **p01 で測る** |
+| 3D | 作った直後の 100–200 ms は作ったときの音量で鳴る（実測）ので、さらに 250 ms 先に始めて無音のうちにやり過ごす | **p01 で測る** |
+| 声 | モーラ＝音符: 母音の頭を拍に置き（子音は前へ）、高さは東京式のアクセント（tools/speech.py は Open JTalk の解析、ゲームの中の /spectral:say はかなだけで「句の頭が低く、あとは高い・文の終わりで下がる」）。3 段の高さの素から近いものを選び setPitch で 2 半音以内 | 聞き取りは **p02・Whisper で測る** |
+| 量 | ピアノ 104 音の 20 秒が 690 バイト、話し声 4 秒が 180–270 バイト（約 400 bps: 声を音素で送る道） | 計算 |
+
+ゲームの中: `/spectral:play piano_demo`（内蔵のエチュード）、`/spectral:say "こんにちは"`（`out speaker` で 3D）、`/spectral:sampler <束ねる tick 数> …`（0 = tick に縛る: 聞き比べ）。
+
 ## 曲の成績（実測: 実機の録音の ViSQOL v3）
 
 ### 36 回目（run 41417008345: 入力欄を開く前に入力メソッドを切り替えても、文字は届かなかった。5 回目のセッション）
