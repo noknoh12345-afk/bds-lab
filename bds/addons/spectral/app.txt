@@ -1,6 +1,6 @@
 # Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。
-# p09（tools/exp/sampler_plans.py p09）: 声の素片を切り直した（子音が素に入った・1 モーラ 180 ms）読み上げを ヘッドホン・3D で、
-# 同じ文の Kokoro そのままの声を正弦波の道で。録音を手元の Whisper で聞き取り（文字の誤り率）
+# p10（tools/exp/sampler_plans.py p10）: サンプラーを天井近くで（音量 300 %、束ごとに割れる前に下げる）と前の 120 % を、エチュードとエリーゼで。
+# 同じエチュードを正弦波の道で（p02: 正弦波 4.14・サンプラー 2.47）
 
 section title
 audio info
@@ -12,7 +12,7 @@ audio info
 shot title
 
 section prep
-audio song speech_hello,speech_weather,speech_cave,speech_piano,speech_hello_kokoro,speech_weather_kokoro,speech_cave_kokoro,speech_piano_kokoro pack=tools/exp/packs/notes
+audio song fur_elise,piano_demo_sine pack=tools/exp/packs/notes
 
 section join
 join
@@ -23,59 +23,39 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section speech
+section level
 do execute as @a run spectral:sampler 2 250 28 120
-audio start sv_speech_hello
-do execute as @a run spectral:play speech_hello
-wait 7000
+audio start pd_v12
+do execute as @a run spectral:play piano_demo
+wait 22500
 do execute as @a run spectral:stop
 audio stop
-audio export sv_speech_hello 192
-audio start sk_speech_hello
-do execute as @a run spectral:play speech_hello_kokoro
-wait 7000
+audio export pd_v12 192
+do execute as @a run spectral:sampler 2 250 28 120
+audio start fe_v12
+do execute as @a run spectral:play fur_elise
+wait 15500
 do execute as @a run spectral:stop
 audio stop
-audio export sk_speech_hello 192
-audio start sv_speech_weather
-do execute as @a run spectral:play speech_weather
-wait 7000
+audio export fe_v12 192
+do execute as @a run spectral:sampler 2 250 28 300
+audio start pd_v30
+do execute as @a run spectral:play piano_demo
+wait 22500
 do execute as @a run spectral:stop
 audio stop
-audio export sv_speech_weather 192
-audio start sk_speech_weather
-do execute as @a run spectral:play speech_weather_kokoro
-wait 7000
+audio export pd_v30 192
+do execute as @a run spectral:sampler 2 250 28 300
+audio start fe_v30
+do execute as @a run spectral:play fur_elise
+wait 15500
 do execute as @a run spectral:stop
 audio stop
-audio export sk_speech_weather 192
-audio start sv_speech_cave
-do execute as @a run spectral:play speech_cave
-wait 7000
+audio export fe_v30 192
+audio start ps_piano_demo
+do execute as @a run spectral:play piano_demo_sine
+wait 22500
 do execute as @a run spectral:stop
 audio stop
-audio export sv_speech_cave 192
-audio start sk_speech_cave
-do execute as @a run spectral:play speech_cave_kokoro
-wait 7000
-do execute as @a run spectral:stop
-audio stop
-audio export sk_speech_cave 192
-audio start sv_speech_piano
-do execute as @a run spectral:play speech_piano
-wait 7000
-do execute as @a run spectral:stop
-audio stop
-audio export sv_speech_piano 192
-audio start sk_speech_piano
-do execute as @a run spectral:play speech_piano_kokoro
-wait 7000
-do execute as @a run spectral:stop
-audio stop
-audio export sk_speech_piano 192
-audio start sv3_speech_hello
-do execute as @a run spectral:play speech_hello speaker
-wait 7300
-do execute as @a run spectral:stop
-audio stop
-audio export sv3_speech_hello 192
+audio export ps_piano_demo 192
+do execute as @a run spectral:sampler 2 250 28 300
