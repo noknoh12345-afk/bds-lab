@@ -2,7 +2,7 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 03（tools/exp/queue/q03_phones_vs_speaker.json）: ヘッドホンとスピーカー（同じ場所）。同じ曲をヘッドホン（自分に付く）とその場のスピーカー（3D）で。3D にしただけで何が変わるか（距離 0 での 3D の処理の分）
+# キュー 04（tools/exp/queue/q04_distance.json）: 3D の距離 3・8・16・32・48 ブロック（6 曲）。スピーカーからの距離ごとの音質と大きさ（届く距離 48 ブロックの中の落ち方）。静かな所が 16 bit の床に沈む距離
 
 section title
 audio info
@@ -14,7 +14,7 @@ audio info
 shot title
 
 section prep
-audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_e pack=tools/exp/packs/run10
+audio song piano_gymnopedie,vocal_name_of_love,rock_big,edm_detection,orchestra_five_armies,speech_ja_soseki suffix=_e pack=tools/exp/packs/run10
 
 section join
 join
@@ -25,115 +25,131 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section hp_hs
+section d3_d8_d16_d32_d48
 do execute as @a run tp @s 0 -60 0 0 0
-audio start hp_hs_1
-audio mark hp_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e phones
+audio start d3_d8_d16_d32_d48_1
+audio mark d3_piano_gymnopedie
+do execute as @a run spectral:live_demo piano_gymnopedie_e near @s 24 "near:3,-58.5,0,overworld"
 wait 23000
-audio mark hs_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e speaker
+audio mark d8_piano_gymnopedie
+do execute as @a run spectral:live_demo piano_gymnopedie_e near @s 24 "near:8,-58.5,0,overworld"
 wait 23000
-audio mark hp_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_e phones
+audio mark d16_piano_gymnopedie
+do execute as @a run spectral:live_demo piano_gymnopedie_e near @s 24 "near:16,-58.5,0,overworld"
 wait 23000
-audio mark hs_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_e speaker
+audio mark d32_piano_gymnopedie
+do execute as @a run spectral:live_demo piano_gymnopedie_e near @s 24 "near:32,-58.5,0,overworld"
 wait 23000
-audio mark hp_vocal_stars
-do execute as @a run spectral:play vocal_stars_e phones
+audio mark d48_piano_gymnopedie
+do execute as @a run spectral:live_demo piano_gymnopedie_e near @s 24 "near:48,-58.5,0,overworld"
 wait 23000
-audio mark hs_vocal_stars
-do execute as @a run spectral:play vocal_stars_e speaker
+audio mark d3_vocal_name_of_love
+do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:3,-58.5,0,overworld"
 wait 23000
-audio mark hp_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e phones
+audio mark d8_vocal_name_of_love
+do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:8,-58.5,0,overworld"
 wait 23000
-audio mark hs_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e speaker
+audio mark d16_vocal_name_of_love
+do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:16,-58.5,0,overworld"
 wait 23000
-audio mark hp_choir_how_long
-do execute as @a run spectral:play choir_how_long_e phones
+audio mark d32_vocal_name_of_love
+do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:32,-58.5,0,overworld"
 wait 23000
-audio mark hs_choir_how_long
-do execute as @a run spectral:play choir_how_long_e speaker
+audio mark d48_vocal_name_of_love
+do execute as @a run spectral:live_demo vocal_name_of_love_e near @s 24 "near:48,-58.5,0,overworld"
 wait 23000
-audio mark hp_drums_round
-do execute as @a run spectral:play drums_round_e phones
+audio mark d3_rock_big
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:3,-58.5,0,overworld"
 wait 23000
-audio mark hs_drums_round
-do execute as @a run spectral:play drums_round_e speaker
+audio mark d8_rock_big
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:8,-58.5,0,overworld"
 wait 23000
-audio mark hp_rock_big
-do execute as @a run spectral:play rock_big_e phones
+audio mark d16_rock_big
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:16,-58.5,0,overworld"
 wait 23000
-audio stop
-audio analyze-all hp_piano_gymnopedie=song:piano_gymnopedie hs_piano_gymnopedie=song:piano_gymnopedie hp_piano_chopin_op66=song:piano_chopin_op66 hs_piano_chopin_op66=song:piano_chopin_op66 hp_vocal_stars=song:vocal_stars hs_vocal_stars=song:vocal_stars hp_vocal_name_of_love=song:vocal_name_of_love hs_vocal_name_of_love=song:vocal_name_of_love hp_choir_how_long=song:choir_how_long hs_choir_how_long=song:choir_how_long hp_drums_round=song:drums_round hs_drums_round=song:drums_round hp_rock_big=song:rock_big
-audio export hp_piano_gymnopedie 160
-audio export hs_piano_gymnopedie 160
-audio export hp_piano_chopin_op66 160
-audio export hs_piano_chopin_op66 160
-audio export hp_vocal_stars 160
-audio export hs_vocal_stars 160
-audio export hp_vocal_name_of_love 160
-audio export hs_vocal_name_of_love 160
-audio export hp_choir_how_long 160
-audio export hs_choir_how_long 160
-audio export hp_drums_round 160
-audio export hs_drums_round 160
-audio export hp_rock_big 160
-audio start hp_hs_2
-audio mark hs_rock_big
-do execute as @a run spectral:play rock_big_e speaker
+audio mark d32_rock_big
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:32,-58.5,0,overworld"
 wait 23000
-audio mark hp_edm_detection
-do execute as @a run spectral:play edm_detection_e phones
-wait 23000
-audio mark hs_edm_detection
-do execute as @a run spectral:play edm_detection_e speaker
-wait 23000
-audio mark hp_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e phones
-wait 23000
-audio mark hs_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e speaker
-wait 23000
-audio mark hp_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_e phones
-wait 23000
-audio mark hs_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_e speaker
-wait 23000
-audio mark hp_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e phones
-wait 23000
-audio mark hs_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e speaker
-wait 23000
-audio mark hp_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_e phones
-wait 23000
-audio mark hs_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_e speaker
-wait 23000
-audio mark hp_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_e phones
-wait 23000
-audio mark hs_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_e speaker
+audio mark d48_rock_big
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:48,-58.5,0,overworld"
 wait 23000
 audio stop
-audio analyze-all hs_rock_big=song:rock_big hp_edm_detection=song:edm_detection hs_edm_detection=song:edm_detection hp_orchestra_five_armies=song:orchestra_five_armies hs_orchestra_five_armies=song:orchestra_five_armies hp_funk_funkorama=song:funk_funkorama hs_funk_funkorama=song:funk_funkorama hp_speech_ja_soseki=song:speech_ja_soseki hs_speech_ja_soseki=song:speech_ja_soseki hp_speech_en_wordsworth=song:speech_en_wordsworth hs_speech_en_wordsworth=song:speech_en_wordsworth hp_demo_selfmade=song:demo_selfmade hs_demo_selfmade=song:demo_selfmade
-audio export hs_rock_big 160
-audio export hp_edm_detection 160
-audio export hs_edm_detection 160
-audio export hp_orchestra_five_armies 160
-audio export hs_orchestra_five_armies 160
-audio export hp_funk_funkorama 160
-audio export hs_funk_funkorama 160
-audio export hp_speech_ja_soseki 160
-audio export hs_speech_ja_soseki 160
-audio export hp_speech_en_wordsworth 160
-audio export hs_speech_en_wordsworth 160
-audio export hp_demo_selfmade 160
-audio export hs_demo_selfmade 160
+audio analyze-all d3_piano_gymnopedie=song:piano_gymnopedie d8_piano_gymnopedie=song:piano_gymnopedie d16_piano_gymnopedie=song:piano_gymnopedie d32_piano_gymnopedie=song:piano_gymnopedie d48_piano_gymnopedie=song:piano_gymnopedie d3_vocal_name_of_love=song:vocal_name_of_love d8_vocal_name_of_love=song:vocal_name_of_love d16_vocal_name_of_love=song:vocal_name_of_love d32_vocal_name_of_love=song:vocal_name_of_love d48_vocal_name_of_love=song:vocal_name_of_love d3_rock_big=song:rock_big d8_rock_big=song:rock_big d16_rock_big=song:rock_big d32_rock_big=song:rock_big d48_rock_big=song:rock_big
+audio export d3_piano_gymnopedie 160
+audio export d8_piano_gymnopedie 160
+audio export d16_piano_gymnopedie 160
+audio export d32_piano_gymnopedie 160
+audio export d48_piano_gymnopedie 160
+audio export d3_vocal_name_of_love 160
+audio export d8_vocal_name_of_love 160
+audio export d16_vocal_name_of_love 160
+audio export d32_vocal_name_of_love 160
+audio export d48_vocal_name_of_love 160
+audio export d3_rock_big 160
+audio export d8_rock_big 160
+audio export d16_rock_big 160
+audio export d32_rock_big 160
+audio export d48_rock_big 160
+audio start d3_d8_d16_d32_d48_2
+audio mark d3_edm_detection
+do execute as @a run spectral:live_demo edm_detection_e near @s 24 "near:3,-58.5,0,overworld"
+wait 23000
+audio mark d8_edm_detection
+do execute as @a run spectral:live_demo edm_detection_e near @s 24 "near:8,-58.5,0,overworld"
+wait 23000
+audio mark d16_edm_detection
+do execute as @a run spectral:live_demo edm_detection_e near @s 24 "near:16,-58.5,0,overworld"
+wait 23000
+audio mark d32_edm_detection
+do execute as @a run spectral:live_demo edm_detection_e near @s 24 "near:32,-58.5,0,overworld"
+wait 23000
+audio mark d48_edm_detection
+do execute as @a run spectral:live_demo edm_detection_e near @s 24 "near:48,-58.5,0,overworld"
+wait 23000
+audio mark d3_orchestra_five_armies
+do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:3,-58.5,0,overworld"
+wait 23000
+audio mark d8_orchestra_five_armies
+do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:8,-58.5,0,overworld"
+wait 23000
+audio mark d16_orchestra_five_armies
+do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:16,-58.5,0,overworld"
+wait 23000
+audio mark d32_orchestra_five_armies
+do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:32,-58.5,0,overworld"
+wait 23000
+audio mark d48_orchestra_five_armies
+do execute as @a run spectral:live_demo orchestra_five_armies_e near @s 24 "near:48,-58.5,0,overworld"
+wait 23000
+audio mark d3_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:3,-58.5,0,overworld"
+wait 23000
+audio mark d8_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:8,-58.5,0,overworld"
+wait 23000
+audio mark d16_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:16,-58.5,0,overworld"
+wait 23000
+audio mark d32_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:32,-58.5,0,overworld"
+wait 23000
+audio mark d48_speech_ja_soseki
+do execute as @a run spectral:live_demo speech_ja_soseki_e near @s 24 "near:48,-58.5,0,overworld"
+wait 23000
+audio stop
+audio analyze-all d3_edm_detection=song:edm_detection d8_edm_detection=song:edm_detection d16_edm_detection=song:edm_detection d32_edm_detection=song:edm_detection d48_edm_detection=song:edm_detection d3_orchestra_five_armies=song:orchestra_five_armies d8_orchestra_five_armies=song:orchestra_five_armies d16_orchestra_five_armies=song:orchestra_five_armies d32_orchestra_five_armies=song:orchestra_five_armies d48_orchestra_five_armies=song:orchestra_five_armies d3_speech_ja_soseki=song:speech_ja_soseki d8_speech_ja_soseki=song:speech_ja_soseki d16_speech_ja_soseki=song:speech_ja_soseki d32_speech_ja_soseki=song:speech_ja_soseki d48_speech_ja_soseki=song:speech_ja_soseki
+audio export d3_edm_detection 160
+audio export d8_edm_detection 160
+audio export d16_edm_detection 160
+audio export d32_edm_detection 160
+audio export d48_edm_detection 160
+audio export d3_orchestra_five_armies 160
+audio export d8_orchestra_five_armies 160
+audio export d16_orchestra_five_armies 160
+audio export d32_orchestra_five_armies 160
+audio export d48_orchestra_five_armies 160
+audio export d3_speech_ja_soseki 160
+audio export d8_speech_ja_soseki 160
+audio export d16_speech_ja_soseki 160
+audio export d32_speech_ja_soseki 160
+audio export d48_speech_ja_soseki 160
