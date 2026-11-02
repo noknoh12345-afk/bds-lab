@@ -33,74 +33,99 @@ def hp(x):
     return sosfiltfilt(butter(4, 800, 'hp', fs=SR, output='sos'), x)
 
 
-def find_clicks(x, tpl, min_gap_ms=20, rel=0.25):
-    """the click times (s) in x: peaks of the normalised match with the template, refined by a parabola"""
-    from scipy.signal import fftconvolve
-    xh, th = hp(x), hp(tpl)
-    c = fftconvolve(xh, th[::-1], 'valid')
-    e = np.sqrt(fftconvolve(xh ** 2, np.ones(len(th)), 'valid')) * np.sqrt((th ** 2).sum()) + 1e-12
-    r = c / e
-    thr = rel * r.max()
-    out, gap = [], int(min_gap_ms / 1000 * SR)
-    i = 0
-    while i < len(r):
-        if r[i] > thr:
-            j = i + int(np.argmax(r[i: i + gap]))
-            if 0 < j < len(r) - 1:
-                a, b, cc = r[j - 1], r[j], r[j + 1]
-                d = 0.5 * (a - cc) / (a - 2 * b + cc) if (a - 2 * b + cc) != 0 else 0
-                out.append((j + d) / SR)
-            i = j + gap
-        else:
-            i += 1
+def envelope(x):
+    """the clicks' envelope: |high-passed| smoothed over 0.5 ms"""
+    return np.convolve(np.abs(hp(x)), np.ones(24) / 24, 'same')
+
+
+def onsets(x, min_gap_ms=15, rel=0.2):
+    """each click's onset (s): the envelope's peaks (at least min_gap_ms apart, over rel of a typical peak), the onset where the
+    envelope first reaches half of that peak going back from it (linear between samples: a tenth of a millisecond)"""
+    from scipy.signal import find_peaks
+    env = envelope(x)
+    pk, pr = find_peaks(env, distance=int(min_gap_ms / 1000 * SR))
+    if not len(pk):
+        return []
+    typical = np.percentile(env[pk], 95)
+    pk = pk[env[pk] > rel * typical]
+    out = []
+    for i in pk:
+        half = env[i] / 2
+        j = i
+        while j > 0 and env[j] > half:
+            j -= 1
+        a, b = env[j], env[j + 1]
+        out.append((j + (half - a) / (b - a if b != a else 1)) / SR)
     return out
 
 
-def pair_distance(seg, tpl):
-    """the k' (ms) for which a click plus the same click k' later best matches the segment"""
-    xh, th = hp(seg), hp(tpl)
-    best = (-1, 0, 0)
-    n = len(th) + int(0.07 * SR)
-    for k10 in range(0, 601):
-        k = k10 / 10
-        sh = k / 1000 * SR
-        two = np.zeros(n)
-        two[: len(th)] += th
-        # the second click k later, at a fraction of a sample by linear interpolation
-        i0 = int(np.floor(sh)); fr = sh - i0
-        two[i0: i0 + len(th)] += th * (1 - fr)
-        two[i0 + 1: i0 + 1 + len(th)] += th * fr
-        from scipy.signal import fftconvolve
-        c = fftconvolve(xh, two[::-1], 'valid')
-        e = np.sqrt(fftconvolve(xh ** 2, np.ones(len(two)), 'valid')) * np.sqrt((two ** 2).sum()) + 1e-12
-        r = (c / e).max() if len(c) else 0
-        if r > best[0]:
-            best = (r, k, 0)
+def template(x, t0, ms=8):
+    a = int(t0 * SR) - int(0.002 * SR)
+    return hp(x)[a: a + int(ms / 1000 * SR)]
+
+
+def pair_distance(seg, tpl, t_first):
+    """the k' (ms, 0.05 ms steps) for which the click at t_first plus the same click k' later best explains the segment (least
+    squares, each click its own size)"""
+    xh = hp(seg)
+    n = len(xh)
+    best = (-1.0, 0.0)
+    def placed(at):
+        y = np.zeros(n)
+        i0 = int(np.floor(at)); fr = at - i0
+        for k, w in ((i0, 1 - fr), (i0 + 1, fr)):
+            if 0 <= k < n:
+                m = min(len(tpl), n - k)
+                y[k: k + m] += tpl[:m] * w
+        return y
+    a = placed(t_first * SR - int(0.002 * SR))
+    for k20 in range(0, 1201):
+        kms = k20 / 20
+        b = placed(t_first * SR - int(0.002 * SR) + kms / 1000 * SR)
+        A = np.vstack([a, b]).T
+        coef, res, *_ = np.linalg.lstsq(A, xh, rcond=None)
+        fit = 1 - ((xh - A @ coef) ** 2).sum() / max(1e-20, (xh ** 2).sum())
+        if fit > best[0] and coef[1] > 0.3 * coef[0]:
+            best = (fit, kms)
     return best[1], best[0]
 
 
-def score_pairs(x, tpl):
-    """the 8 pairs: their segments are where the recording's clicks come in twos (or overlap), 700 ms apart"""
-    ts = find_clicks(x, tpl, min_gap_ms=300, rel=0.3)        # one hit a pair (the first, or the overlapped two)
+def score_pairs(x):
+    """the 8 pairs (k = 1, 2, 3, 5, 8, 13, 21, 34 ms, 700 ms apart): the first onset of each group; the last pair's first click
+    (34 ms alone) is the template, as the phone played it"""
+    ts = onsets(x, min_gap_ms=5, rel=0.15)
+    groups = []
+    for t in ts:
+        if not groups or t - groups[-1][0] > 0.3:
+            groups.append([t])
+        else:
+            groups[-1].append(t)
+    if len(groups) < 8:
+        return {'groups': len(groups)}
+    groups = groups[-8:]
+    tpl = template(x, groups[-1][0])
     out = []
-    for k, t in zip([1, 2, 3, 5, 8, 13, 21, 34], ts[:8]):
-        a = int((t - 0.01) * SR); b = int((t + 0.09) * SR)
-        got, r = pair_distance(x[a:b], tpl)
-        out.append({'sent_ms': k, 'heard_ms': got, 'error_ms': round(got - k, 2), 'match': round(float(r), 3)})
+    for k, g in zip([1, 2, 3, 5, 8, 13, 21, 34], groups):
+        t0 = g[0]
+        a = int((t0 - 0.005) * SR); b = int((t0 + 0.075) * SR)
+        got, fit = pair_distance(x[a:b], tpl, 0.005)
+        out.append({'sent_ms': k, 'heard_ms': got, 'error_ms': round(got - k, 2), 'fit': round(float(fit), 3)})
     return out
 
 
-def score_pulse(x, tpl):
-    ts = np.array(find_clicks(x, tpl, min_gap_ms=20, rel=0.3))
+def score_pulse(x):
+    ts = np.array(onsets(x, min_gap_ms=15, rel=0.2))
     if len(ts) < 10:
         return {'clicks': int(len(ts))}
     iv = np.diff(ts) * 1000
-    n = np.arange(len(ts))
+    # (a missed click shows as about twice the interval: counted, not used for the spread)
+    ok = iv[np.abs(iv - 37) < 18]
+    n = np.round((ts - ts[0]) / 0.037).astype(int)
     A = np.vstack([n, np.ones_like(n)]).T
     (slope, icpt), *_ = np.linalg.lstsq(A, ts, rcond=None)
     resid = (ts - (slope * n + icpt)) * 1000
-    return {'clicks': int(len(ts)), 'interval_ms_mean': round(float(iv.mean()), 3), 'interval_ms_sd': round(float(iv.std()), 3),
-            'interval_ms_min': round(float(iv.min()), 2), 'interval_ms_max': round(float(iv.max()), 2),
+    return {'clicks': int(len(ts)), 'of': 60, 'interval_ms_median': round(float(np.median(ok)), 3), 'interval_ms_sd': round(float(ok.std()), 3),
+            'exact_share': round(float((np.abs(ok - 37) < 0.5).mean()), 3), 'interval_ms_min': round(float(ok.min()), 2), 'interval_ms_max': round(float(ok.max()), 2),
             'grid_ms': round(float(slope * 1000), 3), 'place_sd_ms': round(float(resid.std()), 3), 'place_max_ms': round(float(np.abs(resid).max()), 2)}
 
 
@@ -108,15 +133,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('folder'); ap.add_argument('--json')
     a = ap.parse_args()
-    tpl = click()
     res = {}
     for f in sorted(glob.glob(os.path.join(a.folder, '*'))):
         name = os.path.basename(f).rsplit('.', 1)[0]
         pre = name.split('_')[0]
         if pre in ('pp', 'p3'):
-            res[name] = {'pairs': score_pairs(load(f), tpl)}
+            res[name] = {'pairs': score_pairs(load(f))}
         elif pre in ('pu', 'u3'):
-            res[name] = {'pulse': score_pulse(load(f), tpl)}
+            res[name] = {'pulse': score_pulse(load(f))}
         else:
             continue
         print(name, json.dumps(res[name], ensure_ascii=False), flush=True)

@@ -1,0 +1,167 @@
+{
+ "p3_b4": {
+  "pairs": [
+   {
+    "sent_ms": 1,
+    "heard_ms": 1.25,
+    "error_ms": 0.25,
+    "fit": 0.429
+   },
+   {
+    "sent_ms": 2,
+    "heard_ms": 11.7,
+    "error_ms": 9.7,
+    "fit": 0.052
+   },
+   {
+    "sent_ms": 3,
+    "heard_ms": 7.85,
+    "error_ms": 4.85,
+    "fit": 0.056
+   },
+   {
+    "sent_ms": 5,
+    "heard_ms": 14.6,
+    "error_ms": 9.6,
+    "fit": 0.107
+   },
+   {
+    "sent_ms": 8,
+    "heard_ms": 6.65,
+    "error_ms": -1.35,
+    "fit": 0.04
+   },
+   {
+    "sent_ms": 13,
+    "heard_ms": 6.65,
+    "error_ms": -6.35,
+    "fit": 0.037
+   },
+   {
+    "sent_ms": 21,
+    "heard_ms": 31.1,
+    "error_ms": 10.1,
+    "fit": 0.108
+   },
+   {
+    "sent_ms": 34,
+    "heard_ms": 6.65,
+    "error_ms": -27.35,
+    "fit": 0.036
+   }
+  ]
+ },
+ "pp_b0": {
+  "pairs": [
+   {
+    "sent_ms": 1,
+    "heard_ms": 0.85,
+    "error_ms": -0.15,
+    "fit": 0.286
+   },
+   {
+    "sent_ms": 2,
+    "heard_ms": 0.35,
+    "error_ms": -1.65,
+    "fit": 0.205
+   },
+   {
+    "sent_ms": 3,
+    "heard_ms": 0.0,
+    "error_ms": -3.0,
+    "fit": 0.583
+   },
+   {
+    "sent_ms": 5,
+    "heard_ms": 0.0,
+    "error_ms": -5.0,
+    "fit": 0.939
+   },
+   {
+    "sent_ms": 8,
+    "heard_ms": 0.0,
+    "error_ms": -8.0,
+    "fit": 0.584
+   },
+   {
+    "sent_ms": 13,
+    "heard_ms": 0.35,
+    "error_ms": -12.65,
+    "fit": 0.278
+   },
+   {
+    "sent_ms": 21,
+    "heard_ms": 0.7,
+    "error_ms": -20.3,
+    "fit": 0.797
+   },
+   {
+    "sent_ms": 34,
+    "heard_ms": 0.0,
+    "error_ms": -34.0,
+    "fit": 0.469
+   }
+  ]
+ },
+ "pp_b4": {
+  "pairs": {
+   "groups": 7
+  }
+ },
+ "pu_b0": {
+  "pulse": {
+   "clicks": 44,
+   "of": 60,
+   "interval_ms_median": 42.667,
+   "interval_ms_sd": 4.03,
+   "exact_share": 0.0,
+   "interval_ms_min": 21.33,
+   "interval_ms_max": 42.68,
+   "grid_ms": 37.244,
+   "place_sd_ms": 5.13,
+   "place_max_ms": 13.53
+  }
+ },
+ "pu_b1": {
+  "pulse": {
+   "clicks": 57,
+   "of": 60,
+   "interval_ms_median": 36.949,
+   "interval_ms_sd": 9.04,
+   "exact_share": 0.241,
+   "interval_ms_min": 29.66,
+   "interval_ms_max": 51.01,
+   "grid_ms": 36.946,
+   "place_sd_ms": 8.082,
+   "place_max_ms": 16.78
+  }
+ },
+ "pu_b4": {
+  "pulse": {
+   "clicks": 49,
+   "of": 60,
+   "interval_ms_median": 37.0,
+   "interval_ms_sd": 5.236,
+   "exact_share": 0.7,
+   "interval_ms_min": 29.0,
+   "interval_ms_max": 50.34,
+   "grid_ms": 36.942,
+   "place_sd_ms": 12.985,
+   "place_max_ms": 20.09
+  }
+ },
+ "u3_b4": {
+  "pulse": {
+   "clicks": 55,
+   "of": 60,
+   "interval_ms_median": 37.0,
+   "interval_ms_sd": 4.772,
+   "exact_share": 0.784,
+   "interval_ms_min": 28.93,
+   "interval_ms_max": 50.34,
+   "grid_ms": 37.066,
+   "place_sd_ms": 5.669,
+   "place_max_ms": 9.98
+  }
+ }
+}

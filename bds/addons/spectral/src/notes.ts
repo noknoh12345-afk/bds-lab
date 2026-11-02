@@ -9,7 +9,7 @@
 // bundles: inside one, the notes keep their distances to the millisecond. A 3D sound plays as it was made for 100-200 ms
 // (SPEC.md), so the speaker starts its notes `ahead` ms earlier still, and that time passes in the silence.
 import { system, Player, Dimension, Vector3, SoundInstance } from '@minecraft/server';
-import { BANK, GM, DRUMS, LEAD, VOICES, Inst } from './bank';
+import { BANK, GM, DRUMS, LEAD, VOICES, ALIASES, Inst } from './bank';
 
 export const NOTES_FORMAT = 'spectral-notes/1';
 export interface NoteMeta { format: string; id: string; title: string; artist?: string; seconds: number; notes: number; programs: number[]; }
@@ -132,6 +132,8 @@ export class NotePlayer {
   nextBundle = -Infinity;
   voices: Voice[] = [];
   starts = 0; steals = 0; skipped = 0; calls = 0; peakVoices = 0; ticks = 0;
+  /** the alias each sample was last started under (a sample started again goes under the next: spectral.i.<id>.<k><alias>) */
+  private alias = new Map<number, number>();
   constructor(public owner: Player, public song: NoteSong, public nt: Notes, public o: NoteOpts, public dim: Dimension, public loc: Vector3) {}
   get title() { return this.song.meta.title; }
   start(atMs = 0) { this.started = true; this.seekMs(atMs); }
@@ -180,7 +182,9 @@ export class NotePlayer {
     if (late > 0 && nt.on[i] + nt.dur[i] <= t) { this.skipped++; return; }
     while (this.voices.length >= this.o.maxVoices) this.steal(t);
     const gain = this.o.volume * Math.pow(nt.vel[i] / 127, 2);
-    const ev = `spectral.i.${inst.id}.${j}`;
+    const ak = ii * 4096 + j, an = ((this.alias.get(ak) ?? -1) + 1) % ALIASES.length;
+    this.alias.set(ak, an);
+    const ev = `spectral.i.${inst.id}.${j}${ALIASES[an]}`;
     let s: SoundInstance;
     try {
       if (this.o.where === 'phones') s = this.owner.playSound(ev, { volume: gain, pitch: p });
@@ -188,7 +192,7 @@ export class NotePlayer {
       const seek = Math.max(0, LEAD - (delay / 1000) * p + (late / 1000) * p);
       s.seekTo(seek);
       this.calls += 2;
-      if (this.o.log) console.warn(`[spectral] note ${i} ${inst.id}.${j} key ${key} pitch ${p.toFixed(4)} seek ${seek.toFixed(4)} at ${Math.round(t)} ms`);
+      if (this.o.log) console.warn(`[spectral] note ${i} ${inst.id}.${j} key ${key} pitch ${p.toFixed(4)} seek ${seek.toFixed(4)} at ${Math.round(t)} ms alias ${ALIASES[an] || '-'}`);
     } catch { this.skipped++; return; }
     this.starts++;
     const on = nt.on[i];

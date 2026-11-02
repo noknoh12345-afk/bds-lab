@@ -764,3 +764,14 @@ scriptevent spectral:file {"id":"f_test","title":"Test file","artist":"","second
 scriptevent spectral:file {"id":"f_bad"}
 ~ \[spectral\] file song: no parts
 @A cmd /spectral:sampler 4 250 28 120 false
+
+## a sample sounding again goes under its next alias (the same file under more event names: on the phone many copies of one event started close together lost some — p01): the étude's G3 (piano.48) under -, a, b, c in turn
+@A cmd /spectral:sampler 4 250 28 120 true
+@A cmd /spectral:play piano_demo
+until note 11 piano 4000
+~ \[spectral\] note 2 piano\.48 key 55 pitch 1\.0595 seek 0\.4808 at 200 ms alias -
+~ \[spectral\] note 5 piano\.48 key 55 pitch 1\.0595 seek 0\.4543 at 800 ms alias a
+~ \[spectral\] note 9 piano\.48 key 55 pitch 1\.0595 seek 0\.4278 at 1400 ms alias b
+~ \[spectral\] note 11 piano\.48 key 55 pitch 1\.0595 seek 0\.4014 at 2000 ms alias c
+@A cmd /spectral:stop
+@A cmd /spectral:sampler 4 250 28 120 false
