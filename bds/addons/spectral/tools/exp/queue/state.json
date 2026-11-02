@@ -1,0 +1,65 @@
+{
+ "q01_same_twice": {
+  "commit": "7d9d869",
+  "run": "41426659110",
+  "started": "2026-11-02 19:10",
+  "status": "running"
+ },
+ "q02_ceiling_now": {
+  "status": "pending"
+ },
+ "q03_phones_vs_speaker": {
+  "status": "pending"
+ },
+ "q04_distance": {
+  "status": "pending"
+ },
+ "q05_direction": {
+  "status": "pending"
+ },
+ "q06_two_streams": {
+  "status": "pending"
+ },
+ "q07_screen_off": {
+  "status": "pending"
+ },
+ "q08_walking_talker": {
+  "status": "pending"
+ },
+ "q09_long_song": {
+  "status": "pending"
+ },
+ "q10_live_10min": {
+  "status": "pending"
+ },
+ "q11_speed_pitch": {
+  "status": "pending"
+ },
+ "q12_level_12_14": {
+  "status": "pending"
+ },
+ "q13_voices_16_20": {
+  "status": "pending"
+ },
+ "q14_spz2_coarse": {
+  "status": "pending"
+ },
+ "q15_light_mode": {
+  "status": "pending"
+ },
+ "q16_rain_mobs": {
+  "status": "pending"
+ },
+ "q17_bgm_on": {
+  "status": "pending"
+ },
+ "q18_loop_5min": {
+  "status": "pending"
+ },
+ "q19_pause_seek": {
+  "status": "pending"
+ },
+ "q20_memory_pressure": {
+  "status": "pending"
+ }
+}
