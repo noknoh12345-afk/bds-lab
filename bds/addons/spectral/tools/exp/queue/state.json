@@ -286,7 +286,10 @@
   "tries": 1
  },
  "q10_live_10min": {
-  "status": "pending"
+  "commit": "471f8bd",
+  "run": "41457347451",
+  "started": "2026-11-02 22:56",
+  "status": "running"
  },
  "q11_speed_pitch": {
   "status": "pending"
