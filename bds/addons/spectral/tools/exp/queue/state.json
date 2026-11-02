@@ -1,9 +1,16 @@
 {
  "p01_sampler": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "f93b30f",
+  "conclusion": "success",
+  "ended": "2026-11-03 00:51",
+  "failed_steps": 0,
+  "recordings": 11,
   "run": "41472510854",
   "started": "2026-11-03 00:32",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q01_same_twice": {
   "arms": {
