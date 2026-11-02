@@ -2,7 +2,7 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 13（tools/exp/queue/q13_voices_16_20.json）: 電話の声 16・20・24。模型は 24 声が一番と言う: 実機でも同じか（16・20 はその数に合わせて変換し直したもの）。少ない声は命令も少ない
+# キュー 14（tools/exp/queue/q14_spz2_coarse.json）: 曲テキストの格子を粗く（大きさ 3 dB・音程 20 セント・ノイズ 1.5 dB）。聞き分けられなければ貼り付けのテキストをさらに短くできる（33 回目の今の格子と同じ run で）
 
 section title
 audio info
@@ -14,9 +14,8 @@ audio info
 shot title
 
 section prep
-audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_e pack=tools/exp/packs/run10
-audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_v20 pack=tools/exp/packs/v20
-audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_v16 pack=tools/exp/packs/v16
+audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_z pack=tools/exp/packs/spz2
+audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_zc pack=tools/exp/packs/spz2c
 
 section join
 join
@@ -27,247 +26,115 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section e_v20_v16
+section z_zc
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run spectral:voices 24
-audio start e_v20_v16_1
-audio mark e_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e
+audio start z_zc_1
+audio mark z_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_v20
+audio mark zc_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_v16
+audio mark z_piano_chopin_op66
+do execute as @a run spectral:play piano_chopin_op66_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_e
+audio mark zc_piano_chopin_op66
+do execute as @a run spectral:play piano_chopin_op66_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_v20
+audio mark z_vocal_stars
+do execute as @a run spectral:play vocal_stars_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_v16
+audio mark zc_vocal_stars
+do execute as @a run spectral:play vocal_stars_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_vocal_stars
-do execute as @a run spectral:play vocal_stars_e
+audio mark z_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_vocal_stars
-do execute as @a run spectral:play vocal_stars_v20
+audio mark zc_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_vocal_stars
-do execute as @a run spectral:play vocal_stars_v16
+audio mark z_choir_how_long
+do execute as @a run spectral:play choir_how_long_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e
+audio mark zc_choir_how_long
+do execute as @a run spectral:play choir_how_long_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_v20
+audio mark z_drums_round
+do execute as @a run spectral:play drums_round_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_v16
+audio mark zc_drums_round
+do execute as @a run spectral:play drums_round_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_choir_how_long
-do execute as @a run spectral:play choir_how_long_e
+audio mark z_rock_big
+do execute as @a run spectral:play rock_big_z
 wait 23000
 audio stop
-audio analyze-all e_piano_gymnopedie=song:piano_gymnopedie v20_piano_gymnopedie=song:piano_gymnopedie v16_piano_gymnopedie=song:piano_gymnopedie e_piano_chopin_op66=song:piano_chopin_op66 v20_piano_chopin_op66=song:piano_chopin_op66 v16_piano_chopin_op66=song:piano_chopin_op66 e_vocal_stars=song:vocal_stars v20_vocal_stars=song:vocal_stars v16_vocal_stars=song:vocal_stars e_vocal_name_of_love=song:vocal_name_of_love v20_vocal_name_of_love=song:vocal_name_of_love v16_vocal_name_of_love=song:vocal_name_of_love e_choir_how_long=song:choir_how_long
-audio export e_piano_gymnopedie 160
-audio export v20_piano_gymnopedie 160
-audio export v16_piano_gymnopedie 160
-audio export e_piano_chopin_op66 160
-audio export v20_piano_chopin_op66 160
-audio export v16_piano_chopin_op66 160
-audio export e_vocal_stars 160
-audio export v20_vocal_stars 160
-audio export v16_vocal_stars 160
-audio export e_vocal_name_of_love 160
-audio export v20_vocal_name_of_love 160
-audio export v16_vocal_name_of_love 160
-audio export e_choir_how_long 160
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio start e_v20_v16_2
-audio mark v20_choir_how_long
-do execute as @a run spectral:play choir_how_long_v20
+audio analyze-all z_piano_gymnopedie=song:piano_gymnopedie zc_piano_gymnopedie=song:piano_gymnopedie z_piano_chopin_op66=song:piano_chopin_op66 zc_piano_chopin_op66=song:piano_chopin_op66 z_vocal_stars=song:vocal_stars zc_vocal_stars=song:vocal_stars z_vocal_name_of_love=song:vocal_name_of_love zc_vocal_name_of_love=song:vocal_name_of_love z_choir_how_long=song:choir_how_long zc_choir_how_long=song:choir_how_long z_drums_round=song:drums_round zc_drums_round=song:drums_round z_rock_big=song:rock_big
+audio export z_piano_gymnopedie 160
+audio export zc_piano_gymnopedie 160
+audio export z_piano_chopin_op66 160
+audio export zc_piano_chopin_op66 160
+audio export z_vocal_stars 160
+audio export zc_vocal_stars 160
+audio export z_vocal_name_of_love 160
+audio export zc_vocal_name_of_love 160
+audio export z_choir_how_long 160
+audio export zc_choir_how_long 160
+audio export z_drums_round 160
+audio export zc_drums_round 160
+audio export z_rock_big 160
+audio start z_zc_2
+audio mark zc_rock_big
+do execute as @a run spectral:play rock_big_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_choir_how_long
-do execute as @a run spectral:play choir_how_long_v16
+audio mark z_edm_detection
+do execute as @a run spectral:play edm_detection_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_drums_round
-do execute as @a run spectral:play drums_round_e
+audio mark zc_edm_detection
+do execute as @a run spectral:play edm_detection_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_drums_round
-do execute as @a run spectral:play drums_round_v20
+audio mark z_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_drums_round
-do execute as @a run spectral:play drums_round_v16
+audio mark zc_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_rock_big
-do execute as @a run spectral:play rock_big_e
+audio mark z_funk_funkorama
+do execute as @a run spectral:play funk_funkorama_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_rock_big
-do execute as @a run spectral:play rock_big_v20
+audio mark zc_funk_funkorama
+do execute as @a run spectral:play funk_funkorama_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_rock_big
-do execute as @a run spectral:play rock_big_v16
+audio mark z_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_edm_detection
-do execute as @a run spectral:play edm_detection_e
+audio mark zc_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_edm_detection
-do execute as @a run spectral:play edm_detection_v20
+audio mark z_speech_en_wordsworth
+do execute as @a run spectral:play speech_en_wordsworth_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_edm_detection
-do execute as @a run spectral:play edm_detection_v16
+audio mark zc_speech_en_wordsworth
+do execute as @a run spectral:play speech_en_wordsworth_zc
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e
+audio mark z_demo_selfmade
+do execute as @a run spectral:play demo_selfmade_z
 wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_v20
+audio mark zc_demo_selfmade
+do execute as @a run spectral:play demo_selfmade_zc
 wait 23000
 audio stop
-audio analyze-all v20_choir_how_long=song:choir_how_long v16_choir_how_long=song:choir_how_long e_drums_round=song:drums_round v20_drums_round=song:drums_round v16_drums_round=song:drums_round e_rock_big=song:rock_big v20_rock_big=song:rock_big v16_rock_big=song:rock_big e_edm_detection=song:edm_detection v20_edm_detection=song:edm_detection v16_edm_detection=song:edm_detection e_orchestra_five_armies=song:orchestra_five_armies v20_orchestra_five_armies=song:orchestra_five_armies
-audio export v20_choir_how_long 160
-audio export v16_choir_how_long 160
-audio export e_drums_round 160
-audio export v20_drums_round 160
-audio export v16_drums_round 160
-audio export e_rock_big 160
-audio export v20_rock_big 160
-audio export v16_rock_big 160
-audio export e_edm_detection 160
-audio export v20_edm_detection 160
-audio export v16_edm_detection 160
-audio export e_orchestra_five_armies 160
-audio export v20_orchestra_five_armies 160
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio start e_v20_v16_3
-audio mark v16_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_v16
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_v20
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_v16
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_v20
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_v16
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_v20
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_v16
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 24
-audio mark e_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 20
-audio mark v20_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_v20
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run spectral:voices 16
-audio mark v16_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_v16
-wait 23000
-audio stop
-audio analyze-all v16_orchestra_five_armies=song:orchestra_five_armies e_funk_funkorama=song:funk_funkorama v20_funk_funkorama=song:funk_funkorama v16_funk_funkorama=song:funk_funkorama e_speech_ja_soseki=song:speech_ja_soseki v20_speech_ja_soseki=song:speech_ja_soseki v16_speech_ja_soseki=song:speech_ja_soseki e_speech_en_wordsworth=song:speech_en_wordsworth v20_speech_en_wordsworth=song:speech_en_wordsworth v16_speech_en_wordsworth=song:speech_en_wordsworth e_demo_selfmade=song:demo_selfmade v20_demo_selfmade=song:demo_selfmade v16_demo_selfmade=song:demo_selfmade
-audio export v16_orchestra_five_armies 160
-audio export e_funk_funkorama 160
-audio export v20_funk_funkorama 160
-audio export v16_funk_funkorama 160
-audio export e_speech_ja_soseki 160
-audio export v20_speech_ja_soseki 160
-audio export v16_speech_ja_soseki 160
-audio export e_speech_en_wordsworth 160
-audio export v20_speech_en_wordsworth 160
-audio export v16_speech_en_wordsworth 160
-audio export e_demo_selfmade 160
-audio export v20_demo_selfmade 160
-audio export v16_demo_selfmade 160
+audio analyze-all zc_rock_big=song:rock_big z_edm_detection=song:edm_detection zc_edm_detection=song:edm_detection z_orchestra_five_armies=song:orchestra_five_armies zc_orchestra_five_armies=song:orchestra_five_armies z_funk_funkorama=song:funk_funkorama zc_funk_funkorama=song:funk_funkorama z_speech_ja_soseki=song:speech_ja_soseki zc_speech_ja_soseki=song:speech_ja_soseki z_speech_en_wordsworth=song:speech_en_wordsworth zc_speech_en_wordsworth=song:speech_en_wordsworth z_demo_selfmade=song:demo_selfmade zc_demo_selfmade=song:demo_selfmade
+audio export zc_rock_big 160
+audio export z_edm_detection 160
+audio export zc_edm_detection 160
+audio export z_orchestra_five_armies 160
+audio export zc_orchestra_five_armies 160
+audio export z_funk_funkorama 160
+audio export zc_funk_funkorama 160
+audio export z_speech_ja_soseki 160
+audio export zc_speech_ja_soseki 160
+audio export z_speech_en_wordsworth 160
+audio export zc_speech_en_wordsworth 160
+audio export z_demo_selfmade 160
+audio export zc_demo_selfmade 160
