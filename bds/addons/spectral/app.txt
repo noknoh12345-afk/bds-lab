@@ -1,6 +1,6 @@
 # Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。
-# p11（p06 のやり直し: p06 は区切りの名前に空白があり 2 回とも始まる前に止まった）: 1 つの tick で始めた音のうちいくつ鳴るか（p04: 束ね 4 で連打の 2 割が落ち、別名では変わらなかった）。
-# K = 1〜12 発のクリックを 1 つの tick に（それぞれ seekTo で 40 ms ずつ: 束ね 12）ヘッドホン・3D、対照に束ね 1。K 音の和音（フルート、同じ seek）ヘッドホン・3D
+# p12（p08 のやり直し）: p08 は /connect の後の hello を 30 秒待って止まった（run 41528680880: 何が起きたかは封じた画面だけ）。今度は止まらずに
+# 3 通りの書き方（${DEVICE_HOST}・ws://・172.17.0.1）を試し、つながればサーバーが音階を鳴らす（--greet）ので録音で分かる。チャット・手紙も録る
 
 section title
 audio info
@@ -12,7 +12,6 @@ audio info
 shot title
 
 section prep
-audio song burst_k,chord_k pack=tools/exp/packs/notes
 
 section join
 join
@@ -23,40 +22,39 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section per_tick
-do execute as @a run spectral:sampler 12 250 28 120
-audio start bk_b12
-do execute as @a run spectral:play burst_k
-wait 19200
+section connect
+do execute as @a run spectral:sampler 2 250 28 300 true
+# /connect without stopping on the way: each attempt recorded (the server plays a scale to a game that connects: --greet)
+audio start cn_connect
+chat /connect ${DEVICE_HOST}:8790
+wait 9000
+shot connect-a
+chat /connect ws://${DEVICE_HOST}:8790
+wait 9000
+shot connect-b
+chat /connect ws://172.17.0.1:8790
+wait 9000
+shot connect-c
+audio stop
+audio export cn_connect 192
+# a song by the chat
+audio start cn_chat
+chat !spectral tools/exp/packs/notes/fur_elise.song.json
+wait 18000
 do execute as @a run spectral:stop
 audio stop
-audio export bk_b12 192
-do execute as @a run spectral:sampler 12 250 28 120
-audio start bk3_b12
-do execute as @a run spectral:play burst_k speaker
-wait 19500
+audio export cn_chat 192
+# the remote's mails: a scale on the live keys, then a song
+audio start cn_scale
+do tag @a add geoui.mail.sr.1.0.1.eyJuIjoic2NhbGUiLCJmIjp7fX0
+wait 4500
+audio stop
+audio export cn_scale 192
+audio start cn_mail
+do tag @a add geoui.mail.sr.2.0.1.eyJuIjoicGxheSIsImYiOnsidXJsIjoidG9vbHMvZXhwL3BhY2tzL25vdGVzL2NsaWNrc19wdWxzZS5zb25nLmpzb24ifX0
+wait 6000
 do execute as @a run spectral:stop
 audio stop
-audio export bk3_b12 192
-do execute as @a run spectral:sampler 1 250 28 120
-audio start bk_b1
-do execute as @a run spectral:play burst_k
-wait 19200
-do execute as @a run spectral:stop
-audio stop
-audio export bk_b1 192
-do execute as @a run spectral:sampler 2 250 28 120
-audio start ck_b2
-do execute as @a run spectral:play chord_k
-wait 19200
-do execute as @a run spectral:stop
-audio stop
-audio export ck_b2 192
-do execute as @a run spectral:sampler 2 250 28 120
-audio start ck3_b2
-do execute as @a run spectral:play chord_k speaker
-wait 19500
-do execute as @a run spectral:stop
-audio stop
-audio export ck3_b2 192
-do execute as @a run spectral:sampler 2 250 28 120
+audio export cn_mail 192
+shot after
+do execute as @a run spectral:sampler 2 250 28 300 false
