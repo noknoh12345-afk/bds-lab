@@ -286,10 +286,17 @@
   "tries": 1
  },
  "q10_live_10min": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "471f8bd",
+  "conclusion": "success",
+  "ended": "2026-11-02 23:20",
+  "failed_steps": 0,
+  "recordings": 1,
   "run": "41457347451",
   "started": "2026-11-02 22:56",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q11_speed_pitch": {
   "status": "pending"
