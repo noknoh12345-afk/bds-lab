@@ -1,6 +1,9 @@
 {
  "p01_sampler": {
-  "status": "pending"
+  "commit": "f93b30f",
+  "run": "41472510854",
+  "started": "2026-11-03 00:32",
+  "status": "running"
  },
  "q01_same_twice": {
   "arms": {
