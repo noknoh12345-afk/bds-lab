@@ -648,7 +648,10 @@
   "tries": 1
  },
  "q15_light_mode": {
-  "status": "pending"
+  "commit": "6d2e66b",
+  "run": "41541183581",
+  "started": "2026-11-03 07:54",
+  "status": "running"
  },
  "q16_rain_mobs": {
   "status": "pending"
