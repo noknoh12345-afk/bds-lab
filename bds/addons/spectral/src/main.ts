@@ -16,6 +16,7 @@ import programs, { Program } from './calib_programs';
 import { readPart, joinParts, decodeSongJob, songHeader, payloadText, payloadFrom, Part, SongMeta, FIELD_CHARS, PHONE_CHARS } from './songtext';
 import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes } from './notes';
 import notesDemo from './songs/notes_demo';
+import bandDemo from './songs/band_demo';
 import { saySong } from './say';
 import { VOICES } from './bank';
 
@@ -56,6 +57,7 @@ export function addSong(meta: Meta, data?: string, gen?: (d: Decoded) => void) {
 const noteSongs = new Map<string, NoteSong>();
 export function addNoteSong(meta: NoteMeta, data: string) { noteSongs.set(meta.id, { meta, data }); }
 addNoteSong(notesDemo.meta, notesDemo.data);
+addNoteSong(bandDemo.meta, bandDemo.data);
 
 const B64 = new Uint8Array(128);
 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('').forEach((c, i) => (B64[c.charCodeAt(0)] = i));

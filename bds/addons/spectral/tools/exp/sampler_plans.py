@@ -17,7 +17,7 @@ import notes as N
 from make_note_demo import k
 
 PACK = os.path.join(HERE, 'packs', 'notes')
-CLICK = 76                                  # GM wood block: the bank's click
+CLICK = 34                                  # the bank's click (src/bank.ts DRUMS: GM key 34)
 
 
 def clicks_pairs():

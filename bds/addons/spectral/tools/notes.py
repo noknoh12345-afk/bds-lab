@@ -229,6 +229,19 @@ def render(notes, out, sr=48000, quantize=False, seconds=None, master=0.6):
         inst, j, p = choose(B, prog, key, vel, cents)
         x, xsr = sample(inst['id'], j)
         x = x[int(lead * xsr):]
+        # a held note of an instrument that sustains goes on in copies of its sample from 40 % in, each crossfaded over 150 ms
+        # 350 ms before the one before ends (src/notes.ts relay; headphones only)
+        if inst.get('sustain') and len(x) / xsr > 1.5 and d / 1000 * p > len(x) / xsr - 0.35:
+            fade, start = int(0.15 * xsr), int(0.4 * len(x))
+            piece = x[start:]
+            out = x.copy()
+            while len(out) / xsr < d / 1000 * p + inst['release'] + 0.2:
+                at = len(out) - int(0.35 * xsr)
+                w = np.linspace(0, 1, fade)[:, None]
+                head = out[:at]
+                cross = out[at: at + fade] * (1 - w) + piece[:fade] * w
+                out = np.concatenate([head, cross, piece[fade:]])
+            x = out
         # read at speed p (linear interpolation, as the game reads a file) into the output rate
         n_out = int(min(len(x) / xsr / p, d / 1000 + inst['release'] + 0.05) * sr)
         tpos = np.arange(n_out) / sr * p * xsr

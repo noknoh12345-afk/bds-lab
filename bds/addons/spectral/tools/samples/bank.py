@@ -49,7 +49,7 @@ INSTRUMENTS = [
      'layers': {'vl2': 48, 'vl3': 84, 'vl4': 118}, 'maxs': (7.0, 2.6), 'release': 0.18, 'q': '2', 'stereo': True,
      'gm': list(range(0, 8))},
     # ---- General MIDI's other families (CC0: VSCO 2 CE and VCSL), one velocity layer each (the dynamics from the velocity)
-    {'id': 'strings', 'name': 'Strings (VSCO 2 CE violin and cello sections)', 'release': 0.25, 'q': '1', 'stereo': True, 'maxs': (6.0, 4.0),
+    {'id': 'strings', 'sustain': True, 'name': 'Strings (VSCO 2 CE violin and cello sections)', 'release': 0.25, 'q': '1', 'stereo': True, 'maxs': (6.0, 4.0),
      'sources': [{'repo': 'VSCO-2-CE', 'folder': 'Strings/Violin Section', 'sparse': 'VlnEns_susVib_*_v2.wav', 'pattern': r'VlnEns_susVib_(?P<note>[A-G]#?\d)_v2\.wav', 'from': 55},
                  {'repo': 'VSCO-2-CE', 'folder': 'Strings/Cello Section', 'sparse': 'susvib_*_v1_1.wav', 'pattern': r'susvib_(?P<note>[A-G]#?\d)_v1_1\.wav'}],
      'gm': [40, 41, 42, 43, 44, 48, 49, 50, 51, 52, 53, 54, 55, 110]},
@@ -61,27 +61,27 @@ INSTRUMENTS = [
     {'id': 'guitar', 'name': 'Strumstick, finger-picked (VCSL)', 'release': 0.3, 'q': '1', 'maxs': (4.0, 2.5),
      'repo': 'VCSL', 'folder': 'Chordophones/Composite Chordophones/Strumstick/Finger', 'sparse': '*_vl2_rr1.wav',
      'pattern': r'Strumstick_Finger_Str\d_Main_(?P<note>[A-G]#?\d)_vl2_rr1\.wav', 'gm': [15] + list(range(24, 32))},
-    {'id': 'organ', 'name': 'Pipe organ (VCSL, Rode)', 'release': 0.08, 'q': '1', 'stereo': True, 'maxs': (4.0, 3.0),
+    {'id': 'organ', 'sustain': True, 'name': 'Pipe organ (VCSL, Rode)', 'release': 0.08, 'q': '1', 'stereo': True, 'maxs': (4.0, 3.0),
      'repo': 'VCSL', 'folder': 'Aerophones/Edge-blown Aerophones/Pipe Organ/Loud', 'pattern': r'Rode_Man3Open_(?P<note>[A-G]#?\d)\.wav', 'gm': list(range(16, 24))},
-    {'id': 'trumpet', 'name': 'Trumpet (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
+    {'id': 'trumpet', 'sustain': True, 'name': 'Trumpet (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Brass/Trumpet', 'sparse': 'Sum_SHTrumpet_susvib_*_v2_rr1.wav', 'pattern': r'Sum_SHTrumpet_susvib_(?P<note>[A-G]#?\d)_v2_rr1\.wav',
      'gm': [56, 59, 61, 62, 63]},
-    {'id': 'horn', 'name': 'French horn (VSCO 2 CE)', 'release': 0.2, 'q': '1', 'maxs': (4.0, 3.0),
+    {'id': 'horn', 'sustain': True, 'name': 'French horn (VSCO 2 CE)', 'release': 0.2, 'q': '1', 'maxs': (4.0, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Brass/F Horn', 'sparse': 'MOHorn_sus_*_v1_1.wav', 'pattern': r'MOHorn_sus_(?P<note>[A-G]#?\d)_v1_1\.wav', 'gm': [60]},
-    {'id': 'trombone', 'name': 'Tenor trombone (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
+    {'id': 'trombone', 'sustain': True, 'name': 'Tenor trombone (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Brass/Tenor Trombone', 'sparse': 'tenortbn_sus_*_v2_1.wav', 'pattern': r'tenortbn_sus_(?P<note>[A-G]#?\d)_v2_1\.wav', 'gm': [57]},
-    {'id': 'tuba', 'name': 'Tuba (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
+    {'id': 'tuba', 'sustain': True, 'name': 'Tuba (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Brass/Tuba/sus', 'sparse': 'Tuba3_sus_*_v1_rr1_Mid.wav', 'pattern': r'Tuba3_sus_(?P<note>[A-G]#?\d)_v1_rr1_Mid\.wav', 'gm': [58]},
-    {'id': 'sax', 'name': 'Tenor saxophone (VCSL)', 'release': 0.12, 'q': '1', 'maxs': (3.5, 3.0),
+    {'id': 'sax', 'sustain': True, 'name': 'Tenor saxophone (VCSL)', 'release': 0.12, 'q': '1', 'maxs': (3.5, 3.0),
      'repo': 'VCSL', 'folder': 'Aerophones/Reed Aerophones/Tenor Saxophone/Non-Vibrato', 'sparse': '*_vl2_rr1.wav',
      'pattern': r'BrettTenor_NV_Main_(?P<note>[A-G]#?\d)_vl2_rr1\.wav', 'gm': [64, 65, 66, 67]},
-    {'id': 'oboe', 'name': 'Oboe (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+    {'id': 'oboe', 'sustain': True, 'name': 'Oboe (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Oboe/Sus', 'sparse': 'Oboe_Sus_*_v3_Main.wav', 'pattern': r'Oboe_Sus_(?P<note>[A-G]#?\d)_v3_Main\.wav', 'gm': [68, 69, 109, 111]},
-    {'id': 'bassoon', 'name': 'Bassoon (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+    {'id': 'bassoon', 'sustain': True, 'name': 'Bassoon (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Bassoon/sus', 'sparse': 'PSBassoon_*_v2_1.wav', 'pattern': r'PSBassoon_(?P<note>[A-G]#?\d)_v2_1\.wav', 'gm': [70]},
-    {'id': 'clarinet', 'name': 'Clarinet (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+    {'id': 'clarinet', 'sustain': True, 'name': 'Clarinet (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Clarinet', 'sparse': 'DCClar_susLong_*_v2_rr1_sum.wav', 'pattern': r'DCClar_susLong_(?P<note>[A-G]#?\d)_v2_rr1_sum\.wav', 'gm': [71]},
-    {'id': 'flute', 'name': 'Flute (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+    {'id': 'flute', 'sustain': True, 'name': 'Flute (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Flute', 'sparse': 'LDFlute_susNV_*_v1_1.wav', 'pattern': r'LDFlute_susNV_(?P<note>[A-G]#?\d)_v1_1\.wav', 'gm': list(range(72, 80))},
     {'id': 'vibes', 'name': 'Vibraphone, hard mallets (VCSL)', 'release': 0.5, 'q': '1', 'maxs': (4.0, 2.5),
      'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Vibraphone/Hard Mallets', 'sparse': 'Vibes_hard_*_v2_rr1_Main.wav',
@@ -95,8 +95,6 @@ INSTRUMENTS = [
      'repo': 'VSCO-2-CE', 'folder': 'Percussion/Glock', 'pattern': r'glock_medium_(?P<note>[A-G]#?\d)\.wav', 'gm': [9, 10, 112]},
     {'id': 'chimes', 'name': 'Tubular bells (VCSL)', 'release': 1.0, 'q': '1', 'maxs': (5.0, 4.0),
      'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Tubular Bells 1', 'pattern': r'chimes_(?P<note>[A-G]#?\d)_(?:f|ff|mf)_rr1\.wav', 'gm': [14]},
-    {'id': 'timpani', 'name': 'Timpani (VSCO 2 CE)', 'release': 0.5, 'q': '1', 'maxs': (3.5, 3.0),
-     'repo': 'VSCO-2-CE', 'folder': 'Percussion/Timpani', 'pattern': r'.*?(?P<note>[A-G]#?\d).*?\.wav', 'gm': [47, 116, 117, 118]},
     {'id': 'drums', 'name': 'Drum kit (VCSL)', 'release': 0.05, 'q': '1', 'maxs': (2.5, 2.5), 'gm': [],
      'kit': [([35, 36], {'repo': 'VCSL', 'folder': 'Membranophones/Struck Membranophones/Bass Drum 1'}, 'BDrumNew_hit_v3_rr1_Sum.wav'),
              ([38, 40], {'repo': 'VCSL', 'folder': 'Membranophones/Struck Membranophones/Snare Drum, Modern 1'}, 'Snare2_HitNS_v4_rr1_Mid.wav'),
@@ -145,8 +143,10 @@ def fetch(cache, src):
         os.makedirs(cache, exist_ok=True)
         subprocess.run(['git', 'clone', '-q', '--depth', '1', '--filter=blob:none', '--no-checkout', REPOS[src['repo']], repo], check=True)
         subprocess.run(['git', '-C', repo, 'sparse-checkout', 'init', '--no-cone'], check=True)
+    if subprocess.run(['git', '-C', repo, 'config', 'core.sparseCheckout'], capture_output=True, text=True).stdout.strip() != 'true':
+        subprocess.run(['git', '-C', repo, 'sparse-checkout', 'init', '--no-cone'], check=True)
     have = subprocess.run(['git', '-C', repo, 'sparse-checkout', 'list'], capture_output=True, text=True).stdout.split('\n')
-    want = src['folder'].rstrip('/') + '/' + src.get('sparse', '*')
+    want = src['folder'].rstrip('/') + '/**/' + src['sparse'] if src.get('sparse') else src['folder'].rstrip('/') + '/*'
     if want not in have and src['folder'].rstrip('/') + '/*' not in have:
         subprocess.run(['git', '-C', repo, 'sparse-checkout', 'add', want], check=True)
         subprocess.run(['git', '-C', repo, 'checkout', '-q', 'HEAD'], check=True)
@@ -226,8 +226,7 @@ def build(inst, cache):
         have = {k for k, _, _ in found}
         for dp, _, fs in os.walk(folder):
             for f in sorted(fs):
-                rel = os.path.relpath(os.path.join(dp, f), folder)
-                m = pat.fullmatch(rel)
+                m = pat.fullmatch(f)
                 if not m:
                     continue
                 layer = m.groupdict().get('layer') or ''
@@ -324,7 +323,9 @@ def main():
         b, size = build(inst, a.cache)
         bank.append(b); sizes[inst['id']] = size
         print(f"{inst['id']}: {len(b['samples'])} samples, {size / 1e6:.2f} MB", flush=True)
-    json.dump(bank, open(old, 'w'), indent=0)
+    # (the voices — tools/samples/voice.py — are kept as they were made)
+    bank += [b for k, b in prev.items() if k not in {x['id'] for x in bank}]
+    json.dump(bank, open(old, 'w'), indent=0, ensure_ascii=False)
     write_defs(bank)
     write_ts(bank)
     total = sum(os.path.getsize(os.path.join(dp, f)) for dp, _, fs in os.walk(os.path.join(UNIT, 'rp', 'sounds', 'spectral', 'i')) for f in fs)

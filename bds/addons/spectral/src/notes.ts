@@ -118,7 +118,12 @@ export interface NoteOpts {
   /** each note's choice and placement on the content log (testing, measuring) */
   log?: boolean;
 }
-interface Voice { s: SoundInstance; inst: Inst; gain: number; on: number; off: number; end: number; released: boolean; stopAt: number; }
+/** a sounding note. A held note of an instrument that sustains (strings, organ, winds) is handed over before its sample ends to a
+ *  new copy of the same sample started at its steady part (relayFrom ms in) — the two crossfade in one tick, so they line up */
+interface Voice { s: SoundInstance; inst: Inst; gain: number; on: number; off: number; end: number; released: boolean; stopAt: number;
+  ev: string; p: number; len: number; relayAt: number; relays: number; }
+/** a sustained note is relayed RELAY_MS before its sample ends, crossfading over RELAY_FADE s, from RELAY_FROM of the sample */
+const RELAY_MS = 350, RELAY_FADE = 0.15, RELAY_FROM = 0.4;
 
 export class NotePlayer {
   ending = 0; paused = false; started = false;
@@ -138,6 +143,7 @@ export class NotePlayer {
     this.ticks++;
     const t = this.now(), sp = this.o.speed;
     for (const v of this.voices) if (!v.released && v.off <= t + 25 * sp) this.release(v, v.inst.release, t);
+    for (const v of this.voices) if (!v.released && v.relayAt <= t && v.off > t + RELAY_MS * sp) this.relay(v, t);
     const keep: Voice[] = [];
     for (const v of this.voices) {
       if (v.stopAt && t >= v.stopAt) { this.stopVoice(v); continue; }
@@ -186,7 +192,30 @@ export class NotePlayer {
     } catch { this.skipped++; return; }
     this.starts++;
     const on = nt.on[i];
-    this.voices.push({ s, inst, gain, on, off: on + nt.dur[i], end: on + (smp[2] / p - late + 60) * sp, released: false, stopAt: 0 });
+    const end = on + (smp[2] / p - late + 60) * sp;
+    this.voices.push({ s, inst, gain, on, off: on + nt.dur[i], end, released: false, stopAt: 0, ev: this.o.where === 'phones' ? ev : ev + '_3d', p, len: smp[2],
+      // (not in 3D: a new 3D sound plays as made for 100-200 ms — a relay would start loud there)
+      relayAt: inst.sustain && smp[2] > 1500 && this.o.where === 'phones' ? end - (RELAY_MS + 60) * sp : Infinity, relays: 0 });
+  }
+
+  /** the held note goes on in a new copy of its sample from the steady part; the old copy fades out (both in this tick) */
+  private relay(v: Voice, t: number) {
+    const from = v.len * RELAY_FROM;
+    let s: SoundInstance;
+    try {
+      const vol = this.o.where === 'phones' ? v.gain : v.gain * this.o.level3d;
+      s = this.o.where === 'phones' ? this.owner.playSound(v.ev, { volume: 1e-4, pitch: v.p }) : this.dim.playSound(v.ev, this.loc, { volume: this.o.range3d, pitch: v.p });
+      s.seekTo(LEAD + from / 1000);
+      if (this.o.where !== 'phones') { s.setVolume(1e-4); this.calls++; }
+      s.fade(RELAY_FADE, vol);
+      v.s.fade(RELAY_FADE, 0);
+      this.calls += 4;
+    } catch { v.relayAt = Infinity; return; }
+    const old = v.s;
+    system.runTimeout(() => { try { old.stop(); } catch { /* gone */ } }, Math.ceil(RELAY_FADE * 20) + 2);
+    v.s = s; v.relays++;
+    v.end = t + ((v.len - from) / v.p + 60) * this.o.speed;
+    v.relayAt = v.end - (RELAY_MS + 60) * this.o.speed;
   }
 
   private release(v: Voice, sec: number, t: number) {

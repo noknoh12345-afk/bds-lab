@@ -250,6 +250,24 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
    - **模型の確かめをもう 1 回**（12 回目、+6/+8/+10 dB の 39 本、その回の build）: +10 dB − +6 dB の平均の差は模型 +0.164・実機 +0.163、
      +8 dB − +6 dB は +0.098・+0.095（曲ごとの相関 0.80・0.47）。点そのものはその回だけ模型が +0.27 高い（回ごとのずれ）
 
+19. **MIDI を楽器の音で・tick の外へ・声を MIDI と同じ原理で**（11-02 19:53 / 23:55 の依頼、22:51 の予約から。SPEC.md「サンプラーと声」）:
+    - **サンプラー**（src/notes.ts）: 音符の曲（spectral-notes/1・/2）を 1 音 1 つの SoundInstance で。素の頭の 0.6 秒の無音に
+      **seekTo** して tick の中に 1 ms で置き、4 tick ぶんを束ねて始める（3D はさらに 250 ms 先）。持続する楽器は素が尽きる前に
+      同じ素の途中から渡す（relay、ヘッドホンだけ）。`/spectral:sampler <束ねる tick> [3D の先 ms] [同時の数] [音量%] [log]`
+      （0 = tick に縛る: 聞き比べ）。play / stop / pause / seek / status / songs・曲パックが音符の曲も扱う
+    - **音の素**（tools/samples/bank.py、rp/sounds/spectral/i、src/bank.ts）: ピアノ（VCSL Steinway B・3 段の強さ・ステレオ）、
+      General MIDI の族（VSCO 2 CE・VCSL、どれも CC0: 弦・コントラバスのピチカート・ハープ・ストラムスティック・パイプオルガン・
+      トランペット・ホルン・トロンボーン・チューバ・テナーサックス・オーボエ・ファゴット・クラリネット・フルート・ビブラフォン・
+      マリンバ・シロフォン・グロッケン・チューブラーベル・ドラムキット 21 音）、測るためのクリック。24 kHz（電話の混ぜ方）
+    - **声**（tools/samples/voice.py、src/say.ts、tools/speech.py）: Kokoro-82M（Apache-2.0、jf_alpha）からモーラ 112 の素片 × 高さ 3 段。
+      `/spectral:say "かな"`（ゲームの中は辞書なし: かなだけ）、tools/speech.py は漢字も（Open JTalk のアクセント）→ 音符の曲。
+      4 秒の話が 200 バイト前後
+    - **内蔵の曲**: piano_demo（エチュード: 16 分音符が tick に乗らない・12 ms ずつずらした和音・20 ms 前の装飾音）、band_demo（GM の族）
+    - **測る**: p01（tools/exp/queue/p01_sampler.json: クリックの 2 発 1–34 ms・37 ms の連打を束ねる 4 / 1 / tick に縛る、ヘッドホンと 3D、
+      エリーゼのために・エチュード）→ tools/exp/sampler_score.py。p02（声を素片と正弦波の道で・エチュードをサンプラーと正弦波の道で）
+      → tools/exp/speech_eval.py（Whisper の文字の誤り率）
+    - **IDEAS.md**: 可能性を広げるプロンプトとその結果（23:55 の依頼）。web はゲームの中の web（bds-lab の GeoUI: GeoUI Web・HTML → GeoUI）
+
 ## 4 回目のセッション（2026-10-31）でしたこと
 
 1. **合成による分析を詰めた**（tools/spectral.py refine_client・web/core.js refineClient、py と js のバイト一致）:

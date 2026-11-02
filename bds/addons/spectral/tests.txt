@@ -722,3 +722,18 @@ until note 4 voice 3000
 ~ \[spectral\] note 1 voice_ja\.\d+ key 0 pitch [\d.]+ seek [\d.]+ at
 ~ \[spectral\] note 4 voice_ja\.\d+ key 4 pitch [\d.]+ seek [\d.]+ at
 @A cmd /spectral:sampler 4 250 28 120 false
+
+## a MIDI song with General MIDI's families: each program plays its instrument of the bank (CC0: VSCO 2 CE and VCSL), channel 10 the drum kit by key — strings hold their chords past their samples (relayed from the steady part), the bass a pizzicato an octave down, the flute the tune
+@A cmd /spectral:sampler 4 250 28 120 true
+@A cmd /spectral:play band_demo
+~ @A ▶ Band \(sampler demo\) — Spectral Player \(0:09, 94 notes, headphones\)
+until note 26 4000
+~ \[spectral\] note 0 bass\.10 key 36 pitch 0\.9439 seek 0\.6000 at 0 ms
+~ \[spectral\] note 1 drums\.0 key 36 pitch 1\.0000 seek 0\.6000 at 0 ms
+~ \[spectral\] note 3 strings\.7 key 48 pitch 1\.0000 seek 0\.6000 at 0 ms
+~ \[spectral\] note 4 drums\.8 key 49 pitch 1\.0000 seek 0\.6000 at 0 ms
+~ \[spectral\] note 7 flute\.7 key 76 pitch 1\.0000 seek 0\.6000 at 0 ms
+~ \[spectral\] note 10 drums\.1 key 38 pitch 1\.0000 seek 0\.5750 at 600 ms
+~ \[spectral\] note 17 vibes\.10 key 76 pitch 1\.0000 seek 0\.5500 at 1200 ms
+until ■ Band \(sampler demo\) — end 15000
+@A cmd /spectral:sampler 4 250 28 120 false
