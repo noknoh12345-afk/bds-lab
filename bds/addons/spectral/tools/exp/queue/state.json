@@ -447,7 +447,10 @@
   "tries": 1
  },
  "q13_voices_16_20": {
-  "status": "pending"
+  "commit": "8ef58d1",
+  "run": "41486252660",
+  "started": "2026-11-03 01:56",
+  "status": "running"
  },
  "q14_spz2_coarse": {
   "status": "pending"
