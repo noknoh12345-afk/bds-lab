@@ -1,4 +1,7 @@
 {
+ "p01_sampler": {
+  "status": "pending"
+ },
  "q01_same_twice": {
   "arms": {
    "ra": {
@@ -351,10 +354,39 @@
   "tries": 2
  },
  "q12_level_12_14": {
+  "arms": {
+   "e": {
+    "mrstft": 1.723,
+    "n": 13,
+    "rms_db": -39.1,
+    "third_oct_db": 8.262,
+    "visqol": 3.034
+   },
+   "l12": {
+    "mrstft": 1.704,
+    "n": 13,
+    "rms_db": -37.3,
+    "third_oct_db": 8.143,
+    "visqol": 3.193
+   },
+   "l14": {
+    "mrstft": 1.688,
+    "n": 13,
+    "rms_db": -35.7,
+    "third_oct_db": 8.412,
+    "visqol": 3.13
+   }
+  },
+  "checkpoints": 0,
   "commit": "d130f62",
+  "conclusion": "success",
+  "ended": "2026-11-03 00:31",
+  "failed_steps": 0,
+  "recordings": 39,
   "run": "41465987389",
   "started": "2026-11-02 23:51",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q13_voices_16_20": {
   "status": "pending"
