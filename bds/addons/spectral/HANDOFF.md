@@ -308,7 +308,7 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 - ブランチ addon/spectral（push 済み、最後のコミットは git log で）。**本体 1.4.0**（同じ UUID。1.4.0 = 短いテキスト SPZ2・ほぼ全ての音声形式。
   11-02 午後: パート 5000 文字・切れたテキストの理由）。`node lab.mjs go`（ローカルの BDS 1.26.61.1 取ってきたもの。zip はリポジトリの外: LAB_BDS_ZIP）:
-  **DONE（test 241/241, qa clean）**。tests/app-offline.mjs 110/110、tools/test_page.py（区間・分割・待つ・順にコピー・外すと止まる）、
+  **DONE（test 244/244, qa clean）**。tests/app-offline.mjs 110/110、tools/test_page.py（区間・分割・待つ・順にコピー・外すと止まる）、
   tools/test_decoders.mjs 36/36、tools/live/test_bridge.mjs
 - 電話の既定: 24 声＋ノイズ 8・打撃音なし・ファイルより **+10 dB**。変換器の既定: 合成による分析（+10 dB の実機の模型）・svr の重み・5 回・
   大きさを保つ。3D: 作る音量 3 = 48 ブロック、高さ P_MIN で作る、+10 dB、follow の声は定義の音量 0.01 で静かに作る、動いたら古い音をすぐ止めて
