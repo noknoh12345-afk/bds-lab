@@ -2,7 +2,7 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 19（tools/exp/queue/q19_pause_seek.json）: 一時停止・再開・シーク（6 曲）。リモコンの一時停止と ±10 秒を実機で: 継ぎ目のプツッ・音が戻るまでの時間
+# キュー 20（tools/exp/queue/q20_memory_pressure.json）: メモリが足りないとき（trim memory）。安い電話ではメモリが足りなくなると OS がアプリに減らせと言う: そのとき音は途切れるか
 
 section title
 audio info
@@ -25,82 +25,100 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section pause
-audio start ps_speech_ja_soseki
+section memory
+audio start mn_speech_ja_soseki
 do execute as @a run spectral:play speech_ja_soseki_e
-wait 5000
-do execute as @a run spectral:pause
-wait 2000
-do execute as @a run spectral:pause
-wait 3000
-do execute as @a run spectral:seek 2
-wait 4000
-do execute as @a run spectral:seek 15
-wait 6000
+wait 23000
 audio stop
-audio export ps_speech_ja_soseki 160
-audio start ps_vocal_name_of_love
+audio analyze mn_speech_ja_soseki song:speech_ja_soseki
+audio export mn_speech_ja_soseki 160
+audio start mt_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 4000
+trim RUNNING_CRITICAL
+wait 4000
+trim RUNNING_LOW
+wait 15000
+audio stop
+audio analyze mt_speech_ja_soseki song:speech_ja_soseki
+audio export mt_speech_ja_soseki 160
+audio start mn_vocal_name_of_love
 do execute as @a run spectral:play vocal_name_of_love_e
-wait 5000
-do execute as @a run spectral:pause
-wait 2000
-do execute as @a run spectral:pause
-wait 3000
-do execute as @a run spectral:seek 2
-wait 4000
-do execute as @a run spectral:seek 15
-wait 6000
+wait 23000
 audio stop
-audio export ps_vocal_name_of_love 160
-audio start ps_orchestra_five_armies
+audio analyze mn_vocal_name_of_love song:vocal_name_of_love
+audio export mn_vocal_name_of_love 160
+audio start mt_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 4000
+trim RUNNING_CRITICAL
+wait 4000
+trim RUNNING_LOW
+wait 15000
+audio stop
+audio analyze mt_vocal_name_of_love song:vocal_name_of_love
+audio export mt_vocal_name_of_love 160
+audio start mn_orchestra_five_armies
 do execute as @a run spectral:play orchestra_five_armies_e
-wait 5000
-do execute as @a run spectral:pause
-wait 2000
-do execute as @a run spectral:pause
-wait 3000
-do execute as @a run spectral:seek 2
-wait 4000
-do execute as @a run spectral:seek 15
-wait 6000
+wait 23000
 audio stop
-audio export ps_orchestra_five_armies 160
-audio start ps_rock_big
+audio analyze mn_orchestra_five_armies song:orchestra_five_armies
+audio export mn_orchestra_five_armies 160
+audio start mt_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_e
+wait 4000
+trim RUNNING_CRITICAL
+wait 4000
+trim RUNNING_LOW
+wait 15000
+audio stop
+audio analyze mt_orchestra_five_armies song:orchestra_five_armies
+audio export mt_orchestra_five_armies 160
+audio start mn_rock_big
 do execute as @a run spectral:play rock_big_e
-wait 5000
-do execute as @a run spectral:pause
-wait 2000
-do execute as @a run spectral:pause
-wait 3000
-do execute as @a run spectral:seek 2
-wait 4000
-do execute as @a run spectral:seek 15
-wait 6000
+wait 23000
 audio stop
-audio export ps_rock_big 160
-audio start ps_piano_gymnopedie
+audio analyze mn_rock_big song:rock_big
+audio export mn_rock_big 160
+audio start mt_rock_big
+do execute as @a run spectral:play rock_big_e
+wait 4000
+trim RUNNING_CRITICAL
+wait 4000
+trim RUNNING_LOW
+wait 15000
+audio stop
+audio analyze mt_rock_big song:rock_big
+audio export mt_rock_big 160
+audio start mn_piano_gymnopedie
 do execute as @a run spectral:play piano_gymnopedie_e
-wait 5000
-do execute as @a run spectral:pause
-wait 2000
-do execute as @a run spectral:pause
-wait 3000
-do execute as @a run spectral:seek 2
-wait 4000
-do execute as @a run spectral:seek 15
-wait 6000
+wait 23000
 audio stop
-audio export ps_piano_gymnopedie 160
-audio start ps_edm_detection
+audio analyze mn_piano_gymnopedie song:piano_gymnopedie
+audio export mn_piano_gymnopedie 160
+audio start mt_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+wait 4000
+trim RUNNING_CRITICAL
+wait 4000
+trim RUNNING_LOW
+wait 15000
+audio stop
+audio analyze mt_piano_gymnopedie song:piano_gymnopedie
+audio export mt_piano_gymnopedie 160
+audio start mn_edm_detection
 do execute as @a run spectral:play edm_detection_e
-wait 5000
-do execute as @a run spectral:pause
-wait 2000
-do execute as @a run spectral:pause
-wait 3000
-do execute as @a run spectral:seek 2
-wait 4000
-do execute as @a run spectral:seek 15
-wait 6000
+wait 23000
 audio stop
-audio export ps_edm_detection 160
+audio analyze mn_edm_detection song:edm_detection
+audio export mn_edm_detection 160
+audio start mt_edm_detection
+do execute as @a run spectral:play edm_detection_e
+wait 4000
+trim RUNNING_CRITICAL
+wait 4000
+trim RUNNING_LOW
+wait 15000
+audio stop
+audio analyze mt_edm_detection song:edm_detection
+audio export mt_edm_detection 160
