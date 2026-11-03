@@ -705,10 +705,25 @@
   "tries": 2
  },
  "q17_bgm_on": {
+  "arms": {
+   "bm": {
+    "mrstft": 1.796,
+    "n": 13,
+    "rms_db": -39.1,
+    "third_oct_db": 7.002,
+    "visqol": 3.11
+   }
+  },
+  "checkpoints": 0,
   "commit": "9079608",
+  "conclusion": "success",
+  "ended": "2026-11-03 12:03",
+  "failed_steps": 0,
+  "recordings": 13,
   "run": "41567434787",
   "started": "2026-11-03 11:39",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q18_loop_5min": {
   "status": "pending"
