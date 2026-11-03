@@ -1,0 +1,401 @@
+{
+ "run": 41561994201,
+ "plan": "tools/exp/queue/p13_warm.json",
+ "device": "redroid (Android 14), Minecraft 1.26.60.4",
+ "addon": "Spectral Player 1.4.0 + warming (commit 14e0710)",
+ "probes": {
+  "what": "tools/exp/warm_score.py: 12 short piano notes (300 ms) on samples not played before in the run, each probe its own; heard = a sound starting within 40 ms of its place",
+  "results": {
+   "pl_long": {
+    "anchors_heard": 8,
+    "of": 8,
+    "lag_s": 1.76,
+    "cold": [
+     {
+      "at_s": 1.2,
+      "onset_after_ms": [
+       700
+      ],
+      "sound_in_first_250ms": false
+     },
+     {
+      "at_s": 4.2,
+      "onset_after_ms": [
+       665
+      ],
+      "sound_in_first_250ms": false
+     },
+     {
+      "at_s": 7.2,
+      "onset_after_ms": [
+       655
+      ],
+      "sound_in_first_250ms": false
+     },
+     {
+      "at_s": 10.2,
+      "onset_after_ms": [
+       660
+      ],
+      "sound_in_first_250ms": false
+     },
+     {
+      "at_s": 13.2,
+      "onset_after_ms": [
+       690
+      ],
+      "sound_in_first_250ms": false
+     },
+     {
+      "at_s": 16.2,
+      "onset_after_ms": [
+       655
+      ],
+      "sound_in_first_250ms": false
+     },
+     {
+      "at_s": 19.2,
+      "onset_after_ms": [
+       705
+      ],
+      "sound_in_first_250ms": false
+     },
+     {
+      "at_s": 22.2,
+      "onset_after_ms": [
+       650
+      ],
+      "sound_in_first_250ms": false
+     }
+    ]
+   },
+   "pr_again": {
+    "heard": 0,
+    "of": 12,
+    "lag_s": null,
+    "per_note": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "pr_h1": {
+    "heard": 9,
+    "of": 9,
+    "lag_s": 2.315,
+    "per_note": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "other_onsets": 0
+   },
+   "pr_v1": {
+    "heard": 12,
+    "of": 12,
+    "lag_s": 2.295,
+    "per_note": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "other_onsets": 0
+   },
+   "pr_w0": {
+    "heard": 0,
+    "of": 12,
+    "lag_s": null,
+    "per_note": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "pr_w1000": {
+    "heard": 12,
+    "of": 12,
+    "lag_s": 2.74,
+    "per_note": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "other_onsets": 0
+   },
+   "pr_w150": {
+    "heard": 12,
+    "of": 12,
+    "lag_s": 1.825,
+    "per_note": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "other_onsets": 0
+   },
+   "pr_w300": {
+    "heard": 12,
+    "of": 12,
+    "lag_s": 2.08,
+    "per_note": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "other_onsets": 0
+   },
+   "pr_w600": {
+    "heard": 12,
+    "of": 12,
+    "lag_s": 2.36,
+    "per_note": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "other_onsets": 0
+   }
+  }
+ },
+ "reading": {
+  "first_play": "not lost but late: a 1 s note on a sample never played came 650-705 ms after its place (8 of 8) — loaded, then played from the head of its file (its seekTo not taken: 0.6 s of silence + ~50-100 ms to load); a short note is let go before that: lost (pr_w0: 0 of 12, the recording digital silence)",
+  "warm_lead": "warmed 150, 300, 600 and 1000 ms ahead: 12 of 12 each; for 1 tick: 9 of 9; at volume 1: 12 of 12",
+  "dropped_again": "the same 12 samples 1.5-2.5 min after their first (lost) play, not warmed: 0 of 12 (pr_again) — while the anchor of pl_long, played by pr_again 20-40 s before, sounded: the phone drops a sample not played for a while (between ~40 s and ~90 s)"
+ },
+ "speech": {
+  "what": "tools/exp/speech_eval.py (Whisper small, character error rate), the recordings as they came and level-normalised (ffmpeg loudnorm I=-20: Whisper hears nothing in some quiet ones)",
+  "raw": {
+   "sw12_speech_hello": 1.0,
+   "sw3_speech_hello": 0.37,
+   "sw_speech_cave": 1.0,
+   "sw_speech_hello": 1.0,
+   "sw_speech_piano": 1.0,
+   "sw_speech_weather": 0.208
+  },
+  "normalised": {
+   "sw12_speech_hello": {
+    "cer": 0.185,
+    "heard": "こんにちは私は魔王よくエルトの中で話しています"
+   },
+   "sw3_speech_hello": {
+    "cer": 0.111,
+    "heard": "こんにちは私はマークエフトの中で話しています"
+   },
+   "sw_speech_cave": {
+    "cer": 0.48,
+    "heard": "日々のモロニエダオイモードの動物が エシーヨ"
+   },
+   "sw_speech_hello": {
+    "cer": 0.185,
+    "heard": "こんにちは私は魔王よくイクトの中で話しています"
+   },
+   "sw_speech_piano": {
+    "cer": 0.357,
+    "heard": "このピアノノとは、ホームノノがシーフェスしたものです。"
+   },
+   "sw_speech_weather": {
+    "cer": 0.25,
+    "heard": "今日はお互いですね。お一緒に遊びましょう。"
+   }
+  },
+  "p09_normalised_no_warm": {
+   "sk_speech_cave": {
+    "cer": 0.56,
+    "heard": "きがせのうに、なきゃもんどのぽくつられらせよ。"
+   },
+   "sk_speech_hello": {
+    "cer": 0.111,
+    "heard": "こんにちは、私はインプラクトの中で話しています。"
+   },
+   "sk_speech_piano": {
+    "cer": 0.643,
+    "heard": "本物の物は本物の描き方を使用しています。"
+   },
+   "sk_speech_weather": {
+    "cer": 3.792,
+    "heard": "20点までまみ、今amed馬懲りから消えられています...-、マジナキとスパー道に行きました--特なシンカーは降第一個マジナキです-- extreme ラブル式にアラミしかないか…-"
+   },
+   "sv3_speech_hello": {
+    "cer": 0.593,
+    "heard": "ここに私はおやすのでなしをます。"
+   },
+   "sv_speech_cave": {
+    "cer": 0.84,
+    "heard": "私に何か呼び盛ので"
+   },
+   "sv_speech_hello": {
+    "cer": 1.0,
+    "heard": ""
+   },
+   "sv_speech_piano": {
+    "cer": 0.75,
+    "heard": "な、な、な、は、もの、う、う、す、ものです。"
+   },
+   "sv_speech_weather": {
+    "cer": 1.458,
+    "heard": "終わるですじゃ足もか virtually でそうねはいそっ"
+   }
+  },
+  "notes_sounding": "sw_: 27/27, 20/20, 25/25, 27/27 (p09 without warming: 4/27, 10/20, 13/25, 18/27)"
+ },
+ "songs": {
+  "what": "tools/exp/sampler_score.py --songs against the notes rendered here (the bank as relabelled)",
+  "results": {
+   "bd_w": {
+    "song": "band_demo",
+    "visqol": 2.3202,
+    "mrstft": 1.5475,
+    "third_oct_db": 5.219,
+    "onset_ms": 5.0,
+    "onset_recall": 0.917
+   },
+   "fe_w": {
+    "song": "fur_elise",
+    "visqol": 4.1801,
+    "mrstft": 1.175,
+    "third_oct_db": 1.866,
+    "onset_ms": 5.0,
+    "onset_recall": 0.972
+   },
+   "fp_w": {
+    "song": "piano_demo",
+    "visqol": 3.0639,
+    "mrstft": 0.9048,
+    "third_oct_db": 0.401,
+    "onset_ms": 0.0,
+    "onset_recall": 0.882
+   },
+   "pd_w": {
+    "song": "piano_demo",
+    "visqol": 4.3538,
+    "mrstft": 1.274,
+    "third_oct_db": 2.468,
+    "onset_ms": 6.25,
+    "onset_recall": 0.941
+   },
+   "sw12_speech_hello": {
+    "song": "speech_hello",
+    "visqol": 3.9189,
+    "mrstft": 0.9998,
+    "third_oct_db": 4.4,
+    "onset_ms": 15.0,
+    "onset_recall": 0.925
+   },
+   "sw3_speech_hello": {
+    "song": "speech_hello",
+    "visqol": 3.8836,
+    "mrstft": 0.9979,
+    "third_oct_db": 3.396,
+    "onset_ms": 5.0,
+    "onset_recall": 0.875
+   },
+   "sw_speech_cave": {
+    "song": "speech_cave",
+    "visqol": 4.0027,
+    "mrstft": 0.8904,
+    "third_oct_db": 3.316,
+    "onset_ms": 7.5,
+    "onset_recall": 0.872
+   },
+   "sw_speech_hello": {
+    "song": "speech_hello",
+    "visqol": 3.9386,
+    "mrstft": 1.0165,
+    "third_oct_db": 4.424,
+    "onset_ms": 17.5,
+    "onset_recall": 0.9
+   },
+   "sw_speech_piano": {
+    "song": "speech_piano",
+    "visqol": 3.8822,
+    "mrstft": 0.9114,
+    "third_oct_db": 3.058,
+    "onset_ms": 10.0,
+    "onset_recall": 0.837
+   },
+   "sw_speech_weather": {
+    "song": "speech_weather",
+    "visqol": 4.1075,
+    "mrstft": 0.8031,
+    "third_oct_db": 2.998,
+    "onset_ms": 7.5,
+    "onset_recall": 0.933
+   }
+  },
+  "p10_same_songs_no_warm": {
+   "pd_v30": 4.1956,
+   "fe_v30": 4.1066,
+   "onset_recall_pd": 0.725,
+   "onset_recall_fe": 0.662
+  }
+ }
+}
