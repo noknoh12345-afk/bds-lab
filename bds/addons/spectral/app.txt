@@ -1,20 +1,18 @@
-# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
-#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
-#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
-#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 17（tools/exp/queue/q17_bgm_on.json）: ゲームの BGM を鳴らしたまま（音楽 0.5）。リグはいつも BGM を 0 にしている: 遊ぶ人の多くは BGM が鳴っている。BGM と一緒だと点はどうなるか（同じ曲を別の run と比べる）
+# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。
+# p14（tools/exp/sampler_plans.py p14）: サンプラーの大きさ 200 %（p10・p13 が鳴らした分: 命令が 200 までだった）と 300 %（既定、まだ測っていない）を
+# 同じ曲で続けて: エチュード・エリーゼ・バンド・読み上げ 2 文（温めあり）
 
 section title
 audio info
 stop
-audio volume 0.5
+audio volume 0
 launch
 until title 600000
 audio info
 shot title
 
 section prep
-audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_e pack=tools/exp/packs/run10
+audio song fur_elise,speech_hello,speech_cave pack=tools/exp/packs/notes
 
 section join
 join
@@ -25,60 +23,75 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section bm
-do execute as @a run tp @s 0 -60 0 0 0
-audio start bm_1
-audio mark bm_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e
-wait 23000
-audio mark bm_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_e
-wait 23000
-audio mark bm_vocal_stars
-do execute as @a run spectral:play vocal_stars_e
-wait 23000
-audio mark bm_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e
-wait 23000
-audio mark bm_choir_how_long
-do execute as @a run spectral:play choir_how_long_e
-wait 23000
-audio mark bm_drums_round
-do execute as @a run spectral:play drums_round_e
-wait 23000
-audio mark bm_rock_big
-do execute as @a run spectral:play rock_big_e
-wait 23000
-audio mark bm_edm_detection
-do execute as @a run spectral:play edm_detection_e
-wait 23000
-audio mark bm_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e
-wait 23000
-audio mark bm_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_e
-wait 23000
-audio mark bm_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e
-wait 23000
-audio mark bm_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_e
-wait 23000
-audio mark bm_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_e
-wait 23000
+section level
+do execute as @a run spectral:sampler 2 250 28 200 false 600
+audio start pd_l20
+do execute as @a run spectral:play piano_demo
+wait 23100
+do execute as @a run spectral:stop
 audio stop
-audio analyze-all bm_piano_gymnopedie=song:piano_gymnopedie bm_piano_chopin_op66=song:piano_chopin_op66 bm_vocal_stars=song:vocal_stars bm_vocal_name_of_love=song:vocal_name_of_love bm_choir_how_long=song:choir_how_long bm_drums_round=song:drums_round bm_rock_big=song:rock_big bm_edm_detection=song:edm_detection bm_orchestra_five_armies=song:orchestra_five_armies bm_funk_funkorama=song:funk_funkorama bm_speech_ja_soseki=song:speech_ja_soseki bm_speech_en_wordsworth=song:speech_en_wordsworth bm_demo_selfmade=song:demo_selfmade
-audio export bm_piano_gymnopedie 160
-audio export bm_piano_chopin_op66 160
-audio export bm_vocal_stars 160
-audio export bm_vocal_name_of_love 160
-audio export bm_choir_how_long 160
-audio export bm_drums_round 160
-audio export bm_rock_big 160
-audio export bm_edm_detection 160
-audio export bm_orchestra_five_armies 160
-audio export bm_funk_funkorama 160
-audio export bm_speech_ja_soseki 160
-audio export bm_speech_en_wordsworth 160
-audio export bm_demo_selfmade 160
+audio export pd_l20 192
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start pd_l30
+do execute as @a run spectral:play piano_demo
+wait 23100
+do execute as @a run spectral:stop
+audio stop
+audio export pd_l30 192
+do execute as @a run spectral:sampler 2 250 28 200 false 600
+audio start fe_l20
+do execute as @a run spectral:play fur_elise
+wait 16100
+do execute as @a run spectral:stop
+audio stop
+audio export fe_l20 192
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start fe_l30
+do execute as @a run spectral:play fur_elise
+wait 16100
+do execute as @a run spectral:stop
+audio stop
+audio export fe_l30 192
+do execute as @a run spectral:sampler 2 250 28 200 false 600
+audio start bd_l20
+do execute as @a run spectral:play band_demo
+wait 11600
+do execute as @a run spectral:stop
+audio stop
+audio export bd_l20 192
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start bd_l30
+do execute as @a run spectral:play band_demo
+wait 11600
+do execute as @a run spectral:stop
+audio stop
+audio export bd_l30 192
+do execute as @a run spectral:sampler 2 250 28 200 false 600
+audio start l20_speech_hello
+do execute as @a run spectral:play speech_hello
+wait 7600
+do execute as @a run spectral:stop
+audio stop
+audio export l20_speech_hello 192
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start l30_speech_hello
+do execute as @a run spectral:play speech_hello
+wait 7600
+do execute as @a run spectral:stop
+audio stop
+audio export l30_speech_hello 192
+do execute as @a run spectral:sampler 2 250 28 200 false 600
+audio start l20_speech_cave
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:stop
+audio stop
+audio export l20_speech_cave 192
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start l30_speech_cave
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:stop
+audio stop
+audio export l30_speech_cave 192
+do execute as @a run spectral:sampler 2 250 28 300 false 600
