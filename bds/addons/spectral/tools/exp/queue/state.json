@@ -752,10 +752,17 @@
   "tries": 1
  },
  "q19_pause_seek": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "0992e46",
+  "conclusion": "success",
+  "ended": "2026-11-03 12:56",
+  "failed_steps": 0,
+  "recordings": 6,
   "run": "41573844651",
   "started": "2026-11-03 12:43",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q20_memory_pressure": {
   "status": "pending"
