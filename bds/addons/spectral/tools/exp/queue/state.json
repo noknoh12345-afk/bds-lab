@@ -689,7 +689,10 @@
   "tries": 1
  },
  "q16_rain_mobs": {
-  "status": "pending"
+  "commit": "040859a",
+  "run": "41563850724",
+  "started": "2026-11-03 11:05",
+  "status": "running"
  },
  "q17_bgm_on": {
   "status": "pending"
