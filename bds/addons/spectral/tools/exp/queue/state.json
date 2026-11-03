@@ -739,10 +739,17 @@
   "tries": 1
  },
  "q18_loop_5min": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "cb863e2",
+  "conclusion": "success",
+  "ended": "2026-11-03 12:42",
+  "failed_steps": 0,
+  "recordings": 1,
   "run": "41572109965",
   "started": "2026-11-03 12:25",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q19_pause_seek": {
   "status": "pending"

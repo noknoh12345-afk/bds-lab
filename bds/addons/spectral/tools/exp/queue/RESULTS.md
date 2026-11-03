@@ -39,3 +39,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q16_rain_mobs | 41565709676 | failure | 0 | — | 1（✘ 31 do execute as @a run kill @e[type=cow]） | 2026-11-03 11:22 → 2026-11-03 11:38 |
 | q17_bgm_on | 41567434787 | success | 13 | bm 3.110 / 1.796 / 7.00 (13) | 0 | 2026-11-03 11:39 → 2026-11-03 12:03 |
 | p14_level | 41569907471 | success | 10 | — | 0 | 2026-11-03 12:03 → 2026-11-03 12:22 |
+| q18_loop_5min | 41572109965 | success | 1（lp_vocal_name_of_love 4783 KB） | — | 0 | 2026-11-03 12:25 → 2026-11-03 12:42 |
