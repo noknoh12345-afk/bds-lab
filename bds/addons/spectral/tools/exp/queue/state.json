@@ -705,7 +705,10 @@
   "tries": 2
  },
  "q17_bgm_on": {
-  "status": "pending"
+  "commit": "9079608",
+  "run": "41567434787",
+  "started": "2026-11-03 11:39",
+  "status": "running"
  },
  "q18_loop_5min": {
   "status": "pending"
