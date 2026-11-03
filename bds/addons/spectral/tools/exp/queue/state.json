@@ -786,6 +786,9 @@
   "tries": 1
  },
  "q21_rain_mobs": {
-  "status": "pending"
+  "commit": "68f6740",
+  "run": "41576813484",
+  "started": "2026-11-03 13:13",
+  "status": "running"
  }
 }
