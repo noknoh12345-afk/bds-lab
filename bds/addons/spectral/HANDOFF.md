@@ -310,10 +310,10 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
     **src/notes.ts WARM**: 各素を最初の音の 600 ms 前に、頭の無音の中で音量 0.001 で始めて 4 tick 後に止める（読み込ませる）、曲の頭が要るときは
     曲がその分待つ、30 秒以内に鳴らした素は温め直さない。ファイルの曲の部分も（src/files.ts）、生演奏は `spectral:note warm <program>`
     （Connect がつないだときにピアノ・ページで楽器を選んだときに）。`/spectral:sampler … <log> <warm ms>`（0 = 温めない）。BDS の試験に 3 区切り。
-    **p13**（tools/exp/queue/p13_warm.json）: まだ鳴らしていないピアノの素で 0・150・300・600・1000 ms 前（どれだけ前なら足りるか）、
-    最初の組をもう一度（読み込まれたまま残るか）、初回は落ちるのか遅れるのか（probe_long: 頭から鳴るなら約 0.55 秒遅れて聞こえる）、温めありの
-    読み上げ 4 文と 3D・エチュード・エリーゼ・バンド・録音そのままの曲。解き方: 録音の無音でない所（電話は何も鳴らないとデジタルの 0）を
-    音の時刻に合わせる（scratchpad の which_notes.py の形）、読み上げは tools/exp/speech_eval.py
+    **p13（run 41561994201、実測）**: 温めなしの短い音は 0/12（録音はデジタルの無音）、150・300・600・1000 ms 前に温めると 12/12、1 tick だけ 9/9、
+    音量 1 で 12/12。1 秒の音は 650〜705 ms 遅れて鳴る（読み込んでから頭から: seekTo が効かない）。同じ素を 1.5〜2.5 分後は 0/12（捨てられる）
+    → ttl 15 秒、曲の中で 15 秒使わなかった素は次の音の前にまた温める（WARM.gap）。読み上げ（大きさをそろえた Whisper）0.185・0.25・0.48・0.357、
+    3D 0.111（p09 は 0.75–1.46）。エチュード 4.35・エリーゼ 4.18（頭の聞こえ 0.94・0.97）。measured/sampler-p13-41561994201.json
 26. **楽器が 1 オクターブ高かった**（手元で全部の素を測って、11-03 昼）: ピアノとハープ以外の 16 楽器（弦・ベース・ギター・金管・木管・
     ビブラフォン・マリンバ・シロフォン・グロッケン）は VSCO 2 CE / VCSL のファイルが真ん中の C を「C3」と名付けている → 名前を C4 = 60 で読むと
     12 低い鍵になり、全部 1 オクターブ上で鳴っていた。tools/samples/bank.py の `octave: 1`（鍵を 12 上に）と `--relabel`（ファイルはそのまま
@@ -394,6 +394,9 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## いまの状態
 
+- **11-03 昼: 本体 1.5.0**（同じ UUID。1.5.0 = サンプラー（MIDI を楽器の音で 1 ms ずつ・300 %・束ね 2・温め 600 ms）、ファイルの曲 48 kHz、
+  かなの読み上げ、Spectral Connect（一人のワールドの /connect）とリモコン Spectral Remote 1.0.0、楽器の高さを直した）。`node lab.mjs go`:
+  **DONE（test 357/357, qa clean）**、spectral_remote 15/15。tools/connect/test.mjs 37 項目
 - ブランチ addon/spectral（push 済み、最後のコミットは git log で）。**本体 1.4.0**（同じ UUID。1.4.0 = 短いテキスト SPZ2・ほぼ全ての音声形式。
   11-02 午後: パート 5000 文字・切れたテキストの理由）。`node lab.mjs go`（ローカルの BDS 1.26.61.1 取ってきたもの。zip はリポジトリの外: LAB_BDS_ZIP）:
   **DONE（test 244/244, qa clean）**。tests/app-offline.mjs 110/110、tools/test_page.py（区間・分割・待つ・順にコピー・外すと止まる）、

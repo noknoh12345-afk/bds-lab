@@ -955,7 +955,7 @@ function pick(code, key, vel, cents = 0) {
   for (const c of list) if (Math.abs(inst.samples[c][1] - vel) < Math.abs(inst.samples[j][1] - vel)) j = c;
   return [ii, j, Math.pow(2, (key - inst.samples[j][0]) / 12 + cents / 1200)];
 }
-var WARM = { ms: 600, hold: 4, perTick: 8, ttl: 3e4, vol: 1e-3 };
+var WARM = { ms: 600, hold: 4, perTick: 8, ttl: 15e3, gap: 15e3, vol: 1e-3 };
 var warmMem = /* @__PURE__ */ new Map();
 function touchSample(who, ak) {
   let m = warmMem.get(who);
@@ -1081,16 +1081,16 @@ var NotePlayer = class {
       else if (!this.ending) this.ending = 1;
     }
   }
-  /** the samples of the notes from note `from` on, each at its first note (WARM) */
+  /** the samples of the notes from note `from` on, each at its first note and where it comes back after WARM.gap (WARM) */
   planWarm(from) {
-    const seen = /* @__PURE__ */ new Set(), list = [];
+    const last = /* @__PURE__ */ new Map(), list = [];
     for (let i = from; i < this.nt.n; i++) {
       const g = this.choose(i).got;
       if (!g) continue;
-      const ak = g[0] * 4096 + g[1];
-      if (seen.has(ak)) continue;
-      seen.add(ak);
-      list.push([this.nt.on[i], g[0], g[1]]);
+      const ak = g[0] * 4096 + g[1], before = last.get(ak), on = this.nt.on[i];
+      last.set(ak, on + this.nt.dur[i]);
+      if (before !== void 0 && on - before < WARM.gap) continue;
+      list.push([on, g[0], g[1]]);
     }
     this.warmList = list;
     this.widx = 0;

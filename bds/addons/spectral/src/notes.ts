@@ -99,14 +99,18 @@ export function pick(code: number, key: number, vel: number, cents = 0): [number
 }
 
 // ------------------------------------------------------------------ warming
-/** Measured on the phone (p09 run 41531478311, p11 run 41536705472): the first time a sample is asked for, its note is lost — the
- *  game loads a sound file when it is first played, and that play does not sound. Asked again 0.36 s later and on, it plays: each
- *  of the voice's units sounded only from its second time (Whisper could not read the speech), the first click and the first
- *  flute chord of a run were silent. So a sample is warmed before its first note: started where no one hears it (inside its own
- *  leading silence, at `vol`) and stopped `hold` ticks later, before that silence ends — loaded by the time its note comes.
- *  ms: how far ahead (the default; /spectral:sampler … warm), perTick: at most this many a tick, ttl: a sample played or warmed
- *  this recently is taken as loaded (no lead before a song for it) */
-export const WARM = { ms: 600, hold: 4, perTick: 8, ttl: 30000, vol: 0.001 };
+/** Measured on the phone (p09 run 41531478311, p11 run 41536705472, p13 run 41561994201): a sample not loaded is loaded when it is
+ *  asked for and then played from the head of its file — its seekTo not taken — so it sounds 0.65-0.7 s late (p13: a 1 s note on a
+ *  sample not played before came 650-705 ms after its place, every one of 8), and a note shorter than that is let go before its
+ *  sound comes: lost (p13: 12 short notes on samples not played before, 0 heard — the recording digital silence; p09: each of the
+ *  voice's units sounded only from its second time). A sample not played for a while is dropped again (p13: the same 12 samples
+ *  1.5-2.5 min later, 0 heard; 20-40 s later they played). So a sample is warmed before a note: started where no one hears it
+ *  (inside its own leading silence, at `vol`) and stopped `hold` ticks later, before that silence ends — loaded by the time its note
+ *  comes (p13: warmed 150, 300, 600 or 1000 ms ahead, 12 of 12 heard each; for 1 tick, 9 of 9; at volume 1, 12 of 12).
+ *  ms: how far ahead (the default; /spectral:sampler … warm: 150 ms was enough on the rig, 600 leaves a slower phone its time),
+ *  perTick: at most this many a tick, ttl: a sample played or warmed this recently is taken as loaded (no lead before a song for
+ *  it), gap: a note whose sample the song has not played for this long (song ms) is warmed again */
+export const WARM = { ms: 600, hold: 4, perTick: 8, ttl: 15000, gap: 15000, vol: 0.001 };
 /** who (a player's id; 'speaker:' + id for their speaker) -> sound (a sample: instrument * 4096 + sample; a file song's part:
  *  its event) -> Date.now() it last started */
 const warmMem = new Map<string, Map<number | string, number>>();
@@ -216,14 +220,16 @@ export class NotePlayer {
     }
   }
 
-  /** the samples of the notes from note `from` on, each at its first note (WARM) */
+  /** the samples of the notes from note `from` on, each at its first note and where it comes back after WARM.gap (WARM) */
   private planWarm(from: number) {
-    const seen = new Set<number>(), list: [number, number, number][] = [];
+    // (each sample at its first note, and again at a note it comes back to after WARM.gap without: the phone drops it meanwhile)
+    const last = new Map<number, number>(), list: [number, number, number][] = [];
     for (let i = from; i < this.nt.n; i++) {
       const g = this.choose(i).got; if (!g) continue;
-      const ak = g[0] * 4096 + g[1];
-      if (seen.has(ak)) continue;
-      seen.add(ak); list.push([this.nt.on[i], g[0], g[1]]);
+      const ak = g[0] * 4096 + g[1], before = last.get(ak), on = this.nt.on[i];
+      last.set(ak, on + this.nt.dur[i]);
+      if (before !== undefined && on - before < WARM.gap) continue;
+      list.push([on, g[0], g[1]]);
     }
     this.warmList = list; this.widx = 0;
   }

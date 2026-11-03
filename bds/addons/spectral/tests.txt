@@ -856,7 +856,7 @@ until note 0 voice 3000
 ~ \[spectral\] note 0 voice_ja\.\d+ key \d+ pitch [\d.]+ seek 0\.6000 at 0 ms
 until ■ ぬ — end 4000
 
-## a sample played or warmed within 30 s is loaded: not warmed again, and the song does not wait
+## a sample played or warmed within 15 s is loaded: not warmed again, and the song does not wait
 @A cmd /spectral:say "ぬ"
 until note 0 voice 3000
 !~ \[spectral\] warm
@@ -868,6 +868,18 @@ execute as @a[name=A] run scriptevent spectral:note warm 9
 ~ \[spectral\] live warm glock: 6 samples
 execute as @a[name=A] run scriptevent spectral:note warm 9
 ~ \[spectral\] live warm glock: 0 samples
+@A cmd /spectral:sampler 2 250 28 120 false
+
+## a sample the song comes back to after 15 s without it is warmed again before that note (the phone drops a sample it has not played for a while: p13 run 41561994201 — the same 12 samples 1.5-2.5 min later, 0 of 12 heard)
+scriptevent spectral:song {"id":"gap_test","i":0,"n":1,"meta":{"format":"spectral-notes/1","id":"gap_test","title":"Gap test","artist":"Spectral Player (testing)","seconds":20.2,"notes":2,"programs":[0]},"data":"AQDIAV9kAIDxBMgBX2QA"}
+~ ♪ song pack: Gap test \(0:20\) — /spectral:play gap_test
+@A cmd /spectral:sampler 2 250 28 120 true 600
+@A cmd /spectral:play gap_test
+until note 1 piano 26000
+~ \[spectral\] warm piano\.109 for 0 ms at -600 ms
+~ \[spectral\] warm piano\.109 for 20000 ms at 19\d\d\d ms
+~ \[spectral\] note 1 piano\.109 key 95 pitch 1\.0595 seek 0\.6000 at 20000 ms
+@A cmd /spectral:stop
 @A cmd /spectral:sampler 2 250 28 120 false
 
 ## measuring the warming (p13): the level a sample is warmed at and how many ticks it sounds can be set by a script event (it stays inside the 0.6 s of silence: at most 11 ticks)

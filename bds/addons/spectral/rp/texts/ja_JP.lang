@@ -1,3 +1,3 @@
 pack.name=Spectral Player
-pack.description=MP3を正弦波の加算合成でリアルタイム再生する音楽プレイヤー。声をその場で鳴らすライブ（近接ボイスチャット・立体音響）つき
+pack.description=MP3を正弦波の加算合成でリアルタイム再生する音楽プレイヤー。MIDIは本物の楽器の音で1ミリ秒ずつ・録音そのまま・かなの読み上げ、声をその場で鳴らすライブ（近接ボイスチャット・立体音響）つき
 item.spectral:remote.name=スペクトル・リモコン
