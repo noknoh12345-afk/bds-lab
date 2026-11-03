@@ -321,10 +321,13 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 27. **実機（p10）: サンプラーは大きく鳴らすほど良い**: 300 % でエチュード 2.22 → 4.20（正弦波の道 4.12 を超えた）、エリーゼ 3.03 → 4.11。既定の 300 % のまま
 28. **実機（p11）: 1 tick に始められる数**: 同じ seek の和音は 12 音でも全部（ヘッドホンで抜けた 1 音は初回）。seek がそれぞれの 40 ms おきの
     クリックは束ね 12 で K = 4 から外れるか落ちる、束ね 1 で K = 8 まで全部 → 束ね 2 のまま。measured/sampler-p09/p10/p11-*.json
-29. **/connect は実機でつながらなかった**（p08・p12: 録音はデジタルの無音）。リグのクライアントは BDS に入っていて、/connect は一人の
-    ワールドの側のコマンド（推測）。確かめ方: BDS の上で `/connect` を打つと何と言うか（`node lab.mjs run`）。実機で試すには、リグが一人の
+29. **/connect は実機でつながらなかった**（p08・p12: 録音はデジタルの無音）。リグのクライアントは BDS に入っていて、**BDS の上では
+    `/connect`・`/wsserver` は op でも「権限がない」**（`node lab.mjs run` で: `commands.generic.error.permissions [wsserver]`）。実機で試すには、リグが一人の
     ワールドを開く手（app/ の側: 司令塔の作業）が要る。Connect のサーバー・ページ・リモコンは、にせのゲーム（tools/connect/test.mjs 37 項目）と
     本物の BDS の試験のまま
+30. **自動採譜→サンプラーを試した**（IDEAS.md の表の 8、手元の推測）: tools/transcribe.py（Basic Pitch の ONNX: `pip install --no-deps basic-pitch`
+    と librosa・mir_eval・pretty_midi・resampy・scikit-learn。TensorFlow は要らない）。ジムノペディ 3.77（鳴らしたまま）→ 電話の模型で 2.60、
+    正弦波の道の模型 3.61: 電話の 16 bit の出口がピアノの静かな音を沈める。Connect にはつないでいない。強弱を縮める（1/120）と 3.42
 
 ## 4 回目のセッション（2026-10-31）でしたこと
 

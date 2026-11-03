@@ -120,7 +120,7 @@ JavaScript 版 web/game.js）は 1–6 をそのまま持つ: アドオンの本
 リモコンは `scriptevent sr:show / sr:value`。**にせのゲーム（tools/connect/test.mjs）と本物の BDS（spectral_remote 15/15・spectral の
 remote の試験）で確かめた。実機のクライアントの /connect はまだ**（推測: commandRequest はプレイヤーとして走り、カスタムコマンドも通る）。
 鍵盤（ページの鍵・パソコンのキー・Web MIDI）で弾いた音は 50 ms ごとの束で送り、ゲームが各音を弾いた間のまま約 90 ms 後に seekTo で置く
-（`spectral:note`、src/notes.ts LiveKeys。束の tick 待ちは時計で引く）: 遅れとその揺れは未実測。**実機（p08 run 41528680880・p12 run 41538782070）: つながらなかった**（p12 の 4 本の録音はデジタルの無音: サーバーのあいさつの音階が鳴らない）。リグのクライアントはラボの BDS に入っていて、`/connect` はそのワールドの側のコマンド（一人のワールド・Realms の外のもの）: BDS の上では効かない（推測、次に BDS の上で確かめる）。実機で試すには一人のワールドを開く手がリグに要る。
+（`spectral:note`、src/notes.ts LiveKeys。束の tick 待ちは時計で引く）: 遅れとその揺れは未実測。**実機（p08 run 41528680880・p12 run 41538782070）: つながらなかった**（p12 の 4 本の録音はデジタルの無音: サーバーのあいさつの音階が鳴らない）。リグのクライアントはラボの BDS に入っていて、**BDS（1.26.61.1）の上では `/connect`・`/wsserver` は op のプレイヤーでも「権限がない」**（`commands.generic.error.permissions [wsserver]`: コマンドはあるが、ワールドを開いた人だけのもの。BDS の試験で確かめた）。Spectral Connect は一人のワールド（自分で開いたワールド）で使う。実機で試すには一人のワールドを開く手がリグに要る。
 
 ## 曲の成績（実測: 実機の録音の ViSQOL v3）
 

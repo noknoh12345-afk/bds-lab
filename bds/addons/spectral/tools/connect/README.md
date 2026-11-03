@@ -6,7 +6,8 @@ URL（yt-dlp: **権利のあるものだけ**: 自分の・CC ライセンス）
 
 ## 使う
 
-1. ワールドに **Spectral Player**（と、ゲームの中で操るなら **Spectral Remote**: bds/addons/spectral_remote）を入れ、チートを on、自分はオペレーター。
+1. 自分で開く一人のワールドに **Spectral Player**（と、ゲームの中で操るなら **Spectral Remote**: bds/addons/spectral_remote）を入れ、チートを on。
+   （サーバー・BDS に入ったワールドでは `/connect` は使えない: 下の「確かめたこと」）
 2. パソコンで `node bds/addons/spectral/tools/connect/server.mjs`（`--port 8790`・`--max 240`（秒）・`--latency 90`（ms））。URL には
    `pip install yt-dlp`。曲にするのに Python（tools/spectral.py・tools/notes.py の依存）。
 3. ゲームで `/connect <パソコンのアドレス>:8790`（同じパソコンなら `localhost:8790`）。
@@ -28,5 +29,6 @@ URL（yt-dlp: **権利のあるものだけ**: 自分の・CC ライセンス）
 - `node tools/connect/test.mjs`: にせのゲーム（/connect のクライアントの側）で、ハンドシェイク・購読・ページ・ファイル（MIDI・録音）・チャット・
   リモコンの手紙（分けて・二度目は鳴らさない）・段階の知らせ・鍵盤の束・OreUI の CSS を配ること・ほかのコマンドは通さないこと
 - 本物の BDS: Spectral Player の tests.txt（`spectral:remote`・`spectral:note`・曲パック）、bds/addons/spectral_remote の tests.txt（15/15）
-- **まだ**: 実機のクライアントの `/connect`（commandRequest でカスタムコマンドと scriptevent が通るか・PlayerMessage・タグを読む返事の形）と、
-  鍵盤の遅れの実測
+- **サーバー（BDS）に入ったワールドでは使えない**: BDS 1.26.61.1 の上では `/connect`・`/wsserver` は op のプレイヤーでも「権限がない」
+  （`commands.generic.error.permissions [wsserver]`、ラボの BDS で確かめた）。自分で開いた一人のワールド（チート on）で使う
+- **まだ**: 実機のクライアントの `/connect`（リグはラボの BDS に入るので試せない: p08・p12 の録音は無音）と、鍵盤の遅れの実測
