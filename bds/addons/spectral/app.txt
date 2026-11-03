@@ -2,7 +2,7 @@
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
 #   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
 #   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 18（tools/exp/queue/q18_loop_5min.json）: 1 曲をループで 5 分。/spectral:loop で同じ曲を 15 周: 周の継ぎ目と、時間が経っても音が崩れないか
+# キュー 19（tools/exp/queue/q19_pause_seek.json）: 一時停止・再開・シーク（6 曲）。リモコンの一時停止と ±10 秒を実機で: 継ぎ目のプツッ・音が戻るまでの時間
 
 section title
 audio info
@@ -14,7 +14,7 @@ audio info
 shot title
 
 section prep
-audio song vocal_name_of_love suffix=_e pack=tools/exp/packs/run10
+audio song speech_ja_soseki,vocal_name_of_love,orchestra_five_armies,rock_big,piano_gymnopedie,edm_detection suffix=_e pack=tools/exp/packs/run10
 
 section join
 join
@@ -25,13 +25,82 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section loop
-do execute as @a run spectral:stop
-audio start lp_vocal_name_of_love
-do execute as @a run spectral:loop
-do execute as @a run spectral:play vocal_name_of_love_e
-wait 300000
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
+section pause
+audio start ps_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 5000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 15
+wait 6000
 audio stop
-audio export lp_vocal_name_of_love 160
+audio export ps_speech_ja_soseki 160
+audio start ps_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 5000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 15
+wait 6000
+audio stop
+audio export ps_vocal_name_of_love 160
+audio start ps_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_e
+wait 5000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 15
+wait 6000
+audio stop
+audio export ps_orchestra_five_armies 160
+audio start ps_rock_big
+do execute as @a run spectral:play rock_big_e
+wait 5000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 15
+wait 6000
+audio stop
+audio export ps_rock_big 160
+audio start ps_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+wait 5000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 15
+wait 6000
+audio stop
+audio export ps_piano_gymnopedie 160
+audio start ps_edm_detection
+do execute as @a run spectral:play edm_detection_e
+wait 5000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 15
+wait 6000
+audio stop
+audio export ps_edm_detection 160
