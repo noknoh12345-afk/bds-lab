@@ -395,9 +395,9 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## いまの状態
 
-- **11-03 昼: 本体 1.5.0**（同じ UUID。1.5.0 = サンプラー（MIDI を楽器の音で 1 ms ずつ・300 %・束ね 2・温め 600 ms）、ファイルの曲 48 kHz、
-  かなの読み上げ、Spectral Connect（一人のワールドの /connect）とリモコン Spectral Remote 1.0.0、楽器の高さを直した）。`node lab.mjs go`:
-  **DONE（test 357/357, qa clean）**、spectral_remote 15/15。tools/connect/test.mjs 37 項目
+- **11-03 昼: 本体 1.5.1**（同じ UUID。1.5.0 = サンプラー（MIDI を楽器の音で 1 ms ずつ・300 %・束ね 2・温め 600 ms）、ファイルの曲 48 kHz、
+  かなの読み上げ、Spectral Connect（一人のワールドの /connect）とリモコン Spectral Remote 1.0.0、楽器の高さを直した。1.5.1 = 大きさの上限 400 %・
+  15 秒使わなかった素の温め直し）。`node lab.mjs go`: **DONE（test 364/364, qa clean）**、spectral_remote 15/15。tools/connect/test.mjs 37 項目
 - ブランチ addon/spectral（push 済み、最後のコミットは git log で）。**本体 1.4.0**（同じ UUID。1.4.0 = 短いテキスト SPZ2・ほぼ全ての音声形式。
   11-02 午後: パート 5000 文字・切れたテキストの理由）。`node lab.mjs go`（ローカルの BDS 1.26.61.1 取ってきたもの。zip はリポジトリの外: LAB_BDS_ZIP）:
   **DONE（test 244/244, qa clean）**。tests/app-offline.mjs 110/110、tools/test_page.py（区間・分割・待つ・順にコピー・外すと止まる）、
