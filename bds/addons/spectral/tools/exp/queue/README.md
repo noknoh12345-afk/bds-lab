@@ -26,3 +26,16 @@ measured/redroid-<run>.json・Discord にそのまま記録する（1 本ごと�
 | 18 | loop_5min | 1 曲をループで 5 分 | /spectral:loop で同じ曲を 15 周: 周の継ぎ目と、時間が経っても音が崩れないか | 25 |
 | 19 | pause_seek | 一時停止・再開・シーク（6 曲） | リモコンの一時停止と ±10 秒を実機で: 継ぎ目のプツッ・音が戻るまでの時間 | 25 |
 | 20 | memory_pressure | メモリが足りないとき（trim memory） | 安い電話ではメモリが足りなくなると OS がアプリに減らせと言う: そのとき音は途切れるか | 30 |
+
+## p で始まるもの（サンプラー・声・Connect: tools/exp/sampler_plans.py が作る。q より先に走る）
+
+| 名前 | 何を測るか | 結果 |
+|---|---|---|
+| p01_sampler・p04_aliases | 束ねる 4 / 2 / 1・tick に縛る・別名 | 束ね 2 に（SPEC.md「サンプラーと声」） |
+| p02_speech_piano・p09_speech_units | 声の素（前の・切り直した）と Kokoro の正弦波 | 実機は Whisper 0.88–1.0: **素の初回の再生が落ちていた**（p09） |
+| p03_file_songs | ファイルの曲 24 / 48 kHz | 48 kHz に |
+| p05_limiter | 音割れ止め | 既定は切 |
+| p06・p11_per_tick | 1 tick に始められる数 | 同じ seek の和音は 12 音でも全部、別々の seek の連打は束ね 1 で 8 まで |
+| p08・p12_connect | /connect | つながらない（リグは BDS に入る: /connect は一人のワールドのもの、推測） |
+| p10_sampler_level | サンプラー 120 / 300 % | 300 % でエチュード 2.22 → 4.20・エリーゼ 3.03 → 4.11 |
+| p13_warm | 温め: 何 ms 前に・初回は落ちるか遅れるか・温めの大きさと長さ、温めありの読み上げ・曲 | （待ち）tools/exp/warm_score.py・speech_eval.py・sampler_score.py --songs |

@@ -29,7 +29,8 @@
 6. **楽器の音で（MIDI）・録音そのまま・声**（11-03）: `/spectral:play piano_demo`（サンプラー: 本物のピアノの音を 1 ms 単位で置く。
    `/spectral:sampler` で今の値、既定は 2 tick ずつ束ねる）・`/spectral:play piano_file`（録音そのまま、48 kHz）・`/spectral:say "こんにちは"`。
    MIDI は `python3 tools/notes.py <曲.mid> --out x.song.json`、録音は `python3 tools/filepack.py <曲> --unit <フォルダ>`（その曲のアドオン）。
-   大きな曲の音割れは `/spectral:limit true`（試し: 実機で p07 が決める）
+   大きな曲の音割れは `/spectral:limit true`（実機の p05 では既定の切が少し上）。電話は音の初回の再生を落とすので、どの素も最初の音の
+   600 ms 前に聞こえない所で読み込ませる（温め: `/spectral:sampler … <warm ms>`、曲の頭はその分待つ）。弦・管・打楽器はそれぞれの高さで（11-03 まで 1 オクターブ高かった）
 7. **マイクラのまま、パソコンから**（11-03）: `node tools/connect/server.mjs` → ゲームで `/connect <パソコン>:8790` → ページ（OreUI）か
    ゲームの中のリモコン（Spectral Remote: `/sr:open`）から URL・ファイルを曲にして流す、鍵盤（MIDI 鍵盤・画面の鍵）で弾く。tools/connect/README.md
 
@@ -71,6 +72,8 @@
 - [x] 曲のテキストは電話の入力欄に入る長さのパートに分かれる（電話の入力欄は 5000 文字で止まる: 34 回目の実測。英数字 4977 文字の 1 部は貼れる: 35 回目）。5000 文字で切れた古いテキストにはアドオンが理由を言う（## a text that is not a song, a broken one and a cut one are refused with why）
 - [x] 変換ページ: 曲の一部だけ（区間）・再生位置で「ここから」「ここまで」「ここで分ける」、長いファイルは時間の目安を見て「変換する」、変換は 1 つずつ順に（外した曲の変換は止まる）、テキストのパートを順にコピー・.txt で保存（tools/test_page.py）
 - [x] 電話の録音を手元で: tools/emu/phone.py が実機のリグが録るはずの音と成績を出す。tools/rig/emu_validate.py で録音と比べた（33 回目の 26 本: 成績の予測の誤差 平均 0.074・相関 0.958、推測と実測を SPEC.md に分けて）
+- [x] 電話は音の初回の再生を落とす（実機 p09・p11）ので、サンプラーの各素を最初の音の 600 ms 前に聞こえない所で読み込ませ、曲の頭はその分待つ。30 秒以内に鳴らした素は温め直さない。生演奏は Connect が楽器ごとに温めさせる（## a phone loses a sound's first play … ／ ## a sample played or warmed within 30 s is loaded … ／ ## live notes: Spectral Connect asks the game to warm an instrument …）
+- [x] General MIDI の楽器はそれぞれの高さで鳴る: VSCO 2 CE・VCSL のファイルの名前（真ん中の C が C3）を読み直した（手元で全部の素を測った: 16 楽器が +12 半音）（## a MIDI song with General MIDI's families …）
 
 ## Guessed
 <!-- values decided without asking -->

@@ -1,0 +1,48 @@
+{
+ "run": 41534236021,
+ "plan": "tools/exp/queue/p10_sampler_level.json",
+ "what": "the sampler at level 120 % (v12) and 300 % (v30, each bundle turned down before the phone clips), on the étude (pd) and Für Elise (fe), and the étude through the sine engine (ps); tools/exp/sampler_score.py against the notes rendered here",
+ "scores": {
+  "fe_v12": {
+   "song": "fur_elise",
+   "visqol": 3.0298,
+   "mrstft": 1.4707,
+   "third_oct_db": 4.075,
+   "onset_ms": 12.5,
+   "onset_recall": 0.831
+  },
+  "fe_v30": {
+   "song": "fur_elise",
+   "visqol": 4.1066,
+   "mrstft": 1.4456,
+   "third_oct_db": 5.494,
+   "onset_ms": 5.0,
+   "onset_recall": 0.662
+  },
+  "pd_v12": {
+   "song": "piano_demo",
+   "visqol": 2.222,
+   "mrstft": 2.0834,
+   "third_oct_db": 13.403,
+   "onset_ms": 5.0,
+   "onset_recall": 0.647
+  },
+  "pd_v30": {
+   "song": "piano_demo",
+   "visqol": 4.1956,
+   "mrstft": 1.5713,
+   "third_oct_db": 6.61,
+   "onset_ms": 25.0,
+   "onset_recall": 0.725
+  },
+  "ps_piano_demo": {
+   "song": "piano_demo",
+   "visqol": 4.1231,
+   "mrstft": 1.771,
+   "third_oct_db": 7.174,
+   "onset_ms": 17.5,
+   "onset_recall": 0.549
+  }
+ },
+ "finding": "louder is far better on the phone: étude 2.22 → 4.20 (the sine engine 4.12), Für Elise 3.03 → 4.11 (ViSQOL); the default level is 300 %"
+}

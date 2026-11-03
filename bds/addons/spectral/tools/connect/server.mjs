@@ -110,6 +110,8 @@ class Game {
     // (the remote: shown as connected, and its mails read; Spectral Player says hello on the player's action bar)
     this.command('scriptevent sr:show ws 1');
     this.command('scriptevent spectral:remote hello');
+    // (the piano warmed for the keys: on a phone a sample's first play is lost — Spectral Player warms what it is asked to)
+    this.command('scriptevent spectral:note warm 0');
     if (GREET) setTimeout(() => this.liveScale(), 1500);
     this.mails = new Map(); this.done = new Set(); this.polling = false; this.live = [];
     this.liveTimer = setInterval(() => this.flushLive(), LIVE_MS);
@@ -129,7 +131,7 @@ class Game {
     const now = Date.now(), batch = this.live.splice(0), out = [];
     for (const e of batch) {
       const r = Math.max(0, Math.round(e.at + LATENCY - now));
-      out.push(e.type === 'on' ? `on ${e.key} ${e.vel} ${e.prog} ${r}` : e.type === 'off' ? `off ${e.key} ${e.prog} ${r}` : 'alloff');
+      out.push(e.type === 'on' ? `on ${e.key} ${e.vel} ${e.prog} ${r}` : e.type === 'off' ? `off ${e.key} ${e.prog} ${r}` : e.type === 'warm' ? `warm ${e.prog}` : 'alloff');
     }
     // (a long batch in more than one: a script event takes 2048 characters)
     for (let i = 0; i < out.length; i += 80) this.command(`scriptevent spectral:note @${now};${out.slice(i, i + 80).join(';')}`);
@@ -310,13 +312,14 @@ const server = http.createServer(async (req, res) => {
     json(202, { queued: jobs.length }); return;
   }
   if (req.method === 'POST' && url.pathname === '/api/notes') {
-    // { events: [{ type: 'on' | 'off' | 'alloff', key, vel, prog, age }] } — age: ms since it was played (the page's clock)
+    // { events: [{ type: 'on' | 'off' | 'alloff' | 'warm', key, vel, prog, age }] } — age: ms since it was played (the page's clock);
+    // warm: the page chose an instrument (its samples are loaded before its keys are played)
     let body = ''; for await (const c of req) body += c;
     const g = [...games][0]; if (!g) { json(409, { error: 'no game' }); return; }
     let r; try { r = JSON.parse(body || '{}'); } catch { json(400, { error: 'bad JSON' }); return; }
     const now = Date.now(), int = (v, lo, hi, d) => (Number.isFinite(Number(v)) ? Math.max(lo, Math.min(hi, Math.round(Number(v)))) : d);
     for (const e of Array.isArray(r.events) ? r.events.slice(0, 256) : []) {
-      if (!['on', 'off', 'alloff'].includes(e.type)) continue;
+      if (!['on', 'off', 'alloff', 'warm'].includes(e.type)) continue;
       g.live.push({ type: e.type, key: int(e.key, 0, 127, 60), vel: int(e.vel, 1, 127, 100), prog: int(e.prog, 0, 299, 0), at: now - int(e.age, 0, 1000, 0) });
     }
     json(200, { queued: g.live.length }); return;

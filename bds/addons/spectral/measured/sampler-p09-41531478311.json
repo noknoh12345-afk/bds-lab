@@ -1,0 +1,61 @@
+{
+ "run": 41531478311,
+ "plan": "tools/exp/queue/p09_speech_units.json",
+ "device": "redroid (Android 14), Minecraft 1.26.60.4",
+ "what": "the four sentences by the voice units (sv_: headphones, sv3_: speaker) and Kokoro's own speech through the sine engine (sk_); Whisper small, character error rate against the reading (0 = all heard)",
+ "cer": {
+  "sk_speech_cave": {
+   "cer": 0.96,
+   "heard": "モ�ters os逸性は大いなんか都市us"
+  },
+  "sk_speech_hello": {
+   "cer": 0.111,
+   "heard": "こんにちは私はインプラクトの中で話しています。"
+  },
+  "sk_speech_piano": {
+   "cer": 0.714,
+   "heard": "本物の描き方は、本物の描き方を通しています。"
+  },
+  "sk_speech_weather": {
+   "cer": 0.875,
+   "heard": " ress思いにれているよ レッスニャー"
+  },
+  "sv3_speech_hello": {
+   "cer": 0.593,
+   "heard": "ここに私はおやすみのデナスを増す"
+  },
+  "sv_speech_cave": {
+   "cer": 0.88,
+   "heard": "ブリエイウェイ・・・"
+  },
+  "sv_speech_hello": {
+   "cer": 1.0,
+   "heard": ""
+  },
+  "sv_speech_piano": {
+   "cer": 1.0,
+   "heard": ""
+  },
+  "sv_speech_weather": {
+   "cer": 0.917,
+   "heard": "んはぁにーんんんんんんんんんんん"
+  }
+ },
+ "levels_db": {
+  "sv_peak": [
+   -38.1,
+   -37.6,
+   -36.7,
+   -37.7
+  ],
+  "sk_peak": [
+   -25.9,
+   -25.7,
+   -26.4,
+   -26.4
+  ],
+  "sv3_speech_hello_peak": -26.5
+ },
+ "finding": "the device recording of sv_speech_hello is digital silence where most units should sound: each unit sounded only from its second play (sample 199 ワ silent at 0.76 s, heard at 1.70 s; 202 ン silent at 0.30 s, heard at 2.32 s; 99 ナ silent at 3.27 s, heard at 3.99 s; 96 ド silent at 2.40 s, heard 0.36 s later in sv_speech_cave). The later sentences played more of their units (loaded by the ones before): a sound's first play on the phone is lost (the game loads the file and that play does not sound) — src/notes.ts WARM",
+ "per_note": "scratchpad which_notes.py: per note, the share of its time the recording was not silent (aligned by the best lag)"
+}

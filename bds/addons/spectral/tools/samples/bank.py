@@ -15,7 +15,7 @@ Sound events: spectral.i.<inst>.<k> (2D, category ui) and spectral.i.<inst>.<k>_
 src/bank.ts lists the instruments, their samples (key, velocity layer, length, level) and General MIDI's programs and drums.
 sound_definitions.json keeps every other event (tools/make_rp_assets.py keeps these the same way).
 
-  python3 tools/samples/bank.py [--only piano,drums] [--cache <dir>] [--list]
+  python3 tools/samples/bank.py [--only piano,drums] [--cache <dir>] [--list] [--relabel]
 The sources are fetched once (git, only the folders used) into --cache (default ~/.cache/spectral-samples)."""
 import argparse, json, os, re, subprocess, sys, tempfile
 import numpy as np
@@ -43,6 +43,9 @@ def midi_of(name):
 # the velocity each stands for (the samples are normalized: the add-on makes the dynamics from the velocity); maxs: the longest
 # a sample is kept (s) at key 21 and at key 108 (in between by the key); release: the fade at note-off (s); sustain: the note
 # holds as long as it is held (the sample is relayed from its loop point), else it decays as recorded
+# octave: 1 — the source names middle C "C3" (its files sound an octave above the key read from their names as C4 = 60: every
+# sample of these, measured here — YIN and the spectrum's strongest peak, +12 semitones; the piano and the harp name it C4, the
+# organ's and the chimes' pitches are their own), so its keys are read 12 higher
 INSTRUMENTS = [
     {'id': 'piano', 'name': 'Grand Piano (Steinway B, VCSL)', 'repo': 'VCSL',
      'folder': 'Chordophones/Zithers/Grand Piano, Steinway B/NoSus',
@@ -50,49 +53,49 @@ INSTRUMENTS = [
      'layers': {'vl2': 48, 'vl3': 84, 'vl4': 118}, 'maxs': (7.0, 2.6), 'release': 0.18, 'q': '2', 'stereo': True,
      'gm': list(range(0, 8))},
     # ---- General MIDI's other families (CC0: VSCO 2 CE and VCSL), one velocity layer each (the dynamics from the velocity)
-    {'id': 'strings', 'sustain': True, 'name': 'Strings (VSCO 2 CE violin and cello sections)', 'release': 0.25, 'q': '1', 'stereo': True, 'maxs': (6.0, 4.0),
+    {'id': 'strings', 'octave': 1, 'sustain': True, 'name': 'Strings (VSCO 2 CE violin and cello sections)', 'release': 0.25, 'q': '1', 'stereo': True, 'maxs': (6.0, 4.0),
      'sources': [{'repo': 'VSCO-2-CE', 'folder': 'Strings/Violin Section', 'sparse': 'VlnEns_susVib_*_v2.wav', 'pattern': r'VlnEns_susVib_(?P<note>[A-G]#?\d)_v2\.wav', 'from': 55},
                  {'repo': 'VSCO-2-CE', 'folder': 'Strings/Cello Section', 'sparse': 'susvib_*_v1_1.wav', 'pattern': r'susvib_(?P<note>[A-G]#?\d)_v1_1\.wav'}],
      'gm': [40, 41, 42, 43, 44, 48, 49, 50, 51, 52, 53, 54, 55, 110]},
-    {'id': 'bass', 'name': 'Contrabass pizzicato (VSCO 2 CE)', 'release': 0.12, 'q': '1', 'maxs': (3.0, 2.0),
+    {'id': 'bass', 'octave': 1, 'name': 'Contrabass pizzicato (VSCO 2 CE)', 'release': 0.12, 'q': '1', 'maxs': (3.0, 2.0),
      'repo': 'VSCO-2-CE', 'folder': 'Strings/Solo Contrabass/Pizz', 'sparse': 'BKCtbss_Pizz_*_v1_rr1.wav', 'pattern': r'BKCtbss_Pizz_(?P<note>[A-G]#?\d)_v1_rr1\.wav',
      'gm': list(range(32, 40))},
     {'id': 'harp', 'name': 'Harp (VSCO 2 CE)', 'release': 0.6, 'q': '1', 'stereo': True, 'maxs': (5.0, 2.5),
      'repo': 'VSCO-2-CE', 'folder': 'Strings/Harp', 'sparse': 'KSHarp_*_mf.wav', 'pattern': r'KSHarp_(?P<note>[A-G]#?\d)_mf\.wav', 'gm': [45, 46, 104, 105, 106, 107]},
-    {'id': 'guitar', 'name': 'Strumstick, finger-picked (VCSL)', 'release': 0.3, 'q': '1', 'maxs': (4.0, 2.5),
+    {'id': 'guitar', 'octave': 1, 'name': 'Strumstick, finger-picked (VCSL)', 'release': 0.3, 'q': '1', 'maxs': (4.0, 2.5),
      'repo': 'VCSL', 'folder': 'Chordophones/Composite Chordophones/Strumstick/Finger', 'sparse': '*_vl2_rr1.wav',
      'pattern': r'Strumstick_Finger_Str\d_Main_(?P<note>[A-G]#?\d)_vl2_rr1\.wav', 'gm': [15] + list(range(24, 32))},
     {'id': 'organ', 'sustain': True, 'name': 'Pipe organ (VCSL, Rode)', 'release': 0.08, 'q': '1', 'stereo': True, 'maxs': (4.0, 3.0),
      'repo': 'VCSL', 'folder': 'Aerophones/Edge-blown Aerophones/Pipe Organ/Loud', 'pattern': r'Rode_Man3Open_(?P<note>[A-G]#?\d)\.wav', 'gm': list(range(16, 24))},
-    {'id': 'trumpet', 'sustain': True, 'name': 'Trumpet (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
+    {'id': 'trumpet', 'octave': 1, 'sustain': True, 'name': 'Trumpet (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Brass/Trumpet', 'sparse': 'Sum_SHTrumpet_susvib_*_v2_rr1.wav', 'pattern': r'Sum_SHTrumpet_susvib_(?P<note>[A-G]#?\d)_v2_rr1\.wav',
      'gm': [56, 59, 61, 62, 63]},
-    {'id': 'horn', 'sustain': True, 'name': 'French horn (VSCO 2 CE)', 'release': 0.2, 'q': '1', 'maxs': (4.0, 3.0),
+    {'id': 'horn', 'octave': 1, 'sustain': True, 'name': 'French horn (VSCO 2 CE)', 'release': 0.2, 'q': '1', 'maxs': (4.0, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Brass/F Horn', 'sparse': 'MOHorn_sus_*_v1_1.wav', 'pattern': r'MOHorn_sus_(?P<note>[A-G]#?\d)_v1_1\.wav', 'gm': [60]},
-    {'id': 'trombone', 'sustain': True, 'name': 'Tenor trombone (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
+    {'id': 'trombone', 'octave': 1, 'sustain': True, 'name': 'Tenor trombone (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Brass/Tenor Trombone', 'sparse': 'tenortbn_sus_*_v2_1.wav', 'pattern': r'tenortbn_sus_(?P<note>[A-G]#?\d)_v2_1\.wav', 'gm': [57]},
-    {'id': 'tuba', 'sustain': True, 'name': 'Tuba (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
+    {'id': 'tuba', 'octave': 1, 'sustain': True, 'name': 'Tuba (VSCO 2 CE)', 'release': 0.15, 'q': '1', 'maxs': (4.0, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Brass/Tuba/sus', 'sparse': 'Tuba3_sus_*_v1_rr1_Mid.wav', 'pattern': r'Tuba3_sus_(?P<note>[A-G]#?\d)_v1_rr1_Mid\.wav', 'gm': [58]},
-    {'id': 'sax', 'sustain': True, 'name': 'Tenor saxophone (VCSL)', 'release': 0.12, 'q': '1', 'maxs': (3.5, 3.0),
+    {'id': 'sax', 'octave': 1, 'sustain': True, 'name': 'Tenor saxophone (VCSL)', 'release': 0.12, 'q': '1', 'maxs': (3.5, 3.0),
      'repo': 'VCSL', 'folder': 'Aerophones/Reed Aerophones/Tenor Saxophone/Non-Vibrato', 'sparse': '*_vl2_rr1.wav',
      'pattern': r'BrettTenor_NV_Main_(?P<note>[A-G]#?\d)_vl2_rr1\.wav', 'gm': [64, 65, 66, 67]},
-    {'id': 'oboe', 'sustain': True, 'name': 'Oboe (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+    {'id': 'oboe', 'octave': 1, 'sustain': True, 'name': 'Oboe (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Oboe/Sus', 'sparse': 'Oboe_Sus_*_v3_Main.wav', 'pattern': r'Oboe_Sus_(?P<note>[A-G]#?\d)_v3_Main\.wav', 'gm': [68, 69, 109, 111]},
-    {'id': 'bassoon', 'sustain': True, 'name': 'Bassoon (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+    {'id': 'bassoon', 'octave': 1, 'sustain': True, 'name': 'Bassoon (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Bassoon/sus', 'sparse': 'PSBassoon_*_v2_1.wav', 'pattern': r'PSBassoon_(?P<note>[A-G]#?\d)_v2_1\.wav', 'gm': [70]},
-    {'id': 'clarinet', 'sustain': True, 'name': 'Clarinet (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+    {'id': 'clarinet', 'octave': 1, 'sustain': True, 'name': 'Clarinet (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Clarinet', 'sparse': 'DCClar_susLong_*_v2_rr1_sum.wav', 'pattern': r'DCClar_susLong_(?P<note>[A-G]#?\d)_v2_rr1_sum\.wav', 'gm': [71]},
-    {'id': 'flute', 'sustain': True, 'name': 'Flute (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
+    {'id': 'flute', 'octave': 1, 'sustain': True, 'name': 'Flute (VSCO 2 CE)', 'release': 0.1, 'q': '1', 'maxs': (3.5, 3.0),
      'repo': 'VSCO-2-CE', 'folder': 'Woodwinds/Flute', 'sparse': 'LDFlute_susNV_*_v1_1.wav', 'pattern': r'LDFlute_susNV_(?P<note>[A-G]#?\d)_v1_1\.wav', 'gm': list(range(72, 80))},
-    {'id': 'vibes', 'name': 'Vibraphone, hard mallets (VCSL)', 'release': 0.5, 'q': '1', 'maxs': (4.0, 2.5),
+    {'id': 'vibes', 'octave': 1, 'name': 'Vibraphone, hard mallets (VCSL)', 'release': 0.5, 'q': '1', 'maxs': (4.0, 2.5),
      'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Vibraphone/Hard Mallets', 'sparse': 'Vibes_hard_*_v2_rr1_Main.wav',
      'pattern': r'Vibes_hard_(?P<note>[A-G]#?\d)_v2_rr1_Main\.wav', 'gm': [8, 11]},
-    {'id': 'marimba', 'name': 'Marimba (VCSL)', 'release': 0.3, 'q': '1', 'maxs': (2.5, 1.5),
+    {'id': 'marimba', 'octave': 1, 'name': 'Marimba (VCSL)', 'release': 0.3, 'q': '1', 'maxs': (2.5, 1.5),
      'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Marimba', 'sparse': 'Marimba_hit_Outrigger_*_med_01.wav',
      'pattern': r'Marimba_hit_Outrigger_(?P<note>[A-G]#?\d)_med_01\.wav', 'gm': [12, 108, 114]},
-    {'id': 'xylo', 'name': 'Xylophone (VSCO 2 CE)', 'release': 0.2, 'q': '1', 'maxs': (1.5, 1.0),
+    {'id': 'xylo', 'octave': 1, 'name': 'Xylophone (VSCO 2 CE)', 'release': 0.2, 'q': '1', 'maxs': (1.5, 1.0),
      'repo': 'VSCO-2-CE', 'folder': 'Percussion/Xylo', 'pattern': r'Xylo_Medium_(?P<note>[A-G]#?\d)_ff_01_far\.wav', 'gm': [13, 115]},
-    {'id': 'glock', 'name': 'Glockenspiel (VSCO 2 CE)', 'release': 0.6, 'q': '1', 'maxs': (3.0, 2.0),
+    {'id': 'glock', 'octave': 1, 'name': 'Glockenspiel (VSCO 2 CE)', 'release': 0.6, 'q': '1', 'maxs': (3.0, 2.0),
      'repo': 'VSCO-2-CE', 'folder': 'Percussion/Glock', 'pattern': r'glock_medium_(?P<note>[A-G]#?\d)\.wav', 'gm': [9, 10, 112]},
     {'id': 'chimes', 'name': 'Tubular bells (VCSL)', 'release': 1.0, 'q': '1', 'maxs': (5.0, 4.0),
      'repo': 'VCSL', 'folder': 'Idiophones/Struck Idiophones/Tubular Bells 1', 'pattern': r'chimes_(?P<note>[A-G]#?\d)_(?:f|ff|mf)_rr1\.wav', 'gm': [14]},
@@ -234,6 +237,8 @@ def build(inst, cache):
                 if src.get('layers') and layer not in src['layers']:
                     continue
                 key = midi_of(m.group('note')) if m.groupdict().get('note') else 60
+                if key is not None:
+                    key += 12 * inst.get('octave', 0)
                 if key is None or key in have or key >= src.get('below', 999) or key < src.get('from', -1):
                     continue
                 found.append((key, src['layers'].get(layer, 100) if src.get('layers') else 100, os.path.join(dp, f)))
@@ -256,7 +261,8 @@ def build(inst, cache):
     if inst.get('kit'):
         drums = {k: i for i, (keys, _, _) in enumerate(inst['kit']) for k in keys}
     return {'id': inst['id'], 'name': inst['name'], 'release': inst['release'], 'sustain': bool(inst.get('sustain')),
-            'stereo': bool(inst.get('stereo')), 'samples': rows, 'gm': inst.get('gm', []), 'drums': drums}, total
+            'stereo': bool(inst.get('stereo')), 'samples': rows, 'gm': inst.get('gm', []), 'drums': drums,
+            **({'octave': inst['octave']} if inst.get('octave') else {})}, total
 
 
 def write_defs(bank):
@@ -329,7 +335,26 @@ export const VOICES: Voice[] = {json.dumps(voices, ensure_ascii=False)};
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--only'); ap.add_argument('--cache', default=os.path.expanduser('~/.cache/spectral-samples')); ap.add_argument('--list', action='store_true')
+    ap.add_argument('--relabel', action='store_true', help="bank.json's keys read again with each instrument's octave")
     a = ap.parse_args()
+    if a.relabel:
+        # the keys of bank.json read again with each instrument's octave (no source fetched, the files stay as they are)
+        path = os.path.join(UNIT, 'tools', 'samples', 'bank.json')
+        bank = json.load(open(path))
+        want = {i['id']: i.get('octave', 0) for i in INSTRUMENTS}
+        for b in bank:
+            d = want.get(b['id'], b.get('octave', 0)) - b.get('octave', 0)
+            if d:
+                for row in b['samples']:
+                    row[0] += 12 * d
+                print(f"{b['id']}: keys {'+' if d > 0 else ''}{12 * d}")
+            if want.get(b['id']):
+                b['octave'] = want[b['id']]
+            else:
+                b.pop('octave', None)
+        json.dump(bank, open(path, 'w'), indent=0, ensure_ascii=False)
+        write_ts(bank)
+        return
     if a.list:
         for i in INSTRUMENTS:
             print(i['id'], '-', i['name'])

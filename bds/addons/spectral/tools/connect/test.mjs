@@ -55,6 +55,7 @@ await new Promise((r) => setTimeout(r, 500));
 ok(got.some((m) => m.header?.messagePurpose === 'subscribe' && m.body?.eventName === 'PlayerMessage'), 'the server subscribes to chat');
 ok(got.some((m) => m.body?.commandLine === 'scriptevent sr:show ws 1'), 'and tells the remote in the game it is connected');
 ok(got.some((m) => m.body?.commandLine === 'scriptevent spectral:remote hello'), 'and Spectral Player says hello (what the device run waits for)');
+ok(got.some((m) => m.body?.commandLine === 'scriptevent spectral:note warm 0'), 'and asks the game to warm the piano for the keys (a phone loses a sample\'s first play)');
 
 // a file through the page's API
 const mid = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'spectral-connect-test-')), 'etude.mid');
@@ -127,6 +128,12 @@ const live = got.slice(before5).map((m) => m.body?.commandLine ?? '').find((l) =
 const lm = live && /^scriptevent spectral:note @(\d+);on 60 100 0 (\d+);on 64 90 0 (\d+);off 60 0 (\d+)$/.exec(live);
 ok(lm && Math.abs(Date.now() - Number(lm[1])) < 2000, 'live notes go as one scriptevent with the server\'s clock', live);
 ok(lm && Number(lm[2]) < Number(lm[3]) && Number(lm[3]) - Number(lm[2]) >= 15 && Number(lm[3]) <= 90, 'each a little before 90 ms on, the older one earlier by its age', live);
+// an instrument chosen on the page: the game is asked to warm its samples
+const before5w = got.length;
+await fetch(`http://127.0.0.1:${PORT}/api/notes`, { method: 'POST', body: JSON.stringify({ events: [{ type: 'warm', key: 0, vel: 1, prog: 73, age: 0 }] }) });
+for (let k = 0; k < 40 && !got.slice(before5w).some((m) => m.body?.commandLine?.startsWith('scriptevent spectral:note ')); k++) await new Promise((r) => setTimeout(r, 25));
+const wl = got.slice(before5w).map((m) => m.body?.commandLine ?? '').find((l) => l.startsWith('scriptevent spectral:note '));
+ok(wl && /^scriptevent spectral:note @\d+;warm 73$/.test(wl), 'a chosen instrument goes to the game as warm <program>', wl);
 
 // a song already made, named inside the unit (what the device run sends: no converting there)
 const before6 = got.length;

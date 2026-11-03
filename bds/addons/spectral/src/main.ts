@@ -14,7 +14,7 @@ import { OSC_AMP, BASE_HZ, NOISE_RMS, NOISE_BANDS, BURST_RMS, BURST_BANDS, SUB }
 import demo from './songs/demo';
 import programs, { Program } from './calib_programs';
 import { readPart, joinParts, decodeSongJob, songHeader, payloadText, payloadFrom, Part, SongMeta, FIELD_CHARS, PHONE_CHARS } from './songtext';
-import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes, LiveKeys } from './notes';
+import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes, LiveKeys, WARM } from './notes';
 import notesDemo from './songs/notes_demo';
 import bandDemo from './songs/band_demo';
 import { saySong } from './say';
@@ -720,7 +720,10 @@ async function play(p: Player, id: string | undefined, mode: Mode): Promise<stri
 //  bundle starts in one tick, and the phone lost more of them the more a tick started))
 // (volume 3 — +8 dB over the 1.2 before: near the top of the phone's output, where it loses least; p02 measured the étude at 1.2
 //  scoring ViSQOL 2.47 against 4.14 through the sine engine at +10 dB. Each bundle is turned down when it would clip: src/notes.ts)
-const SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, log: false };
+// (warm 600: on the phone a sample's first play is lost — p09 run 41531478311, the voice's units sounded only from their second
+//  time, 0.36 s later and on; p11 run 41536705472, the run's first click and first chord silent. Each sample is warmed this many ms
+//  before its first note, and a song waits that long when its first notes need it: src/notes.ts WARM)
+const SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false };
 /** how loud a file song plays (setVolume: up to 2 exact on the phone; the game plays a file 32.5 dB under it, into 16 bits) */
 const FILE_LEVEL = 1.8;
 function stopAllFor(p: Player) {
@@ -732,7 +735,7 @@ async function playFile(p: Player, meta: FileMeta, mode: Mode): Promise<string> 
   stopAllFor(p);
   const s = settingsOf(p), c = clientOf(p);
   const fp = new FilePlayer(p, meta, { where: mode, volume: FILE_LEVEL * s.volume, range3d: RANGE_3D, level3d: Math.pow(10, LEVEL_3D_DB / 20) / 3,
-    ahead: mode === 'speaker' ? SAMPLER.ahead3d : 0, hi: !!c && c.mixHz >= 44100, loop: s.loop, log: SAMPLER.log }, p.dimension, { x: p.location.x, y: p.location.y + 1, z: p.location.z });
+    ahead: mode === 'speaker' ? SAMPLER.ahead3d : 0, hi: !!c && c.mixHz >= 44100, loop: s.loop, warm: SAMPLER.warm, log: SAMPLER.log }, p.dimension, { x: p.location.x, y: p.location.y + 1, z: p.location.z });
   filePlays.set(p.id, fp);
   fp.start();
   console.warn(`[spectral] file song ${meta.id}: ${meta.parts.length} part${meta.parts.length > 1 ? 's' : ''}, ${mode}`);
@@ -748,7 +751,7 @@ async function playNotes(p: Player, song: NoteSong, mode: Mode): Promise<string>
   const np = new NotePlayer(p, song, nt, {
     where: mode, place: SAMPLER.place, bundle: SAMPLER.bundle, ahead: mode === 'speaker' ? SAMPLER.ahead3d : 0,
     maxVoices: Math.max(1, Math.min(SAMPLER.voices, s.sounds ? s.sounds - 2 : SAMPLER.voices)), volume: SAMPLER.volume * s.volume,
-    range3d: RANGE_3D, level3d: Math.pow(10, LEVEL_3D_DB / 20), semis: s.semis, speed: s.speed > 0 ? s.speed : 1, loop: s.loop, log: SAMPLER.log,
+    range3d: RANGE_3D, level3d: Math.pow(10, LEVEL_3D_DB / 20), semis: s.semis, speed: s.speed > 0 ? s.speed : 1, loop: s.loop, warm: SAMPLER.warm, log: SAMPLER.log,
   }, p.dimension, { x: p.location.x, y: p.location.y + 1, z: p.location.z });
   notePlays.set(p.id, np);
   np.start();
@@ -805,6 +808,7 @@ function liveNotes(p: Player, message: string) {
     } else if (w[0] === 'on') { const why = k.on(n(3, 0), n(1, 60), n(2, 100), n(4, 0) - late); if (why) console.warn(`[spectral] live note: ${why.replace(/§./g, '')}`); }
     else if (w[0] === 'off') k.off(n(2, 0), n(1, 60), n(3, 0) - late);
     else if (w[0] === 'alloff') k.allOff();
+    else if (w[0] === 'warm') k.warmProgram(n(1, 0));
   }
 }
 /** what the remote's buttons ask: pause · stop · seek <s> · back <s> · fwd <s> · volume <percent> · play <song> [speaker] · status */
@@ -834,6 +838,14 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
     return;
   }
   if (e.id === 'spectral:note' && e.sourceEntity instanceof Player) { liveNotes(e.sourceEntity, e.message); return; }
+  // (measuring the warming, p13: the level a sample is warmed at and how many ticks it sounds — `scriptevent spectral:warmcfg <volume> <ticks>`)
+  if (e.id === 'spectral:warmcfg') {
+    const [v, h] = e.message.trim().split(/\s+/).map(Number);
+    if (Number.isFinite(v)) WARM.vol = Math.max(0.0001, Math.min(2, v));
+    if (Number.isFinite(h)) WARM.hold = Math.max(1, Math.min(11, Math.round(h)));
+    console.warn(`[spectral] warm: volume ${WARM.vol}, ${WARM.hold} tick${WARM.hold > 1 ? 's' : ''}`);
+    return;
+  }
   if (e.id !== 'spectral:remote' || !(e.sourceEntity instanceof Player)) return;
   const p = e.sourceEntity, words = e.message.trim().split(/\s+/).filter((w) => w);
   if (words[0] === 'play') {
@@ -952,15 +964,16 @@ cmd('spectral:say', 'Read kana aloud with the voice, mora by mora like notes (ka
     const said = await playNotes(p, r.song, (a.out ?? 'phones') as Mode);
     return r.skipped ? `${said} §7(${r.skipped} characters not kana: not read)` : said;
   });
-cmd('spectral:sampler', 'Note songs (MIDI, the instrument bank): notes of this many ticks started together, each placed inside its tick by seekTo (0 = no placement: every note at the start of its tick), ms more ahead for a 3D speaker, at most this many notes at once, level in percent',
-  { 'bundle?': 'int', 'ahead?': 'int', 'voices?': 'int', 'volume?': 'int', 'log?': 'bool' }, (p, a) => {
+cmd('spectral:sampler', 'Note songs (MIDI, the instrument bank): notes of this many ticks started together, each placed inside its tick by seekTo (0 = no placement: every note at the start of its tick), ms more ahead for a 3D speaker, at most this many notes at once, level in percent, each sample warmed this many ms before its first note (0 = not; a phone loses a sound\'s first play)',
+  { 'bundle?': 'int', 'ahead?': 'int', 'voices?': 'int', 'volume?': 'int', 'log?': 'bool', 'warm?': 'int' }, (p, a) => {
     // (no bundle: only what it is now)
     if (a.bundle !== undefined) { SAMPLER.place = a.bundle > 0; SAMPLER.bundle = Math.max(1, Math.min(40, a.bundle || 1)); }
     if (a.ahead !== undefined) SAMPLER.ahead3d = Math.max(0, Math.min(400, a.ahead));
     if (a.voices !== undefined) SAMPLER.voices = Math.max(1, Math.min(64, a.voices));
     if (a.volume !== undefined) SAMPLER.volume = Math.max(0, Math.min(200, a.volume)) / 100;
     if (a.log !== undefined) SAMPLER.log = a.log;
-    return `§bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? 's' : ''} a bundle` : 'tick-bound (no placement)'}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %`;
+    if (a.warm !== undefined) SAMPLER.warm = Math.max(0, Math.min(3000, a.warm));
+    return `§bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? 's' : ''} a bundle` : 'tick-bound (no placement)'}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %, ${SAMPLER.warm ? `samples warmed ${SAMPLER.warm} ms ahead` : 'not warmed'}`;
   }, true);
 cmd('spectral:menu', 'Open the player', {}, (p) => { openMenu(p); });
 cmd('spectral:probe', 'Voice-limit probe: a 110 Hz saw built one harmonic at a time (listen where it stops getting brighter)', { 'n?': 'int' }, (p, a) => {

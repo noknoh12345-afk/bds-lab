@@ -275,6 +275,83 @@ def p10():
     print('plan p10_sampler_level:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
 
 
+
+# ------------------------------------------------------------------ p13: warming (p09/p11: a phone loses a sample's first play)
+PROBE_WARM = [('w0', 0, range(40, 64, 2), 118), ('w150', 150, range(40, 64, 2), 84), ('w300', 300, range(40, 64, 2), 48),
+              ('w600', 600, range(64, 88, 2), 118), ('w1000', 1000, range(64, 88, 2), 84)]
+
+
+PROBE_GAPS = [900, 1150, 1000, 1300, 950, 1200, 1050, 1250, 900, 1100, 1350]
+# (warmed 600 ms ahead at the level of a played note, and for 1 tick only: which of the two the warming needs — scriptevent spectral:warmcfg)
+PROBE_KNOBS = [('v1', 600, range(64, 88, 2), 48, '1 4'), ('h1', 600, range(88, 106, 2), 84, '0.001 1')]
+
+
+def probe(keys, vel):
+    """one short piano note on each key (a sample of its own: the key and the velocity's layer), about 1 s apart (unevenly, so that
+    the notes heard line up with the song one way only), 300 ms long — a note started late from the head of its file (its seek not
+    taken) would be let go before its sound comes"""
+    t, out = 200.0, []
+    for i, k in enumerate(keys):
+        out.append((t, 300, k, vel, 0))
+        t += PROBE_GAPS[i % len(PROBE_GAPS)]
+    return out
+
+
+def probe_long():
+    """is a sample's first play lost or only late? An anchor (key 60 at 118: loaded by probe_w0 and probe_again) then, 1 s later, a
+    note on a sample not played before (keys 88-102 at 118), 1 s long: on time it sounds 1 s after its anchor; if its seek was
+    not taken (the file loaded first, then played from its head) about 0.55 s later than that. 3 s a pair: silence before each
+    anchor, so that every sound's start is seen"""
+    out = []
+    for i, k in enumerate(range(88, 104, 2)):
+        out += [(200.0 + 3000.0 * i, 250, 60, 118, 0), (1200.0 + 3000.0 * i, 1000, k, 118, 0)]
+    return out
+
+
+def p13(work):
+    """p13 (src/notes.ts WARM): how far ahead a sample must be warmed (probes on piano samples not played before in the run, each
+    probe its own: warm 0 / 150 / 300 / 600 / 1000 ms, and the first probe again — loaded now), whether a first play is lost or
+    only late (probe_long), and with warming on (600 ms, the default): the four sentences by the voice's units (p09 without:
+    Whisper 0.88-1.0 of the characters wrong, the units sounding only from their second time), the étude and Für Elise at 300 %
+    (p10 without: ViSQOL 4.20 / 4.11), the band with the octave read right, and the étude as recorded (a file song)"""
+    songs = {f'probe_{tag}': (f'Probe: warmed {ms} ms', probe(keys, vel)) for tag, ms, keys, vel in PROBE_WARM}
+    songs.update({f'probe_{tag}': (f'Probe: warmed {ms} ms, {cfg}', probe(keys, vel)) for tag, ms, keys, vel, cfg in PROBE_KNOBS})
+    songs['probe_long'] = ('Probe: a first play lost or late', probe_long())
+    for sid, (title, notes) in songs.items():
+        song = N.encode(notes, sid, title, 'Spectral Player (measuring)')
+        json.dump(song, open(os.path.join(PACK, f'{sid}.song.json'), 'w'), separators=(',', ':'))
+        json.dump([round(n[0], 3) for n in N.decode(song)], open(os.path.join(PACK, f'{sid}.onsets.json'), 'w'))
+        print(sid, len(notes), 'notes', song['meta']['seconds'], 's')
+    S = 'spectral:sampler'
+    lines = []
+    for tag, ms, keys, vel in PROBE_WARM:
+        lines += rec(f'pr_{tag}', [f'{S} 2 250 28 300 false {ms}'], f'spectral:play probe_{tag}', 14000 + ms)
+    lines += rec('pr_again', [f'{S} 2 250 28 300 false 0'], 'spectral:play probe_w0', 14000)
+    for tag, ms, keys, vel, cfg in PROBE_KNOBS:
+        lines += [f'do scriptevent spectral:warmcfg {cfg}']
+        lines += rec(f'pr_{tag}', [f'{S} 2 250 28 300 false {ms}'], f'spectral:play probe_{tag}', 14000 + ms)
+    lines += ['do scriptevent spectral:warmcfg 0.001 4']
+    lines += rec('pl_long', [f'{S} 2 250 28 300 false 0'], 'spectral:play probe_long', 25500)
+    lines += [f'do execute as @a run {S} 2 250 28 300 false 600']
+    for sid in SENTENCES:
+        lines += rec(f'sw_{sid}', [], f'spectral:play {sid}', 7600)
+    lines += rec('sw3_speech_hello', [], 'spectral:play speech_hello speaker', 7900)
+    # (the same sentence again at the level p09 had, 120 %: its units loaded by now — what the level alone does)
+    lines += rec('sw12_speech_hello', [f'{S} 2 250 28 120 false 600'], 'spectral:play speech_hello', 7600)
+    lines += [f'do execute as @a run {S} 2 250 28 300 false 600']
+    lines += rec('pd_w', [], 'spectral:play piano_demo', 23100)
+    lines += rec('fe_w', [], 'spectral:play fur_elise', 16100)
+    lines += rec('bd_w', [], 'spectral:play band_demo', 11600)
+    lines += rec('fp_w', [], 'spectral:play piano_file', 25100)
+    head = ["# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+            "# p13（tools/exp/sampler_plans.py p13）: 温め（p09・p11: 電話は音の初回の再生を落とす）。まだ鳴らしていないピアノの音で、何 ms 前に温めれば足りるか",
+            "# （0・150・300・600・1000 ms、最初の組をもう一度）、初回は落ちるのか遅れるのか、温めありの読み上げ（p09 は温めなしで Whisper 0.88〜1.0）・エチュード・エリーゼ・バンド（オクターブ直し）・録音そのままの曲"]
+    sids = ','.join([*songs, *SENTENCES, 'fur_elise'])
+    plan = {'header': head, 'arms': [], 'setup': ['tp @s 0 -60 0 0 0'], 'prep': [f'audio song {sids} pack=tools/exp/packs/notes'],
+            'sections': [{'title': 'warm', 'lines': lines}]}
+    json.dump(plan, open(os.path.join(HERE, 'queue', 'p13_warm.json'), 'w'), ensure_ascii=False, indent=1)
+    print('plan p13_warm:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'p03':
         p03()
@@ -282,6 +359,8 @@ if __name__ == '__main__':
         p06()
     elif len(sys.argv) > 1 and sys.argv[1] == 'p10':
         p10()
+    elif len(sys.argv) > 1 and sys.argv[1] == 'p13':
+        p13(sys.argv[2] if len(sys.argv) > 2 else '/tmp/warm_refs')
     elif len(sys.argv) > 1 and sys.argv[1] == 'p09':
         p09(sys.argv[2] if len(sys.argv) > 2 else '/tmp/speech_refs')
     elif len(sys.argv) > 1 and sys.argv[1] == 'p02':

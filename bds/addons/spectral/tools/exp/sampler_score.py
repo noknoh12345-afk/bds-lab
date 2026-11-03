@@ -131,7 +131,9 @@ def score_pulse(x):
 
 # ------------------------------------------------------------------ the songs (p02, p04): each recording against the same notes
 # rendered here from the bank's own samples (tools/notes.py render: what the sampler should sound like, every note in its place)
-SONG_OF = {'af': 'fur_elise', 'ad': 'piano_demo', 'pv': 'piano_demo', 'ps': 'piano_demo', 'bd': 'band_demo', 'pd': 'piano_demo', 'fe': 'fur_elise'}
+# (fp: the built-in file song, the étude rendered through the bank's piano — tools/make_file_demo.py — against the same render)
+SONG_OF = {'af': 'fur_elise', 'ad': 'piano_demo', 'pv': 'piano_demo', 'ps': 'piano_demo', 'bd': 'band_demo', 'pd': 'piano_demo', 'fe': 'fur_elise',
+           'fp': 'piano_demo'}
 
 
 def note_song(sid):

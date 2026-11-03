@@ -1,0 +1,70 @@
+{
+ "run": 41536705472,
+ "plan": "tools/exp/queue/p11_per_tick.json",
+ "what": "K clicks 40 ms apart started in one tick (bundled 12: bk_b12 headphones, bk3_b12 speaker) or one or two a tick (bk_b1); K flute notes at once (ck_b2, ck3_b2)",
+ "clicks_heard_within_12ms": {
+  "bk_b12": {
+   "1": "0/1",
+   "2": "2/2",
+   "3": "3/3",
+   "4": "2/4",
+   "5": "5/5",
+   "6": "6/6",
+   "7": "5/7",
+   "8": "7/8",
+   "10": "6/10",
+   "12": "9/12"
+  },
+  "bk3_b12": {
+   "1": "1/1",
+   "2": "2/2",
+   "3": "3/3",
+   "4": "3/4",
+   "5": "5/5",
+   "6": "6/6",
+   "7": "5/7",
+   "8": "5/8",
+   "10": "7/10",
+   "12": "4/12"
+  },
+  "bk_b1": {
+   "1": "1/1",
+   "2": "2/2",
+   "3": "3/3",
+   "4": "4/4",
+   "5": "5/5",
+   "6": "6/6",
+   "7": "7/7",
+   "8": "8/8",
+   "10": "8/10 (one more 13 ms off)",
+   "12": "9/12 (two more off)"
+  }
+ },
+ "chord_notes_heard": {
+  "ck_b2": {
+   "1": "0/1 (silent: the flute sample's first play)",
+   "2": "2/2",
+   "3": "3/3",
+   "4": "3/4 (75: its sample's first play)",
+   "5": "5/5",
+   "6": "6/6",
+   "7": "7/7",
+   "8": "7/8 (79: first play)",
+   "10": "10/10",
+   "12": "11/12 (83: first play)"
+  },
+  "ck3_b2": {
+   "1": "1/1",
+   "2": "2/2",
+   "3": "3/3",
+   "4": "4/4",
+   "5": "5/5",
+   "6": "6/6",
+   "7": "7/7",
+   "8": "8/8",
+   "10": "10/10",
+   "12": "12/12"
+  }
+ },
+ "finding": "a chord (one seek) of 12 notes started in one tick all sounds; the notes lost were each a sample's first play (the run's first click group and first chord silent too). Clicks with their own seeks in one tick: from K = 4 some came more than 12 ms off or not at all when bundled 12 — bundled 1, all to K = 8. The flute played an octave high (1047 Hz for C5): the bank's keys of the VSCO/VCSL instruments were read an octave low (fixed: tools/samples/bank.py octave)"
+}

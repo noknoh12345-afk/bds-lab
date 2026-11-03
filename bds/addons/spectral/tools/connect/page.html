@@ -97,6 +97,8 @@ poll();
 // sends them every 50 ms, each placed in the game to the millisecond: src/notes.ts LiveKeys)
 let base = 60, queue = [], timer = 0;
 const prog = () => Number($('prog').value);
+// (an instrument chosen: the game loads its samples now — on a phone a sample's first play is lost)
+$('prog').onchange = () => post('/api/notes', { events: [{ type: 'warm', key: 0, vel: 1, prog: prog(), age: 0 }] }).catch(() => {});
 function send(type, key, vel = 100, at = performance.now()) {
   queue.push({ type, key, vel, prog: prog(), at });
   if (!timer) timer = setTimeout(() => {

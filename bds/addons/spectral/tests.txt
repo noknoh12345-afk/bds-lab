@@ -662,7 +662,7 @@ restart
 @A cmd /spectral:songs
 ~ @A ♫ piano_demo — Piano étude \(sampler demo\) \(0:20, 104 notes\)
 @A cmd /spectral:sampler
-= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead
 @A cmd /spectral:sampler 4 250 28 120 true
 ~ @A sampler: placed to the ms, 4 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 120 %
 @A cmd /spectral:play piano_demo
@@ -706,6 +706,7 @@ until ■ Piano étude \(sampler demo\) — end 8000
 @A cmd /spectral:sampler 4 250 28 120 true
 @A cmd /spectral:say "こんにちは、マインクラフト。"
 ~ @A ▶ こんにちは、マインクラフト。 \(0:02, 12 notes, headphones\)
+until note 0 voice 3000
 ~ \[spectral\] note 0 voice_ja\.27 key 9 pitch 1\.1225 seek 0\.6000 at 0 ms
 until ■ こんにちは、マインクラフト。 — end 6000
 ~ \[spectral\] note 11 voice_ja\.87 key 29 pitch 0\.9659 seek 0\.5903 at 2200 ms
@@ -725,18 +726,18 @@ until note 4 voice 3000
 ~ \[spectral\] note 4 voice_ja\.\d+ key 4 pitch [\d.]+ seek [\d.]+ at
 @A cmd /spectral:sampler 4 250 28 120 false
 
-## a MIDI song with General MIDI's families: each program plays its instrument of the bank (CC0: VSCO 2 CE and VCSL), channel 10 the drum kit by key — strings hold their chords past their samples (relayed from the steady part), the bass a pizzicato an octave down, the flute the tune
+## a MIDI song with General MIDI's families: each program plays its instrument of the bank (CC0: VSCO 2 CE and VCSL) at its own pitch (their files name middle C "C3": every sample measured an octave over the name read as C4, so their keys are read 12 higher — the bass's C2 is its own C2 sample, not a C3 played at C2's pitch an octave up), channel 10 the drum kit by key — strings hold their chords past their samples (relayed from the steady part), the bass a pizzicato an octave down, the flute the tune
 @A cmd /spectral:sampler 4 250 28 120 true
 @A cmd /spectral:play band_demo
 ~ @A ▶ Band \(sampler demo\) — Spectral Player \(0:09, 94 notes, headphones\)
 until note 26 4000
-~ \[spectral\] note 0 bass\.10 key 36 pitch 0\.9439 seek 0\.6000 at 0 ms
+~ \[spectral\] note 0 bass\.4 key 36 pitch 1\.0000 seek 0\.6000 at 0 ms
 ~ \[spectral\] note 1 drums\.0 key 36 pitch 1\.0000 seek 0\.6000 at 0 ms
-~ \[spectral\] note 3 strings\.7 key 48 pitch 1\.0000 seek 0\.6000 at 0 ms
+~ \[spectral\] note 3 strings\.3 key 48 pitch 1\.0595 seek 0\.6000 at 0 ms
 ~ \[spectral\] note 4 drums\.8 key 49 pitch 1\.0000 seek 0\.6000 at 0 ms
-~ \[spectral\] note 7 flute\.7 key 76 pitch 1\.0000 seek 0\.6000 at 0 ms
+~ \[spectral\] note 7 flute\.4 key 76 pitch 1\.0000 seek 0\.6000 at 0 ms
 ~ \[spectral\] note 10 drums\.1 key 38 pitch 1\.0000 seek 0\.5750 at 600 ms
-~ \[spectral\] note 17 vibes\.10 key 76 pitch 1\.0000 seek 0\.5500 at 1200 ms
+~ \[spectral\] note 17 vibes\.7 key 76 pitch 0\.9439 seek 0\.5528 at 1200 ms
 until ■ Band \(sampler demo\) — end 15000
 @A cmd /spectral:sampler 4 250 28 120 false
 
@@ -845,6 +846,35 @@ execute as @a[name=A] run scriptevent spectral:note @1000;on 67 100 0 90
 ~ \[spectral\] live note on 67 piano\.\d+ pitch [\d.]+ seek [\d.]+ delay 90 ms
 execute as @a[name=A] run scriptevent spectral:note alloff
 @A cmd /spectral:sampler 2 250 28 120 false
+
+## a phone loses a sound's first play (measured: p09 run 41531478311 — each of the voice's units sounded only from its second time, 0.36 s later and on, and Whisper could not read the speech; p11 run 41536705472 — the run's first click and first flute chord were silent): so each sample is warmed 600 ms before its first note — started inside its own silence where no one hears it, stopped 4 ticks later — and a song waits that long when its first notes need it (ヌ is in no song before)
+@A cmd /spectral:sampler 2 250 28 120 true 600
+~ @A sampler: placed to the ms, 2 ticks a bundle, .*, samples warmed 600 ms ahead
+@A cmd /spectral:say "ぬ"
+until note 0 voice 3000
+~ \[spectral\] warm voice_ja\.\d+ for 0 ms at -600 ms
+~ \[spectral\] note 0 voice_ja\.\d+ key \d+ pitch [\d.]+ seek 0\.6000 at 0 ms
+until ■ ぬ — end 4000
+
+## a sample played or warmed within 30 s is loaded: not warmed again, and the song does not wait
+@A cmd /spectral:say "ぬ"
+until note 0 voice 3000
+!~ \[spectral\] warm
+~ \[spectral\] note 0 voice_ja\.\d+ key \d+ pitch [\d.]+ seek 0\.6000 at 0 ms
+until ■ ぬ — end 4000
+
+## live notes: Spectral Connect asks the game to warm an instrument when the page chooses it (the piano when it connects) — every sample of it, 8 a tick — so a key's first note is not lost
+execute as @a[name=A] run scriptevent spectral:note warm 9
+~ \[spectral\] live warm glock: 6 samples
+execute as @a[name=A] run scriptevent spectral:note warm 9
+~ \[spectral\] live warm glock: 0 samples
+@A cmd /spectral:sampler 2 250 28 120 false
+
+## measuring the warming (p13): the level a sample is warmed at and how many ticks it sounds can be set by a script event (it stays inside the 0.6 s of silence: at most 11 ticks)
+scriptevent spectral:warmcfg 1 20
+~ \[spectral\] warm: volume 1, 11 ticks
+scriptevent spectral:warmcfg 0.001 4
+~ \[spectral\] warm: volume 0.001, 4 ticks
 
 ## the sampler plays near the top of the phone's output (level 300 %, measured: quiet notes lose most there) and turns a bundle's new notes down together when they and what still sounds would pass the phone's clip — the last chord's 8 notes in one bundle are turned down, the single notes before it are not
 @A cmd /spectral:sampler 2 250 28 300 true

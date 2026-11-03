@@ -98,6 +98,33 @@ export function pick(code: number, key: number, vel: number, cents = 0): [number
   return [ii, j, Math.pow(2, (key - inst.samples[j][0]) / 12 + cents / 1200)];
 }
 
+// ------------------------------------------------------------------ warming
+/** Measured on the phone (p09 run 41531478311, p11 run 41536705472): the first time a sample is asked for, its note is lost — the
+ *  game loads a sound file when it is first played, and that play does not sound. Asked again 0.36 s later and on, it plays: each
+ *  of the voice's units sounded only from its second time (Whisper could not read the speech), the first click and the first
+ *  flute chord of a run were silent. So a sample is warmed before its first note: started where no one hears it (inside its own
+ *  leading silence, at `vol`) and stopped `hold` ticks later, before that silence ends — loaded by the time its note comes.
+ *  ms: how far ahead (the default; /spectral:sampler … warm), perTick: at most this many a tick, ttl: a sample played or warmed
+ *  this recently is taken as loaded (no lead before a song for it) */
+export const WARM = { ms: 600, hold: 4, perTick: 8, ttl: 30000, vol: 0.001 };
+/** who (a player's id; 'speaker:' + id for their speaker) -> sound (a sample: instrument * 4096 + sample; a file song's part:
+ *  its event) -> Date.now() it last started */
+const warmMem = new Map<string, Map<number | string, number>>();
+export function touchSample(who: string, ak: number | string) { let m = warmMem.get(who); if (!m) warmMem.set(who, (m = new Map())); m.set(ak, Date.now()); }
+export function isWarm(who: string, ak: number | string) { return Date.now() - (warmMem.get(who)?.get(ak) ?? -Infinity) < WARM.ttl; }
+export function forgetWarm(who: string) { warmMem.delete(who); }
+/** start one sound event where no one hears it so that the game loads its file (the event's file begins with LEAD s of silence,
+ *  and it is stopped `hold` ticks later); the calls it took */
+export function warmEvent(ev: string, where: 'phones' | 'speaker', owner: Player, dim: Dimension, loc: Vector3, range3d = 1): number {
+  let s: SoundInstance;
+  try {
+    if (where === 'phones') s = owner.playSound(ev, { volume: WARM.vol });
+    else { s = dim.playSound(ev + '_3d', loc, { volume: range3d }); s.setVolume(WARM.vol); }
+  } catch { return 0; }
+  system.runTimeout(() => { try { s.stop(); } catch { /* gone */ } }, WARM.hold);
+  return where === 'phones' ? 2 : 3;
+}
+
 // ------------------------------------------------------------------ the player
 export interface NoteOpts {
   where: 'phones' | 'speaker';
@@ -115,6 +142,8 @@ export interface NoteOpts {
   /** 3D: the volume a sound is made with (its range: 16 blocks a unit) and how much louder than its file it plays */
   range3d: number; level3d: number;
   semis: number; speed: number; loop: boolean;
+  /** each sample is warmed this many ms before its first note (0: not; the song waits that long when its first notes need it) */
+  warm?: number;
   /** each note's choice and placement on the content log (testing, measuring) */
   log?: boolean;
 }
@@ -136,11 +165,18 @@ export class NotePlayer {
   /** the tick (from t0) the next bundle starts at */
   nextBundle = -Infinity;
   voices: Voice[] = [];
-  starts = 0; steals = 0; skipped = 0; calls = 0; peakVoices = 0; ticks = 0; headDown = 0;
+  starts = 0; steals = 0; skipped = 0; calls = 0; peakVoices = 0; ticks = 0; headDown = 0; warmed = 0; preroll = 0;
+  /** no note starts before this tick (the song waits for its first samples to load: WARM) */
+  private holdTick = 0;
   /** the alias each sample was last started under (a sample started again goes under the next: spectral.i.<id>.<k><alias>) */
   private alias = new Map<number, number>();
+  /** the samples still to warm: [song ms of the sample's first note, instrument, sample], in order (WARM) */
+  private warmList: [number, number, number][] = [];
+  private widx = 0;
   constructor(public owner: Player, public song: NoteSong, public nt: Notes, public o: NoteOpts, public dim: Dimension, public loc: Vector3) {}
   get title() { return this.song.meta.title; }
+  /** whose loaded sounds these are: a player's own (headphones) or what their speaker reaches */
+  get who() { return (this.o.where === 'phones' ? '' : 'speaker:') + this.owner.id; }
   start(atMs = 0) { this.started = true; this.seekMs(atMs); }
   /** song time (ms) at the current tick's landing */
   now() { return (system.currentTick - this.t0) * 50 * this.o.speed; }
@@ -159,6 +195,8 @@ export class NotePlayer {
     }
     this.voices = keep;
     const tk = system.currentTick - this.t0;
+    if (this.o.warm) this.warmAhead(t + (this.o.ahead + Math.max(1, this.o.bundle) * 50 + this.o.warm) * sp);
+    if (system.currentTick < this.holdTick) return;
     if (!this.o.place) {
       const from = this.idx;
       while (this.idx < this.nt.n && this.nt.on[this.idx] < t + 50 * sp) this.idx++;
@@ -178,6 +216,30 @@ export class NotePlayer {
     }
   }
 
+  /** the samples of the notes from note `from` on, each at its first note (WARM) */
+  private planWarm(from: number) {
+    const seen = new Set<number>(), list: [number, number, number][] = [];
+    for (let i = from; i < this.nt.n; i++) {
+      const g = this.choose(i).got; if (!g) continue;
+      const ak = g[0] * 4096 + g[1];
+      if (seen.has(ak)) continue;
+      seen.add(ak); list.push([this.nt.on[i], g[0], g[1]]);
+    }
+    this.warmList = list; this.widx = 0;
+  }
+  /** warm the samples whose first note comes before `until` (song ms), at most WARM.perTick this tick; one played or warmed within
+   *  WARM.ttl is not started again */
+  private warmAhead(until: number) {
+    let n = 0;
+    while (this.widx < this.warmList.length && this.warmList[this.widx][0] < until && n < WARM.perTick) {
+      const [at, ii, j] = this.warmList[this.widx++], ak = ii * 4096 + j;
+      if (isWarm(this.who, ak)) continue;
+      this.calls += warmEvent(`spectral.i.${BANK[ii].id}.${j}`, this.o.where, this.owner, this.dim, this.loc, this.o.range3d);
+      touchSample(this.who, ak);
+      this.warmed++; n++;
+      if (this.o.log) console.warn(`[spectral] warm ${BANK[ii].id}.${j} for ${Math.round(at)} ms at ${Math.round(this.now())} ms`);
+    }
+  }
   /** note i's sample: [instrument, sample, pitch ratio] and its key as played */
   private choose(i: number): { got: [number, number, number] | undefined; key: number } {
     const nt = this.nt, code = this.song.meta.programs[nt.prog[i]];
@@ -228,6 +290,7 @@ export class NotePlayer {
       this.calls += 2;
       if (this.o.log) console.warn(`[spectral] note ${i} ${inst.id}.${j} key ${key} pitch ${p.toFixed(4)} seek ${seek.toFixed(4)} at ${Math.round(t)} ms alias ${ALIASES[an] || '-'}${head < 1 ? ` head ${head.toFixed(2)}` : ''}`);
     } catch { this.skipped++; return; }
+    touchSample(this.who, ak);
     this.starts++;
     const on = nt.on[i];
     const end = on + (smp[2] / p - late + 60) * sp;
@@ -284,7 +347,15 @@ export class NotePlayer {
     const nt = this.nt; let i = 0;
     while (i < nt.n && nt.on[i] + Math.max(nt.dur[i], 0) < ms) i++;
     this.idx = i;
-    const lead = 1 + (this.o.place ? Math.ceil(this.o.ahead / 50) : 0);
+    // (warming: the samples from here on, and the song waits `warm` ms when one of its first notes' samples is not loaded yet)
+    this.preroll = 0;
+    if (this.o.warm) {
+      this.planWarm(i);
+      const first = this.warmList.findIndex(([at, ii, j]) => at < ms + (this.o.warm! + this.o.ahead + Math.max(1, this.o.bundle) * 50) * this.o.speed && !isWarm(this.who, ii * 4096 + j));
+      if (first >= 0) this.preroll = Math.ceil(this.o.warm / 50);
+    }
+    const lead = 1 + (this.o.place ? Math.ceil(this.o.ahead / 50) : 0) + this.preroll;
+    this.holdTick = system.currentTick + 1 + this.preroll;
     this.t0 = system.currentTick + lead - Math.round(ms / 50 / this.o.speed);
     this.nextBundle = -Infinity;
   }
@@ -299,7 +370,7 @@ export class NotePlayer {
   status(): string {
     const m = this.song.meta;
     return `§bnotes §f${m.title}§b: ${this.idx}/${this.nt.n} notes at ${this.position.toFixed(1)} s · sounding ${this.voices.length} (most ${this.peakVoices}, at most ${this.o.maxVoices}) · ` +
-      `started ${this.starts}, stolen ${this.steals}, skipped ${this.skipped}${this.headDown ? `, ${this.headDown} bundle${this.headDown > 1 ? 's' : ''} turned down` : ''} · ${this.ticks ? (this.calls / this.ticks).toFixed(1) : 0} calls/tick · bundle ${this.o.bundle} ticks, ahead ${this.o.ahead} ms · ${this.o.where === 'phones' ? 'headphones' : 'speaker'}`;
+      `started ${this.starts}, stolen ${this.steals}, skipped ${this.skipped}${this.headDown ? `, ${this.headDown} bundle${this.headDown > 1 ? 's' : ''} turned down` : ''}${this.warmed ? `, ${this.warmed} sample${this.warmed > 1 ? 's' : ''} warmed` : ''} · ${this.ticks ? (this.calls / this.ticks).toFixed(1) : 0} calls/tick · bundle ${this.o.bundle} ticks, ahead ${this.o.ahead} ms · ${this.o.where === 'phones' ? 'headphones' : 'speaker'}`;
   }
 }
 
@@ -311,9 +382,34 @@ export class NotePlayer {
  *  latency. A key let go fades with its instrument's release (in its tick) */
 export class LiveKeys {
   held = new Map<string, { s: SoundInstance; inst: Inst; at: number }>();
-  starts = 0; skipped = 0; calls = 0;
+  starts = 0; skipped = 0; calls = 0; cold = 0;
   private alias = new Map<number, number>();
+  /** samples still to warm (warmProgram), WARM.perTick a tick */
+  private warmQueue: number[] = [];
   constructor(public owner: Player, public volume: number, public log = false) {}
+  /** warm every sample of a program's instrument (the page asks when one is chosen, and for the piano when it connects): a key's
+   *  first note would be lost otherwise (WARM) — a piano's 126 samples take 16 ticks; the samples played or warmed within
+   *  WARM.ttl are left */
+  warmProgram(code: number): number {
+    const ii = instOf(code);
+    if (ii < 0 || !BANK[ii]) return 0;
+    const before = this.warmQueue.length;
+    BANK[ii].samples.forEach((_, j) => { const ak = ii * 4096 + j; if (!isWarm(this.owner.id, ak) && !this.warmQueue.includes(ak)) this.warmQueue.push(ak); });
+    const added = this.warmQueue.length - before;
+    if (this.log) console.warn(`[spectral] live warm ${BANK[ii].id}: ${added} samples`);
+    if (before === 0 && added) this.drainWarm();
+    return added;
+  }
+  private drainWarm() {
+    const owner = this.owner;
+    if (!owner.isValid) { this.warmQueue = []; return; }
+    for (const ak of this.warmQueue.splice(0, WARM.perTick)) {
+      const ii = Math.floor(ak / 4096), j = ak % 4096;
+      this.calls += warmEvent(`spectral.i.${BANK[ii].id}.${j}`, 'phones', owner, owner.dimension, owner.location);
+      touchSample(owner.id, ak);
+    }
+    if (this.warmQueue.length) system.runTimeout(() => this.drainWarm(), 1);
+  }
   on(code: number, key: number, vel: number, delayMs = 0) {
     const got = pick(code, key, vel);
     if (!got) { this.skipped++; return `§cno sample for program ${code} key ${key}`; }
@@ -323,6 +419,9 @@ export class LiveKeys {
     if (old) { try { old.s.fade(0.03, 0); } catch { /* gone */ } this.held.delete(id); }
     const ak = ii * 4096 + j, an = ((this.alias.get(ak) ?? -1) + 1) % ALIASES.length;
     this.alias.set(ak, an);
+    // (a sample not warmed: this note loads it and is likely lost on a phone — counted, and it is warm from now on)
+    if (!isWarm(this.owner.id, ak)) this.cold++;
+    touchSample(this.owner.id, ak);
     const ev = `spectral.i.${inst.id}.${j}${ALIASES[an]}`, delay = Math.max(0, Math.min(500, delayMs));
     try {
       const s = this.owner.playSound(ev, { volume: this.volume * Math.pow(vel / 127, 2), pitch: p });
