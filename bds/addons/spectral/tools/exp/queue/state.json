@@ -199,10 +199,17 @@
   "tries": 1
  },
  "p13_warm": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "41fe2ca",
+  "conclusion": "success",
+  "ended": "2026-11-03 11:04",
+  "failed_steps": 0,
+  "recordings": 19,
   "run": "41561994201",
   "started": "2026-11-03 10:47",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q01_same_twice": {
   "arms": {
