@@ -41,3 +41,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | p14_level | 41569907471 | success | 10 | — | 0 | 2026-11-03 12:03 → 2026-11-03 12:22 |
 | q18_loop_5min | 41572109965 | success | 1（lp_vocal_name_of_love 4783 KB） | — | 0 | 2026-11-03 12:25 → 2026-11-03 12:42 |
 | q19_pause_seek | 41573844651 | success | 6 | — | 0 | 2026-11-03 12:43 → 2026-11-03 12:56 |
+| q20_memory_pressure | 41575160350 | failure | 1（mn_speech_ja_soseki 274 KB） | mn 3.192 / 1.448 / 8.68 (1) | 1（✘ 40 trim RUNNING_LOW） | 2026-11-03 12:56 → 2026-11-03 13:12 |

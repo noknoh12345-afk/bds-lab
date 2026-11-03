@@ -765,10 +765,25 @@
   "tries": 1
  },
  "q20_memory_pressure": {
+  "arms": {
+   "mn": {
+    "mrstft": 1.448,
+    "n": 1,
+    "rms_db": -39.6,
+    "third_oct_db": 8.683,
+    "visqol": 3.192
+   }
+  },
+  "checkpoints": 0,
   "commit": "5efdd9b",
+  "conclusion": "failure",
+  "ended": "2026-11-03 13:12",
+  "failed_steps": 1,
+  "recordings": 1,
   "run": "41575160350",
   "started": "2026-11-03 12:56",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q21_rain_mobs": {
   "status": "pending"
