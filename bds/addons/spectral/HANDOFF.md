@@ -414,6 +414,15 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## 次にやること
 
+**11-03 昼の時点**（上の 25〜30）:
+1. **p14**（tools/exp/queue/p14_level.json、キューの次）: サンプラー 200 % と 300 %。良い方を既定に（今は 300: まだ測っていない）。解き方:
+   `python3 tools/exp/sampler_score.py <録音> --songs <参照の置き場>`（pd_l20 / pd_l30 …）、読み上げは録音の大きさをそろえてから
+   tools/exp/speech_eval.py（ffmpeg loudnorm I=-20: Whisper は小さな録音で何も書かないことがある）
+2. q17〜q21 の結果を SPEC.md「実機のキュー 20 本」の表へ（q21 = q16 のやり直し）
+3. 読み上げの外来語（「マインクラフト」→「魔王よくイクト」）: VCV（母音から子音への続き）の素で
+4. バンドの実機 2.32（電話の模型は 3.54）: 6.4 kHz から上が実機で 12〜21 dB 多い理由
+5. /connect の実機: リグが一人のワールドを開く手（app/ の側）が要る
+
 **実機のキュー 20 本（11-02 18:55 の依頼、19:10 から走らせている）**: tools/exp/queue/README.md が 20 本の中身となぜ実機か、
 tools/exp/queue/state.json がどこまで進んだか（pending / running / done と run の番号）、RESULTS.md が 1 本ずつの結果（腕ごとの ViSQOL・mrstft・
 1/3 oct の中央値、録音の数、失敗した手順。判断はまだしていない）、logs/ がジョブのログの `[spectral rig]` の行。止まっていたら
