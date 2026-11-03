@@ -1,7 +1,7 @@
 {
  "run": 41534236021,
  "plan": "tools/exp/queue/p10_sampler_level.json",
- "what": "the sampler at level 120 % (v12) and 300 % (v30, each bundle turned down before the phone clips), on the étude (pd) and Für Elise (fe), and the étude through the sine engine (ps); tools/exp/sampler_score.py against the notes rendered here",
+ "what": "the sampler at level 120 % (v12) and \"300\" (v30: 200 % in fact, each bundle turned down before the phone clips), on the étude (pd) and Für Elise (fe), and the étude through the sine engine (ps); tools/exp/sampler_score.py against the notes rendered here",
  "scores": {
   "fe_v12": {
    "song": "fur_elise",
@@ -44,5 +44,6 @@
    "onset_recall": 0.549
   }
  },
- "finding": "louder is far better on the phone: étude 2.22 → 4.20 (the sine engine 4.12), Für Elise 3.03 → 4.11 (ViSQOL); the default level is 300 %"
+ "finding": "louder is far better on the phone: étude 2.22 → 4.20 (the sine engine 4.12), Für Elise 3.03 → 4.11 (ViSQOL); the default level is 300 %",
+ "level_note": "v30 played at 200 %: /spectral:sampler took at most 200 then (the plan asked 300); the cap is 400 from 11-03"
 }

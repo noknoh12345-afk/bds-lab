@@ -970,7 +970,8 @@ cmd('spectral:sampler', 'Note songs (MIDI, the instrument bank): notes of this m
     if (a.bundle !== undefined) { SAMPLER.place = a.bundle > 0; SAMPLER.bundle = Math.max(1, Math.min(40, a.bundle || 1)); }
     if (a.ahead !== undefined) SAMPLER.ahead3d = Math.max(0, Math.min(400, a.ahead));
     if (a.voices !== undefined) SAMPLER.voices = Math.max(1, Math.min(64, a.voices));
-    if (a.volume !== undefined) SAMPLER.volume = Math.max(0, Math.min(200, a.volume)) / 100;
+    // (up to 400 %: the default is 300 — before, 200 was the most, and p10/p13's "300" played at 200)
+    if (a.volume !== undefined) SAMPLER.volume = Math.max(0, Math.min(400, a.volume)) / 100;
     if (a.log !== undefined) SAMPLER.log = a.log;
     if (a.warm !== undefined) SAMPLER.warm = Math.max(0, Math.min(3000, a.warm));
     return `§bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? 's' : ''} a bundle` : 'tick-bound (no placement)'}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %, ${SAMPLER.warm ? `samples warmed ${SAMPLER.warm} ms ahead` : 'not warmed'}`;

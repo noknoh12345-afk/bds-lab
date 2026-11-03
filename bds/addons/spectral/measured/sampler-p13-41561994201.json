@@ -397,5 +397,6 @@
    "onset_recall_pd": 0.725,
    "onset_recall_fe": 0.662
   }
- }
+ },
+ "level_note": "the sampler played at 200 % (the plan asked 300: /spectral:sampler took at most 200 then)"
 }

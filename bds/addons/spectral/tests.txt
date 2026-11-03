@@ -882,6 +882,13 @@ until note 1 piano 26000
 @A cmd /spectral:stop
 @A cmd /spectral:sampler 2 250 28 120 false
 
+## the sampler's level goes up to 400 % (the default 300; each bundle is turned down before it would clip)
+@A cmd /spectral:sampler 2 250 28 300 false 600
+~ @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead
+@A cmd /spectral:sampler 2 250 28 900 false 600
+~ @A sampler: .*, level 400 %, samples warmed 600 ms ahead
+@A cmd /spectral:sampler 2 250 28 300 false 600
+
 ## measuring the warming (p13): the level a sample is warmed at and how many ticks it sounds can be set by a script event (it stays inside the 0.6 s of silence: at most 11 ticks)
 scriptevent spectral:warmcfg 1 20
 ~ \[spectral\] warm: volume 1, 11 ticks

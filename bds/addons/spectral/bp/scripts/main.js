@@ -3054,7 +3054,7 @@ cmd(
     }
     if (a.ahead !== void 0) SAMPLER.ahead3d = Math.max(0, Math.min(400, a.ahead));
     if (a.voices !== void 0) SAMPLER.voices = Math.max(1, Math.min(64, a.voices));
-    if (a.volume !== void 0) SAMPLER.volume = Math.max(0, Math.min(200, a.volume)) / 100;
+    if (a.volume !== void 0) SAMPLER.volume = Math.max(0, Math.min(400, a.volume)) / 100;
     if (a.log !== void 0) SAMPLER.log = a.log;
     if (a.warm !== void 0) SAMPLER.warm = Math.max(0, Math.min(3e3, a.warm));
     return `\xA7bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? "s" : ""} a bundle` : "tick-bound (no placement)"}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %, ${SAMPLER.warm ? `samples warmed ${SAMPLER.warm} ms ahead` : "not warmed"}`;

@@ -352,6 +352,27 @@ def p13(work):
     json.dump(plan, open(os.path.join(HERE, 'queue', 'p13_warm.json'), 'w'), ensure_ascii=False, indent=1)
     print('plan p13_warm:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
 
+
+def p14():
+    """p14: the sampler at 200 % — what p10 and p13 played, /spectral:sampler took at most 200 then — against 300 % (the default,
+    never measured), each piece at both levels one after the other: the étude, Für Elise, the band and two sentences, warmed"""
+    S = 'spectral:sampler'
+    lines = []
+    for play, name, ms in (('piano_demo', 'pd', 23100), ('fur_elise', 'fe', 16100), ('band_demo', 'bd', 11600),
+                           ('speech_hello', 'speech_hello', 7600), ('speech_cave', 'speech_cave', 7600)):
+        for vol in (200, 300):
+            tag = f'l{vol // 10}'
+            arm = f'{name}_{tag}' if not name.startswith('speech') else f'{tag}_{name}'
+            lines += rec(arm, [f'{S} 2 250 28 {vol} false 600'], f'spectral:play {play}', ms)
+    lines += [f'do execute as @a run {S} 2 250 28 300 false 600']
+    head = ["# Spectral Player の測定リグ: node lab.mjs app run -a spectral --device redroid（Actions → redroid、addon: spectral, mode: run）。",
+            "# p14（tools/exp/sampler_plans.py p14）: サンプラーの大きさ 200 %（p10・p13 が鳴らした分: 命令が 200 までだった）と 300 %（既定、まだ測っていない）を",
+            "# 同じ曲で続けて: エチュード・エリーゼ・バンド・読み上げ 2 文（温めあり）"]
+    plan = {'header': head, 'arms': [], 'setup': ['tp @s 0 -60 0 0 0'], 'prep': ['audio song fur_elise,speech_hello,speech_cave pack=tools/exp/packs/notes'],
+            'sections': [{'title': 'level', 'lines': lines}]}
+    json.dump(plan, open(os.path.join(HERE, 'queue', 'p14_level.json'), 'w'), ensure_ascii=False, indent=1)
+    print('plan p14_level:', sum(1 for x in lines if x.startswith('audio export')), 'recordings')
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'p03':
         p03()
@@ -359,6 +380,8 @@ if __name__ == '__main__':
         p06()
     elif len(sys.argv) > 1 and sys.argv[1] == 'p10':
         p10()
+    elif len(sys.argv) > 1 and sys.argv[1] == 'p14':
+        p14()
     elif len(sys.argv) > 1 and sys.argv[1] == 'p13':
         p13(sys.argv[2] if len(sys.argv) > 2 else '/tmp/warm_refs')
     elif len(sys.argv) > 1 and sys.argv[1] == 'p09':
