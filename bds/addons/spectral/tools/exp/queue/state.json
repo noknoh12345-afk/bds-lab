@@ -691,7 +691,7 @@
  "q16_rain_mobs": {
   "arms": {},
   "checkpoints": 0,
-  "commit": "040859a",
+  "commit": "f7c80a7",
   "conclusion": "failure",
   "earlier_runs": [
    "41563850724"
@@ -699,9 +699,9 @@
   "ended": "2026-11-03 11:22",
   "failed_steps": 1,
   "recordings": 0,
-  "run": "41563850724",
-  "started": "2026-11-03 11:05",
-  "status": "pending",
+  "run": "41565709676",
+  "started": "2026-11-03 11:22",
+  "status": "running",
   "tries": 1
  },
  "q17_bgm_on": {
