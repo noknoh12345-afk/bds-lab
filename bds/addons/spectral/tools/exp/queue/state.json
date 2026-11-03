@@ -752,7 +752,10 @@
   "tries": 1
  },
  "q19_pause_seek": {
-  "status": "pending"
+  "commit": "0992e46",
+  "run": "41573844651",
+  "started": "2026-11-03 12:43",
+  "status": "running"
  },
  "q20_memory_pressure": {
   "status": "pending"
