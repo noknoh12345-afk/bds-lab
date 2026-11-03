@@ -739,7 +739,10 @@
   "tries": 1
  },
  "q18_loop_5min": {
-  "status": "pending"
+  "commit": "cb863e2",
+  "run": "41572109965",
+  "started": "2026-11-03 12:25",
+  "status": "running"
  },
  "q19_pause_seek": {
   "status": "pending"
