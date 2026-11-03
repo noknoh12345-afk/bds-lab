@@ -212,10 +212,17 @@
   "tries": 1
  },
  "p14_level": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "8ca55c4",
+  "conclusion": "success",
+  "ended": "2026-11-03 12:22",
+  "failed_steps": 0,
+  "recordings": 10,
   "run": "41569907471",
   "started": "2026-11-03 12:03",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q01_same_twice": {
   "arms": {
