@@ -696,13 +696,13 @@
   "earlier_runs": [
    "41563850724"
   ],
-  "ended": "2026-11-03 11:22",
+  "ended": "2026-11-03 11:38",
   "failed_steps": 1,
   "recordings": 0,
   "run": "41565709676",
   "started": "2026-11-03 11:22",
-  "status": "running",
-  "tries": 1
+  "status": "done",
+  "tries": 2
  },
  "q17_bgm_on": {
   "status": "pending"

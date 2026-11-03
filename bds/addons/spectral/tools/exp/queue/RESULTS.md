@@ -36,3 +36,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q15_light_mode | 41541183581 | success | 26 | ml 3.153 / 1.744 / 9.31 (13) · mq 3.267 / 1.746 / 7.56 (13) | 0 | 2026-11-03 07:54 → 2026-11-03 08:25 |
 | p13_warm | 41561994201 | success | 19 | — | 0 | 2026-11-03 10:47 → 2026-11-03 11:04 |
 | q16_rain_mobs | 41563850724 | failure（もう一度） | 0 | — | 1（✘ 31 do execute as @a run kill @e[type=cow]） | 2026-11-03 11:05 → 2026-11-03 11:22 |
+| q16_rain_mobs | 41565709676 | failure | 0 | — | 1（✘ 31 do execute as @a run kill @e[type=cow]） | 2026-11-03 11:22 → 2026-11-03 11:38 |
