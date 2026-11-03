@@ -1,0 +1,107 @@
+{
+ "run": 41569907471,
+ "plan": "tools/exp/queue/p14_level.json",
+ "device": "redroid (Android 14), Minecraft 1.26.60.4",
+ "what": "the sampler at 200 % (what p10 and p13 played) and 300 % (the default), each piece at both levels one after the other, warmed 600 ms",
+ "songs": {
+  "bd_l20": {
+   "song": "band_demo",
+   "visqol": 2.2615,
+   "mrstft": 1.5622,
+   "third_oct_db": 5.295,
+   "onset_ms": 20.0,
+   "onset_recall": 0.958
+  },
+  "bd_l30": {
+   "song": "band_demo",
+   "visqol": 2.5018,
+   "mrstft": 1.5743,
+   "third_oct_db": 5.61,
+   "onset_ms": 22.5,
+   "onset_recall": 0.958
+  },
+  "fe_l20": {
+   "song": "fur_elise",
+   "visqol": 4.1795,
+   "mrstft": 1.1694,
+   "third_oct_db": 1.762,
+   "onset_ms": 5.0,
+   "onset_recall": 0.958
+  },
+  "fe_l30": {
+   "song": "fur_elise",
+   "visqol": 4.2293,
+   "mrstft": 1.167,
+   "third_oct_db": 2.263,
+   "onset_ms": 5.0,
+   "onset_recall": 1.0
+  },
+  "l20_speech_cave": {
+   "song": "speech_cave",
+   "visqol": 3.9993,
+   "mrstft": 0.8877,
+   "third_oct_db": 3.348,
+   "onset_ms": 7.5,
+   "onset_recall": 0.821
+  },
+  "l20_speech_hello": {
+   "song": "speech_hello",
+   "visqol": 3.9508,
+   "mrstft": 0.969,
+   "third_oct_db": 3.447,
+   "onset_ms": 11.25,
+   "onset_recall": 0.9
+  },
+  "l30_speech_cave": {
+   "song": "speech_cave",
+   "visqol": 3.9954,
+   "mrstft": 0.8421,
+   "third_oct_db": 2.899,
+   "onset_ms": 8.75,
+   "onset_recall": 0.9
+  },
+  "l30_speech_hello": {
+   "song": "speech_hello",
+   "visqol": 3.8409,
+   "mrstft": 0.9187,
+   "third_oct_db": 3.399,
+   "onset_ms": 12.5,
+   "onset_recall": 0.907
+  },
+  "pd_l20": {
+   "song": "piano_demo",
+   "visqol": 4.3611,
+   "mrstft": 1.3013,
+   "third_oct_db": 2.558,
+   "onset_ms": 7.5,
+   "onset_recall": 0.902
+  },
+  "pd_l30": {
+   "song": "piano_demo",
+   "visqol": 4.4121,
+   "mrstft": 1.3285,
+   "third_oct_db": 3.486,
+   "onset_ms": 5.0,
+   "onset_recall": 0.922
+  }
+ },
+ "speech_normalised": {
+  "l20_speech_cave": {
+   "cer": 1.0,
+   "heard": "什麼呢酒塴の末里だ及んだのかなぜ已住が誰だもう.."
+  },
+  "l20_speech_hello": {
+   "cer": 0.222,
+   "heard": "こんにちは私は魔法洋クエストの中で話しています"
+  },
+  "l30_speech_cave": {
+   "cer": 0.6,
+   "heard": "日CのモロニエダオイモードのドッグツアガンC用"
+  },
+  "l30_speech_hello": {
+   "cer": 0.222,
+   "heard": "こんにちは私はマーオイフレイトの中で話しています"
+  }
+ },
+ "reading": "300 % is as good or better everywhere: étude 4.36 → 4.41, Für Elise 4.18 → 4.23 (its onsets 0.958 → 1.0), the band 2.26 → 2.50; speech: こんにちは 0.222 at both, 洞窟 1.0 → 0.6 (Whisper unsteady on that sentence: 0.48 in p13). The default stays 300 %"
+}

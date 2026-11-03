@@ -319,7 +319,7 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
     12 低い鍵になり、全部 1 オクターブ上で鳴っていた。tools/samples/bank.py の `octave: 1`（鍵を 12 上に）と `--relabel`（ファイルはそのまま
     bank.json を読み直して src/bank.ts を書く）。band_demo の試験の行を直した（ベースの C2 はベースの C2 の素で）。オルガンとチャイムはそのまま
 27. **実機（p10）: サンプラーは大きく鳴らすほど良い**: 200 % でエチュード 2.22 → 4.20（正弦波の道 4.12 を超えた）、エリーゼ 3.03 → 4.11。
-    計画の「300」は `/spectral:sampler` の上限 200 で止まっていた（p13 も 200 %）→ 上限を 400 に、既定の 300 % を p14（tools/exp/queue/p14_level.json）で 200 % と比べる
+    計画の「300」は `/spectral:sampler` の上限 200 で止まっていた（p13 も 200 %）→ 上限を 400 に。**p14: 300 % は 200 % と同じか上** → 既定 300 %
 28. **実機（p11）: 1 tick に始められる数**: 同じ seek の和音は 12 音でも全部（ヘッドホンで抜けた 1 音は初回）。seek がそれぞれの 40 ms おきの
     クリックは束ね 12 で K = 4 から外れるか落ちる、束ね 1 で K = 8 まで全部 → 束ね 2 のまま。measured/sampler-p09/p10/p11-*.json
 29. **/connect は実機でつながらなかった**（p08・p12: 録音はデジタルの無音）。リグのクライアントは BDS に入っていて、**BDS の上では
@@ -415,9 +415,8 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 ## 次にやること
 
 **11-03 昼の時点**（上の 25〜30）:
-1. **p14**（tools/exp/queue/p14_level.json、キューの次）: サンプラー 200 % と 300 %。良い方を既定に（今は 300: まだ測っていない）。解き方:
-   `python3 tools/exp/sampler_score.py <録音> --songs <参照の置き場>`（pd_l20 / pd_l30 …）、読み上げは録音の大きさをそろえてから
-   tools/exp/speech_eval.py（ffmpeg loudnorm I=-20: Whisper は小さな録音で何も書かないことがある）
+1. ~~p14~~ **済**（run 41569907471）: 300 % は 200 % と同じか上（エチュード 4.41・エリーゼ 4.23・バンド 2.50）→ 既定 300 % のまま。
+   読み上げは録音の大きさをそろえてから tools/exp/speech_eval.py（ffmpeg loudnorm I=-20: Whisper は小さな録音で何も書かないことがある）
 2. q17〜q21 の結果を SPEC.md「実機のキュー 20 本」の表へ（q21 = q16 のやり直し）
 3. 読み上げの外来語（「マインクラフト」→「魔王よくイクト」）: VCV（母音から子音への続き）の素で
 4. バンドの実機 2.32（電話の模型は 3.54）: 6.4 kHz から上が実機で 12〜21 dB 多い理由
