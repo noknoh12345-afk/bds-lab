@@ -4,26 +4,14 @@
     "name": "GeoUI Web RP",
     "description": "The web in the game: every site, Chrome-like, full-screen in F1 (bds-lab bds/geoui/web)",
     "uuid": "ab8acf0f-3629-4a56-be81-88bd1862b5f4",
-    "version": [
-      1,
-      0,
-      0
-    ],
-    "min_engine_version": [
-      1,
-      26,
-      50
-    ]
+    "version": [1, 0, 1],
+    "min_engine_version": [1, 26, 50]
   },
   "modules": [
     {
       "type": "resources",
       "uuid": "a033a8a4-28e7-4ff9-8cbd-444efa532c7b",
-      "version": [
-        1,
-        0,
-        0
-      ]
+      "version": [1, 0, 1]
     }
   ]
 }
