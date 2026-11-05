@@ -1,8 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
-#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。数はジョブのログの `[spectral rig]` の行、録音そのものは
-#   `audio export` が Opus にして実行の成果物の public/spectral/rec/ に公開する（鍵なし: 管理パネルでサインインして聞ける・
-#   notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。
-# キュー 21（q16 のやり直し: q16 は始めの『kill @e[type=cow]』が、牛のいないワールドで失敗して 2 回とも録音 0 本 — run 41563850724・41565709676）: 雨と動物の音がある中で。本当のワールドでは雨・動物・足音も同じ 32 音を使う: それらがあると曲はどれだけ崩れるか。消す前に 1 頭ずつ遠く（44 ブロック先: 鳴き声の届かない所）に出してから消す
+#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
+#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
+# キュー 22（tools/exp/queue/q22_warm_min.json、tools/exp/queue40.py）: 温めの最短（0・20・50・80・110・150 ms）。p13 は 150 ms 前で 12/12・0 で 0/12。その間のどこから鳴るか（短いほど曲の頭を待たせない）。最後に 0 ms の組をもう一度（読み込み済みなら全部鳴る: 物差し）
 
 section title
 audio info
@@ -14,7 +13,7 @@ audio info
 shot title
 
 section prep
-audio song piano_gymnopedie,piano_chopin_op66,vocal_stars,vocal_name_of_love,choir_how_long,drums_round,rock_big,edm_detection,orchestra_five_armies,funk_funkorama,speech_ja_soseki,speech_en_wordsworth,demo_selfmade suffix=_e pack=tools/exp/packs/run10
+audio song probe_m0,probe_m20,probe_m50,probe_m80,probe_m110,probe_m150 pack=tools/exp/packs/q40
 
 section join
 join
@@ -25,222 +24,86 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section wc_wr
-do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run weather clear
-do execute as @a run summon cow 31 -60 31
-do execute as @a run kill @e[type=cow]
-do execute as @a run summon chicken 31 -60 31
-do execute as @a run kill @e[type=chicken]
-audio start wc_wr_1
-audio mark wc_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e
-wait 23000
+section warm_m0
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 0
+audio start wm_m0
+do execute as @a run spectral:play probe_m0
+wait 13850
 do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_piano_gymnopedie
-do execute as @a run spectral:play piano_gymnopedie_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_piano_chopin_op66
-do execute as @a run spectral:play piano_chopin_op66_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_vocal_stars
-do execute as @a run spectral:play vocal_stars_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_vocal_stars
-do execute as @a run spectral:play vocal_stars_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_vocal_name_of_love
-do execute as @a run spectral:play vocal_name_of_love_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_choir_how_long
-do execute as @a run spectral:play choir_how_long_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_choir_how_long
-do execute as @a run spectral:play choir_how_long_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_drums_round
-do execute as @a run spectral:play drums_round_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_drums_round
-do execute as @a run spectral:play drums_round_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_rock_big
-do execute as @a run spectral:play rock_big_e
-wait 23000
 audio stop
-audio analyze-all wc_piano_gymnopedie=song:piano_gymnopedie wr_piano_gymnopedie=song:piano_gymnopedie wc_piano_chopin_op66=song:piano_chopin_op66 wr_piano_chopin_op66=song:piano_chopin_op66 wc_vocal_stars=song:vocal_stars wr_vocal_stars=song:vocal_stars wc_vocal_name_of_love=song:vocal_name_of_love wr_vocal_name_of_love=song:vocal_name_of_love wc_choir_how_long=song:choir_how_long wr_choir_how_long=song:choir_how_long wc_drums_round=song:drums_round wr_drums_round=song:drums_round wc_rock_big=song:rock_big
-audio export wc_piano_gymnopedie 160
-audio export wr_piano_gymnopedie 160
-audio export wc_piano_chopin_op66 160
-audio export wr_piano_chopin_op66 160
-audio export wc_vocal_stars 160
-audio export wr_vocal_stars 160
-audio export wc_vocal_name_of_love 160
-audio export wr_vocal_name_of_love 160
-audio export wc_choir_how_long 160
-audio export wr_choir_how_long 160
-audio export wc_drums_round 160
-audio export wr_drums_round 160
-audio export wc_rock_big 160
+audio export wm_m0 160
+
+section warm_m20
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 20
+audio start wm_m20
+do execute as @a run spectral:play probe_m20
+wait 13870
 do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio start wc_wr_2
-audio mark wr_rock_big
-do execute as @a run spectral:play rock_big_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_edm_detection
-do execute as @a run spectral:play edm_detection_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_edm_detection
-do execute as @a run spectral:play edm_detection_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_orchestra_five_armies
-do execute as @a run spectral:play orchestra_five_armies_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_funk_funkorama
-do execute as @a run spectral:play funk_funkorama_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_speech_ja_soseki
-do execute as @a run spectral:play speech_ja_soseki_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_speech_en_wordsworth
-do execute as @a run spectral:play speech_en_wordsworth_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather clear
-audio mark wc_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_e
-wait 23000
-do execute as @a run spectral:stop
-do execute as @a run weather rain
-do execute as @a run summon cow 3 -60 3
-do execute as @a run summon cow -3 -60 3
-do execute as @a run summon chicken 2 -60 -2
-do execute as @a run summon chicken -2 -60 -2
-audio mark wr_demo_selfmade
-do execute as @a run spectral:play demo_selfmade_e
-wait 23000
 audio stop
-audio analyze-all wr_rock_big=song:rock_big wc_edm_detection=song:edm_detection wr_edm_detection=song:edm_detection wc_orchestra_five_armies=song:orchestra_five_armies wr_orchestra_five_armies=song:orchestra_five_armies wc_funk_funkorama=song:funk_funkorama wr_funk_funkorama=song:funk_funkorama wc_speech_ja_soseki=song:speech_ja_soseki wr_speech_ja_soseki=song:speech_ja_soseki wc_speech_en_wordsworth=song:speech_en_wordsworth wr_speech_en_wordsworth=song:speech_en_wordsworth wc_demo_selfmade=song:demo_selfmade wr_demo_selfmade=song:demo_selfmade
-audio export wr_rock_big 160
-audio export wc_edm_detection 160
-audio export wr_edm_detection 160
-audio export wc_orchestra_five_armies 160
-audio export wr_orchestra_five_armies 160
-audio export wc_funk_funkorama 160
-audio export wr_funk_funkorama 160
-audio export wc_speech_ja_soseki 160
-audio export wr_speech_ja_soseki 160
-audio export wc_speech_en_wordsworth 160
-audio export wr_speech_en_wordsworth 160
-audio export wc_demo_selfmade 160
-audio export wr_demo_selfmade 160
+audio export wm_m20 160
+
+section warm_m50
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 50
+audio start wm_m50
+do execute as @a run spectral:play probe_m50
+wait 13900
+do execute as @a run spectral:stop
+audio stop
+audio export wm_m50 160
+
+section warm_m80
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 80
+audio start wm_m80
+do execute as @a run spectral:play probe_m80
+wait 13930
+do execute as @a run spectral:stop
+audio stop
+audio export wm_m80 160
+
+section warm_m110
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 110
+audio start wm_m110
+do execute as @a run spectral:play probe_m110
+wait 13960
+do execute as @a run spectral:stop
+audio stop
+audio export wm_m110 160
+
+section warm_m150
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 150
+audio start wm_m150
+do execute as @a run spectral:play probe_m150
+wait 14000
+do execute as @a run spectral:stop
+audio stop
+audio export wm_m150 160
+
+section warm_again
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 0
+audio start wm_again
+do execute as @a run spectral:play probe_m0
+wait 13850
+do execute as @a run spectral:stop
+audio stop
+audio export wm_again 160
