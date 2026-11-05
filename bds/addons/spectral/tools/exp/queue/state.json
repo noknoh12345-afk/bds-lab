@@ -815,10 +815,17 @@
   "tries": 1
  },
  "q22_warm_min": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "c52661f",
+  "conclusion": "success",
+  "ended": "2026-11-05 11:54",
+  "failed_steps": 0,
+  "recordings": 7,
   "run": "42020624439",
   "started": "2026-11-05 11:38",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q23_forget": {
   "status": "pending"
