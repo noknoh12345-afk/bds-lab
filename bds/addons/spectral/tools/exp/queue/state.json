@@ -1052,10 +1052,17 @@
   "tries": 1
  },
  "q40_sampler_memory": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "fcbfe99",
+  "conclusion": "failure",
+  "ended": "2026-11-05 19:45",
+  "failed_steps": 5,
+  "recordings": 3,
   "run": "42092980688",
   "started": "2026-11-05 19:20",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q41_long_mix_20min": {
   "status": "pending"
