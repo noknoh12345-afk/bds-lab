@@ -1133,10 +1133,17 @@
   "tries": 1
  },
  "q46_speech_distance": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "4e9bde9",
+  "conclusion": "success",
+  "ended": "2026-11-05 23:00",
+  "failed_steps": 0,
+  "recordings": 8,
   "run": "42123770786",
   "started": "2026-11-05 22:42",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q47_speech_over_music": {
   "status": "pending"
