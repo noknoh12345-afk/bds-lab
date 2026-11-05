@@ -1013,10 +1013,17 @@
   "tries": 1
  },
  "q37_sampler_pause_seek": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "f1e3246",
+  "conclusion": "success",
+  "ended": "2026-11-05 18:53",
+  "failed_steps": 0,
+  "recordings": 4,
   "run": "42085533931",
   "started": "2026-11-05 18:34",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q38_sampler_loop_5min": {
   "status": "pending"
