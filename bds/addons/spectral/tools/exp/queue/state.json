@@ -1000,10 +1000,17 @@
   "tries": 1
  },
  "q36_sampler_speed": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "868ad6c",
+  "conclusion": "success",
+  "ended": "2026-11-05 18:34",
+  "failed_steps": 0,
+  "recordings": 10,
   "run": "42083506028",
   "started": "2026-11-05 18:21",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q37_sampler_pause_seek": {
   "status": "pending"
