@@ -1094,17 +1094,17 @@
   "arms": {},
   "checkpoints": 0,
   "commit": "fb94d8c",
-  "conclusion": "failure",
+  "conclusion": "success",
   "earlier_runs": [
    "42107389472"
   ],
-  "ended": "2026-11-05 21:24",
-  "failed_steps": 10,
-  "recordings": 0,
+  "ended": "2026-11-05 21:43",
+  "failed_steps": 0,
+  "recordings": 10,
   "run": "42112405418",
   "started": "2026-11-05 21:24",
-  "status": "running",
-  "tries": 1
+  "status": "done",
+  "tries": 2
  },
  "q44_speech_sentences": {
   "status": "pending"

@@ -66,3 +66,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q41_long_mix_20min | 42096954916 | success | 1（mx_20min 9080 KB） | — | 0 | 2026-11-05 19:45 → 2026-11-05 20:32 |
 | q42_rejoin | 42104363907 | failure | 4 | — | 1（✘ 46 do tp @a 0 -60 0 0 0） | 2026-11-05 20:32 → 2026-11-05 20:52 |
 | q43_speech_mora | 42107389472 | failure（もう一度） | 0 | — | 10（✘ 38 audio export mo140_speech_hello 160） | 2026-11-05 20:52 → 2026-11-05 21:24 |
+| q43_speech_mora | 42112405418 | success | 10 | — | 0 | 2026-11-05 21:24 → 2026-11-05 21:43 |
