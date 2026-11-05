@@ -1000,7 +1000,10 @@
   "tries": 1
  },
  "q36_sampler_speed": {
-  "status": "pending"
+  "commit": "868ad6c",
+  "run": "42083506028",
+  "started": "2026-11-05 18:21",
+  "status": "running"
  },
  "q37_sampler_pause_seek": {
   "status": "pending"
