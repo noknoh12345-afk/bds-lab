@@ -1148,7 +1148,7 @@
  "q47_speech_over_music": {
   "arms": {},
   "checkpoints": 0,
-  "commit": "91cfcb6",
+  "commit": "ca97f69",
   "conclusion": "failure",
   "earlier_runs": [
    "42126160996"
@@ -1156,9 +1156,9 @@
   "ended": "2026-11-05 23:01",
   "failed_steps": 0,
   "recordings": 0,
-  "run": "42126160996",
-  "started": "2026-11-05 23:00",
-  "status": "pending",
+  "run": "42126349718",
+  "started": "2026-11-05 23:01",
+  "status": "running",
   "tries": 1
  },
  "q48_speech_level": {
