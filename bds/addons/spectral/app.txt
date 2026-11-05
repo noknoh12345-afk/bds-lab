@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 30（tools/exp/queue/q30_sampler_direction.json、tools/exp/queue40.py）: サンプラーの 3D: 向き 6 方向（東西南北と斜め 2 つ）。6 ブロック先の東西南北と南東・北西（聞き手は南を向く）。左右の分かれ方と音質が向きでどう変わるか（q05 は正弦波の道）
+# キュー 31（tools/exp/queue/q31_bundle_warm.json、tools/exp/queue40.py）: 束ね 1・2・3・4（温めあり）。p01・p04 は温めなしで束ね 2 を選んだ: 温めありでも 2 が一番か（落ちていた音は温めで戻る）
 
 section title
 audio info
@@ -13,7 +13,7 @@ audio info
 shot title
 
 section prep
-audio song fur_elise,speech_cave pack=tools/exp/packs/notes
+audio song fur_elise,clicks_pulse pack=tools/exp/packs/notes
 
 section join
 join
@@ -24,194 +24,146 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section dir_e_fe
+section bundle_1_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start dre_fe
-do execute as @a run spectral:play fur_elise speaker
-wait 700
-do tp @a -6 -60 0 0 0
-wait 14750
+do execute as @a run spectral:sampler 1 250 28 300 false 600
+audio start bw1_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export dre_fe 160
+audio export bw1_fe 160
 
-section dir_e_sc
+section bundle_1_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start dre_sc
-do execute as @a run spectral:play speech_cave speaker
-wait 700
-do tp @a -6 -60 0 0 0
-wait 7150
+do execute as @a run spectral:sampler 1 250 28 300 false 600
+audio start bw1_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export dre_sc 160
+audio export bw1_pd 160
 
-section dir_w_fe
+section bundle_1_pu
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start drw_fe
-do execute as @a run spectral:play fur_elise speaker
-wait 700
-do tp @a 6 -60 0 0 0
-wait 14750
+do execute as @a run spectral:sampler 1 250 28 300 false 600
+audio start bw1_pu
+do execute as @a run spectral:play clicks_pulse
+wait 3800
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export drw_fe 160
+audio export bw1_pu 160
 
-section dir_w_sc
+section bundle_2_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start drw_sc
-do execute as @a run spectral:play speech_cave speaker
-wait 700
-do tp @a 6 -60 0 0 0
-wait 7150
+audio start bw2_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export drw_sc 160
+audio export bw2_fe 160
 
-section dir_s_fe
+section bundle_2_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start drs_fe
-do execute as @a run spectral:play fur_elise speaker
-wait 700
-do tp @a 0 -60 -6 0 0
-wait 14750
+audio start bw2_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export drs_fe 160
+audio export bw2_pd 160
 
-section dir_s_sc
+section bundle_2_pu
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start drs_sc
-do execute as @a run spectral:play speech_cave speaker
-wait 700
-do tp @a 0 -60 -6 0 0
-wait 7150
+audio start bw2_pu
+do execute as @a run spectral:play clicks_pulse
+wait 3800
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export drs_sc 160
+audio export bw2_pu 160
 
-section dir_n_fe
+section bundle_3_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start drn_fe
-do execute as @a run spectral:play fur_elise speaker
-wait 700
-do tp @a 0 -60 6 0 0
-wait 14750
+do execute as @a run spectral:sampler 3 250 28 300 false 600
+audio start bw3_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export drn_fe 160
+audio export bw3_fe 160
 
-section dir_n_sc
+section bundle_3_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start drn_sc
-do execute as @a run spectral:play speech_cave speaker
-wait 700
-do tp @a 0 -60 6 0 0
-wait 7150
+do execute as @a run spectral:sampler 3 250 28 300 false 600
+audio start bw3_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export drn_sc 160
+audio export bw3_pd 160
 
-section dir_se_fe
+section bundle_3_pu
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start drse_fe
-do execute as @a run spectral:play fur_elise speaker
-wait 700
-do tp @a -4 -60 -4 0 0
-wait 14750
+do execute as @a run spectral:sampler 3 250 28 300 false 600
+audio start bw3_pu
+do execute as @a run spectral:play clicks_pulse
+wait 3800
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export drse_fe 160
+audio export bw3_pu 160
 
-section dir_se_sc
+section bundle_4_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start drse_sc
-do execute as @a run spectral:play speech_cave speaker
-wait 700
-do tp @a -4 -60 -4 0 0
-wait 7150
+do execute as @a run spectral:sampler 4 250 28 300 false 600
+audio start bw4_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export drse_sc 160
+audio export bw4_fe 160
 
-section dir_nw_fe
+section bundle_4_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start drnw_fe
-do execute as @a run spectral:play fur_elise speaker
-wait 700
-do tp @a 4 -60 4 0 0
-wait 14750
+do execute as @a run spectral:sampler 4 250 28 300 false 600
+audio start bw4_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export drnw_fe 160
+audio export bw4_pd 160
 
-section dir_nw_sc
+section bundle_4_pu
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run tp @s 0 -60 0 0 0
-audio start drnw_sc
-do execute as @a run spectral:play speech_cave speaker
-wait 700
-do tp @a 4 -60 4 0 0
-wait 7150
+do execute as @a run spectral:sampler 4 250 28 300 false 600
+audio start bw4_pu
+do execute as @a run spectral:play clicks_pulse
+wait 3800
 do execute as @a run spectral:stop
-do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export drnw_sc 160
+audio export bw4_pu 160
