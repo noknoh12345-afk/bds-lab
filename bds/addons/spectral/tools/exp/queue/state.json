@@ -867,7 +867,10 @@
   "tries": 1
  },
  "q26_chords_wide": {
-  "status": "pending"
+  "commit": "d74032f",
+  "run": "42034434679",
+  "started": "2026-11-05 13:17",
+  "status": "running"
  },
  "q27_sampler_transpose": {
   "status": "pending"
