@@ -1013,7 +1013,10 @@
   "tries": 1
  },
  "q37_sampler_pause_seek": {
-  "status": "pending"
+  "commit": "f1e3246",
+  "run": "42085533931",
+  "started": "2026-11-05 18:34",
+  "status": "running"
  },
  "q38_sampler_loop_5min": {
   "status": "pending"
