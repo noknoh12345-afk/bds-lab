@@ -1065,10 +1065,17 @@
   "tries": 1
  },
  "q41_long_mix_20min": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "93ab5f4",
+  "conclusion": "success",
+  "ended": "2026-11-05 20:32",
+  "failed_steps": 0,
+  "recordings": 1,
   "run": "42096954916",
   "started": "2026-11-05 19:45",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q42_rejoin": {
   "status": "pending"
