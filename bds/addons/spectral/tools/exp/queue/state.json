@@ -1175,7 +1175,10 @@
   "tries": 1
  },
  "q49_say_command": {
-  "status": "pending"
+  "commit": "d67508f",
+  "run": "42131728243",
+  "started": "2026-11-05 23:44",
+  "status": "running"
  },
  "q50_speech_joins": {
   "status": "pending"
