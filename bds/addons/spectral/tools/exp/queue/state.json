@@ -919,7 +919,10 @@
   "tries": 1
  },
  "q30_sampler_direction": {
-  "status": "pending"
+  "commit": "1e8c271",
+  "run": "42050098207",
+  "started": "2026-11-05 14:57",
+  "status": "running"
  },
  "q31_bundle_warm": {
   "status": "pending"
