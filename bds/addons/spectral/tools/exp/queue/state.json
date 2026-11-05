@@ -841,7 +841,10 @@
   "tries": 1
  },
  "q24_load_many": {
-  "status": "pending"
+  "commit": "6adfdd2",
+  "run": "42028777688",
+  "started": "2026-11-05 12:37",
+  "status": "running"
  },
  "q25_sampler_voices": {
   "status": "pending"
