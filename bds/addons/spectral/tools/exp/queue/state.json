@@ -893,10 +893,17 @@
   "tries": 1
  },
  "q28_velocity_curve": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "31647fb",
+  "conclusion": "success",
+  "ended": "2026-11-05 14:35",
+  "failed_steps": 0,
+  "recordings": 3,
   "run": "42044363574",
   "started": "2026-11-05 14:22",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q29_sampler_distance": {
   "status": "pending"

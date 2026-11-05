@@ -49,3 +49,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q25_sampler_voices | 42031247729 | success | 10 | — | 0 | 2026-11-05 12:55 → 2026-11-05 13:17 |
 | q26_chords_wide | 42034434679 | failure | 3 | — | 1（✘ 37 audio export ch_same 160） | 2026-11-05 13:17 → 2026-11-05 13:44 |
 | q27_sampler_transpose | 42038536513 | success | 14 | — | 0 | 2026-11-05 13:45 → 2026-11-05 14:22 |
+| q28_velocity_curve | 42044363574 | success | 3 | — | 0 | 2026-11-05 14:22 → 2026-11-05 14:35 |
