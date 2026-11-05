@@ -1026,10 +1026,17 @@
   "tries": 1
  },
  "q38_sampler_loop_5min": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "aaf19cb",
+  "conclusion": "success",
+  "ended": "2026-11-05 19:09",
+  "failed_steps": 0,
+  "recordings": 1,
   "run": "42088603571",
   "started": "2026-11-05 18:53",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q39_sampler_screen_off": {
   "status": "pending"
