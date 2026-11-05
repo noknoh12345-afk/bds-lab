@@ -1162,10 +1162,17 @@
   "tries": 2
  },
  "q48_speech_level": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "83ac8b0",
+  "conclusion": "success",
+  "ended": "2026-11-05 23:44",
+  "failed_steps": 0,
+  "recordings": 8,
   "run": "42129171990",
   "started": "2026-11-05 23:26",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q49_say_command": {
   "status": "pending"
