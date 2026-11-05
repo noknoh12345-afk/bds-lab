@@ -1078,7 +1078,10 @@
   "tries": 1
  },
  "q42_rejoin": {
-  "status": "pending"
+  "commit": "8f1bd61",
+  "run": "42104363907",
+  "started": "2026-11-05 20:32",
+  "status": "running"
  },
  "q43_speech_mora": {
   "status": "pending"
