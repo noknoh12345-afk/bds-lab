@@ -787,9 +787,151 @@
   "tries": 1
  },
  "q21_rain_mobs": {
+  "arms": {
+   "wc": {
+    "mrstft": 1.926,
+    "n": 13,
+    "rms_db": -40.7,
+    "third_oct_db": 15.285,
+    "visqol": 2.114
+   },
+   "wr": {
+    "mrstft": 2.19,
+    "n": 13,
+    "rms_db": -40.2,
+    "third_oct_db": 13.417,
+    "visqol": 2.132
+   }
+  },
+  "checkpoints": 0,
   "commit": "68f6740",
+  "conclusion": "success",
+  "ended": "2026-11-05 11:38",
+  "failed_steps": 0,
+  "recordings": 26,
   "run": "41576813484",
   "started": "2026-11-03 13:13",
-  "status": "running"
+  "status": "done",
+  "tries": 1
+ },
+ "q22_warm_min": {
+  "status": "pending"
+ },
+ "q23_forget": {
+  "status": "pending"
+ },
+ "q24_load_many": {
+  "status": "pending"
+ },
+ "q25_sampler_voices": {
+  "status": "pending"
+ },
+ "q26_chords_wide": {
+  "status": "pending"
+ },
+ "q27_sampler_transpose": {
+  "status": "pending"
+ },
+ "q28_velocity_curve": {
+  "status": "pending"
+ },
+ "q29_sampler_distance": {
+  "status": "pending"
+ },
+ "q30_sampler_direction": {
+  "status": "pending"
+ },
+ "q31_bundle_warm": {
+  "status": "pending"
+ },
+ "q32_ahead_3d": {
+  "status": "pending"
+ },
+ "q33_band_parts": {
+  "status": "pending"
+ },
+ "q34_drums_each": {
+  "status": "pending"
+ },
+ "q35_instrument_roots": {
+  "status": "pending"
+ },
+ "q36_sampler_speed": {
+  "status": "pending"
+ },
+ "q37_sampler_pause_seek": {
+  "status": "pending"
+ },
+ "q38_sampler_loop_5min": {
+  "status": "pending"
+ },
+ "q39_sampler_screen_off": {
+  "status": "pending"
+ },
+ "q40_sampler_memory": {
+  "status": "pending"
+ },
+ "q41_long_mix_20min": {
+  "status": "pending"
+ },
+ "q42_rejoin": {
+  "status": "pending"
+ },
+ "q43_speech_mora": {
+  "status": "pending"
+ },
+ "q44_speech_sentences": {
+  "status": "pending"
+ },
+ "q45_speech_intonation": {
+  "status": "pending"
+ },
+ "q46_speech_distance": {
+  "status": "pending"
+ },
+ "q47_speech_over_music": {
+  "status": "pending"
+ },
+ "q48_speech_level": {
+  "status": "pending"
+ },
+ "q49_say_command": {
+  "status": "pending"
+ },
+ "q50_speech_joins": {
+  "status": "pending"
+ },
+ "q51_file_warm": {
+  "status": "pending"
+ },
+ "q52_file_seek": {
+  "status": "pending"
+ },
+ "q53_limiter_l12": {
+  "status": "pending"
+ },
+ "q54_voices_28_32": {
+  "status": "pending"
+ },
+ "q55_sampler_same_thrice": {
+  "status": "pending"
+ },
+ "q56_sampler_phones_speaker": {
+  "status": "pending"
+ },
+ "q57_sampler_two_streams": {
+  "status": "pending"
+ },
+ "q58_sampler_rain_mobs": {
+  "status": "pending"
+ },
+ "q59_bgm_sampler": {
+  "status": "pending"
+ },
+ "q60_sampler_walking_listener": {
+  "status": "pending"
+ },
+ "q61_noise_floor_warm": {
+  "status": "pending"
  }
 }
