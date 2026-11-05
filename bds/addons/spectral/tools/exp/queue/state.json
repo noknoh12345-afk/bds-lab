@@ -828,7 +828,10 @@
   "tries": 1
  },
  "q23_forget": {
-  "status": "pending"
+  "commit": "167be64",
+  "run": "42022701237",
+  "started": "2026-11-05 11:54",
+  "status": "running"
  },
  "q24_load_many": {
   "status": "pending"
