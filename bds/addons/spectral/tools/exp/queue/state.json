@@ -893,7 +893,10 @@
   "tries": 1
  },
  "q28_velocity_curve": {
-  "status": "pending"
+  "commit": "31647fb",
+  "run": "42044363574",
+  "started": "2026-11-05 14:22",
+  "status": "running"
  },
  "q29_sampler_distance": {
   "status": "pending"
