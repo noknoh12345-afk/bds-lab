@@ -1107,7 +1107,10 @@
   "tries": 2
  },
  "q44_speech_sentences": {
-  "status": "pending"
+  "commit": "1386a74",
+  "run": "42115207572",
+  "started": "2026-11-05 21:43",
+  "status": "running"
  },
  "q45_speech_intonation": {
   "status": "pending"
