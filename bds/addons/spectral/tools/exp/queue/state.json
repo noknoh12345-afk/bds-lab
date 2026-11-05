@@ -1162,7 +1162,10 @@
   "tries": 2
  },
  "q48_speech_level": {
-  "status": "pending"
+  "commit": "83ac8b0",
+  "run": "42129171990",
+  "started": "2026-11-05 23:26",
+  "status": "running"
  },
  "q49_say_command": {
   "status": "pending"
