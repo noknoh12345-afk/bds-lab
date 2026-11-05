@@ -1107,10 +1107,17 @@
   "tries": 2
  },
  "q44_speech_sentences": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "1386a74",
+  "conclusion": "success",
+  "ended": "2026-11-05 22:05",
+  "failed_steps": 0,
+  "recordings": 16,
   "run": "42115207572",
   "started": "2026-11-05 21:43",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q45_speech_intonation": {
   "status": "pending"
