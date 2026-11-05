@@ -948,7 +948,10 @@
   "tries": 2
  },
  "q32_ahead_3d": {
-  "status": "pending"
+  "commit": "d70681a",
+  "run": "42066770143",
+  "started": "2026-11-05 16:40",
+  "status": "running"
  },
  "q33_band_parts": {
   "status": "pending"
