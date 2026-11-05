@@ -906,10 +906,17 @@
   "tries": 1
  },
  "q29_sampler_distance": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "814dceb",
+  "conclusion": "success",
+  "ended": "2026-11-05 14:57",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "42046555059",
   "started": "2026-11-05 14:36",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q30_sampler_direction": {
   "status": "pending"
