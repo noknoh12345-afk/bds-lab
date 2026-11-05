@@ -1039,10 +1039,17 @@
   "tries": 1
  },
  "q39_sampler_screen_off": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "eccea85",
+  "conclusion": "failure",
+  "ended": "2026-11-05 19:20",
+  "failed_steps": 11,
+  "recordings": 1,
   "run": "42091290812",
   "started": "2026-11-05 19:10",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q40_sampler_memory": {
   "status": "pending"
