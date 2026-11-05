@@ -906,7 +906,10 @@
   "tries": 1
  },
  "q29_sampler_distance": {
-  "status": "pending"
+  "commit": "814dceb",
+  "run": "42046555059",
+  "started": "2026-11-05 14:36",
+  "status": "running"
  },
  "q30_sampler_direction": {
   "status": "pending"
