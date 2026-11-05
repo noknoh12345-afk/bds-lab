@@ -880,7 +880,10 @@
   "tries": 1
  },
  "q27_sampler_transpose": {
-  "status": "pending"
+  "commit": "b42c444",
+  "run": "42038536513",
+  "started": "2026-11-05 13:45",
+  "status": "running"
  },
  "q28_velocity_curve": {
   "status": "pending"
