@@ -961,10 +961,17 @@
   "tries": 1
  },
  "q33_band_parts": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "3a5187b",
+  "conclusion": "success",
+  "ended": "2026-11-05 17:38",
+  "failed_steps": 0,
+  "recordings": 7,
   "run": "42070003707",
   "started": "2026-11-05 16:58",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q34_drums_each": {
   "status": "pending"
@@ -1048,6 +1055,9 @@
   "status": "pending"
  },
  "q61_noise_floor_warm": {
+  "status": "pending"
+ },
+ "q62_bundle_warm_again": {
   "status": "pending"
  }
 }
