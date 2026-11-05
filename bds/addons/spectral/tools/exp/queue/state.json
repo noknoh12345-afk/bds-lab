@@ -841,10 +841,17 @@
   "tries": 1
  },
  "q24_load_many": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "6adfdd2",
+  "conclusion": "success",
+  "ended": "2026-11-05 12:55",
+  "failed_steps": 0,
+  "recordings": 2,
   "run": "42028777688",
   "started": "2026-11-05 12:37",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q25_sampler_voices": {
   "status": "pending"
