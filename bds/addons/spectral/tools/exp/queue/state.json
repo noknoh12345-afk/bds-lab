@@ -1149,17 +1149,17 @@
   "arms": {},
   "checkpoints": 0,
   "commit": "ca97f69",
-  "conclusion": "failure",
+  "conclusion": "success",
   "earlier_runs": [
    "42126160996"
   ],
-  "ended": "2026-11-05 23:01",
+  "ended": "2026-11-05 23:25",
   "failed_steps": 0,
-  "recordings": 0,
+  "recordings": 8,
   "run": "42126349718",
   "started": "2026-11-05 23:01",
-  "status": "running",
-  "tries": 1
+  "status": "done",
+  "tries": 2
  },
  "q48_speech_level": {
   "status": "pending"
