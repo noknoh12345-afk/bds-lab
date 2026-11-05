@@ -828,10 +828,17 @@
   "tries": 1
  },
  "q23_forget": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "167be64",
+  "conclusion": "success",
+  "ended": "2026-11-05 12:37",
+  "failed_steps": 0,
+  "recordings": 1,
   "run": "42022701237",
   "started": "2026-11-05 11:54",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q24_load_many": {
   "status": "pending"
