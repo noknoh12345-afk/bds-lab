@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 36（tools/exp/queue/q36_sampler_speed.json、tools/exp/queue40.py）: サンプラーの速さ 0.5〜2 倍。MIDI の曲は速さを変えても音は伸びない（時刻だけ変わる）: 速いと 1 tick に始める数が増える。どこまで崩れないか
+# キュー 37（tools/exp/queue/q37_sampler_pause_seek.json、tools/exp/queue40.py）: 一時停止・シーク（サンプラーとファイルの曲）。q19 は正弦波の道だけ。サンプラーとファイルの曲で、止めた音が残る・戻った音の頭が遅れる（読み込み直し）が無いか
 
 section title
 audio info
@@ -24,142 +24,82 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section speed_05_fe
+section pause_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run spectral:speed 0.5
-audio start sp05_fe
+audio start pz_pd
+do execute as @a run spectral:play piano_demo
+wait 4000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 8
+wait 9000
+do execute as @a run spectral:stop
+audio stop
+audio export pz_pd 160
+
+section pause_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start pz_fe
 do execute as @a run spectral:play fur_elise
-wait 31000
+wait 4000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 8
+wait 9000
 do execute as @a run spectral:stop
 audio stop
-audio export sp05_fe 160
-do execute as @a run spectral:speed 1
+audio export pz_fe 160
 
-section speed_05_bd
+section pause_bd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run spectral:speed 0.5
-audio start sp05_bd
+audio start pz_bd
 do execute as @a run spectral:play band_demo
-wait 22000
+wait 4000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 8
+wait 9000
 do execute as @a run spectral:stop
 audio stop
-audio export sp05_bd 160
-do execute as @a run spectral:speed 1
+audio export pz_bd 160
 
-section speed_075_fe
+section pause_pf
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run spectral:speed 0.75
-audio start sp075_fe
-do execute as @a run spectral:play fur_elise
-wait 20866
+audio start pz_pf
+do execute as @a run spectral:play piano_file
+wait 4000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 8
+wait 9000
 do execute as @a run spectral:stop
 audio stop
-audio export sp075_fe 160
-do execute as @a run spectral:speed 1
-
-section speed_075_bd
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run spectral:speed 0.75
-audio start sp075_bd
-do execute as @a run spectral:play band_demo
-wait 14866
-do execute as @a run spectral:stop
-audio stop
-audio export sp075_bd 160
-do execute as @a run spectral:speed 1
-
-section speed_125_fe
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run spectral:speed 1.25
-audio start sp125_fe
-do execute as @a run spectral:play fur_elise
-wait 12760
-do execute as @a run spectral:stop
-audio stop
-audio export sp125_fe 160
-do execute as @a run spectral:speed 1
-
-section speed_125_bd
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run spectral:speed 1.25
-audio start sp125_bd
-do execute as @a run spectral:play band_demo
-wait 9160
-do execute as @a run spectral:stop
-audio stop
-audio export sp125_bd 160
-do execute as @a run spectral:speed 1
-
-section speed_15_fe
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run spectral:speed 1.5
-audio start sp15_fe
-do execute as @a run spectral:play fur_elise
-wait 10733
-do execute as @a run spectral:stop
-audio stop
-audio export sp15_fe 160
-do execute as @a run spectral:speed 1
-
-section speed_15_bd
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run spectral:speed 1.5
-audio start sp15_bd
-do execute as @a run spectral:play band_demo
-wait 7733
-do execute as @a run spectral:stop
-audio stop
-audio export sp15_bd 160
-do execute as @a run spectral:speed 1
-
-section speed_2_fe
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run spectral:speed 2
-audio start sp2_fe
-do execute as @a run spectral:play fur_elise
-wait 8200
-do execute as @a run spectral:stop
-audio stop
-audio export sp2_fe 160
-do execute as @a run spectral:speed 1
-
-section speed_2_bd
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run spectral:speed 2
-audio start sp2_bd
-do execute as @a run spectral:play band_demo
-wait 5950
-do execute as @a run spectral:stop
-audio stop
-audio export sp2_bd 160
-do execute as @a run spectral:speed 1
+audio export pz_pf 160
