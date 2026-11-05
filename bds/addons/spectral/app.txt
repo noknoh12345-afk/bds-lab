@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 24（tools/exp/queue/q24_load_many.json、tools/exp/queue40.py）: 一度に温められる素の数（4・8・16・24・32 個を同時に）。まだ鳴らしていない素を 4〜32 個まとめて温めて鳴らす（同時 60 音）。電話の 32 音のうち温めがいくつまで効くか。2 回目は読み込み済み（物差し）
+# キュー 25（tools/exp/queue/q25_sampler_voices.json、tools/exp/queue40.py）: サンプラーの同時音数 8・16・28・40・60。既定の 28 は電話の 32 音から決めただけ。ピアノのエチュードとバンドで、少ないと切れる・多いと電話が落とすの間のどこが一番か
 
 section title
 audio info
@@ -13,7 +13,6 @@ audio info
 shot title
 
 section prep
-audio song probe_many pack=tools/exp/packs/q40
 
 section join
 join
@@ -24,26 +23,122 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section many_v60
+section voices_8_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 60 300 false 600
-audio start mn_v60
-do execute as @a run spectral:play probe_many
-wait 17193
+do execute as @a run spectral:sampler 2 250 8 300 false 600
+audio start vc8_piano_demo
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
 audio stop
-audio export mn_v60 160
+audio export vc8_piano_demo 160
 
-section many_again
+section voices_8_bd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 8 300 false 600
+audio start vc8_band_demo
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:stop
+audio stop
+audio export vc8_band_demo 160
+
+section voices_16_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 16 300 false 600
+audio start vc16_piano_demo
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:stop
+audio stop
+audio export vc16_piano_demo 160
+
+section voices_16_bd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 16 300 false 600
+audio start vc16_band_demo
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:stop
+audio stop
+audio export vc16_band_demo 160
+
+section voices_28_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start vc28_piano_demo
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:stop
+audio stop
+audio export vc28_piano_demo 160
+
+section voices_28_bd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start vc28_band_demo
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:stop
+audio stop
+audio export vc28_band_demo 160
+
+section voices_40_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 40 300 false 600
+audio start vc40_piano_demo
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:stop
+audio stop
+audio export vc40_piano_demo 160
+
+section voices_40_bd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 40 300 false 600
+audio start vc40_band_demo
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:stop
+audio stop
+audio export vc40_band_demo 160
+
+section voices_60_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 60 300 false 600
-audio start mn_again
-do execute as @a run spectral:play probe_many
-wait 17193
+audio start vc60_piano_demo
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
 audio stop
-audio export mn_again 160
+audio export vc60_piano_demo 160
+
+section voices_60_bd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 60 300 false 600
+audio start vc60_band_demo
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:stop
+audio stop
+audio export vc60_band_demo 160
