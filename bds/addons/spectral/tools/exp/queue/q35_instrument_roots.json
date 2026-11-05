@@ -1,0 +1,62 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 35（tools/exp/queue/q35_instrument_roots.json、tools/exp/queue40.py）: 楽器 20 種を素の高さそのままで（高さの確かめ）。11-03 に 16 楽器の高さを 1 オクターブ直した（手元で測っただけ）。実機で全部の素がその高さで鳴るか（pitch 1.0 の音だけ: 高さを見る物差し）"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song inst_roots_1,inst_roots_2,inst_roots_3 pack=tools/exp/packs/q40"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "inst_1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ir_1",
+    "do execute as @a run spectral:play inst_roots_1",
+    "wait 42550",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ir_1 160"
+   ]
+  },
+  {
+   "title": "inst_2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ir_2",
+    "do execute as @a run spectral:play inst_roots_2",
+    "wait 38500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ir_2 160"
+   ]
+  },
+  {
+   "title": "inst_3",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ir_3",
+    "do execute as @a run spectral:play inst_roots_3",
+    "wait 28150",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ir_3 160"
+   ]
+  }
+ ]
+}

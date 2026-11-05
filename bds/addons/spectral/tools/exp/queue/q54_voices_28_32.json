@@ -1,0 +1,58 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 54（tools/exp/queue/q54_voices_28_32.json、tools/exp/queue40.py）: 電話の声 24・28・32（同じ 48 声のデータ）。q13 は 16・20・24 で 24 が上。データは 48 声あるので 28・32 も鳴らせる: 電話の 32 音を使い切ると上がるか落ちるか"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "batch": 13,
+ "interleave": [
+  "v24",
+  "v28",
+  "v32"
+ ],
+ "arms": [
+  {
+   "pre": "v24",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:voices 24"
+   ]
+  },
+  {
+   "pre": "v28",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:voices 28"
+   ]
+  },
+  {
+   "pre": "v32",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:voices 32"
+   ]
+  }
+ ]
+}

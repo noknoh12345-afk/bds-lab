@@ -1,0 +1,135 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 51（tools/exp/queue/q51_file_warm.json、tools/exp/queue40.py）: ファイルの曲の温め 0・300・600・1000 ms（ヘッドホン・3D）。ファイルの曲も部分ごとに温める: 部分の継ぎ目の遅れ・抜けが温めの長さでどう変わるか（p03 は温めの前）"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [],
+ "arms": [],
+ "sections": [
+  {
+   "title": "file_w0",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 0",
+    "audio start fw0_phones",
+    "do execute as @a run spectral:play piano_file",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fw0_phones 160"
+   ]
+  },
+  {
+   "title": "file3_w0",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 0",
+    "audio start fw0_speaker",
+    "do execute as @a run spectral:play piano_file speaker",
+    "wait 24750",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fw0_speaker 160"
+   ]
+  },
+  {
+   "title": "file_w300",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 300",
+    "audio start fw300_phones",
+    "do execute as @a run spectral:play piano_file",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fw300_phones 160"
+   ]
+  },
+  {
+   "title": "file3_w300",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 300",
+    "audio start fw300_speaker",
+    "do execute as @a run spectral:play piano_file speaker",
+    "wait 24750",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fw300_speaker 160"
+   ]
+  },
+  {
+   "title": "file_w600",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start fw600_phones",
+    "do execute as @a run spectral:play piano_file",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fw600_phones 160"
+   ]
+  },
+  {
+   "title": "file3_w600",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start fw600_speaker",
+    "do execute as @a run spectral:play piano_file speaker",
+    "wait 24750",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fw600_speaker 160"
+   ]
+  },
+  {
+   "title": "file_w1000",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 1000",
+    "audio start fw1000_phones",
+    "do execute as @a run spectral:play piano_file",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fw1000_phones 160"
+   ]
+  },
+  {
+   "title": "file3_w1000",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 1000",
+    "audio start fw1000_speaker",
+    "do execute as @a run spectral:play piano_file speaker",
+    "wait 24750",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fw1000_speaker 160"
+   ]
+  }
+ ]
+}

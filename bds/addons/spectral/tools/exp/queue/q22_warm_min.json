@@ -1,0 +1,122 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 22（tools/exp/queue/q22_warm_min.json、tools/exp/queue40.py）: 温めの最短（0・20・50・80・110・150 ms）。p13 は 150 ms 前で 12/12・0 で 0/12。その間のどこから鳴るか（短いほど曲の頭を待たせない）。最後に 0 ms の組をもう一度（読み込み済みなら全部鳴る: 物差し）"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song probe_m0,probe_m20,probe_m50,probe_m80,probe_m110,probe_m150 pack=tools/exp/packs/q40"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "warm_m0",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 0",
+    "audio start wm_m0",
+    "do execute as @a run spectral:play probe_m0",
+    "wait 13850",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export wm_m0 160"
+   ]
+  },
+  {
+   "title": "warm_m20",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 20",
+    "audio start wm_m20",
+    "do execute as @a run spectral:play probe_m20",
+    "wait 13870",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export wm_m20 160"
+   ]
+  },
+  {
+   "title": "warm_m50",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 50",
+    "audio start wm_m50",
+    "do execute as @a run spectral:play probe_m50",
+    "wait 13900",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export wm_m50 160"
+   ]
+  },
+  {
+   "title": "warm_m80",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 80",
+    "audio start wm_m80",
+    "do execute as @a run spectral:play probe_m80",
+    "wait 13930",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export wm_m80 160"
+   ]
+  },
+  {
+   "title": "warm_m110",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 110",
+    "audio start wm_m110",
+    "do execute as @a run spectral:play probe_m110",
+    "wait 13960",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export wm_m110 160"
+   ]
+  },
+  {
+   "title": "warm_m150",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 150",
+    "audio start wm_m150",
+    "do execute as @a run spectral:play probe_m150",
+    "wait 14000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export wm_m150 160"
+   ]
+  },
+  {
+   "title": "warm_again",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 0",
+    "audio start wm_again",
+    "do execute as @a run spectral:play probe_m0",
+    "wait 13850",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export wm_again 160"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,122 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 33（tools/exp/queue/q33_band_parts.json、tools/exp/queue40.py）: バンドを楽器ごとに。バンドの実機 2.50 は電話の模型 3.54 より低く、6.4 kHz から上が 12〜21 dB 多い（理由は未解明）。1 楽器ずつ鳴らして、どの楽器が高い音を足しているか"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song band_p11,band_p32,band_p48,band_p73,band_p128 pack=tools/exp/packs/q40"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "band_full",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start bp_full",
+    "do execute as @a run spectral:play band_demo",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export bp_full 160"
+   ]
+  },
+  {
+   "title": "band_p11",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start bp_p11",
+    "do execute as @a run spectral:play band_p11",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export bp_p11 160"
+   ]
+  },
+  {
+   "title": "band_p32",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start bp_p32",
+    "do execute as @a run spectral:play band_p32",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export bp_p32 160"
+   ]
+  },
+  {
+   "title": "band_p48",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start bp_p48",
+    "do execute as @a run spectral:play band_p48",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export bp_p48 160"
+   ]
+  },
+  {
+   "title": "band_p73",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start bp_p73",
+    "do execute as @a run spectral:play band_p73",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export bp_p73 160"
+   ]
+  },
+  {
+   "title": "band_p128",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start bp_p128",
+    "do execute as @a run spectral:play band_p128",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export bp_p128 160"
+   ]
+  },
+  {
+   "title": "band_full_again",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start bp_full2",
+    "do execute as @a run spectral:play band_demo",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export bp_full2 160"
+   ]
+  }
+ ]
+}

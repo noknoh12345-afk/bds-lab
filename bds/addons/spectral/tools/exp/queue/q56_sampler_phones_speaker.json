@@ -1,0 +1,167 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 56（tools/exp/queue/q56_sampler_phones_speaker.json、tools/exp/queue40.py）: サンプラーのヘッドホンと 3D（同じ場所）。q03 は正弦波の道でほぼ同じだった。サンプラーは 3D に 250 ms 先回り・大きさの割り当てが違う: 距離 0 で同じに聞こえるか"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song fur_elise,speech_weather pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "hp_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start hp_fe",
+    "do execute as @a run spectral:play fur_elise phones",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export hp_fe 160"
+   ]
+  },
+  {
+   "title": "hs_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start hs_fe",
+    "do execute as @a run spectral:play fur_elise speaker",
+    "wait 15450",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export hs_fe 160"
+   ]
+  },
+  {
+   "title": "hp_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start hp_pd",
+    "do execute as @a run spectral:play piano_demo phones",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export hp_pd 160"
+   ]
+  },
+  {
+   "title": "hs_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start hs_pd",
+    "do execute as @a run spectral:play piano_demo speaker",
+    "wait 21450",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export hs_pd 160"
+   ]
+  },
+  {
+   "title": "hp_bd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start hp_bd",
+    "do execute as @a run spectral:play band_demo phones",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export hp_bd 160"
+   ]
+  },
+  {
+   "title": "hs_bd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start hs_bd",
+    "do execute as @a run spectral:play band_demo speaker",
+    "wait 10950",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export hs_bd 160"
+   ]
+  },
+  {
+   "title": "hp_sw",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start hp_sw",
+    "do execute as @a run spectral:play speech_weather phones",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export hp_sw 160"
+   ]
+  },
+  {
+   "title": "hs_sw",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start hs_sw",
+    "do execute as @a run spectral:play speech_weather speaker",
+    "wait 7850",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export hs_sw 160"
+   ]
+  },
+  {
+   "title": "hp_pf",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start hp_pf",
+    "do execute as @a run spectral:play piano_file phones",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export hp_pf 160"
+   ]
+  },
+  {
+   "title": "hs_pf",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start hs_pf",
+    "do execute as @a run spectral:play piano_file speaker",
+    "wait 24750",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export hs_pf 160"
+   ]
+  }
+ ]
+}

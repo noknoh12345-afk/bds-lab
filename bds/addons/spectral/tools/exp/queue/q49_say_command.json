@@ -1,0 +1,90 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 49（tools/exp/queue/q49_say_command.json、tools/exp/queue40.py）: ゲームの中の /spectral:say（かなをその場で）。tools/speech.py を通さず、ゲームの中で文字から読み上げ（抑揚なし・漢字なし）: 曲にした読み上げ（q44）と聞き取りを比べる。速さ 0.8・1・1.25"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [],
+ "arms": [],
+ "sections": [
+  {
+   "title": "say_1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start sy1",
+    "do execute as @a run spectral:say \"こんにちは\" phones 1",
+    "wait 3400",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sy1 160"
+   ]
+  },
+  {
+   "title": "say_2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start sy2",
+    "do execute as @a run spectral:say \"きょうは いい てんきですね\" phones 1",
+    "wait 4660",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sy2 160"
+   ]
+  },
+  {
+   "title": "say_3",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start sy3",
+    "do execute as @a run spectral:say \"きょうは いい てんきですね\" phones 0.8",
+    "wait 5200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sy3 160"
+   ]
+  },
+  {
+   "title": "say_4",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start sy4",
+    "do execute as @a run spectral:say \"きょうは いい てんきですね\" phones 1.25",
+    "wait 4228",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sy4 160"
+   ]
+  },
+  {
+   "title": "say_5",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start sy5",
+    "do execute as @a run spectral:say \"ダイヤモンドを みつけた\" speaker 1",
+    "wait 4480",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export sy5 160"
+   ]
+  }
+ ]
+}

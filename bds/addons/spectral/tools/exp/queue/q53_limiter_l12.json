@@ -1,0 +1,61 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 53（tools/exp/queue/q53_limiter_l12.json、tools/exp/queue40.py）: 音割れ止め +12 dB（正弦波の道）。p05 は +10 dB で音割れ止めが少し下げた。+12 dB（q12 で割れ始めた大きさ）なら効くか: +10、+12、+12 と止め"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "batch": 13,
+ "interleave": [
+  "e",
+  "l12",
+  "l12lm"
+ ],
+ "arms": [
+  {
+   "pre": "e",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:level 10 volume",
+    "spectral:limit false"
+   ]
+  },
+  {
+   "pre": "l12",
+   "pack": "tools/exp/packs/lv12",
+   "suffix": "_l12",
+   "conv": {
+    "refine_level": 12
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:level 12 volume",
+    "spectral:limit false"
+   ]
+  },
+  {
+   "pre": "l12lm",
+   "pack": "tools/exp/packs/lv12",
+   "suffix": "_l12",
+   "conv": {
+    "refine_level": 12
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:level 12 volume",
+    "spectral:limit true"
+   ]
+  }
+ ]
+}

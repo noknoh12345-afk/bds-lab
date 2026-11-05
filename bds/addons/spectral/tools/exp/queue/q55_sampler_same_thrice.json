@@ -1,0 +1,197 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 55（tools/exp/queue/q55_sampler_same_thrice.json、tools/exp/queue40.py）: サンプラーの同じ曲を 3 回（ゆらぎの物差し）。q01 は正弦波の道で 0.15 ゆれた。サンプラー（エリーゼ・エチュード・バンド・読み上げ）を同じ run で 3 回: どの差が差か"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song fur_elise,speech_hello pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "twice_1_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw1_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw1_fe 160"
+   ]
+  },
+  {
+   "title": "twice_1_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw1_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw1_pd 160"
+   ]
+  },
+  {
+   "title": "twice_1_bd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw1_bd",
+    "do execute as @a run spectral:play band_demo",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw1_bd 160"
+   ]
+  },
+  {
+   "title": "twice_1_sh",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw1_sh",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw1_sh 160"
+   ]
+  },
+  {
+   "title": "twice_2_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw2_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw2_fe 160"
+   ]
+  },
+  {
+   "title": "twice_2_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw2_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw2_pd 160"
+   ]
+  },
+  {
+   "title": "twice_2_bd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw2_bd",
+    "do execute as @a run spectral:play band_demo",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw2_bd 160"
+   ]
+  },
+  {
+   "title": "twice_2_sh",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw2_sh",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw2_sh 160"
+   ]
+  },
+  {
+   "title": "twice_3_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw3_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw3_fe 160"
+   ]
+  },
+  {
+   "title": "twice_3_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw3_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw3_pd 160"
+   ]
+  },
+  {
+   "title": "twice_3_bd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw3_bd",
+    "do execute as @a run spectral:play band_demo",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw3_bd 160"
+   ]
+  },
+  {
+   "title": "twice_3_sh",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start tw3_sh",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tw3_sh 160"
+   ]
+  }
+ ]
+}

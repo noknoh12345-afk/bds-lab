@@ -430,6 +430,14 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## 次にやること
 
+**11-05（7 回目のセッション）**: 12:39 の依頼「さらに 40 個ほど考えて検証ずっと走らせて」の計画 q22〜q61 を tools/exp/queue40.py で作った
+（tools/exp/queue/README.md の下の表、曲は tools/exp/packs/q40/ の 59 曲・予定の音の時刻つき）。40 本とも app/lib/scenario.mjs の parseScenario と
+src/main.ts のコマンドの引数で照合して問題 0（2436 行の do）。**1 録音 = 1 区切り**（1 行の失敗はその録音だけ）・各区切りの頭で sampler / pitch /
+speed / volume を戻す・kill なし・trim は RUNNING_CRITICAL だけ・上下の 3D は無し（聞き手が落ちる・埋まる）。
+このセッションには addon/spectral への push と Actions の起動の権限が無かった（GitHub の書き込みはセッションにリポジトリを足す許可が要る）:
+キューはまだ走っていない。続ける人は push して `QUEUE_WORK=<作業用> python3 tools/exp/queue_run.py loop --budget 6900` を回し続ける
+（q21 = run 41576813484 は 11-03 に走っていた: state.json はまだ running。ランナーが最初に拾って記録する）。
+
 **11-03 昼の時点**（上の 25〜30）:
 1. ~~p14~~ **済**（run 41569907471）: 300 % は 200 % と同じか上（エチュード 4.41・エリーゼ 4.23・バンド 2.50）→ 既定 300 % のまま。
    読み上げは録音の大きさをそろえてから tools/exp/speech_eval.py（ffmpeg loudnorm I=-20: Whisper は小さな録音で何も書かないことがある）

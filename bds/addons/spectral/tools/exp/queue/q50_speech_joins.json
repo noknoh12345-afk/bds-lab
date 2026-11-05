@@ -1,0 +1,137 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 50（tools/exp/queue/q50_speech_joins.json、tools/exp/queue40.py）: 読み上げのつなぎ方（重ね 10・40 ms、母音を止める 0・20 ms）。素と素のつなぎ（既定: 重ね 25・止め 10）を変えて: 途切れ（プツッ）と潰れのどちらが聞き取りを下げるか"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song speech_hello_o10,speech_cave_o10,speech_hello_o40,speech_cave_o40,speech_hello_c0,speech_cave_c0,speech_hello_c20,speech_cave_c20 pack=tools/exp/packs/q40"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "join_o10_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start jno10_speech_hello",
+    "do execute as @a run spectral:play speech_hello_o10",
+    "wait 5997",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export jno10_speech_hello 160"
+   ]
+  },
+  {
+   "title": "join_o10_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start jno10_speech_cave",
+    "do execute as @a run spectral:play speech_cave_o10",
+    "wait 5723",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export jno10_speech_cave 160"
+   ]
+  },
+  {
+   "title": "join_o40_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start jno40_speech_hello",
+    "do execute as @a run spectral:play speech_hello_o40",
+    "wait 5997",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export jno40_speech_hello 160"
+   ]
+  },
+  {
+   "title": "join_o40_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start jno40_speech_cave",
+    "do execute as @a run spectral:play speech_cave_o40",
+    "wait 5723",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export jno40_speech_cave 160"
+   ]
+  },
+  {
+   "title": "join_c0_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start jnc0_speech_hello",
+    "do execute as @a run spectral:play speech_hello_c0",
+    "wait 5997",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export jnc0_speech_hello 160"
+   ]
+  },
+  {
+   "title": "join_c0_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start jnc0_speech_cave",
+    "do execute as @a run spectral:play speech_cave_c0",
+    "wait 5723",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export jnc0_speech_cave 160"
+   ]
+  },
+  {
+   "title": "join_c20_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start jnc20_speech_hello",
+    "do execute as @a run spectral:play speech_hello_c20",
+    "wait 5997",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export jnc20_speech_hello 160"
+   ]
+  },
+  {
+   "title": "join_c20_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start jnc20_speech_cave",
+    "do execute as @a run spectral:play speech_cave_c20",
+    "wait 5723",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export jnc20_speech_cave 160"
+   ]
+  }
+ ]
+}

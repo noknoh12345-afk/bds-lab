@@ -128,7 +128,8 @@
   "tries": 2
  },
  "p07_limiter": {
-  "status": "pending"
+  "status": "dropped",
+  "why": "78adc33: p05 の 2 回目がこの run の役を果たした（計画ファイルも消してある）"
  },
  "p08_connect": {
   "arms": {},

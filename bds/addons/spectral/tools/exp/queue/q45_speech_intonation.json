@@ -1,0 +1,137 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 45（tools/exp/queue/q45_speech_intonation.json、tools/exp/queue40.py）: 読み上げの抑揚の幅 0・2・(4)・6・8 半音。素を高さ 3 段（−4・0・+4）から pitch で動かす: 抑揚を広げると聞き取りやすいか、素の高さから遠くて崩れるか（4 は q44・p13 の既定）"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song speech_weather_r0,speech_piano_r0,speech_weather_r2,speech_piano_r2,speech_weather_r6,speech_piano_r6,speech_weather_r8,speech_piano_r8 pack=tools/exp/packs/q40"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "rng_0_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ra0_speech_weather",
+    "do execute as @a run spectral:play speech_weather_r0",
+    "wait 5035",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ra0_speech_weather 160"
+   ]
+  },
+  {
+   "title": "rng_0_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ra0_speech_piano",
+    "do execute as @a run spectral:play speech_piano_r0",
+    "wait 6213",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ra0_speech_piano 160"
+   ]
+  },
+  {
+   "title": "rng_2_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ra2_speech_weather",
+    "do execute as @a run spectral:play speech_weather_r2",
+    "wait 5035",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ra2_speech_weather 160"
+   ]
+  },
+  {
+   "title": "rng_2_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ra2_speech_piano",
+    "do execute as @a run spectral:play speech_piano_r2",
+    "wait 6213",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ra2_speech_piano 160"
+   ]
+  },
+  {
+   "title": "rng_6_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ra6_speech_weather",
+    "do execute as @a run spectral:play speech_weather_r6",
+    "wait 5035",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ra6_speech_weather 160"
+   ]
+  },
+  {
+   "title": "rng_6_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ra6_speech_piano",
+    "do execute as @a run spectral:play speech_piano_r6",
+    "wait 6213",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ra6_speech_piano 160"
+   ]
+  },
+  {
+   "title": "rng_8_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ra8_speech_weather",
+    "do execute as @a run spectral:play speech_weather_r8",
+    "wait 5035",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ra8_speech_weather 160"
+   ]
+  },
+  {
+   "title": "rng_8_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ra8_speech_piano",
+    "do execute as @a run spectral:play speech_piano_r8",
+    "wait 6213",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ra8_speech_piano 160"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,89 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 42（tools/exp/queue/q42_rejoin.json、tools/exp/queue40.py）: 入り直し（ゲームを閉じてもう一度）。入り直すと電話は素を全部捨てる（はず）: 温めが入り直しの後も効くか、温めなしの初回はどうか"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song fur_elise pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "before",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start rj_before",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export rj_before 160"
+   ]
+  },
+  {
+   "title": "rejoin",
+   "lines": [
+    "stop",
+    "launch",
+    "until title 600000",
+    "join",
+    "until joined 300000",
+    "wait 5000",
+    "do tp @a 0 -60 0 0 0"
+   ]
+  },
+  {
+   "title": "after1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start rj_after1",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export rj_after1 160"
+   ]
+  },
+  {
+   "title": "after2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start rj_after2",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export rj_after2 160"
+   ]
+  },
+  {
+   "title": "after_nowarm",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 0",
+    "audio start rj_nowarm",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export rj_nowarm 160"
+   ]
+  }
+ ]
+}
