@@ -1091,10 +1091,20 @@
   "tries": 1
  },
  "q43_speech_mora": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "a03b837",
+  "conclusion": "failure",
+  "earlier_runs": [
+   "42107389472"
+  ],
+  "ended": "2026-11-05 21:24",
+  "failed_steps": 10,
+  "recordings": 0,
   "run": "42107389472",
   "started": "2026-11-05 20:52",
-  "status": "running"
+  "status": "pending",
+  "tries": 1
  },
  "q44_speech_sentences": {
   "status": "pending"
