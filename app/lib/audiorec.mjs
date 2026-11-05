@@ -240,7 +240,8 @@ export function publish({ labDir, addon = 'spectral', wav, kbps = 128, dir }) {
   fs.mkdirSync(recDir, { recursive: true });
   // (-map_metadata -1: no tags of the WAV's, only the encoder's own)
   const r = spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', wav, '-map_metadata', '-1', '-c:a', 'libopus', '-b:a', `${kbps}k`, opus], { encoding: 'utf8', timeout: 600_000 });
-  if (r.status !== 0) throw new Error(`Opus にできません: ${(r.stderr || '').trim().slice(-300)}`);
+  // (the reason too when ffmpeg never ran or was killed: q31's two runs, 2026-11-05, failed every export with no stderr at all)
+  if (r.status !== 0) throw new Error(`Opus にできません: ${(r.stderr || '').trim().slice(-300) || (r.error ? `ffmpeg を動かせません（${r.error.code ?? r.error.message}）` : `ffmpeg が止められました（${r.signal ?? `終了コード ${r.status}`}）`)}`);
   const data = fs.readFileSync(opus), sha256 = crypto.createHash('sha256').update(data).digest('hex');
   const measured = {};
   for (const f of fs.readdirSync(path.dirname(wav)).filter((x) => x.startsWith(`${name}.`) && x.endsWith('.json')).sort()) {
