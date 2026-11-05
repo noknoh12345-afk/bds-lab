@@ -932,7 +932,10 @@
   "tries": 1
  },
  "q31_bundle_warm": {
-  "status": "pending"
+  "commit": "2df138b",
+  "run": "42055705231",
+  "started": "2026-11-05 15:30",
+  "status": "running"
  },
  "q32_ahead_3d": {
   "status": "pending"
