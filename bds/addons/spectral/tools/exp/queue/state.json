@@ -854,10 +854,17 @@
   "tries": 1
  },
  "q25_sampler_voices": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "534cc11",
+  "conclusion": "success",
+  "ended": "2026-11-05 13:17",
+  "failed_steps": 0,
+  "recordings": 10,
   "run": "42031247729",
   "started": "2026-11-05 12:55",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q26_chords_wide": {
   "status": "pending"
