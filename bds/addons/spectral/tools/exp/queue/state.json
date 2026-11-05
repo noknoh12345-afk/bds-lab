@@ -854,7 +854,10 @@
   "tries": 1
  },
  "q25_sampler_voices": {
-  "status": "pending"
+  "commit": "534cc11",
+  "run": "42031247729",
+  "started": "2026-11-05 12:55",
+  "status": "running"
  },
  "q26_chords_wide": {
   "status": "pending"
