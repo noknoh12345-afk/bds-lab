@@ -1120,7 +1120,10 @@
   "tries": 1
  },
  "q45_speech_intonation": {
-  "status": "pending"
+  "commit": "19c1be2",
+  "run": "42118507606",
+  "started": "2026-11-05 22:05",
+  "status": "running"
  },
  "q46_speech_distance": {
   "status": "pending"
