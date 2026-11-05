@@ -64,3 +64,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q39_sampler_screen_off | 42091290812 | failure | 1（sn_pd 448 KB） | — | 11（✘ 51 do execute as @a run spectral:stop） | 2026-11-05 19:10 → 2026-11-05 19:20 |
 | q40_sampler_memory | 42092980688 | failure | 3 | — | 5（✘ 73 trim RUNNING_CRITICAL） | 2026-11-05 19:20 → 2026-11-05 19:45 |
 | q41_long_mix_20min | 42096954916 | success | 1（mx_20min 9080 KB） | — | 0 | 2026-11-05 19:45 → 2026-11-05 20:32 |
+| q42_rejoin | 42104363907 | failure | 4 | — | 1（✘ 46 do tp @a 0 -60 0 0 0） | 2026-11-05 20:32 → 2026-11-05 20:52 |

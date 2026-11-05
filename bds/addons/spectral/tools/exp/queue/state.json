@@ -1078,10 +1078,17 @@
   "tries": 1
  },
  "q42_rejoin": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "8f1bd61",
+  "conclusion": "failure",
+  "ended": "2026-11-05 20:52",
+  "failed_steps": 1,
+  "recordings": 4,
   "run": "42104363907",
   "started": "2026-11-05 20:32",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q43_speech_mora": {
   "status": "pending"
