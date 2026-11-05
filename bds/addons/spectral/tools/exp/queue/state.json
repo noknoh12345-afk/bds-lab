@@ -1146,7 +1146,10 @@
   "tries": 1
  },
  "q47_speech_over_music": {
-  "status": "pending"
+  "commit": "91cfcb6",
+  "run": "42126160996",
+  "started": "2026-11-05 23:00",
+  "status": "running"
  },
  "q48_speech_level": {
   "status": "pending"
