@@ -815,7 +815,10 @@
   "tries": 1
  },
  "q22_warm_min": {
-  "status": "pending"
+  "commit": "c52661f",
+  "run": "42020624439",
+  "started": "2026-11-05 11:38",
+  "status": "running"
  },
  "q23_forget": {
   "status": "pending"
