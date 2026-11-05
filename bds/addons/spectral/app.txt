@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 32（tools/exp/queue/q32_ahead_3d.json、tools/exp/queue40.py）: 3D の先回り 0・100・250・400 ms。3D は作ってから 100〜200 ms 遅れて鳴る（推測）。先回りの量でクリックの間隔・エリーゼの揃い方がどう変わるか（既定 250 は実機で選んでいない）
+# キュー 33（tools/exp/queue/q33_band_parts.json、tools/exp/queue40.py）: バンドを楽器ごとに。バンドの実機 2.50 は電話の模型 3.54 より低く、6.4 kHz から上が 12〜21 dB 多い（理由は未解明）。1 楽器ずつ鳴らして、どの楽器が高い音を足しているか
 
 section title
 audio info
@@ -13,7 +13,7 @@ audio info
 shot title
 
 section prep
-audio song clicks_pairs,clicks_pulse,fur_elise pack=tools/exp/packs/notes
+audio song band_p11,band_p32,band_p48,band_p73,band_p128 pack=tools/exp/packs/q40
 
 section join
 join
@@ -24,146 +24,86 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section ahead_0_pp
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 0 28 300 false 600
-audio start ah0_pp
-do execute as @a run spectral:play clicks_pairs speaker
-wait 7500
-do execute as @a run spectral:stop
-audio stop
-audio export ah0_pp 160
-
-section ahead_0_pu
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 0 28 300 false 600
-audio start ah0_pu
-do execute as @a run spectral:play clicks_pulse speaker
-wait 3800
-do execute as @a run spectral:stop
-audio stop
-audio export ah0_pu 160
-
-section ahead_0_fe
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 0 28 300 false 600
-audio start ah0_fe
-do execute as @a run spectral:play fur_elise speaker
-wait 15200
-do execute as @a run spectral:stop
-audio stop
-audio export ah0_fe 160
-
-section ahead_100_pp
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 100 28 300 false 600
-audio start ah100_pp
-do execute as @a run spectral:play clicks_pairs speaker
-wait 7600
-do execute as @a run spectral:stop
-audio stop
-audio export ah100_pp 160
-
-section ahead_100_pu
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 100 28 300 false 600
-audio start ah100_pu
-do execute as @a run spectral:play clicks_pulse speaker
-wait 3900
-do execute as @a run spectral:stop
-audio stop
-audio export ah100_pu 160
-
-section ahead_100_fe
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 100 28 300 false 600
-audio start ah100_fe
-do execute as @a run spectral:play fur_elise speaker
-wait 15300
-do execute as @a run spectral:stop
-audio stop
-audio export ah100_fe 160
-
-section ahead_250_pp
+section band_full
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ah250_pp
-do execute as @a run spectral:play clicks_pairs speaker
-wait 7750
+audio start bp_full
+do execute as @a run spectral:play band_demo
+wait 10700
 do execute as @a run spectral:stop
 audio stop
-audio export ah250_pp 160
+audio export bp_full 160
 
-section ahead_250_pu
+section band_p11
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ah250_pu
-do execute as @a run spectral:play clicks_pulse speaker
-wait 4050
+audio start bp_p11
+do execute as @a run spectral:play band_p11
+wait 10700
 do execute as @a run spectral:stop
 audio stop
-audio export ah250_pu 160
+audio export bp_p11 160
 
-section ahead_250_fe
+section band_p32
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ah250_fe
-do execute as @a run spectral:play fur_elise speaker
-wait 15450
+audio start bp_p32
+do execute as @a run spectral:play band_p32
+wait 10700
 do execute as @a run spectral:stop
 audio stop
-audio export ah250_fe 160
+audio export bp_p32 160
 
-section ahead_400_pp
+section band_p48
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 400 28 300 false 600
-audio start ah400_pp
-do execute as @a run spectral:play clicks_pairs speaker
-wait 7900
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start bp_p48
+do execute as @a run spectral:play band_p48
+wait 10700
 do execute as @a run spectral:stop
 audio stop
-audio export ah400_pp 160
+audio export bp_p48 160
 
-section ahead_400_pu
+section band_p73
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 400 28 300 false 600
-audio start ah400_pu
-do execute as @a run spectral:play clicks_pulse speaker
-wait 4200
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start bp_p73
+do execute as @a run spectral:play band_p73
+wait 10700
 do execute as @a run spectral:stop
 audio stop
-audio export ah400_pu 160
+audio export bp_p73 160
 
-section ahead_400_fe
+section band_p128
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 400 28 300 false 600
-audio start ah400_fe
-do execute as @a run spectral:play fur_elise speaker
-wait 15600
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start bp_p128
+do execute as @a run spectral:play band_p128
+wait 10700
 do execute as @a run spectral:stop
 audio stop
-audio export ah400_fe 160
+audio export bp_p128 160
+
+section band_full_again
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start bp_full2
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:stop
+audio stop
+audio export bp_full2 160
