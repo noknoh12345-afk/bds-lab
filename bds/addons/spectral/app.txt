@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 28（tools/exp/queue/q28_velocity_curve.json、tools/exp/queue40.py）: 強さの曲線（8〜127 の 16 段、ピアノと弦）。強さ → 大きさが実機でどうなるか（三段の素の継ぎ目・16 bit の床に沈む弱さ）。大きさ 300 % と 200 %
+# キュー 29（tools/exp/queue/q29_sampler_distance.json、tools/exp/queue40.py）: サンプラーの 3D: 距離 0〜32 ブロック。q04 は正弦波の道で 8 ブロックまで同じ。サンプラー（ピアノ・読み上げ）は 3D の遠さでどう落ちるか
 
 section title
 audio info
@@ -13,7 +13,7 @@ audio info
 shot title
 
 section prep
-audio song velocity_ramp pack=tools/exp/packs/q40
+audio song fur_elise,speech_hello pack=tools/exp/packs/notes
 
 section join
 join
@@ -24,38 +24,194 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section vel_phones
+section dist_0_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start vl_phones
-do execute as @a run spectral:play velocity_ramp
-wait 31100
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd0_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 0 -60 0
+wait 14750
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export vl_phones 160
+audio export sd0_fe 160
 
-section vel_speaker
+section dist_0_sh
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start vl_speaker
-do execute as @a run spectral:play velocity_ramp speaker
-wait 31350
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd0_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 0 -60 0
+wait 7150
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export vl_speaker 160
+audio export sd0_sh 160
 
-section vel_l200
+section dist_4_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 200 false 600
-audio start vl_l200
-do execute as @a run spectral:play velocity_ramp
-wait 31100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd4_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 4 -60 0
+wait 14750
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export vl_l200 160
+audio export sd4_fe 160
+
+section dist_4_sh
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd4_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 4 -60 0
+wait 7150
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd4_sh 160
+
+section dist_8_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd8_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 8 -60 0
+wait 14750
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd8_fe 160
+
+section dist_8_sh
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd8_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 8 -60 0
+wait 7150
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd8_sh 160
+
+section dist_16_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd16_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 16 -60 0
+wait 14750
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd16_fe 160
+
+section dist_16_sh
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd16_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 16 -60 0
+wait 7150
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd16_sh 160
+
+section dist_24_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd24_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 24 -60 0
+wait 14750
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd24_fe 160
+
+section dist_24_sh
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd24_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 24 -60 0
+wait 7150
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd24_sh 160
+
+section dist_32_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd32_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 32 -60 0
+wait 14750
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd32_fe 160
+
+section dist_32_sh
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd32_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 32 -60 0
+wait 7150
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd32_sh 160
