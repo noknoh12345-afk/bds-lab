@@ -1052,7 +1052,10 @@
   "tries": 1
  },
  "q40_sampler_memory": {
-  "status": "pending"
+  "commit": "fcbfe99",
+  "run": "42092980688",
+  "started": "2026-11-05 19:20",
+  "status": "running"
  },
  "q41_long_mix_20min": {
   "status": "pending"
