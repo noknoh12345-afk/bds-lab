@@ -867,10 +867,17 @@
   "tries": 1
  },
  "q26_chords_wide": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "d74032f",
+  "conclusion": "failure",
+  "ended": "2026-11-05 13:44",
+  "failed_steps": 1,
+  "recordings": 3,
   "run": "42034434679",
   "started": "2026-11-05 13:17",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q27_sampler_transpose": {
   "status": "pending"

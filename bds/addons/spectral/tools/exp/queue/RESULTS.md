@@ -47,3 +47,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q23_forget | 42022701237 | success | 1（fg_w0 360 KB） | — | 0 | 2026-11-05 11:54 → 2026-11-05 12:37 |
 | q24_load_many | 42028777688 | success | 2（mn_v60 66 KB, mn_again 66 KB） | — | 0 | 2026-11-05 12:37 → 2026-11-05 12:55 |
 | q25_sampler_voices | 42031247729 | success | 10 | — | 0 | 2026-11-05 12:55 → 2026-11-05 13:17 |
+| q26_chords_wide | 42034434679 | failure | 3 | — | 1（✘ 37 audio export ch_same 160） | 2026-11-05 13:17 → 2026-11-05 13:44 |
