@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 40（tools/exp/queue/q40_sampler_memory.json、tools/exp/queue40.py）: メモリが足りないとき（サンプラー、trim RUNNING_CRITICAL）。q20 は RUNNING_LOW の行で止まった（RUNNING_CRITICAL は通った）。読み込んだ素を電話が捨てるか
+# キュー 41（tools/exp/queue/q41_long_mix_20min.json、tools/exp/queue40.py）: 混ぜて 20 分（サンプラー・読み上げ・ファイル・正弦波を順に）。曲を切り替えながら 20 分: 素の温め・捨て・正弦波の道との行き来が長く続いても崩れないか（後で曲ごとに区切って最初の周と比べる）
 
 section title
 audio info
@@ -13,7 +13,8 @@ audio info
 shot title
 
 section prep
-audio song fur_elise pack=tools/exp/packs/notes
+audio song rock_big,vocal_name_of_love suffix=_e pack=tools/exp/packs/run10
+audio song fur_elise,speech_hello,speech_cave pack=tools/exp/packs/notes
 
 section join
 join
@@ -24,106 +25,156 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section mem_n_pd
+section mix
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start mn_pd
+audio start mx_20min
 do execute as @a run spectral:play piano_demo
 wait 21200
-do execute as @a run spectral:stop
-audio stop
-audio export mn_pd 160
-
-section mem_t_pd
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start mt_pd
-do execute as @a run spectral:play piano_demo
-wait 3000
-trim RUNNING_CRITICAL
-wait 18200
-do execute as @a run spectral:stop
-audio stop
-audio export mt_pd 160
-
-section mem_n_fe
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start mn_fe
 do execute as @a run spectral:play fur_elise
 wait 15200
-do execute as @a run spectral:stop
-audio stop
-audio export mn_fe 160
-
-section mem_t_fe
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start mt_fe
-do execute as @a run spectral:play fur_elise
-wait 3000
-trim RUNNING_CRITICAL
-wait 12200
-do execute as @a run spectral:stop
-audio stop
-audio export mt_fe 160
-
-section mem_n_bd
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start mn_bd
 do execute as @a run spectral:play band_demo
 wait 10700
-do execute as @a run spectral:stop
-audio stop
-audio export mn_bd 160
-
-section mem_t_bd
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start mt_bd
-do execute as @a run spectral:play band_demo
-wait 3000
-trim RUNNING_CRITICAL
-wait 7700
-do execute as @a run spectral:stop
-audio stop
-audio export mt_bd 160
-
-section mem_n_pf
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start mn_pf
+do execute as @a run spectral:play speech_hello
+wait 7600
 do execute as @a run spectral:play piano_file
 wait 24500
-do execute as @a run spectral:stop
-audio stop
-audio export mn_pf 160
-
-section mem_t_pf
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start mt_pf
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:play speech_hello
+wait 7600
 do execute as @a run spectral:play piano_file
-wait 3000
-trim RUNNING_CRITICAL
-wait 21500
+wait 24500
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:play speech_hello
+wait 7600
+do execute as @a run spectral:play piano_file
+wait 24500
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:play speech_hello
+wait 7600
+do execute as @a run spectral:play piano_file
+wait 24500
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:play speech_hello
+wait 7600
+do execute as @a run spectral:play piano_file
+wait 24500
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:play speech_hello
+wait 7600
+do execute as @a run spectral:play piano_file
+wait 24500
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:play speech_hello
+wait 7600
+do execute as @a run spectral:play piano_file
+wait 24500
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:play speech_hello
+wait 7600
+do execute as @a run spectral:play piano_file
+wait 24500
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:play speech_hello
+wait 7600
+do execute as @a run spectral:play piano_file
+wait 24500
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:play speech_cave
+wait 7600
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
 do execute as @a run spectral:stop
 audio stop
-audio export mt_pf 160
+audio export mx_20min 64
