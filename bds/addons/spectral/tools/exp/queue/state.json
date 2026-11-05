@@ -1133,7 +1133,10 @@
   "tries": 1
  },
  "q46_speech_distance": {
-  "status": "pending"
+  "commit": "4e9bde9",
+  "run": "42123770786",
+  "started": "2026-11-05 22:42",
+  "status": "running"
  },
  "q47_speech_over_music": {
   "status": "pending"
