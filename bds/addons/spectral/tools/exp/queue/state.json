@@ -934,7 +934,7 @@
  "q31_bundle_warm": {
   "arms": {},
   "checkpoints": 0,
-  "commit": "2df138b",
+  "commit": "8809fcf",
   "conclusion": "failure",
   "earlier_runs": [
    "42055705231"
@@ -942,9 +942,9 @@
   "ended": "2026-11-05 16:06",
   "failed_steps": 12,
   "recordings": 0,
-  "run": "42055705231",
-  "started": "2026-11-05 15:30",
-  "status": "pending",
+  "run": "42061383851",
+  "started": "2026-11-05 16:06",
+  "status": "running",
   "tries": 1
  },
  "q32_ahead_3d": {
