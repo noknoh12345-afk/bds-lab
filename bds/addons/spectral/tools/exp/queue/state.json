@@ -974,10 +974,17 @@
   "tries": 1
  },
  "q34_drums_each": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "385f713",
+  "conclusion": "success",
+  "ended": "2026-11-05 18:01",
+  "failed_steps": 0,
+  "recordings": 2,
   "run": "42076658946",
   "started": "2026-11-05 17:38",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q35_instrument_roots": {
   "status": "pending"
