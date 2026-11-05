@@ -115,8 +115,21 @@ export function pythonFor(labDir) {
   if (!has('ffmpeg', ['-version']) && has('sudo', ['-n', 'true'])) {
     spawnSync('sudo', ['-n', 'sh', '-c', 'apt-get install -y -qq ffmpeg >/dev/null 2>&1 || (apt-get update -qq >/dev/null 2>&1 && apt-get install -y -qq ffmpeg >/dev/null 2>&1)'], { stdio: 'ignore', timeout: 600_000 });
   }
-  if (has('python3', ['-c', 'import numpy, scipy'])) return 'python3';
   const venv = path.join(labDir, '.lab-tools', 'rigpy'), py = path.join(venv, 'bin', 'python3');
+  // (apt sometimes gives nothing, silently: q31's two runs and q43's first, 2026-11-05, lost every recording to "ffmpeg: ENOENT".
+  //  Then the static ffmpeg pip's imageio-ffmpeg carries, linked into a folder put first on PATH)
+  if (!has('ffmpeg', ['-version'])) {
+    const bin = path.join(labDir, '.lab-tools', 'bin');
+    fs.mkdirSync(bin, { recursive: true });
+    if (!fs.existsSync(py)) spawnSync('python3', ['-m', 'venv', venv], { stdio: 'ignore', timeout: 120_000 });
+    spawnSync(py, ['-m', 'pip', 'install', '-q', 'imageio-ffmpeg'], { stdio: 'ignore', timeout: 600_000 });
+    const exe = spawnSync(py, ['-c', 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())'], { encoding: 'utf8' }).stdout.trim();
+    if (exe && fs.existsSync(exe)) {
+      try { fs.rmSync(path.join(bin, 'ffmpeg'), { force: true }); fs.symlinkSync(exe, path.join(bin, 'ffmpeg')); } catch { /* (there already) */ }
+      if (!(process.env.PATH ?? '').split(path.delimiter).includes(bin)) process.env.PATH = bin + path.delimiter + (process.env.PATH ?? '');
+    }
+  }
+  if (has('python3', ['-c', 'import numpy, scipy'])) return 'python3';
   if (!fs.existsSync(py)) spawnSync('python3', ['-m', 'venv', venv], { stdio: 'ignore', timeout: 120_000 });
   if (!has(py, ['-c', 'import numpy, scipy'])) spawnSync(py, ['-m', 'pip', 'install', '-q', 'numpy', 'scipy'], { stdio: 'ignore', timeout: 600_000 });
   if (!has(py, ['-c', 'import numpy, scipy'])) throw new Error('numpy / scipy を用意できません（python3 -m pip install numpy scipy）');
