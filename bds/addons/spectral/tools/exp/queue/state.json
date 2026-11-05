@@ -1026,7 +1026,10 @@
   "tries": 1
  },
  "q38_sampler_loop_5min": {
-  "status": "pending"
+  "commit": "aaf19cb",
+  "run": "42088603571",
+  "started": "2026-11-05 18:53",
+  "status": "running"
  },
  "q39_sampler_screen_off": {
   "status": "pending"
