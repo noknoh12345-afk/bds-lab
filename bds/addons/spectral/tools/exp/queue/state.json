@@ -987,10 +987,17 @@
   "tries": 1
  },
  "q35_instrument_roots": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "3ee1943",
+  "conclusion": "success",
+  "ended": "2026-11-05 18:21",
+  "failed_steps": 0,
+  "recordings": 3,
   "run": "42080371685",
   "started": "2026-11-05 18:02",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q36_sampler_speed": {
   "status": "pending"
