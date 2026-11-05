@@ -430,6 +430,15 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## 次にやること
 
+**11-05 知覚マッチング追跡（調べもの → 手元の試し、すべて推測: tools/exp/run_exp.py、24 声・+10 dB・電話の経路 path24）**:
+ユーザーの依頼「mp3 を正弦波で再現するプロジェクトや記事を網羅して作業短縮」「唯一の方法を見出して」。公開例（Eidolon・Notematic Vocoder・
+PitchCraft・しゃべるピアノ）は Spectral より粗い。理屈の上の答えは「電話が鳴らせる音の辞書から、耳の差が一番減る音を 1 つずつ選ぶ」知覚マッチング追跡
+（Heusdens 2002）で、変換器はすでに 4 段のうち 3 段（マスキングの並べ替え・電話の模型を通した大きさとフェードの詰め refine_client）を持っていた。
+足りない「選ぶ」段を tools/spectral.py の `salience='pmp'`（pmp_salience）と `salience='auto'`（両方作って refine の最後の点数が高い方）に足した
+（**既定は変えていない**）。13 曲: auto は 9 曲上・2 曲下（ファンク −0.16・ショパン −0.08）・平均 +0.02、pmp 単独は旋律の曲で +0.15 前後・
+ロック −1.4。**天井**: 元の曲そのものを同じ +10 dB で同じ経路に通すと中央値 3.86、今の変換は 3.53（差 0.34、オーケストラは天井と同じ）→
+正弦波の選び方の伸びしろは小さい。残りは電話の出口（−32.5 dB・16 bit・24 kHz の混ぜ）。結果は /home/claude/qwork/pmp*.jsonl・ceil10.jsonl（手元）。
+
 **11-05（7 回目のセッション）**: 12:39 の依頼「さらに 40 個ほど考えて検証ずっと走らせて」の計画 q22〜q61 を tools/exp/queue40.py で作った
 （tools/exp/queue/README.md の下の表、曲は tools/exp/packs/q40/ の 59 曲・予定の音の時刻つき）。40 本とも app/lib/scenario.mjs の parseScenario と
 src/main.ts のコマンドの引数で照合して問題 0（2436 行の do）。**1 録音 = 1 区切り**（1 行の失敗はその録音だけ）・各区切りの頭で sampler / pitch /

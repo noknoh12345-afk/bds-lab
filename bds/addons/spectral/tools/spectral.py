@@ -673,6 +673,61 @@ def erb_salience(tracks, spectra, n_frames, floor_db=45.0):
     return out
 
 
+def pmp_salience(tracks, spectra, n_frames, floor_db=45.0, up_db=12.0, down_db=27.0, offset_db=14.0):
+    """perceptual matching pursuit's choice of partials (Heusdens et al. 2002, Ruiz Reyes et al. 2010) on the tracks: the
+    tracks taken one at a time, each the one that takes away the most audible distortion — the tonal power left uncovered in
+    each frame's ERB band, weighted by 1 / the masking threshold there (the original's own power spread over the bands: up
+    `up_db` dB a band toward the treble, `down_db` toward the bass, `offset_db` under the masker). What a track adds where tracks
+    already chosen cover the band counts only up to the band's power (two partials in one band are not twice the band): unlike
+    'a' / 'erb', a track's worth falls as the ones around it are chosen. Lazy greedy (the gain only falls: submodular).
+    Returns a salience per track that sorts as the order chosen (choose_tracks fills the voices in that order)"""
+    import heapq
+    edges, P = erb_band_power(spectra, n_frames)
+    nb = P.shape[1]
+    d = np.arange(nb)[:, None] - np.arange(nb)[None, :]        # target band j minus masker band i
+    spread = np.where(d >= 0, 10 ** (-(offset_db + up_db * d) / 10), 10 ** (-(offset_db + down_db * (-d)) / 10))
+    M = P @ spread.T                                               # (frames, bands): the masking threshold
+    top = P.max(1, keepdims=True)
+    floor = top * 10 ** (-floor_db / 10)
+    W = 1.0 / np.maximum(np.maximum(M, floor), 1e-30)
+    W[P <= floor] = 0.0
+    cells = []
+    for (k0, f, a) in tracks:
+        ks, js, es = [], [], []
+        for i in range(len(a)):
+            k = k0 + i
+            if k >= n_frames or a[i] <= 0:
+                continue
+            j = int(np.searchsorted(edges, f[i]) - 1)
+            if 0 <= j < nb:
+                ks.append(k); js.append(j); es.append(0.5 * a[i] * a[i])
+        cells.append((np.array(ks, np.int64), np.array(js, np.int64), np.array(es)))
+    C = np.zeros_like(P)
+
+    def gain(ti):
+        ks, js, es = cells[ti]
+        if not len(ks):
+            return 0.0
+        p, c = P[ks, js], C[ks, js]
+        return float((W[ks, js] * (np.minimum(p, c + es) - np.minimum(p, c))).sum())
+
+    heap = [(-gain(ti), ti) for ti in range(len(tracks))]
+    heapq.heapify(heap)
+    sal = [0.0] * len(tracks)
+    n = len(tracks)
+    while heap:
+        g, ti = heapq.heappop(heap)
+        g2 = gain(ti)
+        if heap and g2 < -heap[0][0] - 1e-12:
+            heapq.heappush(heap, (-g2, ti)); continue
+        sal[ti] = float(n) + g2 / (1.0 + abs(g2))                  # (order first; within it nothing else)
+        n -= 1
+        ks, js, es = cells[ti]
+        if len(ks):
+            np.add.at(C, (ks, js), es)
+    return sal
+
+
 def fit_noise(spectra, fq, am, n_frames, edges=None, floor_db=45.0, sweeps=60):
     """noise band levels that, with the voices, give each ERB band of each frame the original's power (least squares in
     relative power: every band counts the same, as in ViSQOL; bands more than floor_db under the frame's loudest are
@@ -1595,6 +1650,24 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
     after the phone's (a client that plays them all — a PC, not measured: the model of web/game.js 'pc'), chosen with the phone's
     voices and the noise bands fixed, so what a phone plays does not change (web/core.js refineMore the same)"""
     global BURST_TILT, NOISE_EDGES, FADE_GAIN, FADE_MARGIN_DB2
+    if salience == 'auto':
+        # (the song converted both ways — the partials chosen by A-weighted salience, voices by energy, as before; and by
+        #  perceptual matching pursuit, voices in the order it chose (pmp_salience) — and the one the client model scores
+        #  higher kept: refine_client's own last score. 2026-11-05, emulated through tools/exp/run_exp.py (24 voices, +10 dB):
+        #  pmp alone won on tonal songs (vocal_name_of_love 3.61 -> 3.76, orchestra 3.36 -> 3.52) and lost badly on dense ones
+        #  (rock_big 3.73 -> 2.30); the internal score picked the better way on 6 of 6, median 3.67 -> 3.74)
+        kw = dict(n_voices=n_voices, title=title, artist=artist, gain_db=gain_db, max_seconds=max_seconds, analysis=analysis, residual=residual,
+                  nested=nested, hf=hf, burst_tilt=burst_tilt, noise_edges=noise_edges, nz_fade=nz_fade, v_fade=v_fade, fade_gain=fade_gain,
+                  fade_margin=fade_margin, nz_hop=nz_hop, low_cut=low_cut, nsim_margin=nsim_margin, refine=refine, refine_voices=refine_voices,
+                  refine_level=refine_level, refine_sweeps=refine_sweeps, refine_weights=refine_weights, refine_objective=refine_objective,
+                  refine_hold=refine_hold, refine_more=refine_more)
+        a = convert(path, salience='a', rank=rank, **kw)
+        b = convert(path, salience='pmp', rank='pmp', **kw)
+        sa = (a[3].get('refine_loss') or [0])[-1]; sb = (b[3].get('refine_loss') or [0])[-1]
+        best = b if sb > sa else a
+        best[3]['selection'] = 'pmp' if best is b else 'a'
+        best[3]['selection_scores'] = [sa, sb]
+        return best
     # (these options set module globals: each conversion sets all of them, so one never leaks into the next in a process)
     FADE_GAIN = float(fade_gain) if fade_gain is not None else _DEFAULTS['FADE_GAIN']
     FADE_MARGIN_DB2 = float(fade_margin) if fade_margin is not None else _DEFAULTS['FADE_MARGIN_DB2']
@@ -1608,7 +1681,7 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
     groups = None
     if analysis == 'v2':
         tracks = track_partials(peaks)
-        sal = erb_salience(tracks, spectra, n_frames) if salience == 'erb' else None
+        sal = erb_salience(tracks, spectra, n_frames) if salience == 'erb' else pmp_salience(tracks, spectra, n_frames) if salience == 'pmp' else None
         if nested and nested < n_voices:
             lowf = lambda ti: (not hf) or float(np.median(tracks[ti][1])) < hf
             groups = [(range(nested), lowf), (range(nested, n_voices), None)]
@@ -1616,7 +1689,10 @@ def convert(path, n_voices=48, title=None, artist='', gain_db=0.0, max_seconds=N
     else:
         fq, am, att = allocate(peaks, n_voices)
     # most energetic voices first: an in-game voice cap then drops the least important ones (nested: within each group)
-    if groups:
+    if salience == 'pmp' and not groups and rank == 'pmp':
+        # (the voices in the order the pursuit filled them: voice 0 took its first choice — a phone's cap keeps those)
+        order = np.arange(fq.shape[1])
+    elif groups:
         e = (am ** 2).sum(0)
         order = np.concatenate([nested * 0 + np.argsort(-e[:nested], kind='stable'), nested + np.argsort(-e[nested:], kind='stable')])
     else:
