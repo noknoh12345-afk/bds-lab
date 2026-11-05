@@ -987,7 +987,10 @@
   "tries": 1
  },
  "q35_instrument_roots": {
-  "status": "pending"
+  "commit": "3ee1943",
+  "run": "42080371685",
+  "started": "2026-11-05 18:02",
+  "status": "running"
  },
  "q36_sampler_speed": {
   "status": "pending"
