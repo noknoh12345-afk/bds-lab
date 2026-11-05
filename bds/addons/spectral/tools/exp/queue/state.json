@@ -880,10 +880,17 @@
   "tries": 1
  },
  "q27_sampler_transpose": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "b42c444",
+  "conclusion": "success",
+  "ended": "2026-11-05 14:22",
+  "failed_steps": 0,
+  "recordings": 14,
   "run": "42038536513",
   "started": "2026-11-05 13:45",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q28_velocity_curve": {
   "status": "pending"
