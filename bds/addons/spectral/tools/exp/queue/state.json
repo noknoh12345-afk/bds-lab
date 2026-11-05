@@ -1065,7 +1065,10 @@
   "tries": 1
  },
  "q41_long_mix_20min": {
-  "status": "pending"
+  "commit": "93ab5f4",
+  "run": "42096954916",
+  "started": "2026-11-05 19:45",
+  "status": "running"
  },
  "q42_rejoin": {
   "status": "pending"
