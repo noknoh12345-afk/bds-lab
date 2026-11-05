@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 38（tools/exp/queue/q38_sampler_loop_5min.json、tools/exp/queue40.py）: サンプラーのループ 5 分（エリーゼ 20 周）。ループの継ぎ目と、時間が経っても音が落ちない・ずれないか（15 秒使わない素は温め直す: その仕組みが長く回る）
+# キュー 39（tools/exp/queue/q39_sampler_screen_off.json、tools/exp/queue40.py）: 画面を消す・裏へ（サンプラー・読み上げ・ファイルの曲）。q07 は正弦波の道で 1 区切り目が止まった。サンプラーは素を温めて捨てられる: 画面を消した間に捨てられないか
 
 section title
 audio info
@@ -13,7 +13,7 @@ audio info
 shot title
 
 section prep
-audio song fur_elise pack=tools/exp/packs/notes
+audio song fur_elise,speech_weather pack=tools/exp/packs/notes
 
 section join
 join
@@ -24,17 +24,178 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section loop
+section scr_on_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start sn_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio start lp_fur_elise
-do execute as @a run spectral:play fur_elise
-wait 300000
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
 audio stop
-audio export lp_fur_elise 96
+audio export sn_pd 160
+
+section scr_off_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start so_pd
+do execute as @a run spectral:play piano_demo
+wait 2000
+screen off
+wait 7000
+screen on
+wait 12200
+do execute as @a run spectral:stop
+audio stop
+audio export so_pd 160
+
+section scr_bg_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start sb_pd
+do execute as @a run spectral:play piano_demo
+wait 2000
+background
+wait 6000
+foreground
+wait 13200
+do execute as @a run spectral:stop
+audio stop
+audio export sb_pd 160
+
+section scr_on_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start sn_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:stop
+audio stop
+audio export sn_fe 160
+
+section scr_off_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start so_fe
+do execute as @a run spectral:play fur_elise
+wait 2000
+screen off
+wait 7000
+screen on
+wait 6200
+do execute as @a run spectral:stop
+audio stop
+audio export so_fe 160
+
+section scr_bg_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start sb_fe
+do execute as @a run spectral:play fur_elise
+wait 2000
+background
+wait 6000
+foreground
+wait 7200
+do execute as @a run spectral:stop
+audio stop
+audio export sb_fe 160
+
+section scr_on_sw
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start sn_sw
+do execute as @a run spectral:play speech_weather
+wait 7600
+do execute as @a run spectral:stop
+audio stop
+audio export sn_sw 160
+
+section scr_off_sw
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start so_sw
+do execute as @a run spectral:play speech_weather
+wait 2000
+screen off
+wait 7000
+screen on
+wait 3000
+do execute as @a run spectral:stop
+audio stop
+audio export so_sw 160
+
+section scr_bg_sw
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start sb_sw
+do execute as @a run spectral:play speech_weather
+wait 2000
+background
+wait 6000
+foreground
+wait 4000
+do execute as @a run spectral:stop
+audio stop
+audio export sb_sw 160
+
+section scr_on_pf
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start sn_pf
+do execute as @a run spectral:play piano_file
+wait 24500
+do execute as @a run spectral:stop
+audio stop
+audio export sn_pf 160
+
+section scr_off_pf
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start so_pf
+do execute as @a run spectral:play piano_file
+wait 2000
+screen off
+wait 7000
+screen on
+wait 15500
+do execute as @a run spectral:stop
+audio stop
+audio export so_pf 160
+
+section scr_bg_pf
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start sb_pf
+do execute as @a run spectral:play piano_file
+wait 2000
+background
+wait 6000
+foreground
+wait 16500
+do execute as @a run spectral:stop
+audio stop
+audio export sb_pf 160
