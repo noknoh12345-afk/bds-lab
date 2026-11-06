@@ -1,6 +1,6 @@
 // The match: path, enemies, towers, units, economy, waves. Pure simulation in studs/seconds; entities only mirror it.
 import { world, system, Player, Entity, Dimension } from '@minecraft/server';
-import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, startCash, timerFor, enemyIn, afterDefense, RULES, Stats, Group, Ability, Spawn } from './defs';
+import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, startCash, timerFor, enemyIn, afterDefense, cashShare, hpFor, RULES, Stats, Group, Ability, Spawn } from './defs';
 
 export let headless = false;
 export const log = (ev: string, o: Record<string, unknown> = {}) => { if (!headless) console.log(`[TDS] ${JSON.stringify({ ev, ...o })}`); };
@@ -41,11 +41,14 @@ export type Enemy = {
   aggro?: boolean; regen?: number; abil?: number[]; baseDef?: number; haste?: number; hasteUntil?: number;
 };
 export type Tower = { id: number; name: string; lvl: number; x: number; y: number; z: number; owner: string; target: string; next: number; burstLeft: number; ammoLeft: number; shots: number; spent: number; dealt: number; nextUnit: number; primary: number; stunUntil?: number; fat?: number; rdeb?: number; debUntil?: number; abReady?: Record<string, number>; selfBuff?: number; selfBuffUntil?: number; ctaBuff?: number; ctaUntil?: number };
+/** Per-player match statistics (quests): damage and kills by tower, status effects applied, ability uses, cash earned, towers placed, bosses killed. */
+export type PSt = { dmg: Record<string, number>; kills: number; killsBy: Record<string, number>; status: Record<string, number>; abil: Record<string, number>; earned: number; placed: string[]; bosses: string[] };
 export type Unit = { id: number; tw: number; d: number; hp: number; dmg: number; next: number };
 export type Match = {
   mode: string; map: string; players: string[]; cash: Record<string, number>; baseHP: number; maxHP: number; wave: number; t: number; waveEnd: number; skipAt: number;
   queue: { at: number; name: string; mods: string[] }[]; enemies: Enemy[]; towers: Tower[]; units: Unit[]; seq: number; votes: string[];
   over?: 'win' | 'lose'; hold?: boolean; inter?: boolean; waveDmg?: boolean; stats: { kills: number; leaks: number; dealt: number; income: number }; clearPaid: boolean; leakedThisWave: boolean; seed: number;
+  pst?: Record<string, PSt>; loadouts?: Record<string, string[]>;
 };
 
 export let M: Match | undefined;
@@ -53,6 +56,11 @@ export let path: Path | undefined;
 const ents = new Map<number, Entity>();
 const dim = (): Dimension => world.getDimension('overworld');
 let rnd = 1;
+const fresh = (): PSt => ({ dmg: {}, kills: 0, killsBy: {}, status: {}, abil: {}, earned: 0, placed: [], bosses: [] });
+export const pst = (n: string): PSt => { const m = M!; m.pst ??= {}; return (m.pst[n] ??= fresh()); };
+/** cash into a player's purse, counted as earned (Economy Audit) */
+export function pay(n: string, amount: number) { if (!M || amount <= 0) return; M.cash[n] = (M.cash[n] ?? 0) + amount; pst(n).earned += amount; }
+const mark = (tw: Tower | undefined, k: string) => { if (tw && M?.players.includes(tw.owner)) { const s = pst(tw.owner).status; s[k] = (s[k] ?? 0) + 1; } };
 const rand = () => ((rnd = (rnd * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
 
 // ---------- arena ----------
@@ -100,11 +108,11 @@ export function start(mode: string, players: Player[], map = DEFAULT_MAP) {
   const md = modes[mode]; path = buildArena(map); rnd = 1;
   const cash = startCash(mode, players.length);
   M = { mode, map, players: players.map((p) => p.name), cash: Object.fromEntries(players.map((p) => [p.name, cash])), baseHP: md.baseHP, maxHP: md.baseHP, wave: 0, t: 0, waveEnd: 5, skipAt: 0, inter: true,
-    queue: [], enemies: [], towers: [], units: [], seq: 1, votes: [], stats: { kills: 0, leaks: 0, dealt: 0, income: 0 }, clearPaid: false, leakedThisWave: false, seed: 1 };
+    queue: [], enemies: [], towers: [], units: [], seq: 1, votes: [], stats: { kills: 0, leaks: 0, dealt: 0, income: 0 }, clearPaid: false, leakedThisWave: false, seed: 1, pst: Object.fromEntries(players.map((p) => [p.name, fresh()])) };
   const g = maps[map].grid[32]?.[32], onPath = path.dist(0.5, 0.5) < path.width / 2 + 0.5;
   for (const p of players) p.teleport({ x: 0.5, y: maps[map].y + (g === 'x' && !onPath ? 2.2 : 0.2), z: 0.5 });
   if (holdNext) { M.hold = true; holdNext = false; }
-  log('match_start', { mode, map, players: M.players, cash, baseHP: md.baseHP, pathStuds: +path.len.toFixed(1) });
+  log('match_start', { mode, map, players: M.players, cash, baseHP: md.baseHP, hpScale: hpFor(mode, players.length), pathStuds: +path.len.toFixed(1) });
   persist();
 }
 
@@ -140,7 +148,7 @@ export function voteSkip(p: Player): string {
 function spawnEnemy(name: string, mods: string[], d = 0, wave = M!.wave, summoned = false) {
   if (!M || !path) return;
   const def = enemies[name], s = enemyIn(name, M.mode);
-  const hp = s.hp * (mods.includes('Bloated') ? 2 : 1);
+  const hp = s.hp * (mods.includes('Bloated') ? 2 : 1) * hpFor(M.mode, M.players.length);
   const e: Enemy = { id: M.seq++, name, d, hp, max: hp, shield: s.shield ?? 0, speed: s.speed * (mods.includes('Nimble') ? 2 : 1), def: def?.defense ?? 0, cash: s.cash, every: s.cashEveryPct, paid: 0,
     hidden: !!def?.hidden, flying: !!def?.flying, lead: !!def?.lead, boss: !!def?.boss || mods.includes('Boss'), immune: def?.immune ?? [], mods,
     slow: 0, slowUntil: 0, freezeUntil: 0, stunUntil: 0, dots: [], wave, summoned, born: M.t };
@@ -179,15 +187,18 @@ function kill(e: Enemy, tw?: Tower) {
   const x = ents.get(e.id); if (x?.isValid) x.remove(); ents.delete(e.id);
   if (!e.every) give(tw, e.cash);
   M.stats.kills++;
+  if (tw && M.players.includes(tw.owner)) { const s = pst(tw.owner); s.kills++; s.killsBy[tw.name] = (s.killsBy[tw.name] ?? 0) + 1; }
+  if (e.boss) for (const n of M.players) pst(n).bosses.push(e.name);
   const def = enemies[e.name];
   for (const a of def?.abilities ?? []) if (a.kind === 'deathSpawn' || a.onDeath) useAbility(e, a);
   if (def?.spawns && def.spawnMode === 'death') for (const c of def.spawns.slice(0, 1)) for (let i = 0; i < RULES.childCount; i++) spawnEnemy(c, [], Math.max(0, e.d - i * 1.5), e.wave, true);
   log('enemy_kill', { id: e.id, name: e.name, by: tw?.id ?? null, d: +e.d.toFixed(1) });
 }
-function give(tw: Tower | undefined, amount: number) {
+/** Enemy cash (mode pages): the same amount whoever dealt the damage, split evenly between the players (.5 rounds up). */
+function give(_tw: Tower | undefined, amount: number) {
   if (!M || amount <= 0) return;
-  const who = tw?.owner && M.players.includes(tw.owner) ? [tw.owner] : M.players;
-  for (const n of who) M.cash[n] = (M.cash[n] ?? 0) + Math.floor(amount / who.length);
+  const share = cashShare(amount, M.players.length);
+  for (const n of M.players) pay(n, share);
 }
 
 /** One hit on an enemy; returns damage done to health+shield. Defense reduces, shield first, boss cash per % lost. */
@@ -198,7 +209,7 @@ export function hit(e: Enemy, dmg: number, tw?: Tower, kind: 'direct' | 'splash'
   if (e.shield > 0) { const s = Math.min(e.shield, d); e.shield -= s; d -= s; done += s; if (e.shield <= 0 && e.lead) { e.lead = false; log('lead_broken', { id: e.id }); } if (e.shield <= 0 && e.flying && e.name === 'Balloon') { e.flying = false; } if (e.shield <= 0) { const ns = enemyIn(e.name, M.mode).speedNoShield; if (ns) { e.speed = ns * (e.mods.includes('Nimble') ? 2 : 1); log('shield_broken', { id: e.id, name: e.name, speed: e.speed }); } } }
   const before = e.hp; e.hp = Math.max(0, e.hp - d); done += before - e.hp;
   if (e.every) { const steps = Math.floor(((e.max - e.hp) / e.max) * 100 / e.every); while (e.paid < steps) { e.paid++; give(tw, e.cash); } }
-  if (tw) { tw.dealt += done; M.stats.dealt += done; }
+  if (tw) { tw.dealt += done; M.stats.dealt += done; if (M.players.includes(tw.owner)) { const s = pst(tw.owner).dmg; s[tw.name] = (s[tw.name] ?? 0) + done; } }
   label(e);
   if (e.hp <= 0) kill(e, tw);
   return done;
@@ -304,11 +315,12 @@ function fire(tw: Tower, s: ReturnType<typeof eff>, e: Enemy) {
     if (h.hp <= 0) continue;
     if (s.burn && !h.immune.includes('Burn')) h.dots.push({ dmg: s.burn[0], tick: s.burn[1], next: M.t + s.burn[1], until: M.t + s.burn[2], tw: tw.id });
     if (s.poison) h.dots.push({ dmg: s.poison[0], tick: s.poison[1], next: M.t + s.poison[1], until: M.t + s.poison[2], tw: tw.id });
-    if (s.slowHit && !h.boss && !h.immune.includes('Slowed')) { h.slow = Math.min(s.slowMax ?? s.slowHit, h.slow + s.slowHit); h.slowUntil = M.t + (s.slowTime ?? 2); }
-    if (s.freeze && !h.boss && !h.immune.includes('Freeze') && h.slow >= (s.slowMax ?? 1)) h.freezeUntil = M.t + s.freeze;
-    if (s.stun && !h.boss && !h.immune.includes('Stun')) h.stunUntil = Math.max(h.stunUntil, M.t + s.stun);
+    if (s.poison) mark(tw, 'Poison');
+    if (s.slowHit && !h.boss && !h.immune.includes('Slowed')) { h.slow = Math.min(s.slowMax ?? s.slowHit, h.slow + s.slowHit); h.slowUntil = M.t + (s.slowTime ?? 2); mark(tw, 'Frost'); }
+    if (s.freeze && !h.boss && !h.immune.includes('Freeze') && h.slow >= (s.slowMax ?? 1)) { h.freezeUntil = M.t + s.freeze; mark(tw, 'Freeze'); }
+    if (s.stun && !h.boss && !h.immune.includes('Stun')) { h.stunUntil = Math.max(h.stunUntil, M.t + s.stun); mark(tw, 'Shock'); }
   }
-  if (s.cashShot && s.income && ++tw.shots % s.cashShot === 0) { M.cash[tw.owner] = (M.cash[tw.owner] ?? 0) + s.income; M.stats.income += s.income; log('income', { tower: tw.id, name: tw.name, amount: s.income }); }
+  if (s.cashShot && s.income && ++tw.shots % s.cashShot === 0) { pay(tw.owner, s.income); M.stats.income += s.income; log('income', { tower: tw.id, name: tw.name, amount: s.income }); }
   beam(tw, e, hits.length);
 }
 
@@ -361,6 +373,7 @@ export function place(p: Player | string, name: string, x: number, y: number, z:
   if (!free) M.cash[owner] -= cost;
   const tw: Tower = { id: M.seq++, name, lvl: 0, x, y, z, owner, target: 'First', next: M.t, burstLeft: 0, ammoLeft: 0, shots: 0, spent: cost, dealt: 0, nextUnit: M.t, primary: 0 };
   M.towers.push(tw); body(tw);
+  if (M.players.includes(owner) && !pst(owner).placed.includes(name)) pst(owner).placed.push(name);
   log('tower_place', { id: tw.id, name, x, y, z, cost, owner }); persist();
   return { ok: true, tower: tw };
 }
@@ -382,7 +395,7 @@ export function upgrade(owner: string, id: number): string {
   log('upgrade', { id, name: tw.name, lvl: tw.lvl, cost: c }); persist();
   return `${tw.name} → Lv${tw.lvl}`;
 }
-export const sellValue = (tw: Tower) => Math.floor(tw.spent * RULES.sellRate);
+export const sellValue = (tw: Tower) => Math.floor(tw.spent * RULES.sellRate + 1e-9);
 export function sell(owner: string, id: number): string {
   const tw = towerById(id); if (!M || !tw) return 'No such tower';
   const v = sellValue(tw); M.cash[owner] = (M.cash[owner] ?? 0) + v;
@@ -413,10 +426,11 @@ export function useTowerAbility(owner: string, id: number, title?: string): stri
   else if (a.title === 'Airstrike' || a.title === 'Frost Grenade') {
     if (!lead) return 'No enemy to aim at';
     const r = a.title === 'Airstrike' ? 8 : 6, hits = M.enemies.filter((e) => Math.abs(e.d - lead.d) <= r).slice(0, a.title === 'Frost Grenade' ? 5 : 999);
-    for (const e of hits) { if (a.title === 'Airstrike') hit(e, Number(L.airstrikeDamage) || s.dmg, tw, 'splash'); else if (!e.immune.includes('Freeze') && !e.boss) e.freezeUntil = M.t + 2; }
+    for (const e of hits) { if (a.title === 'Airstrike') hit(e, Number(L.airstrikeDamage) || s.dmg, tw, 'splash'); else if (!e.immune.includes('Freeze') && !e.boss) { e.freezeUntil = M.t + 2; mark(tw, 'Freeze'); } }
     what = `${hits.length} enemies`;
   } else return `${a.title} is not simulated`;
   M.cash[owner] -= a.cost; (tw.abReady ??= {})[a.title] = M.t + (a.cd ?? 30);
+  if (M.players.includes(owner)) { const u = pst(owner).abil; u[tw.name] = (u[tw.name] ?? 0) + 1; }
   log('tower_ability', { id, name: tw.name, ability: a.title, cost: a.cost, what });
   return `${a.title}: ${what}`;
 }
@@ -454,12 +468,12 @@ function step() {
 function endWave(cleared: boolean) {
   if (!M) return;
   const md = modes[M.mode], p = M.players.length, bonus = waveCash(M.mode, M.wave, p);
-  for (const n of M.players) M.cash[n] += bonus;
-  for (const tw of M.towers) { const s = stats(tw.name, tw.lvl); if (s.income && !s.cashShot) { M.cash[tw.owner] = (M.cash[tw.owner] ?? 0) + s.income; M.stats.income += s.income; log('income', { tower: tw.id, name: tw.name, amount: s.income }); } }
+  for (const n of M.players) pay(n, bonus);
+  for (const tw of M.towers) { const s = stats(tw.name, tw.lvl); if (s.income && !s.cashShot) { pay(tw.owner, s.income); M.stats.income += s.income; log('income', { tower: tw.id, name: tw.name, amount: s.income }); } }
   log('wave_cash', { wave: M.wave, bonus });
   const pct = p > 1 ? md.clear.group : md.clear.solo;
-  if (cleared && pct && !M.leakedThisWave && !(md.clear.noDamage && M.waveDmg)) { const b = Math.floor(bonus * pct + 1e-6); for (const n of M.players) M.cash[n] += b; log('wave_clear', { wave: M.wave, bonus: b }); }
-  M.inter = true; M.waveEnd = M.t + 5;   // "a 5-second intermission will count down before the next wave begins"
+  if (cleared && pct && !M.leakedThisWave && !(md.clear.noDamage && M.waveDmg)) { const b = Math.floor(bonus * pct + 1e-6); for (const n of M.players) pay(n, b); log('wave_clear', { wave: M.wave, bonus: b }); }
+  M.inter = true; M.waveEnd = M.t + RULES.intermission;   // "a 5-second intermission will count down before the next wave begins"
 }
 function unitStep(u: Unit) {
   if (!M || !path) return;
@@ -490,6 +504,8 @@ function end(r: 'win' | 'lose') {
   persist();
 }
 
+/** End the match now (tests of rewards and quests) */
+export function finish(r: 'win' | 'lose') { if (M && !M.over) { if (r === 'win') M.wave = modes[M.mode].waves; end(r); } }
 /** Run simulated seconds without the world (bench, tests of the rules). */
 export function simulate(sec: number) { headless = true; try { for (let i = 0; i < sec / DT; i++) step(); } finally { headless = false; } }
 export function __setM(m: Match | undefined) { M = m; path = m ? (path?.map === m.map ? path : new Path(m.map)) : undefined; }

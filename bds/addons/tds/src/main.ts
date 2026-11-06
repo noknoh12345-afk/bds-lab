@@ -1,9 +1,9 @@
 import { world, system, Player, ItemStack } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { cmd, cmdAny, ask, menu, give, ready, every } from './kit';
-import { towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, timerFor, afterDefense, waveCash, startCash, MODE_NAMES } from './defs';
+import { towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, timerFor, afterDefense, waveCash, startCash, rewardFor, slotsAt, rules, MODE_NAMES } from './defs';
 import * as G from './game';
-import { prof, saveProf, buy, equip, queue, voteMap, leaveLift, departNow, questAdd, QUESTS, addExp } from './lobby';
+import { prof, saveProf, buy, equip, queue, voteMap, leaveLift, departNow, forceQuest, objText, setLevel, hardcoreMap, xpBoost, sold } from './lobby';
 import { benchAll, bench, expected } from './bench';
 
 const T = (s: string) => s.replace(/_/g, ' ');
@@ -21,7 +21,8 @@ cmd('tds:play', 'Start a match now (solo or everyone online)', { mode: MODE_NAME
   return `${a.mode}: ${md.waves} waves, $${G.M!.cash[p.name]}`;
 });
 cmdAny('tds:maps', 'Maps traced from the wiki', {}, () => Object.entries(maps).map(([n, m]) => `${n} (${m.pathStuds} studs)`).join(', '));
-cmd('tds:queue', 'Enter an elevator', { lift: MODE_NAMES as unknown as string[] }, (p, a) => queue(p, a.lift));
+cmd('tds:queue', 'Enter an elevator (the first player picks the party size)', { lift: MODE_NAMES as unknown as string[], 'size?': 'int' }, (p, a) => queue(p, a.lift, a.size));
+cmdAny('tds:hardcoremap', 'Map the Hardcore elevators go to this minute', {}, () => hardcoreMap());
 cmd('tds:vote', 'Vote for the map in your elevator', { mapname: MAP_IDS }, (p, a) => voteMap(p, T(a.mapname)));
 cmd('tds:leave', 'Leave the elevator', {}, (p) => { leaveLift(p.name); return 'Left'; });
 cmdAny('tds:depart', 'Elevator leaves now (test)', { liftmode: MODE_NAMES as unknown as string[] }, (_, a) => { departNow(a.liftmode); return 'ok'; }, true);
@@ -33,7 +34,7 @@ cmd('tds:place', 'Place a tower (name with _ for spaces)', { tower: 'string', x:
   if (!loadout(p).includes(name) && !p.hasTag('tds_dev')) return `${name} is not in your loadout`;
   const r = G.place(p, name, a.x, a.y, a.z);
   if (!r.ok) { G.log('place_fail', { name, why: r.why }); return `Cannot place: ${r.why}`; }
-  questAdd(p, 'places', 1); return `Placed #${r.tower.id} ${name} ($${G.M!.cash[p.name]})`;
+  return `Placed #${r.tower.id} ${name} ($${G.M!.cash[p.name]})`;
 });
 cmd('tds:upgrade', 'Upgrade a tower', { id: 'int' }, (p, a) => G.upgrade(p.name, a.id));
 cmd('tds:sell', 'Sell a tower', { id: 'int' }, (p, a) => G.sell(p.name, a.id));
@@ -49,6 +50,7 @@ cmdAny('tds:tower', 'Effective stats of a placed tower (buffs included)', { id: 
   return `#${tw.id} ${tw.name} Lv${tw.lvl} dmg ${s.dmg} fr ${s.fr?.toFixed(3) ?? '-'} range ${s.range.toFixed(2)} dealt ${Math.round(tw.dealt)}${st}`;
 });
 cmdAny('tds:wavecash', 'Wave bonus of a mode (wiki formula)', { mode: 'string', wave: 'int', players: 'int' }, (_, a) => (modes[a.mode] ? `${a.mode} wave ${a.wave} x${a.players}: $${waveCash(a.mode, a.wave, a.players)} start $${startCash(a.mode, a.players)}` : `Modes: ${MODE_NAMES.join(' ')}`));
+cmdAny('tds:rewards', 'Match rewards of a mode at a wave (wiki formula)', { mode: 'string', wave: 'int', win: 'bool', 'boost?': 'float' }, (_, a) => (modes[a.mode] ? JSON.stringify(rewardFor(a.mode, a.wave, a.win, a.boost ?? 1)) : `Modes: ${MODE_NAMES.join(' ')}`));
 cmdAny('tds:info', 'Tower stats from the wiki data', { tower: 'string', 'lvl?': 'int' }, (_, a) => {
   const n = T(a.tower), d = towers[n]; if (!d) return `Unknown ${n}`; const l = a.lvl ?? 0;
   const s = stats(n, l);
@@ -65,9 +67,16 @@ cmdAny('tds:ability', 'Make an enemy use its ability now (test)', { enemy: 'stri
 cmdAny('tds:enemies', 'Enemies on the path: name hp def', {}, () => (G.M?.enemies ?? []).map((e) => `${e.name}:${Math.round(e.hp * 100) / 100}:${e.def}`).join(' ') || 'none', true);
 cmdAny('tds:dmg', 'Damage an enemy would take after its defense', { enemy: 'string', n: 'float', 'mods?': 'string' }, (_, a) => { const d = enemies[T(a.enemy)]; if (!d) return 'unknown'; const def = d.defense + (a.mods?.includes('Blessed') ? 100 : 0); return `${T(a.enemy)} def ${def}% takes ${afterDefense(a.n, def)}`; });
 cmd('tds:grant', 'Give coins/gems/level and dev tag (test)', { coins: 'int', 'gems?': 'int', 'level?': 'int' }, (p, a) => {
-  const pr = prof(p); pr.coins += a.coins; pr.gems += a.gems ?? 0; if (a.level !== undefined) pr.level = a.level; saveProf(p, pr); return `coins ${pr.coins} gems ${pr.gems} level ${pr.level}`;
+  const pr = prof(p); pr.coins += a.coins; pr.gems += a.gems ?? 0; if (a.level !== undefined) setLevel(pr, a.level); saveProf(p, pr); return `coins ${pr.coins} gems ${pr.gems} level ${pr.level}`;
 }, true);
 cmd('tds:dev', 'Own every tower; place anything (test)', {}, (p) => { const pr = prof(p); pr.owned = Object.keys(towers); saveProf(p, pr); p.addTag('tds_dev'); return `owned ${pr.owned.length}`; }, true);
+cmd('tds:reset', 'Start a fresh profile (test)', {}, (p) => { p.setDynamicProperty('tds:p', undefined); const pr = prof(p); saveProf(p, pr); p.removeTag('tds_dev'); return `coins ${pr.coins} owned ${pr.owned.join(',')}`; }, true);
+cmdAny('tds:xpboost', 'XP Boost: on, off, or auto (by the UTC day) (test)', { set: ['on', 'off', 'auto'] }, (_, a) => { world.setDynamicProperty('tds:xpboost', a.set === 'auto' ? undefined : a.set); return `xp boost ${a.set} (x${xpBoost()})`; }, true);
+cmdAny('tds:finish', 'End the match now (test)', { result: ['win', 'lose'] }, (_, a) => { G.finish(a.result); return a.result; }, true);
+cmd('tds:quest', 'Give yourself a quest from the Quests page (test); choices like tower=Scout;map=Grass_Isle', { title: 'string', 'choice?': 'string' }, (p, a) => {
+  const f = Object.fromEntries((a.choice ?? '').split(';').filter(Boolean).map((kv: string) => { const [k, v] = kv.split('='); return [k, T(v ?? '')]; }));
+  return forceQuest(p, T(a.title).replace(/~/g, ':'), f);
+}, true);
 cmd('tds:cash', 'Set match cash (test)', { n: 'int' }, (p, a) => { if (!G.M) return 'no match'; G.M.cash[p.name] = a.n; return `$${a.n}`; }, true);
 cmdAny('tds:hold', 'Stop or resume the wave clock (test; before a match: for the next one)', { on: 'bool' }, (_, a) => { G.setHold(a.on); return `hold ${a.on}`; }, true);
 cmd('tds:auto', 'Let the bot play for you (test)', { on: 'bool' }, (p, a) => { if (a.on) p.addTag('tds_auto'); else p.removeTag('tds_auto'); return `auto ${a.on}`; }, true);
@@ -88,18 +97,21 @@ function* benchJob() {
 cmd('tds:buy', 'Unlock a tower', { tower: 'string' }, (p, a) => buy(p, T(a.tower)));
 cmd('tds:equip', 'Put a tower into a loadout slot', { slot: 'int', tower: 'string' }, (p, a) => equip(p, a.slot, T(a.tower)));
 cmd('tds:profile', 'Your coins, level and loadout', {}, (p) => {
-  const pr = prof(p); return `Lv${pr.level} exp ${Math.floor(pr.exp)} coins ${pr.coins} gems ${pr.gems} owned ${pr.owned.length} loadout ${pr.loadout.join(', ')}`;
+  const pr = prof(p); saveProf(p, pr); return `Lv${pr.level} exp ${Math.floor(pr.exp)} coins ${pr.coins} gems ${pr.gems} texp ${pr.texp} slots ${slotsAt(pr.level)} owned ${pr.owned.length} loadout ${pr.loadout.join(', ')} crates ${JSON.stringify(pr.crates)}`;
 });
-cmd('tds:quests', 'Daily quests', {}, (p) => { const pr = prof(p); return Object.entries(QUESTS).map(([k, q]) => `${q.text} ${pr.quests[k] ?? 0}/${q.need} (+${q.coins})`).join(' | '); });
+const questLines = (p: Player) => { const pr = prof(p); saveProf(p, pr); return pr.quests.map((q) => `[${q.kind}] ${q.text}${q.done ? ' ✔' : ''}: ${q.objs.map(objText).join('; ')}`); };
+cmd('tds:quests', 'Daily and weekly quests', {}, (p) => questLines(p).join(' | '));
 cmd('tds:lobby', 'Lobby menu', {}, (p) => { void lobbyMenu(p); });
 
 async function lobbyMenu(p: Player) {
   const pr = prof(p);
   const i = await menu(p, '§l§2TDS Lobby', [['Play', () => 0], ['Loadout', () => 0], ['Shop', () => 0], ['Quests', () => 0]], `Lv${pr.level} · ${pr.coins} coins · ${pr.gems} gems`);
-  if (i === 0) { const m = await menu(p, 'Elevator', MODE_NAMES.map((n) => [`${n} §8(${modes[n].waves}w, Lv${modes[n].level})`, () => 0])); if (m !== undefined) p.sendMessage(queue(p, MODE_NAMES[m])); }
-  if (i === 1) { const s = await menu(p, 'Loadout', [1, 2, 3, 4, 5].map((k) => [`Slot ${k}: ${pr.loadout[k - 1] ?? '-'}`, () => 0])); if (s !== undefined) { const o = pr.owned; const t = await menu(p, `Slot ${s + 1}`, [...o.map((n) => [n, () => 0] as [string, () => number]), ['(empty)', () => 0]]); if (t !== undefined) p.sendMessage(equip(p, s + 1, o[t] ?? 'none')); } }
-  if (i === 2) { const list = Object.keys(towers).filter((n) => !pr.owned.includes(n) && ['Starter', 'Intermediate', 'Advanced', 'Hardcore'].includes(towers[n].category)); const t = await menu(p, 'Shop', list.map((n) => [`${n} §8${towers[n].unlock.value ?? ''} ${towers[n].unlock.kind}`, () => 0])); if (t !== undefined) p.sendMessage(buy(p, list[t])); }
-  if (i === 3) p.sendMessage(Object.entries(QUESTS).map(([k, q]) => `${q.text} ${pr.quests[k] ?? 0}/${q.need}`).join('\n'));
+  if (i === 0) { const m = await menu(p, 'Elevator', MODE_NAMES.map((n) => [`${n} §8(${modes[n].waves}w, Lv${modes[n].level})${n === 'Hardcore' ? ` ${hardcoreMap()}` : ''}`, () => 0])); if (m === undefined) return;
+    const max = rules.elevators[MODE_NAMES[m] === 'Hardcore' ? 'Hardcore' : 'Survival'].max, sz = await menu(p, 'Party size', [...Array(max).keys()].map((k) => [['Solo', 'Duo', 'Trio', 'Quad'][k], () => 0]));
+    if (sz !== undefined) p.sendMessage(queue(p, MODE_NAMES[m], sz + 1)); }
+  if (i === 1) { const s = await menu(p, 'Loadout', [...Array(slotsAt(pr.level)).keys()].map((x) => x + 1).map((k) => [`Slot ${k}: ${pr.loadout[k - 1] ?? '-'}`, () => 0])); if (s !== undefined) { const o = pr.owned; const t = await menu(p, `Slot ${s + 1}`, [...o.map((n) => [n, () => 0] as [string, () => number]), ['(empty)', () => 0]]); if (t !== undefined) p.sendMessage(equip(p, s + 1, o[t] ?? 'none')); } }
+  if (i === 2) { const list = Object.keys(towers).filter((n) => !pr.owned.includes(n) && ['Starter', 'Intermediate', 'Advanced', 'Hardcore'].includes(towers[n].category) && sold(n)); const t = await menu(p, 'Shop', list.map((n) => { const u = towers[n].unlock; return [`${n} §8${u.kind === 'level' ? `Lv${u.value}` : `${u.value} ${u.kind}`}${u.level ? ` (Lv${u.level})` : ''}${u.triumph ? ` (${u.triumph})` : ''}`, () => 0]; })); if (t !== undefined) p.sendMessage(buy(p, list[t])); }
+  if (i === 3) p.sendMessage(questLines(p).join('\n'));
 }
 
 // ---------- in-world UI ----------
@@ -120,7 +132,6 @@ async function placeMenu(p: Player, x: number, y: number, z: number) {
   const i = await menu(p, '§l§6Place a tower', lo.map((n) => [`${placeCost(n) <= cash ? '§a' : '§c'}${n} §8$${placeCost(n)}`, () => 0]), `$${cash} · ${x} ${y} ${z}`);
   if (i === undefined) return;
   const r = G.place(p, lo[i], x, y, z); p.sendMessage(r.ok ? `Placed #${r.tower.id} ${lo[i]}` : `§cCannot place: ${r.why}`);
-  if (r.ok) questAdd(p, 'places', 1);
 }
 world.afterEvents.playerInteractWithEntity.subscribe(({ player: p, target }) => {
   if (target.typeId !== 'tds:tower') return;
@@ -233,7 +244,7 @@ world.afterEvents.playerSpawn.subscribe(({ player: p, initialSpawn }) => {
   if (!initialSpawn) return;
   const pr = prof(p); saveProf(p, pr);
   if (![...Array(36).keys()].some((i) => p.getComponent('inventory')!.container!.getItem(i)?.typeId === 'tds:wand')) p.getComponent('inventory')!.container!.addItem(new ItemStack('tds:wand'));
-  void addExp; void ask;
+  void ask;
 });
 
 // ---------- performance probe ----------

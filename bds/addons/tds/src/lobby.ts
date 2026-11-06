@@ -1,53 +1,91 @@
-// Out-of-match progression: profile (coins, gems, exp, level), tower shop, loadout, elevators, quests, rewards.
+// Out-of-match progression: profile, levels, store, loadout, elevators, quests, match rewards (wiki pages named per rule).
 import { world, system, Player } from '@minecraft/server';
-import { towers, modes, maps, expFor, RULES } from './defs';
+import { towers, enemies, modes, maps, expFor, rules, rewardFor, xpBoostAt, slotsAt, stats, QuestDef, QuestObj } from './defs';
 import { M, start, log, onEnd, Match } from './game';
 
-export type Profile = { coins: number; gems: number; exp: number; level: number; owned: string[]; loadout: string[]; quests: Record<string, number>; day: number; wins: Record<string, number> };
-const fresh = (): Profile => ({ coins: 0, gems: 0, exp: 0, level: 0, owned: ['Scout', 'Sniper'], loadout: ['Scout', 'Sniper'], quests: {}, day: 0, wins: {} });
+export type Obj = { do: QuestObj['do']; need: number; prog: number; tower?: string; role?: string; boss?: string; status?: string; map?: string; mode?: string; players?: number; cash?: number; hpPct?: number; loadoutMax?: number };
+export type Quest = { title: string; kind: 'daily' | 'weekly'; text: string; objs: Obj[]; done: boolean };
+export type Profile = { coins: number; gems: number; exp: number; level: number; texp: number; owned: string[]; loadout: string[]; wins: Record<string, number>; mapWins: Record<string, number>; crates: Record<string, number>; day: number; week: number; quests: Quest[] };
+
+const DAY = 86400000;
+export const today = () => Math.floor(Date.now() / DAY);
+/** weeks start on Monday 00:00 UTC (1970-01-01 was a Thursday) */
+export const weekOf = (day: number) => Math.floor((day + 3) / 7);
+const fresh = (): Profile => ({ coins: rules.levelRewards['0']?.coins ?? 0, gems: 0, exp: 0, level: 0, texp: 0, owned: Object.keys(towers).filter((n) => towers[n].unlock.kind === 'free' && sold(n)), loadout: [], wins: {}, mapWins: {}, crates: {}, day: -1, week: -1, quests: [] });
+
 export function prof(p: Player): Profile {
   const s = p.getDynamicProperty('tds:p') as string | undefined;
-  const pr = s ? { ...fresh(), ...JSON.parse(s) } as Profile : fresh();
-  const day = Math.floor(Date.now() / 86400000); if (pr.day !== day) { pr.day = day; pr.quests = {}; }
+  const pr: Profile = s ? { ...fresh(), ...JSON.parse(s) } : fresh();
+  if (!pr.loadout.length) pr.loadout = pr.owned.slice(0, slotsAt(pr.level));
+  if (!Array.isArray(pr.quests)) { pr.quests = []; pr.day = pr.week = -1; }   // saved by an older version
+  const d = today(), w = weekOf(d);
+  if (pr.day !== d) { pr.quests = pr.quests.filter((q) => q.kind !== 'daily').concat(draw(p.name, pr, 'daily', d)); pr.day = d; }
+  if (pr.week !== w) { pr.quests = pr.quests.filter((q) => q.kind !== 'weekly').concat(draw(p.name, pr, 'weekly', w)); pr.week = w; }
   return pr;
 }
 export const saveProf = (p: Player, pr: Profile) => p.setDynamicProperty('tds:p', JSON.stringify(pr));
 
-export function addExp(pr: Profile, n: number) { pr.exp += n; while (pr.exp >= expFor(pr.level + 1)) { pr.exp -= expFor(pr.level + 1); pr.level++; } }
+// ---------- levels (Levels page) ----------
+/** towers given by reaching a level ("Reaching some Levels also unlock new towers") */
+const levelTowers = (lv: number) => Object.keys(towers).filter((n) => towers[n].unlock.kind === 'level' && (towers[n].unlock.value ?? Infinity) <= lv && sold(n));
+export function addExp(pr: Profile, n: number, who = '') {
+  pr.exp += n;
+  while (pr.exp >= expFor(pr.level + 1)) {
+    pr.exp -= expFor(pr.level + 1); pr.level++;
+    const c = rules.levelRewards[String(pr.level)]?.coins ?? 0; pr.coins += c;
+    const got = levelTowers(pr.level).filter((t) => !pr.owned.includes(t)); pr.owned.push(...got);
+    log('level_up', { player: who, level: pr.level, coins: c, towers: got, slots: slotsAt(pr.level) });
+  }
+}
+/** set a level directly (tests): towers and slots follow, as if reached */
+export function setLevel(pr: Profile, lv: number) { pr.level = lv; for (const t of levelTowers(lv)) if (!pr.owned.includes(t)) pr.owned.push(t); pr.loadout = pr.loadout.slice(0, slotsAt(lv)); }
 
+// ---------- store and loadout ----------
+const SHOP = ['Starter', 'Intermediate', 'Advanced', 'Hardcore'];
+export const sold = (n: string) => SHOP.includes(towers[n]?.category) && ['free', 'coins', 'gems', 'level'].includes(towers[n].unlock.kind);
 export function buy(p: Player, name: string): string {
   const d = towers[name]; if (!d) return `Unknown tower ${name}`;
-  const u = d.unlock;
-  if (!['free', 'coins', 'gems', 'level'].includes(u.kind) || ['Exclusive', 'Unavailable', 'Golden Perks', 'Evolved'].includes(d.category)) return `${name} is not sold (${d.category})`;
-  const pr = prof(p); if (pr.owned.includes(name)) return `Already own ${name}`;
-  if (u.kind === 'level' && pr.level < (u.value ?? 0)) return `Needs level ${u.value}`;
-  if (u.kind === 'coins') { if (pr.coins < (u.value ?? 0)) return `Need ${u.value} coins`; pr.coins -= u.value ?? 0; }
-  if (u.kind === 'gems') { if (pr.gems < (u.value ?? 0)) return `Need ${u.value} gems`; pr.gems -= u.value ?? 0; }
-  pr.owned.push(name); saveProf(p, pr); log('unlock', { player: p.name, tower: name, kind: u.kind, value: u.value });
+  if (!sold(name)) return `${name} is not sold (${d.category})`;
+  const u = d.unlock, pr = prof(p); if (pr.owned.includes(name)) return `Already own ${name}`;
+  if (u.kind === 'level') return `${name} unlocks at level ${u.value}`;
+  if (u.level && pr.level < u.level) return `${name} is sold from level ${u.level}`;
+  if (u.triumph && !pr.mapWins[u.triumph]) return `Triumph ${u.triumph} first`;
+  const wallet = u.kind === 'gems' ? 'gems' : 'coins', cost = u.value ?? 0;
+  if (pr[wallet] < cost) return `Need ${cost} ${wallet}`;
+  pr[wallet] -= cost; pr.owned.push(name); saveProf(p, pr); log('unlock', { player: p.name, tower: name, kind: u.kind, value: cost, left: pr[wallet] });
   return `Unlocked ${name}`;
 }
 export function equip(p: Player, slot: number, name: string): string {
-  const pr = prof(p); if (slot < 1 || slot > 5) return 'Slots 1-5';
+  const pr = prof(p), n = slotsAt(pr.level); if (slot < 1 || slot > n) return `Slots 1-${n} (the fifth opens at level ${rules.fifthSlot})`;
   if (name === 'none') { pr.loadout.splice(slot - 1, 1); saveProf(p, pr); return `Slot ${slot} cleared`; }
   if (!pr.owned.includes(name)) return `Not owned: ${name}`;
-  pr.loadout = pr.loadout.filter((x) => x !== name); pr.loadout.splice(slot - 1, 0, name); pr.loadout = pr.loadout.slice(0, 5);
+  pr.loadout = pr.loadout.filter((x) => x !== name); pr.loadout.splice(slot - 1, 0, name); pr.loadout = pr.loadout.slice(0, n);
   saveProf(p, pr); log('equip', { player: p.name, slot, tower: name, loadout: pr.loadout }); return `Loadout: ${pr.loadout.join(', ')}`;
 }
 
-// ---------- elevators ----------
-type Lift = { mode: string; players: string[]; at: number; votes: Record<string, string> };
+// ---------- elevators (Elevators page) ----------
+type Lift = { mode: string; size: number; players: string[]; at: number; votes: Record<string, string> };
 const lifts: Lift[] = [];
-export function queue(p: Player, mode: string): string {
+const liftOf = (mode: string) => (mode === 'Hardcore' ? rules.elevators.Hardcore : rules.elevators.Survival);
+/** a Hardcore elevator's map changes every minute */
+export const hardcoreMap = (ms = Date.now()) => { const n = Object.keys(maps); return n[Math.floor(ms / 1000 / (rules.elevators.Hardcore.rotate ?? 60)) % n.length]; };
+export function queue(p: Player, mode: string, size?: number): string {
   const md = modes[mode]; if (!md) return `Modes: ${Object.keys(modes).join(' ')}`;
-  const pr = prof(p); if (pr.level < md.level) return `${mode} needs level ${md.level}`;
+  const pr = prof(p); if (pr.level < md.level && !p.hasTag('tds_dev')) return `${mode} needs level ${md.level}`;
+  const L = liftOf(mode);
   for (const l of lifts) l.players = l.players.filter((n) => n !== p.name);
-  let l = lifts.find((x) => x.mode === mode && x.players.length < (mode === 'Hardcore' ? 3 : 4));
-  if (!l) { l = { mode, players: [], at: system.currentTick + RULES.elevatorWait * 20, votes: {} }; lifts.push(l); }
-  l.players.push(p.name); log('elevator_join', { player: p.name, mode, count: l.players.length });
-  return `Elevator ${mode}: ${l.players.length}/${mode === 'Hardcore' ? 3 : 4}, departs in ${Math.ceil((l.at - system.currentTick) / 20)}s`;
+  let l = lifts.find((x) => x.mode === mode && x.players.length && x.players.length < x.size);
+  if (!l) {   // the first player chooses the party size; the timer starts then
+    const s = Math.max(1, Math.min(L.max, size ?? L.max));
+    l = { mode, size: s, players: [], at: system.currentTick + L.wait * 20, votes: {} }; lifts.push(l);
+  }
+  l.players.push(p.name); log('elevator_join', { player: p.name, mode, count: l.players.length, size: l.size, map: mode === 'Hardcore' ? hardcoreMap() : null });
+  if (l.players.length >= l.size) l.at = system.currentTick;
+  return `Elevator ${mode}: ${l.players.length}/${l.size}${mode === 'Hardcore' ? ` · ${hardcoreMap()}` : ''}, departs in ${Math.max(0, Math.ceil((l.at - system.currentTick) / 20))}s`;
 }
 export function voteMap(p: Player, map: string): string {
   const l = lifts.find((x) => x.players.includes(p.name)); if (!l) return 'Not in an elevator';
+  if (l.mode === 'Hardcore') return `Hardcore elevators go to ${hardcoreMap()}`;
   if (!maps[map]) return `Maps: ${Object.keys(maps).join(', ')}`;
   l.votes[p.name] = map; log('map_vote', { player: p.name, map }); return `Voted ${map}`;
 }
@@ -60,44 +98,130 @@ system.runInterval(() => {
     const ps = world.getAllPlayers().filter((p) => l.players.includes(p.name));
     lifts.splice(lifts.indexOf(l), 1);
     if (!ps.length) continue;
-    log('elevator_depart', { mode: l.mode, players: l.players });
+    let map: string;
+    if (l.mode === 'Hardcore') map = hardcoreMap();
+    else {
+      const tally: Record<string, number> = {}; for (const v of Object.values(l.votes)) tally[v] = (tally[v] ?? 0) + 1;
+      const top = Object.entries(tally).sort((a, b) => b[1] - a[1]), best = top.filter((x) => x[1] === top[0]?.[1]), names = Object.keys(maps);
+      map = best.length ? best[Math.floor(Math.random() * best.length)][0] : names[Math.floor(Math.random() * names.length)];
+    }
+    log('elevator_depart', { mode: l.mode, players: l.players, size: l.size, map });
     const lo = Object.fromEntries(ps.map((p) => [p.name, prof(p).loadout]));
-    const tally: Record<string, number> = {}; for (const v of Object.values(l.votes)) tally[v] = (tally[v] ?? 0) + 1;
-    const top = Object.entries(tally).sort((a, b) => b[1] - a[1]);
-    const names = Object.keys(maps), map = top.length ? top.filter((x) => x[1] === top[0][1])[Math.floor(Math.random() * top.filter((x) => x[1] === top[0][1]).length)][0] : names[Math.floor(Math.random() * names.length)];
-    start(l.mode, ps, map); if (M) (M as Match & { loadouts?: Record<string, string[]> }).loadouts = lo;
+    start(l.mode, ps, map); if (M) M.loadouts = lo;
   }
 }, 20);
 
-// ---------- quests (daily) ----------
-export const QUESTS: Record<string, { text: string; need: number; coins: number }> = {
-  kills: { text: 'Defeat 300 enemies', need: 300, coins: 150 },
-  places: { text: 'Place 20 towers', need: 20, coins: 100 },
-  win: { text: 'Win a match', need: 1, coins: 300 },
+// ---------- quests (Quests page) ----------
+const hash = (s: string) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
+const rng = (seed: number) => () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+/** a need between the page's low and high end, by level (0 → low, 100+ → high) */
+export const scaled = (r: [number, number] | undefined, level: number, def = 1) => (r ? Math.round(r[0] + (r[1] - r[0]) * Math.min(1, level / 100)) : def);
+const ROLES = ['Cliff', 'Spawner', 'Offense', 'Defense', 'Support'];
+export const hasRole = (n: string, role: string) => { const d = towers[n]; if (!d) return false; if (role === 'Cliff') return d.placement !== 'ground'; if (role === 'Spawner') return d.levels.some((_, i) => !!stats(n, i).spawnrate); return d.role === role; };
+const fights = (n: string) => !!stats(n, 0).dmg || towers[n].levels.some((_, i) => !!stats(n, i).dmg);
+const abilityTowers = (pr: Profile, support = false) => pr.owned.filter((n) => towers[n]?.abilities?.some((a) => a.simulated) && (!support || towers[n].role === 'Support'));
+/** major bosses: the strongest boss in the last wave of each mode the player can enter */
+export function majorBosses(level: number) {
+  const out: string[] = [];
+  for (const [m, md] of Object.entries(modes)) {
+    if (md.level > level) continue;
+    const last = (md.wave[String(md.waves)] ?? []).filter((g) => enemies[g.e]?.boss || g.mods?.includes('Boss'));
+    const b = last.sort((a, c) => (enemies[c.e]?.per[m]?.hp ?? 0) - (enemies[a.e]?.per[m]?.hp ?? 0))[0]?.e; if (b && !out.includes(b)) out.push(b);
+  }
+  return out;
+}
+/** turn a page quest into objectives for this player; undefined when it cannot be done with what they own */
+export function makeQuest(def: QuestDef, pr: Profile, r: () => number, force: Record<string, string> = {}): Quest | undefined {
+  const pickOf = <T,>(xs: T[]) => xs[Math.floor(r() * xs.length)];
+  const lv = pr.level, objs: Obj[] = [];
+  const ownedFight = pr.owned.filter(fights), support = def.objs.some((o) => o.support);
+  const tower = force.tower ?? (def.objs.some((o) => o.do === 'ability') ? pickOf(abilityTowers(pr, support)) : support ? pickOf(abilityTowers(pr, true)) : pickOf(ownedFight));
+  if (def.objs.some((o) => o.tower) && !tower) return undefined;
+  const role = force.role ?? pickOf(ROLES), status = force.status ?? pickOf(rules.quests.statuses);
+  const bosses = majorBosses(lv), modeNames = Object.keys(modes).filter((m) => modes[m].level <= lv), mapNames = Object.keys(maps);
+  const shuffled = <T,>(xs: T[]) => xs.map((x) => [r(), x] as const).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+  const bossList = force.boss ? force.boss.split(',') : shuffled(bosses);
+  let bi = 0;
+  for (const o of def.objs) {
+    const base: Obj = { do: o.do, need: o.do === 'triumph' ? scaled(o.times, lv) : scaled(o.need, lv), prog: 0 };
+    if (o.tower) base.tower = tower;
+    if (o.do === 'status') base.status = status;
+    if (o.role) base.role = role;
+    if (o.cash) base.cash = scaled(o.cash, lv);
+    if (o.hpPct) base.hpPct = scaled(o.hpPct, lv);
+    if (o.loadoutMax) base.loadoutMax = o.loadoutMax;
+    if (o.players) base.players = force.players ? +force.players : pickOf(o.players);
+    if (o.map) base.map = force.map ?? pickOf(mapNames);
+    if (o.boss) { base.boss = bossList[bi++ % Math.max(1, bossList.length)]; if (!base.boss) return undefined; base.need = 1; }
+    if (o.maps) { for (const m of (force.maps?.split(',') ?? shuffled(mapNames)).slice(0, Math.min(o.maps, mapNames.length))) objs.push({ ...base, map: m, need: 1 }); continue; }
+    if (o.modes) { if (modeNames.length < 1) return undefined; for (const m of (force.modes?.split(',') ?? shuffled(modeNames)).slice(0, Math.min(o.modes, modeNames.length))) objs.push({ ...base, mode: m, need: 1 }); continue; }
+    objs.push(base);
+  }
+  if (def.objs.filter((o) => o.boss).length > 1 && new Set(objs.filter((o) => o.boss).map((o) => o.boss)).size < objs.filter((o) => o.boss).length) return undefined;   // two separate bosses
+  const b0 = objs.find((o) => o.boss)?.boss ?? '', m0 = objs.find((o) => o.map)?.map ?? '';
+  const text = def.objs.some((o) => o.role) ? `${role} Formation` : def.title.replace(/^Tower Spotlight$/, 'TOWER Spotlight').replace(/TOWER/g, tower ?? '').replace('BOSS', b0).replace('MAP', m0).trim();
+  return { title: def.title, kind: def.kind, text, objs, done: false };
+}
+function draw(name: string, pr: Profile, kind: 'daily' | 'weekly', period: number): Quest[] {
+  const r = rng(hash(`${name}:${kind}:${period}`)), pool = rules.quests.list.filter((q) => q.kind === kind), out: Quest[] = [];
+  const order = pool.map((q) => [r(), q] as const).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+  for (const q of order) { if (out.length >= rules.quests[kind]) break; const made = makeQuest(q, pr, r); if (made) out.push(made); }
+  return out;
+}
+/** put a given page quest into a player's list (tests), replacing one of the same title; "none" empties the list */
+export function forceQuest(p: Player, title: string, force: Record<string, string>): string {
+  if (title === 'none') { const pr = prof(p); pr.quests = []; saveProf(p, pr); return 'No quests'; }
+  const def = rules.quests.list.find((q) => q.title === title); if (!def) return `Quests: ${rules.quests.list.map((q) => q.title).join(' | ')}`;
+  const pr = prof(p), q = makeQuest(def, pr, rng(1), force); if (!q) return `${title} cannot be given with what you own`;
+  const i = pr.quests.findIndex((x) => x.title === title);
+  if (i < 0) pr.quests.push(q); else pr.quests[i] = q;
+  saveProf(p, pr); log('quest_set', { player: p.name, title, text: q.text, objs: q.objs.map(objText) }); return q.text;
+}
+export const objText = (o: Obj) => {
+  const w = o.do === 'triumph' ? `Triumph${o.mode ? ` ${o.mode}` : ''}${o.map ? ` on ${o.map}` : ''}${o.tower ? ` with ${o.tower}` : ''}${o.role ? ` with a ${o.role} tower` : ''}${o.players ? ` in a team of ${o.players}` : ''}${o.cash ? ` holding $${o.cash}` : ''}${o.hpPct ? ` above ${o.hpPct}% base health` : ''}${o.loadoutMax ? ` with ${o.loadoutMax} or fewer towers` : ''}`
+    : o.do === 'damage' ? `Deal damage with ${o.tower}` : o.do === 'kills' ? `Defeat enemies${o.tower ? ` with ${o.tower}` : ''}` : o.do === 'boss' ? `Defeat ${o.boss}` : o.do === 'status' ? `Apply ${o.status}` : o.do === 'ability' ? `Use ${o.tower}'s ability` : 'Earn cash';
+  return `${w} ${Math.min(o.prog, o.need)}/${o.need}`;
 };
-export function questAdd(p: Player, k: string, n: number) {
-  const pr = prof(p), q = QUESTS[k]; if (!q) return;
-  const was = pr.quests[k] ?? 0; if (was >= q.need) return;
-  pr.quests[k] = Math.min(q.need, was + n);
-  if (pr.quests[k] >= q.need) { pr.coins += q.coins; log('quest_done', { player: p.name, quest: k, coins: q.coins }); }
-  saveProf(p, pr);
+
+/** progress of one finished match for one player (counts for the owner of the towers) */
+export function questsAfter(p: Player, pr: Profile, m: Match, win: boolean) {
+  const s = m.pst?.[p.name]; if (!s) return;
+  const lo = m.loadouts?.[p.name] ?? pr.loadout, hp = (Math.max(0, m.baseHP) / m.maxHP) * 100, cash = m.cash[p.name] ?? 0;
+  for (const q of pr.quests) {
+    if (q.done) continue;
+    for (const o of q.objs) {
+      if (o.prog >= o.need) continue;
+      let add = 0;
+      if (o.do === 'damage') add = s.dmg[o.tower!] ?? 0;
+      else if (o.do === 'kills') add = o.tower ? s.killsBy[o.tower] ?? 0 : s.kills;
+      else if (o.do === 'status') add = s.status[o.status!] ?? 0;
+      else if (o.do === 'ability') add = s.abil[o.tower!] ?? 0;
+      else if (o.do === 'cash') add = s.earned;
+      else if (o.do === 'boss') add = s.bosses.includes(o.boss!) ? 1 : 0;
+      else if (o.do === 'triumph' && win && (!o.tower || s.placed.includes(o.tower)) && (!o.role || s.placed.some((n) => hasRole(n, o.role!))) && (!o.map || m.map === o.map) && (!o.mode || m.mode === o.mode)
+        && (!o.players || m.players.length === o.players) && (!o.cash || cash >= o.cash) && (!o.hpPct || hp >= o.hpPct) && (!o.loadoutMax || lo.length <= o.loadoutMax)) add = 1;
+      o.prog = Math.min(o.need, o.prog + Math.floor(add));
+    }
+    if (q.objs.every((o) => o.prog >= o.need)) {
+      q.done = true; const d = rules.quests.list.find((x) => x.title === q.title)!;
+      pr.coins += d.coins ?? 0; pr.gems += d.gems ?? 0; addExp(pr, d.exp, p.name); if (d.crate) pr.crates[d.crate] = (pr.crates[d.crate] ?? 0) + 1;
+      log('quest_done', { player: p.name, quest: q.title, text: q.text, coins: d.coins ?? 0, gems: d.gems ?? 0, exp: d.exp, crate: d.crate ?? null });
+    }
+  }
 }
 
-// ---------- rewards ----------
-/** Easy mode's formula (wiki) applied to every mode's listed reward: R ÷ (1 + ((W ÷ wave) − 1)^1.3), full + triumph on a win. */
-export function rewardFor(mode: string, wave: number, win: boolean) {
-  const md = modes[mode], W = md.waves, f = (R: number) => (wave <= 0 ? 0 : Math.floor(R / (1 + Math.pow(W / wave - 1, 1.3))));
-  return win ? { coins: md.rewards.coins, gems: md.rewards.gems, exp: md.rewards.exp } : { coins: f(md.rewards.coins), gems: f(md.rewards.gems), exp: f(md.rewards.exp) };
-}
+// ---------- match rewards (mode pages) ----------
+/** XP Boost: on its days unless a test fixed it (tds:xpboost on/off) */
+export const xpBoost = () => { const f = world.getDynamicProperty('tds:xpboost') as string | undefined; return f === 'on' ? rules.xpBoost.mult : f === 'off' ? 1 : xpBoostAt(Date.now()); };
 onEnd.push((m, r) => {
-  const rw = rewardFor(m.mode, m.wave, r === 'win');
+  const win = r === 'win', boost = xpBoost(), rw = rewardFor(m.mode, win ? modes[m.mode].waves : m.wave, win, boost);
   for (const p of world.getAllPlayers()) {
     if (!m.players.includes(p.name)) continue;
-    const pr = prof(p); pr.coins += rw.coins; pr.gems += rw.gems; addExp(pr, rw.exp);
-    if (r === 'win') pr.wins[m.mode] = (pr.wins[m.mode] ?? 0) + 1;
+    const pr = prof(p), lv0 = pr.level;
+    pr.coins += rw.coins; pr.gems += rw.gems; pr.texp += rw.texp; addExp(pr, rw.exp, p.name);
+    if (win) { pr.wins[m.mode] = (pr.wins[m.mode] ?? 0) + 1; pr.mapWins[m.map] = (pr.mapWins[m.map] ?? 0) + 1; }
+    log('reward', { player: p.name, result: r, mode: m.mode, wave: m.wave, ...rw, boost, level: pr.level, from: lv0, coinsTotal: pr.coins, gemsTotal: pr.gems });
+    questsAfter(p, pr, m, win);
     saveProf(p, pr);
-    if (r === 'win') questAdd(p, 'win', 1);
-    questAdd(p, 'kills', m.stats.kills);
-    log('reward', { player: p.name, result: r, ...rw, level: pr.level, coinsTotal: pr.coins });
   }
 });

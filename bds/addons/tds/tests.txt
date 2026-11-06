@@ -1,6 +1,7 @@
 # Tower Defense Simulator — systems reproduced from the TDS wiki (data/*.json). Vanilla look only.
 
 ## data from the wiki: every tower, enemy and mode loaded; tower rows match the wiki tables
+tds:xpboost off
 tds:info Scout 4
 = Scout Lv4/4 cost $2200 dmg 8 fr 0.325 range 16 ground limit - detect H2 L- F- dps 24.62
 tds:info Sniper
@@ -19,7 +20,7 @@ until "ev":"bench_done" 240000
 ## map from the wiki image: Grass Isle path = 48.67 s at speed 3.5 (≈170 studs); a Normal (2.7) walks it in ≈63 s
 @A join
 @A cmd /tds:play Easy
-~ "ev":"match_start","mode":"Easy","map":"Grass Isle","players":\["A"\],"cash":500,"baseHP":200,"pathStuds":1(6[4-9]|7[0-6])[.}]
+~ "ev":"match_start","mode":"Easy","map":"Grass Isle","players":\["A"\],"cash":500,"baseHP":200,"hpScale":1,"pathStuds":1(6[4-9]|7[0-6])[.}]
 tds:hold true
 wait 500
 tds:speed 20
@@ -94,6 +95,47 @@ until "ev":"leak","id":\d+,"name":"Balloon" 30000
 !~ "ev":"enemy_kill","id":\d+,"name":"Balloon"
 tds:speed 1
 
+## rewards from the mode pages: R ÷ (1 + [(N ÷ wave) − 1]^k) + triumph bonus for coins/gems, EXP and Tower EXP; XP Boost ×1.5 from 00:00 UTC Friday to 00:00 UTC Sunday (Experience page)
+tds:rewards Easy 20 true
+= {"coins":300,"gems":0,"exp":50,"texp":25}
+tds:rewards Easy 5 false
+= {"coins":48,"gems":0,"exp":12,"texp":2}
+tds:rewards Easy 10 false 1.5
+= {"coins":125,"gems":0,"exp":37,"texp":5}
+tds:rewards Casual 25 true
+= {"coins":450,"gems":0,"exp":90,"texp":50}
+tds:rewards Intermediate 30 true
+= {"coins":600,"gems":0,"exp":120,"texp":75}
+tds:rewards Molten 35 true
+= {"coins":950,"gems":0,"exp":185,"texp":120}
+tds:rewards Molten 20 false
+= {"coins":366,"gems":0,"exp":86,"texp":31}
+tds:rewards Fallen 40 true
+= {"coins":1350,"gems":0,"exp":250,"texp":185}
+tds:rewards Hardcore 45 true
+= {"coins":0,"gems":400,"exp":400,"texp":350}
+tds:rewards Hardcore 30 false
+= {"coins":0,"gems":137,"exp":133,"texp":106}
+tds:xpboost on
+~ xp boost on \(x1.5\)
+tds:stop
+@A cmd /tds:reset
+~ @A coins 50 owned Scout,Sniper
+@A cmd /tds:quest none
+@A cmd /tds:play Easy
+tds:hold true
+tds:finish win
+until "ev":"reward","player":"A","result":"win","mode":"Easy","wave":20,"coins":300,"gems":0,"exp":75,"texp":25,"boost":1.5,"level":1,"from":0,"coinsTotal":350 5000
+~ "ev":"level_up","player":"A","level":1,"coins":0,"towers":\[\],"slots":4
+@A cmd /tds:profile
+~ @A Lv1 exp 26 coins 350 gems 0 texp 25 slots 4
+tds:xpboost off
+@A cmd /tds:play Easy
+tds:hold true
+tds:finish lose
+until "ev":"reward","player":"A","result":"lose","mode":"Easy","wave":0,"coins":0,"gems":0,"exp":0,"texp":0,"boost":1, 5000
+tds:xpboost off
+
 ## economy: Easy wave bonus (200 + (w-1)×160)×(1-0.1×p) and the wave-clear bonus
 tds:wavecash Molten 2 1
 = Molten wave 2 x1: $317 start $500
@@ -130,12 +172,14 @@ tds:stop
 tds:speed 20
 until "ev":"leak","id":\d+,"name":"Normal","dmg":4,"baseHP":196 60000
 until "ev":"game_end","result":"lose" 120000
-until "ev":"reward","player":"A","result":"lose" 5000
+wait 500
+~ "ev":"reward","player":"A","result":"lose"
 tds:speed 1
 
 ## a full Easy match won by the bot (all 20 waves, bosses included)
 tds:stop
 @A cmd /tds:dev
+@A cmd /tds:grant 0 0 15
 @A cmd /tds:equip 1 Scout
 @A cmd /tds:equip 2 Minigunner
 @A cmd /tds:equip 3 Demoman
@@ -145,7 +189,8 @@ tds:stop
 @A cmd /tds:auto true
 tds:speed 20
 until "ev":"game_end","result":"win","mode":"Easy","wave":20 300000
-until "ev":"reward","player":"A","result":"win","coins":300,"gems":0,"exp":50 5000
+wait 500
+~ "ev":"reward","player":"A","result":"win","mode":"Easy","wave":20,"coins":300,"gems":0,"exp":50,"texp":25,"boost":1,
 tds:speed 1
 @A cmd /tds:auto false
 
@@ -286,49 +331,261 @@ tds:spawnat Heavy 1
 ~ "ev":"tower_ability","id":3,"name":"Military Base","ability":"Airstrike","cost":500
 tds:stop
 
-## lobby: profile, shop with coins, loadout, quests, elevator to a match
+## two players: kill cash split evenly between players, a share of .5 rounding up (mode pages); Molten/Fallen health +15/25/40% for 2/3/4 players (|health_scale); placement limits per player
 tds:stop
+@B join
+@A cmd /tds:dev
+@B cmd /tds:dev
+@A cmd /tds:play Molten true
+until "ev":"match_start","mode":"Molten","map":"Grass Isle","players":\["A","B"\],"cash":500,"baseHP":200,"hpScale":1.15 5000
+tds:hold true
+@A cmd /tds:cash 0
+@B cmd /tds:cash 0
+tds:spawn Breaker
+until "ev":"enemy_spawn","id":\d+,"name":"Breaker","hp":46, 5000
+tds:kill Breaker
+tds:state
+~ "cash":\{"A":3,"B":3\}
+@A cmd /tds:cash 20000
+@B cmd /tds:cash 20000
+@A cmd /tds:place Gatling_Gun -12 -60 -16
+~ @A Placed #\d+ Gatling Gun
+@A cmd /tds:place Gatling_Gun -4 -60 -15
+~ @A Cannot place: limit 1
+@B cmd /tds:place Gatling_Gun -4 -60 -15
+~ @B Placed #\d+ Gatling Gun
+tds:stop
+@A cmd /tds:play Easy true
+until "ev":"match_start","mode":"Easy","map":"Grass Isle","players":\["A","B"\],"cash":500,"baseHP":200,"hpScale":1, 5000
+tds:hold true
+tds:spawn Slow_Boss
+until "ev":"enemy_spawn","id":\d+,"name":"Slow Boss","hp":1400, 5000
+@A cmd /tds:cash 0
+@B cmd /tds:cash 0
+tds:hurt Slow_Boss 350
+tds:state
+~ "cash":\{"A":250,"B":250\}
+tds:stop
+
+## store and loadout by level (Levels page): 50 coins at level 0, four slots until level 15, towers unlocked by reaching a level, level gates (Hardcore towers 50, Pursuit 100, Gatling Gun 175, Mercenary Base 150), triumph gates (Warden, Cowboy, Saboteur)
+tds:stop
+@A cmd /tds:reset
+~ @A coins 50 owned Scout,Sniper
 @A cmd /tds:profile
-~ @A Lv\d+ exp \d+ coins \d+ gems \d+ owned \d+ loadout
-@A cmd /tds:grant 1000 0 0
-@A cmd /tds:buy Scout
-~ @A Already own Scout
+~ @A Lv0 exp 0 coins 50 gems 0 texp 0 slots 4 owned 2 loadout Scout, Sniper
+@A cmd /tds:buy Paintballer
+~ @A Need 100 coins
+@A cmd /tds:grant 50 0
+@A cmd /tds:buy Paintballer
+~ @A Unlocked Paintballer
+~ "ev":"unlock","player":"A","tower":"Paintballer","kind":"coins","value":100,"left":0
 @A cmd /tds:buy War_Machine
 ~ @A War Machine is not sold \(Exclusive\)
-@A cmd /tds:buy Freezer
-~ @A Unlocked Freezer|@A Already own Freezer
-@A cmd /tds:equip 2 Freezer
-~ @A Loadout: Scout, Freezer
-@A cmd /tds:quests
-~ @A Defeat 300 enemies \d+/300 .*Win a match 1/1
-@A cmd /tds:grant 0 0 0
+@A cmd /tds:buy Crook_Boss
+~ @A Crook Boss unlocks at level 30
+@A cmd /tds:equip 3 Paintballer
+~ @A Loadout: Scout, Sniper, Paintballer
+@A cmd /tds:equip 5 Paintballer
+~ @A Slots 1-4 \(the fifth opens at level 15\)
+@A cmd /tds:grant 0 2500 49
+@A cmd /tds:buy Accelerator
+~ @A Accelerator is sold from level 50
+@A cmd /tds:profile
+~ @A Lv49 .* slots 5 owned 4 loadout Scout, Sniper, Paintballer 
+@A cmd /tds:equip 4 Crook_Boss
+~ @A Loadout: Scout, Sniper, Paintballer, Crook Boss
+@A cmd /tds:grant 0 0 50
+@A cmd /tds:equip 5 Turret
+~ @A Loadout: Scout, Sniper, Paintballer, Crook Boss, Turret
+@A cmd /tds:buy Accelerator
+~ @A Unlocked Accelerator
+@A cmd /tds:buy Turret
+~ @A Already own Turret
+@A cmd /tds:buy Crook_Boss
+~ @A Already own Crook Boss
+@A cmd /tds:grant 1000000 0 99
+@A cmd /tds:buy Pursuit
+~ @A Pursuit is sold from level 100
+@A cmd /tds:buy Gatling_Gun
+~ @A Gatling Gun is sold from level 175
+@A cmd /tds:buy Mercenary_Base
+~ @A Mercenary Base unlocks at level 150
+@A cmd /tds:buy Cowboy
+~ @A Triumph Badlands II first
+@A cmd /tds:buy Warden
+~ @A Triumph Pizza Party first
+@A cmd /tds:grant 0 0 175
+@A cmd /tds:buy Pursuit
+~ @A Unlocked Pursuit
+@A cmd /tds:buy Gatling_Gun
+~ @A Unlocked Gatling Gun
+@A cmd /tds:buy Mercenary_Base
+~ @A Already own Mercenary Base
+@A cmd /tds:reset
+@A cmd /tds:quest none
+@A cmd /tds:grant 0 0 29
+tds:xpboost on
+@A cmd /tds:play Molten
+tds:hold true
+tds:finish win
+until "ev":"level_up","player":"A","level":30,"coins":0,"towers":\["Crook Boss"\],"slots":5 5000
+tds:xpboost off
+tds:stop
+
+## lobby: profile, shop with coins, loadout, quests, elevators (Survival 4 / Hardcore 3 players, 20 s, party size chosen by the first player, Hardcore map changes every minute) to a match
+tds:stop
+@B join
+@A cmd /tds:reset
+@B cmd /tds:reset
 @A cmd /tds:lobby
 ~ @A form action: title\("TDS Lobby"\)
-@A form 3
-~ @A Defeat 300 enemies
+@A form 0
+~ @A form action: title\("Elevator"\)
+@A form 0
+~ @A form action: title\("Party size"\)
+@A form 0
+~ @A Elevator Easy: 1/1, departs in 0s
+until "ev":"match_start","mode":"Easy" 5000
+~ "ev":"elevator_depart","mode":"Easy","players":\["A"\],"size":1,
+tds:stop
+@A cmd /tds:queue Casual 2
+~ @A Elevator Casual: 1/2, departs in 20s
+@A cmd /tds:vote Grass_Isle
+~ @A Voted Grass Isle
+@B cmd /tds:queue Casual
+~ @B Elevator Casual: 2/2, departs in 0s
+until "ev":"match_start","mode":"Casual","map":"Grass Isle","players":\["A","B"\] 5000
+~ "ev":"elevator_depart","mode":"Casual","players":\["A","B"\],"size":2,"map":"Grass Isle"
+tds:stop
 @A cmd /tds:queue Easy
-~ @A Elevator Easy: 1/4
+~ @A Elevator Easy: 1/4, departs in 20s
 @A cmd /tds:leave
 ~ @A Left
 @A cmd /tds:queue Hardcore
 ~ @A Hardcore needs level 50
-@A cmd /tds:queue Casual
-~ @A Elevator Casual: 1/4, departs in 20s
-@A cmd /tds:vote Grass_Isle
-~ @A Voted Grass Isle
-tds:depart Casual
-until "ev":"match_start","mode":"Casual","map":"Grass Isle" 5000
-~ "ev":"elevator_depart","mode":"Casual","players":\["A"\]
+@A cmd /tds:grant 0 0 50
+@A cmd /tds:queue Hardcore 4
+~ @A Elevator Hardcore: 1/3 · (Grass Isle|Crossroads), departs in 20s
+@A cmd /tds:vote Crossroads
+~ @A Hardcore elevators go to (Grass Isle|Crossroads)
+tds:hardcoremap
+~ ^(Grass Isle|Crossroads)$
+tds:depart Hardcore
+until "ev":"match_start","mode":"Hardcore","map":"(Grass Isle|Crossroads)","players":\["A"\],"cash":900 5000
+~ "ev":"elevator_depart","mode":"Hardcore","players":\["A"\],"size":3,"map":"(Grass Isle|Crossroads)"
+tds:stop
+@A cmd /tds:profile
+~ @A Lv50 exp \d+ coins \d+ gems \d+ texp \d+ slots 5 owned \d+ loadout
+@A cmd /tds:lobby
+@A form 3
+~ @A \[daily\]
 
 ## restart: the match, its towers and wave survive a server restart
+tds:stop
+@A cmd /tds:play Casual
 tds:hold true
-@A cmd /tds:place Freezer -9 -60 -15
-~ @A Placed #\d+ Freezer
+@A cmd /tds:place Scout -9 -60 -15
+~ @A Placed #\d+ Scout
 restart
 @A join
 tds:state
 ~ "ev":"restored","mode":"Casual","wave":0,"enemies":0,"towers":1
-~ "towers":\["\d+:Freezer:0"\]
+~ "towers":\["\d+:Scout:0"\]
+
+## quests (Quests page): 6 of the 10 daily and 4 of the 8 weekly quests, needs scaled by level, progress for the tower's owner, rewards (coins, gems, EXP, crates) once
+tds:stop
+tds:xpboost off
+@B join
+@A cmd /tds:reset
+@B cmd /tds:reset
+@A cmd /tds:quests
+~ ^@A (\[daily\][^|]*\| ){6}(\[weekly\][^|]*\| ){3}\[weekly\][^|]*$
+@A cmd /tds:quest none
+~ @A No quests
+@B cmd /tds:quest none
+@A cmd /tds:quest "Train TOWER" "tower=Gatling Gun"
+~ @A Train Gatling Gun
+~ "ev":"quest_set","player":"A","title":"Train TOWER","text":"Train Gatling Gun","objs":\["Deal damage with Gatling Gun 0/15000"\]
+@B cmd /tds:quest "Train TOWER" "tower=Gatling Gun"
+@A cmd /tds:quest "Bounty: BOSS" "boss=Brute"
+~ "ev":"quest_set","player":"A","title":"Bounty: BOSS","text":"Bounty: Brute","objs":\["Defeat enemies 0/300","Defeat Brute 0/1"\]
+@A cmd /tds:quest "Cash Reserve"
+~ "objs":\["Triumph holding \$10000 0/1"\]
+@A cmd /tds:quest "Clean Defense"
+~ "objs":\["Triumph above 50% base health 0/1"\]
+@A cmd /tds:quest "Small Team Clear" "players=2"
+~ "objs":\["Triumph in a team of 2 0/1"\]
+@A cmd /tds:quest "Status Control" "status=Frost"
+~ "objs":\["Apply Frost 0/60"\]
+@A cmd /tds:quest "TOWER Ability Drill" "tower=Commander"
+~ "objs":\["Use Commander's ability 0/10"\]
+@A cmd /tds:quest "Mode Ladder" "modes=Easy,Casual"
+~ "objs":\["Triumph Easy 0/1","Triumph Casual 0/1"\]
+@A cmd /tds:quest "Boss Dossier" "boss=Brute,Slow Boss"
+~ "objs":\["Defeat Brute 0/1","Defeat Slow Boss 0/1"\]
+@A cmd /tds:quest "Loadout Gauntlet"
+~ "objs":\["Triumph with 3 or fewer towers 0/1"\]
+@A cmd /tds:quest "Economy Audit"
+~ "objs":\["Earn cash 0/200000","Triumph holding \$10000 0/2"\]
+@B cmd /tds:dev
+@A cmd /tds:play Easy true
+tds:hold true
+tag A add tds_dev
+@A cmd /tds:cash 300000
+@A cmd /tds:place Freezer -9 -60 -15
+tds:spawnat Armored 1
+wait 2500
+@A cmd /tds:place Gatling_Gun -12 -60 -16
+@A cmd /tds:upgrade 3
+@A cmd /tds:upgrade 3
+@A cmd /tds:upgrade 3
+@A cmd /tds:upgrade 3
+@A cmd /tds:upgrade 3
+@A cmd /tds:upgrade 3
+~ @A Gatling Gun → Lv6
+@A cmd /tds:place Commander -6 -60 -16
+@A cmd /tds:upgrade 4
+@A cmd /tds:upgrade 4
+@A cmd /tds:use 4
+~ "ev":"tower_ability","id":4,"name":"Commander","ability":"Call to Arms"
+tds:spawn Brute
+tds:spawn Brute
+tds:speed 10
+wait 8000
+tds:speed 1
+~ "ev":"enemy_kill","id":2,"name":"Armored"
+~ "ev":"enemy_kill","id":5,"name":"Brute","by":3
+~ "ev":"enemy_kill","id":6,"name":"Brute","by":3
+tds:spawn Slow_Boss
+tds:kill Slow_Boss
+@A cmd /tds:cash 20000
+tds:finish win
+until "ev":"quest_done","player":"A","quest":"Train TOWER","text":"Train Gatling Gun","coins":200,"gems":0,"exp":100,"crate":null 5000
+~ "ev":"quest_done","player":"A","quest":"Cash Reserve","text":"Cash Reserve","coins":100,"gems":0,"exp":50,"crate":null
+~ "ev":"quest_done","player":"A","quest":"Clean Defense","text":"Clean Defense","coins":100,"gems":0,"exp":50,"crate":null
+~ "ev":"quest_done","player":"A","quest":"Small Team Clear","text":"Small Team Clear","coins":150,"gems":0,"exp":75,"crate":null
+~ "ev":"quest_done","player":"A","quest":"Boss Dossier","text":"Boss Dossier","coins":1250,"gems":0,"exp":200,"crate":"Mid Grade Crate"
+~ "ev":"quest_done","player":"A","quest":"Loadout Gauntlet","text":"Loadout Gauntlet","coins":0,"gems":150,"exp":275,"crate":"High Grade Crate"
+!~ "ev":"quest_done","player":"A","quest":"Bounty: BOSS"
+!~ "ev":"quest_done","player":"A","quest":"Mode Ladder"
+!~ "ev":"quest_done","player":"B","quest":"Train TOWER"
+@A cmd /tds:quests
+~ @A .*Bounty: Brute: Defeat enemies [1-9]\d*/300; Defeat Brute 1/1
+~ @A .*Apply Frost [1-9]\d*/60
+~ @A .*Use Commander's ability 1/10
+~ @A .*Mode Ladder: Triumph Easy 1/1; Triumph Casual 0/1
+~ @A .*Train Gatling Gun ✔
+~ @A .*Earn cash [1-9]\d*/200000; Triumph holding \$10000 1/2
+@B cmd /tds:quests
+~ @B \[daily\] Train Gatling Gun: Deal damage with Gatling Gun 0/15000
+@A cmd /tds:profile
+~ @A .* gems 150 .*crates \{"Mid Grade Crate":1,"High Grade Crate":1\}
+@A cmd /tds:play Casual
+tds:hold true
+tds:finish win
+until "ev":"quest_done","player":"A","quest":"Mode Ladder","text":"Mode Ladder","coins":0,"gems":150,"exp":275,"crate":"High Grade Crate" 5000
+tds:stop
+tds:xpboost off
 
 ## load: 200 enemies and 50 towers keep 20 TPS
 tds:stop
