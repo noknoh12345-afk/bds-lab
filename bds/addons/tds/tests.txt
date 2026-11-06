@@ -718,6 +718,22 @@ tds:finish win
 until "ev":"badge","player":"A" 5000
 tds:stop
 
+## the GeoUI match HUD like the original: wave, timer and base health, boss bar, cash, mode and enemies, the tower bar, the selected tower, banners and rewards; the lobby's level, EXP, coins and gems
+tds:stop
+@A cmd /tds:play Easy
+wait 500
+js world.getAllPlayers().find((p) => p.name === 'A').getProperty('tdsui:alpha')
+~ 100
+js world.getAllPlayers().find((p) => p.name === 'A').getProperty('tdsui:mode')
+~ ^0$
+@A cmd /tds:hud off
+~ @A HUD off
+@A cmd /tds:hud on
+tds:stop
+wait 300
+js world.getAllPlayers().find((p) => p.name === 'A').getProperty('tdsui:mode')
+~ 15
+
 ## load: 200 enemies and 50 towers keep 20 TPS
 tds:stop
 @A cmd /tds:play Easy

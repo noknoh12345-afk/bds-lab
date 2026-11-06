@@ -11,3 +11,4 @@ item.tds:slot_3.name=タワー枠3
 item.tds:slot_4.name=タワー枠4
 item.tds:slot_5.name=タワー枠5
 action.interact.tds_manage=管理
+entity.minecraft:player.name=プレイヤー

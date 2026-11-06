@@ -10,6 +10,7 @@ import { badgesText } from './progress';
 import { setTrack, fpsShoot, abilityNeeds } from './abilities';
 import { modsMenu } from './modifiers';
 import { flashRange } from './placement';
+import { selectTower, hudOn } from './hud';
 
 const T = (s: string) => s.replace(/_/g, ' ');
 const inMatch = (p: Player) => !!G.M && G.M.players.includes(p.name);
@@ -166,7 +167,7 @@ function nextLevel(name: string, lvl: number) {
 }
 async function towerMenu(p: Player, id: number) {
   const tw = G.towerById(id); if (!tw) return;
-  flashRange(tw, 80); const s = G.eff(tw), max = tw.lvl >= maxLevel(tw.name), nc = max ? 0 : G.infl(levelCost(tw.name, tw.lvl + 1));
+  flashRange(tw, 80); selectTower(p, id); const s = G.eff(tw), max = tw.lvl >= maxLevel(tw.name), nc = max ? 0 : G.infl(levelCost(tw.name, tw.lvl + 1));
   const body = `Lv${tw.lvl}/${maxLevel(tw.name)} · dmg ${+s.dmg.toFixed(2)} · fr ${s.fr ?? '-'} · range ${s.range.toFixed(1)}\nDamage dealt ${Math.round(tw.dealt)} · Target ${tw.target}${max ? '' : `\n§l§eNext level§r\n${nextLevel(tw.name, tw.lvl)}`}`;
   const f = new ActionFormData().title(`§l#${tw.id} ${tw.name}`).body(body).button(max ? 'Max level' : `Upgrade §8$${nc}`).button(`Sell §8$${G.sellValue(tw)}`).button(`Target: ${tw.target}`);
   const ab = G.abilitiesOf(tw); for (const a of ab) { const w = G.abilityReady(tw, a.title); f.button(`${a.title}${a.cost ? ` §8$${a.cost}` : ''}${w ? ` §c${Math.ceil(w)}s` : ''}`); }
@@ -201,7 +202,7 @@ every(10, (p) => {
   const M = G.M; if (!M || !M.players.includes(p.name)) return;
   const left = M.waveEnd === Infinity ? '∞' : `${Math.max(0, Math.ceil(M.waveEnd - M.t))}s`;
   const it = p.getComponent('inventory')?.container?.getItem(p.selectedSlotIndex)?.typeId ?? '';
-  if (/^tds:slot_/.test(it)) return;   // the placement preview uses the bar while a slot is held
+  if (/^tds:slot_/.test(it) || hudOn(p)) return;   // the placement preview uses the bar while a slot is held; the GeoUI HUD shows the rest
   const boss = M.enemies.filter((e) => e.boss).sort((a, b) => b.max - a.max)[0];
   p.onScreenDisplay.setActionBar(`§c❤ ${Math.max(0, M.baseHP)}/${M.maxHP} §e$${M.cash[p.name] ?? 0} §fWave ${M.wave}/${G.lastWave()} §7${left} §aEnemies ${M.enemies.length}${boss ? ` §4☠ ${boss.name} ${Math.max(0, Math.ceil((boss.hp / boss.max) * 100))}%` : ''}${M.mods?.length ? ` §d⚑${M.mods.length}` : ''}`);
 });

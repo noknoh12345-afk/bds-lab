@@ -1,7 +1,7 @@
 # Tower Defense Simulator
 
 ## Request
-Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki: data-driven towers/enemies/modes, waves on a path, placement, upgrades, targeting, detections, economy, lobby progression. Small original models (role-based shapes, not the game's designs), a stair-rimmed narrow lane, and the original's placement aids (hotbar slots, ghost, range rings).
+Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki: data-driven towers/enemies/modes, waves on a path, placement, upgrades, targeting, detections, economy, lobby progression. Small original models (role-based shapes, not the game's designs), a stair-rimmed narrow lane, and the original's placement aids (hotbar slots, ghost, range rings); the match and lobby HUD drawn with GeoUI (tools/hud.mjs, original pixel art, ≤ 600 bones, 30 player properties).
 
 ## Acceptance (one tests.txt `## ` section each)
 - [ ] data from the wiki: every tower, enemy and mode loaded; tower rows match the wiki tables
@@ -31,6 +31,7 @@ Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki:
 - [ ] match modifiers from their pages: effects (Glass, Broke, Inflation, Fog, Healthy, Speedy, ...) and the reward boosts
 - [ ] placement like the original: loadout slots 1-5 in the hotbar, a ghost and range ring where you look, cost and limit on the bar; the path is a narrow lane rimmed with stairs
 - [ ] badges from the mode pages: a triumph badge rewards once
+- [ ] the GeoUI match HUD like the original: wave, timer and base health, boss bar, cash, mode and enemies, the tower bar, the selected tower, banners and rewards; the lobby's level, EXP, coins and gems
 - [ ] load: 200 enemies and 50 towers keep 20 TPS
 
 ## Guessed

@@ -1,0 +1,146 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.tdsui_hud": {
+      "geometry": "Geometry.tdsui_hud",
+      "materials": [
+        {
+          "*": "material.tdsui_cutout"
+        },
+        {
+          "wave_bg": "material.tdsui_blend"
+        },
+        {
+          "boss_bg": "material.tdsui_blend"
+        },
+        {
+          "skip_bg": "material.tdsui_blend"
+        },
+        {
+          "cash_bg": "material.tdsui_blend"
+        },
+        {
+          "mode_0": "material.tdsui_blend"
+        },
+        {
+          "mode_1": "material.tdsui_blend"
+        },
+        {
+          "mode_2": "material.tdsui_blend"
+        },
+        {
+          "mode_3": "material.tdsui_blend"
+        },
+        {
+          "mode_4": "material.tdsui_blend"
+        },
+        {
+          "mode_5": "material.tdsui_blend"
+        },
+        {
+          "mode_6": "material.tdsui_blend"
+        },
+        {
+          "mode_7": "material.tdsui_blend"
+        },
+        {
+          "mode_8": "material.tdsui_blend"
+        },
+        {
+          "slot0_bg": "material.tdsui_blend"
+        },
+        {
+          "slot0_sel": "material.tdsui_blend"
+        },
+        {
+          "slot1_bg": "material.tdsui_blend"
+        },
+        {
+          "slot1_sel": "material.tdsui_blend"
+        },
+        {
+          "slot2_bg": "material.tdsui_blend"
+        },
+        {
+          "slot2_sel": "material.tdsui_blend"
+        },
+        {
+          "slot3_bg": "material.tdsui_blend"
+        },
+        {
+          "slot3_sel": "material.tdsui_blend"
+        },
+        {
+          "slot4_bg": "material.tdsui_blend"
+        },
+        {
+          "slot4_sel": "material.tdsui_blend"
+        },
+        {
+          "banner_bg": "material.tdsui_blend"
+        },
+        {
+          "tw_bg": "material.tdsui_blend"
+        },
+        {
+          "tw_t0": "material.tdsui_blend"
+        },
+        {
+          "tw_t1": "material.tdsui_blend"
+        },
+        {
+          "tw_t2": "material.tdsui_blend"
+        },
+        {
+          "tw_t3": "material.tdsui_blend"
+        },
+        {
+          "tw_t4": "material.tdsui_blend"
+        },
+        {
+          "tw_t5": "material.tdsui_blend"
+        },
+        {
+          "tw_t6": "material.tdsui_blend"
+        },
+        {
+          "lb_bg": "material.tdsui_blend"
+        },
+        {
+          "gm_bg": "material.tdsui_blend"
+        }
+      ],
+      "textures": [
+        "Texture.tdsui_hud"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      }
+    }
+  }
+}

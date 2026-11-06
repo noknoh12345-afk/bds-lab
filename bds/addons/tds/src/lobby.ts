@@ -223,6 +223,8 @@ function hiddenReward(first: boolean, boost: number) {
   const H = modes.Fallen?.hidden, reg = (H?.rewards ?? []).filter((x) => !/First/i.test(x.label)), last = reg[reg.length - 1], once = (H?.rewards ?? []).find((x) => /First/i.test(x.label));
   return { coins: 0, gems: (last?.gems ?? 0) + (first ? once?.gems ?? 0 : 0), exp: Math.floor((last?.exp ?? 0) * boost + 1e-9), texp: last?.texp ?? 0 };
 }
+/** the last match reward of each player (the HUD shows it under the result banner) */
+export const lastReward = new Map<string, { coins: number; gems: number; exp: number }>();
 onEnd.push((m, r) => {
   if (m.sandbox || modes[m.mode]?.sandbox) { log('reward', { mode: m.mode, result: r, sandbox: true, none: true }); return; }   // Sandbox gives nothing
   const win = r === 'win', boost = xpBoost(), hidden = win && !!m.hidden?.on, base = rewardFor(m.mode, win ? modes[m.mode].waves : m.wave, win, boost);
@@ -233,6 +235,7 @@ onEnd.push((m, r) => {
     pr.coins += rw.coins; pr.gems += rw.gems; pr.texp += rw.texp; addExp(pr, rw.exp, p.name);
     if (win) { pr.wins[m.mode] = (pr.wins[m.mode] ?? 0) + 1; pr.mapWins[m.map] = (pr.mapWins[m.map] ?? 0) + 1; }
     if (hidden) pr.wins['Hidden Wave'] = (pr.wins['Hidden Wave'] ?? 0) + 1;
+    lastReward.set(p.name, { coins: rw.coins, gems: rw.gems, exp: rw.exp });
     log('reward', { player: p.name, result: r, mode: m.mode, wave: m.wave, ...rw, boost, level: pr.level, from: lv0, coinsTotal: pr.coins, gemsTotal: pr.gems, ...(hidden && { hidden: true }) });
     questsAfter(p, pr, m, win);
     saveProf(p, pr);
