@@ -121,13 +121,26 @@ export function pythonFor(labDir) {
   if (!has('ffmpeg', ['-version'])) {
     const bin = path.join(labDir, '.lab-tools', 'bin');
     fs.mkdirSync(bin, { recursive: true });
-    if (!fs.existsSync(py)) spawnSync('python3', ['-m', 'venv', venv], { stdio: 'ignore', timeout: 120_000 });
-    spawnSync(py, ['-m', 'pip', 'install', '-q', 'imageio-ffmpeg'], { stdio: 'ignore', timeout: 600_000 });
-    const exe = spawnSync(py, ['-c', 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())'], { encoding: 'utf8' }).stdout.trim();
+    // (first into a plain folder with the system's pip — no venv: q54's first run, 2026-11-06, had no ffmpeg again and the venv
+    //  way gave nothing — then through the venv)
+    const lib = path.join(labDir, '.lab-tools', 'ffpy');
+    const find = (cmd, env) => (spawnSync(cmd, ['-c', 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())'], { encoding: 'utf8', env }).stdout || '').trim();
+    const envLib = { ...process.env, PYTHONPATH: lib };
+    let exe = find('python3', envLib);
+    if (!exe) {
+      spawnSync('python3', ['-m', 'pip', 'install', '-q', '--target', lib, '--break-system-packages', 'imageio-ffmpeg'], { stdio: 'ignore', timeout: 600_000 });
+      exe = find('python3', envLib);
+    }
+    if (!exe) {
+      if (!fs.existsSync(py)) spawnSync('python3', ['-m', 'venv', venv], { stdio: 'ignore', timeout: 120_000 });
+      spawnSync(py, ['-m', 'pip', 'install', '-q', 'imageio-ffmpeg'], { stdio: 'ignore', timeout: 600_000 });
+      exe = find(py);
+    }
     if (exe && fs.existsSync(exe)) {
       try { fs.rmSync(path.join(bin, 'ffmpeg'), { force: true }); fs.symlinkSync(exe, path.join(bin, 'ffmpeg')); } catch { /* (there already) */ }
       if (!(process.env.PATH ?? '').split(path.delimiter).includes(bin)) process.env.PATH = bin + path.delimiter + (process.env.PATH ?? '');
-    }
+      console.warn(`[rig] ffmpeg: apt gave none — pip's static one (${exe})`);
+    } else console.warn('[rig] ffmpeg: apt gave none, and pip\'s static one could not be had either');
   }
   if (has('python3', ['-c', 'import numpy, scipy'])) return 'python3';
   if (!fs.existsSync(py)) spawnSync('python3', ['-m', 'venv', venv], { stdio: 'ignore', timeout: 120_000 });
