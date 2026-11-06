@@ -11,7 +11,7 @@ Pick the ONE playbook that fits; read only the skills it names, when its step co
 
 **B. A person's addon (fix, update, finish, add to it).** 1 `bds-fix-addon`: `import`, the brief lists what breaks and the bugs found before any server; fix them all in one round. 2 tests: draft + a section per request + one per unasked fix; `go`. 3 `bds-quality`, then `bds-deliver` (in their language).
 
-**C. Only the look.** Forms/HUD: `bds-json-ui`. Mob/item shape: `bds-models`. Items/blocks/mobs/recipes data: `bds-content`.
+**C. Only the look.** Forms/HUD: `bds-json-ui`. Mob/item shape: `bds-models`. Pixel art, icons, frame animation: `bds-pixel-art`. Items/blocks/mobs/recipes data: `bds-content`.
 
 **D. Beyond BDS scripts** (the list in AGENTS.md): `endstone-plugin` (Python); on LeviLamina: `levilamina-mod`. Then, as in A: `bds-quality`, `bds-deliver` (both cover plugins and mods).
 

@@ -4,34 +4,53 @@
   "description": {
    "identifier": "tds:unit",
    "materials": {
-    "default": "entity_emissive_alpha_one_sided",
-    "blend": "entity_alphablend"
+    "default": "entity_alphatest",
+    "lit": "entity_emissive_alpha_one_sided"
    },
    "textures": {
     "t0": "textures/entity/tds/unit_jeep",
-    "t1": "textures/entity/tds/unit_soldier",
+    "t1": "textures/entity/pillager",
     "t2": "textures/entity/tds/unit_sentry",
-    "t3": "textures/entity/tds/unit_soldier_skeleton",
+    "t3": "textures/entity/skeleton/skeleton",
     "t4": "textures/entity/tds/unit_ice",
-    "t5": "textures/entity/tds/unit_soldier",
-    "t6": "textures/entity/tds/unit_soldier",
-    "t7": "textures/entity/tds/unit_soldier"
+    "t5": "textures/entity/pillager",
+    "t6": "textures/entity/pillager",
+    "t7": "textures/entity/pillager",
+    "o0": "textures/entity/tds/holo_tint",
+    "o1": "textures/entity/tds/gear_soldier",
+    "o2": "textures/entity/tds/holo_tint",
+    "o3": "textures/entity/tds/gear_skeleton",
+    "o4": "textures/entity/tds/holo_tint",
+    "o5": "textures/entity/tds/gear_soldier",
+    "o6": "textures/entity/tds/gear_soldier",
+    "o7": "textures/entity/tds/gear_soldier"
    },
    "geometry": {
     "g0": "geometry.tds.unit_jeep",
-    "g1": "geometry.tds.unit_soldier",
+    "g1": "geometry.pillager",
     "g2": "geometry.tds.unit_sentry",
-    "g3": "geometry.tds.unit_soldier",
+    "g3": "geometry.skeleton.v1.8",
     "g4": "geometry.tds.unit_ice",
-    "g5": "geometry.tds.unit_soldier",
-    "g6": "geometry.tds.unit_soldier",
-    "g7": "geometry.tds.unit_soldier"
+    "g5": "geometry.pillager",
+    "g6": "geometry.pillager",
+    "g7": "geometry.pillager",
+    "o0": "geometry.tds.empty",
+    "o1": "geometry.tds.gear_soldier",
+    "o2": "geometry.tds.empty",
+    "o3": "geometry.tds.gear_skeleton",
+    "o4": "geometry.tds.empty",
+    "o5": "geometry.tds.gear_soldier",
+    "o6": "geometry.tds.gear_soldier",
+    "o7": "geometry.tds.gear_soldier"
    },
    "scripts": {
-    "scale": "0.4 * q.property('tds:size')",
+    "scale": "((q.property('tds:skin') == 1 || q.property('tds:skin') == 3 || q.property('tds:skin') == 5 || q.property('tds:skin') == 6 || q.property('tds:skin') == 7) ? 0.2 : 0.4) * q.property('tds:size')",
     "animate": [
      {
-      "walk": "q.property('tds:skin') == 1 || q.property('tds:skin') == 3 || q.property('tds:skin') > 4"
+      "march": "q.property('tds:skin') == 1 || q.property('tds:skin') == 5 || q.property('tds:skin') == 6 || q.property('tds:skin') == 7"
+     },
+     {
+      "shamble": "q.property('tds:skin') == 3"
      },
      {
       "wheels": "q.property('tds:skin') == 0"
@@ -45,10 +64,14 @@
     ]
    },
    "render_controllers": [
-    "controller.render.tds_unit"
+    "controller.render.tds_unit",
+    {
+     "controller.render.tds_unit_gear": "q.property('tds:skin') == 1 || q.property('tds:skin') == 3 || q.property('tds:skin') == 5 || q.property('tds:skin') == 6 || q.property('tds:skin') == 7"
+    }
    ],
    "animations": {
-    "walk": "animation.tds_unit.walk",
+    "march": "animation.tds_unit.march",
+    "shamble": "animation.tds_unit.shamble",
     "wheels": "animation.tds_unit.wheels",
     "sweep": "animation.tds_unit.sweep",
     "spin": "animation.tds_unit.spin"

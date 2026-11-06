@@ -21,6 +21,10 @@ Not for item or block textures alone (`bds-content`, `png`) or what a mob does (
 - A wing, fin, leaf or cloth is ONE zero-thickness plate cut out by transparent texels (material entity_alphatest), both faces the same size and painted by position; not a board or a fan of boxes. (when missed: wings that look like boards; one face paints over the cut-out) `model-plate`
 - A person's Blockbench save wins: lint it (`check`: collapsed / duplicate cubes, UV off), fix only the defects named and say which; never redesign a part nobody pointed at. (when missed: a rewrite the person rejects) `model-hand-edit`
 - When vanilla has the thing (a wing, a held item, a mount), look first: `render minecraft:<mob>`, `sample rp/models/entity/<name>`. (when missed: a guessed construction rejected 3 times) `model-vanilla-first` [source]
+- No stair steps. Slopes and curves are tilted boxes joined corner to corner. Where a width steps, splay a box out to the wider corner. Fill valley joints by running both links past the corner. A tilted part's end runs INTO what it meets. `src-79236f46` [source]
+- Pictures that cross cubes are placed by position, not by texel index, so lines run on from one cube to the next. `src-237884b3` [source]
+- `entity_emissive_alpha_one_sided`: alpha 255 = world light, low alpha = self-lit, 0 = cut. `src-dfb4fb71` [source]
+- Model wings spread; hold them at rest with the bind pose; clips and Molang loops ADD to the bind; the hand lags the arm by a phase. List `rest`, `spread`, `up`, `down` as poses. `src-a154c0bc` [source]
 <!-- rules:end -->
 
 Rules marked [source] come from a reference project and are not re-run here; the rest are proven by tests/rp-offline.mjs.

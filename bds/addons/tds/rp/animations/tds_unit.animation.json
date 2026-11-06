@@ -1,53 +1,95 @@
 {
  "format_version": "1.8.0",
  "animations": {
-  "animation.tds_unit.walk": {
+  "animation.tds_unit.march": {
    "loop": true,
    "bones": {
-    "leg_l": {
+    "leftLeg": {
      "rotation": [
       "math.sin(q.life_time * 500) * 30",
       0,
       0
      ]
     },
-    "leg_r": {
+    "rightLeg": {
      "rotation": [
       "math.sin(q.life_time * 500) * -30",
       0,
       0
      ]
     },
-    "arm_l": {
+    "rightarm": {
      "rotation": [
-      "math.sin(q.life_time * 500) * -6",
-      0,
+      -70,
+      -12,
       0
      ]
     },
-    "arm_r": {
+    "leftarm": {
      "rotation": [
-      "math.sin(q.life_time * 500) * 6",
-      0,
+      -66,
+      30,
       0
      ]
     },
-    "body": {
+    "waist": {
      "position": [
       0,
-      "math.abs(math.cos(q.life_time * 500)) * 0.3",
-      0
-     ],
-     "rotation": [
-      0,
-      0,
+      "math.abs(math.cos(q.life_time * 500)) * 0.4",
       0
      ]
     },
     "head": {
      "rotation": [
-      "math.sin(q.life_time * 1000 - 40) * 3",
-      "math.sin(q.life_time * 250.0) * 6",
+      "math.sin(q.life_time * 180 - 40) * 2",
+      "math.sin(q.life_time * 60) * 8",
+      0
+     ]
+    }
+   }
+  },
+  "animation.tds_unit.shamble": {
+   "loop": true,
+   "bones": {
+    "leftLeg": {
+     "rotation": [
+      "math.sin(q.life_time * 420) * 26",
+      0,
+      0
+     ]
+    },
+    "rightLeg": {
+     "rotation": [
+      "math.sin(q.life_time * 420) * -26",
+      0,
+      0
+     ]
+    },
+    "leftArm": {
+     "rotation": [
+      "-84 + math.sin(q.life_time * 420) * -6",
+      0,
+      0
+     ]
+    },
+    "rightArm": {
+     "rotation": [
+      "-84 + math.sin(q.life_time * 420) * 6",
+      0,
+      0
+     ]
+    },
+    "waist": {
+     "position": [
+      0,
+      "math.abs(math.cos(q.life_time * 420)) * 0.4",
+      0
+     ]
+    },
+    "head": {
+     "rotation": [
+      "math.sin(q.life_time * 180 - 40) * 2",
+      "math.sin(q.life_time * 60) * 8",
       0
      ]
     }

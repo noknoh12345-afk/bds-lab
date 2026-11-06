@@ -12,21 +12,46 @@
     "bad": "textures/entity/tds/ghost_bad"
    },
    "geometry": {
-    "g0": "geometry.tds.tower_gunner",
-    "g1": "geometry.tds.tower_medic",
+    "g0": "geometry.pillager",
+    "g1": "geometry.villager.witch.v1.8",
     "g2": "geometry.tds.tower_farm",
     "g3": "geometry.tds.tower_mortar",
-    "g4": "geometry.tds.tower_sniper",
+    "g4": "geometry.pillager",
     "g5": "geometry.tds.tower_barracks",
-    "g6": "geometry.tds.tower_gunner",
-    "g7": "geometry.tds.tower_frost"
+    "g6": "geometry.pillager",
+    "g7": "geometry.tds.tower_frost",
+    "o0": "geometry.tds.gear_gunner",
+    "o1": "geometry.tds.gear_medic",
+    "o2": "geometry.tds.empty",
+    "o3": "geometry.tds.empty",
+    "o4": "geometry.tds.gear_sniper",
+    "o5": "geometry.tds.empty",
+    "o6": "geometry.tds.gear_gunner",
+    "o7": "geometry.tds.empty"
    },
    "scripts": {
-    "scale": "0.7"
+    "scale": "(q.property('tds:skin') == 0 || q.property('tds:skin') == 4 || q.property('tds:skin') == 6 || q.property('tds:skin') == 1) ? 0.36 : 0.7",
+    "animate": [
+     "stand_waist",
+     {
+      "stand_body": "q.property('tds:skin') == 1"
+     },
+     {
+      "hold": "q.property('tds:skin') == 0 || q.property('tds:skin') == 4 || q.property('tds:skin') == 6"
+     }
+    ]
    },
    "render_controllers": [
-    "controller.render.tds_ghost"
-   ]
+    "controller.render.tds_ghost",
+    {
+     "controller.render.tds_ghost_gear": "q.property('tds:skin') == 0 || q.property('tds:skin') == 4 || q.property('tds:skin') == 6 || q.property('tds:skin') == 1"
+    }
+   ],
+   "animations": {
+    "stand_waist": "animation.tds_tower.stand_waist",
+    "stand_body": "animation.tds_tower.stand_body",
+    "hold": "animation.tds_tower.hold"
+   }
   }
  }
 }

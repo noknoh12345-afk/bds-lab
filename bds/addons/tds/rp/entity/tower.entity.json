@@ -4,35 +4,65 @@
   "description": {
    "identifier": "tds:tower",
    "materials": {
-    "default": "entity_emissive_alpha_one_sided",
+    "default": "entity_alphatest",
+    "lit": "entity_emissive_alpha_one_sided",
     "blend": "entity_alphablend"
    },
    "textures": {
-    "t0": "textures/entity/tds/tower_gunner",
-    "t1": "textures/entity/tds/tower_medic",
+    "t0": "textures/entity/pillager",
+    "t1": "textures/entity/witch",
     "t2": "textures/entity/tds/tower_farm",
     "t3": "textures/entity/tds/tower_mortar",
-    "t4": "textures/entity/tds/tower_sniper",
+    "t4": "textures/entity/pillager",
     "t5": "textures/entity/tds/tower_barracks",
-    "t6": "textures/entity/tds/tower_gunner_holo",
-    "t7": "textures/entity/tds/tower_frost"
+    "t6": "textures/entity/tds/holo_tint",
+    "t7": "textures/entity/tds/tower_frost",
+    "o0": "textures/entity/tds/gear_gunner",
+    "o1": "textures/entity/tds/gear_medic",
+    "o2": "textures/entity/tds/holo_tint",
+    "o3": "textures/entity/tds/holo_tint",
+    "o4": "textures/entity/tds/gear_sniper",
+    "o5": "textures/entity/tds/holo_tint",
+    "o6": "textures/entity/tds/gear_gunner_holo",
+    "o7": "textures/entity/tds/holo_tint"
    },
    "geometry": {
-    "g0": "geometry.tds.tower_gunner",
-    "g1": "geometry.tds.tower_medic",
+    "g0": "geometry.pillager",
+    "g1": "geometry.villager.witch.v1.8",
     "g2": "geometry.tds.tower_farm",
     "g3": "geometry.tds.tower_mortar",
-    "g4": "geometry.tds.tower_sniper",
+    "g4": "geometry.pillager",
     "g5": "geometry.tds.tower_barracks",
-    "g6": "geometry.tds.tower_gunner",
-    "g7": "geometry.tds.tower_frost"
+    "g6": "geometry.pillager",
+    "g7": "geometry.tds.tower_frost",
+    "o0": "geometry.tds.gear_gunner",
+    "o1": "geometry.tds.gear_medic",
+    "o2": "geometry.tds.empty",
+    "o3": "geometry.tds.empty",
+    "o4": "geometry.tds.gear_sniper",
+    "o5": "geometry.tds.empty",
+    "o6": "geometry.tds.gear_gunner",
+    "o7": "geometry.tds.empty"
    },
    "scripts": {
-    "scale": "0.7",
+    "scale": "(q.property('tds:skin') == 0 || q.property('tds:skin') == 4 || q.property('tds:skin') == 6 || q.property('tds:skin') == 1) ? 0.36 : 0.7",
     "animate": [
      "aim",
+     {
+      "aim_body": "q.property('tds:skin') == 1"
+     },
+     "stand_waist",
+     {
+      "stand_body": "q.property('tds:skin') == 1"
+     },
+     {
+      "hold": "q.property('tds:skin') == 0 || q.property('tds:skin') == 4 || q.property('tds:skin') == 6"
+     },
      "idle",
      "place",
+     {
+      "place_body": "q.property('tds:skin') == 1"
+     },
      "level",
      {
       "smoke": "q.property('tds:skin') == 2"
@@ -43,13 +73,22 @@
     ]
    },
    "render_controllers": [
-    "controller.render.tds_tower"
+    "controller.render.tds_tower",
+    {
+     "controller.render.tds_tower_gear": "q.property('tds:skin') == 0 || q.property('tds:skin') == 4 || q.property('tds:skin') == 6 || q.property('tds:skin') == 1"
+    }
    ],
    "animations": {
     "aim": "animation.tds_tower.aim",
+    "aim_body": "animation.tds_tower.aim_body",
+    "stand_waist": "animation.tds_tower.stand_waist",
+    "stand_body": "animation.tds_tower.stand_body",
+    "hold": "animation.tds_tower.hold",
     "idle": "animation.tds_tower.idle",
     "place": "animation.tds_tower.place",
+    "place_body": "animation.tds_tower.place_body",
     "levelup": "animation.tds_tower.levelup",
+    "levelup_body": "animation.tds_tower.levelup_body",
     "level": "controller.animation.tds_tower.level",
     "smoke": "animation.tds_tower.smoke",
     "fire": "animation.tds_tower.fire",

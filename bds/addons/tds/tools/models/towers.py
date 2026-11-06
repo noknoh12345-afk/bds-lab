@@ -1,6 +1,8 @@
 """Tower looks (tds:skin of tds:tower, see towerSkin in src/game.ts): 0 gunner (offense), 1 medic (support), 2 farm
 (income), 3 mortar (defense / splash), 4 sniper nest (cliff), 5 barracks (spawner), 6 = the gunner as a hologram,
 7 frost spire (slow / freeze). Original designs.
+Built: farm, mortar, barracks, frost. The figure towers (gunner, medic, sniper, hologram) wear vanilla bodies with our
+pedestal gear (vanilla.py); their all-custom versions here are kept, not built.
 Shared bones for the animations: root, turret (turns to the target: q.property('tds:yaw')), body, head, arm_l/arm_r,
 gun (recoil), barrel (mortar tube), door (barracks), flag, spin, pip1..pip7 (shown by tds:lvl)."""
 from __future__ import annotations

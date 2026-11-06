@@ -44,6 +44,49 @@
     "Array.skins[q.property('tds:skin')]"
    ]
   },
+  "controller.render.tds_enemy_gear": {
+   "arrays": {
+    "textures": {
+     "Array.gear": [
+      "Texture.o0",
+      "Texture.o1",
+      "Texture.o2",
+      "Texture.o3",
+      "Texture.o4",
+      "Texture.o5",
+      "Texture.o6",
+      "Texture.o7"
+     ]
+    },
+    "geometries": {
+     "Array.ogeo": [
+      "Geometry.o0",
+      "Geometry.o1",
+      "Geometry.o2",
+      "Geometry.o3",
+      "Geometry.o4",
+      "Geometry.o5",
+      "Geometry.o6",
+      "Geometry.o7"
+     ]
+    },
+    "materials": {
+     "Array.omats": [
+      "Material.gear",
+      "Material.blend"
+     ]
+    }
+   },
+   "geometry": "Array.ogeo[q.property('tds:skin')]",
+   "materials": [
+    {
+     "*": "Array.omats[q.property('tds:skin') == 4 ? 1 : 0]"
+    }
+   ],
+   "textures": [
+    "Array.gear[q.property('tds:skin')]"
+   ]
+  },
   "controller.render.tds_tower": {
    "arrays": {
     "textures": {
@@ -73,6 +116,7 @@
     "materials": {
      "Array.mats": [
       "Material.default",
+      "Material.lit",
       "Material.blend"
      ]
     }
@@ -80,11 +124,80 @@
    "geometry": "Array.geos[q.property('tds:skin')]",
    "materials": [
     {
-     "*": "Array.mats[q.property('tds:skin') == 6 ? 1 : 0]"
+     "*": "Array.mats[q.property('tds:skin') == 6 ? 2 : (q.property('tds:skin') == 0 || q.property('tds:skin') == 4 || q.property('tds:skin') == 6 || q.property('tds:skin') == 1) ? 0 : 1]"
     }
    ],
    "textures": [
     "Array.skins[q.property('tds:skin')]"
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "pip1": "q.property('tds:lvl') >= 1"
+    },
+    {
+     "pip2": "q.property('tds:lvl') >= 2"
+    },
+    {
+     "pip3": "q.property('tds:lvl') >= 3"
+    },
+    {
+     "pip4": "q.property('tds:lvl') >= 4"
+    },
+    {
+     "pip5": "q.property('tds:lvl') >= 5"
+    },
+    {
+     "pip6": "q.property('tds:lvl') >= 6"
+    },
+    {
+     "pip7": "q.property('tds:lvl') >= 7"
+    }
+   ]
+  },
+  "controller.render.tds_tower_gear": {
+   "arrays": {
+    "textures": {
+     "Array.gear": [
+      "Texture.o0",
+      "Texture.o1",
+      "Texture.o2",
+      "Texture.o3",
+      "Texture.o4",
+      "Texture.o5",
+      "Texture.o6",
+      "Texture.o7"
+     ]
+    },
+    "geometries": {
+     "Array.ogeo": [
+      "Geometry.o0",
+      "Geometry.o1",
+      "Geometry.o2",
+      "Geometry.o3",
+      "Geometry.o4",
+      "Geometry.o5",
+      "Geometry.o6",
+      "Geometry.o7"
+     ]
+    },
+    "materials": {
+     "Array.omats": [
+      "Material.lit",
+      "Material.blend"
+     ]
+    }
+   },
+   "geometry": "Array.ogeo[q.property('tds:skin')]",
+   "materials": [
+    {
+     "*": "Array.omats[q.property('tds:skin') == 6 ? 1 : 0]"
+    }
+   ],
+   "textures": [
+    "Array.gear[q.property('tds:skin')]"
    ],
    "part_visibility": [
     {
@@ -138,30 +251,70 @@
       "Geometry.g6",
       "Geometry.g7"
      ]
+    },
+    "materials": {
+     "Array.mats": [
+      "Material.default",
+      "Material.lit"
+     ]
     }
    },
    "geometry": "Array.geos[q.property('tds:skin')]",
    "materials": [
     {
-     "*": "Material.default"
+     "*": "Array.mats[(q.property('tds:skin') == 1 || q.property('tds:skin') == 3 || q.property('tds:skin') == 5 || q.property('tds:skin') == 6 || q.property('tds:skin') == 7) ? 0 : 1]"
     }
    ],
    "textures": [
     "Array.skins[q.property('tds:skin')]"
-   ],
-   "part_visibility": [
-    {
-     "*": true
+   ]
+  },
+  "controller.render.tds_unit_gear": {
+   "arrays": {
+    "textures": {
+     "Array.gear": [
+      "Texture.o0",
+      "Texture.o1",
+      "Texture.o2",
+      "Texture.o3",
+      "Texture.o4",
+      "Texture.o5",
+      "Texture.o6",
+      "Texture.o7"
+     ]
     },
-    {
-     "helmet": "q.property('tds:skin') != 3"
+    "geometries": {
+     "Array.ogeo": [
+      "Geometry.o0",
+      "Geometry.o1",
+      "Geometry.o2",
+      "Geometry.o3",
+      "Geometry.o4",
+      "Geometry.o5",
+      "Geometry.o6",
+      "Geometry.o7"
+     ]
+    },
+    "materials": {
+     "Array.omats": [
+      "Material.lit"
+     ]
     }
+   },
+   "geometry": "Array.ogeo[q.property('tds:skin')]",
+   "materials": [
+    {
+     "*": "Array.omats[0]"
+    }
+   ],
+   "textures": [
+    "Array.gear[q.property('tds:skin')]"
    ]
   },
   "controller.render.tds_ghost": {
    "arrays": {
     "textures": {
-     "Array.tints": [
+     "Array.skins": [
       "Texture.bad",
       "Texture.ok"
      ]
@@ -177,16 +330,83 @@
       "Geometry.g6",
       "Geometry.g7"
      ]
+    },
+    "materials": {
+     "Array.mats": [
+      "Material.blend"
+     ]
     }
    },
    "geometry": "Array.geos[q.property('tds:skin')]",
    "materials": [
     {
-     "*": "Material.blend"
+     "*": "Array.mats[0]"
     }
    ],
    "textures": [
-    "Array.tints[q.property('tds:ok') ? 1 : 0]"
+    "Array.skins[q.property('tds:ok') ? 1 : 0]"
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "pip1": false
+    },
+    {
+     "pip2": false
+    },
+    {
+     "pip3": false
+    },
+    {
+     "pip4": false
+    },
+    {
+     "pip5": false
+    },
+    {
+     "pip6": false
+    },
+    {
+     "pip7": false
+    }
+   ]
+  },
+  "controller.render.tds_ghost_gear": {
+   "arrays": {
+    "textures": {
+     "Array.gear": [
+      "Texture.bad",
+      "Texture.ok"
+     ]
+    },
+    "geometries": {
+     "Array.ogeo": [
+      "Geometry.o0",
+      "Geometry.o1",
+      "Geometry.o2",
+      "Geometry.o3",
+      "Geometry.o4",
+      "Geometry.o5",
+      "Geometry.o6",
+      "Geometry.o7"
+     ]
+    },
+    "materials": {
+     "Array.omats": [
+      "Material.blend"
+     ]
+    }
+   },
+   "geometry": "Array.ogeo[q.property('tds:skin')]",
+   "materials": [
+    {
+     "*": "Array.omats[0]"
+    }
+   ],
+   "textures": [
+    "Array.gear[q.property('tds:ok') ? 1 : 0]"
    ],
    "part_visibility": [
     {

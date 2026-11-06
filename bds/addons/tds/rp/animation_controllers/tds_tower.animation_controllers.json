@@ -13,7 +13,10 @@
     },
     "pop": {
      "animations": [
-      "levelup"
+      "levelup",
+      {
+       "levelup_body": "q.property('tds:skin') == 1"
+      }
      ],
      "on_entry": [
       "v.lvl = q.property('tds:lvl');"

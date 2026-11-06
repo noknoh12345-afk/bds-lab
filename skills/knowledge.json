@@ -1129,6 +1129,970 @@
       },
       "status": "verified",
       "added": "2026-10-03"
+    },
+    {
+      "id": "src-5fefbe89",
+      "skill": "bds-models",
+      "rule": "The design flows as one piece. A motif stuck on the front \"looks like a lizard\". Do not reuse another model's front or sides.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#5"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-7fbecac5",
+      "skill": "bds-models",
+      "rule": "A body is closed. Its face must not show its own sides; nothing floats; no inside is visible from where the player looks (a wheel from the seat, a hollow neck from below).",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#6"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-39b8b241",
+      "skill": "bds-models",
+      "rule": "Texture nobody can see must go (one texel); texture meant to be seen must be visible. Check visibility from every direction, in every pose. Bones that an animation moves freely are exempt.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#10"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-b01f5cae",
+      "skill": "bds-models",
+      "rule": "When a human hand-edits the model, their file wins. Deploy it as is; fix only real defects (say which); bring the builder to THEIR geometry. Fix what they point at — a redesign of the whole part gets rejected.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#13"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-4177c73c",
+      "skill": "bds-models",
+      "rule": "Look at it. Render after every change, from the camera the player will have, in every pose, in a light and a dark livery. \"The checks pass\" is not \"it looks right\". Never report a look you have not rendered.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#14"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-1cee9d61",
+      "skill": "bds-models",
+      "rule": "Heavy loops do not belong in Python. Rasterising visibility in Node took a build from 150 s to 24 s.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#15"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-45df1f8c",
+      "skill": "bds-models",
+      "rule": "Physics footprints are measured, from the rest-pose corners of the structural bones — never eyeballed.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#16"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-3cc947a8",
+      "skill": "bds-models",
+      "rule": "Do not open files the owner marked off limits.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-attachables/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-dd2aed59",
+      "skill": "bds-models",
+      "rule": "Structural bones only (no wheels, steering, transforming parts, trim).",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-collision-footprint/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-45fbacae",
+      "skill": "bds-models",
+      "rule": "Both plates of a wing lie in ONE wing plane; each plate's inner edge lies exactly on its hinge line, and it turns about that axis only — then no pose can swing it into the body.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-creatures-and-props/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-fc5e66f3",
+      "skill": "bds-models",
+      "rule": "Their saved file is the source of truth. Never regenerate over it. \"Deploy as is\" means as is.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-hand-edits/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-da5c09d2",
+      "skill": "bds-models",
+      "rule": "Fix only real defects (collapsed cube, z-fight between their wedges), with the smallest change, as a text patch that keeps their formatting. Tell them exactly what and why. Report asymmetries; do not correct them unasked.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-hand-edits/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-64d9bf8b",
+      "skill": "bds-models",
+      "rule": "Curves and diagonals are tilted boxes joined corner to corner — `slope`, `chain`, `chain_pair`, `plank`. Never boxes of shrinking size.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-shape-language/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-121c5d30",
+      "skill": "bds-models",
+      "rule": "Width steps get a splay: a box with the narrow link's tilt, yawed out to the wide link's corner (`taper_walls`). Wedge gaps are fine only where nobody can see them.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-shape-language/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-d3596ccf",
+      "skill": "bds-models",
+      "rule": "Left/right mirrors: rotation `[x, -y, -z]`, position `[-x, y, z]`; open/close continuity; never `-0.0`.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-transforming-parts/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-c1b0ffb1",
+      "skill": "bds-models",
+      "rule": "Asymmetric art (text, numbers, a dial) only on faces whose orientation you verified in the game.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-uv-and-texture/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-1976650b",
+      "skill": "bds-models",
+      "rule": "Report: what was rendered; what only the game can show; what you decided unasked; pre-existing failures named separately. \"Fixed\" means the diff shows it.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-verification/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-28a7e4d9",
+      "skill": "bds-models",
+      "rule": "A two-faced plate never loses one face.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-visibility-budget/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-b5d3baf8",
+      "skill": "bds-models",
+      "rule": "Audit: list one-texel faces that some *other* set of view directions does show; what remains must be single-colour or one texel wide anyway.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-visibility-budget/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-8c7be64a",
+      "skill": "bds-models",
+      "rule": "Node / vectorise; parallel liveries",
+      "why": "the build takes minutes: per-pixel loops in Python",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/failure-modes.json#F24"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-6b86e448",
+      "skill": "bds-models",
+      "rule": "The game draws a Bedrock model mirrored in x. A cube's `\"east\"` UV is shown on its LOW-x side, `\"west\"` on its high-x side, and across every face the texture runs the other way from the naive reading. `data/face-mapping.json` is the table. A renderer that ignores this lies to you.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#1"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-79236f46",
+      "skill": "bds-models",
+      "rule": "No stair steps. Slopes and curves are tilted boxes joined corner to corner. Where a width steps, splay a box out to the wider corner. Fill valley joints by running both links past the corner. A tilted part's end runs INTO what it meets.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "https://github.com/iMasterProX/mcbemodelingmasterAI/blob/486c7f835ebd26a3c47cc46d96db1675f315c895/data/rules.json"
+      },
+      "status": "verified",
+      "added": "2026-11-06",
+      "promoted": "2026-11-06"
+    },
+    {
+      "id": "src-0df68fb1",
+      "skill": "bds-models",
+      "rule": "One silhouette, one balance. If one end is raised, raise the rest: balance is judged on the whole side view.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#7"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-6a72e21e",
+      "skill": "bds-models",
+      "rule": "Nothing fixed may stand in a moving part's path, in any pose. Model the part open; fold it with the bind pose; check folded, half, open and overshoot.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#8"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-192a8a57",
+      "skill": "bds-models",
+      "rule": "One bone per thing that moves, pivot at the real joint; pieces that read as one share ONE pivot.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#9"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-237884b3",
+      "skill": "bds-models",
+      "rule": "Pictures that cross cubes are placed by position, not by texel index, so lines run on from one cube to the next.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "https://github.com/iMasterProX/mcbemodelingmasterAI/blob/486c7f835ebd26a3c47cc46d96db1675f315c895/data/rules.json"
+      },
+      "status": "verified",
+      "added": "2026-11-06",
+      "promoted": "2026-11-06"
+    },
+    {
+      "id": "src-db0e5cbc",
+      "skill": "bds-models",
+      "rule": "Fit what the model touches: the seated rider, the hand that holds it, the head that wears it. Test against the pose the game really shows.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/data/rules.json#12"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-267ba80d",
+      "skill": "bds-models",
+      "rule": "Geometry lives in a player bone's frame (`rightItem`, `leftItem`, `head`, `leftArm`...). Build around the grip / the limb at the bone's pivot.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-attachables/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-ce87d443",
+      "skill": "bds-models",
+      "rule": "Slim and wide arms need separate geometry; share animation and icon.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-attachables/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-dfb4fb71",
+      "skill": "bds-models",
+      "rule": "`entity_emissive_alpha_one_sided`: alpha 255 = world light, low alpha = self-lit, 0 = cut.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "https://github.com/iMasterProX/mcbemodelingmasterAI/blob/486c7f835ebd26a3c47cc46d96db1675f315c895/skills/mcbe-model-attachables/SKILL.md"
+      },
+      "status": "verified",
+      "added": "2026-11-06",
+      "promoted": "2026-11-06"
+    },
+    {
+      "id": "src-31ce197b",
+      "skill": "bds-models",
+      "rule": "Rest-pose corners → ground-plane convex hull → half-width in 101 slices.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-collision-footprint/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-d83ed3d1",
+      "skill": "bds-models",
+      "rule": "Fit the shape: supports (side, front, rear) 0 to 0.03 blocks outside the measured extremes; then minimise envelope-outside-shape, then shape-outside-envelope.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-collision-footprint/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-64bab7de",
+      "skill": "bds-models",
+      "rule": "Test: recompute the extremes from the geometry inside the test; shrink a radius and watch it fail.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-collision-footprint/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-0f2e3b8d",
+      "skill": "bds-models",
+      "rule": "Look at vanilla first. If the vanilla pack has the thing (a dragon wing, a fin, a banner), open its model and texture before designing yours.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-creatures-and-props/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-64ef9573",
+      "skill": "bds-models",
+      "rule": "One bone per joint: `body → neck → head → jaw`, `tail → tail_tip`, `wing → wingtip`, legs.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-creatures-and-props/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-a109cb42",
+      "skill": "bds-models",
+      "rule": "Curved bodies are chains of tilted links in the side profile; each chain's end runs INTO what it joins.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-creatures-and-props/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-a154c0bc",
+      "skill": "bds-models",
+      "rule": "Model wings spread; hold them at rest with the bind pose; clips and Molang loops ADD to the bind; the hand lags the arm by a phase. List `rest`, `spread`, `up`, `down` as poses.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "https://github.com/iMasterProX/mcbemodelingmasterAI/blob/486c7f835ebd26a3c47cc46d96db1675f315c895/skills/mcbe-model-creatures-and-props/SKILL.md"
+      },
+      "status": "verified",
+      "added": "2026-11-06",
+      "promoted": "2026-11-06"
+    },
+    {
+      "id": "src-832a7102",
+      "skill": "bds-models",
+      "rule": "Conventions: 16 units = 1 block, ground y = 0, front is −z, +x is the model's left in the JSON.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-fundamentals/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-c26bef84",
+      "skill": "bds-models",
+      "rule": "Write a builder script (copy `examples/build_demo_kart.py` or `examples/build_demo_drake.py`): bones → boxes and tilted parts → `FIXED` colours, `palette`, `decal` → `SPEC` → `run`.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-fundamentals/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-6b0f100f",
+      "skill": "bds-models",
+      "rule": "Turn their corrections into rules and checks.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbemodelingmasterAI/skills/mcbe-model-hand-edits/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-8d7f69bf",
+      "skill": "bds-json-ui",
+      "rule": "Only when steps 1–3 do not answer: this skill's own references. Label such guidance \"inferred from skill guidance\", never \"confirmed\".",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-attachables-ui/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-6b8db989",
+      "skill": "bds-json-ui",
+      "rule": "Success: every changed reference resolves, static data stays in RP, dynamic authority stays in BP or Script API, and runtime-only behavior is labeled unverified.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-addon-integration/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-2a154a61",
+      "skill": "bds-json-ui",
+      "rule": "Record when dynamic data is snapshotted and what event refreshes it. A form-open payload is not a live subscription; cross-category search cannot include products never supplied to the client-side data owner.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-addon-integration/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-f7365d73",
+      "skill": "bds-json-ui",
+      "rule": "If the task is only about UI structure, switch back to the narrower skill.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-addon-integration/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-2f7057ac",
+      "skill": "bds-json-ui",
+      "rule": "Dynamic values stay owned by BP/Script API, scoreboard, or server form data. RP bindings may display or transform supplied state but must not be described as authoritative game state.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-addon-integration/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-8a707257",
+      "skill": "bds-json-ui",
+      "rule": "State clearly when a rule is a hard requirement, a common pattern, or only a convenient authoring habit.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-basics/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-628c2393",
+      "skill": "bds-json-ui",
+      "rule": "Do not claim Bedrock has one fixed screen size.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-basics/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-b48447dd",
+      "skill": "bds-json-ui",
+      "rule": "Do not describe JSON UI files as isolated from the rest of the resource pack.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-basics/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-f3549203",
+      "skill": "bds-json-ui",
+      "rule": "Do not treat schema validation as proof that the UI will render correctly.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-basics/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-32a06b66",
+      "skill": "bds-json-ui",
+      "rule": "If the problem is focus border color, modify the actual visual controls in the toggle template or make a custom toggle. Do not search for a magic focus-color property first.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-custom-toggles/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-7f629d19",
+      "skill": "bds-json-ui",
+      "rule": "For hover pulse animations, local button templates show a practical pattern: a mapping with only `to_button_id` can emit a custom hover event; many working files also include `\"mapping_type\": \"pressed\"`.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-custom-toggles/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-48e3bf5b",
+      "skill": "bds-json-ui",
+      "rule": "Compare the failing construct with the closest verified local or vanilla example; never invent a property or event name.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-debugging/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-f5891ea3",
+      "skill": "bds-json-ui",
+      "rule": "Preserve unresolved bindings and states as diagnostics; do not guess their values.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-debugging/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-bb2c0c9d",
+      "skill": "bds-json-ui",
+      "rule": "Inspect unresolved controls, textures, expressions, glyphs, baselines, alpha bounds, aspect warnings, and state geometry. Generate only evidence-backed, read-only patch proposals tied to the current project revision.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-final-rp-inspection/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-4cd22a36",
+      "skill": "bds-json-ui",
+      "rule": "Report this as `final-pack static visual`; promote to `Bedrock runtime verified` only after the in-game state matrix and content log pass.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-final-rp-inspection/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-e3d11f31",
+      "skill": "bds-json-ui",
+      "rule": "Never hide a missing Minecraft font by silently substituting a system font. `FONT_UNAVAILABLE` blocks text-fit and baseline claims.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-final-rp-inspection/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-30d0fa81",
+      "skill": "bds-json-ui",
+      "rule": "Do not claim pixel accuracy or guess coordinates while the vanilla/font profile, device profile, or screenshot calibration is unresolved.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-final-rp-inspection/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-f3bd6c30",
+      "skill": "bds-json-ui",
+      "rule": "Do not infer hover correctness from default-state output.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-final-rp-inspection/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-7ccceb4d",
+      "skill": "bds-json-ui",
+      "rule": "Do not write previews or reports inside the target RP.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-final-rp-inspection/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-bbd47338",
+      "skill": "bds-json-ui",
+      "rule": "A generated PNG with unresolved dependencies is diagnostic evidence, not a pass.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-final-rp-inspection/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-921d3953",
+      "skill": "bds-json-ui",
+      "rule": "A fully transparent PNG, empty controls map, unavailable pixel metrics, generic fixture mismatch, unapplied modification, empty screenshot-region set, or placeholder device profile is diagnostic-only even when a tool reports `ok`.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-final-rp-inspection/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-40569f9b",
+      "skill": "bds-json-ui",
+      "rule": "External editor output is fixture evidence only. The Bedrock client is the final rendering and interaction authority.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-final-rp-inspection/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-a976d17e",
+      "skill": "bds-json-ui",
+      "rule": "For `root` and each element, declare px-only `pos` and `size`. If the final Bedrock JSON must use `%`/`%c`/`fill`, solve with equivalent pixels first and add those dynamic units during the hand-finish JSON patch.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-ir-authoring/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-52645b5d",
+      "skill": "bds-json-ui",
+      "rule": "Pixels in IR. Never put `%`, `%c`, `%cm`, `fill`, or `default` into solver-stage `size` values; add dynamic Bedrock units only after `solved.json` is stable.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-ir-authoring/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-67cdd0a1",
+      "skill": "bds-json-ui",
+      "rule": "Every visible pair/row/group with implied symmetry or alignment must declare a constraint. Do not rely on hand-tuned `pos` values.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-ir-authoring/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-2c4ff65f",
+      "skill": "bds-json-ui",
+      "rule": "Every centered row or card cluster must declare `center_group_x` or `center_group_y`; do not eyeball the group's first `pos`.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-ir-authoring/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-592d951a",
+      "skill": "bds-json-ui",
+      "rule": "Constraint ids must reference existing `elements`. No floating ids.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-ir-authoring/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-ea9eda58",
+      "skill": "bds-json-ui",
+      "rule": "Do not edit the compiled `ui.json` to fix layout. Edit `ir.yaml` and recompile.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-ir-authoring/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-6d3e8f72",
+      "skill": "bds-json-ui",
+      "rule": "Test emitted bytes and slice boundaries with ASCII, Korean, section-sign, PUA/emoji, empty, numeric-only, exact-boundary, and over-boundary fixtures.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-logic/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-0dcfe339",
+      "skill": "bds-json-ui",
+      "rule": "If exact property names are needed, escalate to `vanilla-assets` only for textures, otherwise answer from source evidence.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-logic/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-6689958d",
+      "skill": "bds-json-ui",
+      "rule": "Use short JSON snippets only when needed.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-logic/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-4a57ddb7",
+      "skill": "bds-json-ui",
+      "rule": "Do not equate JavaScript string length or substring offsets with Bedrock's observed `%.Ns` width. Keep target-version behavior as measured evidence, not a universal byte-limit claim.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-logic/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-5faf1813",
+      "skill": "bds-json-ui",
+      "rule": "Output: `mode`, one `primarySkill`, compatibility `followOnSkill`, ordered `nextRoutes`, one initial reference, intended evidence, and the validation boundary. Do not load all `nextRoutes` together.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-master/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-738f05c3",
+      "skill": "bds-json-ui",
+      "rule": "This repository's core router is Minecraft Bedrock Edition only.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-master/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-72d0f6fa",
+      "skill": "bds-json-ui",
+      "rule": "Route any pixel-accuracy, final-state, or screenshot-matching claim for an integrated RP through `mcbe-json-ui-final-rp-inspection`. That workflow must resolve a Minecraft vanilla/font profile and a calibrated target-device profile before it may recommend coordinates.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-master/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-85800051",
+      "skill": "bds-json-ui",
+      "rule": "Do not treat a search icon, hover texture, animation, or static preview as proof that its input, state transition, or full data scope works in Bedrock.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-master/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-4469475f",
+      "skill": "bds-json-ui",
+      "rule": "Treat external editors as compatibility fixtures and design evidence only. Bedrock screenshots and content logs remain the runtime authority.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-master/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-55b3abe8",
+      "skill": "bds-json-ui",
+      "rule": "If the local sample packs do not provide a clean minimal example, use the mirrored external examples.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-patterns/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-eb204279",
+      "skill": "bds-json-ui",
+      "rule": "Success: every exact name or path is traceable to a current schema, working sample, catalog record, or vanilla source; inference is never presented as confirmation.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-reference/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
+    },
+    {
+      "id": "src-486d11e5",
+      "skill": "bds-json-ui",
+      "rule": "Do not invent a near-looking property, binding, control, or texture path.",
+      "why": "",
+      "evidence": {
+        "kind": "source",
+        "ref": "mcbejsonuimasterAI/skills/mcbe-json-ui-reference/SKILL.md"
+      },
+      "status": "candidate",
+      "added": "2026-11-06"
     }
   ],
   "log": [
@@ -1152,6 +2116,78 @@
       "measured": 12,
       "source": 5,
       "candidate": 0,
+      "disputed": 0,
+      "retired": 0,
+      "missed": 0
+    },
+    {
+      "gen": 3,
+      "at": "2026-11-06",
+      "verified": 74,
+      "rerun": 57,
+      "measured": 12,
+      "source": 5,
+      "candidate": 40,
+      "disputed": 0,
+      "retired": 0,
+      "missed": 0
+    },
+    {
+      "gen": 4,
+      "at": "2026-11-06",
+      "verified": 75,
+      "rerun": 57,
+      "measured": 12,
+      "source": 6,
+      "candidate": 39,
+      "disputed": 0,
+      "retired": 0,
+      "missed": 0
+    },
+    {
+      "gen": 5,
+      "at": "2026-11-06",
+      "verified": 76,
+      "rerun": 57,
+      "measured": 12,
+      "source": 7,
+      "candidate": 38,
+      "disputed": 0,
+      "retired": 0,
+      "missed": 0
+    },
+    {
+      "gen": 6,
+      "at": "2026-11-06",
+      "verified": 77,
+      "rerun": 57,
+      "measured": 12,
+      "source": 8,
+      "candidate": 37,
+      "disputed": 0,
+      "retired": 0,
+      "missed": 0
+    },
+    {
+      "gen": 7,
+      "at": "2026-11-06",
+      "verified": 78,
+      "rerun": 57,
+      "measured": 12,
+      "source": 9,
+      "candidate": 36,
+      "disputed": 0,
+      "retired": 0,
+      "missed": 0
+    },
+    {
+      "gen": 8,
+      "at": "2026-11-06",
+      "verified": 78,
+      "rerun": 57,
+      "measured": 12,
+      "source": 9,
+      "candidate": 76,
       "disputed": 0,
       "retired": 0,
       "missed": 0

@@ -1,6 +1,7 @@
 """Unit looks (tds:skin of tds:unit, see unitSkin in src/game.ts): 0 jeep, 1 soldier, 2 sentry, 3 skeleton (the soldier's
 second texture), 4 ice turret, 5-7 soldier. Original designs.
-Shared bones: root, body, head, leg_l/leg_r, arm_l/arm_r, helmet (hidden for the skeleton), wheel_fl/fr/bl/br."""
+Built: jeep, sentry, ice. The soldier and the skeleton wear vanilla bodies with our gear (vanilla.py); soldier() here is
+kept, not built. Shared bones: root, body, head, leg_l/leg_r, arm_l/arm_r, helmet (hidden for the skeleton), wheel_fl/fr/bl/br."""
 from __future__ import annotations
 
 import math

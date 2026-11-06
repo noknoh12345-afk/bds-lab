@@ -4,37 +4,51 @@
   "description": {
    "identifier": "tds:enemy",
    "materials": {
-    "default": "entity_emissive_alpha_one_sided",
-    "blend": "entity_alphablend"
+    "default": "entity_alphatest",
+    "blend": "entity_alphablend",
+    "gear": "entity_emissive_alpha_one_sided"
    },
    "textures": {
-    "t0": "textures/entity/tds/enemy_walker",
-    "t1": "textures/entity/tds/enemy_armored",
-    "t2": "textures/entity/tds/enemy_brute",
-    "t3": "textures/entity/tds/enemy_runner",
-    "t4": "textures/entity/tds/enemy_wraith",
-    "t5": "textures/entity/tds/enemy_imp",
-    "t6": "textures/entity/tds/enemy_heavy",
-    "t7": "textures/entity/tds/enemy_yeti"
+    "t0": "textures/entity/zombie/zombie",
+    "t1": "textures/entity/zombie/husk",
+    "t2": "textures/entity/skeleton/wither_skeleton",
+    "t3": "textures/entity/zombie/drowned",
+    "t4": "textures/entity/vex/vex",
+    "t5": "textures/entity/phantom",
+    "t6": "textures/entity/piglin/zombie_piglin",
+    "t7": "textures/entity/skeleton/stray",
+    "o0": "textures/entity/tds/gear_walker",
+    "o1": "textures/entity/tds/gear_armored",
+    "o2": "textures/entity/tds/gear_boss",
+    "o3": "textures/entity/tds/gear_runner",
+    "o4": "textures/entity/tds/gear_hidden",
+    "o5": "textures/entity/tds/gear_flying",
+    "o6": "textures/entity/tds/gear_heavy",
+    "o7": "textures/entity/tds/gear_frost"
    },
    "geometry": {
-    "g0": "geometry.tds.enemy_walker",
-    "g1": "geometry.tds.enemy_armored",
-    "g2": "geometry.tds.enemy_brute",
-    "g3": "geometry.tds.enemy_runner",
-    "g4": "geometry.tds.enemy_wraith",
-    "g5": "geometry.tds.enemy_imp",
-    "g6": "geometry.tds.enemy_heavy",
-    "g7": "geometry.tds.enemy_yeti"
+    "g0": "geometry.zombie.v1.8",
+    "g1": "geometry.zombie.husk.v1.8",
+    "g2": "geometry.skeleton.wither.v1.8",
+    "g3": "geometry.zombie.drowned.v1.16",
+    "g4": "geometry.vex.v1.8",
+    "g5": "geometry.phantom",
+    "g6": "geometry.piglin",
+    "g7": "geometry.skeleton.stray.v1.8",
+    "o0": "geometry.tds.gear_walker",
+    "o1": "geometry.tds.gear_armored",
+    "o2": "geometry.tds.gear_boss",
+    "o3": "geometry.tds.gear_runner",
+    "o4": "geometry.tds.gear_hidden",
+    "o5": "geometry.tds.gear_flying",
+    "o6": "geometry.tds.gear_heavy",
+    "o7": "geometry.tds.gear_frost"
    },
    "scripts": {
-    "scale": "0.45 * q.property('tds:size')",
+    "scale": "((q.property('tds:skin') == 4) ? 0.6 : (q.property('tds:skin') == 5) ? 0.3 : 0.26) * q.property('tds:size')",
     "animate": [
      {
-      "walk": "q.property('tds:skin') == 0"
-     },
-     {
-      "heavy": "q.property('tds:skin') == 1 || q.property('tds:skin') == 6 || q.property('tds:skin') == 7"
+      "walk": "q.property('tds:skin') == 0 || q.property('tds:skin') == 1"
      },
      {
       "boss": "q.property('tds:skin') == 2"
@@ -47,19 +61,29 @@
      },
      {
       "fly": "q.property('tds:skin') == 5"
+     },
+     {
+      "heavy": "q.property('tds:skin') == 6"
+     },
+     {
+      "frost": "q.property('tds:skin') == 7"
      }
     ]
    },
    "render_controllers": [
-    "controller.render.tds_enemy"
+    "controller.render.tds_enemy",
+    {
+     "controller.render.tds_enemy_gear": "q.property('tds:skin') == 0 || q.property('tds:skin') == 1 || q.property('tds:skin') == 2 || q.property('tds:skin') == 3 || q.property('tds:skin') == 4 || q.property('tds:skin') == 5 || q.property('tds:skin') == 6 || q.property('tds:skin') == 7"
+    }
    ],
    "animations": {
     "walk": "animation.tds_enemy.walk",
-    "heavy": "animation.tds_enemy.heavy",
     "boss": "animation.tds_enemy.boss",
     "run": "animation.tds_enemy.run",
     "float": "animation.tds_enemy.float",
-    "fly": "animation.tds_enemy.fly"
+    "fly": "animation.tds_enemy.fly",
+    "heavy": "animation.tds_enemy.heavy",
+    "frost": "animation.tds_enemy.frost"
    }
   }
  }

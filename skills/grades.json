@@ -10,6 +10,11 @@
    "status": "draft",
    "born": "2026-10-03",
    "scope": "portable"
+  },
+  "bds-pixel-art": {
+   "status": "draft",
+   "born": "2026-11-06",
+   "scope": "portable"
   }
  },
  "log": [

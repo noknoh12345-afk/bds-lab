@@ -20,19 +20,17 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 RP = os.path.join(ROOT, 'rp')
 
 from kit import write  # noqa: E402
-import enemies  # noqa: E402
+import towers  # noqa: E402
+import units  # noqa: E402
+import vanilla  # noqa: E402
 
-GROUPS = {'enemy': enemies.ENEMIES}
-try:
-    import towers  # noqa: E402
-    GROUPS['tower'] = towers.TOWERS
-except ImportError:
-    pass
-try:
-    import units  # noqa: E402
-    GROUPS['unit'] = units.UNITS
-except ImportError:
-    pass
+# bodies: vanilla mobs for every enemy and the figure towers / units (referenced, not built); ours for buildings and machines
+GROUPS = {
+    'enemy gear': vanilla.ENEMY_GEAR,
+    'tower': [towers.farm, towers.mortar, towers.barracks, towers.frost], 'tower gear': list(vanilla.TOWER_GEAR.values()),
+    'unit': [units.jeep, units.sentry, units.ice], 'unit gear': list(vanilla.UNIT_GEAR.values()),
+}
+KEEP = ('ghost_ok.png', 'ghost_bad.png')          # written by tools/gen_assets.py
 
 
 def models():
@@ -65,6 +63,14 @@ def main(argv):
         except ImportError:
             pass
     stale = write(outputs, check)
+    if not only:                                    # files of looks that are no longer built
+        for d in (os.path.join(RP, 'models', 'entity', 'tds'), os.path.join(RP, 'textures', 'entity', 'tds')):
+            for f in sorted(os.listdir(d)):
+                p = os.path.join(d, f)
+                if p not in outputs and f not in KEEP:
+                    stale.append(p)
+                    if not check:
+                        os.remove(p)
     for m in built:
         print(f'  {m.name:18s} bones {len(m.bones):2d}  cubes {len(m.cubes):3d}  variants {len(m.variants)}')
     if check:

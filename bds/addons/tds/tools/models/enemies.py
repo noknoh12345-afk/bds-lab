@@ -1,4 +1,5 @@
-"""The eight enemy classes (tds:skin 0..7 of tds:enemy). Original designs: little figures told apart by silhouette.
+"""NOT BUILT since the enemies wear vanilla bodies with our gear (vanilla.py, build.py GROUPS): kept as the all-custom
+alternative. The eight enemy classes (tds:skin 0..7 of tds:enemy). Original designs: little figures told apart by silhouette.
 Shared bone names drive one set of animations: root, body, head, leg_l/leg_r, arm_l/arm_r, scarf, tail, tail_tip,
 wing_l/wingtip_l, wing_r/wingtip_r (+x is the figure's left)."""
 from __future__ import annotations

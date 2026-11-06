@@ -10,19 +10,74 @@
       "q.property('tds:yaw') - q.body_y_rotation",
       0
      ]
+    },
+    "waist": {
+     "rotation": [
+      0,
+      "q.property('tds:yaw') - q.body_y_rotation",
+      0
+     ]
+    }
+   }
+  },
+  "animation.tds_tower.aim_body": {
+   "loop": true,
+   "bones": {
+    "body": {
+     "rotation": [
+      0,
+      "q.property('tds:yaw') - q.body_y_rotation",
+      0
+     ]
+    }
+   }
+  },
+  "animation.tds_tower.stand_waist": {
+   "loop": true,
+   "bones": {
+    "waist": {
+     "position": [
+      0,
+      4.5,
+      0
+     ]
+    }
+   }
+  },
+  "animation.tds_tower.stand_body": {
+   "loop": true,
+   "bones": {
+    "body": {
+     "position": [
+      0,
+      4.5,
+      0
+     ]
+    }
+   }
+  },
+  "animation.tds_tower.hold": {
+   "loop": true,
+   "bones": {
+    "rightarm": {
+     "rotation": [
+      -82,
+      -14,
+      0
+     ]
+    },
+    "leftarm": {
+     "rotation": [
+      -80,
+      34,
+      0
+     ]
     }
    }
   },
   "animation.tds_tower.idle": {
    "loop": true,
    "bones": {
-    "body": {
-     "position": [
-      0,
-      "math.sin(q.life_time * 90) * 0.12",
-      0
-     ]
-    },
     "head": {
      "rotation": [
       0,
@@ -65,7 +120,7 @@
       "0.05": [
        0,
        0,
-       0.9
+       1.4
       ],
       "0.2": [
        0,
@@ -93,7 +148,7 @@
       ]
      }
     },
-    "body": {
+    "rightarm": {
      "rotation": {
       "0.0": [
        0,
@@ -101,7 +156,7 @@
        0
       ],
       "0.05": [
-       -3,
+       -6,
        0,
        0
       ],
@@ -166,6 +221,69 @@
        1
       ]
      }
+    },
+    "tds_base": {
+     "scale": {
+      "0.0": [
+       0.6,
+       0.2,
+       0.6
+      ],
+      "0.18": [
+       1.1,
+       1.15,
+       1.1
+      ],
+      "0.35": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    "waist": {
+     "scale": {
+      "0.0": [
+       0.6,
+       0.2,
+       0.6
+      ],
+      "0.18": [
+       1.1,
+       1.15,
+       1.1
+      ],
+      "0.35": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   }
+  },
+  "animation.tds_tower.place_body": {
+   "loop": false,
+   "animation_length": 0.35,
+   "bones": {
+    "body": {
+     "scale": {
+      "0.0": [
+       0.6,
+       0.2,
+       0.6
+      ],
+      "0.18": [
+       1.1,
+       1.15,
+       1.1
+      ],
+      "0.35": [
+       1,
+       1,
+       1
+      ]
+     }
     }
    }
   },
@@ -174,6 +292,84 @@
    "animation_length": 0.4,
    "bones": {
     "root": {
+     "scale": {
+      "0.0": [
+       1,
+       1,
+       1
+      ],
+      "0.12": [
+       1.12,
+       0.9,
+       1.12
+      ],
+      "0.25": [
+       0.96,
+       1.1,
+       0.96
+      ],
+      "0.4": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    "tds_base": {
+     "scale": {
+      "0.0": [
+       1,
+       1,
+       1
+      ],
+      "0.12": [
+       1.12,
+       0.9,
+       1.12
+      ],
+      "0.25": [
+       0.96,
+       1.1,
+       0.96
+      ],
+      "0.4": [
+       1,
+       1,
+       1
+      ]
+     }
+    },
+    "waist": {
+     "scale": {
+      "0.0": [
+       1,
+       1,
+       1
+      ],
+      "0.12": [
+       1.12,
+       0.9,
+       1.12
+      ],
+      "0.25": [
+       0.96,
+       1.1,
+       0.96
+      ],
+      "0.4": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   }
+  },
+  "animation.tds_tower.levelup_body": {
+   "loop": false,
+   "animation_length": 0.4,
+   "bones": {
+    "body": {
      "scale": {
       "0.0": [
        1,
