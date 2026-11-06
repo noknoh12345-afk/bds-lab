@@ -1313,7 +1313,10 @@
   "tries": 1
  },
  "q56_sampler_phones_speaker": {
-  "status": "pending"
+  "commit": "af7e245",
+  "run": "42158351773",
+  "started": "2026-11-06 03:44",
+  "status": "running"
  },
  "q57_sampler_two_streams": {
   "status": "pending"
