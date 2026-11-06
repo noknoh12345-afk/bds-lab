@@ -1188,10 +1188,17 @@
   "tries": 1
  },
  "q50_speech_joins": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "15c66ea",
+  "conclusion": "success",
+  "ended": "2026-11-06 00:23",
+  "failed_steps": 0,
+  "recordings": 8,
   "run": "42134173319",
   "started": "2026-11-06 00:04",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q51_file_warm": {
   "status": "pending"
