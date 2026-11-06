@@ -20,16 +20,12 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 RP = os.path.join(ROOT, 'rp')
 
 from kit import write  # noqa: E402
-import hq_mobs  # noqa: E402
 import roster  # noqa: E402
-import units  # noqa: E402
 
-# bodies: vanilla mobs for every enemy and the figure towers / units (referenced, not built); ours for buildings and machines.
-# Enemies and towers: one look each from the roster (roster.py, roster_towers.py), its gear or its own body.
-ROSTER = ('enemy', 'tower')
-GROUPS = {
-    'unit': [units.jeep, units.sentry, units.ice], 'unit gear': list(hq_mobs.UNIT_GEAR.values()),
-}
+# bodies: vanilla mobs and the player's body (referenced, not built); ours for buildings, machines, plants and duckies.
+# Enemies, towers and units: one look each from the roster (roster.py, roster_towers.py, roster_units.py), its gear or its body.
+ROSTER = ('enemy', 'tower', 'unit')
+GROUPS = {}
 KEEP = ('ghost_ok.png', 'ghost_bad.png')          # written by tools/gen_assets.py
 
 
@@ -71,7 +67,8 @@ def main(argv):
             pass
         import roster_entities as RE
         outputs[os.path.join(ROOT, 'src', 'looks.ts')] = RE.looks_ts([('ENEMY_LOOK', looks['enemy']),
-                                                                       ('TOWER_LOOK', looks['tower'], ('string', lambda lk: lk.extra['fire']))]).encode()
+                                                                       ('TOWER_LOOK', looks['tower'], ('string', lambda lk: lk.extra['fire'])),
+                                                                       ('UNIT_LOOK', looks['unit'])]).encode()
     stale = write(outputs, check)
     if not only:                                    # files of looks that are no longer built
         for d in (os.path.join(RP, 'models', 'entity', 'tds'), os.path.join(RP, 'textures', 'entity', 'tds')):

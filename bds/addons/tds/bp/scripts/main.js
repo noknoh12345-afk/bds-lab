@@ -484,6 +484,72 @@ var TOWER_LOOK = {
   "Void Miner": [77, 1.944, ""],
   "Crystallizer": [78, 1.944, "fire"]
 };
+var UNIT_LOOK = {
+  "Golden Mafia": [0, 1],
+  "Mafia": [1, 1],
+  "Body Guards 1": [2, 1],
+  "Body Guards 2": [3, 1],
+  "Golden Body Guards 1": [4, 1],
+  "Golden Body Guards 2": [5, 1],
+  "Rifleman": [6, 1],
+  "Grenadier": [7, 1],
+  "Contractor": [8, 1],
+  "Cannoneer Elf": [9, 0.8],
+  "Gunner Elf": [10, 0.8],
+  "Ripped Elf (Unit)": [11, 1.3],
+  "Golden Crook": [12, 1],
+  "Crook": [13, 1],
+  "Body Guard": [14, 1],
+  "Golden Body Guard": [15, 1],
+  "Lackey": [16, 1],
+  "Field Medic": [17, 1],
+  "Elf": [18, 0.8],
+  "Snowball Elf": [19, 0.8],
+  "Bomber Elf (Unit)": [20, 0.8],
+  "Riot Guard": [21, 1],
+  "Bouncer": [22, 1.25],
+  "Guardian Elf": [23, 0.85],
+  "Citizen 1": [24, 1],
+  "Citizen 2": [25, 1],
+  "Skeleton (Unit)": [26, 1],
+  "Sword Skeleton": [27, 1],
+  "Skeleton Knight": [28, 1.1],
+  "Hallow Guard (Unit)": [29, 1.2],
+  "Money Runner": [30, 1],
+  "Giant Skeleton (Unit)": [31, 2],
+  "Executioner Skeleton": [32, 1.3],
+  "Motorcycle": [33, 1],
+  "Truck1": [34, 1],
+  "Truck2": [35, 1],
+  "Truck3": [36, 1],
+  "Gunner APC": [37, 1],
+  "Missile APC": [38, 1],
+  "Swat Van": [39, 1],
+  "Swat Van Gunner": [40, 1],
+  "SWAT Van": [41, 1],
+  "Jeep": [42, 1],
+  "Gift Bomber": [43, 1],
+  "XR600": [44, 1],
+  "Armored XR600": [45, 1],
+  "XR700": [46, 1],
+  "XR900": [47, 1.15],
+  "XR901": [48, 1.3],
+  "Sentry (Unit)": [49, 1],
+  "Rifle Sentry": [50, 1],
+  "Minigun Sentry": [51, 1],
+  "War Machine Sentry": [52, 1],
+  "Ice Turret": [53, 1],
+  "Sunflower": [54, 1],
+  "Ivy": [55, 1],
+  "Nightshade (Unit)": [56, 1],
+  "Fire Ducky": [57, 1],
+  "Confusion Ducky": [58, 1],
+  "Ice Ducky": [59, 1],
+  "Poison Ducky": [60, 1],
+  "Shock Ducky": [61, 1],
+  "Crab": [62, 1],
+  "Molten Monster": [63, 1.4]
+};
 
 // addons/tds/src/game.ts
 var headless = false;
@@ -852,7 +918,7 @@ function towerRole(name, hologram = false) {
   if (/splash/i.test(d.damageType ?? "") || /Defense/.test(d.role ?? "")) return 3;
   return 0;
 }
-var unitSkin = (u) => u.slow && u.stationary ? 4 : u.stationary ? 2 : !u.kind ? 3 : /Vehicle/i.test(units[u.kind]?.type ?? "") || /APC|Truck|Van|Tank|Humvee|Motorcycle|Car/i.test(u.kind) ? 0 : 1;
+var unitLook = (u) => (u.kind ? UNIT_LOOK[u.kind] : void 0) ?? UNIT_LOOK[u.slow && u.stationary ? "Ice Turret" : u.stationary ? "Sentry (Unit)" : !u.kind ? "Skeleton (Unit)" : /Vehicle/i.test(units[u.kind]?.type ?? "") ? "Truck1" : "Rifleman"] ?? [0, 1];
 function show(e) {
   if (!path) return;
   const p = path.at(e.d), y = path.floor + (e.flying ? 2.5 : 0);
@@ -1841,7 +1907,9 @@ system2.runInterval(() => {
       try {
         x = dim().spawnEntity("tds:unit", { x: p.x, y: path.floor, z: p.z });
         try {
-          x.setProperty("tds:skin", unitSkin(u));
+          const lk = unitLook(u);
+          x.setProperty("tds:skin", lk[0]);
+          x.setProperty("tds:size", lk[1]);
         } catch {
         }
         x.nameTag = `\xA7a${u.kind ?? "Unit"} \xA7f${Math.ceil(u.hp)}`;

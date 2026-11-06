@@ -77,7 +77,7 @@ def outer(m, part):
 
 
 # ------------------------------------------------------------------------------------------------ the person
-def person(name, body='steve', mats=None, disc=None, emblem='chevron'):
+def person(name, body='steve', mats=None, disc=None, emblem='chevron', stand=True):
     from kit import Model
     rig = RIGS[body]
     pal = {**PED, **(mats or {})}
@@ -93,9 +93,10 @@ def person(name, body='steve', mats=None, disc=None, emblem='chevron'):
     from kitbash import THEMES
     m.emblem, m.own, m.wears, m.theme, m.th, m.splats = emblem, None, set(), 'plain', THEMES['plain'], []
     m.gun_at = (-1.6, 22.4, -5.6)                    # on the fists of the `hold` pose (entities.POSES), below the chin
-    m.bone('tds_base', None, (0, 0, 0))
-    pedestal(m, trim='ptrim')
-    pips(m, 3.0, 12.35)
+    if stand:                                         # a tower's pedestal and level pips (a unit walks without them)
+        m.bone('tds_base', None, (0, 0, 0))
+        pedestal(m, trim='ptrim')
+        pips(m, 3.0, 12.35)
     from kitbash import paint as kpaint
     m.decal = lambda p, m=m: tailor_px(m, p) if p.cube['decal'] == 'tailor' else kpaint(m, p)
     return m
@@ -938,3 +939,116 @@ def horns_on(m, col='dark', size=1.0):
 def splats(m, cols, n=7, seed=1):
     """paint splashes over what is worn (a paintballer's clothes): marks the garments' painters read"""
     m.splats = [(hash01(seed, k, 'x') * 8 - 4, 4 + hash01(seed, k, 'y') * 22, C(m, cols[k % len(cols)])) for k in range(n)]
+
+
+# ------------------------------------------------------------------------------------------------ for the units
+def shades(m, col='#16161c', glint='#8ad8ff'):
+    """dark glasses over the eyes (row 4 of the face: a bodyguard's, part of who he is), a glint on each lens"""
+    cc, gc = C(m, col), C(m, glint)
+    hb = m.rig.parts['head'][0]
+    L = LAYER['cap'] + 0.1
+
+    def pp(p):
+        if p.face == 'north' and p.j == 0 and p.i in (1, 5):
+            return lit(gc)
+        return mul(cc, 1.2) if p.face == 'up' else cc
+    piece(m, hb, 'shades', -3.6, 3.6, 26.9, 28.1, -4 - L - 0.2, -4 - L + 0.05, pp)
+    for sx in (-1, 1):
+        lo, hi = sorted((sx * (4 + L - 0.05), sx * (4 + L + 0.2)))
+        piece(m, hb, f'shades_arm{sx}', lo, hi, 27.3, 27.8, -4 - L, -0.5, lambda p: cc)
+
+
+def earpiece(m, col='#16161c'):
+    hb = m.rig.parts['head'][0]
+    cc = C(m, col)
+    L = LAYER['cap']
+    piece(m, hb, 'earpiece', 4 + L - 0.1, 4 + L + 0.45, 26.0, 27.2, -0.4, 0.4, lambda p: cc)
+    piece(m, hb, 'earwire', 4 + L - 0.3, 4 + L - 0.1, 24.8, 26.05, 0.4, 0.6, lambda p: mul(cc, 1.3))      # down to the collar, over the shoulder
+
+
+def elf_ears(m, col=None):
+    """pointed ears out from the head's sides, the skin's own tone (the default skins': Steve's or Alex's)"""
+    hb = m.rig.parts['head'][0]
+    cc = C(m, col or ('#e0a878' if m.rig.key == 'alex' else '#b07a56'))
+    for sx in (-1, 1):
+        x = sx * 4
+        lo, hi = sorted((x, x + sx * 2.4))
+        piece(m, hb, f'ear{sx}', lo, hi, 26.4, 28.2, 0.2, 1.0, lambda p: mul(cc, 1.06) if p.j == 0 else grain(p, cc),
+              rot=(0, 0, sx * -24), pivot=(x, 27.3, 0.6))
+
+
+def elf_hat(m, col, trim='white', bell='gold'):
+    """an elf's hat: a fur band at the brow, a long soft cone falling back over the head, a bell at its tip"""
+    cc, tc, bc = C(m, col), C(m, trim), C(m, bell)
+    hb = m.rig.parts['head'][0]
+    L = LAYER['cap']
+    wear(m, 'head', 'elfhat', L, lambda p: None if p.face == 'down' else grain(p, cc), y0=29.6, y1=32.0)
+    wear(m, 'head', 'elfband', L + 0.3, lambda p: None if p.face in ('up', 'down') else (tc if (p.i + p.j) % 3 else mul(tc, 0.9)),
+         y0=29.1, y1=30.1)                                                     # its fur stops above the eyes
+    y, parent = 32 + L - 0.1, hb
+    for k, (r, hgt, rx) in enumerate(((3.6, 3.2, -16), (2.5, 3.0, -34), (1.5, 2.8, -40))):   # a chain of links, each bent back
+        B = nb(m, f'elfcone{k}')
+        m.bone(B, parent, (0, y, 0.4), rot=(rx, 0, 0))
+        piece(m, B, f'elfcone{k}', -r, r, y - (0.3 if k else 0.0), y + hgt, 0.4 - r, 0.4 + r,
+              lambda p, k=k: None if p.face == 'down' else grain(p, mul(cc, 1.0 - 0.05 * k)))
+        parent, y = B, y + hgt
+    piece(m, parent, 'elfbell', -0.9, 0.9, y - 0.2, y + 1.6, -0.5, 1.3, lambda p: mul(bc, 1.2) if p.j == 0 else bc)
+
+
+def overalls(m, col, buttons='gold', shirt_col=None):
+    """denim overalls: both legs, a bib over the chest on straps, brass buttons"""
+    oc, bc = C(m, col), C(m, buttons)
+    trousers(m, col, 'jeans')
+    b = m.rig.parts['body'][0]
+    L = LAYER['jacket']
+
+    def bib(p):
+        if p.face == 'north' and p.j == 1 and p.i in (0, p.w - 1):
+            return bc
+        if p.face == 'north' and p.j == p.h // 2 and 1 < p.i < p.w - 2:
+            return mul(oc, 0.82)                                               # its pocket
+        return grain(p, oc)
+    piece(m, b, 'bib', -3.0, 3.0, 12.0, 19.5, -2 - L - 0.25, -2 - L + 0.1, bib)
+    for sx in (-1, 1):
+        x = sx * 2.4
+        piece(m, b, f'strap{sx}', x - 0.6, x + 0.6, 19.4, 24.0 + L + 0.05, -2 - L - 0.2, -2 - L + 0.05, lambda p: grain(p, mul(oc, 0.92)))
+        piece(m, b, f'strapb{sx}', x - 0.6, x + 0.6, 16.0, 24.0 + L + 0.05, 2 + L - 0.05, 2 + L + 0.2, lambda p: grain(p, mul(oc, 0.92)))
+    wear(m, 'body', 'overall_waist', LAYER['trousers'] + 0.08, lambda p: None if p.face in ('up',) else grain(p, oc), y0=10.0, y1=12.4)
+
+
+def hood_down(m, col, lining=None):
+    """a hoodie's hood down on the shoulders behind the neck, its lining showing"""
+    hc, lc = C(m, col), C(m, lining or mul(C(m, col), 0.6))
+    b = m.rig.parts['body'][0]
+    z = 2 + LAYER['jacket']
+    piece(m, b, 'hood_down', -3.4, 3.4, 20.6, 24.9, z - 0.3, z + 1.6,
+          lambda p: (lc if p.face == 'up' and p.j >= p.h - 2 else (mul(hc, 0.85) if p.face == 'up' else grain(p, hc))) if p.face != 'down' else mul(hc, 0.6))
+
+
+def straw_hat(m, col='#e0c070', band='#8a3a2a'):
+    """a farmer's straw hat: a low crown, a wide flat brim, woven"""
+    hc, bc = C(m, col), C(m, band)
+    hb = m.rig.parts['head'][0]
+    B = nb(m, 'headwear')
+    m.bone(B, hb, (0, 30, 0))
+    weave = lambda p: mul(hc, 0.88) if (p.i + p.j) % 2 == 0 else hc  # noqa: E731
+    piece(m, B, 'straw_crown', -4.4, 4.4, 29.6, 33.0, -4.4, 4.4, lambda p: None if p.face == 'down' else (bc if p.face in SIDES and p.j >= p.h - 1 else weave(p)))
+    piece(m, B, 'straw_brim', -7.4, 7.4, 29.2, 29.7, -7.4, 7.4, lambda p: mul(hc, 0.75) if p.face == 'down' else weave(p))
+
+
+def flat_cap(m, col, check=None):
+    """a flat cap: a low crown leaning forward over a short peak"""
+    cc = C(m, col)
+    kc = C(m, check) if check else None
+    hb = m.rig.parts['head'][0]
+    B = nb(m, 'headwear')
+    m.bone(B, hb, (0, 30, -1), rot=(-6, 0, 0))
+
+    def pp(p):
+        if p.face == 'down':
+            return None
+        if kc and (p.i % 3 == 0 or p.j % 3 == 0) and p.face in ('up',) + SIDES:
+            return mix(cc, kc, 0.5)
+        return grain(p, cc)
+    piece(m, B, 'flatcap', -4.8, 4.8, 29.4, 32.9, -5.2, 4.8, pp)
+    piece(m, B, 'flatcap_peak', -4.0, 4.0, 29.45, 29.95, -7.0, -5.1, lambda p: mul(cc, 0.8) if p.face == 'down' else grain(p, mul(cc, 0.9)))

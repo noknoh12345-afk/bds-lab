@@ -266,6 +266,9 @@ def looks(kind):
     if kind == 'tower':
         import roster_towers                                      # (it builds on this module's Look)
         return roster_towers.looks()
+    if kind == 'unit':
+        import roster_units
+        return roster_units.looks()
     if kind == 'enemy':
         data = load('enemies')
         out = [build_enemy(n, ENEMY[n], d) for n, d in data.items() if n in ENEMY]
@@ -281,5 +284,8 @@ def missing(kind):
     if kind == 'tower':
         import roster_towers
         return roster_towers.missing()
+    if kind == 'unit':
+        import roster_units
+        return roster_units.missing()
     data = load({'enemy': 'enemies'}[kind])
     return [n for n in data if n not in {'enemy': ENEMY}[kind]]

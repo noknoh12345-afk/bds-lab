@@ -62,6 +62,7 @@ import sys; sys.path.insert(0, os.path.join(ROOT, 'tools', 'models'))
 import roster  # noqa: E402
 N_ENEMY = len(roster.looks('enemy'))
 N_TOWER = len(roster.looks('tower'))
+N_UNIT = len(roster.looks('unit'))
 FLAG = {'type': 'bool', 'default': False, 'client_sync': True}
 def base_components(family, box, hit):
     return {'minecraft:type_family': {'family': family}, 'minecraft:health': {'value': 1000000, 'max': 1000000},
@@ -72,7 +73,7 @@ def base_components(family, box, hit):
 def entity(ident, props, comps): return {'format_version': '1.21.40', 'minecraft:entity': {'description': {'identifier': ident, 'is_spawnable': False, 'is_summonable': True, 'properties': props}, 'components': comps}}
 NAME = {'minecraft:nameable': {'always_show': True, 'allow_name_tag_renaming': False}, 'minecraft:persistent': {}}
 out('bp/entities/enemy.json', entity('tds:enemy', {'tds:skin': prop_int(N_ENEMY - 1), 'tds:size': LOOK_SIZE}, {**base_components(['enemy', 'tds'], (0.3, 0.45), (0.01, 0.01)), **NAME}))
-out('bp/entities/unit.json', entity('tds:unit', {'tds:skin': prop_int(7), 'tds:size': SIZE}, {**base_components(['unit', 'tds'], (0.3, 0.4), (0.01, 0.01)), **NAME}))
+out('bp/entities/unit.json', entity('tds:unit', {'tds:skin': prop_int(N_UNIT - 1), 'tds:size': LOOK_SIZE}, {**base_components(['unit', 'tds'], (0.3, 0.4), (0.01, 0.01)), **NAME}))
 tw = {**base_components(['tower', 'tds'], (0.3, 0.5), (0.8, 0.9)), **NAME,
       'minecraft:interact': {'interactions': [{'interact_text': 'action.interact.tds_manage', 'swing': True, 'on_interact': {'filters': {'test': 'is_family', 'subject': 'other', 'value': 'player'}}}]}}
 # tds:yaw: the yaw (degrees, as a mob's) from the tower to its target; the client turns the turret bone to it

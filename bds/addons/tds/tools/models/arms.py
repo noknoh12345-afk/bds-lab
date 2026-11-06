@@ -17,12 +17,18 @@ from __future__ import annotations
 
 import math
 
-from hq_parts import flash, octa
+from hq_parts import flash as _flash, octa
 from kit import mix, mul
 from kitbash import nb
 from parts import lit
 
 FULL = {f: 1.0 for f in ('north', 'south', 'east', 'west', 'up', 'down')}
+
+
+def flash(m, *a, **k):
+    """a muzzle flash (hq_parts.flash), unless the model never shoots on screen (a unit: m.noflash)"""
+    if not getattr(m, 'noflash', False):
+        _flash(m, *a, **k)
 SIDES = ('north', 'south', 'east', 'west')
 GUN_AT = (-1.6, 22.4, -5.6)
 
@@ -333,10 +339,10 @@ def gun(m, kind, at=None, s=1.0, **mt):
             g.box('ladder', -0.5, 0.5, 2.4, 3.4, -6.8, -6.0, P['dark'])
             mz = -14.0
         elif kind == 'rocket':
-            g.tube('tube', 'z', (0, 1.5), -12.5, 3.0, 1.45, P['furn'])
-            g.tube('bell', 'z', (0, 1.5), 1.6, 3.4, 1.7, P['dark'])
-            g.tube('head', 'z', (0, 1.5), -15.0, -12.4, 1.0, P['warhead'])
-            g.box('tip', -0.45, 0.45, 1.05, 1.95, -16.2, -14.95, P['warhead'])
+            g.tube('tube', 'z', (0, 1.0), -12.5, 0.4, 1.45, P['furn'])                     # its back end clear of the chin
+            g.tube('bell', 'z', (0, 1.0), -0.2, 1.3, 1.7, P['dark'])
+            g.tube('head', 'z', (0, 1.0), -15.0, -12.4, 1.0, P['warhead'])
+            g.box('tip', -0.45, 0.45, 0.55, 1.45, -16.2, -14.95, P['warhead'])
             grip(g, P['dark'], z=-1.0)
             g.box('fgrip', -0.5, 0.5, -3.0, 0.2, -7.4, -6.2, P['dark'])
             g.box('sight', 1.4, 2.3, 1.6, 3.2, -6.0, -3.6, P['dot'])
@@ -354,7 +360,7 @@ def gun(m, kind, at=None, s=1.0, **mt):
             grip(g, P['furn'])
             g.box('fgrip', -0.5, 0.5, -3.0, -0.3, -6.6, -5.4, P['furn'])
             mz = -10.0
-        x, y, z = g.P((0, 1.5 if kind in ('rocket',) else 0.4, mz))
+        x, y, z = g.P((0, 1.0 if kind in ('rocket',) else 0.4, mz))
         flash(m, B, F, x, y, z, 0.9 * s)
         return
     elif kind in ('flamer', 'freezer', 'frostcannon', 'toxic', 'slime', 'paintball'):
@@ -470,6 +476,8 @@ def pistol(m, side, kind='revolver', s=1.0, **mt):
         h.box('slide', -0.6, 0.6, 2.0, 3.4, -1.4, 6.0, P['metal'])
         h.box('frame', -0.55, 0.55, 1.4, 2.05, -0.6, 5.4, P['dark'])
         mz, mu = 6.0, 2.7
+    if getattr(m, 'noflash', False):
+        return
     F = nb(m, f'gun{side}_flash')
     fx, fy, fz = x, yc - mz * s, z - mu * s
     m.bone(F, B, (fx, fy, fz))
@@ -566,3 +574,86 @@ def boomerang(m, side='r', s=1.0, **mt):
         return shade(mul(wd, 1.0 + 0.05 * math.sin(q[0] * 2 + q[1])), p)
     h.box('arm', -0.75, 0.75, -0.3, 0.3, 0.2, 6.6, pp)
     h.box('arm2', -0.75, 0.75, -0.25, 0.25, 0.2, 6.0, pp, rot=(0, 0, -105), pivot=(0, 0, 6.0))
+
+
+# ------------------------------------------------------------------------------------------------ carried in a fist
+def carry(m, side, kind, s=1.0, **mt):
+    """a thing carried in a fist, hanging from it when the arm hangs: a medkit, a gift, a money bag, a torch, a
+    pitchfork, a baton, a candy cane; or a riot shield on the forearm"""
+    if side not in m.rig.hands:
+        return
+    hb, (x, y0, z) = m.rig.hands[side]
+    B = nb(m, f'{kind}_{side}')
+    yc = y0 + 2.0
+    m.bone(B, hb, (x, yc, z))
+    h = Held(m, B, x, yc, z, s)
+    if kind == 'medkit':
+        red, white = C(m, mt.get('mark', 'red')), C(m, mt.get('mat', 'white'))
+
+        def kit(p):
+            if p.face in ('east', 'west') and ((abs(p.i - (p.w - 1) / 2) < 0.6 and 0 < p.j < p.h - 1) or (abs(p.j - (p.h - 1) / 2) < 0.6 and 0 < p.i < p.w - 1)):
+                return red
+            return shade(white, p)
+        h.box('handle', -0.3, 0.3, -0.6, 0.6, 1.6, 2.6, solid(m, 'gun2'))
+        h.box('box', -1.6, 1.6, -2.6, 2.6, 2.5, 6.2, kit)
+    elif kind == 'gift':
+        box, rib = C(m, mt.get('mat', 'red')), C(m, mt.get('mark', 'gold'))
+
+        def gp(p):
+            if (abs(p.i - (p.w - 1) / 2) < 0.6) or (p.face in SIDES and abs(p.j - (p.h - 1) / 2) < 0.6) or (p.face in ('up', 'down') and abs(p.j - (p.h - 1) / 2) < 0.6):
+                return rib
+            return shade(box, p)
+        h.box('box', -2.2, 2.2, -2.2, 2.2, 1.8, 6.2, gp)
+    elif kind == 'moneybag':
+        bag, mark = C(m, mt.get('mat', 'bag')), C(m, mt.get('mark', '#3a8a3a'))
+
+        def mb(p):
+            if p.face in ('north', 'south', 'east', 'west') and 1 <= p.i <= p.w - 2 and 1 <= p.j <= p.h - 2:
+                cx = (p.w - 1) / 2
+                if abs(p.i - cx) < 0.6 or (p.j in (1, p.h - 2) and abs(p.i - cx) < 1.6) or (p.j == p.h // 2 and abs(p.i - cx) < 1.6):
+                    return mark                                                  # a dollar mark
+            return shade(bag, p)
+        h.box('neck', -0.7, 0.7, -0.7, 0.7, 1.4, 2.6, solid(m, mt.get('mat', 'bag')))
+        h.box('tie', -0.85, 0.85, -0.85, 0.85, 2.4, 2.9, solid(m, 'strap'))
+        h.box('bag', -2.3, 2.3, -2.3, 2.3, 2.8, 7.4, mb)
+    elif kind == 'snowball':
+        sc = C(m, mt.get('mat', 'white'))
+        g = Held(m, B, x, yc, z, s)
+        g.box('ball', -1.65, 1.65, -1.65, 1.65, 1.6, 4.9, lambda p: shade(mul(sc, 0.92) if (p.i + p.j) % 3 == 0 else sc, p))
+    elif kind == 'torch':
+        h.box('stick', -0.4, 0.4, -0.4, 0.4, -3.0, 7.0, wood(m, 'wood'))
+        h.box('wrap', -0.6, 0.6, -0.6, 0.6, 6.6, 8.2, solid(m, 'strap'))
+        from kitbash import tag
+        F = nb(m, f'{kind}_{side}_fire')
+        m.bone(F, B, (x, yc - 8.2 * s, z))
+        c = m.box(F, f'{F}_a', x - 1.3 * s, x + 1.3 * s, yc - 12.4 * s, yc - 8.0 * s, z, z, 'flash', only=('north', 'south'), decal='flamey', dens=3)
+        tag(c, top=yc - 8.0 * s, h=4.4 * s)
+    elif kind == 'pitchfork':
+        h.box('shaft', -0.4, 0.4, -0.4, 0.4, -9.0, 9.0, wood(m, 'wood'))
+        h.box('bar', -2.0, 2.0, -0.35, 0.35, 8.6, 9.4, solid(m, 'metal2'))
+        for k, dx in enumerate((-1.7, 0.0, 1.7)):
+            h.box(f'tine{k}', dx - 0.25, dx + 0.25, -0.25, 0.25, 9.3, 13.0 - 0.6 * abs(dx), solid(m, 'metal'))
+    elif kind == 'baton':
+        h.box('grip', -0.45, 0.45, -0.45, 0.45, -1.5, 1.8, solid(m, 'gun2'))
+        h.box('rod', -0.38, 0.38, -0.38, 0.38, 1.7, 8.5, solid(m, mt.get('mat', 'black')))
+    elif kind == 'cane':
+        rc, wc = C(m, 'red'), C(m, 'white')
+        stripe = lambda p: shade(rc if int(p.inbone()[1] * 0.9 + (p.inbone()[2] if p.face in ('east', 'west') else p.inbone()[0]) * 0.9) % 2 else wc, p)  # noqa: E731
+        h.box('shaft', -0.5, 0.5, -0.5, 0.5, -3.0, 9.0, stripe)
+        h.box('hook', -0.47, 0.47, -3.4, 0.45, 9.0, 10.0, stripe)
+        h.box('hook2', -0.44, 0.44, -3.35, -2.4, 7.4, 9.05, stripe)
+    elif kind == 'riotshield':
+        clear = C(m, mt.get('mat', '#b8d8e8'))
+
+        def sh(p):                                                               # its broad faces: up / down in the fist's frame
+            if p.face in SIDES:
+                return shade(C(m, 'gun2'), p)
+            if p.i in (0, p.w - 1) or p.j in (0, p.h - 1):
+                return mul(C(m, 'gun2'), 1.1)                                    # its rim
+            if abs(p.j - p.h * 0.3) < 0.6 and 0 < p.i < p.w - 1:
+                return C(m, 'white')                                             # a band across
+            return mul(clear, 1.12) if (p.i + p.j) % 7 == 0 else clear              # the gear's alpha lights, it does not clear
+        h.box('board', -4.2, 4.2, -6.5, 6.5, 2.3, 2.8, sh)                        # upright ahead when the arm is raised
+        h.box('grip', -0.4, 0.4, -0.4, 0.4, 0.4, 2.35, solid(m, 'gun2'))
+    else:
+        raise KeyError(kind)

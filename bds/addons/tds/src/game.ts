@@ -1,6 +1,6 @@
 // The match: path, enemies, towers, units, economy, waves. Pure simulation in studs/seconds; entities only mirror it.
 import { world, system, Player, Entity, Dimension } from '@minecraft/server';
-import { ENEMY_LOOK, TOWER_LOOK } from './looks';
+import { ENEMY_LOOK, TOWER_LOOK, UNIT_LOOK } from './looks';
 import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, startCash, timerFor, enemyIn, afterDefense, cashShare, hpFor, RULES, rules, units, unitsFor, Stats, Group, Ability, Spawn, TowerAbility, SkillDef } from './defs';
 
 export let headless = false;
@@ -301,8 +301,10 @@ export function towerRole(name: string, hologram = false) {
   if (/splash/i.test(d.damageType ?? '') || /Defense/.test(d.role ?? '')) return 3;
   return 0;
 }
-/** the look of a unit: 0 vehicle, 1 humanoid, 2 sentry, 3 skeleton, 4 ice turret */
-export const unitSkin = (u: Unit) => u.slow && u.stationary ? 4 : u.stationary ? 2 : !u.kind ? 3 : /Vehicle/i.test(units[u.kind]?.type ?? '') || /APC|Truck|Van|Tank|Humvee|Motorcycle|Car/i.test(u.kind) ? 0 : 1;
+/** the look of a unit (src/looks.ts, one per unit of the data): [tds:skin, tds:size]; a unit without a name takes the look of
+ * what it is (an ice wall: the ice turret, a stationary guard: a sentry, a raised dead: a skeleton, else a rifleman) */
+export const unitLook = (u: Unit): [number, number] => (u.kind ? UNIT_LOOK[u.kind] : undefined)
+  ?? UNIT_LOOK[u.slow && u.stationary ? 'Ice Turret' : u.stationary ? 'Sentry (Unit)' : !u.kind ? 'Skeleton (Unit)' : /Vehicle/i.test(units[u.kind]?.type ?? '') ? 'Truck1' : 'Rifleman'] ?? [0, 1];
 function show(e: Enemy) {
   if (!path) return;
   const p = path.at(e.d), y = path.floor + (e.flying ? 2.5 : 0);
@@ -840,7 +842,7 @@ system.runInterval(() => {
   }
   if (tick % 4 === 0) for (const u of M.units) {
     const p = path.at(u.d); let x = ents.get(u.id);
-    if (!x?.isValid) { try { x = dim().spawnEntity('tds:unit' as any, { x: p.x, y: path.floor, z: p.z }); try { x.setProperty('tds:skin', unitSkin(u)); } catch { /* older pack */ } x.nameTag = `§a${u.kind ?? 'Unit'} §f${Math.ceil(u.hp)}`; ents.set(u.id, x); } catch { continue; } }
+    if (!x?.isValid) { try { x = dim().spawnEntity('tds:unit' as any, { x: p.x, y: path.floor, z: p.z }); try { const lk = unitLook(u); x.setProperty('tds:skin', lk[0]); x.setProperty('tds:size', lk[1]); } catch { /* older pack */ } x.nameTag = `§a${u.kind ?? 'Unit'} §f${Math.ceil(u.hp)}`; ents.set(u.id, x); } catch { continue; } }
     try { x.teleport({ x: p.x, y: path.floor, z: p.z }, { rotation: { x: 0, y: p.yaw + 180 } }); x.nameTag = `§a${u.kind ?? 'Unit'} §f${Math.ceil(u.hp)}`; } catch { /* unloaded */ }
   }
   prof.vis += Date.now() - t0; t0 = Date.now();

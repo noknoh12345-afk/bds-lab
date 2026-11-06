@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 import os
 
-import hq_mobs
 import vanilla as V
 
 SK = "q.property('tds:skin')"
@@ -243,17 +242,6 @@ def tower_outputs(looks, empty_geo, built, rp):
     return wrap(tower), wrap(ghost), rcs, tower_anims(looks), controller
 
 
-# ------------------------------------------------------------------------------------------------ units
-UNIT_ANIMS = {
-    'animation.tds_unit.march': loop({**legs(500, 30), 'rightarm': {'rotation': [-70, -12, 0]}, 'leftarm': {'rotation': [-66, 30, 0]},
-                                      **bob('waist', 500, 0.4), **look()}),          # the soldier, rifle at the ready (pillager rig)
-    'animation.tds_unit.shamble': loop({**legs(420, 26), **arms(420, 6, -84), **bob('waist', 420, 0.4), **look()}),   # the skeleton
-    'animation.tds_unit.wheels': loop({w: {'rotation': ['q.life_time * 540', 0, 0]} for w in ('wheel_fl', 'wheel_fr', 'wheel_bl', 'wheel_br')}),
-    'animation.tds_unit.sweep': loop({'head': {'rotation': [0, S(80, 45), 0]}}),
-    'animation.tds_unit.spin': loop({'head': {'rotation': [0, 'q.life_time * 90', 0]}}),
-}
-
-
 def level_rules(rp, geos, built=None):
     """part_visibility for the upgrade looks, from the bone names the tower geometries use: lvN_* from level N, preN_* below N,
     rAtoB_* from A to below B (the original's towers change their model at each upgrade). The ghost shows level 0.
@@ -345,31 +333,14 @@ def outputs(rp, models, looks=None):
     out[j('entity', 'ghost.entity.json')] = dumps(ghost)
     rcs.update(rc)
 
-    # units: the soldier and the skeleton are vanilla bodies + gear; jeep, sentry and ice turret are ours
-    U_FIG = (1, 3, 5, 6, 7)
-    u_geo, u_tex, u_gear, u_gtex = [], [], [], []
-    for i in range(8):
-        k = 3 if i == 3 else 1 if i in U_FIG else None
-        if k:
-            fig = V.UNIT_FIGURE[k]
-            u_geo.append(fig[0]); u_tex.append(fig[1])
-            g = hq_mobs.UNIT_GEAR[k]().name
-            u_gear.append(G(g)); u_gtex.append(T(g))
-        else:
-            n = {0: 'unit_jeep', 2: 'unit_sentry', 4: 'unit_ice'}[i]
-            u_geo.append(G(n)); u_tex.append(T(n)); u_gear.append(EMPTY); u_gtex.append(HOLO)
-    out[j('entity', 'unit.entity.json')] = dumps(entity(
-        'tds:unit', u_geo, u_gear, u_tex, u_gtex,
-        {'default': 'entity_alphatest', 'lit': 'entity_emissive_alpha_one_sided'}, U_FIG,
-        f"({pick(U_FIG, 0.2, 0.4)}) * q.property('tds:size')",
-        {'march': 'animation.tds_unit.march', 'shamble': 'animation.tds_unit.shamble', 'wheels': 'animation.tds_unit.wheels',
-         'sweep': 'animation.tds_unit.sweep', 'spin': 'animation.tds_unit.spin'},
-        [{'march': skin_is(1, 5, 6, 7)}, {'shamble': skin_is(3)}, {'wheels': skin_is(0)}, {'sweep': skin_is(2)}, {'spin': skin_is(4)}], 'unit'))
+    # units: one look per unit of the data (roster_units.py): the player's body in our clothes, a vanilla skeleton in our
+    # armour, or a body of our own (machines, plants, duckies)
+    client, rc = RE.entity('unit', looks['unit'], EMPTY, HOLO, 0.28, fx='fx_unit')
+    out[j('entity', 'unit.entity.json')] = dumps(client)
+    rcs.update(rc)
 
-    rcs.update(two_rc('unit', U_FIG, (('default', 'lit'), f'({skin_is(*U_FIG)}) ? 0 : 1'), (('lit',), '0')))
     out[j('render_controllers', 'tds.render_controllers.json')] = dumps({'format_version': '1.8.0', 'render_controllers': rcs})
-    for name, anims in (('tds_tower', tanims), ('tds_unit', UNIT_ANIMS)):
-        out[j('animations', f'{name}.animation.json')] = dumps({'format_version': '1.8.0', 'animations': anims})
+    out[j('animations', 'tds_tower.animation.json')] = dumps({'format_version': '1.8.0', 'animations': tanims})
     out[j('animations', 'tds_look.animation.json')] = dumps(RE.animations())
     out[j('animation_controllers', 'tds_tower.animation_controllers.json')] = dumps(tcontrol)
     import io

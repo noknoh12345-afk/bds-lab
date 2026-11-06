@@ -30,6 +30,14 @@ def limbs(rate, leg, arm, arm_base=0.0, legs=('rightLeg', 'leftLeg'), more_legs=
     return b
 
 
+WHEELS = ['wheel_fl', 'wheel_fr', 'wheel_ml', 'wheel_mr', 'wheel_bl', 'wheel_br', 'wheel_0l', 'wheel_0r', 'wheel_1l', 'wheel_1r', 'wheel_2l', 'wheel_2r', 'wheel_3l', 'wheel_3r', 'wheel_f', 'wheel_b']
+
+
+def legs_only(rate, leg):
+    """two legs swinging opposite (the arms are the clip's: they hold something)"""
+    return {'rightLeg': {'rotation': [S(rate, leg), 0, 0]}, 'leftLeg': {'rotation': [S(rate, -leg), 0, 0]}}
+
+
 def bob(bone, rate, amp, base=0.0):
     return {bone: {'position': [0, f'{base} + math.abs(math.cos(q.life_time * {rate})) * {amp}', 0]}}
 
@@ -81,6 +89,32 @@ ANIMS = {
                  'leg3': {'rotation': [S(520, 12), 0, 0]}, 'lid': {'rotation': [f'-math.abs(math.sin(q.life_time * 260)) * 18', 0, 0]},
                  'petals': {'rotation': [0, 'q.life_time * 40', 0]}, 'head_s': {'rotation': [0, S(60, 10), 0]}}),
     'float': loop({'root': {'position': [0, S(110, 1.2, 0, 2.0), 0]}, 'spin': {'rotation': [0, 'q.life_time * 60', 0]}}),
+    # the units (roster_units.py): people walking with what they hold, machines, plants and duckies
+    'patrol': loop({**legs_only(420, 26), 'rightArm': {'rotation': [-70, -12, 0]}, 'leftArm': {'rotation': [-68, 34, 0]},
+                    **bob('waist', 420, 0.4), **head(50, 6)}),
+    'pistol': loop({**legs_only(420, 26), 'rightArm': {'rotation': [-84, -6, 0]}, 'leftArm': {'rotation': [S(420, 18), 0, -4]},
+                    **bob('waist', 420, 0.4), **head(50, 6)}),
+    'carry': loop({**legs_only(400, 24), 'rightArm': {'rotation': [S(400, 4, 0, -34), -10, 0]}, 'leftArm': {'rotation': [S(400, -4, 0, -34), 10, 0]},
+                   **bob('waist', 400, 0.4), **head(50, 6)}),
+    'brawl': loop({**legs_only(380, 24), 'rightArm': {'rotation': [S(380, 6, 0, -108), -8, 0]}, 'leftArm': {'rotation': [-74, 18, 0]},
+                   **bob('waist', 380, 0.4), **head(40, 6)}),
+    'ride': loop({'rightLeg': {'rotation': [-46, 8, 0]}, 'leftLeg': {'rotation': [-46, -8, 0]}, 'rightArm': {'rotation': [-58, -8, 0]},
+                  'leftArm': {'rotation': [-58, 8, 0]}, 'waist': {'rotation': [10, 0, 0]},             # leaning on the bars from the hip
+                  'head': {'rotation': [S(120, 2, 0, -10), S(40, 6), 0]},
+                  **{w: {'rotation': ['q.life_time * 720', 0, 0]} for w in ('wheel_f', 'wheel_b')}}),
+    'drive': loop({**{w: {'rotation': ['q.life_time * 540', 0, 0]} for w in WHEELS}, 'turret': {'rotation': [0, S(70, 30), 0]},
+                   'root': {'position': [0, S(900, 0.12), 0]}}),
+    'fly': loop({'fly': {'position': [0, S(110, 1.0), 0], 'rotation': [S(90, 3), 0, S(70, 6)]}, 'prop': {'rotation': [0, 0, 'q.life_time * 1600']}}),
+    'stride': loop({'rightLeg': {'rotation': [S(300, 22), 0, 0]}, 'leftLeg': {'rotation': [S(300, -22), 0, 0]},
+                    'rightArm': {'rotation': [S(300, -6), 0, 0]}, 'leftArm': {'rotation': [S(300, 6), 0, 0]},
+                    'body': {'position': [0, f'math.abs(math.cos(q.life_time * 300)) * 0.8', 0], 'rotation': [0, 0, S(300, 2)]},
+                    'spinz_r': {'rotation': [0, 0, 'q.life_time * 600']}, 'spinz_l': {'rotation': [0, 0, 'q.life_time * -600']}}),
+    'sentry': loop({'turret': {'rotation': [0, S(60, 40), 0]}, 'spinz': {'rotation': [0, 0, 'q.life_time * 600']}}),
+    'sway': loop({'stem': {'rotation': [S(70, 3), 0, S(90, 5)]}, 'head_s': {'rotation': [S(110, 6), S(50, 10), 0]}}),
+    'waddle': loop({'duck': {'rotation': [0, S(160, 6), S(320, 9)], 'position': [0, 'math.abs(math.sin(q.life_time * 320)) * 0.6', 0]},
+                    'head_s': {'rotation': [S(320, 6), 0, 0]}}),
+    'scuttle': loop({**{f'leg{k}': {'rotation': [0, S(900, 14, 60 * k), 0]} for k in range(6)}, 'body': {'position': [0, S(900, 0.2), 0]},
+                     'claw_r': {'rotation': [S(200, 10), 0, 0]}, 'claw_l': {'rotation': [S(200, 10, 90), 0, 0]}}),
 }
 # always on: the spinning, beating and fluttering parts some looks have (a bone a look lacks is not moved)
 FX = loop({'halo': {'rotation': [0, 'q.life_time * 50', 0]}, 'aura': {'rotation': [0, 'q.life_time * 30', 0]},
@@ -101,12 +135,12 @@ def ranges(looks):
     return out
 
 
-def entity(kind, looks, empty_geo, holo_tex, base_scale, extra_anims=None, extra_animate=None, extra=None):
-    """the client entity and the two render controllers of one roster kind"""
+def entity(kind, looks, empty_geo, holo_tex, base_scale, extra_anims=None, extra_animate=None, extra=None, fx='fx'):
+    """the client entity and the two render controllers of one roster kind (fx: its always-on clip, fx or fx_unit)"""
     rng = ranges(looks)
     pre = f'tds_{kind}'
     anims = {k: f'animation.tds_look.{k}' for k in rng}
-    anims['fx'] = 'animation.tds_look.fx'
+    anims['fx'] = f'animation.tds_look.{fx}'
     animate = [{k: f'{SKIN} >= {a} && {SKIN} < {b}'} for k, (a, b) in rng.items()] + ['fx']
     if extra_anims:
         anims.update(extra_anims)
@@ -143,8 +177,12 @@ def entity(kind, looks, empty_geo, holo_tex, base_scale, extra_anims=None, extra
     return client, {f'controller.render.{pre}': body, f'controller.render.{pre}_gear': gear}
 
 
+FX_UNIT = loop({k: v for k, v in FX['bones'].items() if k in ('cape',)})        # the units' moving cloth: a cape
+
+
 def animations():
-    return {'format_version': '1.8.0', 'animations': {**{f'animation.tds_look.{k}': v for k, v in ANIMS.items()}, 'animation.tds_look.fx': FX}}
+    return {'format_version': '1.8.0', 'animations': {**{f'animation.tds_look.{k}': v for k, v in ANIMS.items()}, 'animation.tds_look.fx': FX,
+                                                     'animation.tds_look.fx_unit': FX_UNIT}}
 
 
 def looks_ts(tables):
