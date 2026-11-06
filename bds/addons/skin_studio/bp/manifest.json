@@ -1,0 +1,70 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Skin Studio | Behavior",
+    "description": "Skin Changer + \u8868\u5f70\u53f0 + \u93e1 / skins, award podium and mirrors",
+    "uuid": "ee9d537b-2f19-57c0-b602-918e8477a18e",
+    "version": [
+      1,
+      0,
+      1
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "66d6f726-aee7-5d1e-b031-e78db32239d8",
+      "version": [
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "entry": "scripts/main.js",
+      "uuid": "b098a660-500d-5d06-a415-8df896742b3a",
+      "version": [
+        1,
+        0,
+        1
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.12.0-beta"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.0.0"
+    },
+    {
+      "module_name": "@minecraft/server-gametest",
+      "version": "1.0.0-beta"
+    },
+    {
+      "uuid": "3e671969-7ccc-5439-8506-2babdfd805f7",
+      "version": [
+        1,
+        0,
+        1
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "ASAN10707",
+      "Skin Changer contributors"
+    ],
+    "license": "Skin Changer parts: zlib (altered); see LICENSE-SkinChanger.txt",
+    "product_type": "addon"
+  }
+}

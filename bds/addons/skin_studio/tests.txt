@@ -1,0 +1,325 @@
+# Skin Studio (Skin Changer 1.1.2 altered copy + award podium + mirror, one addon)
+#   S(rank) = "<rank>:<target slot>:<target epoch>" of the podium's statues
+## loads, Skin Changer gives A a slot
+@A join
+wait 1500
+wait 1500
+js [p('A').getProperty('mimic:slot') > 0, p('A').getProperty('mimic:epoch') > 0].join(',')
+= true,true
+
+## placing a podium raises three statues, facing the placer
+summon skin_podium:podium 0 -60 3
+wait 2500
+js world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).map(s => s.getDynamicProperty('sp:rank')).sort().join(',')
+= 1,2,3
+js (() => { const pd = world.getDimension('overworld').getEntities({type:'skin_podium:podium'})[0]; const st = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}); const r = {}; for (const s of st) r[s.getDynamicProperty('sp:rank')] = (s.location.y - pd.location.y).toFixed(3); return [pd.location.x, pd.location.z, pd.getRotation().y, r[1], r[2], r[3]].join(' '); })()
+~ ^0\.5 3\.5 -?180 1\.400 1\.025 0\.775$
+js world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).map(s => s.nameTag.replace(/§./g, '').replace('\n', '|')).sort().join(',')
+= 1位|(空き),2位|(空き),3位|(空き)
+
+## the podium menu puts A on 1st place; the statue points at A's slot
+@A interact skin_podium:podium
+until form 3000
+~ form action: title\("表彰台"\)
+~ button\("1位  \(空き\)"\)
+@A form 0
+until form 3000
+~ button\("自分を置く"\)
+@A form 自分を置く
+until 1位に A を置きました 3000
+wait 1200
+js (() => { const s = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).find(s => s.getDynamicProperty('sp:rank') === 1); const a = p('A'); return [s.getProperty('skin_podium:target') === a.getProperty('mimic:slot'), s.getProperty('skin_podium:target_epoch') === a.getProperty('mimic:epoch'), s.nameTag.replace(/§./g, '').replace('\n', '|')].join(' '); })()
+= true true 1位|A
+
+## A's skin is saved in the vault when placed
+js JSON.parse(world.getDynamicProperty('sp:vault_index') ?? '[]').includes('A')
+= true
+
+## a command block style assignment by name: 2nd = B (before and after B joins)
+execute as @a[name=A] run scriptevent podium:set 2 B
+wait 600
+@B join
+wait 1500
+wait 2500
+js (() => { const s = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).find(s => s.getDynamicProperty('sp:rank') === 2); const b = p('B'); return [s.getProperty('skin_podium:target') === b.getProperty('mimic:slot'), JSON.parse(s.getDynamicProperty('sp:cfg')).ownerId === b.id].join(' '); })()
+= true true
+
+## B saves into the vault from the vault menu
+execute as @a[name=A] run scriptevent podium:vault
+until form 3000
+~ title\("スキン保管庫"\)
+@A form 保存/更新: B
+until B のスキンを保存しました 3000
+js JSON.parse(world.getDynamicProperty('sp:vault_index')).sort().join(',')
+= A,B
+
+## B leaves: a mannequin (SimulatedPlayer) wears B's saved skin and the statue follows it
+@B leave
+wait 4000
+js world.getAllPlayers().filter(q => q.name.startsWith('Mannequin_')).map(q => q.name + ':' + q.isSneaking + ':' + (q.getComponent('inventory').container.getItem(q.selectedSlotIndex)?.typeId ?? '-')).join(',')
+= Mannequin_01:true:minecraft:barrier
+js (() => { const s = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).find(s => s.getDynamicProperty('sp:rank') === 2); const m = world.getAllPlayers().find(q => q.name.startsWith('Mannequin_')); return [s.getProperty('skin_podium:target') === m.getProperty('mimic:slot'), s.getProperty('skin_podium:target_epoch') === m.getProperty('mimic:epoch'), s.nameTag.replace(/§./g, '').replace('\n', '|')].join(' '); })()
+= true true 2位|B
+
+## the mannequin is not offered as a person in the menus
+@A interact skin_podium:podium
+until form 3000
+@A form 1
+until form 3000
+!~ button\("Mannequin_
+@A form close
+wait 500
+
+## re-dressing the saved skin (arm size) keeps the mannequin and its slot
+execute as @a[name=A] run scriptevent podium:vault
+until form 3000
+@A form 着せ替え・削除: B
+until form 3000
+@A form ["Slim(Alex型)", "#c08060", false]
+until B を着せ替えました 3000
+js JSON.parse(world.getDynamicProperty('sp:vault:B')).armSize
+= Slim
+js world.getAllPlayers().filter(q => q.name.startsWith('Mannequin_')).length
+= 1
+
+## B comes back: the statue goes back to B and the idle mannequin leaves
+@B join
+wait 1500
+wait 3000
+js (() => { const s = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).find(s => s.getDynamicProperty('sp:rank') === 2); return s.getProperty('skin_podium:target') === p('B').getProperty('mimic:slot'); })()
+= true
+wait 25000
+js world.getAllPlayers().filter(q => q.name.startsWith('Mannequin_')).length
+= 0
+
+## HUD: the podium is shown on A's screen (A's own player properties)
+@A interact skin_podium:podium
+until form 3000
+@A form この表彰台を画面に表示(HUD)
+until 表彰台を画面に表示しました 3000
+wait 1500
+js (() => { const a = p('A'), b = p('B'); return [a.getProperty('skin_podium:hud'), a.getProperty('skin_podium:hud_s1') === a.getProperty('mimic:slot'), a.getProperty('skin_podium:hud_s2') === b.getProperty('mimic:slot'), a.getProperty('skin_podium:hud_s3')].join(' '); })()
+= 2 true true 0
+
+## HUD settings: one figure, myself, bigger, no spin
+execute as @a[name=A] run scriptevent podium:hud
+until form 3000
+~ title\("画面表示\(HUD\)の設定"\)
+@A form ["1体", 15, -20, 10, false, true]
+wait 1500
+js (() => { const a = p('A'); return [a.getProperty('skin_podium:hud'), a.getProperty('skin_podium:hud_s1') === a.getProperty('mimic:slot'), a.getProperty('skin_podium:hud_e1') === a.getProperty('mimic:epoch'), a.getProperty('skin_podium:hud_size'), a.getProperty('skin_podium:hud_x'), a.getProperty('skin_podium:hud_y'), a.getProperty('skin_podium:hud_spin')].join(' '); })()
+= 1 true true 15 -20 10 false
+
+## HUD off
+execute as @a[name=A] run scriptevent podium:hud
+until form 3000
+@A form ["オフ", 15, -20, 10, false, false]
+wait 1500
+js p('A').getProperty('skin_podium:hud')
+= 0
+
+## turntable: all statues spin, then stop
+@A interact skin_podium:podium
+until form 3000
+@A form 像を回転させる(ターンテーブル)
+wait 800
+js world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).map(s => s.getProperty('skin_podium:spin')).join(',')
+= true,true,true
+@A interact skin_podium:podium
+until form 3000
+@A form 像の回転を止める
+wait 800
+js world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).map(s => s.getProperty('skin_podium:spin')).join(',')
+= false,false,false
+
+## a statue's look settings
+js (() => { const s = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).find(s => s.getDynamicProperty('sp:rank') === 1); s.setDynamicProperty('sp:test', 1); return 1; })()
+= 1
+@A interact skin_podium:podium
+until form 3000
+@A form 0
+until form 3000
+@A form ポーズ・体型・回転・見た目
+until form 3000
+@A form ["手を振る", false, true, true, true, "メタリック像(順位の色)", false]
+wait 800
+js (() => { const s = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).find(s => s.getDynamicProperty('sp:rank') === 1); return ['pose','animate','spin','realgeo','slim','style'].map(k => s.getProperty('skin_podium:' + k)).join(' ') + ' [' + s.nameTag + ']'; })()
+= 2 false true true true 1 []
+
+## the ceremony: statues celebrate for a while, A sees the title
+execute as @a[name=A] run scriptevent podium:ceremony
+wait 500
+~ @A title: 1位 A
+js world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).map(s => s.getProperty('skin_podium:celebrate')).join(',')
+= true,true,true
+wait 6500
+js world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).map(s => s.getProperty('skin_podium:celebrate')).join(',')
+= false,false,false
+
+## rotate the podium: statues follow
+@A interact skin_podium:podium
+until form 3000
+@A form 向きを90°回転
+wait 1500
+js (() => { const pd = world.getDimension('overworld').getEntities({type:'skin_podium:podium'})[0]; const st = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}); return [Math.round(pd.getRotation().y), ...st.sort((a, b) => a.getDynamicProperty('sp:rank') - b.getDynamicProperty('sp:rank')).map(s => `${Math.round(s.getRotation().y)}@${(s.location.x - pd.location.x).toFixed(3)},${(s.location.z - pd.location.z).toFixed(3)}`)].join(' '); })()
+~ ^-90 -90@0\.000,0\.000 -90@0\.000,-?1\.125 -90@0\.000,-?1\.125$
+
+## a restart keeps everything; statues re-point at the new generations
+restart
+@A join
+@B join
+wait 1500
+wait 4000
+js world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).length
+= 3
+js (() => { const st = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}); const g = r => st.find(s => s.getDynamicProperty('sp:rank') === r); const a = p('A'), b = p('B'); return [g(1).getProperty('skin_podium:target_epoch') === a.getProperty('mimic:epoch'), g(2).getProperty('skin_podium:target_epoch') === b.getProperty('mimic:epoch'), g(1).getProperty('skin_podium:pose'), JSON.parse(world.getDynamicProperty('sp:vault_index')).length].join(' '); })()
+= true true 2 2
+
+## a lone statue from its spawn egg
+summon skin_podium:statue 6 -60 6
+wait 1500
+js world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).filter(s => s.getDynamicProperty('sp:podium') === undefined).map(s => [s.getDynamicProperty('sp:init'), s.getProperty('skin_podium:rank'), s.location.x, s.location.z].join(' ')).join(',')
+= true 0 6.5 6.5
+
+## removing the podium from its menu takes its statues (not the lone one)
+@A interact skin_podium:podium
+until form 3000
+@A form 撤去する
+until form 3000
+@A form 撤去する
+wait 1500
+js [world.getDimension('overworld').getEntities({type:'skin_podium:podium'}).length, world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).length].join(' ')
+= 0 1
+
+## a podium removed by /kill leaves no orphan statues
+summon skin_podium:podium 0 -60 -6
+wait 2500
+kill @e[type=skin_podium:podium]
+wait 2500
+js world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).length
+= 1
+
+## Skin Changer itself still works next to the podium
+@A cmd /skinchanger:skin change @s B
+wait 2500
+js p('A').getProperty('mimic:target') === p('B').getProperty('mimic:slot')
+= true
+
+## a mirror placed in front of A faces A and gets its reflections
+@A cmd /skinchanger:skin reset @s
+tp A 0 -60 0 facing 0 -60 -10
+wait 1500
+summon skin_podium:mirror 0 -60 -4
+wait 2500
+js (() => { const m = world.getDimension('overworld').getEntities({type:'skin_podium:mirror'})[0]; const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}); return [m.location.x, m.location.y, m.location.z, Math.round(m.getRotation().y), r.length, r.every(e => Math.abs(e.location.y - (m.location.y + 1.5)) < 0.001 && Math.abs(e.location.z - (m.location.z + 0.03)) < 0.001)].join(' '); })()
+= 0.5 -60 -3.5 0 4 true
+
+## the nearest person in front is reflected with their own slot
+wait 1000
+js (() => { const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).sort((a, b) => a.getDynamicProperty('sm:i') - b.getDynamicProperty('sm:i')); const a = p('A'), b = p('B'); const s = e => `${e.getProperty('skin_podium:pslot')}/${e.getProperty('skin_podium:target')}`; const want = q => `${q.getProperty('mimic:slot')}/${q.getProperty('mimic:slot')}`; return [r.slice(0, 2).map(s).sort().join(',') === [want(a), want(b)].sort().join(','), r[2].getProperty('skin_podium:pslot'), r[3].getProperty('skin_podium:pslot')].join(' '); })()
+= true 0 0
+
+## a Skin Changer disguise shows in the mirror (skin = the disguise, pose = the person)
+@A cmd /skinchanger:skin change @s B
+wait 3000
+js (() => { const a = p('A'), b = p('B'); const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).find(e => e.getProperty('skin_podium:pslot') === a.getProperty('mimic:slot')); return [!!r, r && r.getProperty('skin_podium:target') === b.getProperty('mimic:slot'), r && r.getProperty('skin_podium:target_epoch') === b.getProperty('mimic:epoch')].join(' '); })()
+= true true true
+@A cmd /skinchanger:skin reset @s
+wait 1500
+
+## someone behind the mirror is not reflected; the mannequin never is
+tp B 0 -60 -9
+wait 1500
+js (() => { const b = p('B'); return world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).filter(e => e.getProperty('skin_podium:pslot') === b.getProperty('mimic:slot')).length; })()
+= 0
+tp B 1 -60 0
+
+## the mirror menu: frame colour, settings, rotation
+@A interact skin_podium:mirror
+until form 3000
+~ form action: title\("鏡"\)
+~ button\("枠の色: 金"\)
+@A form 枠の色: 金
+wait 800
+js world.getDimension('overworld').getEntities({type:'skin_podium:mirror'})[0].getProperty('skin_podium:frame')
+= 1
+@A interact skin_podium:mirror
+until form 3000
+@A form 映り方の設定
+until form 3000
+@A form [6, false, true, false, true]
+until 設定しました 3000
+wait 800
+js (() => { const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}); return [...new Set(r.map(e => e.getProperty('skin_podium:mfix') + ':' + e.getProperty('skin_podium:realgeo')))].join(','); })()
+= 5:false
+execute as @a[name=A] run scriptevent mirror:fix 0
+wait 800
+js [...new Set(world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).map(e => e.getProperty('skin_podium:mfix')))].join(',')
+= 0
+@A interact skin_podium:mirror
+until form 3000
+@A form 向きを90°回転
+wait 1500
+js (() => { const m = world.getDimension('overworld').getEntities({type:'skin_podium:mirror'})[0]; const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}); return [Math.round(m.getRotation().y), r.every(e => Math.round(e.getRotation().y) === Math.round(m.getRotation().y) && Math.abs(e.location.x - (m.location.x - 0.03)) < 0.001)].join(' '); })()
+= 90 true
+
+## against a wall the frame's back goes flat on the wall
+fill -2 -60 -11 2 -57 -11 stone
+tp A 0 -60 -6 facing 0 -60 -11
+wait 1000
+summon skin_podium:mirror 0 -60 -10
+wait 2500
+js world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).filter(m => m.location.z < -9).map(m => [m.location.x, m.location.z.toFixed(4), Math.round(m.getRotation().y)].join(' ')).join(',')
+= 0.5 -9.9025 0
+
+## a restart keeps mirrors and their reflections (no duplicates)
+restart
+@A join
+@B join
+wait 5000
+js [world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).length, world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).length].join(' ')
+= 2 8
+
+## removing a mirror from its menu takes its reflections; /kill leaves no orphans
+tp A 0 -60 -6 facing 0 -60 -11
+wait 1000
+@A interact skin_podium:mirror
+until form 3000
+@A form 撤去する
+wait 1500
+js [world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).length, world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).length].join(' ')
+= 1 4
+kill @e[type=skin_podium:mirror]
+wait 2500
+js world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).length
+= 0
+
+## Skin Changer's own item still opens its menu
+give A mimic:selector
+wait 300
+@A select mimic:selector
+@A use
+until form 3000
+~ title\("%skin_changer.ui.title"\)
+@A form close
+wait 300
+
+## command-block helpers: podium:set <rank> @s and podium:hud podium|self|off
+summon skin_podium:podium 0 -60 6
+wait 2500
+execute as @a[name=A] run scriptevent podium:set 3 @s
+wait 1500
+js (() => { const pd = world.getDimension('overworld').getEntities({type:'skin_podium:podium'})[0]; const s = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).find(x => x.getDynamicProperty('sp:podium') === pd.id && x.getDynamicProperty('sp:rank') === 3); return JSON.parse(s.getDynamicProperty('sp:cfg')).ownerName; })()
+= A
+execute as @a[name=A] run scriptevent podium:hud podium
+wait 1500
+js p('A').getProperty('skin_podium:hud') + ' ' + (p('A').getProperty('skin_podium:hud_s3') === p('A').getProperty('mimic:slot'))
+= 2 true
+execute as @a[name=A] run scriptevent podium:hud self
+wait 1500
+js p('A').getProperty('skin_podium:hud') + ' ' + (p('A').getProperty('skin_podium:hud_s1') === p('A').getProperty('mimic:slot'))
+= 1 true
+execute as @a[name=A] run scriptevent podium:hud off
+wait 1000
+js p('A').getProperty('skin_podium:hud')
+= 0

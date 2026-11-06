@@ -1,0 +1,49 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.skin_podium.hud": {
+      "loop": true,
+      "bones": {
+        "hud1_root": {
+          "position": [
+            "-(variable.sp_hx + 0 * variable.sp_hs * (variable.sp_hm == 2 ? 1 : 0))",
+            "8 + 3.65 * math.cos(query.target_x_rotation) + variable.sp_hy + 6 * variable.sp_hs * (variable.sp_hm == 2 ? 1 : 0)",
+            "3.65 * math.sin(query.target_x_rotation) - 12"
+          ],
+          "rotation": [
+            0,
+            "180 + (variable.sp_hspin ? query.life_time * 90 + 40 : 25)",
+            0
+          ],
+          "scale": "variable.sp_hs"
+        },
+        "hud2_root": {
+          "position": [
+            "-(variable.sp_hx + -18 * variable.sp_hs * (variable.sp_hm == 2 ? 1 : 0))",
+            "8 + 3.65 * math.cos(query.target_x_rotation) + variable.sp_hy + 0 * variable.sp_hs * (variable.sp_hm == 2 ? 1 : 0)",
+            "3.65 * math.sin(query.target_x_rotation) - 12"
+          ],
+          "rotation": [
+            0,
+            "180 + (variable.sp_hspin ? query.life_time * 90 + 80 : 25)",
+            0
+          ],
+          "scale": "variable.sp_hs"
+        },
+        "hud3_root": {
+          "position": [
+            "-(variable.sp_hx + 18 * variable.sp_hs * (variable.sp_hm == 2 ? 1 : 0))",
+            "8 + 3.65 * math.cos(query.target_x_rotation) + variable.sp_hy + -4 * variable.sp_hs * (variable.sp_hm == 2 ? 1 : 0)",
+            "3.65 * math.sin(query.target_x_rotation) - 12"
+          ],
+          "rotation": [
+            0,
+            "180 + (variable.sp_hspin ? query.life_time * 90 + 120 : 25)",
+            0
+          ],
+          "scale": "variable.sp_hs"
+        }
+      }
+    }
+  }
+}

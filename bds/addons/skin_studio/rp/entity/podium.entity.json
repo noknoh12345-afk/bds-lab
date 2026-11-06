@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "skin_podium:podium",
+      "materials": {
+        "default": "entity_emissive_alpha",
+        "cut": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/skin_podium/podium"
+      },
+      "geometry": {
+        "default": "geometry.skin_podium"
+      },
+      "scripts": {
+        "animate": [
+          "trophy_spin",
+          "flags_wave"
+        ]
+      },
+      "animations": {
+        "trophy_spin": "animation.skin_podium.trophy_spin",
+        "flags_wave": "animation.skin_podium.flags_wave"
+      },
+      "render_controllers": [
+        "controller.render.skin_podium.podium"
+      ],
+      "spawn_egg": {
+        "base_color": "#E8E6E0",
+        "overlay_color": "#ECBA34"
+      }
+    }
+  }
+}

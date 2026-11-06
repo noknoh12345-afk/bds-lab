@@ -1,0 +1,56 @@
+# Skin Studio を本物のアプリ(redroid)で: 鏡・表彰台・HUD が描けるか、クライアントのコンテンツログにエラーが無いか
+# node lab.mjs app ci --device redroid -a skin_studio --mode run
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 4000
+do time set noon
+do weather clear
+do gamerule doDaylightCycle false
+do tp @a 0 -60 0 facing 0 -60 -10
+wait 1500
+shot world
+section mirror
+do summon skin_podium:mirror 0 -60 -4
+wait 5000
+shot mirror-front
+look left 400
+wait 1500
+shot mirror-turned
+look right 400
+walk left 0.6
+wait 2000
+shot mirror-left
+sneak 1.5
+shot mirror-sneak
+perspective
+wait 2500
+shot mirror-third-person
+perspective
+perspective
+wait 1500
+section podium
+do tp @a 0 -60 12 facing 0 -60 6
+do summon skin_podium:podium 0 -60 6
+wait 4000
+do execute as @a run scriptevent podium:set 1 @s
+wait 5000
+shot podium
+do execute as @a run scriptevent podium:ceremony
+wait 1500
+shot podium-ceremony
+section hud
+do execute as @a run scriptevent podium:hud podium
+wait 4000
+shot hud-podium
+do execute as @a run scriptevent podium:hud self
+wait 3000
+shot hud-self
+do execute as @a run scriptevent podium:hud off
+wait 1000
+section log
+absent clientlog \bERROR\b

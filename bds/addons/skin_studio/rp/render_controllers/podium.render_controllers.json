@@ -1,0 +1,39 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.skin_podium.podium": {
+      "geometry": "Geometry.default",
+      "textures": [
+        "Texture.default"
+      ],
+      "materials": [
+        {
+          "*": "Material.default"
+        },
+        {
+          "arch": "Material.cut"
+        }
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "backdrop": "query.property('skin_podium:backdrop')"
+        },
+        {
+          "arch": "query.property('skin_podium:backdrop')"
+        },
+        {
+          "trophy": "query.property('skin_podium:backdrop')"
+        },
+        {
+          "flag_l": "query.property('skin_podium:backdrop')"
+        },
+        {
+          "flag_r": "query.property('skin_podium:backdrop')"
+        }
+      ]
+    }
+  }
+}

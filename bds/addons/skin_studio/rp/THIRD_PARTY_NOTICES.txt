@@ -1,0 +1,37 @@
+# Skin Changer — Third-party notices / 第三者の権利表示
+
+## Minecraft / Mojang sample definitions
+
+The add-on uses, adapts, or depends on Minecraft Bedrock vanilla player definitions and render-controller structures. In the 1.0.6 baseline, the player behavior definition, client entity definition, and portions of player render controllers are based on or adapted from Minecraft vanilla / Mojang bedrock-samples. Custom additions are layered into these definitions. The source provenance of every inherited line has not been independently established.
+
+- Project: Mojang bedrock-samples
+- Source: https://github.com/Mojang/bedrock-samples
+- Previous baseline reference: https://github.com/Mojang/bedrock-samples/tree/46ba6ea985fb5a92d79a9419198f10dda14c199d
+- Upstream notice: https://github.com/Mojang/bedrock-samples/blob/main/LICENSE.md
+- Minecraft EULA: https://www.minecraft.net/eula
+- Minecraft Usage Guidelines: https://www.minecraft.net/usage-guidelines
+
+Mojang's repository states that its files are subject to the Minecraft EULA. Minecraft, its assets, game files, names and branding retain their respective owners' rights. The Skin Changer project license does not purport to relicense or waive third-party rights. Check the terms applicable to a planned use or distribution; listing a source is not a separate grant of rights.
+
+**NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.**
+
+このアドオンは Minecraft Bedrock のプレイヤー定義・描画構造に由来する部分を含みます。Mojang の sample リポジトリには Minecraft EULA が適用されます。Skin Changer のライセンスは Minecraft の素材やゲームファイルを再許諾するものではありません。上流の条件を別途確認してください。
+
+本製品は Minecraft の公式製品ではなく、Mojang または Microsoft に承認されているものでも、両者と関連するものでもありません。
+
+## Method and investigation references / 技術調査の参考
+
+- Magic Method Documentation — documentation credited to White and chyves, edited by xStormy: https://github.com/notchyves/MagicMethodDocs . Referenced as documentation of cross-expression Molang behavior; its separate statements govern its own materials. No assertion is made here that its source code or example pack is included.
+- JSON UI Workbench: https://github.com/tibiccbarusu/JSON-UI-Workbench . Initial project context / investigation tool. Its own license applies to its own material. This notice does not state that its source code is included in this add-on.
+
+## Players' skins / プレイヤーのスキン
+
+Player skins used at runtime remain subject to their respective owners' rights and applicable game/platform terms. The add-on does not include or license the skins of all possible participants.
+
+## Other generated and contributor material / 独自の追加部分
+
+Copyright © 2026 Skin Changer contributors, where applicable. Individual legal rights and attribution should be confirmed by the publisher before release.
+
+独自の追加部分の権利表示：© 2026 Skin Changer contributors（権利が発生する範囲）。個人の著作者名・権利者は公開前に配布者が確認してください。
+
+Original project contributions are licensed as described in [LICENSE](LICENSE), only to the extent the publisher can grant those rights. This notice does not assign individual authorship or ownership that has not been established. Retain this notice when redistributing source and respect separately applicable upstream terms.

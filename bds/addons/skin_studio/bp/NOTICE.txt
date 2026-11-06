@@ -1,0 +1,14 @@
+Skin Studio
+
+This addon CONTAINS AN ALTERED VERSION of Skin Changer 1.1.2 (Skin Changer contributors,
+zlib License — LICENSE-SkinChanger.txt; Minecraft-derived parts: THIRD_PARTY_NOTICES.txt).
+It is not the original Skin Changer. Changes:
+ - its scripts live in scripts/skin_changer/; scripts/skin_changer/commands.js registers the
+   /skin:* aliases inside try/catch (newer Minecraft refuses them beside the 'skinchanger' enum);
+ - entities/player.json (BP) gained the entity properties skin_podium:hud*;
+ - entity/player.entity.json (RP) gained pre_animation lines (pose/camera publishing, HUD and
+   mannequin variables), render controllers controller.render.skin_podium.publish / hud1-3,
+   "&& !variable.sp_mq" on its third-person/map controllers, one animation, and
+   should_update_bones_and_effects_offscreen;
+ - the pack has new names and UUIDs (Skin Studio) and its texts are merged with ours.
+Not an official Minecraft product; not approved by or associated with Mojang or Microsoft.

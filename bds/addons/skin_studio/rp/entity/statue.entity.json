@@ -1,0 +1,97 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "skin_podium:statue",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/skin_podium/statue_stone",
+        "gold": "textures/entity/skin_podium/statue_gold",
+        "silver": "textures/entity/skin_podium/statue_silver",
+        "bronze": "textures/entity/skin_podium/statue_bronze"
+      },
+      "geometry": {
+        "default": "geometry.humanoid.custom",
+        "slim": "geometry.humanoid.customSlim"
+      },
+      "scripts": {
+        "scale": "0.9375",
+        "initialize": [
+          "variable.sp_slot = 0;",
+          "variable.sp_epoch = 0;",
+          "variable.sp_geo_slot = 0;",
+          "variable.sp_geo_epoch = 0;"
+        ],
+        "pre_animation": [
+          "variable.sp_rank = query.property('skin_podium:rank');",
+          "variable.sp_cel = query.property('skin_podium:celebrate');",
+          "variable.sp_anim = query.property('skin_podium:animate');",
+          "variable.sp_spin = query.property('skin_podium:spin');",
+          "variable.sp_pose = query.property('skin_podium:pose');",
+          "variable.sp_pose = variable.sp_pose > 0 ? variable.sp_pose : (variable.sp_rank == 1 ? 1 : (variable.sp_rank == 2 ? 2 : (variable.sp_rank == 3 ? 3 : 4)));"
+        ],
+        "animate": [
+          {
+            "victory": "!variable.sp_cel && variable.sp_pose == 1"
+          },
+          {
+            "wave": "!variable.sp_cel && variable.sp_pose == 2"
+          },
+          {
+            "fist": "!variable.sp_cel && variable.sp_pose == 3"
+          },
+          {
+            "stand": "!variable.sp_cel && variable.sp_pose == 4"
+          },
+          {
+            "point": "!variable.sp_cel && variable.sp_pose == 5"
+          },
+          {
+            "m_idle": "!variable.sp_cel && variable.sp_anim"
+          },
+          {
+            "m_victory": "!variable.sp_cel && variable.sp_anim && variable.sp_pose == 1"
+          },
+          {
+            "m_wave": "!variable.sp_cel && variable.sp_anim && variable.sp_pose == 2"
+          },
+          {
+            "m_fist": "!variable.sp_cel && variable.sp_anim && variable.sp_pose == 3"
+          },
+          {
+            "m_point": "!variable.sp_cel && variable.sp_anim && variable.sp_pose == 5"
+          },
+          {
+            "celebrate": "variable.sp_cel"
+          },
+          {
+            "spin": "variable.sp_spin"
+          }
+        ]
+      },
+      "animations": {
+        "victory": "animation.skin_podium.statue.victory",
+        "wave": "animation.skin_podium.statue.wave",
+        "fist": "animation.skin_podium.statue.fist",
+        "stand": "animation.skin_podium.statue.stand",
+        "point": "animation.skin_podium.statue.point",
+        "m_idle": "animation.skin_podium.statue.m_idle",
+        "m_victory": "animation.skin_podium.statue.m_victory",
+        "m_wave": "animation.skin_podium.statue.m_wave",
+        "m_fist": "animation.skin_podium.statue.m_fist",
+        "m_point": "animation.skin_podium.statue.m_point",
+        "spin": "animation.skin_podium.statue.spin",
+        "celebrate": "animation.skin_podium.statue.celebrate"
+      },
+      "render_controllers": [
+        "controller.render.skin_podium.statue"
+      ],
+      "spawn_egg": {
+        "base_color": "#C4CAD4",
+        "overlay_color": "#A81828"
+      }
+    }
+  }
+}

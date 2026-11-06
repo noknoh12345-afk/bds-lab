@@ -1,0 +1,28 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "skin_podium:mirror",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "gold": "textures/entity/skin_podium/mirror_gold",
+        "silver": "textures/entity/skin_podium/mirror_silver",
+        "wood": "textures/entity/skin_podium/mirror_wood",
+        "dark": "textures/entity/skin_podium/mirror_dark",
+        "default": "textures/entity/skin_podium/mirror_gold"
+      },
+      "geometry": {
+        "default": "geometry.skin_mirror"
+      },
+      "render_controllers": [
+        "controller.render.skin_podium.mirror"
+      ],
+      "spawn_egg": {
+        "base_color": "#B2BECC",
+        "overlay_color": "#DEB03A"
+      }
+    }
+  }
+}

@@ -1,0 +1,317 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.skin_podium.statue.victory": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            -10,
+            0,
+            150
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            -10,
+            0,
+            -150
+          ]
+        },
+        "head": {
+          "rotation": [
+            -12,
+            0,
+            0
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            0,
+            0,
+            6
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            0,
+            -6
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.wave": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            -10,
+            0,
+            140
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            0,
+            -8
+          ]
+        },
+        "head": {
+          "rotation": [
+            0,
+            -12,
+            0
+          ]
+        },
+        "body": {
+          "rotation": [
+            0,
+            8,
+            0
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.fist": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            -150,
+            0,
+            -12
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            0,
+            -6
+          ]
+        },
+        "head": {
+          "rotation": [
+            -6,
+            0,
+            0
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            -6,
+            0,
+            0
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            6,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.stand": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            0,
+            0,
+            4
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            0,
+            -4
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.point": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            -90,
+            -8,
+            0
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            0,
+            -6
+          ]
+        },
+        "head": {
+          "rotation": [
+            0,
+            -6,
+            0
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.m_idle": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": [
+            "math.sin(query.life_time * 45) * 3",
+            "math.sin(query.life_time * 20) * 10",
+            0
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            0,
+            0,
+            "math.sin(query.life_time * 60) * 2"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            0,
+            "-math.sin(query.life_time * 60) * 2"
+          ]
+        },
+        "body": {
+          "rotation": [
+            0,
+            "math.sin(query.life_time * 20) * 2",
+            0
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.m_victory": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            0,
+            0,
+            "math.sin(query.life_time * 240) * 12"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            0,
+            "-math.sin(query.life_time * 240) * 12"
+          ]
+        },
+        "root": {
+          "position": [
+            0,
+            "math.abs(math.sin(query.life_time * 120)) * 0.8",
+            0
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.m_wave": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            0,
+            0,
+            "math.sin(query.life_time * 420) * 24"
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.m_fist": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "math.sin(query.life_time * 300) * 16",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.m_point": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "math.sin(query.life_time * 90) * 3",
+            "math.sin(query.life_time * 60) * 10",
+            0
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.spin": {
+      "loop": true,
+      "bones": {
+        "root": {
+          "rotation": [
+            0,
+            "query.life_time * 45",
+            0
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.statue.celebrate": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            -10,
+            0,
+            "150 + math.sin(query.life_time * 720) * 16"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            -10,
+            0,
+            "-150 - math.sin(query.life_time * 720) * 16"
+          ]
+        },
+        "head": {
+          "rotation": [
+            -15,
+            0,
+            0
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            "math.sin(query.life_time * 360) * 18",
+            0,
+            6
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            "-math.sin(query.life_time * 360) * 18",
+            0,
+            -6
+          ]
+        },
+        "root": {
+          "position": [
+            0,
+            "math.abs(math.sin(query.life_time * 360)) * 4",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.skin_podium.trophy_spin": {
+      "loop": true,
+      "bones": {
+        "trophy": {
+          "rotation": [
+            0,
+            "query.life_time * 60",
+            0
+          ]
+        }
+      }
+    },
+    "animation.skin_podium.flags_wave": {
+      "loop": true,
+      "bones": {
+        "flag_l": {
+          "rotation": [
+            0,
+            "math.sin(query.life_time * 110) * 9",
+            "math.sin(query.life_time * 70) * 2"
+          ]
+        },
+        "flag_r": {
+          "rotation": [
+            0,
+            "math.sin(query.life_time * 110 + 90) * -9",
+            "math.sin(query.life_time * 70 + 90) * -2"
+          ]
+        }
+      }
+    }
+  }
+}
