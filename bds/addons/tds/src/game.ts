@@ -195,7 +195,7 @@ export function hit(e: Enemy, dmg: number, tw?: Tower, kind: 'direct' | 'splash'
   if (!M || e.hp <= 0) return 0;
   if (kind === 'splash' && e.immune.includes('Splash Damage')) return 0;
   let d = afterDefense(dmg, Math.max(0, e.def)), done = 0;
-  if (e.shield > 0) { const s = Math.min(e.shield, d); e.shield -= s; d -= s; done += s; if (e.shield <= 0 && e.lead) { e.lead = false; log('lead_broken', { id: e.id }); } if (e.shield <= 0 && e.flying && e.name === 'Balloon') { e.flying = false; } }
+  if (e.shield > 0) { const s = Math.min(e.shield, d); e.shield -= s; d -= s; done += s; if (e.shield <= 0 && e.lead) { e.lead = false; log('lead_broken', { id: e.id }); } if (e.shield <= 0 && e.flying && e.name === 'Balloon') { e.flying = false; } if (e.shield <= 0) { const ns = enemyIn(e.name, M.mode).speedNoShield; if (ns) { e.speed = ns * (e.mods.includes('Nimble') ? 2 : 1); log('shield_broken', { id: e.id, name: e.name, speed: e.speed }); } } }
   const before = e.hp; e.hp = Math.max(0, e.hp - d); done += before - e.hp;
   if (e.every) { const steps = Math.floor(((e.max - e.hp) / e.max) * 100 / e.every); while (e.paid < steps) { e.paid++; give(tw, e.cash); } }
   if (tw) { tw.dealt += done; M.stats.dealt += done; }
@@ -530,7 +530,7 @@ export function restore() {
 }
 export function debugSpawn(name: string, mods: string[] = [], d = 0) { spawnEnemy(name, mods, d); }
 export function debugKill(name: string) { if (!M) return 0; const l = M.enemies.filter((e) => e.name === name); for (const e of l) hit(e, 1e15); return l.length; }
-export function debugHurt(name: string, n: number) { const e = M?.enemies.find((x) => x.name === name); if (!e) return false; e.hp = Math.max(1, e.hp - n); label(e); return true; }
+export function debugHurt(name: string, n: number) { const e = M?.enemies.find((x) => x.name === name); if (!e) return false; const d = e.def; e.def = 0; hit(e, Math.min(n, e.hp + e.shield - 1)); e.def = d; return true; }
 export function debugAbility(name: string, i: number) { const e = M?.enemies.find((x) => x.name === name); const a = e && enemies[e.name].abilities?.[i]; if (!e || !a) return false; useAbility(e, a); return true; }
 /** path distance (studs) closest to a tower */
 export function nearestD(tw: Tower) { let best = 0, bd = Infinity; for (let d = 0; d <= path!.len; d += 0.25) { const p = path!.at(d), x = Math.hypot(p.x - tw.x - 0.5, p.z - tw.z - 0.5); if (x < bd) { bd = x; best = d; } } return best; }

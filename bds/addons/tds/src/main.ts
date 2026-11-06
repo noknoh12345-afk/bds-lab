@@ -146,11 +146,14 @@ every(10, (p) => {
 
 // ---------- autoplay (test bot): greedy damage-per-cash with detection needs ----------
 const spots: { x: number; y: number; z: number; cover: number }[] = [];
+const samples: { x: number; z: number }[] = [], covC = new Map<string, number>();
+const covAt = (x: number, z: number, range: number) => { const k = `${x}:${z}:${range}`; let c = covC.get(k); if (c === undefined) { c = 0; const r = range * G.path!.stud; for (const q of samples) if (Math.hypot(q.x - x - 0.5, q.z - z - 0.5) <= r) c++; covC.set(k, c); } return c; };
 function findSpots() {
   spots.length = 0; const path = G.path!, m = maps[G.M!.map];
+  samples.length = 0; for (let d = 0; d < path.len; d += 1) samples.push(path.at(d)); covC.clear();
   for (let x = -31; x <= 30; x += 2) for (let z = -31; z <= 30; z += 2) {
     for (const y of [m.y, m.y + 2]) {
-      if (!G.surface(x, y, z)) continue; if (y === m.y && path.dist(x + 0.5, z + 0.5) < path.width / 2 + 1.5) continue;
+      if (!G.surface(x, y, z) || path.dist(x + 0.5, z + 0.5) > 12) continue; if (y === m.y && path.dist(x + 0.5, z + 0.5) < path.width / 2 + 1.5) continue;
       let c = 0; for (let d = 0; d < path.len; d += 2) { const q = path.at(d); if (Math.hypot(q.x - x - 0.5, q.z - z - 0.5) / path.stud <= 14) c++; }
       if (c) spots.push({ x, y, z, cover: c });
     }
@@ -160,7 +163,7 @@ function findSpots() {
 const dps = (n: string, l: number) => expected(n, l) * (stats(n, l).splash ? 2 : 1) + (stats(n, l).burn ? stats(n, l).burn![0] / stats(n, l).burn![1] : 0);
 function need() {
   const M = G.M!, md = modes[M.mode], r = { hidden: false, lead: false, flying: false };
-  for (let w = M.wave; w <= Math.min(md.waves, M.wave + 2); w++) for (const g of md.wave[String(w)] ?? []) { const e = enemies[g.e]; if (e?.hidden) r.hidden = true; if (e?.lead) r.lead = true; if (e?.flying) r.flying = true; }
+  for (let w = M.wave; w <= Math.min(md.waves, M.wave + 3); w++) for (const g of md.wave[String(w)] ?? []) { const e = enemies[g.e]; if (e?.hidden) r.hidden = true; if (e?.lead) r.lead = true; if (e?.flying) r.flying = true; }
   return r;
 }
 function sees(n: string, l: number, k: 'hidden' | 'lead' | 'flying') { const d = towers[n].detect[k]; return d !== null && l >= d; }
@@ -168,23 +171,30 @@ system.runInterval(() => {
   const M = G.M; if (!M || M.over) return;
   for (const p of world.getAllPlayers()) {
     if (!p.hasTag('tds_auto') || !M.players.includes(p.name)) continue;
+    for (let round = 0; round < 1 + Math.min(12, G.simSpeed()); round++) { if (!botStep(p, M)) break; }
+  }
+}, 5);
+function botStep(p: Player, M: NonNullable<typeof G.M>): boolean {
+  {
     if (!spots.length || (spots as any).map !== M.map + M.mode + M.players.join()) { findSpots(); (spots as any).map = M.map + M.mode + M.players.join(); }
     const cash = M.cash[p.name], nd = need(), mine = M.towers.filter((t) => t.owner === p.name);
     const have = (k: 'hidden' | 'lead' | 'flying') => mine.some((t) => sees(t.name, t.lvl, k));
     let best: { v: number; act: () => unknown } | undefined, dream = 0;
-    const consider = (v: number, c: number, act: () => unknown) => { if (!Number.isFinite(c) || c <= 0) return; dream = Math.max(dream, v / c); if (c <= cash && (!best || v / c > best.v)) best = { v: v / c, act }; };
+    const consider = (v: number, c: number, act: () => unknown) => { if (!Number.isFinite(c) || c <= 0) return; if (c <= cash * 2) dream = Math.max(dream, v / c); if (c <= cash && (!best || v / c > best.v)) best = { v: v / c, act }; };
     for (const n of loadout(p)) {
       if (!dps(n, 0)) continue;
       let bonus = 0; for (const k of ['hidden', 'lead', 'flying'] as const) if (nd[k] && !have(k) && sees(n, 0, k)) bonus += 1000;
-      const free = spots.find((s) => (towers[n].placement === 'both' || (towers[n].placement === 'cliff') === (s.y !== maps[M.map].y)) && !M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2));
+      const rg = stats(n, 0).range; let free: { x: number; y: number; z: number; cover: number } | undefined, fc = 0;
+      for (const s of spots) { if (!(towers[n].placement === 'both' || (towers[n].placement === 'cliff') === (s.y !== maps[M.map].y)) || M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2)) continue; const c = covAt(s.x, s.z, rg); if (c > fc) { fc = c; free = { ...s, cover: c }; } }
       const lim = Math.min(towers[n].limit ?? 99, n === 'Scout' ? 3 : 6); if (free && !(mine.filter((t) => t.name === n).length >= lim)) consider(dps(n, 0) * free.cover + bonus, placeCost(n), () => G.place(p, n, free.x, free.y, free.z));
     }
     for (const t of mine) {
       if (t.lvl >= maxLevel(t.name)) continue;
       let bonus = 0; for (const k of ['hidden', 'lead', 'flying'] as const) if (nd[k] && !have(k) && sees(t.name, t.lvl + 1, k)) bonus += 1000;
-      const sp = spots.find((s) => s.x === t.x && s.z === t.z)?.cover ?? 10;
+      const sp = covAt(t.x, t.z, stats(t.name, t.lvl + 1).range);
       consider((dps(t.name, t.lvl + 1) - dps(t.name, t.lvl)) * sp * 1.5 + bonus, levelCost(t.name, t.lvl + 1), () => G.upgrade(p.name, t.id));
     }
+    for (const t of mine) for (const a of G.abilitiesOf(t)) if (!G.abilityReady(t, a.title) && M.enemies.length && cash >= a.cost + 500) G.useTowerAbility(p.name, t.id, a.title);
     // economy: farms while the defence holds (no leak this wave) in the first half of the match
     const W = modes[M.mode].waves, left = W - M.wave;
     if (loadout(p).includes('Farm') && M.wave >= 1 && M.wave <= W * 0.5 && !M.leakedThisWave) {
@@ -193,11 +203,25 @@ system.runInterval(() => {
       const spot = spots.find((s) => s.y === maps[M.map].y && !M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2));
       const nw = farms.length < (towers.Farm.limit ?? 10) && spot ? { c: placeCost('Farm'), g: stats('Farm', 0).income ?? 0 } : undefined;
       const opt = [up && { c: up.c, g: up.g, act: () => G.upgrade(p.name, up.t.id) }, nw && { ...nw, act: () => G.place(p, 'Farm', spot!.x, spot!.y, spot!.z) }].filter(Boolean).sort((a: any, b: any) => a.c / a.g - b.c / b.g)[0] as any;
-      if (opt && opt.c / opt.g < left / 2 && opt.c <= cash && M.wave % 2 === 0) { opt.act(); continue; }
+      if (opt && opt.c / opt.g < left / 2 && opt.c <= cash && M.wave % 2 === 0) { opt.act(); return true; }
     }
-    if (best && best.v >= dream * 0.6) best.act();
+    // a detection the next waves need and nobody has: save for the cheapest tower (or upgrade) that gives it
+    for (const k of ['hidden', 'lead', 'flying'] as const) {
+      if (!nd[k] || have(k)) continue;
+      const opts = [...loadout(p).filter((n) => towers[n].detect[k] !== null).map((n) => ({ c: [...Array(towers[n].detect[k]! + 1).keys()].reduce((a, l) => a + levelCost(n, l), 0), n })),
+        ...mine.filter((t) => towers[t.name].detect[k] !== null && towers[t.name].detect[k]! > t.lvl).map((t) => ({ c: levelCost(t.name, t.lvl + 1), n: '', t }))].sort((a, b) => a.c - b.c);
+      const o = opts[0] as { c: number; n: string; t?: G.Tower } | undefined; if (!o) continue;
+      if (o.t) { if (levelCost(o.t.name, o.t.lvl + 1) <= cash) { G.upgrade(p.name, o.t.id); return true; } return false; }
+      const sp = spots.filter((s) => (towers[o.n].placement === 'both' || (towers[o.n].placement === 'cliff') === (s.y !== maps[M.map].y)) && !M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2)).sort((a, b) => covAt(b.x, b.z, stats(o.n, 0).range) - covAt(a.x, a.z, stats(o.n, 0).range))[0];
+      if (sp && placeCost(o.n) <= cash) { G.place(p, o.n, sp.x, sp.y, sp.z); return true; }
+      if (sp) return false;   // saving
+    }
+    const md2 = modes[M.mode], soon = [M.wave, M.wave + 1].flatMap((w) => md2.wave[String(w)] ?? []);
+    const bossSoon = soon.some((g) => enemies[g.e]?.boss || g.mods?.includes('Boss'));
+    if (best && (best.v >= dream * 0.6 || bossSoon || M.leakedThisWave)) { best.act(); return true; }
+    return false;
   }
-}, 5);
+}
 
 // ---------- start ----------
 ready(() => {

@@ -7,7 +7,7 @@ import MAPS from '../data/maps.json';
 export type Lv = Record<string, number | string | null>;
 export type TowerAbility = { title: string; unlock: number; cd: number | null; cost: number; info: string; simulated: boolean };
 export type TowerDef = { abilities?: TowerAbility[]; category: string; unlock: { kind: string; value: number | null }; role: string | null; placement: string; footprint: number; limit: number | null; damageType: string | null; sell: number | null; detect: { hidden: number | null; lead: number | null; flying: number | null }; immune: string | null; levels: Lv[] };
-export type EnemyMode = { hp: number | null; speed: number | null; cash: number | null; cashEveryPct?: number; shield?: number };
+export type EnemyMode = { hp: number | null; speed: number | null; cash: number | null; cashEveryPct?: number; shield?: number; speedNoShield?: number };
 export type Spawn = { name?: string; pool?: string[]; n: number };
 export type Ability = { title: string; cd: number | null; kind: 'deathSpawn' | 'summon' | 'stun' | 'debuff' | 'heal' | 'speedAura' | 'boneArmor'; spawn?: Spawn[]; dur?: number; radius?: number | null; unitDmg?: number | null; onDeath?: boolean; fatigue?: number; range?: number; amount?: number; every?: number; pct?: number; step?: number; max?: number };
 export type EnemyDef = { hidden: boolean; flying: boolean; lead: boolean; ghost: boolean; boss: boolean; defense: number; immune: string[]; per: Record<string, EnemyMode>; spawns?: string[]; spawnMode?: string; abilities?: Ability[] };

@@ -97,7 +97,8 @@ for (const e of used) {
   for (const m of MODES) { if (!Object.values(modes[m].wave).flat().some(x => x.e === e) && !roster[m]?.includes(e)) continue;
     const hp = pick(field(t, 'base_hp'), m), sp = pick(field(t, 'speed'), m), cs = pick(field(t, 'cash'), m), sh = pick(field(t, 'shield_hp'), m);
     const spd = sp ? num(sp.match(/\(([\d.]+)/)?.[1] ?? sp) : null; const every = cs?.match(/every (\d+)%/);
-    per[m] = { hp: num(hp), speed: spd, cash: num(cs), ...(every && { cashEveryPct: +every[1] }), ...(sh && { shield: num(sh) }) };
+    const noSh = strip((field(t, 'speed') ?? '').split('{{InfoboxContainer')[0]).match(/\(([\d.]+), No Shield\)/);
+    per[m] = { hp: num(hp), speed: spd, cash: num(cs), ...(every && { cashEveryPct: +every[1] }), ...(sh && { shield: num(sh) }), ...(noSh && { speedNoShield: +noSh[1] }) };
     if (per[m].hp == null || per[m].speed == null) unknown.push({ enemy: e, mode: m, why: 'hp/speed unreadable' });
   }
   const yes = k => /yes/i.test(strip(field(t, k)?.split('<br')[0] ?? ''));

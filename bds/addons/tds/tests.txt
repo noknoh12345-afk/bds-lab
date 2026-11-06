@@ -214,7 +214,7 @@ js world.getDimension('overworld').getEntities({ type: 'tds:enemy' }).length > 0
 tds:speed 1
 tds:stop
 
-## enemy rules from the wiki: defense, Breaker2's one Breaker, Boomer's bile, stuns, Health Regen, Blessed, Aggro
+## enemy rules from the wiki: defense, Breaker2's one Breaker, Boomer's bile, stuns, Health Regen, Blessed, Aggro, shield-dependent speed
 tds:dmg Hazmat 100
 = Hazmat def 60% takes 63
 tds:dmg Armored 100 Blessed
@@ -241,6 +241,11 @@ tds:ability Grave_Digger 0
 tds:tower 1
 ~ stunned [23]\.\ds$
 tds:kill Grave_Digger
+tds:kill Breaker
+tds:spawn Fallen_Rusher
+tds:hurt Fallen_Rusher 850
+~ "ev":"shield_broken","id":\d+,"name":"Fallen Rusher","speed":6
+tds:kill Fallen_Rusher
 tds:kill Breaker
 tds:spawn Heavy Health_Regen
 tds:hurt Heavy 30

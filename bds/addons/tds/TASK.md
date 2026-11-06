@@ -15,7 +15,7 @@ Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki:
 - [ ] a full Easy match won by the bot (all 20 waves, bosses included)
 - [ ] forms: the wand opens the placement menu on a block; a tower opens upgrade, sell and targeting; skip vote
 - [ ] support and units: Commander speeds nearby towers, Farm pays its income each wave, Military Base sends units up the path
-- [ ] enemy rules from the wiki: defense, Breaker2's one Breaker, Boomer's bile, stuns, Health Regen, Blessed, Aggro
+- [ ] enemy rules from the wiki: defense, Breaker2's one Breaker, Boomer's bile, stuns, Health Regen, Blessed, Aggro, shield-dependent speed
 - [ ] tower abilities from the wiki: Commander Call to Arms, Freezer Frost Grenade, Military Base Airstrike (unlock level, cost, cooldown)
 - [ ] lobby: profile, shop with coins, loadout, quests, elevator to a match
 - [ ] restart: the match, its towers and wave survive a server restart
