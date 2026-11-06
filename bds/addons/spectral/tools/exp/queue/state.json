@@ -1386,10 +1386,17 @@
   "tries": 1
  },
  "q61_noise_floor_warm": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "b41a813",
+  "conclusion": "success",
+  "ended": "2026-11-06 07:38",
+  "failed_steps": 0,
+  "recordings": 5,
   "run": "42169741330",
   "started": "2026-11-06 05:39",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q62_bundle_warm_again": {
   "status": "pending"
