@@ -1300,10 +1300,17 @@
   "tries": 2
  },
  "q55_sampler_same_thrice": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "ec2accd",
+  "conclusion": "success",
+  "ended": "2026-11-06 03:44",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "42156173847",
   "started": "2026-11-06 03:22",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q56_sampler_phones_speaker": {
   "status": "pending"
