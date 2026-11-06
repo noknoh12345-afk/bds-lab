@@ -14,12 +14,14 @@
       "textures": {
         "default": "textures/entity/steve",
         "cape": "textures/entity/cape_invisible",
-        "tdsui_hud": "textures/tdsui/hud"
+        "tdsui_hud": "textures/tdsui/hud",
+        "tdsui_anim": "textures/tdsui/anim"
       },
       "geometry": {
         "default": "geometry.humanoid.custom",
         "cape": "geometry.cape",
-        "tdsui_hud": "geometry.tdsui_hud"
+        "tdsui_hud": "geometry.tdsui_hud",
+        "tdsui_anim": "geometry.tdsui_anim"
       },
       "scripts": {
         "scale": "0.9375",
@@ -215,6 +217,9 @@
       "render_controllers": [
         {
           "controller.render.tdsui_hud": "q.is_in_ui && !variable.is_paperdoll"
+        },
+        {
+          "controller.render.tdsui_anim": "q.is_in_ui && !variable.is_paperdoll"
         },
         {
           "controller.render.player.first_person_spectator": "variable.is_first_person && query.is_spectator"

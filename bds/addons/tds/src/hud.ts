@@ -33,12 +33,13 @@ function shape(p: Player) {
 world.afterEvents.playerSpawn.subscribe(({ player }) => { last.delete(player.id); system.runTimeout(() => { if (player.isValid) shape(player); }, 20); });
 world.afterEvents.playerLeave.subscribe(({ playerId }) => last.delete(playerId));
 
-cmd('tds:hud', 'Match HUD: on, off, scale <percent>, aspect <width> <height>, reset', { set: ['on', 'off', 'scale', 'aspect', 'reset'], 'a?': 'int', 'b?': 'int' }, (p, a) => {
+// (its enum is named tds:hudset: /tds:xpboost already registers tds:set, and a second registerEnum of one name throws at startup)
+cmd('tds:hud', 'Match HUD: on, off, scale <percent>, aspect <width> <height>, reset', { hudset: ['on', 'off', 'scale', 'aspect', 'reset'], 'a?': 'int', 'b?': 'int' }, (p, a) => {
   const s = prefOf(p);
-  if (a.set === 'on') s.off = false;
-  else if (a.set === 'off') s.off = true;
-  else if (a.set === 'scale') { if (!a.a || a.a < 10 || a.a > 400) return 'Scale 10-400 (%)'; s.scale = a.a; }
-  else if (a.set === 'aspect') { if (!a.a || !a.b) return 'Aspect: width height (e.g. 2340 1080)'; s.aspect = Math.round(Math.min(5000, Math.max(600, (a.a / a.b) * 1000))); }
+  if (a.hudset === 'on') s.off = false;
+  else if (a.hudset === 'off') s.off = true;
+  else if (a.hudset === 'scale') { if (!a.a || a.a < 10 || a.a > 400) return 'Scale 10-400 (%)'; s.scale = a.a; }
+  else if (a.hudset === 'aspect') { if (!a.a || !a.b) return 'Aspect: width height (e.g. 2340 1080)'; s.aspect = Math.round(Math.min(5000, Math.max(600, (a.a / a.b) * 1000))); }
   else { delete s.aspect; delete s.scale; s.off = false; }
   savePref(p, s); shape(p);
   return `HUD ${s.off ? 'off' : 'on'} · scale ${s.scale ?? 100}% · aspect ${((s.aspect ?? ASPECT[platform(p)]) / 1000).toFixed(3)}`;

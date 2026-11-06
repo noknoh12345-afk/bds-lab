@@ -1,0 +1,214 @@
+{
+ "format_version": "1.16.0",
+ "minecraft:geometry": [
+  {
+   "description": {
+    "identifier": "geometry.tdsui_anim",
+    "texture_width": 48,
+    "texture_height": 128,
+    "visible_bounds_width": 912,
+    "visible_bounds_height": 384,
+    "visible_bounds_offset": [
+     0,
+     140,
+     0
+    ]
+   },
+   "bones": [
+    {
+     "name": "geo_ui",
+     "pivot": [
+      0,
+      140,
+      0
+     ]
+    },
+    {
+     "name": "wave",
+     "parent": "geo_ui",
+     "pivot": [
+      0,
+      213,
+      0
+     ]
+    },
+    {
+     "name": "cash",
+     "parent": "geo_ui",
+     "pivot": [
+      119.464,
+      217,
+      0
+     ]
+    },
+    {
+     "name": "banner",
+     "parent": "geo_ui",
+     "pivot": [
+      0,
+      161,
+      0
+     ]
+    },
+    {
+     "name": "reward",
+     "parent": "banner",
+     "pivot": [
+      0,
+      143,
+      0
+     ]
+    },
+    {
+     "name": "gems",
+     "parent": "geo_ui",
+     "pivot": [
+      119.464,
+      202,
+      0
+     ]
+    },
+    {
+     "name": "an_heart",
+     "parent": "wave",
+     "pivot": [
+      -43,
+      206.5,
+      -0.32
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -46,
+        203.5,
+        -0.32
+       ],
+       "size": [
+        6,
+        6,
+        0
+       ],
+       "uv": {
+        "north": {
+         "uv": [
+          0,
+          0
+         ],
+         "uv_size": [
+          16,
+          16
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "an_coin",
+     "parent": "cash",
+     "pivot": [
+      93.464,
+      217,
+      -0.32
+     ],
+     "cubes": [
+      {
+       "origin": [
+        89.464,
+        213,
+        -0.32
+       ],
+       "size": [
+        8,
+        8,
+        0
+       ],
+       "uv": {
+        "north": {
+         "uv": [
+          16,
+          0
+         ],
+         "uv_size": [
+          16,
+          16
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "an_rcoin",
+     "parent": "reward",
+     "pivot": [
+      -27,
+      143,
+      -0.32
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -30,
+        140,
+        -0.32
+       ],
+       "size": [
+        6,
+        6,
+        0
+       ],
+       "uv": {
+        "north": {
+         "uv": [
+          16,
+          0
+         ],
+         "uv_size": [
+          16,
+          16
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "an_gem",
+     "parent": "gems",
+     "pivot": [
+      92.964,
+      202,
+      -0.32
+     ],
+     "cubes": [
+      {
+       "origin": [
+        89.464,
+        198.5,
+        -0.32
+       ],
+       "size": [
+        7,
+        7,
+        0
+       ],
+       "uv": {
+        "north": {
+         "uv": [
+          32,
+          0
+         ],
+         "uv_size": [
+          16,
+          16
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

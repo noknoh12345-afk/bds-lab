@@ -141,6 +141,45 @@
         "b": 0,
         "a": 0
       }
+    },
+    "controller.render.tdsui_anim": {
+      "geometry": "Geometry.tdsui_anim",
+      "materials": [
+        {
+          "*": "Material.tdsui_cutout"
+        }
+      ],
+      "textures": [
+        "Texture.tdsui_anim"
+      ],
+      "uv_anim": {
+        "offset": [
+          0,
+          "math.mod(math.floor(q.life_time * 10), 8) / 8"
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "v.geoui_alpha"
+      },
+      "is_hurt_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "on_fire_color": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      }
     }
   }
 }

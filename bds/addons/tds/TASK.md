@@ -32,6 +32,7 @@ Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki:
 - [ ] placement like the original: loadout slots 1-5 in the hotbar, a ghost and range ring where you look, cost and limit on the bar; the path is a narrow lane rimmed with stairs
 - [ ] badges from the mode pages: a triumph badge rewards once
 - [ ] the GeoUI match HUD like the original: wave, timer and base health, boss bar, cash, mode and enemies, the tower bar, the selected tower, banners and rewards; the lobby's level, EXP, coins and gems
+- [ ] looks like the original: vanilla mob bodies with gear, towers turn to their target and recoil, pixel icons animated in the GeoUI HUD
 - [ ] load: 200 enemies and 50 towers keep 20 TPS
 
 ## Guessed

@@ -734,6 +734,19 @@ wait 300
 js world.getAllPlayers().find((p) => p.name === 'A').getProperty('tdsui:mode')
 ~ 15
 
+## looks like the original: vanilla mob bodies with gear, towers turn to their target and recoil, pixel icons animated in the GeoUI HUD
+tds:stop
+tag A add tds_dev
+@A cmd /tds:play Easy
+tds:hold true
+@A cmd /tds:place Scout -9 -60 -15
+~ @A Placed #\d+ Scout
+tds:spawn Normal
+wait 15000
+js String(world.getDimension('overworld').getEntities({ type: 'tds:tower' })[0]?.getProperty('tds:yaw'))
+~ ^(\d|[1-9]\d|[12]\d\d|3[0-5]\d|360)$
+tds:stop
+
 ## load: 200 enemies and 50 towers keep 20 TPS
 tds:stop
 @A cmd /tds:play Easy

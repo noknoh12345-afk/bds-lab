@@ -3336,14 +3336,14 @@ world6.afterEvents.playerSpawn.subscribe(({ player }) => {
   }, 20);
 });
 world6.afterEvents.playerLeave.subscribe(({ playerId }) => last.delete(playerId));
-cmd("tds:hud", "Match HUD: on, off, scale <percent>, aspect <width> <height>, reset", { set: ["on", "off", "scale", "aspect", "reset"], "a?": "int", "b?": "int" }, (p, a) => {
+cmd("tds:hud", "Match HUD: on, off, scale <percent>, aspect <width> <height>, reset", { hudset: ["on", "off", "scale", "aspect", "reset"], "a?": "int", "b?": "int" }, (p, a) => {
   const s = prefOf(p);
-  if (a.set === "on") s.off = false;
-  else if (a.set === "off") s.off = true;
-  else if (a.set === "scale") {
+  if (a.hudset === "on") s.off = false;
+  else if (a.hudset === "off") s.off = true;
+  else if (a.hudset === "scale") {
     if (!a.a || a.a < 10 || a.a > 400) return "Scale 10-400 (%)";
     s.scale = a.a;
-  } else if (a.set === "aspect") {
+  } else if (a.hudset === "aspect") {
     if (!a.a || !a.b) return "Aspect: width height (e.g. 2340 1080)";
     s.aspect = Math.round(Math.min(5e3, Math.max(600, a.a / a.b * 1e3)));
   } else {

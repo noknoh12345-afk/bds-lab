@@ -110,6 +110,10 @@ const plane = (name, parent, x, y, w, h, reg, z = Z.item, el, pivot) => {
   return name;
 };
 const P = (k) => `q.property('${NS}:${k}')`;
+/** an animated pixel icon: a plane over frame 0 of column `col` in rp/textures/tdsui/anim.png (8 frames of 16 x 16, a strip),
+ * drawn by a second geometry and render controller whose uv_anim steps the frames — only GeoUI animates */
+const ANIM = [], ANIM_FRAMES = 8, ANIM_FPS = 10;
+const anim = (name, parent, x, y, w, h, col) => ANIM.push({ name, parent, x, y, w, h, col });
 // seven-segment digits: one variable per digit (−1 = blank), seven planes shown by a bit mask of the digits that light them
 const MASK = { a: 1005, b: 927, c: 1019, d: 877, e: 325, f: 881, g: 892 };
 function digits(id, parent, src, n, x, y, w, h, color, { blankZero = false, gap = 1 } = {}) {
@@ -136,7 +140,7 @@ plane('wave_slash', 'wave', -18.5, 215, 3.5, 7, 'wSLASH');
 digits('wt', 'wave', P('total'), 2, -13.5, 215, 4, 7, 'gray');
 plane('wave_clock', 'wave', 13, 215.5, 6, 6, 'clock');
 digits('tm', 'wave', P('timer'), 3, 21, 215, 4, 7, 'white');
-plane('hp_heart', 'wave', -46, 203.5, 6, 6, 'heart');
+anim('an_heart', 'wave', -46, 203.5, 6, 6, 0);   // the heart beats (tools/art/hud_anim.py: frames; the anim layer below)
 plane('hp_track', 'wave', -38, 204.5, 56, 4, 'track', Z.item);
 gauge('hp_fill', 'wave', -38, 204.5, 56, 4, 'hpfill', `${P('hp')}/math.max(1,${P('hpmax')})*100`);
 digits('hp', 'wave', P('hp'), 3, 26.4, 203, 3.5, 6, 'white', { gap: 0.9 });
@@ -155,7 +159,7 @@ digits('sv', 'skip', `math.mod(${P('sv')},10)`, 1, 11, 179.5, 3.5, 6, 'green');
 const HW = C.halfWAt(C.settingsOf({ ns: NS }), 1.778);
 bone('cash', C.ROOT, [HW - 37, 217, 0], { type: 'image', anchor: 'top_right' });   // match cash, or the coins in the lobby
 plane('cash_bg', 'cash', HW - 70, 210, 66, 14, 'pcash', Z.panel, { type: 'image', blend: 'blend' });
-plane('cash_coin', 'cash', HW - 67, 213, 8, 8, 'coin');
+anim('an_coin', 'cash', HW - 67, 213, 8, 8, 1);   // the coin turns
 digits('cs', 'cash', P('cash'), 6, HW - 54, 213.5, 4, 7, 'yellow', { gap: 1.8 });
 // top left: mode badge and the enemies on the path
 bone('info', C.ROOT, [-HW + 24, 212, 0], { type: 'image', anchor: 'top_left', visible: INMATCH });
@@ -189,7 +193,7 @@ const animations = [{ name: `animation.${NS}_banner`, condition: 'q.is_in_ui', j
 
 // the result's rewards under the triumph / defeat banner (tdsui:rew = coins × 1000 + EXP)
 bone('reward', 'banner', [0, 143, 0], { type: 'image', visible: `${BN} == 2 || ${BN} == 3` });
-plane('rw_coin', 'reward', -30, 140, 6, 6, 'coin', Z.item);
+anim('an_rcoin', 'reward', -30, 140, 6, 6, 1);
 digits('rc', 'reward', `math.floor(${P('rew')}/1000)`, 4, -22, 140, 3.5, 6, 'yellow', { gap: 0.9 });
 plane('rw_exp', 'reward', 2, 140.5, R.wEXP[2] * k1, 5, 'wEXP', Z.item);
 digits('rx', 'reward', `math.mod(${P('rew')},1000)`, 3, 15, 140, 3.5, 6, 'white', { gap: 0.9 });
@@ -218,7 +222,7 @@ plane('lb_track', 'lobby', -HW + 23, 206, 66, 4, 'track', Z.item);
 gauge('lb_fill', 'lobby', -HW + 23, 206, 66, 4, 'bossfill', `${P('hp')}/math.max(1,${P('hpmax')})*100`);
 bone('gems', C.ROOT, [HW - 37, 202, 0], { type: 'image', anchor: 'top_right', visible: `${P('mode')} == 15` });
 plane('gm_bg', 'gems', HW - 70, 196, 66, 12, 'pcash', Z.panel, { type: 'image', blend: 'blend' });
-plane('gm_gem', 'gems', HW - 67, 198.5, 7, 7, 'gem');
+anim('an_gem', 'gems', HW - 67, 198.5, 7, 7, 2);   // the gem glints
 digits('wg', 'gems', P('rgems'), 5, HW - 54, 199, 3.6, 6, 'white', { gap: 1.8 });
 
 // ---------- build with GeoUICore and merge into the addon ----------
@@ -231,8 +235,20 @@ const PROPS = { wave: [0, 999], total: [0, 99], timer: [0, 999], hp: [0, 99999],
 for (const [k, v] of Object.entries(built.files)) {
   const rel = k.replace(`${NS}_RP/`, 'rp/').replace(`${NS}_BP/`, 'bp/');
   if (/manifest\.json$|\/texts\/|scripts\/main\.js$/.test(rel)) continue;   // the addon's own manifests, texts and script stay
-  if (rel === 'rp/entity/player.entity.json') {   // our digit variables before the transform animation reads them
-    const ce = JSON.parse(v); ce['minecraft:client_entity'].description.scripts.pre_animation.push(...pre); put(rel, JSON.stringify(ce, null, 2)); continue;
+  if (rel === 'rp/entity/player.entity.json') {   // our digit variables before the transform animation reads them; the anim layer
+    const ce = JSON.parse(v), d = ce['minecraft:client_entity'].description;
+    d.scripts.pre_animation.push(...pre);
+    d.geometry[`${NS}_anim`] = `geometry.${NS}_anim`; d.textures[`${NS}_anim`] = `textures/${NS}/anim`;
+    const i = d.render_controllers.findIndex((r) => typeof r === 'object' && r[`controller.render.${NS}_hud`]);
+    d.render_controllers.splice(i + 1, 0, { [`controller.render.${NS}_anim`]: d.render_controllers[i][`controller.render.${NS}_hud`] });
+    put(rel, JSON.stringify(ce, null, 2)); continue;
+  }
+  if (rel === `rp/render_controllers/${NS}.render_controllers.json`) {   // the anim layer: same alpha as the HUD, uv_anim steps the frames
+    const rc = JSON.parse(v), hud = rc.render_controllers[`controller.render.${NS}_hud`];
+    rc.render_controllers[`controller.render.${NS}_anim`] = { geometry: `Geometry.${NS}_anim`, materials: [{ '*': `Material.${NS}_cutout` }], textures: [`Texture.${NS}_anim`],
+      uv_anim: { offset: [0, `math.mod(math.floor(q.life_time * ${ANIM_FPS}), ${ANIM_FRAMES}) / ${ANIM_FRAMES}`], scale: [1, 1] },
+      color: hud.color, is_hurt_color: hud.is_hurt_color, on_fire_color: hud.on_fire_color };
+    put(rel, JSON.stringify(rc, null, 2)); continue;
   }
   if (rel === 'bp/entities/player.json') {   // GeoUI's own properties (v0-v3 unused) and the HUD's values
     const be = JSON.parse(v), pr = be['minecraft:entity'].description.properties;
@@ -242,6 +258,17 @@ for (const [k, v] of Object.entries(built.files)) {
     put(rel, JSON.stringify(be, null, 2)); continue;
   }
   put(rel, typeof v === 'string' ? v : Buffer.from(v.base64, 'base64'));
+}
+// the anim layer's geometry: the HUD's root and the anchors above each icon (same names, parents and pivots, so the transform
+// animation places and hides them with the HUD), and one plane per icon over frame 0 of its column
+{
+  const byName = Object.fromEntries(bones.map((b) => [b.name, b])), keep = new Map();
+  for (const a of ANIM) for (let n = a.parent; n; n = byName[n].parent) keep.set(n, byName[n]);
+  const out = [...bones.filter((b) => keep.has(b.name)).map((b) => ({ name: b.name, ...(b.parent ? { parent: b.parent } : {}), pivot: b.pivot }))];
+  for (const a of ANIM) out.push({ name: a.name, parent: a.parent, pivot: [a.x + a.w / 2, a.y + a.h / 2, Z.item - 0.02],
+    cubes: [{ origin: [a.x, a.y, Z.item - 0.02], size: [a.w, a.h, 0], uv: { north: { uv: [a.col * 16, 0], uv_size: [16, 16] } } }] });
+  put('rp/models/entity/tdsui/anim.geo.json', JSON.stringify({ format_version: '1.16.0', 'minecraft:geometry': [{ description: { identifier: `geometry.${NS}_anim`,
+    texture_width: 48, texture_height: 16 * ANIM_FRAMES, visible_bounds_width: 912, visible_bounds_height: 384, visible_bounds_offset: [0, C.PIVOT_Y, 0] }, bones: out }] }, null, 1));
 }
 // the player's name, since the pack redefines minecraft:player
 for (const [lang, name] of [['en_US', 'Player'], ['ja_JP', 'プレイヤー']]) {
