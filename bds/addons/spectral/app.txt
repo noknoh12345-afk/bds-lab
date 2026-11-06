@@ -1,19 +1,20 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 58（tools/exp/queue/q58_sampler_rain_mobs.json、tools/exp/queue40.py）: 雨と動物の中でサンプラー。q16・q21（正弦波の道）のサンプラー版。kill は使わない（q16: 対象がいないと失敗）: 晴れで先に録り、そのあと雨と動物を足す
+# キュー 59（tools/exp/queue/q59_bgm_sampler.json、tools/exp/queue40.py）: ゲームの BGM を鳴らしたまま（音楽 0.5）: サンプラー・読み上げ・ファイル・正弦波。q17 は正弦波の道で BGM があっても同じくらいだった。サンプラーと読み上げも BGM と一緒に
 
 section title
 audio info
 stop
-audio volume 0
+audio volume 0.5
 launch
 until title 600000
 audio info
 shot title
 
 section prep
-audio song fur_elise,speech_cave pack=tools/exp/packs/notes
+audio song speech_ja_soseki,vocal_name_of_love,orchestra_five_armies,rock_big,piano_gymnopedie,edm_detection suffix=_e pack=tools/exp/packs/run10
+audio song fur_elise,speech_hello pack=tools/exp/packs/notes
 
 section join
 join
@@ -24,89 +25,140 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section clear_fe
+section bgm_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run weather clear
-audio start wc_fe
+audio start bg_fe
 do execute as @a run spectral:play fur_elise
 wait 15200
 do execute as @a run spectral:stop
 audio stop
-audio export wc_fe 160
+audio export bg_fe 160
 
-section clear_pd
+section bgm_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run weather clear
-audio start wc_pd
+audio start bg_pd
 do execute as @a run spectral:play piano_demo
 wait 21200
 do execute as @a run spectral:stop
 audio stop
-audio export wc_pd 160
+audio export bg_pd 160
 
-section clear_sc
+section bgm_bd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-do execute as @a run weather clear
-audio start wc_sc
-do execute as @a run spectral:play speech_cave
+audio start bg_bd
+do execute as @a run spectral:play band_demo
+wait 10700
+do execute as @a run spectral:stop
+audio stop
+audio export bg_bd 160
+
+section bgm_sh
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start bg_sh
+do execute as @a run spectral:play speech_hello
 wait 7600
 do execute as @a run spectral:stop
 audio stop
-audio export wc_sc 160
+audio export bg_sh 160
 
-section make_rain
-do weather rain
-do summon cow 3 -60 3
-do summon cow -3 -60 3
-do summon chicken 2 -60 -2
-do summon chicken -2 -60 -2
-do summon sheep 0 -60 4
-wait 3000
-
-section rain_fe
+section bgm_pf
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start wr_fe
-do execute as @a run spectral:play fur_elise
-wait 15200
+audio start bg_pf
+do execute as @a run spectral:play piano_file
+wait 24500
 do execute as @a run spectral:stop
 audio stop
-audio export wr_fe 160
+audio export bg_pf 160
 
-section rain_pd
+section bgm_e_speech_ja_soseki
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start wr_pd
-do execute as @a run spectral:play piano_demo
-wait 21200
+audio start bge_speech_ja_soseki
+do execute as @a run spectral:play speech_ja_soseki_e
+wait 23000
 do execute as @a run spectral:stop
 audio stop
-audio export wr_pd 160
+audio analyze bge_speech_ja_soseki song:speech_ja_soseki
+audio export bge_speech_ja_soseki 160
 
-section rain_sc
+section bgm_e_vocal_name_of_love
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start wr_sc
-do execute as @a run spectral:play speech_cave
-wait 7600
+audio start bge_vocal_name_of_love
+do execute as @a run spectral:play vocal_name_of_love_e
+wait 23000
 do execute as @a run spectral:stop
 audio stop
-audio export wr_sc 160
+audio analyze bge_vocal_name_of_love song:vocal_name_of_love
+audio export bge_vocal_name_of_love 160
 
-section end_rain
-do weather clear
+section bgm_e_orchestra_five_armies
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start bge_orchestra_five_armies
+do execute as @a run spectral:play orchestra_five_armies_e
+wait 23000
+do execute as @a run spectral:stop
+audio stop
+audio analyze bge_orchestra_five_armies song:orchestra_five_armies
+audio export bge_orchestra_five_armies 160
+
+section bgm_e_rock_big
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start bge_rock_big
+do execute as @a run spectral:play rock_big_e
+wait 23000
+do execute as @a run spectral:stop
+audio stop
+audio analyze bge_rock_big song:rock_big
+audio export bge_rock_big 160
+
+section bgm_e_piano_gymnopedie
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start bge_piano_gymnopedie
+do execute as @a run spectral:play piano_gymnopedie_e
+wait 23000
+do execute as @a run spectral:stop
+audio stop
+audio analyze bge_piano_gymnopedie song:piano_gymnopedie
+audio export bge_piano_gymnopedie 160
+
+section bgm_e_edm_detection
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start bge_edm_detection
+do execute as @a run spectral:play edm_detection_e
+wait 23000
+do execute as @a run spectral:stop
+audio stop
+audio analyze bge_edm_detection song:edm_detection
+audio export bge_edm_detection 160
