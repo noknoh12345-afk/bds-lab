@@ -1352,7 +1352,10 @@
   "tries": 1
  },
  "q59_bgm_sampler": {
-  "status": "pending"
+  "commit": "581e2f6",
+  "run": "42165212996",
+  "started": "2026-11-06 04:54",
+  "status": "running"
  },
  "q60_sampler_walking_listener": {
   "status": "pending"
