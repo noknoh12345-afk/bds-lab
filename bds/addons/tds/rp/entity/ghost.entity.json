@@ -1,0 +1,32 @@
+{
+ "format_version": "1.10.0",
+ "minecraft:client_entity": {
+  "description": {
+   "identifier": "tds:ghost",
+   "materials": {
+    "default": "entity_alphatest",
+    "blend": "entity_alphablend"
+   },
+   "textures": {
+    "ok": "textures/entity/tds/ghost_ok",
+    "bad": "textures/entity/tds/ghost_bad"
+   },
+   "geometry": {
+    "g0": "geometry.tds.tower_offense",
+    "g1": "geometry.tds.tower_support",
+    "g2": "geometry.tds.tower_income",
+    "g3": "geometry.tds.tower_defense",
+    "g4": "geometry.tds.tower_cliff",
+    "g5": "geometry.tds.tower_spawner",
+    "g6": "geometry.tds.tower_offense",
+    "g7": "geometry.tds.tower_freeze"
+   },
+   "scripts": {
+    "scale": "0.7"
+   },
+   "render_controllers": [
+    "controller.render.tds_ghost"
+   ]
+  }
+ }
+}

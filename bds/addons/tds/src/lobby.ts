@@ -2,16 +2,17 @@
 import { world, system, Player } from '@minecraft/server';
 import { towers, enemies, modes, maps, expFor, rules, rewardFor, xpBoostAt, slotsAt, stats, QuestDef, QuestObj } from './defs';
 import { M, start, log, onEnd, Match } from './game';
+import { modReward } from './modifiers';
 
 export type Obj = { do: QuestObj['do']; need: number; prog: number; tower?: string; role?: string; boss?: string; status?: string; map?: string; mode?: string; players?: number; cash?: number; hpPct?: number; loadoutMax?: number };
 export type Quest = { title: string; kind: 'daily' | 'weekly'; text: string; objs: Obj[]; done: boolean };
-export type Profile = { coins: number; gems: number; exp: number; level: number; texp: number; owned: string[]; loadout: string[]; wins: Record<string, number>; mapWins: Record<string, number>; crates: Record<string, number>; day: number; week: number; quests: Quest[] };
+export type Profile = { coins: number; gems: number; exp: number; level: number; texp: number; owned: string[]; loadout: string[]; wins: Record<string, number>; mapWins: Record<string, number>; crates: Record<string, number>; badges: string[]; day: number; week: number; quests: Quest[] };
 
 const DAY = 86400000;
 export const today = () => Math.floor(Date.now() / DAY);
 /** weeks start on Monday 00:00 UTC (1970-01-01 was a Thursday) */
 export const weekOf = (day: number) => Math.floor((day + 3) / 7);
-const fresh = (): Profile => ({ coins: rules.levelRewards['0']?.coins ?? 0, gems: 0, exp: 0, level: 0, texp: 0, owned: Object.keys(towers).filter((n) => towers[n].unlock.kind === 'free' && sold(n)), loadout: [], wins: {}, mapWins: {}, crates: {}, day: -1, week: -1, quests: [] });
+const fresh = (): Profile => ({ coins: rules.levelRewards['0']?.coins ?? 0, gems: 0, exp: 0, level: 0, texp: 0, owned: Object.keys(towers).filter((n) => towers[n].unlock.kind === 'free' && sold(n)), loadout: [], wins: {}, mapWins: {}, crates: {}, badges: [], day: -1, week: -1, quests: [] });
 
 export function prof(p: Player): Profile {
   const s = p.getDynamicProperty('tds:p') as string | undefined;
@@ -66,26 +67,30 @@ export function equip(p: Player, slot: number, name: string): string {
 // ---------- elevators (Elevators page) ----------
 type Lift = { mode: string; size: number; players: string[]; at: number; votes: Record<string, string> };
 const lifts: Lift[] = [];
-const liftOf = (mode: string) => (mode === 'Hardcore' ? rules.elevators.Hardcore : rules.elevators.Survival);
-/** a Hardcore elevator's map changes every minute */
-export const hardcoreMap = (ms = Date.now()) => { const n = Object.keys(maps); return n[Math.floor(ms / 1000 / (rules.elevators.Hardcore.rotate ?? 60)) % n.length]; };
+/** Survival elevators for the difficulty modes; Hardcore and Voidcore have their own (3 players, map rotating every minute) */
+const liftOf = (mode: string) => rules.elevators[mode] ?? rules.elevators.Survival;
+const rotates = (mode: string) => !!rules.elevators[mode]?.rotate;
+/** the map a rotating elevator (Hardcore, Voidcore) goes to this minute */
+export const rotMap = (mode: string, ms = Date.now()) => { const n = Object.keys(maps); return n[Math.floor(ms / 1000 / (rules.elevators[mode]?.rotate ?? 60)) % n.length]; };
+export const hardcoreMap = (ms = Date.now()) => rotMap('Hardcore', ms);
 export function queue(p: Player, mode: string, size?: number): string {
   const md = modes[mode]; if (!md) return `Modes: ${Object.keys(modes).join(' ')}`;
   const pr = prof(p); if (pr.level < md.level && !p.hasTag('tds_dev')) return `${mode} needs level ${md.level}`;
+  if (md.needsTriumph && !(pr.wins[md.needsTriumph] > 0) && !p.hasTag('tds_dev')) return `${mode} needs a ${md.needsTriumph} triumph`;
   const L = liftOf(mode);
   for (const l of lifts) l.players = l.players.filter((n) => n !== p.name);
   let l = lifts.find((x) => x.mode === mode && x.players.length && x.players.length < x.size);
   if (!l) {   // the first player chooses the party size; the timer starts then
-    const s = Math.max(1, Math.min(L.max, size ?? L.max));
+    const s = Math.max(1, Math.min(L.max, md.maxPlayers ?? 4, size ?? L.max));
     l = { mode, size: s, players: [], at: system.currentTick + L.wait * 20, votes: {} }; lifts.push(l);
   }
-  l.players.push(p.name); log('elevator_join', { player: p.name, mode, count: l.players.length, size: l.size, map: mode === 'Hardcore' ? hardcoreMap() : null });
+  l.players.push(p.name); log('elevator_join', { player: p.name, mode, count: l.players.length, size: l.size, map: rotates(mode) ? rotMap(mode) : null });
   if (l.players.length >= l.size) l.at = system.currentTick;
-  return `Elevator ${mode}: ${l.players.length}/${l.size}${mode === 'Hardcore' ? ` · ${hardcoreMap()}` : ''}, departs in ${Math.max(0, Math.ceil((l.at - system.currentTick) / 20))}s`;
+  return `Elevator ${mode}: ${l.players.length}/${l.size}${rotates(mode) ? ` · ${rotMap(mode)}` : ''}, departs in ${Math.max(0, Math.ceil((l.at - system.currentTick) / 20))}s`;
 }
 export function voteMap(p: Player, map: string): string {
   const l = lifts.find((x) => x.players.includes(p.name)); if (!l) return 'Not in an elevator';
-  if (l.mode === 'Hardcore') return `Hardcore elevators go to ${hardcoreMap()}`;
+  if (rotates(l.mode)) return `${l.mode} elevators go to ${rotMap(l.mode)}`;
   if (!maps[map]) return `Maps: ${Object.keys(maps).join(', ')}`;
   l.votes[p.name] = map; log('map_vote', { player: p.name, map }); return `Voted ${map}`;
 }
@@ -99,7 +104,7 @@ system.runInterval(() => {
     lifts.splice(lifts.indexOf(l), 1);
     if (!ps.length) continue;
     let map: string;
-    if (l.mode === 'Hardcore') map = hardcoreMap();
+    if (rotates(l.mode)) map = rotMap(l.mode);
     else {
       const tally: Record<string, number> = {}; for (const v of Object.values(l.votes)) tally[v] = (tally[v] ?? 0) + 1;
       const top = Object.entries(tally).sort((a, b) => b[1] - a[1]), best = top.filter((x) => x[1] === top[0]?.[1]), names = Object.keys(maps);
@@ -213,14 +218,22 @@ export function questsAfter(p: Player, pr: Profile, m: Match, win: boolean) {
 // ---------- match rewards (mode pages) ----------
 /** XP Boost: on its days unless a test fixed it (tds:xpboost on/off) */
 export const xpBoost = () => { const f = world.getDynamicProperty('tds:xpboost') as string | undefined; return f === 'on' ? rules.xpBoost.mult : f === 'off' ? 1 : xpBoostAt(Date.now()); };
+/** Hidden Wave triumph (its page): its own reward instead of Fallen's — the last regular difficulty label, plus the first-triumph gems once */
+function hiddenReward(first: boolean, boost: number) {
+  const H = modes.Fallen?.hidden, reg = (H?.rewards ?? []).filter((x) => !/First/i.test(x.label)), last = reg[reg.length - 1], once = (H?.rewards ?? []).find((x) => /First/i.test(x.label));
+  return { coins: 0, gems: (last?.gems ?? 0) + (first ? once?.gems ?? 0 : 0), exp: Math.floor((last?.exp ?? 0) * boost + 1e-9), texp: last?.texp ?? 0 };
+}
 onEnd.push((m, r) => {
-  const win = r === 'win', boost = xpBoost(), rw = rewardFor(m.mode, win ? modes[m.mode].waves : m.wave, win, boost);
+  if (m.sandbox || modes[m.mode]?.sandbox) { log('reward', { mode: m.mode, result: r, sandbox: true, none: true }); return; }   // Sandbox gives nothing
+  const win = r === 'win', boost = xpBoost(), hidden = win && !!m.hidden?.on, base = rewardFor(m.mode, win ? modes[m.mode].waves : m.wave, win, boost);
   for (const p of world.getAllPlayers()) {
     if (!m.players.includes(p.name)) continue;
-    const pr = prof(p), lv0 = pr.level;
+    const pr = prof(p), lv0 = pr.level, r0 = hidden ? hiddenReward(!(pr.wins['Hidden Wave'] > 0), boost) : base, mr = 1 + modReward(m);   // modifiers raise rewards by their page's %
+    const rw = mr === 1 ? r0 : { coins: Math.floor(r0.coins * mr), gems: Math.floor(r0.gems * mr), exp: Math.floor(r0.exp * mr), texp: Math.floor(r0.texp * mr) };
     pr.coins += rw.coins; pr.gems += rw.gems; pr.texp += rw.texp; addExp(pr, rw.exp, p.name);
     if (win) { pr.wins[m.mode] = (pr.wins[m.mode] ?? 0) + 1; pr.mapWins[m.map] = (pr.mapWins[m.map] ?? 0) + 1; }
-    log('reward', { player: p.name, result: r, mode: m.mode, wave: m.wave, ...rw, boost, level: pr.level, from: lv0, coinsTotal: pr.coins, gemsTotal: pr.gems });
+    if (hidden) pr.wins['Hidden Wave'] = (pr.wins['Hidden Wave'] ?? 0) + 1;
+    log('reward', { player: p.name, result: r, mode: m.mode, wave: m.wave, ...rw, boost, level: pr.level, from: lv0, coinsTotal: pr.coins, gemsTotal: pr.gems, ...(hidden && { hidden: true }) });
     questsAfter(p, pr, m, win);
     saveProf(p, pr);
   }

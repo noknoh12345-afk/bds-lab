@@ -1,0 +1,19 @@
+[
+  {"rule": "aceOrbit", "why": "Ace Pilot's plane circles 6 studs from its tower at 0.8 rad/s × Speed Multiplier; bombs hit what is within Explosion Range of the plane"},
+  {"rule": "pursuitSpeed", "why": "Pursuit drives at its Speed ÷ 5 studs/s along the path, within Patrol Range of the patrol point (default: the path point nearest the tower)"},
+  {"rule": "accelerator", "why": "Accelerator: Charge Up, then its beam ticks until it has dealt Overcharge damage, then Cooldown; read from the columns, the order is assumed"},
+  {"rule": "medic", "why": "Medic: assigned to the Max Targets most expensive towers in range; Firerate Buff always, Damage Buff only during Ubercharge; one shield per tower absorbs a stun, recharging after Shield Recharge Speed; heals the base by Healing at each wave end up to Overheal Limit above the maximum; over-heal above what the players keep (Over-Heal skill) fades 1/s"},
+  {"rule": "trapper", "why": "Trapper lays a trap every Firerate seconds on a random path point in range; a trap goes off when an enemy steps on it and breaks after dealing its Health in damage"},
+  {"rule": "engineer", "why": "Engineer builds one sentry every Build Range seconds (read as a build time) beside the path within half its range"},
+  {"rule": "crookBoss", "why": "Crook Boss keeps one bodyguard (two from Level 3) standing on the path next to it, replaced 10 s after it falls"},
+  {"rule": "elfCamp", "why": "Elf Camp sends its best elf every unit Spawnrate (15 s when the unit page has none), at most 3 + level at once"},
+  {"rule": "unitChoice", "why": "when a tower's units have no level on their pages, the unit list is spread evenly over the tower's levels"},
+  {"rule": "necromancer", "why": "Necromancer: souls = the health of enemies that die in its range; a full Soul Meter builds a grave (Build Time) or levels the lowest; Raise the Dead: Gravestone Spawn Count skeletons per grave with 30×level health and 5×level damage"},
+  {"rule": "hacker", "why": "Hacker: Synapses = targets per attack; Slowness on hit; Wire Fraud = extra cash share when an enemy it hit dies; holograms deal Hologram EV of the damage, last Hologram Lifetime and cost Clone Cost % of the tower's total cost"},
+  {"rule": "djBooth", "why": "Drop the Beat (numbers not on the page): Purple 3 pulses of 3-stud knockback and 10% + 2% per tower slowness for 3 s; Green $50 × level + $25 per tower; Red 3 pulses of 30 × level damage and 5 + towers defense loss"},
+  {"rule": "abilitiesNumbers", "why": "Missile: 4× damage in 4 studs; Bee Swarm Grenade: 5-stud radius, 5 sting stacks; Thorns: 5-stud patch for 10 s, Harvester damage every 0.5 s, 25% slow (Farms half); Heatwave: 3× damage, 4-stud knockback; Ice Turret: 20 s, 20% chill, freeze every 5th shot; Bounty: 50% of the enemy's cash up to $5000; SWAT Van explodes for half its health; Jester bombs: fire burn, ice 20% slow, poison, 1 s confusion"},
+  {"rule": "onHit", "why": "Warden crits every third hit; Boomerang's extra boomerangs hit the target and up to two neighbours; Sledger's aftershock deals half damage when the page has none; knockback = force × 0.1 studs; bosses are not knocked back"},
+  {"rule": "secondaryWeapons", "why": "Mecha Base missiles and War Machine rocket volleys hit 4 studs around the target on their cooldowns; Military Base vehicles fire their cannon at the nearest visible ground enemy within their range"},
+  {"rule": "bandages", "why": "Bandages heals the base at the end of each wave"},
+  {"rule": "phases", "why": "enemy phases with \"stops moving for a few seconds\" pause it 3 s; random enemies on death come from the enemies that spawn it, else any non-boss of the mode"}
+]

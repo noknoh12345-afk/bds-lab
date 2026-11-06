@@ -1,7 +1,7 @@
 # Tower Defense Simulator
 
 ## Request
-Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki: data-driven towers/enemies/modes, waves on a path, placement, upgrades, targeting, detections, economy, lobby progression. Vanilla look only (no new models or textures).
+Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki: data-driven towers/enemies/modes, waves on a path, placement, upgrades, targeting, detections, economy, lobby progression. Small original models (role-based shapes, not the game's designs), a stair-rimmed narrow lane, and the original's placement aids (hotbar slots, ghost, range rings).
 
 ## Acceptance (one tests.txt `## ` section each)
 - [ ] data from the wiki: every tower, enemy and mode loaded; tower rows match the wiki tables
@@ -23,6 +23,14 @@ Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki:
 - [ ] lobby: profile, shop with coins, loadout, quests, elevators (Survival 4 / Hardcore 3 players, 20 s, party size chosen by the first player, Hardcore map changes every minute) to a match
 - [ ] restart: the match, its towers and wave survive a server restart
 - [ ] quests (Quests page): 6 of the 10 daily and 4 of the 8 weekly quests, needs scaled by level, progress for the tower's owner, rewards (coins, gems, EXP, crates) once
+- [ ] every tower ability from the wiki works: the 27 {{Ability}} templates with their unlock level, cost and cooldown
+- [ ] special towers: Accelerator charge and overcharge, Medic heal and shields, Trapper traps, Engineer sentries, Necromancer graves, Mercenary Base units
+- [ ] skills from the Skills page: cost round5(floor((base × level)^exponent)), requirements, reset for 95% as credits; effects in matches
+- [ ] modes from their pages: Frost and Voidcore (wave bonus, rewards, starting cash, health scale), Sandbox, the Hidden Wave (codes, base at 1, the king within 60 s, waves 41-42)
+- [ ] enemy abilities from the infoboxes: health-threshold phases, tower freezes, healing on the path, gifts, revive, random spawns
+- [ ] match modifiers from their pages: effects (Glass, Broke, Inflation, Fog, Healthy, Speedy, ...) and the reward boosts
+- [ ] placement like the original: loadout slots 1-5 in the hotbar, a ghost and range ring where you look, cost and limit on the bar; the path is a narrow lane rimmed with stairs
+- [ ] badges from the mode pages: a triumph badge rewards once
 - [ ] load: 200 enemies and 50 towers keep 20 TPS
 
 ## Guessed

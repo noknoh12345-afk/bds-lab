@@ -4,27 +4,38 @@
   "description": {
    "identifier": "tds:enemy",
    "materials": {
-    "default": "entity_alphatest"
+    "default": "entity_alphatest",
+    "blend": "entity_alphablend"
    },
    "textures": {
-    "t0": "textures/entity/zombie/zombie",
-    "t1": "textures/entity/zombie/husk",
-    "t2": "textures/entity/zombie/drowned",
-    "t3": "textures/entity/zombie/zombie",
-    "t4": "textures/entity/zombie/husk",
-    "t5": "textures/entity/zombie/drowned",
-    "t6": "textures/entity/zombie/zombie",
-    "t7": "textures/entity/zombie/husk"
+    "t0": "textures/entity/tds/enemy_0",
+    "t1": "textures/entity/tds/enemy_1",
+    "t2": "textures/entity/tds/enemy_2",
+    "t3": "textures/entity/tds/enemy_3",
+    "t4": "textures/entity/tds/enemy_4",
+    "t5": "textures/entity/tds/enemy_5",
+    "t6": "textures/entity/tds/enemy_6",
+    "t7": "textures/entity/tds/enemy_7"
    },
    "geometry": {
-    "default": "geometry.zombie.v1.8"
+    "default": "geometry.tds.enemy"
    },
    "scripts": {
-    "scale": "query.property('tds:size')"
+    "scale": "0.45 * query.property('tds:size')",
+    "animate": [
+     "walk",
+     {
+      "fly": "query.property('tds:skin') == 5"
+     }
+    ]
    },
    "render_controllers": [
-    "controller.render.tds_z"
-   ]
+    "controller.render.tds_enemy"
+   ],
+   "animations": {
+    "walk": "animation.tds.walk",
+    "fly": "animation.tds.fly"
+   }
   }
  }
 }

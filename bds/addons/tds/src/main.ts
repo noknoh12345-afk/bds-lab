@@ -1,10 +1,15 @@
-import { world, system, Player, ItemStack } from '@minecraft/server';
+import { world, system, Player, ItemStack, DisplaySlotId } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { cmd, cmdAny, ask, menu, give, ready, every } from './kit';
 import { towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, timerFor, afterDefense, waveCash, startCash, rewardFor, slotsAt, rules, MODE_NAMES } from './defs';
 import * as G from './game';
 import { prof, saveProf, buy, equip, queue, voteMap, leaveLift, departNow, forceQuest, objText, setLevel, hardcoreMap, xpBoost, sold } from './lobby';
 import { benchAll, bench, expected } from './bench';
+import { skillsMenu } from './skills';
+import { badgesText } from './progress';
+import { setTrack, fpsShoot, abilityNeeds } from './abilities';
+import { modsMenu } from './modifiers';
+import { flashRange } from './placement';
 
 const T = (s: string) => s.replace(/_/g, ' ');
 const inMatch = (p: Player) => !!G.M && G.M.players.includes(p.name);
@@ -38,7 +43,13 @@ cmd('tds:place', 'Place a tower (name with _ for spaces)', { tower: 'string', x:
 });
 cmd('tds:upgrade', 'Upgrade a tower', { id: 'int' }, (p, a) => G.upgrade(p.name, a.id));
 cmd('tds:sell', 'Sell a tower', { id: 'int' }, (p, a) => G.sell(p.name, a.id));
-cmd('tds:use', 'Use a tower ability', { id: 'int' }, (p, a) => G.useTowerAbility(p.name, a.id));
+/** the block a player looks at (an ability's spot) */
+const lookAt = (p: Player) => { const b = p.getBlockFromViewDirection({ maxDistance: 64 })?.block; return b ? { x: b.x, y: b.y + 1, z: b.z } : undefined; };
+cmd('tds:use', 'Use a tower ability (spot: x y z or where you look; target: a tower id)', { id: 'int', 'x?': 'int', 'y?': 'int', 'z?': 'int', 'target?': 'int', 'ability?': 'string' }, (p, a) => {
+  const at = a.x !== undefined && a.y !== undefined && a.z !== undefined ? { x: a.x, y: a.y, z: a.z } : lookAt(p);
+  return G.useTowerAbility(p.name, a.id, a.ability ? T(a.ability) : undefined, at, a.target);
+});
+cmd('tds:track', 'DJ Booth track: Purple, Green or Red', { id: 'int', track: ['Purple', 'Green', 'Red'] }, (_, a) => setTrack(a.id, a.track));
 cmd('tds:target', 'Targeting of a tower', { id: 'int', targeting: G.TARGETS as unknown as string[] }, (_, a) => G.setTarget(a.id, a.targeting));
 cmdAny('tds:state', 'One line of match state', {}, () => {
   const M = G.M; if (!M) return 'none';
@@ -105,7 +116,10 @@ cmd('tds:lobby', 'Lobby menu', {}, (p) => { void lobbyMenu(p); });
 
 async function lobbyMenu(p: Player) {
   const pr = prof(p);
-  const i = await menu(p, '§l§2TDS Lobby', [['Play', () => 0], ['Loadout', () => 0], ['Shop', () => 0], ['Quests', () => 0]], `Lv${pr.level} · ${pr.coins} coins · ${pr.gems} gems`);
+  const i = await menu(p, '§l§2TDS Lobby', [['Play', () => 0], ['Loadout', () => 0], ['Shop', () => 0], ['Quests', () => 0], ['Skills', () => 0], ['Badges', () => 0], ['Modifiers', () => 0]], `Lv${pr.level} · ${pr.coins} coins · ${pr.gems} gems`);
+  if (i === 4) { await skillsMenu(p); return; }
+  if (i === 5) { p.sendMessage(badgesText(p)); return; }
+  if (i === 6) { await modsMenu(p); return; }
   if (i === 0) { const m = await menu(p, 'Elevator', MODE_NAMES.map((n) => [`${n} §8(${modes[n].waves}w, Lv${modes[n].level})${n === 'Hardcore' ? ` ${hardcoreMap()}` : ''}`, () => 0])); if (m === undefined) return;
     const max = rules.elevators[MODE_NAMES[m] === 'Hardcore' ? 'Hardcore' : 'Survival'].max, sz = await menu(p, 'Party size', [...Array(max).keys()].map((k) => [['Solo', 'Duo', 'Trio', 'Quad'][k], () => 0]));
     if (sz !== undefined) p.sendMessage(queue(p, MODE_NAMES[m], sz + 1)); }
@@ -121,6 +135,7 @@ world.beforeEvents.playerInteractWithBlock.subscribe(({ player: p, itemStack, bl
 });
 world.afterEvents.itemUse.subscribe(({ source: p, itemStack }) => {
   if (itemStack.typeId !== 'tds:wand') return;
+  if (inMatch(p) && fpsShoot(p)) return;   // controlling a Gatling Gun: the wand fires it
   if (inMatch(p) && p.getBlockFromViewDirection({ maxDistance: 6 })) return; // the block event places
   if (!inMatch(p)) { void lobbyMenu(p); return; }
   const hitB = p.getBlockFromViewDirection({ maxDistance: 24 })?.block;
@@ -137,22 +152,58 @@ world.afterEvents.playerInteractWithEntity.subscribe(({ player: p, target }) => 
   if (target.typeId !== 'tds:tower') return;
   const tw = G.towerById(target.getDynamicProperty('tds:id') as number); if (tw) void towerMenu(p, tw.id);
 });
+/** what the next upgrade changes, like the original's upgrade panel: changed stats and newly gained detections */
+function nextLevel(name: string, lvl: number) {
+  const a = stats(name, lvl), b = stats(name, lvl + 1), out: string[] = [];
+  const row = (label: string, x?: number, y?: number, pct = false) => { if (y === undefined || x === y) return; const f = (v?: number) => (v === undefined ? '-' : pct ? `${Math.round(v * 100)}%` : `${+v.toFixed(3)}`); out.push(`${label} ${f(x)} §a→ ${f(y)}§r`); };
+  row('Damage', a.dmg, b.dmg); row('Firerate', a.fr, b.fr); row('Range', a.range, b.range); row('Splash', a.splash, b.splash); row('Max hits', a.maxHits, b.maxHits);
+  row('Burst', a.burst, b.burst); row('Slow', a.slowHit, b.slowHit, true); row('Stun', a.stun, b.stun); row('Income', a.income, b.income); row('Unit health', a.unitHp, b.unitHp);
+  row('Firerate buff', a.frBuff, b.frBuff, true); row('Damage buff', a.dmgBuff, b.dmgBuff, true); row('Range buff', a.rangeBuff, b.rangeBuff, true);
+  const d = towers[name].detect;
+  for (const k of ['hidden', 'lead', 'flying'] as const) if (d[k] === lvl + 1) out.push(`§b+ ${k[0].toUpperCase() + k.slice(1)} detection§r`);
+  for (const ab of towers[name].abilities ?? []) if (ab.unlock === lvl + 1 && ab.simulated) out.push(`§d+ Ability: ${ab.title}§r`);
+  return out.join('\n') || 'No stat changes';
+}
 async function towerMenu(p: Player, id: number) {
-  const tw = G.towerById(id); if (!tw) return; const s = G.eff(tw), max = tw.lvl >= maxLevel(tw.name), nc = max ? 0 : levelCost(tw.name, tw.lvl + 1);
-  const body = `Lv${tw.lvl}/${maxLevel(tw.name)} · dmg ${s.dmg} · fr ${s.fr ?? '-'} · range ${s.range.toFixed(1)}\nDamage dealt ${Math.round(tw.dealt)} · Target ${tw.target}`;
+  const tw = G.towerById(id); if (!tw) return;
+  flashRange(tw, 80); const s = G.eff(tw), max = tw.lvl >= maxLevel(tw.name), nc = max ? 0 : G.infl(levelCost(tw.name, tw.lvl + 1));
+  const body = `Lv${tw.lvl}/${maxLevel(tw.name)} · dmg ${+s.dmg.toFixed(2)} · fr ${s.fr ?? '-'} · range ${s.range.toFixed(1)}\nDamage dealt ${Math.round(tw.dealt)} · Target ${tw.target}${max ? '' : `\n§l§eNext level§r\n${nextLevel(tw.name, tw.lvl)}`}`;
   const f = new ActionFormData().title(`§l#${tw.id} ${tw.name}`).body(body).button(max ? 'Max level' : `Upgrade §8$${nc}`).button(`Sell §8$${G.sellValue(tw)}`).button(`Target: ${tw.target}`);
   const ab = G.abilitiesOf(tw); for (const a of ab) { const w = G.abilityReady(tw, a.title); f.button(`${a.title}${a.cost ? ` §8$${a.cost}` : ''}${w ? ` §c${Math.ceil(w)}s` : ''}`); }
+  if (tw.name === 'DJ Booth') f.button(`Track: ${(tw.st?.track as string) ?? 'Purple'}`);
   const r = await ask(p, f); if (!r || r.canceled) return;
-  if (r.selection !== undefined && r.selection >= 3) { p.sendMessage(G.useTowerAbility(p.name, id, ab[r.selection - 3]?.title)); return; }
+  if (r.selection !== undefined && r.selection >= 3 && r.selection < 3 + ab.length) {
+    const a = ab[r.selection - 3], need = abilityNeeds(a.title);
+    let target: number | undefined;
+    if (need === 'tower' || need === 'tower+spot') {   // choose the tower (Hologram: optional; Helicopter: one of yours)
+      const list = G.M!.towers.filter((t) => t.id !== id && t.temp === undefined && (need === 'tower' || t.owner === p.name));
+      const k = await menu(p, a.title, [...list.map((t) => [`#${t.id} ${t.name} Lv${t.lvl}`, () => 0] as [string, () => number]), ...(need === 'tower' ? [['(best in range)', () => 0] as [string, () => number]] : [])]);
+      if (k === undefined) return; target = list[k]?.id;
+      if (need === 'tower+spot') p.sendMessage('Look at the new spot and use the ability again with /tds:use ' + id + ' target ' + (target ?? ''));
+    }
+    p.sendMessage(G.useTowerAbility(p.name, id, a.title, need === 'none' ? undefined : lookAt(p), target)); return;
+  }
+  if (r.selection !== undefined && r.selection === 3 + ab.length && tw.name === 'DJ Booth') { const k = await menu(p, 'Track', ['Purple', 'Green', 'Red'].map((x) => [x, () => 0] as [string, () => number])); if (k !== undefined) p.sendMessage(setTrack(id, ['Purple', 'Green', 'Red'][k])); return; }
   if (r.selection === 0) p.sendMessage(G.upgrade(p.name, id));
   if (r.selection === 1) p.sendMessage(G.sell(p.name, id));
   if (r.selection === 2) { const t = await menu(p, 'Targeting', G.TARGETS.map((x) => [x, () => 0])); if (t !== undefined) p.sendMessage(G.setTarget(id, G.TARGETS[t])); }
 }
 
+// team cash on the sidebar, like the original's player list
+system.runInterval(() => {
+  const sb = world.scoreboard, M = G.M;
+  let o = sb.getObjective('tds_cash');
+  if (!M || M.over) { if (o) { try { sb.removeObjective(o); } catch { /* gone */ } } return; }
+  if (!o) { try { o = sb.addObjective('tds_cash', '§e$ Cash'); sb.setObjectiveAtDisplaySlot(DisplaySlotId.Sidebar, { objective: o }); } catch { return; } }
+  for (const p of world.getAllPlayers()) if (M.players.includes(p.name)) { try { o.setScore(p, Math.min(2147483647, Math.floor(M.cash[p.name] ?? 0))); } catch { /* not ready */ } }
+}, 20);
 every(10, (p) => {
   const M = G.M; if (!M || !M.players.includes(p.name)) return;
   const left = M.waveEnd === Infinity ? '∞' : `${Math.max(0, Math.ceil(M.waveEnd - M.t))}s`;
-  p.onScreenDisplay.setActionBar(`§c❤ ${Math.max(0, M.baseHP)}/${M.maxHP} §e$${M.cash[p.name] ?? 0} §fWave ${M.wave}/${modes[M.mode].waves} §7${left} §aEnemies ${M.enemies.length}`);
+  const it = p.getComponent('inventory')?.container?.getItem(p.selectedSlotIndex)?.typeId ?? '';
+  if (/^tds:slot_/.test(it)) return;   // the placement preview uses the bar while a slot is held
+  const boss = M.enemies.filter((e) => e.boss).sort((a, b) => b.max - a.max)[0];
+  p.onScreenDisplay.setActionBar(`§c❤ ${Math.max(0, M.baseHP)}/${M.maxHP} §e$${M.cash[p.name] ?? 0} §fWave ${M.wave}/${G.lastWave()} §7${left} §aEnemies ${M.enemies.length}${boss ? ` §4☠ ${boss.name} ${Math.max(0, Math.ceil((boss.hp / boss.max) * 100))}%` : ''}${M.mods?.length ? ` §d⚑${M.mods.length}` : ''}`);
 });
 
 // ---------- autoplay (test bot): greedy damage-per-cash with detection needs ----------

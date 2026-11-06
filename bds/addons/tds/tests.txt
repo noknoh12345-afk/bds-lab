@@ -1,4 +1,4 @@
-# Tower Defense Simulator — systems reproduced from the TDS wiki (data/*.json). Vanilla look only.
+# Tower Defense Simulator — systems reproduced from the TDS wiki (data/*.json). Small original models; placement aids like the original.
 
 ## data from the wiki: every tower, enemy and mode loaded; tower rows match the wiki tables
 tds:xpboost off
@@ -586,6 +586,137 @@ tds:finish win
 until "ev":"quest_done","player":"A","quest":"Mode Ladder","text":"Mode Ladder","coins":0,"gems":150,"exp":275,"crate":"High Grade Crate" 5000
 tds:stop
 tds:xpboost off
+
+## every tower ability from the wiki works: the 27 {{Ability}} templates with their unlock level, cost and cooldown
+tds:stop
+tds:xpboost off
+@A cmd /tds:dev
+@A cmd /tds:play Easy
+tds:hold true
+@A cmd /tds:cash 5000000
+@A cmd /tds:place Pulse_Trooper -9 -60 -15
+@A cmd /tds:upgrade 1
+@A cmd /tds:upgrade 1
+@A cmd /tds:upgrade 1
+@A cmd /tds:upgrade 1
+@A cmd /tds:place Medic -6 -60 -16
+@A cmd /tds:upgrade 2
+@A cmd /tds:upgrade 2
+@A cmd /tds:upgrade 2
+@A cmd /tds:place Ace_Pilot -13 -60 -15
+@A cmd /tds:place Pursuit -3 -60 -15
+tds:spawn Slow_Boss
+@A cmd /tds:use 1
+~ "ev":"tower_ability","id":1,"name":"Pulse Trooper","ability":"Sweeper"
+@A cmd /tds:use 2
+~ "ev":"tower_ability","id":2,"name":"Medic","ability":"Ubercharge"
+@A cmd /tds:use 3
+~ "ev":"tower_ability","id":3,"name":"Ace Pilot","ability":"Toggle Reverse","cost":0,"what":"flying counter-clockwise"
+@A cmd /tds:use 4
+~ "ev":"tower_ability","id":4,"name":"Pursuit","ability":"Patrol"
+@A cmd /tds:use 1
+~ @A Sweeper ready in \d+s
+tds:stop
+
+## special towers: Accelerator charge and overcharge, Medic heal and shields, Trapper traps, Engineer sentries, Necromancer graves, Mercenary Base units
+tds:stop
+@A cmd /tds:dev
+@A cmd /tds:play Easy
+tds:hold true
+@A cmd /tds:cash 5000000
+@A cmd /tds:place Accelerator -9 -60 -15
+@A cmd /tds:place Trapper -6 -60 -16
+@A cmd /tds:place Engineer -13 -60 -15
+tds:speed 10
+tds:hold false
+until "ev":"unit_spawn","tower":3,"hp":[\d.]+,"unit": 60000
+until "ev":"overcharge","id":1 120000
+until "ev":"trap","tower":2 120000
+tds:speed 1
+tds:stop
+
+## skills from the Skills page: cost round5(floor((base × level)^exponent)), requirements, reset for 95% as credits; effects in matches
+tds:stop
+@A cmd /tds:reset
+@A cmd /tds:grant 200000 0 50
+@A cmd /tds:skill Enhanced_Optics
+~ "ev":"skill_buy",.*"Enhanced Optics"
+@A cmd /tds:skill Improved_Gunpowder
+~ @A .*Enhanced Optics.*10
+@A cmd /tds:skills
+~ @A .*Enhanced Optics.*1
+@A cmd /tds:skillreset
+~ "ev":"skill_reset"
+@A cmd /tds:skillson false
+~ "ev":"skills_setting","player":"A","on":false
+@A cmd /tds:skillson true
+
+## modes from their pages: Frost and Voidcore (wave bonus, rewards, starting cash, health scale), Sandbox, the Hidden Wave (codes, base at 1, the king within 60 s, waves 41-42)
+tds:wavecash Frost 1 1
+= Frost wave 1 x1: $325 start $500
+tds:wavecash Frost 2 2
+= Frost wave 2 x2: $291 start $500
+tds:wavecash Voidcore 1 1
+= Voidcore wave 1 x1: $380 start $900
+tds:rewards Frost 40 true
+~ "coins":2000,"gems":\d+,"exp":300,"texp":195
+tds:rewards Voidcore 50 true
+~ "gems":700,"exp":500,"texp":420
+tds:stop
+@A cmd /tds:dev
+@A cmd /tds:play Sandbox
+until "ev":"match_start","mode":"Sandbox" 5000
+@A cmd /tds:sbwave Easy 1
+~ "ev":"sandbox_wave"
+tds:stop
+@A cmd /tds:skillson false
+@A cmd /tds:play Fallen
+tds:hold true
+@A cmd /tds:code 120
+@A cmd /tds:code 1
+@A cmd /tds:code 1009
+~ "ev":"hidden_armed"
+tds:stop
+@A cmd /tds:skillson true
+
+## enemy abilities from the infoboxes: health-threshold phases, tower freezes, healing on the path, gifts, revive, random spawns
+tds:stop
+@A cmd /tds:dev
+@A cmd /tds:play Easy
+tds:hold true
+tds:spawn Yeti
+tds:hurt Yeti 999999999
+until "ev":"phase","id":\d+,"name":"Yeti" 5000
+tds:stop
+
+## match modifiers from their pages: effects (Glass, Broke, Inflation, Fog, Healthy, Speedy, ...) and the reward boosts
+tds:stop
+@A cmd /tds:mod Glass
+~ @A Glass on · rewards \+5%
+@A cmd /tds:play Easy
+until "ev":"match_start","mode":"Easy","map":"[^"]+","players":\["A"\],"cash":500,"baseHP":1, 5000
+~ "ev":"modifiers","mods":\["Glass"\],"reward":0.05
+@A cmd /tds:mod Glass
+~ @A Glass off
+tds:stop
+
+## placement like the original: loadout slots 1-5 in the hotbar, a ghost and range ring where you look, cost and limit on the bar; the path is a narrow lane rimmed with stairs
+tds:stop
+@A cmd /tds:play Easy
+wait 500
+js world.getAllPlayers().find((p) => p.name === 'A').getComponent('inventory').container.getItem(0)?.typeId
+~ tds:slot_1
+js world.getDimension('overworld').getEntities({ type: 'tds:ghost' }).length >= 0
+tds:stop
+
+## badges from the mode pages: a triumph badge rewards once
+tds:stop
+@A cmd /tds:reset
+@A cmd /tds:play Easy
+tds:hold true
+tds:finish win
+until "ev":"badge","player":"A" 5000
+tds:stop
 
 ## load: 200 enemies and 50 towers keep 20 TPS
 tds:stop

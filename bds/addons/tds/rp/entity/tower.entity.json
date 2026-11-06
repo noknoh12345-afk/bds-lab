@@ -4,27 +4,43 @@
   "description": {
    "identifier": "tds:tower",
    "materials": {
-    "default": "entity_alphatest"
+    "default": "entity_alphatest",
+    "blend": "entity_alphablend"
    },
    "textures": {
-    "t0": "textures/entity/skeleton/skeleton",
-    "t1": "textures/entity/skeleton/stray",
-    "t2": "textures/entity/skeleton/wither_skeleton",
-    "t3": "textures/entity/skeleton/skeleton",
-    "t4": "textures/entity/skeleton/stray",
-    "t5": "textures/entity/skeleton/wither_skeleton",
-    "t6": "textures/entity/skeleton/skeleton",
-    "t7": "textures/entity/skeleton/stray"
+    "t0": "textures/entity/tds/tower_0",
+    "t1": "textures/entity/tds/tower_1",
+    "t2": "textures/entity/tds/tower_2",
+    "t3": "textures/entity/tds/tower_3",
+    "t4": "textures/entity/tds/tower_4",
+    "t5": "textures/entity/tds/tower_5",
+    "t6": "textures/entity/tds/tower_6",
+    "t7": "textures/entity/tds/tower_7"
    },
    "geometry": {
-    "default": "geometry.skeleton.v1.8"
+    "g0": "geometry.tds.tower_offense",
+    "g1": "geometry.tds.tower_support",
+    "g2": "geometry.tds.tower_income",
+    "g3": "geometry.tds.tower_defense",
+    "g4": "geometry.tds.tower_cliff",
+    "g5": "geometry.tds.tower_spawner",
+    "g6": "geometry.tds.tower_offense",
+    "g7": "geometry.tds.tower_freeze"
    },
    "scripts": {
-    "scale": "query.property('tds:size')"
+    "scale": "0.7",
+    "animate": [
+     {
+      "sweep": "query.property('tds:skin') == 0 || query.property('tds:skin') == 3 || query.property('tds:skin') == 4 || query.property('tds:skin') == 6"
+     }
+    ]
    },
    "render_controllers": [
-    "controller.render.tds_s"
-   ]
+    "controller.render.tds_tower"
+   ],
+   "animations": {
+    "sweep": "animation.tds.sweep"
+   }
   }
  }
 }

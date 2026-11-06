@@ -1,7 +1,7 @@
 {
  "format_version": "1.8.0",
  "render_controllers": {
-  "controller.render.tds_z": {
+  "controller.render.tds_enemy": {
    "arrays": {
     "textures": {
      "Array.skins": [
@@ -14,19 +14,51 @@
       "Texture.t6",
       "Texture.t7"
      ]
+    },
+    "materials": {
+     "Array.mats": [
+      "Material.default",
+      "Material.blend"
+     ]
     }
    },
    "geometry": "Geometry.default",
    "materials": [
     {
-     "*": "Material.default"
+     "*": "Array.mats[query.property('tds:skin') == 4 ? 1 : 0]"
     }
    ],
    "textures": [
     "Array.skins[query.property('tds:skin')]"
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "armor": "query.property('tds:skin') == 1"
+    },
+    {
+     "spikes": "query.property('tds:skin') == 2"
+    },
+    {
+     "scarf": "query.property('tds:skin') == 3"
+    },
+    {
+     "hood": "query.property('tds:skin') == 4"
+    },
+    {
+     "wings": "query.property('tds:skin') == 5"
+    },
+    {
+     "pack": "query.property('tds:skin') == 6"
+    },
+    {
+     "icicles": "query.property('tds:skin') == 7"
+    }
    ]
   },
-  "controller.render.tds_s": {
+  "controller.render.tds_tower": {
    "arrays": {
     "textures": {
      "Array.skins": [
@@ -39,9 +71,90 @@
       "Texture.t6",
       "Texture.t7"
      ]
+    },
+    "geometries": {
+     "Array.geos": [
+      "Geometry.g0",
+      "Geometry.g1",
+      "Geometry.g2",
+      "Geometry.g3",
+      "Geometry.g4",
+      "Geometry.g5",
+      "Geometry.g6",
+      "Geometry.g7"
+     ]
+    },
+    "materials": {
+     "Array.mats": [
+      "Material.default",
+      "Material.blend"
+     ]
     }
    },
-   "geometry": "Geometry.default",
+   "geometry": "Array.geos[query.property('tds:skin')]",
+   "materials": [
+    {
+     "*": "Array.mats[query.property('tds:skin') == 6 ? 1 : 0]"
+    }
+   ],
+   "textures": [
+    "Array.skins[query.property('tds:skin')]"
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "pip1": "query.property('tds:lvl') >= 1"
+    },
+    {
+     "pip2": "query.property('tds:lvl') >= 2"
+    },
+    {
+     "pip3": "query.property('tds:lvl') >= 3"
+    },
+    {
+     "pip4": "query.property('tds:lvl') >= 4"
+    },
+    {
+     "pip5": "query.property('tds:lvl') >= 5"
+    },
+    {
+     "pip6": "query.property('tds:lvl') >= 6"
+    },
+    {
+     "pip7": "query.property('tds:lvl') >= 7"
+    }
+   ]
+  },
+  "controller.render.tds_unit": {
+   "arrays": {
+    "textures": {
+     "Array.skins": [
+      "Texture.t0",
+      "Texture.t1",
+      "Texture.t2",
+      "Texture.t3",
+      "Texture.t4",
+      "Texture.t5",
+      "Texture.t6",
+      "Texture.t7"
+     ]
+    },
+    "geometries": {
+     "Array.geos": [
+      "Geometry.g0",
+      "Geometry.g1",
+      "Geometry.g2",
+      "Geometry.g3",
+      "Geometry.g4",
+      "Geometry.g5",
+      "Geometry.g6",
+      "Geometry.g7"
+     ]
+    }
+   },
+   "geometry": "Array.geos[query.property('tds:skin')]",
    "materials": [
     {
      "*": "Material.default"
@@ -49,6 +162,71 @@
    ],
    "textures": [
     "Array.skins[query.property('tds:skin')]"
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "helmet": "query.property('tds:skin') == 1"
+    }
+   ]
+  },
+  "controller.render.tds_ghost": {
+   "arrays": {
+    "textures": {
+     "Array.tints": [
+      "Texture.bad",
+      "Texture.ok"
+     ]
+    },
+    "geometries": {
+     "Array.geos": [
+      "Geometry.g0",
+      "Geometry.g1",
+      "Geometry.g2",
+      "Geometry.g3",
+      "Geometry.g4",
+      "Geometry.g5",
+      "Geometry.g6",
+      "Geometry.g7"
+     ]
+    }
+   },
+   "geometry": "Array.geos[query.property('tds:skin')]",
+   "materials": [
+    {
+     "*": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Array.tints[query.property('tds:ok') ? 1 : 0]"
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "pip1": false
+    },
+    {
+     "pip2": false
+    },
+    {
+     "pip3": false
+    },
+    {
+     "pip4": false
+    },
+    {
+     "pip5": false
+    },
+    {
+     "pip6": false
+    },
+    {
+     "pip7": false
+    }
    ]
   }
  }

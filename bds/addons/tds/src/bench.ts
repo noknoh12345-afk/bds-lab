@@ -28,10 +28,11 @@ export function bench(name: string, lvl: number, T0 = 60): BenchRow | undefined 
     G.simulate(T);
     return tw.primary;
   };
+  G.setBench(true);
   try {
     const d = run(s.range * 0.9) / T, out = run(s.range + 1) > 0, e = expected(name, lvl);
     return { name, lvl, measured: +d.toFixed(3), expected: +e.toFixed(3), err: e ? +(Math.abs(d - e) / e).toFixed(4) : 0, inRange: d > 0, outRange: out };
-  } finally { setM(saved); }
+  } finally { setM(saved); G.setBench(false); }
 }
 function setM(m: G.Match | undefined) { G.__setM(m); }
 

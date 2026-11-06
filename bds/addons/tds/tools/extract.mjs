@@ -1,5 +1,5 @@
 // wiki cache → data/*.json (deterministic; rerun any time)
-import fs from 'node:fs'; import { waves } from './waves.mjs';
+import fs from 'node:fs'; import { waves, parse } from './waves.mjs';
 const C = n => { try { return fs.readFileSync(new URL(`../.cache/${n.replace(/[^\w.-]+/g, '_')}.wt`, import.meta.url), 'utf8'); } catch { return ''; } };
 const D = new URL('../data/', import.meta.url).pathname; fs.mkdirSync(D, { recursive: true });
 const unknown = [];
@@ -17,7 +17,7 @@ const towers = {};
 for (const [cat, names] of Object.entries(cats)) for (const name of names) {
   const t = C(name); if (!t.includes('TowerInfobox')) { unknown.push({ tower: name, why: 'no infobox' }); continue; }
   const ib = t.slice(t.indexOf('TowerInfobox'));
-  const tab = t.slice(t.search(/\{\| class="wikitable stats-table"/));
+  const tab = t.slice(t.search(/\{\|\s*class="wikitable stats-table"/));
   const lines = tab.split('\n'); const hi = lines.findIndex(l => /^! ?Level !!/.test(l));
   if (hi < 0) { unknown.push({ tower: name, why: 'no stats table' }); continue; }
   const cols = lines[hi].replace(/^!\s*/, '').split('!!').map(key);
@@ -58,20 +58,23 @@ for (const r of LV.slice(LV.indexOf('!Rewards and Unlocks')).split('|-').slice(1
 for (const [n, t] of Object.entries(towers)) { const b = num(strip(field(C(n), 'basecost'))); if (b != null && t.levels[0] && b !== t.levels[0].cost) unknown.push({ tower: n, why: `infobox base cost ${b} vs stats table ${t.levels[0].cost}; the table is used` }); }
 
 // tower abilities ({{Ability|Level Unlock=..|Cooldown Time=..|Ability Title=..|Cost=..|Information=..}}); first tab only (PVP tabs follow)
-const SIM = { 'Call to Arms': 'Commander: firerate buff (callToArmsBuff) to towers in range for 10 s', 'Airstrike': 'damage (airstrikeDamage) in an 8-stud radius at the lead enemy', 'Frost Grenade': 'freezes up to five enemies for 2 s within 6 studs', 'War Cry': '65% firerate buff on itself (duration not on the page: 10 s)' };
+// every {{Ability}} of the towers is reproduced in src/abilities.ts; values the page does not give are listed below and in _unknown.json
+const SIM = new Set(['Call to Arms', 'Airstrike', 'Frost Grenade', 'War Cry', 'Toggle Reverse', 'Ubercharge', 'Sweeper', 'Support Caravan', 'Drop the Beat', 'Aggressive Toxins', 'Patrol', 'FPS', 'Air-Drop', 'Reposition', 'Raise the Dead', 'Hologram Tower', 'Helicopter Reposition', 'SWAT Van', 'Bounty', 'Missile', 'Bee Swarm Grenade', 'Equip Bombs', 'Thorns', 'Heatwave', 'Ice Turret', 'Convoy', "Warrior's Call"]);
 for (const [name, tw] of Object.entries(towers)) {
   const t = C(name), seen = new Set(), list = [];
   for (const m of t.matchAll(/\{\{Ability\|([\s\S]*?)\n\}\}/g)) {
     const f = Object.fromEntries(m[1].split(/\|(?=[A-Z][\w ]+=)/).map(x => { const i = x.indexOf('='); return [x.slice(0, i).trim(), strip(x.slice(i + 1)).replace(/\s+/g, ' ').trim()]; }));
     const title = (f['Ability Title'] ?? '').replace(/This ability.*$/, '').trim(); if (!title || seen.has(title)) continue; seen.add(title);
-    list.push({ title, unlock: num(f['Level Unlock']) ?? 0, cd: num(f['Cooldown Time']), cost: num(f.Cost ?? '') ?? 0, info: (f.Information ?? '').slice(0, 300), simulated: !!SIM[title] });
-    if (!SIM[title]) unknown.push({ tower: name, why: `ability "${title}" not simulated` });
+    const cds = [...(f['Cooldown Time'] ?? '').matchAll(/([\d.]+)s(?: Cooldown)?(?: \(Level (\d+)\))?/g)].map(x => [x[2] ? +x[2] : null, +x[1]]);
+    const cdBy = cds.some(x => x[0] != null) ? Object.fromEntries(cds.filter(x => x[0] != null)) : undefined;
+    list.push({ title, unlock: num(f['Level Unlock']) ?? 0, path: (f['Level Unlock'] ?? '').match(/\d+([AB])/)?.[1] ?? null, cd: cds[0]?.[1] ?? null, ...(cdBy && { cdBy }), cost: num(f.Cost ?? '') ?? 0, simulated: SIM.has(title) });
+    if (!SIM.has(title)) unknown.push({ tower: name, why: `ability "${title}" not simulated` });
   }
   if (list.length) tw.abilities = list;
 }
 
 // ---------- modes ----------
-const MODES = ['Easy', 'Casual', 'Intermediate', 'Molten', 'Fallen', 'Hardcore'];
+const MODES = ['Easy', 'Casual', 'Intermediate', 'Molten', 'Fallen', 'Hardcore', 'Frost', 'Voidcore'];
 const modes = {}; const used = new Set(); const roster = JSON.parse(fs.readFileSync(new URL('../.cache/modeenemies.json', import.meta.url)));
 for (const m in roster) roster[m].forEach(e => used.add(e));
 // wave bonus per mode page ("the formula for calculating the wave bonus"); w = waves completed, p = players; mult = 1 - reduction for 1..4 players
@@ -87,6 +90,65 @@ const CASH = {
 const CLEAR = { Easy: [0.35, 0.2, false], Casual: [0.35, 0.2, true], Intermediate: [0.35, 0.2, false], Molten: [0.4, 0.2, true], Fallen: [0.4, 0.2, true], Hardcore: [0, 0, false] };
 // starting cash (Waves page): 500, Hardcore 900 solo / 750 duo / 600 trio
 const START = { Hardcore: [900, 750, 600, 600] };
+// the same three, read from each mode page; the hand tables above are kept as the fallback (and must agree where both exist)
+const toExpr = (raw) => {
+  let e = raw.replace(/\{\{Money\|([\d,.]+)\}\}/g, (_, n) => n.replace(/,/g, '')).replace(/'''?/g, '').replace(/<[^>]+>/g, '');
+  e = e.replace(/([\d.]+)%/g, (_, n) => String(+n / 100)).replace(/Waves? Completed/gi, 'w').replace(/(?:Number of )?Players?(?: Count)?/gi, 'p')
+    .replace(/×/g, '*').replace(/÷/g, '/').replace(/[\[{]/g, '(').replace(/[\]}]/g, ')').replace(/\^/g, '**').replace(/[−–]/g, '-').replace(/\s+/g, '');
+  return /^[\dwp+\-*/().]+$/.test(e) && /w/.test(e) ? e : null;
+};
+const evalCash = (c, w, p) => { const e = (c.pieces.find((x) => w <= x.to) ?? c.pieces[c.pieces.length - 1]).e; try { return Math.floor(Function('w', 'p', `return ${e}`)(w, p) * (c.mult[Math.min(4, Math.max(1, p)) - 1] ?? 1) + 1e-6); } catch { return NaN; } };
+function cashOf(t) {
+  const at = t.search(/formula for calculating (?:the )?wave bonus|has two wave bonuses|wave bonus is calculated as/i); if (at < 0) return null;
+  let sec = t.slice(at, at + 5000); const cut = sec.search(/reduced using multipliers|\{\||\nBefore |Prior to /); const head = cut > 0 ? sec.slice(0, cut) : sec;
+  const pieces = [];
+  for (const x of head.matchAll(/(?:Between waves (\d+) (?:to|and) (\d+)[^\n]*\n)?:<big>([^\n]*?)<\/big>/g)) { const e = toExpr(x[3]); if (!e) return null; pieces.push({ to: x[2] ? +x[2] : 99, e }); }
+  if (!pieces.length) return null; pieces[pieces.length - 1].to = 99;
+  // the page's worked example ("on Wave N, the wave bonus is … rounded down to X … In duo, it is Y"), used to settle disagreements
+  const ex = sec.match(/on Wave (\d+), the wave bonus is \{\{Money\|[\d.,]+\}\}, rounded down to \{\{Money\|([\d,]+)\}\}[\s\S]{0,300}?In duo, it is \{\{Money\|([\d,]+)\}\}/);
+  const mult = [1, 1, 1, 1], tb = sec.indexOf('Total Reduction');
+  if (tb >= 0) {
+    const tab = sec.slice(sec.lastIndexOf('{|', tb), sec.indexOf('|}', tb));
+    for (const r of tab.split('|-').slice(1)) { const c = r.split('\n').map((x) => x.replace(/^[|!]/, '').trim()).filter(Boolean); const i = ['Solo', 'Duo', 'Trio', 'Quad'].indexOf(c[0]); const v = num(c[c.length - 1]); if (i >= 0 && v != null) mult[i] = +(1 - v / 100).toFixed(4); }
+    if (!/\|Quad/.test(tab)) mult[3] = mult[2];
+  }
+  return { pieces, mult, ...(ex && { example: { w: +ex[1], solo: num(ex[2]), duo: num(ex[3]) } }) };
+}
+function clearOf(t) {
+  const s0 = t.slice(t.search(/The wave clear bonus/i)); if (!/The wave clear bonus/i.test(t)) return null;
+  const sent = s0.slice(0, 600);
+  if (/does not appear/i.test(sent.slice(0, 200))) return [0, 0, false];
+  const x = sent.match(/It is ([\d.]+)% of the wave bonus(?: in solo,? while for duo, trio and quad it is ([\d.]+)%)?/i); if (!x) return null;
+  return [+x[1] / 100, x[2] ? +x[2] / 100 : +x[1] / 100, /no damage was dealt to the base/i.test(sent.slice(0, 300))];
+}
+function startOf(raw) {
+  if (!/Solo:/.test(raw ?? '')) return null;
+  const g = (k) => num(raw.match(new RegExp(`${k}:\\s*\\*\\{\\{Money\\|([\\d,]+)`))?.[1] ?? '');
+  const r = [g('Solo'), g('Duo'), g('Trio'), g('Quad')]; if (r[0] == null) return null;
+  for (let i = 1; i < 4; i++) if (r[i] == null) r[i] = r[i - 1];
+  return r;
+}
+function pickCash(m, t, W) {
+  const got = cashOf(t), hand = CASH[m];
+  if (!got && !hand) { unknown.push({ mode: m, why: 'wave bonus formula not readable; no wave bonus' }); return { pieces: [{ to: 99, e: '0' }], mult: [1, 1, 1, 1] }; }
+  if (!got) { unknown.push({ mode: m, why: 'wave bonus formula not readable on the page; hand table used' }); return hand; }
+  const ex = got.example; delete got.example;
+  const fitsExample = (c) => !!ex && evalCash(c, ex.w, 1) === ex.solo && evalCash(c, ex.w, 2) === ex.duo;
+  if (!hand) return got;
+  for (let w = 1; w <= (W ?? 40); w++) for (let p = 1; p <= 4; p++) if (evalCash(got, w, p) !== evalCash(hand, w, p)) {
+    if (fitsExample(got) && !fitsExample(hand)) { unknown.push({ mode: m, why: `the old hand table disagreed with the page at wave ${w}, ${p} players; the page (its worked example agrees) is used` }); return got; }
+    unknown.push({ mode: m, why: `wave bonus read from the page differs from the hand table at wave ${w}, ${p} players; hand table used` }); return hand;
+  }
+  return got;
+}
+function pickClear(m, t) {
+  const got = clearOf(t), hand = CLEAR[m];
+  if (!got && !hand) { unknown.push({ mode: m, why: 'wave clear bonus not readable; none' }); return [0, 0, false]; }
+  if (!got) return hand;
+  if (hand && JSON.stringify(got) !== JSON.stringify(hand)) { unknown.push({ mode: m, why: `wave clear bonus read as ${JSON.stringify(got)}, hand table ${JSON.stringify(hand)} used` }); return hand; }
+  return got;
+}
+
 // rewards (each mode page's ==Rewards== table): R ÷ (1 + [(N ÷ Current Wave) − 1]^k) + triumph bonus, per currency
 const CUR = { Coins: 'coins', Gem: 'gems', Exp: 'exp', TowerExp: 'texp' };
 function rewards(m, t, W, total) {
@@ -109,9 +171,46 @@ for (const m of MODES) {
   const w = waves(t); Object.values(w).flat().forEach(x => used.add(x.e));
   const rw = strip(field(ib, 'rewards'));
   const timers = []; const tt = t.slice(t.search(/!Wave Timer/)); for (const r of tt.split('|}')[0].split('|-').slice(1)) { const c = r.split('\n').map(x => x.replace(/^\|/, '').trim()).filter(Boolean).map(strip); const [a, b = a] = c[0].split('-').map(Number); const sec = s => /∞/.test(s) ? null : s.split(':').reduce((x, y) => x * 60 + +y, 0); timers.push({ from: a, to: b, timer: sec(c[1]), skipAfter: /N\/A/.test(c[2] ?? '') ? null : sec(c[2] ?? '0:20') }); }
+  const W0 = num(field(ib, 'waves')), cash = pickCash(m, t, W0), clr = pickClear(m, t), st = startOf(field(ib, 'starting_cash')) ?? START[m] ?? null;
+  if (START[m] && st && JSON.stringify(st) !== JSON.stringify(START[m])) unknown.push({ mode: m, why: `starting cash read as ${JSON.stringify(st)} (used); hand table ${JSON.stringify(START[m])}` });
   modes[m] = { waves: num(field(ib, 'waves')), level: num(strip(field(ib, 'level_requirement'))) ?? 0, startCash: num(strip(field(ib, 'starting_cash'))), baseHP: num(field(ib, 'max_health')) ?? 200,
-    waveCash: CASH[m], clear: { solo: CLEAR[m][0], group: CLEAR[m][1], noDamage: CLEAR[m][2] }, startBy: START[m] ?? null, rewards: rewards(m, t, num(field(ib, 'waves')), field(ib, 'rewards') ?? ''), hpScale: hpScale(field(ib, 'health_scale')), timers, wave: w, src: `https://tds.fandom.com/wiki/${m}_Mode` };
+    waveCash: cash, clear: { solo: clr[0], group: clr[1], noDamage: clr[2] }, startBy: st, rewards: rewards(m, t, num(field(ib, 'waves')), field(ib, 'rewards') ?? ''), hpScale: hpScale(field(ib, 'health_scale')), timers, wave: w, src: `https://tds.fandom.com/wiki/${m}_Mode` };
   if (!field(ib, 'max_health')) unknown.push({ mode: m, why: 'baseHP not on page; using 200 (Fallen value)' });
+}
+// party limits (Elevators page / Matchmaking page: Hardcore and Voidcore have no quads)
+for (const m of ['Hardcore', 'Voidcore']) if (modes[m]) modes[m].maxPlayers = 3;
+// Voidcore: entering needs a Hardcore triumph (Levels page) and skills are off there (Skills page)
+if (modes.Voidcore) {
+  if (/Voidcore[^\n]{0,80}requires previously beating[^\n]{0,10}Hardcore/i.test(LV)) modes.Voidcore.needsTriumph = 'Hardcore'; else { modes.Voidcore.needsTriumph = 'Hardcore'; unknown.push({ mode: 'Voidcore', why: 'Hardcore triumph gate not found on the Levels page (kept)' }); }
+  if (/Voidcore/.test(C('Skills').slice(0, 4000))) modes.Voidcore.noSkills = true;
+}
+// Hidden Wave (its own page): Fallen waves 41 and "???" (= 42); dialogue cells are skipped, only enemy groups are read
+const HW = C('Hidden Wave');
+if (HW && modes.Fallen) {
+  const ws = HW.slice(HW.indexOf('===Wave Structure==='), HW.indexOf('==Strategy=='));
+  const tabs = ws.split('{|').slice(1).map((x) => x.split('|}')[0]);
+  const lab = (c) => (/\?\?\?/.test(c) ? 42 : num(c));
+  const timers = [];
+  for (const r of (tabs[0] ?? '').split('|-').slice(1)) { const c = r.split('\n').map((x) => x.replace(/^\|/, '').trim()).filter(Boolean).map(strip); if (c.length < 2) continue; const w = lab(c[0]); if (!w) continue; timers.push({ from: w, to: w, timer: /∞/.test(c[1]) ? null : c[1].split(':').reduce((a, b) => a * 60 + +b, 0), skipAfter: null }); }
+  let cur = null; const hw = {};
+  for (const l of (tabs[1] ?? '').split('\n')) {
+    const x = l.match(/^\|\s*(?:rowspan="\d+"\s*\|)?\s*(\d+|\?\?\?)\s*$/); if (x) { cur = lab(x[1]); continue; }
+    if (cur && /\d+x\s*(?:''')?\[\[/.test(l) && !hw[cur]) hw[cur] = parse(l);
+  }
+  for (const [w, g] of Object.entries(hw)) { modes.Fallen.wave[w] = g; g.forEach((x) => used.add(x.e)); }
+  const codes = HW.match(/type "(\d+)", "(\d+)" and "(\d+)"/)?.slice(1) ?? [];
+  const rw = (field(HW, 'rewards') ?? '').split(/<br\s*\/?>/).map((v) => ({ label: v.match(/\{\{Color\|(\w+)\}\}/)?.[1] ?? strip(v).match(/\(([^)]*)\)\s*$/)?.[1] ?? '', gems: num(v.match(/\{\{Gem\|\+?([\d,]+)/)?.[1] ?? '') ?? 0, exp: num(v.match(/\{\{Exp\|([\d,]+)/)?.[1] ?? '') ?? 0, texp: num(v.match(/\{\{TowerExp\|([\d,]+)/)?.[1] ?? '') ?? 0 })).filter((r) => r.gems || r.exp);
+  modes.Fallen.hidden = { codes, baseHP: num(HW.match(/base health needs to be reduced to (\d+)/)?.[1] ?? '') ?? 1, king: HW.match(/on Wave 40, the \[\[([^\]|]+)/)?.[1] ?? 'Fallen King', kingWithin: num(HW.match(/defeated in under (\d+) seconds/)?.[1] ?? '') ?? 60, timers, rewards: rw };
+  for (const tm of timers) if (!modes.Fallen.timers.some((x) => x.from === tm.from)) modes.Fallen.timers.push(tm);
+  if (codes.length !== 3) unknown.push({ mode: 'Fallen', why: 'Hidden Wave codes not read' });
+  if (!hw[41] || !hw[42]) unknown.push({ mode: 'Fallen', why: 'Hidden Wave enemy groups not read' });
+  unknown.push({ mode: 'Fallen', why: 'Hidden Wave rewards are listed per difficulty label; the last regular label is used, the first-triumph gem bonus is added once' });
+}
+// Sandbox (its own page): infinite cash, no waves of its own, no rewards; enemies and waves are summoned by the players
+{
+  const t = C('Sandbox Mode'), ib = t.slice(t.indexOf('ModeInfobox'));
+  modes.Sandbox = { waves: 0, level: num(strip(field(ib, 'level_requirement') ?? '')) ?? 250, startCash: num(strip(field(ib, 'starting_cash') ?? '')) ?? 9999999999, startBy: null, baseHP: num(field(ib, 'max_health') ?? '') ?? 200,
+    waveCash: { pieces: [{ to: 99, e: '0' }], mult: [1, 1, 1, 1] }, clear: { solo: 0, group: 0, noDamage: false }, rewards: {}, hpScale: [0, 0, 0, 0], timers: [], wave: {}, sandbox: true, src: 'https://tds.fandom.com/wiki/Sandbox_Mode' };
 }
 
 // ---------- enemies ----------
@@ -160,19 +259,50 @@ function abilities(name, t) {
     if (fat || rng) out.push({ ...a, kind: 'debuff', onDeath: /upon (its )?death/i.test(txt), fatigue: fat ?? 0, range: rng ?? 0, dur: num(/for ([\d.]+) seconds/i) ?? 10, radius, unitDmg: num(/deals? ([\d,]+) damage to units/i) });
     const heal = txt.match(/heals? any enemy in a radius of ([\d.]+) by ([\d,]+) every ([\d.]+)/i);
     if (heal) out.push({ ...a, kind: 'heal', radius: +heal[1], amount: +heal[2].replace(/,/g, ''), every: +heal[3] });
-    const sp = txt.match(/upon death.*?([\d.]+)% speed buff.*?for ([\d.]+) seconds/i);
+    const sp = txt.match(/upon (?:its )?death.*?([\d.]+)% speed (?:buff|boost).*?for ([\d.]+) seconds/i);
     if (sp) out.push({ ...a, kind: 'speedAura', onDeath: true, pct: +sp[1], dur: +sp[2], radius: radius ?? 6 });
     const dg = txt.match(/Gains ([\d.]+)% defense as its health is reduced until it reaches at least ([\d.]+)% defense/i);
     if (dg) out.push({ ...a, kind: 'boneArmor', step: +dg[1], max: +dg[2] });
+    const big = (x) => +String(x).replace(/,/g, '');
+    // phases: at a health threshold the enemy changes (becomes hidden, a new speed, Aggro, a shield, a pause)
+    const ph = txt.match(/(?:upon|when|after)[^.]*?(reaching|reaches|going below|losing) (?:(\d+(?:\.\d+)?)% of its (?:default )?health|half(?: of its default)? health|([\d,]+) health)/i) ?? (/(?:^|\. )at half health/i.test(txt) ? [null, 'reaching', '50', null] : null);
+    if (ph) {
+      const p = { ...a, kind: 'phase', at: ph[2] ? (/losing/i.test(ph[1]) ? 1 - +ph[2] / 100 : +ph[2] / 100) : ph[3] ? null : 0.5, atHp: ph[3] ? big(ph[3]) : null };
+      if (/becomes (?:a )?hidden/i.test(txt)) p.hidden = true;
+      const v = txt.match(/speed (?:is set to|to) ([\d.]+)/i); if (v) p.speed = +v[1];
+      if (/gains? (?:the )?Aggro/i.test(txt)) p.aggro = true;
+      const sh = txt.match(/gains? ([\d,]+) Shield Health/i) ?? txt.match(/Shield Health to ([\d,]+)/i); if (sh) p.shield = big(sh[1]);
+      if (/stops moving/i.test(txt)) p.stop = 3;
+      if (p.hidden || p.speed || p.aggro || p.shield || p.stop) out.push(p);
+    }
+    // healing left on the path
+    const hz = txt.match(/heals? enemies by ([\d,]+) health every ([\d.]+) seconds?/i) ?? txt.match(/heals? (?:any )?enem(?:y|ies)[^.]*? by ([\d,]+)[^.]*?every ([\d.]+)/i);
+    if (hz && !heal) out.push({ ...a, kind: 'healZone', amount: big(hz[1]), every: +hz[2], dur: num(/last(?:s|ing)? ([\d.]+) seconds/i) ?? 5, radius: radius ?? 4, onDeath: /upon (its )?death/i.test(txt) });
+    // towers frozen by an attack
+    const fz = txt.match(/freez(?:es|ing)[^.]*?for ([\d.]+) seconds?/i) ?? txt.match(/frozen for ([\d.]+) seconds?/i);
+    if (fz && /tower/i.test(txt)) out.push({ ...a, kind: 'freezeTower', dur: +fz[1], radius: radius ?? num(/range of ([\d.]+)/i), max: nOf(txt.match(/up to (\w+) (?:different )?towers?/i)?.[1]) ?? null, unitDmg: num(/([\d,]+) damage to units/i) });
+    // explosions that hurt units
+    const ub = txt.match(/deals? ([\d,]+) damage to units in a radius of ([\d.]+)/i);
+    if (ub && !(fat || rng) && !out.some((o) => o.kind === 'stun' || o.kind === 'freezeTower')) out.push({ ...a, kind: 'unitBlast', unitDmg: big(ub[1]), radius: +ub[2], onDeath: /upon (its )?death/i.test(txt) });
+    // gifts: nearby enemies get an attribute
+    const gf = txt.match(/gives enemies (?:the )?(Bloated|Blessed|Aggro)(?:,? or (Bloated|Blessed|Aggro))? attributes?/i);
+    if (gf) out.push({ ...a, kind: 'gift', attrs: [gf[1], gf[2]].filter(Boolean), radius: num(/explosion (?:radius|range) of ([\d.]+)/i) ?? 6 });
+    // revives another enemy after a delay
+    const rv = txt.match(/reviving the ([\w ]+?) to ([\d,]+) health/i);
+    if (rv) out.push({ ...a, kind: 'revive', target: rv[1].trim(), hp: big(rv[2]), dur: num(/spend ([\d.]+) seconds/i) ?? 10 });
+    // becomes or spawns random enemies on death
+    const rs = txt.match(/upon death, spawns (?:into )?(?:a random enemy|(\w+) enem(?:y|ies))/i);
+    if (rs && !out.some((o) => o.kind === 'deathSpawn')) out.push({ ...a, kind: 'deathRandom', n: rs[1] ? nOf(rs[1]) ?? 1 : 1 });
   }
-  for (const a of out) { if ((a.kind === 'summon' || a.kind === 'stun' || a.kind === 'debuff' && !a.onDeath) && a.cd == null) { a.cd = 10; unknown.push({ enemy: name, why: `${a.title}: cooldown not on the page (10 s)` }); } if ((a.kind === 'stun' || a.kind === 'debuff' && !a.onDeath) && a.radius == null) { a.radius = 12; unknown.push({ enemy: name, why: `${a.title}: area not given (12 studs)` }); } }
+  for (const a of out) { if ((a.kind === 'freezeTower' || a.kind === 'gift' || a.kind === 'healZone' && !a.onDeath || a.kind === 'unitBlast' && !a.onDeath) && a.cd == null) { a.cd = 10; unknown.push({ enemy: name, why: `${a.title}: cooldown not on the page (10 s)` }); } if (a.kind === 'freezeTower' && a.radius == null) { a.radius = 12; unknown.push({ enemy: name, why: `${a.title}: area not given (12 studs)` }); }
+  if ((a.kind === 'summon' || a.kind === 'stun' || a.kind === 'debuff' && !a.onDeath) && a.cd == null) { a.cd = 10; unknown.push({ enemy: name, why: `${a.title}: cooldown not on the page (10 s)` }); } if ((a.kind === 'stun' || a.kind === 'debuff' && !a.onDeath) && a.radius == null) { a.radius = 12; unknown.push({ enemy: name, why: `${a.title}: area not given (12 studs)` }); } }
   return out;
 }
 for (const [n, e] of Object.entries(enemies)) { const ab = abilities(n, C(n)); if (ab.length) e.abilities = ab; }
 
 // children: who spawns whom
 for (const [n, e] of Object.entries(enemies)) for (const p of e.spawnedBy) if (enemies[p] && !enemies[p].spawns?.includes(n)) (enemies[p].spawns ??= []).push(n);
-for (const [n, e] of Object.entries(enemies)) if (e.spawns && !e.abilities?.some(a => a.spawn)) { e.spawnMode = e.boss || /Necromancer|Summoner|Grave Digger|Necrotic|Mystery|Mandrake|Mandragora/.test(n) ? 'periodic' : 'death'; unknown.push({ enemy: n, why: `spawn mode/count guessed (${e.spawnMode})` }); }
+for (const [n, e] of Object.entries(enemies)) if (e.spawns && !e.abilities?.some(a => a.spawn || a.kind === 'deathRandom')) { e.spawnMode = e.boss || /Necromancer|Summoner|Grave Digger|Necrotic|Mystery|Mandrake|Mandragora/.test(n) ? 'periodic' : 'death'; unknown.push({ enemy: n, why: `spawn mode/count guessed (${e.spawnMode})` }); }
 
 // ---------- rules (lobby and economy pages) ----------
 const plain = (t) => strip(t.replace(/<gallery>[\s\S]*?<\/gallery>/g, '').replace(/\{\{(Coins|Exp|Money|Gem)\|([^}]*)\}\}/g, '$2 $1')).replace(/\s+/g, ' ');
@@ -209,9 +339,70 @@ const quests = [
   Q('TOWER Support Ops', 'weekly', (t) => [{ do: 'ability', tower: true, support: true, need: span(t, /requires ([\d]+) to ([\d]+) ability uses/) }, { do: 'triumph', tower: true, support: true, times: span(t, /requires ([\d]+) to ([\d]+) triumphs/) }]),
 ];
 const daily = nOf(must(/(\w+) of these appear every day/i, plain(QT), 'daily count')[1]), weekly = nOf(must(/(\w+) appear every week/i, plain(QT), 'weekly count')[1]);
+// ---------- units (Units page: tower → unit names; each unit's own infobox) ----------
+const UT = C('Units'), unitList = {}; { let cur = null; for (const l of UT.split('\n')) { const h = l.match(/mainheader">\[\[([^\]|]+)/); if (h) { cur = h[1]; unitList[cur] = []; continue; } const u = l.match(/^\|\[\[(?!File:)([^\]|]+)/); if (cur && u && !unitList[cur].includes(u[1])) unitList[cur].push(u[1]); } }
+const SPEED = { 'very slow': 1.5, slow: 2.5, average: 4, fast: 6, 'very fast': 8 };
+const unitDet = (s) => { s = strip(s ?? ''); if (!s || /^No\b/i.test(s)) return null; const l = s.match(/Level (\d+)/i); return l ? +l[1] : /yes/i.test(s) ? 0 : null; };
+const units = {};
+for (const [tw, list] of Object.entries(unitList)) list.forEach((u, order) => {
+  const t = C(u); if (!t) { unknown.push({ unit: u, why: 'page missing' }); return; }
+  const ib = t.slice(0, t.indexOf('\n}}') > 0 ? t.indexOf('\n}}') + 3 : undefined), f = (k) => field(ib, k);
+  const n1 = (k) => num(strip((f(k) ?? '').split(/<br/)[0]));
+  const sp = strip((f('speed') ?? '').split(/<br/)[0]), spn = num(sp), spd = spn ?? SPEED[sp.toLowerCase()] ?? null;
+  if (spn == null && sp) unknown.push({ unit: u, why: `speed "${sp}" read as ${spd ?? 0} studs/s` });
+  const every = (f('spawnrate') ?? '').match(/every ([\d.]+)\s*s/)?.[1], dt = strip(f('damage_type') ?? ''), type = strip(f('type') ?? '') || null;
+  const splash = n1('explosion_radius') ?? n1('explosion_range') ?? n1('splash_radius');
+  units[u] = { tower: tw, order, level: n1('level') ?? 0, type, hp: n1('health') ?? 0, spawnrate: every ? +every : n1('spawnrate'), lifespan: n1('lifespan'),
+    dmg: n1('ranged_damage') ?? n1('damage') ?? 0, fr: n1('ranged_firerate') ?? n1('firerate'), range: n1('ranged_range') ?? n1('range') ?? 0, burst: n1('ranged_burst') ?? n1('burst'), burstCd: n1('cooldown'),
+    splash: splash ?? (/splash/i.test(dt) ? 3 : null), splashDmg: n1('splash_damage') ?? n1('explosion_damage'), collision: /collision/i.test(dt), speed: spd ?? 0,
+    stationary: spd === 0 || /stationary|sentry|turret/i.test(`${type ?? ''} ${u}`), detect: { hidden: unitDet(f('hidden')), lead: unitDet(f('lead')), flying: unitDet(f('flying') ?? f('fly')) } };
+  if (!units[u].hp) unknown.push({ unit: u, why: 'health not on its page' });
+  if (/splash/i.test(dt) && splash == null) unknown.push({ unit: u, why: 'splash radius not given (3 studs)' });
+});
+
+// ---------- skills (Skills page) ----------
+const SKT = C('Skills'), skillList = [];
+for (const x of SKT.matchAll(/\{\{Skill\n([\s\S]*?)\n\|cost =/g)) {
+  const f = Object.fromEntries(x[1].split('\n').filter((l) => l.startsWith('|')).map((l) => { const i = l.indexOf('='); return [l.slice(1, i).trim(), l.slice(i + 1).trim()]; }));
+  const d = strip(f.description ?? '');
+  const N = '(\\d+(?:\\.\\d+)?)', R = (re) => d.match(new RegExp(re.replace(/N/g, N), 'i'));
+  const ev = d.match(/every (\d+)(?:st|nd|rd|th)/i), mult = R('N ?x');
+  const per = ev ? R('(?:decreasing|Decreases) by N') : R('by N(%)?') ?? R('N(%) more');
+  const base = R('base cost of N'), exp = R('exponential value of N'), req = d.match(/reaching Level (\d+) in ([\w' -]+?) before/i);
+  const duo = R('In duo, it is N'), trio = R('trio and higher it is N');
+  skillList.push({ name: f.name, type: f.type, levels: +f.levels, per: per ? +per[1] : null, pct: !!per?.[2], base: base ? +base[1] : null, exp: exp ? +exp[1] : null,
+    ...(req && { req: { level: +req[1], name: req[2].trim() } }), ...(ev && { every: +ev[1], mult: mult ? +mult[1] : 1 }), ...(duo && { duo: +duo[1] }), ...(trio && { trio: +trio[1] }) });
+  if (!per || !base || !exp) unknown.push({ skill: f.name, why: 'effect or cost numbers not all on the page' });
+}
+const skCost = (sk, L) => Math.round(Math.floor(Math.pow(sk.base * L, sk.exp)) / 5) * 5;
+{ const eo = skillList.find((x) => x.name === 'Enhanced Optics'); if (eo && (skCost(eo, 1) !== 20 || skCost(eo, 2) !== 75)) unknown.push({ skill: 'Enhanced Optics', why: `cost formula gives ${skCost(eo, 1)}/${skCost(eo, 2)} for levels 1/2 (page table: 20/75)` }); }
+const skRaw = SKT.slice(SKT.indexOf('===Resetting Skills==='), SKT.indexOf('==Skills=='));
+const SKILLS = { list: skillList, refund: num(skRaw.match(/given back ([\d.]+)%/)?.[1] ?? '') != null ? num(skRaw.match(/given back ([\d.]+)%/)[1]) / 100 : 0.95,
+  resetCost: num(skRaw.match(/pay \{\{Coins\|([\d,]+)\}\} to reset/)?.[1] ?? '') ?? 200, resetStep: num(skRaw.match(/more expensive by \{\{Coins\|([\d,]+)\}\}/)?.[1] ?? '') ?? 200 };
+unknown.push({ skill: 'Scholar', why: 'Logbooks are not part of this addon; the skill can be bought but does nothing' });
+
+// ---------- badges (each mode page's Badges/Achievements section) ----------
+const BADGES = [];
+for (const m of [...MODES, 'Hidden Wave']) {
+  const t = C(m === 'Hidden Wave' ? m : `${m} Mode`), at = t.search(/^===\s*(?:Badges|Achievements)[^=]*===/m); if (at < 0) continue;
+  const rest = t.slice(at + 5), end = rest.search(/^==[^=]|^===\s*(?!Badges|Achievements)[^=]+===/m), sec = end > 0 ? rest.slice(0, end) : rest;
+  for (const b of sec.matchAll(/\{\{\w+\s*\n([\s\S]*?)\n\}\}/g)) {
+    const f = Object.fromEntries(b[1].split('\n').filter((l) => l.startsWith('|')).map((l) => { const i = l.indexOf('='); return [l.slice(1, i).trim(), l.slice(i + 1).trim()]; }));
+    if (!f.description) continue;
+    const desc = strip(f.description), tm = desc.match(/^Triumph (?:in )?([\w ]+?)(?: mode)?\.?$/i), rw = f.rewards ?? '';
+    const name = strip(f.name ?? f.title ?? f.badge ?? '').slice(0, 40) || desc.slice(0, 40);
+    const mode = tm && (MODES.includes(tm[1].trim()) || tm[1].trim() === 'Hidden Wave') ? (tm[1].trim() === 'Hidden Wave' ? 'Hidden Wave' : tm[1].trim()) : (m === 'Hidden Wave' ? 'Hidden Wave' : m);
+    BADGES.push({ name, mode, cond: tm ? 'triumph' : 'other', coins: num(rw.match(/\{\{Coins\|([\d,]+)/)?.[1] ?? '') ?? 0, gems: num(rw.match(/\{\{Gem\|([\d,]+)/)?.[1] ?? '') ?? 0, crate: rw.match(/\[\[([^\]|]*Crate)/)?.[1] ?? null });
+    if (!tm) unknown.push({ badge: name, mode: m, why: 'condition is not a plain triumph; not awarded here' });
+  }
+}
+
 const rules = { sellRate: 1 / 3, cashSplit: 'equal, rounded half up', xpBoost: { mult: +xb[4], utcDays: Array.from({ length: (d1 - d0 + 7) % 7 }, (_, i) => (d0 + i) % 7) }, intermission: 5,
-  elevators: { Survival: lift('Survival'), Hardcore: { ...lift('Hardcore'), rotate: /map changing every minute/.test(EL) ? 60 : null } }, levelRewards: Object.fromEntries(Object.entries(levelRewards).filter(([k]) => k !== 'fifthSlot')), fifthSlot: levelRewards.fifthSlot,
-  quests: { daily, weekly, list: quests, statuses: ['Frost', 'Freeze', 'Poison', 'Shock'] } };
+  elevators: { Survival: lift('Survival'), Hardcore: { ...lift('Hardcore'), rotate: /map changing every minute/.test(EL) ? 60 : null }, Voidcore: { ...lift('Voidcore'), rotate: /map changing every minute/.test(EL) ? 60 : null } }, levelRewards: Object.fromEntries(Object.entries(levelRewards).filter(([k]) => k !== 'fifthSlot')), fifthSlot: levelRewards.fifthSlot,
+  quests: { daily, weekly, list: quests, statuses: ['Frost', 'Freeze', 'Poison', 'Shock'] }, skills: SKILLS, badges: BADGES };
+// match modifiers the engine reproduces (each page's |rewards_increase; the effects are written in src/game.ts and src/modifiers.ts)
+const MODS = ['Healthy Enemies', 'Speedy Enemies', 'Double Health', 'Small', 'Tanky Enemies', 'Hidden Enemies', 'Flying Enemies', 'Lost Souls', 'Exploding Enemies', 'Glass', 'Broke', 'Committed', 'Inflation', 'Limitation Makes Creativity', 'Quarantine', 'Fog', 'Random Tower Positions', 'Farm Banned', 'Gatling Gun Banned'];
+rules.modifiers = MODS.map((n) => { const t = C(n), r = strip(field(t, 'rewards_increase') ?? ''); const pct = num(r); if (!t) unknown.push({ modifier: n, why: 'page missing' }); return { name: n, reward: /none/i.test(r) || pct == null ? 0 : pct / 100, affects: strip(field(t, 'affects') ?? '').replace(/\s+/g, ' ') || null }; });
 w0('rules.json', rules);
 const ratio = Object.entries(towers).filter(([n, t]) => { let cum = 0; const seq = [t.sell, ...[...C(n).matchAll(/Sell Price changes to \{\{Money\|([\d,.]+)\}\}/g)].map((x) => num(x[1]))].slice(0, t.levels.length); return !seq.every((g, i) => g == null || ((cum += t.levels[i].cost ?? 0), g === Math.floor(cum / 3) || g === Math.round(cum / 3))); }).map(([n]) => n);
 unknown.push({ rule: 'sellRate', why: `sell = ⌊spent ÷ 3⌋ fits the wiki's sell prices of ${Object.keys(towers).length - ratio.length} of ${Object.keys(towers).length} towers; ${ratio.join(', ')} list prices that disagree with their own costs` });
@@ -228,5 +419,7 @@ for (const [k, v] of Object.entries({ spawnGap: '0.6 s between enemies of a grou
   questMaps: 'Weekly Expedition asks for three maps; only as many maps as exist here are asked',
   crates: 'crates from quests are counted on the profile; opening them is not part of this addon' })) unknown.push({ rule: k, why: v });
 const w = w0;
-w('towers.json', towers); w('modes.json', modes); w('enemies.json', enemies); w('_unknown.json', unknown);
-console.log('towers', Object.keys(towers).length, 'modes', Object.keys(modes).length, 'enemies', Object.keys(enemies).length, 'unknown', unknown.length);
+// guesses the engine makes (written by the engine side; listed here so _unknown.json stays the one list)
+try { for (const g of JSON.parse(fs.readFileSync(new URL('./engine_guesses.json', import.meta.url), 'utf8'))) unknown.push(g); } catch { /* none yet */ }
+w('towers.json', towers); w('modes.json', modes); w('enemies.json', enemies); w('units.json', units); w('_unknown.json', unknown);
+console.log('towers', Object.keys(towers).length, 'modes', Object.keys(modes).length, 'enemies', Object.keys(enemies).length, 'units', Object.keys(units).length, 'skills', skillList.length, 'badges', BADGES.length, 'unknown', unknown.length);

@@ -1,9 +1,24 @@
 {
-  "resource_pack_name": "tds",
-  "texture_name": "atlas.items",
-  "texture_data": {
-    "tds_wand": {
-      "textures": "textures/items/wand"
-    }
+ "resource_pack_name": "tds",
+ "texture_name": "atlas.items",
+ "texture_data": {
+  "tds_wand": {
+   "textures": "textures/items/wand"
+  },
+  "tds_slot_1": {
+   "textures": "textures/items/slot_1"
+  },
+  "tds_slot_2": {
+   "textures": "textures/items/slot_2"
+  },
+  "tds_slot_3": {
+   "textures": "textures/items/slot_3"
+  },
+  "tds_slot_4": {
+   "textures": "textures/items/slot_4"
+  },
+  "tds_slot_5": {
+   "textures": "textures/items/slot_5"
   }
+ }
 }

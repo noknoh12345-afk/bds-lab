@@ -7,24 +7,43 @@
     "default": "entity_alphatest"
    },
    "textures": {
-    "t0": "textures/entity/skeleton/skeleton",
-    "t1": "textures/entity/skeleton/stray",
-    "t2": "textures/entity/skeleton/wither_skeleton",
-    "t3": "textures/entity/skeleton/skeleton",
-    "t4": "textures/entity/skeleton/stray",
-    "t5": "textures/entity/skeleton/wither_skeleton",
-    "t6": "textures/entity/skeleton/skeleton",
-    "t7": "textures/entity/skeleton/stray"
+    "t0": "textures/entity/tds/unit_0",
+    "t1": "textures/entity/tds/unit_1",
+    "t2": "textures/entity/tds/unit_2",
+    "t3": "textures/entity/tds/unit_3",
+    "t4": "textures/entity/tds/unit_4",
+    "t5": "textures/entity/tds/unit_1",
+    "t6": "textures/entity/tds/unit_1",
+    "t7": "textures/entity/tds/unit_1"
    },
    "geometry": {
-    "default": "geometry.skeleton.v1.8"
+    "g0": "geometry.tds.unit_vehicle",
+    "g1": "geometry.tds.unit_humanoid",
+    "g2": "geometry.tds.unit_sentry",
+    "g3": "geometry.tds.unit_humanoid",
+    "g4": "geometry.tds.unit_ice",
+    "g5": "geometry.tds.unit_humanoid",
+    "g6": "geometry.tds.unit_humanoid",
+    "g7": "geometry.tds.unit_humanoid"
    },
    "scripts": {
-    "scale": "query.property('tds:size')"
+    "scale": "0.4 * query.property('tds:size')",
+    "animate": [
+     {
+      "walk": "query.property('tds:skin') == 1 || query.property('tds:skin') == 3 || query.property('tds:skin') > 4"
+     },
+     {
+      "spin": "query.property('tds:skin') == 2 || query.property('tds:skin') == 4"
+     }
+    ]
    },
    "render_controllers": [
-    "controller.render.tds_s"
-   ]
+    "controller.render.tds_unit"
+   ],
+   "animations": {
+    "walk": "animation.tds.walk",
+    "spin": "animation.tds.spin"
+   }
   }
  }
 }
