@@ -1201,7 +1201,10 @@
   "tries": 1
  },
  "q51_file_warm": {
-  "status": "pending"
+  "commit": "56c4254",
+  "run": "42136474382",
+  "started": "2026-11-06 00:23",
+  "status": "running"
  },
  "q52_file_seek": {
   "status": "pending"
