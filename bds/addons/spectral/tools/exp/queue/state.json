@@ -1227,10 +1227,39 @@
   "tries": 1
  },
  "q53_limiter_l12": {
+  "arms": {
+   "e": {
+    "mrstft": 1.73,
+    "n": 13,
+    "rms_db": -39,
+    "third_oct_db": 7.921,
+    "visqol": 2.963
+   },
+   "l12": {
+    "mrstft": 1.7,
+    "n": 13,
+    "rms_db": -37.2,
+    "third_oct_db": 7.802,
+    "visqol": 3.365
+   },
+   "l12lm": {
+    "mrstft": 1.73,
+    "n": 13,
+    "rms_db": -40,
+    "third_oct_db": 7.728,
+    "visqol": 2.854
+   }
+  },
+  "checkpoints": 0,
   "commit": "bd886c3",
+  "conclusion": "success",
+  "ended": "2026-11-06 01:53",
+  "failed_steps": 0,
+  "recordings": 39,
   "run": "42142173358",
   "started": "2026-11-06 01:11",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q54_voices_28_32": {
   "status": "pending"
