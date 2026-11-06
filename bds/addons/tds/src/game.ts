@@ -101,7 +101,8 @@ export function start(mode: string, players: Player[], map = DEFAULT_MAP) {
   const cash = md.startCash + (players.length > 1 ? 100 : 0);
   M = { mode, map, players: players.map((p) => p.name), cash: Object.fromEntries(players.map((p) => [p.name, cash])), baseHP: md.baseHP, maxHP: md.baseHP, wave: 0, t: 0, waveEnd: 5, skipAt: 0,
     queue: [], enemies: [], towers: [], units: [], seq: 1, votes: [], stats: { kills: 0, leaks: 0, dealt: 0, income: 0 }, clearPaid: false, leakedThisWave: false, seed: 1 };
-  for (const p of players) p.teleport({ x: 0.5, y: maps[map].y + 0.2, z: 0.5 });
+  const g = maps[map].grid[32]?.[32], onPath = path.dist(0.5, 0.5) < path.width / 2 + 0.5;
+  for (const p of players) p.teleport({ x: 0.5, y: maps[map].y + (g === 'x' && !onPath ? 2.2 : 0.2), z: 0.5 });
   if (holdNext) { M.hold = true; holdNext = false; }
   log('match_start', { mode, map, players: M.players, cash, baseHP: md.baseHP, pathStuds: +path.len.toFixed(1) });
   persist();

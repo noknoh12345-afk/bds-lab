@@ -11,14 +11,16 @@ const inMatch = (p: Player) => !!G.M && G.M.players.includes(p.name);
 const loadout = (p: Player) => ((G.M as any)?.loadouts?.[p.name] as string[] | undefined) ?? prof(p).loadout;
 
 // ---------- match commands ----------
-cmd('tds:play', 'Start a match now (solo or everyone online)', { mode: MODE_NAMES as unknown as string[], 'all?': 'bool' }, (p, a) => {
+const MAP_IDS = Object.keys(maps).map((m) => m.replace(/ /g, '_'));
+cmd('tds:play', 'Start a match now (solo or everyone online)', { mode: MODE_NAMES as unknown as string[], 'all?': 'bool', 'map?': MAP_IDS }, (p, a) => {
   const md = modes[a.mode]; if (!md) return `Modes: ${MODE_NAMES.join(' ')}`;
   if (prof(p).level < md.level && !p.hasTag('tds_dev')) return `${a.mode} needs level ${md.level}`;
   const ps = a.all ? world.getAllPlayers() : [p];
-  G.start(a.mode, ps); if (G.M) (G.M as any).loadouts = Object.fromEntries(ps.map((x) => [x.name, prof(x).loadout]));
+  G.start(a.mode, ps, a.map ? T(a.map) : undefined); if (G.M) (G.M as any).loadouts = Object.fromEntries(ps.map((x) => [x.name, prof(x).loadout]));
   for (const x of ps) give(x, 'tds:wand', 1);
   return `${a.mode}: ${md.waves} waves, $${G.M!.cash[p.name]}`;
 });
+cmdAny('tds:maps', 'Maps traced from the wiki', {}, () => Object.entries(maps).map(([n, m]) => `${n} (${m.pathStuds} studs)`).join(', '));
 cmd('tds:queue', 'Enter an elevator', { lift: MODE_NAMES as unknown as string[] }, (p, a) => queue(p, a.lift));
 cmd('tds:leave', 'Leave the elevator', {}, (p) => { leaveLift(p.name); return 'Left'; });
 cmdAny('tds:depart', 'Elevator leaves now (test)', { liftmode: MODE_NAMES as unknown as string[] }, (_, a) => { departNow(a.liftmode); return 'ok'; }, true);

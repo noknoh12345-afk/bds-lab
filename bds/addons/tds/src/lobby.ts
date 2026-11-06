@@ -1,6 +1,6 @@
 // Out-of-match progression: profile (coins, gems, exp, level), tower shop, loadout, elevators, quests, rewards.
 import { world, system, Player } from '@minecraft/server';
-import { towers, modes, expFor, RULES } from './defs';
+import { towers, modes, maps, expFor, RULES } from './defs';
 import { M, start, log, onEnd, Match } from './game';
 
 export type Profile = { coins: number; gems: number; exp: number; level: number; owned: string[]; loadout: string[]; quests: Record<string, number>; day: number; wins: Record<string, number> };
@@ -57,7 +57,7 @@ system.runInterval(() => {
     if (!ps.length) continue;
     log('elevator_depart', { mode: l.mode, players: l.players });
     const lo = Object.fromEntries(ps.map((p) => [p.name, prof(p).loadout]));
-    start(l.mode, ps); if (M) (M as Match & { loadouts?: Record<string, string[]> }).loadouts = lo;
+    const names = Object.keys(maps); start(l.mode, ps, names[Math.floor(Math.random() * names.length)]); if (M) (M as Match & { loadouts?: Record<string, string[]> }).loadouts = lo;
   }
 }, 20);
 

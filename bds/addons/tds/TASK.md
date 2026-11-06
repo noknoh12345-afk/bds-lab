@@ -7,6 +7,7 @@ Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki:
 - [ ] data from the wiki: every tower, enemy and mode loaded; tower rows match the wiki tables
 - [ ] bench: every tower level shoots a dummy at the wiki's Damage ÷ Firerate (±5%), hits inside its range and never outside
 - [ ] map from the wiki image: Grass Isle path = 48.67 s at speed 3.5 (≈170 studs); a Normal (2.7) walks it in ≈63 s
+- [ ] second map from the wiki image: Crossroads (00:48.44 at speed 3.5 ≈ 170 studs)
 - [ ] placement rules: path, cliff/ground, overlap, cost, upgrade and sell (1/3 of spent)
 - [ ] detection: a tower without hidden/lead/flying detection lets those enemies pass; with it, they die
 - [ ] economy: Easy wave bonus (200 + (w-1)×160)×(1-0.1×p) and the wave-clear bonus

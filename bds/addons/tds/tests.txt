@@ -19,11 +19,25 @@ until "ev":"bench_done" 240000
 ## map from the wiki image: Grass Isle path = 48.67 s at speed 3.5 (≈170 studs); a Normal (2.7) walks it in ≈63 s
 @A join
 @A cmd /tds:play Easy
-~ "ev":"match_start","mode":"Easy","map":"Grass Isle","players":\["A"\],"cash":500,"baseHP":200,"pathStuds":1(6[4-9]|7[0-6])\.
+~ "ev":"match_start","mode":"Easy","map":"Grass Isle","players":\["A"\],"cash":500,"baseHP":200,"pathStuds":1(6[4-9]|7[0-6])[.}]
 tds:hold true
+wait 500
 tds:speed 20
 tds:spawn Normal
-until "ev":"leak","id":\d+,"name":"Normal","dmg":4,"baseHP":196,"took":6[0-5]\. 30000
+until "ev":"leak","id":\d+,"name":"Normal","dmg":4,"baseHP":196,"took":6[0-5][.}] 30000
+tds:speed 1
+tds:stop
+
+## second map from the wiki image: Crossroads (00:48.44 at speed 3.5 ≈ 170 studs)
+tds:maps
+~ Grass Isle \(170\.3\d? studs\), Crossroads \(169\.5\d? studs\)
+@A cmd /tds:play Easy false Crossroads
+~ "ev":"match_start","mode":"Easy","map":"Crossroads".*"pathStuds":1(6[4-9]|7[0-6])[.}]
+tds:hold true
+wait 500
+tds:speed 20
+tds:spawn Normal
+until "ev":"leak","id":\d+,"name":"Normal","dmg":4,"baseHP":196,"took":6[0-5][.}] 30000
 tds:speed 1
 tds:stop
 

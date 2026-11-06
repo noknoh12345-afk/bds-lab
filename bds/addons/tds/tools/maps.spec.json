@@ -1,0 +1,173 @@
+{
+ "Grass Isle": {
+  "image": ".cache/img/RahneegiNOWATERMARK.png",
+  "seconds": 48.67,
+  "route": [
+   [
+    179,
+    216
+   ],
+   [
+    235,
+    212
+   ],
+   [
+    252,
+    202
+   ],
+   [
+    271,
+    177
+   ],
+   [
+    281,
+    123
+   ],
+   [
+    310,
+    89
+   ],
+   [
+    344,
+    79
+   ],
+   [
+    395,
+    88
+   ],
+   [
+    441,
+    121
+   ],
+   [
+    450,
+    143
+   ],
+   [
+    460,
+    192
+   ],
+   [
+    455,
+    261
+   ],
+   [
+    405,
+    321
+   ],
+   [
+    355,
+    337
+   ],
+   [
+    337,
+    371
+   ],
+   [
+    340,
+    419
+   ],
+   [
+    369,
+    452
+   ],
+   [
+    418,
+    463
+   ],
+   [
+    470,
+    477
+   ],
+   [
+    540,
+    440
+   ],
+   [
+    552,
+    395
+   ],
+   [
+    562,
+    330
+   ],
+   [
+    577,
+    288
+   ],
+   [
+    595,
+    252
+   ],
+   [
+    618,
+    228
+   ],
+   [
+    730,
+    228
+   ],
+   [
+    765,
+    255
+   ],
+   [
+    800,
+    285
+   ],
+   [
+    880,
+    290
+   ]
+  ],
+  "src": "https://tds.fandom.com/wiki/Grass_Isle (Top Down image; length 00:48.67 at speed 3.5; tunnel under the plateau drawn straight; spawn side guessed)",
+  "green": 8,
+  "void": 0,
+  "note": "data/maps.json keeps the first hand-checked build of Grass Isle (rock = light/dark grey); this spec reproduces its route"
+ },
+ "Crossroads": {
+  "image": ".cache/img/CrossroadsTopDownV3.png",
+  "seconds": 48.44,
+  "route": [
+   [
+    720,
+    320
+   ],
+   [
+    485,
+    320
+   ],
+   [
+    345,
+    320
+   ],
+   [
+    345,
+    400
+   ],
+   [
+    400,
+    400
+   ],
+   [
+    400,
+    455
+   ],
+   [
+    485,
+    455
+   ],
+   [
+    485,
+    80
+   ]
+  ],
+  "center": [
+   532,
+   267
+  ],
+  "src": "https://tds.fandom.com/wiki/Crossroads (Top Down image CrossroadsTopDownV3.png; length 00:48.44 at speed 3.5; route read from the road arrows)",
+  "green": 8,
+  "void": 55
+ }
+}
