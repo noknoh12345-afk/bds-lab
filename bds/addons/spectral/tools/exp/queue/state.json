@@ -1326,10 +1326,17 @@
   "tries": 1
  },
  "q57_sampler_two_streams": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "bcf4b19",
+  "conclusion": "success",
+  "ended": "2026-11-06 04:43",
+  "failed_steps": 0,
+  "recordings": 6,
   "run": "42162270238",
   "started": "2026-11-06 04:24",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q58_sampler_rain_mobs": {
   "status": "pending"
