@@ -39,6 +39,10 @@ cmdAny('tds:state', 'One line of match state', {}, () => {
   const M = G.M; if (!M) return 'none';
   return JSON.stringify({ mode: M.mode, wave: M.wave, t: +M.t.toFixed(1), baseHP: M.baseHP, cash: M.cash, enemies: M.enemies.length, towers: M.towers.map((t) => `${t.id}:${t.name}:${t.lvl}`), over: M.over ?? null, units: M.units.length });
 });
+cmdAny('tds:tower', 'Effective stats of a placed tower (buffs included)', { id: 'int' }, (_, a) => {
+  const tw = G.towerById(a.id); if (!tw) return 'No such tower'; const s = G.eff(tw);
+  return `#${tw.id} ${tw.name} Lv${tw.lvl} dmg ${s.dmg} fr ${s.fr?.toFixed(3) ?? '-'} range ${s.range.toFixed(2)} dealt ${Math.round(tw.dealt)}`;
+});
 cmdAny('tds:info', 'Tower stats from the wiki data', { tower: 'string', 'lvl?': 'int' }, (_, a) => {
   const n = T(a.tower), d = towers[n]; if (!d) return `Unknown ${n}`; const l = a.lvl ?? 0;
   const s = stats(n, l);

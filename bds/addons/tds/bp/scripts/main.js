@@ -844,6 +844,9 @@ function unitStep(u) {
   }
   if (u.hp <= 0 || u.d <= 0) {
     M.units.splice(M.units.indexOf(u), 1);
+    const x = ents.get(u.id);
+    if (x?.isValid) x.remove();
+    ents.delete(u.id);
     log("unit_end", { id: u.id, hp: Math.max(0, Math.round(u.hp)) });
   }
 }
@@ -902,6 +905,25 @@ system2.runInterval(() => {
     const p = path.at(e.d);
     try {
       x.teleport({ x: p.x, y: path.y + (e.flying ? 2.5 : 0), z: p.z }, { rotation: { x: 0, y: p.yaw } });
+    } catch {
+    }
+  }
+  if (tick % 4 === 0) for (const u of M.units) {
+    const p = path.at(u.d);
+    let x = ents.get(u.id);
+    if (!x?.isValid) {
+      try {
+        x = dim().spawnEntity("tds:unit", { x: p.x, y: path.y, z: p.z });
+        x.setProperty("tds:skin", 1);
+        x.nameTag = `\xA7aUnit \xA7f${Math.ceil(u.hp)}`;
+        ents.set(u.id, x);
+      } catch {
+        continue;
+      }
+    }
+    try {
+      x.teleport({ x: p.x, y: path.y, z: p.z }, { rotation: { x: 0, y: p.yaw + 180 } });
+      x.nameTag = `\xA7aUnit \xA7f${Math.ceil(u.hp)}`;
     } catch {
     }
   }
@@ -1158,6 +1180,12 @@ cmdAny("tds:state", "One line of match state", {}, () => {
   const M2 = M;
   if (!M2) return "none";
   return JSON.stringify({ mode: M2.mode, wave: M2.wave, t: +M2.t.toFixed(1), baseHP: M2.baseHP, cash: M2.cash, enemies: M2.enemies.length, towers: M2.towers.map((t) => `${t.id}:${t.name}:${t.lvl}`), over: M2.over ?? null, units: M2.units.length });
+});
+cmdAny("tds:tower", "Effective stats of a placed tower (buffs included)", { id: "int" }, (_, a) => {
+  const tw = towerById(a.id);
+  if (!tw) return "No such tower";
+  const s = eff(tw);
+  return `#${tw.id} ${tw.name} Lv${tw.lvl} dmg ${s.dmg} fr ${s.fr?.toFixed(3) ?? "-"} range ${s.range.toFixed(2)} dealt ${Math.round(tw.dealt)}`;
 });
 cmdAny("tds:info", "Tower stats from the wiki data", { tower: "string", "lvl?": "int" }, (_, a) => {
   const n2 = T(a.tower), d = towers[n2];

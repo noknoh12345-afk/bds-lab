@@ -405,7 +405,7 @@ function unitStep(u: Unit) {
     if (u.hp <= 0) break;
   }
   if (u.hp > 0 && M.t >= u.next) { const t = M.enemies.find((e) => Math.abs(e.d - u.d) <= RULES.unitRange && !e.hidden); if (t) { hit(t, u.dmg, tw); u.next = M.t + 1; } }
-  if (u.hp <= 0 || u.d <= 0) { M.units.splice(M.units.indexOf(u), 1); log('unit_end', { id: u.id, hp: Math.max(0, Math.round(u.hp)) }); }
+  if (u.hp <= 0 || u.d <= 0) { M.units.splice(M.units.indexOf(u), 1); const x = ents.get(u.id); if (x?.isValid) x.remove(); ents.delete(u.id); log('unit_end', { id: u.id, hp: Math.max(0, Math.round(u.hp)) }); }
 }
 function leak(e: Enemy) {
   if (!M) return;
@@ -442,6 +442,11 @@ system.runInterval(() => {
     if (tick % 10 === 0) flush(e);
     let x = ents.get(e.id); if (!x?.isValid) { if (tick % 40 === 0) show(e); continue; }
     const p = path.at(e.d); try { x.teleport({ x: p.x, y: path.y + (e.flying ? 2.5 : 0), z: p.z }, { rotation: { x: 0, y: p.yaw } }); } catch { /* unloaded */ }
+  }
+  if (tick % 4 === 0) for (const u of M.units) {
+    const p = path.at(u.d); let x = ents.get(u.id);
+    if (!x?.isValid) { try { x = dim().spawnEntity('tds:unit' as any, { x: p.x, y: path.y, z: p.z }); x.setProperty('tds:skin', 1); x.nameTag = `§aUnit §f${Math.ceil(u.hp)}`; ents.set(u.id, x); } catch { continue; } }
+    try { x.teleport({ x: p.x, y: path.y, z: p.z }, { rotation: { x: 0, y: p.yaw + 180 } }); x.nameTag = `§aUnit §f${Math.ceil(u.hp)}`; } catch { /* unloaded */ }
   }
   prof.vis += Date.now() - t0; t0 = Date.now();
   if (tick % 40 === 0) persist();
