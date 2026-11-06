@@ -40,7 +40,7 @@ export type Enemy = {
   nextSummon?: number; wave: number; born?: number; x?: number; z?: number; dirty?: boolean;
   aggro?: boolean; regen?: number; abil?: number[]; baseDef?: number; haste?: number; hasteUntil?: number;
 };
-export type Tower = { id: number; name: string; lvl: number; x: number; y: number; z: number; owner: string; target: string; next: number; burstLeft: number; ammoLeft: number; shots: number; spent: number; dealt: number; nextUnit: number; primary: number; stunUntil?: number; fat?: number; rdeb?: number; debUntil?: number };
+export type Tower = { id: number; name: string; lvl: number; x: number; y: number; z: number; owner: string; target: string; next: number; burstLeft: number; ammoLeft: number; shots: number; spent: number; dealt: number; nextUnit: number; primary: number; stunUntil?: number; fat?: number; rdeb?: number; debUntil?: number; abReady?: Record<string, number>; selfBuff?: number; selfBuffUntil?: number; ctaBuff?: number; ctaUntil?: number };
 export type Unit = { id: number; tw: number; d: number; hp: number; dmg: number; next: number };
 export type Match = {
   mode: string; map: string; players: string[]; cash: Record<string, number>; baseHP: number; maxHP: number; wave: number; t: number; waveEnd: number; skipAt: number;
@@ -247,6 +247,7 @@ export function canSee(tw: Tower, e: Enemy) {
   return true;
 }
 const bcache = new Map<number, { at: number; v: { fr: number; dm: number; rg: number } }>();
+export const dropBuffs = () => bcache.clear();
 const buffs = (tw: Tower) => {
   const c = bcache.get(tw.id); if (c && M && Math.abs(M.t - c.at) < 1) return c.v;
   const v = buffs0(tw); if (M) bcache.set(tw.id, { at: M.t, v }); return v;
@@ -258,13 +259,15 @@ const buffs0 = (tw: Tower) => {
     if (o === tw) continue; const s = stats(o.name, o.lvl);
     if (!s.frBuff && !s.dmgBuff && !s.rangeBuff) continue;
     if (Math.hypot(o.x - tw.x, o.z - tw.z) / path.stud > s.range) continue;
-    fr = Math.max(fr, s.frBuff ?? 0); dm = Math.max(dm, s.dmgBuff ?? 0); rg = Math.max(rg, s.rangeBuff ?? 0);
+    const cta = (o.ctaUntil ?? 0) > M.t ? o.ctaBuff ?? 0 : 0;
+    fr = Math.max(fr, (s.frBuff ?? 0) + cta); dm = Math.max(dm, s.dmgBuff ?? 0); rg = Math.max(rg, s.rangeBuff ?? 0);
   }
   return { fr, dm, rg };
 };
 export function eff(tw: Tower): Stats & { range: number } {
   const s = stats(tw.name, tw.lvl), b = buffs(tw), deb = M && (tw.debUntil ?? 0) > M.t, f = deb ? tw.fat ?? 0 : 0, rd = deb ? tw.rdeb ?? 0 : 0;
-  let fr = s.fr ? s.fr / (1 + b.fr) : s.fr; if (fr && f) fr = fr + fr * (f / (1 + f));   // Fatigue Debuff page
+  const self = M && (tw.selfBuffUntil ?? 0) > M.t ? tw.selfBuff ?? 0 : 0;
+  let fr = s.fr ? s.fr / (1 + b.fr + self) : s.fr; if (fr && f) fr = fr + fr * (f / (1 + f));   // Fatigue Debuff page
   return { ...s, dmg: s.dmg * (1 + b.dm), fr, range: rd ? s.range * (1 - (rd - b.rg)) : s.range * (1 + b.rg) };  // Range Debuff page
 }
 const distTo = (tw: Tower, e: Enemy) => { if (e.x === undefined) { const p = path!.at(e.d); e.x = p.x; e.z = p.z; } return Math.hypot(e.x - (tw.x + 0.5), e.z! - (tw.z + 0.5)) / path!.stud; };
@@ -399,6 +402,30 @@ export function setTarget(id: number, t: string): string {
   const tw = towerById(id); if (!tw) return 'No such tower';
   if (!(TARGETS as readonly string[]).includes(t)) return `Targets: ${TARGETS.join(' ')}`;
   tw.target = t; tlabel(tw); log('target', { id, target: t }); return `#${id} → ${t}`;
+}
+
+// ---------- tower abilities (wiki {{Ability}} templates; the simulated ones) ----------
+export function abilitiesOf(tw: Tower) { return (towers[tw.name].abilities ?? []).filter((a) => a.simulated && tw.lvl >= a.unlock); }
+export function abilityReady(tw: Tower, title: string) { return !M ? 0 : Math.max(0, (tw.abReady?.[title] ?? 0) - M.t); }
+export function useTowerAbility(owner: string, id: number, title?: string): string {
+  const tw = towerById(id); if (!M || !path || !tw) return 'No such tower';
+  const a = abilitiesOf(tw).find((x) => !title || x.title === title); if (!a) return `${tw.name} has no usable ability at Lv${tw.lvl}`;
+  const wait = abilityReady(tw, a.title); if (wait > 0) return `${a.title} ready in ${Math.ceil(wait)}s`;
+  if ((M.cash[owner] ?? 0) < a.cost) return `Need $${a.cost}`;
+  const s = stats(tw.name, tw.lvl), L = towers[tw.name].levels[tw.lvl];
+  const lead = M.enemies.filter((e) => canSee(tw, e)).sort((x, y) => y.d - x.d)[0];
+  let what = '';
+  if (a.title === 'Call to Arms') { tw.ctaBuff = (Number(L.callToArmsBuff) || 0) / 100; tw.ctaUntil = M.t + 10; dropBuffs(); what = `+${Math.round(tw.ctaBuff * 100)}% firerate 10s`; }
+  else if (a.title === 'War Cry') { tw.selfBuff = 0.65; tw.selfBuffUntil = M.t + 10; what = '+65% firerate 10s'; }
+  else if (a.title === 'Airstrike' || a.title === 'Frost Grenade') {
+    if (!lead) return 'No enemy to aim at';
+    const r = a.title === 'Airstrike' ? 8 : 6, hits = M.enemies.filter((e) => Math.abs(e.d - lead.d) <= r).slice(0, a.title === 'Frost Grenade' ? 5 : 999);
+    for (const e of hits) { if (a.title === 'Airstrike') hit(e, Number(L.airstrikeDamage) || s.dmg, tw, 'splash'); else if (!e.immune.includes('Freeze') && !e.boss) e.freezeUntil = M.t + 2; }
+    what = `${hits.length} enemies`;
+  } else return `${a.title} is not simulated`;
+  M.cash[owner] -= a.cost; (tw.abReady ??= {})[a.title] = M.t + (a.cd ?? 30);
+  log('tower_ability', { id, name: tw.name, ability: a.title, cost: a.cost, what });
+  return `${a.title}: ${what}`;
 }
 
 // ---------- simulation ----------

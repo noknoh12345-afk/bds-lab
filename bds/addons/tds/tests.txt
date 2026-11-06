@@ -224,6 +224,35 @@ tds:enemies
 tds:kill Heavy
 tds:stop
 
+## tower abilities from the wiki: Commander Call to Arms, Freezer Frost Grenade, Military Base Airstrike (unlock level, cost, cooldown)
+tds:stop
+tds:hold true
+@A cmd /tds:play Easy
+@A cmd /tds:cash 50000
+@A cmd /tds:place Scout -9 -60 -15
+@A cmd /tds:place Commander -6 -60 -16
+@A cmd /tds:use 2
+~ @A Commander has no usable ability at Lv0
+@A cmd /tds:upgrade 2
+@A cmd /tds:upgrade 2
+@A cmd /tds:use 2
+~ @A Call to Arms: \+\d+% firerate 10s
+@A cmd /tds:use 2
+~ @A Call to Arms ready in (29|30)s
+tds:tower 1
+~ ^#1 Scout Lv0 dmg 1 fr 0\.[0-8]\d+
+@A cmd /tds:place Military_Base -3 -60 -15
+@A cmd /tds:upgrade 3
+@A cmd /tds:upgrade 3
+@A cmd /tds:upgrade 3
+@A cmd /tds:upgrade 3
+~ @A Military Base → Lv4
+tds:spawnat Heavy 1
+@A cmd /tds:use 3
+~ @A Airstrike: [1-9] enemies
+~ "ev":"tower_ability","id":3,"name":"Military Base","ability":"Airstrike","cost":500
+tds:stop
+
 ## lobby: profile, shop with coins, loadout, quests, elevator to a match
 tds:stop
 @A cmd /tds:profile

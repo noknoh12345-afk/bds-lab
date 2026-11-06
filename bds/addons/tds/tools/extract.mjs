@@ -42,6 +42,19 @@ for (const [cat, names] of Object.entries(cats)) for (const name of names) {
   };
 }
 
+// tower abilities ({{Ability|Level Unlock=..|Cooldown Time=..|Ability Title=..|Cost=..|Information=..}}); first tab only (PVP tabs follow)
+const SIM = { 'Call to Arms': 'Commander: firerate buff (callToArmsBuff) to towers in range for 10 s', 'Airstrike': 'damage (airstrikeDamage) in an 8-stud radius at the lead enemy', 'Frost Grenade': 'freezes up to five enemies for 2 s within 6 studs', 'War Cry': '65% firerate buff on itself (duration not on the page: 10 s)' };
+for (const [name, tw] of Object.entries(towers)) {
+  const t = C(name), seen = new Set(), list = [];
+  for (const m of t.matchAll(/\{\{Ability\|([\s\S]*?)\n\}\}/g)) {
+    const f = Object.fromEntries(m[1].split(/\|(?=[A-Z][\w ]+=)/).map(x => { const i = x.indexOf('='); return [x.slice(0, i).trim(), strip(x.slice(i + 1)).replace(/\s+/g, ' ').trim()]; }));
+    const title = (f['Ability Title'] ?? '').replace(/This ability.*$/, '').trim(); if (!title || seen.has(title)) continue; seen.add(title);
+    list.push({ title, unlock: num(f['Level Unlock']) ?? 0, cd: num(f['Cooldown Time']), cost: num(f.Cost ?? '') ?? 0, info: (f.Information ?? '').slice(0, 300), simulated: !!SIM[title] });
+    if (!SIM[title]) unknown.push({ tower: name, why: `ability "${title}" not simulated` });
+  }
+  if (list.length) tw.abilities = list;
+}
+
 // ---------- modes ----------
 const MODES = ['Easy', 'Casual', 'Intermediate', 'Molten', 'Fallen', 'Hardcore'];
 const modes = {}; const used = new Set(); const roster = JSON.parse(fs.readFileSync(new URL('../.cache/modeenemies.json', import.meta.url)));

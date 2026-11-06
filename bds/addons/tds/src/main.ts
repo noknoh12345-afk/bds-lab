@@ -34,6 +34,7 @@ cmd('tds:place', 'Place a tower (name with _ for spaces)', { tower: 'string', x:
 });
 cmd('tds:upgrade', 'Upgrade a tower', { id: 'int' }, (p, a) => G.upgrade(p.name, a.id));
 cmd('tds:sell', 'Sell a tower', { id: 'int' }, (p, a) => G.sell(p.name, a.id));
+cmd('tds:use', 'Use a tower ability', { id: 'int' }, (p, a) => G.useTowerAbility(p.name, a.id));
 cmd('tds:target', 'Targeting of a tower', { id: 'int', targeting: G.TARGETS as unknown as string[] }, (_, a) => G.setTarget(a.id, a.targeting));
 cmdAny('tds:state', 'One line of match state', {}, () => {
   const M = G.M; if (!M) return 'none';
@@ -125,7 +126,9 @@ async function towerMenu(p: Player, id: number) {
   const tw = G.towerById(id); if (!tw) return; const s = G.eff(tw), max = tw.lvl >= maxLevel(tw.name), nc = max ? 0 : levelCost(tw.name, tw.lvl + 1);
   const body = `Lv${tw.lvl}/${maxLevel(tw.name)} · dmg ${s.dmg} · fr ${s.fr ?? '-'} · range ${s.range.toFixed(1)}\nDamage dealt ${Math.round(tw.dealt)} · Target ${tw.target}`;
   const f = new ActionFormData().title(`§l#${tw.id} ${tw.name}`).body(body).button(max ? 'Max level' : `Upgrade §8$${nc}`).button(`Sell §8$${G.sellValue(tw)}`).button(`Target: ${tw.target}`);
+  const ab = G.abilitiesOf(tw); for (const a of ab) { const w = G.abilityReady(tw, a.title); f.button(`${a.title}${a.cost ? ` §8$${a.cost}` : ''}${w ? ` §c${Math.ceil(w)}s` : ''}`); }
   const r = await ask(p, f); if (!r || r.canceled) return;
+  if (r.selection !== undefined && r.selection >= 3) { p.sendMessage(G.useTowerAbility(p.name, id, ab[r.selection - 3]?.title)); return; }
   if (r.selection === 0) p.sendMessage(G.upgrade(p.name, id));
   if (r.selection === 1) p.sendMessage(G.sell(p.name, id));
   if (r.selection === 2) { const t = await menu(p, 'Targeting', G.TARGETS.map((x) => [x, () => 0])); if (t !== undefined) p.sendMessage(G.setTarget(id, G.TARGETS[t])); }
