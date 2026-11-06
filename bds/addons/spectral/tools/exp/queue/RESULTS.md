@@ -73,3 +73,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q47_speech_over_music | 42126160996 | failure（もう一度） | 0 | — | 0 | 2026-11-05 23:00 → 2026-11-05 23:01 |
 | q47_speech_over_music | 42126349718 | success | 8 | — | 0 | 2026-11-05 23:01 → 2026-11-05 23:25 |
 | q48_speech_level | 42129171990 | success | 8 | — | 0 | 2026-11-05 23:26 → 2026-11-05 23:44 |
+| q49_say_command | 42131728243 | success | 5 | — | 0 | 2026-11-05 23:44 → 2026-11-06 00:04 |

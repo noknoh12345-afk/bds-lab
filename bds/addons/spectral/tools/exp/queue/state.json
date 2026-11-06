@@ -1175,10 +1175,17 @@
   "tries": 1
  },
  "q49_say_command": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "d67508f",
+  "conclusion": "success",
+  "ended": "2026-11-06 00:04",
+  "failed_steps": 0,
+  "recordings": 5,
   "run": "42131728243",
   "started": "2026-11-05 23:44",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q50_speech_joins": {
   "status": "pending"
