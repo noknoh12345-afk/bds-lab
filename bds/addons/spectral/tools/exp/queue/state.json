@@ -1262,10 +1262,35 @@
   "tries": 1
  },
  "q54_voices_28_32": {
+  "arms": {
+   "v28": {
+    "mrstft": 1.763,
+    "n": 4,
+    "rms_db": -38.3,
+    "third_oct_db": 5.949,
+    "visqol": 3.352
+   },
+   "v32": {
+    "mrstft": 1.802,
+    "n": 4,
+    "rms_db": -38.25,
+    "third_oct_db": 5.396,
+    "visqol": 3.323
+   }
+  },
+  "checkpoints": 0,
   "commit": "1ec1695",
+  "conclusion": "failure",
+  "earlier_runs": [
+   "42146759946"
+  ],
+  "ended": "2026-11-06 02:41",
+  "failed_steps": 1,
+  "recordings": 0,
   "run": "42146759946",
   "started": "2026-11-06 01:53",
-  "status": "running"
+  "status": "pending",
+  "tries": 1
  },
  "q55_sampler_same_thrice": {
   "status": "pending"
