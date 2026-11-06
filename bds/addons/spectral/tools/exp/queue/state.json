@@ -1188,7 +1188,10 @@
   "tries": 1
  },
  "q50_speech_joins": {
-  "status": "pending"
+  "commit": "15c66ea",
+  "run": "42134173319",
+  "started": "2026-11-06 00:04",
+  "status": "running"
  },
  "q51_file_warm": {
   "status": "pending"
