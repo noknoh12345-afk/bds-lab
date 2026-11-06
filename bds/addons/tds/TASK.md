@@ -10,7 +10,7 @@ Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki:
 - [ ] second map from the wiki image: Crossroads (00:48.44 at speed 3.5 ≈ 170 studs)
 - [ ] placement rules: path, cliff/ground, overlap, cost, upgrade and sell (1/3 of spent)
 - [ ] detection: a tower without hidden/lead/flying detection lets those enemies pass; with it, they die
-- [ ] economy: Easy wave bonus (200 + (w-1)×160)×(1-0.1×p) and the wave-clear bonus
+- [ ] economy: Easy wave bonus (200 + (w-1)×160)×(1-0.1×p) and the wave-clear bonus (wave bonus formulas, player reductions and start cash per mode page)
 - [ ] leaks: an enemy reaching the base removes its remaining health from base HP; HP 0 loses
 - [ ] a full Easy match won by the bot (all 20 waves, bosses included)
 - [ ] forms: the wand opens the placement menu on a block; a tower opens upgrade, sell and targeting; skip vote

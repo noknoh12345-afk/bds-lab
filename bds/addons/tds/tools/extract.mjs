@@ -59,14 +59,26 @@ for (const [name, tw] of Object.entries(towers)) {
 const MODES = ['Easy', 'Casual', 'Intermediate', 'Molten', 'Fallen', 'Hardcore'];
 const modes = {}; const used = new Set(); const roster = JSON.parse(fs.readFileSync(new URL('../.cache/modeenemies.json', import.meta.url)));
 for (const m in roster) roster[m].forEach(e => used.add(e));
-const CASH = { Easy: '(200+(w-1)*160)*(1-0.1*p)', Casual: 'w*200', Intermediate: '200+(w-1)*150', Molten: '(205+(w-1)*75)/(1-0.1*p)', Fallen: '(180+50*w)/p', Hardcore: '(325+50*w)/p' };
+// wave bonus per mode page ("the formula for calculating the wave bonus"); w = waves completed, p = players; mult = 1 - reduction for 1..4 players
+const CASH = {
+  Easy: { pieces: [{ to: 99, e: '(200+(w-1)*160)*(1-0.1*p)' }], mult: [1, 1, 1, 1] },
+  Casual: { pieces: [{ to: 20, e: 'w*200' }, { to: 99, e: '300+(w-1)*350' }], mult: [1, 0.9, 0.85, 0.8] },
+  Intermediate: { pieces: [{ to: 99, e: '200+(w-1)*150' }], mult: [1, 0.88, 0.79, 0.76] },
+  Molten: { pieces: [{ to: 15, e: '250+((w-1)*60)**1.03' }, { to: 99, e: '300+((w-1)*75)**1.07' }], mult: [1, 0.9, 0.85, 0.8] },
+  Fallen: { pieces: [{ to: 30, e: '300+((w-1)*60)**1.03' }, { to: 99, e: '300+((w-1)*60)**1.07' }], mult: [1, 0.7, 0.61, 0.6] },
+  Hardcore: { pieces: [{ to: 99, e: '(325+50*w)/p' }], mult: [1, 0.52, 0.55, 0.55] },
+};
+// wave clear bonus (mode pages): solo / group share of the wave bonus; some modes also need an undamaged base; Hardcore has none (Waves page)
+const CLEAR = { Easy: [0.35, 0.2, false], Casual: [0.35, 0.2, true], Intermediate: [0.35, 0.2, false], Molten: [0.4, 0.2, true], Fallen: [0.4, 0.2, true], Hardcore: [0, 0, false] };
+// starting cash (Waves page): 500, Hardcore 900 solo / 750 duo / 600 trio
+const START = { Hardcore: [900, 750, 600, 600] };
 for (const m of MODES) {
   const t = C(`${m} Mode`); const ib = t.slice(t.indexOf('ModeInfobox'));
   const w = waves(t); Object.values(w).flat().forEach(x => used.add(x.e));
   const rw = strip(field(ib, 'rewards'));
   const timers = []; const tt = t.slice(t.search(/!Wave Timer/)); for (const r of tt.split('|}')[0].split('|-').slice(1)) { const c = r.split('\n').map(x => x.replace(/^\|/, '').trim()).filter(Boolean).map(strip); const [a, b = a] = c[0].split('-').map(Number); const sec = s => /∞/.test(s) ? null : s.split(':').reduce((x, y) => x * 60 + +y, 0); timers.push({ from: a, to: b, timer: sec(c[1]), skipAfter: /N\/A/.test(c[2] ?? '') ? null : sec(c[2] ?? '0:20') }); }
   modes[m] = { waves: num(field(ib, 'waves')), level: num(strip(field(ib, 'level_requirement'))) ?? 0, startCash: num(strip(field(ib, 'starting_cash'))), baseHP: num(field(ib, 'max_health')) ?? 200,
-    waveCash: CASH[m], rewards: { coins: num(rw), exp: num(rw.split(',')[1] ?? ''), gems: /gem/i.test(field(ib, 'rewards')) ? num(rw) : 0 }, timers, wave: w, src: `https://tds.fandom.com/wiki/${m}_Mode` };
+    waveCash: CASH[m], clear: { solo: CLEAR[m][0], group: CLEAR[m][1], noDamage: CLEAR[m][2] }, startBy: START[m] ?? null, rewards: { coins: num(rw), exp: num(rw.split(',')[1] ?? ''), gems: /gem/i.test(field(ib, 'rewards')) ? num(rw) : 0 }, timers, wave: w, src: `https://tds.fandom.com/wiki/${m}_Mode` };
   if (m === 'Hardcore') modes[m].rewards.coins = 0;
   if (!field(ib, 'max_health')) unknown.push({ mode: m, why: 'baseHP not on page; using 200 (Fallen value)' });
 }
@@ -130,7 +142,7 @@ for (const [n, e] of Object.entries(enemies)) { const ab = abilities(n, C(n)); i
 for (const [n, e] of Object.entries(enemies)) for (const p of e.spawnedBy) if (enemies[p] && !enemies[p].spawns?.includes(n)) (enemies[p].spawns ??= []).push(n);
 for (const [n, e] of Object.entries(enemies)) if (e.spawns && !e.abilities?.some(a => a.spawn)) { e.spawnMode = e.boss || /Necromancer|Summoner|Grave Digger|Necrotic|Mystery|Mandrake|Mandragora/.test(n) ? 'periodic' : 'death'; unknown.push({ enemy: n, why: `spawn mode/count guessed (${e.spawnMode})` }); }
 
-for (const [k, v] of Object.entries({ spawnGap: '0.6 s between enemies of a group', groupGap: '1 s between groups', clearWait: 'next wave 5 s after a clear', childCount: '2 children per spawn/summon', summonEvery: 'summoners every 8 s', units: 'units: 4 studs/s, 6-stud gun range, 3 per tower, ram = min(hp)', killCash: 'kill cash to the tower owner', maps: 'Grassland is a lab layout; wiki map images not yet analysed', abilities: 'active abilities (Call to Arms, airstrikes, ...) not simulated', medic: 'Medic/healing: towers have no HP', rewards: 'Easy reward formula applied to every mode' })) unknown.push({ rule: k, why: v });
+for (const [k, v] of Object.entries({ spawnGap: '0.6 s between enemies of a group', groupGap: '1 s between groups', childCount: '2 children per spawn/summon', summonEvery: 'summoners every 8 s', units: 'units: 4 studs/s, 6-stud gun range, 3 per tower, ram = min(hp)', killCash: 'kill cash to the tower owner', maps: 'Grassland is a lab layout; wiki map images not yet analysed', abilities: 'active abilities (Call to Arms, airstrikes, ...) not simulated', medic: 'Medic/healing: towers have no HP', rewards: 'Easy reward formula applied to every mode' })) unknown.push({ rule: k, why: v });
 const w = (f, o) => fs.writeFileSync(D + f, JSON.stringify(o, null, 0));
 w('towers.json', towers); w('modes.json', modes); w('enemies.json', enemies); w('_unknown.json', unknown);
 console.log('towers', Object.keys(towers).length, 'modes', Object.keys(modes).length, 'enemies', Object.keys(enemies).length, 'unknown', unknown.length);

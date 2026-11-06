@@ -35,16 +35,21 @@ export function equip(p: Player, slot: number, name: string): string {
 }
 
 // ---------- elevators ----------
-type Lift = { mode: string; players: string[]; at: number };
+type Lift = { mode: string; players: string[]; at: number; votes: Record<string, string> };
 const lifts: Lift[] = [];
 export function queue(p: Player, mode: string): string {
   const md = modes[mode]; if (!md) return `Modes: ${Object.keys(modes).join(' ')}`;
   const pr = prof(p); if (pr.level < md.level) return `${mode} needs level ${md.level}`;
   for (const l of lifts) l.players = l.players.filter((n) => n !== p.name);
   let l = lifts.find((x) => x.mode === mode && x.players.length < (mode === 'Hardcore' ? 3 : 4));
-  if (!l) { l = { mode, players: [], at: system.currentTick + RULES.elevatorWait * 20 }; lifts.push(l); }
+  if (!l) { l = { mode, players: [], at: system.currentTick + RULES.elevatorWait * 20, votes: {} }; lifts.push(l); }
   l.players.push(p.name); log('elevator_join', { player: p.name, mode, count: l.players.length });
   return `Elevator ${mode}: ${l.players.length}/${mode === 'Hardcore' ? 3 : 4}, departs in ${Math.ceil((l.at - system.currentTick) / 20)}s`;
+}
+export function voteMap(p: Player, map: string): string {
+  const l = lifts.find((x) => x.players.includes(p.name)); if (!l) return 'Not in an elevator';
+  if (!maps[map]) return `Maps: ${Object.keys(maps).join(', ')}`;
+  l.votes[p.name] = map; log('map_vote', { player: p.name, map }); return `Voted ${map}`;
 }
 export function leaveLift(name: string) { for (const l of lifts) l.players = l.players.filter((n) => n !== name); }
 export function departNow(mode: string) { const l = lifts.find((x) => x.mode === mode); if (l) l.at = system.currentTick; }
@@ -57,7 +62,10 @@ system.runInterval(() => {
     if (!ps.length) continue;
     log('elevator_depart', { mode: l.mode, players: l.players });
     const lo = Object.fromEntries(ps.map((p) => [p.name, prof(p).loadout]));
-    const names = Object.keys(maps); start(l.mode, ps, names[Math.floor(Math.random() * names.length)]); if (M) (M as Match & { loadouts?: Record<string, string[]> }).loadouts = lo;
+    const tally: Record<string, number> = {}; for (const v of Object.values(l.votes)) tally[v] = (tally[v] ?? 0) + 1;
+    const top = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+    const names = Object.keys(maps), map = top.length ? top.filter((x) => x[1] === top[0][1])[Math.floor(Math.random() * top.filter((x) => x[1] === top[0][1]).length)][0] : names[Math.floor(Math.random() * names.length)];
+    start(l.mode, ps, map); if (M) (M as Match & { loadouts?: Record<string, string[]> }).loadouts = lo;
   }
 }, 20);
 

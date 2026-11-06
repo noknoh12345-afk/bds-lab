@@ -1,9 +1,9 @@
 import { world, system, Player, ItemStack } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { cmd, cmdAny, ask, menu, give, ready, every } from './kit';
-import { towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, timerFor, afterDefense, MODE_NAMES } from './defs';
+import { towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, timerFor, afterDefense, waveCash, startCash, MODE_NAMES } from './defs';
 import * as G from './game';
-import { prof, saveProf, buy, equip, queue, leaveLift, departNow, questAdd, QUESTS, addExp } from './lobby';
+import { prof, saveProf, buy, equip, queue, voteMap, leaveLift, departNow, questAdd, QUESTS, addExp } from './lobby';
 import { benchAll, bench, expected } from './bench';
 
 const T = (s: string) => s.replace(/_/g, ' ');
@@ -22,6 +22,7 @@ cmd('tds:play', 'Start a match now (solo or everyone online)', { mode: MODE_NAME
 });
 cmdAny('tds:maps', 'Maps traced from the wiki', {}, () => Object.entries(maps).map(([n, m]) => `${n} (${m.pathStuds} studs)`).join(', '));
 cmd('tds:queue', 'Enter an elevator', { lift: MODE_NAMES as unknown as string[] }, (p, a) => queue(p, a.lift));
+cmd('tds:vote', 'Vote for the map in your elevator', { mapname: MAP_IDS }, (p, a) => voteMap(p, T(a.mapname)));
 cmd('tds:leave', 'Leave the elevator', {}, (p) => { leaveLift(p.name); return 'Left'; });
 cmdAny('tds:depart', 'Elevator leaves now (test)', { liftmode: MODE_NAMES as unknown as string[] }, (_, a) => { departNow(a.liftmode); return 'ok'; }, true);
 cmdAny('tds:stop', 'End the match', {}, () => { G.stop(); return 'Stopped'; }, true);
@@ -47,6 +48,7 @@ cmdAny('tds:tower', 'Effective stats of a placed tower (buffs included)', { id: 
   const st = G.M && (tw.stunUntil ?? 0) > G.M.t ? ` stunned ${(tw.stunUntil! - G.M.t).toFixed(1)}s` : '';
   return `#${tw.id} ${tw.name} Lv${tw.lvl} dmg ${s.dmg} fr ${s.fr?.toFixed(3) ?? '-'} range ${s.range.toFixed(2)} dealt ${Math.round(tw.dealt)}${st}`;
 });
+cmdAny('tds:wavecash', 'Wave bonus of a mode (wiki formula)', { mode: 'string', wave: 'int', players: 'int' }, (_, a) => `${a.mode} wave ${a.wave} x${a.players}: $${waveCash(a.mode, a.wave, a.players)} start $${startCash(a.mode, a.players)}`);
 cmdAny('tds:info', 'Tower stats from the wiki data', { tower: 'string', 'lvl?': 'int' }, (_, a) => {
   const n = T(a.tower), d = towers[n]; if (!d) return `Unknown ${n}`; const l = a.lvl ?? 0;
   const s = stats(n, l);

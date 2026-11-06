@@ -12,7 +12,7 @@ export type Spawn = { name?: string; pool?: string[]; n: number };
 export type Ability = { title: string; cd: number | null; kind: 'deathSpawn' | 'summon' | 'stun' | 'debuff' | 'heal' | 'speedAura' | 'boneArmor'; spawn?: Spawn[]; dur?: number; radius?: number | null; unitDmg?: number | null; onDeath?: boolean; fatigue?: number; range?: number; amount?: number; every?: number; pct?: number; step?: number; max?: number };
 export type EnemyDef = { hidden: boolean; flying: boolean; lead: boolean; ghost: boolean; boss: boolean; defense: number; immune: string[]; per: Record<string, EnemyMode>; spawns?: string[]; spawnMode?: string; abilities?: Ability[] };
 export type Group = { n: number; e: string; mods?: string[] };
-export type ModeDef = { waves: number; level: number; startCash: number; baseHP: number; waveCash: string; rewards: { coins: number; exp: number; gems: number }; timers: { from: number; to: number; timer: number | null; skipAfter: number | null }[]; wave: Record<string, Group[]> };
+export type ModeDef = { waves: number; level: number; startCash: number; startBy: number[] | null; baseHP: number; waveCash: { pieces: { to: number; e: string }[]; mult: number[] }; clear: { solo: number; group: number; noDamage: boolean }; rewards: { coins: number; exp: number; gems: number }; timers: { from: number; to: number; timer: number | null; skipAfter: number | null }[]; wave: Record<string, Group[]> };
 export type MapDef = { stud: number; y: number; path: [number, number][]; width: number; grid: string[]; pathStuds: number; src: string };
 
 export const towers = TOWERS as unknown as Record<string, TowerDef>;
@@ -67,11 +67,14 @@ export const levelCost = (name: string, lvl: number) => n(towers[name].levels[lv
 export const placeCost = (name: string) => levelCost(name, 0);
 
 /** Wave bonus from the mode page formula: w = waves completed, p = players. */
+const fcache = new Map<string, (w: number, p: number) => number>();
 export function waveCash(mode: string, w: number, p: number): number {
-  const e = modes[mode].waveCash;
+  const c = modes[mode].waveCash, e = (c.pieces.find((x) => w <= x.to) ?? c.pieces[c.pieces.length - 1]).e;
   if (!/^[\dwp+\-*/().\s]+$/.test(e)) return 0;
-  return Math.floor((Function("w", "p", `return ${e}`)(w, p) as number) + 1e-6);
+  let f = fcache.get(e); if (!f) { f = Function('w', 'p', `return ${e}`) as (w: number, p: number) => number; fcache.set(e, f); }
+  return Math.floor(f(w, p) * (c.mult[Math.min(4, Math.max(1, p)) - 1] ?? 1) + 1e-6);
 }
+export const startCash = (mode: string, p: number) => modes[mode].startBy?.[Math.min(4, Math.max(1, p)) - 1] ?? modes[mode].startCash;
 export function timerFor(mode: string, wave: number) { return modes[mode].timers.find((t) => wave >= t.from && wave <= t.to) ?? { timer: 60, skipAfter: 20 }; }
 
 /** Enemy stats in a mode; falls back to the first mode that lists it (a summoned enemy may not be in the roster). */

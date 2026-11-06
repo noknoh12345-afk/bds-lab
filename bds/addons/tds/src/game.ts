@@ -1,6 +1,6 @@
 // The match: path, enemies, towers, units, economy, waves. Pure simulation in studs/seconds; entities only mirror it.
 import { world, system, Player, Entity, Dimension } from '@minecraft/server';
-import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, timerFor, enemyIn, afterDefense, RULES, Stats, Group, Ability, Spawn } from './defs';
+import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, startCash, timerFor, enemyIn, afterDefense, RULES, Stats, Group, Ability, Spawn } from './defs';
 
 export let headless = false;
 export const log = (ev: string, o: Record<string, unknown> = {}) => { if (!headless) console.log(`[TDS] ${JSON.stringify({ ev, ...o })}`); };
@@ -37,7 +37,7 @@ export type Enemy = {
   id: number; name: string; d: number; hp: number; max: number; shield: number; speed: number; def: number; cash: number; every?: number; paid: number;
   hidden: boolean; flying: boolean; lead: boolean; boss: boolean; immune: string[]; mods: string[];
   slow: number; slowUntil: number; freezeUntil: number; stunUntil: number; dots: { dmg: number; tick: number; next: number; until: number; tw: number }[];
-  nextSummon?: number; wave: number; born?: number; x?: number; z?: number; dirty?: boolean;
+  nextSummon?: number; wave: number; summoned?: boolean; born?: number; x?: number; z?: number; dirty?: boolean;
   aggro?: boolean; regen?: number; abil?: number[]; baseDef?: number; haste?: number; hasteUntil?: number;
 };
 export type Tower = { id: number; name: string; lvl: number; x: number; y: number; z: number; owner: string; target: string; next: number; burstLeft: number; ammoLeft: number; shots: number; spent: number; dealt: number; nextUnit: number; primary: number; stunUntil?: number; fat?: number; rdeb?: number; debUntil?: number; abReady?: Record<string, number>; selfBuff?: number; selfBuffUntil?: number; ctaBuff?: number; ctaUntil?: number };
@@ -45,7 +45,7 @@ export type Unit = { id: number; tw: number; d: number; hp: number; dmg: number;
 export type Match = {
   mode: string; map: string; players: string[]; cash: Record<string, number>; baseHP: number; maxHP: number; wave: number; t: number; waveEnd: number; skipAt: number;
   queue: { at: number; name: string; mods: string[] }[]; enemies: Enemy[]; towers: Tower[]; units: Unit[]; seq: number; votes: string[];
-  over?: 'win' | 'lose'; hold?: boolean; stats: { kills: number; leaks: number; dealt: number; income: number }; clearPaid: boolean; leakedThisWave: boolean; seed: number;
+  over?: 'win' | 'lose'; hold?: boolean; inter?: boolean; waveDmg?: boolean; stats: { kills: number; leaks: number; dealt: number; income: number }; clearPaid: boolean; leakedThisWave: boolean; seed: number;
 };
 
 export let M: Match | undefined;
@@ -98,8 +98,8 @@ export function surface(x: number, y: number, z: number): Place {
 export function start(mode: string, players: Player[], map = DEFAULT_MAP) {
   stop(true);
   const md = modes[mode]; path = buildArena(map); rnd = 1;
-  const cash = md.startCash + (players.length > 1 ? 100 : 0);
-  M = { mode, map, players: players.map((p) => p.name), cash: Object.fromEntries(players.map((p) => [p.name, cash])), baseHP: md.baseHP, maxHP: md.baseHP, wave: 0, t: 0, waveEnd: 5, skipAt: 0,
+  const cash = startCash(mode, players.length);
+  M = { mode, map, players: players.map((p) => p.name), cash: Object.fromEntries(players.map((p) => [p.name, cash])), baseHP: md.baseHP, maxHP: md.baseHP, wave: 0, t: 0, waveEnd: 5, skipAt: 0, inter: true,
     queue: [], enemies: [], towers: [], units: [], seq: 1, votes: [], stats: { kills: 0, leaks: 0, dealt: 0, income: 0 }, clearPaid: false, leakedThisWave: false, seed: 1 };
   const g = maps[map].grid[32]?.[32], onPath = path.dist(0.5, 0.5) < path.width / 2 + 0.5;
   for (const p of players) p.teleport({ x: 0.5, y: maps[map].y + (g === 'x' && !onPath ? 2.2 : 0.2), z: 0.5 });
@@ -120,38 +120,30 @@ export function stop(silent = false) {
 function nextWave() {
   if (!M) return;
   const md = modes[M.mode];
-  if (M.wave > 0) payWave();
-  M.wave++; M.votes = []; M.clearPaid = false; M.leakedThisWave = false;
+  M.wave++; M.votes = []; M.clearPaid = false; M.leakedThisWave = false; M.waveDmg = false; M.inter = false;
   const tm = timerFor(M.mode, M.wave); M.waveEnd = tm.timer === null ? Infinity : M.t + tm.timer; M.skipAt = tm.skipAfter === null ? Infinity : M.t + tm.skipAfter;
   let at = M.t;
   for (const g of md.wave[String(M.wave)] ?? []) { for (let i = 0; i < g.n; i++) { M.queue.push({ at, name: g.e, mods: g.mods ?? [] }); at += RULES.spawnGap; } at += RULES.groupGap - RULES.spawnGap; }
   log('wave_start', { wave: M.wave, of: md.waves, enemies: (md.wave[String(M.wave)] ?? []).reduce((a: number, g: Group) => a + g.n, 0), timer: tm.timer });
 }
 
-function payWave() {
-  if (!M) return;
-  const p = M.players.length, bonus = waveCash(M.mode, M.wave, p);
-  for (const n of M.players) M.cash[n] += bonus;
-  for (const tw of M.towers) { const s = stats(tw.name, tw.lvl); if (s.income && !s.cashShot) { M.cash[tw.owner] = (M.cash[tw.owner] ?? 0) + s.income; M.stats.income += s.income; log('income', { tower: tw.id, name: tw.name, amount: s.income }); } }
-  log('wave_cash', { wave: M.wave, bonus });
-}
-
 export function voteSkip(p: Player): string {
   if (!M) return 'No match';
+  if (M.inter || M.wave === 0) return 'Next wave is starting';
   if (M.t < M.skipAt) return `Skip opens in ${Math.ceil(M.skipAt - M.t)}s`;
   if (!M.votes.includes(p.name)) M.votes.push(p.name);
-  if (M.votes.length * 2 > M.players.length) { log('skip', { wave: M.wave }); M.waveEnd = M.t; return 'Skipped'; }
+  if (M.votes.length >= Math.max(1, M.players.length - 1)) { log('skip', { wave: M.wave }); M.waveEnd = M.t; return 'Skipped'; }
   return `Votes ${M.votes.length}/${M.players.length}`;
 }
 
 // ---------- enemies ----------
-function spawnEnemy(name: string, mods: string[], d = 0, wave = M!.wave) {
+function spawnEnemy(name: string, mods: string[], d = 0, wave = M!.wave, summoned = false) {
   if (!M || !path) return;
   const def = enemies[name], s = enemyIn(name, M.mode);
   const hp = s.hp * (mods.includes('Bloated') ? 2 : 1);
   const e: Enemy = { id: M.seq++, name, d, hp, max: hp, shield: s.shield ?? 0, speed: s.speed * (mods.includes('Nimble') ? 2 : 1), def: def?.defense ?? 0, cash: s.cash, every: s.cashEveryPct, paid: 0,
     hidden: !!def?.hidden, flying: !!def?.flying, lead: !!def?.lead, boss: !!def?.boss || mods.includes('Boss'), immune: def?.immune ?? [], mods,
-    slow: 0, slowUntil: 0, freezeUntil: 0, stunUntil: 0, dots: [], wave, born: M.t };
+    slow: 0, slowUntil: 0, freezeUntil: 0, stunUntil: 0, dots: [], wave, summoned, born: M.t };
   if (def?.spawns && def.spawnMode === 'periodic') e.nextSummon = M.t + RULES.summonEvery;
   // wave modifiers (wiki attribute pages)
   if (mods.includes('Hidden')) e.hidden = true;
@@ -189,7 +181,7 @@ function kill(e: Enemy, tw?: Tower) {
   M.stats.kills++;
   const def = enemies[e.name];
   for (const a of def?.abilities ?? []) if (a.kind === 'deathSpawn' || a.onDeath) useAbility(e, a);
-  if (def?.spawns && def.spawnMode === 'death') for (const c of def.spawns.slice(0, 1)) for (let i = 0; i < RULES.childCount; i++) spawnEnemy(c, [], Math.max(0, e.d - i * 1.5), e.wave);
+  if (def?.spawns && def.spawnMode === 'death') for (const c of def.spawns.slice(0, 1)) for (let i = 0; i < RULES.childCount; i++) spawnEnemy(c, [], Math.max(0, e.d - i * 1.5), e.wave, true);
   log('enemy_kill', { id: e.id, name: e.name, by: tw?.id ?? null, d: +e.d.toFixed(1) });
 }
 function give(tw: Tower | undefined, amount: number) {
@@ -216,7 +208,7 @@ export function hit(e: Enemy, dmg: number, tw?: Tower, kind: 'direct' | 'splash'
 const near = (e: Enemy, r: number) => { const p = path!.at(e.d); return (tw: { x: number; z: number }) => Math.hypot(p.x - (tw.x + 0.5), p.z - (tw.z + 0.5)) / path!.stud <= r; };
 function spawnList(e: Enemy, list: Spawn[]) {
   let k = 0;
-  for (const s of list) for (let i = 0; i < s.n; i++) { const name = s.pool ? s.pool[Math.floor(rand() * s.pool.length)] : s.name!; if (enemies[name]) spawnEnemy(name, [], Math.max(0, e.d - 0.6 * k++), e.wave); }
+  for (const s of list) for (let i = 0; i < s.n; i++) { const name = s.pool ? s.pool[Math.floor(rand() * s.pool.length)] : s.name!; if (enemies[name]) spawnEnemy(name, [], Math.max(0, e.d - 0.6 * k++), e.wave, true); }
 }
 export function useAbility(e: Enemy, a: Ability) {
   if (!M || !path) return;
@@ -436,9 +428,7 @@ const DT = 0.05;
 function step() {
   if (!M || !path || M.over) return;
   M.t += DT;
-  if (!M.hold && M.t >= M.waveEnd) {
-    if (M.wave >= modes[M.mode].waves) { /* final wave: no timer */ } else nextWave();
-  }
+  if (!M.hold && M.inter && M.t >= M.waveEnd) nextWave();
   while (M.queue.length && M.queue[0].at <= M.t) { const q = M.queue.shift()!; spawnEnemy(q.name, q.mods); }
   for (const e of [...M.enemies]) {
     for (const o of [...e.dots]) { while (o.next <= M.t && o.next <= o.until && e.hp > 0) { hit(e, o.dmg, towerById(o.tw), 'dot'); o.next += o.tick; } if (o.next > o.until) e.dots.splice(e.dots.indexOf(o), 1); }
@@ -447,7 +437,7 @@ function step() {
     enemyAbilities(e); if (e.hp <= 0) continue;
     const v = M.t < e.freezeUntil || M.t < e.stunUntil ? 0 : e.speed * (1 - e.slow) * (e.hasteUntil && M.t < e.hasteUntil ? 1 + (e.haste ?? 0) : 1);
     if (v) { e.d += v * DT; e.x = undefined; }
-    if (e.nextSummon !== undefined && M.t >= e.nextSummon) { e.nextSummon = M.t + RULES.summonEvery; const c = enemies[e.name].spawns![0]; for (let i = 0; i < RULES.childCount; i++) spawnEnemy(c, [], Math.max(0, e.d - 2 - i), e.wave); }
+    if (e.nextSummon !== undefined && M.t >= e.nextSummon) { e.nextSummon = M.t + RULES.summonEvery; const c = enemies[e.name].spawns![0]; for (let i = 0; i < RULES.childCount; i++) spawnEnemy(c, [], Math.max(0, e.d - 2 - i), e.wave, true); }
     if (e.d >= path.len) leak(e);
   }
   const ta = Date.now();
@@ -455,14 +445,21 @@ function step() {
   for (const tw of M.towers) towerStep(tw, DT);
   prof.tw += Date.now() - ta;
   const md = modes[M.mode];
-  if (M.wave >= md.waves && !M.enemies.length && !M.queue.length) return end('win');
-  const waveLeft = M.enemies.some((e) => e.wave === M!.wave) || M.queue.length > 0;
-  if (M.wave > 0 && !waveLeft && !M.clearPaid) {
-    M.clearPaid = true;
-    const pct = M.players.length > 1 ? 0.2 : /Molten|Fallen|Hardcore/.test(M.mode) ? 0.4 : 0.35;
-    if (!(M.mode !== 'Easy' && M.leakedThisWave)) { const b = Math.floor(waveCash(M.mode, M.wave, M.players.length) * pct + 1e-6); for (const n of M.players) M.cash[n] += b; log('wave_clear', { wave: M.wave, bonus: b }); }
-    M.waveEnd = Math.min(M.waveEnd, M.t + RULES.clearWait);
-  }
+  if (M.wave >= md.waves && !M.inter && !M.enemies.length && !M.queue.length) return end('win');
+  if (M.inter || M.wave === 0 || M.wave >= md.waves) return;
+  // a wave ends when its own enemies are gone (summoned and older ones do not count), its timer runs out, or a skip vote passes
+  const own = M.enemies.some((e) => e.wave === M!.wave && !e.summoned) || M.queue.length > 0;
+  if (!own || (!M.hold && M.t >= M.waveEnd)) endWave(!own);
+}
+function endWave(cleared: boolean) {
+  if (!M) return;
+  const md = modes[M.mode], p = M.players.length, bonus = waveCash(M.mode, M.wave, p);
+  for (const n of M.players) M.cash[n] += bonus;
+  for (const tw of M.towers) { const s = stats(tw.name, tw.lvl); if (s.income && !s.cashShot) { M.cash[tw.owner] = (M.cash[tw.owner] ?? 0) + s.income; M.stats.income += s.income; log('income', { tower: tw.id, name: tw.name, amount: s.income }); } }
+  log('wave_cash', { wave: M.wave, bonus });
+  const pct = p > 1 ? md.clear.group : md.clear.solo;
+  if (cleared && pct && !M.leakedThisWave && !(md.clear.noDamage && M.waveDmg)) { const b = Math.floor(bonus * pct + 1e-6); for (const n of M.players) M.cash[n] += b; log('wave_clear', { wave: M.wave, bonus: b }); }
+  M.inter = true; M.waveEnd = M.t + 5;   // "a 5-second intermission will count down before the next wave begins"
 }
 function unitStep(u: Unit) {
   if (!M || !path) return;
@@ -478,7 +475,7 @@ function unitStep(u: Unit) {
 }
 function leak(e: Enemy) {
   if (!M) return;
-  const dmg = Math.ceil(e.hp + e.shield); M.baseHP -= dmg; M.stats.leaks++; M.leakedThisWave = true;
+  const dmg = Math.ceil(e.hp + e.shield); M.baseHP -= dmg; M.stats.leaks++; M.waveDmg = true; if (e.wave === M.wave) M.leakedThisWave = true;
   M.enemies.splice(M.enemies.indexOf(e), 1); const x = ents.get(e.id); if (x?.isValid) x.remove(); ents.delete(e.id);
   log('leak', { id: e.id, name: e.name, dmg, baseHP: Math.max(0, M.baseHP), took: +(M.t - (e.born ?? 0)).toFixed(2) });
   if (M.baseHP <= 0) end('lose');
