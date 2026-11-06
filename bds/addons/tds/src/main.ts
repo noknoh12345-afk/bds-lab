@@ -48,7 +48,7 @@ cmdAny('tds:tower', 'Effective stats of a placed tower (buffs included)', { id: 
   const st = G.M && (tw.stunUntil ?? 0) > G.M.t ? ` stunned ${(tw.stunUntil! - G.M.t).toFixed(1)}s` : '';
   return `#${tw.id} ${tw.name} Lv${tw.lvl} dmg ${s.dmg} fr ${s.fr?.toFixed(3) ?? '-'} range ${s.range.toFixed(2)} dealt ${Math.round(tw.dealt)}${st}`;
 });
-cmdAny('tds:wavecash', 'Wave bonus of a mode (wiki formula)', { mode: 'string', wave: 'int', players: 'int' }, (_, a) => `${a.mode} wave ${a.wave} x${a.players}: $${waveCash(a.mode, a.wave, a.players)} start $${startCash(a.mode, a.players)}`);
+cmdAny('tds:wavecash', 'Wave bonus of a mode (wiki formula)', { mode: 'string', wave: 'int', players: 'int' }, (_, a) => (modes[a.mode] ? `${a.mode} wave ${a.wave} x${a.players}: $${waveCash(a.mode, a.wave, a.players)} start $${startCash(a.mode, a.players)}` : `Modes: ${MODE_NAMES.join(' ')}`));
 cmdAny('tds:info', 'Tower stats from the wiki data', { tower: 'string', 'lvl?': 'int' }, (_, a) => {
   const n = T(a.tower), d = towers[n]; if (!d) return `Unknown ${n}`; const l = a.lvl ?? 0;
   const s = stats(n, l);
@@ -72,7 +72,7 @@ cmd('tds:cash', 'Set match cash (test)', { n: 'int' }, (p, a) => { if (!G.M) ret
 cmdAny('tds:hold', 'Stop or resume the wave clock (test; before a match: for the next one)', { on: 'bool' }, (_, a) => { G.setHold(a.on); return `hold ${a.on}`; }, true);
 cmd('tds:auto', 'Let the bot play for you (test)', { on: 'bool' }, (p, a) => { if (a.on) p.addTag('tds_auto'); else p.removeTag('tds_auto'); return `auto ${a.on}`; }, true);
 cmdAny('tds:bench', 'Measure every tower level against a dummy', { 'tower?': 'string', 'lvl?': 'int' }, (_, a) => {
-  if (a.tower) { const r = bench(T(a.tower), a.lvl ?? 0); G.log('bench', r ?? { name: a.tower, none: true }); return JSON.stringify(r); }
+  if (a.tower) { if (!towers[T(a.tower)]) return `Unknown tower ${T(a.tower)}`; const r = bench(T(a.tower), a.lvl ?? 0); G.log('bench', r ?? { name: a.tower, none: true }); return JSON.stringify(r); }
   system.runJob(benchJob()); return 'bench started';
 }, true);
 function* benchJob() {

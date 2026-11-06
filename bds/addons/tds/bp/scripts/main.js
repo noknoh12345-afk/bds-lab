@@ -158,7 +158,7 @@ function stats(name, lvl) {
   const k = name + "#" + lvl;
   const c = cache.get(k);
   if (c) return c;
-  const L = towers[name].levels[lvl] ?? {};
+  const L = towers[name]?.levels[lvl] ?? {};
   const pct = (v) => v === void 0 ? void 0 : v > 1 ? v / 100 : v;
   const s = {
     dmg: f(L, "damage", "normalDamage", "splashDamage", "bombDamage", "fireworkDamage", "gunnerDamage") ?? 0,
@@ -191,12 +191,12 @@ function stats(name, lvl) {
   const pd = f(L, "poisonDamage"), pT = f(L, "poisonTime");
   if (pd && pT) s.poison = [pd, f(L, "tick") ?? 1, pT];
   if (s.spawnrate && s.unitHp) s.unitDmg = f(L, "gunnerDamage", "damage", "normalDamage") ?? 1;
-  if (/splash/i.test(towers[name].damageType ?? "") && !s.splash) s.splash = 3;
+  if (/splash/i.test(towers[name]?.damageType ?? "") && !s.splash) s.splash = 3;
   cache.set(k, s);
   return s;
 }
-var maxLevel = (name) => towers[name].levels.length - 1;
-var levelCost = (name, lvl) => n(towers[name].levels[lvl]?.cost);
+var maxLevel = (name) => (towers[name]?.levels.length ?? 1) - 1;
+var levelCost = (name, lvl) => n(towers[name]?.levels[lvl]?.cost);
 var placeCost = (name) => levelCost(name, 0);
 var fcache = /* @__PURE__ */ new Map();
 function waveCash(mode, w, p) {
@@ -1381,7 +1381,7 @@ cmdAny("tds:tower", "Effective stats of a placed tower (buffs included)", { id: 
   const st = M && (tw.stunUntil ?? 0) > M.t ? ` stunned ${(tw.stunUntil - M.t).toFixed(1)}s` : "";
   return `#${tw.id} ${tw.name} Lv${tw.lvl} dmg ${s.dmg} fr ${s.fr?.toFixed(3) ?? "-"} range ${s.range.toFixed(2)} dealt ${Math.round(tw.dealt)}${st}`;
 });
-cmdAny("tds:wavecash", "Wave bonus of a mode (wiki formula)", { mode: "string", wave: "int", players: "int" }, (_, a) => `${a.mode} wave ${a.wave} x${a.players}: $${waveCash(a.mode, a.wave, a.players)} start $${startCash(a.mode, a.players)}`);
+cmdAny("tds:wavecash", "Wave bonus of a mode (wiki formula)", { mode: "string", wave: "int", players: "int" }, (_, a) => modes[a.mode] ? `${a.mode} wave ${a.wave} x${a.players}: $${waveCash(a.mode, a.wave, a.players)} start $${startCash(a.mode, a.players)}` : `Modes: ${MODE_NAMES.join(" ")}`);
 cmdAny("tds:info", "Tower stats from the wiki data", { tower: "string", "lvl?": "int" }, (_, a) => {
   const n2 = T(a.tower), d = towers[n2];
   if (!d) return `Unknown ${n2}`;
@@ -1445,6 +1445,7 @@ cmd("tds:auto", "Let the bot play for you (test)", { on: "bool" }, (p, a) => {
 }, true);
 cmdAny("tds:bench", "Measure every tower level against a dummy", { "tower?": "string", "lvl?": "int" }, (_, a) => {
   if (a.tower) {
+    if (!towers[T(a.tower)]) return `Unknown tower ${T(a.tower)}`;
     const r = bench(T(a.tower), a.lvl ?? 0);
     log("bench", r ?? { name: a.tower, none: true });
     return JSON.stringify(r);

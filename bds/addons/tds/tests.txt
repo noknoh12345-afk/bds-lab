@@ -340,3 +340,13 @@ wait 12000
 tds:tps
 ~ ^tps (19|20)\.\d
 tds:stop
+
+## chaos 62955: an unknown mode name in /tds:wavecash is answered, not thrown
+@B join
+@B cmd /tds:wavecash "two words" -1 0
+~ @B Modes: Easy Casual Intermediate Molten Fallen Hardcore
+
+## chaos 32085: an unknown tower name in /tds:bench is answered, not thrown
+@C join
+@C cmd /tds:bench "two words"
+~ @C Unknown tower two words

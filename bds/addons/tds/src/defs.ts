@@ -37,7 +37,7 @@ export type Stats = {
 const cache = new Map<string, Stats>();
 export function stats(name: string, lvl: number): Stats {
   const k = name + '#' + lvl; const c = cache.get(k); if (c) return c;
-  const L = towers[name].levels[lvl] ?? {};
+  const L = towers[name]?.levels[lvl] ?? {};
   const pct = (v?: number) => (v === undefined ? undefined : v > 1 ? v / 100 : v);
   const s: Stats = {
     dmg: f(L, 'damage', 'normalDamage', 'splashDamage', 'bombDamage', 'fireworkDamage', 'gunnerDamage') ?? 0,
@@ -59,11 +59,11 @@ export function stats(name: string, lvl: number): Stats {
   const pd = f(L, 'poisonDamage'), pT = f(L, 'poisonTime');
   if (pd && pT) s.poison = [pd, f(L, 'tick') ?? 1, pT];
   if (s.spawnrate && s.unitHp) s.unitDmg = f(L, 'gunnerDamage', 'damage', 'normalDamage') ?? 1;
-  if (/splash/i.test(towers[name].damageType ?? '') && !s.splash) s.splash = 3;
+  if (/splash/i.test(towers[name]?.damageType ?? '') && !s.splash) s.splash = 3;
   cache.set(k, s); return s;
 }
-export const maxLevel = (name: string) => towers[name].levels.length - 1;
-export const levelCost = (name: string, lvl: number) => n(towers[name].levels[lvl]?.cost);
+export const maxLevel = (name: string) => (towers[name]?.levels.length ?? 1) - 1;
+export const levelCost = (name: string, lvl: number) => n(towers[name]?.levels[lvl]?.cost);
 export const placeCost = (name: string) => levelCost(name, 0);
 
 /** Wave bonus from the mode page formula: w = waves completed, p = players. */
