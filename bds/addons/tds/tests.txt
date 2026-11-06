@@ -123,6 +123,40 @@ until "ev":"reward","player":"A","result":"win","coins":300,"gems":0,"exp":50 50
 tds:speed 1
 @A cmd /tds:auto false
 
+## forms: the wand opens the placement menu on a block; a tower opens upgrade, sell and targeting; skip vote
+tds:stop
+tds:hold true
+@A cmd /tds:play Easy
+@A cmd /tds:cash 5000
+tp A -9 -60 -17
+@A select tds:wand
+@A useon -9 -61 -15 up
+~ @A form action: title\("Place a tower"\)
+@A form 0
+~ @A Placed #\d+ Scout
+@A interact tds:tower
+~ @A form action: title\("#\d+ Scout"\)
+@A form 0
+~ @A Scout → Lv1
+@A interact tds:tower
+@A form 2
+@A form Last
+~ @A #\d+ → Last
+@A interact tds:tower
+@A form 1
+~ @A Sold for \$\d+
+tds:hold false
+until "ev":"wave_start","wave":1 20000
+@A cmd /tds:skip
+~ @A Skip opens in \d+s
+tds:speed 20
+wait 2000
+@A cmd /tds:skip
+~ @A Skipped
+until "ev":"wave_start","wave":2 10000
+tds:speed 1
+tds:stop
+
 ## lobby: profile, shop with coins, loadout, quests, elevator to a match
 tds:stop
 @A cmd /tds:profile
@@ -139,6 +173,14 @@ tds:stop
 @A cmd /tds:quests
 ~ @A Defeat 300 enemies \d+/300 .*Win a match 1/1
 @A cmd /tds:grant 0 0 0
+@A cmd /tds:lobby
+~ @A form action: title\("TDS Lobby"\)
+@A form 3
+~ @A Defeat 300 enemies
+@A cmd /tds:queue Easy
+~ @A Elevator Easy: 1/4
+@A cmd /tds:leave
+~ @A Left
 @A cmd /tds:queue Hardcore
 ~ @A Hardcore needs level 50
 @A cmd /tds:queue Casual

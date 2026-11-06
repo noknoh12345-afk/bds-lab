@@ -1263,8 +1263,16 @@ async function lobbyMenu(p) {
   }
   if (i === 3) p.sendMessage(Object.entries(QUESTS).map(([k, q]) => `${q.text} ${pr.quests[k] ?? 0}/${q.need}`).join("\n"));
 }
+world4.beforeEvents.playerInteractWithBlock.subscribe(({ player: p, itemStack, block, isFirstEvent }) => {
+  if (itemStack?.typeId !== "tds:wand" || !isFirstEvent) return;
+  const { x, y, z } = block;
+  system4.run(() => {
+    if (inMatch(p)) void placeMenu(p, x, y + 1, z);
+  });
+});
 world4.afterEvents.itemUse.subscribe(({ source: p, itemStack }) => {
   if (itemStack.typeId !== "tds:wand") return;
+  if (inMatch(p) && p.getBlockFromViewDirection({ maxDistance: 6 })) return;
   if (!inMatch(p)) {
     void lobbyMenu(p);
     return;

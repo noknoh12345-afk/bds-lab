@@ -87,8 +87,13 @@ async function lobbyMenu(p: Player) {
 }
 
 // ---------- in-world UI ----------
+world.beforeEvents.playerInteractWithBlock.subscribe(({ player: p, itemStack, block, isFirstEvent }) => {
+  if (itemStack?.typeId !== 'tds:wand' || !isFirstEvent) return;
+  const { x, y, z } = block; system.run(() => { if (inMatch(p)) void placeMenu(p, x, y + 1, z); });
+});
 world.afterEvents.itemUse.subscribe(({ source: p, itemStack }) => {
   if (itemStack.typeId !== 'tds:wand') return;
+  if (inMatch(p) && p.getBlockFromViewDirection({ maxDistance: 6 })) return; // the block event places
   if (!inMatch(p)) { void lobbyMenu(p); return; }
   const hitB = p.getBlockFromViewDirection({ maxDistance: 24 })?.block;
   if (!hitB) { p.sendMessage('Look at the ground or a cliff'); return; }

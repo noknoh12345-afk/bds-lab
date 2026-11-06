@@ -4,3 +4,4 @@ entity.tds:enemy.name=Enemy
 entity.tds:tower.name=Tower
 entity.tds:unit.name=Unit
 item.tds:wand.name=Tower Placer
+action.interact.tds_manage=Manage

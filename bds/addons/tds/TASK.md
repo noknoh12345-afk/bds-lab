@@ -12,6 +12,7 @@ Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki:
 - [ ] economy: Easy wave bonus (200 + (w-1)×160)×(1-0.1×p) and the wave-clear bonus
 - [ ] leaks: an enemy reaching the base removes its remaining health from base HP; HP 0 loses
 - [ ] a full Easy match won by the bot (all 20 waves, bosses included)
+- [ ] forms: the wand opens the placement menu on a block; a tower opens upgrade, sell and targeting; skip vote
 - [ ] lobby: profile, shop with coins, loadout, quests, elevator to a match
 - [ ] restart: the match, its towers and wave survive a server restart
 - [ ] load: 200 enemies and 50 towers keep 20 TPS
