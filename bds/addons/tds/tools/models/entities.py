@@ -142,13 +142,20 @@ UNIT_ANIMS = {
 
 def level_rules(rp, geos, built=None):
     """part_visibility for the upgrade looks, from the bone names the tower geometries use: lvN_* from level N, preN_* below N,
-    rAtoB_* from A to below B (the original's towers change their model at each upgrade). The ghost shows level 0."""
+    rAtoB_* from A to below B (the original's towers change their model at each upgrade). The ghost shows level 0.
+    The bone names come from the models this build makes (`built`: name -> Model), so the geometry and its rules are written
+    together; only a geometry not built in this run is read from rp/models (reading the files alone gave the rules of the
+    previous build: the first build after adding a part wrote a controller without its rule)."""
     import glob
     import re
-    names = set()
+    names, seen = set(), set()
+    for m in (built or {}).values():
+        if f'geometry.tds.{m.name}' in geos:
+            names |= {b['name'] for b in m.bones}
+            seen.add(f'geometry.tds.{m.name}')
     for p in glob.glob(os.path.join(rp, 'models', 'entity', 'tds', '*.geo.json')):
         g = json.load(open(p))['minecraft:geometry'][0]
-        if g['description']['identifier'] in geos:
+        if g['description']['identifier'] in geos and g['description']['identifier'] not in seen:
             names |= {b['name'] for b in g['bones']}
     L = "q.property('tds:lvl')"
     found = sorted({m.group(0) for n in names for m in [re.match(r'(lv\d|pre\d|r\dto\d)_', n)] if m})
@@ -271,7 +278,7 @@ def outputs(rp, models):
         [{'march': skin_is(1, 5, 6, 7)}, {'shamble': skin_is(3)}, {'wheels': skin_is(0)}, {'sweep': skin_is(2)}, {'spin': skin_is(4)}], 'unit'))
 
     pips = [{f'pip{i}': f"q.property('tds:lvl') >= {i}"} for i in range(1, 8)]
-    lv_rules, ghost_rules = level_rules(rp, t_geo + t_gear)
+    lv_rules, ghost_rules = level_rules(rp, t_geo + t_gear, models)
     rcs = {}
     rcs.update(two_rc('enemy', range(8), (('default', 'blend'), f'{SK} == 4 ? 1 : 0'), (('gear', 'blend'), f'{SK} == 4 ? 1 : 0')))
     rcs.update(two_rc('tower', FIGURES, (('default', 'lit', 'blend'), f'{SK} == 6 ? 2 : ({skin_is(*FIGURES)}) ? 0 : 1'),

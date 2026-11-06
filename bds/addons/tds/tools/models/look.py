@@ -40,6 +40,7 @@ def preview_tex(name):
 def render(name, tex=None, anim=None, views=None, lvl=None, fire=False):
     geo = name if not tex else tex
     target = f'geometry.tds.{name}'
+    os.makedirs(TMP, exist_ok=True)
     if lvl is not None:                                       # the level's look: hide what the render controller would hide
         import json
         from compose import keep_level
@@ -86,8 +87,8 @@ def main(argv):
     name = argv[argv.index('--sheet') + 1] if '--sheet' in argv else 'look'
     scale = float(argv[argv.index('--scale') + 1]) if '--scale' in argv else 0.5
     lvl = int(argv[argv.index('--lvl') + 1]) if '--lvl' in argv else None
-    skip = {anim, views, name, str(scale), str(lvl)}
-    names = [a for a in argv if not a.startswith('--') and a not in skip]
+    valued = {'--anim', '--views', '--sheet', '--scale', '--lvl'}     # flags followed by a value (a value is never a name)
+    names = [a for i, a in enumerate(argv) if not a.startswith('--') and not (i and argv[i - 1] in valued)]
     if '--all' in argv:
         names = sorted(f[:-9] for f in os.listdir(os.path.join(ADDON, 'rp', 'models', 'entity', 'tds')) if f.endswith('.geo.json'))
     paths = []

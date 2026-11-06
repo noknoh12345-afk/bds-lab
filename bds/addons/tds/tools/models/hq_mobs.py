@@ -39,7 +39,7 @@ def blade(m, bone, parent, x, top, length, width=1.6, mat='steel', guard='gold',
     m.box(bone, f'{tag}_grip', x - 0.35, x + 0.35, top - 0.2, top + 2.4, -0.35, 0.35, 'dark')
     m.box(bone, f'{tag}_guard', x - 0.45, x + 0.45, top - 0.75, top - 0.2, -2.0, 2.0, guard)
     m.box(bone, f'{tag}_blade', x - 0.22, x + 0.22, top - 0.75 - length, top - 0.7, -width / 2, width / 2, mat, decal='blade')
-    m.box(bone, f'{tag}_pommel', x - 0.5, x + 0.5, top + 2.4, top + 3.2, -0.5, 0.5, guard)
+    m.box(bone, f'{tag}_pommel', x - 0.5, x + 0.5, top + 2.4, top + 3.0, -0.5, 0.5, guard)
 
 
 # ------------------------------------------------------------------------------------------------ 0 walker

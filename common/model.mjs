@@ -194,7 +194,8 @@ function overlapArea(subject, clip) {
   }
   return Math.abs(signed(out));
 }
-export function lintGeo(geo, pose = {}) {
+// apart(boneA, boneB): true when the pack never draws the two at once (apartParts below): their faces are no z-fight pair
+export function lintGeo(geo, pose = {}, apart = null) {
   const errs = [], bones = new Map(geo.bones.map((b) => [b.name, b])), cubes = [], seen = new Map();
   let n = 0;
   for (const bone of geo.bones) for (const c of bone.cubes ?? []) {
@@ -216,7 +217,7 @@ export function lintGeo(geo, pose = {}) {
       const [u, v] = m.uv, [w, h] = m.uv_size;
       if (Math.min(u, u + w) < 0 || Math.min(v, v + h) < 0 || Math.max(u, u + w) > geo.tw || Math.max(v, v + h) > geo.th) errs.push(`UV leaves the ${geo.tw}x${geo.th} texture: ${name} ${f} [${u},${v}] size [${w},${h}]`);
     }
-    if (Math.min(...s) >= 0) cubes.push({ c, name, chain: lineage(bones, bone.name) });
+    if (Math.min(...s) >= 0) cubes.push({ c, name, chain: lineage(bones, bone.name), bone: bone.name });
   }
   // z-fighting: two faces of different cubes looking the same way from one plane and overlapping there (rotated cubes too)
   const faces = [];
@@ -243,11 +244,66 @@ export function lintGeo(geo, pose = {}) {
     for (let i = 0; i < g.length; i++) for (let j = i + 1; j < g.length; j++) {
       const fa = g[i], fb = g[j];
       if (fb.dist - fa.dist > 0.012) break;
-      if (fa.k === fb.k || dot(fa.n, fb.n) < 0.99995) continue;
+      if (fa.k === fb.k || dot(fa.n, fb.n) < 0.99995 || (apart && fa.k.bone !== fb.k.bone && apart(fa.k.bone, fb.k.bone))) continue;
       const ax = unit(fa.e1), ay = cross(fa.n, ax), to2d = (p) => [dot(p, ax), dot(p, ay)];
       const area = overlapArea(fa.q.map(to2d), fb.q.map(to2d));
       if (area > 0.03) errs.push(`z-fight: ${fa.k.name} / ${fb.k.name} (${fa.face}/${fb.face}, ${area.toFixed(2)} sq px): move one 0.02-0.05, then paint the step`);
     }
   }
   return { cubes: n, bones: geo.bones.length, errs };
+}
+
+// part_visibility: bones a pack's render controllers never draw at once (a tower's level-4 gun and the gun it replaces) share
+// planes without z-fighting. apartParts(clientEntities, renderControllers)(geometry id) -> apart(boneA, boneB), true when in EVERY
+// controller that can draw that geometry one of the two is hidden whenever the other shows; null when that is not known (a
+// controller not in the pack, such as vanilla's, or a geometry no entity draws). Each bone's rule is the last part_visibility
+// entry whose name matches it ("lv4_*": * is a wildcard, as vanilla's camel "reins*"), per bone: a hidden parent hides no child
+// (vanilla's first-person arm shows while its parent body is hidden). Conditions read: true/false/numbers, and comparisons of
+// ONE expression with numbers joined by && ("q.property('tds:lvl') >= 1 && q.property('tds:lvl') < 4"); anything else: unknown.
+const ALL = 'all', NONE = 'none';
+function shownFor(c) {
+  if (typeof c === 'boolean') return c ? ALL : NONE;
+  if (typeof c === 'number') return c ? ALL : NONE;
+  if (typeof c !== 'string') return null;
+  const t = c.trim().toLowerCase();
+  if (t === 'true' || t === 'false' || /^-?\d+(\.\d+)?$/.test(t)) return t === 'false' || Number(t) === 0 ? NONE : ALL;
+  const r = { e: null, lo: -Infinity, loIn: false, hi: Infinity, hiIn: false };
+  for (const term of t.split('&&')) {
+    const m = /^\s*(.+?)\s*(>=|<=|==|>|<)\s*(-?\d+(?:\.\d+)?)\s*$/.exec(term);
+    const e = m?.[1].replace(/\s+/g, '').replace(/^query\./, 'q.');
+    if (!m || !/^[\w.'":()-]+$/.test(e) || (r.e !== null && r.e !== e)) return null;     // ||, !, ?: or two expressions: unknown
+    r.e = e;
+    const n = Number(m[3]), op = m[2];
+    if (op !== '<' && op !== '<=') { const inc = op !== '>'; if (n > r.lo || (n === r.lo && !inc)) [r.lo, r.loIn] = [n, n === r.lo ? r.loIn && inc : inc]; }
+    if (op !== '>' && op !== '>=') { const inc = op !== '<'; if (n < r.hi || (n === r.hi && !inc)) [r.hi, r.hiIn] = [n, n === r.hi ? r.hiIn && inc : inc]; }
+  }
+  return r.lo > r.hi || (r.lo === r.hi && !(r.loIn && r.hiIn)) ? NONE : r;
+}
+function disjoint(a, b) {
+  if (a === NONE || b === NONE) return true;
+  if (!a || !b || a === ALL || b === ALL || a.e !== b.e) return false;
+  const lo = a.lo > b.lo ? [a.lo, a.loIn] : b.lo > a.lo ? [b.lo, b.loIn] : [a.lo, a.loIn && b.loIn];
+  const hi = a.hi < b.hi ? [a.hi, a.hiIn] : b.hi < a.hi ? [b.hi, b.hiIn] : [a.hi, a.hiIn && b.hiIn];
+  return lo[0] > hi[0] || (lo[0] === hi[0] && !(lo[1] && hi[1]));
+}
+export function apartParts(entities, controllers) {
+  const byGeo = new Map(), add = (id, rules) => (byGeo.get(id) ?? byGeo.set(id, []).get(id)).push(rules);
+  const compile = (pv) => (Array.isArray(pv) ? pv : []).flatMap((e) => Object.entries(e ?? {})).map(([k, v]) => ({ re: new RegExp('^' + k.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$'), v }));
+  for (const d of entities) {
+    const geos = d?.geometry && typeof d.geometry === 'object' ? d.geometry : {};
+    for (const r of d?.render_controllers ?? []) {
+      const rc = controllers[typeof r === 'string' ? r : Object.keys(r ?? {})[0]];
+      if (!rc) { for (const id of Object.values(geos)) add(id, null); continue; }
+      const keys = new Set([...JSON.stringify([rc.geometry ?? '', rc.arrays?.geometries ?? {}]).matchAll(/Geometry\.(\w+)/gi)].map((m) => m[1]));
+      const rules = compile(rc.part_visibility);
+      for (const k of keys) if (geos[k]) add(geos[k], rules);
+    }
+  }
+  return (id) => {
+    const all = byGeo.get(id);
+    if (!all?.length || all.includes(null)) return null;
+    const memo = new Map();
+    const shown = (i, bone) => { const key = i + '\u0000' + bone; if (!memo.has(key)) { let v = true; for (const x of all[i]) if (x.re.test(bone)) v = x.v; memo.set(key, shownFor(v)); } return memo.get(key); };
+    return (a, b) => all.every((_, i) => disjoint(shown(i, a), shown(i, b)));
+  };
 }

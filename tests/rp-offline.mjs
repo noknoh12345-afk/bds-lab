@@ -22,6 +22,18 @@ pair(geo([{ origin: [0, 0, 0], size: [8, 8, 8], uv: [20, 0] }], 32, 32), geo([{ 
 // two cubes side by side whose top faces share y=4 and overlap: z-fight; lowered by 0.03: none
 pair(geo([{ origin: [0, 0, 0], size: [4, 4, 4], uv: [0, 0] }, { origin: [2, 0, 0], size: [4, 4, 4], uv: [0, 8] }], 64, 64),
   geo([{ origin: [0, 0, 0], size: [4, 4, 4], uv: [0, 0] }, { origin: [2, -0.03, 0.03], size: [4, 4, 3.94], uv: [0, 8] }], 64, 64), /z-fight/, 'model: two faces on one plane z-fight; moving one 0.02-0.05 clears it');
+// part_visibility: parts the pack's render controllers never draw at once (a level's gun and the gun it replaces) are no z-fight pair
+const lvGeo = (a, b, more = []) => ({ id: 'geometry.lv', tw: 64, th: 64, bones: [...more, { name: a, pivot: [0, 0, 0], cubes: [{ origin: [0, 0, 0], size: [4, 4, 4], uv: [0, 0] }] }, { name: b, pivot: [0, 0, 0], cubes: [{ origin: [2, 0, 0], size: [4, 4, 4], uv: [0, 8] }] }] });
+const lvEnt = (rc) => [{ geometry: { default: 'geometry.lv' }, render_controllers: [{ [rc]: 'true' }] }];
+const lvRcs = { 'controller.render.lv': { geometry: 'Geometry.default', part_visibility: [{ '*': true }, { 'lv4_*': "q.property('t:lvl') >= 4" }, { 'pre4_*': "q.property('t:lvl') < 4" }, { 'r2to5_*': "query.property('t:lvl') >= 2 && q.property('t:lvl') < 5" }, { 'off_*': false }] } };
+const zf = (g, apart) => M.lintGeo(g, {}, apart).errs.some((e) => /z-fight/.test(e));
+const lvA = M.apartParts(lvEnt('controller.render.lv'), lvRcs)('geometry.lv');
+ok(!zf(lvGeo('pre4_gun', 'lv4_gun'), lvA) && zf(lvGeo('pre4_gun', 'lv4_gun'), null) && !zf(lvGeo('body', 'off_gun'), lvA), "model: a level's part and the part it replaces (lv4_* / pre4_*, never drawn at once) or a part never shown is no z-fight pair; without the controllers it is");
+ok(zf(lvGeo('r2to5_gun', 'lv4_gun'), lvA) && zf(lvGeo('body', 'lv4_gun'), lvA), 'model: parts that can show at once (levels 2..4 and 4+ meet at 4; an always-shown body) still z-fight');
+const lvChild = lvGeo('pre4_gun', 'barrel', [{ name: 'lv4_gun', pivot: [0, 0, 0] }]);
+lvChild.bones.find((b) => b.name === 'barrel').parent = 'lv4_gun';
+ok(zf(lvChild, lvA), 'model: a child with no rule of its own shows at every level (visibility is per bone: a hidden parent hides no child): it still z-fights');
+ok(zf(lvGeo('pre4_gun', 'lv4_gun'), M.apartParts(lvEnt('controller.render.vanilla_one'), lvRcs)('geometry.lv')), "model: a controller not in the pack (vanilla's) may draw every part: still a z-fight");
 // a zero-thickness plate (wing): its two faces must be the same size or one paints over the other's cut-out
 const plate = (a, b) => geo([{ origin: [0, 0, 0], size: [8, 0, 8], uv: { up: { uv: [0, 0], uv_size: a }, down: { uv: [16, 0], uv_size: b } } }], 64, 64);
 pair(plate([8, 8], [4, 4]), plate([8, 8], [8, 8]), /two-faced plate with unequal faces/, 'model: a plate whose two faces differ in size is found');

@@ -154,6 +154,33 @@
     },
     {
      "pip7": "q.property('tds:lvl') >= 7"
+    },
+    {
+     "lv1_*": "q.property('tds:lvl') >= 1"
+    },
+    {
+     "lv2_*": "q.property('tds:lvl') >= 2"
+    },
+    {
+     "lv3_*": "q.property('tds:lvl') >= 3"
+    },
+    {
+     "lv4_*": "q.property('tds:lvl') >= 4"
+    },
+    {
+     "lv5_*": "q.property('tds:lvl') >= 5"
+    },
+    {
+     "pre3_*": "q.property('tds:lvl') < 3"
+    },
+    {
+     "pre4_*": "q.property('tds:lvl') < 4"
+    },
+    {
+     "r1to4_*": "q.property('tds:lvl') >= 1 && q.property('tds:lvl') < 4"
+    },
+    {
+     "r2to4_*": "q.property('tds:lvl') >= 2 && q.property('tds:lvl') < 4"
     }
    ]
   },
@@ -223,6 +250,33 @@
     },
     {
      "pip7": "q.property('tds:lvl') >= 7"
+    },
+    {
+     "lv1_*": "q.property('tds:lvl') >= 1"
+    },
+    {
+     "lv2_*": "q.property('tds:lvl') >= 2"
+    },
+    {
+     "lv3_*": "q.property('tds:lvl') >= 3"
+    },
+    {
+     "lv4_*": "q.property('tds:lvl') >= 4"
+    },
+    {
+     "lv5_*": "q.property('tds:lvl') >= 5"
+    },
+    {
+     "pre3_*": "q.property('tds:lvl') < 3"
+    },
+    {
+     "pre4_*": "q.property('tds:lvl') < 4"
+    },
+    {
+     "r1to4_*": "q.property('tds:lvl') >= 1 && q.property('tds:lvl') < 4"
+    },
+    {
+     "r2to4_*": "q.property('tds:lvl') >= 2 && q.property('tds:lvl') < 4"
     }
    ]
   },
@@ -370,6 +424,33 @@
     },
     {
      "pip7": false
+    },
+    {
+     "lv1_*": false
+    },
+    {
+     "lv2_*": false
+    },
+    {
+     "lv3_*": false
+    },
+    {
+     "lv4_*": false
+    },
+    {
+     "lv5_*": false
+    },
+    {
+     "pre3_*": true
+    },
+    {
+     "pre4_*": true
+    },
+    {
+     "r1to4_*": false
+    },
+    {
+     "r2to4_*": false
     }
    ]
   },
@@ -432,6 +513,33 @@
     },
     {
      "pip7": false
+    },
+    {
+     "lv1_*": false
+    },
+    {
+     "lv2_*": false
+    },
+    {
+     "lv3_*": false
+    },
+    {
+     "lv4_*": false
+    },
+    {
+     "lv5_*": false
+    },
+    {
+     "pre3_*": true
+    },
+    {
+     "pre4_*": true
+    },
+    {
+     "r1to4_*": false
+    },
+    {
+     "r2to4_*": false
     }
    ]
   }

@@ -971,14 +971,21 @@ async function lintSchema(errs, warns) {
     errs.push(...r.errs); warns.push(...r.warns);
   } catch (e) { warns.push(`schema check skipped: ${String(e.message).split('\n')[0]}`); }
 }
+// the pack's client entities, attachables and render controllers: which bones are never drawn together (model.mjs apartParts)
+function packApart(M) {
+  const safe = (f) => { try { return readJson(f); } catch { return null; } };
+  const ents = ['entity', 'attachables'].flatMap((d) => files(path.join(RP, d), (f) => f.endsWith('.json')).map((f) => { const j = safe(f); return (j?.['minecraft:client_entity'] ?? j?.['minecraft:attachable'])?.description; }).filter(Boolean));
+  const rcs = Object.assign({}, ...files(path.join(RP, 'render_controllers'), (f) => f.endsWith('.json')).map((f) => safe(f)?.render_controllers ?? {}));
+  return M.apartParts(ents, rcs);
+}
 // entity/attachable geometry: collapsed cubes, z-fighting faces, UVs off the texture, unequal plate faces, duplicates (lib/model.mjs)
 async function lintModels(warns) {
   const fl = files(path.join(RP, 'models'), (f) => f.endsWith('.json'));
   if (!fl.length) return;
-  const M = await import('./model.mjs');
+  const M = await import('./model.mjs'), apart = packApart(M);
   for (const f of fl) {
     let geos; try { geos = M.loadGeos(f); } catch { continue; }
-    for (const g of geos) { const r = M.lintGeo(g); r.errs.slice(0, 6).forEach((e) => warns.push(`${rel(f)} ${g.id}: ${e}`)); if (r.errs.length > 6) warns.push(`${rel(f)} ${g.id}: ... +${r.errs.length - 6} (node lab.mjs render ${g.id})`); }
+    for (const g of geos) { const r = M.lintGeo(g, {}, apart(g.id)); r.errs.slice(0, 6).forEach((e) => warns.push(`${rel(f)} ${g.id}: ${e}`)); if (r.errs.length > 6) warns.push(`${rel(f)} ${g.id}: ... +${r.errs.length - 6} (node lab.mjs render ${g.id})`); }
   }
 }
 
@@ -3178,15 +3185,16 @@ const LAYOUT = () => ({ units: posixRel(ADDONS), branch: F.branchPrefix, vendor:
   allUnits: GITROOT === TOP ? ['bds/addons', 'end/plugins', 'll/mods'] : [posixRel(ADDONS)] });
 const X = () => import('./extra.mjs');
 // render <entity id | geometry id | rp/models/...geo.json> [size]: PNG of the model with its texture (the AI can look at it)
-// render <ns:entity | geometry.id | file.geo.json> [--anim <animation id>[@sec]] [--views a,b,c] [--tex <png>] [--mct]
+// render <ns:entity | geometry.id | file.geo.json> [--anim <animation id>[@sec]] [--views a,b,c] [--tex <png>] [--size WxH] [--mct]
 // drawn the way the game does (x-mirrored, per-face UV incl. converted box UV, bind + animation pose) by lib/model.mjs;
 // minecraft:<mob> renders the vanilla model from Mojang's bedrock-samples (look at how vanilla does it first)
 async function renderCmd(args) {
   const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : undefined; };
   const useMct = args.includes('--mct'); if (useMct) args.splice(args.indexOf('--mct'), 1);
-  const anim = opt('--anim'), views = opt('--views'), texOpt = opt('--tex');
+  const anim = opt('--anim'), views = opt('--views'), texOpt = opt('--tex'), sizeOpt = opt('--size');
+  const vsize = sizeOpt ? (/^(\d+)x(\d+)$/.exec(sizeOpt) ?? die(`--size WxH (one view's pixels, e.g. 640x480), not ${sizeOpt}`)).slice(1).map(Number) : undefined;
   const [q, size] = args;
-  if (!q) die('usage: node lab.mjs render <ns:entity | geometry.id | models/x.geo.json> [--anim <animation id>[@sec]] [--views front34,side,rear34,top,front,rear,left,low34] [--tex rp/textures/x.png] [--mct]');
+  if (!q) die('usage: node lab.mjs render <ns:entity | geometry.id | models/x.geo.json> [--anim <animation id>[@sec]] [--views front34,side,rear34,top,front,rear,left,low34] [--tex rp/textures/x.png] [--size 640x480] [--mct]');
   const M = await import('./model.mjs');
   // a file source: the addon's rp, or (vanilla) the bedrock-samples resource pack through git
   const safe = (t) => { try { return JSON.parse(stripJsonComments(t.replace(/^﻿/, ''))); } catch { return null; } };
@@ -3229,7 +3237,7 @@ async function renderCmd(args) {
   if (!texOpt && desc?.textures) { texName = pickOne(desc.textures); texBuf = src.bin(texName + '.png'); if (!texBuf) { texBuf = src.bin(texName + '.tga'); texExt = '.tga'; } }
   else if (texOpt && /\.tga$/i.test(texOpt)) texExt = '.tga';
   const texFile = texBuf ? path.join(LAB, 'render', 'tex' + texExt) : null;
-  if (texBuf) fs.writeFileSync(texFile, texBuf);
+  if (texBuf) { fs.mkdirSync(path.dirname(texFile), { recursive: true }); fs.writeFileSync(texFile, texBuf); }   // (a fresh cache: no render/ yet)
   // the pose
   let pose = {};
   if (anim) {
@@ -3241,8 +3249,8 @@ async function renderCmd(args) {
   }
   const o = path.join(LAB, 'render', (q.replace(/^.*[:/]/, '').replace(/\.geo\.json$|\.json$/, '') || 'model') + (anim ? '.' + anim.replace(/[^\w.@-]+/g, '_') : '') + '.png');
   const vs = (views ?? 'front34,side,rear34,top').split(',');
-  try { M.renderModel(geo, texFile, o, { views: vs, pose }); } catch (e) { die(e.message); }
-  const lint = M.lintGeo(geo, pose);
+  try { M.renderModel(geo, texFile, o, { views: vs, pose, ...(vsize ? { size: vsize } : {}) }); } catch (e) { die(e.message); }
+  const lint = M.lintGeo(geo, pose, src.name === 'rp' && !file ? packApart(M)(geo.id) : null);
   if (src.name === 'rp' || file) { lint.errs.slice(0, 8).forEach((e) => out('W ' + e)); if (lint.errs.length > 8) out(`W ... +${lint.errs.length - 8}`); }   // vanilla models rely on animations: not linted
   const grid = vs.length > 1 ? vs.reduce((acc, v, i) => acc + (i === 0 ? '' : i % 2 ? ' | ' : ' / ') + v, '') : vs[0];
   out(`OK ${rel(o)} ${geo.id} ${lint.cubes} cubes ${texName ? '' : '(no texture: grey) '}views ${grid}${anim ? ' pose ' + anim : ''} (the game's view: x mirrored; read the image)`);

@@ -20,6 +20,11 @@ then read `bds/.lab/render/sheet_*.png`. `node lab.mjs check -a tds` lints every
   by geometry id and texture path (`vanilla.py`); our gear repeats each vanilla rig (names, parents, pivots, bind rotations)
   so the same animation moves both layers. Buildings and machines (farm, mortar, barracks, frost spire, jeep, sentry, ice
   turret) are ours alone (`towers.py`, `units.py`). `enemies.py` and the other unbuilt functions are the all-custom alternative.
+- Upgrades (hq.py, hq_mobs.py): a bone named `lvN_*` shows from level N, `preN_*` below N, `rAtoB_*` from A to below B, `pipK`
+  from K (render controller part_visibility, per bone: a hidden parent hides no child, so every cube-bearing bone of an upgrade
+  carries its prefix). `entities.level_rules` takes the names from the models of the same build, `test_models.py` fails when a
+  prefix has no rule, and `check` knows two parts the controllers never show together share planes without z-fighting.
+  Previews: `look.py <geo> --lvl N [--fire]`, `compose.py tower 0|1|4 --lvl N [--fire]` (a shot's muzzle flash).
 - Conventions (kit.py): rotation `[rx, ry, rz]` is applied as right-handed `(-rx, ry, -rz)`; the game mirrors models in x
   (`east` UV on the low-x side); paint by position; plates (wings, flags, capes, scarves) are one zero-thickness cube with two
   faces cut by alpha; keep gear 0.2+ off every vanilla face.

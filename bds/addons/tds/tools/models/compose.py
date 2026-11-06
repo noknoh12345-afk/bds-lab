@@ -132,10 +132,11 @@ def compose(tag, gid, gear, gear_tex, pose=None, lift=0.0, lvl=0, fire=False):
 
 
 def visible(name, lvl, fire=False):
-    """what the render controllers show at tower level lvl (entities.level_rules), flashes only during a shot"""
+    """what the render controllers show at tower level lvl (entities.level_rules), flashes only during a shot (and only
+    the flash of the gun that level holds: its own prefix still applies)"""
     import re
-    if 'flash' in name:
-        return fire
+    if 'flash' in name and not fire:
+        return False
     for pat, test in ((r'pip(\d)$', lambda a: lvl >= a[0]), (r'lv(\d)_', lambda a: lvl >= a[0]), (r'pre(\d)_', lambda a: lvl < a[0]),
                       (r'r(\d)to(\d)_', lambda a: a[0] <= lvl < a[1])):
         mm = re.match(pat, name)
@@ -145,12 +146,10 @@ def visible(name, lvl, fire=False):
 
 
 def keep_level(bones_list, lvl, fire=False):
-    """the bones shown at a level, without the children of hidden ones"""
-    hidden = set()
-    for b in bones_list:
-        if not visible(b['name'], lvl, fire) or (b.get('parent') in hidden):
-            hidden.add(b['name'])
-    return [b for b in bones_list if b['name'] not in hidden]
+    """the bones as the render controllers draw them at a level. Visibility is per bone, as in the game (vanilla's first-person
+    arm shows while its parent body is hidden): a hidden bone keeps its place in the rig, so its children still follow it,
+    but draws none of its own cubes, and a child without its own rule still shows"""
+    return [b if visible(b['name'], lvl, fire) else {k: v for k, v in b.items() if k != 'cubes'} for b in bones_list]
 
 
 def is_under(bones, name, root):

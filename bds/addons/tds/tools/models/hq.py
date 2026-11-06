@@ -49,9 +49,9 @@ def gunner():
         octa(m, 'lv1_goggles', f'lv1_lens{"l" if sx > 0 else "r"}', 'z', (sx * 1.7, 31.4), -5.6, -4.65, 0.95, 'gun', decal='goggle')
     m.bone('lv2_vest', 'body', (0, 18, 0))
     vest(m, 'lv2_vest', -4.95, 4.95, 14.0, 24.9, -3.95, 3.95, 'vest', 'pouch', tag='lv2_vest')
-    for b, x0, x1 in (('leftLeg', -0.45, 4.45), ('rightLeg', -4.45, 0.45)):
+    for b, x0, x1 in (('leftLeg', 0.05, 4.3), ('rightLeg', -4.3, -0.05)):       # one pad per leg, a slit between them
         m.bone(f'lv3_knee_{b}', b, (0, 6, 0))
-        m.box(f'lv3_knee_{b}', f'lv3_knee_{b}', x0, x1, 4.9 - (0.03 if b == 'leftLeg' else 0), 7.4, -2.6 - (0.03 if b == 'leftLeg' else 0), -1.0, 'pad')
+        m.box(f'lv3_knee_{b}', f'lv3_knee_{b}', x0, x1, 4.9, 7.4, -2.6, -1.0, 'pad')
     for b, x0, x1 in (('leftarm', 3.55, 8.45), ('rightarm', -8.45, -3.55)):
         m.bone(f'lv3_glove_{b}', b, (0, 13, 0))
         m.box(f'lv3_glove_{b}', f'lv3_glove_{b}', x0, x1, 11.6, 14.4, -2.45, 2.45, 'pad', decal='glove')
@@ -65,7 +65,7 @@ def gunner():
     m.bone('lv5_band', 'head', (0, 30, 0))
     octa(m, 'lv5_band', 'lv5_gold', 'y', (0, 0), 31.9, 32.5, 4.95, 'gold', decal='trim')
     m.bone('lv5_pack', 'body', (0, 18, 4))
-    m.box('lv5_pack', 'lv5_pack', -3.4, 3.4, 14.0, 23.6, 3.9, 7.0, 'pouch', decal='pouch')
+    m.box('lv5_pack', 'lv5_pack', -3.4, 3.4, 14.4, 23.6, 3.9, 7.0, 'pouch', decal='pouch')
     m.box('lv5_pack', 'lv5_mast', 2.2, 2.5, 23.5, 33.0, 5.2, 5.5, 'gun')
 
     def own(p):
@@ -102,13 +102,13 @@ def sniper():
     for sx in (-1, 1):
         m.box('r2to4_bipod', f'r2to4_leg{"l" if sx > 0 else "r"}', -1.6 + sx * 0.6 - 0.2, -1.6 + sx * 0.6 + 0.2, 13.6, 18.4, -15.2, -14.8, 'gun2',
               rot=(-12, 0, sx * -14), pivot=(-1.6, 18.2, -15.0))
-    m.box('r2to4_bipod', 'r2to4_can', -2.15, -1.05, 18.7, 20.1, -27.3, -23.2, 'gun', decal='gunmetal')     # a suppressor over the muzzle
+    m.box('r2to4_bipod', 'r2to4_can', -2.3, -0.9, 18.55, 20.15, -27.3, -23.2, 'gun', decal='gunmetal')     # a suppressor round the muzzle
     m.bone('lv3_range', 'head', (0, 36, 0))
     m.box('lv3_range', 'lv3_range', 1.6, 3.8, 35.9, 37.4, -2.6, 1.4, 'gun2', decal='range')
     mz = rifle(m, 'lv4_amr', 'gun', (-1.6, 19.0, -4.6), 'amr', sight='scope')
     flash(m, 'lv4_amr', 'lv4_flash', *mz)
     m.bone('lv5_bags', 'tds_base', (0, PED_TOP + 3.6, 0))
-    ring(m, 'lv5_bags', 'lv5_bag', 10.3, PED_TOP + 3.5, PED_TOP + 5.9, 'bag')
+    ring(m, 'lv5_bags', 'lv5_bag', 10.0, PED_TOP + 3.5, PED_TOP + 5.9, 'bag')            # the second course set back 0.3
     m.bone('lv5_laser', 'gun', (-1.6, 18.0, -16.0))
     m.box('lv5_laser', 'lv5_laser', -0.7, 0.3, 17.4, 18.4, -20.0, -16.0, 'gold', decal='lens')
 
@@ -203,7 +203,7 @@ def farm():
     m.box('root', 'ridge', -5.3, 5.3, 10.95, 11.75, 1.8, 2.6, 'roof2', rot=(45, 0, 0), pivot=(0, 11.35, 2.2))
     m.bone('chimney', 'root', (2.6, 12.6, 4.0), locators={'smoke': (2.6, 13.0, 4.0)})
     m.box('chimney', 'chimney', 2.0, 3.2, 8.2, 12.6, 3.4, 4.6, 'brick', decal='brick')
-    m.box('root', 'step', -1.4, 1.4, 1.2, 1.6, -1.6, -0.75, 'stone')
+    m.box('root', 'step', -1.4, 1.4, 1.22, 1.6, -1.6, -0.75, 'stone')
     for i, (px, pz) in enumerate([(sx * 5.8, z) for sx in (1, -1) for z in (0.4, 2.6)]):
         m.box('root', f'crop{i}a', px - 0.9, px + 0.9, 1.2, 3.6, pz, pz, 'plant', only=('north', 'south'), decal='crop', dens=3.0)
         m.box('root', f'crop{i}b', px, px, 1.2, 3.6, pz - 0.9, pz + 0.9, 'plant', only=('east', 'west'), decal='crop', dens=3.0)
@@ -213,8 +213,8 @@ def farm():
     m.bone('lv1_fence', 'root', (0, 1.2, -6.6))
     for i, x in enumerate((-6.6, -3.3, 0.0, 3.3)):
         m.box('lv1_fence', f'lv1_post{i}', x - 0.25, x + 0.25, 1.2, 3.2, -6.85, -6.35, 'wood')
-    m.box('lv1_fence', 'lv1_rail0', -6.85, 3.55, 2.5, 2.8, -6.75, -6.45, 'wood')
-    m.box('lv1_fence', 'lv1_rail1', -6.85, 3.55, 1.7, 2.0, -6.78, -6.42, 'wood')
+    m.box('lv1_fence', 'lv1_rail0', -6.6, 3.3, 2.5, 2.8, -6.75, -6.45, 'wood')          # the rails end inside the end posts
+    m.box('lv1_fence', 'lv1_rail1', -6.6, 3.3, 1.7, 2.0, -6.78, -6.42, 'wood')
     m.bone('lv2_well', 'root', (-4.6, 1.2, -3.6))
     octa(m, 'lv2_well', 'lv2_well', 'y', (-4.6, -3.6), 1.2, 3.0, 1.4, 'stone', decal='stone')
     m.box('lv2_well', 'lv2_water', -5.6, -3.6, 3.05, 3.05, -4.6, -2.6, 'water', only=('up', 'down'), dens=2.0)
@@ -227,14 +227,14 @@ def farm():
     m.bone('lv3_silo', 'root', (-5.7, 1.2, 5.4))
     octa(m, 'lv3_silo', 'lv3_silo', 'y', (-5.7, 5.4), 1.2, 11.0, 1.3, 'silo', decal='silo')
     octa(m, 'lv3_silo', 'lv3_cap', 'y', (-5.7, 5.4), 10.9, 11.9, 1.05, 'roof2')
-    m.box('lv3_silo', 'lv3_ladder', -6.1, -5.3, 1.2, 10.5, 6.62, 6.95, 'silo2', decal='ladder')
+    m.box('lv3_silo', 'lv3_ladder', -6.1, -5.3, 1.23, 10.5, 6.62, 6.95, 'silo2', decal='ladder')
     m.bone('lv4_spinx', 'root', (5.75, 8.6, 2.2))                                     # a little windmill on the gable end
     for i in range(4):
-        m.box('lv4_spinx', f'lv4_blade{i}', 5.6, 5.9, 8.6, 13.6, 1.75, 2.65, 'sign', rot=(90 * i + 45, 0, 0), pivot=(5.75, 8.6, 2.2), decal='blade')
+        m.box('lv4_spinx', f'lv4_blade{i}', 5.6 + 0.025 * i, 5.9 + 0.025 * i, 8.6, 13.6, 1.75, 2.65, 'sign', rot=(90 * i + 45, 0, 0), pivot=(5.75, 8.6, 2.2), decal='blade')
     m.box('lv4_spinx', 'lv4_hub', 5.3, 6.1, 8.0, 9.2, 1.6, 2.8, 'beam')
     m.bone('lv5_gold', 'root', (0, 11.6, 2.2))
     m.box('lv5_gold', 'lv5_ridge', -5.36, 5.36, 10.95, 11.85, 1.75, 2.65, 'gold', rot=(45, 0, 0), pivot=(0, 11.4, 2.2))
-    m.box('lv5_gold', 'lv5_hay', 3.4, 6.2, 1.2, 3.0, 2.0, 4.0, 'hay', decal='hay')
+    m.box('lv5_gold', 'lv5_hay', 3.0, 5.6, 1.22, 3.0, -3.4, -1.6, 'hay', decal='hay')            # a bale in the yard beside the door
 
     def own(p):
         d, c, q = p.cube['decal'], p.cube, p.local()
@@ -321,10 +321,10 @@ def mortar():
     for i, (x, z) in enumerate(((-4.2, 1.4), (-3.2, 1.4), (-4.2, 2.6), (-3.2, 2.6))):
         octa(m, 'lv1_shells', f'lv1_shell{i}', 'y', (x, z), top, top + 1.6, 0.42, 'brass', decal='shell')
     m.bone('lv2_bags', 'root', (0, top + 2.4, 0))
-    ring(m, 'lv2_bags', 'lv2_bag', 5.4, top + 2.3, top + 4.0, 'bag')
+    ring(m, 'lv2_bags', 'lv2_bag', 5.1, top + 2.3, top + 4.0, 'bag')                     # the second course set back 0.3
     m.bone('lv4_net', 'root', (0, 13, 0))
     for i, (x, z) in enumerate(((5.2, -5.2), (-5.2, -5.2), (5.2, 5.2), (-5.2, 5.2))):
-        m.box('lv4_net', f'lv4_pole{i}', x - 0.25, x + 0.25, top, 12.6, z - 0.25, z + 0.25, 'pole')
+        m.box('lv4_net', f'lv4_pole{i}', x - 0.25, x + 0.25, top, 12.9, z - 0.25, z + 0.25, 'pole')       # tips through the net
     m.box('lv4_net', 'lv4_cover', -6.0, 6.0, 12.6, 12.6, -6.0, 6.0, 'net', only=('up', 'down'), decal='netting', dens=2.0)
     m.bone('lv5_flag', 'root', (5.2, 12.6, 5.2))
     m.box('lv5_flag', 'lv5_cloth', 5.2, 5.2, 9.6, 12.4, 5.4, 9.6, 'flagc', only=('east', 'west'), decal='flag5', dens=2.0)

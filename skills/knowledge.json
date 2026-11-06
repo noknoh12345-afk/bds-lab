@@ -483,7 +483,7 @@
     {
       "id": "model-look",
       "skill": "bds-models",
-      "rule": "Never decide a side or a look from the JSON: the game mirrors models in x (a cube's east UV shows on its low-x side). `render <id> --anim <clip>@0/@end` draws it as the game does; read the PNG before saying it looks right.",
+      "rule": "Never judge a side or a look from the JSON: the game mirrors models in x (east UV on the low-x side). `render <id> --anim <clip>@0/@end` draws it as the game does; read the PNG before calling it right.",
       "why": "text on the wrong side, a look reported but never seen",
       "evidence": {
         "kind": "test",
@@ -518,7 +518,7 @@
     {
       "id": "model-zfight",
       "skill": "bds-models",
-      "rule": "No two faces on one plane: move one part 0.02-0.05, then paint the thin step so it continues its neighbour (`check` names each z-fight pair).",
+      "rule": "No two faces on one plane: move one part 0.02-0.05, then paint the thin step like its neighbour (`check` names each z-fight pair).",
       "why": "flicker, then a crack where the step is",
       "evidence": {
         "kind": "test",
@@ -554,7 +554,7 @@
     {
       "id": "model-plate",
       "skill": "bds-models",
-      "rule": "A wing, fin, leaf or cloth is ONE zero-thickness plate cut out by transparent texels (material entity_alphatest), both faces the same size and painted by position; not a board or a fan of boxes.",
+      "rule": "A wing, fin, leaf or cloth is ONE zero-thickness plate cut by transparent texels (entity_alphatest), both faces one size, painted by position; not a board or a fan of boxes.",
       "why": "wings that look like boards; one face paints over the cut-out",
       "evidence": {
         "kind": "test",
@@ -572,7 +572,7 @@
     {
       "id": "model-hand-edit",
       "skill": "bds-models",
-      "rule": "A person's Blockbench save wins: lint it (`check`: collapsed / duplicate cubes, UV off), fix only the defects named and say which; never redesign a part nobody pointed at.",
+      "rule": "A person's Blockbench save wins: `check` it, fix only the defects named and say which; never redesign a part nobody pointed at.",
       "why": "a rewrite the person rejects",
       "evidence": {
         "kind": "test",
@@ -590,7 +590,7 @@
     {
       "id": "model-vanilla-first",
       "skill": "bds-models",
-      "rule": "When vanilla has the thing (a wing, a held item, a mount), look first: `render minecraft:<mob>`, `sample rp/models/entity/<name>`.",
+      "rule": "Vanilla has the thing (a wing, a held item, a mount)? Look first: `render minecraft:<mob>`, `sample rp/models/entity/<name>`.",
       "why": "a guessed construction rejected 3 times",
       "evidence": {
         "kind": "source",
@@ -1385,7 +1385,7 @@
     {
       "id": "src-79236f46",
       "skill": "bds-models",
-      "rule": "No stair steps. Slopes and curves are tilted boxes joined corner to corner. Where a width steps, splay a box out to the wider corner. Fill valley joints by running both links past the corner. A tilted part's end runs INTO what it meets.",
+      "rule": "No stair steps: slopes and curves are tilted boxes joined corner to corner; splay a box out where a width steps; run both links past a valley joint; a tilted part's end runs INTO what it meets.",
       "why": "",
       "evidence": {
         "kind": "source",
@@ -1434,7 +1434,7 @@
     {
       "id": "src-237884b3",
       "skill": "bds-models",
-      "rule": "Pictures that cross cubes are placed by position, not by texel index, so lines run on from one cube to the next.",
+      "rule": "Paint pictures that cross cubes by position, not texel index, so lines run on from cube to cube.",
       "why": "",
       "evidence": {
         "kind": "source",
@@ -1568,7 +1568,7 @@
     {
       "id": "src-a154c0bc",
       "skill": "bds-models",
-      "rule": "Model wings spread; hold them at rest with the bind pose; clips and Molang loops ADD to the bind; the hand lags the arm by a phase. List `rest`, `spread`, `up`, `down` as poses.",
+      "rule": "Model wings spread, fold them to rest with the bind pose (clips and Molang loops ADD to it); the hand lags the arm by a phase; poses `rest`, `spread`, `up`, `down`.",
       "why": "",
       "evidence": {
         "kind": "source",

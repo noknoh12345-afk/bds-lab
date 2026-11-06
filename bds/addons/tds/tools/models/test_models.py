@@ -134,6 +134,17 @@ def main(rp, bp):
             farm = geos.get(d['geometry']['g2'], {})
             if not any('smoke' in (b.get('locators') or {}) for b in farm.get('bones', [])):
                 fails.append('tower: the farm has no smoke locator')
+            # every upgrade part has its rule (a part without one is drawn at every level, over the part it replaces)
+            import re
+            rcs = {}
+            for p in glob.glob(os.path.join(rp, 'render_controllers', '*.json')):
+                rcs.update(load(p).get('render_controllers', {}))
+            prefixes = {m.group(0) for gid in d['geometry'].values() for b in bones_of(gid) for m in [re.match(r'(lv\d|pre\d|r\dto\d)_', b)] if m}
+            for rc in ('controller.render.tds_tower', 'controller.render.tds_tower_gear', 'controller.render.tds_ghost', 'controller.render.tds_ghost_gear'):
+                have = {k for rule in rcs.get(rc, {}).get('part_visibility', []) for k in rule}
+                miss = sorted(p + '*' for p in prefixes if p + '*' not in have)
+                if miss:
+                    fails.append(f'{rc}: no part_visibility rule for {", ".join(miss)} (drawn at every level)')
     for gid, g in geos.items():
         W, H = g['description']['texture_width'], g['description']['texture_height']
         for b in g['bones']:

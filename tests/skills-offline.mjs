@@ -114,8 +114,10 @@ const R2 = path.join(T, 'other-skills');
 fs.mkdirSync(path.join(R2, 'skills', 'mcbe-json-ui-x'), { recursive: true }); fs.mkdirSync(path.join(R2, 'data'), { recursive: true });
 fs.writeFileSync(path.join(R2, 'skills', 'mcbe-json-ui-x', 'SKILL.md'), '---\nname: x\ndescription: y\n---\n- Never put two factory controls with the same control_ids in one screen: the second one is ignored silently.\n- Only texture paths that exist (rp/textures or vanilla); an invented textures/ui path draws nothing.\n- and this line continues the one above it with more words.\n- Run `node tools/thing.mjs --fix(1)` before anything else.\n- Is the control inserted into the right panel?\n');
 fs.writeFileSync(path.join(R2, 'data', 'rules.json'), JSON.stringify({ rules: [{ id: '7', rule: '**Bones must have unique names** in one geometry or the later one replaces the earlier.' }] }));
+// (the lab's own knowledge already holds source candidates from earlier imports: only the ones this learn adds count)
+const known = new Set(JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')).rules.map((x) => x.id));
 r = lab(['skill', 'learn', '--from', R2], { ...env, LAB_EPISODES: E, LAB_LESSONS: LS });
-const k5 = JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')), src = k5.rules.filter((x) => x.evidence?.kind === 'source' && x.status === 'candidate');
+const k5 = JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')), src = k5.rules.filter((x) => !known.has(x.id) && x.evidence?.kind === 'source' && x.status === 'candidate');
 ok(src.length === 2 && src.some((x) => /^Never put two factory controls/.test(x.rule) && x.skill === 'bds-json-ui' && x.evidence.ref === 'other-skills/skills/mcbe-json-ui-x/SKILL.md') && src.some((x) => /^Bones must have unique names/.test(x.rule) && x.skill === 'bds-models'),
   'learn --from <dir>: its hard rules become source candidates routed to a skill; one the lab already has, a fragment, a repo-tied command and a question are skipped', JSON.stringify(src.map((x) => [x.id, x.skill, x.rule])) + '\n' + r.t);
 const sid = src.find((x) => /^Never put two/.test(x.rule)).id;
