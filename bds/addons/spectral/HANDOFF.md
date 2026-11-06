@@ -430,7 +430,7 @@ Actions は unit.yml（job go）と redroid.yml（addon spectral, mode run）。
 
 ## 次にやること
 
-**11-06 実機のキュー q22〜q61 の記録（11-05 13:00 〜 11-06 07:40、RESULTS.md に run ごと・Discord にも）**: 40 本のうち 34 本が成功、
+**11-06 実機のキュー q22〜q62 の記録（11-05 11:50 〜 11-06 07:58、RESULTS.md に run ごと・Discord にも）**: 40 本のうち 35 本が成功、q62（q31 のやり直し）も成功で
 録音はおよそ 330 本（tools/fetch_rec.py で取れる。成果物には期限）。**数字が出ているのは正弦波の道の 3 本だけ**（q53・q54・q59、下）。
 サンプラー・読み上げ・ファイルの曲の録音は**まだ解いていない**（依頼が「記録待たないで」: 解くのは次。曲は tools/exp/sampler_score.py、読み上げは
 speech_eval.py、時刻は packs/q40/<id>.onsets.json と比べる）。
@@ -440,7 +440,7 @@ speech_eval.py、時刻は packs/q40/<id>.onsets.json と比べる）。
   **trim RUNNING_CRITICAL を 2 回目に送ると失敗**しその後の録音も全部失敗（q40・q20: 1 回目でゲームが落ちたか止まったと読める、未確認）。
   q26 は 4 本中 3 本、q42 は 4 本全部録れたが 1 行が失敗（どの行かは logs/ に）
 - リグの直し: 録音を Opus にする ffmpeg が**ときどき入っていない**（apt が黙って失敗）→ 全録音が「Opus にできません」（q31 2 回・q43・q54 の 1 回目）。
-  612438e で理由を出し、ce3ee6d・2529e77 で pip の静的 ffmpeg（imageio-ffmpeg、venv なしの --target を先に）へ逃げる。q62 = q31 のやり直し
+  612438e で理由を出し、ce3ee6d・2529e77 で pip の静的 ffmpeg（imageio-ffmpeg、venv なしの --target を先に）へ逃げる。q62 = q31 のやり直しは 12 本全部録れた（直しが効いた）
 - ランナーの見守り: このセッションの作業場所ではターンが終わると数分でランナーが止まる → 予約（send_later）で 15〜25 分ごとに再開した。
   **止まっているかは `pgrep -f '^python3 tools/exp/queue_[r]un'`**（`pgrep -f queue_run.py` は自分の命令行に当たって「動いている」と出る）
 
