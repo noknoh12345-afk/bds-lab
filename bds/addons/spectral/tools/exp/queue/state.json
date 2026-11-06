@@ -1339,10 +1339,17 @@
   "tries": 1
  },
  "q58_sampler_rain_mobs": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "b4acc4a",
+  "conclusion": "success",
+  "ended": "2026-11-06 04:54",
+  "failed_steps": 0,
+  "recordings": 6,
   "run": "42164200663",
   "started": "2026-11-06 04:43",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q59_bgm_sampler": {
   "status": "pending"

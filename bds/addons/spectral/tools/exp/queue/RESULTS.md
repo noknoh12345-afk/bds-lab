@@ -83,3 +83,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q55_sampler_same_thrice | 42156173847 | success | 12 | — | 0 | 2026-11-06 03:22 → 2026-11-06 03:44 |
 | q56_sampler_phones_speaker | 42158351773 | success | 10 | — | 0 | 2026-11-06 03:44 → 2026-11-06 04:23 |
 | q57_sampler_two_streams | 42162270238 | success | 6 | — | 0 | 2026-11-06 04:24 → 2026-11-06 04:43 |
+| q58_sampler_rain_mobs | 42164200663 | success | 6 | — | 0 | 2026-11-06 04:43 → 2026-11-06 04:54 |
