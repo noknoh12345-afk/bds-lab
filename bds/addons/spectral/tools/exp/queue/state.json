@@ -1214,10 +1214,17 @@
   "tries": 1
  },
  "q52_file_seek": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "9dafdb1",
+  "conclusion": "success",
+  "ended": "2026-11-06 01:11",
+  "failed_steps": 0,
+  "recordings": 4,
   "run": "42139891949",
   "started": "2026-11-06 00:52",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q53_limiter_l12": {
   "status": "pending"
