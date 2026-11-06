@@ -81,3 +81,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q54_voices_28_32 | 42146759946 | failure（もう一度） | 0 | v28 3.352 / 1.763 / 5.95 (4) · v32 3.323 / 1.802 / 5.40 (4) | 1（✘ 95 audio analyze-all v24_piano_gymnopedie=song:piano_gymnopedie v28_piano_gymn） | 2026-11-06 01:53 → 2026-11-06 02:41 |
 | q54_voices_28_32 | 42151926608 | success | 39 | v24 2.993 / 1.742 / 7.78 (13) · v28 2.832 / 1.860 / 8.44 (13) · v32 2.731 / 1.835 / 9.09 (13) | 0 | 2026-11-06 02:41 → 2026-11-06 03:22 |
 | q55_sampler_same_thrice | 42156173847 | success | 12 | — | 0 | 2026-11-06 03:22 → 2026-11-06 03:44 |
+| q56_sampler_phones_speaker | 42158351773 | success | 10 | — | 0 | 2026-11-06 03:44 → 2026-11-06 04:23 |
