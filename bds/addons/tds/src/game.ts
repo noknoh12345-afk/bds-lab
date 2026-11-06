@@ -1,6 +1,6 @@
 // The match: path, enemies, towers, units, economy, waves. Pure simulation in studs/seconds; entities only mirror it.
 import { world, system, Player, Entity, Dimension } from '@minecraft/server';
-import { towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, timerFor, enemyIn, RULES, Stats, Group } from './defs';
+import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, timerFor, enemyIn, RULES, Stats, Group } from './defs';
 
 export let headless = false;
 export const log = (ev: string, o: Record<string, unknown> = {}) => { if (!headless) console.log(`[TDS] ${JSON.stringify({ ev, ...o })}`); };
@@ -37,7 +37,7 @@ export type Enemy = {
   id: number; name: string; d: number; hp: number; max: number; shield: number; speed: number; def: number; cash: number; every?: number; paid: number;
   hidden: boolean; flying: boolean; lead: boolean; boss: boolean; immune: string[]; mods: string[];
   slow: number; slowUntil: number; freezeUntil: number; stunUntil: number; dots: { dmg: number; tick: number; next: number; until: number; tw: number }[];
-  nextSummon?: number; wave: number; x?: number; z?: number; dirty?: boolean;
+  nextSummon?: number; wave: number; born?: number; x?: number; z?: number; dirty?: boolean;
 };
 export type Tower = { id: number; name: string; lvl: number; x: number; y: number; z: number; owner: string; target: string; next: number; burstLeft: number; ammoLeft: number; shots: number; spent: number; dealt: number; nextUnit: number; primary: number };
 export type Unit = { id: number; tw: number; d: number; hp: number; dmg: number; next: number };
@@ -59,38 +59,55 @@ export function buildArena(map: string) {
   const m = maps[map], d = dim(), y = m.y;
   d.runCommand(`fill -32 ${y - 1} -32 31 ${y - 1} 31 grass_block`);
   d.runCommand(`fill -32 ${y} -32 31 ${y + 6} 31 air`);
-  const p = new Path(map), h = Math.floor(m.width / 2);
-  for (let i = 1; i < m.path.length; i++) {
-    const [a, b] = [m.path[i - 1], m.path[i]];
-    d.runCommand(`fill ${Math.min(a[0], b[0]) - h} ${y - 1} ${Math.min(a[1], b[1]) - h} ${Math.max(a[0], b[0]) + h} ${y - 1} ${Math.max(a[1], b[1]) + h} grass_path`);
+  const blk: Record<string, string> = { w: 'water', v: 'bedrock' };
+  m.grid.forEach((row, i) => {
+    const z = i - 32; let j = 0;
+    while (j < row.length) {
+      const c = row[j]; let k = j; while (k + 1 < row.length && row[k + 1] === c) k++;
+      if (blk[c]) d.runCommand(`fill ${j - 32} ${y - 1} ${z} ${k - 32} ${y - 1} ${z} ${blk[c]}`);
+      if (c === 'x') d.runCommand(`fill ${j - 32} ${y} ${z} ${k - 32} ${y + 1} ${z} stone`);
+      j = k + 1;
+    }
+  });
+  const p = new Path(map), h = m.width / 2, done = new Set<string>();
+  for (let s = 0; s <= p.len; s += 0.5) {
+    const q = p.at(s);
+    for (let x = Math.floor(q.x - h); x <= Math.floor(q.x + h); x++) for (let z = Math.floor(q.z - h); z <= Math.floor(q.z + h); z++) {
+      const k = `${x},${z}`; if (done.has(k) || Math.hypot(x + 0.5 - q.x, z + 0.5 - q.z) > h + 0.2) continue; done.add(k);
+      const water = m.grid[z + 32]?.[x + 32] === 'w';
+      d.runCommand(`fill ${x} ${y - 1} ${z} ${x} ${y + 1} ${z} air`);
+      d.runCommand(`setblock ${x} ${y - 1} ${z} ${water ? 'oak_planks' : 'grass_path'}`);
+    }
   }
-  const s = m.path[0], e = m.path[m.path.length - 1];
-  d.runCommand(`setblock ${s[0]} ${y - 1} ${s[1]} crimson_nylium`);
+  const s0 = m.path[0], e = m.path[m.path.length - 1];
+  d.runCommand(`setblock ${s0[0]} ${y - 1} ${s0[1]} crimson_nylium`);
   d.runCommand(`setblock ${e[0]} ${y - 1} ${e[1]} warped_nylium`);
-  for (const [x1, z1, x2, z2] of m.cliffs) d.runCommand(`fill ${x1} ${y} ${z1} ${x2} ${y + 1} ${z2} stone`);
   return p;
 }
 
 export type Place = 'ground' | 'cliff' | null;
 export function surface(x: number, y: number, z: number): Place {
-  const m = maps[M?.map ?? 'Grassland'], b = dim().getBlock({ x, y: y - 1, z })?.typeId;
+  const m = maps[M?.map ?? DEFAULT_MAP], b = dim().getBlock({ x, y: y - 1, z })?.typeId;
   if (y === m.y && b === 'minecraft:grass_block') return 'ground';
   if (y === m.y + 2 && b === 'minecraft:stone') return 'cliff';
   return null;
 }
 
 // ---------- match lifecycle ----------
-export function start(mode: string, players: Player[], map = 'Grassland') {
+export function start(mode: string, players: Player[], map = DEFAULT_MAP) {
   stop(true);
   const md = modes[mode]; path = buildArena(map); rnd = 1;
   const cash = md.startCash + (players.length > 1 ? 100 : 0);
   M = { mode, map, players: players.map((p) => p.name), cash: Object.fromEntries(players.map((p) => [p.name, cash])), baseHP: md.baseHP, maxHP: md.baseHP, wave: 0, t: 0, waveEnd: 5, skipAt: 0,
     queue: [], enemies: [], towers: [], units: [], seq: 1, votes: [], stats: { kills: 0, leaks: 0, dealt: 0, income: 0 }, clearPaid: false, leakedThisWave: false, seed: 1 };
   for (const p of players) p.teleport({ x: 0.5, y: maps[map].y + 0.2, z: 0.5 });
+  if (holdNext) { M.hold = true; holdNext = false; }
   log('match_start', { mode, map, players: M.players, cash, baseHP: md.baseHP, pathStuds: +path.len.toFixed(1) });
   persist();
 }
 
+let holdNext = false;
+export function setHold(on: boolean) { if (M && !M.over) { M.hold = on; persist(); } else holdNext = on; }
 export function stop(silent = false) {
   for (const e of dim().getEntities({ families: ['tds'] })) e.remove();
   ents.clear();
@@ -132,7 +149,7 @@ function spawnEnemy(name: string, mods: string[], d = 0, wave = M!.wave) {
   const hp = s.hp * (mods.includes('Bloated') ? 2 : 1);
   const e: Enemy = { id: M.seq++, name, d, hp, max: hp, shield: s.shield ?? 0, speed: s.speed * (mods.includes('Nimble') ? 2 : 1), def: def?.defense ?? 0, cash: s.cash, every: s.cashEveryPct, paid: 0,
     hidden: !!def?.hidden, flying: !!def?.flying, lead: !!def?.lead, boss: !!def?.boss || mods.includes('Boss'), immune: def?.immune ?? [], mods,
-    slow: 0, slowUntil: 0, freezeUntil: 0, stunUntil: 0, dots: [], wave };
+    slow: 0, slowUntil: 0, freezeUntil: 0, stunUntil: 0, dots: [], wave, born: M.t };
   if (def?.spawns && def.spawnMode === 'periodic') e.nextSummon = M.t + RULES.summonEvery;
   M.enemies.push(e); show(e);
   log('enemy_spawn', { id: e.id, name, hp, speed: e.speed, hidden: e.hidden, flying: e.flying, lead: e.lead, boss: e.boss });
@@ -394,7 +411,7 @@ function leak(e: Enemy) {
   if (!M) return;
   const dmg = Math.ceil(e.hp + e.shield); M.baseHP -= dmg; M.stats.leaks++; M.leakedThisWave = true;
   M.enemies.splice(M.enemies.indexOf(e), 1); const x = ents.get(e.id); if (x?.isValid) x.remove(); ents.delete(e.id);
-  log('leak', { id: e.id, name: e.name, dmg, baseHP: Math.max(0, M.baseHP) });
+  log('leak', { id: e.id, name: e.name, dmg, baseHP: Math.max(0, M.baseHP), took: +(M.t - (e.born ?? 0)).toFixed(2) });
   if (M.baseHP <= 0) end('lose');
 }
 

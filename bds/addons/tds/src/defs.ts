@@ -10,13 +10,14 @@ export type EnemyMode = { hp: number | null; speed: number | null; cash: number 
 export type EnemyDef = { hidden: boolean; flying: boolean; lead: boolean; ghost: boolean; boss: boolean; defense: number; immune: string[]; per: Record<string, EnemyMode>; spawns?: string[]; spawnMode?: string };
 export type Group = { n: number; e: string; mods?: string[] };
 export type ModeDef = { waves: number; level: number; startCash: number; baseHP: number; waveCash: string; rewards: { coins: number; exp: number; gems: number }; timers: { from: number; to: number; timer: number | null; skipAfter: number | null }[]; wave: Record<string, Group[]> };
-export type MapDef = { stud: number; y: number; path: [number, number][]; width: number; cliffs: [number, number, number, number][]; src: string };
+export type MapDef = { stud: number; y: number; path: [number, number][]; width: number; grid: string[]; pathStuds: number; src: string };
 
 export const towers = TOWERS as unknown as Record<string, TowerDef>;
 export const enemies = ENEMIES as unknown as Record<string, EnemyDef>;
 export const modes = MODES as unknown as Record<string, ModeDef>;
 export const maps = MAPS as unknown as Record<string, MapDef>;
 export const MODE_NAMES = Object.keys(modes);
+export const DEFAULT_MAP = Object.keys(maps)[0];
 
 // Guesses the wiki does not state (each is listed in data/_unknown.json)
 export const RULES = { spawnGap: 0.6, groupGap: 1.0, clearWait: 5, childCount: 2, summonEvery: 8, unitSpeed: 4, unitRange: 6, unitMax: 3, sellRate: 1 / 3, elevatorWait: 20 };

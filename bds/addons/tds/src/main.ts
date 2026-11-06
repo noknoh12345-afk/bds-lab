@@ -53,7 +53,7 @@ cmd('tds:grant', 'Give coins/gems/level and dev tag (test)', { coins: 'int', 'ge
 }, true);
 cmd('tds:dev', 'Own every tower; place anything (test)', {}, (p) => { const pr = prof(p); pr.owned = Object.keys(towers); saveProf(p, pr); p.addTag('tds_dev'); return `owned ${pr.owned.length}`; }, true);
 cmd('tds:cash', 'Set match cash (test)', { n: 'int' }, (p, a) => { if (!G.M) return 'no match'; G.M.cash[p.name] = a.n; return `$${a.n}`; }, true);
-cmdAny('tds:hold', 'Stop or resume the wave clock (test)', { on: 'bool' }, (_, a) => { if (!G.M) return 'no match'; G.M.hold = a.on; G.persist(); return `hold ${a.on}`; }, true);
+cmdAny('tds:hold', 'Stop or resume the wave clock (test; before a match: for the next one)', { on: 'bool' }, (_, a) => { G.setHold(a.on); return `hold ${a.on}`; }, true);
 cmd('tds:auto', 'Let the bot play for you (test)', { on: 'bool' }, (p, a) => { if (a.on) p.addTag('tds_auto'); else p.removeTag('tds_auto'); return `auto ${a.on}`; }, true);
 cmdAny('tds:bench', 'Measure every tower level against a dummy', { 'tower?': 'string', 'lvl?': 'int' }, (_, a) => {
   if (a.tower) { const r = bench(T(a.tower), a.lvl ?? 0); G.log('bench', r ?? { name: a.tower, none: true }); return JSON.stringify(r); }
@@ -148,21 +148,31 @@ system.runInterval(() => {
     if (!spots.length || (spots as any).map !== M.map + M.mode + M.players.join()) { findSpots(); (spots as any).map = M.map + M.mode + M.players.join(); }
     const cash = M.cash[p.name], nd = need(), mine = M.towers.filter((t) => t.owner === p.name);
     const have = (k: 'hidden' | 'lead' | 'flying') => mine.some((t) => sees(t.name, t.lvl, k));
-    let best: { v: number; act: () => unknown } | undefined;
-    const consider = (v: number, c: number, act: () => unknown) => { if (c <= cash && Number.isFinite(c) && (!best || v / c > best.v)) best = { v: v / c, act }; };
+    let best: { v: number; act: () => unknown } | undefined, dream = 0;
+    const consider = (v: number, c: number, act: () => unknown) => { if (!Number.isFinite(c) || c <= 0) return; dream = Math.max(dream, v / c); if (c <= cash && (!best || v / c > best.v)) best = { v: v / c, act }; };
     for (const n of loadout(p)) {
       if (!dps(n, 0)) continue;
       let bonus = 0; for (const k of ['hidden', 'lead', 'flying'] as const) if (nd[k] && !have(k) && sees(n, 0, k)) bonus += 1000;
       const free = spots.find((s) => (towers[n].placement === 'both' || (towers[n].placement === 'cliff') === (s.y !== maps[M.map].y)) && !M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2));
-      const lim = towers[n].limit; if (free && !(lim && mine.filter((t) => t.name === n).length >= lim)) consider(dps(n, 0) * free.cover + bonus, placeCost(n), () => G.place(p, n, free.x, free.y, free.z));
+      const lim = Math.min(towers[n].limit ?? 99, n === 'Scout' ? 3 : 6); if (free && !(mine.filter((t) => t.name === n).length >= lim)) consider(dps(n, 0) * free.cover + bonus, placeCost(n), () => G.place(p, n, free.x, free.y, free.z));
     }
     for (const t of mine) {
       if (t.lvl >= maxLevel(t.name)) continue;
       let bonus = 0; for (const k of ['hidden', 'lead', 'flying'] as const) if (nd[k] && !have(k) && sees(t.name, t.lvl + 1, k)) bonus += 1000;
       const sp = spots.find((s) => s.x === t.x && s.z === t.z)?.cover ?? 10;
-      consider((dps(t.name, t.lvl + 1) - dps(t.name, t.lvl)) * sp + bonus, levelCost(t.name, t.lvl + 1), () => G.upgrade(p.name, t.id));
+      consider((dps(t.name, t.lvl + 1) - dps(t.name, t.lvl)) * sp * 1.5 + bonus, levelCost(t.name, t.lvl + 1), () => G.upgrade(p.name, t.id));
     }
-    best?.act();
+    // economy: farms while the defence holds (no leak this wave) in the first half of the match
+    const W = modes[M.mode].waves, left = W - M.wave;
+    if (loadout(p).includes('Farm') && M.wave >= 1 && M.wave <= W * 0.5 && !M.leakedThisWave) {
+      const farms = mine.filter((t) => t.name === 'Farm');
+      const up = farms.filter((t) => t.lvl < maxLevel('Farm')).map((t) => ({ t, c: levelCost('Farm', t.lvl + 1), g: (stats('Farm', t.lvl + 1).income ?? 0) - (stats('Farm', t.lvl).income ?? 0) })).sort((a, b) => a.c / a.g - b.c / b.g)[0];
+      const spot = spots.find((s) => s.y === maps[M.map].y && !M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2));
+      const nw = farms.length < (towers.Farm.limit ?? 10) && spot ? { c: placeCost('Farm'), g: stats('Farm', 0).income ?? 0 } : undefined;
+      const opt = [up && { c: up.c, g: up.g, act: () => G.upgrade(p.name, up.t.id) }, nw && { ...nw, act: () => G.place(p, 'Farm', spot!.x, spot!.y, spot!.z) }].filter(Boolean).sort((a: any, b: any) => a.c / a.g - b.c / b.g)[0] as any;
+      if (opt && opt.c / opt.g < left / 2 && opt.c <= cash && M.wave % 2 === 0) { opt.act(); continue; }
+    }
+    if (best && best.v >= dream * 0.6) best.act();
   }
 }, 5);
 

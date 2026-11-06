@@ -6,6 +6,7 @@ Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki:
 ## Acceptance (one tests.txt `## ` section each)
 - [ ] data from the wiki: every tower, enemy and mode loaded; tower rows match the wiki tables
 - [ ] bench: every tower level shoots a dummy at the wiki's Damage ÷ Firerate (±5%), hits inside its range and never outside
+- [ ] map from the wiki image: Grass Isle path = 48.67 s at speed 3.5 (≈170 studs); a Normal (2.7) walks it in ≈63 s
 - [ ] placement rules: path, cliff/ground, overlap, cost, upgrade and sell (1/3 of spent)
 - [ ] detection: a tower without hidden/lead/flying detection lets those enemies pass; with it, they die
 - [ ] economy: Easy wave bonus (200 + (w-1)×160)×(1-0.1×p) and the wave-clear bonus
@@ -17,5 +18,5 @@ Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki:
 
 ## Guessed
 <!-- values decided without asking: data/_unknown.json (rule entries) -->
-- Map: a lab layout (232-stud path, 4 cliffs), 1 stud = 0.5 block
+- Map: Grass Isle traced from the wiki's top-down image (tools/map_trace.py, map_build.py); the tunnel under the plateau is a straight line; spawn at the left cave; rocks = cliff; 1 stud = 0.5 block
 - Spawn spacing, clear wait, summon counts, unit behaviour, kill-cash owner: see data/_unknown.json
