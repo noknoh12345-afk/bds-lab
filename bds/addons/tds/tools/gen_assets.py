@@ -61,6 +61,8 @@ LOOK_SIZE = {'type': 'float', 'range': [0.1, 8.0], 'default': 1.0, 'client_sync'
 import sys; sys.path.insert(0, os.path.join(ROOT, 'tools', 'models'))
 import roster  # noqa: E402
 N_ENEMY = len(roster.looks('enemy'))
+N_TOWER = len(roster.looks('tower'))
+FLAG = {'type': 'bool', 'default': False, 'client_sync': True}
 def base_components(family, box, hit):
     return {'minecraft:type_family': {'family': family}, 'minecraft:health': {'value': 1000000, 'max': 1000000},
             'minecraft:damage_sensor': {'triggers': [{'cause': 'all', 'deals_damage': 'no'}]}, 'minecraft:physics': {'has_gravity': False, 'has_collision': False},
@@ -74,8 +76,10 @@ out('bp/entities/unit.json', entity('tds:unit', {'tds:skin': prop_int(7), 'tds:s
 tw = {**base_components(['tower', 'tds'], (0.3, 0.5), (0.8, 0.9)), **NAME,
       'minecraft:interact': {'interactions': [{'interact_text': 'action.interact.tds_manage', 'swing': True, 'on_interact': {'filters': {'test': 'is_family', 'subject': 'other', 'value': 'player'}}}]}}
 # tds:yaw: the yaw (degrees, as a mob's) from the tower to its target; the client turns the turret bone to it
-out('bp/entities/tower.json', entity('tds:tower', {'tds:skin': prop_int(7), 'tds:size': SIZE, 'tds:lvl': prop_int(7), 'tds:yaw': prop_int(360)}, tw))
-out('bp/entities/ghost.json', entity('tds:ghost', {'tds:skin': prop_int(7), 'tds:ok': {'type': 'bool', 'default': True, 'client_sync': True}},
+# tds:holo: a hologram copy of a tower (its look drawn see-through)
+out('bp/entities/tower.json', entity('tds:tower', {'tds:skin': prop_int(N_TOWER - 1), 'tds:size': LOOK_SIZE, 'tds:lvl': prop_int(7), 'tds:yaw': prop_int(360),
+                                                  'tds:holo': FLAG}, tw))
+out('bp/entities/ghost.json', entity('tds:ghost', {'tds:skin': prop_int(N_TOWER - 1), 'tds:size': LOOK_SIZE, 'tds:ok': {'type': 'bool', 'default': True, 'client_sync': True}},
                                      base_components(['tds', 'tds_ghost'], (0.01, 0.01), (0.01, 0.01))))
 
 # ---------------- names ----------------

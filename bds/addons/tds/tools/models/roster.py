@@ -263,6 +263,9 @@ def build_enemy(name, rec, data):
 
 def looks(kind):
     """every look of one kind in skin order (looks of an animation together, the data's order within it)"""
+    if kind == 'tower':
+        import roster_towers                                      # (it builds on this module's Look)
+        return roster_towers.looks()
     if kind == 'enemy':
         data = load('enemies')
         out = [build_enemy(n, ENEMY[n], d) for n, d in data.items() if n in ENEMY]
@@ -275,5 +278,8 @@ def looks(kind):
 
 
 def missing(kind):
+    if kind == 'tower':
+        import roster_towers
+        return roster_towers.missing()
     data = load({'enemy': 'enemies'}[kind])
     return [n for n in data if n not in {'enemy': ENEMY}[kind]]

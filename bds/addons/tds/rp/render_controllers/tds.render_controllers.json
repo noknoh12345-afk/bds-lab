@@ -934,7 +934,157 @@
       "Texture.t4",
       "Texture.t5",
       "Texture.t6",
-      "Texture.t7"
+      "Texture.t7",
+      "Texture.t8",
+      "Texture.t9",
+      "Texture.t10",
+      "Texture.t11",
+      "Texture.t12",
+      "Texture.t13",
+      "Texture.t14",
+      "Texture.t15",
+      "Texture.t16",
+      "Texture.t17",
+      "Texture.t18",
+      "Texture.t19",
+      "Texture.t20",
+      "Texture.t21",
+      "Texture.t22",
+      "Texture.t23",
+      "Texture.t24",
+      "Texture.t25",
+      "Texture.t26",
+      "Texture.t27",
+      "Texture.t28",
+      "Texture.t29",
+      "Texture.t30",
+      "Texture.t31",
+      "Texture.t32",
+      "Texture.t33",
+      "Texture.t34",
+      "Texture.t35",
+      "Texture.t36",
+      "Texture.t37",
+      "Texture.t38",
+      "Texture.t39",
+      "Texture.t40",
+      "Texture.t41",
+      "Texture.t42",
+      "Texture.t43",
+      "Texture.t44",
+      "Texture.t45",
+      "Texture.t46",
+      "Texture.t47",
+      "Texture.t48",
+      "Texture.t49",
+      "Texture.t50",
+      "Texture.t51",
+      "Texture.t52",
+      "Texture.t53",
+      "Texture.t54",
+      "Texture.t55",
+      "Texture.t56",
+      "Texture.t57",
+      "Texture.t58",
+      "Texture.t59",
+      "Texture.t60",
+      "Texture.t61",
+      "Texture.t62",
+      "Texture.t63",
+      "Texture.t64",
+      "Texture.t65",
+      "Texture.t66",
+      "Texture.t67",
+      "Texture.t68",
+      "Texture.t69",
+      "Texture.t70",
+      "Texture.t71",
+      "Texture.t72",
+      "Texture.t73",
+      "Texture.t74",
+      "Texture.t75",
+      "Texture.t76",
+      "Texture.t77",
+      "Texture.t78",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo"
      ]
     },
     "geometries": {
@@ -946,13 +1096,239 @@
       "Geometry.g4",
       "Geometry.g5",
       "Geometry.g6",
-      "Geometry.g7"
+      "Geometry.g7",
+      "Geometry.g8",
+      "Geometry.g9",
+      "Geometry.g10",
+      "Geometry.g11",
+      "Geometry.g12",
+      "Geometry.g13",
+      "Geometry.g14",
+      "Geometry.g15",
+      "Geometry.g16",
+      "Geometry.g17",
+      "Geometry.g18",
+      "Geometry.g19",
+      "Geometry.g20",
+      "Geometry.g21",
+      "Geometry.g22",
+      "Geometry.g23",
+      "Geometry.g24",
+      "Geometry.g25",
+      "Geometry.g26",
+      "Geometry.g27",
+      "Geometry.g28",
+      "Geometry.g29",
+      "Geometry.g30",
+      "Geometry.g31",
+      "Geometry.g32",
+      "Geometry.g33",
+      "Geometry.g34",
+      "Geometry.g35",
+      "Geometry.g36",
+      "Geometry.g37",
+      "Geometry.g38",
+      "Geometry.g39",
+      "Geometry.g40",
+      "Geometry.g41",
+      "Geometry.g42",
+      "Geometry.g43",
+      "Geometry.g44",
+      "Geometry.g45",
+      "Geometry.g46",
+      "Geometry.g47",
+      "Geometry.g48",
+      "Geometry.g49",
+      "Geometry.g50",
+      "Geometry.g51",
+      "Geometry.g52",
+      "Geometry.g53",
+      "Geometry.g54",
+      "Geometry.g55",
+      "Geometry.g56",
+      "Geometry.g57",
+      "Geometry.g58",
+      "Geometry.g59",
+      "Geometry.g60",
+      "Geometry.g61",
+      "Geometry.g62",
+      "Geometry.g63",
+      "Geometry.g64",
+      "Geometry.g65",
+      "Geometry.g66",
+      "Geometry.g67",
+      "Geometry.g68",
+      "Geometry.g69",
+      "Geometry.g70",
+      "Geometry.g71",
+      "Geometry.g72",
+      "Geometry.g73",
+      "Geometry.g74",
+      "Geometry.g75",
+      "Geometry.g76",
+      "Geometry.g77",
+      "Geometry.g78"
      ]
     },
     "materials": {
      "Array.mats": [
       "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
+      "Material.default",
       "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
       "Material.blend"
      ]
     }
@@ -960,11 +1336,11 @@
    "geometry": "Array.geos[q.property('tds:skin')]",
    "materials": [
     {
-     "*": "Array.mats[q.property('tds:skin') == 6 ? 2 : (q.property('tds:skin') == 0 || q.property('tds:skin') == 4 || q.property('tds:skin') == 6 || q.property('tds:skin') == 1) ? 0 : 1]"
+     "*": "Array.mats[q.property('tds:skin') + (q.property('tds:holo') ? 79 : 0)]"
     }
    ],
    "textures": [
-    "Array.skins[q.property('tds:skin')]"
+    "Array.skins[q.property('tds:skin') + (q.property('tds:holo') ? 79 : 0)]"
    ],
    "part_visibility": [
     {
@@ -1007,16 +1383,13 @@
      "lv5_*": "q.property('tds:lvl') >= 5"
     },
     {
+     "lv6_*": "q.property('tds:lvl') >= 6"
+    },
+    {
      "pre3_*": "q.property('tds:lvl') < 3"
     },
     {
      "pre4_*": "q.property('tds:lvl') < 4"
-    },
-    {
-     "r1to4_*": "q.property('tds:lvl') >= 1 && q.property('tds:lvl') < 4"
-    },
-    {
-     "r2to4_*": "q.property('tds:lvl') >= 2 && q.property('tds:lvl') < 4"
     }
    ]
   },
@@ -1031,7 +1404,157 @@
       "Texture.o4",
       "Texture.o5",
       "Texture.o6",
-      "Texture.o7"
+      "Texture.o7",
+      "Texture.o8",
+      "Texture.o9",
+      "Texture.o10",
+      "Texture.o11",
+      "Texture.o12",
+      "Texture.o13",
+      "Texture.o14",
+      "Texture.o15",
+      "Texture.o16",
+      "Texture.o17",
+      "Texture.o18",
+      "Texture.o19",
+      "Texture.o20",
+      "Texture.o21",
+      "Texture.o22",
+      "Texture.o23",
+      "Texture.o24",
+      "Texture.o25",
+      "Texture.o26",
+      "Texture.o27",
+      "Texture.o28",
+      "Texture.o29",
+      "Texture.o30",
+      "Texture.o31",
+      "Texture.o32",
+      "Texture.o33",
+      "Texture.o34",
+      "Texture.o35",
+      "Texture.o36",
+      "Texture.o37",
+      "Texture.o38",
+      "Texture.o39",
+      "Texture.o40",
+      "Texture.o41",
+      "Texture.o42",
+      "Texture.o43",
+      "Texture.o44",
+      "Texture.o45",
+      "Texture.o46",
+      "Texture.o47",
+      "Texture.o48",
+      "Texture.o49",
+      "Texture.o50",
+      "Texture.o51",
+      "Texture.o52",
+      "Texture.o53",
+      "Texture.o54",
+      "Texture.o55",
+      "Texture.o56",
+      "Texture.o57",
+      "Texture.o58",
+      "Texture.o59",
+      "Texture.o60",
+      "Texture.o61",
+      "Texture.o62",
+      "Texture.o63",
+      "Texture.o64",
+      "Texture.o65",
+      "Texture.o66",
+      "Texture.o67",
+      "Texture.o68",
+      "Texture.o69",
+      "Texture.o70",
+      "Texture.o71",
+      "Texture.o72",
+      "Texture.o73",
+      "Texture.o74",
+      "Texture.o75",
+      "Texture.o76",
+      "Texture.o77",
+      "Texture.o78",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo",
+      "Texture.holo"
      ]
     },
     "geometries": {
@@ -1043,12 +1566,239 @@
       "Geometry.o4",
       "Geometry.o5",
       "Geometry.o6",
-      "Geometry.o7"
+      "Geometry.o7",
+      "Geometry.o8",
+      "Geometry.o9",
+      "Geometry.o10",
+      "Geometry.o11",
+      "Geometry.o12",
+      "Geometry.o13",
+      "Geometry.o14",
+      "Geometry.o15",
+      "Geometry.o16",
+      "Geometry.o17",
+      "Geometry.o18",
+      "Geometry.o19",
+      "Geometry.o20",
+      "Geometry.o21",
+      "Geometry.o22",
+      "Geometry.o23",
+      "Geometry.o24",
+      "Geometry.o25",
+      "Geometry.o26",
+      "Geometry.o27",
+      "Geometry.o28",
+      "Geometry.o29",
+      "Geometry.o30",
+      "Geometry.o31",
+      "Geometry.o32",
+      "Geometry.o33",
+      "Geometry.o34",
+      "Geometry.o35",
+      "Geometry.o36",
+      "Geometry.o37",
+      "Geometry.o38",
+      "Geometry.o39",
+      "Geometry.o40",
+      "Geometry.o41",
+      "Geometry.o42",
+      "Geometry.o43",
+      "Geometry.o44",
+      "Geometry.o45",
+      "Geometry.o46",
+      "Geometry.o47",
+      "Geometry.o48",
+      "Geometry.o49",
+      "Geometry.o50",
+      "Geometry.o51",
+      "Geometry.o52",
+      "Geometry.o53",
+      "Geometry.o54",
+      "Geometry.o55",
+      "Geometry.o56",
+      "Geometry.o57",
+      "Geometry.o58",
+      "Geometry.o59",
+      "Geometry.o60",
+      "Geometry.o61",
+      "Geometry.o62",
+      "Geometry.o63",
+      "Geometry.o64",
+      "Geometry.o65",
+      "Geometry.o66",
+      "Geometry.o67",
+      "Geometry.o68",
+      "Geometry.o69",
+      "Geometry.o70",
+      "Geometry.o71",
+      "Geometry.o72",
+      "Geometry.o73",
+      "Geometry.o74",
+      "Geometry.o75",
+      "Geometry.o76",
+      "Geometry.o77",
+      "Geometry.o78"
      ]
     },
     "materials": {
      "Array.omats": [
       "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.lit",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
+      "Material.blend",
       "Material.blend"
      ]
     }
@@ -1056,11 +1806,11 @@
    "geometry": "Array.ogeo[q.property('tds:skin')]",
    "materials": [
     {
-     "*": "Array.omats[q.property('tds:skin') == 6 ? 1 : 0]"
+     "*": "Array.omats[q.property('tds:skin') + (q.property('tds:holo') ? 79 : 0)]"
     }
    ],
    "textures": [
-    "Array.gear[q.property('tds:skin')]"
+    "Array.gear[q.property('tds:skin') + (q.property('tds:holo') ? 79 : 0)]"
    ],
    "part_visibility": [
     {
@@ -1103,16 +1853,317 @@
      "lv5_*": "q.property('tds:lvl') >= 5"
     },
     {
+     "lv6_*": "q.property('tds:lvl') >= 6"
+    },
+    {
      "pre3_*": "q.property('tds:lvl') < 3"
     },
     {
      "pre4_*": "q.property('tds:lvl') < 4"
+    }
+   ]
+  },
+  "controller.render.tds_ghost": {
+   "arrays": {
+    "textures": {
+     "Array.skins": [
+      "Texture.bad",
+      "Texture.ok"
+     ]
+    },
+    "geometries": {
+     "Array.geos": [
+      "Geometry.g0",
+      "Geometry.g1",
+      "Geometry.g2",
+      "Geometry.g3",
+      "Geometry.g4",
+      "Geometry.g5",
+      "Geometry.g6",
+      "Geometry.g7",
+      "Geometry.g8",
+      "Geometry.g9",
+      "Geometry.g10",
+      "Geometry.g11",
+      "Geometry.g12",
+      "Geometry.g13",
+      "Geometry.g14",
+      "Geometry.g15",
+      "Geometry.g16",
+      "Geometry.g17",
+      "Geometry.g18",
+      "Geometry.g19",
+      "Geometry.g20",
+      "Geometry.g21",
+      "Geometry.g22",
+      "Geometry.g23",
+      "Geometry.g24",
+      "Geometry.g25",
+      "Geometry.g26",
+      "Geometry.g27",
+      "Geometry.g28",
+      "Geometry.g29",
+      "Geometry.g30",
+      "Geometry.g31",
+      "Geometry.g32",
+      "Geometry.g33",
+      "Geometry.g34",
+      "Geometry.g35",
+      "Geometry.g36",
+      "Geometry.g37",
+      "Geometry.g38",
+      "Geometry.g39",
+      "Geometry.g40",
+      "Geometry.g41",
+      "Geometry.g42",
+      "Geometry.g43",
+      "Geometry.g44",
+      "Geometry.g45",
+      "Geometry.g46",
+      "Geometry.g47",
+      "Geometry.g48",
+      "Geometry.g49",
+      "Geometry.g50",
+      "Geometry.g51",
+      "Geometry.g52",
+      "Geometry.g53",
+      "Geometry.g54",
+      "Geometry.g55",
+      "Geometry.g56",
+      "Geometry.g57",
+      "Geometry.g58",
+      "Geometry.g59",
+      "Geometry.g60",
+      "Geometry.g61",
+      "Geometry.g62",
+      "Geometry.g63",
+      "Geometry.g64",
+      "Geometry.g65",
+      "Geometry.g66",
+      "Geometry.g67",
+      "Geometry.g68",
+      "Geometry.g69",
+      "Geometry.g70",
+      "Geometry.g71",
+      "Geometry.g72",
+      "Geometry.g73",
+      "Geometry.g74",
+      "Geometry.g75",
+      "Geometry.g76",
+      "Geometry.g77",
+      "Geometry.g78"
+     ]
+    }
+   },
+   "geometry": "Array.geos[q.property('tds:skin')]",
+   "materials": [
+    {
+     "*": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Array.skins[q.property('tds:ok') ? 1 : 0]"
+   ],
+   "part_visibility": [
+    {
+     "*": true
     },
     {
-     "r1to4_*": "q.property('tds:lvl') >= 1 && q.property('tds:lvl') < 4"
+     "pip1": false
     },
     {
-     "r2to4_*": "q.property('tds:lvl') >= 2 && q.property('tds:lvl') < 4"
+     "pip2": false
+    },
+    {
+     "pip3": false
+    },
+    {
+     "pip4": false
+    },
+    {
+     "pip5": false
+    },
+    {
+     "pip6": false
+    },
+    {
+     "pip7": false
+    },
+    {
+     "lv1_*": false
+    },
+    {
+     "lv2_*": false
+    },
+    {
+     "lv3_*": false
+    },
+    {
+     "lv4_*": false
+    },
+    {
+     "lv5_*": false
+    },
+    {
+     "lv6_*": false
+    },
+    {
+     "pre3_*": true
+    },
+    {
+     "pre4_*": true
+    }
+   ]
+  },
+  "controller.render.tds_ghost_gear": {
+   "arrays": {
+    "textures": {
+     "Array.gear": [
+      "Texture.bad",
+      "Texture.ok"
+     ]
+    },
+    "geometries": {
+     "Array.ogeo": [
+      "Geometry.o0",
+      "Geometry.o1",
+      "Geometry.o2",
+      "Geometry.o3",
+      "Geometry.o4",
+      "Geometry.o5",
+      "Geometry.o6",
+      "Geometry.o7",
+      "Geometry.o8",
+      "Geometry.o9",
+      "Geometry.o10",
+      "Geometry.o11",
+      "Geometry.o12",
+      "Geometry.o13",
+      "Geometry.o14",
+      "Geometry.o15",
+      "Geometry.o16",
+      "Geometry.o17",
+      "Geometry.o18",
+      "Geometry.o19",
+      "Geometry.o20",
+      "Geometry.o21",
+      "Geometry.o22",
+      "Geometry.o23",
+      "Geometry.o24",
+      "Geometry.o25",
+      "Geometry.o26",
+      "Geometry.o27",
+      "Geometry.o28",
+      "Geometry.o29",
+      "Geometry.o30",
+      "Geometry.o31",
+      "Geometry.o32",
+      "Geometry.o33",
+      "Geometry.o34",
+      "Geometry.o35",
+      "Geometry.o36",
+      "Geometry.o37",
+      "Geometry.o38",
+      "Geometry.o39",
+      "Geometry.o40",
+      "Geometry.o41",
+      "Geometry.o42",
+      "Geometry.o43",
+      "Geometry.o44",
+      "Geometry.o45",
+      "Geometry.o46",
+      "Geometry.o47",
+      "Geometry.o48",
+      "Geometry.o49",
+      "Geometry.o50",
+      "Geometry.o51",
+      "Geometry.o52",
+      "Geometry.o53",
+      "Geometry.o54",
+      "Geometry.o55",
+      "Geometry.o56",
+      "Geometry.o57",
+      "Geometry.o58",
+      "Geometry.o59",
+      "Geometry.o60",
+      "Geometry.o61",
+      "Geometry.o62",
+      "Geometry.o63",
+      "Geometry.o64",
+      "Geometry.o65",
+      "Geometry.o66",
+      "Geometry.o67",
+      "Geometry.o68",
+      "Geometry.o69",
+      "Geometry.o70",
+      "Geometry.o71",
+      "Geometry.o72",
+      "Geometry.o73",
+      "Geometry.o74",
+      "Geometry.o75",
+      "Geometry.o76",
+      "Geometry.o77",
+      "Geometry.o78"
+     ]
+    }
+   },
+   "geometry": "Array.ogeo[q.property('tds:skin')]",
+   "materials": [
+    {
+     "*": "Material.blend"
+    }
+   ],
+   "textures": [
+    "Array.gear[q.property('tds:ok') ? 1 : 0]"
+   ],
+   "part_visibility": [
+    {
+     "*": true
+    },
+    {
+     "pip1": false
+    },
+    {
+     "pip2": false
+    },
+    {
+     "pip3": false
+    },
+    {
+     "pip4": false
+    },
+    {
+     "pip5": false
+    },
+    {
+     "pip6": false
+    },
+    {
+     "pip7": false
+    },
+    {
+     "lv1_*": false
+    },
+    {
+     "lv2_*": false
+    },
+    {
+     "lv3_*": false
+    },
+    {
+     "lv4_*": false
+    },
+    {
+     "lv5_*": false
+    },
+    {
+     "lv6_*": false
+    },
+    {
+     "pre3_*": true
+    },
+    {
+     "pre4_*": true
     }
    ]
   },
@@ -1199,184 +2250,6 @@
    ],
    "textures": [
     "Array.gear[q.property('tds:skin')]"
-   ]
-  },
-  "controller.render.tds_ghost": {
-   "arrays": {
-    "textures": {
-     "Array.skins": [
-      "Texture.bad",
-      "Texture.ok"
-     ]
-    },
-    "geometries": {
-     "Array.geos": [
-      "Geometry.g0",
-      "Geometry.g1",
-      "Geometry.g2",
-      "Geometry.g3",
-      "Geometry.g4",
-      "Geometry.g5",
-      "Geometry.g6",
-      "Geometry.g7"
-     ]
-    },
-    "materials": {
-     "Array.mats": [
-      "Material.blend"
-     ]
-    }
-   },
-   "geometry": "Array.geos[q.property('tds:skin')]",
-   "materials": [
-    {
-     "*": "Array.mats[0]"
-    }
-   ],
-   "textures": [
-    "Array.skins[q.property('tds:ok') ? 1 : 0]"
-   ],
-   "part_visibility": [
-    {
-     "*": true
-    },
-    {
-     "pip1": false
-    },
-    {
-     "pip2": false
-    },
-    {
-     "pip3": false
-    },
-    {
-     "pip4": false
-    },
-    {
-     "pip5": false
-    },
-    {
-     "pip6": false
-    },
-    {
-     "pip7": false
-    },
-    {
-     "lv1_*": false
-    },
-    {
-     "lv2_*": false
-    },
-    {
-     "lv3_*": false
-    },
-    {
-     "lv4_*": false
-    },
-    {
-     "lv5_*": false
-    },
-    {
-     "pre3_*": true
-    },
-    {
-     "pre4_*": true
-    },
-    {
-     "r1to4_*": false
-    },
-    {
-     "r2to4_*": false
-    }
-   ]
-  },
-  "controller.render.tds_ghost_gear": {
-   "arrays": {
-    "textures": {
-     "Array.gear": [
-      "Texture.bad",
-      "Texture.ok"
-     ]
-    },
-    "geometries": {
-     "Array.ogeo": [
-      "Geometry.o0",
-      "Geometry.o1",
-      "Geometry.o2",
-      "Geometry.o3",
-      "Geometry.o4",
-      "Geometry.o5",
-      "Geometry.o6",
-      "Geometry.o7"
-     ]
-    },
-    "materials": {
-     "Array.omats": [
-      "Material.blend"
-     ]
-    }
-   },
-   "geometry": "Array.ogeo[q.property('tds:skin')]",
-   "materials": [
-    {
-     "*": "Array.omats[0]"
-    }
-   ],
-   "textures": [
-    "Array.gear[q.property('tds:ok') ? 1 : 0]"
-   ],
-   "part_visibility": [
-    {
-     "*": true
-    },
-    {
-     "pip1": false
-    },
-    {
-     "pip2": false
-    },
-    {
-     "pip3": false
-    },
-    {
-     "pip4": false
-    },
-    {
-     "pip5": false
-    },
-    {
-     "pip6": false
-    },
-    {
-     "pip7": false
-    },
-    {
-     "lv1_*": false
-    },
-    {
-     "lv2_*": false
-    },
-    {
-     "lv3_*": false
-    },
-    {
-     "lv4_*": false
-    },
-    {
-     "lv5_*": false
-    },
-    {
-     "pre3_*": true
-    },
-    {
-     "pre4_*": true
-    },
-    {
-     "r1to4_*": false
-    },
-    {
-     "r2to4_*": false
-    }
    ]
   }
  }

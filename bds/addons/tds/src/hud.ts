@@ -103,7 +103,7 @@ system.runInterval(() => {
     prop(p, 'mode', Math.max(0, MODES.indexOf(M.mode)));
     // the tower bar: role per slot (9 = empty) as base-10 digits, costs, the held slot
     const lo = M.loadouts?.[p.name] ?? prof(p).loadout; let roles = 0;
-    for (let i = 0; i < 5; i++) { const n = lo[i]; roles += (n ? G.towerSkin(n) : 9) * 10 ** i; prop(p, `c${i + 1}`, n ? Math.min(9999, G.infl(placeCost(n)) || 0) : 0); }
+    for (let i = 0; i < 5; i++) { const n = lo[i]; roles += (n ? G.towerRole(n) : 9) * 10 ** i; prop(p, `c${i + 1}`, n ? Math.min(9999, G.infl(placeCost(n)) || 0) : 0); }
     prop(p, 'roles', roles);
     const held = p.getComponent('inventory')?.container?.getItem(p.selectedSlotIndex)?.typeId.match(/^tds:slot_([1-5])$/);
     prop(p, 'sel', held ? +held[1] : 0);
@@ -117,7 +117,7 @@ system.runInterval(() => {
     const tw = selectedTower(p);
     if (!tw) { prop(p, 'tinfo', 0); continue; }
     const mx = Math.min(7, maxLevel(tw.name)), lv = Math.min(7, tw.lvl), tg = Math.max(0, G.TARGETS.indexOf(tw.target as (typeof G.TARGETS)[number]));
-    prop(p, 'tinfo', 10000 + G.towerSkin(tw.name, tw.temp !== undefined) * 1000 + lv * 100 + mx * 10 + tg);
+    prop(p, 'tinfo', 10000 + G.towerRole(tw.name, tw.temp !== undefined) * 1000 + lv * 100 + mx * 10 + tg);
     prop(p, 'tup', tw.lvl >= maxLevel(tw.name) ? 0 : Math.min(99999, G.infl(levelCost(tw.name, tw.lvl + 1)) || 0));
     prop(p, 'tsell', Math.min(99999, G.sellValue(tw)));
   }

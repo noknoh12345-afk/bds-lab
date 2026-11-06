@@ -104,6 +104,7 @@ class Model:
         self.emissive = emissive
         self.decal = None                        # decal(p) -> colour, None (cut) or p.col
         self.locators = {}
+        self.prefix = ''                         # put before every cube name (kitbash.level: one level's parts)
 
     # --- skeleton ---------------------------------------------------------------------------------------
     def bone(self, name, parent=None, pivot=(0, 0, 0), rot=None, locators=None):
@@ -118,11 +119,15 @@ class Model:
         return b
 
     # --- boxes --------------------------------------------------------------------------------------------
-    def box(self, bone, name, x0, x1, y0, y1, z0, z1, mat, rot=None, pivot=None, decal=None, dens=None, only=None, seam=False, flat=False):
+    def box(self, bone, name, x0, x1, y0, y1, z0, z1, mat, rot=None, pivot=None, decal=None, dens=None, only=None, seam=False, flat=False,
+            inflate=0.0, raw=False):
         """A cube. `only`: a PLATE - zero thickness across that face pair, only those faces textured (two opposite
         faces: both drawn, painted by position). `dens`: texels per unit, a number or {face: n}. `seam`: one link of a
-        larger surface (no darkened rim). `flat`: no gradient or rim at all."""
+        larger surface (no darkened rim). `flat`: no gradient or rim at all. `inflate`: drawn that much bigger on every
+        side while its texture keeps the box's own size (a skin's overlay: its texels line up with the part under it).
+        `raw`: the texture exactly as painted (no light or rim baked in: the game lights it as it lights the body)."""
         assert bone in self.bmap, (name, bone)
+        name = self.prefix + name
         assert not any(c['name'] == name for c in self.cubes), f'duplicate cube {name}'
         if isinstance(only, str):
             only = (only,)
@@ -131,7 +136,7 @@ class Model:
             assert (b == a) if ax == thin else (b > a), (name, ax, a, b)
         c = {'bone': bone, 'name': name, 'o': [r5(x0), r5(y0), r5(z0)], 's': [r5(x1 - x0), r5(y1 - y0), r5(z1 - z0)],
              'rot': [r5(v) for v in rot] if rot and any(rot) else None, 'pivot': None, 'mat': mat, 'decal': decal,
-             'dens': dens, 'only': only, 'seam': seam, 'flat': flat}
+             'dens': dens, 'only': only, 'seam': seam, 'flat': flat, 'inflate': r5(inflate), 'raw': raw}
         if c['rot']:
             c['pivot'] = [r5(v) for v in (pivot or ((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2))]
         self.cubes.append(c)
@@ -139,7 +144,7 @@ class Model:
 
     def mirror(self, name, new_name, bone=None):
         """the mirror image of a cube about x = 0 (rotation [rx, -ry, -rz])"""
-        c = next(c for c in self.cubes if c['name'] == name)
+        c = next(c for c in self.cubes if c['name'] in (name, self.prefix + name))
         o, s = c['o'], c['s']
         only = tuple({'east': 'west', 'west': 'east'}.get(f, f) for f in c['only']) if c['only'] else None
         m = self.box(bone or c['bone'], new_name, -(o[0] + s[0]), -o[0], o[1], o[1] + s[1], o[2], o[2] + s[2], c['mat'],
@@ -266,7 +271,9 @@ class Model:
                         lum = (0.3 * col[0] + 0.59 * col[1] + 0.11 * col[2]) / 255
                         col = clamp(tuple(t * (0.45 + 0.75 * lum) for t in tint))
                     lit = c['mat'] in self.glow and not alpha
-                    if twin:
+                    if c.get('raw'):
+                        pass                                  # painted as it should look: the game's own light only
+                    elif twin:
                         col = mul(col, 0.95)              # both faces of a plate alike: no per-face light, no rim
                     elif not lit and not c['flat']:
                         if side:
@@ -303,12 +310,15 @@ class Model:
             cubes = []
             for c in (c for c in self.cubes if c['bone'] == b['name']):
                 oc = {'origin': c['o'], 'size': c['s']}
+                if c.get('inflate'):
+                    oc['inflate'] = c['inflate']
                 if c['rot']:
                     oc['pivot'], oc['rotation'] = c['pivot'], c['rot']
                 oc['uv'] = {f: by[id(c)][f] for f in FACES if f in by[id(c)]}
                 cubes.append(oc)
+                g = c.get('inflate') or 0
                 for k in range(3):
-                    lo[k] = min(lo[k], c['o'][k]); hi[k] = max(hi[k], c['o'][k] + c['s'][k])
+                    lo[k] = min(lo[k], c['o'][k] - g); hi[k] = max(hi[k], c['o'][k] + c['s'][k] + g)
             if cubes:
                 ob['cubes'] = cubes
             bones.append(ob)

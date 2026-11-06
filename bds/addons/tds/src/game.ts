@@ -1,6 +1,6 @@
 // The match: path, enemies, towers, units, economy, waves. Pure simulation in studs/seconds; entities only mirror it.
 import { world, system, Player, Entity, Dimension } from '@minecraft/server';
-import { ENEMY_LOOK } from './looks';
+import { ENEMY_LOOK, TOWER_LOOK } from './looks';
 import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, startCash, timerFor, enemyIn, afterDefense, cashShare, hpFor, RULES, rules, units, unitsFor, Stats, Group, Ability, Spawn, TowerAbility, SkillDef } from './defs';
 
 export let headless = false;
@@ -286,8 +286,11 @@ const enemyLook = (e: Enemy) => ENEMY_LOOK[e.name] ?? ENEMY_LOOK[e.boss ? 'Norma
   : (M?.mode === 'Frost' || /Frost|Ice|Yeti|Snow|Shiver|Glacial|Polar/.test(e.name)) ? 'Frozen' : (e.def >= 40 || /Slow|Heavy|Tank|Armored|Bulwark|Giant/.test(e.name)) ? 'Heavy'
   : e.speed >= 5 ? 'Speedy' : 'Normal'] ?? [0, 1];
 export const enemySkin = (e: Enemy) => enemyLook(e)[0];
-/** the look of a tower: 0 offense, 1 support, 2 income, 3 defense/splash, 4 cliff, 5 spawner, 6 hologram, 7 slow/freeze */
-export function towerSkin(name: string, hologram = false) {
+/** the look of a tower (src/looks.ts, one per tower of the data): [tds:skin, tds:size, the shot it plays]; a tower the data
+ * lacks wears the Scout's */
+export const towerLook = (name: string): [number, number, string] => TOWER_LOOK[name] ?? TOWER_LOOK['Scout'] ?? [0, 1, 'fire'];
+/** the tower's role for the HUD's icons: 0 offense, 1 support, 2 income, 3 defense/splash, 4 cliff, 5 spawner, 6 hologram, 7 slow/freeze */
+export function towerRole(name: string, hologram = false) {
   if (hologram) return 6;
   const d = towers[name]; if (!d) return 0;
   if (d.levels.some((l) => Number(l.income) > 0) && !d.levels.some((l) => Number(l.damage) > 0)) return 2;
@@ -545,7 +548,8 @@ function look(tw: Tower, e: Enemy) {
   const q = epos(e), yaw = Math.round((Math.atan2(-(q.x - tw.x - 0.5), q.z - tw.z - 0.5) * 180) / Math.PI + 360) % 360, last = aimed.get(tw.id);
   if (last === undefined || Math.abs(((yaw - last + 540) % 360) - 180) >= 3) { try { ent.setProperty('tds:yaw', yaw); aimed.set(tw.id, yaw); } catch { /* older pack */ } }
   const now = Date.now();
-  if (now - (kicked.get(tw.id) ?? 0) >= 150) { kicked.set(tw.id, now); try { ent.playAnimation('animation.tds_tower.fire'); } catch { /* unloaded */ } }
+  const shot = towerLook(tw.name)[2];
+  if (shot && now - (kicked.get(tw.id) ?? 0) >= 150) { kicked.set(tw.id, now); try { ent.playAnimation(`animation.tds_tower.${shot}`); } catch { /* unloaded */ } }
 }
 
 function towerStep(tw: Tower, dt: number) {
@@ -656,7 +660,8 @@ export function place(p: Player | string, name: string, x: number, y: number, z:
 function body(tw: Tower) {
   try {
     const e = dim().spawnEntity('tds:tower' as any, { x: tw.x + 0.5, y: tw.y, z: tw.z + 0.5 });
-    e.setProperty('tds:skin', towerSkin(tw.name, tw.temp !== undefined)); try { e.setProperty('tds:lvl', Math.min(7, tw.lvl)); } catch { /* older pack */ }
+    const lk = towerLook(tw.name);
+    e.setProperty('tds:skin', lk[0]); try { e.setProperty('tds:size', lk[1]); e.setProperty('tds:holo', tw.temp !== undefined); e.setProperty('tds:lvl', Math.min(7, tw.lvl)); } catch { /* older pack */ }
     e.setDynamicProperty('tds:id', tw.id); ents.set(-tw.id, e); aimed.delete(tw.id); tlabel(tw);
   } catch { /* unloaded */ }
 }

@@ -62,7 +62,8 @@ function showGhost(p: Player, name: string, s: Spot, ok: boolean) {
   let g = ghosts.get(p.name);
   const at: Vector3 = { x: s.x + 0.5, y: s.y, z: s.z + 0.5 };
   if (!g?.isValid) { try { g = dim().spawnEntity('tds:ghost' as any, at); ghosts.set(p.name, g); } catch { return; } }
-  try { g.teleport(at); g.setProperty('tds:skin', G.towerSkin(name)); g.setProperty('tds:ok', ok); } catch { /* older pack */ }
+  const lk = G.towerLook(name);
+  try { g.teleport(at); g.setProperty('tds:skin', lk[0]); g.setProperty('tds:size', lk[1]); g.setProperty('tds:ok', ok); } catch { /* older pack */ }
 }
 
 /** the preview: every other tick for each player holding a slot */

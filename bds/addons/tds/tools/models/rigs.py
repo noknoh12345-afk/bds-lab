@@ -128,6 +128,25 @@ RIGS = {r.key: r for r in [
 RIGS['skeleton'].hands = RIGS['stray'].hands = RIGS['wither'].hands = {'r': ('rightArm', (-5, 12, 0)), 'l': ('leftArm', (5, 12, 0))}
 
 
+def _player(key, geo, tex, slim):
+    """the player's body (Steve: geometry.humanoid.custom, Alex: .customSlim with 3-wide arms 0.5 lower): the people of the
+    towers and units (tailor.py). Its overlays (hat 0.5, jacket / sleeves / pants 0.25) are the parts' skins."""
+    ay, aw = (21.5, 3) if slim else (22, 4)
+    bones = [('root', None, (0, 0, 0)), ('waist', 'root', (0, 12, 0)), ('body', 'waist', (0, 24, 0)), ('head', 'body', (0, 24, 0)),
+             ('rightArm', 'body', (-5, ay, 0)), ('leftArm', 'body', (5, ay, 0)), ('rightLeg', 'root', (-1.9, 12, 0)),
+             ('leftLeg', 'root', (1.9, 12, 0))]
+    a0 = ay - 10
+    parts = {'head': ('head', (-4, 4, 24, 32, -4, 4), 0.5), 'body': ('body', (-4, 4, 12, 24, -2, 2), 0.25),
+             'rarm': ('rightArm', (-4 - aw, -4, a0, a0 + 12, -2, 2), 0.25), 'larm': ('leftArm', (4, 4 + aw, a0, a0 + 12, -2, 2), 0.25),
+             'rleg': ('rightLeg', (-3.9, 0.1, 0, 12, -2, 2), 0.25), 'lleg': ('leftLeg', (-0.1, 3.9, 0, 12, -2, 2), 0.25)}
+    hands = {'r': ('rightArm', (-4 - aw / 2, a0, 0)), 'l': ('leftArm', (4 + aw / 2, a0, 0))}
+    return Rig(key, geo, tex, bones, parts, hands, family='player')
+
+
+RIGS['steve'] = _player('steve', 'geometry.humanoid.custom', T + 'steve', False)
+RIGS['alex'] = _player('alex', 'geometry.humanoid.customSlim', T + 'alex', True)
+
+
 def ours(key, bones, parts, hands=None, scale=1.0, family='custom'):
     """a body we build ourselves (bodies.py): no vanilla geometry under it"""
     return Rig(key, None, None, bones, parts, hands, scale=scale, family=family)

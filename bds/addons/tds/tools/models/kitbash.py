@@ -9,7 +9,9 @@ a recipe may recolour any of them. Conventions as kit.py: the model faces -z, +x
 """
 from __future__ import annotations
 
+import copy
 import math
+from contextlib import contextmanager
 
 from hq_parts import along, hq_decal, octa
 from kit import Model, mix, mul
@@ -60,9 +62,37 @@ def dress(name, rig, theme='plain', mats=None, hidden=False, width=256, density=
     for b in rig.bones:
         if b[0] not in m.bmap:
             m.bone(b[0], b[1], b[2], rot=b[3] if len(b) > 3 else None)
-    m.rig, m.theme, m.th, m.emblem, m.own = rig, theme, th, None, None
+    m.rig, m.theme, m.th, m.emblem, m.own = copy.copy(rig), theme, th, None, None
+    m.rig.parts, m.rig.hands = dict(rig.parts), dict(rig.hands)
     m.decal = lambda p, m=m: paint(m, p)
     return m
+
+
+def nb(m, name):
+    """a bone a part makes: named with the level's prefix (a hidden parent hides no child: every bone needs its own)"""
+    return (m.bprefix + name) if getattr(m, 'bprefix', '') else name
+
+
+@contextmanager
+def level(m, prefix):
+    """parts added inside show from a level only: their cubes go on bones named <prefix>_<bone> (lv2_body, pre4_gun ...)
+    that follow the rig's bones, and every bone they make is named so too (entities.level_rules shows them by tds:lvl)"""
+    saved = (dict(m.rig.parts), dict(m.rig.hands), m.prefix, getattr(m, 'bprefix', ''))
+    for part, (bone, box, skin) in saved[0].items():
+        b2 = f'{prefix}_{bone}'
+        if b2 not in m.bmap:
+            m.bone(b2, bone, m.bmap[bone]['pivot'])
+        m.rig.parts[part] = (b2, box, skin)
+    for side, (bone, pt) in saved[1].items():
+        b2 = f'{prefix}_{bone}'
+        if b2 not in m.bmap:
+            m.bone(b2, bone, m.bmap[bone]['pivot'])
+        m.rig.hands[side] = (b2, pt)
+    m.prefix, m.bprefix = f'{prefix}_', f'{prefix}_'
+    try:
+        yield
+    finally:
+        m.rig.parts, m.rig.hands, m.prefix, m.bprefix = saved
 
 
 def tag(c, **kw):
@@ -72,6 +102,20 @@ def tag(c, **kw):
 
 def has(m, part):
     return part in m.rig.parts
+
+
+def body_box(m, grow=0.0):
+    """the body's outer box: over the long coat of the rigs that have one (illagers, the witch, the zombie villager: an
+    inflated box from y 6), so what is worn on the body clears the coat instead of hiding inside it"""
+    x0, x1, y0, y1, z0, z1 = m.rig.box('body', grow)
+    if has(m, 'robe'):
+        rx0, rx1, _, ry1, rz0, rz1 = m.rig.box('robe', grow)
+        return rx0, rx1, y0, max(y1, ry1), rz0, rz1
+    return x0, x1, y0, y1, z0, z1
+
+
+def pbox(m, part, grow=0.0):
+    return body_box(m, grow) if part == 'body' else m.rig.box(part, grow)
 
 
 # ------------------------------------------------------------------------------------------------ shells
@@ -84,6 +128,8 @@ def shell(m, parts=('head', 'body', 'rarm', 'larm', 'rleg', 'lleg'), grow=0.3, c
     th = THEMES[theme or m.theme]
     if not th.get('style'):
         return
+    if has(m, 'robe') and 'body' in parts and 'robe' not in parts:
+        parts = tuple('robe' if p == 'body' else p for p in parts)     # the vanilla coat would hide a shell on the body
     for part in parts:
         if not has(m, part):
             continue
@@ -207,8 +253,8 @@ def horns(m, mat='bone', size=1.0, kind='curl', mat2=None):
     else:
         m.rise_x(b, 'horn_l', (x1 - 0.8, yb), (x1 + 3.6 * s, yb + 3.4 * s), zc - 0.85 * s, zc + 0.85 * s, 1.5 * s, mat, decal='horn')
         m.rise_x(b, 'horntip_l', (x1 + 3.2 * s, yb + 3.0 * s), (x1 + 4.6 * s, yb + 6.4 * s), zc - 0.5 * s, zc + 0.5 * s, 0.9 * s, mat2 or mat, decal='horn')
-    for c in [c for c in m.cubes if c['name'].startswith('horn') and c['name'].endswith('_l')]:
-        m.mirror(c['name'], c['name'][:-2] + '_r')
+    for c in [c for c in m.cubes if c['name'][len(m.prefix):].startswith('horn') and c['name'].endswith('_l')]:
+        m.mirror(c['name'], c['name'][len(m.prefix):-2] + '_r')
 
 
 def halo(m, mat='glow', r=None, lift=2.2, spin=True):
@@ -216,7 +262,7 @@ def halo(m, mat='glow', r=None, lift=2.2, spin=True):
     r = r or (x1 - x0) * 0.42
     cy, cz = y1 + lift, (z0 + z1) / 2
     hb = m.rig.bone('head')
-    bone = 'halo'
+    bone = nb(m, 'halo')
     m.bone(bone, hb, (0, cy, cz))
     t = 2 * r * math.tan(math.radians(22.5))
     for i in range(8):
@@ -250,8 +296,8 @@ def helm(m, mat='metal', visor='dark', plume=None, crest=None, grow=0.4, slits=T
     if crest:
         m.box(b, 'helm_crest', -0.45, 0.45, y1, y1 + 1.6, z0 + 0.5, z1 - 0.5, crest, decal='metal')
     if plume:
-        m.bone('plume', b, (0, y1, cz))
-        m.box('plume', 'plume', 0, 0, y1 - 0.4, y1 + 5.0, cz - 2.6, cz + 5.0, plume, only=('east', 'west'), decal='plume', dens=2.0)
+        m.bone(nb(m, 'plume'), b, (0, y1, cz))
+        m.box(nb(m, 'plume'), 'plume', 0, 0, y1 - 0.4, y1 + 5.0, cz - 2.6, cz + 5.0, plume, only=('east', 'west'), decal='plume', dens=2.0)
 
 
 def wizard_hat(m, mat='t2', band='trim', grow=0.3, tall=8.0, bend=14, brim=True):
@@ -262,12 +308,13 @@ def wizard_hat(m, mat='t2', band='trim', grow=0.3, tall=8.0, bend=14, brim=True)
     if brim:
         octa(m, b, 'hat_brim', 'y', (0, cz), y1 - 0.3, y1 + 0.3, r + 2.2, mat, decal='cloth')
     octa(m, b, 'hat_band', 'y', (0, cz), y1 + 0.25, y1 + 1.2, r * 0.82, band, decal='metal')
-    m.bone('hat_tip', b, (0, y1 + 1.0, cz), rot=(-bend, 0, 0))
+    tip = nb(m, 'hat_tip')
+    m.bone(tip, b, (0, y1 + 1.0, cz), rot=(-bend, 0, 0))
     steps = 4
     for i in range(steps):
         rr = r * 0.78 * (1 - i / steps)
         ya, yb2 = y1 + 1.0 + tall * i / steps, y1 + 1.0 + tall * (i + 1) / steps
-        octa(m, 'hat_tip', f'hat_cone{i}', 'y', (0, cz + 0.6 * i), ya - 0.05, yb2 + 0.05, max(0.35, rr), mat, decal='cloth')
+        octa(m, tip, f'hat_cone{i}', 'y', (0, cz + 0.6 * i), ya - 0.05, yb2 + 0.05, max(0.35, rr), mat, decal='cloth')
 
 
 def tophat(m, mat='black', band='red', grow=0.25):
@@ -295,8 +342,8 @@ def bandana(m, mat='red', grow=0.46, tails=True):
     yy = y0 + (y1 - y0) * 0.75
     m.box(b, 'bandana', x0, x1, yy - 0.9, yy + 0.9, z0, z1, mat, decal='strap')
     if tails:
-        m.bone('bandana_tail', b, (0, yy, z1))
-        m.box('bandana_tail', 'bandana_t', 0, 0, yy - 4.0, yy + 0.4, z1, z1 + 3.5, mat, only=('east', 'west'), decal='tail', dens=2.0)
+        m.bone(nb(m, 'bandana_tail'), b, (0, yy, z1))
+        m.box(nb(m, 'bandana_tail'), 'bandana_t', 0, 0, yy - 4.0, yy + 0.4, z1, z1 + 3.5, mat, only=('east', 'west'), decal='tail', dens=2.0)
 
 
 def gasmask(m, mat='t3', lens='glass', filt='metal2'):
@@ -334,7 +381,7 @@ def spikes_on(m, part, mat, n=3, length=3.0, tilt=18, grow=0.2, where='top', thi
     """short spikes out of a part's top (a crown of ice, a punk crest) or its back"""
     if not has(m, part):
         return
-    x0, x1, y0, y1, z0, z1 = m.rig.box(part, grow)
+    x0, x1, y0, y1, z0, z1 = pbox(m, part, grow)
     b = m.rig.bone(part)
     for i in range(n):
         f = (i + 0.5) / n
@@ -361,7 +408,7 @@ def eyes_glow(m, color='glow', y=None, size=0.8, grow=0.36):
 def plate(m, mat='metal', trim='trim', grow=0.48, back=True, ribs=False):
     if not has(m, 'body'):
         return
-    x0, x1, y0, y1, z0, z1 = m.rig.box('body', grow)
+    x0, x1, y0, y1, z0, z1 = body_box(m, grow)
     b = m.rig.bone('body')
     tag(m.box(b, 'plate', x0, x1, y0 + 1.0, y1, z0, z0 + 0.8, mat, decal='ribs' if ribs else 'plate'), trimc=trim)
     if back:
@@ -375,8 +422,8 @@ def robe(m, mat='t1', mat2='t2', grow=0.52, low=2.0, ragged=True, sash=None):
         return
     x0, x1, y0, y1, z0, z1 = m.rig.box('body', grow)
     b = m.rig.bone('body')
-    if has(m, 'robe'):
-        x0, x1, _, y1, z0, z1 = m.rig.box('robe', grow * 0.6)
+    if has(m, 'robe'):                                           # over the vanilla coat and a shell on it (0.42 off)
+        x0, x1, _, y1, z0, z1 = m.rig.box('robe', grow)
     tag(m.box(b, 'robe_top', x0, x1, y0, y1, z0, z1, mat, decal='robe'), ragged=False)
     tag(m.box(b, 'robe_skirt', x0 - 0.35, x1 + 0.35, low, y0 + 0.5, z0 - 0.35, z1 + 0.35, mat, decal='robe'), ragged=ragged)
     if sash:
@@ -386,10 +433,10 @@ def robe(m, mat='t1', mat2='t2', grow=0.52, low=2.0, ragged=True, sash=None):
 def cape(m, mat='t1', mat2='t2', length=18.0, width=None, hem='trim', grow=0.6):
     if not has(m, 'body'):
         return
-    x0, x1, y0, y1, z0, z1 = m.rig.box('body', grow)
+    x0, x1, y0, y1, z0, z1 = body_box(m, grow)
     w = width or (x1 - x0)
-    m.bone('cape', m.rig.bone('body'), (0, y1, z1))
-    tag(m.box('cape', 'cape', -w / 2, w / 2, y1 - length, y1, z1, z1, mat, only=('north', 'south'), decal='cape', dens=1.6), hemc=hem)
+    m.bone(nb(m, 'cape'), m.rig.bone('body'), (0, y1, z1))
+    tag(m.box(nb(m, 'cape'), 'cape', -w / 2, w / 2, y1 - length, y1, z1, z1, mat, only=('north', 'south'), decal='cape', dens=1.6), hemc=hem)
 
 
 def pauldrons(m, mat='metal', trim='trim', spiked=None, size=1.0):
@@ -426,7 +473,7 @@ def greaves(m, mat='metal', grow=0.47):
 def belt(m, mat='leather', buckle='gold', grow=0.58, pouches=None):
     if not has(m, 'body'):
         return
-    x0, x1, y0, y1, z0, z1 = m.rig.box('body', grow)
+    x0, x1, y0, y1, z0, z1 = body_box(m, grow)
     tag(m.box(m.rig.bone('body'), 'belt', x0, x1, y0 - 0.2, y0 + 1.5, z0, z1, mat, decal='belt'), buckle=buckle)
     if pouches:
         for i, x in enumerate((x0 + 1.2, x1 - 2.6)):
@@ -437,7 +484,7 @@ def pack(m, mat='leather', kind='bag', mat2='metal2'):
     """something on the back: a bag, a tank (hazmat), a barrel (boomer), a coffin (grave digger), a crystal cluster"""
     if not has(m, 'body'):
         return
-    x0, x1, y0, y1, z0, z1 = m.rig.box('body', 0.45)
+    x0, x1, y0, y1, z0, z1 = body_box(m, 0.45)
     b = m.rig.bone('body')
     if kind == 'tank':
         for i, x in enumerate((-1.6, 1.6)):
@@ -457,23 +504,23 @@ def wings(m, mat='t3', kind='feather', span=10.0, tall=9.0, bone='body', mat2=No
     """two flapping plates on bones of their own (wing_l, wing_r: the animation beats them)"""
     if not has(m, 'body'):
         return
-    x0, x1, y0, y1, z0, z1 = m.rig.box('body', 0.5)
+    x0, x1, y0, y1, z0, z1 = body_box(m, 0.5)
     b = m.rig.bone(bone)
     for side in (1, -1):
-        n = f'wing_{"l" if side > 0 else "r"}'
+        n = nb(m, f'wing_{"l" if side > 0 else "r"}')
         px = side * 0.8
         m.bone(n, b, (px, y1 - 1.5, z1))
         lo, hi = sorted((px, px + side * span))
         tag(m.box(n, n, lo, hi, y1 - 1.5 - tall * 0.65, y1 - 1.5 + tall * 0.35, z1 + 0.3, z1 + 0.3, mat, only=('north', 'south'), decal='wing', dens=1.8),
             kind=kind, side=side, root=px, span=span, ytop=y1 - 1.5 + tall * 0.35, tall=tall, edge=mat2)
-    m.flappers = getattr(m, 'flappers', []) + ['wing_l', 'wing_r']
+    m.flappers = getattr(m, 'flappers', []) + [nb(m, 'wing_l'), nb(m, 'wing_r')]
 
 
 def crystals(m, part, mat='glow', n=3, where='back', size=1.0, mat2=None):
     """crystal prisms growing out of a part (its back or top)"""
     if not has(m, part):
         return
-    x0, x1, y0, y1, z0, z1 = m.rig.box(part, 0.3)
+    x0, x1, y0, y1, z0, z1 = pbox(m, part, 0.3)
     b = m.rig.bone(part)
     for i in range(n):
         f = (i + 0.5) / n
@@ -492,7 +539,7 @@ def flames(m, part='head', mat='flash', n=3, tall=4.0, grow=0.2):
     """lit flame plates licking up from a part's top"""
     if not has(m, part):
         return
-    x0, x1, y0, y1, z0, z1 = m.rig.box(part, grow)
+    x0, x1, y0, y1, z0, z1 = pbox(m, part, grow)
     b = m.rig.bone(part)
     for i in range(n):
         f = (i + 0.5) / n
@@ -505,27 +552,29 @@ def flames(m, part='head', mat='flash', n=3, tall=4.0, grow=0.2):
 def aura(m, mat='glow', r=6.0, y=0.3, n=8, bone=None):
     """a glowing ring on the ground round the feet (its own bone: the animation turns it)"""
     root = bone or m.rig.bones[0][0]
-    m.bone('aura', root, (0, y, 0))
+    A = nb(m, 'aura')
+    m.bone(A, root, (0, y, 0))
     for i in range(n):
         a = 360 / n * i
         x, z = r * math.sin(math.radians(a)), -r * math.cos(math.radians(a))
-        m.box('aura', f'aura{i}', x - 1.0, x + 1.0, y, y + 0.35, z - 0.3, z + 0.3, mat, rot=(0, -a, 0) if a else None, pivot=(x, y, z))
-    m.spinners = getattr(m, 'spinners', []) + ['aura']
+        m.box(A, f'aura{i}', x - 1.0, x + 1.0, y, y + 0.35, z - 0.3, z + 0.3, mat, rot=(0, -a, 0) if a else None, pivot=(x, y, z))
+    m.spinners = getattr(m, 'spinners', []) + [A]
 
 
 def orbit(m, mat='glow', n=3, r=7.0, y=None, size=1.0, kind='orb'):
     """floating things round the body (its own bone 'orbit': the animation turns it)"""
     root = m.rig.bone('body') if has(m, 'body') else m.rig.bones[0][0]
-    yy = y if y is not None else (m.rig.box('body')[3] if has(m, 'body') else 12)
-    m.bone('orbit', root, (0, yy, 0))
+    yy = y if y is not None else (body_box(m)[3] if has(m, 'body') else 12)
+    O = nb(m, 'orbit')
+    m.bone(O, root, (0, yy, 0))
     for i in range(n):
         a = 360 / n * i
         x, z = r * math.sin(math.radians(a)), -r * math.cos(math.radians(a))
         if kind == 'skull':
-            m.box('orbit', f'orb{i}', x - 1.2 * size, x + 1.2 * size, yy - 1.2 * size, yy + 1.2 * size, z - 1.2 * size, z + 1.2 * size, mat, decal='skull')
+            m.box(O, f'orb{i}', x - 1.2 * size, x + 1.2 * size, yy - 1.2 * size, yy + 1.2 * size, z - 1.2 * size, z + 1.2 * size, mat, decal='skull')
         else:
-            octa(m, 'orbit', f'orb{i}', 'y', (x, z), yy - size, yy + size, size, mat, decal='orbglow')
-    m.spinners = getattr(m, 'spinners', []) + ['orbit']
+            octa(m, O, f'orb{i}', 'y', (x, z), yy - size, yy + size, size, mat, decal='orbglow')
+    m.spinners = getattr(m, 'spinners', []) + [O]
 
 
 def bandages(m, mat='white', parts=('body', 'rarm', 'larm', 'head')):
@@ -535,19 +584,19 @@ def bandages(m, mat='white', parts=('body', 'rarm', 'larm', 'head')):
 def scarf(m, mat='red', mat2=None, tail=True):
     if not has(m, 'body'):
         return
-    x0, x1, y0, y1, z0, z1 = m.rig.box('body', 0.5)
+    x0, x1, y0, y1, z0, z1 = body_box(m, 0.5)
     b = m.rig.bone('body')
     m.box(b, 'scarf', x0, x1, y1 - 2.0, y1 + 0.3, z0, z1, mat, decal='strap')
     if tail:
-        m.bone('scarf_tail', b, (1.0, y1 - 1.0, z1))
-        m.box('scarf_tail', 'scarf_t', 1.0, 1.0, y1 - 9.0, y1 - 0.5, z1, z1 + 4.5, mat2 or mat, only=('east', 'west'), decal='tail', dens=2.0)
+        m.bone(nb(m, 'scarf_tail'), b, (1.0, y1 - 1.0, z1))
+        m.box(nb(m, 'scarf_tail'), 'scarf_t', 1.0, 1.0, y1 - 9.0, y1 - 0.5, z1, z1 + 4.5, mat2 or mat, only=('east', 'west'), decal='tail', dens=2.0)
 
 
 def chains(m, mat='metal2', parts=('body',)):
     for part in parts:
         if not has(m, part):
             continue
-        x0, x1, y0, y1, z0, z1 = m.rig.box(part, 0.5)
+        x0, x1, y0, y1, z0, z1 = pbox(m, part, 0.5)
         m.rise_x(m.rig.bone(part), f'chain_{part}', (x0 - 0.2, y1 - 1.0), (x1 + 0.2, y0 + 2.0), z0 - 0.45, z0 - 0.05, 0.9, mat, decal='chain')
 
 
@@ -556,8 +605,8 @@ def tail(m, mat='t1', length=9.0, kind='tail'):
         return
     x0, x1, y0, y1, z0, z1 = m.rig.box('body', 0.2)
     b = m.rig.bone('body')
-    m.bone('tail_g', b, (0, y0 + 1.0, z1))
-    m.chain('tail_g', 'tail', -0.8, 0.8, [(z1, y0 + 1.5), (z1 + length * 0.5, y0 - 1.0), (z1 + length, y0 + 0.5)], 1.4, mat, decal='horn')
+    m.bone(nb(m, 'tail_g'), b, (0, y0 + 1.0, z1))
+    m.chain(nb(m, 'tail_g'), 'tail', -0.8, 0.8, [(z1, y0 + 1.5), (z1 + length * 0.5, y0 - 1.0), (z1 + length, y0 + 0.5)], 1.4, mat, decal='horn')
 
 
 # ------------------------------------------------------------------------------------------------ hand items
@@ -566,14 +615,16 @@ def hand(m, side='r'):
     return bone, x, y, z
 
 
-def weapon(m, kind, side='r', mat='metal', mat2='wood', size=1.0, glow=None):
-    """a thing in a hand, its length running down the arm's -y from the fist (forward when the arm is raised)"""
+def weapon(m, kind, side='r', mat='metal', mat2='wood', size=1.0, glow=None, tilt=0, fwd=0.0):
+    """a thing in a hand, its length running down the arm's -y from the fist (forward when the arm is raised); tilt turns
+    it about x at the fist (-90: from down the arm to straight ahead of it)"""
     if side not in m.rig.hands:
         return
     hb, x, y, z = hand(m, side)
+    z -= fwd                                                     # held in front of the arm (a staff upright beside it)
     s = size
-    n = f'{kind}_{side}'
-    m.bone(n, hb, (x, y, z))
+    n = nb(m, f'{kind}_{side}')
+    m.bone(n, hb, (x, y, z), rot=(tilt, 0, 0) if tilt else None)
     B = n
     grip = lambda h=2.6: m.box(B, f'{n}_grip', x - 0.35 * s, x + 0.35 * s, y - 0.62, y + h * s, z - 0.35 * s, z + 0.35 * s, 'leather')  # noqa: E731
     if kind in ('sword', 'greatsword', 'cleaver', 'knife'):
@@ -645,8 +696,9 @@ def weapon(m, kind, side='r', mat='metal', mat2='wood', size=1.0, glow=None):
     elif kind == 'orb':
         octa(m, B, f'{n}_orb', 'y', (x, z - 1.5), y - 2.5 * s, y - 0.3, 1.2 * s, glow or 'glow', decal='orbglow')
     elif kind == 'bomb':
-        octa(m, B, f'{n}_bomb', 'y', (x, z), y - 3.6 * s, y - 0.4, 1.6 * s, 'black', decal='metal')
-        m.box(B, f'{n}_fuse', x - 0.2, x + 0.2, y - 0.5, y + 0.8, z - 0.2, z + 0.2, glow or 'flash')
+        octa(m, B, f'{n}_bomb', 'y', (x, z), y - 4.2 * s, y - 1.0, 1.6 * s, 'black', decal='metal')
+        m.box(B, f'{n}_grip', x - 0.6, x + 0.6, y - 1.1, y - 0.3, z - 0.6, z + 0.6, 'metal2')     # held by its cap: the fuse out the far end
+        m.box(B, f'{n}_fuse', x - 0.2, x + 0.2, y - 5.4 * s, y - 4.1 * s, z - 0.2, z + 0.2, glow or 'flash')
     elif kind == 'syringe':
         m.box(B, f'{n}_tube', x - 0.6 * s, x + 0.6 * s, y - 5.0 * s, y + 1.0, z - 0.6 * s, z + 0.6 * s, glow or 'glow')
         m.box(B, f'{n}_needle', x - 0.12, x + 0.12, y - 7.0 * s, y - 5.0 * s, z - 0.12, z + 0.12, 'metal')

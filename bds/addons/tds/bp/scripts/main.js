@@ -403,6 +403,87 @@ var ENEMY_LOOK = {
   "Cold Mist": [142, 1],
   "Ice Beacon": [143, 1]
 };
+var TOWER_LOOK = {
+  "Scout": [0, 1, "fire"],
+  "Sniper": [1, 1, "fire"],
+  "Paintballer": [2, 1, "fire"],
+  "Demoman": [3, 1, "fire"],
+  "Slime Trooper": [4, 1, "fire"],
+  "Soldier": [5, 1, "fire"],
+  "Freezer": [6, 1, "fire"],
+  "Militant": [7, 1, "fire"],
+  "Shotgunner": [8, 1, "fire"],
+  "Hunter": [9, 1, "fire"],
+  "Pyromancer": [10, 1, "fire"],
+  "Medic": [11, 1, ""],
+  "Electroshocker": [12, 1, "fire"],
+  "Rocketeer": [13, 1, "fire"],
+  "Pulse Trooper": [14, 1, "fire"],
+  "Crook Boss": [15, 1, "fire"],
+  "Saboteur": [16, 1, "fire"],
+  "Minigunner": [17, 1.1, "fire"],
+  "Ranger": [18, 1, "fire"],
+  "Accelerator": [19, 1, "fire"],
+  "Operator": [20, 1, "fire"],
+  "Enforcer": [21, 1, "fire"],
+  "Kingpin": [22, 1.1, "fire"],
+  "Juggernaut": [23, 1.2, "fire"],
+  "Golden Minigunner": [24, 1.1, "fire"],
+  "Golden Pyromancer": [25, 1, "fire"],
+  "Golden Crook Boss": [26, 1, "fire"],
+  "Golden Scout": [27, 1, "fire"],
+  "Golden Soldier": [28, 1, "fire"],
+  "Golden Demoman": [29, 1, "fire"],
+  "Commando": [30, 1, "fire"],
+  "Frost Blaster": [31, 1, "fire"],
+  "Swarmer": [32, 1, "fire"],
+  "Toxic Gunner": [33, 1, "fire"],
+  "Hallow Punk": [34, 1, "fire"],
+  "Firework Technician": [35, 1, "fire"],
+  "Twitgunner": [36, 1, "fire"],
+  "Combatant": [37, 1, "fire"],
+  "Archer": [38, 1, "fire"],
+  "Hacker": [39, 1, "cast"],
+  "Cowboy": [40, 1, "fire"],
+  "Golden Cowboy": [41, 1, "fire"],
+  "Warden": [42, 1, "swing"],
+  "Gladiator": [43, 1, "swing"],
+  "Slasher": [44, 1, "swing"],
+  "Sledger": [45, 1.1, "swing"],
+  "Executioner": [46, 1, "swing"],
+  "Harvester": [47, 1, "swing"],
+  "Assassin": [48, 1, "swing"],
+  "Brawler": [49, 1, "swing"],
+  "Commander": [50, 1, "cast"],
+  "Necromancer": [51, 1, "cast"],
+  "Engineer": [52, 1, "cast"],
+  "Cryomancer": [53, 1, "cast"],
+  "Elementalist": [54, 1, "cast"],
+  "Biologist": [55, 1, "cast"],
+  "Warlock": [56, 1, "cast"],
+  "Boomerang": [57, 1, "throw"],
+  "Trapper": [58, 1, "throw"],
+  "Golden Snowballer": [59, 1, "throw"],
+  "Jester": [60, 1, "throw"],
+  "Snowballer": [61, 1, "throw"],
+  "Ace Pilot": [62, 1, ""],
+  "Farm": [63, 1.944, ""],
+  "Military Base": [64, 1.944, ""],
+  "DJ Booth": [65, 1.944, ""],
+  "Tesla": [66, 1.944, "pulse"],
+  "Pursuit": [67, 1.944, "fire"],
+  "Gatling Gun": [68, 1.944, "fire"],
+  "Turret": [69, 1.944, "fire"],
+  "Mortar": [70, 1.944, "fire"],
+  "Mercenary Base": [71, 1.944, ""],
+  "Elf Camp": [72, 1.944, ""],
+  "Spotlight Tech": [73, 1.944, ""],
+  "War Machine": [74, 1.944, "fire"],
+  "Mecha Base": [75, 1.944, ""],
+  "Sentry": [76, 1.944, "fire"],
+  "Void Miner": [77, 1.944, ""],
+  "Crystallizer": [78, 1.944, "fire"]
+};
 
 // addons/tds/src/game.ts
 var headless = false;
@@ -758,7 +839,8 @@ function spawnEnemy(name, mods, d = 0, wave = M.wave, summoned = false) {
 }
 var enemyLook = (e) => ENEMY_LOOK[e.name] ?? ENEMY_LOOK[e.boss ? "Normal Boss" : e.hidden ? "Hidden" : e.flying ? "Void Floater" : e.lead ? "Lead" : M?.mode === "Frost" || /Frost|Ice|Yeti|Snow|Shiver|Glacial|Polar/.test(e.name) ? "Frozen" : e.def >= 40 || /Slow|Heavy|Tank|Armored|Bulwark|Giant/.test(e.name) ? "Heavy" : e.speed >= 5 ? "Speedy" : "Normal"] ?? [0, 1];
 var enemySkin = (e) => enemyLook(e)[0];
-function towerSkin(name, hologram = false) {
+var towerLook = (name) => TOWER_LOOK[name] ?? TOWER_LOOK["Scout"] ?? [0, 1, "fire"];
+function towerRole(name, hologram = false) {
   if (hologram) return 6;
   const d = towers[name];
   if (!d) return 0;
@@ -1244,10 +1326,11 @@ function look(tw, e) {
     }
   }
   const now2 = Date.now();
-  if (now2 - (kicked.get(tw.id) ?? 0) >= 150) {
+  const shot = towerLook(tw.name)[2];
+  if (shot && now2 - (kicked.get(tw.id) ?? 0) >= 150) {
     kicked.set(tw.id, now2);
     try {
-      ent.playAnimation("animation.tds_tower.fire");
+      ent.playAnimation(`animation.tds_tower.${shot}`);
     } catch {
     }
   }
@@ -1427,8 +1510,11 @@ function place(p, name, x, y, z, free = false) {
 function body(tw) {
   try {
     const e = dim().spawnEntity("tds:tower", { x: tw.x + 0.5, y: tw.y, z: tw.z + 0.5 });
-    e.setProperty("tds:skin", towerSkin(tw.name, tw.temp !== void 0));
+    const lk = towerLook(tw.name);
+    e.setProperty("tds:skin", lk[0]);
     try {
+      e.setProperty("tds:size", lk[1]);
+      e.setProperty("tds:holo", tw.temp !== void 0);
       e.setProperty("tds:lvl", Math.min(7, tw.lvl));
     } catch {
     }
@@ -3331,9 +3417,11 @@ function showGhost(p, name, s, ok) {
       return;
     }
   }
+  const lk = towerLook(name);
   try {
     g.teleport(at);
-    g.setProperty("tds:skin", towerSkin(name));
+    g.setProperty("tds:skin", lk[0]);
+    g.setProperty("tds:size", lk[1]);
     g.setProperty("tds:ok", ok);
   } catch {
   }
@@ -3606,7 +3694,7 @@ system6.runInterval(() => {
     let roles = 0;
     for (let i = 0; i < 5; i++) {
       const n2 = lo[i];
-      roles += (n2 ? towerSkin(n2) : 9) * 10 ** i;
+      roles += (n2 ? towerRole(n2) : 9) * 10 ** i;
       prop(p, `c${i + 1}`, n2 ? Math.min(9999, infl(placeCost(n2)) || 0) : 0);
     }
     prop(p, "roles", roles);
@@ -3624,7 +3712,7 @@ system6.runInterval(() => {
       continue;
     }
     const mx = Math.min(7, maxLevel(tw.name)), lv = Math.min(7, tw.lvl), tg = Math.max(0, TARGETS.indexOf(tw.target));
-    prop(p, "tinfo", 1e4 + towerSkin(tw.name, tw.temp !== void 0) * 1e3 + lv * 100 + mx * 10 + tg);
+    prop(p, "tinfo", 1e4 + towerRole(tw.name, tw.temp !== void 0) * 1e3 + lv * 100 + mx * 10 + tg);
     prop(p, "tup", tw.lvl >= maxLevel(tw.name) ? 0 : Math.min(99999, infl(levelCost(tw.name, tw.lvl + 1)) || 0));
     prop(p, "tsell", Math.min(99999, sellValue(tw)));
   }

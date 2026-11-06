@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Contact sheets of the roster's looks (roster.py), each drawn as the game draws it: the vanilla body (from the lab's
-bds-samples checkout) merged with its gear, or our own body, posed by its own animation (animation.tds_look.*).
+"""Contact sheets of the roster's looks (roster.py, roster_towers.py), each drawn as the game draws it: the vanilla body
+(from the lab's bds-samples checkout) merged with its gear, or our own body, posed as in the game. And the audit of the
+same merged, posed models (audit.mjs): gear buried in the body, gear poking into it, gear on a vanilla face's plane, how
+much of the face is still seen.
 
-    python3 tools/models/sheet.py enemy [--only <substring>] [--per 24] [--cols 6] [--views front34] [--size 300x300] [--at 0.3]
+    python3 tools/models/sheet.py enemy|tower [--only <substring>] [--lvl N | --lvl top] [--fire] [--per 24] [--cols 6]
+                                  [--views front34] [--size 300x300] [--at 0.3] [--audit] [--no-render]
 
-writes bds/.lab/render/sheet_roster_<kind>_<n>.png and prints the paths. Preview only: nothing here is shipped.
+writes bds/.lab/render/sheet_roster_<kind>_<n>.png (and with --audit bds/.lab/render/audit_<kind>.json) and prints them.
+Enemies are posed by their animation.tds_look.* at --at seconds; towers stand on their pedestal in their pose
+(entities.POSES), at level --lvl (each tower's top level with `top`). Preview only: nothing here is shipped.
 """
 from __future__ import annotations
 
@@ -20,15 +25,19 @@ from PIL import Image, ImageDraw
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import roster  # noqa: E402
-from compose import vanilla_geo  # noqa: E402
+from compose import keep_level, vanilla_geo  # noqa: E402
+from vanilla import PED_TOP  # noqa: E402
 
 ADDON = os.path.abspath(os.path.join(HERE, '..', '..'))
 LAB = os.path.abspath(os.path.join(ADDON, '..', '..', '..'))
 OUT = os.path.join(LAB, 'bds', '.lab', 'render')
 TMP = os.path.join(LAB, 'bds', '.lab', 'render', 'roster')
+MDIR = os.path.join(ADDON, 'rp', 'models', 'entity', 'tds')
+TDIR = os.path.join(ADDON, 'rp', 'textures', 'entity', 'tds')
 
 
 def vanilla_png(path):
+    os.makedirs(TMP, exist_ok=True)
     keep = os.path.join(TMP, 'v_' + path.replace('/', '_') + '.png')
     if not os.path.exists(keep):
         repo = os.path.join(LAB, 'bds', '.lab', 'samples')
@@ -52,21 +61,34 @@ def solid(img):
     return img
 
 
-def merged(lk):
+def tagged(g, model):
+    """our cubes carry their names (the audit names them) and the layer they belong to"""
+    for b in g['bones']:
+        ours = [c for c in model.cubes if c['bone'] == b['name']]
+        for c, src in zip(b.get('cubes', []), ours):
+            c['name'], c['layer'] = src['name'], 'gear'
+            if src.get('part'):
+                c['part'] = src['part']
+    return g
+
+
+def merged(lk, lvl=None, fire=False):
     """one geometry + one texture for the look: the vanilla body's bones with the gear's cubes added, or our body"""
-    tdir = os.path.join(ADDON, 'rp', 'textures', 'entity', 'tds')
-    mdir = os.path.join(ADDON, 'rp', 'models', 'entity', 'tds')
     if lk.body is not None:
-        geo = json.load(open(os.path.join(mdir, f'{lk.body.name}.geo.json')))
-        tex = solid(Image.open(os.path.join(tdir, f'{lk.body.name}.png')).convert('RGBA'))
-        return geo, tex
+        geo = json.load(open(os.path.join(MDIR, f'{lk.body.name}.geo.json')))
+        g = tagged(geo['minecraft:geometry'][0], lk.body)
+        if lvl is not None:
+            g['bones'] = keep_level(g['bones'], lvl, fire)
+        return geo, solid(Image.open(os.path.join(TDIR, f'{lk.body.name}.png')).convert('RGBA'))
     vb, vw, vh = vanilla_geo(lk.rig.geo)
     vw, vh = int(vw or 64), int(vh or 64)
     vt = vanilla_png(lk.rig.tex)
     if vt.size != (vw, vh):
         vt = vt.crop((0, 0, vw, vh)) if vt.width >= vw and vt.height >= vh else vt.resize((vw, vh), Image.NEAREST)
-    g = json.load(open(os.path.join(mdir, f'{lk.gear.name}.geo.json')))['minecraft:geometry'][0]
-    gt = Image.open(os.path.join(tdir, f'{lk.gear.name}.png')).convert('RGBA')
+    g = tagged(json.load(open(os.path.join(MDIR, f'{lk.gear.name}.geo.json')))['minecraft:geometry'][0], lk.gear)
+    if lvl is not None:
+        g['bones'] = keep_level(g['bones'], lvl, fire)
+    gt = Image.open(os.path.join(TDIR, f'{lk.gear.name}.png')).convert('RGBA')
     W, H = max(vw, gt.width), vh + gt.height
     tex = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     tex.paste(vt, (0, 0))
@@ -88,12 +110,12 @@ def merged(lk):
             order.append(k)
     for k in lk.rig.hide:
         if k.lower() in bones:
-            bones[k.lower()]['cubes'] = []                       # what the render controller hides (the illagers' crossed arms)
+            bones[k.lower()]['cubes'] = [c for c in bones[k.lower()].get('cubes', []) if c.get('layer') == 'gear']   # the illagers' crossed arms
     out = []
     for k in order:
         b = dict(bones[k])
         if b.get('neverRender') and k not in ('waist',):
-            b['cubes'] = []
+            b['cubes'] = [c for c in b.get('cubes', []) if c.get('layer') == 'gear']
         b.pop('neverRender', None)
         out.append(b)
     for b in out:                                              # the lab's renderer looks bones up by their exact name
@@ -104,33 +126,113 @@ def merged(lk):
     return geo, solid(tex)
 
 
-def render(lk, views, size, at):
+def bake_tower(geo, lk):
+    """a tower as it stands in the game: the figure's root raised onto the pedestal (stand_*), the arms in its pose"""
+    from entities import POSES
+    g = geo['minecraft:geometry'][0]
+    bones = {b['name']: b for b in g['bones']}
+    root = lk.extra.get('root')
+    if root in ('waist', 'body', 'root'):
+        top = next((b for b in g['bones'] if b['name'].lower() == root), None)
+        if top:
+            under = set()
+            for b in g['bones']:
+                n = b['name']
+                while n:
+                    if n == top['name']:
+                        under.add(b['name'])
+                        break
+                    n = bones[n].get('parent') if n in bones else None
+            for n in under:
+                b = bones[n]
+                if b.get('pivot'):
+                    b['pivot'] = [b['pivot'][0], b['pivot'][1] + PED_TOP, b['pivot'][2]]
+                for c in b.get('cubes', []):
+                    c['origin'] = [c['origin'][0], c['origin'][1] + PED_TOP, c['origin'][2]]
+                    if c.get('pivot'):
+                        c['pivot'] = [c['pivot'][0], c['pivot'][1] + PED_TOP, c['pivot'][2]]
+    for bn, rot in POSES.get(lk.extra.get('pose'), {}).items():
+        for b in g['bones']:
+            if b['name'].lower() == bn:
+                r0 = b.get('rotation') or [0, 0, 0]
+                b['rotation'] = [r0[i] + rot[i] for i in range(3)]
+    return geo
+
+
+def prepare(lk, lvl, fire, at):
+    """the merged, posed look on disk: (geometry path, texture path, the animation that poses it or None)"""
     os.makedirs(TMP, exist_ok=True)
-    geo, tex = merged(lk)
-    gp, tp = os.path.join(TMP, f'{lk.kind}_{lk.slug}.geo.json'), os.path.join(TMP, f'{lk.kind}_{lk.slug}.png')
+    level = None
+    if lk.kind == 'tower':
+        level = lk.extra['top'] if lvl == 'top' else int(lvl or 0)
+    geo, tex = merged(lk, level, fire)
+    anim = None
+    if lk.kind == 'tower':
+        geo = bake_tower(geo, lk)
+    else:
+        anim = f'animation.tds_look.{lk.anim}'
+    tag = f'{lk.kind}_{lk.slug}' + (f'_lv{level}' if level is not None else '')
+    gp, tp = os.path.join(TMP, f'{tag}.geo.json'), os.path.join(TMP, f'{tag}.png')
     json.dump(geo, open(gp, 'w'))
     tex.save(tp)
-    cmd = ['node', 'lab.mjs', 'render', gp, '--tex', tp, '-a', 'tds', '--views', views, '--size', size, '--anim', f'animation.tds_look.{lk.anim}@{at}']
+    return tag, gp, tp, anim
+
+
+def render(tag, gp, tp, anim, views, size, at):
+    cmd = ['node', 'lab.mjs', 'render', gp, '--tex', tp, '-a', 'tds', '--views', views, '--size', size] + (['--anim', f'{anim}@{at}'] if anim else [])
     r = subprocess.run(cmd, cwd=LAB, capture_output=True, text=True, timeout=300)
     for line in (r.stdout + r.stderr).splitlines():
         if line.startswith('OK '):
             src = os.path.join(LAB, 'bds', line.split()[1])
-            keep = os.path.join(TMP, f'shot_{lk.kind}_{lk.slug}.png')
+            keep = os.path.join(TMP, f'shot_{tag}.png')
             shutil.copy(src, keep)
             return keep
-    print('  no render:', lk.name, (r.stdout + r.stderr)[-300:])
+    print('  no render:', tag, (r.stdout + r.stderr)[-300:])
     return None
+
+
+def summary(res):
+    bad = 0
+    for r in res:
+        if r.get('error'):
+            print(f"  {r['tag']}: ERROR {r['error'][:200]}")
+            bad += 1
+            continue
+        n = len(r['buried']) + len(r['zfight'])                 # (clipped: in the json, read it when a part looks sunk)
+        bad += n > 0
+        if n:
+            print(f"  {r['tag']}: face {r['face']}  buried {r['buried']}  zfight {r['zfight']}")
+    print(f'audit: {len(res)} looks, {bad} with findings')
+    return bad
 
 
 def main(argv):
     kind = argv[0]
     opt = lambda k, d: argv[argv.index(k) + 1] if k in argv else d  # noqa: E731
     only, per, cols = opt('--only', None), int(opt('--per', 24)), int(opt('--cols', 6))
-    views, size, at = opt('--views', 'front34'), opt('--size', '300x300'), opt('--at', '0.3')
-    looks = [lk for lk in roster.looks(kind) if not only or only.lower() in lk.name.lower()]
-    shots = [(lk, render(lk, views, size, at)) for lk in looks]
+    views, size, at, lvl = opt('--views', 'front34'), opt('--size', '300x300'), opt('--at', '0.3'), opt('--lvl', None)
+    fire = '--fire' in argv
+    looks = [lk for lk in roster.looks(kind) if not only or any(o.lower() in lk.name.lower() for o in only.split(','))]
+    if kind == 'tower':
+        data = roster.load('towers')
+        for lk in looks:
+            lk.extra['top'] = max(0, len(data[lk.name].get('levels') or []) - 1)
+    jobs = [(lk, *prepare(lk, lvl, fire, at)) for lk in looks]
+    if '--audit' in argv:
+        jf = os.path.join(TMP, f'audit_jobs_{kind}.json')
+        json.dump([{'tag': lk.name, 'geo': gp, 'tex': tp, **({'anim': an, 'at': float(at)} if an else {})} for lk, tag, gp, tp, an in jobs], open(jf, 'w'))
+        r = subprocess.run(['node', os.path.join(HERE, 'audit.mjs'), jf], capture_output=True, text=True, timeout=900)
+        if r.returncode:
+            raise SystemExit(r.stderr[-2000:])
+        res = json.loads(r.stdout)
+        o = os.path.join(OUT, f'audit_{kind}{"_" + roster.slug(only) if only else ""}.json')
+        json.dump(res, open(o, 'w'), indent=1)
+        summary(res)
+        print(o)
+    if '--no-render' in argv:
+        return 0
+    shots = [(lk, render(tag, gp, tp, an, views, size, at)) for lk, tag, gp, tp, an in jobs]
     shots = [(lk, p) for lk, p in shots if p]
-    outs = []
     for n in range(0, len(shots), per):
         chunk = shots[n:n + per]
         ims = [(lk, Image.open(p).convert('RGB')) for lk, p in chunk]
@@ -142,10 +244,10 @@ def main(argv):
             x, y = (i % cols) * w, (i // cols) * h
             sh.paste(im, (x, y))
             d.text((x + 5, y + 4), f'{lk.index} {lk.name}', fill=(255, 230, 90))
-            d.text((x + 5, y + h - 14), f'{lk.rig.key} {lk.anim} x{lk.size:.2f}', fill=(150, 170, 170))
-        o = os.path.join(OUT, f'sheet_roster_{kind}{"_" + roster.slug(only) if only else ""}_{n // per}.png')
+            rig = lk.rig.key if lk.rig else 'ours'
+            d.text((x + 5, y + h - 14), f'{rig} {lk.anim} x{lk.size:.2f}' + (f' lv{lvl}' if lvl else ''), fill=(150, 170, 170))
+        o = os.path.join(OUT, f'sheet_roster_{kind}{"_" + roster.slug(only) if only else ""}{"_lv" + str(lvl) if lvl else ""}_{n // per}.png')
         sh.save(o)
-        outs.append(o)
         print(o)
     return 0
 
