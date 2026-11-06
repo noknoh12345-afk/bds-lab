@@ -3,7 +3,7 @@ import fs from 'node:fs'; import { waves } from './waves.mjs';
 const C = n => { try { return fs.readFileSync(new URL(`../.cache/${n.replace(/[^\w.-]+/g, '_')}.wt`, import.meta.url), 'utf8'); } catch { return ''; } };
 const D = new URL('../data/', import.meta.url).pathname; fs.mkdirSync(D, { recursive: true });
 const unknown = [];
-const strip = s => (s ?? '').replace(/<ref[^>]*\/>/g, '').replace(/<ref.*?<\/ref>/gs, '').replace(/\[\[File:[^\]]*\]\]/g, '').replace(/\{\{(?:Money|Coins|Gem|Exp|TowerExp|Defense|Level)\|?([^}]*)\}\}/g, '$1')
+const strip = s => (s ?? '').replace(/\{\{WikiAb\|([^}]*)\}\}/g, '$1').replace(/<ref[^>]*\/>/g, '').replace(/<ref.*?<\/ref>/gs, '').replace(/\[\[File:[^\]]*\]\]/g, '').replace(/\{\{(?:Money|Coins|Gem|Exp|TowerExp|Defense|Level)\|?([^}]*)\}\}/g, '$1')
   .replace(/\{\{Color\|[^|}]*\|([^}]*)\}\}/g, '$1').replace(/\{\{Attr\|([^|}]*)(?:\|([^}]*))?\}\}/g, (_, a, b) => b ? `${a} ${b}` : a).replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/'''?/g, '').replace(/<[^>]+>/g, ' ').trim();
 const num = s => { const m = String(s).replace(/,/g, '').match(/-?\d+(?:\.\d+)?/); return m ? +m[0] : null; };
 const field = (t, k) => t.match(new RegExp(`^\\|${k} ?=((?:.|\\n(?!\\|[a-z_\\-0-9]+ ?=|\\}\\}))*)`, 'm'))?.[1] ?? null;
@@ -65,6 +65,7 @@ const pick = (s, mode) => {
   return (parts.find(p => p.lab.split(/,|&/).map(x => x.trim()).some(x => x === mode || x === `${mode} Mode`)) ?? parts.find(p => /Most modes/i.test(p.lab)) ?? parts.find(p => !p.lab || /Default/i.test(p.lab)) ?? parts[0])?.v ?? null;
 };
 const enemies = {};
+const enemiesAll = used;
 for (const e of used) {
   const t = C(e); if (!t) { unknown.push({ enemy: e, why: 'page missing' }); continue; }
   const per = {};
@@ -80,9 +81,41 @@ for (const e of used) {
     defense: num(strip(field(t, 'defense') ?? '')) ?? 0, immune: (imm.match(/\b(Stun|Freeze|Burn|Splash Damage|Slowed)\b(?!\s*\(Variable)/g) ?? []),
     spawnedBy: [...(field(t, 'spawned_by') ?? '').split('{{InfoboxContainer')[0].matchAll(/\[\[(?:([^\]|]*)\|)?([^\]]*)\]\]/g)].map(x => x[1] ?? x[2]), per, src: `https://tds.fandom.com/wiki/${encodeURIComponent(e.replace(/ /g, '_'))}` };
 }
+// abilities from the infobox (|abilityN = ..., |abilityN_cooldown = ...)
+const NUM = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12, twenty: 20, forty: 40 };
+const nOf = w => NUM[w?.toLowerCase()] ?? (Number.isFinite(+w) ? +w : null);
+function abilities(name, t) {
+  const out = [];
+  for (const m of t.matchAll(/^\|ability(\d) ?=(.*)$/gm)) {
+    const raw = m[2].replace(/<ref.*?(<\/ref>|\/>)/g, ''), txt = strip(raw);
+    const cdRaw = t.match(new RegExp(`^\\|ability${m[1]}_cooldown ?=(.*)$`, 'm'))?.[1];
+    const cdN = cdRaw ? strip(cdRaw).split('-').map(Number).filter(Number.isFinite) : [];
+    const cd = cdN.length ? cdN.reduce((a, b) => a + b) / cdN.length : null;
+    const title = txt.split(/ [-–] /)[0].trim();
+    const links = [...raw.matchAll(/(?:\b(\w+) )?\[\[(?:([^\]|]+)\|)?([^\]]+)\]\](?:e?s)?/g)].map(x => ({ n: nOf(x[1]), name: (x[2] ?? x[3]).trim() })).filter(x => enemiesAll.has(x.name) && x.name !== name);
+    const num = re => { const x = txt.match(re); return x ? +x[1].replace(/,/g, '') : null; };
+    const radius = num(/radius of ([\d.]+)/i) ?? num(/range of ([\d.]+)/i);
+    const a = { title, cd };
+    if (/upon (its )?death/i.test(txt) && /spawn/i.test(txt) && links.length) out.push({ ...a, kind: 'deathSpawn', spawn: links.map(l => ({ name: l.name, n: l.n ?? 1 })) });
+    else if (/summon/i.test(txt) && links.length) { const pool = /can be|chance/i.test(txt); const total = nOf(txt.match(/summon(?:s|ing)?(?: in)? (\w+)/i)?.[1]) ?? 1; out.push({ ...a, kind: 'summon', spawn: pool ? [{ pool: links.map(l => l.name), n: total }] : links.map(l => ({ name: l.name, n: l.n ?? 1 })) }); }
+    if (/stun(?:s|ning)? (?:all )?(?:the )?towers?/i.test(txt) || /towers? .*?stun/i.test(txt)) out.push({ ...a, kind: 'stun', dur: num(/(?:for|by) ([\d.]+) seconds?/i) ?? 3, radius, unitDmg: num(/([\d,]+) damage to units/i) });
+    const fat = num(/([\d.]+)% Fatigue Debuff/i), rng = num(/([\d.]+)% Range Debuff/i);
+    if (fat || rng) out.push({ ...a, kind: 'debuff', onDeath: /upon (its )?death/i.test(txt), fatigue: fat ?? 0, range: rng ?? 0, dur: num(/for ([\d.]+) seconds/i) ?? 10, radius, unitDmg: num(/deals? ([\d,]+) damage to units/i) });
+    const heal = txt.match(/heals? any enemy in a radius of ([\d.]+) by ([\d,]+) every ([\d.]+)/i);
+    if (heal) out.push({ ...a, kind: 'heal', radius: +heal[1], amount: +heal[2].replace(/,/g, ''), every: +heal[3] });
+    const sp = txt.match(/upon death.*?([\d.]+)% speed buff.*?for ([\d.]+) seconds/i);
+    if (sp) out.push({ ...a, kind: 'speedAura', onDeath: true, pct: +sp[1], dur: +sp[2], radius: radius ?? 6 });
+    const dg = txt.match(/Gains ([\d.]+)% defense as its health is reduced until it reaches at least ([\d.]+)% defense/i);
+    if (dg) out.push({ ...a, kind: 'boneArmor', step: +dg[1], max: +dg[2] });
+  }
+  for (const a of out) { if ((a.kind === 'summon' || a.kind === 'stun' || a.kind === 'debuff' && !a.onDeath) && a.cd == null) { a.cd = 10; unknown.push({ enemy: name, why: `${a.title}: cooldown not on the page (10 s)` }); } if ((a.kind === 'stun' || a.kind === 'debuff' && !a.onDeath) && a.radius == null) { a.radius = 12; unknown.push({ enemy: name, why: `${a.title}: area not given (12 studs)` }); } }
+  return out;
+}
+for (const [n, e] of Object.entries(enemies)) { const ab = abilities(n, C(n)); if (ab.length) e.abilities = ab; }
+
 // children: who spawns whom
-for (const [n, e] of Object.entries(enemies)) for (const p of e.spawnedBy) if (enemies[p]) (enemies[p].spawns ??= []).push(n);
-for (const [n, e] of Object.entries(enemies)) if (e.spawns) { e.spawnMode = e.boss || /Necromancer|Summoner|Grave Digger|Necrotic|Mystery|Mandrake|Mandragora/.test(n) ? 'periodic' : 'death'; unknown.push({ enemy: n, why: `spawn mode/count guessed (${e.spawnMode})` }); }
+for (const [n, e] of Object.entries(enemies)) for (const p of e.spawnedBy) if (enemies[p] && !enemies[p].spawns?.includes(n)) (enemies[p].spawns ??= []).push(n);
+for (const [n, e] of Object.entries(enemies)) if (e.spawns && !e.abilities?.some(a => a.spawn)) { e.spawnMode = e.boss || /Necromancer|Summoner|Grave Digger|Necrotic|Mystery|Mandrake|Mandragora/.test(n) ? 'periodic' : 'death'; unknown.push({ enemy: n, why: `spawn mode/count guessed (${e.spawnMode})` }); }
 
 for (const [k, v] of Object.entries({ spawnGap: '0.6 s between enemies of a group', groupGap: '1 s between groups', clearWait: 'next wave 5 s after a clear', childCount: '2 children per spawn/summon', summonEvery: 'summoners every 8 s', units: 'units: 4 studs/s, 6-stud gun range, 3 per tower, ram = min(hp)', killCash: 'kill cash to the tower owner', maps: 'Grassland is a lab layout; wiki map images not yet analysed', abilities: 'active abilities (Call to Arms, airstrikes, ...) not simulated', medic: 'Medic/healing: towers have no HP', rewards: 'Easy reward formula applied to every mode' })) unknown.push({ rule: k, why: v });
 const w = (f, o) => fs.writeFileSync(D + f, JSON.stringify(o, null, 0));

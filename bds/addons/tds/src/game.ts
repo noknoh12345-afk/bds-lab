@@ -1,6 +1,6 @@
 // The match: path, enemies, towers, units, economy, waves. Pure simulation in studs/seconds; entities only mirror it.
 import { world, system, Player, Entity, Dimension } from '@minecraft/server';
-import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, timerFor, enemyIn, RULES, Stats, Group } from './defs';
+import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, timerFor, enemyIn, afterDefense, RULES, Stats, Group, Ability, Spawn } from './defs';
 
 export let headless = false;
 export const log = (ev: string, o: Record<string, unknown> = {}) => { if (!headless) console.log(`[TDS] ${JSON.stringify({ ev, ...o })}`); };
@@ -38,8 +38,9 @@ export type Enemy = {
   hidden: boolean; flying: boolean; lead: boolean; boss: boolean; immune: string[]; mods: string[];
   slow: number; slowUntil: number; freezeUntil: number; stunUntil: number; dots: { dmg: number; tick: number; next: number; until: number; tw: number }[];
   nextSummon?: number; wave: number; born?: number; x?: number; z?: number; dirty?: boolean;
+  aggro?: boolean; regen?: number; abil?: number[]; baseDef?: number; haste?: number; hasteUntil?: number;
 };
-export type Tower = { id: number; name: string; lvl: number; x: number; y: number; z: number; owner: string; target: string; next: number; burstLeft: number; ammoLeft: number; shots: number; spent: number; dealt: number; nextUnit: number; primary: number };
+export type Tower = { id: number; name: string; lvl: number; x: number; y: number; z: number; owner: string; target: string; next: number; burstLeft: number; ammoLeft: number; shots: number; spent: number; dealt: number; nextUnit: number; primary: number; stunUntil?: number; fat?: number; rdeb?: number; debUntil?: number };
 export type Unit = { id: number; tw: number; d: number; hp: number; dmg: number; next: number };
 export type Match = {
   mode: string; map: string; players: string[]; cash: Record<string, number>; baseHP: number; maxHP: number; wave: number; t: number; waveEnd: number; skipAt: number;
@@ -151,6 +152,15 @@ function spawnEnemy(name: string, mods: string[], d = 0, wave = M!.wave) {
     hidden: !!def?.hidden, flying: !!def?.flying, lead: !!def?.lead, boss: !!def?.boss || mods.includes('Boss'), immune: def?.immune ?? [], mods,
     slow: 0, slowUntil: 0, freezeUntil: 0, stunUntil: 0, dots: [], wave, born: M.t };
   if (def?.spawns && def.spawnMode === 'periodic') e.nextSummon = M.t + RULES.summonEvery;
+  // wave modifiers (wiki attribute pages)
+  if (mods.includes('Hidden')) e.hidden = true;
+  if (mods.includes('Freeze Immune')) e.immune = [...e.immune, 'Freeze'];
+  if (mods.includes('Stun Immune')) e.immune = [...e.immune, 'Stun'];
+  if (mods.includes('Health Regen')) e.regen = M.t + 2;
+  if (mods.includes('Blessed')) e.def += 100;
+  if (mods.includes('Aggro')) e.aggro = true;
+  e.baseDef = e.def;
+  if (def?.abilities) e.abil = def.abilities.map((a) => (a.cd ? M!.t + a.cd : Infinity));
   M.enemies.push(e); show(e);
   log('enemy_spawn', { id: e.id, name, hp, speed: e.speed, hidden: e.hidden, flying: e.flying, lead: e.lead, boss: e.boss });
 }
@@ -177,6 +187,7 @@ function kill(e: Enemy, tw?: Tower) {
   if (!e.every) give(tw, e.cash);
   M.stats.kills++;
   const def = enemies[e.name];
+  for (const a of def?.abilities ?? []) if (a.kind === 'deathSpawn' || a.onDeath) useAbility(e, a);
   if (def?.spawns && def.spawnMode === 'death') for (const c of def.spawns.slice(0, 1)) for (let i = 0; i < RULES.childCount; i++) spawnEnemy(c, [], Math.max(0, e.d - i * 1.5), e.wave);
   log('enemy_kill', { id: e.id, name: e.name, by: tw?.id ?? null, d: +e.d.toFixed(1) });
 }
@@ -190,7 +201,7 @@ function give(tw: Tower | undefined, amount: number) {
 export function hit(e: Enemy, dmg: number, tw?: Tower, kind: 'direct' | 'splash' | 'dot' = 'direct'): number {
   if (!M || e.hp <= 0) return 0;
   if (kind === 'splash' && e.immune.includes('Splash Damage')) return 0;
-  let d = dmg * (1 - Math.max(0, Math.min(100, e.def)) / 100), done = 0;
+  let d = afterDefense(dmg, Math.max(0, e.def)), done = 0;
   if (e.shield > 0) { const s = Math.min(e.shield, d); e.shield -= s; d -= s; done += s; if (e.shield <= 0 && e.lead) { e.lead = false; log('lead_broken', { id: e.id }); } if (e.shield <= 0 && e.flying && e.name === 'Balloon') { e.flying = false; } }
   const before = e.hp; e.hp = Math.max(0, e.hp - d); done += before - e.hp;
   if (e.every) { const steps = Math.floor(((e.max - e.hp) / e.max) * 100 / e.every); while (e.paid < steps) { e.paid++; give(tw, e.cash); } }
@@ -198,6 +209,33 @@ export function hit(e: Enemy, dmg: number, tw?: Tower, kind: 'direct' | 'splash'
   label(e);
   if (e.hp <= 0) kill(e, tw);
   return done;
+}
+
+// ---------- enemy abilities (parsed from the wiki infobox) ----------
+const near = (e: Enemy, r: number) => { const p = path!.at(e.d); return (tw: { x: number; z: number }) => Math.hypot(p.x - (tw.x + 0.5), p.z - (tw.z + 0.5)) / path!.stud <= r; };
+function spawnList(e: Enemy, list: Spawn[]) {
+  let k = 0;
+  for (const s of list) for (let i = 0; i < s.n; i++) { const name = s.pool ? s.pool[Math.floor(rand() * s.pool.length)] : s.name!; if (enemies[name]) spawnEnemy(name, [], Math.max(0, e.d - 0.6 * k++), e.wave); }
+}
+export function useAbility(e: Enemy, a: Ability) {
+  if (!M || !path) return;
+  if (a.kind === 'deathSpawn' || a.kind === 'summon') spawnList(e, a.spawn ?? []);
+  if (a.kind === 'stun') { const f = near(e, a.radius ?? 12); for (const tw of M.towers) if (f(tw) && !/Stun/.test(towers[tw.name].immune ?? '')) tw.stunUntil = Math.max(tw.stunUntil ?? 0, M.t + (a.dur ?? 3)); }
+  if (a.kind === 'debuff') { const f = near(e, a.radius ?? 12); for (const tw of M.towers) if (f(tw)) { tw.fat = Math.max(tw.debUntil! > M.t ? tw.fat ?? 0 : 0, (a.fatigue ?? 0) / 100); tw.rdeb = Math.max(tw.debUntil! > M.t ? tw.rdeb ?? 0 : 0, (a.range ?? 0) / 100); tw.debUntil = M.t + (a.dur ?? 10); } }
+  if ((a.kind === 'stun' || a.kind === 'debuff') && a.unitDmg) for (const u of M.units) if (Math.abs(u.d - e.d) <= (a.radius ?? 12)) u.hp -= a.unitDmg;
+  if (a.kind === 'speedAura') for (const o of M.enemies) if (o !== e && Math.abs(o.d - e.d) <= (a.radius ?? 6)) { o.haste = (a.pct ?? 0) / 100; o.hasteUntil = M.t + (a.dur ?? 10); }
+  if (a.kind !== 'boneArmor' && a.kind !== 'heal') log('ability', { id: e.id, name: e.name, ability: a.title, kind: a.kind });
+}
+function enemyAbilities(e: Enemy) {
+  if (!M) return;
+  const list = enemies[e.name]?.abilities ?? [];
+  list.forEach((a, i) => {
+    if (a.kind === 'boneArmor') { const lost = 1 - e.hp / e.max; e.def = Math.max(e.def, Math.min(Math.max(a.max ?? 60, e.baseDef ?? 0), (e.baseDef ?? 0) + (a.step ?? 15) * Math.floor(lost / 0.2))); return; }
+    if (a.kind === 'heal') { if ((e.abil![i] === Infinity ? (e.abil![i] = M!.t) : e.abil![i]) <= M!.t) { e.abil![i] = M!.t + (a.every ?? 1); for (const o of M!.enemies) if (o !== e && Math.abs(o.d - e.d) <= (a.radius ?? 8)) { o.hp = Math.min(o.max, o.hp + (a.amount ?? 0)); label(o); } } return; }
+    if (a.onDeath || a.kind === 'deathSpawn' || !e.abil || M!.t < e.abil[i]) return;
+    e.abil[i] = M!.t + (a.cd ?? 10); useAbility(e, a);
+  });
+  if (e.regen !== undefined && M.t >= e.regen) { e.regen = M.t + 2; e.hp = Math.min(e.max, e.hp + e.max * 0.02); label(e); }
 }
 
 // ---------- towers ----------
@@ -225,8 +263,9 @@ const buffs0 = (tw: Tower) => {
   return { fr, dm, rg };
 };
 export function eff(tw: Tower): Stats & { range: number } {
-  const s = stats(tw.name, tw.lvl), b = buffs(tw);
-  return { ...s, dmg: s.dmg * (1 + b.dm), fr: s.fr ? s.fr / (1 + b.fr) : s.fr, range: s.range * (1 + b.rg) };
+  const s = stats(tw.name, tw.lvl), b = buffs(tw), deb = M && (tw.debUntil ?? 0) > M.t, f = deb ? tw.fat ?? 0 : 0, rd = deb ? tw.rdeb ?? 0 : 0;
+  let fr = s.fr ? s.fr / (1 + b.fr) : s.fr; if (fr && f) fr = fr + fr * (f / (1 + f));   // Fatigue Debuff page
+  return { ...s, dmg: s.dmg * (1 + b.dm), fr, range: rd ? s.range * (1 - (rd - b.rg)) : s.range * (1 + b.rg) };  // Range Debuff page
 }
 const distTo = (tw: Tower, e: Enemy) => { if (e.x === undefined) { const p = path!.at(e.d); e.x = p.x; e.z = p.z; } return Math.hypot(e.x - (tw.x + 0.5), e.z! - (tw.z + 0.5)) / path!.stud; };
 
@@ -247,7 +286,7 @@ function pick(tw: Tower, range: number): Enemy | undefined {
   for (const e of M!.enemies) {
     let inIv = false; for (const [a, b] of iv) if (e.d >= a && e.d <= b) { inIv = true; break; }
     if (!inIv || e.hp <= 0 || !canSee(tw, e)) continue; const dd = distTo(tw, e); if (dd > range) continue;
-    const v = tw.target === 'First' ? e.d : tw.target === 'Last' ? -e.d : tw.target === 'Strongest' ? e.hp + e.shield : tw.target === 'Weakest' ? -(e.hp + e.shield) : tw.target === 'Closest' ? -dd : tw.target === 'Farthest' ? dd : 0;
+    const v = (e.aggro ? 1e12 : 0) + (tw.target === 'First' ? e.d : tw.target === 'Last' ? -e.d : tw.target === 'Strongest' ? e.hp + e.shield : tw.target === 'Weakest' ? -(e.hp + e.shield) : tw.target === 'Closest' ? -dd : tw.target === 'Farthest' ? dd : 0);
     if (tw.target === 'Random') c.push(e); else if (v > bv) { bv = v; best = e; }
   }
   return tw.target === 'Random' ? c[Math.floor(rand() * c.length)] : best;
@@ -286,6 +325,7 @@ function beam(tw: Tower, e: Enemy, n: number) {
 function towerStep(tw: Tower, dt: number) {
   if (!M || !path) return;
   const s0 = stats(tw.name, tw.lvl);
+  if (M.t < (tw.stunUntil ?? 0)) { tw.next = Math.max(tw.next, tw.stunUntil!); return; }
   if (M.t < tw.next && !(s0.unitHp && s0.spawnrate && M.t >= tw.nextUnit)) return;
   if (!M.enemies.length && !s0.unitHp) { tw.next = M.t; return; }
   const s = eff(tw);
@@ -376,7 +416,8 @@ function step() {
     for (const o of [...e.dots]) { while (o.next <= M.t && o.next <= o.until && e.hp > 0) { hit(e, o.dmg, towerById(o.tw), 'dot'); o.next += o.tick; } if (o.next > o.until) e.dots.splice(e.dots.indexOf(o), 1); }
     if (e.hp <= 0) continue;
     if (e.slowUntil < M.t) e.slow = 0;
-    const v = M.t < e.freezeUntil || M.t < e.stunUntil ? 0 : e.speed * (1 - e.slow);
+    enemyAbilities(e); if (e.hp <= 0) continue;
+    const v = M.t < e.freezeUntil || M.t < e.stunUntil ? 0 : e.speed * (1 - e.slow) * (e.hasteUntil && M.t < e.hasteUntil ? 1 + (e.haste ?? 0) : 1);
     if (v) { e.d += v * DT; e.x = undefined; }
     if (e.nextSummon !== undefined && M.t >= e.nextSummon) { e.nextSummon = M.t + RULES.summonEvery; const c = enemies[e.name].spawns![0]; for (let i = 0; i < RULES.childCount; i++) spawnEnemy(c, [], Math.max(0, e.d - 2 - i), e.wave); }
     if (e.d >= path.len) leak(e);
@@ -463,3 +504,8 @@ export function restore() {
   return true;
 }
 export function debugSpawn(name: string, mods: string[] = [], d = 0) { spawnEnemy(name, mods, d); }
+export function debugKill(name: string) { if (!M) return 0; const l = M.enemies.filter((e) => e.name === name); for (const e of l) hit(e, 1e15); return l.length; }
+export function debugHurt(name: string, n: number) { const e = M?.enemies.find((x) => x.name === name); if (!e) return false; e.hp = Math.max(1, e.hp - n); label(e); return true; }
+export function debugAbility(name: string, i: number) { const e = M?.enemies.find((x) => x.name === name); const a = e && enemies[e.name].abilities?.[i]; if (!e || !a) return false; useAbility(e, a); return true; }
+/** path distance (studs) closest to a tower */
+export function nearestD(tw: Tower) { let best = 0, bd = Infinity; for (let d = 0; d <= path!.len; d += 0.25) { const p = path!.at(d), x = Math.hypot(p.x - tw.x - 0.5, p.z - tw.z - 0.5); if (x < bd) { bd = x; best = d; } } return best; }

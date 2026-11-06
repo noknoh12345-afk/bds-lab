@@ -186,6 +186,44 @@ js world.getDimension('overworld').getEntities({ type: 'tds:enemy' }).length > 0
 tds:speed 1
 tds:stop
 
+## enemy rules from the wiki: defense, Breaker2's one Breaker, Boomer's bile, stuns, Health Regen, Blessed, Aggro
+tds:dmg Hazmat 100
+= Hazmat def 60% takes 63
+tds:dmg Armored 100 Blessed
+~ ^Armored def \d+% takes \d+$
+tds:stop
+tds:hold true
+@A cmd /tds:play Easy
+@A cmd /tds:cash 20000
+@A cmd /tds:place Scout -9 -60 -15
+~ @A Placed #1 Scout
+tds:spawnat Breaker2 1
+tds:kill Breaker2
+~ ^killed 1$
+~ "ev":"ability","id":\d+,"name":"Breaker2","ability":"Break","kind":"deathSpawn"
+tds:enemies
+~ ^Breaker:\d+:0$
+tds:spawnat Boomer 1
+tds:kill Boomer
+tds:tower 1
+~ ^#1 Scout Lv0 dmg 1 fr 1\.333 range 10\.20
+tds:spawnat Grave_Digger 1
+tds:ability Grave_Digger 0
+~ "ev":"ability","id":\d+,"name":"Grave Digger","ability":"Shovel","kind":"stun"
+tds:tower 1
+~ stunned [23]\.\ds$
+tds:kill Grave_Digger
+tds:kill Breaker
+tds:spawn Heavy Health_Regen
+tds:hurt Heavy 30
+tds:enemies
+~ Heavy:15:25$
+wait 2200
+tds:enemies
+~ Heavy:15\.9:25$
+tds:kill Heavy
+tds:stop
+
 ## lobby: profile, shop with coins, loadout, quests, elevator to a match
 tds:stop
 @A cmd /tds:profile

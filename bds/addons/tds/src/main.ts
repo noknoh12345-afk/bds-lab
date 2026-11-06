@@ -1,7 +1,7 @@
 import { world, system, Player, ItemStack } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { cmd, cmdAny, ask, menu, give, ready, every } from './kit';
-import { towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, timerFor, MODE_NAMES } from './defs';
+import { towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, timerFor, afterDefense, MODE_NAMES } from './defs';
 import * as G from './game';
 import { prof, saveProf, buy, equip, queue, leaveLift, departNow, questAdd, QUESTS, addExp } from './lobby';
 import { benchAll, bench, expected } from './bench';
@@ -41,7 +41,8 @@ cmdAny('tds:state', 'One line of match state', {}, () => {
 });
 cmdAny('tds:tower', 'Effective stats of a placed tower (buffs included)', { id: 'int' }, (_, a) => {
   const tw = G.towerById(a.id); if (!tw) return 'No such tower'; const s = G.eff(tw);
-  return `#${tw.id} ${tw.name} Lv${tw.lvl} dmg ${s.dmg} fr ${s.fr?.toFixed(3) ?? '-'} range ${s.range.toFixed(2)} dealt ${Math.round(tw.dealt)}`;
+  const st = G.M && (tw.stunUntil ?? 0) > G.M.t ? ` stunned ${(tw.stunUntil! - G.M.t).toFixed(1)}s` : '';
+  return `#${tw.id} ${tw.name} Lv${tw.lvl} dmg ${s.dmg} fr ${s.fr?.toFixed(3) ?? '-'} range ${s.range.toFixed(2)} dealt ${Math.round(tw.dealt)}${st}`;
 });
 cmdAny('tds:info', 'Tower stats from the wiki data', { tower: 'string', 'lvl?': 'int' }, (_, a) => {
   const n = T(a.tower), d = towers[n]; if (!d) return `Unknown ${n}`; const l = a.lvl ?? 0;
@@ -51,7 +52,13 @@ cmdAny('tds:info', 'Tower stats from the wiki data', { tower: 'string', 'lvl?': 
 
 // ---------- dev / test commands (op) ----------
 cmdAny('tds:speed', 'Simulation steps per tick (test)', { n: 'int' }, (_, a) => { world.setDynamicProperty('tds:speed', Math.max(1, Math.min(50, a.n))); return `speed ${a.n}`; }, true);
-cmdAny('tds:spawn', 'Spawn an enemy (test)', { enemy: 'string', 'mods?': 'string' }, (_, a) => { if (!G.M) return 'no match'; G.debugSpawn(T(a.enemy), a.mods ? a.mods.split(',') : []); return 'ok'; }, true);
+cmdAny('tds:spawn', 'Spawn an enemy (test)', { enemy: 'string', 'mods?': 'string' }, (_, a) => { if (!G.M) return 'no match'; G.debugSpawn(T(a.enemy), a.mods ? T(a.mods).split(',') : []); return 'ok'; }, true);
+cmdAny('tds:spawnat', 'Spawn an enemy on the path next to a tower (test)', { enemy: 'string', tower: 'int', 'mods?': 'string' }, (_, a) => { const tw = G.towerById(a.tower); if (!tw) return 'No such tower'; G.debugSpawn(T(a.enemy), a.mods ? T(a.mods).split(',') : [], G.nearestD(tw)); return 'ok'; }, true);
+cmdAny('tds:kill', 'Kill every enemy of a kind (test; death abilities run)', { enemy: 'string' }, (_, a) => `killed ${G.debugKill(T(a.enemy))}`, true);
+cmdAny('tds:hurt', 'Take health from an enemy (test)', { enemy: 'string', n: 'int' }, (_, a) => (G.debugHurt(T(a.enemy), a.n) ? 'ok' : 'none'), true);
+cmdAny('tds:ability', 'Make an enemy use its ability now (test)', { enemy: 'string', index: 'int' }, (_, a) => (G.debugAbility(T(a.enemy), a.index) ? 'ok' : 'none'), true);
+cmdAny('tds:enemies', 'Enemies on the path: name hp def', {}, () => (G.M?.enemies ?? []).map((e) => `${e.name}:${Math.round(e.hp * 100) / 100}:${e.def}`).join(' ') || 'none', true);
+cmdAny('tds:dmg', 'Damage an enemy would take after its defense', { enemy: 'string', n: 'float', 'mods?': 'string' }, (_, a) => { const d = enemies[T(a.enemy)]; if (!d) return 'unknown'; const def = d.defense + (a.mods?.includes('Blessed') ? 100 : 0); return `${T(a.enemy)} def ${def}% takes ${afterDefense(a.n, def)}`; });
 cmd('tds:grant', 'Give coins/gems/level and dev tag (test)', { coins: 'int', 'gems?': 'int', 'level?': 'int' }, (p, a) => {
   const pr = prof(p); pr.coins += a.coins; pr.gems += a.gems ?? 0; if (a.level !== undefined) pr.level = a.level; saveProf(p, pr); return `coins ${pr.coins} gems ${pr.gems} level ${pr.level}`;
 }, true);

@@ -7,7 +7,9 @@ import MAPS from '../data/maps.json';
 export type Lv = Record<string, number | string | null>;
 export type TowerDef = { category: string; unlock: { kind: string; value: number | null }; role: string | null; placement: string; footprint: number; limit: number | null; damageType: string | null; sell: number | null; detect: { hidden: number | null; lead: number | null; flying: number | null }; immune: string | null; levels: Lv[] };
 export type EnemyMode = { hp: number | null; speed: number | null; cash: number | null; cashEveryPct?: number; shield?: number };
-export type EnemyDef = { hidden: boolean; flying: boolean; lead: boolean; ghost: boolean; boss: boolean; defense: number; immune: string[]; per: Record<string, EnemyMode>; spawns?: string[]; spawnMode?: string };
+export type Spawn = { name?: string; pool?: string[]; n: number };
+export type Ability = { title: string; cd: number | null; kind: 'deathSpawn' | 'summon' | 'stun' | 'debuff' | 'heal' | 'speedAura' | 'boneArmor'; spawn?: Spawn[]; dur?: number; radius?: number | null; unitDmg?: number | null; onDeath?: boolean; fatigue?: number; range?: number; amount?: number; every?: number; pct?: number; step?: number; max?: number };
+export type EnemyDef = { hidden: boolean; flying: boolean; lead: boolean; ghost: boolean; boss: boolean; defense: number; immune: string[]; per: Record<string, EnemyMode>; spawns?: string[]; spawnMode?: string; abilities?: Ability[] };
 export type Group = { n: number; e: string; mods?: string[] };
 export type ModeDef = { waves: number; level: number; startCash: number; baseHP: number; waveCash: string; rewards: { coins: number; exp: number; gems: number }; timers: { from: number; to: number; timer: number | null; skipAfter: number | null }[]; wave: Record<string, Group[]> };
 export type MapDef = { stud: number; y: number; path: [number, number][]; width: number; grid: string[]; pathStuds: number; src: string };
@@ -76,6 +78,9 @@ export function enemyIn(name: string, mode: string): EnemyMode & { speed: number
   const d = enemies[name]; const m = d?.per[mode] ?? Object.values(d?.per ?? {})[0] ?? { hp: 10, speed: 3, cash: 5 };
   return { ...m, hp: m.hp ?? 10, speed: m.speed ?? 3, cash: m.cash ?? 0 };
 }
+
+/** Effective damage (Defense page): damage ÷ (1 + defense), rounded up when defense applies. */
+export const afterDefense = (dmg: number, def: number) => (def > 0 ? Math.ceil(dmg / (1 + def / 100) - 1e-9) : dmg);
 
 /** EXP needed to go from level-1 to level (Levels page). */
 export const expFor = (next: number) => (next <= 10 ? 45 + next * 3.5 : next <= 40 ? next * 8 : 260 + next * 1.5);
