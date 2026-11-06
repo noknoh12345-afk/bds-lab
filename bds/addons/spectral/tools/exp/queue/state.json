@@ -1399,6 +1399,9 @@
   "tries": 1
  },
  "q62_bundle_warm_again": {
-  "status": "pending"
+  "commit": "c5c282e",
+  "run": "42182206909",
+  "started": "2026-11-06 07:38",
+  "status": "running"
  }
 }
