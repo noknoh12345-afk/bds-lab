@@ -1339,7 +1339,10 @@
   "tries": 1
  },
  "q58_sampler_rain_mobs": {
-  "status": "pending"
+  "commit": "b4acc4a",
+  "run": "42164200663",
+  "started": "2026-11-06 04:43",
+  "status": "running"
  },
  "q59_bgm_sampler": {
   "status": "pending"
