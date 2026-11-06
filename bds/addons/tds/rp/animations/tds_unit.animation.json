@@ -1,0 +1,114 @@
+{
+ "format_version": "1.8.0",
+ "animations": {
+  "animation.tds_unit.walk": {
+   "loop": true,
+   "bones": {
+    "leg_l": {
+     "rotation": [
+      "math.sin(q.life_time * 500) * 30",
+      0,
+      0
+     ]
+    },
+    "leg_r": {
+     "rotation": [
+      "math.sin(q.life_time * 500) * -30",
+      0,
+      0
+     ]
+    },
+    "arm_l": {
+     "rotation": [
+      "math.sin(q.life_time * 500) * -6",
+      0,
+      0
+     ]
+    },
+    "arm_r": {
+     "rotation": [
+      "math.sin(q.life_time * 500) * 6",
+      0,
+      0
+     ]
+    },
+    "body": {
+     "position": [
+      0,
+      "math.abs(math.cos(q.life_time * 500)) * 0.3",
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
+    "head": {
+     "rotation": [
+      "math.sin(q.life_time * 1000 - 40) * 3",
+      "math.sin(q.life_time * 250.0) * 6",
+      0
+     ]
+    }
+   }
+  },
+  "animation.tds_unit.wheels": {
+   "loop": true,
+   "bones": {
+    "wheel_fl": {
+     "rotation": [
+      "q.life_time * 540",
+      0,
+      0
+     ]
+    },
+    "wheel_fr": {
+     "rotation": [
+      "q.life_time * 540",
+      0,
+      0
+     ]
+    },
+    "wheel_bl": {
+     "rotation": [
+      "q.life_time * 540",
+      0,
+      0
+     ]
+    },
+    "wheel_br": {
+     "rotation": [
+      "q.life_time * 540",
+      0,
+      0
+     ]
+    }
+   }
+  },
+  "animation.tds_unit.sweep": {
+   "loop": true,
+   "bones": {
+    "head": {
+     "rotation": [
+      0,
+      "math.sin(q.life_time * 80) * 45",
+      0
+     ]
+    }
+   }
+  },
+  "animation.tds_unit.spin": {
+   "loop": true,
+   "bones": {
+    "head": {
+     "rotation": [
+      0,
+      "q.life_time * 90",
+      0
+     ]
+    }
+   }
+  }
+ }
+}

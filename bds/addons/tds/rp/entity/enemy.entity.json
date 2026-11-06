@@ -4,28 +4,49 @@
   "description": {
    "identifier": "tds:enemy",
    "materials": {
-    "default": "entity_alphatest",
+    "default": "entity_emissive_alpha_one_sided",
     "blend": "entity_alphablend"
    },
    "textures": {
-    "t0": "textures/entity/tds/enemy_0",
-    "t1": "textures/entity/tds/enemy_1",
-    "t2": "textures/entity/tds/enemy_2",
-    "t3": "textures/entity/tds/enemy_3",
-    "t4": "textures/entity/tds/enemy_4",
-    "t5": "textures/entity/tds/enemy_5",
-    "t6": "textures/entity/tds/enemy_6",
-    "t7": "textures/entity/tds/enemy_7"
+    "t0": "textures/entity/tds/enemy_walker",
+    "t1": "textures/entity/tds/enemy_armored",
+    "t2": "textures/entity/tds/enemy_brute",
+    "t3": "textures/entity/tds/enemy_runner",
+    "t4": "textures/entity/tds/enemy_wraith",
+    "t5": "textures/entity/tds/enemy_imp",
+    "t6": "textures/entity/tds/enemy_heavy",
+    "t7": "textures/entity/tds/enemy_yeti"
    },
    "geometry": {
-    "default": "geometry.tds.enemy"
+    "g0": "geometry.tds.enemy_walker",
+    "g1": "geometry.tds.enemy_armored",
+    "g2": "geometry.tds.enemy_brute",
+    "g3": "geometry.tds.enemy_runner",
+    "g4": "geometry.tds.enemy_wraith",
+    "g5": "geometry.tds.enemy_imp",
+    "g6": "geometry.tds.enemy_heavy",
+    "g7": "geometry.tds.enemy_yeti"
    },
    "scripts": {
-    "scale": "0.45 * query.property('tds:size')",
+    "scale": "0.45 * q.property('tds:size')",
     "animate": [
-     "walk",
      {
-      "fly": "query.property('tds:skin') == 5"
+      "walk": "q.property('tds:skin') == 0"
+     },
+     {
+      "heavy": "q.property('tds:skin') == 1 || q.property('tds:skin') == 6 || q.property('tds:skin') == 7"
+     },
+     {
+      "boss": "q.property('tds:skin') == 2"
+     },
+     {
+      "run": "q.property('tds:skin') == 3"
+     },
+     {
+      "float": "q.property('tds:skin') == 4"
+     },
+     {
+      "fly": "q.property('tds:skin') == 5"
      }
     ]
    },
@@ -33,8 +54,12 @@
     "controller.render.tds_enemy"
    ],
    "animations": {
-    "walk": "animation.tds.walk",
-    "fly": "animation.tds.fly"
+    "walk": "animation.tds_enemy.walk",
+    "heavy": "animation.tds_enemy.heavy",
+    "boss": "animation.tds_enemy.boss",
+    "run": "animation.tds_enemy.run",
+    "float": "animation.tds_enemy.float",
+    "fly": "animation.tds_enemy.fly"
    }
   }
  }

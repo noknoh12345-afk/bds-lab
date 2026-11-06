@@ -1,0 +1,66 @@
+{
+  "source": "docs/02-x-mirror-and-face-uv.md",
+  "summary": "Bedrock draws an entity model mirrored in x. A cube spans x0..x1, y0..y1, z0..z1 in the JSON (sx, sy, sz are its sizes); u and v run 0..1 across the face's UV rectangle, left to right and top to bottom of the texture. The table gives the point of the cube, in JSON coordinates, that shows texel (u, v).",
+  "rotation": "JSON [rx, ry, rz] is applied as right-handed (-rx, ry, -rz), X then Y then Z, about the pivot. Animation rotations are added to the bind rotation.",
+  "mirror_of_a_part": {
+    "position": "[-x, y, z]",
+    "rotation": "[rx, -ry, -rz]",
+    "note": "never write -0.0"
+  },
+  "faces": {
+    "east": {
+      "shown_on": "the LOW-x side",
+      "point": [
+        "x0",
+        "y1 - v*sy",
+        "z1 - u*sz"
+      ]
+    },
+    "west": {
+      "shown_on": "the HIGH-x side",
+      "point": [
+        "x1",
+        "y1 - v*sy",
+        "z0 + u*sz"
+      ]
+    },
+    "north": {
+      "shown_on": "the low-z side (front)",
+      "point": [
+        "x0 + u*sx",
+        "y1 - v*sy",
+        "z0"
+      ]
+    },
+    "south": {
+      "shown_on": "the high-z side (rear)",
+      "point": [
+        "x1 - u*sx",
+        "y1 - v*sy",
+        "z1"
+      ]
+    },
+    "up": {
+      "shown_on": "the top",
+      "point": [
+        "x0 + u*sx",
+        "y1",
+        "z1 - v*sz"
+      ]
+    },
+    "down": {
+      "shown_on": "the bottom",
+      "point": [
+        "x0 + u*sx",
+        "y0",
+        "z0 + v*sz"
+      ]
+    }
+  },
+  "consequences": [
+    "The outer face of a part on the +x side is `west`; on the -x side it is `east`.",
+    "A renderer that draws the JSON as written shows every side picture on the wrong side and mirrored.",
+    "Asymmetric art (text, numbers, a dial) must be verified in the game before it ships."
+  ],
+  "evidence": "A wheel hub's outer face blanked by a tool that assumed east = high x showed as a grey square in the game; emblem text placed with this table reads correctly in the game."
+}

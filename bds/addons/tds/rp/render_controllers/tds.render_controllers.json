@@ -15,6 +15,18 @@
       "Texture.t7"
      ]
     },
+    "geometries": {
+     "Array.geos": [
+      "Geometry.g0",
+      "Geometry.g1",
+      "Geometry.g2",
+      "Geometry.g3",
+      "Geometry.g4",
+      "Geometry.g5",
+      "Geometry.g6",
+      "Geometry.g7"
+     ]
+    },
     "materials": {
      "Array.mats": [
       "Material.default",
@@ -22,40 +34,14 @@
      ]
     }
    },
-   "geometry": "Geometry.default",
+   "geometry": "Array.geos[q.property('tds:skin')]",
    "materials": [
     {
-     "*": "Array.mats[query.property('tds:skin') == 4 ? 1 : 0]"
+     "*": "Array.mats[q.property('tds:skin') == 4 ? 1 : 0]"
     }
    ],
    "textures": [
-    "Array.skins[query.property('tds:skin')]"
-   ],
-   "part_visibility": [
-    {
-     "*": true
-    },
-    {
-     "armor": "query.property('tds:skin') == 1"
-    },
-    {
-     "spikes": "query.property('tds:skin') == 2"
-    },
-    {
-     "scarf": "query.property('tds:skin') == 3"
-    },
-    {
-     "hood": "query.property('tds:skin') == 4"
-    },
-    {
-     "wings": "query.property('tds:skin') == 5"
-    },
-    {
-     "pack": "query.property('tds:skin') == 6"
-    },
-    {
-     "icicles": "query.property('tds:skin') == 7"
-    }
+    "Array.skins[q.property('tds:skin')]"
    ]
   },
   "controller.render.tds_tower": {
@@ -91,39 +77,39 @@
      ]
     }
    },
-   "geometry": "Array.geos[query.property('tds:skin')]",
+   "geometry": "Array.geos[q.property('tds:skin')]",
    "materials": [
     {
-     "*": "Array.mats[query.property('tds:skin') == 6 ? 1 : 0]"
+     "*": "Array.mats[q.property('tds:skin') == 6 ? 1 : 0]"
     }
    ],
    "textures": [
-    "Array.skins[query.property('tds:skin')]"
+    "Array.skins[q.property('tds:skin')]"
    ],
    "part_visibility": [
     {
      "*": true
     },
     {
-     "pip1": "query.property('tds:lvl') >= 1"
+     "pip1": "q.property('tds:lvl') >= 1"
     },
     {
-     "pip2": "query.property('tds:lvl') >= 2"
+     "pip2": "q.property('tds:lvl') >= 2"
     },
     {
-     "pip3": "query.property('tds:lvl') >= 3"
+     "pip3": "q.property('tds:lvl') >= 3"
     },
     {
-     "pip4": "query.property('tds:lvl') >= 4"
+     "pip4": "q.property('tds:lvl') >= 4"
     },
     {
-     "pip5": "query.property('tds:lvl') >= 5"
+     "pip5": "q.property('tds:lvl') >= 5"
     },
     {
-     "pip6": "query.property('tds:lvl') >= 6"
+     "pip6": "q.property('tds:lvl') >= 6"
     },
     {
-     "pip7": "query.property('tds:lvl') >= 7"
+     "pip7": "q.property('tds:lvl') >= 7"
     }
    ]
   },
@@ -154,21 +140,21 @@
      ]
     }
    },
-   "geometry": "Array.geos[query.property('tds:skin')]",
+   "geometry": "Array.geos[q.property('tds:skin')]",
    "materials": [
     {
      "*": "Material.default"
     }
    ],
    "textures": [
-    "Array.skins[query.property('tds:skin')]"
+    "Array.skins[q.property('tds:skin')]"
    ],
    "part_visibility": [
     {
      "*": true
     },
     {
-     "helmet": "query.property('tds:skin') == 1"
+     "helmet": "q.property('tds:skin') != 3"
     }
    ]
   },
@@ -193,14 +179,14 @@
      ]
     }
    },
-   "geometry": "Array.geos[query.property('tds:skin')]",
+   "geometry": "Array.geos[q.property('tds:skin')]",
    "materials": [
     {
      "*": "Material.blend"
     }
    ],
    "textures": [
-    "Array.tints[query.property('tds:ok') ? 1 : 0]"
+    "Array.tints[q.property('tds:ok') ? 1 : 0]"
    ],
    "part_visibility": [
     {

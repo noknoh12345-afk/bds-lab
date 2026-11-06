@@ -12,14 +12,14 @@
     "bad": "textures/entity/tds/ghost_bad"
    },
    "geometry": {
-    "g0": "geometry.tds.tower_offense",
-    "g1": "geometry.tds.tower_support",
-    "g2": "geometry.tds.tower_income",
-    "g3": "geometry.tds.tower_defense",
-    "g4": "geometry.tds.tower_cliff",
-    "g5": "geometry.tds.tower_spawner",
-    "g6": "geometry.tds.tower_offense",
-    "g7": "geometry.tds.tower_freeze"
+    "g0": "geometry.tds.tower_gunner",
+    "g1": "geometry.tds.tower_medic",
+    "g2": "geometry.tds.tower_farm",
+    "g3": "geometry.tds.tower_mortar",
+    "g4": "geometry.tds.tower_sniper",
+    "g5": "geometry.tds.tower_barracks",
+    "g6": "geometry.tds.tower_gunner",
+    "g7": "geometry.tds.tower_frost"
    },
    "scripts": {
     "scale": "0.7"

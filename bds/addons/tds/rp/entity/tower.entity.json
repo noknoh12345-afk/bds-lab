@@ -4,42 +4,59 @@
   "description": {
    "identifier": "tds:tower",
    "materials": {
-    "default": "entity_alphatest",
+    "default": "entity_emissive_alpha_one_sided",
     "blend": "entity_alphablend"
    },
    "textures": {
-    "t0": "textures/entity/tds/tower_0",
-    "t1": "textures/entity/tds/tower_1",
-    "t2": "textures/entity/tds/tower_2",
-    "t3": "textures/entity/tds/tower_3",
-    "t4": "textures/entity/tds/tower_4",
-    "t5": "textures/entity/tds/tower_5",
-    "t6": "textures/entity/tds/tower_6",
-    "t7": "textures/entity/tds/tower_7"
+    "t0": "textures/entity/tds/tower_gunner",
+    "t1": "textures/entity/tds/tower_medic",
+    "t2": "textures/entity/tds/tower_farm",
+    "t3": "textures/entity/tds/tower_mortar",
+    "t4": "textures/entity/tds/tower_sniper",
+    "t5": "textures/entity/tds/tower_barracks",
+    "t6": "textures/entity/tds/tower_gunner_holo",
+    "t7": "textures/entity/tds/tower_frost"
    },
    "geometry": {
-    "g0": "geometry.tds.tower_offense",
-    "g1": "geometry.tds.tower_support",
-    "g2": "geometry.tds.tower_income",
-    "g3": "geometry.tds.tower_defense",
-    "g4": "geometry.tds.tower_cliff",
-    "g5": "geometry.tds.tower_spawner",
-    "g6": "geometry.tds.tower_offense",
-    "g7": "geometry.tds.tower_freeze"
+    "g0": "geometry.tds.tower_gunner",
+    "g1": "geometry.tds.tower_medic",
+    "g2": "geometry.tds.tower_farm",
+    "g3": "geometry.tds.tower_mortar",
+    "g4": "geometry.tds.tower_sniper",
+    "g5": "geometry.tds.tower_barracks",
+    "g6": "geometry.tds.tower_gunner",
+    "g7": "geometry.tds.tower_frost"
    },
    "scripts": {
     "scale": "0.7",
     "animate": [
+     "aim",
+     "idle",
+     "place",
+     "level",
      {
-      "sweep": "query.property('tds:skin') == 0 || query.property('tds:skin') == 3 || query.property('tds:skin') == 4 || query.property('tds:skin') == 6"
+      "smoke": "q.property('tds:skin') == 2"
      }
+    ],
+    "initialize": [
+     "v.lvl = 0;"
     ]
    },
    "render_controllers": [
     "controller.render.tds_tower"
    ],
    "animations": {
-    "sweep": "animation.tds.sweep"
+    "aim": "animation.tds_tower.aim",
+    "idle": "animation.tds_tower.idle",
+    "place": "animation.tds_tower.place",
+    "levelup": "animation.tds_tower.levelup",
+    "level": "controller.animation.tds_tower.level",
+    "smoke": "animation.tds_tower.smoke",
+    "fire": "animation.tds_tower.fire",
+    "spawn": "animation.tds_tower.spawn"
+   },
+   "particle_effects": {
+    "smoke": "minecraft:basic_smoke_particle"
    }
   }
  }

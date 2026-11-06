@@ -1077,6 +1077,29 @@ function beam(tw, e, n2) {
   if (!path || headless || simSpeed() > 1) return;
   const p = path.at(e.d), d = dim(), y = path.floor + (e.flying ? 2.7 : 0.3);
   fx(n2 > 1 ? "boom" : "hit", p.x, y, p.z);
+  look(tw, e);
+}
+var aimed = /* @__PURE__ */ new Map();
+var kicked = /* @__PURE__ */ new Map();
+function look(tw, e) {
+  const ent = ents.get(-tw.id);
+  if (!ent?.isValid) return;
+  const q = epos(e), yaw = Math.round(Math.atan2(-(q.x - tw.x - 0.5), q.z - tw.z - 0.5) * 180 / Math.PI + 360) % 360, last2 = aimed.get(tw.id);
+  if (last2 === void 0 || Math.abs((yaw - last2 + 540) % 360 - 180) >= 3) {
+    try {
+      ent.setProperty("tds:yaw", yaw);
+      aimed.set(tw.id, yaw);
+    } catch {
+    }
+  }
+  const now2 = Date.now();
+  if (now2 - (kicked.get(tw.id) ?? 0) >= 150) {
+    kicked.set(tw.id, now2);
+    try {
+      ent.playAnimation("animation.tds_tower.fire");
+    } catch {
+    }
+  }
 }
 function towerStep(tw, dt) {
   if (!M || !path) return;
@@ -1164,6 +1187,13 @@ function spawnUnit(tw, name, o = {}) {
   if (u.stationary && u.speed) u.speed = 0;
   M.units.push(u);
   log("unit_spawn", { tower: tw.id, hp: Math.round(hp * 100) / 100, unit: name ?? null });
+  if (!headless && simSpeed() <= 1) {
+    const te = ents.get(-tw.id);
+    if (te?.isValid) try {
+      te.playAnimation("animation.tds_tower.spawn");
+    } catch {
+    }
+  }
   return u;
 }
 function removeTower(tw, why = "removed") {
@@ -1253,6 +1283,7 @@ function body(tw) {
     }
     e.setDynamicProperty("tds:id", tw.id);
     ents.set(-tw.id, e);
+    aimed.delete(tw.id);
     tlabel(tw);
   } catch {
   }

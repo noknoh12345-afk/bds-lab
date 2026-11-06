@@ -1,0 +1,90 @@
+{
+  "source": "AGENTS.md section 3",
+  "rules": [
+    {
+      "id": "1",
+      "group": "How Bedrock draws",
+      "rule": "**The game draws a Bedrock model mirrored in x.** A cube's `\"east\"` UV is shown on its LOW-x side, `\"west\"` on its high-x side, and across every face the texture runs the other way from the naive reading. `data/face-mapping.json` is the table. A renderer that ignores this lies to you."
+    },
+    {
+      "id": "2",
+      "group": "How Bedrock draws",
+      "rule": "**A JSON rotation `[rx, ry, rz]` is applied as right-handed `(-rx, ry, -rz)`, X then Y then Z.** Animation rotations are **added** to the bone's bind rotation."
+    },
+    {
+      "id": "3",
+      "group": "Shape",
+      "rule": "**No stair steps.** Slopes and curves are tilted boxes joined corner to corner. Where a width steps, splay a box out to the wider corner. Fill valley joints by running both links past the corner. A tilted part's end runs INTO what it meets."
+    },
+    {
+      "id": "4",
+      "group": "Shape",
+      "rule": "**No two faces on one plane.** Move one part 0.02–0.05. Then **paint the thin step that appears so it continues its neighbour** — unpainted steps look like cracks."
+    },
+    {
+      "id": "5",
+      "group": "Shape",
+      "rule": "**The design flows as one piece.** A motif stuck on the front \"looks like a lizard\". Do not reuse another model's front or sides."
+    },
+    {
+      "id": "6",
+      "group": "Shape",
+      "rule": "**A body is closed.** Its face must not show its own sides; nothing floats; no inside is visible from where the player looks (a wheel from the seat, a hollow neck from below)."
+    },
+    {
+      "id": "7",
+      "group": "Shape",
+      "rule": "**One silhouette, one balance.** If one end is raised, raise the rest: balance is judged on the whole side view."
+    },
+    {
+      "id": "8",
+      "group": "Moving parts",
+      "rule": "**Nothing fixed may stand in a moving part's path**, in any pose. Model the part open; fold it with the bind pose; check folded, half, open and overshoot."
+    },
+    {
+      "id": "9",
+      "group": "Moving parts",
+      "rule": "**One bone per thing that moves**, pivot at the real joint; pieces that read as one share ONE pivot."
+    },
+    {
+      "id": "9b",
+      "group": "Thin things",
+      "rule": "**A membrane, fin, leaf, cloth or grille is ONE zero-thickness plate whose outline is cut by transparent texels** (material `entity_alphatest`) — the way the vanilla Ender Dragon makes its wings — not a board and not a fan of boxes. Its two faces lie in one plane and are both drawn: paint them **by position** so they agree at every point. When vanilla has the thing you are making, **open the vanilla pack and look first**."
+    },
+    {
+      "id": "10",
+      "group": "Texture",
+      "rule": "**Texture nobody can see must go (one texel); texture meant to be seen must be visible.** Check visibility from every direction, in every pose. Bones that an animation moves freely are exempt."
+    },
+    {
+      "id": "11",
+      "group": "Texture",
+      "rule": "**Pictures that cross cubes are placed by position**, not by texel index, so lines run on from one cube to the next."
+    },
+    {
+      "id": "12",
+      "group": "Working",
+      "rule": "**Fit what the model touches**: the seated rider, the hand that holds it, the head that wears it. Test against the pose the game really shows."
+    },
+    {
+      "id": "13",
+      "group": "Working",
+      "rule": "**When a human hand-edits the model, their file wins.** Deploy it as is; fix only real defects (say which); bring the builder to THEIR geometry. Fix what they point at — a redesign of the whole part gets rejected."
+    },
+    {
+      "id": "14",
+      "group": "Working",
+      "rule": "**Look at it.** Render after every change, from the camera the player will have, in every pose, in a light and a dark livery. \"The checks pass\" is not \"it looks right\". Never report a look you have not rendered."
+    },
+    {
+      "id": "15",
+      "group": "Working",
+      "rule": "**Heavy loops do not belong in Python.** Rasterising visibility in Node took a build from 150 s to 24 s."
+    },
+    {
+      "id": "16",
+      "group": "Working",
+      "rule": "**Physics footprints are measured**, from the rest-pose corners of the structural bones — never eyeballed."
+    }
+  ]
+}

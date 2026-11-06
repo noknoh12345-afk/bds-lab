@@ -32,6 +32,15 @@
      ],
      "default": 0,
      "client_sync": true
+    },
+    "tds:yaw": {
+     "type": "int",
+     "range": [
+      0,
+      360
+     ],
+     "default": 0,
+     "client_sync": true
     }
    }
   },

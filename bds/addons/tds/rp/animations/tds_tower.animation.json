@@ -1,0 +1,213 @@
+{
+ "format_version": "1.8.0",
+ "animations": {
+  "animation.tds_tower.aim": {
+   "loop": true,
+   "bones": {
+    "turret": {
+     "rotation": [
+      0,
+      "q.property('tds:yaw') - q.body_y_rotation",
+      0
+     ]
+    }
+   }
+  },
+  "animation.tds_tower.idle": {
+   "loop": true,
+   "bones": {
+    "body": {
+     "position": [
+      0,
+      "math.sin(q.life_time * 90) * 0.12",
+      0
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      "math.sin(q.life_time * 40) * 6",
+      0
+     ]
+    },
+    "flag": {
+     "rotation": [
+      0,
+      "math.sin(q.life_time * 160) * 12",
+      "math.sin(q.life_time * 230) * 3"
+     ]
+    },
+    "spin": {
+     "rotation": [
+      0,
+      "q.life_time * 90",
+      0
+     ],
+     "position": [
+      0,
+      "math.sin(q.life_time * 120) * 0.4",
+      0
+     ]
+    }
+   }
+  },
+  "animation.tds_tower.fire": {
+   "loop": false,
+   "animation_length": 0.2,
+   "bones": {
+    "gun": {
+     "position": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.05": [
+       0,
+       0,
+       0.9
+      ],
+      "0.2": [
+       0,
+       0,
+       0
+      ]
+     }
+    },
+    "barrel": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.06": [
+       8,
+       0,
+       0
+      ],
+      "0.2": [
+       0,
+       0,
+       0
+      ]
+     }
+    },
+    "body": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.05": [
+       -3,
+       0,
+       0
+      ],
+      "0.2": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.tds_tower.spawn": {
+   "loop": false,
+   "animation_length": 1.2,
+   "bones": {
+    "door": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.25": [
+       -85,
+       0,
+       0
+      ],
+      "0.9": [
+       -85,
+       0,
+       0
+      ],
+      "1.2": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.tds_tower.place": {
+   "loop": false,
+   "animation_length": 0.35,
+   "bones": {
+    "root": {
+     "scale": {
+      "0.0": [
+       0.6,
+       0.2,
+       0.6
+      ],
+      "0.18": [
+       1.1,
+       1.15,
+       1.1
+      ],
+      "0.35": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   }
+  },
+  "animation.tds_tower.levelup": {
+   "loop": false,
+   "animation_length": 0.4,
+   "bones": {
+    "root": {
+     "scale": {
+      "0.0": [
+       1,
+       1,
+       1
+      ],
+      "0.12": [
+       1.12,
+       0.9,
+       1.12
+      ],
+      "0.25": [
+       0.96,
+       1.1,
+       0.96
+      ],
+      "0.4": [
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   }
+  },
+  "animation.tds_tower.smoke": {
+   "loop": true,
+   "animation_length": 1.4,
+   "particle_effects": {
+    "0.0": {
+     "effect": "smoke",
+     "locator": "smoke"
+    }
+   }
+  }
+ }
+}

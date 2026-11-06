@@ -4,36 +4,43 @@
   "description": {
    "identifier": "tds:unit",
    "materials": {
-    "default": "entity_alphatest"
+    "default": "entity_emissive_alpha_one_sided",
+    "blend": "entity_alphablend"
    },
    "textures": {
-    "t0": "textures/entity/tds/unit_0",
-    "t1": "textures/entity/tds/unit_1",
-    "t2": "textures/entity/tds/unit_2",
-    "t3": "textures/entity/tds/unit_3",
-    "t4": "textures/entity/tds/unit_4",
-    "t5": "textures/entity/tds/unit_1",
-    "t6": "textures/entity/tds/unit_1",
-    "t7": "textures/entity/tds/unit_1"
+    "t0": "textures/entity/tds/unit_jeep",
+    "t1": "textures/entity/tds/unit_soldier",
+    "t2": "textures/entity/tds/unit_sentry",
+    "t3": "textures/entity/tds/unit_soldier_skeleton",
+    "t4": "textures/entity/tds/unit_ice",
+    "t5": "textures/entity/tds/unit_soldier",
+    "t6": "textures/entity/tds/unit_soldier",
+    "t7": "textures/entity/tds/unit_soldier"
    },
    "geometry": {
-    "g0": "geometry.tds.unit_vehicle",
-    "g1": "geometry.tds.unit_humanoid",
+    "g0": "geometry.tds.unit_jeep",
+    "g1": "geometry.tds.unit_soldier",
     "g2": "geometry.tds.unit_sentry",
-    "g3": "geometry.tds.unit_humanoid",
+    "g3": "geometry.tds.unit_soldier",
     "g4": "geometry.tds.unit_ice",
-    "g5": "geometry.tds.unit_humanoid",
-    "g6": "geometry.tds.unit_humanoid",
-    "g7": "geometry.tds.unit_humanoid"
+    "g5": "geometry.tds.unit_soldier",
+    "g6": "geometry.tds.unit_soldier",
+    "g7": "geometry.tds.unit_soldier"
    },
    "scripts": {
-    "scale": "0.4 * query.property('tds:size')",
+    "scale": "0.4 * q.property('tds:size')",
     "animate": [
      {
-      "walk": "query.property('tds:skin') == 1 || query.property('tds:skin') == 3 || query.property('tds:skin') > 4"
+      "walk": "q.property('tds:skin') == 1 || q.property('tds:skin') == 3 || q.property('tds:skin') > 4"
      },
      {
-      "spin": "query.property('tds:skin') == 2 || query.property('tds:skin') == 4"
+      "wheels": "q.property('tds:skin') == 0"
+     },
+     {
+      "sweep": "q.property('tds:skin') == 2"
+     },
+     {
+      "spin": "q.property('tds:skin') == 4"
      }
     ]
    },
@@ -41,8 +48,10 @@
     "controller.render.tds_unit"
    ],
    "animations": {
-    "walk": "animation.tds.walk",
-    "spin": "animation.tds.spin"
+    "walk": "animation.tds_unit.walk",
+    "wheels": "animation.tds_unit.wheels",
+    "sweep": "animation.tds_unit.sweep",
+    "spin": "animation.tds_unit.spin"
    }
   }
  }

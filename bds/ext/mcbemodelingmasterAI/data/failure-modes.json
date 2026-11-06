@@ -1,0 +1,173 @@
+{
+  "source": "docs/14-failure-modes.md",
+  "failure_modes": [
+    {
+      "id": "F01",
+      "symptom": "\"One grey square on every wheel hub; the star is missing\"",
+      "cause": "the forge took `east` for the high-x side and blanked the *outer* face",
+      "cure": "`docs/02`; the outer face of a +x part is `west`"
+    },
+    {
+      "id": "F02",
+      "symptom": "\"It looks perfect in your render, wrong in Blockbench\"",
+      "cause": "a renderer that draws the JSON as written",
+      "cure": "use `tools/preview/render_model.py`, or mirror x + reverse u"
+    },
+    {
+      "id": "F03",
+      "symptom": "\"The curve still has stair steps\"",
+      "cause": "axis-aligned boxes of shrinking size",
+      "cure": "tilted links joined corner to corner"
+    },
+    {
+      "id": "F04",
+      "symptom": "\"One edge matches but there is a gap beside it\"",
+      "cause": "a width step left open / a valley not filled",
+      "cure": "splay box; run both links past the corner"
+    },
+    {
+      "id": "F05",
+      "symptom": "\"I asked you to smooth the steps, not to redesign the nose\"",
+      "cause": "over-reach",
+      "cure": "fix what was pointed at; keep the rest"
+    },
+    {
+      "id": "F06",
+      "symptom": "\"It flickers\"",
+      "cause": "parallel coplanar faces, often between *tilted* parts or hand-placed wedges",
+      "cure": "offset 0.02–0.05; the checker works on face polygons in every pose"
+    },
+    {
+      "id": "F07",
+      "symptom": "\"There are cracks in the whitewall\"",
+      "cause": "step faces left in the cube's default colour",
+      "cure": "paint steps to continue the neighbour (by radius / position; match the face lighting)"
+    },
+    {
+      "id": "F08",
+      "symptom": "\"You painted it nicely but it is hidden\"",
+      "cause": "texture on buried or never-visible faces; or a picture that *should* show is covered",
+      "cure": "visibility passes; move what must be seen"
+    },
+    {
+      "id": "F09",
+      "symptom": "\"The front looks like the last kart\" / \"it looks like a lizard, the head plays apart\"",
+      "cause": "reused parts; a motif bolted on",
+      "cure": "one design language through the whole body"
+    },
+    {
+      "id": "F10",
+      "symptom": "\"The grille sticks out past the tyres and shows its sides\"",
+      "cause": "a face block with nothing joining its ends to the body",
+      "cure": "flush sides, chamfered corner panels"
+    },
+    {
+      "id": "F11",
+      "symptom": "\"A big cube hangs over the front wheel\"",
+      "cause": "a volume faked with a floating box",
+      "cure": "real fender + arch lips"
+    },
+    {
+      "id": "F12",
+      "symptom": "\"From the seat I can see the rear wheel through a hole\"",
+      "cause": "cockpit not walled off",
+      "cure": "tub walls to the bulkhead; sight-line test"
+    },
+    {
+      "id": "F13",
+      "symptom": "\"Only the nose got higher; now it is unbalanced\"",
+      "cause": "a local fix to a global proportion",
+      "cure": "one shoulder line; raise the rest"
+    },
+    {
+      "id": "F14",
+      "symptom": "\"Pipe stays cross the booster panels when they open\"",
+      "cause": "fixed parts in a moving part's path",
+      "cure": "everything ahead of the hinge, steeper than the open lean; check every pose"
+    },
+    {
+      "id": "F15",
+      "symptom": "\"The open lid shows its picture to the ground\"",
+      "cause": "leaned back instead of forward",
+      "cure": "lean forward; test the outward normal"
+    },
+    {
+      "id": "F16",
+      "symptom": "\"The steering column pokes out in front of the windscreen\"",
+      "cause": "cowl too far forward",
+      "cure": "cowl over the shaft; `shaft_buried` checks the first quarter, not only the tip"
+    },
+    {
+      "id": "F17",
+      "symptom": "\"The dial's 12 points the wrong way\"",
+      "cause": "asymmetric art placed by derivation",
+      "cure": "verify orientation in game first"
+    },
+    {
+      "id": "F18",
+      "symptom": "\"The physics box is inside the body\"",
+      "cause": "eyeballed footprint",
+      "cure": "measure (`docs/13`)"
+    },
+    {
+      "id": "F19",
+      "symptom": "\"A dragon's wing is not drawn like that — look at the Ender Dragon\" (twice: a flat board, then a fan of boxes)",
+      "cause": "not looking at how vanilla does it",
+      "cure": "two jointed segments, each a bone + ONE zero-thickness plate whose scalloped outline and fingers are painted, the rest transparent; `entity_alphatest`"
+    },
+    {
+      "id": "F19b",
+      "symptom": "a two-faced plate flickers",
+      "cause": "its two faces differ at some point (outline, light, density) and the material draws both",
+      "cure": "paint by position; same light, density, no grain on both faces"
+    },
+    {
+      "id": "F19c",
+      "symptom": "\"Look more closely — what is this?\" (square board corners on the folded wing, the membrane cutting through the body, spikes seen edge-on)",
+      "cause": "each plate was turned with its swept bone, so plates left the wing plane and their uncut corners showed",
+      "cure": "both plates in ONE wing plane, inner edge exactly on the hinge line, turning about that axis only; cut everything ahead of the bone and outside a deeply scalloped outline; then look at the *folded* pose up close"
+    },
+    {
+      "id": "F19d",
+      "symptom": "the wing is a solid board from below",
+      "cause": "the visibility pass blanked one face of a two-faced plate to one texel",
+      "cure": "never blank either face of such a plate; `seen_from_below=True`; the linter reports unequal faces as an error"
+    },
+    {
+      "id": "F20",
+      "symptom": "\"The effect comes out of the wrong place\"",
+      "cause": "locators left at ordinary exhausts while the glowing core rides the transforming part",
+      "cure": "put the locator in that part's bone, at the core"
+    },
+    {
+      "id": "F21",
+      "symptom": "a test passes on the defect it was written for",
+      "cause": "the test measured the wrong thing",
+      "cure": "break the model and watch the test fail"
+    },
+    {
+      "id": "F22",
+      "symptom": "\"You said eleven fixed; two were not\"",
+      "cause": "reporting from memory",
+      "cure": "report from the diff"
+    },
+    {
+      "id": "F23",
+      "symptom": "a save with a cube of size −0.04 on one side",
+      "cause": "an edge dragged past its opposite face",
+      "cure": "linter; delete it"
+    },
+    {
+      "id": "F24",
+      "symptom": "the build takes minutes",
+      "cause": "per-pixel loops in Python",
+      "cure": "Node / vectorise; parallel liveries"
+    },
+    {
+      "id": "F25",
+      "symptom": "seventeen textures weigh megabytes",
+      "cause": "per-texel grain on a big atlas",
+      "cure": "`grain=0`; crop the atlas height"
+    }
+  ]
+}

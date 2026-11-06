@@ -531,6 +531,17 @@ function beam(tw: Tower, e: Enemy, n: number) {
   if (!path || headless || simSpeed() > 1) return;
   const p = path.at(e.d), d = dim(), y = path.floor + (e.flying ? 2.7 : 0.3);
   fx(n > 1 ? 'boom' : 'hit', p.x, y, p.z);
+  look(tw, e);
+}
+/** The tower's model turns to its target like the original: tds:yaw is the yaw a mob standing on the tower would have
+ * facing the enemy (the client entity turns the turret bone by it), and each shot plays the recoil (throttled). */
+const aimed = new Map<number, number>(), kicked = new Map<number, number>();
+function look(tw: Tower, e: Enemy) {
+  const ent = ents.get(-tw.id); if (!ent?.isValid) return;
+  const q = epos(e), yaw = Math.round((Math.atan2(-(q.x - tw.x - 0.5), q.z - tw.z - 0.5) * 180) / Math.PI + 360) % 360, last = aimed.get(tw.id);
+  if (last === undefined || Math.abs(((yaw - last + 540) % 360) - 180) >= 3) { try { ent.setProperty('tds:yaw', yaw); aimed.set(tw.id, yaw); } catch { /* older pack */ } }
+  const now = Date.now();
+  if (now - (kicked.get(tw.id) ?? 0) >= 150) { kicked.set(tw.id, now); try { ent.playAnimation('animation.tds_tower.fire'); } catch { /* unloaded */ } }
 }
 
 function towerStep(tw: Tower, dt: number) {
@@ -576,6 +587,7 @@ export function spawnUnit(tw: Tower, name: string | undefined, o: Partial<Unit> 
     detect: o.detect ?? { hidden: det?.hidden != null && tw.lvl >= det.hidden, lead: det?.lead != null && tw.lvl >= det.lead, flying: det?.flying != null && tw.lvl >= det.flying } };
   if (u.stationary && u.speed) u.speed = 0;
   M.units.push(u); log('unit_spawn', { tower: tw.id, hp: Math.round(hp * 100) / 100, unit: name ?? null });
+  if (!headless && simSpeed() <= 1) { const te = ents.get(-tw.id); if (te?.isValid) try { te.playAnimation('animation.tds_tower.spawn'); } catch { /* unloaded */ } }   // the barracks door opens
   return u;
 }
 /** take a tower off the field (sold, expired hologram) */
@@ -641,7 +653,7 @@ function body(tw: Tower) {
   try {
     const e = dim().spawnEntity('tds:tower' as any, { x: tw.x + 0.5, y: tw.y, z: tw.z + 0.5 });
     e.setProperty('tds:skin', towerSkin(tw.name, tw.temp !== undefined)); try { e.setProperty('tds:lvl', Math.min(7, tw.lvl)); } catch { /* older pack */ }
-    e.setDynamicProperty('tds:id', tw.id); ents.set(-tw.id, e); tlabel(tw);
+    e.setDynamicProperty('tds:id', tw.id); ents.set(-tw.id, e); aimed.delete(tw.id); tlabel(tw);
   } catch { /* unloaded */ }
 }
 export function tlabel(tw: Tower) { const e = ents.get(-tw.id); if (e?.isValid) { e.nameTag = `§e#${tw.id} §f${tw.name}\n§bLv${tw.lvl} §7${tw.target}`; try { e.setProperty('tds:lvl', Math.min(7, tw.lvl)); } catch { /* older pack */ } } }
