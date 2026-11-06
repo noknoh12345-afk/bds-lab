@@ -1373,7 +1373,10 @@
   "tries": 1
  },
  "q60_sampler_walking_listener": {
-  "status": "pending"
+  "commit": "2a4feab",
+  "run": "42167704647",
+  "started": "2026-11-06 05:19",
+  "status": "running"
  },
  "q61_noise_floor_warm": {
   "status": "pending"
