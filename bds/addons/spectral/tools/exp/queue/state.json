@@ -1279,7 +1279,7 @@
    }
   },
   "checkpoints": 0,
-  "commit": "1ec1695",
+  "commit": "b5fff12",
   "conclusion": "failure",
   "earlier_runs": [
    "42146759946"
@@ -1287,9 +1287,9 @@
   "ended": "2026-11-06 02:41",
   "failed_steps": 1,
   "recordings": 0,
-  "run": "42146759946",
-  "started": "2026-11-06 01:53",
-  "status": "pending",
+  "run": "42151926608",
+  "started": "2026-11-06 02:41",
+  "status": "running",
   "tries": 1
  },
  "q55_sampler_same_thrice": {
