@@ -1399,9 +1399,16 @@
   "tries": 1
  },
  "q62_bundle_warm_again": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "c5c282e",
+  "conclusion": "success",
+  "ended": "2026-11-06 07:58",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "42182206909",
   "started": "2026-11-06 07:38",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  }
 }
