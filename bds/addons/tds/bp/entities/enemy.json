@@ -10,7 +10,7 @@
      "type": "int",
      "range": [
       0,
-      7
+      143
      ],
      "default": 0,
      "client_sync": true
@@ -18,8 +18,8 @@
     "tds:size": {
      "type": "float",
      "range": [
-      0.25,
-      4.0
+      0.1,
+      8.0
      ],
      "default": 1.0,
      "client_sync": true

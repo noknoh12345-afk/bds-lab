@@ -1,5 +1,6 @@
 // The match: path, enemies, towers, units, economy, waves. Pure simulation in studs/seconds; entities only mirror it.
 import { world, system, Player, Entity, Dimension } from '@minecraft/server';
+import { ENEMY_LOOK } from './looks';
 import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, startCash, timerFor, enemyIn, afterDefense, cashShare, hpFor, RULES, rules, units, unitsFor, Stats, Group, Ability, Spawn, TowerAbility, SkillDef } from './defs';
 
 export let headless = false;
@@ -280,8 +281,11 @@ function spawnEnemy(name: string, mods: string[], d = 0, wave = M!.wave, summone
   log('enemy_spawn', { id: e.id, name, hp, speed: e.speed, hidden: e.hidden, flying: e.flying, lead: e.lead, boss: e.boss });
 }
 
-/** the look of an enemy (resource pack variants): 0 normal, 1 lead, 2 boss, 3 fast, 4 hidden, 5 flying, 6 heavy, 7 frost */
-export const enemySkin = (e: Enemy) => e.boss ? 2 : e.hidden ? 4 : e.flying ? 5 : e.lead ? 1 : (M?.mode === 'Frost' || /Frost|Ice|Yeti|Snow|Shiver|Glacial|Polar/.test(e.name)) ? 7 : (e.def >= 40 || /Slow|Heavy|Tank|Armored|Bulwark|Giant/.test(e.name)) ? 6 : e.speed >= 5 ? 3 : 0;
+/** the look of an enemy: its own (src/looks.ts, one per enemy of the data); an enemy the data lacks wears its class's look */
+const enemyLook = (e: Enemy) => ENEMY_LOOK[e.name] ?? ENEMY_LOOK[e.boss ? 'Normal Boss' : e.hidden ? 'Hidden' : e.flying ? 'Void Floater' : e.lead ? 'Lead'
+  : (M?.mode === 'Frost' || /Frost|Ice|Yeti|Snow|Shiver|Glacial|Polar/.test(e.name)) ? 'Frozen' : (e.def >= 40 || /Slow|Heavy|Tank|Armored|Bulwark|Giant/.test(e.name)) ? 'Heavy'
+  : e.speed >= 5 ? 'Speedy' : 'Normal'] ?? [0, 1];
+export const enemySkin = (e: Enemy) => enemyLook(e)[0];
 /** the look of a tower: 0 offense, 1 support, 2 income, 3 defense/splash, 4 cliff, 5 spawner, 6 hologram, 7 slow/freeze */
 export function towerSkin(name: string, hologram = false) {
   if (hologram) return 6;
@@ -302,7 +306,7 @@ function show(e: Enemy) {
   try {
     const ent = dim().spawnEntity('tds:enemy' as any, { x: p.x, y, z: p.z });
     ent.setProperty('tds:skin', enemySkin(e));
-    ent.setProperty('tds:size', e.boss ? 1.6 : e.mods.includes('Bloated') ? 1.5 : 1);
+    ent.setProperty('tds:size', Math.min(8, enemyLook(e)[1] * (e.mods.includes('Bloated') ? 1.5 : 1)));
     if (e.hidden) ent.addEffect('invisibility', 20000000, { showParticles: false });
     ents.set(e.id, ent); e.dirty = true; flush(e);
   } catch { /* chunk not loaded: the simulation still runs */ }

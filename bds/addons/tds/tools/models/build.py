@@ -22,18 +22,20 @@ RP = os.path.join(ROOT, 'rp')
 from kit import write  # noqa: E402
 import hq  # noqa: E402
 import hq_mobs  # noqa: E402
+import roster  # noqa: E402
 import units  # noqa: E402
 
-# bodies: vanilla mobs for every enemy and the figure towers / units (referenced, not built); ours for buildings and machines
+# bodies: vanilla mobs for every enemy and the figure towers / units (referenced, not built); ours for buildings and machines.
+# Enemies: one look each from the roster (roster.py), its gear or its own body.
+ROSTER = ('enemy',)
 GROUPS = {
-    'enemy gear': hq_mobs.ENEMY_GEAR,
     'tower': hq.BUILDINGS, 'tower gear': list(hq.TOWER_GEAR.values()),
     'unit': [units.jeep, units.sentry, units.ice], 'unit gear': list(hq_mobs.UNIT_GEAR.values()),
 }
 KEEP = ('ghost_ok.png', 'ghost_bad.png')          # written by tools/gen_assets.py
 
 
-def models():
+def models(looks):
     seen, out = set(), []
     for group in GROUPS.values():
         for make in group:
@@ -41,6 +43,12 @@ def models():
             if m.name not in seen:
                 seen.add(m.name)
                 out.append(m)
+    for kind in ROSTER:
+        for lk in looks[kind]:
+            m = lk.gear or lk.body
+            assert m.name not in seen, m.name
+            seen.add(m.name)
+            out.append(m)
     return out
 
 
@@ -51,7 +59,8 @@ def main(argv):
         only = set(argv[argv.index('--only') + 1].split(','))
     outputs = {}
     built = []
-    for m in models():
+    looks = {kind: roster.looks(kind) for kind in ROSTER}
+    for m in models(looks):
         if only and m.name not in only:
             continue
         outputs.update(m.outputs(RP))
@@ -59,9 +68,11 @@ def main(argv):
     if not only:
         try:
             import entities  # noqa: E402
-            outputs.update(entities.outputs(RP, {m.name: m for m in built}))
+            outputs.update(entities.outputs(RP, {m.name: m for m in built}, looks))
         except ImportError:
             pass
+        import roster_entities as RE
+        outputs[os.path.join(ROOT, 'src', 'looks.ts')] = RE.looks_ts([('ENEMY_LOOK', looks['enemy'])]).encode()
     stale = write(outputs, check)
     if not only:                                    # files of looks that are no longer built
         for d in (os.path.join(RP, 'models', 'entity', 'tds'), os.path.join(RP, 'textures', 'entity', 'tds')):
@@ -72,7 +83,11 @@ def main(argv):
                     if not check:
                         os.remove(p)
     for m in built:
-        print(f'  {m.name:18s} bones {len(m.bones):2d}  cubes {len(m.cubes):3d}  variants {len(m.variants)}')
+        if not m.name.startswith(('e_', 'eb_', 't_', 'tb_', 'u_', 'ub_')):
+            print(f'  {m.name:18s} bones {len(m.bones):2d}  cubes {len(m.cubes):3d}  variants {len(m.variants)}')
+    for kind in ROSTER:
+        n = [len((lk.gear or lk.body).cubes) for lk in looks[kind]]
+        print(f'  {kind} looks {len(n)}: cubes {min(n)}..{max(n)}, {sum(n)} in all')
     if check:
         for p in stale:
             print('   stale:', os.path.relpath(p, ROOT))

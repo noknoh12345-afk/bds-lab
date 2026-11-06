@@ -3,8 +3,7 @@
 (vanilla bones + gear bones of the same names; gear-only bones added) on one texture (the vanilla texture, the gear atlas
 below it), rendered by the lab (`node lab.mjs render <file> --tex <png>`). Preview only: nothing here is shipped.
 
-    python3 tools/models/compose.py enemy 0 [--views front34,side] [--anim <animation id>@<s>]
-    python3 tools/models/compose.py tower 0|1|4|6      python3 tools/models/compose.py unit 1|3     python3 tools/models/compose.py all
+    python3 tools/models/compose.py tower 0|1|4|6 [--views front34,side] [--anim <animation id>@<s>]   (enemies: sheet.py)      python3 tools/models/compose.py unit 1|3     python3 tools/models/compose.py all
 """
 from __future__ import annotations
 
@@ -177,6 +176,7 @@ ZOMBIE = {'rightArm': (-84, 0, 0), 'leftArm': (-84, 0, 0)}
 
 def job(kind, i):
     if kind == 'enemy':
+        raise SystemExit('enemies have one look each now: python3 tools/models/sheet.py enemy [--only <name>]')
         gid = V.ENEMY_BASE[i][0]
         gear = hq_mobs.ENEMY_GEAR[i]().name
         return f'enemy{i}_{gear}', gid, gear, gear, (ZOMBIE if i in (0, 1) else {'leftarm': (-42, 0, 0)} if i == 6 else None), 0.0
@@ -194,7 +194,7 @@ def main(argv):
     lvl = int(argv[argv.index('--lvl') + 1]) if '--lvl' in argv else 0
     fire = '--fire' in argv
     anim = argv[argv.index('--anim') + 1] if '--anim' in argv else None
-    jobs = [('enemy', i) for i in range(8)] + [('tower', i) for i in (0, 1, 4)] + [('unit', i) for i in (1, 3)] if argv[0] == 'all' else [(argv[0], int(argv[1]))]
+    jobs = [('tower', i) for i in (0, 1, 4)] + [('unit', i) for i in (1, 3)] if argv[0] == 'all' else [(argv[0], int(argv[1]))]
     shots = []
     for kind, i in jobs:
         tag, gid, gear, gtex, pose, lift = job(kind, i)

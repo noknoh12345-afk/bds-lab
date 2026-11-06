@@ -63,29 +63,7 @@ def look(rate=60, amp=8):
     return {'head': {'rotation': [S(rate * 3, 2, 40), S(rate, amp), 0]}}
 
 
-# ------------------------------------------------------------------------------------------------ enemies (vanilla rigs)
-ENEMY_ANIMS = {
-    'animation.tds_enemy.walk': loop({**legs(400, 28), **arms(400, 6, -84), **bob('waist', 400, 0.4), **look(),
-                                      'band_end': {'rotation': [0, 0, S(500, 10)]}}),                  # 0, 1: zombies, arms held out
-    'animation.tds_enemy.boss': loop({**legs(200, 20), **arms(200, 18, -10), **bob('waist', 200, 0.5), **look(40, 10),
-                                      'body': {'rotation': [0, 0, S(200, 4)]}, 'cape': {'rotation': [S(200, 6, 30, 8), 0, 0]}}),   # 2
-    'animation.tds_enemy.run': loop({**legs(760, 45), **arms(760, 40), 'body': {'rotation': [12, 0, 0],
-                                     'position': [0, f'math.abs(math.cos(q.life_time * 760)) * 0.8', 0]},
-                                     'scarf': {'rotation': [0, S(900, 16), S(700, 6)]}}),              # 3: drowned rig, leaning in
-    'animation.tds_enemy.float': loop({'body': {'position': [0, S(120, 0.8), 0], 'rotation': [S(90, 3), 0, 0]},
-                                       'leftWing': {'rotation': [0, S(1400, -25), 0]}, 'rightWing': {'rotation': [0, S(1400, 25), 0]},
-                                       'leftArm': {'rotation': [S(150, 10, 0, -30), 0, 0]}, 'rightArm': {'rotation': [S(150, 10, 60, -30), 0, 0]},
-                                       **look(70, 10)}),                                                # 4: vex rig
-    'animation.tds_enemy.fly': loop({'wing0': {'rotation': [0, 0, S(540, -22)]}, 'wingtip0': {'rotation': [0, 0, S(540, -18, 70)]},
-                                     'wing1': {'rotation': [0, 0, S(540, 22)]}, 'wingtip1': {'rotation': [0, 0, S(540, 18, 70)]},
-                                     'body': {'position': [0, S(540, 0.6, -90), 0]},
-                                     'tail': {'rotation': [S(270, 6), 0, 0]}, 'tailtip': {'rotation': [S(270, 9, 50), 0, 0]}}),   # 5: phantom rig
-    'animation.tds_enemy.heavy': loop({**legs(240, 20, ('leftleg', 'rightleg')), 'leftarm': {'rotation': [S(240, 3, 0, -42), 0, 0]},
-                                       'rightarm': {'rotation': [S(240, 16), 0, 0]}, **bob('body', 240, 0.35), **look(40, 6)}),   # 6: piglin rig
-    'animation.tds_enemy.frost': loop({**legs(260, 22), **arms(260, 10, -30), **bob('waist', 260, 0.35), **look(40, 8),
-                                       'body': {'rotation': [8, 0, S(260, 3)]}}),                       # 7: stray, hunched
-}
-ENEMY_PICK = {'walk': (0, 1), 'boss': (2,), 'run': (3,), 'float': (4,), 'fly': (5,), 'heavy': (6,), 'frost': (7,)}
+# ------------------------------------------------------------------------------------------------ enemies: roster.py + roster_entities.py
 
 # ------------------------------------------------------------------------------------------------ towers
 YAW = "q.property('tds:yaw') - q.body_y_rotation"
@@ -209,22 +187,21 @@ def entity(ident, geos, gear_geos, texs, gear_texs, mats, gear_skins, scale, ani
     return {'format_version': '1.10.0', 'minecraft:client_entity': {'description': d}}
 
 
-def outputs(rp, models):
+def outputs(rp, models, looks=None):
+    """looks: kind -> the roster's looks (roster.py) for the kinds drawn by look (one per entity of the data)"""
+    import roster_entities as RE
+    looks = looks or {}
     out = {}
     j = lambda *p: os.path.join(rp, *p)  # noqa: E731
     T = lambda n: f'textures/entity/tds/{n}'  # noqa: E731
     G = lambda n: f'geometry.tds.{n}'  # noqa: E731
     EMPTY = G('empty')
 
-    # enemies: every class a vanilla body + our gear
-    e_geo = [b[0] for b in V.ENEMY_BASE]
-    e_tex = [b[1] for b in V.ENEMY_BASE]
-    e_gear = [make().name for make in hq_mobs.ENEMY_GEAR]
-    out[j('entity', 'enemy.entity.json')] = dumps(entity(
-        'tds:enemy', e_geo, [G(n) for n in e_gear], e_tex, [T(n) for n in e_gear],
-        {'default': 'entity_alphatest', 'blend': 'entity_alphablend', 'gear': 'entity_emissive_alpha_one_sided'}, range(8),
-        f"({pick((4,), 0.6, pick((5,), 0.3, 0.26))}) * q.property('tds:size')",
-        {k: f'animation.tds_enemy.{k}' for k in ENEMY_PICK}, [{k: skin_is(*v)} for k, v in ENEMY_PICK.items()], 'enemy'))
+    # enemies: one look per enemy of the data (roster.py): a vanilla body with our gear, or a body of ours
+    rcs = {}
+    client, rc = RE.entity('enemy', looks['enemy'], EMPTY, HOLO, 0.26)
+    out[j('entity', 'enemy.entity.json')] = dumps(client)
+    rcs.update(rc)
 
     # towers: figures are vanilla bodies on our pedestal gear; buildings and machines are ours alone
     t_geo, t_tex, t_gear, t_gtex = [], [], [], []
@@ -279,15 +256,14 @@ def outputs(rp, models):
 
     pips = [{f'pip{i}': f"q.property('tds:lvl') >= {i}"} for i in range(1, 8)]
     lv_rules, ghost_rules = level_rules(rp, t_geo + t_gear, models)
-    rcs = {}
-    rcs.update(two_rc('enemy', range(8), (('default', 'blend'), f'{SK} == 4 ? 1 : 0'), (('gear', 'blend'), f'{SK} == 4 ? 1 : 0')))
     rcs.update(two_rc('tower', FIGURES, (('default', 'lit', 'blend'), f'{SK} == 6 ? 2 : ({skin_is(*FIGURES)}) ? 0 : 1'),
                       (('lit', 'blend'), f'{SK} == 6 ? 1 : 0'), parts=[{'*': True}, *pips, *lv_rules]))
     rcs.update(two_rc('unit', U_FIG, (('default', 'lit'), f'({skin_is(*U_FIG)}) ? 0 : 1'), (('lit',), '0')))
     rcs.update(two_rc('ghost', FIGURES, (('blend',), '0'), (('blend',), '0'), parts=[{'*': True}, *[{f'pip{i}': False} for i in range(1, 8)], *ghost_rules], tint=True))
     out[j('render_controllers', 'tds.render_controllers.json')] = dumps({'format_version': '1.8.0', 'render_controllers': rcs})
-    for name, anims in (('tds_enemy', ENEMY_ANIMS), ('tds_tower', TOWER_ANIMS), ('tds_unit', UNIT_ANIMS)):
+    for name, anims in (('tds_tower', TOWER_ANIMS), ('tds_unit', UNIT_ANIMS)):
         out[j('animations', f'{name}.animation.json')] = dumps({'format_version': '1.8.0', 'animations': anims})
+    out[j('animations', 'tds_look.animation.json')] = dumps(RE.animations())
     out[j('animation_controllers', 'tds_tower.animation_controllers.json')] = dumps(TOWER_CONTROLLER)
     import io
     from PIL import Image

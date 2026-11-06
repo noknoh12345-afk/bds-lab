@@ -1,0 +1,316 @@
+{
+ "format_version": "1.16.0",
+ "minecraft:geometry": [
+  {
+   "description": {
+    "identifier": "geometry.tds.e_speedy",
+    "texture_width": 256,
+    "texture_height": 32,
+    "visible_bounds_width": 1.81,
+    "visible_bounds_height": 2.45,
+    "visible_bounds_offset": [
+     0,
+     0.98,
+     0
+    ]
+   },
+   "bones": [
+    {
+     "name": "body",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -4.75,
+        22.75,
+        -2.75
+       ],
+       "size": [
+        9.5,
+        2.3,
+        5.5
+       ],
+       "uv": {
+        "north": {
+         "uv": [
+          97,
+          0
+         ],
+         "uv_size": [
+          19,
+          5
+         ]
+        },
+        "east": {
+         "uv": [
+          137,
+          0
+         ],
+         "uv_size": [
+          11,
+          5
+         ]
+        },
+        "south": {
+         "uv": [
+          117,
+          0
+         ],
+         "uv_size": [
+          19,
+          5
+         ]
+        },
+        "west": {
+         "uv": [
+          149,
+          0
+         ],
+         "uv_size": [
+          11,
+          5
+         ]
+        },
+        "up": {
+         "uv": [
+          40,
+          0
+         ],
+         "uv_size": [
+          19,
+          11
+         ]
+        },
+        "down": {
+         "uv": [
+          86,
+          0
+         ],
+         "uv_size": [
+          10,
+          6
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "head",
+     "parent": "body",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -4.71,
+        29.455,
+        -4.71
+       ],
+       "size": [
+        9.42,
+        1.8,
+        9.42
+       ],
+       "uv": {
+        "north": {
+         "uv": [
+          161,
+          0
+         ],
+         "uv_size": [
+          19,
+          4
+         ]
+        },
+        "east": {
+         "uv": [
+          181,
+          0
+         ],
+         "uv_size": [
+          19,
+          4
+         ]
+        },
+        "south": {
+         "uv": [
+          201,
+          0
+         ],
+         "uv_size": [
+          19,
+          4
+         ]
+        },
+        "west": {
+         "uv": [
+          221,
+          0
+         ],
+         "uv_size": [
+          19,
+          4
+         ]
+        },
+        "up": {
+         "uv": [
+          0,
+          0
+         ],
+         "uv_size": [
+          19,
+          19
+         ]
+        },
+        "down": {
+         "uv": [
+          60,
+          0
+         ],
+         "uv_size": [
+          9,
+          9
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "rightArm",
+     "parent": "body",
+     "pivot": [
+      -5.0,
+      22.0,
+      0.0
+     ]
+    },
+    {
+     "name": "leftArm",
+     "parent": "body",
+     "pivot": [
+      5.0,
+      22.0,
+      0.0
+     ]
+    },
+    {
+     "name": "rightLeg",
+     "parent": "body",
+     "pivot": [
+      -1.9,
+      12.0,
+      0.0
+     ]
+    },
+    {
+     "name": "leftLeg",
+     "parent": "body",
+     "pivot": [
+      1.9,
+      12.0,
+      0.0
+     ]
+    },
+    {
+     "name": "bandana_tail",
+     "parent": "head",
+     "pivot": [
+      0.0,
+      30.355,
+      4.71
+     ],
+     "cubes": [
+      {
+       "origin": [
+        0.0,
+        26.355,
+        4.71
+       ],
+       "size": [
+        0.0,
+        4.4,
+        3.5
+       ],
+       "uv": {
+        "east": {
+         "uv": [
+          70,
+          0
+         ],
+         "uv_size": [
+          7,
+          9
+         ]
+        },
+        "west": {
+         "uv": [
+          78,
+          0
+         ],
+         "uv_size": [
+          7,
+          9
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "scarf_tail",
+     "parent": "body",
+     "pivot": [
+      1.0,
+      23.75,
+      2.75
+     ],
+     "cubes": [
+      {
+       "origin": [
+        1.0,
+        15.75,
+        2.75
+       ],
+       "size": [
+        0.0,
+        8.5,
+        4.5
+       ],
+       "uv": {
+        "east": {
+         "uv": [
+          20,
+          0
+         ],
+         "uv_size": [
+          9,
+          17
+         ]
+        },
+        "west": {
+         "uv": [
+          30,
+          0
+         ],
+         "uv_size": [
+          9,
+          17
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

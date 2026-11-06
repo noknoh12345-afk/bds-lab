@@ -57,6 +57,10 @@ out('rp/textures/item_texture.json', {'resource_pack_name': 'tds', 'texture_name
 # ---------------- behaviour definitions: small boxes, the ghost ----------------
 def prop_int(hi, default=0): return {'type': 'int', 'range': [0, hi], 'default': default, 'client_sync': True}
 SIZE = {'type': 'float', 'range': [0.25, 4.0], 'default': 1.0, 'client_sync': True}
+LOOK_SIZE = {'type': 'float', 'range': [0.1, 8.0], 'default': 1.0, 'client_sync': True}   # a look's size (src/looks.ts) x the enemy's own
+import sys; sys.path.insert(0, os.path.join(ROOT, 'tools', 'models'))
+import roster  # noqa: E402
+N_ENEMY = len(roster.looks('enemy'))
 def base_components(family, box, hit):
     return {'minecraft:type_family': {'family': family}, 'minecraft:health': {'value': 1000000, 'max': 1000000},
             'minecraft:damage_sensor': {'triggers': [{'cause': 'all', 'deals_damage': 'no'}]}, 'minecraft:physics': {'has_gravity': False, 'has_collision': False},
@@ -65,7 +69,7 @@ def base_components(family, box, hit):
             'minecraft:fire_immune': True, 'minecraft:conditional_bandwidth_optimization': {}}
 def entity(ident, props, comps): return {'format_version': '1.21.40', 'minecraft:entity': {'description': {'identifier': ident, 'is_spawnable': False, 'is_summonable': True, 'properties': props}, 'components': comps}}
 NAME = {'minecraft:nameable': {'always_show': True, 'allow_name_tag_renaming': False}, 'minecraft:persistent': {}}
-out('bp/entities/enemy.json', entity('tds:enemy', {'tds:skin': prop_int(7), 'tds:size': SIZE}, {**base_components(['enemy', 'tds'], (0.3, 0.45), (0.01, 0.01)), **NAME}))
+out('bp/entities/enemy.json', entity('tds:enemy', {'tds:skin': prop_int(N_ENEMY - 1), 'tds:size': LOOK_SIZE}, {**base_components(['enemy', 'tds'], (0.3, 0.45), (0.01, 0.01)), **NAME}))
 out('bp/entities/unit.json', entity('tds:unit', {'tds:skin': prop_int(7), 'tds:size': SIZE}, {**base_components(['unit', 'tds'], (0.3, 0.4), (0.01, 0.01)), **NAME}))
 tw = {**base_components(['tower', 'tds'], (0.3, 0.5), (0.8, 0.9)), **NAME,
       'minecraft:interact': {'interactions': [{'interact_text': 'action.interact.tds_manage', 'swing': True, 'on_interact': {'filters': {'test': 'is_family', 'subject': 'other', 'value': 'player'}}}]}}
