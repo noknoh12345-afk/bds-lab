@@ -1352,10 +1352,25 @@
   "tries": 1
  },
  "q59_bgm_sampler": {
+  "arms": {
+   "bge": {
+    "mrstft": 1.541,
+    "n": 6,
+    "rms_db": -39.25,
+    "third_oct_db": 7.534,
+    "visqol": 3.547
+   }
+  },
+  "checkpoints": 0,
   "commit": "581e2f6",
+  "conclusion": "success",
+  "ended": "2026-11-06 05:18",
+  "failed_steps": 0,
+  "recordings": 11,
   "run": "42165212996",
   "started": "2026-11-06 04:54",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q60_sampler_walking_listener": {
   "status": "pending"
