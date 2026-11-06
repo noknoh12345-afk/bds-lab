@@ -1,0 +1,151 @@
+# Tower Defense Simulator — systems reproduced from the TDS wiki (data/*.json). Vanilla look only.
+
+## data from the wiki: every tower, enemy and mode loaded; tower rows match the wiki tables
+tds:info Scout 4
+= Scout Lv4/4 cost $2200 dmg 8 fr 0.325 range 16 ground limit - detect H2 L- F- dps 24.62
+tds:info Sniper
+~ ^Sniper Lv0/\d cost \$\d+ .* cliff .* detect H2 L3 F0
+tds:info Farm
+~ ^Farm Lv0/5 cost \$\d+ .* limit 10
+tds:info Accelerator 0
+~ Accelerator Lv0/\d .*limit 5 detect H1 L0 F-
+
+## bench: every tower level shoots a dummy at the wiki's Damage ÷ Firerate (±5%), hits inside its range and never outside
+tds:bench
+until "ev":"bench_done" 240000
+~ "ev":"bench_done","rows":3\d\d,"towers":7\d,"bad":0,
+!~ "ev":"bench_bad"
+
+## placement rules: path, cliff/ground, overlap, cost, upgrade and sell (1/3 of spent)
+@A join
+tag A add tds_dev
+@A cmd /tds:play Easy
+~ @A Easy: 20 waves, \$500
+tds:hold true
+@A cmd /tds:place Scout 0 -60 -10
+~ @A Cannot place: on the path
+@A cmd /tds:place Sniper 0 -60 -14
+~ @A Cannot place: cliff only
+@A cmd /tds:place Scout 0 -60 -14
+~ @A Placed #\d+ Scout \(\$375\)
+@A cmd /tds:place Scout 0 -60 -14
+~ @A Cannot place: overlaps
+@A cmd /tds:cash 1000
+@A cmd /tds:place Sniper -21 -58 -17
+~ @A Placed #\d+ Sniper
+@A cmd /tds:upgrade 1
+~ @A Scout → Lv1
+@A cmd /tds:target 1 Strongest
+~ @A #1 → Strongest
+@A cmd /tds:sell 1
+= @A Sold for $58
+@A cmd /tds:place Gatling_Gun 6 -60 -16
+~ @A Cannot place: need \$5250
+@A cmd /tds:cash 20000
+@A cmd /tds:place Gatling_Gun 6 -60 -16
+~ @A Placed
+@A cmd /tds:place Gatling_Gun 10 -60 -16
+~ @A Cannot place: limit 1
+
+## detection: a tower without hidden/lead/flying detection lets those enemies pass; with it, they die
+tds:stop
+@A cmd /tds:play Easy
+tds:hold true
+tds:speed 10
+@A cmd /tds:place Scout 0 -60 -13
+@A cmd /tds:cash 5000
+tds:spawn Hidden
+until "ev":"leak","id":\d+,"name":"Hidden" 30000
+!~ "ev":"enemy_kill","id":\d+,"name":"Hidden"
+@A cmd /tds:upgrade 1
+@A cmd /tds:upgrade 1
+~ @A Scout → Lv2
+tds:spawn Hidden
+until "ev":"enemy_kill","id":\d+,"name":"Hidden","by":1 30000
+tds:spawn Lead
+until "ev":"leak","id":\d+,"name":"Lead" 30000
+!~ "ev":"enemy_kill","id":\d+,"name":"Lead"
+tds:spawn Balloon
+until "ev":"leak","id":\d+,"name":"Balloon" 30000
+!~ "ev":"enemy_kill","id":\d+,"name":"Balloon"
+tds:speed 1
+
+## economy: Easy wave bonus (200 + (w-1)×160)×(1-0.1×p) and the wave-clear bonus
+tds:stop
+@A cmd /tds:play Easy
+tds:speed 10
+@A cmd /tds:place Scout -6 -60 -13
+@A cmd /tds:place Scout -10 -60 -13
+until "ev":"wave_clear","wave":1,"bonus":63 60000
+until "ev":"wave_cash","wave":1,"bonus":180 60000
+tds:speed 1
+
+## leaks: an enemy reaching the base removes its remaining health from base HP; HP 0 loses
+tds:stop
+@A cmd /tds:play Easy
+tds:speed 20
+until "ev":"leak","id":\d+,"name":"Normal","dmg":4,"baseHP":196 60000
+until "ev":"game_end","result":"lose" 120000
+until "ev":"reward","player":"A","result":"lose" 5000
+tds:speed 1
+
+## a full Easy match won by the bot (all 20 waves, bosses included)
+tds:stop
+@A cmd /tds:dev
+@A cmd /tds:equip 1 Scout
+@A cmd /tds:equip 2 Minigunner
+@A cmd /tds:equip 3 Demoman
+@A cmd /tds:equip 4 Ranger
+@A cmd /tds:equip 5 Accelerator
+@A cmd /tds:play Easy
+@A cmd /tds:auto true
+tds:speed 20
+until "ev":"game_end","result":"win","mode":"Easy","wave":20 300000
+until "ev":"reward","player":"A","result":"win","coins":300,"gems":0,"exp":50 5000
+tds:speed 1
+@A cmd /tds:auto false
+
+## lobby: profile, shop with coins, loadout, quests, elevator to a match
+tds:stop
+@A cmd /tds:profile
+~ @A Lv\d+ exp \d+ coins \d+ gems \d+ owned \d+ loadout
+@A cmd /tds:grant 1000 0 0
+@A cmd /tds:buy Scout
+~ @A Already own Scout
+@A cmd /tds:buy War_Machine
+~ @A War Machine is not sold \(Exclusive\)
+@A cmd /tds:buy Freezer
+~ @A Unlocked Freezer|@A Already own Freezer
+@A cmd /tds:equip 2 Freezer
+~ @A Loadout: Scout, Freezer
+@A cmd /tds:quests
+~ @A Defeat 300 enemies \d+/300 .*Win a match 1/1
+@A cmd /tds:grant 0 0 0
+@A cmd /tds:queue Hardcore
+~ @A Hardcore needs level 50
+@A cmd /tds:queue Casual
+~ @A Elevator Casual: 1/4, departs in 20s
+tds:depart Casual
+until "ev":"match_start","mode":"Casual" 5000
+~ "ev":"elevator_depart","mode":"Casual","players":\["A"\]
+
+## restart: the match, its towers and wave survive a server restart
+tds:hold true
+@A cmd /tds:place Freezer 0 -60 -14
+~ @A Placed #\d+ Freezer
+restart
+@A join
+tds:state
+~ "ev":"restored","mode":"Casual","wave":0,"enemies":0,"towers":1
+~ "towers":\["\d+:Freezer:0"\]
+
+## load: 200 enemies and 50 towers keep 20 TPS
+tds:stop
+@A cmd /tds:play Easy
+tds:hold true
+@A cmd /tds:stress 200 50
+~ @A stress 200 enemies 50 towers
+wait 12000
+tds:tps
+~ ^tps (19|20)\.\d
+tds:stop

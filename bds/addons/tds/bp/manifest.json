@@ -1,0 +1,33 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Tower Defense Simulator",
+    "description": "TDSのシステム再現タワーディフェンス",
+    "uuid": "78ce3c25-6365-4a01-a715-db443e19776c",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 26, 62]
+  },
+  "modules": [
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "d12ece31-9a19-4bee-b4e6-35eb5f94be59",
+      "version": [1, 0, 0],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.11.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.3.0"
+    },
+    {
+      "uuid": "56343de7-f6bb-493a-9699-86ba7e274787",
+      "version": [1, 0, 0]
+    }
+  ]
+}
