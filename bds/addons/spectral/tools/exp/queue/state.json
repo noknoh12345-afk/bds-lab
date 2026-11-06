@@ -1263,34 +1263,41 @@
  },
  "q54_voices_28_32": {
   "arms": {
+   "v24": {
+    "mrstft": 1.742,
+    "n": 13,
+    "rms_db": -39.1,
+    "third_oct_db": 7.781,
+    "visqol": 2.993
+   },
    "v28": {
-    "mrstft": 1.763,
-    "n": 4,
-    "rms_db": -38.3,
-    "third_oct_db": 5.949,
-    "visqol": 3.352
+    "mrstft": 1.86,
+    "n": 13,
+    "rms_db": -39,
+    "third_oct_db": 8.435,
+    "visqol": 2.832
    },
    "v32": {
-    "mrstft": 1.802,
-    "n": 4,
-    "rms_db": -38.25,
-    "third_oct_db": 5.396,
-    "visqol": 3.323
+    "mrstft": 1.835,
+    "n": 13,
+    "rms_db": -39.2,
+    "third_oct_db": 9.093,
+    "visqol": 2.731
    }
   },
   "checkpoints": 0,
   "commit": "b5fff12",
-  "conclusion": "failure",
+  "conclusion": "success",
   "earlier_runs": [
    "42146759946"
   ],
-  "ended": "2026-11-06 02:41",
-  "failed_steps": 1,
-  "recordings": 0,
+  "ended": "2026-11-06 03:22",
+  "failed_steps": 0,
+  "recordings": 39,
   "run": "42151926608",
   "started": "2026-11-06 02:41",
-  "status": "running",
-  "tries": 1
+  "status": "done",
+  "tries": 2
  },
  "q55_sampler_same_thrice": {
   "status": "pending"
