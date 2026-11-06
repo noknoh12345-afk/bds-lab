@@ -37,16 +37,26 @@ def preview_tex(name):
     return path
 
 
-def render(name, tex=None, anim=None, views=None):
+def render(name, tex=None, anim=None, views=None, lvl=None, fire=False):
     geo = name if not tex else tex
-    cmd = ['node', 'lab.mjs', 'render', f'geometry.tds.{name}', '--tex', preview_tex(tex or name), '-a', 'tds']
+    target = f'geometry.tds.{name}'
+    if lvl is not None:                                       # the level's look: hide what the render controller would hide
+        import json
+        from compose import keep_level
+        d = json.load(open(os.path.join(ADDON, 'rp', 'models', 'entity', 'tds', f'{name}.geo.json')))
+        g = d['minecraft:geometry'][0]
+        g['bones'] = keep_level(g['bones'], lvl, fire)
+        g['description']['identifier'] = f'geometry.tds.{name}_lv{lvl}'
+        target = os.path.join(TMP, f'{name}_lv{lvl}.geo.json')
+        json.dump(d, open(target, 'w'))
+    cmd = ['node', 'lab.mjs', 'render', target, '--tex', preview_tex(tex or name), '-a', 'tds']
     if anim:
         cmd += ['--anim', anim]
     if views:
         cmd += ['--views', views]
     r = subprocess.run(cmd, cwd=LAB, capture_output=True, text=True, timeout=180)
     lines = [l for l in (r.stdout + r.stderr).splitlines() if l.startswith(('W ', 'ERR', 'OK'))]
-    png = os.path.join(OUT, f'geometry.tds.{name}.png')
+    png = None
     for l in lines:
         if l.startswith('OK '):
             png = os.path.join(LAB, 'bds', l.split()[1])           # the renderer names the file it wrote
@@ -75,17 +85,18 @@ def main(argv):
     views = argv[argv.index('--views') + 1] if '--views' in argv else None
     name = argv[argv.index('--sheet') + 1] if '--sheet' in argv else 'look'
     scale = float(argv[argv.index('--scale') + 1]) if '--scale' in argv else 0.5
-    skip = {anim, views, name, str(scale)}
+    lvl = int(argv[argv.index('--lvl') + 1]) if '--lvl' in argv else None
+    skip = {anim, views, name, str(scale), str(lvl)}
     names = [a for a in argv if not a.startswith('--') and a not in skip]
     if '--all' in argv:
         names = sorted(f[:-9] for f in os.listdir(os.path.join(ADDON, 'rp', 'models', 'entity', 'tds')) if f.endswith('.geo.json'))
     paths = []
     for n in names:
         geo, tex = (n.split(':') + [None])[:2]
-        p, _ = render(geo, tex, anim, views)
-        tag = f'{geo}' + (f' [{tex}]' if tex else '') + (f' {anim}' if anim else '')
+        p, _ = render(geo, tex, anim, views, lvl, '--fire' in argv)
+        tag = f'{geo}' + (f' [{tex}]' if tex else '') + (f' {anim}' if anim else '') + (f' lv{lvl}' if lvl is not None else '')
         keep = os.path.join(TMP, f'r_{len(paths)}.png')
-        if os.path.exists(p):
+        if p and os.path.exists(p):
             Image.open(p).save(keep)
         paths.append((tag, keep))
     out = sheet(paths, os.path.join(OUT, f'sheet_{name}.png'), s=scale)

@@ -51,6 +51,16 @@ def face_point(c, face, u, v):
     return (x0 + u * s[0], y0, z0 + v * s[2])
 
 
+def rot_about(v, pivot, rot):
+    """the game's reading of a JSON rotation [rx, ry, rz]: right-handed (-rx, ry, -rz), X then Y then Z, about pivot"""
+    rx, ry, rz = math.radians(-rot[0]), math.radians(rot[1]), math.radians(-rot[2])
+    x, y, z = (v[i] - pivot[i] for i in range(3))
+    y, z = y * math.cos(rx) - z * math.sin(rx), y * math.sin(rx) + z * math.cos(rx)
+    x, z = x * math.cos(ry) + z * math.sin(ry), -x * math.sin(ry) + z * math.cos(ry)
+    x, y = x * math.cos(rz) - y * math.sin(rz), x * math.sin(rz) + y * math.cos(rz)
+    return (x + pivot[0], y + pivot[1], z + pivot[2])
+
+
 def clamp(c):
     return tuple(max(0, min(255, int(round(v)))) for v in c)
 
@@ -74,6 +84,11 @@ class Pixel:
     def local(self):
         """the texel's centre in the cube's own (unrotated) frame, as the game draws it"""
         return face_point(self.cube, self.face, self.u, self.v)
+
+    def inbone(self):
+        """the texel's centre in its bone's frame: local() turned by the cube's own rotation about its pivot"""
+        q, c = self.local(), self.cube
+        return rot_about(q, c['pivot'], c['rot']) if c['rot'] else q
 
     def mat(self, name):
         return self.pal[name]

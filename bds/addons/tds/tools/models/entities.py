@@ -14,7 +14,10 @@ from __future__ import annotations
 import json
 import os
 
+import hq
+import hq_mobs
 import vanilla as V
+from hq_parts import FLASH_BONES
 
 SK = "q.property('tds:skin')"
 HOLO = 'textures/entity/tds/holo_tint'
@@ -99,17 +102,22 @@ TOWER_ANIMS = {
     'animation.tds_tower.idle': loop({
         'head': {'rotation': [0, S(40, 6), 0]},
         'flag': {'rotation': [0, S(160, 12), S(230, 3)]},
-        'spin': {'rotation': [0, 'q.life_time * 90', 0], 'position': [0, S(120, 0.4), 0]}}),
+        'spin': {'rotation': [0, 'q.life_time * 90', 0], 'position': [0, S(120, 0.4), 0]},
+        'lv2_spin': {'rotation': [0, 'q.life_time * 60', 0]}, 'lv4_spin': {'rotation': [0, 'q.life_time * 120', 0]},
+        'lv4_spinx': {'rotation': ['q.life_time * 150', 0, 0]}, 'lv5_flag': {'rotation': [0, S(170, 14), 0]},
+        **{f: {'position': [0, -1000, 0]} for f in FLASH_BONES}}),         # muzzle flashes wait out of sight (positions add)
     'animation.tds_tower.fire': {'loop': False, 'animation_length': 0.2, 'bones': {
         'gun': {'position': {'0.0': [0, 0, 0], '0.05': [0, 0, 1.4], '0.2': [0, 0, 0]}},
         'barrel': {'rotation': {'0.0': [0, 0, 0], '0.06': [8, 0, 0], '0.2': [0, 0, 0]}},
-        'rightarm': {'rotation': {'0.0': [0, 0, 0], '0.05': [-6, 0, 0], '0.2': [0, 0, 0]}}}},
+        'rightarm': {'rotation': {'0.0': [0, 0, 0], '0.05': [-6, 0, 0], '0.2': [0, 0, 0]}},
+        **{f: {'position': {'0.0': [0, 1000, 0], '0.06': [0, 1000, 0], '0.07': [0, 0, 0]}} for f in FLASH_BONES}}},
     'animation.tds_tower.spawn': {'loop': False, 'animation_length': 1.2, 'bones': {
         'door': {'rotation': {'0.0': [0, 0, 0], '0.25': [-85, 0, 0], '0.9': [-85, 0, 0], '1.2': [0, 0, 0]}}}},
     'animation.tds_tower.place': {'loop': False, 'animation_length': 0.35, 'bones': {b: {'scale': POP} for b in ('root', 'tds_base', 'waist')}},
     'animation.tds_tower.place_body': {'loop': False, 'animation_length': 0.35, 'bones': {'body': {'scale': POP}}},
     'animation.tds_tower.levelup': {'loop': False, 'animation_length': 0.4, 'bones': {b: {'scale': LVL} for b in ('root', 'tds_base', 'waist')}},
     'animation.tds_tower.levelup_body': {'loop': False, 'animation_length': 0.4, 'bones': {'body': {'scale': LVL}}},
+    'animation.tds_tower.flashoff': loop({f: {'position': [0, -1000, 0]} for f in FLASH_BONES}),     # the ghost's flashes
     'animation.tds_tower.smoke': {'loop': True, 'animation_length': 1.4,
                                   'particle_effects': {'0.0': {'effect': 'smoke', 'locator': 'smoke'}}},
 }
@@ -130,6 +138,28 @@ UNIT_ANIMS = {
     'animation.tds_unit.sweep': loop({'head': {'rotation': [0, S(80, 45), 0]}}),
     'animation.tds_unit.spin': loop({'head': {'rotation': [0, 'q.life_time * 90', 0]}}),
 }
+
+
+def level_rules(rp, geos, built=None):
+    """part_visibility for the upgrade looks, from the bone names the tower geometries use: lvN_* from level N, preN_* below N,
+    rAtoB_* from A to below B (the original's towers change their model at each upgrade). The ghost shows level 0."""
+    import glob
+    import re
+    names = set()
+    for p in glob.glob(os.path.join(rp, 'models', 'entity', 'tds', '*.geo.json')):
+        g = json.load(open(p))['minecraft:geometry'][0]
+        if g['description']['identifier'] in geos:
+            names |= {b['name'] for b in g['bones']}
+    L = "q.property('tds:lvl')"
+    found = sorted({m.group(0) for n in names for m in [re.match(r'(lv\d|pre\d|r\dto\d)_', n)] if m})
+    rules, ghost = [], []
+    for pre in found:
+        a = re.findall(r'\d', pre)
+        cond = f'{L} >= {a[0]}' if pre.startswith('lv') else f'{L} < {a[0]}' if pre.startswith('pre') else f'{L} >= {a[0]} && {L} < {a[1]}'
+        rules.append({f'{pre}*': cond})
+        shown_at_0 = pre.startswith('pre') or (pre.startswith('r') and a[0] == '0')
+        ghost.append({f'{pre}*': shown_at_0})
+    return rules, ghost
 
 
 def arr(prefix, n=8):
@@ -182,7 +212,7 @@ def outputs(rp, models):
     # enemies: every class a vanilla body + our gear
     e_geo = [b[0] for b in V.ENEMY_BASE]
     e_tex = [b[1] for b in V.ENEMY_BASE]
-    e_gear = [make().name for make in V.ENEMY_GEAR]
+    e_gear = [make().name for make in hq_mobs.ENEMY_GEAR]
     out[j('entity', 'enemy.entity.json')] = dumps(entity(
         'tds:enemy', e_geo, [G(n) for n in e_gear], e_tex, [T(n) for n in e_gear],
         {'default': 'entity_alphatest', 'blend': 'entity_alphablend', 'gear': 'entity_emissive_alpha_one_sided'}, range(8),
@@ -195,7 +225,7 @@ def outputs(rp, models):
         if i in V.TOWER_FIGURE or i == 6:
             fig = V.TOWER_FIGURE.get(i, V.TOWER_FIGURE[0])
             t_geo.append(fig[0]); t_tex.append(HOLO if i == 6 else fig[1])
-            g = V.TOWER_GEAR.get(i, V.TOWER_GEAR[0])().name
+            g = hq.TOWER_GEAR.get(i, hq.TOWER_GEAR[0])().name
             t_gear.append(G(g)); t_gtex.append(T(g + ('_holo' if i == 6 else '')))
         else:
             n = {2: 'tower_farm', 3: 'tower_mortar', 5: 'tower_barracks', 7: 'tower_frost'}[i]
@@ -214,8 +244,9 @@ def outputs(rp, models):
         extra={'particle_effects': {'smoke': 'minecraft:basic_smoke_particle'}, 'scripts': {'initialize': ['v.lvl = 0;']}}))
     out[j('entity', 'ghost.entity.json')] = dumps(entity(
         'tds:ghost', t_geo, t_gear, [], [], {'default': 'entity_alphatest', 'blend': 'entity_alphablend'}, FIGURES, pick(FIGURES, 0.36, 0.7),
-        {'stand_waist': 'animation.tds_tower.stand_waist', 'stand_body': 'animation.tds_tower.stand_body', 'hold': 'animation.tds_tower.hold'},
-        ['stand_waist', {'stand_body': skin_is(*FIG_WITCH)}, {'hold': skin_is(*FIG_PILLAGER)}], 'ghost',
+        {'stand_waist': 'animation.tds_tower.stand_waist', 'stand_body': 'animation.tds_tower.stand_body', 'hold': 'animation.tds_tower.hold',
+         'flashoff': 'animation.tds_tower.flashoff'},
+        ['stand_waist', {'stand_body': skin_is(*FIG_WITCH)}, {'hold': skin_is(*FIG_PILLAGER)}, 'flashoff'], 'ghost',
         extra={'textures': {'ok': T('ghost_ok'), 'bad': T('ghost_bad')}}))
 
     # units: the soldier and the skeleton are vanilla bodies + gear; jeep, sentry and ice turret are ours
@@ -226,7 +257,7 @@ def outputs(rp, models):
         if k:
             fig = V.UNIT_FIGURE[k]
             u_geo.append(fig[0]); u_tex.append(fig[1])
-            g = V.UNIT_GEAR[k]().name
+            g = hq_mobs.UNIT_GEAR[k]().name
             u_gear.append(G(g)); u_gtex.append(T(g))
         else:
             n = {0: 'unit_jeep', 2: 'unit_sentry', 4: 'unit_ice'}[i]
@@ -240,12 +271,13 @@ def outputs(rp, models):
         [{'march': skin_is(1, 5, 6, 7)}, {'shamble': skin_is(3)}, {'wheels': skin_is(0)}, {'sweep': skin_is(2)}, {'spin': skin_is(4)}], 'unit'))
 
     pips = [{f'pip{i}': f"q.property('tds:lvl') >= {i}"} for i in range(1, 8)]
+    lv_rules, ghost_rules = level_rules(rp, t_geo + t_gear)
     rcs = {}
     rcs.update(two_rc('enemy', range(8), (('default', 'blend'), f'{SK} == 4 ? 1 : 0'), (('gear', 'blend'), f'{SK} == 4 ? 1 : 0')))
     rcs.update(two_rc('tower', FIGURES, (('default', 'lit', 'blend'), f'{SK} == 6 ? 2 : ({skin_is(*FIGURES)}) ? 0 : 1'),
-                      (('lit', 'blend'), f'{SK} == 6 ? 1 : 0'), parts=[{'*': True}, *pips]))
+                      (('lit', 'blend'), f'{SK} == 6 ? 1 : 0'), parts=[{'*': True}, *pips, *lv_rules]))
     rcs.update(two_rc('unit', U_FIG, (('default', 'lit'), f'({skin_is(*U_FIG)}) ? 0 : 1'), (('lit',), '0')))
-    rcs.update(two_rc('ghost', FIGURES, (('blend',), '0'), (('blend',), '0'), parts=[{'*': True}, *[{f'pip{i}': False} for i in range(1, 8)]], tint=True))
+    rcs.update(two_rc('ghost', FIGURES, (('blend',), '0'), (('blend',), '0'), parts=[{'*': True}, *[{f'pip{i}': False} for i in range(1, 8)], *ghost_rules], tint=True))
     out[j('render_controllers', 'tds.render_controllers.json')] = dumps({'format_version': '1.8.0', 'render_controllers': rcs})
     for name, anims in (('tds_enemy', ENEMY_ANIMS), ('tds_tower', TOWER_ANIMS), ('tds_unit', UNIT_ANIMS)):
         out[j('animations', f'{name}.animation.json')] = dumps({'format_version': '1.8.0', 'animations': anims})

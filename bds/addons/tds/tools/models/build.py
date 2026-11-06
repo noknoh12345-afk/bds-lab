@@ -20,15 +20,15 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 RP = os.path.join(ROOT, 'rp')
 
 from kit import write  # noqa: E402
-import towers  # noqa: E402
+import hq  # noqa: E402
+import hq_mobs  # noqa: E402
 import units  # noqa: E402
-import vanilla  # noqa: E402
 
 # bodies: vanilla mobs for every enemy and the figure towers / units (referenced, not built); ours for buildings and machines
 GROUPS = {
-    'enemy gear': vanilla.ENEMY_GEAR,
-    'tower': [towers.farm, towers.mortar, towers.barracks, towers.frost], 'tower gear': list(vanilla.TOWER_GEAR.values()),
-    'unit': [units.jeep, units.sentry, units.ice], 'unit gear': list(vanilla.UNIT_GEAR.values()),
+    'enemy gear': hq_mobs.ENEMY_GEAR,
+    'tower': hq.BUILDINGS, 'tower gear': list(hq.TOWER_GEAR.values()),
+    'unit': [units.jeep, units.sentry, units.ice], 'unit gear': list(hq_mobs.UNIT_GEAR.values()),
 }
 KEEP = ('ghost_ok.png', 'ghost_bad.png')          # written by tools/gen_assets.py
 

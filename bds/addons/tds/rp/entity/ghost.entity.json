@@ -38,7 +38,8 @@
      },
      {
       "hold": "q.property('tds:skin') == 0 || q.property('tds:skin') == 4 || q.property('tds:skin') == 6"
-     }
+     },
+     "flashoff"
     ]
    },
    "render_controllers": [
@@ -50,7 +51,8 @@
    "animations": {
     "stand_waist": "animation.tds_tower.stand_waist",
     "stand_body": "animation.tds_tower.stand_body",
-    "hold": "animation.tds_tower.hold"
+    "hold": "animation.tds_tower.hold",
+    "flashoff": "animation.tds_tower.flashoff"
    }
   }
  }

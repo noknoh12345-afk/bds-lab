@@ -20,6 +20,8 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import vanilla as V  # noqa: E402
+import hq  # noqa: E402
+import hq_mobs  # noqa: E402
 
 ADDON = os.path.abspath(os.path.join(HERE, '..', '..'))
 LAB = os.path.abspath(os.path.join(ADDON, '..', '..', '..'))
@@ -70,12 +72,13 @@ def vanilla_tex(gid):
     return Image.open(keep).convert('RGBA')
 
 
-def compose(tag, gid, gear, gear_tex, pose=None, lift=0.0):
+def compose(tag, gid, gear, gear_tex, pose=None, lift=0.0, lvl=0, fire=False):
     vb, vw, vh = vanilla_geo(gid)
     vt = vanilla_tex(gid)
     if vt.size != (vw, vh):                         # the lab packs extra layers beside / below the base texture: keep the base
         vt = vt.crop((0, 0, vw, vh)) if vt.width >= vw and vt.height >= vh else vt.resize((vw, vh), Image.NEAREST)
     g = json.load(open(os.path.join(ADDON, 'rp', 'models', 'entity', 'tds', f'{gear}.geo.json')))['minecraft:geometry'][0]
+    g['bones'] = keep_level(g['bones'], lvl, fire)
     gt = Image.open(os.path.join(ADDON, 'rp', 'textures', 'entity', 'tds', f'{gear_tex}.png')).convert('RGBA')
     W, H = max(vw, gt.width), vh + gt.height
     tex = Image.new('RGBA', (W, H), (0, 0, 0, 0))
@@ -128,6 +131,28 @@ def compose(tag, gid, gear, gear_tex, pose=None, lift=0.0):
     return gp, tp
 
 
+def visible(name, lvl, fire=False):
+    """what the render controllers show at tower level lvl (entities.level_rules), flashes only during a shot"""
+    import re
+    if 'flash' in name:
+        return fire
+    for pat, test in ((r'pip(\d)$', lambda a: lvl >= a[0]), (r'lv(\d)_', lambda a: lvl >= a[0]), (r'pre(\d)_', lambda a: lvl < a[0]),
+                      (r'r(\d)to(\d)_', lambda a: a[0] <= lvl < a[1])):
+        mm = re.match(pat, name)
+        if mm:
+            return test([int(g) for g in mm.groups()])
+    return True
+
+
+def keep_level(bones_list, lvl, fire=False):
+    """the bones shown at a level, without the children of hidden ones"""
+    hidden = set()
+    for b in bones_list:
+        if not visible(b['name'], lvl, fire) or (b.get('parent') in hidden):
+            hidden.add(b['name'])
+    return [b for b in bones_list if b['name'] not in hidden]
+
+
 def is_under(bones, name, root):
     while name:
         if name == root:
@@ -154,30 +179,32 @@ ZOMBIE = {'rightArm': (-84, 0, 0), 'leftArm': (-84, 0, 0)}
 def job(kind, i):
     if kind == 'enemy':
         gid = V.ENEMY_BASE[i][0]
-        gear = V.ENEMY_GEAR[i]().name
+        gear = hq_mobs.ENEMY_GEAR[i]().name
         return f'enemy{i}_{gear}', gid, gear, gear, (ZOMBIE if i in (0, 1) else {'leftarm': (-42, 0, 0)} if i == 6 else None), 0.0
     if kind == 'tower':
         fig = V.TOWER_FIGURE.get(i, V.TOWER_FIGURE[0])
-        gear = V.TOWER_GEAR.get(i, V.TOWER_GEAR[0])().name
+        gear = hq.TOWER_GEAR.get(i, hq.TOWER_GEAR[0])().name
         return f'tower{i}_{gear}', fig[0], gear, gear + ('_holo' if i == 6 else ''), (HOLD if i in (0, 4, 6) else None), V.PED_TOP
     fig = V.UNIT_FIGURE[i]
-    gear = V.UNIT_GEAR[i]().name
+    gear = hq_mobs.UNIT_GEAR[i]().name
     return f'unit{i}_{gear}', fig[0], gear, gear, ({'rightarm': (-70, -12, 0), 'leftarm': (-66, 30, 0)} if i == 1 else ZOMBIE), 0.0
 
 
 def main(argv):
     views = argv[argv.index('--views') + 1] if '--views' in argv else None
+    lvl = int(argv[argv.index('--lvl') + 1]) if '--lvl' in argv else 0
+    fire = '--fire' in argv
     anim = argv[argv.index('--anim') + 1] if '--anim' in argv else None
     jobs = [('enemy', i) for i in range(8)] + [('tower', i) for i in (0, 1, 4)] + [('unit', i) for i in (1, 3)] if argv[0] == 'all' else [(argv[0], int(argv[1]))]
     shots = []
     for kind, i in jobs:
         tag, gid, gear, gtex, pose, lift = job(kind, i)
-        gp, tp = compose(tag, gid, gear, gtex, None if anim else pose, lift)     # with an animation, its pose is the one shown
+        gp, tp = compose(tag + f'_lv{lvl}', gid, gear, gtex, None if anim else pose, lift, lvl, fire)     # with an animation, its pose is the one shown
         png = render(gp, tp, views, anim)
         if png:
-            keep = os.path.join(TMP, f'shot_{tag}.png'); shutil.copy(png, keep); shots.append((tag, keep))
+            keep = os.path.join(TMP, f'shot_{tag}_lv{lvl}.png'); shutil.copy(png, keep); shots.append((f'{tag} lv{lvl}', keep))
     from look import sheet
-    print(sheet(shots, os.path.join(LAB, 'bds', '.lab', 'render', f'sheet_compose_{argv[0]}.png'), s=0.5))
+    print(sheet(shots, os.path.join(LAB, 'bds', '.lab', 'render', f'sheet_compose_{argv[0]}_lv{lvl}.png'), s=0.5))
 
 
 if __name__ == '__main__':
