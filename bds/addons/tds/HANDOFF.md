@@ -44,7 +44,7 @@
 - `node lab.mjs run -a tds "<cmd>" ...`: 新しいワールドでコマンドを流し、全部表示する（失敗の調査用）。
 - アセット生成（`bds/addons/tds` で、この順）: `python3 -I tools/art/art.py` → `python3 -I tools/art/hud_anim.py` → `python3 -I tools/models/build.py` → `python3 -I tools/gen_assets.py` → `node tools/hud.mjs` → `python3 -I tools/models/test_models.py`
 - プレビューと監査: `python3 -I tools/models/sheet.py <enemy|tower|unit> [--only "A,B"] [--lvl 0|N|top] [--fire] [--per N --cols N --size WxH]`（`bds/.lab/render/sheet_roster_*.png`）、`--audit --no-render`（装備が体に埋まる・刺さる・バニラの面と同一平面: 3種とも 0 件）。
-- ラボのレンダラは Molang の変数を 0 として扱うので、歩きや死亡の動きはそのままでは描けない。動きを見るときは変数を時間の式に置き換えた一時クリップを rp に置いて描き、すぐ消す（このセッションでは scratch の animprev.py でやった。再現するなら tools/models/motion.py の変数の意味どおりに置換する）。
+- 動きのプレビュー: `python3 -I tools/models/motion_preview.py <enemy|unit|tower> "名前,名前" --clip walk|die|fall|leave|cast|dizzy|idle|<タワーの射撃名> [--times 0,0.1,0.2] [--views left] [--pace 2.7]`（`bds/.lab/render/motion_preview.png`）。ラボのレンダラは Molang の変数を 0 として扱うので、変数を時間の式に置き換えた一時クリップを rp に置いて描き、すぐ消す。
 
 ## 5. アーキテクチャの要点
 - **ロースター:** データの全エンティティにレシピがある（`roster.py` 敵144、`roster_towers.py` タワー79、`roster_units.py` ユニット64）。`roster.looks(kind)` の順番が `tds:skin` の番号（同じアニメの見た目は連続）。`src/looks.ts`（生成）がスクリプトに skin・size・タワーの射撃クリップ名を渡す。

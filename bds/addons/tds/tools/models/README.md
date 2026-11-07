@@ -46,7 +46,9 @@ python3 tools/models/test_models.py   # the contract: geometries, textures, gear
 
 `python3 tools/models/sheet.py <enemy|tower|unit> [--only "A,B"] [--lvl 0|N|top] [--fire] [--per N --cols N --size WxH]`
 draws contact sheets (`bds/.lab/render/sheet_roster_*.png`); `--audit --no-render` finds gear buried in the body, poking into
-it or on a vanilla face's plane. `node lab.mjs check -a tds` lints every geometry (z-fights, UVs) and type-checks.
+it or on a vanilla face's plane. `python3 tools/models/motion_preview.py <kind> "Name,Name" --clip walk|die|... --times ...`
+draws the motion frame by frame (the renderer takes variables as 0: it writes them out in time into a temporary clip).
+`node lab.mjs check -a tds` lints every geometry (z-fights, UVs) and type-checks.
 
 Conventions (kit.py): rotation `[rx, ry, rz]` is applied as right-handed `(-rx, ry, -rz)`; the game mirrors models in x
 (`east` UV on the low-x side); paint by position; plates (wings, flags, capes) are one zero-thickness cube cut by alpha; keep
