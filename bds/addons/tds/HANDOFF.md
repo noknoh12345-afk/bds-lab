@@ -131,3 +131,7 @@
   - `node lab.mjs app ci -a tds --ref addon/tds` は addon/tds の上で起動してしまい、スキップされた。
   - 1 回目（main）: Play とアカウントの準備まで進み、端末の土台は暗号化キャッシュに入った（4.9 GB）。Microsoft のサインインの段階で失敗（MS_EMAIL / MS_PASSWORD が無いか二段階）。→ `APP_SIGNIN=0`（LAN 参加にサインインは要らない）。
 - シナリオは `bds/addons/tds/app.txt`（タイトル → 参加 → ロビーの HUD → 訓練場と敵 → 遠征: 到着、空撮、拠点、門、階段の角、坂、橋、真上、タワーと敵 → クライアントのエラーが無いこと）。見どころへの移動は `/tds:siteview`。結果は `node lab.mjs app ci watch <番号>` で `app/runs/gh-<番号>/` に取る（main のラボで）。
+- **結果（2026-11-08）**:
+  - unit go（run 42403343936、BDS 1.26.61.1）: test 280/280、QA clean、.mcaddon の成果物。
+  - 実機（run 42408059626、アプリと BDS 1.26.62.1）: **PASS（手順 74 個）**、参加 43 秒、クライアントのエラーなし。写真と動画 19 個は Discord に届く。成果物は暗号化されていて、`APP_CACHE_KEY`（または同じ `GOOGLE_AAS_TOKEN`）を `.env.local` に入れた手元で `node lab.mjs app ci watch 42408059626` を実行すると開ける。
+  - シナリオで試合を始めるときは `do execute as @a run tds:play ...` を使う（アプリのチャットに打った `/tds:play` は実行されなかった。run 42403346240）。
