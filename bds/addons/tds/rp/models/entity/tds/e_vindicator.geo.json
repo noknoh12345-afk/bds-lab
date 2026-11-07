@@ -7,7 +7,7 @@
     "texture_width": 256,
     "texture_height": 64,
     "visible_bounds_width": 2.21,
-    "visible_bounds_height": 2.17,
+    "visible_bounds_height": 2.16,
     "visible_bounds_offset": [
      0,
      0.83,
@@ -31,7 +31,7 @@
        ],
        "size": [
         9.96,
-        12.46,
+        11.96,
         0.8
        ],
        "uv": {
@@ -42,7 +42,7 @@
          ],
          "uv_size": [
           20,
-          25
+          24
          ]
         },
         "east": {
@@ -52,7 +52,7 @@
          ],
          "uv_size": [
           2,
-          25
+          24
          ]
         },
         "south": {
@@ -62,7 +62,7 @@
          ],
          "uv_size": [
           20,
-          25
+          24
          ]
         },
         "west": {
@@ -72,7 +72,7 @@
          ],
          "uv_size": [
           2,
-          25
+          24
          ]
         },
         "up": {

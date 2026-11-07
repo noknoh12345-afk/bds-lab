@@ -40,6 +40,8 @@ def body_px(m, p):
             return pal['dark']                                   # its eyes
         if f == 'north' and abs(q[0]) < 1.6 and 2.6 < q[1] < 3.4:
             return pal['dark']
+        if f in ('east', 'west', 'south', 'up') and 0.3 < p.u < 0.7 and 0.3 < p.v < 0.7:
+            return mul(p.col, 0.78) if not (0.36 < p.u < 0.64 and 0.36 < p.v < 0.64) else mul(p.col, 0.7)   # its core, seen through it
         return mul(p.col, 1.15) if n > 0.68 else (lit(pal['glow']) if hash3(*q) > 0.97 else p.col)
     if d == 'crate':
         if f == 'up':
@@ -157,8 +159,7 @@ def _rig(key, extra=(), parts=None, family='hop'):
 def slime(name, theme='toxic', mats=None, size=1.0):
     m = body(name, theme, {'t1': '#5ac850', 't2': '#3a9a34', 't3': '#9af07a', **(mats or {})})
     s = 7.0 * size
-    m.box('root', 'jelly', -s, s, 0, 2 * s, -s, s, 't1', decal='jelly', seam=True)
-    m.box('root', 'core', -s * 0.4, s * 0.4, s * 0.5, s * 1.3, -s * 0.4, s * 0.4, 'glow')
+    m.box('root', 'jelly', -s, s, 0, 2 * s, -s, s, 't1', decal='jelly', seam=True)       # its core painted as seen through it
     m.th_style = None
     return m, _rig(name, parts={'body': ('root', (-s, s, 0, 2 * s, -s, s), 0.0)}), 'hop'
 
@@ -252,7 +253,7 @@ def floater(name, theme='void', mats=None):
     m.bone('spin', 'root', (0, 12, 0))
     octa(m, 'root', 'bell', 'y', (0, 0), 10.0, 16.0, 6.0, 't1', decal='theme')
     octa(m, 'root', 'dome', 'y', (0, 0), 15.8, 18.2, 4.0, 't3', decal='theme')
-    octa(m, 'root', 'core', 'y', (0, 0), 11.0, 14.0, 2.6, 'glow')
+    octa(m, 'root', 'core', 'y', (0, 0), 7.6, 10.6, 2.2, 'glow')                          # its heart hangs under the bell
     for i in range(6):
         a = 60 * i
         x, z = 4.0 * math.sin(math.radians(a)), 4.0 * math.cos(math.radians(a))

@@ -27,7 +27,7 @@ THEMES = {
     'molten': dict(pal=dict(t1='#2e1a14', t2='#4a2418', t3='#6a3420', glow='#ff7a1a', trim='#ffb040'), style='crust', cover=0.92, eyes='#ffd060'),
     'fallen': dict(pal=dict(t1='#a8b0c0', t2='#7a8294', t3='#d8dce6', glow='#7ae8ff', trim='#5a6a8a'), style='bone', cover=0.7, eyes='#9af0ff'),
     'void': dict(pal=dict(t1='#1c1228', t2='#2e1c44', t3='#4a2c6a', glow='#c070ff', trim='#7a4aa8'), style='specks', cover=0.66, eyes='#e090ff'),
-    'frost': dict(pal=dict(t1='#cfeeff', t2='#8cc8ee', t3='#f0faff', glow='#d8ffff', trim='#5aa8d8'), style='ice', cover=0.56, eyes=None),
+    'frost': dict(pal=dict(t1='#cfeeff', t2='#8cc8ee', t3='#f0faff', glow='#d8ffff', trim='#5aa8d8'), style='ice', cover=0.56, eyes='#6ad0ff'),
     'hazmat': dict(pal=dict(t1='#e8c838', t2='#b89a28', t3='#3a3a3a', glow='#a8ff3c', trim='#2a2a2a'), style='suit', cover=1.0, eyes=None),
     'toxic': dict(pal=dict(t1='#4a6a24', t2='#33501a', t3='#7a9a3a', glow='#b8ff3c', trim='#2a3a14'), style='drip', cover=0.62, eyes='#d8ff60'),
     'shadow': dict(pal=dict(t1='#22202c', t2='#16141e', t3='#3a3648', glow='#b8b8ff', trim='#5a5470'), style='cloak', cover=0.9, eyes='#c8c8ff'),
@@ -119,92 +119,203 @@ def pbox(m, part, grow=0.0):
 
 
 # ------------------------------------------------------------------------------------------------ shells
-SHELL_OFF = {'head': 0.0, 'body': 0.06, 'rarm': 0.03, 'larm': 0.09, 'rleg': 0.01, 'lleg': 0.04, 'robe': 0.12, 'neck': 0.07, 'tail': 0.11, 'waist': 0.08}
+SHELL_OFF = {'head': 0.0, 'body': 0.06, 'rarm': 0.03, 'larm': 0.0, 'rleg': 0.01, 'lleg': 0.04, 'robe': 0.12, 'neck': 0.07, 'tail': 0.11, 'waist': 0.08}
 # gear sits outside the shells (0.3 .. 0.42 off the body): what is worn over a part keeps 0.45+ from it
 
 
+NOSE = {k: (-1, 1, 23, 27, -6, -4) for k in ('pillager', 'vindicator', 'evoker', 'witch', 'zvillager')}   # the villagers' nose
+NOSE['golem'] = (-1, 1, 32, 36, -9.5, -7.5)                       # the iron golem's
+LONG = {'suit', 'plate', 'crust', 'cloak', 'bone', 'ice', 'facets', 'specks', 'bolts'}     # themes whose sleeves run to the wrist
+
+
 def shell(m, parts=('head', 'body', 'rarm', 'larm', 'rleg', 'lleg'), grow=0.3, cover=None, face=None, theme=None, mat='t1', tag_='shell'):
-    """the theme's skin over the vanilla parts, `grow` off them (0.2+ from every vanilla face), holes where the body shows"""
+    """the theme's clothes over the vanilla parts, `grow` off them, designed like the towers' (tailor.py): on a body of two
+    arms and two legs the head wears a cap of it down to the brow (the vanilla face stays in view), the arms sleeves to the
+    elbow or the wrist (the hands bare), the body a tunic, the legs trousers; a body of another shape (a golem, a mite, a
+    ravager, a phantom, a blaze) wears it whole. No random holes: each theme is a pattern (shell_px)."""
     th = THEMES[theme or m.theme]
     if not th.get('style'):
         return
     if has(m, 'robe') and 'body' in parts and 'robe' not in parts:
         parts = tuple('robe' if p == 'body' else p for p in parts)     # the vanilla coat would hide a shell on the body
+    if has(m, 'waist') and 'body' in parts and 'waist' not in parts:
+        parts = parts + ('waist',)                            # a golem's waist: left bare, its vanilla belly shows through the theme
+    two_legged = m.rig.family in ('humanoid', 'player', 'stand') and has(m, 'rleg')
+    style = th['style']
+    over = tag_ != 'shell'                                    # a second layer (bandages over the clothes): its own hems
     for part in parts:
         if not has(m, part):
             continue
-        g = grow + SHELL_OFF.get(part, 0.1)                  # each part its own distance: neighbouring shells never share a plane
-        b = m.rig.box(part, g)
-        tag(m.box(m.rig.bone(part), f'{tag_}_{part}', *b, mat, decal='shell', seam=True),
-            style=th['style'], cover=th.get('cover', 0.7) if cover is None else cover, part=part, face=face if face is not None else th.get('eyes'))
+        if part == 'head' and worn(m, 'helm'):
+            continue                                          # a closed helm hides the head whole: no cap under it
+        g = grow + 0.08 + SHELL_OFF.get(part, 0.1)           # each part its own distance: neighbouring shells never share a plane
+        if m.rig.key == 'drowned' and part in ('rleg', 'lleg'):
+            g += 0.2                                          # the drowned's trousers sit out from its legs (and off the tunic's sides)
+        x0, x1, y0, y1, z0, z1 = m.rig.box(part, g)
+        h0, h1 = m.rig.box(part)[2], m.rig.box(part)[3]
+        if two_legged and part == 'head':
+            y0 = h1 - (h1 - h0) * 0.4 - (0.5 if over else 0.0)   # a cap down to the brow: the eyes (the face's 5th row) free
+        elif two_legged and part in ('rarm', 'larm'):
+            y0 = h0 + (h1 - h0) * (0.2 if style in LONG else 0.5)   # sleeves: to the wrist or the elbow, the hand bare
+            if over:
+                y0 = max(h0 + 0.6, y0 - 0.8)                  # wound further down the arm than the sleeve under it
+        c = tag(m.box(m.rig.bone(part), f'{tag_}_{part}', x0, x1, y0, y1, z0, z1, mat, decal='shell', seam=True),
+                style=style, cover=th.get('cover', 0.7) if cover is None else cover, part=part, face=face if face is not None else th.get('eyes'),
+                cap=two_legged and part == 'head')
+        c['raw'] = True                                       # lit by the game, as the vanilla body under it
+        if part == 'head' and not two_legged and m.rig.key in NOSE:      # a whole head: its nose dressed too
+            nx0, nx1, ny0, ny1, nz0, nz1 = NOSE[m.rig.key]
+            n = tag(m.box(m.rig.bone('head'), f'{tag_}_nose', nx0 - g, nx1 + g, ny0 - g, ny1 + g, nz0 - g, nz1 - g + 0.6, mat,
+                          decal='shell', seam=True), style=style, cover=c['cover'], part='nose', face=None, cap=False)
+            n['raw'] = True
 
 
 def shell_px(m, p):
+    """a theme's clothes painted like cloth or armour: a light top row, a shaded hem, its pattern in rows and columns"""
     c, q, f = p.cube, p.local(), p.face
-    style, cover = c.get('style'), c.get('cover', 0.7)
+    style = c.get('style')
     x, y, z = q
     pal = p.pal
-    if c.get('part') == 'head' and f == 'north':               # the face: open to the vanilla one, or the theme's eyes on a mask
+    t1, t2, t3, gl, tr = pal['t1'], pal['t2'], pal['t3'], pal['glow'], pal['trim']
+    i, j, w, h = p.i, p.j, p.w, p.h
+    side = f in ('north', 'south', 'east', 'west')
+    if c.get('part') == 'head' and f == 'north' and not c.get('cap'):   # a whole head (a golem's, a blaze's): the theme's eyes on it
         hb = m.rig.box('head')
         u = (x - hb[0]) / (hb[1] - hb[0])
         v = (hb[3] - y) / (hb[3] - hb[2])
         eyes = c.get('face')
         if eyes and 0.32 < v < 0.5 and (0.16 < u < 0.4 or 0.6 < u < 0.84):
             return lit(hexrgb(eyes))
-        if not eyes and 0.25 < v < 0.75 and 0.12 < u < 0.88:
+    if f == 'down':
+        return None if c.get('part') in ('head', 'body', 'robe') else mul(t2, 0.8)
+    top = side and j == 0
+    hem = side and j == h - 1
+
+    def cloth(col, k=0.04):
+        r = hash3(x * 1.7, y * 1.7, z * 1.7)
+        v = 1.0 + (k if r > 0.86 else -k if r < 0.12 else 0.0)
+        if top:
+            v += 0.08
+        elif hem:
+            v -= 0.12
+        return mul(col, v)
+    if style == 'crust':                                         # a crust of cooled plates, lava glowing in the crazing between them
+        a, b, seed = ((x, y, math.floor(z)) if f in ('north', 'south') else (z, y, math.floor(x) + 50) if side else (x, z, math.floor(y) + 90))
+        d1, d2, cid = cells(a, b, 4.4, seed)
+        e = d2 - d1                                              # 0 on the line between two plates
+        if e < 0.42:
+            return lit(tr if e < 0.16 else gl)                   # a crack one texel wide, hotter in its core
+        if e < 0.85:
+            return mix(t1, gl, 0.12)                             # the plate's rim, warmed by it
+        return cloth(t3 if top else (t2 if cid > 0.72 else t1), 0.05)
+    if style == 'bone':                                          # a pale tabard, its edges trimmed, a glowing seam down the front
+        if hem or (side and j == 1 and h > 4):
+            return tr
+        if f == 'north' and abs(i - (w - 1) / 2) < 0.6 and c.get('part') in ('body', 'robe'):
+            return lit(gl)
+        return cloth(t3 if top else t1)
+    if style == 'specks':                                        # deep cloth with stars in it, a lighter hem
+        if hem:
+            return t3
+        if hash3(x * 1.1 + 3, y * 1.1, z * 1.1) > 0.978:
+            return lit(gl)
+        return cloth(t2 if (i // 2 + j // 3) % 4 == 0 else t1)
+    if style == 'ice':                                           # pale cloth, rime on top, icicles at the hem
+        if top:
+            return t3
+        if hem and i % 2 == 0:
+            return mix(t3, gl, 0.4)                              # icicles along the hem
+        if hash3(x * 1.3, y * 1.3, z * 1.3 + 7) > 0.975:
+            return lit(gl)
+        return cloth(t2 if (i // 2 + j // 2) % 5 == 0 else t1)
+    if style == 'suit':                                          # a sealed suit: seams, a reflective band at the waist and wrists
+        if c.get('part') in ('rarm', 'larm') and side and j >= h - 2:
+            return mix(t1, (255, 255, 255), 0.45)
+        if c.get('part') in ('body', 'robe') and side and abs(j - h * 0.75) < 0.6:
+            return mix(t1, (255, 255, 255), 0.45)
+        if side and (i % 4 == 0 and w > 4):
+            return t2
+        return cloth(t1, 0.03)
+    if style == 'drip':                                          # stained cloth, the stain dripping down from the waist and hems
+        drop = hash3(x * 0.7, 0, z * 0.7) * 4.0
+        if side and j >= h - 1 - drop and i % 2 == 0:
+            return lit(gl) if j >= h - 2 else t3
+        return cloth(t2 if (i * 3 + j) % 7 == 0 else t1, 0.06)
+    if style == 'cloak':                                         # dark cloth in folds, a faint sheen on top
+        if side and i % 3 == 1:
+            return mul(t2, 0.95)
+        return cloth(t3 if top else t1)
+    if style == 'bandage':                                       # strips wound round: a gap between two, a stain here and there
+        if side and j % 3 == 2:
             return None
-    if f == 'down' and c.get('part') in ('head', 'body'):
-        return None
-    n = vnoise(x, y, z, 0.55)
-    if style == 'suit':
-        if c.get('part') == 'head':
-            return pal['t3'] if f == 'north' else p.col
-        if abs((y % 6) - 3) < 0.35:
-            return pal['t2']                                     # seams
-        return mix(pal['t1'], (255, 255, 255), 0.35) if abs(y - 14.5) < 0.6 and c.get('part') in ('body', 'rarm', 'larm') else p.col
-    if n > cover + 0.15 * math.sin(y * 0.7):
-        return None
-    if style == 'crust':
-        k = abs(math.sin(x * 1.3 + y * 0.7 + 0.4) * math.cos(z * 1.1 - y * 0.9))
-        if k < 0.1:
-            return lit(pal['glow'] if k > 0.04 else pal['trim'])
-        return pal['t2'] if n > 0.55 else (pal['t3'] if hash3(x, y, z) > 0.85 else p.col)
-    if style == 'bone':
-        if abs(math.sin(y * 1.1 + x * 0.4)) < 0.07:
-            return lit(pal['glow'])
-        return pal['t3'] if n < 0.3 else (pal['t2'] if (x + y + z) % 2.2 < 0.4 else p.col)
-    if style == 'specks':
-        if hash3(x * 1.3, y * 1.3, z * 1.3) > 0.94:
-            return lit(pal['glow'])
-        return pal['t3'] if n > cover - 0.08 else (pal['t2'] if n > 0.4 else p.col)
-    if style == 'ice':
-        if n > cover - 0.07:
-            return pal['t3']                                     # the rime round each patch
-        return lit(pal['glow']) if abs(math.sin(x * 1.7 - y * 1.2 + z)) < 0.06 else (pal['t2'] if n > 0.35 else p.col)
-    if style == 'drip':
-        top = y - (m.rig.box(c['part'])[2] if has(m, c['part']) else 0)
-        if hash3(x, 0, z) > 0.6 and top < 3 + 4 * hash3(x * 0.5, 1, z * 0.5):
-            return None if f not in ('up',) and top < 1 else p.col
-        return lit(pal['glow']) if hash3(x, y, z) > 0.93 else (pal['t2'] if n > 0.45 else p.col)
-    if style == 'cloak':
-        return pal['t2'] if n > 0.5 else (pal['t3'] if abs(math.sin(y * 2.0 + x)) < 0.08 else p.col)
-    if style == 'bandage':
-        return pal['t2'] if (y * 1.4 + x * 0.3) % 1.0 < 0.18 else (mul(pal['red'], 0.9) if hash3(x, y, z) > 0.95 else p.col)
-    if style == 'veins':
+        if hash3(x * 1.3, y * 1.3, z * 1.3) > 0.93:
+            return mul(pal.get('red', (160, 40, 40)), 0.9)
+        return cloth(t2 if (i + j) % 6 == 0 else t1, 0.03)
+    if style == 'veins':                                         # veins over the body's own skin
         k = abs(math.sin(x * 2.1 + y * 0.9) + math.sin(z * 1.7 - y * 1.3))
-        return lit(pal['glow']) if k < 0.08 else (pal['t2'] if k < 0.4 else None)
-    if style == 'facets':
-        return lit(pal['glow']) if (x * 0.7 + y * 1.1 + z * 0.9) % 2.4 < 0.25 else (pal['t3'] if n > cover - 0.1 else (pal['t2'] if (x - z) % 2 < 1 else p.col))
-    if style == 'dirt':
-        return pal['t2'] if n > 0.4 else (lit(pal['glow']) if hash3(x, y, z) > 0.97 else p.col)
-    if style == 'bolts':
-        k = abs((y * 0.9 + abs(math.sin(x * 1.3 + z)) * 2.5) % 4.0 - 2.0)
-        return lit(pal['glow']) if k < 0.18 else (pal['t3'] if n > 0.5 else p.col)
-    if style == 'leaf':
-        return pal['t2'] if (x * 1.3 + z * 0.7 + y * 2.1) % 2.0 < 0.6 else (pal['t3'] if n > cover - 0.08 else p.col)
-    if style == 'plate':
-        return pal['t2'] if abs((y % 4) - 2) < 0.25 or abs((x % 4) - 2) < 0.15 else (pal['t3'] if n < 0.3 else p.col)
+        return lit(gl) if k < 0.07 else None                     # thin glowing veins, the skin between them its own
+    if style == 'facets':                                        # crystal armour: flat facets, each its own shade, bright edges
+        a, b, seed = ((x, y, math.floor(z)) if f in ('north', 'south') else (z, y, math.floor(x) + 50) if side else (x, z, math.floor(y) + 90))
+        d1, d2, cid = cells(a, b, 3.9, seed)
+        if d2 - d1 < 0.42:
+            return lit(gl) if cid > 0.86 else mix(t3, t1, 0.3)  # a facet's edge catching the light, now and then glowing
+        return t3 if cid > 0.8 else (t1 if cid > 0.33 else t2)
+    if style == 'dirt':                                          # old clothes caked with earth toward the hem, patched, the hem torn
+        if hem and i % 3 == 1:
+            return None
+        if side and j >= h - 3 and (i + j) % 3:
+            return t2
+        if side and (i // 3 + j // 4) % 5 == 2:
+            return t3                                            # a patch
+        return cloth(t1, 0.03)
+    if style == 'bolts':                                         # storm cloth, bolts zigzagging down it a hand apart
+        if side and not top:
+            a = x if f in ('north', 'south') else z + 2.3
+            zig = abs((y / 1.5) % 2.0 - 1.0) * 1.7               # a kink every 1.5 down
+            if abs(((a + zig) % 6.0) - 3.0) < 0.42:
+                return lit(gl)
+        return cloth(t3 if top else (t2 if (i // 2 + j // 2) % 6 == 0 else t1))
+    if style == 'leaf':                                          # leaves in overlapping rows
+        if side and j % 3 == 2 and (i + j // 3) % 2 == 0:
+            return t3
+        return cloth(t2 if (i + (j // 3)) % 2 == 0 else t1, 0.05)
+    if style == 'plate':                                         # gilded plates with seams and rivets
+        if side and j % 4 == 3:
+            return t2
+        if side and j % 4 == 1 and i % 3 == 1:
+            return t3
+        return cloth(t1, 0.03)
     return p.col
+
+
+def cells(a, b, s, seed):
+    """plates about `s` across on a face: the distance to the nearest plate's centre, to the next one, the plate's id"""
+    ia, ib = math.floor(a / s), math.floor(b / s)
+    d1 = d2 = 9e9
+    cid = 0.0
+    for da in (-1, 0, 1):
+        for db in (-1, 0, 1):
+            ca, cb = ia + da, ib + db
+            pa = (ca + 0.2 + 0.6 * hash3(ca * 0.5, cb * 0.5, seed)) * s
+            pb = (cb + 0.2 + 0.6 * hash3(cb * 0.5, ca * 0.5, seed + 7)) * s
+            d = math.hypot(a - pa, b - pb)
+            if d < d1:
+                d1, d2, cid = d, d1, hash3(ca * 0.5, cb * 0.5, seed + 13)
+            elif d < d2:
+                d2 = d
+    return d1, d2, cid
+
+
+def worn(m, name):
+    """is a piece of this name (or one of its links: helm0, helm1 ..) already on the model"""
+    full = m.prefix + name
+    return any(c['name'] == full or (c['name'].startswith(full) and c['name'][len(full):].isdigit()) for c in m.cubes)
+
+
+def unwear(m, *names):
+    """take off what a later piece covers whole (a cap under a closed helm): a hidden cube only costs texture and flickers"""
+    full = {m.prefix + n for n in names}
+    m.cubes[:] = [c for c in m.cubes if c['name'] not in full]
 
 
 def hexrgb(h):
@@ -273,26 +384,30 @@ def halo(m, mat='glow', r=None, lift=2.2, spin=True):
     m.spinners = getattr(m, 'spinners', []) + [bone]
 
 
-def hood(m, mat='t1', mat2='t2', grow=0.55, peak=True, face_open=True):
+def hood(m, mat='t1', mat2='t2', grow=0.62, peak=True, face_open=True):
     x0, x1, y0, y1, z0, z1 = head_box(m, grow)
     b = m.rig.bone('head')
     tag(m.box(b, 'hood', x0, x1, y0 - 0.4, y1, z0, z1, mat, decal='hood'), open=face_open)
     if peak:
         m.slope(b, 'hood_peak', -1.4, 1.4, ((z0 + z1) / 2, y1), (z1 + 1.8, y1 - 3.0), 1.2, mat2, extend=(0, 0.3))
-    m.box(b, 'hood_drape', x0 + 0.2, x1 - 0.2, y0 - 3.0, y0 - 0.3, z1 - 1.2, z1 + 0.3, mat2, decal='cloth')
+    m.box(b, 'hood_drape', x0 + 0.35, x1 - 0.35, y0 - 3.0, y0 - 0.3, z1 - 1.0, z1 + 0.3, mat2, decal='cloth')
 
 
-def helm(m, mat='metal', visor='dark', plume=None, crest=None, grow=0.4, slits=True, kind='great'):
+def helm(m, mat='metal', visor='dark', plume=None, crest=None, grow=0.38, slits=True, kind='great'):
     """a closed helm: an eight-sided shell over the head, a visor band with slits, an optional plume or crest"""
     x0, x1, y0, y1, z0, z1 = head_box(m, grow)
     b = m.rig.bone('head')
     cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
     r = max(x1 - x0, z1 - z0) / 2
+    unwear(m, 'shell_head', 'shell_nose')                        # the theme's cap would sit inside it, on its very planes
     if kind == 'great':
         tag(m.box(b, 'helm', x0, x1, y0 - 0.2, y1, z0, z1, mat, decal='helm'), visor=visor, slits=slits)
+        if m.rig.key in NOSE:                                    # the nose would poke through: a beaked visor over it
+            nx0, nx1, ny0, ny1, nz0, nz1 = NOSE[m.rig.key]
+            m.box(b, 'helm_beak', nx0 - 0.4, nx1 + 0.4, ny0 - 0.3, ny1 + 0.7, nz0 - 0.45, z0 + 0.3, mat, decal='metal')
     else:                                                        # a rounded sallet
         octa(m, b, 'helm', 'y', (cx, cz), y0 + (y1 - y0) * 0.45, y1 + 0.2, r + 0.1, mat, decal='metal')
-        m.box(b, 'helm_visor', x0 + 0.4, x1 - 0.4, y0 + (y1 - y0) * 0.35, y0 + (y1 - y0) * 0.55, z0 - 0.25, z0 + 1.0, visor, decal='visor')
+        m.box(b, 'helm_visor', x0 + 0.3, x1 - 0.3, y0 + (y1 - y0) * 0.35, y0 + (y1 - y0) * 0.55, z0 - 0.3, z0 + 0.3, visor, decal='visor')   # in front of the face, not in it
     if crest:
         m.box(b, 'helm_crest', -0.45, 0.45, y1, y1 + 1.6, z0 + 0.5, z1 - 0.5, crest, decal='metal')
     if plume:
@@ -410,7 +525,7 @@ def plate(m, mat='metal', trim='trim', grow=0.48, back=True, ribs=False):
         return
     x0, x1, y0, y1, z0, z1 = body_box(m, grow)
     b = m.rig.bone('body')
-    tag(m.box(b, 'plate', x0, x1, y0 + 1.0, y1, z0, z0 + 0.8, mat, decal='ribs' if ribs else 'plate'), trimc=trim)
+    tag(m.box(b, 'plate', x0, x1, y0 + 1.0, y1 - 0.5, z0, z0 + 0.8, mat, decal='ribs' if ribs else 'plate'), trimc=trim)   # below the chin
     if back:
         m.box(b, 'plate_back', x0 + 0.2, x1 - 0.2, y0 + 1.6, y1 - 0.2, z1 - 0.8, z1, mat, decal='metal')
     m.box(b, 'plate_belt', x0 - 0.05, x1 + 0.05, y0 - 0.2, y0 + 1.4, z0 + 0.3, z1 - 0.3, trim, decal='belt')
@@ -493,7 +608,7 @@ def pack(m, mat='leather', kind='bag', mat2='metal2'):
     elif kind == 'barrel':
         octa(m, b, 'barrel', 'y', (0, z1 + 2.6), y0 - 0.5, y1 + 1.5, 2.6, mat, decal='barrel')
     elif kind == 'coffin':
-        m.box(b, 'coffin', x0 + 0.5, x1 - 0.5, y0 - 4.0, y1 + 3.0, z1 + 0.2, z1 + 2.0, mat, rot=(-8, 0, 0), pivot=(0, y1, z1 + 1.0), decal='coffin')
+        m.box(b, 'coffin', x0 + 0.8, x1 - 0.8, y0 - 4.0, y1 + 3.0, z1 + 0.2, z1 + 2.0, mat, rot=(-8, 0, 0), pivot=(0, y1, z1 + 1.0), decal='coffin')
     elif kind == 'crystals':
         crystals(m, 'body', 'glow', n=4, where='back')
     else:
@@ -562,9 +677,16 @@ def aura(m, mat='glow', r=6.0, y=0.3, n=8, bone=None):
 
 
 def orbit(m, mat='glow', n=3, r=7.0, y=None, size=1.0, kind='orb'):
-    """floating things round the body (its own bone 'orbit': the animation turns it)"""
+    """floating things round the body (its own bone 'orbit': the animation turns it), circling clear of the arms: a ring
+    through the shoulders would bury an orb in a sleeve every turn"""
     root = m.rig.bone('body') if has(m, 'body') else m.rig.bones[0][0]
     yy = y if y is not None else (body_box(m)[3] if has(m, 'body') else 12)
+    half = 1.2 * size * 1.42 if kind == 'skull' else size      # how far a turning skull's corner or an orb's side reaches
+    for part in ('rarm', 'larm'):
+        if has(m, part):
+            ax0, ax1, ay0, ay1, _, _ = m.rig.box(part, 0.75)        # the arm in its sleeve, glove or pauldron
+            if ay0 - half < yy < ay1 + half:
+                r = max(r, max(abs(ax0), abs(ax1)) + half + 0.4)
     O = nb(m, 'orbit')
     m.bone(O, root, (0, yy, 0))
     for i in range(n):
@@ -620,6 +742,8 @@ def weapon(m, kind, side='r', mat='metal', mat2='wood', size=1.0, glow=None, til
     it about x at the fist (-90: from down the arm to straight ahead of it)"""
     if side not in m.rig.hands:
         return
+    if kind in ('staff', 'wand', 'scepter') and not tilt and not fwd:
+        tilt, fwd = 24, 2.4                                      # its head beyond the fist, upright beside the arm (not up the sleeve)
     hb, x, y, z = hand(m, side)
     z -= fwd                                                     # held in front of the arm (a staff upright beside it)
     s = size
@@ -760,7 +884,8 @@ def part_px(m, p, d):
             return None
         if f == 'north' and 0.4 < p.v < 0.56:
             if c.get('slits') and (0.18 < p.u < 0.42 or 0.58 < p.u < 0.82):
-                return pal['dark']
+                vz = c.get('visor') or 'dark'
+                return lit(pal[vz]) if vz in ('glow', 'flash', 'cyan', 'gem') else pal['dark']   # eyes burning behind the slits
             return pal.get(c.get('visor') or 'dark', p.col) if not c.get('slits') else mul(p.col, 0.8)
         if f == 'north' and p.v > 0.6 and int(p.u * 9) % 2 == 0:
             return mul(p.col, 0.85)                              # breathing holes
