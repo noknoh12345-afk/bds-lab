@@ -323,3 +323,88 @@ execute as @a[name=A] run scriptevent podium:hud off
 wait 1000
 js p('A').getProperty('skin_podium:hud')
 = 0
+
+## podium controls for command blocks: look, spin, a vault copy re-dresses its mannequin
+summon skin_podium:podium 0 -60 -14
+tp A 0 -60 -10 facing 0 -60 -14
+wait 2500
+execute as @a[name=A] run scriptevent podium:look all 3 1
+wait 800
+js (() => { const pd = world.getDimension('overworld').getEntities({type:'skin_podium:podium', location:{x:0.5,y:-60,z:-13.5}, maxDistance:1})[0]; return world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).filter(s => s.getDynamicProperty('sp:podium') === pd.id).map(s => s.getProperty('skin_podium:pose') + '/' + s.getProperty('skin_podium:style')).join(','); })()
+= 3/1,3/1,3/1
+execute as @a[name=A] run scriptevent podium:spin on
+wait 800
+js (() => { const pd = world.getDimension('overworld').getEntities({type:'skin_podium:podium', location:{x:0.5,y:-60,z:-13.5}, maxDistance:1})[0]; return world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).filter(s => s.getDynamicProperty('sp:podium') === pd.id).map(s => s.getProperty('skin_podium:spin')).join(','); })()
+= true,true,true
+execute as @a[name=A] run scriptevent podium:vaultcopy Copy_X slim #6a4630
+wait 300
+js (() => { const d = JSON.parse(world.getDynamicProperty('sp:vault:Copy_X')); return [d.armSize, Math.round(d.skinColor.red * 255), JSON.parse(world.getDynamicProperty('sp:vault_index')).includes('Copy_X')].join(' '); })()
+= Slim 106 true
+execute as @a[name=A] run scriptevent podium:set 2 Copy_X
+wait 4000
+js (() => { const pd = world.getDimension('overworld').getEntities({type:'skin_podium:podium', location:{x:0.5,y:-60,z:-13.5}, maxDistance:1})[0]; const s = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).find(x => x.getDynamicProperty('sp:podium') === pd.id && x.getDynamicProperty('sp:rank') === 2); const m = world.getAllPlayers().find(q => q.name.startsWith('Mannequin_') && q.getProperty('mimic:slot') === s.getProperty('skin_podium:target')); return [!!m, s.getProperty('skin_podium:slim'), JSON.parse(s.getDynamicProperty('sp:cfg')).vault].join(' '); })()
+= true true Copy_X
+execute as @a[name=A] run scriptevent podium:vaultdel Copy_X
+wait 1500
+js [JSON.parse(world.getDynamicProperty('sp:vault_index')).includes('Copy_X'), world.getAllPlayers().filter(q => q.name.startsWith('Mannequin_')).length].join(' ')
+= false 0
+kill @e[type=skin_podium:podium]
+wait 2500
+
+## mirror:frame from a command block
+summon skin_podium:mirror 0 -60 -16
+wait 2000
+execute as @a[name=A] run scriptevent mirror:frame 3
+wait 600
+js world.getDimension('overworld').getEntities({type:'skin_podium:mirror', location:{x:0.5,y:-60,z:-15.5}, maxDistance:1})[0].getProperty('skin_podium:frame')
+= 3
+kill @e[type=skin_podium:mirror]
+wait 2500
+
+## the guide item opens its menu
+execute as @a[name=A] run scriptevent studio:guide
+wait 500
+js inv(p('A')).some(s => s.includes('skin_podium:guide'))
+= true
+@A select skin_podium:guide
+@A use
+until form 3000
+~ title\("Skin Studio ガイド"\)
+~ button\("紹介デモを全部見る"\)
+@A form 鏡を目の前に置く
+wait 2000
+js world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).length
+= 1
+kill @e[type=skin_podium:mirror]
+wait 2500
+
+## the showcase tour does every part, then cleans up and puts the area back
+tp A 0 -60 -20 facing 0 -60 -10
+setblock 0 -59 -14 gold_block
+wait 1000
+execute as @a[name=A] run scriptevent studio:demo fast
+until demo step 1/8 8000
+js world.getDimension('overworld').getBlock({x:0, y:-59, z:-14})?.typeId
+= minecraft:air
+until demo step 3/8 20000
+wait 1500
+js (() => { const pd = world.getDimension('overworld').getEntities({type:'skin_podium:podium'})[0]; const st = world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).filter(s => s.getDynamicProperty('sp:podium') === pd.id).sort((a, b) => a.getDynamicProperty('sp:rank') - b.getDynamicProperty('sp:rank')); return st.map(s => JSON.parse(s.getDynamicProperty('sp:cfg')).ownerName).join(',') + ' ' + world.getAllPlayers().filter(q => q.name.startsWith('Mannequin_')).length; })()
+= A,Demo_Alex,Demo_Steve 2
+until demo step 5/8 20000
+until demo step 7/8 30000
+wait 400
+js p('A').getProperty('skin_podium:hud')
+= 2
+until demo step 8/8 30000
+wait 1500
+js world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).length + ' ' + world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).filter(r => r.getProperty('skin_podium:pslot') === p('A').getProperty('mimic:slot')).length
+= 1 1
+until demo done 30000
+~ @A title: Skin Studio
+js JSON.parse(world.getDynamicProperty('sd:state')).entities.length
+= 2
+execute as @a[name=A] run scriptevent studio:clean
+until 紹介ステージを片付けて、元に戻しました 5000
+wait 2500
+js [world.getDimension('overworld').getBlock({x:0, y:-59, z:-14})?.typeId, world.getDimension('overworld').getEntities({type:'skin_podium:podium'}).length, world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).length, world.getDimension('overworld').getEntities({type:'skin_podium:statue'}).filter(s => typeof s.getDynamicProperty('sp:podium') === 'string').length, world.getDynamicProperty('sd:state') === undefined, JSON.parse(world.getDynamicProperty('sp:vault_index')).filter(n => n.startsWith('Demo_')).length, p('A').getProperty('skin_podium:hud')].join(' ')
+= minecraft:gold_block 0 0 0 true 0 0

@@ -4,15 +4,27 @@
     "animation.skin_podium.refl.place": {
       "loop": true,
       "bones": {
+        "mirror_root": {
+          "position": [
+            "variable.sp_sx * variable.sp_ru * 16",
+            "variable.sp_rv * 16",
+            0
+          ],
+          "scale": [
+            "(variable.sp_k * 0.9375)",
+            "(variable.sp_k * 0.9375)",
+            0.03
+          ]
+        },
         "root": {
           "position": [
-            "variable.sp_sx * variable.sp_ru * 16 / (variable.sp_k * 0.9375) + (variable.sp_sn ?? 0) * 9 * math.sin(variable.sp_ry)",
-            "variable.sp_rv * 16 / (variable.sp_k * 0.9375) + (variable.sp_sn ?? 0) * 1.25",
+            "(variable.sp_sn ?? 0) * 9 * math.sin(180 - variable.sp_ry)",
+            "(variable.sp_sn ?? 0) * 1.25",
             0
           ],
           "rotation": [
             "(variable.sp_sn ?? 0) * 28",
-            "variable.sp_ry",
+            "180 - variable.sp_ry",
             0
           ]
         }
@@ -24,7 +36,7 @@
         "head": {
           "rotation": [
             "variable.sp_hx ?? 0",
-            "variable.sp_hy ?? 0",
+            "-(variable.sp_hy ?? 0)",
             0
           ]
         }
@@ -50,15 +62,15 @@
         "leftleg": {
           "rotation": [
             "(variable.sp_tc ?? 0) * -1.4",
-            -0.1,
-            -0.1
+            0.1,
+            0.1
           ]
         },
         "rightleg": {
           "rotation": [
             "(variable.sp_tc ?? 0) * 1.4",
-            0.1,
-            0.1
+            -0.1,
+            -0.1
           ]
         }
       }
@@ -70,14 +82,14 @@
           "rotation": [
             0,
             0,
-            "-((math.cos(query.life_time * 103.2) * 2.865) + 2.865)"
+            "(math.cos(query.life_time * 103.2) * 2.865) + 2.865"
           ]
         },
         "rightarm": {
           "rotation": [
             0,
             0,
-            "(math.cos(query.life_time * 103.2) * 2.865) + 2.865"
+            "-((math.cos(query.life_time * 103.2) * 2.865) + 2.865)"
           ]
         }
       }
@@ -116,15 +128,15 @@
         "leftleg": {
           "rotation": [
             -28,
-            -0.1,
-            -0.1
+            0.1,
+            0.1
           ]
         },
         "rightleg": {
           "rotation": [
             -28,
-            0.1,
-            0.1
+            -0.1,
+            -0.1
           ]
         }
       }

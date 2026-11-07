@@ -2,3 +2,4 @@
 import './skin_changer/main.js';
 import './podium.js';
 import './mirror.js';
+import './demo.js';

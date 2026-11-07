@@ -200,11 +200,15 @@ world.beforeEvents.playerInteractWithEntity.subscribe(({ player, target }) => {
   system.run(() => { if (valid(target)) mirrorMenu(player, target); });
 });
 system.afterEvents.scriptEventReceive.subscribe(e => {
-  if (e.id !== 'mirror:fix') return;    // /scriptevent mirror:fix <0-7>: the nearest mirror's calibration
+  // /scriptevent mirror:fix <0-7>   the nearest mirror's calibration
+  // /scriptevent mirror:frame <0-3> the nearest mirror's frame (gold, silver, wood, dark)
+  if (e.id !== 'mirror:fix' && e.id !== 'mirror:frame') return;
   const src = e.sourceEntity; if (!src) return;
   const m = src.dimension.getEntities({ type: MIRROR, location: src.location, maxDistance: 16, closest: 1 })[0];
   if (!m) return;
-  applyCfg(m, { ...cfgOf(m), fix: Math.max(0, Math.min(7, parseInt(e.message, 10) || 0)) });
+  const n = parseInt(e.message, 10) || 0;
+  if (e.id === 'mirror:fix') applyCfg(m, { ...cfgOf(m), fix: Math.max(0, Math.min(7, n)) });
+  else applyCfg(m, { ...cfgOf(m), frame: Math.max(0, Math.min(3, n)) });
 });
 
 let tick = 0;

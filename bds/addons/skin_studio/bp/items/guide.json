@@ -1,0 +1,24 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:item": {
+    "description": {
+      "identifier": "skin_podium:guide",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "skin_studio_guide",
+      "minecraft:display_name": {
+        "value": "item.skin_podium:guide.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:interact_button": true,
+      "minecraft:glint": true,
+      "minecraft:use_modifiers": {
+        "use_duration": 0.1,
+        "movement_modifier": 1.0
+      }
+    }
+  }
+}

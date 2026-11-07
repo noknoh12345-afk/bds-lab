@@ -94,3 +94,4 @@ item.spawn_egg.entity.skin_podium:podium.name=表彰台
 item.spawn_egg.entity.skin_podium:statue.name=スキン像
 item.spawn_egg.entity.skin_podium:mirror.name=鏡
 entity.minecraft:player.name=プレイヤー
+item.skin_podium:guide.name=Skin Studio ガイド

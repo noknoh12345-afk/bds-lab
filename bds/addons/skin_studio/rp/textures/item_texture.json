@@ -4,6 +4,9 @@
   "texture_data": {
     "mimic_selector": {
       "textures": "textures/items/mimic_selector"
+    },
+    "skin_studio_guide": {
+      "textures": "textures/items/skin_studio_guide"
     }
   }
 }

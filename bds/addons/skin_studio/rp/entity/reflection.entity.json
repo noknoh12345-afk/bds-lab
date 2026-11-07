@@ -50,9 +50,6 @@
           "variable.sp_sy = math.mod(math.floor(query.property('skin_podium:mfix') / 2), 2) >= 1 ? -1 : 1;",
           "variable.sp_ry = variable.sp_sy * ((variable.sp_by ?? 0) - variable.sp_e);"
         ],
-        "scaleX": "(variable.sp_k * 0.9375)",
-        "scaleY": "(variable.sp_k * 0.9375)",
-        "scaleZ": "-0.02",
         "should_update_bones_and_effects_offscreen": "1.0",
         "animate": [
           "place",

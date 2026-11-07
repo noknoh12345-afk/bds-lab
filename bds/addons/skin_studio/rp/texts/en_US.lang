@@ -94,3 +94,4 @@ item.spawn_egg.entity.skin_podium:podium.name=Award Podium
 item.spawn_egg.entity.skin_podium:statue.name=Skin Statue
 item.spawn_egg.entity.skin_podium:mirror.name=Mirror
 entity.minecraft:player.name=Player
+item.skin_podium:guide.name=Skin Studio Guide

@@ -383,6 +383,23 @@ system.afterEvents.scriptEventReceive.subscribe(e => {
     system.run(() => guarded(src, () => e.id === 'podium:hud' ? hudMenu(src) : vaultMenu(src)));
     return;
   }
+  // /scriptevent podium:vaultcopy <name> slim|wide [#rrggbb] — save MY skin under another name, changed
+  // /scriptevent podium:vaultdel <name>
+  if (e.id === 'podium:vaultcopy' || e.id === 'podium:vaultdel') {
+    const src = e.sourceEntity;
+    const [name, arm, color] = e.message.trim().split(/\s+/);
+    if (!name || !/^[\w\-]{1,24}$/.test(name)) return;
+    if (e.id === 'podium:vaultdel') return vaultDelete(name);
+    if (!(src instanceof Player)) return;
+    let d; try { d = cleanSkin(getPlayerSkin(src)); } catch (_) {}
+    if (!d) return;
+    if (arm === 'slim' || arm === 'wide') d.armSize = arm === 'slim' ? 'Slim' : 'Wide';
+    const m = /^#?([0-9a-f]{6})$/i.exec(color ?? '');
+    if (m) { const n = parseInt(m[1], 16); d.skinColor = { red: (n >> 16 & 255) / 255, green: (n >> 8 & 255) / 255, blue: (n & 255) / 255 }; }
+    vaultPut(name, d);
+    const mq = mannequins.get(name); if (mq && valid(mq.sp)) dress(mq.sp, d);   // a live mannequin is re-dressed at once
+    return;
+  }
   const src = e.sourceEntity ?? undefined;
   const dim = src?.dimension ?? e.sourceBlock?.dimension;
   const loc = src?.location ?? e.sourceBlock?.location;
@@ -399,7 +416,16 @@ system.afterEvents.scriptEventReceive.subscribe(e => {
     if (name === '@s' && src instanceof Player) name = src.name;     // the player who ran it
     if (![1, 2, 3].includes(r) || !name || !st[r]) return;
     const live = online().find(p => p.name === name);
-    applyCfg(st[r], { ...cfgOf(st[r]), ownerId: live?.id ?? '', ownerName: live?.name ?? name });
+    const cfg = { ...cfgOf(st[r]), ownerId: live?.id ?? '', ownerName: live?.name ?? name };
+    if (live) ownerSkinSave(live, cfg);
+    else { const v = vaultGet(name); if (v) { cfg.vault = name; cfg.slim = v.armSize === 'Slim'; } else cfg.vault = ''; }
+    applyCfg(st[r], cfg);
+  } else if (e.id === 'podium:spin') {          // /scriptevent podium:spin on|off
+    for (const s of Object.values(st)) applyCfg(s, { ...cfgOf(s), spin: first !== 'off' });
+  } else if (e.id === 'podium:look') {          // /scriptevent podium:look <rank|all> <pose 0-5> <style 0-1>
+    const pose = Math.max(0, Math.min(5, Number(rest[0]) | 0)), style = Math.max(0, Math.min(1, Number(rest[1]) | 0));
+    for (const r of first === 'all' ? [1, 2, 3] : [Number(first)])
+      if (st[r]) applyCfg(st[r], { ...cfgOf(st[r]), pose, style });
   } else if (e.id === 'podium:clear') {
     for (const r of first === 'all' || !first ? [1, 2, 3] : [Number(first)])
       if (st[r]) applyCfg(st[r], { ...cfgOf(st[r]), ownerId: '', ownerName: '' });
