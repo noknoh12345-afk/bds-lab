@@ -121,3 +121,15 @@
 - タレットの yaw の向きと補間、ユニットの射撃クリップ
 - 遠征の見た目: 階段の角の形、空撮、門と拠点、合成した地形（木は `placeFeature` で生やし、無ければ自作の小さな木）
 - ダメージ表示（名札の 2 行目）、語り部と合図の文（lang の translate）
+
+## 10. GitHub Actions での実機テスト（2026-11-08）
+- このセッションからの push は、権限の自動判定で拒否された（add_repo の push）。回避はしていない。push はユーザーの手元で行う。
+- 手元のクローンで（新しく取るなら `git clone https://github.com/noknoh12345-afk/bds-lab && cd bds-lab`）:
+  ```
+  git fetch /path/to/addon-tds.bundle addon/tds:addon/tds
+  git checkout addon/tds && git push origin addon/tds
+  ```
+- push すると `verify.yml` が自動で走る（変わったアドオンの実サーバのテスト）。
+- 本物のアプリ（実機）は `app.yml` を手で起動する: `node lab.mjs app ci -a tds --ref addon/tds --wait`（結果は `app/runs/gh-<番号>/`。report.md とスクショ）か、GitHub の Actions → app → Run workflow（addon: `tds`、ref: `addon/tds`、mode: `run`）。HUD などの JSON UI の画面だけを全部撮るなら mode: `ui`。
+- シナリオは `bds/addons/tds/app.txt`（タイトル → 参加 → ロビーの HUD → 訓練場と敵 → 遠征: 到着、空撮、拠点、門、階段の角、坂、橋、真上、タワーと敵 → クライアントのエラーが無いこと）。見どころへの移動は `/tds:siteview`。
+- 実機の確認には、リポジトリの秘密（Google の AAS トークンなど。`app/AGENTS.md`）が要る。無ければ app ワークフローがその旨を出して止まる。
