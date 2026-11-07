@@ -99,6 +99,10 @@
       "minecraft:collision_box": {
         "width": 0.01,
         "height": 0.01
+      },
+      "minecraft:nameable": {
+        "always_show": false,
+        "allow_name_tag_renaming": false
       }
     }
   }

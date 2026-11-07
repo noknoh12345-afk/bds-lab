@@ -32,7 +32,7 @@ function frame(origin, yaw) {
   };
   return { L, box, f, yaw };
 }
-const REGION = [0, 15, -9, 9, -1, 7];
+const REGION = [0, 16, -9, 14, -1, 7];   // includes the mirror world behind the mirror wall
 function fill(dim, { min, max }, block) { dim.runCommand(`fill ${min.x} ${min.y} ${min.z} ${max.x} ${max.y} ${max.z} ${block}`); }
 
 function buildStage(p) {
@@ -42,7 +42,7 @@ function buildStage(p) {
   const region = fr.box(...REGION);
   try { world.structureManager.delete(BACKUP); } catch (_) {}
   world.structureManager.createFromWorld(BACKUP, dim, region.min, region.max, { includeEntities: false, includeBlocks: true, saveMode: StructureSaveMode.World });
-  fill(dim, fr.box(0, 15, -9, 9, 0, 7), 'air');
+  fill(dim, fr.box(0, 16, -9, 14, 0, 7), 'air');
   fill(dim, fr.box(0, 15, -9, 9, -1, -1), 'smooth_quartz');
   fill(dim, fr.box(1, 14, -8, 8, -1, -1), 'polished_blackstone');
   fill(dim, fr.box(2, 13, -7, 7, -1, -1), 'smooth_quartz');
@@ -52,6 +52,9 @@ function buildStage(p) {
     dim.runCommand(`fill ${Math.floor(q.x)} ${q.y} ${Math.floor(q.z)} ${Math.floor(q.x)} ${q.y + 1} ${Math.floor(q.z)} polished_blackstone_wall`);
     dim.runCommand(`setblock ${Math.floor(q.x)} ${q.y + 2} ${Math.floor(q.z)} lantern`);
   }
+  // the mirror wall (quartz bricks, a gold cap) on the right of the stage, facing the walk
+  fill(dim, fr.box(4, 12, 5, 5, 0, 3), 'quartz_bricks');
+  fill(dim, fr.box(4, 12, 5, 5, 4, 4), 'gold_block');
   return { dim: dim.id, origin, yaw: fr.yaw, region, entities: [], player: p.id };
 }
 
@@ -66,6 +69,11 @@ function cleanup(by) {
       for (const t of ['skin_podium:statue', 'skin_podium:reflection'])
         for (const c of e.dimension.getEntities({ type: t, location: e.location, maxDistance: 4 }))
           if (c.getDynamicProperty('sp:podium') === id || c.getDynamicProperty('sm:mirror') === id) c.remove();
+      if (e.typeId === 'skin_podium:mirror') {
+        const tag = e.id.replace(/[^0-9a-z]/gi, '').slice(-12);
+        for (const k of ['back', 'open']) try { world.structureManager.delete(`skin_studio:m${k}_${tag}`); } catch (_) {}
+        for (const r of e.dimension.getEntities({ type: 'skin_podium:reflection' })) if (r.getDynamicProperty('sm:mirror') === id) r.remove();
+      }
       e.remove();
     } catch (_) {}
   }
@@ -153,13 +161,16 @@ async function tour(p, fast) {
     run_('scriptevent podium:hud off');
 
     // 6 — the mirror
-    const mirror = dim.spawnEntity('skin_podium:mirror', fr.L(8, 5, 0));
+    const mirror = dim.spawnEntity('skin_podium:mirror', fr.L(8, 4, 0));
+    // it faces the stage centre (toward -b), set into the wall at b = 5
+    const toward = { x: -(-fr.f.z), z: -(fr.f.x) };
+    mirror.setDynamicProperty('sm:yaw', Math.round(Math.atan2(-toward.x, toward.z) * 180 / Math.PI));
     state.entities.push(mirror.id); saveState(state);
-    await wait(1.5);
+    await wait(2);
     const my = mirror.getRotation().y, mr = my * Math.PI / 180;
     const n = { x: -Math.sin(mr), z: Math.cos(mr) };
     p.teleport({ x: mirror.location.x + n.x * 2.6, y: mirror.location.y, z: mirror.location.z + n.z * 2.6 }, { rotation: { x: 8, y: my + 180 } });
-    step('8/8', '鏡：見る人の視点から、鏡像を毎フレーム計算します');
+    step('8/8', '鏡：壁の向こうに、左右が反転した本物の世界ができます');
     await wait(3);
     for (const c of [1, 2, 3, 0]) { run_(`scriptevent mirror:frame ${c}`); bar(`§e8/8§r 枠の色：${['金', '銀', '木', '黒'][c]}`); await wait(0.9); }
     // a disguise shows in the mirror: become the mannequin on 2nd place
@@ -238,7 +249,7 @@ system.afterEvents.scriptEventReceive.subscribe(e => {
 world.afterEvents.playerLeave.subscribe(({ playerId }) => { if (running?.id === playerId) running.abort = true; });
 // a hint once per player
 world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
-  if (!initialSpawn || player.getDynamicProperty('sd:hinted')) return;
+  if (!initialSpawn || player.name.startsWith('Mannequin_') || player.getDynamicProperty('sd:hinted')) return;
   player.setDynamicProperty('sd:hinted', true);
   system.runTimeout(() => tell(player, 'ガイド: §b/scriptevent studio:guide§r ／ 紹介デモ: §b/scriptevent studio:demo§r'), 60);
 });

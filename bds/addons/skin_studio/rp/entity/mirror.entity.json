@@ -4,7 +4,8 @@
     "description": {
       "identifier": "skin_podium:mirror",
       "materials": {
-        "default": "entity_alphatest"
+        "default": "entity_alphatest",
+        "glass": "entity_alphablend"
       },
       "textures": {
         "gold": "textures/entity/skin_podium/mirror_gold",

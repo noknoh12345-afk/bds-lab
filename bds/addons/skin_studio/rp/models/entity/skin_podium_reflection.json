@@ -184,6 +184,15 @@
           ]
         },
         {
+          "name": "leftItem",
+          "pivot": [
+            -6.0,
+            15.0,
+            1.0
+          ],
+          "parent": "leftArm"
+        },
+        {
           "name": "rightArm",
           "parent": "body",
           "pivot": [
@@ -239,6 +248,22 @@
               "mirror": true
             }
           ]
+        },
+        {
+          "name": "rightItem",
+          "pivot": [
+            6,
+            15,
+            1
+          ],
+          "locators": {
+            "lead_hold": [
+              -6,
+              15,
+              1
+            ]
+          },
+          "parent": "rightArm"
         },
         {
           "name": "leftLeg",
@@ -682,6 +707,15 @@
           ]
         },
         {
+          "name": "leftItem",
+          "pivot": [
+            -6,
+            14.5,
+            1
+          ],
+          "parent": "leftArm"
+        },
+        {
           "name": "rightArm",
           "parent": "body",
           "pivot": [
@@ -737,6 +771,22 @@
               "mirror": true
             }
           ]
+        },
+        {
+          "name": "rightItem",
+          "pivot": [
+            6,
+            14.5,
+            1
+          ],
+          "locators": {
+            "lead_hold": [
+              -6,
+              14.5,
+              1
+            ]
+          },
+          "parent": "rightArm"
         },
         {
           "name": "jacket",

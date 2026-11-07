@@ -16,6 +16,9 @@
       "materials": [
         {
           "*": "Material.default"
+        },
+        {
+          "glass": "Material.glass"
         }
       ],
       "textures": [
@@ -38,45 +41,6 @@
         },
         {
           "cape": false
-        },
-        {
-          "leftLeg": "variable.sp_vis && variable.sp_tok && variable.sp_legs"
-        },
-        {
-          "rightLeg": "variable.sp_vis && variable.sp_tok && variable.sp_legs"
-        },
-        {
-          "leftPants": "variable.sp_vis && variable.sp_tok && variable.sp_legs"
-        },
-        {
-          "rightPants": "variable.sp_vis && variable.sp_tok && variable.sp_legs"
-        },
-        {
-          "body": "variable.sp_vis && variable.sp_tok && variable.sp_body"
-        },
-        {
-          "jacket": "variable.sp_vis && variable.sp_tok && variable.sp_body"
-        },
-        {
-          "leftArm": "variable.sp_vis && variable.sp_tok && variable.sp_body"
-        },
-        {
-          "rightArm": "variable.sp_vis && variable.sp_tok && variable.sp_body"
-        },
-        {
-          "leftSleeve": "variable.sp_vis && variable.sp_tok && variable.sp_body"
-        },
-        {
-          "rightSleeve": "variable.sp_vis && variable.sp_tok && variable.sp_body"
-        },
-        {
-          "waist": "variable.sp_vis && variable.sp_tok && variable.sp_body"
-        },
-        {
-          "head": "variable.sp_vis && variable.sp_tok && variable.sp_head"
-        },
-        {
-          "hat": "variable.sp_vis && variable.sp_tok && variable.sp_head"
         }
       ]
     }

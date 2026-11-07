@@ -618,7 +618,7 @@ async function vaultEdit(p, name) {
 //   Here we only tell each viewer's player entity which slot/epoch to show.
 // =====================================================================
 const HUD_KEY = 'sp:hud';
-function hudGet(p) { return { mode: 0, statues: [], size: 10, x: 35, y: 18, spin: true, ...getJSON(p, HUD_KEY, {}) }; }
+function hudGet(p) { return { mode: 0, statues: [], size: 10, x: 35, y: 18, spin: true, hand: true, ...getJSON(p, HUD_KEY, {}) }; }
 function hudSet(p, patch) { setJSON(p, HUD_KEY, { ...hudGet(p), ...patch }); hudApply(p); }
 function setProp(p, k, v) { try { if (p.getProperty(k) !== v) p.setProperty(k, v); } catch (_) {} }
 function hudApply(p) {
@@ -645,6 +645,7 @@ function hudApply(p) {
   setProp(p, 'skin_podium:hud_x', Math.max(-60, Math.min(60, h.x | 0)));
   setProp(p, 'skin_podium:hud_y', Math.max(-60, Math.min(60, h.y | 0)));
   setProp(p, 'skin_podium:hud_spin', !!h.spin);
+  setProp(p, 'skin_podium:hud_anchor', h.hand !== false);
 }
 function hudTick() { for (const p of online()) if (hudGet(p).mode > 0) hudApply(p); }
 async function hudMenu(p) {
@@ -655,11 +656,12 @@ async function hudMenu(p) {
     .slider('左右の位置', -60, 60, { valueStep: 1, defaultValue: h.x | 0 })
     .slider('上下の位置', -60, 60, { valueStep: 1, defaultValue: h.y | 0 })
     .toggle('回転させる', { defaultValue: !!h.spin })
+    .toggle('手元に表示（オフ: 画面に固定）', { defaultValue: h.hand !== false })
     .toggle('1体表示を「自分」にする', { defaultValue: false });
   const res = await f.show(p);
   if (res.canceled) return;
-  const [mode, size, x, y, spin, self] = res.formValues;
-  const patch = { mode: Number(mode) | 0, size: Number(size), x: Number(x), y: Number(y), spin: !!spin, self: false };
+  const [mode, size, x, y, spin, hand, self] = res.formValues;
+  const patch = { mode: Number(mode) | 0, size: Number(size), x: Number(x), y: Number(y), spin: !!spin, hand: !!hand, self: false };
   if (self) {
     patch.mode = 1; patch.self = true; patch.statues = [];
     try { patch.selfSlim = cleanSkin(getPlayerSkin(p))?.armSize === 'Slim'; } catch (_) { patch.selfSlim = false; }

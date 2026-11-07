@@ -105,15 +105,15 @@ js (() => { const a = p('A'), b = p('B'); return [a.getProperty('skin_podium:hud
 execute as @a[name=A] run scriptevent podium:hud
 until form 3000
 ~ title\("画面表示\(HUD\)の設定"\)
-@A form ["1体", 15, -20, 10, false, true]
+@A form ["1体", 15, -20, 10, false, true, true]
 wait 1500
-js (() => { const a = p('A'); return [a.getProperty('skin_podium:hud'), a.getProperty('skin_podium:hud_s1') === a.getProperty('mimic:slot'), a.getProperty('skin_podium:hud_e1') === a.getProperty('mimic:epoch'), a.getProperty('skin_podium:hud_size'), a.getProperty('skin_podium:hud_x'), a.getProperty('skin_podium:hud_y'), a.getProperty('skin_podium:hud_spin')].join(' '); })()
-= 1 true true 15 -20 10 false
+js (() => { const a = p('A'); return [a.getProperty('skin_podium:hud'), a.getProperty('skin_podium:hud_s1') === a.getProperty('mimic:slot'), a.getProperty('skin_podium:hud_e1') === a.getProperty('mimic:epoch'), a.getProperty('skin_podium:hud_size'), a.getProperty('skin_podium:hud_x'), a.getProperty('skin_podium:hud_y'), a.getProperty('skin_podium:hud_spin'), a.getProperty('skin_podium:hud_anchor')].join(' '); })()
+= 1 true true 15 -20 10 false true
 
 ## HUD off
 execute as @a[name=A] run scriptevent podium:hud
 until form 3000
-@A form ["オフ", 15, -20, 10, false, false]
+@A form ["オフ", 15, -20, 10, false, false, false]
 wait 1500
 js p('A').getProperty('skin_podium:hud')
 = 0
@@ -205,94 +205,120 @@ wait 2500
 js p('A').getProperty('mimic:target') === p('B').getProperty('mimic:slot')
 = true
 
-## a mirror placed in front of A faces A and gets its reflections
+## a mirror needs a wall: in the open it is not placed
 @A cmd /skinchanger:skin reset @s
-tp A 0 -60 0 facing 0 -60 -10
 wait 1500
-summon skin_podium:mirror 0 -60 -4
-wait 2500
-js (() => { const m = world.getDimension('overworld').getEntities({type:'skin_podium:mirror'})[0]; const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}); return [m.location.x, m.location.y, m.location.z, Math.round(m.getRotation().y), r.length, r.every(e => Math.abs(e.location.y - (m.location.y + 1.5)) < 0.001 && Math.abs(e.location.z - (m.location.z + 0.03)) < 0.001)].join(' '); })()
-= 0.5 -60 -3.5 0 4 true
+tp A 20 -60 20 facing 20 -60 10
+wait 800
+summon skin_podium:mirror 20 -60 16
+wait 2000
+js world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).length
+= 0
 
-## the nearest person in front is reflected with their own slot
+## a mirror set into a wall: the opening, its backup and the mirror world behind
+fill -4 -60 -9 4 -56 -9 stone
+setblock 2 -60 -6 gold_block
+tp A 0.5 -60 -4.5 facing 0.5 -60 -9
 wait 1000
-js (() => { const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).sort((a, b) => a.getDynamicProperty('sm:i') - b.getDynamicProperty('sm:i')); const a = p('A'), b = p('B'); const s = e => `${e.getProperty('skin_podium:pslot')}/${e.getProperty('skin_podium:target')}`; const want = q => `${q.getProperty('mimic:slot')}/${q.getProperty('mimic:slot')}`; return [r.slice(0, 2).map(s).sort().join(',') === [want(a), want(b)].sort().join(','), r[2].getProperty('skin_podium:pslot'), r[3].getProperty('skin_podium:pslot')].join(' '); })()
-= true 0 0
+summon skin_podium:mirror 0 -60 -8
+until 壁の向こうに鏡の世界ができます 4000
+wait 1000
+js (() => { const d = world.getDimension('overworld'); const m = d.getEntities({type:'skin_podium:mirror'})[0]; const b = (x, y, z) => d.getBlock({x, y, z})?.typeId.replace('minecraft:', ''); return [m.location.x, m.location.y, m.location.z, Math.round(m.getRotation().y), b(-1, -60, -9), b(1, -58, -9), b(0, -57, -9), b(2, -60, -12)].join(' '); })()
+= 0.5 -60 -8 0 barrier barrier stone gold_block
 
-## a Skin Changer disguise shows in the mirror (skin = the disguise, pose = the person)
+## the person in front stands mirrored in the mirror world, facing back out
+wait 800
+js (() => { const a = p('A'); const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).find(e => e.getProperty('skin_podium:pslot') === a.getProperty('mimic:slot')); return r ? [r.location.x.toFixed(2), r.location.y.toFixed(2), r.location.z.toFixed(2), Math.round(((r.getRotation().y % 360) + 360) % 360), r.getProperty('skin_podium:target') === a.getProperty('mimic:slot')].join(' ') : 'none'; })()
+= 0.50 -60.00 -12.50 0 true
+tp A 2.5 -60 -6.5 facing 4 -60 -9
+wait 600
+js (() => { const a = p('A'); const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).find(e => e.getProperty('skin_podium:pslot') === a.getProperty('mimic:slot')); const ay = a.getRotation().y; return [r.location.x.toFixed(2), r.location.z.toFixed(2), Math.round((((r.getRotation().y - (180 - ay)) % 360) + 360) % 360)].join(' '); })()
+= 2.50 -10.50 0
+
+## what they wear and hold is copied onto the reflection
+replaceitem entity A slot.armor.head 0 diamond_helmet
+replaceitem entity A slot.weapon.mainhand 0 diamond_sword
+wait 1500
+execute if entity @e[type=skin_podium:reflection,hasitem={item=diamond_helmet,location=slot.armor.head}] run say GEAR_HEAD
+execute if entity @e[type=skin_podium:reflection,hasitem={item=diamond_sword,location=slot.weapon.mainhand}] run say GEAR_HAND
+~ GEAR_HEAD
+~ GEAR_HAND
+replaceitem entity A slot.armor.head 0 air
+wait 1500
+execute unless entity @e[type=skin_podium:reflection,hasitem={item=diamond_helmet,location=slot.armor.head}] run say HEAD_GONE
+~ HEAD_GONE
+
+## a block placed in front shows up mirrored (by the player, and by a command after refresh)
+give A gold_block 4
+wait 300
+@A place gold_block -2 -60 -5
+wait 1500
+js world.getDimension('overworld').getBlock({x:-2, y:-60, z:-13})?.typeId
+= minecraft:gold_block
+setblock 3 -59 -7 diamond_block
+execute as @a[name=A] run scriptevent mirror:refresh
+wait 500
+js world.getDimension('overworld').getBlock({x:3, y:-59, z:-11})?.typeId
+= minecraft:diamond_block
+
+## two people, a disguise, and leaving the mirror
+tp B -1.5 -60 -3.5
+wait 800
+js (() => { const ids = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).map(e => e.getProperty('skin_podium:pslot')).filter(x => x > 0).sort(); return ids.length + ' ' + ids.includes(p('B').getProperty('mimic:slot')); })()
+= 2 true
 @A cmd /skinchanger:skin change @s B
 wait 3000
-js (() => { const a = p('A'), b = p('B'); const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).find(e => e.getProperty('skin_podium:pslot') === a.getProperty('mimic:slot')); return [!!r, r && r.getProperty('skin_podium:target') === b.getProperty('mimic:slot'), r && r.getProperty('skin_podium:target_epoch') === b.getProperty('mimic:epoch')].join(' '); })()
-= true true true
+js (() => { const a = p('A'), b = p('B'); const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).find(e => e.getProperty('skin_podium:pslot') === a.getProperty('mimic:slot')); return r.getProperty('skin_podium:target') === b.getProperty('mimic:slot'); })()
+= true
 @A cmd /skinchanger:skin reset @s
-wait 1500
+tp B 10 -60 10
+wait 800
+js world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).filter(e => e.getProperty('skin_podium:pslot') > 0).length
+= 1
 
-## someone behind the mirror is not reflected; the mannequin never is
-tp B 0 -60 -9
-wait 1500
-js (() => { const b = p('B'); return world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).filter(e => e.getProperty('skin_podium:pslot') === b.getProperty('mimic:slot')).length; })()
-= 0
-tp B 1 -60 0
-
-## the mirror menu: frame colour, settings, rotation
+## the mirror menu: frame colour, refresh; mirror:frame from a command block
 @A interact skin_podium:mirror
 until form 3000
 ~ form action: title\("鏡"\)
-~ button\("枠の色: 金"\)
 @A form 枠の色: 金
-wait 800
+wait 600
 js world.getDimension('overworld').getEntities({type:'skin_podium:mirror'})[0].getProperty('skin_podium:frame')
 = 1
-@A interact skin_podium:mirror
-until form 3000
-@A form 映り方の設定
-until form 3000
-@A form [6, false, true, false, true]
-until 設定しました 3000
-wait 800
-js (() => { const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}); return [...new Set(r.map(e => e.getProperty('skin_podium:mfix') + ':' + e.getProperty('skin_podium:realgeo')))].join(','); })()
-= 5:false
-execute as @a[name=A] run scriptevent mirror:fix 0
-wait 800
-js [...new Set(world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).map(e => e.getProperty('skin_podium:mfix')))].join(',')
-= 0
-@A interact skin_podium:mirror
-until form 3000
-@A form 向きを90°回転
-wait 1500
-js (() => { const m = world.getDimension('overworld').getEntities({type:'skin_podium:mirror'})[0]; const r = world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}); return [Math.round(m.getRotation().y), r.every(e => Math.round(e.getRotation().y) === Math.round(m.getRotation().y) && Math.abs(e.location.x - (m.location.x - 0.03)) < 0.001)].join(' '); })()
-= 90 true
+execute as @a[name=A] run scriptevent mirror:frame 3
+wait 600
+js world.getDimension('overworld').getEntities({type:'skin_podium:mirror'})[0].getProperty('skin_podium:frame')
+= 3
 
-## against a wall the frame's back goes flat on the wall
-fill -2 -60 -11 2 -57 -11 stone
-tp A 0 -60 -6 facing 0 -60 -11
+## removing a mirror from its menu puts its wall back
+fill 12 -60 -9 16 -56 -9 stone
+tp A 14.5 -60 -5.5 facing 14.5 -60 -9
 wait 1000
-summon skin_podium:mirror 0 -60 -10
+summon skin_podium:mirror 14 -60 -8
 wait 2500
-js world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).filter(m => m.location.z < -9).map(m => [m.location.x, m.location.z.toFixed(4), Math.round(m.getRotation().y)].join(' ')).join(',')
-= 0.5 -9.9025 0
+@A interact skin_podium:mirror
+until form 3000
+@A form 撤去する（壁を元に戻す）
+wait 1500
+js (() => { const d = world.getDimension('overworld'); return [d.getEntities({type:'skin_podium:mirror', location:{x:14.5, y:-60, z:-8}, maxDistance:2}).length, d.getBlock({x:14, y:-59, z:-9})?.typeId, d.getEntities({type:'skin_podium:mirror'}).length].join(' '); })()
+= 0 minecraft:stone 1
+fill 12 -60 -9 16 -56 -9 air
 
-## a restart keeps mirrors and their reflections (no duplicates)
+## a restart keeps the mirror, its world and its reflections
 restart
 @A join
 @B join
 wait 5000
-js [world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).length, world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).length].join(' ')
-= 2 8
+js [world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).length, world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).length, world.getDimension('overworld').getBlock({x:-1, y:-60, z:-9})?.typeId].join(' ')
+= 1 6 minecraft:barrier
 
-## removing a mirror from its menu takes its reflections; /kill leaves no orphans
-tp A 0 -60 -6 facing 0 -60 -11
-wait 1000
-@A interact skin_podium:mirror
-until form 3000
-@A form 撤去する
+## removing the mirror (after a restart, by command) puts the wall and what was behind it back
+tp A 0.5 -60 -4.5 facing 0.5 -60 -9
 wait 1500
-js [world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).length, world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).length].join(' ')
-= 1 4
-kill @e[type=skin_podium:mirror]
-wait 2500
-js world.getDimension('overworld').getEntities({type:'skin_podium:reflection'}).length
-= 0
+execute as @a[name=A] run scriptevent mirror:remove
+wait 1500
+js (() => { const d = world.getDimension('overworld'); const b = (x, y, z) => d.getBlock({x, y, z})?.typeId.replace('minecraft:', ''); return [d.getEntities({type:'skin_podium:mirror'}).length, d.getEntities({type:'skin_podium:reflection'}).length, b(-1, -60, -9), b(1, -58, -9), b(2, -60, -12), b(-2, -60, -13), b(3, -59, -11)].join(' '); })()
+= 0 0 stone stone air air air
+fill -7 -60 -14 7 -55 -3 air
 
 ## Skin Changer's own item still opens its menu
 give A mimic:selector
@@ -351,17 +377,9 @@ js [JSON.parse(world.getDynamicProperty('sp:vault_index')).includes('Copy_X'), w
 kill @e[type=skin_podium:podium]
 wait 2500
 
-## mirror:frame from a command block
-summon skin_podium:mirror 0 -60 -16
-wait 2000
-execute as @a[name=A] run scriptevent mirror:frame 3
-wait 600
-js world.getDimension('overworld').getEntities({type:'skin_podium:mirror', location:{x:0.5,y:-60,z:-15.5}, maxDistance:1})[0].getProperty('skin_podium:frame')
-= 3
-kill @e[type=skin_podium:mirror]
-wait 2500
-
 ## the guide item opens its menu
+tp A 20 -60 20 facing 20 -60 30
+wait 800
 execute as @a[name=A] run scriptevent studio:guide
 wait 500
 js inv(p('A')).some(s => s.includes('skin_podium:guide'))
@@ -372,11 +390,10 @@ until form 3000
 ~ title\("Skin Studio ガイド"\)
 ~ button\("紹介デモを全部見る"\)
 @A form 鏡を目の前に置く
-wait 2000
+until 壁 3000
+wait 1000
 js world.getDimension('overworld').getEntities({type:'skin_podium:mirror'}).length
-= 1
-kill @e[type=skin_podium:mirror]
-wait 2500
+= 0
 
 ## the showcase tour does every part, then cleans up and puts the area back
 tp A 0 -60 -20 facing 0 -60 -10

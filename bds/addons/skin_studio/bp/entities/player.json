@@ -150,6 +150,11 @@
           "type": "bool",
           "default": true,
           "client_sync": true
+        },
+        "skin_podium:hud_anchor": {
+          "type": "bool",
+          "default": true,
+          "client_sync": true
         }
       }
     },

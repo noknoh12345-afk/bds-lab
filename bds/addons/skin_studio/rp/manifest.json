@@ -2,20 +2,35 @@
   "format_version": 2,
   "header": {
     "name": "Skin Studio | Resources",
-    "description": "Skin Changer + 表彰台 + 鏡 / skins, award podium and mirrors",
+    "description": "Skin Changer + \u8868\u5f70\u53f0 + \u93e1 / skins, award podium and mirrors",
     "uuid": "3e671969-7ccc-5439-8506-2babdfd805f7",
-    "version": [1, 0, 1],
-    "min_engine_version": [1, 26, 50]
+    "version": [
+      1,
+      1,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
   },
   "modules": [
     {
       "type": "resources",
       "uuid": "372aac88-18b4-5b0c-bf88-3fcda1396ecd",
-      "version": [1, 0, 1]
+      "version": [
+        1,
+        1,
+        0
+      ]
     }
   ],
   "metadata": {
-    "authors": ["ASAN10707", "Skin Changer contributors"],
+    "authors": [
+      "ASAN10707",
+      "Skin Changer contributors"
+    ],
     "product_type": "addon"
   }
 }
