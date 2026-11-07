@@ -48,6 +48,8 @@ export type Enemy = {
   aggro?: boolean; regen?: number; abil?: number[]; baseDef?: number; haste?: number; hasteUntil?: number; v?: number;
   /** status effects from towers: confusion (walks back), Neuralyzed (forced target, +damage taken), vulnerability, bounty, wire fraud */
   ph?: number[]; rev?: { at: number; name: string; hp: number; d: number };
+  /** damage indicator (Features page): damage from a selected tower, shown under the health bar until `until` (src/indicators.ts) */
+  ind?: { n: number; until: number };
   conf?: number; confCd?: number; neural?: number; neuralPct?: number; vuln?: number; vulnPct?: number; bounty?: { tw: number; pct: number; cap: number }; wire?: { tw: number; pct: number }; acc?: Record<number, number>;
 };
 export type Tower = { id: number; name: string; lvl: number; x: number; y: number; z: number; owner: string; target: string; next: number; burstLeft: number; ammoLeft: number; shots: number; spent: number; dealt: number; nextUnit: number; primary: number; stunUntil?: number; stunKind?: 'stun' | 'freeze'; fat?: number; rdeb?: number; debUntil?: number; abReady?: Record<string, number>; selfBuff?: number; selfBuffUntil?: number; ctaBuff?: number; ctaUntil?: number; st?: Record<string, any>; temp?: number };
@@ -267,7 +269,10 @@ function nextWave() {
   let at = M.t;
   for (const g of md.wave[String(M.wave)] ?? []) { for (let i = 0, cnt = mod('Lost Souls') ? Math.floor(g.n * 1.5) : g.n; i < cnt; i++) { M.queue.push({ at, name: g.e, mods: g.mods ?? [] }); at += RULES.spawnGap; } at += RULES.groupGap - RULES.spawnGap; }
   log('wave_start', { wave: M.wave, of: lastWave(), enemies: (md.wave[String(M.wave)] ?? []).reduce((a: number, g: Group) => a + g.n, 0), timer: tm.timer });
+  for (const f of onWave) f(M);
 }
+/** called when a wave starts, after its enemies are queued (src/narrator.ts) */
+export const onWave: ((m: Match) => void)[] = [];
 
 export function voteSkip(p: Player): string {
   if (!M) return 'No match';
@@ -339,8 +344,11 @@ function show(e: Enemy) {
     ents.set(e.id, ent); shown.delete(e.id); e.dirty = true; flush(e);
   } catch { /* chunk not loaded: the simulation still runs */ }
 }
-const bar = (e: Enemy) => `${e.boss ? '§c' : e.hidden ? '§7' : '§f'}${e.name}${e.lead ? ' §8[Lead]' : ''}${e.flying ? ' §b[Fly]' : ''}\n§a${Math.ceil(e.hp)}${e.shield > 0 ? ` §e+${Math.ceil(e.shield)}` : ''}`;
+const bar = (e: Enemy) => `${e.boss ? '§c' : e.hidden ? '§7' : '§f'}${e.name}${e.lead ? ' §8[Lead]' : ''}${e.flying ? ' §b[Fly]' : ''}\n§a${Math.ceil(e.hp)}${e.shield > 0 ? ` §e+${Math.ceil(e.shield)}` : ''}${indText(e)}`;
 function label(e: Enemy) { if (!headless) e.dirty = true; }
+/** damage indicators: the towers some player has selected (src/hud.ts fills it each pass); src/indicators.ts clears old numbers */
+export const indicators = { on: true, watched: new Set<number>() };
+const indText = (e: Enemy) => (e.ind && M && e.ind.until > M.t ? ` §c-${e.ind.n >= 1000 ? `${(e.ind.n / 1000).toFixed(1)}k` : Math.round(e.ind.n)}` : '');
 function flush(e: Enemy) { if (!e.dirty) return; e.dirty = false; const x = ents.get(e.id); if (x?.isValid) x.nameTag = bar(e); }
 
 function kill(e: Enemy, tw?: Tower) {
@@ -386,6 +394,7 @@ export function hit(e: Enemy, dmg: number, tw?: Tower, kind: 'direct' | 'splash'
   const before = e.hp; e.hp = Math.max(0, e.hp - d); done += before - e.hp;
   if (e.every) { const steps = Math.floor(((e.max - e.hp) / e.max) * 100 / e.every); while (e.paid < steps) { e.paid++; give(tw, e.cash); } }
   if (tw) { tw.dealt += done; M.stats.dealt += done; if (M.players.includes(tw.owner)) { const s = pst(tw.owner).dmg; s[tw.name] = (s[tw.name] ?? 0) + done; } }
+  if (tw && done > 0 && indicators.on && indicators.watched.has(tw.id)) e.ind = { n: (e.ind && e.ind.until > M.t ? e.ind.n : 0) + done, until: M.t + 0.6 };
   label(e);
   if (e.hp <= 0) kill(e, tw);
   return done;

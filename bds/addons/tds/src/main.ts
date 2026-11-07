@@ -11,6 +11,9 @@ import { setTrack, fpsShoot, abilityNeeds } from './abilities';
 import { modsMenu } from './modifiers';
 import { flashRange } from './placement';
 import { selectTower, hudOn } from './hud';
+import { signalMenu } from './signals';
+import './narrator';
+import './indicators';
 
 const T = (s: string) => s.replace(/_/g, ' ');
 const inMatch = (p: Player) => !!G.M && G.M.players.includes(p.name);
@@ -133,11 +136,13 @@ async function lobbyMenu(p: Player) {
 // ---------- in-world UI ----------
 world.beforeEvents.playerInteractWithBlock.subscribe(({ player: p, itemStack, block, isFirstEvent }) => {
   if (itemStack?.typeId !== 'tds:wand' || !isFirstEvent) return;
-  const { x, y, z } = block; system.run(() => { if (inMatch(p)) void placeMenu(p, x, y + 1, z); });
+  const { x, y, z } = block, sneak = p.isSneaking;
+  system.run(() => { if (!inMatch(p)) return; if (sneak) void signalMenu(p, { x: x + 0.5, y: y + 1, z: z + 0.5 }); else void placeMenu(p, x, y + 1, z); });   // sneaking: a team signal there
 });
 world.afterEvents.itemUse.subscribe(({ source: p, itemStack }) => {
   if (itemStack.typeId !== 'tds:wand') return;
   if (inMatch(p) && fpsShoot(p)) return;   // controlling a Gatling Gun: the wand fires it
+  if (inMatch(p) && p.isSneaking) { if (!p.getBlockFromViewDirection({ maxDistance: 6 })) void signalMenu(p); return; }   // sneaking: a team signal (a close block: the block event sends it)
   if (inMatch(p) && p.getBlockFromViewDirection({ maxDistance: 6 })) return; // the block event places
   if (!inMatch(p)) { void lobbyMenu(p); return; }
   const hitB = p.getBlockFromViewDirection({ maxDistance: 24 })?.block;

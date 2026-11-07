@@ -83,6 +83,7 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => hidden.delete(playerId
 system.runInterval(() => {
   bannerNow();
   const M = G.M, t = system.currentTick;
+  G.indicators.watched.clear();   // damage indicators: refilled below with the towers selected now
   for (const p of world.getAllPlayers()) {
     const on = hudOn(p);
     vanilla(p, on);
@@ -116,6 +117,7 @@ system.runInterval(() => {
     // the selected tower: the one whose menu was opened lately, else the one looked at with the wand
     const tw = selectedTower(p);
     if (!tw) { prop(p, 'tinfo', 0); continue; }
+    if (G.indicators.on) G.indicators.watched.add(tw.id);
     const mx = Math.min(7, maxLevel(tw.name)), lv = Math.min(7, tw.lvl), tg = Math.max(0, G.TARGETS.indexOf(tw.target as (typeof G.TARGETS)[number]));
     prop(p, 'tinfo', 10000 + G.towerRole(tw.name, tw.temp !== undefined) * 1000 + lv * 100 + mx * 10 + tg);
     prop(p, 'tup', tw.lvl >= maxLevel(tw.name) ? 0 : Math.min(99999, G.infl(levelCost(tw.name, tw.lvl + 1)) || 0));

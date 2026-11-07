@@ -818,3 +818,47 @@ until "ev":"match_start","mode":"Sandbox" 5000
 tds:stop
 @A cmd /tds:sbcash 5
 ~ @A Not in a Sandbox match
+
+## narrators (Features page): a line at the first wave, at a boss and on the loss screen; one line per wave at most
+tds:stop
+@A cmd /tds:reset
+@A cmd /tds:play Easy
+until "ev":"wave_start","wave":1 8000
+~ "ev":"narrate","key":"start","wave":1
+tds:finish lose
+until "ev":"narrate","key":"lose" 5000
+tds:stop
+
+## boss badges: "Defeat X" badges from the mode pages are earned when the boss X dies in a match of that mode, once
+tds:stop
+@A cmd /tds:reset
+@A cmd /tds:play Easy
+tds:hold true
+tds:spawn Grave_Digger
+tds:kill Grave_Digger
+tds:finish lose
+until "ev":"badge","player":"A","badge":"Defeat Grave Digger","mode":"Easy","boss":"Grave Digger" 5000
+@A cmd /tds:badges
+~ @A .*✔ Defeat Grave Digger \(Easy: defeat Grave Digger\)
+tds:stop
+
+## team signals (the communication wheel of v2.1.0): /tds:signal sends a known signal in a match, refuses unknown ones and outside a match
+tds:stop
+@A cmd /tds:reset
+@A cmd /tds:signal defend
+~ @A Not in a match
+@A cmd /tds:play Easy
+tds:hold true
+@A cmd /tds:signal defend
+~ "ev":"signal","player":"A","kind":"defend"
+~ @A Signal defend
+@A cmd /tds:signal dance
+~ @A Signals: defend, boss, place, save, help, thanks
+tds:stop
+
+## damage indicators (Features page): numbers on enemies hit by a selected tower, and the setting that turns them off
+tds:dmgnumbers off
+~ Damage numbers off
+~ "ev":"dmgnumbers","on":false
+tds:dmgnumbers on
+~ Damage numbers on

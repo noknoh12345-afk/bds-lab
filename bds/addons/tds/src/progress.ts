@@ -49,9 +49,31 @@ G.onEnd.push((m, r) => {
     if (changed) saveProf(p, pr);
   }
 });
+// ---------- boss badges: the mode pages list "Defeat X" badges with no plain triumph condition; read from the name, ----------
+// they are earned when the boss X dies in a match of that mode (every player of the match, as boss kills count for quests),
+// win or lose, Sandbox excepted; once per badge name (Easy and Casual list the same "Defeat Grave Digger")
+const BOSS_BADGE = /^Defeat(?:ed)?(?: the)? (.+?)!?$/;
+export const bossOf = (b: BadgeDef): string | null => { const m = BOSS_BADGE.exec(b.name); return m && enemies[m[1]]?.boss ? m[1] : null; };
+export const bossBadges = (): BadgeDef[] => (rules.badges ?? []).filter((b) => b.cond !== 'triumph' && !!bossOf(b));
+G.onEnd.push((m) => {
+  if (m.sandbox) return;
+  for (const p of world.getAllPlayers()) {
+    if (!m.players.includes(p.name)) continue;
+    const killed = m.pst?.[p.name]?.bosses ?? []; if (!killed.length) continue;
+    const pr = prof(p); pr.badges ??= []; let changed = false;
+    for (const b of bossBadges()) {
+      if (b.mode !== m.mode || pr.badges.includes(b.name) || !killed.includes(bossOf(b)!)) continue;
+      pr.badges.push(b.name); pr.coins += b.coins; pr.gems += b.gems; if (b.crate) pr.crates[b.crate] = (pr.crates[b.crate] ?? 0) + 1; changed = true;
+      G.log('badge', { player: p.name, badge: b.name, mode: b.mode, boss: bossOf(b), coins: b.coins, gems: b.gems, crate: b.crate });
+    }
+    if (changed) saveProf(p, pr);
+  }
+});
 export function badgesText(p: Player): string {
   const pr = prof(p), own = new Set(pr.badges ?? []);
-  return triumphBadges().map((b) => `${own.has(b.name) ? '✔' : '·'} ${b.name} (${b.mode}: ${[b.coins && `${b.coins} coins`, b.gems && `${b.gems} gems`, b.crate].filter(Boolean).join(', ')})`).join(' | ') || 'No badges';
+  const tri = triumphBadges().map((b) => `${own.has(b.name) ? '✔' : '·'} ${b.name} (${b.mode}: ${[b.coins && `${b.coins} coins`, b.gems && `${b.gems} gems`, b.crate].filter(Boolean).join(', ')})`);
+  const seen = new Set<string>(), boss = bossBadges().filter((b) => !seen.has(b.name) && !!seen.add(b.name)).map((b) => `${own.has(b.name) ? '✔' : '·'} ${b.name} (${b.mode}: defeat ${bossOf(b)})`);
+  return [...tri, ...boss].join(' | ') || 'No badges';
 }
 cmd('tds:badges', 'Mode badges and their rewards', {}, (p) => badgesText(p));
 
