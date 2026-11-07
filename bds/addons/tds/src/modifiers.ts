@@ -39,10 +39,11 @@ G.onStart.push((m, players) => {
 /** Random Tower Positions: every wave each tower jumps to a random free spot of its kind */
 G.hooks.waveEnd.push(() => {
   const M = G.M; if (!M || !G.mod('Random Tower Positions') || !G.path) return;
-  const y0 = maps[M.map].y;
+  const y0 = maps[M.map].y, wild = maps[M.map].site ? G.siteHooks.spots?.() ?? [] : null;   // an expedition: the spots of its land
   for (const tw of [...M.towers]) {
     if (tw.temp !== undefined) continue;
     const kind = towers[tw.name].placement;
+    if (wild) { const ok = wild.filter((q) => kind === 'both' || q.kind === kind); for (let k = 0; k < 20 && ok.length; k++) { const q = ok[Math.floor(Math.random() * ok.length)]; if (!G.moveTower(tw, q.x, q.y, q.z)) break; } continue; }
     for (let k = 0; k < 40; k++) {
       const x = Math.floor(Math.random() * 62) - 31, z = Math.floor(Math.random() * 62) - 31, y = kind === 'cliff' ? y0 + 2 : kind === 'both' && Math.random() < 0.5 ? y0 + 2 : y0;
       if (G.path.dist(x + 0.5, z + 0.5) > 14) continue;

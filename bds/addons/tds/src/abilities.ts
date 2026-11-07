@@ -476,7 +476,7 @@ export function fpsShoot(p: Player): boolean {
   S.fpsNext = M.t + (s.fr ?? 0.1);
   const h = p.getHeadLocation(), v = p.getViewDirection(), hits: Enemy[] = [];
   for (const e of alive()) {
-    const q = G.epos(e), y = G.path.floor + (e.flying ? 2.7 : 0.25), dx = q.x - h.x, dy = y - h.y, dz = q.z - h.z, k = dx * v.x + dy * v.y + dz * v.z;
+    const q = G.epos(e), y = G.path.at(e.d).y + (e.flying ? 2.7 : 0.25), dx = q.x - h.x, dy = y - h.y, dz = q.z - h.z, k = dx * v.x + dy * v.y + dz * v.z;
     if (k < 0) continue;
     if (Math.hypot(h.x + v.x * k - q.x, h.y + v.y * k - y, h.z + v.z * k - q.z) <= 1.2) hits.push(e);
   }

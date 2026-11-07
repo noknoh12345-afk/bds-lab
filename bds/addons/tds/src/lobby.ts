@@ -3,6 +3,7 @@ import { world, system, Player } from '@minecraft/server';
 import { towers, enemies, modes, maps, expFor, rules, rewardFor, xpBoostAt, slotsAt, stats, QuestDef, QuestObj } from './defs';
 import { M, start, log, onEnd, Match } from './game';
 import { modReward } from './modifiers';
+import { expedition, preparing, wildSeed, wildName } from './site';
 
 export type Obj = { do: QuestObj['do']; need: number; prog: number; tower?: string; role?: string; boss?: string; status?: string; map?: string; mode?: string; players?: number; cash?: number; hpPct?: number; loadoutMax?: number };
 export type Quest = { title: string; kind: 'daily' | 'weekly'; text: string; objs: Obj[]; done: boolean };
@@ -71,7 +72,9 @@ const lifts: Lift[] = [];
 const liftOf = (mode: string) => rules.elevators[mode] ?? rules.elevators.Survival;
 const rotates = (mode: string) => !!rules.elevators[mode]?.rotate;
 /** the map a rotating elevator (Hardcore, Voidcore) goes to this minute */
-export const rotMap = (mode: string, ms = Date.now()) => { const n = Object.keys(maps); return n[Math.floor(ms / 1000 / (rules.elevators[mode]?.rotate ?? 60)) % n.length]; };
+// every elevator goes on an expedition (src/site.ts) unless its players vote for a training ground; the place changes every minute
+const period = (mode: string, ms = Date.now()) => Math.floor(ms / 1000 / (rules.elevators[mode]?.rotate ?? 60));
+export const rotMap = (mode: string, ms = Date.now()) => wildName(wildSeed(mode, period(mode, ms)));
 export const hardcoreMap = (ms = Date.now()) => rotMap('Hardcore', ms);
 export function queue(p: Player, mode: string, size?: number): string {
   const md = modes[mode]; if (!md) return `Modes: ${Object.keys(modes).join(' ')}`;
@@ -91,7 +94,7 @@ export function queue(p: Player, mode: string, size?: number): string {
 export function voteMap(p: Player, map: string): string {
   const l = lifts.find((x) => x.players.includes(p.name)); if (!l) return 'Not in an elevator';
   if (rotates(l.mode)) return `${l.mode} elevators go to ${rotMap(l.mode)}`;
-  if (!maps[map]) return `Maps: ${Object.keys(maps).join(', ')}`;
+  if (map !== 'Wild' && !(maps[map] && !maps[map].site)) return `Maps: ${[...Object.keys(maps).filter((n) => !maps[n].site), 'Wild'].join(', ')}`;
   l.votes[p.name] = map; log('map_vote', { player: p.name, map }); return `Voted ${map}`;
 }
 export function leaveLift(name: string) { for (const l of lifts) l.players = l.players.filter((n) => n !== name); }
@@ -99,20 +102,22 @@ export function departNow(mode: string) { const l = lifts.find((x) => x.mode ===
 system.runInterval(() => {
   for (const l of [...lifts]) {
     if (!l.players.length) { lifts.splice(lifts.indexOf(l), 1); continue; }
-    if (system.currentTick < l.at || (M && !M.over)) continue;
-    const ps = world.getAllPlayers().filter((p) => l.players.includes(p.name));
+    if (system.currentTick < l.at || (M && !M.over) || preparing()) continue;
+    const all = world.getAllPlayers(), ps = l.players.map((n) => all.find((p) => p.name === n)).filter((p): p is Player => !!p);   // in the order they got in
     lifts.splice(lifts.indexOf(l), 1);
     if (!ps.length) continue;
-    let map: string;
-    if (rotates(l.mode)) map = rotMap(l.mode);
-    else {
+    let map = 'Wild';
+    if (!rotates(l.mode)) {   // a vote for a training ground takes the elevator there; no vote (or Wild): an expedition
       const tally: Record<string, number> = {}; for (const v of Object.values(l.votes)) tally[v] = (tally[v] ?? 0) + 1;
-      const top = Object.entries(tally).sort((a, b) => b[1] - a[1]), best = top.filter((x) => x[1] === top[0]?.[1]), names = Object.keys(maps);
-      map = best.length ? best[Math.floor(Math.random() * best.length)][0] : names[Math.floor(Math.random() * names.length)];
+      const top = Object.entries(tally).sort((a, b) => b[1] - a[1]), best = top.filter((x) => x[1] === top[0]?.[1]);
+      if (best.length) map = best[Math.floor(Math.random() * best.length)][0];
     }
+    const seed = map === 'Wild' ? wildSeed(l.mode, period(l.mode)) : undefined;
+    if (seed !== undefined) map = wildName(seed);
     log('elevator_depart', { mode: l.mode, players: l.players, size: l.size, map });
     const lo = Object.fromEntries(ps.map((p) => [p.name, prof(p).loadout]));
-    start(l.mode, ps, map); if (M) M.loadouts = lo;
+    if (seed !== undefined) void expedition(l.mode, ps, { seed }).then((r) => { if (M) M.loadouts = lo; log('expedition', { mode: l.mode, result: r }); });
+    else { start(l.mode, ps, map); if (M) M.loadouts = lo; }
   }
 }, 20);
 
@@ -143,7 +148,7 @@ export function makeQuest(def: QuestDef, pr: Profile, r: () => number, force: Re
   const tower = force.tower ?? (def.objs.some((o) => o.do === 'ability') ? pickOf(abilityTowers(pr, support)) : support ? pickOf(abilityTowers(pr, true)) : pickOf(ownedFight));
   if (def.objs.some((o) => o.tower) && !tower) return undefined;
   const role = force.role ?? pickOf(ROLES), status = force.status ?? pickOf(rules.quests.statuses);
-  const bosses = majorBosses(lv), modeNames = Object.keys(modes).filter((m) => modes[m].level <= lv), mapNames = Object.keys(maps);
+  const bosses = majorBosses(lv), modeNames = Object.keys(modes).filter((m) => modes[m].level <= lv), mapNames = Object.keys(maps).filter((n) => !maps[n].site);   // the named maps (training grounds), not the expeditions' sites
   const shuffled = <T,>(xs: T[]) => xs.map((x) => [r(), x] as const).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
   const bossList = force.boss ? force.boss.split(',') : shuffled(bosses);
   let bi = 0;

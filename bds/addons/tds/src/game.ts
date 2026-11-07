@@ -1,7 +1,7 @@
 // The match: path, enemies, towers, units, economy, waves. Pure simulation in studs/seconds; entities only mirror it.
 import { world, system, Player, Entity, Dimension } from '@minecraft/server';
 import { ENEMY_LOOK, TOWER_LOOK, UNIT_LOOK } from './looks';
-import { DEFAULT_MAP, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, startCash, timerFor, enemyIn, afterDefense, cashShare, hpFor, RULES, rules, units, unitsFor, Stats, Group, Ability, Spawn, TowerAbility, SkillDef } from './defs';
+import { DEFAULT_MAP, SiteDef, towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, waveCash, startCash, timerFor, enemyIn, afterDefense, cashShare, hpFor, RULES, rules, units, unitsFor, Stats, Group, Ability, Spawn, TowerAbility, SkillDef } from './defs';
 
 export let headless = false;
 export const log = (ev: string, o: Record<string, unknown> = {}) => { if (!headless) console.log(`[TDS] ${JSON.stringify({ ev, ...o })}`); };
@@ -12,18 +12,20 @@ export const TARGETS = ['First', 'Last', 'Strongest', 'Weakest', 'Closest', 'Far
 export const LANE_DEPTH = 1;
 /** half the width of the flat lane, in blocks (the rest of the path width is the stair slope) */
 export const LANE_HALF = 0.75;
-type Pt = { x: number; z: number };
+type Pt = { x: number; z: number; y: number };
 export class Path {
   pts: Pt[]; seg: number[] = []; len = 0; stud: number; y: number; width: number; floor: number;
   constructor(public map: string) {
-    const m = maps[map]; this.stud = m.stud; this.y = m.y; this.width = m.width; this.floor = m.y - LANE_DEPTH; this.pts = m.path.map(([x, z]) => ({ x: x + 0.5, z: z + 0.5 }));
+    const m = maps[map], o = m.offset ?? 0.5; this.stud = m.stud; this.y = m.y; this.width = m.width; this.floor = m.y - LANE_DEPTH;
+    // a training ground's points are block centres on one level; an expedition's are on the grid's lines, each with the height of the road's top there
+    this.pts = m.path.map(([x, z, y]) => ({ x: x + o, z: z + o, y: y ?? this.floor }));
     for (let i = 1; i < this.pts.length; i++) { this.seg.push(this.len); this.len += Math.hypot(this.pts[i].x - this.pts[i - 1].x, this.pts[i].z - this.pts[i - 1].z) / this.stud; }
   }
   at(d: number): Pt & { yaw: number } {
     d = Math.max(0, Math.min(this.len, d));
     let i = this.seg.length - 1; while (i > 0 && this.seg[i] > d) i--;
     const a = this.pts[i], b = this.pts[i + 1], sl = Math.hypot(b.x - a.x, b.z - a.z) / this.stud, t = sl ? (d - this.seg[i]) / sl : 0;
-    return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t, yaw: (Math.atan2(-(b.x - a.x), b.z - a.z) * 180) / Math.PI };
+    return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t, y: a.y + (b.y - a.y) * t, yaw: (Math.atan2(-(b.x - a.x), b.z - a.z) * 180) / Math.PI };
   }
   /** the way a walker faces at d: from a little behind to a little ahead, so it turns round a corner instead of snapping */
   yawAt(d: number) { const a = this.at(d - 0.7), b = this.at(d + 0.7); return (Math.atan2(-(b.x - a.x), b.z - a.z) * 180) / Math.PI; }
@@ -36,6 +38,16 @@ export class Path {
       best = Math.min(best, Math.hypot(x - a.x - dx * t, z - a.z - dz * t));
     }
     return best;
+  }
+  /** the height of the road's top at the centre-line point nearest to a block position */
+  nearestY(x: number, z: number) {
+    let best = Infinity, y = this.floor;
+    for (let i = 1; i < this.pts.length; i++) {
+      const a = this.pts[i - 1], b = this.pts[i], dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz;
+      const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / l2)), d = Math.hypot(x - a.x - dx * t, z - a.z - dz * t);
+      if (d < best) { best = d; y = a.y + (b.y - a.y) * t; }
+    }
+    return y;
   }
 }
 
@@ -58,6 +70,8 @@ export type PSt = { dmg: Record<string, number>; kills: number; killsBy: Record<
 export type Unit = { id: number; tw: number; d: number; hp: number; dmg: number; next: number; max?: number; kind?: string; fr?: number; range?: number; speed?: number; until?: number; stationary?: boolean;
   splash?: number; splashDmg?: number; burst?: number; burstCd?: number; burstLeft?: number; collide?: boolean; explode?: number; detect?: { hidden: boolean; lead: boolean; flying: boolean }; slow?: number; slowTime?: number; freezeEvery?: number; shots?: number };
 export type Match = {
+  /** an expedition's site (src/site.ts): kept with the match so a restart finds its road again */
+  site?: SiteDef;
   mode: string; map: string; players: string[]; cash: Record<string, number>; baseHP: number; maxHP: number; wave: number; t: number; waveEnd: number; skipAt: number;
   queue: { at: number; name: string; mods: string[] }[]; enemies: Enemy[]; towers: Tower[]; units: Unit[]; seq: number; votes: string[];
   over?: 'win' | 'lose'; hold?: boolean; inter?: boolean; waveDmg?: boolean; stats: { kills: number; leaks: number; dealt: number; income: number }; clearPaid: boolean; leakedThisWave: boolean; seed: number;
@@ -135,7 +149,7 @@ export const overCap = () => (M ? M.players.reduce((a, n) => a + skv(n, 'Over-He
 export function healBase(n: number, extra = 0) {
   if (!M || n <= 0 || M.over || mod('Glass')) return 0;
   const cap = M.maxHP + Math.max(extra, overCap()), was = M.baseHP; M.baseHP = Math.max(M.baseHP, Math.min(cap, M.baseHP + n));
-  if (M.baseHP > was && path) { const e = maps[M.map].path[maps[M.map].path.length - 1]; fx('heal', e[0] + 0.5, path.floor + 0.5, e[1] + 0.5); }
+  if (M.baseHP > was && path) { const q = path.at(path.len); fx('heal', q.x, q.y + 0.5, q.z); }
   return M.baseHP - was;
 }
 /** Extreme Conditioning: stuns and debuffs from enemies on that player's towers are shorter */
@@ -224,7 +238,10 @@ export function buildArena(map: string) {
 }
 
 export type Place = 'ground' | 'cliff' | null;
+/** expedition sites (src/site.ts): placement on the land, re-registering a site after a restart, cancelling, the bot's spots */
+export const siteHooks: { surface?: (x: number, y: number, z: number) => Place; register?: (s: SiteDef) => void; stop?: () => void; spots?: () => { x: number; y: number; z: number; kind: 'ground' | 'cliff' }[]; started?: (m: Match, players: Player[]) => void } = {};
 export function surface(x: number, y: number, z: number): Place {
+  if (maps[M?.map ?? DEFAULT_MAP]?.site) return siteHooks.surface?.(x, y, z) ?? null;   // an expedition: the land as it is (src/site.ts)
   const m = maps[M?.map ?? DEFAULT_MAP], b = dim().getBlock({ x, y: y - 1, z })?.typeId;
   const free = dim().getBlock({ x, y, z })?.isAir ?? true;   // nothing standing in the tower's own block (stairs, stone)
   if (y === m.y && b === 'minecraft:grass_block' && free) return 'ground';
@@ -235,24 +252,26 @@ export function surface(x: number, y: number, z: number): Place {
 // ---------- match lifecycle ----------
 export function start(mode: string, players: Player[], map = DEFAULT_MAP) {
   stop(true); ezones = [];
-  const md = modes[mode]; path = buildArena(map); rnd = 1;
+  const md = modes[mode], site = maps[map]?.site; path = site ? new Path(map) : buildArena(map); rnd = 1;
   const cash = startCash(mode, players.length);
   M = { mode, map, players: players.map((p) => p.name), cash: Object.fromEntries(players.map((p) => [p.name, cash])), baseHP: md.baseHP, maxHP: md.baseHP, wave: 0, t: 0, waveEnd: 5, skipAt: 0, inter: true,
-    queue: [], enemies: [], towers: [], units: [], seq: 1, votes: [], stats: { kills: 0, leaks: 0, dealt: 0, income: 0 }, clearPaid: false, leakedThisWave: false, seed: 1, pst: Object.fromEntries(players.map((p) => [p.name, fresh()])) };
-  const g = maps[map].grid[32]?.[32], onPath = path.dist(0.5, 0.5) < path.width / 2 + 0.5;
-  for (const p of players) p.teleport({ x: 0.5, y: maps[map].y + (g === 'x' && !onPath ? 2.2 : 0.2), z: 0.5 });
+    queue: [], enemies: [], towers: [], units: [], seq: 1, votes: [], stats: { kills: 0, leaks: 0, dealt: 0, income: 0 }, clearPaid: false, leakedThisWave: false, seed: 1, pst: Object.fromEntries(players.map((p) => [p.name, fresh()])), ...(site && { site }) };
+  if (site) for (const p of players) p.teleport({ x: site.camp[0] + 0.5, y: site.camp[1], z: site.camp[2] + 0.5 });
+  else { const g = maps[map].grid[32]?.[32], onPath = path.dist(0.5, 0.5) < path.width / 2 + 0.5; for (const p of players) p.teleport({ x: 0.5, y: maps[map].y + (g === 'x' && !onPath ? 2.2 : 0.2), z: 0.5 }); }
   if (holdNext) { M.hold = true; holdNext = false; }
   if (md.sandbox) { M.sandbox = true; M.hold = true; }
   for (const f of onStart) f(M, players);
   applyStartSkills(M);
   if (mod('Glass')) { M.baseHP = 1; M.maxHP = 1; }   // Glass: base at 1, no over-heal
   log('match_start', { mode, map, players: M.players, cash, baseHP: M.baseHP, hpScale: hpFor(mode, players.length), pathStuds: +path.len.toFixed(1) });
+  if (site) siteHooks.started?.(M, players);
   persist();
 }
 
 let holdNext = false;
 export function setHold(on: boolean) { if (M && !M.over) { M.hold = on; persist(); } else holdNext = on; }
 export function stop(silent = false) {
+  siteHooks.stop?.();
   for (const e of dim().getEntities({ families: ['tds'] })) e.remove();
   ents.clear(); shown.clear();
   if (M && !silent) log('match_stop', { mode: M.mode, wave: M.wave });
@@ -335,7 +354,7 @@ export const unitLook = (u: Unit): [number, number] => (u.kind ? UNIT_LOOK[u.kin
   ?? UNIT_LOOK[u.slow && u.stationary ? 'Ice Turret' : u.stationary ? 'Sentry (Unit)' : !u.kind ? 'Skeleton (Unit)' : /Vehicle/i.test(units[u.kind]?.type ?? '') ? 'Truck1' : 'Rifleman'] ?? [0, 1];
 function show(e: Enemy) {
   if (!path) return;
-  const p = path.at(e.d), y = path.floor + (e.flying ? 2.5 : 0);
+  const p = path.at(e.d), y = p.y + (e.flying ? 2.5 : 0);
   try {
     const ent = dim().spawnEntity('tds:enemy' as any, { x: p.x, y, z: p.z });
     ent.setProperty('tds:skin', enemySkin(e));
@@ -551,7 +570,7 @@ function fire(tw: Tower, s: ReturnType<typeof eff>, e: Enemy) {
     if (s.poison) h.dots.push({ dmg: s.poison[0], tick: s.poison[1], next: M.t + s.poison[1], until: M.t + s.poison[2] * F, tw: tw.id, kind: 'poison' });
     if (s.poison) mark(tw, 'Poison');
     if (s.slowHit && !h.boss && !h.immune.includes('Slowed')) { h.slow = Math.min(s.slowMax ?? s.slowHit, h.slow + s.slowHit); h.slowUntil = M.t + (s.slowTime ?? 2) * F; mark(tw, 'Frost'); }
-    if (s.freeze && !h.boss && !h.immune.includes('Freeze') && h.slow >= (s.slowMax ?? 1)) { h.freezeUntil = M.t + s.freeze * F; mark(tw, 'Freeze'); const q = epos(h); fx('freeze', q.x, path.floor + 0.3, q.z); }
+    if (s.freeze && !h.boss && !h.immune.includes('Freeze') && h.slow >= (s.slowMax ?? 1)) { h.freezeUntil = M.t + s.freeze * F; mark(tw, 'Freeze'); const q = epos(h); fx('freeze', q.x, path.at(h.d).y + 0.3, q.z); }
     if (s.stun && !h.boss && !h.immune.includes('Stun')) { h.stunUntil = Math.max(h.stunUntil, M.t + s.stun * F); mark(tw, 'Shock'); }
   }
   if (s.cashShot && s.income && ++tw.shots % s.cashShot === 0) { pay(tw.owner, s.income); M.stats.income += s.income; log('income', { tower: tw.id, name: tw.name, amount: s.income }); }
@@ -571,7 +590,7 @@ export function fx(kind: keyof typeof FX, x: number, y: number, z: number) {
 }
 function beam(tw: Tower, e: Enemy, n: number) {
   if (!path || headless || simSpeed() > 1) return;
-  const p = path.at(e.d), d = dim(), y = path.floor + (e.flying ? 2.7 : 0.3);
+  const p = path.at(e.d), d = dim(), y = p.y + (e.flying ? 2.7 : 0.3);
   fx(n > 1 ? 'boom' : 'hit', p.x, y, p.z);
   look(tw, e);
 }
@@ -681,7 +700,7 @@ export function place(p: Player | string, name: string, x: number, y: number, z:
   const lim = limitFor(owner, name);
   if (lim && M.towers.filter((t) => t.name === name && t.owner === owner && t.temp === undefined).length >= lim) return { ok: false, why: `limit ${lim}` };
   const r0 = (foot(name) / 2) * path.stud;
-  if (y === maps[M.map].y && path.dist(x + 0.5, z + 0.5) < path.width / 2 + r0) return { ok: false, why: 'on the path' };
+  if ((maps[M.map].site || y === maps[M.map].y) && path.dist(x + 0.5, z + 0.5) < path.width / 2 + r0) return { ok: false, why: 'on the path' };
   const sf = surface(x, y, z);
   if (!sf) return { ok: false, why: 'not placeable here' };
   if (def.placement !== 'both' && def.placement !== sf) return { ok: false, why: `${def.placement} only` };
@@ -863,7 +882,7 @@ function end(r: 'win' | 'lose') {
 export function finish(r: 'win' | 'lose') { if (M && !M.over) { if (r === 'win') M.wave = modes[M.mode].waves; end(r); } }
 /** Run simulated seconds without the world (bench, tests of the rules). */
 export function simulate(sec: number) { headless = true; try { for (let i = 0; i < sec / DT; i++) step(); } finally { headless = false; } }
-export function __setM(m: Match | undefined) { M = m; path = m ? (path?.map === m.map ? path : new Path(m.map)) : undefined; }
+export function __setM(m: Match | undefined) { if (m?.site && !maps[m.map]) siteHooks.register?.(m.site); M = m; path = m ? (path?.map === m.map ? path : new Path(m.map)) : undefined; }
 
 // ---------- visuals, persistence ----------
 let tick = 0;
@@ -881,14 +900,14 @@ system.runInterval(() => {
     if (tick % 10 === 0) flush(e);
     let x = ents.get(e.id); if (!x?.isValid) { if (tick % 40 === 0) show(e); continue; }
     const p = path.at(e.d), back = M.t < (e.conf ?? 0) ? 180 : 0;
-    try { x.teleport({ x: p.x, y: path.floor + (e.flying ? 2.5 : 0), z: p.z }, { rotation: { x: 0, y: path.yawAt(e.d) + back } }); } catch { /* unloaded */ }
+    try { x.teleport({ x: p.x, y: p.y + (e.flying ? 2.5 : 0), z: p.z }, { rotation: { x: 0, y: path.yawAt(e.d) + back } }); } catch { /* unloaded */ }
     if (!headless) showState(e.id, x, Math.min(255, Math.round((e.v ?? e.speed) * 10 * n)), M.t < e.freezeUntil ? 2 : M.t < e.stunUntil ? 1 : 0);
   }
   if (tick % (M.units.length > 20 ? 2 : 1) === 0) for (const u of M.units) {
     const p = path.at(u.d); let x = ents.get(u.id);
     const tag = `§a${u.kind ?? 'Unit'} §f${Math.ceil(u.hp)}`;
-    if (!x?.isValid) { try { x = dim().spawnEntity('tds:unit' as any, { x: p.x, y: path.floor, z: p.z }); try { const lk = unitLook(u); x.setProperty('tds:skin', lk[0]); x.setProperty('tds:size', lk[1]); } catch { /* older pack */ } x.nameTag = tag; ents.set(u.id, x); shown.delete(u.id); } catch { continue; } }
-    try { x.teleport({ x: p.x, y: path.floor, z: p.z }, { rotation: { x: 0, y: path.yawAt(u.d) + 180 } }); if (x.nameTag !== tag) x.nameTag = tag; } catch { /* unloaded */ }
+    if (!x?.isValid) { try { x = dim().spawnEntity('tds:unit' as any, { x: p.x, y: p.y, z: p.z }); try { const lk = unitLook(u); x.setProperty('tds:skin', lk[0]); x.setProperty('tds:size', lk[1]); } catch { /* older pack */ } x.nameTag = tag; ents.set(u.id, x); shown.delete(u.id); } catch { continue; } }
+    try { x.teleport({ x: p.x, y: p.y, z: p.z }, { rotation: { x: 0, y: path.yawAt(u.d) + 180 } }); if (x.nameTag !== tag) x.nameTag = tag; } catch { /* unloaded */ }
     if (!headless) showState(u.id, x, u.stationary ? 0 : Math.min(255, Math.round((u.speed ?? RULES.unitSpeed) * 10 * n)), 0);
   }
   if (tick % 4 === 0 && !headless) for (const tw of M.towers) {   // a stunned tower reels, a frozen one stands still
@@ -904,7 +923,7 @@ export function persist() { try { world.setDynamicProperty('tds:m', M ? JSON.str
 export function restore() {
   const s = world.getDynamicProperty('tds:m') as string | undefined; if (!s) return false;
   for (const e of dim().getEntities({ families: ['tds'] })) e.remove();
-  ents.clear(); shown.clear(); M = JSON.parse(s) as Match; path = new Path(M.map);
+  ents.clear(); shown.clear(); M = JSON.parse(s) as Match; if (M.site) siteHooks.register?.(M.site); path = new Path(M.map);
   for (const e of M.enemies) show(e); for (const t of M.towers) body(t);
   log('restored', { mode: M.mode, wave: M.wave, enemies: M.enemies.length, towers: M.towers.length, baseHP: M.baseHP });
   return true;

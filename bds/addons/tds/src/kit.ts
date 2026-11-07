@@ -27,12 +27,19 @@ export function cmd(name: string, description: string, params: Record<string, Pa
   cmdAny(name, description, params, (p, a, o) => (p ? fn(p, a, o) : 'players only'), op);
 }
 /** like cmd, also from the console or command blocks (p undefined there; a returned string is logged) */
+/** the command enums registered so far (name → its values) */
+const ENUMS = new Map<string, string>();
 export function cmdAny(name: string, description: string, params: Record<string, Param>, fn: (p: Player | undefined, a: any, o: CustomCommandOrigin) => string | void | Promise<string | void>, op = false) {
   const ns = name.split(':')[0];
   atStartup((e) => {
     const list = Object.entries(params).map(([k, t]) => {
       const opt = k.endsWith('?'), key = opt ? k.slice(0, -1) : k;
-      if (Array.isArray(t)) { const en = `${ns}:${key}`; e.customCommandRegistry.registerEnum(en, [...t]); return { key, opt, p: { name: en, type: CustomCommandParamType.Enum } }; }
+      if (Array.isArray(t)) {   // one enum per list of values: commands that share a parameter name and its values share the enum
+        const vals = [...t].join('\u0001'); let en = `${ns}:${key}`;
+        for (let n = 2; ENUMS.has(en) && ENUMS.get(en) !== vals; n++) en = `${ns}:${key}${n}`;
+        if (!ENUMS.has(en)) { e.customCommandRegistry.registerEnum(en, [...t]); ENUMS.set(en, vals); }
+        return { key, opt, p: { name: en, type: CustomCommandParamType.Enum } };
+      }
       return { key, opt, p: { name: key, type: PT[t as string] } };
     });
     e.customCommandRegistry.registerCommand({

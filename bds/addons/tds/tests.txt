@@ -433,7 +433,7 @@ until "ev":"level_up","player":"A","level":30,"coins":0,"towers":\["Crook Boss"\
 tds:xpboost off
 tds:stop
 
-## lobby: profile, shop with coins, loadout, quests, elevators (Survival 4 / Hardcore 3 players, 20 s, party size chosen by the first player, Hardcore map changes every minute) to a match
+## lobby: profile, shop with coins, loadout, quests, elevators (Survival 4 / Hardcore 3 players, 20 s, party size chosen by the first player, the place changes every minute) to an expedition, or to a training ground voted for
 tds:stop
 @B join
 @A cmd /tds:reset
@@ -446,8 +446,8 @@ tds:stop
 ~ @A form action: title\("Party size"\)
 @A form 0
 ~ @A Elevator Easy: 1/1, departs in 0s
-until "ev":"match_start","mode":"Easy" 5000
-~ "ev":"elevator_depart","mode":"Easy","players":\["A"\],"size":1,
+until "ev":"match_start","mode":"Easy","map":"Wild #\d+" 120000
+~ "ev":"elevator_depart","mode":"Easy","players":\["A"\],"size":1,"map":"Wild #\d+"
 tds:stop
 @A cmd /tds:queue Casual 2
 ~ @A Elevator Casual: 1/2, departs in 20s
@@ -466,14 +466,14 @@ tds:stop
 ~ @A Hardcore needs level 50
 @A cmd /tds:grant 0 0 50
 @A cmd /tds:queue Hardcore 4
-~ @A Elevator Hardcore: 1/3 · (Grass Isle|Crossroads), departs in 20s
+~ @A Elevator Hardcore: 1/3 · Wild #\d+, departs in 20s
 @A cmd /tds:vote Crossroads
-~ @A Hardcore elevators go to (Grass Isle|Crossroads)
+~ @A Hardcore elevators go to Wild #\d+
 tds:hardcoremap
-~ ^(Grass Isle|Crossroads)$
+~ ^Wild #\d+$
 tds:depart Hardcore
-until "ev":"match_start","mode":"Hardcore","map":"(Grass Isle|Crossroads)","players":\["A"\],"cash":900 5000
-~ "ev":"elevator_depart","mode":"Hardcore","players":\["A"\],"size":3,"map":"(Grass Isle|Crossroads)"
+until "ev":"match_start","mode":"Hardcore","map":"Wild #\d+","players":\["A"\],"cash":900 120000
+~ "ev":"elevator_depart","mode":"Hardcore","players":\["A"\],"size":3,"map":"Wild #\d+"
 tds:stop
 @A cmd /tds:profile
 ~ @A Lv50 exp \d+ coins \d+ gems \d+ texp \d+ slots 5 owned \d+ loadout
@@ -862,3 +862,28 @@ tds:dmgnumbers off
 ~ "ev":"dmgnumbers","on":false
 tds:dmgnumbers on
 ~ Damage numbers on
+
+## expeditions: a far place in the world (a made-up land on a flat world), a road of stair blocks only (170 studs, one step at a time), the gates and the camp; towers on the land's ground and cliffs; a restart keeps the site
+tds:stop
+@A cmd /tds:reset
+@A cmd /tds:expedition Easy false 4242
+~ @A Easy: setting out on an expedition
+until "ev":"site_built" 120000
+~ "ev":"site_built","name":"Wild #\d+","mode":"Easy","seed":\d+,"x":-?\d+,"z":-?\d+,"flat":true
+~ "pathStuds":1(6[4-9]|7[0-6]),"onlyStairs":true,"maxStep":[01],
+until "ev":"match_start","mode":"Easy","map":"Wild #\d+","players":\["A"\] 20000
+tds:hold true
+tds:sitecheck
+~ ^road ok \d+ stairs, ground \d+, cliff \d+
+@A cmd /tds:sitetry ground Scout
+~ @A Placed ground #\d+ Scout
+@A cmd /tds:sitetry cliff Sniper
+~ @A Placed cliff #\d+ Sniper
+tds:site
+~ ^Wild #\d+ at -?\d+ -?\d+: pathStuds 1(6[4-9]|7[0-6])
+restart
+until "ev":"restored","mode":"Easy" 60000
+tds:site
+~ ^Wild #\d+ at -?\d+ -?\d+
+tds:stop
+

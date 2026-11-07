@@ -12,6 +12,7 @@ import { modsMenu } from './modifiers';
 import { flashRange } from './placement';
 import { selectTower, hudOn } from './hud';
 import { signalMenu } from './signals';
+import { expedition } from './site';
 import './narrator';
 import './indicators';
 
@@ -20,16 +21,17 @@ const inMatch = (p: Player) => !!G.M && G.M.players.includes(p.name);
 const loadout = (p: Player) => ((G.M as any)?.loadouts?.[p.name] as string[] | undefined) ?? prof(p).loadout;
 
 // ---------- match commands ----------
-const MAP_IDS = Object.keys(maps).map((m) => m.replace(/ /g, '_'));
+const MAP_IDS = [...Object.keys(maps).map((m) => m.replace(/ /g, '_')), 'Wild'];   // Wild: an expedition (src/site.ts)
 cmd('tds:play', 'Start a match now (solo or everyone online)', { mode: MODE_NAMES as unknown as string[], 'all?': 'bool', 'map?': MAP_IDS }, (p, a) => {
   const md = modes[a.mode]; if (!md) return `Modes: ${MODE_NAMES.join(' ')}`;
   if (prof(p).level < md.level && !p.hasTag('tds_dev')) return `${a.mode} needs level ${md.level}`;
-  const ps = a.all ? world.getAllPlayers() : [p];
+  const ps = a.all ? [p, ...world.getAllPlayers().filter((x) => x.name !== p.name)] : [p];   // the one who asked first
+  if (a.map === 'Wild') { void expedition(a.mode, ps).then((r) => p.sendMessage(r)); return `${a.mode}: setting out on an expedition`; }
   G.start(a.mode, ps, a.map ? T(a.map) : undefined); if (G.M) (G.M as any).loadouts = Object.fromEntries(ps.map((x) => [x.name, prof(x).loadout]));
   for (const x of ps) give(x, 'tds:wand', 1);
   return `${a.mode}: ${md.waves} waves, $${G.M!.cash[p.name]}`;
 });
-cmdAny('tds:maps', 'Maps traced from the wiki', {}, () => Object.entries(maps).map(([n, m]) => `${n} (${m.pathStuds} studs)`).join(', '));
+cmdAny('tds:maps', 'Maps: the training grounds traced from the wiki, and Wild (an expedition)', {}, () => [...Object.entries(maps).filter(([, m]) => !m.site).map(([n, m]) => `${n} (${m.pathStuds} studs)`), 'Wild (an expedition, 170 studs)'].join(', '));
 cmd('tds:queue', 'Enter an elevator (the first player picks the party size)', { lift: MODE_NAMES as unknown as string[], 'size?': 'int' }, (p, a) => queue(p, a.lift, a.size));
 cmdAny('tds:hardcoremap', 'Map the Hardcore elevators go to this minute', {}, () => hardcoreMap());
 cmd('tds:vote', 'Vote for the map in your elevator', { mapname: MAP_IDS }, (p, a) => voteMap(p, T(a.mapname)));
@@ -214,17 +216,21 @@ every(10, (p) => {
 });
 
 // ---------- autoplay (test bot): greedy damage-per-cash with detection needs ----------
-const spots: { x: number; y: number; z: number; cover: number }[] = [];
+const spots: { x: number; y: number; z: number; cover: number; kind: 'ground' | 'cliff' }[] = [];
 const samples: { x: number; z: number }[] = [], covC = new Map<string, number>();
 const covAt = (x: number, z: number, range: number) => { const k = `${x}:${z}:${range}`; let c = covC.get(k); if (c === undefined) { c = 0; const r = range * G.path!.stud; for (const q of samples) if (Math.hypot(q.x - x - 0.5, q.z - z - 0.5) <= r) c++; covC.set(k, c); } return c; };
 function findSpots() {
   spots.length = 0; const path = G.path!, m = maps[G.M!.map];
   samples.length = 0; for (let d = 0; d < path.len; d += 1) samples.push(path.at(d)); covC.clear();
+  if (m.site) {   // an expedition: the spots its land offers (src/site.ts)
+    for (const s of G.siteHooks.spots?.() ?? []) { let c = 0; for (let d = 0; d < path.len; d += 2) { const q = path.at(d); if (Math.hypot(q.x - s.x - 0.5, q.z - s.z - 0.5) / path.stud <= 14) c++; } if (c) spots.push({ ...s, cover: c }); }
+    spots.sort((a, b) => b.cover - a.cover); return;
+  }
   for (let x = -31; x <= 30; x += 2) for (let z = -31; z <= 30; z += 2) {
     for (const y of [m.y, m.y + 2]) {
       if (!G.surface(x, y, z) || path.dist(x + 0.5, z + 0.5) > 12) continue; if (y === m.y && path.dist(x + 0.5, z + 0.5) < path.width / 2 + 1.5) continue;
       let c = 0; for (let d = 0; d < path.len; d += 2) { const q = path.at(d); if (Math.hypot(q.x - x - 0.5, q.z - z - 0.5) / path.stud <= 14) c++; }
-      if (c) spots.push({ x, y, z, cover: c });
+      if (c) spots.push({ x, y, z, cover: c, kind: y === m.y ? 'ground' : 'cliff' });
     }
   }
   spots.sort((a, b) => b.cover - a.cover);
@@ -254,7 +260,7 @@ function botStep(p: Player, M: NonNullable<typeof G.M>): boolean {
       if (!dps(n, 0)) continue;
       let bonus = 0; for (const k of ['hidden', 'lead', 'flying'] as const) if (nd[k] && !have(k) && sees(n, 0, k)) bonus += 1000;
       const rg = stats(n, 0).range; let free: { x: number; y: number; z: number; cover: number } | undefined, fc = 0;
-      for (const s of spots) { if (!(towers[n].placement === 'both' || (towers[n].placement === 'cliff') === (s.y !== maps[M.map].y)) || M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2)) continue; const c = covAt(s.x, s.z, rg); if (c > fc) { fc = c; free = { ...s, cover: c }; } }
+      for (const s of spots) { if (!(towers[n].placement === 'both' || (towers[n].placement === 'cliff') === (s.kind === 'cliff')) || M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2)) continue; const c = covAt(s.x, s.z, rg); if (c > fc) { fc = c; free = { ...s, cover: c }; } }
       const lim = Math.min(towers[n].limit ?? 99, n === 'Scout' ? 3 : 6); if (free && !(mine.filter((t) => t.name === n).length >= lim)) consider(dps(n, 0) * free.cover + bonus, placeCost(n), () => G.place(p, n, free.x, free.y, free.z));
     }
     for (const t of mine) {
@@ -269,7 +275,7 @@ function botStep(p: Player, M: NonNullable<typeof G.M>): boolean {
     if (loadout(p).includes('Farm') && M.wave >= 1 && M.wave <= W * 0.5 && !M.leakedThisWave) {
       const farms = mine.filter((t) => t.name === 'Farm');
       const up = farms.filter((t) => t.lvl < maxLevel('Farm')).map((t) => ({ t, c: levelCost('Farm', t.lvl + 1), g: (stats('Farm', t.lvl + 1).income ?? 0) - (stats('Farm', t.lvl).income ?? 0) })).sort((a, b) => a.c / a.g - b.c / b.g)[0];
-      const spot = spots.find((s) => s.y === maps[M.map].y && !M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2));
+      const spot = spots.find((s) => s.kind === 'ground' && !M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2));
       const nw = farms.length < (towers.Farm.limit ?? 10) && spot ? { c: placeCost('Farm'), g: stats('Farm', 0).income ?? 0 } : undefined;
       const opt = [up && { c: up.c, g: up.g, act: () => G.upgrade(p.name, up.t.id) }, nw && { ...nw, act: () => G.place(p, 'Farm', spot!.x, spot!.y, spot!.z) }].filter(Boolean).sort((a: any, b: any) => a.c / a.g - b.c / b.g)[0] as any;
       if (opt && opt.c / opt.g < left / 2 && opt.c <= cash && M.wave % 2 === 0) { opt.act(); return true; }
@@ -281,7 +287,7 @@ function botStep(p: Player, M: NonNullable<typeof G.M>): boolean {
         ...mine.filter((t) => towers[t.name].detect[k] !== null && towers[t.name].detect[k]! > t.lvl).map((t) => ({ c: levelCost(t.name, t.lvl + 1), n: '', t }))].sort((a, b) => a.c - b.c);
       const o = opts[0] as { c: number; n: string; t?: G.Tower } | undefined; if (!o) continue;
       if (o.t) { if (levelCost(o.t.name, o.t.lvl + 1) <= cash) { G.upgrade(p.name, o.t.id); return true; } return false; }
-      const sp = spots.filter((s) => (towers[o.n].placement === 'both' || (towers[o.n].placement === 'cliff') === (s.y !== maps[M.map].y)) && !M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2)).sort((a, b) => covAt(b.x, b.z, stats(o.n, 0).range) - covAt(a.x, a.z, stats(o.n, 0).range))[0];
+      const sp = spots.filter((s) => (towers[o.n].placement === 'both' || (towers[o.n].placement === 'cliff') === (s.kind === 'cliff')) && !M.towers.some((t) => Math.hypot(t.x - s.x, t.z - s.z) < 2)).sort((a, b) => covAt(b.x, b.z, stats(o.n, 0).range) - covAt(a.x, a.z, stats(o.n, 0).range))[0];
       if (sp && placeCost(o.n) <= cash) { G.place(p, o.n, sp.x, sp.y, sp.z); return true; }
       if (sp) return false;   // saving
     }

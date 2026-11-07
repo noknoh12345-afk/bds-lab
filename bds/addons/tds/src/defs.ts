@@ -27,7 +27,12 @@ export type Formula = { base: number; n: number; pow: number; bonus: number };
 export type QuestObj = { do: 'triumph' | 'damage' | 'kills' | 'boss' | 'status' | 'ability' | 'cash'; need?: [number, number]; times?: [number, number]; cash?: [number, number]; hpPct?: [number, number]; tower?: boolean; support?: boolean; role?: boolean; boss?: boolean; status?: boolean; map?: boolean; maps?: number; modes?: number; players?: number[]; loadoutMax?: number };
 export type QuestDef = { title: string; kind: 'daily' | 'weekly'; coins?: number; gems?: number; exp: number; crate?: string; objs: QuestObj[] };
 export type Rules = { sellRate: number; cashSplit: string; xpBoost: { mult: number; utcDays: number[] }; intermission: number; elevators: Record<string, { max: number; wait: number; rotate?: number | null }>; skills?: { list: SkillDef[]; refund: number; resetCost: number; resetStep: number }; badges?: BadgeDef[]; modifiers?: { name: string; reward: number; affects: string | null }[]; levelRewards: Record<string, { coins: number }>; fifthSlot: number; quests: { daily: number; weekly: number; list: QuestDef[]; statuses: string[] } };
-export type MapDef = { stud: number; y: number; path: [number, number][]; width: number; grid: string[]; pathStuds: number; src: string };
+export type MapDef = { stud: number; y: number; path: [number, number, number?][]; width: number; grid: string[]; pathStuds: number; src: string; offset?: number; site?: SiteDef };
+/** an expedition's site (src/site.ts): where it is, its road (centre line with the top's height; stair cells packed as
+ *  "x,z,y,dir,flags;..."), the gates, the camp, and where the players were before they left */
+export type SiteDef = { name: string; seed: number; mode: string; theme: string; title: [number, string]; cx: number; cz: number; flat: boolean;
+  pts: [number, number, number][]; cells: string; gateIn: [number, number, number]; gateOut: [number, number, number]; camp: [number, number, number];
+  home?: Record<string, [number, number, number]>; stats: Record<string, number> };
 
 export const towers = TOWERS as unknown as Record<string, TowerDef>;
 export const enemies = ENEMIES as unknown as Record<string, EnemyDef>;
