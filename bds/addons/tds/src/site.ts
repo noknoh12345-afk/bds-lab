@@ -7,7 +7,7 @@
 import { world, system, Player, BlockPermutation, Vector3, CatmullRomSpline, InputButton, ButtonState } from '@minecraft/server';
 import * as G from './game';
 import { maps, modes, MODE_NAMES, SiteDef } from './defs';
-import { plan, Route, Dir, rng, valueNoise } from './road';
+import { planSteps, Route, Dir, rng, valueNoise } from './road';
 import { cmd, cmdAny, give } from './kit';
 
 const AREA = 40, CAMP = 4, AREA_ID = 'tds_site';
@@ -32,7 +32,7 @@ const THEMES: Record<string, Theme> = {
 const themeOf = (mode: string) => THEMES[mode] ?? THEMES.Intermediate;
 const BRIDGE = 'spruce_stairs';
 const NOUNS: [RegExp, string][] = [[/birch/, 'birch'], [/taiga|spruce|pine/, 'taiga'], [/snow|ice|frozen|grove|cold/, 'snow'], [/desert/, 'desert'], [/mesa|badlands/, 'badlands'],
-  [/savanna/, 'savanna'], [/swamp|mangrove/, 'swamp'], [/jungle|bamboo/, 'jungle'], [/peak|mountain|hills|slopes|windswept|stony/, 'peaks'], [/forest|roofed|dark/, 'forest'], [/plains|meadow|sunflower|flower/, 'plains']];
+  [/savanna/, 'savanna'], [/swamp|mangrove/, 'swamp'], [/jungle|bamboo/, 'jungle'], [/peak|mountain|hills|slopes|windswept|stony/, 'peaks'], [/forest|roofed|dark/, 'forest'], [/plains|meadow|sunflower|flower/, 'plains'], [/ocean|beach|river|shore/, 'coast']];
 
 // ---------- blocks ----------
 const perms = new Map<string, BlockPermutation | null>();
@@ -77,6 +77,7 @@ function* scan(cx: number, cz: number, hm: HMap, st: Scan): Generator<void, void
       hm.g[i] = c.g; hm.w[i] = c.w ? 1 : 0; if (c.lava || c.made) hm.bad[i] = 1;
       if (c.made) st.made++; if (c.lava) st.lava++; if (c.w) st.water++; if (c.top === 'minecraft:grass_block') st.grass++;
       st.min = Math.min(st.min, c.g); st.max = Math.max(st.max, c.g);
+      if ((z & 15) === 0) yield;
     }
     yield;
   }
@@ -104,6 +105,7 @@ function* synth(cx: number, cz: number, g0: number, hm: HMap, seed: number): Gen
       const X = cx + x, Z = cz + z;
       if (wet) fill(X, g0 - 1, Z, X, g0, Z, 'water');
       else if (H > 0) { fill(X, g0, Z, X, g0 + H - 1, Z, isRock ? 'stone' : 'dirt'); put(X, g0 + H, Z, isRock ? (H > 4 ? 'moss_block' : 'andesite') : 'grass_block'); }
+      if ((z & 15) === 0) yield;
     }
     yield;
   }
@@ -150,16 +152,19 @@ function* buildRoad(cx: number, cz: number, rt: Route, hm: HMap, th: Theme): Gen
   }
 }
 /** a gate over one end of the road: two pillars beside it, a lintel high enough for flyers, lanterns under it; returns its middle */
-function gate(cx: number, cz: number, rt: Route, hm: HMap, first: boolean, P: string, L: string, light: string): [number, number, number] {
+function gate(cx: number, cz: number, rt: Route, hm: HMap, first: boolean, P: string, L: string, light: string): { mid: [number, number, number]; blocks: [number, number, number][] } {
   const n = rt.pts.length - 1, a = first ? rt.pts[0] : rt.pts[n], b = first ? rt.pts[1] : rt.pts[n - 1], y = first ? rt.J[0] : rt.J[n], top = y + 6;
   const row: [number, number][] = a[1] === b[1] ? [-2, -1, 0, 1].map((k) => [Math.min(a[0], b[0]), a[1] + k]) : [-2, -1, 0, 1].map((k) => [a[0] + k, Math.min(a[1], b[1])]);
+  const blocks: [number, number, number][] = [];   // the order a gate breaks in: lanterns and lintel, then the pillars from the top
   for (const [i, [x, z]] of row.entries()) {
     const X = cx + x, Z = cz + z;
     if (i === 0 || i === 3) fill(X, hm.get(x, z) + 1, Z, X, top, Z, P);
-    else { put(X, top, Z, L); put(X, top - 1, Z, light, { hanging: true }); }
+    else { put(X, top, Z, L); put(X, top - 1, Z, light, { hanging: true }); blocks.push([X, top - 1, Z], [X, top, Z]); }
   }
   put(cx + row[0][0], top + 1, cz + row[0][1], light); put(cx + row[3][0], top + 1, cz + row[3][1], light);
-  return [cx + a[0], y, cz + a[1]];
+  blocks.unshift([cx + row[0][0], top + 1, cz + row[0][1]], [cx + row[3][0], top + 1, cz + row[3][1]]);
+  for (let yy = top; yy >= Math.max(hm.get(row[0][0], row[0][1]), hm.get(row[3][0], row[3][1])) + 2; yy--) for (const k of [0, 3]) blocks.push([cx + row[k][0], yy, cz + row[k][1]]);
+  return { mid: [cx + a[0], y, cz + a[1]], blocks };
 }
 function posts(cx: number, cz: number, rt: Route, hm: HMap, road: Set<string>, light: string) {
   for (let k = 5; k < rt.pts.length - 6; k += 10) {
@@ -189,17 +194,25 @@ function surface(x: number, y: number, z: number, P = G.path): G.Place {
   const rel = y - P.nearestY(x + 0.5, z + 0.5);
   return rel >= 2 ? 'cliff' : rel >= -2 && rel <= 1 ? 'ground' : null;
 }
+function* spotSteps(P: G.Path, out: Spot[]): Generator<void, void, void> {
+  const s = live.site; if (!s) return;
+  for (let x = s.cx - 32; x <= s.cx + 32; x++) {
+    for (let z = s.cz - 32; z <= s.cz + 32; z++) {
+      if (P.dist(x + 0.5, z + 0.5) > 9) continue;
+      const c = column(x, z); if (!c || c.w) continue;
+      const k = surface(x, c.g + 1, z, P); if (k) out.push({ x, y: c.g + 1, z, kind: k });
+    }
+    yield;
+  }
+}
+/** the spots of the land (cached; the expedition fills it as a job before the match, a restart here at once) */
 function spots(P = G.path): Spot[] {
   if (live.spots) return live.spots;
-  const s = live.site; if (!s || !P) return [];
-  const out: Spot[] = [];
-  for (let x = s.cx - 32; x <= s.cx + 32; x++) for (let z = s.cz - 32; z <= s.cz + 32; z++) {
-    if (P.dist(x + 0.5, z + 0.5) > 9) continue;
-    const c = column(x, z); if (!c || c.w) continue;
-    const k = surface(x, c.g + 1, z, P); if (k) out.push({ x, y: c.g + 1, z, kind: k });
-  }
+  if (!live.site || !P) return [];
+  const out: Spot[] = []; for (const _ of spotSteps(P, out)) { /* at once */ }
   return (live.spots = out);
 }
+async function spotsJob(P: G.Path): Promise<Spot[]> { const out: Spot[] = []; await job(spotSteps(P, out)); return (live.spots = out); }
 /** rocks beside the road where the land has too few cliffs (four towers are cliff only): 3×3, two above the road's top */
 function rocks(cx: number, cz: number, rt: Route, hm: HMap, want: number, r: () => number): number {
   let made = 0;
@@ -249,6 +262,8 @@ export function wildSeed(mode: string, period: number) { let h = 2166136261; for
 export const wildName = (seed: number) => `Wild #${seed % 10000}`;
 
 // ---------- setting out ----------
+/** "looking for another place (n/6)" on the action bar while a place is turned down */
+function say(players: Player[], n: number) { for (const p of players) { try { p.onScreenDisplay.setActionBar({ translate: 'tds.site.searching', with: [String(Math.min(6, n)), '6'] }); } catch { /* left */ } } }
 let busy = 0, token = 0, starting = false, cinematic = true;
 export const preparing = () => busy > 0;
 export async function expedition(mode: string, players: Player[], o: { seed?: number; at?: Vector3 } = {}): Promise<string> {
@@ -263,7 +278,7 @@ export async function expedition(mode: string, players: Player[], o: { seed?: nu
     for (let attempt = 0; attempt < 6; attempt++, seed = (seed * 7 + 13) % 1000000) {
       const [cx, cz] = o.at ? [Math.floor(o.at.x), Math.floor(o.at.z)] : where(seed);
       G.log('site_search', { mode, seed, x: cx, z: cz });
-      if (!(await load(cx, cz))) { G.log('site_reject', { seed, why: 'not loaded' }); continue; }
+      if (!(await load(cx, cz))) { G.log('site_reject', { seed, why: 'not loaded' }); say(players, attempt + 2); continue; }
       if (my !== token) return 'Cancelled';
       const hm = new HMap(), st: Scan = { made: 0, lava: 0, water: 0, min: Infinity, max: -Infinity, grass: 0, cols: 0 };
       await job(scan(cx, cz, hm, st));
@@ -272,29 +287,33 @@ export async function expedition(mode: string, players: Player[], o: { seed?: nu
       if (flat) await job(synth(cx, cz, st.min, hm, seed));
       else if (!o.at) {
         const why = st.lava > 10 ? 'lava' : st.made > 25 ? 'buildings' : st.water > st.cols * 0.25 ? 'water' : hm.wet(0, 0) ? 'water in the middle' : '';
-        if (why) { G.log('site_reject', { seed, why }); continue; }
+        if (why) { G.log('site_reject', { seed, why }); say(players, attempt + 2); continue; }
       }
       if (my !== token) return 'Cancelled';
-      const rt = plan({ r: AREA, ground: (x, z) => hm.get(x, z), water: (x, z) => hm.wet(x, z), blocked: (x, z) => hm.blocked(x, z) }, seed);
-      if (!rt) { G.log('site_reject', { seed, why: 'no road fits' }); continue; }
+      const land = { r: AREA, ground: (x: number, z: number) => hm.get(x, z), water: (x: number, z: number) => hm.wet(x, z), blocked: (x: number, z: number) => hm.blocked(x, z) };
+      const found: { best: Route | null } = { best: null };
+      await job(planSteps(land, seed, 60, 6, found));
+      if (!found.best) await job(planSteps(land, seed + 1, 120, 10, found));   // rough land: the same place again with a taller raised road, before going elsewhere
+      const rt = found.best;
+      if (!rt) { G.log('site_reject', { seed, why: 'no road fits' }); say(players, attempt + 2); continue; }
       // the camp stands at the middle's usual height
       const around: number[] = []; for (let x = -CAMP; x <= CAMP; x++) for (let z = -CAMP; z <= CAMP; z++) around.push(hm.get(x, z));
       const cy = around.sort((a, b) => a - b)[Math.floor(around.length / 2)], th = themeOf(mode), r = rng(seed + 11);
       await job(buildCamp(cx, cy, cz, hm));
       await job(buildRoad(cx, cz, rt, hm, th));
       if (my !== token) return 'Cancelled';
-      const gateIn = gate(cx, cz, rt, hm, true, th.inP, th.inL, th.light), gateOut = gate(cx, cz, rt, hm, false, th.outP, th.outL, th.light);
+      const gateIn = gate(cx, cz, rt, hm, true, th.inP, th.inL, th.light).mid, out = gate(cx, cz, rt, hm, false, th.outP, th.outL, th.light), gateOut = out.mid;
       const cells = rt.cells.map((c) => `${cx + c.x},${cz + c.z},${c.y},${c.dir},${c.slope ? 's' : ''}${c.water ? 'w' : ''}${c.corner ? c.corner[0] : ''}`).join(';');
       let biome = ''; try { biome = dim().getBiome({ x: cx, y: cy + 1, z: cz }).id; } catch { /* older engine */ }
       const name = wildName(seed), noun = flat ? 'plains' : NOUNS.find(([re]) => re.test(biome))?.[1] ?? 'wilds';
       const site: SiteDef = { name, seed, mode, theme: mode in THEMES ? mode : 'Intermediate', title: [Math.floor(r() * 8), noun], cx, cz, flat,
         pts: rt.pts.map(([x, z], i) => [cx + x, cz + z, rt.J[i]] as [number, number, number]), cells, gateIn, gateOut, camp: [cx + 1, cy + 1, cz + 1], home,
-        stats: { pathStuds: rt.len * 2, steps: rt.steps, bridges: rt.bridges, maxFill: rt.maxFill, corners: rt.corners, ring: rt.ring } };
+        stats: { pathStuds: rt.len * 2, steps: rt.steps, bridges: rt.bridges, maxFill: rt.maxFill, corners: rt.corners, ring: rt.ring }, gateBlocks: out.blocks };
       register(site);
       posts(cx, cz, rt, hm, live.road, th.light);
       const P = new G.Path(name);
-      let sp = spots(P), cliff = sp.filter((q) => q.kind === 'cliff').length;
-      if (cliff < 8) { site.stats.rocks = rocks(cx, cz, rt, hm, 4, r); live.spots = undefined; sp = spots(P); cliff = sp.filter((q) => q.kind === 'cliff').length; }
+      let sp = await spotsJob(P), cliff = sp.filter((q) => q.kind === 'cliff').length;
+      if (cliff < 8) { site.stats.rocks = rocks(cx, cz, rt, hm, 4, r); sp = await spotsJob(P); cliff = sp.filter((q) => q.kind === 'cliff').length; }
       const ground = sp.filter((q) => q.kind === 'ground' && P.dist(q.x + 0.5, q.z + 0.5) <= 4.5).length;
       Object.assign(site.stats, { ground, cliff });
       G.log('site_built', { name, mode, seed, x: cx, z: cz, flat, biome, theme: site.theme, pathStuds: rt.len * 2, onlyStairs: true, maxStep: Math.max(0, ...rt.h.slice(1).map((h, k) => Math.abs(h - rt.h[k]))),

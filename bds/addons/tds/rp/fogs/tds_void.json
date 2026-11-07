@@ -1,0 +1,22 @@
+{
+  "format_version": "1.16.100",
+  "minecraft:fog_settings": {
+    "description": {
+      "identifier": "tds:fog_void"
+    },
+    "distance": {
+      "air": {
+        "fog_start": 0.2,
+        "fog_end": 0.8,
+        "fog_color": "#1e1430",
+        "render_distance_type": "render"
+      },
+      "weather": {
+        "fog_start": 0.1,
+        "fog_end": 0.65,
+        "fog_color": "#150e22",
+        "render_distance_type": "render"
+      }
+    }
+  }
+}

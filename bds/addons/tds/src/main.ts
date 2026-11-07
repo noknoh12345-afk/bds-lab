@@ -13,6 +13,7 @@ import { flashRange } from './placement';
 import { selectTower, hudOn } from './hud';
 import { signalMenu } from './signals';
 import { expedition } from './site';
+import './scene';   // after site: it wraps the site's stop hook
 import './narrator';
 import './indicators';
 

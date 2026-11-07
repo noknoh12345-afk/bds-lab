@@ -32,7 +32,9 @@ export type MapDef = { stud: number; y: number; path: [number, number, number?][
  *  "x,z,y,dir,flags;..."), the gates, the camp, and where the players were before they left */
 export type SiteDef = { name: string; seed: number; mode: string; theme: string; title: [number, string]; cx: number; cz: number; flat: boolean;
   pts: [number, number, number][]; cells: string; gateIn: [number, number, number]; gateOut: [number, number, number]; camp: [number, number, number];
-  home?: Record<string, [number, number, number]>; stats: Record<string, number> };
+  home?: Record<string, [number, number, number]>; stats: Record<string, number>;
+  /** the exit gate's blocks, in the order they break as the base loses health (src/scene.ts) */
+  gateBlocks?: [number, number, number][] };
 
 export const towers = TOWERS as unknown as Record<string, TowerDef>;
 export const enemies = ENEMIES as unknown as Record<string, EnemyDef>;

@@ -49,3 +49,5 @@ tds.site.noun.swamp=湿地
 tds.site.noun.jungle=密林
 tds.site.noun.peaks=峠
 tds.site.noun.wilds=荒野
+tds.scene.boss=ボスが門をくぐってくる
+tds.site.searching=別の場所を探しています…（%s/%s）

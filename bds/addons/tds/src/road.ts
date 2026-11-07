@@ -92,7 +92,7 @@ function sides(a: [number, number], b: [number, number]): [number, number, Dir][
 }
 
 /** heights, cells and measures for a centre line on a terrain (null: crosses blocked ground, too much water or too high a fill) */
-export function build(pts: [number, number][], t: Terrain): Route | null {
+export function build(pts: [number, number][], t: Terrain, fillMax = 6): Route | null {
   const n = pts.length - 1, segs = [...Array(n).keys()];
   const dirs = segs.map((k) => [pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]] as [number, number]);
   const corner = pts.map((_, i) => i > 0 && i < n && (dirs[i - 1][0] !== dirs[i][0] || dirs[i - 1][1] !== dirs[i][1]));
@@ -102,9 +102,11 @@ export function build(pts: [number, number][], t: Terrain): Route | null {
   // joints where the height may change: every other one, never at or beside a corner, nor at the gates
   const can = segs.slice(0, -1).map((k) => k % STEP_EVERY === 0 && k > 1 && k < n - 3 && !corner[k] && !corner[k + 1] && !corner[k + 2]);
   // the lowest heights at or above the wanted ones with those limits (the road is raised over dips, never cut into the ground)
-  const h = segs.map((k) => { let m = -Infinity; for (let j = 0; j < n; j++) { let dd = 0; for (let i = Math.min(j, k); i < Math.max(j, k); i++) dd += can[i] ? 1 : 0; m = Math.max(m, want[j] - dd); } return m; });
+  // (P: how many joints that may change come before each segment, so the allowed change between two segments is |P[k] - P[j]|)
+  const P = [0]; for (let i = 0; i < n - 1; i++) P.push(P[i] + (can[i] ? 1 : 0));
+  const h = segs.map((k) => { let m = -Infinity; for (let j = 0; j < n; j++) m = Math.max(m, want[j] - Math.abs(P[k] - P[j])); return m; });
   const maxFill = Math.max(...segs.map((k) => h[k] - want[k]));
-  if (maxFill > 6) return null;
+  if (maxFill > fillMax) return null;
   // the walking surface at each lattice point
   const J = pts.map((_, i) => (i === 0 ? h[0] + 1 : i === n ? h[n - 1] + 1 : h[i] > h[i - 1] ? h[i - 1] + 1 : h[i] + 1));
   // the cells: the segment's own first (a corner's shared cell keeps the way in's facing: it becomes the inner corner)
@@ -135,19 +137,25 @@ export function build(pts: [number, number][], t: Terrain): Route | null {
 }
 
 /** the best of many random layouts for this terrain (null: none fits) */
-export function plan(t: Terrain, seed: number, tries = 60): Route | null {
-  const rnd = rng(seed); let best: Route | null = null, bestScore = -Infinity;
+export function plan(t: Terrain, seed: number, tries = 60, fillMax = 6): Route | null {
+  const out: { best: Route | null } = { best: null };
+  for (const _ of planSteps(t, seed, tries, fillMax, out)) { /* all at once (node, tests) */ }
+  return out.best;
+}
+/** the same, one layout per step (the game runs it as a job, so a long search never holds a tick) */
+export function* planSteps(t: Terrain, seed: number, tries: number, fillMax: number, out: { best: Route | null }): Generator<void, void, void> {
+  const rnd = rng(seed); let best: Route | null = out.best, bestScore = -Infinity;
   for (let i = 0; i < tries; i++) {
+    yield;
     const r = 9 + Math.floor(rnd() * 4), side = Math.floor(rnd() * 4), off = Math.round((rnd() * 2 - 1) * (r - 4)), cw = rnd() < 0.5;
     const l1 = 7 + Math.floor(rnd() * 7), l2 = 7 + Math.floor(rnd() * 7);
     const pts = shape(r, side, off, cw, l1, l2, t.r); if (!pts) continue;
-    const rt = build(pts, t); if (!rt) continue;
+    const rt = build(pts, t, fillMax); if (!rt) continue;
     rt.ring = r;
     // a lively road: a few climbs, few bridges, little raised road, and a ring close to the camp
     const score = Math.min(rt.steps, 8) * 1.0 - rt.bridges * 1.5 - rt.maxFill * 0.6 - (r - 9) * 0.4 + rnd() * 0.5;
-    if (score > bestScore) { bestScore = score; best = rt; }
+    if (score > bestScore) { bestScore = score; best = rt; out.best = rt; }
   }
-  return best;
 }
 
 /** checks a route keeps the rules (the tests and the build use it): length, one step at a time, stairs only, no gaps on the top */

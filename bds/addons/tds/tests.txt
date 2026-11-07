@@ -891,3 +891,25 @@ tds:site
 ~ ^Wild #\d+ at -?\d+ -?\d+
 tds:stop
 
+## expedition scenes: the time follows the waves, a boss brings rain and turns the camera to the gate, the exit gate breaks as the base loses health, fireworks for a win; each can be turned off
+tds:stop
+@A cmd /tds:reset
+@A cmd /tds:expedition Easy false 5151
+until "ev":"match_start","mode":"Easy","map":"Wild #\d+" 120000
+until "ev":"scene","what":"time","wave":1,"t":1000 40000
+tds:spawn Brute
+until "ev":"scene","what":"bosscam","boss":"Brute" 5000
+~ "ev":"scene","what":"weather","w":"Rain"
+tds:basehp 140
+until "ev":"scene","what":"gate","step":1 5000
+tds:basehp 40
+until "ev":"scene","what":"gate","step":3 5000
+~ "ev":"scene","what":"gate","step":2
+tds:finish win
+until "ev":"scene","what":"end","result":"win" 5000
+tds:scene all off
+~ ^Scenes: time off, weather off, fog off, bosscam off, gate off, end off$
+tds:scene all on
+~ ^Scenes: time on, weather on, fog on, bosscam on, gate on, end on$
+tds:stop
+
