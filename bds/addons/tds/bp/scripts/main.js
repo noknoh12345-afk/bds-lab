@@ -3116,22 +3116,84 @@ function queue(p, mode, size) {
   let l = lifts.find((x) => x.mode === mode && x.players.length && x.players.length < x.size);
   if (!l) {
     const s = Math.max(1, Math.min(L.max, md.maxPlayers ?? 4, size ?? L.max));
-    l = { mode, size: s, players: [], at: system4.currentTick + L.wait * 20, votes: {} };
+    l = { mode, size: s, players: [], at: system4.currentTick + L.wait * 20, votes: {}, cands: rotates(mode) ? [] : candsFor(mode, 0), round: 0, veto: [], ready: [] };
     lifts.push(l);
   }
   l.players.push(p.name);
   log("elevator_join", { player: p.name, mode, count: l.players.length, size: l.size, map: rotates(mode) ? rotMap(mode) : null });
   if (l.players.length >= l.size) l.at = system4.currentTick;
-  return `Elevator ${mode}: ${l.players.length}/${l.size}${rotates(mode) ? ` \xB7 ${rotMap(mode)}` : ""}, departs in ${Math.max(0, Math.ceil((l.at - system4.currentTick) / 20))}s`;
+  return `Elevator ${mode}: ${l.players.length}/${l.size}${rotates(mode) ? ` \xB7 ${rotMap(mode)}` : ""}, departs in ${Math.max(0, Math.ceil((l.at - system4.currentTick) / 20))}s${l.cands.length ? ` \xB7 vote: ${l.cands.map(wildName).join(" / ")}` : ""}`;
 }
 function voteMap(p, map) {
   const l = lifts.find((x) => x.players.includes(p.name));
   if (!l) return "Not in an elevator";
   if (rotates(l.mode)) return `${l.mode} elevators go to ${rotMap(l.mode)}`;
   if (map !== "Wild" && !(maps[map] && !maps[map].site)) return `Maps: ${[...Object.keys(maps).filter((n2) => !maps[n2].site), "Wild"].join(", ")}`;
+  if (map === "Wild") return voteWild(p, 1);
   l.votes[p.name] = map;
   log("map_vote", { player: p.name, map });
   return `Voted ${map}`;
+}
+var candsFor = (mode, round) => [0, 1, 2].map((k) => wildSeed(`${mode}/${round}/${k}`, period(mode)));
+var myLift = (p) => lifts.find((x) => x.players.includes(p.name));
+function voteWild(p, n2) {
+  const l = myLift(p);
+  if (!l) return "Not in an elevator";
+  if (rotates(l.mode)) return `${l.mode} elevators go to ${rotMap(l.mode)}`;
+  const seed = l.cands[n2 - 1];
+  if (seed === void 0) return "Places: 1, 2, 3";
+  l.votes[p.name] = `wild:${seed}`;
+  log("map_vote", { player: p.name, map: wildName(seed), place: n2 });
+  return `Voted ${wildName(seed)}`;
+}
+function veto(p) {
+  const l = myLift(p);
+  if (!l) return "Not in an elevator";
+  if (rotates(l.mode)) return `${l.mode} elevators go to ${rotMap(l.mode)}`;
+  if (!l.veto.includes(p.name)) l.veto.push(p.name);
+  const need3 = Math.floor(l.players.length / 2) + 1;
+  if (l.veto.length < need3) return `Veto ${l.veto.length}/${need3}`;
+  l.round++;
+  l.cands = candsFor(l.mode, l.round);
+  l.veto = [];
+  l.ready = [];
+  l.votes = {};
+  l.at = system4.currentTick + 25 * 20;
+  log("elevator_veto", { mode: l.mode, round: l.round, places: l.cands.map(wildName) });
+  const msg = `Veto: new places ${l.cands.map(wildName).join(" / ")}, departs in 25s`;
+  for (const q of world4.getAllPlayers()) if (l.players.includes(q.name) && q.name !== p.name) q.sendMessage(msg);
+  return msg;
+}
+function ready2(p) {
+  const l = myLift(p);
+  if (!l) return "Not in an elevator";
+  if (!l.ready.includes(p.name)) l.ready.push(p.name);
+  if (l.players.every((n2) => l.ready.includes(n2))) {
+    l.at = system4.currentTick;
+    log("elevator_ready", { mode: l.mode, players: l.players });
+    return `Ready ${l.ready.length}/${l.players.length}: departing`;
+  }
+  return `Ready ${l.ready.length}/${l.players.length}`;
+}
+async function destinationMenu(p) {
+  const l = myLift(p);
+  if (!l) {
+    p.sendMessage("Not in an elevator");
+    return;
+  }
+  if (rotates(l.mode)) {
+    p.sendMessage(`${l.mode} elevators go to ${rotMap(l.mode)}`);
+    return;
+  }
+  const count = (v) => Object.values(l.votes).filter((x) => x === v).length;
+  const grounds = Object.keys(maps).filter((n2) => !maps[n2].site);
+  const items = [
+    ...l.cands.map((s, i) => [`${wildName(s)} \xA78(${count(`wild:${s}`)})`, (q) => q.sendMessage(voteWild(q, i + 1))]),
+    ...grounds.map((g) => [`\xA77${g} \xA78(${count(g)})`, (q) => q.sendMessage(voteMap(q, g))]),
+    [`\xA7cVeto \xA78(${l.veto.length}/${Math.floor(l.players.length / 2) + 1})`, (q) => q.sendMessage(veto(q))],
+    [`\xA7aReady \xA78(${l.ready.length}/${l.players.length})`, (q) => q.sendMessage(ready2(q))]
+  ];
+  await menu(p, `Elevator ${l.mode}`, items, `Departs in ${Math.max(0, Math.ceil((l.at - system4.currentTick) / 20))}s`);
 }
 function leaveLift(name) {
   for (const l of lifts) l.players = l.players.filter((n2) => n2 !== name);
@@ -3150,14 +3212,20 @@ system4.runInterval(() => {
     const all2 = world4.getAllPlayers(), ps = l.players.map((n2) => all2.find((p) => p.name === n2)).filter((p) => !!p);
     lifts.splice(lifts.indexOf(l), 1);
     if (!ps.length) continue;
-    let map = "Wild";
+    let map = "", seed = rotates(l.mode) ? wildSeed(l.mode, period(l.mode)) : l.cands[0];
     if (!rotates(l.mode)) {
       const tally = {};
       for (const v of Object.values(l.votes)) tally[v] = (tally[v] ?? 0) + 1;
       const top = Object.entries(tally).sort((a, b) => b[1] - a[1]), best = top.filter((x) => x[1] === top[0]?.[1]);
-      if (best.length) map = best[Math.floor(Math.random() * best.length)][0];
+      if (best.length) {
+        const w = best[Math.floor(Math.random() * best.length)][0];
+        if (w.startsWith("wild:")) seed = Number(w.slice(5));
+        else {
+          map = w;
+          seed = void 0;
+        }
+      }
     }
-    const seed = map === "Wild" ? wildSeed(l.mode, period(l.mode)) : void 0;
     if (seed !== void 0) map = wildName(seed);
     log("elevator_depart", { mode: l.mode, players: l.players, size: l.size, map });
     const lo = Object.fromEntries(ps.map((p) => [p.name, prof2(p).loadout]));
@@ -5129,6 +5197,9 @@ cmdAny("tds:maps", "Maps: the training grounds traced from the wiki, and Wild (a
 cmd("tds:queue", "Enter an elevator (the first player picks the party size)", { lift: MODE_NAMES, "size?": "int" }, (p, a) => queue(p, a.lift, a.size));
 cmdAny("tds:hardcoremap", "Map the Hardcore elevators go to this minute", {}, () => hardcoreMap());
 cmd("tds:vote", "Vote for the map in your elevator", { mapname: MAP_IDS }, (p, a) => voteMap(p, T3(a.mapname)));
+cmd("tds:votewild", "Vote for one of the three places your elevator offers (1-3)", { place: "int" }, (p, a) => voteWild(p, a.place));
+cmd("tds:veto", "Veto the places your elevator offers (more than half: three new ones and 25 s)", {}, (p) => veto(p));
+cmd("tds:ready", "Ready to leave (everyone ready: the elevator leaves now)", {}, (p) => ready2(p));
 cmd("tds:leave", "Leave the elevator", {}, (p) => {
   leaveLift(p.name);
   return "Left";
@@ -5306,7 +5377,7 @@ cmd("tds:lobby", "Lobby menu", {}, (p) => {
 });
 async function lobbyMenu(p) {
   const pr = prof2(p);
-  const i = await menu(p, "\xA7l\xA72TDS Lobby", [["Play", () => 0], ["Loadout", () => 0], ["Shop", () => 0], ["Quests", () => 0], ["Skills", () => 0], ["Badges", () => 0], ["Modifiers", () => 0]], `Lv${pr.level} \xB7 ${pr.coins} coins \xB7 ${pr.gems} gems`);
+  const i = await menu(p, "\xA7l\xA72TDS Lobby", [["Play", () => 0], ["Loadout", () => 0], ["Shop", () => 0], ["Quests", () => 0], ["Skills", () => 0], ["Badges", () => 0], ["Modifiers", () => 0], ["Destination", () => 0]], `Lv${pr.level} \xB7 ${pr.coins} coins \xB7 ${pr.gems} gems`);
   if (i === 4) {
     await skillsMenu(p);
     return;
@@ -5317,6 +5388,10 @@ async function lobbyMenu(p) {
   }
   if (i === 6) {
     await modsMenu(p);
+    return;
+  }
+  if (i === 7) {
+    await destinationMenu(p);
     return;
   }
   if (i === 0) {

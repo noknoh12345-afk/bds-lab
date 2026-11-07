@@ -3,6 +3,7 @@ import { ActionFormData } from '@minecraft/server-ui';
 import { cmd, cmdAny, ask, menu, give, ready, every } from './kit';
 import { towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, timerFor, afterDefense, waveCash, startCash, rewardFor, slotsAt, rules, MODE_NAMES } from './defs';
 import * as G from './game';
+import { voteWild, veto, ready as liftReady, destinationMenu } from './lobby';
 import { prof, saveProf, buy, equip, queue, voteMap, leaveLift, departNow, forceQuest, objText, setLevel, hardcoreMap, xpBoost, sold } from './lobby';
 import { benchAll, bench, expected } from './bench';
 import { skillsMenu } from './skills';
@@ -36,6 +37,9 @@ cmdAny('tds:maps', 'Maps: the training grounds traced from the wiki, and Wild (a
 cmd('tds:queue', 'Enter an elevator (the first player picks the party size)', { lift: MODE_NAMES as unknown as string[], 'size?': 'int' }, (p, a) => queue(p, a.lift, a.size));
 cmdAny('tds:hardcoremap', 'Map the Hardcore elevators go to this minute', {}, () => hardcoreMap());
 cmd('tds:vote', 'Vote for the map in your elevator', { mapname: MAP_IDS }, (p, a) => voteMap(p, T(a.mapname)));
+cmd('tds:votewild', 'Vote for one of the three places your elevator offers (1-3)', { place: 'int' }, (p, a) => voteWild(p, a.place));
+cmd('tds:veto', 'Veto the places your elevator offers (more than half: three new ones and 25 s)', {}, (p) => veto(p));
+cmd('tds:ready', 'Ready to leave (everyone ready: the elevator leaves now)', {}, (p) => liftReady(p));
 cmd('tds:leave', 'Leave the elevator', {}, (p) => { leaveLift(p.name); return 'Left'; });
 cmdAny('tds:depart', 'Elevator leaves now (test)', { liftmode: MODE_NAMES as unknown as string[] }, (_, a) => { departNow(a.liftmode); return 'ok'; }, true);
 cmdAny('tds:stop', 'End the match', {}, () => { G.stop(); return 'Stopped'; }, true);
@@ -124,10 +128,11 @@ cmd('tds:lobby', 'Lobby menu', {}, (p) => { void lobbyMenu(p); });
 
 async function lobbyMenu(p: Player) {
   const pr = prof(p);
-  const i = await menu(p, '§l§2TDS Lobby', [['Play', () => 0], ['Loadout', () => 0], ['Shop', () => 0], ['Quests', () => 0], ['Skills', () => 0], ['Badges', () => 0], ['Modifiers', () => 0]], `Lv${pr.level} · ${pr.coins} coins · ${pr.gems} gems`);
+  const i = await menu(p, '§l§2TDS Lobby', [['Play', () => 0], ['Loadout', () => 0], ['Shop', () => 0], ['Quests', () => 0], ['Skills', () => 0], ['Badges', () => 0], ['Modifiers', () => 0], ['Destination', () => 0]], `Lv${pr.level} · ${pr.coins} coins · ${pr.gems} gems`);
   if (i === 4) { await skillsMenu(p); return; }
   if (i === 5) { p.sendMessage(badgesText(p)); return; }
   if (i === 6) { await modsMenu(p); return; }
+  if (i === 7) { await destinationMenu(p); return; }
   if (i === 0) { const m = await menu(p, 'Elevator', MODE_NAMES.map((n) => [`${n} §8(${modes[n].waves}w, Lv${modes[n].level})${n === 'Hardcore' ? ` ${hardcoreMap()}` : ''}`, () => 0])); if (m === undefined) return;
     const max = rules.elevators[MODE_NAMES[m] === 'Hardcore' ? 'Hardcore' : 'Survival'].max, sz = await menu(p, 'Party size', [...Array(max).keys()].map((k) => [['Solo', 'Duo', 'Trio', 'Quad'][k], () => 0]));
     if (sz !== undefined) p.sendMessage(queue(p, MODE_NAMES[m], sz + 1)); }

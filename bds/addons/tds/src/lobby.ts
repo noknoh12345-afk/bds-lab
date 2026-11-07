@@ -4,6 +4,7 @@ import { towers, enemies, modes, maps, expFor, rules, rewardFor, xpBoostAt, slot
 import { M, start, log, onEnd, Match } from './game';
 import { modReward } from './modifiers';
 import { expedition, preparing, wildSeed, wildName } from './site';
+import { menu } from './kit';
 
 export type Obj = { do: QuestObj['do']; need: number; prog: number; tower?: string; role?: string; boss?: string; status?: string; map?: string; mode?: string; players?: number; cash?: number; hpPct?: number; loadoutMax?: number };
 export type Quest = { title: string; kind: 'daily' | 'weekly'; text: string; objs: Obj[]; done: boolean };
@@ -66,7 +67,8 @@ export function equip(p: Player, slot: number, name: string): string {
 }
 
 // ---------- elevators (Elevators page) ----------
-type Lift = { mode: string; size: number; players: string[]; at: number; votes: Record<string, string> };
+/** votes: a training ground's name, or "wild:<seed>" for one of the three places (cands) offered; veto and ready: who asked */
+type Lift = { mode: string; size: number; players: string[]; at: number; votes: Record<string, string>; cands: number[]; round: number; veto: string[]; ready: string[] };
 const lifts: Lift[] = [];
 /** Survival elevators for the difficulty modes; Hardcore and Voidcore have their own (3 players, map rotating every minute) */
 const liftOf = (mode: string) => rules.elevators[mode] ?? rules.elevators.Survival;
@@ -85,17 +87,59 @@ export function queue(p: Player, mode: string, size?: number): string {
   let l = lifts.find((x) => x.mode === mode && x.players.length && x.players.length < x.size);
   if (!l) {   // the first player chooses the party size; the timer starts then
     const s = Math.max(1, Math.min(L.max, md.maxPlayers ?? 4, size ?? L.max));
-    l = { mode, size: s, players: [], at: system.currentTick + L.wait * 20, votes: {} }; lifts.push(l);
+    l = { mode, size: s, players: [], at: system.currentTick + L.wait * 20, votes: {}, cands: rotates(mode) ? [] : candsFor(mode, 0), round: 0, veto: [], ready: [] }; lifts.push(l);
   }
   l.players.push(p.name); log('elevator_join', { player: p.name, mode, count: l.players.length, size: l.size, map: rotates(mode) ? rotMap(mode) : null });
   if (l.players.length >= l.size) l.at = system.currentTick;
-  return `Elevator ${mode}: ${l.players.length}/${l.size}${rotates(mode) ? ` · ${rotMap(mode)}` : ''}, departs in ${Math.max(0, Math.ceil((l.at - system.currentTick) / 20))}s`;
+  return `Elevator ${mode}: ${l.players.length}/${l.size}${rotates(mode) ? ` · ${rotMap(mode)}` : ''}, departs in ${Math.max(0, Math.ceil((l.at - system.currentTick) / 20))}s${l.cands.length ? ` · vote: ${l.cands.map(wildName).join(' / ')}` : ''}`;
 }
 export function voteMap(p: Player, map: string): string {
   const l = lifts.find((x) => x.players.includes(p.name)); if (!l) return 'Not in an elevator';
   if (rotates(l.mode)) return `${l.mode} elevators go to ${rotMap(l.mode)}`;
   if (map !== 'Wild' && !(maps[map] && !maps[map].site)) return `Maps: ${[...Object.keys(maps).filter((n) => !maps[n].site), 'Wild'].join(', ')}`;
+  if (map === 'Wild') return voteWild(p, 1);
   l.votes[p.name] = map; log('map_vote', { player: p.name, map }); return `Voted ${map}`;
+}
+/** the intermission (Elevators page; the v1.8.0 notes: a veto may come again and again, each starts a 25 s timer) */
+const candsFor = (mode: string, round: number) => [0, 1, 2].map((k) => wildSeed(`${mode}/${round}/${k}`, period(mode)));
+const myLift = (p: Player) => lifts.find((x) => x.players.includes(p.name));
+export function voteWild(p: Player, n: number): string {
+  const l = myLift(p); if (!l) return 'Not in an elevator';
+  if (rotates(l.mode)) return `${l.mode} elevators go to ${rotMap(l.mode)}`;
+  const seed = l.cands[n - 1]; if (seed === undefined) return 'Places: 1, 2, 3';
+  l.votes[p.name] = `wild:${seed}`; log('map_vote', { player: p.name, map: wildName(seed), place: n }); return `Voted ${wildName(seed)}`;
+}
+export function veto(p: Player): string {
+  const l = myLift(p); if (!l) return 'Not in an elevator';
+  if (rotates(l.mode)) return `${l.mode} elevators go to ${rotMap(l.mode)}`;
+  if (!l.veto.includes(p.name)) l.veto.push(p.name);
+  const need = Math.floor(l.players.length / 2) + 1;
+  if (l.veto.length < need) return `Veto ${l.veto.length}/${need}`;
+  l.round++; l.cands = candsFor(l.mode, l.round); l.veto = []; l.ready = []; l.votes = {}; l.at = system.currentTick + 25 * 20;
+  log('elevator_veto', { mode: l.mode, round: l.round, places: l.cands.map(wildName) });
+  const msg = `Veto: new places ${l.cands.map(wildName).join(' / ')}, departs in 25s`;
+  for (const q of world.getAllPlayers()) if (l.players.includes(q.name) && q.name !== p.name) q.sendMessage(msg);
+  return msg;
+}
+export function ready(p: Player): string {
+  const l = myLift(p); if (!l) return 'Not in an elevator';
+  if (!l.ready.includes(p.name)) l.ready.push(p.name);
+  if (l.players.every((n) => l.ready.includes(n))) { l.at = system.currentTick; log('elevator_ready', { mode: l.mode, players: l.players }); return `Ready ${l.ready.length}/${l.players.length}: departing`; }
+  return `Ready ${l.ready.length}/${l.players.length}`;
+}
+/** the lobby's form for the elevator a player is in: the three places with their votes, the training grounds, veto, ready */
+export async function destinationMenu(p: Player) {
+  const l = myLift(p); if (!l) { p.sendMessage('Not in an elevator'); return; }
+  if (rotates(l.mode)) { p.sendMessage(`${l.mode} elevators go to ${rotMap(l.mode)}`); return; }
+  const count = (v: string) => Object.values(l.votes).filter((x) => x === v).length;
+  const grounds = Object.keys(maps).filter((n) => !maps[n].site);
+  const items: [string, (p: Player) => unknown][] = [
+    ...l.cands.map((s, i) => [`${wildName(s)} §8(${count(`wild:${s}`)})`, (q: Player) => q.sendMessage(voteWild(q, i + 1))] as [string, (p: Player) => unknown]),
+    ...grounds.map((g) => [`§7${g} §8(${count(g)})`, (q: Player) => q.sendMessage(voteMap(q, g))] as [string, (p: Player) => unknown]),
+    [`§cVeto §8(${l.veto.length}/${Math.floor(l.players.length / 2) + 1})`, (q: Player) => q.sendMessage(veto(q))],
+    [`§aReady §8(${l.ready.length}/${l.players.length})`, (q: Player) => q.sendMessage(ready(q))],
+  ];
+  await menu(p, `Elevator ${l.mode}`, items, `Departs in ${Math.max(0, Math.ceil((l.at - system.currentTick) / 20))}s`);
 }
 export function leaveLift(name: string) { for (const l of lifts) l.players = l.players.filter((n) => n !== name); }
 export function departNow(mode: string) { const l = lifts.find((x) => x.mode === mode); if (l) l.at = system.currentTick; }
@@ -106,13 +150,13 @@ system.runInterval(() => {
     const all = world.getAllPlayers(), ps = l.players.map((n) => all.find((p) => p.name === n)).filter((p): p is Player => !!p);   // in the order they got in
     lifts.splice(lifts.indexOf(l), 1);
     if (!ps.length) continue;
-    let map = 'Wild';
-    if (!rotates(l.mode)) {   // a vote for a training ground takes the elevator there; no vote (or Wild): an expedition
+    // the most votes win (a tie: one of them); no vote: the first place offered; a rotating elevator: this minute's place
+    let map = '', seed: number | undefined = rotates(l.mode) ? wildSeed(l.mode, period(l.mode)) : l.cands[0];
+    if (!rotates(l.mode)) {
       const tally: Record<string, number> = {}; for (const v of Object.values(l.votes)) tally[v] = (tally[v] ?? 0) + 1;
       const top = Object.entries(tally).sort((a, b) => b[1] - a[1]), best = top.filter((x) => x[1] === top[0]?.[1]);
-      if (best.length) map = best[Math.floor(Math.random() * best.length)][0];
+      if (best.length) { const w = best[Math.floor(Math.random() * best.length)][0]; if (w.startsWith('wild:')) seed = Number(w.slice(5)); else { map = w; seed = undefined; } }
     }
-    const seed = map === 'Wild' ? wildSeed(l.mode, period(l.mode)) : undefined;
     if (seed !== undefined) map = wildName(seed);
     log('elevator_depart', { mode: l.mode, players: l.players, size: l.size, map });
     const lo = Object.fromEntries(ps.map((p) => [p.name, prof(p).loadout]));

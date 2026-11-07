@@ -73,4 +73,17 @@ shot enemies-near-gate
 do execute as @a run tds:siteview top
 wait 6000
 shot enemies-from-top
+section scenes
+do tds:spawn Brute
+wait 1800
+shot boss-camera
+do tds:basehp 60
+wait 2500
+do execute as @a run tds:siteview gate_out
+wait 2000
+shot gate-broken
+do tds:finish win
+do execute as @a run tds:siteview top
+wait 2500
+shot fireworks
 absent clientlog \bERROR\b

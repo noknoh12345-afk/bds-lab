@@ -913,3 +913,31 @@ tds:scene all on
 ~ ^Scenes: time on, weather on, fog on, bosscam on, gate on, end on$
 tds:stop
 
+## elevators: three expedition places to vote for, a veto by more than half draws three new ones and gives 25 s, everyone ready leaves at once
+tds:stop
+@A cmd /tds:reset
+@B cmd /tds:reset
+@A cmd /tds:queue Easy 3
+~ @A Elevator Easy: 1/3, departs in 20s · vote: Wild #\d+ / Wild #\d+ / Wild #\d+
+@B cmd /tds:queue Easy
+~ @B Elevator Easy: 2/3, departs in \d+s · vote: Wild #\d+ / Wild #\d+ / Wild #\d+
+@A cmd /tds:votewild 2
+~ @A Voted Wild #\d+
+~ "ev":"map_vote","player":"A","map":"Wild #\d+","place":2
+@A cmd /tds:votewild 4
+~ @A Places: 1, 2, 3
+@A cmd /tds:veto
+~ @A Veto 1/2
+@B cmd /tds:veto
+~ @B Veto: new places Wild #\d+ / Wild #\d+ / Wild #\d+, departs in 25s
+~ "ev":"elevator_veto","mode":"Easy","round":1,
+~ @A Veto: new places
+@A cmd /tds:votewild 3
+@A cmd /tds:ready
+~ @A Ready 1/2
+@B cmd /tds:ready
+~ @B Ready 2/2: departing
+until "ev":"match_start","mode":"Easy","map":"Wild #\d+","players":\["A","B"\] 120000
+~ "ev":"elevator_depart","mode":"Easy","players":\["A","B"\],"size":3,"map":"Wild #\d+"
+tds:stop
+
