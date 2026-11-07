@@ -101,6 +101,9 @@ BADGE.forEach(([w, c], k) => at(`mode${k}`, (k % 5) * 44, 166 + Math.floor(k / 5
 // ---------- the design (model units: x right, y up; the screen is centred on (0, 140), 176 high) ----------
 const bones = [{ name: C.ROOT, pivot: [0, C.PIVOT_Y, 0], cubes: [] }], elements = {}, pre = [];
 const Z = { panel: -0.15, item: -0.3, over: -0.45, top: -0.7 };
+// alternatives drawn in one place (a badge per mode, an icon per role) never at once: each 0.015 nearer than the one before,
+// so no two of them share a plane (the lint cannot read GeoUI's visible rules)
+const ALT = 0.015;
 const bone = (name, parent, pivot, el) => { bones.push({ name, parent, pivot, cubes: [] }); if (el) elements[name] = el; return name; };
 /** a plane: lower-left (x, y), size (w, h), atlas region */
 const plane = (name, parent, x, y, w, h, reg, z = Z.item, el, pivot) => {
@@ -116,7 +119,7 @@ const ANIM = [], ANIM_FRAMES = 8, ANIM_FPS = 10;
 const anim = (name, parent, x, y, w, h, col) => ANIM.push({ name, parent, x, y, w, h, col });
 // seven-segment digits: one variable per digit (−1 = blank), seven planes shown by a bit mask of the digits that light them
 const MASK = { a: 1005, b: 927, c: 1019, d: 877, e: 325, f: 881, g: 892 };
-function digits(id, parent, src, n, x, y, w, h, color, { blankZero = false, gap = 1 } = {}) {
+function digits(id, parent, src, n, x, y, w, h, color, { blankZero = false, gap = 1, z = Z.item } = {}) {
   const t = Math.max(0.6, Math.round(w * 0.22 * 10) / 10);
   for (let k = 0; k < n; k++) {
     const place = 10 ** (n - 1 - k), v = `v.${NS}_${id}${k}`, dx = x + k * (w + gap);
@@ -124,7 +127,8 @@ function digits(id, parent, src, n, x, y, w, h, color, { blankZero = false, gap 
     const digit = `math.mod(math.floor(math.abs(${src})/${place}),10)`;
     pre.push(`${v} = variable.is_paperdoll ? -1 : ${blank ? `((${blank}) ? -1 : ${digit})` : digit};`);
     const segs = { a: [dx, y + h - t, w, t, 'h'], b: [dx + w - t, y + h / 2, t, h / 2, 'v'], c: [dx + w - t, y, t, h / 2, 'v'], d: [dx, y, w, t, 'h'], e: [dx, y, t, h / 2, 'v'], f: [dx, y + h / 2, t, h / 2, 'v'], g: [dx, y + h / 2 - t / 2, w, t, 'h'] };
-    for (const [s, [sx, sy, sw, sh, o]] of Object.entries(segs)) plane(`${id}${k}_${s}`, parent, sx, sy, sw, sh, `seg${o}_${color}`, Z.item, { type: 'image', visible: `math.mod(math.floor(${MASK[s]}/math.pow(2,${v})),2) >= 1` });
+    // the upright strokes 0.03 in front of the flat ones: where two meet at a corner they never share a plane
+    for (const [s, [sx, sy, sw, sh, o]] of Object.entries(segs)) plane(`${id}${k}_${s}`, parent, sx, sy, sw, sh, `seg${o}_${color}`, o === 'v' ? z - 0.03 : z, { type: 'image', visible: `math.mod(math.floor(${MASK[s]}/math.pow(2,${v})),2) >= 1` });
   }
 }
 const gauge = (name, parent, x, y, w, h, reg, source) => plane(name, parent, x, y, w, h, reg, Z.over, { type: 'gauge', gauge: { source, max: 100, fill: 'left' } }, [x, y + h / 2, Z.over]);
@@ -163,7 +167,7 @@ anim('an_coin', 'cash', HW - 67, 213, 8, 8, 1);   // the coin turns
 digits('cs', 'cash', P('cash'), 6, HW - 54, 213.5, 4, 7, 'yellow', { gap: 1.8 });
 // top left: mode badge and the enemies on the path
 bone('info', C.ROOT, [-HW + 24, 212, 0], { type: 'image', anchor: 'top_left', visible: INMATCH });
-BADGE.forEach((_, k) => plane(`mode_${k}`, 'info', -HW + 4, 214, 40, 10.9, `mode${k}`, Z.item, { type: 'image', blend: 'blend', visible: `${P('mode')} == ${k}` }));
+BADGE.forEach((_, k) => plane(`mode_${k}`, 'info', -HW + 4, 214, 40, 10.9, `mode${k}`, Z.item - ALT * k, { type: 'image', blend: 'blend', visible: `${P('mode')} == ${k}` }));
 plane('info_enemy', 'info', -HW + 4, 203, 7, 7, 'enemy');
 digits('en', 'info', P('enemies'), 3, -HW + 13, 203.5, 3.5, 6, 'white', { gap: 0.9 });
 // bottom middle: the tower bar (slots 1-5: frame, the tower's role, its cost; the held slot lit)
@@ -173,7 +177,7 @@ for (let i = 0; i < 5; i++) {
   bone(s, 'bar', [x0 + 12, y0 + 13, 0]);
   plane(`${s}_bg`, s, x0, y0, 24, 26, 'slot', Z.panel, { type: 'image', blend: 'blend' });
   plane(`${s}_sel`, s, x0, y0, 24, 26, 'slotsel', Z.top, { type: 'image', blend: 'blend', visible: `${P('sel')} == ${i + 1}` });
-  for (let k = 0; k < 8; k++) plane(`${s}_r${k}`, s, x0 + 5, y0 + 9, 14, 14, `role${k}`, Z.item, { type: 'image', visible: `math.mod(math.floor(${P('roles')}/${10 ** i}),10) == ${k}` });
+  for (let k = 0; k < 8; k++) plane(`${s}_r${k}`, s, x0 + 5, y0 + 9, 14, 14, `role${k}`, Z.item - ALT * k, { type: 'image', visible: `math.mod(math.floor(${P('roles')}/${10 ** i}),10) == ${k}` });
   plane(`${s}_n`, s, x0 + 1.6, y0 + 20.5, 2.9, 4, `n${i + 1}`, Z.over);
   digits(`c${i}`, s, P(`c${i + 1}`), 4, x0 + 3.2, y0 + 2.2, 3.2, 5, 'green', { blankZero: true, gap: 1.2 });
 }
@@ -185,9 +189,9 @@ plane('banner_bg', 'banner_pop', -60, 150, 120, 22, 'pbanner', Z.panel, { type: 
 bone('bn_wave', 'banner_pop', [0, 161, 0], { type: 'image', visible: `${BN} == 1` });
 plane('bn_wave_w', 'bn_wave', -33, 155.5, R.wWAVE2[2] * 0.75, 10.5, 'wWAVE2', Z.item);
 digits('bw', 'bn_wave', P('wave'), 2, 6, 155, 7, 12, 'gold', { gap: 2 });
-plane('bn_win', 'banner_pop', -R.wTRIUMPH[2] * 0.375, 155.75, R.wTRIUMPH[2] * 0.75, 10.5, 'wTRIUMPH', Z.item, { type: 'image', visible: `${BN} == 2` });
-plane('bn_lose', 'banner_pop', -R.wDEFEAT[2] * 0.375, 155.75, R.wDEFEAT[2] * 0.75, 10.5, 'wDEFEAT', Z.item, { type: 'image', visible: `${BN} == 3` });
-plane('bn_hidden', 'banner_pop', -R.wHIDDEN[2] * 0.375, 155.75, R.wHIDDEN[2] * 0.75, 10.5, 'wHIDDEN', Z.item, { type: 'image', visible: `${BN} == 4` });
+plane('bn_win', 'banner_pop', -R.wTRIUMPH[2] * 0.375, 155.75, R.wTRIUMPH[2] * 0.75, 10.5, 'wTRIUMPH', Z.item - 3 * ALT, { type: 'image', visible: `${BN} == 2` });
+plane('bn_lose', 'banner_pop', -R.wDEFEAT[2] * 0.375, 155.75, R.wDEFEAT[2] * 0.75, 10.5, 'wDEFEAT', Z.item - 4 * ALT, { type: 'image', visible: `${BN} == 3` });
+plane('bn_hidden', 'banner_pop', -R.wHIDDEN[2] * 0.375, 155.75, R.wHIDDEN[2] * 0.75, 10.5, 'wHIDDEN', Z.item - 5 * ALT, { type: 'image', visible: `${BN} == 4` });
 const age = `math.mod(${P('bn')},1000)`;
 const animations = [{ name: `animation.${NS}_banner`, condition: 'q.is_in_ui', json: { loop: true, animation_length: 1, bones: { banner_pop: { scale: `math.clamp(${age}/5,0,1)*(${BN} == 1 ? math.clamp((50-${age})/8,0,1) : 1)` } } } }];
 
@@ -204,9 +208,9 @@ plane('tw_bg', 'tower', HW - 68, 126, 64, 36, 'ptower', Z.panel, { type: 'image'
 for (let k = 0; k < 7; k++) {
   plane(`tw_p${k}`, 'tower', HW - 62 + k * 6, 156.5, 4, 3, 'pip', Z.over, { type: 'image', visible: `${TI(100)} >= ${k + 1}` });
 }
-for (let k = 0; k < 7; k++) plane(`tw_t${k}`, 'tower', HW - 65, 146.5, 30, 7.5, `tg${k}`, Z.item, { type: 'image', blend: 'blend', visible: `${TI(1)} == ${k}` });
+for (let k = 0; k < 7; k++) plane(`tw_t${k}`, 'tower', HW - 65, 146.5, 30, 7.5, `tg${k}`, Z.item - ALT * k, { type: 'image', blend: 'blend', visible: `${TI(1)} == ${k}` });
 plane('tw_up', 'tower', HW - 65, 138.5, R.wUP[2] * k1, 5, 'wUP', Z.item, { type: 'image', visible: `${TI(100)} < ${TI(10)}` });
-plane('tw_max', 'tower', HW - 65, 138.5, R.wMAX[2] * k1, 5, 'wMAX', Z.item, { type: 'image', visible: `${TI(100)} >= ${TI(10)}` });
+plane('tw_max', 'tower', HW - 65, 138.5, R.wMAX[2] * k1, 5, 'wMAX', Z.item - ALT, { type: 'image', visible: `${TI(100)} >= ${TI(10)}` });
 digits('tu', 'tower', P('tup'), 5, HW - 40, 138, 3.5, 6, 'green', { blankZero: true, gap: 0.9 });
 plane('tw_sell', 'tower', HW - 65, 130.5, R.wSELL[2] * k1, 5, 'wSELL', Z.item);
 digits('ts', 'tower', P('tsell'), 5, HW - 40, 130, 3.5, 6, 'yellow', { blankZero: true, gap: 0.9 });
@@ -215,10 +219,11 @@ digits('ts', 'tower', P('tsell'), 5, HW - 40, 130, 3.5, 6, 'yellow', { blankZero
 // (wave = level, hp / hpmax = EXP / EXP to the next level, cash = coins, rgems = gems)
 bone('lobby', C.ROOT, [-HW + 49, 213, 0], { type: 'image', anchor: 'top_left', visible: `${P('mode')} == 15` });
 plane('lb_bg', 'lobby', -HW + 4, 202, 90, 22, 'pwave', Z.panel, { type: 'image', blend: 'blend' });
-plane('lb_lv', 'lobby', -HW + 8, 215.5, R.wLV[2] * k1, 5, 'wLV');
-digits('lv', 'lobby', P('wave'), 3, -HW + 18, 214.5, 4, 7, 'yellow');
-plane('lb_exp', 'lobby', -HW + 8, 205.5, R.wEXP[2] * k1, 5, 'wEXP');
-plane('lb_track', 'lobby', -HW + 23, 206, 66, 4, 'track', Z.item);
+const LZ = Z.item + 4 * ALT;   // the lobby's words and numbers: where the match's badge and counts are, never with them
+plane('lb_lv', 'lobby', -HW + 8, 215.5, R.wLV[2] * k1, 5, 'wLV', LZ);
+digits('lv', 'lobby', P('wave'), 3, -HW + 18, 214.5, 4, 7, 'yellow', { z: LZ });
+plane('lb_exp', 'lobby', -HW + 8, 205.5, R.wEXP[2] * k1, 5, 'wEXP', LZ);
+plane('lb_track', 'lobby', -HW + 23, 206, 66, 4, 'track', LZ);
 gauge('lb_fill', 'lobby', -HW + 23, 206, 66, 4, 'bossfill', `${P('hp')}/math.max(1,${P('hpmax')})*100`);
 bone('gems', C.ROOT, [HW - 37, 202, 0], { type: 'image', anchor: 'top_right', visible: `${P('mode')} == 15` });
 plane('gm_bg', 'gems', HW - 70, 196, 66, 12, 'pcash', Z.panel, { type: 'image', blend: 'blend' });
