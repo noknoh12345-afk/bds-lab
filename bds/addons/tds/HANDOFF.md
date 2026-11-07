@@ -122,14 +122,12 @@
 - 遠征の見た目: 階段の角の形、空撮、門と拠点、合成した地形（木は `placeFeature` で生やし、無ければ自作の小さな木）
 - ダメージ表示（名札の 2 行目）、語り部と合図の文（lang の translate）
 
-## 10. GitHub Actions での実機テスト（2026-11-08）
-- このセッションからの push は、権限の自動判定で拒否された（add_repo の push）。回避はしていない。push はユーザーの手元で行う。
-- 手元のクローンで（新しく取るなら `git clone https://github.com/noknoh12345-afk/bds-lab && cd bds-lab`）:
-  ```
-  git fetch /path/to/addon-tds.bundle addon/tds:addon/tds
-  git checkout addon/tds && git push origin addon/tds
-  ```
-- push すると `verify.yml` が自動で走る（変わったアドオンの実サーバのテスト）。
-- 本物のアプリ（実機）は `app.yml` を手で起動する: `node lab.mjs app ci -a tds --ref addon/tds --wait`（結果は `app/runs/gh-<番号>/`。report.md とスクショ）か、GitHub の Actions → app → Run workflow（addon: `tds`、ref: `addon/tds`、mode: `run`）。HUD などの JSON UI の画面だけを全部撮るなら mode: `ui`。
-- シナリオは `bds/addons/tds/app.txt`（タイトル → 参加 → ロビーの HUD → 訓練場と敵 → 遠征: 到着、空撮、拠点、門、階段の角、坂、橋、真上、タワーと敵 → クライアントのエラーが無いこと）。見どころへの移動は `/tds:siteview`。
-- 実機の確認には、リポジトリの秘密（Google の AAS トークンなど。`app/AGENTS.md`）が要る。無ければ app ワークフローがその旨を出して止まる。
+## 10. GitHub Actions でのテスト（2026-11-08）
+- このセッションは、ユーザーが GitHub を noknoh12345-afk でつなぎ直したあと、push できるようになった（`/home/claude/bds-lab` に main の shallow clone を作り、bundle で addon/tds を入れて push）。
+- **verify.yml**（push で自動）: addon/tds の枝にあるラボ自体の古いオフライン検査（scratch・geoui-web・host・forge）が落ち、その後の実サーバのジョブが飛ばされる。2026-11-06 の verify も同じ。アドオンとは関係ない。
+- **アドオン単体の実サーバ**: `gh workflow run unit.yml --ref addon/tds -f job=go -f unit=tds`（ラボのオフライン検査を通らない。go = テスト → 品質検査 → .mcaddon の成果物）。
+  - 1 回目は失敗。CI の BDS は 1.26.61 で、manifest の `min_engine_version` が 1.26.62 だったため、パックが読み込まれず、全コマンドが無かった。→ bp と rp の両方を **1.26.60** に下げた（@minecraft/server 2.11.0 が使える最初の系列）。
+- **実機（本物のアプリ）**: `app.yml` は既定ブランチ（main）で起動しないと全ジョブがスキップされる（prep の `if`）。`gh workflow run app.yml --ref main -f addon=tds -f ref=addon/tds -f mode=run -f knobs="APP_SIGNIN=0"`。
+  - `node lab.mjs app ci -a tds --ref addon/tds` は addon/tds の上で起動してしまい、スキップされた。
+  - 1 回目（main）: Play とアカウントの準備まで進み、端末の土台は暗号化キャッシュに入った（4.9 GB）。Microsoft のサインインの段階で失敗（MS_EMAIL / MS_PASSWORD が無いか二段階）。→ `APP_SIGNIN=0`（LAN 参加にサインインは要らない）。
+- シナリオは `bds/addons/tds/app.txt`（タイトル → 参加 → ロビーの HUD → 訓練場と敵 → 遠征: 到着、空撮、拠点、門、階段の角、坂、橋、真上、タワーと敵 → クライアントのエラーが無いこと）。見どころへの移動は `/tds:siteview`。結果は `node lab.mjs app ci watch <番号>` で `app/runs/gh-<番号>/` に取る（main のラボで）。
