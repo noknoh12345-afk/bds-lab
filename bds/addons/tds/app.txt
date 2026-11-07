@@ -15,7 +15,7 @@ do tds:speed 1
 wait 1500
 shot lobby-hud
 section training
-chat /tds:play Easy
+do execute as @a run tds:play Easy
 until server "ev":"match_start","mode":"Easy","map":"Grass Isle" 60000
 wait 3000
 shot training-hud
@@ -26,7 +26,7 @@ do tds:spawn Slow
 wait 4000
 shot training-enemies
 section expedition
-chat /tds:play Easy false Wild
+do execute as @a run tds:play Easy false Wild
 until server "ev":"site_built" 240000
 until server "ev":"match_start","mode":"Easy","map":"Wild #\d+" 60000
 wait 1500
