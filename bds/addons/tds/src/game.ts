@@ -379,7 +379,7 @@ function give(_tw: Tower | undefined, amount: number) {
 export function hit(e: Enemy, dmg: number, tw?: Tower, kind: 'direct' | 'splash' | 'dot' | 'true' = 'direct'): number {
   if (!M || e.hp <= 0) return 0;
   if (kind === 'splash' && e.immune.includes('Splash Damage')) return 0;
-  const taken = 1 + ((e.neural ?? 0) > M.t ? e.neuralPct ?? 0 : 0) + ((e.vuln ?? 0) > M.t ? e.vulnPct ?? 0 : 0);   // Neuralyzed / vulnerability: more damage taken
+  const taken = benchMode ? 1 : 1 + ((e.neural ?? 0) > M.t ? e.neuralPct ?? 0 : 0) + ((e.vuln ?? 0) > M.t ? e.vulnPct ?? 0 : 0);   // Neuralyzed / vulnerability: more damage taken (not on the bench: it measures the tower's own damage)
   let d = kind === 'true' ? dmg * taken : afterDefense(dmg * taken, Math.max(0, e.def)), done = 0;
   if (e.mods.includes('Tank') && kind !== 'dot') d = Math.min(d, 1);   // Tank attribute: most damage becomes 1
   if (e.shield > 0) { const s = Math.min(e.shield, d); e.shield -= s; d -= s; done += s; if (e.shield <= 0 && e.lead) { e.lead = false; log('lead_broken', { id: e.id }); } if (e.shield <= 0 && e.flying && e.name === 'Balloon') { e.flying = false; } if (e.shield <= 0) { const ns = enemyIn(e.name, M.mode).speedNoShield; if (ns) { e.speed = ns * (e.mods.includes('Nimble') ? 2 : 1); log('shield_broken', { id: e.id, name: e.name, speed: e.speed }); } } }
@@ -578,6 +578,8 @@ function look(tw: Tower, e: Enemy) {
   if (shot && now - (kicked.get(tw.id) ?? 0) >= 150) { kicked.set(tw.id, now); try { ent.playAnimation(`animation.tds_tower.${shot}`); } catch { /* unloaded */ } }
 }
 
+/** towers whose units come only with an ability (the Commander's APCs: Support Caravan), never on a spawn timer */
+const BY_ABILITY = new Set(['Commander']);
 function towerStep(tw: Tower, dt: number) {
   if (!M || !path) return;
   if (tw.temp !== undefined && M.t >= tw.temp) { removeTower(tw, 'expired'); return; }
@@ -585,7 +587,7 @@ function towerStep(tw: Tower, dt: number) {
   if (M.t < (tw.stunUntil ?? 0)) { tw.next = Math.max(tw.next, tw.stunUntil!); return; }
   const sp = !benchMode && hooks.towerStep[tw.name]; if (sp && sp(tw, dt)) return;
   // units: the tower row's Spawnrate, else the unit's own (Units page)
-  const ud = tw.temp === undefined ? unitsFor(tw.name, tw.lvl, maxLevel(tw.name))[0] : undefined, rate = s0.spawnrate ?? ud?.[1].spawnrate ?? undefined;
+  const ud = tw.temp === undefined && !BY_ABILITY.has(tw.name) ? unitsFor(tw.name, tw.lvl, maxLevel(tw.name))[0] : undefined, rate = s0.spawnrate ?? ud?.[1].spawnrate ?? undefined;
   const spawns = !!rate && (!!s0.unitHp || !!ud);
   if (M.t < tw.next && !(spawns && M.t >= tw.nextUnit)) return;
   if (!M.enemies.length && !spawns) { tw.next = M.t; return; }
@@ -901,6 +903,7 @@ export function restore() {
 export function debugSpawn(name: string, mods: string[] = [], d = 0) { spawnEnemy(name, mods, d); }
 export function debugKill(name: string) { if (!M) return 0; const l = M.enemies.filter((e) => e.name === name); for (const e of l) hit(e, 1e15); return l.length; }
 export function debugHurt(name: string, n: number) { const e = M?.enemies.find((x) => x.name === name); if (!e) return false; const d = e.def; e.def = 0; hit(e, Math.min(n, e.hp + e.shield - 1)); e.def = d; return true; }
+export function debugStun(name: string, sec: number) { if (!M) return 0; const l = M.enemies.filter((e) => e.name === name); for (const e of l) e.stunUntil = M.t + sec; return l.length; }
 export function debugAbility(name: string, i: number) { const e = M?.enemies.find((x) => x.name === name); const a = e && enemies[e.name].abilities?.[i]; if (!e || !a) return false; useAbility(e, a); return true; }
 /** path distance (studs) closest to a tower */
 export function nearestD(tw: Tower) { let best = 0, bd = Infinity; for (let d = 0; d <= path!.len; d += 0.25) { const p = path!.at(d), x = Math.hypot(p.x - tw.x - 0.5, p.z - tw.z - 0.5); if (x < bd) { bd = x; best = d; } } return best; }

@@ -127,8 +127,9 @@ tds:hold true
 tds:finish win
 until "ev":"reward","player":"A","result":"win","mode":"Easy","wave":20,"coins":300,"gems":0,"exp":75,"texp":25,"boost":1.5,"level":1,"from":0,"coinsTotal":350 5000
 ~ "ev":"level_up","player":"A","level":1,"coins":0,"towers":\[\],"slots":4
+~ "ev":"badge","player":"A","badge":"Recruit","mode":"Easy","coins":100
 @A cmd /tds:profile
-~ @A Lv1 exp 26 coins 350 gems 0 texp 25 slots 4
+~ @A Lv1 exp 26 coins 450 gems 0 texp 25 slots 4
 tds:xpboost off
 @A cmd /tds:play Easy
 tds:hold true
@@ -625,12 +626,17 @@ tds:stop
 tds:hold true
 @A cmd /tds:cash 5000000
 @A cmd /tds:place Accelerator -9 -60 -15
-@A cmd /tds:place Trapper -6 -60 -16
+@A cmd /tds:place Trapper -5 -60 -13
+~ @A Placed #2 Trapper
 @A cmd /tds:place Engineer -13 -60 -15
-tds:speed 10
-tds:hold false
+tds:spawnat Fallen_Honor_Guard 1
+tds:stun Fallen_Honor_Guard 900
+~ stunned 1
+tds:speed 20
 until "ev":"unit_spawn","tower":3,"hp":[\d.]+,"unit": 60000
 until "ev":"overcharge","id":1 120000
+tds:spawn Normal
+tds:spawn Normal
 until "ev":"trap","tower":2 120000
 tds:speed 1
 tds:stop
@@ -684,9 +690,9 @@ tds:stop
 @A cmd /tds:dev
 @A cmd /tds:play Easy
 tds:hold true
-tds:spawn Yeti
-tds:hurt Yeti 999999999
-until "ev":"phase","id":\d+,"name":"Yeti" 5000
+tds:spawn Void_Reaver
+tds:hurt Void_Reaver 999999999
+until "ev":"phase","id":\d+,"name":"Void Reaver","phase":"Void's Wrath" 5000
 tds:stop
 
 ## match modifiers from their pages: effects (Glass, Broke, Inflation, Fog, Healthy, Speedy, ...) and the reward boosts
@@ -706,7 +712,8 @@ tds:stop
 wait 500
 js world.getAllPlayers().find((p) => p.name === 'A').getComponent('inventory').container.getItem(0)?.typeId
 ~ tds:slot_1
-js world.getDimension('overworld').getEntities({ type: 'tds:ghost' }).length >= 0
+js ['ghosts', world.getDimension('overworld').getEntities({ type: 'tds:ghost' }).length].join(' ')
+~ ^ghosts [01]$
 tds:stop
 
 ## badges from the mode pages: a triumph badge rewards once
@@ -767,3 +774,47 @@ tds:stop
 @C join
 @C cmd /tds:bench "two words"
 ~ @C Unknown tower two words
+
+## the rest of the commands: the badge list, the modifier menu and list, the skill menu, DJ Booth tracks, Sandbox cash, base health and enemies
+tds:stop
+@A cmd /tds:reset
+~ @A coins 50 owned Scout,Sniper
+@A cmd /tds:badges
+~ @A · Recruit \(Easy: 100 coins\) \| · Average Joe \(Casual: 150 coins\)
+@A cmd /tds:modmenu
+~ @A form action: title\("Modifiers"\)
+@A form 0
+~ @A Healthy Enemies on · rewards \+30%
+@A cmd /tds:mods
+~ @A Healthy Enemies.* · rewards \+\d+%
+@A cmd /tds:mod Healthy_Enemies
+~ @A Healthy Enemies off
+@A cmd /tds:skillmenu
+~ @A form action: title\("Skills"\)
+@A form close
+@A cmd /tds:dev
+@A cmd /tds:play Easy
+tds:hold true
+@A cmd /tds:cash 50000
+@A cmd /tds:place DJ_Booth -9 -60 -15
+~ @A Placed #1 DJ Booth
+@A cmd /tds:track 1 Green
+~ @A Track: Green
+~ "ev":"dj_track","id":1,"track":"Green"
+@A cmd /tds:track 7 Red
+~ @A Not a DJ Booth
+tds:stop
+@A cmd /tds:play Sandbox
+until "ev":"match_start","mode":"Sandbox" 5000
+@A cmd /tds:sbcash 1234
+~ @A \$1234
+@A cmd /tds:sbhp 50
+~ @A Base 50/\d+
+@A cmd /tds:sbenemy Normal
+~ @A Spawned Normal
+~ "ev":"enemy_spawn","id":\d+,"name":"Normal"
+@A cmd /tds:sbenemy Nobody
+~ @A Unknown enemy Nobody
+tds:stop
+@A cmd /tds:sbcash 5
+~ @A Not in a Sandbox match

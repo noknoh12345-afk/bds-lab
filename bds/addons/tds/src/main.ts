@@ -75,6 +75,7 @@ cmdAny('tds:spawn', 'Spawn an enemy (test)', { enemy: 'string', 'mods?': 'string
 cmdAny('tds:spawnat', 'Spawn an enemy on the path next to a tower (test)', { enemy: 'string', tower: 'int', 'mods?': 'string' }, (_, a) => { const tw = G.towerById(a.tower); if (!tw) return 'No such tower'; G.debugSpawn(T(a.enemy), a.mods ? T(a.mods).split(',') : [], G.nearestD(tw)); return 'ok'; }, true);
 cmdAny('tds:kill', 'Kill every enemy of a kind (test; death abilities run)', { enemy: 'string' }, (_, a) => `killed ${G.debugKill(T(a.enemy))}`, true);
 cmdAny('tds:hurt', 'Take health from an enemy (test)', { enemy: 'string', n: 'int' }, (_, a) => (G.debugHurt(T(a.enemy), a.n) ? 'ok' : 'none'), true);
+cmdAny('tds:stun', 'Hold the enemies of a name where they are for some seconds (test)', { enemy: 'string', sec: 'int' }, (_, a) => `stunned ${G.debugStun(T(a.enemy), a.sec)}`, true);
 cmdAny('tds:ability', 'Make an enemy use its ability now (test)', { enemy: 'string', index: 'int' }, (_, a) => (G.debugAbility(T(a.enemy), a.index) ? 'ok' : 'none'), true);
 cmdAny('tds:enemies', 'Enemies on the path: name hp def', {}, () => (G.M?.enemies ?? []).map((e) => `${e.name}:${Math.round(e.hp * 100) / 100}:${e.def}`).join(' ') || 'none', true);
 cmdAny('tds:dmg', 'Damage an enemy would take after its defense', { enemy: 'string', n: 'float', 'mods?': 'string' }, (_, a) => { const d = enemies[T(a.enemy)]; if (!d) return 'unknown'; const def = d.defense + (a.mods?.includes('Blessed') ? 100 : 0); return `${T(a.enemy)} def ${def}% takes ${afterDefense(a.n, def)}`; });

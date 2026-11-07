@@ -1047,7 +1047,7 @@ function give2(_tw, amount) {
 function hit(e, dmg, tw, kind = "direct") {
   if (!M || e.hp <= 0) return 0;
   if (kind === "splash" && e.immune.includes("Splash Damage")) return 0;
-  const taken = 1 + ((e.neural ?? 0) > M.t ? e.neuralPct ?? 0 : 0) + ((e.vuln ?? 0) > M.t ? e.vulnPct ?? 0 : 0);
+  const taken = benchMode ? 1 : 1 + ((e.neural ?? 0) > M.t ? e.neuralPct ?? 0 : 0) + ((e.vuln ?? 0) > M.t ? e.vulnPct ?? 0 : 0);
   let d = kind === "true" ? dmg * taken : afterDefense(dmg * taken, Math.max(0, e.def)), done = 0;
   if (e.mods.includes("Tank") && kind !== "dot") d = Math.min(d, 1);
   if (e.shield > 0) {
@@ -1452,6 +1452,7 @@ function look(tw, e) {
     }
   }
 }
+var BY_ABILITY = /* @__PURE__ */ new Set(["Commander"]);
 function towerStep(tw, dt) {
   if (!M || !path) return;
   if (tw.temp !== void 0 && M.t >= tw.temp) {
@@ -1465,7 +1466,7 @@ function towerStep(tw, dt) {
   }
   const sp = !benchMode && hooks.towerStep[tw.name];
   if (sp && sp(tw, dt)) return;
-  const ud = tw.temp === void 0 ? unitsFor(tw.name, tw.lvl, maxLevel(tw.name))[0] : void 0, rate = s0.spawnrate ?? ud?.[1].spawnrate ?? void 0;
+  const ud = tw.temp === void 0 && !BY_ABILITY.has(tw.name) ? unitsFor(tw.name, tw.lvl, maxLevel(tw.name))[0] : void 0, rate = s0.spawnrate ?? ud?.[1].spawnrate ?? void 0;
   const spawns = !!rate && (!!s0.unitHp || !!ud);
   if (M.t < tw.next && !(spawns && M.t >= tw.nextUnit)) return;
   if (!M.enemies.length && !spawns) {
@@ -2039,6 +2040,12 @@ function debugHurt(name, n2) {
   e.def = d;
   return true;
 }
+function debugStun(name, sec) {
+  if (!M) return 0;
+  const l = M.enemies.filter((e) => e.name === name);
+  for (const e of l) e.stunUntil = M.t + sec;
+  return l.length;
+}
 function debugAbility(name, i) {
   const e = M?.enemies.find((x) => x.name === name);
   const a = e && enemies[e.name].abilities?.[i];
@@ -2452,9 +2459,9 @@ function expected(name, lvl) {
 function bench(name, lvl, T0 = 60) {
   const s = stats(name, lvl);
   if (!s.fr || !s.dmg || !s.range) return;
-  const T4 = Math.min(400, Math.max(T0, (s.fr * (s.burst ?? 1) + (s.burstCd ?? 0) + (s.reload ?? 0)) * 25));
+  const cycle = s.fr * (s.burst ?? 1) + (s.burstCd ?? 0) + (s.reload ?? 0), T4 = Math.min(400, Math.max(T0, cycle * 25));
   const saved = M;
-  const run = (dist) => {
+  const run = (dist, dur = T4) => {
     const m = { mode: "Easy", map: DEFAULT_MAP, players: ["bench"], cash: { bench: 0 }, baseHP: 1, maxHP: 1, wave: 1, t: 0, waveEnd: Infinity, skipAt: Infinity, queue: [], enemies: [], towers: [], units: [], seq: 1, votes: [], stats: { kills: 0, leaks: 0, dealt: 0, income: 0 }, clearPaid: true, leakedThisWave: false, seed: 1 };
     setM(m);
     const p = path.at(path.len * 0.5);
@@ -2463,12 +2470,12 @@ function bench(name, lvl, T0 = 60) {
     tw.x = p.x - 0.5;
     m.towers.push(tw);
     m.enemies.push({ id: 1e9 + 1, name: "Dummy", d: path.len * 0.5, hp: 1e12, max: 1e12, shield: 0, speed: 0, def: 0, cash: 0, paid: 0, hidden: false, flying: false, lead: false, boss: true, immune: ["Stun", "Freeze", "Slowed", "Burn"], mods: [], slow: 0, slowUntil: 0, freezeUntil: 0, stunUntil: 0, dots: [], wave: 1 });
-    simulate(T4);
+    simulate(dur);
     return tw.primary;
   };
   setBench(true);
   try {
-    const d = run(s.range * 0.9) / T4, out = run(s.range + 1) > 0, e = expected(name, lvl);
+    const d = run(s.range * 0.9) / T4, out = run(s.range + 1, Math.min(T4, Math.max(10, cycle * 4))) > 0, e = expected(name, lvl);
     return { name, lvl, measured: +d.toFixed(3), expected: +e.toFixed(3), err: e ? +(Math.abs(d - e) / e).toFixed(4) : 0, inRange: d > 0, outRange: out };
   } finally {
     setM(saved);
@@ -2635,8 +2642,8 @@ chat?.subscribe((e) => {
   const p = e.sender, m = e.message;
   system4.run(() => onChat(p, m));
 });
-cmd("tds:code", "Type a Hidden Wave code", { code: "string" }, (p, a) => {
-  onChat(p, a.code);
+cmd("tds:code", "Type a Hidden Wave code", { code: "int" }, (p, a) => {
+  onChat(p, String(a.code));
   return "ok";
 });
 var triumphBadges = () => (rules.badges ?? []).filter((b) => b.cond === "triumph");
@@ -3952,6 +3959,7 @@ cmdAny("tds:spawnat", "Spawn an enemy on the path next to a tower (test)", { ene
 }, true);
 cmdAny("tds:kill", "Kill every enemy of a kind (test; death abilities run)", { enemy: "string" }, (_, a) => `killed ${debugKill(T3(a.enemy))}`, true);
 cmdAny("tds:hurt", "Take health from an enemy (test)", { enemy: "string", n: "int" }, (_, a) => debugHurt(T3(a.enemy), a.n) ? "ok" : "none", true);
+cmdAny("tds:stun", "Hold the enemies of a name where they are for some seconds (test)", { enemy: "string", sec: "int" }, (_, a) => `stunned ${debugStun(T3(a.enemy), a.sec)}`, true);
 cmdAny("tds:ability", "Make an enemy use its ability now (test)", { enemy: "string", index: "int" }, (_, a) => debugAbility(T3(a.enemy), a.index) ? "ok" : "none", true);
 cmdAny("tds:enemies", "Enemies on the path: name hp def", {}, () => (M?.enemies ?? []).map((e) => `${e.name}:${Math.round(e.hp * 100) / 100}:${e.def}`).join(" ") || "none", true);
 cmdAny("tds:dmg", "Damage an enemy would take after its defense", { enemy: "string", n: "float", "mods?": "string" }, (_, a) => {

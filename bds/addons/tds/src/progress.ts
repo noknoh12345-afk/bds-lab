@@ -31,7 +31,7 @@ const chat = (world.afterEvents as unknown as { chatSend?: { subscribe(f: (e: { 
   ?? (world.beforeEvents as unknown as { chatSend?: { subscribe(f: (e: { sender: Player; message: string }) => void): unknown } }).chatSend;
 chat?.subscribe((e) => { const p = e.sender, m = e.message; system.run(() => onChat(p, m)); });
 /** the same as typing a code in chat (tests, and servers without the chat event) */
-cmd('tds:code', 'Type a Hidden Wave code', { code: 'string' }, (p, a) => { onChat(p, a.code); return 'ok'; });
+cmd('tds:code', 'Type a Hidden Wave code', { code: 'int' }, (p, a) => { onChat(p, String(a.code)); return 'ok'; });   // the codes are numbers (a number is no string to the command parser)
 
 // ---------- badges (mode pages): a triumph badge per mode, rewarded once ----------
 export const triumphBadges = (): BadgeDef[] => (rules.badges ?? []).filter((b) => b.cond === 'triumph');
