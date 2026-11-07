@@ -881,6 +881,10 @@ tds:sitecheck
 ~ @A Placed cliff #\d+ Sniper
 tds:site
 ~ ^Wild #\d+ at -?\d+ -?\d+: pathStuds 1(6[4-9]|7[0-6])
+@A cmd /tds:siteview corner
+~ @A Looking at the corner
+@A cmd /tds:siteview top
+~ @A Looking at the top
 restart
 until "ev":"restored","mode":"Easy" 60000
 tds:site

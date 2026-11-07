@@ -1,0 +1,76 @@
+# 本物のアプリで TDS を見る: node lab.mjs app run -a tds（GitHub では app ワークフロー: addon=tds, ref=addon/tds, mode=run）
+# 撮るもの: HUD、訓練場、遠征（到着のタイトルと空撮、拠点、入り口と出口の門、階段の曲がり角と坂、橋、真上から、道を歩く敵）
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+shot world
+section lobby
+do tds:xpboost off
+do tds:speed 1
+wait 1500
+shot lobby-hud
+section training
+chat /tds:play Easy
+until server "ev":"match_start","mode":"Easy","map":"Grass Isle" 60000
+wait 3000
+shot training-hud
+do tds:hold true
+do tds:spawn Normal
+do tds:spawn Speedy
+do tds:spawn Slow
+wait 4000
+shot training-enemies
+section expedition
+chat /tds:play Easy false Wild
+until server "ev":"site_built" 240000
+until server "ev":"match_start","mode":"Easy","map":"Wild #\d+" 60000
+wait 1500
+shot arrival
+wait 3500
+shot flyover-1
+wait 3500
+shot flyover-2
+until server "ev":"flyover" 10000
+wait 6000
+shot camp-after
+do tds:hold true
+do execute as @a run tds:siteview top
+wait 2500
+shot site-top
+do execute as @a run tds:siteview camp
+wait 2000
+shot site-camp
+do execute as @a run tds:siteview gate_in
+wait 2000
+shot gate-in
+do execute as @a run tds:siteview gate_out
+wait 2000
+shot gate-out
+do execute as @a run tds:siteview corner
+wait 2000
+shot road-corner
+do execute as @a run tds:siteview climb
+wait 2000
+shot road-climb
+do execute as @a run tds:siteview bridge
+wait 2000
+shot road-bridge
+section enemies
+do execute as @a run tds:sitetry ground Scout
+do execute as @a run tds:sitetry cliff Sniper
+do tds:spawn Normal
+do tds:spawn Speedy
+do tds:spawn Normal
+do tds:hold false
+do execute as @a run tds:siteview gate_in
+wait 5000
+shot enemies-near-gate
+do execute as @a run tds:siteview top
+wait 6000
+shot enemies-from-top
+absent clientlog \bERROR\b

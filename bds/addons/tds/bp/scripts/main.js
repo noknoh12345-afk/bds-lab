@@ -2952,6 +2952,40 @@ cmd("tds:sitetry", "Place a tower on a ground or cliff spot of the expedition (t
   }
   return `No ${a.kind} spot took it`;
 }, true);
+cmd("tds:siteview", "See a part of the expedition site: top, camp, gate_in, gate_out, corner, climb, bridge", { at: ["top", "camp", "gate_in", "gate_out", "corner", "climb", "bridge"] }, (p, a) => {
+  const s = M?.site;
+  if (!s) return "No expedition";
+  const cells = s.cells.split(";").filter(Boolean).map((c) => {
+    const [x, z, y, d, f2] = c.split(",");
+    return { x: +x, z: +z, y: +y, d: +d, f: f2 ?? "" };
+  });
+  const [cx, cy, cz] = [s.camp[0] - 0.5, s.camp[1], s.camp[2] - 0.5];
+  const near2 = (t, dist, up) => {
+    const dx = t.x - cx, dz = t.z - cz, l = Math.hypot(dx, dz) || 1;
+    return { x: t.x - dx / l * dist, y: t.y + up, z: t.z - dz / l * dist };
+  };
+  let at, look2;
+  if (a.at === "top") {
+    at = { x: cx, y: cy + 30, z: cz + 0.3 };
+    look2 = { x: cx, y: cy, z: cz };
+  } else if (a.at === "camp") {
+    at = { x: cx + 6, y: cy + 4, z: cz + 6 };
+    look2 = { x: cx, y: cy, z: cz };
+  } else if (a.at === "gate_in" || a.at === "gate_out") {
+    const g = a.at === "gate_in" ? s.gateIn : s.gateOut, t = { x: g[0], y: g[1] + 2, z: g[2] };
+    at = near2(t, 8, 3);
+    look2 = t;
+  } else {
+    const c = cells.find((q) => a.at === "corner" ? q.f.includes("i") : a.at === "climb" ? q.f.includes("s") : q.f.includes("w"));
+    if (!c) return `No ${a.at} on this road`;
+    const t = { x: c.x + 0.5, y: c.y + 1, z: c.z + 0.5 };
+    at = near2(t, 5, 3);
+    look2 = t;
+  }
+  p.teleport(at, { facingLocation: look2 });
+  log("siteview", { player: p.name, at: a.at });
+  return `Looking at the ${a.at.replace("_", " ")}`;
+}, true);
 
 // addons/tds/src/lobby.ts
 var DAY = 864e5;
