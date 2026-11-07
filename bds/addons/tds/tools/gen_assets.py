@@ -72,14 +72,17 @@ def base_components(family, box, hit):
             'minecraft:fire_immune': True, 'minecraft:conditional_bandwidth_optimization': {}}
 def entity(ident, props, comps): return {'format_version': '1.21.40', 'minecraft:entity': {'description': {'identifier': ident, 'is_spawnable': False, 'is_summonable': True, 'properties': props}, 'components': comps}}
 NAME = {'minecraft:nameable': {'always_show': True, 'allow_name_tag_renaming': False}, 'minecraft:persistent': {}}
-out('bp/entities/enemy.json', entity('tds:enemy', {'tds:skin': prop_int(N_ENEMY - 1), 'tds:size': LOOK_SIZE}, {**base_components(['enemy', 'tds'], (0.3, 0.45), (0.01, 0.01)), **NAME}))
-out('bp/entities/unit.json', entity('tds:unit', {'tds:skin': prop_int(N_UNIT - 1), 'tds:size': LOOK_SIZE}, {**base_components(['unit', 'tds'], (0.3, 0.4), (0.01, 0.01)), **NAME}))
+# tds:pace: how fast the script moves it along the path (studs/s x 10, the sim speed included): its legs follow it;
+# tds:st: what happens to it (0 moving, 1 stunned, 2 frozen, 3 dies, 4 leaves, 5 dies in the air) (tools/models/motion.py)
+MOVE = {'tds:pace': prop_int(255), 'tds:st': prop_int(7)}
+out('bp/entities/enemy.json', entity('tds:enemy', {'tds:skin': prop_int(N_ENEMY - 1), 'tds:size': LOOK_SIZE, **MOVE}, {**base_components(['enemy', 'tds'], (0.3, 0.45), (0.01, 0.01)), **NAME}))
+out('bp/entities/unit.json', entity('tds:unit', {'tds:skin': prop_int(N_UNIT - 1), 'tds:size': LOOK_SIZE, **MOVE}, {**base_components(['unit', 'tds'], (0.3, 0.4), (0.01, 0.01)), **NAME}))
 tw = {**base_components(['tower', 'tds'], (0.3, 0.5), (0.8, 0.9)), **NAME,
       'minecraft:interact': {'interactions': [{'interact_text': 'action.interact.tds_manage', 'swing': True, 'on_interact': {'filters': {'test': 'is_family', 'subject': 'other', 'value': 'player'}}}]}}
 # tds:yaw: the yaw (degrees, as a mob's) from the tower to its target; the client turns the turret bone to it
-# tds:holo: a hologram copy of a tower (its look drawn see-through)
+# tds:holo: a hologram copy of a tower (its look drawn see-through); tds:st: 1 stunned, 2 frozen, 3 sold (it shrinks away)
 out('bp/entities/tower.json', entity('tds:tower', {'tds:skin': prop_int(N_TOWER - 1), 'tds:size': LOOK_SIZE, 'tds:lvl': prop_int(7), 'tds:yaw': prop_int(360),
-                                                  'tds:holo': FLAG}, tw))
+                                                  'tds:holo': FLAG, 'tds:st': prop_int(3)}, tw))
 out('bp/entities/ghost.json', entity('tds:ghost', {'tds:skin': prop_int(N_TOWER - 1), 'tds:size': LOOK_SIZE, 'tds:ok': {'type': 'bool', 'default': True, 'client_sync': True}},
                                      base_components(['tds', 'tds_ghost'], (0.01, 0.01), (0.01, 0.01))))
 

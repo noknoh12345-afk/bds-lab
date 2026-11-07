@@ -35,7 +35,6 @@ def vehicle(name, mats=None):
     m.glow |= {'lamp', 'glow', 'flash'}
     m.decal = vdecal
     m.own = None
-    m.noflash = True                                  # a unit plays no shot: its guns have no flash
     m.bone('root', None, (0, 0, 0))
     return m
 

@@ -72,13 +72,17 @@ def tagged(g, model):
     return g
 
 
+def unflashed(bones, fire):
+    """a muzzle flash waits out of sight until a shot (the looks' always-on clip hides it): drawn only with --fire"""
+    return bones if fire else [{k: v for k, v in b.items() if k != 'cubes'} if 'flash' in b['name'] else b for b in bones]
+
+
 def merged(lk, lvl=None, fire=False):
     """one geometry + one texture for the look: the vanilla body's bones with the gear's cubes added, or our body"""
     if lk.body is not None:
         geo = json.load(open(os.path.join(MDIR, f'{lk.body.name}.geo.json')))
         g = tagged(geo['minecraft:geometry'][0], lk.body)
-        if lvl is not None:
-            g['bones'] = keep_level(g['bones'], lvl, fire)
+        g['bones'] = keep_level(g['bones'], lvl, fire) if lvl is not None else unflashed(g['bones'], fire)
         return geo, solid(Image.open(os.path.join(TDIR, f'{lk.body.name}.png')).convert('RGBA'))
     vb, vw, vh = vanilla_geo(lk.rig.geo)
     vw, vh = int(vw or 64), int(vh or 64)
@@ -86,8 +90,7 @@ def merged(lk, lvl=None, fire=False):
     if vt.size != (vw, vh):
         vt = vt.crop((0, 0, vw, vh)) if vt.width >= vw and vt.height >= vh else vt.resize((vw, vh), Image.NEAREST)
     g = tagged(json.load(open(os.path.join(MDIR, f'{lk.gear.name}.geo.json')))['minecraft:geometry'][0], lk.gear)
-    if lvl is not None:
-        g['bones'] = keep_level(g['bones'], lvl, fire)
+    g['bones'] = keep_level(g['bones'], lvl, fire) if lvl is not None else unflashed(g['bones'], fire)
     gt = Image.open(os.path.join(TDIR, f'{lk.gear.name}.png')).convert('RGBA')
     W, H = max(vw, gt.width), vh + gt.height
     tex = Image.new('RGBA', (W, H), (0, 0, 0, 0))

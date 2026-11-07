@@ -269,7 +269,23 @@
     "o63": "geometry.tds.empty"
    },
    "scripts": {
-    "scale": "0.28 * q.property('tds:size')",
+    "initialize": [
+     "v.walk = math.random(0, 360); v.move = 0; v.clock = math.random(0, 10); v.dying = 0; v.fall = 0; v.drop = 0; v.fade = 0;"
+    ],
+    "pre_animation": [
+     "v.sz = math.max(0.3, q.property('tds:size'));",
+     "v.st = q.property('tds:st');",
+     "v.pace = (v.st == 1 || v.st == 2) ? 0 : q.property('tds:pace') * 0.1;",
+     "v.clock = v.clock + (v.st == 2 ? 0 : q.delta_time);",
+     "v.walk = math.mod(v.walk + q.delta_time * v.pace * 400.0 * (q.property('tds:skin') < 12 ? 1.22 : (q.property('tds:skin') < 17 ? 1.22 : (q.property('tds:skin') < 21 ? 1.22 : (q.property('tds:skin') < 26 ? 1.22 : (q.property('tds:skin') < 30 ? 1.3 : (q.property('tds:skin') < 31 ? 0.87 : (q.property('tds:skin') < 33 ? 1.7 : (q.property('tds:skin') < 34 ? 1.17 : (q.property('tds:skin') < 43 ? 1.35 : (q.property('tds:skin') < 44 ? 1.0 : (q.property('tds:skin') < 49 ? 1.0 : (q.property('tds:skin') < 54 ? 1.0 : (q.property('tds:skin') < 57 ? 1.0 : (q.property('tds:skin') < 62 ? 1.6 : (q.property('tds:skin') < 63 ? 2.0 : (q.property('tds:skin') < 64 ? 1.27 : 1)))))))))))))))) / v.sz, 3600);",
+     "v.move = math.lerp(v.move, (v.pace > 0.05 && v.st < 3) ? 1 : 0, math.min(1, q.delta_time * 8));",
+     "v.dying = v.st >= 3 ? v.dying + q.delta_time : 0;",
+     "v.fall = math.min(1, math.pow(v.dying / 0.42, 2)) - ((v.dying > 0.42 && v.dying < 0.62) ? math.sin((v.dying - 0.42) * 900) * 0.06 : 0);",
+     "v.drop = math.min(1, math.pow(v.dying / 0.55, 2));",
+     "v.fade = v.st == 4 ? math.clamp(v.dying / 0.3, 0, 1) : (v.st >= 3 ? math.clamp((v.dying - 0.6) / 0.3, 0, 1) : 0);",
+     "v.grow = q.life_time < 0.4 ? math.sin(q.life_time * 300) / 0.866 : 1;"
+    ],
+    "scale": "0.28 * q.property('tds:size') * v.grow * (1 - v.fade)",
     "animate": [
      {
       "patrol": "q.property('tds:skin') >= 0 && q.property('tds:skin') < 12"
@@ -319,7 +335,34 @@
      {
       "golem": "q.property('tds:skin') >= 63 && q.property('tds:skin') < 64"
      },
-     "fx"
+     "fx",
+     {
+      "steady_r_march": "(q.property('tds:skin') >= 26 && q.property('tds:skin') < 30)"
+     },
+     {
+      "steady_r_stomp": "(q.property('tds:skin') >= 31 && q.property('tds:skin') < 33)"
+     },
+     {
+      "die_root_0p0": "v.st == 3 && ((q.property('tds:skin') >= 0 && q.property('tds:skin') < 26) || q.property('tds:skin') == 30 || (q.property('tds:skin') >= 33 && q.property('tds:skin') < 64))"
+     },
+     {
+      "fall_root_0p0": "v.st == 5 && ((q.property('tds:skin') >= 0 && q.property('tds:skin') < 26) || q.property('tds:skin') == 30 || (q.property('tds:skin') >= 33 && q.property('tds:skin') < 64))"
+     },
+     {
+      "leave_root_0p0": "v.st == 4 && ((q.property('tds:skin') >= 0 && q.property('tds:skin') < 26) || q.property('tds:skin') == 30 || (q.property('tds:skin') >= 33 && q.property('tds:skin') < 64))"
+     },
+     {
+      "die_waist_12p0": "v.st == 3 && ((q.property('tds:skin') >= 26 && q.property('tds:skin') < 30) || (q.property('tds:skin') >= 31 && q.property('tds:skin') < 33))"
+     },
+     {
+      "fall_waist_12p0": "v.st == 5 && ((q.property('tds:skin') >= 26 && q.property('tds:skin') < 30) || (q.property('tds:skin') >= 31 && q.property('tds:skin') < 33))"
+     },
+     {
+      "leave_waist_12p0": "v.st == 4 && ((q.property('tds:skin') >= 26 && q.property('tds:skin') < 30) || (q.property('tds:skin') >= 31 && q.property('tds:skin') < 33))"
+     },
+     {
+      "dizzy": "v.st == 1"
+     }
     ]
    },
    "animations": {
@@ -339,7 +382,16 @@
     "waddle": "animation.tds_look.waddle",
     "scuttle": "animation.tds_look.scuttle",
     "golem": "animation.tds_look.golem",
-    "fx": "animation.tds_look.fx_unit"
+    "fx": "animation.tds_look.fx_unit",
+    "die_root_0p0": "animation.tds_look.die_root_0p0",
+    "fall_root_0p0": "animation.tds_look.fall_root_0p0",
+    "leave_root_0p0": "animation.tds_look.leave_root_0p0",
+    "die_waist_12p0": "animation.tds_look.die_waist_12p0",
+    "fall_waist_12p0": "animation.tds_look.fall_waist_12p0",
+    "leave_waist_12p0": "animation.tds_look.leave_waist_12p0",
+    "dizzy": "animation.tds_look.dizzy",
+    "steady_r_march": "animation.tds_look.steady_r_march",
+    "steady_r_stomp": "animation.tds_look.steady_r_stomp"
    },
    "render_controllers": [
     "controller.render.tds_unit",

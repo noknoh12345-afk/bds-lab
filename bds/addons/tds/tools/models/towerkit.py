@@ -27,7 +27,31 @@ THEMES['outfit'] = dict(pal=dict(t1='#4a5a7a', t2='#2e3a52', t3='#3a3026', glow=
 ROLE = {'Offense': '#c84a3a', 'Offensive': '#c84a3a', 'Defense': '#4a78c8', 'Support': '#3cc864'}
 GUN_AT = (-1.6, 19.0, -4.6)          # the grip line of a gun held at the chest (the `hold` pose's hands meet there)
 POSE = {'b': 'bow', 'k': 'type', 'g': 'hold', 'h': 'dual', 'm': 'ready', 'm2': 'ready2', 'c': 'cast', 't': 'throw', None: 'idle'}
-SHOT = {'b': 'fire', 'k': 'cast', 'g': 'fire', 'h': 'fire', 'm': 'swing', 'm2': 'swing', 'c': 'cast', 't': 'throw', None: ''}
+SHOT = {'b': 'bow', 'k': 'type', 'g': 'fire', 'h': 'revolver', 'm': 'slash', 'm2': 'slash', 'c': 'cast', 't': 'throw', None: ''}
+
+
+def shot_for(spec):
+    """the shot a figure plays (animation.tds_tower.<it>), by what it holds: an automatic's short kicks, a sniper's heavy
+    kick, a shotgun's kick and pump, a launcher's shoulder kick, a sprayer's stream, a revolver's flip, a bow's release,
+    typing, a blade's sweep, a heavy weapon's overhead slam, a staff's cast, a wrench's knock, a throw"""
+    if not spec:
+        return ''
+    how, _, kind = spec.partition(':')
+    kind = kind.split('@')[0]
+    if how == 'g':
+        if kind == 'minigun':
+            return 'spin'
+        for shot, kinds in (('auto', ('smg', 'ar', 'lmg', 'tommy', 'twit')), ('snipe', ('sr', 'amr', 'rail', 'crossbow')),
+                            ('blast', ('shotgun', 'combat')), ('heavy', ('launcher', 'rocket', 'firework', 'hive', 'frostcannon')),
+                            ('stream', ('flamer', 'freezer', 'toxic', 'medigun', 'laser', 'tesla', 'pulse'))):
+            if kind in kinds:
+                return shot
+        return 'fire'
+    if how in ('m', 'm2'):
+        return 'slam' if kind in ('club', 'hammer', 'battleaxe') else 'slash'
+    if how == 'c':
+        return 'hammer' if kind == 'wrench' else 'cast'
+    return SHOT.get(how, '')
 TILT = {'m': -80, 'm2': -80, 'c': 24}  # a held thing's angle to the arm, so it stands right in the pose (the arm's x + this)
 NOSE = {'pillager', 'vindicator', 'evoker', 'witch', 'zvillager'}     # rigs with the villagers' nose (to z -6)
 

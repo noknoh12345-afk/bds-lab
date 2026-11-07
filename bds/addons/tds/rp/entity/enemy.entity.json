@@ -589,7 +589,23 @@
     "o143": "geometry.tds.empty"
    },
    "scripts": {
-    "scale": "0.26 * q.property('tds:size')",
+    "initialize": [
+     "v.walk = math.random(0, 360); v.move = 0; v.clock = math.random(0, 10); v.dying = 0; v.fall = 0; v.drop = 0; v.fade = 0;"
+    ],
+    "pre_animation": [
+     "v.sz = math.max(0.3, q.property('tds:size'));",
+     "v.st = q.property('tds:st');",
+     "v.pace = (v.st == 1 || v.st == 2) ? 0 : q.property('tds:pace') * 0.1;",
+     "v.clock = v.clock + (v.st == 2 ? 0 : q.delta_time);",
+     "v.walk = math.mod(v.walk + q.delta_time * v.pace * 400.0 * (q.property('tds:skin') < 12 ? 1.15 : (q.property('tds:skin') < 33 ? 1.3 : (q.property('tds:skin') < 54 ? 0.87 : (q.property('tds:skin') < 88 ? 1.7 : (q.property('tds:skin') < 94 ? 1.0 : (q.property('tds:skin') < 100 ? 1.0 : (q.property('tds:skin') < 102 ? 1.0 : (q.property('tds:skin') < 117 ? 1.27 : (q.property('tds:skin') < 120 ? 1.1 : (q.property('tds:skin') < 123 ? 2.0 : (q.property('tds:skin') < 124 ? 1.0 : (q.property('tds:skin') < 125 ? 1.0 : (q.property('tds:skin') < 137 ? 0.9 : (q.property('tds:skin') < 144 ? 1.0 : 1)))))))))))))) / v.sz, 3600);",
+     "v.move = math.lerp(v.move, (v.pace > 0.05 && v.st < 3) ? 1 : 0, math.min(1, q.delta_time * 8));",
+     "v.dying = v.st >= 3 ? v.dying + q.delta_time : 0;",
+     "v.fall = math.min(1, math.pow(v.dying / 0.42, 2)) - ((v.dying > 0.42 && v.dying < 0.62) ? math.sin((v.dying - 0.42) * 900) * 0.06 : 0);",
+     "v.drop = math.min(1, math.pow(v.dying / 0.55, 2));",
+     "v.fade = v.st == 4 ? math.clamp(v.dying / 0.3, 0, 1) : (v.st >= 3 ? math.clamp((v.dying - 0.6) / 0.3, 0, 1) : 0);",
+     "v.grow = q.life_time < 0.4 ? math.sin(q.life_time * 300) / 0.866 : 1;"
+    ],
+    "scale": "0.26 * q.property('tds:size') * v.grow * (1 - v.fade)",
     "animate": [
      {
       "walk": "q.property('tds:skin') >= 0 && q.property('tds:skin') < 12"
@@ -633,7 +649,139 @@
      {
       "float": "q.property('tds:skin') >= 137 && q.property('tds:skin') < 144"
      },
-     "fx"
+     "fx",
+     {
+      "body_hover": "q.property('tds:skin') == 88 || (q.property('tds:skin') >= 92 && q.property('tds:skin') < 94)"
+     },
+     {
+      "body_march": "q.property('tds:skin') == 12 || (q.property('tds:skin') >= 15 && q.property('tds:skin') < 17) || q.property('tds:skin') == 18 || (q.property('tds:skin') >= 20 && q.property('tds:skin') < 22) || (q.property('tds:skin') >= 26 && q.property('tds:skin') < 29) || (q.property('tds:skin') >= 31 && q.property('tds:skin') < 33)"
+     },
+     {
+      "body_run": "(q.property('tds:skin') >= 33 && q.property('tds:skin') < 35) || (q.property('tds:skin') >= 36 && q.property('tds:skin') < 39) || q.property('tds:skin') == 44 || q.property('tds:skin') == 47 || q.property('tds:skin') == 50"
+     },
+     {
+      "body_stomp": "q.property('tds:skin') == 56 || q.property('tds:skin') == 58 || q.property('tds:skin') == 60 || q.property('tds:skin') == 65 || (q.property('tds:skin') >= 67 && q.property('tds:skin') < 69) || q.property('tds:skin') == 72 || q.property('tds:skin') == 78 || q.property('tds:skin') == 82 || q.property('tds:skin') == 84 || (q.property('tds:skin') >= 86 && q.property('tds:skin') < 88)"
+     },
+     {
+      "steady_l_golem": "q.property('tds:skin') == 108 || q.property('tds:skin') == 112"
+     },
+     {
+      "steady_r_golem": "q.property('tds:skin') == 103 || q.property('tds:skin') == 107"
+     },
+     {
+      "steady_l_march": "(q.property('tds:skin') >= 13 && q.property('tds:skin') < 15) || q.property('tds:skin') == 19 || q.property('tds:skin') == 22 || q.property('tds:skin') == 28"
+     },
+     {
+      "steady_r_march": "(q.property('tds:skin') >= 12 && q.property('tds:skin') < 21) || q.property('tds:skin') == 22 || (q.property('tds:skin') >= 24 && q.property('tds:skin') < 27) || (q.property('tds:skin') >= 28 && q.property('tds:skin') < 33)"
+     },
+     {
+      "steady_r_run": "q.property('tds:skin') == 34 || q.property('tds:skin') == 40 || q.property('tds:skin') == 43 || q.property('tds:skin') == 47 || q.property('tds:skin') == 53"
+     },
+     {
+      "steady_l_stomp": "(q.property('tds:skin') >= 59 && q.property('tds:skin') < 61) || q.property('tds:skin') == 66 || q.property('tds:skin') == 70 || (q.property('tds:skin') >= 72 && q.property('tds:skin') < 74) || q.property('tds:skin') == 83 || q.property('tds:skin') == 85"
+     },
+     {
+      "steady_r_stomp": "(q.property('tds:skin') >= 55 && q.property('tds:skin') < 61) || q.property('tds:skin') == 63 || (q.property('tds:skin') >= 65 && q.property('tds:skin') < 69) || (q.property('tds:skin') >= 70 && q.property('tds:skin') < 72) || (q.property('tds:skin') >= 74 && q.property('tds:skin') < 77) || q.property('tds:skin') == 78 || (q.property('tds:skin') >= 80 && q.property('tds:skin') < 88)"
+     },
+     {
+      "steady_l_walk": "q.property('tds:skin') == 6"
+     },
+     {
+      "steady_r_walk": "q.property('tds:skin') == 8 || q.property('tds:skin') == 11"
+     },
+     {
+      "die_baseplate_0p0": "v.st == 3 && (q.property('tds:skin') == 91 || q.property('tds:skin') == 123)"
+     },
+     {
+      "fall_baseplate_0p0": "v.st == 5 && (q.property('tds:skin') == 91 || q.property('tds:skin') == 123)"
+     },
+     {
+      "leave_baseplate_0p0": "v.st == 4 && (q.property('tds:skin') == 91 || q.property('tds:skin') == 123)"
+     },
+     {
+      "die_body_24p0": "v.st == 3 && (q.property('tds:skin') == 12 || (q.property('tds:skin') >= 15 && q.property('tds:skin') < 17) || q.property('tds:skin') == 18 || (q.property('tds:skin') >= 20 && q.property('tds:skin') < 22) || (q.property('tds:skin') >= 26 && q.property('tds:skin') < 29) || (q.property('tds:skin') >= 31 && q.property('tds:skin') < 35) || (q.property('tds:skin') >= 36 && q.property('tds:skin') < 39) || q.property('tds:skin') == 44 || q.property('tds:skin') == 47 || q.property('tds:skin') == 50 || q.property('tds:skin') == 56 || q.property('tds:skin') == 58 || q.property('tds:skin') == 60 || q.property('tds:skin') == 65 || (q.property('tds:skin') >= 67 && q.property('tds:skin') < 69) || q.property('tds:skin') == 72 || q.property('tds:skin') == 78 || q.property('tds:skin') == 82 || q.property('tds:skin') == 84 || (q.property('tds:skin') >= 86 && q.property('tds:skin') < 89) || (q.property('tds:skin') >= 92 && q.property('tds:skin') < 94) || (q.property('tds:skin') >= 100 && q.property('tds:skin') < 102))"
+     },
+     {
+      "fall_body_24p0": "v.st == 5 && (q.property('tds:skin') == 12 || (q.property('tds:skin') >= 15 && q.property('tds:skin') < 17) || q.property('tds:skin') == 18 || (q.property('tds:skin') >= 20 && q.property('tds:skin') < 22) || (q.property('tds:skin') >= 26 && q.property('tds:skin') < 29) || (q.property('tds:skin') >= 31 && q.property('tds:skin') < 35) || (q.property('tds:skin') >= 36 && q.property('tds:skin') < 39) || q.property('tds:skin') == 44 || q.property('tds:skin') == 47 || q.property('tds:skin') == 50 || q.property('tds:skin') == 56 || q.property('tds:skin') == 58 || q.property('tds:skin') == 60 || q.property('tds:skin') == 65 || (q.property('tds:skin') >= 67 && q.property('tds:skin') < 69) || q.property('tds:skin') == 72 || q.property('tds:skin') == 78 || q.property('tds:skin') == 82 || q.property('tds:skin') == 84 || (q.property('tds:skin') >= 86 && q.property('tds:skin') < 89) || (q.property('tds:skin') >= 92 && q.property('tds:skin') < 94) || (q.property('tds:skin') >= 100 && q.property('tds:skin') < 102))"
+     },
+     {
+      "leave_body_24p0": "v.st == 4 && (q.property('tds:skin') == 12 || (q.property('tds:skin') >= 15 && q.property('tds:skin') < 17) || q.property('tds:skin') == 18 || (q.property('tds:skin') >= 20 && q.property('tds:skin') < 22) || (q.property('tds:skin') >= 26 && q.property('tds:skin') < 29) || (q.property('tds:skin') >= 31 && q.property('tds:skin') < 35) || (q.property('tds:skin') >= 36 && q.property('tds:skin') < 39) || q.property('tds:skin') == 44 || q.property('tds:skin') == 47 || q.property('tds:skin') == 50 || q.property('tds:skin') == 56 || q.property('tds:skin') == 58 || q.property('tds:skin') == 60 || q.property('tds:skin') == 65 || (q.property('tds:skin') >= 67 && q.property('tds:skin') < 69) || q.property('tds:skin') == 72 || q.property('tds:skin') == 78 || q.property('tds:skin') == 82 || q.property('tds:skin') == 84 || (q.property('tds:skin') >= 86 && q.property('tds:skin') < 89) || (q.property('tds:skin') >= 92 && q.property('tds:skin') < 94) || (q.property('tds:skin') >= 100 && q.property('tds:skin') < 102))"
+     },
+     {
+      "die_body_2p0": "v.st == 3 && ((q.property('tds:skin') >= 94 && q.property('tds:skin') < 100))"
+     },
+     {
+      "fall_body_2p0": "v.st == 5 && ((q.property('tds:skin') >= 94 && q.property('tds:skin') < 100))"
+     },
+     {
+      "leave_body_2p0": "v.st == 4 && ((q.property('tds:skin') >= 94 && q.property('tds:skin') < 100))"
+     },
+     {
+      "die_body_31p0": "v.st == 3 && ((q.property('tds:skin') >= 102 && q.property('tds:skin') < 117))"
+     },
+     {
+      "fall_body_31p0": "v.st == 5 && ((q.property('tds:skin') >= 102 && q.property('tds:skin') < 117))"
+     },
+     {
+      "leave_body_31p0": "v.st == 4 && ((q.property('tds:skin') >= 102 && q.property('tds:skin') < 117))"
+     },
+     {
+      "die_body_x6": "v.st == 3 && ((q.property('tds:skin') >= 118 && q.property('tds:skin') < 120))"
+     },
+     {
+      "fall_body_x6": "v.st == 5 && ((q.property('tds:skin') >= 118 && q.property('tds:skin') < 120))"
+     },
+     {
+      "leave_body_x6": "v.st == 4 && ((q.property('tds:skin') >= 118 && q.property('tds:skin') < 120))"
+     },
+     {
+      "die_head_x13": "v.st == 3 && (q.property('tds:skin') == 124)"
+     },
+     {
+      "fall_head_x13": "v.st == 5 && (q.property('tds:skin') == 124)"
+     },
+     {
+      "leave_head_x13": "v.st == 4 && (q.property('tds:skin') == 124)"
+     },
+     {
+      "die_root_0p0": "v.st == 3 && (q.property('tds:skin') == 117)"
+     },
+     {
+      "fall_root_0p0": "v.st == 5 && (q.property('tds:skin') == 117)"
+     },
+     {
+      "leave_root_0p0": "v.st == 4 && (q.property('tds:skin') == 117)"
+     },
+     {
+      "die_root_0p0_soft": "v.st == 3 && ((q.property('tds:skin') >= 125 && q.property('tds:skin') < 144))"
+     },
+     {
+      "fall_root_0p0_soft": "v.st == 5 && ((q.property('tds:skin') >= 125 && q.property('tds:skin') < 144))"
+     },
+     {
+      "leave_root_0p0_soft": "v.st == 4 && ((q.property('tds:skin') >= 125 && q.property('tds:skin') < 144))"
+     },
+     {
+      "die_section_2_0p0": "v.st == 3 && ((q.property('tds:skin') >= 120 && q.property('tds:skin') < 123))"
+     },
+     {
+      "fall_section_2_0p0": "v.st == 5 && ((q.property('tds:skin') >= 120 && q.property('tds:skin') < 123))"
+     },
+     {
+      "leave_section_2_0p0": "v.st == 4 && ((q.property('tds:skin') >= 120 && q.property('tds:skin') < 123))"
+     },
+     {
+      "die_waist_12p0": "v.st == 3 && ((q.property('tds:skin') >= 0 && q.property('tds:skin') < 12) || (q.property('tds:skin') >= 13 && q.property('tds:skin') < 15) || q.property('tds:skin') == 17 || q.property('tds:skin') == 19 || (q.property('tds:skin') >= 22 && q.property('tds:skin') < 26) || (q.property('tds:skin') >= 29 && q.property('tds:skin') < 31) || q.property('tds:skin') == 35 || (q.property('tds:skin') >= 39 && q.property('tds:skin') < 44) || (q.property('tds:skin') >= 45 && q.property('tds:skin') < 47) || (q.property('tds:skin') >= 48 && q.property('tds:skin') < 50) || (q.property('tds:skin') >= 51 && q.property('tds:skin') < 56) || q.property('tds:skin') == 57 || q.property('tds:skin') == 59 || (q.property('tds:skin') >= 61 && q.property('tds:skin') < 65) || q.property('tds:skin') == 66 || (q.property('tds:skin') >= 69 && q.property('tds:skin') < 72) || (q.property('tds:skin') >= 73 && q.property('tds:skin') < 78) || (q.property('tds:skin') >= 79 && q.property('tds:skin') < 82) || q.property('tds:skin') == 83 || q.property('tds:skin') == 85 || (q.property('tds:skin') >= 89 && q.property('tds:skin') < 91))"
+     },
+     {
+      "fall_waist_12p0": "v.st == 5 && ((q.property('tds:skin') >= 0 && q.property('tds:skin') < 12) || (q.property('tds:skin') >= 13 && q.property('tds:skin') < 15) || q.property('tds:skin') == 17 || q.property('tds:skin') == 19 || (q.property('tds:skin') >= 22 && q.property('tds:skin') < 26) || (q.property('tds:skin') >= 29 && q.property('tds:skin') < 31) || q.property('tds:skin') == 35 || (q.property('tds:skin') >= 39 && q.property('tds:skin') < 44) || (q.property('tds:skin') >= 45 && q.property('tds:skin') < 47) || (q.property('tds:skin') >= 48 && q.property('tds:skin') < 50) || (q.property('tds:skin') >= 51 && q.property('tds:skin') < 56) || q.property('tds:skin') == 57 || q.property('tds:skin') == 59 || (q.property('tds:skin') >= 61 && q.property('tds:skin') < 65) || q.property('tds:skin') == 66 || (q.property('tds:skin') >= 69 && q.property('tds:skin') < 72) || (q.property('tds:skin') >= 73 && q.property('tds:skin') < 78) || (q.property('tds:skin') >= 79 && q.property('tds:skin') < 82) || q.property('tds:skin') == 83 || q.property('tds:skin') == 85 || (q.property('tds:skin') >= 89 && q.property('tds:skin') < 91))"
+     },
+     {
+      "leave_waist_12p0": "v.st == 4 && ((q.property('tds:skin') >= 0 && q.property('tds:skin') < 12) || (q.property('tds:skin') >= 13 && q.property('tds:skin') < 15) || q.property('tds:skin') == 17 || q.property('tds:skin') == 19 || (q.property('tds:skin') >= 22 && q.property('tds:skin') < 26) || (q.property('tds:skin') >= 29 && q.property('tds:skin') < 31) || q.property('tds:skin') == 35 || (q.property('tds:skin') >= 39 && q.property('tds:skin') < 44) || (q.property('tds:skin') >= 45 && q.property('tds:skin') < 47) || (q.property('tds:skin') >= 48 && q.property('tds:skin') < 50) || (q.property('tds:skin') >= 51 && q.property('tds:skin') < 56) || q.property('tds:skin') == 57 || q.property('tds:skin') == 59 || (q.property('tds:skin') >= 61 && q.property('tds:skin') < 65) || q.property('tds:skin') == 66 || (q.property('tds:skin') >= 69 && q.property('tds:skin') < 72) || (q.property('tds:skin') >= 73 && q.property('tds:skin') < 78) || (q.property('tds:skin') >= 79 && q.property('tds:skin') < 82) || q.property('tds:skin') == 83 || q.property('tds:skin') == 85 || (q.property('tds:skin') >= 89 && q.property('tds:skin') < 91))"
+     },
+     {
+      "dizzy": "v.st == 1"
+     }
     ]
    },
    "animations": {
@@ -651,7 +799,51 @@
     "blaze": "animation.tds_look.blaze",
     "hop": "animation.tds_look.hop",
     "float": "animation.tds_look.float",
-    "fx": "animation.tds_look.fx"
+    "fx": "animation.tds_look.fx",
+    "die_baseplate_0p0": "animation.tds_look.die_baseplate_0p0",
+    "fall_baseplate_0p0": "animation.tds_look.fall_baseplate_0p0",
+    "leave_baseplate_0p0": "animation.tds_look.leave_baseplate_0p0",
+    "die_body_24p0": "animation.tds_look.die_body_24p0",
+    "fall_body_24p0": "animation.tds_look.fall_body_24p0",
+    "leave_body_24p0": "animation.tds_look.leave_body_24p0",
+    "die_body_2p0": "animation.tds_look.die_body_2p0",
+    "fall_body_2p0": "animation.tds_look.fall_body_2p0",
+    "leave_body_2p0": "animation.tds_look.leave_body_2p0",
+    "die_body_31p0": "animation.tds_look.die_body_31p0",
+    "fall_body_31p0": "animation.tds_look.fall_body_31p0",
+    "leave_body_31p0": "animation.tds_look.leave_body_31p0",
+    "die_body_x6": "animation.tds_look.die_body_x6",
+    "fall_body_x6": "animation.tds_look.fall_body_x6",
+    "leave_body_x6": "animation.tds_look.leave_body_x6",
+    "die_head_x13": "animation.tds_look.die_head_x13",
+    "fall_head_x13": "animation.tds_look.fall_head_x13",
+    "leave_head_x13": "animation.tds_look.leave_head_x13",
+    "die_root_0p0": "animation.tds_look.die_root_0p0",
+    "fall_root_0p0": "animation.tds_look.fall_root_0p0",
+    "leave_root_0p0": "animation.tds_look.leave_root_0p0",
+    "die_root_0p0_soft": "animation.tds_look.die_root_0p0_soft",
+    "fall_root_0p0_soft": "animation.tds_look.fall_root_0p0_soft",
+    "leave_root_0p0_soft": "animation.tds_look.leave_root_0p0_soft",
+    "die_section_2_0p0": "animation.tds_look.die_section_2_0p0",
+    "fall_section_2_0p0": "animation.tds_look.fall_section_2_0p0",
+    "leave_section_2_0p0": "animation.tds_look.leave_section_2_0p0",
+    "die_waist_12p0": "animation.tds_look.die_waist_12p0",
+    "fall_waist_12p0": "animation.tds_look.fall_waist_12p0",
+    "leave_waist_12p0": "animation.tds_look.leave_waist_12p0",
+    "dizzy": "animation.tds_look.dizzy",
+    "body_hover": "animation.tds_look.body_hover",
+    "body_march": "animation.tds_look.body_march",
+    "body_run": "animation.tds_look.body_run",
+    "body_stomp": "animation.tds_look.body_stomp",
+    "steady_l_golem": "animation.tds_look.steady_l_golem",
+    "steady_r_golem": "animation.tds_look.steady_r_golem",
+    "steady_l_march": "animation.tds_look.steady_l_march",
+    "steady_r_march": "animation.tds_look.steady_r_march",
+    "steady_r_run": "animation.tds_look.steady_r_run",
+    "steady_l_stomp": "animation.tds_look.steady_l_stomp",
+    "steady_r_stomp": "animation.tds_look.steady_r_stomp",
+    "steady_l_walk": "animation.tds_look.steady_l_walk",
+    "steady_r_walk": "animation.tds_look.steady_r_walk"
    },
    "render_controllers": [
     "controller.render.tds_enemy",

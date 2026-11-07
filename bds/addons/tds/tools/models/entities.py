@@ -38,26 +38,10 @@ def loop(bones, **kw):
 
 
 def S(rate, amp, phase=0, base=None):
-    """math.sin(t * rate - phase) * amp, optionally after a constant"""
+    """math.sin(clock * rate - phase) * amp, optionally after a constant (v.clock: the tower's seconds, stopped while frozen)"""
     shift = f' - {phase}' if phase > 0 else f' + {-phase}' if phase < 0 else ''
-    e = f'math.sin(q.life_time * {rate}{shift}) * {amp}'
+    e = f'math.sin(v.clock * {rate}{shift}) * {amp}'
     return f'{base} + {e}' if base is not None else e
-
-
-def legs(rate, amp, names=('leftLeg', 'rightLeg')):
-    return {names[0]: {'rotation': [S(rate, amp), 0, 0]}, names[1]: {'rotation': [S(rate, -amp), 0, 0]}}
-
-
-def arms(rate, amp, base=0, names=('leftArm', 'rightArm')):
-    return {names[0]: {'rotation': [S(rate, -amp, 0, base), 0, 0]}, names[1]: {'rotation': [S(rate, amp, 0, base), 0, 0]}}
-
-
-def bob(bone, rate, amp):
-    return {bone: {'position': [0, f'math.abs(math.cos(q.life_time * {rate})) * {amp}', 0]}}
-
-
-def look(rate=60, amp=8):
-    return {'head': {'rotation': [S(rate * 3, 2, 40), S(rate, amp), 0]}}
 
 
 # ------------------------------------------------------------------------------------------------ enemies: roster.py + roster_entities.py
@@ -79,14 +63,14 @@ POSES = {'hold': {'rightarm': [-70, -12, 0], 'leftarm': [-68, 34, 0]},          
          'throw': {'rightarm': [-150, 0, 12], 'leftarm': [-30, 0, -10]}}        # the thing raised over the shoulder
 # what the idle animation does to a bone, by its name without the level prefix (exact names first, then a name that
 # starts or ends with a key: spin_l, radar_spin)
-EXACT = {'spin': {'rotation': [0, 'q.life_time * 90', 0], 'position': [0, S(120, 0.4), 0]}, 'lv2_spin': {'rotation': [0, 'q.life_time * 60', 0]},
-         'lv4_spin': {'rotation': [0, 'q.life_time * 120', 0]}}
-MOTION = {'spin': {'rotation': [0, 'q.life_time * 90', 0]}, 'spinx': {'rotation': ['q.life_time * 150', 0, 0]},
-          'spinz': {'rotation': [0, 0, 'q.life_time * 400']}, 'rotor': {'rotation': [0, 'q.life_time * 900', 0]},
+EXACT = {'spin': {'rotation': [0, 'v.clock * 90', 0], 'position': [0, S(120, 0.4), 0]}, 'lv2_spin': {'rotation': [0, 'v.clock * 60', 0]},
+         'lv4_spin': {'rotation': [0, 'v.clock * 120', 0]}}
+MOTION = {'spin': {'rotation': [0, 'v.clock * 90', 0]}, 'spinx': {'rotation': ['v.clock * 150', 0, 0]},
+          'spinz': {'rotation': [0, 0, 'v.clock * 90']}, 'rotor': {'rotation': [0, 'v.clock * 900', 0]},     # a minigun idles slowly; its shot spins it up
           'hover': {'position': [0, S(110, 0.6), 0]}, 'flag': {'rotation': [0, S(160, 12), S(230, 3)]},
-          'beat': {'scale': ['1 + math.abs(math.sin(q.life_time * 240)) * 0.08'] * 3},
-          'halo': {'rotation': [0, 'q.life_time * 50', 0]}, 'aura': {'rotation': [0, 'q.life_time * 30', 0]},
-          'orbit': {'rotation': [0, 'q.life_time * 90', 0], 'position': [0, S(120, 0.6), 0]},
+          'beat': {'scale': ['1 + math.abs(math.sin(v.clock * 240)) * 0.08'] * 3},
+          'halo': {'rotation': [0, 'v.clock * 50', 0]}, 'aura': {'rotation': [0, 'v.clock * 30', 0]},
+          'orbit': {'rotation': [0, 'v.clock * 90', 0], 'position': [0, S(120, 0.6), 0]},
           'wing_l': {'rotation': [0, S(500, 22, 0, 12), 0]}, 'wing_r': {'rotation': [0, S(500, -22, 0, -12), 0]},
           'cape': {'rotation': [S(160, 5, 0, 10), 0, S(230, 2)]}, 'scarf_tail': {'rotation': [S(400, 8, 0, 12), S(300, 10), 0]},
           'bandana_tail': {'rotation': [S(400, 8, 0, 8), S(300, 12), 0]}, 'plume': {'rotation': [S(200, 4), 0, 0]}}
@@ -130,6 +114,95 @@ def cond(idx):
     return ' || '.join(f'{SK} == {a}' if b - a == 1 else f'({SK} >= {a} && {SK} < {b})' for a, b in rs)
 
 
+def kf(*pairs):
+    """keyframes from (time, value) pairs"""
+    return {f'{t:g}' if t else '0.0': v for t, v in pairs}
+
+
+Z3 = [0, 0, 0]
+GUNS = ('fire', 'auto', 'spin', 'snipe', 'blast', 'heavy', 'stream', 'revolver')     # shots that show the muzzle flash
+
+
+def tower_shots(show):
+    """animation.tds_tower.<shot>: what a tower does each time it attacks (played by the script, throttled), by what it
+    holds. The gun hangs on the body (`gun`), the hands on it: a gun's kick moves the gun, the arms follow a little, the
+    waist takes the recoil; positions in the gun's frame, + z toward the shooter."""
+    A = {}
+
+    def clip(length, bones, flash=False):
+        return {'loop': False, 'animation_length': length, 'bones': {**bones, **(show if flash else {})}}
+    # a single shot of a rifle or a pistol in a building's turret: a firm kick
+    A['fire'] = clip(0.22, {'gun': {'position': kf((0, Z3), (0.04, [0, 0.2, 1.4]), (0.22, Z3)), 'rotation': kf((0, Z3), (0.04, [-3, 0, 0]), (0.22, Z3))},
+                            'barrel': {'rotation': kf((0, Z3), (0.06, [8, 0, 0]), (0.22, Z3)), 'position': kf((0, Z3), (0.04, [0, 0, 1.2]), (0.22, Z3))},
+                            'turret': {'position': kf((0, Z3), (0.04, [0, 0, 0.8]), (0.22, Z3))},
+                            'rightarm': {'rotation': kf((0, Z3), (0.04, [-6, 0, 0]), (0.22, Z3))},
+                            'waist': {'rotation': kf((0, Z3), (0.04, [-2, 0, 0]), (0.22, Z3))}}, True)
+    # automatics: short sharp kicks, the muzzle climbing a little
+    A['auto'] = clip(0.14, {'gun': {'position': kf((0, Z3), (0.03, [0, 0.12, 0.8]), (0.14, Z3)), 'rotation': kf((0, Z3), (0.03, [-1.5, 0, 0]), (0.14, Z3))},
+                            'rightarm': {'rotation': kf((0, Z3), (0.03, [-3, 0, 0]), (0.14, Z3))}, 'leftarm': {'rotation': kf((0, Z3), (0.03, [-2, 0, 0]), (0.14, Z3))},
+                            'waist': {'rotation': kf((0, Z3), (0.03, [-1, 0, 0]), (0.14, Z3))}}, True)
+    # a minigun: the barrels spun up while it fires (a turn of six barrels each shot), a steady rattle
+    A['spin'] = clip(0.15, {'spinz': {'rotation': kf((0, Z3), (0.15, [0, 0, 360]))},
+                            'gun': {'position': kf((0, Z3), (0.04, [0.12, 0.1, 0.5]), (0.09, [-0.1, 0.05, 0.4]), (0.15, Z3))},
+                            'waist': {'rotation': kf((0, Z3), (0.04, [-1, 0, 0]), (0.15, Z3))}}, True)
+    # a sniper's heavy shot: a big kick, the head and shoulders rock back, then the hand works the bolt
+    A['snipe'] = clip(0.75, {'gun': {'position': kf((0, Z3), (0.05, [0, 0.6, 2.6]), (0.35, [0, 0.1, 0.4]), (0.75, Z3)),
+                                     'rotation': kf((0, Z3), (0.05, [-7, 0, 0]), (0.3, [-1.5, 0, 0]), (0.75, Z3))},
+                             'rightarm': {'rotation': kf((0, Z3), (0.05, [-10, 0, 0]), (0.3, [-2, 0, 0]), (0.42, [6, -14, 0]), (0.56, [2, -6, 0]), (0.75, Z3))},
+                             'leftarm': {'rotation': kf((0, Z3), (0.05, [-8, 0, 0]), (0.35, Z3))},
+                             'waist': {'rotation': kf((0, Z3), (0.05, [-4, 0, 0]), (0.45, Z3))},
+                             'head': {'rotation': kf((0, Z3), (0.05, [-5, 0, 0]), (0.4, Z3))}}, True)
+    # a shotgun: a hard kick, then the fore hand pumps it
+    A['blast'] = clip(0.62, {'gun': {'position': kf((0, Z3), (0.04, [0, 0.5, 2.2]), (0.25, [0, 0.1, 0.3]), (0.62, Z3)),
+                                     'rotation': kf((0, Z3), (0.04, [-9, 0, 0]), (0.25, [-1, 0, 0]), (0.62, Z3))},
+                             'leftarm': {'rotation': kf((0, Z3), (0.04, [-6, 0, 0]), (0.26, Z3), (0.36, [12, 0, 0]), (0.48, Z3))},
+                             'rightarm': {'rotation': kf((0, Z3), (0.04, [-8, 0, 0]), (0.3, Z3))},
+                             'waist': {'rotation': kf((0, Z3), (0.04, [-5, 0, 0]), (0.35, Z3))}}, True)
+    # a launcher on the shoulder: a heavy kick that lifts the muzzle and rocks the whole body
+    A['heavy'] = clip(0.65, {'gun': {'position': kf((0, Z3), (0.05, [0, 0.8, 2.8]), (0.65, Z3)), 'rotation': kf((0, Z3), (0.05, [-10, 0, 0]), (0.65, Z3))},
+                             'rightarm': {'rotation': kf((0, Z3), (0.05, [-10, 0, 0]), (0.5, Z3))}, 'leftarm': {'rotation': kf((0, Z3), (0.05, [-9, 0, 0]), (0.5, Z3))},
+                             'waist': {'rotation': kf((0, Z3), (0.05, [-6, 0, 0]), (0.5, Z3))}, 'head': {'rotation': kf((0, Z3), (0.05, [-5, 0, 0]), (0.5, Z3))}}, True)
+    # sprayers and beams (flame, frost, poison, a medigun, a laser): no kick, the nozzle trembling in the stream
+    A['stream'] = clip(0.15, {'gun': {'position': kf((0, Z3), (0.05, [0.15, 0.1, 0.35]), (0.1, [-0.15, 0.05, 0.2]), (0.15, Z3))}}, True)
+    # a revolver: the gun hand flips up with the shot, the other hand fans a second
+    A['revolver'] = clip(0.45, {'rightarm': {'rotation': kf((0, Z3), (0.04, [-26, 0, 0]), (0.2, [-4, 0, 0]), (0.3, Z3))},
+                                'leftarm': {'rotation': kf((0, Z3), (0.18, Z3), (0.22, [-22, 0, 0]), (0.45, Z3))},
+                                'waist': {'rotation': kf((0, Z3), (0.04, [-2, 0, 0]), (0.3, Z3))}}, True)
+    # a bow: the string hand lets go and flicks back, the bow arm kicks, then the hand draws again
+    A['bow'] = clip(0.7, {'leftarm': {'rotation': kf((0, Z3), (0.03, [8, 18, 0]), (0.25, [8, 18, 0]), (0.45, [-4, -6, 0]), (0.7, Z3))},
+                          'rightarm': {'rotation': kf((0, Z3), (0.03, [-4, 0, 0]), (0.3, Z3))}})
+    # a hacker: a burst of typing, the head nodding along
+    A['type'] = clip(0.4, {'rightarm': {'rotation': kf((0, Z3), (0.08, [4, 0, 0]), (0.16, [-2, 0, 0]), (0.24, [4, 0, 0]), (0.4, Z3))},
+                           'leftarm': {'rotation': kf((0, Z3), (0.08, [-2, 0, 0]), (0.16, [4, 0, 0]), (0.24, [-2, 0, 0]), (0.32, [4, 0, 0]), (0.4, Z3))},
+                           'head': {'rotation': kf((0, Z3), (0.1, [4, 0, 0]), (0.4, Z3))}})
+    # a blade: drawn back out to the right, swept across in front, the body turning with it
+    A['slash'] = clip(0.5, {'rightarm': {'rotation': kf((0, Z3), (0.12, [-25, 50, 0]), (0.24, [-25, -65, 0]), (0.5, Z3))},
+                            'leftarm': {'rotation': kf((0, Z3), (0.24, [-12, 10, 0]), (0.5, Z3))},
+                            'body': {'rotation': kf((0, Z3), (0.12, [0, 14, 0]), (0.24, [0, -18, 0]), (0.5, Z3))}})
+    # a hammer, a club, an axe: raised over the head with both hands, brought down, the body bending into it
+    A['slam'] = clip(0.62, {'rightarm': {'rotation': kf((0, Z3), (0.2, [-105, 0, 0]), (0.32, [45, 0, 0]), (0.62, Z3))},
+                            'leftarm': {'rotation': kf((0, Z3), (0.2, [-70, 0, 0]), (0.32, [30, 0, 0]), (0.62, Z3))},
+                            'waist': {'rotation': kf((0, Z3), (0.2, [-6, 0, 0]), (0.32, [10, 0, 0]), (0.62, Z3))},
+                            'root': {'position': kf((0, Z3), (0.32, [0, -0.6, 0]), (0.45, Z3))}})
+    # fists: a one-two, the shoulders turning into each punch
+    A['punch'] = clip(0.38, {'rightarm': {'rotation': kf((0, Z3), (0.08, [-38, 8, 0]), (0.18, Z3))},
+                             'leftarm': {'rotation': kf((0, Z3), (0.18, Z3), (0.26, [-38, -8, 0]), (0.38, Z3))},
+                             'body': {'rotation': kf((0, Z3), (0.08, [0, -12, 0]), (0.26, [0, 12, 0]), (0.38, Z3))}})
+    # a staff, a wand, an orb, a flask: raised and thrust forward, the free hand thrown out, the head up
+    A['cast'] = clip(0.55, {'rightarm': {'rotation': kf((0, Z3), (0.15, [-40, 0, 0]), (0.3, [10, 0, 0]), (0.55, Z3))},
+                            'leftarm': {'rotation': kf((0, Z3), (0.15, [-30, -10, 0]), (0.3, [-10, 0, 0]), (0.55, Z3))},
+                            'head': {'rotation': kf((0, Z3), (0.15, [-8, 0, 0]), (0.55, Z3))}, 'waist': {'rotation': kf((0, Z3), (0.15, [-3, 0, 0]), (0.3, [3, 0, 0]), (0.55, Z3))}})
+    # a wrench: two quick knocks
+    A['hammer'] = clip(0.5, {'rightarm': {'rotation': kf((0, Z3), (0.1, [-50, 0, 0]), (0.18, [15, 0, 0]), (0.3, [-40, 0, 0]), (0.38, [12, 0, 0]), (0.5, Z3))},
+                             'head': {'rotation': kf((0, Z3), (0.18, [6, 0, 0]), (0.5, Z3))}})
+    # a throw from over the shoulder: wound back, thrown, the other arm swinging for balance
+    A['throw'] = clip(0.5, {'rightarm': {'rotation': kf((0, Z3), (0.1, [-20, 0, 0]), (0.22, [120, 0, 0]), (0.5, Z3))},
+                            'leftarm': {'rotation': kf((0, Z3), (0.22, [-30, 0, 0]), (0.5, Z3))},
+                            'waist': {'rotation': kf((0, Z3), (0.1, [-4, 0, 0]), (0.22, [8, 0, 0]), (0.5, Z3))}})
+    A['swing'] = A['slash']
+    return A
+
+
 def tower_anims(looks):
     """animation.tds_tower.*: the stands, aims and poses by skin, the idle and the shots made from the bone names the
     looks use (a bone a look lacks is moved in none of its geometries)"""
@@ -138,36 +211,51 @@ def tower_anims(looks):
         names |= {b['name'] for b in (lk.gear or lk.body).bones}
     flashes = sorted(n for n in names if 'flash' in base_name(n))
     pulses = sorted(n for n in names if base_name(n) == 'pulse')
-    idle = {'head': {'rotation': [0, S(40, 6), 0]}}
+    # the idle: a figure breathes, shifts its weight and looks about; a building's parts spin, wave and beat
+    idle = {'head': {'rotation': [S(120, 1.5), S(40, 6), 0]}, 'waist': {'position': [0, S(95, 0.12), 0], 'rotation': [0, 0, S(37, 1.2)]}}
     for n in sorted(names):
         mo = motion(n)
         if mo and n != 'head':
             idle[n] = mo
     show = {f: {'position': {'0.0': [0, 1000, 0], '0.06': [0, 1000, 0], '0.07': [0, 0, 0]}} for f in flashes}
     A = {
-        'animation.tds_tower.aim': loop({'turret': {'rotation': [0, YAW, 0]}}),                    # a building's turret
-        'animation.tds_tower.aim_root': loop({'root': {'rotation': [0, YAW, 0]}}),                # a person turns whole
+        'animation.tds_tower.aim': loop({'turret': {'rotation': [0, 'v.yaw', 0]}}),                  # a building's turret
+        'animation.tds_tower.aim_root': loop({'root': {'rotation': [0, 'v.yaw', 0]}}),              # a person turns whole
         'animation.tds_tower.stand_root': loop({'root': {'position': [0, V.PED_TOP, 0]}}),        # a person onto the pedestal
         **{f'animation.tds_tower.pose_{k}': loop({b: {'rotation': r} for b, r in v.items()}) for k, v in POSES.items()},
         'animation.tds_tower.idle': loop(idle),
-        'animation.tds_tower.fire': {'loop': False, 'animation_length': 0.2, 'bones': {
-            'gun': {'position': {'0.0': [0, 0, 0], '0.05': [0, 0, 1.4], '0.2': [0, 0, 0]}},
-            'barrel': {'rotation': {'0.0': [0, 0, 0], '0.06': [8, 0, 0], '0.2': [0, 0, 0]}},
-            'rightarm': {'rotation': {'0.0': [0, 0, 0], '0.05': [-6, 0, 0], '0.2': [0, 0, 0]}}, **show}},
-        'animation.tds_tower.swing': {'loop': False, 'animation_length': 0.45, 'bones': {
-            'rightarm': {'rotation': {'0.0': [0, 0, 0], '0.1': [-55, 0, 0], '0.24': [60, 0, 0], '0.45': [0, 0, 0]}},
-            'leftarm': {'rotation': {'0.0': [0, 0, 0], '0.1': [-25, 0, 0], '0.24': [25, 0, 0], '0.45': [0, 0, 0]}}}},
-        'animation.tds_tower.cast': {'loop': False, 'animation_length': 0.4, 'bones': {
-            'rightarm': {'rotation': {'0.0': [0, 0, 0], '0.12': [-40, 0, 0], '0.4': [0, 0, 0]}},
-            'leftarm': {'rotation': {'0.0': [0, 0, 0], '0.12': [-30, 0, 0], '0.4': [0, 0, 0]}}}},
-        'animation.tds_tower.throw': {'loop': False, 'animation_length': 0.45, 'bones': {
-            'rightarm': {'rotation': {'0.0': [0, 0, 0], '0.1': [-25, 0, 0], '0.22': [110, 0, 0], '0.45': [0, 0, 0]}}}},
+        **{f'animation.tds_tower.{k}': v for k, v in tower_shots(show).items()},
         'animation.tds_tower.pulse': {'loop': False, 'animation_length': 0.35, 'bones': {
             **{p: {'scale': {'0.0': [1, 1, 1], '0.08': [1.3, 1.3, 1.3], '0.35': [1, 1, 1]}} for p in pulses}, **show}},
         'animation.tds_tower.spawn': {'loop': False, 'animation_length': 1.2, 'bones': {
             'door': {'rotation': {'0.0': [0, 0, 0], '0.25': [-85, 0, 0], '0.9': [-85, 0, 0], '1.2': [0, 0, 0]}}}},
-        'animation.tds_tower.place': {'loop': False, 'animation_length': 0.35, 'bones': {b: {'scale': POP} for b in ('root', 'tds_base')}},
-        'animation.tds_tower.levelup': {'loop': False, 'animation_length': 0.4, 'bones': {b: {'scale': LVL} for b in ('root', 'tds_base')}},
+        # placed: the pedestal pops up, the figure (or the building) drops onto it and settles
+        'animation.tds_tower.place': {'loop': False, 'animation_length': 0.5, 'bones': {
+            'tds_base': {'scale': POP},
+            'root': {'position': kf((0, [0, 12, 0]), (0.22, Z3), (0.3, [0, 1.0, 0]), (0.38, Z3)),
+                     'scale': kf((0, [0.8, 1.2, 0.8]), (0.22, [1.0, 1.0, 1.0]), (0.26, [1.12, 0.86, 1.12]), (0.36, [0.97, 1.04, 0.97]), (0.5, [1, 1, 1]))}}},
+        # upgraded: a hop and a turn, squashed on landing, the pedestal pulsing
+        'animation.tds_tower.levelup': {'loop': False, 'animation_length': 0.55, 'bones': {
+            'tds_base': {'scale': LVL},
+            'root': {'position': kf((0, Z3), (0.16, [0, 4, 0]), (0.32, Z3), (0.38, [0, 0.6, 0]), (0.44, Z3)),
+                     'scale': kf((0, [1, 1, 1]), (0.32, [1, 1, 1]), (0.36, [1.1, 0.9, 1.1]), (0.46, [0.98, 1.03, 0.98]), (0.55, [1, 1, 1]))}}},
+        # reloading (played by the script when a tower runs out of ammunition): the gun tipped, the free hand to the
+        # magazine and back, the head looking down at it
+        'animation.tds_tower.reload': {'loop': False, 'animation_length': 1.0, 'bones': {
+            'gun': {'rotation': kf((0, Z3), (0.15, [14, 0, -24]), (0.8, [14, 0, -24]), (1.0, Z3)), 'position': kf((0, Z3), (0.15, [0, -0.6, 0.6]), (0.8, [0, -0.6, 0.6]), (1.0, Z3))},
+            'leftarm': {'rotation': kf((0, Z3), (0.2, [30, 0, -10]), (0.45, [40, 0, -10]), (0.65, [10, 0, 0]), (1.0, Z3))},
+            'head': {'rotation': kf((0, Z3), (0.15, [12, 0, 0]), (0.85, [12, 0, 0]), (1.0, Z3))}}},
+        # an ability: the figure raises a fist (or its thing) high, the building heaves
+        'animation.tds_tower.ability': {'loop': False, 'animation_length': 0.9, 'bones': {
+            'rightarm': {'rotation': kf((0, Z3), (0.15, [-160, 0, 10]), (0.6, [-160, 0, 10]), (0.9, Z3))},
+            'head': {'rotation': kf((0, Z3), (0.15, [-12, 0, 0]), (0.6, [-12, 0, 0]), (0.9, Z3))},
+            'tds_base': {'scale': LVL},
+            'root': {'scale': kf((0, [1, 1, 1]), (0.12, [1.08, 0.92, 1.08]), (0.26, [0.96, 1.06, 0.96]), (0.4, [1, 1, 1]))}}},
+        # stunned: the head reels, the arms sag, the figure sways (a building shudders)
+        'animation.tds_tower.dizzy': loop({'head': {'rotation': [S(420, 10), S(210, 8), f"math.cos(v.clock * 420) * 10"]},
+                                           'rightarm': {'rotation': [16, 0, 4]}, 'leftarm': {'rotation': [16, 0, -4]},
+                                           'waist': {'rotation': [0, 0, S(210, 4)]}, 'turret': {'rotation': [0, S(300, 6), 0]},
+                                           'root': {'position': [S(600, 0.15), 0, 0]}}),
         'animation.tds_tower.flashoff': loop({f: HIDE for f in flashes}),              # the ghost's flashes
         'animation.tds_tower.smoke': {'loop': True, 'animation_length': 1.4, 'particle_effects': {'0.0': {'effect': 'smoke', 'locator': 'smoke'}}},
     }
@@ -188,15 +276,22 @@ def tower_outputs(looks, empty_geo, built, rp):
     pose_anims = {f'pose_{k}': f'animation.tds_tower.pose_{k}' for k in POSES}
     anims = {'aim': 'animation.tds_tower.aim', 'aim_root': 'animation.tds_tower.aim_root', 'stand_root': 'animation.tds_tower.stand_root',
              **pose_anims, 'idle': 'animation.tds_tower.idle', 'place': 'animation.tds_tower.place', 'levelup': 'animation.tds_tower.levelup',
-             'level': 'controller.animation.tds_tower.level', 'smoke': 'animation.tds_tower.smoke', 'fire': 'animation.tds_tower.fire',
-             'swing': 'animation.tds_tower.swing', 'cast': 'animation.tds_tower.cast', 'throw': 'animation.tds_tower.throw',
-             'pulse': 'animation.tds_tower.pulse', 'spawn': 'animation.tds_tower.spawn'}
+             'level': 'controller.animation.tds_tower.level', 'smoke': 'animation.tds_tower.smoke', 'dizzy': 'animation.tds_tower.dizzy'}
     stand = [{'stand_root': cond(people)}, *[{f'pose_{k}': cond(v)} for k, v in poses.items() if v]]
     scale = "0.36 * q.property('tds:size')"
+    # v.yaw eases to tds:yaw along the shorter way (540 degrees a second); v.clock stops while the tower is frozen;
+    # tds:st: 1 stunned, 2 frozen, 3 sold (it shrinks away before the script removes it)
+    pre = ["v.st = q.property('tds:st');",
+           "v.clock = v.clock + (v.st == 2 ? 0 : q.delta_time);",
+           f"v.dy = math.mod(math.mod({YAW} - v.yaw, 360) + 540, 360) - 180;",
+           "v.yaw = (v.st == 1 || v.st == 2) ? v.yaw : v.yaw + math.clamp(v.dy, -q.delta_time * 540, q.delta_time * 540);",
+           "v.dying = v.st == 3 ? v.dying + q.delta_time : 0;",
+           "v.fade = math.clamp(v.dying / 0.25, 0, 1);"]
     tower = {'identifier': 'tds:tower', 'materials': {'default': 'entity_alphatest', 'lit': 'entity_emissive_alpha_one_sided', 'blend': 'entity_alphablend'},
              'textures': {**tex, 'holo': HOLO}, 'geometry': geo,
-             'scripts': {'scale': scale, 'initialize': ['v.lvl = 0;'],
-                         'animate': ['aim', {'aim_root': cond(people)}, *stand, 'idle', 'place', 'level', {'smoke': cond(smoke)}]},
+             'scripts': {'scale': f'{scale} * (1 - v.fade)', 'initialize': ['v.lvl = 0; v.yaw = 0; v.clock = math.random(0, 10); v.dying = 0; v.fade = 0;'],
+                         'pre_animation': pre,
+                         'animate': ['aim', {'aim_root': cond(people)}, *stand, 'idle', 'place', 'level', {'smoke': cond(smoke)}, {'dizzy': 'v.st == 1'}]},
              'animations': anims, 'particle_effects': {'smoke': 'minecraft:basic_smoke_particle'},
              'render_controllers': ['controller.render.tds_tower', 'controller.render.tds_tower_gear']}
     ghost = {'identifier': 'tds:ghost', 'materials': {'default': 'entity_alphatest', 'blend': 'entity_alphablend'},
@@ -322,10 +417,11 @@ def outputs(rp, models, looks=None):
     EMPTY = G('empty')
 
     # enemies: one look per enemy of the data (roster.py): a vanilla body with our gear, or a body of ours
-    rcs = {}
-    client, rc = RE.entity('enemy', looks['enemy'], EMPTY, HOLO, 0.26)
+    rcs, clips = {}, {}
+    client, rc, more = RE.entity('enemy', looks['enemy'], EMPTY, HOLO, 0.26)
     out[j('entity', 'enemy.entity.json')] = dumps(client)
     rcs.update(rc)
+    clips.update(more)
 
     # towers: one look per tower of the data (roster_towers.py): a figure on our pedestal, or a building of ours
     tower, ghost, rc, tanims, tcontrol = tower_outputs(looks['tower'], EMPTY, models, rp)
@@ -335,13 +431,16 @@ def outputs(rp, models, looks=None):
 
     # units: one look per unit of the data (roster_units.py): the player's body in our clothes, a vanilla skeleton in our
     # armour, or a body of our own (machines, plants, duckies)
-    client, rc = RE.entity('unit', looks['unit'], EMPTY, HOLO, 0.28, fx='fx_unit')
+    client, rc, more = RE.entity('unit', looks['unit'], EMPTY, HOLO, 0.28, fx='fx_unit')
     out[j('entity', 'unit.entity.json')] = dumps(client)
     rcs.update(rc)
+    clips.update(more)
 
     out[j('render_controllers', 'tds.render_controllers.json')] = dumps({'format_version': '1.8.0', 'render_controllers': rcs})
     out[j('animations', 'tds_tower.animation.json')] = dumps({'format_version': '1.8.0', 'animations': tanims})
-    out[j('animations', 'tds_look.animation.json')] = dumps(RE.animations())
+    look_anims = RE.animations(looks)
+    look_anims['animations'].update({f'animation.tds_look.{k}': v for k, v in clips.items()})
+    out[j('animations', 'tds_look.animation.json')] = dumps(look_anims)
     out[j('animation_controllers', 'tds_tower.animation_controllers.json')] = dumps(tcontrol)
     import io
     from PIL import Image

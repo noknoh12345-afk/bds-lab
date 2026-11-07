@@ -18,7 +18,7 @@ from hq_parts import octa
 from kitbash import aura, level, nb, orbit, weapon
 from rigs import RIGS
 from roster import Look, load, slug
-from towerkit import POSE, ROLE, SHOT, armament, crate_on, finish, own_px, pot_on
+from towerkit import POSE, ROLE, armament, crate_on, finish, own_px, pot_on, shot_for
 
 BUILDING_SIZE = 0.7 / 0.36          # buildings are drawn at 0.7 of a person's pedestal scale (0.36 x tds:size)
 ORDER = ['root_hold', 'root_bow', 'root_type', 'root_dual', 'root_ready', 'root_ready2', 'root_cast', 'root_throw', 'root_idle', 'building']
@@ -264,7 +264,7 @@ B('Mercenary Base', BUILDINGS['Mercenary Base'], fire='')
 P('Brawler', 'steve', dict(a='#c83838', b='#1e1e24', c='#eef0f2', d='#eef0f2', disc=ROLE['Offense']),
   lambda m: (T.shirt(m, 'a', 'none', neck='round'), T.trousers(m, 'b', 'shorts'), T.boots(m, 'd', 'shoes', sole='#c83838'),
              T.gloves(m, 'a', 'boxing'), T.headband(m, 'c')),
-  pose='ready2', fire='swing', ups=[kn('b'), bl('#d8a838', 'gem', None), lambda m: T.scarf(m, 'c', tail=False), cp('a', lining='b', trim='#d8a838', length=17)])
+  pose='ready2', fire='punch', ups=[kn('b'), bl('#d8a838', 'gem', None), lambda m: T.scarf(m, 'c', tail=False), cp('a', lining='b', trim='#d8a838', length=17)])
 P('Necromancer', 'steve', dict(a='#2a2030', c='#7cff8c', glow='#7cff8c', disc=ROLE['Defense']),
   lambda m: (T.robe(m, 'a', trim='#8a6ab0', sleeves='bell', sash='#4a2a5a'), T.hood(m, '#3a2a48', lining='#1a1420'), T.boots(m, '#1e1a24', 'shoes')),
   arm='c:staff', amats=dict(mat='bone', mat2='wood2', glow='glow', size=1.3), emblem='star',
@@ -487,7 +487,7 @@ def build(name, rec, data):
     first = spec[0] if isinstance(spec, tuple) else spec
     how = first.split(':')[0] if first else None
     pose = rec['pose'] or POSE[how]
-    fire = SHOT[how] if rec['fire'] is None else rec['fire']
+    fire = shot_for(first) if rec['fire'] is None else rec['fire']
     return Look('tower', name, sl, rig, None, m, f'root_{pose}', rec['size'], False, extra=dict(root='root', pose=pose, fire=fire))
 
 

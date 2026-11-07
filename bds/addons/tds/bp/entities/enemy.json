@@ -23,6 +23,24 @@
      ],
      "default": 1.0,
      "client_sync": true
+    },
+    "tds:pace": {
+     "type": "int",
+     "range": [
+      0,
+      255
+     ],
+     "default": 0,
+     "client_sync": true
+    },
+    "tds:st": {
+     "type": "int",
+     "range": [
+      0,
+      7
+     ],
+     "default": 0,
+     "client_sync": true
     }
    }
   },

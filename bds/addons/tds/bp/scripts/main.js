@@ -404,59 +404,59 @@ var ENEMY_LOOK = {
   "Ice Beacon": [143, 1]
 };
 var TOWER_LOOK = {
-  "Scout": [0, 1, "fire"],
-  "Sniper": [1, 1, "fire"],
+  "Scout": [0, 1, "auto"],
+  "Sniper": [1, 1, "snipe"],
   "Paintballer": [2, 1, "fire"],
-  "Demoman": [3, 1, "fire"],
+  "Demoman": [3, 1, "heavy"],
   "Slime Trooper": [4, 1, "fire"],
-  "Soldier": [5, 1, "fire"],
-  "Freezer": [6, 1, "fire"],
-  "Militant": [7, 1, "fire"],
-  "Shotgunner": [8, 1, "fire"],
-  "Hunter": [9, 1, "fire"],
-  "Pyromancer": [10, 1, "fire"],
+  "Soldier": [5, 1, "auto"],
+  "Freezer": [6, 1, "stream"],
+  "Militant": [7, 1, "auto"],
+  "Shotgunner": [8, 1, "blast"],
+  "Hunter": [9, 1, "snipe"],
+  "Pyromancer": [10, 1, "stream"],
   "Medic": [11, 1, ""],
-  "Electroshocker": [12, 1, "fire"],
-  "Rocketeer": [13, 1, "fire"],
-  "Pulse Trooper": [14, 1, "fire"],
-  "Crook Boss": [15, 1, "fire"],
-  "Saboteur": [16, 1, "fire"],
-  "Minigunner": [17, 1.1, "fire"],
-  "Ranger": [18, 1, "fire"],
-  "Accelerator": [19, 1, "fire"],
-  "Operator": [20, 1, "fire"],
-  "Enforcer": [21, 1, "fire"],
-  "Kingpin": [22, 1.1, "fire"],
-  "Juggernaut": [23, 1.2, "fire"],
-  "Golden Minigunner": [24, 1.1, "fire"],
-  "Golden Pyromancer": [25, 1, "fire"],
-  "Golden Crook Boss": [26, 1, "fire"],
-  "Golden Scout": [27, 1, "fire"],
-  "Golden Soldier": [28, 1, "fire"],
-  "Golden Demoman": [29, 1, "fire"],
-  "Commando": [30, 1, "fire"],
-  "Frost Blaster": [31, 1, "fire"],
-  "Swarmer": [32, 1, "fire"],
-  "Toxic Gunner": [33, 1, "fire"],
-  "Hallow Punk": [34, 1, "fire"],
-  "Firework Technician": [35, 1, "fire"],
-  "Twitgunner": [36, 1, "fire"],
-  "Combatant": [37, 1, "fire"],
-  "Archer": [38, 1, "fire"],
-  "Hacker": [39, 1, "cast"],
-  "Cowboy": [40, 1, "fire"],
-  "Golden Cowboy": [41, 1, "fire"],
-  "Warden": [42, 1, "swing"],
-  "Gladiator": [43, 1, "swing"],
-  "Slasher": [44, 1, "swing"],
-  "Sledger": [45, 1.1, "swing"],
-  "Executioner": [46, 1, "swing"],
-  "Harvester": [47, 1, "swing"],
-  "Assassin": [48, 1, "swing"],
-  "Brawler": [49, 1, "swing"],
+  "Electroshocker": [12, 1, "stream"],
+  "Rocketeer": [13, 1, "heavy"],
+  "Pulse Trooper": [14, 1, "stream"],
+  "Crook Boss": [15, 1, "auto"],
+  "Saboteur": [16, 1, "stream"],
+  "Minigunner": [17, 1.1, "spin"],
+  "Ranger": [18, 1, "snipe"],
+  "Accelerator": [19, 1, "stream"],
+  "Operator": [20, 1, "auto"],
+  "Enforcer": [21, 1, "blast"],
+  "Kingpin": [22, 1.1, "auto"],
+  "Juggernaut": [23, 1.2, "spin"],
+  "Golden Minigunner": [24, 1.1, "spin"],
+  "Golden Pyromancer": [25, 1, "stream"],
+  "Golden Crook Boss": [26, 1, "auto"],
+  "Golden Scout": [27, 1, "auto"],
+  "Golden Soldier": [28, 1, "auto"],
+  "Golden Demoman": [29, 1, "heavy"],
+  "Commando": [30, 1, "auto"],
+  "Frost Blaster": [31, 1, "heavy"],
+  "Swarmer": [32, 1, "heavy"],
+  "Toxic Gunner": [33, 1, "stream"],
+  "Hallow Punk": [34, 1, "heavy"],
+  "Firework Technician": [35, 1, "heavy"],
+  "Twitgunner": [36, 1, "auto"],
+  "Combatant": [37, 1, "auto"],
+  "Archer": [38, 1, "bow"],
+  "Hacker": [39, 1, "type"],
+  "Cowboy": [40, 1, "revolver"],
+  "Golden Cowboy": [41, 1, "revolver"],
+  "Warden": [42, 1, "slam"],
+  "Gladiator": [43, 1, "slash"],
+  "Slasher": [44, 1, "slash"],
+  "Sledger": [45, 1.1, "slam"],
+  "Executioner": [46, 1, "slam"],
+  "Harvester": [47, 1, "slash"],
+  "Assassin": [48, 1, "slash"],
+  "Brawler": [49, 1, "punch"],
   "Commander": [50, 1, "cast"],
   "Necromancer": [51, 1, "cast"],
-  "Engineer": [52, 1, "cast"],
+  "Engineer": [52, 1, "hammer"],
   "Cryomancer": [53, 1, "cast"],
   "Elementalist": [54, 1, "cast"],
   "Biologist": [55, 1, "cast"],
@@ -588,6 +588,11 @@ var Path = class {
     const a = this.pts[i], b = this.pts[i + 1], sl = Math.hypot(b.x - a.x, b.z - a.z) / this.stud, t = sl ? (d - this.seg[i]) / sl : 0;
     return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t, yaw: Math.atan2(-(b.x - a.x), b.z - a.z) * 180 / Math.PI };
   }
+  /** the way a walker faces at d: from a little behind to a little ahead, so it turns round a corner instead of snapping */
+  yawAt(d) {
+    const a = this.at(d - 0.7), b = this.at(d + 0.7);
+    return Math.atan2(-(b.x - a.x), b.z - a.z) * 180 / Math.PI;
+  }
   /** distance from a block position to the path centreline, in blocks */
   dist(x, z) {
     let best = Infinity;
@@ -603,6 +608,49 @@ var onStart = [];
 var M;
 var path;
 var ents = /* @__PURE__ */ new Map();
+var shown = /* @__PURE__ */ new Map();
+function showState(id, x, pace, st2) {
+  const was = shown.get(id);
+  if (was && was[0] === pace && was[1] === st2) return;
+  shown.set(id, [pace, st2]);
+  try {
+    if (pace >= 0 && (!was || was[0] !== pace)) x.setProperty("tds:pace", pace);
+    if (!was || was[1] !== st2) x.setProperty("tds:st", st2);
+  } catch {
+  }
+}
+var visual = () => !headless && simSpeed() <= 1;
+function vanish(id, st2, ticks) {
+  const x = ents.get(id);
+  ents.delete(id);
+  shown.delete(id);
+  if (!x?.isValid) return;
+  if (!visual()) {
+    x.remove();
+    return;
+  }
+  try {
+    x.setProperty("tds:st", st2);
+    x.nameTag = "";
+  } catch {
+    x.remove();
+    return;
+  }
+  system2.runTimeout(() => {
+    try {
+      if (x.isValid) x.remove();
+    } catch {
+    }
+  }, ticks);
+}
+function act(id, anim) {
+  if (!visual()) return;
+  const x = ents.get(id);
+  if (x?.isValid) try {
+    x.playAnimation(anim);
+  } catch {
+  }
+}
 var ezones = [];
 var dim = () => world2.getDimension("overworld");
 var rnd = 1;
@@ -815,6 +863,7 @@ function setHold(on) {
 function stop(silent = false) {
   for (const e of dim().getEntities({ families: ["tds"] })) e.remove();
   ents.clear();
+  shown.clear();
   if (M && !silent) log("match_stop", { mode: M.mode, wave: M.wave });
   M = void 0;
   path = void 0;
@@ -928,6 +977,7 @@ function show(e) {
     ent.setProperty("tds:size", Math.min(8, enemyLook(e)[1] * (e.mods.includes("Bloated") ? 1.5 : 1)));
     if (e.hidden) ent.addEffect("invisibility", 2e7, { showParticles: false });
     ents.set(e.id, ent);
+    shown.delete(e.id);
     e.dirty = true;
     flush(e);
   } catch {
@@ -947,9 +997,7 @@ function flush(e) {
 function kill(e, tw) {
   if (!M) return;
   M.enemies.splice(M.enemies.indexOf(e), 1);
-  const x = ents.get(e.id);
-  if (x?.isValid) x.remove();
-  ents.delete(e.id);
+  vanish(e.id, e.flying ? 5 : 3, e.boss ? 24 : 18);
   let cash = e.cash;
   if (tw && M.players.includes(tw.owner)) {
     const N2 = skEvery(tw.owner, "Scavenger");
@@ -1057,6 +1105,7 @@ function spawnList(e, list) {
 }
 function useAbility(e, a) {
   if (!M || !path) return;
+  act(e.id, "animation.tds_look.cast");
   if (a.kind === "deathSpawn" || a.kind === "summon") spawnList(e, a.spawn ?? []);
   if (a.kind === "stun") {
     const f2 = near(e, a.radius ?? 12);
@@ -1120,6 +1169,7 @@ function enemyAbilities(e) {
     if (a.kind === "phase") {
       if (e.ph?.includes(i) || !(a.at != null && e.hp <= e.max * a.at || a.atHp != null && e.hp <= a.atHp)) return;
       (e.ph ??= []).push(i);
+      act(e.id, "animation.tds_look.cast");
       if (a.hidden) {
         e.hidden = true;
         try {
@@ -1176,6 +1226,7 @@ function stunTower(tw, dur, kind = "stun") {
   if (!M || kind === "stun" && /Stun/.test(towers[tw.name]?.immune ?? "") || kind === "freeze" && /Freeze/.test(towers[tw.name]?.immune ?? "")) return false;
   for (const g of hooks.guard) if (g(tw, kind)) return false;
   tw.stunUntil = Math.max(tw.stunUntil ?? 0, M.t + dur * ec(tw));
+  tw.stunKind = kind;
   return true;
 }
 var seesHiddenNear = (tw, e) => {
@@ -1449,7 +1500,10 @@ function towerStep(tw, dt) {
     }
     if (s.ammo && s.reload) {
       tw.ammoLeft = (tw.ammoLeft || s.ammo) - 1;
-      if (tw.ammoLeft === 0) gap += s.reload;
+      if (tw.ammoLeft === 0) {
+        gap += s.reload;
+        if (s.reload >= 0.5) act(-tw.id, "animation.tds_tower.reload");
+      }
     }
     tw.next += gap;
   }
@@ -1502,9 +1556,13 @@ function removeTower(tw, why = "removed") {
   if (i < 0) return;
   M.towers.splice(i, 1);
   M.units = M.units.filter((u) => u.tw !== tw.id);
-  const e = ents.get(-tw.id);
-  if (e?.isValid) e.remove();
-  ents.delete(-tw.id);
+  if (why === "sold" || why === "expired") vanish(-tw.id, 3, 6);
+  else {
+    const e = ents.get(-tw.id);
+    if (e?.isValid) e.remove();
+    ents.delete(-tw.id);
+    shown.delete(-tw.id);
+  }
   dropBuffs();
   if (why !== "sold") log("tower_remove", { id: tw.id, name: tw.name, why });
 }
@@ -1586,6 +1644,7 @@ function body(tw) {
     }
     e.setDynamicProperty("tds:id", tw.id);
     ents.set(-tw.id, e);
+    shown.delete(-tw.id);
     aimed.delete(tw.id);
     tlabel(tw);
   } catch {
@@ -1681,6 +1740,7 @@ function useTowerAbility(owner, id, title, at, target) {
     const u = pst(owner).abil;
     u[tw.name] = (u[tw.name] ?? 0) + 1;
   }
+  act(-tw.id, "animation.tds_tower.ability");
   log("tower_ability", { id, name: tw.name, ability: a.title, cost, what });
   persist();
   return `${a.title}: ${what}`;
@@ -1709,6 +1769,7 @@ function step() {
     enemyAbilities(e);
     if (e.hp <= 0) continue;
     const v = M.t < e.freezeUntil || M.t < e.stunUntil ? 0 : e.speed * (1 - e.slow) * (e.hasteUntil && M.t < e.hasteUntil ? 1 + (e.haste ?? 0) : 1);
+    e.v = v;
     if (v) {
       e.d = Math.max(0, e.d + v * DT * (M.t < (e.conf ?? 0) ? -1 : 1));
       e.x = void 0;
@@ -1785,6 +1846,7 @@ function endWave(cleared) {
   M.inter = true;
   M.waveEnd = M.t + RULES.intermission;
 }
+var unitKick = /* @__PURE__ */ new Map();
 function unitStep(u) {
   if (!M || !path) return;
   const tw = towerById(u.tw);
@@ -1811,6 +1873,11 @@ function unitStep(u) {
         mark(tw, "Frost");
       }
       u.shots = (u.shots ?? 0) + 1;
+      const now2 = Date.now();
+      if (now2 - (unitKick.get(u.id) ?? 0) >= 120) {
+        unitKick.set(u.id, now2);
+        act(u.id, "animation.tds_look.shot");
+      }
       if (u.freezeEvery && u.shots % u.freezeEvery === 0 && t.hp > 0 && !t.boss && !t.immune.includes("Freeze")) {
         t.freezeUntil = M.t + 1;
         mark(tw, "Freeze");
@@ -1829,9 +1896,7 @@ function unitStep(u) {
   }
   if (dead || gone) {
     M.units.splice(M.units.indexOf(u), 1);
-    const x = ents.get(u.id);
-    if (x?.isValid) x.remove();
-    ents.delete(u.id);
+    vanish(u.id, dead ? 3 : 4, dead ? 18 : 7);
     log("unit_end", { id: u.id, hp: Math.max(0, Math.round(u.hp)) });
   }
 }
@@ -1843,9 +1908,7 @@ function leak(e) {
   M.waveDmg = true;
   if (e.wave === M.wave) M.leakedThisWave = true;
   M.enemies.splice(M.enemies.indexOf(e), 1);
-  const x = ents.get(e.id);
-  if (x?.isValid) x.remove();
-  ents.delete(e.id);
+  vanish(e.id, 4, 7);
   log("leak", { id: e.id, name: e.name, dmg, baseHP: Math.max(0, M.baseHP), took: +(M.t - (e.born ?? 0)).toFixed(2) });
   if (M.baseHP <= 0) end("lose");
 }
@@ -1886,7 +1949,7 @@ system2.runInterval(() => {
   prof.sim += Date.now() - t0;
   t0 = Date.now();
   prof.n++;
-  const every2 = M.enemies.length > 80 ? 4 : 2;
+  const every2 = M.enemies.length > 80 ? 4 : M.enemies.length > 40 ? 2 : 1;
   if (++tick % every2 === 0) for (const e of M.enemies) {
     if (tick % 10 === 0) flush(e);
     let x = ents.get(e.id);
@@ -1894,15 +1957,17 @@ system2.runInterval(() => {
       if (tick % 40 === 0) show(e);
       continue;
     }
-    const p = path.at(e.d);
+    const p = path.at(e.d), back = M.t < (e.conf ?? 0) ? 180 : 0;
     try {
-      x.teleport({ x: p.x, y: path.floor + (e.flying ? 2.5 : 0), z: p.z }, { rotation: { x: 0, y: p.yaw } });
+      x.teleport({ x: p.x, y: path.floor + (e.flying ? 2.5 : 0), z: p.z }, { rotation: { x: 0, y: path.yawAt(e.d) + back } });
     } catch {
     }
+    if (!headless) showState(e.id, x, Math.min(255, Math.round((e.v ?? e.speed) * 10 * n2)), M.t < e.freezeUntil ? 2 : M.t < e.stunUntil ? 1 : 0);
   }
-  if (tick % 4 === 0) for (const u of M.units) {
+  if (tick % (M.units.length > 20 ? 2 : 1) === 0) for (const u of M.units) {
     const p = path.at(u.d);
     let x = ents.get(u.id);
+    const tag = `\xA7a${u.kind ?? "Unit"} \xA7f${Math.ceil(u.hp)}`;
     if (!x?.isValid) {
       try {
         x = dim().spawnEntity("tds:unit", { x: p.x, y: path.floor, z: p.z });
@@ -1912,17 +1977,24 @@ system2.runInterval(() => {
           x.setProperty("tds:size", lk[1]);
         } catch {
         }
-        x.nameTag = `\xA7a${u.kind ?? "Unit"} \xA7f${Math.ceil(u.hp)}`;
+        x.nameTag = tag;
         ents.set(u.id, x);
+        shown.delete(u.id);
       } catch {
         continue;
       }
     }
     try {
-      x.teleport({ x: p.x, y: path.floor, z: p.z }, { rotation: { x: 0, y: p.yaw + 180 } });
-      x.nameTag = `\xA7a${u.kind ?? "Unit"} \xA7f${Math.ceil(u.hp)}`;
+      x.teleport({ x: p.x, y: path.floor, z: p.z }, { rotation: { x: 0, y: path.yawAt(u.d) + 180 } });
+      if (x.nameTag !== tag) x.nameTag = tag;
     } catch {
     }
+    if (!headless) showState(u.id, x, u.stationary ? 0 : Math.min(255, Math.round((u.speed ?? RULES.unitSpeed) * 10 * n2)), 0);
+  }
+  if (tick % 4 === 0 && !headless) for (const tw of M.towers) {
+    const x = ents.get(-tw.id);
+    if (!x?.isValid) continue;
+    showState(-tw.id, x, -1, M.t < (tw.stunUntil ?? 0) ? tw.stunKind === "freeze" ? 2 : 1 : 0);
   }
   prof.vis += Date.now() - t0;
   t0 = Date.now();
@@ -1941,6 +2013,7 @@ function restore() {
   if (!s) return false;
   for (const e of dim().getEntities({ families: ["tds"] })) e.remove();
   ents.clear();
+  shown.clear();
   M = JSON.parse(s);
   path = new Path(M.map);
   for (const e of M.enemies) show(e);
@@ -4225,10 +4298,10 @@ function botStep(p, M2) {
     const cash = M2.cash[p.name], nd = need2(), mine = M2.towers.filter((t) => t.owner === p.name);
     const have = (k) => mine.some((t) => sees(t.name, t.lvl, k));
     let best, dream = 0;
-    const consider = (v, c, act) => {
+    const consider = (v, c, act2) => {
       if (!Number.isFinite(c) || c <= 0) return;
       if (c <= cash * 2) dream = Math.max(dream, v / c);
-      if (c <= cash && (!best || v / c > best.v)) best = { v: v / c, act };
+      if (c <= cash && (!best || v / c > best.v)) best = { v: v / c, act: act2 };
     };
     for (const n2 of loadout(p)) {
       if (!dps(n2, 0)) continue;

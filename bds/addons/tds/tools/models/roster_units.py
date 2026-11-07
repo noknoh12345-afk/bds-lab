@@ -298,7 +298,6 @@ def build(name, rec):
     m = T.person(f'u_{sl}', rec['body'], pal, None, 'chevron', stand=False)
     from towerkit import own_px
     m.own = lambda p, m=m: own_px(m, p)                      # the shared decals (a torch's flame)
-    m.noflash = True                                         # a unit plays no shot: its guns have no flash
     rec['outfit'](m)
     armed(m, rec['arm'], rec['amats'])
     from towerkit import finish

@@ -25,6 +25,8 @@ export class Path {
     const a = this.pts[i], b = this.pts[i + 1], sl = Math.hypot(b.x - a.x, b.z - a.z) / this.stud, t = sl ? (d - this.seg[i]) / sl : 0;
     return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t, yaw: (Math.atan2(-(b.x - a.x), b.z - a.z) * 180) / Math.PI };
   }
+  /** the way a walker faces at d: from a little behind to a little ahead, so it turns round a corner instead of snapping */
+  yawAt(d: number) { const a = this.at(d - 0.7), b = this.at(d + 0.7); return (Math.atan2(-(b.x - a.x), b.z - a.z) * 180) / Math.PI; }
   /** distance from a block position to the path centreline, in blocks */
   dist(x: number, z: number) {
     let best = Infinity;
@@ -43,12 +45,12 @@ export type Enemy = {
   hidden: boolean; flying: boolean; lead: boolean; boss: boolean; immune: string[]; mods: string[];
   slow: number; slowUntil: number; freezeUntil: number; stunUntil: number; dots: { dmg: number; tick: number; next: number; until: number; tw: number; kind?: string }[];
   nextSummon?: number; wave: number; summoned?: boolean; born?: number; x?: number; z?: number; dirty?: boolean;
-  aggro?: boolean; regen?: number; abil?: number[]; baseDef?: number; haste?: number; hasteUntil?: number;
+  aggro?: boolean; regen?: number; abil?: number[]; baseDef?: number; haste?: number; hasteUntil?: number; v?: number;
   /** status effects from towers: confusion (walks back), Neuralyzed (forced target, +damage taken), vulnerability, bounty, wire fraud */
   ph?: number[]; rev?: { at: number; name: string; hp: number; d: number };
   conf?: number; confCd?: number; neural?: number; neuralPct?: number; vuln?: number; vulnPct?: number; bounty?: { tw: number; pct: number; cap: number }; wire?: { tw: number; pct: number }; acc?: Record<number, number>;
 };
-export type Tower = { id: number; name: string; lvl: number; x: number; y: number; z: number; owner: string; target: string; next: number; burstLeft: number; ammoLeft: number; shots: number; spent: number; dealt: number; nextUnit: number; primary: number; stunUntil?: number; fat?: number; rdeb?: number; debUntil?: number; abReady?: Record<string, number>; selfBuff?: number; selfBuffUntil?: number; ctaBuff?: number; ctaUntil?: number; st?: Record<string, any>; temp?: number };
+export type Tower = { id: number; name: string; lvl: number; x: number; y: number; z: number; owner: string; target: string; next: number; burstLeft: number; ammoLeft: number; shots: number; spent: number; dealt: number; nextUnit: number; primary: number; stunUntil?: number; stunKind?: 'stun' | 'freeze'; fat?: number; rdeb?: number; debUntil?: number; abReady?: Record<string, number>; selfBuff?: number; selfBuffUntil?: number; ctaBuff?: number; ctaUntil?: number; st?: Record<string, any>; temp?: number };
 /** Per-player match statistics (quests): damage and kills by tower, status effects applied, ability uses, cash earned, towers placed, bosses killed. */
 export type PSt = { dmg: Record<string, number>; kills: number; killsBy: Record<string, number>; status: Record<string, number>; abil: Record<string, number>; earned: number; placed: string[]; bosses: string[] };
 export type Unit = { id: number; tw: number; d: number; hp: number; dmg: number; next: number; max?: number; kind?: string; fr?: number; range?: number; speed?: number; until?: number; stationary?: boolean;
@@ -72,6 +74,27 @@ export const onStart: ((m: Match, players: Player[]) => void)[] = [];
 export let M: Match | undefined;
 export let path: Path | undefined;
 const ents = new Map<number, Entity>();
+/** what the client shows of a walker (tools/models/motion.py): tds:pace, how fast its legs go (studs/s x 10, the sim speed
+ * in), and tds:st, what happens to it (1 stunned, 2 frozen, 3 dies, 4 leaves, 5 dies in the air; a tower: 3 sold) — sent
+ * only when they change */
+const shown = new Map<number, [number, number]>();
+function showState(id: number, x: Entity, pace: number, st: number) {
+  const was = shown.get(id); if (was && was[0] === pace && was[1] === st) return;
+  shown.set(id, [pace, st]);
+  try { if (pace >= 0 && (!was || was[0] !== pace)) x.setProperty('tds:pace', pace); if (!was || was[1] !== st) x.setProperty('tds:st', st); } catch { /* older pack */ }
+}
+/** the motion is worth showing: a real match at real speed (not a bench, a headless simulation or a sped-up test) */
+const visual = () => !headless && simSpeed() <= 1;
+/** an entity leaves with its last motion (a fall, a hop into the base, a fade) and is removed after it */
+function vanish(id: number, st: number, ticks: number) {
+  const x = ents.get(id); ents.delete(id); shown.delete(id);
+  if (!x?.isValid) return;
+  if (!visual()) { x.remove(); return; }
+  try { x.setProperty('tds:st', st); x.nameTag = ''; } catch { x.remove(); return; }
+  system.runTimeout(() => { try { if (x.isValid) x.remove(); } catch { /* gone */ } }, ticks);
+}
+/** a one-off animation on an entity: an enemy's ability, a unit's shot, a tower's reload or ability */
+function act(id: number, anim: string) { if (!visual()) return; const x = ents.get(id); if (x?.isValid) try { x.playAnimation(anim); } catch { /* unloaded */ } }
 /** healing left on the path by enemies (puddles, flasks); seconds-long, not saved */
 let ezones: { d: number; r: number; amount: number; every: number; next: number; until: number }[] = [];
 const dim = (): Dimension => world.getDimension('overworld');
@@ -229,7 +252,7 @@ let holdNext = false;
 export function setHold(on: boolean) { if (M && !M.over) { M.hold = on; persist(); } else holdNext = on; }
 export function stop(silent = false) {
   for (const e of dim().getEntities({ families: ['tds'] })) e.remove();
-  ents.clear();
+  ents.clear(); shown.clear();
   if (M && !silent) log('match_stop', { mode: M.mode, wave: M.wave });
   M = undefined; path = undefined; world.setDynamicProperty('tds:m', undefined);
 }
@@ -313,7 +336,7 @@ function show(e: Enemy) {
     ent.setProperty('tds:skin', enemySkin(e));
     ent.setProperty('tds:size', Math.min(8, enemyLook(e)[1] * (e.mods.includes('Bloated') ? 1.5 : 1)));
     if (e.hidden) ent.addEffect('invisibility', 20000000, { showParticles: false });
-    ents.set(e.id, ent); e.dirty = true; flush(e);
+    ents.set(e.id, ent); shown.delete(e.id); e.dirty = true; flush(e);
   } catch { /* chunk not loaded: the simulation still runs */ }
 }
 const bar = (e: Enemy) => `${e.boss ? '§c' : e.hidden ? '§7' : '§f'}${e.name}${e.lead ? ' §8[Lead]' : ''}${e.flying ? ' §b[Fly]' : ''}\n§a${Math.ceil(e.hp)}${e.shield > 0 ? ` §e+${Math.ceil(e.shield)}` : ''}`;
@@ -323,7 +346,7 @@ function flush(e: Enemy) { if (!e.dirty) return; e.dirty = false; const x = ents
 function kill(e: Enemy, tw?: Tower) {
   if (!M) return;
   M.enemies.splice(M.enemies.indexOf(e), 1);
-  const x = ents.get(e.id); if (x?.isValid) x.remove(); ents.delete(e.id);
+  vanish(e.id, e.flying ? 5 : 3, e.boss ? 24 : 18);   // it topples (or falls from the air) and fades
   let cash = e.cash;
   if (tw && M.players.includes(tw.owner)) { const N = skEvery(tw.owner, 'Scavenger'); if (N && (pst(tw.owner).kills + 1) % N === 0) cash = Math.floor(cash * (skillDef.get('Scavenger')?.mult ?? 1.5)); }
   if (!e.every) give(tw, cash);
@@ -376,6 +399,7 @@ function spawnList(e: Enemy, list: Spawn[]) {
 }
 export function useAbility(e: Enemy, a: Ability) {
   if (!M || !path) return;
+  act(e.id, 'animation.tds_look.cast');   // it rears back and slams its arms down
   if (a.kind === 'deathSpawn' || a.kind === 'summon') spawnList(e, a.spawn ?? []);
   if (a.kind === 'stun') { const f = near(e, a.radius ?? 12); for (const tw of M.towers) if (f(tw)) stunTower(tw, a.dur ?? 3); }
   if (a.kind === 'debuff') { const f = near(e, a.radius ?? 12); for (const tw of M.towers) if (f(tw)) { tw.fat = Math.max(tw.debUntil! > M.t ? tw.fat ?? 0 : 0, (a.fatigue ?? 0) / 100); tw.rdeb = Math.max(tw.debUntil! > M.t ? tw.rdeb ?? 0 : 0, (a.range ?? 0) / 100); tw.debUntil = M.t + (a.dur ?? 10) * ec(tw); } }
@@ -403,7 +427,7 @@ function enemyAbilities(e: Enemy) {
   list.forEach((a, i) => {
     if (a.kind === 'phase') {   // a health threshold changes the enemy once
       if (e.ph?.includes(i) || !((a.at != null && e.hp <= e.max * a.at) || (a.atHp != null && e.hp <= a.atHp))) return;
-      (e.ph ??= []).push(i);
+      (e.ph ??= []).push(i); act(e.id, 'animation.tds_look.cast');
       if (a.hidden) { e.hidden = true; try { ents.get(e.id)?.addEffect('invisibility', 20000000, { showParticles: false }); } catch { /* unloaded */ } }
       if (a.speed) e.speed = a.speed * (e.mods.includes('Nimble') ? 2 : 1);
       if (a.aggro) e.aggro = true;
@@ -425,7 +449,7 @@ function enemyAbilities(e: Enemy) {
 export function stunTower(tw: Tower, dur: number, kind: 'stun' | 'freeze' = 'stun') {
   if (!M || (kind === 'stun' && /Stun/.test(towers[tw.name]?.immune ?? '')) || (kind === 'freeze' && /Freeze/.test(towers[tw.name]?.immune ?? ''))) return false;
   for (const g of hooks.guard) if (g(tw, kind)) return false;
-  tw.stunUntil = Math.max(tw.stunUntil ?? 0, M.t + dur * ec(tw)); return true;
+  tw.stunUntil = Math.max(tw.stunUntil ?? 0, M.t + dur * ec(tw)); tw.stunKind = kind; return true;
 }
 
 // ---------- towers ----------
@@ -579,7 +603,7 @@ function towerStep(tw: Tower, dt: number) {
     fire(tw, s, e); (tw.st ??= {}).last = M.t;
     let gap = s.fr;
     if (s.burst && s.burst > 1) { tw.burstLeft = (tw.burstLeft || s.burst) - 1; if (tw.burstLeft === 0) gap += s.burstCd ?? 0; }
-    if (s.ammo && s.reload) { tw.ammoLeft = (tw.ammoLeft || s.ammo) - 1; if (tw.ammoLeft === 0) gap += s.reload; }
+    if (s.ammo && s.reload) { tw.ammoLeft = (tw.ammoLeft || s.ammo) - 1; if (tw.ammoLeft === 0) { gap += s.reload; if (s.reload >= 0.5) act(-tw.id, 'animation.tds_tower.reload'); } }
     tw.next += gap;
   }
   void dt;
@@ -604,7 +628,8 @@ export function spawnUnit(tw: Tower, name: string | undefined, o: Partial<Unit> 
 export function removeTower(tw: Tower, why = 'removed') {
   if (!M) return; const i = M.towers.indexOf(tw); if (i < 0) return;
   M.towers.splice(i, 1); M.units = M.units.filter((u) => u.tw !== tw.id);
-  const e = ents.get(-tw.id); if (e?.isValid) e.remove(); ents.delete(-tw.id); dropBuffs();
+  if (why === 'sold' || why === 'expired') vanish(-tw.id, 3, 6); else { const e = ents.get(-tw.id); if (e?.isValid) e.remove(); ents.delete(-tw.id); shown.delete(-tw.id); }
+  dropBuffs();
   if (why !== 'sold') log('tower_remove', { id: tw.id, name: tw.name, why });
 }
 /** whether a tower of this kind could stand on a block (surface, path, overlap); undefined = yes */
@@ -664,7 +689,7 @@ function body(tw: Tower) {
     const e = dim().spawnEntity('tds:tower' as any, { x: tw.x + 0.5, y: tw.y, z: tw.z + 0.5 });
     const lk = towerLook(tw.name);
     e.setProperty('tds:skin', lk[0]); try { e.setProperty('tds:size', lk[1]); e.setProperty('tds:holo', tw.temp !== undefined); e.setProperty('tds:lvl', Math.min(7, tw.lvl)); } catch { /* older pack */ }
-    e.setDynamicProperty('tds:id', tw.id); ents.set(-tw.id, e); aimed.delete(tw.id); tlabel(tw);
+    e.setDynamicProperty('tds:id', tw.id); ents.set(-tw.id, e); shown.delete(-tw.id); aimed.delete(tw.id); tlabel(tw);
   } catch { /* unloaded */ }
 }
 export function tlabel(tw: Tower) { const e = ents.get(-tw.id); if (e?.isValid) { e.nameTag = `§e#${tw.id} §f${tw.name}\n§bLv${tw.lvl} §7${tw.target}`; try { e.setProperty('tds:lvl', Math.min(7, tw.lvl)); } catch { /* older pack */ } } }
@@ -715,6 +740,7 @@ export function useTowerAbility(owner: string, id: number, title?: string, at?: 
   if (what.startsWith('!')) return what.slice(1);
   M.cash[owner] -= cost; (tw.abReady ??= {})[a.title] = M.t + cooldownOf(tw, a);
   if (M.players.includes(owner)) { const u = pst(owner).abil; u[tw.name] = (u[tw.name] ?? 0) + 1; }
+  act(-tw.id, 'animation.tds_tower.ability');
   log('tower_ability', { id, name: tw.name, ability: a.title, cost, what });
   persist();
   return `${a.title}: ${what}`;
@@ -735,6 +761,7 @@ function step() {
     if (e.slowUntil < M.t) e.slow = 0;
     enemyAbilities(e); if (e.hp <= 0) continue;
     const v = M.t < e.freezeUntil || M.t < e.stunUntil ? 0 : e.speed * (1 - e.slow) * (e.hasteUntil && M.t < e.hasteUntil ? 1 + (e.haste ?? 0) : 1);
+    e.v = v;
     if (v) { e.d = Math.max(0, e.d + v * DT * (M.t < (e.conf ?? 0) ? -1 : 1)); e.x = undefined; }   // confused enemies walk back
     if (e.nextSummon !== undefined && M.t >= e.nextSummon) { e.nextSummon = M.t + RULES.summonEvery; const c = enemies[e.name].spawns![0]; for (let i = 0; i < RULES.childCount; i++) spawnEnemy(c, [], Math.max(0, e.d - 2 - i), e.wave, true); }
     if (e.d >= path.len) leak(e);
@@ -775,6 +802,7 @@ function endWave(cleared: boolean) {
   for (const f of hooks.waveEnd) f(cleared);
   M.inter = true; M.waveEnd = M.t + RULES.intermission;   // "a 5-second intermission will count down before the next wave begins"
 }
+const unitKick = new Map<number, number>();
 function unitStep(u: Unit) {
   if (!M || !path) return;
   const tw = towerById(u.tw);
@@ -792,6 +820,7 @@ function unitStep(u: Unit) {
       else hit(t, u.dmg, tw);
       if (u.slow && t.hp > 0 && !t.boss && !t.immune.includes('Slowed')) { t.slow = Math.max(t.slow, u.slow); t.slowUntil = M.t + (u.slowTime ?? 2); mark(tw, 'Frost'); }
       u.shots = (u.shots ?? 0) + 1;
+      const now = Date.now(); if (now - (unitKick.get(u.id) ?? 0) >= 120) { unitKick.set(u.id, now); act(u.id, 'animation.tds_look.shot'); }
       if (u.freezeEvery && u.shots % u.freezeEvery === 0 && t.hp > 0 && !t.boss && !t.immune.includes('Freeze')) { t.freezeUntil = M.t + 1; mark(tw, 'Freeze'); }
       let gap = u.fr ?? 1;
       if (u.burst && u.burst > 1) { u.burstLeft = (u.burstLeft || u.burst) - 1; if (u.burstLeft === 0) gap += u.burstCd ?? 0; }
@@ -800,12 +829,12 @@ function unitStep(u: Unit) {
   }
   const dead = u.hp <= 0, gone = (!u.stationary && u.d <= 0) || (u.until !== undefined && M.t >= u.until);
   if (dead && u.explode) for (const e of [...M.enemies]) if (Math.abs(e.d - u.d) <= 4) hit(e, u.explode, tw, 'splash');   // a van blows up when destroyed
-  if (dead || gone) { M.units.splice(M.units.indexOf(u), 1); const x = ents.get(u.id); if (x?.isValid) x.remove(); ents.delete(u.id); log('unit_end', { id: u.id, hp: Math.max(0, Math.round(u.hp)) }); }
+  if (dead || gone) { M.units.splice(M.units.indexOf(u), 1); vanish(u.id, dead ? 3 : 4, dead ? 18 : 7); log('unit_end', { id: u.id, hp: Math.max(0, Math.round(u.hp)) }); }
 }
 function leak(e: Enemy) {
   if (!M) return;
   const dmg = Math.ceil(e.hp + e.shield); M.baseHP -= dmg; M.stats.leaks++; M.waveDmg = true; if (e.wave === M.wave) M.leakedThisWave = true;
-  M.enemies.splice(M.enemies.indexOf(e), 1); const x = ents.get(e.id); if (x?.isValid) x.remove(); ents.delete(e.id);
+  M.enemies.splice(M.enemies.indexOf(e), 1); vanish(e.id, 4, 7);   // into the base
   log('leak', { id: e.id, name: e.name, dmg, baseHP: Math.max(0, M.baseHP), took: +(M.t - (e.born ?? 0)).toFixed(2) });
   if (M.baseHP <= 0) end('lose');
 }
@@ -834,16 +863,26 @@ system.runInterval(() => {
   for (let i = 0; i < n && M && !M.over; i++) step();
   if (!M || !path) return;
   prof.sim += Date.now() - t0; t0 = Date.now(); prof.n++;
-  const every = M.enemies.length > 80 ? 4 : 2;
+  // the walkers move every tick while few (smooth), every 2 or 4 when many; each faces the way it goes, easing round corners,
+  // and tells its look how fast its legs go and whether it is stunned or frozen
+  const every = M.enemies.length > 80 ? 4 : M.enemies.length > 40 ? 2 : 1;
   if (++tick % every === 0) for (const e of M.enemies) {
     if (tick % 10 === 0) flush(e);
     let x = ents.get(e.id); if (!x?.isValid) { if (tick % 40 === 0) show(e); continue; }
-    const p = path.at(e.d); try { x.teleport({ x: p.x, y: path.floor + (e.flying ? 2.5 : 0), z: p.z }, { rotation: { x: 0, y: p.yaw } }); } catch { /* unloaded */ }
+    const p = path.at(e.d), back = M.t < (e.conf ?? 0) ? 180 : 0;
+    try { x.teleport({ x: p.x, y: path.floor + (e.flying ? 2.5 : 0), z: p.z }, { rotation: { x: 0, y: path.yawAt(e.d) + back } }); } catch { /* unloaded */ }
+    if (!headless) showState(e.id, x, Math.min(255, Math.round((e.v ?? e.speed) * 10 * n)), M.t < e.freezeUntil ? 2 : M.t < e.stunUntil ? 1 : 0);
   }
-  if (tick % 4 === 0) for (const u of M.units) {
+  if (tick % (M.units.length > 20 ? 2 : 1) === 0) for (const u of M.units) {
     const p = path.at(u.d); let x = ents.get(u.id);
-    if (!x?.isValid) { try { x = dim().spawnEntity('tds:unit' as any, { x: p.x, y: path.floor, z: p.z }); try { const lk = unitLook(u); x.setProperty('tds:skin', lk[0]); x.setProperty('tds:size', lk[1]); } catch { /* older pack */ } x.nameTag = `§a${u.kind ?? 'Unit'} §f${Math.ceil(u.hp)}`; ents.set(u.id, x); } catch { continue; } }
-    try { x.teleport({ x: p.x, y: path.floor, z: p.z }, { rotation: { x: 0, y: p.yaw + 180 } }); x.nameTag = `§a${u.kind ?? 'Unit'} §f${Math.ceil(u.hp)}`; } catch { /* unloaded */ }
+    const tag = `§a${u.kind ?? 'Unit'} §f${Math.ceil(u.hp)}`;
+    if (!x?.isValid) { try { x = dim().spawnEntity('tds:unit' as any, { x: p.x, y: path.floor, z: p.z }); try { const lk = unitLook(u); x.setProperty('tds:skin', lk[0]); x.setProperty('tds:size', lk[1]); } catch { /* older pack */ } x.nameTag = tag; ents.set(u.id, x); shown.delete(u.id); } catch { continue; } }
+    try { x.teleport({ x: p.x, y: path.floor, z: p.z }, { rotation: { x: 0, y: path.yawAt(u.d) + 180 } }); if (x.nameTag !== tag) x.nameTag = tag; } catch { /* unloaded */ }
+    if (!headless) showState(u.id, x, u.stationary ? 0 : Math.min(255, Math.round((u.speed ?? RULES.unitSpeed) * 10 * n)), 0);
+  }
+  if (tick % 4 === 0 && !headless) for (const tw of M.towers) {   // a stunned tower reels, a frozen one stands still
+    const x = ents.get(-tw.id); if (!x?.isValid) continue;
+    showState(-tw.id, x, -1, M.t < (tw.stunUntil ?? 0) ? (tw.stunKind === 'freeze' ? 2 : 1) : 0);
   }
   prof.vis += Date.now() - t0; t0 = Date.now();
   if (tick % 40 === 0) persist();
@@ -854,7 +893,7 @@ export function persist() { try { world.setDynamicProperty('tds:m', M ? JSON.str
 export function restore() {
   const s = world.getDynamicProperty('tds:m') as string | undefined; if (!s) return false;
   for (const e of dim().getEntities({ families: ['tds'] })) e.remove();
-  ents.clear(); M = JSON.parse(s) as Match; path = new Path(M.map);
+  ents.clear(); shown.clear(); M = JSON.parse(s) as Match; path = new Path(M.map);
   for (const e of M.enemies) show(e); for (const t of M.towers) body(t);
   log('restored', { mode: M.mode, wave: M.wave, enemies: M.enemies.length, towers: M.towers.length, baseHP: M.baseHP });
   return true;

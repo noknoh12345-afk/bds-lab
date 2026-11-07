@@ -330,9 +330,17 @@
     "o78": "geometry.tds.empty"
    },
    "scripts": {
-    "scale": "0.36 * q.property('tds:size')",
+    "scale": "0.36 * q.property('tds:size') * (1 - v.fade)",
     "initialize": [
-     "v.lvl = 0;"
+     "v.lvl = 0; v.yaw = 0; v.clock = math.random(0, 10); v.dying = 0; v.fade = 0;"
+    ],
+    "pre_animation": [
+     "v.st = q.property('tds:st');",
+     "v.clock = v.clock + (v.st == 2 ? 0 : q.delta_time);",
+     "v.dy = math.mod(math.mod(q.property('tds:yaw') - q.body_y_rotation - v.yaw, 360) + 540, 360) - 180;",
+     "v.yaw = (v.st == 1 || v.st == 2) ? v.yaw : v.yaw + math.clamp(v.dy, -q.delta_time * 540, q.delta_time * 540);",
+     "v.dying = v.st == 3 ? v.dying + q.delta_time : 0;",
+     "v.fade = math.clamp(v.dying / 0.25, 0, 1);"
     ],
     "animate": [
      "aim",
@@ -371,6 +379,9 @@
      "level",
      {
       "smoke": "q.property('tds:skin') == 63"
+     },
+     {
+      "dizzy": "v.st == 1"
      }
     ]
    },
@@ -391,12 +402,7 @@
     "levelup": "animation.tds_tower.levelup",
     "level": "controller.animation.tds_tower.level",
     "smoke": "animation.tds_tower.smoke",
-    "fire": "animation.tds_tower.fire",
-    "swing": "animation.tds_tower.swing",
-    "cast": "animation.tds_tower.cast",
-    "throw": "animation.tds_tower.throw",
-    "pulse": "animation.tds_tower.pulse",
-    "spawn": "animation.tds_tower.spawn"
+    "dizzy": "animation.tds_tower.dizzy"
    },
    "particle_effects": {
     "smoke": "minecraft:basic_smoke_particle"
