@@ -15,6 +15,7 @@ import { selectTower, hudOn } from './hud';
 import { signalMenu } from './signals';
 import { expedition } from './site';
 import './scene';   // after site: it wraps the site's stop hook
+import './scout';   // survey birds and the war table (SURVEY.md)
 import './narrator';
 import './indicators';
 

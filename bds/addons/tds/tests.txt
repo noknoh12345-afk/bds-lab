@@ -944,3 +944,51 @@ until "ev":"match_start","mode":"Easy","map":"Wild #\d+","players":\["A","B"\] 1
 ~ "ev":"elevator_depart","mode":"Easy","players":\["A","B"\],"size":3,"map":"Wild #\d+"
 tds:stop
 
+
+## scouting (SURVEY.md): a survey bird flies the way you face for the distance asked and costs a feather; it brings back the land's stars, a model on the war table with the road, gates and camp, and which way the land rises; a known place is free; no feathers, no bird; the elevators offer the table's places first and go to the place itself, built as its survey said; a win gives two feathers; all kept over a restart
+tds:stop
+js world.setDynamicProperty('tds:sites', '[]')
+@A cmd /tds:setfeathers 3
+@A cmd /tp @s 0 -60 0 -90 0
+@A cmd /tds:scout 3000
+until @A Found Wild #\d+ 90000
+~ "ev":"feathers","player":"A","n":2,"why":"scout"
+~ "ev":"scout_out","player":"A","x":3008,"z":0,"dist":3008,"dir":"e"
+~ "ev":"table_built","slot":1,"id":1
+~ "ev":"scout_report",.*"x":3008,"z":0,.*"stars":2,"keys":\d+,"heights":\d+,"footing":\d+,"cliffs":\d+,"rocks":0,"steps":8,"bridges":1,"corners":4,.*"flat":true,"by":"A","lean":"\w+","wet":"\w*","dir":"e","dist":3008
+~ @A %tds.scout.back
+~ @A Found Wild #\d+ ★★☆☆☆
+js (() => { const d = world.getDimension('overworld'), k = {}; for (let x = 42; x < 63; x++) for (let z = -10; z < 11; z++) for (let y = -60; y < -50; y++) { const t = d.getBlock({ x, y, z })?.typeId ?? ''; k[t] = (k[t] ?? 0) + 1; } return `campfire ${k['minecraft:campfire']} gates ${(k['minecraft:lantern'] ?? 0) + (k['minecraft:soul_lantern'] ?? 0)} road ${k['minecraft:red_concrete'] ?? 0}`; })()
+~ ^campfire 1 gates [23] road [1-9]\d$
+@A cmd /tds:feathers
+= @A Feathers 2
+@A cmd /tds:scout 3000
+until @A Known place: Wild #\d+ 30000
+~ @A Known place: Wild #\d+ ★★☆☆☆
+@A cmd /tds:feathers
+= @A Feathers 2
+@A cmd /tds:atlas
+~ @A ★★☆☆☆ Wild #\d+ e 3008m by A
+@A cmd /tds:setfeathers 0
+@A cmd /tds:scout 2000 180
+~ @A No survey feathers
+!~ "ev":"scout_out","player":"A","x":0,"z":-1984
+@A cmd /tds:setfeathers 3
+@A cmd /tds:queue Easy 1
+~ @A Elevator Easy: 1/1, departs in \d+s · vote: Wild #\d+ ★★ / Wild #\d+ / Wild #\d+
+@A cmd /tds:votewild 1
+until "ev":"site_built" 120000
+~ "ev":"site_built",.*"seed":\d+,"x":3008,"z":0,"flat":true,.*"steps":8,"bridges":1,.*"corners":4,.*"rocks":0,"surveyed":true,"stars":2
+until "ev":"match_start","mode":"Easy","map":"Wild #\d+" 30000
+tds:finish win
+until "ev":"feathers","player":"A","n":5,"why":"win" 10000
+tds:stop
+restart
+@A cmd /tds:atlas
+~ @A ★★☆☆☆ Wild #\d+ e 3008m by A
+@A cmd /tds:feathers
+= @A Feathers 5
+@A cmd /tds:table
+= @A The war table
+tds:tableclear
+= Table cleared

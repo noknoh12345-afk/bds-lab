@@ -168,3 +168,109 @@ export function check(rt: Route): string[] {
   const seen = new Set<string>(); for (const c of rt.cells) { const k = `${c.x},${c.z}`; if (seen.has(k)) bad.push(`cell ${k}`); seen.add(k); }
   return bad;
 }
+
+// ---------- a flat world's made-up land (src/site.ts builds it; a survey reads it without building) ----------
+/** every column of the area -r..r in one fixed order: valueNoise draws its lattice as it is first asked, so the order makes the
+ *  land, and the survey must see the same land the expedition later builds. `rnd` goes on drawing for the trees and flowers */
+export function synthLand(seed: number, r: number, camp = 4) {
+  const hill = valueNoise(seed, 16, 8), rock = valueNoise(seed + 3, 7, 1), rnd = rng(seed + 5), ph = rnd() * 6.28, alongX = rnd() < 0.5, off = Math.floor(rnd() * 30) - 15;
+  const bank = (x: number, z: number) => { const a = alongX ? x : z, b = alongX ? z : x; return Math.abs(b - (7 * Math.sin(a / 10 + ph) + off)); };
+  const s = 2 * r + 1, H = new Int8Array(s * s), wet = new Uint8Array(s * s), stone = new Uint8Array(s * s);
+  for (let x = -r; x <= r; x++) for (let z = -r; z <= r; z++) {
+    const i = (x + r) * s + (z + r), bk = bank(x, z), c = Math.max(Math.abs(x), Math.abs(z)) <= camp + 2;
+    let h = Math.max(0, Math.min(6, Math.round(hill(x + 200, z + 200) - 2.2)));
+    if (bk < 3.5 || c) h = 0;
+    const w = bk < 1.5 && !c, isRock = !w && bk >= 3.5 && !c && rock(x + 300, z + 300) > 0.8;
+    if (isRock) h += 3;
+    H[i] = h; wet[i] = w ? 1 : 0; stone[i] = isRock ? 1 : 0;
+  }
+  return { H, wet, stone, bank, rnd };
+}
+
+// ---------- how good a land is for defending it (src/scout.ts): the road it gets, and where towers can stand by it ----------
+export type Rate = {
+  /** 要所: ground spots where a tower reaches 24+ blocks of the road (12 studs = a tower's 20-stud reach, a middling one) */
+  keys: number;
+  /** 高台: cliff spots (2+ above the road beside them) that reach 16+ blocks of it */
+  heights: number;
+  /** 足場: ground spots within 4.5 of the road */
+  footing: number;
+  /** every cliff spot within 9 of the road (fewer than 8: rocks are added) */
+  cliffs: number; stars: number;
+};
+export const REACH = 10;
+/** the score, a few steps at a time (the game runs it as a job; each segment's neighbourhood is one step) */
+export function* rateSteps(t: Terrain, rt: Route, out: { rate: Rate | null }): Generator<void, void, void> {
+  const n = rt.pts.length - 1, S = 2 * t.r + 1, idx = (x: number, z: number) => (x + t.r) * S + (z + t.r);
+  const dist = new Float32Array(S * S).fill(99), top = new Float32Array(S * S), cover = new Int16Array(S * S);
+  // the centre line's nearest point to each column near it (and the road top's height there), segment by segment
+  for (let k = 0; k < n; k++) {
+    const [ax, az] = rt.pts[k], [bx, bz] = rt.pts[k + 1], dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz;
+    for (let x = Math.max(-t.r, Math.min(ax, bx) - 10); x <= Math.min(t.r, Math.max(ax, bx) + 9); x++) for (let z = Math.max(-t.r, Math.min(az, bz) - 10); z <= Math.min(t.r, Math.max(az, bz) + 9); z++) {
+      const px = x + 0.5, pz = z + 0.5, u = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2)), e = Math.hypot(px - ax - dx * u, pz - az - dz * u), i = idx(x, z);
+      if (e < dist[i]) { dist[i] = e; top[i] = rt.J[k] + (rt.J[k + 1] - rt.J[k]) * u; }
+    }
+    // how much road each column reaches: every segment's middle counts once for the columns within REACH of it
+    const mx = (ax + bx) / 2, mz = (az + bz) / 2;
+    for (let x = Math.max(-t.r, Math.floor(mx - REACH - 1)); x <= Math.min(t.r, Math.ceil(mx + REACH)); x++) for (let z = Math.max(-t.r, Math.floor(mz - REACH - 1)); z <= Math.min(t.r, Math.ceil(mz + REACH)); z++)
+      if (Math.hypot(mx - x - 0.5, mz - z - 0.5) <= REACH) cover[idx(x, z)]++;
+    if (k % 8 === 7) yield;
+  }
+  const road = new Set(rt.cells.map((c) => `${c.x},${c.z}`));
+  let keys = 0, heights = 0, footing = 0, cliffs = 0;
+  for (let x = -t.r; x <= t.r; x++) {
+    for (let z = -t.r; z <= t.r; z++) {
+      const i = idx(x, z), d = dist[i]; if (d > 9 || d < 1.5) continue;
+      if (road.has(`${x},${z}`) || t.water(x, z) || t.blocked(x, z)) continue;
+      const rel = t.ground(x, z) + 1 - top[i], cliff = rel >= 2; if (!cliff && (rel < -2 || rel > 1)) continue;
+      if (cliff) { cliffs++; if (cover[i] >= 16) heights++; } else { if (cover[i] >= 24) keys++; if (d <= 4.5) footing++; }
+    }
+    if ((x & 15) === 15) yield;
+  }
+  out.rate = { keys, heights, footing, cliffs, stars: starsOf(keys, heights, footing) };
+}
+export function rate(t: Terrain, rt: Route): Rate {
+  const out: { rate: Rate | null } = { rate: null }; for (const _ of rateSteps(t, rt, out)) { /* all at once (node) */ } return out.rate!;
+}
+/** rocks beside the road where a land has too few cliffs (four towers are cliff only): 3×3 at four places along the way, away
+ *  from the camp, two above the road's top; [x, z, top] in local coordinates (src/site.ts builds them) */
+export function rockSpots(rt: Route, t: Terrain, want: number, r: () => number, camp = 4): [number, number, number][] {
+  const road = new Set(rt.cells.map((c) => `${c.x},${c.z}`)), out: [number, number, number][] = [];
+  for (const k of [12, 32, 52, 70].sort(() => r() - 0.5)) {
+    if (out.length >= want) break;
+    const a = rt.pts[k], b = rt.pts[k + 1], horiz = a[1] === b[1];
+    const side = (horiz ? Math.sign(a[1]) : Math.sign(a[0])) || 1;   // away from the camp
+    const mx = horiz ? Math.min(a[0], b[0]) : a[0] + side * 5, mz = horiz ? a[1] + side * 5 : Math.min(a[1], b[1]);
+    const top = Math.max(rt.J[k] + 1, t.ground(mx, mz) + 2);
+    let ok = true;
+    for (let x = mx - 1; x <= mx + 1 && ok; x++) for (let z = mz - 1; z <= mz + 1; z++) if (road.has(`${x},${z}`) || t.water(x, z) || Math.max(Math.abs(x), Math.abs(z)) <= camp + 1) ok = false;
+    if (ok) out.push([mx, mz, top]);
+  }
+  return out;
+}
+/** a land with those rocks on it */
+export function withRocks(t: Terrain, rocks: [number, number, number][]): Terrain {
+  if (!rocks.length) return t;
+  return { ...t, ground: (x, z) => { for (const [mx, mz, top] of rocks) if (Math.abs(x - mx) <= 1 && Math.abs(z - mz) <= 1) return top; return t.ground(x, z); } };
+}
+/** the whole judgement of a place, as its expedition will be built: the title's word drawn first, then rocks if fewer than 8
+ *  cliffs, then the score of the land as it will be (src/site.ts uses the same for a surveyed place) */
+export type Appraisal = { adj: number; rocks: [number, number, number][]; rate: Rate; r: () => number };
+export function* appraiseSteps(t: Terrain, rt: Route, seed: number, camp: number, out: { a: Appraisal | null }): Generator<void, void, void> {
+  const r = rng(seed + 11), adj = Math.floor(r() * 8), first: { rate: Rate | null } = { rate: null };
+  yield* rateSteps(t, rt, first);
+  const rocks = first.rate!.cliffs < 8 ? rockSpots(rt, t, 4, r, camp) : [];
+  const after: { rate: Rate | null } = { rate: first.rate };
+  if (rocks.length) yield* rateSteps(withRocks(t, rocks), rt, after);
+  out.a = { adj, rocks, rate: after.rate!, r };
+}
+export function appraise(t: Terrain, rt: Route, seed: number, camp = 4): Appraisal {
+  const out: { a: Appraisal | null } = { a: null }; for (const _ of appraiseSteps(t, rt, seed, camp, out)) { /* all at once (node) */ } return out.a!;
+}
+/** how good, 0..1: strong ground and strong high ground count most, room by the road a little */
+export const landValue = (keys: number, heights: number, footing: number) => 0.4 * Math.min(1, keys / 220) + 0.4 * Math.min(1, heights / 40) + 0.2 * Math.min(1, footing / 600);
+/** ★1-5 (tools/rate_test.mjs: made-up lands; ★5 is rare) */
+export function starsOf(keys: number, heights: number, footing: number) {
+  const v = landValue(keys, heights, footing);
+  return v >= 0.87 ? 5 : v >= 0.76 ? 4 : v >= 0.6 ? 3 : v >= 0.46 ? 2 : 1;
+}

@@ -7,10 +7,10 @@
 import { world, system, Player, BlockPermutation, Vector3, CatmullRomSpline, InputButton, ButtonState } from '@minecraft/server';
 import * as G from './game';
 import { maps, modes, MODE_NAMES, SiteDef } from './defs';
-import { planSteps, Route, Dir, rng, valueNoise } from './road';
+import { planSteps, Route, Dir, rng, synthLand, appraiseSteps, Appraisal, rockSpots, Rate } from './road';
 import { cmd, cmdAny, give } from './kit';
 
-const AREA = 40, CAMP = 4, AREA_ID = 'tds_site';
+const AREA = 40, CAMP = 4, AREA_ID = 'tds_site', SCOUT_ID = 'tds_scout';
 const dim = () => world.getDimension('overworld');
 const sleep = (t: number) => new Promise<void>((r) => system.runTimeout(() => r(), t));
 function job(gen: Generator<void, void, void>): Promise<void> {
@@ -55,14 +55,16 @@ const SOFT = /leaves|_log$|log$|_wood$|stem$|grass$|fern|flower|tulip|dandelion|
 const MADE = /planks|glass|_bed$|door|fence|hay_block|cobblestone$|torch|lantern|bell|crafting_table|furnace|chest|wool|bookshelf|brick/;
 const NATURAL = /grass_block|dirt|podzol|mycelium|moss_block|mud|sand|gravel|snow|stone|andesite|diorite|granite|deepslate|tuff|calcite|terracotta|ice|clay|netherrack|blackstone|basalt|dripstone/;
 type Col = { g: number; w: boolean; lava: boolean; made: boolean; top: string };
+/** what a column's top is, for the war table's models: 0 grass, 1 sand, 2 stone, 3 snow, 4 earth, 5 water */
+const topKind = (id: string, w: boolean) => (w ? 5 : /grass_block|moss/.test(id) ? 0 : /sand|gravel/.test(id) ? 1 : /snow|ice/.test(id) ? 3 : /stone|andesite|diorite|granite|deepslate|tuff|calcite|basalt|blackstone|terracotta/.test(id) ? 2 : 4);
 function column(x: number, z: number): Col | null {
   let b; try { b = dim().getTopmostBlock({ x, z }); } catch { return null; }
   for (let i = 0; i < 48 && b && SOFT.test(b.typeId); i++) b = b.below();
   if (!b) return null;
   return { g: b.y, w: /water/.test(b.typeId), lava: /lava/.test(b.typeId), made: MADE.test(b.typeId), top: b.typeId };
 }
-class HMap {
-  s = 2 * AREA + 1; g = new Int16Array(this.s * this.s); w = new Uint8Array(this.s * this.s); bad = new Uint8Array(this.s * this.s);
+export class HMap {
+  s = 2 * AREA + 1; g = new Int16Array(this.s * this.s); w = new Uint8Array(this.s * this.s); bad = new Uint8Array(this.s * this.s); top = new Uint8Array(this.s * this.s);
   i(x: number, z: number) { const c = (v: number) => Math.max(-AREA, Math.min(AREA, v)) + AREA; return c(x) * this.s + c(z); }
   get(x: number, z: number) { return this.g[this.i(x, z)]; }
   wet(x: number, z: number) { return this.w[this.i(x, z)] === 1; }
@@ -74,7 +76,7 @@ function* scan(cx: number, cz: number, hm: HMap, st: Scan): Generator<void, void
     for (let z = -AREA; z <= AREA; z++) {
       const c = column(cx + x, cz + z), i = hm.i(x, z); st.cols++;
       if (!c) { hm.bad[i] = 1; continue; }
-      hm.g[i] = c.g; hm.w[i] = c.w ? 1 : 0; if (c.lava || c.made) hm.bad[i] = 1;
+      hm.g[i] = c.g; hm.w[i] = c.w ? 1 : 0; hm.top[i] = topKind(c.top, c.w); if (c.lava || c.made) hm.bad[i] = 1;
       if (c.made) st.made++; if (c.lava) st.lava++; if (c.w) st.water++; if (c.top === 'minecraft:grass_block') st.grass++;
       st.min = Math.min(st.min, c.g); st.max = Math.max(st.max, c.g);
       if ((z & 15) === 0) yield;
@@ -91,18 +93,17 @@ function tree(x: number, y: number, z: number, r: () => number) {
   fill(x - 2, y + h - 2, z - 2, x + 2, y + h - 1, z + 2, `${wood}_leaves`); fill(x - 1, y + h, z - 1, x + 1, y + h, z + 1, `${wood}_leaves`);
   fill(x, y, z, x, y + h - 1, z, `${wood}_log`);
 }
+/** a flat world's made-up land into the height map only (a survey: nothing is built) */
+function synthInto(g0: number, hm: HMap, seed: number) {
+  const L = synthLand(seed, AREA, CAMP);
+  for (let i = 0; i < hm.g.length; i++) { hm.g[i] = g0 + L.H[i]; hm.w[i] = L.wet[i]; hm.top[i] = L.wet[i] ? 5 : L.stone[i] ? 2 : 0; }
+  return L;
+}
 function* synth(cx: number, cz: number, g0: number, hm: HMap, seed: number): Generator<void, void, void> {
-  const hill = valueNoise(seed, 16, 8), rock = valueNoise(seed + 3, 7, 1), r = rng(seed + 5), ph = r() * 6.28, alongX = r() < 0.5, off = Math.floor(r() * 30) - 15;
-  const bank = (x: number, z: number) => { const a = alongX ? x : z, b = alongX ? z : x; return Math.abs(b - (7 * Math.sin(a / 10 + ph) + off)); };
+  const L = synthInto(g0, hm, seed), r = L.rnd, bank = L.bank;
   for (let x = -AREA; x <= AREA; x++) {
     for (let z = -AREA; z <= AREA; z++) {
-      const i = hm.i(x, z), bk = bank(x, z), camp = Math.max(Math.abs(x), Math.abs(z)) <= CAMP + 2;
-      let H = Math.max(0, Math.min(6, Math.round(hill(x + 200, z + 200) - 2.2)));
-      if (bk < 3.5 || camp) H = 0;
-      const wet = bk < 1.5 && !camp, isRock = !wet && bk >= 3.5 && !camp && rock(x + 300, z + 300) > 0.8;
-      if (isRock) H += 3;
-      hm.g[i] = g0 + H; hm.w[i] = wet ? 1 : 0;
-      const X = cx + x, Z = cz + z;
+      const i = hm.i(x, z), H = L.H[i], wet = L.wet[i] === 1, isRock = L.stone[i] === 1, X = cx + x, Z = cz + z;
       if (wet) fill(X, g0 - 1, Z, X, g0, Z, 'water');
       else if (H > 0) { fill(X, g0, Z, X, g0 + H - 1, Z, isRock ? 'stone' : 'dirt'); put(X, g0 + H, Z, isRock ? (H > 4 ? 'moss_block' : 'andesite') : 'grass_block'); }
       if ((z & 15) === 0) yield;
@@ -213,42 +214,32 @@ function spots(P = G.path): Spot[] {
   return (live.spots = out);
 }
 async function spotsJob(P: G.Path): Promise<Spot[]> { const out: Spot[] = []; await job(spotSteps(P, out)); return (live.spots = out); }
-/** rocks beside the road where the land has too few cliffs (four towers are cliff only): 3×3, two above the road's top */
-function rocks(cx: number, cz: number, rt: Route, hm: HMap, want: number, r: () => number): number {
-  let made = 0;
-  for (const k of [12, 32, 52, 70].sort(() => r() - 0.5)) {
-    if (made >= want) break;
-    const a = rt.pts[k], b = rt.pts[k + 1], horiz = a[1] === b[1];
-    const side = (horiz ? Math.sign(a[1]) : Math.sign(a[0])) || 1;   // away from the camp
-    const mx = horiz ? Math.min(a[0], b[0]) : a[0] + side * 5, mz = horiz ? a[1] + side * 5 : Math.min(a[1], b[1]);
-    const top = Math.max(rt.J[k] + 1, hm.get(mx, mz) + 2);
-    let ok = true;
-    for (let x = mx - 1; x <= mx + 1 && ok; x++) for (let z = mz - 1; z <= mz + 1; z++) if (live.road.has(`${cx + x},${cz + z}`) || hm.wet(x, z) || Math.max(Math.abs(x), Math.abs(z)) <= CAMP + 1) ok = false;
-    if (!ok) continue;
-    for (let x = mx - 1; x <= mx + 1; x++) for (let z = mz - 1; z <= mz + 1; z++) { fill(cx + x, hm.get(x, z) + 1, cz + z, cx + x, top - 1, cz + z, 'stone'); put(cx + x, top, cz + z, 'moss_block'); fill(cx + x, top + 1, cz + z, cx + x, top + 4, cz + z, 'air'); }
-    made++;
+/** rocks beside the road where the land has too few cliffs (src/road.ts rockSpots: 3×3, two above the road's top) */
+function rocks(cx: number, cz: number, at: [number, number, number][], hm: HMap): number {
+  for (const [mx, mz, top] of at) for (let x = mx - 1; x <= mx + 1; x++) for (let z = mz - 1; z <= mz + 1; z++) {
+    fill(cx + x, hm.get(x, z) + 1, cz + z, cx + x, top - 1, cz + z, 'stone'); put(cx + x, top, cz + z, 'moss_block'); fill(cx + x, top + 1, cz + z, cx + x, top + 4, cz + z, 'air');
   }
-  return made;
+  return at.length;
 }
 
 // ---------- areas: load the place, free it after ----------
-async function load(cx: number, cz: number): Promise<boolean> {
+async function load(cx: number, cz: number, id = AREA_ID): Promise<boolean> {
   const from = { x: cx - AREA - 8, y: -64, z: cz - AREA - 8 }, to = { x: cx + AREA + 8, y: 319, z: cz + AREA + 8 };
-  freeArea();
-  try { await world.tickingAreaManager.createTickingArea(AREA_ID, { dimension: dim(), from, to }); }
-  catch { try { dim().runCommand(`tickingarea add ${from.x} 0 ${from.z} ${to.x} 0 ${to.z} ${AREA_ID}`); } catch { /* full */ } }
+  freeArea(id);
+  try { await world.tickingAreaManager.createTickingArea(id, { dimension: dim(), from, to }); }
+  catch { try { dim().runCommand(`tickingarea add ${from.x} 0 ${from.z} ${to.x} 0 ${to.z} ${id}`); } catch { /* full */ } }
   for (let i = 0; i < 300; i++) {
     const ok = [[0, 0], [-AREA, -AREA], [AREA, AREA], [-AREA, AREA], [AREA, -AREA]].every(([a, b]) => { try { return dim().isChunkLoaded({ x: cx + a, y: 0, z: cz + b }) && !!dim().getTopmostBlock({ x: cx + a, z: cz + b }); } catch { return false; } });
     if (ok) return true; await sleep(5);
   }
   return false;
 }
-function freeArea() {
-  try { if (world.tickingAreaManager.hasTickingArea(AREA_ID)) world.tickingAreaManager.removeTickingArea(AREA_ID); } catch { /* older engine */ }
-  try { dim().runCommand(`tickingarea remove ${AREA_ID}`); } catch { /* none */ }
+function freeArea(id = AREA_ID) {
+  try { if (world.tickingAreaManager.hasTickingArea(id)) world.tickingAreaManager.removeTickingArea(id); } catch { /* older engine */ }
+  try { dim().runCommand(`tickingarea remove ${id}`); } catch { /* none */ }
 }
 const USED = 'tds:sites';
-const usedSites = (): [number, number][] => { try { return JSON.parse((world.getDynamicProperty(USED) as string) ?? '[]'); } catch { return []; } };
+export const usedSites = (): [number, number][] => { try { return JSON.parse((world.getDynamicProperty(USED) as string) ?? '[]'); } catch { return []; } };
 function where(seed: number): [number, number] {
   const used = usedSites(), r = rng(seed ^ 0x5bd1e995);
   for (let i = 0; i < 24; i++) {
@@ -266,7 +257,7 @@ export const wildName = (seed: number) => `Wild #${seed % 10000}`;
 function say(players: Player[], n: number) { for (const p of players) { try { p.onScreenDisplay.setActionBar({ translate: 'tds.site.searching', with: [String(Math.min(6, n)), '6'] }); } catch { /* left */ } } }
 let busy = 0, token = 0, starting = false, cinematic = true;
 export const preparing = () => busy > 0;
-export async function expedition(mode: string, players: Player[], o: { seed?: number; at?: Vector3 } = {}): Promise<string> {
+export async function expedition(mode: string, players: Player[], o: { seed?: number; at?: Vector3; surveyed?: boolean } = {}): Promise<string> {
   if (!modes[mode]) return `Modes: ${MODE_NAMES.join(' ')}`;
   if (busy) return 'An expedition is being prepared';
   if (G.M && !G.M.over) G.stop(true);
@@ -296,6 +287,8 @@ export async function expedition(mode: string, players: Player[], o: { seed?: nu
       if (!found.best) await job(planSteps(land, seed + 1, 120, 10, found));   // rough land: the same place again with a taller raised road, before going elsewhere
       const rt = found.best;
       if (!rt) { G.log('site_reject', { seed, why: 'no road fits' }); say(players, attempt + 2); continue; }
+      const apo: { a: Appraisal | null } = { a: null }; if (o.surveyed) await job(appraiseSteps(land, rt, seed, CAMP, apo));
+      const ap = apo.a;   // a surveyed place: its rocks as the survey saw them (src/scout.ts)
       // the camp stands at the middle's usual height
       const around: number[] = []; for (let x = -CAMP; x <= CAMP; x++) for (let z = -CAMP; z <= CAMP; z++) around.push(hm.get(x, z));
       const cy = around.sort((a, b) => a - b)[Math.floor(around.length / 2)], th = themeOf(mode), r = rng(seed + 11);
@@ -313,17 +306,49 @@ export async function expedition(mode: string, players: Player[], o: { seed?: nu
       posts(cx, cz, rt, hm, live.road, th.light);
       const P = new G.Path(name);
       let sp = await spotsJob(P), cliff = sp.filter((q) => q.kind === 'cliff').length;
-      if (cliff < 8) { site.stats.rocks = rocks(cx, cz, rt, hm, 4, r); sp = await spotsJob(P); cliff = sp.filter((q) => q.kind === 'cliff').length; }
+      if (ap ? ap.rocks.length > 0 : cliff < 8) { site.stats.rocks = rocks(cx, cz, ap ? ap.rocks : rockSpots(rt, land, 4, r, CAMP), hm); sp = await spotsJob(P); cliff = sp.filter((q) => q.kind === 'cliff').length; }
       const ground = sp.filter((q) => q.kind === 'ground' && P.dist(q.x + 0.5, q.z + 0.5) <= 4.5).length;
       Object.assign(site.stats, { ground, cliff });
       G.log('site_built', { name, mode, seed, x: cx, z: cz, flat, biome, theme: site.theme, pathStuds: rt.len * 2, onlyStairs: true, maxStep: Math.max(0, ...rt.h.slice(1).map((h, k) => Math.abs(h - rt.h[k]))),
-        steps: rt.steps, bridges: rt.bridges, maxFill: rt.maxFill, corners: rt.corners, cells: rt.cells.length, ground, cliff, rocks: site.stats.rocks ?? 0 });
+        steps: rt.steps, bridges: rt.bridges, maxFill: rt.maxFill, corners: rt.corners, cells: rt.cells.length, ground, cliff, rocks: site.stats.rocks ?? 0, ...(ap && { surveyed: true, stars: ap.rate.stars }) });
       try { const u = usedSites(); u.push([cx, cz]); world.setDynamicProperty(USED, JSON.stringify(u.slice(-64))); } catch { /* full */ }
       starting = true; try { G.start(mode, players, name); } finally { starting = false; }
       return `${mode}: ${name} (${rt.len * 2} studs, ${rt.steps} climbs, ${rt.bridges} bridges)`;
     }
     return 'No place for an expedition was found';
   } finally { busy--; }
+}
+
+// ---------- a survey (src/scout.ts): a place judged as its expedition would build it, without building anything ----------
+export type Survey = { ok: true; flat: boolean; hm: HMap; rt: Route; rate: Rate; rocks: [number, number, number][]; adj: number; noun: string; cy: number }
+  | { ok: false; why: string };
+let surveying = false;
+export const surveyBusy = () => surveying;
+export async function survey(cx: number, cz: number, seed: number): Promise<Survey> {
+  if (surveying) return { ok: false, why: 'busy' };
+  surveying = true;
+  try {
+    if (!(await load(cx, cz, SCOUT_ID))) return { ok: false, why: 'not loaded' };
+    const hm = new HMap(), st: Scan = { made: 0, lava: 0, water: 0, min: Infinity, max: -Infinity, grass: 0, cols: 0 };
+    await job(scan(cx, cz, hm, st));
+    const flat = st.max - st.min <= 1 && st.grass > st.cols * 0.9;
+    if (flat) synthInto(st.min, hm, seed);
+    else {
+      const why = st.lava > 10 ? 'lava' : st.made > 25 ? 'buildings' : st.water > st.cols * 0.25 ? 'water' : hm.wet(0, 0) ? 'water in the middle' : '';
+      if (why) return { ok: false, why };
+    }
+    const land = { r: AREA, ground: (x: number, z: number) => hm.get(x, z), water: (x: number, z: number) => hm.wet(x, z), blocked: (x: number, z: number) => hm.blocked(x, z) };
+    const found: { best: Route | null } = { best: null };
+    await job(planSteps(land, seed, 60, 6, found));
+    if (!found.best) await job(planSteps(land, seed + 1, 120, 10, found));
+    const rt = found.best; if (!rt) return { ok: false, why: 'no road fits' };
+    const apo: { a: Appraisal | null } = { a: null }; await job(appraiseSteps(land, rt, seed, CAMP, apo)); const ap = apo.a!;
+    const around: number[] = []; for (let x = -CAMP; x <= CAMP; x++) for (let z = -CAMP; z <= CAMP; z++) around.push(hm.get(x, z));
+    const cy = around.sort((a, b) => a - b)[Math.floor(around.length / 2)];
+    let biome = ''; try { biome = dim().getBiome({ x: cx, y: cy + 1, z: cz }).id; } catch { /* older engine */ }
+    const noun = flat ? 'plains' : NOUNS.find(([re]) => re.test(biome))?.[1] ?? 'wilds';
+    return { ok: true, flat, hm, rt, rate: ap.rate, rocks: ap.rocks, adj: ap.adj, noun, cy };
+  } finally { freeArea(SCOUT_ID); surveying = false; }
 }
 
 // ---------- arriving: a title, the wand, a fly-over of the road (skipped by sneaking, never at test speed) ----------

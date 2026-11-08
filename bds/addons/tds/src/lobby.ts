@@ -4,6 +4,7 @@ import { towers, enemies, modes, maps, expFor, rules, rewardFor, xpBoostAt, slot
 import { M, start, log, onEnd, Match } from './game';
 import { modReward } from './modifiers';
 import { expedition, preparing, wildSeed, wildName } from './site';
+import { tablePlaces, placeAt, findBySeed } from './scout';
 import { menu } from './kit';
 
 export type Obj = { do: QuestObj['do']; need: number; prog: number; tower?: string; role?: string; boss?: string; status?: string; map?: string; mode?: string; players?: number; cash?: number; hpPct?: number; loadoutMax?: number };
@@ -91,7 +92,7 @@ export function queue(p: Player, mode: string, size?: number): string {
   }
   l.players.push(p.name); log('elevator_join', { player: p.name, mode, count: l.players.length, size: l.size, map: rotates(mode) ? rotMap(mode) : null });
   if (l.players.length >= l.size) l.at = system.currentTick;
-  return `Elevator ${mode}: ${l.players.length}/${l.size}${rotates(mode) ? ` · ${rotMap(mode)}` : ''}, departs in ${Math.max(0, Math.ceil((l.at - system.currentTick) / 20))}s${l.cands.length ? ` · vote: ${l.cands.map(wildName).join(' / ')}` : ''}`;
+  return `Elevator ${mode}: ${l.players.length}/${l.size}${rotates(mode) ? ` · ${rotMap(mode)}` : ''}, departs in ${Math.max(0, Math.ceil((l.at - system.currentTick) / 20))}s${l.cands.length ? ` · vote: ${l.cands.map(placeName).join(' / ')}` : ''}`;
 }
 export function voteMap(p: Player, map: string): string {
   const l = lifts.find((x) => x.players.includes(p.name)); if (!l) return 'Not in an elevator';
@@ -101,7 +102,10 @@ export function voteMap(p: Player, map: string): string {
   l.votes[p.name] = map; log('map_vote', { player: p.name, map }); return `Voted ${map}`;
 }
 /** the intermission (Elevators page; the v1.8.0 notes: a veto may come again and again, each starts a 25 s timer) */
-const candsFor = (mode: string, round: number) => [0, 1, 2].map((k) => wildSeed(`${mode}/${round}/${k}`, period(mode)));
+/** the places offered: the war table's first (the survey birds found them: src/scout.ts), then drawn ones */
+const candsFor = (mode: string, round: number) => [...(round ? [] : tablePlaces().map((f) => f.seed)), ...[0, 1, 2].map((k) => wildSeed(`${mode}/${round}/${k}`, period(mode)))].slice(0, 3);   // a veto turns them down too
+/** a place's name in the elevator: a surveyed one with its stars */
+const placeName = (seed: number) => { const f = findBySeed(seed); return f ? `${wildName(seed)} ${'★'.repeat(f.stars)}` : wildName(seed); };
 const myLift = (p: Player) => lifts.find((x) => x.players.includes(p.name));
 export function voteWild(p: Player, n: number): string {
   const l = myLift(p); if (!l) return 'Not in an elevator';
@@ -134,7 +138,7 @@ export async function destinationMenu(p: Player) {
   const count = (v: string) => Object.values(l.votes).filter((x) => x === v).length;
   const grounds = Object.keys(maps).filter((n) => !maps[n].site);
   const items: [string, (p: Player) => unknown][] = [
-    ...l.cands.map((s, i) => [`${wildName(s)} §8(${count(`wild:${s}`)})`, (q: Player) => q.sendMessage(voteWild(q, i + 1))] as [string, (p: Player) => unknown]),
+    ...l.cands.map((s, i) => [`${placeName(s)} §8(${count(`wild:${s}`)})`, (q: Player) => q.sendMessage(voteWild(q, i + 1))] as [string, (p: Player) => unknown]),
     ...grounds.map((g) => [`§7${g} §8(${count(g)})`, (q: Player) => q.sendMessage(voteMap(q, g))] as [string, (p: Player) => unknown]),
     [`§cVeto §8(${l.veto.length}/${Math.floor(l.players.length / 2) + 1})`, (q: Player) => q.sendMessage(veto(q))],
     [`§aReady §8(${l.ready.length}/${l.players.length})`, (q: Player) => q.sendMessage(ready(q))],
@@ -160,7 +164,8 @@ system.runInterval(() => {
     if (seed !== undefined) map = wildName(seed);
     log('elevator_depart', { mode: l.mode, players: l.players, size: l.size, map });
     const lo = Object.fromEntries(ps.map((p) => [p.name, prof(p).loadout]));
-    if (seed !== undefined) void expedition(l.mode, ps, { seed }).then((r) => { if (M) M.loadouts = lo; log('expedition', { mode: l.mode, result: r }); });
+    const at = seed !== undefined ? placeAt(seed) : undefined;   // a surveyed place: there itself, as its model on the war table shows
+    if (seed !== undefined) void expedition(l.mode, ps, { seed, ...(at && { at, surveyed: true }) }).then((r) => { if (M) M.loadouts = lo; log('expedition', { mode: l.mode, result: r }); });
     else { start(l.mode, ps, map); if (M) M.loadouts = lo; }
   }
 }, 20);

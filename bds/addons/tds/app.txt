@@ -1,5 +1,5 @@
 # 本物のアプリで TDS を見る: node lab.mjs app run -a tds（GitHub では app ワークフロー: addon=tds, ref=addon/tds, mode=run）
-# 撮るもの: HUD、訓練場、遠征（到着のタイトルと空撮、拠点、入り口と出口の門、階段の曲がり角と坂、橋、真上から、道を歩く敵）
+# 撮るもの: HUD、訓練場、遠征（到着のタイトルと空撮、拠点、入り口と出口の門、階段の曲がり角と坂、橋、真上から、道を歩く敵）、測量鳥の報告と作戦卓の模型
 section title
 launch
 until title 600000
@@ -86,4 +86,18 @@ do tds:finish win
 do execute as @a run tds:siteview top
 wait 2500
 shot fireworks
+section scouting
+do tds:stop
+do execute as @a run tds:setfeathers 3
+do tp @a 0 -60 0 -90 0
+do execute as @a run tds:scout 3000
+until server "ev":"scout_report" 120000
+wait 1500
+shot scout-report
+do execute as @a run tds:table
+wait 3000
+shot war-table
+do tp @a 52 -47 15 180 55
+wait 2500
+shot war-table-model
 absent clientlog \bERROR\b
