@@ -4,14 +4,14 @@
     "name": "Tower Defense Simulator RP",
     "description": "TDSのシステム再現タワーディフェンス",
     "uuid": "56343de7-f6bb-493a-9699-86ba7e274787",
-    "version": [1, 0, 0],
+    "version": [1, 0, 1],
     "min_engine_version": [1, 26, 60]
   },
   "modules": [
     {
       "type": "resources",
       "uuid": "d8825e43-4c0f-44bc-aa4c-7557415503fe",
-      "version": [1, 0, 0]
+      "version": [1, 0, 1]
     }
   ]
 }
