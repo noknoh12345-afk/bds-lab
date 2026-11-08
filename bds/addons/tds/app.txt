@@ -89,8 +89,7 @@ shot fireworks
 section scouting
 do tds:stop
 do execute as @a run tds:setfeathers 3
-do tp @a 0 -60 0 -90 0
-do execute as @a run tds:scout 3000
+do execute as @a run tds:scout 3000 -90
 until server "ev":"scout_report" 120000
 wait 1500
 shot scout-report

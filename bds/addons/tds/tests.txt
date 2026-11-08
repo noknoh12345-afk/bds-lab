@@ -949,8 +949,7 @@ tds:stop
 tds:stop
 js world.setDynamicProperty('tds:sites', '[]')
 @A cmd /tds:setfeathers 3
-@A cmd /tp @s 0 -60 0 -90 0
-@A cmd /tds:scout 3000
+@A cmd /tds:scout 3000 -90
 until @A Found Wild #\d+ 90000
 ~ "ev":"feathers","player":"A","n":2,"why":"scout"
 ~ "ev":"scout_out","player":"A","x":3008,"z":0,"dist":3008,"dir":"e"
@@ -962,7 +961,7 @@ js (() => { const d = world.getDimension('overworld'), k = {}; for (let x = 42; 
 ~ ^campfire 1 gates [23] road [1-9]\d$
 @A cmd /tds:feathers
 = @A Feathers 2
-@A cmd /tds:scout 3000
+@A cmd /tds:scout 3010 -90
 until @A Known place: Wild #\d+ 30000
 ~ @A Known place: Wild #\d+ ★★☆☆☆
 @A cmd /tds:feathers

@@ -58,10 +58,12 @@ type Col = { g: number; w: boolean; lava: boolean; made: boolean; top: string };
 /** what a column's top is, for the war table's models: 0 grass, 1 sand, 2 stone, 3 snow, 4 earth, 5 water */
 const topKind = (id: string, w: boolean) => (w ? 5 : /grass_block|moss/.test(id) ? 0 : /sand|gravel/.test(id) ? 1 : /snow|ice/.test(id) ? 3 : /stone|andesite|diorite|granite|deepslate|tuff|calcite|basalt|blackstone|terracotta/.test(id) ? 2 : 4);
 function column(x: number, z: number): Col | null {
-  let b; try { b = dim().getTopmostBlock({ x, z }); } catch { return null; }
-  for (let i = 0; i < 48 && b && SOFT.test(b.typeId); i++) b = b.below();
-  if (!b) return null;
-  return { g: b.y, w: /water/.test(b.typeId), lava: /lava/.test(b.typeId), made: MADE.test(b.typeId), top: b.typeId };
+  try {   // (a chunk not ticking yet, or no longer: every touch of its blocks throws, not only the first)
+    let b = dim().getTopmostBlock({ x, z });
+    for (let i = 0; i < 48 && b && SOFT.test(b.typeId); i++) b = b.below();
+    if (!b) return null;
+    return { g: b.y, w: /water/.test(b.typeId), lava: /lava/.test(b.typeId), made: MADE.test(b.typeId), top: b.typeId };
+  } catch { return null; }
 }
 export class HMap {
   s = 2 * AREA + 1; g = new Int16Array(this.s * this.s); w = new Uint8Array(this.s * this.s); bad = new Uint8Array(this.s * this.s); top = new Uint8Array(this.s * this.s);
@@ -228,8 +230,10 @@ async function load(cx: number, cz: number, id = AREA_ID): Promise<boolean> {
   freeArea(id);
   try { await world.tickingAreaManager.createTickingArea(id, { dimension: dim(), from, to }); }
   catch { try { dim().runCommand(`tickingarea add ${from.x} 0 ${from.z} ${to.x} 0 ${to.z} ${id}`); } catch { /* full */ } }
+  // every chunk of the area loaded and its blocks readable (points 8 apart: none skipped), not only the corners
+  const pts: [number, number][] = []; for (let a = -AREA; a <= AREA; a += 8) for (let b = -AREA; b <= AREA; b += 8) pts.push([a, b]);
   for (let i = 0; i < 300; i++) {
-    const ok = [[0, 0], [-AREA, -AREA], [AREA, AREA], [-AREA, AREA], [AREA, -AREA]].every(([a, b]) => { try { return dim().isChunkLoaded({ x: cx + a, y: 0, z: cz + b }) && !!dim().getTopmostBlock({ x: cx + a, z: cz + b }); } catch { return false; } });
+    const ok = pts.every(([a, b]) => { try { return dim().isChunkLoaded({ x: cx + a, y: 0, z: cz + b }) && !!dim().getTopmostBlock({ x: cx + a, z: cz + b })?.typeId; } catch { return false; } });
     if (ok) return true; await sleep(5);
   }
   return false;

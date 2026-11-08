@@ -2493,15 +2493,14 @@ var MADE = /planks|glass|_bed$|door|fence|hay_block|cobblestone$|torch|lantern|b
 var NATURAL = /grass_block|dirt|podzol|mycelium|moss_block|mud|sand|gravel|snow|stone|andesite|diorite|granite|deepslate|tuff|calcite|terracotta|ice|clay|netherrack|blackstone|basalt|dripstone/;
 var topKind = (id, w) => w ? 5 : /grass_block|moss/.test(id) ? 0 : /sand|gravel/.test(id) ? 1 : /snow|ice/.test(id) ? 3 : /stone|andesite|diorite|granite|deepslate|tuff|calcite|basalt|blackstone|terracotta/.test(id) ? 2 : 4;
 function column(x, z) {
-  let b;
   try {
-    b = dim2().getTopmostBlock({ x, z });
+    let b = dim2().getTopmostBlock({ x, z });
+    for (let i = 0; i < 48 && b && SOFT.test(b.typeId); i++) b = b.below();
+    if (!b) return null;
+    return { g: b.y, w: /water/.test(b.typeId), lava: /lava/.test(b.typeId), made: MADE.test(b.typeId), top: b.typeId };
   } catch {
     return null;
   }
-  for (let i = 0; i < 48 && b && SOFT.test(b.typeId); i++) b = b.below();
-  if (!b) return null;
-  return { g: b.y, w: /water/.test(b.typeId), lava: /lava/.test(b.typeId), made: MADE.test(b.typeId), top: b.typeId };
 }
 var HMap = class {
   s = 2 * AREA + 1;
@@ -2740,10 +2739,12 @@ async function load(cx, cz, id = AREA_ID) {
     } catch {
     }
   }
+  const pts = [];
+  for (let a = -AREA; a <= AREA; a += 8) for (let b = -AREA; b <= AREA; b += 8) pts.push([a, b]);
   for (let i = 0; i < 300; i++) {
-    const ok = [[0, 0], [-AREA, -AREA], [AREA, AREA], [-AREA, AREA], [AREA, -AREA]].every(([a, b]) => {
+    const ok = pts.every(([a, b]) => {
       try {
-        return dim2().isChunkLoaded({ x: cx + a, y: 0, z: cz + b }) && !!dim2().getTopmostBlock({ x: cx + a, z: cz + b });
+        return dim2().isChunkLoaded({ x: cx + a, y: 0, z: cz + b }) && !!dim2().getTopmostBlock({ x: cx + a, z: cz + b })?.typeId;
       } catch {
         return false;
       }
