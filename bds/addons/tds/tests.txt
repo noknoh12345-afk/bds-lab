@@ -163,7 +163,10 @@ tds:hold true
 ~ @A Scout → Lv3
 tds:speed 10
 tds:hold false
-until "ev":"wave_cash","wave":1,"bonus":180 60000
+# (each until waits for the last line its checks need: a line printed right after the one waited for can be read after the next
+#  command has started on a slower server, and the checks of an until see only up to it; tools/until_race.mjs finds these)
+until "ev":"wave_clear","wave":1 60000
+~ "ev":"wave_cash","wave":1,"bonus":180
 ~ "ev":"wave_clear","wave":1,"bonus":63
 tds:speed 1
 
@@ -823,8 +826,8 @@ tds:stop
 tds:stop
 @A cmd /tds:reset
 @A cmd /tds:play Easy
-until "ev":"wave_start","wave":1 8000
-~ "ev":"narrate","key":"start","wave":1
+until "ev":"narrate","key":"start","wave":1 8000
+~ "ev":"wave_start","wave":1
 tds:finish lose
 until "ev":"narrate","key":"lose" 5000
 tds:stop
@@ -898,8 +901,8 @@ tds:stop
 until "ev":"match_start","mode":"Easy","map":"Wild #\d+" 120000
 until "ev":"scene","what":"time","wave":1,"t":1000 40000
 tds:spawn Brute
-until "ev":"scene","what":"bosscam","boss":"Brute" 5000
-~ "ev":"scene","what":"weather","w":"Rain"
+until "ev":"scene","what":"weather","w":"Rain" 5000
+~ "ev":"scene","what":"bosscam","boss":"Brute"
 tds:basehp 140
 until "ev":"scene","what":"gate","step":1 5000
 tds:basehp 40
