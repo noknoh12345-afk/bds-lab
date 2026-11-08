@@ -5,7 +5,7 @@
 ## 0. 概要
 - 目的: Roblox「Tower Defense Simulator」を Minecraft Bedrock のアドオンとして bds-lab 上で再現する。データは tds.fandom.com（数値と仕様だけ使う。wiki の文章はコピーしない）。
 - リポジトリ: `noknoh12345-afk/bds-lab`、ブランチ `addon/tds`、アドオン本体は `bds/addons/tds`。
-- すべて GitHub に push 済み（公開リポジトリ。2026-11-08 にユーザーが noknoh12345-afk でつなぎ直してから push できるようになった）。引き継ぎ zip の `addon-tds.bundle` は `ea5ff05..addon/tds` の予備。
+- すべて GitHub に push 済み（公開リポジトリ。2026-11-08 にユーザーが noknoh12345-afk でつなぎ直してから push できるようになった。最後に HUD を画像で作り直した: bca3e67、v1.0.1 = 2bdf0f5）。引き継ぎ zip の `addon-tds.bundle` は `ea5ff05..addon/tds` の予備。
 - 2026-11-08 のセッションのコミットの帰属行は `Claude-Session: https://claude.ai/code/session_01E8dAwn51Bt6hXGcwmS9ubN`。
 
 ## 1. 復元のしかた
@@ -124,6 +124,8 @@
 - `node lab.mjs check -a tds`: OK。`node tools/road_test.mjs 50`: 200 地形すべてで規則どおり。
 - 実サーバ（BDS 1.26.63.1）: 乖離の 4 機能を足した時点で 267/267。遠征の節とエレベーターの節: 32/32（道のセルがすべて階段、地面と崖への設置、再起動）。**遠征を入れた全体: 278/278**（`node lab.mjs test -a tds`）。TASK.md の受け入れ項目はすべて [x] にした。
 - 演出（scene.ts）と行き先の投票・拒否・準備を入れた全体: **303/303**。`until` の読み方の競合を直した 3 節（経済・語り部・演出）: 23/23。
+- HUD を画像で作り直して（夜）: `check` 警告 0、**`go` DONE（test 336/336、QA clean）**。HUD の節は、詰めた値（wt・misc・c1〜c3・t123・t45）、ホットバーと ItemText が隠れていること、持った枠、選んだタワーの板（tinfo・tup・tsell）、ロビーと `/tds:hud off` で戻ることを確かめる。
+  - 落とし穴: テスト用のクライアントの `@A select X` は、そのクライアントが「もう X を持っている」と思っていると何も送らない（サーバーの選んだ枠とずれていることがある）。確かめる前に別のもの（杖）を一度持たせる。
 
 ## 8. 次にやること
 0. HUD（§5 HUD）: 実機の写真で、文字の大きさ・本家との配置の差・スマホの画面（縦横比 2.0）を確かめる。肖像は 6 枚まで（タワーバー 5 ＋選んだタワー 1）。
@@ -163,3 +165,7 @@
     - 手元の全体（同じ時）は 327/328。エレベーターの節の遠征で、まだ動いていないチャンクのブロックに触れて例外が出て（道の置き場の数え上げ）、試合が始まらなかった。→ `load` は区域のチャンクを 8 ブロックおきに全部確かめる。`column` はブロックに触るところを全部守る。
     - unit go（run 42466221385 = 27deeae、BDS 1.26.61.1）: **test 328/328、QA clean、DONE**。手元の全体も 328/328。`tools/until_race.mjs` も問題なし。
     - 実機 3 回目（run 42464919727 = 27deeae）: **PASS（手順 100 個、204 秒、参加 43 秒）**。測量の報告と作戦卓の写真（scout-report、war-table、war-table-model）も Discord に届く。
+  - HUD を画像で作り直して（2026-11-08 夜、bca3e67）:
+    - unit go（run 42473918793、BDS 1.26.63.1）: **test 336/336、QA clean、DONE**。残った提案（S）: `/tds:cinematic`、`tds:slot_3`〜`tds:slot_5`、`minecraft:player` を使うテストがまだ無い。
+    - 実機 4 回目（run 42473920907、アプリと BDS 1.26.62.1）: **PASS（手順 109 個、249 秒、参加 54.5 秒）**、クライアントのエラーなし。写真と動画 27 個が Discord に届く（新しい HUD: lobby-hud、training-hud、hud-tower（タワーの板）、hud-slot-2（持った枠）、fireworks（TRIUMPH と報酬））。
+    - パックは v1.0.1 に上げた（2bdf0f5。古いパックで作ったワールドと混ざらないように）。`.mcworld` はこの版で作り直した。
