@@ -137,7 +137,7 @@
   - unit go（run 42403343936、BDS 1.26.61.1）: test 280/280、QA clean、.mcaddon の成果物。
   - 実機（run 42408059626、アプリと BDS 1.26.62.1）: **PASS（手順 74 個）**、参加 43 秒、クライアントのエラーなし。写真と動画 19 個は Discord に届く。成果物は暗号化されていて、`APP_CACHE_KEY`（または同じ `GOOGLE_AAS_TOKEN`）を `.env.local` に入れた手元で `node lab.mjs app ci watch 42408059626` を実行すると開ける。
   - シナリオで試合を始めるときは `do execute as @a run tds:play ...` を使う（アプリのチャットに打った `/tds:play` は実行されなかった。run 42403346240）。
-  - 実機 2 回目（run 42424313404、演出・投票を入れた 492de28）: **PASS（手順 87 個）**、写真と動画 22 個、クライアントのエラーなし。
+  - 実機 2 回目（run 42424313404、演出・投票を入れた 58a1e68）: **PASS（手順 87 個）**、写真と動画 22 個、クライアントのエラーなし。
   - unit go（run 42424058996 = 492de28、42424310777 = 58a1e68）: test 302/303。落ちたのは経済の節の `~ "ev":"wave_clear"`（`until "ev":"wave_cash"` の下）だけ。シミュレーションは手元と同じ（同じ敵が同じ位置で倒れている）。原因はテストの読み方: `until` は待つ行を読んだ瞬間に終わり、その下の確認はそこまでの出力しか見ない。wave_clear は同じティックで wave_cash の直後に出るが、CI では次のコマンドが始まってから読まれた。
     → 各 `until` は確認に要る最後の行を待つようにした（経済・語り部・演出の 3 か所）。見つけ方: `LAB_DUMP=<file> node lab.mjs test -a tds` → `node tools/until_race.mjs tests.txt <file>`（待つ行より後にしか無い行を確認しているところを挙げる）。
   - unit go（run 42429363974 = 1bc06fa、BDS 1.26.61.1）: **test 304/304、QA clean、DONE**（.mcaddon の成果物 unit-tds）。残った提案（S）: `/tds:cinematic` と `tds:slot_2`〜`tds:slot_5` を使うテストがまだ無い。
