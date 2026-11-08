@@ -158,9 +158,13 @@ world.afterEvents.itemUse.subscribe(({ source: p, itemStack }) => {
   if (!hitB) { p.sendMessage('Look at the ground or a cliff'); return; }
   void placeMenu(p, hitB.x, hitB.y + 1, hitB.z);
 });
+/** a tower's picture (tools/art/portraits.py: drawn from its own model) for a form's button */
+export const towerIcon = (n: string) => `textures/tdsui/towers/${n.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/^_+|_+$/g, '')}`;
 async function placeMenu(p: Player, x: number, y: number, z: number) {
   const lo = loadout(p), cash = G.M?.cash[p.name] ?? 0;
-  const i = await menu(p, '§l§6Place a tower', lo.map((n) => [`${placeCost(n) <= cash ? '§a' : '§c'}${n} §8$${placeCost(n)}`, () => 0]), `$${cash} · ${x} ${y} ${z}`);
+  const f = new ActionFormData().title('§l§6Place a tower').body(`$${cash} · ${x} ${y} ${z}`);
+  for (const n of lo) f.button(`${placeCost(n) <= cash ? '§a' : '§c'}${n} §8$${placeCost(n)}`, towerIcon(n));
+  const i = (await ask(p, f))?.selection;
   if (i === undefined) return;
   const r = G.place(p, lo[i], x, y, z); p.sendMessage(r.ok ? `Placed #${r.tower.id} ${lo[i]}` : `§cCannot place: ${r.why}`);
 }

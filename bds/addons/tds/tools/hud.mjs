@@ -1,284 +1,282 @@
-// The match HUD as GeoUI (bds/geoui: a live_player_renderer on the HUD draws planes added to minecraft:player).
-// Layout follows the original's information (wave, timer and base health at the top, boss bar, cash at the top right,
-// mode and enemy count at the top left, the tower bar at the bottom, banners in the middle); the art is original pixel art
-// drawn here. Values come from player properties (tdsui:*) that src/hud.ts sets. Run: node tools/hud.mjs
+// The match HUD as GeoUI (bds/geoui: a live_player_renderer on the HUD draws planes added to minecraft:player), laid out like
+// the original's screen: the wave, the base's health and the timer in one strip at the top, the boss bar and the skip vote under
+// it, the tower bar at the bottom (each slot the tower's own picture, its key and its price; the held one lit and raised) with
+// the cash above it, the selected tower's panel on the left, the mode and the enemies at the top left, banners in the middle.
+// The vanilla hotbar is hidden in a match (src/hud.ts): this bar takes its place.
+// Pictures, not pixel art: tools/art/hud_art.mjs (a browser draws them: hud.png, digits.png) and tools/art/portraits.py (the
+// towers' own models: towers.png). Three textures, so three geometries; the HUD's planes draw through smooth faded materials
+// whose render controllers multiply by 1.32 — the colours meant (bds/geoui/RULES.md R3.7, R3.11). A digit is ONE plane: ten
+// render controllers (one per digit 0-9) each show the digits whose value is theirs, uv_anim moving the glyph down to its row;
+// a tower's picture likewise, one controller per slot with uv_anim to its cell. Values come from the player properties
+// tdsui:* that src/hud.ts sets. Run: node tools/hud.mjs (after tools/art/hud_art.mjs and tools/art/portraits.py)
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { encodePng } from '../../../geoui/png.mjs';
+import { D, DIGIT, SPRITES, MODES, TARGETS } from './hud_layout.mjs';
 const require = createRequire(import.meta.url);
 const C = require('../../../geoui/geoui_builder.js');
 const HERE = path.dirname(new URL(import.meta.url).pathname), ADDON = path.resolve(HERE, '..');
 const NS = 'tdsui';
+const ATLAS = JSON.parse(fs.readFileSync(path.join(HERE, 'art/hud_atlas.json'), 'utf8'));
+const PORT = JSON.parse(fs.readFileSync(path.join(HERE, 'art/portraits.json'), 'utf8'));
+const png = (f) => fs.readFileSync(path.join(ADDON, 'rp/textures/tdsui', f)).toString('base64');
 
-// ---------- atlas (256 x 256, drawn pixel by pixel) ----------
-const W = 256, H = 256, px = new Uint8Array(W * H * 4);
-const set = (x, y, c) => { x |= 0; y |= 0; if (x < 0 || y < 0 || x >= W || y >= H) return; const i = (y * W + x) * 4; const a = (c[3] ?? 255) / 255, b = px[i + 3] / 255, o = a + b * (1 - a); if (!o) return; for (let k = 0; k < 3; k++) px[i + k] = Math.round((c[k] * a + px[i + k] * b * (1 - a)) / o); px[i + 3] = Math.round(o * 255); };
-const rect = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
-const round = (x, y, w, h, r, fill, border, bw = 1) => {
-  const inside = (i, j, rr) => { const cx = i < rr ? rr : i >= w - rr ? w - rr - 1 : i, cy = j < rr ? rr : j >= h - rr ? h - rr - 1 : j; return Math.hypot(i - cx, j - cy) <= rr + 0.25; };
-  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { if (!inside(i, j, r)) continue; const edge = border && (i < bw || j < bw || i >= w - bw || j >= h - bw || !inside(i, j, Math.max(0, r - bw)) && (i < r || i >= w - r) && (j < r || j >= h - r)); set(x + i, y + j, edge ? border : fill); }
-};
-const disc = (cx, cy, r, c) => { for (let j = -Math.ceil(r); j <= Math.ceil(r); j++) for (let i = -Math.ceil(r); i <= Math.ceil(r); i++) if (Math.hypot(i, j) <= r) set(cx + i, cy + j, c); };
-const ring = (cx, cy, r, t, c) => { for (let j = -Math.ceil(r); j <= Math.ceil(r); j++) for (let i = -Math.ceil(r); i <= Math.ceil(r); i++) { const d = Math.hypot(i, j); if (d <= r && d > r - t) set(cx + i, cy + j, c); } };
-const line = (x0, y0, x1, y1, c) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1); for (let k = 0; k <= n; k++) set(Math.round(x0 + ((x1 - x0) * k) / n), Math.round(y0 + ((y1 - y0) * k) / n), c); };
-// a 5x7 pixel font of our own
-const F = {
-  A: [' ### ', '#   #', '#   #', '#####', '#   #', '#   #', '#   #'], B: ['#### ', '#   #', '#   #', '#### ', '#   #', '#   #', '#### '], C: [' ####', '#    ', '#    ', '#    ', '#    ', '#    ', ' ####'],
-  D: ['#### ', '#   #', '#   #', '#   #', '#   #', '#   #', '#### '], E: ['#####', '#    ', '#    ', '#### ', '#    ', '#    ', '#####'], F: ['#####', '#    ', '#    ', '#### ', '#    ', '#    ', '#    '],
-  H: ['#   #', '#   #', '#   #', '#####', '#   #', '#   #', '#   #'], I: ['#####', '  #  ', '  #  ', '  #  ', '  #  ', '  #  ', '#####'], K: ['#   #', '#  # ', '# #  ', '##   ', '# #  ', '#  # ', '#   #'],
-  L: ['#    ', '#    ', '#    ', '#    ', '#    ', '#    ', '#####'], M: ['#   #', '## ##', '# # #', '# # #', '#   #', '#   #', '#   #'], N: ['#   #', '##  #', '# # #', '#  ##', '#   #', '#   #', '#   #'],
-  O: [' ### ', '#   #', '#   #', '#   #', '#   #', '#   #', ' ### '], P: ['#### ', '#   #', '#   #', '#### ', '#    ', '#    ', '#    '], R: ['#### ', '#   #', '#   #', '#### ', '# #  ', '#  # ', '#   #'],
-  S: [' ####', '#    ', '#    ', ' ### ', '    #', '    #', '#### '], T: ['#####', '  #  ', '  #  ', '  #  ', '  #  ', '  #  ', '  #  '], U: ['#   #', '#   #', '#   #', '#   #', '#   #', '#   #', ' ### '],
-  V: ['#   #', '#   #', '#   #', '#   #', '#   #', ' # # ', '  #  '], W: ['#   #', '#   #', '#   #', '# # #', '# # #', '## ##', '#   #'], X: ['#   #', '#   #', ' # # ', '  #  ', ' # # ', '#   #', '#   #'],
-  Y: ['#   #', '#   #', ' # # ', '  #  ', '  #  ', '  #  ', '  #  '], G: [' ####', '#    ', '#    ', '# ###', '#   #', '#   #', ' ### '],
-  1: ['  #  ', ' ##  ', '  #  ', '  #  ', '  #  ', '  #  ', ' ### '], 2: [' ### ', '#   #', '    #', '   # ', '  #  ', ' #   ', '#####'], 3: ['#### ', '    #', '    #', ' ### ', '    #', '    #', '#### '],
-  4: ['#   #', '#   #', '#   #', '#####', '    #', '    #', '    #'], 5: ['#####', '#    ', '#    ', '#### ', '    #', '    #', '#### '],
-  '/': ['    #', '   # ', '   # ', '  #  ', ' #   ', ' #   ', '#    '], '?': [' ### ', '#   #', '    #', '   # ', '  #  ', '     ', '  #  '], '!': ['  #  ', '  #  ', '  #  ', '  #  ', '  #  ', '     ', '  #  '],
-  $: [' ### ', '# # #', '# #  ', ' ### ', '  # #', '# # #', ' ### '], ' ': ['     ', '     ', '     ', '     ', '     ', '     ', '     '],
-};
-const textW = (s, k = 1) => s.length * 6 * k - k;
-const text = (s, x, y, k, c, shadow) => { [...s].forEach((ch, n) => { const g = F[ch] ?? F[' ']; g.forEach((row, j) => [...row].forEach((v, i) => { if (v !== '#') return; if (shadow) rect(x + (n * 6 + i) * k + k, y + j * k + k, k, k, shadow); rect(x + (n * 6 + i) * k, y + j * k, k, k, c); })); }); };
-
-const R = {};   // atlas regions [u, v, w, h]
-const at = (name, u, v, w, h, draw) => { R[name] = [u, v, w, h]; draw(u, v); };
-// icons (16 x 16)
-at('heart', 0, 0, 16, 16, (u, v) => { disc(u + 5, v + 6, 3.6, [220, 50, 70]); disc(u + 10, v + 6, 3.6, [220, 50, 70]); for (let j = 0; j < 7; j++) rect(u + 2 + j, v + 8 + j, 12 - 2 * j, 1, [220, 50, 70]); set(u + 4, v + 4, [255, 170, 180]); set(u + 5, v + 4, [255, 170, 180]); });
-at('clock', 16, 0, 16, 16, (u, v) => { disc(u + 8, v + 8, 7, [30, 34, 60]); ring(u + 8, v + 8, 7, 1.6, [235, 240, 255]); line(u + 8, v + 8, u + 8, v + 3, [235, 240, 255]); line(u + 8, v + 8, u + 11, v + 9, [255, 210, 90]); });
-at('coin', 32, 0, 16, 16, (u, v) => { disc(u + 8, v + 8, 7, [240, 190, 50]); ring(u + 8, v + 8, 7, 1.4, [190, 130, 20]); text('$', u + 6, v + 5, 1, [140, 90, 10]); });
-at('skull', 48, 0, 16, 16, (u, v) => { disc(u + 8, v + 7, 6, [235, 235, 225]); rect(u + 5, v + 11, 7, 3, [235, 235, 225]); disc(u + 5.5, v + 7, 1.6, [40, 20, 30]); disc(u + 10.5, v + 7, 1.6, [40, 20, 30]); for (let i = 0; i < 3; i++) rect(u + 6 + i * 2, v + 12, 1, 2, [80, 70, 70]); });
-at('enemy', 64, 0, 16, 16, (u, v) => { disc(u + 8, v + 4, 3, [120, 200, 90]); rect(u + 5, v + 7, 6, 6, [90, 160, 70]); rect(u + 5, v + 13, 2, 3, [70, 120, 60]); rect(u + 9, v + 13, 2, 3, [70, 120, 60]); set(u + 7, v + 4, [20, 30, 20]); set(u + 9, v + 4, [20, 30, 20]); });
-// role icons (16 x 16): offense, support, income, defense, cliff, spawner, hologram, freeze
-const roleArt = [
-  (u, v) => { ring(u + 8, v + 8, 6.5, 1.5, [235, 70, 60]); line(u + 8, v + 1, u + 8, v + 15, [235, 70, 60]); line(u + 1, v + 8, u + 15, v + 8, [235, 70, 60]); disc(u + 8, v + 8, 1.2, [255, 230, 120]); },
-  (u, v) => { rect(u + 6, v + 2, 4, 12, [80, 220, 120]); rect(u + 2, v + 6, 12, 4, [80, 220, 120]); rect(u + 7, v + 3, 2, 10, [190, 255, 200]); },
-  (u, v) => { for (let k = 0; k < 3; k++) { round(u + 2, v + 10 - k * 3, 12, 4, 1, [240, 190, 50], [180, 120, 20]); } },
-  (u, v) => { for (let j = 0; j < 14; j++) { const w = j < 8 ? 12 : 12 - (j - 7) * 2; rect(u + 8 - w / 2, v + 1 + j, w, 1, [70, 130, 230]); } rect(u + 7, v + 3, 2, 9, [190, 220, 255]); },
-  (u, v) => { for (let j = 0; j < 12; j++) rect(u + 8 - j * 0.6 - 1, v + 3 + j, j * 1.2 + 2, 1, j < 3 ? [240, 245, 255] : [130, 120, 110]); },
-  (u, v) => { for (let j = 0; j < 5; j++) rect(u + 3 + (4 - j), v + 2 + j, 2 * j + 2, 1, [230, 120, 50]); rect(u + 3, v + 7, 10, 8, [200, 170, 120]); rect(u + 6, v + 10, 4, 5, [90, 60, 40]); },
-  (u, v) => { for (let j = 0; j < 7; j++) { set(u + 8 - j, v + 1 + j, [90, 230, 255]); set(u + 8 + j, v + 1 + j, [90, 230, 255]); set(u + 8 - j, v + 14 - j, [90, 230, 255]); set(u + 8 + j, v + 14 - j, [90, 230, 255]); } disc(u + 8, v + 8, 1.5, [190, 250, 255]); },
-  (u, v) => { for (let k = 0; k < 3; k++) { const a = (k * Math.PI) / 3; line(u + 8 - Math.cos(a) * 6.5, v + 8 - Math.sin(a) * 6.5, u + 8 + Math.cos(a) * 6.5, v + 8 + Math.sin(a) * 6.5, [170, 220, 255]); } disc(u + 8, v + 8, 1.4, [240, 250, 255]); },
-];
-roleArt.forEach((f, k) => at(`role${k}`, k * 16, 16, 16, 16, f));
-// seven-segment strokes (solid colours, stretched over each segment)
-const SEG = { white: [235, 240, 255], yellow: [255, 214, 70], green: [110, 240, 130], gray: [150, 160, 190], gold: [255, 220, 110] };
-Object.entries(SEG).forEach(([n, c], k) => { at(`segh_${n}`, k * 8, 32, 6, 2, (u, v) => rect(u, v, 6, 2, c)); at(`segv_${n}`, k * 8 + 6, 32, 2, 6, (u, v) => rect(u, v, 2, 6, c)); });
-// gauges
-at('track', 0, 40, 64, 4, (u, v) => rect(u, v, 64, 4, [36, 38, 52, 230]));
-at('hpfill', 0, 44, 64, 4, (u, v) => { rect(u, v, 64, 4, [225, 55, 70]); rect(u, v, 64, 1, [255, 140, 150]); });
-at('bossfill', 0, 48, 64, 4, (u, v) => { rect(u, v, 64, 4, [160, 70, 225]); rect(u, v, 64, 1, [215, 160, 255]); });
-// panels (one texture pixel per model unit)
-const PANEL = [16, 22, 44, 205], EDGE = [120, 160, 225, 255];
-at('pwave', 0, 56, 100, 26, (u, v) => { round(u, v, 100, 26, 4, PANEL, EDGE); rect(u + 4, v + 1, 92, 1, [170, 200, 255, 120]); });
-at('pcash', 104, 56, 66, 14, (u, v) => round(u, v, 66, 14, 3, PANEL, [240, 200, 80, 255]));
-at('pskip', 176, 56, 40, 10, (u, v) => round(u, v, 40, 10, 3, [20, 50, 30, 210], [110, 240, 130, 255]));
-at('pboss', 0, 84, 100, 9, (u, v) => round(u, v, 100, 9, 3, [30, 14, 40, 205], [190, 110, 240, 255]));
-at('slot', 0, 96, 24, 26, (u, v) => round(u, v, 24, 26, 3, [18, 24, 46, 185], [110, 140, 200, 255]));
-at('slotsel', 24, 96, 24, 26, (u, v) => round(u, v, 24, 26, 3, [255, 220, 90, 40], [255, 214, 70, 255], 2));
-at('pbanner', 56, 96, 120, 22, (u, v) => { round(u, v, 120, 22, 5, [10, 14, 30, 200], [240, 200, 90, 255]); rect(u + 6, v + 2, 108, 1, [255, 230, 150, 110]); });
-// words
-at('wWAVE', 0, 124, textW('WAVE'), 7, (u, v) => text('WAVE', u, v, 1, [190, 210, 255]));
-at('wSKIP', 24, 124, textW('SKIP?'), 7, (u, v) => text('SKIP?', u, v, 1, [120, 255, 140]));
-at('wSLASH', 56, 124, 5, 7, (u, v) => text('/', u, v, 1, [150, 160, 190]));
-for (let i = 1; i <= 5; i++) at(`n${i}`, 64 + (i - 1) * 6, 124, 5, 7, (u, v) => text(String(i), u, v, 1, [220, 225, 240]));
-at('wTRIUMPH', 0, 134, textW('TRIUMPH!', 2), 14, (u, v) => text('TRIUMPH!', u, v, 2, [255, 215, 80], [120, 70, 10]));
-at('wDEFEAT', 96, 134, textW('DEFEAT', 2), 14, (u, v) => text('DEFEAT', u, v, 2, [255, 90, 90], [90, 10, 20]));
-at('wHIDDEN', 0, 150, textW('HIDDEN WAVE', 2), 14, (u, v) => text('HIDDEN WAVE', u, v, 2, [205, 125, 255], [50, 10, 80]));
-at('wWAVE2', 132, 150, textW('WAVE', 2), 14, (u, v) => text('WAVE', u, v, 2, [235, 240, 255], [30, 40, 90]));
-at('gem', 80, 0, 16, 16, (u, v) => { for (let j = 0; j < 7; j++) { rect(u + 8 - j, v + 2 + j, 2 * j + 1, 1, [170, 90, 240]); rect(u + 8 - (6 - j), v + 9 + j, 2 * (6 - j) + 1, 1, [130, 60, 200]); } set(u + 6, v + 5, [235, 200, 255]); set(u + 7, v + 4, [235, 200, 255]); });
-for (const [w, x, c] of [['UP', 96, [120, 255, 140]], ['SELL', 110, [255, 150, 120]], ['MAX', 136, [255, 214, 70]], ['DMG', 156, [190, 210, 255]], ['EXP', 176, [120, 200, 255]]]) at(`w${w}`, x, 124, textW(w), 7, (u, v) => text(w, u, v, 1, c));
-at('wLV', 214, 124, textW('LV'), 7, (u, v) => text('LV', u, v, 1, [255, 214, 70]));
-at('pip', 200, 124, 4, 3, (u, v) => rect(u, v, 4, 3, [255, 214, 70]));
-at('pipbg', 206, 124, 4, 3, (u, v) => rect(u, v, 4, 3, [60, 66, 90]));
-const TARGETS = [['FIRST', [70, 130, 230]], ['LAST', [130, 90, 210]], ['STRONG', [220, 70, 70]], ['WEAK', [90, 180, 110]], ['CLOSE', [230, 150, 50]], ['FAR', [60, 170, 190]], ['RANDOM', [150, 150, 160]]];
-TARGETS.forEach(([w, c], k) => at(`tg${k}`, (k % 6) * 40, 192 + Math.floor(k / 6) * 10, 40, 10, (u, v) => { round(u, v, 40, 10, 3, [...c, 230], [255, 255, 255, 180]); text(w, u + Math.floor((40 - textW(w)) / 2), v + 1.5, 1, [255, 255, 255]); }));
-at('ptower', 0, 212, 64, 44, (u, v) => { round(u, v, 64, 44, 4, PANEL, EDGE); rect(u + 4, v + 1, 56, 1, [170, 200, 255, 120]); });
-// mode badges (the order src/hud.ts sends)
-export const MODES = ['Easy', 'Casual', 'Intermediate', 'Molten', 'Fallen', 'Hardcore', 'Frost', 'Voidcore', 'Sandbox'];
-const BADGE = [['EASY', [60, 170, 80]], ['CASUAL', [40, 160, 170]], ['INTER', [60, 110, 210]], ['MOLTEN', [230, 110, 40]], ['FALLEN', [110, 60, 150]], ['HARD', [150, 30, 40]], ['FROST', [110, 180, 235]], ['VOID', [60, 30, 90]], ['SANDBOX', [200, 170, 60]]];
-BADGE.forEach(([w, c], k) => at(`mode${k}`, (k % 5) * 44, 166 + Math.floor(k / 5) * 12, 44, 12, (u, v) => { round(u, v, 44, 12, 3, [...c, 235], [255, 255, 255, 200]); text(w, u + Math.floor((44 - textW(w)) / 2), v + 2, 1, [255, 255, 255], [0, 0, 0, 120]); }));
-
-// ---------- the design (model units: x right, y up; the screen is centred on (0, 140), 176 high) ----------
-const bones = [{ name: C.ROOT, pivot: [0, C.PIVOT_Y, 0], cubes: [] }], elements = {}, pre = [];
+// ---------- the scene (model units: x right, y up; the screen centred on (0, 140), 176 high) ----------
+export const bones = [{ name: C.ROOT, pivot: [0, C.PIVOT_Y, 0], cubes: [] }], elements = {}, pre = [];
+export const digitBones = [], portraitBones = [], layout = {};   // (layout: bone → position Molang, the layout animation)
 const Z = { panel: -0.15, item: -0.3, over: -0.45, top: -0.7 };
-// alternatives drawn in one place (a badge per mode, an icon per role) never at once: each 0.015 nearer than the one before,
-// so no two of them share a plane (the lint cannot read GeoUI's visible rules)
-const ALT = 0.015;
+// the lobby's planes where the match's are, never shown with them: a depth of their own (no two faces on one plane)
+const LZ = { panel: -0.2, item: -0.55, over: -0.65 };   // (past the mode badges' -0.30..-0.42 and Z.over)
+const ALT = 0.015;   // alternatives in one place (a badge per mode) never share a plane: each a little nearer
 const bone = (name, parent, pivot, el) => { bones.push({ name, parent, pivot, cubes: [] }); if (el) elements[name] = el; return name; };
-/** a plane: lower-left (x, y), size (w, h), atlas region */
-const plane = (name, parent, x, y, w, h, reg, z = Z.item, el, pivot) => {
-  const [u, v, uw, uh] = R[reg];
-  bones.push({ name, parent, pivot: pivot ?? [x + w / 2, y + h / 2, z], cubes: [{ origin: [x, y, z], size: [w, h, 0], faces: { north: { uv: [u, v], uv_size: [uw, uh], texture: 'atlas' } } }] });
+/** a picture of hud.png at (x, y) (lower left), its size from tools/hud_layout.mjs unless given */
+function pic(name, parent, x, y, reg, z = Z.item, el, size) {
+  const [u, v, uw, uh] = ATLAS.at[reg], [w, h] = size ?? SPRITES[reg];
+  bones.push({ name, parent, pivot: [x + w / 2, y + h / 2, z], cubes: [{ origin: [x, y, z], size: [w, h, 0], faces: { north: { uv: [u + 0.5, v + 0.5], uv_size: [uw - 1, uh - 1], texture: 'hud' } } }] });
   if (el) elements[name] = el;
   return name;
-};
+}
 const P = (k) => `q.property('${NS}:${k}')`;
-/** an animated pixel icon: a plane over frame 0 of column `col` in rp/textures/tdsui/anim.png (8 frames of 16 x 16, a strip),
- * drawn by a second geometry and render controller whose uv_anim steps the frames — only GeoUI animates */
-const ANIM = [], ANIM_FRAMES = 8, ANIM_FPS = 10;
-const anim = (name, parent, x, y, w, h, col) => ANIM.push({ name, parent, x, y, w, h, col });
-// seven-segment digits: one variable per digit (−1 = blank), seven planes shown by a bit mask of the digits that light them
-const MASK = { a: 1005, b: 927, c: 1019, d: 877, e: 325, f: 881, g: 892 };
-function digits(id, parent, src, n, x, y, w, h, color, { blankZero = false, gap = 1, z = Z.item } = {}) {
-  const t = Math.max(0.6, Math.round(w * 0.22 * 10) / 10);
+const V = (k) => `v.${NS}_${k}`;
+const INSET = 1.5;   // (a glyph's plane stops short of its cell's edge: smooth sampling never reaches the next glyph)
+/** one digit: a plane over the 0 of its style's column in digits.png; the controller for its value moves it to that row */
+function digit(name, parent, x, y, h, style, v, z = Z.over) {
+  const c = DIGIT.styles.indexOf(style), w = h * DIGIT.aspect;
+  if (c < 0) throw new Error(`digit style ${style}`);
+  bones.push({ name, parent, pivot: [x + w / 2, y + h / 2, z], cubes: [{ origin: [x, y, z], size: [w, h, 0], faces: { north: { uv: [c * DIGIT.cellW + INSET, INSET], uv_size: [DIGIT.cellW - 2 * INSET, DIGIT.cellH - 2 * INSET], texture: 'digits' } } }] });
+  digitBones.push({ name, v });
+}
+/**
+ * a number of n digit planes (h tall) at x (the left of its n-digit field), y; leading zeros blank (minDigits kept); aligned
+ * left, right or centre by the layout animation (the blanks counted in pre_animation); a prefix picture ($) kept next to the
+ * first digit shown
+ */
+function number(id, parent, src, n, x, y, h, style, { align = 'left', prefix = null, minDigits = 1, z = Z.over, prefixGap = 0.3, hideZero = false } = {}) {
+  const w = h * DIGIT.aspect, step = w * DIGIT.step, pw = prefix ? SPRITES[prefix][0] + prefixGap : 0, b = V(`${id}_b`);
+  bone(id, parent, [x, y + h / 2, 0]);
+  const dg = bone(`${id}_dg`, id, [x, y + h / 2, 0]);
+  if (prefix) { bone(`${id}_pf`, id, [x, y + h / 2, 0], hideZero ? { type: 'image', visible: `${V(`${id}_n`)} > 0` } : undefined); pic(`${id}_px`, `${id}_pf`, x, y + (h - SPRITES[prefix][1]) / 2, prefix, z); }
+  // the value once, then each digit (−1: blank) and the count of blanks
+  pre.push(`${V(`${id}_n`)} = math.floor(math.max(0, ${src}));`);
+  const val = V(`${id}_n`);
   for (let k = 0; k < n; k++) {
-    const place = 10 ** (n - 1 - k), v = `v.${NS}_${id}${k}`, dx = x + k * (w + gap);
-    const blank = place > 1 ? `(${src}) < ${place}` : blankZero ? `(${src}) <= 0` : null;
-    const digit = `math.mod(math.floor(math.abs(${src})/${place}),10)`;
-    pre.push(`${v} = variable.is_paperdoll ? -1 : ${blank ? `((${blank}) ? -1 : ${digit})` : digit};`);
-    const segs = { a: [dx, y + h - t, w, t, 'h'], b: [dx + w - t, y + h / 2, t, h / 2, 'v'], c: [dx + w - t, y, t, h / 2, 'v'], d: [dx, y, w, t, 'h'], e: [dx, y, t, h / 2, 'v'], f: [dx, y + h / 2, t, h / 2, 'v'], g: [dx, y + h / 2 - t / 2, w, t, 'h'] };
-    // the upright strokes 0.03 in front of the flat ones: where two meet at a corner they never share a plane
-    for (const [s, [sx, sy, sw, sh, o]] of Object.entries(segs)) plane(`${id}${k}_${s}`, parent, sx, sy, sw, sh, `seg${o}_${color}`, o === 'v' ? z - 0.03 : z, { type: 'image', visible: `math.mod(math.floor(${MASK[s]}/math.pow(2,${v})),2) >= 1` });
+    const place = 10 ** (n - 1 - k), lead = n - 1 - k >= minDigits;   // a leading place may be blank
+    const shown = lead ? `(${val} < ${place} ? -1 : math.mod(math.floor(${val}/${place}),10))` : hideZero ? `(${val} <= 0 ? -1 : math.mod(math.floor(${val}/${place}),10))` : `math.mod(math.floor(${val}/${place}),10)`;
+    pre.push(`${V(`${id}_${k}`)} = variable.is_paperdoll ? -1 : ${shown};`);
+    digit(`${id}_${k}`, dg, x + pw + k * step, y, h, style, V(`${id}_${k}`), z - (k % 2) * 0.02);   // neighbours overlap: every other one nearer
   }
+  let blanks = '0';
+  for (let k = n - 1; k >= minDigits; k--) blanks = `(${val} < ${10 ** k} ? ${n - k} : ${blanks})`;
+  pre.push(`${b} = ${blanks};`);
+  if (align === 'left') layout[dg] = [`-${b}*${step.toFixed(4)}`, 0];
+  if (align === 'right' && prefix) layout[`${id}_pf`] = [`${b}*${step.toFixed(4)}`, 0];
+  if (align === 'center') { layout[id] = [`-${b}*${(step / 2).toFixed(4)}`, 0]; if (prefix) layout[`${id}_pf`] = [`${b}*${step.toFixed(4)}`, 0]; }
+  return { width: pw + (n - 1) * step + w, step, w };
 }
-const gauge = (name, parent, x, y, w, h, reg, source) => plane(name, parent, x, y, w, h, reg, Z.over, { type: 'gauge', gauge: { source, max: 100, fill: 'left' } }, [x, y + h / 2, Z.over]);
-const k1 = 5 / 7;   // 1-scale words: 7 px tall → 5 units
-
-// top middle: wave, timer, base health
+/** the width of a number's whole field (prefix and n digits): to put its right edge or centre where it belongs */
+const fieldW = (n, h, prefix = null, gap = 0.3) => (prefix ? SPRITES[prefix][0] + gap : 0) + (n - 1) * h * DIGIT.aspect * DIGIT.step + h * DIGIT.aspect;
+/** a tower's picture: one plane over cell 0 of towers.png; its controller moves the picture to the cell of the index */
+function portrait(name, parent, x, y, s, idx, z = Z.item) {
+  const c = PORT.cell;
+  bones.push({ name, parent, pivot: [x + s / 2, y + s / 2, z], cubes: [{ origin: [x, y, z], size: [s, s, 0], faces: { north: { uv: [2, 2], uv_size: [c - 4, c - 4], texture: 'towers' } } }] });
+  portraitBones.push({ name, idx });
+}
+/** a bar filled from the left by source (0-100): its pivot at its left end, where it grows from */
+const gauge = (name, parent, x, y, reg, source) => { const h = SPRITES[reg][1]; pic(name, parent, x, y, reg, Z.over, { type: 'gauge', gauge: { source, max: 100, fill: 'left' } }); bones.at(-1).pivot = [x, y + h / 2, Z.over]; return name; };
+const HW = C.halfWAt(C.settingsOf({ ns: NS }), 1.778);   // the half width at the reference 16:9 (anchors move with the real one)
 const INMATCH = `${P('mode')} < 15`;
-bone('wave', C.ROOT, [0, 213, 0], { type: 'image', anchor: 'top_middle', visible: INMATCH });
-plane('wave_bg', 'wave', -50, 200, 100, 26, 'pwave', Z.panel, { type: 'image', blend: 'blend' });
-plane('wave_label', 'wave', -46, 216.5, R.wWAVE[2] * k1, 5, 'wWAVE');
-digits('wv', 'wave', P('wave'), 2, -28, 215, 4, 7, 'white');
-plane('wave_slash', 'wave', -18.5, 215, 3.5, 7, 'wSLASH');
-digits('wt', 'wave', P('total'), 2, -13.5, 215, 4, 7, 'gray');
-plane('wave_clock', 'wave', 13, 215.5, 6, 6, 'clock');
-digits('tm', 'wave', P('timer'), 3, 21, 215, 4, 7, 'white');
-anim('an_heart', 'wave', -46, 203.5, 6, 6, 0);   // the heart beats (tools/art/hud_anim.py: frames; the anim layer below)
-plane('hp_track', 'wave', -38, 204.5, 56, 4, 'track', Z.item);
-gauge('hp_fill', 'wave', -38, 204.5, 56, 4, 'hpfill', `${P('hp')}/math.max(1,${P('hpmax')})*100`);
-digits('hp', 'wave', P('hp'), 3, 26.4, 203, 3.5, 6, 'white', { gap: 0.9 });
-// boss bar under it
-bone('boss', C.ROOT, [0, 194.5, 0], { type: 'image', anchor: 'top_middle', visible: `${P('boss')} > 0 && ${INMATCH}` });
-plane('boss_bg', 'boss', -50, 190, 100, 9, 'pboss', Z.panel, { type: 'image', blend: 'blend' });
-plane('boss_skull', 'boss', -46, 191.5, 6, 6, 'skull');
-plane('boss_track', 'boss', -38, 192.5, 84, 4, 'track', Z.item);
-gauge('boss_fill', 'boss', -38, 192.5, 84, 4, 'bossfill', P('boss'));
-// skip vote, under the boss bar (it would meet the cash panel beside the wave panel on narrow screens)
-bone('skip', C.ROOT, [0, 183, 0], { type: 'image', anchor: 'top_middle', visible: `math.floor(${P('sv')}/10) == 1 && ${INMATCH}` });
-plane('skip_bg', 'skip', -20, 178, 40, 10, 'pskip', Z.panel, { type: 'image', blend: 'blend' });
-plane('skip_label', 'skip', -17, 180.5, R.wSKIP[2] * k1, 5, 'wSKIP');
-digits('sv', 'skip', `math.mod(${P('sv')},10)`, 1, 11, 179.5, 3.5, 6, 'green');
-// top right: cash
-const HW = C.halfWAt(C.settingsOf({ ns: NS }), 1.778);
-bone('cash', C.ROOT, [HW - 37, 217, 0], { type: 'image', anchor: 'top_right' });   // match cash, or the coins in the lobby
-plane('cash_bg', 'cash', HW - 70, 210, 66, 14, 'pcash', Z.panel, { type: 'image', blend: 'blend' });
-anim('an_coin', 'cash', HW - 67, 213, 8, 8, 1);   // the coin turns
-digits('cs', 'cash', P('cash'), 6, HW - 54, 213.5, 4, 7, 'yellow', { gap: 1.8 });
-// top left: mode badge and the enemies on the path
-bone('info', C.ROOT, [-HW + 24, 212, 0], { type: 'image', anchor: 'top_left', visible: INMATCH });
-BADGE.forEach((_, k) => plane(`mode_${k}`, 'info', -HW + 4, 214, 40, 10.9, `mode${k}`, Z.item - ALT * k, { type: 'image', blend: 'blend', visible: `${P('mode')} == ${k}` }));
-plane('info_enemy', 'info', -HW + 4, 203, 7, 7, 'enemy');
-digits('en', 'info', P('enemies'), 3, -HW + 13, 203.5, 3.5, 6, 'white', { gap: 0.9 });
-// bottom middle: the tower bar (slots 1-5: frame, the tower's role, its cost; the held slot lit)
-bone('bar', C.ROOT, [0, 115, 0], { type: 'image', anchor: 'bottom_middle', visible: INMATCH });   // above the hotbar and the action bar
+
+// the values unpacked (src/hud.ts packs them: an entity has at most 32 properties)
+pre.push(`${V('wave')} = math.floor(${P('wt')}/100);`, `${V('total')} = math.mod(${P('wt')},100);`,
+  `${V('ens')} = math.floor(${P('eb')}/1000);`, `${V('boss')} = math.mod(${P('eb')},1000);`,
+  `${V('sel')} = math.mod(${P('misc')},8);`, `${V('votes')} = math.mod(math.floor(${P('misc')}/8),10);`, `${V('need')} = math.mod(math.floor(${P('misc')}/80),10);`, `${V('skip')} = math.floor(${P('misc')}/800);`);
+for (let i = 0; i < 5; i++) pre.push(`${V(`ti${i}`)} = math.mod(math.floor(${P(i < 3 ? 't123' : 't45')}/${100 ** (i % 3)}),100);`);
+pre.push(`${V('tsel')} = math.floor(${P('t45')}/10000);`);
+
+// ---- top middle: the wave, the base's health, the timer (the original: wave at the left of the bar, time at the right)
+bone('top', C.ROOT, [0, 214, 0], { type: 'image', anchor: 'top_middle', visible: INMATCH });
+pic('top_bg', 'top', -72, 203, 'top_panel', Z.panel);
+pic('top_wavew', 'top', -67, 216.4, 'word_wave_s');
+number('wv', 'top', V('wave'), 2, -55.5 - fieldW(2, 10), 205, 10, 'w', { align: 'right' });   // its right edge at the slash
+pic('top_slash', 'top', -55.1, 205.8, 'slash_k');
+number('wt', 'top', V('total'), 2, -52.3, 205.8, 6.6, 'k', { align: 'left' });
+pic('hp_track', 'top', -34, 207, 'hp_track', Z.item);
+gauge('hp_fill', 'top', -34, 207, 'hp_fill', `${P('hp')}/math.max(1,${P('hpmax')})*100`);
+pic('hp_heart', 'top', -42, 206, 'heart', Z.top);
+number('hc', 'top', P('hp'), 4, -7.3 - fieldW(4, 6.4), 207.8, 6.4, 'w', { align: 'right', z: Z.top });
+pic('hp_slash', 'top', -7.1, 207.7, 'slash_w', Z.top, null, [2.6, 6.4]);
+number('hm', 'top', P('hpmax'), 4, -4.3, 207.8, 6.4, 'w', { align: 'left', z: Z.top });
+pic('tm_clock', 'top', 32, 207, 'clock');
+number('tmm', 'top', `math.floor(${P('timer')}/60)`, 1, 41.2, 206.6, 8.4, 'w');
+pic('tm_colon', 'top', 46.6, 206.9, 'colon_w', Z.over, null, [2, 7.2]);
+number('tms', 'top', `math.mod(${P('timer')},60)`, 2, 48.7, 206.6, 8.4, 'w', { minDigits: 2 });
+
+// ---- boss bar under it, the skip vote under that (up in the boss bar's place when there is no boss)
+bone('boss', C.ROOT, [0, 196, 0], { type: 'image', anchor: 'top_middle', visible: `${V('boss')} > 0 && ${INMATCH}` });
+pic('boss_bg', 'boss', -56, 191, 'boss_panel', Z.panel);
+pic('boss_skull', 'boss', -53.5, 192, 'skull');
+pic('boss_word', 'boss', -44, 193.6, 'word_boss');
+pic('boss_track', 'boss', -29, 193, 'boss_track', Z.item);
+gauge('boss_fill', 'boss', -29, 193, 'boss_fill', V('boss'));
+bone('skip', C.ROOT, [0, 184, 0], { type: 'image', anchor: 'top_middle', visible: `${V('skip')} == 1 && ${INMATCH}` });
+layout.skip = [0, `(${V('boss')} > 0 ? 0 : 12)`];
+pic('skip_bg', 'skip', -35, 179, 'skip_panel', Z.panel);
+pic('skip_word', 'skip', -31.5, 181.6, 'word_skip');
+pic('skip_check', 'skip', 4, 180.8, 'check');
+number('sv', 'skip', V('votes'), 1, 12.5, 180.9, 6.2, 'w');
+pic('skip_slash', 'skip', 16.5, 181, 'slash_k', Z.over, null, [2.4, 6]);
+number('sn', 'skip', V('need'), 1, 19.1, 180.9, 6.2, 'k');
+
+// ---- top left: the mode, the enemies on the road
+bone('info', C.ROOT, [-HW + 21, 210, 0], { type: 'image', anchor: 'top_left', visible: INMATCH });
+MODES.forEach((_, k) => pic(`mode_${k}`, 'info', -HW + 4, 215.5, `mode_${k}`, Z.item - ALT * k, { type: 'image', visible: `${P('mode')} == ${k}` }));
+pic('info_enemy', 'info', -HW + 4, 205, 'enemy_pill', Z.panel);
+number('en', 'info', V('ens'), 3, -HW + 15, 206.4, 6.2, 'w');
+
+// ---- bottom middle: the tower bar (the hotbar's place) and the cash above it
+bone('bar', C.ROOT, [0, 76, 0], { type: 'image', anchor: 'bottom_middle', visible: INMATCH });
 for (let i = 0; i < 5; i++) {
-  const x0 = -64 + i * 26, y0 = 102, s = `slot${i}`;
-  bone(s, 'bar', [x0 + 12, y0 + 13, 0]);
-  plane(`${s}_bg`, s, x0, y0, 24, 26, 'slot', Z.panel, { type: 'image', blend: 'blend' });
-  plane(`${s}_sel`, s, x0, y0, 24, 26, 'slotsel', Z.top, { type: 'image', blend: 'blend', visible: `${P('sel')} == ${i + 1}` });
-  for (let k = 0; k < 8; k++) plane(`${s}_r${k}`, s, x0 + 5, y0 + 9, 14, 14, `role${k}`, Z.item - ALT * k, { type: 'image', visible: `math.mod(math.floor(${P('roles')}/${10 ** i}),10) == ${k}` });
-  plane(`${s}_n`, s, x0 + 1.6, y0 + 20.5, 2.9, 4, `n${i + 1}`, Z.over);
-  digits(`c${i}`, s, P(`c${i + 1}`), 4, x0 + 3.2, y0 + 2.2, 3.2, 5, 'green', { blankZero: true, gap: 1.2 });
+  const x0 = -74 + 30 * i, y0 = 59, s = `slot${i}`;
+  bone(s, 'bar', [x0 + 14, y0 + 16, 0]);
+  layout[s] = [0, `(${V('sel')} == ${i + 1} ? 2.5 : 0)`];   // the held slot rises, like the original's
+  pic(`${s}_bg`, s, x0, y0, 'slot', Z.panel);
+  portrait(`${s}_tw`, s, x0 + 2.5, y0 + 7.6, 23, V(`ti${i}`), Z.item);
+  pic(`${s}_lock`, s, x0 + 2, y0 + 8.5, 'slot_empty', Z.item - ALT, { type: 'image', visible: `${V(`ti${i}`)} >= 99` });
+  pic(`${s}_key`, s, x0 + 0.4, y0 + 24.6, `key_${i + 1}`, Z.top);
+  number(`c${i}`, s, P(`c${i + 1}`), 5, x0 + 14 - fieldW(5, 5.2, 'dollar_gs') / 2, y0 + 1.6, 5.2, 'g', { align: 'center', prefix: 'dollar_gs', hideZero: true });
+  pic(`${s}_sel`, s, x0 - 1, y0 - 1, 'slot_sel', Z.top - ALT, { type: 'image', visible: `${V('sel')} == ${i + 1}` });
 }
-// middle: banners (wave start, triumph, defeat, the Hidden Wave), popping in by their age (tdsui:bn = banner × 1000 + age)
+pic('cash_bg', 'bar', -26, 94, 'cash_pill', Z.panel);
+number('cs', 'bar', P('cash'), 6, -fieldW(6, 8, 'dollar_g') / 2, 95.5, 8, 'g', { align: 'center', prefix: 'dollar_g' });
+
+// ---- left: the selected tower, like the original's upgrade panel (tdsui:tinfo = 10000 + role × 1000 + level × 100 + max × 10 + targeting)
+const TI = (place) => `math.mod(math.floor(${P('tinfo')}/${place}),10)`;
+bone('tower', C.ROOT, [-HW + 40, 138, 0], { type: 'image', anchor: 'left_middle', visible: `${P('tinfo')} > 0 && ${INMATCH}` });
+pic('tw_bg', 'tower', -HW + 4, 98, 'tower_panel', Z.panel);
+portrait('tw_pic', 'tower', -HW + 8, 145, 28, V('tsel'), Z.item);
+pic('tw_lv', 'tower', -HW + 40, 165.6, 'word_lv');
+number('tl', 'tower', TI(100), 1, -HW + 48.4, 165, 7, 'y');
+for (let k = 0; k < 7; k++) pic(`tw_p${k}`, 'tower', -HW + 40 + k * 4.4, 157.5, 'pip_on', Z.item - ALT * 2, { type: 'image', visible: `${TI(100)} >= ${k + 1} && ${TI(10)} >= ${k + 1}` });
+for (let k = 0; k < 7; k++) pic(`tw_q${k}`, 'tower', -HW + 40 + k * 4.4, 157.5, 'pip_off', Z.item, { type: 'image', visible: `${TI(100)} < ${k + 1} && ${TI(10)} >= ${k + 1}` });
+pic('tw_up', 'tower', -HW + 8, 129, 'btn_up', Z.item, { type: 'image', visible: `${TI(100)} < ${TI(10)}` });
+pic('tw_max', 'tower', -HW + 8, 129, 'btn_max', Z.item - ALT, { type: 'image', visible: `${TI(100)} >= ${TI(10)}` });
+bone('tw_upc', 'tower', [-HW + 52, 135, 0], { type: 'image', visible: `${TI(100)} < ${TI(10)}` });
+number('tu', 'tw_upc', P('tup'), 5, -HW + 69 - fieldW(5, 6.8, 'dollar_w'), 131.6, 6.8, 'w', { align: 'right', prefix: 'dollar_w' });
+pic('tw_sell', 'tower', -HW + 8, 116, 'btn_sell', Z.item);
+number('ts', 'tower', P('tsell'), 5, -HW + 69 - fieldW(5, 6.6, 'dollar_w'), 118.3, 6.6, 'w', { align: 'right', prefix: 'dollar_w' });
+TARGETS.forEach((_, k) => pic(`tw_t${k}`, 'tower', -HW + 8, 103, `tg_${k}`, Z.item - ALT * k, { type: 'image', visible: `${TI(1)} == ${k}` }));
+
+// ---- middle: banners (wave start, triumph, defeat, the Hidden Wave), popping in by their age (tdsui:bn = banner × 1000 + age)
 const BN = `math.floor(${P('bn')}/1000)`;
 bone('banner', C.ROOT, [0, 161, 0], { type: 'image', anchor: 'center', visible: `${BN} > 0 && ${INMATCH}` });
 bone('banner_pop', 'banner', [0, 161, 0]);
-plane('banner_bg', 'banner_pop', -60, 150, 120, 22, 'pbanner', Z.panel, { type: 'image', blend: 'blend' });
+pic('banner_bg', 'banner_pop', -78, 146, 'banner', Z.panel);
 bone('bn_wave', 'banner_pop', [0, 161, 0], { type: 'image', visible: `${BN} == 1` });
-plane('bn_wave_w', 'bn_wave', -33, 155.5, R.wWAVE2[2] * 0.75, 10.5, 'wWAVE2', Z.item);
-digits('bw', 'bn_wave', P('wave'), 2, 6, 155, 7, 12, 'gold', { gap: 2 });
-plane('bn_win', 'banner_pop', -R.wTRIUMPH[2] * 0.375, 155.75, R.wTRIUMPH[2] * 0.75, 10.5, 'wTRIUMPH', Z.item - 3 * ALT, { type: 'image', visible: `${BN} == 2` });
-plane('bn_lose', 'banner_pop', -R.wDEFEAT[2] * 0.375, 155.75, R.wDEFEAT[2] * 0.75, 10.5, 'wDEFEAT', Z.item - 4 * ALT, { type: 'image', visible: `${BN} == 3` });
-plane('bn_hidden', 'banner_pop', -R.wHIDDEN[2] * 0.375, 155.75, R.wHIDDEN[2] * 0.75, 10.5, 'wHIDDEN', Z.item - 5 * ALT, { type: 'image', visible: `${BN} == 4` });
+pic('bn_wave_w', 'bn_wave', -39, 154, 'word_wave_b', Z.item);
+number('bw', 'bn_wave', V('wave'), 2, 2, 154, 14, 'y', { align: 'left' });
+pic('bn_win', 'banner_pop', -52, 152.5, 'word_triumph', Z.item - 3 * ALT, { type: 'image', visible: `${BN} == 2` });
+pic('bn_lose', 'banner_pop', -42, 152.5, 'word_defeat', Z.item - 4 * ALT, { type: 'image', visible: `${BN} == 3` });
+pic('bn_hidden', 'banner_pop', -58, 152.5, 'word_hidden', Z.item - 5 * ALT, { type: 'image', visible: `${BN} == 4` });
 const age = `math.mod(${P('bn')},1000)`;
-const animations = [{ name: `animation.${NS}_banner`, condition: 'q.is_in_ui', json: { loop: true, animation_length: 1, bones: { banner_pop: { scale: `math.clamp(${age}/5,0,1)*(${BN} == 1 ? math.clamp((50-${age})/8,0,1) : 1)` } } } }];
+// the result's rewards under the triumph / defeat banner (tdsui:rew = coins × 1000 + EXP; tdsui:rgems = gems)
+bone('reward', 'banner', [0, 139, 0], { type: 'image', visible: `${BN} == 2 || ${BN} == 3` });
+pic('rw_coin', 'reward', -54, 135, 'coin');
+number('rc', 'reward', `math.floor(${P('rew')}/1000)`, 4, -44.5, 135, 8, 'y');
+pic('rw_star', 'reward', -14, 135, 'star');
+number('rx', 'reward', `math.mod(${P('rew')},1000)`, 3, -4.5, 135, 8, 'b');
+pic('rw_gem', 'reward', 18, 135, 'gem');
+number('rg', 'reward', P('rgems'), 4, 27.5, 135, 8, 'p');
 
-// the result's rewards under the triumph / defeat banner (tdsui:rew = coins × 1000 + EXP)
-bone('reward', 'banner', [0, 143, 0], { type: 'image', visible: `${BN} == 2 || ${BN} == 3` });
-anim('an_rcoin', 'reward', -30, 140, 6, 6, 1);
-digits('rc', 'reward', `math.floor(${P('rew')}/1000)`, 4, -22, 140, 3.5, 6, 'yellow', { gap: 0.9 });
-plane('rw_exp', 'reward', 2, 140.5, R.wEXP[2] * k1, 5, 'wEXP', Z.item);
-digits('rx', 'reward', `math.mod(${P('rew')},1000)`, 3, 15, 140, 3.5, 6, 'white', { gap: 0.9 });
-// the selected tower, like the original's upgrade panel (tdsui:tinfo = 10000 + role × 1000 + level × 100 + max × 10 + targeting)
-const TI = (place) => `math.mod(math.floor(${P('tinfo')}/${place}),10)`;
-bone('tower', C.ROOT, [HW - 36, 140, 0], { type: 'image', anchor: 'right_middle', visible: `${P('tinfo')} > 0 && ${INMATCH}` });
-plane('tw_bg', 'tower', HW - 68, 126, 64, 36, 'ptower', Z.panel, { type: 'image', blend: 'blend' });
-for (let k = 0; k < 7; k++) {
-  plane(`tw_p${k}`, 'tower', HW - 62 + k * 6, 156.5, 4, 3, 'pip', Z.over, { type: 'image', visible: `${TI(100)} >= ${k + 1}` });
-}
-for (let k = 0; k < 7; k++) plane(`tw_t${k}`, 'tower', HW - 65, 146.5, 30, 7.5, `tg${k}`, Z.item - ALT * k, { type: 'image', blend: 'blend', visible: `${TI(1)} == ${k}` });
-plane('tw_up', 'tower', HW - 65, 138.5, R.wUP[2] * k1, 5, 'wUP', Z.item, { type: 'image', visible: `${TI(100)} < ${TI(10)}` });
-plane('tw_max', 'tower', HW - 65, 138.5, R.wMAX[2] * k1, 5, 'wMAX', Z.item - ALT, { type: 'image', visible: `${TI(100)} >= ${TI(10)}` });
-digits('tu', 'tower', P('tup'), 5, HW - 40, 138, 3.5, 6, 'green', { blankZero: true, gap: 0.9 });
-plane('tw_sell', 'tower', HW - 65, 130.5, R.wSELL[2] * k1, 5, 'wSELL', Z.item);
-digits('ts', 'tower', P('tsell'), 5, HW - 40, 130, 3.5, 6, 'yellow', { blankZero: true, gap: 0.9 });
+// ---- the lobby (mode 15): level and EXP at the top left, coins and gems at the top right (the match values reused:
+//      wt = level × 100, hp / hpmax = EXP / EXP to the next level, cash = coins, rgems = gems)
+bone('lobby', C.ROOT, [-HW + 52, 214, 0], { type: 'image', anchor: 'top_left', visible: `${P('mode')} == 15` });
+pic('lb_bg', 'lobby', -HW + 4, 204, 'lobby_panel', LZ.panel);
+pic('lb_lv', 'lobby', -HW + 7, 209, 'lv_badge', LZ.item);
+number('lv', 'lobby', V('wave'), 3, -HW + 22.5, 209.5, 9, 'y', { z: LZ.over });
+pic('lb_track', 'lobby', -HW + 41, 211.5, 'exp_track', LZ.item);
+gauge('lb_fill', 'lobby', -HW + 41, 211.5, 'exp_fill', `${P('hp')}/math.max(1,${P('hpmax')})*100`); { const b = bones.at(-1); b.pivot[2] = LZ.over + 0.05; b.cubes[0].origin[2] = LZ.over + 0.05; }
+bone('purse', C.ROOT, [HW - 35, 208, 0], { type: 'image', anchor: 'top_right', visible: `${P('mode')} == 15` });
+pic('pu_coin', 'purse', HW - 66, 214.5, 'coin_pill', LZ.panel);
+number('lc', 'purse', P('cash'), 6, HW - 54, 216, 8, 'y', { z: LZ.over });
+pic('pu_gem', 'purse', HW - 66, 202, 'gem_pill', LZ.panel);
+number('lg', 'purse', P('rgems'), 5, HW - 54, 203.5, 8, 'p', { z: LZ.over });
 
-// the lobby (mode 15): level and EXP bar at the top left, coins and gems at the top right — the match values reused
-// (wave = level, hp / hpmax = EXP / EXP to the next level, cash = coins, rgems = gems)
-bone('lobby', C.ROOT, [-HW + 49, 213, 0], { type: 'image', anchor: 'top_left', visible: `${P('mode')} == 15` });
-plane('lb_bg', 'lobby', -HW + 4, 202, 90, 22, 'pwave', Z.panel, { type: 'image', blend: 'blend' });
-const LZ = Z.item + 4 * ALT;   // the lobby's words and numbers: where the match's badge and counts are, never with them
-plane('lb_lv', 'lobby', -HW + 8, 215.5, R.wLV[2] * k1, 5, 'wLV', LZ);
-digits('lv', 'lobby', P('wave'), 3, -HW + 18, 214.5, 4, 7, 'yellow', { z: LZ });
-plane('lb_exp', 'lobby', -HW + 8, 205.5, R.wEXP[2] * k1, 5, 'wEXP', LZ);
-plane('lb_track', 'lobby', -HW + 23, 206, 66, 4, 'track', LZ);
-gauge('lb_fill', 'lobby', -HW + 23, 206, 66, 4, 'bossfill', `${P('hp')}/math.max(1,${P('hpmax')})*100`);
-bone('gems', C.ROOT, [HW - 37, 202, 0], { type: 'image', anchor: 'top_right', visible: `${P('mode')} == 15` });
-plane('gm_bg', 'gems', HW - 70, 196, 66, 12, 'pcash', Z.panel, { type: 'image', blend: 'blend' });
-anim('an_gem', 'gems', HW - 67, 198.5, 7, 7, 2);   // the gem glints
-digits('wg', 'gems', P('rgems'), 5, HW - 54, 199, 3.6, 6, 'white', { gap: 1.8 });
+// the layout animation: numbers aligned, the held slot raised, the skip vote moved up; the banner popping in
+const lay = {};
+for (const [b, [x, y]] of Object.entries(layout)) lay[b] = { position: [x, y, 0] };
+lay.banner_pop = { scale: `math.clamp(${age}/5,0,1)*(${BN} == 1 ? math.clamp((50-${age})/8,0,1) : 1)` };
+const animations = [{ name: `animation.${NS}_layout`, condition: 'q.is_in_ui', json: { loop: true, animation_length: 1, bones: lay } }];
 
-// ---------- build with GeoUICore and merge into the addon ----------
-const design = { seed: 'tds-hud', settings: { ns: NS, name: 'TDS HUD', description: 'Tower Defense Simulator match HUD', bp: true }, textures: { atlas: { name: 'hud', width: W, height: H, png: encodePng({ width: W, height: H, data: px }).toString('base64') } }, bones, elements, animations };
-const built = C.buildPack(design);
-const put = (rel, content) => { const f = path.join(ADDON, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, content); };
-// (an entity has at most 32 properties: GeoUI's 7 and these 24; small values share one property)
-const PROPS = { wave: [0, 999], total: [0, 99], timer: [0, 999], hp: [0, 99999], hpmax: [1, 99999], cash: [0, 999999], enemies: [0, 999], boss: [0, 100], mode: [0, 15], roles: [0, 99999], sel: [0, 5], c1: [0, 9999], c2: [0, 9999], c3: [0, 9999], c4: [0, 9999], c5: [0, 9999],
-  sv: [0, 19], bn: [0, 4999], tinfo: [0, 19999], tup: [0, 99999], tsell: [0, 99999], rew: [0, 9999999], rgems: [0, 99999] };
-for (const [k, v] of Object.entries(built.files)) {
-  const rel = k.replace(`${NS}_RP/`, 'rp/').replace(`${NS}_BP/`, 'bp/');
-  if (/manifest\.json$|\/texts\/|scripts\/main\.js$/.test(rel)) continue;   // the addon's own manifests, texts and script stay
-  if (rel === 'rp/entity/player.entity.json') {   // our digit variables before the transform animation reads them; the anim layer
-    const ce = JSON.parse(v), d = ce['minecraft:client_entity'].description;
-    d.scripts.pre_animation.push(...pre);
-    d.geometry[`${NS}_anim`] = `geometry.${NS}_anim`; d.textures[`${NS}_anim`] = `textures/${NS}/anim`;
-    const i = d.render_controllers.findIndex((r) => typeof r === 'object' && r[`controller.render.${NS}_hud`]);
-    d.render_controllers.splice(i + 1, 0, { [`controller.render.${NS}_anim`]: d.render_controllers[i][`controller.render.${NS}_hud`] });
-    put(rel, JSON.stringify(ce, null, 2)); continue;
-  }
-  if (rel === `rp/render_controllers/${NS}.render_controllers.json`) {   // the anim layer: same alpha as the HUD, uv_anim steps the frames
-    const rc = JSON.parse(v), hud = rc.render_controllers[`controller.render.${NS}_hud`];
-    rc.render_controllers[`controller.render.${NS}_anim`] = { geometry: `Geometry.${NS}_anim`, materials: [{ '*': `Material.${NS}_cutout` }], textures: [`Texture.${NS}_anim`],
-      uv_anim: { offset: [0, `math.mod(math.floor(q.life_time * ${ANIM_FPS}), ${ANIM_FRAMES}) / ${ANIM_FRAMES}`], scale: [1, 1] },
-      color: hud.color, is_hurt_color: hud.is_hurt_color, on_fire_color: hud.on_fire_color };
-    put(rel, JSON.stringify(rc, null, 2)); continue;
-  }
-  if (rel === 'bp/entities/player.json') {   // GeoUI's own properties (v0-v3 unused) and the HUD's values
-    const be = JSON.parse(v), pr = be['minecraft:entity'].description.properties;
-    for (const n of ['v0', 'v1', 'v2', 'v3']) delete pr[`${NS}:${n}`];
-    for (const [n, [a, b]] of Object.entries(PROPS)) pr[`${NS}:${n}`] = { client_sync: true, type: 'int', range: [a, b], default: a };
-    pr[`${NS}:alpha`].default = 0;   // hidden until a match: src/hud.ts shows it
-    put(rel, JSON.stringify(be, null, 2)); continue;
-  }
-  put(rel, typeof v === 'string' ? v : Buffer.from(v.base64, 'base64'));
+// ---------- build with GeoUICore, then the controllers of the digits and the pictures, and merge into the addon ----------
+const textures = {
+  hud: { name: 'hud', width: ATLAS.width, height: ATLAS.height, png: png('hud.png') },
+  digits: { name: 'digits', width: ATLAS.digits.width, height: ATLAS.digits.height, png: png('digits.png') },
+  towers: { name: 'towers', width: PORT.cols * PORT.cell, height: PORT.rows * PORT.cell, png: png('towers.png') },
+};
+const design = { seed: 'tds-hud', settings: { ns: NS, name: 'TDS HUD', description: 'Tower Defense Simulator match HUD', bp: true }, textures, bones, elements, animations };
+export const built = C.buildPack(design);
+// (an entity has at most 32 properties: GeoUI's 7 and these 21; small values share one property)
+export const PROPS = { wt: [0, 99999], timer: [0, 999], hp: [0, 99999], hpmax: [1, 99999], cash: [0, 999999], eb: [0, 999999], mode: [0, 15], misc: [0, 1999],
+  t123: [0, 999999], t45: [0, 999999], c1: [0, 99999], c2: [0, 99999], c3: [0, 99999], c4: [0, 99999], c5: [0, 99999],
+  bn: [0, 4999], tinfo: [0, 19999], tup: [0, 99999], tsell: [0, 99999], rew: [0, 9999999], rgems: [0, 99999] };
+const LIGHT = 1.32;   // the plane's light is 0.757: × 1.32 through the colour mask gives the colour meant (up to 236)
+const MAT = `material.${NS}_fade_s`;
+export function controllers(rc) {
+  const base = rc[`controller.render.${NS}_hud`], color = { r: LIGHT, g: LIGHT, b: LIGHT, a: base.color.a }, quiet = { is_hurt_color: base.is_hurt_color, on_fire_color: base.on_fire_color };
+  const out = {};
+  out[`controller.render.${NS}_hud`] = Object.assign({}, base, { materials: [{ '*': MAT }], color }, quiet);
+  // the digits: controller k shows each digit plane whose value is k, the glyph moved down k rows
+  for (let k = 0; k < 10; k++) out[`controller.render.${NS}_d${k}`] = { geometry: `Geometry.${NS}_digits`, materials: [{ '*': MAT }], textures: [`Texture.${NS}_digits`],
+    part_visibility: [{ '*': false }, ...digitBones.map((d) => ({ [d.name]: `${d.v} == ${k}` }))], uv_anim: { offset: [0, k / 10], scale: [1, 1] }, color, ...quiet };
+  // the towers' pictures: one controller per plane, moved to its tower's cell (99: none)
+  portraitBones.forEach((p, i) => { out[`controller.render.${NS}_p${i}`] = { geometry: `Geometry.${NS}_towers`, materials: [{ '*': MAT }], textures: [`Texture.${NS}_towers`],
+    part_visibility: [{ '*': false }, { [p.name]: `${p.idx} < 99 && !variable.is_paperdoll` }],
+    uv_anim: { offset: [`math.mod(${p.idx},${PORT.cols})/${PORT.cols}`, `math.floor(${p.idx}/${PORT.cols})/${PORT.rows}`], scale: [1, 1] }, color, ...quiet }; });
+  return out;
 }
-// the anim layer's geometry: the HUD's root and the anchors above each icon (same names, parents and pivots, so the transform
-// animation places and hides them with the HUD), and one plane per icon over frame 0 of its column
-{
-  const byName = Object.fromEntries(bones.map((b) => [b.name, b])), keep = new Map();
-  for (const a of ANIM) for (let n = a.parent; n; n = byName[n].parent) keep.set(n, byName[n]);
-  const out = [...bones.filter((b) => keep.has(b.name)).map((b) => ({ name: b.name, ...(b.parent ? { parent: b.parent } : {}), pivot: b.pivot }))];
-  for (const a of ANIM) out.push({ name: a.name, parent: a.parent, pivot: [a.x + a.w / 2, a.y + a.h / 2, Z.item - 0.02],
-    cubes: [{ origin: [a.x, a.y, Z.item - 0.02], size: [a.w, a.h, 0], uv: { north: { uv: [a.col * 16, 0], uv_size: [16, 16] } } }] });
-  put('rp/models/entity/tdsui/anim.geo.json', JSON.stringify({ format_version: '1.16.0', 'minecraft:geometry': [{ description: { identifier: `geometry.${NS}_anim`,
-    texture_width: 48, texture_height: 16 * ANIM_FRAMES, visible_bounds_width: 912, visible_bounds_height: 384, visible_bounds_offset: [0, C.PIVOT_Y, 0] }, bones: out }] }, null, 1));
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname);
+if (isMain) {
+  const put = (rel, content) => { const f = path.join(ADDON, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, content); };
+  for (const old of ['rp/textures/tdsui/anim.png', 'rp/models/entity/tdsui/anim.geo.json']) fs.rmSync(path.join(ADDON, old), { force: true });   // (the pixel-art layer is gone)
+  let rcAll = null;
+  for (const [k, v] of Object.entries(built.files)) {
+    const rel = k.replace(`${NS}_RP/`, 'rp/').replace(`${NS}_BP/`, 'bp/');
+    if (/manifest\.json$|\/texts\/|scripts\/main\.js$/.test(rel)) continue;   // the addon's own manifests, texts and script stay
+    if (rel === `rp/render_controllers/${NS}.render_controllers.json`) { rcAll = JSON.parse(v); continue; }
+    if (rel === 'rp/entity/player.entity.json') {   // our variables after GeoUI's (the transform animation reads them); the controllers
+      const ce = JSON.parse(v), d = ce['minecraft:client_entity'].description;
+      d.scripts.pre_animation.push(...pre);
+      const cond = (n) => d.render_controllers.find((r) => typeof r === 'object' && r[n]);
+      const dig = cond(`controller.render.${NS}_digits`), tow = cond(`controller.render.${NS}_towers`), c0 = dig[`controller.render.${NS}_digits`];
+      const at = d.render_controllers.indexOf(dig);
+      d.render_controllers.splice(at, 1, ...Array.from({ length: 10 }, (_, k) => ({ [`controller.render.${NS}_d${k}`]: c0 })));
+      d.render_controllers.splice(d.render_controllers.indexOf(tow), 1, ...portraitBones.map((_, i) => ({ [`controller.render.${NS}_p${i}`]: c0 })));
+      put(rel, JSON.stringify(ce, null, 2)); continue;
+    }
+    if (rel === 'rp/materials/entity.material') {   // GeoUI's, and the smooth faded one every HUD controller draws with
+      const m = JSON.parse(v), base = m.materials[`${NS}_base`];
+      m.materials[`${NS}_bases`] = Object.assign({}, base, { '+samplerStates': [{ samplerIndex: 0, textureFilter: 'Bilinear' }] });
+      m.materials[`${NS}_fade_s:${NS}_bases`] = { '+defines': ['USE_UV_ANIM', 'USE_COLOR_MASK'], '+states': ['Blending'], blendSrc: 'SourceAlpha', blendDst: 'OneMinusSrcAlpha' };
+      put(rel, JSON.stringify(m, null, 2)); continue;
+    }
+    if (rel === 'bp/entities/player.json') {   // GeoUI's own properties (v0-v3 unused) and the HUD's values
+      const be = JSON.parse(v), pr = be['minecraft:entity'].description.properties;
+      for (const n of ['v0', 'v1', 'v2', 'v3']) delete pr[`${NS}:${n}`];
+      for (const [n, [a, b]] of Object.entries(PROPS)) pr[`${NS}:${n}`] = { client_sync: true, type: 'int', range: [a, b], default: a };
+      pr[`${NS}:alpha`].default = 0;   // hidden until a match: src/hud.ts shows it
+      put(rel, JSON.stringify(be, null, 2)); continue;
+    }
+    put(rel, typeof v === 'string' ? v : Buffer.from(v.base64, 'base64'));
+  }
+  const rcFile = { format_version: rcAll.format_version, render_controllers: Object.assign({}, rcAll.render_controllers, controllers(rcAll.render_controllers)) };
+  delete rcFile.render_controllers[`controller.render.${NS}_digits`]; delete rcFile.render_controllers[`controller.render.${NS}_towers`];
+  put(`rp/render_controllers/${NS}.render_controllers.json`, JSON.stringify(rcFile, null, 2));
+  // the player's name, since the pack redefines minecraft:player
+  for (const [lang, name] of [['en_US', 'Player'], ['ja_JP', 'プレイヤー']]) {
+    const f = path.join(ADDON, 'rp/texts', `${lang}.lang`), s = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
+    if (!/^entity\.minecraft:player\.name=/m.test(s)) fs.writeFileSync(f, `${s.replace(/\n?$/, '\n')}entity.minecraft:player.name=${name}\n`);
+  }
+  fs.writeFileSync(path.join(ADDON, 'tools/hud.props.json'), JSON.stringify({ ns: NS, props: PROPS, modes: MODES, towers: PORT.names, platform: C.STUDIO.platformAspect, centerFix: C.STUDIO.centerFix }, null, 1));
+  const nCtl = 1 + 10 + portraitBones.length;
+  console.log(`HUD: ${bones.length} bones, ${Object.keys(elements).length} elements, ${digitBones.length} digit planes, ${portraitBones.length} pictures, ${nCtl} render controllers, ${Object.keys(PROPS).length + 7} player properties${built.warnings.length ? `; warnings: ${built.warnings.slice(0, 5).join(' / ')}` : ''}`);
 }
-// the player's name, since the pack redefines minecraft:player
-for (const [lang, name] of [['en_US', 'Player'], ['ja_JP', 'プレイヤー']]) {
-  const f = path.join(ADDON, 'rp/texts', `${lang}.lang`), s = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
-  if (!/^entity\.minecraft:player\.name=/m.test(s)) fs.writeFileSync(f, `${s.replace(/\n?$/, '\n')}entity.minecraft:player.name=${name}\n`);
-}
-fs.writeFileSync(path.join(ADDON, 'tools/hud.props.json'), JSON.stringify({ ns: NS, props: PROPS, modes: MODES, platform: C.STUDIO.platformAspect, centerFix: C.STUDIO.centerFix }, null, 1));
-console.log(`HUD: ${bones.length} bones, ${Object.keys(elements).length} elements, ${pre.length} digits, ${Object.keys(PROPS).length + 7} player properties${built.warnings.length ? `; warnings: ${built.warnings.slice(0, 5).join(' / ')}` : ''}`);

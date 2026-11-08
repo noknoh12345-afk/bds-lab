@@ -16,6 +16,7 @@
   git fetch /path/to/addon-tds.bundle addon/tds:addon/tds && git checkout addon/tds
   ```
 - zip に入れていないもの（どれも再取得や再生成ができる）: `bds/.lab/`（キャッシュ: vanilla サンプル、レンダー出力、サーバ作業領域）、`bds/vendor/bedrock-server.zip`（公式 BDS）、`node_modules`、`__pycache__`。
+- **遊べるワールド（.mcworld）**: ラボの平らなワールド（テストと同じ）にパックを入れたもの。`bds/addons/tds` で `python3 -I tools/world/mcworld.py ../../.lab/world ../../dist/Tower_Defense_Simulator.mcaddon <出力>.mcworld "Tower Defense Simulator"`（`.mcaddon` は `node lab.mjs pack -a tds` か CI の go の成果物。level.dat を `tools/world/bnbt.py` で読み書きし、名前・チート可・keepInventory を入れる。パックはワールドの中の behavior_packs/resource_packs と world_*_packs.json）。
 - 環境は README.md と setup.sh に従う。Node 22、Python 3 + Pillow。vanilla サンプル（`bds/.lab/samples`、Mojang/bedrock-samples の sparse checkout）はラボが自動で取る（common/core.mjs）。
 
 ## 2. ユーザーの依頼（原文）と状態
@@ -32,15 +33,16 @@
 11. 「あとgithubactionsで実機テストしてほしい勿体無いからリソースが」→「許可する」「繋ぎ直したよ」→ GitHub Actions で実サーバ（unit go 304/304）と本物のアプリ（PASS、手順 87 個）の両方が通った（§10）。
 12. 「続き」→ CI だけで落ちていたテストの読み方の競合を直した（§10）。
 13. 「より良い地形を求める何かを用意して欲しい。ただし簡単にできたら面白くないしランダムなのも面白くない。画期的なアイデアを採用して / あともうすぐ利用制限かかるため別AIに完全に引き継げるようにzipやって」→ 設計は **SURVEY.md**（測量鳥と作戦卓）。引き継ぎ zip を作って渡した。
+14. 「mcworldちょうだい / あとgeouiなんだけどドット絵ではなく画像を採用して作って画像生成して。hotbar消してuiそしてhotbarの真似をしてui全体的に見やすくして本家のui画面と同じにして」→ `.mcworld` を渡した（§1）。HUD をドット絵から生成した画像に作り直し、試合中はバニラのホットバーを消して、HUD のタワーバー（各枠にタワーの絵・キー・値段、持っている枠が浮く）をその代わりにした（§5 HUD）。
 
 ## 3. 守るべき制約（必ず守る）
-- **push しない。** add_repo の push が拒否されたので回避しない。コミットはローカルに残し、bundle で渡す。
+- **push は `addon/tds` だけ**（2026-11-08 にユーザーが許可。`/home/claude/bds-lab` の clone 経由で `noknoh12345-afk/bds-lab` へ）。main など他の枝には push しない。ドキュメントだけのコミットは `[skip ci]`。
 - **外部からダウンロードしたコードは実行しない。** 対象は `bds/ext/` に vendored した claude-pxl の pxl CLI や mcbemodelingmasterAI の forge など。代わりに自前コード（`tools/art/pix.py`、`tools/models/kit.py`）を使う。原本を動かすにはユーザーの許可が要る。
 - **モデルと絵とアニメーションはオリジナルにする。** TDS のデザインやキャラはコピーしない（動きは「何が起きるか」だけ合わせる）。バニラ資産は id やパスで参照するだけで、ファイルはコピーしない。バニラのテクスチャの画素を自作テクスチャに写さない。
 - **コミット:** `git -c user.name="ASAN10707" -c user.email="noknoh12@gmail.com" commit ...`。末尾に帰属行:
   ```
   Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-  Claude-Session: https://claude.ai/code/session_01BtsvKV48TxC2up3jzfyVww
+  Claude-Session: <そのセッションの URL>（2026-11-08 は https://claude.ai/code/session_01E8dAwn51Bt6hXGcwmS9ubN）
   ```
 - ファイルは明示して add する（`git add -A bds/addons/tds` は可）。ラボが書き換える `bds/vendor/bds-version.txt` や BDS の zip はコミットしない。
 - ユーザーへの返答は日本語で簡潔に。
@@ -53,7 +55,8 @@
 - `node lab.mjs check -a tds`: geometry の lint（z-fight・UV）と TS の型チェック。いまは警告 0（HUD も含む）。
 - `node lab.mjs test -a tds`: tests.txt を新しい実サーバで流す（約15分）。`node lab.mjs qa -a tds`、`node lab.mjs pack -a tds`（`bds/dist/Tower_Defense_Simulator.mcaddon`）。
 - `node lab.mjs run -a tds "<cmd>" ...`: 新しいワールドでコマンドを流し、全部表示する（失敗の調査用）。
-- アセット生成（`bds/addons/tds` で、この順）: `python3 -I tools/art/art.py` → `python3 -I tools/art/hud_anim.py` → `python3 -I tools/models/build.py` → `python3 -I tools/gen_assets.py` → `node tools/hud.mjs` → `python3 -I tools/models/test_models.py`
+- アセット生成（`bds/addons/tds` で、この順）: `python3 -I tools/art/art.py` → `python3 -I tools/models/build.py` → `python3 -I tools/gen_assets.py` → `python3 -I tools/art/portraits.py` → `node tools/art/hud_art.mjs` → `node tools/hud.mjs` → `python3 -I tools/models/test_models.py`（`tools/models/README.md` にも同じ順）
+- HUD のプレビュー: `node tools/hud_preview.mjs all --out <png>`（HUD 自身の Molang を GeoUICore で動かし、試合・タワー選択・ロビー・勝利の 4 状態を合成する。実機の写真は app の HUD の節）
 - プレビューと監査: `python3 -I tools/models/sheet.py <enemy|tower|unit> [--only "A,B"] [--lvl 0|N|top] [--fire] [--per N --cols N --size WxH]`（`bds/.lab/render/sheet_roster_*.png`）、`--audit --no-render`（装備が体に埋まる・刺さる・バニラの面と同一平面: 3種とも 0 件）。
 - 動きのプレビュー: `python3 -I tools/models/motion_preview.py <enemy|unit|tower> "名前,名前" --clip walk|die|fall|leave|cast|dizzy|idle|<タワーの射撃名> [--times 0,0.1,0.2] [--views left] [--pace 2.7]`（`bds/.lab/render/motion_preview.png`）。ラボのレンダラは Molang の変数を 0 として扱うので、変数を時間の式に置き換えた一時クリップを rp に置いて描き、すぐ消す。
 
@@ -85,6 +88,14 @@
 - **自然生成の世界**: `LAB_WORLD=normal LAB_SEED=1` で流した。荒れた土地では、道の計画を同じ tick で 180 案試して watchdog がサーバを止めた → 計画・地形の読み取り・置き場所を job で少しずつ。高さの計算は累積和で O(n²)。道が収まらない場所は、高架を高め（10）にしてもう一度試し、だめなら別の場所へ（アクションバーに「別の場所を探しています（n/6）」）。
 - **測量鳥と作戦卓**（`src/scout.ts`、設計と遊び方は SURVEY.md）: `/tds:scout <距離> [角度]` で、向いた方角へ鳥を放つ。行き先は 64 の格子に丸めた 1 点（同じ向きなら同じ土地）。羽を 1 枚使う（初めは 3 枚。勝ち +2、10 ウェーブ以上で負け +1）。`src/site.ts` の `survey` は、建てずに遠征と同じ手順で調べる（走査 → 平らなら synthLand → 断る理由 → 道の計画 → `appraise`: 題の語、岩、点数）。点数は `src/road.ts` の `rate`（要所 = 道 24 以上に届く地面、高台 = 16 以上に届く崖、足場 = 道から 4.5 以内の地面）と `starsOf`（tools/rate_test.mjs で合わせた: ★1 13%・★2 23%・★3 38%・★4 20%・★5 6%）。模型は訓練場の東（x 42〜114、z −10〜10。`tds_table` の常時読み込み区域）に 1/4 で、道が赤、入口の門が灯り、出口の門が魂の灯り、拠点が焚き火。看板に★・名前・方角と距離・見つけた人。エレベーターの候補は、作戦卓の土地が先（拒否すると外れる）。選ばれたら `expedition(mode, ps, { seed, at, surveyed: true })` で、その場所そのものへ行く（岩も調べたとおり。site_built に `surveyed` と `stars`）。
 
+### HUD（2026-11-08 夜。依頼 14）
+- **絵はドット絵ではなく画像**: `tools/art/hud_art.mjs` が Chromium（Playwright、`/opt/npm-tools/node_modules/playwright-core`）に SVG を描かせる。太い字（Inter Display Black、濃い縁取り）、ガラス風の板、ゲージ、ボタン、アイコン（ハート・時計・ドクロ・ゾンビ・コイン・ジェム・星・チェック・錠）。どの絵も貼る面の大きさ × D=6 px/単位でぴったり描き、2048 幅に棚詰め → `rp/textures/tdsui/hud.png`（67 枚）、`digits.png`（数字 6 色 × 10）、`tools/art/hud_atlas.json`。大きさの表は `tools/hud_layout.mjs`（SPRITES・DIGIT・MODES・TARGETS）。
+- **タワーの肖像**: `tools/art/portraits.py` が各タワー自身のモデルを正面斜めから描き（`tools/art/render_batch.mjs` → `common/model.mjs` の renderModel、背景をマゼンタで抜いて影）、`towers.png`（96 px × 10 列 × 8 行、`data/towers.json` の順）と `towers/<slug>.png`（128 px、配置フォームのボタンの絵。`src/main.ts` の `towerIcon`）を書く。
+- **組み立て**（`tools/hud.mjs`）: テクスチャごとに geometry（hud・digits・towers）。数字は 1 桁 1 面で、`pre_animation` が各桁の値を `v.tdsui_<id>_<k>` に（−1 は空白）、`controller.render.tdsui_d0..d9` がその値の面だけを見せて uv_anim で数字の行へずらす。左・右・中央そろえは空白の数だけレイアウトのアニメで動かす。肖像は `tdsui_p0..p5` が uv_anim でタワーの番号のセルへ。隣の桁は少し重なるので 1 つおきに 0.02 手前、ロビーの面は試合の面と別の奥行き（LZ）にして、`check` の z-fight 警告は 0。269 骨、render controller 17、プレイヤーのプロパティ 28（GeoUI の 7 を含む）。
+- **値の詰め方**（`src/hud.ts`、エンティティのプロパティは 32 まで）: `wt` = ウェーブ×100＋総数、`eb` = 敵の数×1000＋ボスの体力%、`misc` = 持っている枠＋8×スキップ票＋80×必要票＋800×投票中、`t123`・`t45` = 各枠のタワーの番号（2 桁ずつ、99 は空）と選んだタワーの番号、`c1..c5` = 各枠の値段、`tinfo`・`tup`・`tsell` = 選んだタワー。変わったときだけ送る。
+- **ホットバー**: 試合中は `Hotbar` と `ItemText` をほかのバニラのバー（体力・空腹・経験値など）と一緒に隠し、HUD のタワーバーが代わりに出る（キー 1〜5 とホイールはそのまま枠を選ぶ。持っている枠は浮いて金色の枠）。スマホはキーが無いので、隠すときに杖を持たせる（地面をタップで、タワーの絵が並ぶ配置フォーム）。ロビーと `/tds:hud off` では元に戻る。テストは HUD の節（`isForcedHidden`、各プロパティの値）。
+- 本家の画面の配置: 上の中央に WAVE・基地の体力・時計、その下にボスのバー、スキップ投票、左上にモードと敵の数、下の中央に所持金とタワーバー、左にタワーの板（肖像・LV・強化の点・UPGRADE/SELL/TARGET）、中央にバナー（WAVE n・TRIUMPH!・DEFEAT・Hidden）と報酬、ロビーは左上に LV と EXP、右上にコインとジェム。
+
 ### 本家との乖離を埋めたもの（2026-11-08）
 - `GAPS.md`: 乖離の一覧と、やる・やらないの振り分け。
 - 語り部（`src/narrator.ts`）、チームの合図（`src/signals.ts`、しゃがみ＋杖、`/tds:signal`）、ダメージ表示（`src/indicators.ts`、`/tds:dmgnumbers`）、ボス撃破バッジ（`src/progress.ts`、12 件）。文言はオリジナルで、ja_JP と en_US の lang にある。
@@ -92,7 +103,7 @@
 
 ## 6. ファイルマップ（bds/addons/tds）
 - `tools/models/`: `kit.py`（モデルビルダー）、`rigs.py`（バニラのリグ）、`roster*.py`（全エンティティのレシピ）、`kitbash.py`（敵の服と装備）、`tailor.py`・`arms.py`・`towerkit.py`（人型・武器）、`bodies.py`・`critters.py`・`vehicles.py`・`buildings.py`（自作の体）、`motion.py`（敵とユニットの動き）、`entities.py`（タワーの動き、エンティティ、RC）、`roster_entities.py`（敵とユニットのクライアントエンティティ）、`build.py`、`sheet.py`・`audit.mjs`（プレビューと監査）、`test_models.py`、`README.md`。`hq*.py`・`vanilla.py`・`enemies.py`・`towers.py`・`parts.py` は旧版（一部はまだ参照される）。
-- `tools/gen_assets.py`（BP エンティティとプロパティ、パーティクル、スロットアイテム、lang）、`tools/hud.mjs`（GeoUI HUD）、`tools/art/`（ドット絵）。
+- `tools/gen_assets.py`（BP エンティティとプロパティ、パーティクル、スロットアイテム、lang）、`tools/hud.mjs`（GeoUI HUD）・`tools/hud_layout.mjs`（その寸法）・`tools/hud_preview.mjs`＋`hud_preview.py`（プレビュー）、`tools/art/`（モデル用のドット絵 `art.py`、HUD の絵 `hud_art.mjs`、タワーの肖像 `portraits.py`）。
 - `src/`: `game.ts`（試合）、`abilities.ts`（タワー能力・特殊タワー）、`placement.ts`、`lobby.ts`、`progress.ts`（Hidden Wave、バッジ、Sandbox）、`skills.ts`、`modifiers.ts`、`hud.ts`、`bench.ts`、`main.ts`（コマンド）、`looks.ts`（生成）。
 - `tests.txt`（受け入れ項目）、`TASK.md`。
 
@@ -115,7 +126,8 @@
 - 演出（scene.ts）と行き先の投票・拒否・準備を入れた全体: **303/303**。`until` の読み方の競合を直した 3 節（経済・語り部・演出）: 23/23。
 
 ## 8. 次にやること
-0. 測量鳥と作戦卓（SURVEY.md）は作った（§5）。次の候補: 溜めて放つ鳥のアイテム（溜めた長さで距離）、作戦卓の模型の見た目の手直し（実機の写真: app の scouting 節）、本物の世界での★の分布の確認（`LAB_WORLD=normal`）。
+0. HUD（§5 HUD）: 実機の写真で、文字の大きさ・本家との配置の差・スマホの画面（縦横比 2.0）を確かめる。肖像は 6 枚まで（タワーバー 5 ＋選んだタワー 1）。
+   測量鳥と作戦卓（SURVEY.md）は作った（§5）。次の候補: 溜めて放つ鳥のアイテム（溜めた長さで距離）、作戦卓の模型の見た目の手直し（実機の写真: app の scouting 節）、本物の世界での★の分布の確認（`LAB_WORLD=normal`）。
 1. 実機（クライアント）で見る: §9。特に、階段の曲がり角の形（内角・外角）と段差、空撮（カメラのスプライン）、門と拠点、ダメージ表示の名札、`tds:pace` に合わせた歩幅、死亡の倒れ方。
 2. 自然生成の世界で遠征を流す: `LAB_WORLD=normal LAB_SEED=1 node lab.mjs test -a tds <遠征の節だけのファイル>`（ログは `"flat":false` になる）。
 3. 計画 v2（`TDS_次セッション用プロンプト_v2.md`）の残り: 偵察隊（待ち時間の先読みと、候補の名前・★の表示）、遠征記録と今日の遠征、音楽。投票・拒否・準備と、演出（時刻・天気・霧・ボス・門の損傷・勝敗）は済み（§5 遠征）

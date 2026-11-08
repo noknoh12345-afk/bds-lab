@@ -1,14 +1,16 @@
 # TDS looks: how they are made
 
-Required skills (AGENTS.md): `mcbe-model-*` + `bds-models` for geometry, `pxl-pixel-art` + `pixel-art-animator` + `bds-pixel-art`
-for pixel art and its animation, `mcbe-geo-ui` for the HUD. This build is the lab's own code following them.
+Required skills (AGENTS.md): `mcbe-model-*` + `bds-models` for geometry, `pxl-pixel-art` + `bds-pixel-art`
+for the models' pixel art, `mcbe-geo-ui` + `mcbe-resource-pack-rendering` for the HUD. This build is the lab's own code following them.
 
 ```
 python3 tools/art/art.py           # pixel art: faces and emblems the models sample, slot icons, particles, pack icon
-python3 tools/art/hud_anim.py      # the GeoUI HUD's animated icons: an 8-frame strip (only GeoUI animates)
 python3 tools/models/build.py      # every look, client entities, render controllers, animations, src/looks.ts (--check: stale?)
 python3 tools/gen_assets.py        # ghost tints, particles, slot items, behaviour entities (their properties), lang
-node tools/hud.mjs                 # the GeoUI HUD + its anim layer (uv_anim flipbook)
+python3 tools/art/portraits.py     # each tower's own model drawn front 3/4: towers.png (the HUD's tower bar) + towers/<slug>.png (form icons)
+node tools/art/hud_art.mjs         # the HUD's pictures, drawn by a browser (not pixel art): hud.png, digits.png, hud_atlas.json
+node tools/hud.mjs                 # the GeoUI HUD: a geometry per texture, digits and portraits moved by uv_anim, player properties
+node tools/hud_preview.mjs all --out /tmp/hud.png   # the HUD's own Molang run on four states (match, tower, lobby, triumph)
 python3 tools/models/test_models.py   # the contract: geometries, textures, gear-vs-vanilla rigs, animated bones, pips, looks.ts
 ```
 

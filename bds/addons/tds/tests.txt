@@ -728,23 +728,50 @@ tds:finish win
 until "ev":"badge","player":"A" 5000
 tds:stop
 
-## the GeoUI match HUD like the original: wave, timer and base health, boss bar, cash, mode and enemies, the tower bar, the selected tower, banners and rewards; the lobby's level, EXP, coins and gems
+## the GeoUI match HUD like the original: wave, timer and base health, boss bar, cash, mode and enemies, the tower bar in place of the hidden hotbar (each slot the tower's picture, key and price, the held one raised), the selected tower, banners and rewards; the lobby's level, EXP, coins and gems
 tds:stop
+@A cmd /tds:reset
 @A cmd /tds:play Easy
 wait 500
 js world.getAllPlayers().find((p) => p.name === 'A').getProperty('tdsui:alpha')
 ~ 100
 js world.getAllPlayers().find((p) => p.name === 'A').getProperty('tdsui:mode')
 ~ ^0$
+@A select tds:wand
+@A select tds:slot_1
+wait 300
+js (() => { const a = p('A'); return ['wt', 'hp', 'hpmax', 'cash', 'misc', 'c1', 'c2', 'c3', 't123', 't45'].map((k) => k + '=' + a.getProperty('tdsui:' + k)).join(' '); })()
+~ ^wt=20 hp=200 hpmax=200 cash=500 misc=81 c1=125 c2=450 c3=0 t123=990100 t45=999999$
+js [p('A').onScreenDisplay.isForcedHidden(mc.HudElement.Hotbar), p('A').onScreenDisplay.isForcedHidden(mc.HudElement.ItemText)].join(' ')
+~ ^true true$
+@A select tds:slot_2
+wait 300
+js String(p('A').getProperty('tdsui:misc'))
+~ ^82$
+tds:hold true
+@A cmd /tds:cash 5000
+tp A -9 -60 -17
+@A cmd /tds:place Scout -9 -60 -15
+~ @A Placed #\d+ Scout
+@A interact tds:tower
+~ @A form action: title\("#\d+ Scout"\)
+wait 300
+js (() => { const a = p('A'); return ['tinfo', 'tup', 'tsell'].map((k) => k + '=' + a.getProperty('tdsui:' + k)).join(' ') + ' sel=' + Math.floor(a.getProperty('tdsui:t45') / 10000); })()
+~ ^tinfo=10040 tup=50 tsell=41 sel=0$
+@A form close
 @A cmd /tds:hud off
 ~ @A HUD off
+js String(p('A').onScreenDisplay.isForcedHidden(mc.HudElement.Hotbar))
+~ ^false$
 @A cmd /tds:hud on
 tds:stop
 wait 300
 js world.getAllPlayers().find((p) => p.name === 'A').getProperty('tdsui:mode')
 ~ 15
+js String(p('A').onScreenDisplay.isForcedHidden(mc.HudElement.Hotbar))
+~ ^false$
 
-## looks like the original: vanilla mob bodies with gear, towers turn to their target and recoil, pixel icons animated in the GeoUI HUD
+## looks like the original: vanilla mob bodies with gear, towers turn to their target and recoil
 tds:stop
 tag A add tds_dev
 @A cmd /tds:play Easy

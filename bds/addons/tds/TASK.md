@@ -1,7 +1,7 @@
 # Tower Defense Simulator
 
 ## Request
-Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki: data-driven towers/enemies/modes, waves on a path, placement, upgrades, targeting, detections, economy, lobby progression. Small original models (role-based shapes, not the game's designs), a stair-rimmed narrow lane, and the original's placement aids (hotbar slots, ghost, range rings); the match and lobby HUD drawn with GeoUI (tools/hud.mjs, original pixel art, ≤ 600 bones, 30 player properties).
+Reproduce Roblox Tower Defense Simulator's systems in Bedrock from the TDS wiki: data-driven towers/enemies/modes, waves on a path, placement, upgrades, targeting, detections, economy, lobby progression. Small original models (role-based shapes, not the game's designs), a stair-rimmed narrow lane, and the original's placement aids (hotbar slots, ghost, range rings); the match and lobby HUD drawn with GeoUI (tools/hud.mjs: generated pictures, not pixel art — tools/art/hud_art.mjs and the towers' own portraits; the vanilla hotbar hidden and the tower bar in its place; ≤ 600 bones, 28 player properties).
 
 Expeditions (2026-11-08, the user's request): no built maps for the lobby's matches — each goes to a new place far out in the world and is fought on the land as it is there (a made-up land on a flat world); a road of stair blocks only, two rows back to back whose upper halves make a one-block top the enemies cross; an entrance gate, an exit gate (the base) and a camp in the middle; the original's numbers kept (170 studs). The two traced maps stay as training grounds. Gaps to the original listed in GAPS.md.
 
@@ -33,8 +33,8 @@ Expeditions (2026-11-08, the user's request): no built maps for the lobby's matc
 - [x] match modifiers from their pages: effects (Glass, Broke, Inflation, Fog, Healthy, Speedy, ...) and the reward boosts
 - [x] placement like the original: loadout slots 1-5 in the hotbar, a ghost and range ring where you look, cost and limit on the bar; the path is a narrow lane rimmed with stairs
 - [x] badges from the mode pages: a triumph badge rewards once
-- [x] the GeoUI match HUD like the original: wave, timer and base health, boss bar, cash, mode and enemies, the tower bar, the selected tower, banners and rewards; the lobby's level, EXP, coins and gems
-- [x] looks like the original: vanilla mob bodies with gear, towers turn to their target and recoil, pixel icons animated in the GeoUI HUD
+- [x] the GeoUI match HUD like the original: wave, timer and base health, boss bar, cash, mode and enemies, the tower bar in place of the hidden hotbar (each slot the tower's picture, key and price, the held one raised), the selected tower, banners and rewards; the lobby's level, EXP, coins and gems
+- [x] looks like the original: vanilla mob bodies with gear, towers turn to their target and recoil
 - [x] load: 200 enemies and 50 towers keep 20 TPS
 - [x] expeditions: a far place in the world, a road of stair blocks only (170 studs, one step at a time), the gates and the camp; towers on the land's ground and cliffs; a restart keeps the site
 - [x] lobby elevators go on an expedition (the place changes every minute) unless the players vote for a training ground

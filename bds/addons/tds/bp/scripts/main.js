@@ -5166,6 +5166,8 @@ world7.afterEvents.playerLeave.subscribe(({ playerName }) => {
 // addons/tds/src/hud.ts
 import { world as world8, system as system8, PlatformType, HudElement, HudVisibility } from "@minecraft/server";
 var NS = "tdsui";
+var TIDX = new Map(Object.keys(towers).map((n2, i) => [n2, i]));
+var tidx = (n2) => n2 !== void 0 && TIDX.has(n2) ? TIDX.get(n2) : 99;
 var MODES = ["Easy", "Casual", "Intermediate", "Molten", "Fallen", "Hardcore", "Frost", "Voidcore", "Sandbox"];
 var ASPECT = { Desktop: 1778, Mobile: 2e3, Console: 1778 };
 var FIX = { Desktop: [-6, -278], Mobile: [-17, -526], Console: [-6, -278] };
@@ -5284,7 +5286,7 @@ function bannerNow() {
   if ((banner === 1 || banner === 4) && t - bannerAt > 100) banner = 0;
 }
 var hudOn = (p) => !!M && M.players.includes(p.name) && !prefOf(p).off;
-var HIDE = ["Health", "Hunger", "ProgressBar", "Armor", "AirBubbles", "HorseHealth"].map((n2) => HudElement[n2]).filter((x) => x !== void 0);
+var HIDE = ["Health", "Hunger", "ProgressBar", "Armor", "AirBubbles", "HorseHealth", "Hotbar", "ItemText"].map((n2) => HudElement[n2]).filter((x) => x !== void 0);
 var hidden = /* @__PURE__ */ new Set();
 function vanilla(p, hide) {
   if (hide === hidden.has(p.id)) return;
@@ -5293,6 +5295,16 @@ function vanilla(p, hide) {
     if (hide) hidden.add(p.id);
     else hidden.delete(p.id);
   } catch {
+  }
+  if (hide && platform(p) === "Mobile") {
+    try {
+      const inv2 = p.getComponent("inventory")?.container;
+      for (let i = 0; i < 9; i++) if (inv2?.getItem(i)?.typeId === "tds:wand") {
+        p.selectedSlotIndex = i;
+        break;
+      }
+    } catch {
+    }
   }
 }
 world8.afterEvents.playerLeave.subscribe(({ playerId }) => hidden.delete(playerId));
@@ -5309,7 +5321,7 @@ system8.runInterval(() => {
       if (off) continue;
       const pr = prof2(p);
       prop(p, "mode", 15);
-      prop(p, "wave", Math.min(999, pr.level));
+      prop(p, "wt", Math.min(999, pr.level) * 100);
       prop(p, "hp", Math.min(99999, Math.floor(pr.exp)));
       prop(p, "hpmax", Math.min(99999, Math.max(1, Math.ceil(expFor(pr.level + 1)))));
       prop(p, "cash", Math.min(999999, pr.coins));
@@ -5319,33 +5331,29 @@ system8.runInterval(() => {
       continue;
     }
     prop(p, "alpha", 100);
-    prop(p, "wave", Math.min(999, M2.wave));
-    prop(p, "total", Math.min(99, lastWave()));
+    prop(p, "wt", Math.min(999, M2.wave) * 100 + Math.min(99, lastWave()));
     prop(p, "timer", M2.waveEnd === Infinity ? 0 : Math.min(999, Math.max(0, Math.ceil(M2.waveEnd - M2.t))));
     prop(p, "hp", Math.min(99999, Math.max(0, M2.baseHP)));
     prop(p, "hpmax", Math.min(99999, Math.max(1, M2.maxHP)));
     prop(p, "cash", Math.min(999999, Math.max(0, Math.floor(M2.cash[p.name] ?? 0))));
-    prop(p, "enemies", Math.min(999, M2.enemies.length));
     const boss = M2.enemies.filter((e) => e.boss).sort((a, b) => b.max - a.max)[0];
-    prop(p, "boss", boss ? Math.max(1, Math.min(100, Math.ceil(boss.hp / boss.max * 100))) : 0);
+    prop(p, "eb", Math.min(999, M2.enemies.length) * 1e3 + (boss ? Math.max(1, Math.min(100, Math.ceil(boss.hp / boss.max * 100))) : 0));
     prop(p, "mode", Math.max(0, MODES.indexOf(M2.mode)));
-    const lo = M2.loadouts?.[p.name] ?? prof2(p).loadout;
-    let roles = 0;
+    const lo = M2.loadouts?.[p.name] ?? prof2(p).loadout, ti = [0, 1, 2, 3, 4].map((i) => tidx(lo[i]));
     for (let i = 0; i < 5; i++) {
       const n2 = lo[i];
-      roles += (n2 ? towerRole(n2) : 9) * 10 ** i;
-      prop(p, `c${i + 1}`, n2 ? Math.min(9999, infl(placeCost(n2)) || 0) : 0);
+      prop(p, `c${i + 1}`, n2 ? Math.min(99999, infl(placeCost(n2)) || 0) : 0);
     }
-    prop(p, "roles", roles);
     const held = p.getComponent("inventory")?.container?.getItem(p.selectedSlotIndex)?.typeId.match(/^tds:slot_([1-5])$/);
-    prop(p, "sel", held ? +held[1] : 0);
     const skip = !M2.over && !M2.inter && M2.wave > 0 && Number.isFinite(M2.skipAt) && M2.t >= M2.skipAt;
-    prop(p, "sv", (skip ? 10 : 0) + Math.min(9, M2.votes.length));
+    prop(p, "misc", (held ? +held[1] : 0) + 8 * Math.min(9, M2.votes.length) + 80 * Math.min(9, Math.max(1, M2.players.length - 1)) + (skip ? 800 : 0));
     prop(p, "bn", banner * 1e3 + Math.min(999, Math.floor((t - bannerAt) / 2)));
     const rw = M2.over ? lastReward.get(p.name) : void 0;
     prop(p, "rew", rw ? Math.min(9999, rw.coins) * 1e3 + Math.min(999, rw.exp) : 0);
     prop(p, "rgems", rw ? Math.min(9999, rw.gems) : 0);
     const tw = selectedTower(p);
+    prop(p, "t123", ti[0] + 100 * ti[1] + 1e4 * ti[2]);
+    prop(p, "t45", ti[3] + 100 * ti[4] + 1e4 * (tw ? tidx(tw.name) : 99));
     if (!tw) {
       prop(p, "tinfo", 0);
       continue;
@@ -5943,9 +5951,12 @@ world12.afterEvents.itemUse.subscribe(({ source: p, itemStack }) => {
   }
   void placeMenu(p, hitB.x, hitB.y + 1, hitB.z);
 });
+var towerIcon = (n2) => `textures/tdsui/towers/${n2.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/^_+|_+$/g, "")}`;
 async function placeMenu(p, x, y, z) {
   const lo = loadout(p), cash = M?.cash[p.name] ?? 0;
-  const i = await menu(p, "\xA7l\xA76Place a tower", lo.map((n2) => [`${placeCost(n2) <= cash ? "\xA7a" : "\xA7c"}${n2} \xA78$${placeCost(n2)}`, () => 0]), `$${cash} \xB7 ${x} ${y} ${z}`);
+  const f2 = new ActionFormData4().title("\xA7l\xA76Place a tower").body(`$${cash} \xB7 ${x} ${y} ${z}`);
+  for (const n2 of lo) f2.button(`${placeCost(n2) <= cash ? "\xA7a" : "\xA7c"}${n2} \xA78$${placeCost(n2)}`, towerIcon(n2));
+  const i = (await ask(p, f2))?.selection;
   if (i === void 0) return;
   const r = place(p, lo[i], x, y, z);
   p.sendMessage(r.ok ? `Placed #${r.tower.id} ${lo[i]}` : `\xA7cCannot place: ${r.why}`);
@@ -6249,3 +6260,6 @@ cmd("tds:stress", "Spawn enemies and towers for a load test (test)", { enemies: 
   for (let x = -30; x <= 30 && n2 < a.towers; x += 3) for (let z = -30; z <= 30 && n2 < a.towers; z += 3) if (place(p, "Scout", x, -60, z, true).ok) n2++;
   return `stress ${a.enemies} enemies ${n2} towers`;
 }, true);
+export {
+  towerIcon
+};

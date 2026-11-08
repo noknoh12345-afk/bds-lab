@@ -70,21 +70,12 @@
           ],
           "default": 0
         },
-        "tdsui:wave": {
+        "tdsui:wt": {
           "client_sync": true,
           "type": "int",
           "range": [
             0,
-            999
-          ],
-          "default": 0
-        },
-        "tdsui:total": {
-          "client_sync": true,
-          "type": "int",
-          "range": [
-            0,
-            99
+            99999
           ],
           "default": 0
         },
@@ -124,21 +115,12 @@
           ],
           "default": 0
         },
-        "tdsui:enemies": {
+        "tdsui:eb": {
           "client_sync": true,
           "type": "int",
           "range": [
             0,
-            999
-          ],
-          "default": 0
-        },
-        "tdsui:boss": {
-          "client_sync": true,
-          "type": "int",
-          "range": [
-            0,
-            100
+            999999
           ],
           "default": 0
         },
@@ -151,21 +133,30 @@
           ],
           "default": 0
         },
-        "tdsui:roles": {
+        "tdsui:misc": {
           "client_sync": true,
           "type": "int",
           "range": [
             0,
-            99999
+            1999
           ],
           "default": 0
         },
-        "tdsui:sel": {
+        "tdsui:t123": {
           "client_sync": true,
           "type": "int",
           "range": [
             0,
-            5
+            999999
+          ],
+          "default": 0
+        },
+        "tdsui:t45": {
+          "client_sync": true,
+          "type": "int",
+          "range": [
+            0,
+            999999
           ],
           "default": 0
         },
@@ -174,7 +165,7 @@
           "type": "int",
           "range": [
             0,
-            9999
+            99999
           ],
           "default": 0
         },
@@ -183,7 +174,7 @@
           "type": "int",
           "range": [
             0,
-            9999
+            99999
           ],
           "default": 0
         },
@@ -192,7 +183,7 @@
           "type": "int",
           "range": [
             0,
-            9999
+            99999
           ],
           "default": 0
         },
@@ -201,7 +192,7 @@
           "type": "int",
           "range": [
             0,
-            9999
+            99999
           ],
           "default": 0
         },
@@ -210,16 +201,7 @@
           "type": "int",
           "range": [
             0,
-            9999
-          ],
-          "default": 0
-        },
-        "tdsui:sv": {
-          "client_sync": true,
-          "type": "int",
-          "range": [
-            0,
-            19
+            99999
           ],
           "default": 0
         },

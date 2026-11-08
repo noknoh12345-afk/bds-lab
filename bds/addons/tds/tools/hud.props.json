@@ -1,13 +1,9 @@
 {
  "ns": "tdsui",
  "props": {
-  "wave": [
+  "wt": [
    0,
-   999
-  ],
-  "total": [
-   0,
-   99
+   99999
   ],
   "timer": [
    0,
@@ -25,49 +21,45 @@
    0,
    999999
   ],
-  "enemies": [
+  "eb": [
    0,
-   999
-  ],
-  "boss": [
-   0,
-   100
+   999999
   ],
   "mode": [
    0,
    15
   ],
-  "roles": [
+  "misc": [
    0,
-   99999
+   1999
   ],
-  "sel": [
+  "t123": [
    0,
-   5
+   999999
+  ],
+  "t45": [
+   0,
+   999999
   ],
   "c1": [
    0,
-   9999
+   99999
   ],
   "c2": [
    0,
-   9999
+   99999
   ],
   "c3": [
    0,
-   9999
+   99999
   ],
   "c4": [
    0,
-   9999
+   99999
   ],
   "c5": [
    0,
-   9999
-  ],
-  "sv": [
-   0,
-   19
+   99999
   ],
   "bn": [
    0,
@@ -104,6 +96,87 @@
   "Frost",
   "Voidcore",
   "Sandbox"
+ ],
+ "towers": [
+  "Scout",
+  "Sniper",
+  "Paintballer",
+  "Demoman",
+  "Boomerang",
+  "Slime Trooper",
+  "Soldier",
+  "Freezer",
+  "Assassin",
+  "Militant",
+  "Shotgunner",
+  "Hunter",
+  "Pyromancer",
+  "Ace Pilot",
+  "Medic",
+  "Farm",
+  "Electroshocker",
+  "Rocketeer",
+  "Trapper",
+  "Pulse Trooper",
+  "Military Base",
+  "Crook Boss",
+  "Commander",
+  "Warden",
+  "Cowboy",
+  "DJ Booth",
+  "Tesla",
+  "Saboteur",
+  "Minigunner",
+  "Ranger",
+  "Pursuit",
+  "Gatling Gun",
+  "Turret",
+  "Mortar",
+  "Mercenary Base",
+  "Brawler",
+  "Necromancer",
+  "Accelerator",
+  "Engineer",
+  "Hacker",
+  "Operator",
+  "Enforcer",
+  "Kingpin",
+  "Juggernaut",
+  "Golden Minigunner",
+  "Golden Pyromancer",
+  "Golden Crook Boss",
+  "Golden Scout",
+  "Golden Cowboy",
+  "Golden Soldier",
+  "Golden Demoman",
+  "Golden Snowballer",
+  "Gladiator",
+  "Commando",
+  "Slasher",
+  "Frost Blaster",
+  "Archer",
+  "Swarmer",
+  "Toxic Gunner",
+  "Sledger",
+  "Executioner",
+  "Elf Camp",
+  "Jester",
+  "Cryomancer",
+  "Hallow Punk",
+  "Harvester",
+  "Snowballer",
+  "Elementalist",
+  "Firework Technician",
+  "Biologist",
+  "Warlock",
+  "Spotlight Tech",
+  "War Machine",
+  "Mecha Base",
+  "Sentry",
+  "Twitgunner",
+  "Void Miner",
+  "Combatant",
+  "Crystallizer"
  ],
  "platform": {
   "Desktop": 1778,
