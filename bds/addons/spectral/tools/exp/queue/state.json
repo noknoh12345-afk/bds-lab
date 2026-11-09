@@ -1492,7 +1492,10 @@
   "tries": 1
  },
  "q68_speech_sentences": {
-  "status": "pending"
+  "commit": "61ef7d5",
+  "run": "42550947866",
+  "started": "2026-11-09 11:26",
+  "status": "running"
  },
  "q69_sampler_distance": {
   "status": "pending"
