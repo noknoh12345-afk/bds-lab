@@ -1,5 +1,5 @@
 import { world, system, Player, CommandPermissionLevel, CustomCommandParamType as Param, CustomCommandStatus } from '@minecraft/server';
-import { PODIUM, MIRROR, FACINGS, facingOf, yawOf, isManager } from './util.js';
+import { PODIUM, MIRROR, FACINGS, YAW, facingOf, yawOf, isManager } from './util.js';
 import { setup as setupPodium, assign, podiumAt, removePodium, restorePodiums, podiumState } from './podium.js';
 import { setup as setupMirror, windowProblem, removeMirror, restoreMirrors, mirrorState } from './mirror.js';
 import { showHud, resizeHud } from './hud.js';
@@ -86,7 +86,7 @@ function placeWith(type, label, check) {
     const at = problem;
     const from = { kind: 'command', player: selfOf(origin) };
     system.run(() => {
-      const entity = dimension.spawnEntity(type, at, { initialRotation: 0 });
+      const entity = dimension.spawnEntity(type, at, { initialRotation: YAW[turn] });
       if (type === PODIUM) setupPodium(entity, turn, from);
       else setupMirror(entity, turn, from);
     });
