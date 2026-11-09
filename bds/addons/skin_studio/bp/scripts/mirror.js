@@ -17,9 +17,10 @@ const DEPTH = 8;
 const SIDE = 6;
 const REACH = 96;
 const RISE = 48;
-const WALLS = [-1.2, -0.4, 0.4, 1.2];
-const GAP = 0.6;
-const HOLD = 0.7;
+const WALLS = [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25];
+const FACE = 0.1;
+const BACK = 0.4;
+const BODY = 0.3;
 const SPAN = 1.6;
 const PUSHED = 4;
 const CHANNELS = 4;
@@ -144,7 +145,12 @@ function adopt(entity, mirror) {
 function fence(mirror, frame) {
   const mine = mirror.dimension.getEntities({ type: WALL, location: frame.glass, maxDistance: 3 }).filter((wall) => owned(wall, mirror));
   WALLS.forEach((offset, i) => {
-    const spot = { x: frame.glass.x + frame.side.x * offset, y: frame.glass.y, z: frame.glass.z + frame.side.z * offset };
+    const middle = (FACE - BACK) / 2;
+    const spot = {
+      x: frame.glass.x + frame.side.x * offset + frame.ahead.x * middle,
+      y: frame.glass.y,
+      z: frame.glass.z + frame.side.z * offset + frame.ahead.z * middle,
+    };
     const [wall, ...extra] = mine.filter((each) => each.getDynamicProperty('ss:i') === i);
     for (const copy of extra) copy.remove();
     if (wall) {
@@ -273,9 +279,14 @@ function keepOut(mirror, frame) {
     const dz = z - frame.glass.z;
     const front = dx * frame.ahead.x + dz * frame.ahead.z;
     const across = dx * frame.side.x + dz * frame.side.z;
-    if (Math.abs(front) >= GAP || Math.abs(across) > SPAN || y < frame.glass.y - 1.8 || y > frame.glass.y + 2.9) continue;
-    const side = front < 0 ? -1 : 1;
-    const target = (way) => ({ x: x + frame.ahead.x * (way * HOLD - front), y, z: z + frame.ahead.z * (way * HOLD - front) });
+    const before = FACE + BODY;
+    const behind = -(BACK + BODY);
+    if (front >= before - 0.001 || front <= behind + 0.001 || Math.abs(across) > SPAN || y < frame.glass.y - 1.8 || y > frame.glass.y + 2.9) continue;
+    const side = front >= (FACE - BACK) / 2 ? 1 : -1;
+    const target = (way) => {
+      const to = way > 0 ? before : behind;
+      return { x: x + frame.ahead.x * (to - front), y, z: z + frame.ahead.z * (to - front) };
+    };
     const free = (spot) => [0, 1].every((up) => passable(blockAt(mirror.dimension, { x: spot.x, y: spot.y + up + 0.01, z: spot.z })));
     const spot = [target(side), target(-side)].find(free);
     if (!spot) continue;

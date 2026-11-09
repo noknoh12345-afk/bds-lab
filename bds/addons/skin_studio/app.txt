@@ -209,5 +209,97 @@ shot mirror-paused                        # 窓をふさぐと鏡は止まる: �
 do setblock 0 -59 12 air
 wait 4000
 shot mirror-resumed                       # 空けると元どおり映る
+section diag-head
+do kill @e[type=!player,type=!skin_studio:mirror,type=!skin_studio:mirror_wall,type=!skin_studio:ghost]
+do fill -2 -60 9 3 -57 11 air
+do tp @a 0.5 -60 9.6 0 0
+wait 2500
+shot head-level                           # 一人称: まっすぐ見る → 鏡の自分もこちらをまっすぐ見る
+do tp @a 0.5 -60 9.6 0 -35
+wait 1500
+shot head-up                              # 上を向く → 鏡の自分も上を向く
+do tp @a 0.5 -60 9.6 0 35
+wait 1500
+shot head-down                            # 下を向く → 鏡の自分も下を向く（顔が下がる）
+do tp @a 0.5 -60 9.6 30 0
+wait 600
+shot head-left-quick                      # 右へ 30 度振り向いた直後 → 鏡の自分の頭が向く（体はまだ）
+wait 2500
+shot head-left-later                      # しばらく後
+do tp @a 0.5 -60 9.6 -30 0
+wait 600
+shot head-right-quick
+wait 2500
+shot head-right-later
+section diag-walk
+do tp @a 0.5 -60 6.5 0 0
+wait 1500
+record start
+@A walk forward 2
+@A walk back 2
+record stop                               # 一人称で歩く: 鏡の自分の脚・腕の振り（recordings）
+do camera @a set minecraft:free pos 5.5 -58.0 7.0 facing 0.5 -59 9.5
+wait 1500
+record start
+@A walk forward 2
+@A walk back 2
+record stop                               # 横から: 本物の自分と鏡の自分の脚が同じ振り（左右反転）
+do camera @a clear
+section diag-zombie
+do difficulty normal
+do gamemode survival @a
+do effect @a resistance 120 255 true
+do effect @a regeneration 120 255 true
+do tp @a 0.5 -60 10.0 0 0
+do summon zombie 0.5 -60 2.5
+do effect @e[type=zombie] fire_resistance 120 1 true
+record start
+wait 6000
+record stop                               # 一人称で鏡だけを見る: 後ろから歩いて来るゾンビ（本物は画面外）の脚
+do tp @e[type=zombie] 0.5 -60 3.5
+do camera @a set minecraft:free pos 6.0 -58.0 8.0 facing 0.5 -59 8.0
+record start
+wait 6000
+record stop                               # 横から: 本物のゾンビと鏡のゾンビが同じ歩き
+do camera @a clear
+do kill @e[type=zombie]
+do gamemode creative @a
+do difficulty peaceful
+section diag-blocks
+do fill -2 -60 4 3 -57 11 air
+do setblock -1 -60 10 oak_stairs
+do setblock 0 -60 10 oak_slab
+do setblock 1 -60 10 oak_fence
+do setblock 2 -60 10 glass_pane
+do setblock -1 -60 9 torch
+do setblock 0 -60 9 poppy
+do setblock 1 -60 9 short_grass
+do setblock 2 -60 9 oak_leaves
+do setblock -1 -60 8 chest
+do setblock 0 -60 8 white_carpet
+do setblock 1 -60 8 lantern
+do setblock 2 -60 8 oak_trapdoor
+do setblock -2 -60 10 water
+do setblock 3 -60 10 grass_block
+do setblock 3 -59 10 oak_log
+do tp @a 0.5 -60 5.5 0 10
+wait 4000
+shot blocks-1p                            # いろいろな形のブロックが全部、左右反転で鏡に映る（床の草ブロックも）
+do camera @a set minecraft:free pos 0.5 -58.38 18.5 rot 10 180
+wait 2500
+shot blocks-truth                         # 正解: 鏡の位置で反対側から窓越しに見た本物（左右反転して blocks-1p と比べる）
+do camera @a clear
+do fill -2 -60 4 3 -57 11 air
+section diag-light
+do tp @a 0.5 -60 9.0 0 0
+do time set midnight
+wait 3000
+shot light-night                          # 夜: 鏡の自分も同じだけ暗い
+do setblock 1 -60 7 torch
+wait 2500
+shot light-torch                          # たいまつのそば: 鏡の自分もたいまつで照らされる
+do setblock 1 -60 7 air
+do time set noon
+wait 1500
 section done
 absent clientlog \bERROR\b                # コンテンツログに、パック・JSON UI・スクリプトのエラーが無い

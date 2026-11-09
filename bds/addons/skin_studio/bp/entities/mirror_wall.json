@@ -41,7 +41,7 @@
         ]
       },
       "minecraft:collision_box": {
-        "width": 0.8,
+        "width": 0.5,
         "height": 3.0
       },
       "minecraft:is_collidable": {}
