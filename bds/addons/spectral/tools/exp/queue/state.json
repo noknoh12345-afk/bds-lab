@@ -1825,6 +1825,9 @@
   "tries": 1
  },
  "q91_speaker_head3d_mid": {
-  "status": "pending"
+  "commit": "efaccfe",
+  "run": "42717230528",
+  "started": "2026-11-10 08:03",
+  "status": "running"
  }
 }
