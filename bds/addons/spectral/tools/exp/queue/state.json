@@ -1410,5 +1410,77 @@
   "started": "2026-11-06 07:38",
   "status": "done",
   "tries": 1
+ },
+ "q63_level12_confirm": {
+  "commit": "e1c02ff",
+  "run": "42541811250",
+  "started": "2026-11-09 09:44",
+  "status": "running"
+ },
+ "q64_sampler_voices": {
+  "status": "pending"
+ },
+ "q65_warm_min": {
+  "status": "pending"
+ },
+ "q66_forget": {
+  "status": "pending"
+ },
+ "q67_speech_mora": {
+  "status": "pending"
+ },
+ "q68_speech_sentences": {
+  "status": "pending"
+ },
+ "q69_sampler_distance": {
+  "status": "pending"
+ },
+ "q70_band_parts": {
+  "status": "pending"
+ },
+ "q71_sampler_transpose": {
+  "status": "pending"
+ },
+ "q72_sampler_speed": {
+  "status": "pending"
+ },
+ "q73_ahead_3d": {
+  "status": "pending"
+ },
+ "q74_instrument_roots": {
+  "status": "pending"
+ },
+ "q75_speech_level": {
+  "status": "pending"
+ },
+ "q76_speech_distance": {
+  "status": "pending"
+ },
+ "q77_speech_over_music": {
+  "status": "pending"
+ },
+ "q78_speech_intonation": {
+  "status": "pending"
+ },
+ "q79_load_many": {
+  "status": "pending"
+ },
+ "q80_velocity_curve": {
+  "status": "pending"
+ },
+ "q81_sampler_direction": {
+  "status": "pending"
+ },
+ "q82_drums_each": {
+  "status": "pending"
+ },
+ "q83_sampler_pause_seek": {
+  "status": "pending"
+ },
+ "q84_sampler_loop_5min": {
+  "status": "pending"
+ },
+ "q85_long_mix_20min": {
+  "status": "pending"
  }
 }
