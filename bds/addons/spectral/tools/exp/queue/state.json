@@ -1654,7 +1654,10 @@
   "tries": 1
  },
  "q79_load_many": {
-  "status": "pending"
+  "commit": "f571deb",
+  "run": "42574712055",
+  "started": "2026-11-09 15:42",
+  "status": "running"
  },
  "q80_velocity_curve": {
   "status": "pending"
