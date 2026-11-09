@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 82（tools/exp/queue/q82_drums_each.json、q34 のやり直し: 11-05 の録音が解く前に期限で消えた）: 打楽器を 1 つずつ（GM の鍵 全部、強・弱）。打楽器の素は短い（30〜2500 ms）: 温めと 1 ms の置き方がそれぞれに効くか、どれが落ちる・割れるか
+# キュー 83（tools/exp/queue/q83_sampler_pause_seek.json、q37 のやり直し: 11-05 の録音が解く前に期限で消えた）: 一時停止・シーク（サンプラーとファイルの曲）。q19 は正弦波の道だけ。サンプラーとファイルの曲で、止めた音が残る・戻った音の頭が遅れる（読み込み直し）が無いか
 
 section title
 audio info
@@ -13,7 +13,7 @@ audio info
 shot title
 
 section prep
-audio song drums_each pack=tools/exp/packs/q40
+audio song fur_elise pack=tools/exp/packs/notes
 
 section join
 join
@@ -24,26 +24,82 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section drums_phones
+section pause_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start dk_phones
-do execute as @a run spectral:play drums_each
-wait 59400
+audio start pz_pd
+do execute as @a run spectral:play piano_demo
+wait 4000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 8
+wait 9000
 do execute as @a run spectral:stop
 audio stop
-audio export dk_phones 160
+audio export pz_pd 160
 
-section drums_speaker
+section pause_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start dk_speaker
-do execute as @a run spectral:play drums_each speaker
-wait 59650
+audio start pz_fe
+do execute as @a run spectral:play fur_elise
+wait 4000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 8
+wait 9000
 do execute as @a run spectral:stop
 audio stop
-audio export dk_speaker 160
+audio export pz_fe 160
+
+section pause_bd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start pz_bd
+do execute as @a run spectral:play band_demo
+wait 4000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 8
+wait 9000
+do execute as @a run spectral:stop
+audio stop
+audio export pz_bd 160
+
+section pause_pf
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+audio start pz_pf
+do execute as @a run spectral:play piano_file
+wait 4000
+do execute as @a run spectral:pause
+wait 2000
+do execute as @a run spectral:pause
+wait 3000
+do execute as @a run spectral:seek 2
+wait 4000
+do execute as @a run spectral:seek 8
+wait 9000
+do execute as @a run spectral:stop
+audio stop
+audio export pz_pf 160
