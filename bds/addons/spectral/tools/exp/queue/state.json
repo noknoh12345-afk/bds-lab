@@ -1799,10 +1799,17 @@
   "tries": 1
  },
  "q89_speaker_head3d": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "03a16aa",
+  "conclusion": "success",
+  "ended": "2026-11-10 07:19",
+  "failed_steps": 0,
+  "recordings": 16,
   "run": "42707141129",
   "started": "2026-11-10 06:56",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q90_speech_stream_voices": {
   "status": "pending"
