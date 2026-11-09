@@ -441,6 +441,7 @@ measured/queue-q49-q62-2026-11-09.json）。**q22〜q48 の録音は GitHub の�
 - ファイルの曲: 温めの長さは効かない・シークと一時停止は正しい。ヘッドホンはステレオのファイルを左右そのまま鳴らす（ViSQOL の 3.1 は測り方の分、SN 比は 3D と同じ 28 dB）
 - 温めの音は 0.01 でも出力はちょうど 0（聞こえない）
 - 読み上げ: 実機と手元の Whisper の誤りがほぼ同じ → 伸ばすなら声の素（VCV など）。/spectral:say はどのモーラも鳴る
+- **11-09 09:44 から実機のキュー q63〜q85 を走らせている**（依頼「さらに続きで検証して」）: q63 = +12 dB の 3 回目の確かめ、q64〜q85 = 録音が消えた q22〜q48 のきれいに走った 22 本のやり直し（tools/exp/queue/README.md の下の表）。約 10 時間。ランナーはこのセッションの作業場所で、止まったら `QUEUE_WORK=<作業用> python3 tools/exp/queue_run.py loop --budget 6900`。録音は run ごとに corpus/renders/rec/queue/ にも残る（gitignore）。解き方は曲 = tools/metrics/metrics.py と tools/notes.py --render の参照、読み上げ = Whisper small（loudnorm の後）
 - **電話の既定を +12 dB に**（1.5.2、変換器の CL_LEVEL_DB も 12）: q12 と q53 の 2 回とも +12 が上。go 364/364（qa clean）を通して push 済み
   （内蔵のデモ曲は +10 で変換したまま: +10 に合わせた曲は +12 でもほぼ同じに上がる、+6 → +10 のときの模型から）
 
