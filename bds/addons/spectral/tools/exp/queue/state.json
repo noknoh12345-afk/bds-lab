@@ -1797,5 +1797,14 @@
   "started": "2026-11-09 22:19",
   "status": "done",
   "tries": 1
+ },
+ "q89_speaker_head3d": {
+  "commit": "03a16aa",
+  "run": "42707141129",
+  "started": "2026-11-10 06:56",
+  "status": "running"
+ },
+ "q90_speech_stream_voices": {
+  "status": "pending"
  }
 }
