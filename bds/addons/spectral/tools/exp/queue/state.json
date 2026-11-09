@@ -1696,13 +1696,20 @@
   "tries": 2
  },
  "q82_drums_each": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "bf32e90",
+  "conclusion": "success",
   "earlier": [
    "42581816904"
   ],
+  "ended": "2026-11-09 19:12",
+  "failed_steps": 0,
+  "recordings": 2,
   "run": "42596716049",
   "started": "2026-11-09 18:52",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q83_sampler_pause_seek": {
   "earlier": [
