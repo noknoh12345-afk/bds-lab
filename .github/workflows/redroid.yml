@@ -173,7 +173,7 @@ jobs:
           r=$(ls -td app/runs/*/ 2>/dev/null | head -1); [ -n "$r" ] && { cp "$r/report.md" out/ 2>/dev/null; cp "$r/run.txt" out/ 2>/dev/null; for f in $(printf '%s\n' "$r"shots/*.png | tail -n 6); do [ -f "$f" ] && cp "$f" "out/run-$(basename "$f")"; done; }
           ls -la out
 
-      - name: a copy for the holder of app/redroid/claude.pub.pem (RSA-OAEP key, AES-256 body)
+      - name: a copy sealed for the holder of app/redroid/claude.pub.pem (RSA-OAEP key, AES-256 body)
         if: always() && hashFiles('app/redroid/claude.pub.pem') != ''
         run: |
           mkdir -p mine stage
