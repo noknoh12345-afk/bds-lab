@@ -1612,7 +1612,10 @@
   "tries": 2
  },
  "q76_speech_distance": {
-  "status": "pending"
+  "commit": "1bd61c1",
+  "run": "42570122687",
+  "started": "2026-11-09 14:56",
+  "status": "running"
  },
  "q77_speech_over_music": {
   "status": "pending"
