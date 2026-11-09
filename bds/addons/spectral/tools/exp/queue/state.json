@@ -1440,10 +1440,17 @@
   "tries": 1
  },
  "q64_sampler_voices": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "cae5f59",
+  "conclusion": "success",
+  "ended": "2026-11-09 10:34",
+  "failed_steps": 0,
+  "recordings": 10,
   "run": "42544393395",
   "started": "2026-11-09 10:13",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q65_warm_min": {
   "status": "pending"
