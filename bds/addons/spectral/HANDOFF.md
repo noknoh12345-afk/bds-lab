@@ -443,6 +443,12 @@ measured/queue-q49-q62-2026-11-09.json）。**q22〜q48 の録音は GitHub の�
 - 読み上げ: 実機と手元の Whisper の誤りがほぼ同じ → 伸ばすなら声の素（VCV など）。/spectral:say はどのモーラも鳴る
 - **11-09 q70 で測る側の誤りを直した**: tools/notes.py の参照はドラム（128）をピアノで鳴らしていた → 実機のバンドは 2.3〜2.5 ではなく 3.8 前後。q55〜q70 のバンドの数字は SPEC.md の q70 の行に直した値。p10〜p14 のバンドの数字（measured/sampler-p1*.json）は古い参照のまま
 - **11-09 09:44 から実機のキュー q63〜q85 を走らせている**（依頼「さらに続きで検証して」）: q63 = +12 dB の 3 回目の確かめ、q64〜q85 = 録音が消えた q22〜q48 のきれいに走った 22 本のやり直し（tools/exp/queue/README.md の下の表）。約 10 時間。ランナーはこのセッションの作業場所で、止まったら `QUEUE_WORK=<作業用> python3 tools/exp/queue_run.py loop --budget 6900`。録音は run ごとに corpus/renders/rec/queue/ にも残る（gitignore）。解き方は曲 = tools/metrics/metrics.py と tools/notes.py --render の参照、読み上げ = Whisper small（loudnorm の後）
+- **11-09 18:50〜23:00（次のセッション、依頼「続き」）: キュー q80〜q88 を解いて 1.5.6 まで**（measured/queue-q80-q88-2026-11-09.json、SPEC.md の表）。前の作業場所が 17:41 に止まりランナーも止まっていた: q82〜q84 を待ちに戻して再開。
+  - **電話の道は playSound の volume が 1 で止まる**（q80: 300 % で強さ 72 から上が同じ大きさ。q82 の打楽器の強弱の差 3.5 dB も同じ原因）。サンプラーは 1 で作って setVolume で上げる `over`（1.5.3、q86 で 6 組とも上 → 1.5.5 で既定）、ファイルの曲も同じ（scriptevent spectral:fileover、q88: ViSQOL 3.14 → 4.48 → 1.5.6 で既定）
+  - ループの継ぎ目: 鳴っている音が全部消えるのを待っていた（q84: 1 周 +0.35 s・0.18 s の無音）→ `seam`（src/notes.ts nextLap、1.5.4、q87 で無音 0・周 = 曲の長さ → 1.5.5 で既定）。`/spectral:sampler` の 7 つ目 over・8 つ目 seam
+  - q81: 3D の向きは左右の振り分けだけ（北 = 南）。q83: 一時停止・シークは正しい。q85: 20 分混ぜても崩れない
+  - 装置の失敗: 「until title」（ゲームがタイトルまで来ない）が 3 回。うち 1 回は別ブランチ claude/redroid-skin-studio3 の redroid と同時（同じ Google アカウント）。ランナーは重ならないよう待つが、他ブランチの push で始まる run は止められない
+  - 次の候補: 3D（スピーカー）の道の頭打ち（q80 のスピーカーで弦は 104 から横ばい: setVolume 2 の上限か level3d の掛け方）、q77 の読み上げが曲に負ける件（32 音の取り合い）、前後の区別（q81）
 - **電話の既定を +12 dB に**（1.5.2、変換器の CL_LEVEL_DB も 12）: q12 と q53 の 2 回とも +12 が上。go 364/364（qa clean）を通して push 済み
   （内蔵のデモ曲は +10 で変換したまま: +10 に合わせた曲は +12 でもほぼ同じに上がる、+6 → +10 のときの模型から）
 
