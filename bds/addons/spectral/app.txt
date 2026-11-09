@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 77（tools/exp/queue/q77_speech_over_music.json、q47 のやり直し: 11-05 の録音が解く前に期限で消えた）: 曲が鳴っている中で読み上げ。4 ブロック先で曲（正弦波の道）を流しながら読み上げ: 32 音の取り合いで素が落ちるか、聞き取りはどれだけ下がるか
+# キュー 78（tools/exp/queue/q78_speech_intonation.json、q45 のやり直し: 11-05 の録音が解く前に期限で消えた）: 読み上げの抑揚の幅 0・2・(4)・6・8 半音。素を高さ 3 段（−4・0・+4）から pitch で動かす: 抑揚を広げると聞き取りやすいか、素の高さから遠くて崩れるか（4 は q44・p13 の既定）
 
 section title
 audio info
@@ -13,8 +13,7 @@ audio info
 shot title
 
 section prep
-audio song rock_big suffix=_e pack=tools/exp/packs/run10
-audio song speech_hello,speech_weather,speech_cave,speech_piano pack=tools/exp/packs/notes
+audio song speech_weather_r0,speech_piano_r0,speech_weather_r2,speech_piano_r2,speech_weather_r6,speech_piano_r6,speech_weather_r8,speech_piano_r8 pack=tools/exp/packs/q40
 
 section join
 join
@@ -25,110 +24,98 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section ovr_none_hello
+section rng_0_weather
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ov0_speech_hello
-do execute as @a run spectral:play speech_hello
-wait 7600
+audio start ra0_speech_weather
+do execute as @a run spectral:play speech_weather_r0
+wait 5035
 do execute as @a run spectral:stop
 audio stop
-audio export ov0_speech_hello 160
+audio export ra0_speech_weather 160
 
-section ovr_music_hello
+section rng_0_piano
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ovm_speech_hello
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_hello
-wait 7600
+audio start ra0_speech_piano
+do execute as @a run spectral:play speech_piano_r0
+wait 6213
 do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export ovm_speech_hello 160
+audio export ra0_speech_piano 160
 
-section ovr_none_weather
+section rng_2_weather
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ov0_speech_weather
-do execute as @a run spectral:play speech_weather
-wait 7600
+audio start ra2_speech_weather
+do execute as @a run spectral:play speech_weather_r2
+wait 5035
 do execute as @a run spectral:stop
 audio stop
-audio export ov0_speech_weather 160
+audio export ra2_speech_weather 160
 
-section ovr_music_weather
+section rng_2_piano
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ovm_speech_weather
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_weather
-wait 7600
+audio start ra2_speech_piano
+do execute as @a run spectral:play speech_piano_r2
+wait 6213
 do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export ovm_speech_weather 160
+audio export ra2_speech_piano 160
 
-section ovr_none_cave
+section rng_6_weather
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ov0_speech_cave
-do execute as @a run spectral:play speech_cave
-wait 7600
+audio start ra6_speech_weather
+do execute as @a run spectral:play speech_weather_r6
+wait 5035
 do execute as @a run spectral:stop
 audio stop
-audio export ov0_speech_cave 160
+audio export ra6_speech_weather 160
 
-section ovr_music_cave
+section rng_6_piano
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ovm_speech_cave
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_cave
-wait 7600
+audio start ra6_speech_piano
+do execute as @a run spectral:play speech_piano_r6
+wait 6213
 do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export ovm_speech_cave 160
+audio export ra6_speech_piano 160
 
-section ovr_none_piano
+section rng_8_weather
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ov0_speech_piano
-do execute as @a run spectral:play speech_piano
-wait 7600
+audio start ra8_speech_weather
+do execute as @a run spectral:play speech_weather_r8
+wait 5035
 do execute as @a run spectral:stop
 audio stop
-audio export ov0_speech_piano 160
+audio export ra8_speech_weather 160
 
-section ovr_music_piano
+section rng_8_piano
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start ovm_speech_piano
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_piano
-wait 7600
+audio start ra8_speech_piano
+do execute as @a run spectral:play speech_piano_r8
+wait 6213
 do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export ovm_speech_piano 160
+audio export ra8_speech_piano 160
