@@ -105,3 +105,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q73_ahead_3d | 42560078030 | success | 12 | — | 0 | 2026-11-09 13:08 → 2026-11-09 13:26 |
 | q74_instrument_roots | 42561848347 | success | 3 | — | 0 | 2026-11-09 13:26 → 2026-11-09 13:44 |
 | p15_ahead_400_confirm | 42563427556 | success | 12 | — | 0 | 2026-11-09 13:44 → 2026-11-09 14:19 |
+| q75_speech_level | 42566717206 | failure（もう一度） | 0 | — | 8（✘ 32 audio start sl150_speech_hello） | 2026-11-09 14:20 → 2026-11-09 14:38 |
