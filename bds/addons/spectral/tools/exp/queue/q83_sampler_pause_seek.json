@@ -1,0 +1,109 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 83（tools/exp/queue/q83_sampler_pause_seek.json、q37 のやり直し: 11-05 の録音が解く前に期限で消えた）: 一時停止・シーク（サンプラーとファイルの曲）。q19 は正弦波の道だけ。サンプラーとファイルの曲で、止めた音が残る・戻った音の頭が遅れる（読み込み直し）が無いか"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song fur_elise pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "pause_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start pz_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 4000",
+    "do execute as @a run spectral:pause",
+    "wait 2000",
+    "do execute as @a run spectral:pause",
+    "wait 3000",
+    "do execute as @a run spectral:seek 2",
+    "wait 4000",
+    "do execute as @a run spectral:seek 8",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export pz_pd 160"
+   ]
+  },
+  {
+   "title": "pause_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start pz_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 4000",
+    "do execute as @a run spectral:pause",
+    "wait 2000",
+    "do execute as @a run spectral:pause",
+    "wait 3000",
+    "do execute as @a run spectral:seek 2",
+    "wait 4000",
+    "do execute as @a run spectral:seek 8",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export pz_fe 160"
+   ]
+  },
+  {
+   "title": "pause_bd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start pz_bd",
+    "do execute as @a run spectral:play band_demo",
+    "wait 4000",
+    "do execute as @a run spectral:pause",
+    "wait 2000",
+    "do execute as @a run spectral:pause",
+    "wait 3000",
+    "do execute as @a run spectral:seek 2",
+    "wait 4000",
+    "do execute as @a run spectral:seek 8",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export pz_bd 160"
+   ]
+  },
+  {
+   "title": "pause_pf",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start pz_pf",
+    "do execute as @a run spectral:play piano_file",
+    "wait 4000",
+    "do execute as @a run spectral:pause",
+    "wait 2000",
+    "do execute as @a run spectral:pause",
+    "wait 3000",
+    "do execute as @a run spectral:seek 2",
+    "wait 4000",
+    "do execute as @a run spectral:seek 8",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export pz_pf 160"
+   ]
+  }
+ ]
+}

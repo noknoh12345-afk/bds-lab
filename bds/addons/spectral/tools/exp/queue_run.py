@@ -19,7 +19,7 @@ Q = os.path.join(HERE, 'queue')
 STATE = os.path.join(Q, 'state.json')
 SLUG = 'noknoh12345-afk/bds-lab'
 BRANCH = 'addon/spectral'
-TRAILER = '\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01Mj47KfiEBkHuS3hFHafefm'
+TRAILER = '\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_0178eNzMFWYBfAsbM8HbFKNE'
 SONGS13 = ['piano_gymnopedie', 'piano_chopin_op66', 'vocal_stars', 'vocal_name_of_love', 'choir_how_long', 'drums_round', 'rock_big',
            'edm_detection', 'orchestra_five_armies', 'funk_funkorama', 'speech_ja_soseki', 'speech_en_wordsworth', 'demo_selfmade']
 sys.path.insert(0, os.path.join(UNIT, 'tools', 'rig'))
@@ -278,7 +278,7 @@ def finish(name, st):
     commit([*queue_files(name), rel(os.path.join(UNIT, 'measured'))], f"spectral queue {name}: run {rid} recorded ({len(recs)} recordings, {v.get('conclusion')})")
     subprocess.run(['gh', 'workflow', 'run', 'notify.yml', '--repo', SLUG, '--ref', BRANCH, '-f', f'run={rid}'], capture_output=True)
     spec = json.load(open(os.path.join(Q, name + '.json')))
-    label = f'キュー {int(name[1:3])}/20 {name}' if name.startswith('q') else f'追加の実機 {name}'
+    label = f'キュー {int(name[1:3])} {name}' if name.startswith('q') else f'追加の実機 {name}'
     msg = (f"🧾 {label}（run {rid}・実測・記録のみ）: {spec['header'][-1].split('）: ', 1)[-1].split('。')[0][:150]}\n"
            f"結果 {v.get('conclusion')}・録音 {rec_txt}・失敗した手順 {fail_txt}"
            + ('・録音が無いのでもう一度走らせる' if again else '') + f"\n腕ごとの中央値 ViSQOL / mrstft / 1/3 oct (n): {arm_txt}")

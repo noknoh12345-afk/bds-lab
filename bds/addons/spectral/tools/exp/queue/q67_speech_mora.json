@@ -1,0 +1,168 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 67（tools/exp/queue/q67_speech_mora.json、q43 のやり直し: 11-05 の録音が解く前に期限で消えた）: 読み上げの速さ（1 モーラ 140・160・180・200・220 ms）。手元の Whisper は 180 ms が一番だった（推測）。実機で、速いと素の頭が重なって潰れるか・遅いと間延びか"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song speech_hello_m140,speech_cave_m140,speech_hello_m160,speech_cave_m160,speech_hello_m200,speech_cave_m200,speech_hello_m220,speech_cave_m220 pack=tools/exp/packs/q40",
+  "audio song speech_hello,speech_cave pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "mora_140_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start mo140_speech_hello",
+    "do execute as @a run spectral:play speech_hello_m140",
+    "wait 4949",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mo140_speech_hello 160"
+   ]
+  },
+  {
+   "title": "mora_140_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start mo140_speech_cave",
+    "do execute as @a run spectral:play speech_cave_m140",
+    "wait 4729",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mo140_speech_cave 160"
+   ]
+  },
+  {
+   "title": "mora_160_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start mo160_speech_hello",
+    "do execute as @a run spectral:play speech_hello_m160",
+    "wait 5473",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mo160_speech_hello 160"
+   ]
+  },
+  {
+   "title": "mora_160_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start mo160_speech_cave",
+    "do execute as @a run spectral:play speech_cave_m160",
+    "wait 5226",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mo160_speech_cave 160"
+   ]
+  },
+  {
+   "title": "mora_200_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start mo200_speech_hello",
+    "do execute as @a run spectral:play speech_hello_m200",
+    "wait 6521",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mo200_speech_hello 160"
+   ]
+  },
+  {
+   "title": "mora_200_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start mo200_speech_cave",
+    "do execute as @a run spectral:play speech_cave_m200",
+    "wait 6220",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mo200_speech_cave 160"
+   ]
+  },
+  {
+   "title": "mora_220_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start mo220_speech_hello",
+    "do execute as @a run spectral:play speech_hello_m220",
+    "wait 7045",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mo220_speech_hello 160"
+   ]
+  },
+  {
+   "title": "mora_220_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start mo220_speech_cave",
+    "do execute as @a run spectral:play speech_cave_m220",
+    "wait 6717",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mo220_speech_cave 160"
+   ]
+  },
+  {
+   "title": "mora_180_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start mo180_speech_hello",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mo180_speech_hello 160"
+   ]
+  },
+  {
+   "title": "mora_180_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start mo180_speech_cave",
+    "do execute as @a run spectral:play speech_cave",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mo180_speech_cave 160"
+   ]
+  }
+ ]
+}

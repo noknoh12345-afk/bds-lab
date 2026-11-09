@@ -1,0 +1,47 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 79（tools/exp/queue/q79_load_many.json、q24 のやり直し: 11-05 の録音が解く前に期限で消えた）: 一度に温められる素の数（4・8・16・24・32 個を同時に）。まだ鳴らしていない素を 4〜32 個まとめて温めて鳴らす（同時 60 音）。電話の 32 音のうち温めがいくつまで効くか。2 回目は読み込み済み（物差し）"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song probe_many pack=tools/exp/packs/q40"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "many_v60",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 60 300 false 600",
+    "audio start mn_v60",
+    "do execute as @a run spectral:play probe_many",
+    "wait 17193",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mn_v60 160"
+   ]
+  },
+  {
+   "title": "many_again",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 60 300 false 600",
+    "audio start mn_again",
+    "do execute as @a run spectral:play probe_many",
+    "wait 17193",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export mn_again 160"
+   ]
+  }
+ ]
+}

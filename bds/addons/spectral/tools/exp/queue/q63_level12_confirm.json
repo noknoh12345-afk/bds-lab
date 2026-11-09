@@ -1,0 +1,47 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 63（tools/exp/queue/q63_level12_confirm.json、11-09 に q53 から）: 1.5.2 の既定 +12 dB の 3 回目の確かめ（正弦波の道 13 曲、+10 と +12 を同じ run で交互）。q12・q53 は 2 回とも +12 が上"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "batch": 13,
+ "interleave": [
+  "e",
+  "l12",
+  "l12lm"
+ ],
+ "arms": [
+  {
+   "pre": "e",
+   "pack": "tools/exp/packs/run10",
+   "suffix": "_e",
+   "conv": {
+    "pack": "run10"
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:level 10 volume",
+    "spectral:limit false"
+   ]
+  },
+  {
+   "pre": "l12",
+   "pack": "tools/exp/packs/lv12",
+   "suffix": "_l12",
+   "conv": {
+    "refine_level": 12
+   },
+   "export": 160,
+   "cmds": [
+    "tp @s 0 -60 0 0 0",
+    "spectral:level 12 volume",
+    "spectral:limit false"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,255 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 71（tools/exp/queue/q71_sampler_transpose.json、q27 のやり直し: 11-05 の録音が解く前に期限で消えた）: サンプラーの移調 −12〜+12（pitch 0.5〜2）。素の高さを setPitch で 0.5〜2 倍に: 電話がどこまで正しい高さで鳴らすか（模型は全部正しい）、高く・低くしたときの音質"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song fur_elise pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "pitch_m12_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch -12",
+    "audio start tpm12_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpm12_pd 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_m12_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch -12",
+    "audio start tpm12_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpm12_fe 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_m7_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch -7",
+    "audio start tpm7_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpm7_pd 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_m7_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch -7",
+    "audio start tpm7_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpm7_fe 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_m3_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch -3",
+    "audio start tpm3_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpm3_pd 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_m3_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch -3",
+    "audio start tpm3_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpm3_fe 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_p0_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch 0",
+    "audio start tpp0_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpp0_pd 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_p0_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch 0",
+    "audio start tpp0_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpp0_fe 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_p3_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch 3",
+    "audio start tpp3_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpp3_pd 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_p3_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch 3",
+    "audio start tpp3_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpp3_fe 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_p7_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch 7",
+    "audio start tpp7_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpp7_pd 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_p7_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch 7",
+    "audio start tpp7_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpp7_fe 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_p12_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch 12",
+    "audio start tpp12_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpp12_pd 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  },
+  {
+   "title": "pitch_p12_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:pitch 12",
+    "audio start tpp12_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export tpp12_fe 160",
+    "do execute as @a run spectral:pitch 0"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,47 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 82（tools/exp/queue/q82_drums_each.json、q34 のやり直し: 11-05 の録音が解く前に期限で消えた）: 打楽器を 1 つずつ（GM の鍵 全部、強・弱）。打楽器の素は短い（30〜2500 ms）: 温めと 1 ms の置き方がそれぞれに効くか、どれが落ちる・割れるか"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song drums_each pack=tools/exp/packs/q40"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "drums_phones",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start dk_phones",
+    "do execute as @a run spectral:play drums_each",
+    "wait 59400",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export dk_phones 160"
+   ]
+  },
+  {
+   "title": "drums_speaker",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start dk_speaker",
+    "do execute as @a run spectral:play drums_each speaker",
+    "wait 59650",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export dk_speaker 160"
+   ]
+  }
+ ]
+}

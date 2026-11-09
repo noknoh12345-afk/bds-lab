@@ -1,0 +1,35 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 84（tools/exp/queue/q84_sampler_loop_5min.json、q38 のやり直し: 11-05 の録音が解く前に期限で消えた）: サンプラーのループ 5 分（エリーゼ 20 周）。ループの継ぎ目と、時間が経っても音が落ちない・ずれないか（15 秒使わない素は温め直す: その仕組みが長く回る）"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song fur_elise pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "loop",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:loop",
+    "audio start lp_fur_elise",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 300000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:loop",
+    "audio stop",
+    "audio export lp_fur_elise 96"
+   ]
+  }
+ ]
+}

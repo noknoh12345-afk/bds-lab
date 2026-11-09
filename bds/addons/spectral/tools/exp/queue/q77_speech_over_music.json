@@ -1,0 +1,150 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 77（tools/exp/queue/q77_speech_over_music.json、q47 のやり直し: 11-05 の録音が解く前に期限で消えた）: 曲が鳴っている中で読み上げ。4 ブロック先で曲（正弦波の道）を流しながら読み上げ: 32 音の取り合いで素が落ちるか、聞き取りはどれだけ下がるか"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song rock_big suffix=_e pack=tools/exp/packs/run10",
+  "audio song speech_hello,speech_weather,speech_cave,speech_piano pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "ovr_none_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ov0_speech_hello",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ov0_speech_hello 160"
+   ]
+  },
+  {
+   "title": "ovr_music_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ovm_speech_hello",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export ovm_speech_hello 160"
+   ]
+  },
+  {
+   "title": "ovr_none_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ov0_speech_weather",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ov0_speech_weather 160"
+   ]
+  },
+  {
+   "title": "ovr_music_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ovm_speech_weather",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export ovm_speech_weather 160"
+   ]
+  },
+  {
+   "title": "ovr_none_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ov0_speech_cave",
+    "do execute as @a run spectral:play speech_cave",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ov0_speech_cave 160"
+   ]
+  },
+  {
+   "title": "ovr_music_cave",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ovm_speech_cave",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_cave",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export ovm_speech_cave 160"
+   ]
+  },
+  {
+   "title": "ovr_none_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ov0_speech_piano",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ov0_speech_piano 160"
+   ]
+  },
+  {
+   "title": "ovr_music_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start ovm_speech_piano",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export ovm_speech_piano 160"
+   ]
+  }
+ ]
+}
