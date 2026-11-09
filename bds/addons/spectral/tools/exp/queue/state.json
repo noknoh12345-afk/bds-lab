@@ -1773,9 +1773,16 @@
   "tries": 1
  },
  "q87_loop_seam": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "d76ea75",
+  "conclusion": "success",
+  "ended": "2026-11-09 22:01",
+  "failed_steps": 0,
+  "recordings": 8,
   "run": "42619329439",
   "started": "2026-11-09 21:43",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  }
 }
