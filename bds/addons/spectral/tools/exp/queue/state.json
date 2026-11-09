@@ -1709,7 +1709,10 @@
   "tries": 1
  },
  "q83_sampler_pause_seek": {
-  "status": "pending"
+  "commit": "1b16f98",
+  "run": "42583954696",
+  "started": "2026-11-09 17:09",
+  "status": "running"
  },
  "q84_sampler_loop_5min": {
   "status": "pending"
