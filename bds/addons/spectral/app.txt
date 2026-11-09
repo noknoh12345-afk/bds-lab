@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 65（tools/exp/queue/q65_warm_min.json、q22 のやり直し: 11-05 の録音が解く前に期限で消えた）: 温めの最短（0・20・50・80・110・150 ms）。p13 は 150 ms 前で 12/12・0 で 0/12。その間のどこから鳴るか（短いほど曲の頭を待たせない）。最後に 0 ms の組をもう一度（読み込み済みなら全部鳴る: 物差し）
+# キュー 66（tools/exp/queue/q66_forget.json、q23 のやり直し: 11-05 の録音が解く前に期限で消えた）: 読み込んだ素が捨てられるまで（10〜120 秒あけて同じ素）。温め 0 で、24 の素を 1 回鳴らしてから 10・20・30・45・60・75・90・120 秒後にもう一度。2 回目が時間どおりなら残っていた、0.65 秒遅れ・無音なら捨てられていた（p13 は 1.5〜2.5 分で 0/12）。温め直しの 15 秒を決める
 
 section title
 audio info
@@ -13,7 +13,7 @@ audio info
 shot title
 
 section prep
-audio song probe_m0,probe_m20,probe_m50,probe_m80,probe_m110,probe_m150 pack=tools/exp/packs/q40
+audio song probe_forget pack=tools/exp/packs/q40
 
 section join
 join
@@ -24,86 +24,14 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section warm_m0
+section forget_w0
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 0
-audio start wm_m0
-do execute as @a run spectral:play probe_m0
-wait 13850
+audio start fg_w0
+do execute as @a run spectral:play probe_forget
+wait 134800
 do execute as @a run spectral:stop
 audio stop
-audio export wm_m0 160
-
-section warm_m20
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 20
-audio start wm_m20
-do execute as @a run spectral:play probe_m20
-wait 13870
-do execute as @a run spectral:stop
-audio stop
-audio export wm_m20 160
-
-section warm_m50
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 50
-audio start wm_m50
-do execute as @a run spectral:play probe_m50
-wait 13900
-do execute as @a run spectral:stop
-audio stop
-audio export wm_m50 160
-
-section warm_m80
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 80
-audio start wm_m80
-do execute as @a run spectral:play probe_m80
-wait 13930
-do execute as @a run spectral:stop
-audio stop
-audio export wm_m80 160
-
-section warm_m110
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 110
-audio start wm_m110
-do execute as @a run spectral:play probe_m110
-wait 13960
-do execute as @a run spectral:stop
-audio stop
-audio export wm_m110 160
-
-section warm_m150
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 150
-audio start wm_m150
-do execute as @a run spectral:play probe_m150
-wait 14000
-do execute as @a run spectral:stop
-audio stop
-audio export wm_m150 160
-
-section warm_again
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 0
-audio start wm_again
-do execute as @a run spectral:play probe_m0
-wait 13850
-do execute as @a run spectral:stop
-audio stop
-audio export wm_again 160
+audio export fg_w0 96
