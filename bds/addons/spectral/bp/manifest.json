@@ -4,7 +4,7 @@
     "name": "Spectral Player",
     "description": "MP3を正弦波の加算合成でリアルタイム再生する音楽プレイヤー。MIDIは本物の楽器の音で1ミリ秒ずつ・録音そのまま・かなの読み上げ、声をその場で鳴らすライブ（近接ボイスチャット・立体音響）つき",
     "uuid": "03c28995-e982-476d-ac5e-38c6d5231f97",
-    "version": [1, 5, 5],
+    "version": [1, 5, 6],
     "min_engine_version": [
       1,
       26,
@@ -16,7 +16,7 @@
       "type": "script",
       "language": "javascript",
       "uuid": "3e46060d-48ef-461a-9234-9cadf68501c9",
-      "version": [1, 5, 5],
+      "version": [1, 5, 6],
       "entry": "scripts/main.js"
     }
   ],
@@ -31,7 +31,7 @@
     },
     {
       "uuid": "0079b728-ca9a-41ab-b21f-9a4661ad7334",
-      "version": [1, 5, 5]
+      "version": [1, 5, 6]
     }
   ]
 }

@@ -929,11 +929,11 @@ scriptevent spectral:warmcfg 1 20
 scriptevent spectral:warmcfg 0.001 4
 ~ \[spectral\] warm: volume 0.001, 4 ticks
 
-## measuring a file song's level on the phone (q88): its level above 1 can be raised by setVolume, set by a script event (playSound's volume stops at 1 there, q80 — so the 1.8 a file song is given played at 1); off until the phone compares
-scriptevent spectral:fileover true
-~ \[spectral\] file over true
+## a file song's level above 1 on the phone is raised by setVolume (playSound's volume stops at 1 there, q80 — so the 1.8 a file song is given played at 1); on by default since 1.5.6 (q88: ViSQOL 3.14 → 4.48 in 3 pairs), and a script event can turn it off for measuring
 scriptevent spectral:fileover false
 ~ \[spectral\] file over false
+scriptevent spectral:fileover true
+~ \[spectral\] file over true
 
 ## the sampler plays near the top of the phone's output (level 300 %, measured: quiet notes lose most there) and turns a bundle's new notes down together when they and what still sounds would pass the phone's clip — the last chord's 8 notes in one bundle are turned down, the single notes before it are not
 @A cmd /spectral:sampler 2 250 28 300 true

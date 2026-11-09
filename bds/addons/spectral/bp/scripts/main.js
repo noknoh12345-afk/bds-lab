@@ -1598,7 +1598,7 @@ function saySong(text, v = 0, moraMs = 180, range = 4) {
 
 // addons/spectral/src/files.ts
 import { system as system3 } from "@minecraft/server";
-var FILE_OVER = { on: false };
+var FILE_OVER = { on: true };
 var FilePlayer = class {
   constructor(owner, meta, o, dim, loc) {
     this.owner = owner;

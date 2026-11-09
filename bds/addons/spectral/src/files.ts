@@ -16,7 +16,7 @@ interface Part { k: number; s: SoundInstance; end: number; }
 
 /** phones: the file's level above 1 by setVolume (playSound's volume stops at 1 on the phone, q80 — so the 1.8 a file song is
  *  given played at 1). Off until the phone compares (q88): `scriptevent spectral:fileover true|false` */
-export const FILE_OVER = { on: false };
+export const FILE_OVER = { on: true };
 export class FilePlayer {
   ending = 0; paused = false; started = false; t0 = 0; pausedAt = 0;
   next = 0; playing: Part[] = []; starts = 0; calls = 0; wnext = 0; warmed = 0; preroll = 0;

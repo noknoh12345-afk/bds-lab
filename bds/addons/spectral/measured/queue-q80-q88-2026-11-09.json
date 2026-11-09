@@ -1474,5 +1474,47 @@
    }
   },
   "how": "silent runs >= 60 ms 70 dB under the peak between the first and last sound (5 ms frames); lap = envelope autocorrelation peak (10 ms)"
+ },
+ "q88_file_over1": {
+  "run": "42624515005",
+  "scores": {
+   "off1": {
+    "visqol": 3.148,
+    "mrstft": 0.906,
+    "onset_recall": 0.882
+   },
+   "off2": {
+    "visqol": 3.139,
+    "mrstft": 0.906,
+    "onset_recall": 0.882
+   },
+   "off3": {
+    "visqol": 3.148,
+    "mrstft": 0.906,
+    "onset_recall": 0.882
+   },
+   "on1": {
+    "visqol": 4.476,
+    "mrstft": 0.814,
+    "onset_recall": 0.882
+   },
+   "on2": {
+    "visqol": 4.476,
+    "mrstft": 0.816,
+    "onset_recall": 0.902
+   },
+   "on3": {
+    "visqol": 4.473,
+    "mrstft": 0.816,
+    "onset_recall": 0.902
+   }
+  },
+  "level": {
+   "off_rms_dB": -56.82,
+   "on_rms_dB": -51.71,
+   "off_peak_dB": -33.74,
+   "on_peak_dB": -29.4
+  },
+  "how": "tools/metrics/metrics.py against the piano_demo render (the piano file is that étude); RMS and peak over the whole recording"
  }
 }
