@@ -1557,7 +1557,10 @@
   "tries": 1
  },
  "q73_ahead_3d": {
-  "status": "pending"
+  "commit": "6db039e",
+  "run": "42560078030",
+  "started": "2026-11-09 13:08",
+  "status": "running"
  },
  "q74_instrument_roots": {
   "status": "pending"
