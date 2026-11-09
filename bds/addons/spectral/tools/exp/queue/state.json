@@ -1731,10 +1731,13 @@
   "tries": 2
  },
  "q84_sampler_loop_5min": {
+  "commit": "52a589a",
   "earlier": [
    "42585283960"
   ],
-  "status": "pending"
+  "run": "42607417810",
+  "started": "2026-11-09 20:14",
+  "status": "running"
  },
  "q85_long_mix_20min": {
   "status": "pending"
