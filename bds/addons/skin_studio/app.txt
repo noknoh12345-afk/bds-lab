@@ -211,6 +211,7 @@ wait 4000
 shot mirror-resumed                       # 空けると元どおり映る
 section diag-head
 do kill @e[type=!player,type=!skin_studio:mirror,type=!skin_studio:mirror_wall,type=!skin_studio:ghost]
+do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 9 3 -57 11 air
 do tp @a 0.5 -60 9.6 0 0
 wait 2500
@@ -266,6 +267,7 @@ do kill @e[type=zombie]
 do gamemode creative @a
 do difficulty peaceful
 section diag-blocks
+do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 4 3 -57 11 air
 do setblock -1 -60 10 oak_stairs
 do setblock 0 -60 10 oak_slab
@@ -289,6 +291,7 @@ do camera @a set minecraft:free pos 0.5 -58.38 18.5 rot 10 180
 wait 2500
 shot blocks-truth                         # 正解: 鏡の位置で反対側から窓越しに見た本物（左右反転して blocks-1p と比べる）
 do camera @a clear
+do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 4 3 -57 11 air
 section diag-light
 do tp @a 0.5 -60 9.0 0 0
