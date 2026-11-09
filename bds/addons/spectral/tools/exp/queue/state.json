@@ -1466,7 +1466,10 @@
   "tries": 1
  },
  "q66_forget": {
-  "status": "pending"
+  "commit": "c860d36",
+  "run": "42548070364",
+  "started": "2026-11-09 10:55",
+  "status": "running"
  },
  "q67_speech_mora": {
   "status": "pending"
