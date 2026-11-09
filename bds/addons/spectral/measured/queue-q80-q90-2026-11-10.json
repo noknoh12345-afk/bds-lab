@@ -1678,5 +1678,139 @@
    }
   },
   "how": "listener 6 blocks from the speaker (close: 1 block); velocity as q80; songs by tools/metrics/metrics.py against tools/notes.py --render"
+ },
+ "q90_speech_stream_voices": {
+  "run": "42714269600",
+  "metrics": {
+   "hello": {
+    "none": {
+     "visqol": 3.828,
+     "mrstft": 1.058,
+     "onset_recall": 0.9
+    },
+    "24": {
+     "visqol": 3.219,
+     "mrstft": 3.11,
+     "onset_recall": 0.651
+    },
+    "12": {
+     "visqol": 3.163,
+     "mrstft": 3.194,
+     "onset_recall": 0.628
+    },
+    "6": {
+     "visqol": 3.436,
+     "mrstft": 3.296,
+     "onset_recall": 0.674
+    }
+   },
+   "weather": {
+    "none": {
+     "visqol": 4.09,
+     "mrstft": 0.92,
+     "onset_recall": 0.933
+    },
+    "24": {
+     "visqol": 3.409,
+     "mrstft": 5.036,
+     "onset_recall": 0.233
+    },
+    "12": {
+     "visqol": 3.756,
+     "mrstft": 3.597,
+     "onset_recall": 0.567
+    },
+    "6": {
+     "visqol": 3.97,
+     "mrstft": 3.696,
+     "onset_recall": 0.533
+    }
+   },
+   "piano": {
+    "none": {
+     "visqol": 3.824,
+     "mrstft": 0.967,
+     "onset_recall": 0.837
+    },
+    "24": {
+     "visqol": 3.338,
+     "mrstft": 2.962,
+     "onset_recall": 0.673
+    },
+    "12": {
+     "visqol": 3.577,
+     "mrstft": 3.439,
+     "onset_recall": 0.735
+    },
+    "6": {
+     "visqol": 3.734,
+     "mrstft": 3.355,
+     "onset_recall": 0.469
+    }
+   }
+  },
+  "whisper_small_cer": {
+   "svnone_hello": [
+    0.261,
+    0.261,
+    0.304
+   ],
+   "sv24_hello": [
+    0.957,
+    0.522,
+    6.0
+   ],
+   "sv12_hello": [
+    0.522,
+    0.522,
+    0.522
+   ],
+   "sv6_hello": [
+    0.478,
+    0.478,
+    0.478
+   ],
+   "svnone_weather": [
+    0.421,
+    0.211,
+    0.368
+   ],
+   "sv24_weather": [
+    0.526,
+    12.947,
+    11.684
+   ],
+   "sv12_weather": [
+    0.263,
+    5.684,
+    8.789
+   ],
+   "sv6_weather": [
+    1.0,
+    1.0,
+    5.895
+   ],
+   "svnone_piano": [
+    0.545,
+    0.5,
+    0.5
+   ],
+   "sv24_piano": [
+    1.0,
+    0.955,
+    5.318
+   ],
+   "sv12_piano": [
+    1.0,
+    1.0,
+    10.136
+   ],
+   "sv6_piano": [
+    0.591,
+    1.0,
+    10.091
+   ]
+  },
+  "how": "tools/metrics/metrics.py against tools/notes.py --render of each sentence; Whisper small (loudnorm, temperatures 0/0.2/0.4) — with music in the recording it repeats words (CER up to 13), so it is not used to compare"
  }
 }
