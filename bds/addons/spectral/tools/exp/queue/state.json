@@ -1696,10 +1696,13 @@
   "tries": 2
  },
  "q82_drums_each": {
+  "commit": "bf32e90",
   "earlier": [
    "42581816904"
   ],
-  "status": "pending"
+  "run": "42596716049",
+  "started": "2026-11-09 18:52",
+  "status": "running"
  },
  "q83_sampler_pause_seek": {
   "earlier": [
