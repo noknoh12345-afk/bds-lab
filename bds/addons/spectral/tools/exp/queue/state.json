@@ -1725,10 +1725,20 @@
   "tries": 2
  },
  "q84_sampler_loop_5min": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "1710ab5",
+  "conclusion": "failure",
+  "earlier_runs": [
+   "42584263602"
+  ],
+  "ended": "2026-11-09 17:20",
+  "failed_steps": 0,
+  "recordings": 0,
   "run": "42584263602",
   "started": "2026-11-09 17:12",
-  "status": "running"
+  "status": "pending",
+  "tries": 1
  },
  "q85_long_mix_20min": {
   "status": "pending"
