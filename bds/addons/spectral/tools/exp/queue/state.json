@@ -1531,7 +1531,10 @@
   "tries": 1
  },
  "q71_sampler_transpose": {
-  "status": "pending"
+  "commit": "c20bb2f",
+  "run": "42556516204",
+  "started": "2026-11-09 12:27",
+  "status": "running"
  },
  "q72_sampler_speed": {
   "status": "pending"
