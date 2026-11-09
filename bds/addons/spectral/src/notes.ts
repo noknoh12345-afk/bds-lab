@@ -172,7 +172,9 @@ const HEAD_LIMIT = 1.9, HEAD_DECAY_MS = 1200;
  *  'one' counts it at its gain only (a 3D note reaches the mix about 30 dB under its level 3 blocks away, run 41270487804 — so
  *  'level' turned every loud note down: q80, the speaker's velocity ramp flat from 72 (piano) / 104 (strings)). Measuring (q89):
  *  `scriptevent spectral:head3d level|one` */
-export const HEAD3D = { mode: 'level' as 'level' | 'one' };
+export const HEAD3D = { mode: 'level' as 'level' | 'one' | 'db', db: 5 };
+// (q89: 'one' let the velocity ramp follow but squashed loud piano notes — ViSQOL 4.23 → 3.89; 'db' counts each 3D note at
+//  gain × 10^(db/20), between the two: q91)
 /** a sustained note is relayed RELAY_MS before its sample ends, crossfading over RELAY_FADE s, from RELAY_FROM of the sample */
 const RELAY_MS = 350, RELAY_FADE = 0.15, RELAY_FROM = 0.4;
 
@@ -291,7 +293,7 @@ export class NotePlayer {
   /** how much the notes from..to (one bundle) are turned down: 1 while what still sounds and they stay under HEAD_LIMIT */
   private headroom(from: number, to: number, t: number): number {
     if (to <= from) return 1;
-    const k3 = this.o.where === 'phones' || HEAD3D.mode === 'one' ? 1 : this.o.level3d;
+    const k3 = this.o.where === 'phones' || HEAD3D.mode === 'one' ? 1 : HEAD3D.mode === 'db' ? Math.min(this.o.level3d, Math.pow(10, HEAD3D.db / 20)) : this.o.level3d;
     let now = 0, add = 0;
     for (const v of this.voices) {
       const age = Math.max(0, t - v.on) / this.o.speed;

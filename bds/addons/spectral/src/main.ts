@@ -842,8 +842,12 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
   if (e.id === 'spectral:note' && e.sourceEntity instanceof Player) { liveNotes(e.sourceEntity, e.message); return; }
   // (measuring the warming, p13: the level a sample is warmed at and how many ticks it sounds — `scriptevent spectral:warmcfg <volume> <ticks>`)
   // (q88: a file song's level above 1 on the phone by setVolume — `scriptevent spectral:fileover true|false`)
-  // (q89: the speaker's head-room counted at each note's gain only — `scriptevent spectral:head3d level|one`)
-  if (e.id === 'spectral:head3d') { HEAD3D.mode = e.message.trim() === 'one' ? 'one' : 'level'; console.warn(`[spectral] head3d ${HEAD3D.mode}`); return; }
+  // (q89: the speaker's head-room counted at each note's gain only — `scriptevent spectral:head3d level|one|<dB>`)
+  if (e.id === 'spectral:head3d') {
+    const m = e.message.trim(), db = Number(m);
+    if (m !== '' && Number.isFinite(db)) { HEAD3D.mode = 'db'; HEAD3D.db = Math.max(0, Math.min(18, db)); } else HEAD3D.mode = m === 'one' ? 'one' : 'level';
+    console.warn(`[spectral] head3d ${HEAD3D.mode === 'db' ? `${HEAD3D.db} dB` : HEAD3D.mode}`); return;
+  }
   if (e.id === 'spectral:fileover') { FILE_OVER.on = e.message.trim() === 'true'; console.warn(`[spectral] file over ${FILE_OVER.on}`); return; }
   if (e.id === 'spectral:warmcfg') {
     const [v, h] = e.message.trim().split(/\s+/).map(Number);

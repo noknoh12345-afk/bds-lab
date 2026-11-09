@@ -986,7 +986,7 @@ function warmEvent(ev, where, owner, dim, loc, range3d = 1) {
 }
 var HEAD_LIMIT = 1.9;
 var HEAD_DECAY_MS = 1200;
-var HEAD3D = { mode: "level" };
+var HEAD3D = { mode: "level", db: 5 };
 var RELAY_MS = 350;
 var RELAY_FADE = 0.15;
 var RELAY_FROM = 0.4;
@@ -1153,7 +1153,7 @@ var NotePlayer = class {
   /** how much the notes from..to (one bundle) are turned down: 1 while what still sounds and they stay under HEAD_LIMIT */
   headroom(from, to, t) {
     if (to <= from) return 1;
-    const k3 = this.o.where === "phones" || HEAD3D.mode === "one" ? 1 : this.o.level3d;
+    const k3 = this.o.where === "phones" || HEAD3D.mode === "one" ? 1 : HEAD3D.mode === "db" ? Math.min(this.o.level3d, Math.pow(10, HEAD3D.db / 20)) : this.o.level3d;
     let now = 0, add = 0;
     for (const v of this.voices) {
       const age = Math.max(0, t - v.on) / this.o.speed;
@@ -2858,8 +2858,12 @@ system4.afterEvents.scriptEventReceive.subscribe((e) => {
     return;
   }
   if (e.id === "spectral:head3d") {
-    HEAD3D.mode = e.message.trim() === "one" ? "one" : "level";
-    console.warn(`[spectral] head3d ${HEAD3D.mode}`);
+    const m = e.message.trim(), db = Number(m);
+    if (m !== "" && Number.isFinite(db)) {
+      HEAD3D.mode = "db";
+      HEAD3D.db = Math.max(0, Math.min(18, db));
+    } else HEAD3D.mode = m === "one" ? "one" : "level";
+    console.warn(`[spectral] head3d ${HEAD3D.mode === "db" ? `${HEAD3D.db} dB` : HEAD3D.mode}`);
     return;
   }
   if (e.id === "spectral:fileover") {

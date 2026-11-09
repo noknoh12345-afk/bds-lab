@@ -935,9 +935,11 @@ scriptevent spectral:fileover false
 scriptevent spectral:fileover true
 ~ \[spectral\] file over true
 
-## measuring the speaker's head-room (q89): a 3D note counted at its level (gain × +10 dB, as before) or at its gain only against the phone's clip, set by a script event (a 3D note reaches the mix about 30 dB under its level, so counting the level turned loud notes down: q80's speaker ramp flat from 72)
+## measuring the speaker's head-room (q89): a 3D note counted at its level (gain × +10 dB, as before) or at its gain only against the phone's clip, set by a script event, or a part of the +10 dB (q89: counting none let the ramp follow but squashed loud piano notes) (a 3D note reaches the mix about 30 dB under its level, so counting the level turned loud notes down: q80's speaker ramp flat from 72)
 scriptevent spectral:head3d one
 ~ \[spectral\] head3d one
+scriptevent spectral:head3d 5
+~ \[spectral\] head3d 5 dB
 scriptevent spectral:head3d level
 ~ \[spectral\] head3d level
 
