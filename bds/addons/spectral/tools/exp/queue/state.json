@@ -1696,7 +1696,10 @@
   "tries": 2
  },
  "q82_drums_each": {
-  "status": "pending"
+  "commit": "0dcdda1",
+  "run": "42581816904",
+  "started": "2026-11-09 16:50",
+  "status": "running"
  },
  "q83_sampler_pause_seek": {
   "status": "pending"
