@@ -33,6 +33,7 @@ perf 5000
 do execute as @a run studio:hud off
 wait 3000
 shot screen-off
+do kill @e[type=skin_studio:podium]
 section mirror-field
 do studio:mirror 20 -60 12 north           # 野原にそのまま立てた鏡
 do setblock 21 -60 9 gold_block
@@ -45,6 +46,11 @@ shot mirror-field-side                    # 横から: 枠の外に鏡像も鏡�
 do tp @a 20.5 -60 15.5 facing 20.5 -59 12
 wait 3000
 shot mirror-field-back                    # 裏から: 何も映らない（鏡の中の金ブロックも見えない）
+do execute as @a at @s run studio:remove
+do tp @a 20.5 -60 8.5 0 0
+do summon skin_studio:mirror 20.5 -60 12.5
+wait 3000
+shot mirror-summoned                      # /summon で出した鏡も、こちらを向いてまっすぐ立つ
 do execute as @a at @s run studio:remove
 do setblock 21 -60 9 air
 section mirror-pair
@@ -70,10 +76,10 @@ do tp @a 0.5 -60 7.5 facing 0.5 -59 12
 wait 5000
 do execute as @a at @s run studio:report
 shot mirror                               # 自分が左右反転で映り、金ブロック・板材・横倒しの原木（切り口が横）・作業台（天板が上）が窓の奥に描かれる（本物は置かない）
-do tp @a 0.5 -60 11.3 facing 0.5 -58.4 12
+do tp @a 0.5 -60 11.3 0 0
 wait 3000
 shot mirror-close                         # ガラスの目の前（0.7）: 自分も金ブロックも板材も消えずに映る
-do tp @a 0.5 -60 11.85 facing 0.5 -58.4 12
+do tp @a 0.5 -60 11.85 0 0
 wait 2000
 shot mirror-pushed                        # ガラスに入り込んでも前へ戻されて、映ったまま
 do tp @a 0.5 -60 7.5 facing 0.5 -59 12
@@ -120,16 +126,24 @@ do ride @a stop_riding
 do kill @e[type=boat]
 do tp @a 0.5 -60 7.5 facing 0.5 -59 12
 wait 2000
+section mirror-turned
+do tp @e[type=skin_studio:mirror] ~ ~ ~ 90 0
+wait 3000
+shot mirror-turned-back                   # 鏡を横へ回しても、まっすぐ窓に戻って映る
 section mirror-mobs
+do setblock 2 -60 9 air
+do setblock -2 -60 10 air
+do setblock -2 -59 10 air
+do setblock 2 -59 9 air
 do summon cow 1.5 -60 10.5
-do summon sheep -1.5 -60 9.5
-do summon villager 0.5 -60 8.5
-do summon pig -0.5 -60 10.5
-do summon chicken 1.5 -60 8.5
-do summon zombie -1.5 -60 8.5
+do summon sheep -0.5 -60 9.5
+do summon villager 0.5 -60 10.8
+do summon pig 1.5 -60 9
+do summon chicken -0.5 -60 11
+do summon zombie 0.5 -60 9
 do effect @e[type=!player] slowness 60 255 true
 do effect @e[type=zombie] fire_resistance 60 1 true
-do tp @a 3.5 -60 6.5 facing 0.5 -59 12
+do tp @a -2.5 -60 7.5 -38 5
 wait 5000
 do execute as @a at @s run studio:report
 shot mirror-mobs                          # 牛・羊・村人・豚・鶏・ゾンビも左右反転で窓の奥に映る（色・模様・首の向き・歩きも本物と同じ）
@@ -137,12 +151,12 @@ do camera @a set minecraft:third_person
 wait 3000
 shot mirror-mobs-3p                       # 三人称でも同じ
 do camera @a clear
-do tp @a 3.5 -60 6.5 facing 0.5 -59 12
+do tp @a -2.5 -60 7.5 -38 5
 do execute as @a run studio:debug on
 wait 2000
 shot mirror-mobs-marks                    # 生き物の鏡像の印（緑の点 = 中継、黄の三角 = 予備）
 do execute as @a run studio:debug off
-do tp @a 0.5 -60 11 facing 0.5 -59 12
+do tp @a 0.5 -60 11 0 0
 do tp @e[type=cow] 0.5 -60 6.5
 wait 3000
 shot mirror-mob-behind                    # 背中側で画面に入っていない牛も映る（サーバー経由の予備の動き）

@@ -62,7 +62,13 @@ export function settle(entity, spot, facing) {
   const { x, y, z } = entity.location;
   const turn = (((entity.getRotation().y - YAW[facing]) % 360) + 360) % 360;
   const moved = Math.abs(x - spot.x) + Math.abs(y - spot.y) + Math.abs(z - spot.z) > 0.01;
-  if (moved || (turn > 0.5 && turn < 359.5)) entity.teleport(spot, { rotation: { x: 0, y: YAW[facing] } });
+  if (!moved && !(turn > 0.5 && turn < 359.5)) return;
+  entity.teleport(spot, { rotation: { x: 0, y: YAW[facing] } });
+  if (turn > 0.5 && turn < 359.5) {
+    try {
+      entity.runCommand(`tp @s ~ ~ ~ ${YAW[facing]} 0`);
+    } catch {}
+  }
 }
 
 function blockAt(dimension, location) {
