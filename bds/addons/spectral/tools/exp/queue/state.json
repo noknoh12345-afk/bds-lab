@@ -1786,9 +1786,16 @@
   "tries": 1
  },
  "q88_file_over1": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "0cae979",
+  "conclusion": "success",
+  "ended": "2026-11-09 22:39",
+  "failed_steps": 0,
+  "recordings": 6,
   "run": "42624515005",
   "started": "2026-11-09 22:19",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  }
 }
