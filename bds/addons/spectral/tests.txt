@@ -699,6 +699,26 @@ wait 1500
 @A cmd /spectral:sampler 2 250 28 300 false 600 false
 = @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead
 
+## a looped note song with `seam` starts its next lap when its last note ends, the tails still ringing (q84 on the phone: waiting for every note to end, then starting again, made each 14.7 s lap of Für Elise 15.05 s with a 0.18 s silent seam) — off by default until the phone compares
+@A cmd /spectral:sampler 4 250 28 120 true 600 false true
+~ @A sampler: placed to the ms, 4 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 120 %, samples warmed 600 ms ahead, loops without a gap
+@A cmd /spectral:loop
+~ @A loop on
+@A cmd /spectral:play piano_demo
+@A cmd /spectral:seek 17.4
+~ @A ⇥ 0:17
+until note 103 3000
+~ \[spectral\] note 103 piano\.\d+ key 76 pitch [\d.]+ seek [\d.]+ at 17\d\d\d ms
+until note 0 piano 4000
+~ \[spectral\] note 0 piano\.40 key 48 pitch 1\.0000 seek [\d.]+ at \d{1,2} ms
+until note 2 piano 2000
+~ \[spectral\] note 2 piano\.48 key 55 pitch 1\.0595 seek [\d.]+ at \d+ ms
+@A cmd /spectral:stop
+@A cmd /spectral:loop
+~ @A loop off
+@A cmd /spectral:sampler 2 250 28 300 false 600 false false
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead
+
 ## a note song seeks, pauses and ends by itself; the last chord rolled 12 ms a note keeps its roll (bundled, its 8 notes start in one tick each at its own place)
 @A cmd /spectral:sampler 4 250 28 120 true
 @A cmd /spectral:play piano_demo

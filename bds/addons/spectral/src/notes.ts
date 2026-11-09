@@ -150,6 +150,9 @@ export interface NoteOpts {
   warm?: number;
   /** each note's choice and placement on the content log (testing, measuring) */
   log?: boolean;
+  /** loop: the next lap starts when the song's last note ends, its notes' tails still ringing (q84: waiting for every voice to
+   *  end, then stopping and starting again, made each 14.7 s lap 15.05 s with a 155-185 ms silent seam). false = as before */
+  seam?: boolean;
   /** phones: a note louder than 1 is made at 1 and raised by setVolume (playSound's volume stops at 1 on the phone — q80: at 300 %
    *  every velocity from 72 up sounded the same; setVolume is exact to 2). false = as before (made at its gain, so held at 1) */
   over?: boolean;
@@ -217,10 +220,31 @@ export class NotePlayer {
       for (let i = from; i < this.idx; i++) this.noteOn(i, t, true, g);
     }
     this.peakVoices = Math.max(this.peakVoices, this.voices.length);
+    if (this.o.loop && this.o.seam && this.idx >= this.nt.n && this.nt.n > 0 && t >= this.songEnd()) { this.nextLap(); return; }
     if (this.idx >= this.nt.n && this.voices.length === 0) {
       if (this.o.loop) this.seekMs(0);
       else if (!this.ending) this.ending = 1;
     }
+  }
+
+  /** song ms where its last note ends */
+  private endMs = -1;
+  songEnd() {
+    if (this.endMs < 0) { let e = 0; for (let i = 0; i < this.nt.n; i++) e = Math.max(e, this.nt.on[i] + Math.max(0, this.nt.dur[i])); this.endMs = e; }
+    return this.endMs;
+  }
+  /** the next lap from here (seam): the song's clock goes back by whole ticks of its length, the sounding notes keep ringing on
+   *  the same clock moved back with it, the first notes are placed from the next bundle on, samples warmed again from the top */
+  laps = 0;
+  private nextLap() {
+    const L = Math.max(1, Math.ceil(this.songEnd() / 50 / this.o.speed)), ms = L * 50 * this.o.speed;
+    this.t0 += L; this.nextBundle -= L; this.idx = 0; this.laps++;
+    for (const v of this.voices) {
+      v.on -= ms; v.off -= ms; v.end -= ms;
+      if (v.stopAt) v.stopAt -= ms;
+      if (v.relayAt !== Infinity) v.relayAt -= ms;
+    }
+    if (this.o.warm) this.planWarm(0);
   }
 
   /** the samples of the notes from note `from` on, each at its first note and where it comes back after WARM.gap (WARM) */

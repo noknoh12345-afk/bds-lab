@@ -1076,10 +1076,42 @@ var NotePlayer = class {
       for (let i = from; i < this.idx; i++) this.noteOn(i, t, true, g);
     }
     this.peakVoices = Math.max(this.peakVoices, this.voices.length);
+    if (this.o.loop && this.o.seam && this.idx >= this.nt.n && this.nt.n > 0 && t >= this.songEnd()) {
+      this.nextLap();
+      return;
+    }
     if (this.idx >= this.nt.n && this.voices.length === 0) {
       if (this.o.loop) this.seekMs(0);
       else if (!this.ending) this.ending = 1;
     }
+  }
+  /** song ms where its last note ends */
+  endMs = -1;
+  songEnd() {
+    if (this.endMs < 0) {
+      let e = 0;
+      for (let i = 0; i < this.nt.n; i++) e = Math.max(e, this.nt.on[i] + Math.max(0, this.nt.dur[i]));
+      this.endMs = e;
+    }
+    return this.endMs;
+  }
+  /** the next lap from here (seam): the song's clock goes back by whole ticks of its length, the sounding notes keep ringing on
+   *  the same clock moved back with it, the first notes are placed from the next bundle on, samples warmed again from the top */
+  laps = 0;
+  nextLap() {
+    const L = Math.max(1, Math.ceil(this.songEnd() / 50 / this.o.speed)), ms = L * 50 * this.o.speed;
+    this.t0 += L;
+    this.nextBundle -= L;
+    this.idx = 0;
+    this.laps++;
+    for (const v of this.voices) {
+      v.on -= ms;
+      v.off -= ms;
+      v.end -= ms;
+      if (v.stopAt) v.stopAt -= ms;
+      if (v.relayAt !== Infinity) v.relayAt -= ms;
+    }
+    if (this.o.warm) this.planWarm(0);
   }
   /** the samples of the notes from note `from` on, each at its first note and where it comes back after WARM.gap (WARM) */
   planWarm(from) {
@@ -2588,7 +2620,7 @@ async function play(p, id, mode) {
   const m = song.meta;
   return `\xA7a\u25B6 ${m.title}${m.artist ? " \u2014 " + m.artist : ""} \xA77(${fmt(m.seconds)}, ${s.V}/${m.voices} voices, ${mode === "phones" ? "headphones" : "speaker"})`;
 }
-var SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false, over: false };
+var SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false, over: false, seam: false };
 var FILE_LEVEL = 1.8;
 function stopAllFor(p) {
   const old = sessions.get(p.id);
@@ -2663,7 +2695,8 @@ async function playNotes(p, song, mode) {
     loop: s.loop,
     warm: SAMPLER.warm,
     log: SAMPLER.log,
-    over: SAMPLER.over
+    over: SAMPLER.over,
+    seam: SAMPLER.seam
   }, p.dimension, { x: p.location.x, y: p.location.y + 1, z: p.location.z });
   notePlays.set(p.id, np);
   np.start();
@@ -3052,7 +3085,7 @@ cmd(
 cmd(
   "spectral:sampler",
   "Note songs (MIDI, the instrument bank): notes of this many ticks started together, each placed inside its tick by seekTo (0 = no placement: every note at the start of its tick), ms more ahead for a 3D speaker, at most this many notes at once, level in percent, each sample warmed this many ms before its first note (0 = not; a phone loses a sound's first play)",
-  { "bundle?": "int", "ahead?": "int", "voices?": "int", "volume?": "int", "log?": "bool", "warm?": "int", "over?": "bool" },
+  { "bundle?": "int", "ahead?": "int", "voices?": "int", "volume?": "int", "log?": "bool", "warm?": "int", "over?": "bool", "seam?": "bool" },
   (p, a) => {
     if (a.bundle !== void 0) {
       SAMPLER.place = a.bundle > 0;
@@ -3064,7 +3097,8 @@ cmd(
     if (a.log !== void 0) SAMPLER.log = a.log;
     if (a.warm !== void 0) SAMPLER.warm = Math.max(0, Math.min(3e3, a.warm));
     if (a.over !== void 0) SAMPLER.over = a.over;
-    return `\xA7bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? "s" : ""} a bundle` : "tick-bound (no placement)"}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %, ${SAMPLER.warm ? `samples warmed ${SAMPLER.warm} ms ahead` : "not warmed"}${SAMPLER.over ? ", loud notes raised past 1" : ""}`;
+    if (a.seam !== void 0) SAMPLER.seam = a.seam;
+    return `\xA7bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? "s" : ""} a bundle` : "tick-bound (no placement)"}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %, ${SAMPLER.warm ? `samples warmed ${SAMPLER.warm} ms ahead` : "not warmed"}${SAMPLER.over ? ", loud notes raised past 1" : ""}${SAMPLER.seam ? ", loops without a gap" : ""}`;
   },
   true
 );

@@ -725,7 +725,7 @@ async function play(p: Player, id: string | undefined, mode: Mode): Promise<stri
 // (warm 600: on the phone a sample's first play is lost — p09 run 41531478311, the voice's units sounded only from their second
 //  time, 0.36 s later and on; p11 run 41536705472, the run's first click and first chord silent. Each sample is warmed this many ms
 //  before its first note, and a song waits that long when its first notes need it: src/notes.ts WARM)
-const SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false, over: false };
+const SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false, over: false, seam: false };
 /** how loud a file song plays (setVolume: up to 2 exact on the phone; the game plays a file 32.5 dB under it, into 16 bits) */
 const FILE_LEVEL = 1.8;
 function stopAllFor(p: Player) {
@@ -753,7 +753,7 @@ async function playNotes(p: Player, song: NoteSong, mode: Mode): Promise<string>
   const np = new NotePlayer(p, song, nt, {
     where: mode, place: SAMPLER.place, bundle: SAMPLER.bundle, ahead: mode === 'speaker' ? SAMPLER.ahead3d : 0,
     maxVoices: Math.max(1, Math.min(SAMPLER.voices, s.sounds ? s.sounds - 2 : SAMPLER.voices)), volume: SAMPLER.volume * s.volume,
-    range3d: RANGE_3D, level3d: Math.pow(10, LEVEL_3D_DB / 20), semis: s.semis, speed: s.speed > 0 ? s.speed : 1, loop: s.loop, warm: SAMPLER.warm, log: SAMPLER.log, over: SAMPLER.over,
+    range3d: RANGE_3D, level3d: Math.pow(10, LEVEL_3D_DB / 20), semis: s.semis, speed: s.speed > 0 ? s.speed : 1, loop: s.loop, warm: SAMPLER.warm, log: SAMPLER.log, over: SAMPLER.over, seam: SAMPLER.seam,
   }, p.dimension, { x: p.location.x, y: p.location.y + 1, z: p.location.z });
   notePlays.set(p.id, np);
   np.start();
@@ -967,7 +967,7 @@ cmd('spectral:say', 'Read kana aloud with the voice, mora by mora like notes (ka
     return r.skipped ? `${said} §7(${r.skipped} characters not kana: not read)` : said;
   });
 cmd('spectral:sampler', 'Note songs (MIDI, the instrument bank): notes of this many ticks started together, each placed inside its tick by seekTo (0 = no placement: every note at the start of its tick), ms more ahead for a 3D speaker, at most this many notes at once, level in percent, each sample warmed this many ms before its first note (0 = not; a phone loses a sound\'s first play)',
-  { 'bundle?': 'int', 'ahead?': 'int', 'voices?': 'int', 'volume?': 'int', 'log?': 'bool', 'warm?': 'int', 'over?': 'bool' }, (p, a) => {
+  { 'bundle?': 'int', 'ahead?': 'int', 'voices?': 'int', 'volume?': 'int', 'log?': 'bool', 'warm?': 'int', 'over?': 'bool', 'seam?': 'bool' }, (p, a) => {
     // (no bundle: only what it is now)
     if (a.bundle !== undefined) { SAMPLER.place = a.bundle > 0; SAMPLER.bundle = Math.max(1, Math.min(40, a.bundle || 1)); }
     if (a.ahead !== undefined) SAMPLER.ahead3d = Math.max(0, Math.min(400, a.ahead));
@@ -978,7 +978,9 @@ cmd('spectral:sampler', 'Note songs (MIDI, the instrument bank): notes of this m
     if (a.warm !== undefined) SAMPLER.warm = Math.max(0, Math.min(3000, a.warm));
     // (q80: on the phone a note made louder than 1 stays at 1 — over = make it at 1 and raise it by setVolume)
     if (a.over !== undefined) SAMPLER.over = a.over;
-    return `§bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? 's' : ''} a bundle` : 'tick-bound (no placement)'}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %, ${SAMPLER.warm ? `samples warmed ${SAMPLER.warm} ms ahead` : 'not warmed'}${SAMPLER.over ? ', loud notes raised past 1' : ''}`;
+    // (q84: a loop waited for every note to end, then started again — 0.35 s longer a lap, 0.18 s of silence; seam = no wait)
+    if (a.seam !== undefined) SAMPLER.seam = a.seam;
+    return `§bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? 's' : ''} a bundle` : 'tick-bound (no placement)'}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %, ${SAMPLER.warm ? `samples warmed ${SAMPLER.warm} ms ahead` : 'not warmed'}${SAMPLER.over ? ', loud notes raised past 1' : ''}${SAMPLER.seam ? ', loops without a gap' : ''}`;
   }, true);
 cmd('spectral:menu', 'Open the player', {}, (p) => { openMenu(p); });
 cmd('spectral:probe', 'Voice-limit probe: a 110 Hz saw built one harmonic at a time (listen where it stops getting brighter)', { 'n?': 'int' }, (p, a) => {
