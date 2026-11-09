@@ -1667,7 +1667,10 @@
   "tries": 1
  },
  "q80_velocity_curve": {
-  "status": "pending"
+  "commit": "baad5a7",
+  "run": "42576433258",
+  "started": "2026-11-09 15:59",
+  "status": "running"
  },
  "q81_sampler_direction": {
   "status": "pending"
