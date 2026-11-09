@@ -1641,10 +1641,17 @@
   "tries": 2
  },
  "q78_speech_intonation": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "b23e047",
+  "conclusion": "success",
+  "ended": "2026-11-09 15:42",
+  "failed_steps": 0,
+  "recordings": 8,
   "run": "42572871344",
   "started": "2026-11-09 15:24",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q79_load_many": {
   "status": "pending"
