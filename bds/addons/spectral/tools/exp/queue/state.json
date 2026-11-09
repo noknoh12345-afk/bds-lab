@@ -1453,7 +1453,10 @@
   "tries": 1
  },
  "q65_warm_min": {
-  "status": "pending"
+  "commit": "723b215",
+  "run": "42546283140",
+  "started": "2026-11-09 10:34",
+  "status": "running"
  },
  "q66_forget": {
   "status": "pending"
