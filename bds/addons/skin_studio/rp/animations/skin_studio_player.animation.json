@@ -1,0 +1,43 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.skin_studio.probe": {
+      "loop": true,
+      "bones": {
+        "waist": {
+          "rotation": [
+            "v.ss_slim = q.get_default_bone_pivot('rightarm', 1) < 21.75; return 0;",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.skin_studio.screen": {
+      "loop": true,
+      "bones": {
+        "podium": {
+          "position": [
+            "(v.ssp_cx ?? -6) / 10000 * 176 - 7.04 - 34 * (v.ssp_size ?? 100) / 100 * v.ss_pop * 0.73333",
+            "(v.ssp_cy ?? -278) / 10000 * 176 + 220.96 - 65 * (v.ssp_size ?? 100) / 100 * v.ss_pop * 0.73333",
+            -0.2
+          ],
+          "rotation": [
+            10,
+            15,
+            0
+          ],
+          "scale": "(v.ssp_size ?? 100) / 100 * v.ss_pop * 0.73333"
+        },
+        "podium_card": {
+          "position": [
+            "(v.ssp_cx ?? -6) / 10000 * 176 - 7.04 - 34 * (v.ssp_size ?? 100) / 100 * v.ss_pop * 0.73333",
+            "(v.ssp_cy ?? -278) / 10000 * 176 + 220.96 - 65 * (v.ssp_size ?? 100) / 100 * v.ss_pop * 0.73333",
+            -0.2
+          ],
+          "scale": "(v.ssp_size ?? 100) / 100 * v.ss_pop * 0.73333"
+        }
+      }
+    }
+  }
+}

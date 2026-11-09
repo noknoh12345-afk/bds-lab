@@ -128,7 +128,7 @@ jobs:
       - name: app ${{ inputs.mode || 'run' }} on the redroid device
         if: steps.turn.outputs.ok == 'true' && (steps.prep.outputs.game_ok == 'true' || steps.open.outputs.opened == 'true')
         env:
-          ADDON: ${{ inputs.addon || 'jsonui_demo' }}
+          ADDON: ${{ inputs.addon || 'skin_studio' }}
           MODE: ${{ inputs.mode || 'run' }}
         run: node app/redroid/game.mjs debug --data /mnt/redroid/data --addon "$ADDON" --mode "$MODE" --shots /mnt/redroid/shots/debug
 
@@ -172,6 +172,35 @@ jobs:
           # shellcheck disable=SC2012  # (the newest run folder: ls -t sorts by time, the names are the lab's own)
           r=$(ls -td app/runs/*/ 2>/dev/null | head -1); [ -n "$r" ] && { cp "$r/report.md" out/ 2>/dev/null; cp "$r/run.txt" out/ 2>/dev/null; for f in $(printf '%s\n' "$r"shots/*.png | tail -n 6); do [ -f "$f" ] && cp "$f" "out/run-$(basename "$f")"; done; }
           ls -la out
+
+      - name: a copy for the holder of app/redroid/claude.pub.pem (RSA-OAEP key, AES-256 body)
+        if: always() && hashFiles('app/redroid/claude.pub.pem') != ''
+        run: |
+          mkdir -p mine stage
+          cp -r out stage/out 2>/dev/null || true
+          r=$(ls -td app/runs/*/ 2>/dev/null | head -1)
+          if [ -n "$r" ]; then
+            mkdir -p stage/run
+            for f in report.md run.txt result.json do.txt steps.txt scenario.txt server.log logcat-minecraft.txt logcat-client.txt logcat-digest.txt notices.txt annotations.txt explain.txt; do [ -f "$r$f" ] && cp "$r$f" stage/run/; done
+            [ -d "${r}shots" ] && cp -r "${r}shots" stage/run/
+            [ -d "${r}recordings" ] && cp -r "${r}recordings" stage/run/
+            find "$r" -maxdepth 2 -iname '*content*log*' -size -20M -exec cp {} stage/run/ \; 2>/dev/null || true
+          fi
+          find stage -name '*.apk' -delete; find stage -name 'adbkey*' -delete
+          tar czf mine.tgz -C stage .
+          openssl rand -hex 32 > mine.k
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in mine.tgz -out mine/body.enc -pass file:mine.k
+          openssl pkeyutl -encrypt -pubin -inkey app/redroid/claude.pub.pem -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in mine.k -out mine/key.enc
+          rm -rf mine.k mine.tgz stage
+          ls -la mine
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always() && hashFiles('mine/key.enc') != ''
+        with:
+          name: redroid-claude
+          path: mine/
+          retention-days: 3
+          if-no-files-found: ignore
 
       # (not private: out/ sealed with the vault's key, only summary.json in the clear; no key → summary.json only.
       # Read on this machine: node lab.mjs app ci watch <run> opens it with the key of .env.local)

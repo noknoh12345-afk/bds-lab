@@ -1,0 +1,29 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.skin_studio.ghost_window": {
+      "loop": true,
+      "bones": {
+        "ss_mask": {
+          "position": [
+            "v.ss_gx",
+            "v.ss_gy",
+            "v.ss_gz"
+          ],
+          "rotation": [
+            0,
+            "v.ss_gr",
+            0
+          ]
+        },
+        "block": {
+          "rotation": [
+            "v.ss_rx",
+            0,
+            "v.ss_rz"
+          ]
+        }
+      }
+    }
+  }
+}
