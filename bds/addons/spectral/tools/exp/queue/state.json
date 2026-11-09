@@ -1667,10 +1667,17 @@
   "tries": 1
  },
  "q80_velocity_curve": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "baad5a7",
+  "conclusion": "success",
+  "ended": "2026-11-09 16:13",
+  "failed_steps": 0,
+  "recordings": 3,
   "run": "42576433258",
   "started": "2026-11-09 15:59",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q81_sampler_direction": {
   "status": "pending"
