@@ -1711,7 +1711,7 @@
  "q83_sampler_pause_seek": {
   "arms": {},
   "checkpoints": 0,
-  "commit": "1b16f98",
+  "commit": "1ad4483",
   "conclusion": "failure",
   "earlier_runs": [
    "42583954696"
@@ -1719,9 +1719,9 @@
   "ended": "2026-11-09 17:11",
   "failed_steps": 0,
   "recordings": 0,
-  "run": "42583954696",
-  "started": "2026-11-09 17:09",
-  "status": "pending",
+  "run": "42584112365",
+  "started": "2026-11-09 17:11",
+  "status": "running",
   "tries": 1
  },
  "q84_sampler_loop_5min": {
