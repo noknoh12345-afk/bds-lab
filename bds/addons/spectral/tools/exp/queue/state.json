@@ -1747,10 +1747,17 @@
   "tries": 1
  },
  "q85_long_mix_20min": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "397f532",
+  "conclusion": "success",
+  "ended": "2026-11-09 21:15",
+  "failed_steps": 0,
+  "recordings": 1,
   "run": "42610747467",
   "started": "2026-11-09 20:39",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q86_sampler_over1": {
   "status": "pending"
