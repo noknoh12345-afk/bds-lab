@@ -1760,10 +1760,17 @@
   "tries": 1
  },
  "q86_sampler_over1": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "7cd4a74",
+  "conclusion": "success",
+  "ended": "2026-11-09 21:42",
+  "failed_steps": 0,
+  "recordings": 16,
   "run": "42616318444",
   "started": "2026-11-09 21:21",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q87_loop_seam": {
   "status": "pending"

@@ -125,3 +125,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q83_sampler_pause_seek | 42604859618 | success | 4 | — | 0 | 2026-11-09 19:55 → 2026-11-09 20:14 |
 | q84_sampler_loop_5min | 42607417810 | success | 1（lp_fur_elise 4169 KB） | — | 0 | 2026-11-09 20:14 → 2026-11-09 20:29 |
 | q85_long_mix_20min | 42610747467 | success | 1（mx_20min 9070 KB） | — | 0 | 2026-11-09 20:39 → 2026-11-09 21:15 |
+| q86_sampler_over1 | 42616318444 | success | 16 | — | 0 | 2026-11-09 21:21 → 2026-11-09 21:42 |
