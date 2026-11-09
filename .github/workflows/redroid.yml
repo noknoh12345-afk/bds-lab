@@ -36,7 +36,7 @@ on:
         default: false
   push:
     branches: [main, 'claude/redroid-*']
-    paths: ['app/redroid/**', 'app/lib/android.mjs', '.github/workflows/redroid.yml']
+    paths: ['app/redroid/**', 'app/lib/android.mjs', 'bds/addons/skin_studio/**', '.github/workflows/redroid.yml']
 
 concurrency:
   group: redroid-${{ github.ref }}

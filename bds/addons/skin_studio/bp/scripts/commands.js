@@ -170,7 +170,7 @@ function report(origin) {
   if (mirror) {
     const state = mirrorState(mirror);
     lines.push(
-      `鏡 ${state.uid ?? '?'}: ${state.paused ? '窓がふさがっていて止めている' : '映している'}・番号 ${state.channel}・人 ${state.people.join('、') || 'なし'}・鏡の中のブロック ${state.ghosts}・見えない箱 ${state.walls}・押し戻し ${state.pushed} 回`,
+      `鏡 ${state.uid ?? '?'}: ${state.paused ? '窓がふさがっていて止めている' : '映している'}・番号 ${state.channel}・人 ${state.people.join('、') || 'なし'}・鏡の中のブロック ${state.ghosts}・見えない箱 ${state.walls}・押し戻し ${state.pushed} 回・向き ${Math.round(mirror.getRotation().y)}`,
     );
   }
   const podium = nearest(origin, [PODIUM]);

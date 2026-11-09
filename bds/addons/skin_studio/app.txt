@@ -68,6 +68,7 @@ do setblock 2 -59 9 crafting_table
 do studio:mirror 0 -60 12 north
 do tp @a 0.5 -60 7.5 facing 0.5 -59 12
 wait 5000
+do execute as @a at @s run studio:report
 shot mirror                               # 自分が左右反転で映り、金ブロック・板材・横倒しの原木（切り口が横）・作業台（天板が上）が窓の奥に描かれる（本物は置かない）
 do tp @a 0.5 -60 11.3 facing 0.5 -58.4 12
 wait 3000
@@ -77,19 +78,31 @@ wait 2000
 shot mirror-pushed                        # ガラスに入り込んでも前へ戻されて、映ったまま
 do tp @a 0.5 -60 7.5 facing 0.5 -59 12
 wait 2000
+do execute as @a at @s run studio:report
 record start
-walk left 1
-walk right 1
-look left 300 40
-look right 300 40
-record stop                               # 歩く・振り向く鏡像がカクつかないか（recordings/rec-1.mp4）
+do tp @a -0.5 -60 7.5 facing 0.5 -59 12
+wait 700
+do tp @a 1.5 -60 7.5 facing 0.5 -59 12
+wait 700
+do tp @a 0.5 -60 7.5 facing -1.5 -59 12
+wait 700
+do tp @a 0.5 -60 7.5 facing 2.5 -59 12
+wait 700
+do tp @a 0.5 -60 7.5 facing 0.5 -59 12
+wait 700
+record stop                               # 動く・振り向く鏡像（recordings/rec-1.mp4）
+do execute as @a run studio:debug on
+wait 2000
+shot mirror-marks                         # 自分の鏡像の上の印: 緑の点 = 中継で映る・黄の三角 = サーバーの予備・赤の × = スキンが届いていない
+do execute as @a run studio:debug off
 shot mirror-after
 do camera @a set minecraft:third_person
+do tp @a 2.0 -60 6.5 facing 0.5 -59 12
 wait 3000
-shot mirror-3p                            # 三人称（後ろから）: 自分の背中の先の窓に、こちらを向いた自分が左右反転で映る
-look left 300 40
+shot mirror-3p                            # 三人称（右後ろから）: 窓に、こちらを向いた自分が左右反転で映る
+do tp @a 2.0 -60 6.5 facing -1.5 -59 12
 wait 1500
-shot mirror-3p-turned                     # 三人称で振り向いても鏡像の向きが合う
+shot mirror-3p-turned                     # 三人称で向きを変えても鏡像の向きが合う
 do camera @a clear
 do tp @a 0.5 -60 7.5 facing 0.5 -59 12
 wait 2000
@@ -118,16 +131,27 @@ do effect @e[type=!player] slowness 60 255 true
 do effect @e[type=zombie] fire_resistance 60 1 true
 do tp @a 3.5 -60 6.5 facing 0.5 -59 12
 wait 5000
+do execute as @a at @s run studio:report
 shot mirror-mobs                          # 牛・羊・村人・豚・鶏・ゾンビも左右反転で窓の奥に映る（色・模様・首の向き・歩きも本物と同じ）
 do camera @a set minecraft:third_person
 wait 3000
 shot mirror-mobs-3p                       # 三人称でも同じ
 do camera @a clear
+do tp @a 3.5 -60 6.5 facing 0.5 -59 12
+do execute as @a run studio:debug on
+wait 2000
+shot mirror-mobs-marks                    # 生き物の鏡像の印（緑の点 = 中継、黄の三角 = 予備）
+do execute as @a run studio:debug off
 do tp @a 0.5 -60 11 facing 0.5 -59 12
 do tp @e[type=cow] 0.5 -60 6.5
 wait 3000
 shot mirror-mob-behind                    # 背中側で画面に入っていない牛も映る（サーバー経由の予備の動き）
-do kill @e[type=!player]
+do kill @e[type=cow]
+do kill @e[type=sheep]
+do kill @e[type=villager]
+do kill @e[type=pig]
+do kill @e[type=chicken]
+do kill @e[type=zombie]
 section mirror-debug
 do summon cow 1.5 -60 10.5
 do effect @e[type=cow] slowness 60 255 true

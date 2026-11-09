@@ -60,16 +60,16 @@
           "mk1": "(v.ss_dbg ?? 0) && (v.r1_ok ?? 0)"
         },
         {
-          "mk1_dot": "(v.r1_live ?? 0) && (v.m1_ok ?? 0)"
+          "mk1_dot": "(v.ss_dbg ?? 0) && (v.r1_ok ?? 0) && (v.r1_live ?? 0) && (v.m1_ok ?? 0)"
         },
         {
-          "mk1_tri": "!(v.r1_live ?? 0) && (v.m1_ok ?? 0)"
+          "mk1_tri": "(v.ss_dbg ?? 0) && (v.r1_ok ?? 0) && !(v.r1_live ?? 0) && (v.m1_ok ?? 0)"
         },
         {
-          "mk1_box": "(v.r1_live ?? 0) && !(v.m1_ok ?? 0)"
+          "mk1_box": "(v.ss_dbg ?? 0) && (v.r1_ok ?? 0) && (v.r1_live ?? 0) && !(v.m1_ok ?? 0)"
         },
         {
-          "mk1_x": "!(v.r1_live ?? 0) && !(v.m1_ok ?? 0)"
+          "mk1_x": "(v.ss_dbg ?? 0) && (v.r1_ok ?? 0) && !(v.r1_live ?? 0) && !(v.m1_ok ?? 0)"
         }
       ]
     },
@@ -107,16 +107,16 @@
           "mk2": "(v.ss_dbg ?? 0) && (v.r2_ok ?? 0)"
         },
         {
-          "mk2_dot": "(v.r2_live ?? 0) && (v.m2_ok ?? 0)"
+          "mk2_dot": "(v.ss_dbg ?? 0) && (v.r2_ok ?? 0) && (v.r2_live ?? 0) && (v.m2_ok ?? 0)"
         },
         {
-          "mk2_tri": "!(v.r2_live ?? 0) && (v.m2_ok ?? 0)"
+          "mk2_tri": "(v.ss_dbg ?? 0) && (v.r2_ok ?? 0) && !(v.r2_live ?? 0) && (v.m2_ok ?? 0)"
         },
         {
-          "mk2_box": "(v.r2_live ?? 0) && !(v.m2_ok ?? 0)"
+          "mk2_box": "(v.ss_dbg ?? 0) && (v.r2_ok ?? 0) && (v.r2_live ?? 0) && !(v.m2_ok ?? 0)"
         },
         {
-          "mk2_x": "!(v.r2_live ?? 0) && !(v.m2_ok ?? 0)"
+          "mk2_x": "(v.ss_dbg ?? 0) && (v.r2_ok ?? 0) && !(v.r2_live ?? 0) && !(v.m2_ok ?? 0)"
         }
       ]
     },
@@ -154,16 +154,16 @@
           "mk3": "(v.ss_dbg ?? 0) && (v.r3_ok ?? 0)"
         },
         {
-          "mk3_dot": "(v.r3_live ?? 0) && (v.m3_ok ?? 0)"
+          "mk3_dot": "(v.ss_dbg ?? 0) && (v.r3_ok ?? 0) && (v.r3_live ?? 0) && (v.m3_ok ?? 0)"
         },
         {
-          "mk3_tri": "!(v.r3_live ?? 0) && (v.m3_ok ?? 0)"
+          "mk3_tri": "(v.ss_dbg ?? 0) && (v.r3_ok ?? 0) && !(v.r3_live ?? 0) && (v.m3_ok ?? 0)"
         },
         {
-          "mk3_box": "(v.r3_live ?? 0) && !(v.m3_ok ?? 0)"
+          "mk3_box": "(v.ss_dbg ?? 0) && (v.r3_ok ?? 0) && (v.r3_live ?? 0) && !(v.m3_ok ?? 0)"
         },
         {
-          "mk3_x": "!(v.r3_live ?? 0) && !(v.m3_ok ?? 0)"
+          "mk3_x": "(v.ss_dbg ?? 0) && (v.r3_ok ?? 0) && !(v.r3_live ?? 0) && !(v.m3_ok ?? 0)"
         }
       ]
     },
@@ -201,16 +201,16 @@
           "mk4": "(v.ss_dbg ?? 0) && (v.r4_ok ?? 0)"
         },
         {
-          "mk4_dot": "(v.r4_live ?? 0) && (v.m4_ok ?? 0)"
+          "mk4_dot": "(v.ss_dbg ?? 0) && (v.r4_ok ?? 0) && (v.r4_live ?? 0) && (v.m4_ok ?? 0)"
         },
         {
-          "mk4_tri": "!(v.r4_live ?? 0) && (v.m4_ok ?? 0)"
+          "mk4_tri": "(v.ss_dbg ?? 0) && (v.r4_ok ?? 0) && !(v.r4_live ?? 0) && (v.m4_ok ?? 0)"
         },
         {
-          "mk4_box": "(v.r4_live ?? 0) && !(v.m4_ok ?? 0)"
+          "mk4_box": "(v.ss_dbg ?? 0) && (v.r4_ok ?? 0) && (v.r4_live ?? 0) && !(v.m4_ok ?? 0)"
         },
         {
-          "mk4_x": "!(v.r4_live ?? 0) && !(v.m4_ok ?? 0)"
+          "mk4_x": "(v.ss_dbg ?? 0) && (v.r4_ok ?? 0) && !(v.r4_live ?? 0) && !(v.m4_ok ?? 0)"
         }
       ]
     }

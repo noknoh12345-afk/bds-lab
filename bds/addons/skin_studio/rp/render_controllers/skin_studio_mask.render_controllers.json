@@ -30,16 +30,16 @@
           "ss_mark": "(v.ss_dbg ?? 0) && (v.ss_show ?? 0)"
         },
         {
-          "ss_mark_dot": "(v.ss_live ?? 0) && 1"
+          "ss_mark_dot": "(v.ss_dbg ?? 0) && (v.ss_show ?? 0) && (v.ss_live ?? 0) && 1"
         },
         {
-          "ss_mark_tri": "!(v.ss_live ?? 0) && 1"
+          "ss_mark_tri": "(v.ss_dbg ?? 0) && (v.ss_show ?? 0) && !(v.ss_live ?? 0) && 1"
         },
         {
-          "ss_mark_box": "(v.ss_live ?? 0) && !1"
+          "ss_mark_box": "(v.ss_dbg ?? 0) && (v.ss_show ?? 0) && (v.ss_live ?? 0) && !1"
         },
         {
-          "ss_mark_x": "!(v.ss_live ?? 0) && !1"
+          "ss_mark_x": "(v.ss_dbg ?? 0) && (v.ss_show ?? 0) && !(v.ss_live ?? 0) && !1"
         }
       ]
     }
