@@ -326,7 +326,7 @@ wait 800
 ~ @A status: playing tinyfade .* fades fitted \(voices and noise\) short [1-9]\d*$
 until ■ Tiny fades — end 5000
 
-## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, no drum bursts (measured: better without), and every level 10 dB over the files (the phone plays them 32.5 dB under, into 16 bits; measured: +10 dB beat +6 dB on 10 of 13 songs in two runs)
+## a phone gets as many sounds as its client plays at once (32, measured): 24 voices beside the 8 noise bands, no drum bursts (measured: better without), and every level 12 dB over the files (the phone plays them 32.5 dB under, into 16 bits; measured: +10 dB beat +6 dB on 10 of 13 songs in two runs, +12 dB beat +10 dB in two more, q12 and q53)
 @C join platform=mobile
 @C cmd /spectral:play demo
 ~ @C ▶ Demo \(original\) — Spectral Player \(0:22, 24/48 voices, headphones\)
@@ -334,7 +334,7 @@ wait 1000
 @C cmd /spectral:status
 ~ @C status: playing demo .* mode phones voices 24 instances 32
 ~ @C status: playing demo .* drums off
-~ @C status: playing demo .* level \+10 dB volume
+~ @C status: playing demo .* level \+12 dB volume
 @C cmd /spectral:mode light
 ~ @C quality light: 16 voices
 @C cmd /spectral:mode quality

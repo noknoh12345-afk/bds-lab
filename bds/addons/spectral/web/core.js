@@ -742,11 +742,11 @@
   }
 
   // ---------------------------------------------------------------- analysis by synthesis through the client model
-  // (tools/spectral.py refine_client, line for line: the song as the phone plays it — its 24 voices and the noise bands, +10 dB,
+  // (tools/spectral.py refine_client, line for line: the song as the phone plays it — its 24 voices and the noise bands, +12 dB,
   // the engine's send rules, the 24 kHz mix with its folding, x2 linear, the 16-bit floor — measured in ViSQOL's 32 gammatone
   // bands against the original, each tick's level and fade of every sound chosen to bring them closest; the squared
   // difference counted in whole 1/64ths of a dB, so both converters choose the same)
-  const CL_VOICES = 24, CL_LEVEL_DB = 10, CL_OSC_AMP = 0.9, CL_SILENT = 1e-4, CL_SEND_DB = 0.75, CL_SEND_CENTS = 3;
+  const CL_VOICES = 24, CL_LEVEL_DB = 12, CL_OSC_AMP = 0.9, CL_SILENT = 1e-4, CL_SEND_DB = 0.75, CL_SEND_CENTS = 3;
   // (tools/spectral.py CL_MORE: the default second stage — the voices after the phone's for a PC as assumed, the phone's part fixed)
   const CL_MORE = { client: 'pc', level: 0, sweeps: 2 };
   const CL_NOISE_RMS = [0.181311, 0.180788, 0.179998, 0.179116, 0.178403, 0.177544, 0.177018, 0.175986], NOISE_RMS_ALL = 0.18;

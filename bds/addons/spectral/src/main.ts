@@ -208,9 +208,11 @@ const LOUD_EVENT_DB = 20 * Math.log10(4);          // the _l events' definition 
 // 10/13 against 10/13 and 8/13; drums +1.0 and Chopin +0.6 in both runs, the one steady loss Name of Love -0.07 (still above
 // its ceiling). Songs converted for +6 dB gain about as much at +10 (emulated: median 3.33 -> 3.45, 9 of 13 up): what the level
 // buys is the 16-bit floor further under the quiet passages. The clip of the loudest moments (its distortion -21 dB on the
-// speech at +10, emulated) did not cost ViSQOL on the phone. /spectral:level sets another
+// speech at +10, emulated) did not cost ViSQOL on the phone. +12 dB since 1.5.2 (the songs converted for it): over +10 dB in
+// two runs, 13 songs each — q12 (run 41465987389) median 3.193 against 3.034 and q53 (run 42142173358) 3.365 against 2.963;
+// the limiter on top of +12 was lower (2.854), so it stays off. /spectral:level sets another
 interface Client { sounds: number; mixHz: number; fold: boolean; limit: boolean; drums?: boolean; level?: number; }
-const CLIENTS: Partial<Record<string, Client>> = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false, drums: false, level: 10 } };
+const CLIENTS: Partial<Record<string, Client>> = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false, drums: false, level: 12 } };
 function clientOf(p: Player): Client | undefined {
   let kind = '';
   try { kind = String(p.clientSystemInfo.platformType); } catch { /* not known (an older client) */ }

@@ -1877,7 +1877,7 @@ var DEFAULTS = { volume: 1, speed: 1, semis: 0, eq: [0, 0, 0], voices: 64, noise
 var LIGHT_VOICES = 16;
 var LIGHT_BUDGET = 24;
 var LOUD_EVENT_DB = 20 * Math.log10(4);
-var CLIENTS = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false, drums: false, level: 10 } };
+var CLIENTS = { Mobile: { sounds: 32, mixHz: 0, fold: false, limit: false, drums: false, level: 12 } };
 function clientOf(p) {
   let kind = "";
   try {

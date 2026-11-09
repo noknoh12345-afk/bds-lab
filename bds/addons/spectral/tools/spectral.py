@@ -1148,7 +1148,7 @@ def fit_noise_fades(x, nz, hop=None):
 # the two spectrograms closest (the squared difference, weighted per band): two sweeps of coordinate descent. The squared
 # difference is counted in whole 1/64ths of those dB (integers), so tools/spectral.py and web/core.js choose the same.
 CL_VOICES = 24                    # the phone's voices beside the 8 noise bands (32 sounds at once, measured)
-CL_LEVEL_DB = 10.0                # the phone's level over the files (src/main.ts CLIENTS: +10 dB since 1.2.0, measured)
+CL_LEVEL_DB = 12.0                # the phone's level over the files (src/main.ts CLIENTS: +12 dB since 1.5.2, measured q12/q53)
 CL_OSC_AMP = 0.9                  # src/assets.ts: the sine loop's peak
 CL_NOISE_RMS = [0.181311, 0.180788, 0.179998, 0.179116, 0.178403, 0.177544, 0.177018, 0.175986]   # src/assets.ts
 CL_SILENT = 1e-4

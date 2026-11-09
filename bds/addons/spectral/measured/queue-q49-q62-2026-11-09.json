@@ -1,0 +1,782 @@
+{
+ "what": "q49–q62 (11-05〜11-06) recordings of the real phone (redroid, Android 14, Minecraft 1.26.60.4), solved 2026-11-09. q22–q48: their recordings had expired on GitHub (3 days) before they were solved.",
+ "how": {
+  "songs": "tools/metrics/metrics.py against the song rendered here through the bank (tools/notes.py --render; band_demo/piano_demo from src/songs, the others tools/exp/packs/notes). piano_file against the same piano_demo render.",
+  "speech": "openai-whisper small after ffmpeg loudnorm I=-20; character error rate of the reading (tools/speech.py cer, Open JTalk)",
+  "clicks": "tools/exp/sampler_score.py (q62 bwN_pu as pu_bN)"
+ },
+ "runs": {
+  "q49_say_command": "42131728243",
+  "q50_speech_joins": "42134173319",
+  "q51_file_warm": "42136474382",
+  "q52_file_seek": "42139891949",
+  "q53_limiter_l12": "42142173358",
+  "q54_voices_28_32": "42151926608",
+  "q55_sampler_same_thrice": "42156173847",
+  "q56_sampler_phones_speaker": "42158351773",
+  "q57_sampler_two_streams": "42162270238",
+  "q58_sampler_rain_mobs": "42164200663",
+  "q59_bgm_sampler": "42165212996",
+  "q60_sampler_walking_listener": "42167704647",
+  "q61_noise_floor_warm": "42169741330",
+  "q62_bundle_warm_again": "42182206909"
+ },
+ "songs": {
+  "q50/jnc0_speech_cave": {
+   "ref": "speech_cave",
+   "visqol": 3.8212,
+   "mrstft": 1.0046,
+   "third_oct_db": 2.675,
+   "onset_ms": 5.0,
+   "onset_recall": 0.8
+  },
+  "q50/jnc0_speech_hello": {
+   "ref": "speech_hello",
+   "visqol": 3.6296,
+   "mrstft": 1.1145,
+   "third_oct_db": 3.344,
+   "onset_ms": 10.0,
+   "onset_recall": 0.811
+  },
+  "q50/jnc20_speech_cave": {
+   "ref": "speech_cave",
+   "visqol": 3.8091,
+   "mrstft": 1.1025,
+   "third_oct_db": 3.284,
+   "onset_ms": 7.5,
+   "onset_recall": 0.771
+  },
+  "q50/jnc20_speech_hello": {
+   "ref": "speech_hello",
+   "visqol": 3.74,
+   "mrstft": 1.0916,
+   "third_oct_db": 3.064,
+   "onset_ms": 7.5,
+   "onset_recall": 0.838
+  },
+  "q50/jno10_speech_cave": {
+   "ref": "speech_cave",
+   "visqol": 3.8317,
+   "mrstft": 1.0067,
+   "third_oct_db": 2.523,
+   "onset_ms": 5.0,
+   "onset_recall": 0.743
+  },
+  "q50/jno10_speech_hello": {
+   "ref": "speech_hello",
+   "visqol": 3.7002,
+   "mrstft": 1.2677,
+   "third_oct_db": 5.609,
+   "onset_ms": 17.5,
+   "onset_recall": 0.811
+  },
+  "q50/jno40_speech_cave": {
+   "ref": "speech_cave",
+   "visqol": 3.8091,
+   "mrstft": 1.1045,
+   "third_oct_db": 3.855,
+   "onset_ms": 10.0,
+   "onset_recall": 0.743
+  },
+  "q50/jno40_speech_hello": {
+   "ref": "speech_hello",
+   "visqol": 3.7269,
+   "mrstft": 1.1464,
+   "third_oct_db": 3.43,
+   "onset_ms": 11.25,
+   "onset_recall": 0.865
+  },
+  "q51/fw0_phones": {
+   "ref": "piano_demo",
+   "visqol": 3.2124,
+   "mrstft": 0.9057,
+   "third_oct_db": 0.419,
+   "onset_ms": 0.0,
+   "onset_recall": 0.863
+  },
+  "q51/fw0_speaker": {
+   "ref": "piano_demo",
+   "visqol": 4.4758,
+   "mrstft": 0.8062,
+   "third_oct_db": 0.428,
+   "onset_ms": 0.0,
+   "onset_recall": 0.902
+  },
+  "q51/fw1000_phones": {
+   "ref": "piano_demo",
+   "visqol": 3.2087,
+   "mrstft": 0.9048,
+   "third_oct_db": 0.416,
+   "onset_ms": 0.0,
+   "onset_recall": 0.882
+  },
+  "q51/fw1000_speaker": {
+   "ref": "piano_demo",
+   "visqol": 4.4689,
+   "mrstft": 0.8062,
+   "third_oct_db": 0.431,
+   "onset_ms": 0.0,
+   "onset_recall": 0.902
+  },
+  "q51/fw300_phones": {
+   "ref": "piano_demo",
+   "visqol": 3.1063,
+   "mrstft": 0.9069,
+   "third_oct_db": 0.415,
+   "onset_ms": 0.0,
+   "onset_recall": 0.863
+  },
+  "q51/fw300_speaker": {
+   "ref": "piano_demo",
+   "visqol": 4.4747,
+   "mrstft": 0.8063,
+   "third_oct_db": 0.428,
+   "onset_ms": 0.0,
+   "onset_recall": 0.902
+  },
+  "q51/fw600_phones": {
+   "ref": "piano_demo",
+   "visqol": 3.1261,
+   "mrstft": 0.9075,
+   "third_oct_db": 0.411,
+   "onset_ms": 0.0,
+   "onset_recall": 0.882
+  },
+  "q51/fw600_speaker": {
+   "ref": "piano_demo",
+   "visqol": 4.4728,
+   "mrstft": 0.8087,
+   "third_oct_db": 0.428,
+   "onset_ms": 0.0,
+   "onset_recall": 0.882
+  },
+  "q52/fs_ref": {
+   "ref": "piano_demo",
+   "visqol": 3.1552,
+   "mrstft": 0.9069,
+   "third_oct_db": 0.415,
+   "onset_ms": 0.0,
+   "onset_recall": 0.863
+  },
+  "q55/tw1_bd": {
+   "ref": "band_demo",
+   "visqol": 2.358,
+   "mrstft": 1.6478,
+   "third_oct_db": 5.587,
+   "onset_ms": 22.5,
+   "onset_recall": 0.958
+  },
+  "q55/tw1_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.1627,
+   "mrstft": 1.2334,
+   "third_oct_db": 2.107,
+   "onset_ms": 5.0,
+   "onset_recall": 1.0
+  },
+  "q55/tw1_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.391,
+   "mrstft": 1.3905,
+   "third_oct_db": 3.444,
+   "onset_ms": 7.5,
+   "onset_recall": 0.922
+  },
+  "q55/tw1_sh": {
+   "ref": "speech_hello",
+   "visqol": 3.884,
+   "mrstft": 0.9192,
+   "third_oct_db": 3.039,
+   "onset_ms": 5.0,
+   "onset_recall": 0.875
+  },
+  "q55/tw2_bd": {
+   "ref": "band_demo",
+   "visqol": 2.3641,
+   "mrstft": 1.6379,
+   "third_oct_db": 5.569,
+   "onset_ms": 20.0,
+   "onset_recall": 0.958
+  },
+  "q55/tw2_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.1604,
+   "mrstft": 1.2553,
+   "third_oct_db": 2.244,
+   "onset_ms": 7.5,
+   "onset_recall": 1.0
+  },
+  "q55/tw2_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.3971,
+   "mrstft": 1.3905,
+   "third_oct_db": 3.502,
+   "onset_ms": 7.5,
+   "onset_recall": 0.922
+  },
+  "q55/tw2_sh": {
+   "ref": "speech_hello",
+   "visqol": 3.8856,
+   "mrstft": 1.0726,
+   "third_oct_db": 5.404,
+   "onset_ms": 15.0,
+   "onset_recall": 0.95
+  },
+  "q55/tw3_bd": {
+   "ref": "band_demo",
+   "visqol": 2.3546,
+   "mrstft": 1.645,
+   "third_oct_db": 5.511,
+   "onset_ms": 7.5,
+   "onset_recall": 0.958
+  },
+  "q55/tw3_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.1553,
+   "mrstft": 1.2518,
+   "third_oct_db": 2.212,
+   "onset_ms": 7.5,
+   "onset_recall": 1.0
+  },
+  "q55/tw3_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.4041,
+   "mrstft": 1.3962,
+   "third_oct_db": 3.493,
+   "onset_ms": 8.75,
+   "onset_recall": 0.941
+  },
+  "q55/tw3_sh": {
+   "ref": "speech_hello",
+   "visqol": 3.8826,
+   "mrstft": 1.0913,
+   "third_oct_db": 5.742,
+   "onset_ms": 17.5,
+   "onset_recall": 0.95
+  },
+  "q56/hp_bd": {
+   "ref": "band_demo",
+   "visqol": 2.3599,
+   "mrstft": 1.6409,
+   "third_oct_db": 5.584,
+   "onset_ms": 20.0,
+   "onset_recall": 0.958
+  },
+  "q56/hp_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.157,
+   "mrstft": 1.2701,
+   "third_oct_db": 2.494,
+   "onset_ms": 10.0,
+   "onset_recall": 1.0
+  },
+  "q56/hp_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.4026,
+   "mrstft": 1.3881,
+   "third_oct_db": 3.45,
+   "onset_ms": 5.0,
+   "onset_recall": 0.961
+  },
+  "q56/hp_pf": {
+   "ref": "piano_demo",
+   "visqol": 3.1343,
+   "mrstft": 0.9048,
+   "third_oct_db": 0.416,
+   "onset_ms": 0.0,
+   "onset_recall": 0.882
+  },
+  "q56/hp_sw": {
+   "ref": "speech_weather",
+   "visqol": 4.1392,
+   "mrstft": 0.8533,
+   "third_oct_db": 3.513,
+   "onset_ms": 10.0,
+   "onset_recall": 0.967
+  },
+  "q56/hs_bd": {
+   "ref": "band_demo",
+   "visqol": 2.1856,
+   "mrstft": 1.6761,
+   "third_oct_db": 5.479,
+   "onset_ms": 22.5,
+   "onset_recall": 0.958
+  },
+  "q56/hs_fe": {
+   "ref": "fur_elise",
+   "visqol": 3.9288,
+   "mrstft": 1.3817,
+   "third_oct_db": 3.557,
+   "onset_ms": 5.0,
+   "onset_recall": 0.93
+  },
+  "q56/hs_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.2392,
+   "mrstft": 1.4112,
+   "third_oct_db": 3.566,
+   "onset_ms": 10.0,
+   "onset_recall": 1.0
+  },
+  "q56/hs_pf": {
+   "ref": "piano_demo",
+   "visqol": 4.4735,
+   "mrstft": 0.8075,
+   "third_oct_db": 0.428,
+   "onset_ms": 0.0,
+   "onset_recall": 0.902
+  },
+  "q56/hs_sw": {
+   "ref": "speech_weather",
+   "visqol": 4.1245,
+   "mrstft": 0.8658,
+   "third_oct_db": 3.018,
+   "onset_ms": 5.0,
+   "onset_recall": 0.8
+  },
+  "q57/ta_bd": {
+   "ref": "band_demo",
+   "visqol": 2.3142,
+   "mrstft": 1.6827,
+   "third_oct_db": 5.832,
+   "onset_ms": 22.5,
+   "onset_recall": 0.583
+  },
+  "q57/ta_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.1629,
+   "mrstft": 1.236,
+   "third_oct_db": 2.081,
+   "onset_ms": 5.0,
+   "onset_recall": 1.0
+  },
+  "q57/ta_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.3983,
+   "mrstft": 1.4065,
+   "third_oct_db": 3.595,
+   "onset_ms": 10.0,
+   "onset_recall": 0.941
+  },
+  "q57/tw_bd": {
+   "ref": "band_demo",
+   "visqol": 1.6913,
+   "mrstft": 2.3657,
+   "third_oct_db": 5.768,
+   "onset_ms": 22.5,
+   "onset_recall": 0.708
+  },
+  "q57/tw_fe": {
+   "ref": "fur_elise",
+   "visqol": 1.8543,
+   "mrstft": 2.3864,
+   "third_oct_db": 4.827,
+   "onset_ms": 10.0,
+   "onset_recall": 0.676
+  },
+  "q57/tw_pd": {
+   "ref": "piano_demo",
+   "visqol": 2.0354,
+   "mrstft": 2.446,
+   "third_oct_db": 7.593,
+   "onset_ms": 5.0,
+   "onset_recall": 0.588
+  },
+  "q58/wc_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.1444,
+   "mrstft": 1.2534,
+   "third_oct_db": 2.356,
+   "onset_ms": 7.5,
+   "onset_recall": 1.0
+  },
+  "q58/wc_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.4063,
+   "mrstft": 1.3898,
+   "third_oct_db": 3.452,
+   "onset_ms": 5.0,
+   "onset_recall": 0.941
+  },
+  "q58/wc_sc": {
+   "ref": "speech_cave",
+   "visqol": 4.0042,
+   "mrstft": 0.8748,
+   "third_oct_db": 3.1,
+   "onset_ms": 7.5,
+   "onset_recall": 0.846
+  },
+  "q58/wr_fe": {
+   "ref": "fur_elise",
+   "visqol": 3.3913,
+   "mrstft": 1.4969,
+   "third_oct_db": 2.481,
+   "onset_ms": 7.5,
+   "onset_recall": 0.958
+  },
+  "q58/wr_pd": {
+   "ref": "piano_demo",
+   "visqol": 3.1918,
+   "mrstft": 1.6508,
+   "third_oct_db": 3.507,
+   "onset_ms": 7.5,
+   "onset_recall": 0.843
+  },
+  "q58/wr_sc": {
+   "ref": "speech_cave",
+   "visqol": 3.7052,
+   "mrstft": 2.4917,
+   "third_oct_db": 3.112,
+   "onset_ms": 7.5,
+   "onset_recall": 0.846
+  },
+  "q59/bg_bd": {
+   "ref": "band_demo",
+   "visqol": 2.3991,
+   "mrstft": 1.6345,
+   "third_oct_db": 5.534,
+   "onset_ms": 20.0,
+   "onset_recall": 0.958
+  },
+  "q59/bg_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.1645,
+   "mrstft": 1.2259,
+   "third_oct_db": 2.054,
+   "onset_ms": 5.0,
+   "onset_recall": 1.0
+  },
+  "q59/bg_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.4033,
+   "mrstft": 1.4322,
+   "third_oct_db": 3.606,
+   "onset_ms": 12.5,
+   "onset_recall": 0.98
+  },
+  "q59/bg_pf": {
+   "ref": "piano_demo",
+   "visqol": 3.154,
+   "mrstft": 0.9048,
+   "third_oct_db": 0.416,
+   "onset_ms": 0.0,
+   "onset_recall": 0.882
+  },
+  "q59/bg_sh": {
+   "ref": "speech_hello",
+   "visqol": 3.8797,
+   "mrstft": 1.0258,
+   "third_oct_db": 4.421,
+   "onset_ms": 15.0,
+   "onset_recall": 0.875
+  },
+  "q60/ls_fe": {
+   "ref": "fur_elise",
+   "visqol": 3.9809,
+   "mrstft": 1.3352,
+   "third_oct_db": 3.554,
+   "onset_ms": 12.5,
+   "onset_recall": 0.944
+  },
+  "q60/ls_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.2277,
+   "mrstft": 1.3564,
+   "third_oct_db": 3.582,
+   "onset_ms": 5.0,
+   "onset_recall": 0.98
+  },
+  "q60/ls_sc": {
+   "ref": "speech_cave",
+   "visqol": 3.9329,
+   "mrstft": 1.0147,
+   "third_oct_db": 4.207,
+   "onset_ms": 8.75,
+   "onset_recall": 0.95
+  },
+  "q60/lw_fe": {
+   "ref": "fur_elise",
+   "visqol": 3.8204,
+   "mrstft": 1.4194,
+   "third_oct_db": 5.058,
+   "onset_ms": 5.0,
+   "onset_recall": 0.93
+  },
+  "q60/lw_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.0411,
+   "mrstft": 1.4599,
+   "third_oct_db": 4.812,
+   "onset_ms": 5.0,
+   "onset_recall": 0.941
+  },
+  "q60/lw_sc": {
+   "ref": "speech_cave",
+   "visqol": 3.8755,
+   "mrstft": 1.29,
+   "third_oct_db": 6.987,
+   "onset_ms": 7.5,
+   "onset_recall": 0.95
+  },
+  "q62/bw1_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.1634,
+   "mrstft": 1.2312,
+   "third_oct_db": 1.989,
+   "onset_ms": 5.0,
+   "onset_recall": 1.0
+  },
+  "q62/bw1_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.3852,
+   "mrstft": 1.366,
+   "third_oct_db": 3.039,
+   "onset_ms": 5.0,
+   "onset_recall": 0.98
+  },
+  "q62/bw2_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.1686,
+   "mrstft": 1.2265,
+   "third_oct_db": 2.095,
+   "onset_ms": 5.0,
+   "onset_recall": 0.986
+  },
+  "q62/bw2_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.3859,
+   "mrstft": 1.3899,
+   "third_oct_db": 3.454,
+   "onset_ms": 5.0,
+   "onset_recall": 0.961
+  },
+  "q62/bw3_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.1522,
+   "mrstft": 1.2428,
+   "third_oct_db": 2.168,
+   "onset_ms": 7.5,
+   "onset_recall": 0.972
+  },
+  "q62/bw3_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.3926,
+   "mrstft": 1.3984,
+   "third_oct_db": 3.456,
+   "onset_ms": 7.5,
+   "onset_recall": 0.961
+  },
+  "q62/bw4_fe": {
+   "ref": "fur_elise",
+   "visqol": 4.1629,
+   "mrstft": 1.2322,
+   "third_oct_db": 2.142,
+   "onset_ms": 7.5,
+   "onset_recall": 0.972
+  },
+  "q62/bw4_pd": {
+   "ref": "piano_demo",
+   "visqol": 4.3853,
+   "mrstft": 1.4049,
+   "third_oct_db": 3.585,
+   "onset_ms": 5.0,
+   "onset_recall": 0.922
+  }
+ },
+ "speech": {
+  "q49/sy1": {
+   "text": "こんにちは",
+   "heard": "肥 Morganシュガー",
+   "cer": 1.6
+  },
+  "q49/sy2": {
+   "text": "きょうは いい てんきですね",
+   "heard": "清上此nic送 statement",
+   "cer": 2.667
+  },
+  "q49/sy3": {
+   "text": "きょうは いい てんきですね",
+   "heard": "気をうはういてうひですね",
+   "cer": 0.417
+  },
+  "q49/sy4": {
+   "text": "きょうは いい てんきですね",
+   "heard": "きよっといずれきですね",
+   "cer": 0.5
+  },
+  "q49/sy5": {
+   "text": "ダイヤモンドを みつけた",
+   "heard": " evolving謎 interactive",
+   "cer": 3.818
+  },
+  "q50/jnc0_speech_cave": {
+   "text": "東の森に、ダイヤモンドの洞窟があるらしいよ。",
+   "heard": "CMのモロニエダオイモードの動物が演じるよ。",
+   "cer": 0.6
+  },
+  "q50/jnc0_speech_hello": {
+   "text": "こんにちは、私はマインクラフトの中で話しています。",
+   "heard": "こんにちは私はマオイフ人の中で話しています",
+   "cer": 0.222
+  },
+  "q50/jnc20_speech_cave": {
+   "text": "東の森に、ダイヤモンドの洞窟があるらしいよ。",
+   "heard": "日々のモロニエダオイモードの動物があえしいよ",
+   "cer": 0.44
+  },
+  "q50/jnc20_speech_hello": {
+   "text": "こんにちは、私はマインクラフトの中で話しています。",
+   "heard": "私は魔法屋フェイルとの中で話しています",
+   "cer": 0.444
+  },
+  "q50/jno10_speech_cave": {
+   "text": "東の森に、ダイヤモンドの洞窟があるらしいよ。",
+   "heard": "CMCのモロニエダオイモードの動物が演じるよ。",
+   "cer": 0.64
+  },
+  "q50/jno10_speech_hello": {
+   "text": "こんにちは、私はマインクラフトの中で話しています。",
+   "heard": "こんにちは私は魔王ヤクエフトの中で話しています",
+   "cer": 0.148
+  },
+  "q50/jno40_speech_cave": {
+   "text": "東の森に、ダイヤモンドの洞窟があるらしいよ。",
+   "heard": "できた。",
+   "cer": 1.0
+  },
+  "q50/jno40_speech_hello": {
+   "text": "こんにちは、私はマインクラフトの中で話しています。",
+   "heard": "こんにちは私は魔王のフェイトの中で話しています",
+   "cer": 0.222
+  },
+  "q55/tw1_sh": {
+   "text": "こんにちは、私はマインクラフトの中で話しています。",
+   "heard": "こんにちは私は魔王よくエフトの中で話しています",
+   "cer": 0.148
+  },
+  "q55/tw2_sh": {
+   "text": "こんにちは、私はマインクラフトの中で話しています。",
+   "heard": "こんにちは私は魔王よくエフトの中で話しています",
+   "cer": 0.148
+  },
+  "q55/tw3_sh": {
+   "text": "こんにちは、私はマインクラフトの中で話しています。",
+   "heard": "こんにちは私は魔王よくエフトの中で話してます",
+   "cer": 0.185
+  },
+  "q56/hp_sw": {
+   "text": "今日はいい天気ですね。一緒に遊びましょう！",
+   "heard": "今日はお手裏ですね。一緒に遊びましょう。",
+   "cer": 0.167
+  },
+  "q56/hs_sw": {
+   "text": "今日はいい天気ですね。一緒に遊びましょう！",
+   "heard": "今日はお互いですね。お一緒に遊びましょう。",
+   "cer": 0.25
+  },
+  "q58/wc_sc": {
+   "text": "東の森に、ダイヤモンドの洞窟があるらしいよ。",
+   "heard": "日々のモロニエダオイモードの動物が エシーヨー",
+   "cer": 0.52
+  },
+  "q58/wr_sc": {
+   "text": "東の森に、ダイヤモンドの洞窟があるらしいよ。",
+   "heard": "告解池山",
+   "cer": 0.96
+  },
+  "q59/bg_sh": {
+   "text": "こんにちは、私はマインクラフトの中で話しています。",
+   "heard": "こんにちは私はマオイフレイフトの中で話しています",
+   "cer": 0.148
+  },
+  "q60/ls_sc": {
+   "text": "東の森に、ダイヤモンドの洞窟があるらしいよ。",
+   "heard": "気仕のマとニェダ우、 mewどうごつが 塵仕よレマジン",
+   "cer": 1.08
+  },
+  "q60/lw_sc": {
+   "text": "東の森に、ダイヤモンドの洞窟があるらしいよ。",
+   "heard": "フィーシーのモーロニーだおいモードのドーツがエンシーよ",
+   "cer": 0.64
+  },
+  "loc/render_speech_hello": {
+   "text": "こんにちは、私はマインクラフトの中で話しています。",
+   "heard": "こんにちは 私はマオイフエクトの中で話しています",
+   "cer": 0.185
+  },
+  "loc/render_speech_cave": {
+   "text": "東の森に、ダイヤモンドの洞窟があるらしいよ。",
+   "heard": "必死のものに 黙いモードの動物があえしいよ",
+   "cer": 0.36
+  },
+  "loc/render_speech_weather": {
+   "text": "今日はいい天気ですね。一緒に遊びましょう！",
+   "heard": "今日は、お手補きですね。一緒に遊びましょう。",
+   "cer": 0.25
+  }
+ },
+ "clicks_q62": {
+  "pu_b1": {
+   "pulse": {
+    "clicks": 57,
+    "of": 60,
+    "interval_ms_median": 36.949,
+    "interval_ms_sd": 8.912,
+    "exact_share": 0.278,
+    "interval_ms_min": 29.63,
+    "interval_ms_max": 51.01,
+    "grid_ms": 36.984,
+    "place_sd_ms": 7.067,
+    "place_max_ms": 20.99
+   }
+  },
+  "pu_b2": {
+   "pulse": {
+    "clicks": 49,
+    "of": 60,
+    "interval_ms_median": 37.007,
+    "interval_ms_sd": 6.464,
+    "exact_share": 0.541,
+    "interval_ms_min": 22.33,
+    "interval_ms_max": 43.68,
+    "grid_ms": 37.095,
+    "place_sd_ms": 6.763,
+    "place_max_ms": 13.8
+   }
+  },
+  "pu_b3": {
+   "pulse": {
+    "clicks": 53,
+    "of": 60,
+    "interval_ms_median": 36.999,
+    "interval_ms_sd": 0.344,
+    "exact_share": 0.769,
+    "interval_ms_min": 36.0,
+    "interval_ms_max": 38.0,
+    "grid_ms": 37.492,
+    "place_sd_ms": 8.67,
+    "place_max_ms": 17.4
+   }
+  },
+  "pu_b4": {
+   "pulse": {
+    "clicks": 59,
+    "of": 60,
+    "interval_ms_median": 36.999,
+    "interval_ms_sd": 4.513,
+    "exact_share": 0.772,
+    "interval_ms_min": 28.99,
+    "interval_ms_max": 50.34,
+    "grid_ms": 37.0,
+    "place_sd_ms": 6.194,
+    "place_max_ms": 10.45
+   }
+  }
+ },
+ "notes": {
+  "q51/q56 piano_file phones vs speaker": "ViSQOL 3.1–3.2 against 4.47 but the waveform SNR against the pack file is the same (28.3 / 28.8 dB after alignment and one gain): the headphones play the stereo file channel for channel (correlation 0.999 each; the file itself has L/R correlation 0.396), the speaker its mono sum. The ViSQOL gap is the metric on a down-mixed wide stereo file, not a difference heard",
+  "q52": "every seek lands where asked (song position read by matching 0.5 s windows against the pack file); pause 2 s then on: the song goes on from where it stopped",
+  "q61": "nothing playing: the output is exactly 0; warming at volume 0.01 and 0.001 (4 ticks): exactly 0 as well (inaudible); probe_quiet the first time without warming: 0, the second time: peak -86 dBFS",
+  "q49": "every mora slot of every /spectral:say recording has sound (energy per mora within 2 dB); the high error of sy1 (こんにちは, 1 s) and sy2/sy5 is Whisper writing other words on short clips"
+ }
+}

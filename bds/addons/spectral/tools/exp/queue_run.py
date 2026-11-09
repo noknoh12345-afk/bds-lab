@@ -247,6 +247,13 @@ def finish(name, st):
         open(os.path.join(Q, 'logs', f'{name}_{rid}.txt'), 'w').write('\n'.join(lines) + '\n')
         subprocess.run(['python3', os.path.join(UNIT, 'tools', 'rig', 'collect.py'), joblog, '--run', rid], cwd=UNIT, capture_output=True, text=True, timeout=600)
     arms, recs, cks = measured(lines)
+    # (the recordings themselves kept here at once: the run's artifacts expire after 3 days — q22-q48's were gone before anyone
+    # solved them, 11-09. corpus/renders is gitignored; the handoff zip carries it)
+    if recs:
+        keep = os.path.join(UNIT, 'corpus', 'renders', 'rec', 'queue', f'{name}_{rid}')
+        r = subprocess.run(['python3', os.path.join(UNIT, 'tools', 'rig', 'fetch_rec.py'), rid, '--out', keep, '--index', os.path.join(keep, 'index.json')],
+                           cwd=UNIT, capture_output=True, text=True, timeout=1800)
+        log(f'{name}: recordings kept in {rel(keep)}' if r.returncode == 0 else f'{name}: recordings not kept ({r.stderr.strip()[-200:]})')
     fails = [re.sub(r'^\S+Z\s+', '', l).strip() for l in lines if re.search(r'✘ \d+ ', l)]
     tries = st[name].get('tries', 0) + 1
     again = not recs and tries < 2
