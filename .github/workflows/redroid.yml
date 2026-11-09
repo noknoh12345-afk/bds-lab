@@ -122,7 +122,7 @@ jobs:
         run: node app/redroid/game.mjs prep --data /mnt/redroid/data --shots /mnt/redroid/shots/prep
 
       - name: bench (start → the game's title)
-        if: steps.turn.outputs.ok == 'true' && (steps.prep.outputs.game_ok == 'true' || steps.open.outputs.opened == 'true') && (github.event_name == 'push' || inputs.bench)
+        if: steps.turn.outputs.ok == 'true' && (steps.prep.outputs.game_ok == 'true' || steps.open.outputs.opened == 'true') && inputs.bench
         run: node app/redroid/game.mjs bench --data /mnt/redroid/data --rounds 3 --shots /mnt/redroid/shots/bench
 
       - name: app ${{ inputs.mode || 'run' }} on the redroid device
