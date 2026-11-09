@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 70（tools/exp/queue/q70_band_parts.json、q33 のやり直し: 11-05 の録音が解く前に期限で消えた）: バンドを楽器ごとに。バンドの実機 2.50 は電話の模型 3.54 より低く、6.4 kHz から上が 12〜21 dB 多い（理由は未解明）。1 楽器ずつ鳴らして、どの楽器が高い音を足しているか
+# キュー 71（tools/exp/queue/q71_sampler_transpose.json、q27 のやり直し: 11-05 の録音が解く前に期限で消えた）: サンプラーの移調 −12〜+12（pitch 0.5〜2）。素の高さを setPitch で 0.5〜2 倍に: 電話がどこまで正しい高さで鳴らすか（模型は全部正しい）、高く・低くしたときの音質
 
 section title
 audio info
@@ -13,7 +13,7 @@ audio info
 shot title
 
 section prep
-audio song band_p11,band_p32,band_p48,band_p73,band_p128 pack=tools/exp/packs/q40
+audio song fur_elise pack=tools/exp/packs/notes
 
 section join
 join
@@ -24,86 +24,198 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section band_full
+section pitch_m12_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start bp_full
-do execute as @a run spectral:play band_demo
-wait 10700
+do execute as @a run spectral:pitch -12
+audio start tpm12_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
 audio stop
-audio export bp_full 160
+audio export tpm12_pd 160
+do execute as @a run spectral:pitch 0
 
-section band_p11
+section pitch_m12_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start bp_p11
-do execute as @a run spectral:play band_p11
-wait 10700
+do execute as @a run spectral:pitch -12
+audio start tpm12_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
 do execute as @a run spectral:stop
 audio stop
-audio export bp_p11 160
+audio export tpm12_fe 160
+do execute as @a run spectral:pitch 0
 
-section band_p32
+section pitch_m7_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start bp_p32
-do execute as @a run spectral:play band_p32
-wait 10700
+do execute as @a run spectral:pitch -7
+audio start tpm7_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
 audio stop
-audio export bp_p32 160
+audio export tpm7_pd 160
+do execute as @a run spectral:pitch 0
 
-section band_p48
+section pitch_m7_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start bp_p48
-do execute as @a run spectral:play band_p48
-wait 10700
+do execute as @a run spectral:pitch -7
+audio start tpm7_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
 do execute as @a run spectral:stop
 audio stop
-audio export bp_p48 160
+audio export tpm7_fe 160
+do execute as @a run spectral:pitch 0
 
-section band_p73
+section pitch_m3_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start bp_p73
-do execute as @a run spectral:play band_p73
-wait 10700
+do execute as @a run spectral:pitch -3
+audio start tpm3_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
 audio stop
-audio export bp_p73 160
+audio export tpm3_pd 160
+do execute as @a run spectral:pitch 0
 
-section band_p128
+section pitch_m3_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start bp_p128
-do execute as @a run spectral:play band_p128
-wait 10700
+do execute as @a run spectral:pitch -3
+audio start tpm3_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
 do execute as @a run spectral:stop
 audio stop
-audio export bp_p128 160
+audio export tpm3_fe 160
+do execute as @a run spectral:pitch 0
 
-section band_full_again
+section pitch_p0_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start bp_full2
-do execute as @a run spectral:play band_demo
-wait 10700
+do execute as @a run spectral:pitch 0
+audio start tpp0_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
 do execute as @a run spectral:stop
 audio stop
-audio export bp_full2 160
+audio export tpp0_pd 160
+do execute as @a run spectral:pitch 0
+
+section pitch_p0_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run spectral:pitch 0
+audio start tpp0_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:stop
+audio stop
+audio export tpp0_fe 160
+do execute as @a run spectral:pitch 0
+
+section pitch_p3_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run spectral:pitch 3
+audio start tpp3_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:stop
+audio stop
+audio export tpp3_pd 160
+do execute as @a run spectral:pitch 0
+
+section pitch_p3_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run spectral:pitch 3
+audio start tpp3_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:stop
+audio stop
+audio export tpp3_fe 160
+do execute as @a run spectral:pitch 0
+
+section pitch_p7_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run spectral:pitch 7
+audio start tpp7_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:stop
+audio stop
+audio export tpp7_pd 160
+do execute as @a run spectral:pitch 0
+
+section pitch_p7_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run spectral:pitch 7
+audio start tpp7_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:stop
+audio stop
+audio export tpp7_fe 160
+do execute as @a run spectral:pitch 0
+
+section pitch_p12_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run spectral:pitch 12
+audio start tpp12_pd
+do execute as @a run spectral:play piano_demo
+wait 21200
+do execute as @a run spectral:stop
+audio stop
+audio export tpp12_pd 160
+do execute as @a run spectral:pitch 0
+
+section pitch_p12_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run spectral:pitch 12
+audio start tpp12_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
+do execute as @a run spectral:stop
+audio stop
+audio export tpp12_fe 160
+do execute as @a run spectral:pitch 0
