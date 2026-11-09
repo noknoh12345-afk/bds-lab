@@ -1654,10 +1654,17 @@
   "tries": 1
  },
  "q79_load_many": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "f571deb",
+  "conclusion": "success",
+  "ended": "2026-11-09 15:59",
+  "failed_steps": 0,
+  "recordings": 2,
   "run": "42574712055",
   "started": "2026-11-09 15:42",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q80_velocity_curve": {
   "status": "pending"
