@@ -1811,6 +1811,108 @@
     10.091
    ]
   },
-  "how": "tools/metrics/metrics.py against tools/notes.py --render of each sentence; Whisper small (loudnorm, temperatures 0/0.2/0.4) — with music in the recording it repeats words (CER up to 13), so it is not used to compare"
+  "how": "tools/metrics/metrics.py against tools/notes.py --render of each sentence; Whisper small (loudnorm, temperatures 0/0.2/0.4) — with music in the recording it repeats words (CER up to 13), so it is not used to compare",
+  "speech_present": {
+   "by_arm": {
+    "none_hello": {
+     "windows": 21,
+     "median_gain": 1.0,
+     "share_over_half": 1.0,
+     "share_under_quarter": 0.0
+    },
+    "24_hello": {
+     "windows": 21,
+     "median_gain": 0.845,
+     "share_over_half": 0.952,
+     "share_under_quarter": 0.0
+    },
+    "12_hello": {
+     "windows": 21,
+     "median_gain": 0.786,
+     "share_over_half": 0.952,
+     "share_under_quarter": 0.0
+    },
+    "6_hello": {
+     "windows": 21,
+     "median_gain": 0.979,
+     "share_over_half": 1.0,
+     "share_under_quarter": 0.0
+    },
+    "none_weather": {
+     "windows": 21,
+     "median_gain": 1.0,
+     "share_over_half": 1.0,
+     "share_under_quarter": 0.0
+    },
+    "24_weather": {
+     "windows": 21,
+     "median_gain": 0.939,
+     "share_over_half": 0.952,
+     "share_under_quarter": 0.0
+    },
+    "12_weather": {
+     "windows": 21,
+     "median_gain": 0.862,
+     "share_over_half": 0.952,
+     "share_under_quarter": 0.048
+    },
+    "6_weather": {
+     "windows": 21,
+     "median_gain": 0.92,
+     "share_over_half": 0.952,
+     "share_under_quarter": 0.0
+    },
+    "none_piano": {
+     "windows": 23,
+     "median_gain": 1.0,
+     "share_over_half": 1.0,
+     "share_under_quarter": 0.0
+    },
+    "24_piano": {
+     "windows": 23,
+     "median_gain": 0.84,
+     "share_over_half": 0.957,
+     "share_under_quarter": 0.0
+    },
+    "12_piano": {
+     "windows": 23,
+     "median_gain": 0.953,
+     "share_over_half": 0.957,
+     "share_under_quarter": 0.0
+    },
+    "6_piano": {
+     "windows": 23,
+     "median_gain": 0.963,
+     "share_over_half": 0.957,
+     "share_under_quarter": 0.0
+    }
+   },
+   "music_only_bias": {
+    "24": {
+     "hello": 0.053,
+     "weather": 0.079,
+     "piano": 0.102
+    },
+    "6": {
+     "hello": 0.17,
+     "weather": 0.336,
+     "piano": 0.249
+    }
+   },
+   "stream_rms_300_4000Hz": {
+    "24": [
+     0.00116,
+     0.00119,
+     0.00138
+    ],
+    "6": [
+     0.00887,
+     0.00901,
+     0.00866
+    ]
+   },
+   "speech_rms_alone": 0.0046,
+   "how": "300-4000 Hz; each 200 ms window of the speech-alone recording projected onto the with-music recording (best lag ±10 ms): 1 = all of it there; bias = the same on music-only stretches"
+  }
  }
 }
