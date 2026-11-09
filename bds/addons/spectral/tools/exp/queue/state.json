@@ -1544,7 +1544,10 @@
   "tries": 1
  },
  "q72_sampler_speed": {
-  "status": "pending"
+  "commit": "67717db",
+  "run": "42558191744",
+  "started": "2026-11-09 12:46",
+  "status": "running"
  },
  "q73_ahead_3d": {
   "status": "pending"
