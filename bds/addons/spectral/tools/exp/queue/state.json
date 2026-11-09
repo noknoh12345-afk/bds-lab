@@ -1628,17 +1628,17 @@
   "arms": {},
   "checkpoints": 0,
   "commit": "2f916b7",
-  "conclusion": "failure",
+  "conclusion": "success",
   "earlier_runs": [
    "42571107604"
   ],
-  "ended": "2026-11-09 15:08",
+  "ended": "2026-11-09 15:24",
   "failed_steps": 0,
-  "recordings": 0,
+  "recordings": 8,
   "run": "42571231787",
   "started": "2026-11-09 15:08",
-  "status": "running",
-  "tries": 1
+  "status": "done",
+  "tries": 2
  },
  "q78_speech_intonation": {
   "status": "pending"
