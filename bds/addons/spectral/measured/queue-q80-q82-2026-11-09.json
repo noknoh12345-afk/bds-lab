@@ -362,5 +362,116 @@
    }
   },
   "how": "RMS of each channel from 1.5 s on; listener faces south, speaker 6 blocks away"
+ },
+ "q82_drums_each": {
+  "run": "42596716049",
+  "keys": [
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   59,
+   60,
+   61,
+   62,
+   63,
+   64,
+   67,
+   68,
+   69,
+   70,
+   73,
+   74,
+   75,
+   76,
+   77,
+   80,
+   81,
+   82
+  ],
+  "summary": {
+   "dk_phones": {
+    "lag_ms": 2147,
+    "loud_minus_ref_median": -28.6,
+    "soft_minus_ref_median": -21.5,
+    "loud_soft_gap_median": 3.5,
+    "ref_gap_median": 10.5,
+    "dropped_keys": [],
+    "onset_ms_median": 2.3,
+    "onset_ms_iqr": [
+     -2.0,
+     7.7
+    ],
+    "worst": [
+     [
+      39,
+      -0.3
+     ],
+     [
+      35,
+      -0.3
+     ],
+     [
+      56,
+      -0.2
+     ],
+     [
+      38,
+      -0.2
+     ]
+    ]
+   },
+   "dk_speaker": {
+    "lag_ms": 2578,
+    "loud_minus_ref_median": -11.6,
+    "soft_minus_ref_median": -11.6,
+    "loud_soft_gap_median": 10.5,
+    "ref_gap_median": 10.5,
+    "dropped_keys": [],
+    "onset_ms_median": 4.0,
+    "onset_ms_iqr": [
+     -1.4,
+     9.3
+    ],
+    "worst": [
+     [
+      39,
+      -6.0
+     ],
+     [
+      41,
+      -2.9
+     ],
+     [
+      43,
+      -2.8
+     ],
+     [
+      45,
+      -2.8
+     ]
+    ]
+   }
+  },
+  "how": "600 ms RMS from each planned hit vs tools/notes.py --render; onset = first 30 % of the envelope peak"
  }
 }
