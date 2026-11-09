@@ -1715,20 +1715,20 @@
   "arms": {},
   "checkpoints": 0,
   "commit": "f7adc8e",
-  "conclusion": "failure",
+  "conclusion": "success",
   "earlier": [
    "42584112365"
   ],
   "earlier_runs": [
    "42599155621"
   ],
-  "ended": "2026-11-09 19:32",
-  "failed_steps": 2,
-  "recordings": 0,
+  "ended": "2026-11-09 20:14",
+  "failed_steps": 0,
+  "recordings": 4,
   "run": "42604859618",
   "started": "2026-11-09 19:55",
-  "status": "running",
-  "tries": 1
+  "status": "done",
+  "tries": 2
  },
  "q84_sampler_loop_5min": {
   "earlier": [
