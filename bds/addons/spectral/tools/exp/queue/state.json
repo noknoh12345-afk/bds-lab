@@ -1696,49 +1696,22 @@
   "tries": 2
  },
  "q82_drums_each": {
-  "arms": {},
-  "checkpoints": 0,
-  "commit": "0dcdda1",
-  "conclusion": "failure",
-  "ended": "2026-11-09 17:09",
-  "failed_steps": 1,
-  "recordings": 1,
-  "run": "42581816904",
-  "started": "2026-11-09 16:50",
-  "status": "done",
-  "tries": 1
+  "earlier": [
+   "42581816904"
+  ],
+  "status": "pending"
  },
  "q83_sampler_pause_seek": {
-  "arms": {},
-  "checkpoints": 0,
-  "commit": "1ad4483",
-  "conclusion": "failure",
-  "earlier_runs": [
-   "42583954696"
+  "earlier": [
+   "42584112365"
   ],
-  "ended": "2026-11-09 17:12",
-  "failed_steps": 0,
-  "recordings": 0,
-  "run": "42584112365",
-  "started": "2026-11-09 17:11",
-  "status": "done",
-  "tries": 2
+  "status": "pending"
  },
  "q84_sampler_loop_5min": {
-  "arms": {},
-  "checkpoints": 0,
-  "commit": "7c2e703",
-  "conclusion": "failure",
-  "earlier_runs": [
-   "42584263602"
+  "earlier": [
+   "42585283960"
   ],
-  "ended": "2026-11-09 17:41",
-  "failed_steps": 2,
-  "recordings": 0,
-  "run": "42585283960",
-  "started": "2026-11-09 17:21",
-  "status": "done",
-  "tries": 2
+  "status": "pending"
  },
  "q85_long_mix_20min": {
   "status": "pending"
