@@ -473,5 +473,49 @@
    }
   },
   "how": "600 ms RMS from each planned hit vs tools/notes.py --render; onset = first 30 % of the envelope peak"
+ },
+ "q83_sampler_pause_seek": {
+  "run": "42604859618",
+  "earlier_failed": [
+   "42583954696",
+   "42584112365",
+   "42599155621"
+  ],
+  "by_recording": {
+   "pz_pd": {
+    "pause_ms": 2655,
+    "fall_ms": 10,
+    "floor_rel_dB": -102.2,
+    "gaps_after": []
+   },
+   "pz_fe": {
+    "pause_ms": 2555,
+    "fall_ms": 45,
+    "floor_rel_dB": -102.9,
+    "gaps_after": [
+     [
+      12.55,
+      100
+     ],
+     [
+      17.09,
+      55
+     ]
+    ]
+   },
+   "pz_bd": {
+    "pause_ms": 2560,
+    "fall_ms": 40,
+    "floor_rel_dB": -101.5,
+    "gaps_after": []
+   },
+   "pz_pf": {
+    "pause_ms": 2550,
+    "fall_ms": 30,
+    "floor_rel_dB": -95.5,
+    "gaps_after": []
+   }
+  },
+  "how": "5 ms RMS; pause = longest run 60 dB under the 90th percentile; fall = last frame within 30 dB to the first silent one; gaps = silent runs >= 50 ms after the resume (s from the recording start)"
  }
 }
