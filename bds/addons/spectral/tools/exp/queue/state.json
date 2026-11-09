@@ -1570,10 +1570,17 @@
   "tries": 1
  },
  "q74_instrument_roots": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "3a1d4c3",
+  "conclusion": "success",
+  "ended": "2026-11-09 13:44",
+  "failed_steps": 0,
+  "recordings": 3,
   "run": "42561848347",
   "started": "2026-11-09 13:26",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q75_speech_level": {
   "status": "pending"
