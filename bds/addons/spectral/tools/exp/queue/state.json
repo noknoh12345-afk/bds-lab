@@ -1760,6 +1760,12 @@
   "tries": 1
  },
  "q86_sampler_over1": {
+  "commit": "7cd4a74",
+  "run": "42616318444",
+  "started": "2026-11-09 21:21",
+  "status": "running"
+ },
+ "q87_loop_seam": {
   "status": "pending"
  }
 }
