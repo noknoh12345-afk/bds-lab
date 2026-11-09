@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 87（tools/exp/queue/q87_loop_seam.json、11-09 の q84 から）: ループの継ぎ目（1.5.4 の /spectral:sampler の 8 つ目 seam）。q84 で、ループは鳴っている音が全部消えてから頭に戻り、14.7 s の周が 15.05 s・継ぎ目に 0.18 s の無音と分かった。エリーゼ約 4 周・バンド約 4 周を seam 切/入で交互（同じ run）
+# キュー 88（tools/exp/queue/q88_file_over1.json、11-09 の q80・q86 から）: ファイルの曲（ピアノのファイル）の大きさ 1.8 を電話で setVolume で上げる（scriptevent spectral:fileover）切/入を同じ run で 3 組。電話の道は playSound の音量で 1.8 を渡していて、1 で止まっていた（q80 と同じ作り）
 
 section title
 audio info
@@ -13,7 +13,6 @@ audio info
 shot title
 
 section prep
-audio song fur_elise pack=tools/exp/packs/notes
 
 section join
 join
@@ -24,122 +23,77 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section seam_off_fe1
+section fileover_off_1
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 false false
+do scriptevent spectral:fileover false
+audio start fooff1_pf
+do execute as @a run spectral:play piano_file
+wait 24500
 do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio start smoff1_fe
-do execute as @a run spectral:play fur_elise
-wait 61000
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
 audio stop
-audio export smoff1_fe 160
+audio export fooff1_pf 160
 
-section seam_on_fe1
+section fileover_on_1
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 false true
+do scriptevent spectral:fileover true
+audio start foon1_pf
+do execute as @a run spectral:play piano_file
+wait 24500
 do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio start smon1_fe
-do execute as @a run spectral:play fur_elise
-wait 61000
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
 audio stop
-audio export smon1_fe 160
+audio export foon1_pf 160
 
-section seam_on_fe2
+section fileover_on_2
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 false true
+do scriptevent spectral:fileover true
+audio start foon2_pf
+do execute as @a run spectral:play piano_file
+wait 24500
 do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio start smon2_fe
-do execute as @a run spectral:play fur_elise
-wait 61000
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
 audio stop
-audio export smon2_fe 160
+audio export foon2_pf 160
 
-section seam_off_fe2
+section fileover_off_2
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 false false
+do scriptevent spectral:fileover false
+audio start fooff2_pf
+do execute as @a run spectral:play piano_file
+wait 24500
 do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio start smoff2_fe
-do execute as @a run spectral:play fur_elise
-wait 61000
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
 audio stop
-audio export smoff2_fe 160
+audio export fooff2_pf 160
 
-section seam_off_bd1
+section fileover_off_3
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 false false
+do scriptevent spectral:fileover false
+audio start fooff3_pf
+do execute as @a run spectral:play piano_file
+wait 24500
 do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio start smoff1_bd
-do execute as @a run spectral:play band_demo
-wait 45000
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
 audio stop
-audio export smoff1_bd 160
+audio export fooff3_pf 160
 
-section seam_on_bd1
+section fileover_on_3
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 false true
+do scriptevent spectral:fileover true
+audio start foon3_pf
+do execute as @a run spectral:play piano_file
+wait 24500
 do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio start smon1_bd
-do execute as @a run spectral:play band_demo
-wait 45000
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
 audio stop
-audio export smon1_bd 160
+audio export foon3_pf 160
 
-section seam_on_bd2
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 false true
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio start smon2_bd
-do execute as @a run spectral:play band_demo
-wait 45000
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio stop
-audio export smon2_bd 160
-
-section seam_off_bd2
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 false false
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio start smoff2_bd
-do execute as @a run spectral:play band_demo
-wait 45000
-do execute as @a run spectral:stop
-do execute as @a run spectral:loop
-audio stop
-audio export smoff2_bd 160
+section fileover_reset
+do scriptevent spectral:fileover false
