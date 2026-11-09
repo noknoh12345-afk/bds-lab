@@ -6,6 +6,7 @@ import { showHud, resizeHud } from './hud.js';
 import { isReplaced } from './relay.js';
 import { records } from './registry.js';
 import { VERSION, SAMPLES } from './about.js';
+import { placeGauge, walk } from './gauge.js';
 
 const REACH = 32;
 const ENUMS = { 'studio:facing': FACINGS, 'studio:switch': ['on', 'off'] };
@@ -148,6 +149,27 @@ function debug(origin, state, players) {
   return ok(state === 'on' ? `鏡像の上に、いまの映り方の印を出しました（${names(list)}）` : `印を消しました（${names(list)}）`);
 }
 
+function gauge(origin, mode, location, offset, channel) {
+  const source = sourceOf(origin);
+  if (!source) return no('どこに置くかが分かりません');
+  const at = location ?? source.location;
+  system.run(() => {
+    try {
+      placeGauge(source.dimension, at, source.entity?.location, mode, offset ?? 0, channel ?? 1);
+    } catch (error) {
+      console.warn(`[Skin Studio] gauge: ${error}`);
+    }
+  });
+  return ok(`計器を置きました（${mode}）`);
+}
+
+function walking(origin, players, x, z, ticks) {
+  const list = players ?? [];
+  if (!list.length) return no('だれを歩かせるかを指定してください（例: @a）');
+  system.run(() => list.forEach((player) => player.isValid && walk(player, x, z, ticks)));
+  return ok(`${names(list)} を ${ticks} tick 歩かせます`);
+}
+
 function remove(origin) {
   const target = nearest(origin, [MIRROR, PODIUM]);
   if (!target) return no(`${REACH} ブロック以内に表彰台も鏡もありません`);
@@ -234,4 +256,25 @@ system.beforeEvents.startup.subscribe(({ customCommandRegistry: registry }) => {
   register(registry, { name: 'studio:restore', description: '台帳から、消えた表彰台と鏡を元の場所に戻す', ...op }, restore);
   register(registry, { name: 'studio:report', description: '近くの鏡と表彰台の状態を出す', ...anyone }, report);
   register(registry, { name: 'studio:debug', description: '鏡像の上に、いまの映り方の印を出す・消す', ...anyone, mandatoryParameters: [toggle], optionalParameters: [players] }, debug);
+  register(
+    registry,
+    {
+      name: 'studio:gauge',
+      description: '確かめ用の計器を置く（0〜3: 数字、8: 明るさの箱、9: 切り抜きの箱）',
+      ...op,
+      mandatoryParameters: [{ name: 'mode', type: Param.Integer }],
+      optionalParameters: [{ name: 'location', type: Param.Location }, { name: 'offset', type: Param.Integer }, { name: 'channel', type: Param.Integer }],
+    },
+    gauge,
+  );
+  register(
+    registry,
+    {
+      name: 'studio:walk',
+      description: '確かめ用: プレイヤーを少しずつ押して歩かせる',
+      ...op,
+      mandatoryParameters: [players, { name: 'x', type: Param.Float }, { name: 'z', type: Param.Float }, { name: 'ticks', type: Param.Integer }],
+    },
+    walking,
+  );
 });

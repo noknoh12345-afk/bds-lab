@@ -1,0 +1,27 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.skin_studio.gauge": {
+      "loop": true,
+      "bones": {
+        "gauge": {
+          "scale": 0.5
+        },
+        "probe_cube": {
+          "position": [
+            0,
+            "q.property('skin_studio:poy')",
+            0
+          ]
+        },
+        "probe_seen": {
+          "position": [
+            0,
+            "q.property('skin_studio:poy')",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

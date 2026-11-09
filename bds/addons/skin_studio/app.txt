@@ -209,63 +209,124 @@ shot mirror-paused                        # 窓をふさぐと鏡は止まる: �
 do setblock 0 -59 12 air
 wait 4000
 shot mirror-resumed                       # 空けると元どおり映る
-section diag-head
+section probe-head
 do kill @e[type=!player,type=!skin_studio:mirror,type=!skin_studio:mirror_wall,type=!skin_studio:ghost]
 do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
-do fill -2 -60 9 3 -57 11 air
-do tp @a 0.5 -60 9.6 0 0
+do fill -2 -60 4 3 -57 11 air
+do tp @a 0.5 -60 7.5 0 0
+do execute as @a run studio:debug on
+do execute as @a at @s run studio:gauge 0 -2.1 -59.1 11.8
+do execute as @a at @s run studio:gauge 1 3.1 -59.1 11.8
+wait 3000
+shot probe-head-level                     # 計器（左右）: 0 = カメラの縦・横・頭の縦・頭の横、1 = 胴の向き・一人称か・自前の頭の横・自前の胴（10 倍、赤い棒は負）
+do tp @a 0.5 -60 7.5 0 -20
+wait 2000
+shot probe-head-up                        # 上を 20 度: どの値が -20 になるか（鏡の自分も上を向くか）
+do tp @a 0.5 -60 7.5 0 20
+wait 2000
+shot probe-head-down                      # 下を 20 度
+do tp @a 0.5 -60 7.5 15 0
+wait 500
+shot probe-head-right-quick               # 右へ 15 度の直後
 wait 2500
-shot head-level                           # 一人称: まっすぐ見る → 鏡の自分もこちらをまっすぐ見る
-do tp @a 0.5 -60 9.6 0 -35
-wait 1500
-shot head-up                              # 上を向く → 鏡の自分も上を向く
-do tp @a 0.5 -60 9.6 0 35
-wait 1500
-shot head-down                            # 下を向く → 鏡の自分も下を向く（顔が下がる）
-do tp @a 0.5 -60 9.6 30 0
-wait 600
-shot head-left-quick                      # 右へ 30 度振り向いた直後 → 鏡の自分の頭が向く（体はまだ）
+shot probe-head-right-later               # しばらく後（胴が追いつくか）
+do tp @a 0.5 -60 7.5 -15 0
+wait 500
+shot probe-head-left-quick
 wait 2500
-shot head-left-later                      # しばらく後
-do tp @a 0.5 -60 9.6 -30 0
-wait 600
-shot head-right-quick
+shot probe-head-left-later
+do tp @a 0.5 -60 7.5 40 0
 wait 2500
-shot head-right-later
-section diag-walk
-do tp @a 0.5 -60 6.5 0 0
+shot probe-head-right-40                  # 右へ 40 度（計器は端が切れてもよい）: 鏡の自分の頭の向き
+do tp @a 0.5 -60 7.5 0 0
+do camera @a set minecraft:third_person
 wait 1500
-record start
-walk forward 2
-walk back 2
-record stop                               # 一人称で歩く: 鏡の自分の脚・腕の振り（recordings）
-do camera @a set minecraft:free pos 5.5 -58.0 7.0 facing 0.5 -59 9.5
-wait 1500
-record start
-walk forward 2
-walk back 2
-record stop                               # 横から: 本物の自分と鏡の自分の脚が同じ振り（左右反転）
+do tp @a 0.5 -60 7.5 15 -20
+wait 2000
+shot probe-head-3p                        # 三人称で同じ値（頭が回る見え方の値と比べる）
 do camera @a clear
-section diag-zombie
+do execute as @a run studio:debug off
+section probe-walk
+do kill @e[type=skin_studio:gauge]
+do tp @a 0.5 -60 5.5 0 0
+do execute as @a run studio:debug on
+do execute as @a at @s run studio:gauge 2 -2.1 -59.1 11.8
+do execute as @a at @s run studio:gauge 1 3.1 -59.1 11.8
+wait 2000
+record start
+do execute as @a run studio:walk @s 0 1 20
+wait 2500
+do execute as @a run studio:walk @s 0 -1 20
+wait 2500
+record stop                               # 一人称で押されて歩く（計器 2 = 歩いた距離・歩く速さ・歩いた距離（別）・地面の速さ）: 鏡の自分の脚と腕が振れるか
+do execute as @a run studio:walk @s 0 1 20
+wait 600
+shot probe-walk-mid                       # 歩いている途中の計器の値
+wait 2500
+do tp @a 0.5 -60 5.5 0 0
+do camera @a set minecraft:free pos 5.5 -58.0 6.0 facing 0.5 -59 9.5
+wait 1500
+record start
+do execute as @a run studio:walk @s 0 1 20
+wait 2500
+do execute as @a run studio:walk @s 0 -1 20
+wait 2500
+record stop                               # 横から: 本物の自分と鏡の自分の脚の振りが同じ（左右反転）
+do camera @a clear
+do tp @a 0.5 -60 9.0 0 0
+wait 1000
+do execute as @a run studio:walk @s 0 1 40
+wait 3000
+shot probe-walk-glass                     # 歩いてガラスにぶつかる: 体がガラスに触れる所で止まり、顔が大きく映る
+do execute as @a at @s run studio:report
+do execute as @a run studio:debug off
+section probe-offscreen
+do kill @e[type=skin_studio:gauge]
 do difficulty normal
 do gamemode survival @a
 do effect @a resistance 120 255 true
 do effect @a regeneration 120 255 true
 do tp @a 0.5 -60 10.0 0 0
-do summon zombie 0.5 -60 2.5
+do execute as @a run studio:debug on
+do execute as @a at @s run studio:gauge 3 -2.1 -59.1 11.8
+do summon zombie 5.5 -60 2.5
+do summon husk -4.5 -60 2.5
 do effect @e[type=zombie] fire_resistance 120 1 true
+do effect @e[type=husk] fire_resistance 120 1 true
+do effect @e[type=zombie] slowness 120 1 true
+do effect @e[type=husk] slowness 120 1 true
+wait 1000
 record start
-wait 6000
-record stop                               # 一人称で鏡だけを見る: 後ろから歩いて来るゾンビ（本物は画面外）の脚
-do tp @e[type=zombie] 0.5 -60 3.5
-do camera @a set minecraft:free pos 6.0 -58.0 8.0 facing 0.5 -59 8.0
-record start
-wait 6000
-record stop                               # 横から: 本物のゾンビと鏡のゾンビが同じ歩き
-do camera @a clear
+wait 7000
+record stop                               # 本物は両方とも後ろ（画面の外）。左右から来るゾンビ（そのまま）とハスク（画面の外でも骨を動かす定義）の鏡像の印: 緑の点 = 中継、黄の三角 = 予備
+shot probe-offscreen                      # 計器 3 = 生き物の番号 1〜4 の中継の古さ（ミリ秒）
 do kill @e[type=zombie]
+do kill @e[type=husk]
 do gamemode creative @a
 do difficulty peaceful
+do execute as @a run studio:debug off
+section probe-stencil
+do kill @e[type=skin_studio:gauge]
+do tp @a 0.5 -60 6.5 0 0
+do execute as @a at @s run studio:gauge 9 -0.18 -59.5 9.0 0 1
+do execute as @a at @s run studio:gauge 9 1.18 -59.5 9.0 0 2
+wait 2500
+shot probe-stencil                        # 赤い箱は窓の下の角にまたがる（左は 1 番、右は 2 番の切り抜き）: 鏡の番号の箱の、窓の中の部分だけ描かれれば、ステンシルは別のエンティティの間でも効く（P-02）
+section probe-light
+do kill @e[type=skin_studio:gauge]
+do fill 10 -60 -12 14 -56 -8 stone hollow
+do execute as @a at @s run studio:gauge 8 12.5 -59 -10.5 128
+do execute as @a at @s run studio:gauge 8 14.5 -51 -10.5 0
+do execute as @a at @s run studio:gauge 8 16.5 -20 -10.5 -496
+do camera @a set minecraft:free pos 14.5 -50.7 -16.5 rot 0 0
+wait 3000
+shot probe-light                          # 白い箱 3 つ: 左 = 本体は石の箱の中（真っ暗）で骨だけ上へ、中 = 本体もそこ、右 = 本体は 30 ブロック上（画面の外）で骨だけ下へ（P-08・P-09）
+do time set midnight
+wait 2500
+shot probe-light-night
+do time set noon
+do camera @a clear
+do kill @e[type=skin_studio:gauge]
 section diag-blocks
 do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 4 3 -57 11 air
@@ -281,28 +342,26 @@ do setblock -1 -60 8 chest
 do setblock 0 -60 8 white_carpet
 do setblock 1 -60 8 lantern
 do setblock 2 -60 8 oak_trapdoor
-do setblock -2 -60 10 water
 do setblock 3 -60 10 grass_block
 do setblock 3 -59 10 oak_log
+do setblock -2 -60 10 gold_block
+do setblock -2 -59 9 crafting_table
 do tp @a 0.5 -60 5.5 0 10
 wait 4000
 shot blocks-1p                            # いろいろな形のブロックが全部、左右反転で鏡に映る（床の草ブロックも）
+do tp @a 0.5 -60 9.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 5.5 0 10
 do camera @a set minecraft:free pos 0.5 -58.38 18.5 rot 10 180
-wait 2500
-shot blocks-truth                         # 正解: 鏡の位置で反対側から窓越しに見た本物（左右反転して blocks-1p と比べる）
+wait 3000
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から、壁も鏡も無しで見た本物（左右反転して blocks-1p の窓の中と比べる）
 do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
 do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 4 3 -57 11 air
-section diag-light
-do tp @a 0.5 -60 9.0 0 0
-do time set midnight
-wait 3000
-shot light-night                          # 夜: 鏡の自分も同じだけ暗い
-do setblock 1 -60 7 torch
-wait 2500
-shot light-torch                          # たいまつのそば: 鏡の自分もたいまつで照らされる
-do setblock 1 -60 7 air
-do time set noon
-wait 1500
+wait 2000
 section done
 absent clientlog \bERROR\b                # コンテンツログに、パック・JSON UI・スクリプトのエラーが無い

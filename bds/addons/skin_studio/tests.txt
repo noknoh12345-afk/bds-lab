@@ -220,7 +220,7 @@ js (() => { const d = world.getDimension('overworld'); const [pd] = d.getEntitie
 deop B
 wait 500
 @B cmd /studio:report
-~ Skin Studio 3\.3\.4（bedrock-samples
+~ Skin Studio 3\.3\.5（bedrock-samples
 ~ 台帳: 表彰台 1・鏡 1
 ~ プレイヤーの定義: Skin Studio のまま
 @B cmd /studio:debug on
@@ -251,3 +251,18 @@ execute as @e[type=skin_studio:podium] run studio:rank 1 A
 wait 1500
 js (() => { const [pd] = world.getDimension('overworld').getEntities({ type: 'skin_studio:podium' }); return [pd.location.x, pd.location.z, Math.round(pd.getRotation().y), pd.nameTag.replace(/§./g, '')].join(' '); })()
 = 10.5 10.5 0 1位 A
+
+## the probe commands: a gauge faces whoever places it and keeps its numbers, and walk pushes a player along the ground
+tp A 40.5 -60 40.5 0 0
+wait 500
+@A cmd /studio:gauge 1 40.5 -60 44.5 40 2
+~ 計器を置きました
+wait 1000
+js (() => { const [g] = world.getDimension('overworld').getEntities({ type: 'skin_studio:gauge' }); return [g.getProperty('skin_studio:pm'), g.getProperty('skin_studio:poy'), g.getProperty('skin_studio:pch'), ((Math.round(g.getRotation().y) % 360) + 360) % 360].join(' '); })()
+= 1 40 2 180
+@A cmd /studio:walk @s 0 1 20
+~ 20 tick 歩かせます
+wait 2000
+js (() => { const l = p('A').location; return `${Math.abs(l.x - 40.5) < 0.05 ? 'straight' : 'x ' + l.x.toFixed(2)} ${l.z > 41 ? 'walked' : 'stayed'} ${(l.z - 40.5).toFixed(1)}`; })()
+~ ^straight walked
+kill @e[type=skin_studio:gauge]

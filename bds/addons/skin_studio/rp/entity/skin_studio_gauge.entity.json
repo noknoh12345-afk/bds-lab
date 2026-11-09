@@ -1,0 +1,44 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "skin_studio:gauge",
+      "materials": {
+        "default": "entity_alphatest",
+        "lit": "entity",
+        "seen__c1": "skin_studio_seen_1_entity_alphatest",
+        "seen__c2": "skin_studio_seen_2_entity_alphatest",
+        "seen__c3": "skin_studio_seen_3_entity_alphatest",
+        "seen__c4": "skin_studio_seen_4_entity_alphatest",
+        "ss_mask__c1": "skin_studio_mask_1",
+        "ss_mask__c2": "skin_studio_mask_2",
+        "ss_mask__c3": "skin_studio_mask_3",
+        "ss_mask__c4": "skin_studio_mask_4"
+      },
+      "textures": {
+        "default": "textures/entity/skin_studio/gauge"
+      },
+      "geometry": {
+        "default": "geometry.skin_studio.gauge",
+        "box": "geometry.skin_studio.gauge_box"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.ss_clock = (math.mod(q.time_stamp, 72000) + q.frame_alpha) / 20; v.ssm = q.property('skin_studio:pm'); v.ss_ch = q.property('skin_studio:pch'); v.sg0 = (v.ssm == 0 ? (t.ssq_c0 ?? -1) : (v.ssm == 1 ? (t.ssq_by ?? -1) : (v.ssm == 2 ? (t.ssq_dm ?? -1) : (v.ssm == 3 ? ((v.ss_clock - (t.m1_s ?? -1000)) * 1000) : 0)))); t.sa = math.min(math.floor(math.abs(v.sg0) * 10 + 0.5), 999999); v.sg0d0 = math.mod(math.floor(t.sa / 1), 10); v.sg0d1 = math.mod(math.floor(t.sa / 10), 10); v.sg0d2 = math.mod(math.floor(t.sa / 100), 10); v.sg0d3 = math.mod(math.floor(t.sa / 1000), 10); v.sg0d4 = math.mod(math.floor(t.sa / 10000), 10); v.sg0d5 = math.mod(math.floor(t.sa / 100000), 10); v.sg1 = (v.ssm == 0 ? (t.ssq_c1 ?? -1) : (v.ssm == 1 ? (t.ssq_fp ?? -1) : (v.ssm == 2 ? (t.ssq_ms ?? -1) : (v.ssm == 3 ? ((v.ss_clock - (t.m2_s ?? -1000)) * 1000) : 0)))); t.sa = math.min(math.floor(math.abs(v.sg1) * 10 + 0.5), 999999); v.sg1d0 = math.mod(math.floor(t.sa / 1), 10); v.sg1d1 = math.mod(math.floor(t.sa / 10), 10); v.sg1d2 = math.mod(math.floor(t.sa / 100), 10); v.sg1d3 = math.mod(math.floor(t.sa / 1000), 10); v.sg1d4 = math.mod(math.floor(t.sa / 10000), 10); v.sg1d5 = math.mod(math.floor(t.sa / 100000), 10); v.sg2 = (v.ssm == 0 ? (t.ssq_tx ?? -1) : (v.ssm == 1 ? (t.ssq_hy ?? -1) : (v.ssm == 2 ? (t.ssq_wd ?? -1) : (v.ssm == 3 ? ((v.ss_clock - (t.m3_s ?? -1000)) * 1000) : 0)))); t.sa = math.min(math.floor(math.abs(v.sg2) * 10 + 0.5), 999999); v.sg2d0 = math.mod(math.floor(t.sa / 1), 10); v.sg2d1 = math.mod(math.floor(t.sa / 10), 10); v.sg2d2 = math.mod(math.floor(t.sa / 100), 10); v.sg2d3 = math.mod(math.floor(t.sa / 1000), 10); v.sg2d4 = math.mod(math.floor(t.sa / 10000), 10); v.sg2d5 = math.mod(math.floor(t.sa / 100000), 10); v.sg3 = (v.ssm == 0 ? (t.ssq_ty ?? -1) : (v.ssm == 1 ? (t.ssq_fb ?? -1) : (v.ssm == 2 ? (t.ssq_gs ?? -1) : (v.ssm == 3 ? ((v.ss_clock - (t.m4_s ?? -1000)) * 1000) : 0)))); t.sa = math.min(math.floor(math.abs(v.sg3) * 10 + 0.5), 999999); v.sg3d0 = math.mod(math.floor(t.sa / 1), 10); v.sg3d1 = math.mod(math.floor(t.sa / 10), 10); v.sg3d2 = math.mod(math.floor(t.sa / 100), 10); v.sg3d3 = math.mod(math.floor(t.sa / 1000), 10); v.sg3d4 = math.mod(math.floor(t.sa / 10000), 10); v.sg3d5 = math.mod(math.floor(t.sa / 100000), 10);"
+        ],
+        "animate": [
+          "place"
+        ],
+        "should_update_bones_and_effects_offscreen": "1.0"
+      },
+      "animations": {
+        "place": "animation.skin_studio.gauge"
+      },
+      "render_controllers": [
+        "controller.render.skin_studio.gauge",
+        "controller.render.skin_studio.gauge_cube",
+        "controller.render.skin_studio.gauge_seen"
+      ]
+    }
+  }
+}
