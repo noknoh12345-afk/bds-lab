@@ -113,3 +113,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q78_speech_intonation | 42572871344 | success | 8 | — | 0 | 2026-11-09 15:24 → 2026-11-09 15:42 |
 | q79_load_many | 42574712055 | success | 2（mn_v60 67 KB, mn_again 68 KB） | — | 0 | 2026-11-09 15:42 → 2026-11-09 15:59 |
 | q80_velocity_curve | 42576433258 | success | 3 | — | 0 | 2026-11-09 15:59 → 2026-11-09 16:13 |
+| q81_sampler_direction | 42577998433 | failure（もう一度） | 0 | — | 12（✘ 33 audio start dre_fe） | 2026-11-09 16:14 → 2026-11-09 16:29 |
