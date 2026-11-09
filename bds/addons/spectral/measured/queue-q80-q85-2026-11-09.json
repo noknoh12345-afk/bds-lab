@@ -702,5 +702,349 @@
   ],
   "song_s": 14.7,
   "how": "5 ms dB envelope; laps from the silent seams (>=80 ms, 70 dB under the peak); each lap correlated with lap 2 (floor 60 dB under the peak)"
+ },
+ "q85_long_mix_20min": {
+  "run": "42610747467",
+  "period_s": 137.72,
+  "cycles": 8,
+  "items": {
+   "piano_demo": [
+    {
+     "cycle": 1,
+     "corr": 1.0,
+     "level": -51.47
+    },
+    {
+     "cycle": 2,
+     "corr": 0.886,
+     "level": -51.49
+    },
+    {
+     "cycle": 3,
+     "corr": 0.98,
+     "level": -51.48
+    },
+    {
+     "cycle": 4,
+     "corr": 0.993,
+     "level": -51.45
+    },
+    {
+     "cycle": 5,
+     "corr": 0.887,
+     "level": -51.48
+    },
+    {
+     "cycle": 6,
+     "corr": 0.912,
+     "level": -51.43
+    },
+    {
+     "cycle": 7,
+     "corr": 0.965,
+     "level": -51.44
+    },
+    {
+     "cycle": 8,
+     "corr": 0.956,
+     "level": -51.52
+    }
+   ],
+   "fur_elise": [
+    {
+     "cycle": 1,
+     "corr": 1.0,
+     "level": -49.81
+    },
+    {
+     "cycle": 2,
+     "corr": 0.876,
+     "level": -49.78
+    },
+    {
+     "cycle": 3,
+     "corr": 0.967,
+     "level": -49.78
+    },
+    {
+     "cycle": 4,
+     "corr": 0.984,
+     "level": -49.77
+    },
+    {
+     "cycle": 5,
+     "corr": 0.878,
+     "level": -49.78
+    },
+    {
+     "cycle": 6,
+     "corr": 0.826,
+     "level": -49.75
+    },
+    {
+     "cycle": 7,
+     "corr": 0.939,
+     "level": -49.79
+    },
+    {
+     "cycle": 8,
+     "corr": 0.733,
+     "level": -50.06
+    }
+   ],
+   "band_demo": [
+    {
+     "cycle": 1,
+     "corr": 1.0,
+     "level": -50.82
+    },
+    {
+     "cycle": 2,
+     "corr": 0.945,
+     "level": -50.67
+    },
+    {
+     "cycle": 3,
+     "corr": 0.987,
+     "level": -50.85
+    },
+    {
+     "cycle": 4,
+     "corr": 0.994,
+     "level": -50.66
+    },
+    {
+     "cycle": 5,
+     "corr": 0.955,
+     "level": -50.7
+    },
+    {
+     "cycle": 6,
+     "corr": 0.987,
+     "level": -50.63
+    },
+    {
+     "cycle": 7,
+     "corr": 0.965,
+     "level": -50.72
+    },
+    {
+     "cycle": 8,
+     "corr": 0.991,
+     "level": -50.93
+    }
+   ],
+   "speech_hello": [
+    {
+     "cycle": 1,
+     "corr": 1.0,
+     "level": -52.71
+    },
+    {
+     "cycle": 2,
+     "corr": 0.869,
+     "level": -52.82
+    },
+    {
+     "cycle": 3,
+     "corr": 0.975,
+     "level": -52.56
+    },
+    {
+     "cycle": 4,
+     "corr": 0.992,
+     "level": -52.71
+    },
+    {
+     "cycle": 5,
+     "corr": 0.869,
+     "level": -52.77
+    },
+    {
+     "cycle": 6,
+     "corr": 0.973,
+     "level": -52.64
+    },
+    {
+     "cycle": 7,
+     "corr": 0.923,
+     "level": -52.55
+    },
+    {
+     "cycle": 8,
+     "corr": 0.931,
+     "level": -52.0
+    }
+   ],
+   "piano_file": [
+    {
+     "cycle": 1,
+     "corr": 1.0,
+     "level": -57.98
+    },
+    {
+     "cycle": 2,
+     "corr": 0.988,
+     "level": -57.99
+    },
+    {
+     "cycle": 3,
+     "corr": 0.953,
+     "level": -57.98
+    },
+    {
+     "cycle": 4,
+     "corr": 0.986,
+     "level": -57.99
+    },
+    {
+     "cycle": 5,
+     "corr": 0.989,
+     "level": -57.99
+    },
+    {
+     "cycle": 6,
+     "corr": 0.944,
+     "level": -57.99
+    },
+    {
+     "cycle": 7,
+     "corr": 0.972,
+     "level": -57.99
+    },
+    {
+     "cycle": 8,
+     "corr": 0.979,
+     "level": -57.99
+    }
+   ],
+   "rock_big_e": [
+    {
+     "cycle": 1,
+     "corr": 1.0,
+     "level": -45.73
+    },
+    {
+     "cycle": 2,
+     "corr": 0.972,
+     "level": -45.77
+    },
+    {
+     "cycle": 3,
+     "corr": 0.977,
+     "level": -45.78
+    },
+    {
+     "cycle": 4,
+     "corr": 0.981,
+     "level": -45.59
+    },
+    {
+     "cycle": 5,
+     "corr": 0.964,
+     "level": -45.7
+    },
+    {
+     "cycle": 6,
+     "corr": 0.976,
+     "level": -45.63
+    },
+    {
+     "cycle": 7,
+     "corr": 0.928,
+     "level": -45.49
+    },
+    {
+     "cycle": 8,
+     "corr": 0.915,
+     "level": -45.17
+    }
+   ],
+   "speech_cave": [
+    {
+     "cycle": 1,
+     "corr": 1.0,
+     "level": -53.85
+    },
+    {
+     "cycle": 2,
+     "corr": 0.992,
+     "level": -53.98
+    },
+    {
+     "cycle": 3,
+     "corr": 0.991,
+     "level": -53.86
+    },
+    {
+     "cycle": 4,
+     "corr": 0.998,
+     "level": -53.85
+    },
+    {
+     "cycle": 5,
+     "corr": 0.938,
+     "level": -53.84
+    },
+    {
+     "cycle": 6,
+     "corr": 0.995,
+     "level": -53.87
+    },
+    {
+     "cycle": 7,
+     "corr": 0.956,
+     "level": -53.6
+    },
+    {
+     "cycle": 8,
+     "corr": 0.993,
+     "level": -53.63
+    }
+   ],
+   "vocal_name_of_love_e": [
+    {
+     "cycle": 1,
+     "corr": 1.0,
+     "level": -39.03
+    },
+    {
+     "cycle": 2,
+     "corr": 0.986,
+     "level": -39.16
+    },
+    {
+     "cycle": 3,
+     "corr": 0.987,
+     "level": -39.01
+    },
+    {
+     "cycle": 4,
+     "corr": 0.986,
+     "level": -38.98
+    },
+    {
+     "cycle": 5,
+     "corr": 0.995,
+     "level": -39.04
+    },
+    {
+     "cycle": 6,
+     "corr": 0.987,
+     "level": -38.91
+    },
+    {
+     "cycle": 7,
+     "corr": 0.975,
+     "level": -39.08
+    },
+    {
+     "cycle": 8,
+     "corr": 0.991,
+     "level": -38.73
+    }
+   ]
+  },
+  "how": "10 ms dB envelope (16 kHz); cycle = autocorrelation peak; each cycle aligned on cycle 1 (±1.5 s); each song segment from the planned waits, correlated with cycle 1 (floor 60 dB under the peak) and its mean level"
  }
 }
