@@ -1492,10 +1492,17 @@
   "tries": 1
  },
  "q68_speech_sentences": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "61ef7d5",
+  "conclusion": "success",
+  "ended": "2026-11-09 11:45",
+  "failed_steps": 0,
+  "recordings": 16,
   "run": "42550947866",
   "started": "2026-11-09 11:26",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q69_sampler_distance": {
   "status": "pending"
