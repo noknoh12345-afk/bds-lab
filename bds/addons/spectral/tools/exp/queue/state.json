@@ -1479,7 +1479,10 @@
   "tries": 1
  },
  "q67_speech_mora": {
-  "status": "pending"
+  "commit": "0928832",
+  "run": "42549195696",
+  "started": "2026-11-09 11:07",
+  "status": "running"
  },
  "q68_speech_sentences": {
   "status": "pending"
