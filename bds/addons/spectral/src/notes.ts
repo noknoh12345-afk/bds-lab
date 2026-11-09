@@ -150,6 +150,9 @@ export interface NoteOpts {
   warm?: number;
   /** each note's choice and placement on the content log (testing, measuring) */
   log?: boolean;
+  /** phones: a note louder than 1 is made at 1 and raised by setVolume (playSound's volume stops at 1 on the phone — q80: at 300 %
+   *  every velocity from 72 up sounded the same; setVolume is exact to 2). false = as before (made at its gain, so held at 1) */
+  over?: boolean;
 }
 /** a sounding note. A held note of an instrument that sustains (strings, organ, winds) is handed over before its sample ends to a
  *  new copy of the same sample started at its steady part (relayFrom ms in) — the two crossfade in one tick, so they line up */
@@ -289,7 +292,10 @@ export class NotePlayer {
     const ev = `spectral.i.${inst.id}.${j}${ALIASES[an]}`;
     let s: SoundInstance;
     try {
-      if (this.o.where === 'phones') s = this.owner.playSound(ev, { volume: gain, pitch: p });
+      if (this.o.where === 'phones') {
+        s = this.owner.playSound(ev, { volume: this.o.over ? Math.min(1, gain) : gain, pitch: p });
+        if (this.o.over && gain > 1) { s.setVolume(gain); this.calls++; }
+      }
       else { s = this.dim.playSound(ev + '_3d', this.loc, { volume: this.o.range3d, pitch: p }); s.setVolume(gain * this.o.level3d); this.calls++; }
       const seek = Math.max(0, LEAD - (delay / 1000) * p + (late / 1000) * p);
       s.seekTo(seek);

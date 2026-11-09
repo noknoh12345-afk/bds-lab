@@ -687,6 +687,18 @@ until note 2 3000
 until note 2 piano 3000
 ~ \[spectral\] note 2 piano\.48 key 55 pitch 1\.0595 seek 0\.6000 at 300 ms
 
+## a loud note can be raised past 1 on the phone (q80: playSound's volume stops at 1 there, so at 300 % every velocity from 72 up sounded the same; `over` makes it at 1 and raises it by setVolume, exact to 2) — off by default until the phone says which is better
+@A cmd /spectral:sampler 2 250 28 300 false 600 true
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead, loud notes raised past 1
+@A cmd /spectral:play piano_demo
+~ @A ▶ Piano étude \(sampler demo\) — Spectral Player \(0:20, 104 notes, headphones\)
+wait 1500
+@A cmd /spectral:status
+~ @A notes Piano étude \(sampler demo\): \d+/104 notes at \d+\.\d s · sounding \d+ \(most \d+, at most 28\) · started \d+, stolen 0, skipped 0
+@A cmd /spectral:stop
+@A cmd /spectral:sampler 2 250 28 300 false 600 false
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead
+
 ## a note song seeks, pauses and ends by itself; the last chord rolled 12 ms a note keeps its roll (bundled, its 8 notes start in one tick each at its own place)
 @A cmd /spectral:sampler 4 250 28 120 true
 @A cmd /spectral:play piano_demo

@@ -1,0 +1,258 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 86（tools/exp/queue/q86_sampler_over1.json、11-09 の q80 から）: 電話で 1 を超える音を setVolume で上げる（/spectral:sampler の 7 つ目 over）。q80 で、既定の 300 % では強さ 72 から上がすべて同じ大きさ（playSound の音量は電話で 1 で止まる）と分かった。強さの曲線・エチュード・エリーゼ・バンド・読み上げを over の切/入で交互に（同じ run）"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song velocity_ramp,band_p11,band_p32,band_p48,band_p73,band_p128 pack=tools/exp/packs/q40",
+  "audio song fur_elise,speech_hello pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "over_off_vel1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 false",
+    "audio start ovoff1_vel",
+    "do execute as @a run spectral:play velocity_ramp",
+    "wait 31100",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovoff1_vel 160"
+   ]
+  },
+  {
+   "title": "over_on_vel1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true",
+    "audio start ovon1_vel",
+    "do execute as @a run spectral:play velocity_ramp",
+    "wait 31100",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovon1_vel 160"
+   ]
+  },
+  {
+   "title": "over_off_pd1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 false",
+    "audio start ovoff1_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovoff1_pd 160"
+   ]
+  },
+  {
+   "title": "over_on_pd1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true",
+    "audio start ovon1_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovon1_pd 160"
+   ]
+  },
+  {
+   "title": "over_on_pd2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true",
+    "audio start ovon2_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovon2_pd 160"
+   ]
+  },
+  {
+   "title": "over_off_pd2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 false",
+    "audio start ovoff2_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovoff2_pd 160"
+   ]
+  },
+  {
+   "title": "over_off_fe1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 false",
+    "audio start ovoff1_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovoff1_fe 160"
+   ]
+  },
+  {
+   "title": "over_on_fe1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true",
+    "audio start ovon1_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovon1_fe 160"
+   ]
+  },
+  {
+   "title": "over_on_fe2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true",
+    "audio start ovon2_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovon2_fe 160"
+   ]
+  },
+  {
+   "title": "over_off_fe2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 false",
+    "audio start ovoff2_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovoff2_fe 160"
+   ]
+  },
+  {
+   "title": "over_off_bd1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 false",
+    "audio start ovoff1_bd",
+    "do execute as @a run spectral:play band_demo",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovoff1_bd 160"
+   ]
+  },
+  {
+   "title": "over_on_bd1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true",
+    "audio start ovon1_bd",
+    "do execute as @a run spectral:play band_demo",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovon1_bd 160"
+   ]
+  },
+  {
+   "title": "over_on_bd2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true",
+    "audio start ovon2_bd",
+    "do execute as @a run spectral:play band_demo",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovon2_bd 160"
+   ]
+  },
+  {
+   "title": "over_off_bd2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 false",
+    "audio start ovoff2_bd",
+    "do execute as @a run spectral:play band_demo",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovoff2_bd 160"
+   ]
+  },
+  {
+   "title": "over_off_sh1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 false",
+    "audio start ovoff1_sh",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovoff1_sh 160"
+   ]
+  },
+  {
+   "title": "over_on_sh1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true",
+    "audio start ovon1_sh",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export ovon1_sh 160"
+   ]
+  }
+ ]
+}

@@ -1164,8 +1164,13 @@ var NotePlayer = class {
     const ev = `spectral.i.${inst.id}.${j}${ALIASES[an]}`;
     let s;
     try {
-      if (this.o.where === "phones") s = this.owner.playSound(ev, { volume: gain, pitch: p });
-      else {
+      if (this.o.where === "phones") {
+        s = this.owner.playSound(ev, { volume: this.o.over ? Math.min(1, gain) : gain, pitch: p });
+        if (this.o.over && gain > 1) {
+          s.setVolume(gain);
+          this.calls++;
+        }
+      } else {
         s = this.dim.playSound(ev + "_3d", this.loc, { volume: this.o.range3d, pitch: p });
         s.setVolume(gain * this.o.level3d);
         this.calls++;
@@ -2583,7 +2588,7 @@ async function play(p, id, mode) {
   const m = song.meta;
   return `\xA7a\u25B6 ${m.title}${m.artist ? " \u2014 " + m.artist : ""} \xA77(${fmt(m.seconds)}, ${s.V}/${m.voices} voices, ${mode === "phones" ? "headphones" : "speaker"})`;
 }
-var SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false };
+var SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false, over: false };
 var FILE_LEVEL = 1.8;
 function stopAllFor(p) {
   const old = sessions.get(p.id);
@@ -2657,7 +2662,8 @@ async function playNotes(p, song, mode) {
     speed: s.speed > 0 ? s.speed : 1,
     loop: s.loop,
     warm: SAMPLER.warm,
-    log: SAMPLER.log
+    log: SAMPLER.log,
+    over: SAMPLER.over
   }, p.dimension, { x: p.location.x, y: p.location.y + 1, z: p.location.z });
   notePlays.set(p.id, np);
   np.start();
@@ -3046,7 +3052,7 @@ cmd(
 cmd(
   "spectral:sampler",
   "Note songs (MIDI, the instrument bank): notes of this many ticks started together, each placed inside its tick by seekTo (0 = no placement: every note at the start of its tick), ms more ahead for a 3D speaker, at most this many notes at once, level in percent, each sample warmed this many ms before its first note (0 = not; a phone loses a sound's first play)",
-  { "bundle?": "int", "ahead?": "int", "voices?": "int", "volume?": "int", "log?": "bool", "warm?": "int" },
+  { "bundle?": "int", "ahead?": "int", "voices?": "int", "volume?": "int", "log?": "bool", "warm?": "int", "over?": "bool" },
   (p, a) => {
     if (a.bundle !== void 0) {
       SAMPLER.place = a.bundle > 0;
@@ -3057,7 +3063,8 @@ cmd(
     if (a.volume !== void 0) SAMPLER.volume = Math.max(0, Math.min(400, a.volume)) / 100;
     if (a.log !== void 0) SAMPLER.log = a.log;
     if (a.warm !== void 0) SAMPLER.warm = Math.max(0, Math.min(3e3, a.warm));
-    return `\xA7bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? "s" : ""} a bundle` : "tick-bound (no placement)"}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %, ${SAMPLER.warm ? `samples warmed ${SAMPLER.warm} ms ahead` : "not warmed"}`;
+    if (a.over !== void 0) SAMPLER.over = a.over;
+    return `\xA7bsampler: ${SAMPLER.place ? `placed to the ms, ${SAMPLER.bundle} tick${SAMPLER.bundle > 1 ? "s" : ""} a bundle` : "tick-bound (no placement)"}, 3D ahead ${SAMPLER.ahead3d} ms, ${SAMPLER.voices} notes at once, level ${Math.round(SAMPLER.volume * 100)} %, ${SAMPLER.warm ? `samples warmed ${SAMPLER.warm} ms ahead` : "not warmed"}${SAMPLER.over ? ", loud notes raised past 1" : ""}`;
   },
   true
 );
