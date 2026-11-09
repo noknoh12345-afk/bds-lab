@@ -194,6 +194,15 @@ def choose(B, prog, key, vel, cents=0):
         L = vb['voice']['layers']
         li = min(range(len(L)), key=lambda j: abs(L[j] - cents / 100))
         return vb, key * len(L) + li, 2 ** ((cents / 100 - L[li]) / 12)
+    if 128 <= prog < 200:
+        # (drums as src/notes.ts pick: the kit's own GM key -> sample map, pitch 1. Before 11-09 the drum kit, having no GM
+        #  program, fell through choose_inst to instrument 0 — every reference of a song with drums had piano notes where the
+        #  phone played drums: the band's 2.3-2.5 and its "+12-21 dB over 6.4 kHz on the phone", q70)
+        inst = next((b for b in B if b.get('drums')), None)
+        j = inst['drums'].get(str(key)) if inst else None
+        if j is None:
+            return None, None, None
+        return inst, j, 1.0
     inst, j = choose_inst(B, prog, key, vel)
     return inst, j, 2 ** ((key - inst['samples'][j][0]) / 12 + cents / 1200)
 
@@ -227,6 +236,8 @@ def render(notes, out, sr=48000, quantize=False, seconds=None, master=0.6):
         if quantize:
             s = np.floor(s / 50) * 50
         inst, j, p = choose(B, prog, key, vel, cents)
+        if inst is None:            # a drum key the kit has no sample for: the add-on skips it too
+            continue
         x, xsr = sample(inst['id'], j)
         x = x[int(lead * xsr):]
         # a held note of an instrument that sustains goes on in copies of its sample from 40 % in, each crossfaded over 150 ms
