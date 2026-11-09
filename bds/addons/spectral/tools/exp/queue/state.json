@@ -1747,7 +1747,10 @@
   "tries": 1
  },
  "q85_long_mix_20min": {
-  "status": "pending"
+  "commit": "397f532",
+  "run": "42610747467",
+  "started": "2026-11-09 20:39",
+  "status": "running"
  },
  "q86_sampler_over1": {
   "status": "pending"
