@@ -27,13 +27,15 @@
       },
       "scripts": {
         "pre_animation": [
-          "v.ss_clock = (math.mod(q.time_stamp, 72000) + q.frame_alpha) / 20;"
+          "v.ss_fy = q.property('skin_studio:f') * 90; v.ss_clock = (math.mod(q.time_stamp, 72000) + q.frame_alpha) / 20;"
         ],
         "animate": [
+          "turn",
           "pose"
         ]
       },
       "animations": {
+        "turn": "animation.skin_studio.turn",
         "pose": "animation.skin_studio.podium"
       },
       "render_controllers": [

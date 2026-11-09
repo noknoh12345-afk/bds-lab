@@ -109,6 +109,10 @@ shot mirror-3p                            # 三人称（右後ろから）: 窓�
 do tp @a 2.0 -60 6.5 facing -1.5 -59 12
 wait 1500
 shot mirror-3p-turned                     # 三人称で向きを変えても鏡像の向きが合う
+do tp @a 0.5 -60 8.5 0 0
+do camera @a set minecraft:free pos 3.2 -58.2 6.5 facing 0.5 -59 12.5
+wait 3000
+shot mirror-outside                       # 体の外のカメラ（三人称と同じく自分の体が描かれる）: 自分と、窓の中のこちらを向いた自分の両方
 do camera @a clear
 do tp @a 0.5 -60 7.5 facing 0.5 -59 12
 wait 2000
@@ -127,7 +131,7 @@ do kill @e[type=boat]
 do tp @a 0.5 -60 7.5 facing 0.5 -59 12
 wait 2000
 section mirror-turned
-do tp @e[type=skin_studio:mirror] ~ ~ ~ 90 0
+do execute as @e[type=skin_studio:mirror] at @s run tp @s ~ ~ ~ 90 0
 wait 3000
 shot mirror-turned-back                   # 鏡を横へ回しても、まっすぐ窓に戻って映る
 section mirror-mobs
@@ -146,15 +150,24 @@ do effect @e[type=zombie] fire_resistance 60 1 true
 do tp @a -2.5 -60 7.5 -38 5
 wait 5000
 do execute as @a at @s run studio:report
+do tp @a -3.5 -60 5.5 0 0
+do camera @a set minecraft:free pos -2.2 -57.2 6.2 facing 0.6 -59.4 12.5
+wait 2000
+shot mirror-mobs-above                    # 上から斜めに: 生き物の背中の向こうの窓に、こちらを向いた生き物たち
+do camera @a clear
+do tp @a -2.5 -60 7.5 -38 5
+wait 1500
 shot mirror-mobs                          # 牛・羊・村人・豚・鶏・ゾンビも左右反転で窓の奥に映る（色・模様・首の向き・歩きも本物と同じ）
 do camera @a set minecraft:third_person
 wait 3000
 shot mirror-mobs-3p                       # 三人称でも同じ
 do camera @a clear
-do tp @a -2.5 -60 7.5 -38 5
+do tp @a -3.5 -60 5.5 0 0
 do execute as @a run studio:debug on
+do camera @a set minecraft:free pos -2.2 -57.2 6.2 facing 0.6 -59.4 12.5
 wait 2000
 shot mirror-mobs-marks                    # 生き物の鏡像の印（緑の点 = 中継、黄の三角 = 予備）
+do camera @a clear
 do execute as @a run studio:debug off
 do tp @a 0.5 -60 11 0 0
 do tp @e[type=cow] 0.5 -60 6.5

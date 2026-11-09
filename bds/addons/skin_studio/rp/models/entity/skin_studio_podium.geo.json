@@ -16,12 +16,21 @@
       },
       "bones": [
         {
-          "name": "root",
+          "name": "ss_turn",
           "pivot": [
             0,
             0,
             0
           ]
+        },
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "podium",

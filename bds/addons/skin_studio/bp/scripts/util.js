@@ -59,6 +59,7 @@ export function set(entity, key, value) {
 }
 
 export function settle(entity, spot, facing) {
+  if (entity.typeId === MIRROR || entity.typeId === PODIUM) set(entity, 'skin_studio:f', facing);
   const { x, y, z } = entity.location;
   const turn = (((entity.getRotation().y - YAW[facing]) % 360) + 360) % 360;
   const moved = Math.abs(x - spot.x) + Math.abs(y - spot.y) + Math.abs(z - spot.z) > 0.01;

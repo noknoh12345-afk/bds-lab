@@ -16,6 +16,14 @@
       },
       "bones": [
         {
+          "name": "ss_turn",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
           "name": "ss_mask",
           "pivot": [
             0,
@@ -47,7 +55,8 @@
                 }
               }
             }
-          ]
+          ],
+          "parent": "ss_turn"
         }
       ]
     }

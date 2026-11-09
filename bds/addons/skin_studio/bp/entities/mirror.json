@@ -87,6 +87,15 @@
           "default": 1,
           "client_sync": true
         },
+        "skin_studio:f": {
+          "type": "int",
+          "range": [
+            0,
+            3
+          ],
+          "default": 2,
+          "client_sync": true
+        },
         "skin_studio:y1": {
           "type": "int",
           "range": [

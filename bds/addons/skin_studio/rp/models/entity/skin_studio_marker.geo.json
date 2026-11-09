@@ -16,12 +16,21 @@
       },
       "bones": [
         {
-          "name": "ss_mark",
+          "name": "ss_turn",
           "pivot": [
             0,
             0,
             0
           ]
+        },
+        {
+          "name": "ss_mark",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "ss_mark_dot",
@@ -844,12 +853,21 @@
       },
       "bones": [
         {
-          "name": "mk1",
+          "name": "ss_turn",
           "pivot": [
             0,
             0,
             0
           ]
+        },
+        {
+          "name": "mk1",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "mk1_dot",
@@ -1672,12 +1690,21 @@
       },
       "bones": [
         {
-          "name": "mk2",
+          "name": "ss_turn",
           "pivot": [
             0,
             0,
             0
           ]
+        },
+        {
+          "name": "mk2",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "mk2_dot",
@@ -2500,12 +2527,21 @@
       },
       "bones": [
         {
-          "name": "mk3",
+          "name": "ss_turn",
           "pivot": [
             0,
             0,
             0
           ]
+        },
+        {
+          "name": "mk3",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "mk3_dot",
@@ -3328,12 +3364,21 @@
       },
       "bones": [
         {
-          "name": "mk4",
+          "name": "ss_turn",
           "pivot": [
             0,
             0,
             0
           ]
+        },
+        {
+          "name": "mk4",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "mk4_dot",

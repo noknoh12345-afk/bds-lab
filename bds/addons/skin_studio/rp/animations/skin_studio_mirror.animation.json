@@ -1,6 +1,18 @@
 {
   "format_version": "1.8.0",
   "animations": {
+    "animation.skin_studio.turn": {
+      "loop": true,
+      "bones": {
+        "ss_turn": {
+          "rotation": [
+            0,
+            "v.ss_fy - q.body_y_rotation",
+            0
+          ]
+        }
+      }
+    },
     "animation.skin_studio.reflection1": {
       "loop": true,
       "bones": {

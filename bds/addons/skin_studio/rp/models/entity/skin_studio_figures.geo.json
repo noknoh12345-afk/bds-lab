@@ -16,12 +16,21 @@
       },
       "bones": [
         {
+          "name": "ss_turn",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
           "name": "f1",
           "pivot": [
             0,
             22.4,
             0
-          ]
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "f1_root",
@@ -389,12 +398,21 @@
       },
       "bones": [
         {
+          "name": "ss_turn",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
           "name": "f1",
           "pivot": [
             0,
             22.4,
             0
-          ]
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "f1_root",
@@ -763,12 +781,21 @@
       },
       "bones": [
         {
+          "name": "ss_turn",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
           "name": "f2",
           "pivot": [
             -18,
             16.4,
             0
-          ]
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "f2_root",
@@ -1136,12 +1163,21 @@
       },
       "bones": [
         {
+          "name": "ss_turn",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
           "name": "f2",
           "pivot": [
             -18,
             16.4,
             0
-          ]
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "f2_root",
@@ -1510,12 +1546,21 @@
       },
       "bones": [
         {
+          "name": "ss_turn",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
           "name": "f3",
           "pivot": [
             18,
             12.4,
             0
-          ]
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "f3_root",
@@ -1883,12 +1928,21 @@
       },
       "bones": [
         {
+          "name": "ss_turn",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
           "name": "f3",
           "pivot": [
             18,
             12.4,
             0
-          ]
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "f3_root",
@@ -2257,12 +2311,21 @@
       },
       "bones": [
         {
+          "name": "ss_turn",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
           "name": "f1",
           "pivot": [
             0,
             22.4,
             0
-          ]
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "f1_root",
@@ -2930,12 +2993,21 @@
       },
       "bones": [
         {
+          "name": "ss_turn",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
           "name": "f1",
           "pivot": [
             0,
             22.4,
             0
-          ]
+          ],
+          "parent": "ss_turn"
         },
         {
           "name": "f1_root",
