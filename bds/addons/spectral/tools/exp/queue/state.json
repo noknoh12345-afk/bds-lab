@@ -1812,6 +1812,9 @@
   "tries": 1
  },
  "q90_speech_stream_voices": {
-  "status": "pending"
+  "commit": "0d555e3",
+  "run": "42714269600",
+  "started": "2026-11-10 07:42",
+  "status": "running"
  }
 }
