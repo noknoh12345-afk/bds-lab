@@ -1696,10 +1696,17 @@
   "tries": 2
  },
  "q82_drums_each": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "0dcdda1",
+  "conclusion": "failure",
+  "ended": "2026-11-09 17:09",
+  "failed_steps": 1,
+  "recordings": 1,
   "run": "42581816904",
   "started": "2026-11-09 16:50",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q83_sampler_pause_seek": {
   "status": "pending"
