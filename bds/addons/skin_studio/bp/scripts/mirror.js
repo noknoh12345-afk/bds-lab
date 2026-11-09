@@ -21,6 +21,7 @@ const WALLS = [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25];
 const FACE = 0.1;
 const BACK = 0.4;
 const BODY = 0.3;
+const SLACK = 0.05;
 const SPAN = 1.6;
 const PUSHED = 4;
 const CHANNELS = 4;
@@ -281,7 +282,7 @@ function keepOut(mirror, frame) {
     const across = dx * frame.side.x + dz * frame.side.z;
     const before = FACE + BODY;
     const behind = -(BACK + BODY);
-    if (front >= before - 0.001 || front <= behind + 0.001 || Math.abs(across) > SPAN || y < frame.glass.y - 1.8 || y > frame.glass.y + 2.9) continue;
+    if (front >= before - SLACK || front <= behind + SLACK || Math.abs(across) > SPAN || y < frame.glass.y - 1.8 || y > frame.glass.y + 2.9) continue;
     const side = front >= (FACE - BACK) / 2 ? 1 : -1;
     const target = (way) => {
       const to = way > 0 ? before : behind;
