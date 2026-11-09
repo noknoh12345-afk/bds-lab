@@ -1,0 +1,197 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# 追加 p15（tools/exp/queue/p15_ahead_400_confirm.json、11-09 に q73 から）: 3D の先回り 250（既定）と 400 ms をもう一度（エリーゼ・エチュード・こんにちは、交互に 2 回ずつ）。q73 ではエリーゼが 0→400 ms で 3.65・3.82・3.93・4.02 と上がり続けた"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song fur_elise,speech_hello pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "ahead_250_fe_r1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start a250r1_fe",
+    "do execute as @a run spectral:play fur_elise speaker",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a250r1_fe 160"
+   ]
+  },
+  {
+   "title": "ahead_400_fe_r1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 400 28 300 false 600",
+    "audio start a400r1_fe",
+    "do execute as @a run spectral:play fur_elise speaker",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a400r1_fe 160"
+   ]
+  },
+  {
+   "title": "ahead_250_pd_r1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start a250r1_pd",
+    "do execute as @a run spectral:play piano_demo speaker",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a250r1_pd 160"
+   ]
+  },
+  {
+   "title": "ahead_400_pd_r1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 400 28 300 false 600",
+    "audio start a400r1_pd",
+    "do execute as @a run spectral:play piano_demo speaker",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a400r1_pd 160"
+   ]
+  },
+  {
+   "title": "ahead_250_sh_r1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start a250r1_sh",
+    "do execute as @a run spectral:play speech_hello speaker",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a250r1_sh 160"
+   ]
+  },
+  {
+   "title": "ahead_400_sh_r1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 400 28 300 false 600",
+    "audio start a400r1_sh",
+    "do execute as @a run spectral:play speech_hello speaker",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a400r1_sh 160"
+   ]
+  },
+  {
+   "title": "ahead_400_fe_r2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 400 28 300 false 600",
+    "audio start a400r2_fe",
+    "do execute as @a run spectral:play fur_elise speaker",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a400r2_fe 160"
+   ]
+  },
+  {
+   "title": "ahead_250_fe_r2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start a250r2_fe",
+    "do execute as @a run spectral:play fur_elise speaker",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a250r2_fe 160"
+   ]
+  },
+  {
+   "title": "ahead_400_pd_r2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 400 28 300 false 600",
+    "audio start a400r2_pd",
+    "do execute as @a run spectral:play piano_demo speaker",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a400r2_pd 160"
+   ]
+  },
+  {
+   "title": "ahead_250_pd_r2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start a250r2_pd",
+    "do execute as @a run spectral:play piano_demo speaker",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a250r2_pd 160"
+   ]
+  },
+  {
+   "title": "ahead_400_sh_r2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 400 28 300 false 600",
+    "audio start a400r2_sh",
+    "do execute as @a run spectral:play speech_hello speaker",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a400r2_sh 160"
+   ]
+  },
+  {
+   "title": "ahead_250_sh_r2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600",
+    "audio start a250r2_sh",
+    "do execute as @a run spectral:play speech_hello speaker",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export a250r2_sh 160"
+   ]
+  }
+ ]
+}
