@@ -1625,7 +1625,10 @@
   "tries": 1
  },
  "q77_speech_over_music": {
-  "status": "pending"
+  "commit": "b65c670",
+  "run": "42571107604",
+  "started": "2026-11-09 15:07",
+  "status": "running"
  },
  "q78_speech_intonation": {
   "status": "pending"
