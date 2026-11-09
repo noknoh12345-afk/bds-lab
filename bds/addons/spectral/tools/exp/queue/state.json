@@ -1544,10 +1544,17 @@
   "tries": 1
  },
  "q72_sampler_speed": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "67717db",
+  "conclusion": "success",
+  "ended": "2026-11-09 13:07",
+  "failed_steps": 0,
+  "recordings": 10,
   "run": "42558191744",
   "started": "2026-11-09 12:46",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q73_ahead_3d": {
   "status": "pending"
