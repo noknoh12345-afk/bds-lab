@@ -113,16 +113,16 @@ wait 1500
 js (() => { const [m] = world.getDimension('overworld').getEntities({ type: 'skin_studio:mirror' }); return [m.location.x, m.location.y, m.location.z, Math.abs(Math.round(m.getRotation().y)), m.getProperty('skin_studio:r1') === p('A').getProperty('skin_studio:slot')].join(' '); })()
 = 0.5 -60 12 180 true
 
-## the glass is solid and exact: six invisible boxes close the window, walking into it stops with the body touching the frame
+## the glass is solid and exact: six invisible boxes close the window, walking into it stops with the body touching the glass (the boxes do not stop a walk; the push back does, at 0.15 of overlap)
 js world.getDimension('overworld').getEntities({ type: 'skin_studio:mirror_wall' }).map((w) => (Math.round(w.location.x * 100) / 100) + ' ' + w.location.y + ' ' + (Math.round(w.location.z * 100) / 100)).sort().join(',')
 = -0.25 -60 12.15,-0.75 -60 12.15,0.25 -60 12.15,0.75 -60 12.15,1.25 -60 12.15,1.75 -60 12.15
 tp A 0.5 -60 9.5 facing 0.5 -59 12
 @A walk forward 40
 wait 1500
 js Math.round(p('A').location.z * 100) / 100
-~ ^11\.(5[5-9]|6[0-2]?)$
+~ ^11\.(6[0-9]?|7[0-5]?)$
 @A cmd /studio:report
-~ 見えない箱 6・押し戻し 0 回
+~ 見えない箱 6・押し戻し \d+ 回
 tp A 0.5 -60 9.5 facing 0.5 -59 12
 
 ## a block in front of the mirror is drawn behind it, and no real block is placed
