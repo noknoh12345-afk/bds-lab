@@ -46,6 +46,8 @@ setblock 3 -60 3 air
 setblock 24 -60 16 command_block ["facing_direction"=3]
 @A cmdblock 24 -60 16 impulse always studio:podium 24 -59.5 20
 wait 1500
+js [world.getDimension('overworld').getBlock({ x: 24, y: -60, z: 16 })?.typeId, ...world.getDimension('overworld').getEntities({ type: 'skin_studio:podium' }).map((e) => [e.location.x, e.location.y, e.location.z].join(' '))].join('|')
+~ \|24\.5 -60 20\.5
 js (() => { const [pd] = world.getDimension('overworld').getEntities({ type: 'skin_studio:podium', location: { x: 24.5, y: -60, z: 20.5 }, maxDistance: 1 }); return [pd.location.x, pd.location.y, pd.location.z, Math.abs(Math.round(pd.getRotation().y))].join(' '); })()
 = 24.5 -60 20.5 180
 @A cmd /studio:podium 30 -61 20
@@ -217,7 +219,7 @@ js (() => { const d = world.getDimension('overworld'); const [pd] = d.getEntitie
 deop B
 wait 500
 @B cmd /studio:report
-~ Skin Studio 3\.3\.0（bedrock-samples
+~ Skin Studio 3\.3\.1（bedrock-samples
 ~ 台帳: 表彰台 1・鏡 1
 ~ プレイヤーの定義: Skin Studio のまま
 @B cmd /studio:debug on

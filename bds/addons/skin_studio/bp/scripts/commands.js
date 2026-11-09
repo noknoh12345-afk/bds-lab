@@ -180,7 +180,10 @@ function report(origin) {
   }
   lines.push(`台帳: 表彰台 ${records('podium').length}・鏡 ${records('mirror').length}`);
   lines.push(isReplaced() ? 'プレイヤーの定義: ほかのパックが上書きしている（人が映らない）' : 'プレイヤーの定義: Skin Studio のまま');
-  return ok(lines.join('\n'));
+  const self = selfOf(origin);
+  if (!self) return ok(lines.join('\n'));
+  system.run(() => self.isValid && lines.slice(1).forEach((line) => self.sendMessage(line)));
+  return ok(lines[0]);
 }
 
 function register(registry, definition, callback) {
