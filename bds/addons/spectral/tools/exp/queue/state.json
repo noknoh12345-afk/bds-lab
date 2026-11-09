@@ -1682,7 +1682,7 @@
  "q81_sampler_direction": {
   "arms": {},
   "checkpoints": 0,
-  "commit": "47ea23e",
+  "commit": "d18099f",
   "conclusion": "failure",
   "earlier_runs": [
    "42577998433"
@@ -1690,9 +1690,9 @@
   "ended": "2026-11-09 16:29",
   "failed_steps": 12,
   "recordings": 0,
-  "run": "42577998433",
-  "started": "2026-11-09 16:14",
-  "status": "pending",
+  "run": "42579663495",
+  "started": "2026-11-09 16:29",
+  "status": "running",
   "tries": 1
  },
  "q82_drums_each": {
