@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 68（tools/exp/queue/q68_speech_sentences.json、q44 のやり直し: 11-05 の録音が解く前に期限で消えた）: 読み上げの文を増やす（かなの 12 文）。今まで 4 文だけで Whisper 0.19〜0.48（文で大きく違う）。12 文で物差しを太く（かなだけ: 読みの誤りなし）、4 文は 3D でも
+# キュー 69（tools/exp/queue/q69_sampler_distance.json、q29 のやり直し: 11-05 の録音が解く前に期限で消えた）: サンプラーの 3D: 距離 0〜32 ブロック。q04 は正弦波の道で 8 ブロックまで同じ。サンプラー（ピアノ・読み上げ）は 3D の遠さでどう落ちるか
 
 section title
 audio info
@@ -13,7 +13,7 @@ audio info
 shot title
 
 section prep
-audio song s_kaze,s_mori,s_tomo,s_yoru,s_umi,s_hon,s_sora,s_kagi,s_ame,s_neko,s_ie,s_tetsu pack=tools/exp/packs/q40
+audio song fur_elise,speech_hello pack=tools/exp/packs/notes
 
 section join
 join
@@ -24,194 +24,194 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section sent_s_kaze
+section dist_0_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_kaze
-do execute as @a run spectral:play s_kaze
-wait 3653
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd0_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 0 -60 0
+wait 14750
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_kaze 160
+audio export sd0_fe 160
 
-section sent_s_mori
+section dist_0_sh
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_mori
-do execute as @a run spectral:play s_mori
-wait 4905
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd0_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 0 -60 0
+wait 7150
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_mori 160
+audio export sd0_sh 160
 
-section sent_s_tomo
+section dist_4_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_tomo
-do execute as @a run spectral:play s_tomo
-wait 5085
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd4_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 4 -60 0
+wait 14750
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_tomo 160
+audio export sd4_fe 160
 
-section sent_s_yoru
+section dist_4_sh
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_yoru
-do execute as @a run spectral:play s_yoru
-wait 4575
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd4_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 4 -60 0
+wait 7150
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_yoru 160
+audio export sd4_sh 160
 
-section sent_s_umi
+section dist_8_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_umi
-do execute as @a run spectral:play s_umi
-wait 4085
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd8_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 8 -60 0
+wait 14750
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_umi 160
+audio export sd8_fe 160
 
-section sent_s_hon
+section dist_8_sh
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_hon
-do execute as @a run spectral:play s_hon
-wait 4383
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd8_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 8 -60 0
+wait 7150
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_hon 160
+audio export sd8_sh 160
 
-section sent_s_sora
+section dist_16_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_sora
-do execute as @a run spectral:play s_sora
-wait 4437
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd16_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 16 -60 0
+wait 14750
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_sora 160
+audio export sd16_fe 160
 
-section sent_s_kagi
+section dist_16_sh
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_kagi
-do execute as @a run spectral:play s_kagi
-wait 5019
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd16_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 16 -60 0
+wait 7150
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_kagi 160
+audio export sd16_sh 160
 
-section sent_s_ame
+section dist_24_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_ame
-do execute as @a run spectral:play s_ame
-wait 5249
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd24_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 24 -60 0
+wait 14750
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_ame 160
+audio export sd24_fe 160
 
-section sent_s_neko
+section dist_24_sh
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_neko
-do execute as @a run spectral:play s_neko
-wait 4385
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd24_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 24 -60 0
+wait 7150
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_neko 160
+audio export sd24_sh 160
 
-section sent_s_ie
+section dist_32_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_ie
-do execute as @a run spectral:play s_ie
-wait 4247
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd32_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a 32 -60 0
+wait 14750
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_ie 160
+audio export sd32_fe 160
 
-section sent_s_tetsu
+section dist_32_sh
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st_s_tetsu
-do execute as @a run spectral:play s_tetsu
-wait 4355
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd32_sh
+do execute as @a run spectral:play speech_hello speaker
+wait 700
+do tp @a 32 -60 0
+wait 7150
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export st_s_tetsu 160
-
-section sent3_s_kaze
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st3_s_kaze
-do execute as @a run spectral:play s_kaze speaker
-wait 3903
-do execute as @a run spectral:stop
-audio stop
-audio export st3_s_kaze 160
-
-section sent3_s_mori
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st3_s_mori
-do execute as @a run spectral:play s_mori speaker
-wait 5155
-do execute as @a run spectral:stop
-audio stop
-audio export st3_s_mori 160
-
-section sent3_s_tomo
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st3_s_tomo
-do execute as @a run spectral:play s_tomo speaker
-wait 5335
-do execute as @a run spectral:stop
-audio stop
-audio export st3_s_tomo 160
-
-section sent3_s_yoru
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start st3_s_yoru
-do execute as @a run spectral:play s_yoru speaker
-wait 4825
-do execute as @a run spectral:stop
-audio stop
-audio export st3_s_yoru 160
+audio export sd32_sh 160
