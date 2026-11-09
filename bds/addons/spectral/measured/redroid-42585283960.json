@@ -1,0 +1,67 @@
+{
+ "run": "42585283960",
+ "device": "redroid (Android 14 x86_64), Minecraft from Play",
+ "source": "job log [spectral rig] lines (recordings of the real client)",
+ "results": {
+  "device": {
+   "audio": {
+    "media_volume": {
+     "line": "[V] volume is 5 in range [0..15]",
+     "index": 5,
+     "max": 15
+    },
+    "stream_music": "- STREAM_MUSIC: Muted: false Muted Internally: false Min: 0 Max: 15 streamVolume:5 Current: 2 (speaker): 5, 80 (bt_a2dp): 2, 100 (bt_a2dp_hp): 2, 4000000 (usb_headset): 3, 20000000 (ble_headset): 2, 20000002 (ble_broadcast): 2, 40000000 (default): 5 Devices: speaker(2) Volume Group: AUDIO_STREAM_MUS",
+    "focus": [],
+    "mixer": {
+     "sample_rate": [
+      "44100",
+      "16000",
+      "48000"
+     ],
+     "hal_frames": [
+      "441",
+      "320",
+      "1024"
+     ],
+     "normal_frames": [
+      "896"
+     ],
+     "master_volume": [
+      "1.000000"
+     ],
+     "master_mute": [
+      "off"
+     ]
+    },
+    "game_options": {
+     "audio_main": "0.5",
+     "audio_sound": "1",
+     "audio_music": "0.3",
+     "audio_ambient": "1",
+     "audio_block": "1",
+     "audio_hostile": "1",
+     "audio_neutral": "1",
+     "audio_record": "1",
+     "audio_player": "1",
+     "audio_weather": "1",
+     "audio_texttospeech": "1",
+     "volumetric_fog_quality": "1"
+    },
+    "tracks": [
+     {
+      "thread": "Output thread 0x7f4d5b430940, name AudioOut_D, tid 215, type 0 (MIXER):",
+      "sample_rate": "44100",
+      "header": "Type Id Active Client Session Port Id S Flags Format Chn mask SRate ST Usg CT G db L dB R dB VS dB Server FrmCnt FrmRdy F Underruns Flushed BitPerfect Latency",
+      "rows": [
+       "F1 57 yes 2009 2449 10 A 0x000 00000005 00000003 44100 3 e 2 -33 0 0 0 002B9C89 3528r 3528 f 0 0 false unavail",
+       "11-09 08:25:56.376 removeTrack_l (0x7f4b21606070) 55 no 2009 2433 8 T 0x000 00000005 00000003 44100 3 e 2 -inf 0 0 0 00000000 1796 0 I 0 0 false new",
+       "11-09 08:25:56.435 removeTrack_l (0x7f4b21606070) F1 56 no 2009 2441 9 T 0x200 00000005 00000003 44100 3 e 2 -inf 0 0 0 00000000 3528 0 I 0 0 false new",
+       "11-09 08:25:56.486 AT::add (0x7f4b21606070) F1 57 no 2009 2449 10 A 0x000 00000005 00000003 44100 3 e 2 -inf 0 0 0 00000000 3528r 0 f 0 0 false new"
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "songs": {}
+}
