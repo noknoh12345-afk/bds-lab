@@ -1518,10 +1518,17 @@
   "tries": 1
  },
  "q70_band_parts": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "43f63a7",
+  "conclusion": "success",
+  "ended": "2026-11-09 12:27",
+  "failed_steps": 0,
+  "recordings": 7,
   "run": "42554553381",
   "started": "2026-11-09 12:06",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q71_sampler_transpose": {
   "status": "pending"
