@@ -517,5 +517,190 @@
    }
   },
   "how": "5 ms RMS; pause = longest run 60 dB under the 90th percentile; fall = last frame within 30 dB to the first silent one; gaps = silent runs >= 50 ms after the resume (s from the recording start)"
+ },
+ "q84_sampler_loop_5min": {
+  "run": "42607417810",
+  "earlier_failed": [
+   "42584263602",
+   "42585283960"
+  ],
+  "laps": [
+   {
+    "lap": 1,
+    "start_s": 2.32,
+    "corr_vs_lap2": 0.925,
+    "level_dB": -49.65,
+    "rises": 31
+   },
+   {
+    "lap": 2,
+    "start_s": 17.36,
+    "corr_vs_lap2": 1.0,
+    "level_dB": -49.62,
+    "rises": 32
+   },
+   {
+    "lap": 3,
+    "start_s": 32.42,
+    "corr_vs_lap2": 0.906,
+    "level_dB": -49.67,
+    "rises": 32
+   },
+   {
+    "lap": 4,
+    "start_s": 47.46,
+    "corr_vs_lap2": 0.889,
+    "level_dB": -49.64,
+    "rises": 36
+   },
+   {
+    "lap": 5,
+    "start_s": 62.52,
+    "corr_vs_lap2": 0.888,
+    "level_dB": -49.66,
+    "rises": 35
+   },
+   {
+    "lap": 6,
+    "start_s": 77.56,
+    "corr_vs_lap2": 0.951,
+    "level_dB": -49.64,
+    "rises": 37
+   },
+   {
+    "lap": 7,
+    "start_s": 92.62,
+    "corr_vs_lap2": 0.88,
+    "level_dB": -49.64,
+    "rises": 38
+   },
+   {
+    "lap": 8,
+    "start_s": 107.67,
+    "corr_vs_lap2": 0.876,
+    "level_dB": -49.65,
+    "rises": 36
+   },
+   {
+    "lap": 9,
+    "start_s": 122.72,
+    "corr_vs_lap2": 0.886,
+    "level_dB": -49.61,
+    "rises": 29
+   },
+   {
+    "lap": 10,
+    "start_s": 137.78,
+    "corr_vs_lap2": 0.872,
+    "level_dB": -49.66,
+    "rises": 34
+   },
+   {
+    "lap": 11,
+    "start_s": 152.82,
+    "corr_vs_lap2": 0.878,
+    "level_dB": -49.6,
+    "rises": 28
+   },
+   {
+    "lap": 12,
+    "start_s": 167.88,
+    "corr_vs_lap2": 0.86,
+    "level_dB": -49.7,
+    "rises": 36
+   },
+   {
+    "lap": 13,
+    "start_s": 182.93,
+    "corr_vs_lap2": 0.865,
+    "level_dB": -49.61,
+    "rises": 31
+   },
+   {
+    "lap": 14,
+    "start_s": 197.97,
+    "corr_vs_lap2": 0.891,
+    "level_dB": -49.7,
+    "rises": 41
+   },
+   {
+    "lap": 15,
+    "start_s": 213.01,
+    "corr_vs_lap2": 0.867,
+    "level_dB": -49.61,
+    "rises": 34
+   },
+   {
+    "lap": 16,
+    "start_s": 228.07,
+    "corr_vs_lap2": 0.888,
+    "level_dB": -49.69,
+    "rises": 37
+   },
+   {
+    "lap": 17,
+    "start_s": 243.11,
+    "corr_vs_lap2": 0.884,
+    "level_dB": -49.6,
+    "rises": 34
+   },
+   {
+    "lap": 18,
+    "start_s": 258.17,
+    "corr_vs_lap2": 0.906,
+    "level_dB": -49.7,
+    "rises": 36
+   },
+   {
+    "lap": 19,
+    "start_s": 273.21,
+    "corr_vs_lap2": 0.882,
+    "level_dB": -49.61,
+    "rises": 34
+   }
+  ],
+  "period_s": [
+   15.04,
+   15.060000000000002,
+   15.04,
+   15.060000000000002,
+   15.04,
+   15.060000000000002,
+   15.049999999999997,
+   15.049999999999997,
+   15.060000000000002,
+   15.039999999999992,
+   15.060000000000002,
+   15.050000000000011,
+   15.039999999999992,
+   15.039999999999992,
+   15.060000000000002,
+   15.04000000000002,
+   15.060000000000002,
+   15.039999999999964
+  ],
+  "seam_gap_ms": [
+   160,
+   180,
+   180,
+   180,
+   160,
+   180,
+   185,
+   185,
+   185,
+   180,
+   180,
+   160,
+   180,
+   160,
+   180,
+   160,
+   180,
+   155,
+   180
+  ],
+  "song_s": 14.7,
+  "how": "5 ms dB envelope; laps from the silent seams (>=80 ms, 70 dB under the peak); each lap correlated with lap 2 (floor 60 dB under the peak)"
  }
 }
