@@ -1479,10 +1479,17 @@
   "tries": 1
  },
  "q67_speech_mora": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "0928832",
+  "conclusion": "success",
+  "ended": "2026-11-09 11:26",
+  "failed_steps": 0,
+  "recordings": 10,
   "run": "42549195696",
   "started": "2026-11-09 11:07",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q68_speech_sentences": {
   "status": "pending"
