@@ -1412,10 +1412,32 @@
   "tries": 1
  },
  "q63_level12_confirm": {
+  "arms": {
+   "e": {
+    "mrstft": 1.756,
+    "n": 13,
+    "rms_db": -39.1,
+    "third_oct_db": 7.478,
+    "visqol": 3.169
+   },
+   "l12": {
+    "mrstft": 1.756,
+    "n": 13,
+    "rms_db": -37.5,
+    "third_oct_db": 7.664,
+    "visqol": 3.363
+   }
+  },
+  "checkpoints": 0,
   "commit": "e1c02ff",
+  "conclusion": "success",
+  "ended": "2026-11-09 10:13",
+  "failed_steps": 0,
+  "recordings": 26,
   "run": "42541811250",
   "started": "2026-11-09 09:44",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q64_sampler_voices": {
   "status": "pending"
