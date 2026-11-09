@@ -1773,6 +1773,9 @@
   "tries": 1
  },
  "q87_loop_seam": {
-  "status": "pending"
+  "commit": "d76ea75",
+  "run": "42619329439",
+  "started": "2026-11-09 21:43",
+  "status": "running"
  }
 }
