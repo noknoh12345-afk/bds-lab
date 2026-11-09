@@ -1812,9 +1812,19 @@
   "tries": 1
  },
  "q90_speech_stream_voices": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "0d555e3",
+  "conclusion": "success",
+  "ended": "2026-11-10 08:03",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "42714269600",
   "started": "2026-11-10 07:42",
-  "status": "running"
+  "status": "done",
+  "tries": 1
+ },
+ "q91_speaker_head3d_mid": {
+  "status": "pending"
  }
 }
