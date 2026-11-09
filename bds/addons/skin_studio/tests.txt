@@ -117,12 +117,12 @@ js (() => { const [m] = world.getDimension('overworld').getEntities({ type: 'ski
 js world.getDimension('overworld').getEntities({ type: 'skin_studio:mirror_wall' }).map((w) => (Math.round(w.location.x * 100) / 100) + ' ' + w.location.y + ' ' + (Math.round(w.location.z * 100) / 100)).sort().join(',')
 = -0.25 -60 12.15,-0.75 -60 12.15,0.25 -60 12.15,0.75 -60 12.15,1.25 -60 12.15,1.75 -60 12.15
 tp A 0.5 -60 9.5 facing 0.5 -59 12
-@A walk forward 4
+@A walk forward 40
 wait 1500
 js Math.round(p('A').location.z * 100) / 100
 ~ ^11\.(5[5-9]|6[0-2])$
 @A cmd /studio:report
-~ 見えない箱 4・押し戻し 0 回
+~ 見えない箱 6・押し戻し 0 回
 tp A 0.5 -60 9.5 facing 0.5 -59 12
 
 ## a block in front of the mirror is drawn behind it, and no real block is placed

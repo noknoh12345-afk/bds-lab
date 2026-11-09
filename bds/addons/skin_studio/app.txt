@@ -235,14 +235,14 @@ section diag-walk
 do tp @a 0.5 -60 6.5 0 0
 wait 1500
 record start
-@A walk forward 2
-@A walk back 2
+walk forward 2
+walk back 2
 record stop                               # 一人称で歩く: 鏡の自分の脚・腕の振り（recordings）
 do camera @a set minecraft:free pos 5.5 -58.0 7.0 facing 0.5 -59 9.5
 wait 1500
 record start
-@A walk forward 2
-@A walk back 2
+walk forward 2
+walk back 2
 record stop                               # 横から: 本物の自分と鏡の自分の脚が同じ振り（左右反転）
 do camera @a clear
 section diag-zombie
