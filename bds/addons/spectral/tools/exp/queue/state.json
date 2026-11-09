@@ -1531,10 +1531,17 @@
   "tries": 1
  },
  "q71_sampler_transpose": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "c20bb2f",
+  "conclusion": "success",
+  "ended": "2026-11-09 12:46",
+  "failed_steps": 0,
+  "recordings": 14,
   "run": "42556516204",
   "started": "2026-11-09 12:27",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q72_sampler_speed": {
   "status": "pending"
