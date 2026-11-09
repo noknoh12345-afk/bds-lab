@@ -1596,7 +1596,10 @@
   "tries": 1
  },
  "q75_speech_level": {
-  "status": "pending"
+  "commit": "48421ce",
+  "run": "42566717206",
+  "started": "2026-11-09 14:20",
+  "status": "running"
  },
  "q76_speech_distance": {
   "status": "pending"
