@@ -1680,7 +1680,10 @@
   "tries": 1
  },
  "q81_sampler_direction": {
-  "status": "pending"
+  "commit": "47ea23e",
+  "run": "42577998433",
+  "started": "2026-11-09 16:14",
+  "status": "running"
  },
  "q82_drums_each": {
   "status": "pending"
