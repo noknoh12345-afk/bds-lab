@@ -120,3 +120,5 @@ q63 は 1.5.2 で既定にした +12 dB の 3 回目の確かめ。q64〜q85 は
 | 86 | sampler_over1 | q80 | 電話で 1 を超える音を setVolume で上げる（1.5.3 の `/spectral:sampler … over`）切/入を同じ run で: 強さの曲線・エチュード ×2・エリーゼ ×2・バンド ×2・読み上げ |
 | 87 | loop_seam | q84 | ループの継ぎ目（1.5.4 の `/spectral:sampler … seam`）切/入を同じ run で: エリーゼ・バンドを約 1 分ずつ ×2 |
 | 88 | file_over1 | q80・q86 | ファイルの曲の大きさ 1.8 を電話で setVolume で上げる（`scriptevent spectral:fileover`）切/入を同じ run で 3 組（ピアノのファイル） |
+| 89 | speaker_head3d | q80 | スピーカーの割れ防止を 3D の上乗せ込みで数えるか（今まで）音の強さだけか（`scriptevent spectral:head3d`）同じ run で: 強さの曲線・エチュード ×2・エリーゼ ×2・バンド ×2、6 ブロック先。1 ブロックの 1 組で割れの確かめ |
+| 90 | speech_stream_voices | q77 | 4 ブロック先の曲（正弦波の道のライブ）の同時の数 24 / 12 / 6 / なし で読み上げの聞き取り（3 文） |

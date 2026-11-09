@@ -168,6 +168,11 @@ interface Voice { s: SoundInstance; inst: Inst; gain: number; on: number; off: n
  *  plays near the top, and each bundle's new notes are turned down together when what still sounds (its peaks, a struck note
  *  falling with HEAD_DECAY_MS) and they would pass HEAD_LIMIT — the phone's mix clips at about 2 file units (measured) */
 const HEAD_LIMIT = 1.9, HEAD_DECAY_MS = 1200;
+/** the speaker's head-room: 'level' counts each 3D note at its level (gain × level3d, +10 dB) against the phone's clip as before;
+ *  'one' counts it at its gain only (a 3D note reaches the mix about 30 dB under its level 3 blocks away, run 41270487804 — so
+ *  'level' turned every loud note down: q80, the speaker's velocity ramp flat from 72 (piano) / 104 (strings)). Measuring (q89):
+ *  `scriptevent spectral:head3d level|one` */
+export const HEAD3D = { mode: 'level' as 'level' | 'one' };
 /** a sustained note is relayed RELAY_MS before its sample ends, crossfading over RELAY_FADE s, from RELAY_FROM of the sample */
 const RELAY_MS = 350, RELAY_FADE = 0.15, RELAY_FROM = 0.4;
 
@@ -286,7 +291,7 @@ export class NotePlayer {
   /** how much the notes from..to (one bundle) are turned down: 1 while what still sounds and they stay under HEAD_LIMIT */
   private headroom(from: number, to: number, t: number): number {
     if (to <= from) return 1;
-    const k3 = this.o.where === 'phones' ? 1 : this.o.level3d;
+    const k3 = this.o.where === 'phones' || HEAD3D.mode === 'one' ? 1 : this.o.level3d;
     let now = 0, add = 0;
     for (const v of this.voices) {
       const age = Math.max(0, t - v.on) / this.o.speed;

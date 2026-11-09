@@ -1,0 +1,225 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 90（tools/exp/queue/q90_speech_stream_voices.json、11-10 の q77 から）: 4 ブロック先の曲（正弦波の道のライブ）の同時に鳴らす数を 24 / 12 / 6 にして、読み上げがどこから聞き取れるか（なし も同じ run で）。q77: 24 のとき Whisper の誤り 0.19 → 0.82、頭の聞こえ半分以下（電話の 32 音の取り合い）。3 文"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song rock_big suffix=_e pack=tools/exp/packs/run10",
+  "audio song speech_hello,speech_weather,speech_piano pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "sv_none_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start svnone_hello",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export svnone_hello 160"
+   ]
+  },
+  {
+   "title": "sv_24_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start sv24_hello",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export sv24_hello 160"
+   ]
+  },
+  {
+   "title": "sv_12_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start sv12_hello",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 12 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export sv12_hello 160"
+   ]
+  },
+  {
+   "title": "sv_6_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start sv6_hello",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 6 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export sv6_hello 160"
+   ]
+  },
+  {
+   "title": "sv_none_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start svnone_weather",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export svnone_weather 160"
+   ]
+  },
+  {
+   "title": "sv_24_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start sv24_weather",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export sv24_weather 160"
+   ]
+  },
+  {
+   "title": "sv_12_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start sv12_weather",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 12 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export sv12_weather 160"
+   ]
+  },
+  {
+   "title": "sv_6_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start sv6_weather",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 6 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export sv6_weather 160"
+   ]
+  },
+  {
+   "title": "sv_none_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start svnone_piano",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export svnone_piano 160"
+   ]
+  },
+  {
+   "title": "sv_24_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start sv24_piano",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export sv24_piano 160"
+   ]
+  },
+  {
+   "title": "sv_12_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start sv12_piano",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 12 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export sv12_piano 160"
+   ]
+  },
+  {
+   "title": "sv_6_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "audio start sv6_piano",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 6 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export sv6_piano 160"
+   ]
+  }
+ ]
+}

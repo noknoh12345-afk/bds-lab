@@ -14,7 +14,7 @@ import { OSC_AMP, BASE_HZ, NOISE_RMS, NOISE_BANDS, BURST_RMS, BURST_BANDS, SUB }
 import demo from './songs/demo';
 import programs, { Program } from './calib_programs';
 import { readPart, joinParts, decodeSongJob, songHeader, payloadText, payloadFrom, Part, SongMeta, FIELD_CHARS, PHONE_CHARS } from './songtext';
-import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes, LiveKeys, WARM } from './notes';
+import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes, LiveKeys, WARM, HEAD3D } from './notes';
 import notesDemo from './songs/notes_demo';
 import bandDemo from './songs/band_demo';
 import { saySong } from './say';
@@ -842,6 +842,8 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
   if (e.id === 'spectral:note' && e.sourceEntity instanceof Player) { liveNotes(e.sourceEntity, e.message); return; }
   // (measuring the warming, p13: the level a sample is warmed at and how many ticks it sounds — `scriptevent spectral:warmcfg <volume> <ticks>`)
   // (q88: a file song's level above 1 on the phone by setVolume — `scriptevent spectral:fileover true|false`)
+  // (q89: the speaker's head-room counted at each note's gain only — `scriptevent spectral:head3d level|one`)
+  if (e.id === 'spectral:head3d') { HEAD3D.mode = e.message.trim() === 'one' ? 'one' : 'level'; console.warn(`[spectral] head3d ${HEAD3D.mode}`); return; }
   if (e.id === 'spectral:fileover') { FILE_OVER.on = e.message.trim() === 'true'; console.warn(`[spectral] file over ${FILE_OVER.on}`); return; }
   if (e.id === 'spectral:warmcfg') {
     const [v, h] = e.message.trim().split(/\s+/).map(Number);
