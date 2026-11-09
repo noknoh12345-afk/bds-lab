@@ -1641,7 +1641,10 @@
   "tries": 2
  },
  "q78_speech_intonation": {
-  "status": "pending"
+  "commit": "b23e047",
+  "run": "42572871344",
+  "started": "2026-11-09 15:24",
+  "status": "running"
  },
  "q79_load_many": {
   "status": "pending"
