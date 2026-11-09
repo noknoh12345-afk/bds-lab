@@ -14,6 +14,9 @@ export interface FileOpts { where: 'phones' | 'speaker'; volume: number; range3d
 
 interface Part { k: number; s: SoundInstance; end: number; }
 
+/** phones: the file's level above 1 by setVolume (playSound's volume stops at 1 on the phone, q80 — so the 1.8 a file song is
+ *  given played at 1). Off until the phone compares (q88): `scriptevent spectral:fileover true|false` */
+export const FILE_OVER = { on: false };
 export class FilePlayer {
   ending = 0; paused = false; started = false; t0 = 0; pausedAt = 0;
   next = 0; playing: Part[] = []; starts = 0; calls = 0; wnext = 0; warmed = 0; preroll = 0;
@@ -34,7 +37,10 @@ export class FilePlayer {
     const [, len] = this.meta.parts[k];
     let s: SoundInstance;
     try {
-      if (this.o.where === 'phones') s = this.owner.playSound(this.ev(k), { volume: this.o.volume });
+      if (this.o.where === 'phones') {
+        s = this.owner.playSound(this.ev(k), { volume: FILE_OVER.on ? Math.min(1, this.o.volume) : this.o.volume });
+        if (FILE_OVER.on && this.o.volume > 1) { s.setVolume(this.o.volume); this.calls++; }
+      }
       else { s = this.dim.playSound(this.ev(k), this.loc, { volume: this.o.range3d }); s.setVolume(this.o.volume * this.o.level3d); this.calls++; }
       const seek = Math.max(0, this.lead - delay / 1000 + into / 1000);
       s.seekTo(seek);

@@ -1,0 +1,111 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 88（tools/exp/queue/q88_file_over1.json、11-09 の q80・q86 から）: ファイルの曲（ピアノのファイル）の大きさ 1.8 を電話で setVolume で上げる（scriptevent spectral:fileover）切/入を同じ run で 3 組。電話の道は playSound の音量で 1.8 を渡していて、1 で止まっていた（q80 と同じ作り）"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [],
+ "arms": [],
+ "sections": [
+  {
+   "title": "fileover_off_1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do scriptevent spectral:fileover false",
+    "audio start fooff1_pf",
+    "do execute as @a run spectral:play piano_file",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fooff1_pf 160"
+   ]
+  },
+  {
+   "title": "fileover_on_1",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do scriptevent spectral:fileover true",
+    "audio start foon1_pf",
+    "do execute as @a run spectral:play piano_file",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export foon1_pf 160"
+   ]
+  },
+  {
+   "title": "fileover_on_2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do scriptevent spectral:fileover true",
+    "audio start foon2_pf",
+    "do execute as @a run spectral:play piano_file",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export foon2_pf 160"
+   ]
+  },
+  {
+   "title": "fileover_off_2",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do scriptevent spectral:fileover false",
+    "audio start fooff2_pf",
+    "do execute as @a run spectral:play piano_file",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fooff2_pf 160"
+   ]
+  },
+  {
+   "title": "fileover_off_3",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do scriptevent spectral:fileover false",
+    "audio start fooff3_pf",
+    "do execute as @a run spectral:play piano_file",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export fooff3_pf 160"
+   ]
+  },
+  {
+   "title": "fileover_on_3",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do scriptevent spectral:fileover true",
+    "audio start foon3_pf",
+    "do execute as @a run spectral:play piano_file",
+    "wait 24500",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export foon3_pf 160"
+   ]
+  },
+  {
+   "title": "fileover_reset",
+   "lines": [
+    "do scriptevent spectral:fileover false"
+   ]
+  }
+ ]
+}

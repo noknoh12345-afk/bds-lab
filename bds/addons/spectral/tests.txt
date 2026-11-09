@@ -662,7 +662,7 @@ restart
 @A cmd /spectral:songs
 ~ @A ♫ piano_demo — Piano étude \(sampler demo\) \(0:20, 104 notes\)
 @A cmd /spectral:sampler
-= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead, loud notes raised past 1, loops without a gap
 @A cmd /spectral:sampler 4 250 28 120 true
 ~ @A sampler: placed to the ms, 4 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 120 %
 @A cmd /spectral:play piano_demo
@@ -687,9 +687,9 @@ until note 2 3000
 until note 2 piano 3000
 ~ \[spectral\] note 2 piano\.48 key 55 pitch 1\.0595 seek 0\.6000 at 300 ms
 
-## a loud note can be raised past 1 on the phone (q80: playSound's volume stops at 1 there, so at 300 % every velocity from 72 up sounded the same; `over` makes it at 1 and raises it by setVolume, exact to 2) — off by default until the phone says which is better
+## a loud note can be raised past 1 on the phone (q80: playSound's volume stops at 1 there, so at 300 % every velocity from 72 up sounded the same; `over` makes it at 1 and raises it by setVolume, exact to 2) — on by default since 1.5.5 (q86 on the phone, on against off in one run: the velocity ramp follows the reference to 127, ViSQOL étude 4.40 → 4.41, Für Elise 4.20 → 4.22, band 3.82 → 3.90, speech as well understood)
 @A cmd /spectral:sampler 2 250 28 300 false 600 true
-= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead, loud notes raised past 1
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead, loud notes raised past 1, loops without a gap
 @A cmd /spectral:play piano_demo
 ~ @A ▶ Piano étude \(sampler demo\) — Spectral Player \(0:20, 104 notes, headphones\)
 wait 1500
@@ -697,9 +697,11 @@ wait 1500
 ~ @A notes Piano étude \(sampler demo\): \d+/104 notes at \d+\.\d s · sounding \d+ \(most \d+, at most 28\) · started \d+, stolen 0, skipped 0
 @A cmd /spectral:stop
 @A cmd /spectral:sampler 2 250 28 300 false 600 false
-= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead, loops without a gap
+@A cmd /spectral:sampler 2 250 28 300 false 600 true
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead, loud notes raised past 1, loops without a gap
 
-## a looped note song with `seam` starts its next lap when its last note ends, the tails still ringing (q84 on the phone: waiting for every note to end, then starting again, made each 14.7 s lap of Für Elise 15.05 s with a 0.18 s silent seam) — off by default until the phone compares
+## a looped note song with `seam` starts its next lap when its last note ends, the tails still ringing (q84 on the phone: waiting for every note to end, then starting again, made each 14.7 s lap of Für Elise 15.05 s with a 0.18 s silent seam) — on by default since 1.5.5 (q87 on the phone: no silent seam in 4 laps where off left 125-185 ms each, laps 14.70 s and 9.95 s = the songs' lengths)
 @A cmd /spectral:sampler 4 250 28 120 true 600 false true
 ~ @A sampler: placed to the ms, 4 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 120 %, samples warmed 600 ms ahead, loops without a gap
 @A cmd /spectral:loop
@@ -716,8 +718,8 @@ until note 2 piano 2000
 @A cmd /spectral:stop
 @A cmd /spectral:loop
 ~ @A loop off
-@A cmd /spectral:sampler 2 250 28 300 false 600 false false
-= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead
+@A cmd /spectral:sampler 2 250 28 300 false 600 true true
+= @A sampler: placed to the ms, 2 ticks a bundle, 3D ahead 250 ms, 28 notes at once, level 300 %, samples warmed 600 ms ahead, loud notes raised past 1, loops without a gap
 
 ## a note song seeks, pauses and ends by itself; the last chord rolled 12 ms a note keeps its roll (bundled, its 8 notes start in one tick each at its own place)
 @A cmd /spectral:sampler 4 250 28 120 true
@@ -926,6 +928,12 @@ scriptevent spectral:warmcfg 1 20
 ~ \[spectral\] warm: volume 1, 11 ticks
 scriptevent spectral:warmcfg 0.001 4
 ~ \[spectral\] warm: volume 0.001, 4 ticks
+
+## measuring a file song's level on the phone (q88): its level above 1 can be raised by setVolume, set by a script event (playSound's volume stops at 1 there, q80 — so the 1.8 a file song is given played at 1); off until the phone compares
+scriptevent spectral:fileover true
+~ \[spectral\] file over true
+scriptevent spectral:fileover false
+~ \[spectral\] file over false
 
 ## the sampler plays near the top of the phone's output (level 300 %, measured: quiet notes lose most there) and turns a bundle's new notes down together when they and what still sounds would pass the phone's clip — the last chord's 8 notes in one bundle are turned down, the single notes before it are not
 @A cmd /spectral:sampler 2 250 28 300 true

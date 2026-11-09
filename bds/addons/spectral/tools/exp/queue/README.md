@@ -119,3 +119,4 @@ q63 は 1.5.2 で既定にした +12 dB の 3 回目の確かめ。q64〜q85 は
 | 85 | long_mix_20min | q41 | 混ぜて 20 分（サンプラー・読み上げ・ファイル・正弦波を順に） |
 | 86 | sampler_over1 | q80 | 電話で 1 を超える音を setVolume で上げる（1.5.3 の `/spectral:sampler … over`）切/入を同じ run で: 強さの曲線・エチュード ×2・エリーゼ ×2・バンド ×2・読み上げ |
 | 87 | loop_seam | q84 | ループの継ぎ目（1.5.4 の `/spectral:sampler … seam`）切/入を同じ run で: エリーゼ・バンドを約 1 分ずつ ×2 |
+| 88 | file_over1 | q80・q86 | ファイルの曲の大きさ 1.8 を電話で setVolume で上げる（`scriptevent spectral:fileover`）切/入を同じ run で 3 組（ピアノのファイル） |

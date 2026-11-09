@@ -151,10 +151,12 @@ export interface NoteOpts {
   /** each note's choice and placement on the content log (testing, measuring) */
   log?: boolean;
   /** loop: the next lap starts when the song's last note ends, its notes' tails still ringing (q84: waiting for every voice to
-   *  end, then stopping and starting again, made each 14.7 s lap 15.05 s with a 155-185 ms silent seam). false = as before */
+   *  end, then stopping and starting again, made each 14.7 s lap 15.05 s with a 155-185 ms silent seam; q87: with it, none and
+   *  the laps are the song's length — on by default since 1.5.5). false = as before */
   seam?: boolean;
   /** phones: a note louder than 1 is made at 1 and raised by setVolume (playSound's volume stops at 1 on the phone — q80: at 300 %
-   *  every velocity from 72 up sounded the same; setVolume is exact to 2). false = as before (made at its gain, so held at 1) */
+   *  every velocity from 72 up sounded the same; setVolume is exact to 2; q86: with it the ramp follows to 127 and
+   *  each song scores higher — on by default since 1.5.5). false = as before (made at its gain, so held at 1) */
   over?: boolean;
 }
 /** a sounding note. A held note of an instrument that sustains (strings, organ, winds) is handed over before its sample ends to a

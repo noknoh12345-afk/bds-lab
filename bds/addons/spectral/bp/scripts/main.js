@@ -1598,6 +1598,7 @@ function saySong(text, v = 0, moraMs = 180, range = 4) {
 
 // addons/spectral/src/files.ts
 import { system as system3 } from "@minecraft/server";
+var FILE_OVER = { on: false };
 var FilePlayer = class {
   constructor(owner, meta, o, dim, loc) {
     this.owner = owner;
@@ -1653,8 +1654,13 @@ var FilePlayer = class {
     const [, len] = this.meta.parts[k];
     let s;
     try {
-      if (this.o.where === "phones") s = this.owner.playSound(this.ev(k), { volume: this.o.volume });
-      else {
+      if (this.o.where === "phones") {
+        s = this.owner.playSound(this.ev(k), { volume: FILE_OVER.on ? Math.min(1, this.o.volume) : this.o.volume });
+        if (FILE_OVER.on && this.o.volume > 1) {
+          s.setVolume(this.o.volume);
+          this.calls++;
+        }
+      } else {
         s = this.dim.playSound(this.ev(k), this.loc, { volume: this.o.range3d });
         s.setVolume(this.o.volume * this.o.level3d);
         this.calls++;
@@ -2620,7 +2626,7 @@ async function play(p, id, mode) {
   const m = song.meta;
   return `\xA7a\u25B6 ${m.title}${m.artist ? " \u2014 " + m.artist : ""} \xA77(${fmt(m.seconds)}, ${s.V}/${m.voices} voices, ${mode === "phones" ? "headphones" : "speaker"})`;
 }
-var SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false, over: false, seam: false };
+var SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false, over: true, seam: true };
 var FILE_LEVEL = 1.8;
 function stopAllFor(p) {
   const old = sessions.get(p.id);
@@ -2848,6 +2854,11 @@ system4.afterEvents.scriptEventReceive.subscribe((e) => {
   }
   if (e.id === "spectral:note" && e.sourceEntity instanceof Player4) {
     liveNotes(e.sourceEntity, e.message);
+    return;
+  }
+  if (e.id === "spectral:fileover") {
+    FILE_OVER.on = e.message.trim() === "true";
+    console.warn(`[spectral] file over ${FILE_OVER.on}`);
     return;
   }
   if (e.id === "spectral:warmcfg") {

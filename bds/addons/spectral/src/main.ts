@@ -18,7 +18,7 @@ import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes, LiveKeys, WARM
 import notesDemo from './songs/notes_demo';
 import bandDemo from './songs/band_demo';
 import { saySong } from './say';
-import { FilePlayer, FileMeta } from './files';
+import { FilePlayer, FileMeta, FILE_OVER } from './files';
 import { VOICES } from './bank';
 
 // ------------------------------------------------------------------ constants (same as tools/spectral.py)
@@ -725,7 +725,7 @@ async function play(p: Player, id: string | undefined, mode: Mode): Promise<stri
 // (warm 600: on the phone a sample's first play is lost — p09 run 41531478311, the voice's units sounded only from their second
 //  time, 0.36 s later and on; p11 run 41536705472, the run's first click and first chord silent. Each sample is warmed this many ms
 //  before its first note, and a song waits that long when its first notes need it: src/notes.ts WARM)
-const SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false, over: false, seam: false };
+const SAMPLER = { place: true, bundle: 2, ahead3d: 250, voices: 28, volume: 3, warm: 600, log: false, over: true, seam: true };
 /** how loud a file song plays (setVolume: up to 2 exact on the phone; the game plays a file 32.5 dB under it, into 16 bits) */
 const FILE_LEVEL = 1.8;
 function stopAllFor(p: Player) {
@@ -841,6 +841,8 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
   }
   if (e.id === 'spectral:note' && e.sourceEntity instanceof Player) { liveNotes(e.sourceEntity, e.message); return; }
   // (measuring the warming, p13: the level a sample is warmed at and how many ticks it sounds — `scriptevent spectral:warmcfg <volume> <ticks>`)
+  // (q88: a file song's level above 1 on the phone by setVolume — `scriptevent spectral:fileover true|false`)
+  if (e.id === 'spectral:fileover') { FILE_OVER.on = e.message.trim() === 'true'; console.warn(`[spectral] file over ${FILE_OVER.on}`); return; }
   if (e.id === 'spectral:warmcfg') {
     const [v, h] = e.message.trim().split(/\s+/).map(Number);
     if (Number.isFinite(v)) WARM.vol = Math.max(0.0001, Math.min(2, v));
