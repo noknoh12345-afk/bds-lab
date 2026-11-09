@@ -44,7 +44,9 @@ setblock 3 -60 3 air
 
 ## a command block without a direction places the podium the way the block points, on the ground and never inside a block
 setblock 24 -60 16 command_block ["facing_direction"=3]
+gamerule commandblockoutput true
 @A cmdblock 24 -60 16 impulse always studio:podium 24 -59.5 20
+~ 表彰台を置きました
 wait 1500
 js [world.getDimension('overworld').getBlock({ x: 24, y: -60, z: 16 })?.typeId, ...world.getDimension('overworld').getEntities({ type: 'skin_studio:podium' }).map((e) => [e.location.x, e.location.y, e.location.z].join(' '))].join('|')
 ~ \|24\.5 -60 20\.5

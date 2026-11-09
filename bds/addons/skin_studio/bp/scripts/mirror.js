@@ -384,7 +384,7 @@ function sweep() {
       const mirror = (byId?.typeId === MIRROR ? byId : undefined) ?? live.get(uid);
       if (mirror) {
         const frame = frameOf(mirror);
-        if (!frame || distance(entity.location, frame.glass) > reach || paused.has(mirror.id)) entity.remove();
+        if (!frame || distance(entity.location, frame.glass) > reach || (type === GHOST && paused.has(mirror.id))) entity.remove();
         else adopt(entity, mirror);
         continue;
       }
