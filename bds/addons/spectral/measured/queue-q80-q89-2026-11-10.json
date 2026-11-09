@@ -1516,5 +1516,167 @@
    "on_peak_dB": -29.4
   },
   "how": "tools/metrics/metrics.py against the piano_demo render (the piano file is that étude); RMS and peak over the whole recording"
+ },
+ "q89_speaker_head3d": {
+  "run": "42707141129",
+  "velocity_ramp": {
+   "vels": [
+    8,
+    16,
+    24,
+    32,
+    40,
+    48,
+    56,
+    64,
+    72,
+    80,
+    88,
+    96,
+    104,
+    112,
+    120,
+    127
+   ],
+   "rec": {
+    "h3level1_vel": {
+     "diff_piano": [
+      -14.6,
+      -14.6,
+      -14.6,
+      -14.6,
+      -14.6,
+      -14.6,
+      -14.6,
+      -14.6,
+      -15.2,
+      -17.6,
+      -19.2,
+      -20.7,
+      -22.1,
+      -23.4,
+      -24.7,
+      -25.6
+     ],
+     "diff_str": [
+      -14.7,
+      -14.6,
+      -14.5,
+      -14.9,
+      -14.8,
+      -14.7,
+      -14.6,
+      -14.6,
+      -14.9,
+      -14.8,
+      -14.7,
+      -14.7,
+      -15.8,
+      -16.9,
+      -18.5,
+      -19.4
+     ]
+    },
+    "h3one1_vel": {
+     "diff_piano": [
+      -14.6,
+      -14.6,
+      -14.6,
+      -14.6,
+      -14.5,
+      -14.6,
+      -14.5,
+      -14.5,
+      -14.6,
+      -14.6,
+      -14.7,
+      -15.3,
+      -14.9,
+      -15.3,
+      -15.6,
+      -16.7
+     ],
+     "diff_str": [
+      -14.6,
+      -14.6,
+      -15.0,
+      -14.9,
+      -14.8,
+      -14.7,
+      -14.6,
+      -14.5,
+      -14.9,
+      -14.8,
+      -14.7,
+      -14.7,
+      -14.6,
+      -14.9,
+      -14.8,
+      -14.8
+     ]
+    }
+   }
+  },
+  "scores": {
+   "pd": {
+    "level1": {
+     "visqol": 4.225,
+     "mrstft": 1.53
+    },
+    "level2": {
+     "visqol": 4.23,
+     "mrstft": 1.526
+    },
+    "one1": {
+     "visqol": 3.928,
+     "mrstft": 1.421
+    },
+    "one2": {
+     "visqol": 3.856,
+     "mrstft": 1.403
+    }
+   },
+   "fe": {
+    "level1": {
+     "visqol": 3.947,
+     "mrstft": 1.541
+    },
+    "level2": {
+     "visqol": 3.94,
+     "mrstft": 1.528
+    },
+    "one1": {
+     "visqol": 3.193,
+     "mrstft": 1.369
+    },
+    "one2": {
+     "visqol": 3.243,
+     "mrstft": 1.356
+    }
+   },
+   "bd": {
+    "level1": {
+     "visqol": 3.483,
+     "mrstft": 1.312
+    },
+    "level2": {
+     "visqol": 3.405,
+     "mrstft": 1.322
+    },
+    "one1": {
+     "visqol": 3.722,
+     "mrstft": 1.306
+    },
+    "one2": {
+     "visqol": 3.651,
+     "mrstft": 1.296
+    }
+   },
+   "close_pd": {
+    "level": "{'visqol': 4.25, 'mrstft': 1.343} rms -46.61 peak -28.8 near-peak samples 14",
+    "one": "{'visqol': 3.386, 'mrstft': 1.415} rms -40.31 peak -28.6 near-peak samples 37"
+   }
+  },
+  "how": "listener 6 blocks from the speaker (close: 1 block); velocity as q80; songs by tools/metrics/metrics.py against tools/notes.py --render"
  }
 }
