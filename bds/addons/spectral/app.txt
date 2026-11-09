@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 75（tools/exp/queue/q75_speech_level.json、q48 のやり直し: 11-05 の録音が解く前に期限で消えた）: 読み上げの大きさ 150・200・300・400 %。読み上げは素が 1 つずつ: 曲より上げても割れないはず。どこで聞き取りが一番か（Whisper は大きさをそろえて聞く）
+# キュー 76（tools/exp/queue/q76_speech_distance.json、q46 のやり直し: 11-05 の録音が解く前に期限で消えた）: 読み上げの 3D: 2・4・8・16 ブロック。近接ボイスチャットのように: 話し手から離れると聞き取りはどこまで保つか
 
 section title
 audio info
@@ -13,7 +13,7 @@ audio info
 shot title
 
 section prep
-audio song speech_hello,speech_cave pack=tools/exp/packs/notes
+audio song speech_hello,speech_weather pack=tools/exp/packs/notes
 
 section join
 join
@@ -24,98 +24,130 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section slv_150_hello
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 150 false 600
-audio start sl150_speech_hello
-do execute as @a run spectral:play speech_hello
-wait 7600
-do execute as @a run spectral:stop
-audio stop
-audio export sl150_speech_hello 160
-
-section slv_150_cave
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 150 false 600
-audio start sl150_speech_cave
-do execute as @a run spectral:play speech_cave
-wait 7600
-do execute as @a run spectral:stop
-audio stop
-audio export sl150_speech_cave 160
-
-section slv_200_hello
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 200 false 600
-audio start sl200_speech_hello
-do execute as @a run spectral:play speech_hello
-wait 7600
-do execute as @a run spectral:stop
-audio stop
-audio export sl200_speech_hello 160
-
-section slv_200_cave
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 200 false 600
-audio start sl200_speech_cave
-do execute as @a run spectral:play speech_cave
-wait 7600
-do execute as @a run spectral:stop
-audio stop
-audio export sl200_speech_cave 160
-
-section slv_300_hello
+section sdist_2_hello
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start sl300_speech_hello
-do execute as @a run spectral:play speech_hello
-wait 7600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd2_speech_hello
+do execute as @a run spectral:play speech_hello speaker
+wait 500
+do tp @a 2 -60 0
+wait 7350
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export sl300_speech_hello 160
+audio export sd2_speech_hello 160
 
-section slv_300_cave
+section sdist_2_weather
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600
-audio start sl300_speech_cave
-do execute as @a run spectral:play speech_cave
-wait 7600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd2_speech_weather
+do execute as @a run spectral:play speech_weather speaker
+wait 500
+do tp @a 2 -60 0
+wait 7350
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export sl300_speech_cave 160
+audio export sd2_speech_weather 160
 
-section slv_400_hello
+section sdist_4_hello
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 400 false 600
-audio start sl400_speech_hello
-do execute as @a run spectral:play speech_hello
-wait 7600
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd4_speech_hello
+do execute as @a run spectral:play speech_hello speaker
+wait 500
+do tp @a 4 -60 0
+wait 7350
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export sl400_speech_hello 160
+audio export sd4_speech_hello 160
 
-section slv_400_cave
+section sdist_4_weather
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 400 false 600
-audio start sl400_speech_cave
-do execute as @a run spectral:play speech_cave
-wait 7600
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd4_speech_weather
+do execute as @a run spectral:play speech_weather speaker
+wait 500
+do tp @a 4 -60 0
+wait 7350
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export sl400_speech_cave 160
+audio export sd4_speech_weather 160
+
+section sdist_8_hello
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd8_speech_hello
+do execute as @a run spectral:play speech_hello speaker
+wait 500
+do tp @a 8 -60 0
+wait 7350
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd8_speech_hello 160
+
+section sdist_8_weather
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd8_speech_weather
+do execute as @a run spectral:play speech_weather speaker
+wait 500
+do tp @a 8 -60 0
+wait 7350
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd8_speech_weather 160
+
+section sdist_16_hello
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd16_speech_hello
+do execute as @a run spectral:play speech_hello speaker
+wait 500
+do tp @a 16 -60 0
+wait 7350
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd16_speech_hello 160
+
+section sdist_16_weather
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600
+do execute as @a run tp @s 0 -60 0 0 0
+audio start sd16_speech_weather
+do execute as @a run spectral:play speech_weather speaker
+wait 500
+do tp @a 16 -60 0
+wait 7350
+do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
+audio stop
+audio export sd16_speech_weather 160
