@@ -1825,9 +1825,16 @@
   "tries": 1
  },
  "q91_speaker_head3d_mid": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "efaccfe",
+  "conclusion": "success",
+  "ended": "2026-11-10 08:31",
+  "failed_steps": 0,
+  "recordings": 24,
   "run": "42717230528",
   "started": "2026-11-10 08:03",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  }
 }
