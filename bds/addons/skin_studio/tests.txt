@@ -140,12 +140,12 @@ wait 1500
 js world.getDimension('overworld').getEntities({ type: 'skin_studio:ghost' }).length
 = 0
 
-## an animal in front of the mirror gets a mirrored copy that follows it, and goes when it goes
+## an animal in front of the mirror gets a mirrored copy that stands in the animal's cell (lit like it), follows it, and goes when it goes
 summon cow 1.5 -60 9.5
 effect @e[type=cow] slowness 30 255 true
 wait 1500
-js (() => { const d = world.getDimension('overworld'); const [c] = d.getEntities({ type: 'minecraft:cow', location: { x: 1.5, y: -60, z: 9.5 }, closest: 1 }); const r = d.getEntities({ type: 'skin_studio:m_cow' }).find((e) => Math.abs(e.getProperty('skin_studio:dx') - Math.round((c.location.x - 0.5) * 1000)) < 300); return [r.typeId, r.location.x, r.location.y, r.location.z, r.getProperty('skin_studio:slot') > 0].join(' '); })()
-= skin_studio:m_cow 0.5 -60 12 true
+js (() => { const d = world.getDimension('overworld'); const [c] = d.getEntities({ type: 'minecraft:cow', location: { x: 1.5, y: -60, z: 9.5 }, closest: 1 }); const r = d.getEntities({ type: 'skin_studio:m_cow' }).find((e) => Math.abs(e.getProperty('skin_studio:dx') - Math.round((c.location.x - 0.5) * 1000)) < 300); return [r.typeId, r.location.x, r.location.y, r.location.z, ...['wx', 'wy', 'wz'].map((n) => r.getProperty('skin_studio:' + n)), r.getProperty('skin_studio:slot') > 0].join(' '); })()
+~ ^skin_studio:m_cow 1\.5 -(60|59) 9\.5 1 -60 24 true$
 kill @e[type=cow]
 wait 2500
 js world.getDimension('overworld').getEntities({ type: 'skin_studio:m_cow' }).length
@@ -222,7 +222,7 @@ js (() => { const d = world.getDimension('overworld'); const [pd] = d.getEntitie
 deop B
 wait 500
 @B cmd /studio:report
-~ Skin Studio 3\.4\.4（bedrock-samples
+~ Skin Studio 3\.4\.5（bedrock-samples
 ~ 台帳: 表彰台 1・鏡 1
 ~ プレイヤーの定義: Skin Studio のまま
 @B cmd /studio:debug on

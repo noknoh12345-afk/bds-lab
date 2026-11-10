@@ -60,6 +60,33 @@
           "default": 0,
           "client_sync": true
         },
+        "skin_studio:wx": {
+          "type": "int",
+          "range": [
+            -60000000,
+            60000000
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "skin_studio:wy": {
+          "type": "int",
+          "range": [
+            -128,
+            512
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "skin_studio:wz": {
+          "type": "int",
+          "range": [
+            -60000000,
+            60000000
+          ],
+          "default": 0,
+          "client_sync": true
+        },
         "skin_studio:scale": {
           "type": "int",
           "range": [

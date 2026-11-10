@@ -7,6 +7,7 @@ const AGAIN = 40;
 const REST = 40;
 const FAMILY = 'skin_studio_reflection';
 const FAR = 200000;
+const LIGHT_AT_SOURCE = true;
 
 const SCALE = 100000;
 const claims = new Map();
@@ -75,10 +76,28 @@ function drop(entryKey) {
   if (![...shown.values()].some((other) => other.source.id === entry.source.id)) release(entry.source.id);
 }
 
+function anchorOf(source, glass) {
+  if (!LIGHT_AT_SOURCE) return glass;
+  const { x, y, z } = source.location;
+  let head = y;
+  try {
+    head = source.getHeadLocation().y;
+  } catch {}
+  return { x: Math.floor(x) + 0.5, y: Math.floor(y + 0.75 * (head - y)), z: Math.floor(z) + 0.5 };
+}
+
 function follow(entry) {
   const { reflection, source, glass } = entry;
   const claim = claims.get(source.id);
   const { x, y, z } = source.location;
+  const anchor = anchorOf(source, glass);
+  if (!entry.anchor || anchor.x !== entry.anchor.x || anchor.y !== entry.anchor.y || anchor.z !== entry.anchor.z) {
+    entry.anchor = anchor;
+    settle(reflection, anchor, entry.facing);
+  }
+  set(reflection, 'skin_studio:wx', Math.round(glass.x * 2));
+  set(reflection, 'skin_studio:wy', Math.round(glass.y));
+  set(reflection, 'skin_studio:wz', Math.round(glass.z * 2));
   set(reflection, 'skin_studio:slot', claim?.slot ?? 0);
   set(reflection, 'skin_studio:dx', clamp((x - glass.x) * 1000, -FAR, FAR));
   set(reflection, 'skin_studio:dy', clamp((y - glass.y) * 1000, -FAR, FAR));
@@ -126,7 +145,7 @@ export function showMobs(mirror, frame, isInFront, reach) {
     if (!entry || !entry.reflection.isValid) {
       let reflection;
       try {
-        reflection = mirror.dimension.spawnEntity(`skin_studio:m_${claim.key}`, frame.glass, { initialRotation: YAW[frame.facing] });
+        reflection = mirror.dimension.spawnEntity(`skin_studio:m_${claim.key}`, anchorOf(source, frame.glass), { initialRotation: YAW[frame.facing] });
       } catch {
         continue;
       }
@@ -179,7 +198,7 @@ system.runInterval(() => {
         continue;
       }
       follow(entry);
-      if (tick % 20 === 0) settle(entry.reflection, entry.glass, entry.facing);
+      if (tick % 20 === 0) settle(entry.reflection, entry.anchor ?? entry.glass, entry.facing);
     } catch {
       drop(key);
     }
