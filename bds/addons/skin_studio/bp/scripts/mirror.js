@@ -386,7 +386,11 @@ function lightCell(dimension, spot, frame) {
   if (!LIGHT_AT_REAL) return undefined;
   const toward = { x: spot.x - frame.ahead.x, y: spot.y, z: spot.z - frame.ahead.z };
   const above = { x: spot.x, y: spot.y + 1, z: spot.z };
-  return [toward, above].find((place) => passable(blockAt(dimension, place)));
+  const below = { x: spot.x, y: spot.y - 1, z: spot.z };
+  const high = spot.y >= frame.window.y + 2;
+  const across = (spot.x - frame.window.x) * frame.side.x + (spot.z - frame.window.z) * frame.side.z;
+  const sides = (across > 0 ? [-1, 1] : [1, -1]).map((way) => ({ x: spot.x + frame.side.x * way, y: spot.y, z: spot.z + frame.side.z * way }));
+  return [toward, ...(high ? [below, above] : [above, below]), ...sides].find((place) => passable(blockAt(dimension, place)));
 }
 
 function dress(ghost, frame, key, look, channel, mirror) {
