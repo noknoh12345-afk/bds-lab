@@ -1,5 +1,5 @@
 # 本物のアプリで TDS を見る: node lab.mjs app run -a tds（GitHub では app ワークフロー: addon=tds, ref=addon/tds, mode=run）
-# 撮るもの: HUD（ロビー、試合、タワーバーと選んだタワーの板）、訓練場、遠征（到着のタイトルと空撮、拠点、入り口と出口の門、階段の曲がり角と坂、橋、真上から、道を歩く敵）、測量鳥の報告と作戦卓の模型
+# 撮るもの: 通しの流れ（試合の中の操作、ロビーのフォームから出発、クリア、ロビーへ戻る、パーティー: flow-*・party-*）、HUD（ロビー、試合、タワーバーと選んだタワーの板）、訓練場、遠征（到着のタイトルと空撮、拠点、入り口と出口の門、階段の曲がり角と坂、橋、真上から、道を歩く敵）、測量鳥の報告と作戦卓の模型
 section title
 launch
 until title 600000
@@ -109,4 +109,121 @@ shot war-table
 do tp @a 52 -47 15 180 55
 wait 2500
 shot war-table-model
+# ---- 通しの流れ（本物のアプリが自分で画面を押す）: 試合の中の操作 → ロビーのフォームからソロで出発 → クリア → ロビーへ戻る → パーティー
+section flow-play
+# 試合の中: 杖で地面を使う → 「Place a tower」のフォームでタワーを押す → 置いたタワーを使う → Upgrade を押す
+do tds:stop
+do tds:tableclear
+do tds:speed 1
+do tds:hold false
+do execute as @a run tds:reset
+do execute as @a run tds:play Easy
+wait 3000
+do tds:hold true
+do execute as @a run tds:cash 5000
+# スマホは、ホットバーを隠したとき杖を持っている（src/hud.ts）
+do js (() => { const a = world.getAllPlayers()[0], it = a.getComponent('inventory').container.getItem(a.selectedSlotIndex)?.typeId; if (it !== 'tds:wand') throw new Error('in hand: ' + it + ' (platform ' + a.clientSystemInfo.platformType + ')'); return it; })()
+do tp @a -7 -60 -17 0 39
+wait 2000
+use
+until text (?i)place.a.tower 20000
+shot play-place-menu
+tap text (?i)^scout
+until server "ev":"tower_place","id":\d+,"name":"Scout","x":-7,"y":-60,"z":-15 15000
+do tp @a -7 -60 -18 0 15
+wait 2000
+shot play-tower-placed
+use
+until text (?i)upgrade 20000
+shot play-tower-menu
+tap text (?i)^upgrade
+until server "ev":"upgrade","id":\d+,"name":"Scout","lvl":1 15000
+wait 1500
+shot play-upgraded
+do tds:stop
+section flow-lobby
+# ロビー → 試合: ロビーのフォーム（Play → Easy → Solo）を画面で押し、エレベーターが遠征へ出る
+do tds:stop
+do execute as @a run tds:reset
+# どの土地でも勝てる持ち物（Scout と Sniper だけでは、自動プレイが負ける土地があった）
+do execute as @a run tds:dev
+do execute as @a run tds:grant 0 0 15
+do execute as @a run tds:equip 1 Scout
+do execute as @a run tds:equip 2 Minigunner
+do execute as @a run tds:equip 3 Demoman
+do execute as @a run tds:equip 4 Ranger
+do execute as @a run tds:equip 5 Accelerator
+wait 1500
+shot flow-lobby
+do execute as @a run tds:lobby
+until text (?i)loadout 20000
+shot flow-lobby-menu
+tap text (?i)^play$
+until text (?i)intermediate 20000
+shot flow-elevators
+tap text (?i)^easy
+until text (?i)solo 20000
+shot flow-party-size
+tap text (?i)^solo$
+until server "ev":"elevator_depart","mode":"Easy","players":\["[^"]+"\],"size":1 20000
+until server "ev":"expedition","mode":"Easy" 300000
+wait 14000
+shot flow-match
+section flow-clear
+# 試合 → クリア: 自動プレイで最後のウェーブまで（20 倍速）、最後のウェーブは普通の速さで勝つ → 報酬 → 12 秒後にロビーへ
+do tag @a add tds_auto
+do tds:speed 20
+until server "ev":"wave_start","wave":20 900000
+do tds:speed 1
+wait 2000
+shot flow-last-wave
+until server "ev":"game_end","result":"win","mode":"Easy","wave":20,.*"kills":[1-9]\d+ 900000
+wait 2500
+shot flow-triumph
+until server "ev":"match_return","mode":"Easy","result":"win","players":\["[^"]+"\] 60000
+wait 3000
+shot flow-back-in-lobby
+do tag @a remove tds_auto
+do tag @a remove tds_dev
+do js (() => { const a = world.getAllPlayers()[0], r = [a.getProperty('tdsui:mode'), a.onScreenDisplay.isForcedHidden(mc.HudElement.Hotbar), Math.sign(200 - Math.hypot(a.location.x, a.location.z))].join(' '); if (r !== '15 false 1') throw new Error('after the return: ' + r); return r; })()
+section flow-party
+# パーティー: アプリが Trio を選ぶ → もう 1 人（ラボのクライアント B）が乗る → アプリが Destination のフォームで Ready、B も Ready → 2 人で出発 → 2 人とも報酬 → 2 人ともロビーへ
+do tds:stop
+do @B join
+do @B cmd /tds:reset
+do execute as @a[name=!B] run tds:lobby
+until text (?i)loadout 20000
+tap text (?i)^play$
+until text (?i)intermediate 20000
+tap text (?i)^easy
+until text (?i)trio 20000
+shot party-size
+tap text (?i)^trio$
+until server "ev":"elevator_join","player":"[^"]+","mode":"Easy","count":1,"size":3 20000
+do tds:liftwait 240
+do @B cmd /tds:queue Easy
+until server "ev":"elevator_join","player":"B","mode":"Easy","count":2,"size":3 20000
+do execute as @a[name=!B] run tds:lobby
+until text (?i)destination 20000
+tap text (?i)^destination$
+until text (?i)veto 20000
+shot party-destination
+tap text (?i)^ready
+wait 1500
+do @B cmd /tds:ready
+until server "ev":"elevator_ready","mode":"Easy","players":\["[^"]+","B"\] 20000
+until server "ev":"match_start","mode":"Easy","map":"Wild #\d+","players":\["[^"]+","B"\] 300000
+wait 14000
+do execute as B at @a[name=!B] run tp @s ^ ^ ^4 facing @a[name=!B,c=1]
+wait 1500
+shot party-match
+do tds:hold true
+do tds:finish win
+wait 3000
+shot party-triumph
+until server "ev":"match_return","mode":"Easy","result":"win","players":\["[^"]+","B"\] 60000
+expect server "ev":"reward","player":"B","result":"win"
+wait 3000
+shot party-back-in-lobby
+do @B leave
 absent clientlog \bERROR\b

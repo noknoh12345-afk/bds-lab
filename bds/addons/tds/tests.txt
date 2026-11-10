@@ -1018,3 +1018,67 @@ restart
 = @A The war table
 tds:tableclear
 = Table cleared
+
+## the whole way as a player goes: the lobby's forms into a solo elevator, an expedition, the bot plays to the last wave, a triumph at the game's own speed, the reward, and 12 s after the result the match is over and the player is back in the lobby (its HUD, the hotbar back)
+tds:stop
+tds:speed 1
+tds:hold false
+@A cmd /tds:reset
+# (a loadout that wins on any land: with Scout and Sniper alone the bot lost on one)
+@A cmd /tds:dev
+@A cmd /tds:grant 0 0 15
+@A cmd /tds:equip 1 Scout
+@A cmd /tds:equip 2 Minigunner
+@A cmd /tds:equip 3 Demoman
+@A cmd /tds:equip 4 Ranger
+@A cmd /tds:equip 5 Accelerator
+@A cmd /tds:lobby
+~ @A form action: title\("TDS Lobby"\)
+@A form 0
+@A form 0
+~ @A form action: title\("Party size"\)
+@A form 0
+~ @A Elevator Easy: 1/1
+until "ev":"match_start","mode":"Easy","map":"Wild #\d+","players":\["A"\] 240000
+tag A add tds_auto
+tds:speed 20
+until "ev":"wave_start","wave":20 400000
+tds:speed 1
+until "ev":"match_return","mode":"Easy","result":"win","players":\["A"\] 400000
+~ "ev":"game_end","result":"win","mode":"Easy","wave":20
+~ "ev":"reward","player":"A","result":"win","mode":"Easy","wave":20
+wait 500
+# (back where the player got in: near the lobby, not thousands of blocks away)
+js [p('A').getProperty('tdsui:mode'), p('A').onScreenDisplay.isForcedHidden(mc.HudElement.Hotbar), Math.sign(200 - Math.hypot(p('A').location.x, p('A').location.z)), mc.world.getDynamicProperty('tds:m') === undefined].join(' ')
+~ ^15 false 1 true$
+tag A remove tds_auto
+tag A remove tds_dev
+
+## a party: the first picks Trio in the lobby's forms, a second gets in, the wait can be held (test), both press Ready (one in the Destination form) and the elevator leaves with the two; both are in the match, both are rewarded and both come back
+tds:stop
+@B cmd /tds:reset
+@A cmd /tds:lobby
+@A form 0
+@A form 0
+@A form 2
+~ @A Elevator Easy: 1/3, departs in \d+s
+@B cmd /tds:queue Easy
+~ @B Elevator Easy: 2/3
+tds:liftwait 100
+~ 1 elevator\(s\): 100s
+@A cmd /tds:lobby
+@A form 7
+~ @A form action: title\("Elevator Easy"\) body\("Departs in (100|9\d)s"\)
+@A form 6
+~ @A Ready 1/2
+@B cmd /tds:ready
+~ @B Ready 2/2: departing
+until "ev":"match_start","mode":"Easy","map":"Wild #\d+","players":\["A","B"\] 240000
+~ "ev":"elevator_ready","mode":"Easy","players":\["A","B"\]
+~ "ev":"elevator_depart","mode":"Easy","players":\["A","B"\],"size":3
+tds:hold true
+tds:finish win
+until "ev":"match_return","mode":"Easy","result":"win","players":\["A","B"\] 30000
+~ "ev":"reward","player":"A","result":"win"
+~ "ev":"reward","player":"B","result":"win"
+tds:stop

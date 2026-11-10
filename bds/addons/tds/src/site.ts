@@ -387,13 +387,16 @@ function arrive(m: G.Match, players: Player[]) {
 }
 world.afterEvents.playerButtonInput.subscribe(({ player, button, newButtonState }) => { if (button === InputButton.Sneak && newButtonState === ButtonState.Pressed) landed(player); });
 
-// back where they came from, a while after the end (not at test speed)
-G.onEnd.push((m) => {
-  const s = m.site; if (!s?.home || G.headless || G.simSpeed() > 1) return;
+// back to the lobby a while after the end, like the original's return after the result (not at test speed): an expedition's
+// players go back where they came from; the match is over for good, so the HUD and the hotbar are the lobby's again
+G.onEnd.push((m, r) => {
+  if (G.headless || G.simSpeed() > 1) return;
   system.runTimeout(() => {
-    if (G.M && G.M !== m && !G.M.over) return;
-    for (const p of world.getAllPlayers()) { const h = s.home![p.name]; if (h && m.players.includes(p.name)) { try { p.teleport({ x: h[0], y: h[1], z: h[2] }); } catch { /* left */ } } }
-    freeArea();
+    const home = () => { const s = m.site; if (s?.home) for (const p of world.getAllPlayers()) { const h = s.home[p.name]; if (h && m.players.includes(p.name)) { try { p.teleport({ x: h[0], y: h[1], z: h[2] }); } catch { /* left */ } } } };
+    if (G.M !== m) { if (!G.M && !preparing()) home(); return; }   // stopped meanwhile (its area freed then), or another match began or is being built
+    home();
+    G.log('match_return', { mode: m.mode, result: r, players: m.players });
+    G.stop(true);   // (an expedition's area is freed there)
   }, 240);
 });
 

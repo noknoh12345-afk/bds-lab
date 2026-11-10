@@ -3029,21 +3029,28 @@ function arrive(m, players2) {
 world3.afterEvents.playerButtonInput.subscribe(({ player, button, newButtonState }) => {
   if (button === InputButton.Sneak && newButtonState === ButtonState.Pressed) landed(player);
 });
-onEnd.push((m) => {
-  const s = m.site;
-  if (!s?.home || headless || simSpeed() > 1) return;
+onEnd.push((m, r) => {
+  if (headless || simSpeed() > 1) return;
   system3.runTimeout(() => {
-    if (M && M !== m && !M.over) return;
-    for (const p of world3.getAllPlayers()) {
-      const h = s.home[p.name];
-      if (h && m.players.includes(p.name)) {
-        try {
-          p.teleport({ x: h[0], y: h[1], z: h[2] });
-        } catch {
+    const home = () => {
+      const s = m.site;
+      if (s?.home) for (const p of world3.getAllPlayers()) {
+        const h = s.home[p.name];
+        if (h && m.players.includes(p.name)) {
+          try {
+            p.teleport({ x: h[0], y: h[1], z: h[2] });
+          } catch {
+          }
         }
       }
+    };
+    if (M !== m) {
+      if (!M && !preparing()) home();
+      return;
     }
-    freeArea();
+    home();
+    log("match_return", { mode: m.mode, result: r, players: m.players });
+    stop(true);
   }, 240);
 });
 system3.run(() => {
@@ -3697,6 +3704,10 @@ function leaveLift(name) {
 function departNow(mode) {
   const l = lifts.find((x) => x.mode === mode);
   if (l) l.at = system5.currentTick;
+}
+function liftWait(sec) {
+  for (const l of lifts) l.at = system5.currentTick + Math.max(0, sec) * 20;
+  return lifts.length;
 }
 system5.runInterval(() => {
   for (const l of [...lifts]) {
@@ -5713,6 +5724,7 @@ cmdAny("tds:depart", "Elevator leaves now (test)", { liftmode: MODE_NAMES }, (_,
   departNow(a.liftmode);
   return "ok";
 }, true);
+cmdAny("tds:liftwait", "Waiting elevators leave in that many seconds (test)", { seconds: "int" }, (_, a) => `${liftWait(a.seconds)} elevator(s): ${a.seconds}s`, true);
 cmdAny("tds:stop", "End the match", {}, () => {
   stop();
   return "Stopped";

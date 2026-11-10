@@ -4,7 +4,7 @@ import { cmd, cmdAny, ask, menu, give, ready, every } from './kit';
 import { towers, enemies, modes, maps, stats, maxLevel, levelCost, placeCost, timerFor, afterDefense, waveCash, startCash, rewardFor, slotsAt, rules, MODE_NAMES } from './defs';
 import * as G from './game';
 import { voteWild, veto, ready as liftReady, destinationMenu } from './lobby';
-import { prof, saveProf, buy, equip, queue, voteMap, leaveLift, departNow, forceQuest, objText, setLevel, hardcoreMap, xpBoost, sold } from './lobby';
+import { prof, saveProf, buy, equip, queue, voteMap, leaveLift, departNow, liftWait, forceQuest, objText, setLevel, hardcoreMap, xpBoost, sold } from './lobby';
 import { benchAll, bench, expected } from './bench';
 import { skillsMenu } from './skills';
 import { badgesText } from './progress';
@@ -43,6 +43,7 @@ cmd('tds:veto', 'Veto the places your elevator offers (more than half: three new
 cmd('tds:ready', 'Ready to leave (everyone ready: the elevator leaves now)', {}, (p) => liftReady(p));
 cmd('tds:leave', 'Leave the elevator', {}, (p) => { leaveLift(p.name); return 'Left'; });
 cmdAny('tds:depart', 'Elevator leaves now (test)', { liftmode: MODE_NAMES as unknown as string[] }, (_, a) => { departNow(a.liftmode); return 'ok'; }, true);
+cmdAny('tds:liftwait', 'Waiting elevators leave in that many seconds (test)', { seconds: 'int' }, (_, a) => `${liftWait(a.seconds)} elevator(s): ${a.seconds}s`, true);
 cmdAny('tds:stop', 'End the match', {}, () => { G.stop(); return 'Stopped'; }, true);
 cmd('tds:skip', 'Vote to skip the wave timer', {}, (p) => G.voteSkip(p));
 

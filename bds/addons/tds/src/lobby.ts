@@ -147,6 +147,8 @@ export async function destinationMenu(p: Player) {
 }
 export function leaveLift(name: string) { for (const l of lifts) l.players = l.players.filter((n) => n !== name); }
 export function departNow(mode: string) { const l = lifts.find((x) => x.mode === mode); if (l) l.at = system.currentTick; }
+/** every waiting elevator leaves that many seconds from now (tests with a real client: its forms take longer than the 20 s) */
+export function liftWait(sec: number) { for (const l of lifts) l.at = system.currentTick + Math.max(0, sec) * 20; return lifts.length; }
 system.runInterval(() => {
   for (const l of [...lifts]) {
     if (!l.players.length) { lifts.splice(lifts.indexOf(l), 1); continue; }
