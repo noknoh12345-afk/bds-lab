@@ -285,6 +285,8 @@ do effect @a regeneration 120 255 true
 do tp @a 0.5 -60 10.0 0 0
 do execute as @a run studio:debug on
 do execute as @a at @s run studio:gauge 3 -1.9 -59.3 10.6
+do fill -12 -60 12 -5 -56 12 stone       # 15 回目は、押されて壁沿いに流され、壁の端（x 4）から外へ出た。壁を左右に広げる
+do fill 5 -60 12 12 -56 12 stone
 do summon zombie 4.5 -60 4.5
 do summon husk -3.5 -60 4.5
 do effect @e[type=zombie] fire_resistance 120 1 true
@@ -296,6 +298,8 @@ record stop                               # 後ろからゾンビとハスクに
 shot probe-shove                          # まだ鏡の前にいて、鏡が見えている
 do kill @e[type=zombie]
 do kill @e[type=husk]
+do fill -12 -60 12 -5 -56 12 air
+do fill 5 -60 12 12 -56 12 air
 do gamemode creative @a
 do difficulty peaceful
 do kill @e[type=skin_studio:gauge]
@@ -330,6 +334,27 @@ do kill @e[type=zombie]
 do gamemode creative @a
 do difficulty peaceful
 do execute as @a run studio:debug off
+section legs-fallback-side
+do difficulty normal
+do gamemode survival @a
+do effect @a resistance 60 255 true
+do effect @a regeneration 60 255 true
+do execute as @a run studio:debug on
+do tp @a -9.5 -60 5.5 -90 0
+do summon zombie 7.5 -60 5.5
+do effect @e[type=zombie] fire_resistance 60 1 true
+do effect @e[type=zombie] slowness 60 1 true
+do camera @a set minecraft:free pos -2.5 -58.5 9.5 facing 0.5 -59 13
+wait 300
+record start
+wait 6000
+record stop                               # 体の外のカメラは鏡を斜めに見る。本物のゾンビは z 5.5 を西へ歩く（カメラの後ろ・画面の外）。窓の中の鏡のゾンビ（黄の三角 = 予備）が横向きに歩き、脚と腕が本家と同じに振れる
+do camera @a clear
+do kill @e[type=zombie]
+do gamemode creative @a
+do difficulty peaceful
+do execute as @a run studio:debug off
+do tp @a 0.5 -60 8.0 0 0
 section room-light
 do kill @e[type=skin_studio:gauge]
 do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
@@ -364,6 +389,33 @@ do fill -5 -55 2 6 -55 12 air
 do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 3 3 -57 11 air
 wait 2000
+section blocks-high
+do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
+do fill -2 -60 3 3 -57 11 air
+do setblock -1 -57 9 gold_block
+do setblock 0 -57 7 stone
+do setblock 1 -57 5 oak_planks
+do setblock 0 -56 4 diamond_block
+do setblock 2 -58 10 emerald_block
+do setblock -1 -60 6 oak_planks
+do tp @a 0.5 -60 9.6 0 -12
+wait 4500
+shot blocks-high-mirror                   # 頭より上に浮かせたブロック（金・石・板・ダイヤ・エメラルド）と床の板: 鏡の中で下の面が見える（15 回目の部屋の屋根が映らなかった原因の切り分け）
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 -12
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot -12 180
+wait 3000
+shot blocks-high-truth                    # 正解: 壁と鏡を外し、鏡の面で折り返した位置から見た本物（左右反転して比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do setblock 0 -56 4 air
+do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
+do fill -2 -60 3 3 -57 11 air
+wait 1500
 section blocks-shapes
 do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 3 3 -57 11 air
@@ -438,91 +490,60 @@ do replaceitem entity @a slot.weapon.mainhand 0 air
 do tp @a 0.5 -60 9.6 0 10
 wait 4500
 shot blocks-shapes-2-mirror               # 形のいろいろ 2（階段の内角・外角・床のボタン・ランタン・ろうそく・鎖 / 避雷針・アメジスト・鍾乳石・フェンスゲート・ケーキ・植木鉢 / 開いたトラップドア 3 向き・ドア 3 / ソウルランタン・レッドストーンの松明・塀・エンチャント台・スイートベリー・レール / 逆さの階段・内角・白樺の柵・ガラス板・色ガラス・シーランタン）
-section blocks-truth
+section blocks-signs
 do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 3 3 -57 11 air
+do setblock -2 -60 8 standing_sign ["ground_sign_direction"=0]
+do setblock -1 -60 8 standing_sign ["ground_sign_direction"=2]
+do setblock 0 -60 8 birch_standing_sign ["ground_sign_direction"=4]
+do setblock 1 -60 8 spruce_standing_sign ["ground_sign_direction"=6]
+do setblock 2 -60 8 standing_sign ["ground_sign_direction"=8]
+do setblock 3 -60 8 standing_sign ["ground_sign_direction"=14]
+do setblock -2 -60 5 stone
+do setblock -2 -60 6 wall_sign ["facing_direction"=3]
+do setblock 0 -60 5 stone
+do setblock 0 -60 6 acacia_wall_sign ["facing_direction"=3]
+do setblock 2 -59 6 stone
+do setblock 2 -60 6 oak_hanging_sign ["hanging"=true,"attached_bit"=false,"facing_direction"=4]
+do setblock 3 -59 6 stone
+do setblock 3 -60 6 cherry_hanging_sign ["hanging"=true,"attached_bit"=true,"ground_sign_direction"=2]
+do setblock -1 -59 4 stone
+do setblock -1 -60 4 oak_hanging_sign ["hanging"=true,"attached_bit"=false,"facing_direction"=2]
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-signs-mirror                  # 看板（後ろの列: 立て看板 6 つ、南・南西・西・北西・北・南東 / 壁の看板 2 / 吊り看板 3）。鏡の中では向きが左右反転する（斜めの看板は逆の斜めに）
 do tp @a 0.5 -60 10.5 0 0
 do execute as @a at @s run studio:remove
 do fill -4 -60 12 4 -56 12 air
-do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
-do fill -2 -60 3 3 -57 11 air
-do setblock -2 -60 8 oak_stairs ["weirdo_direction"=0]
-do setblock -1 -60 8 oak_stairs ["weirdo_direction"=1]
-do setblock 0 -60 8 oak_stairs ["weirdo_direction"=2]
-do setblock 1 -60 8 oak_stairs ["weirdo_direction"=3]
-do setblock 2 -60 8 oak_slab ["minecraft:vertical_half"="top"]
-do setblock 3 -60 8 smooth_stone_slab
-do setblock -2 -60 7 oak_fence
-do setblock -1 -60 7 oak_fence
-do setblock 0 -60 7 oak_fence
-do setblock 1 -60 7 cobblestone_wall
-do setblock 2 -60 7 cobblestone_wall
-do setblock 3 -60 7 cobblestone_wall
-do setblock -2 -60 6 glass_pane
-do setblock -1 -60 6 glass_pane
-do setblock 0 -60 6 iron_bars
-do setblock 1 -60 6 wooden_door ["minecraft:cardinal_direction"="east"]
-do setblock 2 -60 6 trapdoor ["open_bit"=true,"direction"=0]
-do setblock 3 -60 6 trapdoor ["upside_down_bit"=true]
-do setblock -2 -60 5 torch
-do setblock -1 -60 5 lantern
-do setblock 0 -60 5 poppy
-do setblock 1 -60 5 wheat ["growth"=7]
-do setblock 2 -60 5 short_grass
-do setblock 3 -60 5 oak_sapling
-do setblock -2 -60 4 snow_layer ["height"=3]
-do setblock -1 -60 4 white_carpet
-do setblock 0 -60 4 chest ["minecraft:cardinal_direction"="north"]
-do setblock 1 -60 4 oak_leaves
-do setblock 2 -60 4 furnace ["minecraft:cardinal_direction"="north"]
-do setblock 3 -60 4 oak_log ["pillar_axis"="x"]
 do tp @a 0.5 -60 9.6 0 10
 do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
 wait 3000
-shot blocks-shapes-truth              # 正解: 鏡の面で折り返した位置から、壁も鏡も無しで見た本物（左右反転して blocks-shapes-mirror の窓の中と比べる）
-do camera @a clear
-do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
-do fill -2 -60 3 3 -57 11 air
-do setblock -2 -60 8 oak_stairs ["weirdo_direction"=3,"minecraft:corner"="inner_left"]
-do setblock -1 -60 8 oak_stairs ["weirdo_direction"=3,"minecraft:corner"="outer_right"]
-do setblock 0 -60 8 stone_button ["facing_direction"=1]
-do setblock 1 -60 8 lantern
-do setblock 2 -60 8 candle
-do setblock 3 -60 8 iron_chain
-do setblock -2 -60 7 lightning_rod ["facing_direction"=1]
-do setblock -1 -60 7 amethyst_cluster
-do setblock 0 -60 7 pointed_dripstone
-do setblock 1 -60 7 fence_gate ["minecraft:cardinal_direction"="north"]
-do setblock 2 -60 7 cake
-do setblock 3 -60 7 flower_pot
-do setblock -2 -60 6 trapdoor ["open_bit"=true,"direction"=1]
-do setblock -1 -60 6 trapdoor ["open_bit"=true,"direction"=2]
-do setblock 0 -60 6 trapdoor ["open_bit"=true,"direction"=3]
-do setblock 1 -60 6 wooden_door ["minecraft:cardinal_direction"="north"]
-do setblock 2 -60 6 wooden_door ["minecraft:cardinal_direction"="south","open_bit"=true]
-do setblock 3 -60 6 wooden_door ["minecraft:cardinal_direction"="west"]
-do setblock -2 -60 5 soul_lantern
-do setblock -1 -60 5 redstone_torch
-do setblock 0 -60 5 cobblestone_wall
-do setblock 1 -60 5 enchanting_table
-do setblock 2 -60 5 sweet_berry_bush ["growth"=3]
-do setblock 3 -60 5 rail
-do setblock -2 -60 4 oak_stairs ["weirdo_direction"=0,"upside_down_bit"=true]
-do setblock -1 -60 4 stone_brick_stairs ["weirdo_direction"=1,"minecraft:corner"="inner_right"]
-do setblock 0 -60 4 birch_fence
-do setblock 1 -60 4 glass_pane
-do setblock 2 -60 4 white_stained_glass
-do setblock 3 -60 4 sea_lantern
-do tp @a 0.5 -60 9.6 0 10
-do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
-wait 3000
-shot blocks-shapes-2-truth              # 正解: 鏡の面で折り返した位置から、壁も鏡も無しで見た本物（左右反転して blocks-shapes-2-mirror の窓の中と比べる）
+shot blocks-signs-truth                   # 正解: 鏡の面で折り返した位置から見た本物（左右反転して比べる）
 do camera @a clear
 do fill -4 -60 12 4 -56 12 stone
 do fill -1 -60 12 1 -58 12 air
 do studio:mirror 0 -60 12 north
 do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 3 3 -57 11 air
+wait 1500
+section floor-cover
+do fill -3 -61 4 3 -61 11 oak_planks
+do tp @a 0.5 -60 9.6 0 25
+wait 4500
+shot floor-cover-mirror                   # 床を板にした（鏡の向こうの本物の地面は草のまま）。鏡に映る床も板（3.4.2: 像のマスが本物のブロックでも、違うブロックなら鏡の中のブロックを少し大きく重ねる）。窓の下の縁も板
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 25
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 25 180
+wait 3000
+shot floor-cover-truth                    # 正解: 壁と鏡を外し、鏡の面で折り返した位置から見た本物（左右反転して、floor-cover-mirror の窓の中と比べる）
+do camera @a clear
+do fill -3 -61 4 3 -61 11 grass_block
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
 wait 1500
 section done
 absent clientlog \bERROR\b                # コンテンツログに、パック・JSON UI・スクリプトのエラーが無い

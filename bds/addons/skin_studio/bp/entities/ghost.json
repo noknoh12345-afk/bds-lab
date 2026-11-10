@@ -46,7 +46,7 @@
           "type": "int",
           "range": [
             0,
-            153
+            160
           ],
           "default": 0,
           "client_sync": true
@@ -55,7 +55,7 @@
           "type": "int",
           "range": [
             0,
-            2
+            18
           ],
           "default": 0,
           "client_sync": true

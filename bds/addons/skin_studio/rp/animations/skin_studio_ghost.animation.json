@@ -26,7 +26,7 @@
         "block": {
           "rotation": [
             "v.ss_rx",
-            0,
+            "v.ss_ry",
             "v.ss_rz"
           ],
           "scale": "q.property('skin_studio:in') ? 1.01 : 1"

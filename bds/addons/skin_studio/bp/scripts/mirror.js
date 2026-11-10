@@ -13,8 +13,9 @@ const AHEAD = [
   { x: 1, z: 0 },
 ];
 const FIGURES = 4;
-const DEPTH = 8;
+const DEPTH = 10;
 const SIDE = 6;
+const GHOST_REACH = 20;
 const REACH = 96;
 const RISE = 48;
 const WALLS = [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25];
@@ -319,16 +320,22 @@ function rebuild(mirror, frame) {
   for (const spot of scan(dimension, cell(frame, 0, -SIDE, -1), cell(frame, 1 - DEPTH, SIDE, 5), OPEN)) open.add(keyOf(spot));
 
   const wanted = new Map();
+  const covers = [];
   for (const spot of scan(dimension, cell(frame, 1, -SIDE, -1), cell(frame, DEPTH, SIDE, 5), MIRRORED)) {
     const depth = (spot.x - frame.window.x) * frame.ahead.x + (spot.z - frame.window.z) * frame.ahead.z;
-    const image = keyOf({ x: spot.x + frame.ahead.x * (1 - 2 * depth), y: spot.y, z: spot.z + frame.ahead.z * (1 - 2 * depth) });
+    const at = { x: spot.x + frame.ahead.x * (1 - 2 * depth), y: spot.y, z: spot.z + frame.ahead.z * (1 - 2 * depth) };
+    const image = keyOf(at);
     const block = blockAt(dimension, spot);
     const look = lookOf(block, frame.facing);
-    if (look && (SOLID_IMAGES || open.has(image))) wanted.set(image, { ...look, light: lightCell(dimension, spot, frame), inflate: open.has(image) ? 0 : 1 });
+    if (!look) continue;
+    if (open.has(image)) wanted.set(image, { ...look, light: lightCell(dimension, spot, frame), inflate: 0 });
+    else if (SOLID_IMAGES && exposed(open, at, frame, depth) && !alike(blockAt(dimension, at), block)) covers.push({ image, depth, look, spot });
   }
+  covers.sort((a, b) => a.depth - b.depth);
+  for (const { image, look, spot } of covers.slice(0, COVERS)) wanted.set(image, { ...look, light: lightCell(dimension, spot, frame), inflate: 1 });
 
   const channel = channelOf(mirror);
-  for (const ghost of dimension.getEntities({ type: GHOST, location: cell(frame, -DEPTH / 2, 0, 2), maxDistance: 12 })) {
+  for (const ghost of dimension.getEntities({ type: GHOST, location: frame.glass, maxDistance: GHOST_REACH })) {
     if (!owned(ghost, mirror)) continue;
     const key = String(ghost.getDynamicProperty('ss:k'));
     const look = wanted.get(key);
@@ -352,7 +359,28 @@ function rebuild(mirror, frame) {
 }
 
 const LIGHT_AT_REAL = true;
-const SOLID_IMAGES = false;
+const SOLID_IMAGES = true;
+const COVERS = 96;
+
+function exposed(open, at, frame, depth) {
+  const near = [
+    { x: at.x, y: at.y + 1, z: at.z },
+    { x: at.x, y: at.y - 1, z: at.z },
+    { x: at.x + frame.side.x, y: at.y, z: at.z + frame.side.z },
+    { x: at.x - frame.side.x, y: at.y, z: at.z - frame.side.z },
+  ];
+  if (depth > 1) near.push({ x: at.x + frame.ahead.x, y: at.y, z: at.z + frame.ahead.z });
+  return near.some((place) => open.has(keyOf(place)));
+}
+
+function alike(real, source) {
+  if (!real || !source || real.typeId !== source.typeId) return false;
+  try {
+    return JSON.stringify(real.permutation.getAllStates()) === JSON.stringify(source.permutation.getAllStates());
+  } catch {
+    return true;
+  }
+}
 
 function lightCell(dimension, spot, frame) {
   if (!LIGHT_AT_REAL) return undefined;
@@ -409,7 +437,7 @@ function channels(list) {
 function sweep() {
   const live = new Map(mirrors.filter((mirror) => mirror.isValid).map((mirror) => [mirror.getDynamicProperty('ss:u'), mirror]));
   for (const { type, reach } of [
-    { type: GHOST, reach: 14 },
+    { type: GHOST, reach: GHOST_REACH },
     { type: WALL, reach: 2.5 },
   ]) {
     for (const entity of loaded(type)) {

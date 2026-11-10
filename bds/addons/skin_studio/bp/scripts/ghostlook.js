@@ -18,6 +18,7 @@ const WEIRDO = [1, 3, 2, 0];
 const LEGACY = [2, 3, 0, 1];
 const FACING6 = [-1, -1, 0, 2, 3, 1];
 const AXES = { y: 0, x: 1, z: 2 };
+const STEP = Math.PI / 8;
 const N = 0;
 const E = 1;
 const S = 2;
@@ -104,6 +105,25 @@ function modelTextures(faces, facing) {
 }
 
 const shape = (name) => SHAPES[name] ?? SHAPES.cube;
+
+function spin(front, facing) {
+  const m = toModel(front, facing);
+  return 3 + ((Math.round(Math.atan2(-m.x, -m.z) / STEP) % 16) + 16) % 16;
+}
+
+function signLook(block, facing, side) {
+  const name = block.typeId;
+  const six = Number(state(block, 'facing_direction'));
+  const cardinal = FACING6[six] ?? -1;
+  if (name.endsWith('wall_sign')) return { sh: shape(`sign_wall_${side(turn(cardinal < 0 ? N : cardinal, 2))}`) };
+  const hanging = name.endsWith('hanging_sign');
+  let front = WORLD[cardinal < 0 ? S : cardinal];
+  if (!hanging || state(block, 'attached_bit')) {
+    const a = Number(state(block, 'ground_sign_direction') ?? 0) * STEP;
+    front = { x: -Math.sin(a), z: Math.cos(a) };
+  }
+  return { sh: shape(!hanging ? 'sign_post' : state(block, 'hanging') ? 'sign_hang' : 'sign_hang_wall'), ax: spin(front, facing) };
+}
 const all = (t) => ({ tex: t, ew: t, up: t, dn: t });
 
 export function lookOf(block, facing) {
@@ -186,6 +206,8 @@ export function lookOf(block, facing) {
     if (entry.g) t = entry.g[Math.min(entry.g.length - 1, Math.floor((Number(state(block, 'growth') ?? 0) * entry.g.length) / 8))];
     else if (state(block, 'upper_block_bit') !== undefined) t = state(block, 'upper_block_bit') ? faces.u : faces.d;
     look = { ...look, ...all(t), sh: SHAPES.cross };
+  } else if (type === 'sign') {
+    look = { ...look, ...all(faces.ring[0]), ...signLook(block, facing, side) };
   } else if (type === 'box') {
     look.sh = entry.b ?? SHAPES.cube;
   }
