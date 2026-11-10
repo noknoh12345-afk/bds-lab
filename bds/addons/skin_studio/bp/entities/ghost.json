@@ -10,7 +10,7 @@
           "type": "int",
           "range": [
             0,
-            848
+            928
           ],
           "default": 0,
           "client_sync": true
@@ -19,7 +19,7 @@
           "type": "int",
           "range": [
             0,
-            848
+            928
           ],
           "default": 0,
           "client_sync": true
@@ -28,7 +28,7 @@
           "type": "int",
           "range": [
             0,
-            848
+            928
           ],
           "default": 0,
           "client_sync": true
@@ -37,7 +37,7 @@
           "type": "int",
           "range": [
             0,
-            848
+            928
           ],
           "default": 0,
           "client_sync": true
@@ -46,7 +46,7 @@
           "type": "int",
           "range": [
             0,
-            127
+            153
           ],
           "default": 0,
           "client_sync": true
@@ -92,6 +92,42 @@
           "range": [
             -64,
             64
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "skin_studio:sx": {
+          "type": "int",
+          "range": [
+            -64,
+            64
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "skin_studio:sy": {
+          "type": "int",
+          "range": [
+            -64,
+            64
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "skin_studio:sz": {
+          "type": "int",
+          "range": [
+            -64,
+            64
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "skin_studio:in": {
+          "type": "int",
+          "range": [
+            0,
+            1
           ],
           "default": 0,
           "client_sync": true

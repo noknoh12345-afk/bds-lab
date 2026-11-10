@@ -153,7 +153,7 @@ function headmode(origin, mode, players) {
   const list = targets(origin, players);
   if (!list) return no('ほかの人の設定を変えられるのはオペレーターだけです');
   if (!list.length) return no('だれの設定かを指定してください（例: @s）');
-  if (!Number.isInteger(mode) || mode < 0 || mode > 15) return no('0〜15 で指定してください（縦の候補 0〜3 + 4 × 横の候補 0〜3）');
+  if (!Number.isInteger(mode) || mode < 0 || mode > 24) return no('0〜24 で指定してください（縦の候補 0〜4 + 5 × 横の候補 0〜4）');
   system.run(() => list.forEach((player) => player.isValid && player.getProperty('skin_studio:hm') !== undefined && player.setProperty('skin_studio:hm', mode)));
   return ok(`一人称の頭の向きの読み方を ${mode} にしました（${names(list)}）`);
 }

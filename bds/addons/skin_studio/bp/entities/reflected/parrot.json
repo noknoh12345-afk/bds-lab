@@ -51,6 +51,15 @@
           "default": 0,
           "client_sync": true
         },
+        "skin_studio:spd": {
+          "type": "int",
+          "range": [
+            0,
+            2000
+          ],
+          "default": 0,
+          "client_sync": true
+        },
         "skin_studio:scale": {
           "type": "int",
           "range": [

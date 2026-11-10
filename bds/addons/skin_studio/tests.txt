@@ -129,8 +129,10 @@ tp A 0.5 -60 9.5 facing 0.5 -59 12
 give A gold_block 1
 @A place gold_block 1 -60 10
 wait 1500
-js world.getDimension('overworld').getEntities({ type: 'skin_studio:ghost' }).map((g) => [g.location.x, g.location.y, g.location.z].join(' ')).join(',')
+js world.getDimension('overworld').getEntities({ type: 'skin_studio:ghost' }).map((g) => [g.location.x + g.getProperty('skin_studio:sx') / 2, g.location.y + g.getProperty('skin_studio:sy'), g.location.z + g.getProperty('skin_studio:sz') / 2].join(' ')).join(',')
 = 1.5 -60 13.5
+js world.getDimension('overworld').getEntities({ type: 'skin_studio:ghost' }).map((g) => [g.location.x, g.location.y, g.location.z].join(' ')).join(',')
+= 1.5 -60 11.5
 js ['1 -60 13', '0 -60 13', '1 -60 14'].map((at) => { const [x, y, z] = at.split(' ').map(Number); return world.getDimension('overworld').getBlock({ x, y, z }).typeId; }).join(',')
 = minecraft:air,minecraft:air,minecraft:air
 @A dig 1 -60 10
@@ -220,7 +222,7 @@ js (() => { const d = world.getDimension('overworld'); const [pd] = d.getEntitie
 deop B
 wait 500
 @B cmd /studio:report
-~ Skin Studio 3\.4\.0（bedrock-samples
+~ Skin Studio 3\.4\.1（bedrock-samples
 ~ 台帳: 表彰台 1・鏡 1
 ~ プレイヤーの定義: Skin Studio のまま
 @B cmd /studio:debug on

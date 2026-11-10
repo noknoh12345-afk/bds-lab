@@ -16,12 +16,20 @@
             0
           ]
         },
+        "shift": {
+          "position": [
+            "v.ss_sx",
+            "v.ss_sy",
+            "v.ss_sz"
+          ]
+        },
         "block": {
           "rotation": [
             "v.ss_rx",
             0,
             "v.ss_rz"
-          ]
+          ],
+          "scale": "q.property('skin_studio:in') ? 1.01 : 1"
         }
       }
     }

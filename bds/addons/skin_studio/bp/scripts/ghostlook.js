@@ -150,11 +150,11 @@ export function lookOf(block, facing) {
   } else if (type === 'lantern') {
     look.sh = shape(state(block, 'hanging') ? 'lantern_hanging' : 'lantern');
   } else if (type === 'candle') {
-    look.sh = shape('box_2_6_0');
+    look.sh = shape('candle');
   } else if (type === 'rod') {
     const six = state(block, 'facing_direction');
     const axis = typeof six === 'number' ? (six < 2 ? 0 : six < 4 ? 2 : 1) : AXES[String(state(block, 'pillar_axis'))] ?? 0;
-    look = { ...look, sh: entry.b ?? SHAPES.cube, ax: modelAxis(axis, facing) };
+    look = { ...look, ...all(faces.ring[0]), sh: shape(block.typeId.endsWith('lightning_rod') ? 'lightning_rod' : 'chain'), ax: modelAxis(axis, facing) };
   } else if (type === 'liquid') {
     const depth = Number(state(block, 'liquid_depth') ?? 0);
     look.sh = depth >= 8 ? SHAPES.cube : shape(`box_16_${Math.max(2, Math.round(14 - depth * 1.75))}_0`);
@@ -170,6 +170,17 @@ export function lookOf(block, facing) {
   } else if (type === 'ladder') {
     const front = FACING6[Number(state(block, 'facing_direction'))] ?? N;
     look = { ...look, ...all(faces.ring[0]), sh: shape(`thin_${side(turn(front < 0 ? N : front, 2))}`) };
+  } else if (type === 'button') {
+    const six = Number(state(block, 'facing_direction') ?? 1);
+    const name = six === 1 ? 'button_floor' : six === 0 ? 'button_ceiling' : `button_${side(turn(FACING6[six] ?? N, 2))}`;
+    look = { ...look, ...all(faces.ring[0]), sh: shape(name) };
+  } else if (type === 'vine') {
+    const bits = Number(state(block, 'vine_direction_bits') ?? Math.floor(Number(state(block, 'multi_face_direction_bits') ?? 0) / 4));
+    let mask = 0;
+    [S, W, N, E].forEach((world, bit) => {
+      if ((bits >> bit) & 1) mask |= 1 << side(world);
+    });
+    look = mask ? { ...look, ...all(faces.ring[0]), sh: shape(`vine_${mask}`) } : undefined;
   } else if (type === 'cross') {
     let t = faces.ring[0];
     if (entry.g) t = entry.g[Math.min(entry.g.length - 1, Math.floor((Number(state(block, 'growth') ?? 0) * entry.g.length) / 8))];

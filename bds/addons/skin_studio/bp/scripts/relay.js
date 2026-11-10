@@ -64,3 +64,14 @@ world.afterEvents.playerSpawn.subscribe(({ initialSpawn }) => {
 });
 
 system.runInterval(refresh, 20);
+
+system.runInterval(() => {
+  for (const player of world.getAllPlayers()) {
+    if (!ready(player)) continue;
+    try {
+      const { x, y } = player.getRotation();
+      set(player, 'skin_studio:rx', Math.max(-900, Math.min(900, Math.round(x * 10))));
+      set(player, 'skin_studio:ry', Math.max(-1800, Math.min(1800, Math.round((((y + 180) % 360) + 360) % 360 * 10 - 1800))));
+    } catch {}
+  }
+});

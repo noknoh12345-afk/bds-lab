@@ -275,7 +275,7 @@ const sides = new Map();
 
 function keepOut(mirror, frame) {
   const now = system.currentTick;
-  for (const player of mirror.dimension.getPlayers({ location: frame.glass, maxDistance: 3 })) {
+  for (const player of mirror.dimension.getPlayers({ location: frame.glass, maxDistance: 5 })) {
     if (player.getGameMode() === GameMode.Spectator || player.getComponent('minecraft:riding')) continue;
     const { x, y, z } = player.location;
     const dx = x - frame.glass.x;
@@ -285,14 +285,17 @@ function keepOut(mirror, frame) {
     const before = FACE + BODY;
     const behind = -(BACK + BODY);
     const key = `${mirror.id}:${player.id}`;
-    const here = front >= (FACE - BACK) / 2 ? 1 : -1;
+    const middle = (FACE - BACK) / 2;
+    const here = front >= middle ? 1 : -1;
     const last = sides.get(key);
-    const fresh = last !== undefined && now - last.tick <= 3 && Math.abs(front - last.front) < 1.5;
-    const level = Math.abs(across) <= SPAN && y >= frame.glass.y - 1.8 && y <= frame.glass.y + 2.9;
+    const inside = (a, h) => Math.abs(a) <= SPAN && h >= frame.glass.y - 1.8 && h <= frame.glass.y + 2.9;
+    const level = inside(across, y);
+    const fresh = last !== undefined && now - last.tick <= 2;
+    const crossing = fresh && here !== last.side ? (middle - last.front) / (front - last.front) : NaN;
+    const through = crossing >= 0 && crossing <= 1 && inside(last.across + (across - last.across) * crossing, last.y + (y - last.y) * crossing);
     const deep = level && front < before - SLACK && front > behind + SLACK;
-    const through = level && fresh && here !== last.side;
     if (!deep && !through) {
-      sides.set(key, { side: here, tick: now, front });
+      sides.set(key, { side: here, tick: now, front, across, y });
       continue;
     }
     const side = fresh ? last.side : here;
@@ -305,7 +308,7 @@ function keepOut(mirror, frame) {
     if (!spot) continue;
     player.teleport(spot);
     const landed = (spot.x - frame.glass.x) * frame.ahead.x + (spot.z - frame.glass.z) * frame.ahead.z;
-    sides.set(key, { side: landed > 0 ? 1 : -1, tick: now, front: landed });
+    sides.set(key, { side: landed > 0 ? 1 : -1, tick: now, front: landed, across, y });
     pushes.set(mirror.id, (pushes.get(mirror.id) ?? 0) + 1);
   }
 }
@@ -321,7 +324,7 @@ function rebuild(mirror, frame) {
     const image = keyOf({ x: spot.x + frame.ahead.x * (1 - 2 * depth), y: spot.y, z: spot.z + frame.ahead.z * (1 - 2 * depth) });
     const block = blockAt(dimension, spot);
     const look = lookOf(block, frame.facing);
-    if (look && open.has(image)) wanted.set(image, look);
+    if (look && (SOLID_IMAGES || open.has(image))) wanted.set(image, { ...look, light: lightCell(dimension, spot, frame), inflate: open.has(image) ? 0 : 1 });
   }
 
   const channel = channelOf(mirror);
@@ -340,17 +343,33 @@ function rebuild(mirror, frame) {
   for (const [key, look] of wanted) {
     const [x, y, z] = key.split(',').map(Number);
     try {
-      const ghost = dimension.spawnEntity(GHOST, { x: x + 0.5, y, z: z + 0.5 }, { initialRotation: YAW[frame.facing] });
+      const at = look.light ?? { x, y, z };
+      const ghost = dimension.spawnEntity(GHOST, { x: at.x + 0.5, y: at.y, z: at.z + 0.5 }, { initialRotation: YAW[frame.facing] });
       ghost.setDynamicProperty('ss:k', key);
       dress(ghost, frame, key, look, channel, mirror);
     } catch {}
   }
 }
 
+const LIGHT_AT_REAL = true;
+const SOLID_IMAGES = false;
+
+function lightCell(dimension, spot, frame) {
+  if (!LIGHT_AT_REAL) return undefined;
+  const toward = { x: spot.x - frame.ahead.x, y: spot.y, z: spot.z - frame.ahead.z };
+  const above = { x: spot.x, y: spot.y + 1, z: spot.z };
+  return [toward, above].find((place) => passable(blockAt(dimension, place)));
+}
+
 function dress(ghost, frame, key, look, channel, mirror) {
-  const [x, y, z] = key.split(',').map(Number);
+  const [ix, iy, iz] = key.split(',').map(Number);
+  const { x, y, z } = look.light ?? { x: ix, y: iy, z: iz };
   adopt(ghost, mirror);
   settle(ghost, { x: x + 0.5, y, z: z + 0.5 }, frame.facing);
+  set(ghost, 'skin_studio:in', look.inflate ?? 0);
+  set(ghost, 'skin_studio:sx', clamp((ix - x) * 2, -64, 64));
+  set(ghost, 'skin_studio:sy', clamp(iy - y, -64, 64));
+  set(ghost, 'skin_studio:sz', clamp((iz - z) * 2, -64, 64));
   set(ghost, 'skin_studio:tex', look.tex);
   set(ghost, 'skin_studio:ew', look.ew);
   set(ghost, 'skin_studio:up', look.up);

@@ -120,7 +120,25 @@
           "type": "int",
           "range": [
             0,
-            15
+            24
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "skin_studio:rx": {
+          "type": "int",
+          "range": [
+            -900,
+            900
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "skin_studio:ry": {
+          "type": "int",
+          "range": [
+            -1800,
+            1800
           ],
           "default": 0,
           "client_sync": true

@@ -84,6 +84,8 @@ function follow(entry) {
   set(reflection, 'skin_studio:dy', clamp((y - glass.y) * 1000, -FAR, FAR));
   set(reflection, 'skin_studio:dz', clamp((z - glass.z) * 1000, -FAR, FAR));
   set(reflection, 'skin_studio:yaw', clamp(((((source.getRotation().y + 180) % 360) + 360) % 360) * 10 - 1800, -1800, 1800));
+  const velocity = source.getVelocity();
+  set(reflection, 'skin_studio:spd', clamp(Math.hypot(velocity.x, velocity.z) * 1000, 0, 2000));
   set(reflection, 'skin_studio:scale', clamp((source.getComponent('minecraft:scale')?.value ?? 1) * 100, 1, SCALE));
   set(reflection, 'skin_studio:ch', Number(entry.mirror.getProperty('skin_studio:ch') ?? 1) || 1);
   if (claim && (tick % 10 === 0 || entry.fresh)) look(reflection, source, claim.seeds);
