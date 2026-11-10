@@ -81,10 +81,17 @@ const hidden = new Set<string>();
 function vanilla(p: Player, hide: boolean) {
   if (hide === hidden.has(p.id)) return;
   try { p.onScreenDisplay.setHudVisibility(hide ? HudVisibility.Hide : HudVisibility.Reset, HIDE); if (hide) hidden.add(p.id); else hidden.delete(p.id); } catch { /* older game */ }
-  // a phone has no keys for the hidden hotbar: the wand in hand, so a tap on the ground opens the tower menu
-  if (hide && platform(p) === 'Mobile') { try { const inv = p.getComponent('inventory')?.container; for (let i = 0; i < 9; i++) if (inv?.getItem(i)?.typeId === 'tds:wand') { p.selectedSlotIndex = i; break; } } catch { /* left */ } }
+  // a phone has no keys for the hidden hotbar: the wand in hand, so a tap on the ground opens the tower menu. For 2 s from
+  // then on (wandUntil): the match's items arrive after the bars are hidden, and the first slot was in hand (seen on redroid)
+  if (hide && platform(p) === 'Mobile') wandUntil.set(p.id, system.currentTick + 40);
 }
-world.afterEvents.playerLeave.subscribe(({ playerId }) => hidden.delete(playerId));
+const wandUntil = new Map<string, number>();
+function holdWand(p: Player) {
+  const u = wandUntil.get(p.id); if (u === undefined) return;
+  if (system.currentTick > u) { wandUntil.delete(p.id); return; }
+  try { const inv = p.getComponent('inventory')?.container; for (let i = 0; i < 9; i++) if (inv?.getItem(i)?.typeId === 'tds:wand') { if (p.selectedSlotIndex !== i) p.selectedSlotIndex = i; break; } } catch { /* left */ }
+}
+world.afterEvents.playerLeave.subscribe(({ playerId }) => { hidden.delete(playerId); wandUntil.delete(playerId); });
 
 system.runInterval(() => {
   bannerNow();
@@ -93,6 +100,7 @@ system.runInterval(() => {
   for (const p of world.getAllPlayers()) {
     const on = hudOn(p);
     vanilla(p, on);
+    if (on) holdWand(p);
     if (!on || !M) {   // the lobby: level, EXP, coins, gems (mode 15)
       const off = prefOf(p).off; prop(p, 'alpha', off ? 0 : 100); if (off) continue;
       const pr = prof(p); prop(p, 'mode', 15); prop(p, 'wt', Math.min(999, pr.level) * 100); prop(p, 'hp', Math.min(99999, Math.floor(pr.exp))); prop(p, 'hpmax', Math.min(99999, Math.max(1, Math.ceil(expFor(pr.level + 1)))));

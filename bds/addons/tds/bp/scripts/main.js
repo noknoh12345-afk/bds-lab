@@ -5307,18 +5307,29 @@ function vanilla(p, hide) {
     else hidden.delete(p.id);
   } catch {
   }
-  if (hide && platform(p) === "Mobile") {
-    try {
-      const inv2 = p.getComponent("inventory")?.container;
-      for (let i = 0; i < 9; i++) if (inv2?.getItem(i)?.typeId === "tds:wand") {
-        p.selectedSlotIndex = i;
-        break;
-      }
-    } catch {
+  if (hide && platform(p) === "Mobile") wandUntil.set(p.id, system8.currentTick + 40);
+}
+var wandUntil = /* @__PURE__ */ new Map();
+function holdWand(p) {
+  const u = wandUntil.get(p.id);
+  if (u === void 0) return;
+  if (system8.currentTick > u) {
+    wandUntil.delete(p.id);
+    return;
+  }
+  try {
+    const inv2 = p.getComponent("inventory")?.container;
+    for (let i = 0; i < 9; i++) if (inv2?.getItem(i)?.typeId === "tds:wand") {
+      if (p.selectedSlotIndex !== i) p.selectedSlotIndex = i;
+      break;
     }
+  } catch {
   }
 }
-world8.afterEvents.playerLeave.subscribe(({ playerId }) => hidden.delete(playerId));
+world8.afterEvents.playerLeave.subscribe(({ playerId }) => {
+  hidden.delete(playerId);
+  wandUntil.delete(playerId);
+});
 system8.runInterval(() => {
   bannerNow();
   const M2 = M, t = system8.currentTick;
@@ -5326,6 +5337,7 @@ system8.runInterval(() => {
   for (const p of world8.getAllPlayers()) {
     const on2 = hudOn(p);
     vanilla(p, on2);
+    if (on2) holdWand(p);
     if (!on2 || !M2) {
       const off = prefOf(p).off;
       prop(p, "alpha", off ? 0 : 100);
@@ -6237,6 +6249,10 @@ function botStep(p, M2) {
   }
 }
 ready(() => {
+  try {
+    world12.gameRules.fallDamage = false;
+  } catch {
+  }
   if (world12.getDynamicProperty("tds:speed") === void 0) world12.setDynamicProperty("tds:speed", 1);
   restore();
   log("ready", { towers: Object.keys(towers).length, enemies: Object.keys(enemies).length, modes: MODE_NAMES.length, maps: Object.keys(maps).length, timer1: timerFor("Easy", 1).timer });

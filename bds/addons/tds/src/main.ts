@@ -312,6 +312,8 @@ function botStep(p: Player, M: NonNullable<typeof G.M>): boolean {
 
 // ---------- start ----------
 ready(() => {
+  // nobody dies of a fall, as in the original (a player falls off a cliff of an expedition, or is set down in the air by a view: on the real app one died and its death screen covered every form after)
+  try { world.gameRules.fallDamage = false; } catch { /* older engine */ }
   if (world.getDynamicProperty('tds:speed') === undefined) world.setDynamicProperty('tds:speed', 1);
   G.restore();
   G.log('ready', { towers: Object.keys(towers).length, enemies: Object.keys(enemies).length, modes: MODE_NAMES.length, maps: Object.keys(maps).length, timer1: timerFor('Easy', 1).timer });

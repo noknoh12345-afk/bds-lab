@@ -1019,7 +1019,9 @@ restart
 tds:tableclear
 = Table cleared
 
-## the whole way as a player goes: the lobby's forms into a solo elevator, an expedition, the bot plays to the last wave, a triumph at the game's own speed, the reward, and 12 s after the result the match is over and the player is back in the lobby (its HUD, the hotbar back)
+## the whole way as a player goes: the lobby's forms into a solo elevator, an expedition, the bot plays to the last wave, a triumph at the game's own speed, the reward, and 12 s after the result the match is over and the player is back in the lobby (its HUD, the hotbar back); nobody dies of a fall
+js String(world.gameRules.fallDamage)
+~ ^false$
 tds:stop
 tds:speed 1
 tds:hold false
