@@ -6,8 +6,8 @@
     "description": "表彰台と鏡 / podium and mirror",
     "version": [
       3,
-      3,
-      5
+      4,
+      0
     ],
     "min_engine_version": [
       1,
@@ -21,8 +21,8 @@
       "uuid": "66d6f726-aee7-5d1e-b031-e78db32239d8",
       "version": [
         3,
-        3,
-        5
+        4,
+        0
       ]
     },
     {
@@ -32,8 +32,8 @@
       "uuid": "b098a660-500d-5d06-a415-8df896742b3a",
       "version": [
         3,
-        3,
-        5
+        4,
+        0
       ]
     }
   ],
@@ -50,8 +50,8 @@
       "uuid": "3e671969-7ccc-5439-8506-2babdfd805f7",
       "version": [
         3,
-        3,
-        5
+        4,
+        0
       ]
     }
   ],

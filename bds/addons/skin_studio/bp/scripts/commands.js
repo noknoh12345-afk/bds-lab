@@ -149,6 +149,15 @@ function debug(origin, state, players) {
   return ok(state === 'on' ? `鏡像の上に、いまの映り方の印を出しました（${names(list)}）` : `印を消しました（${names(list)}）`);
 }
 
+function headmode(origin, mode, players) {
+  const list = targets(origin, players);
+  if (!list) return no('ほかの人の設定を変えられるのはオペレーターだけです');
+  if (!list.length) return no('だれの設定かを指定してください（例: @s）');
+  if (!Number.isInteger(mode) || mode < 0 || mode > 15) return no('0〜15 で指定してください（縦の候補 0〜3 + 4 × 横の候補 0〜3）');
+  system.run(() => list.forEach((player) => player.isValid && player.getProperty('skin_studio:hm') !== undefined && player.setProperty('skin_studio:hm', mode)));
+  return ok(`一人称の頭の向きの読み方を ${mode} にしました（${names(list)}）`);
+}
+
 function gauge(origin, mode, location, offset, channel) {
   const source = sourceOf(origin);
   if (!source) return no('どこに置くかが分かりません');
@@ -260,12 +269,17 @@ system.beforeEvents.startup.subscribe(({ customCommandRegistry: registry }) => {
     registry,
     {
       name: 'studio:gauge',
-      description: '確かめ用の計器を置く（0〜3: 数字、8: 明るさの箱、9: 切り抜きの箱）',
+      description: '確かめ用の計器を置く（0〜5: 数字、8: 明るさの箱、9: 切り抜きの箱）',
       ...op,
       mandatoryParameters: [{ name: 'mode', type: Param.Integer }],
       optionalParameters: [{ name: 'location', type: Param.Location }, { name: 'offset', type: Param.Integer }, { name: 'channel', type: Param.Integer }],
     },
     gauge,
+  );
+  register(
+    registry,
+    { name: 'studio:headmode', description: '確かめ用: 一人称の頭の向きをどのクエリで読むか（0 が今の作り）', ...op, mandatoryParameters: [{ name: 'mode', type: Param.Integer }], optionalParameters: [players] },
+    headmode,
   );
   register(
     registry,

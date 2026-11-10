@@ -115,6 +115,15 @@
           "type": "bool",
           "default": false,
           "client_sync": true
+        },
+        "skin_studio:hm": {
+          "type": "int",
+          "range": [
+            0,
+            15
+          ],
+          "default": 0,
+          "client_sync": true
         }
       }
     },

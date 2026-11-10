@@ -220,7 +220,7 @@ js (() => { const d = world.getDimension('overworld'); const [pd] = d.getEntitie
 deop B
 wait 500
 @B cmd /studio:report
-~ Skin Studio 3\.3\.5（bedrock-samples
+~ Skin Studio 3\.4\.0（bedrock-samples
 ~ 台帳: 表彰台 1・鏡 1
 ~ プレイヤーの定義: Skin Studio のまま
 @B cmd /studio:debug on
@@ -266,3 +266,10 @@ wait 2000
 js (() => { const l = p('A').location; return `${Math.abs(l.x - 40.5) < 0.05 ? 'straight' : 'x ' + l.x.toFixed(2)} ${l.z > 41 ? 'walked' : 'stayed'} ${(l.z - 40.5).toFixed(1)}`; })()
 ~ ^straight walked
 kill @e[type=skin_studio:gauge]
+@A cmd /studio:headmode 6
+~ 一人称の頭の向きの読み方を 6 に
+wait 500
+js p('A').getProperty('skin_studio:hm')
+= 6
+@A cmd /studio:headmode 0
+~ 読み方を 0 に

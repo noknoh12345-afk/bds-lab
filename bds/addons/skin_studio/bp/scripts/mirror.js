@@ -2,7 +2,7 @@ import { world, system, BlockVolume, GameMode } from '@minecraft/server';
 import { ActionFormData, MessageFormData } from '@minecraft/server-ui';
 import { relayOf } from './relay.js';
 import { showMobs, forget, wanted as mobsWanted } from './reflections.js';
-import { BLOCKS } from './blocks.js';
+import { lookOf, MIRRORED_TYPES } from './ghostlook.js';
 import { MIRROR, GHOST, WALL, MIRROR_EGG, YAW, facingOf, loaded, set, settle, refund, parsed, canEdit, origin, claim, present } from './util.js';
 import { uidOf, renew, record, remember, forgetRecord, records } from './registry.js';
 
@@ -29,8 +29,7 @@ const NEIGHBOURS = 64;
 const FLAGS = 32;
 const LOW_SEATS = ['minecraft:minecart', 'minecraft:boat', 'minecraft:chest_boat', 'minecraft:strider'];
 const OPEN = ['minecraft:air', 'minecraft:barrier'];
-const MIRRORED = Object.keys(BLOCKS);
-const AXES = { y: 0, x: 1, z: 2 };
+const MIRRORED = MIRRORED_TYPES;
 const WHERE = '§c鏡は、壁にあけた 3×3 の窓の「一番下の真ん中」に置いてください。';
 const TAKEN = '§cこの窓にはもう鏡があります。';
 const FAR = 200000;
@@ -272,7 +271,10 @@ function trace({ mirror, frame, players }) {
   });
 }
 
+const sides = new Map();
+
 function keepOut(mirror, frame) {
+  const now = system.currentTick;
   for (const player of mirror.dimension.getPlayers({ location: frame.glass, maxDistance: 3 })) {
     if (player.getGameMode() === GameMode.Spectator || player.getComponent('minecraft:riding')) continue;
     const { x, y, z } = player.location;
@@ -282,8 +284,18 @@ function keepOut(mirror, frame) {
     const across = dx * frame.side.x + dz * frame.side.z;
     const before = FACE + BODY;
     const behind = -(BACK + BODY);
-    if (front >= before - SLACK || front <= behind + SLACK || Math.abs(across) > SPAN || y < frame.glass.y - 1.8 || y > frame.glass.y + 2.9) continue;
-    const side = front >= (FACE - BACK) / 2 ? 1 : -1;
+    const key = `${mirror.id}:${player.id}`;
+    const here = front >= (FACE - BACK) / 2 ? 1 : -1;
+    const last = sides.get(key);
+    const fresh = last !== undefined && now - last.tick <= 3 && Math.abs(front - last.front) < 1.5;
+    const level = Math.abs(across) <= SPAN && y >= frame.glass.y - 1.8 && y <= frame.glass.y + 2.9;
+    const deep = level && front < before - SLACK && front > behind + SLACK;
+    const through = level && fresh && here !== last.side;
+    if (!deep && !through) {
+      sides.set(key, { side: here, tick: now, front });
+      continue;
+    }
+    const side = fresh ? last.side : here;
     const target = (way) => {
       const to = way > 0 ? before : behind;
       return { x: x + frame.ahead.x * (to - front), y, z: z + frame.ahead.z * (to - front) };
@@ -292,20 +304,10 @@ function keepOut(mirror, frame) {
     const spot = [target(side), target(-side)].find(free);
     if (!spot) continue;
     player.teleport(spot);
+    const landed = (spot.x - frame.glass.x) * frame.ahead.x + (spot.z - frame.glass.z) * frame.ahead.z;
+    sides.set(key, { side: landed > 0 ? 1 : -1, tick: now, front: landed });
     pushes.set(mirror.id, (pushes.get(mirror.id) ?? 0) + 1);
   }
-}
-
-function faces(type, block) {
-  const entry = BLOCKS[type];
-  if (!entry) return undefined;
-  let axis = 0;
-  if (entry.p) {
-    try {
-      axis = AXES[String(block?.permutation.getState('pillar_axis'))] ?? 0;
-    } catch {}
-  }
-  return { tex: entry.s, ew: entry.e, up: entry.u, dn: entry.d, ax: axis };
 }
 
 function rebuild(mirror, frame) {
@@ -318,7 +320,7 @@ function rebuild(mirror, frame) {
     const depth = (spot.x - frame.window.x) * frame.ahead.x + (spot.z - frame.window.z) * frame.ahead.z;
     const image = keyOf({ x: spot.x + frame.ahead.x * (1 - 2 * depth), y: spot.y, z: spot.z + frame.ahead.z * (1 - 2 * depth) });
     const block = blockAt(dimension, spot);
-    const look = block && faces(block.typeId, block);
+    const look = lookOf(block, frame.facing);
     if (look && open.has(image)) wanted.set(image, look);
   }
 
@@ -354,6 +356,7 @@ function dress(ghost, frame, key, look, channel, mirror) {
   set(ghost, 'skin_studio:up', look.up);
   set(ghost, 'skin_studio:dn', look.dn);
   set(ghost, 'skin_studio:ax', look.ax);
+  set(ghost, 'skin_studio:sh', look.sh);
   set(ghost, 'skin_studio:ch', channel);
   set(ghost, 'skin_studio:gx', clamp((frame.glass.x - x - 0.5) * 2, -64, 64));
   set(ghost, 'skin_studio:gy', clamp(frame.glass.y - y, -64, 64));

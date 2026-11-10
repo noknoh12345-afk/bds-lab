@@ -10,7 +10,7 @@
           "type": "int",
           "range": [
             0,
-            186
+            848
           ],
           "default": 0,
           "client_sync": true
@@ -19,7 +19,7 @@
           "type": "int",
           "range": [
             0,
-            186
+            848
           ],
           "default": 0,
           "client_sync": true
@@ -28,7 +28,7 @@
           "type": "int",
           "range": [
             0,
-            186
+            848
           ],
           "default": 0,
           "client_sync": true
@@ -37,7 +37,16 @@
           "type": "int",
           "range": [
             0,
-            186
+            848
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "skin_studio:sh": {
+          "type": "int",
+          "range": [
+            0,
+            127
           ],
           "default": 0,
           "client_sync": true

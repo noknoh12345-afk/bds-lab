@@ -218,40 +218,72 @@ do execute as @a run studio:debug on
 do execute as @a at @s run studio:gauge 0 -2.1 -59.1 11.8
 do execute as @a at @s run studio:gauge 1 3.1 -59.1 11.8
 wait 3000
-shot probe-head-level                     # 計器（左右）: 0 = カメラの縦・横・頭の縦・頭の横、1 = 胴の向き・一人称か・自前の頭の横・自前の胴（10 倍、赤い棒は負）
+shot probe-head-level                     # 計器（数字はそのままの値、小数 1 桁、赤い棒は負）。右: 0 = カメラの縦・カメラの横・頭の縦・頭の横、左: 1 = 胴の向き・一人称か・自前の頭の横・自前の胴
 do tp @a 0.5 -60 7.5 0 -20
 wait 2000
-shot probe-head-up                        # 上を 20 度: どの値が -20 になるか（鏡の自分も上を向くか）
-do tp @a 0.5 -60 7.5 0 20
-wait 2000
-shot probe-head-down                      # 下を 20 度
+shot probe-head-up                        # 上を 20 度: どの値が -20 になるか
 do tp @a 0.5 -60 7.5 15 0
-wait 500
-shot probe-head-right-quick               # 右へ 15 度の直後
 wait 2500
-shot probe-head-right-later               # しばらく後（胴が追いつくか）
-do tp @a 0.5 -60 7.5 -15 0
-wait 500
-shot probe-head-left-quick
-wait 2500
-shot probe-head-left-later
-do tp @a 0.5 -60 7.5 40 0
-wait 2500
-shot probe-head-right-40                  # 右へ 40 度（計器は端が切れてもよい）: 鏡の自分の頭の向き
+shot probe-head-right                     # 右へ 15 度: どの値が 15 になるか
+do kill @e[type=skin_studio:gauge]
 do tp @a 0.5 -60 7.5 0 0
-do camera @a set minecraft:third_person
-wait 1500
+do execute as @a at @s run studio:gauge 4 -2.1 -59.1 11.8
+do execute as @a at @s run studio:gauge 5 3.1 -59.1 11.8
+wait 2500
+shot probe-head-more-level                # 右: 4 = head_x(0)・head_y(0)・eye_target_x・eye_target_y、左: 5 = 自分か・鏡に送る頭の縦・胴の縦・頭の読み方の番号
 do tp @a 0.5 -60 7.5 15 -20
+wait 2500
+shot probe-head-more-turned               # 右へ 15 度・上へ 20 度
+section probe-headmode
+do tp @a 0.5 -60 7.5 0 -25
+do execute as @a run studio:headmode 0
+wait 1500
+shot headmode-0-up                        # 上を 25 度で、読み方 0〜3（縦の候補）: 鏡の自分が「上を向く」のはどれか（計器 5 の 2 行目が鏡に送る値）
+do execute as @a run studio:headmode 1
+wait 1500
+shot headmode-1-up
+do execute as @a run studio:headmode 2
+wait 1500
+shot headmode-2-up
+do execute as @a run studio:headmode 3
+wait 1500
+shot headmode-3-up
+do tp @a 0.5 -60 7.5 0 0
+do execute as @a run studio:headmode 0
+wait 1500
+do tp @a 0.5 -60 7.5 30 0
+wait 1500
+shot headmode-0-turn                      # 右へ 30 度で、読み方 0・4・8・12（横の候補）: 鏡の自分の頭だけが右（鏡の中では左）を向き、胴はそのままなのはどれか
+do tp @a 0.5 -60 7.5 0 0
+do execute as @a run studio:headmode 4
+wait 1500
+do tp @a 0.5 -60 7.5 30 0
+wait 1500
+shot headmode-4-turn
+do tp @a 0.5 -60 7.5 0 0
+do execute as @a run studio:headmode 8
+wait 1500
+do tp @a 0.5 -60 7.5 30 0
+wait 1500
+shot headmode-8-turn
+do tp @a 0.5 -60 7.5 0 0
+do execute as @a run studio:headmode 12
+wait 1500
+do tp @a 0.5 -60 7.5 30 0
+wait 1500
+shot headmode-12-turn
+do execute as @a run studio:headmode 0
+do camera @a set minecraft:third_person
+do tp @a 0.5 -60 7.5 30 -25
 wait 2000
-shot probe-head-3p                        # 三人称で同じ値（頭が回る見え方の値と比べる）
+shot headmode-3p-reference                # 三人称（本家の頭の動き）: 右へ 30 度・上へ 25 度のとき、鏡の自分の頭はこう見えるのが正しい
 do camera @a clear
+do kill @e[type=skin_studio:gauge]
 do execute as @a run studio:debug off
 section probe-walk
-do kill @e[type=skin_studio:gauge]
 do tp @a 0.5 -60 5.5 0 0
 do execute as @a run studio:debug on
 do execute as @a at @s run studio:gauge 2 -2.1 -59.1 11.8
-do execute as @a at @s run studio:gauge 1 3.1 -59.1 11.8
 wait 2000
 record start
 do execute as @a run studio:walk @s 0 1 20
@@ -263,15 +295,15 @@ do execute as @a run studio:walk @s 0 1 20
 wait 600
 shot probe-walk-mid                       # 歩いている途中の計器の値
 wait 2500
-do tp @a 0.5 -60 5.5 0 0
-do camera @a set minecraft:free pos 5.5 -58.0 6.0 facing 0.5 -59 9.5
+do tp @a 0.5 -60 5.0 0 0
+do camera @a set minecraft:free pos 3.2 -58.6 4.6 facing 0.6 -59.2 12
 wait 1500
 record start
 do execute as @a run studio:walk @s 0 1 20
 wait 2500
 do execute as @a run studio:walk @s 0 -1 20
 wait 2500
-record stop                               # 横から: 本物の自分と鏡の自分の脚の振りが同じ（左右反転）
+record stop                               # 斜め後ろから: 本物の自分（手前）と鏡の自分（窓の中）の脚の振りが同じ（左右反転）
 do camera @a clear
 do tp @a 0.5 -60 9.0 0 0
 wait 1000
@@ -279,9 +311,9 @@ do execute as @a run studio:walk @s 0 1 40
 wait 3000
 shot probe-walk-glass                     # 歩いてガラスにぶつかる: 体がガラスに触れる所で止まり、顔が大きく映る
 do execute as @a at @s run studio:report
-do execute as @a run studio:debug off
-section probe-offscreen
 do kill @e[type=skin_studio:gauge]
+do execute as @a run studio:debug off
+section probe-shove
 do difficulty normal
 do gamemode survival @a
 do effect @a resistance 120 255 true
@@ -289,31 +321,29 @@ do effect @a regeneration 120 255 true
 do tp @a 0.5 -60 10.0 0 0
 do execute as @a run studio:debug on
 do execute as @a at @s run studio:gauge 3 -2.1 -59.1 11.8
-do summon zombie 5.5 -60 2.5
-do summon husk -4.5 -60 2.5
+do summon zombie 4.5 -60 4.5
+do summon husk -3.5 -60 4.5
 do effect @e[type=zombie] fire_resistance 120 1 true
 do effect @e[type=husk] fire_resistance 120 1 true
-do effect @e[type=zombie] slowness 120 1 true
-do effect @e[type=husk] slowness 120 1 true
 wait 1000
 record start
 wait 7000
-record stop                               # 本物は両方とも後ろ（画面の外）。左右から来るゾンビ（そのまま）とハスク（画面の外でも骨を動かす定義）の鏡像の印: 緑の点 = 中継、黄の三角 = 予備
-shot probe-offscreen                      # 計器 3 = 生き物の番号 1〜4 の中継の古さ（ミリ秒）
+record stop                               # 後ろからゾンビとハスクに殴られてガラスに押し付けられても、ガラスを突き抜けて鏡の裏へ出ない（計器 3 = 生き物の中継の古さ）
+shot probe-shove                          # まだ鏡の前にいて、鏡が見えている
 do kill @e[type=zombie]
 do kill @e[type=husk]
 do gamemode creative @a
 do difficulty peaceful
+do kill @e[type=skin_studio:gauge]
 do execute as @a run studio:debug off
 section probe-stencil
-do kill @e[type=skin_studio:gauge]
 do tp @a 0.5 -60 6.5 0 0
 do execute as @a at @s run studio:gauge 9 -0.18 -59.5 9.0 0 1
 do execute as @a at @s run studio:gauge 9 1.18 -59.5 9.0 0 2
 wait 2500
-shot probe-stencil                        # 赤い箱は窓の下の角にまたがる（左は 1 番、右は 2 番の切り抜き）: 鏡の番号の箱の、窓の中の部分だけ描かれれば、ステンシルは別のエンティティの間でも効く（P-02）
-section probe-light
+shot probe-stencil                        # 赤い箱は窓の下の角にまたがる（右の箱は 1 番、左の箱は 2 番の切り抜き）: 鏡（1 番）と同じ番号の箱だけ、窓の中の部分だけ描かれれば、ステンシルは別のエンティティの間でも効く（P-02）
 do kill @e[type=skin_studio:gauge]
+section probe-light
 do fill 10 -60 -12 14 -56 -8 stone hollow
 do execute as @a at @s run studio:gauge 8 12.5 -59 -10.5 128
 do execute as @a at @s run studio:gauge 8 14.5 -51 -10.5 0
@@ -321,47 +351,234 @@ do execute as @a at @s run studio:gauge 8 16.5 -20 -10.5 -496
 do camera @a set minecraft:free pos 14.5 -50.7 -16.5 rot 0 0
 wait 3000
 shot probe-light                          # 白い箱 3 つ: 左 = 本体は石の箱の中（真っ暗）で骨だけ上へ、中 = 本体もそこ、右 = 本体は 30 ブロック上（画面の外）で骨だけ下へ（P-08・P-09）
-do time set midnight
-wait 2500
-shot probe-light-night
-do time set noon
 do camera @a clear
 do kill @e[type=skin_studio:gauge]
-section diag-blocks
+section blocks-shapes
 do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 4 3 -57 11 air
-do setblock -1 -60 10 oak_stairs
-do setblock 0 -60 10 oak_slab
-do setblock 1 -60 10 oak_fence
-do setblock 2 -60 10 glass_pane
-do setblock -1 -60 9 torch
-do setblock 0 -60 9 poppy
-do setblock 1 -60 9 short_grass
-do setblock 2 -60 9 oak_leaves
-do setblock -1 -60 8 chest
-do setblock 0 -60 8 white_carpet
-do setblock 1 -60 8 lantern
-do setblock 2 -60 8 oak_trapdoor
-do setblock 3 -60 10 grass_block
-do setblock 3 -59 10 oak_log
-do setblock -2 -60 10 gold_block
-do setblock -2 -59 9 crafting_table
-do tp @a 0.5 -60 5.5 0 10
-wait 4000
-shot blocks-1p                            # いろいろな形のブロックが全部、左右反転で鏡に映る（床の草ブロックも）
+do setblock -2 -60 11 oak_stairs ["weirdo_direction"=0]
+do setblock -1 -60 11 oak_stairs ["weirdo_direction"=1]
+do setblock 0 -60 11 oak_stairs ["weirdo_direction"=2]
+do setblock 1 -60 11 oak_stairs ["weirdo_direction"=3]
+do setblock 2 -60 11 oak_slab ["minecraft:vertical_half"="top"]
+do setblock 3 -60 11 smooth_stone_slab
+do setblock -2 -60 10 oak_fence
+do setblock -1 -60 10 oak_fence
+do setblock 0 -60 10 oak_fence
+do setblock 1 -60 10 cobblestone_wall
+do setblock 2 -60 10 cobblestone_wall
+do setblock 3 -60 10 cobblestone_wall
+do setblock -2 -60 9 glass_pane
+do setblock -1 -60 9 glass_pane
+do setblock 0 -60 9 iron_bars
+do setblock 1 -60 9 wooden_door ["minecraft:cardinal_direction"="east"]
+do setblock 2 -60 9 trapdoor ["open_bit"=true,"direction"=0]
+do setblock 3 -60 9 trapdoor ["upside_down_bit"=true]
+do setblock -2 -60 8 torch
+do setblock -1 -60 8 lantern
+do setblock 0 -60 8 poppy
+do setblock 1 -60 8 wheat ["growth"=7]
+do setblock 2 -60 8 short_grass
+do setblock 3 -60 8 oak_sapling
+do setblock -2 -60 7 snow_layer ["height"=3]
+do setblock -1 -60 7 white_carpet
+do setblock 0 -60 7 chest ["minecraft:cardinal_direction"="south"]
+do setblock 1 -60 7 oak_leaves
+do setblock 2 -60 7 furnace ["minecraft:cardinal_direction"="south"]
+do setblock 3 -60 7 oak_log ["pillar_axis"="x"]
+do tp @a 0.5 -60 5.0 0 12
+wait 4500
+shot blocks-shapes-mirror                 # 形のいろいろ（奥から: 階段 4 向き・上付きハーフ・ハーフ / 柵 3・塀 3 / ガラス板 2・鉄格子・ドア・開いたトラップドア・上のトラップドア / 松明・ランタン・ポピー・実った小麦・草・苗木 / 雪・カーペット・チェスト・葉・かまど・横の原木）が、本物と同じ形と向きで左右反転して映る
+section blocks-auto-0
+do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
+do fill -2 -60 4 3 -57 11 air
+do setblock -2 -60 11 acacia_double_slab
+do setblock -1 -60 11 acacia_wood
+do setblock 0 -60 11 andesite_double_slab
+do setblock 1 -60 11 bamboo_double_slab
+do setblock 2 -60 11 barrel
+do setblock 3 -60 11 beehive
+do setblock -2 -60 10 birch_planks
+do setblock -1 -60 10 black_glazed_terracotta
+do setblock 0 -60 10 black_wool
+do setblock 1 -60 10 blast_furnace
+do setblock 2 -60 10 blue_ice
+do setblock 3 -60 10 blue_wool
+do setblock -2 -60 9 brain_coral_block
+do setblock -1 -60 9 brown_concrete_double_slab
+do setblock 0 -60 9 brown_stained_glass
+do setblock 1 -60 9 bubble_coral_block
+do setblock 2 -60 9 carved_pumpkin
+do setblock 3 -60 9 cherry_planks
+do setblock -2 -60 8 chiseled_copper
+do setblock -1 -60 8 chiseled_quartz_block
+do setblock 0 -60 8 chiseled_stone_bricks
+do setblock 1 -60 8 cinnabar
+do setblock 2 -60 8 clay
+do setblock 3 -60 8 cobbled_deepslate
+do setblock -2 -60 7 copper_block
+do setblock -1 -60 7 copper_grate
+do setblock 0 -60 7 cracked_nether_bricks
+do setblock 1 -60 7 crafting_table
+do setblock 2 -60 7 crimson_planks
+do setblock 3 -60 7 cut_red_sandstone
+do tp @a 0.5 -60 5.0 0 12
+wait 3500
+shot blocks-auto-0                 # 立方体のブロック 30 種: acacia_double_slab acacia_wood andesite_double_slab bamboo_double_slab barrel beehive …
+section blocks-auto-1
+do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
+do fill -2 -60 4 3 -57 11 air
+do setblock -2 -60 11 cyan_concrete
+do setblock -1 -60 11 cyan_stained_glass
+do setblock 0 -60 11 dark_oak_double_slab
+do setblock 1 -60 11 dark_oak_wood
+do setblock 2 -60 11 dead_bubble_coral_block
+do setblock 3 -60 11 deepslate
+do setblock -2 -60 10 deepslate_copper_ore
+do setblock -1 -60 10 deepslate_iron_ore
+do setblock 0 -60 10 deepslate_tiles
+do setblock 1 -60 10 diorite_double_slab
+do setblock 2 -60 10 double_cut_copper_slab
+do setblock 3 -60 10 dropper
+do setblock -2 -60 9 end_stone
+do setblock -1 -60 9 exposed_copper_bulb
+do setblock 0 -60 9 exposed_cut_copper
+do setblock 1 -60 9 frosted_ice
+do setblock 2 -60 9 glowstone
+do setblock 3 -60 9 granite
+do setblock -2 -60 8 gray_concrete_double_slab
+do setblock -1 -60 8 gray_terracotta
+do setblock 0 -60 8 green_concrete_double_slab
+do setblock 1 -60 8 green_terracotta
+do setblock 2 -60 8 hay_block
+do setblock 3 -60 8 infested_chiseled_stone_bricks
+do setblock -2 -60 7 infested_mossy_stone_bricks
+do setblock -1 -60 7 iron_ore
+do setblock 0 -60 7 jungle_log
+do setblock 1 -60 7 lapis_ore
+do setblock 2 -60 7 light_blue_shulker_box
+do setblock 3 -60 7 light_blue_wool_double_slab
+do tp @a 0.5 -60 5.0 0 12
+wait 3500
+shot blocks-auto-1                 # 立方体のブロック 30 種: cyan_concrete cyan_stained_glass dark_oak_double_slab dark_oak_wood dead_bubble_coral_block deepslate …
+section blocks-auto-2
+do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
+do fill -2 -60 4 3 -57 11 air
+do setblock -2 -60 11 light_gray_stained_glass
+do setblock -1 -60 11 lime_concrete
+do setblock 0 -60 11 lime_stained_glass
+do setblock 1 -60 11 lit_blast_furnace
+do setblock 2 -60 11 lit_redstone_lamp
+do setblock 3 -60 11 loom
+do setblock -2 -60 10 magenta_shulker_box
+do setblock -1 -60 10 magenta_wool_double_slab
+do setblock 0 -60 10 mangrove_planks
+do setblock 1 -60 10 mob_spawner
+do setblock 2 -60 10 mossy_stone_brick_double_slab
+do setblock 3 -60 10 muddy_mangrove_roots
+do setblock -2 -60 9 nether_brick_double_slab
+do setblock -1 -60 9 netherrack
+do setblock 0 -60 9 oak_leaves
+do setblock 1 -60 9 observer
+do setblock 2 -60 9 orange_concrete_double_slab
+do setblock 3 -60 9 orange_stained_glass
+do setblock -2 -60 8 oxidized_chiseled_copper
+do setblock -1 -60 8 oxidized_copper_golem_statue
+do setblock 0 -60 8 packed_ice
+do setblock 1 -60 8 pale_oak_double_slab
+do setblock 2 -60 8 pale_oak_wood
+do setblock 3 -60 8 pink_concrete_double_slab
+do setblock -2 -60 7 pink_terracotta
+do setblock -1 -60 7 podzol
+do setblock 0 -60 7 polished_blackstone
+do setblock 1 -60 7 polished_cinnabar
+do setblock 2 -60 7 polished_diorite
+do setblock 3 -60 7 polished_sulfur
+do tp @a 0.5 -60 5.0 0 12
+wait 3500
+shot blocks-auto-2                 # 立方体のブロック 30 種: light_gray_stained_glass lime_concrete lime_stained_glass lit_blast_furnace lit_redstone_lamp loom …
+section blocks-auto-3
+do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
+do fill -2 -60 4 3 -57 11 air
+do setblock -2 -60 11 poplar_double_slab
+do setblock -1 -60 11 poplar_wood
+do setblock 0 -60 11 prismarine_bricks
+do setblock 1 -60 11 purple_concrete_double_slab
+do setblock 2 -60 11 purple_terracotta
+do setblock 3 -60 11 purpur_double_slab
+do setblock -2 -60 10 quartz_double_slab
+do setblock -1 -60 10 raw_gold_block
+do setblock 0 -60 10 red_glazed_terracotta
+do setblock 1 -60 10 red_poplar_leaves
+do setblock 2 -60 10 red_stained_glass
+do setblock 3 -60 10 redstone_block
+do setblock -2 -60 9 resin_block
+do setblock -1 -60 9 sandstone_double_slab
+do setblock 0 -60 9 shroomlight
+do setblock 1 -60 9 smoker
+do setblock 2 -60 9 smooth_red_sandstone
+do setblock 3 -60 9 smooth_stone
+do setblock -2 -60 8 spruce_double_slab
+do setblock -1 -60 8 spruce_wood
+do setblock 0 -60 8 stone_bricks
+do setblock 1 -60 8 stripped_birch_log
+do setblock 2 -60 8 stripped_crimson_hyphae
+do setblock 3 -60 8 stripped_jungle_log
+do setblock -2 -60 7 stripped_oak_log
+do setblock -1 -60 7 stripped_poplar_log
+do setblock 0 -60 7 stripped_warped_hyphae
+do setblock 1 -60 7 sulfur_bricks
+do setblock 2 -60 7 tinted_glass
+do setblock 3 -60 7 tuff_bricks
+do tp @a 0.5 -60 5.0 0 12
+wait 3500
+shot blocks-auto-3                 # 立方体のブロック 30 種: poplar_double_slab poplar_wood prismarine_bricks purple_concrete_double_slab purple_terracotta purpur_double_slab …
+section blocks-truth
+do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
+do fill -2 -60 4 3 -57 11 air
+do setblock -2 -60 11 oak_stairs ["weirdo_direction"=0]
+do setblock -1 -60 11 oak_stairs ["weirdo_direction"=1]
+do setblock 0 -60 11 oak_stairs ["weirdo_direction"=2]
+do setblock 1 -60 11 oak_stairs ["weirdo_direction"=3]
+do setblock 2 -60 11 oak_slab ["minecraft:vertical_half"="top"]
+do setblock 3 -60 11 smooth_stone_slab
+do setblock -2 -60 10 oak_fence
+do setblock -1 -60 10 oak_fence
+do setblock 0 -60 10 oak_fence
+do setblock 1 -60 10 cobblestone_wall
+do setblock 2 -60 10 cobblestone_wall
+do setblock 3 -60 10 cobblestone_wall
+do setblock -2 -60 9 glass_pane
+do setblock -1 -60 9 glass_pane
+do setblock 0 -60 9 iron_bars
+do setblock 1 -60 9 wooden_door ["minecraft:cardinal_direction"="east"]
+do setblock 2 -60 9 trapdoor ["open_bit"=true,"direction"=0]
+do setblock 3 -60 9 trapdoor ["upside_down_bit"=true]
+do setblock -2 -60 8 torch
+do setblock -1 -60 8 lantern
+do setblock 0 -60 8 poppy
+do setblock 1 -60 8 wheat ["growth"=7]
+do setblock 2 -60 8 short_grass
+do setblock 3 -60 8 oak_sapling
+do setblock -2 -60 7 snow_layer ["height"=3]
+do setblock -1 -60 7 white_carpet
+do setblock 0 -60 7 chest ["minecraft:cardinal_direction"="south"]
+do setblock 1 -60 7 oak_leaves
+do setblock 2 -60 7 furnace ["minecraft:cardinal_direction"="south"]
+do setblock 3 -60 7 oak_log ["pillar_axis"="x"]
 do tp @a 0.5 -60 9.5 0 0
 do execute as @a at @s run studio:remove
 do fill -4 -60 12 4 -56 12 air
-do tp @a 0.5 -60 5.5 0 10
-do camera @a set minecraft:free pos 0.5 -58.38 18.5 rot 10 180
+do tp @a 0.5 -60 5.0 0 12
+do camera @a set minecraft:free pos 0.5 -58.38 19.0 rot 12 180
 wait 3000
-shot blocks-truth                         # 正解: 鏡の面で折り返した位置から、壁も鏡も無しで見た本物（左右反転して blocks-1p の窓の中と比べる）
+shot blocks-shapes-truth                  # 正解: 鏡の面で折り返した位置から、壁も鏡も無しで見た本物（左右反転して blocks-shapes-mirror の窓の中と比べる）
 do camera @a clear
 do fill -4 -60 12 4 -56 12 stone
 do fill -1 -60 12 1 -58 12 air
 do studio:mirror 0 -60 12 north
 do setblock 3 -57 11 stone          # fill は何も変わらないとエラーになるので、先に 1 個置く
 do fill -2 -60 4 3 -57 11 air
-wait 2000
+wait 1500
 section done
 absent clientlog \bERROR\b                # コンテンツログに、パック・JSON UI・スクリプトのエラーが無い
