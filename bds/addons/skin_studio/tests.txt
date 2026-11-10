@@ -222,7 +222,7 @@ js (() => { const d = world.getDimension('overworld'); const [pd] = d.getEntitie
 deop B
 wait 500
 @B cmd /studio:report
-~ Skin Studio 3\.4\.3（bedrock-samples
+~ Skin Studio 3\.4\.4（bedrock-samples
 ~ 台帳: 表彰台 1・鏡 1
 ~ プレイヤーの定義: Skin Studio のまま
 @B cmd /studio:debug on

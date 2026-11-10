@@ -3,6 +3,7 @@ import { ActionFormData, MessageFormData } from '@minecraft/server-ui';
 import { relayOf } from './relay.js';
 import { showMobs, forget, wanted as mobsWanted } from './reflections.js';
 import { lookOf, MIRRORED_TYPES } from './ghostlook.js';
+import { BLOCKS, KINDS } from './blocks.js';
 import { MIRROR, GHOST, WALL, MIRROR_EGG, YAW, facingOf, loaded, set, settle, refund, parsed, canEdit, origin, claim, present } from './util.js';
 import { uidOf, renew, record, remember, forgetRecord, records } from './registry.js';
 
@@ -83,6 +84,7 @@ function blockAt(dimension, location) {
 
 const isOpen = (block) => !!block && (block.isAir || block.typeId === 'minecraft:barrier');
 const passable = (block) => !!block && (block.isAir || block.isLiquid);
+const lit = (block) => passable(block) || (!!block && !!BLOCKS[block.typeId] && KINDS[BLOCKS[block.typeId].k] !== 'cube');
 
 function scan(dimension, from, to, includeTypes) {
   const { min, max } = dimension.heightRange;
@@ -332,7 +334,10 @@ function rebuild(mirror, frame) {
     else if (SOLID_IMAGES && exposed(open, at, frame, depth) && !alike(blockAt(dimension, at), block)) covers.push({ image, depth, look, spot });
   }
   covers.sort((a, b) => a.depth - b.depth);
-  for (const { image, look, spot } of covers.slice(0, COVERS)) wanted.set(image, { ...look, light: lightCell(dimension, spot, frame), inflate: 1 });
+  for (const { image, look, spot } of covers.slice(0, COVERS)) {
+    const light = lightCell(dimension, spot, frame);
+    if (light) wanted.set(image, { ...look, light, inflate: 1 });
+  }
 
   const channel = channelOf(mirror);
   for (const ghost of dimension.getEntities({ type: GHOST, location: frame.glass, maxDistance: GHOST_REACH })) {
@@ -390,7 +395,7 @@ function lightCell(dimension, spot, frame) {
   const high = spot.y >= frame.window.y + 2;
   const across = (spot.x - frame.window.x) * frame.side.x + (spot.z - frame.window.z) * frame.side.z;
   const sides = (across > 0 ? [-1, 1] : [1, -1]).map((way) => ({ x: spot.x + frame.side.x * way, y: spot.y, z: spot.z + frame.side.z * way }));
-  return [toward, ...(high ? [below, above] : [above, below]), ...sides].find((place) => passable(blockAt(dimension, place)));
+  return [toward, ...(high ? [below, above] : [above, below]), ...sides].find((place) => lit(blockAt(dimension, place)));
 }
 
 function dress(ghost, frame, key, look, channel, mirror) {
