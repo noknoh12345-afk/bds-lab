@@ -173,6 +173,11 @@ world.afterEvents.playerInteractWithEntity.subscribe(({ player: p, target }) => 
   if (target.typeId !== 'tds:tower') return;
   const tw = G.towerById(target.getDynamicProperty('tds:id') as number); if (tw) void towerMenu(p, tw.id);
 });
+// a hit opens it too: on a touch screen a tap on an entity is a hit, not an interaction
+world.afterEvents.entityHitEntity.subscribe(({ damagingEntity: p, hitEntity: target }) => {
+  if (!(p instanceof Player) || target.typeId !== 'tds:tower') return;
+  const tw = G.towerById(target.getDynamicProperty('tds:id') as number); if (tw) void towerMenu(p, tw.id);
+});
 /** what the next upgrade changes, like the original's upgrade panel: changed stats and newly gained detections */
 function nextLevel(name: string, lvl: number) {
   const a = stats(name, lvl), b = stats(name, lvl + 1), out: string[] = [];
@@ -313,7 +318,7 @@ function botStep(p: Player, M: NonNullable<typeof G.M>): boolean {
 // ---------- start ----------
 ready(() => {
   // nobody dies of a fall, as in the original (a player falls off a cliff of an expedition, or is set down in the air by a view: on the real app one died and its death screen covered every form after)
-  try { world.gameRules.fallDamage = false; } catch { /* older engine */ }
+  try { const g = world.gameRules; g.fallDamage = false; g.fireDamage = false; g.drowningDamage = false; g.freezeDamage = false; } catch { /* older engine */ }   // (nor of the camp's fire: the app's player burnt on a campfire)
   if (world.getDynamicProperty('tds:speed') === undefined) world.setDynamicProperty('tds:speed', 1);
   G.restore();
   G.log('ready', { towers: Object.keys(towers).length, enemies: Object.keys(enemies).length, modes: MODE_NAMES.length, maps: Object.keys(maps).length, timer1: timerFor('Easy', 1).timer });

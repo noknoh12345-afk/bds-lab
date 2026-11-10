@@ -1019,9 +1019,9 @@ restart
 tds:tableclear
 = Table cleared
 
-## the whole way as a player goes: the lobby's forms into a solo elevator, an expedition, the bot plays to the last wave, a triumph at the game's own speed, the reward, and 12 s after the result the match is over and the player is back in the lobby (its HUD, the hotbar back); nobody dies of a fall
-js String(world.gameRules.fallDamage)
-~ ^false$
+## the whole way as a player goes: the lobby's forms into a solo elevator, an expedition, the bot plays to the last wave, a triumph at the game's own speed, the reward, and 12 s after the result the match is over and the player is back in the lobby (its HUD, the hotbar back); nobody dies of a fall or of the camp's fire
+js [world.gameRules.fallDamage, world.gameRules.fireDamage].join(' ')
+~ ^false false$
 tds:stop
 tds:speed 1
 tds:hold false
@@ -1083,4 +1083,17 @@ tds:finish win
 until "ev":"match_return","mode":"Easy","result":"win","players":\["A","B"\] 30000
 ~ "ev":"reward","player":"A","result":"win"
 ~ "ev":"reward","player":"B","result":"win"
+tds:stop
+
+## a hit opens a tower's menu like an interaction does (a tap on a touch screen is a hit)
+tds:stop
+@A cmd /tds:reset
+@A cmd /tds:play Easy
+tds:hold true
+tp A -9 -60 -17
+@A cmd /tds:place Scout -9 -60 -15
+~ @A Placed #\d+ Scout
+@A attack tds:tower
+~ @A form action: title\("#\d+ Scout"\)
+@A form close
 tds:stop

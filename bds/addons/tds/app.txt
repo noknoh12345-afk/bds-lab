@@ -111,7 +111,7 @@ wait 2500
 shot war-table-model
 # ---- 通しの流れ（本物のアプリが自分で画面を押す）: 試合の中の操作 → ロビーのフォームからソロで出発 → クリア → ロビーへ戻る → パーティー
 section flow-play
-# 試合の中: 杖で地面を使う → 「Place a tower」のフォームでタワーを押す → 置いたタワーを使う → Upgrade を押す
+# 試合の中（スマホの操作: 画面の真ん中をタップ）: 杖で地面をタップ → 「Place a tower」のフォームでタワーを押す → 置いたタワーをタップ → Upgrade を押す
 do tds:stop
 do tds:tableclear
 do tds:speed 1
@@ -125,7 +125,7 @@ do execute as @a run tds:cash 5000
 do js (() => { const a = world.getAllPlayers()[0], it = a.getComponent('inventory').container.getItem(a.selectedSlotIndex)?.typeId; if (it !== 'tds:wand') throw new Error('in hand: ' + it + ' (platform ' + a.clientSystemInfo.platformType + ')'); return it; })()
 do tp @a -7 -60 -17 0 39
 wait 2000
-use
+tap 0.5 0.5
 until text (?i)place.a.tower 20000
 shot play-place-menu
 tap text (?i)^scout
@@ -133,7 +133,7 @@ until server "ev":"tower_place","id":\d+,"name":"Scout","x":-7,"y":-60,"z":-15 1
 do tp @a -7 -60 -18 0 15
 wait 2000
 shot play-tower-placed
-use
+tap 0.5 0.5
 until text (?i)upgrade 20000
 shot play-tower-menu
 tap text (?i)^upgrade
