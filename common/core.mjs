@@ -2558,6 +2558,13 @@ function qaStatic() {
     const all = new Set(Object.values(keys).flatMap((x) => [...x]));
     for (const l of langs) { const miss = [...all].filter((k) => !keys[l].has(k)); if (miss.length) q.push(['Q', `rp/texts/${l}.lang lacks ${miss.slice(0, 4).join(' ')}${miss.length > 4 ? ` +${miss.length - 4}` : ''} (players with that language see the raw key): node lab.mjs i18n`]); }
   }
+  // a Japanese name or description that is still the English one, word for word (the pack's name may stay: a title)
+  // (not for an imported pack: a person's or a generator's pack keeps its own names and texts)
+  if (!exists(path.join(ADDON, 'imported.json'))) for (const [pk, dir] of [['rp', RP], ['bp', BP]]) {
+    const lines = (l) => { const f = path.join(dir, 'texts', l + '.lang'); return new Map(exists(f) ? fs.readFileSync(f, 'utf8').split(/\r?\n/).filter((x) => x.includes('=') && !x.trim().startsWith('#')).map((x) => [x.slice(0, x.indexOf('=')).trim(), x.slice(x.indexOf('=') + 1).trim()]) : []); };
+    const en = lines('en_US'), same = [...lines('ja_JP')].filter(([k, v]) => (k === 'pack.description' || (k.endsWith('.name') && k !== 'pack.name')) && en.get(k) === v && /[A-Za-z]{2}/.test(v) && !/[\u3040-\u30ff\u4e00-\u9fff]/.test(v));
+    if (same.length) q.push(['Q', `${pk}/texts/ja_JP.lang: ${same.slice(0, 3).map(([k, v]) => `${k} is still English ("${v.slice(0, 40)}")`).join(', ')}${same.length > 3 ? ` +${same.length - 3}` : ''}: node lab.mjs i18n ja_JP "${same[0][0]}=<日本語>"`]);
+  }
   // custom components: used in JSON <-> registered in scripts
   for (const [dir, key] of [['items', 'minecraft:item'], ['blocks', 'minecraft:block']]) for (const f of files(path.join(BP, dir), (x) => x.endsWith('.json'))) {
     const j = safe(f), d = j?.[key]; if (!d) continue;
@@ -2948,7 +2955,11 @@ async function sample(args) {
   if (hit.read) text = hit.read();
   else { const buf = fs.readFileSync(hit.f); text = (hit.len !== undefined ? buf.subarray(hit.off, hit.off + hit.len) : buf).toString('utf8'); }
   let v;
-  try { v = JSON.parse(stripJsonComments(text.replace(/^﻿/, ''))); } catch { out(text.slice(0, 6000)); return true; }
+  try { v = JSON.parse(stripJsonComments(text.replace(/^﻿/, ''))); } catch {
+    // a text file (a .lang): with a word, only its lines (`sample rp/texts/ja_JP.lang diamond` → the game's own Japanese names)
+    if (keys) { const w = keys.toLowerCase(), ls = text.split(/\r?\n/).filter((l) => l.toLowerCase().includes(w)); out(ls.length ? ls.slice(0, 40).join('\n') + (ls.length > 40 ? `\n... +${ls.length - 40} (narrow it)` : '') : `none: no line has ${keys}`); return ls.length > 0; }
+    out(text.slice(0, 6000)); return true;
+  }
   for (const k of keys ? keys.split('/') : []) {
     if (v === null || typeof v !== 'object' || !(k in v)) { out(`none: ${k}. keys: ${v && typeof v === 'object' ? Object.keys(v).join(' ') : '-'}`); return false; }
     v = v[k];
@@ -2993,7 +3004,8 @@ function packIcon(file, name) {
 //   --js plain JavaScript in bp/scripts   --stable stable APIs only   --no-rp behavior pack only
 async function newAddon(args) {
   const desc = args.find((a) => a.startsWith('desc='))?.slice(5).trim() || null;   // desc="what players read in the pack list"
-  const [name, title = name, ...reqParts] = args.filter((a) => !a.startsWith('--') && !a.startsWith('desc='));
+  const jaDesc = args.find((a) => a.startsWith('ja='))?.slice(3).trim() || null;   // ja="the same in Japanese" (ja_JP.lang; without it qa asks for it)
+  const [name, title = name, ...reqParts] = args.filter((a) => !a.startsWith('--') && !a.startsWith('desc=') && !a.startsWith('ja='));
   if (!/^[a-z0-9_]+$/.test(name ?? '')) die('usage: node lab.mjs new <name: a-z0-9_> ["Title"] [--js] [--stable] [--no-rp]');
   const dir = path.join(ADDONS, name);
   if (exists(dir)) die(`addons/${name} exists (node lab.mjs use ${name})`);
@@ -3009,7 +3021,7 @@ async function newAddon(args) {
     m.dependencies.push({ uuid: r.header.uuid, version: r.header.version });
     fs.mkdirSync(path.join(dir, 'rp', 'texts'), { recursive: true });
     writeJson(path.join(dir, 'rp', 'texts', 'languages.json'), ['en_US', 'ja_JP']);
-    for (const l of ['en_US', 'ja_JP']) fs.writeFileSync(path.join(dir, 'rp', 'texts', l + '.lang'), `pack.name=${title}\npack.description=${desc ?? title}\n`);
+    for (const l of ['en_US', 'ja_JP']) fs.writeFileSync(path.join(dir, 'rp', 'texts', l + '.lang'), `pack.name=${title}\npack.description=${(l === 'ja_JP' && jaDesc) || desc || title}\n`);
   }
   writeJson(path.join(dir, 'bp', 'manifest.json'), m);
   const main = `import { world, system } from '@minecraft/server';\nimport { cmd, ask, give, take, count, once, load, save, score, every, cooldown, ready } from './kit';\n`;

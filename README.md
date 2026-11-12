@@ -3,6 +3,8 @@
 > **To the AI reading this:** read `AGENTS.md` and follow it (it is short and complete for an addon).
 > Network blocked or no terminal (a chat sandbox): run `node lab.mjs help chat` (or read the `## chat` part of `common/help.md`) and work that way: build offline, reply with `node lab.mjs patch` in one code block, and ask the person to paste back what `verify.command` / `verify.cmd` prints. Never ask the person to debug.
 
+> **これは `dev` ブランチです**：すべての機能と実験が入っています（管理パネル・自動操縦・GeoUI・本物のアプリ・Endstone・LeviLamina）。アドオンを作って確かめるだけなら、必要最低限の安定版 `main` ブランチを使ってください。`main` の修正は cherry-pick でここにも入れます。切り替え前の状態は `pre-stable` ブランチにあります。
+
 作りたいものを日本語で頼むだけで、AI が **本物の Bedrock Dedicated Server（BDS）を立て、本物の Bedrock クライアントを参加させ、テストと品質チェックが通るまで自分で直して、`.mcaddon` まで仕上げます**。人がやるのは頼むことだけです。
 
 ## いちばん簡単な始め方

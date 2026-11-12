@@ -14,6 +14,7 @@ Not for how a form looks (use `bds-json-ui`) or a whole shop or economy (start f
 <!-- rules:begin (node lab.mjs skill build writes these from skills/knowledge.json) -->
 - A closed form gives canceled (selection / formValues undefined): check it before reading the answer; kit ask/menu/input/confirm return undefined then. (when missed: cannot read property 'selection' of undefined when a player presses Esc) `api-form-cancel`
 - A form shown while the player has another screen open is refused (UserBusy): kit ask() retries; plain show() does not. (when missed: the form never appears when opened from a chat word or right after joining) `api-busy`
+- Text a Japanese player reads (buttons, messages, titles): one politeness level throughout (です・ます), no subject where Japanese drops it (「ルビーが足りません」, not 「あなたはルビーを持っていません」), a counter with every number (ダイヤ1個, 3分, 5回), a button as a noun or a short verb (購入, 閉じる), no leftover English word the game has a Japanese word for. (when missed: text that reads as a machine translation) `forms-ja` [source]
 <!-- rules:end -->
 
 Done when `go` passes a section per button, one per input value at its edges (0, max, empty text) and one that closes the form.

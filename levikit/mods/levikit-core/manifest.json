@@ -1,0 +1,14 @@
+{
+    "name": "${modName}",
+    "entry": "${modFile}",
+    "version": "${modVersion}",
+    "type": "native",
+    "platform": "${modPlatform}",
+    "author": "ASAN10707",
+    "description": "LeviKit core: config-driven MoreDimensions worlds, /dim switching, seamless transfer for hot restore",
+    "dependencies": [
+        {
+            "name": "more-dimensions"
+        }
+    ]
+}

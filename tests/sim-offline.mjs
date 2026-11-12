@@ -127,7 +127,7 @@ ok(/^✔ chat$/m.test(o8), 'chat commands on beta: beforeEvents.chatSend (cancel
 // a player who leaves and joins again: BDS keeps the inventory and saved properties, playerSpawn fires with initialSpawn
 const U4 = path.join(T, 'demo4'); fs.cpSync(U, U4, { recursive: true });
 fs.appendFileSync(path.join(U4, 'bp', 'scripts', 'main.js'), "world.afterEvents.playerSpawn.subscribe((e) => { if (e.initialSpawn) { e.player.getComponent('inventory').container.addItem(new ItemStack('minecraft:bread', 1)); world.sendMessage('spawn ' + e.player.name); } });\n");
-fs.writeFileSync(path.join(U4, 'tests.txt'), '## rejoin\n@A join\nwait 200\n@A leave\nwait 200\n@A join\n~ ^@A joined \\d+ -60 \\d+$\nwait 200\njs inv(p("A"))\n~ minecraft:bread\\*2\n');
+fs.writeFileSync(path.join(U4, 'tests.txt'), '## rejoin\n@A join\nwait 200\n@A leave\nwait 200\n@A join\n~ ^@A joined \\d+ -60 \\d+$\nwait 200\njs inv(p("A"))\n~ minecraft:bread\\*2\njs count(p("A"),"minecraft:bread")\n= 2\n');
 const r4 = spawnSync(process.execPath, [path.join(TOP, 'lab.mjs'), 'sim', '-a', U4], { cwd: TOP, encoding: 'utf8', timeout: 120000, env: { ...process.env, LAB_DOTENV: 'off' } });
 const o4 = (r4.stdout ?? '') + (r4.stderr ?? '');
 ok(/^✔ rejoin$/m.test(o4), 'leave + join: the player comes back with what they had, `@A joined x y z`, playerSpawn (initialSpawn) again', o4);

@@ -1,0 +1,172 @@
+name: levikit
+# LeviKit (levikit/): the panel's own tests, the Endstone edition on a real Endstone server, levikit-core (the LeviLamina mod, C++)
+# built on Windows and started on a real LeviLamina server. Only when levikit/ changes, or by hand.
+# A levikit-v* tag: levikit-core-windows-x64.zip and papyruscs-linux-x64.zip are attached to the Release
+# (install.sh --kitcore-url / --papyrus-url take those URLs).
+on:
+  push:
+    branches: [main]
+    paths: ['levikit/**', '.github/workflows/levikit.yml']
+    tags: ['levikit-v*']
+  pull_request:
+    paths: ['levikit/**', '.github/workflows/levikit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: levikit-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    # the panel against a fake server (backups, restore, worlds, import, clone) and the parts of levikit-core that need no BDS
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults: { run: { working-directory: levikit } }
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with: { node-version: 22 }
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq zlib1g-dev g++
+      - run: node test/toolkit.js
+      - run: node test/e2e.js
+      - run: node test/e2e-worlds.js
+
+  endstone:
+    # the Endstone edition for real: the installer (no systemd), then the panel drives a real Endstone server
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults: { run: { working-directory: levikit } }
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with: { node-version: 22 }
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with: { python-version: '3.12' }
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq rsync
+      - run: ./install-endstone.sh --accept-eula --root "$RUNNER_TEMP/lk" --no-service --public-host 127.0.0.1 --panel-host 127.0.0.1 --panel-port 18555
+      - run: node test/e2e-endstone.js "$RUNNER_TEMP/lk"
+      - if: failure()
+        run: tail -n 80 "$RUNNER_TEMP/lk/.tmp/first-boot.log" || true
+
+  endstone-players:
+    # the plugin with real Bedrock clients (join, /dim, warps, /tpa, protection, bans, restart): levikit/endstone/tests.txt in
+    # the dev branch's Endstone lab (the stable branch has no Endstone lab of its own)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with: { ref: dev, path: devlab }
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with: { node-version: 22 }
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with: { python-version: '3.12' }
+      - run: npm i -g esbuild@0.28 typescript@6.0.3
+      - working-directory: devlab
+        run: |
+          mkdir -p end/plugins/levikit
+          cp -r ../levikit/endstone/. end/plugins/levikit/
+          node lab.mjs end setup
+          node lab.mjs end go -a levikit > "$RUNNER_TEMP/go.txt" 2>&1 || true
+          tail -n 60 "$RUNNER_TEMP/go.txt"
+          grep -q '^DONE ' "$RUNNER_TEMP/go.txt"
+
+  build:
+    # levikit-core: a LeviLamina mod is a Windows DLL
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults: { run: { working-directory: levikit/mods/levikit-core } }
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: xmake-io/github-action-setup-xmake@3a1a5dddfc7fa625d9a698738334bf55655a861a # v1
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/AppData/Local/.xmake
+          key: xmake-levikit-${{ hashFiles('levikit/mods/levikit-core/xmake.lua') }}
+          restore-keys: xmake-levikit-
+      - uses: ZhongRuoyu/setup-llvm@eea6238baf53d41c1615923680d7a738da584318 # v0
+        with: { llvm-version: 22 }
+      - run: xmake repo -u
+      - run: xmake f -a x64 -m release -p windows -v -y
+      - run: xmake -v -y
+      - shell: pwsh
+        run: Compress-Archive -Path bin/levikit-core -DestinationPath levikit-core-windows-x64.zip -Force
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: levikit-core-windows-x64
+          path: levikit/mods/levikit-core/levikit-core-windows-x64.zip
+
+  levilamina:
+    # the mod for real: LeviLamina + MoreDimensions from lip on Windows (no Wine needed there), the DLL just built, one start
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with: { name: levikit-core-windows-x64, path: kitcore }
+      - name: lip, LeviLamina, MoreDimensions (the versions install.sh names)
+        shell: bash
+        run: |
+          eval "$(grep -E '^(LL_VERSION|MOREDIM_VERSION|LIP_VERSION)=' levikit/install.sh | sed 's/ *#.*//')"
+          mkdir -p lip server
+          curl -fsSL -o lip.zip "https://github.com/LiteLDev/lip/releases/download/v${LIP_VERSION}/lip-${LIP_VERSION}-win-x64.zip"
+          unzip -q lip.zip -d lip
+          LIP="$(find "$PWD/lip" -iname lip.exe | head -n1)"
+          cd server
+          "$LIP" install "github.com/LiteLDev/LeviLamina@${LL_VERSION}"
+          "$LIP" install "github.com/LiteLDev/MoreDimensions@${MOREDIM_VERSION}"
+          test -f bedrock_server_mod.exe
+          mkdir -p plugins
+          unzip -q -o ../kitcore/levikit-core-windows-x64.zip -d plugins
+          test -f plugins/levikit-core/manifest.json
+      - name: one start on the real server
+        shell: bash
+        run: node levikit/test/real-server.js server -- "$PWD/server/bedrock_server_mod.exe"
+
+  papyrus:
+    # PapyrusCS (the map renderer the panel can use, Apache-2.0) for Linux: only by hand or for a release
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/levikit-v')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      PAPYRUS_REF: '0.6.9'
+    steps:
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with: { dotnet-version: '6.0.x' }
+      - name: sources
+        run: |
+          git clone --depth 1 --branch "$PAPYRUS_REF" https://github.com/ModifiedCommand/PapyrusCS.git papyrus
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/Mojang/bedrock-samples.git samples
+          cd samples && git sparse-checkout set --no-cone /resource_pack/textures/terrain_texture.json /resource_pack/textures/blocks/
+      - name: .NET 6
+        working-directory: papyrus
+        run: |
+          find . -name '*.csproj' -exec sed -i 's#<TargetFramework>netcoreapp3.1</TargetFramework>#<TargetFramework>net6.0</TargetFramework>#' {} +
+          sed -i 's#</Project>#  <ItemGroup><RuntimeHostConfigurationOption Include="System.Drawing.EnableUnixSupport" Value="true" /></ItemGroup>\n</Project>#' PapyrusCs/PapyrusCs.csproj
+          dotnet publish PapyrusCs -c Release --self-contained --runtime linux-x64 -o ../out
+      - name: textures and zip
+        run: |
+          rm -rf out/textures && mkdir -p out/textures
+          cp samples/resource_pack/textures/terrain_texture.json out/textures/
+          cp -r samples/resource_pack/textures/blocks out/textures/blocks
+          cp papyrus/LICENSE out/PAPYRUS-LICENSE
+          cd out && zip -qr ../papyruscs-linux-x64.zip .
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: papyruscs-linux-x64, path: papyruscs-linux-x64.zip }
+
+  release:
+    # a levikit-v* tag: both zips on the Release
+    if: startsWith(github.ref, 'refs/tags/levikit-v')
+    needs: [build, papyrus]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with: { path: dist, merge-multiple: true }
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with: { files: 'dist/*.zip' }

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LeviKit 観察ビュー</title>
+<style>
+  :root { color-scheme: dark; --bg: #0f1216; --panel: #171b21cc; --line: #2a3039; --text: #e6e9ee; --muted: #9aa3ae; --accent: #4caf50; }
+  html, body { margin: 0; height: 100%; background: #87b5ff; color: var(--text); font: 13px/1.5 system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif; overflow: hidden; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .bar { position: fixed; left: 10px; right: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--panel); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  .bar label { display: flex; gap: 5px; align-items: center; color: var(--muted); }
+  select, input, button { background: #0f1216; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font: inherit; }
+  input[type=number] { width: 80px; }
+  button { cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #status { position: fixed; left: 10px; bottom: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: var(--muted); max-width: 70vw; }
+  #help { position: fixed; right: 10px; bottom: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: var(--muted); }
+  #cross { position: fixed; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px; border-radius: 50%; border: 1px solid #fff8; pointer-events: none; display: none; }
+</style>
+<script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js" } }</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="bar">
+  <b>🧭 観察ビュー</b>
+  <label>ワールド <select id="world"></select></label>
+  <label>時点 <select id="at"></select></label>
+  <button id="shoot" class="primary">📷 今の状態を撮る</button>
+  <label>中心 X <input id="x" type="number" value="0"></label>
+  <label>Z <input id="z" type="number" value="0"></label>
+  <label>範囲 <select id="r"><option value="2">5×5 チャンク</option><option value="3">7×7</option><option value="4" selected>9×9</option><option value="6">13×13</option></select></label>
+  <button id="load">表示</button>
+  <label>追いかける <select id="follow"><option value="">（なし）</option></select></label>
+  <label><input type="checkbox" id="names" checked> 名前</label>
+</div>
+<div id="cross"></div>
+<div id="status">読み込み中…</div>
+<div id="help">左ドラッグ: 回転 / 右ドラッグ: 移動 / ホイール: 拡大 / WASD+QE: 飛ぶ / ダブルクリック: そこへ注目</div>
+<script type="module" src="/viewer.js"></script>
+</body>
+</html>

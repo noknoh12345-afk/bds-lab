@@ -1129,6 +1129,58 @@
       },
       "status": "verified",
       "added": "2026-10-03"
+    },
+    {
+      "id": "content-ja",
+      "skill": "bds-content",
+      "rule": "Every name and the pack's description also in Japanese: `add ... ja=名前`, `bds new ... ja=\"説明\"`, later `i18n ja_JP \"key=text\"`. A vanilla thing keeps the game's own Japanese: `sample rp/texts/ja_JP.lang <word>` (diamond → ダイヤモンド).",
+      "why": "qa: ja_JP.lang ... is still English; Japanese players read English, or a made-up word for a vanilla item",
+      "evidence": {
+        "kind": "test",
+        "ref": "tests/cli-offline.mjs"
+      },
+      "status": "verified",
+      "verified": {
+        "bds": "1.26.63.1",
+        "at": "2026-11-12",
+        "ok": true
+      },
+      "match": "is still English",
+      "added": "2026-11-12"
+    },
+    {
+      "id": "forms-ja",
+      "skill": "bds-forms",
+      "rule": "Text a Japanese player reads (buttons, messages, titles): one politeness level throughout (です・ます), no subject where Japanese drops it (「ルビーが足りません」, not 「あなたはルビーを持っていません」), a counter with every number (ダイヤ1個, 3分, 5回), a button as a noun or a short verb (購入, 閉じる), no leftover English word the game has a Japanese word for.",
+      "why": "text that reads as a machine translation",
+      "evidence": {
+        "kind": "source",
+        "ref": "bds/addons/shop/src/main.ts"
+      },
+      "status": "verified",
+      "verified": {
+        "bds": "1.26.63.1",
+        "at": "2026-11-12",
+        "ok": true
+      },
+      "added": "2026-11-12"
+    },
+    {
+      "id": "deliver-ja",
+      "skill": "bds-deliver",
+      "rule": "A report in Japanese: the result first, then what was proven, then what was not; です・ます throughout; one sentence, one thing; the game's own Japanese words (統合版, アドオン, ビヘイビアパック, リソースパック, 実験的機能) and the addon's own names as the player sees them; commands and file names stay as they are typed. No sentence built on an English frame (「〜することができます」→「〜できます」, 「〜を行います」→「〜します」).",
+      "why": "a report the person has to translate back in their head",
+      "evidence": {
+        "kind": "source",
+        "ref": "README.md"
+      },
+      "status": "verified",
+      "verified": {
+        "bds": "1.26.63.1",
+        "at": "2026-11-12",
+        "ok": true
+      },
+      "added": "2026-11-12"
     }
   ],
   "log": [
