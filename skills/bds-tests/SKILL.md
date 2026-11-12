@@ -20,6 +20,7 @@ description: Write tests.txt that proves what the request asks on the real BDS w
 - `!` and `!~` check the whole section, later lines too: to prove something did not happen before a later step makes it, give that check its own section. (when missed: an absence check fails on what a later line prints) `test-absent-section`
 - A js line gives its last expression: `js const l = inv(p('A')); l.length` (or `return x`); nothing printed means undefined. (when missed: want = 2, got only other lines) `test-js-last`
 - `~` regexes are JavaScript and match one line: no (?s) or other inline flags (only a leading (?i)); for an order across lines, compute it in a js/py/lse line and check its value. (when missed: Invalid regular expression after the server started) `test-regex-js`
+- `js` has no kit or addon functions: count(p('A'),'ns:id') / inv(p) for items, p('A').getDynamicProperty(k) for what was saved. (when missed: E js: 'take' is not defined) `test-js-names`
 <!-- rules:end -->
 
 Done when `go` passes and each section fails once the code is broken (`mutate`). Report which request lines a section proves; `sim` is not proof (say so).
