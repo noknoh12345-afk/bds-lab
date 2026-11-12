@@ -1001,24 +1001,6 @@
         "ok": true
       },
       "added": "2026-11-12"
-    },
-    {
-      "id": "test-js-names",
-      "skill": "bds-tests",
-      "rule": "`js` has no kit or addon functions: count(p('A'),'ns:id') / inv(p) for items, p('A').getDynamicProperty(k) for what was saved.",
-      "why": "E js: 'take' is not defined",
-      "evidence": {
-        "kind": "test",
-        "ref": "tests/sim-offline.mjs"
-      },
-      "status": "verified",
-      "verified": {
-        "bds": "1.26.63.1",
-        "at": "2026-11-12",
-        "ok": true
-      },
-      "match": "js: '\\w+' is not defined",
-      "added": "2026-11-12"
     }
   ],
   "log": [
