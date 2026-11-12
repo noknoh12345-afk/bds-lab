@@ -20,6 +20,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with: { node-version: 22 }
+      - run: npm i -g esbuild@0.28 typescript@6.0.3
       - run: node common/run-tests.mjs tests/*-offline.mjs tests/offline.mjs
   bds:
     # the real server: setup, then each addon in bds/addons through go (build → tests.txt → QA → DONE)
