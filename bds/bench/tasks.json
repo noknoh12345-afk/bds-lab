@@ -215,44 +215,6 @@
       "bds-content"
     ]
   },
-  "pingtop": {
-    "lab": "end",
-    "prompt": "/ping で自分のping(ms)を「A: 12ms」の形で表示し、/pingtop でオンラインの全員をpingの小さい順に「1. A 3ms | 2. B 5ms」の形で表示する。",
-    "test": [
-      "## ping",
-      "@A join",
-      "@B join",
-      "@A cmd /ping",
-      "~ @A A: \\d+ms",
-      "@A cmd /pingtop",
-      "~ @A 1\\. [AB] \\d+ms \\| 2\\. [AB] \\d+ms"
-    ],
-    "level": 6,
-    "area": "Endstone: what BDS scripts cannot do (ping)",
-    "teaches": [
-      "endstone-plugin"
-    ]
-  },
-  "coins": {
-    "lab": "ll",
-    "prompt": "ブロックを壊すたびにそのプレイヤーのコインが1枚増え、本人だけのサイドバーに「コイン」の行で枚数を表示する。/coins でチャットに「コイン: 2」の形で枚数を表示する。",
-    "test": [
-      "## coins",
-      "@A join",
-      "setblock 2 -60 2 dirt",
-      "setblock 3 -60 2 dirt",
-      "@A dig 2 -60 2",
-      "@A dig 3 -60 2",
-      "wait 1000",
-      "@A cmd /coins",
-      "~ @A .*コイン: 2"
-    ],
-    "level": 6,
-    "area": "LeviLamina: a per-player sidebar",
-    "teaches": [
-      "levilamina-mod"
-    ]
-  },
   "calc": {
     "level": 1,
     "area": "a custom command with arguments",

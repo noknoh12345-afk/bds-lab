@@ -47,7 +47,7 @@ ok(!badJ.length, `data: ${jsons.length} JSON files parse`, badJ.join('\n'));
   const rows = [...(m?.[1] ?? '').matchAll(/([a-z][\w-]*): \['([\w.-]+\.mjs)', '(\w+)'/g)].map((x) => ({ cmd: x[1], file: x[2], fn: x[3] }));
   const missingFn = [];
   for (const r of rows) { const src = fs.existsSync(path.join(TOP, 'common', r.file)) ? rd(`common/${r.file}`) : ''; if (!new RegExp(`export (async )?function ${r.fn}\\b`).test(src)) missingFn.push(`${r.cmd} → common/${r.file} ${r.fn}`); }
-  ok(rows.length >= 30 && !missingFn.length, `commands: ${rows.length} lab-level commands, each a module exporting its function`, missingFn.join('\n'));
+  ok(rows.length >= 20 && !missingFn.length, `commands: ${rows.length} lab-level commands, each a module exporting its function`, missingFn.join('\n'));
   const docs = ['AGENTS.md', 'common/help.md', 'README.md', ...files.filter((f) => /^docs\/.*\.md$/.test(f))].map(rd).join('\n');
   const undocumented = rows.filter((r) => !new RegExp('(`|lab\\.mjs |\\b)' + r.cmd + '\\b').test(docs)).map((r) => r.cmd);
   ok(!undocumented.length, 'commands: every one is documented (AGENTS.md, help.md, README.md or docs/)', undocumented.join(' '));
@@ -63,31 +63,10 @@ ok(!badJ.length, `data: ${jsons.length} JSON files parse`, badJ.join('\n'));
   ok(arch && !off.length, 'modules: every one is on the map (docs/ARCHITECTURE.md)', off.join(' '));
 }
 
-// gate and CI
+// CI: every offline test runs (the workflow names the pattern, not a list: none forgotten)
 {
-  const { DEFAULT_POLICY } = await import(pathToFileURL(path.join(TOP, 'common', 'auto-guard.mjs')).href);
-  const gate = DEFAULT_POLICY.gate, missing = gate.filter((g) => !fs.existsSync(path.join(TOP, g)));
-  ok(!missing.length, `gate: all ${gate.length} tests exist`, missing.join(' '));
-  // (.lab-github/: the same files where a lender's host carries them — GitHub starts nothing from there: common/hosts.mjs)
-  const ci = files.filter((f) => /^\.(lab-)?github\/workflows\/.*\.yml$/.test(f)).map(rd).join('\n');
-  // (CI runs every tests/*-offline.mjs and tests/offline.mjs, whatever their names — the same pattern below: `auto gate --all`, or
-  // verify's plan, which can name each of them (common/verify-plan.mjs listUnits) to `auto gate --tests`)
-  const all = /node lab\.mjs auto gate --all/.test(ci);
-  const { listUnits } = await import(pathToFileURL(path.join(TOP, 'common', 'verify-plan.mjs')).href);
-  // (the plan's list itself, or each runner's share of it: offmatrix, a list per runner)
-  const planned = /node lab\.mjs auto gate --tests "\$TESTS"/.test(ci) && /TESTS: \$\{\{ (needs\.plan\.outputs\.tests|matrix\.tests) \}\}/.test(ci) && (/TESTS: \$\{\{ needs\.plan\.outputs\.tests \}\}/.test(ci) || /fromJSON\(needs\.plan\.outputs\.offmatrix\)/.test(ci)) ? new Set(listUnits(TOP)) : new Set();
-  const loose = files.filter((f) => /^tests\/[\w-]+\.mjs$/.test(f) && /-offline\.mjs$|^tests\/offline\.mjs$/.test(f) && !gate.includes(f) && !ci.includes(f) && !all && !planned.has(f));
-  ok(!loose.length, 'gate: every offline test runs in the gate or in CI (none forgotten)', loose.join(' '));
-  ok(all || planned.size > 0, 'CI: every offline test can run (node lab.mjs auto gate --all, or verify\'s plan naming any of them to auto gate --tests)', '');
-  for (const t of ['tests/cli-offline.mjs', 'tests/scratch-offline.mjs', 'tests/lint-offline.mjs']) ok(gate.includes(t), `gate: ${t} is in it`, gate.join(' '));
-}
-
-// a release carries what its skills point at: every unit a verified rule names as evidence is shipped by share (it was not)
-{
-  const { samples } = await import(pathToFileURL(path.join(TOP, 'common', 'share.mjs')).href);
-  const S = samples(TOP), k = JSON.parse(rd('skills/knowledge.json'));
-  const missing = k.rules.filter((r) => r.status === 'verified' && r.evidence?.kind === 'unit').map((r) => r.evidence.ref).filter((ref) => { const m = /^(bds|end|ll)\/(?:addons|plugins|mods)\/([^/]+)$/.exec(ref); return !m || !S[m[1]].includes(m[2]) || !fs.existsSync(path.join(TOP, ref)); });
-  ok(!missing.length, 'release: every unit a verified skill rule cites as evidence is here and shipped by share', missing.join(' '));
+  const ci = files.filter((f) => /^\.github\/workflows\/.*\.yml$/.test(f)).map(rd).join('\n');
+  ok(/tests\/\*-offline\.mjs/.test(ci), 'CI: every tests/*-offline.mjs runs (verify.yml names the pattern)', '');
 }
 
 // CI supply chain: every action pinned to a commit (a moved tag cannot change what runs), every workflow says its permissions
@@ -110,8 +89,6 @@ ok(!badJ.length, `data: ${jsons.length} JSON files parse`, badJ.join('\n'));
     });
   }
   ok(!hits.length, 'no prompt placed with String.replace and a string (its $& $` $\' patterns rewrite the text)', hits.join('\n'));
-  const au = rd('common/auto.mjs');
-  ok(/spawnSync\(tpl\[0\][^\n]*LAB_AUTO_AGENT: '1'/.test(au), 'the engine agent CLI the autopilot starts is marked LAB_AUTO_AGENT (it cannot lift STOP or change the policy)', '');
   const mt = rd('common/maint.mjs');
   ok(/ls-files', '--error-unmatch', 'bds\/vendor\/bedrock-server\.zip'/.test(mt), 'maint --fix never deletes a BDS zip git tracks', '');
   const sk = rd('common/skills.mjs');

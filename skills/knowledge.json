@@ -892,24 +892,6 @@
       }
     },
     {
-      "id": "recipe-fixed",
-      "skill": "bds-recipes",
-      "rule": "A person's addon that broke after an update, fixed in place (their UUIDs, plain JS kept) → bds/addons/teleport_menu (TASK.md lists every change)",
-      "why": "a rewrite instead of a fix",
-      "evidence": {
-        "kind": "unit",
-        "ref": "bds/addons/teleport_menu"
-      },
-      "status": "verified",
-      "added": "2026-10-03",
-      "tags": "修正 壊れた アップデート 人のアドオン",
-      "verified": {
-        "bds": "1.26.52.3",
-        "at": "2026-10-03",
-        "ok": true
-      }
-    },
-    {
       "id": "deliver-beta",
       "skill": "bds-deliver",
       "rule": "On beta modules: tell them to turn on the world's Beta APIs experiment and that it works only on this Minecraft version; prefer stable when the request allows (go tries it).",

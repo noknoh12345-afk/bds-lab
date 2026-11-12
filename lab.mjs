@@ -377,9 +377,9 @@ if (A[0] === 'maint') { process.exit((await (await import(pathToFileURL(path.joi
   const TABLE = { maintain: ['maintain.mjs', 'maintainCmd'], apidiff: ['apidiff.mjs', 'apidiffCmd'], undo: ['checkpoint.mjs', 'checkpointCmd', true], checkpoint: ['checkpoint.mjs', 'checkpointCmd', true],
     mutate: ['mutate.mjs', 'mutateCmd'], scan: ['scan.mjs', 'scanCmd'], i18n: ['i18n.mjs', 'i18nCmd'], optimize: ['optimize.mjs', 'optimizeCmd'], why: ['why.mjs', 'whyCmd'], skill: ['skills.mjs', 'skillCmd'], skills: ['skills.mjs', 'skillCmd'],
     sim: ['sim.mjs', 'simCmd'], status: ['status.mjs', 'statusCmd'], clean: ['status.mjs', 'cleanCmd'], deploy: ['deploy.mjs', 'deployCmd'], ts: ['ts.mjs', 'tsCmd'], bb: ['bb.mjs', 'bbCmd'], upkeep: ['upkeep.mjs', 'upkeepCmd'], record: ['record.mjs', 'recordCmd'],
-    chaos: ['chaos.mjs', 'chaosCmd'], shrink: ['chaos.mjs', 'shrinkCmd'], gaps: ['gaps.mjs', 'gapsCmd'] };
+    bisect: ['bisect.mjs', 'bisectCmd'], flaky: ['flaky.mjs', 'flakyCmd'], chaos: ['chaos.mjs', 'chaosCmd'], shrink: ['chaos.mjs', 'shrinkCmd'], gaps: ['gaps.mjs', 'gapsCmd'] };
   // what the stable branch leaves out lives on the dev branch (panel, autopilot, lending, colony, GeoUI, the real app, Endstone, LeviLamina ...)
-  const DEV = ['end', 'll', 'app', 'login', 'connect', 'connect-daily', 'weekly', 'statuspage', 'start', 'notify', 'watch', 'ui', 'flaky', 'release', 'bisect', 'colony', 'host', 'schedule', 'unitci', 'auto', 'share', 'c2s', 'panel', 'scratch', 'update', 'make', 'playtest', 'harden', 'lan'];
+  const DEV = ['end', 'll', 'app', 'login', 'connect', 'connect-daily', 'weekly', 'statuspage', 'start', 'notify', 'watch', 'ui', 'release', 'colony', 'host', 'schedule', 'unitci', 'auto', 'share', 'c2s', 'panel', 'scratch', 'update', 'make', 'playtest', 'harden', 'lan'];
   if (DEV.includes(A[0]) && !(A[0] === 'ui' && A[1] === 'build')) { console.log(`ERR ${A[0]}: not in the stable branch (it is on dev: git switch dev)`); process.exit(1); }
   // `node lab.mjs end maintain` / `end status`: any of these after a lab's name runs for that lab (status, sim, ... used to fall
   // through to the lab's own commands and print its usage)
