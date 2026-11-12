@@ -15,13 +15,14 @@
 - **テスト**：tests.txt の `js` で `count(p('A'),'ns:id')` が使えます（kit の `count` と同じ感覚で書いて失敗していました）。
 - **CI**：`go` が失敗した見本の出力が見えるようになりました。jelly の見本の待ち時間を、遅いランナーでも足りる長さにしました。
 
+- **見本 `teleport_menu` が戻りました**（13 本目）：通らなかった原因は、マニフェストが前の BDS のベータ版モジュール（`@minecraft/server` 2.11.0-beta）を指していたことでした。`node lab.mjs mode beta` でこの BDS のもの（2.12.0-beta）に合わせ、20/20 で通ります。
 - 切り替え前の状態は `pre-stable` ブランチにあります（タグはこの環境から作れませんでした）。
 
 ## v2.0.0 (2026-11-12) — 安定版
 
 `main` を、アドオンを作って本物のサーバーで確かめるのに要るものだけにしました。v1.24.0 までの全機能と変更履歴は `dev` ブランチ（切り替え前の状態は `pre-stable` ブランチ）にあります。
 
-- **残したもの**：`bds new`・`add`・`go`・`sim`・`why`・`run`・`import`・`gaps`・`mutate`・`chaos`・`record`・`api`・`doc`・`sample`・`ts`・`bb`・`skill`・`help`・`status`・`checkpoint`/`undo`・`deploy`・`upkeep`、kit、本物のプレイヤー、スキル 13 本、見本のアドオン 12 本、ベンチ。
+- **残したもの**：`bds new`・`add`・`go`・`sim`・`why`・`run`・`import`・`gaps`・`mutate`・`chaos`・`record`・`api`・`doc`・`sample`・`ts`・`bb`・`skill`・`help`・`status`・`checkpoint`/`undo`・`deploy`・`upkeep`、kit、本物のプレイヤー、スキル 13 本、見本のアドオン 12 本（のちに 13 本）、ベンチ。
 - **`dev` に移したもの**：管理パネルとサインイン、Actions の貸し借り、クラフターズコロニー、予約、通知、配布、自動操縦、スキルの自動成長、fanout、GeoUI、本物のアプリでの確認、Endstone、LeviLamina。
 - `dev` にしかないコマンドは `not in the stable branch` と 1 行で答えます。
 - `AGENTS.md` は約 10 KB から約 5 KB になりました。
