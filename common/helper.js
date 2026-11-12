@@ -10,6 +10,7 @@ globalThis.__labClock=ms=>{CLK=clk()+ms;world.setDynamicProperty("__lab_clock",C
 const sim=(n="P",x=0,y=-60,z=0,gm="survival")=>{const g=mc.GameMode[gm]??mc.GameMode[gm[0].toUpperCase()+gm.slice(1)];const p=gt.spawnSimulatedPlayer({dimension:dim(),x,y,z},n,g);P.set(n,p);return p};
 const p=n=>n?P.get(n)??world.getPlayers({name:n})[0]:[...P.values()].at(-1)??world.getAllPlayers()[0];
 const inv=(q=p())=>{if(typeof q==="string")q=p(q);const c=q.getComponent("inventory").container,r=[];for(let i=0;i<c.size;i++){const s=c.getItem(i);if(s)r.push(i+":"+s.typeId+"*"+s.amount)}return r};
+const count=(q,id)=>inv(q).reduce((n,s)=>{const m=/^\d+:(.+)\*(\d+)$/.exec(s);return m&&(m[1]===id||m[1]==="minecraft:"+id)?n+ +m[2]:n},0);
 const num=v=>Number.isInteger(v)?v:Math.round(v*1e3)/1e3;
 const fmt=(v,d=0)=>{if(typeof v==="number")return String(num(v));if(v===null||typeof v!=="object")return typeof v==="function"?"[fn]":d?JSON.stringify(v)??String(v):String(v);
 if(Array.isArray(v))return"["+v.slice(0,50).map(x=>fmt(x,d+1)).join(",")+(v.length>50?",+"+(v.length-50):"")+"]";
