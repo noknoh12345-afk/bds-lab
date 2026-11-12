@@ -1,0 +1,18 @@
+world.scoreboard
+!expect sidebar_info
+world.scoreboard.getObjectives()
+!expect kills
+world.scoreboard.getObjective("kills").getScore(world.getLocalPlayer())
+!expect 7
+world.scoreboard.getObjective("kills").getScore("Alex_Remote")
+!expect 12
+world.scoreboard.getObjectiveAtDisplaySlot("Sidebar")
+!expect Ascending
+client.sidebar()
+!expect play.example.net  1
+world.scoreboard.getObjective("kills").getScores().map(s => [s.participant.type, s.participant.displayName, s.score])
+!expect "Player", "Alex_Remote", 12
+world.scoreboard.getObjective("kills").getParticipants()[0].getEntity()
+!expect Player {
+world.scoreboard.getObjective("kills").setScore("x", 1)
+!expect NotSupportedOnClientError

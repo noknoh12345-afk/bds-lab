@@ -6,6 +6,9 @@ dist/
 !bds/geoui/dist/
 # vendored code under common/ keeps its dist/ (common/nethernet-connect/dist: what `lan` runs; not a build output of the lab)
 !common/*/dist/
+# scripteval mod の Studio dist は埋め込む .gz だけ置く(素の index.html は作り直しの産物なので無視)
+!app/redroid/scripteval/mod-src/studio/dist/
+app/redroid/scripteval/mod-src/studio/dist/index.html
 __pycache__/
 *.pyc
 build/
@@ -61,3 +64,12 @@ bds/addons/borrowed_*/
 .claude/worktrees/
 # hostrun.yml: the host's results for the run's artifact (made on the runner)
 hostrun-result/
+
+# scripteval: 素の .so はコミットしない(封緘 .bin のみ置く)
+app/redroid/scripteval/*.so
+app/redroid/scripteval/.lab/
+# scripteval mod のビルド成果物・取得物(ソースだけ置く。.so/.bin は封緘して app/redroid/scripteval/ に)
+app/redroid/scripteval/mod-src/**/*.so
+app/redroid/scripteval/mod-src/build-*/
+app/redroid/scripteval/mod-src/cpm-cache/
+app/redroid/scripteval/mod-src/studio/node_modules/

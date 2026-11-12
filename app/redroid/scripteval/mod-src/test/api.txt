@@ -1,0 +1,73 @@
+world.getAllPlayers().length
+!expect 2
+!sleep 2200
+client.tick().installed
+!expect true
+const lp = world.getLocalPlayer(); [lp.name, lp.typeId, lp.id, lp.isLocalPlayer, lp.getGameMode(), lp.dimension.id]
+!expect "Steve_Dev", "minecraft:player", "-4294967295", true, "Creative", "minecraft:overworld"
+world.getLocalPlayer().getHeadLocation().y - world.getLocalPlayer().location.y
+!expect 1.62
+world.getLocalPlayer().getVelocity()
+world.getLocalPlayer().getViewDirection()
+world.getLocalPlayer().getComponent("health")
+!expect currentValue: 20
+world.getLocalPlayer().getComponent("minecraft:movement")
+world.getLocalPlayer().getComponent("equippable")
+!expect diamond_sword
+world.getLocalPlayer().getComponent("equippable").getEquipment("Mainhand")
+!expect minecraft:diamond_sword
+world.getLocalPlayer().getComponent("inventory")
+!expect cobblestone
+world.getLocalPlayer().selectedSlotIndex
+!expect 2
+world.getLocalPlayer().getComponent("inventory").container.getItem(2)
+!expect minecraft:bread x12
+world.getDimension("overworld").getEntities({ type: "zombie" }).length
+!expect 200
+world.getDimension("overworld").getEntities({ location: world.getLocalPlayer().location, maxDistance: 6 }).map(e => e.typeId)
+world.getDimension("overworld").getEntities({ location: {x:0,y:64,z:0}, closest: 3 }).map(e => [e.typeId, fmt(e.location)])
+world.getPlayers({ name: "Alex_Remote" })[0]
+!expect Alex_Remote
+world.getEntity("-8589934591").name
+!expect Alex_Remote
+client.countByType()
+!expect "minecraft:zombie": 200
+client.nearby(5)
+world.getLocalPlayer().ecsComponents
+!expect StateVectorComponent
+world.getLocalPlayer().synchedData()
+world.getDimension("overworld").getBlock({x: 10, y: 63, z: 20})
+!expect minecraft:grass_block
+world.getDimension("overworld").getBlock({x: 10, y: 10, z: 20}).getTags()
+!expect minecraft:is_pickaxe_item_destructible
+world.getDimension("overworld").getTopmostBlock({x: 3, z: 3})
+!expect grass_block @ 3, 63, 3
+world.getDimension("nether").getBlock({x:0,y:0,z:0})
+!expect undefined
+world.getLocalPlayer().isSneaking
+!sleep 2100
+world.getLocalPlayer().isSneaking
+let t0 = system.currentTick; await system.waitTicks(10); system.currentTick - t0
+!expect 10
+system.runTimeout(() => console.log("timeout fired at", system.currentTick), 5); "scheduled"
+!sleep 600
+system.runInterval(() => {}, 1)
+system.clearRun(2)
+while(true){}
+!expect interrupted
+1+1
+!expect 2
+throw new Error("boom")
+!expect Error: boom
+undefinedVariable
+!expect ReferenceError
+import { world as w } from "@minecraft/server"; console.log("module ok", w.getAllPlayers().length)
+!expect module ok
+runScript("players")
+!expect Steve_Dev
+.run entities
+!expect minecraft:zombie
+world.getTimeOfDay()
+!expect NotSupportedOnClientError
+world.getLocalPlayer().teleport({x:0,y:0,z:0})
+!expect NotSupportedOnClientError

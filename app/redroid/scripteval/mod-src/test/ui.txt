@@ -1,0 +1,50 @@
+client.status().gameVersion
+!expect 1.26.51.1
+!uidump
+!expect not shown
+!key 119
+!sleep 400
+!uidump
+!expect [button] Run
+!uitype world.getAllPlayers().map(p => p.name).join(",")
+!uiclick Run
+!sleep 1500
+!uidump
+!expect Steve_Dev,Alex_Remote
+!uiclick Example
+!sleep 300
+!uidump
+!expect [input] 'world.getAllPlayers()
+!uiclick < History
+!sleep 300
+!uidump
+!expect [input] 'world.getAllPlayers().map(p => p.name).join(",")'
+!uitype 6*7+1000
+!key 13
+!sleep 800
+!uidump
+!expect 1042
+!menu ScriptEval/Status
+!sleep 800
+!uidump
+!expect inWorld: true
+!menu ScriptEval/Scripts...
+!sleep 500
+!uidump ScriptEval Scripts
+!expect players.js
+!uiclick Clear
+!sleep 300
+!uidump
+!reject 1042
+!uiclick Open Studio
+!sleep 300
+__native.sys.consoleTail(5).map(l => l.text).join("|")
+!expect Studio is not running
+!menu ScriptEval/Doctor
+!sleep 800
+!uidump
+!expect SE-DOC 0.3.0
+!key 119
+!sleep 400
+!uidump
+!expect not shown

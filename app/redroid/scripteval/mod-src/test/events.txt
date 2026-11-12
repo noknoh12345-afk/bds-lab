@@ -1,0 +1,35 @@
+world.afterEvents.entitySpawn.subscribe(e => console.log("spawn", e.entity.typeId, e.entity.id)); world.afterEvents.entityRemove.subscribe(e => console.log("remove", e.typeId, e.removedEntityId)); world.afterEvents.playerJoin.subscribe(e => console.log("join", e.playerName)); world.afterEvents.playerLeave.subscribe(e => console.log("leave", e.playerName)); "ok"
+!sleep 16000
+client.reset()
+!expect cleared
+dbg.search("Player")
+dbg.rtti("LocalPlayer")
+!expect Player
+dbg.classify(world.getLocalPlayer().address)
+!expect LocalPlayer
+dbg.fields(world.getLocalPlayer().address, 0x60)
+!expect vptr
+dbg.find("Zombie").length
+!expect 200
+dbg.find("Actor").length
+dbg.ecs("Rotation")
+!expect ActorRotationComponent
+dbg.hexdump(world.getLocalPlayer().address, 32)
+dbg.str(world.getLocalPlayer().address + client.offsets().playerName)
+!expect Steve_Dev
+dbg.findString("Alex_Remote").length > 0
+!expect true
+dbg.u32(0)
+!expect null
+dbg.read(16, 8)
+!expect null
+const p = world.getLocalPlayer(); p.ecs("StateVectorComponent") > 0
+!expect true
+dbg.f32(world.getLocalPlayer().ecs("StateVectorComponent") + 4)
+dbg.vfuncs("LocalPlayer", 4)
+system.runInterval(() => { while (true) {} }, 1); "evil interval"
+!sleep 2500
+system.runs
+!expect []
+1+1
+!expect 2

@@ -1,0 +1,20 @@
+# scripteval の検証(ワールドの中): app/redroid/scripteval.mjs run --world が、この手順の app run を横で走らせる。
+# 注入はタイトルで済ませてある(「端末の準備ができた」の合図の前)。ここはラボの BDS に入り、scripteval が実測と歩行を
+# 終えるまで待つだけ。合図(logcat の SE_MARK_A / SE_MARK_B / SE_WORLD_DONE)ごとに、サーバーから見た位置を控える。
+section title
+launch                                    # 端末はもう起動済み（scripteval が注入したゲームをそのまま使う）
+until title 600000
+section join
+join                                      # ラボの BDS へ（LAN）
+until joined 300000
+wait 3000
+shot world
+where
+section scripteval
+until log SE_MARK_A 1500000               # scripteval: 実測を終え、歩く前
+where
+until log SE_MARK_B 600000                # コントローラで 2 秒前へ（対照）の後
+where
+until log SE_WORLD_DONE 600000            # injectInput で 2.5 秒前へ（本題）の後
+where
+shot after

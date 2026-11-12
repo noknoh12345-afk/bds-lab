@@ -1,0 +1,153 @@
+# @minecraft/server-ui emulation and live panels (run with FAKE_LAUNCHER=1)
+client.status().gameVersion
+!expect 1.26.51.1
+# ---- ActionFormData: click a button
+void new ActionFormData().title("§6Pick").body("Choose one").button("Alpha").button("Beta").show(world.getLocalPlayer()).then(r => { globalThis.r1 = r; console.log("action:", r.selection); })
+!sleep 500
+!uidump Pick
+!expect [button] Alpha
+!expect [text] Choose one
+!reject §
+!ui click Pick|Beta
+!sleep 500
+r1
+!expect selection: 1
+!expect canceled: false
+!uidump Pick
+!expect not shown
+# ---- closing the window cancels
+void new ActionFormData().title("Closing").button("x").show().then(r => { globalThis.r2 = r; })
+!sleep 500
+!ui close Closing
+!sleep 500
+r2
+!expect canceled: true
+!expect UserClosed
+# ---- ModalFormData with every control kind (new and legacy signatures)
+void new ModalFormData().title("Settings").header("General").textField("Name", "type here", { defaultValue: "Steve" }).slider("Radius", 0, 100, { valueStep: 5, defaultValue: 20 }).slider("Speed", 0, 1, 0.1, 0.5).toggle("Enabled", true).dropdown("Mode", ["Survival", "Creative", "Adventure"], 1).submitButton("Apply").show().then(r => { globalThis.r3 = r; })
+!sleep 500
+!uidump Settings
+!expect [text] General
+!expect [button] [x] Enabled
+!expect [button] Mode: Creative  >
+!expect [input] 'Steve' label=Name
+!expect [slider] Radius = 4 (0..20)
+!expect = 20
+!ui input Settings|Name|Alex "the" Builder
+!ui slide Settings|Radius|10
+!ui slide Settings|Speed|0.73
+!ui click Settings|[x] Enabled
+!ui click Settings|Mode: Creative  >
+!sleep 500
+!uidump Settings
+!expect [button] [  ] Enabled
+!expect [button] Mode: Adventure  >
+!expect = 50
+!expect [input] 'Alex "the" Builder'
+!ui click Settings|Apply
+!sleep 500
+r3.formValues
+!expect [undefined, "Alex \"the\" Builder", 50, 0.7, false, 2]
+# ---- MessageFormData
+void new MessageFormData().title("Confirm").body("Sure?").button1("Yes").button2("No").show().then(r => { globalThis.r4 = r; })
+!sleep 500
+!ui click Confirm|No
+!sleep 500
+r4
+!expect selection: 1
+# ---- two forms at once + uiManager.closeAllForms
+globalThis.done = []; for (const t of ["F1", "F2"]) new ActionFormData().title(t).button("ok").show().then(r => done.push(t + ":" + r.canceled)); 0
+!sleep 500
+!uidump F2
+!expect [button] ok
+uiManager.closeAllForms(world.getLocalPlayer())
+!sleep 600
+done.sort().join(",")
+!expect F1:true,F2:true
+!uidump F1
+!expect not shown
+# ---- import from the module
+import { ActionFormData as AFD, FormCancelationReason } from "@minecraft/server-ui"; globalThis.FCR = FormCancelationReason; globalThis.AFD = AFD;
+FCR.UserClosed + " " + (AFD === ActionFormData)
+!expect UserClosed true
+# ---- watch panel
+client.watch("1 + 1", "two")
+!expect 1
+!sleep 700
+!uidump ScriptEval Watch
+!expect #1  two
+!expect     2
+client.watch(() => world.getAllPlayers().length, { label: "players", every: 2 })
+!sleep 700
+!uidump ScriptEval Watch
+!expect #2  players
+!expect [button] Remove #1
+!ui click ScriptEval Watch|Remove #1
+!sleep 700
+!uidump ScriptEval Watch
+!reject #1  two
+!expect #2  players
+client.watches()
+!expect label: "players"
+client.watch("nope(")
+!expect SyntaxError
+# ---- players panel (toggle from the menu and with the X button)
+client.playersPanel()
+!expect players panel open
+!sleep 900
+!uidump ScriptEval Players
+!expect Steve_Dev (you)
+!expect Alex_Remote
+!ui close ScriptEval Players
+!sleep 700
+client.panels()
+!expect ["watch"]
+!uidump ScriptEval Players
+!expect not shown
+!menu ScriptEval/Players panel
+!sleep 900
+!uidump ScriptEval Players
+!expect Steve_Dev (you)
+!menu ScriptEval/Players panel
+!sleep 700
+!uidump ScriptEval Players
+!expect not shown
+# ---- custom panel with a button that prints to the console
+client.panel("custom", () => ["hello panel", ["Say hi", "console.log('hi from ' + 'panel')"]], { title: "My Panel" })
+!sleep 700
+!uidump My Panel
+!expect hello panel
+!key 119
+!sleep 300
+!ui click My Panel|Say hi
+!sleep 700
+!uidump
+!expect hi from panel
+!reject > console.log('hi from
+# ---- closing the watch panel drops the watches
+!ui close ScriptEval Watch
+!sleep 700
+client.watches().length
+!expect 0
+client.reset()
+!expect 1 panel(s)
+!sleep 600
+!uidump My Panel
+!expect not shown
+# ---- memory snapshot / diff on the local player
+globalThis.snap = dbg.snapshot(world.getLocalPlayer().ecs("StateVectorComponent"), 36)
+!expect Snapshot
+!sleep 600
+dbg.diff(snap)
+!expect f32
+dbg.diff(snap, snap)
+!expect (no changes)
+# ---- the example debug menu script
+.run debugmenu
+!sleep 600
+!uidump ScriptEval debug menu
+!expect [button] Entities within 32 blocks
+!ui click ScriptEval debug menu|Sidebar scoreboard
+!sleep 700
+!uidump
+!expect play.example.net

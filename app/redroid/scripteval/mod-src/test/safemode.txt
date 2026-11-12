@@ -1,0 +1,14 @@
+# a leftover running.marker means the last launch crashed early: no autorun, no tick hook
+client.safeMode
+!expect true
+!sleep 3000
+client.tick().installed
+!expect false
+client.doctor().line
+!expect tick=OFF:safe
+!expect safe=on
+client.leaveSafeMode()
+!expect left safe mode
+!sleep 2500
+client.tick().installed
+!expect true

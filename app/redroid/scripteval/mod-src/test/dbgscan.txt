@@ -1,0 +1,33 @@
+# memory scanner helpers and address identification
+globalThis.sv = world.getLocalPlayer().ecs("StateVectorComponent"); dbg.whereIs(sv + 4)
+!expect component: "StateVectorComponent"
+!expect offset: 4
+dbg.whereIs(sv + 4).ecs.actor.name
+!expect Steve_Dev
+dbg.whereIs(world.getLocalPlayer().address + 0x10).nearestObject
+!expect name: "LocalPlayer"
+!expect offset: 16
+dbg.whereIs(dbg.module().base + 0x10).module
+!expect libminecraftpe.so+0x10
+globalThis.hits = dbg.findF32(dbg.f32(sv + 4)); hits.includes(sv + 4)
+!expect true
+dbg.refine(hits, "f32", dbg.f32(sv + 4)).includes(sv + 4)
+!expect true
+dbg.refine(hits, "f32", v => typeof v !== "number").length
+!expect 0
+dbg.findI32(dbg.i32(sv + 4)).includes(sv + 4)
+!expect true
+dbg.findBytes([0x53, 0x74, 0x65, 0x76, 0x65, 0x5f, 0x44, 0x65, 0x76]).length > 0
+!expect true
+(() => { const a = new Set(dbg.findBytes("53 74 65 76 65 5f 44 65 76")); return dbg.findString("Steve_Dev").some(x => a.has(x)); })()
+!expect true
+dbg.findBytes("abc")
+!expect TypeError
+dbg.refine([sv], "nope", 1)
+!expect TypeError
+client.save("players.json", world.getAllPlayers())
+!expect /out/players.json
+client.load("players.json")[0].name
+!expect Steve_Dev
+client.load("../config.json")
+!expect not found

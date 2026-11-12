@@ -1,0 +1,26 @@
+world.getAllPlayers().map(p => p.name)
+!expect Steve_Dev
+!mock preview
+!sleep 2600
+client.tick()
+!expect installed: true
+const before = world.getLocalPlayer(); globalThis.oldMe = before; before.id
+!expect -4294967295
+system.currentTick > 0
+!mock rejoin
+!sleep 600
+oldMe.isValid
+!expect false
+world.getAllPlayers().map(p => p.name)
+!expect Server2_Admin
+world.getLocalPlayer().id
+!expect -77309411327
+client.countByType()
+!expect "minecraft:cow": 30
+client.status().lastScan
+let t1 = system.currentTick; await system.waitTicks(5); system.currentTick - t1
+!expect 5
+world.getPlayerList().map(p => p.name)
+!expect Server2_Admin
+oldMe.location
+!expect InvalidEntityError

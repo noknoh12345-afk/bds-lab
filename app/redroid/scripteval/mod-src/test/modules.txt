@@ -1,0 +1,57 @@
+# module scopes, hot reload, Studio RPC and MCP entry points (driven through the REPL)
+world.getAllPlayers().length > 0
+!expect true
+!sleep 2600
+JSON.parse(await __studioRpc(JSON.stringify({jsonrpc:"2.0",id:1,method:"scripts.write",params:{name:"mt.js",content:"import { system } from '@minecraft/server'; globalThis.mtCount = 0; system.runInterval(() => globalThis.mtCount++, 1); client.onDispose(() => { globalThis.mtDisposed = (globalThis.mtDisposed ?? 0) + 1; });"}}))).result.ok
+!expect true
+await runScript("mt"); await system.waitTicks(10); mtCount > 5
+!expect true
+client.modules().map(m => m.name + ":" + m.timers + ":" + m.disposers).join(",")
+!expect scripts/mt.js:1:1
+await runScript("mt"); globalThis.mtDisposed
+!expect 1
+client.modules().filter(m => m.name === "scripts/mt.js").length
+!expect 1
+client.stopModule("scripts/mt.js").released.timers
+!expect 1
+const c0 = mtCount; await system.waitTicks(5); mtCount === c0
+!expect true
+globalThis.mtDisposed
+!expect 2
+JSON.parse(await __studioRpc(JSON.stringify({jsonrpc:"2.0",id:2,method:"module.run",params:{name:"ev",code:"import { world } from '@minecraft/server'; world.afterEvents.entitySpawn.subscribe(() => {});"}}))).result.resources.handlers
+!expect 1
+client.stopModule("ev").released.handlers
+!expect 1
+world.afterEvents.entitySpawn.handlers.length
+!expect 0
+JSON.stringify(JSON.parse(await __studioRpc(JSON.stringify({jsonrpc:"2.0",id:3,method:"eval",params:{code:"console.log('hi'); 6*7"}}))).result)
+!expect "logs":["hi"],"result":"42"
+JSON.stringify(JSON.parse(await __studioRpc(JSON.stringify({jsonrpc:"2.0",id:4,method:"eval",params:{code:"throw new Error('boom')"}}))).result)
+!expect boom
+JSON.stringify(JSON.parse(await __studioRpc(JSON.stringify({jsonrpc:"2.0",id:5,method:"complete",params:{text:"world.getAll"}}))).result)
+!expect "label":"getAllPlayers","type":"method"
+JSON.parse(await __studioRpc(JSON.stringify({jsonrpc:"2.0",id:6,method:"api.search",params:{query:"player location"}}))).result.total > 0
+!expect true
+JSON.stringify(JSON.parse(await __studioRpc(JSON.stringify({jsonrpc:"2.0",id:7,method:"nope"}))).error)
+!expect unknown method
+JSON.parse(await __studioRpc(JSON.stringify({jsonrpc:"2.0",id:8,method:"scripts.read",params:{name:"../config.json"}}))).error.message
+!expect invalid script name
+client.doctor().line
+!expect SE-DOC 0.3.0
+!expect rtti=ok
+!expect world=ok
+!expect tick=ok
+JSON.parse(await __mcp(JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list"}))).result.tools.map(t => t.name).join(",")
+!expect status,doctor,eval,inspect,logs,api_search
+JSON.parse(await __mcp(JSON.stringify({jsonrpc:"2.0",id:2,method:"tools/call",params:{name:"eval",arguments:{code:"console.log('x'); 1+2"}}}))).result.content[0].text
+!expect => 3
+JSON.parse(await __mcp(JSON.stringify({jsonrpc:"2.0",id:3,method:"initialize",params:{protocolVersion:"2025-03-26"}}))).result.protocolVersion
+!expect 2025-03-26
+JSON.parse(await __mcp(JSON.stringify({jsonrpc:"2.0",id:4,method:"tools/call",params:{name:"eval",arguments:{code:"nope("}}}))).result.isError
+!expect true
+JSON.parse(await __studioRpc(JSON.stringify({jsonrpc:"2.0",id:9,method:"ai.recent"}))).result.calls.length
+!expect 2
+JSON.parse(await __studioRpc(JSON.stringify({jsonrpc:"2.0",id:10,method:"scripts.delete",params:{name:"mt.js"}}))).result.ok
+!expect true
+client.reset()
+!expect cleared

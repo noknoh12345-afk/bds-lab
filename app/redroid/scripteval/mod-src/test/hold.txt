@@ -1,0 +1,5 @@
+# keeps the mock game running while test/studio_test.py talks to Studio
+world.getAllPlayers().length > 0
+!expect true
+!sleep 400000
+1 + 1

@@ -1,0 +1,11 @@
+1 + 2
+!expect 3
+dbg.module()
+client.status()
+world.getAllPlayers().map(p => p.name)
+!expect Steve_Dev
+world.getLocalPlayer()
+world.getPlayerList()
+client.offsets()
+!sleep 2500
+client.tick()
