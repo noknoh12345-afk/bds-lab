@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeviKit Panel</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="login" class="login hidden">
+  <form id="loginForm" class="login-card">
+    <div class="brand big"><span class="logo">▣</span> LeviKit</div>
+    <p class="muted">LeviLamina サーバー管理パネル</p>
+    <input id="loginPw" type="password" placeholder="パスワード" autocomplete="current-password" required>
+    <button class="btn primary" type="submit">ログイン</button>
+    <p id="loginErr" class="err"></p>
+  </form>
+</div>
+
+<div id="app" class="app hidden">
+  <aside class="side">
+    <div class="brand"><span class="logo">▣</span> LeviKit</div>
+    <nav id="nav">
+      <a data-view="dash" class="active">ダッシュボード</a>
+      <a data-view="console">コンソール</a>
+      <a data-view="chat">チャット</a>
+      <a data-view="players">プレイヤー</a>
+      <a data-view="access">BAN / メンテナンス</a>
+      <a data-view="dims">ワールド</a>
+      <a data-view="warps">ワープ / ポータル</a>
+      <a data-view="addons">アドオン / スクリプト</a>
+      <a data-view="map">マップ / タイムマシン</a>
+      <a href="/viewer.html" target="_blank" rel="noopener">3D 観察ビュー ↗</a>
+      <a data-view="backups">バックアップ</a>
+      <a data-view="tasks">スケジュール</a>
+      <a data-view="props">server.properties</a>
+      <a data-view="files">ファイル</a>
+      <a data-view="mods">Mod / プロトコル</a>
+      <a data-view="audit">操作ログ</a>
+      <a data-view="settings">設定</a>
+    </nav>
+    <div class="side-foot">
+      <div id="connDot" class="dot off"></div><span id="connText" class="muted">未接続</span>
+      <button id="logout" class="btn ghost small">ログアウト</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- ダッシュボード -->
+    <section id="view-dash" class="view">
+      <h1>ダッシュボード</h1>
+      <div id="blocker" class="notice warn hidden"></div>
+      <div id="maintNotice" class="notice warn hidden">メンテナンスモード中です（OP と許可リスト以外は参加できません）。 <button class="btn small" id="maintOffQuick">解除</button></div>
+      <div id="noKit" class="notice warn hidden">levikit-core Mod が入っていません。ディメンション切替と「参加したまま」系の操作は使えません（README の「levikit-core のビルド」を参照）。</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-head"><h2>メインサーバー</h2><span id="mainBadge" class="badge">-</span></div>
+          <div class="stats">
+            <div><b id="mainPlayers">0</b><span>オンライン</span></div>
+            <div><b id="mainTps">-</b><span>TPS</span></div>
+            <div><b id="mainUptime">-</b><span>稼働時間</span></div>
+            <div><b id="mainPort">-</b><span>ポート</span></div>
+          </div>
+          <div class="btns">
+            <button class="btn primary" data-act="start">起動</button>
+            <button class="btn" data-act="restart">参加したまま再起動</button>
+            <button class="btn" data-act="restartStd">通常再起動</button>
+            <button class="btn warn" data-act="stop">停止</button>
+            <button class="btn danger ghost" data-act="kill">強制終了</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>待機サーバー (limbo)</h2><span id="limboBadge" class="badge">-</span></div>
+          <p class="muted small">再起動・復元・Mod更新のあいだ、参加者を一時的に移す軽量サーバー。作業が終わると自動でメインへ戻します。</p>
+          <div class="stats">
+            <div><b id="limboPlayers">0</b><span>待機中</span></div>
+            <div><b id="limboMode">-</b><span>モード</span></div>
+          </div>
+          <div class="btns">
+            <button class="btn" data-act="limboStart">起動</button>
+            <button class="btn warn" data-act="limboStop">停止</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>メトリクス</h2>
+          <select id="mRange"><option value="3600">1時間</option><option value="21600">6時間</option><option value="86400">24時間</option></select></div>
+        <div class="charts">
+          <div class="chart"><div class="chart-t">TPS <span id="cTpsV"></span></div><svg id="cTps" viewBox="0 0 300 80" preserveAspectRatio="none"></svg></div>
+          <div class="chart"><div class="chart-t">メモリ (Wine込み) <span id="cMemV"></span></div><svg id="cMem" viewBox="0 0 300 80" preserveAspectRatio="none"></svg></div>
+          <div class="chart"><div class="chart-t">CPU <span id="cCpuV"></span></div><svg id="cCpu" viewBox="0 0 300 80" preserveAspectRatio="none"></svg></div>
+          <div class="chart"><div class="chart-t">プレイヤー <span id="cPlV"></span></div><svg id="cPl" viewBox="0 0 300 80" preserveAspectRatio="none"></svg></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>ワールド</h2><span id="worldSum" class="muted small"></span></div>
+        <div id="worldList" class="wlist"></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-head"><h2>実行中のジョブ</h2><span id="jobBadge" class="badge">なし</span></div>
+          <pre id="jobLog" class="log small-log"></pre>
+          <div id="jobResult" class="hidden"></div>
+        </div>
+        <div class="card">
+          <h2>システム</h2>
+          <div id="sysInfo" class="kv"></div>
+          <h3>導入バージョン</h3>
+          <div id="verInfo" class="kv"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- コンソール -->
+    <section id="view-console" class="view hidden">
+      <h1>コンソール</h1>
+      <div class="toolbar">
+        <select id="conInst"><option value="main">メイン</option><option value="limbo">待機</option></select>
+        <input id="conFilter" placeholder="絞り込み">
+        <label class="chk"><input type="checkbox" id="conAuto" checked> 自動スクロール</label>
+      </div>
+      <pre id="conLog" class="log tall"></pre>
+      <form id="conForm" class="cmdline">
+        <span class="prompt">&gt;</span><input id="conInput" list="cmdList" placeholder="コマンド（BDS の全コマンド + LeviLamina / LeviKit。例: list, say hello, reload, tpdim @a 0 100 0 levikit:resource）" autocomplete="off"><datalist id="cmdList"></datalist>
+        <button class="btn primary">送信</button>
+      </form>
+    </section>
+
+    <!-- チャット -->
+    <section id="view-chat" class="view hidden">
+      <h1>チャット</h1>
+      <p class="muted">ゲーム内チャット（levikit-core が転送）。ここから送ると全員に <code>[Web]</code> として表示されます。</p>
+      <div id="chatLog" class="log tall chatlog"></div>
+      <form id="chatForm" class="cmdline"><input id="chatFrom" value="管理者" style="flex:0 0 120px"><input id="chatInput" placeholder="メッセージ" autocomplete="off"><button class="btn primary">送信</button></form>
+    </section>
+
+    <!-- アクセス -->
+    <section id="view-access" class="view hidden">
+      <h1>BAN / メンテナンス / 権限グループ</h1>
+      <p class="muted">BDS 標準には無い BAN（期限付き可・名前/XUID）とメンテナンスモード。保存すると即時反映し、該当する参加中のプレイヤーは切断されます。</p>
+      <div class="card form">
+        <label class="chk"><input type="checkbox" id="acMaint"> メンテナンスモード（OP と下の許可リスト以外は参加不可）</label>
+        <label>メンテナンス中のメッセージ<input id="acMaintMsg"></label>
+        <label>許可リスト（名前か XUID、<code>@グループ名</code>、改行区切り）<textarea id="acAllow" rows="3"></textarea></label>
+        <label>参加時メッセージ（{name} {online} が使えます。空で無効）<input id="acWelcome"></label>
+        <button id="acSave" class="btn primary">保存して反映</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>権限グループ</h2><button id="roleAdd" class="btn small">＋ 追加</button></div>
+        <p class="muted small">名前を付けたプレイヤーの集まりです。ワールドの「建築できる人」「入場を許可する人」やメンテナンスの許可リストに <code>@グループ名</code> と書くと、その全員が対象になります。メンバーを変えるだけで全ワールドに反映されます。</p>
+        <div class="table-wrap"><table class="tbl narrow"><thead><tr><th>グループ名</th><th>メンバー（名前か XUID、改行区切り）</th><th></th></tr></thead><tbody id="roleBody"></tbody></table></div>
+        <div class="btns"><button id="roleSave" class="btn primary">保存して反映</button></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>BAN リスト</h2></div>
+        <form id="banForm" class="toolbar">
+          <input id="banName" placeholder="名前"><input id="banXuid" placeholder="XUID（任意）" size="18">
+          <input id="banReason" placeholder="理由"><input id="banMin" type="number" min="0" placeholder="分(0=無期限)" style="width:120px">
+          <button class="btn danger">BAN</button>
+        </form>
+        <table class="tbl"><thead><tr><th>名前</th><th>XUID</th><th>理由</th><th>期限</th><th></th></tr></thead><tbody id="banBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- スケジュール -->
+    <section id="view-tasks" class="view hidden">
+      <h1>スケジュール</h1>
+      <p class="muted">定期的なコマンド・告知・タイトル表示・MOTD ローテーション・バックアップ・再起動。{online} {max} {tps} {time} {name} が使えます（複数行は順番に実行。MOTD は1行ずつ切り替え）。</p>
+      <div class="card">
+        <div class="card-head"><h2>タスク</h2><button id="taskAdd" class="btn small">＋ 追加</button></div>
+        <div id="taskBody" class="tasks"></div>
+      </div>
+      <div class="btns"><button id="taskSave" class="btn primary">保存</button></div>
+    </section>
+
+    <!-- ファイル -->
+    <section id="view-files" class="view hidden">
+      <h1>ファイル</h1>
+      <p class="muted">サーバーフォルダ内の設定ファイル（plugins/*/config など）を編集します。ワールドとパックは対象外。保存前のファイルは <code>.levikit-bak</code> に残ります。</p>
+      <div class="files">
+        <div class="card fl"><div id="fPath" class="muted small"></div><div id="fList"></div></div>
+        <div class="card fe">
+          <div class="card-head"><h2 id="fName">ファイルを選択</h2><div class="btns"><button id="fSave" class="btn primary" disabled>保存</button></div></div>
+          <textarea id="fText" spellcheck="false" disabled></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- 操作ログ -->
+    <section id="view-audit" class="view hidden">
+      <h1>操作ログ</h1>
+      <table class="tbl"><thead><tr><th>日時</th><th>IP</th><th>操作</th><th>内容</th></tr></thead><tbody id="auBody"></tbody></table>
+    </section>
+
+    <!-- プレイヤー -->
+    <section id="view-players" class="view hidden">
+      <h1>プレイヤー</h1>
+      <div class="toolbar"><button id="plRefresh" class="btn">再取得</button></div>
+      <div class="card"><h2>オンライン</h2>
+      <table class="tbl"><thead><tr><th>名前</th><th>XUID</th><th>ワールド</th><th>持ち物グループ</th><th>座標</th><th>接続</th><th></th></tr></thead><tbody id="plBody"></tbody></table></div>
+      <div class="card"><div class="card-head"><h2>履歴・プレイ時間</h2><input id="phFilter" placeholder="絞り込み"></div>
+      <table class="tbl"><thead><tr><th>名前</th><th>XUID</th><th>初参加</th><th>最終</th><th>累計</th><th>回数</th><th>よくいるワールド</th><th></th></tr></thead><tbody id="phBody"></tbody></table></div>
+    </section>
+
+    <!-- ワールド -->
+    <section id="view-dims" class="view hidden">
+      <h1>ワールド</h1>
+      <p class="muted">MoreDimensions で1つのサーバーに好きなだけワールドを追加し、ワールドごとにルールを決められます。プレイヤーは <code>/dim</code>（またはコンパスを使う）でメニューを開いて移動し、ワールドごとに最後にいた場所へ戻ります。追加・削除・リセットは再起動で反映されます（参加者は待機サーバー経由で自動で戻ります）。ルールや表示の変更はすぐ反映できます。</p>
+      <div class="card">
+        <div class="card-head"><h2>全体設定</h2></div>
+        <div class="fgrid">
+          <label>チャット
+            <select id="gChat"><option value="global">全体（通常）</option><option value="prefix">全体 + [ワールド名]</option><option value="world">ワールドごと（! で全体）</option></select></label>
+          <label>ゲームモード指定のないワールドに戻ったとき
+            <select id="gDefGm"><option value="survival">サバイバル</option><option value="adventure">アドベンチャー</option><option value="creative">クリエイティブ</option></select></label>
+          <label>メニューを開くアイテム（空で無効）<input id="gMenuItem" placeholder="minecraft:compass"></label>
+          <label>参加時にロビーへ送る
+            <select id="gHubMode"><option value="none">しない</option><option value="firstJoin">初めての人だけ</option><option value="always">毎回</option></select></label>
+          <label>ロビーの行き先（world:ID / warp:名前）<input id="gHubTarget" list="targetList" placeholder="world:levikit:lobby"></label>
+        </div>
+        <div class="chks">
+          <label class="chk"><input type="checkbox" id="dimEveryone"> /dim を全員に開放（オフで OP のみ）</label>
+          <label class="chk"><input type="checkbox" id="dimRemember"> ワールドごとに最後の位置を記憶</label>
+          <label class="chk"><input type="checkbox" id="dimSepInv"> 持ち物グループを使う（グループが違うワールドへ移ると持ち物が切り替わる）</label>
+        </div>
+        <h3 class="sub">移動コマンド</h3>
+        <div class="chks wide">
+          <label class="chk"><input type="checkbox" id="gTpa"> <span><code>/tpa 相手</code> ・ <code>/tpaccept</code> ・ <code>/tpdeny</code>（相手の所へ移動のお願い）</span></label>
+          <label class="chk"><input type="checkbox" id="gTpaCross"> <span>別のワールドにいる相手にも /tpa できる（入場制限は守られます）</span></label>
+          <label class="chk"><input type="checkbox" id="gSpawn"> <span><code>/spawn</code>（今いるワールドのスポーンへ）</span></label>
+          <label class="chk"><input type="checkbox" id="gBack"> <span><code>/back</code>（移動前・死んだ場所へ戻る）</span></label>
+        </div>
+        <label class="inline">/tpa の有効時間 <input id="gTpaTimeout" type="number" min="10" max="600" style="width:90px"> 秒</label>
+        <p class="muted small">コマンドの追加・削除は再起動で反映されます（「保存して適用」）。</p>
+      </div>
+      <div class="toolbar">
+        <select id="presetSel"></select>
+        <button id="dimAdd" class="btn">＋ ワールドを追加</button>
+        <button id="dimImport" class="btn">＋ .mcworld を取り込む</button>
+        <span class="muted small">プリセットを選んで追加 → 細かいルールはあとで変更できます。配布マップや別のサーバーのワールドも、参加したまま新しいワールドとして追加できます</span>
+      </div>
+      <div id="worldCards" class="wcards"></div>
+      <div class="btns savebar">
+        <button id="dimSaveApply" class="btn primary">保存して適用（参加したまま再起動）</button>
+        <button id="dimSaveReload" class="btn">保存してすぐ反映（ルール・表示・ロビー）</button>
+        <button id="dimSaveOnly" class="btn ghost">保存のみ</button>
+      </div>
+      <datalist id="iconList">
+        <option value="textures/blocks/grass_side_carried"><option value="textures/blocks/stone"><option value="textures/blocks/iron_ore"><option value="textures/blocks/diamond_ore">
+        <option value="textures/blocks/brick"><option value="textures/blocks/glass"><option value="textures/blocks/netherrack"><option value="textures/blocks/end_stone">
+        <option value="textures/blocks/sand"><option value="textures/blocks/snow"><option value="textures/blocks/sapling_oak"><option value="textures/items/nether_star">
+        <option value="textures/items/diamond_sword"><option value="textures/items/ender_pearl"><option value="textures/items/fireworks"><option value="textures/items/map_filled">
+      </datalist>
+      <datalist id="targetList"></datalist>
+    </section>
+
+    <!-- ワープ / ポータル -->
+    <section id="view-addons" class="view hidden">
+      <h1>アドオン / スクリプト</h1>
+      <p class="muted">BDS 標準のビヘイビアパック・リソースパック（Script API / GameTest を含む）をそのまま使えます。LeviLamina の Mod とは別に、普通の BDS と同じ仕組みで動きます。変更は「反映」で参加したまま再起動して適用します。</p>
+      <div class="card">
+        <div class="card-head"><h2>取り込む</h2></div>
+        <div class="maptools">
+          <input id="adFile" type="file" accept=".mcpack,.mcaddon,.zip">
+          <label class="chk"><input type="checkbox" id="adEnable" checked> このワールドで有効にする</label>
+          <button id="adUpload" class="btn primary">アップロード</button>
+          <span class="muted small">.mcaddon（ビヘイビア+リソースのセット）もそのまま入れられます</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>パック</h2><span class="muted small" id="adLevel"></span></div>
+        <p class="muted small">チェックしたパックがワールドで有効になります。上にあるほど優先（同じものを上書き）。「標準」は BDS に最初から入っているパックです。</p>
+        <h3 class="sub">ビヘイビアパック</h3>
+        <div class="table-wrap"><table class="tbl narrow"><thead><tr><th>有効</th><th>名前</th><th>種類</th><th>バージョン</th><th>場所</th><th></th></tr></thead><tbody id="adBeh"></tbody></table></div>
+        <h3 class="sub">リソースパック</h3>
+        <div class="table-wrap"><table class="tbl narrow"><thead><tr><th>有効</th><th>名前</th><th>種類</th><th>バージョン</th><th>場所</th><th></th></tr></thead><tbody id="adRes"></tbody></table></div>
+        <label class="chk"><input type="checkbox" id="adTexReq"> リソースパックを必須にする（texturepack-required。拒否したプレイヤーは入れない）</label>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>実験的機能（このワールド）</h2></div>
+        <p class="muted small">ワールドの level.dat の experiments です。Script API の beta 版モジュール（例: @minecraft/server の beta）は「Beta APIs」が必要です。反映時、サーバー停止中に書き換えます（元の level.dat は .levikit-bak に保存）。</p>
+        <div id="adExp" class="chks wide"></div>
+        <div class="maptools"><input id="adExpNew" placeholder="ほかのキー（例: jigsaw_structures）"><button id="adExpAdd" class="btn small">追加</button></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Script API の許可モジュール</h2></div>
+        <p class="muted small">config/default/permissions.json の allowed_modules です。<code>@minecraft/server-net</code>（HTTP 通信）や <code>@minecraft/server-admin</code>（変数・シークレット）は BDS だけで使えるモジュールで、ここで許可したものだけスクリプトから読み込めます。パックごとの変数・シークレットは「ファイル」の <code>config/&lt;パックのUUID&gt;/variables.json</code> / <code>secrets.json</code> に書きます。</p>
+        <div id="adMods" class="chks wide"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>反映・コマンド</h2></div>
+        <div class="btns">
+          <button id="adApply" class="btn primary">保存して反映（参加したまま再起動）</button>
+          <label class="chk"><input type="checkbox" id="adStd"> 待機サーバーを使わない</label>
+          <button id="adReload" class="btn">/reload（スクリプトと関数を読み直す・再起動なし）</button>
+          <button id="adReloadAll" class="btn">/reload all</button>
+        </div>
+        <p class="muted small">スクリプトだけを直したときは /reload で十分です（パックの追加・削除・実験的機能の変更は再起動が必要）。スクリプトのエラーはコンソールに <code>[Scripting]</code> として出ます。</p>
+      </div>
+    </section>
+
+    <section id="view-map" class="view hidden">
+      <h1>マップ / タイムマシン</h1>
+      <p class="muted">ワールドを上空から見た地図を、参加したまま作ります。過去のバックアップの地図に切り替えたり、2つの時点で<b>変わったチャンク</b>を色付けしたりできます。範囲を選んで「この範囲だけ過去に戻す」と、荒らされた場所だけを元に戻せます（オーバーワールドも可・他の場所はそのまま）。</p>
+      <div class="card">
+        <div class="maptools">
+          <label>ワールド <select id="mapWorld"></select></label>
+          <label>時点 <select id="mapAt"></select></label>
+          <button id="mapShoot" class="btn primary">📷 今の状態を撮る</button>
+          <button id="mapRender" class="btn">この時点を描く</button>
+          <label>比べる <select id="mapCmp"><option value="">（比べない）</option></select></label>
+          <label class="chk"><input type="checkbox" id="mapLive" checked> プレイヤーを表示</label>
+        </div>
+        <div id="mapWrap" class="mapwrap"><canvas id="mapCanvas"></canvas><div id="mapEmpty" class="muted">地図がありません。「📷 今の状態を撮る」を押してください。</div></div>
+        <div class="maptools">
+          <span id="mapInfo" class="muted small">ドラッグで移動・ホイールで拡大・<b>Shift+ドラッグで範囲選択</b></span>
+          <span id="mapSel" class="muted small"></span>
+          <button id="mapClear" class="btn small">選択を解除</button>
+          <button id="map3d" class="btn small">🧭 選択（または中央）を 3D で見る</button>
+          <label>戻す時点 <select id="mapRbFrom"></select></label>
+          <button id="mapRollback" class="btn danger">選択範囲をこの時点に戻す</button>
+        </div>
+        <div id="mapLegend" class="muted small"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>高品質マップ（PapyrusCS）</h2><button id="papRender" class="btn">選んだワールドを描く</button></div>
+        <p class="muted small">統合版用の定番マップレンダラー <a href="https://github.com/papyrus-mc/papyruscs" target="_blank" rel="noopener">PapyrusCS</a>（Apache-2.0）で、拡大縮小できるタイル地図を作ります。2回目からは変わったチャンクだけ描き直します。上のワールド選択を使います。</p>
+        <div id="papList" class="muted small"></div>
+      </div>
+    </section>
+
+    <section id="view-warps" class="view hidden">
+      <h1>ワープ / ポータル</h1>
+      <p class="muted">ワープはどのワールドからでも <code>/warp 名前</code> で飛べる地点です（ゲーム内では OP が <code>/setwarp 名前</code> でその場に作れます）。ポータルは範囲に入ると別のワールド/ワープへ移動させます（ゲーム内では <code>/dimportal pos1</code>・<code>pos2</code>・<code>create 名前 行き先</code>）。行き先は <code>world:ID</code>（スポーン）・<code>last:ID</code>（最後にいた場所）・<code>warp:名前</code>。</p>
+      <div class="card">
+        <div class="card-head"><h2>ワープ</h2><button id="warpAdd" class="btn small">＋ 追加</button></div>
+        <div class="table-wrap"><table class="tbl narrow"><thead><tr><th>名前</th><th>ワールド</th><th>x / y / z</th><th>向き</th><th>説明</th><th>OP専用</th><th></th></tr></thead><tbody id="warpBody"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>ポータル</h2><button id="portalAdd" class="btn small">＋ 追加</button></div>
+        <div class="table-wrap"><table class="tbl narrow"><thead><tr><th>有効</th><th>名前</th><th>ワールド</th><th>角1 x / y / z</th><th>角2 x / y / z</th><th>行き先</th><th>メッセージ</th><th></th></tr></thead><tbody id="portalBody"></tbody></table></div>
+      </div>
+      <div class="btns"><button id="warpSave" class="btn primary">保存して反映</button></div>
+    </section>
+
+    <!-- バックアップ -->
+    <section id="view-backups" class="view hidden">
+      <h1>バックアップ</h1>
+      <p class="muted">「ホット」バックアップはプレイヤーが遊んだまま取得します（save hold → 整合性のあるファイル長でコピー → save resume）。復元はプレイヤーを待機サーバーへ逃がしてから差し替え、自動で戻します。復元前のワールドは自動で退避バックアップになります。</p>
+      <div class="toolbar">
+        <input id="bkNote" placeholder="メモ（任意）">
+        <button id="bkCreate" class="btn primary">今すぐバックアップ</button>
+        <span id="bkStats" class="muted small"></span>
+        <label class="btn ghost file">アップロード<input id="bkUpload" type="file" accept=".zst,.gz,.tgz,.tar"></label>
+      </div>
+      <table class="tbl"><thead><tr><th>日時</th><th>種類</th><th>ワールド</th><th>サイズ / 新規</th><th>参加者</th><th>メモ</th><th></th></tr></thead><tbody id="bkBody"></tbody></table>
+    </section>
+
+    <!-- properties -->
+    <section id="view-props" class="view hidden">
+      <h1>server.properties</h1>
+      <p class="muted">変更は次回の起動から有効です。</p>
+      <div class="toolbar"><input id="propFilter" placeholder="絞り込み"><button id="propSave" class="btn primary">保存</button><button id="propSaveRestart" class="btn">保存して参加したまま再起動</button></div>
+      <table class="tbl"><thead><tr><th>キー</th><th>値</th><th>説明</th></tr></thead><tbody id="propBody"></tbody></table>
+    </section>
+
+    <!-- mods -->
+    <section id="view-mods" class="view hidden">
+      <h1>Mod / マルチプロトコル</h1>
+      <div class="card">
+        <h2>マルチプロトコル (Glacie + ProtocolLib)</h2>
+        <p class="muted">サーバー本体と異なるバージョンのクライアントを接続させる LeviLamina 用 Mod。新しいクライアント版への対応は ProtocolLib の更新で入ります。</p>
+        <div class="btns">
+          <button class="btn primary" data-lip="update github.com/GlacieTeam/Glacie">Glacie / ProtocolLib を更新</button>
+          <button class="btn" data-lip="update github.com/LiteLDev/MoreDimensions">MoreDimensions を更新</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>lip でパッケージ操作</h2>
+        <form id="lipForm" class="toolbar">
+          <select id="lipAction"><option value="install">install</option><option value="update">update</option><option value="uninstall">uninstall</option></select>
+          <input id="lipPkg" placeholder="github.com/owner/repo[@version]" size="40">
+          <button class="btn primary">実行</button>
+        </form>
+        <p class="muted small">起動中なら参加者を待機サーバーへ移してから実行し、終わったら戻します。LeviLamina 本体のバージョンは変更しないでください（MoreDimensions が 26.51 系専用のため）。</p>
+      </div>
+      <div class="card">
+        <h2>導入済み Mod (plugins/)</h2>
+        <table class="tbl"><thead><tr><th>名前</th><th>バージョン</th><th>種類</th><th>説明</th></tr></thead><tbody id="modBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- settings -->
+    <section id="view-settings" class="view hidden">
+      <h1>設定</h1>
+      <form id="setForm" class="card form">
+        <label>公開ホスト（プレイヤーが接続する VPS の IP かドメイン）<input id="setHost" placeholder="例: 203.0.113.10 / mc.example.com"></label>
+        <p class="muted small">待機サーバーへの転送 (TransferPacket) に使います。未設定だと「参加したまま」系は通常モードになります。</p>
+        <div class="row">
+          <label>自動バックアップ間隔（分, 0で無効）<input id="setInterval" type="number" min="0"></label>
+          <label>自動バックアップ保持数<input id="setKeep" type="number" min="1"></label>
+          <label>日次で残す日数<input id="setKeepDaily" type="number" min="0"></label>
+        </div>
+        <label class="chk"><input type="checkbox" id="setOnlyPlayers"> 誰かが参加しているときだけ自動バックアップ</label>
+        <div class="row">
+          <label>保存形式
+            <select id="setFormat"><option value="cas">重複排除ストア（推奨: 変わった分だけ保存）</option><option value="tar">1回ごとに tar.zst</option></select>
+          </label>
+          <label>外部同期 (rclone remote, 例 r2:mybucket/levikit)<input id="setOffRemote" placeholder="remote:path"></label>
+        </div>
+        <label class="chk"><input type="checkbox" id="setOffOn"> バックアップ後に rclone で外部ストレージへ同期する（事前に <code>rclone config</code> が必要）</label>
+        <div class="row">
+          <label>毎日の自動再起動（HH:MM, 空で無効）<input id="setDaily" placeholder="05:00"></label>
+          <label>通常再起動の予告秒数<input id="setWarn" type="number" min="0" max="600"></label>
+          <label>待機サーバー
+            <select id="setLimbo"><option value="ondemand">必要なときだけ起動</option><option value="always">常時起動（切替が速い）</option><option value="disabled">使わない</option></select>
+          </label>
+        </div>
+        <label class="chk"><input type="checkbox" id="setAutoStart"> パネル起動時にサーバーを自動起動</label>
+        <label class="chk"><input type="checkbox" id="setAutoRestart"> クラッシュ時に自動再起動</label>
+        <button class="btn primary">保存</button>
+      </form>
+      <form id="pwForm" class="card form">
+        <h2>パスワード変更</h2>
+        <div class="row">
+          <label>現在のパスワード<input id="pwCur" type="password" autocomplete="current-password"></label>
+          <label>新しいパスワード（10文字以上）<input id="pwNew" type="password" autocomplete="new-password"></label>
+        </div>
+        <button class="btn">変更</button>
+      </form>
+    </section>
+  </main>
+</div>
+<div id="modal" class="modal hidden"><div class="modal-card"><h2 id="mTitle"></h2><div id="mBody"></div><div id="mBtns" class="btns"></div></div></div>
+<div id="toast" class="toast hidden"></div>
+<script src="/app.js"></script>
+</body>
+</html>

@@ -16,3 +16,5 @@ bds/docs/coverage/spec.txt
 *.lock
 # the reference solution of the bench tasks
 bds/bench/solution.mjs
+# LeviKit: vendored three.js
+levikit/panel/public/vendor/

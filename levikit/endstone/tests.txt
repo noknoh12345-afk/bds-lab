@@ -1,0 +1,125 @@
+# command, then expectations: = exact line | ~ regex | ! absent | !~ absent regex; '## title' = section
+## loads with the three vanilla worlds
+py plugin.is_enabled
+= True
+py [w.key for w in plugin.worlds]
+= ["overworld","nether","the_end"]
+
+## a player is welcomed and counted in the overworld
+@A join
+~ ^@A .*ようこそ
+@A cmd dim list
+~ ^@A .*オーバーワールド（overworld・1 人）
+
+## the console lines the panel reads
+levikit players
+~ @@LEVIKIT PLAYERS \[\{"name":"A".*"world":"overworld"
+levikit dims
+~ @@LEVIKIT DIMS \[\{"id":0,"key":"overworld"
+levikit stats
+~ @@LEVIKIT STATS \{"tps":[\d.]+,"players":1,"worlds":\{"overworld":1,"nether":0,"the_end":0\}\}
+
+## /dim moves to another world and /back returns
+@A cmd dim nether
+until ネザー へ移動しました
+wait 2000
+py p("A").dimension.name
+= Nether
+py plugin.where["A"]
+= nether
+@A cmd back
+until 前の場所へ戻りました
+wait 2000
+py p("A").dimension.name
+= Overworld
+
+## an unknown world is refused
+@A cmd dim nowhere
+~ ^@A .*ワールド「nowhere」はありません
+
+## warps: made, used, listed, removed (kept in the panel's config file)
+tp A 10 -60 10
+@A cmd setwarp shop
+~ ^@A .*ワープ「shop」を作りました
+py import json\nreturn [w["name"] for w in json.loads(plugin.cfg_file.read_text("utf-8"))["warps"]]
+= ["shop"]
+tp A 0 -60 0
+@A cmd warp shop
+until ワープ「shop」へ移動しました
+py round(p("A").location.x)
+= 10
+@A cmd warp
+~ ^@A .*ワープ: shop
+@A cmd delwarp shop
+~ ^@A .*ワープ「shop」を消しました
+@A cmd warp shop
+~ ^@A .*ワープ「shop」はありません
+
+## /tpa: asked, accepted, the asker arrives
+@B join
+tp B 20 -60 20
+@A cmd tpa B
+~ ^@B .*A さんがあなたの所へ来ようとしています
+@B cmd tpaccept
+until B さんの所へ移動しました
+py round(p("A").location.x)
+= 20
+
+## /tpdeny and no request
+@A cmd tpa B
+@B cmd tpdeny
+~ ^@A .*B さんに断られました
+@B cmd tpaccept
+~ ^@B .*リクエストはありません
+
+## a closed world: an ordinary player is refused, reload applies the panel's file at once
+deop B
+py import json\nplugin.write_raw({"nether": {"rules": {"open": False}}, "overworld": {"rules": {"protection": "all", "pvp": False}}})\nreturn "ok"
+levikit reload
+~ @@LEVIKIT RELOADED
+@B cmd dim nether
+~ ^@B .*このワールドは閉鎖中です
+py p("B").dimension.name
+= Overworld
+
+## build protection: an ordinary player cannot break, an operator can
+setblock 5 -60 5 stone
+tp B 5 -59 6
+@B dig 5 -60 5
+py block(5, -60, 5).type
+= minecraft:stone
+tp A 5 -59 6
+@A dig 5 -60 5
+py block(5, -60, 5).type
+= minecraft:air
+
+## a ban from the panel's file kicks at reload and is refused at login
+py plugin.write_raw({"bans": [{"name": "B", "reason": "test"}]})\nreturn "ok"
+levikit reload
+wait 1500
+py [q.name for q in server.online_players]
+= ["A"]
+py "BAN" in (plugin.denied("B", "", False) or "")
+= True
+
+## maintenance: operators and the allowed stay, others are refused
+py plugin.write_raw({"maintenance": True, "maintenanceAllow": ["C"]})\nreturn "ok"
+levikit reload
+py [plugin.denied("C", "", False), plugin.denied("A", "", True), "メンテナンス" in (plugin.denied("D", "", False) or "")]
+= [-,-,True]
+
+## what survives a restart: the place /back returns to
+py plugin.write_raw({})\nreturn "ok"
+levikit reload
+tp A 3 -60 3
+@A cmd spawn
+until スポーンへ移動しました
+levikit save
+restart
+@A join
+py [plugin.back["A"][0], int(plugin.back["A"][1])]
+= ["overworld",3]
+
+## transfer: every player is sent to the other server (the panel's 待機サーバー)
+levikit transfer 127.0.0.1 19199
+~ @@LEVIKIT TRANSFER \{"host":"127.0.0.1","port":19199,"count":2\}

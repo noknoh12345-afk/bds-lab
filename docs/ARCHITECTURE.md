@@ -20,6 +20,8 @@ AI が毎回読むのは `AGENTS.md` だけです。この文書は、ラボ自�
           bds/bench/               課題と隠しテスト（tasks.json）・参照解（solution.mjs）
 ```
 
+`levikit/` はサーバー運用セット（管理パネル、LeviLamina の Mod、Endstone のプラグイン）で、上の層とは独立しています。ラボのコマンドは使わず、自分のテストと CI（`.github/workflows/levikit.yml`）を持ちます。
+
 ## 主な流れ
 
 | 流れ | 入口 | 中身 |
