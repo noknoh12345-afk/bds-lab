@@ -1,0 +1,42 @@
+name: verify
+# The stable branch's whole CI: every offline test, and every sample addon through `go` on a real BDS. Nothing scheduled,
+# no secrets. (The incremental verify with its memory of what passed lives on dev.)
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  offline:
+    # tests/*-offline.mjs and tests/offline.mjs: the engine end to end against fake servers, the docs, the lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with: { node-version: 22 }
+      - run: node common/run-tests.mjs tests/*-offline.mjs tests/offline.mjs
+  bds:
+    # the real server: setup, then each addon in bds/addons through go (build → tests.txt → QA → DONE)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with: { node-version: 22 }
+      - run: node lab.mjs setup
+      - name: go (every sample addon)
+        run: |
+          bad=""
+          for a in $(ls bds/addons); do
+            echo "::group::$a"
+            node lab.mjs go -a "$a" > "/tmp/go-$a.txt" 2>&1; tail -30 "/tmp/go-$a.txt"
+            grep -q '^DONE ' "/tmp/go-$a.txt" || bad="$bad $a"
+            echo "::endgroup::"
+          done
+          if [ -n "$bad" ]; then echo "::error::not DONE:$bad"; exit 1; fi

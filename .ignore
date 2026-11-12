@@ -10,10 +10,9 @@ bds/docs/verbs/results.json
 bds/docs/EVENTS.md
 bds/docs/VERBS.md
 bds/docs/coverage/spec.txt
-training/
 *.png
 *.tga
 *.ogg
 *.lock
-# the reference solution of the lessons: building from nothing is the point (scratch)
+# the reference solution of the bench tasks
 bds/bench/solution.mjs
