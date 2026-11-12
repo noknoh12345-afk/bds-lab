@@ -1,4 +1,0 @@
-{
-  "service": "bds/geoui/web/server.mjs",
-  "tunnel": false
-}

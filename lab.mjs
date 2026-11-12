@@ -6,7 +6,7 @@ import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-const TOP = path.dirname(fileURLToPath(import.meta.url)), MEM = path.join(TOP, '.lab-kind'), KINDS = ['bds', 'end', 'll'];
+const TOP = path.dirname(fileURLToPath(import.meta.url)), MEM = path.join(TOP, '.lab-kind'), KINDS = ['bds'];
 const A = process.argv.slice(2);
 // `<command> [sub] --help` (or -h): that command's help, never the command itself (an AI asking `skill verify --help` started
 // every probe on a real server; `skill bench --help` a paid AI run). `help` finds the topic, or the lines that name it.
@@ -66,7 +66,7 @@ if (A[0] === 'wait' || A[0] === 'stop') {
 if (A[0] === 'setup' && A[1] === 'all') {
   const { spawnSync } = await import('node:child_process');
   let ok = true;
-  for (const k of ['bds', 'end', 'll']) {
+  for (const k of KINDS) {
     const r = spawnSync(process.execPath, [path.join(TOP, k, 'lab.mjs'), 'setup', ...A.slice(2)], { cwd: path.join(TOP, k), stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', maxBuffer: 256e6 });
     const t = ((r.stdout ?? '') + (r.stderr ?? '')).trim().split('\n');
     ok = ok && r.status === 0;
@@ -370,17 +370,17 @@ if (A[0] === 'selftest' && A[1] === 'all') {
   console.log(ok ? 'PASS' : 'FAIL');
   process.exit(ok ? 0 : 1);
 }
-// update <zip>: a newer bds-lab over this folder in place (keeps .env.local, caches and your units; never deletes the folder)
-if (A[0] === 'update') { try { (await import(pathToFileURL(path.join(TOP, 'common', 'update.mjs')).href)).update(TOP, A[1] && path.resolve(A[1])); process.exit(0); } catch (e) { console.log(`ERR ${e.message}`); process.exit(1); } }
 // maint [--fix] [--online]: ten health checks (temp folders, old runs, stale locks, login profiles, disk, secrets, leaks, scripts, token, new releases)
 if (A[0] === 'maint') { process.exit((await (await import(pathToFileURL(path.join(TOP, 'common', 'maint.mjs')).href)).maintCmd(TOP, A.slice(1))) ? 0 : 1); }
 // ---- for the person and the AI: sign-ins, first start, upkeep, the browser page, finding causes (common/<name>.mjs of each) ----
 {
-  if (!A.length && process.stdin.isTTY && process.stdout.isTTY) A.push('start');   // lab.cmd double-clicked, or `node lab.mjs` typed by a person
-  const TABLE = { login: ['auth.mjs', 'loginCmd'], connect: ['connect.mjs', 'connectCmd'], 'connect-daily': ['connect-daily.mjs', 'dailyCmd'], weekly: ['weekly.mjs', 'weeklyCmd'], statuspage: ['statuspage.mjs', 'statusCmd'], start: ['start.mjs', 'startCmd'], maintain: ['maintain.mjs', 'maintainCmd'], apidiff: ['apidiff.mjs', 'apidiffCmd'],
-    undo: ['checkpoint.mjs', 'checkpointCmd', true], checkpoint: ['checkpoint.mjs', 'checkpointCmd', true], notify: ['notify.mjs', 'notifyCmd'], watch: ['watch.mjs', 'watchCmd'], ui: ['ui.mjs', 'uiCmd'], flaky: ['flaky.mjs', 'flakyCmd'], release: ['release.mjs', 'releaseCmd'],
-    bisect: ['bisect.mjs', 'bisectCmd'], mutate: ['mutate.mjs', 'mutateCmd'], scan: ['scan.mjs', 'scanCmd'], i18n: ['i18n.mjs', 'i18nCmd'], optimize: ['optimize.mjs', 'optimizeCmd'],
-    why: ['why.mjs', 'whyCmd'], colony: ['colony.mjs', 'colonyCmd'], host: ['hosts.mjs', 'hostCmd'], schedule: ['schedule.mjs', 'scheduleCmd'], unitci: ['unitci.mjs', 'unitCiCmd'], skill: ['skills.mjs', 'skillCmd'], skills: ['skills.mjs', 'skillCmd'], auto: ['auto.mjs', 'autoCmd'], share: ['share.mjs', 'shareCmd'], sim: ['sim.mjs', 'simCmd'], status: ['status.mjs', 'statusCmd'], clean: ['status.mjs', 'cleanCmd'], deploy: ['deploy.mjs', 'deployCmd'], c2s: ['c2s.mjs', 'c2sCmd'], panel: ['panel.mjs', 'panelCmd'], ts: ['ts.mjs', 'tsCmd'], bb: ['bb.mjs', 'bbCmd'], upkeep: ['upkeep.mjs', 'upkeepCmd'], record: ['record.mjs', 'recordCmd'], chaos: ['chaos.mjs', 'chaosCmd'], shrink: ['chaos.mjs', 'shrinkCmd'], gaps: ['gaps.mjs', 'gapsCmd'], scratch: ['scratch.mjs', 'scratchCmd'] };
+  const TABLE = { maintain: ['maintain.mjs', 'maintainCmd'], apidiff: ['apidiff.mjs', 'apidiffCmd'], undo: ['checkpoint.mjs', 'checkpointCmd', true], checkpoint: ['checkpoint.mjs', 'checkpointCmd', true],
+    mutate: ['mutate.mjs', 'mutateCmd'], scan: ['scan.mjs', 'scanCmd'], i18n: ['i18n.mjs', 'i18nCmd'], optimize: ['optimize.mjs', 'optimizeCmd'], why: ['why.mjs', 'whyCmd'], skill: ['skills.mjs', 'skillCmd'], skills: ['skills.mjs', 'skillCmd'],
+    sim: ['sim.mjs', 'simCmd'], status: ['status.mjs', 'statusCmd'], clean: ['status.mjs', 'cleanCmd'], deploy: ['deploy.mjs', 'deployCmd'], ts: ['ts.mjs', 'tsCmd'], bb: ['bb.mjs', 'bbCmd'], upkeep: ['upkeep.mjs', 'upkeepCmd'], record: ['record.mjs', 'recordCmd'],
+    chaos: ['chaos.mjs', 'chaosCmd'], shrink: ['chaos.mjs', 'shrinkCmd'], gaps: ['gaps.mjs', 'gapsCmd'] };
+  // what the stable branch leaves out lives on the dev branch (panel, autopilot, lending, colony, GeoUI, the real app, Endstone, LeviLamina ...)
+  const DEV = ['end', 'll', 'app', 'login', 'connect', 'connect-daily', 'weekly', 'statuspage', 'start', 'notify', 'watch', 'ui', 'flaky', 'release', 'bisect', 'colony', 'host', 'schedule', 'unitci', 'auto', 'share', 'c2s', 'panel', 'scratch', 'update', 'make', 'playtest', 'harden', 'lan'];
+  if (DEV.includes(A[0]) && !(A[0] === 'ui' && A[1] === 'build')) { console.log(`ERR ${A[0]}: not in the stable branch (it is on dev: git switch dev)`); process.exit(1); }
   // `node lab.mjs end maintain` / `end status`: any of these after a lab's name runs for that lab (status, sim, ... used to fall
   // through to the lab's own commands and print its usage)
   const Tn = KINDS.includes(A[0]) && A[1] !== 'ui' && TABLE[A[1]];   // (`<lab> ui` is that lab's JSON UI command)
@@ -388,8 +388,6 @@ if (A[0] === 'maint') { process.exit((await (await import(pathToFileURL(path.joi
   const T = A[0] === 'ui' && A[1] === 'build' ? null : TABLE[A[0]];   // (`ui build <layout.yaml>` is the lab's JSON UI builder; `ui` alone the browser page)
   if (T) { await top(T[0], T[1], T[2] ? A : A.slice(1)); await new Promise(() => {}); }
 }
-// app: the real Minecraft app (APK) on an Android emulator joins the lab's BDS; screenshots of the addon's JSON UI + logs (app/AGENTS.md)
-if (A[0] === 'app') { process.argv.splice(2, 1); await import(pathToFileURL(path.join(TOP, 'app', 'app.mjs')).href); await new Promise(() => {}); }
 // `node lab.mjs bds 1.26.60.29` / `bds --update|--preview|--list`: the bds command of the bds lab (not "switch to the bds lab")
 if (A[0] === 'bds' && /^(\d+\.\d+\.\d+\.\d+|--(update|preview|list))$/.test(A[1] ?? '')) process.argv.splice(3, 0, 'bds');
 let kind = process.env.LAB_KIND;

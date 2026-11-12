@@ -1649,7 +1649,7 @@ class Engine {
           if (tj === 'lan') {
             if (TRANSPORT !== 'lan') throw new Error('join transport=lan: start the server with LAB_TRANSPORT=lan');
             delete jo.transport;
-            lanJ = await (await import('./lan.mjs')).labJoin(CACHE, { name });
+            throw new Error('join transport=lan: not in the stable branch (dev)');
           }
           let bot; let n0 = LOG.length;
           // cmdBehind: `@A cmd` knows a command has run by a /list right behind it (realplayer), not by waiting 1.5 s for an answer a
@@ -3532,7 +3532,6 @@ try {
   else if (cmd === 'test') ok = await test(rest);
   else if (cmd === 'qa') { const r = await qa({ built: !!process.env.LAB_QA_BUILT }); ok = r.ok; if (process.env.LAB_QA_JSON) fs.writeFileSync(process.env.LAB_QA_JSON, JSON.stringify(r)); }
   else if (cmd === 'go') ok = await go(rest);
-  else if (cmd === 'make') ok = await (await import('./make.mjs')).make(L(), [...rest], { newAddon, go });
   else if (cmd === 'api') ok = await api(rest);
   else if (cmd === 'sample') ok = await sample(rest);
   else if (cmd === 'init') init(rest.find((a) => a !== '--rp'), rest.includes('--rp'));
@@ -3622,11 +3621,6 @@ try {
   else if (cmd === 'use') useAddon(rest[0]);
   else if (cmd === 'dispute') dispute(rest);
   else if (cmd === 'unlock') unlockCmd(rest);
-  else if (cmd === 'playtest') ok = await (await import('./make.mjs')).playtest(L(), [...rest]);
-  else if (cmd === 'harden') {   // = make -a <current unit> --harden [n] (the AI adds tests to what mutate and gaps find missing)
-    const ni = rest.findIndex((a, i) => /^\d+$/.test(a) && !['--via', '--model', '--turns', '--budget', '-a', '--edit'].includes(rest[i - 1])), n = ni >= 0 ? rest.splice(ni, 1) : [];
-    ok = await (await import('./make.mjs')).make(L(), ['--harden', ...n, ...rest, ...(ADDON_ARG || rest.includes('--edit') ? [] : ['--edit', path.basename(ADDON)])], { newAddon, go });
-  }
   else if (cmd === 'import') await importAddon(rest);
   else if (cmd === 'brief') ok = await brief(rest);
   else if (cmd === 'bds') { await lock(); await bdsCmd(rest); }
@@ -3647,7 +3641,6 @@ try {
     await ensureBds(); (await gh()).bundle({ ROOT: GITROOT, layout: LAYOUT(), bdsVer: bdsVersion(), zip, release: rest.includes('--release'), exclude: BU.map((u) => u.rel), say: out });
   }
   else if (cmd === 'selftest') ok = await selftest(rest);
-  else if (cmd === 'lan') ok = await (await import('./lan.mjs')).lanCmd(CACHE, rest, out);
   else if (cmd === 'doctor') ok = await doctor();
   else if (cmd === 'carry') {   // save this unit's SDK types into <top>/carry/ (verify does it after a real test)
     if (F.sapiBuild === false || !exists(path.join(BP, 'manifest.json'))) { out('OK nothing to carry for this lab'); }

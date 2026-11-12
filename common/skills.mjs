@@ -27,8 +27,6 @@ import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as forge from './skill-forge.mjs';
-import * as evolve from './skill-evolve.mjs';
-import * as scratch from './scratch.mjs';
 
 const TOP = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 export const SK = process.env.LAB_SKILLS_DIR ? path.resolve(process.env.LAB_SKILLS_DIR) : path.join(TOP, 'skills');   // (tests: a copy)
@@ -309,7 +307,6 @@ export function growth(args, out = console.log) {
     const half = Math.floor(eps.length / 2), per = (xs) => { const u = new Set(xs.map((e) => `${e.lab}/${e.unit}`)).size; return u ? xs.reduce((s, e) => s + (e.fixed?.length ?? 0), 0) / u : 0; };
     out(`  experience: ${eps.length} episodes, ${fixes} failures fixed in ${units.size} units${half >= 2 ? ` · per unit ${per(eps.slice(0, half)).toFixed(1)} → ${per(eps.slice(half)).toFixed(1)} (older → newer half)` : ''}`);
   } else out('  experience: no episodes yet (every test/go records what the last edit fixed)');
-  const sc = scratch.growthLine(); out(sc.line);   // practice from nothing: lessons with hidden tests (scratch next)
   const h = readJ(HIST, []).at(-1);
   out(`  selection: ${h ? `last bench ${String(h.at ?? '?').slice(0, 10)} ${h.keep === false ? 'WORSE' : h.keep ? 'KEEP' : 'UNSURE'}: ${h.why}` : 'never benched (skill bench --via <ai>: with vs without skills, hidden tests decide)'}`);
   const next = [];
@@ -436,19 +433,10 @@ export async function skillCmd(args, out = console.log) {
   if (sub === 'build') return build({ check: rest.includes('--check') }, out);
   if (sub === 'install') return install(rest, out);
   if (sub === 'verify') return verify(rest, out);
-  if (sub === 'learn') return learn(rest, out);
   if (sub === 'promote') return promote(rest, out);
   if (sub === 'retire') return retire(rest, out);
-  if (sub === 'bench') return await bench(rest, out);
-  if (sub === 'growth') return growth(rest, out);
-  if (sub === 'note') return note(rest, out);
-  if (sub === 'new') return forge.newSkill(rest, out);
-  if (sub === 'grade') return forge.grade(rest, out);
   if (sub === 'route') return forge.route(rest, out);
-  if (sub === 'compare') return evolve.compare(rest, out);
-  if (sub === 'rubric') return evolve.rubricCmd(rest, out);
-  if (sub === 'prompt') return evolve.prompt(rest, out);
-  if (sub === 'refine') return rest.includes('--via') ? forge.refineAuto(rest, out) : forge.refine(rest, out);
+  if (['learn', 'bench', 'growth', 'note', 'new', 'grade', 'refine', 'compare', 'rubric', 'prompt'].includes(sub)) { out(`ERR skill ${sub}: not in the stable branch (the skills' growth loop is on dev: git switch dev)`); return false; }
   if (skillNames().includes(sub)) {
     // `skill a b`: several in one call (each call re-sends the conversation); the reader view (no front matter, markers or
     // ids); --raw: the file as it is; --for <ai>: that AI's parts too
@@ -456,6 +444,6 @@ export async function skillCmd(args, out = console.log) {
     for (const n of names) { forge.noteRead(n); const t = fs.readFileSync(skillFile(n), 'utf8'); if (names.length > 1) out(`# skill ${n}`); out(rest.includes('--raw') ? forge.forAI(t, ai).trimEnd() : forge.readerView(t, ai)); }
     return true;
   }
-  out(`ERR no skill "${sub}" (skills: ${skillNames().join(' ')}; or build | install | verify | learn | promote | retire | bench | growth | note | new | grade | route | refine | compare | rubric | prompt)`);
+  out(`ERR no skill "${sub}" (skills: ${skillNames().join(' ')}; or build | install | verify | promote | retire | route)`);
   return false;
 }
