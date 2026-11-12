@@ -21,15 +21,15 @@ levikit stats
 
 ## /dim moves to another world and /back returns
 @A cmd dim nether
-until ネザー へ移動しました
-wait 2000
+until @@LEVIKIT WORLD_CHANGE \{"player":"A","from":"overworld","to":"nether"\} 30000
+wait 3000
 py p("A").dimension.name
 = Nether
 py plugin.where["A"]
 = nether
 @A cmd back
-until 前の場所へ戻りました
-wait 2000
+until @@LEVIKIT WORLD_CHANGE \{"player":"A","from":"nether","to":"overworld"\} 30000
+wait 3000
 py p("A").dimension.name
 = Overworld
 

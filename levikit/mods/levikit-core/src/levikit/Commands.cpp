@@ -28,7 +28,9 @@
 
 namespace levikit {
 
-namespace {
+// コマンドの引数の型は無名名前空間に置かない: LeviLamina は boost.pfr でメンバーを数え、clang は内部リンケージの型で
+// 「fake_object<...> is used but not defined」のエラーにする。inline 名前空間なら外部リンケージで、名前はそのまま使える。
+inline namespace command_params {
 
 struct DimParam {
     DimensionType dimension;
@@ -53,6 +55,10 @@ struct TextParam {
 struct PlayerParam {
     CommandSelector<Player> player;
 };
+
+} // namespace command_params
+
+namespace {
 
 bool isConsole(CommandOrigin const& origin) { return origin.getOriginType() == CommandOriginType::DedicatedServer; }
 

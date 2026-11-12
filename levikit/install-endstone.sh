@@ -78,6 +78,8 @@ if [[ ! -x "$MAIN/bedrock_server" || ! -f "$MAIN/server.properties" ]]; then
     sleep 2
   done
   grep -q "Server started\." "$ROOT/.tmp/first-boot.log" || { kill $BOOT 2>/dev/null || true; die "初回起動が終わりません（$ROOT/.tmp/first-boot.log）"; }
+  # プラグインが有効になるのは「Server started.」の少しあと
+  for _ in $(seq 1 30); do grep -q "@@LEVIKIT READY" "$ROOT/.tmp/first-boot.log" && break; sleep 1; done
   grep -q "@@LEVIKIT READY" "$ROOT/.tmp/first-boot.log" || { kill $BOOT 2>/dev/null || true; die "endstone-levikit が読み込まれていません（$ROOT/.tmp/first-boot.log）"; }
   # 止める: Endstone と、その子の bedrock_server（終わるまで待つ。残っていれば強制終了）
   pkill -TERM -P $BOOT 2>/dev/null || true; kill -TERM $BOOT 2>/dev/null || true
@@ -90,6 +92,7 @@ setprop() { if grep -q "^$1=" "$MAIN/server.properties"; then sed -i "s|^$1=.*|$
 setprop server-name "$SERVER_NAME"
 setprop server-port 19132
 setprop server-portv6 19133
+setprop allow-list false   # Endstone の初期値は true（誰も入れない）。入場の制限はパネルの BAN・メンテナンス・ワールドごとの許可で
 echo '{"v":1}' > "$MAIN/.levikit-stamp"
 
 step "管理パネル"
