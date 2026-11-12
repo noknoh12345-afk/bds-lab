@@ -1,6 +1,14 @@
 # bds-lab の変更
 
 ## 次の版（作業中）
+**ブランチの役割（2026-11-12）**：`main` は安定版 v2（アドオンを作って本物のサーバーで確かめるのに要るものだけ、695 ファイル）、この `dev` は全部の機能と実験です。切り替え前の状態は `pre-stable` ブランチにあります。`main` の修正は cherry-pick で `dev` に入れます（`main` は多くのファイルを消しているので、丸ごとのマージはしません）。
+
+**`main` から取り込んだもの（2026-11-12）**
+- **日本語**：`go` の QA が、`ja_JP.lang` の名前や説明が英語のまま残っているのを見つけます（`Q … is still English`）。`bds new … ja="説明"`、`sample rp/texts/ja_JP.lang <語>`（ゲーム本来の日本語名）。見本の説明を日本語にしました。
+- **スキル**：日本語の規則 3 つ（`bds-content`・`bds-forms`・`bds-deliver`）。
+- **テスト**：tests.txt の `js` で `count(p('A'),'ns:id')`。
+- **LeviKit**（`levikit/`）：サーバー運用セット。LeviLamina 版（本物の LeviLamina 26.51.9 で起動して見つけた不具合 3 つを修正）と Endstone 版（`endstone-levikit`、`install-endstone.sh`）。CI は `.github/workflows/levikit.yml`。
+
 **app ラボを「ほぼクライアント」に: 本物のアプリをコントローラーで人のように遊べる（歩く・見回す・跳ぶ・壊す・置く・持ち物・チャット…）。
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
