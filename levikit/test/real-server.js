@@ -2,7 +2,7 @@
 'use strict';
 // 本物のサーバーを 1 回起動して、levikit-core（LeviLamina）か endstone-levikit（Endstone）がパネルとの約束を守るか確かめる:
 //   node test/real-server.js <サーバーのフォルダー> -- <起動コマンド...>
-//   「Server started.」→ @@LEVIKIT READY → `levikit dims` に @@LEVIKIT DIMS（3 つのバニラのワールドを含む）→
+//   @@LEVIKIT READY → `levikit dims` に @@LEVIKIT DIMS（3 つのバニラのワールドを含む）→
 //   `levikit players` に @@LEVIKIT PLAYERS [] → `stop` で終わる。
 const { spawn } = require('node:child_process');
 const path = require('node:path');
@@ -36,16 +36,17 @@ const until = async (label, re, ms) => {
 (async () => {
   let ok = true;
   try {
-    await until('Server started.', /Server started\./, 600_000);
-    await until('@@LEVIKIT READY', /@@LEVIKIT READY \{/, 60_000);
+    // （「Server started.」の行はローダーによって形が違うので待たない。READY は起動が済んでから出る）
+    await until('@@LEVIKIT READY', /@@LEVIKIT READY \{/, 600_000);
     child.stdin.write('levikit dims\n');
-    await until('levikit dims → @@LEVIKIT DIMS（overworld・nether・the_end）', /@@LEVIKIT DIMS \[.*"key":"overworld".*"key":"nether".*"key":"the_end"/, 30_000);
+    await until('levikit dims → @@LEVIKIT DIMS（overworld・nether・the_end）', /@@LEVIKIT DIMS (?=.*"key":"overworld")(?=.*"key":"nether")(?=.*"key":"the_end")\[/, 30_000);
     child.stdin.write('levikit players\n');
     await until('levikit players → @@LEVIKIT PLAYERS []', /@@LEVIKIT PLAYERS \[\]/, 30_000);
   } catch (e) {
     ok = false;
     console.error(`FAILED: ${e.message}`);
-    console.error(out.split('\n').slice(-60).join('\n'));
+    // 何が出ていたか: 定期の POS / STATS を除いた最初の 200 行
+    console.error(out.replace(/\x1b\[[0-9;]*m/g, '').split(/\r?\n/).filter((l) => !/@@LEVIKIT (POS|STATS) /.test(l)).slice(0, 200).join('\n'));
   }
   child.stdin.write('stop\n');
   for (let n = 0; n < 120 && exited === null; n++) await sleep(500);
