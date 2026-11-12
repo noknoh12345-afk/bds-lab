@@ -211,6 +211,9 @@ export function schedule(when, at = '04:17', rest = [], out = console.log, what 
 // ones carry over, so the next update is less likely to break it (tried once per unit and release; put back if it fails)
 async function promote(k, u, r, ctx, o) {
   const mf = path.join(unitDir(k, u), 'bp', 'manifest.json'), m = readJ(mf);
+  // a pack a lab generator makes (imported.json from: bds/geoui/...) is the generator's: its manifest is what the generator
+  // writes, and a test holds the two equal (tests/geoui-web-offline.mjs, tl-probe, tl-runtime). Moving it here broke that.
+  if (/^bds\/geoui\//.test(String(readJ(path.join(unitDir(k, u), 'imported.json'))?.from ?? ''))) return;
   if (!(m?.dependencies ?? []).some((d) => d.module_name?.startsWith('@minecraft/') && String(d.version).includes('beta'))) return;
   const memo = path.join(ROOT(), k, '.lab', 'maintain', 'promote-tried.json'), tried = readJ(memo) ?? {};
   if (tried[u] === ctx.to) return;
@@ -243,7 +246,8 @@ export async function maintainCmd(args, out = console.log) {
   // the quick health checks first (temp folders, stale locks, login leftovers, disk): quiet unless they repaired something
   try { const M = await import('./maint.mjs'); const q = await M.maint({ top: ROOT(), fix: true, only: M.QUICK }); q.lines.forEach((l) => out(l)); } catch { /* upkeep never blocks */ }
   const kinds = o.labs === 'all' ? Object.keys(UNITS) : o.labs ? o.labs.split(',') : [process.env.LAB_KIND || (() => { try { return fs.readFileSync(path.join(ROOT(), '.lab-kind'), 'utf8').trim(); } catch { return 'bds'; } })()].map((x) => (UNITS[x] ? x : 'bds'));
-  const ai = null;   // stable branch: module versions and limited mode only (the AI patch is on dev)
+  const { pickVia } = await import('./make.mjs');
+  const ai = o.noAi ? null : pickVia(o.via);
   const rows = [], all = { tokens: 0 };
   for (const k of kinds) {
     if (!UNITS[k]) { out(`ERR --lab ${k}: bds, end, ll or all`); return false; }
