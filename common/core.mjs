@@ -2559,7 +2559,8 @@ function qaStatic() {
     for (const l of langs) { const miss = [...all].filter((k) => !keys[l].has(k)); if (miss.length) q.push(['Q', `rp/texts/${l}.lang lacks ${miss.slice(0, 4).join(' ')}${miss.length > 4 ? ` +${miss.length - 4}` : ''} (players with that language see the raw key): node lab.mjs i18n`]); }
   }
   // a Japanese name or description that is still the English one, word for word (the pack's name may stay: a title)
-  for (const [pk, dir] of [['rp', RP], ['bp', BP]]) {
+  // (not for an imported pack: a person's or a generator's pack keeps its own names and texts)
+  if (!exists(path.join(ADDON, 'imported.json'))) for (const [pk, dir] of [['rp', RP], ['bp', BP]]) {
     const lines = (l) => { const f = path.join(dir, 'texts', l + '.lang'); return new Map(exists(f) ? fs.readFileSync(f, 'utf8').split(/\r?\n/).filter((x) => x.includes('=') && !x.trim().startsWith('#')).map((x) => [x.slice(0, x.indexOf('=')).trim(), x.slice(x.indexOf('=') + 1).trim()]) : []); };
     const en = lines('en_US'), same = [...lines('ja_JP')].filter(([k, v]) => (k === 'pack.description' || (k.endsWith('.name') && k !== 'pack.name')) && en.get(k) === v && /[A-Za-z]{2}/.test(v) && !/[\u3040-\u30ff\u4e00-\u9fff]/.test(v));
     if (same.length) q.push(['Q', `${pk}/texts/ja_JP.lang: ${same.slice(0, 3).map(([k, v]) => `${k} is still English ("${v.slice(0, 40)}")`).join(', ')}${same.length > 3 ? ` +${same.length - 3}` : ''}: node lab.mjs i18n ja_JP "${same[0][0]}=<日本語>"`]);
