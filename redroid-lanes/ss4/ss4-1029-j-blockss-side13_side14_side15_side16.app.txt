@@ -1,0 +1,340 @@
+# 一括検証 4 回目（j-blockss-side13+side14+side15+side16）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-deepslate_tile_wall
+do setblock -2 -60 3 deepslate_tile_wall
+section b-deepslate_tiles
+do setblock -1 -60 3 deepslate_tiles
+section b-detector_rail
+do setblock 0 -60 3 detector_rail
+section b-diamond_block
+do setblock 1 -60 3 diamond_block
+section b-diamond_ore
+do setblock 2 -60 3 diamond_ore
+section b-diorite
+do setblock 3 -60 3 diorite
+section b-diorite_slab
+do setblock -2 -60 4 diorite_slab
+section b-diorite_stairs
+do setblock -1 -60 4 diorite_stairs
+section b-diorite_wall
+do setblock 0 -60 4 diorite_wall
+section b-dirt
+do setblock 1 -60 4 dirt
+section b-dirt_with_roots
+do setblock 2 -60 4 dirt_with_roots
+section b-dispenser
+do setblock 3 -60 4 dispenser
+section b-double_cut_copper_slab
+do setblock -2 -60 5 double_cut_copper_slab
+section b-dragon_egg
+do setblock -1 -60 5 dragon_egg
+section b-dried_ghast
+do setblock 0 -60 5 dried_ghast
+section b-dried_kelp_block
+do setblock 1 -60 5 dried_kelp_block
+section b-dripstone_block
+do setblock 2 -60 5 dripstone_block
+section b-dropper
+do setblock 3 -60 5 dropper
+section b-emerald_block
+do setblock -2 -60 6 emerald_block
+section b-emerald_ore
+do setblock -1 -60 6 emerald_ore
+section b-enchanting_table
+do setblock 0 -60 6 enchanting_table
+section b-end_brick_stairs
+do setblock 1 -60 6 end_brick_stairs
+section b-end_bricks
+do setblock 2 -60 6 end_bricks
+section b-end_stone
+do setblock 3 -60 6 end_stone
+section b-end_stone_brick_slab
+do setblock -2 -60 7 end_stone_brick_slab
+section b-end_stone_brick_wall
+do setblock -1 -60 7 end_stone_brick_wall
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（deepslate_tile_wall deepslate_tiles detector_rail diamond_block diamond_ore diorite diorite_slab diorite_stairs diorite_wall dirt dirt_with_roots dispenser double_cut_copper_slab dragon_egg dried_ghast dried_kelp_block dripstone_block dropper emerald_block emerald_ore enchanting_table end_brick_stairs end_bricks end_stone end_stone_brick_slab end_stone_brick_wall）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-ender_chest
+do setblock -2 -60 3 ender_chest
+section b-exposed_chiseled_copper
+do setblock -1 -60 3 exposed_chiseled_copper
+section b-exposed_copper
+do setblock 0 -60 3 exposed_copper
+section b-exposed_copper_bars
+do setblock 1 -60 3 exposed_copper_bars
+section b-exposed_copper_bulb
+do setblock 2 -60 3 exposed_copper_bulb
+section b-exposed_copper_chain
+do setblock 3 -60 3 exposed_copper_chain
+section b-exposed_copper_chest
+do setblock -2 -60 4 exposed_copper_chest
+section b-exposed_copper_door
+do setblock -1 -60 4 exposed_copper_door
+section b-exposed_copper_golem_statue
+do setblock 0 -60 4 exposed_copper_golem_statue
+section b-exposed_copper_grate
+do setblock 1 -60 4 exposed_copper_grate
+section b-exposed_copper_lantern
+do setblock 2 -60 4 exposed_copper_lantern
+section b-exposed_copper_trapdoor
+do setblock 3 -60 4 exposed_copper_trapdoor
+section b-exposed_cut_copper
+do setblock -2 -60 5 exposed_cut_copper
+section b-exposed_cut_copper_slab
+do setblock -1 -60 5 exposed_cut_copper_slab
+section b-exposed_cut_copper_stairs
+do setblock 0 -60 5 exposed_cut_copper_stairs
+section b-exposed_double_cut_copper_slab
+do setblock 1 -60 5 exposed_double_cut_copper_slab
+section b-exposed_lightning_rod
+do setblock 2 -60 5 exposed_lightning_rod
+section b-farmland
+do setblock 3 -60 5 farmland
+section b-fence_gate
+do setblock -2 -60 6 fence_gate
+section b-fern
+do setblock -1 -60 6 fern
+section b-fletching_table
+do setblock 0 -60 6 fletching_table
+section b-flower_pot
+do setblock 1 -60 6 flower_pot
+section b-flowering_azalea
+do setblock 2 -60 6 flowering_azalea
+section b-frog_spawn
+do setblock 3 -60 6 frog_spawn
+section b-frosted_ice
+do setblock -2 -60 7 frosted_ice
+section b-furnace
+do setblock -1 -60 7 furnace
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（ender_chest exposed_chiseled_copper exposed_copper exposed_copper_bars exposed_copper_bulb exposed_copper_chain exposed_copper_chest exposed_copper_door exposed_copper_golem_statue exposed_copper_grate exposed_copper_lantern exposed_copper_trapdoor exposed_cut_copper exposed_cut_copper_slab exposed_cut_copper_stairs exposed_double_cut_copper_slab exposed_lightning_rod farmland fence_gate fern fletching_table flower_pot flowering_azalea frog_spawn frosted_ice furnace）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-gilded_blackstone
+do setblock -2 -60 3 gilded_blackstone
+section b-glass
+do setblock -1 -60 3 glass
+section b-glass_pane
+do setblock 0 -60 3 glass_pane
+section b-glow_lichen
+do setblock 1 -60 3 glow_lichen
+section b-glowstone
+do setblock 2 -60 3 glowstone
+section b-gold_block
+do setblock 3 -60 3 gold_block
+section b-gold_ore
+do setblock -2 -60 4 gold_ore
+section b-golden_dandelion
+do setblock -1 -60 4 golden_dandelion
+section b-golden_rail
+do setblock 0 -60 4 golden_rail
+section b-granite
+do setblock 1 -60 4 granite
+section b-granite_slab
+do setblock 2 -60 4 granite_slab
+section b-granite_stairs
+do setblock 3 -60 4 granite_stairs
+section b-granite_wall
+do setblock -2 -60 5 granite_wall
+section b-grass_block
+do setblock -1 -60 5 grass_block
+section b-grass_path
+do setblock 0 -60 5 grass_path
+section b-gray_candle
+do setblock 1 -60 5 gray_candle
+section b-gray_candle_cake
+do setblock 2 -60 5 gray_candle_cake
+section b-gray_carpet
+do setblock 3 -60 5 gray_carpet
+section b-gray_concrete
+do setblock -2 -60 6 gray_concrete
+section b-gray_concrete_slab
+do setblock -1 -60 6 gray_concrete_slab
+section b-gray_concrete_stairs
+do setblock 0 -60 6 gray_concrete_stairs
+section b-gray_glazed_terracotta
+do setblock 1 -60 6 gray_glazed_terracotta
+section b-gray_shulker_box
+do setblock 2 -60 6 gray_shulker_box
+section b-gray_stained_glass
+do setblock 3 -60 6 gray_stained_glass
+section b-gray_stained_glass_pane
+do setblock -2 -60 7 gray_stained_glass_pane
+section b-gray_terracotta
+do setblock -1 -60 7 gray_terracotta
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（gilded_blackstone glass glass_pane glow_lichen glowstone gold_block gold_ore golden_dandelion golden_rail granite granite_slab granite_stairs granite_wall grass_block grass_path gray_candle gray_candle_cake gray_carpet gray_concrete gray_concrete_slab gray_concrete_stairs gray_glazed_terracotta gray_shulker_box gray_stained_glass gray_stained_glass_pane gray_terracotta）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-gray_wool
+do setblock -2 -60 3 gray_wool
+section b-gray_wool_slab
+do setblock -1 -60 3 gray_wool_slab
+section b-gray_wool_stairs
+do setblock 0 -60 3 gray_wool_stairs
+section b-green_candle
+do setblock 1 -60 3 green_candle
+section b-green_candle_cake
+do setblock 2 -60 3 green_candle_cake
+section b-green_carpet
+do setblock 3 -60 3 green_carpet
+section b-green_concrete
+do setblock -2 -60 4 green_concrete
+section b-green_concrete_slab
+do setblock -1 -60 4 green_concrete_slab
+section b-green_concrete_stairs
+do setblock 0 -60 4 green_concrete_stairs
+section b-green_glazed_terracotta
+do setblock 1 -60 4 green_glazed_terracotta
+section b-green_shulker_box
+do setblock 2 -60 4 green_shulker_box
+section b-green_stained_glass
+do setblock 3 -60 4 green_stained_glass
+section b-green_stained_glass_pane
+do setblock -2 -60 5 green_stained_glass_pane
+section b-green_terracotta
+do setblock -1 -60 5 green_terracotta
+section b-green_wool
+do setblock 0 -60 5 green_wool
+section b-green_wool_slab
+do setblock 1 -60 5 green_wool_slab
+section b-green_wool_stairs
+do setblock 2 -60 5 green_wool_stairs
+section b-grindstone
+do setblock 3 -60 5 grindstone
+section b-hanging_roots
+do setblock -2 -60 6 hanging_roots
+section b-hardened_clay
+do setblock -1 -60 6 hardened_clay
+section b-hay_block
+do setblock 0 -60 6 hay_block
+section b-heavy_core
+do setblock 1 -60 6 heavy_core
+section b-heavy_weighted_pressure_plate
+do setblock 2 -60 6 heavy_weighted_pressure_plate
+section b-honey_block
+do setblock 3 -60 6 honey_block
+section b-honeycomb_block
+do setblock -2 -60 7 honeycomb_block
+section b-hopper
+do setblock -1 -60 7 hopper
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（gray_wool gray_wool_slab gray_wool_stairs green_candle green_candle_cake green_carpet green_concrete green_concrete_slab green_concrete_stairs green_glazed_terracotta green_shulker_box green_stained_glass green_stained_glass_pane green_terracotta green_wool green_wool_slab green_wool_stairs grindstone hanging_roots hardened_clay hay_block heavy_core heavy_weighted_pressure_plate honey_block honeycomb_block hopper）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

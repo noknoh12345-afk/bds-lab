@@ -1,0 +1,103 @@
+# 一括検証 3 回目（blocks-night40）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-weathered_copper_door
+do setblock -2 -60 3 weathered_copper_door
+section b-weathered_copper_golem_statue
+do setblock -1 -60 3 weathered_copper_golem_statue
+section b-weathered_copper_grate
+do setblock 0 -60 3 weathered_copper_grate
+section b-weathered_copper_lantern
+do setblock 1 -60 3 weathered_copper_lantern
+section b-weathered_copper_trapdoor
+do setblock 2 -60 3 weathered_copper_trapdoor
+section b-weathered_cut_copper
+do setblock 3 -60 3 weathered_cut_copper
+section b-weathered_cut_copper_slab
+do setblock -2 -60 4 weathered_cut_copper_slab
+section b-weathered_cut_copper_stairs
+do setblock -1 -60 4 weathered_cut_copper_stairs
+section b-weathered_double_cut_copper_slab
+do setblock 0 -60 4 weathered_double_cut_copper_slab
+section b-weathered_lightning_rod
+do setblock 1 -60 4 weathered_lightning_rod
+section b-web
+do setblock 2 -60 4 web
+section b-weeping_vines
+do setblock 3 -60 4 weeping_vines
+section b-wet_sponge
+do setblock -2 -60 5 wet_sponge
+section b-wheat
+do setblock -1 -60 5 wheat
+section b-white_candle
+do setblock 0 -60 5 white_candle
+section b-white_candle_cake
+do setblock 1 -60 5 white_candle_cake
+section b-white_carpet
+do setblock 2 -60 5 white_carpet
+section b-white_concrete
+do setblock 3 -60 5 white_concrete
+section b-white_concrete_slab
+do setblock -2 -60 6 white_concrete_slab
+section b-white_concrete_stairs
+do setblock -1 -60 6 white_concrete_stairs
+section b-white_glazed_terracotta
+do setblock 0 -60 6 white_glazed_terracotta
+section b-white_shulker_box
+do setblock 1 -60 6 white_shulker_box
+section b-white_stained_glass
+do setblock 2 -60 6 white_stained_glass
+section b-white_stained_glass_pane
+do setblock 3 -60 6 white_stained_glass_pane
+section b-white_terracotta
+do setblock -2 -60 7 white_terracotta
+section b-white_tulip
+do setblock -1 -60 7 white_tulip
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-mirror                        # night: 26 種（weathered_copper_door weathered_copper_golem_statue weathered_copper_grate weathered_copper_lantern weathered_copper_trapdoor weathered_cut_copper weathered_cut_copper_slab weathered_cut_copper_stairs weathered_double_cut_copper_slab weathered_lightning_rod web weeping_vines wet_sponge wheat white_candle white_candle_cake white_carpet white_concrete white_concrete_slab white_concrete_stairs white_glazed_terracotta white_shulker_box white_stained_glass white_stained_glass_pane white_terracotta white_tulip）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

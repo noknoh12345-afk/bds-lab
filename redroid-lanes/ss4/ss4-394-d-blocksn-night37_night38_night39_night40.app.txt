@@ -1,0 +1,348 @@
+# 一括検証 4 回目（d-blocksn-night37+night38+night39+night40）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-warped_roots
+do setblock -2 -60 3 warped_roots
+section b-warped_slab
+do setblock -1 -60 3 warped_slab
+section b-warped_stairs
+do setblock 0 -60 3 warped_stairs
+section b-warped_standing_sign
+do setblock 1 -60 3 warped_standing_sign
+section b-warped_stem
+do setblock 2 -60 3 warped_stem
+section b-warped_trapdoor
+do setblock 3 -60 3 warped_trapdoor
+section b-warped_wall_sign
+do setblock -2 -60 4 warped_wall_sign
+section b-warped_wart_block
+do setblock -1 -60 4 warped_wart_block
+section b-waxed_chiseled_copper
+do setblock 0 -60 4 waxed_chiseled_copper
+section b-waxed_copper
+do setblock 1 -60 4 waxed_copper
+section b-waxed_copper_bars
+do setblock 2 -60 4 waxed_copper_bars
+section b-waxed_copper_bulb
+do setblock 3 -60 4 waxed_copper_bulb
+section b-waxed_copper_chain
+do setblock -2 -60 5 waxed_copper_chain
+section b-waxed_copper_chest
+do setblock -1 -60 5 waxed_copper_chest
+section b-waxed_copper_door
+do setblock 0 -60 5 waxed_copper_door
+section b-waxed_copper_golem_statue
+do setblock 1 -60 5 waxed_copper_golem_statue
+section b-waxed_copper_grate
+do setblock 2 -60 5 waxed_copper_grate
+section b-waxed_copper_lantern
+do setblock 3 -60 5 waxed_copper_lantern
+section b-waxed_copper_trapdoor
+do setblock -2 -60 6 waxed_copper_trapdoor
+section b-waxed_cut_copper
+do setblock -1 -60 6 waxed_cut_copper
+section b-waxed_cut_copper_slab
+do setblock 0 -60 6 waxed_cut_copper_slab
+section b-waxed_cut_copper_stairs
+do setblock 1 -60 6 waxed_cut_copper_stairs
+section b-waxed_double_cut_copper_slab
+do setblock 2 -60 6 waxed_double_cut_copper_slab
+section b-waxed_exposed_chiseled_copper
+do setblock 3 -60 6 waxed_exposed_chiseled_copper
+section b-waxed_exposed_copper
+do setblock -2 -60 7 waxed_exposed_copper
+section b-waxed_exposed_copper_bars
+do setblock -1 -60 7 waxed_exposed_copper_bars
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-night-mirror                 # night: 26 種（warped_roots warped_slab warped_stairs warped_standing_sign warped_stem warped_trapdoor warped_wall_sign warped_wart_block waxed_chiseled_copper waxed_copper waxed_copper_bars waxed_copper_bulb waxed_copper_chain waxed_copper_chest waxed_copper_door waxed_copper_golem_statue waxed_copper_grate waxed_copper_lantern waxed_copper_trapdoor waxed_cut_copper waxed_cut_copper_slab waxed_cut_copper_stairs waxed_double_cut_copper_slab waxed_exposed_chiseled_copper waxed_exposed_copper waxed_exposed_copper_bars）
+section blocks-night-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-night-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-night-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-waxed_exposed_copper_bulb
+do setblock -2 -60 3 waxed_exposed_copper_bulb
+section b-waxed_exposed_copper_chain
+do setblock -1 -60 3 waxed_exposed_copper_chain
+section b-waxed_exposed_copper_chest
+do setblock 0 -60 3 waxed_exposed_copper_chest
+section b-waxed_exposed_copper_door
+do setblock 1 -60 3 waxed_exposed_copper_door
+section b-waxed_exposed_copper_golem_statue
+do setblock 2 -60 3 waxed_exposed_copper_golem_statue
+section b-waxed_exposed_copper_grate
+do setblock 3 -60 3 waxed_exposed_copper_grate
+section b-waxed_exposed_copper_lantern
+do setblock -2 -60 4 waxed_exposed_copper_lantern
+section b-waxed_exposed_copper_trapdoor
+do setblock -1 -60 4 waxed_exposed_copper_trapdoor
+section b-waxed_exposed_cut_copper
+do setblock 0 -60 4 waxed_exposed_cut_copper
+section b-waxed_exposed_cut_copper_slab
+do setblock 1 -60 4 waxed_exposed_cut_copper_slab
+section b-waxed_exposed_cut_copper_stairs
+do setblock 2 -60 4 waxed_exposed_cut_copper_stairs
+section b-waxed_exposed_double_cut_copper_slab
+do setblock 3 -60 4 waxed_exposed_double_cut_copper_slab
+section b-waxed_exposed_lightning_rod
+do setblock -2 -60 5 waxed_exposed_lightning_rod
+section b-waxed_lightning_rod
+do setblock -1 -60 5 waxed_lightning_rod
+section b-waxed_oxidized_chiseled_copper
+do setblock 0 -60 5 waxed_oxidized_chiseled_copper
+section b-waxed_oxidized_copper
+do setblock 1 -60 5 waxed_oxidized_copper
+section b-waxed_oxidized_copper_bars
+do setblock 2 -60 5 waxed_oxidized_copper_bars
+section b-waxed_oxidized_copper_bulb
+do setblock 3 -60 5 waxed_oxidized_copper_bulb
+section b-waxed_oxidized_copper_chain
+do setblock -2 -60 6 waxed_oxidized_copper_chain
+section b-waxed_oxidized_copper_chest
+do setblock -1 -60 6 waxed_oxidized_copper_chest
+section b-waxed_oxidized_copper_door
+do setblock 0 -60 6 waxed_oxidized_copper_door
+section b-waxed_oxidized_copper_golem_statue
+do setblock 1 -60 6 waxed_oxidized_copper_golem_statue
+section b-waxed_oxidized_copper_grate
+do setblock 2 -60 6 waxed_oxidized_copper_grate
+section b-waxed_oxidized_copper_lantern
+do setblock 3 -60 6 waxed_oxidized_copper_lantern
+section b-waxed_oxidized_copper_trapdoor
+do setblock -2 -60 7 waxed_oxidized_copper_trapdoor
+section b-waxed_oxidized_cut_copper
+do setblock -1 -60 7 waxed_oxidized_cut_copper
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-night-mirror                 # night: 26 種（waxed_exposed_copper_bulb waxed_exposed_copper_chain waxed_exposed_copper_chest waxed_exposed_copper_door waxed_exposed_copper_golem_statue waxed_exposed_copper_grate waxed_exposed_copper_lantern waxed_exposed_copper_trapdoor waxed_exposed_cut_copper waxed_exposed_cut_copper_slab waxed_exposed_cut_copper_stairs waxed_exposed_double_cut_copper_slab waxed_exposed_lightning_rod waxed_lightning_rod waxed_oxidized_chiseled_copper waxed_oxidized_copper waxed_oxidized_copper_bars waxed_oxidized_copper_bulb waxed_oxidized_copper_chain waxed_oxidized_copper_chest waxed_oxidized_copper_door waxed_oxidized_copper_golem_statue waxed_oxidized_copper_grate waxed_oxidized_copper_lantern waxed_oxidized_copper_trapdoor waxed_oxidized_cut_copper）
+section blocks-night-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-night-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-night-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-waxed_oxidized_cut_copper_slab
+do setblock -2 -60 3 waxed_oxidized_cut_copper_slab
+section b-waxed_oxidized_cut_copper_stairs
+do setblock -1 -60 3 waxed_oxidized_cut_copper_stairs
+section b-waxed_oxidized_double_cut_copper_slab
+do setblock 0 -60 3 waxed_oxidized_double_cut_copper_slab
+section b-waxed_oxidized_lightning_rod
+do setblock 1 -60 3 waxed_oxidized_lightning_rod
+section b-waxed_weathered_chiseled_copper
+do setblock 2 -60 3 waxed_weathered_chiseled_copper
+section b-waxed_weathered_copper
+do setblock 3 -60 3 waxed_weathered_copper
+section b-waxed_weathered_copper_bars
+do setblock -2 -60 4 waxed_weathered_copper_bars
+section b-waxed_weathered_copper_bulb
+do setblock -1 -60 4 waxed_weathered_copper_bulb
+section b-waxed_weathered_copper_chain
+do setblock 0 -60 4 waxed_weathered_copper_chain
+section b-waxed_weathered_copper_chest
+do setblock 1 -60 4 waxed_weathered_copper_chest
+section b-waxed_weathered_copper_door
+do setblock 2 -60 4 waxed_weathered_copper_door
+section b-waxed_weathered_copper_golem_statue
+do setblock 3 -60 4 waxed_weathered_copper_golem_statue
+section b-waxed_weathered_copper_grate
+do setblock -2 -60 5 waxed_weathered_copper_grate
+section b-waxed_weathered_copper_lantern
+do setblock -1 -60 5 waxed_weathered_copper_lantern
+section b-waxed_weathered_copper_trapdoor
+do setblock 0 -60 5 waxed_weathered_copper_trapdoor
+section b-waxed_weathered_cut_copper
+do setblock 1 -60 5 waxed_weathered_cut_copper
+section b-waxed_weathered_cut_copper_slab
+do setblock 2 -60 5 waxed_weathered_cut_copper_slab
+section b-waxed_weathered_cut_copper_stairs
+do setblock 3 -60 5 waxed_weathered_cut_copper_stairs
+section b-waxed_weathered_double_cut_copper_slab
+do setblock -2 -60 6 waxed_weathered_double_cut_copper_slab
+section b-waxed_weathered_lightning_rod
+do setblock -1 -60 6 waxed_weathered_lightning_rod
+section b-weathered_chiseled_copper
+do setblock 0 -60 6 weathered_chiseled_copper
+section b-weathered_copper
+do setblock 1 -60 6 weathered_copper
+section b-weathered_copper_bars
+do setblock 2 -60 6 weathered_copper_bars
+section b-weathered_copper_bulb
+do setblock 3 -60 6 weathered_copper_bulb
+section b-weathered_copper_chain
+do setblock -2 -60 7 weathered_copper_chain
+section b-weathered_copper_chest
+do setblock -1 -60 7 weathered_copper_chest
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-night-mirror                 # night: 26 種（waxed_oxidized_cut_copper_slab waxed_oxidized_cut_copper_stairs waxed_oxidized_double_cut_copper_slab waxed_oxidized_lightning_rod waxed_weathered_chiseled_copper waxed_weathered_copper waxed_weathered_copper_bars waxed_weathered_copper_bulb waxed_weathered_copper_chain waxed_weathered_copper_chest waxed_weathered_copper_door waxed_weathered_copper_golem_statue waxed_weathered_copper_grate waxed_weathered_copper_lantern waxed_weathered_copper_trapdoor waxed_weathered_cut_copper waxed_weathered_cut_copper_slab waxed_weathered_cut_copper_stairs waxed_weathered_double_cut_copper_slab waxed_weathered_lightning_rod weathered_chiseled_copper weathered_copper weathered_copper_bars weathered_copper_bulb weathered_copper_chain weathered_copper_chest）
+section blocks-night-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-night-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-night-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-weathered_copper_door
+do setblock -2 -60 3 weathered_copper_door
+section b-weathered_copper_golem_statue
+do setblock -1 -60 3 weathered_copper_golem_statue
+section b-weathered_copper_grate
+do setblock 0 -60 3 weathered_copper_grate
+section b-weathered_copper_lantern
+do setblock 1 -60 3 weathered_copper_lantern
+section b-weathered_copper_trapdoor
+do setblock 2 -60 3 weathered_copper_trapdoor
+section b-weathered_cut_copper
+do setblock 3 -60 3 weathered_cut_copper
+section b-weathered_cut_copper_slab
+do setblock -2 -60 4 weathered_cut_copper_slab
+section b-weathered_cut_copper_stairs
+do setblock -1 -60 4 weathered_cut_copper_stairs
+section b-weathered_double_cut_copper_slab
+do setblock 0 -60 4 weathered_double_cut_copper_slab
+section b-weathered_lightning_rod
+do setblock 1 -60 4 weathered_lightning_rod
+section b-web
+do setblock 2 -60 4 web
+section b-weeping_vines
+do setblock 3 -60 4 weeping_vines
+section b-wet_sponge
+do setblock -2 -60 5 wet_sponge
+section b-wheat
+do setblock -1 -60 5 wheat
+section b-white_candle
+do setblock 0 -60 5 white_candle
+section b-white_candle_cake
+do setblock 1 -60 5 white_candle_cake
+section b-white_carpet
+do setblock 2 -60 5 white_carpet
+section b-white_concrete
+do setblock 3 -60 5 white_concrete
+section b-white_concrete_slab
+do setblock -2 -60 6 white_concrete_slab
+section b-white_concrete_stairs
+do setblock -1 -60 6 white_concrete_stairs
+section b-white_glazed_terracotta
+do setblock 0 -60 6 white_glazed_terracotta
+section b-white_shulker_box
+do setblock 1 -60 6 white_shulker_box
+section b-white_stained_glass
+do setblock 2 -60 6 white_stained_glass
+section b-white_stained_glass_pane
+do setblock 3 -60 6 white_stained_glass_pane
+section b-white_terracotta
+do setblock -2 -60 7 white_terracotta
+section b-white_tulip
+do setblock -1 -60 7 white_tulip
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-night-mirror                 # night: 26 種（weathered_copper_door weathered_copper_golem_statue weathered_copper_grate weathered_copper_lantern weathered_copper_trapdoor weathered_cut_copper weathered_cut_copper_slab weathered_cut_copper_stairs weathered_double_cut_copper_slab weathered_lightning_rod web weeping_vines wet_sponge wheat white_candle white_candle_cake white_carpet white_concrete white_concrete_slab white_concrete_stairs white_glazed_terracotta white_shulker_box white_stained_glass white_stained_glass_pane white_terracotta white_tulip）
+section blocks-night-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-night-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-night-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

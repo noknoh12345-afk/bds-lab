@@ -1,0 +1,178 @@
+# 一括検証 2 回目（night10）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section night
+do time set midnight
+do setblock 3 -60 7 torch
+section clean172a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean172b
+do kill @e[type=item]
+section clean172c
+do kill @e[type=xp_orb]
+section mobn-mooshroom
+do summon mooshroom -0.5 -60 8.5 150 0
+do effect @e[type=mooshroom] slowness 60 255 true
+do effect @e[type=mooshroom] fire_resistance 60 1 true
+do effect @e[type=mooshroom] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+shot mobn-mooshroom-mirror                       # mooshroom: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobn-mooshroom-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobn-mooshroom-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobn-mooshroom-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean173a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean173b
+do kill @e[type=item]
+section clean173c
+do kill @e[type=xp_orb]
+section mobn-mule
+do summon mule -0.5 -60 8.5 150 0
+do effect @e[type=mule] slowness 60 255 true
+do effect @e[type=mule] fire_resistance 60 1 true
+do effect @e[type=mule] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+shot mobn-mule-mirror                       # mule: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobn-mule-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobn-mule-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobn-mule-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean174a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean174b
+do kill @e[type=item]
+section clean174c
+do kill @e[type=xp_orb]
+section mobn-nautilus
+do summon nautilus -0.5 -60 8.5 150 0
+do effect @e[type=nautilus] slowness 60 255 true
+do effect @e[type=nautilus] fire_resistance 60 1 true
+do effect @e[type=nautilus] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+shot mobn-nautilus-mirror                       # nautilus: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobn-nautilus-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobn-nautilus-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobn-nautilus-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean175a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean175b
+do kill @e[type=item]
+section clean175c
+do kill @e[type=xp_orb]
+section mobn-ocelot
+do summon ocelot -0.5 -60 8.5 150 0
+do effect @e[type=ocelot] slowness 60 255 true
+do effect @e[type=ocelot] fire_resistance 60 1 true
+do effect @e[type=ocelot] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+shot mobn-ocelot-mirror                       # ocelot: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobn-ocelot-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobn-ocelot-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobn-ocelot-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean176a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean176b
+do kill @e[type=item]
+section clean176c
+do kill @e[type=xp_orb]
+section mobn-panda
+do summon panda -0.5 -60 8.5 150 0
+do effect @e[type=panda] slowness 60 255 true
+do effect @e[type=panda] fire_resistance 60 1 true
+do effect @e[type=panda] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+shot mobn-panda-mirror                       # panda: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobn-panda-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobn-panda-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobn-panda-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean177a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean177b
+do kill @e[type=item]
+section clean177c
+do kill @e[type=xp_orb]
+section done

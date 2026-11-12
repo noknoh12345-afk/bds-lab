@@ -1,7 +1,0 @@
-## a restart keeps dynamic properties, not script variables
-@A join
-scriptevent probe:set
-= set
-restart
-scriptevent probe:get
-= variable gone, dynamic property kept

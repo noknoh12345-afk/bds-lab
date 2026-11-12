@@ -1,0 +1,169 @@
+# 一括検証 4 回目（c-legs-legs-wither_skeleton+legs-spider+legs-cave_spider）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean2897a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2897b
+do kill @e[type=item]
+section clean2897c
+do kill @e[type=xp_orb]
+section legs-wither_skeleton
+do difficulty normal
+do gamemode survival @a
+do effect @a regeneration 100000 255 true
+do execute as @a run studio:debug on
+do tp @a -6.5 -60 8.5 -90 0
+do summon wither_skeleton 6.5 -60 8.5 90 0
+do effect @e[type=wither_skeleton] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 0.5 -58.3 3.5 facing 0.5 -59.2 12
+wait 300
+record start
+wait 10000
+record stop                               # wither_skeleton: 窓の前を歩いて横切る。本物（手前）と鏡の中の像の脚の振れ・速さ・向きが同じ（左右反転）
+shot legs-wither_skeleton-wide
+section legs-wither_skeleton-close
+do camera @a set minecraft:free pos 0.5 -58.6 10.4 facing 0.5 -59 12
+do tp @e[type=wither_skeleton] 5.5 -60 7.5 90 0
+wait 300
+record start
+wait 8000
+record stop                               # wither_skeleton: ガラスの近くから鏡だけ（本物が画面の外）。脚が動く
+do camera @a clear
+do execute as @a run studio:debug off
+do gamemode creative @a
+section legs-wither_skeleton-end
+do camera @a clear
+do gamemode creative @a
+do difficulty peaceful
+section clean2898a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2898b
+do kill @e[type=item]
+section clean2898c
+do kill @e[type=xp_orb]
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean2899a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2899b
+do kill @e[type=item]
+section clean2899c
+do kill @e[type=xp_orb]
+section legs-spider
+do difficulty normal
+do gamemode survival @a
+do effect @a regeneration 100000 255 true
+do execute as @a run studio:debug on
+do tp @a -6.5 -60 8.5 -90 0
+do summon spider 6.5 -60 8.5 90 0
+do effect @e[type=spider] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 0.5 -58.3 3.5 facing 0.5 -59.2 12
+wait 300
+record start
+wait 10000
+record stop                               # spider: 窓の前を歩いて横切る。本物（手前）と鏡の中の像の脚の振れ・速さ・向きが同じ（左右反転）
+shot legs-spider-wide
+section legs-spider-close
+do camera @a set minecraft:free pos 0.5 -58.6 10.4 facing 0.5 -59 12
+do tp @e[type=spider] 5.5 -60 7.5 90 0
+wait 300
+record start
+wait 8000
+record stop                               # spider: ガラスの近くから鏡だけ（本物が画面の外）。脚が動く
+do camera @a clear
+do execute as @a run studio:debug off
+do gamemode creative @a
+section legs-spider-end
+do camera @a clear
+do gamemode creative @a
+do difficulty peaceful
+section clean2900a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2900b
+do kill @e[type=item]
+section clean2900c
+do kill @e[type=xp_orb]
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean2901a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2901b
+do kill @e[type=item]
+section clean2901c
+do kill @e[type=xp_orb]
+section legs-cave_spider
+do difficulty normal
+do gamemode survival @a
+do effect @a regeneration 100000 255 true
+do execute as @a run studio:debug on
+do tp @a -6.5 -60 8.5 -90 0
+do summon cave_spider 6.5 -60 8.5 90 0
+do effect @e[type=cave_spider] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 0.5 -58.3 3.5 facing 0.5 -59.2 12
+wait 300
+record start
+wait 10000
+record stop                               # cave_spider: 窓の前を歩いて横切る。本物（手前）と鏡の中の像の脚の振れ・速さ・向きが同じ（左右反転）
+shot legs-cave_spider-wide
+section legs-cave_spider-close
+do camera @a set minecraft:free pos 0.5 -58.6 10.4 facing 0.5 -59 12
+do tp @e[type=cave_spider] 5.5 -60 7.5 90 0
+wait 300
+record start
+wait 8000
+record stop                               # cave_spider: ガラスの近くから鏡だけ（本物が画面の外）。脚が動く
+do camera @a clear
+do execute as @a run studio:debug off
+do gamemode creative @a
+section legs-cave_spider-end
+do camera @a clear
+do gamemode creative @a
+do difficulty peaceful
+section clean2902a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2902b
+do kill @e[type=item]
+section clean2902c
+do kill @e[type=xp_orb]
+section done

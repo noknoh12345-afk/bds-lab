@@ -1,0 +1,100 @@
+# 一括検証 2 回目（blocks36）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 11 air
+section b-tuff_brick_slab
+do setblock -2 -60 3 tuff_brick_slab
+section b-tuff_brick_stairs
+do setblock -1 -60 3 tuff_brick_stairs
+section b-tuff_brick_wall
+do setblock 0 -60 3 tuff_brick_wall
+section b-tuff_bricks
+do setblock 1 -60 3 tuff_bricks
+section b-tuff_slab
+do setblock 2 -60 3 tuff_slab
+section b-tuff_stairs
+do setblock 3 -60 3 tuff_stairs
+section b-tuff_wall
+do setblock -2 -60 4 tuff_wall
+section b-twisting_vines
+do setblock -1 -60 4 twisting_vines
+section b-undyed_shulker_box
+do setblock 0 -60 4 undyed_shulker_box
+section b-unlit_redstone_torch
+do setblock 1 -60 4 unlit_redstone_torch
+section b-unpowered_comparator
+do setblock 2 -60 4 unpowered_comparator
+section b-unpowered_repeater
+do setblock 3 -60 4 unpowered_repeater
+section b-vault
+do setblock -2 -60 5 vault
+section b-verdant_froglight
+do setblock -1 -60 5 verdant_froglight
+section b-vine
+do setblock 0 -60 5 vine
+section b-wall_sign
+do setblock 1 -60 5 wall_sign
+section b-warped_button
+do setblock 2 -60 5 warped_button
+section b-warped_door
+do setblock 3 -60 5 warped_door
+section b-warped_fence
+do setblock -2 -60 6 warped_fence
+section b-warped_fence_gate
+do setblock -1 -60 6 warped_fence_gate
+section b-warped_fungus
+do setblock 0 -60 6 warped_fungus
+section b-warped_hanging_sign
+do setblock 1 -60 6 warped_hanging_sign
+section b-warped_hyphae
+do setblock 2 -60 6 warped_hyphae
+section b-warped_nylium
+do setblock 3 -60 6 warped_nylium
+section b-warped_planks
+do setblock -2 -60 7 warped_planks
+section b-warped_pressure_plate
+do setblock -1 -60 7 warped_pressure_plate
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-mirror                        # 26 種（tuff_brick_slab tuff_brick_stairs tuff_brick_wall tuff_bricks tuff_slab tuff_stairs tuff_wall twisting_vines undyed_shulker_box unlit_redstone_torch unpowered_comparator unpowered_repeater vault verdant_froglight vine wall_sign warped_button warped_door warped_fence warped_fence_gate warped_fungus warped_hanging_sign warped_hyphae warped_nylium warped_planks warped_pressure_plate）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

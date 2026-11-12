@@ -1,0 +1,185 @@
+# 一括検証 3 回目（walk19）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clean409a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean409b
+do kill @e[type=item]
+section clean409c
+do kill @e[type=xp_orb]
+section mobw-zoglin
+do summon zoglin -0.5 -60 8.5 150 0
+do effect @e[type=zoglin] fire_resistance 60 1 true
+do effect @e[type=zoglin] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # zoglin: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-zoglin-mirror                       # zoglin: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-zoglin-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-zoglin-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-zoglin-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean410a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean410b
+do kill @e[type=item]
+section clean410c
+do kill @e[type=xp_orb]
+section mobw-zombie
+do summon zombie -0.5 -60 8.5 150 0
+do effect @e[type=zombie] fire_resistance 60 1 true
+do effect @e[type=zombie] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # zombie: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-zombie-mirror                       # zombie: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-zombie-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-zombie-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-zombie-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean411a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean411b
+do kill @e[type=item]
+section clean411c
+do kill @e[type=xp_orb]
+section mobw-zombie_horse
+do summon zombie_horse -0.5 -60 8.5 150 0
+do effect @e[type=zombie_horse] fire_resistance 60 1 true
+do effect @e[type=zombie_horse] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # zombie_horse: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-zombie_horse-mirror                       # zombie_horse: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-zombie_horse-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-zombie_horse-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-zombie_horse-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean412a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean412b
+do kill @e[type=item]
+section clean412c
+do kill @e[type=xp_orb]
+section mobw-zombie_nautilus
+do summon zombie_nautilus -0.5 -60 8.5 150 0
+do effect @e[type=zombie_nautilus] fire_resistance 60 1 true
+do effect @e[type=zombie_nautilus] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # zombie_nautilus: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-zombie_nautilus-mirror                       # zombie_nautilus: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-zombie_nautilus-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-zombie_nautilus-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-zombie_nautilus-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean413a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean413b
+do kill @e[type=item]
+section clean413c
+do kill @e[type=xp_orb]
+section mobw-zombie_pigman
+do summon zombie_pigman -0.5 -60 8.5 150 0
+do effect @e[type=zombie_pigman] fire_resistance 60 1 true
+do effect @e[type=zombie_pigman] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # zombie_pigman: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-zombie_pigman-mirror                       # zombie_pigman: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-zombie_pigman-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-zombie_pigman-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-zombie_pigman-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean414a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean414b
+do kill @e[type=item]
+section clean414c
+do kill @e[type=xp_orb]
+section done

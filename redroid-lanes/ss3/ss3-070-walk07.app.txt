@@ -1,0 +1,187 @@
+# 一括検証 3 回目（walk07）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clean337a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean337b
+do kill @e[type=item]
+section clean337c
+do kill @e[type=xp_orb]
+section mobw-fox
+do summon fox -0.5 -60 8.5 150 0
+do effect @e[type=fox] fire_resistance 60 1 true
+do effect @e[type=fox] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # fox: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-fox-mirror                       # fox: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-fox-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-fox-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-fox-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean338a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean338b
+do kill @e[type=item]
+section clean338c
+do kill @e[type=xp_orb]
+section mobw-frog
+do summon frog -0.5 -60 8.5 150 0
+do effect @e[type=frog] fire_resistance 60 1 true
+do effect @e[type=frog] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # frog: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-frog-mirror                       # frog: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-frog-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-frog-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-frog-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean339a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean339b
+do kill @e[type=item]
+section clean339c
+do kill @e[type=xp_orb]
+section mobw-ghast
+do summon ghast -0.5 -60 6.5 150 0
+do effect @e[type=ghast] fire_resistance 60 1 true
+do effect @e[type=ghast] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # ghast: 自由に動く。本物と鏡の像が同じ動き
+do tp @e[type=ghast] -0.5 -60 6.5 150 0
+wait 500
+shot mobw-ghast-mirror                       # ghast: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-ghast-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-ghast-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-ghast-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean340a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean340b
+do kill @e[type=item]
+section clean340c
+do kill @e[type=xp_orb]
+section mobw-glow_squid
+do summon glow_squid -0.5 -60 8.5 150 0
+do effect @e[type=glow_squid] fire_resistance 60 1 true
+do effect @e[type=glow_squid] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # glow_squid: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-glow_squid-mirror                       # glow_squid: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-glow_squid-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-glow_squid-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-glow_squid-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean341a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean341b
+do kill @e[type=item]
+section clean341c
+do kill @e[type=xp_orb]
+section mobw-goat
+do summon goat -0.5 -60 8.5 150 0
+do effect @e[type=goat] fire_resistance 60 1 true
+do effect @e[type=goat] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # goat: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-goat-mirror                       # goat: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-goat-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-goat-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-goat-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean342a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean342b
+do kill @e[type=item]
+section clean342c
+do kill @e[type=xp_orb]
+section done

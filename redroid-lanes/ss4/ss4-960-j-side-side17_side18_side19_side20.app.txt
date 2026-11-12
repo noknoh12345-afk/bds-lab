@@ -1,0 +1,529 @@
+# 一括検証 4 回目（j-side-side17+side18+side19+side20）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clean9577a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9577b
+do kill @e[type=item]
+section clean9577c
+do kill @e[type=xp_orb]
+section mobjs-vex
+do summon vex -0.5 -58 8.5 150 0
+do effect @e[type=vex] slowness 60 255 true
+do effect @e[type=vex] fire_resistance 60 1 true
+do effect @e[type=vex] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+do tp @e[type=vex] -0.5 -58 8.5 150 0
+wait 500
+shot mobjs-vex-mirror                       # vex: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-vex-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-vex-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-vex-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9578a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9578b
+do kill @e[type=item]
+section clean9578c
+do kill @e[type=xp_orb]
+section mobjs-villager
+do summon villager -0.5 -60 8.5 150 0
+do effect @e[type=villager] slowness 60 255 true
+do effect @e[type=villager] fire_resistance 60 1 true
+do effect @e[type=villager] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-villager-mirror                       # villager: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-villager-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-villager-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-villager-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9579a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9579b
+do kill @e[type=item]
+section clean9579c
+do kill @e[type=xp_orb]
+section mobjs-vindicator
+do summon vindicator -0.5 -60 8.5 150 0
+do effect @e[type=vindicator] slowness 60 255 true
+do effect @e[type=vindicator] fire_resistance 60 1 true
+do effect @e[type=vindicator] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-vindicator-mirror                       # vindicator: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-vindicator-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-vindicator-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-vindicator-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9580a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9580b
+do kill @e[type=item]
+section clean9580c
+do kill @e[type=xp_orb]
+section mobjs-wandering_trader
+do summon wandering_trader -0.5 -60 8.5 150 0
+do effect @e[type=wandering_trader] slowness 60 255 true
+do effect @e[type=wandering_trader] fire_resistance 60 1 true
+do effect @e[type=wandering_trader] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-wandering_trader-mirror                       # wandering_trader: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-wandering_trader-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-wandering_trader-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-wandering_trader-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9581a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9581b
+do kill @e[type=item]
+section clean9581c
+do kill @e[type=xp_orb]
+section mobjs-warden
+do summon warden -0.5 -60 6.5 150 0
+do effect @e[type=warden] slowness 60 255 true
+do effect @e[type=warden] fire_resistance 60 1 true
+do effect @e[type=warden] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-warden-mirror                       # warden: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-warden-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-warden-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-warden-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9582a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9582b
+do kill @e[type=item]
+section clean9582c
+do kill @e[type=xp_orb]
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clean9619a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9619b
+do kill @e[type=item]
+section clean9619c
+do kill @e[type=xp_orb]
+section mobjs-witch
+do summon witch -0.5 -60 8.5 150 0
+do effect @e[type=witch] slowness 60 255 true
+do effect @e[type=witch] fire_resistance 60 1 true
+do effect @e[type=witch] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-witch-mirror                       # witch: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-witch-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-witch-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-witch-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9620a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9620b
+do kill @e[type=item]
+section clean9620c
+do kill @e[type=xp_orb]
+section mobjs-wither
+do summon wither -0.5 -60 6.5 150 0
+do effect @e[type=wither] slowness 60 255 true
+do effect @e[type=wither] fire_resistance 60 1 true
+do effect @e[type=wither] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+do tp @e[type=wither] -0.5 -60 6.5 150 0
+wait 500
+shot mobjs-wither-mirror                       # wither: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-wither-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-wither-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-wither-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9621a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9621b
+do kill @e[type=item]
+section clean9621c
+do kill @e[type=xp_orb]
+section mobjs-wither_skeleton
+do summon wither_skeleton -0.5 -60 8.5 150 0
+do effect @e[type=wither_skeleton] slowness 60 255 true
+do effect @e[type=wither_skeleton] fire_resistance 60 1 true
+do effect @e[type=wither_skeleton] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-wither_skeleton-mirror                       # wither_skeleton: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-wither_skeleton-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-wither_skeleton-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-wither_skeleton-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9622a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9622b
+do kill @e[type=item]
+section clean9622c
+do kill @e[type=xp_orb]
+section mobjs-wolf
+do summon wolf -0.5 -60 8.5 150 0
+do effect @e[type=wolf] slowness 60 255 true
+do effect @e[type=wolf] fire_resistance 60 1 true
+do effect @e[type=wolf] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-wolf-mirror                       # wolf: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-wolf-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-wolf-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-wolf-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9623a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9623b
+do kill @e[type=item]
+section clean9623c
+do kill @e[type=xp_orb]
+section mobjs-xp_orb
+do summon xp_orb -0.5 -60 8.5 150 0
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-xp_orb-mirror                       # xp_orb: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-xp_orb-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-xp_orb-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-xp_orb-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9624a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9624b
+do kill @e[type=item]
+section clean9624c
+do kill @e[type=xp_orb]
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clean9661a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9661b
+do kill @e[type=item]
+section clean9661c
+do kill @e[type=xp_orb]
+section mobjs-zoglin
+do summon zoglin -0.5 -60 8.5 150 0
+do effect @e[type=zoglin] slowness 60 255 true
+do effect @e[type=zoglin] fire_resistance 60 1 true
+do effect @e[type=zoglin] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-zoglin-mirror                       # zoglin: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-zoglin-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-zoglin-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-zoglin-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9662a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9662b
+do kill @e[type=item]
+section clean9662c
+do kill @e[type=xp_orb]
+section mobjs-zombie
+do summon zombie -0.5 -60 8.5 150 0
+do effect @e[type=zombie] slowness 60 255 true
+do effect @e[type=zombie] fire_resistance 60 1 true
+do effect @e[type=zombie] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-zombie-mirror                       # zombie: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-zombie-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-zombie-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-zombie-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9663a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9663b
+do kill @e[type=item]
+section clean9663c
+do kill @e[type=xp_orb]
+section mobjs-zombie_horse
+do summon zombie_horse -0.5 -60 8.5 150 0
+do effect @e[type=zombie_horse] slowness 60 255 true
+do effect @e[type=zombie_horse] fire_resistance 60 1 true
+do effect @e[type=zombie_horse] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-zombie_horse-mirror                       # zombie_horse: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-zombie_horse-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-zombie_horse-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-zombie_horse-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9664a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9664b
+do kill @e[type=item]
+section clean9664c
+do kill @e[type=xp_orb]
+section mobjs-zombie_nautilus
+do summon zombie_nautilus -0.5 -60 8.5 150 0
+do effect @e[type=zombie_nautilus] slowness 60 255 true
+do effect @e[type=zombie_nautilus] fire_resistance 60 1 true
+do effect @e[type=zombie_nautilus] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-zombie_nautilus-mirror                       # zombie_nautilus: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-zombie_nautilus-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-zombie_nautilus-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-zombie_nautilus-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9665a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9665b
+do kill @e[type=item]
+section clean9665c
+do kill @e[type=xp_orb]
+section mobjs-zombie_pigman
+do summon zombie_pigman -0.5 -60 8.5 150 0
+do effect @e[type=zombie_pigman] slowness 60 255 true
+do effect @e[type=zombie_pigman] fire_resistance 60 1 true
+do effect @e[type=zombie_pigman] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-zombie_pigman-mirror                       # zombie_pigman: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-zombie_pigman-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-zombie_pigman-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-zombie_pigman-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9666a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9666b
+do kill @e[type=item]
+section clean9666c
+do kill @e[type=xp_orb]
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clean9695a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9695b
+do kill @e[type=item]
+section clean9695c
+do kill @e[type=xp_orb]
+section mobjs-zombie_villager
+do summon zombie_villager -0.5 -60 8.5 150 0
+do effect @e[type=zombie_villager] slowness 60 255 true
+do effect @e[type=zombie_villager] fire_resistance 60 1 true
+do effect @e[type=zombie_villager] water_breathing 60 1 true
+do tp @a -2.5 -60 5.5 -25 3
+wait 3500
+shot mobjs-zombie_villager-mirror                       # zombie_villager: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobjs-zombie_villager-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -2.5 -60 5.5 -25 3
+do camera @a set minecraft:free pos -2.5 -58.38 18.5 rot 3 -155
+wait 2500
+shot mobjs-zombie_villager-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobjs-zombie_villager-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean9696a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9696b
+do kill @e[type=item]
+section clean9696c
+do kill @e[type=xp_orb]
+section done

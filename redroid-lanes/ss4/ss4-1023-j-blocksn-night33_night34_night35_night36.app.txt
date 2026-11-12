@@ -1,0 +1,352 @@
+# 一括検証 4 回目（j-blocksn-night33+night34+night35+night36）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-spruce_door
+do setblock -2 -60 3 spruce_door
+section b-spruce_fence
+do setblock -1 -60 3 spruce_fence
+section b-spruce_fence_gate
+do setblock 0 -60 3 spruce_fence_gate
+section b-spruce_hanging_sign
+do setblock 1 -60 3 spruce_hanging_sign
+section b-spruce_leaves
+do setblock 2 -60 3 spruce_leaves
+section b-spruce_log
+do setblock 3 -60 3 spruce_log
+section b-spruce_planks
+do setblock -2 -60 4 spruce_planks
+section b-spruce_pressure_plate
+do setblock -1 -60 4 spruce_pressure_plate
+section b-spruce_sapling
+do setblock 0 -60 4 spruce_sapling
+section b-spruce_slab
+do setblock 1 -60 4 spruce_slab
+section b-spruce_stairs
+do setblock 2 -60 4 spruce_stairs
+section b-spruce_standing_sign
+do setblock 3 -60 4 spruce_standing_sign
+section b-spruce_trapdoor
+do setblock -2 -60 5 spruce_trapdoor
+section b-spruce_wall_sign
+do setblock -1 -60 5 spruce_wall_sign
+section b-spruce_wood
+do setblock 0 -60 5 spruce_wood
+section b-standing_sign
+do setblock 1 -60 5 standing_sign
+section b-stone
+do setblock 2 -60 5 stone
+section b-stone_brick_slab
+do setblock 3 -60 5 stone_brick_slab
+section b-stone_brick_stairs
+do setblock -2 -60 6 stone_brick_stairs
+section b-stone_brick_wall
+do setblock -1 -60 6 stone_brick_wall
+section b-stone_bricks
+do setblock 0 -60 6 stone_bricks
+section b-stone_button
+do setblock 1 -60 6 stone_button
+section b-stone_pressure_plate
+do setblock 2 -60 6 stone_pressure_plate
+section b-stone_stairs
+do setblock 3 -60 6 stone_stairs
+section b-stonecutter_block
+do setblock -2 -60 7 stonecutter_block
+section b-stripped_acacia_log
+do setblock -1 -60 7 stripped_acacia_log
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-night-mirror                 # night: 26 種（spruce_door spruce_fence spruce_fence_gate spruce_hanging_sign spruce_leaves spruce_log spruce_planks spruce_pressure_plate spruce_sapling spruce_slab spruce_stairs spruce_standing_sign spruce_trapdoor spruce_wall_sign spruce_wood standing_sign stone stone_brick_slab stone_brick_stairs stone_brick_wall stone_bricks stone_button stone_pressure_plate stone_stairs stonecutter_block stripped_acacia_log）
+section blocks-night-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-night-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-night-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-stripped_acacia_wood
+do setblock -2 -60 3 stripped_acacia_wood
+section b-stripped_bamboo_block
+do setblock -1 -60 3 stripped_bamboo_block
+section b-stripped_birch_log
+do setblock 0 -60 3 stripped_birch_log
+section b-stripped_birch_wood
+do setblock 1 -60 3 stripped_birch_wood
+section b-stripped_cherry_log
+do setblock 2 -60 3 stripped_cherry_log
+section b-stripped_cherry_wood
+do setblock 3 -60 3 stripped_cherry_wood
+section b-stripped_crimson_hyphae
+do setblock -2 -60 4 stripped_crimson_hyphae
+section b-stripped_crimson_stem
+do setblock -1 -60 4 stripped_crimson_stem
+section b-stripped_dark_oak_log
+do setblock 0 -60 4 stripped_dark_oak_log
+section b-stripped_dark_oak_wood
+do setblock 1 -60 4 stripped_dark_oak_wood
+section b-stripped_jungle_log
+do setblock 2 -60 4 stripped_jungle_log
+section b-stripped_jungle_wood
+do setblock 3 -60 4 stripped_jungle_wood
+section b-stripped_mangrove_log
+do setblock -2 -60 5 stripped_mangrove_log
+section b-stripped_mangrove_wood
+do setblock -1 -60 5 stripped_mangrove_wood
+section b-stripped_oak_log
+do setblock 0 -60 5 stripped_oak_log
+section b-stripped_oak_wood
+do setblock 1 -60 5 stripped_oak_wood
+section b-stripped_pale_oak_log
+do setblock 2 -60 5 stripped_pale_oak_log
+section b-stripped_pale_oak_wood
+do setblock 3 -60 5 stripped_pale_oak_wood
+section b-stripped_poplar_log
+do setblock -2 -60 6 stripped_poplar_log
+section b-stripped_poplar_wood
+do setblock -1 -60 6 stripped_poplar_wood
+section b-stripped_spruce_log
+do setblock 0 -60 6 stripped_spruce_log
+section b-stripped_spruce_wood
+do setblock 1 -60 6 stripped_spruce_wood
+section b-stripped_warped_hyphae
+do setblock 2 -60 6 stripped_warped_hyphae
+section b-stripped_warped_stem
+do setblock 3 -60 6 stripped_warped_stem
+section b-structure_block
+do setblock -2 -60 7 structure_block
+section b-sulfur
+do setblock -1 -60 7 sulfur
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-night-mirror                 # night: 26 種（stripped_acacia_wood stripped_bamboo_block stripped_birch_log stripped_birch_wood stripped_cherry_log stripped_cherry_wood stripped_crimson_hyphae stripped_crimson_stem stripped_dark_oak_log stripped_dark_oak_wood stripped_jungle_log stripped_jungle_wood stripped_mangrove_log stripped_mangrove_wood stripped_oak_log stripped_oak_wood stripped_pale_oak_log stripped_pale_oak_wood stripped_poplar_log stripped_poplar_wood stripped_spruce_log stripped_spruce_wood stripped_warped_hyphae stripped_warped_stem structure_block sulfur）
+section blocks-night-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-night-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-night-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-sulfur_brick_slab
+do setblock -2 -60 3 sulfur_brick_slab
+section b-sulfur_brick_stairs
+do setblock -1 -60 3 sulfur_brick_stairs
+section b-sulfur_brick_wall
+do setblock 0 -60 3 sulfur_brick_wall
+section b-sulfur_bricks
+do setblock 1 -60 3 sulfur_bricks
+section b-sulfur_slab
+do setblock 2 -60 3 sulfur_slab
+section b-sulfur_spike
+do setblock 3 -60 3 sulfur_spike
+section b-sulfur_stairs
+do setblock -2 -60 4 sulfur_stairs
+section b-sulfur_wall
+do setblock -1 -60 4 sulfur_wall
+section b-sunflower
+do setblock 0 -60 4 sunflower
+section b-sweet_berry_bush
+do setblock 1 -60 4 sweet_berry_bush
+section b-tall_dry_grass
+do setblock 2 -60 4 tall_dry_grass
+section b-tall_grass
+do setblock 3 -60 4 tall_grass
+section b-target
+do setblock -2 -60 5 target
+section b-tinted_glass
+do setblock -1 -60 5 tinted_glass
+section b-tnt
+do setblock 0 -60 5 tnt
+section b-torch
+do setblock 1 -60 5 torch
+section b-torchflower
+do setblock 2 -60 5 torchflower
+section b-torchflower_crop
+do setblock 3 -60 5 torchflower_crop
+section b-trapdoor
+do setblock -2 -60 6 trapdoor
+section b-trapped_chest
+do setblock -1 -60 6 trapped_chest
+section b-trial_spawner
+do setblock 0 -60 6 trial_spawner
+section b-tube_coral
+do setblock 1 -60 6 tube_coral
+section b-tube_coral_block
+do setblock 2 -60 6 tube_coral_block
+section b-tube_coral_fan
+do setblock 3 -60 6 tube_coral_fan
+section b-tube_coral_wall_fan
+do setblock -2 -60 7 tube_coral_wall_fan
+section b-tuff
+do setblock -1 -60 7 tuff
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-night-mirror                 # night: 26 種（sulfur_brick_slab sulfur_brick_stairs sulfur_brick_wall sulfur_bricks sulfur_slab sulfur_spike sulfur_stairs sulfur_wall sunflower sweet_berry_bush tall_dry_grass tall_grass target tinted_glass tnt torch torchflower torchflower_crop trapdoor trapped_chest trial_spawner tube_coral tube_coral_block tube_coral_fan tube_coral_wall_fan tuff）
+section blocks-night-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-night-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-night-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-tuff_brick_slab
+do setblock -2 -60 3 tuff_brick_slab
+section b-tuff_brick_stairs
+do setblock -1 -60 3 tuff_brick_stairs
+section b-tuff_brick_wall
+do setblock 0 -60 3 tuff_brick_wall
+section b-tuff_bricks
+do setblock 1 -60 3 tuff_bricks
+section b-tuff_slab
+do setblock 2 -60 3 tuff_slab
+section b-tuff_stairs
+do setblock 3 -60 3 tuff_stairs
+section b-tuff_wall
+do setblock -2 -60 4 tuff_wall
+section b-twisting_vines
+do setblock -1 -60 4 twisting_vines
+section b-undyed_shulker_box
+do setblock 0 -60 4 undyed_shulker_box
+section b-unlit_redstone_torch
+do setblock 1 -60 4 unlit_redstone_torch
+section b-unpowered_comparator
+do setblock 2 -60 4 unpowered_comparator
+section b-unpowered_repeater
+do setblock 3 -60 4 unpowered_repeater
+section b-vault
+do setblock -2 -60 5 vault
+section b-verdant_froglight
+do setblock -1 -60 5 verdant_froglight
+section b-vine
+do setblock 0 -60 5 vine
+section b-wall_sign
+do setblock 1 -60 5 wall_sign
+section b-warped_button
+do setblock 2 -60 5 warped_button
+section b-warped_door
+do setblock 3 -60 5 warped_door
+section b-warped_fence
+do setblock -2 -60 6 warped_fence
+section b-warped_fence_gate
+do setblock -1 -60 6 warped_fence_gate
+section b-warped_fungus
+do setblock 0 -60 6 warped_fungus
+section b-warped_hanging_sign
+do setblock 1 -60 6 warped_hanging_sign
+section b-warped_hyphae
+do setblock 2 -60 6 warped_hyphae
+section b-warped_nylium
+do setblock 3 -60 6 warped_nylium
+section b-warped_planks
+do setblock -2 -60 7 warped_planks
+section b-warped_pressure_plate
+do setblock -1 -60 7 warped_pressure_plate
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-night-mirror                 # night: 26 種（tuff_brick_slab tuff_brick_stairs tuff_brick_wall tuff_bricks tuff_slab tuff_stairs tuff_wall twisting_vines undyed_shulker_box unlit_redstone_torch unpowered_comparator unpowered_repeater vault verdant_froglight vine wall_sign warped_button warped_door warped_fence warped_fence_gate warped_fungus warped_hanging_sign warped_hyphae warped_nylium warped_planks warped_pressure_plate）
+section blocks-night-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-night-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-night-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

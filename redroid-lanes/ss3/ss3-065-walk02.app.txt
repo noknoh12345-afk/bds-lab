@@ -1,0 +1,191 @@
+# 一括検証 3 回目（walk02）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clean307a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean307b
+do kill @e[type=item]
+section clean307c
+do kill @e[type=xp_orb]
+section mobw-bee
+do summon bee -0.5 -58 8.5 150 0
+do effect @e[type=bee] fire_resistance 60 1 true
+do effect @e[type=bee] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # bee: 自由に動く。本物と鏡の像が同じ動き
+do tp @e[type=bee] -0.5 -58 8.5 150 0
+wait 500
+shot mobw-bee-mirror                       # bee: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-bee-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-bee-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-bee-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean308a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean308b
+do kill @e[type=item]
+section clean308c
+do kill @e[type=xp_orb]
+section mobw-blaze
+do summon blaze -0.5 -58 8.5 150 0
+do effect @e[type=blaze] fire_resistance 60 1 true
+do effect @e[type=blaze] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # blaze: 自由に動く。本物と鏡の像が同じ動き
+do tp @e[type=blaze] -0.5 -58 8.5 150 0
+wait 500
+shot mobw-blaze-mirror                       # blaze: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-blaze-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-blaze-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-blaze-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean309a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean309b
+do kill @e[type=item]
+section clean309c
+do kill @e[type=xp_orb]
+section mobw-bogged
+do summon bogged -0.5 -60 8.5 150 0
+do effect @e[type=bogged] fire_resistance 60 1 true
+do effect @e[type=bogged] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # bogged: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-bogged-mirror                       # bogged: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-bogged-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-bogged-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-bogged-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean310a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean310b
+do kill @e[type=item]
+section clean310c
+do kill @e[type=xp_orb]
+section mobw-breeze
+do summon breeze -0.5 -58 8.5 150 0
+do effect @e[type=breeze] fire_resistance 60 1 true
+do effect @e[type=breeze] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # breeze: 自由に動く。本物と鏡の像が同じ動き
+do tp @e[type=breeze] -0.5 -58 8.5 150 0
+wait 500
+shot mobw-breeze-mirror                       # breeze: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-breeze-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-breeze-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-breeze-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean311a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean311b
+do kill @e[type=item]
+section clean311c
+do kill @e[type=xp_orb]
+section mobw-camel
+do summon camel -0.5 -60 6.5 150 0
+do effect @e[type=camel] fire_resistance 60 1 true
+do effect @e[type=camel] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # camel: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-camel-mirror                       # camel: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-camel-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-camel-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-camel-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean312a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean312b
+do kill @e[type=item]
+section clean312c
+do kill @e[type=xp_orb]
+section done

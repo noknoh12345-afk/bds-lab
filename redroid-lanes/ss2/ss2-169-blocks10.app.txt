@@ -1,0 +1,100 @@
+# 一括検証 2 回目（blocks10）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 11 air
+section b-crimson_slab
+do setblock -2 -60 3 crimson_slab
+section b-crimson_stairs
+do setblock -1 -60 3 crimson_stairs
+section b-crimson_standing_sign
+do setblock 0 -60 3 crimson_standing_sign
+section b-crimson_stem
+do setblock 1 -60 3 crimson_stem
+section b-crimson_trapdoor
+do setblock 2 -60 3 crimson_trapdoor
+section b-crimson_wall_sign
+do setblock 3 -60 3 crimson_wall_sign
+section b-crying_obsidian
+do setblock -2 -60 4 crying_obsidian
+section b-cut_copper
+do setblock -1 -60 4 cut_copper
+section b-cut_copper_slab
+do setblock 0 -60 4 cut_copper_slab
+section b-cut_copper_stairs
+do setblock 1 -60 4 cut_copper_stairs
+section b-cyan_candle
+do setblock 2 -60 4 cyan_candle
+section b-cyan_candle_cake
+do setblock 3 -60 4 cyan_candle_cake
+section b-cyan_carpet
+do setblock -2 -60 5 cyan_carpet
+section b-cyan_concrete
+do setblock -1 -60 5 cyan_concrete
+section b-cyan_concrete_slab
+do setblock 0 -60 5 cyan_concrete_slab
+section b-cyan_concrete_stairs
+do setblock 1 -60 5 cyan_concrete_stairs
+section b-cyan_glazed_terracotta
+do setblock 2 -60 5 cyan_glazed_terracotta
+section b-cyan_shulker_box
+do setblock 3 -60 5 cyan_shulker_box
+section b-cyan_stained_glass
+do setblock -2 -60 6 cyan_stained_glass
+section b-cyan_stained_glass_pane
+do setblock -1 -60 6 cyan_stained_glass_pane
+section b-cyan_terracotta
+do setblock 0 -60 6 cyan_terracotta
+section b-cyan_wool
+do setblock 1 -60 6 cyan_wool
+section b-cyan_wool_slab
+do setblock 2 -60 6 cyan_wool_slab
+section b-cyan_wool_stairs
+do setblock 3 -60 6 cyan_wool_stairs
+section b-dandelion
+do setblock -2 -60 7 dandelion
+section b-dark_oak_button
+do setblock -1 -60 7 dark_oak_button
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-mirror                        # 26 種（crimson_slab crimson_stairs crimson_standing_sign crimson_stem crimson_trapdoor crimson_wall_sign crying_obsidian cut_copper cut_copper_slab cut_copper_stairs cyan_candle cyan_candle_cake cyan_carpet cyan_concrete cyan_concrete_slab cyan_concrete_stairs cyan_glazed_terracotta cyan_shulker_box cyan_stained_glass cyan_stained_glass_pane cyan_terracotta cyan_wool cyan_wool_slab cyan_wool_stairs dandelion dark_oak_button）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

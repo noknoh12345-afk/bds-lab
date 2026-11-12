@@ -1,0 +1,172 @@
+# 一括検証 4 回目（c-legs-legs-armadillo+legs-frog+legs-panda）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean2933a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2933b
+do kill @e[type=item]
+section clean2933c
+do kill @e[type=xp_orb]
+section legs-armadillo
+do difficulty normal
+do gamemode survival @a
+do effect @a regeneration 100000 255 true
+do execute as @a run studio:debug on
+do replaceitem entity @a slot.weapon.mainhand 0 spider_eye
+do tp @a -6.5 -60 8.5 -90 0
+do summon armadillo 6.5 -60 8.5 90 0
+do effect @e[type=armadillo] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 0.5 -58.3 3.5 facing 0.5 -59.2 12
+wait 300
+record start
+wait 10000
+record stop                               # armadillo: 窓の前を歩いて横切る。本物（手前）と鏡の中の像の脚の振れ・速さ・向きが同じ（左右反転）
+shot legs-armadillo-wide
+section legs-armadillo-close
+do camera @a set minecraft:free pos 0.5 -58.6 10.4 facing 0.5 -59 12
+do tp @e[type=armadillo] 5.5 -60 7.5 90 0
+wait 300
+record start
+wait 8000
+record stop                               # armadillo: ガラスの近くから鏡だけ（本物が画面の外）。脚が動く
+do camera @a clear
+do execute as @a run studio:debug off
+do gamemode creative @a
+section legs-armadillo-end
+do camera @a clear
+do gamemode creative @a
+do difficulty peaceful
+section clean2934a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2934b
+do kill @e[type=item]
+section clean2934c
+do kill @e[type=xp_orb]
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean2935a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2935b
+do kill @e[type=item]
+section clean2935c
+do kill @e[type=xp_orb]
+section legs-frog
+do difficulty normal
+do gamemode survival @a
+do effect @a regeneration 100000 255 true
+do execute as @a run studio:debug on
+do replaceitem entity @a slot.weapon.mainhand 0 slime_ball
+do tp @a -6.5 -60 8.5 -90 0
+do summon frog 6.5 -60 8.5 90 0
+do effect @e[type=frog] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 0.5 -58.3 3.5 facing 0.5 -59.2 12
+wait 300
+record start
+wait 10000
+record stop                               # frog: 窓の前を歩いて横切る。本物（手前）と鏡の中の像の脚の振れ・速さ・向きが同じ（左右反転）
+shot legs-frog-wide
+section legs-frog-close
+do camera @a set minecraft:free pos 0.5 -58.6 10.4 facing 0.5 -59 12
+do tp @e[type=frog] 5.5 -60 7.5 90 0
+wait 300
+record start
+wait 8000
+record stop                               # frog: ガラスの近くから鏡だけ（本物が画面の外）。脚が動く
+do camera @a clear
+do execute as @a run studio:debug off
+do gamemode creative @a
+section legs-frog-end
+do camera @a clear
+do gamemode creative @a
+do difficulty peaceful
+section clean2936a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2936b
+do kill @e[type=item]
+section clean2936c
+do kill @e[type=xp_orb]
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean2937a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2937b
+do kill @e[type=item]
+section clean2937c
+do kill @e[type=xp_orb]
+section legs-panda
+do difficulty normal
+do gamemode survival @a
+do effect @a regeneration 100000 255 true
+do execute as @a run studio:debug on
+do replaceitem entity @a slot.weapon.mainhand 0 bamboo
+do tp @a -6.5 -60 8.5 -90 0
+do summon panda 6.5 -60 8.5 90 0
+do effect @e[type=panda] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 0.5 -58.3 3.5 facing 0.5 -59.2 12
+wait 300
+record start
+wait 10000
+record stop                               # panda: 窓の前を歩いて横切る。本物（手前）と鏡の中の像の脚の振れ・速さ・向きが同じ（左右反転）
+shot legs-panda-wide
+section legs-panda-close
+do camera @a set minecraft:free pos 0.5 -58.6 10.4 facing 0.5 -59 12
+do tp @e[type=panda] 5.5 -60 7.5 90 0
+wait 300
+record start
+wait 8000
+record stop                               # panda: ガラスの近くから鏡だけ（本物が画面の外）。脚が動く
+do camera @a clear
+do execute as @a run studio:debug off
+do gamemode creative @a
+section legs-panda-end
+do camera @a clear
+do gamemode creative @a
+do difficulty peaceful
+section clean2938a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean2938b
+do kill @e[type=item]
+section clean2938c
+do kill @e[type=xp_orb]
+section done

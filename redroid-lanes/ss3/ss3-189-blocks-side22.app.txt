@@ -1,0 +1,100 @@
+# 一括検証 3 回目（blocks-side22）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-mangrove_wood
+do setblock -2 -60 3 mangrove_wood
+section b-medium_amethyst_bud
+do setblock -1 -60 3 medium_amethyst_bud
+section b-melon_block
+do setblock 0 -60 3 melon_block
+section b-melon_stem
+do setblock 1 -60 3 melon_stem
+section b-mob_spawner
+do setblock 2 -60 3 mob_spawner
+section b-moss_block
+do setblock 3 -60 3 moss_block
+section b-moss_carpet
+do setblock -2 -60 4 moss_carpet
+section b-mossy_cobblestone
+do setblock -1 -60 4 mossy_cobblestone
+section b-mossy_cobblestone_slab
+do setblock 0 -60 4 mossy_cobblestone_slab
+section b-mossy_cobblestone_stairs
+do setblock 1 -60 4 mossy_cobblestone_stairs
+section b-mossy_cobblestone_wall
+do setblock 2 -60 4 mossy_cobblestone_wall
+section b-mossy_stone_brick_slab
+do setblock 3 -60 4 mossy_stone_brick_slab
+section b-mossy_stone_brick_stairs
+do setblock -2 -60 5 mossy_stone_brick_stairs
+section b-mossy_stone_brick_wall
+do setblock -1 -60 5 mossy_stone_brick_wall
+section b-mossy_stone_bricks
+do setblock 0 -60 5 mossy_stone_bricks
+section b-mud
+do setblock 1 -60 5 mud
+section b-mud_brick_slab
+do setblock 2 -60 5 mud_brick_slab
+section b-mud_brick_stairs
+do setblock 3 -60 5 mud_brick_stairs
+section b-mud_brick_wall
+do setblock -2 -60 6 mud_brick_wall
+section b-mud_bricks
+do setblock -1 -60 6 mud_bricks
+section b-muddy_mangrove_roots
+do setblock 0 -60 6 muddy_mangrove_roots
+section b-mushroom_stem
+do setblock 1 -60 6 mushroom_stem
+section b-mycelium
+do setblock 2 -60 6 mycelium
+section b-nether_brick
+do setblock 3 -60 6 nether_brick
+section b-nether_brick_fence
+do setblock -2 -60 7 nether_brick_fence
+section b-nether_brick_slab
+do setblock -1 -60 7 nether_brick_slab
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-mirror                        # side: 26 種（mangrove_wood medium_amethyst_bud melon_block melon_stem mob_spawner moss_block moss_carpet mossy_cobblestone mossy_cobblestone_slab mossy_cobblestone_stairs mossy_cobblestone_wall mossy_stone_brick_slab mossy_stone_brick_stairs mossy_stone_brick_wall mossy_stone_bricks mud mud_brick_slab mud_brick_stairs mud_brick_wall mud_bricks muddy_mangrove_roots mushroom_stem mycelium nether_brick nether_brick_fence nether_brick_slab）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

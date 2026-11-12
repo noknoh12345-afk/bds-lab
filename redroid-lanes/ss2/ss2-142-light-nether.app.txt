@@ -1,0 +1,51 @@
+# 一括検証 2 回目（light-nether）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section nether-load
+do execute in nether run tp @a 0.5 70 8 0 0
+wait 6000
+do execute in nether run fill -6 70 0 6 76 16 air
+section nether
+do execute in nether run fill -6 69 0 6 69 16 stone
+do execute in nether run fill -4 70 12 4 74 12 stone
+do execute in nether run fill -1 70 12 1 72 12 air
+do execute in nether run tp @a 0.5 70 8 0 0
+wait 2000
+do execute in nether run studio:mirror 0 70 12 north
+do execute in nether run setblock 2 70 9 gold_block
+do execute in nether run summon pig -0.5 70 8.5 150 0
+do execute in nether run tp @a 2.5 70 5.5 20 3
+wait 5000
+shot nether-mirror                           # nether: 鏡が置けて、金ブロックと豚と自分が映る。明るさ・霧が本物と同じ
+section nether-truth
+do execute in nether run studio:remove
+do execute in nether run fill -4 70 12 4 74 12 air
+do execute in nether run camera @a set minecraft:free pos 2.5 71.62 18.5 rot 3 160
+wait 2500
+shot nether-truth                            # 正解（左右反転して比べる）
+do camera @a clear
+section done

@@ -1,0 +1,336 @@
+# 一括検証 4 回目（e-blockss-side9+side10+side11+side12）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 12800
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-copper_golem_statue
+do setblock -2 -60 3 copper_golem_statue
+section b-copper_grate
+do setblock -1 -60 3 copper_grate
+section b-copper_lantern
+do setblock 0 -60 3 copper_lantern
+section b-copper_ore
+do setblock 1 -60 3 copper_ore
+section b-copper_torch
+do setblock 2 -60 3 copper_torch
+section b-copper_trapdoor
+do setblock 3 -60 3 copper_trapdoor
+section b-cornflower
+do setblock -2 -60 4 cornflower
+section b-cracked_deepslate_bricks
+do setblock -1 -60 4 cracked_deepslate_bricks
+section b-cracked_deepslate_tiles
+do setblock 0 -60 4 cracked_deepslate_tiles
+section b-cracked_nether_bricks
+do setblock 1 -60 4 cracked_nether_bricks
+section b-cracked_polished_blackstone_bricks
+do setblock 2 -60 4 cracked_polished_blackstone_bricks
+section b-cracked_stone_bricks
+do setblock 3 -60 4 cracked_stone_bricks
+section b-crafter
+do setblock -2 -60 5 crafter
+section b-crafting_table
+do setblock -1 -60 5 crafting_table
+section b-creaking_heart
+do setblock 0 -60 5 creaking_heart
+section b-crimson_button
+do setblock 1 -60 5 crimson_button
+section b-crimson_door
+do setblock 2 -60 5 crimson_door
+section b-crimson_fence
+do setblock 3 -60 5 crimson_fence
+section b-crimson_fence_gate
+do setblock -2 -60 6 crimson_fence_gate
+section b-crimson_fungus
+do setblock -1 -60 6 crimson_fungus
+section b-crimson_hanging_sign
+do setblock 0 -60 6 crimson_hanging_sign
+section b-crimson_hyphae
+do setblock 1 -60 6 crimson_hyphae
+section b-crimson_nylium
+do setblock 2 -60 6 crimson_nylium
+section b-crimson_planks
+do setblock 3 -60 6 crimson_planks
+section b-crimson_pressure_plate
+do setblock -2 -60 7 crimson_pressure_plate
+section b-crimson_roots
+do setblock -1 -60 7 crimson_roots
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（copper_golem_statue copper_grate copper_lantern copper_ore copper_torch copper_trapdoor cornflower cracked_deepslate_bricks cracked_deepslate_tiles cracked_nether_bricks cracked_polished_blackstone_bricks cracked_stone_bricks crafter crafting_table creaking_heart crimson_button crimson_door crimson_fence crimson_fence_gate crimson_fungus crimson_hanging_sign crimson_hyphae crimson_nylium crimson_planks crimson_pressure_plate crimson_roots）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 12800
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-crimson_slab
+do setblock -2 -60 3 crimson_slab
+section b-crimson_stairs
+do setblock -1 -60 3 crimson_stairs
+section b-crimson_standing_sign
+do setblock 0 -60 3 crimson_standing_sign
+section b-crimson_stem
+do setblock 1 -60 3 crimson_stem
+section b-crimson_trapdoor
+do setblock 2 -60 3 crimson_trapdoor
+section b-crimson_wall_sign
+do setblock 3 -60 3 crimson_wall_sign
+section b-crying_obsidian
+do setblock -2 -60 4 crying_obsidian
+section b-cut_copper
+do setblock -1 -60 4 cut_copper
+section b-cut_copper_slab
+do setblock 0 -60 4 cut_copper_slab
+section b-cut_copper_stairs
+do setblock 1 -60 4 cut_copper_stairs
+section b-cyan_candle
+do setblock 2 -60 4 cyan_candle
+section b-cyan_candle_cake
+do setblock 3 -60 4 cyan_candle_cake
+section b-cyan_carpet
+do setblock -2 -60 5 cyan_carpet
+section b-cyan_concrete
+do setblock -1 -60 5 cyan_concrete
+section b-cyan_concrete_slab
+do setblock 0 -60 5 cyan_concrete_slab
+section b-cyan_concrete_stairs
+do setblock 1 -60 5 cyan_concrete_stairs
+section b-cyan_glazed_terracotta
+do setblock 2 -60 5 cyan_glazed_terracotta
+section b-cyan_shulker_box
+do setblock 3 -60 5 cyan_shulker_box
+section b-cyan_stained_glass
+do setblock -2 -60 6 cyan_stained_glass
+section b-cyan_stained_glass_pane
+do setblock -1 -60 6 cyan_stained_glass_pane
+section b-cyan_terracotta
+do setblock 0 -60 6 cyan_terracotta
+section b-cyan_wool
+do setblock 1 -60 6 cyan_wool
+section b-cyan_wool_slab
+do setblock 2 -60 6 cyan_wool_slab
+section b-cyan_wool_stairs
+do setblock 3 -60 6 cyan_wool_stairs
+section b-dandelion
+do setblock -2 -60 7 dandelion
+section b-dark_oak_button
+do setblock -1 -60 7 dark_oak_button
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（crimson_slab crimson_stairs crimson_standing_sign crimson_stem crimson_trapdoor crimson_wall_sign crying_obsidian cut_copper cut_copper_slab cut_copper_stairs cyan_candle cyan_candle_cake cyan_carpet cyan_concrete cyan_concrete_slab cyan_concrete_stairs cyan_glazed_terracotta cyan_shulker_box cyan_stained_glass cyan_stained_glass_pane cyan_terracotta cyan_wool cyan_wool_slab cyan_wool_stairs dandelion dark_oak_button）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 12800
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-dark_oak_door
+do setblock -2 -60 3 dark_oak_door
+section b-dark_oak_fence
+do setblock -1 -60 3 dark_oak_fence
+section b-dark_oak_fence_gate
+do setblock 0 -60 3 dark_oak_fence_gate
+section b-dark_oak_hanging_sign
+do setblock 1 -60 3 dark_oak_hanging_sign
+section b-dark_oak_leaves
+do setblock 2 -60 3 dark_oak_leaves
+section b-dark_oak_log
+do setblock 3 -60 3 dark_oak_log
+section b-dark_oak_planks
+do setblock -2 -60 4 dark_oak_planks
+section b-dark_oak_pressure_plate
+do setblock -1 -60 4 dark_oak_pressure_plate
+section b-dark_oak_sapling
+do setblock 0 -60 4 dark_oak_sapling
+section b-dark_oak_slab
+do setblock 1 -60 4 dark_oak_slab
+section b-dark_oak_stairs
+do setblock 2 -60 4 dark_oak_stairs
+section b-dark_oak_trapdoor
+do setblock 3 -60 4 dark_oak_trapdoor
+section b-dark_oak_wood
+do setblock -2 -60 5 dark_oak_wood
+section b-dark_prismarine
+do setblock -1 -60 5 dark_prismarine
+section b-dark_prismarine_slab
+do setblock 0 -60 5 dark_prismarine_slab
+section b-dark_prismarine_stairs
+do setblock 1 -60 5 dark_prismarine_stairs
+section b-darkoak_standing_sign
+do setblock 2 -60 5 darkoak_standing_sign
+section b-darkoak_wall_sign
+do setblock 3 -60 5 darkoak_wall_sign
+section b-daylight_detector
+do setblock -2 -60 6 daylight_detector
+section b-daylight_detector_inverted
+do setblock -1 -60 6 daylight_detector_inverted
+section b-dead_brain_coral
+do setblock 0 -60 6 dead_brain_coral
+section b-dead_brain_coral_block
+do setblock 1 -60 6 dead_brain_coral_block
+section b-dead_brain_coral_fan
+do setblock 2 -60 6 dead_brain_coral_fan
+section b-dead_brain_coral_wall_fan
+do setblock 3 -60 6 dead_brain_coral_wall_fan
+section b-dead_bubble_coral
+do setblock -2 -60 7 dead_bubble_coral
+section b-dead_bubble_coral_block
+do setblock -1 -60 7 dead_bubble_coral_block
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（dark_oak_door dark_oak_fence dark_oak_fence_gate dark_oak_hanging_sign dark_oak_leaves dark_oak_log dark_oak_planks dark_oak_pressure_plate dark_oak_sapling dark_oak_slab dark_oak_stairs dark_oak_trapdoor dark_oak_wood dark_prismarine dark_prismarine_slab dark_prismarine_stairs darkoak_standing_sign darkoak_wall_sign daylight_detector daylight_detector_inverted dead_brain_coral dead_brain_coral_block dead_brain_coral_fan dead_brain_coral_wall_fan dead_bubble_coral dead_bubble_coral_block）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 12800
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-dead_bubble_coral_fan
+do setblock -2 -60 3 dead_bubble_coral_fan
+section b-dead_bubble_coral_wall_fan
+do setblock -1 -60 3 dead_bubble_coral_wall_fan
+section b-dead_horn_coral
+do setblock 0 -60 3 dead_horn_coral
+section b-dead_horn_coral_block
+do setblock 1 -60 3 dead_horn_coral_block
+section b-dead_horn_coral_fan
+do setblock 2 -60 3 dead_horn_coral_fan
+section b-dead_horn_coral_wall_fan
+do setblock 3 -60 3 dead_horn_coral_wall_fan
+section b-dead_tube_coral
+do setblock -2 -60 4 dead_tube_coral
+section b-dead_tube_coral_block
+do setblock -1 -60 4 dead_tube_coral_block
+section b-dead_tube_coral_fan
+do setblock 0 -60 4 dead_tube_coral_fan
+section b-dead_tube_coral_wall_fan
+do setblock 1 -60 4 dead_tube_coral_wall_fan
+section b-deadbush
+do setblock 2 -60 4 deadbush
+section b-deepslate
+do setblock 3 -60 4 deepslate
+section b-deepslate_brick_slab
+do setblock -2 -60 5 deepslate_brick_slab
+section b-deepslate_brick_stairs
+do setblock -1 -60 5 deepslate_brick_stairs
+section b-deepslate_brick_wall
+do setblock 0 -60 5 deepslate_brick_wall
+section b-deepslate_bricks
+do setblock 1 -60 5 deepslate_bricks
+section b-deepslate_coal_ore
+do setblock 2 -60 5 deepslate_coal_ore
+section b-deepslate_copper_ore
+do setblock 3 -60 5 deepslate_copper_ore
+section b-deepslate_diamond_ore
+do setblock -2 -60 6 deepslate_diamond_ore
+section b-deepslate_emerald_ore
+do setblock -1 -60 6 deepslate_emerald_ore
+section b-deepslate_gold_ore
+do setblock 0 -60 6 deepslate_gold_ore
+section b-deepslate_iron_ore
+do setblock 1 -60 6 deepslate_iron_ore
+section b-deepslate_lapis_ore
+do setblock 2 -60 6 deepslate_lapis_ore
+section b-deepslate_redstone_ore
+do setblock 3 -60 6 deepslate_redstone_ore
+section b-deepslate_tile_slab
+do setblock -2 -60 7 deepslate_tile_slab
+section b-deepslate_tile_stairs
+do setblock -1 -60 7 deepslate_tile_stairs
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（dead_bubble_coral_fan dead_bubble_coral_wall_fan dead_horn_coral dead_horn_coral_block dead_horn_coral_fan dead_horn_coral_wall_fan dead_tube_coral dead_tube_coral_block dead_tube_coral_fan dead_tube_coral_wall_fan deadbush deepslate deepslate_brick_slab deepslate_brick_stairs deepslate_brick_wall deepslate_bricks deepslate_coal_ore deepslate_copper_ore deepslate_diamond_ore deepslate_emerald_ore deepslate_gold_ore deepslate_iron_ore deepslate_lapis_ore deepslate_redstone_ore deepslate_tile_slab deepslate_tile_stairs）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

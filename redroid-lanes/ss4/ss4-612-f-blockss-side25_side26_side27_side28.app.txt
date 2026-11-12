@@ -1,0 +1,336 @@
+# 一括検証 4 回目（f-blockss-side25+side26+side27+side28）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-oxidized_cut_copper
+do setblock -2 -60 3 oxidized_cut_copper
+section b-oxidized_cut_copper_slab
+do setblock -1 -60 3 oxidized_cut_copper_slab
+section b-oxidized_cut_copper_stairs
+do setblock 0 -60 3 oxidized_cut_copper_stairs
+section b-oxidized_double_cut_copper_slab
+do setblock 1 -60 3 oxidized_double_cut_copper_slab
+section b-oxidized_lightning_rod
+do setblock 2 -60 3 oxidized_lightning_rod
+section b-packed_ice
+do setblock 3 -60 3 packed_ice
+section b-packed_mud
+do setblock -2 -60 4 packed_mud
+section b-pale_hanging_moss
+do setblock -1 -60 4 pale_hanging_moss
+section b-pale_moss_block
+do setblock 0 -60 4 pale_moss_block
+section b-pale_moss_carpet
+do setblock 1 -60 4 pale_moss_carpet
+section b-pale_oak_button
+do setblock 2 -60 4 pale_oak_button
+section b-pale_oak_door
+do setblock 3 -60 4 pale_oak_door
+section b-pale_oak_fence
+do setblock -2 -60 5 pale_oak_fence
+section b-pale_oak_fence_gate
+do setblock -1 -60 5 pale_oak_fence_gate
+section b-pale_oak_hanging_sign
+do setblock 0 -60 5 pale_oak_hanging_sign
+section b-pale_oak_leaves
+do setblock 1 -60 5 pale_oak_leaves
+section b-pale_oak_log
+do setblock 2 -60 5 pale_oak_log
+section b-pale_oak_planks
+do setblock 3 -60 5 pale_oak_planks
+section b-pale_oak_pressure_plate
+do setblock -2 -60 6 pale_oak_pressure_plate
+section b-pale_oak_sapling
+do setblock -1 -60 6 pale_oak_sapling
+section b-pale_oak_slab
+do setblock 0 -60 6 pale_oak_slab
+section b-pale_oak_stairs
+do setblock 1 -60 6 pale_oak_stairs
+section b-pale_oak_standing_sign
+do setblock 2 -60 6 pale_oak_standing_sign
+section b-pale_oak_trapdoor
+do setblock 3 -60 6 pale_oak_trapdoor
+section b-pale_oak_wall_sign
+do setblock -2 -60 7 pale_oak_wall_sign
+section b-pale_oak_wood
+do setblock -1 -60 7 pale_oak_wood
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（oxidized_cut_copper oxidized_cut_copper_slab oxidized_cut_copper_stairs oxidized_double_cut_copper_slab oxidized_lightning_rod packed_ice packed_mud pale_hanging_moss pale_moss_block pale_moss_carpet pale_oak_button pale_oak_door pale_oak_fence pale_oak_fence_gate pale_oak_hanging_sign pale_oak_leaves pale_oak_log pale_oak_planks pale_oak_pressure_plate pale_oak_sapling pale_oak_slab pale_oak_stairs pale_oak_standing_sign pale_oak_trapdoor pale_oak_wall_sign pale_oak_wood）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-pearlescent_froglight
+do setblock -2 -60 3 pearlescent_froglight
+section b-peony
+do setblock -1 -60 3 peony
+section b-petrified_oak_slab
+do setblock 0 -60 3 petrified_oak_slab
+section b-pink_candle
+do setblock 1 -60 3 pink_candle
+section b-pink_candle_cake
+do setblock 2 -60 3 pink_candle_cake
+section b-pink_carpet
+do setblock 3 -60 3 pink_carpet
+section b-pink_concrete
+do setblock -2 -60 4 pink_concrete
+section b-pink_concrete_slab
+do setblock -1 -60 4 pink_concrete_slab
+section b-pink_concrete_stairs
+do setblock 0 -60 4 pink_concrete_stairs
+section b-pink_glazed_terracotta
+do setblock 1 -60 4 pink_glazed_terracotta
+section b-pink_petals
+do setblock 2 -60 4 pink_petals
+section b-pink_shulker_box
+do setblock 3 -60 4 pink_shulker_box
+section b-pink_stained_glass
+do setblock -2 -60 5 pink_stained_glass
+section b-pink_stained_glass_pane
+do setblock -1 -60 5 pink_stained_glass_pane
+section b-pink_terracotta
+do setblock 0 -60 5 pink_terracotta
+section b-pink_tulip
+do setblock 1 -60 5 pink_tulip
+section b-pink_wool
+do setblock 2 -60 5 pink_wool
+section b-pink_wool_slab
+do setblock 3 -60 5 pink_wool_slab
+section b-pink_wool_stairs
+do setblock -2 -60 6 pink_wool_stairs
+section b-pitcher_crop
+do setblock -1 -60 6 pitcher_crop
+section b-pitcher_plant
+do setblock 0 -60 6 pitcher_plant
+section b-podzol
+do setblock 1 -60 6 podzol
+section b-polished_andesite
+do setblock 2 -60 6 polished_andesite
+section b-polished_andesite_slab
+do setblock 3 -60 6 polished_andesite_slab
+section b-polished_andesite_stairs
+do setblock -2 -60 7 polished_andesite_stairs
+section b-polished_basalt
+do setblock -1 -60 7 polished_basalt
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（pearlescent_froglight peony petrified_oak_slab pink_candle pink_candle_cake pink_carpet pink_concrete pink_concrete_slab pink_concrete_stairs pink_glazed_terracotta pink_petals pink_shulker_box pink_stained_glass pink_stained_glass_pane pink_terracotta pink_tulip pink_wool pink_wool_slab pink_wool_stairs pitcher_crop pitcher_plant podzol polished_andesite polished_andesite_slab polished_andesite_stairs polished_basalt）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-polished_blackstone
+do setblock -2 -60 3 polished_blackstone
+section b-polished_blackstone_brick_slab
+do setblock -1 -60 3 polished_blackstone_brick_slab
+section b-polished_blackstone_brick_stairs
+do setblock 0 -60 3 polished_blackstone_brick_stairs
+section b-polished_blackstone_brick_wall
+do setblock 1 -60 3 polished_blackstone_brick_wall
+section b-polished_blackstone_bricks
+do setblock 2 -60 3 polished_blackstone_bricks
+section b-polished_blackstone_button
+do setblock 3 -60 3 polished_blackstone_button
+section b-polished_blackstone_pressure_plate
+do setblock -2 -60 4 polished_blackstone_pressure_plate
+section b-polished_blackstone_slab
+do setblock -1 -60 4 polished_blackstone_slab
+section b-polished_blackstone_stairs
+do setblock 0 -60 4 polished_blackstone_stairs
+section b-polished_blackstone_wall
+do setblock 1 -60 4 polished_blackstone_wall
+section b-polished_cinnabar
+do setblock 2 -60 4 polished_cinnabar
+section b-polished_cinnabar_slab
+do setblock 3 -60 4 polished_cinnabar_slab
+section b-polished_cinnabar_stairs
+do setblock -2 -60 5 polished_cinnabar_stairs
+section b-polished_cinnabar_wall
+do setblock -1 -60 5 polished_cinnabar_wall
+section b-polished_deepslate
+do setblock 0 -60 5 polished_deepslate
+section b-polished_deepslate_slab
+do setblock 1 -60 5 polished_deepslate_slab
+section b-polished_deepslate_stairs
+do setblock 2 -60 5 polished_deepslate_stairs
+section b-polished_deepslate_wall
+do setblock 3 -60 5 polished_deepslate_wall
+section b-polished_diorite
+do setblock -2 -60 6 polished_diorite
+section b-polished_diorite_slab
+do setblock -1 -60 6 polished_diorite_slab
+section b-polished_diorite_stairs
+do setblock 0 -60 6 polished_diorite_stairs
+section b-polished_granite
+do setblock 1 -60 6 polished_granite
+section b-polished_granite_slab
+do setblock 2 -60 6 polished_granite_slab
+section b-polished_granite_stairs
+do setblock 3 -60 6 polished_granite_stairs
+section b-polished_sulfur
+do setblock -2 -60 7 polished_sulfur
+section b-polished_sulfur_slab
+do setblock -1 -60 7 polished_sulfur_slab
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（polished_blackstone polished_blackstone_brick_slab polished_blackstone_brick_stairs polished_blackstone_brick_wall polished_blackstone_bricks polished_blackstone_button polished_blackstone_pressure_plate polished_blackstone_slab polished_blackstone_stairs polished_blackstone_wall polished_cinnabar polished_cinnabar_slab polished_cinnabar_stairs polished_cinnabar_wall polished_deepslate polished_deepslate_slab polished_deepslate_stairs polished_deepslate_wall polished_diorite polished_diorite_slab polished_diorite_stairs polished_granite polished_granite_slab polished_granite_stairs polished_sulfur polished_sulfur_slab）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-polished_sulfur_stairs
+do setblock -2 -60 3 polished_sulfur_stairs
+section b-polished_sulfur_wall
+do setblock -1 -60 3 polished_sulfur_wall
+section b-polished_tuff
+do setblock 0 -60 3 polished_tuff
+section b-polished_tuff_slab
+do setblock 1 -60 3 polished_tuff_slab
+section b-polished_tuff_stairs
+do setblock 2 -60 3 polished_tuff_stairs
+section b-polished_tuff_wall
+do setblock 3 -60 3 polished_tuff_wall
+section b-poplar_button
+do setblock -2 -60 4 poplar_button
+section b-poplar_door
+do setblock -1 -60 4 poplar_door
+section b-poplar_fence
+do setblock 0 -60 4 poplar_fence
+section b-poplar_fence_gate
+do setblock 1 -60 4 poplar_fence_gate
+section b-poplar_hanging_sign
+do setblock 2 -60 4 poplar_hanging_sign
+section b-poplar_log
+do setblock 3 -60 4 poplar_log
+section b-poplar_planks
+do setblock -2 -60 5 poplar_planks
+section b-poplar_pressure_plate
+do setblock -1 -60 5 poplar_pressure_plate
+section b-poplar_sapling
+do setblock 0 -60 5 poplar_sapling
+section b-poplar_slab
+do setblock 1 -60 5 poplar_slab
+section b-poplar_stairs
+do setblock 2 -60 5 poplar_stairs
+section b-poplar_standing_sign
+do setblock 3 -60 5 poplar_standing_sign
+section b-poplar_trapdoor
+do setblock -2 -60 6 poplar_trapdoor
+section b-poplar_wall_sign
+do setblock -1 -60 6 poplar_wall_sign
+section b-poplar_wood
+do setblock 0 -60 6 poplar_wood
+section b-poppy
+do setblock 1 -60 6 poppy
+section b-potatoes
+do setblock 2 -60 6 potatoes
+section b-potent_sulfur
+do setblock 3 -60 6 potent_sulfur
+section b-powder_snow
+do setblock -2 -60 7 powder_snow
+section b-powered_comparator
+do setblock -1 -60 7 powered_comparator
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（polished_sulfur_stairs polished_sulfur_wall polished_tuff polished_tuff_slab polished_tuff_stairs polished_tuff_wall poplar_button poplar_door poplar_fence poplar_fence_gate poplar_hanging_sign poplar_log poplar_planks poplar_pressure_plate poplar_sapling poplar_slab poplar_stairs poplar_standing_sign poplar_trapdoor poplar_wall_sign poplar_wood poppy potatoes potent_sulfur powder_snow powered_comparator）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

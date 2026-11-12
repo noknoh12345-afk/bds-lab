@@ -1,0 +1,674 @@
+# 一括検証 4 回目（b-walk-walk13+walk14+walk15+walk16）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 23300
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean1529a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1529b
+do kill @e[type=item]
+section clean1529c
+do kill @e[type=xp_orb]
+section mobbw-ravager
+do summon ravager -0.5 -60 6.5 150 0
+do effect @e[type=ravager] fire_resistance 60 1 true
+do effect @e[type=ravager] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # ravager: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-ravager-mirror                       # ravager: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-ravager-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-ravager-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-ravager-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1530a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1530b
+do kill @e[type=item]
+section clean1530c
+do kill @e[type=xp_orb]
+section mobbw-salmon
+do summon salmon -0.5 -60 8.5 150 0
+do effect @e[type=salmon] fire_resistance 60 1 true
+do effect @e[type=salmon] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # salmon: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-salmon-mirror                       # salmon: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-salmon-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-salmon-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-salmon-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1531a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1531b
+do kill @e[type=item]
+section clean1531c
+do kill @e[type=xp_orb]
+section mobbw-sheep
+do summon sheep -0.5 -60 8.5 150 0
+do effect @e[type=sheep] fire_resistance 60 1 true
+do effect @e[type=sheep] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # sheep: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-sheep-mirror                       # sheep: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-sheep-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-sheep-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-sheep-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1532a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1532b
+do kill @e[type=item]
+section clean1532c
+do kill @e[type=xp_orb]
+section mobbw-shulker
+do summon shulker -0.5 -60 8.5 150 0
+do effect @e[type=shulker] fire_resistance 60 1 true
+do effect @e[type=shulker] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # shulker: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-shulker-mirror                       # shulker: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-shulker-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-shulker-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-shulker-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1533a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1533b
+do kill @e[type=item]
+section clean1533c
+do kill @e[type=xp_orb]
+section mobbw-silverfish
+do summon silverfish -0.5 -60 8.5 150 0
+do effect @e[type=silverfish] fire_resistance 60 1 true
+do effect @e[type=silverfish] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # silverfish: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-silverfish-mirror                       # silverfish: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-silverfish-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-silverfish-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-silverfish-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1534a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1534b
+do kill @e[type=item]
+section clean1534c
+do kill @e[type=xp_orb]
+section reset
+do time set 23300
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean1571a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1571b
+do kill @e[type=item]
+section clean1571c
+do kill @e[type=xp_orb]
+section mobbw-skeleton
+do summon skeleton -0.5 -60 8.5 150 0
+do effect @e[type=skeleton] fire_resistance 60 1 true
+do effect @e[type=skeleton] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # skeleton: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-skeleton-mirror                       # skeleton: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-skeleton-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-skeleton-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-skeleton-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1572a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1572b
+do kill @e[type=item]
+section clean1572c
+do kill @e[type=xp_orb]
+section mobbw-skeleton_horse
+do summon skeleton_horse -0.5 -60 8.5 150 0
+do effect @e[type=skeleton_horse] fire_resistance 60 1 true
+do effect @e[type=skeleton_horse] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # skeleton_horse: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-skeleton_horse-mirror                       # skeleton_horse: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-skeleton_horse-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-skeleton_horse-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-skeleton_horse-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1573a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1573b
+do kill @e[type=item]
+section clean1573c
+do kill @e[type=xp_orb]
+section mobbw-slime
+do summon slime -0.5 -60 8.5 150 0
+do effect @e[type=slime] fire_resistance 60 1 true
+do effect @e[type=slime] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # slime: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-slime-mirror                       # slime: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-slime-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-slime-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-slime-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1574a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1574b
+do kill @e[type=item]
+section clean1574c
+do kill @e[type=xp_orb]
+section mobbw-sniffer
+do summon sniffer -0.5 -60 6.5 150 0
+do effect @e[type=sniffer] fire_resistance 60 1 true
+do effect @e[type=sniffer] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # sniffer: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-sniffer-mirror                       # sniffer: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-sniffer-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-sniffer-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-sniffer-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1575a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1575b
+do kill @e[type=item]
+section clean1575c
+do kill @e[type=xp_orb]
+section mobbw-snow_golem
+do summon snow_golem -0.5 -60 8.5 150 0
+do effect @e[type=snow_golem] fire_resistance 60 1 true
+do effect @e[type=snow_golem] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # snow_golem: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-snow_golem-mirror                       # snow_golem: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-snow_golem-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-snow_golem-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-snow_golem-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1576a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1576b
+do kill @e[type=item]
+section clean1576c
+do kill @e[type=xp_orb]
+section reset
+do time set 23300
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean1613a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1613b
+do kill @e[type=item]
+section clean1613c
+do kill @e[type=xp_orb]
+section mobbw-spider
+do summon spider -0.5 -60 8.5 150 0
+do effect @e[type=spider] fire_resistance 60 1 true
+do effect @e[type=spider] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # spider: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-spider-mirror                       # spider: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-spider-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-spider-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-spider-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1614a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1614b
+do kill @e[type=item]
+section clean1614c
+do kill @e[type=xp_orb]
+section mobbw-squid
+do summon squid -0.5 -60 8.5 150 0
+do effect @e[type=squid] fire_resistance 60 1 true
+do effect @e[type=squid] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # squid: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-squid-mirror                       # squid: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-squid-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-squid-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-squid-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1615a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1615b
+do kill @e[type=item]
+section clean1615c
+do kill @e[type=xp_orb]
+section mobbw-stray
+do summon stray -0.5 -60 8.5 150 0
+do effect @e[type=stray] fire_resistance 60 1 true
+do effect @e[type=stray] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # stray: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-stray-mirror                       # stray: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-stray-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-stray-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-stray-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1616a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1616b
+do kill @e[type=item]
+section clean1616c
+do kill @e[type=xp_orb]
+section mobbw-strider
+do summon strider -0.5 -60 8.5 150 0
+do effect @e[type=strider] fire_resistance 60 1 true
+do effect @e[type=strider] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # strider: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-strider-mirror                       # strider: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-strider-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-strider-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-strider-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1617a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1617b
+do kill @e[type=item]
+section clean1617c
+do kill @e[type=xp_orb]
+section mobbw-sulfur_cube
+do summon sulfur_cube -0.5 -60 8.5 150 0
+do effect @e[type=sulfur_cube] fire_resistance 60 1 true
+do effect @e[type=sulfur_cube] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # sulfur_cube: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-sulfur_cube-mirror                       # sulfur_cube: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-sulfur_cube-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-sulfur_cube-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-sulfur_cube-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1618a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1618b
+do kill @e[type=item]
+section clean1618c
+do kill @e[type=xp_orb]
+section reset
+do time set 23300
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean1655a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1655b
+do kill @e[type=item]
+section clean1655c
+do kill @e[type=xp_orb]
+section mobbw-tadpole
+do summon tadpole -0.5 -60 8.5 150 0
+do effect @e[type=tadpole] fire_resistance 60 1 true
+do effect @e[type=tadpole] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # tadpole: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-tadpole-mirror                       # tadpole: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-tadpole-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-tadpole-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-tadpole-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1656a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1656b
+do kill @e[type=item]
+section clean1656c
+do kill @e[type=xp_orb]
+section mobbw-tnt_minecart
+do summon tnt_minecart -0.5 -60 8.5 150 0
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # tnt_minecart: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-tnt_minecart-mirror                       # tnt_minecart: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-tnt_minecart-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-tnt_minecart-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-tnt_minecart-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1657a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1657b
+do kill @e[type=item]
+section clean1657c
+do kill @e[type=xp_orb]
+section mobbw-trader_llama
+do summon trader_llama -0.5 -60 8.5 150 0
+do effect @e[type=trader_llama] fire_resistance 60 1 true
+do effect @e[type=trader_llama] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # trader_llama: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-trader_llama-mirror                       # trader_llama: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-trader_llama-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-trader_llama-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-trader_llama-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1658a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1658b
+do kill @e[type=item]
+section clean1658c
+do kill @e[type=xp_orb]
+section mobbw-tropicalfish
+do summon tropicalfish -0.5 -60 8.5 150 0
+do effect @e[type=tropicalfish] fire_resistance 60 1 true
+do effect @e[type=tropicalfish] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # tropicalfish: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-tropicalfish-mirror                       # tropicalfish: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-tropicalfish-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-tropicalfish-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-tropicalfish-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1659a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1659b
+do kill @e[type=item]
+section clean1659c
+do kill @e[type=xp_orb]
+section mobbw-turtle
+do summon turtle -0.5 -60 8.5 150 0
+do effect @e[type=turtle] fire_resistance 60 1 true
+do effect @e[type=turtle] water_breathing 60 1 true
+do tp @a -1.5 -60 4.5 -10 0
+wait 3500
+record start
+wait 6000
+record stop                               # turtle: 自由に動く。本物と鏡の像が同じ動き
+shot mobbw-turtle-mirror                       # turtle: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobbw-turtle-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 4.5 -10 0
+do camera @a set minecraft:free pos -1.5 -58.38 19.5 rot 0 -170
+wait 2500
+shot mobbw-turtle-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobbw-turtle-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean1660a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean1660b
+do kill @e[type=item]
+section clean1660c
+do kill @e[type=xp_orb]
+section done

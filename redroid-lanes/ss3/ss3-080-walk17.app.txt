@@ -1,0 +1,187 @@
+# 一括検証 3 回目（walk17）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clean397a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean397b
+do kill @e[type=item]
+section clean397c
+do kill @e[type=xp_orb]
+section mobw-vex
+do summon vex -0.5 -58 8.5 150 0
+do effect @e[type=vex] fire_resistance 60 1 true
+do effect @e[type=vex] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # vex: 自由に動く。本物と鏡の像が同じ動き
+do tp @e[type=vex] -0.5 -58 8.5 150 0
+wait 500
+shot mobw-vex-mirror                       # vex: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-vex-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-vex-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-vex-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean398a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean398b
+do kill @e[type=item]
+section clean398c
+do kill @e[type=xp_orb]
+section mobw-villager
+do summon villager -0.5 -60 8.5 150 0
+do effect @e[type=villager] fire_resistance 60 1 true
+do effect @e[type=villager] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # villager: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-villager-mirror                       # villager: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-villager-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-villager-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-villager-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean399a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean399b
+do kill @e[type=item]
+section clean399c
+do kill @e[type=xp_orb]
+section mobw-vindicator
+do summon vindicator -0.5 -60 8.5 150 0
+do effect @e[type=vindicator] fire_resistance 60 1 true
+do effect @e[type=vindicator] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # vindicator: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-vindicator-mirror                       # vindicator: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-vindicator-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-vindicator-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-vindicator-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean400a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean400b
+do kill @e[type=item]
+section clean400c
+do kill @e[type=xp_orb]
+section mobw-wandering_trader
+do summon wandering_trader -0.5 -60 8.5 150 0
+do effect @e[type=wandering_trader] fire_resistance 60 1 true
+do effect @e[type=wandering_trader] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # wandering_trader: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-wandering_trader-mirror                       # wandering_trader: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-wandering_trader-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-wandering_trader-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-wandering_trader-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean401a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean401b
+do kill @e[type=item]
+section clean401c
+do kill @e[type=xp_orb]
+section mobw-warden
+do summon warden -0.5 -60 6.5 150 0
+do effect @e[type=warden] fire_resistance 60 1 true
+do effect @e[type=warden] water_breathing 60 1 true
+do tp @a 2.5 -60 5.5 20 3
+wait 3500
+record start
+wait 6000
+record stop                               # warden: 自由に動く。本物と鏡の像が同じ動き
+shot mobw-warden-mirror                       # warden: 鏡の中で左右反転・同じ模様・同じ大きさ・同じ動き
+section mobw-warden-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 2.5 -60 5.5 20 3
+do camera @a set minecraft:free pos 2.5 -58.38 18.5 rot 3 160
+wait 2500
+shot mobw-warden-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して mobw-warden-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section clean402a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean402b
+do kill @e[type=item]
+section clean402c
+do kill @e[type=xp_orb]
+section done

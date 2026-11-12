@@ -1,0 +1,336 @@
+# 一括検証 4 回目（a-blockss-side1+side2+side3+side4）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-acacia_button
+do setblock -2 -60 3 acacia_button
+section b-acacia_door
+do setblock -1 -60 3 acacia_door
+section b-acacia_fence
+do setblock 0 -60 3 acacia_fence
+section b-acacia_fence_gate
+do setblock 1 -60 3 acacia_fence_gate
+section b-acacia_hanging_sign
+do setblock 2 -60 3 acacia_hanging_sign
+section b-acacia_leaves
+do setblock 3 -60 3 acacia_leaves
+section b-acacia_log
+do setblock -2 -60 4 acacia_log
+section b-acacia_planks
+do setblock -1 -60 4 acacia_planks
+section b-acacia_pressure_plate
+do setblock 0 -60 4 acacia_pressure_plate
+section b-acacia_sapling
+do setblock 1 -60 4 acacia_sapling
+section b-acacia_slab
+do setblock 2 -60 4 acacia_slab
+section b-acacia_stairs
+do setblock 3 -60 4 acacia_stairs
+section b-acacia_standing_sign
+do setblock -2 -60 5 acacia_standing_sign
+section b-acacia_trapdoor
+do setblock -1 -60 5 acacia_trapdoor
+section b-acacia_wall_sign
+do setblock 0 -60 5 acacia_wall_sign
+section b-acacia_wood
+do setblock 1 -60 5 acacia_wood
+section b-activator_rail
+do setblock 2 -60 5 activator_rail
+section b-allium
+do setblock 3 -60 5 allium
+section b-amethyst_block
+do setblock -2 -60 6 amethyst_block
+section b-amethyst_cluster
+do setblock -1 -60 6 amethyst_cluster
+section b-ancient_debris
+do setblock 0 -60 6 ancient_debris
+section b-andesite
+do setblock 1 -60 6 andesite
+section b-andesite_slab
+do setblock 2 -60 6 andesite_slab
+section b-andesite_stairs
+do setblock 3 -60 6 andesite_stairs
+section b-andesite_wall
+do setblock -2 -60 7 andesite_wall
+section b-azalea
+do setblock -1 -60 7 azalea
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（acacia_button acacia_door acacia_fence acacia_fence_gate acacia_hanging_sign acacia_leaves acacia_log acacia_planks acacia_pressure_plate acacia_sapling acacia_slab acacia_stairs acacia_standing_sign acacia_trapdoor acacia_wall_sign acacia_wood activator_rail allium amethyst_block amethyst_cluster ancient_debris andesite andesite_slab andesite_stairs andesite_wall azalea）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-azalea_leaves
+do setblock -2 -60 3 azalea_leaves
+section b-azalea_leaves_flowered
+do setblock -1 -60 3 azalea_leaves_flowered
+section b-azure_bluet
+do setblock 0 -60 3 azure_bluet
+section b-bamboo_block
+do setblock 1 -60 3 bamboo_block
+section b-bamboo_button
+do setblock 2 -60 3 bamboo_button
+section b-bamboo_door
+do setblock 3 -60 3 bamboo_door
+section b-bamboo_fence
+do setblock -2 -60 4 bamboo_fence
+section b-bamboo_fence_gate
+do setblock -1 -60 4 bamboo_fence_gate
+section b-bamboo_hanging_sign
+do setblock 0 -60 4 bamboo_hanging_sign
+section b-bamboo_mosaic
+do setblock 1 -60 4 bamboo_mosaic
+section b-bamboo_mosaic_slab
+do setblock 2 -60 4 bamboo_mosaic_slab
+section b-bamboo_mosaic_stairs
+do setblock 3 -60 4 bamboo_mosaic_stairs
+section b-bamboo_planks
+do setblock -2 -60 5 bamboo_planks
+section b-bamboo_pressure_plate
+do setblock -1 -60 5 bamboo_pressure_plate
+section b-bamboo_sapling
+do setblock 0 -60 5 bamboo_sapling
+section b-bamboo_slab
+do setblock 1 -60 5 bamboo_slab
+section b-bamboo_stairs
+do setblock 2 -60 5 bamboo_stairs
+section b-bamboo_standing_sign
+do setblock 3 -60 5 bamboo_standing_sign
+section b-bamboo_trapdoor
+do setblock -2 -60 6 bamboo_trapdoor
+section b-bamboo_wall_sign
+do setblock -1 -60 6 bamboo_wall_sign
+section b-barrel
+do setblock 0 -60 6 barrel
+section b-basalt
+do setblock 1 -60 6 basalt
+section b-beacon
+do setblock 2 -60 6 beacon
+section b-bedrock
+do setblock 3 -60 6 bedrock
+section b-bee_nest
+do setblock -2 -60 7 bee_nest
+section b-beehive
+do setblock -1 -60 7 beehive
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（azalea_leaves azalea_leaves_flowered azure_bluet bamboo_block bamboo_button bamboo_door bamboo_fence bamboo_fence_gate bamboo_hanging_sign bamboo_mosaic bamboo_mosaic_slab bamboo_mosaic_stairs bamboo_planks bamboo_pressure_plate bamboo_sapling bamboo_slab bamboo_stairs bamboo_standing_sign bamboo_trapdoor bamboo_wall_sign barrel basalt beacon bedrock bee_nest beehive）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-beetroot
+do setblock -2 -60 3 beetroot
+section b-birch_button
+do setblock -1 -60 3 birch_button
+section b-birch_door
+do setblock 0 -60 3 birch_door
+section b-birch_fence
+do setblock 1 -60 3 birch_fence
+section b-birch_fence_gate
+do setblock 2 -60 3 birch_fence_gate
+section b-birch_hanging_sign
+do setblock 3 -60 3 birch_hanging_sign
+section b-birch_leaves
+do setblock -2 -60 4 birch_leaves
+section b-birch_log
+do setblock -1 -60 4 birch_log
+section b-birch_planks
+do setblock 0 -60 4 birch_planks
+section b-birch_pressure_plate
+do setblock 1 -60 4 birch_pressure_plate
+section b-birch_sapling
+do setblock 2 -60 4 birch_sapling
+section b-birch_slab
+do setblock 3 -60 4 birch_slab
+section b-birch_stairs
+do setblock -2 -60 5 birch_stairs
+section b-birch_standing_sign
+do setblock -1 -60 5 birch_standing_sign
+section b-birch_trapdoor
+do setblock 0 -60 5 birch_trapdoor
+section b-birch_wall_sign
+do setblock 1 -60 5 birch_wall_sign
+section b-birch_wood
+do setblock 2 -60 5 birch_wood
+section b-black_candle
+do setblock 3 -60 5 black_candle
+section b-black_candle_cake
+do setblock -2 -60 6 black_candle_cake
+section b-black_carpet
+do setblock -1 -60 6 black_carpet
+section b-black_concrete
+do setblock 0 -60 6 black_concrete
+section b-black_concrete_slab
+do setblock 1 -60 6 black_concrete_slab
+section b-black_concrete_stairs
+do setblock 2 -60 6 black_concrete_stairs
+section b-black_glazed_terracotta
+do setblock 3 -60 6 black_glazed_terracotta
+section b-black_shulker_box
+do setblock -2 -60 7 black_shulker_box
+section b-black_stained_glass
+do setblock -1 -60 7 black_stained_glass
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（beetroot birch_button birch_door birch_fence birch_fence_gate birch_hanging_sign birch_leaves birch_log birch_planks birch_pressure_plate birch_sapling birch_slab birch_stairs birch_standing_sign birch_trapdoor birch_wall_sign birch_wood black_candle black_candle_cake black_carpet black_concrete black_concrete_slab black_concrete_stairs black_glazed_terracotta black_shulker_box black_stained_glass）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 6000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-black_stained_glass_pane
+do setblock -2 -60 3 black_stained_glass_pane
+section b-black_terracotta
+do setblock -1 -60 3 black_terracotta
+section b-black_wool
+do setblock 0 -60 3 black_wool
+section b-black_wool_slab
+do setblock 1 -60 3 black_wool_slab
+section b-black_wool_stairs
+do setblock 2 -60 3 black_wool_stairs
+section b-blackstone
+do setblock 3 -60 3 blackstone
+section b-blackstone_slab
+do setblock -2 -60 4 blackstone_slab
+section b-blackstone_stairs
+do setblock -1 -60 4 blackstone_stairs
+section b-blackstone_wall
+do setblock 0 -60 4 blackstone_wall
+section b-blast_furnace
+do setblock 1 -60 4 blast_furnace
+section b-blue_candle
+do setblock 2 -60 4 blue_candle
+section b-blue_candle_cake
+do setblock 3 -60 4 blue_candle_cake
+section b-blue_carpet
+do setblock -2 -60 5 blue_carpet
+section b-blue_concrete
+do setblock -1 -60 5 blue_concrete
+section b-blue_concrete_slab
+do setblock 0 -60 5 blue_concrete_slab
+section b-blue_concrete_stairs
+do setblock 1 -60 5 blue_concrete_stairs
+section b-blue_glazed_terracotta
+do setblock 2 -60 5 blue_glazed_terracotta
+section b-blue_ice
+do setblock 3 -60 5 blue_ice
+section b-blue_orchid
+do setblock -2 -60 6 blue_orchid
+section b-blue_shulker_box
+do setblock -1 -60 6 blue_shulker_box
+section b-blue_stained_glass
+do setblock 0 -60 6 blue_stained_glass
+section b-blue_stained_glass_pane
+do setblock 1 -60 6 blue_stained_glass_pane
+section b-blue_terracotta
+do setblock 2 -60 6 blue_terracotta
+section b-blue_wool
+do setblock 3 -60 6 blue_wool
+section b-blue_wool_slab
+do setblock -2 -60 7 blue_wool_slab
+section b-blue_wool_stairs
+do setblock -1 -60 7 blue_wool_stairs
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（black_stained_glass_pane black_terracotta black_wool black_wool_slab black_wool_stairs blackstone blackstone_slab blackstone_stairs blackstone_wall blast_furnace blue_candle blue_candle_cake blue_carpet blue_concrete blue_concrete_slab blue_concrete_stairs blue_glazed_terracotta blue_ice blue_orchid blue_shulker_box blue_stained_glass blue_stained_glass_pane blue_terracotta blue_wool blue_wool_slab blue_wool_stairs）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

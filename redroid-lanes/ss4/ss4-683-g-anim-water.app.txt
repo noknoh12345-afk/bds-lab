@@ -1,0 +1,63 @@
+# 一括検証 4 回目（g-anim-water）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 18000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clean6911a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean6911b
+do kill @e[type=item]
+section clean6911c
+do kill @e[type=xp_orb]
+section water
+do fill -3 -61 6 3 -61 11 water
+do summon cod -0.5 -61 9
+do summon axolotl 1.5 -61 9
+do summon squid 0.5 -61 8
+do effect @e[type=!player,family=!skin_studio] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 2.5 -58.5 4.5 facing 0.5 -60.5 10.5
+wait 500
+record start
+wait 9000
+record stop                               # water: 本物と鏡の中の像が同じ動き（左右反転・同じ間合い）
+shot water
+do camera @a clear
+section water-end
+do gamemode creative @a
+do difficulty peaceful
+section clean6912a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean6912b
+do kill @e[type=item]
+section clean6912c
+do kill @e[type=xp_orb]
+section done

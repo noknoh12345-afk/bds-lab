@@ -1,0 +1,62 @@
+# 一括検証 2 回目（anim-hurt）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clean583a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean583b
+do kill @e[type=item]
+section clean583c
+do kill @e[type=xp_orb]
+section hurt
+do summon pig -0.5 -60 9 150 0
+do summon cow 1.5 -60 8 150 0
+wait 1000
+do damage @e[type=pig] 1
+wait 1500
+do damage @e[type=cow] 1
+wait 1500
+do damage @e[type=pig] 1
+do effect @e[type=!player,family=!skin_studio] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 3.5 -58.5 4.5 facing 0.5 -59.3 10
+wait 500
+record start
+wait 9000
+record stop                               # hurt: 本物と鏡の中の像が同じ動き（左右反転・同じ間合い）
+shot hurt
+do camera @a clear
+section hurt-end
+do gamemode creative @a
+do difficulty peaceful
+section clean584a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean584b
+do kill @e[type=item]
+section clean584c
+do kill @e[type=xp_orb]
+section done

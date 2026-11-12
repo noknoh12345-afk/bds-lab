@@ -1,0 +1,103 @@
+# 一括検証 3 回目（blocks-night21）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-magenta_concrete_stairs
+do setblock -2 -60 3 magenta_concrete_stairs
+section b-magenta_glazed_terracotta
+do setblock -1 -60 3 magenta_glazed_terracotta
+section b-magenta_shulker_box
+do setblock 0 -60 3 magenta_shulker_box
+section b-magenta_stained_glass
+do setblock 1 -60 3 magenta_stained_glass
+section b-magenta_stained_glass_pane
+do setblock 2 -60 3 magenta_stained_glass_pane
+section b-magenta_terracotta
+do setblock 3 -60 3 magenta_terracotta
+section b-magenta_wool
+do setblock -2 -60 4 magenta_wool
+section b-magenta_wool_slab
+do setblock -1 -60 4 magenta_wool_slab
+section b-magenta_wool_stairs
+do setblock 0 -60 4 magenta_wool_stairs
+section b-magma
+do setblock 1 -60 4 magma
+section b-mangrove_button
+do setblock 2 -60 4 mangrove_button
+section b-mangrove_door
+do setblock 3 -60 4 mangrove_door
+section b-mangrove_fence
+do setblock -2 -60 5 mangrove_fence
+section b-mangrove_fence_gate
+do setblock -1 -60 5 mangrove_fence_gate
+section b-mangrove_hanging_sign
+do setblock 0 -60 5 mangrove_hanging_sign
+section b-mangrove_leaves
+do setblock 1 -60 5 mangrove_leaves
+section b-mangrove_log
+do setblock 2 -60 5 mangrove_log
+section b-mangrove_planks
+do setblock 3 -60 5 mangrove_planks
+section b-mangrove_pressure_plate
+do setblock -2 -60 6 mangrove_pressure_plate
+section b-mangrove_propagule
+do setblock -1 -60 6 mangrove_propagule
+section b-mangrove_roots
+do setblock 0 -60 6 mangrove_roots
+section b-mangrove_slab
+do setblock 1 -60 6 mangrove_slab
+section b-mangrove_stairs
+do setblock 2 -60 6 mangrove_stairs
+section b-mangrove_standing_sign
+do setblock 3 -60 6 mangrove_standing_sign
+section b-mangrove_trapdoor
+do setblock -2 -60 7 mangrove_trapdoor
+section b-mangrove_wall_sign
+do setblock -1 -60 7 mangrove_wall_sign
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-mirror                        # night: 26 種（magenta_concrete_stairs magenta_glazed_terracotta magenta_shulker_box magenta_stained_glass magenta_stained_glass_pane magenta_terracotta magenta_wool magenta_wool_slab magenta_wool_stairs magma mangrove_button mangrove_door mangrove_fence mangrove_fence_gate mangrove_hanging_sign mangrove_leaves mangrove_log mangrove_planks mangrove_pressure_plate mangrove_propagule mangrove_roots mangrove_slab mangrove_stairs mangrove_standing_sign mangrove_trapdoor mangrove_wall_sign）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

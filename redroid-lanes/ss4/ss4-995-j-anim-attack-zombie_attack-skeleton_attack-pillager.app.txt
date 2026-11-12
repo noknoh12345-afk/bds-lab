@@ -1,0 +1,136 @@
+# 一括検証 4 回目（j-anim-attack-zombie+attack-skeleton+attack-pillager）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clean9857a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9857b
+do kill @e[type=item]
+section clean9857c
+do kill @e[type=xp_orb]
+section attack-zombie
+do difficulty normal
+do gamemode survival @a
+do tp @a 0.5 -60 9 180 0
+do summon zombie -1.5 -60 6 0 0
+do effect @e[type=!player,family=!skin_studio] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 4 -58.5 5 facing 0 -59.3 9.5
+wait 500
+record start
+wait 9000
+record stop                               # attack-zombie: 本物と鏡の中の像が同じ動き（左右反転・同じ間合い）
+shot attack-zombie
+do camera @a clear
+section attack-zombie-end
+do gamemode creative @a
+do difficulty peaceful
+section clean9858a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9858b
+do kill @e[type=item]
+section clean9858c
+do kill @e[type=xp_orb]
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clean9859a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9859b
+do kill @e[type=item]
+section clean9859c
+do kill @e[type=xp_orb]
+section attack-skeleton
+do difficulty normal
+do gamemode survival @a
+do tp @a 0.5 -60 9 180 0
+do summon skeleton 2.5 -60 4 0 0
+do effect @e[type=!player,family=!skin_studio] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 4 -58.5 5 facing 0 -59.3 9.5
+wait 500
+record start
+wait 9000
+record stop                               # attack-skeleton: 本物と鏡の中の像が同じ動き（左右反転・同じ間合い）
+shot attack-skeleton
+do camera @a clear
+section attack-skeleton-end
+do gamemode creative @a
+do difficulty peaceful
+section clean9860a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9860b
+do kill @e[type=item]
+section clean9860c
+do kill @e[type=xp_orb]
+section reset
+do time set 9000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clean9861a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9861b
+do kill @e[type=item]
+section clean9861c
+do kill @e[type=xp_orb]
+section attack-pillager
+do difficulty normal
+do gamemode survival @a
+do tp @a 0.5 -60 9 180 0
+do summon pillager -2.5 -60 4 0 0
+do effect @e[type=!player,family=!skin_studio] fire_resistance 60 1 true
+do camera @a set minecraft:free pos 4 -58.5 5 facing 0 -59.3 9.5
+wait 500
+record start
+wait 9000
+record stop                               # attack-pillager: 本物と鏡の中の像が同じ動き（左右反転・同じ間合い）
+shot attack-pillager
+do camera @a clear
+section attack-pillager-end
+do gamemode creative @a
+do difficulty peaceful
+section clean9862a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean9862b
+do kill @e[type=item]
+section clean9862c
+do kill @e[type=xp_orb]
+section done

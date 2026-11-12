@@ -1,0 +1,100 @@
+# 一括検証 3 回目（blocks-side15）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-gilded_blackstone
+do setblock -2 -60 3 gilded_blackstone
+section b-glass
+do setblock -1 -60 3 glass
+section b-glass_pane
+do setblock 0 -60 3 glass_pane
+section b-glow_lichen
+do setblock 1 -60 3 glow_lichen
+section b-glowstone
+do setblock 2 -60 3 glowstone
+section b-gold_block
+do setblock 3 -60 3 gold_block
+section b-gold_ore
+do setblock -2 -60 4 gold_ore
+section b-golden_dandelion
+do setblock -1 -60 4 golden_dandelion
+section b-golden_rail
+do setblock 0 -60 4 golden_rail
+section b-granite
+do setblock 1 -60 4 granite
+section b-granite_slab
+do setblock 2 -60 4 granite_slab
+section b-granite_stairs
+do setblock 3 -60 4 granite_stairs
+section b-granite_wall
+do setblock -2 -60 5 granite_wall
+section b-grass_block
+do setblock -1 -60 5 grass_block
+section b-grass_path
+do setblock 0 -60 5 grass_path
+section b-gray_candle
+do setblock 1 -60 5 gray_candle
+section b-gray_candle_cake
+do setblock 2 -60 5 gray_candle_cake
+section b-gray_carpet
+do setblock 3 -60 5 gray_carpet
+section b-gray_concrete
+do setblock -2 -60 6 gray_concrete
+section b-gray_concrete_slab
+do setblock -1 -60 6 gray_concrete_slab
+section b-gray_concrete_stairs
+do setblock 0 -60 6 gray_concrete_stairs
+section b-gray_glazed_terracotta
+do setblock 1 -60 6 gray_glazed_terracotta
+section b-gray_shulker_box
+do setblock 2 -60 6 gray_shulker_box
+section b-gray_stained_glass
+do setblock 3 -60 6 gray_stained_glass
+section b-gray_stained_glass_pane
+do setblock -2 -60 7 gray_stained_glass_pane
+section b-gray_terracotta
+do setblock -1 -60 7 gray_terracotta
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-mirror                        # side: 26 種（gilded_blackstone glass glass_pane glow_lichen glowstone gold_block gold_ore golden_dandelion golden_rail granite granite_slab granite_stairs granite_wall grass_block grass_path gray_candle gray_candle_cake gray_carpet gray_concrete gray_concrete_slab gray_concrete_stairs gray_glazed_terracotta gray_shulker_box gray_stained_glass gray_stained_glass_pane gray_terracotta）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

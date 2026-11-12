@@ -1,0 +1,83 @@
+# 一括検証 4 回目（i-perf-4m20）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 22000
+do weather clear
+do camera @a clear
+do setblock 7 -54 -3 stone
+do fill -7 -60 -3 7 -54 11 air
+section clean8890a
+do kill @e[type=!player,family=!skin_studio]
+wait 300
+section clean8890b
+do kill @e[type=item]
+section clean8890c
+do kill @e[type=xp_orb]
+section perf
+do fill -26 -60 12 -5 -56 12 stone
+do fill 5 -60 12 26 -56 12 stone
+do fill -9 -60 12 -7 -58 12 air
+do studio:mirror -8 -60 12 north
+do fill 7 -60 12 9 -58 12 air
+do studio:mirror 8 -60 12 north
+do fill -17 -60 12 -15 -58 12 air
+do studio:mirror -16 -60 12 north
+do summon cow -9.0 -60 4.0 0 0
+do summon pig -7.5 -60 4.0 37 0
+do summon sheep -6.0 -60 4.0 74 0
+do summon chicken -4.5 -60 4.0 111 0
+do summon zombie -3.0 -60 4.0 148 0
+do summon villager -1.5 -60 4.0 185 0
+do summon wolf 0.0 -60 4.0 222 0
+do summon horse 1.5 -60 4.0 259 0
+do summon cow 3.0 -60 4.0 296 0
+do summon pig 4.5 -60 4.0 333 0
+do summon sheep 6.0 -60 4.0 10 0
+do summon chicken 7.5 -60 4.0 47 0
+do summon zombie -9.0 -60 6.5 84 0
+do summon villager -7.5 -60 6.5 121 0
+do summon wolf -6.0 -60 6.5 158 0
+do summon horse -4.5 -60 6.5 195 0
+do summon cow -3.0 -60 6.5 232 0
+do summon pig -1.5 -60 6.5 269 0
+do summon sheep 0.0 -60 6.5 306 0
+do summon chicken 1.5 -60 6.5 343 0
+do effect @e[type=!player,family=!skin_studio] fire_resistance 60 1 true
+do tp @a 0.5 -60 6 0 0
+wait 6000
+do execute as @a at @s run studio:report
+shot perf-mirror                          # どの鏡にも映る
+record start
+do tp @a -8.5 -60 6 0 0
+wait 2000
+do tp @a 8.5 -60 6 0 0
+wait 2000
+do tp @a 0.5 -60 6 0 0
+wait 2000
+record stop                               # 動いても、こまが落ちない。server.log の Watchdog を見る
+section done

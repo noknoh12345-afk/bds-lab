@@ -1,0 +1,103 @@
+# 一括検証 3 回目（blocks-night24）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-orange_carpet
+do setblock -2 -60 3 orange_carpet
+section b-orange_concrete
+do setblock -1 -60 3 orange_concrete
+section b-orange_concrete_slab
+do setblock 0 -60 3 orange_concrete_slab
+section b-orange_concrete_stairs
+do setblock 1 -60 3 orange_concrete_stairs
+section b-orange_glazed_terracotta
+do setblock 2 -60 3 orange_glazed_terracotta
+section b-orange_poplar_leaves
+do setblock 3 -60 3 orange_poplar_leaves
+section b-orange_shulker_box
+do setblock -2 -60 4 orange_shulker_box
+section b-orange_stained_glass
+do setblock -1 -60 4 orange_stained_glass
+section b-orange_stained_glass_pane
+do setblock 0 -60 4 orange_stained_glass_pane
+section b-orange_terracotta
+do setblock 1 -60 4 orange_terracotta
+section b-orange_tulip
+do setblock 2 -60 4 orange_tulip
+section b-orange_wool
+do setblock 3 -60 4 orange_wool
+section b-orange_wool_slab
+do setblock -2 -60 5 orange_wool_slab
+section b-orange_wool_stairs
+do setblock -1 -60 5 orange_wool_stairs
+section b-oxeye_daisy
+do setblock 0 -60 5 oxeye_daisy
+section b-oxidized_chiseled_copper
+do setblock 1 -60 5 oxidized_chiseled_copper
+section b-oxidized_copper
+do setblock 2 -60 5 oxidized_copper
+section b-oxidized_copper_bars
+do setblock 3 -60 5 oxidized_copper_bars
+section b-oxidized_copper_bulb
+do setblock -2 -60 6 oxidized_copper_bulb
+section b-oxidized_copper_chain
+do setblock -1 -60 6 oxidized_copper_chain
+section b-oxidized_copper_chest
+do setblock 0 -60 6 oxidized_copper_chest
+section b-oxidized_copper_door
+do setblock 1 -60 6 oxidized_copper_door
+section b-oxidized_copper_golem_statue
+do setblock 2 -60 6 oxidized_copper_golem_statue
+section b-oxidized_copper_grate
+do setblock 3 -60 6 oxidized_copper_grate
+section b-oxidized_copper_lantern
+do setblock -2 -60 7 oxidized_copper_lantern
+section b-oxidized_copper_trapdoor
+do setblock -1 -60 7 oxidized_copper_trapdoor
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-mirror                        # night: 26 種（orange_carpet orange_concrete orange_concrete_slab orange_concrete_stairs orange_glazed_terracotta orange_poplar_leaves orange_shulker_box orange_stained_glass orange_stained_glass_pane orange_terracotta orange_tulip orange_wool orange_wool_slab orange_wool_stairs oxeye_daisy oxidized_chiseled_copper oxidized_copper oxidized_copper_bars oxidized_copper_bulb oxidized_copper_chain oxidized_copper_chest oxidized_copper_door oxidized_copper_golem_statue oxidized_copper_grate oxidized_copper_lantern oxidized_copper_trapdoor）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

@@ -1,0 +1,100 @@
+# 一括検証 3 回目（blocks-side25）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-oxidized_cut_copper
+do setblock -2 -60 3 oxidized_cut_copper
+section b-oxidized_cut_copper_slab
+do setblock -1 -60 3 oxidized_cut_copper_slab
+section b-oxidized_cut_copper_stairs
+do setblock 0 -60 3 oxidized_cut_copper_stairs
+section b-oxidized_double_cut_copper_slab
+do setblock 1 -60 3 oxidized_double_cut_copper_slab
+section b-oxidized_lightning_rod
+do setblock 2 -60 3 oxidized_lightning_rod
+section b-packed_ice
+do setblock 3 -60 3 packed_ice
+section b-packed_mud
+do setblock -2 -60 4 packed_mud
+section b-pale_hanging_moss
+do setblock -1 -60 4 pale_hanging_moss
+section b-pale_moss_block
+do setblock 0 -60 4 pale_moss_block
+section b-pale_moss_carpet
+do setblock 1 -60 4 pale_moss_carpet
+section b-pale_oak_button
+do setblock 2 -60 4 pale_oak_button
+section b-pale_oak_door
+do setblock 3 -60 4 pale_oak_door
+section b-pale_oak_fence
+do setblock -2 -60 5 pale_oak_fence
+section b-pale_oak_fence_gate
+do setblock -1 -60 5 pale_oak_fence_gate
+section b-pale_oak_hanging_sign
+do setblock 0 -60 5 pale_oak_hanging_sign
+section b-pale_oak_leaves
+do setblock 1 -60 5 pale_oak_leaves
+section b-pale_oak_log
+do setblock 2 -60 5 pale_oak_log
+section b-pale_oak_planks
+do setblock 3 -60 5 pale_oak_planks
+section b-pale_oak_pressure_plate
+do setblock -2 -60 6 pale_oak_pressure_plate
+section b-pale_oak_sapling
+do setblock -1 -60 6 pale_oak_sapling
+section b-pale_oak_slab
+do setblock 0 -60 6 pale_oak_slab
+section b-pale_oak_stairs
+do setblock 1 -60 6 pale_oak_stairs
+section b-pale_oak_standing_sign
+do setblock 2 -60 6 pale_oak_standing_sign
+section b-pale_oak_trapdoor
+do setblock 3 -60 6 pale_oak_trapdoor
+section b-pale_oak_wall_sign
+do setblock -2 -60 7 pale_oak_wall_sign
+section b-pale_oak_wood
+do setblock -1 -60 7 pale_oak_wood
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-mirror                        # side: 26 種（oxidized_cut_copper oxidized_cut_copper_slab oxidized_cut_copper_stairs oxidized_double_cut_copper_slab oxidized_lightning_rod packed_ice packed_mud pale_hanging_moss pale_moss_block pale_moss_carpet pale_oak_button pale_oak_door pale_oak_fence pale_oak_fence_gate pale_oak_hanging_sign pale_oak_leaves pale_oak_log pale_oak_planks pale_oak_pressure_plate pale_oak_sapling pale_oak_slab pale_oak_stairs pale_oak_standing_sign pale_oak_trapdoor pale_oak_wall_sign pale_oak_wood）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

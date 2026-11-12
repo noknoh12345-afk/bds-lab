@@ -1,0 +1,100 @@
+# 一括検証 2 回目（blocks30）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 11 air
+section b-purpur_slab
+do setblock -2 -60 3 purpur_slab
+section b-purpur_stairs
+do setblock -1 -60 3 purpur_stairs
+section b-quartz_block
+do setblock 0 -60 3 quartz_block
+section b-quartz_bricks
+do setblock 1 -60 3 quartz_bricks
+section b-quartz_ore
+do setblock 2 -60 3 quartz_ore
+section b-quartz_pillar
+do setblock 3 -60 3 quartz_pillar
+section b-quartz_slab
+do setblock -2 -60 4 quartz_slab
+section b-quartz_stairs
+do setblock -1 -60 4 quartz_stairs
+section b-rail
+do setblock 0 -60 4 rail
+section b-raw_copper_block
+do setblock 1 -60 4 raw_copper_block
+section b-raw_gold_block
+do setblock 2 -60 4 raw_gold_block
+section b-raw_iron_block
+do setblock 3 -60 4 raw_iron_block
+section b-red_candle
+do setblock -2 -60 5 red_candle
+section b-red_candle_cake
+do setblock -1 -60 5 red_candle_cake
+section b-red_carpet
+do setblock 0 -60 5 red_carpet
+section b-red_concrete
+do setblock 1 -60 5 red_concrete
+section b-red_concrete_slab
+do setblock 2 -60 5 red_concrete_slab
+section b-red_concrete_stairs
+do setblock 3 -60 5 red_concrete_stairs
+section b-red_glazed_terracotta
+do setblock -2 -60 6 red_glazed_terracotta
+section b-red_mushroom
+do setblock -1 -60 6 red_mushroom
+section b-red_mushroom_block
+do setblock 0 -60 6 red_mushroom_block
+section b-red_nether_brick
+do setblock 1 -60 6 red_nether_brick
+section b-red_nether_brick_slab
+do setblock 2 -60 6 red_nether_brick_slab
+section b-red_nether_brick_stairs
+do setblock 3 -60 6 red_nether_brick_stairs
+section b-red_nether_brick_wall
+do setblock -2 -60 7 red_nether_brick_wall
+section b-red_poplar_leaves
+do setblock -1 -60 7 red_poplar_leaves
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-mirror                        # 26 種（purpur_slab purpur_stairs quartz_block quartz_bricks quartz_ore quartz_pillar quartz_slab quartz_stairs rail raw_copper_block raw_gold_block raw_iron_block red_candle red_candle_cake red_carpet red_concrete red_concrete_slab red_concrete_stairs red_glazed_terracotta red_mushroom red_mushroom_block red_nether_brick red_nether_brick_slab red_nether_brick_stairs red_nether_brick_wall red_poplar_leaves）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

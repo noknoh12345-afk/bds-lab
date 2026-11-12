@@ -1,0 +1,100 @@
+# 一括検証 2 回目（blocks32）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 11 air
+section b-sculk_vein
+do setblock -2 -60 3 sculk_vein
+section b-sea_lantern
+do setblock -1 -60 3 sea_lantern
+section b-seagrass
+do setblock 0 -60 3 seagrass
+section b-short_dry_grass
+do setblock 1 -60 3 short_dry_grass
+section b-short_grass
+do setblock 2 -60 3 short_grass
+section b-shroomlight
+do setblock 3 -60 3 shroomlight
+section b-silver_glazed_terracotta
+do setblock -2 -60 4 silver_glazed_terracotta
+section b-slime
+do setblock -1 -60 4 slime
+section b-small_amethyst_bud
+do setblock 0 -60 4 small_amethyst_bud
+section b-small_dripleaf_block
+do setblock 1 -60 4 small_dripleaf_block
+section b-smithing_table
+do setblock 2 -60 4 smithing_table
+section b-smoker
+do setblock 3 -60 4 smoker
+section b-smooth_basalt
+do setblock -2 -60 5 smooth_basalt
+section b-smooth_quartz
+do setblock -1 -60 5 smooth_quartz
+section b-smooth_quartz_slab
+do setblock 0 -60 5 smooth_quartz_slab
+section b-smooth_quartz_stairs
+do setblock 1 -60 5 smooth_quartz_stairs
+section b-smooth_stone
+do setblock 2 -60 5 smooth_stone
+section b-smooth_stone_slab
+do setblock 3 -60 5 smooth_stone_slab
+section b-sniffer_egg
+do setblock -2 -60 6 sniffer_egg
+section b-snow
+do setblock -1 -60 6 snow
+section b-snow_layer
+do setblock 0 -60 6 snow_layer
+section b-soul_lantern
+do setblock 1 -60 6 soul_lantern
+section b-soul_soil
+do setblock 2 -60 6 soul_soil
+section b-soul_torch
+do setblock 3 -60 6 soul_torch
+section b-sponge
+do setblock -2 -60 7 sponge
+section b-spruce_button
+do setblock -1 -60 7 spruce_button
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-mirror                        # 26 種（sculk_vein sea_lantern seagrass short_dry_grass short_grass shroomlight silver_glazed_terracotta slime small_amethyst_bud small_dripleaf_block smithing_table smoker smooth_basalt smooth_quartz smooth_quartz_slab smooth_quartz_stairs smooth_stone smooth_stone_slab sniffer_egg snow snow_layer soul_lantern soul_soil soul_torch sponge spruce_button）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

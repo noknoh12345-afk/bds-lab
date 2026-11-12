@@ -1,0 +1,100 @@
+# 一括検証 3 回目（blocks-side33）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-spruce_door
+do setblock -2 -60 3 spruce_door
+section b-spruce_fence
+do setblock -1 -60 3 spruce_fence
+section b-spruce_fence_gate
+do setblock 0 -60 3 spruce_fence_gate
+section b-spruce_hanging_sign
+do setblock 1 -60 3 spruce_hanging_sign
+section b-spruce_leaves
+do setblock 2 -60 3 spruce_leaves
+section b-spruce_log
+do setblock 3 -60 3 spruce_log
+section b-spruce_planks
+do setblock -2 -60 4 spruce_planks
+section b-spruce_pressure_plate
+do setblock -1 -60 4 spruce_pressure_plate
+section b-spruce_sapling
+do setblock 0 -60 4 spruce_sapling
+section b-spruce_slab
+do setblock 1 -60 4 spruce_slab
+section b-spruce_stairs
+do setblock 2 -60 4 spruce_stairs
+section b-spruce_standing_sign
+do setblock 3 -60 4 spruce_standing_sign
+section b-spruce_trapdoor
+do setblock -2 -60 5 spruce_trapdoor
+section b-spruce_wall_sign
+do setblock -1 -60 5 spruce_wall_sign
+section b-spruce_wood
+do setblock 0 -60 5 spruce_wood
+section b-standing_sign
+do setblock 1 -60 5 standing_sign
+section b-stone
+do setblock 2 -60 5 stone
+section b-stone_brick_slab
+do setblock 3 -60 5 stone_brick_slab
+section b-stone_brick_stairs
+do setblock -2 -60 6 stone_brick_stairs
+section b-stone_brick_wall
+do setblock -1 -60 6 stone_brick_wall
+section b-stone_bricks
+do setblock 0 -60 6 stone_bricks
+section b-stone_button
+do setblock 1 -60 6 stone_button
+section b-stone_pressure_plate
+do setblock 2 -60 6 stone_pressure_plate
+section b-stone_stairs
+do setblock 3 -60 6 stone_stairs
+section b-stonecutter_block
+do setblock -2 -60 7 stonecutter_block
+section b-stripped_acacia_log
+do setblock -1 -60 7 stripped_acacia_log
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-mirror                        # side: 26 種（spruce_door spruce_fence spruce_fence_gate spruce_hanging_sign spruce_leaves spruce_log spruce_planks spruce_pressure_plate spruce_sapling spruce_slab spruce_stairs spruce_standing_sign spruce_trapdoor spruce_wall_sign spruce_wood standing_sign stone stone_brick_slab stone_brick_stairs stone_brick_wall stone_bricks stone_button stone_pressure_plate stone_stairs stonecutter_block stripped_acacia_log）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

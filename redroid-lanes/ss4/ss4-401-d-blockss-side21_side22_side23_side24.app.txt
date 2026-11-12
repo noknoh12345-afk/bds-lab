@@ -1,0 +1,336 @@
+# 一括検証 4 回目（d-blockss-side21+side22+side23+side24）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-magenta_concrete_stairs
+do setblock -2 -60 3 magenta_concrete_stairs
+section b-magenta_glazed_terracotta
+do setblock -1 -60 3 magenta_glazed_terracotta
+section b-magenta_shulker_box
+do setblock 0 -60 3 magenta_shulker_box
+section b-magenta_stained_glass
+do setblock 1 -60 3 magenta_stained_glass
+section b-magenta_stained_glass_pane
+do setblock 2 -60 3 magenta_stained_glass_pane
+section b-magenta_terracotta
+do setblock 3 -60 3 magenta_terracotta
+section b-magenta_wool
+do setblock -2 -60 4 magenta_wool
+section b-magenta_wool_slab
+do setblock -1 -60 4 magenta_wool_slab
+section b-magenta_wool_stairs
+do setblock 0 -60 4 magenta_wool_stairs
+section b-magma
+do setblock 1 -60 4 magma
+section b-mangrove_button
+do setblock 2 -60 4 mangrove_button
+section b-mangrove_door
+do setblock 3 -60 4 mangrove_door
+section b-mangrove_fence
+do setblock -2 -60 5 mangrove_fence
+section b-mangrove_fence_gate
+do setblock -1 -60 5 mangrove_fence_gate
+section b-mangrove_hanging_sign
+do setblock 0 -60 5 mangrove_hanging_sign
+section b-mangrove_leaves
+do setblock 1 -60 5 mangrove_leaves
+section b-mangrove_log
+do setblock 2 -60 5 mangrove_log
+section b-mangrove_planks
+do setblock 3 -60 5 mangrove_planks
+section b-mangrove_pressure_plate
+do setblock -2 -60 6 mangrove_pressure_plate
+section b-mangrove_propagule
+do setblock -1 -60 6 mangrove_propagule
+section b-mangrove_roots
+do setblock 0 -60 6 mangrove_roots
+section b-mangrove_slab
+do setblock 1 -60 6 mangrove_slab
+section b-mangrove_stairs
+do setblock 2 -60 6 mangrove_stairs
+section b-mangrove_standing_sign
+do setblock 3 -60 6 mangrove_standing_sign
+section b-mangrove_trapdoor
+do setblock -2 -60 7 mangrove_trapdoor
+section b-mangrove_wall_sign
+do setblock -1 -60 7 mangrove_wall_sign
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（magenta_concrete_stairs magenta_glazed_terracotta magenta_shulker_box magenta_stained_glass magenta_stained_glass_pane magenta_terracotta magenta_wool magenta_wool_slab magenta_wool_stairs magma mangrove_button mangrove_door mangrove_fence mangrove_fence_gate mangrove_hanging_sign mangrove_leaves mangrove_log mangrove_planks mangrove_pressure_plate mangrove_propagule mangrove_roots mangrove_slab mangrove_stairs mangrove_standing_sign mangrove_trapdoor mangrove_wall_sign）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-mangrove_wood
+do setblock -2 -60 3 mangrove_wood
+section b-medium_amethyst_bud
+do setblock -1 -60 3 medium_amethyst_bud
+section b-melon_block
+do setblock 0 -60 3 melon_block
+section b-melon_stem
+do setblock 1 -60 3 melon_stem
+section b-mob_spawner
+do setblock 2 -60 3 mob_spawner
+section b-moss_block
+do setblock 3 -60 3 moss_block
+section b-moss_carpet
+do setblock -2 -60 4 moss_carpet
+section b-mossy_cobblestone
+do setblock -1 -60 4 mossy_cobblestone
+section b-mossy_cobblestone_slab
+do setblock 0 -60 4 mossy_cobblestone_slab
+section b-mossy_cobblestone_stairs
+do setblock 1 -60 4 mossy_cobblestone_stairs
+section b-mossy_cobblestone_wall
+do setblock 2 -60 4 mossy_cobblestone_wall
+section b-mossy_stone_brick_slab
+do setblock 3 -60 4 mossy_stone_brick_slab
+section b-mossy_stone_brick_stairs
+do setblock -2 -60 5 mossy_stone_brick_stairs
+section b-mossy_stone_brick_wall
+do setblock -1 -60 5 mossy_stone_brick_wall
+section b-mossy_stone_bricks
+do setblock 0 -60 5 mossy_stone_bricks
+section b-mud
+do setblock 1 -60 5 mud
+section b-mud_brick_slab
+do setblock 2 -60 5 mud_brick_slab
+section b-mud_brick_stairs
+do setblock 3 -60 5 mud_brick_stairs
+section b-mud_brick_wall
+do setblock -2 -60 6 mud_brick_wall
+section b-mud_bricks
+do setblock -1 -60 6 mud_bricks
+section b-muddy_mangrove_roots
+do setblock 0 -60 6 muddy_mangrove_roots
+section b-mushroom_stem
+do setblock 1 -60 6 mushroom_stem
+section b-mycelium
+do setblock 2 -60 6 mycelium
+section b-nether_brick
+do setblock 3 -60 6 nether_brick
+section b-nether_brick_fence
+do setblock -2 -60 7 nether_brick_fence
+section b-nether_brick_slab
+do setblock -1 -60 7 nether_brick_slab
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（mangrove_wood medium_amethyst_bud melon_block melon_stem mob_spawner moss_block moss_carpet mossy_cobblestone mossy_cobblestone_slab mossy_cobblestone_stairs mossy_cobblestone_wall mossy_stone_brick_slab mossy_stone_brick_stairs mossy_stone_brick_wall mossy_stone_bricks mud mud_brick_slab mud_brick_stairs mud_brick_wall mud_bricks muddy_mangrove_roots mushroom_stem mycelium nether_brick nether_brick_fence nether_brick_slab）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-nether_brick_stairs
+do setblock -2 -60 3 nether_brick_stairs
+section b-nether_brick_wall
+do setblock -1 -60 3 nether_brick_wall
+section b-nether_gold_ore
+do setblock 0 -60 3 nether_gold_ore
+section b-nether_sprouts
+do setblock 1 -60 3 nether_sprouts
+section b-nether_wart
+do setblock 2 -60 3 nether_wart
+section b-nether_wart_block
+do setblock 3 -60 3 nether_wart_block
+section b-netherite_block
+do setblock -2 -60 4 netherite_block
+section b-netherrack
+do setblock -1 -60 4 netherrack
+section b-normal_stone_slab
+do setblock 0 -60 4 normal_stone_slab
+section b-normal_stone_stairs
+do setblock 1 -60 4 normal_stone_stairs
+section b-noteblock
+do setblock 2 -60 4 noteblock
+section b-oak_fence
+do setblock 3 -60 4 oak_fence
+section b-oak_hanging_sign
+do setblock -2 -60 5 oak_hanging_sign
+section b-oak_leaves
+do setblock -1 -60 5 oak_leaves
+section b-oak_log
+do setblock 0 -60 5 oak_log
+section b-oak_planks
+do setblock 1 -60 5 oak_planks
+section b-oak_sapling
+do setblock 2 -60 5 oak_sapling
+section b-oak_slab
+do setblock 3 -60 5 oak_slab
+section b-oak_stairs
+do setblock -2 -60 6 oak_stairs
+section b-oak_wood
+do setblock -1 -60 6 oak_wood
+section b-observer
+do setblock 0 -60 6 observer
+section b-obsidian
+do setblock 1 -60 6 obsidian
+section b-ochre_froglight
+do setblock 2 -60 6 ochre_froglight
+section b-open_eyeblossom
+do setblock 3 -60 6 open_eyeblossom
+section b-orange_candle
+do setblock -2 -60 7 orange_candle
+section b-orange_candle_cake
+do setblock -1 -60 7 orange_candle_cake
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（nether_brick_stairs nether_brick_wall nether_gold_ore nether_sprouts nether_wart nether_wart_block netherite_block netherrack normal_stone_slab normal_stone_stairs noteblock oak_fence oak_hanging_sign oak_leaves oak_log oak_planks oak_sapling oak_slab oak_stairs oak_wood observer obsidian ochre_froglight open_eyeblossom orange_candle orange_candle_cake）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-orange_carpet
+do setblock -2 -60 3 orange_carpet
+section b-orange_concrete
+do setblock -1 -60 3 orange_concrete
+section b-orange_concrete_slab
+do setblock 0 -60 3 orange_concrete_slab
+section b-orange_concrete_stairs
+do setblock 1 -60 3 orange_concrete_stairs
+section b-orange_glazed_terracotta
+do setblock 2 -60 3 orange_glazed_terracotta
+section b-orange_poplar_leaves
+do setblock 3 -60 3 orange_poplar_leaves
+section b-orange_shulker_box
+do setblock -2 -60 4 orange_shulker_box
+section b-orange_stained_glass
+do setblock -1 -60 4 orange_stained_glass
+section b-orange_stained_glass_pane
+do setblock 0 -60 4 orange_stained_glass_pane
+section b-orange_terracotta
+do setblock 1 -60 4 orange_terracotta
+section b-orange_tulip
+do setblock 2 -60 4 orange_tulip
+section b-orange_wool
+do setblock 3 -60 4 orange_wool
+section b-orange_wool_slab
+do setblock -2 -60 5 orange_wool_slab
+section b-orange_wool_stairs
+do setblock -1 -60 5 orange_wool_stairs
+section b-oxeye_daisy
+do setblock 0 -60 5 oxeye_daisy
+section b-oxidized_chiseled_copper
+do setblock 1 -60 5 oxidized_chiseled_copper
+section b-oxidized_copper
+do setblock 2 -60 5 oxidized_copper
+section b-oxidized_copper_bars
+do setblock 3 -60 5 oxidized_copper_bars
+section b-oxidized_copper_bulb
+do setblock -2 -60 6 oxidized_copper_bulb
+section b-oxidized_copper_chain
+do setblock -1 -60 6 oxidized_copper_chain
+section b-oxidized_copper_chest
+do setblock 0 -60 6 oxidized_copper_chest
+section b-oxidized_copper_door
+do setblock 1 -60 6 oxidized_copper_door
+section b-oxidized_copper_golem_statue
+do setblock 2 -60 6 oxidized_copper_golem_statue
+section b-oxidized_copper_grate
+do setblock 3 -60 6 oxidized_copper_grate
+section b-oxidized_copper_lantern
+do setblock -2 -60 7 oxidized_copper_lantern
+section b-oxidized_copper_trapdoor
+do setblock -1 -60 7 oxidized_copper_trapdoor
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（orange_carpet orange_concrete orange_concrete_slab orange_concrete_stairs orange_glazed_terracotta orange_poplar_leaves orange_shulker_box orange_stained_glass orange_stained_glass_pane orange_terracotta orange_tulip orange_wool orange_wool_slab orange_wool_stairs oxeye_daisy oxidized_chiseled_copper oxidized_copper oxidized_copper_bars oxidized_copper_bulb oxidized_copper_chain oxidized_copper_chest oxidized_copper_door oxidized_copper_golem_statue oxidized_copper_grate oxidized_copper_lantern oxidized_copper_trapdoor）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

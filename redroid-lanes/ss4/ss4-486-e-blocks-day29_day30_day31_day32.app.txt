@@ -1,0 +1,336 @@
+# 一括検証 4 回目（e-blocks-day29+day30+day31+day32）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 12800
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-powered_repeater
+do setblock -2 -60 3 powered_repeater
+section b-prismarine
+do setblock -1 -60 3 prismarine
+section b-prismarine_brick_slab
+do setblock 0 -60 3 prismarine_brick_slab
+section b-prismarine_bricks
+do setblock 1 -60 3 prismarine_bricks
+section b-prismarine_bricks_stairs
+do setblock 2 -60 3 prismarine_bricks_stairs
+section b-prismarine_slab
+do setblock 3 -60 3 prismarine_slab
+section b-prismarine_stairs
+do setblock -2 -60 4 prismarine_stairs
+section b-prismarine_wall
+do setblock -1 -60 4 prismarine_wall
+section b-pumpkin
+do setblock 0 -60 4 pumpkin
+section b-pumpkin_stem
+do setblock 1 -60 4 pumpkin_stem
+section b-purple_candle
+do setblock 2 -60 4 purple_candle
+section b-purple_candle_cake
+do setblock 3 -60 4 purple_candle_cake
+section b-purple_carpet
+do setblock -2 -60 5 purple_carpet
+section b-purple_concrete
+do setblock -1 -60 5 purple_concrete
+section b-purple_concrete_slab
+do setblock 0 -60 5 purple_concrete_slab
+section b-purple_concrete_stairs
+do setblock 1 -60 5 purple_concrete_stairs
+section b-purple_glazed_terracotta
+do setblock 2 -60 5 purple_glazed_terracotta
+section b-purple_shulker_box
+do setblock 3 -60 5 purple_shulker_box
+section b-purple_stained_glass
+do setblock -2 -60 6 purple_stained_glass
+section b-purple_stained_glass_pane
+do setblock -1 -60 6 purple_stained_glass_pane
+section b-purple_terracotta
+do setblock 0 -60 6 purple_terracotta
+section b-purple_wool
+do setblock 1 -60 6 purple_wool
+section b-purple_wool_slab
+do setblock 2 -60 6 purple_wool_slab
+section b-purple_wool_stairs
+do setblock 3 -60 6 purple_wool_stairs
+section b-purpur_block
+do setblock -2 -60 7 purpur_block
+section b-purpur_pillar
+do setblock -1 -60 7 purpur_pillar
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-day-mirror                 # day: 26 種（powered_repeater prismarine prismarine_brick_slab prismarine_bricks prismarine_bricks_stairs prismarine_slab prismarine_stairs prismarine_wall pumpkin pumpkin_stem purple_candle purple_candle_cake purple_carpet purple_concrete purple_concrete_slab purple_concrete_stairs purple_glazed_terracotta purple_shulker_box purple_stained_glass purple_stained_glass_pane purple_terracotta purple_wool purple_wool_slab purple_wool_stairs purpur_block purpur_pillar）
+section blocks-day-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-day-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-day-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 12800
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-purpur_slab
+do setblock -2 -60 3 purpur_slab
+section b-purpur_stairs
+do setblock -1 -60 3 purpur_stairs
+section b-quartz_block
+do setblock 0 -60 3 quartz_block
+section b-quartz_bricks
+do setblock 1 -60 3 quartz_bricks
+section b-quartz_ore
+do setblock 2 -60 3 quartz_ore
+section b-quartz_pillar
+do setblock 3 -60 3 quartz_pillar
+section b-quartz_slab
+do setblock -2 -60 4 quartz_slab
+section b-quartz_stairs
+do setblock -1 -60 4 quartz_stairs
+section b-rail
+do setblock 0 -60 4 rail
+section b-raw_copper_block
+do setblock 1 -60 4 raw_copper_block
+section b-raw_gold_block
+do setblock 2 -60 4 raw_gold_block
+section b-raw_iron_block
+do setblock 3 -60 4 raw_iron_block
+section b-red_candle
+do setblock -2 -60 5 red_candle
+section b-red_candle_cake
+do setblock -1 -60 5 red_candle_cake
+section b-red_carpet
+do setblock 0 -60 5 red_carpet
+section b-red_concrete
+do setblock 1 -60 5 red_concrete
+section b-red_concrete_slab
+do setblock 2 -60 5 red_concrete_slab
+section b-red_concrete_stairs
+do setblock 3 -60 5 red_concrete_stairs
+section b-red_glazed_terracotta
+do setblock -2 -60 6 red_glazed_terracotta
+section b-red_mushroom
+do setblock -1 -60 6 red_mushroom
+section b-red_mushroom_block
+do setblock 0 -60 6 red_mushroom_block
+section b-red_nether_brick
+do setblock 1 -60 6 red_nether_brick
+section b-red_nether_brick_slab
+do setblock 2 -60 6 red_nether_brick_slab
+section b-red_nether_brick_stairs
+do setblock 3 -60 6 red_nether_brick_stairs
+section b-red_nether_brick_wall
+do setblock -2 -60 7 red_nether_brick_wall
+section b-red_poplar_leaves
+do setblock -1 -60 7 red_poplar_leaves
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-day-mirror                 # day: 26 種（purpur_slab purpur_stairs quartz_block quartz_bricks quartz_ore quartz_pillar quartz_slab quartz_stairs rail raw_copper_block raw_gold_block raw_iron_block red_candle red_candle_cake red_carpet red_concrete red_concrete_slab red_concrete_stairs red_glazed_terracotta red_mushroom red_mushroom_block red_nether_brick red_nether_brick_slab red_nether_brick_stairs red_nether_brick_wall red_poplar_leaves）
+section blocks-day-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-day-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-day-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 12800
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-red_shulker_box
+do setblock -2 -60 3 red_shulker_box
+section b-red_stained_glass
+do setblock -1 -60 3 red_stained_glass
+section b-red_stained_glass_pane
+do setblock 0 -60 3 red_stained_glass_pane
+section b-red_terracotta
+do setblock 1 -60 3 red_terracotta
+section b-red_tulip
+do setblock 2 -60 3 red_tulip
+section b-red_wool
+do setblock 3 -60 3 red_wool
+section b-red_wool_slab
+do setblock -2 -60 4 red_wool_slab
+section b-red_wool_stairs
+do setblock -1 -60 4 red_wool_stairs
+section b-redstone_block
+do setblock 0 -60 4 redstone_block
+section b-redstone_lamp
+do setblock 1 -60 4 redstone_lamp
+section b-redstone_ore
+do setblock 2 -60 4 redstone_ore
+section b-redstone_torch
+do setblock 3 -60 4 redstone_torch
+section b-reeds
+do setblock -2 -60 5 reeds
+section b-reinforced_deepslate
+do setblock -1 -60 5 reinforced_deepslate
+section b-repeating_command_block
+do setblock 0 -60 5 repeating_command_block
+section b-resin_block
+do setblock 1 -60 5 resin_block
+section b-resin_brick_slab
+do setblock 2 -60 5 resin_brick_slab
+section b-resin_brick_stairs
+do setblock 3 -60 5 resin_brick_stairs
+section b-resin_brick_wall
+do setblock -2 -60 6 resin_brick_wall
+section b-resin_bricks
+do setblock -1 -60 6 resin_bricks
+section b-respawn_anchor
+do setblock 0 -60 6 respawn_anchor
+section b-rose_bush
+do setblock 1 -60 6 rose_bush
+section b-sculk
+do setblock 2 -60 6 sculk
+section b-sculk_catalyst
+do setblock 3 -60 6 sculk_catalyst
+section b-sculk_sensor
+do setblock -2 -60 7 sculk_sensor
+section b-sculk_shrieker
+do setblock -1 -60 7 sculk_shrieker
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-day-mirror                 # day: 26 種（red_shulker_box red_stained_glass red_stained_glass_pane red_terracotta red_tulip red_wool red_wool_slab red_wool_stairs redstone_block redstone_lamp redstone_ore redstone_torch reeds reinforced_deepslate repeating_command_block resin_block resin_brick_slab resin_brick_stairs resin_brick_wall resin_bricks respawn_anchor rose_bush sculk sculk_catalyst sculk_sensor sculk_shrieker）
+section blocks-day-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-day-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-day-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 12800
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-sculk_vein
+do setblock -2 -60 3 sculk_vein
+section b-sea_lantern
+do setblock -1 -60 3 sea_lantern
+section b-seagrass
+do setblock 0 -60 3 seagrass
+section b-short_dry_grass
+do setblock 1 -60 3 short_dry_grass
+section b-short_grass
+do setblock 2 -60 3 short_grass
+section b-shroomlight
+do setblock 3 -60 3 shroomlight
+section b-silver_glazed_terracotta
+do setblock -2 -60 4 silver_glazed_terracotta
+section b-slime
+do setblock -1 -60 4 slime
+section b-small_amethyst_bud
+do setblock 0 -60 4 small_amethyst_bud
+section b-small_dripleaf_block
+do setblock 1 -60 4 small_dripleaf_block
+section b-smithing_table
+do setblock 2 -60 4 smithing_table
+section b-smoker
+do setblock 3 -60 4 smoker
+section b-smooth_basalt
+do setblock -2 -60 5 smooth_basalt
+section b-smooth_quartz
+do setblock -1 -60 5 smooth_quartz
+section b-smooth_quartz_slab
+do setblock 0 -60 5 smooth_quartz_slab
+section b-smooth_quartz_stairs
+do setblock 1 -60 5 smooth_quartz_stairs
+section b-smooth_stone
+do setblock 2 -60 5 smooth_stone
+section b-smooth_stone_slab
+do setblock 3 -60 5 smooth_stone_slab
+section b-sniffer_egg
+do setblock -2 -60 6 sniffer_egg
+section b-snow
+do setblock -1 -60 6 snow
+section b-snow_layer
+do setblock 0 -60 6 snow_layer
+section b-soul_lantern
+do setblock 1 -60 6 soul_lantern
+section b-soul_soil
+do setblock 2 -60 6 soul_soil
+section b-soul_torch
+do setblock 3 -60 6 soul_torch
+section b-sponge
+do setblock -2 -60 7 sponge
+section b-spruce_button
+do setblock -1 -60 7 spruce_button
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-day-mirror                 # day: 26 種（sculk_vein sea_lantern seagrass short_dry_grass short_grass shroomlight silver_glazed_terracotta slime small_amethyst_bud small_dripleaf_block smithing_table smoker smooth_basalt smooth_quartz smooth_quartz_slab smooth_quartz_stairs smooth_stone smooth_stone_slab sniffer_egg snow snow_layer soul_lantern soul_soil soul_torch sponge spruce_button）
+section blocks-day-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-day-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-day-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

@@ -1,0 +1,336 @@
+# 一括検証 4 回目（d-blockss-side5+side6+side7+side8）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-bone_block
+do setblock -2 -60 3 bone_block
+section b-bookshelf
+do setblock -1 -60 3 bookshelf
+section b-brain_coral
+do setblock 0 -60 3 brain_coral
+section b-brain_coral_block
+do setblock 1 -60 3 brain_coral_block
+section b-brain_coral_fan
+do setblock 2 -60 3 brain_coral_fan
+section b-brain_coral_wall_fan
+do setblock 3 -60 3 brain_coral_wall_fan
+section b-brick_block
+do setblock -2 -60 4 brick_block
+section b-brick_slab
+do setblock -1 -60 4 brick_slab
+section b-brick_stairs
+do setblock 0 -60 4 brick_stairs
+section b-brick_wall
+do setblock 1 -60 4 brick_wall
+section b-brown_candle
+do setblock 2 -60 4 brown_candle
+section b-brown_candle_cake
+do setblock 3 -60 4 brown_candle_cake
+section b-brown_carpet
+do setblock -2 -60 5 brown_carpet
+section b-brown_concrete
+do setblock -1 -60 5 brown_concrete
+section b-brown_concrete_slab
+do setblock 0 -60 5 brown_concrete_slab
+section b-brown_concrete_stairs
+do setblock 1 -60 5 brown_concrete_stairs
+section b-brown_glazed_terracotta
+do setblock 2 -60 5 brown_glazed_terracotta
+section b-brown_mushroom
+do setblock 3 -60 5 brown_mushroom
+section b-brown_mushroom_block
+do setblock -2 -60 6 brown_mushroom_block
+section b-brown_shulker_box
+do setblock -1 -60 6 brown_shulker_box
+section b-brown_stained_glass
+do setblock 0 -60 6 brown_stained_glass
+section b-brown_stained_glass_pane
+do setblock 1 -60 6 brown_stained_glass_pane
+section b-brown_terracotta
+do setblock 2 -60 6 brown_terracotta
+section b-brown_wool
+do setblock 3 -60 6 brown_wool
+section b-brown_wool_slab
+do setblock -2 -60 7 brown_wool_slab
+section b-brown_wool_stairs
+do setblock -1 -60 7 brown_wool_stairs
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（bone_block bookshelf brain_coral brain_coral_block brain_coral_fan brain_coral_wall_fan brick_block brick_slab brick_stairs brick_wall brown_candle brown_candle_cake brown_carpet brown_concrete brown_concrete_slab brown_concrete_stairs brown_glazed_terracotta brown_mushroom brown_mushroom_block brown_shulker_box brown_stained_glass brown_stained_glass_pane brown_terracotta brown_wool brown_wool_slab brown_wool_stairs）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-bubble_coral
+do setblock -2 -60 3 bubble_coral
+section b-bubble_coral_block
+do setblock -1 -60 3 bubble_coral_block
+section b-bubble_coral_fan
+do setblock 0 -60 3 bubble_coral_fan
+section b-bubble_coral_wall_fan
+do setblock 1 -60 3 bubble_coral_wall_fan
+section b-budding_amethyst
+do setblock 2 -60 3 budding_amethyst
+section b-bush
+do setblock 3 -60 3 bush
+section b-cactus
+do setblock -2 -60 4 cactus
+section b-cactus_flower
+do setblock -1 -60 4 cactus_flower
+section b-cake
+do setblock 0 -60 4 cake
+section b-calcite
+do setblock 1 -60 4 calcite
+section b-calibrated_sculk_sensor
+do setblock 2 -60 4 calibrated_sculk_sensor
+section b-candle
+do setblock 3 -60 4 candle
+section b-candle_cake
+do setblock -2 -60 5 candle_cake
+section b-carrots
+do setblock -1 -60 5 carrots
+section b-cartography_table
+do setblock 0 -60 5 cartography_table
+section b-carved_pumpkin
+do setblock 1 -60 5 carved_pumpkin
+section b-cauldron
+do setblock 2 -60 5 cauldron
+section b-cave_vines
+do setblock 3 -60 5 cave_vines
+section b-cave_vines_body_with_berries
+do setblock -2 -60 6 cave_vines_body_with_berries
+section b-cave_vines_head_with_berries
+do setblock -1 -60 6 cave_vines_head_with_berries
+section b-chain_command_block
+do setblock 0 -60 6 chain_command_block
+section b-cherry_button
+do setblock 1 -60 6 cherry_button
+section b-cherry_door
+do setblock 2 -60 6 cherry_door
+section b-cherry_fence
+do setblock 3 -60 6 cherry_fence
+section b-cherry_fence_gate
+do setblock -2 -60 7 cherry_fence_gate
+section b-cherry_hanging_sign
+do setblock -1 -60 7 cherry_hanging_sign
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（bubble_coral bubble_coral_block bubble_coral_fan bubble_coral_wall_fan budding_amethyst bush cactus cactus_flower cake calcite calibrated_sculk_sensor candle candle_cake carrots cartography_table carved_pumpkin cauldron cave_vines cave_vines_body_with_berries cave_vines_head_with_berries chain_command_block cherry_button cherry_door cherry_fence cherry_fence_gate cherry_hanging_sign）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-cherry_leaves
+do setblock -2 -60 3 cherry_leaves
+section b-cherry_log
+do setblock -1 -60 3 cherry_log
+section b-cherry_planks
+do setblock 0 -60 3 cherry_planks
+section b-cherry_pressure_plate
+do setblock 1 -60 3 cherry_pressure_plate
+section b-cherry_sapling
+do setblock 2 -60 3 cherry_sapling
+section b-cherry_slab
+do setblock 3 -60 3 cherry_slab
+section b-cherry_stairs
+do setblock -2 -60 4 cherry_stairs
+section b-cherry_standing_sign
+do setblock -1 -60 4 cherry_standing_sign
+section b-cherry_trapdoor
+do setblock 0 -60 4 cherry_trapdoor
+section b-cherry_wall_sign
+do setblock 1 -60 4 cherry_wall_sign
+section b-cherry_wood
+do setblock 2 -60 4 cherry_wood
+section b-chest
+do setblock 3 -60 4 chest
+section b-chiseled_bookshelf
+do setblock -2 -60 5 chiseled_bookshelf
+section b-chiseled_cinnabar
+do setblock -1 -60 5 chiseled_cinnabar
+section b-chiseled_copper
+do setblock 0 -60 5 chiseled_copper
+section b-chiseled_deepslate
+do setblock 1 -60 5 chiseled_deepslate
+section b-chiseled_nether_bricks
+do setblock 2 -60 5 chiseled_nether_bricks
+section b-chiseled_polished_blackstone
+do setblock 3 -60 5 chiseled_polished_blackstone
+section b-chiseled_quartz_block
+do setblock -2 -60 6 chiseled_quartz_block
+section b-chiseled_resin_bricks
+do setblock -1 -60 6 chiseled_resin_bricks
+section b-chiseled_stone_bricks
+do setblock 0 -60 6 chiseled_stone_bricks
+section b-chiseled_sulfur
+do setblock 1 -60 6 chiseled_sulfur
+section b-chiseled_tuff
+do setblock 2 -60 6 chiseled_tuff
+section b-chiseled_tuff_bricks
+do setblock 3 -60 6 chiseled_tuff_bricks
+section b-cinnabar
+do setblock -2 -60 7 cinnabar
+section b-cinnabar_brick_slab
+do setblock -1 -60 7 cinnabar_brick_slab
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（cherry_leaves cherry_log cherry_planks cherry_pressure_plate cherry_sapling cherry_slab cherry_stairs cherry_standing_sign cherry_trapdoor cherry_wall_sign cherry_wood chest chiseled_bookshelf chiseled_cinnabar chiseled_copper chiseled_deepslate chiseled_nether_bricks chiseled_polished_blackstone chiseled_quartz_block chiseled_resin_bricks chiseled_stone_bricks chiseled_sulfur chiseled_tuff chiseled_tuff_bricks cinnabar cinnabar_brick_slab）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section reset
+do time set 1000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-cinnabar_brick_stairs
+do setblock -2 -60 3 cinnabar_brick_stairs
+section b-cinnabar_brick_wall
+do setblock -1 -60 3 cinnabar_brick_wall
+section b-cinnabar_bricks
+do setblock 0 -60 3 cinnabar_bricks
+section b-cinnabar_slab
+do setblock 1 -60 3 cinnabar_slab
+section b-cinnabar_stairs
+do setblock 2 -60 3 cinnabar_stairs
+section b-cinnabar_wall
+do setblock 3 -60 3 cinnabar_wall
+section b-clay
+do setblock -2 -60 4 clay
+section b-closed_eyeblossom
+do setblock -1 -60 4 closed_eyeblossom
+section b-coal_block
+do setblock 0 -60 4 coal_block
+section b-coal_ore
+do setblock 1 -60 4 coal_ore
+section b-coarse_dirt
+do setblock 2 -60 4 coarse_dirt
+section b-cobbled_deepslate
+do setblock 3 -60 4 cobbled_deepslate
+section b-cobbled_deepslate_slab
+do setblock -2 -60 5 cobbled_deepslate_slab
+section b-cobbled_deepslate_stairs
+do setblock -1 -60 5 cobbled_deepslate_stairs
+section b-cobbled_deepslate_wall
+do setblock 0 -60 5 cobbled_deepslate_wall
+section b-cobblestone
+do setblock 1 -60 5 cobblestone
+section b-cobblestone_slab
+do setblock 2 -60 5 cobblestone_slab
+section b-cobblestone_wall
+do setblock 3 -60 5 cobblestone_wall
+section b-command_block
+do setblock -2 -60 6 command_block
+section b-composter
+do setblock -1 -60 6 composter
+section b-copper_bars
+do setblock 0 -60 6 copper_bars
+section b-copper_block
+do setblock 1 -60 6 copper_block
+section b-copper_bulb
+do setblock 2 -60 6 copper_bulb
+section b-copper_chain
+do setblock 3 -60 6 copper_chain
+section b-copper_chest
+do setblock -2 -60 7 copper_chest
+section b-copper_door
+do setblock -1 -60 7 copper_door
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-side-mirror                 # side: 26 種（cinnabar_brick_stairs cinnabar_brick_wall cinnabar_bricks cinnabar_slab cinnabar_stairs cinnabar_wall clay closed_eyeblossom coal_block coal_ore coarse_dirt cobbled_deepslate cobbled_deepslate_slab cobbled_deepslate_stairs cobbled_deepslate_wall cobblestone cobblestone_slab cobblestone_wall command_block composter copper_bars copper_block copper_bulb copper_chain copper_chest copper_door）
+section blocks-side-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-side-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-side-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

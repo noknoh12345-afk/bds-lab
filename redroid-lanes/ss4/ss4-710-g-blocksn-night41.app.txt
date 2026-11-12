@@ -1,0 +1,102 @@
+# 一括検証 4 回目（g-blocksn-night41）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section reset
+do time set 18000
+do weather clear
+do camera @a clear
+do fill -7 -60 -3 7 -54 11 air
+section night
+do time set midnight
+do setblock 3 -60 10 torch
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-white_wool
+do setblock -2 -60 3 white_wool
+section b-white_wool_slab
+do setblock -1 -60 3 white_wool_slab
+section b-white_wool_stairs
+do setblock 0 -60 3 white_wool_stairs
+section b-wildflowers
+do setblock 1 -60 3 wildflowers
+section b-wither_rose
+do setblock 2 -60 3 wither_rose
+section b-wooden_button
+do setblock 3 -60 3 wooden_button
+section b-wooden_door
+do setblock -2 -60 4 wooden_door
+section b-wooden_pressure_plate
+do setblock -1 -60 4 wooden_pressure_plate
+section b-yellow_candle
+do setblock 0 -60 4 yellow_candle
+section b-yellow_candle_cake
+do setblock 1 -60 4 yellow_candle_cake
+section b-yellow_carpet
+do setblock 2 -60 4 yellow_carpet
+section b-yellow_concrete
+do setblock 3 -60 4 yellow_concrete
+section b-yellow_concrete_slab
+do setblock -2 -60 5 yellow_concrete_slab
+section b-yellow_concrete_stairs
+do setblock -1 -60 5 yellow_concrete_stairs
+section b-yellow_glazed_terracotta
+do setblock 0 -60 5 yellow_glazed_terracotta
+section b-yellow_poplar_leaves
+do setblock 1 -60 5 yellow_poplar_leaves
+section b-yellow_shulker_box
+do setblock 2 -60 5 yellow_shulker_box
+section b-yellow_stained_glass
+do setblock 3 -60 5 yellow_stained_glass
+section b-yellow_stained_glass_pane
+do setblock -2 -60 6 yellow_stained_glass_pane
+section b-yellow_terracotta
+do setblock -1 -60 6 yellow_terracotta
+section b-yellow_wool
+do setblock 0 -60 6 yellow_wool
+section b-yellow_wool_slab
+do setblock 1 -60 6 yellow_wool_slab
+section b-yellow_wool_stairs
+do setblock 2 -60 6 yellow_wool_stairs
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-night-mirror                 # night: 23 種（white_wool white_wool_slab white_wool_stairs wildflowers wither_rose wooden_button wooden_door wooden_pressure_plate yellow_candle yellow_candle_cake yellow_carpet yellow_concrete yellow_concrete_slab yellow_concrete_stairs yellow_glazed_terracotta yellow_poplar_leaves yellow_shulker_box yellow_stained_glass yellow_stained_glass_pane yellow_terracotta yellow_wool yellow_wool_slab yellow_wool_stairs）
+section blocks-night-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-night-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-night-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

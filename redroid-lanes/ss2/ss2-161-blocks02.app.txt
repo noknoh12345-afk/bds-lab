@@ -1,0 +1,100 @@
+# 一括検証 2 回目（blocks02）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 11 air
+section b-azalea_leaves
+do setblock -2 -60 3 azalea_leaves
+section b-azalea_leaves_flowered
+do setblock -1 -60 3 azalea_leaves_flowered
+section b-azure_bluet
+do setblock 0 -60 3 azure_bluet
+section b-bamboo_block
+do setblock 1 -60 3 bamboo_block
+section b-bamboo_button
+do setblock 2 -60 3 bamboo_button
+section b-bamboo_door
+do setblock 3 -60 3 bamboo_door
+section b-bamboo_fence
+do setblock -2 -60 4 bamboo_fence
+section b-bamboo_fence_gate
+do setblock -1 -60 4 bamboo_fence_gate
+section b-bamboo_hanging_sign
+do setblock 0 -60 4 bamboo_hanging_sign
+section b-bamboo_mosaic
+do setblock 1 -60 4 bamboo_mosaic
+section b-bamboo_mosaic_slab
+do setblock 2 -60 4 bamboo_mosaic_slab
+section b-bamboo_mosaic_stairs
+do setblock 3 -60 4 bamboo_mosaic_stairs
+section b-bamboo_planks
+do setblock -2 -60 5 bamboo_planks
+section b-bamboo_pressure_plate
+do setblock -1 -60 5 bamboo_pressure_plate
+section b-bamboo_sapling
+do setblock 0 -60 5 bamboo_sapling
+section b-bamboo_slab
+do setblock 1 -60 5 bamboo_slab
+section b-bamboo_stairs
+do setblock 2 -60 5 bamboo_stairs
+section b-bamboo_standing_sign
+do setblock 3 -60 5 bamboo_standing_sign
+section b-bamboo_trapdoor
+do setblock -2 -60 6 bamboo_trapdoor
+section b-bamboo_wall_sign
+do setblock -1 -60 6 bamboo_wall_sign
+section b-barrel
+do setblock 0 -60 6 barrel
+section b-basalt
+do setblock 1 -60 6 basalt
+section b-beacon
+do setblock 2 -60 6 beacon
+section b-bedrock
+do setblock 3 -60 6 bedrock
+section b-bee_nest
+do setblock -2 -60 7 bee_nest
+section b-beehive
+do setblock -1 -60 7 beehive
+section page
+do tp @a 0.5 -60 9.6 0 10
+wait 4500
+shot blocks-mirror                        # 26 種（azalea_leaves azalea_leaves_flowered azure_bluet bamboo_block bamboo_button bamboo_door bamboo_fence bamboo_fence_gate bamboo_hanging_sign bamboo_mosaic bamboo_mosaic_slab bamboo_mosaic_stairs bamboo_planks bamboo_pressure_plate bamboo_sapling bamboo_slab bamboo_stairs bamboo_standing_sign bamboo_trapdoor bamboo_wall_sign barrel basalt beacon bedrock bee_nest beehive）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a 0.5 -60 9.6 0 10
+do camera @a set minecraft:free pos 0.5 -58.38 14.4 rot 10 180
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done

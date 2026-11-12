@@ -1,0 +1,100 @@
+# 一括検証 3 回目（blocks-side16）: 3.4.5 のまま、場面だけを変えた枝。結果は自分の鍵で封じる
+section title
+launch
+until title 600000
+shot title
+section join
+join
+until joined 300000
+wait 3000
+do gamerule dodaylightcycle false
+do gamerule doweathercycle false
+do gamerule domobspawning false
+do gamerule mobgriefing false
+do gamerule doentitydrops false
+do gamerule domobloot false
+do time set noon
+do weather clear
+do gamemode creative @a
+do effect @a resistance 100000 255 true
+section setup
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+do replaceitem entity @a slot.weapon.mainhand 0 air
+do tp @a 0.5 -60 8 0 0
+wait 3000
+shot setup                                # 鏡ができた
+section clear
+do setblock -2 -60 3 stone
+do fill -3 -60 2 3 -57 9 air
+section b-gray_wool
+do setblock -2 -60 3 gray_wool
+section b-gray_wool_slab
+do setblock -1 -60 3 gray_wool_slab
+section b-gray_wool_stairs
+do setblock 0 -60 3 gray_wool_stairs
+section b-green_candle
+do setblock 1 -60 3 green_candle
+section b-green_candle_cake
+do setblock 2 -60 3 green_candle_cake
+section b-green_carpet
+do setblock 3 -60 3 green_carpet
+section b-green_concrete
+do setblock -2 -60 4 green_concrete
+section b-green_concrete_slab
+do setblock -1 -60 4 green_concrete_slab
+section b-green_concrete_stairs
+do setblock 0 -60 4 green_concrete_stairs
+section b-green_glazed_terracotta
+do setblock 1 -60 4 green_glazed_terracotta
+section b-green_shulker_box
+do setblock 2 -60 4 green_shulker_box
+section b-green_stained_glass
+do setblock 3 -60 4 green_stained_glass
+section b-green_stained_glass_pane
+do setblock -2 -60 5 green_stained_glass_pane
+section b-green_terracotta
+do setblock -1 -60 5 green_terracotta
+section b-green_wool
+do setblock 0 -60 5 green_wool
+section b-green_wool_slab
+do setblock 1 -60 5 green_wool_slab
+section b-green_wool_stairs
+do setblock 2 -60 5 green_wool_stairs
+section b-grindstone
+do setblock 3 -60 5 grindstone
+section b-hanging_roots
+do setblock -2 -60 6 hanging_roots
+section b-hardened_clay
+do setblock -1 -60 6 hardened_clay
+section b-hay_block
+do setblock 0 -60 6 hay_block
+section b-heavy_core
+do setblock 1 -60 6 heavy_core
+section b-heavy_weighted_pressure_plate
+do setblock 2 -60 6 heavy_weighted_pressure_plate
+section b-honey_block
+do setblock 3 -60 6 honey_block
+section b-honeycomb_block
+do setblock -2 -60 7 honeycomb_block
+section b-hopper
+do setblock -1 -60 7 hopper
+section page
+do tp @a -1.5 -60 9.0 -30 15
+wait 4500
+shot blocks-mirror                        # side: 26 種（gray_wool gray_wool_slab gray_wool_stairs green_candle green_candle_cake green_carpet green_concrete green_concrete_slab green_concrete_stairs green_glazed_terracotta green_shulker_box green_stained_glass green_stained_glass_pane green_terracotta green_wool green_wool_slab green_wool_stairs grindstone hanging_roots hardened_clay hay_block heavy_core heavy_weighted_pressure_plate honey_block honeycomb_block hopper）
+section blocks-truth
+do tp @a 0.5 -60 10.5 0 0
+do execute as @a at @s run studio:remove
+do fill -4 -60 12 4 -56 12 air
+do tp @a -1.5 -60 9.0 -30 15
+do camera @a set minecraft:free pos -1.5 -58.38 15.0 rot 15 -150
+wait 2500
+shot blocks-truth                         # 正解: 鏡の面で折り返した位置から見た本物（左右反転して blocks-mirror と比べる）
+do camera @a clear
+do fill -4 -60 12 4 -56 12 stone
+do fill -1 -60 12 1 -58 12 air
+do studio:mirror 0 -60 12 north
+wait 1500
+section done
