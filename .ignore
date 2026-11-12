@@ -17,3 +17,5 @@ training/
 *.lock
 # the reference solution of the lessons: building from nothing is the point (scratch)
 bds/bench/solution.mjs
+# LeviKit: vendored three.js
+levikit/panel/public/vendor/

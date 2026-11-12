@@ -1,0 +1,5 @@
+node_modules/
+*.log
+mods/levikit-core/build/
+mods/levikit-core/bin/
+mods/levikit-core/.xmake/

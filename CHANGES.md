@@ -9,6 +9,16 @@
 - **テスト**：tests.txt の `js` で `count(p('A'),'ns:id')`。
 - **LeviKit**（`levikit/`）：サーバー運用セット。LeviLamina 版（本物の LeviLamina 26.51.9 で起動して見つけた不具合 3 つを修正）と Endstone 版（`endstone-levikit`、`install-endstone.sh`）。CI は `.github/workflows/levikit.yml`。
 
+**`dev` の整理（2026-11-12）**
+- **`AGENTS.md` が約 10.1 KB → 約 7.8 KB**：管理パネルの長い説明を `help panel` に移しました。fanout の司令塔はモデルを問いません。
+- **見本 `teleport_menu` を直しました**：マニフェストが前の BDS のベータ版モジュールを指していて読み込まれていませんでした（自動操縦は同じ修理を繰り返していました）。`mode beta` で 20/20。
+- **生成ツールのパックは生成ツールのもの**：`maintain` の「安定版 API へ移す」は、`bds/geoui/` の生成ツールが作るパックには掛けません（マニフェストを書き換えて「生成物と同じ」のテストを落としていました）。`geoui_web`・`geoui_web_probe`・`geoui_web_title_ctl` を作り直し、`geoui-web-offline` が通るようになりました。日本語の QA も、取り込んだパック（`imported.json`）には掛けません。
+- **実機での見本の結果**（BDS 1.26.63.1、43 本）：40 本が `DONE`。`geoui_over`・`geoui_probe_b` は上限をわざと超える確かめ用、`geoui_studio` はルートテーブルの欠けで、QA が指摘して止まります（前からです）。
+- **`upkeep` の知識の作り直しが動くようになりました**：「19 個中 17 個しかダンプが返らない」の原因は、ダンプ用のユニットが前の BDS のベータ版モジュールを指していたことでした。`kb-build` が先にこの BDS のものへ合わせます。
+- **まだ直っていないこと**：
+  - `common/data/kb.json` は BDS 1.26.52.3 のままです。1.26.63.1 で作り直すと動詞のカタログも作り直しが要り、`mine_dirt` が無くなる差が出たので、今回は入れていません。
+  - 同梱の sandbox-be のデータは 1.26.50.4 のままです（生成ツールは sandbox-be 本体のリポジトリ）。そのため `sim` はベータ版モジュールのアドオンの失敗を UNSURE と言い、`tests/scratch-offline.mjs` が 1 件落ちます（前からです）。
+
 **app ラボを「ほぼクライアント」に: 本物のアプリをコントローラーで人のように遊べる（歩く・見回す・跳ぶ・壊す・置く・持ち物・チャット…）。
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 

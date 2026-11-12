@@ -211,6 +211,9 @@ export function schedule(when, at = '04:17', rest = [], out = console.log, what 
 // ones carry over, so the next update is less likely to break it (tried once per unit and release; put back if it fails)
 async function promote(k, u, r, ctx, o) {
   const mf = path.join(unitDir(k, u), 'bp', 'manifest.json'), m = readJ(mf);
+  // a pack a lab generator makes (imported.json from: bds/geoui/...) is the generator's: its manifest is what the generator
+  // writes, and a test holds the two equal (tests/geoui-web-offline.mjs, tl-probe, tl-runtime). Moving it here broke that.
+  if (/^bds\/geoui\//.test(String(readJ(path.join(unitDir(k, u), 'imported.json'))?.from ?? ''))) return;
   if (!(m?.dependencies ?? []).some((d) => d.module_name?.startsWith('@minecraft/') && String(d.version).includes('beta'))) return;
   const memo = path.join(ROOT(), k, '.lab', 'maintain', 'promote-tried.json'), tried = readJ(memo) ?? {};
   if (tried[u] === ctx.to) return;

@@ -55,6 +55,9 @@ if (!process.argv.includes('--reuse') || !fs.existsSync(path.join(SAVED, 'kb-ite
   console.log(`server dump: ${cmds.length} steps, then a real client's recipe book...`);
   // the crafting recipes as the server sends them to a client (crafting_data): the only complete list (beds, dyes, wool ... are
   // not in the recipe files)
+  // the dump unit names beta modules: the ones of this BDS first (after a Minecraft update its manifest named the last
+  // release's, its script did not load, and every dump came back empty: "only 17 of 19 dumps")
+  spawnSync(process.execPath, [UNIT, 'mode', 'beta'], { cwd: path.dirname(UNIT), encoding: 'utf8' });
   const r = spawnSync(process.execPath, [UNIT, 'run', ...cmds, '@A join', 'wait 1500', '@A recipes_all', '-w', '300'], { cwd: path.dirname(UNIT), encoding: 'utf8', maxBuffer: 256e6, env: { ...process.env, LAB_MAX: '100000000' } });
   const said = (r.stdout.match(/KB \w+ \d+|KB drops none/g) ?? []);
   if (said.length < cmds.length) { console.log(r.stdout.slice(-3000)); console.log(`ERR only ${said.length} of ${cmds.length} dumps came back`); process.exit(1); }
