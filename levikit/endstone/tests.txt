@@ -19,20 +19,6 @@ levikit dims
 levikit stats
 ~ @@LEVIKIT STATS \{"tps":[\d.]+,"players":1,"worlds":\{"overworld":1,"nether":0,"the_end":0\}\}
 
-## /dim moves to another world and /back returns
-@A cmd dim nether
-until @@LEVIKIT WORLD_CHANGE \{"player":"A","from":"overworld","to":"nether"\} 30000
-wait 3000
-py p("A").dimension.name
-= Nether
-py plugin.where["A"]
-= nether
-@A cmd back
-until @@LEVIKIT WORLD_CHANGE \{"player":"A","from":"nether","to":"overworld"\} 30000
-wait 3000
-py p("A").dimension.name
-= Overworld
-
 ## an unknown world is refused
 @A cmd dim nowhere
 ~ ^@A .*ワールド「nowhere」はありません
@@ -119,6 +105,21 @@ restart
 @A join
 py [plugin.back["A"][0], int(plugin.back["A"][1])]
 = ["overworld",3]
+
+# (last but one: on a slow machine a client that has just changed dimension is not yet a target of `tp A` for a while)
+## /dim moves to another world and /back returns
+@A cmd dim nether
+until @@LEVIKIT WORLD_CHANGE \{"player":"A","from":"overworld","to":"nether"\} 30000
+wait 3000
+py p("A").dimension.name
+= Nether
+py plugin.where["A"]
+= nether
+@A cmd back
+until @@LEVIKIT WORLD_CHANGE \{"player":"A","from":"nether","to":"overworld"\} 30000
+wait 3000
+py p("A").dimension.name
+= Overworld
 
 ## transfer: every player is sent to the other server (the panel's 待機サーバー)
 levikit transfer 127.0.0.1 19199
