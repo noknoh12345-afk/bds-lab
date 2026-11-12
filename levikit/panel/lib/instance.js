@@ -155,7 +155,8 @@ class Instance extends EventEmitter {
     if (!/@@LEVIKIT (POS|STATS) /.test(msg)) this.pushLog(line);
     for (const c of this.collectors) c(msg, line);
 
-    if (/Server started\./.test(msg)) {
+    // BDS / Endstone: "Server started."  LeviLamina: "Server started in (1.9s)! For help, type …"
+    if (/Server started(\.| in \()/.test(msg)) {
       this.setState('running');
       this.emit('started');
     }

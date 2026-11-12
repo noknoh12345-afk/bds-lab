@@ -5,6 +5,10 @@
 - **LeviKit を追加**（`levikit/`）：Linux VPS のサーバー運用セット。管理パネル、動かしたままのバックアップ／復元／再起動、ワールドごとのルール、ワープ、`/tpa`、BAN、メンテナンス、スケジュール、地図。
   - **LeviLamina 版**（`install.sh`）：MoreDimensions の追加ワールド、リセット・取り込み・複製、マルチプロトコル。C++ Mod `levikit-core` は CI の Windows ランナーでビルドし、本物の LeviLamina サーバーで 1 回起動して確かめます。
   - **Endstone 版**（`install-endstone.sh`）：Wine もビルドも不要。同じパネルを、Python プラグイン `endstone-levikit` が動かします。ワールドはバニラの 3 つです。本物の Endstone サーバーと本物のクライアントで確かめています（試験 36 行、QA 込み）。
+  - **本物の LeviLamina 26.51.9 で起動して見つけた不具合を直しました**（CI の Windows ランナー）:
+    - `levikit-core` がビルドできなかった（コマンドの引数の型が無名名前空間にあり、clang + boost.pfr でエラー）。
+    - 起動してもワールドの用意と `READY` が走らなかった（Mod が有効になる前に ServerStartedEvent が済んでいた）。
+    - パネルが起動完了を検出できなかった（LeviLamina の行は `Server started in (1.9s)!` で、`Server started.` ではない）。
   - パネルは Endstone のログの形（`[時刻 INFO]: …`）も読めるようになりました（バックアップのファイル一覧が壊れていました）。
 - 切り替え前の状態は `pre-stable` ブランチにあります（タグはこの環境から作れませんでした）。
 

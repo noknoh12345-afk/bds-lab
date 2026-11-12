@@ -254,18 +254,30 @@ bool Core::load() {
     return true;
 }
 
+namespace {
+bool gServerReady = false;
+// ワールドの用意と READY。1 回だけ。
+void serverReady() {
+    if (gServerReady) return;
+    gServerReady = true;
+    loadResetState();
+    performPendingResets(); // ディメンションが生成される前に
+    loadWorldState();
+    registerDimensions();
+    performPendingTransfers(); // 取り込み・複製（新しいディメンションの ID が決まってから、生成される前に）
+    rebuildWorlds();
+    updateWarpEnum();
+    emitMachine("DIMS", worldsJson());
+    emitMachine("READY", {{"limbo", cfg().limboMode}});
+}
+} // namespace
+
 bool Core::enable() {
-    listen<ll::event::ServerStartedEvent>([](ll::event::ServerStartedEvent&) {
-        loadResetState();
-        performPendingResets(); // ディメンションが生成される前に
-        loadWorldState();
-        registerDimensions();
-        performPendingTransfers(); // 取り込み・複製（新しいディメンションの ID が決まってから、生成される前に）
-        rebuildWorlds();
-        updateWarpEnum();
-        emitMachine("DIMS", worldsJson());
-        emitMachine("READY", {{"limbo", cfg().limboMode}});
-    });
+    gServerReady = false;
+    listen<ll::event::ServerStartedEvent>([](ll::event::ServerStartedEvent&) { serverReady(); });
+    // LeviLamina 26.51.9 の実機では、Mod が有効になるのは「Server started in (…)!」のあとで、ServerStartedEvent はもう
+    // 済んでいる（このリスナーは呼ばれず、ワールドも READY も出なかった）。レベルがもうあるなら、ここで用意する。
+    if (ll::service::getLevel()) serverReady();
 
     listen<ll::event::PlayerJoinEvent>([](ll::event::PlayerJoinEvent& ev) {
         auto& p = ev.self();
