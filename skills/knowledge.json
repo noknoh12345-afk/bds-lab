@@ -289,7 +289,7 @@
     {
       "id": "test-broadcast",
       "skill": "bds-tests-world",
-      "rule": "world.sendMessage / say prints as one plain line on BDS; a player's chat shows on every player, the sender too, as `@B chat <A> text`; in Endstone a broadcast shows as each player's line (@A ...).",
+      "rule": "world.sendMessage / say prints as one plain line on BDS; a player's chat shows on every player, the sender too, as `@B chat <A> text`",
       "why": "~ ^text misses because the line is \"@A text\"",
       "evidence": {
         "kind": "probe",
@@ -642,7 +642,7 @@
     {
       "id": "ui-unverified",
       "skill": "bds-json-ui",
-      "rule": "BDS never loads RP UI and the test clients do not draw it: `check` passing is the only automatic proof. Say what was checked statically and that the look still needs a real client (`app run`, or the person).",
+      "rule": "BDS never loads RP UI and the test clients do not draw it: `check` passing is the only automatic proof. Say what was checked statically and that the look still needs a real client (the person; the real-app lab is on `dev`).",
       "why": "a look reported that nobody saw",
       "evidence": {
         "kind": "source",

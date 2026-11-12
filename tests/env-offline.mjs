@@ -12,7 +12,7 @@ const TOP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const T = fs.mkdtempSync(path.join(os.tmpdir(), 'bdslab-env-'));
 const REPO = process.env.ENV_TEST_REPO || path.join(T, 'repo');   // (ENV_TEST_REPO: the copy part 2 made for part 3)
 if (!process.env.ENV_TEST_REPO) {
-for (const d of ['common', 'bds', 'end', 'll']) fs.cpSync(path.join(TOP, d), path.join(REPO, d), { recursive: true, filter: (s) => !/[\\/](\.lab|dist|runs|node_modules)$/.test(s) });
+for (const d of ['common', 'bds']) fs.cpSync(path.join(TOP, d), path.join(REPO, d), { recursive: true, filter: (s) => !/[\\/](\.lab|dist|runs|node_modules)$/.test(s) });
 for (const f of ['lab.mjs', 'lab.sh', 'AGENTS.md']) fs.copyFileSync(path.join(TOP, f), path.join(REPO, f));
 fs.chmodSync(path.join(REPO, 'lab.sh'), 0o755);
 }
@@ -74,7 +74,7 @@ check(/stopped: sleeper/.test(r.text) && /DONE exit=stopped/.test(r2.text), 'sto
 // (no network for real: on a machine with one, Endstone's pip install and LeviLamina's portable Wine downloaded a gigabyte, which
 // the cache export below then packed — a minute of CI's time)
 r = lab(['setup', 'all'], { LAB_BDS_ZIP: path.join(T, 'nope.zip'), LAB_LL_SERVER: path.join(T, 'nope'), LAB_WINE: path.join(T, 'no-wine'), PIP_NO_INDEX: '1', LAB_PYTHON_RELEASE: 'http://127.0.0.1:9/' }, 300000);
-check(/^bds: .+/m.test(r.text) && /^end: .+/m.test(r.text) && /^ll: .+/m.test(r.text) && /^(OK|FAIL)/m.test(r.text.trim().split('\n').at(-1)), 'setup all: one line per lab, then OK/FAIL', r.text);
+check(/^bds: .+/m.test(r.text) && /^(OK|FAIL)/m.test(r.text.trim().split('\n').at(-1)), 'setup all: one line per lab, then OK/FAIL', r.text);
 
 // 5. cache export → import
 fs.mkdirSync(path.join(REPO, 'bds', '.lab', 'bds'), { recursive: true }); fs.writeFileSync(path.join(REPO, 'bds', '.lab', 'bds', 'VERSION'), '1.2.3');
@@ -236,42 +236,6 @@ if (part(3)) {
   r = lab(['bds', 'api', 'World'], noNet, 120000);
   check(/sendMessage/.test(r.text), 'carry: api answers offline from the carried types', r.text);
   fs.rmSync(path.join(REPO, 'carry'), { recursive: true, force: true });
-}
-
-// 7b. ll offline: one bundled script (LSE loads a single file) that runs, with relative imports
-{
-  const noNet = { LAB_CACHE: path.join(T, 'cache-ll-empty'), npm_config_registry: 'http://127.0.0.1:9/', npm_config_fetch_retries: '0', npm_config_fetch_timeout: '2000' };
-  r = lab(['ll', 'new', 'offmod', 'OffMod'], noNet, 120000);
-  const M = path.join(REPO, 'll', 'mods', 'offmod');
-  if (fs.existsSync(path.join(M, 'src', 'main.ts'))) {
-    fs.writeFileSync(path.join(M, 'src', 'util.ts'), 'export const add = (a: number, b: number) => a + b;\n');
-    fs.writeFileSync(path.join(M, 'src', 'main.ts'), 'import { add } from "./util";\nglobalThis.__labOut = add(2, 3);\n');
-    r = lab(['ll', 'pack'], noNet, 200000);
-    const js = spawnSync('sh', ['-c', `unzip -p "${path.join(REPO, 'll', 'dist')}"/offmod-*.zip "offmod/offmod.js"`], { encoding: 'utf8' }).stdout ?? '';
-    let v = null; try { v = new Function(`${js}\nreturn globalThis.__labOut;`)(); } catch (e) { v = e.message; }
-    if (/offline build/.test(r.text)) check(v === 5, 'll offline: one bundled script that runs (relative imports)', r.text + ' → ' + v);
-    else check(/no TypeScript/.test(r.text), 'll offline: without TypeScript it says what to do', r.text);
-  } else check(false, 'll offline: new works without network', r.text);
-}
-
-// 7c. end: a portable Python when the machine has none usable (release list + tarball served locally like GitHub would)
-if (process.platform === 'linux' && process.arch === 'x64') {
-  const web = path.join(T, 'web'); fs.mkdirSync(path.join(web, 'python', 'bin'), { recursive: true });
-  fs.writeFileSync(path.join(web, 'python', 'bin', 'python3'), '#!/bin/sh\necho portable\n'); fs.chmodSync(path.join(web, 'python', 'bin', 'python3'), 0o755);
-  const name = 'cpython-3.12.9+20250317-x86_64-unknown-linux-gnu-install_only.tar.gz';
-  spawnSync('tar', ['-czf', path.join(web, name), '-C', web, 'python']);
-  // a separate process: the download runs in a sync child, which would deadlock a server in this process
-  const srv = spawn(process.execPath, ['-e', `const fs=require('fs'),path=require('path');const s=require('http').createServer((q,r)=>{const f=path.join(process.argv[1],decodeURIComponent(q.url.slice(1)));if(fs.existsSync(f)&&fs.statSync(f).isFile())r.end(fs.readFileSync(f));else{r.writeHead(404);r.end()}});s.listen(0,'127.0.0.1',()=>console.log(s.address().port))`, web], { stdio: ['ignore', 'pipe', 'inherit'] });
-  const port = await new Promise((res) => srv.stdout.once('data', (b) => res(String(b).trim())));
-  const base = `http://127.0.0.1:${port}`;
-  fs.writeFileSync(path.join(web, 'release.json'), JSON.stringify({ assets: [{ name: 'cpython-3.11.1+x-x86_64-unknown-linux-gnu-install_only.tar.gz', browser_download_url: base + '/nope' }, { name, browser_download_url: `${base}/${encodeURIComponent(name)}` }] }));
-  process.env.LAB_PYTHON_RELEASE = `${base}/release.json`;
-  const { portablePython } = await import(new URL('../end/flavor.mjs', import.meta.url).href);
-  const said = [], cache = path.join(T, 'cache-py');
-  const py = await new Promise((res) => setImmediate(() => res(portablePython({ RT: { kind: 'native' }, CACHE: cache, out: (x) => said.push(x) }))));
-  srv.kill(); delete process.env.LAB_PYTHON_RELEASE;
-  const ran = py && spawnSync(py.cmd, [], { encoding: 'utf8' }).stdout.trim();
-  check(py?.portable && ran === 'portable' && /portable Python 3\.12/.test(said.join(' ')), 'end: portable Python 3.12 fetched when none is usable', JSON.stringify(py) + said.join(' '));
 }
 
 // 8. lab.sh runs the lab with the Node it finds (22+)

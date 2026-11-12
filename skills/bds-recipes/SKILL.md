@@ -23,6 +23,6 @@ Not for a person's addon (`bds-fix-addon`). Each unit below passes `go` on the r
 - A form with its own look (JSON UI server_form by title marker) → bds/addons/jsonui_demo (when missed: every form changes look) `recipe-ui`
 <!-- rules:end -->
 
-None close: `bds-script-api` + `bds-tests`; once it passes, `node lab.mjs skill note "recipe: <unit> does <what>"`.
+None close: `bds-script-api` + `bds-tests`.
 
 Done when `go` is DONE. Report the recipe you began from and what stays untested (say so).

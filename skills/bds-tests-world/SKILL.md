@@ -1,6 +1,6 @@
 ---
 name: bds-tests-world
-description: Tests where players move, fish, shoot, fight mobs or see broadcasts in the world (walk, goto, fishing pools, projectiles, two players apart, Endstone broadcasts). Use with bds-tests when a section does more than commands and forms.
+description: Tests where players move, fish, shoot, fight mobs or see broadcasts in the world (walk, goto, fishing pools, projectiles, two players apart). Use with bds-tests when a section does more than commands and forms.
 ---
 
 # Tests in the world
@@ -21,5 +21,5 @@ Limit: a passing `go` proves only the lines, ranges and events the test checks, 
 - Loot and fishing are random: never expect an exact count; check a range (~ ^[12]$) or a relation (the score equals the fish in the inventory). (when missed: a test that passes sometimes) `test-random`
 - `@A walk forward N`: N is ticks, not blocks (20 ticks = 4.3 blocks; forward = +z, left = +x as spawned); `@A goto x z` for a place. (when missed: the player stops short of the zone) `test-walk-ticks`
 - Fishing in a test: a pool ahead of the player (fill -8 -64 2 8 -61 24 water), enchant A lure 3 (about 8 s a catch), @A fish_n n 30. (when missed: "the bobber landed on grass") `test-fish-setup`
-- world.sendMessage / say prints as one plain line on BDS; a player's chat shows on every player, the sender too, as `@B chat <A> text`; in Endstone a broadcast shows as each player's line (@A ...). (when missed: ~ ^text misses because the line is "@A text") `test-broadcast`
+- world.sendMessage / say prints as one plain line on BDS; a player's chat shows on every player, the sender too, as `@B chat <A> text` (when missed: ~ ^text misses because the line is "@A text") `test-broadcast`
 <!-- rules:end -->

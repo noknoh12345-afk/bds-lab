@@ -17,7 +17,7 @@ description: Change how screens look with JSON UI (rp/ui/*.json): custom server-
 - Only texture paths that exist (rp/textures or vanilla); an invented textures/ui/... draws nothing. (when missed: an invisible image) `ui-texture`
 - Change a vanilla screen with small `modifications` (insert_front / insert_back / replace on its controls), never a copy of the whole file: a copy breaks on the next game update and hides other packs. (when missed: the screen breaks after a Minecraft update) `ui-modify` [source]
 - Custom server forms: put a marker in the form title (title('§s§h§o§p§rShop')) and show the custom control with a view binding on #title_text; tests see the raw title (`~ title\("§s§h§o§p`). (when missed: every form turns custom, or none does) `ui-title-route` [source]
-- BDS never loads RP UI and the test clients do not draw it: `check` passing is the only automatic proof. Say what was checked statically and that the look still needs a real client (`app run`, or the person). (when missed: a look reported that nobody saw) `ui-unverified` [source]
+- BDS never loads RP UI and the test clients do not draw it: `check` passing is the only automatic proof. Say what was checked statically and that the look still needs a real client (the person; the real-app lab is on `dev`). (when missed: a look reported that nobody saw) `ui-unverified` [source]
 - A view binding needs source_property_name and target_property_name; a collection binding needs binding_collection_name. (when missed: a control that never shows or never updates) `ui-binding`
 <!-- rules:end -->
 

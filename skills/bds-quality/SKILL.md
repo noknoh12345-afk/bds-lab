@@ -12,7 +12,7 @@ Not for getting `go` to pass the first time (`bds-tests`, `bds-debug`); after th
 3. `node lab.mjs chaos --append`; again after each fix, since one error can hide the next.
 4. Each finding becomes a `##` section; `go` again.
 
-The same for Endstone plugins (Python lines) and LeviLamina mods; each mutant is one server run (under Wine about 2 min: run `mutate` in the background). A unit left changed by a stopped mutate is put back by the next lab command.
+Each mutant is one server run. A unit left changed by a stopped mutate is put back by the next lab command.
 
 <!-- rules:begin (node lab.mjs skill build writes these from skills/knowledge.json) -->
 - After DONE: gaps (code no test runs) → mutate (bugs no test notices: write the check each one needs) → chaos; a new test must fail on the broken code. (when missed: tests that pass whatever the code does) `quality-mutate`
