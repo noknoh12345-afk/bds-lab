@@ -20,6 +20,8 @@ AI が毎回読むのは `AGENTS.md` だけです。この文書は、ラボ自�
           bds/bench/               課題と隠しテスト（tasks.json）・参照解（solution.mjs）
 ```
 
+`levikit/` はサーバー運用セット（管理パネル、LeviLamina の Mod、Endstone のプラグイン）で、上の層とは独立しています。ラボのコマンドは使わず、自分のテストと CI（`.github/workflows/levikit.yml`）を持ちます。
+
 ## 主な流れ
 
 | 流れ | 入口 | 中身 |
@@ -85,4 +87,4 @@ AI が使うトークンの大半は、毎ターン送り直されるもので�
 3. コマンドを足す前に、既存のコマンドを深めて済まないか考える。`AGENTS.md` は 1 行でも高い。
 4. スキルの規則は `skills/knowledge.json` に証拠つきで書き、`node lab.mjs skill build` で SKILL.md に出す。
 5. 実機で確かめていないことは「確かめていない」と書く。
-6. 新しい機能は `dev` で試し、実機のテストとベンチで効果が出たものだけ `main` に上げる。
+6. 新しい機能は `dev` で試し、実機のテストとベンチで効果が出たものだけ `main` に上げる。 `main` の修正を `dev` に入れるときは cherry-pick（丸ごとのマージは `dev` のファイルを消す）。

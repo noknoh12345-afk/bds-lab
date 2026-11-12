@@ -47,6 +47,7 @@ node lab.mjs status       # いまの状態と、次にやること
 | `bedrock-binary/` | BDS 本体から読み取ったパケット・列挙・コマンドの一覧（`bb`） |
 | `bds/bench/` | トークン節約のベンチマーク（課題と隠しテスト） |
 | `tests/` | ラボ自体のテスト（`node common/run-tests.mjs tests/*-offline.mjs`） |
+| `levikit/` | サーバー運用セット LeviKit（管理パネル・複数ワールド・動かしたままのバックアップ）。LeviLamina 版と Endstone 版。アドオン作りとは別物です（[levikit/README.md](levikit/README.md)） |
 
 - 構成とモジュールの地図：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - 秘密の扱い：[SECURITY.md](SECURITY.md)
@@ -55,4 +56,4 @@ node lab.mjs status       # いまの状態と、次にやること
 ## ブランチ
 
 - `main`：安定版。本体の修正はここに入れます。
-- `dev`：すべての機能と実験。`main` を取り込みます。`dev` のものは、本物のサーバーのテストとベンチで効果が出たときだけ `main` に上げます。
+- `dev`：すべての機能と実験。`main` の修正は、要るものだけ cherry-pick で `dev` にも入れます（`main` は多くのファイルを消しているので、丸ごとのマージはしません）。`dev` のものは、本物のサーバーのテストとベンチで効果が出たときだけ `main` に上げます。
