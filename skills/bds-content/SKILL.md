@@ -16,6 +16,7 @@ Not for a mob's shape or look (`bds-models`) or what an item does when used (scr
 - A shaped/shapeless recipe with format_version 1.20 or later needs "unlock" (e.g. [{"item": "lab:gel"}]), or it does not load. (when missed: the recipe never appears) `content-unlock`
 - A custom item/block component needs both `ns:x={}` in the item/block components (add ... 'ns:x={}') and kit onItem/onBlock('ns:x', ...). (when missed: the hook never runs (why says so)) `content-component`
 - A mob's drops: add entity ... drops=ns:item*1-2 writes its loot table; test the kill with a weapon (give a diamond_sword; a fist does 1). (when missed: the mob does not die in the test) `content-drops`
+- Every name and the pack's description also in Japanese: `add ... ja=名前`, `bds new ... ja="説明"`, later `i18n ja_JP "key=text"`. A vanilla thing keeps the game's own Japanese: `sample rp/texts/ja_JP.lang <word>` (diamond → ダイヤモンド). (when missed: qa: ja_JP.lang ... is still English; Japanese players read English, or a made-up word for a vanilla item) `content-ja`
 <!-- rules:end -->
 
 Done when `go` passes a section that gets each new thing (give / craft_at / kill the mob with a weapon) and checks the inventory or the ground.

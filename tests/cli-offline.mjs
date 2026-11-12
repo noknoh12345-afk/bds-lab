@@ -77,6 +77,16 @@ const unitBlocks = async () => {
     } finally { fs.rmSync(U, { recursive: true, force: true }); if (cur0 === null) fs.rmSync(cur, { force: true }); else fs.writeFileSync(cur, cur0); }
   }
   
+  // new ja="…": the Japanese description goes into ja_JP.lang, the English one stays in en_US.lang
+  {
+    const U = path.join(TOP, 'bds', 'addons', 'zz_cli_ja'), cur = path.join(TOP, 'bds', '.lab', 'addon'), cur0 = fs.existsSync(cur) ? fs.readFileSync(cur, 'utf8') : null;
+    fs.rmSync(U, { recursive: true, force: true });
+    try {
+      await lab(['bds', 'new', 'zz_cli_ja', 'Zz', '--js', 'desc=A coin shop', 'ja=コインで買い物ができるショップ']);
+      const t = (l) => { try { return fs.readFileSync(path.join(U, 'rp', 'texts', l + '.lang'), 'utf8'); } catch { return ''; } };
+      ok(/^pack\.description=A coin shop$/m.test(t('en_US')) && /^pack\.description=コインで買い物ができるショップ$/m.test(t('ja_JP')), 'new desc= ja=: each language gets its own description', t('en_US') + t('ja_JP'));
+    } finally { fs.rmSync(U, { recursive: true, force: true }); if (cur0 === null) fs.rmSync(cur, { force: true }); else fs.writeFileSync(cur, cur0); }
+  }
   // add: what keeps a definition from loading is said at add time (it was found only by go)
   {
     const U = path.join(TOP, 'bds', 'addons', 'zz_cli_add'), cur = path.join(TOP, 'bds', '.lab', 'addon'), cur0 = fs.existsSync(cur) ? fs.readFileSync(cur, 'utf8') : null;
