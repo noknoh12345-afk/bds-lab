@@ -36,7 +36,8 @@ jobs:
           bad=""
           for a in $(ls bds/addons); do
             echo "::group::$a"
-            node lab.mjs go -a "$a" > "/tmp/go-$a.txt" 2>&1; tail -30 "/tmp/go-$a.txt"
+            node lab.mjs go -a "$a" > "/tmp/go-$a.txt" 2>&1 || true   # (a failing go must not end the script before its output is shown)
+            tail -n 40 "/tmp/go-$a.txt"
             grep -q '^DONE ' "/tmp/go-$a.txt" || bad="$bad $a"
             echo "::endgroup::"
           done

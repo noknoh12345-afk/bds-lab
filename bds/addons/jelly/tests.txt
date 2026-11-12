@@ -2,10 +2,10 @@
 @A join
 give A diamond_sword
 summon lab:jelly 0 -60 2
-wait 500
+wait 1000
 @A select diamond_sword
 @A attack lab:jelly
-wait 1500
+wait 3000
 js dim.getEntities({ type: 'minecraft:item' }).filter((e) => e.getComponent('item').itemStack.typeId === 'lab:gel').reduce((n, e) => n + e.getComponent('item').itemStack.amount, 0)
 ~ ^[12]$
 
