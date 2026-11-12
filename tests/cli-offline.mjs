@@ -35,83 +35,32 @@ const STACK = /\n\s+at .+:\d+:\d+|TypeError|ReferenceError|ENOENT: no such file/
 // The checks that touch no shared file run at once (each is a node lab.mjs start); the ones that use bds/.lab/addon or .lab-kind keep their order.
 const readOnly = async () => {
   // --help: the help, never the command (skill verify --help ran every probe on a server; skill bench --help a paid run)
-  const helps = [['skill', 'verify', '--help'], ['skill', 'bench', '--help'], ['share', '--help'], ['go', '-h'], ['end', 'go', '--help']];
-  const [hs, hr, hAll, hFish, bench, benchRuns, benchTasks, promote, retire, learn, doc, apply, verify, share, setup, ui, appTok] = await Promise.all([
+  const helps = [['skill', 'verify', '--help'], ['go', '-h'], ['mutate', '--help']];
+  const [hs, hr, hAll, hFish, promote, retire, doc, apply, verify, setup, ui, devOnly] = await Promise.all([
     Promise.all(helps.map((a) => lab(a, {}, TOP, 20000))), lab(['help', 'record']), lab(['help', 'player']), lab(['help', 'player', 'fish']),
-    lab(['skill', 'bench']), lab(['skill', 'bench', '--via', 'claude', '--runs', 'x']), lab(['skill', 'bench', '--via', 'claude', '--tasks', 'nosuchtask']),
-    lab(['skill', 'promote']), lab(['skill', 'retire']), lab(['skill', 'learn', '--from', path.join(T, 'nowhere')]), lab(['doc']), lab(['apply', path.join(T, 'no-patch.txt')]),
-    lab(['verify', 'no_such_unit_zz']), lab(['share', 'zzz']), lab(['setup', 'zzz']), lab(['ui', 'build'], {}, TOP, 20000),
-    // (no credentials: the person's own Google ones in the environment are not this test's)
-    lab(['app', 'token'], { APP_LOGIN_HEADLESS: '1', DISPLAY: '', GOOGLE_EMAIL: '', GOOGLE_AAS_TOKEN: '', GOOGLE_PASSWORD: '' }, TOP, 30000),
+    lab(['skill', 'promote']), lab(['skill', 'retire']), lab(['doc']), lab(['apply', path.join(T, 'no-patch.txt')]),
+    lab(['verify', 'no_such_unit_zz']), lab(['setup', 'zzz']), lab(['ui', 'build'], {}, TOP, 20000),
+    // what the stable branch leaves out says where it is, in one line (no usage dump, no stack)
+    Promise.all([['panel'], ['end', 'go'], ['auto', 'next'], ['skill', 'grade']].map((a) => lab(a, {}, TOP, 20000))),
   ]);
   helps.forEach((a, i) => { const r = hs[i]; ok(r.code === 0 && !r.timedOut && r.ms < 15000 && r.t.trim() && !/^(share v|verifying|started|PASS|FAIL|on |off )/m.test(r.t) && !STACK.test(r.t), `${a.join(' ')}: prints help and returns (${r.ms} ms)`, r.t); });
   ok(!spent(), '--help spent no AI tokens', spent());
   { const h = hr, ls = h.t.split('\n').filter((l) => /^\(help /.test(l)); ok(ls.length && ls.every((l) => /(^|[^\w-])record([^\w-]|$)/i.test(l)), '`help record` finds the word record, not every line with "records" (it showed 3 skills lines)', h.t); }
-  ok(((() => { try { return fs.readFileSync(path.join(TOP, '.lab-kind'), 'utf8'); } catch { return null; } })()) === kind0, '`end go --help` does not switch the remembered lab');
+  ok(((() => { try { return fs.readFileSync(path.join(TOP, '.lab-kind'), 'utf8'); } catch { return null; } })()) === kind0, '--help does not switch the remembered lab');
 
   // fewer tokens: help <topic> <word> prints only the parts with the word (help player is ~3,800 tokens whole)
   { const all = hAll.t, part = hFish; ok(part.code === 0 && /fish/.test(part.t) && part.t.length * 5 < all.length && part.t.split('\n').filter(Boolean).every((l) => /fish/i.test(l)), 'help player fish: only the lines with fish (a fifth or less of the topic)', part.t); }
 
-  // skill bench: tokens only with an explicit --via (it defaulted to the claude CLI)
-  let r = bench;
-  ok(r.code !== 0 && /--via is required|usage: node lab\.mjs skill bench --via/.test(r.t) && !spent(), 'skill bench without --via: the usage, nothing run', r.t + spent());
-  r = benchRuns;
-  ok(r.code !== 0 && /--runs x: a whole number/.test(r.t) && !spent(), 'skill bench --runs x: refused before anything runs', r.t);
-  r = benchTasks;
-  ok(r.code !== 0 && /unknown nosuchtask/.test(r.t) && !spent(), 'skill bench --tasks <unknown>: refused, the tasks named', r.t);
-
+  let r;
   // usage lines instead of "undefined", stack traces and silent successes
   r = promote; ok(r.code !== 0 && /usage: node lab\.mjs skill promote/.test(r.t) && !/undefined/.test(r.t), 'skill promote with no id: usage (was "ERR no rule undefined")', r.t);
   r = retire; ok(r.code !== 0 && /usage: node lab\.mjs skill retire/.test(r.t), 'skill retire with no id: usage', r.t);
-  r = learn; ok(r.code !== 0 && /not found/.test(r.t), 'skill learn --from <missing>: an error, not "OK 0 new"', r.t);
   r = doc; ok(r.code !== 0 && /^ERR usage: node lab\.mjs doc/m.test(r.t) && !STACK.test(r.t), 'doc with no word: the usage without a stack trace', r.t);
   r = apply; ok(r.code !== 0 && /ERR no such file/.test(r.t) && !STACK.test(r.t), 'apply <missing file>: an error line, not an ENOENT crash', r.t);
   r = verify; ok(r.code !== 0 && /no bds unit "no_such_unit_zz"/.test(r.t) && r.ms < 15000, 'verify <unknown unit>: refused at once (it ran check/test/qa for minutes)', r.t);
-  r = share; ok(r.code !== 0 && /ERR share: unknown zzz/.test(r.t) && r.ms < 15000, 'share <unknown arg>: refused (it built and verified a whole release)', r.t);
   r = setup; ok(r.code !== 0 && /setup: unknown zzz/.test(r.t) && r.ms < 15000, 'setup <unknown arg>: refused (it started a server install)', r.t);
   r = ui; ok(!r.timedOut && /usage: node lab\.mjs ui build|ERR several addons|ERR no addon|use <name>/.test(r.t), '`ui build` reaches the JSON UI builder (it opened the browser page and never returned)', r.t);
-  r = appTok;
-  ok(!r.timedOut && r.code !== 0 && /GOOGLE_EMAIL/.test(r.t), 'app token with no screen, no credentials and no terminal: an error at once (it waited forever)', r.t);
-};
-
-const autoPolicy = async () => {
-  let r;
-  // the autopilot's money floor: a value of the wrong type is refused, and a hand-edited one fails closed
-  {
-    const X = path.join(T, 'auto-root'); fs.mkdirSync(path.join(X, 'auto'), { recursive: true });
-    const e = { LAB_AUTO_ROOT: X };
-    r = await lab(['auto', 'policy', 'dailyTokens=abc'], e); ok(r.code !== 0 && /a number ≥ 0/.test(r.t) && !fs.existsSync(path.join(X, 'auto', 'policy.json')), 'auto policy dailyTokens=abc: refused (it was stored, and a string cap never stops anything)', r.t);
-    r = await lab(['auto', 'policy', 'merge=sometimes'], e); ok(r.code !== 0 && /auto \| pr \| local/.test(r.t), 'auto policy merge=<other>: refused', r.t);
-    r = await lab(['auto', 'policy', 'kinds.nope=true'], e); ok(r.code !== 0 && /no such setting/.test(r.t), 'auto policy kinds.<unknown>: refused', r.t);
-    r = await lab(['auto', 'policy', 'dailyTokens=5000', 'kinds.forge=false'], e); const p = JSON.parse(fs.readFileSync(path.join(X, 'auto', 'policy.json'), 'utf8'));
-    ok(r.code === 0 && p.dailyTokens === 5000 && p.kinds.forge === false, 'auto policy: right types are kept', r.t);
-    fs.writeFileSync(path.join(X, 'auto', 'policy.json'), JSON.stringify({ dailyTokens: '3e6x', taskTokens: 'lots' }));
-    const G = await import(path.join(TOP, 'common', 'auto-guard.mjs'));
-    const pol = G.policy(X);
-    ok(pol.dailyTokens === 0 && pol.taskTokens === 0 && !G.canSpend(pol, 0).ok, 'a hand-edited non-number cap reads as 0: nothing runs (fails closed)', JSON.stringify(pol));
-  }
-};
-
-const refine = async () => {
-  let r;
-  // refine --via "<cmd {prompt}>": the prompt (SKILL.md text: backticks, $()) is quoted, never run by the shell
-  {
-    const S = path.join(T, 'skills'); fs.cpSync(path.join(TOP, 'skills'), S, { recursive: true });
-    const target = 'bds-debug', f = path.join(S, target, 'SKILL.md'), pwn = path.join(T, 'PWNED');
-    fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(/^Done when.*$/m, '') + `\n\`$(touch ${pwn})\` and $(touch ${pwn}) and $\` $& $' "quoted" 'single'\n`);   // (no Done line: the brief has work, so the AI command runs)
-    const got = path.join(T, 'got.txt');
-    r = await lab(['skill', 'refine', target, '--via', `printf %s {prompt} > '${got}'; echo none`, '--rounds', '1'], { LAB_SKILLS_DIR: S, LAB_STATE_DIR: path.join(T, 'state'), LAB_SKILL_READS: 'off' });
-    ok(/round 1:/.test(r.t) && !fs.existsSync(pwn) && fs.existsSync(got) && fs.readFileSync(got, 'utf8').includes(`$(touch ${pwn}) and $\` $& $' "quoted" 'single'`), 'refine --via "<cmd {prompt}>": the command got the prompt exactly ($( ) $` $& quotes), and none of it was executed by the shell', r.t);
-    // a second brief before --done keeps the first snapshot (it re-based on the edit: --done saw no change, --revert lost the original)
-    const orig = fs.readFileSync(path.join(S, 'bds-tests', 'SKILL.md'), 'utf8');
-    const env = { LAB_SKILLS_DIR: S, LAB_STATE_DIR: path.join(T, 'state2'), LAB_SKILL_READS: 'off' };
-    await lab(['skill', 'refine', 'bds-tests'], env);
-    fs.writeFileSync(path.join(S, 'bds-tests', 'SKILL.md'), orig.replace(/^1\. .*$/m, '1. Write tests.'));
-    r = await lab(['skill', 'refine', 'bds-tests'], env);
-    ok(/under way since its snapshot/.test(r.t), 'a second refine brief says a refine is under way and keeps its snapshot', r.t);
-    await lab(['skill', 'refine', 'bds-tests', '--revert'], env);
-    ok(fs.readFileSync(path.join(S, 'bds-tests', 'SKILL.md'), 'utf8') === orig, '--revert after two briefs puts back the original, not the edit', '');
-  }
+  ok(devOnly.every((x) => x.code !== 0 && /not in the stable branch/.test(x.t) && x.t.trim().split('\n').length === 1 && !STACK.test(x.t)), 'panel / end / auto / skill grade: one line saying it is on dev', devOnly.map((x) => x.t).join('|'));
 };
 
 const unitBlocks = async () => {
@@ -178,11 +127,8 @@ const unitBlocks = async () => {
 };
 
 // (ui build, verify and api read the current addon: the unit blocks start after the read-only ones)
-await Promise.all([readOnly().then(unitBlocks), autoPolicy(), refine()]);
+await readOnly().then(unitBlocks);
 
-// a lab name before any lab-level command (end status printed the Endstone lab's usage)
-const r = await lab(['end', 'status']);
-ok(r.code === 0 && /^next: /m.test(r.t) && !/^usage: node lab\.mjs new/m.test(r.t), '`end status`: the status, not the lab\'s usage', r.t);
 if (kind0 !== null) fs.writeFileSync(path.join(TOP, '.lab-kind'), kind0); else fs.rmSync(path.join(TOP, '.lab-kind'), { force: true });
 
 ok(!spent(), 'nothing above spent AI tokens', spent());

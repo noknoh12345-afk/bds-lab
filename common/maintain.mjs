@@ -243,8 +243,7 @@ export async function maintainCmd(args, out = console.log) {
   // the quick health checks first (temp folders, stale locks, login leftovers, disk): quiet unless they repaired something
   try { const M = await import('./maint.mjs'); const q = await M.maint({ top: ROOT(), fix: true, only: M.QUICK }); q.lines.forEach((l) => out(l)); } catch { /* upkeep never blocks */ }
   const kinds = o.labs === 'all' ? Object.keys(UNITS) : o.labs ? o.labs.split(',') : [process.env.LAB_KIND || (() => { try { return fs.readFileSync(path.join(ROOT(), '.lab-kind'), 'utf8').trim(); } catch { return 'bds'; } })()].map((x) => (UNITS[x] ? x : 'bds'));
-  const { pickVia } = await import('./make.mjs');
-  const ai = o.noAi ? null : pickVia(o.via);
+  const ai = null;   // stable branch: module versions and limited mode only (the AI patch is on dev)
   const rows = [], all = { tokens: 0 };
   for (const k of kinds) {
     if (!UNITS[k]) { out(`ERR --lab ${k}: bds, end, ll or all`); return false; }

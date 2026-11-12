@@ -31,8 +31,7 @@ mk(path.join(top, 'sandbox-be', 'src', 'play', 'discover.js'), 'put back'); mk(p
 
 let r = await M.maint({ top, tmp, env: {} });
 const ids = r.lines.map((l) => l.split(':')[0]);
-check(['W temp', 'W runs', 'W leftovers', 'W locks', 'W logins', 'W secrets', 'W leaks', 'W exec', 'W token'].every((x) => ids.includes(x)), 'every problem found (without --fix nothing changes)', r.lines.join('\n'));
-check(r.lines.some((l) => /^W leftovers: 古いリリースにだけあったファイル 1 個.*app\/lib\/bb\/zip\.js/.test(l)), 'leftovers: the unedited one only (not the edited one, not what extras.json lists)', r.lines.join('\n'));
+check(['W temp', 'W runs', 'W locks', 'W logins', 'W secrets', 'W leaks', 'W exec'].every((x) => ids.includes(x)), 'every problem found (without --fix nothing changes)', r.lines.join('\n'));
 check(fs.existsSync(path.join(tmp, 'bdslab-env-old')) && fs.existsSync(path.join(top, 'app', '.lab', 'run.lock')), 'without --fix nothing is touched');
 r = await M.maint({ top, tmp, env: {}, fix: true });
 check(!fs.existsSync(path.join(tmp, 'bdslab-env-old')) && fs.existsSync(path.join(tmp, 'app-offline-now')) && fs.existsSync(path.join(tmp, 'unrelated-old')), 'temp: only old test folders go (a running test and others stay)');
@@ -41,13 +40,13 @@ check(!fs.existsSync(path.join(top, 'app', '.lab', 'run.lock')) && fs.existsSync
 check(!fs.existsSync(path.join(top, 'app', '.lab', 'browser', 'login-abc')), 'logins: a signed-in profile never left');
 check((fs.statSync(path.join(top, '.env.local')).mode & 0o777) === 0o600 && /^\.env\.local$/m.test(fs.readFileSync(path.join(top, '.gitignore'), 'utf8')), 'secrets: .env.local 0600 and ignored');
 check((fs.statSync(path.join(top, 'lab.sh')).mode & 0o100) !== 0, 'exec: scripts runnable again');
-check(!fs.existsSync(path.join(top, 'app', 'lib', 'bb', 'zip.js')) && fs.existsSync(path.join(top, 'app', 'lib', 'bb', 'axml.js')) && fs.existsSync(path.join(top, 'sandbox-be', 'src', 'play', 'discover.js')), 'leftovers --fix: the unedited copy goes; the edited one and the one put back stay');
-check(r.lines.some((l) => /^W leaks: .*notes\.md/.test(l)) && r.lines.some((l) => /^W token: .*oauth_token/.test(l)) && r.problems === 2, 'leaks and a wrong token: reported with the fix command, not auto-edited', r.lines.join('\n'));
+check(r.lines.some((l) => /^W leaks: .*notes\.md/.test(l)) && r.problems === 1, 'leaks: reported with the fix command, not auto-edited', r.lines.join('\n'));
 fs.rmSync(path.join(top, 'notes.md')); fs.writeFileSync(path.join(top, '.env.local'), 'GOOGLE_EMAIL="a@b.co"\nGOOGLE_AAS_TOKEN="aas_et/' + 'k'.repeat(40) + '"\n'); fs.chmodSync(path.join(top, '.env.local'), 0o600);
 r = await M.maint({ top, tmp, env: {}, fix: true });
 check(r.problems === 0 && r.lines.length === 0, 'a healthy lab: no findings', r.lines.join('\n'));
-r = await M.maint({ top, tmp, env: {}, online: true, only: ['updates'], probe: { bds: '9.0.0.0', playwright: '99.0.0', apkeep: '9.9.9' } });
-check(/^W updates: 新しい版: .*playwright-core 99\.0\.0.*apkeep 9\.9\.9/.test(r.lines[0] ?? ''), 'updates (--online): newer pinned tools reported', r.lines.join('\n'));
+mk(path.join(top, 'bds', 'vendor', 'bds-version.txt'), '1.0.0.0\n');
+r = await M.maint({ top, tmp, env: {}, online: true, only: ['updates'], probe: { bds: '9.0.0.0' } });
+check(/^W updates: 新しい版: BDS 9\.0\.0\.0/.test(r.lines[0] ?? ''), 'updates (--online): a newer BDS reported', r.lines.join('\n'));
 const c = spawnSync(process.execPath, [path.join(TOP, 'lab.mjs'), 'maint', '--bogus'], { encoding: 'utf8' });
 check(c.status === 1 && /知らない指定 --bogus/.test(c.stdout), 'cli: a typo is an error', c.stdout);
 fs.rmSync(T, { recursive: true, force: true });

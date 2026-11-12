@@ -152,34 +152,6 @@ try {
       ok(/coverage: \d+% of code lines ran/.test(q.t) && /(OK|W) mutate devbds_side: \d+\/\d+ bugs caught/.test(q.t) && read('src/main.ts', SIDE_DIR) === sideMain, 'mutate: 3 bugs tried, the unit put back exactly', q.t);
     })();
 
-    // ---- harden with a scripted AI: it may only add sections; a wrong one is kept out; bugs caught before → after ----
-    const before = read('tests.txt'), mainNow = read('src/main.ts');
-    const ADD = [
-      '## harden: paying nothing is refused', '@A cmd /lab:pay 0 B', '~ @A PAY nothing to pay',
-      '## harden: paying more than you have takes nothing', 'clear A', 'give A emerald 1', '@A cmd /lab:pay 3 B', '~ @A PAY you have only 1', "js inv(p('A')).join()", '~ minecraft:emerald\\*1',
-      '## harden: the shop sells a diamond for 3 emeralds', 'clear A', 'give A emerald 3', '@A cmd /lab:shop', 'until form', '@A form 0', 'until SHOP bought', "js inv(p('A')).join()", '~ minecraft:diamond\\*1', '!~ emerald',
-      '## harden: a wrong expectation on purpose', '@A cmd /lab:pay 1 B', '~ @A PAY 99 to B'].join('\n');
-    const steps = [
-      [{ name: 'lab', input: { args: 'record "@C cmd /lab:pay 0 A"' } }],
-      [{ name: 'write', input: { path: 'tests.txt', content: before.replace('~ @A SPARK 1', '~ @A SPARK') + '\n' + ADD + '\n' } }, { name: 'edit', input: { path: 'src/main.ts', old: "'PAY nothing to pay'", new: "'PAY nothing'" } }],
-      'Added 4 sections.\nBUG src/main.ts:31 the bread button says bought without taking an emerald',
-    ];
-    const seen = [];
-    const srv = http.createServer((q, s) => { let b = ''; q.on('data', (d) => { b += d; }); q.on('end', () => { seen.push(JSON.parse(b)); const st = steps[seen.length - 1] ?? 'done';
-      s.writeHead(200, { 'content-type': 'application/json' }); s.end(JSON.stringify({ content: typeof st === 'string' ? [{ type: 'text', text: st }] : st.map((c, i) => ({ type: 'tool_use', id: `t${seen.length}_${i}`, name: c.name, input: c.input })), usage: { input_tokens: 100, output_tokens: 50 }, stop_reason: typeof st === 'string' ? 'end_turn' : 'tool_use' })); }); });
-    await new Promise((z) => srv.listen(0, '127.0.0.1', z));
-    // (its 4 bugs at once, each on a server of its own: harden is this file's longest way, and 3 at a time made it two rounds)
-    r = await lab(['harden', '4', '--via', 'anthropic'], { ANTHROPIC_API_KEY: 'k', ANTHROPIC_BASE_URL: `http://127.0.0.1:${srv.address().port}`, NO_PROXY: '127.0.0.1', no_proxy: '127.0.0.1', LAB_MUTATE_JOBS: '4' });
-    srv.close();
-    const prompt = JSON.stringify(seen[0]?.messages?.[0] ?? '');
-    ok(/Strengthen the tests of the Minecraft Bedrock addon in bds\/addons\/devbds/.test(prompt) && /never ran: \/lab:shop/.test(prompt), 'harden: the AI is told the places no test runs (and the bugs no test notices)', prompt.slice(0, 600));
-    const after = read('tests.txt');
-    ok(after.startsWith(before.trimEnd()) && after.includes('## harden: paying nothing is refused') && after.includes('## harden: the shop sells a diamond for 3 emeralds') && !after.includes('a wrong expectation on purpose') && after.includes('~ @A SPARK 1'), 'harden: new sections kept after the old tests.txt as it was (an old section it edited stays as it was)', after.slice(-900));
-    ok(read('src/main.ts') === mainNow && /put back what it changed besides tests\.txt: .*src\/main\.ts/.test(r.t), 'harden: its edit to the code is put back', r.t);
-    ok(/SUSPECT "## harden: a wrong expectation on purpose": fails on the code as it is/.test(r.t) && /BUG\? src\/main\.ts:31/.test(r.t), 'harden: a section that fails is kept out (SUSPECT), the AI\'s BUG line is shown', r.t);
-    ok(r.code === 0 && /harden devbds: \+3 section\(s\)/.test(r.t) && /code the tests run: \d+% → \d+%/.test(r.t) && /^HARDENED /m.test(r.t), 'harden: +3 sections, the coverage before → after, HARDENED', r.t);
-    const rank = JSON.parse(fs.readFileSync(path.join(TOP, 'bds', 'bench', 'ranking.json'), 'utf8'));
-    ok(rank.some((x) => x.task === `harden:${NAME}` && x.pass), 'harden: a ranking row');
     await side;
   };
   await Promise.all([bugs(), fixed()]);

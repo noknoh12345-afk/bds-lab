@@ -21,9 +21,8 @@ Not for a person's addon (`bds-fix-addon`). Each unit below passes `go` on the r
 - A block players toggle (block state) and a name typed in a form, kept over restart → bds/addons/lamp (when missed: state lost on restart) `recipe-block`
 - A custom mob with drops, a crafting recipe and a potion effect → bds/addons/jelly (when missed: the recipe never appears; drops not tested with a weapon) `recipe-mob`
 - A form with its own look (JSON UI server_form by title marker) → bds/addons/jsonui_demo (when missed: every form changes look) `recipe-ui`
-- A person's addon that broke after an update, fixed in place (their UUIDs, plain JS kept) → bds/addons/teleport_menu (TASK.md lists every change) (when missed: a rewrite instead of a fix) `recipe-fixed`
 <!-- rules:end -->
 
-None close: `bds-script-api` + `bds-tests`; once it passes, `node lab.mjs skill note "recipe: <unit> does <what>"`.
+None close: `bds-script-api` + `bds-tests`.
 
 Done when `go` is DONE. Report the recipe you began from and what stays untested (say so).

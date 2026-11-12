@@ -289,7 +289,7 @@
     {
       "id": "test-broadcast",
       "skill": "bds-tests-world",
-      "rule": "world.sendMessage / say prints as one plain line on BDS; a player's chat shows on every player, the sender too, as `@B chat <A> text`; in Endstone a broadcast shows as each player's line (@A ...).",
+      "rule": "world.sendMessage / say prints as one plain line on BDS; a player's chat shows on every player, the sender too, as `@B chat <A> text`",
       "why": "~ ^text misses because the line is \"@A text\"",
       "evidence": {
         "kind": "probe",
@@ -438,45 +438,6 @@
       "evidence": {
         "kind": "measured",
         "ref": "practice of the reference skills (say what was not run)"
-      },
-      "status": "verified"
-    },
-    {
-      "id": "end-settable",
-      "skill": "endstone-plugin",
-      "rule": "Make waits and limits plugin attributes so a test sets them: `py plugin.idle_seconds = 3` instead of waiting 5 minutes.",
-      "why": "a test that takes minutes",
-      "evidence": {
-        "kind": "measured",
-        "ref": "AFK plugin on Endstone (BDS 1.26.52.3)"
-      },
-      "status": "verified"
-    },
-    {
-      "id": "end-deps",
-      "skill": "endstone-plugin",
-      "rule": "PyPI packages: lib add <pkg> (writes pyproject); go installs what pyproject declares and is missing.",
-      "why": "plugin fails to load: No module named ...",
-      "evidence": {
-        "kind": "test",
-        "ref": "tests/pytb-offline.mjs"
-      },
-      "status": "verified",
-      "verified": {
-        "bds": "1.26.52.3",
-        "at": "2026-10-03",
-        "ok": true
-      },
-      "match": "No module named"
-    },
-    {
-      "id": "end-thread",
-      "skill": "endstone-plugin",
-      "rule": "The Endstone API is server-thread only: no sleep or blocking I/O there; a thread computes, then self.server.scheduler.run_task(self, fn) brings the result back.",
-      "why": "every player freezes",
-      "evidence": {
-        "kind": "measured",
-        "ref": "end/AGENTS.md (pyChecks warns)"
       },
       "status": "verified"
     },
@@ -681,7 +642,7 @@
     {
       "id": "ui-unverified",
       "skill": "bds-json-ui",
-      "rule": "BDS never loads RP UI and the test clients do not draw it: `check` passing is the only automatic proof. Say what was checked statically and that the look still needs a real client (`app run`, or the person).",
+      "rule": "BDS never loads RP UI and the test clients do not draw it: `check` passing is the only automatic proof. Say what was checked statically and that the look still needs a real client (the person; the real-app lab is on `dev`).",
       "why": "a look reported that nobody saw",
       "evidence": {
         "kind": "source",
@@ -931,24 +892,6 @@
       }
     },
     {
-      "id": "recipe-fixed",
-      "skill": "bds-recipes",
-      "rule": "A person's addon that broke after an update, fixed in place (their UUIDs, plain JS kept) → bds/addons/teleport_menu (TASK.md lists every change)",
-      "why": "a rewrite instead of a fix",
-      "evidence": {
-        "kind": "unit",
-        "ref": "bds/addons/teleport_menu"
-      },
-      "status": "verified",
-      "added": "2026-10-03",
-      "tags": "修正 壊れた アップデート 人のアドオン",
-      "verified": {
-        "bds": "1.26.52.3",
-        "at": "2026-10-03",
-        "ok": true
-      }
-    },
-    {
       "id": "deliver-beta",
       "skill": "bds-deliver",
       "rule": "On beta modules: tell them to turn on the world's Beta APIs experiment and that it works only on this Minecraft version; prefer stable when the request allows (go tries it).",
@@ -990,54 +933,6 @@
       }
     },
     {
-      "id": "ll-command",
-      "skill": "levilamina-mod",
-      "rule": "Commands: mc.newCommand(name, desc, PermType.Any) → mandatory/optional → overload([...]) → setCallback((_c, origin, out, r) => ...) → setup(); origin.player is null from the console (out.error); tests see `@A cmd: <success text>`.",
-      "why": "a command that never registers, or crashes from the console",
-      "evidence": {
-        "kind": "unit",
-        "ref": "ll/mods/money"
-      },
-      "status": "verified",
-      "added": "2026-10-03"
-    },
-    {
-      "id": "ll-xuid",
-      "skill": "levilamina-mod",
-      "rule": "Offline servers (the lab's, many private ones) give pl.xuid = \"\": key saved data by pl.xuid || pl.uuid.",
-      "why": "every player shares one account",
-      "evidence": {
-        "kind": "unit",
-        "ref": "ll/mods/money"
-      },
-      "status": "verified",
-      "added": "2026-10-03"
-    },
-    {
-      "id": "ll-files",
-      "skill": "levilamina-mod",
-      "rule": "Data lives under ./plugins/<n>/ (File.mkdir first; JsonConfigFile, DBSession sqlite3) and survives restart: prove it with a `restart` section.",
-      "why": "data lost, or written beside the server",
-      "evidence": {
-        "kind": "unit",
-        "ref": "ll/mods/sqlstats"
-      },
-      "status": "verified",
-      "added": "2026-10-03"
-    },
-    {
-      "id": "ll-cancel",
-      "skill": "levilamina-mod",
-      "rule": "Before-style events (onChat, onPlayerCmd, onDestroyBlock ...) are cancelled by returning false from the listener.",
-      "why": "the vanilla action still happens",
-      "evidence": {
-        "kind": "unit",
-        "ref": "ll/mods/cmdguard"
-      },
-      "status": "verified",
-      "added": "2026-10-03"
-    },
-    {
       "id": "test-regex-js",
       "skill": "bds-tests",
       "rule": "`~` regexes are JavaScript and match one line: no (?s) or other inline flags (only a leading (?i)); for an order across lines, compute it in a js/py/lse line and check its value.",
@@ -1054,81 +949,6 @@
         "at": "2026-10-03",
         "ok": true
       }
-    },
-    {
-      "id": "end-json",
-      "skill": "endstone-plugin",
-      "rule": "A py line's value prints short, not as Python repr: a str as itself, True/False, None as -, lists and tuples as [\"B\",\"A\",0], dicts as {k=v}: write `=` in that form, or return an f-string.",
-      "why": "want [('B', 'A', 0)] never matches",
-      "evidence": {
-        "kind": "test",
-        "ref": "tests/offline.mjs"
-      },
-      "status": "verified",
-      "added": "2026-10-03",
-      "verified": {
-        "bds": "1.26.52.3",
-        "at": "2026-10-03",
-        "ok": true
-      }
-    },
-    {
-      "id": "end-template",
-      "skill": "endstone-plugin",
-      "rule": "Start from the closest working plugin: `node lab.mjs help ideas` lists end/plugins (SQLite and restarts: sqlstats; a report system with cooldowns and an op list: report).",
-      "why": "a structure guessed from scratch",
-      "evidence": {
-        "kind": "unit",
-        "ref": "end/plugins/report"
-      },
-      "status": "verified",
-      "added": "2026-10-03",
-      "verified": {
-        "bds": "1.26.52.3",
-        "at": "2026-10-03",
-        "ok": true
-      }
-    },
-    {
-      "id": "end-perm",
-      "skill": "endstone-plugin",
-      "rule": "The lab's players are operators: `deop B` before a section that proves a normal player is refused (\"op\" permissions).",
-      "why": "a permission check that is never tested",
-      "evidence": {
-        "kind": "unit",
-        "ref": "end/plugins/report"
-      },
-      "status": "verified",
-      "added": "2026-10-03",
-      "verified": {
-        "bds": "1.26.52.3",
-        "at": "2026-10-03",
-        "ok": true
-      }
-    },
-    {
-      "id": "ll-restart",
-      "skill": "levilamina-mod",
-      "rule": "`restart` keeps plugins/<n>/ and the world and the players rejoin: a section after it proves what must survive; `lse` lines see the mod's top-level names (lab builds).",
-      "why": "data lost on restart, untested",
-      "evidence": {
-        "kind": "unit",
-        "ref": "ll/mods/warps"
-      },
-      "status": "verified",
-      "added": "2026-10-03"
-    },
-    {
-      "id": "ll-template",
-      "skill": "levilamina-mod",
-      "rule": "Start from the closest working mod in ll/mods (`help ideas`): JSON file + op commands + cooldown → warps; SQLite → sqlstats; economy → money.",
-      "why": "a structure guessed from scratch",
-      "evidence": {
-        "kind": "unit",
-        "ref": "ll/mods/warps"
-      },
-      "status": "verified",
-      "added": "2026-10-03"
     }
   ],
   "log": [

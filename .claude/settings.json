@@ -5,14 +5,12 @@
       "Bash(node lab.mjs:*)",
       "Bash(gh:*)",
       "Bash(git:*)",
-      "Bash(node .fanout/fanout.mjs:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git merge:*)",
-      "Bash(git worktree:*)",
       "Bash(git branch:*)",
       "Bash(git checkout:*)",
       "Bash(git switch:*)",
@@ -79,28 +77,6 @@
     "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
   },
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .fanout/fanout.mjs brief"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node lab.mjs panel hook",
-            "timeout": 120
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",

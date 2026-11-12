@@ -52,37 +52,6 @@ lab(['skill', 'install', 'agents', '--to', P], env);
 const ag = fs.readFileSync(path.join(P, 'AGENTS.md'), 'utf8');
 ok(/^# mine\nkeep this/.test(ag) && ag.split('bds-lab skills: begin').length === 2, 'installing again replaces its block and keeps the rest of the file', ag);
 
-// learn: recurring fixed failures and the autopilot's lessons → candidates (not in SKILL.md)
-const E = path.join(T, 'bds', 'episodes.jsonl'); fs.mkdirSync(path.dirname(E), { recursive: true });
-const ep = (u) => JSON.stringify({ at: 'x', unit: u, fixed: [{ sig: "E TypeError: cannot read property 'foo' of undefined (src/main.ts:12)", hints: ['fix: check the bar before use'] }, { sig: '✘ 4: ## once > @A cmd /x / want ~ ok', hints: [] }] });
-fs.writeFileSync(E, [ep('a'), ep('b')].join('\n') + '\n');
-const LS = path.join(T, 'LESSONS.md'); fs.writeFileSync(LS, '# Lessons\n- a form opened from a chat word must wait for the chat screen to close\n');
-r = lab(['skill', 'learn'], { ...env, LAB_EPISODES: E, LAB_LESSONS: LS });
-const k3 = JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')), cands = k3.rules.filter((x) => x.status === 'candidate');
-ok(r.code === 0 && cands.some((x) => x.rule === 'check the bar before use' && x.evidence.n === 2 && x.evidence.units.length === 2) && cands.some((x) => /chat screen to close/.test(x.rule) && x.evidence.kind === 'lesson') && !fs.readFileSync(path.join(S, 'bds-script-api', 'SKILL.md'), 'utf8').includes('check the bar'), 'learn: a failure fixed in 2 units with a hint and a lesson become candidates; candidates stay out of SKILL.md', r.t);
-const cid = cands.find((x) => x.rule === 'check the bar before use').id;
-r = lab(['skill', 'promote', cid], env);
-ok(r.code !== 0 && /needs evidence first/.test(r.t), 'promote without evidence is refused', r.t);
-r = lab(['skill', 'promote', cid, '--evidence', 'test:tests/pytb-offline.mjs'], env);
-ok(r.code === 0 && fs.readFileSync(path.join(S, 'bds-script-api', 'SKILL.md'), 'utf8').includes('check the bar before use'), 'promote with evidence: the rule enters its SKILL.md', r.t);
-r = lab(['skill', 'verify', cid], env);
-ok(r.code === 0 && /✔ cand-/.test(r.t) && JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')).rules.find((x) => x.id === cid).verified?.ok === true, 'verify re-runs its evidence (an offline test here) and records the BDS version and date', r.t);
-const k4 = JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')); k4.rules.find((x) => x.id === cid).evidence = { kind: 'test', ref: 'tests/no-such-test.mjs' }; fs.writeFileSync(path.join(S, 'knowledge.json'), JSON.stringify(k4));
-r = lab(['skill', 'verify', cid], env);
-ok(r.code !== 0 && /status disputed/.test(r.t) && !fs.readFileSync(path.join(S, 'bds-script-api', 'SKILL.md'), 'utf8').includes('check the bar before use'), 'evidence that fails: the rule is disputed and leaves SKILL.md', r.t);
-r = lab(['skill', 'retire', cid, 'replaced'], env);
-ok(r.code === 0 && JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')).rules.find((x) => x.id === cid).status === 'retired', 'retire keeps the rule with why, out of the skills', r.t);
-
-// bench: A/B verdict (a stand-in for the AI runs)
-const stub = path.join(T, 'stub.sh');
-fs.writeFileSync(stub, '#!/bin/sh\nif [ "$2" = on ]; then echo \'RESULT {"pass":true,"tokens":80000,"steps":5}\'; else if [ "$1" = ruby ]; then echo \'RESULT {"pass":false,"tokens":120000,"steps":9}\'; else echo \'RESULT {"pass":true,"tokens":100000,"steps":7}\'; fi; fi\n'); fs.chmodSync(stub, 0o755);
-r = lab(['skill', 'bench', '--tasks', 'ruby,kills'], { ...env, LAB_SKILL_BENCH_CMD: stub });
-const h = JSON.parse(fs.readFileSync(path.join(S, 'history.json'), 'utf8')).at(-1);
-ok(r.code === 0 && /^KEEP skills \w+: more passes with skills \(2 > 1\)/m.test(r.t) && h.on.pass === 2 && h.off.pass === 1 && h.keep === true, 'bench: with and without skills on each task; more passes with them: KEEP, recorded in history.json', r.t);
-fs.writeFileSync(stub, '#!/bin/sh\nif [ "$2" = on ]; then echo \'RESULT {"pass":true,"tokens":150000,"steps":9}\'; else echo \'RESULT {"pass":true,"tokens":100000,"steps":7}\'; fi\n');
-r = lab(['skill', 'bench', '--tasks', 'ruby'], { ...env, LAB_SKILL_BENCH_CMD: stub });
-ok(r.code !== 0 && /^WORSE skills \w+: same passes, 50% more tokens with skills/m.test(r.t), 'same passes but 50% more tokens with the skills: WORSE (undo or retire)', r.t);
-
 // just in time: a problem line a verified rule's `match` fits gets that rule's one line under it (once), from the real lab
 const U = path.join(TOP, 'bds', 'addons', 'zz_skills_jit');
 fs.rmSync(U, { recursive: true, force: true });
@@ -101,39 +70,6 @@ try {
   kd.rules.find((x) => x.id === 'ui-defs').status = 'verified'; fs.writeFileSync(path.join(S, 'knowledge.json'), JSON.stringify(kd));
 } finally { fs.rmSync(U, { recursive: true, force: true }); }
 
-// misses: the failure a verified rule covers still happened (and got fixed) in units → counted from all episodes, flagged at 3 in 2 units
-const ident = (u) => JSON.stringify({ at: 'x', unit: u, fixed: [{ sig: 'E Failed to resolve identity (src/main.ts:4)', hints: [] }] });
-fs.writeFileSync(E, [ident('a'), ident('b'), ident('c')].join('\n') + '\n');
-r = lab(['skill', 'learn'], { ...env, LAB_EPISODES: E, LAB_LESSONS: LS });
-r = lab(['skill', 'learn'], { ...env, LAB_EPISODES: E, LAB_LESSONS: LS });
-const mi = JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')).rules.find((x) => x.id === 'api-score-identity');
-ok(mi.misses?.n === 3 && mi.misses.units.length === 3 && /^! api-score-identity: its failure still happened 3× in 3 units/m.test(r.t) && !JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')).rules.some((x) => x.status === 'candidate' && /resolve identity/.test(x.why)), 'learn: a covered failure seen again counts as a miss of its rule (recounted, not added: run twice = 3), flagged; no duplicate candidate', r.t);
-
-// learn --from: another project's skills → source candidates (hard rules first, nothing it knows, no fragments or repo-tied lines)
-const R2 = path.join(T, 'other-skills');
-fs.mkdirSync(path.join(R2, 'skills', 'mcbe-json-ui-x'), { recursive: true }); fs.mkdirSync(path.join(R2, 'data'), { recursive: true });
-fs.writeFileSync(path.join(R2, 'skills', 'mcbe-json-ui-x', 'SKILL.md'), '---\nname: x\ndescription: y\n---\n- Never put two factory controls with the same control_ids in one screen: the second one is ignored silently.\n- Only texture paths that exist (rp/textures or vanilla); an invented textures/ui path draws nothing.\n- and this line continues the one above it with more words.\n- Run `node tools/thing.mjs --fix(1)` before anything else.\n- Is the control inserted into the right panel?\n');
-fs.writeFileSync(path.join(R2, 'data', 'rules.json'), JSON.stringify({ rules: [{ id: '7', rule: '**Bones must have unique names** in one geometry or the later one replaces the earlier.' }] }));
-r = lab(['skill', 'learn', '--from', R2], { ...env, LAB_EPISODES: E, LAB_LESSONS: LS });
-const k5 = JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')), src = k5.rules.filter((x) => x.evidence?.kind === 'source' && x.status === 'candidate');
-ok(src.length === 2 && src.some((x) => /^Never put two factory controls/.test(x.rule) && x.skill === 'bds-json-ui' && x.evidence.ref === 'other-skills/skills/mcbe-json-ui-x/SKILL.md') && src.some((x) => /^Bones must have unique names/.test(x.rule) && x.skill === 'bds-models'),
-  'learn --from <dir>: its hard rules become source candidates routed to a skill; one the lab already has, a fragment, a repo-tied command and a question are skipped', JSON.stringify(src.map((x) => [x.id, x.skill, x.rule])) + '\n' + r.t);
-const sid = src.find((x) => /^Never put two/.test(x.rule)).id;
-r = lab(['skill', 'promote', sid, '--evidence', 'source:https://example.com/repo skills/x'], env);
-ok(r.code === 0 && new RegExp(`Never put two factory controls.*\`${sid}\` \\[source\\]`).test(fs.readFileSync(path.join(S, 'bds-json-ui', 'SKILL.md'), 'utf8')), 'promote with source evidence: in the skill, marked [source] (a reference says so; not re-run here)', r.t);
-
-// note: a surprise while working → auto/LESSONS.md → learn makes it a candidate
-const LS2 = path.join(T, 'LESSONS2.md');
-r = lab(['skill', 'note', 'An Endstone py value prints short, a tuple as a list'], { ...env, LAB_LESSONS: LS2 });
-const r2 = lab(['skill', 'note', 'An Endstone py value prints short, a tuple as a list'], { ...env, LAB_LESSONS: LS2 });
-r = lab(['skill', 'learn'], { ...env, LAB_EPISODES: E, LAB_LESSONS: LS2 });
-ok(/^- An Endstone py value prints short, a tuple as a list$/m.test(fs.readFileSync(LS2, 'utf8')) && /already noted/.test(r2.t) && JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')).rules.some((x) => x.status === 'candidate' && /prints short, a tuple/.test(x.rule) && x.skill === 'endstone-plugin'), 'skill note: one line into the lessons (once); learn makes it a candidate routed to its skill', r.t);
-
-// growth: generations and the next rung for each part
-r = lab(['skill', 'growth'], { ...env, LAB_EPISODES: E });
-const lg = JSON.parse(fs.readFileSync(path.join(S, 'knowledge.json'), 'utf8')).log;
-ok(r.code === 0 && lg.length >= 2 && /^skills generation \d+: \d+ skills, \d+ rules \(\+\d+ since gen 1/m.test(r.t) && /proof: \d+ re-run here .* \d+% re-checkable/.test(r.t) && /experience: 3 episodes, 3 failures fixed in 3 units/.test(r.t) && /next: api-score-identity missed 3×/.test(r.t) && /\[source\] rules: a test or probe/.test(r.t),
-  'growth: generation log, proof strength, experience, and next steps (a missed rule first, then candidates, source rules to prove)', r.t);
 
 fs.rmSync(T, { recursive: true, force: true });
 console.log(`${fails ? 'FAIL' : 'PASS'} skills-offline ${n - fails}/${n}`);

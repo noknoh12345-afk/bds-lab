@@ -14,7 +14,7 @@ const size = (p) => { let n = 0; try { const st = fs.lstatSync(p); if (!st.isDir
 const gb = (n) => `${(n / GB).toFixed(n < GB ? 2 : 1)} GB`;
 const rm = (p) => { const n = size(p); fs.rmSync(p, { recursive: true, force: true }); return n; };
 const old = (p, ms) => { try { return Date.now() - fs.statSync(p).mtimeMs > ms; } catch { return false; } };
-const LABS = ['bds', 'end', 'll'];
+const LABS = ['bds'];
 // the test suites' own temp folders (a killed run leaves them: once they filled a disk)
 const TEMP = /^(bdslab-|app-offline-|device-offline-|lan-offline-|latest-offline-|update-offline-|nc-(acc|bds|snap|worlds)-|nnc-|lab-import-|lab-colony-|mcw-(world|conv)-)/;
 const TOKEN_TEXT = /(aas_et\/[A-Za-z0-9_-]{20,}|oauth2_4\/[A-Za-z0-9_-]{20,})/;
@@ -83,10 +83,6 @@ export const CHECKS = {
   // 2g. files an earlier release shipped and the installed one says are gone, still here exactly as shipped: an update done by
   //     an older lab deleted nothing (and `share` would ship them again). An edited one, a unit, a cache, a secret and what
   //     extras.json lists (put back on purpose from the extras zip) are never touched
-  leftovers: async (c) => {
-    const U = await import('./update.mjs'), d = U.leftovers(c.top);
-    return d.length ? { ok: false, msg: `古いリリースにだけあったファイル ${d.length} 個（手を入れていない。前の update が古い版で消さなかったもの: ${d.slice(0, 3).join(' ')}${d.length > 3 ? ' …' : ''}）`, fix: () => `古いリリースにだけあったファイル ${U.removeLeftovers(c.top, d).removed} 個を削除` } : { ok: true };
-  },
   // 3. locks and pid files of processes that are gone (a crash leaves them; the next run then refuses or waits)
   locks: (c) => {
     const f = [path.join(c.top, 'app', '.lab', 'run.lock'), path.join(c.top, 'app', '.lab', 'emulator.json'), ...LABS.map((k) => path.join(c.top, k, '.lab', 'live.json'))]
@@ -133,25 +129,13 @@ export const CHECKS = {
     return f.length ? { ok: false, msg: `実行できないスクリプト ${f.length} 個`, fix: () => { f.forEach((p) => fs.chmodSync(p, 0o755)); return `スクリプト ${f.length} 個を実行可能に`; } } : { ok: true };
   },
   // 9. the Google token's shape (the usual paste mistakes), before a download fails on it
-  token: async (c) => {
-    const K = await import('../app/lib/apk.mjs');
-    K.loadEnv([path.join(c.top, '.env.local')], c.env);
-    const p = K.playCredentials(c.env);
-    return p.problems.length || p.partial ? { ok: false, warn: true, msg: `Google の認証: ${p.problems.join(' / ') || '片方だけ'}（node lab.mjs app token --force）` } : { ok: true };
-  },
   // 10. newer releases (--online): the game server, Endstone, LeviLamina, and the lab's own pinned tools
   updates: async (c) => {
     if (!c.online) return { ok: true, skipped: true };
-    const L = await import('./latest.mjs'), K = await import('../app/lib/apk.mjs'), P = await import('../app/lib/playwright-login.mjs');
-    const p = c.probe ?? await L.probe(), have = [];
+    const A = await import('./apidiff.mjs'), cmp = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number); for (let i = 0; i < 4; i++) if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) - (y[i] ?? 0); return 0; };
+    const newest = c.probe?.bds ?? await A.newestBds(false);
     const bds = (() => { try { return fs.readFileSync(path.join(c.top, 'bds', 'vendor', 'bds-version.txt'), 'utf8').trim(); } catch { return null; } })();
-    if (p.bds && bds && L.cmp(p.bds, bds) > 0) have.push(`BDS ${p.bds}（いま ${bds}: node lab.mjs bds ${p.bds}）`);
-    const npm = async (n) => { try { return (await (await fetch(`https://registry.npmjs.org/${n}/latest`, { signal: AbortSignal.timeout(15000) })).json()).version; } catch { return null; } };
-    const pwv = c.probe?.playwright ?? await npm('playwright-core');
-    if (pwv && L.cmp(pwv, P.PW_VERSION) > 0) have.push(`playwright-core ${pwv}（固定 ${P.PW_VERSION}: app/lib/playwright-login.mjs）`);
-    const apk = c.probe?.apkeep ?? await (async () => { try { return (await (await fetch('https://formulae.brew.sh/api/formula/apkeep.json', { signal: AbortSignal.timeout(15000) })).json()).versions.stable; } catch { return null; } })();
-    if (apk && L.cmp(apk, K.APKEEP_VERSION) > 0) have.push(`apkeep ${apk}（固定 ${K.APKEEP_VERSION}: app/lib/apk.mjs のハッシュも更新）`);
-    return have.length ? { ok: false, warn: true, msg: `新しい版: ${have.join(' / ')}` } : { ok: true };
+    return newest && bds && cmp(newest, bds) > 0 ? { ok: false, warn: true, msg: `新しい版: BDS ${newest}（いま ${bds}: node lab.mjs bds ${newest}）` } : { ok: true };
   },
   // 11. two units with the same pack UUIDs (a copied folder, an addon imported twice): a world keeps only one of them. --fix gives
   //     the newer one (by folder age) its own; not automatic: a copy meant as an update of the same pack needs the same UUIDs

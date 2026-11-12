@@ -1649,7 +1649,7 @@ class Engine {
           if (tj === 'lan') {
             if (TRANSPORT !== 'lan') throw new Error('join transport=lan: start the server with LAB_TRANSPORT=lan');
             delete jo.transport;
-            lanJ = await (await import('./lan.mjs')).labJoin(CACHE, { name });
+            throw new Error('join transport=lan: not in the stable branch (dev)');
           }
           let bot; let n0 = LOG.length;
           // cmdBehind: `@A cmd` knows a command has run by a /list right behind it (realplayer), not by waiting 1.5 s for an answer a
@@ -3340,7 +3340,7 @@ const CACHE_ROOT_FOR_DISK = () => { let d = CACHE; while (!fs.existsSync(d)) d =
 async function doctor() {
   const rows = [], row = (state, what, detail, fix = '') => rows.push({ state, what, detail, fix });
   const has = (cmd, args = ['--version']) => { const r = spawnSync(cmd, args, { encoding: 'utf8', timeout: 10000 }); return r.status === 0 ? (r.stdout || r.stderr).trim().split('\n')[0] : null; };
-  const labs = ['bds', 'end', 'll'];
+  const labs = ['bds', 'end', 'll'].filter((l) => exists(path.join(TOP, l, 'flavor.mjs')));   // (the stable branch has bds alone)
   // the machine: install hints must be commands this AI can actually run here (root or sudo, which package manager)
   const E = hostInfo(has);
   row('INFO', 'machine', E.summary);
@@ -3356,8 +3356,8 @@ async function doctor() {
   const py = ['python3', 'python'].map((c) => { const v = has(c, ['-c', 'import sys;print("%d.%d"%sys.version_info[:2])']); return v ? { c, v } : null; }).find(Boolean);
   const pyOk = py && Number(py.v.split('.')[0]) === 3 && Number(py.v.split('.')[1]) >= 10;
   const portable = ['linux-x64', 'linux-arm64', 'win32-x64', 'win32-arm64'].includes(`${process.platform}-${process.arch}`);
-  row(pyOk || process.platform === 'darwin' ? 'OK' : portable ? 'INFO' : 'MISSING', 'python (end)', py ? `${py.c} ${py.v}` : 'not found', pyOk || process.platform === 'darwin' ? '' : (portable ? 'none needed: setup fetches a portable Python 3.12 (GitHub); or ' : '') + inst({ apt: 'python3 python3-venv', dnf: 'python3', apk: 'python3 py3-virtualenv', pacman: 'python', brew: 'python', winget: 'Python.Python.3.12' }));
-  if (process.platform === 'linux') { const w = has('wine64') ?? has('wine'); row(w || process.env.LAB_LL_SERVER ? (w && Number(/wine-(\d+)/.exec(w)?.[1] ?? 10) < 10 && !process.env.LAB_WINE ? 'INFO' : 'OK') : 'MISSING', 'wine (ll)', w ? (Number(/wine-(\d+)/.exec(w)?.[1] ?? 10) < 10 && !process.env.LAB_WINE ? `${w}: too old for BDS (stalls with a player); ll setup fetches a portable Wine 10 into ll/.lab` : w) : (process.env.LAB_LL_SERVER ? 'LAB_LL_SERVER set' : 'not found'), w ? '' : (E.pm === 'apt' && E.priv !== null ? `${E.priv}apt-get update && ${E.priv}apt-get install -y wine winetricks cabextract` : inst({ dnf: 'wine', pacman: 'wine', apk: 'wine' })) + '   (or LAB_RUNTIME=docker, or LAB_LL_SERVER=<a LeviLamina server on Windows>)'); }
+  if (labs.includes('end')) row(pyOk || process.platform === 'darwin' ? 'OK' : portable ? 'INFO' : 'MISSING', 'python (end)', py ? `${py.c} ${py.v}` : 'not found', pyOk || process.platform === 'darwin' ? '' : (portable ? 'none needed: setup fetches a portable Python 3.12 (GitHub); or ' : '') + inst({ apt: 'python3 python3-venv', dnf: 'python3', apk: 'python3 py3-virtualenv', pacman: 'python', brew: 'python', winget: 'Python.Python.3.12' }));
+  if (process.platform === 'linux' && labs.includes('ll')) { const w = has('wine64') ?? has('wine'); row(w || process.env.LAB_LL_SERVER ? (w && Number(/wine-(\d+)/.exec(w)?.[1] ?? 10) < 10 && !process.env.LAB_WINE ? 'INFO' : 'OK') : 'MISSING', 'wine (ll)', w ? (Number(/wine-(\d+)/.exec(w)?.[1] ?? 10) < 10 && !process.env.LAB_WINE ? `${w}: too old for BDS (stalls with a player); ll setup fetches a portable Wine 10 into ll/.lab` : w) : (process.env.LAB_LL_SERVER ? 'LAB_LL_SERVER set' : 'not found'), w ? '' : (E.pm === 'apt' && E.priv !== null ? `${E.priv}apt-get update && ${E.priv}apt-get install -y wine winetricks cabextract` : inst({ dnf: 'wine', pacman: 'wine', apk: 'wine' })) + '   (or LAB_RUNTIME=docker, or LAB_LL_SERVER=<a LeviLamina server on Windows>)'); }
   if (process.platform === 'linux') {   // LAB_SPEED (a sped-up server clock) needs it; optional
     const ftl = [process.env.LAB_FAKETIME_LIB, '/usr/lib/x86_64-linux-gnu/faketime/libfaketimeMT.so.1', '/usr/lib/aarch64-linux-gnu/faketime/libfaketimeMT.so.1', '/usr/local/lib/faketime/libfaketimeMT.so.1', '/usr/lib64/faketime/libfaketimeMT.so.1'].find((x) => x && exists(x));
     row(ftl ? 'OK' : 'INFO', 'libfaketime (LAB_SPEED)', ftl ?? 'not found: the server runs at 1x only', ftl ? '' : inst({ apt: 'faketime', dnf: 'libfaketime', pacman: 'libfaketime', apk: 'libfaketime' }));
@@ -3379,6 +3379,7 @@ async function doctor() {
       ['GitHub API', 'll end', 'https://api.github.com/repos/futrime/lip/releases/latest', 'LAB_GITHUB_MIRROR=<a GitHub mirror, e.g. https://ghfast.top>; GITHUB_TOKEN=<token> if rate-limited; ll: LAB_LIP_URL=<lip win-x64 zip> or LAB_LL_SERVER=<LeviLamina server folder/zip>'],
       ['GitHub downloads', 'll, NetherNet', 'https://github.com/futrime/lip/releases/latest', 'll: LAB_GITHUB_MIRROR=<a GitHub mirror, e.g. https://ghfast.top> or LAB_LL_SERVER; NetherNet players need node-datachannel\'s prebuilt binary from GitHub: copy <lab>/.lab/node-rtc from another machine']]),
   ];
+  for (let i = net.length - 1; i >= 0; i--) if (!/all|NetherNet/.test(net[i][1]) && !net[i][1].split(/[ ,]+/).some((l) => labs.includes(l))) net.splice(i, 1);   // (a lab this branch lacks: its downloads are not looked at)
   const res = await Promise.all(net.map(([, , url]) => probe(url)));
   net.forEach(([what, who, url, fix], i) => { const r = res[i]; row(r.ok ? 'OK' : r.blocked ? 'BLOCKED' : 'FAIL', `${what} [${who}]`, `${new URL(url).host}: ${r.why}`, r.ok ? '' : fix); });
   if (res.some((r) => /CERT|certificate/i.test(r.why ?? ''))) row('BLOCKED', 'TLS certificate', 'something on the network re-signs HTTPS (a proxy or antivirus) and Node does not trust its CA', 'SSL_CERT_FILE=<that CA or the system bundle, .pem> (the lab passes it to Node, npm, pip), then doctor again');
@@ -3388,6 +3389,7 @@ async function doctor() {
   const bad = (re) => rows.filter((r) => /BLOCKED|FAIL|MISSING/.test(r.state) && re.test(r.what));
   const need = { bds: bad(/^(node|npm|IPv6|BDS download|npm registry)/), end: bad(/^(node|npm|python|PyPI|BDS download|npm registry)/), ll: bad(/^(node|npm|wine|GitHub|npm registry)/) };
   if (bdsGiven) for (const l of ['bds', 'end']) need[l] = need[l].filter((r) => !/BDS download/.test(r.what));
+  for (const l of Object.keys(need)) if (!labs.includes(l)) delete need[l];
   for (const l of labs) out(`${l}: ${need[l].length ? 'cannot set up here yet: ' + need[l].map((r) => r.what.replace(/ \[.*/, '')).join(', ') : 'ready to set up'}`);
   const blocked = rows.some((r) => r.state === 'BLOCKED');
   if (blocked) out('BLOCKED items are the network, not the code: ask a person for the → way in, then run doctor again.');
@@ -3532,7 +3534,6 @@ try {
   else if (cmd === 'test') ok = await test(rest);
   else if (cmd === 'qa') { const r = await qa({ built: !!process.env.LAB_QA_BUILT }); ok = r.ok; if (process.env.LAB_QA_JSON) fs.writeFileSync(process.env.LAB_QA_JSON, JSON.stringify(r)); }
   else if (cmd === 'go') ok = await go(rest);
-  else if (cmd === 'make') ok = await (await import('./make.mjs')).make(L(), [...rest], { newAddon, go });
   else if (cmd === 'api') ok = await api(rest);
   else if (cmd === 'sample') ok = await sample(rest);
   else if (cmd === 'init') init(rest.find((a) => a !== '--rp'), rest.includes('--rp'));
@@ -3622,11 +3623,6 @@ try {
   else if (cmd === 'use') useAddon(rest[0]);
   else if (cmd === 'dispute') dispute(rest);
   else if (cmd === 'unlock') unlockCmd(rest);
-  else if (cmd === 'playtest') ok = await (await import('./make.mjs')).playtest(L(), [...rest]);
-  else if (cmd === 'harden') {   // = make -a <current unit> --harden [n] (the AI adds tests to what mutate and gaps find missing)
-    const ni = rest.findIndex((a, i) => /^\d+$/.test(a) && !['--via', '--model', '--turns', '--budget', '-a', '--edit'].includes(rest[i - 1])), n = ni >= 0 ? rest.splice(ni, 1) : [];
-    ok = await (await import('./make.mjs')).make(L(), ['--harden', ...n, ...rest, ...(ADDON_ARG || rest.includes('--edit') ? [] : ['--edit', path.basename(ADDON)])], { newAddon, go });
-  }
   else if (cmd === 'import') await importAddon(rest);
   else if (cmd === 'brief') ok = await brief(rest);
   else if (cmd === 'bds') { await lock(); await bdsCmd(rest); }
@@ -3647,7 +3643,6 @@ try {
     await ensureBds(); (await gh()).bundle({ ROOT: GITROOT, layout: LAYOUT(), bdsVer: bdsVersion(), zip, release: rest.includes('--release'), exclude: BU.map((u) => u.rel), say: out });
   }
   else if (cmd === 'selftest') ok = await selftest(rest);
-  else if (cmd === 'lan') ok = await (await import('./lan.mjs')).lanCmd(CACHE, rest, out);
   else if (cmd === 'doctor') ok = await doctor();
   else if (cmd === 'carry') {   // save this unit's SDK types into <top>/carry/ (verify does it after a real test)
     if (F.sapiBuild === false || !exists(path.join(BP, 'manifest.json'))) { out('OK nothing to carry for this lab'); }

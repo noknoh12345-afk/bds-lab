@@ -70,7 +70,8 @@ export async function i18nCmd(args, out = console.log) {
   }
   let miss = missing(dir);
   if (args.includes('--ai') && miss.length) {
-    const { pickVia, ask1 } = await import('./make.mjs'), via = pickVia(opt('--via'));
+    out('ERR i18n --ai: not in the stable branch (dev); fill the lines: node lab.mjs i18n <lang> key=text ...'); return false;
+    const pickVia = () => null, ask1 = null, via = pickVia(opt('--via'));
     if (!via) { out('ERR --ai needs an AI: ANTHROPIC_API_KEY or OPENAI_API_KEY in .env (node lab.mjs login ai), or the claude / codex / gemini CLI'); return false; }
     let tokens = 0;
     const groups = new Map(); for (const m of miss) if (m.ref) { const g = `${m.dir}\u0000${m.lang}\u0000${m.refLang}`; (groups.get(g) ?? groups.set(g, []).get(g)).push(m); }

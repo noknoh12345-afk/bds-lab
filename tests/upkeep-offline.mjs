@@ -83,9 +83,6 @@ const runAsync = (args, e = {}) => new Promise((ok) => { const { spawn } = requi
 const require_cp = await import('node:child_process');
 let o = await runAsync(['i18n', '-a', 'tr']);
 check(o.code === 1 && /ja_JP lacks 2/.test(o.text) && /tile\.lab:ore\.name=Ruby Ore/.test(o.text), 'i18n cli: lists the missing lines with their text', o.text);
-o = await runAsync(['i18n', '-a', 'tr', '--ai']);
-const ja = fs.readFileSync(path.join(iu, 'rp', 'texts', 'ja_JP.lang'), 'utf8');
-check(o.code === 0 && /ルビー鉱石/.test(ja) && /スライム/.test(ja) && /150 tokens/.test(o.text) && /Japanese/.test(asked) && !/item\.lab:ruby/.test(asked), 'i18n --ai: one small call with only the missing lines; written', o.text + asked);
 o = await runAsync(['i18n', '-a', 'tr', 'ja_JP', 'item.lab:ruby.name=紅玉']);
 check(/item\.lab:ruby\.name=紅玉/.test(fs.readFileSync(path.join(iu, 'rp', 'texts', 'ja_JP.lang'), 'utf8')) && /OK ja_JP: 1/.test(o.text), 'i18n <lang> key=text: written in place (no file to open)', o.text);
 o = await runAsync(['i18n', '-a', 'tr', '--add', 'zh_CN']);

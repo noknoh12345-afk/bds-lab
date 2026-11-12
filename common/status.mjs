@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const TOP = process.env.LAB_STATUS_ROOT || path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const UNITS = { bds: 'addons', end: 'plugins', ll: 'mods' };
+const UNITS = Object.fromEntries(Object.entries({ bds: 'addons', end: 'plugins', ll: 'mods' }).filter(([k]) => k === 'bds' || fs.existsSync(path.join(TOP, k))));   // (the labs this copy has)
 const read = (f) => { try { return fs.readFileSync(f, 'utf8').trim(); } catch { return ''; } };
 const size = (p) => { let n = 0; try { const st = fs.lstatSync(p); if (!st.isDirectory()) return st.size; for (const e of fs.readdirSync(p)) n += size(path.join(p, e)); } catch { /* gone */ } return n; };
 const mb = (n) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : `${Math.round(n / 1e6)} MB`);
@@ -35,7 +35,7 @@ export async function statusCmd(args, out = console.log) {
   const kind = read(path.join(TOP, '.lab-kind')) || 'bds', cur = read(path.join(TOP, kind, '.lab', 'addon'));
   const ver = read(path.join(TOP, 'VERSION'));
   out(`bds-lab${ver ? ' v' + ver : ''} | lab ${kind}${cur ? ` | current unit ${cur}` : ''}`);
-  const servers = ['bds', 'end', 'll'].map((k) => { const v = read(path.join(TOP, k, '.lab', 'bds', 'VERSION')); return v ? `${k} BDS ${v}` : null; }).filter(Boolean);
+  const servers = Object.keys(UNITS).map((k) => { const v = read(path.join(TOP, k, '.lab', 'bds', 'VERSION')); return v ? `${k} BDS ${v}` : null; }).filter(Boolean);
   out(`servers: ${servers.join(' · ') || 'none yet (node lab.mjs setup all)'}`);
   const rows = unitsState();
   const fails = rows.filter((r) => r.last.startsWith('FAIL'));
@@ -52,8 +52,7 @@ export async function statusCmd(args, out = console.log) {
     .map(([p, what]) => [what, size(path.join(TOP, p))]).filter(([, n]) => n > 5e6);
   if (caches.length) out(`disk: ${caches.map(([w, n]) => `${w} ${mb(n)}`).join(' · ')} (node lab.mjs clean frees what can be rebuilt)`);
   const util = (() => { try { return JSON.parse(fs.readFileSync(path.join(TOP, 'common', 'data', 'samples.json'), 'utf8')).utility?.bds ?? []; } catch { return []; } })();
-  const c2s = [process.env.SANDBOX_BE_CMDSCRIPT, path.join(TOP, 'cmdscript-be', 'src', 'index.js')].some((f) => f && fs.existsSync(f));
-  out(`tools: utility addons ${util.join(', ') || 'none'} (in up/live/serve and deploy${util.includes('ts_repl') ? '; ts "<code>" runs code in the live one, help ts' : ''}) · sandbox-be ${fs.existsSync(path.join(TOP, 'sandbox-be', 'src', 'index.js')) ? 'ready (sim)' : 'missing'} · cmd2script ${c2s ? 'ready (c2s)' : 'missing (help c2s)'}${fs.existsSync(path.join(TOP, 'bedrock-binary', 'src', 'cli.js')) ? ' · bedrock-binary ready (bb)' : ''} · lan ${fs.existsSync(path.join(TOP, 'common', 'nethernet-connect', 'dist', 'src', 'index.js')) ? 'ready' : 'missing (common/nethernet-connect/dist is not in this copy: help lan)'}`);
+  out(`tools: utility addons ${util.join(', ') || 'none'} (in up/live/serve and deploy${util.includes('ts_repl') ? '; ts "<code>" runs code in the live one, help ts' : ''}) · sandbox-be ${fs.existsSync(path.join(TOP, 'sandbox-be', 'src', 'index.js')) ? 'ready (sim)' : 'missing'}${fs.existsSync(path.join(TOP, 'bedrock-binary', 'src', 'cli.js')) ? ' · bedrock-binary ready (bb)' : ''}`);
   const training = (() => { try { return fs.readdirSync(path.join(TOP, 'training', 'addons')).length; } catch { return 0; } })();
   if (training) out(`training/: ${training} training addon(s) kept out of tests, upkeep and the autopilot (training/README.md)`);
   out(fails.length ? `next: node lab.mjs ${fails[0].lab} go -a ${fails[0].unit}   (node lab.mjs ${fails[0].lab} why -a ${fails[0].unit} first if the cause is not plain)` : cur ? `next: node lab.mjs go -a ${cur}` : 'next: node lab.mjs bds new <name> "<Title>" "<request>"');
