@@ -91,8 +91,20 @@ export function importCard(ctx) {
     const f = file.files?.[0];
     state.replaceChildren(f && f.size > W.BIG_BYTES ? h('span', { class: 'warn' }, `${fmtBytes(f.size)} の大きなパックです: 送るのに時間がかかります（Wi-Fi で）。GitHub が大きすぎると断ったら、音や画像を減らして小さくしてください。`) : '');
   });
+  // (by name, no file: an Endstone plugin from PyPI or GitHub — the run downloads it; nothing is sent from this device)
+  const source = h('input', { type: 'text', id: 'import-source', placeholder: 'pypi:endstone-essentials ／ gh:EndstoneMC/python-example-plugin', autocapitalize: 'off', spellcheck: 'false' });
+  const takeByName = async () => {
+    const r = W.importSourceInputs({ source: source.value, unit: unit.value, words: words.value });
+    if (r.error) return toast(r.error, true);
+    if (await U.unitExists(ctx.api, ctx.lab.slug, r.unit, 'end').catch(() => false)) return toast(`${r.dir} はもうあります: 名前を変えて（「名前」の欄に）`, true);
+    const ok = await ctx.guarded('dispatch', { workflow: W.WORKFLOW, job: 'import', source: r.inputs.source, unit: r.unit, kind: 'end' }, () => ctx.dispatch(W.WORKFLOW, r.inputs), `${r.inputs.source} を ${r.dir} に取り込み始めました（数分: できると「アドオン」に出ます）`);
+    if (ok === undefined) return;
+    source.value = ''; unit.value = ''; words.value = '';
+    later(ctx);
+  };
   const take = async () => {
     const f = file.files?.[0];
+    if (!f && source.value.trim()) return takeByName();
     if (!f) return toast('ファイルを選んでください', true);
     const p = W.importPlan({ fileName: f.name, size: f.size, words: words.value, unit: unit.value, kind: kindSel.value || null });
     if (p.error) return toast(`${p.error}。ファイルを選び直すか「名前」の欄を直して、もう一度「取り込む」`, true);
@@ -115,6 +127,7 @@ export function importCard(ctx) {
     noWorkflow(ctx),
     h('details', {}, h('summary', {}, 'ファイルを選ぶ'),
       h('label', { for: 'import-file' }, 'ファイル'), file,
+      h('label', { for: 'import-source' }, 'または名前で（Endstone のプラグイン: PyPI か GitHub。ファイルは要りません）'), source,
       h('label', { for: 'import-unit' }, '名前（英小文字・数字・_。空ならファイルの名前から）'), unit,
       h('label', { for: 'import-kind' }, 'ラボ'), kindSel,
       h('label', { for: 'import-words' }, 'その人の言葉（何をしてほしいか: TASK.md に）'), words,

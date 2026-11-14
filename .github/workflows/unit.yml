@@ -36,6 +36,10 @@ on:
         description: 'import: パネルが incoming/ に置いたファイル（incoming/<名前>）'
         type: string
         default: ''
+      source:
+        description: 'import（ファイルの代わり）: Endstone のプラグインを名前で — pypi:endstone-<名前>[==版] か gh:<持ち主>/<リポジトリ>[@枝]'
+        type: string
+        default: ''
       words:
         description: 'import: その人の言葉'
         type: string
@@ -43,7 +47,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: unit-${{ inputs.unit || inputs.file || github.run_id }}
+  group: unit-${{ inputs.unit || inputs.file || inputs.source || github.run_id }}
   cancel-in-progress: false
 jobs:
   run:
@@ -71,9 +75,10 @@ jobs:
         env:
           KIND: ${{ inputs.kind }}
           FILE: ${{ inputs.file }}
+          SOURCE: ${{ inputs.source }}
         run: |
           k="$KIND"
-          if [[ -z "$k" && "$FILE" =~ \.(whl|tar\.gz|tgz)$ ]]; then k=end; fi
+          if [[ -z "$k" && ( "$FILE" =~ \.(whl|tar\.gz|tgz)$ || -n "$SOURCE" ) ]]; then k=end; fi
           case "${k:-bds}" in bds) dir=bds/addons ;; end) dir=end/plugins ;; ll) dir=ll/mods ;; *) echo "::error title=unit::kind は bds・end・ll"; exit 1 ;; esac
           echo "kind=${k:-bds}" >> "$GITHUB_OUTPUT"; echo "dir=$dir" >> "$GITHUB_OUTPUT"
       - if: steps.lab.outputs.kind != 'bds'
@@ -86,7 +91,7 @@ jobs:
         working-directory: ${{ steps.lab.outputs.kind }}
       # (import: the pack from its own branch into incoming/ — a plain name only, nothing outside the folder)
       - name: the pack
-        if: inputs.job == 'import'
+        if: inputs.job == 'import' && inputs.source == ''
         env:
           FILE: ${{ inputs.file }}
         run: |
@@ -105,6 +110,7 @@ jobs:
           REQUEST: ${{ inputs.request }}
           FILE: ${{ inputs.file }}
           WORDS: ${{ inputs.words }}
+          SOURCE: ${{ inputs.source }}
           KIND: ${{ steps.lab.outputs.kind }}
         run: node lab.mjs unitci
       # (new and import: the unit kept on the branch it ran on)
@@ -133,7 +139,7 @@ jobs:
           printf '### ⚠️ %s は直接の push を受け付けません\n\n%s/%s を枝 `%s` に置きました。[PR を作る](%s)（守られた枝では PR を通して入れます）\n' "$GITHUB_REF_NAME" "$DIR" "$MADE" "$side" "$pr" >> "$GITHUB_STEP_SUMMARY"
       # (import: the pack's own branch deleted whatever happened — a new try from the panel puts the pack on a new one)
       - name: the pack's branch away
-        if: always() && inputs.job == 'import'
+        if: always() && inputs.job == 'import' && inputs.source == ''
         env:
           FILE: ${{ inputs.file }}
         run: |

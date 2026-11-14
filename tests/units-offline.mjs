@@ -216,6 +216,9 @@ await t('unit.yml\'s inputs: a new unit, a run, a pack to take in — names made
   const wp = W.importPlan({ fileName: 'endstone_warp-1.2.3-py3-none-any.whl', size: 9, now: Date.UTC(2026, 9, 8, 12, 3), nonce: 'ab12' });
   eq([wp.path, wp.unit, wp.kind, wp.dir, wp.inputs.kind], ['incoming/endstone_warp-1.2.3-py3-none-any-20261008T1203-ab12.whl', 'warp', 'end', 'end/plugins/warp', 'end'], 'a wheel: an Endstone plugin, named without endstone_ and its version');
   const sd = W.importPlan({ fileName: 'endstone-inv-2.0.tar.gz', size: 9, now: 0, nonce: 'ab12' }), gz = W.importPlan({ fileName: 'Plug-main.zip', size: 9, kind: 'end', now: 0, nonce: 'ab12' });
+  const bn = W.importSourceInputs({ source: 'https://github.com/me/warp-plugin', words: 'x' });
+  eq([bn.unit, bn.dir, bn.inputs], ['warp', 'end/plugins/warp', { job: 'import', kind: 'end', source: 'gh:me/warp-plugin', unit: 'warp', words: 'x' }], 'by name: a github.com link taken as gh:, the unit from the repository');
+  ok(W.importSourceInputs({ source: 'gh:a/b c' }).error && W.importSourceInputs({ source: '' }).error && W.importSourceInputs({ source: 'pypi:x', unit: 'Bad' }).error, 'by name: a word that is not one, none, or a bad unit name: refused');
   ok(/\.tar\.gz$/.test(sd.path) && W.INCOMING.test(sd.path) && sd.unit === 'inv' && gz.kind === 'end' && gz.dir === 'end/plugins/plug_main' && W.incomingBranch(sd.path) === `lab-incoming/${sd.name}`, JSON.stringify([sd, gz]));
   // a pack's name in incoming/: made safe, then its own — a short time and a random part after its stem
   const at = Date.UTC(2026, 9, 8, 12, 3, 45);
@@ -367,6 +370,10 @@ await t('unitci: the inputs checked by the panel\'s own rules — each job\'s co
   eq(C.plan({ JOB: 'new', UNIT: 'warp', KIND: 'end', TITLE: 'Warp' }).args, ['lab.mjs', 'end', 'new', 'warp', 'Warp']);
   ok(C.plan({ JOB: 'sim', UNIT: 'hub', KIND: 'end' }).error && C.plan({ JOB: 'test', UNIT: 'hub', KIND: 'evil' }).error && !/evil/.test(C.plan({ JOB: 'test', UNIT: 'hub', KIND: 'evil' }).error), 'sim on a plugin and an unknown lab: refused (the word not repeated)');
   eq(C.madeUnit(['OK end/plugins/warp/ (endstone-warp 1.2.3), now the current plugin'], 'end'), 'warp');
+  // by name (SOURCE, no file): an Endstone plugin from PyPI or GitHub, the lab's end import downloads it in the run
+  eq(C.plan({ JOB: 'import', SOURCE: 'pypi:endstone-essentials==0.0.5', WORDS: '直して' }).args, ['lab.mjs', 'end', 'import', 'pypi:endstone-essentials==0.0.5', '直して', '--name', 'essentials']);
+  eq(C.plan({ JOB: 'import', SOURCE: 'gh:EndstoneMC/python-example-plugin' }).unit, 'python_example', 'a repository: its name without -plugin');
+  for (const bad of ['gh:o/r;rm -rf /', '--help', 'pypi:../x', 'https://evil.example/x.whl', 'gh:o/../r']) ok(C.plan({ JOB: 'import', SOURCE: bad }).error, `refused: ${bad}`);
   eq(C.madeUnit(['OK bds/addons/x/ (bp)'], 'end'), null, 'another lab\'s line is not this one\'s unit');
   eq(C.plan({ JOB: 'new', UNIT: 'ruby_sword', TITLE: 'Ruby Sword', REQUEST: 'x' }).show, 'node lab.mjs bds new ruby_sword "Ruby Sword" x');
   const bad = [{ JOB: 'rm', UNIT: 'coins' }, { JOB: 'new\n::add-mask::x', UNIT: 'coins' }, { JOB: 'test', UNIT: 'Coins' }, { JOB: 'go', UNIT: 'coins; rm -rf /' }, { JOB: 'test', UNIT: '' },
@@ -621,6 +628,16 @@ await t('the cards (fake DOM, fake GitHub): 新しく作る starts unit.yml with
     ok(/bds\/addons\/coins はもうあります: 名前を変えて/.test(toast.kids.at(-1)?.textContent) && log.guarded.length === 2 && f.st.seen.slice(n0).map((s) => `${s.method} ${s.path}`).join() === 'GET /repos/o/lab/contents/bds/addons/coins', `${file} ${typed}: ${toast.kids.at(-1)?.textContent}`);
   }
   im.byId('import-unit').value = '';
+  // by name (no file chosen): an Endstone plugin from PyPI — unit.yml with source, nothing put on a branch; a word that is not a
+  // name: said, nothing sent
+  im.byId('import-file').files = [];
+  im.byId('import-source').value = 'not a name'; { const n0 = f.st.seen.length; await im.button(/^取り込む$/).click(); ok(/pypi:endstone-<名前>/.test(toast.kids.at(-1)?.textContent ?? toast.textContent) && f.st.seen.length === n0 && log.guarded.length === 2, 'by name: not a name, said, nothing sent'); }
+  im.byId('import-source').value = 'pypi:endstone-warp==1.2.3'; im.byId('import-words').value = '直して';
+  { const n0 = f.st.seen.length; await im.button(/^取り込む$/).click();
+    const sent2 = f.st.seen.slice(n0).map((x) => `${x.method} ${x.path}`);
+    eq(sent2, ['GET /repos/o/lab/contents/end/plugins/warp', 'POST /repos/o/lab/actions/workflows/unit.yml/dispatches'], 'by name: the name looked up in end/plugins, then unit.yml — no branch, no file');
+    eq([f.st.seen.at(-1).body.inputs, log.guarded.at(-1).detail], [{ job: 'import', kind: 'end', source: 'pypi:endstone-warp==1.2.3', unit: 'warp', words: '直して' }, { workflow: 'unit.yml', job: 'import', source: 'pypi:endstone-warp==1.2.3', unit: 'warp', kind: 'end' }]);
+    ok(im.byId('import-source').value === '' && /end\/plugins\/warp に取り込み始めました/.test(log.guarded.at(-1).done), log.guarded.at(-1).done); }
   // the editor
   const ran = [], ed = UW.editorView({ ...ctx, runUnit: (x) => ran.push(x) }, U.unitSummary({ name: 'coins', manifest: LAB['bds/addons/coins/bp/manifest.json'] }));
   await settle();

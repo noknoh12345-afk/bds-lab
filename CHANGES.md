@@ -11,6 +11,11 @@
 - **試験の `js` 行が `<=`・`>=`・`^` を使えるように**: BDS のコマンドの読み手がこれらを断るため（`js 1<=2` は一度も動かなかった）、その行だけ文字を符号にして送り、ラボの helper.js が戻します（本物の BDS で確かめ。試験 `tests/jsline-offline.mjs`）。
 - **`py`・`lse` 行の `\n` は文字列の中ではそのまま**（`common/codeline.mjs`）: `py return "a\nb".split("\n")` が改行に化けて SyntaxError だったのを直しました（本物の Endstone で ["a","b"]。試験 `tests/codeline-offline.mjs`）。
 - **GeoUI を bds-lab の中の独立したプロジェクトに**（`geoui/`）: 自分の README・package.json・`node test.mjs`（生成器 8 つ + 試験 15 本を並べて）・`node lab.mjs`（bds ラボへの入口: `go -a geoui_…`・`go all`）と、アドオン 30 個（`geoui/addons/`）・試験（`geoui/tests/`）。bds ラボ・`sim`・`maint`・API の差・app ラボ・CI の計画は geoui/addons を名前で見つけ、`auto gate --all` と verify は geoui/tests も走らせます（`go all --lab geoui`）。`bds/addons` には自分のアドオンだけ。
+- **名前だけで持ち込む**: `end import pypi:endstone-<名前>[==版]`（その版の wheel、無ければ sdist。依存は入れない）・`gh:<持ち主>/<リポジトリ>[@枝]`（浅い git clone、だめなら GitHub の zip）。ダウンロードするだけで go までは何も動かしません。管理パネルの「取り込む」にも「または名前で」の欄（スマホからファイルなしで: unit.yml の `source`）。
+- **`end brief --live`**: プラグインを新しい本物のサーバーで起動し、Endstone が見ているもの（読み込めたか・その理由の行・登録されたコマンドとコードから読んだものの食い違い）。
+- **`deploy <自分のサーバー> <プラグイン>`**: go が作った wheel を plugins/ に、同じプラグインの古い wheel は外して（`--undo` で戻す）。前は end/plugins を受け付けると言いながらパックしか置きませんでした。
+- **QA のスクリプト時間の上限**: x86 の BDS をエミュレーションで動かすとき（ARM の docker: QEMU・Rosetta）は普段の 3 倍で、そう書きます（ARM のインストーラーの試験が QEMU の遅さで落ちていた）。安定版にも。
+- `teleport_menu` を今の BDS のベータ（server 2.12.0-beta・server-ui 2.4.0-beta）に: 更新で 2.11.0-beta が消え、読み込めなくなっていました（chatSend はベータだけ）。DONE 20/20。
 - Endstone・LeviLamina の `new`・`import` のあとに出るスキルは、そのラボのもの（前は依頼の言葉からアドオンのスキルが出ることがあった）。
 
 ### 🌐 GeoUI: URL の画像・F1（ゲームモードはそのまま）・ゲームの中のウェブ（GeoUI Web）

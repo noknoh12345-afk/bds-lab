@@ -5,6 +5,7 @@
 //   import         node lab.mjs <kind> import incoming/<f> ["<words>"] --name <unit>   (no UNIT: unitFromFile, the panel's own
 //                  rule — never the pack's header.name; the pack waits on the branch incomingBranch(FILE): unit.yml takes it)
 //   test sim go    node lab.mjs <kind> <job> -a <unit>
+// SOURCE (import, instead of FILE): pypi:<name>[==v] | gh:<owner>/<repo>[@ref] — an Endstone plugin by name, downloaded by the lab
 // KIND: bds (default) | end | ll — the lab the unit is in (an import's: from the file, .whl .tar.gz .tgz → end, when not given)
 // The words go to it as arguments (never through a shell), on the bds lab (LAB_KIND), and what it prints — the lab's and the
 // person's words — is shown with workflow commands stopped (no line of it is taken for one). The result: the run's summary,
@@ -36,6 +37,12 @@ export function plan(env = {}) {
   if (!W.JOBS.includes(job)) return { error: `JOB は ${W.JOBS.join('・')} のどれか` };
   const kind = v('KIND') || (job === 'import' ? W.kindOfPack(file) : 'bds');
   if (!W.KINDS.includes(kind)) return { error: `KIND は ${W.KINDS.join('・')} のどれか` };
+  if (job === 'import' && v('SOURCE')) {
+    // (by name: an Endstone plugin from PyPI or GitHub, the lab's end import downloads it — no file, no branch)
+    const r = W.importSourceInputs({ source: v('SOURCE'), unit, words });
+    if (r.error) return { error: r.error };
+    return made(job, r.unit, ['lab.mjs', 'end', 'import', r.inputs.source, ...(words ? [words] : []), '--name', r.unit], 'end');
+  }
   if (job === 'import') {
     if (file.length > W.LIMITS.file || !W.INCOMING.test(file) || file.includes('..')) return { error: `FILE は incoming/<名前>（${W.IMPORT_TYPES.join('・')}。英数字と . _ -）` };
     const wrong = unit ? W.unitNameProblem(unit, { taking: true }) : '';
@@ -87,7 +94,8 @@ export async function unitCiCmd(args = [], { env = process.env, spawn = spawnSyn
   // (the import's pack: a file in the lab's own incoming/ folder — neither of them a link to somewhere else)
   const real = (f, dir) => { const s = fs.lstatSync(path.join(root, ...f.split('/')), { throwIfNoEntry: false }); return Boolean(dir ? s?.isDirectory() : s?.isFile()); };
   const pack = p.job === 'import' ? p.args[p.args.indexOf('import') + 1] : null;   // (incoming/<f>, after the word import)
-  const why = p.error ?? (p.job === 'import' && !(real('incoming', true) && real(pack)) ? `${pack} がありません（パネルの取り込みがまだ届いていないか、もう消されました）` : null);
+  const byName = p.job === 'import' && /^(pypi:|gh:|endstone[-_])/.test(pack ?? '');
+  const why = p.error ?? (p.job === 'import' && !byName && !(real('incoming', true) && real(pack)) ? `${pack} がありません（パネルの取り込みがまだ届いていないか、もう消されました）` : null);
   // (from here what is printed is the person's and the lab's words: no workflow command until the end)
   const stop = crypto.randomBytes(8).toString('hex');
   out(`::stop-commands::${stop}`);

@@ -13,6 +13,8 @@
 //            lab-incoming/<name> (incomingBranch), never on the default branch — put there by putIncoming; unit.yml takes it
 //            from that branch and deletes the branch once the unit is made
 //   words    import: what the person asked
+//   source   import by name instead of a file (an Endstone plugin): pypi:<name>[==version] or gh:<owner>/<repo>[@ref] —
+//            SOURCE's rule here, the lab's end import downloads it in the run (nothing on a branch, no file sent)
 // new and import commit the unit to the default branch; go uploads dist/*.mcaddon as the artifact unit-<name>.
 // Pure but for the calls to GitHub at the end (through lib/gh.mjs). No DOM, no node:.
 import { UNIT, isUnitName, DIR } from './units.mjs';
@@ -129,6 +131,24 @@ export function importPlan({ fileName, size, words = '', unit = '', kind = null,
   const as = u || unitFromFile(name, k), dir = `${DIR[k]}/${as}`;
   // ([skip ci]: a pack waiting for unit.yml is no change of the lab's code — the push starts no verify run)
   return { name, path, branch: incomingBranch(name), unit: as, kind: k, dir, message: `panel: 取り込む ${name}（unit.yml が ${dir} に） [skip ci]`, inputs: { job: 'import', file: path, unit: as, words: w, ...kindIn(k) } };
+}
+/** a plugin by name: pypi:<name>[==version] (a bare endstone-<name> too) or gh:<owner>/<repo>[@ref] (a github.com link too) —
+ *  the lab's own parseSource (end/importer.mjs) takes the same; nothing that could be a shell word or an option */
+export const SOURCE = /^(?:pypi:[A-Za-z0-9][A-Za-z0-9._-]{0,99}(?:==[\w.!+-]{1,40})?|endstone[-_][A-Za-z0-9._-]{1,90}(?:==[\w.!+-]{1,40})?|gh:[\w.-]{1,39}\/[\w.-]{1,100}(?:@[\w./-]{1,100})?)$/;
+/** the plugin a name becomes when no unit name is given (pure): pypi:endstone-warp==1.2 → warp, gh:me/my-plugin → my_plugin */
+export function unitFromSource(source) {
+  const s = String(source ?? '').trim(), n = /^gh:[\w.-]+\/([\w.-]+)/.exec(s)?.[1] ?? s.replace(/^pypi:/, '').replace(/==.*$/, '');
+  return unitFromFile(`${n.replace(/^endstone[-_]/i, '').replace(/[-_.]?(endstone|plugin)$/i, '') || n}.whl`, 'end');
+}
+/** 「名前で取り込む」 → { inputs } for unit.yml (job import, kind end, source), or { error } (pure) */
+export function importSourceInputs({ source, unit = '', words = '' } = {}) {
+  const s0 = String(source ?? '').trim(), s = /^(?:https?:\/\/)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/.exec(s0) ? s0.replace(/^(?:https?:\/\/)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/, 'gh:$1/$2') : s0;
+  if (!SOURCE.test(s) || s.includes('..')) return { error: '名前は pypi:endstone-<名前>（==版 も）か gh:<持ち主>/<リポジトリ>（@枝 も）' };
+  const u = String(unit ?? '').trim(), w = String(words ?? '').trim();
+  const bad = (u ? unitNameProblem(u, { taking: true }) : '') || textProblem(w, { max: LIMITS.words, what: 'その人の言葉' });
+  if (bad) return { error: bad };
+  const as = u || unitFromSource(s);
+  return { unit: as, kind: 'end', dir: `${DIR.end}/${as}`, inputs: { job: 'import', kind: 'end', source: s, unit: as, words: w } };
 }
 /** FileReader's data: URL → its base64 (pure) */
 export function base64Of(dataUrl) { const s = String(dataUrl ?? ''), i = s.indexOf(';base64,'); return i < 0 ? '' : s.slice(i + 8); }
