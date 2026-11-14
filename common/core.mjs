@@ -54,6 +54,9 @@ const RP = path.join(ADDON ?? path.join(ADDONS, '_none'), 'rp');
 const FWD = "// written by bds-lab: `node lab.mjs ...` works from this folder too (= from the bds-lab folder, for this unit). Not packed.\nimport path from 'node:path';\nimport { fileURLToPath, pathToFileURL } from 'node:url';\nconst here = path.dirname(fileURLToPath(import.meta.url)), top = path.resolve(here, '..', '..', '..');\nconst kind = path.basename(path.dirname(path.dirname(here)));\nif (!process.argv.slice(2).some((a) => a === '-a' || a === '--addon')) process.env.LAB_ADDON ??= path.basename(here);\nif (!['bds', 'end', 'll'].includes(process.argv[2])) process.argv.splice(2, 0, kind);\nprocess.chdir(top);\nawait import(pathToFileURL(path.join(top, 'lab.mjs')).href);\n";
 const packFileName = (m) => { let raw = String(m?.header?.name ?? ''); if (/^[\w]+(\.[\w]+)+$/.test(raw)) { try { const hit = fs.readFileSync(path.join(BP, 'texts', 'en_US.lang'), 'utf8').split(/\r?\n/).find((l) => l.startsWith(raw + '=')); if (hit) raw = hit.slice(raw.length + 1).replace(/\s*##.*$/, ''); } catch { /* no lang */ } }   // (a name given as a lang key: pack.name → its English text)
   const n = raw.replace(/§./g, '').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, ''); return /[A-Za-z0-9]/.test(n) ? n : path.basename(ADDON); };
+// a js line as BDS's command parser takes it: `scriptevent lab:js #<code>`. The parser refuses <=, >= and ^ anywhere in the
+// message ("Syntax error: Unexpected"); such code goes as #% + those characters (and %) percent-encoded, helper.js decodes it
+const jsCmd = (code) => `scriptevent lab:js #${/[<>]=|\^/.test(code) ? '%' + code.replace(/[%<>=^]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')) : code}`;
 function forwarder(dir) { try { const f = path.join(dir, 'lab.mjs'); if (dir !== ROOT && !fs.existsSync(f) && fs.existsSync(path.join(path.dirname(path.dirname(dir)), 'lab.mjs'))) fs.writeFileSync(f, FWD); } catch { /* read-only */ } }
 const needAddon = () => {
   if (ADDON && isUnit(ADDON)) { forwarder(ADDON); return; }
@@ -1577,7 +1580,7 @@ class Engine {
     if (!seen() && this.jsWait) await this.srv.wait(/LAB_JS_READY/, 10000);
     this.jsWait = false;
     if (!seen()) { LOG.push('[0-0-0 0:0:0 ERROR] js unavailable: the addon script did not load (see errors above)'); return; }
-    this.srv.send('scriptevent lab:js #' + code);   // '#' keeps the command parser away from a leading [ or {
+    this.srv.send(jsCmd(code));   // '#' keeps the command parser away from a leading [ or {
     await this.srv.wait(/LAB_JS_DONE/, 30000);
     await sleep(50);
   }
@@ -1631,7 +1634,7 @@ class Engine {
           // the bot asks the server-side script for block permutations (needed for block clicks)
           const ask = async (code, tag) => {
             const n = LOG.length;
-            srv.send(`scriptevent lab:js #${code}`);
+            srv.send(jsCmd(code));
             await srv.wait(/LAB_JS_DONE/, 5000);
             const l = LOG.slice(n).find((x) => x.includes(tag + ' '));
             for (let i = LOG.length - 1; i >= n; i--) if (/LAB_BLOCK |LAB_TAGS |LAB_JS_DONE|Script event /.test(LOG[i])) LOG.splice(i, 1);
