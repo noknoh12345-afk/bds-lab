@@ -14,7 +14,7 @@ export const KINDS = [
   { kind: 'll', dir: 'll/mods', manifest: 'manifest.json' },
 ];
 export const KIND_WORDS = { bds: 'アドオン', end: 'Endstone のプラグイン', ll: 'LeviLamina の MOD' };
-const DIR = Object.fromEntries(KINDS.map((k) => [k.kind, k.dir]));
+export const DIR = Object.fromEntries(KINDS.map((k) => [k.kind, k.dir]));
 
 /** a folder that is a unit to show (pure): not a hidden or parked one (_ zz_ .), and a name the lab takes */
 export const isUnitName = (n) => !/^(_|zz_|\.)/.test(String(n ?? '')) && UNIT.test(String(n ?? ''));
@@ -104,6 +104,6 @@ export function listUnits(api, slug, { fresh = false } = {}) {
 /** what was read for this lab forgotten (a file was changed here: the next look reads again) */
 export const forgetUnits = (api, slug) => { CACHE.get(api)?.delete(slug); };
 /** is there a bds unit by this name on the default branch already → true / false */
-export async function unitExists(api, slug, name) {
-  try { await api.call('GET', `/repos/${slug}/contents/${DIR.bds}/${encodeURIComponent(name)}`); return true; } catch (e) { if (e.status === 404) return false; throw e; }
+export async function unitExists(api, slug, name, kind = 'bds') {
+  try { await api.call('GET', `/repos/${slug}/contents/${DIR[kind] ?? DIR.bds}/${encodeURIComponent(name)}`); return true; } catch (e) { if (e.status === 404) return false; throw e; }
 }

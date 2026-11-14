@@ -37,14 +37,18 @@ const ADDONS = path.join(ROOT, F.unitDir);
 // the lab's bundled samples (end/examples, ll/examples): kept apart from the person's own units, still a `-a <name>` away —
 // tested, run and read in place; `new <name> --from <sample>` makes one of them the person's own (common/examples.mjs)
 const EXAMPLES = path.join(ROOT, 'examples');
+// a project of the repository's own that brings units for this lab (geoui/addons for bds): found by name as a sample is
+const PROJECT_UNITS = (F.name === 'bds' ? ['geoui/addons'] : []).map((p) => path.join(TOP, p));
 const isUnit = (d) => { try { return F.isUnit(d); } catch { return false; } };
 const addonNames = () => (fs.existsSync(ADDONS) ? fs.readdirSync(ADDONS).filter((n) => isUnit(path.join(ADDONS, n))).sort() : []);
 const gitBranch = () => { try { const r = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }); return r.status === 0 ? r.stdout.trim() : ''; } catch { return ''; } };
 function resolveAddon() {
   if (ADDON_ARG) {
-    const own = path.join(ADDONS, ADDON_ARG), ex = path.join(EXAMPLES, ADDON_ARG);
-    // (a unit of the person's own wins; else the sample of that name; else the person's path, as before — `new` makes it)
-    return !fs.existsSync(own) && /^[a-z0-9_]+$/.test(ADDON_ARG) && isUnit(ex) ? ex : own;
+    const own = path.join(ADDONS, ADDON_ARG);
+    // (a unit of the person's own wins; else the sample of that name, then a project's; else the person's path, as before —
+    // `new` makes it)
+    if (fs.existsSync(own) || !/^[a-z0-9_]+$/.test(ADDON_ARG)) return own;
+    return [EXAMPLES, ...PROJECT_UNITS].map((d) => path.join(d, ADDON_ARG)).find(isUnit) ?? own;
   }
   if (isUnit(ROOT)) return ROOT;   // single-unit folder (bench workspaces, docs/coverage)
   const names = addonNames();
@@ -58,9 +62,12 @@ const BP = path.join(ADDON ?? path.join(ADDONS, '_none'), 'bp');
 const RP = path.join(ADDON ?? path.join(ADDONS, '_none'), 'rp');
 // <unit>/lab.mjs: `node lab.mjs ...` run after a `cd` into the unit works too (the commonest lost turn in bench transcripts: an
 // AI cds into its unit, then `node lab.mjs go` there finds no lab.mjs). It is the lab's own lab.mjs, pinned to this unit.
-const FWD = "// written by bds-lab: `node lab.mjs ...` works from this folder too (= from the bds-lab folder, for this unit). Not packed.\nimport path from 'node:path';\nimport { fileURLToPath, pathToFileURL } from 'node:url';\nconst here = path.dirname(fileURLToPath(import.meta.url)), top = path.resolve(here, '..', '..', '..');\nconst kind = path.basename(path.dirname(path.dirname(here)));\nif (!process.argv.slice(2).some((a) => a === '-a' || a === '--addon')) process.env.LAB_ADDON ??= path.basename(here);\nif (!['bds', 'end', 'll'].includes(process.argv[2])) process.argv.splice(2, 0, kind);\nprocess.chdir(top);\nawait import(pathToFileURL(path.join(top, 'lab.mjs')).href);\n";
+const FWD = "// written by bds-lab: `node lab.mjs ...` works from this folder too (= from the bds-lab folder, for this unit). Not packed.\nimport path from 'node:path';\nimport { fileURLToPath, pathToFileURL } from 'node:url';\nconst here = path.dirname(fileURLToPath(import.meta.url)), top = path.resolve(here, '..', '..', '..');\nconst k0 = path.basename(path.dirname(path.dirname(here))), kind = k0 === 'geoui' ? 'bds' : k0;   // (GeoUI's addons: the bds lab)\nif (!process.argv.slice(2).some((a) => a === '-a' || a === '--addon')) process.env.LAB_ADDON ??= path.basename(here);\nif (!['bds', 'end', 'll'].includes(process.argv[2])) process.argv.splice(2, 0, kind);\nprocess.chdir(top);\nawait import(pathToFileURL(path.join(top, 'lab.mjs')).href);\n";
 const packFileName = (m) => { let raw = String(m?.header?.name ?? ''); if (/^[\w]+(\.[\w]+)+$/.test(raw)) { try { const hit = fs.readFileSync(path.join(BP, 'texts', 'en_US.lang'), 'utf8').split(/\r?\n/).find((l) => l.startsWith(raw + '=')); if (hit) raw = hit.slice(raw.length + 1).replace(/\s*##.*$/, ''); } catch { /* no lang */ } }   // (a name given as a lang key: pack.name → its English text)
   const n = raw.replace(/§./g, '').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, ''); return /[A-Za-z0-9]/.test(n) ? n : path.basename(ADDON); };
+// a js line as BDS's command parser takes it: `scriptevent lab:js #<code>`. The parser refuses <=, >= and ^ anywhere in the
+// message ("Syntax error: Unexpected"); such code goes as #% + those characters (and %) percent-encoded, helper.js decodes it
+const jsCmd = (code) => `scriptevent lab:js #${/[<>]=|\^/.test(code) ? '%' + code.replace(/[%<>=^]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')) : code}`;
 function forwarder(dir) { try { const f = path.join(dir, 'lab.mjs'); if (dir !== ROOT && !fs.existsSync(f) && fs.existsSync(path.join(path.dirname(path.dirname(dir)), 'lab.mjs'))) fs.writeFileSync(f, FWD); } catch { /* read-only */ } }
 const needAddon = () => {
   if (ADDON && isUnit(ADDON)) { forwarder(ADDON); return; }
@@ -1330,13 +1337,13 @@ async function writePacks(world, settings = {}, live = false) {
   writeJson(path.join(world, 'world_resource_packs.json'), rps);
   return packHash();
 }
-// GeoUI Web (bds/geoui/web): the service the unit's script asks for pages and the game fetches pictures from, started beside the
+// GeoUI Web (geoui/web): the service the unit's script asks for pages and the game fetches pictures from, started beside the
 // BDS once (GEOUI_WEB_HOST: the name the game uses for this machine — the app lab passes it)
 async function geouiWeb() {
   try {
-    const { ensureService } = await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'web', 'lab.mjs')).href);
+    const { ensureService } = await import(pathToFileURL(path.join(TOP, 'geoui', 'web', 'lab.mjs')).href);
     // ("tunnel": true — an https address by cloudflared as well; "app" — only when the app lab plays (it names this machine for
-    //  the game: GEOUI_WEB_HOST): bds/geoui/web/lab.mjs)
+    //  the game: GEOUI_WEB_HOST): geoui/web/lab.mjs)
     let conf = {}; try { conf = readJson(path.join(ADDON, 'geoui-web.json')) ?? {}; } catch { /* {} */ }
     const r = await ensureService({ logFile: path.join(LAB, 'geoui-web.log'), tunnel: conf.tunnel === true || (conf.tunnel === 'app' && !!process.env.GEOUI_WEB_HOST) || process.env.GEOUI_WEB_TUNNEL === '1' });
     if (!r.ok) LOG.push(`[0-0-0 0:0:0 WARN] ${r.why}`);
@@ -1382,7 +1389,7 @@ class Engine {
       LOG.push(this.ok ? '[0-0-0 0:0:0 INFO] BDS crashed while starting and started the second time (not the addon: the same addon loaded)' : '[0-0-0 0:0:0 ERROR] BDS crashed while starting, twice: the addon (a script at load, a pack file) or the world makes it crash');
     }
     if (this.ok && F.afterReady) this.ok = (await F.afterReady(L(), this)) !== false;
-    // (a unit's own service beside its BDS: GeoUI Web when it has geoui-web.json — bds/geoui/web/lab.mjs; kept between boots)
+    // (a unit's own service beside its BDS: GeoUI Web when it has geoui-web.json — geoui/web/lab.mjs; kept between boots)
     if (this.ok && ADDON && exists(path.join(ADDON, 'geoui-web.json'))) await geouiWeb();
     return this.ok;
   }
@@ -1584,7 +1591,7 @@ class Engine {
     if (!seen() && this.jsWait) await this.srv.wait(/LAB_JS_READY/, 10000);
     this.jsWait = false;
     if (!seen()) { LOG.push('[0-0-0 0:0:0 ERROR] js unavailable: the addon script did not load (see errors above)'); return; }
-    this.srv.send('scriptevent lab:js #' + code);   // '#' keeps the command parser away from a leading [ or {
+    this.srv.send(jsCmd(code));   // '#' keeps the command parser away from a leading [ or {
     await this.srv.wait(/LAB_JS_DONE/, 30000);
     await sleep(50);
   }
@@ -1638,7 +1645,7 @@ class Engine {
           // the bot asks the server-side script for block permutations (needed for block clicks)
           const ask = async (code, tag) => {
             const n = LOG.length;
-            srv.send(`scriptevent lab:js #${code}`);
+            srv.send(jsCmd(code));
             await srv.wait(/LAB_JS_DONE/, 5000);
             const l = LOG.slice(n).find((x) => x.includes(tag + ' '));
             for (let i = LOG.length - 1; i >= n; i--) if (/LAB_BLOCK |LAB_TAGS |LAB_JS_DONE|Script event /.test(LOG[i])) LOG.splice(i, 1);
@@ -2553,7 +2560,11 @@ function sameAsLast(ok, sig, file, blocks = [], secs = [], errs = []) {
 }
 // ---------- quality: qa (what players would hit that tests.txt did not ask) and go (check+test+qa+pack) ----------
 // Q = fails `go` (a player would see it), S = suggestion. Budgets measured on BDS 1.26.52 with an empty addon: script_tick 0.3 ms.
-const QA_BUDGET = { avg: Number(process.env.LAB_QA_TICK_MS) || 2, spam: 8 };
+// (an x86-64 BDS emulated — docker on an ARM machine: QEMU or Rosetta — runs every script call several times slower than the
+// players' servers do: measured on GitHub's ubuntu-24.04-arm, kit's own per-tick loop at 2.3 ms that takes well under 1 ms
+// natively. The budget is the native one times 3 there, and the line says so; LAB_QA_TICK_MS sets it outright)
+const EMULATED = RT.kind === 'docker' && os.arch() !== 'x64';
+const QA_BUDGET = { avg: Number(process.env.LAB_QA_TICK_MS) || (EMULATED ? 6 : 2), spam: 8, why: !process.env.LAB_QA_TICK_MS && EMULATED ? ', amd64 emulated here: 3 × the native 2ms' : '' };
 function qaStatic() {
   const q = [], srcDir = exists(path.join(ADDON, 'src')) ? path.join(ADDON, 'src') : path.join(BP, 'scripts');
   const src = files(srcDir, (f) => /\.[cm]?[jt]s$/.test(f) && !/kit\.[jt]s$/.test(f)).map((f) => fs.readFileSync(f, 'utf8')).join('\n');
@@ -2672,7 +2683,7 @@ async function qa({ quiet = false, built = false } = {}) {
       else if (l.startsWith('W ')) q.push(['Q', `${l}   (content log, during: ${during})`]);
       const pm = /^PERF script_tick avg ([\d.]+)ms max ([\d.]+)ms/.exec(l);
       if (pm) { const n0 = q.length; perfNote(+pm[1], q); perfQ.push(...q.slice(n0)); }
-      if (pm) { const avg = +pm[1], max = +pm[2]; if (avg > QA_BUDGET.avg) perfQ.push(q[q.push(['Q', `script time ${avg}ms per tick with 3 players (budget ${QA_BUDGET.avg}ms; max ${max}ms)`]) - 1]); else if (max > 25) perfQ.push(q[q.push(['S', `script spike ${max}ms in one tick (a tick is 50ms): spread the work over ticks (system.runJob)`]) - 1]); }
+      if (pm) { const avg = +pm[1], max = +pm[2]; if (avg > QA_BUDGET.avg) perfQ.push(q[q.push(['Q', `script time ${avg}ms per tick with 3 players (budget ${QA_BUDGET.avg}ms${QA_BUDGET.why}; max ${max}ms)`]) - 1]); else if (max > 25) perfQ.push(q[q.push(['S', `script spike ${max}ms in one tick (a tick is 50ms): spread the work over ticks (system.runJob)`]) - 1]); }
       if (during === 'profile' && /^prof stop/.test(g.cmd ?? '')) { const m = /([\d.]+)ms (.+)$/.exec(l); if (/ sampled/.test(l)) profTotal = +m?.[1] || 0; else if (m) hot += `${hot ? ', ' : ''}${m[2].trim()} ${profTotal ? Math.round((100 * m[1]) / profTotal) + '%' : m[1] + 'ms'}`; }
     }
     if (alive && g.cmd === alive[0] && during === 'alive at first') aliveOk = g.out.some((l) => l.trim() === alive[1]);   // (a probe that never answers, e.g. a fake server, judges nothing)
@@ -3073,11 +3084,13 @@ function useAddon(name, quiet) {
 // import <file|folder> ["<what they asked>"] keeps the request in TASK.md, writes a draft tests.txt that runs each way into the
 // addon once (one go shows every crash) and prints the brief (what it is, its ways in, what breaks on this BDS's APIs)
 async function importAddon(args) {
-  const pos = args.filter((a, k) => !a.startsWith('--') && args[k - 1] !== '--name');
+  const pos = args.filter((a, k) => !a.startsWith('--') && !['--name', '--world'].includes(args[k - 1]));
   const given = pos[0], request = pos.slice(1).join(' ').trim();
   const cands = given ? [path.resolve(process.env.LAB_CALLER_CWD ?? process.cwd(), given), path.resolve(TOP, given), path.resolve(given)] : [];
   const src = cands.find((c) => exists(c));
-  if (!src) die(`usage: node lab.mjs import <file.mcaddon|.mcpack|.zip|folder> ["<what the person asked>"] [--name n]${given ? ` (no ${given} here)` : ''}`);
+  if (!src) die(`usage: node lab.mjs import <file.mcaddon|.mcpack|.zip|folder|your BDS folder> ["<what the person asked>"] [--name n]${given ? ` (no ${given} here)` : ''}`);
+  // a BDS folder of the person's own: everything it runs (its world's addons, its Endstone plugins) as units — common/serverimport.mjs
+  { const SI = await import('./serverimport.mjs'); if (fs.statSync(src).isDirectory() && SI.isServerFolder(src)) { if (!(await SI.importServer(L(), src, request, args))) die('some of the server could not be taken in (the ✘ lines)'); return; } }
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lab-import-'));
   if (fs.statSync(src).isDirectory()) fs.cpSync(src, tmp, { recursive: true }); else unzip(fs.readFileSync(src), tmp);
   // an .mcaddon may hold .mcpack files (zips) instead of folders
@@ -3676,7 +3689,10 @@ try {
   if (ok && (cmd === 'new' || cmd === 'import') && process.env.LAB_NEW_SKILL !== 'off') {
     const pos = rest.filter((a, i) => !a.startsWith('-') && !/^\w+=/.test(a) && !['-a', '--name'].includes(rest[i - 1]));
     const req = pos.slice(cmd === 'new' ? 2 : 1).join(' ').trim(), sk = path.join(LIBDIR, '..', 'skills');
-    if (req && exists(sk) && fs.readdirSync(sk).some((n) => exists(path.join(sk, n, 'SKILL.md')))) try { (await import('./skill-forge.mjs')).route([req, '--print'], out); } catch { /* no skills here */ }
+    // (the Endstone and LeviLamina labs: their own lab's skill — the request's words would otherwise route to an addon skill)
+    const own = { end: 'endstone-plugin', ll: 'levilamina-mod' }[F.name];
+    if (own && exists(path.join(sk, own, 'SKILL.md'))) try { (await import('./skill-forge.mjs')).printSkill(own, req || own, out); } catch { /* no skills here */ }
+    else if (req && exists(sk) && fs.readdirSync(sk).some((n) => exists(path.join(sk, n, 'SKILL.md')))) try { (await import('./skill-forge.mjs')).route([req, '--print'], out); } catch { /* no skills here */ }
   }
 } catch (e) { out(e instanceof Stop || /^usage: /.test(e?.message ?? '') ? 'ERR ' + e.message : 'ERR ' + (e?.stack ?? e)); ok = false; }   // (a usage line needs no stack)
 trace(ok);

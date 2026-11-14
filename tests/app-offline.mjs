@@ -2125,7 +2125,7 @@ await t('scenario: measure geoui <shot> — the lab\'s own measuring on a pictur
   eq(errors, []); eq(steps.map((x) => x.verb), ['shot', 'measure']); eq(steps[1].args, ['geoui', 'calib']);
   const bad = S.parseScenario('measure\nmeasure geoui\nmeasure ruler calib\nmeasure geoui a/b\nmeasure geoui calib extra\n').errors;
   eq(bad.length, 5, bad.join('\n'));
-  const { synth } = await imp('bds/geoui/calib.mjs');
+  const { synth } = await imp('geoui/calib.mjs');
   const dir = path.join(tmp, 'measure'); fs.mkdirSync(dir, { recursive: true });
   const srv = path.join(dir, 'server.log'); fs.writeFileSync(srv, ''); fs.writeFileSync(path.join(dir, 'logcat.txt'), '');
   const g = synth({ h: 176, cx: -0.3, cy: -9.25, w: 1560, hpx: 720 }), grid = pngEncode({ w: g.width, h: g.height, data: Buffer.from(g.data) });

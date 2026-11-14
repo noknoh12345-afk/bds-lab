@@ -33,11 +33,11 @@ const noWorkflow = (ctx) => (ready(ctx) ? null : h('p', { class: 'warn' }, 'こ�
 const later = (ctx) => setTimeout(() => ctx.go?.('runs'), 2500);
 
 /** test / go / sim of a unit on the lab's own Actions (unit.yml) → what guarded gave (undefined: not started) */
-export async function startUnit(ctx, { job, unit }) {
-  const r = W.runInputs({ job, unit });
+export async function startUnit(ctx, { job, unit, kind = 'bds' }) {
+  const r = W.runInputs({ job, unit, kind });
   if (r.error) { toast(r.error, true); return undefined; }
-  const ok = await ctx.guarded('dispatch', { workflow: W.WORKFLOW, job, unit: r.inputs.unit }, () => ctx.dispatch(W.WORKFLOW, r.inputs),
-    `${r.inputs.unit} の${W.JOB_WORDS[job]}を始めました（「進み具合」の unit で見られます${job === 'go' ? `。.mcaddon は実行の成果物 unit-${r.inputs.unit} に` : ''}）`);
+  const ok = await ctx.guarded('dispatch', { workflow: W.WORKFLOW, job, unit: r.inputs.unit, ...(r.inputs.kind ? { kind: r.inputs.kind } : {}) }, () => ctx.dispatch(W.WORKFLOW, r.inputs),
+    `${r.inputs.unit} の${W.jobWord(job, kind)}を始めました（「進み具合」の unit で見られます${job === 'go' ? `。${W.MADE[kind] ?? W.MADE.bds} は実行の成果物 unit-${r.inputs.unit} に` : ''}）`);
   if (ok !== undefined) later(ctx);
   return ok;
 }
@@ -48,20 +48,22 @@ export function newUnitCard(ctx) {
   const name = h('input', { type: 'text', id: 'newunit-name', placeholder: 'ruby_sword', autocapitalize: 'off', spellcheck: 'false' });
   const title = h('input', { type: 'text', id: 'newunit-title', placeholder: 'Ruby Sword' });
   const what = h('textarea', { id: 'newunit-request', placeholder: '例: ルビーの剣。右クリックで雷が落ちる。村人が 5 エメラルドで売ってくれる' });
+  const kindNew = h('select', { id: 'newunit-kind', 'aria-label': 'ラボ' }, ...W.KINDS.map((k) => h('option', { value: k }, U.KIND_WORDS[k] ?? k)));
   const make = async () => {
-    const r = W.newUnitInputs({ unit: name.value, title: title.value, request: what.value });
+    const k = kindNew.value || 'bds', r = W.newUnitInputs({ unit: name.value, title: title.value, request: what.value, kind: k });
     if (r.error) return toast(r.error, true);
     // (a name taken already: said now, not by a run a minute later; the look failing is not said here — the run checks it again)
-    if (await U.unitExists(ctx.api, ctx.lab.slug, r.inputs.unit).catch(() => false)) return toast(`bds/addons/${r.inputs.unit} はもうあります: ほかの名前に`, true);
-    const ok = await ctx.guarded('dispatch', { workflow: W.WORKFLOW, job: 'new', unit: r.inputs.unit }, () => ctx.dispatch(W.WORKFLOW, r.inputs), `${r.inputs.unit} を作り始めました（数分: できると「アドオン」に出ます）`);
+    if (await U.unitExists(ctx.api, ctx.lab.slug, r.inputs.unit, k).catch(() => false)) return toast(`${U.DIR[k]}/${r.inputs.unit} はもうあります: ほかの名前に`, true);
+    const ok = await ctx.guarded('dispatch', { workflow: W.WORKFLOW, job: 'new', unit: r.inputs.unit, ...(r.inputs.kind ? { kind: r.inputs.kind } : {}) }, () => ctx.dispatch(W.WORKFLOW, r.inputs), `${r.inputs.unit} を作り始めました（数分: できると「アドオン」に出ます）`);
     if (ok === undefined) return;
-    name.value = ''; title.value = ''; what.value = '';
+    name.value = ''; title.value = ''; what.value = ''; kindNew.value = 'bds';
     later(ctx);
   };
   return h('div', { class: 'card', id: 'newunit' }, h('h2', {}, '🆕 新しく作る'),
     h('p', { class: 'muted' }, 'GitHub の Actions がひな形（src/main.ts・tests.txt・TASK.md・bp と rp）を作り、既定の枝に入れます（unit.yml）。中身は「ファイルを直す」か「AI で変える」で。'),
     noWorkflow(ctx),
     h('details', {}, h('summary', {}, '名前・題・何をするかを書く'),
+      h('label', { for: 'newunit-kind' }, 'ラボ'), kindNew,
       h('label', { for: 'newunit-name' }, '名前（英小文字・数字・_ の 2〜40 文字: bds/addons/<名前>）'), name,
       h('label', { for: 'newunit-title' }, '題（遊ぶ人に見える名前。空なら名前）'), title,
       h('label', { for: 'newunit-request' }, '何をするアドオンか（TASK.md に）'), what,
@@ -81,6 +83,7 @@ const readAsDataUrl = (file) => new Promise((resolve, reject) => {
 export function importCard(ctx) {
   const file = h('input', { type: 'file', id: 'import-file', accept: W.IMPORT_TYPES.join(',') });
   const unit = h('input', { type: 'text', id: 'import-unit', placeholder: '空ならファイルの名前から', autocapitalize: 'off', spellcheck: 'false' });
+  const kindSel = h('select', { id: 'import-kind', 'aria-label': 'ラボ' }, h('option', { value: '' }, 'ファイルから（.whl・.tar.gz は Endstone）'), ...W.KINDS.map((k) => h('option', { value: k }, U.KIND_WORDS[k] ?? k)));
   const words = h('textarea', { id: 'import-words', placeholder: '例: 新しい Minecraft で動かなくなったので直してほしい。お店の値段を半分に' });
   const state = h('div', { class: 'muted', id: 'import-state' });
   // (a big pack: said as it is chosen — the time it takes, and what to do if GitHub refuses it)
@@ -88,30 +91,45 @@ export function importCard(ctx) {
     const f = file.files?.[0];
     state.replaceChildren(f && f.size > W.BIG_BYTES ? h('span', { class: 'warn' }, `${fmtBytes(f.size)} の大きなパックです: 送るのに時間がかかります（Wi-Fi で）。GitHub が大きすぎると断ったら、音や画像を減らして小さくしてください。`) : '');
   });
+  // (by name, no file: an Endstone plugin from PyPI or GitHub — the run downloads it; nothing is sent from this device)
+  const source = h('input', { type: 'text', id: 'import-source', placeholder: 'pypi:endstone-essentials ／ gh:EndstoneMC/python-example-plugin', autocapitalize: 'off', spellcheck: 'false' });
+  const takeByName = async () => {
+    const r = W.importSourceInputs({ source: source.value, unit: unit.value, words: words.value });
+    if (r.error) return toast(r.error, true);
+    if (await U.unitExists(ctx.api, ctx.lab.slug, r.unit, 'end').catch(() => false)) return toast(`${r.dir} はもうあります: 名前を変えて（「名前」の欄に）`, true);
+    const ok = await ctx.guarded('dispatch', { workflow: W.WORKFLOW, job: 'import', source: r.inputs.source, unit: r.unit, kind: 'end' }, () => ctx.dispatch(W.WORKFLOW, r.inputs), `${r.inputs.source} を ${r.dir} に取り込み始めました（数分: できると「アドオン」に出ます）`);
+    if (ok === undefined) return;
+    source.value = ''; unit.value = ''; words.value = '';
+    later(ctx);
+  };
   const take = async () => {
     const f = file.files?.[0];
+    if (!f && source.value.trim()) return takeByName();
     if (!f) return toast('ファイルを選んでください', true);
-    const p = W.importPlan({ fileName: f.name, size: f.size, words: words.value, unit: unit.value });
+    const p = W.importPlan({ fileName: f.name, size: f.size, words: words.value, unit: unit.value, kind: kindSel.value || null });
     if (p.error) return toast(`${p.error}。ファイルを選び直すか「名前」の欄を直して、もう一度「取り込む」`, true);
     // (a unit by that name already: said now, not by a run a minute later)
-    if (await U.unitExists(ctx.api, ctx.lab.slug, p.unit).catch(() => false)) return toast(`bds/addons/${p.unit} はもうあります: 名前を変えて（「名前」の欄に）`, true);
-    const ok = await ctx.guarded('dispatch', { workflow: W.WORKFLOW, job: 'import', file: p.path, unit: p.unit }, async () => {
+    if (await U.unitExists(ctx.api, ctx.lab.slug, p.unit, p.kind).catch(() => false)) return toast(`${p.dir} はもうあります: 名前を変えて（「名前」の欄に）`, true);
+    const ok = await ctx.guarded('dispatch', { workflow: W.WORKFLOW, job: 'import', file: p.path, unit: p.unit, ...(p.inputs.kind ? { kind: p.inputs.kind } : {}) }, async () => {
       state.replaceChildren(`${f.name}（${fmtBytes(f.size)}）を読んでいます…`);
       const content = W.base64Of(await readAsDataUrl(f));
       state.replaceChildren(`${p.branch} に入れています…`);
       return W.importUnit(ctx.api, ctx.lab.slug, p, content, ctx.dispatch, branch(ctx));
-    }, `${f.name} を bds/addons/${p.unit} に取り込み始めました（数分: できると「アドオン」に出ます）`);
-    state.replaceChildren(ok === undefined ? '取り込めませんでした: 上の知らせを読んで、直してからもう一度「取り込む」を押してください' : `✅ ${p.branch} に入れ、unit.yml を始めました（bds/addons/${p.unit} に）`);
+    }, `${f.name} を ${p.dir} に取り込み始めました（数分: できると「アドオン」に出ます）`);
+    state.replaceChildren(ok === undefined ? '取り込めませんでした: 上の知らせを読んで、直してからもう一度「取り込む」を押してください' : `✅ ${p.branch} に入れ、unit.yml を始めました（${p.dir} に）`);
     if (ok === undefined) return;
-    file.value = ''; unit.value = ''; words.value = '';
+    file.value = ''; unit.value = ''; words.value = ''; kindSel.value = '';
     later(ctx);
   };
-  return h('div', { class: 'card', id: 'importunit' }, h('h2', {}, '📥 取り込む（.mcaddon・.mcpack・.zip）'),
+  return h('div', { class: 'card', id: 'importunit' }, h('h2', {}, '📥 取り込む（.mcaddon・.mcpack・.zip・.whl・.tar.gz）'),
+    h('p', { class: 'muted' }, 'Endstone のプラグインは .whl・.tar.gz（PyPI のもの）か、GitHub のソースの .zip（「ラボ」で Endstone を選ぶ）。'),
     h('p', { class: 'muted' }, `人のアドオンをユニットにして、直して仕上げます。ファイルは取り込みのための枝（lab-incoming/…）に入れ、Actions がユニットにします（既定の枝には入らず、できたら枝は消えます。パックの名前と UUID はそのまま: その人のワールドが新しい版として読みます）。${W.MAX_BYTES / 1024 / 1024} MB まで。`),
     noWorkflow(ctx),
     h('details', {}, h('summary', {}, 'ファイルを選ぶ'),
       h('label', { for: 'import-file' }, 'ファイル'), file,
+      h('label', { for: 'import-source' }, 'または名前で（Endstone のプラグイン: PyPI か GitHub。ファイルは要りません）'), source,
       h('label', { for: 'import-unit' }, '名前（英小文字・数字・_。空ならファイルの名前から）'), unit,
+      h('label', { for: 'import-kind' }, 'ラボ'), kindSel,
       h('label', { for: 'import-words' }, 'その人の言葉（何をしてほしいか: TASK.md に）'), words,
       h('div', { class: 'row' }, h('button', { class: 'primary', ...startAttrs(ctx), onclick: take }, '取り込む')), state));
 }

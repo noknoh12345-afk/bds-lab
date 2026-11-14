@@ -2,8 +2,8 @@ node_modules/
 .lab/
 .lab-current
 dist/
-# (GeoUI Builder as one plugin file for Blockbench: bds/geoui/build.mjs makes it, tests/tl-bridge-offline.mjs checks it is current)
-!bds/geoui/dist/
+# (GeoUI Builder as one plugin file for Blockbench: geoui/build.mjs makes it, tests/tl-bridge-offline.mjs checks it is current)
+!geoui/dist/
 # vendored code under common/ keeps its dist/ (common/nethernet-connect/dist: what `lan` runs; not a build output of the lab)
 !common/*/dist/
 __pycache__/
@@ -56,6 +56,7 @@ end/plugins/*/lab.mjs
 end/examples/*/lab.mjs
 ll/mods/*/lab.mjs
 ll/examples/*/lab.mjs
+geoui/addons/*/lab.mjs
 # borrowed addons (colony harvest / borrow): someone else's, run and fixed here only — never committed or handed out
 bds/addons/borrowed_*/
 # fanout: その回の計画（司令塔のもの）

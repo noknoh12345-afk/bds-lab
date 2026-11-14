@@ -2,7 +2,7 @@
 // They are the only things of a run's screen that may leave it unsealed (summary.json, the check of a public repository):
 // each kind returns a fixed set of named numbers, nothing else (no picture, word or log line; why a measure failed stays
 // in the sealed results). Read back the same way (cleanMeasures) wherever a summary is read.
-//   geoui — the GeoUI calibration grid of bds/addons/geoui_calib (bds/geoui/calib.mjs): the screen's height in model units,
+//   geoui — the GeoUI calibration grid of geoui/addons/geoui_calib (geoui/calib.mjs): the screen's height in model units,
 //           its centre and centre fix, px per unit, skew and depth — what GeoUI Studio's hand-set numbers are checked against
 //   diff  — where the picture differs from the newest `shot world` (the baseline `changed` uses): the share that changed and
 //           the boxes (px) of the changed parts, biggest first — where a UI was drawn, in numbers. Optionally only inside a box
@@ -13,7 +13,7 @@
 import { measureCode, cleanCode } from './failcodes.mjs';
 
 const DIFF_PARTS = 8, DIFF_LEVEL = 48;
-// marks: the colours a probe draws its marks in (bds/geoui/screen/device.mjs HUES: 11 hues 30° apart without 300°, then white,
+// marks: the colours a probe draws its marks in (geoui/screen/device.mjs HUES: 11 hues 30° apart without 300°, then white,
 // grey and black) — each changed pixel is put in the class of its colour, each class's box is where that mark is
 export const MARK_HUES = [['red', 0], ['orange', 30], ['yellow', 60], ['chartreuse', 90], ['green', 120], ['spring', 150], ['cyan', 180], ['azure', 210], ['blue', 240], ['violet', 270], ['rose', 330]];
 export const MARK_CLASSES = [...MARK_HUES.map(([n]) => n), 'white', 'gray', 'black'];
@@ -146,7 +146,7 @@ export const KINDS = {
     fields: ['width', 'height', 'areaX', 'areaY', 'matched', 'dropped', 'anchors', 'colourAgreement', 'rmsPx', 'unitsPerScreenH', 'unitsPerScreenHFromX',
       'centreX', 'centreY', 'centreFixX', 'centreFixY', 'pxPerUnitX', 'pxPerUnitY', 'skewXFromY', 'skewYFromX', 'depthNear', 'depthNearN', 'depthFar', 'depthFarN'],
     async run(img) {
-      const { measure } = await import('../../bds/geoui/calib.mjs');
+      const { measure } = await import('../../geoui/calib.mjs');
       const r = measure(img);
       if (!r.ok) return { ok: false, why: r.why };
       return { ok: true, values: { width: r.width, height: r.height, matched: r.matched, dropped: r.dropped, anchors: r.anchors, colourAgreement: r.colourAgreement,

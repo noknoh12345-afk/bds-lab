@@ -56,6 +56,23 @@ ok(r.status !== 0 && /no such unit: no_such_unit/.test(r.t), 'an unknown unit is
   r = run(['--undo']);
   ok(r.status === 0 && fs.existsSync(path.join(hand, 'manifest.json')) && JSON.parse(fs.readFileSync(path.join(hand, 'manifest.json'), 'utf8')).header.name === 'by hand', '--undo puts the person\'s own copy back', r.t);
 }
+// an Endstone plugin (end/plugins/<n>, or a sample such as guard): its wheel from go into plugins/, an older wheel of the same
+// plugin replaced (kept for --undo), another plugin's left alone; no wheel yet: said, nothing written
+if (fs.existsSync(path.join(REPO, 'end', 'examples', 'guard', 'pyproject.toml'))) {
+  const dist = path.join(REPO, 'end', 'dist'), whl = path.join(dist, 'endstone_guard-0.1.0-py3-none-any.whl'), had = fs.existsSync(whl);
+  const P = path.join(B, 'plugins'); fs.mkdirSync(P, { recursive: true });
+  fs.writeFileSync(path.join(P, 'endstone_guard-0.0.9-py3-none-any.whl'), 'old'); fs.writeFileSync(path.join(P, 'endstone_hub-0.1.0-py3-none-any.whl'), 'other');
+  // (here when go never built it — CI: dist/ is not in the repository; a machine that built it skips this one)
+  if (!had) { r = run(['end/guard']); ok(r.status !== 0 && /no wheel yet for guard: node lab\.mjs end go -a guard/.test(r.t) && fs.readFileSync(path.join(P, 'endstone_guard-0.0.9-py3-none-any.whl'), 'utf8') === 'old', 'a plugin with no wheel yet: said (go builds it), nothing written', r.t); }
+  fs.mkdirSync(dist, { recursive: true }); if (!had) fs.writeFileSync(whl, 'new wheel');
+  r = run(['guard']);
+  const now = fs.readdirSync(P).sort();
+  ok(r.status === 0 && now.join() === 'endstone_guard-0.1.0-py3-none-any.whl,endstone_hub-0.1.0-py3-none-any.whl' && /plugin guard: the older endstone_guard-0\.0\.9-py3-none-any\.whl replaced/.test(r.t) && /plugin guard v0\.1\.0 → plugins\/endstone_guard-0\.1\.0-py3-none-any\.whl/.test(r.t),
+    'a bare name not an addon\'s: the Endstone plugin of that name — its wheel in plugins/, the older one out, another plugin kept', r.t + now);
+  r = run(['--undo']);
+  ok(r.status === 0 && fs.readdirSync(P).sort().join() === 'endstone_guard-0.0.9-py3-none-any.whl,endstone_hub-0.1.0-py3-none-any.whl' && fs.readFileSync(path.join(P, 'endstone_guard-0.0.9-py3-none-any.whl'), 'utf8') === 'old', '--undo: the older wheel back, the new one gone', r.t + fs.readdirSync(P));
+  if (!had) fs.rmSync(whl, { force: true });
+}
 fs.rmSync(B, { recursive: true, force: true });
 console.log(`\n${fails ? 'FAIL' : 'PASS'} deploy-offline (${n - fails}/${n})`);
 process.exit(fails ? 1 : 0);

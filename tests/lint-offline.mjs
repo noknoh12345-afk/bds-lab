@@ -70,13 +70,13 @@ ok(!badJ.length, `data: ${jsons.length} JSON files parse`, badJ.join('\n'));
   ok(!missing.length, `gate: all ${gate.length} tests exist`, missing.join(' '));
   // (.lab-github/: the same files where a lender's host carries them — GitHub starts nothing from there: common/hosts.mjs)
   const ci = files.filter((f) => /^\.(lab-)?github\/workflows\/.*\.yml$/.test(f)).map(rd).join('\n');
-  // (CI runs every tests/*-offline.mjs and tests/offline.mjs, whatever their names — the same pattern below: `auto gate --all`, or
+  // (CI runs every tests/*-offline.mjs, geoui/tests/*-offline.mjs and tests/offline.mjs, whatever their names — the same pattern below: `auto gate --all`, or
   // verify's plan, which can name each of them (common/verify-plan.mjs listUnits) to `auto gate --tests`)
   const all = /node lab\.mjs auto gate --all/.test(ci);
   const { listUnits } = await import(pathToFileURL(path.join(TOP, 'common', 'verify-plan.mjs')).href);
   // (the plan's list itself, or each runner's share of it: offmatrix, a list per runner)
   const planned = /node lab\.mjs auto gate --tests "\$TESTS"/.test(ci) && /TESTS: \$\{\{ (needs\.plan\.outputs\.tests|matrix\.tests) \}\}/.test(ci) && (/TESTS: \$\{\{ needs\.plan\.outputs\.tests \}\}/.test(ci) || /fromJSON\(needs\.plan\.outputs\.offmatrix\)/.test(ci)) ? new Set(listUnits(TOP)) : new Set();
-  const loose = files.filter((f) => /^tests\/[\w-]+\.mjs$/.test(f) && /-offline\.mjs$|^tests\/offline\.mjs$/.test(f) && !gate.includes(f) && !ci.includes(f) && !all && !planned.has(f));
+  const loose = files.filter((f) => /^(tests|geoui\/tests)\/[\w-]+\.mjs$/.test(f) && /-offline\.mjs$|^tests\/offline\.mjs$/.test(f) && !gate.includes(f) && !ci.includes(f) && !all && !planned.has(f));
   ok(!loose.length, 'gate: every offline test runs in the gate or in CI (none forgotten)', loose.join(' '));
   ok(all || planned.size > 0, 'CI: every offline test can run (node lab.mjs auto gate --all, or verify\'s plan naming any of them to auto gate --tests)', '');
   for (const t of ['tests/cli-offline.mjs', 'tests/scratch-offline.mjs', 'tests/lint-offline.mjs']) ok(gate.includes(t), `gate: ${t} is in it`, gate.join(' '));

@@ -47,7 +47,7 @@ export function stepCode(note) {
   return 'other';
 }
 
-/** a measure's why (bds/geoui/calib.mjs and lib/measure.mjs say it in fixed forms) → its code, with the counts it gives
+/** a measure's why (geoui/calib.mjs and lib/measure.mjs say it in fixed forms) → its code, with the counts it gives
  *  (numbers only): 'few-marks 4', 'no-grid', 'few-rows 7/2/3' … ('other' for none) */
 export const MEASURE_CODES = [
   [/^only (\d+) square marks/, 'few-marks'],

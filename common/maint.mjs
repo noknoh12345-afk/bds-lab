@@ -6,6 +6,7 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { unitDirIn, unitsIn } from './checkpoint.mjs';
 
 const H = 3600_000, GB = 1024 ** 3;
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
@@ -156,12 +157,14 @@ export const CHECKS = {
   // 11. two units with the same pack UUIDs (a copied folder, an addon imported twice): a world keeps only one of them. --fix gives
   //     the newer one (by folder age) its own; not automatic: a copy meant as an update of the same pack needs the same UUIDs
   uuids: (c) => {
-    const dir = path.join(c.top, 'bds', 'addons'), ids = (u) => ['bp', 'rp'].flatMap((p) => { const j = readJson(path.join(dir, u, p, 'manifest.json')); return j?.header ? [j.header.uuid, ...(j.modules ?? []).map((x) => x.uuid)].filter((x) => x && x !== TEMPLATE_UUID) : []; });
-    let names = []; try { names = fs.readdirSync(dir).filter((n) => !n.startsWith('.') && fs.existsSync(path.join(dir, n, 'bp', 'manifest.json'))); } catch { return { ok: true }; }
-    const age = (n) => { const st = fs.statSync(path.join(dir, n)); return st.birthtimeMs || st.ctimeMs; };
+    const at = (u) => unitDirIn(c.top, 'bds', u), ids = (u) => ['bp', 'rp'].flatMap((p) => { const j = readJson(path.join(at(u), p, 'manifest.json')); return j?.header ? [j.header.uuid, ...(j.modules ?? []).map((x) => x.uuid)].filter((x) => x && x !== TEMPLATE_UUID) : []; });
+    // (GeoUI's too, geoui/addons: one world can load a lab addon and a GeoUI one side by side)
+    const names = unitsIn(c.top, 'bds').filter((n) => fs.existsSync(path.join(at(n), 'bp', 'manifest.json')));
+    if (!names.length) return { ok: true };
+    const age = (n) => { const st = fs.statSync(at(n)); return st.birthtimeMs || st.ctimeMs; };
     const owner = new Map(), dup = [];
     for (const n of names.sort((a, b) => age(a) - age(b) || a.localeCompare(b))) { const mine = ids(n), clash = mine.find((x) => owner.has(x)); if (clash) dup.push([n, owner.get(clash)]); else mine.forEach((x) => owner.set(x, n)); }
-    return dup.length ? { ok: false, msg: `同じパック UUID のユニット: ${dup.map(([a, b]) => `${a}（${b} と同じ）`).join('、')}。ワールドには片方しか入りません`, fix: () => { for (const [n] of dup) renewUuids(path.join(dir, n)); return `${dup.map(([a]) => a).join('、')} に新しい UUID（同じものを更新として配るなら node lab.mjs undo）`; } } : { ok: true };
+    return dup.length ? { ok: false, msg: `同じパック UUID のユニット: ${dup.map(([a, b]) => `${a}（${b} と同じ）`).join('、')}。ワールドには片方しか入りません`, fix: () => { for (const [n] of dup) renewUuids(at(n)); return `${dup.map(([a]) => a).join('、')} に新しい UUID（同じものを更新として配るなら node lab.mjs undo）`; } } : { ok: true };
   },
   // 12. the lab's knowledge of the world (common/data/kb.json, the goal planner) is for an older BDS than the lab runs: --fix
   //     rebuilds it on the lab's BDS (one short server session; maintain does it by itself after an update)

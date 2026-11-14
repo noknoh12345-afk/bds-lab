@@ -10,6 +10,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { decls, MEMBER, members } from './dts.mjs';
+import { unitDirIn, unitsIn } from './checkpoint.mjs';
 
 const TOP = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const CACHE = path.join(TOP, 'bds', '.lab', 'apidiff');
@@ -119,7 +120,8 @@ export function impact(d, unitDir) {
   return hits;
 }
 
-const UNITS = path.join(TOP, 'bds', 'addons');
+// (every unit the bds lab runs: its own, its samples, GeoUI's — common/checkpoint.mjs)
+const unitPath = (n) => unitDirIn(TOP, 'bds', n);
 export function labBds() {
   for (const f of [path.join(TOP, 'bds', '.lab', 'bds', 'VERSION'), path.join(TOP, 'bds', 'vendor', 'bds-version.txt')]) { try { const v = fs.readFileSync(f, 'utf8').trim(); if (/^\d+\.\d+\.\d+/.test(v)) return v; } catch { /* next */ } }
   return null;
@@ -159,19 +161,19 @@ export async function apidiffCmd(args, out = console.log) {
   if (d.stable.length) { out('## beta から stable になったもの（--stable でも使える）'); cut(d.stable, N, (x) => `- ${x.name}.${x.member}`); }
   if (d.added.length) { out('## 増えたもの'); cut(d.added, all ? 1e9 : 40, (x) => `- ${x.name}${x.member ? '.' + x.member : ` (${x.kind})`}`); }
   // every addon: what of it breaks
-  let names = []; try { names = fs.readdirSync(UNITS).filter((n) => fs.statSync(path.join(UNITS, n)).isDirectory()); } catch { /* none */ }
+  const names = unitsIn(TOP, 'bds');
   const rows = [];
-  for (const n of names) { const h = impact(d, path.join(UNITS, n)); rows.push([n, h]); }
+  for (const n of names) { const h = impact(d, unitPath(n)); rows.push([n, h]); }
   out('## アドオンへの影響（? は同名の別物かもしれない箇所）');
   for (const [n, h] of rows) {
     out(`${h.length ? '✘' : '✔'} ${n}${h.length ? `: ${h.length} 箇所` : ''}`);
-    h.slice(0, all ? 1e9 : 8).forEach((x) => out(`    ${path.relative(path.join(UNITS, n), x.file).split(path.sep).join('/')}:${x.line} ${x.what}`));
+    h.slice(0, all ? 1e9 : 8).forEach((x) => out(`    ${path.relative(unitPath(n), x.file).split(path.sep).join('/')}:${x.line} ${x.what}`));
   }
   if (md) {
     const body = [`# @minecraft/${module} ${va} → ${vb}`, '', `BDS ${from} → ${to}`, '',
       '## Removed', ...d.removed.map((x) => `- \`${x.name}${x.member ? '.' + x.member : ''}\``), '', '## Changed', ...d.changed.map((x) => `- \`${x.name}.${x.member ?? ''}\`\n  - was: \`${x.was}\`\n  - now: \`${x.now}\``), '',
       '## Beta → stable', ...d.stable.map((x) => `- \`${x.name}.${x.member}\``), '', '## Added', ...d.added.map((x) => `- \`${x.name}${x.member ? '.' + x.member : ''}\``), '',
-      '## Addons', ...rows.map(([n, h]) => `- ${h.length ? '✘' : '✔'} ${n}${h.map((x) => `\n  - ${path.relative(path.join(UNITS, n), x.file).split(path.sep).join('/')}:${x.line} ${x.what}`).join('')}`), ''].join('\n');
+      '## Addons', ...rows.map(([n, h]) => `- ${h.length ? '✘' : '✔'} ${n}${h.map((x) => `\n  - ${path.relative(unitPath(n), x.file).split(path.sep).join('/')}:${x.line} ${x.what}`).join('')}`), ''].join('\n');
     fs.mkdirSync(path.dirname(path.resolve(md)), { recursive: true }); fs.writeFileSync(path.resolve(md), body); out(`OK ${md}`);
   }
   return true;

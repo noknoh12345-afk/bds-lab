@@ -1,0 +1,702 @@
+# GeoUI の端末の確かめ（geoui/screen/device.mjs が作る）: node lab.mjs app ci -a geoui_device（許可をもらってから）
+# 各画面の大きさで、GeoUI を出す前（shot world）と後を比べ、色ごとの枠を測る（measure marks: 11 色・白・灰の箱 px）。期待の位置は
+# node geoui/screen/device.mjs expect <幅>x<高さ>。入力は gdev:check の PASS / FAIL がサーバーのログに出る（expect server）。
+# 結果: node geoui/screen/device.mjs compare <summary.json>（式と比べ、色・向き・重なり・renderer ごとの計算・回転のクエリも読む）。
+
+section join
+stop
+launch
+until title 600000
+shot title
+join
+until joined 900000
+do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
+do gamemode adventure @a
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do scriptevent gdev:show 0
+do scriptevent gdev:cam 1
+wait 7000
+absent clientlog \bERROR\b
+
+section size-default
+do hud @a hide hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-default
+measure marks anchors-default
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 38
+wait 2000
+shot box-default
+measure marks box-default
+do scriptevent gdev:show 16
+wait 2000
+shot clip-default
+measure marks clip-default
+
+section size-4x3
+size 1024x768
+wait 9000
+do hud @a hide hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-4x3
+measure marks anchors-4x3
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 38
+wait 2000
+shot box-4x3
+measure marks box-4x3
+do scriptevent gdev:show 16
+wait 2000
+shot clip-4x3
+measure marks clip-4x3
+
+section size-fold
+size 1104x920
+wait 9000
+do hud @a hide hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-fold
+measure marks anchors-fold
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 38
+wait 2000
+shot box-fold
+measure marks box-fold
+
+section size-16x10
+size 1280x800
+wait 9000
+do hud @a hide hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-16x10
+measure marks anchors-16x10
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 38
+wait 2000
+shot box-16x10
+measure marks box-16x10
+
+section size-16x9
+size 1920x1080
+wait 9000
+do hud @a hide hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-16x9
+measure marks anchors-16x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 38
+wait 2000
+shot box-16x9
+measure marks box-16x9
+
+section size-18x9
+size 2160x1080
+wait 9000
+do hud @a hide hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-18x9
+measure marks anchors-18x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 38
+wait 2000
+shot box-18x9
+measure marks box-18x9
+
+section size-195x9
+size 2340x1080
+wait 9000
+do hud @a hide hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-195x9
+measure marks anchors-195x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 38
+wait 2000
+shot box-195x9
+measure marks box-195x9
+
+section size-20x9
+size 2400x1080
+wait 9000
+do hud @a hide hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-20x9
+measure marks anchors-20x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 38
+wait 2000
+shot box-20x9
+measure marks box-20x9
+
+section size-21x9
+size 2520x1080
+wait 9000
+do hud @a hide hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-21x9
+measure marks anchors-21x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 38
+wait 2000
+shot box-21x9
+measure marks box-21x9
+
+section size-32x9
+size 3840x1080
+wait 9000
+do hud @a hide hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-32x9
+measure marks anchors-32x9
+do hud @a reset hotbar
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 38
+wait 2000
+shot box-32x9
+measure marks box-32x9
+do scriptevent gdev:show 16
+wait 2000
+shot clip-32x9
+measure marks clip-32x9
+
+section look
+size reset
+wait 6000
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 64
+wait 2000
+shot colors
+measure marks colors
+do scriptevent gdev:show 1024
+wait 2000
+shot glyph
+measure marks glyph
+do scriptevent gdev:show 2048
+wait 2000
+shot order
+measure marks order
+do scriptevent gdev:show 512
+wait 2000
+shot rc
+measure marks rc
+do scriptevent gdev:cam 0
+wait 1500
+
+section text
+do scriptevent gdev:show 4096
+wait 1500
+shot world
+do scriptevent gdev:title QZX7JK2W SUBLINE
+wait 2500
+shot text
+measure diff text
+expect text QZX7JK2W
+expect text ^QZX$
+expect text ^7JK2W$
+expect text SUBLINE
+do scriptevent gdev:title
+
+section in-key-free
+do scriptevent gdev:mark
+press W 700
+wait 400
+do scriptevent gdev:check move key-w
+expect server GDEV CHECK key-w PASS
+do scriptevent gdev:check forward key-w-forward
+expect server GDEV CHECK key-w-forward PASS
+
+section in-key-left
+do scriptevent gdev:mark
+press A 700
+wait 400
+do scriptevent gdev:check left key-a-left
+expect server GDEV CHECK key-a-left PASS
+
+section ui-lock
+do scriptevent gdev:show 128
+do scriptevent gdev:ui on lock
+wait 2500
+shot ui-lock
+
+section in-key-locked
+do scriptevent gdev:mark
+press W 700
+wait 400
+do scriptevent gdev:check move locked-key-w
+expect server GDEV CHECK locked-key-w PASS
+do scriptevent gdev:check still locked-still
+expect server GDEV CHECK locked-still PASS
+
+section in-stick-locked
+do scriptevent gdev:mark
+walk forward 0.7
+wait 400
+do scriptevent gdev:check move locked-stick
+expect server GDEV CHECK locked-stick PASS
+
+section in-look-locked
+do scriptevent gdev:mark
+shot look-before
+look right 400 60
+wait 600
+shot look-after
+do scriptevent gdev:check rot frozen-turn
+expect server GDEV CHECK frozen-turn PASS
+do scriptevent gdev:check pointer frozen-pointer
+expect server GDEV CHECK frozen-pointer PASS
+
+section in-query
+do scriptevent gdev:mark
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 256
+wait 1500
+shot query-before
+measure marks query-before
+look left 400 60
+wait 800
+shot query-after
+measure marks query-after
+
+section in-recentre
+do scriptevent gdev:mark
+do scriptevent gdev:show 128
+look down 1500 80
+wait 600
+do scriptevent gdev:check recentre recentre
+expect server GDEV CHECK recentre PASS
+
+section in-jump-pad
+do scriptevent gdev:mark
+jump
+wait 500
+do scriptevent gdev:check jump pad-jump
+expect server GDEV CHECK pad-jump PASS
+
+section in-jump-key
+do scriptevent gdev:mark
+press SPACE 300
+wait 500
+do scriptevent gdev:check jump key-jump
+expect server GDEV CHECK key-jump PASS
+
+section in-jump-denied
+do scriptevent gdev:mark
+do scriptevent gdev:perm jump off
+wait 300
+press SPACE 300
+wait 500
+do scriptevent gdev:check jump denied-jump
+expect server GDEV CHECK denied-jump PASS
+do scriptevent gdev:perm jump on
+
+section in-sneak-pad
+do scriptevent gdev:mark
+sneak 0.5
+wait 400
+do scriptevent gdev:check sneak pad-sneak
+expect server GDEV CHECK pad-sneak PASS
+
+section in-sneak-key
+do scriptevent gdev:mark
+press SHIFT_LEFT 400
+wait 400
+do scriptevent gdev:check sneak key-sneak
+expect server GDEV CHECK key-sneak PASS
+
+section in-sneak-denied
+do scriptevent gdev:mark
+do scriptevent gdev:perm sneak off
+wait 300
+press SHIFT_LEFT 400
+wait 400
+do scriptevent gdev:check sneak denied-sneak
+expect server GDEV CHECK denied-sneak PASS
+do scriptevent gdev:perm sneak on
+
+section in-wheel
+do scriptevent gdev:mark
+mouse scroll 0.5 0.5 1
+wait 600
+do scriptevent gdev:check wheel mouse-wheel
+expect server GDEV CHECK mouse-wheel PASS
+
+section in-slot-key
+do scriptevent gdev:mark
+press 5 200
+wait 600
+do scriptevent gdev:check slot key-slot
+expect server GDEV CHECK key-slot PASS
+
+section in-slot-pad
+do scriptevent gdev:mark
+slot next
+wait 600
+do scriptevent gdev:check wheel pad-wheel
+expect server GDEV CHECK pad-wheel PASS
+
+section in-swing-pad
+do scriptevent gdev:mark
+attack 0.3
+wait 500
+do scriptevent gdev:check swing pad-swing
+expect server GDEV CHECK pad-swing PASS
+
+section in-swing-mouse
+do scriptevent gdev:mark
+mouse tap 0.5 0.5
+wait 500
+do scriptevent gdev:check swing mouse-swing
+expect server GDEV CHECK mouse-swing PASS
+
+section in-swing-touch
+do scriptevent gdev:mark
+tap 0.6 0.4
+wait 500
+do scriptevent gdev:check swing touch-swing
+expect server GDEV CHECK touch-swing PASS
+
+section in-swing-hold
+do scriptevent gdev:mark
+hold 0.6 0.4 800
+wait 500
+do scriptevent gdev:check swing touch-hold-swing
+expect server GDEV CHECK touch-hold-swing PASS
+
+section in-use-pad
+do scriptevent gdev:mark
+do replaceitem entity @a slot.weapon.mainhand 0 snowball 16
+wait 500
+use 0.3
+wait 500
+do scriptevent gdev:check use pad-use
+expect server GDEV CHECK pad-use PASS
+do replaceitem entity @a slot.weapon.mainhand 0 air
+
+section in-text
+do scriptevent gdev:mark
+shot world
+press T 150
+wait 1500
+shot chat-open
+measure diff chat-open
+press SLASH 80
+press G 80
+press D 80
+press E 80
+press V 80
+press SHIFT+SEMICOLON 80
+press T 80
+press SPACE 80
+press H 80
+press E 80
+press L 80
+press L 80
+press O 80
+wait 300
+shot chat-typed
+measure diff chat-typed
+press ENTER 150
+wait 800
+shot chat-sent
+measure diff chat-sent
+do scriptevent gdev:check text chat-text
+expect server GDEV CHECK chat-text PASS
+
+section in-text-slash
+do scriptevent gdev:mark
+shot world
+press SLASH 150
+wait 1500
+shot slash-open
+measure diff slash-open
+press G 80
+press D 80
+press E 80
+press V 80
+press SHIFT+SEMICOLON 80
+press T 80
+press SPACE 80
+press H 80
+press I 80
+wait 300
+shot slash-typed
+measure diff slash-typed
+press ENTER 150
+wait 800
+shot slash-sent
+measure diff slash-sent
+do scriptevent gdev:check text slash-text
+expect server GDEV CHECK slash-text PASS
+
+section in-mode
+do scriptevent gdev:mark
+tap 0.6 0.4
+wait 300
+press W 200
+wait 300
+pad A
+wait 500
+do scriptevent gdev:check mode input-modes
+expect server GDEV CHECK input-modes PASS
+
+section ui-free
+do scriptevent gdev:ui off
+wait 500
+do scriptevent gdev:ui on free
+wait 2000
+
+section in-key-free-ui
+do scriptevent gdev:mark
+press W 700
+wait 400
+do scriptevent gdev:check move free-key-w
+expect server GDEV CHECK free-key-w PASS
+do scriptevent gdev:check home free-snapped
+expect server GDEV CHECK free-snapped PASS
+
+section in-jump-free-ui
+do scriptevent gdev:mark
+jump
+wait 500
+do scriptevent gdev:check jump free-pad-jump
+expect server GDEV CHECK free-pad-jump PASS
+do scriptevent gdev:check home free-jump-home
+expect server GDEV CHECK free-jump-home PASS
+
+section ui-speed
+do scriptevent gdev:ui on speed
+wait 2000
+
+section in-key-speed
+do scriptevent gdev:mark
+press W 700
+wait 400
+do scriptevent gdev:check move speed-key-w
+expect server GDEV CHECK speed-key-w PASS
+do scriptevent gdev:check home speed-home
+expect server GDEV CHECK speed-home PASS
+
+section in-jump-speed
+do scriptevent gdev:mark
+press SPACE 300
+wait 500
+do scriptevent gdev:check jump speed-key-jump
+expect server GDEV CHECK speed-key-jump PASS
+
+section ui-off
+do scriptevent gdev:ui off
+do scriptevent gdev:show 0
+wait 1000
+
+section density
+size reset
+do scriptevent gdev:cam 1
+wait 6000
+density 240
+wait 9000
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 5
+wait 2000
+shot gui-dpi240
+measure marks gui-dpi240
+density 480
+wait 9000
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 5
+wait 2000
+shot gui-dpi480
+measure marks gui-dpi480
+density reset
+wait 6000
+
+section over
+do scriptevent gdev:show 0
+wait 1500
+shot world
+do scriptevent gdev:show 8
+wait 2000
+shot over
+measure marks over
+
+section cutout-tall
+do scriptevent gdev:kick
+wait 3000
+stop
+cutout tall
+wait 10000
+launch
+until title 180000
+join
+until joined 300000
+shot world
+wait 5000
+shot rejoin-tall
+measure diff rejoin-tall
+do testfor @a
+do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
+do gamemode adventure @a
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do scriptevent gdev:show 0
+do scriptevent gdev:cam 1
+wait 7000
+do hud @a hide hotbar
+wait 1000
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-cut-tall
+measure marks anchors-cut-tall
+do hud @a reset hotbar
+do scriptevent gdev:show 8
+wait 2000
+shot over-cut-tall
+measure marks over-cut-tall
+
+section cutout-hole
+do scriptevent gdev:kick
+wait 3000
+stop
+cutout hole
+wait 10000
+launch
+until title 180000
+join
+until joined 300000
+shot world
+wait 5000
+shot rejoin-hole
+measure diff rejoin-hole
+do testfor @a
+do tp @a 0 -60 0 0 90                      # 真下を向く（後ろは動かない地面だけ）
+do gamemode adventure @a
+do hud @a hide crosshair
+do hud @a hide health
+do hud @a hide hunger
+do hud @a hide armor
+do hud @a hide progress_bar
+do hud @a hide air_bubbles
+do hud @a hide status_effects
+do hud @a hide item_text
+do hud @a hide tooltips
+do hud @a hide paperdoll
+do hud @a hide touch_controls
+do scriptevent gdev:show 0
+do scriptevent gdev:cam 1
+wait 7000
+do hud @a hide hotbar
+wait 1000
+shot world
+do scriptevent gdev:show 1
+wait 2000
+shot anchors-cut-hole
+measure marks anchors-cut-hole
+do hud @a reset hotbar
+do scriptevent gdev:show 8
+wait 2000
+shot over-cut-hole
+measure marks over-cut-hole
+
+section end
+do scriptevent gdev:ui off
+do scriptevent gdev:cam 0
+do scriptevent gdev:show 0
+do hud @a reset
+wait 1000
+shot end

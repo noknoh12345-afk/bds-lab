@@ -18,6 +18,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 // tests that write into the lab folder itself (units, .lab-current, runs/): never side by side with another in the same folder
 // (each in a copy of its own, or one by one after the others)
 // (cli-offline: it and offline.mjs both read and write the lab's remembered lab, .lab-kind — side by side, one saw the other's)
+// where the offline tests are: the lab's own (tests/) and those of each project the repository carries (geoui/tests: GeoUI's) —
+// `auto gate --all`, verify's plan and lint's "none forgotten" all go by this one list
+export const TEST_DIRS = ['tests', 'geoui/tests'];
+export const offlineTests = (root) => TEST_DIRS.flatMap((d) => { try { return fs.readdirSync(path.join(root, d)).filter((f) => /^(offline|[\w-]+-offline)\.mjs$/.test(f)).sort().map((f) => `${d}/${f}`); } catch { return []; } });
 export const SERIAL = new Set(['tests/make-offline.mjs', 'tests/guards-offline.mjs', 'tests/cli-offline.mjs', 'tests/ci-offline.mjs', 'tests/import-offline.mjs', 'tests/colony-offline.mjs', 'tests/app-offline.mjs', 'tests/app-browser.mjs', 'tests/device-offline.mjs', 'tests/host-offline.mjs', 'tests/dev-bds.mjs']);
 // tests that take long by design (the app lab drives a fake device through every step): their own time limit
 export const LONG = { 'tests/app-offline.mjs': 3600000, 'tests/offline.mjs': 1800000, 'tests/env-offline.mjs': 1800000 };
@@ -28,6 +32,7 @@ export const TIME = {
   'tests/app-offline.mjs': 800, 'tests/env-offline.mjs': 300, 'tests/offline.mjs': 300, 'tests/rd-overlap-offline.mjs': 140, 'tests/device-offline.mjs': 120,
   'tests/host-offline.mjs': 110, 'tests/colony-offline.mjs': 100, 'tests/cli-offline.mjs': 80, 'tests/realplayer-offline.mjs': 65, 'tests/scratch-offline.mjs': 50,
   'tests/rd-title-offline.mjs': 37, 'tests/lint-offline.mjs': 28, 'tests/sim-offline.mjs': 26, 'tests/auto-offline.mjs': 22, 'tests/rd-boot-offline.mjs': 20, 'tests/login-offline.mjs': 18,
+  'geoui/tests/tl-probe-offline.mjs': 380, 'geoui/tests/tl-osu-offline.mjs': 20, 'geoui/tests/tl-runtime-offline.mjs': 18,
   'tests/deps-offline.mjs': 18, 'tests/import-offline.mjs': 17, 'tests/guards-offline.mjs': 16,
 };
 const UNKNOWN = 60;

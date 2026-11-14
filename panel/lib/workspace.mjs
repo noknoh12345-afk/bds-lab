@@ -2,6 +2,9 @@
 // the lab there: common/unitci.mjs checks them by these same rules), a person's pack put in the repository for it to take in,
 // and a unit's files changed through the contents API. The contract with unit.yml (workflow_dispatch inputs):
 //   job      new | test | go | sim | import
+//   kind     bds | end | ll — the lab the unit is in (bds/addons, end/plugins, ll/mods); sent only when it is not bds (a
+//            unit.yml from before it has no such input); import: from the file (.whl .tar.gz .tgz: an Endstone plugin);
+//            sim: bds only (the sandbox runs Script API addons)
 //   unit     the unit's name (bds/addons/<unit>, UNIT; new and import: one the list shows — unitNameProblem); import: the name
 //            to give it — the panel always sends one (the person's, else unitFromFile: unitci makes the same when none comes)
 //   title    new: what players see (empty: the name)
@@ -10,9 +13,11 @@
 //            lab-incoming/<name> (incomingBranch), never on the default branch — put there by putIncoming; unit.yml takes it
 //            from that branch and deletes the branch once the unit is made
 //   words    import: what the person asked
+//   source   import by name instead of a file (an Endstone plugin): pypi:<name>[==version] or gh:<owner>/<repo>[@ref] —
+//            SOURCE's rule here, the lab's end import downloads it in the run (nothing on a branch, no file sent)
 // new and import commit the unit to the default branch; go uploads dist/*.mcaddon as the artifact unit-<name>.
 // Pure but for the calls to GitHub at the end (through lib/gh.mjs). No DOM, no node:.
-import { UNIT, isUnitName } from './units.mjs';
+import { UNIT, isUnitName, DIR } from './units.mjs';
 import { refusal } from './model.mjs';
 
 export const WORKFLOW = 'unit.yml';
@@ -20,17 +25,26 @@ export const JOBS = ['new', 'test', 'go', 'sim', 'import'];
 /** the jobs on a unit that is there already */
 export const RUN_JOBS = ['test', 'go', 'sim'];
 export const JOB_WORDS = { new: '新しく作る', test: '試験', go: '仕上げ（.mcaddon）', sim: 'すばやい試し（sim）', import: '取り込み' };
+/** the labs a unit can be in, and what go makes in each (its artifact unit-<name> holds it) */
+export const KINDS = ['bds', 'end', 'll'];
+export const MADE = { bds: '.mcaddon', end: '.whl', ll: '.zip' };
+export const jobWord = (job, kind = 'bds') => (job === 'go' ? `仕上げ（${MADE[kind] ?? MADE.bds}）` : JOB_WORDS[job]);
+const kindIn = (kind) => (kind && kind !== 'bds' ? { kind } : {});
 /** the most each input may hold (characters) */
 export const LIMITS = { title: 80, request: 2000, words: 2000, file: 120 };
 export const UNIT_SAY = '名前は英小文字で始まる英小文字・数字・_ の 2〜40 文字（例 ruby_sword）';
 /** a person's pack: these kinds, up to this size */
-export const IMPORT_TYPES = ['.mcaddon', '.mcpack', '.zip'];
+export const IMPORT_TYPES = ['.mcaddon', '.mcpack', '.zip', '.whl', '.tar.gz', '.tgz'];
+/** a file's kind of pack by its name (pure): .whl .tar.gz .tgz are Endstone plugins (a wheel or an sdist from PyPI); the rest
+ *  addons — a .zip can be either (GitHub's source zip of a plugin): kind says so */
+export const extOf = (name) => { const b = String(name ?? '').toLowerCase(); return b.endsWith('.tar.gz') ? '.tar.gz' : b.lastIndexOf('.') > 0 ? b.slice(b.lastIndexOf('.')) : ''; };
+export const kindOfPack = (name) => (['.whl', '.tar.gz', '.tgz'].includes(extOf(name)) ? 'end' : 'bds');
 export const MAX_BYTES = 50 * 1024 * 1024;
 // (over this, said before it is sent: a long upload from a phone, and GitHub's contents API has refused packs not far above the
 // limit — 422 「too large to be processed」 — though it took 49 MB in the lab's own run)
 export const BIG_BYTES = 25 * 1024 * 1024;
 /** where a pack waits for unit.yml: incoming/<a safe name> — nothing above it, no way out */
-export const INCOMING = /^incoming\/[A-Za-z0-9][A-Za-z0-9._-]{0,99}\.(mcaddon|mcpack|zip)$/i;
+export const INCOMING = /^incoming\/[A-Za-z0-9][A-Za-z0-9._-]{0,99}\.(mcaddon|mcpack|zip|whl|tar\.gz|tgz)$/i;
 
 /** a text for unit.yml (pure) → what is wrong with it, in words; '' when nothing is. Within its length; no control
  *  characters (line: no line break either); not taken by the lab for an option — -- or name= at its start */
@@ -51,16 +65,19 @@ export function unitNameProblem(name, { taking = false } = {}) {
   return taking && n.endsWith('_') ? '取り込むときの名前は _ で終われません（ラボが外します）: 最後の _ を消して、もう一度' : '';
 }
 /** a new unit → { inputs } for unit.yml, or { error } in words (pure) */
-export function newUnitInputs({ unit, title = '', request = '' } = {}) {
+export function newUnitInputs({ unit, title = '', request = '', kind = 'bds' } = {}) {
   const u = String(unit ?? '').trim(), t = String(title ?? '').trim() || u, q = String(request ?? '').trim();
+  if (!KINDS.includes(kind)) return { error: `ラボは ${KINDS.join('・')} のどれかです` };
   const bad = unitNameProblem(u) || textProblem(t, { max: LIMITS.title, line: true, what: '題' }) || textProblem(q, { max: LIMITS.request, what: '何をするか' });
-  return bad ? { error: bad } : { inputs: { job: 'new', unit: u, title: t, request: q } };
+  return bad ? { error: bad } : { inputs: { job: 'new', unit: u, title: t, request: q, ...kindIn(kind) } };
 }
 /** test / go / sim of a unit → { inputs } for unit.yml, or { error } (pure) */
-export function runInputs({ job, unit } = {}) {
+export function runInputs({ job, unit, kind = 'bds' } = {}) {
   if (!RUN_JOBS.includes(job)) return { error: `仕事は ${RUN_JOBS.join('・')} のどれかです: 「アドオン」のボタンから始めてください` };
+  if (!KINDS.includes(kind)) return { error: `ラボは ${KINDS.join('・')} のどれかです` };
+  if (job === 'sim' && kind !== 'bds') return { error: 'すばやい試し（sim）は bds のアドオンだけです: 「試験」で本物のサーバーに' };
   const u = String(unit ?? '').trim();
-  return UNIT.test(u) ? { inputs: { job, unit: u } } : { error: UNIT_SAY };
+  return UNIT.test(u) ? { inputs: { job, unit: u, ...kindIn(kind) } } : { error: UNIT_SAY };
 }
 // (what incomingStamp puts at the end of a pack's stem)
 const STAMP = /-\d{8}T\d{4}-[a-z0-9]{4}$/i;
@@ -84,20 +101,23 @@ export function incomingBranch(file) {
  *  folder, no .mcaddon .mcpack .zip, no stamp — in lower case, each run of anything but a-z 0-9 one _, none at either end,
  *  40 at most; addon_ before one that would not start with a letter, would be parked (zz_) or is under 2. Always a name the
  *  list shows and the lab's import keeps as it is ("2048 Game.mcaddon" → addon_2048_game) */
-export function unitFromFile(file) {
-  const stem = String(file ?? '').split(/[\\/]/).pop().normalize('NFKC').replace(/\.(mcaddon|mcpack|zip)$/i, '').replace(STAMP, '');
+export function unitFromFile(file, kind = kindOfPack(file)) {
+  let stem = String(file ?? '').split(/[\\/]/).pop().normalize('NFKC').replace(/\.(mcaddon|mcpack|zip|whl|tar\.gz|tgz)$/i, '').replace(STAMP, '');
+  // (an Endstone plugin's file: endstone_warp-1.2.3-py3-none-any, endstone-warp-1.2.3 → warp — its name without the version)
+  if (kind === 'end') stem = stem.replace(/-\d[\w.+!-]*$/, '').replace(/^endstone[-_]/i, '');
   const fit = (s) => s.slice(0, 40).replace(/_+$/, '');
   const n = fit(stem.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+/, ''));
-  return /^[a-z]/.test(n) && !n.startsWith('zz_') && n.length >= 2 ? n : fit(`addon_${n}`);
+  return /^[a-z]/.test(n) && !n.startsWith('zz_') && n.length >= 2 ? n : fit(`${kind === 'end' ? 'plugin' : 'addon'}_${n}`);
 }
 /** a person's pack chosen to take in → { name (its own: incomingStamp), path (incoming/<name>), branch (lab-incoming/<name>),
  *  unit, message (the commit's), inputs (unit.yml's) }, or { error } (pure given now and nonce; else the clock's and a random
  *  one). Only .mcaddon .mcpack .zip, not empty, up to MAX_BYTES; the name made safe — its folders dropped, only letters,
  *  digits and . _ - (others become _), no dot at the start, no .. — so it can only land in incoming/. unit: the one given,
  *  else unitFromFile — always there, so the lab never names it from the pack */
-export function importPlan({ fileName, size, words = '', unit = '', now = Date.now(), nonce = randomNonce() } = {}) {
-  const base = String(fileName ?? '').split(/[\\/]/).pop().normalize('NFKC'), dot = base.lastIndexOf('.');
-  const ext = dot > 0 ? base.slice(dot).toLowerCase() : '';
+export function importPlan({ fileName, size, words = '', unit = '', kind = null, now = Date.now(), nonce = randomNonce() } = {}) {
+  const base = String(fileName ?? '').split(/[\\/]/).pop().normalize('NFKC'), ext = extOf(base), dot = base.length - ext.length;
+  const k = kind ?? kindOfPack(base);
+  if (!KINDS.includes(k)) return { error: `ラボは ${KINDS.join('・')} のどれかです` };
   if (!IMPORT_TYPES.includes(ext)) return { error: `${IMPORT_TYPES.join('・')} のファイルを選んでください` };
   const n = Number(size);
   if (!Number.isFinite(n) || n <= 0) return { error: '空のファイルです' };
@@ -108,9 +128,27 @@ export function importPlan({ fileName, size, words = '', unit = '', now = Date.n
   if (bad) return { error: bad };
   // (cannot fail after the cleaning above: the same check unit.yml makes, said here first)
   if (!INCOMING.test(path) || path.length > LIMITS.file) return { error: 'このファイルの名前は使えません' };
-  const as = u || unitFromFile(name);
+  const as = u || unitFromFile(name, k), dir = `${DIR[k]}/${as}`;
   // ([skip ci]: a pack waiting for unit.yml is no change of the lab's code — the push starts no verify run)
-  return { name, path, branch: incomingBranch(name), unit: as, message: `panel: 取り込む ${name}（unit.yml が bds/addons/${as} に） [skip ci]`, inputs: { job: 'import', file: path, unit: as, words: w } };
+  return { name, path, branch: incomingBranch(name), unit: as, kind: k, dir, message: `panel: 取り込む ${name}（unit.yml が ${dir} に） [skip ci]`, inputs: { job: 'import', file: path, unit: as, words: w, ...kindIn(k) } };
+}
+/** a plugin by name: pypi:<name>[==version] (a bare endstone-<name> too) or gh:<owner>/<repo>[@ref] (a github.com link too) —
+ *  the lab's own parseSource (end/importer.mjs) takes the same; nothing that could be a shell word or an option */
+export const SOURCE = /^(?:pypi:[A-Za-z0-9][A-Za-z0-9._-]{0,99}(?:==[\w.!+-]{1,40})?|endstone[-_][A-Za-z0-9._-]{1,90}(?:==[\w.!+-]{1,40})?|gh:[\w.-]{1,39}\/[\w.-]{1,100}(?:@[\w./-]{1,100})?)$/;
+/** the plugin a name becomes when no unit name is given (pure): pypi:endstone-warp==1.2 → warp, gh:me/my-plugin → my_plugin */
+export function unitFromSource(source) {
+  const s = String(source ?? '').trim(), n = /^gh:[\w.-]+\/([\w.-]+)/.exec(s)?.[1] ?? s.replace(/^pypi:/, '').replace(/==.*$/, '');
+  return unitFromFile(`${n.replace(/^endstone[-_]/i, '').replace(/[-_.]?(endstone|plugin)$/i, '') || n}.whl`, 'end');
+}
+/** 「名前で取り込む」 → { inputs } for unit.yml (job import, kind end, source), or { error } (pure) */
+export function importSourceInputs({ source, unit = '', words = '' } = {}) {
+  const s0 = String(source ?? '').trim(), s = /^(?:https?:\/\/)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/.exec(s0) ? s0.replace(/^(?:https?:\/\/)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/, 'gh:$1/$2') : s0;
+  if (!SOURCE.test(s) || s.includes('..')) return { error: '名前は pypi:endstone-<名前>（==版 も）か gh:<持ち主>/<リポジトリ>（@枝 も）' };
+  const u = String(unit ?? '').trim(), w = String(words ?? '').trim();
+  const bad = (u ? unitNameProblem(u, { taking: true }) : '') || textProblem(w, { max: LIMITS.words, what: 'その人の言葉' });
+  if (bad) return { error: bad };
+  const as = u || unitFromSource(s);
+  return { unit: as, kind: 'end', dir: `${DIR.end}/${as}`, inputs: { job: 'import', kind: 'end', source: s, unit: as, words: w } };
 }
 /** FileReader's data: URL → its base64 (pure) */
 export function base64Of(dataUrl) { const s = String(dataUrl ?? ''), i = s.indexOf(';base64,'); return i < 0 ? '' : s.slice(i + 8); }

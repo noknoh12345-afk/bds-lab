@@ -48,15 +48,15 @@ export function unitsTab(body, ctx) {
       h('p', { class: 'muted' }, `${u.dir} · `, !last ? 'まだ配布はありません'
         : a ? [link(a.browser_download_url, `⬇ ${a.name}`), `（${fmtBytes(a.size ?? 0)}・${a.download_count ?? 0} 回）`] : link(last.release.html_url, `⬇ ${last.release.name || last.release.tag_name}`)),
       h('div', { class: 'row' },
-        bds ? h('button', { ...g, onclick: () => run({ job: 'test', unit: u.name }) }, '🧪 試験') : null,
-        bds ? h('button', { class: 'primary', ...g, onclick: () => run({ job: 'go', unit: u.name }) }, '📦 仕上げる（.mcaddon）') : null,
+        h('button', { ...g, onclick: () => run({ job: 'test', unit: u.name, kind: u.kind }) }, '🧪 試験'),
+        h('button', { class: 'primary', ...g, onclick: () => run({ job: 'go', unit: u.name, kind: u.kind }) }, bds ? '📦 仕上げる（.mcaddon）' : u.kind === 'end' ? '📦 仕上げる（.whl）' : '📦 仕上げる（.zip）'),
         bds ? h('button', { onclick: () => edit(u) }, '✏️ ファイルを直す') : null,
         ctx.aiMake ? h('button', { onclick: () => ctx.aiMake({ unit: u.ref }) }, '💡 AI で変える') : null,
         bds && !ctx.simple ? h('button', { onclick: () => show('play', () => playcardCard(ctx, u)) }, '🎮 遊び方カード') : null,
         bds && !ctx.simple ? h('button', { onclick: () => show('notes', () => relnotesCard(ctx, { unit: u.name })) }, '📝 リリースの説明') : null,
         last ? h('button', { onclick: () => ctx.go('releases') }, '配布を見る') : null,
         link(`https://github.com/${slug}/tree/${branch}/${u.dir}`, 'GitHub')),
-      bds ? null : h('p', { class: 'muted' }, '試験と仕上げは「AI で変える」から（AI が本物のサーバーで確かめます）。'), extra);
+      extra);
   };
   const none = () => h('div', { class: 'card', id: 'nounits' }, h('h2', {}, 'まだアドオンがありません'),
     h('p', {}, '始め方は 3 つ。どれも手元の PC は要りません:'),

@@ -51,6 +51,11 @@ const ENV_FILE = path.join(TOP, '.env.local');
 const BDS_LAB = process.env.APP_BDS_LAB || path.join(TOP, 'bds', 'lab.mjs');
 const BDS_DIR = path.dirname(BDS_LAB), BDS_LIVE = path.join(BDS_DIR, '.lab', 'live.json');
 const ADDONS = path.join(TOP, 'bds', 'addons');
+// where an addon is: the bds lab's own folder, then GeoUI's (geoui/addons, a project of its own in the repository)
+const SHELVES = [ADDONS, path.join(TOP, 'geoui', 'addons')];
+const isAddonDir = (d) => fs.existsSync(path.join(d, 'bp', 'manifest.json')) || fs.existsSync(path.join(d, 'rp', 'manifest.json'));
+const addonDir = (n) => SHELVES.map((d) => path.join(d, n)).find(isAddonDir) ?? path.join(ADDONS, n);
+const addonRel = (n) => path.relative(TOP, addonDir(n)).split(path.sep).join('/');
 // APP_RUN_LOCK: another file for the one-run-at-a-time lock (tests that run apps side by side, each with its own fake world)
 const MEMO = path.join(LAB, 'apk.json'), LOCK = process.env.APP_RUN_LOCK || path.join(LAB, 'run.lock'), PREP_LOG = path.join(LAB, 'prepare.txt');
 // the person's own devices (app device add): app/.lab/devices.json and devices/<name>.json (APP_DEVICES_DIR: tests)
@@ -468,7 +473,7 @@ const appTransport = () => (process.env.APP_TRANSPORT === 'raknet' ? 'raknet' : 
  *  attached (traces and coverage are the BDS lab's; here it is only load — APP_DEBUGGER=1 keeps it) */
 function bdsForApp(webHost) {
   // (GEOUI_WEB_HOST: the name the game uses for this machine — the emulator's 10.0.2.2, redroid's bridge, a phone's view of this
-  //  PC — for the pictures of a unit with GeoUI Web: bds/geoui/web/lab.mjs)
+  //  PC — for the pictures of a unit with GeoUI Web: geoui/web/lab.mjs)
   return { LAB_LAN_VISIBLE: '1', LAB_WATCHDOG_MS: process.env.APP_WATCHDOG_MS ?? '60000', ...(appTransport() === 'lan' ? { LAB_TRANSPORT: 'lan' } : {}), ...(process.env.APP_DEBUGGER === '1' ? {} : { LAB_NO_DEBUGGER: '1' }),
     GEOUI_WEB_HOST: process.env.GEOUI_WEB_HOST || webHost || process.env.APP_HOST || '10.0.2.2' };
 }
@@ -478,7 +483,7 @@ function currentAddon(a) {
   if (process.env.LAB_ADDON) return process.env.LAB_ADDON;
   try { return fs.readFileSync(path.join(TOP, 'bds', '.lab', 'addon'), 'utf8').trim() || null; } catch { return null; }
 }
-const addonNames = () => { try { return fs.readdirSync(ADDONS).filter((n) => fs.existsSync(path.join(ADDONS, n, 'bp', 'manifest.json'))).sort(); } catch { return []; } };
+const addonNames = () => [...new Set(SHELVES.flatMap((d) => { try { return fs.readdirSync(d).filter((n) => fs.existsSync(path.join(d, n, 'bp', 'manifest.json'))); } catch { return []; } }))].sort();
 function needAddon(name) {
   const a = currentAddon(name);
   const names = addonNames();
@@ -491,7 +496,7 @@ function needAddon(name) {
 function initCmd(args) {
   const o = parse(args, { opts: ['-a', '--addon'] });
   const addon = needAddon(o.opts['-a'] ?? o.opts['--addon']);
-  const f = path.join(ADDONS, addon, 'app.txt');
+  const f = path.join(addonDir(addon), 'app.txt');
   if (fs.existsSync(f)) fail(`${rel(f)} はもうあります`, '書き直すなら、そのファイルを直接編集してください。');
   fs.writeFileSync(f, `# ${addon} を本物のアプリで確かめる手順。実行: node lab.mjs app run -a ${addon}
 # 1 行 1 手順。一覧: node lab.mjs app help   押す位置の測り方: node lab.mjs app screen
@@ -607,11 +612,11 @@ async function runCmd(args) {
   let scenarioFile, scenarioText;
   if (batch) {
     for (const b of batch) needAddon(b);
-    const made = batchScenario(batch, (b) => { const f = path.join(ADDONS, b, 'app.txt'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : null; });
+    const made = batchScenario(batch, (b) => { const f = path.join(addonDir(b), 'app.txt'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : null; });
     if (made.errors.length) { made.errors.forEach((e) => out(`E ${e}`)); fail('バッチの手順を作れません（上の行）', '--scenario batch/<アドオン>/<アドオン>…（どれも app.txt があり、join がある）'); }
-    scenarioFile = path.join(ADDONS, batch[0], 'app.txt'); scenarioText = made.text;
+    scenarioFile = path.join(addonDir(batch[0]), 'app.txt'); scenarioText = made.text;
   } else {
-    scenarioFile = path.resolve(o.opts['--scenario'] ?? [path.join(ADDONS, addon, 'app.txt'), path.join(APPDIR, 'scenarios', 'default.txt')].find((f) => fs.existsSync(f)));
+    scenarioFile = path.resolve(o.opts['--scenario'] ?? [path.join(addonDir(addon), 'app.txt'), path.join(APPDIR, 'scenarios', 'default.txt')].find((f) => fs.existsSync(f)));
     if (!fs.existsSync(scenarioFile)) fail(`${o.opts['--scenario']} がありません`);
     scenarioText = fs.readFileSync(scenarioFile, 'utf8');
   }
@@ -1037,7 +1042,7 @@ async function runCmd(args) {
       //  game is left as it is: the next join takes it in. The batch's times go in the result: st.batch)
       switchAddon: async (name) => {
         if (name === liveAddon) { st.batch?.push({ addon: name, up_ms: 0 }); return `${name}（いま動いているもの）`; }
-        if (!fs.existsSync(path.join(ADDONS, name, 'bp', 'manifest.json')) && !fs.existsSync(path.join(ADDONS, name, 'rp', 'manifest.json'))) throw new Error(`bds/addons/${name} がありません`);
+        if (!fs.existsSync(path.join(addonDir(name), 'bp', 'manifest.json')) && !fs.existsSync(path.join(addonDir(name), 'rp', 'manifest.json'))) throw new Error(`${addonRel(name)} がありません`);
         const t1 = Date.now();
         bds(['down'], { LAB_ADDON: liveAddon }, 60_000);
         const up2 = bds(['up'], { LAB_ADDON: name, LAB_PORT: String(port), LAB_TAIL: serverLog, LAB_TEXTUREPACK_REQUIRED: '1', LAB_LIVE_IDLE: '240', ...bdsForApp(webHost) });
@@ -1989,7 +1994,7 @@ async function liveRun(verb, tail, ctx) {
     if (!spec.opts.includes(w) || words[i + 1] === undefined) return `${verb} では使えない指定: ${w}（${[...spec.flags, ...spec.opts.map((x) => `${x} <値>`)].join(' ')}${verb === 'run' ? '、run <<' : ''}）`;
     const v = words[++i];
     // (a scenario of the repository's addons or app/scenarios: no other file of the runner is read into a reply)
-    if (w === '--scenario') { const f = path.resolve(TOP, v); if (![ADDONS, path.join(APPDIR, 'scenarios')].some((d) => f.startsWith(d + path.sep)) || !f.endsWith('.txt') || !fs.existsSync(f)) return `--scenario ${v}: bds/addons/ か app/scenarios/ の .txt を（例 bds/addons/${addon}/app.txt）`; args.push(w, f); }
+    if (w === '--scenario') { const f = path.resolve(TOP, v); if (![...SHELVES, path.join(APPDIR, 'scenarios')].some((d) => f.startsWith(d + path.sep)) || !f.endsWith('.txt') || !fs.existsSync(f)) return `--scenario ${v}: bds/addons/ か app/scenarios/ の .txt を（例 bds/addons/${addon}/app.txt）`; args.push(w, f); }
     else if (!/^[A-Za-z0-9_.:,/x-]{1,200}$/.test(v)) return `${w} ${v}: 英数字と _ . : , / - だけ`;
     else args.push(w, v);
   }
@@ -2051,16 +2056,16 @@ async function livePull(ref) {
   const commit = await call(`/commits/${ref}`);
   // the addon's own tree: down from the root (bds → addons → <addon>), then all of it at once
   let sha = commit.commit.tree.sha;
-  for (const part of ['bds', 'addons', addon]) {
+  for (const part of addonRel(addon).split('/')) {
     const t = await call(`/git/trees/${sha}`), e = t.tree.find((x) => x.path === part && x.type === 'tree');
-    if (!e) return `${ref} に bds/addons/${addon} がありません`;
+    if (!e) return `${ref} に ${addonRel(addon)} がありません`;
     sha = e.sha;
   }
   const tree = await call(`/git/trees/${sha}?recursive=1`);
   if (tree.truncated) return 'アドオンのファイルが多すぎます（GitHub の一覧が途中で切れました）';
   const files = tree.tree.filter((x) => x.type === 'blob');
   if (files.some((x) => x.mode === '120000' || x.path.split('/').includes('..'))) return 'シンボリックリンクや .. を含むパスは受け付けません';
-  const dir = path.join(ADDONS, addon), got = new Set();
+  const dir = addonDir(addon), got = new Set();
   for (const f of files) {
     const b = await call(`/git/blobs/${f.sha}`), dst = path.join(dir, ...f.path.split('/'));
     fs.mkdirSync(path.dirname(dst), { recursive: true }); fs.writeFileSync(dst, Buffer.from(b.content, b.encoding === 'base64' ? 'base64' : 'utf8'));
@@ -2363,7 +2368,7 @@ async function uiCmd(args) {
   const o = parse(args, { flags: ['--all', '--list', '--no-fetch', '--wipe', '--window', '--keep', '-v', '--account', '--allow-client-errors'], opts: ['-a', '--addon', '--screens', '--shard', '--apk', '--bds', '--vending', '--sizes', '--cutouts'] });
   if (o.rest.length) fail(`知らない指定 ${o.rest.join(' ')}`, 'node lab.mjs app ui -a <アドオン> [--all] [--screens <id,id>] [--shard k/n] [--list]');
   const addon = needAddon(o.opts['-a'] ?? o.opts['--addon']);
-  const dir = path.join(ADDONS, addon), files = U.addonUiFiles(dir);
+  const dir = addonDir(addon), files = U.addonUiFiles(dir);
   const plan = U.screensFor(files);
   let screens = plan.screens, start = plan.start;
   if (o.flags.has('--all')) { screens = U.SCREENS; start = true; }
@@ -2428,7 +2433,7 @@ function statusCmd() {
   const wide = (t) => [...t].reduce((n, c) => n + (/[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe4f\uff00-\uff60\uffe0-\uffe6]/.test(c) ? 2 : 1), 0);
   for (const r of rows) out(`  ${r.ok && !r.soft ? '✔' : r.soft ? '・' : '✘'} ${r.name}${' '.repeat(Math.max(1, 24 - wide(r.name)))}${r.detail}`);
   const next = rows.find((r) => !r.ok && !r.soft);
-  const names = addonNames(), withApp = names.filter((n) => fs.existsSync(path.join(ADDONS, n, 'app.txt')));
+  const names = addonNames(), withApp = names.filter((n) => fs.existsSync(path.join(addonDir(n), 'app.txt')));
   out('');
   if (next) { out(`次にやること: ${next.fix}`); out('（まとめて対話で進めるなら: node lab.mjs app setup）'); }
   else {
@@ -2860,7 +2865,7 @@ async function ciCmd(args) {
     if (names.length < 2 || names.length > 8 || !BATCH_RE.test(`batch/${names.join('/')}`)) fail(`--batch ${o.opts['--batch']}: アドオンの名前を , で区切って 2〜8 個`, 'node lab.mjs app ci --batch geoui_osu_pixel,geoui_osu_skin');
     if (o.opts['--scenario'] || (o.opts['-a'] ?? o.opts['--addon'])) fail('--batch は -a・--scenario と一緒に使いません（-a はその最初、シナリオは batch/…）');
     if (o.opts['--mode'] && o.opts['--mode'] !== 'run') fail('--batch は --mode run だけ（app.txt の手順をつなぐ）');
-    for (const b of names) if (!fs.existsSync(path.join(ADDONS, b, 'app.txt'))) fail(`bds/addons/${b}/app.txt がありません`, `node lab.mjs app init -a ${b}`);
+    for (const b of names) if (!fs.existsSync(path.join(addonDir(b), 'app.txt'))) fail(`${addonRel(b)}/app.txt がありません`, `node lab.mjs app init -a ${b}`);
     o.opts['-a'] = names[0]; o.opts['--scenario'] = `batch/${names.join('/')}`;
   }
   if (gh(['--version']).status !== 0) fail('GitHub CLI（gh）がありません', 'https://cli.github.com から入れて、gh auth login でログインしてください。');

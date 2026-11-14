@@ -11,6 +11,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { lineBreaks } from '../common/codeline.mjs';   // (a written \n breaks the line outside string literals only)
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WIN = process.platform === 'win32';
@@ -67,9 +68,15 @@ export function unitMeta(dir) {
     let prefix = null, api = null;
     for (const f of walk(src, (x) => x.endsWith('.py'))) {
       const s = fs.readFileSync(f, 'utf8');
-      if (new RegExp(`class\\s+${cls}\\b`).test(s)) { prefix = /^\s+prefix\s*=\s*["']([^"']+)/m.exec(s)?.[1] ?? null; api = /^\s+api_version\s*=\s*["']([^"']+)/m.exec(s)?.[1] ?? null; }
+      if (new RegExp(`class\\s+${cls}\\b`).test(s)) {
+        prefix = /^\s+prefix\s*=\s*["']([^"']+)/m.exec(s)?.[1] ?? null; api = /^\s+api_version\s*=\s*["']([^"']+)/m.exec(s)?.[1] ?? null;
+        // (set from a file by a class decorator, @plugin_metadata("plugin.yml"): what Endstone sees once the class is built)
+        const mf = new RegExp(`@[\\w.]+\\(\\s*["']([\\w.-]+\\.(?:ya?ml|toml|json))["']\\s*\\)\\s*\\n\\s*class\\s+${cls}\\b`).exec(s)?.[1];
+        if (!api && mf && exists(path.join(path.dirname(f), mf))) api = /^\s*"?api_version"?\s*[:=]\s*["']([^"']+)/m.exec(fs.readFileSync(path.join(path.dirname(f), mf), 'utf8'))?.[1] ?? null;
+      }
     }
-    m = { kind: 'py', dist: t.project?.name, version: String(t.project?.version ?? '0.1.0'), deps: t.project?.dependencies ?? [], plugin, pkg, cls, prefix, api, src: path.join(dir, 'src') };
+    // (plugin: the entry point's name; name: what Endstone calls the plugin — its data folder, get_plugin — with - as _)
+    m = { kind: 'py', dist: t.project?.name, version: String(t.project?.version ?? '0.1.0'), deps: t.project?.dependencies ?? [], plugin, name: plugin?.replace(/-/g, '_'), pkg, cls, prefix, api, src: path.join(dir, 'src') };
   } else if (exists(cm)) {
     let plugin = null, version = '0.1.0';
     for (const f of walk(path.join(dir, 'src'), (x) => /\.(cpp|cc|cxx|h|hpp)$/.test(x))) { const r = /ENDSTONE_PLUGIN\(\s*"([^"]+)"\s*,\s*"([^"]+)"/.exec(fs.readFileSync(f, 'utf8')); if (r) { plugin = r[1]; version = r[2]; } }
@@ -265,12 +272,17 @@ async function pyChecks(L, opts) {
   const m = unitMeta(L.ADDON);
   if (!m) return { errs, warns, hints };
   if (m.kind === 'cpp') return cppBuild(L, m);
-  if (!m.dist?.startsWith('endstone-')) warns.push(`pyproject.toml: [project] name should be "endstone-<name>" (Endstone's convention; got ${m.dist})`);
   if (!m.plugin) { errs.push('pyproject.toml: no [project.entry-points."endstone"] entry (name = "endstone_x:ClassName")'); return { errs, warns, hints }; }
-  if (!/^[a-z0-9_]+$/.test(m.plugin)) errs.push(`pyproject.toml: plugin name "${m.plugin}" must be lowercase letters, digits and _ (Endstone rejects others)`);
+  // Endstone's own rules (endstone/plugin/plugin_loader.py): the distribution starts with endstone- and is exactly
+  // "endstone-" + the entry point's name (_ and - alike), or the plugin is not loaded ("Invalid name"); the plugin is then
+  // called by the entry point's name with - as _
+  const want = `endstone-${m.plugin.replace(/_/g, '-')}`, dist = String(m.dist ?? '').replace(/_/g, '-');
+  if (!dist.startsWith('endstone-')) errs.push(`pyproject.toml: [project] name "${m.dist}" must start with "endstone-" (Endstone does not load it: Invalid name) — "${want}"`);
+  else if (dist !== want) errs.push(`pyproject.toml: [project] name "${m.dist}" and the entry point "${m.plugin}" disagree: Endstone loads it only when the name is "${want}" (or the entry point is "${dist.slice(9)}")`);
+  if (!/^[a-z0-9_-]+$/.test(m.plugin)) errs.push(`pyproject.toml: plugin name "${m.plugin}" must be lowercase letters, digits, _ and - (the plugin is called ${m.plugin.replace(/-/g, '_')})`);
   if (!m.pkg || !exists(path.join(m.src, m.pkg, '__init__.py'))) errs.push(`src/${m.pkg}/__init__.py missing (the entry point imports ${m.pkg})`);
   else if (!new RegExp(`\\b${m.cls}\\b`).test(fs.readFileSync(path.join(m.src, m.pkg, '__init__.py'), 'utf8'))) errs.push(`src/${m.pkg}/__init__.py does not export ${m.cls} (entry point ${m.pkg}:${m.cls})`);
-  if (!m.api) errs.push(`${m.cls}: set api_version = "0.11" (Endstone refuses plugins without it)`);
+  if (!m.api) warns.push(`${m.cls}: set api_version = "0.11" (without it Endstone warns that a future release may refuse the plugin)`);
   else if (!/^0\.\d+$/.test(m.api)) warns.push(`${m.cls}: api_version "${m.api}" should be "major.minor" like "0.11"`);
   // things that break at runtime without a word from the type checker
   const RULES = [
@@ -324,6 +336,8 @@ async function pyChecks(L, opts) {
   } catch (e) { warns.push('type check unavailable (' + String(e.message).split('\n')[0] + ')'); }
   return { errs, warns, hints };
 }
+// the same checks for a folder (end/importer.mjs: the brief right after an import)
+export const checksOf = (L, dir) => pyChecks(Object.create(L, { ADDON: { value: dir } }), {});
 // pyright (npm), installed once into the cache
 function pyright(L) {
   const dir = path.join(L.CACHE, 'pytool'), main = path.join(dir, 'node_modules', 'pyright', 'index.js');
@@ -520,7 +534,7 @@ watch off
     [/asynchronous|async(hronously)? .*event|not on the server thread/i, 'fix: touch the API on the server thread: self.server.scheduler.run_task(self, fn)'],
     [/did not load \(errors above/, 'fix: the lines above say why; also: node lab.mjs check'],
   ],
-  usage: 'usage: node lab.mjs new <n> [Title] [--cpp] [--bp] | use <n> | up [-k] | do <cmd..> | reload | down | run [cmd..] [-w ms] [-k] [-v] [-t file.py:line] [--cov] | test [file] [--cov] | check | build | api <Class|Class.member|?word|sapi ..> | py <code> | pack | lib add <pypi pkg> | server [--update|<endstone version>] | help [topic] | (bds-lab tools: doc sample proto render png add ui mode ...)   (-a <plugin> picks the plugin)',
+  usage: 'usage: node lab.mjs new <n> [Title] [--cpp] [--bp] | import <plugin.whl|.tar.gz|.zip|folder> ["<request>"] | brief | use <n> | up [-k] | do <cmd..> | reload | down | run [cmd..] [-w ms] [-k] [-v] [-t file.py:line] [--cov] | test [file] [--cov] | check | build | api <Class|Class.member|?word|sapi ..> | py <code> | pack | lib add <pypi pkg> | server [--update|<endstone version>] | help [topic] | (bds-lab tools: doc sample proto render png add ui mode ...)   (-a <plugin> picks the plugin)',
 
   serverExe: (win) => (win ? 'bedrock_server.exe' : 'bedrock_server'),
   needsSetup: (L) => !exists(vbin(L, 'endstone')),
@@ -541,7 +555,7 @@ watch off
     if (name === 'Server') return 'server';
     if (name === 'lab_helper') return 'script';
     const m = unitMeta(L.ADDON);
-    return m && [m.plugin, m.prefix, m.cls].includes(name) ? 'script' : 'keep';
+    return m && [m.plugin, m.name, m.prefix, m.cls].includes(name) ? 'script' : 'keep';
   },
   // qa, last: every command of the plugin with generated arguments, from the console and from players (it may kick or ban them)
   qaLast(L) { const src = walk(path.join(L.ADDON, 'src'), (x) => x.endsWith('.py')).map((f) => fs.readFileSync(f, 'utf8')).join('\n'); return [...src.matchAll(/"([\w-]+)"\s*:\s*\{\s*"description"\s*:\s*"[^"]*"\s*,\s*"usages"/g)].map((m) => [`fuzz ${m[1]} 40`, `/${m[1]} with generated arguments`]); },
@@ -558,13 +572,13 @@ watch off
     const mark = path.join(inst.dir, 'lab_deployed.json');
     if (exists(mark)) for (const f of JSON.parse(fs.readFileSync(mark, 'utf8'))) fs.rmSync(path.join(pdir, f), { force: true });
     const placed = [];
-    if (!eng.keep && !eng.deployedOnce && m?.plugin) fs.rmSync(path.join(pdir, m.plugin), { recursive: true, force: true });   // fresh run: the plugin's data folder too (a `restart` keeps it, like the world)
+    if (!eng.keep && !eng.deployedOnce && m?.plugin) fs.rmSync(path.join(pdir, m.name ?? m.plugin), { recursive: true, force: true });   // fresh run: the plugin's data folder too (a `restart` keeps it, like the world)
     eng.deployedOnce = true;
     if (m?.kind === 'py' && m.plugin) distInfo(udir, m.dist ?? `endstone-${m.plugin}`, m.version, m.plugin, `${m.pkg}:${m.cls}`);
     if (m?.kind === 'cpp') { const lib = cppLib(L, m); if (lib) { fs.mkdirSync(pdir, { recursive: true }); fs.copyFileSync(lib, path.join(pdir, path.basename(lib))); placed.push(path.basename(lib)); } }
     fs.writeFileSync(mark, JSON.stringify(placed));
     const conf = path.join(site, 'conf.json');
-    L.writeJson(conf, { plugin: m?.plugin ?? null, package: m?.pkg ?? null, src: m?.src ?? L.ADDON, unit: L.ADDON, cov: !!(eng.pyCov || eng.covWanted), covFile: path.join(inst.dir, 'lab_cov.json'), covRun: (eng.covRun ??= `${process.pid}-${Date.now()}`), traces: eng.pyTraces ?? [] });   // (covFile: what ran before a `restart` is kept and merged)
+    L.writeJson(conf, { plugin: m?.name ?? m?.plugin ?? null, package: m?.pkg ?? null, src: m?.src ?? L.ADDON, unit: L.ADDON, cov: !!(eng.pyCov || eng.covWanted), covFile: path.join(inst.dir, 'lab_cov.json'), covRun: (eng.covRun ??= `${process.pid}-${Date.now()}`), traces: eng.pyTraces ?? [] });   // (covFile: what ran before a `restart` is kept and merged)
     inst.labEnv = { LAB_PY_CONF: conf, LAB_PYPATH: [hdir, udir, ...(m?.kind === 'py' ? [m.src] : [])].join(path.delimiter) };
   },
   async afterReady(L, eng) {
@@ -602,7 +616,7 @@ watch off
   async exec(L, eng, w, rest, c, wait) {
     const on = rest[0] !== 'off', names = rest.slice(rest[0] === 'on' || rest[0] === 'off' ? 1 : 0).join(' ').split(/[\s,]+/).filter(Boolean);
     switch (w) {
-      case 'py': return py(L, eng, { op: 'eval', code: c.slice(3).replace(/\\n/g, '\n') });
+      case 'py': return py(L, eng, { op: 'eval', code: lineBreaks(c.slice(3), 'py') });
       case 'packets': {   // packets on [name|id ...] | off | drop <name|id> [n] [in|out]
         await pkDecoder(L);
         if (rest[0] === 'drop') {
@@ -639,6 +653,9 @@ watch off
   unitVersion: (L) => unitMeta(L.ADDON)?.version ?? '0.1.0',
   commands: {
     new: (L, a) => scaffold(L, a),
+    // a person's plugin (.whl, sdist, source zip, folder) → plugins/<name>/, read before it runs, a draft tests.txt
+    import: async (L, a) => (await import('./importer.mjs')).importPlugin(L, a),
+    brief: async (L, a) => (await import('./importer.mjs')).briefPlugin(L, a),
     async api(L, a) {
       if (!a.length) L.die('usage: node lab.mjs api <Class|Class.member|?word> ... (Endstone)   |   api sapi <q> (the Script API, for bp/scripts)');
       if (a[0] === 'sapi') return L.sapi(a.slice(1));
