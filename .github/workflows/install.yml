@@ -4,10 +4,10 @@ name: install
 # No secrets. Runs when the installers or what they call change, and by hand.
 on:
   pull_request:
-    paths: ['install.sh', 'install.ps1', 'setup.sh', 'setup.cmd', 'lab.sh', 'lab.cmd', 'common/runtime.mjs', '.github/workflows/install.yml']
+    paths: ['install.sh', 'install.ps1', 'setup.sh', 'setup.cmd', 'lab.sh', 'lab.cmd', 'common/runtime.mjs', 'common/core.mjs', '.github/workflows/install.yml']
   push:
     branches: [main]
-    paths: ['install.sh', 'install.ps1', 'setup.sh', 'setup.cmd', 'lab.sh', 'lab.cmd', 'common/runtime.mjs', '.github/workflows/install.yml']
+    paths: ['install.sh', 'install.ps1', 'setup.sh', 'setup.cmd', 'lab.sh', 'lab.cmd', 'common/runtime.mjs', 'common/core.mjs', '.github/workflows/install.yml']
   workflow_dispatch:
 permissions:
   contents: read

@@ -36,7 +36,7 @@ AI が毎回読むのは `AGENTS.md` だけです。この文書は、ラボ自�
 
 | 区分 | モジュール |
 |---|---|
-| 入口・環境 | `status.mjs`（状況と次の 1 手・`clean`）・`netenv.mjs`（プロキシと証明書）・`runtime.mjs`（ホストかコンテナか）・`secrets.mjs`（.env）・`secret-scan.mjs`（鍵の漏れ止め） |
+| 入口・環境 | `status.mjs`（状況と次の 1 手・`clean`）・`netenv.mjs`（プロキシと証明書）・`runtime.mjs`（ホストかコンテナか）・`goall.mjs`（`go all`: 全ユニットをコア数ぶん同時に）・`secrets.mjs`（.env）・`secret-scan.mjs`（鍵の漏れ止め） |
 | 作る・試す | `core.mjs`（エンジン）・`build.mjs`（esbuild と型検査）・`addon-lint.mjs`・`api-hints.mjs`・`dts.mjs`（型定義の索引）・`schema.mjs`（Mojang のスキーマ）・`lint-tests.mjs`（tests.txt の静的検査）・`trial.mjs`（1 回の試走）・`helper.js`（テスト用にアドオンへ差し込む補助）・`extra.mjs`（doc・sample などの重い道具）・`pixel.mjs`（16×16 のテクスチャ）・`model.mjs`（モデルの描画と検査）・`jsonui.mjs`（JSON UI の検査）・`i18n.mjs`（翻訳の欠け）・`optimize.mjs`（配布物を小さく）・`bb.mjs`（BDS 本体の解析） |
 | 本物のプレイヤー | `realplayer.cjs`（本物のクライアント）・`raknet.cjs`・`nethernet.cjs`（通信）・`verbs.cjs`・`verbs-more.cjs`・`verbs-gen.cjs`（動作）・`goal.cjs`・`goal-exec.cjs`・`challenges.cjs`（目標の計画と実行）・`debugger.cjs`（スクリプトのデバッガ） |
 | サンドボックスと生きた世界 | `sim.mjs`（sandbox-be で tests.txt を約 1 秒）・`ts.mjs`（TS REPL を外から動かす） |

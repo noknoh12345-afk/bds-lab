@@ -3476,41 +3476,66 @@ async function selftest(rest) {
   let spec = SELFTEST_COMMON(old) + (F.selftest ?? '');
   if (noClient) spec = spec.split(/^(?=## )/m).filter((sec) => !/^@/m.test(sec)).join('');
   fs.writeFileSync(path.join(dir, 'tests.txt'), spec);
-  out(`selftest ${F.name}: running ${spec.match(/^## /gm).length} sections on the server...`);
-  r = run(['test', '-a', name]); report.push('== test', r.text);
-  if (noClient) r.ok = false;   // not complete
-  // the same server on NetherNet (WebRTC): a real player joins through HTTP signaling + data channels
-  const nnSkip = F.netherNetSkip?.(L());   // a platform that cannot do NetherNet here says why
-  if (nnSkip && !rest.includes('--no-nethernet')) { report.push('== nethernet', 'skipped: ' + nnSkip); out('nethernet: skipped: ' + nnSkip); }
-  if (!noClient && !nnSkip && !rest.includes('--no-nethernet')) {
-    fs.writeFileSync(path.join(dir, 'tests-nn.txt'), '## NetherNet: a real player joins over WebRTC\n@N join\n~ ^@N joined\n~ @N nethernet: server key\n## NetherNet: chat reaches the server\n@N chat nn-hello\n~ nn-hello\n');
-    out(`selftest ${F.name}: the same server on NetherNet...`);
-    const n = run(['test', '-a', name, path.join(dir, 'tests-nn.txt')], { LAB_TRANSPORT: 'nethernet' });
-    report.push('== nethernet', n.text);
-    n.text.split('\n').filter((l) => /^✘|^(PASS|FAIL) /.test(l)).slice(0, 10).forEach((l) => out('nethernet: ' + l));
-    r.ok = r.ok && n.ok;
-  }
-  const lines = r.text.split('\n');
-  lines.filter((l, i) => /^✘|^E |^(PASS|FAIL) /.test(l) || /^✘/.test(lines[i - 1] ?? '')).slice(0, 40).forEach((l) => out(l));
-  // the kit every new addon gets (common/kit): its own tests with real players, beta and stable APIs, then go (qa + pack)
-  if (F.name === 'bds' && !noClient && !rest.includes('--no-kit')) {
-    const kd = path.join(ADDONS, 'labkit'), fx = path.join(LIBDIR, 'kit', 'test');
-    fs.rmSync(kd, { recursive: true, force: true });
-    const steps = [['new', 'labkit', 'Lab Kit', 'kit selftest', 'desc=The lab kit, tested on this server', 'ja=このサーバーで確かめるラボのキット'], ...fs.readFileSync(path.join(fx, 'setup.txt'), 'utf8').trim().split('\n').map((l) => l.match(/"[^"]*"|\S+/g).map((x) => x.replace(/^"|"$/g, '')))];
-    let k = { ok: true, text: '' };
-    for (const a of steps) { k = run(a[0] === 'new' ? a : [...a, '-a', 'labkit']); report.push(`== kit: ${a.join(' ')}`, k.text); if (!k.ok) break; }
-    if (k.ok) {
-      fs.copyFileSync(path.join(fx, 'main.ts'), path.join(kd, 'src', 'main.ts')); fs.copyFileSync(path.join(fx, 'tests.txt'), path.join(kd, 'tests.txt'));
-      const m = readJson(path.join(kd, 'bp', 'manifest.json')); m.header.description = 'bds-lab kit selftest'; writeJson(path.join(kd, 'bp', 'manifest.json'), m);
-      out(`selftest ${F.name}: kit (beta, stable, go)...`);
-      for (const [label, args] of [['beta', ['test', '-a', 'labkit']], ['stable', null], ['go', ['go', '-a', 'labkit']]]) {
-        if (!args) { k = run(['mode', 'stable', '-a', 'labkit']); report.push('== kit: mode stable', k.text); k = run(['test', '-a', 'labkit']); } else k = run(args);
-        report.push(`== kit ${label}`, k.text);
-        out(`kit ${label}: ${k.text.split('\n').filter((l) => /^(✘|Q |E |PASS|FAIL|DONE)/.test(l)).slice(0, 8).join('\n  ') || k.text.split('\n').at(-1)}`);
-        if (!k.ok) break;
-      }
+  // Up to three servers at once, one per core: the sections (then NetherNet), the kit's tests on beta APIs and the kit's tests
+  // on stable APIs (each `test` has its own server folder, world and port; the kit is made twice so the two modes do not share
+  // a folder). The kit's `go` still runs alone, after all of them: its QA measures the script's time per tick.
+  // LAB_SELFTEST_PARALLEL=0: one after another.
+  const par = process.env.LAB_SELFTEST_PARALLEL === '0' ? 1 : Math.max(1, Math.min(3, os.availableParallelism?.() ?? os.cpus().length));
+  const runA = (args, extra = {}) => new Promise((res) => {
+    const c = spawn(process.execPath, [me, ...args], { cwd: ROOT, env: { ...env, ...extra }, stdio: ['ignore', 'pipe', 'pipe'] });
+    let t = ''; c.stdout.on('data', (b) => { t += b; }); c.stderr.on('data', (b) => { t += b; });
+    c.on('error', (e) => res({ ok: false, text: String(e.message) })); c.on('close', (code) => res({ ok: code === 0, text: t.trim() }));
+  });
+  const sections = async () => {
+    out(`selftest ${F.name}: running ${spec.match(/^## /gm).length} sections on the server...`);
+    const r = await runA(['test', '-a', name]); report.push('== test', r.text);
+    if (noClient) r.ok = false;   // not complete
+    // the same server on NetherNet (WebRTC): a real player joins through HTTP signaling + data channels
+    const nnSkip = F.netherNetSkip?.(L());   // a platform that cannot do NetherNet here says why
+    if (nnSkip && !rest.includes('--no-nethernet')) { report.push('== nethernet', 'skipped: ' + nnSkip); out('nethernet: skipped: ' + nnSkip); }
+    if (!noClient && !nnSkip && !rest.includes('--no-nethernet')) {
+      fs.writeFileSync(path.join(dir, 'tests-nn.txt'), '## NetherNet: a real player joins over WebRTC\n@N join\n~ ^@N joined\n~ @N nethernet: server key\n## NetherNet: chat reaches the server\n@N chat nn-hello\n~ nn-hello\n');
+      out(`selftest ${F.name}: the same server on NetherNet...`);
+      const n = await runA(['test', '-a', name, path.join(dir, 'tests-nn.txt')], { LAB_TRANSPORT: 'nethernet' });
+      report.push('== nethernet', n.text);
+      n.text.split('\n').filter((l) => /^✘|^(PASS|FAIL) /.test(l)).slice(0, 10).forEach((l) => out('nethernet: ' + l));
+      r.ok = r.ok && n.ok;
     }
-    if (!rest.includes('--keep')) fs.rmSync(kd, { recursive: true, force: true });
+    const lines = r.text.split('\n');
+    lines.filter((l, i) => /^✘|^E |^(PASS|FAIL) /.test(l) || /^✘/.test(lines[i - 1] ?? '')).slice(0, 40).forEach((l) => out(l));
+    return r;
+  };
+  // the kit every new addon gets (common/kit): its own tests with real players, beta and stable APIs, then go (qa + pack)
+  const wantKit = F.name === 'bds' && !noClient && !rest.includes('--no-kit');
+  const kd = path.join(ADDONS, 'labkit'), kb = path.join(ADDONS, 'labkitbeta'), fx = path.join(LIBDIR, 'kit', 'test');
+  const kitRep = [], kitOut = {};   // (said after the sections' lines, in the same order whichever finished first)
+  const kitLine = (label, k) => `kit ${label}: ${k.text.split('\n').filter((l) => /^(✘|Q |E |PASS|FAIL|DONE)/.test(l)).slice(0, 8).join('\n  ') || k.text.split('\n').at(-1)}`;
+  // the kit as an addon: new + setup.txt + its main.ts and tests.txt; `stable` moves it to the stable APIs
+  const makeKit = async (nm, d, stable) => {
+    fs.rmSync(d, { recursive: true, force: true });
+    const steps = [['new', nm, 'Lab Kit', 'kit selftest', 'desc=The lab kit, tested on this server', 'ja=このサーバーで確かめるラボのキット'], ...fs.readFileSync(path.join(fx, 'setup.txt'), 'utf8').trim().split('\n').map((l) => l.match(/"[^"]*"|\S+/g).map((x) => x.replace(/^"|"$/g, '')))];
+    let k = { ok: true, text: '' };
+    for (const a of steps) { k = await runA(a[0] === 'new' ? a : [...a, '-a', nm]); kitRep.push(`== kit: ${a.join(' ')}`, k.text); if (!k.ok) return k; }
+    fs.copyFileSync(path.join(fx, 'main.ts'), path.join(d, 'src', 'main.ts')); fs.copyFileSync(path.join(fx, 'tests.txt'), path.join(d, 'tests.txt'));
+    const m = readJson(path.join(d, 'bp', 'manifest.json')); m.header.description = 'bds-lab kit selftest'; writeJson(path.join(d, 'bp', 'manifest.json'), m);
+    if (stable) { k = await runA(['mode', 'stable', '-a', nm]); kitRep.push('== kit: mode stable', k.text); }
+    return k;
+  };
+  const kitTest = (label, nm) => async () => { const k = await runA(['test', '-a', nm]); kitOut[label] = { k, rep: [`== kit ${label}`, k.text] }; return k; };
+  let k = { ok: true, text: '' };
+  // (the two kit folders are made one after the other, before anything runs beside them: `new` and `add` write shared files)
+  if (wantKit) { k = await makeKit('labkitbeta', kb, false); if (k.ok) k = await makeKit('labkit', kd, true); }
+  const tasks = [sections, ...(wantKit && k.ok ? [kitTest('beta', 'labkitbeta'), kitTest('stable', 'labkit')] : [])];
+  const done = new Array(tasks.length); let next = 0;
+  await Promise.all(Array.from({ length: Math.min(par, tasks.length) }, async () => { for (;;) { const t = next++; if (t >= tasks.length) return; done[t] = await tasks[t](); } }));
+  r = done[0];
+  if (wantKit) {
+    out(`selftest ${F.name}: kit (beta, stable, go)...`);
+    report.push(...kitRep);
+    for (const label of ['beta', 'stable']) { const o = kitOut[label]; if (!o) continue; report.push(...o.rep); out(kitLine(label, o.k)); k = k.ok ? o.k : k; }
+    if (k.ok) { k = await runA(['go', '-a', 'labkit']); report.push('== kit go', k.text); out(kitLine('go', k)); }
+    else if (!kitOut.beta && !kitOut.stable) out(k.text.split('\n').slice(-6).join('\n'));
+    if (!rest.includes('--keep')) { fs.rmSync(kd, { recursive: true, force: true }); fs.rmSync(kb, { recursive: true, force: true }); }
     r.ok = r.ok && k.ok;
   }
   return fin(r.ok);

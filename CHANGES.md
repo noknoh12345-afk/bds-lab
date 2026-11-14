@@ -2,6 +2,9 @@
 
 ## 次の版（作業中）
 
+- **`go all`：全ユニットを同時に**（`common/goall.mjs`）。ユニットごとに `go` を別プロセスで、コア数（1 つ 1.5 GB、最大 8）ぶん同時に走らせます。前回長かったものから始めます。2 コアの機械で 12 本が 8 分 36 秒 → 4 分 18 秒（どのユニットの時間も変わらず、やり直しなし）。基準は下げません: 並べて走って DONE にならなかったユニットは、ほかを止めて単独でもう一度走らせ、その結果を採ります（`W` の行で必ず名前を出します）。コア数より多く並べると失敗が出ました（2 コアに 4 本で 2 本が単独やり直し）ので、既定はコア数までです。
+- **CI（verify）：アドオン 1 本に 1 ジョブ**。12 本を 1 ジョブで順に（8〜9 分）走らせていたのを、ユニットごとのジョブを同時に。サーバーの隣で何も動かないので QA の計測は単独のときと同じです。結果は今までどおり `bds` の 1 つにまとまります。
+- **selftest：同時に 3 サーバーまで**（セクション・キットの beta・キットの stable。キットの `go` は今までどおり単独）。2 コアで 2 分 20 秒 → 1 分 42 秒。`LAB_SELFTEST_PARALLEL=0` で 1 つずつ。
 - **1 行で導入**：`install.sh`（Linux・macOS・WSL）と `install.ps1`（Windows）。何もないパソコンで、ラボの取得（git がなければ tarball / zip）、OS のパッケージ（apt・dnf・yum・zypper・pacman）、Node.js 22、サーバー、selftest まで。もう一度実行すると更新。`.github/workflows/install.yml` が Ubuntu 22.04 / 24.04、Debian 12 / 13、Fedora、Rocky 9、Arch、openSUSE、Windows（PowerShell 5.1 / 7）、macOS で確かめます。Alpine（musl）は理由を言って止まります。`setup.cmd`（Windows の `setup.sh`）。`setup.sh` は apt 以外のパッケージマネージャーにも対応。
 - **VPS を GitHub Actions のランナーに**：`vps/runner-setup.sh`（sudo のない専用ユーザー、ランナー本体は SHA-256 を確かめて入れる、systemd のサービス）と `.github/workflows/vps.yml`（手動起動だけ。引数はシェルを通さず `lab.mjs` へ）。
 - **selftest が新しいフォルダーで必ず FAIL していたのを直しました**：selftest が作るキットのアドオンに日本語の説明がなく、自分の QA（`pack.description is still English`）に落ちていました。

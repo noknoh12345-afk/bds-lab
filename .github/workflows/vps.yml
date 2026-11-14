@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       args:
-        description: 'node lab.mjs に渡す引数（例: status / selftest / go -a coins / doctor）'
+        description: 'node lab.mjs に渡す引数（例: status / selftest / go -a coins / go all = 全アドオンをコア数ぶん同時に）'
         default: 'status'
         type: string
       ref:

@@ -22,23 +22,54 @@ jobs:
         with: { node-version: 22 }
       - run: npm i -g esbuild@0.28 typescript@6.0.3
       - run: node common/run-tests.mjs tests/*-offline.mjs tests/offline.mjs
-  bds:
-    # the real server: setup, then each addon in bds/addons through go (build → tests.txt → QA → DONE)
+  units:
+    # which units there are (the same list `go all` uses): one job each below
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 5
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with: { node-version: 22 }
+      - id: list
+        run: echo "list=$(node -e "import('./common/goall.mjs').then((m) => console.log(JSON.stringify(m.listUnits('.', ['bds']).map((u) => u.name))))")" >> "$GITHUB_OUTPUT"
+  unit:
+    # the real server: setup, then one addon of bds/addons through go (build → tests.txt → QA → DONE). Every addon has its own
+    # runner, all at once: nothing runs beside a server, so QA's timings are those of a machine to itself, and the whole takes
+    # as long as the longest addon instead of the sum (it was one job, one addon after another: 8-9 minutes).
+    name: go ${{ matrix.unit }}
+    needs: units
+    strategy:
+      fail-fast: false
+      matrix:
+        unit: ${{ fromJSON(needs.units.outputs.list) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with: { node-version: 22 }
       - run: node lab.mjs setup
-      - name: go (every sample addon)
+      - name: go
+        env:
+          UNIT: ${{ matrix.unit }}
         run: |
-          bad=""
-          for a in $(ls bds/addons); do
-            echo "::group::$a"
-            node lab.mjs go -a "$a" > "/tmp/go-$a.txt" 2>&1 || true   # (a failing go must not end the script before its output is shown)
-            tail -n 40 "/tmp/go-$a.txt"
-            grep -q '^DONE ' "/tmp/go-$a.txt" || bad="$bad $a"
-            echo "::endgroup::"
-          done
-          if [ -n "$bad" ]; then echo "::error::not DONE:$bad"; exit 1; fi
+          node lab.mjs go -a "$UNIT" > go.txt 2>&1 || true   # (a failing go must not end the script before its output is shown)
+          tail -n 60 go.txt
+          { echo "### go $UNIT"; echo; echo '```'; grep -E '^(DONE|FAIL|✘|E |Q |W |  FAIL)' go.txt | tail -n 20 | cut -c1-300; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          grep -q '^DONE ' go.txt || { echo "::error::not DONE: $UNIT"; exit 1; }
+      - if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with: { name: 'go-${{ matrix.unit }}', path: go.txt, retention-days: 7 }
+  bds:
+    # one result for all the units (the name branch protection and people know): green only when every unit is DONE
+    needs: unit
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - env:
+          RESULT: ${{ needs.unit.result }}
+        run: |
+          [ "$RESULT" = success ] || { echo "::error::not every unit is DONE (the unit jobs: $RESULT)"; exit 1; }

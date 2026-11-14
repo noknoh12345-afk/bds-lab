@@ -50,7 +50,7 @@ curl -fsSL https://raw.githubusercontent.com/noknoh12345-afk/bds-lab/main/vps/ru
 sudo sh runner-setup.sh
 ```
 
-あとは Actions → **vps** → Run workflow（`args` に `status`・`selftest`・`go -a coins` など）。公開リポジトリなので、Settings → Actions → General の「Require approval for all external contributors」を必ず選んでください（理由は `vps/runner-setup.sh` の先頭）。
+あとは Actions → **vps** → Run workflow（`args` に `status`・`selftest`・`go -a coins`、全アドオンをコア数ぶん同時に回す `go all` など）。公開リポジトリなので、Settings → Actions → General の「Require approval for all external contributors」を必ず選んでください（理由は `vps/runner-setup.sh` の先頭）。
 
 あとは AI（Claude Code・Codex など）をこのフォルダーで開き、作りたいものを頼むだけです。AI は `AGENTS.md` を読んで次の順に進めます。
 
@@ -60,6 +60,8 @@ sudo sh runner-setup.sh
 | 2 | `node lab.mjs add item\|block\|entity ...` | アイテム・ブロック・モブのファイルとテクスチャを書く |
 | 3 | `node lab.mjs go` | ビルド → 本物のサーバーでテスト → 品質チェック → `DONE dist/<名前>.mcaddon` |
 | 4 | `node lab.mjs gaps` / `mutate` / `chaos --append` | テストの穴を探して埋める |
+
+アドオンを全部まとめて確かめるときは `node lab.mjs go all`（コア数ぶんのサーバーを同時に立てます。`--jobs N` で指定）。
 
 人のアドオン（`.mcaddon`・`.mcpack`・`.zip`・フォルダー）を直すときは `node lab.mjs import <ファイル> "<直したいこと>"` から始めます。
 
