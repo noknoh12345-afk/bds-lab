@@ -348,7 +348,9 @@ for m in res["imports"]:
     if dist in closure or norm(m) in closure:
         continue
     # not installed here: sure only when every declared dependency is installed (none of them gives it)
-    unknown = [d for d in have if d not in {x for v in provided.values() for x in v}]
+    # (a well-known package not installed here gives only its own module — requests gives requests — so it cannot be the one)
+    known = {norm(v): k for k, v in DIST_OF.items()}
+    unknown = [d for d in have if d not in {x for v in provided.values() for x in v} and not (d in known and known[d] != m)]
     res["missing"].append({"module": m, "dist": DIST_OF.get(m, m), "sure": not unknown})
 
 # the package's data files (what save_default_config copies: config.toml ...)
