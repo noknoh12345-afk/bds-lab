@@ -34,7 +34,7 @@ macOS: Endstone ships no macOS wheels, so the venv, Endstone and its BDS live in
 ## lag
 `lag <ms> [ticks]` sleeps on the server thread every tick (TPS drops as on a busy server): timers, scheduler tasks, movement checks. `perf` shows the effect. `watch <expr>` / `watch off`: a Python expression evaluated every tick, `W expr = value` on change.
 ## ideas
-What Endstone does that BDS scripts cannot. Each is a working sample in plugins/<name>/ (tests.txt passes on the real server). Read plugins/<name>/src/endstone_<name>/plugin.py (~50 lines) and its tests.txt, then write yours in `new <yours>`:
+What Endstone does that BDS scripts cannot. Each is a working sample in examples/<name>/ (tests.txt passes on the real server; `examples` lists them, `new <n> --from <name>` copies one into your plugins/). Read examples/<name>/src/endstone_<name>/plugin.py (~50 lines) and its tests.txt, then write yours in `new <yours>`:
 - webapi: an HTTP API in the server (GET /status, POST /say with a token): threading + a snapshot the server thread refreshes
 - bossbar: per-player boss bars (`server.create_boss_bar`, `bar.add_player`)
 - toast: toast cards (`player.send_toast`)

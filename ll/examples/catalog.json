@@ -1,0 +1,59 @@
+{
+  "_": "このラボの見本。practical = サーバー運用でそのまま使える / showcase = この基盤でできることを見せる見本。node lab.mjs examples で一覧、new <名前> --from <見本> で自分のものに",
+  "bossbar": {
+    "kind": "showcase",
+    "ja": "このプレイヤーだけに見えるボスバー"
+  },
+  "chatlog": {
+    "kind": "practical",
+    "ja": "チャットを日付ごとのログに残し、/chatlog で読む"
+  },
+  "cmdguard": {
+    "kind": "practical",
+    "ja": "ミュート（ささやきも）・コマンドの略記・全コマンドの記録"
+  },
+  "hub": {
+    "kind": "practical",
+    "ja": "別のサーバーへ送る（ロビーのネットワーク）"
+  },
+  "i18n": {
+    "kind": "practical",
+    "ja": "プレイヤーごとにゲームの言語で表示する"
+  },
+  "money": {
+    "kind": "practical",
+    "ja": "ほかの MOD と共有するお金（LegacyMoney）"
+  },
+  "motd": {
+    "kind": "practical",
+    "ja": "サーバー一覧の 1 行を人数で書き換える"
+  },
+  "sidebar": {
+    "kind": "showcase",
+    "ja": "プレイヤーごとのサイドバー（位置と ping）"
+  },
+  "sqlstats": {
+    "kind": "practical",
+    "ja": "プレイヤーの成績を SQLite に（/stats と /top）"
+  },
+  "tempban": {
+    "kind": "practical",
+    "ja": "期限付き BAN（ログインを拒み、理由と残り時間を見せる）"
+  },
+  "toast": {
+    "kind": "showcase",
+    "ja": "画面上のトースト通知"
+  },
+  "unbreakable": {
+    "kind": "showcase",
+    "ja": "手に持った道具が壊れない（NBT）"
+  },
+  "warps": {
+    "kind": "practical",
+    "ja": "OP が置くワープ地点（/warp・/warps・/delwarp）"
+  },
+  "whois": {
+    "kind": "practical",
+    "ja": "プレイヤーのアドレス・ping・パケットロス・端末"
+  }
+}

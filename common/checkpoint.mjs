@@ -15,8 +15,13 @@ const KEEP = 20;
 const SKIP = /^(node_modules|dist|__pycache__|\.lab|build|\.xmake|tsconfig\.json)$/;
 
 export const labKind = () => { const k = process.env.LAB_KIND || (() => { try { return fs.readFileSync(path.join(TOP, '.lab-kind'), 'utf8').trim(); } catch { return ''; } })(); return UNITS[k] ? k : 'bds'; };
-export const unitDir = (k, u) => path.join(TOP, k, UNITS[k], u);
-export const unitNames = (k) => { try { return fs.readdirSync(path.join(TOP, k, UNITS[k])).filter((n) => !n.startsWith('.') && fs.statSync(unitDir(k, n)).isDirectory()).sort(); } catch { return []; } };
+// a unit is the person's own (<lab>/<units>/<name>) or one of the lab's samples (<lab>/examples/<name>): the own one wins
+// a name both have. unitsIn: the names, both kinds (top: the labs' folder — tools that take their own root pass it)
+const isDir = (d) => { try { return fs.statSync(d).isDirectory(); } catch { return false; } };
+export const unitDirIn = (top, k, u) => { const own = path.join(top, k, UNITS[k] ?? 'addons', u), ex = path.join(top, k, 'examples', u); return !isDir(own) && isDir(ex) ? ex : own; };
+export const unitsIn = (top, k) => { const ls = (d) => { try { return fs.readdirSync(d).filter((n) => !n.startsWith('.') && isDir(path.join(d, n))); } catch { return []; } }; return [...new Set([...ls(path.join(top, k, UNITS[k] ?? 'addons')), ...ls(path.join(top, k, 'examples'))])].sort(); };
+export const unitDir = (k, u) => unitDirIn(TOP, k, u);
+export const unitNames = (k) => unitsIn(TOP, k);
 export function currentUnit(k, args = []) {
   const i = args.indexOf('-a');
   const u = (i >= 0 ? args[i + 1] : null) || process.env.LAB_ADDON || (() => { try { return fs.readFileSync(path.join(TOP, k, '.lab', 'addon'), 'utf8').trim(); } catch { return ''; } })();

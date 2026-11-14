@@ -34,11 +34,18 @@ const ARGV = process.argv.slice(2);
 const pickArg = (flags) => { const i = ARGV.findIndex((a) => flags.includes(a)); if (i < 0) return undefined; const v = ARGV[i + 1]; ARGV.splice(i, 2); return v; };
 const ADDON_ARG = pickArg(['-a', '--addon']) ?? process.env.LAB_ADDON;
 const ADDONS = path.join(ROOT, F.unitDir);
+// the lab's bundled samples (end/examples, ll/examples): kept apart from the person's own units, still a `-a <name>` away —
+// tested, run and read in place; `new <name> --from <sample>` makes one of them the person's own (common/examples.mjs)
+const EXAMPLES = path.join(ROOT, 'examples');
 const isUnit = (d) => { try { return F.isUnit(d); } catch { return false; } };
 const addonNames = () => (fs.existsSync(ADDONS) ? fs.readdirSync(ADDONS).filter((n) => isUnit(path.join(ADDONS, n))).sort() : []);
 const gitBranch = () => { try { const r = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }); return r.status === 0 ? r.stdout.trim() : ''; } catch { return ''; } };
 function resolveAddon() {
-  if (ADDON_ARG) return path.join(ADDONS, ADDON_ARG);
+  if (ADDON_ARG) {
+    const own = path.join(ADDONS, ADDON_ARG), ex = path.join(EXAMPLES, ADDON_ARG);
+    // (a unit of the person's own wins; else the sample of that name; else the person's path, as before — `new` makes it)
+    return !fs.existsSync(own) && /^[a-z0-9_]+$/.test(ADDON_ARG) && isUnit(ex) ? ex : own;
+  }
   if (isUnit(ROOT)) return ROOT;   // single-unit folder (bench workspaces, docs/coverage)
   const names = addonNames();
   try { const cur = fs.readFileSync(path.join(ROOT, '.lab', 'addon'), 'utf8').trim(); if (names.includes(cur)) return path.join(ADDONS, cur); } catch { /* none chosen */ }
@@ -3522,7 +3529,11 @@ try {
   // commands that rewrite a unit's files take a checkpoint first (node lab.mjs undo), quietly
   try { for (const l of (await import('./checkpoint.mjs')).recoverHolds(F.name)) out(l); } catch { /* best-effort */ }   // a unit a killed mutate left with a planted bug
   if (['mode', 'add', 'lib', 'png'].includes(cmd) && ADDON && exists(ADDON) && !process.env.LAB_NO_CHECKPOINT) try { (await import('./checkpoint.mjs')).save(F.name, path.basename(ADDON), `before ${cmd} ${rest.filter((a) => a !== '-a' && a !== path.basename(ADDON)).join(' ').slice(0, 60)}`); } catch { /* best-effort */ }
-  if (F.commands?.[cmd]) ok = (await F.commands[cmd](L(), rest)) !== false;
+  // the lab's samples (common/examples.mjs): listed, made one's own, handed out — any lab with an examples/ folder
+  if (cmd === 'examples') ok = (await import('./examples.mjs')).examplesCmd(L(), rest);
+  else if (cmd === 'new' && rest.includes('--from')) ok = (await import('./examples.mjs')).newFrom(L(), rest);
+  else if (cmd === 'pack-examples') ok = await (await import('./examples.mjs')).packExamples(L(), rest);
+  else if (F.commands?.[cmd]) ok = (await F.commands[cmd](L(), rest)) !== false;
   else if (cmd === 'run') ok = await run(rest);
   else if (cmd === 'up') ok = await up(rest);
   else if (cmd === 'do') ok = await doCmd(rest);

@@ -1,0 +1,83 @@
+{
+  "_": "このラボの見本。practical = サーバー運用でそのまま使える / showcase = この基盤でできることを見せる見本。node lab.mjs examples で一覧、new <名前> --from <見本> で自分のものに",
+  "abilities": {
+    "kind": "practical",
+    "ja": "/fly と歩く速さをプレイヤーごとに"
+  },
+  "antispam": {
+    "kind": "practical",
+    "ja": "チャットの連投をパケットの段階で止める"
+  },
+  "bossbar": {
+    "kind": "showcase",
+    "ja": "プレイヤーごとに減っていくボスバーのカウントダウン"
+  },
+  "cmdguard": {
+    "kind": "practical",
+    "ja": "ミュート（ささやきも）・コマンドの略記・全コマンドの記録"
+  },
+  "guard": {
+    "kind": "practical",
+    "ja": "立入禁止区域（移動そのものを止める）"
+  },
+  "hub": {
+    "kind": "practical",
+    "ja": "/hub で別のサーバーへ送る（ロビーのネットワーク）"
+  },
+  "i18n": {
+    "kind": "practical",
+    "ja": "プレイヤーごとにゲームの言語で表示する"
+  },
+  "livemap": {
+    "kind": "showcase",
+    "ja": "ブラウザで見るライブ地図"
+  },
+  "motd": {
+    "kind": "practical",
+    "ja": "サーバー一覧の 1 行を、人数と時刻で毎回書き換える"
+  },
+  "pixelmap": {
+    "kind": "showcase",
+    "ja": "地図アイテムにドット絵を描く"
+  },
+  "qrmap": {
+    "kind": "showcase",
+    "ja": "地図アイテムに QR コードを描く"
+  },
+  "report": {
+    "kind": "practical",
+    "ja": "プレイヤーの通報を SQLite に保存し、OP が確認・処理する"
+  },
+  "sidebar": {
+    "kind": "showcase",
+    "ja": "プレイヤーごとのサイドバー（位置と ping）"
+  },
+  "skinpng": {
+    "kind": "showcase",
+    "ja": "参加したプレイヤーのスキンを PNG に保存"
+  },
+  "sqlstats": {
+    "kind": "practical",
+    "ja": "プレイヤーの成績（壊したブロック・死亡・参加）を SQLite に"
+  },
+  "tempban": {
+    "kind": "practical",
+    "ja": "期限付き BAN（ログインを拒み、理由と残り時間を見せる）"
+  },
+  "toast": {
+    "kind": "showcase",
+    "ja": "画面上のトースト通知"
+  },
+  "webapi": {
+    "kind": "practical",
+    "ja": "サーバーの状態を HTTP で返し、トークン付きでチャットに送る"
+  },
+  "whois": {
+    "kind": "practical",
+    "ja": "プレイヤーのアドレス・ping・端末・言語・クライアントの版"
+  },
+  "worldpng": {
+    "kind": "showcase",
+    "ja": "周りの土地を上から見た絵にする"
+  }
+}

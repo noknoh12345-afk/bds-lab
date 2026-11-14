@@ -37,7 +37,7 @@ Or bring one: `LAB_LL_SERVER=/path/to/levilamina-server` (a folder or zip with b
 ## crash
 LeviLamina's CrashLogger writes a symbolized native stack to logs/crash/trace_*.log; after a crash the lab prints it under the crash line, your mod's frames first (`crash report trace_... (2 frame(s) in <mod>)`). `lag <ms> [ticks]` stalls the server thread; `watch <expr>` / `watch off` evaluates in the mod's context every tick.
 ## ideas
-What LeviLamina (LegacyScriptEngine) does that BDS scripts cannot. Each is a working sample in mods/<name>/ (tests.txt passes on the real server). Read mods/<name>/src/main.ts (~30 lines) and its tests.txt, then write yours in `new <yours>`:
+What LeviLamina (LegacyScriptEngine) does that BDS scripts cannot. Each is a working sample in examples/<name>/ (tests.txt passes on the real server; `examples` lists them, `new <n> --from <name>` copies one into your mods/). Read examples/<name>/src/main.ts (~30 lines) and its tests.txt, then write yours in `new <yours>`:
 - sidebar: a private sidebar per player (`pl.setSidebar(title, {line: n})`)
 - bossbar: per-player boss bars (`pl.setBossBar(uid, title, percent, colour)`, `removeBossBar`)
 - toast: toast cards (`pl.sendToast`)

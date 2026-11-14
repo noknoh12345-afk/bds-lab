@@ -12,6 +12,7 @@ build/
 .xmake/
 */addons/*/tsconfig.json
 ll/mods/*/tsconfig.json
+ll/examples/*/tsconfig.json
 bds/vendor/*
 !bds/vendor/bedrock-server.zip
 !bds/vendor/bds-version.txt
@@ -52,7 +53,9 @@ auto/.lock
 # the lab writes a lab.mjs into each unit (`node lab.mjs` from inside the unit folder): generated, not the unit's
 bds/addons/*/lab.mjs
 end/plugins/*/lab.mjs
+end/examples/*/lab.mjs
 ll/mods/*/lab.mjs
+ll/examples/*/lab.mjs
 # borrowed addons (colony harvest / borrow): someone else's, run and fixed here only — never committed or handed out
 bds/addons/borrowed_*/
 # fanout: その回の計画（司令塔のもの）

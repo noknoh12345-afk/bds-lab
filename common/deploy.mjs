@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { unitDirIn } from './checkpoint.mjs';
 
 const TOP = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const UNITS = { bds: 'addons', end: 'plugins', ll: 'mods' };
@@ -54,7 +55,7 @@ function packsOf(names) {
   const out = [], missing = [];
   for (const n of want) {
     const [k, u] = n.includes('/') ? n.split('/') : ['bds', n];
-    const d = path.join(TOP, k, UNITS[k] ?? 'addons', u);
+    const d = unitDirIn(TOP, k, u);   // (the person's own, or the lab's sample)
     let any = false;
     for (const kind of ['bp', 'rp']) { const m = path.join(d, kind, 'manifest.json'); if (fs.existsSync(m)) { out.push({ unit: u, kind, dir: path.join(d, kind), m: readJson(m) }); any = true; } }
     if (!any) missing.push(n);

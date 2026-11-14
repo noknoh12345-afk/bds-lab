@@ -87,10 +87,13 @@ ok(fs.readFileSync(path.join(U, 'auto', 'ledger.jsonl'), 'utf8') === '{"id":"x"}
 
 // 6. the real samples.json says what the docs call samples, and every one exists
 const S = JSON.parse(fs.readFileSync(path.join(REPO, 'common', 'data', 'samples.json'), 'utf8'));
-for (const [k, d] of [['end', 'plugins'], ['ll', 'mods']]) {
+for (const k of ['end', 'll']) {
+  // (end/ll samples live in <lab>/examples, shipped whole: samples.json names none of them, or a unit of the person's own
+  // with a sample's name would be shipped as one)
   const ideas = [...(fs.readFileSync(path.join(REPO, k, 'help.md'), 'utf8').split(/^## /m).find((x) => x.startsWith('ideas')) ?? '').matchAll(/^- ([a-z0-9_]+):/gm)].map((m) => m[1]);
-  ok(ideas.length && ideas.every((x) => S[k].includes(x)) && S[k].every((x) => fs.existsSync(path.join(REPO, k, d, x))), `${k}: every \`help ideas\` sample is in samples.json and exists (${ideas.length})`);
-  const said = Number(/as (\d+) working (?:plugins|mods)/.exec(fs.readFileSync(path.join(REPO, k, 'AGENTS.md'), 'utf8'))?.[1]);
+  const cat = JSON.parse(fs.readFileSync(path.join(REPO, k, 'examples', 'catalog.json'), 'utf8'));
+  ok(ideas.length && S[k].length === 0 && ideas.every((x) => fs.existsSync(path.join(REPO, k, 'examples', x, 'tests.txt')) && cat[x]), `${k}: every \`help ideas\` sample is in ${k}/examples with tests and in catalog.json (${ideas.length})`);
+  const said = Number(/as (\d+) working (?:plugins|mods|samples)/.exec(fs.readFileSync(path.join(REPO, k, 'AGENTS.md'), 'utf8'))?.[1]);
   ok(said === ideas.length, `${k}/AGENTS.md says how many \`help ideas\` has (${said} = ${ideas.length})`);
 }
 ok(S.bds.every((x) => fs.existsSync(path.join(REPO, 'bds', 'addons', x))), 'bds samples exist');

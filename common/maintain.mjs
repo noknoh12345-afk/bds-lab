@@ -25,6 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { unitDirIn, unitsIn } from './checkpoint.mjs';
 
 const REPO = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const ROOT = () => process.env.LAB_LABS_ROOT || REPO;
@@ -36,8 +37,8 @@ const lab = (k, args, env = {}, timeout = 60 * 60_000) => {
   const text = `${r.stdout ?? ''}${r.stderr ?? ''}`;
   return { ok: r.status === 0, text, lines: text.trim().split('\n').filter(Boolean) };
 };
-const unitDir = (k, u) => path.join(ROOT(), k, UNITS[k], u);
-const units = (k) => { try { return fs.readdirSync(path.join(ROOT(), k, UNITS[k])).filter((n) => !n.startsWith('.') && fs.statSync(unitDir(k, n)).isDirectory()).sort(); } catch { return []; } };
+const unitDir = (k, u) => unitDirIn(ROOT(), k, u);   // (the person's own, or the lab's sample: maintained the same)
+const units = (k) => unitsIn(ROOT(), k);
 const readJ = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
 const passed = (t) => t.ok && t.lines.some((l) => /^PASS \d/.test(l));
 const failLines = (t) => t.lines.filter((l) => /^(✘|  want|  got|E |ERR |SECTION FAIL|SECTION WHY|FAIL)/.test(l)).slice(0, 40);
@@ -275,7 +276,7 @@ export async function maintainCmd(args, out = console.log) {
     const ctx = { ver, from, to, ai, tokens: 0 };
     const list = o.only ? o.only.split(',') : units(k);
     for (const u of list) {
-      if (!fs.existsSync(unitDir(k, u))) { out(`  W ${u}: not in ${k}/${UNITS[k]}`); continue; }
+      if (!fs.existsSync(unitDir(k, u))) { out(`  W ${u}: not in ${k}/${UNITS[k]} or ${k}/examples`); continue; }
       const r = await maintainUnit(k, u, o, ctx);
       if (!o.dry && !o.noPromote && k === 'bds' && ['OK', 'FIXED'].includes(r.status)) await promote(k, u, r, ctx, o);
       rows.push({ lab: k, ver: to, ...r });

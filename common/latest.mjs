@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { unitsIn } from './checkpoint.mjs';
 
 const TOP = process.env.LAB_LATEST_LABS || path.dirname(path.dirname(fileURLToPath(import.meta.url)));   // (tests: fake labs)
 const UNITS = { bds: 'addons', end: 'plugins', ll: 'mods' }, WORD = { bds: 'アドオン', end: 'Endstone プラグイン', ll: 'LeviLamina mod' };
@@ -42,7 +43,7 @@ const lab = (k, args, env = {}) => {
   const r = spawnSync(process.execPath, [path.join(TOP, k, 'lab.mjs'), ...args], { cwd: path.join(TOP, k), encoding: 'utf8', maxBuffer: 256e6, env: { ...process.env, LAB_NO_LASTFAIL: '1', ...env } });
   return { ok: r.status === 0, text: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 };
-const units = (k) => { try { return fs.readdirSync(path.join(TOP, k, UNITS[k])).filter((n) => !n.startsWith('.') && fs.statSync(path.join(TOP, k, UNITS[k], n)).isDirectory()).sort(); } catch { return []; } };
+const units = (k) => unitsIn(TOP, k);   // (the person's own and the lab's samples)
 const put = (file, s) => { if (file) fs.appendFileSync(file, s); };
 
 function gh(args, input) {

@@ -1,5 +1,5 @@
 // go all: every unit through `go` (build → tests.txt on a real server → QA → DONE), several at once.
-//   node lab.mjs go all [--jobs N] [--only a,b] [--no-retry]
+//   node lab.mjs go all [--jobs N] [--only a,b] [--no-retry] [--lab end|ll|bds] [--examples]
 // Each unit is its own `node lab.mjs go -a <unit>` process: the lab already gives every running server its own folder, world
 // and port (core.mjs claim), so they do not meet. How many at once: --jobs, else LAB_JOBS, else what this machine has
 // (autoJobs: its cores and memory).
@@ -16,16 +16,20 @@ export function autoJobs({ cores = os.availableParallelism?.() ?? os.cpus().leng
   return Math.max(1, Math.min(cores, Math.floor(memGB / 1.5) || 1, 8, units));   // (8: `go` takes up to two of the lab's 16 instances)
 }
 
-// the units of one lab: its addon folders that have tests (not the selftest's own, not borrowed ones)
-export function listUnits(top, kinds) {
+// the units of one lab: its addon folders that have tests (not the selftest's own, not borrowed ones); with examples, the
+// lab's samples too (<lab>/examples: a sample whose name a unit of the person's own has is left out — -a finds the own one)
+export function listUnits(top, kinds, { examples = false } = {}) {
   const out = [];
+  const read = (dir) => { try { return fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort(); } catch { return []; } };
   for (const k of kinds) {
-    const sub = { bds: 'addons', end: 'plugins', ll: 'mods' }[k] ?? 'addons', dir = path.join(top, k, sub);
-    let names = []; try { names = fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name); } catch { /* no such lab */ }
-    for (const n of names.sort()) {
+    const sub = { bds: 'addons', end: 'plugins', ll: 'mods' }[k] ?? 'addons', dir = path.join(top, k, sub), own = new Set();
+    for (const n of read(dir)) {
       if (/^(labkit|labselftest|borrowed_)/.test(n) || !fs.existsSync(path.join(dir, n, 'tests.txt'))) continue;
-      out.push({ kind: k, name: n });
+      out.push({ kind: k, name: n }); own.add(n);
     }
+    if (!examples) continue;
+    const ex = path.join(top, k, 'examples');
+    for (const n of read(ex)) if (!own.has(n) && fs.existsSync(path.join(ex, n, 'tests.txt'))) out.push({ kind: k, name: n, example: true });
   }
   return out;
 }
@@ -34,7 +38,7 @@ export function listUnits(top, kinds) {
 export function lastTimes(logDir) {
   try { return Object.fromEntries(JSON.parse(fs.readFileSync(path.join(logDir, 'summary.json'), 'utf8')).units.map((r) => [r.unit, r.ms])); } catch { return {}; }
 }
-export const byLongestFirst = (units, times) => [...units].sort((a, b) => (times[b.name] ?? Infinity) - (times[a.name] ?? Infinity) || a.name.localeCompare(b.name));
+export const byLongestFirst = (units, times) => [...units].sort((a, b) => (times[b.id ?? b.name] ?? Infinity) - (times[a.id ?? a.name] ?? Infinity) || (a.id ?? a.name).localeCompare(b.id ?? b.name));
 
 // run `tasks` with at most `jobs` at once; `start(task)` returns a promise of its result. Results in the tasks' order.
 export async function pool(tasks, jobs, start) {
@@ -50,23 +54,23 @@ const lastLine = (text) => text.split('\n').map((l) => l.trim()).filter((l) => /
 // the whole command. `runUnit(unit)` → { ok, text, ms } (the real one spawns `go`; tests pass their own)
 export async function goAll({ units, jobs, retry = true, runUnit, say = console.log, logDir = null, summaryFile = process.env.GITHUB_STEP_SUMMARY }) {
   const t0 = Date.now();
-  const keep = (u, r, tag) => { if (logDir) { fs.mkdirSync(logDir, { recursive: true }); fs.writeFileSync(path.join(logDir, `${u.name}${tag}.txt`), r.text); } };
+  const keep = (u, r, tag) => { if (logDir) { fs.mkdirSync(logDir, { recursive: true }); fs.writeFileSync(path.join(logDir, `${u.id ?? u.name}${tag}.txt`), r.text); } };
   say(`go all: ${units.length} unit(s), ${jobs} at once`);
   const first = await pool(units, jobs, async (u) => {
     const r = await runUnit(u); keep(u, r, '');
-    say(`${r.ok ? '✔' : '✘'} ${u.name}  ${secs(r.ms)}  ${lastLine(r.text)}`);
+    say(`${r.ok ? '✔' : '✘'} ${u.id ?? u.name}  ${secs(r.ms)}  ${lastLine(r.text)}`);
     return r;
   });
-  const rows = units.map((u, i) => ({ unit: u.name, ok: first[i].ok, ms: first[i].ms, line: lastLine(first[i].text), alone: false, firstLine: null }));
+  const rows = units.map((u, i) => ({ unit: u.id ?? u.name, ok: first[i].ok, ms: first[i].ms, line: lastLine(first[i].text), alone: false, firstLine: null }));
   // not DONE beside others: once more with nothing else running (one at a time), and that is the verdict
   const again = rows.filter((r) => !r.ok);
   if (again.length && retry && jobs > 1) {
     say(`go all: ${again.length} not DONE beside others: once more, alone (${again.map((r) => r.unit).join(' ')})`);
     for (const row of again) {
-      const u = units.find((x) => x.name === row.unit), r = await runUnit(u); keep(u, r, '-alone');
+      const u = units.find((x) => (x.id ?? x.name) === row.unit), r = await runUnit(u); keep(u, r, '-alone');
       row.firstLine = row.line; row.alone = true; row.ok = r.ok; row.ms += r.ms; row.line = lastLine(r.text);
-      say(`${r.ok ? '✔' : '✘'} ${u.name}  ${secs(r.ms)}  ${row.line}`);
-      if (r.ok) say(`W ${u.name}: DONE alone, but beside others it was: ${row.firstLine}  (timing under load: node lab.mjs flaky -a ${u.name})`);
+      say(`${r.ok ? '✔' : '✘'} ${row.unit}  ${secs(r.ms)}  ${row.line}`);
+      if (r.ok) say(`W ${row.unit}: DONE alone, but beside others it was: ${row.firstLine}  (timing under load: node lab.mjs ${u.kind} flaky -a ${u.name})`);
     }
   }
   const wall = Date.now() - t0, sum = rows.reduce((a, r) => a + r.ms, 0), bad = rows.filter((r) => !r.ok), shaky = rows.filter((r) => r.ok && r.alone);
@@ -86,9 +90,14 @@ export async function goAll({ units, jobs, retry = true, runUnit, say = console.
 export async function main({ top, kinds, args }) {
   const val = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : args.find((a) => a.startsWith(k + '='))?.slice(k.length + 1); };
   const only = val('--only')?.split(',').map((s) => s.trim()).filter(Boolean);
-  let units = listUnits(top, kinds);
-  if (only) { const miss = only.filter((n) => !units.some((u) => u.name === n)); if (miss.length) { console.log(`ERR no such unit: ${miss.join(' ')} (units: ${units.map((u) => u.name).join(' ')})`); return 1; } units = units.filter((u) => only.includes(u.name)); }
-  if (!units.length) { console.log('ERR no units with tests.txt (node lab.mjs bds new <name> ... makes one)'); return 1; }
+  // --lab end|ll|bds: one lab's units alone; --examples: the samples too
+  const labArg = val('--lab'), labs = labArg ? labArg.split(',').filter((k) => kinds.includes(k)) : kinds;
+  if (labArg && !labs.length) { console.log(`ERR --lab: one of ${kinds.join(' ')}`); return 1; }
+  let units = listUnits(top, labs, { examples: args.includes('--examples') });
+  // (two labs can have a unit of the same name: the lines and logs say end-cmdguard, ll-cmdguard)
+  if (new Set(units.map((u) => u.kind)).size > 1) units = units.map((u) => ({ ...u, id: `${u.kind}-${u.name}` }));
+  if (only) { const miss = only.filter((n) => !units.some((u) => u.name === n || u.id === n)); if (miss.length) { console.log(`ERR no such unit: ${miss.join(' ')} (units: ${units.map((u) => u.name).join(' ')})`); return 1; } units = units.filter((u) => only.includes(u.name) || only.includes(u.id)); }
+  if (!units.length) { console.log(`ERR no units with tests.txt (node lab.mjs bds new <name> ... makes one${labs.some((k) => k !== 'bds') ? '; the samples: --examples' : ''})`); return 1; }
   // the longest first (by the last run's times, a new unit before all): the wall time is then about the longest unit's, not
   // the longest one started last
   const logDir = path.join(top, '.lab', 'goall');
@@ -96,7 +105,7 @@ export async function main({ top, kinds, args }) {
   const asked = Number(val('--jobs') ?? process.env.LAB_JOBS);
   const jobs = Number.isInteger(asked) && asked > 0 ? Math.min(asked, 8, units.length) : autoJobs({ units: units.length });
   // the server and the tools once, before the units start beside each other (each `go` would otherwise do it under one lock)
-  const pre = await new Promise((res) => { const c = spawn(process.execPath, [path.join(top, 'lab.mjs'), 'setup', 'all'], { cwd: top, stdio: ['ignore', 'pipe', 'pipe'] }); let t = ''; c.stdout.on('data', (b) => { t += b; }); c.stderr.on('data', (b) => { t += b; }); c.on('close', (code) => res({ ok: code === 0, text: t })); });
+  const pre = await new Promise((res) => { const c = spawn(process.execPath, labs.length === 1 ? [path.join(top, labs[0], 'lab.mjs'), 'setup'] : [path.join(top, 'lab.mjs'), 'setup', 'all'], { cwd: labs.length === 1 ? path.join(top, labs[0]) : top, stdio: ['ignore', 'pipe', 'pipe'] }); let t = ''; c.stdout.on('data', (b) => { t += b; }); c.stderr.on('data', (b) => { t += b; }); c.on('close', (code) => res({ ok: code === 0, text: t })); });
   if (!pre.ok) { console.log(pre.text.trim().split('\n').slice(-6).join('\n')); console.log('ERR setup did not finish: node lab.mjs doctor'); return 1; }
   const env = { ...process.env }; delete env.LAB_ADDON;   // (each child is told its unit with -a)
   const runUnit = (u) => new Promise((res) => {
