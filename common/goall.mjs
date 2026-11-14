@@ -100,7 +100,7 @@ export async function main({ top, kinds, args }) {
   if (!pre.ok) { console.log(pre.text.trim().split('\n').slice(-6).join('\n')); console.log('ERR setup did not finish: node lab.mjs doctor'); return 1; }
   const env = { ...process.env }; delete env.LAB_ADDON;   // (each child is told its unit with -a)
   const runUnit = (u) => new Promise((res) => {
-    const t = Date.now(), c = spawn(process.execPath, [path.join(top, 'lab.mjs'), 'go', '-a', u.name], { cwd: top, stdio: ['ignore', 'pipe', 'pipe'], env });
+    const t = Date.now(), c = spawn(process.execPath, [path.join(top, u.kind, 'lab.mjs'), 'go', '-a', u.name], { cwd: path.join(top, u.kind), stdio: ['ignore', 'pipe', 'pipe'], env });   // (that lab's own lab.mjs: a unit of any lab, whichever one is remembered)
     let text = ''; c.stdout.on('data', (b) => { text += b; }); c.stderr.on('data', (b) => { text += b; });
     c.on('error', (e) => res({ ok: false, text: text + `\nERR ${e.message}`, ms: Date.now() - t }));
     c.on('close', () => res({ ok: /^DONE /m.test(text), text, ms: Date.now() - t }));   // (DONE is the lab's own word for "everything passed")
