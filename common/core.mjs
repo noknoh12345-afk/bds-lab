@@ -2549,7 +2549,11 @@ function sameAsLast(ok, sig, file, blocks = [], secs = [], errs = []) {
 }
 // ---------- quality: qa (what players would hit that tests.txt did not ask) and go (check+test+qa+pack) ----------
 // Q = fails `go` (a player would see it), S = suggestion. Budgets measured on BDS 1.26.52 with an empty addon: script_tick 0.3 ms.
-const QA_BUDGET = { avg: Number(process.env.LAB_QA_TICK_MS) || 2, spam: 8 };
+// (an x86-64 BDS emulated — docker on an ARM machine: QEMU or Rosetta — runs every script call several times slower than the
+// players' servers do: measured on GitHub's ubuntu-24.04-arm, kit's own per-tick loop at 2.3 ms that takes well under 1 ms
+// natively. The budget is the native one times 3 there, and the line says so; LAB_QA_TICK_MS sets it outright)
+const EMULATED = RT.kind === 'docker' && os.arch() !== 'x64';
+const QA_BUDGET = { avg: Number(process.env.LAB_QA_TICK_MS) || (EMULATED ? 6 : 2), spam: 8, why: !process.env.LAB_QA_TICK_MS && EMULATED ? ', amd64 emulated here: 3 × the native 2ms' : '' };
 function qaStatic() {
   const q = [], srcDir = exists(path.join(ADDON, 'src')) ? path.join(ADDON, 'src') : path.join(BP, 'scripts');
   const src = files(srcDir, (f) => /\.[cm]?[jt]s$/.test(f) && !/kit\.[jt]s$/.test(f)).map((f) => fs.readFileSync(f, 'utf8')).join('\n');
@@ -2674,7 +2678,7 @@ async function qa({ quiet = false, built = false } = {}) {
       else if (l.startsWith('W ')) q.push(['Q', `${l}   (content log, during: ${during})`]);
       const pm = /^PERF script_tick avg ([\d.]+)ms max ([\d.]+)ms/.exec(l);
       if (pm) { const n0 = q.length; perfNote(+pm[1], q); perfQ.push(...q.slice(n0)); }
-      if (pm) { const avg = +pm[1], max = +pm[2]; if (avg > QA_BUDGET.avg) perfQ.push(q[q.push(['Q', `script time ${avg}ms per tick with 3 players (budget ${QA_BUDGET.avg}ms; max ${max}ms)`]) - 1]); else if (max > 25) perfQ.push(q[q.push(['S', `script spike ${max}ms in one tick (a tick is 50ms): spread the work over ticks (system.runJob)`]) - 1]); }
+      if (pm) { const avg = +pm[1], max = +pm[2]; if (avg > QA_BUDGET.avg) perfQ.push(q[q.push(['Q', `script time ${avg}ms per tick with 3 players (budget ${QA_BUDGET.avg}ms${QA_BUDGET.why}; max ${max}ms)`]) - 1]); else if (max > 25) perfQ.push(q[q.push(['S', `script spike ${max}ms in one tick (a tick is 50ms): spread the work over ticks (system.runJob)`]) - 1]); }
       if (during === 'profile' && /^prof stop/.test(g.cmd ?? '')) { const m = /([\d.]+)ms (.+)$/.exec(l); if (/ sampled/.test(l)) profTotal = +m?.[1] || 0; else if (m) hot += `${hot ? ', ' : ''}${m[2].trim()} ${profTotal ? Math.round((100 * m[1]) / profTotal) + '%' : m[1] + 'ms'}`; }
     }
     if (alive && g.cmd === alive[0] && during === 'alive at first') aliveOk = g.out.some((l) => l.trim() === alive[1]);   // (a probe that never answers, e.g. a fake server, judges nothing)
