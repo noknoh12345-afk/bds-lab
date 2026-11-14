@@ -183,7 +183,7 @@ if main:
                      **{k: attrs.get(k) for k in ("api_version", "prefix", "version", "load", "depend", "soft_depend", "description")}}
     cmds = attrs.get("commands") if isinstance(attrs.get("commands"), dict) else {}
     if attrs.get("commands") is not None and not isinstance(attrs.get("commands"), dict):
-        res["notes"].append(f"{rel(f)}:{where.get('commands')} commands is not a plain dict literal: the lab cannot read it before the server does (brief --live reads it from the running plugin)")
+        res["notes"].append(f"{rel(f)}:{where.get('commands')} commands is not a plain dict literal: the lab cannot read it before the server does (node lab.mjs brief --live reads it from the running plugin)")
     for name, spec in cmds.items():
         spec = spec if isinstance(spec, dict) else {}
         res["commands"].append({"name": str(name), "usages": [str(u) for u in spec.get("usages") or [f"/{name}"]], "aliases": [str(a) for a in spec.get("aliases") or []],

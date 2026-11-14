@@ -4,7 +4,7 @@
 // could do outside the game, calls that block the server thread, imports no dependency provides — then what breaks on this
 // Endstone (pyright on its stubs) and a draft tests.txt that runs each way in once.
 //   node lab.mjs end import <file.whl|.tar.gz|.zip|folder> ["<what the person asked>"] [--name <n>]
-//   node lab.mjs end brief            (the current plugin, read again)
+//   node lab.mjs end brief [--live]   (the current plugin, read again; --live: started on a real server, what Endstone sees)
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -285,8 +285,36 @@ async function briefOf(L, dir, m) {
   return { lines: briefLines(L, m, r, { endstone, supported, checks }), r };
 }
 
-export async function briefPlugin(L) {
-  const F = await import('./flavor.mjs'), m = F.unitMeta(L.ADDON);
-  for (const l of (await briefOf(L, L.ADDON, m)).lines) L.out(l);
+export async function briefPlugin(L, args = []) {
+  const F = await import('./flavor.mjs'), m = F.unitMeta(L.ADDON), b = await briefOf(L, L.ADDON, m);
+  for (const l of b.lines) L.out(l);
+  if (args.includes('--live')) for (const l of live(L, m, b.r)) L.out(l);
   return true;
+}
+
+// brief --live: the plugin started on a fresh real server, and what Endstone itself sees — enabled or not (and the errors that
+// say why), its commands and permissions as registered — set beside what was read from the code (a commands dict built at
+// runtime, a metadata file, a decorator: what the reading could not see, the server can)
+// (the plugin's PluginDescription: _get_description() — its description attribute is the plugin's own text; each command as
+// the server has it, get_command: registered or not)
+const LIVE = `import json
+d = plugin._get_description() if hasattr(plugin, "_get_description") else plugin._description
+cs = [(c, plugin.get_command(c.name)) for c in d.commands]
+return json.dumps({"enabled": plugin.is_enabled, "api": d.api_version, "commands": [[c.name, list(c.usages), list(c.aliases), list(c.permissions), bool(r and r.is_registered)] for c, r in cs], "perms": [[x.name, str(x.default).split(".")[-1]] for x in d.permissions]})`;
+export function live(L, m, r) {
+  if (m?.kind !== 'py') return ['W brief --live reads Python plugins (a C++ one: go)'];
+  const unit = path.basename(L.ADDON);
+  const run = spawnSync(process.execPath, [path.join(L.TOP, 'lab.mjs'), 'end', 'run', '-a', unit, `py ${LIVE.replace(/\n/g, '\\n')}`], { cwd: L.TOP, encoding: 'utf8', maxBuffer: 64e6, timeout: 900000, env: { ...process.env, LAB_NOTRACE: '1' } });
+  const text = `${run.stdout ?? ''}\n${run.stderr ?? ''}`, hit = text.split('\n').find((l) => l.startsWith('{"enabled"'));
+  const errs = text.split('\n').filter((l) => /^E |Traceback|Error occurred|not compatible|No module named/.test(l)).slice(0, 8);
+  if (!hit) return [`E live: the plugin did not answer on a real server${errs.length ? ':' : ' (node lab.mjs run -v shows all it printed)'}`, ...errs.map((e) => `  ${e}`)];
+  let j; try { j = JSON.parse(hit); } catch { return ['E live: the answer could not be read']; }
+  const o = [`live (a fresh Endstone server): ${j.enabled ? 'enabled' : 'NOT enabled'} · api ${j.api || 'none'} · commands ${j.commands.length} · permissions ${j.perms.length}`];
+  if (!j.enabled) o.push(...errs.map((e) => `  ${e}`));
+  const read = new Set((r?.commands ?? []).map((c) => c.name)), seen = new Set(j.commands.filter((c) => c[4]).map((c) => c[0]));
+  const extra = j.commands.filter((c) => !read.has(c[0])), lost = [...read].filter((n) => !seen.has(n));
+  if (extra.length) o.push(`  registered but not read from the code: ${extra.map((c) => `${c[1][0] ?? '/' + c[0]}${c[3].length ? ` [${c[3].join(',')}]` : ''}`).join(' · ')} (add a section each to tests.txt)`);
+  if (lost.length) o.push(`  read from the code but not registered: /${lost.join(' /')} (a command Endstone does not know: a player gets "Unknown command")`);
+  if (!extra.length && !lost.length && j.commands.length) o.push('  the commands match what was read from the code');
+  return o;
 }

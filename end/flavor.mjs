@@ -655,7 +655,7 @@ watch off
     new: (L, a) => scaffold(L, a),
     // a person's plugin (.whl, sdist, source zip, folder) → plugins/<name>/, read before it runs, a draft tests.txt
     import: async (L, a) => (await import('./importer.mjs')).importPlugin(L, a),
-    brief: async (L) => (await import('./importer.mjs')).briefPlugin(L),
+    brief: async (L, a) => (await import('./importer.mjs')).briefPlugin(L, a),
     async api(L, a) {
       if (!a.length) L.die('usage: node lab.mjs api <Class|Class.member|?word> ... (Endstone)   |   api sapi <q> (the Script API, for bp/scripts)');
       if (a[0] === 'sapi') return L.sapi(a.slice(1));
