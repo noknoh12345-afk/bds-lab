@@ -2,6 +2,11 @@
 
 ## 次の版（作業中）
 
+- **1 行で導入**：`install.sh`（Linux・macOS・WSL）と `install.ps1`（Windows）。何もないパソコンで、ラボの取得（git がなければ tarball / zip）、OS のパッケージ（apt・dnf・yum・zypper・pacman）、Node.js 22、サーバー、selftest まで。もう一度実行すると更新。`.github/workflows/install.yml` が Ubuntu 22.04 / 24.04、Debian 12 / 13、Fedora、Rocky 9、Arch、openSUSE、Windows（PowerShell 5.1 / 7）、macOS で確かめます。Alpine（musl）は理由を言って止まります。`setup.cmd`（Windows の `setup.sh`）。`setup.sh` は apt 以外のパッケージマネージャーにも対応。
+- **VPS を GitHub Actions のランナーに**：`vps/runner-setup.sh`（sudo のない専用ユーザー、ランナー本体は SHA-256 を確かめて入れる、systemd のサービス）と `.github/workflows/vps.yml`（手動起動だけ。引数はシェルを通さず `lab.mjs` へ）。
+- **selftest が新しいフォルダーで必ず FAIL していたのを直しました**：selftest が作るキットのアドオンに日本語の説明がなく、自分の QA（`pack.description is still English`）に落ちていました。
+- **ARM の Linux では BDS を Docker（amd64）で動かすのを既定に**：BDS は x86-64 の Linux と Windows にしかないので、そのまま起動して失敗する代わりに、macOS と同じ道を通ります（`LAB_RUNTIME=native` で元の動き）。
+- `.gitattributes`：`.sh` は LF、`.cmd` と `.ps1` は CRLF（Windows で `autocrlf` が有効でも WSL や Git Bash で `.sh` が動くように）。
 - **LeviKit を追加**（`levikit/`）：Linux VPS のサーバー運用セット。管理パネル、動かしたままのバックアップ／復元／再起動、ワールドごとのルール、ワープ、`/tpa`、BAN、メンテナンス、スケジュール、地図。
   - **LeviLamina 版**（`install.sh`）：MoreDimensions の追加ワールド、リセット・取り込み・複製、マルチプロトコル。C++ Mod `levikit-core` は CI の Windows ランナーでビルドし、本物の LeviLamina サーバーで 1 回起動して確かめます。
   - **Endstone 版**（`install-endstone.sh`）：Wine もビルドも不要。同じパネルを、Python プラグイン `endstone-levikit` が動かします。ワールドはバニラの 3 つです。本物の Endstone サーバーと本物のクライアントで確かめています（試験 36 行、QA 込み）。

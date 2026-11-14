@@ -1,0 +1,61 @@
+name: vps
+# The lab on your own server (a VPS made a runner by vps/runner-setup.sh): started by hand only, from Actions -> vps ->
+# Run workflow or `gh workflow run vps -f args="go -a coins"`. The server keeps its checkout, Node.js and the Bedrock server
+# between runs (clean: false), so a run starts in seconds. No secrets are given to it.
+# Only workflow_dispatch: that needs write access to this repository. Never add pull_request here (a fork's pull request
+# must not reach your server); see the safety note at the top of vps/runner-setup.sh.
+run-name: "vps: lab ${{ inputs.args }}${{ inputs.ref && format(' @{0}', inputs.ref) || '' }}"
+on:
+  workflow_dispatch:
+    inputs:
+      args:
+        description: 'node lab.mjs に渡す引数（例: status / selftest / go -a coins / doctor）'
+        default: 'status'
+        type: string
+      ref:
+        description: '枝・タグ・コミット（空: この実行の枝）'
+        default: ''
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: vps
+  cancel-in-progress: false
+jobs:
+  lab:
+    runs-on: [self-hosted, bds-vps]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.ref }}
+          clean: false                 # the lab's caches (.lab, .lab-node, bds/vendor) stay for the next run
+          persist-credentials: false
+      - name: setup（初回だけ時間がかかります）
+        run: |
+          chmod +x lab.sh setup.sh
+          ./lab.sh doctor
+          ./lab.sh setup all
+      - name: lab
+        env:
+          LAB_ARGS: ${{ inputs.args }}   # (through the environment and xargs: the words reach lab.mjs as arguments, never a shell)
+        shell: bash
+        run: |
+          set -o pipefail
+          printf '%s' "$LAB_ARGS" | xargs ./lab.sh 2>&1 | tee vps-out.txt
+      - name: 結果
+        if: always()
+        shell: bash
+        run: |
+          { echo '### lab ${{ github.run_number }}'; echo; echo '```'; tail -n 60 vps-out.txt 2>/dev/null | cut -c1-400; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: vps-result
+          path: |
+            vps-out.txt
+            dist/*.mcaddon
+            .lab/selftest.txt
+            bds/.lab/selftest.txt
+          if-no-files-found: ignore
+          retention-days: 7
