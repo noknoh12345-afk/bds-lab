@@ -18,7 +18,7 @@ MARKS = [(255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 128, 0), (255, 255, 
 PAGE = """<!doctype html><meta charset=utf-8><title>Live map</title><body style="background:#111;color:#eee;font:14px sans-serif">
 <img id=m src=/map.png width=512 height=512 style="image-rendering:pixelated"><ul id=p></ul><script>
 setInterval(async()=>{m.src='/map.png?'+Date.now();const r=await(await fetch('/players.json')).json();
-p.innerHTML=r.map(x=>`<li>${x.name} ${x.x} ${x.y} ${x.z}</li>`).join('')},2000)</script>"""
+p.replaceChildren(...r.map(x=>{const li=document.createElement('li');li.textContent=`${x.name} ${x.x} ${x.y} ${x.z}`;return li}))},2000)</script>"""
 
 
 def color(t: str) -> tuple[int, int, int]:

@@ -99,6 +99,8 @@ export function gh({ token, base = 'https://api.github.com', fetchImpl = (...a) 
     addCollaborator: (r, login, permission = 'push') => call('PUT', `/repos/${r}/collaborators/${encodeURIComponent(login)}`, { permission }),
     /** the invitations to repositories this person has not taken yet, and one taken */
     myInvitations: () => call('GET', '/user/repository_invitations?per_page=100'),
+    /** an owner's public repositories (with has_pages: which share the panel's github.io origin — lib/origin.mjs) */
+    ownerRepos: (owner) => call('GET', `/users/${encodeURIComponent(owner)}/repos?type=owner&per_page=100`),
     acceptInvitation: (id) => call('PATCH', `/user/repository_invitations/${encodeURIComponent(id)}`),
     /** a GitHub App as GitHub shows it to anyone: { slug, permissions, … } */
     app: (slug) => call('GET', `/apps/${encodeURIComponent(slug)}`),

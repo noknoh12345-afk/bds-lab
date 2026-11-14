@@ -41,6 +41,7 @@ import { secretWatchCard } from './ui/secretwatch.mjs';
 import { connectDailyCard } from './ui/connectdaily.mjs';
 import { weeklyCard } from './ui/weekly.mjs';
 import { vpsTab } from './ui/vps.mjs';
+import { originCard } from './ui/origin.mjs';
 import { notifyPrefsCard } from './ui/notifyprefs.mjs';
 import { minutesCard } from './ui/minutes.mjs';
 import { lendForecastCard } from './ui/lendfc.mjs';
@@ -606,6 +607,7 @@ function setup(body) {
   setupTab(body, { api: st.api, lab: { slug: st.lab.slug, repo: st.lab.repo, role: st.lab.role, secrets: st.lab.secrets, workflows: st.lab.workflows }, hosts: st.hosts, me: st.me, config: CONFIG,
     panelUrl: `${location.origin}${location.pathname}`, signedInWithApp: A.session(st.login)?.kind === 'oauth', storage: TAB, appReturn: APP_RETURN, policy: st.policy, role: st.role,
     reload: async () => { await loadEnv(st.lab); if (st.tab === 'setup') render(); }, record: (action, detail) => record(action, detail) });
+  body.append(originCard({ api: st.api, lab: st.lab }));
 }
 function audit(body) { auditTab(body, { api: st.api, lab: st.lab, policy: st.policy, role: st.role, guarded, may }); }
 // ---- アドオン・配布 (ui/units.mjs, ui/workspace.mjs, ui/releases.mjs): the lab's units made, taken in, changed, tested and

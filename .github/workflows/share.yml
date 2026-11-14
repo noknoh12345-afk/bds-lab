@@ -20,10 +20,11 @@ jobs:
       - name: share
         env:
           GH_TOKEN: ${{ github.token }}
+          BUMP: ${{ inputs.bump || 'patch' }}   # (through the environment: a value, never shell text)
         run: |
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git config user.name 'bds-lab'
-          node lab.mjs share --bump "${{ inputs.bump || 'patch' }}" --release
+          node lab.mjs share --bump "$BUMP" --release
           git add VERSION CHANGES.md auto/ledger.jsonl
           git commit -q -m "share: bds-lab v$(cat VERSION)" || true
           git tag -f "lab-v$(cat VERSION)"
