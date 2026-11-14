@@ -19,10 +19,10 @@ const ks=Object.keys(v);if(ks.length===3&&"x"in v&&"y"in v&&"z"in v)return"{x:"+
 const mob=(t="minecraft:pig",x=2,y=-60,z=0)=>dim().spawnEntity(t,{x,y,z});
 const hit=(e,dmg=9999,by=p())=>e.applyDamage(dmg,{cause:"entityAttack",damagingEntity:by});
 const $={};
-const A=["mc","gt","world","system","dim","sim","p","inv","mob","hit","answer","$","tap"];
+const A=["mc","gt","world","system","dim","sim","p","inv","mob","hit","answer","$","tap","count"];
 system.afterEvents.scriptEventReceive.subscribe(async e=>{if(e.id!=="lab:js")return;let f;
 const src=e.message.replace(/^#/,"");try{f=new AF(...A,"return("+src+"\n)")}catch{const s2=src.trimEnd().replace(/;$/,""),i=s2.lastIndexOf(";");try{if(i<1)throw 0;f=new AF(...A,s2.slice(0,i+1)+"return("+s2.slice(i+1)+"\n)")}catch{try{f=new AF(...A,src)}catch(x){console.error("js: "+x);console.warn("LAB_JS_DONE");return}}}
-try{const r=await f(mc,gt,world,system,dim(),sim,p,inv,mob,hit,answer,$,tap);if(r!==undefined)console.warn(fmt(r))}catch(x){console.error("js: "+(x?.message??x))}console.warn("LAB_JS_DONE")},{namespaces:["lab"]});
+try{const r=await f(mc,gt,world,system,dim(),sim,p,inv,mob,hit,answer,$,tap,count);if(r!==undefined)console.warn(fmt(r))}catch(x){console.error("js: "+(x?.message??x))}console.warn("LAB_JS_DONE")},{namespaces:["lab"]});
 const txt=m=>typeof m==="string"?m:Array.isArray(m)?m.map(txt).join(""):m?.rawtext?m.rawtext.map(txt).join(""):m?.text??(m?.translate?"%"+m.translate:m?.score?"%score":JSON.stringify(m));
 const isSim=q=>gt.SimulatedPlayer&&q instanceof gt.SimulatedPlayer;const noReal=()=>!world.getAllPlayers().some(q=>!isSim(q));
 {const o=mc.World.prototype.sendMessage;try{mc.World.prototype.sendMessage=function(m){try{console.warn(txt(m))}catch{}return o.call(this,m)}}catch{}}

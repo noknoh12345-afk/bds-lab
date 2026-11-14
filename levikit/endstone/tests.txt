@@ -100,11 +100,15 @@ py from endstone_levikit.plugin import with_player\nreturn [with_player("tag {pl
 py plugin.write_raw({"nether": {"rules": {"enterCommands": ["tag {player} add came_in"]}}})\nreturn "ok"
 levikit reload
 @A cmd dim nether
-wait 2000
+until @@LEVIKIT WORLD_CHANGE \{"player":"A","from":"overworld","to":"nether"\} 30000
+wait 1000
 py return "came_in" in p("A").scoreboard_tags
 = True
 @A cmd dim overworld
-wait 1500
+until @@LEVIKIT WORLD_CHANGE \{"player":"A","from":"nether","to":"overworld"\} 30000
+wait 3000
+py plugin.write_raw({})\nreturn "ok"
+levikit reload
 
 ## what survives a restart: the place /back returns to
 py plugin.write_raw({})\nreturn "ok"
