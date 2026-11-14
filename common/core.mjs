@@ -3496,7 +3496,7 @@ async function selftest(rest) {
   if (F.name === 'bds' && !noClient && !rest.includes('--no-kit')) {
     const kd = path.join(ADDONS, 'labkit'), fx = path.join(LIBDIR, 'kit', 'test');
     fs.rmSync(kd, { recursive: true, force: true });
-    const steps = [['new', 'labkit', 'Lab Kit', 'kit selftest'], ...fs.readFileSync(path.join(fx, 'setup.txt'), 'utf8').trim().split('\n').map((l) => l.match(/"[^"]*"|\S+/g).map((x) => x.replace(/^"|"$/g, '')))];
+    const steps = [['new', 'labkit', 'Lab Kit', 'kit selftest', 'desc=The lab kit, tested on this server', 'ja=このサーバーで確かめるラボのキット'], ...fs.readFileSync(path.join(fx, 'setup.txt'), 'utf8').trim().split('\n').map((l) => l.match(/"[^"]*"|\S+/g).map((x) => x.replace(/^"|"$/g, '')))];
     let k = { ok: true, text: '' };
     for (const a of steps) { k = run(a[0] === 'new' ? a : [...a, '-a', 'labkit']); report.push(`== kit: ${a.join(' ')}`, k.text); if (!k.ok) break; }
     if (k.ok) {

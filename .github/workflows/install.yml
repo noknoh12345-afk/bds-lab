@@ -1,0 +1,134 @@
+name: install
+# The one-command install (install.sh / install.ps1) on machines that have nothing: each job starts from a bare system, runs
+# the installer exactly as a first-time person would, and ends with selftest on a real server where that system can run one.
+# No secrets. Runs when the installers or what they call change, and by hand.
+on:
+  pull_request:
+    paths: ['install.sh', 'install.ps1', 'setup.sh', 'setup.cmd', 'lab.sh', 'lab.cmd', 'common/runtime.mjs', '.github/workflows/install.yml']
+  push:
+    branches: [main]
+    paths: ['install.sh', 'install.ps1', 'setup.sh', 'setup.cmd', 'lab.sh', 'lab.cmd', 'common/runtime.mjs', '.github/workflows/install.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: install-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  BDS_LAB_REPO: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+  BDS_LAB_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+jobs:
+  linux:
+    # the runner's own Ubuntu: git and Node.js are there (the clone path is not taken for a commit: the tarball is)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with: { persist-credentials: false }
+      - name: install.sh (piped, as the README says)
+        run: cat install.sh | BDS_LAB_DIR="$RUNNER_TEMP/lab" sh
+      - name: again (an update of what is there)
+        run: cat install.sh | BDS_LAB_DIR="$RUNNER_TEMP/lab" BDS_LAB_STAGE=setup sh
+      - if: failure()
+        run: tail -n 80 "$RUNNER_TEMP/lab/.lab/selftest.txt" "$RUNNER_TEMP/lab/bds/.lab/selftest.txt" 2>/dev/null || true
+  distro:
+    # bare images of other distributions, as root: no git, no Node.js, often no tar or unzip
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['debian:12', 'debian:13', 'ubuntu:24.04', 'fedora:latest', 'rockylinux:9', 'archlinux:latest', 'opensuse/tumbleweed']
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with: { persist-credentials: false }
+      - name: install.sh in ${{ matrix.image }}
+        run: |
+          docker run --rm -i -e BDS_LAB_REPO -e BDS_LAB_REF -e BDS_LAB_DIR=/root/bds-lab ${{ matrix.image }} sh -c '
+            if command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1; then :; \
+            elif command -v apt-get >/dev/null 2>&1; then apt-get update -qq && apt-get install -y -qq curl ca-certificates >/dev/null; fi
+            cat > /tmp/install.sh && sh /tmp/install.sh || { s=$?; tail -n 80 /root/bds-lab/.lab/selftest.txt /root/bds-lab/bds/.lab/selftest.txt 2>/dev/null; exit $s; }' < install.sh
+  alpine:
+    # musl: the installer must refuse it in words, not fail half way
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with: { persist-credentials: false }
+      - run: |
+          out=$(docker run --rm -i -e BDS_LAB_REPO -e BDS_LAB_REF alpine:latest sh 2>&1 < install.sh) && { echo "::error::install.sh went on on Alpine"; exit 1; }
+          echo "$out"; echo "$out" | grep -q 'musl'
+  macos:
+    # no docker on GitHub's macOS runners: the files, Node.js 22 fetched by lab.sh, and the installer's words about docker
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with: { persist-credentials: false }
+      - name: install.sh up to the files
+        run: cat install.sh | BDS_LAB_DIR="$RUNNER_TEMP/lab" BDS_LAB_STAGE=code sh
+      - name: the lab starts (its own Node.js when the machine's is older)
+        run: cd "$RUNNER_TEMP/lab" && ./lab.sh status
+      - name: without docker it stops with the way in
+        run: |
+          if docker version >/dev/null 2>&1; then echo "docker is here: skipped"; exit 0; fi
+          out=$(cat install.sh | BDS_LAB_DIR="$RUNNER_TEMP/lab" sh 2>&1) && { echo "::error::went on without docker"; exit 1; }
+          echo "$out"; echo "$out" | grep -q 'colima'
+  windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [powershell, pwsh]   # Windows PowerShell 5.1 (what a fresh Windows has) and PowerShell 7
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with: { persist-credentials: false }
+      - name: install.ps1 piped to iex, as the README says (Windows PowerShell 5.1)
+        if: matrix.shell == 'powershell'
+        shell: powershell
+        env: { BDS_LAB_CI: '1' }
+        run: |
+          $env:BDS_LAB_DIR = Join-Path $env:RUNNER_TEMP 'lab'
+          Get-Content -Raw .\install.ps1 | Invoke-Expression
+      - name: install.ps1 piped to iex, as the README says (PowerShell 7)
+        if: matrix.shell == 'pwsh'
+        shell: pwsh
+        env: { BDS_LAB_CI: '1' }
+        run: |
+          $env:BDS_LAB_DIR = Join-Path $env:RUNNER_TEMP 'lab'
+          Get-Content -Raw .\install.ps1 | Invoke-Expression
+      - if: failure()
+        shell: pwsh
+        run: Get-ChildItem -Recurse -Filter selftest.txt (Join-Path $env:RUNNER_TEMP 'lab') -Force -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName -Tail 80 }
+  arm:
+    # ARM machines: the server is an x86-64 program, so it runs emulated (Linux: docker + binfmt). Slow, and allowed to fail
+    # for now: the job shows how far it gets.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04-arm, windows-11-arm]
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with: { persist-credentials: false }
+      - if: runner.os == 'Linux'
+        run: |
+          docker run --privileged --rm tonistiigi/binfmt --install amd64
+          cat install.sh | BDS_LAB_DIR="$RUNNER_TEMP/lab" sh
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        env: { BDS_LAB_CI: '1' }
+        run: |
+          $env:BDS_LAB_DIR = Join-Path $env:RUNNER_TEMP 'lab'
+          Get-Content -Raw .\install.ps1 | Invoke-Expression
