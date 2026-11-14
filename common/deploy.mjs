@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { unitDirIn } from './checkpoint.mjs';
 
 const TOP = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const UNITS = { bds: 'addons', end: 'plugins', ll: 'mods' };
+// (units: checkpoint.mjs unitDirIn — the person's own or the lab's sample)
 const readJson = (f) => JSON.parse(fs.readFileSync(f, 'utf8').replace(/^﻿/, ''));
 const stamp = () => new Date().toISOString().replace(/[:.]/g, '-').slice(0, 23);
 
