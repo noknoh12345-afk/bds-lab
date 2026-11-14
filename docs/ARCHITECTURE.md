@@ -42,7 +42,7 @@ AI が毎回読むのは `AGENTS.md` だけです。この文書は、ラボ自�
 | サンドボックスと生きた世界 | `sim.mjs`（sandbox-be で tests.txt を約 1 秒）・`ts.mjs`（TS REPL を外から動かす） |
 | 原因を探す・テストを鍛える | `why.mjs`・`gaps.mjs`・`mutate.mjs`・`chaos.mjs`・`record.mjs`・`flaky.mjs`・`bisect.mjs`・`checkpoint.mjs`（undo）・`pytb.mjs`（traceback を 1 行に） |
 | 持ち込み・保守 | `brief.mjs`（人のアドオンを読む）・`borrow.mjs`（借りたアドオンの印）・`scan.mjs`（アドオンが何をできるか）・`apidiff.mjs`（API の版の差）・`maintain.mjs`・`upkeep.mjs`・`maint.mjs`（健康診断）・`refresh.mjs`・`kb-build.mjs`（ラボの知識を新しい Minecraft に合わせる） |
-| 配る | `deploy.mjs`（自分の BDS へ、戻せる）・`github.mjs`（GitHub 側の補助） |
+| 配る | `deploy.mjs`・`serverimport.mjs`（`import <BDS のフォルダ>`: 自分のサーバーのアドオンを丸ごとユニットに。deploy の逆）（自分の BDS へ、戻せる）・`github.mjs`（GitHub 側の補助） |
 | 知識（スキル） | `skills.mjs`（規則・振り分け・実機での確認）・`skill-forge.mjs`（スキル本文の検査） |
 | テスト | `run-tests.mjs`（オフライン試験を並べて走らせる） |
 

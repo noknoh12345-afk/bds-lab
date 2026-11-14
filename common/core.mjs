@@ -3084,11 +3084,13 @@ function useAddon(name, quiet) {
 // import <file|folder> ["<what they asked>"] keeps the request in TASK.md, writes a draft tests.txt that runs each way into the
 // addon once (one go shows every crash) and prints the brief (what it is, its ways in, what breaks on this BDS's APIs)
 async function importAddon(args) {
-  const pos = args.filter((a, k) => !a.startsWith('--') && args[k - 1] !== '--name');
+  const pos = args.filter((a, k) => !a.startsWith('--') && !['--name', '--world'].includes(args[k - 1]));
   const given = pos[0], request = pos.slice(1).join(' ').trim();
   const cands = given ? [path.resolve(process.env.LAB_CALLER_CWD ?? process.cwd(), given), path.resolve(TOP, given), path.resolve(given)] : [];
   const src = cands.find((c) => exists(c));
-  if (!src) die(`usage: node lab.mjs import <file.mcaddon|.mcpack|.zip|folder> ["<what the person asked>"] [--name n]${given ? ` (no ${given} here)` : ''}`);
+  if (!src) die(`usage: node lab.mjs import <file.mcaddon|.mcpack|.zip|folder|your BDS folder> ["<what the person asked>"] [--name n]${given ? ` (no ${given} here)` : ''}`);
+  // a BDS folder of the person's own: everything it runs (its world's addons) as units — common/serverimport.mjs
+  { const SI = await import('./serverimport.mjs'); if (fs.statSync(src).isDirectory() && SI.isServerFolder(src)) { if (!(await SI.importServer(L(), src, request, args))) die('some of the server could not be taken in (the ✘ lines)'); return; } }
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lab-import-'));
   if (fs.statSync(src).isDirectory()) fs.cpSync(src, tmp, { recursive: true }); else unzip(fs.readFileSync(src), tmp);
   // an .mcaddon may hold .mcpack files (zips) instead of folders

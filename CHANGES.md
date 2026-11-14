@@ -1,6 +1,7 @@
 # bds-lab の変更
 
 ## 次の版（作業中）
+- **自分のサーバーを丸ごと持ち込む**（`node lab.mjs import <BDS のフォルダ>`、`common/serverimport.mjs`）: deploy の逆。ワールドが使っているアドオン（world_*_packs.json の通り。BP とそれが頼る RP を 1 つに）を、名前と UUID はそのまま全部ユニットに。もうあるもの（同じ UUID）は二度取らず、サーバーのフォルダは何も変えません。最後に出る `go all --only …` で全部を本物のサーバーで同時に確かめます。試験 `tests/serverimport-offline.mjs`。
 - **QA のスクリプト時間の上限**: x86 の BDS をエミュレーションで動かすとき（ARM の docker: QEMU・Rosetta）は普段の 2ms の 3 倍で、そう書きます。ARM のインストーラーの試験が、アドオンではなく QEMU の遅さで落ちていました。
 - **試験の `js` 行が `<=`・`>=`・`^` を使えるように**: BDS のコマンドの読み手がこれらを断るため（`js 1<=2` は一度も動かなかった）、その行だけ文字を符号にして送り、ラボの helper.js が戻します（本物の BDS で確かめ。試験 `tests/jsline-offline.mjs`）。
 
