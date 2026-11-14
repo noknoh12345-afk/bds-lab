@@ -5,11 +5,13 @@
 //   modules     config/default/permissions.json allows every @minecraft/* module the packs ask for (BDS leaves out
 //               @minecraft/common and @minecraft/server-net: such an addon does not load)
 //   beta APIs   a pack on beta modules (or "beta"): the world's level.dat gets the Beta APIs experiment, other experiments kept
+//   plugins     an Endstone plugin (end/plugins/<name>, or end/<name>): its wheel from go (end/dist/) into <BDS>/plugins/, the
+//               older wheels of the same plugin there replaced (an update); its packs (--bp) as world packs too
 // Everything changed is backed up first (<BDS>/.bdslab-backup/<time>/); --undo puts the last deploy back. Stop the server
 // first: it rewrites level.dat when it stops. --dry: what it would change, nothing written.
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { unitDirIn } from './checkpoint.mjs';
 
 const TOP = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -49,18 +51,26 @@ export function withBetaApis(buf) {
 }
 export function hasBetaApis(buf) { try { return !withBetaApis(buf).changed; } catch { return false; } }
 
-function packsOf(names) {
+async function packsOf(names) {
   const s = (() => { try { return readJson(path.join(TOP, 'common', 'data', 'samples.json')); } catch { return {}; } })();
   const want = [...new Set([...(s.utility?.bds ?? []), ...names])];
-  const out = [], missing = [];
+  const out = [], wheels = [], missing = [], unbuilt = [];
   for (const n of want) {
-    const [k, u] = n.includes('/') ? n.split('/') : ['bds', n];
+    // (end/plugins/x, end/x or x: a bare name is an addon's, else an Endstone plugin's of that name)
+    const parts = n.split('/').filter((x) => x && x !== 'addons' && x !== 'plugins');
+    let [k, u] = parts.length > 1 ? parts : ['bds', parts[0]];
+    if (parts.length === 1 && !fs.existsSync(path.join(unitDirIn(TOP, 'bds', u), 'bp')) && fs.existsSync(unitDirIn(TOP, 'end', u))) k = 'end';
     const d = unitDirIn(TOP, k, u);   // (the person's own, or the lab's sample)
     let any = false;
     for (const kind of ['bp', 'rp']) { const m = path.join(d, kind, 'manifest.json'); if (fs.existsSync(m)) { out.push({ unit: u, kind, dir: path.join(d, kind), m: readJson(m) }); any = true; } }
+    if (k === 'end' && fs.existsSync(path.join(d, 'pyproject.toml'))) {
+      const m = (await import(pathToFileURL(path.join(TOP, 'end', 'flavor.mjs')).href)).unitMeta(d);
+      const norm = String(m?.dist ?? '').replace(/[-.]+/g, '_'), file = path.join(TOP, 'end', 'dist', `${norm}-${m?.version}-py3-none-any.whl`);
+      if (m?.dist && fs.existsSync(file)) { wheels.push({ unit: u, file, norm, version: m.version }); any = true; } else { unbuilt.push(u); any = true; }
+    }
     if (!any) missing.push(n);
   }
-  return { packs: out, missing };
+  return { packs: out, wheels, missing, unbuilt };
 }
 const levelName = (bdsDir) => { try { return /^level-name=(.*)$/m.exec(fs.readFileSync(path.join(bdsDir, 'server.properties'), 'utf8'))?.[1]?.trim() || 'Bedrock level'; } catch { return 'Bedrock level'; } };
 
@@ -77,14 +87,15 @@ export async function deployCmd(args, out = console.log) {
     const dir = path.join(BK, last), plan = readJson(path.join(dir, 'plan.json'));
     for (const r of plan.changed) { const f = path.join(bds, r), b = path.join(dir, 'files', r); if (fs.existsSync(b)) { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.copyFileSync(b, f); } else fs.rmSync(f, { force: true }); }
     for (const r of plan.added) { fs.rmSync(path.join(bds, r), { recursive: true, force: true }); for (let d = path.dirname(path.join(bds, r)); d.startsWith(path.join(bds, 'worlds') + path.sep); d = path.dirname(d)) { try { fs.rmdirSync(d); } catch { break; } } }   // (and the pack folders it made, once empty)
-    for (const r of plan.replaced ?? []) { fs.rmSync(path.join(bds, r), { recursive: true, force: true }); fs.cpSync(path.join(dir, 'dirs', r), path.join(bds, r), { recursive: true }); }
+    for (const r of plan.replaced ?? []) { fs.rmSync(path.join(bds, r), { recursive: true, force: true }); fs.mkdirSync(path.dirname(path.join(bds, r)), { recursive: true }); fs.cpSync(path.join(dir, 'dirs', r), path.join(bds, r), { recursive: true }); }
     fs.rmSync(dir, { recursive: true, force: true });
-    out(`OK put back the deploy of ${last} (${plan.changed.length} file(s) restored, ${plan.added.length} pack folder(s) removed, ${(plan.replaced ?? []).length} older pack(s) back)`);
+    out(`OK put back the deploy of ${last} (${plan.changed.length} file(s) restored, ${plan.added.length} pack folder(s) or plugin(s) removed, ${(plan.replaced ?? []).length} older pack(s) or plugin(s) back)`);
     return true;
   }
   const level = world0 ?? levelName(bds), wd = path.join(bds, 'worlds', level);
-  const { packs, missing } = packsOf(rest.slice(1));
+  const { packs, wheels, missing, unbuilt } = await packsOf(rest.slice(1));
   if (missing.length) { out(`ERR no such unit: ${missing.join(' ')} (bds/addons/<name>, end/plugins/<name>, ...)`); return false; }
+  if (unbuilt.length) { out(`ERR no wheel yet for ${unbuilt.join(' ')}: node lab.mjs end go -a ${unbuilt[0]} builds it (end/dist/), then deploy again`); return false; }
   const changed = new Set(), added = [], replaced = [], lines = [];
   let bkDir = path.join(BK, stamp()); for (let k = 2; fs.existsSync(bkDir); k++) bkDir = path.join(BK, `${stamp()}-${k}`);   // (two deploys in one moment: two backups)
   const keep = (r) => { if (changed.has(r)) return; changed.add(r); const f = path.join(bds, r); if (!dry && fs.existsSync(f)) { const b = path.join(bkDir, 'files', r); fs.mkdirSync(path.dirname(b), { recursive: true }); fs.copyFileSync(f, b); } };
@@ -111,6 +122,17 @@ export async function deployCmd(args, out = console.log) {
     const r = rel(path.join(wd, file)); let cur = []; try { cur = readJson(path.join(bds, r)); } catch { /* none yet */ }
     const ids = new Set(lists[kind].map((x) => x.pack_id)), next = [...cur.filter((x) => !ids.has(x.pack_id)), ...lists[kind]];
     if (JSON.stringify(next) !== JSON.stringify(cur)) { write(r, JSON.stringify(next, null, 2) + '\n'); lines.push(`${file}: ${lists[kind].length} pack(s) on`); }
+  }
+  // 1b. Endstone plugins: the wheel into plugins/ (Endstone loads every wheel there at start); an older one of the same plugin
+  //     (endstone_x-<other version>-*.whl) goes, kept whole for --undo — two versions of one plugin there load one at random
+  if (wheels.length && !fs.existsSync(path.join(bds, 'plugins')) && !fs.readdirSync(bds).some((n) => /endstone/i.test(n))) lines.push(`W ${bds} has no plugins/ folder: is it an Endstone server? (Endstone makes plugins/ on its first start; the wheel is put there anyway)`);
+  for (const w of wheels) {
+    const destRel = `plugins/${path.basename(w.file)}`, pdir = path.join(bds, 'plugins');
+    let old = []; try { old = fs.readdirSync(pdir).filter((n) => n.startsWith(`${w.norm}-`) && n.endsWith('.whl') && n !== path.basename(w.file)); } catch { /* none yet */ }
+    for (const n of old) { const r = `plugins/${n}`; replaced.push(r); lines.push(`plugin ${w.unit}: the older ${n} replaced`); if (!dry) { fs.mkdirSync(path.join(bkDir, 'dirs', 'plugins'), { recursive: true }); fs.copyFileSync(path.join(pdir, n), path.join(bkDir, 'dirs', r)); fs.rmSync(path.join(pdir, n), { force: true }); } }
+    if (fs.existsSync(path.join(bds, destRel))) keep(destRel); else added.push(destRel);
+    if (!dry) { fs.mkdirSync(pdir, { recursive: true }); fs.copyFileSync(w.file, path.join(bds, destRel)); }
+    lines.push(`plugin ${w.unit} v${w.version} → ${destRel}`);
   }
   // 2. the script modules the packs ask for
   const pf = path.join(bds, 'config', 'default', 'permissions.json');
