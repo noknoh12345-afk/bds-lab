@@ -4,6 +4,15 @@
 **app ラボを「ほぼクライアント」に: 本物のアプリをコントローラーで人のように遊べる（歩く・見回す・跳ぶ・壊す・置く・持ち物・チャット…）。
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
+### 📥 Endstone のプラグインを持ち込む・GeoUI を独立したプロジェクトに
+- **人の Endstone プラグインを持ち込めるように**（`node lab.mjs end import <.whl|.tar.gz|.zip|フォルダ> "<その人の言葉>"`、`end/importer.mjs`・`end/brief.py`）: アドオンの `import` と同じく、名前（配布名・エントリーポイント・版）はそのままで `end/plugins/<名前>/` に。wheel・sdist・setup.py の物は pyproject.toml をメタデータから作り、平らな置き方は src/ の下へ。動かさずに読む説明書（brief）: クラスと api_version（plugin.yml をデコレーターで読む物も、Endstone が見るとおりに）、コマンドごとに何が答えるか（on_command の分岐・名前の分岐の後ろ・register_command の executor・何も無い）、権限、イベントの受け手とそれが登録されているか、スケジューラー、外でできること（プロセス・ネット・eval・削除・書き込み）、サーバーを止める呼び出し、依存が無い import、この Endstone の API に無いもの（file:line）。試験の下書きは入り口ごとに 1 回（コマンドは最短の正しい引数、イベントはプレイヤーが 1 回起こす、再起動）。PyPI の本物 6 本（essentials・example・inventoryui・pluggy・sidebar・disable-me）で読み、`sender.ping` や `ActionForm.Button` のようにこの Endstone で消えた API を見つけました。自分の wheel の持ち込み → `go` は本物の Endstone 0.11.15 で DONE（55 秒）。試験 `tests/end-import-offline.mjs`（22）。
+- **Endstone の名前の規則を本物に合わせました**（Endstone の plugin_loader.py を読んで）: エントリーポイントの `-` は `_` として読まれる（前は「Endstone が拒む」と止めていた: 本物の endstone-disable-me が通らなかった）。配布名は「endstone-」+ エントリーポイントの名前でなければ読み込まれない（前は注意だけ）。api_version が無いのは警告だけ（前は「拒まれる」と言っていた）。プラグインのデータフォルダと get_plugin は `_` の名前で。
+- **管理パネルから Endstone・LeviLamina も**: 「アドオン」のプラグインと MOD のカードに 🧪 試験・📦 仕上げる（.whl / .zip）。「新しく作る」と「取り込む」に「ラボ」の選択（.whl・.tar.gz は自動で Endstone）。unit.yml に `kind`（そのラボの用意とキャッシュ、入れる場所、成果物）。前は見えるだけで「AI で変える」からしか動かせませんでした。
+- **試験の `js` 行が `<=`・`>=`・`^` を使えるように**: BDS のコマンドの読み手がこれらを断るため（`js 1<=2` は一度も動かなかった）、その行だけ文字を符号にして送り、ラボの helper.js が戻します（本物の BDS で確かめ。試験 `tests/jsline-offline.mjs`）。
+- **`py`・`lse` 行の `\n` は文字列の中ではそのまま**（`common/codeline.mjs`）: `py return "a\nb".split("\n")` が改行に化けて SyntaxError だったのを直しました（本物の Endstone で ["a","b"]。試験 `tests/codeline-offline.mjs`）。
+- **GeoUI を bds-lab の中の独立したプロジェクトに**（`geoui/`）: 自分の README・package.json・`node test.mjs`（生成器 8 つ + 試験 15 本を並べて）・`node lab.mjs`（bds ラボへの入口: `go -a geoui_…`・`go all`）と、アドオン 30 個（`geoui/addons/`）・試験（`geoui/tests/`）。bds ラボ・`sim`・`maint`・API の差・app ラボ・CI の計画は geoui/addons を名前で見つけ、`auto gate --all` と verify は geoui/tests も走らせます（`go all --lab geoui`）。`bds/addons` には自分のアドオンだけ。
+- Endstone・LeviLamina の `new`・`import` のあとに出るスキルは、そのラボのもの（前は依頼の言葉からアドオンのスキルが出ることがあった）。
+
 ### 🌐 GeoUI: URL の画像・F1（ゲームモードはそのまま）・ゲームの中のウェブ（GeoUI Web）
 - **end・ll の見本を自分の作品から分けました**：Endstone の 20 本は `end/examples/`、LeviLamina の 14 本は `ll/examples/` へ。`end/plugins/`・`ll/mods/` は自分のものだけです。見本はそのまま `-a <見本>` で試せます（自分のものに同じ名前があればそちらが先）。保守（`upkeep`・`maintain`・`latest`）、自動操縦、`undo`、`deploy`、CI は見本も今までどおり扱います。
   - `examples [語]`：実用（サーバー運用でそのまま使える）とショーケース（できることの見本）に分けて一覧。`examples/catalog.json` に一行の説明。

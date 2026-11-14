@@ -41,7 +41,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { policy, stopped, floorHash, canSpend, isProtected, SECRET, PROTECTED, DEFAULT_POLICY } from './auto-guard.mjs';
 import { hostCmd, hostsSummary } from './hosts.mjs';
-import { shardOf } from './run-tests.mjs';
+import { shardOf, offlineTests } from './run-tests.mjs';
 import { unitsIn, unitDirIn } from './checkpoint.mjs';
 
 const REPO = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -672,7 +672,7 @@ export async function autoCmd(args, out = console.log) {
     // --all: every offline test in tests/ too (the gate's, then the rest: the labs end to end, app, lan, login, env, …);
     // --jobs n: how many side by side (1 = one by one); a test whose vendored part is missing says so and is not a failure
     const pol = policy(TOP), all = a.includes('--all'), jobs = Number(flag('--jobs')) || undefined;
-    const extra = all ? fs.readdirSync(path.join(TOP, 'tests')).filter((f) => /^(offline|[\w-]+-offline)\.mjs$/.test(f)).map((f) => `tests/${f}`).filter((t) => !pol.gate.includes(t)).sort() : [];
+    const extra = all ? offlineTests(TOP).filter((t) => !pol.gate.includes(t)).sort() : [];
     // --shard i/n: this runner's part (the same split on every runner: from the list and the times alone, never this machine's)
     const sh = /^(\d+)\/(\d+)$/.exec(flag('--shard') ?? ''), first = Number(flag('--first')) || 0;
     // --tests "<a b c>": only these (one not here is skipped, as a gate test is); --results <file>: a JSON line per test as it ends;

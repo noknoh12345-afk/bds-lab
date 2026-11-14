@@ -22,6 +22,8 @@ export function listUnits(top, kinds, { examples = false } = {}) {
   const out = [];
   const read = (dir) => { try { return fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort(); } catch { return []; } };
   for (const k of kinds) {
+    // geoui: GeoUI's addons (geoui/addons, a project of its own in the repository), run by the bds lab
+    if (k === 'geoui') { const d = path.join(top, 'geoui', 'addons'); for (const n of read(d)) if (fs.existsSync(path.join(d, n, 'tests.txt'))) out.push({ kind: 'bds', name: n, project: 'geoui' }); continue; }
     const sub = { bds: 'addons', end: 'plugins', ll: 'mods' }[k] ?? 'addons', dir = path.join(top, k, sub), own = new Set();
     for (const n of read(dir)) {
       if (/^(labkit|labselftest|borrowed_)/.test(n) || !fs.existsSync(path.join(dir, n, 'tests.txt'))) continue;
@@ -91,8 +93,9 @@ export async function main({ top, kinds, args }) {
   const val = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : args.find((a) => a.startsWith(k + '='))?.slice(k.length + 1); };
   const only = val('--only')?.split(',').map((s) => s.trim()).filter(Boolean);
   // --lab end|ll|bds: one lab's units alone; --examples: the samples too
-  const labArg = val('--lab'), labs = labArg ? labArg.split(',').filter((k) => kinds.includes(k)) : kinds;
-  if (labArg && !labs.length) { console.log(`ERR --lab: one of ${kinds.join(' ')}`); return 1; }
+  // (--lab geoui: GeoUI's addons, geoui/addons — not in a plain `go all`: GeoUI is a project of its own, `npm run go` in geoui/)
+  const labArg = val('--lab'), labs = labArg ? labArg.split(',').filter((k) => kinds.includes(k) || (k === 'geoui' && kinds.includes('bds'))) : kinds;
+  if (labArg && !labs.length) { console.log(`ERR --lab: one of ${kinds.join(' ')} geoui`); return 1; }
   let units = listUnits(top, labs, { examples: args.includes('--examples') });
   // (two labs can have a unit of the same name: the lines and logs say end-cmdguard, ll-cmdguard)
   if (new Set(units.map((u) => u.kind)).size > 1) units = units.map((u) => ({ ...u, id: `${u.kind}-${u.name}` }));
@@ -105,7 +108,8 @@ export async function main({ top, kinds, args }) {
   const asked = Number(val('--jobs') ?? process.env.LAB_JOBS);
   const jobs = Number.isInteger(asked) && asked > 0 ? Math.min(asked, 8, units.length) : autoJobs({ units: units.length });
   // the server and the tools once, before the units start beside each other (each `go` would otherwise do it under one lock)
-  const pre = await new Promise((res) => { const c = spawn(process.execPath, labs.length === 1 ? [path.join(top, labs[0], 'lab.mjs'), 'setup'] : [path.join(top, 'lab.mjs'), 'setup', 'all'], { cwd: labs.length === 1 ? path.join(top, labs[0]) : top, stdio: ['ignore', 'pipe', 'pipe'] }); let t = ''; c.stdout.on('data', (b) => { t += b; }); c.stderr.on('data', (b) => { t += b; }); c.on('close', (code) => res({ ok: code === 0, text: t })); });
+  const setLabs = [...new Set(labs.map((k) => (k === 'geoui' ? 'bds' : k)))];   // (GeoUI's addons run on the bds lab)
+  const pre = await new Promise((res) => { const c = spawn(process.execPath, setLabs.length === 1 ? [path.join(top, setLabs[0], 'lab.mjs'), 'setup'] : [path.join(top, 'lab.mjs'), 'setup', 'all'], { cwd: setLabs.length === 1 ? path.join(top, setLabs[0]) : top, stdio: ['ignore', 'pipe', 'pipe'] }); let t = ''; c.stdout.on('data', (b) => { t += b; }); c.stderr.on('data', (b) => { t += b; }); c.on('close', (code) => res({ ok: code === 0, text: t })); });
   if (!pre.ok) { console.log(pre.text.trim().split('\n').slice(-6).join('\n')); console.log('ERR setup did not finish: node lab.mjs doctor'); return 1; }
   const env = { ...process.env }; delete env.LAB_ADDON;   // (each child is told its unit with -a)
   const runUnit = (u) => new Promise((res) => {

@@ -123,6 +123,7 @@ node lab.mjs clean         # 作り直せるものを消して空きを作る（
 ```
 
 - 構成・モジュールの地図・品質ゲート・安全の床：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- このリポジトリの中の独立したプロジェクト：[geoui/](geoui/README.md)（HUD に 2D の UI。`cd geoui && node test.mjs`）・[sandbox-be/](sandbox-be/README.md)（実機なしの仮想世界）・[bedrock-binary/](bedrock-binary/README.md)（BDS の中から定義を復元。`cd bedrock-binary && npm test`）
 - 道具（TS REPL・sandbox-be・bedrock-binary・deploy・c2s・スキーマ検査）：[docs/guide/tools.md](docs/guide/tools.md)
 - 使い方と自動化（AI に作らせる・Issue から・チャットだけの AI・配布・自動操縦・保守・品質）：[docs/guide/workflows.md](docs/guide/workflows.md)
 - スキルと、一から作る練習：[docs/guide/skills.md](docs/guide/skills.md)・成長の仕組み全体：[skills/GROWTH.md](skills/GROWTH.md)

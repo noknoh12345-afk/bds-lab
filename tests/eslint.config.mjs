@@ -23,7 +23,7 @@ const rules = {
   'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none', ignoreRestSiblings: true, varsIgnorePattern: '^_' }],
 };
 export default [
-  { ignores: ['**/node_modules/**', '**/.lab/**', '**/dist/**', '**/runs/**', 'training/**', 'bds/addons/**', 'end/plugins/**', 'll/mods/**', 'skills/probes/**', 'bds/docs/*/bp/**',
+  { ignores: ['**/node_modules/**', '**/.lab/**', '**/dist/**', '**/runs/**', 'training/**', 'bds/addons/**', 'geoui/addons/**', 'end/plugins/**', 'll/mods/**', 'skills/probes/**', 'bds/docs/*/bp/**',
     'bds/bench/**/bp/**', 'bds/vendor/**', 'common/nethernet-connect/**', 'sandbox-be/src/vm/runtime/**', 'sandbox-be/src/vm/commands/**', '**/data/**', 'common/kit/kit.js',
     // (vendored as it is: fzstd's own build, the panel's zstd)
     'panel/lib/zstd.mjs'] },

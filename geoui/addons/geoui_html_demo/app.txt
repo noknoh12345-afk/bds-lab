@@ -1,0 +1,89 @@
+# geoui_html_demo（geoui/html/convert.mjs --sample が作る）を本物のアプリで: ページの見た目・焦点・ポインタ・ページの切り替え
+section title
+stop
+launch
+until title 600000
+shot title
+
+section join
+join
+until joined 900000
+do tp @a 0 -60 0 0 90
+do gamemode adventure @a
+wait 6000
+shot world
+absent clientlog \bERROR\b
+
+section open
+do scriptevent ghd:open
+wait 2500
+shot page-play
+changed 0.2
+measure diff page-play
+
+# (D・S は 150 ms: 押し続けて 8 tick（400 ms）で焦点は繰り返し動き、300 ms では近すぎる。各段の絵をその前のページ（shot world）と
+#  比べた数を公開のまとめに残す — 焦点が動いたか・スロットが替わったか。run 40968015119 で D・S は焦点を動かした（上のタブの列 → 真ん中の
+#  ボタン）が、行き先は出来事の無いボタンだった見込み: 決定（SPACE）の確かめは、パックで焦点を出来事のあるボタン・チェックボックスに置いてから)
+section keys
+shot world
+press D 150
+wait 800
+shot keys-right
+measure diff keys-right
+press S 150
+wait 800
+shot keys-focus
+measure diff keys-focus
+do scriptevent ghd:focus c3
+wait 600
+press SPACE 200
+wait 800
+until server GEOUI event 5000
+
+section tabs
+shot world
+press 2 200
+wait 800
+shot slot-2
+measure diff slot-2
+until server GEOUI page 5000
+wait 1500
+shot page-items
+press 3 200
+until server GEOUI page 5000
+wait 1500
+shot page-settings
+do scriptevent ghd:focus c19
+wait 600
+press SPACE 200
+until server GEOUI change 5000
+wait 1000
+shot settings-toggle
+
+section pointer
+press 1 200
+until server GEOUI page 5000
+wait 1200
+look left 400 50
+wait 800
+shot pointer
+look right 600 50
+wait 800
+shot pointer-2
+
+section sizes
+size 1024x768
+wait 9000
+shot page-4x3
+size 2400x1080
+wait 9000
+shot page-20x9
+size reset
+wait 6000
+
+section close
+press SHIFT_LEFT 300
+wait 600
+press SHIFT_LEFT 300
+wait 1500
+shot closed

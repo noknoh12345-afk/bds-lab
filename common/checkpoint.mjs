@@ -18,8 +18,12 @@ export const labKind = () => { const k = process.env.LAB_KIND || (() => { try { 
 // a unit is the person's own (<lab>/<units>/<name>) or one of the lab's samples (<lab>/examples/<name>): the own one wins
 // a name both have. unitsIn: the names, both kinds (top: the labs' folder — tools that take their own root pass it)
 const isDir = (d) => { try { return fs.statSync(d).isDirectory(); } catch { return false; } };
-export const unitDirIn = (top, k, u) => { const own = path.join(top, k, UNITS[k] ?? 'addons', u), ex = path.join(top, k, 'examples', u); return !isDir(own) && isDir(ex) ? ex : own; };
-export const unitsIn = (top, k) => { const ls = (d) => { try { return fs.readdirSync(d).filter((n) => !n.startsWith('.') && isDir(path.join(d, n))); } catch { return []; } }; return [...new Set([...ls(path.join(top, k, UNITS[k] ?? 'addons')), ...ls(path.join(top, k, 'examples'))])].sort(); };
+// where a lab's units are: the person's own (<lab>/addons|plugins|mods), then the lab's samples (<lab>/examples), then a project
+// of its own in the repository that brings units for that lab (geoui/addons: GeoUI's addons, run by the bds lab)
+export const shelvesIn = (top, k) => [path.join(top, k, UNITS[k] ?? 'addons'), path.join(top, k, 'examples'), ...(PROJECTS[k] ?? []).map((p) => path.join(top, p))];
+export const PROJECTS = { bds: ['geoui/addons'] };
+export const unitDirIn = (top, k, u) => { const sh = shelvesIn(top, k); return sh.map((d) => path.join(d, u)).find(isDir) ?? path.join(sh[0], u); };
+export const unitsIn = (top, k) => { const ls = (d) => { try { return fs.readdirSync(d).filter((n) => !n.startsWith('.') && isDir(path.join(d, n))); } catch { return []; } }; return [...new Set(shelvesIn(top, k).flatMap(ls))].sort(); };
 export const unitDir = (k, u) => unitDirIn(TOP, k, u);
 export const unitNames = (k) => unitsIn(TOP, k);
 export function currentUnit(k, args = []) {

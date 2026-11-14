@@ -24,7 +24,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { policy } from './auto-guard.mjs';
 import { STATE_VERSION, treeAt, valuesOf, envKey } from './verify-state.mjs';
-import { TIME, PARTS } from './run-tests.mjs';
+import { TIME, PARTS, offlineTests } from './run-tests.mjs';
 import { listEntries, readEntry } from '../sandbox-be/src/colony/zip.js';
 
 const TOP = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -43,10 +43,14 @@ const msg = (e) => String(e?.message ?? e).replace(/\s+/g, ' ').slice(0, 200);
  *  per addon with a pack (a name the workflow can put on a command line: letters, digits, _ and -) */
 export function listUnits(root = TOP) {
   const pol = policy(root);
-  const all = fs.readdirSync(path.join(root, 'tests')).filter((f) => /^(offline|[\w-]+-offline)\.mjs$/.test(f)).map((f) => `tests/${f}`);
+  const all = offlineTests(root);
   const tests = [...new Set([...pol.gate, ...all.filter((t) => !pol.gate.includes(t)).sort()])].filter((t) => fs.existsSync(path.join(root, t)));
   let addons = [];
-  try { addons = fs.readdirSync(path.join(root, 'bds', 'addons')).filter((n) => /^[A-Za-z0-9_-]+$/.test(n) && fs.existsSync(path.join(root, 'bds', 'addons', n, 'bp', 'manifest.json'))).sort(); } catch { /* none */ }
+  // (the bds lab's own addons and GeoUI's, geoui/addons: `node lab.mjs test -a <name>` finds either)
+  for (const d of [path.join(root, 'bds', 'addons'), path.join(root, 'geoui', 'addons')]) {
+    try { addons.push(...fs.readdirSync(d).filter((n) => /^[A-Za-z0-9_-]+$/.test(n) && fs.existsSync(path.join(d, n, 'bp', 'manifest.json')))); } catch { /* none */ }
+  }
+  addons = [...new Set(addons)].sort();
   return [...tests, ...STEPS, ...BDS_PARTS.map((p) => `bds:${p}`), ...addons.map((n) => `bds:addon:${n}`)];
 }
 

@@ -209,12 +209,20 @@ await t('unit.yml\'s inputs: a new unit, a run, a pack to take in — names made
   eq([U.isUnitName('zz_shop'), W.unitNameProblem('zz_shop') !== '', W.unitNameProblem('shop'), W.unitNameProblem('Shop'), W.unitNameProblem('shop_'), W.unitNameProblem('shop_', { taking: true }) !== ''], [false, true, '', W.UNIT_SAY, '', true]);
   eq([W.runInputs({ job: 'test', unit: 'coins' }), W.runInputs({ job: 'go', unit: 'coins' }).inputs, W.runInputs({ job: 'sim', unit: 'coins' }).inputs.job], [{ inputs: { job: 'test', unit: 'coins' } }, { job: 'go', unit: 'coins' }, 'sim']);
   ok(W.runInputs({ job: 'new', unit: 'coins' }).error && W.runInputs({ job: 'test', unit: '../x' }).error && W.runInputs({}).error, 'only test / go / sim of a good name');
+  // a plugin's or a mod's unit: its lab sent (kind; none for bds: a unit.yml from before has no such input); sim is bds's
+  eq([W.runInputs({ job: 'go', unit: 'hub', kind: 'end' }).inputs, W.runInputs({ job: 'test', unit: 'hub', kind: 'll' }).inputs], [{ job: 'go', unit: 'hub', kind: 'end' }, { job: 'test', unit: 'hub', kind: 'll' }]);
+  ok(W.runInputs({ job: 'sim', unit: 'hub', kind: 'end' }).error && W.runInputs({ job: 'test', unit: 'hub', kind: 'x' }).error, 'sim of a plugin, or a lab not known: refused');
+  eq(W.newUnitInputs({ unit: 'warp', title: 'Warp', kind: 'end' }).inputs, { job: 'new', unit: 'warp', title: 'Warp', request: '', kind: 'end' });
+  const wp = W.importPlan({ fileName: 'endstone_warp-1.2.3-py3-none-any.whl', size: 9, now: Date.UTC(2026, 9, 8, 12, 3), nonce: 'ab12' });
+  eq([wp.path, wp.unit, wp.kind, wp.dir, wp.inputs.kind], ['incoming/endstone_warp-1.2.3-py3-none-any-20261008T1203-ab12.whl', 'warp', 'end', 'end/plugins/warp', 'end'], 'a wheel: an Endstone plugin, named without endstone_ and its version');
+  const sd = W.importPlan({ fileName: 'endstone-inv-2.0.tar.gz', size: 9, now: 0, nonce: 'ab12' }), gz = W.importPlan({ fileName: 'Plug-main.zip', size: 9, kind: 'end', now: 0, nonce: 'ab12' });
+  ok(/\.tar\.gz$/.test(sd.path) && W.INCOMING.test(sd.path) && sd.unit === 'inv' && gz.kind === 'end' && gz.dir === 'end/plugins/plug_main' && W.incomingBranch(sd.path) === `lab-incoming/${sd.name}`, JSON.stringify([sd, gz]));
   // a pack's name in incoming/: made safe, then its own — a short time and a random part after its stem
   const at = Date.UTC(2026, 9, 8, 12, 3, 45);
   eq([W.incomingStamp(at, 'ab12'), W.incomingStamp(at, 'AB-1'), W.incomingStamp(at, ''), W.incomingStamp(NaN, 'zz99')], ['-20261008T1203-ab12', '-20261008T1203-ab10', '-20261008T1203-0000', '-00000000T0000-zz99']);
   ok(/^[a-z0-9]{4}$/.test(W.randomNonce()) && new Set(Array.from({ length: 20 }, W.randomNonce)).size > 15, 'a random part');
   const p = W.importPlan({ fileName: 'C:\\Users\\me\\Downloads\\My Cool Addon v1.2.MCADDON', size: 12_345, words: ' 直してほしい ', now: at, nonce: 'ab12' });
-  eq(p, { name: 'My_Cool_Addon_v1.2-20261008T1203-ab12.mcaddon', path: 'incoming/My_Cool_Addon_v1.2-20261008T1203-ab12.mcaddon', branch: 'lab-incoming/My_Cool_Addon_v1.2-20261008T1203-ab12.mcaddon', unit: 'my_cool_addon_v1_2',
+  eq(p, { name: 'My_Cool_Addon_v1.2-20261008T1203-ab12.mcaddon', path: 'incoming/My_Cool_Addon_v1.2-20261008T1203-ab12.mcaddon', branch: 'lab-incoming/My_Cool_Addon_v1.2-20261008T1203-ab12.mcaddon', unit: 'my_cool_addon_v1_2', kind: 'bds', dir: 'bds/addons/my_cool_addon_v1_2',
     message: 'panel: 取り込む My_Cool_Addon_v1.2-20261008T1203-ab12.mcaddon（unit.yml が bds/addons/my_cool_addon_v1_2 に） [skip ci]', inputs: { job: 'import', file: 'incoming/My_Cool_Addon_v1.2-20261008T1203-ab12.mcaddon', unit: 'my_cool_addon_v1_2', words: '直してほしい' } });
   const twice = [W.importPlan({ fileName: 'addon.mcpack', size: 1 }), W.importPlan({ fileName: 'addon.mcpack', size: 1 })];
   ok(twice[0].path !== twice[1].path && twice.every((x) => /^incoming\/addon-\d{8}T\d{4}-[a-z0-9]{4}\.mcpack$/.test(x.path) && x.unit === 'addon'), `one file twice: two names (${twice.map((x) => x.path)})`);
@@ -346,10 +354,20 @@ await t('a person\'s pack put on a branch of its own (the default branch\'s head
 await t('unitci: the inputs checked by the panel\'s own rules — each job\'s command, its words as arguments, never through a shell; anything else refused without repeating it (pure)', () => {
   eq(C.plan({ JOB: 'new', UNIT: 'ruby_sword', TITLE: 'Ruby Sword', REQUEST: 'ルビーの剣\n雷' }).args, ['lab.mjs', 'bds', 'new', 'ruby_sword', 'Ruby Sword', 'ルビーの剣\n雷']);
   eq(C.plan({ JOB: 'new', UNIT: 'lamp' }).args, ['lab.mjs', 'bds', 'new', 'lamp', 'lamp'], 'no title: the name; no request: left out');
-  eq(C.plan({ JOB: 'import', FILE: 'incoming/My_Pack.mcpack', WORDS: '直して' }).args, ['lab.mjs', 'import', 'incoming/My_Pack.mcpack', '直して', '--name', 'my_pack'], 'no UNIT: the file\'s name, always as --name (never the pack\'s header.name)');
-  eq(C.plan({ JOB: 'import', FILE: 'incoming/a.zip', UNIT: 'mine' }).args, ['lab.mjs', 'import', 'incoming/a.zip', '--name', 'mine']);
-  eq(C.plan({ JOB: 'import', FILE: 'incoming/2048_Game-20261008T1203-ab12.mcaddon' }), { job: 'import', unit: 'addon_2048_game', args: ['lab.mjs', 'import', 'incoming/2048_Game-20261008T1203-ab12.mcaddon', '--name', 'addon_2048_game'], show: 'node lab.mjs import incoming/2048_Game-20261008T1203-ab12.mcaddon --name addon_2048_game' });
-  for (const job of ['test', 'sim', 'go']) eq(C.plan({ JOB: job, UNIT: 'coins', TITLE: 'ignored', FILE: 'x' }), { job, unit: 'coins', args: ['lab.mjs', job, '-a', 'coins'], show: `node lab.mjs ${job} -a coins` });
+  eq(C.plan({ JOB: 'import', FILE: 'incoming/My_Pack.mcpack', WORDS: '直して' }).args, ['lab.mjs', 'bds', 'import', 'incoming/My_Pack.mcpack', '直して', '--name', 'my_pack'], 'no UNIT: the file\'s name, always as --name (never the pack\'s header.name)');
+  eq(C.plan({ JOB: 'import', FILE: 'incoming/a.zip', UNIT: 'mine' }).args, ['lab.mjs', 'bds', 'import', 'incoming/a.zip', '--name', 'mine']);
+  eq(C.plan({ JOB: 'import', FILE: 'incoming/2048_Game-20261008T1203-ab12.mcaddon' }), { job: 'import', unit: 'addon_2048_game', kind: 'bds', dir: 'bds/addons/addon_2048_game', args: ['lab.mjs', 'bds', 'import', 'incoming/2048_Game-20261008T1203-ab12.mcaddon', '--name', 'addon_2048_game'], show: 'node lab.mjs bds import incoming/2048_Game-20261008T1203-ab12.mcaddon --name addon_2048_game' });
+  for (const job of ['test', 'sim', 'go']) eq(C.plan({ JOB: job, UNIT: 'coins', TITLE: 'ignored', FILE: 'x' }), { job, unit: 'coins', kind: 'bds', dir: 'bds/addons/coins', args: ['lab.mjs', 'bds', job, '-a', 'coins'], show: `node lab.mjs bds ${job} -a coins` });
+  // the Endstone and LeviLamina labs: KIND, or an import's file (.whl .tar.gz .tgz: a plugin); sim stays bds's
+  for (const job of ['test', 'go']) eq(C.plan({ JOB: job, UNIT: 'hub', KIND: 'end' }).args, ['lab.mjs', 'end', job, '-a', 'hub']);
+  eq(C.plan({ JOB: 'go', UNIT: 'hub', KIND: 'll' }).dir, 'll/mods/hub');
+  eq(C.plan({ JOB: 'import', FILE: 'incoming/endstone_warp-1.2.3-py3-none-any-20261008T1203-ab12.whl' }).args, ['lab.mjs', 'end', 'import', 'incoming/endstone_warp-1.2.3-py3-none-any-20261008T1203-ab12.whl', '--name', 'warp'], 'a wheel: the Endstone lab, named without endstone_ and its version');
+  eq(C.plan({ JOB: 'import', FILE: 'incoming/endstone-inv-2.0-20261008T1203-ab12.tar.gz' }).args.slice(0, 2), ['lab.mjs', 'end']);
+  eq(C.plan({ JOB: 'import', FILE: 'incoming/Plug-main.zip', KIND: 'end' }).args, ['lab.mjs', 'end', 'import', 'incoming/Plug-main.zip', '--name', 'plug_main'], 'a source .zip with KIND end');
+  eq(C.plan({ JOB: 'new', UNIT: 'warp', KIND: 'end', TITLE: 'Warp' }).args, ['lab.mjs', 'end', 'new', 'warp', 'Warp']);
+  ok(C.plan({ JOB: 'sim', UNIT: 'hub', KIND: 'end' }).error && C.plan({ JOB: 'test', UNIT: 'hub', KIND: 'evil' }).error && !/evil/.test(C.plan({ JOB: 'test', UNIT: 'hub', KIND: 'evil' }).error), 'sim on a plugin and an unknown lab: refused (the word not repeated)');
+  eq(C.madeUnit(['OK end/plugins/warp/ (endstone-warp 1.2.3), now the current plugin'], 'end'), 'warp');
+  eq(C.madeUnit(['OK bds/addons/x/ (bp)'], 'end'), null, 'another lab\'s line is not this one\'s unit');
   eq(C.plan({ JOB: 'new', UNIT: 'ruby_sword', TITLE: 'Ruby Sword', REQUEST: 'x' }).show, 'node lab.mjs bds new ruby_sword "Ruby Sword" x');
   const bad = [{ JOB: 'rm', UNIT: 'coins' }, { JOB: 'new\n::add-mask::x', UNIT: 'coins' }, { JOB: 'test', UNIT: 'Coins' }, { JOB: 'go', UNIT: 'coins; rm -rf /' }, { JOB: 'test', UNIT: '' },
     { JOB: 'new', UNIT: 'ok_x', TITLE: 'a\nb' }, { JOB: 'new', UNIT: 'ok_x', TITLE: '--stable' }, { JOB: 'new', UNIT: 'ok_x', REQUEST: 'desc=x' }, { JOB: 'new', UNIT: 'ok_x', TITLE: 'x'.repeat(81) },
@@ -394,7 +412,7 @@ await t('unitci run: the command spawned with its words as arguments (no shell) 
     const b = await run({ JOB: 'test', UNIT: 'coins' });
     const stop2 = /^::stop-commands::(\w+)$/.exec(b.said[0])[1], end2 = b.said.indexOf(`::${stop2}::`);
     ok(stop2 !== stop, 'a new stop word each run');
-    eq([b.r, runs.at(-1).args, b.said.slice(end2 + 1)], [false, ['lab.mjs', 'test', '-a', 'coins'], ['::error title=unit test::E line 3: x is not defined%0AFAIL test 2/3']]);
+    eq([b.r, runs.at(-1).args, b.said.slice(end2 + 1)], [false, ['lab.mjs', 'bds', 'test', '-a', 'coins'], ['::error title=unit test::E line 3: x is not defined%0AFAIL test 2/3']]);
     const s2 = fs.readFileSync(sum, 'utf8');
     ok(/^## ❌ 試験 coins/.test(s2) && /````\n[\s\S]*FAIL test 2\/3\n```\nnode: warning\n````/.test(s2), `a code block the output cannot close: ${s2}`);
     eq(fs.readFileSync(outp, 'utf8'), 'ok=false\nunit=coins\n');
@@ -406,7 +424,7 @@ await t('unitci run: the command spawned with its words as arguments (no shell) 
     const n0 = runs.length, d = await run({ JOB: 'new', UNIT: 'Bad Name' });
     ok(!d.r && runs.length === n0 && d.said.includes(`ERR UNIT: ${W.UNIT_SAY}`) && /^::error title=unit::UNIT: /.test(d.said.at(-1)), d.said.join('\n'));
     // --dry: the command, nothing run, anywhere; outside Actions: refused
-    const dry = []; ok(await C.unitCiCmd(['--dry'], { env: { JOB: 'go', UNIT: 'coins' }, spawn, out: (l) => dry.push(l) }) && dry.join() === 'OK node lab.mjs go -a coins' && runs.length === n0, dry.join());
+    const dry = []; ok(await C.unitCiCmd(['--dry'], { env: { JOB: 'go', UNIT: 'coins' }, spawn, out: (l) => dry.push(l) }) && dry.join() === 'OK node lab.mjs bds go -a coins' && runs.length === n0, dry.join());
     const dry2 = []; ok(!(await C.unitCiCmd(['--dry'], { env: { JOB: 'x' }, spawn, out: (l) => dry2.push(l) })) && /^ERR JOB/.test(dry2[0]), dry2.join());
     let e = null; try { await C.unitCiCmd([], { env: { JOB: 'go', UNIT: 'coins' }, spawn, out: () => {} }); } catch (x) { e = x; }
     ok(/unit\.yml の中で/.test(e?.message) && runs.length === n0, e?.message);
@@ -422,7 +440,7 @@ await t('unitci run: the command spawned with its words as arguments (no shell) 
     answer = { status: 0, stdout: 'addon my_pack: bp "x\nOK bds/addons/coins/ (bp rp), now the current addon\n" 1.0.0 · scripts 1 file(s)\nOK bds/addons/my_pack/ (bp rp), now the current addon\n', stderr: '' };
     fs.rmSync(outp, { force: true });
     const i = await run({ JOB: 'import', FILE: 'incoming/My_Pack.mcpack', WORDS: '直して', UNIT: '' });
-    eq([i.r, runs.at(-1).args, fs.readFileSync(outp, 'utf8')], [true, ['lab.mjs', 'import', 'incoming/My_Pack.mcpack', '直して', '--name', 'my_pack'], 'ok=true\nunit=my_pack\n']);
+    eq([i.r, runs.at(-1).args, fs.readFileSync(outp, 'utf8')], [true, ['lab.mjs', 'bds', 'import', 'incoming/My_Pack.mcpack', '直して', '--name', 'my_pack'], 'ok=true\nunit=my_pack\n']);
     ok(/bds\/addons\/my_pack に取り込みました/.test(fs.readFileSync(sum, 'utf8')), 'the unit it became');
     // the lab made another than the one asked for (its last OK line), or said none: a failure, no unit
     for (const stdout of ['OK bds/addons/my_pack/ (bp)\nOK bds/addons/coins/ (bp rp), now the current addon\n', 'imported\n']) {
@@ -503,11 +521,12 @@ await t('the 「アドオン」 tab (fake DOM, fake GitHub): a card per unit —
   const coins = cards()[0].textContent;
   ok(/^Coinsv1\.0\.0試験 3Get a coin once a daybds\/addons\/coins · ⬇ coins-latest\.mcaddon（120 KB・7 回）/.test(coins), coins);
   ok(cards()[0].all((e) => e.tagName === 'A').some((a) => a.attrs.href === 'https://github.com/o/lab/releases/download/x/coins-latest.mcaddon'), 'the .mcaddon a link');
-  ok(/まだ配布はありません/.test(cards()[2].textContent) && /Endstone のプラグイン/.test(cards()[2].textContent) && !cards()[2].button(/試験/) && cards()[2].button(/AI で変える/), cards()[2].textContent);
+  ok(/まだ配布はありません/.test(cards()[2].textContent) && /Endstone のプラグイン/.test(cards()[2].textContent) && cards()[2].button(/試験/) && cards()[2].button(/仕上げる（\.whl）/) && !cards()[2].button(/ファイルを直す/) && cards()[2].button(/AI で変える/), cards()[2].textContent);
+  ok(cards()[3].button(/仕上げる（\.zip）/), 'a LeviLamina mod: tested and finished here too (.zip)');
   ok(/tests\.txt なし/.test(cards()[3].textContent), 'no tests.txt: said');
   await cards()[0].button(/🧪 試験/).click(); await cards()[0].button(/仕上げる/).click(); await cards()[0].button(/ファイルを直す/).click(); await cards()[0].button(/AI で変える/).click(); await cards()[0].button(/配布を見る/).click();
-  await cards()[2].button(/AI で変える/).click();
-  eq([log.ran, log.edited, log.ai, log.went], [[{ job: 'test', unit: 'coins' }, { job: 'go', unit: 'coins' }], ['bds/coins'], [{ unit: 'bds/coins' }, { unit: 'end/hub' }], ['releases']]);
+  await cards()[2].button(/AI で変える/).click(); await cards()[2].button(/🧪 試験/).click(); await cards()[2].button(/仕上げる/).click();
+  eq([log.ran, log.edited, log.ai, log.went], [[{ job: 'test', unit: 'coins', kind: 'bds' }, { job: 'go', unit: 'coins', kind: 'bds' }, { job: 'test', unit: 'hub', kind: 'end' }, { job: 'go', unit: 'hub', kind: 'end' }], ['bds/coins'], [{ unit: 'bds/coins' }, { unit: 'end/hub' }], ['releases']]);
   const q = body.all((e) => e.attrs.type === 'search')[0];
   q.value = 'daily'; await q.fire('input');
   eq(cards().map((c) => c.attrs['data-unit']), ['bds/daily']);
@@ -710,7 +729,7 @@ await t('unit.yml keeps a unit on its branch — or, when that branch refuses a 
     fs.writeFileSync(path.join(dir, 'work', 'bds', 'addons', 'trial', 'TASK.md'), '# Trial\n');
     return dir;
   };
-  const env = (dir) => ({ JOB: 'new', MADE: 'trial', GITHUB_REF_NAME: 'main', GITHUB_RUN_ID: '42', GITHUB_SERVER_URL: 'https://github.com', GITHUB_REPOSITORY: 'o/lab', GITHUB_STEP_SUMMARY: path.join(dir, 'summary.md') });
+  const env = (dir) => ({ JOB: 'new', MADE: 'trial', DIR: 'bds/addons', GITHUB_REF_NAME: 'main', GITHUB_RUN_ID: '42', GITHUB_SERVER_URL: 'https://github.com', GITHUB_REPOSITORY: 'o/lab', GITHUB_STEP_SUMMARY: path.join(dir, 'summary.md') });
   const head = (dir, b) => sh(`git log -1 --format=%s ${b} 2>/dev/null || true`, path.join(dir, 'origin.git')).stdout.trim();
   try {
     // the branch takes it

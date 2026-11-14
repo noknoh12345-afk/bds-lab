@@ -15,6 +15,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { remapper } from './build.mjs';
 import { literalMiss } from './lint-tests.mjs';
+import { unitDirIn, shelvesIn } from './checkpoint.mjs';
 const clockMs = (a) => { const m = /^([+-]?)(\d+(?:\.\d+)?)(ms|s|m|h|d)$/.exec(String(a ?? '')); return m ? (m[1] === '-' ? -1 : 1) * Number(m[2]) * { ms: 1, s: 1e3, m: 6e4, h: 36e5, d: 864e5 }[m[3]] : null; };
 
 const TOP = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -243,10 +244,10 @@ export async function simCmd(args, out = console.log) {
   const kind = (process.env.LAB_KIND || (() => { try { return fs.readFileSync(path.join(TOP, '.lab-kind'), 'utf8').trim(); } catch { return 'bds'; } })()).replace(/[^a-z]/g, '');
   if (!a.includes('-a') && (kind === 'end' || kind === 'll')) { out(`ERR sim runs BDS Script API addons only; for ${kind === 'end' ? 'an Endstone plugin' : 'a LeviLamina mod'} \`go\` is the check (${kind === 'end' ? 'about 1 min' : 'about 2 min under Wine'}); between edits \`node lab.mjs check\` catches type errors in seconds`); return false; }
   const unit = flag('-a') ?? process.env.LAB_ADDON ?? (() => { try { return fs.readFileSync(path.join(TOP, 'bds', '.lab', 'addon'), 'utf8').trim(); } catch { return ''; } })();
-  const dir = /[\\/]/.test(unit) ? path.resolve(unit) : path.join(TOP, 'bds', 'addons', unit);   // (a folder: any pack, tests)
-  if (!unit || !fs.existsSync(path.join(dir, 'bp', 'manifest.json'))) { out(`ERR sim: no addon ${unit ? `"${unit}"` : '(node lab.mjs use <name>, or -a <name>)'} with bp/manifest.json in bds/addons`); return false; }
+  const dir = /[\\/]/.test(unit) ? path.resolve(unit) : unitDirIn(TOP, 'bds', unit);   // (a folder: any pack, tests; a name: the lab's, a sample's or GeoUI's)
+  if (!unit || !fs.existsSync(path.join(dir, 'bp', 'manifest.json'))) { out(`ERR sim: no addon ${unit ? `"${unit}"` : '(node lab.mjs use <name>, or -a <name>)'} with bp/manifest.json in bds/addons (or geoui/addons)`); return false; }
   // the scripts as `go` would load them (src/ built first)
-  if (dir.startsWith(path.join(TOP, 'bds', 'addons') + path.sep) && (fs.existsSync(path.join(dir, 'src', 'main.ts')) || fs.existsSync(path.join(dir, 'src', 'main.js')))) {
+  if (shelvesIn(TOP, 'bds').some((d) => dir.startsWith(d + path.sep)) && (fs.existsSync(path.join(dir, 'src', 'main.ts')) || fs.existsSync(path.join(dir, 'src', 'main.js')))) {
     const b = spawnSync(process.execPath, [path.join(TOP, 'lab.mjs'), 'bds', 'build', '-a', path.basename(dir)], { cwd: TOP, encoding: 'utf8', env: { ...process.env, LAB_NOTRACE: '1' } });
     if (b.status !== 0) { ((b.stdout ?? '') + (b.stderr ?? '')).trim().split('\n').filter((l) => /^(E|ERR)/.test(l)).slice(0, 12).forEach((l) => out(l)); out('FAIL sim: the build failed (above)'); return false; }
   }

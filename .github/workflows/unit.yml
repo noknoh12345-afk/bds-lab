@@ -7,7 +7,7 @@ name: unit
 # with the link to its pull request (a push made with this run's own token starts no other workflow — GitHub's rule — so test it
 # from the panel next). The inputs reach the lab only as environment variables, checked there (common/unitci.mjs: names a-z0-9_,
 # files under incoming/ only) — never pasted into a shell line.
-run-name: "unit ${{ inputs.job }} ${{ inputs.unit }}"
+run-name: "unit ${{ inputs.job }} ${{ inputs.unit }}${{ inputs.kind && inputs.kind != 'bds' && format(' ({0})', inputs.kind) || '' }}"
 on:
   workflow_dispatch:
     inputs:
@@ -16,8 +16,12 @@ on:
         type: choice
         options: [test, sim, go, new, import]
         default: test
+      kind:
+        description: 'ラボ: bds（アドオン）・end（Endstone のプラグイン）・ll（LeviLamina の MOD）。import では空でよい（.whl・.tar.gz は end）'
+        type: string
+        default: ''
       unit:
-        description: 'ユニットの名前（bds/addons/<名前>: 英小文字・数字・_。import では空でよい）'
+        description: 'ユニットの名前（bds/addons・end/plugins・ll/mods の <名前>: 英小文字・数字・_。import では空でよい）'
         type: string
         default: ''
       title:
@@ -60,6 +64,26 @@ jobs:
       - run: npm i -g esbuild@0.28 typescript@6.0.3
       - run: node lab.mjs bds
         working-directory: bds
+      # (a plugin or a mod: that lab's server and tools too — Endstone from PyPI, LeviLamina with Wine — cached as bds/.lab is.
+      # The lab is told by unitci, checked there: only bds, end or ll; the folder below by the same word, a fixed list)
+      - name: the Endstone or LeviLamina lab
+        id: lab
+        env:
+          KIND: ${{ inputs.kind }}
+          FILE: ${{ inputs.file }}
+        run: |
+          k="$KIND"
+          if [[ -z "$k" && "$FILE" =~ \.(whl|tar\.gz|tgz)$ ]]; then k=end; fi
+          case "${k:-bds}" in bds) dir=bds/addons ;; end) dir=end/plugins ;; ll) dir=ll/mods ;; *) echo "::error title=unit::kind は bds・end・ll"; exit 1 ;; esac
+          echo "kind=${k:-bds}" >> "$GITHUB_OUTPUT"; echo "dir=$dir" >> "$GITHUB_OUTPUT"
+      - if: steps.lab.outputs.kind != 'bds'
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.lab.outputs.kind }}/.lab
+          key: ${{ steps.lab.outputs.kind }}-${{ runner.os }}-${{ hashFiles(format('{0}/flavor.mjs', steps.lab.outputs.kind), 'bds/vendor/bds-version.txt') }}
+      - if: steps.lab.outputs.kind != 'bds'
+        run: node lab.mjs setup
+        working-directory: ${{ steps.lab.outputs.kind }}
       # (import: the pack from its own branch into incoming/ — a plain name only, nothing outside the folder)
       - name: the pack
         if: inputs.job == 'import'
@@ -81,6 +105,7 @@ jobs:
           REQUEST: ${{ inputs.request }}
           FILE: ${{ inputs.file }}
           WORDS: ${{ inputs.words }}
+          KIND: ${{ steps.lab.outputs.kind }}
         run: node lab.mjs unitci
       # (new and import: the unit kept on the branch it ran on)
       - name: keep the unit
@@ -88,14 +113,15 @@ jobs:
         env:
           JOB: ${{ inputs.job }}
           MADE: ${{ steps.unitci.outputs.unit }}
+          DIR: ${{ steps.lab.outputs.dir }}
         run: |
           git config user.name "bds-lab panel"
           git config user.email "bds-lab-panel@users.noreply.github.com"
-          git add -A -- "bds/addons/$MADE"
+          git add -A -- "$DIR/$MADE"
           if git diff --cached --quiet; then echo "nothing to keep"; exit 0; fi
           git commit -q -m "unit: $JOB $MADE（管理パネルから）"
           if git push -q origin "HEAD:$GITHUB_REF_NAME" || { git pull -q --rebase origin "$GITHUB_REF_NAME" && git push -q origin "HEAD:$GITHUB_REF_NAME"; }; then
-            echo "kept bds/addons/$MADE on $GITHUB_REF_NAME" >> "$GITHUB_STEP_SUMMARY"
+            echo "kept $DIR/$MADE on $GITHUB_REF_NAME" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           # (the branch refuses it — protected: changes through a pull request only — so the unit waits on a branch of its own,
@@ -103,8 +129,8 @@ jobs:
           side="lab-unit/$MADE-$GITHUB_RUN_ID"
           git push -q origin "HEAD:refs/heads/$side"
           pr="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/$GITHUB_REF_NAME...$side?expand=1"
-          echo "::warning title=unit $JOB::$GITHUB_REF_NAME は直接の push を受け付けません（守られた枝なら PR が要ります）: bds/addons/$MADE を枝 $side に置きました。PR を作る: $pr"
-          printf '### ⚠️ %s は直接の push を受け付けません\n\nbds/addons/%s を枝 `%s` に置きました。[PR を作る](%s)（守られた枝では PR を通して入れます）\n' "$GITHUB_REF_NAME" "$MADE" "$side" "$pr" >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning title=unit $JOB::$GITHUB_REF_NAME は直接の push を受け付けません（守られた枝なら PR が要ります）: $DIR/$MADE を枝 $side に置きました。PR を作る: $pr"
+          printf '### ⚠️ %s は直接の push を受け付けません\n\n%s/%s を枝 `%s` に置きました。[PR を作る](%s)（守られた枝では PR を通して入れます）\n' "$GITHUB_REF_NAME" "$DIR" "$MADE" "$side" "$pr" >> "$GITHUB_STEP_SUMMARY"
       # (import: the pack's own branch deleted whatever happened — a new try from the panel puts the pack on a new one)
       - name: the pack's branch away
         if: always() && inputs.job == 'import'
@@ -118,6 +144,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: unit-${{ inputs.unit }}
-          path: bds/dist/*.mcaddon
+          path: |
+            ${{ steps.lab.outputs.kind }}/dist/*.mcaddon
+            ${{ steps.lab.outputs.kind }}/dist/*.whl
+            ${{ steps.lab.outputs.kind }}/dist/*.zip
           if-no-files-found: ignore
           retention-days: 30

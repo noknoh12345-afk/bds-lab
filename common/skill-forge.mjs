@@ -240,6 +240,12 @@ export function routeEval(list = ours()) {
   }
   return { per, sets, fails, close, n: cases.length };
 }
+// one skill printed as route prints it (focused on the request): the end and ll labs' `new` / `import` print their own lab's
+export function printSkill(name, q, out = console.log) {
+  const f = skillFile(name); if (!fs.existsSync(f)) return false;
+  noteRead(name); const raw = fs.readFileSync(f, 'utf8');
+  out(`# skill ${name}`); out(focus(readerView(raw), q, raw, name)); return true;
+}
 export function route(args, out = console.log) {
   if (args.includes('--eval')) {
     const e = routeEval(); const f = (s) => (s.n ? `${s.ok1}/${s.n} first (${pct(s.ok1 / s.n)}), ${s.ok2}/${s.n} in the first two` : 'no cases');

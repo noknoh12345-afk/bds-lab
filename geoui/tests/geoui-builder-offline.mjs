@@ -1,0 +1,316 @@
+#!/usr/bin/env node
+// GeoUI Builder (geoui/geoui_builder.js, a Blockbench plugin) against GeoUI Studio v10.1's own export
+// (geoui/addons/geoui_studio: Studio's files as they are). The template 「スコア＆ゲージ」 is rebuilt as a Builder design and
+// both packs are run through their own Molang (pre_animation → animation → render controllers) for every aspect Studio
+// knows, both platforms' centre fixes, offsets and values: where each digit and the gauge are drawn, and which digit shows.
+// At scale 100 the two must agree to 1e-6 of a model unit; at other scales Builder must be the scale-100 picture scaled
+// about the screen centre (Studio is not: its digits keep their spacing and its gauge drifts — printed, not failed).
+// Also: the generated files parse, the script compiles, the Molang the exporter writes is read back by its own parser.
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+const TOP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const CAL = await import(pathToFileURL(path.join(TOP, 'geoui', 'calib.mjs')).href);
+const mod = { exports: {} };
+new Function('module', fs.readFileSync(path.join(TOP, 'geoui', 'geoui_builder.js'), 'utf8'))(mod);
+const G = mod.exports;
+let fails = 0, n = 0;
+const ok = (c, m, d = '') => { n++; console.log(`${c ? '✔' : '✘'} ${m}${c || !d ? '' : '\n  ' + String(d).split('\n').slice(0, 14).join('\n  ')}`); if (!c) fails++; };
+const close = (a, b, e = 1e-6) => Math.abs(a - b) <= e;
+const qclose = (a, b, e = 1e-6) => a && b && close(a.x0, b.x0, e) && close(a.x1, b.x1, e) && close(a.y0, b.y0, e) && close(a.y1, b.y1, e);
+const fmt = (q) => (q ? `[${q.x0.toFixed(4)}, ${q.y0.toFixed(4)}]-[${q.x1.toFixed(4)}, ${q.y1.toFixed(4)}]` : 'none');
+
+// ---- Studio's export, as it is ----
+const SD = path.join(TOP, 'geoui', 'addons', 'geoui_studio', 'rp');
+const sj = (f) => JSON.parse(fs.readFileSync(path.join(SD, f), 'utf8'));
+const sEntity = sj('entity/player.entity.json')['minecraft:client_entity'].description;
+const sPre = sEntity.scripts.pre_animation.filter((l) => /^v\.geoui_/.test(l));
+const sAnim = sj('animations/geoui.animation.json').animations['animation.geoui_transform'];
+const sRC = sj('render_controllers/geoui.render_controllers.json').render_controllers;
+const sGeo = {};
+for (const f of fs.readdirSync(path.join(SD, 'models', 'entity', 'geoui'))) { const g = sj(`models/entity/geoui/${f}`)['minecraft:geometry'][0]; sGeo[g.description.identifier] = g; }
+ok(Object.keys(sGeo).length === 6 && sPre.length >= 9, `Studio's export read: ${Object.keys(sGeo).length} geometries, ${sPre.length} pre_animation lines of its own`, JSON.stringify(Object.keys(sGeo)));
+const digitsOf = (env) => [0, 1, 2, 3, 4].map((k) => Math.round(G.molang(sRC[`controller.render.geoui_l1_d${k}`].uv_anim.offset[0], env) * 440 / 40));
+function studioAt({ aspect, platform, props }) {
+  const S = G.settingsOf({}), p = { 'geoui:aspect': Math.round(G.qa(aspect) * 1000), 'geoui:scale': 100, 'geoui:ox': 0, 'geoui:oy': 0, 'geoui:alpha': 100, 'geoui:v0': 0, 'geoui:v1': 0 };
+  const c = S.centerFix[platform]; p['geoui:cx'] = Math.round(c.x * 10000); p['geoui:cy'] = Math.round(c.y * 10000);
+  Object.assign(p, props);
+  const env = G.envOf({ props: p }); G.runPre(sPre, env);
+  const geos = [0, 1, 2, 3, 4].map((k) => sGeo[`geometry.geoui_l1_d${k}`]).concat([sGeo['geometry.geoui_l2']]);
+  const ps = G.pose(geos, sAnim, env).quads;
+  return { digits: digitsOf(env), digitQuads: [0, 1, 2, 3, 4].map((k) => ps.find((q) => q.geometry === k).quad), bar: ps.find((q) => q.geometry === 5), env };
+}
+
+// ---- the same template as a Builder design ----
+const S0 = { ns: 'geoui', name: 'Score & gauge', unitsPerScreenH: 176, refAspect: 1.778 };
+const S = G.settingsOf(S0), H = S.unitsPerScreenH;
+const score = { w: 5 * 8.924, h: H * 0.09, padX: 1.2, padY: 1.2 }, bar = { w: H * 0.34, h: H * 0.025, padX: 1.2, padY: 4.4 };
+function design(fill) {
+  const bones = [{ name: 'geo_ui', pivot: [0, 140, 0], cubes: [] }];
+  const sc = G.studioAnchor(S, score.w, score.h, 'top_left', score.padX, score.padY, S.refAspect);
+  const sx0 = sc.x - score.w / 2, sy0 = 140 + sc.y - score.h / 2, dw = score.w / 5;
+  bones.push({ name: 'score', parent: 'geo_ui', pivot: [sc.x, 140 + sc.y, -0.2], cubes: [] });
+  const digits = [];
+  for (let k = 0; k < 5; k++) {
+    const cx = sx0 + dw * (k + 0.5);
+    bones.push({ name: `score_d${k}`, parent: 'score', pivot: [cx, 140 + sc.y, -0.2], cubes: [] });
+    const names = [];
+    for (let j = 0; j < 10; j++) {
+      bones.push({ name: `score_d${k}_n${j}`, parent: `score_d${k}`, pivot: [cx, 140 + sc.y, -0.2],
+        cubes: [{ origin: [cx - dw / 2, sy0, -0.2], size: [dw, score.h, 0], faces: { north: { uv: [j * 40, 0], uv_size: [40, 71], texture: 'digits' } } }] });
+      names.push(`score_d${k}_n${j}`);
+    }
+    digits.push(names);
+  }
+  const bc = G.studioAnchor(S, bar.w, bar.h, 'top_left', bar.padX, bar.padY, S.refAspect);
+  const bx0 = bc.x - bar.w / 2, by0 = 140 + bc.y - bar.h / 2;
+  const pivX = fill === 'left' ? bx0 : fill === 'right' ? bx0 + bar.w : bc.x;
+  bones.push({ name: 'gauge', parent: 'geo_ui', pivot: [pivX, 140 + bc.y, -0.4],
+    cubes: [{ origin: [bx0, by0, -0.4], size: [bar.w, bar.h, 0], faces: { north: { uv: [0, 0], uv_size: [256, 16], texture: 'bar' } } }] });
+  return {
+    settings: S0, bones, seed: 'test',
+    textures: { digits: { name: 'l1', width: 440, height: 71, png: 'AA==' }, bar: { name: 'l2', width: 256, height: 16, png: 'AA==' } },
+    elements: {
+      score: { type: 'number', anchor: 'top_left', number: { source: "q.property('geoui:v0')", digits, hideLeadingZero: true } },
+      gauge: { type: 'gauge', anchor: 'top_left', blend: 'blend', gauge: { source: "q.property('geoui:v1')", max: 20, fill } },
+    },
+  };
+}
+function builderAt(built, { aspect, platform, props }) {
+  const L = G.layoutOf(built, { aspect, platform, props });
+  const digits = [], digitQuads = [];
+  for (let k = 0; k < 5; k++) {
+    const shown = L.quads.filter((q) => new RegExp(`^score_d${k}_n\\d$`).test(q.bone) && !q.hidden);
+    digits.push(shown.length === 1 ? +shown[0].bone.slice(-1) : shown.length === 0 ? 10 : -1);
+    digitQuads.push(shown.length === 1 ? shown[0].quad : null);
+  }
+  return { digits, digitQuads, bar: L.quads.find((q) => q.bone === 'gauge'), L };
+}
+
+const built = G.buildPack(design('center'));
+ok(!built.warnings.length, 'the template builds without warnings', built.warnings.join('\n'));
+{
+  // (alpha 0 hides the UI by its scale as well: the game ignores the render controllers' colour alpha — geoui_probe, 2026-10-21)
+  const on = G.layoutOf(built, { aspect: 1.778, platform: 'desktop', props: { 'geoui:v0': 42, 'geoui:alpha': 100 } }), off = G.layoutOf(built, { aspect: 1.778, platform: 'desktop', props: { 'geoui:v0': 42, 'geoui:alpha': 0 } });
+  ok(on.quads.some((q) => !q.hidden) && off.quads.every((q) => q.hidden), 'alpha 0: every plane hidden (by the root\'s scale too, not by colour alpha alone); alpha 100: shown');
+}
+const aspects = G.DEVICES.map((d) => d.aspect).concat([1.5]);
+const v0s = [0, 7, 42, 305, 12345, 99999, -305], v1s = [0, 5, 10, 20, 37], offs = [[0, 0], [123, -77], [-400, 250]];
+let cases = 0, bad = [];
+for (const aspect of aspects) for (const platform of ['desktop', 'mobile']) for (const [ox, oy] of offs) for (const v0 of v0s) for (const v1 of v1s) {
+  const props = { 'geoui:v0': v0, 'geoui:v1': v1, 'geoui:ox': ox, 'geoui:oy': oy };
+  const a = studioAt({ aspect, platform, props }), b = builderAt(built, { aspect, platform, props });
+  cases++;
+  const why = [];
+  if (a.digits.join() !== b.digits.join()) why.push(`digits Studio ${a.digits} / Builder ${b.digits}`);
+  a.digits.forEach((d, k) => { if (d !== 10 && !qclose(a.digitQuads[k], b.digitQuads[k])) why.push(`digit ${k}: Studio ${fmt(a.digitQuads[k])} / Builder ${fmt(b.digitQuads[k])}`); });
+  if (a.bar.hidden !== b.bar.hidden || (!a.bar.hidden && !qclose(a.bar.quad, b.bar.quad))) why.push(`gauge: Studio ${a.bar.hidden ? 'hidden' : fmt(a.bar.quad)} / Builder ${b.bar.hidden ? 'hidden' : fmt(b.bar.quad)}`);
+  if (why.length) bad.push(`aspect ${aspect.toFixed(4)} ${platform} ox ${ox} oy ${oy} v0 ${v0} v1 ${v1}: ${why.join('; ')}`);
+}
+ok(!bad.length, `scale 100: Builder draws every digit and the gauge where Studio does, and the same digit (${cases} cases: ${aspects.length} aspects x 2 platforms x 3 offsets x ${v0s.length} x ${v1s.length} values)`, bad.slice(0, 8).join('\n'));
+
+// at other scales: Builder = the scale-100 picture scaled about the screen centre (0, 140) — what Studio does for an image
+bad = [];
+const studioDrift = { digit: 0, gauge: 0 };
+for (const aspect of [1.333, 1.778, 2.222]) for (const scale of [25, 50, 150, 200]) for (const v0 of [42, 12345]) for (const v1 of [5, 20]) {
+  const base = { 'geoui:v0': v0, 'geoui:v1': v1, 'geoui:ox': 50, 'geoui:oy': -30 };
+  const one = builderAt(built, { aspect, platform: 'desktop', props: base }), sc = builderAt(built, { aspect, platform: 'desktop', props: { ...base, 'geoui:scale': scale } });
+  const k = scale / 100, o = { x: 5 + one.L.vars['variable.geoui_cx'], y: -3 + one.L.vars['variable.geoui_cy'] };
+  const expect = (q) => q && { x0: (q.x0 - o.x) * k + o.x, x1: (q.x1 - o.x) * k + o.x, y0: 140 + (q.y0 - o.y - 140) * k + o.y, y1: 140 + (q.y1 - o.y - 140) * k + o.y };
+  one.digitQuads.forEach((q, i) => { if (q && !qclose(expect(q), sc.digitQuads[i], 1e-5)) bad.push(`aspect ${aspect} scale ${scale} digit ${i}: ${fmt(sc.digitQuads[i])}, expected ${fmt(expect(q))}`); });
+  if (!qclose(expect(one.bar.quad), sc.bar.quad, 1e-5)) bad.push(`aspect ${aspect} scale ${scale} gauge: ${fmt(sc.bar.quad)}, expected ${fmt(expect(one.bar.quad))}`);
+  const st = studioAt({ aspect, platform: 'desktop', props: { ...base, 'geoui:scale': scale } });
+  st.digitQuads.forEach((q, i) => { if (st.digits[i] !== 10 && one.digitQuads[i]) studioDrift.digit = Math.max(studioDrift.digit, Math.abs((q.x0 + q.x1) / 2 - (expect(one.digitQuads[i]).x0 + expect(one.digitQuads[i]).x1) / 2)); });
+  studioDrift.gauge = Math.max(studioDrift.gauge, Math.abs((st.bar.quad.x0 + st.bar.quad.x1) / 2 - (expect(one.bar.quad).x0 + expect(one.bar.quad).x1) / 2));
+}
+ok(!bad.length, 'other scales (25–200 %): Builder is the scale-100 picture scaled about the screen centre, digits and gauge alike', bad.slice(0, 8).join('\n'));
+console.log(`  (Studio at those scales: a digit's centre is up to ${studioDrift.digit.toFixed(3)} units off that picture — its digit spacing does not scale — and the gauge's centre up to ${studioDrift.gauge.toFixed(3)} units)`);
+
+// the gauge filled from its left edge (Builder's default; Studio's template pivots the gauge at its centre)
+const left = G.buildPack(design('left'));
+bad = [];
+for (const aspect of [1.333, 1.778, 2.333]) {
+  let x0 = null;
+  for (const v1 of [1, 5, 10, 15, 20]) {
+    const b = builderAt(left, { aspect, platform: 'desktop', props: { 'geoui:v1': v1 } });
+    if (x0 === null) x0 = b.bar.quad.x0;
+    if (!close(b.bar.quad.x0, x0) || !close(b.bar.quad.x1 - b.bar.quad.x0, bar.w * Math.min(1, v1 / 20), 1e-4)) bad.push(`aspect ${aspect} v1 ${v1}: ${fmt(b.bar.quad)}`);
+  }
+}
+ok(!bad.length, 'fill "left": the gauge keeps its left edge and grows to the right with the value', bad.join('\n'));
+const sMid = [5, 20].map((v1) => studioAt({ aspect: 1.778, platform: 'desktop', props: { 'geoui:v1': v1 } }).bar.quad);
+console.log(`  (Studio's template at v1 5 and 20: left edge ${sMid[0].x0.toFixed(3)} vs ${sMid[1].x0.toFixed(3)} — it shrinks to its centre)`);
+
+// aspect: an element anchored left keeps its distance from the left edge of the screen, right from the right edge
+bad = [];
+for (const aspect of aspects) {
+  const b = builderAt(built, { aspect, platform: 'desktop', props: { 'geoui:v0': 88888, 'geoui:v1': 20 } }), sc = G.screenAt(S, aspect, 'desktop');
+  if (!close(b.digitQuads[0].x0 - sc.left, 1.2, 1e-3) || !close(sc.top - b.digitQuads[0].y1, 1.2, 1e-3)) bad.push(`aspect ${aspect}: left pad ${(b.digitQuads[0].x0 - sc.left).toFixed(4)} top pad ${(sc.top - b.digitQuads[0].y1).toFixed(4)}`);
+}
+ok(!bad.length, 'the score stays 1.2 units from the left and top edges of the screen at every aspect (the screen as Studio defines it)', bad.join('\n'));
+
+// the files
+const F = built.files, names = Object.keys(F);
+const jsonBad = names.filter((f) => /\.(json|material)$/.test(f)).filter((f) => { try { JSON.parse(F[f]); return false; } catch { return true; } });
+ok(!jsonBad.length && names.length >= 14, `${names.length} files, every JSON parses`, jsonBad.join('\n'));
+const ce = JSON.parse(F['geoui_RP/entity/player.entity.json'])['minecraft:client_entity'].description;
+ok(ce.render_controllers.slice(0, 2).every((r) => Object.values(r)[0] === 'q.is_in_ui && !variable.is_paperdoll') && ce.render_controllers.length === 7
+  && ce.scripts.animate[0].geoui_transform === 'q.is_in_ui' && ce.scripts.animate.includes('root') && ce.geometry.default === 'geometry.humanoid.custom'
+  && Object.keys(ce.scripts.variables).length === 6, 'player.entity.json: the vanilla 1.26.50 one, with 2 geometries drawn in the UI only, the transform animation first', JSON.stringify(ce.render_controllers));
+const unreadable = [];
+for (const l of ce.scripts.pre_animation) if (G.molangError(l.replace(/;$/, ''))) unreadable.push(`${l} → ${G.molangError(l.replace(/;$/, ''))}`);
+const an = JSON.parse(F['geoui_RP/animations/geoui.animation.json']).animations;
+for (const a of Object.values(an)) for (const [bn, ch] of Object.entries(a.bones)) for (const v of Object.values(ch)) for (const e of [].concat(v)) if (typeof e === 'string' && G.molangError(e)) unreadable.push(`${bn}: ${e} → ${G.molangError(e)}`);
+ok(!unreadable.length, 'every pre_animation line and animation expression the exporter wrote reads back as Molang', unreadable.slice(0, 6).join('\n'));
+const hud = JSON.parse(F['geoui_RP/ui/hud_screen.json']);
+ok(hud.root_panel && hud.root_panel.modifications[0].operation === 'insert_front' && !hud.hud_content && hud.geoui_panel.size.join() === '10%,10%' && hud.geoui_panel.offset[1] === '110%',
+  'hud_screen.json adds the panel to root_panel (Studio replaced all of hud_content) at 10% x 10%, 110% down', JSON.stringify(hud));
+const be = JSON.parse(F['geoui_BP/entities/player.json'])['minecraft:entity'];
+const props = be.description.properties;
+ok(Object.keys(props).length === 11 && props['geoui:aspect'].default === 1778 && props['geoui:v0'].range[1] === 16777216 && be.events['minecraft:gain_raid_omen'] && !be.events['minecraft:gain_bad_omen'],
+  'BP player.json: the vanilla 1.26.50 one (raid omen, not the old bad omen) with 11 client_sync properties, values inside float32\'s exact range', JSON.stringify(Object.keys(props)));
+const T = fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-builder-')), js = path.join(T, 'main.mjs');
+fs.writeFileSync(js, F['geoui_BP/scripts/main.js']);
+const chk = spawnSync(process.execPath, ['--check', js], { encoding: 'utf8' });
+ok(chk.status === 0, 'the behaviour pack script compiles', chk.stderr);
+fs.rmSync(T, { recursive: true, force: true });
+const noBp = G.buildPack({ ...design('left'), settings: { ...S0, bp: false } });
+ok(!Object.keys(noBp.files).some((f) => f.startsWith('geoui_BP/')) && noBp.pre[0] === 'v.geoui_aspect = 1.778;' && noBp.pre.some((l) => l === 'v.geoui_cy = -4.9;'),
+  'resource pack only: no BP, the aspect and the PC centre fix written as numbers (Studio\'s values)', noBp.pre.join('\n'));
+const studioHud = G.buildPack({ ...design('left'), settings: { ...S0, hud: 'studio' } });
+ok(JSON.parse(studioHud.files['geoui_RP/ui/hud_screen.json']).hud_content.controls.length === 3, 'hud "studio": Studio\'s hud_content replacement, on request');
+
+// Molang: the parser and evaluator on what Studio writes
+const env = G.envOf({ props: { 'geoui:v0': 12345 } });
+ok(G.molang("(math.mod((math.abs(q.property('geoui:v0'))<10000 ? 10 : math.mod(math.floor(math.abs(q.property('geoui:v0'))/10000),10)),11))*40/440", env) === 1 * 40 / 440
+  && G.molang('math.clamp(5/20,0,1)', env) === 0.25 && G.molang('v.a = 3; v.b = v.a * 2; return v.b + 1', G.envOf()) === 7 && G.molangError('1 +') && !G.molangError("q.is_in_ui && !v.is_paperdoll"),
+  'Molang: Studio\'s digit expression, clamp, statements and return; a broken expression is reported');
+
+// the calibration pack (geoui/calib.mjs make): with every centre fix 0 the exporter adds nothing — each marker is drawn
+// at its own model coordinates, so a picture of it measures the game's mapping and nothing of Studio's
+const cal = G.buildPack(CAL.design(G)), marks = CAL.markers();
+const cl = G.layoutOf(cal, { aspect: 2.167, platform: 'mobile' }), cq = cl.quads.filter((q) => q.bone === 'gcal_marks');
+bad = marks.filter((m, i) => !cq[i] || !close((cq[i].quad.x0 + cq[i].quad.x1) / 2, m.x) || !close((cq[i].quad.y0 + cq[i].quad.y1) / 2, m.y) || !close(cq[i].quad.z, m.z)).map((m) => m.id);
+ok(!cal.warnings.length && marks.length === 92 && cq.length === 92 && !bad.length, 'calibration pack: 92 markers drawn at their own model coordinates on a phone (no centre fix, no anchor term)', bad.join(' '));
+// measuring: made-up screenshots with a known answer (a HUD in the grid's colours on top; a perspective camera)
+const meas = [
+  { o: { h: 176, cx: -0.1, cy: -4.9, w: 1560, hpx: 720, hud: true }, near: 1, far: 1 },
+  { o: { h: 150, cx: 3, cy: 10, w: 1024, hpx: 768, persp: 0.002, hud: true }, near: 1 / (1 - 0.12), far: 1 / (1 + 0.12) },
+  { o: { h: 220, cx: 0, cy: -9.25, w: 2400, hpx: 1080, dim: 0.6 }, near: 1, far: 1 },
+].map(({ o, near, far }) => ({ o, near, far, r: CAL.measure(CAL.synth(o)) }));
+bad = meas.filter(({ o, r, near, far }) => !r.ok || Math.abs(r.unitsPerScreenH / o.h - 1) > 0.004 || Math.abs(r.centre.x - o.cx) > 0.1 || Math.abs(r.centre.y - (140 + o.cy)) > 0.1
+  || Math.abs(r.depth.near.ratio - near) > 0.01 || Math.abs(r.depth.far.ratio - far) > 0.01).map(({ o, r }) => `${JSON.stringify(o)} → ${CAL.describe('synth', r)}`);
+ok(!bad.length, 'calib.mjs measure reads back the screen height (0.4 %), the centre (0.1 unit) and the depth scale (1 %) it was given — HUD pieces, perspective, a dim picture', bad.join('\n'));
+// a real screenshot: the game lights the board dimmer, the centre fix moves the grid so the blue (or green) marker is off
+// the picture, and a phone or chat app shrinks it and shares its colours between pixels — the grid is found by its shape
+const rough = [
+  { o: { h: 176, w: 2400, hpx: 1080, hud: true, dim: 0.45 }, d: {} },
+  { o: { h: 120, cy: -25, w: 1920, hpx: 1080, hud: true }, d: {} },
+  { o: { h: 260, cy: -25, w: 2532, hpx: 1170, hud: true, dim: 0.7, persp: 0.004 }, d: { scale: 0.4, chroma: true, noise: 12 } },
+  { o: { h: 150, cx: 4, cy: 12, w: 2048, hpx: 1536, hud: true }, d: { scale: 0.33, chroma: true, noise: 8 } },
+].map(({ o, d }) => ({ o, r: CAL.measure(CAL.degrade(CAL.synth(o), d)) }));
+bad = rough.filter(({ o, r }) => !r.ok || Math.abs(r.unitsPerScreenH / o.h - 1) > 0.01 || Math.hypot(r.centre.x - (o.cx || 0), r.centre.y - (140 + (o.cy || 0))) > 1).map(({ o, r }) => `${JSON.stringify(o)} → ${CAL.describe('synth', r)}`);
+const upright = CAL.measure(CAL.synth({ h: 176, w: 1080, hpx: 2400, hud: true }));
+ok(!bad.length && !upright.ok, 'calib.mjs measure finds the grid on a dim, shrunk, colour-shared picture with a marker off it (1 %, 1 unit) and refuses a phone held upright (too few columns) instead of guessing', bad.join('\n') + (upright.ok ? ` upright: ${CAL.describe('synth', upright)}` : ''));
+// the measuring page carries calib.mjs's own measuring code: rebuilt from it, it is the file in the repository, and its sample
+// measures as the made-up answer says (node geoui/page.mjs after changing calib.mjs)
+const PAGE = await import(pathToFileURL(path.join(TOP, 'geoui', 'page.mjs')).href);
+const pageNow = fs.existsSync(path.join(TOP, 'geoui', 'measure.html')) ? fs.readFileSync(path.join(TOP, 'geoui', 'measure.html'), 'utf8') : '';
+const pageSrc = PAGE.calibSource(), smp = CAL.measure((await import(pathToFileURL(path.join(TOP, 'geoui', 'png.mjs')).href)).decodePng(Buffer.from(PAGE.sample().split(',')[1], 'base64')));
+ok(pageNow === PAGE.build() && pageSrc.includes('function measure(') && !/^export /m.test(pageSrc) && smp.ok && Math.abs(smp.unitsPerScreenH - 176) < 0.5 && Math.abs(smp.centre.y - 130.75) < 0.3,
+  'measure.html is built from calib.mjs as it is now, and its sample reads back height 176 and centre y 130.75', `${pageNow === PAGE.build() ? '' : 'measure.html is stale: node geoui/page.mjs '}${CAL.describe('sample', smp)}`);
+const pngBack = (await import(pathToFileURL(path.join(TOP, 'geoui', 'png.mjs')).href));
+const img = CAL.synth({ w: 64, hpx: 32 }), back = pngBack.decodePng(pngBack.encodePng(img));
+ok(back.width === 64 && back.height === 32 && Buffer.compare(Buffer.from(back.data), Buffer.from(img.data)) === 0, 'png.mjs: a picture written and read back is the same');
+
+// ---- the measured calibration (GeoUI Builder's MEASURED, a new project's choice): the real app's own numbers ----
+{
+  const n = G.settingsOf(G.newProjectSettings()), st = G.settingsOf({});
+  ok(n.calibration === G.MEASURED.id && close(n.unitsPerScreenH, 170.68, 0.01) && close(n.centerFix.mobile.y, -0.02905, 1e-5) && n.centerFix.desktop.x === 0 && n.centerFix.console.y === n.centerFix.mobile.y,
+    'measured: a new project is 170.68 units high, centred at 135.04 (fix y −0.02905) on every platform', JSON.stringify(n.centerFix));
+  ok(st.calibration === 'studio-v10.1' && st.unitsPerScreenH === 176 && st.centerFix.mobile.y === -0.05256 && G.settingsOf({ calibration: 'odd' }).calibration === 'manual', 'measured: the library\'s defaults stay Studio\'s (older projects, the tests); an unknown choice is manual');
+  // Studio's chosen again: its two numbers come back (a measured project's are left in the fields); a project from before
+  // calibrations with its own numbers is 'manual' — they stay
+  const back = G.settingsOf({ ...n, calibration: 'studio-v10.1' }), old = G.settingsOf({ unitsPerScreenH: 180, centerFix: { mobile: { x: 0, y: -0.04 } } });
+  ok(back.unitsPerScreenH === 176 && JSON.stringify(back.centerFix) === JSON.stringify(G.STUDIO.centerFix) && old.calibration === 'manual' && old.unitsPerScreenH === 180 && old.centerFix.mobile.y === -0.04,
+    'Studio\'s calibration is a preset (176 and its centre fixes); an older project\'s own numbers stay (manual)', JSON.stringify([back.unitsPerScreenH, back.centerFix, old.calibration, old.unitsPerScreenH]));
+  // the shots the real app gave (app runs 39560350529, 39563235250, 39563238661, 39563246391, 39566341288: Android 1560x720,
+  // 1.26.52.3) — each frame's height and centre as the model says them, against what was measured (o210: its markers lifted
+  // 88 and 176 units into view, the centre measured 217.60 + 88 = 129.60 + 176 = 305.60)
+  const real = [[{ size: [2, 10], offset: [0, 110] }, 393.72, 279.96], [{ size: [10, 10], offset: [0, 1110] }, 170.61, 1841.60], [{ size: [20, 20], offset: [0, 105] }, 85.31, 79.47], [{ size: [10, 10], offset: [0, 210] }, 170.61, 305.60]];
+  const off = real.map(([panel, H, cy]) => { const f = G.frameScreen(panel, 1560 / 720); return { panel: panel.size.join('x'), dH: (f.H - H) / H, dcy: f.cy - cy }; });
+  ok(off.every((o) => Math.abs(o.dH) < 0.001 && Math.abs(o.dcy) < 0.3), 'measured: the model gives back the real app\'s three frames (height 0.1 %, centre 0.3 units)', JSON.stringify(off));
+  const moved = G.settingsOf({ ...G.newProjectSettings(), panel: { size: [20, 20], offset: [0, 105] } });
+  ok(close(moved.unitsPerScreenH, 85.34, 0.01) && close(140 + moved.centerFix.mobile.y * moved.unitsPerScreenH, 79.57, 0.01), 'measured: another frame in the settings moves the screen with it (20 x 20 at 105: 85.34 high, centred at 79.57)');
+  const mp = G.buildPack({ ...design('left'), settings: { ...G.newProjectSettings(), ns: 'geoui', name: 'Score & gauge', uuids: S0.uuids ?? undefined } });
+  const pre = JSON.stringify(mp.files['geoui_RP/entity/player.entity.json'] ?? '');
+  ok(!mp.warnings.length && /v\.geoui_halfw = 85\.34\*v\.geoui_aspect/.test(pre), 'measured: the export\'s own Molang carries it (half the screen 85.34 x aspect)', pre.slice(0, 300));
+}
+
+// ---- the report (geoui/report.mjs): the real app's numbers gathered, each shot's own changes undone, the frame → screen
+// mapping fitted. Shots made up from a known mapping must give it back, whatever their frame, scale, oy and lift ----
+{
+  const RP = await import(pathToFileURL(path.join(TOP, 'geoui', 'report.mjs')).href);
+  const eq2 = (a, b, m) => ok(JSON.stringify(a) === JSON.stringify(b), m, `want ${JSON.stringify(b)} got ${JSON.stringify(a)}`);
+  const planOf = (a) => RP.addonPlan({ imported: fs.readFileSync(path.join(TOP, 'geoui', 'addons', a, 'imported.json'), 'utf8'), app: fs.readFileSync(path.join(TOP, 'geoui', 'addons', a, 'app.txt'), 'utf8') });
+  const base = planOf('geoui_calib'), far = planOf('geoui_calib_far'), p20 = planOf('geoui_calib_p20'), o210 = planOf('geoui_calib_o210'), w2 = planOf('geoui_calib_w2');
+  // (every GeoUI addon's real-app steps parse: a typo there costs a device run to find)
+  const SC = await import(pathToFileURL(path.join(TOP, 'app', 'lib', 'scenario.mjs')).href);
+  const bad = fs.readdirSync(path.join(TOP, 'geoui', 'addons')).filter((a) => /^geoui/.test(a) && fs.existsSync(path.join(TOP, 'geoui', 'addons', a, 'app.txt')))
+    .map((a) => [a, SC.parseScenario(fs.readFileSync(path.join(TOP, 'geoui', 'addons', a, 'app.txt'), 'utf8')).errors]).filter(([, e]) => e.length);
+  ok(!bad.length, 'report: every geoui addon\'s app.txt parses (the steps a device run takes)', JSON.stringify(bad));
+  ok(JSON.stringify(base.frame) === '{"w":10,"h":10,"top":110}' && base.lift === 0 && base.shots['calib-scale50'].scale === 50 && base.shots['calib-dpi240'].scale === 100 && base.shots['inventory-shown'].scale === 100, 'report: the plain pack\'s frame (Studio\'s), and each shot\'s scale as app.txt set it before that shot (scale 50 put back to 100 only after it)', JSON.stringify(base));
+  ok(JSON.stringify(far.frame) === '{"w":10,"h":10,"top":1110}' && far.lift === 1760 && JSON.stringify(p20.frame) === '{"w":20,"h":20,"top":105}' && p20.shots['calib-fit'].scale === 50 && p20.shots['calib-fit'].oy === -660
+    && JSON.stringify(o210.frame) === '{"w":10,"h":10,"top":210}' && o210.shots['calib-up176'].oy === 1760 && JSON.stringify(w2.frame) === '{"w":2,"h":10,"top":110}' && w2.shots['calib-double'].scale === 200, 'report: the variants\' frames and lift from imported.json, their shots\' scale and oy');
+  // made-up devices (two answers that differ in every way), every variant's shots as the measure would read them — at the
+  // screen size each shot's name says (calib-1024x768 …), else the CI device's 1560x720 — and the fit must find each
+  const plans = [['geoui_calib', base], ['geoui_calib_far', far], ['geoui_calib_p20', p20], ['geoui_calib_o210', o210], ['geoui_calib_w2', w2]];
+  const shotsOf = (model) => plans.flatMap(([addon, plan]) => Object.entries(plan.shots).filter(([k]) => /^calib-/.test(k)).map(([shot, t]) => {
+    const m = /(\d+)x(\d+)/.exec(shot), W = m ? +m[1] : 1560, Hs = m ? +m[2] : 720, s = t.scale / 100, P = RP.predict(model, plan.frame, W, Hs), Ha = P.H / s;
+    return { run: '1', addon, shot, kind: 'geoui', ok: true, plan, values: { width: W, height: Hs, unitsPerScreenH: Ha, unitsPerScreenHFromX: Ha, centreX: (P.cx - t.ox / 10) / s, centreY: 140 + (P.cy - 140 - plan.lift - t.oy / 10) / s, pxPerUnitX: Hs / Ha, pxPerUnitY: -Hs / Ha, depthNear: 1, depthFar: 1 } };
+  }));
+  for (const truth of [{ scale: 'area', c: 0.038585, pin: 'middle', px: false, d: 24.1, C: 0.5 }, { scale: 'height', c: 10 / 176, pin: 'bottom', px: true, d: 8, C: 0 }]) {
+    const a = RP.analyse(shotsOf(truth)), M = a.fit?.model;
+    ok(M && M.scale === truth.scale && M.pin === truth.pin && M.px === truth.px && close(M.c / truth.c, 1, 1e-9) && close(M.d, truth.d, 1e-6) && close(M.C, truth.C, 1e-9) && a.fit.scales[1].spread > 1 && a.geo.every((g) => Math.abs(g.residual.cyPx) < 1e-6 && Math.abs(g.residual.kPct) < 1e-6),
+      `report: a device whose scale follows the frame's ${truth.scale} and whose origin is pinned at its ${truth.pin} found again from ${a.geo.length} shots of 5 frames and 6 screens (scale 50 / 200, oy, lift undone)`, JSON.stringify({ M, scales: a.fit?.scales }));
+  }
+  // Studio's hand-set answer is the 'height' one: 176 high and centred 140 on every screen
+  // (k = Hs / 176 for the 10 % frame; its middle is 1.15 screens down: 0.65 · 176 = 114.4 units below the screen's centre, so the
+  //  origin 25.6 units further down puts the centre at y = 140)
+  const st = RP.analyse(shotsOf({ scale: 'height', c: 10 / 176, pin: 'middle', px: false, d: 25.6, C: 0 }));
+  ok(st.fit.studio.every((x) => close(x.H, 176, 1e-6) && close(x.cy, 140, 1e-6)), 'report: Studio\'s own answer (a height-scaled device) is 176 units high and centred at 140 on every screen for its frame', JSON.stringify(st.fit.studio));
+  const rows = [...shotsOf({ scale: 'area', c: 0.038585, pin: 'middle', px: false, d: 24.1, C: 0.5 }),
+    { run: '1', addon: 'geoui_calib', shot: 'inventory-shown', kind: 'diff', ok: true, plan: base, values: { share: 0, parts: 0 } }, { run: '1', addon: 'geoui_calib', shot: 'calib-hud', kind: 'geoui', ok: false, plan: base, values: {} }];
+  const a = RP.analyse(rows), F = a.fit;
+  ok(a.diffs.length === 1 && a.failed.length === 1 && F.studio.length === RP.SCREENS.length && close(F.studio[0].H, 176.07, 0.05) && F.studio[1].H > 190 && F.studio[4].H > 220, 'report: Studio\'s frame on the usual screens (an area-scaled device: 176 on the CI device, more on wider-than-tall ones less wide), the diff kept, the failed one named', JSON.stringify(F.studio));
+  const md = RP.markdown(a, { runs: ['1'] });
+  ok(/1 モデル単位 = \*\*0\.038585 × √\(枠の幅 × 高さ\)（px）\*\*/.test(md) && /枠の真ん中（横は真ん中）から下へ \*\*24\.10 単位\*\*/.test(md) && /どちらも 1: 遠近なし/.test(md) && /geoui_calib_o210（10x10@210） \| calib-up176/.test(md) && /\| 16:9（PC・ゲーム機） 1920x1080 \| \*\*/.test(md) && /測れなかった画面: geoui_calib\/calib-hud/.test(md),
+    'report: the Markdown says the model found, Studio\'s frame on each screen, the depth and every shot', md.slice(0, 1600));
+  // one frame shape on one screen: the scale models cannot be told apart — said
+  const one = RP.analyse(shotsOf({ scale: 'area', c: 0.038585, pin: 'middle', px: false, d: 24.1, C: 0 }).filter((r) => r.addon === 'geoui_calib' && !/\d+x\d+/.test(r.shot)));
+  ok(one.fit.shapes === 1 && /形の違う枠（幅 2 % など）が無いと見分けられません/.test(RP.markdown(one)), 'report: one frame shape only — the scale models cannot be told apart, and it says so');
+  // the spec's claims answered by the diffs of known shots (0 parts: no)
+  eq2(RP.verdicts([{ addon: 'geoui_calib', shot: 'inventory-shown', values: { parts: 0, share: 0 } }, { addon: 'geoui_lab', shot: 'invisible-on', values: { parts: 2, share: 0.01 } }, { addon: 'geoui_lab', shot: 'third', values: { parts: 1 } }]).map((v) => `${v.question}:${v.yes}`),
+    ['インベントリに GeoUI が映り込む:false', '透明化の間も GeoUI が描かれる:true'], 'report: known diffs as yes / no, unknown shots left as numbers');
+  eq2(RP.verdicts([{ addon: 'geoui_calib_far', shot: 'inventory-shown', values: { parts: 1, share: 0.864 } }]).map((v) => v.yes), [null], 'report: half the screen changed is no answer (the inventory that never opened: 86 %)');
+  ok(/\| インベントリに GeoUI が映り込む \| \*\*いいえ\*\* \| geoui_calib の inventory-shown: 0 か所/.test(md), 'report: the answers in the Markdown');
+  // a run that never got into the world: its summary's join code and trail (app/lib/failcodes.mjs), read by load()
+  {
+    const jd = fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-join-'));
+    fs.writeFileSync(path.join(jd, 'summary.json'), JSON.stringify({ addon: 'geoui_calib', failed_lines: [14], failed_codes: ['join-play-unreached 2'], failed_trails: { 14: 'title-play wait*2 unknown-a restart' }, measures: [{ kind: 'geoui', shot: 'calib-hud', ok: false, code: 'no-anchor', values: {} }] }));
+    const L = RP.load([jd]), jmd = RP.markdown(RP.analyse(L.rows), { joins: L.joins });
+    fs.rmSync(jd, { recursive: true, force: true });
+    ok(L.joins.length === 1 && /\| geoui_calib \| 14 \| join-play-unreached 2 \| `title-play wait\*2 unknown-a restart` \|/.test(jmd) && /calib-hud（no-anchor）/.test(jmd), 'report: a run that could not join — its code and trail; a failed measure with its code', jmd.slice(-600));
+  }
+  // from summary.json files (a run's artifacts as fetched): only measures, by addon
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'geoui-report-')); fs.mkdirSync(path.join(d, 'app-geoui_calib-9', 'run1'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'app-geoui_calib-9', 'run1', 'summary.json'), JSON.stringify({ addon: 'geoui_calib', app: '1.26.52.3', measures: rows.filter((r) => r.addon === 'geoui_calib').map(({ shot, kind, ok: o, values }) => ({ shot, kind, ok: o, values })) }));
+  const L = RP.load([d]);
+  ok(L.rows.length === rows.filter((r) => r.addon === 'geoui_calib').length && L.app === '1.26.52.3' && L.rows.every((r) => r.plan.frame.top === 110), 'report: summary.json files under a run folder read, each addon\'s plan from its files', JSON.stringify(L).slice(0, 400));
+  fs.rmSync(d, { recursive: true, force: true });
+}
+
+console.log(`\n${fails ? 'FAIL' : 'PASS'} geoui-builder-offline (${n - fails}/${n})`);
+process.exit(fails ? 1 : 0);

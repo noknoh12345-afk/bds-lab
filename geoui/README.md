@@ -1,0 +1,160 @@
+# GeoUI Builder — Blockbench で GeoUI を作る（GeoUI Studio の式を再現・検証）
+
+GeoUI = HUD に足した `live_player_renderer` が、`minecraft:player` に付けた板（平らなキューブ）を描くことで作る 2D の UI（統合版）。
+このフォルダは、それを **Blockbench の上で組み立てて書き出すプラグイン** と、GeoUI Studio v10.1 の式の検証・本物のアプリでの較正の道具です。
+
+**bds-lab の中の独立したプロジェクト**です（自分の README・`package.json`・試験・アドオンを持ち、bds-lab のほかの場所を書き換えずに進められます）。
+
+| したいこと | このフォルダで |
+|---|---|
+| 全部を確かめる（ゲームなし: 生成器が出す物と置いてある物が同じか＋試験 15 本） | `node test.mjs`（`npm test`。`--only web` で名前に web を含むものだけ） |
+| アドオン 1 つを本物の BDS で | `node lab.mjs go -a geoui_web`（bds ラボの `go`。`test`・`run`・`sim` も同じ形） |
+| アドオン全部を本物の BDS で（並べて） | `node lab.mjs go all`（`npm run go`） |
+| Blockbench のプラグインを作る | `node build.mjs`（`--check`: 最新か） |
+
+| フォルダ | 中身 |
+|---|---|
+| `addons/` | GeoUI のアドオン 30 個（bds ラボが名前で見つけます: `-a geoui_…`） |
+| `tests/` | GeoUI の試験（bds-lab の CI でも、変わった所に関係するものが走ります） |
+
+**仕様書: [SPEC.md](SPEC.md)** — どの画面でも正しい所に出す式（renderer の写し方・表示領域・4 つの大きさの決め方・寄せ先ごとの renderer・
+端末ごとの数）、描き方の決まりと限度、フォームなしで PC を再現する入力、HTML から GeoUI への変換器、端末の確かめ方と要実測の一覧。
+**規則の台帳: [RULES.md](RULES.md)** — サーバーの値が画面の画素になるまでの全段の規則（出どころ・状態）と、仮説を決める実験 `addons/geoui_rules`。
+
+| ファイル | 中身 |
+|---|---|
+| `dist/geoui_builder.js` | **Blockbench に入れる 1 ファイル**: GeoUI Builder と **タイムライン**（`timeline/`。使い方は [TIMELINE.md](TIMELINE.md)）。`node geoui/build.mjs` が作る（`--check`: 最新か） |
+| `geoui_builder.js` | GeoUI Builder 本体（Blockbench 5.x、web 版・デスクトップ版。これだけ入れるとタイムラインなし）。中の `GeoUICore` は Node のモジュールにもなる（式・Molang・書き出し） |
+| `timeline/` | タイムライン（データと編集・書き出しの Molang・ゲームの中のスクリプト・パネル・プレビュー・Blockbench とのつなぎ）。設計と本物のゲームで確かめたことは `timeline/PLAN.md`。osu! を丸ごと作る部品（`osugame.js` ルール・`osukit.js` 2 つの見た目・`osusong.js` ラボの曲）も |
+| `osu/` | osu! の見本の道具: 曲と譜面を書き出す（`music.mjs`）・公式の Legacy スキン（`skin-legacy/`、ppy/osu-resources・CC-BY-NC 4.0、`fetch-skin.mjs`）・見本のアドオンを作る（`addon.mjs`、demo.mjs から）・ゲームを使わない絵と動画（`render.mjs`・`video.mjs`。`--tour` はパックのスクリプトのまま検証ツアーを）。使い方は [TIMELINE.md](TIMELINE.md)「osu! を丸ごと作る」 |
+| `bbpage.mjs` | 本物の Blockbench（web 版）をヘッドレスの Chromium で開く、確かめの共通部分（`blockbench-check.mjs`・`timeline/check-bridge.mjs`） |
+| `blockbench-check.mjs` | 本物の Blockbench（web 版をヘッドレスの Chromium で）にプラグインを入れて確かめ、画を撮る（作者向け。要るものはファイルの先頭） |
+| `calib.mjs` | 較正: 目盛りのパックを作る（`make`）・本物のアプリの画面を測る（`measure`）・答えのわかった偽の画面（`synth`） |
+| `report.mjs` | **較正のまとめ**: 本物のアプリの実行（番号・フォルダ・summary.json）の `measure` の数を集め、各画面の大きさ・ずらし・持ち上げを戻して、HUD の枠 → 画面の対応（尺度と原点の形）を比べて当てはめる。封じた成果物を開けなくても読める |
+| `png.mjs` | PNG の読み書き（node:zlib だけ） |
+| `measure.html` | **測定ページ**: スクショを選ぶだけで、その端末の中で測る（何も送らない）。`calib.mjs` の測り方をそのまま埋め込んだもの |
+| `page.mjs`・`measure.tpl.html` | 測定ページを作る（`node geoui/page.mjs`。`calib.mjs` を変えたら作り直す。古いままだと試験が落ちる） |
+| `tests/geoui-builder-offline.mjs` | Studio の書き出し（`geoui/addons/geoui_studio`）との突き合わせ、書き出したファイル、較正の測り方（CI） |
+| `addons/geoui_bb/` | このプラグインで Studio のひな形「スコア＆ゲージ」を作り直した書き出し（本物の BDS: DONE 22/22・本物のアプリ: `app.txt`） |
+| `addons/geoui_calib/` | 較正の目盛り（本物の BDS: DONE 3/3・本物のアプリ: `app.txt`） |
+| `screen/` | **GeoUI Screen**: SPEC.md の式（`layout.js`）・パックを作る（`pack.js`）・向きつきの焦点の移動（`nav.js`）・フォームなしの入力（`input.js`）・端末の確かめのパック（`device.mjs` → `addons/geoui_device`） |
+| `html/` | **HTML → GeoUI**: ページをブラウザで状態ごとに撮り（`capture.mjs`）、アトラスとボーンにして（`scene.mjs`）、フォームなしで動かす（`runtime.js`）。`node geoui/html/convert.mjs <page.html か https://…> --out <フォルダ>`（どのサイトも URL で: 見えている操作できる物を 120 個まで）。見本 `addons/geoui_html_demo` |
+| `web/` | **GeoUI Web**（[web/README.md](web/README.md)）: ゲームの中のウェブ。本物の Chromium がどのサイトも（動くサイトも）開き、F1（HUD・腕・持ち物を消す、ゲームモードはそのまま）の全画面に URL の画像で出す。Chrome のようにタブ・戻る・アドレス欄・クリック・ドラッグ・スクロール・文字。`addons/geoui_web`（`make.mjs`）と、本物のアプリで測る探り `addons/geoui_web_probe`（`probe.mjs`） |
+| `screen/channel.js` | **題名の通り道**（URL の画像・F1・並べ方を 1 人ずつ HUD へ: SPEC.md 17 章） |
+| `tests/geoui-screen-offline.mjs`・`geoui-html-offline.mjs` | 式と JSON UI の配置・パック・焦点・入力、変換器（パックの Molang をゲームと同じに動かした見た目・main.js そのもの）（CI） |
+| `tests/geoui-web-offline.mjs` | URL の画像の置き場所・題名の通り道を JSON UI の式どおりに読み戻す・並べ方と背景・F1・サービス・ブラウザの中身（作り物の世界で）（CI） |
+| `addons/geoui_osu_pixel/`・`geoui_osu_skin/` | タイムラインで作った osu!（キューブで組んだドット絵の模型 / 公式の素材。ラボの曲「Cubic Pulse」。失敗・Mods・結果・自己ベスト・検証ツアー・メニュー `/geoui:osu`）。本物の BDS: `tests.txt`・本物のアプリ: `app.txt`（ツアー 1 回）（`node geoui/timeline/demo.mjs` が作る） |
+
+## 使い方
+
+1. Blockbench（5.0 以上）→ **File → Plugins → Load Plugin from File** → `dist/geoui_builder.js`（タイムラインつき。[TIMELINE.md](TIMELINE.md)）。メニューに **GeoUI** が出ます。
+2. **GeoUI → 新しい GeoUI プロジェクト**。画面の枠（水色。基準の画面比 16:9）が出て、正面から見た向き（ゲームの HUD と同じ: 右が +x）になります。
+3. **画像を足す / 数字を足す / ゲージを足す**。寄せる先（`top_left` など）と余白（Studio の padX / padY、モデル単位）で置きます。
+   画像は PNG を選ぶだけ（1 要素 1 テクスチャでよい）。数字はドット絵の 0〜9 を自動で描きます（自分の帯 0〜9＋空白でも）。
+   ゲージは左（右・下・上・中心）から伸びます。値はどれも Molang（既定 `q.property('geoui:v0')` / `v1`）。
+4. **選んだ要素の設定**: 寄せる先・重ね方（cutout / blend / add）・表示の条件（Molang）・値。「寄せる先へ動かす」で余白どおりに置き直せます。
+   普通のキューブ・ボーンも自由に足せます（`geo_ui` の中に）。Blockbench のアニメーションもそのまま書き出されます（`q.is_in_ui` の間、ループ）。
+5. **プレビュー**: 書き出す式そのもの（pre_animation とアニメーション）を Blockbench が動かします。左下の Variable Placeholders に
+   プロパティの値（`q.property('geoui:aspect') = 1778` など）が並ぶので、書き換えると画面比・大きさ・値が変わります（v0〜v3 はスライダー）。
+   **画面と書き出しの設定** でプレビューの画面比と端末（中心のずれ）を選べます。
+6. **はみ出し・式を確かめる**: Studio の 8 種類の画面比 × PC / スマホで、画面からはみ出す要素と読めない式を挙げます。
+7. **アドオンを書き出す（.mcaddon）**: `<名前空間>_RP` と `<名前空間>_BP`（ビヘイビアパックは設定で外せる）。2 回目からはパッチ版を 1 つ上げます。
+   パックの UUID はプロジェクトごとに 1 度だけ作って .bbmodel に保存するので、ワールドの中で更新として入ります。
+
+ゲームの中: `/geoui:set <名前> <値>`（scale・alpha・ox・oy・cx・cy・aspect・v0〜v3）・`/geoui:aspect <幅> <高さ>`（例 `2340 1080`）・`/geoui:get`・`/geoui:reset`、
+コマンドブロックや別のパックからは `/scriptevent geoui:set <名前> <値>`、スコアボード `geoui_v0`〜`geoui_v3` を作れば v0〜v3 に 2 tick ごとに写ります。
+
+## GeoUI Studio v10.1 の式（Au12jp/geouistudio 7fe110f、`index.html` の `GGen`）と、このプラグインでの再現
+
+モデル座標（ジオメトリの単位。x = 画面の右、y = 上）で、画面の中心を (0, 140) に置く。
+
+| 式 | Studio | このプラグイン |
+|---|---|---|
+| 画面比 | `v.geoui_aspect = q.property('geoui:aspect')/1000.0`（スクリプトが端末の種類から 1778 / 2000 を推す） | 同じ（`/geoui:aspect <幅> <高さ>` で本当の比も） |
+| 画面の半分の幅 | `v.geoui_halfw = r3(H/2)*v.geoui_aspect`、H = 画面の高さ = **176** | 同じ |
+| 左へ寄せる | 中心 x = `-(halfw - (w/2 + padX))` | 基準の画面比で置いた位置 + `-(v.geoui_halfw - halfw基準)`（どの画面比でも同じ所） |
+| 右へ寄せる | `halfw - (w/2 + padX)` | 同じ考え |
+| 上・下へ寄せる | `±(H/2 - h/2 - padY)`（画面比によらない） | 置いた位置のまま |
+| 大きさ・ずらし | 位置 `(…)*v.geoui_scale + v.geoui_ox + v.geoui_cx`、`ox = q.property(ox)/10` | 全体を `geo_ui` で `(0,140)` を中心に `scale`、`ox+cx`・`oy+cy` ずらす（同じ結果） |
+| 中心のずれ | `v.geoui_cx = q.property('geoui:cx')/10000*176`（PC `-6` / `-278`、スマホ `-17` / `-526`） | 同じ（設定で変えられる） |
+| 数字 | 桁ごとに別ジオメトリ、帯 11 コマ（0〜9・空白）を `uv_anim` でずらす。頭の 0 は空白 | 桁ごとに 10 枚の板、合わない数字は `scale 0`（Blockbench のプレビューでも動く）。桁の値は Studio と同じ式 |
+| ゲージ | `scale.x = clamp(値/最大, 0, 1)` | 同じ（伸びる向きの端を軸に） |
+| HUD | `size 10% x 10%`・`offset [0, 110%]`・`top_middle` の `live_player_renderer`（人形は画面の下の外） | 同じ枠（設定で変えられる） |
+
+**確かめたこと**（`node geoui/tests/geoui-builder-offline.mjs`）: Studio が書き出したひな形（`geoui/addons/geoui_studio` のファイルそのもの）と、
+同じ配置をこのプラグインで作った書き出しを、どちらも自分の Molang（pre_animation → アニメーション → レンダーコントローラー）で動かして比べると、
+**scale 100 では 1890 通り（画面比 9 × PC / スマホ × ずらし 3 × 値 35）すべてで、どの桁がどの数字をどこに出すかとゲージの位置が 1e-6 単位まで一致**。
+本物の Blockbench 5.2.2 でも（`blockbench-check.mjs`）、Blockbench の中で作ったパックが Studio と 192 通りで一致し、Blockbench 自身のプレビュー
+（Blockbench の Molang とボーンの変形）がプラグインの計算と同じ所に板を置き・隠すことを確かめた。
+
+## 人の手で決めた値（Studio）と、その確かめ方
+
+| 値 | Studio | 出どころ | 状態 |
+|---|---|---|---|
+| 画面の高さ | 176 単位（初期値は 22.5 だった） | 「実機で 20.25 倍にしたらちょうど良かった」という報告 | **測った: 170.68 単位**（−3.0 %）。1 単位 = 0.058589 × 枠の短い辺（px）なので、Studio の枠なら横長の画面すべてで同じ |
+| 画面の中心 | y = 140 | 人形を画面の外へ出すための高さ | **測った: y = 135.04**（モデルの原点は枠の真ん中の 24.10 単位下）→ **決まった: y = 134.93**（原点は 24 モデル単位下。[RULES.md](RULES.md) R4.2） |
+| 中心のずれ | PC x -0.1 / y -4.9、iOS x -0.3 / y -9.25 | 176 単位のときに一度ずつ実測 | **測った（Android）: x 0 / y −4.96 単位**（割合 −0.02905。Studio の PC の値に近い）。切り欠きのある iPhone は未測定 |
+| json-ui 単位 | 240 / 176 = 1.364 | 画面の高さを 240 json-ui 単位と仮定 | 未測定（UI の倍率を変えて写す: `geoui_calib` の density の区切り） |
+| 画面比 | PC 1778・スマホ 2000・ゲーム機 1778 | 端末の種類からの推測 | 既知の問題: 19.5:9 のスマホは 2167（左右に寄せた要素が 14.7 単位ずれる） |
+
+**実機で測った値（2026-10-21、Android エミュレータ 1560x720、Minecraft 1.26.52.3）**: 枠の違う 3 つ（10 x 10・20 x 20・幅 2 % の 2 x 10）の 5 枚が
+「1 モデル単位 = 0.058589 × 枠の幅と高さの小さい方（px）・モデルの原点 = 枠の真ん中（横は真ん中）の 24.10 単位下」に、尺度 0.08 %・中心 0.7 px で合う
+（高さ・幅・面積・対角線で決まる形は、幅 2 % の枠で 1.8〜46 % 外れる）。同じ枠を別の実行で測っても 0.003 % の違い。縦と横の尺度は同じ（0.9999）、
+遠近は無い（手前・奥 60 単位で 0.9999 / 1.0000）。**2026-10-24 に決まった**（run 40055307539、`geoui_rules`: UI の中の scale を 4 つ変えて写した）:
+1 モデル単位 = scale / 16 × 枠の短い辺（scale = プレイヤーの scripts.scale、バニラ 0.9375: K = 0.05859375）、原点 = 枠の真ん中の 24 モデル単位下。
+上の 0.058589・24.10 との違いは scale 0.9375 の目盛りの端のぼけ（1 単位 4.22 px）で、1560 x 720 で 0.5 px 未満。プラグインの「実機で測った値」・
+タイムラインの probe・osu! の render は 2026-10-21 の値のまま（違いが 1 px 未満なので変えていない）。この形で前もって出した 4 つ目の枠（10 x 10 を画面 1 つ分下の 210 %）の中心 305.72 は、
+実機で 305.60（高さ 170.61）だった。`report.mjs` が実行の番号からこれを出す。プラグインの新しいプロジェクトは、この値（「画面の高さ・
+中心の値: 実機で測った値」）で始まり、HUD の枠を変えると画面の高さと中心がそれに合わせて決まる（Studio と同じ値を選び直せば Studio の
+176 と中心のずれに戻る。自分で入れた値も選べる）。
+幅の細い枠（幅 % × 画面比 < 高さ %）は幅で尺度が決まるので、画面比で画面の高さが変わる（プラグインは基準の画面比で計算する）。
+
+これらは本物のアプリでしか測れません。`geoui/addons/geoui_calib` が目盛り（モデル座標のわかった色の点 92 個・中心のずれ 0）を描き、
+`app.txt` が端末の既定・4:3・16:10・16:9・20:9・21:9・UI の倍率 2 種・scale 50 で写します。測るのは:
+
+```sh
+node lab.mjs app ci -a geoui_calib --wait          # GitHub の本物のアプリで（Google Play の連携が要る）
+node geoui/calib.mjs measure app/runs/gh-<番号>/shots
+node geoui/report.mjs <番号> [<番号>…] --md report.md   # 何本でも: 枠の違う変わり種（geoui_calib_*）もまとめて当てはめる
+```
+
+`report.mjs` は「HUD の枠（live_player_renderer のパネル: 幅 w %・高さ h %・上端 t %、横は真ん中）が、モデルを画面のどこに・どの大きさで
+置くか」を、いくつかの形を全部の画面に当てて比べ、いちばん合う形を答えにする:
+**尺度**（1 モデル単位の px）= c × 枠の高さ ／ 幅 ／ √(幅 × 高さ) ／ 対角線、**原点**（モデルの (0, 0)）= 枠の上端 ／ 真ん中 ／ 下端 + d（単位か px）。
+答えの形から、どの枠・どの画面でも画面の高さ H（モデル単位）と中心が出る（Studio の枠 10 x 10・110 % を、CI の端末・16:9・19.5:9・20:9・4:3・16:10 で）。
+Studio は「どの画面でも H = 176・中心 y = 140」と置いているが、これは尺度が枠の高さだけで決まるときにしか成り立たない。
+枠の形が 1 種類の画面しか無いと形どうしを見分けられないので、幅の違う枠（`geoui_calib_w2`）や大きさの違う画面（`size`）の数が要る。
+各画面の `gcal:set scale / oy`（app.txt でその shot の前に設定したもの）と目盛りの持ち上げ（`--lift`）は戻してから当てはめる。
+
+Google Play の連携が無くても、スマホ 1 台で測れます: `GeoUI_Calibration.mcaddon` を取り込んだワールドで横向きのまま撮り、
+`measure.html`（パネルに置くか、ファイルをそのままブラウザで開く）でそのスクショを選ぶだけ。輪が点に重なっていれば正しく測れています。
+
+画面ごとに **画面の高さ（モデル単位）・画面の中心のモデル座標（＝ Studio の中心のずれ）・縦と横の尺度・遠近（奥行き ±60 の点の拡大率）** が出ます。
+測った値はプラグインの **画面と書き出しの設定**（画面の高さ・中心のずれ）に入れます。測り方は、答えのわかった偽の画面で確かめてあります
+（HUD の部品が混ざっても外れとして除く・遠近の拡大率も読める: `calib.mjs synth`）。
+本物のスクショで起こることにも耐えます: 格子は色ではなく「同じ大きさの四角が等間隔に並ぶ形」で見つけ、赤・緑・青のどれか 1 つが写っていれば位置が決まります。
+偽の画面 240 通り（5 種の画面 × 高さ 120 / 176 / 260 × 中心のずれ × 遠近 × 縮小 1〜1/3・JPEG 70〜90・暗さ 0.5〜1・タッチ操作のボタンとチャットの文字）で、
+横向きの 192 通りすべてが高さ 1 % 以内・中心 1 単位以内。縦向き（目盛りが 2 列しか写らない）は、間違った数字を出さずに測れないと答えます。
+
+## Studio との違い（わざと）
+
+どれも Studio の書き出しで起きることを確かめた上で、変えています。
+
+- **scale ≠ 100 のとき**: Studio は数字の桁の間隔が縮まず、ゲージの位置もずれる（scale 25〜200 で桁の中心が最大 17.8 単位・ゲージが最大 29.9 単位。scale 50 ならそれぞれ 8.9・15.0 単位で、桁が離れて見える）。
+  このプラグインは UI 全体を (0, 140) を中心に縮める（Studio の画像の縮み方と同じ）。Blockbench で両方を描いた画: `blockbench-check.mjs` の 10〜13。
+- **ゲージ**: Studio のひな形はゲージの軸が中心（`pivot: "center"`）で、値が減ると中心へ縮む（左端が動く）。既定は左端から（中心も選べる）。
+- **HUD**: Studio は `hud_content` を丸ごと置き換える（その写しには 1.26.50 で増えたエディターの描画が無い）。`root_panel` に足すだけにした（Studio の形も選べる）。
+- **player の定義**: 現行バニラ 1.26.50（bedrock-samples 46ba6ea）を元にする。Studio の BP は 1.19.70 の写しで満腹度が違い、襲撃の予兆のイベントが無い。
+- **ビヘイビアパック**: 引数が整数型のコマンド（Studio は文字列型で数値がそのまま書けない）、alpha 0 が効く、範囲外は理由を言う、自分で変えた値は
+  入り直し・/reload・再起動でも残る、値の範囲は float32 で正確な ±2^24、汎用名のスコアボードを作らない（`geoui_bb` の tests.txt が全部を本物の BDS で確かめる）。
+- **ポーズ画面の人形**（paper_doll_renderer）では描かず、プロパティも読まない（`!variable.is_paperdoll`）。
+- 数字の 10 枚の板は 0.02 ずつ手前へ（同じ面に重ねない）。プレイヤーの名前の lang と空のルートテーブルも入れる。
+
+## まだ確かめていないこと
+
+- 画面の大きさ・画面比（4:3〜21:9）・UI の倍率（density）を変えた画面で、上の形がそのまま成り立つか（`geoui_calib` の size / density の区切り。
+  形からは「Studio の枠なら横長の画面すべてで 170.68・135.04」と出る）。PC・ゲーム機・iPhone（切り欠き）の実機。
+- インベントリの人形（これも `live_player_renderer`）にも GeoUI が映るか: CI の端末ではキーボードの E で持ち物が開かず、答えになっていない
+  （持ち物はゲームパッドの Y で開き、開いたことを確かめてから比べるようにした）。alpha 0 で消えるか: 比べる画面にタッチ操作のボタンが
+  出たり消えたりして答えになっていない（`/hud hide touch_controls` で外した）。
+- Blockbench のデスクトップ版（Electron）での読み込み（web 版 5.2.2 では確かめた。使っているのは両方にある API だけ）。

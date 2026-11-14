@@ -7,8 +7,8 @@
 - [ ] lab: brief が難読化されたアドオン（文字列を配列に隠したもの）のイベントを読めない：helper.js で subscribe を包み、1 回の run で実際に購読しているイベントとコマンドを brief に出す（brief --live）
 - [x] lab: draft tests.txt に、引数を取るカスタムコマンド（kit cmd の型・registerCommand の mandatoryParameters）の見本の引数を入れる（今は引数なしで呼ぶだけ）
 - [ ] lab: sim が作業台のクラフト（@A craft_at）を飛ばす：バニラ（sample の recipes.brarchive）とパックの recipes を sandbox に渡して作る
-- [ ] lab: Endstone プラグインの持ち込み（.whl・プラグインのフォルダ）：end の import と brief（コマンド・イベント・依存パッケージ）
-- [ ] lab: go の QA が 1 度だけ「BDS crashed (native crash) during startup」で落ちた（zz_jitgo、5 回中 1 回、再現せず）：起動時のクラッシュは QA を 1 回やり直してから Q にする
+- [x] lab: Endstone プラグインの持ち込み（.whl・プラグインのフォルダ）：end の import と brief（コマンド・イベント・依存パッケージ）
+- [x] lab: go の QA が 1 度だけ「BDS crashed (native crash) during startup」で落ちた（zz_jitgo、5 回中 1 回、再現せず）：起動時のクラッシュは QA を 1 回やり直してから Q にする
 - [ ] skills: [source] の規則（model-vanilla-first、ui-modify、ui-title-route、ui-unverified）にテストか probe を作って再確認できるように（ui-title-route は realplayer がタイトルを生で出すので dev-bds で示せる）
 - [ ] skills: `skill learn --from` で参考 3 リポジトリから出た候補（モデリング 60、MCBE-UI 60）を仕分け、証明できるものを promote
 - [ ] skills: `skill bench --via claude --runs 3` で今のスキル（rubric v2 で平均 96%）とスキル無しを比べ、L3（採点がベンチの合格を予測するか）の最初の点を取る。採点だけ上がって合格が増えない項目は rubric から外すか書き直す

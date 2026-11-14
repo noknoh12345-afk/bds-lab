@@ -1,0 +1,4 @@
+{
+  "service": "geoui/web/server.mjs",
+  "tunnel": "app"
+}

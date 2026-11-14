@@ -1,0 +1,14 @@
+{
+  "name": "geoui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GeoUI: Minecraft 統合版の HUD に 2D の UI を描く（Blockbench のプラグイン・タイムライン・HTML/ウェブの変換・端末ごとの式）。bds-lab の中の独立したプロジェクト",
+  "scripts": {
+    "test": "node test.mjs",
+    "build": "node build.mjs",
+    "check": "node build.mjs --check",
+    "go": "node lab.mjs go all",
+    "blockbench": "node blockbench-check.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

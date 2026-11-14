@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { lineBreaks } from '../common/codeline.mjs';   // (a written \n breaks the line outside string literals only)
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WIN = process.platform === 'win32';
@@ -602,7 +603,7 @@ wait 1000
   async exec(L, eng, w, rest, c) {
     const on = rest[0] !== 'off', names = rest.slice(rest[0] === 'on' || rest[0] === 'off' ? 1 : 0).join(' ').split(/[\s,]+/).filter(Boolean);
     switch (w) {
-      case 'lse': return lse(L, eng, { op: 'eval', code: c.slice(4).replace(/\\n/g, '\n') });
+      case 'lse': return lse(L, eng, { op: 'eval', code: lineBreaks(c.slice(4), 'js') });
       case 'events': return lse(L, eng, { op: 'events', on, names });
       case 'states': return lse(L, eng, { op: 'states', on, keys: names });
       case 'perf': return lse(L, eng, { op: 'perf', ms: Number(rest[0]) || 3000 }, (Number(rest[0]) || 3000) + 10000);

@@ -1075,7 +1075,7 @@
     {
       "id": "end-template",
       "skill": "endstone-plugin",
-      "rule": "Start from the closest working plugin: `node lab.mjs help ideas` lists end/plugins (SQLite and restarts: sqlstats; a report system with cooldowns and an op list: report).",
+      "rule": "Start from the closest working plugin: `node lab.mjs examples` lists the 20 in end/examples, `new <n> --from <sample>` makes one yours (SQLite and restarts: sqlstats; a report system with cooldowns and an op list: report).",
       "why": "a structure guessed from scratch",
       "evidence": {
         "kind": "unit",
