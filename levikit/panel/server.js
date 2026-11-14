@@ -931,8 +931,22 @@ async function main() {
     send(res, 200, { ok: true });
   }, { audit: false });
 
+  // Content-Security-Policy: scripts only from this server's own files (and the 3D viewer's import map, by its hash, read
+  // from the page itself so an edit cannot fall out of step): a name or text that ever slipped past escaping still cannot
+  // run. Inline style attributes stay allowed (the pages colour their rows with them).
+  const inlineHashes = (() => {
+    const out = [];
+    for (const f of ['index.html', 'viewer.html']) {
+      let html = ''; try { html = fs.readFileSync(path.join(PUBLIC_DIR, f), 'utf8'); } catch { continue; }
+      for (const m of html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)) out.push(`'sha256-${crypto.createHash('sha256').update(m[1]).digest('base64')}'`);
+    }
+    return [...new Set(out)];
+  })();
+  const CSP = ["default-src 'self'", `script-src 'self' ${inlineHashes.join(' ')}`.trim(), "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:",
+    "connect-src 'self'", "object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'self'"].join('; ');
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
+    res.setHeader('Content-Security-Policy', CSP);
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Referrer-Policy', 'no-referrer');
