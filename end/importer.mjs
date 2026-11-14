@@ -202,12 +202,58 @@ function readMetadata(text) {
 }
 const pyprojectText = ({ dist, version, summary, python, deps, ep, pkg, cls }) => `[build-system]\nrequires = ["hatchling"]\nbuild-backend = "hatchling.build"\n\n[project]\nname = "${dist}"\nversion = "${version}"\ndescription = ${JSON.stringify(summary ?? '')}\nrequires-python = "${python ?? '>=3.10'}"\ndependencies = [${deps.map((d) => JSON.stringify(d)).join(', ')}]\n\n[project.entry-points."endstone"]\n${ep} = "${pkg}:${cls}"\n\n[tool.hatch.build.targets.wheel]\npackages = ["src/${pkg}"]\n`;
 
+// ---- a plugin by name: PyPI (the lab venv's pip, --no-deps: the plugin alone) or GitHub (its zip) → a file in a new folder
+const PYPI = /^(?:pypi:)?(endstone[-_][A-Za-z0-9._-]+?)(?:(==|@)([\w.!+-]+))?$/i, PYPI_ANY = /^pypi:([A-Za-z0-9][A-Za-z0-9._-]*)(?:==([\w.!+-]+))?$/i;
+const GH = /^(?:gh:|(?:https?:\/\/)?github\.com\/)([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:@([\w./-]+)|\/tree\/([\w./-]+))?\/?$/i;
+export function parseSource(given) {
+  const g = GH.exec(given ?? '');
+  if (g) return { kind: 'github', owner: g[1], repo: g[2], ref: g[3] ?? g[4] ?? 'HEAD' };
+  const a = PYPI_ANY.exec(given ?? ''), p = a ? null : PYPI.exec(given ?? '');
+  if (a) return { kind: 'pypi', name: a[1], version: a[2] ?? null };
+  if (p) return { kind: 'pypi', name: p[1], version: p[3] ?? null };
+  return null;
+}
+async function fetchPlugin(L, given) {
+  const s = parseSource(given);
+  if (!s) return null;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lab-fetch-'));
+  if (s.kind === 'pypi') {
+    const pipBin = path.join(L.CACHE, 'py', process.platform === 'win32' ? 'Scripts' : 'bin', `pip${process.platform === 'win32' ? '.exe' : ''}`);
+    const pip = exists(pipBin) ? [pipBin] : null;
+    if (!pip) L.die('pypi: needs the lab venv (node lab.mjs end setup), or download the file yourself: pip download --no-deps <name>');
+    const spec = s.version ? `${s.name}==${s.version}` : s.name;
+    L.out(`  downloading ${spec} from PyPI (the plugin alone, --no-deps; nothing of it runs here)`);
+    let r = L.RT.run(pip[0], ['download', '--no-deps', '--only-binary', ':all:', '--dest', dir, spec]);
+    if (r.status !== 0) r = L.RT.run(pip[0], ['download', '--no-deps', '--no-binary', ':all:', '--dest', dir, spec]);   // (no wheel: its sdist)
+    const f = fs.readdirSync(dir).find((n) => /\.(whl|tar\.gz|zip)$/i.test(n));
+    if (!f) L.die(`pypi: ${spec} not found (${String(r.stderr || r.stdout).trim().split('\n').filter((l) => /ERROR/.test(l)).slice(-1)[0] ?? 'pip download failed'})`);
+    return path.join(dir, f);
+  }
+  // git first (one shallow clone of that ref: through proxies git is set up for, no zip size limit), else GitHub's zip
+  L.out(`  downloading ${s.owner}/${s.repo}@${s.ref} from GitHub (nothing of it runs here)`);
+  const repo = `https://github.com/${s.owner}/${s.repo}.git`, to = path.join(dir, s.repo), sha = /^[0-9a-f]{7,40}$/i.test(s.ref);
+  const git = (a, cwd) => spawnSync('git', a, { cwd, encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' }, timeout: 180000 });
+  let g = git(['clone', '-q', '--depth', '1', ...(s.ref !== 'HEAD' && !sha ? ['--branch', s.ref] : []), repo, to], dir);
+  if (g.status === 0 && sha) { g = git(['fetch', '-q', '--depth', '1', 'origin', s.ref], to); if (g.status === 0) g = git(['checkout', '-q', 'FETCH_HEAD'], to); }
+  if (g.status === 0) { fs.rmSync(path.join(to, '.git'), { recursive: true, force: true }); return to; }
+  const url = `https://codeload.github.com/${s.owner}/${s.repo}/zip/${s.ref}`;
+  let res; try { res = await fetch(url, { signal: AbortSignal.timeout(120000) }); } catch (e) { L.die(`gh: ${url}: ${e.message} (or download the zip yourself and import the file)`); }
+  if (!res.ok) L.die(`gh: ${s.owner}/${s.repo}@${s.ref}: ${res.status} ${res.status === 404 ? '(no such repository, branch or tag — a private one: download its zip yourself)' : res.statusText}`);
+  const f = path.join(dir, `${s.repo}-${s.ref.replace(/[^\w.-]+/g, '_')}.zip`);
+  fs.writeFileSync(f, Buffer.from(await res.arrayBuffer()));
+  return f;
+}
+
 export async function importPlugin(L, args) {
   const pos = args.filter((a, k) => !a.startsWith('--') && args[k - 1] !== '--name');
   const given = pos[0], request = pos.slice(1).join(' ').trim();
   const cands = given ? [path.resolve(process.env.LAB_CALLER_CWD ?? process.cwd(), given), path.resolve(L.TOP, given), path.resolve(given)] : [];
-  const src = cands.find((c) => exists(c));
-  if (!src) L.die(`usage: node lab.mjs import <plugin.whl|.tar.gz|.zip|folder> ["<what the person asked>"] [--name n]   (an Endstone plugin: a wheel or an sdist from PyPI — pip download --no-deps <name> —, GitHub's source zip, a folder)${given ? ` (no ${given} here)` : ''}`);
+  let src = cands.find((c) => exists(c));
+  // a name instead of a file: pypi:<name>[==version] (or a bare endstone-<name>) → its wheel (else its sdist) from PyPI;
+  // gh:<owner>/<repo>[@ref] (or github.com/<owner>/<repo>) → GitHub's zip of that branch, tag or commit. Downloaded only, into a
+  // folder of its own: nothing of it runs before go
+  if (!src && given) src = await fetchPlugin(L, given);
+  if (!src) L.die(`usage: node lab.mjs import <plugin.whl|.tar.gz|.zip|folder|pypi:<name>[==ver]|gh:<owner>/<repo>[@ref]> ["<what the person asked>"] [--name n]   (an Endstone plugin: a wheel or an sdist, GitHub's source zip, a folder — or its name on PyPI or GitHub)${given ? ` (no ${given} here)` : ''}`);
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lab-import-'));
   try {
     if (fs.statSync(src).isDirectory()) copyTree(src, tmp);

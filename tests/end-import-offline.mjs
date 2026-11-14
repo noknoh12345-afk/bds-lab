@@ -112,6 +112,13 @@ class Warp(Plugin):
 const META = 'Metadata-Version: 2.1\nName: endstone-warp\nVersion: 1.2.3\nSummary: Warps\nRequires-Python: >=3.10\nRequires-Dist: requests\nRequires-Dist: ruff; extra == "dev"\n\n# Warp\n';
 
 // ---- the pure parts
+{
+  const P = (g) => JSON.stringify(I.parseSource(g));
+  ok(P('pypi:endstone-essentials') === '{"kind":"pypi","name":"endstone-essentials","version":null}' && P('endstone-sidebar==0.2.0') === '{"kind":"pypi","name":"endstone-sidebar","version":"0.2.0"}'
+    && P('gh:EndstoneMC/python-example-plugin') === '{"kind":"github","owner":"EndstoneMC","repo":"python-example-plugin","ref":"HEAD"}' && P('https://github.com/o/r/tree/dev') === '{"kind":"github","owner":"o","repo":"r","ref":"dev"}'
+    && P('github.com/o/r.git@v1.2') === '{"kind":"github","owner":"o","repo":"r","ref":"v1.2"}' && I.parseSource('./plugin.whl') === null && I.parseSource('essentials') === null && I.parseSource('gh:o/r; rm -rf') === null,
+  'a plugin by name: pypi:<name>[==v] or a bare endstone-<name>; gh:<owner>/<repo>[@ref] or a github.com link; anything else is a path (nothing like a shell word taken)');
+}
 ok(I.sampleArgs('/warp <name: str> [x: int]') === 'x', `usage → the shortest call: required only (${I.sampleArgs('/warp <name: str> [x: int]')})`);
 ok(I.sampleArgs('/setwarp (here|there)<where: Where> <n: int>') === 'here 1' && I.sampleArgs('/tp <who: player> <pos: position>') === 'A 0 -60 0' && I.sampleArgs('/home set <name: str>') === 'set x' && I.sampleArgs('/back') === '',
   `an enum's first value, a player as A, a position, the bare words before the first parameter (${I.sampleArgs('/home set <name: str>')})`);
