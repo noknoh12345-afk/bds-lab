@@ -434,6 +434,7 @@ export const PRESETS = [
   { id: 'secrets', label: '🔑 秘密を Discord のフォームで登録', workflow: 'secrets.yml', inputs: { names: 'MS_EMAIL,MS_PASSWORD' }, needs: 'secretsForm' },
   { id: 'notify', label: '🔔 Discord に試しに送る', workflow: 'notify.yml', inputs: { run: '', message: 'bds-lab: 管理パネルからの試し' }, needs: 'notify' },
   { id: 'verify', label: '✔️ ラボの試験を全部（verify）', workflow: 'verify.yml', inputs: {}, needs: null },
+  { id: 'vps', label: '🖧 自分のサーバーで全アドオンを同時に確かめる（go all）', workflow: 'vps.yml', inputs: { args: 'go all', ref: '' }, needs: null },
 ];
 /** the lab's repository from where the panel is served (pure): <owner>.github.io/<repo>/ → owner/repo, else null */
 export function repoFromLocation(loc) {

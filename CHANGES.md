@@ -5,6 +5,7 @@
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
 ### 🌐 GeoUI: URL の画像・F1（ゲームモードはそのまま）・ゲームの中のウェブ（GeoUI Web）
+- **管理パネルに「サーバー」のタブ**（`panel/lib/vps.mjs`・`panel/ui/vps.mjs`）: 自分のサーバー（VPS）を GitHub Actions のランナーとしてつなぐ 1 行を登録トークンつきで作る・つないだサーバーの様子（待機中・仕事中・応答なし）・外す・公開リポジトリに要る「外部のプルリクエストは毎回承認」の設定を読んで直す・サーバーで `go all`／`selftest`／`status`／`doctor`／アドオン 1 本／手で書いた引数を走らせる・最近の実行・自分のパソコンに入れる 1 行。新しい役割の操作 `servers`（管理者だけ）。貼る 1 行は root のシェルで動くので、中の語を 1 つずつ確かめます。5 つの言語で。`.github/workflows/vps.yml`・`vps/runner-setup.sh`・`go all`（`common/goall.mjs`）も `main` から。試験 `tests/vps-offline.mjs`。
 - **URL の画像**（[bds/geoui/SPEC.md](bds/geoui/SPEC.md) 17 章・[RULES.md](bds/geoui/RULES.md) 10 章）: JSON UI の `profile_image_renderer` に
   `{"type":7,"url":…}` を入れるとゲームがその絵を取りに行って描く（zelisce の SAPI-with-URL-Images の使い方）。GeoUI は `scene.urlImages` で HUD の
   どのグループのどの四角にも置ける（板と同じ式）。URL はサーバーが 1 人ずつ渡せる唯一の文字 = 題名に「通り道」として載せ（`~gu~` + F1 の旗 +

@@ -45,7 +45,7 @@ await t('かんたん表示: the strip and ☰ without 成果物・統計・Disc
   eq([...NAV.ADVANCED_TABS], ['files', 'stats', 'discord', 'members', 'audit']);
   for (const k of NAV.ADVANCED_TABS) ok(TABS.some(([x]) => x === k), `${k}: a tab of the panel`);
   const simple = NAV.visibleTabs(TABS), hidden = NAV.hiddenTabs(TABS);
-  eq(simple.map(([, l]) => l), ['概要', '進み具合', '実行', 'アドオン', '配布', '予約', '秘密', '端末', '貸し借り', '準備', '連携', '設定']);
+  eq(simple.map(([, l]) => l), ['概要', '進み具合', '実行', 'サーバー', 'アドオン', '配布', '予約', '秘密', '端末', '貸し借り', '準備', '連携', '設定']);
   eq(hidden.map(([k]) => k), ['files', 'stats', 'discord', 'members', 'audit'], 'the hidden ones, in the strip\'s order');
   eq(NAV.visibleTabs(TABS, { full: true }), TABS, 'full: every tab');
   eq(NAV.hiddenTabs(TABS, { full: true }), [], 'full: none hidden');

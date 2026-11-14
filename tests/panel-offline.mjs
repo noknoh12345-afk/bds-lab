@@ -474,7 +474,10 @@ await t('the page: its CSP allows GitHub\'s API alone (and its own config; pages
     const official = /^(lib|ui)\/connect\.mjs$/.test(f) ? '|discord\\.com|dash\\.cloudflare\\.com|accounts\\.google\\.com|account\\.microsoft\\.com|console\\.anthropic\\.com|platform\\.openai\\.com' : '';
     // (「準備」's Cloudflare row: Cloudflare's own token page, a link only — never fetched)
     const cfPage = f === 'lib/setup.mjs' ? '|dash\\.cloudflare\\.com' : '';
-    const allowed = new RegExp(`^https:\\/\\/(api\\.github\\.com|github\\.com|avatars\\.githubusercontent\\.com${official}${cfPage})$`);
+    // (「サーバー」's lines for a person to paste on their own server or computer: GitHub's raw file host, shown as text —
+    // never fetched by the page, whose CSP would refuse it)
+    const rawGh = f === 'lib/vps.mjs' ? '|raw\\.githubusercontent\\.com' : '';
+    const allowed = new RegExp(`^https:\\/\\/(api\\.github\\.com|github\\.com|avatars\\.githubusercontent\\.com${official}${cfPage}${rawGh})$`);
     ok(![...src.matchAll(/https?:\/\/[\w.-]+/g)].map((m) => m[0]).some((u) => !allowed.test(u)), `${f}: no address but GitHub and the services' own pages`);
   }
   ok(/setAttribute\('style'/.test(js) === false, 'styles through the CSSOM only');
