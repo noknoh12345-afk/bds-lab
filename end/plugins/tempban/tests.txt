@@ -35,3 +35,14 @@ unban2 Nobody
 deop C
 @C cmd /tempban A 5
 !~ A banned
+## a broken bans.json is kept aside and the plugin still starts
+py (plugin.data_folder / "bans.json").write_text("{not json", "utf-8")
+reload
+~ bans.json was not readable .*kept as bans.json.bad
+wait 1500
+py return [plugin.is_enabled, (plugin.data_folder / "bans.json.bad").read_text("utf-8"), plugin.bans]
+= [True,"{not json",{}]
+tempban B 1 test
+~ B banned
+py return sorted(p.name for p in (plugin.data_folder).iterdir())
+= ["bans.json","bans.json.bad"]

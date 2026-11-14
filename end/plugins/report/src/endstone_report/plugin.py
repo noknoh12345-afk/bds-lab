@@ -1,4 +1,5 @@
 """通報システム: /report <プレイヤー> <理由> を SQLite に保存し、OP は /reports で確認、/reports clear <番号> で処理済みにする。"""
+import re
 import sqlite3
 import time
 
@@ -8,6 +9,8 @@ from endstone.event import PlayerJoinEvent, event_handler
 from endstone.plugin import Plugin
 
 MAX_REASON = 200
+# control characters and § (Minecraft's colour codes): a reason cannot dress itself up as another message to the operators
+UNSAFE = re.compile(r"[\x00-\x1f\x7f\u00a7]")
 
 
 class Report(Plugin):
@@ -71,7 +74,7 @@ class Report(Plugin):
             return True
         if len(args) < 2:
             return False
-        reason = " ".join(args[1:]).strip()
+        reason = UNSAFE.sub("", " ".join(args[1:])).strip()
         if not reason:
             sender.send_error_message("理由を書いてください")
             return True

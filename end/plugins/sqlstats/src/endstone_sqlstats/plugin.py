@@ -21,6 +21,10 @@ class Sqlstats(Plugin):
     def on_enable(self) -> None:
         self.data_folder.mkdir(parents=True, exist_ok=True)
         self.db = sqlite3.connect(self.data_folder / "stats.db")
+        # WAL: a write per broken block no longer waits for the disk on the server thread each time (synchronous NORMAL
+        # stays safe against a crash of the server; at worst the last moment before a power cut is lost)
+        self.db.execute("PRAGMA journal_mode=WAL")
+        self.db.execute("PRAGMA synchronous=NORMAL")
         self.db.execute("CREATE TABLE IF NOT EXISTS stats (name TEXT PRIMARY KEY, blocks INT DEFAULT 0, deaths INT DEFAULT 0, joins INT DEFAULT 0)")
         self.db.commit()
         self.register_events(self)
@@ -47,7 +51,9 @@ class Sqlstats(Plugin):
     def on_command(self, sender: CommandSender, command: Command, args: list[str]) -> bool:
         if command.name == "stats":
             name = args[0] if args else sender.name
-            row = self.db.execute("SELECT blocks, deaths, joins FROM stats WHERE name = ?", (name,)).fetchone()
+            # (a name typed in any case finds the player: Steve, steve, STEVE)
+            hit = self.db.execute("SELECT name, blocks, deaths, joins FROM stats WHERE name = ? COLLATE NOCASE", (name,)).fetchone()
+            name, row = (hit[0], hit[1:]) if hit else (name, None)
             sender.send_message(f"{name}: " + (" ".join(f"{c} {v}" for c, v in zip(COLS, row)) if row else "no data"))
             return True
         what = args[0] if args and args[0] in COLS else "blocks"

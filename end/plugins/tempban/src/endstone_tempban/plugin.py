@@ -2,6 +2,7 @@
 the time left on their disconnect screen; kept across restarts (bans.json). /bans lists them, /unban2 <player> lifts one
 early. BDS scripts can kick, but cannot refuse a login or show why."""
 import json
+import os
 import time
 
 from endstone.command import Command, CommandSender
@@ -27,13 +28,24 @@ class Tempban(Plugin):
     def on_enable(self) -> None:
         self.data_folder.mkdir(parents=True, exist_ok=True)
         self.file = self.data_folder / "bans.json"
-        self.bans: dict[str, dict] = json.loads(self.file.read_text("utf-8")) if self.file.exists() else {}
+        self.bans: dict[str, dict] = {}
+        if self.file.exists():
+            try:
+                raw = json.loads(self.file.read_text("utf-8"))
+                self.bans = {str(k): v for k, v in raw.items() if isinstance(v, dict) and isinstance(v.get("until"), (int, float))}
+            except (ValueError, AttributeError) as e:
+                # a file this plugin cannot read is kept aside (bans.json.bad), never thrown away, and the plugin still starts
+                os.replace(self.file, self.file.with_name("bans.json.bad"))
+                self.logger.error(f"bans.json was not readable ({e}): kept as bans.json.bad, starting with no timed bans")
         self.register_events(self)
 
     def keep(self) -> None:
         now = time.time()
         self.bans = {k: v for k, v in self.bans.items() if v["until"] > now}
-        self.file.write_text(json.dumps(self.bans), "utf-8")
+        # written whole, then moved over the old file: a crash mid-write never leaves half a bans.json
+        tmp = self.file.with_suffix(".tmp")
+        tmp.write_text(json.dumps(self.bans), "utf-8")
+        os.replace(tmp, self.file)
 
     def ban_of(self, name: str) -> dict | None:
         b = self.bans.get(name.lower())

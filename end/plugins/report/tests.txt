@@ -83,3 +83,8 @@ py import sqlite3\nreturn sqlite3.connect(plugin.data_folder / "reports.db").exe
 py plugin.cooldown_seconds = 3600
 @C cmd /report A 再起動後
 ~ ^@C .*A はさっき通報しました
+## colour codes in a reason are taken out: the operators see plain text
+py plugin.cooldown_seconds = 0
+@C cmd /report A §c[Server] fake
+py return plugin.db.execute("select reason from reports order by id desc limit 1").fetchone()[0]
+= c[Server] fake

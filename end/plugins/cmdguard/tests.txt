@@ -34,6 +34,20 @@ py return (plugin.data_folder / 'commands.log').read_text().splitlines()[-1]
 ~ ^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d A -?\d+ -?\d+ -?\d+ /gmc$
 py return sum('/tell A secret' in l for l in (plugin.data_folder / 'commands.log').read_text().splitlines())
 = 1
+## a mute survives a restart (mutes.json), and the log rolls over past 5 MB keeping one old file
+mute B 5
+~ B muted for 5 min
+restart
+@B chat after restart
+~ ^@B .*You are muted
+!~ ^@A .*after restart
+unmute B
+~ B can talk again
+py (plugin.data_folder / 'commands.log').write_text('x' * (5 * 1024 * 1024 + 10))
+@A cmd /day
+wait 300
+py return [(plugin.data_folder / 'commands.log.1').stat().st_size > 5 * 1024 * 1024, len((plugin.data_folder / 'commands.log').read_text().splitlines())]
+= [True,1]
 ## wrong input is refused; players without op cannot mute
 mute B -1
 ~ minutes: more than 0

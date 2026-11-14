@@ -15,6 +15,19 @@ py import urllib.request\nq = urllib.request.Request(f"http://127.0.0.1:{plugin.
 = 202
 until @A .*\[Web\] こんにちは web
 ~ @A .*\[Web\] こんにちは web
+## a wrong token, an oversized body and a flood are refused; colour codes and line breaks never reach the chat
+py import urllib.request, urllib.error\nq = urllib.request.Request(f"http://127.0.0.1:{plugin.port}/say", data=b'{"text":"x"}', method="POST", headers={"Authorization": "Bearer " + "0" * len(plugin.token)})\ntry:\n  urllib.request.urlopen(q, timeout=3)\nexcept urllib.error.HTTPError as e:\n  return e.code
+= 401
+py import urllib.request, urllib.error\nq = urllib.request.Request(f"http://127.0.0.1:{plugin.port}/say", data=b'{"text":"' + b"a" * 5000 + b'"}', method="POST", headers={"Authorization": "Bearer " + plugin.token})\ntry:\n  urllib.request.urlopen(q, timeout=3)\nexcept urllib.error.HTTPError as e:\n  return e.code
+= 413
+py import urllib.request, json\nq = urllib.request.Request(f"http://127.0.0.1:{plugin.port}/say", data=json.dumps({"text": "\u00a7cfake\u000aline"}).encode(), method="POST", headers={"Authorization": "Bearer " + plugin.token})\nreturn json.load(urllib.request.urlopen(q, timeout=3))["queued"]
+= cfakeline
+until @A .*\[Web\] cfakeline
+~ @A .*\[Web\] cfakeline
+py import urllib.request, urllib.error\ncodes = []\nfor i in range(40):\n  q = urllib.request.Request(f"http://127.0.0.1:{plugin.port}/say", data=b'{"text":"flood"}', method="POST", headers={"Authorization": "Bearer " + plugin.token})\n  try:\n    codes.append(urllib.request.urlopen(q, timeout=3).status)\n  except urllib.error.HTTPError as e:\n    codes.append(e.code)\nreturn [codes.count(202) <= 20, 429 in codes]
+= [True,True]
+py import os, stat\nreturn oct(stat.S_IMODE(os.stat(plugin.data_folder / "token.txt").st_mode))
+= 0o600
 ## survives /reload (the port is closed and opened again)
 reload
 wait 1500
