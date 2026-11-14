@@ -245,7 +245,7 @@ async function fetchPlugin(L, given) {
 }
 
 export async function importPlugin(L, args) {
-  const pos = args.filter((a, k) => !a.startsWith('--') && args[k - 1] !== '--name');
+  const pos = args.filter((a, k) => !a.startsWith('--') && !['--name', '--world'].includes(args[k - 1]));
   const given = pos[0], request = pos.slice(1).join(' ').trim();
   const cands = given ? [path.resolve(process.env.LAB_CALLER_CWD ?? process.cwd(), given), path.resolve(L.TOP, given), path.resolve(given)] : [];
   let src = cands.find((c) => exists(c));
@@ -254,6 +254,8 @@ export async function importPlugin(L, args) {
   // folder of its own: nothing of it runs before go
   if (!src && given) src = await fetchPlugin(L, given);
   if (!src) L.die(`usage: node lab.mjs import <plugin.whl|.tar.gz|.zip|folder|pypi:<name>[==ver]|gh:<owner>/<repo>[@ref]> ["<what the person asked>"] [--name n]   (an Endstone plugin: a wheel or an sdist, GitHub's source zip, a folder — or its name on PyPI or GitHub)${given ? ` (no ${given} here)` : ''}`);
+  // a BDS folder (an Endstone server): all it runs, its world's addons too (common/serverimport.mjs)
+  { const SI = await import('../common/serverimport.mjs'); if (fs.statSync(src).isDirectory() && SI.isServerFolder(src)) return SI.importServer(L, src, request, args); }
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lab-import-'));
   try {
     if (fs.statSync(src).isDirectory()) copyTree(src, tmp);
