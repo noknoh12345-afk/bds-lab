@@ -94,6 +94,18 @@ levikit reload
 py [plugin.denied("C", "", False), plugin.denied("A", "", True), "メンテナンス" in (plugin.denied("D", "", False) or "")]
 = [-,-,True]
 
+## a world's enter command gets the player's name as one quoted word (a space or a selector in a name changes nothing)
+py from endstone_levikit.plugin import with_player\nreturn [with_player("tag {player} add x", "Steve Two"), with_player("tag {player} add x", "@a"), with_player('tell "{player}" hi', 'A"b')]
+= ["tag \"Steve Two\" add x","tag \"@a\" add x","tell \"Ab\" hi"]
+py plugin.write_raw({"nether": {"rules": {"enterCommands": ["tag {player} add came_in"]}}})\nreturn "ok"
+levikit reload
+@A cmd dim nether
+wait 2000
+py return "came_in" in p("A").scoreboard_tags
+= True
+@A cmd dim overworld
+wait 1500
+
 ## what survives a restart: the place /back returns to
 py plugin.write_raw({})\nreturn "ok"
 levikit reload
