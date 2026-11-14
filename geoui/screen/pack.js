@@ -5,7 +5,7 @@
 // and the HUD's renderers (layout.hudScreen: one per group). The behaviour pack carries the player's properties and the script.
 //
 // scene = {
-//   ns, name, description, version [1,0,0], minEngine [1,26,50], uuids {rp,rpMod,bp,bpData,bpScript} | seed,
+//   ns, name, description (descriptionJa: ja_JP's), version [1,0,0], minEngine [1,26,50], uuids {rp,rpMod,bp,bpData,bpScript} | seed,
 //   scale (layout.modeOf), groups [{ id, anchor, scale?, clip?, layer? }],
 //   textures [{ id, width, height, png (bytes or base64) }],
 //   bones [{ name, group, parent?, pivot? [x, y] (local units), material? 'cutout'|'blend'|'add'|'fade'|'addfade'|'glass' or one of
@@ -261,7 +261,8 @@
     const version = scene.version || [1, 0, 0], minEngine = scene.minEngine || [1, 26, 50];
     const name = scene.name || 'GeoUI Screen', desc = scene.description || 'GeoUI Screen (bds-lab)';
     files['rp/manifest.json'] = J({ format_version: 2, header: { name: `${name} RP`, description: desc, uuid: U.rp, version, min_engine_version: minEngine }, modules: [{ type: 'resources', uuid: U.rpMod, version: [1, 0, 0] }] });
-    const langOf = (k) => `pack.name=${String(name).replace(/[\r\n=]/g, ' ')}\npack.description=${String(desc).replace(/[\r\n=]/g, ' ')}\n${(scene.lang && scene.lang[k]) || ''}`;
+    // (ja_JP: scene.descriptionJa when given — the lab's QA asks a Japanese description of every pack)
+    const langOf = (k) => `pack.name=${String(name).replace(/[\r\n=]/g, ' ')}\npack.description=${String(k === 'ja_JP' && scene.descriptionJa ? scene.descriptionJa : desc).replace(/[\r\n=]/g, ' ')}\n${(scene.lang && scene.lang[k]) || ''}`;
     files['rp/texts/languages.json'] = J(['en_US', 'ja_JP']);
     files['rp/texts/en_US.lang'] = `${langOf('en_US')}entity.minecraft:player.name=Player\n`;
     files['rp/texts/ja_JP.lang'] = `${langOf('ja_JP')}entity.minecraft:player.name=プレイヤー\n`;

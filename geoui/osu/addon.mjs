@@ -21,8 +21,8 @@ const NS = 'geoui';
 const clean = (s) => String(s).toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '') || 'e';
 
 export const OSU_SAMPLES = [
-  { name: 'geoui_osu_pixel', skin: 'pixel', map: 'cubic_pulse_pixel.osu', music: 'cubic_pulse_chip.ogg', title: 'GeoUI osu! Pixel', description: 'GeoUI timeline: osu! in pixel art of cubes, its own song (bds-lab)', shots: [2.2, 10, 22.3, 30, 45, 52, 60, 67.5, 70] },
-  { name: 'geoui_osu_skin', skin: 'skin', map: 'cubic_pulse_skin.osu', music: 'cubic_pulse.ogg', title: 'GeoUI osu! Skin', description: 'GeoUI timeline: osu! with its Legacy skin (CC-BY-NC 4.0, ppy), its own song (bds-lab)', shots: [2.2, 10, 22.3, 30, 45, 52, 60, 67.5, 70] },
+  { name: 'geoui_osu_pixel', skin: 'pixel', map: 'cubic_pulse_pixel.osu', music: 'cubic_pulse_chip.ogg', title: 'GeoUI osu! Pixel', description: 'GeoUI timeline: osu! in pixel art of cubes, its own song (bds-lab)', descriptionJa: 'GeoUI タイムライン: キューブで組んだドット絵の osu!、ラボの曲（bds-lab）', shots: [2.2, 10, 22.3, 30, 45, 52, 60, 67.5, 70] },
+  { name: 'geoui_osu_skin', skin: 'skin', map: 'cubic_pulse_skin.osu', music: 'cubic_pulse.ogg', title: 'GeoUI osu! Skin', description: 'GeoUI timeline: osu! with its Legacy skin (CC-BY-NC 4.0, ppy), its own song (bds-lab)', descriptionJa: 'GeoUI タイムライン: 公式の Legacy スキン（CC-BY-NC 4.0、ppy）の osu!、ラボの曲（bds-lab）', shots: [2.2, 10, 22.3, 30, 45, 52, 60, 67.5, 70] },
 ];
 
 /** the sounds of a look: the music, and osu!'s sample names → their files (the chip set's blips, or the Legacy skin's) */
@@ -41,7 +41,7 @@ export function makeOsu(V, top) {
   // ---- the sounds: an osu! sample name → its id in the pack (soft / drum fall back on normal where the set has none)
   const have = soundSet(V), used = new Set();
   const sound = (n) => { const k = have[n] ? n : have[n.replace(/^(soft|drum)-/, 'normal-')] ? n.replace(/^(soft|drum)-/, 'normal-') : null; if (!k) return null; used.add(k); return `${NS}.${clean(k)}`; };
-  const built0 = K.build(map, { skin: V.skin, images, music: 'music', sound, ns: NS, title: V.title, description: V.description, seed: V.name, settings: { calibration: G.MEASURED.id } });
+  const built0 = K.build(map, { skin: V.skin, images, music: 'music', sound, ns: NS, title: V.title, description: V.description, descriptionJa: V.descriptionJa, seed: V.name, settings: { calibration: G.MEASURED.id } });
   warnings.push(...built0.warnings);
   const { design, doc, info } = built0;
   design.textures.atlas.png = encodePng(built0.atlas.image).toString('base64');

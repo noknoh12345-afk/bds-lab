@@ -66,7 +66,7 @@ export function scene() {
   COLORS.forEach(([, rgb], i) => { for (let y = 0; y < 4; y++) atlas.set([rgb[0], rgb[1], rgb[2], 255], (y * 16 + i) * 4); });
   const R = (n) => `variable.is_paperdoll ? 0 : q.property('gwp:${n}')`;
   return {
-    ns: NS, name: 'GeoUI Web Probe', description: 'GeoUI: URL images and F1 measured on the real game (bds-lab geoui/web/probe.mjs)', seed: 'gwp',
+    ns: NS, name: 'GeoUI Web Probe', description: 'GeoUI: URL images and F1 measured on the real game (bds-lab geoui/web/probe.mjs)', descriptionJa: 'GeoUI: URL の画像と F1 を本物のゲームで測る（bds-lab geoui/web/probe.mjs）', seed: 'gwp',
     scale: { mode: 'height', s: 0.1 }, groups,
     textures: [{ id: 'atlas', width: 16, height: 4, png: Buffer.from(encodePng({ width: 16, height: 4, data: atlas })) }],
     bones, planes,
@@ -549,7 +549,7 @@ URL の画像（profile_image_renderer の {"type":7,"url":…}）を GeoUI に�
 /** the control's scene: the probe's, with the game's title left alone and its own name and pack ids */
 export function ctlScene() {
   return Object.assign(scene(), { titleHide: 'none', name: 'GeoUI Web Title Control', seed: 'gwp-title-ctl',
-    description: 'GeoUI: the title control — the probe with the game title left alone (bds-lab geoui/web/probe.mjs)' });
+    description: 'GeoUI: the title control — the probe with the game title left alone (bds-lab geoui/web/probe.mjs)', descriptionJa: 'GeoUI: 題名の対照 — ゲームの題名をそのままにした探り（bds-lab geoui/web/probe.mjs）' });
 }
 const CTL_TASK = `# geoui_web_title_ctl — 題名の対照（GeoUI の 5 本目）
 

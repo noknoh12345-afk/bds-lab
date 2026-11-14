@@ -2576,6 +2576,12 @@ function qaStatic() {
     const all = new Set(Object.values(keys).flatMap((x) => [...x]));
     for (const l of langs) { const miss = [...all].filter((k) => !keys[l].has(k)); if (miss.length) q.push(['Q', `rp/texts/${l}.lang lacks ${miss.slice(0, 4).join(' ')}${miss.length > 4 ? ` +${miss.length - 4}` : ''} (players with that language see the raw key): node lab.mjs i18n`]); }
   }
+  // a Japanese name or description that is still the English one, word for word (the pack's name may stay: a title)
+  for (const [pk, dir] of [['rp', RP], ['bp', BP]]) {
+    const lines = (l) => { const f = path.join(dir, 'texts', l + '.lang'); return new Map(exists(f) ? fs.readFileSync(f, 'utf8').split(/\r?\n/).filter((x) => x.includes('=') && !x.trim().startsWith('#')).map((x) => [x.slice(0, x.indexOf('=')).trim(), x.slice(x.indexOf('=') + 1).trim()]) : []); };
+    const en = lines('en_US'), same = [...lines('ja_JP')].filter(([k, v]) => (k === 'pack.description' || (k.endsWith('.name') && k !== 'pack.name')) && en.get(k) === v && /[A-Za-z]{2}/.test(v) && !/[\u3040-\u30ff\u4e00-\u9fff]/.test(v));
+    if (same.length) q.push(['Q', `${pk}/texts/ja_JP.lang: ${same.slice(0, 3).map(([k, v]) => `${k} is still English ("${v.slice(0, 40)}")`).join(', ')}${same.length > 3 ? ` +${same.length - 3}` : ''}: node lab.mjs i18n ja_JP "${same[0][0]}=<日本語>"`]);
+  }
   // custom components: used in JSON <-> registered in scripts
   for (const [dir, key] of [['items', 'minecraft:item'], ['blocks', 'minecraft:block']]) for (const f of files(path.join(BP, dir), (x) => x.endsWith('.json'))) {
     const j = safe(f), d = j?.[key]; if (!d) continue;
@@ -2966,7 +2972,11 @@ async function sample(args) {
   if (hit.read) text = hit.read();
   else { const buf = fs.readFileSync(hit.f); text = (hit.len !== undefined ? buf.subarray(hit.off, hit.off + hit.len) : buf).toString('utf8'); }
   let v;
-  try { v = JSON.parse(stripJsonComments(text.replace(/^﻿/, ''))); } catch { out(text.slice(0, 6000)); return true; }
+  try { v = JSON.parse(stripJsonComments(text.replace(/^﻿/, ''))); } catch {
+    // a text file (a .lang): with a word, only its lines (`sample rp/texts/ja_JP.lang diamond` → the game's own Japanese names)
+    if (keys) { const w = keys.toLowerCase(), ls = text.split(/\r?\n/).filter((l) => l.toLowerCase().includes(w)); out(ls.length ? ls.slice(0, 40).join('\n') + (ls.length > 40 ? `\n... +${ls.length - 40} (narrow it)` : '') : `none: no line has ${keys}`); return ls.length > 0; }
+    out(text.slice(0, 6000)); return true;
+  }
   for (const k of keys ? keys.split('/') : []) {
     if (v === null || typeof v !== 'object' || !(k in v)) { out(`none: ${k}. keys: ${v && typeof v === 'object' ? Object.keys(v).join(' ') : '-'}`); return false; }
     v = v[k];
@@ -3011,7 +3021,8 @@ function packIcon(file, name) {
 //   --js plain JavaScript in bp/scripts   --stable stable APIs only   --no-rp behavior pack only
 async function newAddon(args) {
   const desc = args.find((a) => a.startsWith('desc='))?.slice(5).trim() || null;   // desc="what players read in the pack list"
-  const [name, title = name, ...reqParts] = args.filter((a) => !a.startsWith('--') && !a.startsWith('desc='));
+  const jaDesc = args.find((a) => a.startsWith('ja='))?.slice(3).trim() || null;   // ja="the same in Japanese" (ja_JP.lang; without it qa asks for it)
+  const [name, title = name, ...reqParts] = args.filter((a) => !a.startsWith('--') && !a.startsWith('desc=') && !a.startsWith('ja='));
   if (!/^[a-z0-9_]+$/.test(name ?? '')) die('usage: node lab.mjs new <name: a-z0-9_> ["Title"] [--js] [--stable] [--no-rp]');
   const dir = path.join(ADDONS, name);
   if (exists(dir)) die(`addons/${name} exists (node lab.mjs use ${name})`);
@@ -3027,7 +3038,7 @@ async function newAddon(args) {
     m.dependencies.push({ uuid: r.header.uuid, version: r.header.version });
     fs.mkdirSync(path.join(dir, 'rp', 'texts'), { recursive: true });
     writeJson(path.join(dir, 'rp', 'texts', 'languages.json'), ['en_US', 'ja_JP']);
-    for (const l of ['en_US', 'ja_JP']) fs.writeFileSync(path.join(dir, 'rp', 'texts', l + '.lang'), `pack.name=${title}\npack.description=${desc ?? title}\n`);
+    for (const l of ['en_US', 'ja_JP']) fs.writeFileSync(path.join(dir, 'rp', 'texts', l + '.lang'), `pack.name=${title}\npack.description=${(l === 'ja_JP' && jaDesc) || desc || title}\n`);
   }
   writeJson(path.join(dir, 'bp', 'manifest.json'), m);
   const main = `import { world, system } from '@minecraft/server';\nimport { cmd, ask, give, take, count, once, load, save, score, every, cooldown, ready } from './kit';\n`;
@@ -3360,7 +3371,7 @@ const CACHE_ROOT_FOR_DISK = () => { let d = CACHE; while (!fs.existsSync(d)) d =
 async function doctor() {
   const rows = [], row = (state, what, detail, fix = '') => rows.push({ state, what, detail, fix });
   const has = (cmd, args = ['--version']) => { const r = spawnSync(cmd, args, { encoding: 'utf8', timeout: 10000 }); return r.status === 0 ? (r.stdout || r.stderr).trim().split('\n')[0] : null; };
-  const labs = ['bds', 'end', 'll'];
+  const labs = ['bds', 'end', 'll'].filter((l) => exists(path.join(TOP, l, 'flavor.mjs')));   // (the stable branch has bds alone)
   // the machine: install hints must be commands this AI can actually run here (root or sudo, which package manager)
   const E = hostInfo(has);
   row('INFO', 'machine', E.summary);
@@ -3376,8 +3387,8 @@ async function doctor() {
   const py = ['python3', 'python'].map((c) => { const v = has(c, ['-c', 'import sys;print("%d.%d"%sys.version_info[:2])']); return v ? { c, v } : null; }).find(Boolean);
   const pyOk = py && Number(py.v.split('.')[0]) === 3 && Number(py.v.split('.')[1]) >= 10;
   const portable = ['linux-x64', 'linux-arm64', 'win32-x64', 'win32-arm64'].includes(`${process.platform}-${process.arch}`);
-  row(pyOk || process.platform === 'darwin' ? 'OK' : portable ? 'INFO' : 'MISSING', 'python (end)', py ? `${py.c} ${py.v}` : 'not found', pyOk || process.platform === 'darwin' ? '' : (portable ? 'none needed: setup fetches a portable Python 3.12 (GitHub); or ' : '') + inst({ apt: 'python3 python3-venv', dnf: 'python3', apk: 'python3 py3-virtualenv', pacman: 'python', brew: 'python', winget: 'Python.Python.3.12' }));
-  if (process.platform === 'linux') { const w = has('wine64') ?? has('wine'); row(w || process.env.LAB_LL_SERVER ? (w && Number(/wine-(\d+)/.exec(w)?.[1] ?? 10) < 10 && !process.env.LAB_WINE ? 'INFO' : 'OK') : 'MISSING', 'wine (ll)', w ? (Number(/wine-(\d+)/.exec(w)?.[1] ?? 10) < 10 && !process.env.LAB_WINE ? `${w}: too old for BDS (stalls with a player); ll setup fetches a portable Wine 10 into ll/.lab` : w) : (process.env.LAB_LL_SERVER ? 'LAB_LL_SERVER set' : 'not found'), w ? '' : (E.pm === 'apt' && E.priv !== null ? `${E.priv}apt-get update && ${E.priv}apt-get install -y wine winetricks cabextract` : inst({ dnf: 'wine', pacman: 'wine', apk: 'wine' })) + '   (or LAB_RUNTIME=docker, or LAB_LL_SERVER=<a LeviLamina server on Windows>)'); }
+  if (labs.includes('end')) row(pyOk || process.platform === 'darwin' ? 'OK' : portable ? 'INFO' : 'MISSING', 'python (end)', py ? `${py.c} ${py.v}` : 'not found', pyOk || process.platform === 'darwin' ? '' : (portable ? 'none needed: setup fetches a portable Python 3.12 (GitHub); or ' : '') + inst({ apt: 'python3 python3-venv', dnf: 'python3', apk: 'python3 py3-virtualenv', pacman: 'python', brew: 'python', winget: 'Python.Python.3.12' }));
+  if (process.platform === 'linux' && labs.includes('ll')) { const w = has('wine64') ?? has('wine'); row(w || process.env.LAB_LL_SERVER ? (w && Number(/wine-(\d+)/.exec(w)?.[1] ?? 10) < 10 && !process.env.LAB_WINE ? 'INFO' : 'OK') : 'MISSING', 'wine (ll)', w ? (Number(/wine-(\d+)/.exec(w)?.[1] ?? 10) < 10 && !process.env.LAB_WINE ? `${w}: too old for BDS (stalls with a player); ll setup fetches a portable Wine 10 into ll/.lab` : w) : (process.env.LAB_LL_SERVER ? 'LAB_LL_SERVER set' : 'not found'), w ? '' : (E.pm === 'apt' && E.priv !== null ? `${E.priv}apt-get update && ${E.priv}apt-get install -y wine winetricks cabextract` : inst({ dnf: 'wine', pacman: 'wine', apk: 'wine' })) + '   (or LAB_RUNTIME=docker, or LAB_LL_SERVER=<a LeviLamina server on Windows>)'); }
   if (process.platform === 'linux') {   // LAB_SPEED (a sped-up server clock) needs it; optional
     const ftl = [process.env.LAB_FAKETIME_LIB, '/usr/lib/x86_64-linux-gnu/faketime/libfaketimeMT.so.1', '/usr/lib/aarch64-linux-gnu/faketime/libfaketimeMT.so.1', '/usr/local/lib/faketime/libfaketimeMT.so.1', '/usr/lib64/faketime/libfaketimeMT.so.1'].find((x) => x && exists(x));
     row(ftl ? 'OK' : 'INFO', 'libfaketime (LAB_SPEED)', ftl ?? 'not found: the server runs at 1x only', ftl ? '' : inst({ apt: 'faketime', dnf: 'libfaketime', pacman: 'libfaketime', apk: 'libfaketime' }));
@@ -3399,6 +3410,7 @@ async function doctor() {
       ['GitHub API', 'll end', 'https://api.github.com/repos/futrime/lip/releases/latest', 'LAB_GITHUB_MIRROR=<a GitHub mirror, e.g. https://ghfast.top>; GITHUB_TOKEN=<token> if rate-limited; ll: LAB_LIP_URL=<lip win-x64 zip> or LAB_LL_SERVER=<LeviLamina server folder/zip>'],
       ['GitHub downloads', 'll, NetherNet', 'https://github.com/futrime/lip/releases/latest', 'll: LAB_GITHUB_MIRROR=<a GitHub mirror, e.g. https://ghfast.top> or LAB_LL_SERVER; NetherNet players need node-datachannel\'s prebuilt binary from GitHub: copy <lab>/.lab/node-rtc from another machine']]),
   ];
+  for (let i = net.length - 1; i >= 0; i--) if (!/all|NetherNet/.test(net[i][1]) && !net[i][1].split(/[ ,]+/).some((l) => labs.includes(l))) net.splice(i, 1);   // (a lab this branch lacks: its downloads are not looked at)
   const res = await Promise.all(net.map(([, , url]) => probe(url)));
   net.forEach(([what, who, url, fix], i) => { const r = res[i]; row(r.ok ? 'OK' : r.blocked ? 'BLOCKED' : 'FAIL', `${what} [${who}]`, `${new URL(url).host}: ${r.why}`, r.ok ? '' : fix); });
   if (res.some((r) => /CERT|certificate/i.test(r.why ?? ''))) row('BLOCKED', 'TLS certificate', 'something on the network re-signs HTTPS (a proxy or antivirus) and Node does not trust its CA', 'SSL_CERT_FILE=<that CA or the system bundle, .pem> (the lab passes it to Node, npm, pip), then doctor again');
@@ -3408,6 +3420,7 @@ async function doctor() {
   const bad = (re) => rows.filter((r) => /BLOCKED|FAIL|MISSING/.test(r.state) && re.test(r.what));
   const need = { bds: bad(/^(node|npm|IPv6|BDS download|npm registry)/), end: bad(/^(node|npm|python|PyPI|BDS download|npm registry)/), ll: bad(/^(node|npm|wine|GitHub|npm registry)/) };
   if (bdsGiven) for (const l of ['bds', 'end']) need[l] = need[l].filter((r) => !/BDS download/.test(r.what));
+  for (const l of Object.keys(need)) if (!labs.includes(l)) delete need[l];
   for (const l of labs) out(`${l}: ${need[l].length ? 'cannot set up here yet: ' + need[l].map((r) => r.what.replace(/ \[.*/, '')).join(', ') : 'ready to set up'}`);
   const blocked = rows.some((r) => r.state === 'BLOCKED');
   if (blocked) out('BLOCKED items are the network, not the code: ask a person for the → way in, then run doctor again.');
@@ -3483,41 +3496,66 @@ async function selftest(rest) {
   let spec = SELFTEST_COMMON(old) + (F.selftest ?? '');
   if (noClient) spec = spec.split(/^(?=## )/m).filter((sec) => !/^@/m.test(sec)).join('');
   fs.writeFileSync(path.join(dir, 'tests.txt'), spec);
-  out(`selftest ${F.name}: running ${spec.match(/^## /gm).length} sections on the server...`);
-  r = run(['test', '-a', name]); report.push('== test', r.text);
-  if (noClient) r.ok = false;   // not complete
-  // the same server on NetherNet (WebRTC): a real player joins through HTTP signaling + data channels
-  const nnSkip = F.netherNetSkip?.(L());   // a platform that cannot do NetherNet here says why
-  if (nnSkip && !rest.includes('--no-nethernet')) { report.push('== nethernet', 'skipped: ' + nnSkip); out('nethernet: skipped: ' + nnSkip); }
-  if (!noClient && !nnSkip && !rest.includes('--no-nethernet')) {
-    fs.writeFileSync(path.join(dir, 'tests-nn.txt'), '## NetherNet: a real player joins over WebRTC\n@N join\n~ ^@N joined\n~ @N nethernet: server key\n## NetherNet: chat reaches the server\n@N chat nn-hello\n~ nn-hello\n');
-    out(`selftest ${F.name}: the same server on NetherNet...`);
-    const n = run(['test', '-a', name, path.join(dir, 'tests-nn.txt')], { LAB_TRANSPORT: 'nethernet' });
-    report.push('== nethernet', n.text);
-    n.text.split('\n').filter((l) => /^✘|^(PASS|FAIL) /.test(l)).slice(0, 10).forEach((l) => out('nethernet: ' + l));
-    r.ok = r.ok && n.ok;
-  }
-  const lines = r.text.split('\n');
-  lines.filter((l, i) => /^✘|^E |^(PASS|FAIL) /.test(l) || /^✘/.test(lines[i - 1] ?? '')).slice(0, 40).forEach((l) => out(l));
-  // the kit every new addon gets (common/kit): its own tests with real players, beta and stable APIs, then go (qa + pack)
-  if (F.name === 'bds' && !noClient && !rest.includes('--no-kit')) {
-    const kd = path.join(ADDONS, 'labkit'), fx = path.join(LIBDIR, 'kit', 'test');
-    fs.rmSync(kd, { recursive: true, force: true });
-    const steps = [['new', 'labkit', 'Lab Kit', 'kit selftest'], ...fs.readFileSync(path.join(fx, 'setup.txt'), 'utf8').trim().split('\n').map((l) => l.match(/"[^"]*"|\S+/g).map((x) => x.replace(/^"|"$/g, '')))];
-    let k = { ok: true, text: '' };
-    for (const a of steps) { k = run(a[0] === 'new' ? a : [...a, '-a', 'labkit']); report.push(`== kit: ${a.join(' ')}`, k.text); if (!k.ok) break; }
-    if (k.ok) {
-      fs.copyFileSync(path.join(fx, 'main.ts'), path.join(kd, 'src', 'main.ts')); fs.copyFileSync(path.join(fx, 'tests.txt'), path.join(kd, 'tests.txt'));
-      const m = readJson(path.join(kd, 'bp', 'manifest.json')); m.header.description = 'bds-lab kit selftest'; writeJson(path.join(kd, 'bp', 'manifest.json'), m);
-      out(`selftest ${F.name}: kit (beta, stable, go)...`);
-      for (const [label, args] of [['beta', ['test', '-a', 'labkit']], ['stable', null], ['go', ['go', '-a', 'labkit']]]) {
-        if (!args) { k = run(['mode', 'stable', '-a', 'labkit']); report.push('== kit: mode stable', k.text); k = run(['test', '-a', 'labkit']); } else k = run(args);
-        report.push(`== kit ${label}`, k.text);
-        out(`kit ${label}: ${k.text.split('\n').filter((l) => /^(✘|Q |E |PASS|FAIL|DONE)/.test(l)).slice(0, 8).join('\n  ') || k.text.split('\n').at(-1)}`);
-        if (!k.ok) break;
-      }
+  // Up to three servers at once, one per core: the sections (then NetherNet), the kit's tests on beta APIs and the kit's tests
+  // on stable APIs (each `test` has its own server folder, world and port; the kit is made twice so the two modes do not share
+  // a folder). The kit's `go` still runs alone, after all of them: its QA measures the script's time per tick.
+  // LAB_SELFTEST_PARALLEL=0: one after another.
+  const par = process.env.LAB_SELFTEST_PARALLEL === '0' ? 1 : Math.max(1, Math.min(3, os.availableParallelism?.() ?? os.cpus().length));
+  const runA = (args, extra = {}) => new Promise((res) => {
+    const c = spawn(process.execPath, [me, ...args], { cwd: ROOT, env: { ...env, ...extra }, stdio: ['ignore', 'pipe', 'pipe'] });
+    let t = ''; c.stdout.on('data', (b) => { t += b; }); c.stderr.on('data', (b) => { t += b; });
+    c.on('error', (e) => res({ ok: false, text: String(e.message) })); c.on('close', (code) => res({ ok: code === 0, text: t.trim() }));
+  });
+  const sections = async () => {
+    out(`selftest ${F.name}: running ${spec.match(/^## /gm).length} sections on the server...`);
+    const r = await runA(['test', '-a', name]); report.push('== test', r.text);
+    if (noClient) r.ok = false;   // not complete
+    // the same server on NetherNet (WebRTC): a real player joins through HTTP signaling + data channels
+    const nnSkip = F.netherNetSkip?.(L());   // a platform that cannot do NetherNet here says why
+    if (nnSkip && !rest.includes('--no-nethernet')) { report.push('== nethernet', 'skipped: ' + nnSkip); out('nethernet: skipped: ' + nnSkip); }
+    if (!noClient && !nnSkip && !rest.includes('--no-nethernet')) {
+      fs.writeFileSync(path.join(dir, 'tests-nn.txt'), '## NetherNet: a real player joins over WebRTC\n@N join\n~ ^@N joined\n~ @N nethernet: server key\n## NetherNet: chat reaches the server\n@N chat nn-hello\n~ nn-hello\n');
+      out(`selftest ${F.name}: the same server on NetherNet...`);
+      const n = await runA(['test', '-a', name, path.join(dir, 'tests-nn.txt')], { LAB_TRANSPORT: 'nethernet' });
+      report.push('== nethernet', n.text);
+      n.text.split('\n').filter((l) => /^✘|^(PASS|FAIL) /.test(l)).slice(0, 10).forEach((l) => out('nethernet: ' + l));
+      r.ok = r.ok && n.ok;
     }
-    if (!rest.includes('--keep')) fs.rmSync(kd, { recursive: true, force: true });
+    const lines = r.text.split('\n');
+    lines.filter((l, i) => /^✘|^E |^(PASS|FAIL) /.test(l) || /^✘/.test(lines[i - 1] ?? '')).slice(0, 40).forEach((l) => out(l));
+    return r;
+  };
+  // the kit every new addon gets (common/kit): its own tests with real players, beta and stable APIs, then go (qa + pack)
+  const wantKit = F.name === 'bds' && !noClient && !rest.includes('--no-kit');
+  const kd = path.join(ADDONS, 'labkit'), kb = path.join(ADDONS, 'labkitbeta'), fx = path.join(LIBDIR, 'kit', 'test');
+  const kitRep = [], kitOut = {};   // (said after the sections' lines, in the same order whichever finished first)
+  const kitLine = (label, k) => `kit ${label}: ${k.text.split('\n').filter((l) => /^(✘|Q |E |PASS|FAIL|DONE)/.test(l)).slice(0, 8).join('\n  ') || k.text.split('\n').at(-1)}`;
+  // the kit as an addon: new + setup.txt + its main.ts and tests.txt; `stable` moves it to the stable APIs
+  const makeKit = async (nm, d, stable) => {
+    fs.rmSync(d, { recursive: true, force: true });
+    const steps = [['new', nm, 'Lab Kit', 'kit selftest', 'desc=The lab kit, tested on this server', 'ja=このサーバーで確かめるラボのキット'], ...fs.readFileSync(path.join(fx, 'setup.txt'), 'utf8').trim().split('\n').map((l) => l.match(/"[^"]*"|\S+/g).map((x) => x.replace(/^"|"$/g, '')))];
+    let k = { ok: true, text: '' };
+    for (const a of steps) { k = await runA(a[0] === 'new' ? a : [...a, '-a', nm]); kitRep.push(`== kit: ${a.join(' ')}`, k.text); if (!k.ok) return k; }
+    fs.copyFileSync(path.join(fx, 'main.ts'), path.join(d, 'src', 'main.ts')); fs.copyFileSync(path.join(fx, 'tests.txt'), path.join(d, 'tests.txt'));
+    const m = readJson(path.join(d, 'bp', 'manifest.json')); m.header.description = 'bds-lab kit selftest'; writeJson(path.join(d, 'bp', 'manifest.json'), m);
+    if (stable) { k = await runA(['mode', 'stable', '-a', nm]); kitRep.push('== kit: mode stable', k.text); }
+    return k;
+  };
+  const kitTest = (label, nm) => async () => { const k = await runA(['test', '-a', nm]); kitOut[label] = { k, rep: [`== kit ${label}`, k.text] }; return k; };
+  let k = { ok: true, text: '' };
+  // (the two kit folders are made one after the other, before anything runs beside them: `new` and `add` write shared files)
+  if (wantKit) { k = await makeKit('labkitbeta', kb, false); if (k.ok) k = await makeKit('labkit', kd, true); }
+  const tasks = [sections, ...(wantKit && k.ok ? [kitTest('beta', 'labkitbeta'), kitTest('stable', 'labkit')] : [])];
+  const done = new Array(tasks.length); let next = 0;
+  await Promise.all(Array.from({ length: Math.min(par, tasks.length) }, async () => { for (;;) { const t = next++; if (t >= tasks.length) return; done[t] = await tasks[t](); } }));
+  r = done[0];
+  if (wantKit) {
+    out(`selftest ${F.name}: kit (beta, stable, go)...`);
+    report.push(...kitRep);
+    for (const label of ['beta', 'stable']) { const o = kitOut[label]; if (!o) continue; report.push(...o.rep); out(kitLine(label, o.k)); k = k.ok ? o.k : k; }
+    if (k.ok) { k = await runA(['go', '-a', 'labkit']); report.push('== kit go', k.text); out(kitLine('go', k)); }
+    else if (!kitOut.beta && !kitOut.stable) out(k.text.split('\n').slice(-6).join('\n'));
+    if (!rest.includes('--keep')) { fs.rmSync(kd, { recursive: true, force: true }); fs.rmSync(kb, { recursive: true, force: true }); }
     r.ok = r.ok && k.ok;
   }
   return fin(r.ok);
