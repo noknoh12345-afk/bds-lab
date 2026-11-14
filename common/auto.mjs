@@ -42,6 +42,7 @@ import { fileURLToPath } from 'node:url';
 import { policy, stopped, floorHash, canSpend, isProtected, SECRET, PROTECTED, DEFAULT_POLICY } from './auto-guard.mjs';
 import { hostCmd, hostsSummary } from './hosts.mjs';
 import { shardOf } from './run-tests.mjs';
+import { unitsIn, unitDirIn } from './checkpoint.mjs';
 
 const REPO = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const TOP = process.env.LAB_AUTO_ROOT || REPO;
@@ -123,8 +124,8 @@ function addLesson(kind, text) {
 }
 
 // ---------- sense: every source of work, no tokens ----------
-const unitsOf = (k) => { try { return fs.readdirSync(path.join(TOP, k, UNITS[k])).filter((n) => !n.startsWith('.') && fs.statSync(path.join(TOP, k, UNITS[k], n)).isDirectory()).sort(); } catch { return []; } };
-export const allUnits = () => Object.keys(UNITS).flatMap((k) => unitsOf(k).map((u) => ({ k, u, dir: path.join(TOP, k, UNITS[k], u) })));
+const unitsOf = (k) => unitsIn(TOP, k);   // (the person's own and the lab's samples)
+export const allUnits = () => Object.keys(UNITS).flatMap((k) => unitsOf(k).map((u) => ({ k, u, dir: unitDirIn(TOP, k, u) })));
 function newNotes(task, changelog) {   // (= release.mjs newNotes: the TASK.md lines no release has carried yet)
   const pick = (h) => ((task.split(new RegExp(`^## ${h}\\s*$`, 'm'))[1] ?? '').split(/^## /m)[0]).split('\n').filter((l) => /^- /.test(l)).map((l) => l.replace(/^- (\d{4}-\d\d-\d\d )?/, '').trim());
   return [...pick('Changes'), ...pick('Maintenance')].filter((l) => l && !changelog.includes(l));

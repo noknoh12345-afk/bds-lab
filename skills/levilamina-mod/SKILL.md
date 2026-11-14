@@ -8,7 +8,7 @@ description: Build a LeviLamina mod (LegacyScriptEngine, TypeScript; or C++) pro
 Not for a plain BDS (`bds-script-api` addon, or `endstone-plugin` for Python).
 
 1. `node lab.mjs ll new <n> "Title" "<request>" desc="<what it does>"` (later `node lab.mjs <cmd>` stays in ll), then read ll/AGENTS.md (one screen: commands, events, files, test lines).
-2. Look up, do not guess: `node lab.mjs api <Name|Name.member|onEvent|?word>`; working mods to copy from: ll/mods/ (`help ideas`).
+2. Look up, do not guess: `node lab.mjs api <Name|Name.member|onEvent|?word>`; working mods to copy from: ll/examples/ (`examples`, `new <n> --from <sample>`; `help ideas`).
 3. tests.txt as for addons, plus `lse <code>` lines inside the mod (`return x`); `go` = types → tests → QA → dist/<n>-<ver>.zip.
 
 <!-- rules:begin (node lab.mjs skill build writes these from skills/knowledge.json) -->

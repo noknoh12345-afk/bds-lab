@@ -5,6 +5,13 @@
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
 ### 🌐 GeoUI: URL の画像・F1（ゲームモードはそのまま）・ゲームの中のウェブ（GeoUI Web）
+- **end・ll の見本を自分の作品から分けました**：Endstone の 20 本は `end/examples/`、LeviLamina の 14 本は `ll/examples/` へ。`end/plugins/`・`ll/mods/` は自分のものだけです。見本はそのまま `-a <見本>` で試せます（自分のものに同じ名前があればそちらが先）。保守（`upkeep`・`maintain`・`latest`）、自動操縦、`undo`、`deploy`、CI は見本も今までどおり扱います。
+  - `examples [語]`：実用（サーバー運用でそのまま使える）とショーケース（できることの見本）に分けて一覧。`examples/catalog.json` に一行の説明。
+  - `new <名前> --from <見本>`：見本を自分のものとして複製し、パッケージ・エントリーポイント・クラス（ll は manifest の名前）を付け替えます（コマンドはそのまま）。`guard` から作った `myguard` が本物の Endstone で 7/7。
+  - `pack-examples [practical|showcase|all]`：見本を `go` で確かめてから 1 つの zip に（README つき）。コア数ぶん同時に: showcase 8 本で 3 分 8 秒。実用 12 本の zip を確かめました。
+  - `go all --lab end|ll [--examples]`：1 つのラボだけ、見本も含めてまとめて検証。ラボが違う同じ名前は end-cmdguard・ll-cmdguard と分けて表示。
+  - `install.sh` / `install.ps1` を dev にも。`BDS_LAB_LABS=bds,end,ll` で Endstone・LeviLamina も用意して確かめます（用意できないラボは言って先へ）。
+  - 試験 `tests/examples-offline.mjs`。`samples.json` の end・ll は空に（examples/ は丸ごと配る: 見本と同じ名前の自分のプラグインを見本として配らない）。
 - **Endstone のプラグインを本物のサーバーで全部通し、7 本を直しました**（20 本すべて DONE。直したものは試験を足して本物の Endstone 0.11.15 で DONE）:
   - `guard`: 区域がディメンションを区別せず、オーバーワールドの区域と同じ x/z のネザーに入った人を、見回りがオーバーワールドへ連れ戻していました。区域は設定した世界だけのものに。古い zone.json はオーバーワールドとして読みます。
   - `webapi`: トークンを一定時間で比べる・本文は 4 KB まで（413）・待ちは 20 通まで（429）・色コード（§）と改行は消す（偽の [Server] 行を作れない）・token.txt は所有者だけが読める（0600）。

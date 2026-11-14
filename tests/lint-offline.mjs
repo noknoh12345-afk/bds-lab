@@ -86,7 +86,7 @@ ok(!badJ.length, `data: ${jsons.length} JSON files parse`, badJ.join('\n'));
 {
   const { samples } = await import(pathToFileURL(path.join(TOP, 'common', 'share.mjs')).href);
   const S = samples(TOP), k = JSON.parse(rd('skills/knowledge.json'));
-  const missing = k.rules.filter((r) => r.status === 'verified' && r.evidence?.kind === 'unit').map((r) => r.evidence.ref).filter((ref) => { const m = /^(bds|end|ll)\/(?:addons|plugins|mods)\/([^/]+)$/.exec(ref); return !m || !S[m[1]].includes(m[2]) || !fs.existsSync(path.join(TOP, ref)); });
+  const missing = k.rules.filter((r) => r.status === 'verified' && r.evidence?.kind === 'unit').map((r) => r.evidence.ref).filter((ref) => { const m = /^(bds|end|ll)\/(addons|plugins|mods|examples)\/([^/]+)$/.exec(ref); return !m || (m[2] !== 'examples' && !S[m[1]].includes(m[3])) || !fs.existsSync(path.join(TOP, ref)); });
   ok(!missing.length, 'release: every unit a verified skill rule cites as evidence is here and shipped by share', missing.join(' '));
 }
 

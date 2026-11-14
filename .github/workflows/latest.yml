@@ -43,8 +43,8 @@ jobs:
       matrix:
         include:
           - { lab: bds, os: ubuntu-latest, units: 'bds/addons/**', release: '' }
-          - { lab: end, os: ubuntu-latest, units: 'end/plugins/**', release: endstone }
-          - { lab: ll, os: windows-latest, units: 'll/mods/**', release: ll }
+          - { lab: end, os: ubuntu-latest, units: 'end/plugins/**', units2: 'end/examples/**', release: endstone }
+          - { lab: ll, os: windows-latest, units: 'll/mods/**', units2: 'll/examples/**', release: ll }
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
     defaults: { run: { shell: bash } }
@@ -59,7 +59,7 @@ jobs:
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .latest-${{ matrix.lab }}
-          key: latest-${{ matrix.lab }}-${{ env.NEWEST }}-${{ hashFiles(matrix.units, format('{0}/flavor.mjs', matrix.lab), 'common/core.mjs', 'common/realplayer.cjs') }}
+          key: latest-${{ matrix.lab }}-${{ env.NEWEST }}-${{ hashFiles(matrix.units, matrix.units2 || matrix.units, format('{0}/flavor.mjs', matrix.lab), 'common/core.mjs', 'common/realplayer.cjs') }}
       - if: steps.seen.outputs.cache-hit == 'true'
         run: |
           echo "already checked with these versions and files: $(cat .latest-${{ matrix.lab }})" | tee -a "$GITHUB_STEP_SUMMARY"

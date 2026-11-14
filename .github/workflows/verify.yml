@@ -220,7 +220,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       # (a plugin to test at all: here, where hashFiles is allowed)
       - id: has
-        if: hashFiles('end/plugins/*/pyproject.toml', 'end/plugins/*/CMakeLists.txt') != ''
+        if: hashFiles('end/plugins/*/pyproject.toml', 'end/plugins/*/CMakeLists.txt', 'end/examples/*/pyproject.toml', 'end/examples/*/CMakeLists.txt') != ''
         run: echo "yes=true" >> "$GITHUB_OUTPUT"
       - if: steps.has.outputs.yes == 'true'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
@@ -241,10 +241,12 @@ jobs:
       - name: test and pack every plugin
         if: steps.has.outputs.yes == 'true'
         run: |
-          # every plugin, then the ones that failed (one failure does not hide the rest)
+          # every plugin — the person's own (plugins/) and the samples (examples/: -a finds them there) —, then the ones that
+          # failed (one failure does not hide the rest)
           bad=""
-          for d in plugins/*/; do
+          for d in plugins/*/ examples/*/; do
             [ -d "$d" ] || continue; p=$(basename "$d")
+            case "$d" in examples/*) [ -d "plugins/$p" ] && continue ;; esac   # (a plugin of one's own of that name wins)
             echo "::group::$p"
             if node lab.mjs test -a "$p" --cov && node lab.mjs pack -a "$p"; then :; else bad="$bad $p"; echo "::error title=endstone $p::test or pack failed"; fi
             echo "::endgroup::"
@@ -264,7 +266,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - id: has
-        if: hashFiles('ll/mods/*/manifest.json', 'll/mods/*/xmake.lua') != ''
+        if: hashFiles('ll/mods/*/manifest.json', 'll/mods/*/xmake.lua', 'll/examples/*/manifest.json', 'll/examples/*/xmake.lua') != ''
         run: echo "yes=true" >> "$GITHUB_OUTPUT"
       - if: steps.has.outputs.yes == 'true'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
@@ -282,10 +284,11 @@ jobs:
       - name: test and pack every mod
         if: steps.has.outputs.yes == 'true'
         run: |
-          # every mod, then the ones that failed (one failure does not hide the rest)
+          # every mod — the person's own (mods/) and the samples (examples/) —, then the ones that failed
           bad=""
-          for d in mods/*/; do
+          for d in mods/*/ examples/*/; do
             [ -d "$d" ] || continue; m=$(basename "$d")
+            case "$d" in examples/*) [ -d "mods/$m" ] && continue ;; esac
             echo "::group::$m"
             if node lab.mjs test -a "$m" && node lab.mjs pack -a "$m"; then :; else bad="$bad $m"; echo "::error title=levilamina $m::test or pack failed"; fi
             echo "::endgroup::"

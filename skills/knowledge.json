@@ -996,7 +996,7 @@
       "why": "a command that never registers, or crashes from the console",
       "evidence": {
         "kind": "unit",
-        "ref": "ll/mods/money"
+        "ref": "ll/examples/money"
       },
       "status": "verified",
       "added": "2026-10-03"
@@ -1008,7 +1008,7 @@
       "why": "every player shares one account",
       "evidence": {
         "kind": "unit",
-        "ref": "ll/mods/money"
+        "ref": "ll/examples/money"
       },
       "status": "verified",
       "added": "2026-10-03"
@@ -1020,7 +1020,7 @@
       "why": "data lost, or written beside the server",
       "evidence": {
         "kind": "unit",
-        "ref": "ll/mods/sqlstats"
+        "ref": "ll/examples/sqlstats"
       },
       "status": "verified",
       "added": "2026-10-03"
@@ -1032,7 +1032,7 @@
       "why": "the vanilla action still happens",
       "evidence": {
         "kind": "unit",
-        "ref": "ll/mods/cmdguard"
+        "ref": "ll/examples/cmdguard"
       },
       "status": "verified",
       "added": "2026-10-03"
@@ -1079,7 +1079,7 @@
       "why": "a structure guessed from scratch",
       "evidence": {
         "kind": "unit",
-        "ref": "end/plugins/report"
+        "ref": "end/examples/report"
       },
       "status": "verified",
       "added": "2026-10-03",
@@ -1096,7 +1096,7 @@
       "why": "a permission check that is never tested",
       "evidence": {
         "kind": "unit",
-        "ref": "end/plugins/report"
+        "ref": "end/examples/report"
       },
       "status": "verified",
       "added": "2026-10-03",
@@ -1113,7 +1113,7 @@
       "why": "data lost on restart, untested",
       "evidence": {
         "kind": "unit",
-        "ref": "ll/mods/warps"
+        "ref": "ll/examples/warps"
       },
       "status": "verified",
       "added": "2026-10-03"
@@ -1125,7 +1125,7 @@
       "why": "a structure guessed from scratch",
       "evidence": {
         "kind": "unit",
-        "ref": "ll/mods/warps"
+        "ref": "ll/examples/warps"
       },
       "status": "verified",
       "added": "2026-10-03"

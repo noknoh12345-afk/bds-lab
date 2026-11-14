@@ -6,7 +6,9 @@ wait 500
 @A select diamond_sword
 @A attack lab:jelly
 wait 1500
-js dim.getEntities({ type: 'minecraft:item' }).filter((e) => e.getComponent('item').itemStack.typeId === 'lab:gel').reduce((n, e) => n + e.getComponent('item').itemStack.amount, 0)
+js dim.getEntities({ type: 'lab:jelly' }).length
+= 0
+js dim.getEntities({ type: 'minecraft:item' }).filter((e) => e.getComponent('item').itemStack.typeId === 'lab:gel').reduce((n, e) => n + e.getComponent('item').itemStack.amount, 0) + inv(p('A')).filter((s) => s.includes(':lab:gel*')).reduce((n, s) => n + Number(s.split('*')[1]), 0)
 ~ ^[12]$
 
 ## three gel and a glass bottle make a jump potion
