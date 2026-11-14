@@ -13,6 +13,7 @@ rules: game mode, PvP, build protection, who may enter, a title and commands on 
 """
 
 import json
+import os
 import time
 from pathlib import Path
 
@@ -67,6 +68,16 @@ DEFAULTS = {
 MODES = {"survival": GameMode.SURVIVAL, "creative": GameMode.CREATIVE, "adventure": GameMode.ADVENTURE, "spectator": GameMode.SPECTATOR}
 P = "§7[LeviKit] §f"
 
+
+
+def with_player(command: str, name: str) -> str:
+    """a world's enter/leave command with {player} filled in, as one quoted name: a gamertag with a space ("Steve Two")
+    stays one argument, and a name that is a selector (@a, possible on a server without Xbox sign-in) is never read as one.
+    A command that already quotes it ("{player}") keeps its own quotes."""
+    clean = name.replace('"', "").replace("\\", "")
+    if '"{player}"' in command:
+        return command.replace('"{player}"', f'"{clean}"')
+    return command.replace("{player}", f'"{clean}"')
 
 class World:
     def __init__(self, key: str, dim_name: str, dim_id: int, entry: dict, base: dict) -> None:
@@ -135,8 +146,11 @@ class Levikit(Plugin):
             return {}
 
     def write_raw(self, raw: dict) -> None:
+        # written whole, then moved over the old file: the panel never reads half a config.json, a crash never leaves one
         self.cfg_file.parent.mkdir(parents=True, exist_ok=True)
-        self.cfg_file.write_text(json.dumps(raw, ensure_ascii=False, indent=2), "utf-8")
+        tmp = self.cfg_file.with_suffix(".tmp")
+        tmp.write_text(json.dumps(raw, ensure_ascii=False, indent=2), "utf-8")
+        os.replace(tmp, self.cfg_file)
 
     def load_config(self) -> None:
         raw = self.read_raw()
@@ -146,7 +160,9 @@ class Levikit(Plugin):
 
     def save_state(self) -> None:
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
-        self.state_file.write_text(json.dumps({"back": self.back}, ensure_ascii=False), "utf-8")
+        tmp = self.state_file.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"back": self.back}, ensure_ascii=False), "utf-8")
+        os.replace(tmp, self.state_file)
 
     def emit(self, kind: str, data) -> None:
         self.logger.info(f"@@LEVIKIT {kind} {json.dumps(data, ensure_ascii=False, separators=(',', ':'))}")
@@ -228,14 +244,14 @@ class Levikit(Plugin):
     def entered(self, p: Player, before: World | None, now: World) -> None:
         if before and before.key != now.key:
             for c in before.rules["leaveCommands"]:
-                self.server.dispatch_command(self.server.command_sender, c.replace("{player}", p.name))
+                self.server.dispatch_command(self.server.command_sender, with_player(c, p.name))
         mode = MODES.get(str(now.rules["gameMode"]).lower())
         if mode is not None and p.game_mode != mode:
             p.game_mode = mode
         if now.rules["enterTitle"]:
             p.send_title(now.rules["enterTitle"], now.rules["enterSubtitle"])
         for c in now.rules["enterCommands"]:
-            self.server.dispatch_command(self.server.command_sender, c.replace("{player}", p.name))
+            self.server.dispatch_command(self.server.command_sender, with_player(c, p.name))
         self.where[p.name] = now.key
         self.emit("WORLD_CHANGE", {"player": p.name, "from": before.key if before else "", "to": now.key})
 

@@ -54,6 +54,9 @@ const RP = path.join(ADDON ?? path.join(ADDONS, '_none'), 'rp');
 const FWD = "// written by bds-lab: `node lab.mjs ...` works from this folder too (= from the bds-lab folder, for this unit). Not packed.\nimport path from 'node:path';\nimport { fileURLToPath, pathToFileURL } from 'node:url';\nconst here = path.dirname(fileURLToPath(import.meta.url)), top = path.resolve(here, '..', '..', '..');\nconst kind = path.basename(path.dirname(path.dirname(here)));\nif (!process.argv.slice(2).some((a) => a === '-a' || a === '--addon')) process.env.LAB_ADDON ??= path.basename(here);\nif (!['bds', 'end', 'll'].includes(process.argv[2])) process.argv.splice(2, 0, kind);\nprocess.chdir(top);\nawait import(pathToFileURL(path.join(top, 'lab.mjs')).href);\n";
 const packFileName = (m) => { let raw = String(m?.header?.name ?? ''); if (/^[\w]+(\.[\w]+)+$/.test(raw)) { try { const hit = fs.readFileSync(path.join(BP, 'texts', 'en_US.lang'), 'utf8').split(/\r?\n/).find((l) => l.startsWith(raw + '=')); if (hit) raw = hit.slice(raw.length + 1).replace(/\s*##.*$/, ''); } catch { /* no lang */ } }   // (a name given as a lang key: pack.name → its English text)
   const n = raw.replace(/§./g, '').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, ''); return /[A-Za-z0-9]/.test(n) ? n : path.basename(ADDON); };
+// a js line as BDS's command parser takes it: `scriptevent lab:js #<code>`. The parser refuses <=, >= and ^ anywhere in the
+// message ("Syntax error: Unexpected"); such code goes as #% + those characters (and %) percent-encoded, helper.js decodes it
+const jsCmd = (code) => `scriptevent lab:js #${/[<>]=|\^/.test(code) ? '%' + code.replace(/[%<>=^]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')) : code}`;
 function forwarder(dir) { try { const f = path.join(dir, 'lab.mjs'); if (dir !== ROOT && !fs.existsSync(f) && fs.existsSync(path.join(path.dirname(path.dirname(dir)), 'lab.mjs'))) fs.writeFileSync(f, FWD); } catch { /* read-only */ } }
 const needAddon = () => {
   if (ADDON && isUnit(ADDON)) { forwarder(ADDON); return; }
@@ -1577,7 +1580,7 @@ class Engine {
     if (!seen() && this.jsWait) await this.srv.wait(/LAB_JS_READY/, 10000);
     this.jsWait = false;
     if (!seen()) { LOG.push('[0-0-0 0:0:0 ERROR] js unavailable: the addon script did not load (see errors above)'); return; }
-    this.srv.send('scriptevent lab:js #' + code);   // '#' keeps the command parser away from a leading [ or {
+    this.srv.send(jsCmd(code));   // '#' keeps the command parser away from a leading [ or {
     await this.srv.wait(/LAB_JS_DONE/, 30000);
     await sleep(50);
   }
@@ -1631,7 +1634,7 @@ class Engine {
           // the bot asks the server-side script for block permutations (needed for block clicks)
           const ask = async (code, tag) => {
             const n = LOG.length;
-            srv.send(`scriptevent lab:js #${code}`);
+            srv.send(jsCmd(code));
             await srv.wait(/LAB_JS_DONE/, 5000);
             const l = LOG.slice(n).find((x) => x.includes(tag + ' '));
             for (let i = LOG.length - 1; i >= n; i--) if (/LAB_BLOCK |LAB_TAGS |LAB_JS_DONE|Script event /.test(LOG[i])) LOG.splice(i, 1);
@@ -2546,7 +2549,11 @@ function sameAsLast(ok, sig, file, blocks = [], secs = [], errs = []) {
 }
 // ---------- quality: qa (what players would hit that tests.txt did not ask) and go (check+test+qa+pack) ----------
 // Q = fails `go` (a player would see it), S = suggestion. Budgets measured on BDS 1.26.52 with an empty addon: script_tick 0.3 ms.
-const QA_BUDGET = { avg: Number(process.env.LAB_QA_TICK_MS) || 2, spam: 8 };
+// (an x86-64 BDS emulated — docker on an ARM machine: QEMU or Rosetta — runs every script call several times slower than the
+// players' servers do: measured on GitHub's ubuntu-24.04-arm, kit's own per-tick loop at 2.3 ms that takes well under 1 ms
+// natively. The budget is the native one times 3 there, and the line says so; LAB_QA_TICK_MS sets it outright)
+const EMULATED = RT.kind === 'docker' && os.arch() !== 'x64';
+const QA_BUDGET = { avg: Number(process.env.LAB_QA_TICK_MS) || (EMULATED ? 6 : 2), spam: 8, why: !process.env.LAB_QA_TICK_MS && EMULATED ? ', amd64 emulated here: 3 × the native 2ms' : '' };
 function qaStatic() {
   const q = [], srcDir = exists(path.join(ADDON, 'src')) ? path.join(ADDON, 'src') : path.join(BP, 'scripts');
   const src = files(srcDir, (f) => /\.[cm]?[jt]s$/.test(f) && !/kit\.[jt]s$/.test(f)).map((f) => fs.readFileSync(f, 'utf8')).join('\n');
@@ -2671,7 +2678,7 @@ async function qa({ quiet = false, built = false } = {}) {
       else if (l.startsWith('W ')) q.push(['Q', `${l}   (content log, during: ${during})`]);
       const pm = /^PERF script_tick avg ([\d.]+)ms max ([\d.]+)ms/.exec(l);
       if (pm) { const n0 = q.length; perfNote(+pm[1], q); perfQ.push(...q.slice(n0)); }
-      if (pm) { const avg = +pm[1], max = +pm[2]; if (avg > QA_BUDGET.avg) perfQ.push(q[q.push(['Q', `script time ${avg}ms per tick with 3 players (budget ${QA_BUDGET.avg}ms; max ${max}ms)`]) - 1]); else if (max > 25) perfQ.push(q[q.push(['S', `script spike ${max}ms in one tick (a tick is 50ms): spread the work over ticks (system.runJob)`]) - 1]); }
+      if (pm) { const avg = +pm[1], max = +pm[2]; if (avg > QA_BUDGET.avg) perfQ.push(q[q.push(['Q', `script time ${avg}ms per tick with 3 players (budget ${QA_BUDGET.avg}ms${QA_BUDGET.why}; max ${max}ms)`]) - 1]); else if (max > 25) perfQ.push(q[q.push(['S', `script spike ${max}ms in one tick (a tick is 50ms): spread the work over ticks (system.runJob)`]) - 1]); }
       if (during === 'profile' && /^prof stop/.test(g.cmd ?? '')) { const m = /([\d.]+)ms (.+)$/.exec(l); if (/ sampled/.test(l)) profTotal = +m?.[1] || 0; else if (m) hot += `${hot ? ', ' : ''}${m[2].trim()} ${profTotal ? Math.round((100 * m[1]) / profTotal) + '%' : m[1] + 'ms'}`; }
     }
     if (alive && g.cmd === alive[0] && during === 'alive at first') aliveOk = g.out.some((l) => l.trim() === alive[1]);   // (a probe that never answers, e.g. a fake server, judges nothing)
@@ -3077,11 +3084,13 @@ function useAddon(name, quiet) {
 // import <file|folder> ["<what they asked>"] keeps the request in TASK.md, writes a draft tests.txt that runs each way into the
 // addon once (one go shows every crash) and prints the brief (what it is, its ways in, what breaks on this BDS's APIs)
 async function importAddon(args) {
-  const pos = args.filter((a, k) => !a.startsWith('--') && args[k - 1] !== '--name');
+  const pos = args.filter((a, k) => !a.startsWith('--') && !['--name', '--world'].includes(args[k - 1]));
   const given = pos[0], request = pos.slice(1).join(' ').trim();
   const cands = given ? [path.resolve(process.env.LAB_CALLER_CWD ?? process.cwd(), given), path.resolve(TOP, given), path.resolve(given)] : [];
   const src = cands.find((c) => exists(c));
-  if (!src) die(`usage: node lab.mjs import <file.mcaddon|.mcpack|.zip|folder> ["<what the person asked>"] [--name n]${given ? ` (no ${given} here)` : ''}`);
+  if (!src) die(`usage: node lab.mjs import <file.mcaddon|.mcpack|.zip|folder|your BDS folder> ["<what the person asked>"] [--name n]${given ? ` (no ${given} here)` : ''}`);
+  // a BDS folder of the person's own: everything it runs (its world's addons) as units — common/serverimport.mjs
+  { const SI = await import('./serverimport.mjs'); if (fs.statSync(src).isDirectory() && SI.isServerFolder(src)) { if (!(await SI.importServer(L(), src, request, args))) die('some of the server could not be taken in (the ✘ lines)'); return; } }
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lab-import-'));
   if (fs.statSync(src).isDirectory()) fs.cpSync(src, tmp, { recursive: true }); else unzip(fs.readFileSync(src), tmp);
   // an .mcaddon may hold .mcpack files (zips) instead of folders
@@ -3476,41 +3485,66 @@ async function selftest(rest) {
   let spec = SELFTEST_COMMON(old) + (F.selftest ?? '');
   if (noClient) spec = spec.split(/^(?=## )/m).filter((sec) => !/^@/m.test(sec)).join('');
   fs.writeFileSync(path.join(dir, 'tests.txt'), spec);
-  out(`selftest ${F.name}: running ${spec.match(/^## /gm).length} sections on the server...`);
-  r = run(['test', '-a', name]); report.push('== test', r.text);
-  if (noClient) r.ok = false;   // not complete
-  // the same server on NetherNet (WebRTC): a real player joins through HTTP signaling + data channels
-  const nnSkip = F.netherNetSkip?.(L());   // a platform that cannot do NetherNet here says why
-  if (nnSkip && !rest.includes('--no-nethernet')) { report.push('== nethernet', 'skipped: ' + nnSkip); out('nethernet: skipped: ' + nnSkip); }
-  if (!noClient && !nnSkip && !rest.includes('--no-nethernet')) {
-    fs.writeFileSync(path.join(dir, 'tests-nn.txt'), '## NetherNet: a real player joins over WebRTC\n@N join\n~ ^@N joined\n~ @N nethernet: server key\n## NetherNet: chat reaches the server\n@N chat nn-hello\n~ nn-hello\n');
-    out(`selftest ${F.name}: the same server on NetherNet...`);
-    const n = run(['test', '-a', name, path.join(dir, 'tests-nn.txt')], { LAB_TRANSPORT: 'nethernet' });
-    report.push('== nethernet', n.text);
-    n.text.split('\n').filter((l) => /^✘|^(PASS|FAIL) /.test(l)).slice(0, 10).forEach((l) => out('nethernet: ' + l));
-    r.ok = r.ok && n.ok;
-  }
-  const lines = r.text.split('\n');
-  lines.filter((l, i) => /^✘|^E |^(PASS|FAIL) /.test(l) || /^✘/.test(lines[i - 1] ?? '')).slice(0, 40).forEach((l) => out(l));
-  // the kit every new addon gets (common/kit): its own tests with real players, beta and stable APIs, then go (qa + pack)
-  if (F.name === 'bds' && !noClient && !rest.includes('--no-kit')) {
-    const kd = path.join(ADDONS, 'labkit'), fx = path.join(LIBDIR, 'kit', 'test');
-    fs.rmSync(kd, { recursive: true, force: true });
-    const steps = [['new', 'labkit', 'Lab Kit', 'kit selftest'], ...fs.readFileSync(path.join(fx, 'setup.txt'), 'utf8').trim().split('\n').map((l) => l.match(/"[^"]*"|\S+/g).map((x) => x.replace(/^"|"$/g, '')))];
-    let k = { ok: true, text: '' };
-    for (const a of steps) { k = run(a[0] === 'new' ? a : [...a, '-a', 'labkit']); report.push(`== kit: ${a.join(' ')}`, k.text); if (!k.ok) break; }
-    if (k.ok) {
-      fs.copyFileSync(path.join(fx, 'main.ts'), path.join(kd, 'src', 'main.ts')); fs.copyFileSync(path.join(fx, 'tests.txt'), path.join(kd, 'tests.txt'));
-      const m = readJson(path.join(kd, 'bp', 'manifest.json')); m.header.description = 'bds-lab kit selftest'; writeJson(path.join(kd, 'bp', 'manifest.json'), m);
-      out(`selftest ${F.name}: kit (beta, stable, go)...`);
-      for (const [label, args] of [['beta', ['test', '-a', 'labkit']], ['stable', null], ['go', ['go', '-a', 'labkit']]]) {
-        if (!args) { k = run(['mode', 'stable', '-a', 'labkit']); report.push('== kit: mode stable', k.text); k = run(['test', '-a', 'labkit']); } else k = run(args);
-        report.push(`== kit ${label}`, k.text);
-        out(`kit ${label}: ${k.text.split('\n').filter((l) => /^(✘|Q |E |PASS|FAIL|DONE)/.test(l)).slice(0, 8).join('\n  ') || k.text.split('\n').at(-1)}`);
-        if (!k.ok) break;
-      }
+  // Up to three servers at once, one per core: the sections (then NetherNet), the kit's tests on beta APIs and the kit's tests
+  // on stable APIs (each `test` has its own server folder, world and port; the kit is made twice so the two modes do not share
+  // a folder). The kit's `go` still runs alone, after all of them: its QA measures the script's time per tick.
+  // LAB_SELFTEST_PARALLEL=0: one after another.
+  const par = process.env.LAB_SELFTEST_PARALLEL === '0' ? 1 : Math.max(1, Math.min(3, os.availableParallelism?.() ?? os.cpus().length));
+  const runA = (args, extra = {}) => new Promise((res) => {
+    const c = spawn(process.execPath, [me, ...args], { cwd: ROOT, env: { ...env, ...extra }, stdio: ['ignore', 'pipe', 'pipe'] });
+    let t = ''; c.stdout.on('data', (b) => { t += b; }); c.stderr.on('data', (b) => { t += b; });
+    c.on('error', (e) => res({ ok: false, text: String(e.message) })); c.on('close', (code) => res({ ok: code === 0, text: t.trim() }));
+  });
+  const sections = async () => {
+    out(`selftest ${F.name}: running ${spec.match(/^## /gm).length} sections on the server...`);
+    const r = await runA(['test', '-a', name]); report.push('== test', r.text);
+    if (noClient) r.ok = false;   // not complete
+    // the same server on NetherNet (WebRTC): a real player joins through HTTP signaling + data channels
+    const nnSkip = F.netherNetSkip?.(L());   // a platform that cannot do NetherNet here says why
+    if (nnSkip && !rest.includes('--no-nethernet')) { report.push('== nethernet', 'skipped: ' + nnSkip); out('nethernet: skipped: ' + nnSkip); }
+    if (!noClient && !nnSkip && !rest.includes('--no-nethernet')) {
+      fs.writeFileSync(path.join(dir, 'tests-nn.txt'), '## NetherNet: a real player joins over WebRTC\n@N join\n~ ^@N joined\n~ @N nethernet: server key\n## NetherNet: chat reaches the server\n@N chat nn-hello\n~ nn-hello\n');
+      out(`selftest ${F.name}: the same server on NetherNet...`);
+      const n = await runA(['test', '-a', name, path.join(dir, 'tests-nn.txt')], { LAB_TRANSPORT: 'nethernet' });
+      report.push('== nethernet', n.text);
+      n.text.split('\n').filter((l) => /^✘|^(PASS|FAIL) /.test(l)).slice(0, 10).forEach((l) => out('nethernet: ' + l));
+      r.ok = r.ok && n.ok;
     }
-    if (!rest.includes('--keep')) fs.rmSync(kd, { recursive: true, force: true });
+    const lines = r.text.split('\n');
+    lines.filter((l, i) => /^✘|^E |^(PASS|FAIL) /.test(l) || /^✘/.test(lines[i - 1] ?? '')).slice(0, 40).forEach((l) => out(l));
+    return r;
+  };
+  // the kit every new addon gets (common/kit): its own tests with real players, beta and stable APIs, then go (qa + pack)
+  const wantKit = F.name === 'bds' && !noClient && !rest.includes('--no-kit');
+  const kd = path.join(ADDONS, 'labkit'), kb = path.join(ADDONS, 'labkitbeta'), fx = path.join(LIBDIR, 'kit', 'test');
+  const kitRep = [], kitOut = {};   // (said after the sections' lines, in the same order whichever finished first)
+  const kitLine = (label, k) => `kit ${label}: ${k.text.split('\n').filter((l) => /^(✘|Q |E |PASS|FAIL|DONE)/.test(l)).slice(0, 8).join('\n  ') || k.text.split('\n').at(-1)}`;
+  // the kit as an addon: new + setup.txt + its main.ts and tests.txt; `stable` moves it to the stable APIs
+  const makeKit = async (nm, d, stable) => {
+    fs.rmSync(d, { recursive: true, force: true });
+    const steps = [['new', nm, 'Lab Kit', 'kit selftest', 'desc=The lab kit, tested on this server', 'ja=このサーバーで確かめるラボのキット'], ...fs.readFileSync(path.join(fx, 'setup.txt'), 'utf8').trim().split('\n').map((l) => l.match(/"[^"]*"|\S+/g).map((x) => x.replace(/^"|"$/g, '')))];
+    let k = { ok: true, text: '' };
+    for (const a of steps) { k = await runA(a[0] === 'new' ? a : [...a, '-a', nm]); kitRep.push(`== kit: ${a.join(' ')}`, k.text); if (!k.ok) return k; }
+    fs.copyFileSync(path.join(fx, 'main.ts'), path.join(d, 'src', 'main.ts')); fs.copyFileSync(path.join(fx, 'tests.txt'), path.join(d, 'tests.txt'));
+    const m = readJson(path.join(d, 'bp', 'manifest.json')); m.header.description = 'bds-lab kit selftest'; writeJson(path.join(d, 'bp', 'manifest.json'), m);
+    if (stable) { k = await runA(['mode', 'stable', '-a', nm]); kitRep.push('== kit: mode stable', k.text); }
+    return k;
+  };
+  const kitTest = (label, nm) => async () => { const k = await runA(['test', '-a', nm]); kitOut[label] = { k, rep: [`== kit ${label}`, k.text] }; return k; };
+  let k = { ok: true, text: '' };
+  // (the two kit folders are made one after the other, before anything runs beside them: `new` and `add` write shared files)
+  if (wantKit) { k = await makeKit('labkitbeta', kb, false); if (k.ok) k = await makeKit('labkit', kd, true); }
+  const tasks = [sections, ...(wantKit && k.ok ? [kitTest('beta', 'labkitbeta'), kitTest('stable', 'labkit')] : [])];
+  const done = new Array(tasks.length); let next = 0;
+  await Promise.all(Array.from({ length: Math.min(par, tasks.length) }, async () => { for (;;) { const t = next++; if (t >= tasks.length) return; done[t] = await tasks[t](); } }));
+  r = done[0];
+  if (wantKit) {
+    out(`selftest ${F.name}: kit (beta, stable, go)...`);
+    report.push(...kitRep);
+    for (const label of ['beta', 'stable']) { const o = kitOut[label]; if (!o) continue; report.push(...o.rep); out(kitLine(label, o.k)); k = k.ok ? o.k : k; }
+    if (k.ok) { k = await runA(['go', '-a', 'labkit']); report.push('== kit go', k.text); out(kitLine('go', k)); }
+    else if (!kitOut.beta && !kitOut.stable) out(k.text.split('\n').slice(-6).join('\n'));
+    if (!rest.includes('--keep')) { fs.rmSync(kd, { recursive: true, force: true }); fs.rmSync(kb, { recursive: true, force: true }); }
     r.ok = r.ok && k.ok;
   }
   return fin(r.ok);

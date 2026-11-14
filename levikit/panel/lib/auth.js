@@ -47,6 +47,8 @@ class Sessions {
   /** 1分間に5回まで */
   allowAttempt(ip) {
     const now = Date.now();
+    // 古い記録を掃く（多数の送信元から叩かれても、覚えておく量が増え続けないように）
+    if (this.attempts.size > 5000) for (const [k, v] of this.attempts) if (!v.some((t) => now - t < 60_000)) this.attempts.delete(k);
     const list = (this.attempts.get(ip) || []).filter((t) => now - t < 60_000);
     if (list.length >= 5) {
       this.attempts.set(ip, list);

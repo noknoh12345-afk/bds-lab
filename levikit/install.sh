@@ -165,9 +165,16 @@ if [[ -n "$NODE_BIN" ]] && [[ "$("$NODE_BIN" -p 'process.versions.node.split("."
   echo "既存の Node.js を使用: $("$NODE_BIN" --version)"
 else
   mkdir -p "$ROOT/node"
-  NODE_TAR="$(curl -fsSL "https://nodejs.org/dist/latest-v${NODE_MAJOR}.x/SHASUMS256.txt" | awk '/linux-x64.tar.xz$/ {print $2; exit}')"
-  [[ -n "$NODE_TAR" ]] || die "Node.js のダウンロード先が取得できません"
-  curl -fsSL "https://nodejs.org/dist/latest-v${NODE_MAJOR}.x/${NODE_TAR}" | tar -xJ -C "$ROOT/node" --strip-components=1
+  # (ダウンロードした本体を、nodejs.org が公開している SHA-256 と照合してから展開する)
+  NODE_SUMS="$(curl -fsSL "https://nodejs.org/dist/latest-v${NODE_MAJOR}.x/SHASUMS256.txt")"
+  NODE_TAR="$(awk '/linux-x64.tar.xz$/ {print $2; exit}' <<<"$NODE_SUMS")"
+  NODE_SHA="$(awk '/linux-x64.tar.xz$/ {print $1; exit}' <<<"$NODE_SUMS")"
+  [[ -n "$NODE_TAR" && "$NODE_SHA" =~ ^[0-9a-f]{64}$ ]] || die "Node.js のダウンロード先が取得できません"
+  NODE_TMP="$(mktemp)"
+  curl -fsSL "https://nodejs.org/dist/latest-v${NODE_MAJOR}.x/${NODE_TAR}" -o "$NODE_TMP"
+  [[ "$(sha256sum "$NODE_TMP" | cut -d' ' -f1)" == "$NODE_SHA" ]] || { rm -f "$NODE_TMP"; die "Node.js のチェックサムが一致しません（ダウンロードが壊れたか、書き換えられています）"; }
+  tar -xJf "$NODE_TMP" -C "$ROOT/node" --strip-components=1
+  rm -f "$NODE_TMP"
   NODE_BIN="$ROOT/node/bin/node"
   echo "Node.js: $("$NODE_BIN" --version)"
 fi

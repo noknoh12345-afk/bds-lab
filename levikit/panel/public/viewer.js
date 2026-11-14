@@ -1,6 +1,8 @@
 // LeviKit 観察ビュー: スナップショットのブロックをバニラのテクスチャで描き、参加者の現在地をリアルタイムに重ねる
 import * as THREE from 'three';
 import { OrbitControls } from '/vendor/three/OrbitControls.js';
+// (text from the server — player names, world and backup names — always as text, never as HTML)
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const $ = (s) => document.querySelector(s);
 const status = (t) => ($('#status').textContent = t);
@@ -667,7 +669,7 @@ function updatePlayers(pos) {
   const names = [...seen].sort();
   const opts = ['', ...names];
   if (sel.options.length !== opts.length || [...sel.options].some((o, i) => o.value !== opts[i])) {
-    sel.innerHTML = opts.map((n) => `<option value="${n}">${n || '（なし）'}</option>`).join('');
+    sel.innerHTML = opts.map((n) => `<option value="${esc(n)}">${n ? esc(n) : '（なし）'}</option>`).join('');
     sel.value = names.includes(cur) ? cur : '';
   }
 }
@@ -714,7 +716,7 @@ renderer.domElement.addEventListener('dblclick', (e) => {
 // ---------- 画面 ----------
 async function refreshList(select) {
   const l = await api('GET', '/api/view3d/list');
-  $('#at').innerHTML = l.list.map((x) => `<option value="${x.backupId}">${new Date(x.createdAt).toLocaleString('ja-JP')}</option>`).join('') || '<option value="">（まだありません）</option>';
+  $('#at').innerHTML = l.list.map((x) => `<option value="${esc(x.backupId)}">${new Date(x.createdAt).toLocaleString('ja-JP')}</option>`).join('') || '<option value="">（まだありません）</option>';
   if (select) $('#at').value = select;
   if (!l.textures) status('バニラのテクスチャがありません（install.sh で取得）。白いブロックで表示します');
   updatePlayers(l.pos);
@@ -761,7 +763,7 @@ $('#names').addEventListener('change', () => updatePlayers());
   try {
     const dims = await api('GET', '/api/dimensions');
     const worlds = [['overworld', 'オーバーワールド'], ['nether', 'ネザー'], ['the_end', 'ジ・エンド'], ...dims.kit.dimensions.map((d) => [d.name, d.displayName || d.name])];
-    $('#world').innerHTML = worlds.map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
+    $('#world').innerHTML = worlds.map(([k, n]) => `<option value="${esc(k)}">${esc(n)}</option>`).join('');
     if (qs.get('w')) $('#world').value = qs.get('w');
     if (qs.get('x')) $('#x').value = qs.get('x');
     if (qs.get('z')) $('#z').value = qs.get('z');
