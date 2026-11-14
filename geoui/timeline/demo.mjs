@@ -100,7 +100,7 @@ elements.combo = { type: 'number', anchor: 'bottom-left', number: { source: `q.p
 bones.push(plane('healthback', 'geo_ui', [-55, 206], [40, 4], REG.barback, 1)); elements.healthback = { type: 'image', anchor: 'top-left' };
 bones.push(Object.assign(plane('health', 'geo_ui', [-55, 206], [40, 4], REG.bar, 0.5), { pivot: [-75, 206, 0.5] }));
 elements.health = { type: 'gauge', anchor: 'top-left', gauge: { source: `q.property('${NS}:v3')`, max: 100, fill: 'left' } };
-const design = { settings: { ns: NS, name: V.title, description: V.description, bp: true, calibration: G.MEASURED.id }, seed: V.name,
+const design = { settings: { ns: NS, name: V.title, description: V.description, descriptionJa: V.descriptionJa, bp: true, calibration: G.MEASURED.id }, seed: V.name,
   bones, elements, textures: { atlas: { name: 'atlas', width: W, height: H, png: png.toString('base64') } } };
 
 // ---- the timeline: the beatmap imported (above), the click track as its music
@@ -309,12 +309,12 @@ function osuSamples(top = TOP) {
 }
 
 const hugeAt = process.argv.indexOf('--huge');
-const HUGE = (top = TOP) => ({ name: 'geoui_rhythm_huge', big: 1000, top, title: 'GeoUI Rhythm 1000', description: 'GeoUI timeline sample: a long map, 1000 objects (bds-lab)', atlas: [2048, 2048], shots: [2, 10, 30, 60, 120, 180, 240, 300, 350, 375], seek: 300 });
+const HUGE = (top = TOP) => ({ name: 'geoui_rhythm_huge', big: 1000, top, title: 'GeoUI Rhythm 1000', description: 'GeoUI timeline sample: a long map, 1000 objects (bds-lab)', descriptionJa: 'GeoUI タイムラインの見本: 長い譜面、オブジェクト 1000 個（bds-lab）', atlas: [2048, 2048], shots: [2, 10, 30, 60, 120, 180, 240, 300, 350, 375], seek: 300 });
 if (hugeAt >= 0) {
   make(HUGE(process.argv[hugeAt + 1] && !process.argv[hugeAt + 1].startsWith('--') ? path.resolve(process.argv[hugeAt + 1]) : TOP));
 } else {
-  make({ name: 'geoui_rhythm', title: 'GeoUI Rhythm', description: 'GeoUI timeline sample: an osu!-style HUD (bds-lab)', atlas: [128, 256], shots: [1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 8.0, 9.5, 11.0, 12.5], seek: 6 });
-  make({ name: 'geoui_rhythm_big', big: 300, title: 'GeoUI Rhythm 300', description: 'GeoUI timeline sample: a map of real size, 300 objects (bds-lab)', atlas: [1024, 1024], shots: [2, 5, 10, 20, 30, 45, 60, 80, 100, 112], seek: 60 });
+  make({ name: 'geoui_rhythm', title: 'GeoUI Rhythm', description: 'GeoUI timeline sample: an osu!-style HUD (bds-lab)', descriptionJa: 'GeoUI タイムラインの見本: osu! 風の HUD（bds-lab）', atlas: [128, 256], shots: [1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 8.0, 9.5, 11.0, 12.5], seek: 6 });
+  make({ name: 'geoui_rhythm_big', big: 300, title: 'GeoUI Rhythm 300', description: 'GeoUI timeline sample: a map of real size, 300 objects (bds-lab)', descriptionJa: 'GeoUI タイムラインの見本: 本物の大きさの譜面、オブジェクト 300 個（bds-lab）', atlas: [1024, 1024], shots: [2, 5, 10, 20, 30, 45, 60, 80, 100, 112], seek: 60 });
   make(HUGE());
   if (!process.argv.includes('--no-osu')) osuSamples();
 }

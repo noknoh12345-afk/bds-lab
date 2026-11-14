@@ -61,7 +61,7 @@ const plane = (name, [cx, cy], { uv = UV.white, z = 0, tex = 'probe', size = SIZ
   cubes: [{ origin: [cx - size / 2, cy - size / 2, z], size: [size, size, 0], faces: { north: { uv, uv_size: [16, 16], texture: tex } } }] });
 const filler = (name, tex = 'probe') => ({ name, parent: 'geo_ui', pivot: [-400, 140, 0], cubes: [{ origin: [-400, 140, 0], size: [1, 1, 0], faces: { north: { uv: UV.grey, uv_size: [16, 16], texture: tex } } }] });
 const ALL = 99, sel = (k) => `(v.gp_t == ${k} || v.gp_t == ${ALL})`, on = (k) => `${sel(k)} ? 1 : 0`;
-const settings = (ns, name) => ({ ns, name, description: `GeoUI probe (bds-lab): ${name}`, bp: true, calibration: G.MEASURED.id });
+const settings = (ns, name) => ({ ns, name, description: `GeoUI probe (bds-lab): ${name}`, descriptionJa: `GeoUI の探り（bds-lab）: ${name}`, bp: true, calibration: G.MEASURED.id });
 
 /** the base controller of the texture `tex` stops drawing some bones; each gets a controller of its own (compile.js's way):
  *  o.material — that bone drawn with material.<ns>_<o.material> (blend, fade, cutfade …); o.alpha — the colour's alpha times it */
