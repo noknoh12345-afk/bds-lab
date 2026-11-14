@@ -1,13 +1,20 @@
 """Web API: the server answers HTTP. GET /status (players, TPS), GET /players/<name>, POST /say (token).
 BDS scripts cannot listen on a socket at all (@minecraft/server-net only sends requests out)."""
 import json
+import os
 import queue
+import re
 import secrets
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from endstone.command import Command, CommandSender
 from endstone.plugin import Plugin
+
+
+MAX_BODY = 4096  # bytes: a /say body is a short line; more is refused before it is read
+INBOX = 20  # messages waiting for the next tick at most: a flood gets 429, not a chat full of it
+UNSAFE = re.compile(r"[\x00-\x1f\x7f\u00a7]")  # control characters and § (Minecraft's colour codes: no fake [Server] lines)
 
 
 class Webapi(Plugin):
@@ -18,11 +25,14 @@ class Webapi(Plugin):
 
     def on_enable(self) -> None:
         self.snapshot: dict = {"players": [], "tps": 20.0}
-        self.inbox: queue.Queue[str] = queue.Queue()
+        self.inbox: queue.Queue[str] = queue.Queue(maxsize=INBOX)
         self.data_folder.mkdir(parents=True, exist_ok=True)
         tok = self.data_folder / "token.txt"
         if not tok.exists():
-            tok.write_text(secrets.token_hex(16))
+            # readable by this server's own user alone (the token lets anyone who has it post to the chat)
+            fd = os.open(tok, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "w") as f:
+                f.write(secrets.token_hex(16))
         self.token = tok.read_text().strip()
         plugin = self
 
@@ -49,16 +59,26 @@ class Webapi(Plugin):
                 self.reply(404, {"error": "GET /status | GET /players/<name> | POST /say"})
 
             def do_POST(self) -> None:
-                if self.headers.get("Authorization") != f"Bearer {plugin.token}":
+                # (compared in constant time: how long a wrong token takes says nothing about the right one)
+                if not secrets.compare_digest(self.headers.get("Authorization", "").encode(), f"Bearer {plugin.token}".encode()):
                     return self.reply(401, {"error": "Authorization: Bearer <token.txt>"})
-                n = int(self.headers.get("Content-Length") or 0)
                 try:
-                    text = str(json.loads(self.rfile.read(n) or b"{}").get("text", ""))[:200]
+                    n = int(self.headers.get("Content-Length") or 0)
+                except ValueError:
+                    return self.reply(400, {"error": "Content-Length"})
+                if n < 0 or n > MAX_BODY:
+                    return self.reply(413, {"error": f"at most {MAX_BODY} bytes"})
+                try:
+                    body = json.loads(self.rfile.read(n) or b"{}")
+                    text = UNSAFE.sub("", str(body.get("text", "") if isinstance(body, dict) else "")).strip()[:200]
                 except ValueError:
                     return self.reply(400, {"error": "JSON body {\"text\": ...}"})
                 if self.path != "/say" or not text:
                     return self.reply(400, {"error": "POST /say {\"text\": ...}"})
-                plugin.inbox.put(text)  # the world is only touched on the server thread (tick below)
+                try:
+                    plugin.inbox.put_nowait(text)  # the world is only touched on the server thread (tick below)
+                except queue.Full:
+                    return self.reply(429, {"error": "too many messages: try again in a moment"})
                 self.reply(202, {"queued": text})
 
         self.http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)

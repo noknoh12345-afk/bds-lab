@@ -64,10 +64,11 @@ jobs:
           LAB_MODEL: ${{ vars.LAB_MODEL }}
           LAB_NOTIFY_WEBHOOK: ${{ secrets.LAB_NOTIFY_WEBHOOK }}
           GH_TOKEN: ${{ github.token }}
+          TICKS: ${{ inputs.ticks || vars.LAB_AUTO_TICKS || 1 }}   # (through the environment: a value, never shell text)
         run: |
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git config user.name 'bds-lab autopilot'
-          node lab.mjs auto run --ticks "${{ inputs.ticks || vars.LAB_AUTO_TICKS || 1 }}" | tee -a "$GITHUB_STEP_SUMMARY"
+          node lab.mjs auto run --ticks "$TICKS" | tee -a "$GITHUB_STEP_SUMMARY"
       - if: always() && steps.plan.outputs.work == 'yes'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with: { name: auto, path: '*/dist/*', if-no-files-found: ignore }

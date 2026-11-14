@@ -22,3 +22,15 @@ py p("A").location.x < 5
 wait 500
 py p("A").location.x > 5
 = True
+## the zone belongs to the dimension it was set in: the same x/z in the nether is free, and nobody is pulled out of it
+@A cmd /guard 5 -10 15 10
+~ zone 5,-10 .. 16,11
+tp A 2 -60 0.5
+wait 500
+effect A resistance 60 255 true
+execute in nether run tp A 10 100 0.5
+wait 2000
+py return p("A").dimension.name
+= Nether
+py return round(p("A").location.x)
+= 10

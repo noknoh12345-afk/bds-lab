@@ -15,3 +15,8 @@ wait 3500
 @A chat m6
 wait 500
 ~ @B chat <A> m6
+## a player who left is forgotten
+@A leave
+wait 500
+py return "A" in plugin.seen
+= False

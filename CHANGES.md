@@ -5,6 +5,17 @@
 スマホの Discord から CI の端末を画面とボタンで動かせ、リポジトリの秘密も Discord のフォームで登録できる（node も PC も要らない）。**
 
 ### 🌐 GeoUI: URL の画像・F1（ゲームモードはそのまま）・ゲームの中のウェブ（GeoUI Web）
+- **Endstone のプラグインを本物のサーバーで全部通し、7 本を直しました**（20 本すべて DONE。直したものは試験を足して本物の Endstone 0.11.15 で DONE）:
+  - `guard`: 区域がディメンションを区別せず、オーバーワールドの区域と同じ x/z のネザーに入った人を、見回りがオーバーワールドへ連れ戻していました。区域は設定した世界だけのものに。古い zone.json はオーバーワールドとして読みます。
+  - `webapi`: トークンを一定時間で比べる・本文は 4 KB まで（413）・待ちは 20 通まで（429）・色コード（§）と改行は消す（偽の [Server] 行を作れない）・token.txt は所有者だけが読める（0600）。
+  - `cmdguard`: ミュートが再起動で解けていたのを mutes.json に保存。commands.log は 5 MB で commands.log.1 に回し、改行で偽の行を書けないように。
+  - `tempban`: bans.json を書き切ってから置き換える。読めない bans.json は bans.json.bad に残してプラグインは起動する（前は起動できず BAN が全部消えていました）。
+  - `report`: 理由の色コードを消す（OP への知らせを装えない）。
+  - `sqlstats`: `/stats steve` で Steve が見つかる。WAL で、壊すたびにディスクを待たない。
+  - `antispam`、`guard`: 抜けた人の記録を消す（長く動かしても増え続けない）。
+- **dev の試験を緑に**：`geoui-web-offline`（GeoUI Web のアドオンが作り手の出す物と違う）は、Minecraft の更新の保守（`upkeep`）が作られたアドオンだけを直していたためでした。作り直しても保守が確かめた新しい安定版の API と TASK.md の記録を引き継ぎ、JSON は中身で比べます（`bds/geoui/web/out.mjs`、試験 `tests/geoui-out-offline.mjs`）。`scratch-offline`（間違った足し算が FAIL にならず UNSURE）は、新しいアドオンが求める API の版をサンドボックスがまだ持たないためでした。試験のアドオンはサンドボックスの持つ最新の版を求めます（サンドボックスの資料 `sandbox-be/data/script-api.json` はゲーム 1.26.50.4 のまま: 新しい公式メタデータ 1.26.60.5 から作り直す道具はまだありません）。
+- **`home` のネザーの試験**：落ちて死んだプレイヤーが再起動のあとどちらの世界に戻るかで結果が変わっていたのを直し、世界の移動を本当に確かめるようにしました。
+- **管理パネルに「サーバー」のタブ**（`panel/lib/vps.mjs`・`panel/ui/vps.mjs`）: 自分のサーバー（VPS）を GitHub Actions のランナーとしてつなぐ 1 行を登録トークンつきで作る・つないだサーバーの様子（待機中・仕事中・応答なし）・外す・公開リポジトリに要る「外部のプルリクエストは毎回承認」の設定を読んで直す・サーバーで `go all`／`selftest`／`status`／`doctor`／アドオン 1 本／手で書いた引数を走らせる・最近の実行・自分のパソコンに入れる 1 行。新しい役割の操作 `servers`（管理者だけ）。貼る 1 行は root のシェルで動くので、中の語を 1 つずつ確かめます。5 つの言語で。`.github/workflows/vps.yml`・`vps/runner-setup.sh`・`go all`（`common/goall.mjs`）も `main` から。試験 `tests/vps-offline.mjs`。
 - **URL の画像**（[bds/geoui/SPEC.md](bds/geoui/SPEC.md) 17 章・[RULES.md](bds/geoui/RULES.md) 10 章）: JSON UI の `profile_image_renderer` に
   `{"type":7,"url":…}` を入れるとゲームがその絵を取りに行って描く（zelisce の SAPI-with-URL-Images の使い方）。GeoUI は `scene.urlImages` で HUD の
   どのグループのどの四角にも置ける（板と同じ式）。URL はサーバーが 1 人ずつ渡せる唯一の文字 = 題名に「通り道」として載せ（`~gu~` + F1 の旗 +

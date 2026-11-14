@@ -74,6 +74,16 @@ export function gh({ token, base = 'https://api.github.com', fetchImpl = (...a) 
     annotations: (r, checkRun) => call('GET', `/repos/${r}/check-runs/${checkRun}/annotations?per_page=50`),
     dispatch: (r, workflow, ref, inputs) => call('POST', `/repos/${r}/actions/workflows/${encodeURIComponent(workflow)}/dispatches`, { ref, inputs }),
     cancel: (r, run) => call('POST', `/repos/${r}/actions/runs/${run}/cancel`),
+    // (the lab's own servers — panel/lib/vps.mjs: all four need the repository's administrator, GitHub says 403 to others)
+    /** the repository's self-hosted runners: [{ id, name, os, status: 'online' | 'offline', busy, labels: [{ name }] }] */
+    runners: async (r) => (await call('GET', `/repos/${r}/actions/runners?per_page=100`)).runners ?? [],
+    /** a token that registers one runner with the repository, good for an hour: { token, expires_at } */
+    runnerToken: (r) => call('POST', `/repos/${r}/actions/runners/registration-token`),
+    /** take a runner off the repository (its server keeps running; its service finds itself unregistered) */
+    removeRunner: (r, id) => call('DELETE', `/repos/${r}/actions/runners/${encodeURIComponent(id)}`),
+    /** who must be approved before a fork's pull request runs workflows: { approval_policy } */
+    forkApproval: (r) => call('GET', `/repos/${r}/actions/permissions/fork-pr-contributor-approval`),
+    setForkApproval: (r, policy) => call('PUT', `/repos/${r}/actions/permissions/fork-pr-contributor-approval`, { approval_policy: policy }),
     rerunFailed: (r, run) => call('POST', `/repos/${r}/actions/runs/${run}/rerun-failed-jobs`),
     pulls: (r) => call('GET', `/repos/${r}/pulls?state=open&per_page=20`),
     /** a workflow turned on or off (a fork's start off: disabled_fork) */
@@ -89,6 +99,8 @@ export function gh({ token, base = 'https://api.github.com', fetchImpl = (...a) 
     addCollaborator: (r, login, permission = 'push') => call('PUT', `/repos/${r}/collaborators/${encodeURIComponent(login)}`, { permission }),
     /** the invitations to repositories this person has not taken yet, and one taken */
     myInvitations: () => call('GET', '/user/repository_invitations?per_page=100'),
+    /** an owner's public repositories (with has_pages: which share the panel's github.io origin — lib/origin.mjs) */
+    ownerRepos: (owner) => call('GET', `/users/${encodeURIComponent(owner)}/repos?type=owner&per_page=100`),
     acceptInvitation: (id) => call('PATCH', `/user/repository_invitations/${encodeURIComponent(id)}`),
     /** a GitHub App as GitHub shows it to anyone: { slug, permissions, … } */
     app: (slug) => call('GET', `/apps/${encodeURIComponent(slug)}`),

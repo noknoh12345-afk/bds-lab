@@ -6,11 +6,11 @@
 /** each tab's icon (the strip draws it from data-icon, outside the button's words: the words stay the tab's name) */
 export const TAB_ICONS = Object.freeze({
   overview: '🏠', runs: '📈', start: '▶️', units: '🧩', releases: '📦', files: '📁', schedule: '⏰', stats: '📊', discord: '💬',
-  secrets: '🔑', live: '📱', hosts: '🤝', members: '👥', setup: '🛠️', connect: '🔗', audit: '📜', settings: '⚙️',
+  secrets: '🔑', live: '📱', hosts: '🤝', members: '👥', setup: '🛠️', connect: '🔗', audit: '📜', settings: '⚙️', vps: '🖧',
 });
 /** the groups, in the menu's order: what a person comes to do */
 export const GROUPS = Object.freeze([
-  ['いつも見る', ['overview', 'runs', 'start', 'live']],
+  ['いつも見る', ['overview', 'runs', 'start', 'vps', 'live']],
   ['作る・配る', ['units', 'releases', 'files', 'schedule']],
   ['つなぐ・鍵', ['connect', 'secrets', 'discord', 'setup']],
   ['人と時間', ['members', 'hosts', 'audit']],

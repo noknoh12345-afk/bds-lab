@@ -40,6 +40,8 @@ import { testHistCard } from './ui/testhist.mjs';
 import { secretWatchCard } from './ui/secretwatch.mjs';
 import { connectDailyCard } from './ui/connectdaily.mjs';
 import { weeklyCard } from './ui/weekly.mjs';
+import { vpsTab } from './ui/vps.mjs';
+import { originCard } from './ui/origin.mjs';
 import { notifyPrefsCard } from './ui/notifyprefs.mjs';
 import { minutesCard } from './ui/minutes.mjs';
 import { lendForecastCard } from './ui/lendfc.mjs';
@@ -499,7 +501,7 @@ const capsOf = () => Object.fromEntries((st.lab?.caps ?? []).map((c) => [c.key, 
 const hasWf = (f) => (st.lab?.workflows ?? []).some((w) => String(w.path).endsWith(`/${f}`));
 
 // ---- the frame: tabs ----
-const TABS = [['overview', '概要'], ['runs', '進み具合'], ['start', '実行'], ['units', 'アドオン'], ['releases', '配布'], ['files', '成果物'], ['schedule', '予約'], ['stats', '統計'], ['discord', 'Discord'], ['secrets', '秘密'],
+const TABS = [['overview', '概要'], ['runs', '進み具合'], ['start', '実行'], ['vps', 'サーバー'], ['units', 'アドオン'], ['releases', '配布'], ['files', '成果物'], ['schedule', '予約'], ['stats', '統計'], ['discord', 'Discord'], ['secrets', '秘密'],
   ['live', '端末'], ['hosts', '貸し借り'], ['members', 'メンバー'], ['setup', '準備'], ['connect', '連携'], ['audit', '監査'], ['settings', '設定']];
 /** what each screen asks of its person: 'anyone' (概要・貸し借り・設定 — a lender, a borrower), 'look' (someone let in to look
  *  at the lab: they see the lab as it is, and do what their role allows), 'write' (whoever GitHub lets write the lab), or the
@@ -540,7 +542,7 @@ function render() {
   setTitle(tabs.find(([k]) => k === st.tab)?.[1] ?? allowed.find(([k]) => k === st.tab)?.[1]);
   $('nstart')?.replaceChildren(h('button', { id: 'menubtn', 'aria-haspopup': 'dialog', 'aria-label': '画面の一覧', title: '画面の一覧（すべての画面と、何をするところか）', onclick: () => openMenu(st.nav.tabs, st.nav.hidden) }, icon('menu')));
   showActiveTab(strip);
-  ({ overview, runs, start, units, releases, files, schedule, stats, discord, secrets, live, hosts, members, setup, connect: connectView, audit, settings: settingsTab })[st.tab](body);
+  ({ overview, runs, start, vps, units, releases, files, schedule, stats, discord, secrets, live, hosts, members, setup, connect: connectView, audit, settings: settingsTab })[st.tab](body);
   readLater();
 }
 /** another tab (the address follows: a reload or a shared link opens the same tab); a screen of its own comes in as OreUI's
@@ -597,10 +599,15 @@ function connectView(body) {
   connectTab(body, { api: st.api, lab: { slug: st.lab.slug, repo: st.lab.repo, role: st.lab.role, secrets: st.lab.secrets, workflows: st.lab.workflows }, me: st.me, policy: st.policy, role: st.role, authUrl: CONFIG.authUrl, panelUrl: `${location.origin}${location.pathname}`, pick: PICK, pickUsed,
     guarded, reload: async () => { await loadEnv(st.lab); if (st.tab === 'connect') render(); }, record: (action, detail) => record(action, detail) });
 }
+/** 「サーバー」: the lab on the person's own server — runners, the line that connects one, what to run there (ui/vps.mjs) */
+function vps(body) {
+  vpsTab(body, { api: st.api, lab: { slug: st.lab.slug, repo: st.lab.repo, workflows: st.lab.workflows }, gate, guarded, go, dispatch: dispatchRaw });
+}
 function setup(body) {
   setupTab(body, { api: st.api, lab: { slug: st.lab.slug, repo: st.lab.repo, role: st.lab.role, secrets: st.lab.secrets, workflows: st.lab.workflows }, hosts: st.hosts, me: st.me, config: CONFIG,
     panelUrl: `${location.origin}${location.pathname}`, signedInWithApp: A.session(st.login)?.kind === 'oauth', storage: TAB, appReturn: APP_RETURN, policy: st.policy, role: st.role,
     reload: async () => { await loadEnv(st.lab); if (st.tab === 'setup') render(); }, record: (action, detail) => record(action, detail) });
+  body.append(originCard({ api: st.api, lab: st.lab }));
 }
 function audit(body) { auditTab(body, { api: st.api, lab: st.lab, policy: st.policy, role: st.role, guarded, may }); }
 // ---- アドオン・配布 (ui/units.mjs, ui/workspace.mjs, ui/releases.mjs): the lab's units made, taken in, changed, tested and

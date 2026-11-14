@@ -54,6 +54,15 @@ ok(r.code === 0 && /^PASS scratch selftest: \d+ lesson/m.test(r.t) && !zz().leng
   fs.rmSync(dir, { recursive: true, force: true });
   try {
     lab(['bds', 'new', u, 'Calc', '--js']);
+    // (the unit asks for the API versions the sandbox has: a new unit asks for the lab's BDS's newest, which the sandbox —
+    // built from Mojang's metadata of a game a release or two older — may not have yet, and then it calls every failure
+    // UNSURE. This test is about a wrong sum reported as FAIL, not about that lag: read the sandbox's own newest, so it
+    // never drifts)
+    {
+      const api = JSON.parse(fs.readFileSync(path.join(TOP, 'sandbox-be', 'data', 'script-api.json'), 'utf8')), mf = path.join(dir, 'bp', 'manifest.json'), m = JSON.parse(fs.readFileSync(mf, 'utf8'));
+      for (const d of m.dependencies ?? []) { const vs = api.modules[d.module_name]?.versions; if (vs && /beta/.test(String(d.version))) d.version = vs.filter((v) => /-beta$/.test(v)).at(-1) ?? d.version; }
+      fs.writeFileSync(mf, JSON.stringify(m, null, 2));
+    }
     const main = path.join(dir, 'bp', 'scripts', 'main.js');
     fs.writeFileSync(main, "import { cmd } from './kit.js';\ncmd('lab:add', 'Add', { a: 'int', b: 'int' }, (p, x) => '= ' + (x.a + x.b));\n");
     r = lab(['scratch', 'check', 'calc']);

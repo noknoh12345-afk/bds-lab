@@ -1,6 +1,6 @@
 """Chat flood control at the packet level: more than 3 chat packets in 3 seconds are dropped before the game sees them
 (PacketReceiveEvent). BDS scripts can cancel a chat message but never see or drop raw packets."""
-from endstone.event import PacketReceiveEvent, event_handler
+from endstone.event import PacketReceiveEvent, PlayerQuitEvent, event_handler
 from endstone.plugin import Plugin
 
 TEXT = 9  # the Text packet: chat from a client
@@ -32,3 +32,8 @@ class Antispam(Plugin):
         else:
             recent.append(self.tick)
         self.seen[name] = recent
+
+    @event_handler
+    def on_quit(self, e: PlayerQuitEvent) -> None:
+        # (nothing kept for someone who left: a server up for weeks does not keep every name it ever saw)
+        self.seen.pop(e.player.name, None)

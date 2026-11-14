@@ -352,7 +352,7 @@ const waitText = async (re, ms = 10_000) => { const end = Date.now() + ms; while
 const signIn = async (tok) => { await page.goto(URL0); await page.waitForSelector('#tok'); await page.fill('#tok', tok); await page.fill('#lab', LAB); await page.click('#go'); };
 // (the panel's frame, OreUI's: the five groups on the dock, each group's screens as a segmented row — a screen is opened by its
 //  group, then its segment; the screens someone sees are the dock's, said here in the panel's own order of them)
-const KEY = { 概要: 'overview', 進み具合: 'runs', 実行: 'start', アドオン: 'units', 配布: 'releases', 成果物: 'files', 予約: 'schedule', 統計: 'stats', Discord: 'discord', 秘密: 'secrets', 端末: 'live', 貸し借り: 'hosts', メンバー: 'members', 準備: 'setup', 連携: 'connect', 監査: 'audit', 設定: 'settings' };
+const KEY = { 概要: 'overview', 進み具合: 'runs', 実行: 'start', サーバー: 'vps', アドオン: 'units', 配布: 'releases', 成果物: 'files', 予約: 'schedule', 統計: 'stats', Discord: 'discord', 秘密: 'secrets', 端末: 'live', 貸し借り: 'hosts', メンバー: 'members', 準備: 'setup', 連携: 'connect', 監査: 'audit', 設定: 'settings' };
 const NAME = Object.fromEntries(Object.entries(KEY).map(([n, k]) => [k, n])), ORDER = Object.keys(KEY);
 const openScreen = async (pg, name) => {
   const k = KEY[name] ?? name, seg = pg.locator(`nav.tabs button[data-tab="${k}"]`);
@@ -835,7 +835,7 @@ try {
   // back to the author with a tap: their own settings (the host they borrow, the vault key) as they left them
   await page.selectOption('#acct', 'author1');
   await waitText(/管理者/);
-  check(JSON.stringify(await screensOf(page)) === JSON.stringify(['概要', '進み具合', '実行', 'アドオン', '配布', '成果物', '予約', '統計', 'Discord', '秘密', '端末', '貸し借り', 'メンバー', '準備', '連携', '監査', '設定']), 'switched: the author\'s tabs', JSON.stringify(await page.locator('nav.tabs button').allInnerTexts()));
+  check(JSON.stringify(await screensOf(page)) === JSON.stringify(['概要', '進み具合', '実行', 'サーバー', 'アドオン', '配布', '成果物', '予約', '統計', 'Discord', '秘密', '端末', '貸し借り', 'メンバー', '準備', '連携', '監査', '設定']), 'switched: the author\'s tabs', JSON.stringify(await page.locator('nav.tabs button').allInnerTexts()));
   // every tab, as the author sees it: a missing part is nothing — never the words 「null」「undefined」「[object …]」 on the page
   // (the browser's own replaceChildren / append write them; ui/dom.mjs keeps them out)
   for (const name of await screensOf(page)) {
@@ -1024,8 +1024,8 @@ try {
   const on4 = () => p4.locator('nav.tabs button.on').innerText();
   const tab4 = (name) => openScreen(p4, name);
   const shot4 = async (name) => { if (!process.env.PANEL_SHOTS) return; await p4.waitForTimeout(900); fs.mkdirSync(process.env.PANEL_SHOTS, { recursive: true }); await p4.screenshot({ path: path.join(process.env.PANEL_SHOTS, `simple-${String(++shots).padStart(2, '0')}-${name}.png`), fullPage: true }); };
-  const SIMPLE = ['概要', '進み具合', '実行', 'アドオン', '配布', '予約', '秘密', '端末', '貸し借り', '準備', '連携', '設定'];
-  const EVERY = ['概要', '進み具合', '実行', 'アドオン', '配布', '成果物', '予約', '統計', 'Discord', '秘密', '端末', '貸し借り', 'メンバー', '準備', '連携', '監査', '設定'];
+  const SIMPLE = ['概要', '進み具合', '実行', 'サーバー', 'アドオン', '配布', '予約', '秘密', '端末', '貸し借り', '準備', '連携', '設定'];
+  const EVERY = ['概要', '進み具合', '実行', 'サーバー', 'アドオン', '配布', '成果物', '予約', '統計', 'Discord', '秘密', '端末', '貸し借り', 'メンバー', '準備', '連携', '監査', '設定'];
   await p4.goto(URL0); await p4.waitForSelector('#tok'); await p4.fill('#tok', 'tok-author'); await p4.fill('#lab', LAB); await p4.click('#go');
   await p4.waitForSelector('#dock button', { timeout: 10_000 });
   check(JSON.stringify(await strip4()) === JSON.stringify(SIMPLE), 'かんたん表示 (the default): the strip without 成果物・統計・Discord・メンバー・監査', JSON.stringify(await strip4()));

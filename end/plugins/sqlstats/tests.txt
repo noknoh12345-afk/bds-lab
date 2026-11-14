@@ -16,3 +16,8 @@ restart
 ## the file is a normal SQLite database other programs can read
 py import sqlite3\nreturn sqlite3.connect(plugin.data_folder / "stats.db").execute("select count(*) from stats").fetchone()[0]
 = 1
+## a name typed in another case finds the player; the database is in WAL mode
+@A cmd /stats a
+~ @A A: blocks 2 deaths 0 joins 2
+py return plugin.db.execute("PRAGMA journal_mode").fetchone()[0]
+= wal
