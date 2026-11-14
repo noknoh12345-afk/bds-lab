@@ -256,7 +256,9 @@ async function main() {
       });
       req.on('error', reject);
     });
-  const clientIp = (req) => (cfg.panel.trustProxy && req.headers['x-forwarded-for']?.split(',')[0].trim()) || req.socket.remoteAddress;
+  // trustProxy: 手前のリバースプロキシが足した値（X-Forwarded-For の最後）だけを信じる。先頭は接続してきた側が自由に
+  // 書けるので、それを使うとログインの試行回数の制限を IP を偽って回避できてしまう。
+  const clientIp = (req) => (cfg.panel.trustProxy && String(req.headers['x-forwarded-for'] || '').split(',').pop().trim()) || req.socket.remoteAddress;
 
   const routes = [];
   const route = (method, pattern, handler, opts = {}) => routes.push({ method, pattern, handler, auth: opts.auth !== false, audit: opts.audit });
@@ -952,7 +954,7 @@ async function main() {
       let p = url.pathname === '/' ? '/index.html' : url.pathname;
       p = path.normalize(p).replace(/^(\.\.[/\\])+/, '');
       const file = path.join(PUBLIC_DIR, p);
-      if (!file.startsWith(PUBLIC_DIR)) return send(res, 403, 'forbidden');
+      if (file !== PUBLIC_DIR && !file.startsWith(PUBLIC_DIR + path.sep)) return send(res, 403, 'forbidden');
       const data = await fsp.readFile(file).catch(() => null);
       if (!data) return send(res, 404, 'not found');
       res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });

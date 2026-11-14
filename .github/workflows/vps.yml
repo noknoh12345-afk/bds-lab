@@ -24,6 +24,10 @@ concurrency:
 jobs:
   lab:
     runs-on: [self-hosted, bds-vps]
+    # (an environment of its own: in Settings -> Environments -> vps you can require a reviewer or allow only chosen branches
+    # before anything runs on your server; left as it is, it changes nothing. Whoever can write to this repository can run
+    # code on the server through this workflow: give write access only to people you would give a shell to.)
+    environment: vps
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5

@@ -33,7 +33,12 @@ DIR="${RUNNER_DIR:-/opt/actions-runner}"
 say() { printf '%s\n' "$*" >&2; }
 die() { say ""; say "ERR $*"; exit 1; }
 have() { command -v "$1" >/dev/null 2>&1; }
-as_user() { if have runuser; then runuser -u "$USER_" -- "$@"; else su -s /bin/sh "$USER_" -c "$(printf '%s ' "$@")"; fi; }
+# (su's -c takes one string: each argument quoted, so a word is a word whatever is in it)
+as_user() {
+  if have runuser; then runuser -u "$USER_" -- "$@"; return; fi
+  line=""; for a in "$@"; do line="$line '$(printf '%s' "$a" | sed "s/'/'\\\\''/g")'"; done
+  su -s /bin/sh "$USER_" -c "$line"
+}
 
 ask_token() {   # ask_token <what for> -> TOKEN
   TOKEN="${RUNNER_TOKEN:-}"
@@ -49,7 +54,16 @@ ask_token() {   # ask_token <what for> -> TOKEN
   say ""
   TOKEN=$(printf '%s' "$TOKEN" | tr -d ' \r\n')
   [ -n "$TOKEN" ] || die "no token given"
+  case "$TOKEN" in *[!A-Za-z0-9_]*) TOKEN=""; die "that is not a registration token (letters and digits only): copy the value after --token" ;; esac
 }
+
+# every word that ends up in a command line or a path is checked: this script runs as root
+ok_word() { case "$2" in ''|*[!A-Za-z0-9._/,-]*) die "$1=$2: letters, digits and . _ - / , only" ;; esac; }
+ok_word RUNNER_REPO "$REPO"; ok_word RUNNER_LABELS "$LABELS"; ok_word RUNNER_NAME "$NAME"; ok_word RUNNER_USER "$USER_"; ok_word RUNNER_DIR "$DIR"
+case "$REPO" in */*/*|/*|*/|*..*) die "RUNNER_REPO=$REPO: owner/repo" ;; */*) ;; *) die "RUNNER_REPO=$REPO: owner/repo" ;; esac
+case "$USER_" in */*|*,*|-*) die "RUNNER_USER=$USER_: a user name" ;; esac
+# (remove deletes this folder: an absolute path of its own, never / or a system folder)
+case "$DIR" in /|/bin|/boot|/dev|/etc|/home|/lib|/lib64|/opt|/proc|/root|/run|/sbin|/srv|/sys|/tmp|/usr|/var|*..*|*/) die "RUNNER_DIR=$DIR: a folder of the runner's own, like /opt/actions-runner" ;; /*/*) ;; *) die "RUNNER_DIR=$DIR: an absolute path two levels deep or more, like /opt/actions-runner" ;; esac
 
 [ "$(uname -s)" = Linux ] || die "this script is for a Linux server (a Windows or macOS machine: GitHub's own instructions on the Runners page)"
 [ "$(id -u)" = 0 ] || die "run it as root:   sudo sh $0 ${1:-}"
