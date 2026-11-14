@@ -14,6 +14,9 @@
 #   BDS_LAB_STAGE=code|doctor|setup|selftest   stop after that step (default selftest: everything)
 #   BDS_LAB_NO_GIT=1          take the tarball even when git is here
 #   BDS_LAB_NO_PACKAGES=1     install no OS packages (say what is missing instead)
+#   BDS_LAB_LABS=bds,end,ll   which labs to set up and prove (default bds): end = Endstone plugins (Python), ll = LeviLamina
+#                             mods (Wine on Linux). bds is the one that must work; end and ll that cannot be set up here are
+#                             said with what they need, and the install still finishes. A lab this branch does not have is skipped.
 set -eu
 
 main() {
@@ -21,6 +24,8 @@ main() {
   REF="${BDS_LAB_REF:-main}"
   DIR="${BDS_LAB_DIR:-${HOME:-.}/bds-lab}"
   STAGE="${BDS_LAB_STAGE:-selftest}"
+  LABS="$(printf '%s' "${BDS_LAB_LABS:-bds}" | tr ',' ' ')"
+  for l in $LABS; do case "$l" in bds|end|ll) ;; *) die "BDS_LAB_LABS: bds, end or ll (got $l)" ;; esac; done
   case "$STAGE" in code|doctor|setup|selftest) ;; *) die "BDS_LAB_STAGE=$STAGE: one of code doctor setup selftest" ;; esac
 
   # ---- 1. which machine ----
@@ -103,12 +108,24 @@ main() {
   [ "$STAGE" = doctor ] && { done_msg "doctor is clean (no server yet)"; return 0; }
 
   # ---- 6. the server and the tools ----
-  ./lab.sh setup all </dev/null || die "setup did not finish: the lines above say why (a BLOCKED line is the network: a proxy or firewall). Then run this command again."
+  ./lab.sh bds setup </dev/null || die "setup did not finish: the lines above say why (a BLOCKED line is the network: a proxy or firewall). Then run this command again."
+  # the other labs asked for: each on its own, never the end of the install (what one needs is said, and the install goes on)
+  EXTRA_OK=""; EXTRA_BAD=""
+  for l in $LABS; do
+    [ "$l" = bds ] && continue
+    if [ ! -f "$l/flavor.mjs" ]; then say "W $l: this branch has no $l lab (the dev branch has: BDS_LAB_REF=dev)"; EXTRA_BAD="$EXTRA_BAD $l"; continue; fi
+    say "setting up the $l lab..."
+    if ./lab.sh "$l" setup </dev/null; then EXTRA_OK="$EXTRA_OK $l"; else say "W $l: not set up here (above: what it needs; ./lab.sh $l doctor says it again). The rest of the lab works."; EXTRA_BAD="$EXTRA_BAD $l"; fi
+  done
   [ "$STAGE" = setup ] && { done_msg "the server is set up (not yet proven: node lab.mjs selftest)"; return 0; }
 
   # ---- 7. proof: a real server, real clients, the kit ----
   say "selftest: starting a real server and joining it (2-3 minutes)..."
   ./lab.sh selftest </dev/null || die "selftest failed on this machine: the report is $DIR/.lab/selftest.txt (bds/.lab/selftest.txt). The lab is installed; please open an issue with that file: https://github.com/$REPO/issues"
+  for l in $EXTRA_OK; do
+    say "selftest of the $l lab..."
+    ./lab.sh "$l" selftest </dev/null || say "W $l: its selftest failed (report: $DIR/$l/.lab/selftest.txt). bds works; $l needs a look."
+  done
   done_msg "installed and proven on a real server"
 }
 
@@ -181,6 +198,8 @@ done_msg() {
   say "   folder:  $DIR"
   say "   next:    cd \"$DIR\" && ./lab.sh status"
   say "   then open this folder with your AI (Claude Code, Codex ...) and ask for the addon you want: it reads AGENTS.md."
+  [ -z "${EXTRA_OK:-}" ] || say "   labs:    bds$EXTRA_OK ready (./lab.sh end examples, ./lab.sh ll examples: the samples)"
+  [ -z "${EXTRA_BAD:-}" ] || say "   not set up here:$EXTRA_BAD (./lab.sh <lab> doctor)"
 }
 
 main "$@"

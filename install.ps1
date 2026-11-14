@@ -11,6 +11,8 @@
 #   $env:BDS_LAB_REPO  = '<owner/repo>'   a fork (default noknoh12345-afk/bds-lab)
 #   $env:BDS_LAB_STAGE = 'code|doctor|setup|selftest'   stop after that step (default selftest: everything)
 #   $env:BDS_LAB_NO_GIT = '1'             take the zip even when git is here
+#   $env:BDS_LAB_LABS = 'bds,end,ll'      which labs (default bds): end = Endstone plugins, ll = LeviLamina mods; bds must work,
+#                                         end and ll that cannot be set up here are said and the install still finishes
 
 function Install-BdsLab {
   $ErrorActionPreference = 'Stop'
@@ -23,6 +25,8 @@ function Install-BdsLab {
   $ref = Or $env:BDS_LAB_REF 'main'
   $dir = Or $env:BDS_LAB_DIR (Join-Path $HOME 'bds-lab')
   $stage = Or $env:BDS_LAB_STAGE 'selftest'
+  $labs = @((Or $env:BDS_LAB_LABS 'bds') -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+  foreach ($l in $labs) { if (@('bds', 'end', 'll') -notcontains $l) { Fail "BDS_LAB_LABS: bds, end or ll (got $l)" } }
   if (@('code', 'doctor', 'setup', 'selftest') -notcontains $stage) { Fail "BDS_LAB_STAGE=${stage}: one of code doctor setup selftest" }
 
   # ---- 1. which machine ----
@@ -100,14 +104,25 @@ function Install-BdsLab {
     if ($stage -eq 'doctor') { Done 'doctor is clean (no server yet)'; return }
 
     # ---- 5. the server and the tools ----
-    & $lab setup all
+    & $lab bds setup
     if ($LASTEXITCODE -ne 0) { Fail 'setup did not finish: the lines above say why (a BLOCKED line is the network: a proxy or firewall). Then run this command again.' }
+    # the other labs asked for: each on its own, never the end of the install
+    $extraOk = @(); $extraBad = @()
+    foreach ($l in $labs) {
+      if ($l -eq 'bds') { continue }
+      if (-not (Test-Path (Join-Path $dir "$l\flavor.mjs"))) { Say "W ${l}: this branch has no $l lab (the dev branch has: `$env:BDS_LAB_REF='dev')"; $extraBad += $l; continue }
+      Say "setting up the $l lab..."
+      & $lab $l setup
+      if ($LASTEXITCODE -eq 0) { $extraOk += $l } else { Say "W ${l}: not set up here (above: what it needs; .\lab.cmd $l doctor). The rest of the lab works."; $extraBad += $l }
+    }
     if ($stage -eq 'setup') { Done 'the server is set up (not yet proven: .\lab.cmd selftest)'; return }
 
     # ---- 6. proof: a real server, real clients, the kit ----
     Say 'selftest: starting a real server and joining it (2-3 minutes; if Windows Firewall asks about bedrock_server.exe, either answer works: the lab uses this machine only)...'
     & $lab selftest
     if ($LASTEXITCODE -ne 0) { Fail "selftest failed on this machine: the report is $dir\.lab\selftest.txt (bds\.lab\selftest.txt). The lab is installed; please open an issue with that file: https://github.com/$repo/issues" }
+    foreach ($l in $extraOk) { Say "selftest of the $l lab..."; & $lab $l selftest; if ($LASTEXITCODE -ne 0) { Say "W ${l}: its selftest failed (report: $dir\$l\.lab\selftest.txt). bds works; $l needs a look." } }
+    if ($extraBad.Count) { Say "   not set up here: $($extraBad -join ' ') (.\lab.cmd <lab> doctor)" }
     Done 'installed and proven on a real server'
   } finally { Pop-Location }
 }
