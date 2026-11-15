@@ -14,7 +14,13 @@ if [ "$(ver node)" -lt 22 ] 2>/dev/null; then
   NODE="$PWD/.node/bin/node"; export PATH="$PWD/.node/bin:$PATH"
 fi
 if [ ! -d .deps/node_modules/bedrock-protocol ] || [ ! -d .deps/node_modules/node-datachannel ]; then
-  mkdir -p .deps && cd .deps && [ -f package.json ] || echo '{"private":true}' > package.json
+  # bedrock-protocol lists prismarine-xbox-services as a GitHub dependency (newer npm refuses those); it is only used to join
+  # friends' worlds through Xbox sessions, never for a direct join to a server: a placeholder takes its place
+  mkdir -p .deps/stub/prismarine-xbox-services && cd .deps
+  echo '{"name":"prismarine-xbox-services","version":"0.0.0","main":"index.js"}' > stub/prismarine-xbox-services/package.json
+  echo 'module.exports = { XboxClient: class { constructor () { throw new Error("bdslab remote: Xbox sessions (friends worlds) are not used") } } }' > stub/prismarine-xbox-services/index.js
+  # (an absolute path: npm resolves a relative file: override against the dependent, bedrock-protocol, and links nothing)
+  echo "{\"private\":true,\"overrides\":{\"prismarine-xbox-services\":\"file:$PWD/stub/prismarine-xbox-services\"}}" > package.json
   echo "installing bedrock-protocol and node-datachannel (once)"
   npm i bedrock-protocol@latest --ignore-scripts --no-audit --no-fund --loglevel=error
   npm i node-datachannel@latest --no-audit --no-fund --loglevel=error
