@@ -103,6 +103,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
       // (already among builds, every way has one: then just get out, the shortest way, and steer again once clear)
       if (guardOn && builtTurns < 11 && builtAhead(b, p, r)) { builtTurns++; turn += turn >= 0 ? 35 : -35; if (Math.abs(turn) > 180) turn = -turn % 180; await sleep(50); continue; }
       if (builtTurns >= 11 && !guardReason(b)) builtTurns = 0; else if (builtTurns < 11) builtTurns = 0;
+      if (hostilesNear(b, 5).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); continue; }
       await b.act('look', [String(yaw.toFixed(1)), '0']).catch(() => {});
       await b.act('sprint', ['on']).catch(() => {});
       await sleep(400);
@@ -238,17 +239,56 @@ timers.push(setInterval(() => {
   if (wet !== surfacing) { surfacing = wet; b.act('jump', [wet ? 'on' : 'off']).catch(() => {}); }
 }, 400));
 
-// ---------- self-defense: a hostile mob within reach gets hit back (no block is touched: allowed near builds too) ----------
-let swinging = false;
+// ---------- combat: fight like a PvP player, not just swing back ----------
+// best weapon in hand; close in on the nearest hostile (strafing a little, as a player does against arrows); hit only when it is
+// under the crosshair in reach (legit); a creeper is hit once and backed off from; low on health: break away, sprinting from them,
+// and eat. Runs whenever no goal verb is fighting for itself (get_/kill_ have their own reflexes), and inside long walks.
+const WEAPONS = ['netherite_sword', 'diamond_sword', 'iron_sword', 'stone_sword', 'wooden_sword', 'diamond_axe', 'iron_axe', 'stone_axe', 'wooden_axe'];
+let fighting = false, lastWeaponCheck = 0;
+const hostilesNear = (b, r) => { const P = b.state().pos; return [...b.entities.values()].filter((x) => HOSTILE.test(x.type ?? '') && Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) < r).map((x) => ({ e: x, d: Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) })).sort((p, q) => p.d - q.d); };
+async function invList(b) { const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap); await b.act('inv', []).catch(() => {}); ctx.taps.delete(tap); return seen.join(' '); }
+async function armUp(b) {
+  if (Date.now() - lastWeaponCheck < 5000) return; lastWeaponCheck = Date.now();
+  const inv = await invList(b), w = WEAPONS.find((x) => inv.includes('minecraft:' + x + '*'));
+  if (w && !new RegExp(`\\d+:minecraft:${w}\\*\\d+[^|]*\\(holding slot`).test(inv)) await b.act('hold_' + w, []).catch(() => {});
+}
+async function breakAway(b, foes) {
+  const P = b.state().pos; let ax = 0, az = 0; for (const f of foes) { ax += P.x - f.e.x; az += P.z - f.e.z; }
+  const yaw = (Math.atan2(-ax, az) * 180) / Math.PI;
+  log(`fight: health ${me.hp}: breaking away from ${foes.length} (${foes.map((f) => f.e.type.replace('minecraft:', '')).join(' ')})`);
+  await b.act('look', [yaw.toFixed(0), '0']).catch(() => {});
+  await b.act('sprint', ['on']).catch(() => {}); await b.act('option', ['autojump', 'on']).catch(() => {});
+  await sleep(2500); await b.act('sprint', ['off']).catch(() => {});
+  await b.act('eat', []).catch(() => {});
+}
+async function engage(b, maxMs = 12000) {
+  if (fighting) return; fighting = true;
+  const t0 = Date.now(); let strafe = 1;
+  try {
+    while (Date.now() - t0 < maxMs && me.connected && !b.state().dead) {
+      const foes = hostilesNear(b, 7); if (!foes.length) return;
+      if (me.hp !== null && me.hp <= 6) { await breakAway(b, foes); return; }
+      const { e, d } = foes[0], kind = e.type.replace('minecraft:', '');
+      await armUp(b);
+      if (/creeper/.test(kind) && d < 3.2) { await b.act('attack', [kind]).catch(() => {}); await b.act('look', [String((((Math.atan2(-(b.state().pos.x - e.x), b.state().pos.z - e.z)) * 180) / Math.PI).toFixed(0)), '0']).catch(() => {}); await b.act('sprint', ['on']).catch(() => {}); await sleep(1200); await b.act('sprint', ['off']).catch(() => {}); continue; }
+      if (d > 2.7) {   // close in, a little to the side each time (arrows)
+        const P = b.state().pos, yaw = (Math.atan2(-(e.x - P.x), e.z - P.z) * 180) / Math.PI + (/skeleton|stray|bogged|pillager/.test(kind) ? 25 * (strafe = -strafe) : 0);
+        await b.act('look', [yaw.toFixed(0), '0']).catch(() => {});
+        await b.act('sprint', ['6']).catch(() => {});
+        continue;
+      }
+      await b.act('attack', [kind]).catch(() => {});
+      await sleep(350);   // (a full swing: 1.9+ style timing hits harder with a sword)
+    }
+  } finally { fighting = false; }
+}
+timers.push(setInterval(() => {
+  const b = me.bot; if (!b || !me.connected || fighting || b.state().dead) return;
+  if (/^auto: (get|kill|mine|fight|stronghold)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself)
+  const f = hostilesNear(b, 5); if (!f.length) return;
+  engage(b).catch(() => {});
+}, 500));
 const skipUntil = new Map();
-timers.push(setInterval(async () => {
-  const b = me.bot; if (!b || !me.connected || swinging || b.state().dead) return;
-  const P = b.state().pos, e = [...b.entities.values()].filter((x) => HOSTILE.test(x.type ?? '') && !/creeper/.test(x.type) && Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) < 2.9 && !(skipUntil.get(String(x.id)) > Date.now()))[0];
-  if (!e) return;
-  skipUntil.set(String(e.id), Date.now() + 2500);   // one try per mob every 2.5 s (a mob behind a block is not swung at over and over)
-  swinging = true;
-  try { await b.act('attack', [e.type.replace('minecraft:', '')]); } catch { /* gone */ } finally { swinging = false; }
-}, 700));
 
 
 // ---------- auto: the whole run on its own (`auto` starts it, `auto stop` ends it) ----------
