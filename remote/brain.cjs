@@ -103,8 +103,8 @@ const BUILTIN = {
       }
       if (i % 2 === 1) log(`travel: at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}, ${Math.round(Math.hypot(tx - r.x, tz - r.z))} to go`);
     }
-    const r = me.bot.state().pos;
-    log(`travel: arrived ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}`, { dc: true });
+    const r = me.bot.state().pos, left = Math.round(Math.hypot(tx - r.x, tz - r.z));
+    log(left < 8 ? `travel: arrived ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}` : `travel: called off at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}, ${left} to go`, { dc: left < 8 });
   },
   wait: async (a) => sleep(+(a[0] ?? 1000)),
   // join again now (it also does by itself, once, when the server really dropped it)
@@ -307,6 +307,11 @@ BUILTIN.auto = async (a) => {
   if (live()) return log('auto: already running');
   autoRun = { gen: ++me.autoGen }; autoMark(true); try { await auto(); } catch (e) { log('auto: error ' + e.message, { dc: true }); } finally { if (live()) autoMark(false); autoRun = null; }
 };
+// a watchdog: auto is meant to be running (auto.json) but no run is live and nothing is queued: start it again
+timers.push(setInterval(() => {
+  let on = false; try { on = JSON.parse(fsx.readFileSync(AUTOF, 'utf8')).on; } catch { /* */ }
+  if (on && !live() && !me.queue.includes('auto') && me.connected && !String(me.busy ?? '').startsWith('auto')) { log('auto: not running though it should: starting it again'); me.queue.push('auto'); }
+}, 30000));
 // it was running when the bot last stopped: carry on (the run is not over until the goal and the hours are)
 try { if (JSON.parse(fsx.readFileSync(AUTOF, 'utf8')).on) { me.queue.push('auto'); log('auto: resuming'); } } catch { /* never started */ }
 NOW['auto'] = (a) => { if (a[0] === 'stop') return BUILTIN.auto(a); me.queue.push('auto'); };
