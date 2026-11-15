@@ -133,7 +133,8 @@ async function connect() {
 async function stayIn() {
   let wait = 5000;
   for (;;) {
-    if (me.connected && Date.now() - me.lastPacket > (me.closedAt ? 15000 : 30000)) {
+    // (a long path search can hold this thread for seconds: packets wait unread meanwhile, so look again after letting them in)
+    if (me.connected && Date.now() - me.lastPacket > (me.closedAt ? 15000 : 30000) && (await sleep(4000), Date.now() - me.lastPacket > 12000)) {
       me.connected = false; me.closedAt = null; log('connection lost: joining again', { dc: true });
       try { me.bot?.close(); } catch { /* */ }
       await sleep(5000);
