@@ -73,8 +73,8 @@ const BUILTIN = {
   // a long walk in steps over the chunks the client has (goto alone only paths through what it already knows)
   travel: async (a) => {
     const tx = +a[0], tz = +a[1];
-    for (let i = 0; i < 400 && !me.abort; i++) {
-      while (!me.connected || !me.bot) { if (me.abort) return; await sleep(1000); }   // dropped on the way: carry on once back in
+    for (let i = 0; i < 400 && !me.abort && !disposed; i++) {
+      while (!me.connected || !me.bot) { if (me.abort || disposed) return; await sleep(1000); }   // dropped on the way: carry on once back in
       const q = me.bot.state().pos, dx = tx - q.x, dz = tz - q.z, d = Math.hypot(dx, dz);
       if (d < 4) break;
       const st = Math.min(32, d);
