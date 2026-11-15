@@ -34,6 +34,23 @@ export function npmFailed(dir, key) {
 export function npmNote(dir, key, msg) {
   try { if (msg === null) fs.rmSync(`${dir}.npm-failed`, { force: true }); else { fs.mkdirSync(path.dirname(dir), { recursive: true }); fs.writeFileSync(`${dir}.npm-failed`, JSON.stringify({ key, at: Date.now(), msg })); } } catch { /* only a memo */ }
 }
+// one install at a time into a folder: several lab processes build at once (go all, a test running two units, CI's units beside
+// each other), and the second one used to empty the folder while the first was installing into it — npm failed with nothing to
+// say, and that failure was kept for 10 minutes: every build in them went untyped. The lock is a folder (mkdir is atomic on every
+// system); a lock older than 15 minutes is a process that died holding it
+export function withLock(dir, fn, { waitMs = 600_000, staleMs = 900_000 } = {}) {
+  const lock = `${dir}.lock`, t0 = Date.now(), nap = new Int32Array(new SharedArrayBuffer(4));
+  fs.mkdirSync(path.dirname(lock), { recursive: true });
+  for (;;) {
+    try { fs.mkdirSync(lock); break; } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      try { if (Date.now() - fs.statSync(lock).mtimeMs > staleMs) { fs.rmSync(lock, { recursive: true, force: true }); continue; } } catch { continue; }
+      if (Date.now() - t0 > waitMs) throw new Error(`${lock}: another install has held it for ${Math.round((Date.now() - t0) / 1000)} s (a stuck npm? remove the folder)`);
+      Atomics.wait(nap, 0, 0, 300);
+    }
+  }
+  try { return fn(); } finally { fs.rmSync(lock, { recursive: true, force: true }); }
+}
 function npmI(dir, specs, extra = []) {
   const key = [...specs, ...extra].join(' '), was = npmFailed(dir, key);
   if (was) throw new Error(was);
@@ -54,10 +71,12 @@ export function tools(cache) {
   // (the stamp alone is not the tools: a cache restored with the stamp and without node_modules — CI's bds/.lab — said
   //  "Cannot find module 'esbuild'" on every build until the stamp changed. Installed again whenever they do not resolve)
   const there = () => { try { req.resolve('esbuild'); req.resolve('typescript'); return true; } catch { return false; } };
-  if (!exists(stamp) || fs.readFileSync(stamp, 'utf8') !== want || !there()) {
+  const fresh = () => exists(stamp) && fs.readFileSync(stamp, 'utf8') === want && there();
+  if (!fresh()) withLock(dir, () => {   // (checked again inside: another process may have installed them while this one waited)
+    if (fresh()) return;
     npmI(dir, Object.entries(TOOLS).map(([k, v]) => `${k}@${v}`));
     fs.writeFileSync(stamp, want);
-  }
+  });
   return { req, esbuild: req('esbuild'), get ts() { return req('typescript'); } };
 }
 
@@ -99,11 +118,12 @@ export async function sdk({ cache, bv, deps, npmDoc }) {
   specs.sort();
   const key = crypto.createHash('sha1').update(specs.join(' ')).digest('hex').slice(0, 10);
   const dir = path.join(cache, 'sdk', key);
-  if (!exists(path.join(dir, 'ok'))) {
+  if (!exists(path.join(dir, 'ok'))) withLock(dir, () => {   // (one install of this SDK at a time; another one's done: kept)
+    if (exists(path.join(dir, 'ok'))) return;
     fs.rmSync(dir, { recursive: true, force: true });
     npmI(dir, specs);
     fs.writeFileSync(path.join(dir, 'ok'), specs.join('\n') + '\n');
-  }
+  });
   try {   // (several lab processes at once: written whole, then renamed)
     const all = read(); all[want] = { key, at: Date.now() };
     const tmp = `${memo}.${process.pid}.tmp`; fs.writeFileSync(tmp, JSON.stringify(all)); fs.renameSync(tmp, memo);
