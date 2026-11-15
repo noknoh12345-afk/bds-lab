@@ -195,6 +195,18 @@ async function escape() {
     for (const yaw of [0, 90, 180, 270, 45, 135, 225, 315]) { await me.bot.act('look', [String(yaw), '0']); await me.bot.act('jump', []).catch(() => {}); await me.bot.act('walk', ['forward', '30']).catch(() => {}); if (Math.hypot(me.bot.state().pos.x - p.x, me.bot.state().pos.z - p.z) > 4) break; }
   }
 }
+// work far from everyone: the builds are around the world spawn, where a death also brings it back. Out to the work area
+// (cfg.workArea, default 700 700) whenever it is closer than 450 to the spawn; things lost in a death are fetched on the way
+// only when that death was out there too
+const WORK = (cfg.workArea ?? '700 700').split(/\s+/).map(Number);
+async function goFar() {
+  if (!(await waitIn()) || me.dim !== 'overworld') return;
+  const p = me.bot.state().pos;
+  if (Math.hypot(p.x, p.z) >= 450) return;
+  log(`auto: near the spawn (${Math.round(p.x)} ${Math.round(p.z)}): out to the work area ${WORK.join(' ')}`, { dc: true });
+  me.abort = false;
+  await BUILTIN.travel([String(WORK[0]), String(WORK[1])]);
+}
 async function dragon() {
   if (me.dim !== 'the_end') return false;
   await sleep(4000);
@@ -218,6 +230,7 @@ async function auto() {
   for (const st of STEPS) {
     if (!live()) return;
     for (let tries = 0; live(); tries++) {
+      await goFar();
       log(`auto: step "${st.name}"${tries ? ` (try ${tries + 1})` : ''}`, { dc: !tries });
       let ok = true;
       if (st.special === 'dragon') ok = await dragon();
@@ -225,7 +238,7 @@ async function auto() {
       else for (const c of st.cmds) { const r = await run(c, st.name); if (!r && !st.optional) ok = false; }
       if (st.dim && me.dim !== st.dim) ok = false;
       if (ok || st.optional) break;
-      if (me.deaths > (st.deaths ?? 0)) { st.deaths = me.deaths; await run('goto_death', 'fetch the things back'); }
+      if (me.deaths > (st.deaths ?? 0)) { st.deaths = me.deaths; const dp = me.bot?.deathPos?.(); if (!dp || Math.hypot(dp.x, dp.z) >= 450) await run('goto_death', 'fetch the things back'); }
       if (tries >= 7 && !st.has) break;
       await sleep(3000);
     }
