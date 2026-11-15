@@ -9,7 +9,7 @@ const timers = [];
 
 // ---------- the rule: keep away from builds and other players ----------
 // blocks no world generates by itself in the open (villages and ruins have some too: kept away from as well, which is fine)
-const BUILT = /planks|glass|crafting_table|chest|barrel|_bed$|torch|lantern|wool|carpet|concrete|bricks|_slab|_stairs|_door|fence|furnace|smoker|anvil|_sign|bookshelf|rail|redstone_(wire|torch|lamp|block)|repeater|comparator|piston|hopper|composter|lectern|scaffolding|ladder|banner|bell|item_frame|shulker_box|enchanting_table|brewing_stand|beacon|quartz_block|smooth_stone|polished_|cut_|_wall$|campfire|flower_pot|candle|lever|_button|pressure_plate|observer|dispenser|dropper|tnt|iron_block|gold_block|diamond_block|emerald_block|copper_block|hay_block|glazed_terracotta|stained|sea_lantern|end_rod/;
+const BUILT = /planks|glass|crafting_table|chest|barrel|_bed$|torch|lantern|wool|(?<!moss_)carpet|concrete|bricks|_slab|_stairs|_door|fence|furnace|smoker|anvil|_sign|bookshelf|rail|redstone_(wire|torch|lamp|block)|repeater|comparator|piston|hopper|composter|lectern|scaffolding|ladder|banner|bell|item_frame|shulker_box|enchanting_table|brewing_stand|beacon|quartz_block|smooth_stone|polished_|cut_|_wall$|campfire|flower_pot|candle|lever|_button|pressure_plate|observer|dispenser|dropper|tnt|iron_block|gold_block|diamond_block|emerald_block|copper_block|hay_block|glazed_terracotta|stained|sea_lantern|end_rod/;
 // actions that only move or look: allowed anywhere (they change nothing)
 const PASSIVE = /^(auto|map|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
 let guardOn = ctx.guardOn ?? true;
@@ -81,7 +81,18 @@ const BUILTIN = {
       try { await me.bot.act('goto', [String(Math.round(q.x + (dx / d) * st)), String(Math.round(q.z + (dz / d) * st))]); } catch { continue; }
       if (!me.connected) continue;
       const r = me.bot.state().pos;
-      if (Math.hypot(r.x - q.x, r.z - q.z) < 2) { log(`travel: stuck at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}`, { dc: true }); return; }
+      if (Math.hypot(r.x - q.x, r.z - q.z) < 2) {
+        // no way straight on (a cliff, a lake, a wall): around it, to the side at 45 / 90 degrees, either hand
+        let moved = false;
+        for (const turn of [0.785, -0.785, 1.571, -1.571, 2.356, -2.356]) {
+          const ang = Math.atan2(dz, dx) + turn, sx = Math.round(r.x + Math.cos(ang) * 24), sz = Math.round(r.z + Math.sin(ang) * 24);
+          try { await me.bot.act('goto', [String(sx), String(sz)]); } catch { /* */ }
+          const t = me.bot.state().pos; if (Math.hypot(t.x - r.x, t.z - r.z) > 6) { moved = true; break; }
+          if (me.abort) return;
+        }
+        if (!moved) { log(`travel: stuck at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}`, { dc: true }); return; }
+        continue;
+      }
       if (i % 2 === 1) log(`travel: at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}, ${Math.round(Math.hypot(tx - r.x, tz - r.z))} to go`);
     }
     const r = me.bot.state().pos;
