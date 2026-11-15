@@ -26,12 +26,12 @@ export default [
   { ignores: ['**/node_modules/**', '**/.lab/**', '**/dist/**', '**/runs/**', 'training/**', 'bds/addons/**', 'end/plugins/**', 'll/mods/**', 'skills/probes/**', 'bds/docs/*/bp/**',
     'bds/bench/**/bp/**', 'bds/vendor/**', 'common/nethernet-connect/**', 'sandbox-be/src/vm/runtime/**', 'sandbox-be/src/vm/commands/**', '**/data/**', 'common/kit/kit.js',
     // (vendored as it is: fzstd's own build, the panel's zstd)
-    'panel/lib/zstd.mjs'] },
+    'panel/lib/zstd.mjs', 'levikit/panel/public/vendor/**'] },
   { files: ['**/*.mjs', '**/*.js'], languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: node }, rules },
   { files: ['**/*.cjs'], languageOptions: { ecmaVersion: 2024, sourceType: 'commonjs', globals: node }, rules },
   // run in a browser page (the lab's pages, the app lab's page scripts, bedrock-binary's report, the management panel and the
 // page.evaluate callbacks of its browser test)
-  { files: ['bedrock-binary/src/report/assets/**/*.js', 'common/nethernet-connect/web/**/*.js', 'app/lib/playwright-login.mjs', 'panel/**/*.js', 'panel/**/*.mjs', 'tests/panel-browser.mjs'], languageOptions: { globals: { ...node, ...browser } } },
+  { files: ['bedrock-binary/src/report/assets/**/*.js', 'common/nethernet-connect/web/**/*.js', 'app/lib/playwright-login.mjs', 'panel/**/*.js', 'panel/**/*.mjs', 'tests/panel-browser.mjs', 'levikit/panel/public/**/*.js'], languageOptions: { globals: { ...node, ...browser } } },
   // run in the game: the in-world helper (common/helper.js: its form wrappers are spliced in by text, core.mjs EVAL_HELPER)
   { files: ['common/helper.js'], rules: { 'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none', varsIgnorePattern: '^(_|wrapForm$)' }] } },
   // LegacyScriptEngine (the ll lab's helper): its own globals

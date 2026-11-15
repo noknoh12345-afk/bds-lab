@@ -317,7 +317,6 @@ export function growth(args, out = console.log) {
   const cands = k.rules.filter((x) => x.status === 'candidate'); if (cands.length) next.push(`${cands.length} candidates: prove one (probe or test) and skill promote <id> --evidence ...; or retire it`);
   const src = k.rules.filter((x) => x.status === 'verified' && x.evidence?.kind === 'source'); if (src.length) next.push(`${src.length} [source] rules: a test or probe for one makes it re-checkable here (${src.slice(0, 3).map((r) => r.id).join(' ')})`);
   if (!h) next.push('skill bench: measure whether the skills make AI builds better');
-  if (sc.next) next.push(sc.next);
   if (log.length > 1) out(`  history: ${log.slice(-6).map((x) => `gen ${x.gen} ${x.at} ${x.verified}r/${x.rerun}p/${x.candidate}c`).join(' · ')}`);
   // the layers above the rules: the skills as prompts (grade, routing, refinements, use) and the rubric that judges them
   const L = forge.growthLines(readJ(HIST, []));

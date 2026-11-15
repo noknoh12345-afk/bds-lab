@@ -71,20 +71,6 @@ export async function i18nCmd(args, out = console.log) {
   let miss = missing(dir);
   if (args.includes('--ai') && miss.length) {
     out('ERR i18n --ai: not in the stable branch (dev); fill the lines: node lab.mjs i18n <lang> key=text ...'); return false;
-    const pickVia = () => null, ask1 = null, via = pickVia(opt('--via'));
-    if (!via) { out('ERR --ai needs an AI: ANTHROPIC_API_KEY or OPENAI_API_KEY in .env (node lab.mjs login ai), or the claude / codex / gemini CLI'); return false; }
-    let tokens = 0;
-    const groups = new Map(); for (const m of miss) if (m.ref) { const g = `${m.dir}\u0000${m.lang}\u0000${m.refLang}`; (groups.get(g) ?? groups.set(g, []).get(g)).push(m); }
-    for (const [g, ms] of groups) {
-      const [d, lang, from] = g.split('\u0000');
-      for (let i = 0; i < ms.length; i += 150) {
-        const rows = ms.slice(i, i + 150).map((m) => [m.key, m.ref]);
-        try { const r = await ask1(via, prompt(from, lang, rows), { model: opt('--model') }); tokens += r.tokens; const got = answer(r.text, rows.map(([key]) => key)); write(d, lang, [...got]); out(`  ${lang}: +${got.size}/${rows.length} (${from} → ${lang})`); }
-        catch (e) { out(`E i18n ${lang}: ${e.message.slice(0, 200)}`); }
-      }
-    }
-    miss = missing(dir);
-    out(`  AI ${via}${tokens ? `: ${tokens.toLocaleString('en')} tokens` : ''}`);
   }
   if (!miss.length) { out(`OK i18n ${u}: every language has every line (${texts(dir).packs.map((pk) => `${pk.p}: ${pk.langs.join(' ')}`).join(' | ')})`); return true; }
   const by = new Map(); for (const m of miss) (by.get(m.lang) ?? by.set(m.lang, []).get(m.lang)).push(m);

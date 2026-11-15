@@ -22,6 +22,10 @@ jobs:
         with: { node-version: 22 }
       - run: npm i -g esbuild@0.28 typescript@6.0.3
       - run: node common/run-tests.mjs tests/*-offline.mjs tests/offline.mjs
+      # the static check for real bugs (names that do not exist, code that cannot run): its config said CI ran it, and on this
+      # branch nothing did — 101 findings had gathered (two of them dead code left where dev's parts were taken out)
+      - name: ESLint
+        run: npx --yes eslint@9 -c tests/eslint.config.mjs .
   units:
     # which units there are (the same list `go all` uses): one job each below
     runs-on: ubuntu-latest

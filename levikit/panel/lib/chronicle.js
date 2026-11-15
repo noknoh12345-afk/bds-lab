@@ -5,7 +5,6 @@
 //   2. 今のワールドから対象チャンクの全タグ・そこにいるエンティティを消す
 //   3. 1 を書き込み、新しい LevelDB を作って差し替える（元の db は .rollback-old に退避 → 成功したら削除）
 const fsp = require('node:fs/promises');
-const path = require('node:path');
 const { LevelDBReader, writeDatabase } = require('./leveldb');
 const { classifyKey, chunkKey, digpKey, remapEntities } = require('./worldio');
 

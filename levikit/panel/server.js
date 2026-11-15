@@ -8,7 +8,7 @@ const path = require('node:path');
 const os = require('node:os');
 const crypto = require('node:crypto');
 
-const { loadConfig, saveConfig, CONFIG_PATH, merge } = require('./lib/config');
+const { loadConfig, saveConfig, CONFIG_PATH } = require('./lib/config');
 const { Instance } = require('./lib/instance');
 const { BackupManager } = require('./lib/backup');
 const { Orchestrator, syncGlacieConfig } = require('./lib/orchestrator');
@@ -20,7 +20,7 @@ const { readProps } = require('./lib/props');
 const { dimIdInWorld, dimRangeInWorld } = require('./lib/orchestrator');
 const { describeProps, writeProps } = require('./lib/props');
 const { verifyPassword, hashPassword, Sessions, parseCookies } = require('./lib/auth');
-const { readJson, writeJsonAtomic, sleep } = require('./lib/util');
+const { readJson, sleep } = require('./lib/util');
 const { Metrics } = require('./lib/metrics');
 const { PlayerDB } = require('./lib/players');
 const { normalizeTask, isDue, runTask, KINDS } = require('./lib/tasks');

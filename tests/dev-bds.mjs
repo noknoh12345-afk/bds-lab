@@ -10,7 +10,6 @@
 // side). gaps → record → mutate run beside harden on a copy of the fixed unit as go left it (devbds_side: harden edits the unit's
 // own files while it runs). One after the other they took the sum of all three
 import fs from 'node:fs';
-import http from 'node:http';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
