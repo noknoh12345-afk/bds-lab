@@ -261,7 +261,7 @@ function loginData(o) {
 // lan: { nc, config, guard, endpoint, transport, account, observe, allowChat } — transport=lan joins through nethernet-connect
 // (common/nethernet-connect): only peers on this machine / the same LAN / the user's own Tailscale devices, a local world by the
 // local world's own method (UDP 7551), a server by its own (NetherNet HTTP / RakNet); account = a signed-in Xbox account (else offline)
-async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, emit, blockAt, itemTags, packId, packNames = {}, opts = {}, timeoutMs = 60000, transport = 'raknet', rtc = null, nn = {}, lan = null, cmdBehind = false }) {
+async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, emit, blockAt, itemTags, packId, packNames = {}, opts = {}, timeoutMs = 60000, transport = 'raknet', rtc = null, nn = {}, lan = null, cmdBehind = false, online = null }) {
   const bp = load(req);
   // transport=raknet|nethernet (default: what the server runs). NetherNet only: identity=verify|strict|warn|off (the server's
   // a=identity: verify = trust on first use like the game, strict = a key not pinned yet is refused), key=<pin> (the server
@@ -300,7 +300,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     client = conn.client;
     lanConn = conn;
   } else {
-    client = bp.createClient({ host, port, username: name, offline: true, skipPing: true, version, followPort: false, conLog: null, raknetBackend: 'raknet-native', ...(tr === 'nethernet' ? { connectTimeout: 60000 } : {}), ...(deviceOS ? { deviceOS } : {}), skinData });
+    // online = { profilesFolder, onMsaCode }: an Xbox sign-in (remote/bot.cjs on an online-mode server); else offline like the lab's BDS
+    client = bp.createClient({ host, port, username: name, offline: !online, ...(online ? { profilesFolder: online.profilesFolder, onMsaCode: online.onMsaCode } : {}), skipPing: true, version, followPort: false, conLog: null, raknetBackend: 'raknet-native', ...(tr === 'nethernet' ? { connectTimeout: 60000 } : {}), ...(deviceOS ? { deviceOS } : {}), skinData });
   }
   // NetherNet: the offer's identity is signed with the login's key; DTLS encrypts, so the game layer does not (like a real client)
   if (NEXT.conn) { NEXT.conn.keyPair = client.ecdhKeyPair; client.disableEncryption = true; }
@@ -377,7 +378,15 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     const L = (p.abilities ?? []).find((l) => l.type === 'base'), has = (set, k) => (!set ? null : Array.isArray(set) ? set.includes(k) : typeof set === 'object' ? !!set[k] : null);
     if (has(L?.allowed, 'may_fly') && has(L?.enabled, 'may_fly') === false) flying = false;   // (the layer sets may_fly, to no)
   });
-  client.on('player_list', (p) => { for (const r of [].concat(p.records?.records ?? p.records ?? [])) if (r.type === 'add' && r.username) players.set(r.username, r.entity_unique_id); });
+  // (remove records carry only the uuid: who left is found through the uuid each add came with)
+  const playerUuid = new Map();   // uuid -> name
+  client.on('player_list', (p) => {
+    const add = (p.records?.type ?? 'add') === 'add';
+    for (const r of [].concat(p.records?.records ?? p.records ?? [])) {
+      if (add && r.username) { players.set(r.username, r.entity_unique_id); if (r.uuid) playerUuid.set(r.uuid, r.username); }
+      else if (!add && r.uuid && playerUuid.has(r.uuid)) { players.delete(playerUuid.get(r.uuid)); playerUuid.delete(r.uuid); }
+    }
+  });
   // leaving the End through its exit portal plays the credits: the player skips them (Esc), then the server respawns them
   client.on('show_credits', (p) => { if (p.status === 0) { say('credits (skipped)'); client.queue('show_credits', { runtime_entity_id: rid, status: 1 }); } });
   // a packet this BDS build's table cannot write (field names differ per protocol) is reported, never thrown into the action
@@ -2511,6 +2520,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   const VERBS = makeVerbs(K);
   bot.close = () => { loop.stop(); try { client.close(); } catch { /* closed */ } };
   bot.state = () => big({ pos: feet(), yaw, pitch, dead });
+  // remote/bot.cjs (a resident player on someone's server) reads these: the chunks it knows, the mobs and players in sight, the connection
+  bot.world = world; bot.entities = entities; bot.client = client; bot.players = () => [...players.keys()];
   return bot;
 }
 

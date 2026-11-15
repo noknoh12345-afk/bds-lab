@@ -1,0 +1,9 @@
+{
+  "host": "dis.daggskog.org",
+  "port": 19132,
+  "name": "LabBot",
+  "version": "1.26.60",
+  "webhook": "",
+  "guardRadius": 48,
+  "transport": "auto"
+}
