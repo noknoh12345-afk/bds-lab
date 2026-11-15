@@ -1527,7 +1527,11 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   // n ticks of this client (paced as above), not n x 50 ms of the wall clock. Always through the event loop: 0 ticks = the next turn
   // of it, and once this client has left, n x 50/k ms of the wall clock (a goal still looping after the player left used to spin
   // on promises that resolved at once, and the whole lab process hung at 100% CPU)
-  const ticks = (n) => new Promise((r) => {
+  // cancel: what was asked is to stop now (remote/bot.cjs: a build or a player came close). Every wait from then on throws, so a
+  // long verb (get_<item>, a walk, a fight) ends at its next step instead of going on; the next top-level action clears it
+  let cancelled = false, actDepth = 0;
+  const ticks = (n) => (cancelled && actDepth > 0 ? Promise.reject(new Error('cancelled')) : ticks0(n));
+  const ticks0 = (n) => new Promise((r) => {
     const k = Math.max(0, Math.ceil(Number(n) || 0)), at = tick + BigInt(k);
     if (loopStopped) return void setTimeout(r, Math.max(1, k * TICK_MS));
     if (at <= tick) return void setImmediate(r);
@@ -1578,7 +1582,13 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   const num = (v, d) => (v === undefined || v === '' ? d : Number(v));
 
   // one lab cmd: `@Name <action> args...`
+  bot.cancel = () => { cancelled = true; for (const k of Object.keys(controls)) controls[k] = false; stick = null; };
   bot.act = async (action, a) => {
+    if (actDepth === 0) cancelled = false;
+    actDepth++;
+    try { return await act1(action, a); } finally { actDepth--; }
+  };
+  const act1 = async (action, a) => {
     switch (action) {
       case 'typing': typing = a[0] !== 'off'; return ticks(1);   // hold the chat screen open (a phone player after sending): forms get UserBusy
       case 'chat': client.queue('text', { needs_translation: false, category: 'authored', type: 'chat', source_name: name, message: a.join(' '), xuid: '', platform_chat_id: '', has_filtered_message: false }); return ticks(4);

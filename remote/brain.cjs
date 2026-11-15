@@ -99,7 +99,7 @@ const BUILTIN = {
 };
 // handled at once, even while something runs
 const NOW = {
-  stop: () => { me.abort = true; me.queue.length = 0; me.bot?.act('stop', []).catch(() => {}); log('stopped (queue cleared)'); },
+  stop: () => { me.abort = true; me.queue.length = 0; me.bot?.cancel?.(); me.bot?.act('stop', []).catch(() => {}); log('stopped (queue cleared)'); },
   clear: () => { me.queue.length = 0; log('queue cleared'); },
   status: BUILTIN.status, players: BUILTIN.players, survey: BUILTIN.survey, around: BUILTIN.around, map: BUILTIN.map, help: BUILTIN.help, quit: BUILTIN.quit, guard: BUILTIN.guard, update: BUILTIN.update, reload: BUILTIN.reload, restart: BUILTIN.restart, reconnect: BUILTIN.reconnect,
 };
