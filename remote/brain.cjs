@@ -332,7 +332,16 @@ async function goFar() {
 // walk back from the world spawn through the mobs there). Clicking a bed sets it at any time of day on Bedrock.
 async function bedSpawn() {
   if (me.dim !== 'overworld' || me.spawnSet) return true;
-  const bedOk = await run('get_bed 1', 'a bed');   // (Bedrock calls every colour's item minecraft:bed)
+  // three wool of one colour (sheep come in several): sheep until some colour has three, then the bed of that colour from the
+  // inventory (get_bed plans for white wool only)
+  const woolCounts = async () => { const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap); await me.bot.act('inv', []).catch(() => {}); ctx.taps.delete(tap);
+    const m = new Map(); for (const l of seen) for (const x of l.matchAll(/minecraft:(\w+_wool)\*(\d+)/g)) m.set(x[1], (m.get(x[1]) ?? 0) + Number(x[2])); return m; };
+  let bedOk = false;
+  for (let i = 0; i < 10 && live() && !bedOk; i++) {
+    if ([...(await woolCounts()).values()].some((n) => n >= 3)) { bedOk = await run('craft_bed', 'the bed from three of one colour'); break; }
+    await run('kill_sheep 1', 'wool for a bed');
+  }
+  if (!bedOk) bedOk = await run('get_bed 1', 'a bed');
   if (!bedOk) return false;
   { // a spot two cells long on open ground beside it: air over something solid, for the foot and the head
     const q = me.bot.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z);
