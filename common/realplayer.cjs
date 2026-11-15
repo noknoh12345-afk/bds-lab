@@ -261,7 +261,14 @@ function loginData(o) {
 // lan: { nc, config, guard, endpoint, transport, account, observe, allowChat } — transport=lan joins through nethernet-connect
 // (common/nethernet-connect): only peers on this machine / the same LAN / the user's own Tailscale devices, a local world by the
 // local world's own method (UDP 7551), a server by its own (NetherNet HTTP / RakNet); account = a signed-in Xbox account (else offline)
-async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, emit, blockAt, itemTags, packId, packNames = {}, opts = {}, timeoutMs = 60000, transport = 'raknet', rtc = null, nn = {}, lan = null, cmdBehind = false, online = null }) {
+// item tags without a server-side script to ask (a player on someone else's server): the tags kb.json keeps for each item, in both
+// spellings (planks / minecraft:planks), so a #planks recipe finds oak_planks instead of falling to the bamboo one
+let KB_ITEMS = null;
+async function kbItemTags(names) {
+  KB_ITEMS ??= require('./data/kb.json').items;
+  return Object.fromEntries(names.map((n) => { const t = KB_ITEMS[String(n).replace(/^minecraft:/, '')]?.[3] ?? []; return [n, [...t, ...t.map((x) => 'minecraft:' + x)]]; }));
+}
+async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, emit, blockAt, itemTags = kbItemTags, packId, packNames = {}, opts = {}, timeoutMs = 60000, transport = 'raknet', rtc = null, nn = {}, lan = null, cmdBehind = false, online = null }) {
   const bp = load(req);
   // transport=raknet|nethernet (default: what the server runs). NetherNet only: identity=verify|strict|warn|off (the server's
   // a=identity: verify = trust on first use like the game, strict = a key not pinned yet is refused), key=<pin> (the server
