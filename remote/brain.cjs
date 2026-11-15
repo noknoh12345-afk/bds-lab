@@ -81,7 +81,33 @@ async function handStairs(tx, tz, maxSteps = 60) {
   }
   return openSky(b, b.state().pos);
 }
-const nightNow = (b) => { const t = b.time?.(); if (t === null || t === undefined) return false; const d = ((t % 24000) + 24000) % 24000; return d >= 12800 && d <= 23200; };
+// ---------- learning from each death: a report, and the knob that cause points at turned one notch (run/adapt.json) ----------
+const ADAPTF = require('node:path').join(ctx.RUN, 'adapt.json');
+const AD = Object.assign({ drop: 4, breakAwayHp: 6, engageR: 5, nightStart: 12800, avoidWater: false, deaths: {} }, (() => { try { return JSON.parse(require('node:fs').readFileSync(ADAPTF, 'utf8')); } catch { return {}; } })());
+const saveAD = () => { try { require('node:fs').writeFileSync(ADAPTF, JSON.stringify(AD, null, 1)); } catch { /* */ } };
+function learn(cause, report) {
+  AD.deaths[cause] = (AD.deaths[cause] ?? 0) + 1;
+  const was = JSON.stringify({ drop: AD.drop, breakAwayHp: AD.breakAwayHp, engageR: AD.engageR, nightStart: AD.nightStart, avoidWater: AD.avoidWater });
+  if (/fall/.test(cause)) AD.drop = Math.max(2, AD.drop - 1);                                   // fell: smaller drops count as cliffs
+  if (/drown/.test(cause)) AD.avoidWater = true;                                                // drowned (or drowned mobs): keep out of water
+  if (/arrow|skeleton|stray|bogged|pillager/.test(cause)) AD.engageR = Math.min(12, AD.engageR + 2);   // shot: go for shooters sooner
+  if (/mob|zombie|spider|husk|drowned|creeper/.test(cause)) AD.breakAwayHp = Math.min(12, AD.breakAwayHp + 2);   // beaten: break away earlier
+  if (report.night) AD.nightStart = Math.max(11800, AD.nightStart - 300);                      // died at night: dig in earlier
+  saveAD();
+  const now = JSON.stringify({ drop: AD.drop, breakAwayHp: AD.breakAwayHp, engageR: AD.engageR, nightStart: AD.nightStart, avoidWater: AD.avoidWater });
+  log(`death #${me.deaths} (${cause}) at ${report.at}${report.night ? ' at night' : ''}, hp before ${report.hpBefore}, held ${report.held || 'nothing'}, foes ${report.foes || 'none seen'}, doing "${report.busy || 'nothing'}" → ${was === now ? 'no knob to turn' : 'adjusted ' + now}`, { dc: true });
+  try { require('node:fs').appendFileSync(require('node:path').join(ctx.RUN, 'deaths.jsonl'), JSON.stringify({ t: new Date().toISOString(), cause, ...report, knobs: AD }) + '\n'); } catch { /* */ }
+}
+let lastHp = null, lastFoes = '', lastHeld = '';
+timers.push(setInterval(() => { const b = me.bot; if (!b || !me.connected) return; if (me.hp) lastHp = me.hp; const f = hostilesNear(b, 10); if (f.length) lastFoes = f.map((x) => `${x.e.type.replace('minecraft:', '')}@${x.d.toFixed(0)}`).join(' '); }, 500));
+const deathTap = (l) => {
+  const m = / died \(([^)]+)\)/.exec(l); if (!m || !me.bot) return;
+  const p = me.bot.state().pos;
+  learn(m[1].replace(/^death\.(attack|fell)\./, ''), { at: `${Math.round(p.x)} ${Math.round(p.y)} ${Math.round(p.z)}`, night: nightNow(me.bot), hpBefore: lastHp, held: lastHeld, foes: lastFoes, busy: me.busy });
+  lastFoes = '';
+};
+ctx.taps.add(deathTap);
+const nightNow = (b) => { const t = b.time?.(); if (t === null || t === undefined) return false; const d = ((t % 24000) + 24000) % 24000; return d >= AD.nightStart && d <= 23200; };
 async function walkTo(tx, tz, maxMs = 600000) {
   me.walkTick ??= 0;
   const deaths0 = me.deaths;   // (a death puts it back at the spawn: this walk's way is no longer the way; the caller plans again)
@@ -99,14 +125,16 @@ async function walkTo(tx, tz, maxMs = 600000) {
       const ax = Math.floor(p.x - Math.sin(r) * 1.6), az = Math.floor(p.z + Math.cos(r) * 1.6);
       let drop = 0;
       for (let y = Math.floor(p.y) - 1; y > Math.floor(p.y) - 7; y--) { const n = b.world.block(ax, y, az)?.name; if (n === undefined || !/^minecraft:(air|cave_air)$/.test(n)) break; drop++; }
-      if (drop >= 4) { turn += turn >= 0 ? 45 : -45; if (Math.abs(turn) > 180) turn = -turn % 180; continue; }
+      // (water ahead counts too once it has drowned)
+      if (AD.avoidWater && /water/.test(b.world.block(ax, Math.floor(p.y), az)?.name ?? '')) drop = 9;
+      if (drop >= AD.drop) { turn += turn >= 0 ? 45 : -45; if (Math.abs(turn) > 180) turn = -turn % 180; continue; }
       // the rule while walking too: someone's build within 5 blocks ahead is not walked into or along; steer off it
       // (already among builds, every way has one: then just get out, the shortest way, and steer again once clear)
       if (guardOn && builtTurns < 11 && builtAhead(b, p, r)) { builtTurns++; turn += turn >= 0 ? 35 : -35; if (Math.abs(turn) > 180) turn = -turn % 180; await sleep(50); continue; }
       if (builtTurns >= 11 && !guardReason(b)) builtTurns = 0; else if (builtTurns < 11) builtTurns = 0;
       // the night out in the open, no armour: dug in until morning (the way RTA players sit out the night), then on
       if (nightNow(b) && me.dim === 'overworld' && !guardReason(b)) { await b.act('sprint', ['off']).catch(() => {}); log('travel: night: digging in until morning', { dc: true }); await b.act('shelter', []).catch(() => {}); while (nightNow(b) && me.connected && !me.abort && !disposed) await sleep(5000); log('travel: morning: on'); last = b.state().pos; lastT = Date.now(); continue; }
-      if (hostilesNear(b, 5).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); last = b.state().pos; lastT = Date.now(); continue; }
+      if (hostilesNear(b, AD.engageR).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); last = b.state().pos; lastT = Date.now(); continue; }
       await b.act('look', [String(yaw.toFixed(1)), '0']).catch(() => {});
       await b.act('sprint', ['on']).catch(() => {});
       await sleep(400);
@@ -256,6 +284,7 @@ async function invList(b) { const seen = []; const tap = (l) => seen.push(l); ct
 async function armUp(b) {
   if (Date.now() - lastWeaponCheck < 5000) return; lastWeaponCheck = Date.now();
   const inv = await invList(b), w = WEAPONS.find((x) => inv.includes('minecraft:' + x + '*'));
+  lastHeld = w ?? '';
   if (w && !new RegExp(`\\d+:minecraft:${w}\\*\\d+[^|]*\\(holding slot`).test(inv)) await b.act('hold_' + w, []).catch(() => {});
 }
 async function breakAway(b, foes) {
@@ -273,7 +302,7 @@ async function engage(b, maxMs = 12000) {
   try {
     while (Date.now() - t0 < maxMs && me.connected && !b.state().dead) {
       const foes = hostilesNear(b, 7); if (!foes.length) return;
-      if (me.hp !== null && me.hp <= 6) { await breakAway(b, foes); return; }
+      if (me.hp !== null && me.hp <= AD.breakAwayHp) { await breakAway(b, foes); return; }
       const { e, d } = foes[0], kind = e.type.replace('minecraft:', '');
       await armUp(b);
       if (/creeper/.test(kind) && d < 3.2) { await b.act('attack', [kind]).catch(() => {}); await b.act('look', [String((((Math.atan2(-(b.state().pos.x - e.x), b.state().pos.z - e.z)) * 180) / Math.PI).toFixed(0)), '0']).catch(() => {}); await b.act('sprint', ['on']).catch(() => {}); await sleep(1200); await b.act('sprint', ['off']).catch(() => {}); continue; }
@@ -291,7 +320,7 @@ async function engage(b, maxMs = 12000) {
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || b.state().dead) return;
   if (/^auto: (get|kill|mine|fight|stronghold)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself)
-  const f = hostilesNear(b, 5); if (!f.length) return;
+  const f = hostilesNear(b, AD.engageR); if (!f.length) return;
   engage(b).catch(() => {});
 }, 500));
 const skipUntil = new Map();
@@ -466,5 +495,5 @@ try { if (JSON.parse(fsx.readFileSync(AUTOF, 'utf8')).on) { me.queue.push('auto'
 NOW['auto'] = (a) => { if (a[0] === 'stop') return BUILTIN.auto(a); me.queue.push('auto'); };
 
 worker();
-return { command, status, dispose: () => { disposed = true; for (const t of timers) clearInterval(t); if (live()) { me.autoGen++; me.abort = true; me.bot?.act('stop', []).catch(() => {}); } autoRun = null; }, guardOn: () => guardOn, setGuard: (v) => { guardOn = v; } };
+return { command, status, dispose: () => { disposed = true; ctx.taps.delete(deathTap); for (const t of timers) clearInterval(t); if (live()) { me.autoGen++; me.abort = true; me.bot?.act('stop', []).catch(() => {}); } autoRun = null; }, guardOn: () => guardOn, setGuard: (v) => { guardOn = v; } };
 };
