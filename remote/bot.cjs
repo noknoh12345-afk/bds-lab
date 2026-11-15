@@ -34,6 +34,8 @@ const DEF = { host: '127.0.0.1', port: 19132, name: 'bot', version: '1.26.60', w
 if (!fs.existsSync(CONFIG)) fs.writeFileSync(CONFIG, JSON.stringify(DEF, null, 2) + '\n');
 const cfg = { ...DEF, ...JSON.parse(fs.readFileSync(CONFIG, 'utf8')) };
 const req = createRequire(path.join(HERE, '.deps', 'package.json'));
+// someone's crafting table, furnace or chest is never used: only what this player set down itself (common/goal-exec.cjs)
+process.env.LAB_OWN_ONLY = '1';
 const { createRealPlayer } = require('../common/realplayer.cjs');
 
 // ---------- output: terminal, run/out.log, Discord ----------

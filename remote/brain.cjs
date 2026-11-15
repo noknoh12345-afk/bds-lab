@@ -20,7 +20,7 @@ function scanBuilt(bot, R) {
     if ((x - X) ** 2 + (z - Z) ** 2 > R * R) continue;
     for (let y = Math.max(-64, Y - 24); y <= Y + 24; y++) {
       const id = bot.world.block(x, y, z)?.name;
-      if (id && BUILT.test(id)) { const k = id.replace('minecraft:', ''); const h = hits.get(k); if (h) h.n++; else hits.set(k, { n: 1, x, y, z, d: Math.round(Math.hypot(x - X, z - Z)) }); }
+      if (id && BUILT.test(id) && !bot.placedByMe?.has(`${x},${y},${z}`)) { const k = id.replace('minecraft:', ''); const h = hits.get(k); if (h) h.n++; else hits.set(k, { n: 1, x, y, z, d: Math.round(Math.hypot(x - X, z - Z)) }); }
     }
   }
   return [...hits].map(([k, h]) => ({ block: k, ...h })).sort((a, b) => a.d - b.d);
@@ -36,7 +36,8 @@ function guardReason(bot) {
   const R = cfg.guardRadius, pl = nearPlayers(bot, R);
   if (pl.length) return `player ${pl[0].name} ${pl[0].d} blocks away`;
   const b = scanBuilt(bot, Math.min(R, 64));
-  if (b.length >= 3 || (b.length && b[0].n >= 4)) return `someone's build (${b.slice(0, 3).map((h) => `${h.block}@${h.x},${h.y},${h.z}`).join(' ')}) ${b[0].d} blocks away`;
+  // (one chest, furnace, table, bed or sign of someone's is enough: those are theirs to use)
+  if (b.length >= 3 || (b.length && b[0].n >= 4) || b.some((h) => /chest|barrel|furnace|smoker|crafting_table|_bed|sign|shulker|anvil|brewing|enchanting/.test(h.block))) return `someone's build (${b.slice(0, 3).map((h) => `${h.block}@${h.x},${h.y},${h.z}`).join(' ')}) ${b[0].d} blocks away`;
   return null;
 }
 

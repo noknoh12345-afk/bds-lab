@@ -56,6 +56,9 @@ function goalVerbs(K, H) {
   const dist3 = (a, b) => hyp(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
   const dimName = () => { const d = K.dim(); return typeof d === 'string' ? d.replace(/^minecraft:/, '') : ['overworld', 'nether', 'the_end'][d] ?? 'overworld'; };
   const xray = () => process.env.LAB_GOAL === 'xray' || K.memo.get('goal:xray') === true;
+  // LAB_OWN_ONLY=1 (a player on someone's server): a crafting table, furnace or chest is used only when this player set it down
+  const ownOnly = process.env.LAB_OWN_ONLY === '1';
+  const mineOnly = (q) => !ownOnly || (K.placedByMe?.(q.x, q.y, q.z) ?? false);
   // (in an RTA each line carries its game time: `get: [12:31] ...`)
   const log = (s) => { if (K.memo.get('goal:quiet') !== true) K.say(`get: ${rtaRun ? `[${G.mmss(Math.round((gnow() - rtaRun.t0) / 1000))}] ` : ''}${s}`); };
   // game time in ms (the client's ticks): RTA times, time limits and waits count game time, so a lagging or sped-up server
@@ -3052,7 +3055,7 @@ function goalVerbs(K, H) {
   }
   async function stationAt(kind) {
     const re = kind === 'furnace' ? /^minecraft:(lit_)?furnace$/ : /^minecraft:crafting_table$/;
-    const h = known((b) => re.test(b.name), { max: 6, radius: 12, fair: false }).find((q) => !isBad(q));
+    const h = known((b) => re.test(b.name), { max: 6, radius: 12, fair: false }).find((q) => !isBad(q) && mineOnly(q));
     if (h) return [h.x, h.y, h.z];
     if (cnt(kind) < 1) { log(`no ${kind} carried or near`); return null; }
     for (let tries = 0; tries < 3; tries++) {
@@ -3100,7 +3103,7 @@ function goalVerbs(K, H) {
     if (bestTool({ kind: 'pickaxe', tier: 1 })) return true;
     if (cnt('cobblestone') + cnt('cobbled_deepslate') + cnt('blackstone') < 3) return false;
     const planksN = () => [...invMap()].filter(([k]) => /_planks$/.test(k)).reduce((a, [, v]) => a + v, 0);
-    const needPlanks = (cnt('stick') >= 2 ? 0 : 2) + (cnt('crafting_table') || known((b) => b.name === 'minecraft:crafting_table', { max: 1, radius: 12, fair: false }).length ? 0 : 4);
+    const needPlanks = (cnt('stick') >= 2 ? 0 : 2) + (cnt('crafting_table') || known((b) => b.name === 'minecraft:crafting_table', { max: 6, radius: 12, fair: false }).filter(mineOnly).length ? 0 : 4);
     if (planksN() < needPlanks) {   // planks from a log carried
       const lg = [...invMap()].find(([k]) => /_(log|stem)$/.test(k));
       if (!lg) return false;
@@ -3109,7 +3112,7 @@ function goalVerbs(K, H) {
       if (planksN() < needPlanks) return false;
     }
     if (cnt('stick') < 2) { await closeScreen(); await K.act('craft', ['stick', '1']); await K.sync(); if (cnt('stick') < 2) return false; }
-    if (!cnt('crafting_table') && !known((b) => b.name === 'minecraft:crafting_table', { max: 1, radius: 12, fair: false }).length) { await closeScreen(); await K.act('craft', ['crafting_table', '1']); await K.sync(); }
+    if (!cnt('crafting_table') && !known((b) => b.name === 'minecraft:crafting_table', { max: 6, radius: 12, fair: false }).filter(mineOnly).length) { await closeScreen(); await K.act('craft', ['crafting_table', '1']); await K.sync(); }
     if (!(await openStation('crafting_table'))) return false;
     await K.act('craft', ['stone_pickaxe', '1']); await K.sync(); await closeScreen();
     await pickUp('crafting_table');
@@ -3124,7 +3127,7 @@ function goalVerbs(K, H) {
     if (armed()) return true;
     const planksN = () => [...invMap()].filter(([k]) => /_planks$/.test(k)).reduce((a, [, v]) => a + v, 0);
     const stone = cnt('cobblestone') + cnt('cobbled_deepslate') + cnt('blackstone') >= 2, kind = stone ? 'stone_sword' : 'wooden_sword';
-    const table = () => cnt('crafting_table') > 0 || known((b) => b.name === 'minecraft:crafting_table', { max: 1, radius: 4, fair: false }).length > 0;
+    const table = () => cnt('crafting_table') > 0 || known((b) => b.name === 'minecraft:crafting_table', { max: 6, radius: 4, fair: false }).filter(mineOnly).length > 0;
     const needPlanks = (stone ? 0 : 2) + (cnt('stick') >= 1 ? 0 : 2) + (table() ? 0 : 4);
     if (planksN() < needPlanks) {
       const lg = [...invMap()].find(([k]) => /_(log|stem)$/.test(k));
@@ -3577,7 +3580,7 @@ function goalVerbs(K, H) {
       stations: new Set([...['crafting_table', 'furnace'].filter((s) => known(new RegExp(`^minecraft:${s === 'furnace' ? '(lit_)?furnace' : s}$`), { max: 6, radius: 12, fair: false }).some((q) => !isBad(q)))]),
       near: (b) => { if (cache.has(b)) return cache.get(b); const h = known(blockTest(b === 'stone' ? 'stone|cobblestone' : b), { max: 1, radius: 96, ok: ripeOk(b) })[0]; const d = h ? h.d : null; cache.set(b, d); return d; },
       mob: (m) => { const e = mobs(m)[0]; return e ? hyp(e.x - f.x, e.y - f.y, e.z - f.z) : null; },
-      container: () => { const h = known(/^minecraft:(chest|barrel|trapped_chest)$/, { max: 12, radius: 48 }).find((q) => !looted.has(`${q.x},${q.y},${q.z}`)); return h ? h.d : null; },
+      container: () => { if (ownOnly) return null; const h = known(/^minecraft:(chest|barrel|trapped_chest)$/, { max: 12, radius: 48 }).find((q) => !looted.has(`${q.x},${q.y},${q.z}`)); return h ? h.d : null; },   // (own-only: no one's chests are looted)
       drop: (it) => { if (noPickup.has(it)) return null; const e = K.nearest('item').find((q) => q.item === it && Math.abs(q.y - f.y) < 6 && !q.gone && !inDeathZone(q)); return e ? hyp(e.x - f.x, e.y - f.y, e.z - f.z) : null; },
     };
   };

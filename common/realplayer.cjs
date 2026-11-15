@@ -1565,6 +1565,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   // legit: act only as a person could at that moment: looking at it, in reach, nothing in between (what the crosshair hits after
   // turning is the thing itself); otherwise say why and leave it (remote/bot.cjs turns it on for a real server)
   let legit = false;
+  const placedByMe = new Set();   // cells this player clicked a block into: its own crafting table, furnace, bed (remote/bot.cjs: only those are used)
   const FACE_OFF = [[0, -1, 0], [0, 1, 0], [0, 0, -1], [0, 0, 1], [-1, 0, 0], [1, 0, 0]];
   const facePoint = (b, f) => { const o = FACE_OFF[f] ?? [0, 1, 0]; return { x: b.x + 0.5 + o[0] * 0.49, y: b.y + 0.5 + o[1] * 0.49, z: b.z + 0.5 + o[2] * 0.49 }; };
   // the crosshair on what a click goes to: the block itself, or (placing) the grass / leaf litter / snow layer standing in the cell
@@ -1678,6 +1679,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           say(`dbg useon ${b.x},${b.y},${b.z} face ${face} -> ${c.x},${c.y},${c.z} (${world.block(c.x, c.y, c.z)?.name}) held ${itemNames.get(h.network_id) ?? 'nothing'} sid ${JSON.stringify(h.stack_id)} slot ${inv.selected} eye ${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)} screen ${box?.type ?? '-'} t=${tick}`);
         }
         useTx({ action_type: 'click_block', block_position: b, face, click_pos: cp, block_runtime_id: brid });
+        { const o = FACE_OFF[face] ?? [0, 1, 0]; placedByMe.add(`${b.x + o[0]},${b.y + o[1]},${b.z + o[2]}`); }   // (what this player set down: its own, not someone's)
         // fast: the block shown at once where it goes, as a real client predicts it (a plain full block into an empty cell clear of the
         // player): landed on at the top of a jump, not fallen through while the server's word is on its way
         if (fast) {
@@ -2521,7 +2523,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     }
   };
   // everyday verbs (verbs.cjs): human sequences over the actions above
-  const K = { act: (x, y) => bot.act(x, y), name, inv, itemNames, sync, ticks, say, controls, world, feet, box: () => box, dim: () => dim, yaw: () => yaw,
+  const K = { act: (x, y) => bot.act(x, y), placedByMe: (x, y, z) => placedByMe.has(`${x},${y},${z}`), name, inv, itemNames, sync, ticks, say, controls, world, feet, box: () => box, dim: () => dim, yaw: () => yaw,
     look: (y, p) => { yaw = y; pitch = p; }, pitch: () => pitch, lookAt: (x, y, z) => lookAt({ x, y, z }), attrs: () => attrs, memo: new Map(),
     all: () => { const f = feet(); return [...entities.values()].sort((x, y) => Math.hypot(x.x - f.x, x.y - f.y, x.z - f.z) - Math.hypot(y.x - f.x, y.y - f.y, y.z - f.z)); },
     nearest: (q) => { const f = feet(); return [...entities.values()].filter((e) => isType(e, q)).sort((x, y) => Math.hypot(x.x - f.x, x.y - f.y, x.z - f.z) - Math.hypot(y.x - f.x, y.y - f.y, y.z - f.z)); },
@@ -2556,7 +2558,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   bot.close = () => { loop.stop(); try { client.close(); } catch { /* closed */ } };
   bot.state = () => big({ pos: feet(), yaw, pitch, dead });
   // remote/bot.cjs (a resident player on someone's server) reads these: the chunks it knows, the mobs and players in sight, the connection
-  bot.world = world; bot.entities = entities; bot.client = client; bot.players = () => [...players.keys()];
+  bot.world = world; bot.entities = entities; bot.client = client; bot.placedByMe = placedByMe; bot.players = () => [...players.keys()];
   bot.setLegit = (v) => { legit = !!v; };
   bot.time = () => (worldTime === null ? null : Number(worldTime) + (clockPaused ? 0 : Number(BigInt(tick) - BigInt(worldTimeTick))));
   return bot;
