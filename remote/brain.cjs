@@ -49,6 +49,14 @@ function status() {
   const P = s.pos, hostile = [...b.entities.values()].filter((e) => HOSTILE.test(e.type ?? '') && Math.hypot(e.x - P.x, e.z - P.z) < 16).length;
   return { connected: me.connected, account: me.account, time: day, night: day === null ? null : day >= 12542 && day <= 23460, hostileNear: hostile, pos: { x: +s.pos.x.toFixed(1), y: +s.pos.y.toFixed(1), z: +s.pos.z.toFixed(1) }, dim: me.dim, hp: me.hp, food: me.food, dead: s.dead, deaths: me.deaths, busy: me.busy, queued: me.queue.length, guard: guardOn, players: b.players(), signIn: me.msa, uptime: Math.round((Date.now() - ctx.t0) / 1000) };
 }
+// a goto that takes too long (a path search over far too much, a step it keeps retrying) is called off after 30 s
+async function gotoFor(args, ms = 30000) {
+  const b = me.bot; let timer;
+  const g = b.act('goto', args);
+  await Promise.race([g.catch(() => {}), new Promise((r) => { timer = setTimeout(() => { b.cancel?.(); r(); }, ms); })]);
+  clearTimeout(timer);
+  await g.catch(() => {});
+}
 const BUILTIN = {
   help: () => log('commands: any bdslab action/verb (get_<item> [n], mine_<block> [n], goto x z, craft_<item>, kill_<mob>, fight_ender_dragon, inv, pos, near ...) · status · players · survey [r] · around · travel x z · guard on|off|<radius> · stop · clear · auto [stop] · reconnect · update · reload · restart · quit'),
   status: () => log('status ' + JSON.stringify(status())),
@@ -78,7 +86,7 @@ const BUILTIN = {
       const q = me.bot.state().pos, dx = tx - q.x, dz = tz - q.z, d = Math.hypot(dx, dz);
       if (d < 4) break;
       const st = Math.min(32, d);
-      try { await me.bot.act('goto', [String(Math.round(q.x + (dx / d) * st)), String(Math.round(q.z + (dz / d) * st))]); } catch { continue; }
+      try { await gotoFor([String(Math.round(q.x + (dx / d) * st)), String(Math.round(q.z + (dz / d) * st))]); } catch { continue; }
       if (!me.connected) continue;
       const r = me.bot.state().pos;
       if (Math.hypot(r.x - q.x, r.z - q.z) < 2) {
@@ -86,7 +94,7 @@ const BUILTIN = {
         let moved = false;
         for (const turn of [0.785, -0.785, 1.571, -1.571, 2.356, -2.356]) {
           const ang = Math.atan2(dz, dx) + turn, sx = Math.round(r.x + Math.cos(ang) * 24), sz = Math.round(r.z + Math.sin(ang) * 24);
-          try { await me.bot.act('goto', [String(sx), String(sz)]); } catch { /* */ }
+          try { await gotoFor([String(sx), String(sz)]); } catch { /* */ }
           const t = me.bot.state().pos; if (Math.hypot(t.x - r.x, t.z - r.z) > 6) { moved = true; break; }
           if (me.abort) return;
         }
