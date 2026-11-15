@@ -53,6 +53,8 @@ function status() {
 // for 3 s jump and veer off to one side; a drop of 4 or more right ahead is gone round instead of jumped down
 async function walkTo(tx, tz, maxMs = 600000) {
   me.walkTick ??= 0;
+  if (me.walking && me.walking !== ctx) { log('travel: another walk is on (an older brain): calling it off'); me.abort = true; await sleep(1500); me.abort = false; }
+  me.walking = ctx;
   const b = me.bot, t0 = Date.now();
   await b.act('option', ['autojump', 'on']).catch(() => {});
   let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0;
@@ -86,7 +88,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
         if (stuckFor >= 10) return false;
       }
     }
-  } finally { await b.act('sprint', ['off']).catch(() => {}); }
+  } finally { if (me.walking === ctx) me.walking = null; await b.act('sprint', ['off']).catch(() => {}); }
   return false;
 }
 // a goto that takes too long (a path search over far too much, a step it keeps retrying) is called off after 30 s
@@ -277,8 +279,11 @@ async function goFar() {
   if (Math.hypot(p.x, p.z) >= 450) return;
   if (me.spawnSet && Math.hypot(p.x - me.spawnSet.x, p.z - me.spawnSet.z) < 64) return;
   log(`auto: near the spawn (${Math.round(p.x)} ${Math.round(p.z)}): out to the work area ${WORK.join(' ')}`, { dc: true });
-  me.abort = false;
-  await BUILTIN.travel([String(WORK[0]), String(WORK[1])]);
+  for (let i = 0; i < 5 && live(); i++) {
+    me.abort = false;
+    await BUILTIN.travel([String(WORK[0]), String(WORK[1])]);
+    const q = me.bot.state().pos; if (Math.hypot(q.x, q.z) >= 450) return;
+  }
 }
 // a bed set down out in the work area and clicked: the respawn point is here from then on (a death no longer means the long
 // walk back from the world spawn through the mobs there). Clicking a bed sets it at any time of day on Bedrock.
