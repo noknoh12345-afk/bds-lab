@@ -146,7 +146,7 @@ function status() {
   return { connected: me.connected, account: me.account, time: day, night: day === null ? null : day >= 12542 && day <= 23460, hostileNear: hostile, pos: { x: +s.pos.x.toFixed(1), y: +s.pos.y.toFixed(1), z: +s.pos.z.toFixed(1) }, dim: me.dim, hp: me.hp, food: me.food, dead: s.dead, deaths: me.deaths, busy: me.busy, queued: me.queue.length, guard: guardOn, players: b.players(), signIn: me.msa, uptime: Math.round((Date.now() - t0) / 1000) };
 }
 const BUILTIN = {
-  help: () => log('commands: any bdslab action/verb (get_<item> [n], mine_<block> [n], goto x z, craft_<item>, kill_<mob>, fight_ender_dragon, inv, pos, near ...) · status · players · survey [r] · around · travel x z · guard on|off|<radius> · stop · clear · reconnect · quit'),
+  help: () => log('commands: any bdslab action/verb (get_<item> [n], mine_<block> [n], goto x z, craft_<item>, kill_<mob>, fight_ender_dragon, inv, pos, near ...) · status · players · survey [r] · around · travel x z · guard on|off|<radius> · stop · clear · reconnect · update · quit'),
   status: () => log('status ' + JSON.stringify(status())),
   players: () => { const l = me.bot?.players() ?? []; log(`players (${l.length}): ${l.join(', ')}`, { dc: true }); },
   survey: (a) => {
@@ -176,13 +176,15 @@ const BUILTIN = {
   },
   wait: async (a) => sleep(+(a[0] ?? 1000)),
   reconnect: () => { try { me.bot?.close(); } catch { /* */ } me.connected = false; },
+  // fetch the newest bdslab and start again (start.sh does it on exit code 75)
+  update: () => { log('updating: back in a moment', { dc: true }); try { me.bot?.close(); } catch { /* */ } setTimeout(() => process.exit(75), 800); },
   quit: () => { log('bye', { dc: true }); try { me.bot?.close(); } catch { /* */ } setTimeout(() => process.exit(0), 800); },
 };
 // handled at once, even while something runs
 const NOW = {
   stop: () => { me.abort = true; me.queue.length = 0; me.bot?.act('stop', []).catch(() => {}); log('stopped (queue cleared)'); },
   clear: () => { me.queue.length = 0; log('queue cleared'); },
-  status: BUILTIN.status, players: BUILTIN.players, help: BUILTIN.help, quit: BUILTIN.quit, guard: BUILTIN.guard,
+  status: BUILTIN.status, players: BUILTIN.players, help: BUILTIN.help, quit: BUILTIN.quit, guard: BUILTIN.guard, update: BUILTIN.update,
 };
 function command(line) {
   line = line.trim();

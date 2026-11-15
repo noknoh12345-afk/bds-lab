@@ -26,4 +26,11 @@ if [ ! -d .deps/node_modules/bedrock-protocol ] || [ ! -d .deps/node_modules/nod
   npm i node-datachannel@latest --no-audit --no-fund --loglevel=error
   cd ..
 fi
-exec "$NODE" bot.cjs "$@"
+# exit 75 = `update`: fetch this branch again and start over (stays in the terminal; anything else ends it)
+while true; do
+  set +e; "$NODE" bot.cjs "$@"; code=$?; set -e
+  [ $code -eq 75 ] || exit $code
+  echo "updating bdslab..."
+  b=$(git -C .. rev-parse --abbrev-ref HEAD)
+  git -C .. fetch -q --depth 1 origin "$b" && git -C .. checkout -q -B "$b" FETCH_HEAD || echo "update failed: starting the same version"
+done
