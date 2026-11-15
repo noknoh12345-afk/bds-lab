@@ -3102,8 +3102,18 @@ async function importAddon(args) {
   if (!src) die(`usage: node lab.mjs import <file.mcaddon|.mcpack|.zip|folder|your BDS folder> ["<what the person asked>"] [--name n]${given ? ` (no ${given} here)` : ''}`);
   // a BDS folder of the person's own: everything it runs (its world's addons, its Endstone plugins) as units — common/serverimport.mjs
   { const SI = await import('./serverimport.mjs'); if (fs.statSync(src).isDirectory() && SI.isServerFolder(src)) { if (!(await SI.importServer(L(), src, request, args))) die('some of the server could not be taken in (the ✘ lines)'); return; } }
+  // a plugin, not an addon: the lab it belongs to takes it (an Endstone wheel or project → end, a LegacyScriptEngine .js or mod → ll)
+  const forward = (lab) => { out(`(${path.basename(src)} is ${lab === 'end' ? 'an Endstone plugin' : 'a LeviLamina (LegacyScriptEngine) plugin'}: node lab.mjs ${lab} import)`); const r = spawnSync(process.execPath, [path.join(TOP, 'lab.mjs'), lab, 'import', ...args], { stdio: 'inherit', env: { ...process.env, LAB_CALLER_CWD: process.env.LAB_CALLER_CWD ?? process.cwd() } }); if (r.status !== 0) die(`${lab} import failed (above)`); };
+  if (F.name === 'bds' && /\.(m?js|cjs)$/i.test(src)) return forward('ll');
+  if (F.name === 'bds' && /\.(whl|tar\.gz)$/i.test(src)) return forward('end');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lab-import-'));
   if (fs.statSync(src).isDirectory()) fs.cpSync(src, tmp, { recursive: true }); else unzip(fs.readFileSync(src), tmp);
+  if (F.name === 'bds' && !files(tmp, (f) => path.basename(f) === 'manifest.json' && /"modules"/.test(fs.readFileSync(f, 'utf8'))).length) {
+    const all = files(tmp, () => true);
+    const lse = all.some((f) => path.basename(f) === 'manifest.json' && /"type"\s*:\s*"lse-/.test(fs.readFileSync(f, 'utf8'))) || all.some((f) => /\.m?js$/i.test(f) && !/[\\/]node_modules[\\/]/.test(f) && /\bll\.register(Plugin)?\s*\(|\bmc\.(listen|newCommand|regPlayerCmd)\s*\(/.test(fs.readFileSync(f, 'utf8')));
+    const py = all.some((f) => ['pyproject.toml', 'setup.py', 'setup.cfg'].includes(path.basename(f)) && /endstone/i.test(fs.readFileSync(f, 'utf8')));
+    if (lse || py) { fs.rmSync(tmp, { recursive: true, force: true }); return forward(lse ? 'll' : 'end'); }
+  }
   // an .mcaddon may hold .mcpack files (zips) instead of folders
   for (const z of files(tmp, (f) => /\.(mcpack|zip)$/i.test(f))) { const d = z.replace(/\.(mcpack|zip)$/i, ''); fs.mkdirSync(d, { recursive: true }); try { unzip(fs.readFileSync(z), d); } catch { /* not a zip */ } }
   const packs = files(tmp, (f) => path.basename(f) === 'manifest.json').map((f) => ({ dir: path.dirname(f), m: readJson(f) }))

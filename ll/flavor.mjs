@@ -253,6 +253,11 @@ function writeTsconfig(L, sdk) {
   const f = path.join(L.ADDON, 'tsconfig.json');
   if (!exists(f) || fs.readFileSync(f, 'utf8') !== want) fs.writeFileSync(f, want);
 }
+// what ll/importer.mjs needs from here: TypeScript (the build's, else this machine's) and LSE's types folder (null: none to be had)
+const lseEnv = (L) => ({
+  ts: () => { try { return L.tl().ts; } catch { const t = L.B.localTs(L.CACHE); if (!t) L.die('no TypeScript to read the plugin with (npm unreachable): node lab.mjs setup where the network is open'); return t; } },
+  types: () => { const d = lseSdk(L), t = d && path.join(d, 'node_modules', '@levimc-lse', 'types'); return t && exists(path.join(t, 'src', 'index.d.ts')) ? t : null; },
+});
 async function buildLse(L, m, { release = false, types = true } = {}) {
   const errs = [], warns = [], hints = [];
   if (!m.name || !/^[\w-]+$/.test(m.name)) errs.push('manifest.json: "name" (letters, digits, _ -) is the mod folder name');
@@ -285,6 +290,15 @@ async function buildLse(L, m, { release = false, types = true } = {}) {
     const sdk = lseSdk(L);
     if (!sdk) warns.push('type check skipped: npm could not install @levimc-lse/types (offline?)');
     else { writeTsconfig(L, sdk); for (const l of L.B.typecheck({ tl, addon: L.ADDON, cache: L.CACHE, js: false })) errs.push(l); }
+    if (errs.length) return { errs, warns, hints };
+  }
+  // JavaScript (an imported plugin, a --js mod): the calls LSE does not have, and two mistakes LSE plugins often make
+  if (types && /\.m?js$/.test(m.src) && process.env.LAB_TYPES !== '0') {
+    const imp = await import('./importer.mjs'), env = lseEnv(L), t = env.types();
+    if (!t) warns.push('API check skipped: LSE\'s types could not be had (npm and GitHub unreachable?)');
+    else for (const x of imp.apiMisses(env.ts(), L.ADDON, t)) errs.push(x);
+    const src = path.join(L.ADDON, 'src');
+    for (const b of imp.readSource(env.ts(), new Map(walk(src).filter((f) => /\.m?js$/.test(f)).map((f) => [`src/${path.relative(src, f).split(path.sep).join('/')}`, fs.readFileSync(f, 'utf8')]))).bugs) warns.push(b);
     if (errs.length) return { errs, warns, hints };
   }
   const out = outDir(L), outfile = path.join(out, m.entry);
@@ -642,6 +656,9 @@ wait 1000
   unitVersion: (L) => unitMeta(L.ADDON)?.version ?? '0.1.0',
   commands: {
     new: (L, a) => scaffold(L, a),
+    // a person's LSE plugin (a LiteLoader-era .js, a mod folder, a zip, gh:owner/repo) → mods/<name>/, read before it runs, a draft tests.txt
+    import: async (L, a) => (await import('./importer.mjs')).importMod(L, a, lseEnv(L)),
+    brief: async (L, a) => (await import('./importer.mjs')).briefMod(L, a, lseEnv(L)),
     async api(L, a) {
       if (!a.length) L.die('usage: node lab.mjs api <Name|Name.member|?word> ... (LegacyScriptEngine types)   |   api sapi <q> (the Script API, for bp/scripts)');
       if (a[0] === 'sapi') return L.sapi(a.slice(1));
