@@ -122,7 +122,7 @@ async function connect() {
   bot.client.on('update_attributes', (p) => { for (const a of p.attributes ?? []) { if (a.name === 'minecraft:health') me.hp = a.current; if (a.name === 'minecraft:player.hunger') me.food = a.current; } });
   bot.client.on('change_dimension', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? String(p.dimension); });
   bot.client.on('start_game', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? me.dim; });
-  bot.client.on('close', () => { me.connected = false; });
+  bot.client.on('close', () => { if (me.bot === bot) { me.connected = false; log('connection lost: joining again', { dc: true }); } });
   const p = bot.state().pos;
   log(`in the world at ${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.z.toFixed(0)}`, { dc: true });
 }
@@ -163,10 +163,12 @@ const BUILTIN = {
   travel: async (a) => {
     const tx = +a[0], tz = +a[1];
     for (let i = 0; i < 400 && !me.abort; i++) {
+      while (!me.connected || !me.bot) { if (me.abort) return; await sleep(1000); }   // dropped on the way: carry on once back in
       const q = me.bot.state().pos, dx = tx - q.x, dz = tz - q.z, d = Math.hypot(dx, dz);
       if (d < 4) break;
       const st = Math.min(32, d);
-      await me.bot.act('goto', [String(Math.round(q.x + (dx / d) * st)), String(Math.round(q.z + (dz / d) * st))]);
+      try { await me.bot.act('goto', [String(Math.round(q.x + (dx / d) * st)), String(Math.round(q.z + (dz / d) * st))]); } catch { continue; }
+      if (!me.connected) continue;
       const r = me.bot.state().pos;
       if (Math.hypot(r.x - q.x, r.z - q.z) < 2) { log(`travel: stuck at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}`, { dc: true }); return; }
       if (i % 2 === 1) log(`travel: at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}, ${Math.round(Math.hypot(tx - r.x, tz - r.z))} to go`);
