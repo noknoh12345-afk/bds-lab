@@ -405,8 +405,9 @@ const WAYOUT = (cfg.wayOut ?? '0 60').split(/\s+/).map(Number);   // (8 130 led 
 // (the death of 08:53 under review: a goal started in a drowned cave at night, unarmed, and a skeleton shot it there)
 async function safeStart() {
   const b = me.bot; if (!b || me.dim !== 'overworld' || guardReason(b)) return;
+  const lastInv = nightNow(b) ? await invList(b) : '';
   if (!openSky(b, b.state().pos)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
-  if (nightNow(b) && !lastHeld) { log('auto: night and nothing to fight with: dug in until morning', { dc: true }); await b.act('shelter', []).catch(() => {}); while (nightNow(b) && me.connected && !disposed) await sleep(5000); }
+  if (nightNow(b) && !WEAPONS.some((w) => lastInv.includes('minecraft:' + w + '*'))) { log('auto: night and nothing to fight with: dug in until morning', { dc: true }); await b.act('shelter', []).catch(() => {}); while (nightNow(b) && me.connected && !disposed) await sleep(5000); }
 }
 async function goFar() {
   await reviewWait();
