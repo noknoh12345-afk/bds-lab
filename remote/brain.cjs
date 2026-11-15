@@ -108,8 +108,10 @@ async function walkTo(tx, tz, maxMs = 600000) {
 async function gotoFor(args, ms = 30000, verb = 'goto') {
   const b = me.bot; let timer;
   const g = b.act(verb, args);
+  // (walk_xz may dig: called off at once when someone's build or a player comes within the guard radius)
+  const watch = verb === 'walk_xz' ? setInterval(() => { if (guardReason(b)) { log('travel: a build or a player near: no digging walk here'); b.cancel?.(); } }, 1500) : null;
   await Promise.race([g.catch(() => {}), new Promise((r) => { timer = setTimeout(() => { b.cancel?.(); r(); }, ms); })]);
-  clearTimeout(timer);
+  clearTimeout(timer); if (watch) clearInterval(watch);
   await g.catch(() => {});
 }
 const BUILTIN = {
