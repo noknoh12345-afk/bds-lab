@@ -26,5 +26,11 @@ if [ ! -d .deps/node_modules/bedrock-protocol ] || [ ! -d .deps/node_modules/nod
   npm i node-datachannel@latest --no-audit --no-fund --loglevel=error
   cd ..
 fi
-# one run = one join: when it stops (quit, Ctrl+C, a crash) it is not started again by itself
-exec "$NODE" bot.cjs "$@"
+# exit 75 = `restart` (asked for): fetch the newest and start again. Anything else (quit, Ctrl+C, a crash) ends it: no leave/join
+# that nobody asked for
+while true; do
+  set +e; "$NODE" bot.cjs "$@"; code=$?; set -e
+  [ $code -eq 75 ] || exit $code
+  b=$(git -C .. rev-parse --abbrev-ref HEAD)
+  git -C .. fetch -q --depth 1 origin "$b" && git -C .. checkout -q -B "$b" FETCH_HEAD || echo "update failed: starting the same version"
+done

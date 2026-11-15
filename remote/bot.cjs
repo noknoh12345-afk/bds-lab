@@ -80,6 +80,7 @@ async function connect() {
   log(`connecting to ${cfg.host}:${cfg.port} (${tr}) as ${cfg.name}`);
   const emit = (l) => {
     log(l);
+    for (const t of taps) { try { t(l); } catch { /* */ } }
     if (/ died \(|disconnected|kicked|error: /.test(l)) discord(l);
     if (/ died \(/.test(l)) { me.deaths++; setTimeout(() => me.bot?.act('respawn', []).catch(() => {}), 1500); }
     const m = /^@\S+ %death\.\S+ \[(\S+)\]/.exec(l); if (m) me.account = m[1];
@@ -90,6 +91,7 @@ async function connect() {
     online: { profilesFolder: path.join(RUN, 'auth'), onMsaCode: (d) => { me.msa = d.user_code; log(`SIGN IN: open ${d.verification_uri} and enter ${d.user_code}`, { dc: true }); } },
   });
   me.msa = null; me.bot = bot; me.connected = true; me.closedAt = null; me.kicked = null;
+  bot.setLegit?.(cfg.legit !== false);   // only what a person could do: looking at it, in reach, nothing in between
   bot.client.on('update_attributes', (p) => { for (const a of p.attributes ?? []) { if (a.name === 'minecraft:health') me.hp = a.current; if (a.name === 'minecraft:player.hunger') me.food = a.current; } });
   bot.client.on('change_dimension', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? String(p.dimension); });
   bot.client.on('start_game', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? me.dim; });
@@ -127,6 +129,8 @@ setInterval(async () => {
 }, 2000);
 const sleep = (ms) => new Promise((s) => setTimeout(s, ms));
 
+const taps = new Set();   // the brain listens to what the player says (an auto step reads its outcome)
+
 // ---------- the brain (commands, guard, work): reloadable in place ----------
 const BRAIN = path.join(HERE, 'brain.cjs');
 let brain = null;
@@ -135,7 +139,7 @@ function loadBrain() {
   delete require.cache[require.resolve(BRAIN)];
   const make = require(BRAIN);
   if (old) old.dispose();
-  brain = make({ me, cfg, log, sleep, t0, guardOn: old?.guardOn(),
+  brain = make({ me, cfg, log, sleep, t0, taps, RUN, guardOn: old?.guardOn(), setLegit: (v) => me.bot?.setLegit?.(v),
     rejoin: async () => { if (me.connected) return log('already in the server'); me.kicked = null; await joinOnce(); },
     reload: () => { try { loadBrain(); log('reloaded brain.cjs (still in the server)', { dc: true }); } catch (e) { log('reload failed, keeping the old one: ' + e.message, { dc: true }); } },
     update: () => {

@@ -49,7 +49,7 @@ function status() {
   return { connected: me.connected, account: me.account, time: day, night: day === null ? null : day >= 12542 && day <= 23460, hostileNear: hostile, pos: { x: +s.pos.x.toFixed(1), y: +s.pos.y.toFixed(1), z: +s.pos.z.toFixed(1) }, dim: me.dim, hp: me.hp, food: me.food, dead: s.dead, deaths: me.deaths, busy: me.busy, queued: me.queue.length, guard: guardOn, players: b.players(), signIn: me.msa, uptime: Math.round((Date.now() - ctx.t0) / 1000) };
 }
 const BUILTIN = {
-  help: () => log('commands: any bdslab action/verb (get_<item> [n], mine_<block> [n], goto x z, craft_<item>, kill_<mob>, fight_ender_dragon, inv, pos, near ...) · status · players · survey [r] · around · travel x z · guard on|off|<radius> · stop · clear · reconnect · update · reload · quit'),
+  help: () => log('commands: any bdslab action/verb (get_<item> [n], mine_<block> [n], goto x z, craft_<item>, kill_<mob>, fight_ender_dragon, inv, pos, near ...) · status · players · survey [r] · around · travel x z · guard on|off|<radius> · stop · clear · auto [stop] · reconnect · update · reload · restart · quit'),
   status: () => log('status ' + JSON.stringify(status())),
   players: () => { const l = me.bot?.players() ?? []; log(`players (${l.length}): ${l.join(', ')}`, { dc: true }); },
   survey: (a) => {
@@ -86,12 +86,14 @@ const BUILTIN = {
   update: () => ctx.update(),
   reload: () => ctx.reload(),
   quit: () => ctx.quit(),
+  // leave and start again with the newest bdslab (a change to realplayer.cjs or bot.cjs needs it): one leave and one join
+  restart: () => { log('restarting with the newest bdslab: leaving and joining once', { dc: true }); try { me.bot?.close(); } catch { /* */ } setTimeout(() => process.exit(75), 1500); },
 };
 // handled at once, even while something runs
 const NOW = {
   stop: () => { me.abort = true; me.queue.length = 0; me.bot?.act('stop', []).catch(() => {}); log('stopped (queue cleared)'); },
   clear: () => { me.queue.length = 0; log('queue cleared'); },
-  status: BUILTIN.status, players: BUILTIN.players, help: BUILTIN.help, quit: BUILTIN.quit, guard: BUILTIN.guard, update: BUILTIN.update, reload: BUILTIN.reload, reconnect: BUILTIN.reconnect,
+  status: BUILTIN.status, players: BUILTIN.players, help: BUILTIN.help, quit: BUILTIN.quit, guard: BUILTIN.guard, update: BUILTIN.update, reload: BUILTIN.reload, restart: BUILTIN.restart, reconnect: BUILTIN.reconnect,
 };
 function command(line) {
   line = line.trim();
@@ -128,6 +130,112 @@ timers.push(setInterval(async () => {
 }, 700));
 
 
+// ---------- auto: the whole run on its own (`auto` starts it, `auto stop` ends it) ----------
+// away from builds and players → stone tools → iron gear, bucket, food → eyes of ender (the nether) → the stronghold → the dragon;
+// the dragon already gone → the elytra (end gateway, end city); afterwards diamonds, as many as can be mined, until ENDS_AT.
+// Every step is retried; a death is followed by fetching the things back; a guard stop by moving away first.
+const ENDS_AT = cfg.autoUntil ?? '08:00';   // local time to keep going until (after the goal)
+const STEPS = [
+  { name: 'stone tools', cmds: ['get_stone_pickaxe', 'get_stone_sword', 'get_stone_axe'], has: ['stone_pickaxe', 'stone_sword'] },
+  { name: 'food', cmds: ['get_cooked_beef 10', 'get_cooked_porkchop 10', 'get_cooked_mutton 10', 'get_cooked_chicken 10', 'get_bread 10'], food: 8 },
+  { name: 'iron gear', cmds: ['get_iron_pickaxe', 'get_iron_sword', 'get_bucket', 'get_shield', 'get_iron_chestplate', 'get_iron_leggings', 'get_iron_helmet', 'get_iron_boots'], has: ['iron_pickaxe', 'iron_sword', 'bucket'] },
+  { name: 'flint and steel', cmds: ['get_flint_and_steel'], has: ['flint_and_steel'] },
+  { name: 'beds (dragon)', cmds: ['get_white_bed 4'], optional: true },
+  { name: 'eyes of ender', cmds: ['get_ender_eye 14'], has: ['ender_eye'] },
+  { name: 'stronghold → the end', cmds: ['stronghold'], dim: 'the_end' },
+  { name: 'the dragon', special: 'dragon' },
+];
+let autoRun = null;
+function untilEnd() { const [h, m] = ENDS_AT.split(':').map(Number), n = new Date(), t = new Date(n); t.setHours(h, m, 0, 0); if (t <= n) t.setDate(t.getDate() + 1); return t; }
+async function waitIn() { while (!me.connected || !me.bot) { if (!autoRun) return false; await sleep(2000); } return true; }
+async function run(cmd, why) {   // one command, as the worker would: guard first, then the bot; true when it finished without a failure
+  if (!(await waitIn())) return false;
+  const [v, ...a] = cmd.split(/\s+/);
+  const g = PASSIVE.test(v) || BUILTIN[v] ? null : guardReason(me.bot);
+  if (g) { log(`auto: "${cmd}" waits: ${g}`); await escape(); return false; }
+  me.busy = `auto: ${cmd}`; me.abort = false;
+  const t = Date.now(); let ok = true;
+  const watch = PASSIVE.test(v) ? null : setInterval(() => { const w = me.connected && guardReason(me.bot); if (w && !me.abort) { log(`guard: stopping "${cmd}": ${w}`, { dc: true }); NOW.stop(); ok = false; } }, 3000);
+  const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap);
+  try { await (BUILTIN[v] ? BUILTIN[v](a) : me.bot.act(v, a)); } catch (e) { ok = false; log(`auto: "${cmd}" failed: ${e.message}`); }
+  finally { if (watch) clearInterval(watch); ctx.taps.delete(tap); me.busy = null; }
+  if (seen.some((l) => /: (gave up|failed|could not|cannot|no way|not found|nothing to)|did not break|not under the crosshair/i.test(l))) ok = false;
+  log(`auto: ${ok ? 'done' : 'not done'} "${cmd}"${why ? ` (${why})` : ''} in ${Math.round((Date.now() - t) / 1000)}s`, { dc: ok });
+  return ok && !me.abort;
+}
+// away from builds and players: walk out in the direction with the fewest built blocks, further each time
+let escapes = 0;
+async function escape() {
+  if (!(await waitIn())) return;
+  escapes++; me.abort = false;
+  const p = me.bot.state().pos, b = scanBuilt(me.bot, 64), far = 160 + 80 * Math.min(escapes, 10);
+  let best = null;
+  for (let k = 0; k < 8; k++) {
+    const ang = (k / 8) * Math.PI * 2, dx = Math.cos(ang), dz = Math.sin(ang);
+    const score = b.reduce((s, h) => s + h.n * Math.max(0, ((h.x - p.x) * dx + (h.z - p.z) * dz) / (h.d + 1)), 0);
+    if (!best || score < best.score) best = { score, x: Math.round(p.x + dx * far), z: Math.round(p.z + dz * far) };
+  }
+  log(`auto: moving away from builds/players toward ${best.x} ${best.z}`, { dc: true });
+  await BUILTIN.travel([String(best.x), String(best.z)]);
+  // still on top of something someone built (a roof, a deck): step off it, every way, jumping
+  if (guardReason(me.bot) && Math.hypot(me.bot.state().pos.x - p.x, me.bot.state().pos.z - p.z) < 3) {
+    for (const yaw of [0, 90, 180, 270, 45, 135, 225, 315]) { await me.bot.act('look', [String(yaw), '0']); await me.bot.act('jump', []).catch(() => {}); await me.bot.act('walk', ['forward', '30']).catch(() => {}); if (Math.hypot(me.bot.state().pos.x - p.x, me.bot.state().pos.z - p.z) > 4) break; }
+  }
+}
+async function dragon() {
+  if (me.dim !== 'the_end') return false;
+  await sleep(4000);
+  const d = [...me.bot.entities.values()].find((e) => e.type === 'minecraft:ender_dragon');
+  if (d) return run('fight_ender_dragon', 'the dragon');
+  log('auto: no dragon in the end (already killed on this server): going for the elytra', { dc: true });
+  return elytra();
+}
+async function elytra() {
+  // the outer islands: through an end gateway (an ender pearl thrown into it), then find an end city by its purpur and take the
+  // elytra from the item frame on the ship; back home through the gateway and the exit portal
+  for (let i = 0; i < 6 && autoRun; i++) {
+    if (await run('get_elytra', 'elytra')) return true;
+    if (!(await run('get_ender_pearl 4', 'pearls for the gateway'))) await sleep(5000);
+  }
+  return false;
+}
+async function auto() {
+  log(`auto: start (goal: the dragon, or the elytra home; then diamonds until ${ENDS_AT})`, { dc: true });
+  ctx.setLegit?.(true);
+  for (const st of STEPS) {
+    if (!autoRun) return;
+    for (let tries = 0; autoRun; tries++) {
+      log(`auto: step "${st.name}"${tries ? ` (try ${tries + 1})` : ''}`, { dc: !tries });
+      let ok = true;
+      if (st.special === 'dragon') ok = await dragon();
+      else if (st.food) { ok = false; for (const c of st.cmds) if (await run(c, st.name)) { ok = true; break; } }
+      else for (const c of st.cmds) { const r = await run(c, st.name); if (!r && !st.optional) ok = false; }
+      if (st.dim && me.dim !== st.dim) ok = false;
+      if (ok || st.optional) break;
+      if (me.deaths > (st.deaths ?? 0)) { st.deaths = me.deaths; await run('goto_death', 'fetch the things back'); }
+      if (tries >= 7 && !st.has) break;
+      await sleep(3000);
+    }
+  }
+  log('auto: goal reached — now diamonds until ' + ENDS_AT, { dc: true });
+  const end = untilEnd();
+  while (autoRun && Date.now() < end) {
+    if (me.dim !== 'overworld') { await run('goto_death', 'home'); }
+    await run('get_diamond 64', 'diamonds');
+  }
+  log('auto: finished', { dc: true });
+}
+const AUTOF = require('node:path').join(ctx.RUN, 'auto.json'), fsx = require('node:fs');
+const autoMark = (on) => { try { fsx.writeFileSync(AUTOF, JSON.stringify({ on, at: new Date().toISOString() })); } catch { /* */ } };
+BUILTIN.auto = async (a) => {
+  if (a[0] === 'stop') { autoRun = null; autoMark(false); NOW.stop(); return log('auto: stopped', { dc: true }); }
+  if (autoRun) return log('auto: already running');
+  autoRun = {}; autoMark(true); try { await auto(); } catch (e) { log('auto: error ' + e.message, { dc: true }); } finally { if (autoRun) autoMark(false); autoRun = null; }
+};
+// it was running when the bot last stopped: carry on (the run is not over until the goal and the hours are)
+try { if (JSON.parse(fsx.readFileSync(AUTOF, 'utf8')).on) { me.queue.push('auto'); log('auto: resuming'); } } catch { /* never started */ }
+NOW['auto'] = (a) => { if (a[0] === 'stop') return BUILTIN.auto(a); me.queue.push('auto'); };
+
 worker();
-return { command, status, dispose: () => { disposed = true; for (const t of timers) clearInterval(t); }, guardOn: () => guardOn, setGuard: (v) => { guardOn = v; } };
+return { command, status, dispose: () => { disposed = true; for (const t of timers) clearInterval(t); if (autoRun) { autoRun = null; me.abort = true; me.bot?.act('stop', []).catch(() => {}); } }, guardOn: () => guardOn, setGuard: (v) => { guardOn = v; } };
 };

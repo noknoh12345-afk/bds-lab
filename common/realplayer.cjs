@@ -1551,6 +1551,10 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     list.sort((a, b) => Math.hypot(a.x - f.x, a.z - f.z, a.y - f.y) - Math.hypot(b.x - f.x, b.z - f.z, b.y - f.y));
     return list[0];
   };
+  // legit: act only as a person could at that moment: looking at it, in reach, nothing in between (what the crosshair hits after
+  // turning is the thing itself); otherwise say why and leave it (remote/bot.cjs turns it on for a real server)
+  let legit = false;
+  const underCrosshair = (want) => { const h = raycast(); return want.entity ? h?.kind === 'entity' && String(h.entity.id) === String(want.entity.id) : h?.kind === 'block' && h.x === want.x && h.y === want.y && h.z === want.z; };
   const hitTx = (e, kind, aimed) => {
     if (!aimed) lookAt({ x: e.x, y: e.y + (e.bh > 0 ? e.bh / 2 : e.type === 'minecraft:player' ? 0.9 : 0.5), z: e.z });   // the middle of its box
     if (kind === 'attack') swingArm('attack');
@@ -1638,6 +1642,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const brid = known !== undefined ? known >>> 0 : blk ? blockHash(req, blk.id, blk.states, version) >>> 0 : 0;
         if (process.env.LAB_DEBUG) say(`dbg useon known=${known} ${JSON.stringify(blk)}`);
         if (!fast) await ticks(1);
+        if (legit && !fast && !underCrosshair(b)) return say(`useon: ${b.x} ${b.y} ${b.z} is not under the crosshair (out of reach or behind a block): not clicked`);
         const cp = pt.length === 3 && pt.every((v) => v >= 0 && v <= 1) ? { x: pt[0], y: pt[1], z: pt[2] } : [{ x: 0.5, y: 0, z: 0.5 }, { x: 0.5, y: 1, z: 0.5 }, { x: 0.5, y: 0.5, z: 0 }, { x: 0.5, y: 0.5, z: 1 }, { x: 0, y: 0.5, z: 0.5 }, { x: 1, y: 0.5, z: 0.5 }][face] ?? { x: 0.5, y: 0.5, z: 0.5 };
         if (pt.length && !(pt.length === 3 && pt.every((v) => v >= 0 && v <= 1))) throw new Error('useon x y z [face] [cx cy cz] [hold]: cx cy cz are 0..1 inside the block');
         const pa = (action) => client.queue('player_action', { runtime_entity_id: rid, action, position: b, result_position: b, face });
@@ -1687,6 +1692,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         if (a[3] === 'hold') { digging = { pos: b, face: faceToward(b), phase: 'start', ticks: 0, hold: true, done() {} }; return ticks(4); }   // keep digging until `release`
         const kb = world.block(b.x, b.y, b.z);
         if (kb ? kb.name === 'minecraft:air' : blockAt && (await blockAt(b))?.id === 'minecraft:air') return say('dig: nothing to dig (air)');
+        if (legit) { await ticks(1); if (!underCrosshair(b)) return say(`dig: ${b.x} ${b.y} ${b.z} is not under the crosshair (out of reach or behind a block): not dug`); }
         const stopAt = num(a[3], 0);   // dig x y z [ticks]: stop (abort) after that many ticks
         const broken = await new Promise((done) => { digging = { pos: b, face: faceToward(b), phase: 'start', ticks: 0, max: 400, broken: false, done, stopAt }; });
         if (!broken) say(stopAt ? 'dig: stopped before breaking' : 'dig: block did not break');
@@ -1712,7 +1718,12 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         { const w = (e.bw > 0 ? e.bw : 0.6) / 2, hh = e.bh > 0 ? e.bh : e.type === 'minecraft:player' ? 1.8 : 1;   // a human could not reach it from here: say so (the server decides)
           const c = { x: Math.max(e.x - w, Math.min(pos.x, e.x + w)), y: Math.max(e.y, Math.min(pos.y, e.y + hh)), z: Math.max(e.z - w, Math.min(pos.z, e.z + w)) };
           const dd = Math.hypot(c.x - pos.x, c.y - pos.y, c.z - pos.z); if (dd > reach('entity') + 0.3) say(`${action}: ${e.name ?? e.type} is ${dd.toFixed(1)} blocks away (reach ${reach('entity')})`); }
-        hitTx(e, action);
+        if (legit) {
+          lookAt({ x: e.x, y: e.y + (e.bh > 0 ? e.bh / 2 : e.type === 'minecraft:player' ? 0.9 : 0.5), z: e.z });
+          await ticks(2);   // the turn goes out with the next movement packets, before the hit (the server checks where the player looks)
+          if (!underCrosshair({ entity: e })) { say(`${action}: ${e.name ?? e.type} is not under the crosshair (out of reach or behind a block): not ${action === 'attack' ? 'hit' : 'used'}`); return ticks(1); }
+          hitTx(e, action, true);
+        } else hitTx(e, action);
         return ticks(4);
       }
       case 'form': {
@@ -2523,6 +2534,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   bot.state = () => big({ pos: feet(), yaw, pitch, dead });
   // remote/bot.cjs (a resident player on someone's server) reads these: the chunks it knows, the mobs and players in sight, the connection
   bot.world = world; bot.entities = entities; bot.client = client; bot.players = () => [...players.keys()];
+  bot.setLegit = (v) => { legit = !!v; };
   bot.time = () => (worldTime === null ? null : Number(worldTime) + (clockPaused ? 0 : Number(BigInt(tick) - BigInt(worldTimeTick))));
   return bot;
 }
