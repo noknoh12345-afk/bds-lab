@@ -167,6 +167,7 @@ timers.push(setInterval(async () => {
 const ENDS_AT = cfg.autoUntil ?? '08:00';   // local time to keep going until (after the goal)
 const STEPS = [
   { name: 'stone tools', cmds: ['get_stone_pickaxe', 'get_stone_sword', 'get_stone_axe'], has: ['stone_pickaxe', 'stone_sword'] },
+  { name: 'a bed as the spawn point (out here, not among the builds)', special: 'bedspawn', optional: true },
   { name: 'food', cmds: ['get_cooked_beef 10', 'get_cooked_porkchop 10', 'get_cooked_mutton 10', 'get_cooked_chicken 10', 'get_bread 10'], food: 8 },
   { name: 'iron gear', cmds: ['get_iron_pickaxe', 'get_iron_sword', 'get_bucket', 'get_shield', 'get_iron_chestplate', 'get_iron_leggings', 'get_iron_helmet', 'get_iron_boots'], has: ['iron_pickaxe', 'iron_sword', 'bucket'] },
   { name: 'flint and steel', cmds: ['get_flint_and_steel'], has: ['flint_and_steel'] },
@@ -200,6 +201,7 @@ let escapes = 0;
 async function escape() {
   if (!(await waitIn())) return;
   escapes++; me.abort = false;
+  { const q = me.bot.state().pos; if (me.dim === 'overworld' && Math.hypot(q.x, q.z) < 450) return goFar(); }
   const p = me.bot.state().pos, b = scanBuilt(me.bot, 64), far = 160 + 80 * Math.min(escapes, 10);
   let best = null;
   for (let k = 0; k < 8; k++) {
@@ -223,9 +225,27 @@ async function goFar() {
   if (!(await waitIn()) || me.dim !== 'overworld') return;
   const p = me.bot.state().pos;
   if (Math.hypot(p.x, p.z) >= 450) return;
+  if (me.spawnSet && Math.hypot(p.x - me.spawnSet.x, p.z - me.spawnSet.z) < 64) return;
   log(`auto: near the spawn (${Math.round(p.x)} ${Math.round(p.z)}): out to the work area ${WORK.join(' ')}`, { dc: true });
   me.abort = false;
   await BUILTIN.travel([String(WORK[0]), String(WORK[1])]);
+}
+// a bed set down out in the work area and clicked: the respawn point is here from then on (a death no longer means the long
+// walk back from the world spawn through the mobs there). Clicking a bed sets it at any time of day on Bedrock.
+async function bedSpawn() {
+  if (me.dim !== 'overworld' || me.spawnSet) return true;
+  const bedOk = await run('get_white_bed 1', 'a bed') || await run('get_red_bed 1', 'a bed');
+  if (!bedOk) return false;
+  await run('place_white_bed', 'set the bed down').catch?.(() => {});
+  const p = me.bot.state().pos; let bed = null;
+  for (let dx = -4; dx <= 4 && !bed; dx++) for (let dz = -4; dz <= 4 && !bed; dz++) for (let dy = -2; dy <= 2 && !bed; dy++) { const n = me.bot.world.block(Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz)?.name ?? ''; if (/_bed$/.test(n)) bed = [Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz]; }
+  if (!bed) { await run('place_red_bed', 'set the bed down'); }
+  if (!bed) { log('auto: the bed did not go down'); return false; }
+  const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap);
+  await me.bot.act('useon', bed.map(String)).catch(() => {}); await sleep(1500); ctx.taps.delete(tap);
+  me.spawnSet = { x: bed[0], y: bed[1], z: bed[2] };
+  log(`auto: respawn point set at the bed ${bed.join(' ')}`, { dc: true });
+  return true;
 }
 async function dragon() {
   if (me.dim !== 'the_end') return false;
@@ -254,6 +274,7 @@ async function auto() {
       log(`auto: step "${st.name}"${tries ? ` (try ${tries + 1})` : ''}`, { dc: !tries });
       let ok = true;
       if (st.special === 'dragon') ok = await dragon();
+      else if (st.special === 'bedspawn') ok = await bedSpawn();
       else if (st.food) { ok = false; for (const c of st.cmds) if (await run(c, st.name)) { ok = true; break; } }
       else for (const c of st.cmds) { const r = await run(c, st.name); if (!r && !st.optional) ok = false; }
       if (st.dim && me.dim !== st.dim) ok = false;
