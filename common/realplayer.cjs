@@ -1561,6 +1561,12 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   // legit: act only as a person could at that moment: looking at it, in reach, nothing in between (what the crosshair hits after
   // turning is the thing itself); otherwise say why and leave it (remote/bot.cjs turns it on for a real server)
   let legit = false;
+  const FACE_OFF = [[0, -1, 0], [0, 1, 0], [0, 0, -1], [0, 0, 1], [-1, 0, 0], [1, 0, 0]];
+  const facePoint = (b, f) => { const o = FACE_OFF[f] ?? [0, 1, 0]; return { x: b.x + 0.5 + o[0] * 0.49, y: b.y + 0.5 + o[1] * 0.49, z: b.z + 0.5 + o[2] * 0.49 }; };
+  // the crosshair on what a click goes to: the block itself, or (placing) the grass / leaf litter / snow layer standing in the cell
+  // the new block replaces (in the game that is what the crosshair shows, and the placed block takes its cell)
+  const REPLACEABLE = /short_grass|tall_grass|fern|leaf_litter|snow_layer|deadbush|dead_bush|vine|seagrass|_flower|dandelion|poppy|tulip|orchid|allium|bluet|daisy|cornflower|lily_of_the_valley|bush|wildflowers|dry_grass/;
+  const underCrosshairPlace = (b, f) => { if (underCrosshair(b)) return true; const h = raycast(), o = FACE_OFF[f] ?? [0, 1, 0]; return h?.kind === 'block' && h.x === b.x + o[0] && h.y === b.y + o[1] && h.z === b.z + o[2] && REPLACEABLE.test(world.block(h.x, h.y, h.z)?.name ?? ''); };
   const underCrosshair = (want) => { const h = raycast(); return want.entity ? h?.kind === 'entity' && String(h.entity.id) === String(want.entity.id) : h?.kind === 'block' && h.x === want.x && h.y === want.y && h.z === want.z; };
   const hitTx = (e, kind, aimed) => {
     if (!aimed) lookAt({ x: e.x, y: e.y + (e.bh > 0 ? e.bh / 2 : e.type === 'minecraft:player' ? 0.9 : 0.5), z: e.z });   // the middle of its box
@@ -1642,14 +1648,14 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const face = /^\d$/.test(a[3] ?? '') ? +a[3] : FACES.includes(a[3]) ? FACES.indexOf(a[3]) : 1;
         const fast = a.includes('fast');
         const pt = a.slice(/^\d$/.test(a[3] ?? '') || FACES.includes(a[3]) ? 4 : 3).filter((x) => x !== 'hold' && x !== 'fast').map(Number);
-        const aim = pt.length === 3 ? { x: b.x + pt[0], y: b.y + pt[1], z: b.z + pt[2] } : { x: b.x + 0.5, y: b.y + 0.5, z: b.z + 0.5 };
+        const aim = pt.length === 3 ? { x: b.x + pt[0], y: b.y + pt[1], z: b.z + pt[2] } : legit ? facePoint(b, face) : { x: b.x + 0.5, y: b.y + 0.5, z: b.z + 0.5 };
         lookAt(aim);
         if (!fast) await sync();
         const known = world.rid(b.x, b.y, b.z), blk = known === undefined && blockAt ? await blockAt(b) : null;   // a real client knows it from its chunks
         const brid = known !== undefined ? known >>> 0 : blk ? blockHash(req, blk.id, blk.states, version) >>> 0 : 0;
         if (process.env.LAB_DEBUG) say(`dbg useon known=${known} ${JSON.stringify(blk)}`);
         if (!fast) await ticks(1);
-        if (legit && !fast && !underCrosshair(b)) return say(`useon: ${b.x} ${b.y} ${b.z} is not under the crosshair (out of reach or behind a block): not clicked`);
+        if (legit && !fast && !underCrosshairPlace(b, face)) return say(`useon: ${b.x} ${b.y} ${b.z} is not under the crosshair (out of reach or behind a block): not clicked`);
         const cp = pt.length === 3 && pt.every((v) => v >= 0 && v <= 1) ? { x: pt[0], y: pt[1], z: pt[2] } : [{ x: 0.5, y: 0, z: 0.5 }, { x: 0.5, y: 1, z: 0.5 }, { x: 0.5, y: 0.5, z: 0 }, { x: 0.5, y: 0.5, z: 1 }, { x: 0, y: 0.5, z: 0.5 }, { x: 1, y: 0.5, z: 0.5 }][face] ?? { x: 0.5, y: 0.5, z: 0.5 };
         if (pt.length && !(pt.length === 3 && pt.every((v) => v >= 0 && v <= 1))) throw new Error('useon x y z [face] [cx cy cz] [hold]: cx cy cz are 0..1 inside the block');
         const pa = (action) => client.queue('player_action', { runtime_entity_id: rid, action, position: b, result_position: b, face });
@@ -1695,7 +1701,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           return bot.act('dig', [h.x, h.y, h.z, ...a].map(String));
         }
         const b = { x: +a[0], y: +a[1], z: +a[2] };
-        lookAt({ x: b.x + 0.5, y: b.y + 0.5, z: b.z + 0.5 });
+        lookAt(legit ? facePoint(b, faceToward(b)) : { x: b.x + 0.5, y: b.y + 0.5, z: b.z + 0.5 });
         if (a[3] === 'hold') { digging = { pos: b, face: faceToward(b), phase: 'start', ticks: 0, hold: true, done() {} }; return ticks(4); }   // keep digging until `release`
         const kb = world.block(b.x, b.y, b.z);
         if (kb ? kb.name === 'minecraft:air' : blockAt && (await blockAt(b))?.id === 'minecraft:air') return say('dig: nothing to dig (air)');
