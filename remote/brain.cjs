@@ -11,7 +11,7 @@ const timers = [];
 // blocks no world generates by itself in the open (villages and ruins have some too: kept away from as well, which is fine)
 const BUILT = /planks|glass|crafting_table|chest|barrel|_bed$|torch|lantern|wool|carpet|concrete|bricks|_slab|_stairs|_door|fence|furnace|smoker|anvil|_sign|bookshelf|rail|redstone_(wire|torch|lamp|block)|repeater|comparator|piston|hopper|composter|lectern|scaffolding|ladder|banner|bell|item_frame|shulker_box|enchanting_table|brewing_stand|beacon|quartz_block|smooth_stone|polished_|cut_|_wall$|campfire|flower_pot|candle|lever|_button|pressure_plate|observer|dispenser|dropper|tnt|iron_block|gold_block|diamond_block|emerald_block|copper_block|hay_block|glazed_terracotta|stained|sea_lantern|end_rod/;
 // actions that only move or look: allowed anywhere (they change nothing)
-const PASSIVE = /^(goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
+const PASSIVE = /^(auto|map|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
 let guardOn = ctx.guardOn ?? true;
 const HOSTILE = /^minecraft:(zombie|husk|drowned|skeleton|stray|bogged|spider|cave_spider|creeper|witch|slime|magma_cube|zombie_villager_v2|pillager|vindicator|silverfish|phantom|blaze|wither_skeleton|piglin_brute|hoglin|ghast|endermite|breeze)$/;
 function scanBuilt(bot, R) {
@@ -61,6 +61,13 @@ const BUILTIN = {
     const q = me.bot.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z), rows = [];
     for (let dy = 2; dy >= -3; dy--) { const r = []; for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) r.push((me.bot.world.block(X + dx, Y + dy, Z + dz)?.name ?? '?').replace('minecraft:', '').slice(0, 8)); rows.push(`y${Y + dy}: ${r.join(',')}`); }
     log('around\n' + rows.join('\n'));
+  },
+  // a top view around the feet: what is at feet height (upper letter) / under the feet (lower): . air  # solid  ~ water  f fence/wall/trapdoor  @ me
+  map: (a) => {
+    const R = +(a[0] ?? 8), q = me.bot.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z), rows = [];
+    const ch = (b) => { const n = b?.name ?? '?'; return n === '?' ? '?' : /air/.test(n) ? '.' : /water/.test(n) ? '~' : /lava/.test(n) ? '!' : /fence|wall|trapdoor|pane|bars|door/.test(n) ? 'f' : /slab|stairs|carpet|snow/.test(n) ? 's' : /leaves/.test(n) ? 'l' : /grass|flower|fern|bush|sapling|vine/.test(n) && !/block/.test(n) ? ',' : '#'; };
+    for (let dz = -R; dz <= R; dz++) { let r = ''; for (let dx = -R; dx <= R; dx++) { if (!dx && !dz) { r += '@ '; continue; } const f = ch(me.bot.world.block(X + dx, Y, Z + dz)), u = ch(me.bot.world.block(X + dx, Y - 1, Z + dz)); r += (f === '.' ? (u === '.' ? (ch(me.bot.world.block(X + dx, Y - 2, Z + dz)) === '.' ? '_' : 'v') : u.toLowerCase()) : f.toUpperCase()) + ' '; } rows.push(r); }
+    log(`map around ${X} ${Y} ${Z} (north up, east right; capital = blocks the way at feet height, lower = floor, v = 1 down, _ = 2+ down)\n` + rows.join('\n'));
   },
   guard: (a) => { if (a[0] === 'off') guardOn = false; else if (a[0] === 'on') guardOn = true; else if (+a[0] > 0) cfg.guardRadius = +a[0]; log(`guard ${guardOn ? 'on' : 'off'} radius ${cfg.guardRadius}`); },
   // a long walk in steps over the chunks the client has (goto alone only paths through what it already knows)
@@ -122,10 +129,12 @@ async function worker() {
 
 // ---------- self-defense: a hostile mob within reach gets hit back (no block is touched: allowed near builds too) ----------
 let swinging = false;
+const skipUntil = new Map();
 timers.push(setInterval(async () => {
   const b = me.bot; if (!b || !me.connected || swinging || b.state().dead) return;
-  const P = b.state().pos, e = [...b.entities.values()].filter((x) => HOSTILE.test(x.type ?? '') && !/creeper/.test(x.type) && Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) < 3.2)[0];
+  const P = b.state().pos, e = [...b.entities.values()].filter((x) => HOSTILE.test(x.type ?? '') && !/creeper/.test(x.type) && Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) < 2.9 && !(skipUntil.get(String(x.id)) > Date.now()))[0];
   if (!e) return;
+  skipUntil.set(String(e.id), Date.now() + 2500);   // one try per mob every 2.5 s (a mob behind a block is not swung at over and over)
   swinging = true;
   try { await b.act('attack', [e.type.replace('minecraft:', '')]); } catch { /* gone */ } finally { swinging = false; }
 }, 700));
