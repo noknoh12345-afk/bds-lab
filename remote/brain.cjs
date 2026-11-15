@@ -342,7 +342,7 @@ const skipUntil = new Map();
 // Every step is retried; a death is followed by fetching the things back; a guard stop by moving away first.
 const ENDS_AT = cfg.autoUntil ?? '08:00';   // local time to keep going until (after the goal)
 const STEPS = [
-  { name: 'stone tools', cmds: ['get_stone_pickaxe', 'get_stone_sword', 'get_stone_axe'], has: ['stone_pickaxe', 'stone_sword'] },
+  { name: 'stone tools', cmds: ['get_wooden_sword', 'get_stone_pickaxe', 'get_stone_sword', 'get_stone_axe'], has: ['stone_pickaxe', 'stone_sword'] },   // (a weapon before anything: every death so far was with nothing in hand)
   { name: 'a bed as the spawn point (out here, not among the builds)', special: 'bedspawn', optional: true },
   { name: 'food', cmds: ['get_cooked_beef 10', 'get_cooked_porkchop 10', 'get_cooked_mutton 10', 'get_cooked_chicken 10', 'get_bread 10'], food: 8 },
   { name: 'iron gear', cmds: ['get_iron_pickaxe', 'get_iron_sword', 'get_bucket', 'get_shield', 'get_iron_chestplate', 'get_iron_leggings', 'get_iron_helmet', 'get_iron_boots'], has: ['iron_pickaxe', 'iron_sword', 'bucket'] },
@@ -360,6 +360,7 @@ async function waitIn() { while (!me.connected || !me.bot) { if (!live()) return
 async function run(cmd, why) {   // one command, as the worker would: guard first, then the bot; true when it finished without a failure
   await reviewWait();
   if (!(await waitIn())) return false;
+  await safeStart();
   const [v, ...a] = cmd.split(/\s+/);
   const g = PASSIVE.test(v) || BUILTIN[v] ? null : guardReason(me.bot);
   if (g) { log(`auto: "${cmd}" waits: ${g}`); await escape(); return false; }
@@ -400,6 +401,13 @@ async function escape() {
 const WORK = (cfg.workArea ?? '260 260').split(/\s+/).map(Number), FAR = cfg.farFromSpawn ?? 220;
 // the way out of the spawn: south first (the builds east of it, x 40-95 z 20-45, are not walked through or near), then on
 const WAYOUT = (cfg.wayOut ?? '0 60').split(/\s+/).map(Number);   // (8 130 led over a drowned cave at -24 43 107 it fell into twice)
+// before work: not down in a cave (up to the sky first), and not out in the night with nothing to fight with (dug in until morning)
+// (the death of 08:53 under review: a goal started in a drowned cave at night, unarmed, and a skeleton shot it there)
+async function safeStart() {
+  const b = me.bot; if (!b || me.dim !== 'overworld' || guardReason(b)) return;
+  if (!openSky(b, b.state().pos)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
+  if (nightNow(b) && !lastHeld) { log('auto: night and nothing to fight with: dug in until morning', { dc: true }); await b.act('shelter', []).catch(() => {}); while (nightNow(b) && me.connected && !disposed) await sleep(5000); }
+}
 async function goFar() {
   await reviewWait();
   if (!(await waitIn()) || me.dim !== 'overworld') return;

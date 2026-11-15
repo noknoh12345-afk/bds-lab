@@ -1530,7 +1530,9 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   // cancel: what was asked is to stop now (remote/bot.cjs: a build or a player came close). Every wait from then on throws, so a
   // long verb (get_<item>, a walk, a fight) ends at its next step instead of going on; the next top-level action clears it
   let cancelled = false, actDepth = 0;
-  const ticks = (n) => (cancelled && actDepth > 0 ? Promise.reject(new Error('cancelled')) : ticks0(n));
+  // (the throw comes a tick later, not at once: a verb that catches it and tries again must not spin the process - after a death
+  //  goal-exec's "died again" ran 14 rounds in the same millisecond)
+  const ticks = (n) => (cancelled && actDepth > 0 ? ticks0(1).then(() => { throw new Error('cancelled'); }) : ticks0(n));
   const ticks0 = (n) => new Promise((r) => {
     const k = Math.max(0, Math.ceil(Number(n) || 0)), at = tick + BigInt(k);
     if (loopStopped) return void setTimeout(r, Math.max(1, k * TICK_MS));
