@@ -104,7 +104,9 @@ fs.rmSync(path.join(st, 'c', 'bdslab-redroid-t'), { force: true });
 m = await R.up({ name: 'bdslab-redroid-t', port: 5699, timeoutMs: 30_000, untilBoot: true });
 L = lines();
 const wfd = L.map((l, i) => /wait-for-device/.test(l) ? i : -1).filter((i) => i >= 0);
-ok(m.bootS != null && wfd.length === 2 && /^adb disconnect /.test(L[wfd[0] + 1]) && /^adb connect /.test(L[wfd[0] + 2]) && m.adbS >= 2.9 && m.adbS < 3.9,
+// (the next adb calls: the background clean-up of old containers, docker ps …-old-, may come in between — CI saw it once)
+const nextAdb = L.slice(wfd[0] + 1).filter((l) => /^adb /.test(l));
+ok(m.bootS != null && wfd.length === 2 && /^adb disconnect /.test(nextAdb[0]) && /^adb connect /.test(nextAdb[1]) && m.adbS >= 2.9 && m.adbS < 3.9,
   `up: a hung wait-for-device → given up at 3 s, disconnect, connect again at once (adb at ${m.adbS} s)`, L.join('\n'));
 
 // the device-side loops are sliced (sliceMs) and run again until the time is out; SIGTERM's handler runs between slices

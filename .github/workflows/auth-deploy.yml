@@ -136,4 +136,4 @@ jobs:
           done
           echo "::notice title=auth-url::$url"
           if [ -z "$ok" ]; then echo "::warning title=auth-deploy::$url がまだ答えません（新しい workers.dev は数分かかることがあります）: パネルが続けて確かめます"; fi
-          { echo "## サインインのサービス"; echo; echo "$url（パネルの「準備」が変数 LAB_AUTH_URL に入れます）"; echo; echo "App の設定の Callback URL: $url/callback"; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "## サインインのサービス"; echo; echo "${url}（パネルの「準備」が変数 LAB_AUTH_URL に入れます）"; echo; echo "App の設定の Callback URL: $url/callback"; } >> "$GITHUB_STEP_SUMMARY"

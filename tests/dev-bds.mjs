@@ -102,7 +102,7 @@ try {
   let r;
   for (const [n, d, title] of [[BUGS, BUGS_DIR, 'Dev Bench Bugs'], [NAME, DIR, 'Dev Bench']]) {
     fs.rmSync(d, { recursive: true, force: true });
-    r = await lab(['new', n, title, 'A wand that sparks, /lab:pay and a shop menu', 'desc=Use the wand to spark; /lab:pay gives emeralds']);
+    r = await lab(['new', n, title, 'A wand that sparks, /lab:pay and a shop menu', 'desc=Use the wand to spark; /lab:pay gives emeralds', 'ja=杖で火花を出す。/lab:pay でエメラルドをもらえる']);
     ok(r.code === 0 && fs.existsSync(path.join(d, 'src', 'main.ts')), `new: the unit (${n})`, r.t);
     r = await lab(['add', 'item', 'lab:wand', 'Spark Wand', 'ja=火花の杖', 'tex=wand:8844ff', 'max_stack_size=1'], {}, n);
     ok(r.code === 0 && !('lab:wand' in JSON.parse(read('bp/items/wand.json', d))['minecraft:item'].components), `add: the wand, its component left out (the first bug) (${n})`, r.t);

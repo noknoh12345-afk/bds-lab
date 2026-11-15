@@ -58,9 +58,12 @@ export function scanServer(bds, { world = null } = {}) {
   for (const a of addons) { const k = seen.get(a.name) ?? 0; seen.set(a.name, k + 1); if (k) a.name = `${a.name}_${k + 1}`.slice(0, 40); }
   let wheels = [], mods = [];
   try { wheels = fs.readdirSync(path.join(bds, 'plugins')).filter((n) => /\.whl$/i.test(n)).map((n) => path.join(bds, 'plugins', n)); } catch { /* not Endstone */ }
-  // (a LeviLamina mod: plugins/<name>/manifest.json — the lab says so; ll mods are made with `ll new`)
-  mods = dirs(path.join(bds, 'plugins')).filter((d) => readJson(path.join(d, 'manifest.json'))?.type).map((d) => path.basename(d));
-  return { level, addons, wheels, mods, unlisted };
+  // a LeviLamina mod: plugins/<name>/manifest.json (lse-*: script, taken in by `ll import`; native: a .dll, its source makes one);
+  // a LiteLoader-era script left in plugins/ itself (X.js, X.lxl.js: LSE moves it into plugins/X/ at the next start)
+  const lse = [], legacy = [];
+  for (const d of dirs(path.join(bds, 'plugins'))) { const t = String(readJson(path.join(d, 'manifest.json'))?.type ?? ''); if (!t) continue; if (/^lse-/.test(t)) lse.push(d); else mods.push(path.basename(d)); }
+  try { for (const n of fs.readdirSync(path.join(bds, 'plugins')).filter((x) => /\.(m?js)$/i.test(x))) { const f = path.join(bds, 'plugins', n); if (/\bll\.register(Plugin)?\s*\(|\bmc\.(listen|newCommand|regPlayerCmd)\s*\(/.test(fs.readFileSync(f, 'utf8'))) legacy.push(f); } } catch { /* no plugins/ */ }
+  return { level, addons, wheels, mods, lse, legacy, unlisted };
 }
 
 /** the import: each addon through `bds import <its packs> --name`, each wheel through `end import`; the units already here (the
@@ -69,14 +72,14 @@ export async function importServer(L, src, request, args = []) {
   const out = L?.out ?? console.log, flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
   process.env.LAB_NEW_SKILL = 'off';   // (a whole server: no one skill fits it — each unit's import said its own brief)
   const dry = args.includes('--dry'), s = scanServer(src, { world: flag('--world') });
-  if (!fs.existsSync(path.join(src, 'worlds', s.level)) && !s.wheels.length) { out(`ERR ${src}: no world "${s.level}" in worlds/ and no plugins/*.whl (--world <name> picks another world)`); return false; }
+  if (!fs.existsSync(path.join(src, 'worlds', s.level)) && !s.wheels.length && !s.lse.length && !s.legacy.length) { out(`ERR ${src}: no world "${s.level}" in worlds/ and no plugins (--world <name> picks another world)`); return false; }
   // the units here, by their packs' UUIDs (a pack taken in before is not taken twice: node lab.mjs go -a <it> tests it again)
   const mine = new Map();
   for (const u of unitsIn(TOP, 'bds')) for (const k of ['bp', 'rp']) { for (const id of ids(readJson(path.join(unitDirIn(TOP, 'bds', u), k, 'manifest.json')))) mine.set(id, u); }
-  const endLab = fs.existsSync(path.join(TOP, 'end', 'flavor.mjs'));
-  out(`server ${src} · world "${s.level}"${s.unlisted ? ' (no pack lists: the packs in its folders)' : ''} · ${s.addons.length} addon(s), ${s.wheels.length} Endstone plugin(s)${s.mods.length ? `, ${s.mods.length} LeviLamina mod(s)` : ''}`);
+  const endLab = fs.existsSync(path.join(TOP, 'end', 'flavor.mjs')), llLab = fs.existsSync(path.join(TOP, 'll', 'flavor.mjs'));
+  out(`server ${src} · world "${s.level}"${s.unlisted ? ' (no pack lists: the packs in its folders)' : ''} · ${s.addons.length} addon(s), ${s.wheels.length} Endstone plugin(s)${s.lse.length + s.legacy.length + s.mods.length ? `, ${s.lse.length + s.legacy.length + s.mods.length} LeviLamina mod(s)` : ''}`);
   const made = [], kept = [], failed = [];
-  const run = (lab, what, name) => spawnSync(process.execPath, [path.join(TOP, 'lab.mjs'), lab, 'import', what, ...(request ? [request] : []), ...(name ? ['--name', name] : [])], { cwd: TOP, encoding: 'utf8', maxBuffer: 64e6, env: { ...process.env, LAB_NEW_SKILL: 'off' }, timeout: 900000 });
+  const run = (lab, what, name, more = []) => spawnSync(process.execPath, [path.join(TOP, 'lab.mjs'), lab, 'import', what, ...(request ? [request] : []), ...(name ? ['--name', name] : []), ...more], { cwd: TOP, encoding: 'utf8', maxBuffer: 64e6, env: { ...process.env, LAB_NEW_SKILL: 'off' }, timeout: 900000 });
   for (const a of s.addons) {
     // (a resource pack alone — textures, sounds, a UI: the lab tests behavior; it stays on the server as it is)
     if (!a.bp) { out(`  · ${a.title || a.name}: a resource pack alone (looks only): not a unit — the lab tests addons with a behavior pack`); continue; }
@@ -101,10 +104,24 @@ export async function importServer(L, src, request, args = []) {
     else if (/plugins\/([a-z0-9_]+) exists/.test(r.stdout ?? '')) { kept.push(/plugins\/([a-z0-9_]+) exists/.exec(r.stdout)[1]); out(`  = ${path.basename(w)}: already a plugin unit here`); }
     else { failed.push(path.basename(w)); out(`  ✘ ${path.basename(w)}: ${String(r.stdout || r.stderr).trim().split('\n').filter((l) => /^(ERR|E )/.test(l)).slice(-1)[0] ?? 'import failed'}`); }
   }
-  for (const m of s.mods) out(`  · ${m}: a LeviLamina mod (plugins/${m}): not taken in — its source makes a unit with node lab.mjs ll new`);
+  // (a script mod as the server has it: its code alone — what else is in its folder is that server's data, which stays there)
+  for (const f of [...s.lse, ...s.legacy]) {
+    const shown = path.relative(src, f).split(path.sep).join('/');
+    if (!llLab) { out(`  · ${shown}: a LeviLamina script mod (the LeviLamina lab is on the dev branch)`); continue; }
+    // (its unit's name as ll import makes it: the manifest's name, or the file's — a mod taken in before is not taken twice)
+    const disp = /\.m?js$/i.test(f) ? path.basename(f).replace(/(\.lxl)?\.m?js$/i, '') : String(readJson(path.join(f, 'manifest.json'))?.name ?? path.basename(f));
+    const nm = disp.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '').replace(/^(\d)/, 'mod_$1') || 'imported';
+    if (fs.existsSync(path.join(TOP, 'll', 'mods', nm))) { kept.push(`ll-${nm}`); out(`  = ${shown}: already the mod unit ${nm}`); continue; }
+    if (dry) { out(`  + ${shown} → ll/mods/${nm} (LegacyScriptEngine, its code)`); made.push(`ll-${nm}`); continue; }
+    const r = run('ll', f, null, ['--code-only']), m = /^OK ll\/mods\/([a-z0-9_]+)\//m.exec(r.stdout ?? '');
+    if (m) { made.push(`ll-${m[1]}`); out(`  + ${shown} → ll/mods/${m[1]}`); }
+    else if (/mods\/([a-z0-9_]+) exists/.test(r.stdout ?? '')) { kept.push(`ll-${/mods\/([a-z0-9_]+) exists/.exec(r.stdout)[1]}`); out(`  = ${shown}: already a mod unit here`); }
+    else { failed.push(shown); out(`  ✘ ${shown}: ${String(r.stdout || r.stderr).trim().split('\n').filter((l) => /^(ERR|E )/.test(l)).slice(-1)[0] ?? 'import failed'}`); }
+  }
+  for (const m of s.mods) out(`  · ${m}: a native LeviLamina mod (plugins/${m}, a .dll): not taken in — its source makes a unit: node lab.mjs ll new <n> --native`);
   const names = [...made, ...kept];
   out(`${dry ? 'DRY' : failed.length ? 'W' : 'OK'} ${dry ? 'would take' : 'took'} ${made.length} in${kept.length ? `, ${kept.length} already here` : ''}${failed.length ? `, ${failed.length} failed (${failed.join(', ')})` : ''} from ${src}; nothing there was changed`);
-  const labs = [...new Set(names.map((n) => (n.startsWith('end-') ? 'end' : 'bds')))].join(',');
+  const labs = [...new Set(names.map((n) => (n.startsWith('end-') ? 'end' : n.startsWith('ll-') ? 'll' : 'bds')))].join(',');
   if (names.length && !dry) out(`next: node lab.mjs go all --lab ${labs} --only ${names.join(',')}   (each on a fresh real server, side by side: what still works on this BDS; then deploy "${src}" <unit> puts a fixed one back)`);
   return !failed.length;
 }

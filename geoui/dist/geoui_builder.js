@@ -1,5 +1,5 @@
 // GeoUI Builder 0.1.0 with its timeline — one file for Blockbench (made by geoui/build.mjs from geoui/geoui_builder.js and
-// geoui/timeline/*.js: change those, then node geoui/build.mjs). sources 8e8c4f494092
+// geoui/timeline/*.js: change those, then node geoui/build.mjs). sources 85dfeae7163c
 // ---- timeline/model.js
 (function (module) {
 // GeoUI timeline — the model (pure: no DOM, no Blockbench). The plan's step 1 (geoui/timeline/PLAN.md):
@@ -2898,7 +2898,7 @@
     const tour = tourOf(G);
     G.tour = tour.scenes;
     const md = map.metadata || {};
-    const design = { settings: Object.assign({ ns, name: opts.title || `${md.Title || 'osu!'} (${P ? 'pixel' : 'skin'})`, description: opts.description || 'GeoUI timeline: osu! (bds-lab)', bp: true }, opts.settings || {}),
+    const design = { settings: Object.assign({ ns, name: opts.title || `${md.Title || 'osu!'} (${P ? 'pixel' : 'skin'})`, description: opts.description || 'GeoUI timeline: osu! (bds-lab)', descriptionJa: opts.descriptionJa || 'GeoUI タイムライン: osu!（bds-lab）', bp: true }, opts.settings || {}),
       seed: opts.seed || `osu-${skin}`, bones, elements, textures: { atlas: { name: 'atlas', width: A.width, height: A.height, image: A.image } } };
     // (what the game needs: sounds the script plays — the hitsounds each object names and the gameplay's own)
     const sounds = [...new Set(G.objects.flatMap((g) => [...(g.hs || []), ...(g.es || []).flat()]).concat(Object.values(G.sounds).filter(Boolean)))];
@@ -8006,9 +8006,11 @@ system.runInterval(() => {
     d.render_controllers = [...rcList, ...d.render_controllers];
     files[`${rpDir}/entity/player.entity.json`] = J(ce);
     const lang = `pack.name=${String(S.name).replace(/[\r\n=]/g, ' ')}\npack.description=${String(S.description).replace(/[\r\n=]/g, ' ')}\n`;
+    // (ja_JP: settings.descriptionJa when given — the lab's QA asks a Japanese description of every pack — else the same words)
+    const langJa = S.descriptionJa ? lang.replace(/^pack\.description=.*$/m, `pack.description=${String(S.descriptionJa).replace(/[\r\n=]/g, ' ')}`) : lang;
     // (the pack redefines minecraft:player: its name is given again, the game's own words)
     files[`${rpDir}/texts/languages.json`] = J(['en_US', 'ja_JP']);
-    files[`${rpDir}/texts/en_US.lang`] = `${lang}entity.minecraft:player.name=Player\n`; files[`${rpDir}/texts/ja_JP.lang`] = `${lang}entity.minecraft:player.name=プレイヤー\n`;
+    files[`${rpDir}/texts/en_US.lang`] = `${lang}entity.minecraft:player.name=Player\n`; files[`${rpDir}/texts/ja_JP.lang`] = `${langJa}entity.minecraft:player.name=プレイヤー\n`;
 
     if (withScript) {
       const props = {};
@@ -8027,7 +8029,7 @@ system.runInterval(() => {
       files[`${bpDir}/loot_tables/empty.json`] = J({ pools: [] });
       files[`${bpDir}/scripts/main.js`] = scriptOf(S);
       files[`${bpDir}/texts/languages.json`] = J(['en_US', 'ja_JP']);
-      files[`${bpDir}/texts/en_US.lang`] = lang; files[`${bpDir}/texts/ja_JP.lang`] = lang;
+      files[`${bpDir}/texts/en_US.lang`] = lang; files[`${bpDir}/texts/ja_JP.lang`] = langJa;
     }
     const report = [
       `GeoUI Builder ${VERSION}: ${ns}（画面の高さ ${r3(S.unitsPerScreenH)} 単位・基準の画面比 ${r3(S.refAspect)}・HUD の枠 ${S.panel.size.join('% x ')}% / ${S.panel.offset[1]}%）`,

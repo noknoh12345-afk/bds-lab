@@ -628,7 +628,7 @@
       },
       "status": "verified",
       "added": "2026-10-03",
-      "match": "does not exist|namespace \\\"",
+      "match": "rp/ui/.*does not exist|namespace \\\"",
       "verified": {
         "bds": "1.26.52.3",
         "at": "2026-10-03",

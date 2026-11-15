@@ -10,6 +10,7 @@ globalThis.__labClock=ms=>{CLK=clk()+ms;world.setDynamicProperty("__lab_clock",C
 const sim=(n="P",x=0,y=-60,z=0,gm="survival")=>{const g=mc.GameMode[gm]??mc.GameMode[gm[0].toUpperCase()+gm.slice(1)];const p=gt.spawnSimulatedPlayer({dimension:dim(),x,y,z},n,g);P.set(n,p);return p};
 const p=n=>n?P.get(n)??world.getPlayers({name:n})[0]:[...P.values()].at(-1)??world.getAllPlayers()[0];
 const inv=(q=p())=>{if(typeof q==="string")q=p(q);const c=q.getComponent("inventory").container,r=[];for(let i=0;i<c.size;i++){const s=c.getItem(i);if(s)r.push(i+":"+s.typeId+"*"+s.amount)}return r};
+const count=(q,id)=>inv(q).reduce((n,s)=>{const m=/^\d+:(.+)\*(\d+)$/.exec(s);return m&&(m[1]===id||m[1]==="minecraft:"+id)?n+ +m[2]:n},0);
 const num=v=>Number.isInteger(v)?v:Math.round(v*1e3)/1e3;
 const fmt=(v,d=0)=>{if(typeof v==="number")return String(num(v));if(v===null||typeof v!=="object")return typeof v==="function"?"[fn]":d?JSON.stringify(v)??String(v):String(v);
 if(Array.isArray(v))return"["+v.slice(0,50).map(x=>fmt(x,d+1)).join(",")+(v.length>50?",+"+(v.length-50):"")+"]";
@@ -18,10 +19,10 @@ const ks=Object.keys(v);if(ks.length===3&&"x"in v&&"y"in v&&"z"in v)return"{x:"+
 const mob=(t="minecraft:pig",x=2,y=-60,z=0)=>dim().spawnEntity(t,{x,y,z});
 const hit=(e,dmg=9999,by=p())=>e.applyDamage(dmg,{cause:"entityAttack",damagingEntity:by});
 const $={};
-const A=["mc","gt","world","system","dim","sim","p","inv","mob","hit","answer","$","tap"];
+const A=["mc","gt","world","system","dim","sim","p","inv","mob","hit","answer","$","tap","count"];
 system.afterEvents.scriptEventReceive.subscribe(async e=>{if(e.id!=="lab:js")return;let f;
 const m0=e.message.replace(/^#/,""),src=m0.startsWith("%")?decodeURIComponent(m0.slice(1)):m0;try{f=new AF(...A,"return("+src+"\n)")}catch{const s2=src.trimEnd().replace(/;$/,""),i=s2.lastIndexOf(";");try{if(i<1)throw 0;f=new AF(...A,s2.slice(0,i+1)+"return("+s2.slice(i+1)+"\n)")}catch{try{f=new AF(...A,src)}catch(x){console.error("js: "+x);console.warn("LAB_JS_DONE");return}}}
-try{const r=await f(mc,gt,world,system,dim(),sim,p,inv,mob,hit,answer,$,tap);if(r!==undefined)console.warn(fmt(r))}catch(x){console.error("js: "+(x?.message??x))}console.warn("LAB_JS_DONE")},{namespaces:["lab"]});
+try{const r=await f(mc,gt,world,system,dim(),sim,p,inv,mob,hit,answer,$,tap,count);if(r!==undefined)console.warn(fmt(r))}catch(x){console.error("js: "+(x?.message??x))}console.warn("LAB_JS_DONE")},{namespaces:["lab"]});
 const txt=m=>typeof m==="string"?m:Array.isArray(m)?m.map(txt).join(""):m?.rawtext?m.rawtext.map(txt).join(""):m?.text??(m?.translate?"%"+m.translate:m?.score?"%score":JSON.stringify(m));
 const isSim=q=>gt.SimulatedPlayer&&q instanceof gt.SimulatedPlayer;const noReal=()=>!world.getAllPlayers().some(q=>!isSim(q));
 {const o=mc.World.prototype.sendMessage;try{mc.World.prototype.sendMessage=function(m){try{console.warn(txt(m))}catch{}return o.call(this,m)}}catch{}}

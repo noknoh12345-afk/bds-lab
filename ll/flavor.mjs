@@ -230,15 +230,46 @@ function lseSdk(L) {
   fs.mkdirSync(dir, { recursive: true });
   if (!exists(path.join(dir, 'package.json'))) fs.writeFileSync(path.join(dir, 'package.json'), '{"private":true}');
   const r = spawnSync(WIN ? 'npm.cmd' : 'npm', ['i', '@levimc-lse/types', '--no-audit', '--no-fund', '--loglevel=error'], { cwd: dir, encoding: 'utf8', shell: WIN });
-  if (r.status !== 0 || !exists(types)) { fs.writeFileSync(fail, ''); return null; }
+  // (npm's registry answers 404 for the @levimc-lse scope (seen 2026-11-15): every type check and `api` lookup was skipped.
+  //  The same package — platforms/javascript of LiteLDev/LegacyScriptEngine_API, "@levimc-lse/types" — straight from GitHub then:
+  //  declaration files only, nothing of it runs)
+  if (r.status !== 0 || !exists(types)) {
+    const tmp = path.join(dir, 'git');
+    fs.rmSync(tmp, { recursive: true, force: true });
+    const g = spawnSync('git', ['clone', '-q', '--depth', '1', 'https://github.com/LiteLDev/LegacyScriptEngine_API.git', tmp], { encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' }, timeout: 180000 });
+    const pkg = path.join(tmp, 'platforms', 'javascript');
+    if (g.status === 0 && exists(path.join(pkg, 'src', 'index.d.ts'))) {
+      fs.mkdirSync(path.dirname(types), { recursive: true });
+      fs.cpSync(pkg, types, { recursive: true, filter: (f) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(f) });
+    }
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+  if (!exists(types)) { fs.writeFileSync(fail, ''); return null; }
   return dir;
 }
 function writeTsconfig(L, sdk) {
   const nm = path.relative(L.ADDON, path.join(sdk, 'node_modules')).split(path.sep).join('/');
-  const want = JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'ESNext', moduleResolution: 'Bundler', lib: ['ES2022'], strict: true, noEmit: true, skipLibCheck: true, allowJs: true, checkJs: false, typeRoots: [nm], types: ['@levimc-lse/types'] }, include: ['src'] }, null, 2) + '\n';
+  // (an imported TypeScript project's own choices the code depends on — its path aliases, how strict — kept in tsconfig.lab.json:
+  //  this file is written again on every build; esbuild reads the aliases from it too)
+  let own = {};
+  try { own = JSON.parse(fs.readFileSync(path.join(L.ADDON, 'tsconfig.lab.json'), 'utf8')).compilerOptions ?? {}; } catch { /* the lab's defaults */ }
+  const keep = Object.fromEntries(Object.entries(own).filter(([k]) => ['paths', 'baseUrl', 'strict', 'noImplicitAny', 'strictNullChecks', 'strictPropertyInitialization', 'useUnknownInCatchVariables', 'experimentalDecorators', 'emitDecoratorMetadata', 'useDefineForClassFields', 'jsx', 'jsxFactory', 'jsxFragmentFactory'].includes(k)));
+  const want = JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'ESNext', moduleResolution: 'Bundler', lib: ['ES2022'], strict: true, ...keep, noEmit: true, skipLibCheck: true, allowJs: true, checkJs: false, typeRoots: [nm], types: ['@levimc-lse/types'] }, include: ['src'] }, null, 2) + '\n';
   const f = path.join(L.ADDON, 'tsconfig.json');
   if (!exists(f) || fs.readFileSync(f, 'utf8') !== want) fs.writeFileSync(f, want);
 }
+// the tails on LSE type errors (the Script API's own — '@minecraft/server', './kit' — would send a mod the wrong way)
+const LSE_FIXES = [
+  [/Property '(\w+)' does not exist on type '(?:typeof )?(\w+)'/, 'not in LSE\'s API: node lab.mjs api $2'],
+  [/Cannot find name '(fs|path|require|process|Buffer|__dirname|module|exports)'/, 'a Node API: LSE quickjs has none (an lse-nodejs mod, or LSE\'s File / data / network)'],
+  [/Cannot find name '(\w+)'/, 'not an LSE global: node lab.mjs api ?$1'],
+  [/Cannot find module '([^'.][^']*)'/, 'an npm package: node lab.mjs lib add $1 (the bundle carries it)'],
+];
+// what ll/importer.mjs needs from here: TypeScript (the build's, else this machine's) and LSE's types folder (null: none to be had)
+const lseEnv = (L) => ({
+  ts: () => { try { return L.tl().ts; } catch { const t = L.B.localTs(L.CACHE); if (!t) L.die('no TypeScript to read the plugin with (npm unreachable): node lab.mjs setup where the network is open'); return t; } },
+  types: () => { if (process.env.LAB_TYPES === '0') return null; const d = lseSdk(L), t = d && path.join(d, 'node_modules', '@levimc-lse', 'types'); return t && exists(path.join(t, 'src', 'index.d.ts')) ? t : null; },
+});
 async function buildLse(L, m, { release = false, types = true } = {}) {
   const errs = [], warns = [], hints = [];
   if (!m.name || !/^[\w-]+$/.test(m.name)) errs.push('manifest.json: "name" (letters, digits, _ -) is the mod folder name');
@@ -270,7 +301,16 @@ async function buildLse(L, m, { release = false, types = true } = {}) {
   if (types && m.src.endsWith('.ts') && process.env.LAB_TYPES !== '0') {
     const sdk = lseSdk(L);
     if (!sdk) warns.push('type check skipped: npm could not install @levimc-lse/types (offline?)');
-    else { writeTsconfig(L, sdk); for (const l of L.B.typecheck({ tl, addon: L.ADDON, cache: L.CACHE, js: false })) errs.push(l); }
+    else { writeTsconfig(L, sdk); for (const l of L.B.typecheck({ tl, addon: L.ADDON, cache: L.CACHE, js: false, fixes: LSE_FIXES })) errs.push(l); }
+    if (errs.length) return { errs, warns, hints };
+  }
+  // JavaScript (an imported plugin, a --js mod): the calls LSE does not have, and two mistakes LSE plugins often make
+  if (types && /\.m?js$/.test(m.src) && process.env.LAB_TYPES !== '0') {
+    const imp = await import('./importer.mjs'), env = lseEnv(L), t = env.types();
+    if (!t) warns.push('API check skipped: LSE\'s types could not be had (npm and GitHub unreachable?)');
+    else for (const x of imp.apiMisses(env.ts(), L.ADDON, t)) errs.push(x);
+    const src = path.join(L.ADDON, 'src');
+    for (const b of imp.readSource(env.ts(), new Map(walk(src).filter((f) => /\.m?js$/.test(f)).map((f) => [`src/${path.relative(src, f).split(path.sep).join('/')}`, fs.readFileSync(f, 'utf8')]))).bugs) warns.push(b);
     if (errs.length) return { errs, warns, hints };
   }
   const out = outDir(L), outfile = path.join(out, m.entry);
@@ -628,6 +668,9 @@ wait 1000
   unitVersion: (L) => unitMeta(L.ADDON)?.version ?? '0.1.0',
   commands: {
     new: (L, a) => scaffold(L, a),
+    // a person's LSE plugin (a LiteLoader-era .js, a mod folder, a zip, gh:owner/repo) → mods/<name>/, read before it runs, a draft tests.txt
+    import: async (L, a) => (await import('./importer.mjs')).importMod(L, a, lseEnv(L)),
+    brief: async (L, a) => (await import('./importer.mjs')).briefMod(L, a, lseEnv(L)),
     async api(L, a) {
       if (!a.length) L.die('usage: node lab.mjs api <Name|Name.member|?word> ... (LegacyScriptEngine types)   |   api sapi <q> (the Script API, for bp/scripts)');
       if (a[0] === 'sapi') return L.sapi(a.slice(1));

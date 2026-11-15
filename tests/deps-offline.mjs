@@ -23,7 +23,7 @@ const ok = (c, m) => { if (!c) throw new Error(m); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // (this test may itself run inside a recording — auto gate --record: what only shows without one is said, not checked)
 const RECORDED = !!process.env.LAB_DEPS_OUT;
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'bdslab-deps-test-'));
+const TMP = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bdslab-deps-test-')));   // (macOS: /var is /private/var, as a process's cwd and the recorder see it)
 const REPO = path.join(TMP, 'repo'), COPY = path.join(TMP, 'copy', 'lab'), DEST = path.join(TMP, 'dest');
 const git = (...a) => { const r = spawnSync('git', a, { cwd: REPO, encoding: 'utf8' }); if (r.status !== 0) throw new Error(`git ${a.join(' ')}: ${r.stderr}`); return r.stdout.trim(); };
 const put = (files, at = REPO) => { for (const [f, s] of Object.entries(files)) { fs.mkdirSync(path.dirname(path.join(at, f)), { recursive: true }); fs.writeFileSync(path.join(at, f), s); } };

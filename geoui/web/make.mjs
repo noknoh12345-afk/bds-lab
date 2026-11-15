@@ -117,6 +117,7 @@ export function scene(o = {}) {
   const sc = {
     ns: NS, name: ws ? 'GeoUI Web (WebSocket)' : 'GeoUI Web', seed: ws ? 'gweb-ws' : 'gweb',
     description: ws ? 'The web in the game over /connect (any world): every site, Chrome-like, full-screen in F1 (bds-lab geoui/web)' : 'The web in the game: every site, Chrome-like, full-screen in F1 (bds-lab geoui/web)',
+    descriptionJa: ws ? 'ゲームの中のウェブ（/connect で、どのワールドでも）: どのサイトも Chrome のように、F1 の全画面で（bds-lab geoui/web）' : 'ゲームの中のウェブ: どのサイトも Chrome のように、F1 の全画面で（bds-lab geoui/web）',
     scale: { mode: 'height', s: 0.1 }, groups,
     textures: [{ id: 'atlas', width: 64, height: 64, png: atlasPng() }],
     bones, planes, urlImages,

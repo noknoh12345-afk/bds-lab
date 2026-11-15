@@ -23,7 +23,7 @@ const TOP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const INSTALL = path.join(TOP, 'common', 'nethernet-connect', 'install.mjs');
 let good = 0, bad = 0;
 const check = (ok, what, detail = '') => { console.log(`${ok ? '✔' : '✘'} ${what}${ok || !detail ? '' : '\n    ' + String(detail).slice(0, 1500)}`); ok ? good++ : bad++; };
-const T = fs.mkdtempSync(path.join(os.tmpdir(), 'nc-install-'));
+const T = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'nc-install-')));   // (macOS: /var is /private/var — the stand-in npm logs process.cwd(), the real path)
 const kids = new Set();
 process.on('exit', () => { for (const p of kids) try { process.kill(p, 'SIGKILL'); } catch { /* gone */ } try { fs.rmSync(T, { recursive: true, force: true }); } catch { /* gone */ } });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

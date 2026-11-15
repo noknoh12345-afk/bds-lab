@@ -1,0 +1,315 @@
+{
+  "about": "Lines the stable branch (main) has and dev lacks on purpose: dev's newer version of the same thing, or the stable branch's own 'not here' words. node lab.mjs drift (common/drift.mjs) leaves these out; anything else it finds is a fix or a feature that never came across.",
+  "common/serverimport.mjs": [
+    {
+      "starts": "import { unitNames, unitDir } from './checkpoint.mjs';",
+      "why": "dev finds units on every shelf (unitsIn/unitDirIn: own, examples, geoui)"
+    },
+    {
+      "starts": "for (const u of unitNames('bds'))",
+      "why": "the same, with unitsIn"
+    },
+    {
+      "starts": "if (!endLab) { out(`  · ${path.basename(w)}: an Endstone plugin (the Endstone lab is on the dev branch",
+      "why": "the stable branch's words: dev has the Endstone lab"
+    },
+    {
+      "starts": "if (names.length && !dry) out(`next: node lab.mjs go all --only",
+      "why": "dev names the labs too (go all --lab bds,end)"
+    }
+  ],
+  "common/checkpoint.mjs": [
+    {
+      "starts": "export const unitDir = (k, u) => path.join(TOP, k, UNITS[k], u);",
+      "why": "dev: unitDirIn over every shelf"
+    },
+    {
+      "starts": "export const unitNames = (k) => { try { return fs.readdirSync(path.join(TOP, k, UNITS[k]))",
+      "why": "dev: unitsIn over every shelf"
+    }
+  ],
+  "common/deploy.mjs": [
+    {
+      "starts": "import { fileURLToPath } from 'node:url';",
+      "why": "dev also imports pathToFileURL (the Endstone flavor for wheels)"
+    },
+    {
+      "starts": "const UNITS = { bds: 'addons', end: 'plugins', ll: 'mods' };",
+      "why": "dev: unitDirIn"
+    },
+    {
+      "starts": "function packsOf(names) {",
+      "why": "dev: async packsOf, wheels too"
+    },
+    {
+      "starts": "const out = [], missing = [];",
+      "why": "dev: wheels and unbuilt too"
+    },
+    {
+      "starts": "const [k, u] = n.includes('/') ? n.split('/') : ['bds', n];",
+      "why": "dev: end/plugins/x, end/x or a bare plugin name"
+    },
+    {
+      "starts": "const d = path.join(TOP, k, UNITS[k] ?? 'addons', u);",
+      "why": "dev: unitDirIn"
+    },
+    {
+      "starts": "return { packs: out, missing };",
+      "why": "dev returns wheels and unbuilt too"
+    },
+    {
+      "starts": "for (const r of plan.replaced ?? []) {",
+      "why": "dev: a replaced wheel is a file (its folder made first)"
+    },
+    {
+      "starts": "const { packs, missing } = packsOf(rest.slice(1));",
+      "why": "dev: await, wheels"
+    },
+    {
+      "starts": "out(`OK put back the deploy of ${last}",
+      "why": "dev's words count plugins too"
+    }
+  ],
+  "common/core.mjs": [
+    {
+      "starts": "if (ADDON_ARG) return path.join(ADDONS, ADDON_ARG);",
+      "why": "dev: a sample's or GeoUI's unit by name too"
+    },
+    {
+      "starts": "const FWD = \"// written by bds-lab:",
+      "why": "dev: a GeoUI unit's forwarder runs the bds lab"
+    },
+    {
+      "starts": "const { ensureService } = await import(pathToFileURL(path.join(TOP, 'bds', 'geoui', 'web', 'lab.mjs')).href);",
+      "why": "dev: GeoUI is geoui/"
+    },
+    {
+      "starts": "throw new Error('join transport=lan: not in the stable branch (dev)');",
+      "why": "the stable branch's words: dev has it"
+    },
+    {
+      "starts": "if (F.commands?.[cmd]) ok = (await F.commands[cmd](L(), rest)) !== false;",
+      "why": "dev: else if, after the samples' commands"
+    },
+    {
+      "starts": "if (req && exists(sk) && fs.readdirSync(sk).some((n) => exists(path.join(sk, n, 'SKILL.md')))) try {",
+      "why": "dev: else if, after the Endstone and LeviLamina labs' own skill"
+    },
+    {
+      "starts": "this.srv.send('scriptevent lab:js #' + code);   // '#' keeps the command parser away from a leading [ or {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "srv.send(`scriptevent lab:js #${code}`);",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "const QA_BUDGET = { avg: Number(process.env.LAB_QA_TICK_MS) || 2, spam: 8 };",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "if (pm) { const avg = +pm[1], max = +pm[2]; if (avg > QA_BUDGET.avg) perfQ.push(q[q.push(['Q', `script time ${avg}ms per",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "const pos = args.filter((a, k) => !a.startsWith('--') && args[k - 1] !== '--name');",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "if (!src) die(`usage: node lab.mjs import <file.mcaddon|.mcpack|.zip|folder> [\"<what the person asked>\"] [--name n]${giv",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "r = run(['test', '-a', name]); report.push('== test', r.text);",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "const n = run(['test', '-a', name, path.join(dir, 'tests-nn.txt')], { LAB_TRANSPORT: 'nethernet' });",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "if (F.name === 'bds' && !noClient && !rest.includes('--no-kit')) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "const kd = path.join(ADDONS, 'labkit'), fx = path.join(LIBDIR, 'kit', 'test');",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "fs.rmSync(kd, { recursive: true, force: true });",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "const steps = [['new', 'labkit', 'Lab Kit', 'kit selftest'], ...fs.readFileSync(path.join(fx, 'setup.txt'), 'utf8').trim",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "for (const a of steps) { k = run(a[0] === 'new' ? a : [...a, '-a', 'labkit']); report.push(`== kit: ${a.join(' ')}`, k.t",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "if (k.ok) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "fs.copyFileSync(path.join(fx, 'main.ts'), path.join(kd, 'src', 'main.ts')); fs.copyFileSync(path.join(fx, 'tests.txt'), ",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "const m = readJson(path.join(kd, 'bp', 'manifest.json')); m.header.description = 'bds-lab kit selftest'; writeJson(path.",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "for (const [label, args] of [['beta', ['test', '-a', 'labkit']], ['stable', null], ['go', ['go', '-a', 'labkit']]]) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "if (!args) { k = run(['mode', 'stable', '-a', 'labkit']); report.push('== kit: mode stable', k.text); k = run(['test', '",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "report.push(`== kit ${label}`, k.text);",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "out(`kit ${label}: ${k.text.split('\\n').filter((l) => /^(✘|Q |E |PASS|FAIL|DONE)/.test(l)).slice(0, 8).join('\\n  ') || k",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "if (!k.ok) break;",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "if (!rest.includes('--keep')) fs.rmSync(kd, { recursive: true, force: true });",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "function udpFree(port) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "const s = dgram.createSocket('udp4');",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "s.once('error', () => res(false));",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "s.bind(port, '0.0.0.0', () => s.close(() => res(true)));",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "for (let k = 0; k < 50 && !(await udpFree(port) && await udpFree(port + 1)); k++) port += 2;",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    }
+  ],
+  "tests/serverimport-offline.mjs": [
+    {
+      "starts": "&& /Coins RP: a resource pack alone",
+      "why": "dev's next line names the labs (go all --lab bds)"
+    }
+  ],
+  "setup.sh": [
+    {
+      "starts": "# Node 22 if missing, the OS packages it can install (when root or passwordless sudo), then the server and tools.",
+      "why": "dev: every lab's server"
+    },
+    {
+      "starts": "$S apt-get install -y -qq --no-install-recommends gcc libc6-dev unzip ca-certificates curl",
+      "why": "dev adds python3 and python3-venv (the Endstone lab)"
+    },
+    {
+      "starts": "elif command -v dnf >/dev/null 2>&1; then $S dnf install -y -q gcc glibc-devel unzip ca-certificates curl tar gzip >/dev/null",
+      "why": "dev adds python3"
+    },
+    {
+      "starts": "elif command -v yum >/dev/null 2>&1; then $S yum install -y -q gcc glibc-devel unzip ca-certificates curl tar gzip >/dev/null",
+      "why": "dev adds python3"
+    },
+    {
+      "starts": "elif command -v zypper >/dev/null 2>&1; then $S zypper --non-interactive --quiet install gcc glibc-devel unzip ca-certificates curl tar gzip >/dev/null",
+      "why": "dev adds python3"
+    },
+    {
+      "starts": "elif command -v pacman >/dev/null 2>&1; then $S pacman -Sy --noconfirm --needed gcc unzip ca-certificates curl tar gzip >/dev/null",
+      "why": "dev adds python"
+    },
+    {
+      "starts": "if [ \"$S\" != none ] && command -v apt-get >/dev/null 2>&1; then",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    }
+  ],
+  "common/helper.js": [
+    {
+      "starts": "const A=[\"mc\",\"gt\",\"world\",\"system\",\"dim\",\"sim\",\"p\",\"inv\",\"mob\",\"hit\",\"answer\",\"$\",\"tap\"];",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "const src=e.message.replace(/^#/,\"\");try{f=new AF(...A,\"return(\"+src+\"\\n)\")}catch{const s2=src.trimEnd().replace(/;$/,\"\"",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "try{const r=await f(mc,gt,world,system,dim(),sim,p,inv,mob,hit,answer,$,tap);if(r!==undefined)console.warn(fmt(r))}catch",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    }
+  ],
+  "common/runtime.mjs": [
+    {
+      "starts": "const kind = want === 'docker' || want === 'native' ? want : process.platform === 'darwin' ? 'docker' : 'native';",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "die([`${flavor.title ?? flavor.name}: the server runs in a Linux container here (${process.platform === 'darwin' ? 'macO",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "'fix (macOS, pick one): Docker Desktop (enable \"Use Rosetta for x86_64/amd64 emulation\") | OrbStack | `brew install coli",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    }
+  ],
+  "common/build.mjs": [
+    {
+      "starts": "if (!exists(stamp) || fs.readFileSync(stamp, 'utf8') !== want || !there()) {",
+      "why": "main before PR #12: the install lock (one install at a time) replaced it on both branches"
+    },
+    {
+      "starts": "export function typecheck({ tl, addon, cache, js, max = 12 }) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "const found = stamp && path.join(cache, 'tsinfo', 'found', `${stamp}-${max}.json`);",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "const res = typecheckNow({ tl, addon, cache, js, max });",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "function typecheckNow({ tl, addon, cache, js, max = 12 }) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "}), max);",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "const fixOf = (m) => { for (const [re, f] of TS_FIXES) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "export function compactDiags(list, max = 12) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "const fx = fixOf(m0), m = fx ?",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    }
+  ],
+  "tests/dev-bds.mjs": [
+    {
+      "starts": "r = await lab(['new', n, title, 'A wand that sparks, /lab:pay and a shop menu', 'desc=Use the wand to spark; /lab:pay gives emeralds']);",
+      "why": "main before PR #12: both branches now make it with ja= (the Japanese-text QA)"
+    }
+  ]
+}

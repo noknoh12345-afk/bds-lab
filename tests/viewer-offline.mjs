@@ -130,16 +130,19 @@ await t('tar: ustar with its prefix, GNU long names, pax path and size; folders 
   fs.writeFileSync(path.join(d, 'shot.png'), PNG);
   fs.writeFileSync(path.join(d, '日本語のメモ.txt'), 'メモ');
   fs.symlinkSync('shot.png', path.join(d, 'link.png'));
-  const gnu = new Uint8Array(execFileSync('tar', ['--format=gnu', '-C', d, '-cf', '-', '.']));
+  // (GNU tar writes GNU long names; macOS's tar is bsdtar, which has no gnu format: gtar when installed, else that case is left out)
+  const gtar = ['tar', 'gtar'].find((t) => { try { execFileSync(t, ['--format=gnu', '-cf', '/dev/null', '-T', '/dev/null'], { stdio: 'ignore' }); return true; } catch { return false; } });
+  const gnu = gtar ? new Uint8Array(execFileSync(gtar, ['--format=gnu', '-C', d, '-cf', '-', '.'])) : null;
+  if (!gtar) console.log('     (no GNU tar here: the GNU long-name case is left out)');
   const pax = new Uint8Array(execFileSync('tar', ['--format=pax', '-C', d, '-cf', '-', '.']));
   // (ustar: a path over 100 characters split into its prefix and name)
   const ustar = new Uint8Array(execFileSync('tar', ['--format=ustar', '-C', d, '-cf', '-', 'shot.png', split]));
-  for (const [what, b, want] of [['gnu', gnu, [long, split, 'shot.png', '日本語のメモ.txt']], ['pax', pax, [long, split, 'shot.png', '日本語のメモ.txt']], ['ustar', ustar, ['shot.png', split]]]) {
+  for (const [what, b, want] of [['gnu', gnu, [long, split, 'shot.png', '日本語のメモ.txt']], ['pax', pax, [long, split, 'shot.png', '日本語のメモ.txt']], ['ustar', ustar, ['shot.png', split]]].filter(([, b]) => b)) {
     const box = U.tarBox(b);
     eq(names(box).sort(), [...want].sort(), what);
     ok(Buffer.compare(Buffer.from(await box.files.find((f) => f.name === 'shot.png').get()), PNG) === 0, `${what}: the picture's bytes`);
   }
-  const tgz = U.fileOf('logs.tar.gz', 0, () => new Uint8Array(zlib.gzipSync(gnu)));
+  const tgz = U.fileOf('logs.tar.gz', 0, () => new Uint8Array(zlib.gzipSync(gnu ?? pax)));
   eq(names(await U.boxOf(tgz)).sort(), [long, split, 'shot.png', '日本語のメモ.txt'].sort(), 'a .tar.gz');
   const one = await U.boxOf(U.fileOf('server.log.zst', 0, () => new Uint8Array(zlib.zstdCompressSync(Buffer.from('a line\n')))));
   eq([one.kind, names(one), await text(one.files[0])], ['single', ['server.log'], 'a line\n'], 'a .zst of one file: that file');

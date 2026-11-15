@@ -1,3 +1,3 @@
 pack.name=Lamp
-pack.description=A lamp you switch by touching
+pack.description=触ると点いたり消えたりするランプ
 tile.lab:lamp.name=ランプ

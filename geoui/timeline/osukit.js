@@ -999,7 +999,7 @@
     const tour = tourOf(G);
     G.tour = tour.scenes;
     const md = map.metadata || {};
-    const design = { settings: Object.assign({ ns, name: opts.title || `${md.Title || 'osu!'} (${P ? 'pixel' : 'skin'})`, description: opts.description || 'GeoUI timeline: osu! (bds-lab)', bp: true }, opts.settings || {}),
+    const design = { settings: Object.assign({ ns, name: opts.title || `${md.Title || 'osu!'} (${P ? 'pixel' : 'skin'})`, description: opts.description || 'GeoUI timeline: osu! (bds-lab)', descriptionJa: opts.descriptionJa || 'GeoUI タイムライン: osu!（bds-lab）', bp: true }, opts.settings || {}),
       seed: opts.seed || `osu-${skin}`, bones, elements, textures: { atlas: { name: 'atlas', width: A.width, height: A.height, image: A.image } } };
     // (what the game needs: sounds the script plays — the hitsounds each object names and the gameplay's own)
     const sounds = [...new Set(G.objects.flatMap((g) => [...(g.hs || []), ...(g.es || []).flat()]).concat(Object.values(G.sounds).filter(Boolean)))];
