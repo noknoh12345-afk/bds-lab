@@ -155,9 +155,11 @@ const STEPS = [
   { name: 'stronghold → the end', cmds: ['stronghold'], dim: 'the_end' },
   { name: 'the dragon', special: 'dragon' },
 ];
-let autoRun = null;
+let autoRun = null;   // this brain's run; me.autoGen says which run is the live one (one at a time, across reloads)
+me.autoGen ??= 0;
+const live = () => autoRun && autoRun.gen === me.autoGen;
 function untilEnd() { const [h, m] = ENDS_AT.split(':').map(Number), n = new Date(), t = new Date(n); t.setHours(h, m, 0, 0); if (t <= n) t.setDate(t.getDate() + 1); return t; }
-async function waitIn() { while (!me.connected || !me.bot) { if (!autoRun) return false; await sleep(2000); } return true; }
+async function waitIn() { while (!me.connected || !me.bot) { if (!live()) return false; await sleep(2000); } return true; }
 async function run(cmd, why) {   // one command, as the worker would: guard first, then the bot; true when it finished without a failure
   if (!(await waitIn())) return false;
   const [v, ...a] = cmd.split(/\s+/);
@@ -186,6 +188,7 @@ async function escape() {
     if (!best || score < best.score) best = { score, x: Math.round(p.x + dx * far), z: Math.round(p.z + dz * far) };
   }
   log(`auto: moving away from builds/players toward ${best.x} ${best.z}`, { dc: true });
+  if (!live()) return;
   await BUILTIN.travel([String(best.x), String(best.z)]);
   // still on top of something someone built (a roof, a deck): step off it, every way, jumping
   if (guardReason(me.bot) && Math.hypot(me.bot.state().pos.x - p.x, me.bot.state().pos.z - p.z) < 3) {
@@ -203,7 +206,7 @@ async function dragon() {
 async function elytra() {
   // the outer islands: through an end gateway (an ender pearl thrown into it), then find an end city by its purpur and take the
   // elytra from the item frame on the ship; back home through the gateway and the exit portal
-  for (let i = 0; i < 6 && autoRun; i++) {
+  for (let i = 0; i < 6 && live(); i++) {
     if (await run('get_elytra', 'elytra')) return true;
     if (!(await run('get_ender_pearl 4', 'pearls for the gateway'))) await sleep(5000);
   }
@@ -213,8 +216,8 @@ async function auto() {
   log(`auto: start (goal: the dragon, or the elytra home; then diamonds until ${ENDS_AT})`, { dc: true });
   ctx.setLegit?.(true);
   for (const st of STEPS) {
-    if (!autoRun) return;
-    for (let tries = 0; autoRun; tries++) {
+    if (!live()) return;
+    for (let tries = 0; live(); tries++) {
       log(`auto: step "${st.name}"${tries ? ` (try ${tries + 1})` : ''}`, { dc: !tries });
       let ok = true;
       if (st.special === 'dragon') ok = await dragon();
@@ -229,7 +232,7 @@ async function auto() {
   }
   log('auto: goal reached — now diamonds until ' + ENDS_AT, { dc: true });
   const end = untilEnd();
-  while (autoRun && Date.now() < end) {
+  while (live() && Date.now() < end) {
     if (me.dim !== 'overworld') { await run('goto_death', 'home'); }
     await run('get_diamond 64', 'diamonds');
   }
@@ -238,14 +241,14 @@ async function auto() {
 const AUTOF = require('node:path').join(ctx.RUN, 'auto.json'), fsx = require('node:fs');
 const autoMark = (on) => { try { fsx.writeFileSync(AUTOF, JSON.stringify({ on, at: new Date().toISOString() })); } catch { /* */ } };
 BUILTIN.auto = async (a) => {
-  if (a[0] === 'stop') { autoRun = null; autoMark(false); NOW.stop(); return log('auto: stopped', { dc: true }); }
-  if (autoRun) return log('auto: already running');
-  autoRun = {}; autoMark(true); try { await auto(); } catch (e) { log('auto: error ' + e.message, { dc: true }); } finally { if (autoRun) autoMark(false); autoRun = null; }
+  if (a[0] === 'stop') { me.autoGen++; autoRun = null; autoMark(false); NOW.stop(); return log('auto: stopped', { dc: true }); }
+  if (live()) return log('auto: already running');
+  autoRun = { gen: ++me.autoGen }; autoMark(true); try { await auto(); } catch (e) { log('auto: error ' + e.message, { dc: true }); } finally { if (live()) autoMark(false); autoRun = null; }
 };
 // it was running when the bot last stopped: carry on (the run is not over until the goal and the hours are)
 try { if (JSON.parse(fsx.readFileSync(AUTOF, 'utf8')).on) { me.queue.push('auto'); log('auto: resuming'); } } catch { /* never started */ }
 NOW['auto'] = (a) => { if (a[0] === 'stop') return BUILTIN.auto(a); me.queue.push('auto'); };
 
 worker();
-return { command, status, dispose: () => { disposed = true; for (const t of timers) clearInterval(t); if (autoRun) { autoRun = null; me.abort = true; me.bot?.act('stop', []).catch(() => {}); } }, guardOn: () => guardOn, setGuard: (v) => { guardOn = v; } };
+return { command, status, dispose: () => { disposed = true; for (const t of timers) clearInterval(t); if (live()) { me.autoGen++; me.abort = true; me.bot?.act('stop', []).catch(() => {}); } autoRun = null; }, guardOn: () => guardOn, setGuard: (v) => { guardOn = v; } };
 };
