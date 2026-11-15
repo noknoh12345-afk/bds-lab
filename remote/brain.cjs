@@ -80,7 +80,7 @@ const BUILTIN = {
     log(`travel: arrived ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}`, { dc: true });
   },
   wait: async (a) => sleep(+(a[0] ?? 1000)),
-  // joins again only when told to (the bot joins once: no automatic rejoin)
+  // join again now (it also does by itself, once, when the server really dropped it)
   reconnect: () => ctx.rejoin(),
   // the newest bdslab, without leaving: these commands (brain.cjs) are reloaded in place; a change to realplayer.cjs waits for a restart
   update: () => ctx.update(),

@@ -2,8 +2,10 @@
 // remote/bot.cjs — a resident bdslab player on someone's real server (not the lab's BDS).
 // It stays in: reconnects when dropped, respawns when it dies, and takes commands while it plays, from three places:
 //   - this terminal (type a line), - files dropped into run/inbox/ (one command per line), - `node remote/bot.cjs send "<cmd>"`
-// It joins ONCE: no automatic rejoin (a dropped connection is reported, `reconnect` joins again when you say so), and `update`
-// reloads the commands (remote/brain.cjs) in place without leaving the server.
+// It leaves and joins as few times as can be: nothing of its own makes it leave (`update` reloads the commands, remote/brain.cjs,
+// in place; a busy thread or a stray NetherNet close is not taken for a lost connection; errors are logged, not fatal). Only when
+// the server really dropped it (a disconnect packet, or no packet for a long while) does it join again, once, after a pause long
+// enough for the server to let go of the old session (else: server_id_conflict, the account in twice, and another round).
 // Every command is a bdslab player action or verb (get_<item>, mine_<block>, goto x z, craft_<item>, fight_ender_dragon ...)
 // or one of the built-ins below (`help`). What happens goes to run/out.log, run/status.json and, when set, a Discord webhook.
 // Server rules: it never works (digs, places, opens, attacks, uses) within guardRadius of a block someone built or of another
@@ -64,7 +66,7 @@ function log(line, { dc = false } = {}) {
 }
 
 // ---------- the player ----------
-const me = { lastPacket: 0, closedAt: null, kicked: null, checking: false, bot: null, account: null, busy: null, queue: [], abort: false, hp: null, food: null, dim: 'overworld', msa: null, connected: false, deaths: 0 };
+const me = { lastPacket: 0, closedAt: null, kicked: null, checking: false, quitting: false, bot: null, account: null, busy: null, queue: [], abort: false, hp: null, food: null, dim: 'overworld', msa: null, connected: false, deaths: 0 };
 async function transport() {
   if (cfg.transport !== 'auto') return cfg.transport;
   return new Promise((res) => {
@@ -87,7 +89,7 @@ async function connect() {
     rtc: tr === 'nethernet' ? req('node-datachannel/polyfill') : null, nn: { pins: path.join(RUN, 'nethernet-pins.json') }, opts: {}, timeoutMs: 300000,   // (the first join includes the sign-in)
     online: { profilesFolder: path.join(RUN, 'auth'), onMsaCode: (d) => { me.msa = d.user_code; log(`SIGN IN: open ${d.verification_uri} and enter ${d.user_code}`, { dc: true }); } },
   });
-  me.msa = null; me.bot = bot; me.connected = true; me.closedAt = null;
+  me.msa = null; me.bot = bot; me.connected = true; me.closedAt = null; me.kicked = null;
   bot.client.on('update_attributes', (p) => { for (const a of p.attributes ?? []) { if (a.name === 'minecraft:health') me.hp = a.current; if (a.name === 'minecraft:player.hunger') me.food = a.current; } });
   bot.client.on('change_dimension', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? String(p.dimension); });
   bot.client.on('start_game', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? me.dim; });
@@ -100,22 +102,28 @@ async function connect() {
   const p = bot.state().pos;
   log(`in the world at ${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.z.toFixed(0)}`, { dc: true });
 }
-// one join, then watch: a connection that is really gone (packets stopped) is reported once; joining again waits for `reconnect`
-// (a long path search can hold this thread for seconds: packets wait unread meanwhile, so look again after letting them in)
+// join; then watch. Gone for real = the server said so (disconnect), or no packet for 45 s (30 s after a close) measured after
+// the thread had time to read what was waiting. Then: one rejoin after a pause (60 s after server_id_conflict); a manual
+// `reconnect` any time; `quit` stops for good.
 async function joinOnce() {
-  for (let i = 0; i < 3 && !me.connected; i++) {   // a join that never got in may be tried again (3 times); one that got in, never
-    try { await connect(); } catch (e) { log(`join failed: ${e.message}`, { dc: true }); if (/server_id_conflict/.test(String(me.kicked))) await sleep(60000); else await sleep(20000); }
+  for (let i = 0; i < 3 && !me.connected && !me.quitting; i++) {   // a join that never got in is tried up to 3 times
+    try { await connect(); } catch (e) { log(`join failed: ${e.message}`, { dc: i === 2 }); await sleep(/server_id_conflict/.test(String(me.kicked)) ? 60000 : 20000); }
   }
-  if (!me.connected) log('could not join: `reconnect` to try again', { dc: true });
+  if (!me.connected && !me.quitting) log('could not join: `reconnect` to try again', { dc: true });
 }
 setInterval(async () => {
   if (!me.connected || me.checking) return;
-  if (Date.now() - me.lastPacket < (me.closedAt ? 15000 : 30000)) return;
-  me.checking = true; await sleep(4000); me.checking = false;
-  if (Date.now() - me.lastPacket < 12000) return;
+  if (!me.kicked && Date.now() - me.lastPacket < (me.closedAt ? 30000 : 45000)) return;
+  me.checking = true; await sleep(5000); me.checking = false;
+  if (!me.kicked && Date.now() - me.lastPacket < 15000) return;
   me.connected = false;
-  log(`left the server (${me.kicked ?? 'no packet for ' + Math.round((Date.now() - me.lastPacket) / 1000) + 's'}): not joining again by itself, \`reconnect\` when wanted`, { dc: true });
+  const why = me.kicked ?? `no packet for ${Math.round((Date.now() - me.lastPacket) / 1000)}s`;
   try { me.bot?.close(); } catch { /* */ }
+  if (me.quitting) return;
+  log(`dropped by the server (${why}): joining again in 30 s`, { dc: true });
+  await sleep(/server_id_conflict/.test(why) ? 60000 : 30000);
+  me.kicked = null;
+  if (!me.connected) await joinOnce();
 }, 2000);
 const sleep = (ms) => new Promise((s) => setTimeout(s, ms));
 
@@ -136,7 +144,7 @@ function loadBrain() {
       log('updated to ' + r.stdout.trim() + ' (brain reloaded; realplayer changes take effect at the next start)', { dc: true });
       try { loadBrain(); } catch (e) { log('reload failed, keeping the old one: ' + e.message, { dc: true }); }
     },
-    quit: () => { log('bye', { dc: true }); try { me.bot?.close(); } catch { /* */ } setTimeout(() => process.exit(0), 800); },
+    quit: () => { me.quitting = true; log('bye', { dc: true }); try { me.bot?.close(); } catch { /* */ } setTimeout(() => process.exit(0), 800); },
   });
 }
 
