@@ -253,7 +253,7 @@ let escapes = 0;
 async function escape() {
   if (!(await waitIn())) return;
   escapes++; me.abort = false;
-  { const q = me.bot.state().pos; if (me.dim === 'overworld' && Math.hypot(q.x, q.z) < 450) return goFar(); }
+  { const q = me.bot.state().pos; if (me.dim === 'overworld' && Math.hypot(q.x, q.z) < FAR) return goFar(); }
   const p = me.bot.state().pos, b = scanBuilt(me.bot, 64), far = 160 + 80 * Math.min(escapes, 10);
   let best = null;
   for (let k = 0; k < 8; k++) {
@@ -272,17 +272,21 @@ async function escape() {
 // work far from everyone: the builds are around the world spawn, where a death also brings it back. Out to the work area
 // (cfg.workArea, default 700 700) whenever it is closer than 450 to the spawn; things lost in a death are fetched on the way
 // only when that death was out there too
-const WORK = (cfg.workArea ?? '700 700').split(/\s+/).map(Number);
+const WORK = (cfg.workArea ?? '260 260').split(/\s+/).map(Number), FAR = cfg.farFromSpawn ?? 220;
+// the way out of the spawn: south first (the builds east of it, x 40-95 z 20-45, are not walked through or near), then on
+const WAYOUT = (cfg.wayOut ?? '8 130').split(/\s+/).map(Number);
 async function goFar() {
   if (!(await waitIn()) || me.dim !== 'overworld') return;
   const p = me.bot.state().pos;
-  if (Math.hypot(p.x, p.z) >= 450) return;
+  if (Math.hypot(p.x, p.z) >= FAR) return;
   if (me.spawnSet && Math.hypot(p.x - me.spawnSet.x, p.z - me.spawnSet.z) < 64) return;
-  log(`auto: near the spawn (${Math.round(p.x)} ${Math.round(p.z)}): out to the work area ${WORK.join(' ')}`, { dc: true });
+  log(`auto: near the spawn (${Math.round(p.x)} ${Math.round(p.z)}): out to the work area ${WORK.join(' ')} (by ${WAYOUT.join(' ')})`, { dc: true });
   for (let i = 0; i < 5 && live(); i++) {
     me.abort = false;
+    const q0 = me.bot.state().pos;
+    if (Math.hypot(q0.x, q0.z) < 100 && q0.z < WAYOUT[1] - 10) await BUILTIN.travel([String(WAYOUT[0]), String(WAYOUT[1])]);
     await BUILTIN.travel([String(WORK[0]), String(WORK[1])]);
-    const q = me.bot.state().pos; if (Math.hypot(q.x, q.z) >= 450) return;
+    const q = me.bot.state().pos; if (Math.hypot(q.x, q.z) >= FAR) return;
   }
 }
 // a bed set down out in the work area and clicked: the respawn point is here from then on (a death no longer means the long
@@ -334,7 +338,7 @@ async function auto() {
       else for (const c of st.cmds) { const r = await run(c, st.name); if (!r && !st.optional) ok = false; }
       if (st.dim && me.dim !== st.dim) ok = false;
       if (ok || st.optional) break;
-      if (me.deaths > (st.deaths ?? 0)) { st.deaths = me.deaths; const dp = me.bot?.deathPos?.(); if (!dp || Math.hypot(dp.x, dp.z) >= 450) await run('goto_death', 'fetch the things back'); }
+      if (me.deaths > (st.deaths ?? 0)) { st.deaths = me.deaths; const dp = me.bot?.deathPos?.(); if (!dp || Math.hypot(dp.x, dp.z) >= FAR) await run('goto_death', 'fetch the things back'); }
       if (tries >= 7 && !st.has) break;
       await sleep(3000);
     }
