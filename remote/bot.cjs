@@ -93,7 +93,9 @@ async function connect() {
     online: { profilesFolder: path.join(RUN, 'auth'), onMsaCode: (d) => { me.msa = d.user_code; log(`SIGN IN: open ${d.verification_uri} and enter ${d.user_code}`, { dc: true }); } },
   });
   me.msa = null; me.bot = bot; me.connected = true; me.closedAt = null; me.kicked = null;
-  bot.setLegit?.(cfg.legit !== false);   // only what a person could do: looking at it, in reach, nothing in between
+  bot.setLegit?.(cfg.legit !== false);
+  // what it set down before (its own table, furnace, bed) stays its own across restarts
+  try { for (const k of JSON.parse(fs.readFileSync(path.join(RUN, 'placed.json'), 'utf8'))) bot.placedByMe?.add(k); } catch { /* none yet */ }   // only what a person could do: looking at it, in reach, nothing in between
   bot.client.on('update_attributes', (p) => { for (const a of p.attributes ?? []) { if (a.name === 'minecraft:health') me.hp = a.current; if (a.name === 'minecraft:player.hunger') me.food = a.current; } });
   bot.client.on('change_dimension', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? String(p.dimension); });
   bot.client.on('start_game', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? me.dim; });
@@ -163,6 +165,7 @@ setInterval(() => {
     try { const t = fs.readFileSync(p, 'utf8'); fs.renameSync(p, path.join(RUN, 'done-' + f)); for (const l of t.split('\n')) command(l); } catch { /* being written */ }
   }
   try { fs.writeFileSync(path.join(RUN, 'status.json'), JSON.stringify(brain.status(), null, 1)); } catch { /* */ }
+  if (me.bot?.placedByMe?.size && me.bot.placedByMe.size !== me.placedSaved) { try { fs.writeFileSync(path.join(RUN, 'placed.json'), JSON.stringify([...me.bot.placedByMe].slice(-5000))); me.placedSaved = me.bot.placedByMe.size; } catch { /* */ } }
 }, 1000);
 process.on('unhandledRejection', (e) => log('error: ' + (e?.message ?? e)));
 process.on('uncaughtException', (e) => log('error: ' + (e?.stack ?? e).toString().split('\n').slice(0, 3).join(' | ')));
