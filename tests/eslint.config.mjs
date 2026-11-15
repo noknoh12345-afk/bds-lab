@@ -35,5 +35,5 @@ export default [
   // run in the game: the in-world helper (common/helper.js: its form wrappers are spliced in by text, core.mjs EVAL_HELPER)
   { files: ['common/helper.js'], rules: { 'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none', varsIgnorePattern: '^(_|wrapForm$)' }] } },
   // LegacyScriptEngine (the ll lab's helper): its own globals
-  { files: ['ll/lib/*.js'], languageOptions: { sourceType: 'script', globals: { ...node, mc: 'readonly', logger: 'readonly', ll: 'readonly', PermType: 'readonly', ParamType: 'readonly', File: 'readonly', data: 'readonly', network: 'readonly', NBT: 'readonly', JsonConfigFile: 'readonly', KVDatabase: 'readonly', money: 'readonly', system: 'readonly', colorLog: 'readonly', log: 'readonly' } } },
+  { files: ['ll/lib/*.js', 'll/fixtures/**/*.js'], languageOptions: { sourceType: 'script', globals: { ...node, mc: 'readonly', logger: 'readonly', ll: 'readonly', PermType: 'readonly', ParamType: 'readonly', File: 'readonly', data: 'readonly', network: 'readonly', NBT: 'readonly', JsonConfigFile: 'readonly', KVDatabase: 'readonly', money: 'readonly', system: 'readonly', colorLog: 'readonly', log: 'readonly' } } },
 ];
