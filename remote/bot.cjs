@@ -86,7 +86,7 @@ function nearPlayers(bot, R) {
     .filter((e) => e.d <= R).sort((a, b) => a.d - b.d);
 }
 function guardReason(bot) {
-  if (!guardOn) return null;
+  if (!guardOn || !bot) return null;
   const R = cfg.guardRadius, pl = nearPlayers(bot, R);
   if (pl.length) return `player ${pl[0].name} ${pl[0].d} blocks away`;
   const b = scanBuilt(bot, Math.min(R, 64));
@@ -95,7 +95,7 @@ function guardReason(bot) {
 }
 
 // ---------- the player ----------
-const me = { bot: null, account: null, busy: null, queue: [], abort: false, hp: null, food: null, dim: 'overworld', msa: null, connected: false, deaths: 0 };
+const me = { lastPacket: 0, closedAt: null, bot: null, account: null, busy: null, queue: [], abort: false, hp: null, food: null, dim: 'overworld', msa: null, connected: false, deaths: 0 };
 async function transport() {
   if (cfg.transport !== 'auto') return cfg.transport;
   return new Promise((res) => {
@@ -118,19 +118,28 @@ async function connect() {
     rtc: tr === 'nethernet' ? req('node-datachannel/polyfill') : null, nn: { pins: path.join(RUN, 'nethernet-pins.json') }, opts: {}, timeoutMs: 300000,   // (the first join includes the sign-in)
     online: { profilesFolder: path.join(RUN, 'auth'), onMsaCode: (d) => { me.msa = d.user_code; log(`SIGN IN: open ${d.verification_uri} and enter ${d.user_code}`, { dc: true }); } },
   });
-  me.msa = null; me.bot = bot; me.connected = true;
+  me.msa = null; me.bot = bot; me.connected = true; me.closedAt = null;
   bot.client.on('update_attributes', (p) => { for (const a of p.attributes ?? []) { if (a.name === 'minecraft:health') me.hp = a.current; if (a.name === 'minecraft:player.hunger') me.food = a.current; } });
   bot.client.on('change_dimension', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? String(p.dimension); });
   bot.client.on('start_game', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? me.dim; });
-  bot.client.on('close', () => { if (me.bot === bot) { me.connected = false; log('connection lost: joining again', { dc: true }); } });
+  // 'close' can fire while the server still talks to us (a NetherNet data channel closing): gone only when packets stopped too
+  // (joining again while still in = server_id_conflict, the account being in twice)
+  me.lastPacket = Date.now();
+  bot.client.on('packet', () => { me.lastPacket = Date.now(); });
+  bot.client.on('close', () => { me.closedAt = Date.now(); });
   const p = bot.state().pos;
   log(`in the world at ${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.z.toFixed(0)}`, { dc: true });
 }
 async function stayIn() {
   let wait = 5000;
   for (;;) {
+    if (me.connected && Date.now() - me.lastPacket > (me.closedAt ? 15000 : 30000)) {
+      me.connected = false; me.closedAt = null; log('connection lost: joining again', { dc: true });
+      try { me.bot?.close(); } catch { /* */ }
+      await sleep(5000);
+    }
     if (!me.connected) {
-      try { await connect(); wait = 5000; } catch (e) { log(`connect failed: ${e.message}`); me.bot = null; await sleep(wait); wait = Math.min(wait * 2, 120000); continue; }
+      try { await connect(); wait = 5000; } catch (e) { log(`connect failed: ${e.message}`); await sleep(wait); wait = Math.min(wait * 2, 120000); continue; }
     }
     await sleep(2000);
   }
@@ -205,7 +214,7 @@ async function worker() {
     const t = Date.now();
     log(`> ${line}`);
     // while it runs: leave off when a build or a player comes close
-    const watch = PASSIVE.test(v) ? null : setInterval(() => { const w = guardReason(me.bot); if (w && !me.abort) { log(`guard: stopping "${line}": ${w}`, { dc: true }); NOW.stop(); } }, 3000);
+    const watch = PASSIVE.test(v) ? null : setInterval(() => { if (!me.connected) return; const w = guardReason(me.bot); if (w && !me.abort) { log(`guard: stopping "${line}": ${w}`, { dc: true }); NOW.stop(); } }, 3000);
     try { await (BUILTIN[v] ? BUILTIN[v](a) : me.bot.act(v, a)); log(`done "${line}" in ${((Date.now() - t) / 1000).toFixed(0)}s`, { dc: !/^(pos|inv|near|look|turn|wait|around)$/.test(v) }); }
     catch (e) { log(`failed "${line}": ${e.message}`, { dc: true }); }
     finally { if (watch) clearInterval(watch); me.busy = null; }
@@ -232,6 +241,7 @@ setInterval(() => {
   try { fs.writeFileSync(path.join(RUN, 'status.json'), JSON.stringify(status(), null, 1)); } catch { /* */ }
 }, 1000);
 process.on('unhandledRejection', (e) => log('error: ' + (e?.message ?? e)));
+process.on('uncaughtException', (e) => log('error: ' + (e?.stack ?? e).toString().split('\n').slice(0, 3).join(' | ')));
 log(`bdslab remote bot: ${cfg.name} → ${cfg.host}:${cfg.port} (type "help")`, { dc: true });
 stayIn();
 worker();
