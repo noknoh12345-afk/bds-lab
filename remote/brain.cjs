@@ -334,7 +334,12 @@ async function bedSpawn() {
   if (me.dim !== 'overworld' || me.spawnSet) return true;
   const bedOk = await run('get_bed 1', 'a bed');   // (Bedrock calls every colour's item minecraft:bed)
   if (!bedOk) return false;
-  await run('place_bed', 'set the bed down');
+  { // a spot two cells long on open ground beside it: air over something solid, for the foot and the head
+    const q = me.bot.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z);
+    const free = (x, y, z) => /air/.test(me.bot.world.block(x, y, z)?.name ?? '') && !/air|water|lava/.test(me.bot.world.block(x, y - 1, z)?.name ?? 'air');
+    const spot = [[2, 0, 1, 0, 'east'], [-2, 0, -1, 0, 'west'], [0, 2, 0, 1, 'south'], [0, -2, 0, -1, 'north']].find(([dx, dz, hx, hz]) => free(X + dx, Y, Z + dz) && free(X + dx + hx, Y, Z + dz + hz));
+    if (spot) await run(`place_bed ${X + spot[0]} ${Y} ${Z + spot[1]} ${spot[4]}`, 'set the bed down');
+  }
   const p = me.bot.state().pos; let bed = null;
   for (let dx = -4; dx <= 4 && !bed; dx++) for (let dz = -4; dz <= 4 && !bed; dz++) for (let dy = -2; dy <= 2 && !bed; dy++) { const n = me.bot.world.block(Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz)?.name ?? ''; if (/_bed$/.test(n)) bed = [Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz]; }
   if (!bed) { log('auto: the bed did not go down'); return false; }
