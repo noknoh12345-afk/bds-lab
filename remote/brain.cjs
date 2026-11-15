@@ -127,6 +127,15 @@ async function worker() {
   }
 }
 
+// ---------- air: under water, keep the jump key down (swim up) until the head is out again; a person does the same ----------
+let surfacing = false;
+timers.push(setInterval(() => {
+  const b = me.bot; if (!b || !me.connected || b.state().dead) return;
+  const p = b.state().pos, head = b.world.block(Math.floor(p.x), Math.floor(p.y + 0.1), Math.floor(p.z))?.name ?? '';
+  const wet = /water/.test(head);
+  if (wet !== surfacing) { surfacing = wet; b.act('jump', [wet ? 'on' : 'off']).catch(() => {}); }
+}, 400));
+
 // ---------- self-defense: a hostile mob within reach gets hit back (no block is touched: allowed near builds too) ----------
 let swinging = false;
 const skipUntil = new Map();
