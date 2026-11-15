@@ -289,7 +289,7 @@ const inSight = (b, P, x) => { const ex = P.x, ey = P.y + 1.62, ez = P.z, tx = x
 const hostilesNear = (b, r) => { const P = b.state().pos; return [...b.entities.values()].filter((x) => HOSTILE.test(x.type ?? '') && Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) < r && inSight(b, P, x)).map((x) => ({ e: x, d: Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) })).sort((p, q) => p.d - q.d); };
 async function invList(b) { const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap); await b.act('inv', []).catch(() => {}); ctx.taps.delete(tap); return seen.join(' '); }
 async function armUp(b) {
-  if (Date.now() - lastWeaponCheck < 5000) return; lastWeaponCheck = Date.now();
+  if (Date.now() - lastWeaponCheck < 30000) return; lastWeaponCheck = Date.now();
   const inv = await invList(b), w = WEAPONS.find((x) => inv.includes('minecraft:' + x + '*'));
   lastHeld = w ?? '';
   if (w && !new RegExp(`\\d+:minecraft:${w}\\*\\d+[^|]*\\(holding slot`).test(inv)) await b.act('hold_' + w, []).catch(() => {});
@@ -396,7 +396,7 @@ async function escape() {
 // only when that death was out there too
 const WORK = (cfg.workArea ?? '260 260').split(/\s+/).map(Number), FAR = cfg.farFromSpawn ?? 220;
 // the way out of the spawn: south first (the builds east of it, x 40-95 z 20-45, are not walked through or near), then on
-const WAYOUT = (cfg.wayOut ?? '8 130').split(/\s+/).map(Number);
+const WAYOUT = (cfg.wayOut ?? '0 60').split(/\s+/).map(Number);   // (8 130 led over a drowned cave at -24 43 107 it fell into twice)
 async function goFar() {
   await reviewWait();
   if (!(await waitIn()) || me.dim !== 'overworld') return;
@@ -407,7 +407,7 @@ async function goFar() {
   for (let i = 0; i < 5 && live(); i++) {
     me.abort = false;
     const q0 = me.bot.state().pos;
-    if (Math.hypot(q0.x, q0.z) < 100 && q0.z < WAYOUT[1] - 10) await BUILTIN.travel([String(WAYOUT[0]), String(WAYOUT[1])]);
+    if (Math.hypot(q0.x, q0.z) < 60 && q0.z < WAYOUT[1] - 10) await BUILTIN.travel([String(WAYOUT[0]), String(WAYOUT[1])]);
     await BUILTIN.travel([String(WORK[0]), String(WORK[1])]);
     const q = me.bot.state().pos; if (Math.hypot(q.x, q.z) >= FAR) return;
   }
