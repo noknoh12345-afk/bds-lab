@@ -26,13 +26,5 @@ if [ ! -d .deps/node_modules/bedrock-protocol ] || [ ! -d .deps/node_modules/nod
   npm i node-datachannel@latest --no-audit --no-fund --loglevel=error
   cd ..
 fi
-# exit 75 = `update`: fetch this branch again and start over (stays in the terminal; anything else ends it)
-while true; do
-  set +e; "$NODE" bot.cjs "$@"; code=$?; set -e
-  # 0 = quit, 130 = Ctrl+C: stop. 75 = `update`; anything else = it crashed: fetch the newest and start again
-  { [ $code -eq 0 ] || [ $code -eq 130 ]; } && exit $code
-  [ $code -eq 75 ] || { echo "the bot stopped (exit $code): starting again in 5 s (Ctrl+C to stop)"; sleep 5; }
-  echo "updating bdslab..."
-  b=$(git -C .. rev-parse --abbrev-ref HEAD)
-  git -C .. fetch -q --depth 1 origin "$b" && git -C .. checkout -q -B "$b" FETCH_HEAD || echo "update failed: starting the same version"
-done
+# one run = one join: when it stops (quit, Ctrl+C, a crash) it is not started again by itself
+exec "$NODE" bot.cjs "$@"
