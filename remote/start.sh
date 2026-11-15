@@ -28,9 +28,18 @@ if [ ! -d .deps/node_modules/bedrock-protocol ] || [ ! -d .deps/node_modules/nod
 fi
 # exit 75 = `restart` (asked for): fetch the newest and start again. Anything else (quit, Ctrl+C, a crash) ends it: no leave/join
 # that nobody asked for
+# a watchdog beside it: run/status.json is written every second; not for 3 minutes = the bot is frozen (a loop with no pause): it is
+# stopped and started again (code 137 below), the newest version first
 while true; do
-  set +e; "$NODE" bot.cjs "$@"; code=$?; set -e
-  [ $code -eq 75 ] || exit $code
+  set +e
+  "$NODE" bot.cjs "$@" & pid=$!
+  ( while kill -0 $pid 2>/dev/null; do sleep 30; f=run/status.json
+      if [ -f $f ] && [ $(( $(date +%s) - $(stat -f %m $f 2>/dev/null || stat -c %Y $f) )) -gt 180 ]; then echo "watchdog: the bot froze: starting it again"; kill -9 $pid; fi
+    done ) &
+  wd=$!
+  wait $pid; code=$?; kill $wd 2>/dev/null
+  set -e
+  [ $code -eq 75 ] || [ $code -eq 137 ] || exit $code
   b=$(git -C .. rev-parse --abbrev-ref HEAD)
   git -C .. fetch -q --depth 1 origin "$b" && git -C .. checkout -q -B "$b" FETCH_HEAD || echo "update failed: starting the same version"
 done

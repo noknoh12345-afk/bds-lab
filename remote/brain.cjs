@@ -120,7 +120,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
   me.walking = ctx;
   const b = me.bot, t0 = Date.now();
   await b.act('option', ['autojump', 'on']).catch(() => {});
-  let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0, builtTurns = 0;
+  let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0, builtTurns = 0, dropTurns = 0;
   await b.act('sprint', ['on']).catch(() => {});
   try {
     while (!me.abort && !disposed && me.connected && Date.now() - t0 < maxMs && me.deaths === deaths0 && !me.reviewPending) {
@@ -132,7 +132,10 @@ async function walkTo(tx, tz, maxMs = 600000) {
       for (let y = Math.floor(p.y) - 1; y > Math.floor(p.y) - 7; y--) { const n = b.world.block(ax, y, az)?.name; if (n === undefined || !/^minecraft:(air|cave_air)$/.test(n)) break; drop++; }
       // (water ahead counts too once it has drowned)
       if (AD.avoidWater && /water/.test(b.world.block(ax, Math.floor(p.y), az)?.name ?? '')) drop = 9;
-      if (drop >= AD.drop) { turn += turn >= 0 ? 45 : -45; if (Math.abs(turn) > 180) turn = -turn % 180; continue; }
+      // (every way a drop or water - in a lake, on a peak: turning round and round without a pause froze the whole process; after a
+      //  full turn it goes on anyway)
+      if (drop >= AD.drop && dropTurns < 8) { dropTurns++; turn += turn >= 0 ? 45 : -45; if (Math.abs(turn) > 180) turn = -turn % 180; await sleep(30); continue; }
+      dropTurns = 0;
       // the rule while walking too: someone's build within 5 blocks ahead is not walked into or along; steer off it
       // (already among builds, every way has one: then just get out, the shortest way, and steer again once clear)
       if (guardOn && builtTurns < 11 && builtAhead(b, p, r)) { builtTurns++; turn += turn >= 0 ? 35 : -35; if (Math.abs(turn) > 180) turn = -turn % 180; await sleep(50); continue; }
