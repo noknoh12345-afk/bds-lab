@@ -69,8 +69,10 @@ function log(line, { dc = false } = {}) {
 
 // ---------- the player ----------
 const me = { lastPacket: 0, closedAt: null, kicked: null, checking: false, quitting: false, bot: null, account: null, busy: null, queue: [], abort: false, hp: null, food: null, dim: 'overworld', msa: null, connected: false, deaths: 0 };
+let knownTransport = null;   // what the server answered last time (a server restarting answers nothing for a while: not RakNet then)
 async function transport() {
   if (cfg.transport !== 'auto') return cfg.transport;
+  if (knownTransport) return knownTransport;
   return new Promise((res) => {
     const r = http.get({ host: cfg.host, port: cfg.port, path: '/v1/join', timeout: 5000 }, (x) => { x.resume(); res(x.statusCode >= 200 && x.statusCode < 300 ? 'nethernet' : 'raknet'); });
     r.on('timeout', () => { r.destroy(); res('raknet'); });
@@ -92,7 +94,7 @@ async function connect() {
     rtc: tr === 'nethernet' ? req('node-datachannel/polyfill') : null, nn: { pins: path.join(RUN, 'nethernet-pins.json') }, opts: {}, timeoutMs: 300000,   // (the first join includes the sign-in)
     online: { profilesFolder: path.join(RUN, 'auth'), onMsaCode: (d) => { me.msa = d.user_code; log(`SIGN IN: open ${d.verification_uri} and enter ${d.user_code}`, { dc: true }); } },
   });
-  me.msa = null; me.bot = bot; me.connected = true; me.closedAt = null; me.kicked = null;
+  knownTransport = tr; me.msa = null; me.bot = bot; me.connected = true; me.closedAt = null; me.kicked = null;
   bot.setLegit?.(cfg.legit !== false);
   // what it set down before (its own table, furnace, bed) stays its own across restarts
   try { for (const k of JSON.parse(fs.readFileSync(path.join(RUN, 'placed.json'), 'utf8'))) bot.placedByMe?.add(k); } catch { /* none yet */ }   // only what a person could do: looking at it, in reach, nothing in between
@@ -112,10 +114,10 @@ async function connect() {
 // the thread had time to read what was waiting. Then: one rejoin after a pause (60 s after server_id_conflict); a manual
 // `reconnect` any time; `quit` stops for good.
 async function joinOnce() {
-  for (let i = 0; i < 3 && !me.connected && !me.quitting; i++) {   // a join that never got in is tried up to 3 times
-    try { await connect(); } catch (e) { log(`join failed: ${e.message}`, { dc: i === 2 }); await sleep(/server_id_conflict/.test(String(me.kicked)) ? 60000 : 20000); }
+  // the server may be down for a while (a restart, an update): keep trying, less and less often (up to every 5 minutes), never give up
+  for (let i = 0; !me.connected && !me.quitting; i++) {
+    try { await connect(); } catch (e) { log(`join failed: ${e.message}`, { dc: i === 2 || i % 20 === 19 }); await sleep(/server_id_conflict/.test(String(me.kicked)) ? 60000 : Math.min(300000, 20000 * (i + 1))); }
   }
-  if (!me.connected && !me.quitting) log('could not join: `reconnect` to try again', { dc: true });
 }
 setInterval(async () => {
   if (!me.connected || me.checking) return;
