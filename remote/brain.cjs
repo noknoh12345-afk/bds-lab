@@ -332,12 +332,11 @@ async function goFar() {
 // walk back from the world spawn through the mobs there). Clicking a bed sets it at any time of day on Bedrock.
 async function bedSpawn() {
   if (me.dim !== 'overworld' || me.spawnSet) return true;
-  const bedOk = await run('get_white_bed 1', 'a bed') || await run('get_red_bed 1', 'a bed');
+  const bedOk = await run('get_bed 1', 'a bed');   // (Bedrock calls every colour's item minecraft:bed)
   if (!bedOk) return false;
-  await run('place_white_bed', 'set the bed down').catch?.(() => {});
+  await run('place_bed', 'set the bed down');
   const p = me.bot.state().pos; let bed = null;
   for (let dx = -4; dx <= 4 && !bed; dx++) for (let dz = -4; dz <= 4 && !bed; dz++) for (let dy = -2; dy <= 2 && !bed; dy++) { const n = me.bot.world.block(Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz)?.name ?? ''; if (/_bed$/.test(n)) bed = [Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz]; }
-  if (!bed) { await run('place_red_bed', 'set the bed down'); }
   if (!bed) { log('auto: the bed did not go down'); return false; }
   const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap);
   await me.bot.act('useon', bed.map(String)).catch(() => {}); await sleep(1500); ctx.taps.delete(tap);
