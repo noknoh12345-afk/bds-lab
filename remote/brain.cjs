@@ -11,7 +11,7 @@ const timers = [];
 // blocks no world generates by itself in the open (villages and ruins have some too: kept away from as well, which is fine)
 const BUILT = /planks|glass|crafting_table|chest|barrel|_bed$|torch|lantern|wool|(?<!moss_)carpet|concrete|bricks|_slab|_stairs|_door|fence|furnace|smoker|anvil|_sign|bookshelf|rail|redstone_(wire|torch|lamp|block)|repeater|comparator|piston|hopper|composter|lectern|scaffolding|ladder|banner|bell|item_frame|shulker_box|enchanting_table|brewing_stand|beacon|quartz_block|smooth_stone|polished_|cut_|_wall$|campfire|flower_pot|candle|lever|_button|pressure_plate|observer|dispenser|dropper|tnt|iron_block|gold_block|diamond_block|emerald_block|copper_block|hay_block|glazed_terracotta|stained|sea_lantern|end_rod/;
 // actions that only move or look: allowed anywhere (they change nothing)
-const PASSIVE = /^(auto|map|walk_xz|to_surface|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
+const PASSIVE = /^(auto|map|walk_xz|to_surface|shelter|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
 let guardOn = ctx.guardOn ?? true;
 const HOSTILE = /^minecraft:(zombie|husk|drowned|skeleton|stray|bogged|spider|cave_spider|creeper|witch|slime|magma_cube|zombie_villager_v2|pillager|vindicator|silverfish|phantom|blaze|wither_skeleton|piglin_brute|hoglin|ghast|endermite|breeze)$/;
 function scanBuilt(bot, R) {
@@ -81,6 +81,7 @@ async function handStairs(tx, tz, maxSteps = 60) {
   }
   return openSky(b, b.state().pos);
 }
+const nightNow = (b) => { const t = b.time?.(); if (t === null || t === undefined) return false; const d = ((t % 24000) + 24000) % 24000; return d >= 12800 && d <= 23200; };
 async function walkTo(tx, tz, maxMs = 600000) {
   me.walkTick ??= 0;
   const deaths0 = me.deaths;   // (a death puts it back at the spawn: this walk's way is no longer the way; the caller plans again)
@@ -103,7 +104,9 @@ async function walkTo(tx, tz, maxMs = 600000) {
       // (already among builds, every way has one: then just get out, the shortest way, and steer again once clear)
       if (guardOn && builtTurns < 11 && builtAhead(b, p, r)) { builtTurns++; turn += turn >= 0 ? 35 : -35; if (Math.abs(turn) > 180) turn = -turn % 180; await sleep(50); continue; }
       if (builtTurns >= 11 && !guardReason(b)) builtTurns = 0; else if (builtTurns < 11) builtTurns = 0;
-      if (hostilesNear(b, 5).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); continue; }
+      // the night out in the open, no armour: dug in until morning (the way RTA players sit out the night), then on
+      if (nightNow(b) && me.dim === 'overworld' && !guardReason(b)) { await b.act('sprint', ['off']).catch(() => {}); log('travel: night: digging in until morning', { dc: true }); await b.act('shelter', []).catch(() => {}); while (nightNow(b) && me.connected && !me.abort && !disposed) await sleep(5000); log('travel: morning: on'); last = b.state().pos; lastT = Date.now(); continue; }
+      if (hostilesNear(b, 5).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); last = b.state().pos; lastT = Date.now(); continue; }
       await b.act('look', [String(yaw.toFixed(1)), '0']).catch(() => {});
       await b.act('sprint', ['on']).catch(() => {});
       await sleep(400);
