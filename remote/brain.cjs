@@ -48,7 +48,7 @@ function status() {
   const s = b.state();
   const t = b.time?.(), day = t === null || t === undefined ? null : ((t % 24000) + 24000) % 24000;
   const P = s.pos, hostile = [...b.entities.values()].filter((e) => HOSTILE.test(e.type ?? '') && Math.hypot(e.x - P.x, e.z - P.z) < 16).length;
-  return { connected: me.connected, account: me.account, time: day, night: day === null ? null : day >= 12542 && day <= 23460, hostileNear: hostile, pos: { x: +s.pos.x.toFixed(1), y: +s.pos.y.toFixed(1), z: +s.pos.z.toFixed(1) }, dim: me.dim, hp: me.hp, food: me.food, dead: s.dead, deaths: me.deaths, busy: me.busy, queued: me.queue.length, guard: guardOn, players: b.players(), signIn: me.msa, uptime: Math.round((Date.now() - ctx.t0) / 1000) };
+  return { connected: me.connected, review: me.reviewPending ?? null, account: me.account, time: day, night: day === null ? null : day >= 12542 && day <= 23460, hostileNear: hostile, pos: { x: +s.pos.x.toFixed(1), y: +s.pos.y.toFixed(1), z: +s.pos.z.toFixed(1) }, dim: me.dim, hp: me.hp, food: me.food, dead: s.dead, deaths: me.deaths, busy: me.busy, queued: me.queue.length, guard: guardOn, players: b.players(), signIn: me.msa, uptime: Math.round((Date.now() - ctx.t0) / 1000) };
 }
 // walking a long way the way a person does: face the target, run (sprint, auto-jump up 1-block steps), and when nothing moves
 // for 3 s jump and veer off to one side; a drop of 4 or more right ahead is gone round instead of jumped down
@@ -105,8 +105,13 @@ const deathTap = (l) => {
   const p = me.bot.state().pos;
   learn(m[1].replace(/^death\.(attack|fell)\./, ''), { at: `${Math.round(p.x)} ${Math.round(p.y)} ${Math.round(p.z)}`, night: nightNow(me.bot), hpBefore: lastHp, held: lastHeld, foes: lastFoes, busy: me.busy });
   lastFoes = '';
+  // after every death the run waits for a review (cfg.reviewDeaths, default on): the death is looked into and the bot improved
+  // before it goes on (`resume`); meanwhile it only defends itself where it stands
+  if (cfg.reviewDeaths !== false) { me.reviewPending = { at: new Date().toISOString(), death: me.deaths + 1, cause: m[1] }; try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'review.json'), JSON.stringify(me.reviewPending)); } catch { /* */ } log('auto: paused for a review of this death (resume when improved)', { dc: true }); }
 };
 ctx.taps.add(deathTap);
+try { me.reviewPending ??= JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'review.json'), 'utf8')); } catch { /* none */ }
+async function reviewWait() { if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) await sleep(3000); me.abort = false; }
 const nightNow = (b) => { const t = b.time?.(); if (t === null || t === undefined) return false; const d = ((t % 24000) + 24000) % 24000; return d >= AD.nightStart && d <= 23200; };
 async function walkTo(tx, tz, maxMs = 600000) {
   me.walkTick ??= 0;
@@ -118,7 +123,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
   let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0, builtTurns = 0;
   await b.act('sprint', ['on']).catch(() => {});
   try {
-    while (!me.abort && !disposed && me.connected && Date.now() - t0 < maxMs && me.deaths === deaths0) {
+    while (!me.abort && !disposed && me.connected && Date.now() - t0 < maxMs && me.deaths === deaths0 && !me.reviewPending) {
       const p = b.state().pos, dx = tx - p.x, dz = tz - p.z;
       if (Math.hypot(dx, dz) < 3) return true;
       const yaw = (Math.atan2(-dx, dz) * 180) / Math.PI + turn, r = (yaw * Math.PI) / 180;
@@ -227,6 +232,8 @@ const BUILTIN = {
   // the newest bdslab, without leaving: these commands (brain.cjs) are reloaded in place; a change to realplayer.cjs waits for a restart
   update: () => ctx.update(),
   reload: () => ctx.reload(),
+  // the review of the last death is done (and the improvement in): go on
+  resume: () => { me.reviewPending = null; try { require('node:fs').unlinkSync(require('node:path').join(ctx.RUN, 'review.json')); } catch { /* */ } log('auto: review done, going on', { dc: true }); },
   quit: () => ctx.quit(),
   // leave and start again with the newest bdslab (a change to realplayer.cjs or bot.cjs needs it): one leave and one join
   restart: () => { log('restarting with the newest bdslab: leaving and joining once', { dc: true }); try { me.bot?.close(); } catch { /* */ } setTimeout(() => process.exit(75), 1500); },
@@ -235,7 +242,7 @@ const BUILTIN = {
 const NOW = {
   stop: () => { me.abort = true; me.queue.length = 0; me.bot?.cancel?.(); me.bot?.act('stop', []).catch(() => {}); log('stopped (queue cleared)'); },
   clear: () => { me.queue.length = 0; log('queue cleared'); },
-  status: BUILTIN.status, players: BUILTIN.players, survey: BUILTIN.survey, around: BUILTIN.around, map: BUILTIN.map, help: BUILTIN.help, quit: BUILTIN.quit, guard: BUILTIN.guard, update: BUILTIN.update, reload: BUILTIN.reload, restart: BUILTIN.restart, reconnect: BUILTIN.reconnect,
+  status: BUILTIN.status, players: BUILTIN.players, survey: BUILTIN.survey, around: BUILTIN.around, map: BUILTIN.map, help: BUILTIN.help, quit: BUILTIN.quit, guard: BUILTIN.guard, update: BUILTIN.update, reload: BUILTIN.reload, restart: BUILTIN.restart, resume: BUILTIN.resume, reconnect: BUILTIN.reconnect,
 };
 function command(line) {
   line = line.trim();
@@ -348,6 +355,7 @@ const live = () => autoRun && autoRun.gen === me.autoGen;
 function untilEnd() { const [h, m] = ENDS_AT.split(':').map(Number), n = new Date(), t = new Date(n); t.setHours(h, m, 0, 0); if (t <= n) t.setDate(t.getDate() + 1); return t; }
 async function waitIn() { while (!me.connected || !me.bot) { if (!live()) return false; await sleep(2000); } return true; }
 async function run(cmd, why) {   // one command, as the worker would: guard first, then the bot; true when it finished without a failure
+  await reviewWait();
   if (!(await waitIn())) return false;
   const [v, ...a] = cmd.split(/\s+/);
   const g = PASSIVE.test(v) || BUILTIN[v] ? null : guardReason(me.bot);
@@ -390,6 +398,7 @@ const WORK = (cfg.workArea ?? '260 260').split(/\s+/).map(Number), FAR = cfg.far
 // the way out of the spawn: south first (the builds east of it, x 40-95 z 20-45, are not walked through or near), then on
 const WAYOUT = (cfg.wayOut ?? '8 130').split(/\s+/).map(Number);
 async function goFar() {
+  await reviewWait();
   if (!(await waitIn()) || me.dim !== 'overworld') return;
   const p = me.bot.state().pos;
   if (Math.hypot(p.x, p.z) >= FAR) return;
@@ -456,6 +465,7 @@ async function auto() {
   for (const st of STEPS) {
     if (!live()) return;
     for (let tries = 0; live(); tries++) {
+      await reviewWait();
       await goFar();
       log(`auto: step "${st.name}"${tries ? ` (try ${tries + 1})` : ''}`, { dc: !tries });
       let ok = true;
