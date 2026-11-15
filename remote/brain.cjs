@@ -52,6 +52,7 @@ function status() {
 // walking a long way the way a person does: face the target, run (sprint, auto-jump up 1-block steps), and when nothing moves
 // for 3 s jump and veer off to one side; a drop of 4 or more right ahead is gone round instead of jumped down
 async function walkTo(tx, tz, maxMs = 600000) {
+  me.walkTick ??= 0;
   const b = me.bot, t0 = Date.now();
   await b.act('option', ['autojump', 'on']).catch(() => {});
   let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0;
@@ -70,10 +71,19 @@ async function walkTo(tx, tz, maxMs = 600000) {
       await sleep(400);
       if (Date.now() - lastT > 3000) {
         const moved = Math.hypot(p.x - last.x, p.z - last.z);
-        if (moved < 1.5) { stuckFor++; await b.act('jump', []).catch(() => {}); turn = (stuckFor % 2 ? 1 : -1) * Math.min(150, 40 * stuckFor); }
+        if (moved < 1.5) {
+          stuckFor++; await b.act('jump', []).catch(() => {});
+          // still nowhere after a few tries and nobody's build near: dig the way ahead (natural ground only), as a person would
+          if (stuckFor >= 3 && !guardReason(b)) {
+            const ry = ((Math.atan2(-dx, dz) * 180) / Math.PI) * Math.PI / 180, fx = Math.floor(p.x - Math.sin(ry) * 1.1), fz = Math.floor(p.z + Math.cos(ry) * 1.1);
+            for (const y of [Math.floor(p.y) + 1, Math.floor(p.y)]) { const n = b.world.block(fx, y, fz)?.name ?? ''; if (n && !/air|water|lava|bedrock/.test(n)) await b.act('dig', [String(fx), String(y), String(fz)]).catch(() => {}); }
+            turn = 0;
+          } else turn = (stuckFor % 2 ? 1 : -1) * Math.min(150, 40 * stuckFor);
+        }
         else { stuckFor = 0; turn = Math.abs(turn) < 10 ? 0 : turn * 0.5; }
         last = p; lastT = Date.now();
-        if (stuckFor >= 8) return false;
+        if (++me.walkTick % 10 === 0) log(`travel: at ${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.z.toFixed(0)}, ${Math.round(Math.hypot(dx, dz))} to go${stuckFor ? ` (stuck ${stuckFor})` : ''}`);
+        if (stuckFor >= 10) return false;
       }
     }
   } finally { await b.act('sprint', ['off']).catch(() => {}); }
