@@ -125,7 +125,7 @@ jobs:
           git config user.email "bds-lab-panel@users.noreply.github.com"
           git add -A -- "$DIR/$MADE"
           if git diff --cached --quiet; then echo "nothing to keep"; exit 0; fi
-          git commit -q -m "unit: $JOB $MADE（管理パネルから）"
+          git commit -q -m "unit: ${JOB} ${MADE}（管理パネルから）"   # (braces: bash on macOS read the first byte of （ as part of the name)
           if git push -q origin "HEAD:$GITHUB_REF_NAME" || { git pull -q --rebase origin "$GITHUB_REF_NAME" && git push -q origin "HEAD:$GITHUB_REF_NAME"; }; then
             echo "kept $DIR/$MADE on $GITHUB_REF_NAME" >> "$GITHUB_STEP_SUMMARY"
             exit 0
