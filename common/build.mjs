@@ -34,6 +34,23 @@ export function npmFailed(dir, key) {
 export function npmNote(dir, key, msg) {
   try { if (msg === null) fs.rmSync(`${dir}.npm-failed`, { force: true }); else { fs.mkdirSync(path.dirname(dir), { recursive: true }); fs.writeFileSync(`${dir}.npm-failed`, JSON.stringify({ key, at: Date.now(), msg })); } } catch { /* only a memo */ }
 }
+// one install at a time into a folder: several lab processes build at once (go all, a test running two units, CI's units beside
+// each other), and the second one used to empty the folder while the first was installing into it — npm failed with nothing to
+// say, and that failure was kept for 10 minutes: every build in them went untyped. The lock is a folder (mkdir is atomic on every
+// system); a lock older than 15 minutes is a process that died holding it
+export function withLock(dir, fn, { waitMs = 600_000, staleMs = 900_000 } = {}) {
+  const lock = `${dir}.lock`, t0 = Date.now(), nap = new Int32Array(new SharedArrayBuffer(4));
+  fs.mkdirSync(path.dirname(lock), { recursive: true });
+  for (;;) {
+    try { fs.mkdirSync(lock); break; } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      try { if (Date.now() - fs.statSync(lock).mtimeMs > staleMs) { fs.rmSync(lock, { recursive: true, force: true }); continue; } } catch { continue; }
+      if (Date.now() - t0 > waitMs) throw new Error(`${lock}: another install has held it for ${Math.round((Date.now() - t0) / 1000)} s (a stuck npm? remove the folder)`);
+      Atomics.wait(nap, 0, 0, 300);
+    }
+  }
+  try { return fn(); } finally { fs.rmSync(lock, { recursive: true, force: true }); }
+}
 function npmI(dir, specs, extra = []) {
   const key = [...specs, ...extra].join(' '), was = npmFailed(dir, key);
   if (was) throw new Error(was);
@@ -54,10 +71,12 @@ export function tools(cache) {
   // (the stamp alone is not the tools: a cache restored with the stamp and without node_modules — CI's bds/.lab — said
   //  "Cannot find module 'esbuild'" on every build until the stamp changed. Installed again whenever they do not resolve)
   const there = () => { try { req.resolve('esbuild'); req.resolve('typescript'); return true; } catch { return false; } };
-  if (!exists(stamp) || fs.readFileSync(stamp, 'utf8') !== want || !there()) {
+  const fresh = () => exists(stamp) && fs.readFileSync(stamp, 'utf8') === want && there();
+  if (!fresh()) withLock(dir, () => {   // (checked again inside: another process may have installed them while this one waited)
+    if (fresh()) return;
     npmI(dir, Object.entries(TOOLS).map(([k, v]) => `${k}@${v}`));
     fs.writeFileSync(stamp, want);
-  }
+  });
   return { req, esbuild: req('esbuild'), get ts() { return req('typescript'); } };
 }
 
@@ -99,11 +118,12 @@ export async function sdk({ cache, bv, deps, npmDoc }) {
   specs.sort();
   const key = crypto.createHash('sha1').update(specs.join(' ')).digest('hex').slice(0, 10);
   const dir = path.join(cache, 'sdk', key);
-  if (!exists(path.join(dir, 'ok'))) {
+  if (!exists(path.join(dir, 'ok'))) withLock(dir, () => {   // (one install of this SDK at a time; another one's done: kept)
+    if (exists(path.join(dir, 'ok'))) return;
     fs.rmSync(dir, { recursive: true, force: true });
     npmI(dir, specs);
     fs.writeFileSync(path.join(dir, 'ok'), specs.join('\n') + '\n');
-  }
+  });
   try {   // (several lab processes at once: written whole, then renamed)
     const all = read(); all[want] = { key, at: Date.now() };
     const tmp = `${memo}.${process.pid}.tmp`; fs.writeFileSync(tmp, JSON.stringify(all)); fs.renameSync(tmp, memo);
@@ -147,18 +167,18 @@ function typeStamp(addon, js) {
 // (and what a check found, by the same content wherever it is: the brief's audit copies each unit to check it on stable and on
 // beta, and the same sources under another name — a post seen again, a copy — were checked again: colony-offline spent two
 // thirds of its CPU there)
-export function typecheck({ tl, addon, cache, js, max = 12 }) {
+export function typecheck({ tl, addon, cache, js, max = 12, fixes = TS_FIXES }) {
   const okFile = path.join(cache, 'tsinfo', crypto.createHash('sha1').update(addon).digest('hex').slice(0, 10) + (js ? '.js' : '') + '.clean');
   const stamp = process.env.LAB_TYPES_MEMO === '0' ? null : typeStamp(addon, js);
   try { if (stamp && fs.readFileSync(okFile, 'utf8') === stamp) return []; } catch { /* not checked yet */ }
-  const found = stamp && path.join(cache, 'tsinfo', 'found', `${stamp}-${max}.json`);
+  const found = stamp && path.join(cache, 'tsinfo', 'found', `${stamp}-${max}${fixes === TS_FIXES ? '' : `-${crypto.createHash('sha1').update(String(fixes)).digest('hex').slice(0, 8)}`}.json`);
   try { if (found) { const r = JSON.parse(fs.readFileSync(found, 'utf8')); if (Array.isArray(r)) return r; } } catch { /* not checked yet */ }
-  const res = typecheckNow({ tl, addon, cache, js, max });
+  const res = typecheckNow({ tl, addon, cache, js, max, fixes });
   try { if (stamp && !res.length) { fs.mkdirSync(path.dirname(okFile), { recursive: true }); fs.writeFileSync(okFile, stamp); } else fs.rmSync(okFile, { force: true }); } catch { /* only a memo */ }
   try { if (found) { fs.mkdirSync(path.dirname(found), { recursive: true }); const t = `${found}.${process.pid}.tmp`; fs.writeFileSync(t, JSON.stringify(res)); fs.renameSync(t, found); } } catch { /* only a memo */ }
   return res;
 }
-function typecheckNow({ tl, addon, cache, js, max = 12 }) {
+function typecheckNow({ tl, addon, cache, js, max = 12, fixes = TS_FIXES }) {
   const ts = tl.ts;
   const cfgFile = path.join(addon, 'tsconfig.json');
   const cfg = ts.getParsedCommandLineOfConfigFile(cfgFile, {}, { ...ts.sys, onUnRecoverableConfigFileDiagnostic: () => {} });
@@ -175,7 +195,7 @@ function typecheckNow({ tl, addon, cache, js, max = 12 }) {
     const msg = ts.flattenDiagnosticMessageText(d.messageText, ' ').replace(/\s+/g, ' ');
     const at = d.file ? { file: path.relative(addon, d.file.fileName).split(path.sep).join('/'), line: d.file.getLineAndCharacterOfPosition(d.start ?? 0).line + 1 } : null;
     return { code: d.code, msg, at };
-  }), max);
+  }), max, fixes);
 }
 // TypeScript's own text is long: import("/abs/path/node_modules/@minecraft/server/index").Player, whole object types, the same
 // message on many lines. Kept: what is wrong and where, once per message (lines joined), the first 12, each under 220 chars.
@@ -187,12 +207,12 @@ export const TS_FIXES = [
   [/Property '(\w+)' does not exist on type '(\w+)'/, 'not in this API version: node lab.mjs api $2'],
   [/Cannot find name '(\w+)'/, "import it (from '@minecraft/server', '@minecraft/server-ui' or './kit')"],
 ];
-const fixOf = (m) => { for (const [re, f] of TS_FIXES) { const x = re.exec(m); if (x) return f.replace(/\$(\d)/g, (_, k) => x[k] ?? ''); } return ''; };
-export function compactDiags(list, max = 12) {
+const fixOf = (m, fixes = TS_FIXES) => { for (const [re, f] of fixes) { const x = re.exec(m); if (x) return f.replace(/\$(\d)/g, (_, k) => x[k] ?? ''); } return ''; };
+export function compactDiags(list, max = 12, fixes = TS_FIXES) {
   const groups = new Map();
   for (const { code, msg, at } of list) {
     const m0 = msg.replace(/import\("[^"]*"\)\./g, '').replace(/\{ [^{}]{120,}? \}/g, '{ … }').replace(/'(.{90})[^']{30,}'/g, "'$1…'");
-    const fx = fixOf(m0), m = fx ? `${m0} → ${fx}` : m0;
+    const fx = fixOf(m0, fixes), m = fx ? `${m0} → ${fx}` : m0;
     const k = `${at?.file ?? ''}\u0000TS${code} ${m}`;
     const g = groups.get(k) ?? groups.set(k, { file: at?.file, lines: [], text: `TS${code} ${m0.length > 220 ? m0.slice(0, 220) + '…' : m0}${fx ? ` → ${fx}` : ''}` }).get(k);
     if (at && !g.lines.includes(at.line)) g.lines.push(at.line);

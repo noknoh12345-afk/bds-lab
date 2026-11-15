@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
 export function makeRuntime({ flavor, CACHE, TOP, extraMounts = [], die, say = () => {} }) {
   const want = (process.env.LAB_RUNTIME || '').toLowerCase();
-  const kind = want === 'docker' || want === 'native' ? want : process.platform === 'darwin' ? 'docker' : 'native';
+  const kind = want === 'docker' || want === 'native' ? want : process.platform === 'darwin' || (process.platform === 'linux' && process.arch !== 'x64') ? 'docker' : 'native';   // (BDS is built for x86-64 Linux and Windows only: an ARM Linux runs it in an amd64 container, as macOS does)
   const docker = process.env.LAB_DOCKER || 'docker';
   const dockerfile = BASE + (flavor.dockerfile ?? '');
   const image = `bds-lab-${flavor.name}:${crypto.createHash('sha1').update(dockerfile).digest('hex').slice(0, 10)}`;
@@ -41,9 +41,11 @@ export function makeRuntime({ flavor, CACHE, TOP, extraMounts = [], die, say = (
     if (kind !== 'docker' || checked) return;
     const v = spawnSync(docker, ['version', '--format', '{{.Server.Version}}'], { encoding: 'utf8' });
     if (v.error || v.status !== 0) {
-      die([`${flavor.title ?? flavor.name}: the server runs in a Linux container here (${process.platform === 'darwin' ? 'macOS has no BDS build' : 'LAB_RUNTIME=docker'}), and \`${docker}\` is not working:`,
+      die([`${flavor.title ?? flavor.name}: the server runs in a Linux container here (${process.platform === 'darwin' ? 'macOS has no BDS build' : want ? 'LAB_RUNTIME=docker' : `no BDS build for ${process.platform}-${process.arch}`}), and \`${docker}\` is not working:`,
         `  ${(v.error?.message ?? v.stderr ?? '').trim().split('\n')[0] || 'no answer from the docker daemon'}`,
-        'fix (macOS, pick one): Docker Desktop (enable "Use Rosetta for x86_64/amd64 emulation") | OrbStack | `brew install colima docker && colima start --vm-type vz --vz-rosetta`',
+        process.platform === 'linux' && process.arch !== 'x64' && !want
+          ? `fix (Linux on ${process.arch}: BDS is an x86-64 program): install docker, then let it run amd64 programs: \`docker run --privileged --rm tonistiigi/binfmt --install amd64\``
+          : 'fix (macOS, pick one): Docker Desktop (enable "Use Rosetta for x86_64/amd64 emulation") | OrbStack | `brew install colima docker && colima start --vm-type vz --vz-rosetta`',
         '     then: node lab.mjs setup   (first run builds the lab image, a few minutes)'].join('\n'));
     }
     if (spawnSync(docker, ['image', 'inspect', image], { stdio: 'ignore' }).status !== 0) {

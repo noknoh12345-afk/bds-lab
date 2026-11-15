@@ -62,6 +62,11 @@ if (A[0] === 'wait' || A[0] === 'stop') {
   if (!alive(j.pid)) { console.log(`DONE exit=? (the job vanished: killed with its sandbox? ${j.cmd})`); process.exit(1); }
   console.log(`RUNNING ${secs}s: ${j.cmd}  (again: node lab.mjs wait)`); process.exit(0);
 }
+// ---- go all: every unit through go, as many at once as this machine carries (common/goall.mjs) ----
+if (A[0] === 'go' && A[1] === 'all') {
+  const { main } = await import('./common/goall.mjs');
+  process.exit(await main({ top: TOP, kinds: KINDS, args: A.slice(2) }));
+}
 // ---- setup all: every lab's server and tools now (e.g. in a setup phase that has network, before it is cut) ----
 if (A[0] === 'setup' && A[1] === 'all') {
   const { spawnSync } = await import('node:child_process');

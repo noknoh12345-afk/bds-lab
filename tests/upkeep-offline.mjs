@@ -75,8 +75,8 @@ put(path.join(iu, 'rp', 'texts', 'ja_JP.lang'), 'item.lab:ruby.name=ルビー\n'
 put(path.join(iu, 'bp', 'manifest.json'), man('44444444-0000-4000-8000-000000000001'));
 check(I.missing(iu).map((m) => m.key).join() === 'tile.lab:ore.name,entity.lab:slime.name' && I.missing(iu)[0].ref === 'Ruby Ore', 'i18n: what ja_JP lacks, with the en_US text');
 check(I.answer('Here:\ntile.lab:ore.name=ルビー鉱石\n- entity.lab:slime.name = スライム\nother=x', ['tile.lab:ore.name', 'entity.lab:slime.name']).size === 2, 'i18n: the AI answer parsed (extra lines ignored)');
-let asked = '';
-const srv = http.createServer((q, s) => { let b = ''; q.on('data', (d) => (b += d)); q.on('end', () => { asked = JSON.parse(b).messages[0].content; s.setHeader('content-type', 'application/json'); s.end(JSON.stringify({ content: [{ type: 'text', text: 'tile.lab:ore.name=ルビー鉱石\nentity.lab:slime.name=スライム' }], usage: { input_tokens: 120, output_tokens: 30 } })); }); });
+let _asked = '';   // (what the fake AI was asked: read by the AI part of this test, which lives on dev)
+const srv = http.createServer((q, s) => { let b = ''; q.on('data', (d) => (b += d)); q.on('end', () => { _asked = JSON.parse(b).messages[0].content; s.setHeader('content-type', 'application/json'); s.end(JSON.stringify({ content: [{ type: 'text', text: 'tile.lab:ore.name=ルビー鉱石\nentity.lab:slime.name=スライム' }], usage: { input_tokens: 120, output_tokens: 30 } })); }); });
 await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
 const env = { ...process.env, LAB_LABS_ROOT: path.join(T, 'lab'), LAB_KIND: 'bds', LAB_DOTENV: 'off', ANTHROPIC_API_KEY: 'fake', ANTHROPIC_BASE_URL: `http://127.0.0.1:${srv.address().port}`, LAB_NOTRACE: '1' };
 const runAsync = (args, e = {}) => new Promise((ok) => { const { spawn } = require_cp; const c = spawn(process.execPath, [path.join(TOP, 'lab.mjs'), ...args], { cwd: TOP, env: { ...env, ...e } }); let t = ''; c.stdout.on('data', (d) => (t += d)); c.stderr.on('data', (d) => (t += d)); c.on('close', (code) => ok({ code, text: t })); });

@@ -36,13 +36,13 @@ AI が毎回読むのは `AGENTS.md` だけです。この文書は、ラボ自�
 
 | 区分 | モジュール |
 |---|---|
-| 入口・環境 | `status.mjs`（状況と次の 1 手・`clean`）・`netenv.mjs`（プロキシと証明書）・`runtime.mjs`（ホストかコンテナか）・`secrets.mjs`（.env）・`secret-scan.mjs`（鍵の漏れ止め） |
+| 入口・環境 | `status.mjs`（状況と次の 1 手・`clean`）・`netenv.mjs`（プロキシと証明書）・`runtime.mjs`（ホストかコンテナか）・`goall.mjs`（`go all`: 全ユニットをコア数ぶん同時に）・`secrets.mjs`（.env）・`secret-scan.mjs`（鍵の漏れ止め） |
 | 作る・試す | `core.mjs`（エンジン）・`build.mjs`（esbuild と型検査）・`addon-lint.mjs`・`api-hints.mjs`・`dts.mjs`（型定義の索引）・`schema.mjs`（Mojang のスキーマ）・`lint-tests.mjs`（tests.txt の静的検査）・`trial.mjs`（1 回の試走）・`helper.js`（テスト用にアドオンへ差し込む補助）・`extra.mjs`（doc・sample などの重い道具）・`pixel.mjs`（16×16 のテクスチャ）・`model.mjs`（モデルの描画と検査）・`jsonui.mjs`（JSON UI の検査）・`i18n.mjs`（翻訳の欠け）・`optimize.mjs`（配布物を小さく）・`bb.mjs`（BDS 本体の解析） |
 | 本物のプレイヤー | `realplayer.cjs`（本物のクライアント）・`raknet.cjs`・`nethernet.cjs`（通信）・`verbs.cjs`・`verbs-more.cjs`・`verbs-gen.cjs`（動作）・`goal.cjs`・`goal-exec.cjs`・`challenges.cjs`（目標の計画と実行）・`debugger.cjs`（スクリプトのデバッガ） |
 | サンドボックスと生きた世界 | `sim.mjs`（sandbox-be で tests.txt を約 1 秒）・`ts.mjs`（TS REPL を外から動かす） |
 | 原因を探す・テストを鍛える | `why.mjs`・`gaps.mjs`・`mutate.mjs`・`chaos.mjs`・`record.mjs`・`flaky.mjs`・`bisect.mjs`・`checkpoint.mjs`（undo）・`pytb.mjs`（traceback を 1 行に） |
 | 持ち込み・保守 | `brief.mjs`（人のアドオンを読む）・`borrow.mjs`（借りたアドオンの印）・`scan.mjs`（アドオンが何をできるか）・`apidiff.mjs`（API の版の差）・`maintain.mjs`・`upkeep.mjs`・`maint.mjs`（健康診断）・`refresh.mjs`・`kb-build.mjs`（ラボの知識を新しい Minecraft に合わせる） |
-| 配る | `deploy.mjs`（自分の BDS へ、戻せる）・`github.mjs`（GitHub 側の補助） |
+| 配る | `deploy.mjs`・`serverimport.mjs`（`import <BDS のフォルダ>`: 自分のサーバーのアドオンを丸ごとユニットに。deploy の逆）（自分の BDS へ、戻せる）・`github.mjs`（GitHub 側の補助） |
 | 知識（スキル） | `skills.mjs`（規則・振り分け・実機での確認）・`skill-forge.mjs`（スキル本文の検査） |
 | テスト | `run-tests.mjs`（オフライン試験を並べて走らせる） |
 

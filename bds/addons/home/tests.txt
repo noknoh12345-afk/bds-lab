@@ -21,15 +21,22 @@ js [Math.floor(p('A').location.x), Math.floor(p('A').location.z)].join(' ')
 ~ @A Wait a little
 
 ## a home in the nether, after a restart
+effect A resistance 120 255 true
+effect A fire_resistance 120 0 true
 execute in nether run tp A 0 80 0
-wait 1000
+js await new Promise((r) => { let n = 0; const id = system.runInterval(() => { const d = world.getDimension('nether'); let ok = false; try { if (d.getBlock({ x: 0, y: 79, z: 0 })) { for (const x of [-1, 0, 1]) for (const z of [-1, 0, 1]) { d.getBlock({ x, y: 79, z }).setType('minecraft:obsidian'); d.getBlock({ x, y: 80, z }).setType('minecraft:air'); d.getBlock({ x, y: 81, z }).setType('minecraft:air'); } ok = true; } } catch {} if (ok || ++n > 200) { system.clearRun(id); r(ok); } }, 1); })
+= true
+execute in nether run tp A 0 80 0
+wait 500
 @A cmd /lab:sethome
 ~ @A Home set at 0 80 0 \(nether\)
 restart
 clock +1d
 wait 11000
+@A cmd /execute in overworld run tp @s 0 -60 0
+js await new Promise((r) => { let n = 0; const id = system.runInterval(() => { const d = p('A')?.dimension.id; if (d === 'minecraft:overworld' || ++n > 200) { system.clearRun(id); r(d); } }, 1); })
+= minecraft:overworld
 @A cmd /lab:home
 ~ @A Welcome home
-wait 1000
-js p('A').dimension.id
+js await new Promise((r) => { let n = 0; const id = system.runInterval(() => { const d = p('A')?.dimension.id; if (d === 'minecraft:nether' || ++n > 200) { system.clearRun(id); r(d); } }, 1); })
 = minecraft:nether
