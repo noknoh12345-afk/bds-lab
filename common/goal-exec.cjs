@@ -3939,6 +3939,10 @@ function goalVerbs(K, H) {
     return timed('rta ' + what, a, () => gather(goals, a));
   };
   const runRta = (name, a, body) => timed(name, a, body);
+  // walk_xz x z: there over the ground the client knows, digging through and climbing up where the way needs it (remote/bot.cjs's
+  // long walks fall back to it); to_surface: up to the open sky by the way it came or a shaft
+  M.walk_xz = async (a) => { const ok = await goToXZ(Number(a[0]), Number(a[1]), Number(a[2]) || 2); return K.say(`walk_xz: ${ok ? 'there' : 'not there'} (${K.feet().x.toFixed(0)} ${K.feet().y.toFixed(0)} ${K.feet().z.toFixed(0)})`); };
+  M.to_surface = async () => { await toSurface('asked'); return K.say(`to_surface: y=${feet()[1]}`); };
   M.end_run = async (a) => K.say(`end_run: ${await endRun(Number(a[0]) || 900)}`);
   M.nether_seek = async (a) => { const r = await netherSeek(Number(a[0]) || 600); return K.say(`nether_seek: ${r ? `fortress at ${r.x} ${r.y} ${r.z}` : 'none found'}`); };
   M.blaze_rods = async (a) => K.say(`blaze_rods: ${(await blazeRods(Number(a[0]) || 6, Number(a[1]) || 400)) ? 'got them' : `only ${cnt('blaze_rod')}`}`);

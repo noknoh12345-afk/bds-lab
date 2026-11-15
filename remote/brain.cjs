@@ -11,7 +11,7 @@ const timers = [];
 // blocks no world generates by itself in the open (villages and ruins have some too: kept away from as well, which is fine)
 const BUILT = /planks|glass|crafting_table|chest|barrel|_bed$|torch|lantern|wool|(?<!moss_)carpet|concrete|bricks|_slab|_stairs|_door|fence|furnace|smoker|anvil|_sign|bookshelf|rail|redstone_(wire|torch|lamp|block)|repeater|comparator|piston|hopper|composter|lectern|scaffolding|ladder|banner|bell|item_frame|shulker_box|enchanting_table|brewing_stand|beacon|quartz_block|smooth_stone|polished_|cut_|_wall$|campfire|flower_pot|candle|lever|_button|pressure_plate|observer|dispenser|dropper|tnt|iron_block|gold_block|diamond_block|emerald_block|copper_block|hay_block|glazed_terracotta|stained|sea_lantern|end_rod/;
 // actions that only move or look: allowed anywhere (they change nothing)
-const PASSIVE = /^(auto|map|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
+const PASSIVE = /^(auto|map|walk_xz|to_surface|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
 let guardOn = ctx.guardOn ?? true;
 const HOSTILE = /^minecraft:(zombie|husk|drowned|skeleton|stray|bogged|spider|cave_spider|creeper|witch|slime|magma_cube|zombie_villager_v2|pillager|vindicator|silverfish|phantom|blaze|wither_skeleton|piglin_brute|hoglin|ghast|endermite|breeze)$/;
 function scanBuilt(bot, R) {
@@ -97,6 +97,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
         else { stuckFor = 0; turn = Math.abs(turn) < 10 ? 0 : turn * 0.5; }
         last = p; lastT = Date.now();
         if (++me.walkTick % 10 === 0) log(`travel: at ${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.z.toFixed(0)}, ${Math.round(Math.hypot(dx, dz))} to go${stuckFor ? ` (stuck ${stuckFor})` : ''}`);
+        if (stuckFor === 6 && !guardReason(b)) { log('travel: stuck, going up to the surface first'); await b.act('to_surface', []).catch(() => {}); }
         if (stuckFor >= 10) return false;
       }
     }
@@ -104,9 +105,9 @@ async function walkTo(tx, tz, maxMs = 600000) {
   return false;
 }
 // a goto that takes too long (a path search over far too much, a step it keeps retrying) is called off after 30 s
-async function gotoFor(args, ms = 30000) {
+async function gotoFor(args, ms = 30000, verb = 'goto') {
   const b = me.bot; let timer;
-  const g = b.act('goto', args);
+  const g = b.act(verb, args);
   await Promise.race([g.catch(() => {}), new Promise((r) => { timer = setTimeout(() => { b.cancel?.(); r(); }, ms); })]);
   clearTimeout(timer);
   await g.catch(() => {});
@@ -142,7 +143,7 @@ const BUILTIN = {
       const q = me.bot.state().pos, dx = tx - q.x, dz = tz - q.z, d = Math.hypot(dx, dz);
       if (d < 4) break;
       const st = Math.min(32, d);
-      try { await gotoFor([String(Math.round(q.x + (dx / d) * st)), String(Math.round(q.z + (dz / d) * st))]); } catch { continue; }
+      try { await gotoFor([String(Math.round(q.x + (dx / d) * st)), String(Math.round(q.z + (dz / d) * st))], 60000, guardReason(me.bot) ? 'goto' : 'walk_xz'); } catch { continue; }
       if (!me.connected) continue;
       const r = me.bot.state().pos;
       if (Math.hypot(r.x - q.x, r.z - q.z) < 2) {
