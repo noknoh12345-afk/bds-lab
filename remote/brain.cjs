@@ -59,6 +59,27 @@ function builtAhead(b, p, r) {
   }
   return false;
 }
+// up out of a cave without a pickaxe or blocks to stand on: a staircase dug by hand, one step up each time (what a person with
+// nothing in hand does): the block ahead at head height and the one above it, then the head room over the feet, then a jump up
+const openSky = (b, p) => { for (let y = Math.floor(p.y) + 2; y < Math.floor(p.y) + 60; y++) { const n = b.world.block(Math.floor(p.x), y, Math.floor(p.z))?.name; if (n === undefined) return true; if (!/air|leaves|water/.test(n)) return false; } return true; };
+async function handStairs(tx, tz, maxSteps = 60) {
+  const b = me.bot;
+  for (let i = 0; i < maxSteps && !me.abort && !disposed && me.connected; i++) {
+    const p = b.state().pos;
+    if (openSky(b, p)) { log(`travel: out under the sky at y=${Math.floor(p.y)}`); return true; }
+    if (guardReason(b)) return false;
+    const r = Math.atan2(-(tx - p.x), tz - p.z), dx = Math.round(-Math.sin(r)), dz = Math.round(Math.cos(r));
+    const X = Math.floor(p.x), Y = Math.floor(p.y), Z = Math.floor(p.z);
+    for (const c of [[X, Y + 2, Z], [X + dx, Y + 1, Z + dz], [X + dx, Y + 2, Z + dz]]) {
+      const n = b.world.block(...c)?.name ?? '';
+      if (n && !/air|water|lava|bedrock|torch/.test(n)) await b.act('dig', c.map(String)).catch(() => {});
+    }
+    await b.act('look', [String(((Math.atan2(-dx, dz) * 180) / Math.PI).toFixed(0)), '0']).catch(() => {});
+    await b.act('walk', ['forward', 'on']).catch(() => {}); await b.act('jump', ['4']).catch(() => {}); await b.act('walk', ['off']).catch(() => {});
+    if (i % 5 === 4) log(`travel: digging up by hand, y=${Math.floor(b.state().pos.y)}`);
+  }
+  return openSky(b, b.state().pos);
+}
 async function walkTo(tx, tz, maxMs = 600000) {
   me.walkTick ??= 0;
   if (me.walking && me.walking !== ctx) { log('travel: another walk is on (an older brain): calling it off'); me.abort = true; await sleep(1500); me.abort = false; }
@@ -97,7 +118,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
         else { stuckFor = 0; turn = Math.abs(turn) < 10 ? 0 : turn * 0.5; }
         last = p; lastT = Date.now();
         if (++me.walkTick % 10 === 0) log(`travel: at ${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.z.toFixed(0)}, ${Math.round(Math.hypot(dx, dz))} to go${stuckFor ? ` (stuck ${stuckFor})` : ''}`);
-        if (stuckFor === 6 && !guardReason(b)) { log('travel: stuck, going up to the surface first'); await b.act('to_surface', []).catch(() => {}); }
+        if (stuckFor === 6 && !guardReason(b) && !openSky(b, p)) { log('travel: stuck under the ground, going up first'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(tx, tz); }
         if (stuckFor >= 10) return false;
       }
     }
