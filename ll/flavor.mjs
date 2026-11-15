@@ -230,7 +230,21 @@ function lseSdk(L) {
   fs.mkdirSync(dir, { recursive: true });
   if (!exists(path.join(dir, 'package.json'))) fs.writeFileSync(path.join(dir, 'package.json'), '{"private":true}');
   const r = spawnSync(WIN ? 'npm.cmd' : 'npm', ['i', '@levimc-lse/types', '--no-audit', '--no-fund', '--loglevel=error'], { cwd: dir, encoding: 'utf8', shell: WIN });
-  if (r.status !== 0 || !exists(types)) { fs.writeFileSync(fail, ''); return null; }
+  // (npm's registry answers 404 for the @levimc-lse scope (seen 2026-11-15): every type check and `api` lookup was skipped.
+  //  The same package — platforms/javascript of LiteLDev/LegacyScriptEngine_API, "@levimc-lse/types" — straight from GitHub then:
+  //  declaration files only, nothing of it runs)
+  if (r.status !== 0 || !exists(types)) {
+    const tmp = path.join(dir, 'git');
+    fs.rmSync(tmp, { recursive: true, force: true });
+    const g = spawnSync('git', ['clone', '-q', '--depth', '1', 'https://github.com/LiteLDev/LegacyScriptEngine_API.git', tmp], { encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' }, timeout: 180000 });
+    const pkg = path.join(tmp, 'platforms', 'javascript');
+    if (g.status === 0 && exists(path.join(pkg, 'src', 'index.d.ts'))) {
+      fs.mkdirSync(path.dirname(types), { recursive: true });
+      fs.cpSync(pkg, types, { recursive: true, filter: (f) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(f) });
+    }
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+  if (!exists(types)) { fs.writeFileSync(fail, ''); return null; }
   return dir;
 }
 function writeTsconfig(L, sdk) {
