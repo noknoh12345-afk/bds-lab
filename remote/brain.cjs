@@ -64,7 +64,8 @@ function builtAhead(b, p, r) {
 const openSky = (b, p) => { for (let y = Math.floor(p.y) + 2; y < Math.floor(p.y) + 60; y++) { const n = b.world.block(Math.floor(p.x), y, Math.floor(p.z))?.name; if (n === undefined) return true; if (!/air|leaves|water/.test(n)) return false; } return true; };
 async function handStairs(tx, tz, maxSteps = 60) {
   const b = me.bot;
-  for (let i = 0; i < maxSteps && !me.abort && !disposed && me.connected; i++) {
+  const deaths0 = me.deaths;
+  for (let i = 0; i < maxSteps && !me.abort && !disposed && me.connected && me.deaths === deaths0; i++) {
     const p = b.state().pos;
     if (openSky(b, p)) { log(`travel: out under the sky at y=${Math.floor(p.y)}`); return true; }
     if (guardReason(b)) return false;
@@ -82,6 +83,7 @@ async function handStairs(tx, tz, maxSteps = 60) {
 }
 async function walkTo(tx, tz, maxMs = 600000) {
   me.walkTick ??= 0;
+  const deaths0 = me.deaths;   // (a death puts it back at the spawn: this walk's way is no longer the way; the caller plans again)
   if (me.walking && me.walking !== ctx) { log('travel: another walk is on (an older brain): calling it off'); me.abort = true; await sleep(1500); me.abort = false; }
   me.walking = ctx;
   const b = me.bot, t0 = Date.now();
@@ -89,7 +91,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
   let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0, builtTurns = 0;
   await b.act('sprint', ['on']).catch(() => {});
   try {
-    while (!me.abort && !disposed && me.connected && Date.now() - t0 < maxMs) {
+    while (!me.abort && !disposed && me.connected && Date.now() - t0 < maxMs && me.deaths === deaths0) {
       const p = b.state().pos, dx = tx - p.x, dz = tz - p.z;
       if (Math.hypot(dx, dz) < 3) return true;
       const yaw = (Math.atan2(-dx, dz) * 180) / Math.PI + turn, r = (yaw * Math.PI) / 180;
@@ -161,7 +163,8 @@ const BUILTIN = {
     const tx = +a[0], tz = +a[1];
     if (await walkTo(tx, tz)) { const r = me.bot.state().pos; log(`travel: arrived ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}`, { dc: true }); return; }
     if (me.abort || disposed) return;
-    for (let i = 0; i < 400 && !me.abort && !disposed; i++) {
+    const deaths0 = me.deaths;
+    for (let i = 0; i < 400 && !me.abort && !disposed && me.deaths === deaths0; i++) {
       while (!me.connected || !me.bot) { if (me.abort || disposed) return; await sleep(1000); }   // dropped on the way: carry on once back in
       const q = me.bot.state().pos, dx = tx - q.x, dz = tz - q.z, d = Math.hypot(dx, dz);
       if (d < 4) break;
