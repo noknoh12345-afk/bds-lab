@@ -1134,7 +1134,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     cb(p);
   });
   let radius = null; client.on('chunk_radius_update', (p) => { radius = p.chunk_radius; });
-  client.on('disconnect', (p) => say('disconnected: ' + (p.message ?? p.reason ?? '')));
+  client.on('disconnect', (p) => say('disconnected: ' + ([p.reason, p.message].filter((x) => x !== undefined && x !== '').join(' ') || '?')));
   client.on('close', () => bot.emit('gone'));   // kicked or disconnected: the name can join again
   client.on('packet_violation_warning', (p) => emit(`E @${name} kicked: packet ${p.packet_id} ${p.violation_type}: ${String(p.reason).replace(/\s*\n\s*/g, ' | ').slice(0, 400)}`));
 
@@ -1149,7 +1149,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     const iv = setInterval(() => { const now = P.now(); if (now - last > 50) say(`dbg join stall ${Math.round(now - last - 10)} ms at +${ms()}`); last = now; if (ready) clearInterval(iv); }, 10);
   }
   await new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error(`${name} did not spawn`)), timeoutMs);
+    // (a join that never spawned is closed: left open it stays on the server as the same account, and the next join is refused)
+    const t = setTimeout(() => { try { client.close(); } catch { /* closed */ } reject(new Error(`${name} did not spawn`)); }, timeoutMs);
     client.once('spawn', () => { clearTimeout(t); resolve(); });
     client.once('close', () => { clearTimeout(t); reject(new Error(`${name} connection closed`)); });
   });

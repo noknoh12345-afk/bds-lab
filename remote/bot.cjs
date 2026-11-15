@@ -114,7 +114,7 @@ async function connect() {
   };
   const bot = await createRealPlayer({
     req, host: cfg.host, port: cfg.port, name: cfg.name, version: cfg.version, emit, transport: tr,
-    rtc: tr === 'nethernet' ? req('node-datachannel/polyfill') : null, nn: { pins: path.join(RUN, 'nethernet-pins.json') }, opts: {},
+    rtc: tr === 'nethernet' ? req('node-datachannel/polyfill') : null, nn: { pins: path.join(RUN, 'nethernet-pins.json') }, opts: {}, timeoutMs: 300000,   // (the first join includes the sign-in)
     online: { profilesFolder: path.join(RUN, 'auth'), onMsaCode: (d) => { me.msa = d.user_code; log(`SIGN IN: open ${d.verification_uri} and enter ${d.user_code}`, { dc: true }); } },
   });
   me.msa = null; me.bot = bot; me.connected = true;
