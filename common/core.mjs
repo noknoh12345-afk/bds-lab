@@ -3710,6 +3710,7 @@ try {
   }
   else if (cmd === 'selftest') ok = await selftest(rest);
   else if (cmd === 'lan') ok = await (await import('./lan.mjs')).lanCmd(CACHE, rest, out);
+  else if (cmd === 'drift') ok = (await import('./drift.mjs')).driftCmd(rest, out);   // (what the stable branch has that this one lacks)
   else if (cmd === 'doctor') ok = await doctor();
   else if (cmd === 'carry') {   // save this unit's SDK types into <top>/carry/ (verify does it after a real test)
     if (F.sapiBuild === false || !exists(path.join(BP, 'manifest.json'))) { out('OK nothing to carry for this lab'); }
