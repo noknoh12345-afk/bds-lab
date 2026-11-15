@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const TOP = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 /** the files both branches keep alike (a change to one belongs in the other) */
-export const SHARED = ['common/helper.js', 'common/runtime.mjs', 'common/codeline.mjs', 'common/serverimport.mjs', 'install.sh', 'install.ps1', 'setup.cmd', 'setup.sh',
+export const SHARED = ['common/helper.js', 'common/build.mjs', 'tests/buildlock-offline.mjs', 'tests/dev-bds.mjs', 'common/runtime.mjs', 'common/codeline.mjs', 'common/serverimport.mjs', 'install.sh', 'install.ps1', 'setup.cmd', 'setup.sh',
   'lab.sh', 'lab.cmd', 'vps/runner-setup.sh', '.github/workflows/vps.yml', 'common/core.mjs', 'common/checkpoint.mjs', 'common/deploy.mjs', 'tests/jsline-offline.mjs', 'tests/serverimport-offline.mjs'];
 // (a line worth comparing: code, not a blank, a lone bracket or a comment's words — those change with every rewording)
 const meaningful = (l) => { const t = l.trim(); return t.length > 3 && !/^(\/\/|#|\*|\/\*|<!--|rem\b)/i.test(t) && !/^[{}()[\];,]+$/.test(t); };
