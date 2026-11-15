@@ -49,6 +49,36 @@ function status() {
   const P = s.pos, hostile = [...b.entities.values()].filter((e) => HOSTILE.test(e.type ?? '') && Math.hypot(e.x - P.x, e.z - P.z) < 16).length;
   return { connected: me.connected, account: me.account, time: day, night: day === null ? null : day >= 12542 && day <= 23460, hostileNear: hostile, pos: { x: +s.pos.x.toFixed(1), y: +s.pos.y.toFixed(1), z: +s.pos.z.toFixed(1) }, dim: me.dim, hp: me.hp, food: me.food, dead: s.dead, deaths: me.deaths, busy: me.busy, queued: me.queue.length, guard: guardOn, players: b.players(), signIn: me.msa, uptime: Math.round((Date.now() - ctx.t0) / 1000) };
 }
+// walking a long way the way a person does: face the target, run (sprint, auto-jump up 1-block steps), and when nothing moves
+// for 3 s jump and veer off to one side; a drop of 4 or more right ahead is gone round instead of jumped down
+async function walkTo(tx, tz, maxMs = 600000) {
+  const b = me.bot, t0 = Date.now();
+  await b.act('option', ['autojump', 'on']).catch(() => {});
+  let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0;
+  await b.act('sprint', ['on']).catch(() => {});
+  try {
+    while (!me.abort && !disposed && me.connected && Date.now() - t0 < maxMs) {
+      const p = b.state().pos, dx = tx - p.x, dz = tz - p.z;
+      if (Math.hypot(dx, dz) < 3) return true;
+      const yaw = (Math.atan2(-dx, dz) * 180) / Math.PI + turn, r = (yaw * Math.PI) / 180;
+      const ax = Math.floor(p.x - Math.sin(r) * 1.6), az = Math.floor(p.z + Math.cos(r) * 1.6);
+      let drop = 0;
+      for (let y = Math.floor(p.y) - 1; y > Math.floor(p.y) - 7; y--) { const n = b.world.block(ax, y, az)?.name; if (n === undefined || !/^minecraft:(air|cave_air)$/.test(n)) break; drop++; }
+      if (drop >= 4) { turn += turn >= 0 ? 45 : -45; if (Math.abs(turn) > 180) turn = -turn % 180; continue; }
+      await b.act('look', [String(yaw.toFixed(1)), '0']).catch(() => {});
+      await b.act('sprint', ['on']).catch(() => {});
+      await sleep(400);
+      if (Date.now() - lastT > 3000) {
+        const moved = Math.hypot(p.x - last.x, p.z - last.z);
+        if (moved < 1.5) { stuckFor++; await b.act('jump', []).catch(() => {}); turn = (stuckFor % 2 ? 1 : -1) * Math.min(150, 40 * stuckFor); }
+        else { stuckFor = 0; turn = Math.abs(turn) < 10 ? 0 : turn * 0.5; }
+        last = p; lastT = Date.now();
+        if (stuckFor >= 8) return false;
+      }
+    }
+  } finally { await b.act('sprint', ['off']).catch(() => {}); }
+  return false;
+}
 // a goto that takes too long (a path search over far too much, a step it keeps retrying) is called off after 30 s
 async function gotoFor(args, ms = 30000) {
   const b = me.bot; let timer;
@@ -81,6 +111,8 @@ const BUILTIN = {
   // a long walk in steps over the chunks the client has (goto alone only paths through what it already knows)
   travel: async (a) => {
     const tx = +a[0], tz = +a[1];
+    if (await walkTo(tx, tz)) { const r = me.bot.state().pos; log(`travel: arrived ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}`, { dc: true }); return; }
+    if (me.abort || disposed) return;
     for (let i = 0; i < 400 && !me.abort && !disposed; i++) {
       while (!me.connected || !me.bot) { if (me.abort || disposed) return; await sleep(1000); }   // dropped on the way: carry on once back in
       const q = me.bot.state().pos, dx = tx - q.x, dz = tz - q.z, d = Math.hypot(dx, dz);
