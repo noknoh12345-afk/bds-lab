@@ -182,6 +182,26 @@
     {
       "starts": "if (!rest.includes('--keep')) fs.rmSync(kd, { recursive: true, force: true });",
       "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
+    },
+    {
+      "starts": "function udpFree(port) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "const s = dgram.createSocket('udp4');",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "s.once('error', () => res(false));",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "s.bind(port, '0.0.0.0', () => s.close(() => res(true)));",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "for (let k = 0; k < 50 && !(await udpFree(port) && await udpFree(port + 1)); k++) port += 2;",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
     }
   ],
   "tests/serverimport-offline.mjs": [
@@ -252,6 +272,38 @@
     {
       "starts": "if (!exists(stamp) || fs.readFileSync(stamp, 'utf8') !== want || !there()) {",
       "why": "main before PR #12: the install lock (one install at a time) replaced it on both branches"
+    },
+    {
+      "starts": "export function typecheck({ tl, addon, cache, js, max = 12 }) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "const found = stamp && path.join(cache, 'tsinfo', 'found', `${stamp}-${max}.json`);",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "const res = typecheckNow({ tl, addon, cache, js, max });",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "function typecheckNow({ tl, addon, cache, js, max = 12 }) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "}), max);",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "const fixOf = (m) => { for (const [re, f] of TS_FIXES) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "export function compactDiags(list, max = 12) {",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
+    },
+    {
+      "starts": "const fx = fixOf(m0), m = fx ?",
+      "why": "main before PR #12: replaced by #12 (the same change dev has: a hint table for typecheck, LeviLamina's own hints; the boot retry and the IPv6 port check)"
     }
   ],
   "tests/dev-bds.mjs": [

@@ -474,11 +474,12 @@ async function ensureTypes() {
 }
 
 // ---------- server ----------
-function udpFree(port) {
+function udpFree(port, type = 'udp4') {
   return new Promise((res) => {
-    const s = dgram.createSocket('udp4');
-    s.once('error', () => res(false));
-    s.bind(port, '0.0.0.0', () => s.close(() => res(true)));
+    const s = dgram.createSocket({ type, ipv6Only: type === 'udp6' });
+    // (no IPv6 on this machine: nothing can hold the port there either)
+    s.once('error', (e) => res(type === 'udp6' && /EAFNOSUPPORT|EADDRNOTAVAIL|EPROTONOSUPPORT/.test(String(e.code))));
+    s.bind(port, type === 'udp6' ? '::' : '0.0.0.0', () => s.close(() => res(true)));
   });
 }
 
@@ -761,7 +762,7 @@ const NN_WINDOW = (port) => [port + 100, port + 107];
 async function boot(inst) {
   if (TRANSPORT === 'lan' && RT.kind === 'docker') die('LAB_TRANSPORT=lan: the server must run natively (LAN discovery on UDP 7551 does not cross the container); use LAB_TRANSPORT=nethernet here');
   let port = Number(process.env.LAB_PORT) || 19132 + 2 * Math.floor(Math.random() * 400);
-  for (let k = 0; k < 50 && !(await udpFree(port) && await udpFree(port + 1)); k++) port += 2;
+  for (let k = 0; k < 50 && !(await udpFree(port) && await udpFree(port + 1) && await udpFree(port + 1, 'udp6')); k++) port += 2;   // (server-portv6: BDS binds it on ::)
   // LAB_SPEED=k: the same unmodified BDS on a clock that runs k times as fast (libfaketime: clock_gettime, sleeps and timed waits
   // scaled), so its 20 ticks a second come k times as often; the lab's clients tick at 50/k ms to match (realplayer LAB_TICK_MS).
   // CLOCK_X: how fast this server's clock really runs (1 without libfaketime, whatever LAB_SPEED says)
@@ -1384,8 +1385,13 @@ class Engine {
     // again once. A crash that comes back is the addon's (or the world's) and fails as before; one that does not is said
     if (!this.ok && this.srv.crashed && !process.env.LAB_NO_BOOT_RETRY) {
       try { await this.srv.stop?.(); } catch { /* gone */ }
+      const first = LOG.length;
       this.srv = await boot(this.inst);
       this.ok = !!(await ready(this.srv));
+      // (the first boot's error lines are not the addon's when the second boot comes up: kept, as notes — CI saw a boot whose
+      //  random port was taken in the moment between the check and BDS binding it, "Port [n] may be in use", then a crash dump;
+      //  the second boot ran every test and the unit still failed on those E lines)
+      if (this.ok) for (let i = this.bootMark; i < first; i++) LOG[i] = String(LOG[i]).replace(/^(\[[^\]]*?)\s(ERROR|WARN)\]/, '$1 INFO] (first boot, retried:)');
       LOG.push(this.ok ? '[0-0-0 0:0:0 INFO] BDS crashed while starting and started the second time (not the addon: the same addon loaded)' : '[0-0-0 0:0:0 ERROR] BDS crashed while starting, twice: the addon (a script at load, a pack file) or the world makes it crash');
     }
     if (this.ok && F.afterReady) this.ok = (await F.afterReady(L(), this)) !== false;

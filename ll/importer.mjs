@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process';
 const exists = (f) => fs.existsSync(f);
 const SKIP = new Set(['.git', 'node_modules', '.github', '.vscode', '.idea', 'screenshots', 'screenshot', 'images', 'docs', 'test', 'tests', '__tests__', 'dist']);
 const walk = (d, acc = [], root = d) => { let es = []; try { es = fs.readdirSync(d, { withFileTypes: true }); } catch { return acc; } for (const e of es) { const f = path.join(d, e.name); if (e.isDirectory()) { if (!SKIP.has(e.name)) walk(f, acc, root); } else acc.push(path.relative(root, f)); } return acc; };
-const JS = /\.(m?js|cjs)$/i, KEEP_OUT = /^(readme|license|licence|changelog)(\.[a-z]+)?$/i;
+const JS = /\.(m?js|cjs)$/i, TSX = /\.(m?ts|cts)$/i, CODE = /\.(m?[jt]s|c[jt]s)$/i, KEEP_OUT = /^(readme|license|licence|changelog)(\.[a-z]+)?$/i;
 const readJson = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8').replace(/^﻿/, '')); } catch { return null; } };
 
 /** a plugin's source read with TypeScript's parser (pure but for ts): its registration, commands, events, timers, risks, needs */
@@ -28,7 +28,7 @@ export function readSource(ts, files) {
     'll.eval': 'runs text as code in another plugin', 'Function': 'makes code from text' };
   const NODE_RISK = { child_process: 'starts programs', http: 'talks HTTP', https: 'talks HTTPS', net: 'opens sockets', dgram: 'opens sockets', fs: 'reads and writes files', 'fs/promises': 'reads and writes files', vm: 'runs text as code' };
   for (const [rel, text] of files) {
-    const sf = ts.createSourceFile(rel, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+    const sf = ts.createSourceFile(rel, text, ts.ScriptTarget.Latest, true, TSX.test(rel) ? ts.ScriptKind.TS : ts.ScriptKind.JS);
     const at = (n) => `${rel}:${sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1}`;
     // constants the file names: const X = 'a', static Meta = { Name: 'a', Version: [1, 0, 0] } → "X", "Meta.Name" (this.Meta.Name and Cls.Meta.Name alike)
     const known = new Map();
@@ -147,7 +147,7 @@ export function draftTests(name, r) {
 // the calls LSE's own types do not have: a checkJs pass over src/ against @levimc-lse/types (only "no such member/name" and
 // "wrong number of arguments": legacy JavaScript is untyped, everything else would be noise)
 export function apiMisses(ts, unitDir, typesDir) {
-  const src = path.join(unitDir, 'src'), names = walk(src).filter((f) => JS.test(f)).map((f) => path.join(src, f));
+  const src = path.join(unitDir, 'src'), names = walk(src).filter((f) => CODE.test(f) && !/\.d\.ts$/.test(f)).map((f) => path.join(src, f));
   if (!names.length || !typesDir || !exists(path.join(typesDir, 'src', 'index.d.ts'))) return null;
   const prog = ts.createProgram([...names, path.join(typesDir, 'src', 'index.d.ts')], { allowJs: true, checkJs: true, noEmit: true, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler, skipLibCheck: true, types: [], lib: ['lib.es2022.d.ts'], strict: false, noImplicitAny: false });
   const out = [];
@@ -226,6 +226,12 @@ export function briefLines(L, m, r, misses) {
 // ---- where the plugin is in what was given
 function findPlugins(root, ts) {
   const all = walk(root);
+  // a TypeScript project (the newer way, a template or @levimc-lse/scaffold): package.json naming LSE's types, its code in src/
+  const pjs = all.filter((f) => path.basename(f) === 'package.json').sort((a, b) => a.split(path.sep).length - b.split(path.sep).length);
+  for (const f of pjs) {
+    const pkg = readJson(path.join(root, f)), deps = { ...pkg?.dependencies, ...pkg?.devDependencies }, dir = path.join(root, path.dirname(f));
+    if (Object.keys(deps).some((k) => /^@levimc-lse\/(types|scaffold)$/.test(k)) && walk(path.join(dir, 'src')).some((x) => TSX.test(x))) return [{ kind: 'ts', dir, pkg, manifest: readJson(path.join(dir, 'manifest.json')) }];
+  }
   const mans = all.filter((f) => path.basename(f) === 'manifest.json').map((f) => ({ f, m: readJson(path.join(root, f)) })).filter((x) => /^lse-/.test(String(x.m?.type ?? '')) && x.m?.entry);
   if (mans.length) return mans.sort((a, b) => a.f.split(path.sep).length - b.f.split(path.sep).length).map((x) => ({ kind: 'mod', dir: path.join(root, path.dirname(x.f)), manifest: x.m }));
   // LiteLoader-era: a .js that registers itself or uses the engine (X.lxl.js first), its data folder X/ beside it
@@ -263,24 +269,31 @@ export async function importMod(L, args, env) {
     if (found.length > 1 && found[0].kind === 'legacy' && !pick) L.die(`${found.length} plugins in ${given}: take one with --file <it> (${found.map((x) => x.file.replace(/\\/g, '/')).join(', ')})`);
     const p = found[0];
     // its files: a mod folder as it is; a single plugin with its data folder (X/ beside X.js) — scripts into src/, the rest assets/
-    const base = p.kind === 'mod' ? p.dir : work;
-    const entryRel = p.kind === 'mod' ? p.manifest.entry : p.file;
-    const stem = path.basename(entryRel).replace(/(\.lxl)?\.m?js$/i, '');
+    const base = p.kind === 'legacy' ? work : p.dir;
+    // (a TypeScript project's entry: package.json's main as its source — dist/index.js → src/index.ts — else src/index|main|app.ts)
+    const tsEntry = p.kind === 'ts' ? [String(p.pkg.main ?? '').replace(/^\.?\/?(dist|build|lib|out)\//, 'src/').replace(/\.js$/, '.ts'), 'src/index.ts', 'src/main.ts', 'src/app.ts', 'src/plugin.ts'].find((f) => f && f.startsWith('src/') && exists(path.join(base, f))) : null;
+    if (p.kind === 'ts' && !tsEntry) L.die(`a TypeScript LSE project without an entry: no src/index.ts, src/main.ts or a package.json "main" that maps into src/`);
+    const entryRel = p.kind === 'mod' ? p.manifest.entry : p.kind === 'ts' ? tsEntry : p.file;
+    const tsName = p.kind === 'ts' ? String(p.manifest?.name ?? String(p.pkg.name ?? 'imported').replace(/^@[^/]+\//, '')).replace(/[^\w-]+/g, '_') : null;
+    const stem = p.kind === 'ts' ? tsName : path.basename(entryRel).replace(/(\.lxl)?\.m?js$/i, '');
     let files = walk(base);
+    if (p.kind === 'ts') files = files.filter((f) => f.startsWith(`src${path.sep}`) || f.startsWith(`assets${path.sep}`) || ['package.json', 'package-lock.json'].includes(f) || (KEEP_OUT.test(f) && !f.includes(path.sep)));
     if (p.kind === 'legacy') { const dataDir = path.join(path.dirname(p.file), stem); files = files.filter((f) => f === p.file || f.startsWith(dataDir + path.sep) || (!JS.test(f) && path.dirname(f) === path.dirname(p.file) && (KEEP_OUT.test(path.basename(f)) || /\.(json|txt|ya?ml|toml|ini)$/i.test(f)))); }
-    const srcText = new Map(files.filter((f) => JS.test(f)).map((f) => [f.split(path.sep).join('/'), fs.readFileSync(path.join(base, f), 'utf8')]));
+    const srcText = new Map(files.filter((f) => CODE.test(f) && !/\.d\.ts$/.test(f)).map((f) => [f.split(path.sep).join('/'), fs.readFileSync(path.join(base, f), 'utf8')]));
     const r = readSource(ts, p.kind === 'legacy' ? new Map([[p.file.split(path.sep).join('/'), srcText.get(p.file.split(path.sep).join('/'))]]) : srcText);
     // (a LiteLoader-era file: LSE moves X.js into plugins/X/ and names the mod after the file, not ll.registerPlugin's name)
-    const display = p.kind === 'mod' ? p.manifest.name : stem.replace(/[^\w-]+/g, '_');
+    const display = p.kind === 'mod' ? p.manifest.name : p.kind === 'ts' ? tsName : stem.replace(/[^\w-]+/g, '_');
     const name = String(flag('--name') ?? display).replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '').replace(/^(\d)/, 'mod_$1') || 'imported';
     const dir = path.join(L.ADDONS, name);
     if (exists(dir)) L.die(`mods/${name} exists (use --name <other>)`);
-    const engine = p.kind === 'mod' ? String(p.manifest.type).replace(/^lse-/, '') : 'quickjs';
+    const engine = p.kind === 'mod' || (p.kind === 'ts' && p.manifest?.type) ? String(p.manifest.type).replace(/^lse-/, '') : 'quickjs';
     // --code-only (a mod as a server has it, server import): its folder there is also its data — that stays on the server
     const codeOnly = args.includes('--code-only');
     if (codeOnly) { const keep = files.filter((f) => JS.test(f) || ['package.json', 'package-lock.json'].includes(f) || (KEEP_OUT.test(path.basename(f)) && !f.includes(path.sep))); if (files.length > keep.length) L.out(`  ${files.length - keep.length} file(s) of its data on that server not taken (they stay there; a test that needs them writes its own)`); files = keep; }
     for (const f of files) {
       if (path.basename(f) === 'manifest.json' && path.dirname(f) === '.' && p.kind === 'mod') continue;
+      // (a TypeScript project: src/ and assets/ keep their places)
+      if (p.kind === 'ts' && (f.startsWith(`src${path.sep}`) || f.startsWith(`assets${path.sep}`))) { const to = path.join(dir, f); fs.mkdirSync(path.dirname(to), { recursive: true }); fs.copyFileSync(path.join(base, f), to); continue; }
       if (KEEP_OUT.test(path.basename(f)) && path.dirname(f) === (p.kind === 'legacy' ? path.dirname(p.file) : '.')) { fs.mkdirSync(dir, { recursive: true }); fs.copyFileSync(path.join(base, f), path.join(dir, path.basename(f))); continue; }
       if (f === 'package.json' || f === 'package-lock.json') { fs.mkdirSync(dir, { recursive: true }); fs.copyFileSync(path.join(base, f), path.join(dir, f)); continue; }
       // (a legacy plugin's data folder X/ is its folder at run time: plugins/<name>/ — its contents go beside the bundle)
@@ -289,26 +302,35 @@ export async function importMod(L, args, env) {
       fs.mkdirSync(path.dirname(to), { recursive: true }); fs.copyFileSync(path.join(base, f), to);
     }
     const entryIn = p.kind === 'legacy' ? path.basename(p.file) : entryRel;
-    // the lab bundles src/main.js (or index.js): one that imports the plugin's own entry as it is
-    if (!['main.js', 'index.js'].includes(entryIn.split(/[\\/]/).join('/'))) fs.writeFileSync(path.join(dir, 'src', 'main.js'), `// written by bds-lab's import: the lab bundles src/main.js; the plugin's own entry is ${entryIn}\nimport './${entryIn.split(path.sep).join('/')}';\n`);
-    const manifest = p.kind === 'mod' ? { ...p.manifest } : { name: display, entry: `${stem}.js`, type: 'lse-quickjs', version: r.plugin?.version || '0.1.0', description: r.plugin?.description ?? '', dependencies: [{ name: 'legacy-script-engine-quickjs' }] };
+    // the lab bundles src/main.ts|main.js|index.ts|index.js: one that imports the plugin's own entry as it is
+    if (p.kind === 'ts') { const e = tsEntry.replace(/^src\//, ''); if (!['main.ts', 'index.ts'].includes(e)) fs.writeFileSync(path.join(dir, 'src', 'main.ts'), `// written by bds-lab's import: the lab bundles src/main.ts; the plugin's own entry is ${tsEntry}\nimport './${e.replace(/\.ts$/, '')}';\n`); }
+    else if (!['main.js', 'index.js'].includes(entryIn.split(/[\\/]/).join('/'))) fs.writeFileSync(path.join(dir, 'src', 'main.js'), `// written by bds-lab's import: the lab bundles src/main.js; the plugin's own entry is ${entryIn}\nimport './${entryIn.split(path.sep).join('/')}';\n`);
+    const manifest = p.kind === 'mod' ? { ...p.manifest } : p.kind === 'ts' ? { name: tsName, entry: `${tsName}.js`, type: `lse-${engine}`, version: p.manifest?.version ?? p.pkg.version ?? r.plugin?.version ?? '0.1.0', description: p.manifest?.description ?? p.pkg.description ?? '', dependencies: [{ name: `legacy-script-engine-${engine}` }] } : { name: display, entry: `${stem}.js`, type: 'lse-quickjs', version: r.plugin?.version || '0.1.0', description: r.plugin?.description ?? '', dependencies: [{ name: 'legacy-script-engine-quickjs' }] };
     if (!/\.js$/.test(manifest.entry)) manifest.entry = `${stem}.js`;
     L.writeJson(path.join(dir, 'manifest.json'), manifest);
+    // its tsconfig: the choices its code depends on (path aliases such as @/x, how strict) — the lab writes tsconfig.json itself
+    if (p.kind === 'ts' && exists(path.join(base, 'tsconfig.json'))) {
+      const c = ts.readConfigFile(path.join(base, 'tsconfig.json'), ts.sys.readFile).config?.compilerOptions ?? {};
+      const pick = Object.fromEntries(['paths', 'baseUrl', 'noImplicitAny', 'strictNullChecks', 'strictPropertyInitialization', 'useUnknownInCatchVariables', 'experimentalDecorators', 'emitDecoratorMetadata', 'useDefineForClassFields', 'jsx', 'jsxFactory', 'jsxFragmentFactory'].filter((k) => k in c).map((k) => [k, c[k]]));
+      L.writeJson(path.join(dir, 'tsconfig.lab.json'), { compilerOptions: { strict: !!c.strict, ...pick } });
+      if ((c.types ?? []).includes('node') && engine !== 'nodejs') L.out(`  its tsconfig names Node's types, but it runs on LSE ${engine} (no Node APIs there: fs, path …): an lse-nodejs mod, or LSE's File`);
+    }
     if (!exists(path.join(dir, '.gitignore'))) fs.writeFileSync(path.join(dir, '.gitignore'), 'node_modules/\ntsconfig.json\n');
     fs.writeFileSync(path.join(dir, 'tests.txt'), draftTests(display, r));
-    L.writeJson(path.join(dir, 'imported.json'), { from: path.basename(src), name: display, version: manifest.version, legacy: p.kind === 'legacy', request: request || null });
+    L.writeJson(path.join(dir, 'imported.json'), { from: path.basename(src), name: display, version: manifest.version, legacy: p.kind === 'legacy', typescript: p.kind === 'ts', entry: entryRel.split(path.sep).join('/'), request: request || null });
     fs.writeFileSync(path.join(dir, 'TASK.md'), L.TASK_MD(name, `${request ? `${request}\n\n` : ''}(a person's LegacyScriptEngine plugin, imported from ${path.basename(src)}: keep its name "${display}", its entry and its version line, so their servers update in place)`));
     L.useAddon(name, true);
     const typesDir = env.types();   // (LSE's types: npm, else GitHub)
     const misses = apiMisses(ts, dir, typesDir);
     for (const l of briefLines(L, { ...manifest, engine, legacy: p.kind === 'legacy' }, readUnit(ts, dir), misses)) L.out(l);   // (read again where it now is: the lines say src/..., as go and brief do)
-    if (exists(path.join(dir, 'package.json')) && Object.keys(readJson(path.join(dir, 'package.json'))?.dependencies ?? {}).length) L.out(`  its npm packages: ${Object.keys(readJson(path.join(dir, 'package.json')).dependencies).join(' ')} → node lab.mjs lib add <each> (the bundle carries them)`);
+    const npmDeps = Object.keys(readJson(path.join(dir, 'package.json'))?.dependencies ?? {}).filter((k) => !/^(@levimc-lse\/|typescript$|@types\/|esbuild$|rolldown$|rollup$|webpack)/.test(k));
+    if (npmDeps.length) L.out(`  its npm packages: ${npmDeps.join(' ')} → node lab.mjs lib add <each> (the bundle carries them)`);
     L.out(`OK ll/mods/${name}/ ("${display}", LSE ${engine} ${manifest.version}), now the current mod; tests.txt: a draft that runs each way in once${request ? '' : '; put the request in TASK.md'}; next: node lab.mjs go`);
     return true;
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 }
 
-const readUnit = (ts, dir) => { const src = path.join(dir, 'src'); return readSource(ts, new Map(walk(src).filter((f) => JS.test(f) || /\.ts$/.test(f)).map((f) => [`src/${f.split(path.sep).join('/')}`, fs.readFileSync(path.join(src, f), 'utf8')]))); };
+const readUnit = (ts, dir) => { const src = path.join(dir, 'src'); return readSource(ts, new Map(walk(src).filter((f) => CODE.test(f) && !/\.d\.ts$/.test(f)).map((f) => [`src/${f.split(path.sep).join('/')}`, fs.readFileSync(path.join(src, f), 'utf8')]))); };
 export async function briefMod(L, args, env) {
   const m = readJson(path.join(L.ADDON, 'manifest.json')) ?? {}, ts = env.ts(), r = readUnit(ts, L.ADDON);
   for (const l of briefLines(L, { ...m, engine: String(m.type ?? '').replace(/^lse-/, '') }, r, apiMisses(ts, L.ADDON, env.types()))) L.out(l);

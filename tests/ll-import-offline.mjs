@@ -148,6 +148,21 @@ ok(!r.ok && /no LegacyScriptEngine plugin/.test(r.out), 'a folder without a plug
 r = await run(path.join(src, 'Homes.lxl.js'));
 ok(!r.ok && /mods\/homes exists/.test(r.out), 'an existing mod is not overwritten');
 
+// ---- a TypeScript project (a template / @levimc-lse/scaffold): package.json naming LSE's types, its code in src/, path aliases
+put(path.join(X, 'in', 'tsproj'), { 'package.json': JSON.stringify({ name: '@me/tp-ask', version: '2.1.0', description: 'Ask before a teleport', main: 'dist/app.js', dependencies: { 'jsonc-parser': '^3' }, devDependencies: { '@levimc-lse/types': '^2', typescript: '^5' } }),
+  'tsconfig.json': '{\n  // comments are allowed here\n  "compilerOptions": { "paths": { "@/*": ["./src/*"] }, "types": ["@levimc-lse/types", "node"], "noImplicitAny": false }\n}\n',
+  'src/app.ts': 'import { greet } from "@/util";\nconst c = mc.newCommand("tpask", "Ask to teleport", PermType.Any);\nc.mandatory("who", ParamType.Player);\nc.overload(["who"]);\nc.setCallback((_c, o, out, r) => { out.success(greet(String(r.who))); });\nc.setup();\n',
+  'src/util.ts': 'export const greet = (n: string): string => `asked ${n}`;\n', 'dist/app.js': '// built: not taken\n', 'rolldown.config.ts': 'export default {};\n' });
+r = await run(path.join(X, 'in', 'tsproj'));
+const d3 = path.join(L.ADDONS, 'tp_ask'), m3 = fs.existsSync(path.join(d3, 'manifest.json')) ? JSON.parse(fs.readFileSync(path.join(d3, 'manifest.json'), 'utf8')) : {};
+ok(r.ok && m3.name === 'tp-ask' && m3.entry === 'tp-ask.js' && m3.version === '2.1.0' && m3.type === 'lse-quickjs', 'a TypeScript project: named after its package (scope dropped), its version', r.out + JSON.stringify(m3));
+ok(fs.existsSync(path.join(d3, 'src', 'app.ts')) && fs.existsSync(path.join(d3, 'src', 'util.ts')) && /import '\.\/app';/.test(fs.readFileSync(path.join(d3, 'src', 'main.ts'), 'utf8')) && !fs.existsSync(path.join(d3, 'dist')) && !fs.existsSync(path.join(d3, 'rolldown.config.ts')),
+  'its src/ as it is, package.json "main" (dist/app.js) found as src/app.ts and imported by main.ts; its built files and build config left');
+const tl = fs.existsSync(path.join(d3, 'tsconfig.lab.json')) ? JSON.parse(fs.readFileSync(path.join(d3, 'tsconfig.lab.json'), 'utf8')).compilerOptions : {};
+ok(tl.paths?.['@/*']?.[0] === './src/*' && tl.strict === false && tl.noImplicitAny === false, 'its tsconfig (with comments) read: the path alias and its strictness kept in tsconfig.lab.json', JSON.stringify(tl));
+ok(/commands \(1\): \/tpask \[Any\] src\/app\.ts:2/.test(r.out) && /@A cmd \/tpask A/.test(fs.readFileSync(path.join(d3, 'tests.txt'), 'utf8')), 'its .ts read for commands (a Player parameter gets A)', r.out);
+ok(/Node's types, but it runs on LSE quickjs/.test(r.out) && /its npm packages: jsonc-parser →/.test(r.out) && !/@levimc-lse|typescript →/.test(r.out.split('npm packages')[1] ?? ''), 'Node types on quickjs said; its npm packages without LSE\'s types or the build tools', r.out);
+
 // ---- brief on the imported mod reads the same
 OUT.length = 0; await I.briefMod({ ...L, ADDON: d1 }, [], env);
 ok(/commands \(2\)/.test(OUT.join('\n')) && /TS2551 Property 'uid'/.test(OUT.join('\n')), 'brief reads the mod where it is', OUT.join('\n'));

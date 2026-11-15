@@ -167,18 +167,18 @@ function typeStamp(addon, js) {
 // (and what a check found, by the same content wherever it is: the brief's audit copies each unit to check it on stable and on
 // beta, and the same sources under another name — a post seen again, a copy — were checked again: colony-offline spent two
 // thirds of its CPU there)
-export function typecheck({ tl, addon, cache, js, max = 12 }) {
+export function typecheck({ tl, addon, cache, js, max = 12, fixes = TS_FIXES }) {
   const okFile = path.join(cache, 'tsinfo', crypto.createHash('sha1').update(addon).digest('hex').slice(0, 10) + (js ? '.js' : '') + '.clean');
   const stamp = process.env.LAB_TYPES_MEMO === '0' ? null : typeStamp(addon, js);
   try { if (stamp && fs.readFileSync(okFile, 'utf8') === stamp) return []; } catch { /* not checked yet */ }
-  const found = stamp && path.join(cache, 'tsinfo', 'found', `${stamp}-${max}.json`);
+  const found = stamp && path.join(cache, 'tsinfo', 'found', `${stamp}-${max}${fixes === TS_FIXES ? '' : `-${crypto.createHash('sha1').update(String(fixes)).digest('hex').slice(0, 8)}`}.json`);
   try { if (found) { const r = JSON.parse(fs.readFileSync(found, 'utf8')); if (Array.isArray(r)) return r; } } catch { /* not checked yet */ }
-  const res = typecheckNow({ tl, addon, cache, js, max });
+  const res = typecheckNow({ tl, addon, cache, js, max, fixes });
   try { if (stamp && !res.length) { fs.mkdirSync(path.dirname(okFile), { recursive: true }); fs.writeFileSync(okFile, stamp); } else fs.rmSync(okFile, { force: true }); } catch { /* only a memo */ }
   try { if (found) { fs.mkdirSync(path.dirname(found), { recursive: true }); const t = `${found}.${process.pid}.tmp`; fs.writeFileSync(t, JSON.stringify(res)); fs.renameSync(t, found); } } catch { /* only a memo */ }
   return res;
 }
-function typecheckNow({ tl, addon, cache, js, max = 12 }) {
+function typecheckNow({ tl, addon, cache, js, max = 12, fixes = TS_FIXES }) {
   const ts = tl.ts;
   const cfgFile = path.join(addon, 'tsconfig.json');
   const cfg = ts.getParsedCommandLineOfConfigFile(cfgFile, {}, { ...ts.sys, onUnRecoverableConfigFileDiagnostic: () => {} });
@@ -195,7 +195,7 @@ function typecheckNow({ tl, addon, cache, js, max = 12 }) {
     const msg = ts.flattenDiagnosticMessageText(d.messageText, ' ').replace(/\s+/g, ' ');
     const at = d.file ? { file: path.relative(addon, d.file.fileName).split(path.sep).join('/'), line: d.file.getLineAndCharacterOfPosition(d.start ?? 0).line + 1 } : null;
     return { code: d.code, msg, at };
-  }), max);
+  }), max, fixes);
 }
 // TypeScript's own text is long: import("/abs/path/node_modules/@minecraft/server/index").Player, whole object types, the same
 // message on many lines. Kept: what is wrong and where, once per message (lines joined), the first 12, each under 220 chars.
@@ -207,12 +207,12 @@ export const TS_FIXES = [
   [/Property '(\w+)' does not exist on type '(\w+)'/, 'not in this API version: node lab.mjs api $2'],
   [/Cannot find name '(\w+)'/, "import it (from '@minecraft/server', '@minecraft/server-ui' or './kit')"],
 ];
-const fixOf = (m) => { for (const [re, f] of TS_FIXES) { const x = re.exec(m); if (x) return f.replace(/\$(\d)/g, (_, k) => x[k] ?? ''); } return ''; };
-export function compactDiags(list, max = 12) {
+const fixOf = (m, fixes = TS_FIXES) => { for (const [re, f] of fixes) { const x = re.exec(m); if (x) return f.replace(/\$(\d)/g, (_, k) => x[k] ?? ''); } return ''; };
+export function compactDiags(list, max = 12, fixes = TS_FIXES) {
   const groups = new Map();
   for (const { code, msg, at } of list) {
     const m0 = msg.replace(/import\("[^"]*"\)\./g, '').replace(/\{ [^{}]{120,}? \}/g, '{ … }').replace(/'(.{90})[^']{30,}'/g, "'$1…'");
-    const fx = fixOf(m0), m = fx ? `${m0} → ${fx}` : m0;
+    const fx = fixOf(m0, fixes), m = fx ? `${m0} → ${fx}` : m0;
     const k = `${at?.file ?? ''}\u0000TS${code} ${m}`;
     const g = groups.get(k) ?? groups.set(k, { file: at?.file, lines: [], text: `TS${code} ${m0.length > 220 ? m0.slice(0, 220) + '…' : m0}${fx ? ` → ${fx}` : ''}` }).get(k);
     if (at && !g.lines.includes(at.line)) g.lines.push(at.line);

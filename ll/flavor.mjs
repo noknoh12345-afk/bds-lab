@@ -249,10 +249,22 @@ function lseSdk(L) {
 }
 function writeTsconfig(L, sdk) {
   const nm = path.relative(L.ADDON, path.join(sdk, 'node_modules')).split(path.sep).join('/');
-  const want = JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'ESNext', moduleResolution: 'Bundler', lib: ['ES2022'], strict: true, noEmit: true, skipLibCheck: true, allowJs: true, checkJs: false, typeRoots: [nm], types: ['@levimc-lse/types'] }, include: ['src'] }, null, 2) + '\n';
+  // (an imported TypeScript project's own choices the code depends on — its path aliases, how strict — kept in tsconfig.lab.json:
+  //  this file is written again on every build; esbuild reads the aliases from it too)
+  let own = {};
+  try { own = JSON.parse(fs.readFileSync(path.join(L.ADDON, 'tsconfig.lab.json'), 'utf8')).compilerOptions ?? {}; } catch { /* the lab's defaults */ }
+  const keep = Object.fromEntries(Object.entries(own).filter(([k]) => ['paths', 'baseUrl', 'strict', 'noImplicitAny', 'strictNullChecks', 'strictPropertyInitialization', 'useUnknownInCatchVariables', 'experimentalDecorators', 'emitDecoratorMetadata', 'useDefineForClassFields', 'jsx', 'jsxFactory', 'jsxFragmentFactory'].includes(k)));
+  const want = JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'ESNext', moduleResolution: 'Bundler', lib: ['ES2022'], strict: true, ...keep, noEmit: true, skipLibCheck: true, allowJs: true, checkJs: false, typeRoots: [nm], types: ['@levimc-lse/types'] }, include: ['src'] }, null, 2) + '\n';
   const f = path.join(L.ADDON, 'tsconfig.json');
   if (!exists(f) || fs.readFileSync(f, 'utf8') !== want) fs.writeFileSync(f, want);
 }
+// the tails on LSE type errors (the Script API's own — '@minecraft/server', './kit' — would send a mod the wrong way)
+const LSE_FIXES = [
+  [/Property '(\w+)' does not exist on type '(?:typeof )?(\w+)'/, 'not in LSE\'s API: node lab.mjs api $2'],
+  [/Cannot find name '(fs|path|require|process|Buffer|__dirname|module|exports)'/, 'a Node API: LSE quickjs has none (an lse-nodejs mod, or LSE\'s File / data / network)'],
+  [/Cannot find name '(\w+)'/, 'not an LSE global: node lab.mjs api ?$1'],
+  [/Cannot find module '([^'.][^']*)'/, 'an npm package: node lab.mjs lib add $1 (the bundle carries it)'],
+];
 // what ll/importer.mjs needs from here: TypeScript (the build's, else this machine's) and LSE's types folder (null: none to be had)
 const lseEnv = (L) => ({
   ts: () => { try { return L.tl().ts; } catch { const t = L.B.localTs(L.CACHE); if (!t) L.die('no TypeScript to read the plugin with (npm unreachable): node lab.mjs setup where the network is open'); return t; } },
@@ -289,7 +301,7 @@ async function buildLse(L, m, { release = false, types = true } = {}) {
   if (types && m.src.endsWith('.ts') && process.env.LAB_TYPES !== '0') {
     const sdk = lseSdk(L);
     if (!sdk) warns.push('type check skipped: npm could not install @levimc-lse/types (offline?)');
-    else { writeTsconfig(L, sdk); for (const l of L.B.typecheck({ tl, addon: L.ADDON, cache: L.CACHE, js: false })) errs.push(l); }
+    else { writeTsconfig(L, sdk); for (const l of L.B.typecheck({ tl, addon: L.ADDON, cache: L.CACHE, js: false, fixes: LSE_FIXES })) errs.push(l); }
     if (errs.length) return { errs, warns, hints };
   }
   // JavaScript (an imported plugin, a --js mod): the calls LSE does not have, and two mistakes LSE plugins often make
