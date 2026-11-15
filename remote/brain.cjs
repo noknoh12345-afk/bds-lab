@@ -51,6 +51,13 @@ function status() {
 }
 // walking a long way the way a person does: face the target, run (sprint, auto-jump up 1-block steps), and when nothing moves
 // for 3 s jump and veer off to one side; a drop of 4 or more right ahead is gone round instead of jumped down
+function builtAhead(b, p, r) {
+  for (let s = 1; s <= 5; s++) for (const side of [-1, 0, 1]) {
+    const x = Math.floor(p.x - Math.sin(r) * s + Math.cos(r) * side), z = Math.floor(p.z + Math.cos(r) * s + Math.sin(r) * side);
+    for (let y = Math.floor(p.y) - 1; y <= Math.floor(p.y) + 2; y++) { const n = b.world.block(x, y, z)?.name; if (n && BUILT.test(n)) return true; }
+  }
+  return false;
+}
 async function walkTo(tx, tz, maxMs = 600000) {
   me.walkTick ??= 0;
   if (me.walking && me.walking !== ctx) { log('travel: another walk is on (an older brain): calling it off'); me.abort = true; await sleep(1500); me.abort = false; }
@@ -68,6 +75,8 @@ async function walkTo(tx, tz, maxMs = 600000) {
       let drop = 0;
       for (let y = Math.floor(p.y) - 1; y > Math.floor(p.y) - 7; y--) { const n = b.world.block(ax, y, az)?.name; if (n === undefined || !/^minecraft:(air|cave_air)$/.test(n)) break; drop++; }
       if (drop >= 4) { turn += turn >= 0 ? 45 : -45; if (Math.abs(turn) > 180) turn = -turn % 180; continue; }
+      // the rule while walking too: someone's build within 5 blocks ahead is not walked into or along; steer off it
+      if (guardOn && builtAhead(b, p, r)) { turn += turn >= 0 ? 35 : -35; if (Math.abs(turn) > 180) turn = -turn % 180; await sleep(50); continue; }
       await b.act('look', [String(yaw.toFixed(1)), '0']).catch(() => {});
       await b.act('sprint', ['on']).catch(() => {});
       await sleep(400);
