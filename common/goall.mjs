@@ -99,7 +99,8 @@ export async function main({ top, kinds, args }) {
   let units = listUnits(top, labs, { examples: args.includes('--examples') });
   // (two labs can have a unit of the same name: the lines and logs say end-cmdguard, ll-cmdguard)
   if (new Set(units.map((u) => u.kind)).size > 1) units = units.map((u) => ({ ...u, id: `${u.kind}-${u.name}` }));
-  if (only) { const miss = only.filter((n) => !units.some((u) => u.name === n || u.id === n)); if (miss.length) { console.log(`ERR no such unit: ${miss.join(' ')} (units: ${units.map((u) => u.name).join(' ')})`); return 1; } units = units.filter((u) => only.includes(u.name) || only.includes(u.id)); }
+  if (only) { const is = (u, n) => u.name === n || u.id === n || `${u.kind}-${u.name}` === n;   // (end-x / ll-x as server import prints them, one lab or several)
+    const miss = only.filter((n) => !units.some((u) => is(u, n))); if (miss.length) { console.log(`ERR no such unit: ${miss.join(' ')} (units: ${units.map((u) => u.name).join(' ')})`); return 1; } units = units.filter((u) => only.some((n) => is(u, n))); }
   if (!units.length) { console.log(`ERR no units with tests.txt (node lab.mjs bds new <name> ... makes one${labs.some((k) => k !== 'bds') ? '; the samples: --examples' : ''})`); return 1; }
   // the longest first (by the last run's times, a new unit before all): the wall time is then about the longest unit's, not
   // the longest one started last

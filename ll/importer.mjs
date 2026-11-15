@@ -276,6 +276,9 @@ export async function importMod(L, args, env) {
     const dir = path.join(L.ADDONS, name);
     if (exists(dir)) L.die(`mods/${name} exists (use --name <other>)`);
     const engine = p.kind === 'mod' ? String(p.manifest.type).replace(/^lse-/, '') : 'quickjs';
+    // --code-only (a mod as a server has it, server import): its folder there is also its data — that stays on the server
+    const codeOnly = args.includes('--code-only');
+    if (codeOnly) { const keep = files.filter((f) => JS.test(f) || ['package.json', 'package-lock.json'].includes(f) || (KEEP_OUT.test(path.basename(f)) && !f.includes(path.sep))); if (files.length > keep.length) L.out(`  ${files.length - keep.length} file(s) of its data on that server not taken (they stay there; a test that needs them writes its own)`); files = keep; }
     for (const f of files) {
       if (path.basename(f) === 'manifest.json' && path.dirname(f) === '.' && p.kind === 'mod') continue;
       if (KEEP_OUT.test(path.basename(f)) && path.dirname(f) === (p.kind === 'legacy' ? path.dirname(p.file) : '.')) { fs.mkdirSync(dir, { recursive: true }); fs.copyFileSync(path.join(base, f), path.join(dir, path.basename(f))); continue; }

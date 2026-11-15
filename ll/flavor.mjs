@@ -256,7 +256,7 @@ function writeTsconfig(L, sdk) {
 // what ll/importer.mjs needs from here: TypeScript (the build's, else this machine's) and LSE's types folder (null: none to be had)
 const lseEnv = (L) => ({
   ts: () => { try { return L.tl().ts; } catch { const t = L.B.localTs(L.CACHE); if (!t) L.die('no TypeScript to read the plugin with (npm unreachable): node lab.mjs setup where the network is open'); return t; } },
-  types: () => { const d = lseSdk(L), t = d && path.join(d, 'node_modules', '@levimc-lse', 'types'); return t && exists(path.join(t, 'src', 'index.d.ts')) ? t : null; },
+  types: () => { if (process.env.LAB_TYPES === '0') return null; const d = lseSdk(L), t = d && path.join(d, 'node_modules', '@levimc-lse', 'types'); return t && exists(path.join(t, 'src', 'index.d.ts')) ? t : null; },
 });
 async function buildLse(L, m, { release = false, types = true } = {}) {
   const errs = [], warns = [], hints = [];
