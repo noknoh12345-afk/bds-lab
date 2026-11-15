@@ -131,7 +131,7 @@ async function worker() {
 let surfacing = false;
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || b.state().dead) return;
-  const p = b.state().pos, head = b.world.block(Math.floor(p.x), Math.floor(p.y + 0.1), Math.floor(p.z))?.name ?? '';
+  const p = b.state().pos, head = b.world.block(Math.floor(p.x), Math.floor(p.y + 1.6), Math.floor(p.z))?.name ?? '';
   const wet = /water/.test(head);
   if (wet !== surfacing) { surfacing = wet; b.act('jump', [wet ? 'on' : 'off']).catch(() => {}); }
 }, 400));
