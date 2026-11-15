@@ -3,6 +3,7 @@
 // queue, self-defense. Reloaded in place by `update`/`reload` (the connection in bot.cjs stays: the bot joins the server once).
 module.exports = function brain(ctx) {
 const { me, cfg, log, sleep } = ctx;
+ctx.RUN ??= require('node:path').join(__dirname, 'run'); ctx.taps ??= new Set(); ctx.t0 ??= Date.now();   // (an older bot.cjs does not pass these)
 let disposed = false;
 const timers = [];
 
