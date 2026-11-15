@@ -247,5 +247,17 @@
       "starts": "'fix (macOS, pick one): Docker Desktop (enable \"Use Rosetta for x86_64/amd64 emulation\") | OrbStack | `brew install coli",
       "why": "main before PR #12: replaced by #12 (the same change dev has: parallel selftest, any-Linux setup, labkit ja=)"
     }
+  ],
+  "common/build.mjs": [
+    {
+      "starts": "if (!exists(stamp) || fs.readFileSync(stamp, 'utf8') !== want || !there()) {",
+      "why": "main before PR #12: the install lock (one install at a time) replaced it on both branches"
+    }
+  ],
+  "tests/dev-bds.mjs": [
+    {
+      "starts": "r = await lab(['new', n, title, 'A wand that sparks, /lab:pay and a shop menu', 'desc=Use the wand to spark; /lab:pay gives emeralds']);",
+      "why": "main before PR #12: both branches now make it with ja= (the Japanese-text QA)"
+    }
   ]
 }
