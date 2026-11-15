@@ -67,6 +67,7 @@ const BUILT = /planks|glass|crafting_table|chest|barrel|_bed$|torch|lantern|wool
 // actions that only move or look: allowed anywhere (they change nothing)
 const PASSIVE = /^(goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
 let guardOn = true;
+const HOSTILE = /^minecraft:(zombie|husk|drowned|skeleton|stray|bogged|spider|cave_spider|creeper|witch|slime|magma_cube|zombie_villager_v2|pillager|vindicator|silverfish|phantom|blaze|wither_skeleton|piglin_brute|hoglin|ghast|endermite|breeze)$/;
 function scanBuilt(bot, R) {
   const p = bot.state().pos, X = Math.floor(p.x), Y = Math.floor(p.y), Z = Math.floor(p.z), hits = new Map();
   for (let x = X - R; x <= X + R; x += 1) for (let z = Z - R; z <= Z + R; z += 1) {
@@ -140,7 +141,9 @@ const sleep = (ms) => new Promise((s) => setTimeout(s, ms));
 function status() {
   const b = me.bot; if (!b) return { connected: false, signIn: me.msa };
   const s = b.state();
-  return { connected: me.connected, account: me.account, pos: { x: +s.pos.x.toFixed(1), y: +s.pos.y.toFixed(1), z: +s.pos.z.toFixed(1) }, dim: me.dim, hp: me.hp, food: me.food, dead: s.dead, deaths: me.deaths, busy: me.busy, queued: me.queue.length, guard: guardOn, players: b.players(), signIn: me.msa, uptime: Math.round((Date.now() - t0) / 1000) };
+  const t = b.time?.(), day = t === null || t === undefined ? null : ((t % 24000) + 24000) % 24000;
+  const P = s.pos, hostile = [...b.entities.values()].filter((e) => HOSTILE.test(e.type ?? '') && Math.hypot(e.x - P.x, e.z - P.z) < 16).length;
+  return { connected: me.connected, account: me.account, time: day, night: day === null ? null : day >= 12542 && day <= 23460, hostileNear: hostile, pos: { x: +s.pos.x.toFixed(1), y: +s.pos.y.toFixed(1), z: +s.pos.z.toFixed(1) }, dim: me.dim, hp: me.hp, food: me.food, dead: s.dead, deaths: me.deaths, busy: me.busy, queued: me.queue.length, guard: guardOn, players: b.players(), signIn: me.msa, uptime: Math.round((Date.now() - t0) / 1000) };
 }
 const BUILTIN = {
   help: () => log('commands: any bdslab action/verb (get_<item> [n], mine_<block> [n], goto x z, craft_<item>, kill_<mob>, fight_ender_dragon, inv, pos, near ...) · status · players · survey [r] · around · travel x z · guard on|off|<radius> · stop · clear · reconnect · quit'),
@@ -166,7 +169,7 @@ const BUILTIN = {
       await me.bot.act('goto', [String(Math.round(q.x + (dx / d) * st)), String(Math.round(q.z + (dz / d) * st))]);
       const r = me.bot.state().pos;
       if (Math.hypot(r.x - q.x, r.z - q.z) < 2) { log(`travel: stuck at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}`, { dc: true }); return; }
-      if (i % 5 === 4) log(`travel: at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}, ${Math.round(Math.hypot(tx - r.x, tz - r.z))} to go`);
+      if (i % 2 === 1) log(`travel: at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}, ${Math.round(Math.hypot(tx - r.x, tz - r.z))} to go`);
     }
     const r = me.bot.state().pos;
     log(`travel: arrived ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}`, { dc: true });
@@ -204,6 +207,16 @@ async function worker() {
     finally { if (watch) clearInterval(watch); me.busy = null; }
   }
 }
+
+// ---------- self-defense: a hostile mob within reach gets hit back (no block is touched: allowed near builds too) ----------
+let swinging = false;
+setInterval(async () => {
+  const b = me.bot; if (!b || !me.connected || swinging || b.state().dead) return;
+  const P = b.state().pos, e = [...b.entities.values()].filter((x) => HOSTILE.test(x.type ?? '') && !/creeper/.test(x.type) && Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) < 3.2)[0];
+  if (!e) return;
+  swinging = true;
+  try { await b.act('attack', [e.type.replace('minecraft:', '')]); } catch { /* gone */ } finally { swinging = false; }
+}, 700);
 
 // ---------- inputs and status ----------
 readline.createInterface({ input: process.stdin }).on('line', command);
