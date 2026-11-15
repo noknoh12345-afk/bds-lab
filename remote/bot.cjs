@@ -114,9 +114,10 @@ async function connect() {
 // the thread had time to read what was waiting. Then: one rejoin after a pause (60 s after server_id_conflict); a manual
 // `reconnect` any time; `quit` stops for good.
 async function joinOnce() {
-  // the server may be down for a while (a restart, an update): keep trying, less and less often (up to every 5 minutes), never give up
+  // the server may be down for a while (a restart, an update): keep trying every cfg.joinEveryMin minutes (default 30), never give up
+  const every = (cfg.joinEveryMin ?? 30) * 60000;
   for (let i = 0; !me.connected && !me.quitting; i++) {
-    try { await connect(); } catch (e) { log(`join failed: ${e.message}`, { dc: i === 2 || i % 20 === 19 }); await sleep(/server_id_conflict/.test(String(me.kicked)) ? 60000 : Math.min(300000, 20000 * (i + 1))); }
+    try { await connect(); } catch (e) { log(`join failed: ${e.message}: next try in ${Math.round(every / 60000)} min`, { dc: true }); await sleep(every); }
   }
 }
 setInterval(async () => {
@@ -128,8 +129,8 @@ setInterval(async () => {
   const why = me.kicked ?? `no packet for ${Math.round((Date.now() - me.lastPacket) / 1000)}s`;
   try { me.bot?.close(); } catch { /* */ }
   if (me.quitting) return;
-  log(`dropped by the server (${why}): joining again in 30 s`, { dc: true });
-  await sleep(/server_id_conflict/.test(why) ? 60000 : 30000);
+  log(`dropped by the server (${why}): joining again in ${cfg.joinEveryMin ?? 30} min`, { dc: true });
+  await sleep((cfg.joinEveryMin ?? 30) * 60000);
   me.kicked = null;
   if (!me.connected) await joinOnce();
 }, 2000);
