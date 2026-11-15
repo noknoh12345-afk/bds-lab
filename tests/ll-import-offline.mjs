@@ -114,6 +114,13 @@ ok(!/getTPS/.test(r.out), 'a feature test (mc.getTPS ? mc.getTPS() : null) is no
 const tt = fs.readFileSync(path.join(d1, 'tests.txt'), 'utf8');
 ok(/## \/sethome runs\n@A join\n@A cmd \/sethome x/.test(tt) && /@A cmd \/tpmode walk 1/.test(tt) && /@A chat hello/.test(tt) && /## a restart keeps it working\nrestart/.test(tt), 'draft tests: each command with the arguments it needs (an enum takes its first value), each event once, a restart', tt);
 ok(fs.readFileSync(path.join(d1, 'TASK.md'), 'utf8').includes('homes that survive a restart'), 'the request goes into TASK.md');
+ok(/@A cmd \/sethome x\n# it may answer: ~ \^@A \.\*taken\n# it may answer: ~ \^@A \.\*set\n/.test(tt) && !/\*no$|\*ok$/m.test(tt), 'what each command answers (output.success / error), as hints under its section (not a 2-letter text)', tt);
+
+// ---- the lab's own LiteLoader-era fixture (CI imports it and runs it on a real LeviLamina): clean, and its welcome text a hint
+r = await run(path.join(TOP, 'll', 'fixtures', 'legacy-homes'), '--name', 'legacy_homes');
+const tf = fs.readFileSync(path.join(L.ADDONS, 'legacy_homes', 'tests.txt'), 'utf8');
+ok(r.ok && !/bugs found|TS\d+|outside its own folder/.test(r.out) && fs.existsSync(path.join(L.ADDONS, 'legacy_homes', 'assets', 'lang.json')), 'll/fixtures/legacy-homes imports clean, lang.json beside the bundle', r.out);
+ok(/# it may answer: ~ \^@B \.\*\\\(from lang\\\.json\\\)/.test(tf) && /# it may answer: ~ \^@A \.\*home \.\* set/.test(tf), 'a player.tell in an event and a template literal become hints', tf);
 // a name LSE has at run time but its .d.ts lacks (BaseLib.js: ll.export = ll.exports) is not a finding
 ok(I.engineHas("Property 'export' does not exist on type 'typeof ll'. Did you mean 'exports'?") && I.engineHas("Property 'getMoney' does not exist on type 'Player'.") && !I.engineHas("Property 'uid' does not exist on type 'Player'."), 'the engine\'s own names (ll/data/lse-runtime.json) cover what its .d.ts lacks');
 

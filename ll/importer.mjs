@@ -45,8 +45,17 @@ export function readSource(ts, files) {
     };
     const byVar = new Map();   // let c = mc.newCommand(..): the command c's later calls (mandatory, overload, setEnum) belong to (the latest one by that name)
     const outs = [];           // the output parameter of each setCallback((cmd, origin, output, result) => ..) being read
+    const cb = [];             // [command, output name] / [event, player name] whose callback is being read: the texts it answers with
+    // a text as a regex: 'home ' + r.name + ' set' / `home ${r.name} set` → home .* set (null when nothing of it is fixed)
+    const pattern = (n) => {
+      const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const parts = (x) => (ts.isStringLiteral(x) || ts.isNoSubstitutionTemplateLiteral(x) ? [esc(x.text)] : ts.isTemplateExpression(x) ? [esc(x.head.text), ...x.templateSpans.flatMap((sp) => ['.*', esc(sp.literal.text)])]
+        : ts.isBinaryExpression(x) && x.operatorToken.kind === ts.SyntaxKind.PlusToken ? [...parts(x.left), ...parts(x.right)] : ts.isParenthesizedExpression(x) ? parts(x.expression) : ['.*']);
+      const re = parts(n).join('').replace(/(\.\*)+/g, '.*').replace(/^\.\*|\.\*$/g, '').trim();
+      return re.replace(/\.\*/g, '').trim().length >= 3 ? re : null;
+    };
     const visit = (n) => {
-      let pushedOut = false;
+      let pushedOut = false, pushedCb = false;
       if (ts.isCallExpression(n) || ts.isNewExpression(n)) {
         const f = dotted(n.expression), a = n.arguments ?? [];
         if (f === 'll.registerPlugin' || f === 'll.register') r.plugin ??= { name: str(a[0]), description: str(a[1]), version: str(a[2]), at: at(n) };
@@ -57,19 +66,24 @@ export function readSource(ts, files) {
           else if (ts.isBinaryExpression(n.parent) && n.parent.operatorToken.kind === ts.SyntaxKind.EqualsToken && ts.isIdentifier(n.parent.left)) byVar.set(n.parent.left.text, c);
         } else if (f === 'mc.regPlayerCmd') r.commands.push({ name: str(a[0])?.replace(/^\//, ''), description: str(a[1]), perm: a[3] ? a[3].getText(sf) : null, at: at(n), how: 'regPlayerCmd' });
         else if (f === 'mc.regConsoleCmd') r.consoleCommands.push({ name: str(a[0])?.replace(/^\//, ''), at: at(n) });
-        else if (f === 'mc.listen') r.events.push({ name: str(a[0]), at: at(n) });
+        else if (f === 'mc.listen') { const e = { name: str(a[0]), at: at(n), answers: [] }; r.events.push(e); const fn = a[1]; if (fn && (ts.isArrowFunction(fn) || ts.isFunctionExpression(fn)) && fn.parameters[0] && ts.isIdentifier(fn.parameters[0].name)) { cb.push([e, fn.parameters[0].name.text, 'tell']); pushedCb = true; } }
         else if (f === 'setInterval' || f === 'setTimeout') r.timers.push({ at: at(n), repeat: f === 'setInterval' });
         else if (f === 'll.require' || f === 'll.import' || f === 'll.imports') r.needs.push({ what: str(a[0]) ?? a[0]?.getText(sf), at: at(n) });
         else if (['JsonConfigFile', 'IniConfigFile', 'KVDatabase', 'DBSession', 'data.openDB', 'data.openConfig'].includes(f)) r.data.push({ what: f, file: str(a[0]), at: at(n) });
         else if (f === 'require' && str(a[0])) { const m = str(a[0]).replace(/^node:/, ''); if (NODE_RISK[m]) r.risky.push({ at: at(n), what: `require('${str(a[0])}'): ${NODE_RISK[m]}` }); }
         if (f && RISK[f]) r.risky.push({ at: at(n), what: `${f}(): ${RISK[f]}` });
+        // what the command or event answers with: output.success('..') / output.error('..') / player.tell('..')
+        if (ts.isCallExpression(n) && ts.isPropertyAccessExpression(n.expression) && ts.isIdentifier(n.expression.expression) && a[0]) {
+          const who = n.expression.expression.text, m = n.expression.name.text;
+          for (let k = cb.length - 1; k >= 0; k--) { const [owner, name, kind] = cb[k]; if (who === name && (kind === 'tell' ? ['tell', 'sendText'].includes(m) : ['success', 'error', 'addMessage'].includes(m))) { const re = pattern(a[0]); if (re && !(owner.answers ??= []).includes(re)) owner.answers.push(re); break; } }
+        }
         // c.mandatory('x', ParamType.Int[, 'EnumName']) / c.optional / c.overload(['x']) / c.setEnum('E', ['a', 'b'])
         if (ts.isCallExpression(n) && ts.isPropertyAccessExpression(n.expression) && ts.isIdentifier(n.expression.expression)) {
           const c = byVar.get(n.expression.expression.text), m = n.expression.name.text;
           if (c && (m === 'mandatory' || m === 'optional')) c.params[str(a[0])] = { type: a[1] ? a[1].getText(sf).replace(/^ParamType\./, '') : null, enumName: str(a[2]), optional: m === 'optional' };
           if (c && m === 'overload' && !c.overload) c.overload = a[0] && ts.isArrayLiteralExpression(a[0]) ? a[0].elements.map(str) : [];
           if (m === 'setEnum' && a[1] && ts.isArrayLiteralExpression(a[1])) r.enums[str(a[0])] = a[1].elements.map(str).filter(Boolean);
-          if (m === 'setCallback' && a[0] && (ts.isArrowFunction(a[0]) || ts.isFunctionExpression(a[0])) && a[0].parameters[2] && ts.isIdentifier(a[0].parameters[2].name)) { outs.push(a[0].parameters[2].name.text); pushedOut = true; }
+          if (m === 'setCallback' && a[0] && (ts.isArrowFunction(a[0]) || ts.isFunctionExpression(a[0])) && a[0].parameters[2] && ts.isIdentifier(a[0].parameters[2].name)) { outs.push(a[0].parameters[2].name.text); pushedOut = true; if (c) { cb.push([c, a[0].parameters[2].name.text]); pushedCb = true; } }
         }
       }
       // output.error(..) and then more statements: the command carries on and does its work anyway (a return was meant)
@@ -89,6 +103,7 @@ export function readSource(ts, files) {
       }
       ts.forEachChild(n, visit);
       if (pushedOut) outs.pop();
+      if (pushedCb) cb.pop();
     };
     visit(sf);
   }
@@ -118,10 +133,12 @@ export function draftTests(name, r) {
   const sec = (t, lines) => out.push('', `## ${t}`, ...lines, 'wait 500');
   let joined = false; const join = () => (joined ? [] : ((joined = true), ['@A join']));
   const seen = new Set();
-  for (const c of (r?.commands ?? []).filter((x) => x.name)) { const k = c.name.split(/\s+/)[0]; if (seen.has(k)) continue; seen.add(k); const args = sampleArgs(c, r); sec(`/${k} runs`, [...join(), `@A cmd /${c.name}${args ? ' ' + args : ''}`]); }
+  // (what it may answer, from its code: a hint to turn into the section's expectation once the path it takes is known)
+  const hints = (who, xs) => (xs ?? []).slice(0, 3).map((re) => `# it may answer: ~ ^@${who} .*${re}`);
+  for (const c of (r?.commands ?? []).filter((x) => x.name)) { const k = c.name.split(/\s+/)[0]; if (seen.has(k)) continue; seen.add(k); const args = sampleArgs(c, r); sec(`/${k} runs`, [...join(), `@A cmd /${c.name}${args ? ' ' + args : ''}`, ...hints('A', c.answers)]); }
   for (const c of (r?.consoleCommands ?? []).filter((x) => x.name)) sec(`the console command ${c.name} runs`, [c.name]);
   const done = new Set();
-  for (const e of r?.events ?? []) { const hit = EVENT_ACTIONS.find(([re]) => re.test(e.name ?? '')); if (!hit || done.has(hit[1]) || !hit[2].length) continue; done.add(hit[1]); sec(`${hit[1]} (${e.name})`, [...join(), ...hit[2]]); }
+  for (const e of r?.events ?? []) { const hit = EVENT_ACTIONS.find(([re]) => re.test(e.name ?? '')); if (!hit || done.has(hit[1]) || !hit[2].length) continue; done.add(hit[1]); const who = /@B /.test(hit[2].join(' ')) ? 'B' : 'A'; sec(`${hit[1]} (${e.name})`, [...join(), ...hit[2], ...hints(who, (r.events ?? []).filter((x) => x.name === e.name).flatMap((x) => x.answers ?? []))]); }
   if ((r?.timers ?? []).some((t) => t.repeat)) sec('its repeating timer runs for a while', [...join(), 'wait 3000']);
   sec('a restart keeps it working', ['restart', 'll list', `~ ${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`]);
   return out.join('\n') + '\n';

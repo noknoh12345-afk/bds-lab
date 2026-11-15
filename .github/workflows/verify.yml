@@ -281,6 +281,22 @@ jobs:
           key: ll-${{ runner.os }}-${{ hashFiles('ll/flavor.mjs') }}
       - if: steps.has.outputs.yes == 'true'
         run: node lab.mjs server
+      - name: a LiteLoader-era plugin through ll import (fixtures/legacy-homes)
+        if: steps.has.outputs.yes == 'true'
+        run: |
+          # import as a person's plugin comes (X.lxl.js and its folder X/): the draft tests run below with the mods, plus what the
+          # draft leaves as hints — its data folder must sit beside the bundle, and the command must answer
+          node lab.mjs import fixtures/legacy-homes --name legacy_homes
+          cat >> mods/legacy_homes/tests.txt <<'T'
+
+          ## its data folder came along (lang.json beside the bundle)
+          @C join
+          ~ ^@C .*Welcome home \(from lang\.json\)
+
+          ## /sethome answers a player
+          @A cmd /sethome base
+          ~ ^@A .*home base set
+          T
       - name: test and pack every mod
         if: steps.has.outputs.yes == 'true'
         run: |
