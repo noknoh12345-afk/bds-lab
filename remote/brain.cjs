@@ -125,6 +125,8 @@ async function walkTo(tx, tz, maxMs = 600000) {
   const b = me.bot, t0 = Date.now();
   await b.act('option', ['autojump', 'on']).catch(() => {});
   let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0, builtTurns = 0, dropTurns = 0;
+  // progress, not movement: going back and forth (up a slope and back down, round a pit's edge) moves but gets nowhere
+  let bestLeft = Infinity, bestT = Date.now();
   await b.act('sprint', ['on']).catch(() => {});
   try {
     while (!me.abort && !disposed && me.connected && Date.now() - t0 < maxMs && me.deaths === deaths0 && !me.reviewPending) {
@@ -151,8 +153,11 @@ async function walkTo(tx, tz, maxMs = 600000) {
       await b.act('sprint', ['on']).catch(() => {});
       await sleep(400);
       if (Date.now() - lastT > 3000) {
-        const moved = Math.hypot(p.x - last.x, p.z - last.z);
-        if (moved < 1.5) {
+        const moved = Math.hypot(p.x - last.x, p.z - last.z), left = Math.hypot(dx, dz);
+        if (left < bestLeft - 2) { bestLeft = left; bestT = Date.now(); }
+        const noProgress = Date.now() - bestT > 20000;
+        if (noProgress) { bestT = Date.now(); log(`travel: 20 s without getting closer (${Math.round(left)} to go): taking it as stuck`); }
+        if (moved < 1.5 || noProgress) {
           stuckFor++; await b.act('jump', []).catch(() => {});
           // still nowhere after a few tries and nobody's build near: dig the way ahead (natural ground only), as a person would
           if (stuckFor >= 3 && !guardReason(b)) {
