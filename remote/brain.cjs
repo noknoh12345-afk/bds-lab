@@ -111,11 +111,41 @@ const deathTap = (l) => {
   // after every death the run waits for a review (cfg.reviewDeaths, default on): the death is looked into and the bot improved
   // before it goes on (`resume`); meanwhile it only defends itself where it stands
   if (cfg.reviewDeaths !== false && me.reviewPending) { me.reviewPending.more = (me.reviewPending.more ?? 0) + 1; try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'review.json'), JSON.stringify(me.reviewPending)); } catch { /* */ } }
-  else if (cfg.reviewDeaths !== false) { me.reviewPending = { at: new Date().toISOString(), death: me.deaths + 1, cause: m[1] }; try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'review.json'), JSON.stringify(me.reviewPending)); } catch { /* */ } log('auto: paused for a review of this death (resume when improved)', { dc: true }); }
+  else if (cfg.reviewDeaths !== false) { const rv = { at: new Date().toISOString(), death: me.deaths + 1, cause: m[1] }; const dp = me.bot.deathPos?.() ?? me.bot.state().pos; if (me.fetching) { me.abort = true; me.bot?.cancel?.(); return; } fetchThenReview({ x: dp.x, y: dp.y, z: dp.z, t: Date.now() }, rv); }
 };
 ctx.taps.add(deathTap);
+// what it had falls where it died and lies there five minutes: it goes back for it first (a person would), then the review
+// (until 15:44 it never did: goto_death only after a step failed, and only for 40 s - 99 deaths, every sword and pickaxe lost)
+async function fetchThenReview(dp, rv) {
+  me.fetching = true; me.abort = true; me.bot?.cancel?.();
+  try {
+    await sleep(2500);   // (respawned, and the old work has stopped)
+    const b = me.bot; if (!b || !me.connected) return;
+    const q = b.state().pos, far = Math.hypot(q.x - dp.x, q.z - dp.z);
+    if (me.dim !== 'overworld' || far > 450) { log(`death: my things lie ${Math.round(far)} blocks off: too far to reach in time`); return; }
+    log(`death: back for my things at ${Math.round(dp.x)} ${Math.round(dp.y)} ${Math.round(dp.z)} (${Math.round(far)} blocks, ${Math.round((300000 - (Date.now() - dp.t)) / 1000)} s before they vanish)`, { dc: true });
+    me.abort = false;
+    const stop = setTimeout(() => { me.abort = true; b.cancel?.(); }, Math.max(10000, 285000 - (Date.now() - dp.t)));
+    try {
+      if (far > 6) await BUILTIN.travel([String(Math.round(dp.x)), String(Math.round(dp.z))]);
+      for (let k = 0; k < 12 && !me.abort && Date.now() - dp.t < 295000; k++) {
+        const p = b.state().pos, items = [...b.entities.values()].filter((e) => e.type === 'minecraft:item' && Math.hypot(e.x - dp.x, e.z - dp.z) < 10).sort((u, v) => Math.hypot(u.x - p.x, u.z - p.z) - Math.hypot(v.x - p.x, v.z - p.z));
+        if (!items.length) break;
+        await gotoFor([String(Math.floor(items[0].x)), String(Math.floor(items[0].z))], 8000);
+        await sleep(400);
+      }
+    } finally { clearTimeout(stop); }
+    lastWeaponCheck = 0; me.armed = WEAPONS.some((w) => (b.invText?.() ?? '').includes('minecraft:' + w + '*'));
+    log(`death: back with ${(b.invText?.() ?? 'inv empty').replace(/^inv /, '').slice(0, 160)}`, { dc: true });
+  } catch (e) { log('death: fetching failed: ' + e.message); }
+  finally {
+    me.fetching = false; me.abort = false;
+    me.reviewPending = rv; try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'review.json'), JSON.stringify(rv)); } catch { /* */ }
+    log('auto: paused for a review of this death (resume when improved)', { dc: true });
+  }
+}
 try { me.reviewPending ??= JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'review.json'), 'utf8')); } catch { /* none */ }
-async function reviewWait() { if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) { const b = me.bot; const f = b && me.connected ? hostilesNear(b, 8) : []; if (f.length && !fighting) { fighting = true; try { await breakAway(b, f); } finally { fighting = false; } } else await sleep(2000); } me.abort = false; }   // (fighting set: the fight timer and this wait broke away at once, two ways)
+async function reviewWait() { while (me.fetching && !disposed) await sleep(1000); if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) { const b = me.bot; const f = b && me.connected ? hostilesNear(b, 8) : []; if (f.length && !fighting) { fighting = true; try { await breakAway(b, f); } finally { fighting = false; } } else await sleep(2000); } me.abort = false; }   // (fighting set: the fight timer and this wait broke away at once, two ways)
 // (a thunderstorm is as dark as the night: monsters spawn and the zombies do not burn - 15:13 it opened its hole 'in the morning' of a
 //  thunderstorm and two zombies came in)
 const weatherTap = (l) => { const m = /@\S+ weather: (\w+)/.exec(l); if (m) me.weather = m[1]; };
