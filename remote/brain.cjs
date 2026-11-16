@@ -90,7 +90,7 @@ function learn(cause, report) {
   AD.deaths[cause] = (AD.deaths[cause] ?? 0) + 1;
   const was = JSON.stringify({ drop: AD.drop, breakAwayHp: AD.breakAwayHp, engageR: AD.engageR, nightStart: AD.nightStart, avoidWater: AD.avoidWater });
   if (/fall/.test(cause)) AD.drop = Math.max(2, AD.drop - 1);                                   // fell: smaller drops count as cliffs
-  if (/drown/.test(cause)) AD.avoidWater = true;                                                // drowned (or drowned mobs): keep out of water
+  if (/drown/.test(cause) || /drowned/.test(report.foes ?? '')) AD.avoidWater = true;   // drowned, or killed by drowned (14:42 and 10:16, the same pond at 157-166 62 109-129)                                                // drowned (or drowned mobs): keep out of water
   if (/arrow|skeleton|stray|bogged|pillager/.test(cause)) AD.engageR = Math.min(12, AD.engageR + 2);   // shot: go for shooters sooner
   // beaten in melee: break away earlier only when it had a weapon (unarmed, running from a zombie only gets it hit in the back:
   // review of 09:42); the cap stays low enough that it still fights
@@ -144,7 +144,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
   await b.act('option', ['autojump', 'on']).catch(() => {});
   let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0, builtTurns = 0, dropTurns = 0;
   // progress, not movement: going back and forth (up a slope and back down, round a pit's edge) moves but gets nowhere
-  let bestLeft = Infinity, bestT = Date.now();
+  let bestLeft = Infinity, bestT = Date.now(), armTried = false;
   await b.act('sprint', ['on']).catch(() => {});
   try {
     while (!me.abort && !disposed && me.connected && Date.now() - t0 < maxMs && me.deaths === deaths0 && !me.reviewPending) {
@@ -166,6 +166,14 @@ async function walkTo(tx, tz, maxMs = 600000) {
       if (builtTurns >= 11 && !guardReason(b)) builtTurns = 0; else if (builtTurns < 11) builtTurns = 0;
       // the night out in the open, no armour: dug in until morning (the way RTA players sit out the night), then on
       if (nightNow(b) && me.dim === 'overworld' && !guardReason(b)) { await b.act('sprint', ['off']).catch(() => {}); log('travel: night: digging in until morning', { dc: true }); await sitOutNight(b, () => me.abort); log('travel: morning: on'); last = b.state().pos; lastT = Date.now(); continue; }
+      // nothing in hand, out of the builds' reach, by day: a sword first (logs - planks - sword, half a minute), then on - the long walk
+      // unarmed from the world spawn to the bed was three deaths in a row (14:42 - 14:47)
+      if (!me.armed && !armTried && !guardReason(b) && !nightNow(b) && me.dim === 'overworld') {
+        armTried = true; await b.act('sprint', ['off']).catch(() => {}); log('travel: nothing to fight with: a sword first');
+        const t = setTimeout(() => b.cancel?.(), 120000); await b.act('get_wooden_sword', []).catch(() => {}); clearTimeout(t);
+        lastWeaponCheck = 0; await armUp(b).catch(() => {}); me.armed = WEAPONS.some((w) => (b.invText?.() ?? '').includes('minecraft:' + w + '*'));
+        last = b.state().pos; lastT = Date.now(); bestT = Date.now(); continue;
+      }
       if (me.armed && hostilesNear(b, AD.engageR).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); last = b.state().pos; lastT = Date.now(); continue; }   // (unarmed: it keeps running on its way)
       await b.act('look', [String(yaw.toFixed(1)), '0']).catch(() => {});
       await b.act('sprint', ['on']).catch(() => {});
