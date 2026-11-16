@@ -124,7 +124,9 @@ async function sitOutNight(b, stop = () => false) {
   // (shelter night: kept in until morning; a plain shelter went out again at once - 'armed and well' / its own later night start - and
   //  each new try dug 3 deeper: 70 down to 58 in 4 minutes)
   let failed = false; const tap = (l) => { if (/shelter: failed/.test(l)) failed = true; };
-  const dig = async () => { failed = false; ctx.taps.add(tap); await b.act('shelter', ['night']).catch(() => {}); ctx.taps.delete(tap); };
+  // (never by someone's builds: 14:51 it dug itself into the ground of the spawn hub, two blocks down among the chests, and could not
+  //  get out again - the guard forbids every dig there, its own lid too)
+  const dig = async () => { failed = false; if (guardReason(b)) { failed = true; log(`night: no digging in here (${guardReason(b)})`); return; } ctx.taps.add(tap); await b.act('shelter', ['night']).catch(() => {}); ctx.taps.delete(tap); };
   await dig();
   let warned = false, lastTry = Date.now();
   while (nightNow(b) && me.connected && !disposed && !stop()) {
@@ -134,6 +136,16 @@ async function sitOutNight(b, stop = () => false) {
     if (f.length) { if (me.armed && (me.hp ?? 20) > AD.breakAwayHp) await engage(b); else await breakAway(b, f); }
     else { await sleep(1000); if (failed && Date.now() - lastTry > 60000) { lastTry = Date.now(); await dig(); } }   // (after a failed dig-in only: another try a minute on, maybe on better ground; never a new hole after one that worked)
   }
+}
+async function unbury(b) {
+  const q = b.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z); let n = 0;
+  for (const [x, y, z] of [[X, Y + 2, Z], ...[[1, 0], [-1, 0], [0, 1], [0, -1]].flatMap(([dx, dz]) => [[X + dx, Y, Z + dz], [X + dx, Y + 1, Z + dz], [X + dx, Y + 2, Z + dz]])]) {
+    const nm = b.world.block(x, y, z)?.name ?? 'air';
+    if (/air|water|lava/.test(nm) || !b.placedByMe?.has?.(`${x},${y},${z}`)) continue;
+    await b.act('dig', [String(x), String(y), String(z)]).catch(() => {}); n++;
+  }
+  if (n) log(`travel: took away ${n} of my own blocks around me (an old dig-in)`);
+  return n;
 }
 async function walkTo(tx, tz, maxMs = 600000) {
   me.walkTick ??= 0;
@@ -185,6 +197,8 @@ async function walkTo(tx, tz, maxMs = 600000) {
         if (noProgress) { bestT = Date.now(); log(`travel: 20 s without getting closer (${Math.round(left)} to go): taking it as stuck`); }
         if (moved < 1.5 || noProgress) {
           stuckFor++; await b.act('jump', []).catch(() => {});
+          // walled in by its own blocks (a lid, a wall of an old dig-in): those are ours to take away, builds near or not
+          if (stuckFor >= 2) await unbury(b);
           // still nowhere after a few tries and nobody's build near: dig the way ahead (natural ground only), as a person would
           if (stuckFor >= 3 && !guardReason(b)) {
             const ry = ((Math.atan2(-dx, dz) * 180) / Math.PI) * Math.PI / 180; let fx = Math.floor(p.x - Math.sin(ry) * 1.1), fz = Math.floor(p.z + Math.cos(ry) * 1.1);
