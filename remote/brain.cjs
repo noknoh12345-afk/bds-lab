@@ -107,15 +107,19 @@ const deathTap = (l) => {
   const m = / died \(([^)]+)\)/.exec(l); if (!m || !me.bot) return;
   const p = me.bot.state().pos;
   learn(m[1].replace(/^death\.(attack|fell)\./, ''), { at: `${Math.round(p.x)} ${Math.round(p.y)} ${Math.round(p.z)}`, night: nightNow(me.bot), hpBefore: lastHp, held: lastHeld, foes: lastFoes, busy: me.busy });
-  lastFoes = '';
+  const lastFoesAtDeath = lastFoes; lastFoes = '';
   // after every death the run waits for a review (cfg.reviewDeaths, default on): the death is looked into and the bot improved
   // before it goes on (`resume`); meanwhile it only defends itself where it stands
   if (cfg.reviewDeaths !== false && me.reviewPending) { me.reviewPending.more = (me.reviewPending.more ?? 0) + 1; try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'review.json'), JSON.stringify(me.reviewPending)); } catch { /* */ } }
-  else if (cfg.reviewDeaths !== false) { const rv = { at: new Date().toISOString(), death: me.deaths + 1, cause: m[1] }; const dp = me.bot.deathPos?.() ?? me.bot.state().pos; if (me.fetching) { me.abort = true; me.bot?.cancel?.(); return; } fetchThenReview({ x: dp.x, y: dp.y, z: dp.z, t: Date.now() }, rv); }
+  else if (cfg.reviewDeaths !== false) { const rv = { at: new Date().toISOString(), death: me.deaths + 1, cause: m[1], inv: lastInvText, night: nightNow(me.bot), foes: lastFoesAtDeath }; const dp = me.bot.deathPos?.() ?? me.bot.state().pos; if (me.fetching) { me.abort = true; me.bot?.cancel?.(); return; } fetchThenReview({ x: dp.x, y: dp.y, z: dp.z, t: Date.now() }, rv); }
 };
 ctx.taps.add(deathTap);
 // what it had falls where it died and lies there five minutes: it goes back for it first (a person would), then the review
 // (until 15:44 it never did: goto_death only after a step failed, and only for 40 s - 99 deaths, every sword and pickaxe lost)
+const REMAKE = [[/netherite|elytra|ender_eye|ender_pearl|blaze_rod|diamond/, 900], [/iron_(pickaxe|sword|axe|shovel|helmet|chestplate|leggings|boots)|shield|bucket|flint_and_steel/, 300], [/iron_ingot|raw_iron|gold_ingot/, 45], [/_bed\b|^bed\b/, 180], [/_wool/, 40], [/cooked_|bread|baked_potato/, 20], [/beef|porkchop|mutton|chicken|rabbit|cod|salmon/, 12], [/stone_(pickaxe|sword|axe|shovel)/, 25], [/wooden_(pickaxe|sword|axe|shovel)/, 35], [/coal|torch/, 8], [/furnace|crafting_table/, 10], [/log|planks|stick|cobblestone|dirt/, 0.5]];
+function remakeSeconds(inv) { let s = 0; for (const m of String(inv).matchAll(/minecraft:(\w+)\*(\d+)/g)) { const r = REMAKE.find(([re]) => re.test(m[1])); if (r) s += r[1] * (r[1] >= 25 && !/ingot|raw_|wool|cooked|beef|pork|mutton|chicken|coal|torch|log|planks|stick|cobble|dirt|ender_eye|pearl|blaze/.test(m[1]) ? 1 : Math.min(+m[2], 64)); } return s; }
+let lastInvText = '';
+timers.push(setInterval(() => { const b = me.bot; if (b && me.connected && !b.state().dead) { const t = b.invText?.(); if (t && !/^inv empty/.test(t)) lastInvText = t; } }, 3000));
 async function fetchThenReview(dp, rv) {
   me.fetching = true; me.abort = true; me.bot?.cancel?.();
   try {
@@ -123,6 +127,10 @@ async function fetchThenReview(dp, rv) {
     const b = me.bot; if (!b || !me.connected) return;
     const q = b.state().pos, far = Math.hypot(q.x - dp.x, q.z - dp.z);
     if (me.dim !== 'overworld' || far > 450) { log(`death: my things lie ${Math.round(far)} blocks off: too far to reach in time`); return; }
+    // which is faster: the walk back, or making it all again? (seconds to make each again, from the plans' own times on this server:
+    // a stone tool 15-40 s, a wooden sword ~40 s, a bed ~3 min with the sheep, iron minutes of mining and smelting)
+    const go = far / 4.5 + 20, inv = rv.inv ?? '', val = remakeSeconds(inv), danger = rv.night && /zombie|skeleton|spider|creeper|drowned|husk|stray|witch/.test(rv.foes ?? '') && !me.armed;
+    if (go > val || danger) { log(`death: not going back (${Math.round(far)} blocks ≈ ${Math.round(go)} s${danger ? ', at night with them still there and nothing in hand' : ''}; making it again ≈ ${Math.round(val)} s)`, { dc: true }); return; }
     log(`death: back for my things at ${Math.round(dp.x)} ${Math.round(dp.y)} ${Math.round(dp.z)} (${Math.round(far)} blocks, ${Math.round((300000 - (Date.now() - dp.t)) / 1000)} s before they vanish)`, { dc: true });
     me.abort = false;
     const stop = setTimeout(() => { me.abort = true; b.cancel?.(); }, Math.max(10000, 285000 - (Date.now() - dp.t)));
