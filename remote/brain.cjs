@@ -126,6 +126,11 @@ async function fetchThenReview(dp, rv) {
     await sleep(2500);   // (respawned, and the old work has stopped)
     const b = me.bot; if (!b || !me.connected) return;
     const q = b.state().pos, far = Math.hypot(q.x - dp.x, q.z - dp.z);
+    // (a circuit breaker: back to the same place at most twice in 20 minutes - a recovery that keeps walking into what killed it only
+    //  feeds the loop: one bot elsewhere was sent back into a camp 226 times)
+    me.fetchLog = (me.fetchLog ?? []).filter((f) => Date.now() - f.t < 1200000);
+    if (me.fetchLog.filter((f) => Math.hypot(f.x - dp.x, f.z - dp.z) < 32).length >= 2) { log('death: not going back - twice to that place already in the last 20 minutes'); return; }
+    me.fetchLog.push({ x: dp.x, z: dp.z, t: Date.now() });
     if (me.dim !== 'overworld' || far > 450) { log(`death: my things lie ${Math.round(far)} blocks off: too far to reach in time`); return; }
     // which is faster: the walk back, or making it all again? (seconds to make each again, from the plans' own times on this server:
     // a stone tool 15-40 s, a wooden sword ~40 s, a bed ~3 min with the sheep, iron minutes of mining and smelting)
@@ -153,7 +158,13 @@ async function fetchThenReview(dp, rv) {
   }
 }
 try { me.reviewPending ??= JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'review.json'), 'utf8')); } catch { /* none */ }
-async function reviewWait() { while (me.fetching && !disposed) await sleep(1000); if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) { const b = me.bot; const f = b && me.connected ? hostilesNear(b, 8) : []; if (f.length && !fighting) { fighting = true; try { await breakAway(b, f); } finally { fighting = false; } } else await sleep(2000); } me.abort = false; }   // (fighting set: the fight timer and this wait broke away at once, two ways)
+async function nightAway() {   // the night at the world spawn, nothing in hand: away until morning (one leave, one join)
+  const b = me.bot; if (!b || !me.connected || !ctx.away || me.armed || me.dim !== 'overworld' || !nightNow(b)) return false;
+  const q = b.state().pos; if (Math.hypot(q.x, q.z) > FAR) return false;
+  const t = b.time?.(), d = t == null ? 13000 : ((t % 24000) + 24000) % 24000, left = me.weather === 'thunder' && d < AD.nightStart ? 300 : Math.max(30, (23300 - d) / 20);
+  await ctx.away(Math.round(left * 1000) + 15000, 'night at the world spawn with nothing in hand'); return true;
+}
+async function reviewWait() { while (me.fetching && !disposed) await sleep(1000); if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) { if (await nightAway()) continue; const b = me.bot; const f = b && me.connected ? hostilesNear(b, 8) : []; if (f.length && !fighting) { fighting = true; try { await breakAway(b, f); } finally { fighting = false; } } else await sleep(2000); } me.abort = false; }   // (fighting set: the fight timer and this wait broke away at once, two ways)
 // (a thunderstorm is as dark as the night: monsters spawn and the zombies do not burn - 15:13 it opened its hole 'in the morning' of a
 //  thunderstorm and two zombies came in)
 const weatherTap = (l) => { const m = /@\S+ weather: (\w+)/.exec(l); if (m) me.weather = m[1]; };
@@ -578,9 +589,12 @@ async function goFar() {
   if (me.spawnSet && Math.hypot(p.x - me.spawnSet.x, p.z - me.spawnSet.z) < 64) return;
   // night and nothing in hand: not out into the dark fields (14:46, 14:47, 14:50: three deaths walking out at night unarmed) - the
   // spawn's lit buildings until morning, stepping away from what comes
-  if (nightNow(me.bot) && !me.armed) {
-    log('auto: night, nothing in hand: waiting by the spawn until morning', { dc: true });
-    while (nightNow(me.bot) && !me.armed && me.connected && live() && !disposed) { const f = hostilesNear(me.bot, 8); if (f.length && !fighting) { fighting = true; try { await breakAway(me.bot, f); } finally { fighting = false; } } else await sleep(1500); }
+  // (15:47-15:52: waiting there was a death a minute - seven in one night; the user, 15:57: then leave for the night, one leave and one
+  //  join a night, only when the night finds it unarmed at the world spawn)
+  if (nightNow(me.bot) && !me.armed && ctx.away) {
+    const t = me.bot.time?.(), d = t == null ? 13000 : ((t % 24000) + 24000) % 24000, left = me.weather === 'thunder' && d < AD.nightStart ? 300 : Math.max(30, (23300 - d) / 20);
+    await ctx.away(Math.round(left * 1000) + 15000, 'night at the world spawn with nothing in hand');
+    await waitIn();
   }
   log(`auto: near the spawn (${Math.round(p.x)} ${Math.round(p.z)}): out to the work area ${WORK.join(' ')} (by ${WAYOUT.join(' ')})`, { dc: true });
   for (let i = 0; i < 5 && live(); i++) {

@@ -133,7 +133,7 @@ async function joinOnce() {
   }
 }
 setInterval(async () => {
-  if (!me.connected || me.checking) return;
+  if (!me.connected || me.checking || me.away) return;
   if (!me.kicked && Date.now() - me.lastPacket < (me.closedAt ? 30000 : 45000)) return;
   me.checking = true; await sleep(5000); me.checking = false;
   if (!me.kicked && Date.now() - me.lastPacket < 15000) return;
@@ -167,6 +167,9 @@ function loadBrain() {
       log('updated to ' + r.stdout.trim() + ' (brain reloaded; realplayer changes take effect at the next start)', { dc: true });
       try { loadBrain(); } catch (e) { log('reload failed, keeping the old one: ' + e.message, { dc: true }); }
     },
+    // away for a while, then back once (the user, 15:57: when the night catches it unarmed at the world spawn - where nothing may be dug
+    // or built - it leaves for the night and joins again in the morning; one leave and one join a night)
+    away: async (ms, why) => { if (!me.connected) return; me.away = true; log(`leaving for ${Math.round(ms / 1000)} s (${why}); back once after`, { dc: true }); me.connected = false; try { me.bot?.close(); } catch { /* */ } await sleep(ms); me.away = false; me.kicked = null; await joinOnce(); },
     quit: () => { me.quitting = true; log('bye', { dc: true }); try { me.bot?.close(); } catch { /* */ } setTimeout(() => process.exit(0), 800); },
   });
 }
