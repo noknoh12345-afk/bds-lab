@@ -1495,7 +1495,7 @@ function goalVerbs(K, H) {
           await travel((a, b, c) => a === soft.x && c === soft.z && b === soft.y + 1, (a, b, c) => hyp(a - soft.x, b - soft.y - 1, c - soft.z), { radius: 32, legs: 3 });
           return shelter0(true, o);   // (still sheltering: no reflex starts another one on the way)
         }
-        log(`could not shut myself in (dug ${dug}, ${gaps.length} gaps, ${blocksHeld()} blocks, no soft ground near): carrying on`); return 'failed';
+        log(`could not shut myself in (dug ${dug}, ${gaps.length} gaps ${gaps.map((c) => c.join(',')).join(' ')}, ${blocksHeld()} blocks, placing ${blockItem() ?? 'nothing'}, no soft ground near): carrying on`); return 'failed';
       } else { log(`could not shut myself in (dug ${dug}, ${gaps.length} gaps, ${blocksHeld()} blocks): carrying on`); return 'failed'; }
     }
     if (!o.hold && !perched && nightNow() && !armed()) { try { await swordHere(); } catch (e) { log(`sword in the hole: ${e.message}`); } }

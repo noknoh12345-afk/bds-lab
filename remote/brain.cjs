@@ -117,6 +117,20 @@ ctx.taps.add(deathTap);
 try { me.reviewPending ??= JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'review.json'), 'utf8')); } catch { /* none */ }
 async function reviewWait() { if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) { const b = me.bot; const f = b && me.connected ? hostilesNear(b, 8) : []; if (f.length) await breakAway(b, f); else await sleep(2000); } me.abort = false; }
 const nightNow = (b) => { const t = b.time?.(); if (t === null || t === undefined) return false; const d = ((t % 24000) + 24000) % 24000; return d >= AD.nightStart && d <= 23200; };
+// the night out: dug in if it can be; if not (rock, nothing to build with), it does not stand there idle - it watches and fights
+// (10:24-10:26: the shelter failed, it stood still 3 minutes with a stone sword in the inventory, three zombies, dead)
+function shutIn(b) { const q = b.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z); const solid = (x, y, z) => { const n = b.world.block(x, y, z)?.name ?? 'air'; return !/air|water|lava|grass$|fern|flower|leaf_litter|snow_layer|torch|carpet/.test(n); }; return [[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dz]) => solid(X + dx, Y, Z + dz) && solid(X + dx, Y + 1, Z + dz)) && solid(X, Y + 2, Z); }
+async function sitOutNight(b, stop = () => false) {
+  await b.act('shelter', []).catch(() => {});
+  let warned = false;
+  while (nightNow(b) && me.connected && !disposed && !stop()) {
+    if (shutIn(b)) { await sleep(5000); continue; }
+    if (!warned) { warned = true; log('night: not shut in: standing guard, sword in hand'); lastWeaponCheck = 0; await armUp(b).catch(() => {}); }
+    const f = hostilesNear(b, 10);
+    if (f.length) { if (me.armed && (me.hp ?? 20) > AD.breakAwayHp) await engage(b); else await breakAway(b, f); }
+    else { await sleep(1000); if (Math.random() < 0.05) await b.act('shelter', []).catch(() => {}); }   // (now and then: another try at digging in, maybe on better ground after moving)
+  }
+}
 async function walkTo(tx, tz, maxMs = 600000) {
   me.walkTick ??= 0;
   const deaths0 = me.deaths;   // (a death puts it back at the spawn: this walk's way is no longer the way; the caller plans again)
@@ -147,7 +161,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
       if (guardOn && builtTurns < 11 && builtAhead(b, p, r)) { builtTurns++; turn += turn >= 0 ? 35 : -35; if (Math.abs(turn) > 180) turn = -turn % 180; await sleep(50); continue; }
       if (builtTurns >= 11 && !guardReason(b)) builtTurns = 0; else if (builtTurns < 11) builtTurns = 0;
       // the night out in the open, no armour: dug in until morning (the way RTA players sit out the night), then on
-      if (nightNow(b) && me.dim === 'overworld' && !guardReason(b)) { await b.act('sprint', ['off']).catch(() => {}); log('travel: night: digging in until morning', { dc: true }); await b.act('shelter', []).catch(() => {}); while (nightNow(b) && me.connected && !me.abort && !disposed) await sleep(5000); log('travel: morning: on'); last = b.state().pos; lastT = Date.now(); continue; }
+      if (nightNow(b) && me.dim === 'overworld' && !guardReason(b)) { await b.act('sprint', ['off']).catch(() => {}); log('travel: night: digging in until morning', { dc: true }); await sitOutNight(b, () => me.abort); log('travel: morning: on'); last = b.state().pos; lastT = Date.now(); continue; }
       if (me.armed && hostilesNear(b, AD.engageR).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); last = b.state().pos; lastT = Date.now(); continue; }   // (unarmed: it keeps running on its way)
       await b.act('look', [String(yaw.toFixed(1)), '0']).catch(() => {});
       await b.act('sprint', ['on']).catch(() => {});
@@ -402,7 +416,7 @@ async function run(cmd, why) {   // one command, as the worker would: guard firs
   finally { if (watch) clearInterval(watch); ctx.taps.delete(tap); me.busy = null; }
   if (me.interrupt) {
     const why = me.interrupt; me.interrupt = null; ok = false;
-    if (why === 'night') { await me.bot.act('shelter', []).catch(() => {}); while (nightNow(me.bot) && me.connected && !disposed && !me.reviewPending) await sleep(5000); log('auto: morning: back to work'); }
+    if (why === 'night') { await sitOutNight(me.bot, () => !!me.reviewPending); log('auto: morning: back to work'); }
     if (why === 'fight') await engage(me.bot);
   }
   if (seen.some((l) => /: (gave up|failed|could not|cannot|no way|not found|nothing to)|did not break|not under the crosshair/i.test(l))) ok = false;
@@ -443,7 +457,7 @@ async function safeStart() {
   const lastInv = nightNow(b) ? await invList(b) : '';
   if (!openSky(b, b.state().pos)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
   me.armored = /_chestplate\*/.test(lastInv || (await invList(b)));
-  if (nightNow(b) && !me.armored) { log('auto: night and no armour: dug in until morning', { dc: true }); await b.act('shelter', []).catch(() => {}); while (nightNow(b) && me.connected && !disposed) await sleep(5000); }
+  if (nightNow(b) && !me.armored) { log('auto: night and no armour: dug in until morning', { dc: true }); await sitOutNight(b); }
 }
 async function goFar() {
   await reviewWait();
