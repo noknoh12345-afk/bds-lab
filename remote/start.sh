@@ -3,6 +3,8 @@
 # ./remote/start.sh            (edit remote/config.json first: host, port, webhook)
 set -e
 cd "$(dirname "$0")"
+# the terminal window closing (SIGHUP) does not end the bot: it is started detached (nohup) by the launcher, and ignores HUP itself
+trap '' HUP
 NODE=node
 ver() { "$1" -e 'process.stdout.write(process.versions.node.split(".")[0])' 2>/dev/null || echo 0; }
 if [ "$(ver node)" -lt 22 ] 2>/dev/null; then
@@ -33,6 +35,8 @@ fi
 while true; do
   set +e
   "$NODE" bot.cjs "$@" & pid=$!
+  # macOS: no idle sleep while the bot runs (a sleeping Mac is a bot that stands still in the world); ends with the bot
+  command -v caffeinate >/dev/null 2>&1 && caffeinate -is -w $pid &
   ( while kill -0 $pid 2>/dev/null; do sleep 30; f=run/status.json
       if [ -f $f ] && [ $(( $(date +%s) - $(stat -f %m $f 2>/dev/null || stat -c %Y $f) )) -gt 180 ]; then kill -9 $pid; echo "$(date +%H:%M:%S) watchdog: the bot froze: started again" >> run/out.log; fi
     done ) &
