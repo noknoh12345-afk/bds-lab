@@ -121,14 +121,18 @@ const nightNow = (b) => { const t = b.time?.(); if (t === null || t === undefine
 // (10:24-10:26: the shelter failed, it stood still 3 minutes with a stone sword in the inventory, three zombies, dead)
 function shutIn(b) { const q = b.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z); const solid = (x, y, z) => { const n = b.world.block(x, y, z)?.name ?? 'air'; return !/air|water|lava|grass$|fern|flower|leaf_litter|snow_layer|torch|carpet/.test(n); }; return [[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dz]) => solid(X + dx, Y, Z + dz) && solid(X + dx, Y + 1, Z + dz)) && solid(X, Y + 2, Z); }
 async function sitOutNight(b, stop = () => false) {
-  await b.act('shelter', []).catch(() => {});
-  let warned = false;
+  // (shelter night: kept in until morning; a plain shelter went out again at once - 'armed and well' / its own later night start - and
+  //  each new try dug 3 deeper: 70 down to 58 in 4 minutes)
+  let failed = false; const tap = (l) => { if (/shelter: failed/.test(l)) failed = true; };
+  const dig = async () => { failed = false; ctx.taps.add(tap); await b.act('shelter', ['night']).catch(() => {}); ctx.taps.delete(tap); };
+  await dig();
+  let warned = false, lastTry = Date.now();
   while (nightNow(b) && me.connected && !disposed && !stop()) {
     if (shutIn(b)) { await sleep(5000); continue; }
     if (!warned) { warned = true; log('night: not shut in: standing guard, sword in hand'); lastWeaponCheck = 0; await armUp(b).catch(() => {}); }
     const f = hostilesNear(b, 10);
     if (f.length) { if (me.armed && (me.hp ?? 20) > AD.breakAwayHp) await engage(b); else await breakAway(b, f); }
-    else { await sleep(1000); if (Math.random() < 0.05) await b.act('shelter', []).catch(() => {}); }   // (now and then: another try at digging in, maybe on better ground after moving)
+    else { await sleep(1000); if (failed && Date.now() - lastTry > 60000) { lastTry = Date.now(); await dig(); } }   // (after a failed dig-in only: another try a minute on, maybe on better ground; never a new hole after one that worked)
   }
 }
 async function walkTo(tx, tz, maxMs = 600000) {
