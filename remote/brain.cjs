@@ -161,7 +161,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
   await b.act('option', ['autojump', 'on']).catch(() => {});
   let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0, builtTurns = 0, dropTurns = 0;
   // progress, not movement: going back and forth (up a slope and back down, round a pit's edge) moves but gets nowhere
-  let bestLeft = Infinity, bestT = Date.now(), armTried = false;
+  let bestLeft = Infinity, bestT = Date.now(), armTried = 0;
   await b.act('sprint', ['on']).catch(() => {});
   try {
     while (!me.abort && !disposed && me.connected && Date.now() - t0 < maxMs && me.deaths === deaths0 && !me.reviewPending) {
@@ -185,9 +185,9 @@ async function walkTo(tx, tz, maxMs = 600000) {
       if (nightNow(b) && me.dim === 'overworld' && !guardReason(b)) { await b.act('sprint', ['off']).catch(() => {}); log('travel: night: digging in until morning', { dc: true }); await sitOutNight(b, () => me.abort); log('travel: morning: on'); last = b.state().pos; lastT = Date.now(); continue; }
       // nothing in hand, out of the builds' reach, by day: a sword first (logs - planks - sword, half a minute), then on - the long walk
       // unarmed from the world spawn to the bed was three deaths in a row (14:42 - 14:47)
-      if (!me.armed && !armTried && !guardReason(b) && !nightNow(b) && me.dim === 'overworld') {
-        armTried = true; await b.act('sprint', ['off']).catch(() => {}); log('travel: nothing to fight with: a sword first');
-        const t = setTimeout(() => b.cancel?.(), 120000); await b.act('get_wooden_sword', []).catch(() => {}); clearTimeout(t);
+      if (!me.armed && Date.now() - armTried > 180000 && !guardReason(b) && !nightNow(b) && me.dim === 'overworld') {
+        armTried = Date.now(); await b.act('sprint', ['off']).catch(() => {}); log('travel: nothing to fight with: a sword first');
+        const t = setTimeout(() => b.cancel?.(), 300000); await b.act('get_wooden_sword', []).catch(() => {}); clearTimeout(t);
         lastWeaponCheck = 0; await armUp(b).catch(() => {}); me.armed = WEAPONS.some((w) => (b.invText?.() ?? '').includes('minecraft:' + w + '*'));
         last = b.state().pos; lastT = Date.now(); bestT = Date.now(); continue;
       }
