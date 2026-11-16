@@ -486,6 +486,12 @@ async function goFar() {
   const p = me.bot.state().pos;
   if (Math.hypot(p.x, p.z) >= FAR) return;
   if (me.spawnSet && Math.hypot(p.x - me.spawnSet.x, p.z - me.spawnSet.z) < 64) return;
+  // night and nothing in hand: not out into the dark fields (14:46, 14:47, 14:50: three deaths walking out at night unarmed) - the
+  // spawn's lit buildings until morning, stepping away from what comes
+  if (nightNow(me.bot) && !me.armed) {
+    log('auto: night, nothing in hand: waiting by the spawn until morning', { dc: true });
+    while (nightNow(me.bot) && !me.armed && me.connected && live() && !disposed) { const f = hostilesNear(me.bot, 8); if (f.length && !fighting) { fighting = true; try { await breakAway(me.bot, f); } finally { fighting = false; } } else await sleep(1500); }
+  }
   log(`auto: near the spawn (${Math.round(p.x)} ${Math.round(p.z)}): out to the work area ${WORK.join(' ')} (by ${WAYOUT.join(' ')})`, { dc: true });
   for (let i = 0; i < 5 && live(); i++) {
     await reviewWait(); if (!(await waitIn())) return;
