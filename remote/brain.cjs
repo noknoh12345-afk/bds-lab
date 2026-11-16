@@ -458,6 +458,7 @@ const WAYOUT = (cfg.wayOut ?? '0 60').split(/\s+/).map(Number);   // (8 130 led 
 // (the death of 08:53 under review: a goal started in a drowned cave at night, unarmed, and a skeleton shot it there)
 async function safeStart() {
   const b = me.bot; if (!b || me.dim !== 'overworld' || guardReason(b)) return;
+  if (!me.spawnSet && !nightNow(b) && /\d+:minecraft:(\w+_)?bed\*/.test(await invList(b))) { log('auto: a bed carried and no respawn point yet: setting it down first'); await bedSpawn(); }
   const lastInv = nightNow(b) ? await invList(b) : '';
   if (!openSky(b, b.state().pos)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
   me.armored = /_chestplate\*/.test(lastInv || (await invList(b)));
@@ -487,21 +488,25 @@ async function bedSpawn() {
   // inventory (get_bed plans for white wool only)
   const woolCounts = async () => { const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap); await me.bot.act('inv', []).catch(() => {}); ctx.taps.delete(tap);
     const m = new Map(); for (const l of seen) for (const x of l.matchAll(/minecraft:(\w+_wool)\*(\d+)/g)) m.set(x[1], (m.get(x[1]) ?? 0) + Number(x[2])); return m; };
-  let bedOk = false;
+  let bedOk = /\d+:minecraft:(\w+_)?bed\*/.test(await invList(me.bot));   // (one carried already: straight to setting it down)
   for (let i = 0; i < 10 && live() && !bedOk; i++) {
     if ([...(await woolCounts()).values()].some((n) => n >= 3)) { bedOk = await run('craft_bed', 'the bed from three of one colour'); break; }
     await run('kill_sheep 1', 'wool for a bed');
   }
   if (!bedOk) bedOk = await run('get_bed 1', 'a bed');
   if (!bedOk) return false;
-  { // a spot two cells long on open ground beside it: air over something solid, for the foot and the head
+  // (13:17 the bed was made in the night's hole: the floor of the spot beside it could not be seen from down there, the bed did not go
+  //  down - up to the open sky first; then every spot around, not only the first one, each checked)
+  if (!openSky(me.bot, me.bot.state().pos)) { await me.bot.act('to_surface', []).catch(() => {}); }
+  const findBed = () => { const p = me.bot.state().pos; for (let dx = -4; dx <= 4; dx++) for (let dz = -4; dz <= 4; dz++) for (let dy = -2; dy <= 2; dy++) { const n = me.bot.world.block(Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz)?.name ?? ''; if (/(^|:)(\w+_)?bed$/.test(n)) return [Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz]; } return null; };
+  let bed = findBed();
+  for (let k = 0; k < 2 && !bed && live(); k++) {   // (a spot two cells long on open ground beside it: air with air over it, over something solid)
     const q = me.bot.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z);
-    const free = (x, y, z) => /air/.test(me.bot.world.block(x, y, z)?.name ?? '') && !/air|water|lava/.test(me.bot.world.block(x, y - 1, z)?.name ?? 'air');
-    const spot = [[2, 0, 1, 0, 'east'], [-2, 0, -1, 0, 'west'], [0, 2, 0, 1, 'south'], [0, -2, 0, -1, 'north']].find(([dx, dz, hx, hz]) => free(X + dx, Y, Z + dz) && free(X + dx + hx, Y, Z + dz + hz));
-    if (spot) await run(`place_bed ${X + spot[0]} ${Y} ${Z + spot[1]} ${spot[4]}`, 'set the bed down');
+    const free = (x, y, z) => /air/.test(me.bot.world.block(x, y, z)?.name ?? '') && /air/.test(me.bot.world.block(x, y + 1, z)?.name ?? '') && !/air|water|lava|leaves|_bed/.test(me.bot.world.block(x, y - 1, z)?.name ?? 'air');
+    const spots = [[2, 0, 1, 0, 'east'], [-2, 0, -1, 0, 'west'], [0, 2, 0, 1, 'south'], [0, -2, 0, -1, 'north'], [1, 0, 1, 0, 'east'], [-1, 0, -1, 0, 'west'], [0, 1, 0, 1, 'south'], [0, -1, 0, -1, 'north']].filter(([dx, dz, hx, hz]) => free(X + dx, Y, Z + dz) && free(X + dx + hx, Y, Z + dz + hz));
+    for (const s of spots) { await run(`place_bed ${X + s[0]} ${Y} ${Z + s[1]} ${s[4]}`, 'set the bed down'); await sleep(500); bed = findBed(); if (bed || !live()) break; }
+    if (!bed && k === 0) { log('auto: no spot for the bed took it here: a few steps on and again'); await gotoFor([String(X + 6), String(Z)], 15000); }
   }
-  const p = me.bot.state().pos; let bed = null;
-  for (let dx = -4; dx <= 4 && !bed; dx++) for (let dz = -4; dz <= 4 && !bed; dz++) for (let dy = -2; dy <= 2 && !bed; dy++) { const n = me.bot.world.block(Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz)?.name ?? ''; if (/_bed$/.test(n)) bed = [Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz]; }
   if (!bed) { log('auto: the bed did not go down'); return false; }
   const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap);
   await me.bot.act('useon', bed.map(String)).catch(() => {}); await sleep(1500); ctx.taps.delete(tap);
