@@ -1384,6 +1384,7 @@ function goalVerbs(K, H) {
   async function fillCell(at) {
     if (fAt(...at) & F_SOLID) return true;
     { const [fx, fy, fz] = feet(); if (at[0] === fx && at[2] === fz && (at[1] === fy || at[1] === fy + 1)) return false; }   // (the player's own cells)
+    const tried = [];
     for (const [dx, dy, dz, face] of FACES) {
       const c = [at[0] + dx, at[1] + dy, at[2] + dz];
       if (!(fAt(...c) & F_SOLID)) continue;
@@ -1393,7 +1394,9 @@ function goalVerbs(K, H) {
       await K.act('useon', [S(c[0]), S(c[1]), S(c[2]), face]);
       await until(() => (fAt(...at) & F_SOLID) !== 0, 4, 300);
       if (fAt(...at) & F_SOLID) return true;
+      tried.push(`${c.join(',')} ${face}`);
     }
+    if (tried.length) log(`fill ${at.join(' ')}: not placed against ${tried.join(' | ')} (feet ${feet().join(' ')}, eyes ${K.feet().y.toFixed(2)})`);   // (why a dig-in on rock fails: one line)
     return false;
   }
   // o.why / o.hold: dug in by day for a while (to heal, or while a crowd is about) instead of until the morning
@@ -1462,7 +1465,7 @@ function goalVerbs(K, H) {
     const blocksHeld = () => { const m = invMap(); let n = 0; for (const [k, v] of m) if (SCAFFOLD.includes(k) || /_(log|planks|wood|stem)$|^(grass_block|coarse_dirt|mud)$/.test(k)) n += v; return n; };
     const SIDES = [[1, 0, 'west'], [-1, 0, 'east'], [0, 1, 'north'], [0, -1, 'south']];
     const [x, y, z] = feet(), lid = [x, y + 2, z];
-    const put = async (cx, cy, cz, face, at) => { const it = blockItem(); if (!it) return false; try { await grab(it, 'shelter'); } catch { return false; } K.lookAt(at[0] + 0.5, at[1] + 0.5, at[2] + 0.5); await K.act('useon', [S(cx), S(cy), S(cz), face]); await until(() => (fAt(...at) & F_SOLID) !== 0, 4, 300); const ok = (fAt(...at) & F_SOLID) !== 0; if (!ok && process.env.LAB_GOAL_DEBUG) log(`shelter: ${it} on ${cx} ${cy} ${cz} ${face} for ${at.join(' ')}: not placed (there: ${sh(bname(...at))}, feet ${feet().join(' ')})`); return ok; };
+    const put = async (cx, cy, cz, face, at) => { const it = blockItem(); if (!it) return false; try { await grab(it, 'shelter'); } catch { return false; } K.lookAt(at[0] + 0.5, at[1] + 0.5, at[2] + 0.5); await K.act('useon', [S(cx), S(cy), S(cz), face]); await until(() => (fAt(...at) & F_SOLID) !== 0, 4, 300); const ok = (fAt(...at) & F_SOLID) !== 0; if (!ok) log(`shelter: ${it} on ${cx} ${cy} ${cz} ${face} for ${at.join(' ')}: not placed (there: ${sh(bname(...at))}, feet ${feet().join(' ')})`); return ok; };
     const open = () => [...[0, 1].flatMap((h) => SIDES.map(([dx, dz]) => [x + dx, y + h, z + dz])).filter((c) => !(fAt(...c) & F_SOLID)), ...((fAt(...lid) & F_SOLID) ? [] : [lid])];
     // not enough blocks for the gaps: soft ground a little way off (dirt, sand: by hand) comes along
     for (let k = 0; k < 12 && blocksHeld() < open().length + 1 && !slow() && !K.dead(); k++) {
