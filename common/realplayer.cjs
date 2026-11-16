@@ -1569,10 +1569,17 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   };
   // legit: act only as a person could at that moment: looking at it, in reach, nothing in between (what the crosshair hits after
   // turning is the thing itself); otherwise say why and leave it (remote/bot.cjs turns it on for a real server)
-  let legit = false;
+  let legit = process.env.LAB_LEGIT === '1';   // (remote/bot.cjs turns it on; LAB_LEGIT=1 for a lab run)
   const placedByMe = new Set();   // cells this player clicked a block into: its own crafting table, furnace, bed (remote/bot.cjs: only those are used)
   const FACE_OFF = [[0, -1, 0], [0, 1, 0], [0, 0, -1], [0, 0, 1], [-1, 0, 0], [1, 0, 0]];
-  const facePoint = (b, f) => { const o = FACE_OFF[f] ?? [0, 1, 0]; return { x: b.x + 0.5 + o[0] * 0.49, y: b.y + 0.5 + o[1] * 0.49, z: b.z + 0.5 + o[2] * 0.49 }; };
+  // (on the block's own shape: a bed, a slab, a chest is lower than a full cube - aiming at y+0.99 of a bed went over it, 'not under the
+  //  crosshair', and the respawn point was never set)
+  const facePoint = (b, f) => {
+    const o = FACE_OFF[f] ?? [0, 1, 0], sh = world.block(b.x, b.y, b.z)?.shape;
+    const bx = sh?.length ? sh.reduce((m, s) => [Math.min(m[0], s[0]), Math.min(m[1], s[1]), Math.min(m[2], s[2]), Math.max(m[3], s[3]), Math.max(m[4], s[4]), Math.max(m[5], s[5])], [1, 1, 1, 0, 0, 0]) : [0, 0, 0, 1, 1, 1];
+    const at = (i, d) => (d > 0 ? bx[i + 3] - 0.01 : d < 0 ? bx[i] + 0.01 : (bx[i] + bx[i + 3]) / 2);
+    return { x: b.x + at(0, o[0]), y: b.y + at(1, o[1]), z: b.z + at(2, o[2]) };
+  };
   // the crosshair on what a click goes to: the block itself, or (placing) the grass / leaf litter / snow layer standing in the cell
   // the new block replaces (in the game that is what the crosshair shows, and the placed block takes its cell)
   const REPLACEABLE = /short_grass|tall_grass|fern|leaf_litter|snow_layer|deadbush|dead_bush|vine|seagrass|_flower|dandelion|poppy|tulip|orchid|allium|bluet|daisy|cornflower|lily_of_the_valley|bush|wildflowers|dry_grass/;
@@ -1764,9 +1771,17 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           const c = { x: Math.max(e.x - w, Math.min(pos.x, e.x + w)), y: Math.max(e.y, Math.min(pos.y, e.y + hh)), z: Math.max(e.z - w, Math.min(pos.z, e.z + w)) };
           const dd = Math.hypot(c.x - pos.x, c.y - pos.y, c.z - pos.z); if (dd > reach('entity') + 0.3) say(`${action}: ${e.name ?? e.type} is ${dd.toFixed(1)} blocks away (reach ${reach('entity')})`); }
         if (legit) {
-          lookAt({ x: e.x, y: e.y + (e.bh > 0 ? e.bh / 2 : e.type === 'minecraft:player' ? 0.9 : 0.5), z: e.z });
-          await ticks(2);   // the turn goes out with the next movement packets, before the hit (the server checks where the player looks)
-          if (!underCrosshair({ entity: e })) { say(`${action}: ${e.name ?? e.type} is not under the crosshair (out of reach or behind a block): not ${action === 'attack' ? 'hit' : 'used'}`); return ticks(1); }
+          // the mob moves while the turn goes out: aim again each tick (a moving zombie at 2 blocks was 'not under the crosshair' 20 times
+          // in a row and it died); grass or a flower in the way is punched away first, as a player does
+          const aimY = () => e.y + (e.bh > 0 ? e.bh / 2 : e.type === 'minecraft:player' ? 0.9 : 0.5);
+          let onIt = false, hit = null;
+          for (let k = 0; k < 5 && !onIt; k++) {
+            lookAt({ x: e.x, y: aimY(), z: e.z });
+            await ticks(k ? 1 : 2);   // the turn goes out with the next movement packets, before the hit (the server checks where the player looks)
+            onIt = underCrosshair({ entity: e });
+            if (!onIt) { hit = raycast(); if (hit?.kind === 'block' && /short_grass|tall_grass|fern|_flower|dandelion|poppy|tulip|orchid|allium|bluet|daisy|cornflower|lily_of_the_valley|bush|leaf_litter|dry_grass|sweet_berry|vine|seagrass/.test(world.block(hit.x, hit.y, hit.z)?.name ?? '')) { await bot.act('dig', [String(hit.x), String(hit.y), String(hit.z)]).catch(() => {}); } }
+          }
+          if (!onIt) { const what = hit?.kind === 'block' ? `${(world.block(hit.x, hit.y, hit.z)?.name ?? '?').replace('minecraft:', '')} at ${hit.x} ${hit.y} ${hit.z}` : hit?.kind === 'entity' ? hit.entity.type : 'nothing'; say(`${action}: ${e.name ?? e.type} is not under the crosshair (out of reach or behind a block; the crosshair is on ${what}): not ${action === 'attack' ? 'hit' : 'used'}`); return ticks(1); }
           hitTx(e, action, true);
         } else hitTx(e, action);
         return ticks(4);

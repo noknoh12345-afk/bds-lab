@@ -345,7 +345,7 @@ async function breakAway(b, foes) {
 }
 async function engage(b, maxMs = 12000) {
   if (fighting) return; fighting = true;
-  const t0 = Date.now(); let strafe = 1;
+  const t0 = Date.now(); let strafe = 1, misses = 0;
   try {
     while (Date.now() - t0 < maxMs && me.connected && !b.state().dead) {
       const foes = hostilesNear(b, 7); if (!foes.length) return;
@@ -360,7 +360,13 @@ async function engage(b, maxMs = 12000) {
         await b.act('sprint', ['6']).catch(() => {});
         continue;
       }
-      await b.act('attack', [kind]).catch(() => {});
+      let miss = false; const mt = (l) => { if (/not under the crosshair/.test(l)) miss = true; }; ctx.taps.add(mt);
+      await b.act('attack', [kind]).catch(() => {}); ctx.taps.delete(mt);
+      // (14:14: 20 misses in a row at 2 blocks, standing still while two zombies hit: dead from 18 health) - after three misses, a step
+      //  back and a new angle; after six, away
+      misses = miss ? misses + 1 : 0;
+      if (misses >= 6) { await breakAway(b, foes); misses = 0; return; }
+      if (misses >= 3) { const P = b.state().pos; await b.act('look', [String(((Math.atan2(-(P.x - e.x), P.z - e.z) * 180) / Math.PI + 40 * (strafe = -strafe)).toFixed(0)), '0']).catch(() => {}); await b.act('sprint', ['3']).catch(() => {}); continue; }
       await sleep(350);   // (a full swing: 1.9+ style timing hits harder with a sword)
     }
   } finally { fighting = false; }
@@ -486,6 +492,7 @@ async function goFar() {
 // walk back from the world spawn through the mobs there). Clicking a bed sets it at any time of day on Bedrock.
 // (kept over restarts: the bed stays where it was set down; a death sends it there, not to the world spawn)
 if (!me.spawnSet) { try { me.spawnSet = JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'spawn.json'), 'utf8')); } catch { /* none yet */ } }
+function findBed0() { const b = me.bot; if (!b) return null; const p = b.state().pos; for (let dx = -4; dx <= 4; dx++) for (let dz = -4; dz <= 4; dz++) for (let dy = -2; dy <= 2; dy++) { const x = Math.floor(p.x) + dx, y = Math.floor(p.y) + dy, z = Math.floor(p.z) + dz; if (/(^|:)(\w+_)?bed$/.test(b.world.block(x, y, z)?.name ?? '') && b.placedByMe?.has?.(`${x},${y},${z}`)) return [x, y, z]; } return null; }
 let inBedSpawn = false;
 async function bedSpawn() { if (inBedSpawn) return false; inBedSpawn = true; try { return await bedSpawn0(); } finally { inBedSpawn = false; } }
 async function bedSpawn0() {
@@ -494,7 +501,11 @@ async function bedSpawn0() {
   // inventory (get_bed plans for white wool only)
   const woolCounts = async () => { const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap); await me.bot.act('inv', []).catch(() => {}); ctx.taps.delete(tap);
     const m = new Map(); for (const l of seen) for (const x of l.matchAll(/minecraft:(\w+_wool)\*(\d+)/g)) m.set(x[1], (m.get(x[1]) ?? 0) + Number(x[2])); return m; };
-  let bedOk = /\d+:minecraft:(\w+_)?bed\*/.test(await invList(me.bot));   // (one carried already: straight to setting it down)
+  // a bed of ours already standing somewhere (set down before, not yet taken as the respawn point): back to it rather than a new one
+  { let pb = null; try { pb = JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'bed.json'), 'utf8')); } catch { /* */ }
+    const q = me.bot.state().pos;
+    if (pb && Math.hypot(q.x - pb.x, q.z - pb.z) > 4 && Math.hypot(q.x - pb.x, q.z - pb.z) < 600) { log(`auto: back to our bed at ${pb.x} ${pb.y} ${pb.z} to set it as the respawn point`); await BUILTIN.travel([String(pb.x + 2), String(pb.z)]); } }
+  let bedOk = /\d+:minecraft:(\w+_)?bed\*/.test(await invList(me.bot)) || !!findBed0();   // (one carried already: straight to setting it down)
   for (let i = 0; i < 10 && live() && !bedOk; i++) {
     if ([...(await woolCounts()).values()].some((n) => n >= 3)) { bedOk = await run('craft_bed', 'the bed from three of one colour'); break; }
     await run('kill_sheep 1', 'wool for a bed');
@@ -504,7 +515,7 @@ async function bedSpawn0() {
   // (13:17 the bed was made in the night's hole: the floor of the spot beside it could not be seen from down there, the bed did not go
   //  down - up to the open sky first; then every spot around, not only the first one, each checked)
   if (!openSky(me.bot, me.bot.state().pos)) { await me.bot.act('to_surface', []).catch(() => {}); }
-  const findBed = () => { const p = me.bot.state().pos; for (let dx = -4; dx <= 4; dx++) for (let dz = -4; dz <= 4; dz++) for (let dy = -2; dy <= 2; dy++) { const n = me.bot.world.block(Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz)?.name ?? ''; if (/(^|:)(\w+_)?bed$/.test(n)) return [Math.floor(p.x) + dx, Math.floor(p.y) + dy, Math.floor(p.z) + dz]; } return null; };
+  const findBed = findBed0;   // (our own bed only: never someone else's)
   let bed = findBed();
   for (let k = 0; k < 2 && !bed && live(); k++) {   // (a spot two cells long on open ground beside it: air with air over it, over something solid)
     const q = me.bot.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z);
@@ -514,8 +525,12 @@ async function bedSpawn0() {
     if (!bed && k === 0) { log('auto: no spot for the bed took it here: a few steps on and again'); await gotoFor([String(X + 6), String(Z)], 15000); }
   }
   if (!bed) { log('auto: the bed did not go down'); return false; }
+  try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'bed.json'), JSON.stringify({ x: bed[0], y: bed[1], z: bed[2] })); } catch { /* */ }
   const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap);
   await me.bot.act('useon', bed.map(String)).catch(() => {}); await sleep(1500); ctx.taps.delete(tap);
+  // (only when the server says so: 13:43 the click never went out - 'not under the crosshair' - and 'respawn point set' was logged
+  //  anyway; the death at 14:14 went back to the world spawn)
+  if (!seen.some((l) => /respawnSet|respawn point set/i.test(l))) { log(`auto: the bed at ${bed.join(' ')} did not take as the respawn point (${seen.filter((l) => /useon|bed/.test(l)).slice(-1)[0] ?? 'no answer'})`, { dc: true }); return false; }
   me.spawnSet = { x: bed[0], y: bed[1], z: bed[2] }; try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'spawn.json'), JSON.stringify(me.spawnSet)); } catch { /* */ }
   log(`auto: respawn point set at the bed ${bed.join(' ')}`, { dc: true });
   return true;
