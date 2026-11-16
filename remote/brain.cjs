@@ -484,6 +484,8 @@ async function goFar() {
 }
 // a bed set down out in the work area and clicked: the respawn point is here from then on (a death no longer means the long
 // walk back from the world spawn through the mobs there). Clicking a bed sets it at any time of day on Bedrock.
+// (kept over restarts: the bed stays where it was set down; a death sends it there, not to the world spawn)
+if (!me.spawnSet) { try { me.spawnSet = JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'spawn.json'), 'utf8')); } catch { /* none yet */ } }
 let inBedSpawn = false;
 async function bedSpawn() { if (inBedSpawn) return false; inBedSpawn = true; try { return await bedSpawn0(); } finally { inBedSpawn = false; } }
 async function bedSpawn0() {
@@ -514,7 +516,7 @@ async function bedSpawn0() {
   if (!bed) { log('auto: the bed did not go down'); return false; }
   const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap);
   await me.bot.act('useon', bed.map(String)).catch(() => {}); await sleep(1500); ctx.taps.delete(tap);
-  me.spawnSet = { x: bed[0], y: bed[1], z: bed[2] };
+  me.spawnSet = { x: bed[0], y: bed[1], z: bed[2] }; try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'spawn.json'), JSON.stringify(me.spawnSet)); } catch { /* */ }
   log(`auto: respawn point set at the bed ${bed.join(' ')}`, { dc: true });
   return true;
 }
