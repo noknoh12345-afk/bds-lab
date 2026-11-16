@@ -116,7 +116,11 @@ const deathTap = (l) => {
 ctx.taps.add(deathTap);
 try { me.reviewPending ??= JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'review.json'), 'utf8')); } catch { /* none */ }
 async function reviewWait() { if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) { const b = me.bot; const f = b && me.connected ? hostilesNear(b, 8) : []; if (f.length && !fighting) { fighting = true; try { await breakAway(b, f); } finally { fighting = false; } } else await sleep(2000); } me.abort = false; }   // (fighting set: the fight timer and this wait broke away at once, two ways)
-const nightNow = (b) => { const t = b.time?.(); if (t === null || t === undefined) return false; const d = ((t % 24000) + 24000) % 24000; return d >= AD.nightStart && d <= 23200; };
+// (a thunderstorm is as dark as the night: monsters spawn and the zombies do not burn - 15:13 it opened its hole 'in the morning' of a
+//  thunderstorm and two zombies came in)
+const weatherTap = (l) => { const m = /@\S+ weather: (\w+)/.exec(l); if (m) me.weather = m[1]; };
+ctx.taps.add(weatherTap);
+const nightNow = (b) => { if (me.weather === 'thunder') return true; const t = b.time?.(); if (t === null || t === undefined) return false; const d = ((t % 24000) + 24000) % 24000; return d >= AD.nightStart && d <= 23200; };
 // the night out: dug in if it can be; if not (rock, nothing to build with), it does not stand there idle - it watches and fights
 // (10:24-10:26: the shelter failed, it stood still 3 minutes with a stone sword in the inventory, three zombies, dead)
 function shutIn(b) { const q = b.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z); const solid = (x, y, z) => { const n = b.world.block(x, y, z)?.name ?? 'air'; return !/air|water|lava|grass$|fern|flower|leaf_litter|snow_layer|torch|carpet/.test(n); }; return [[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dz]) => solid(X + dx, Y, Z + dz) && solid(X + dx, Y + 1, Z + dz)) && solid(X, Y + 2, Z); }
@@ -138,6 +142,7 @@ async function sitOutNight(b, stop = () => false) {
   }
 }
 async function unbury(b) {
+  if (hostilesNear(b, 10).length || nightNow(b)) return 0;   // (not with them about, nor in the dark: the lid is what keeps them out)
   const q = b.state().pos, X = Math.floor(q.x), Y = Math.floor(q.y), Z = Math.floor(q.z); let n = 0;
   for (const [x, y, z] of [[X, Y + 2, Z], ...[[1, 0], [-1, 0], [0, 1], [0, -1]].flatMap(([dx, dz]) => [[X + dx, Y, Z + dz], [X + dx, Y + 1, Z + dz], [X + dx, Y + 2, Z + dz]])]) {
     const nm = b.world.block(x, y, z)?.name ?? 'air';
@@ -279,6 +284,29 @@ const BUILTIN = {
     }
     const r = me.bot.state().pos, left = Math.round(Math.hypot(tx - r.x, tz - r.z));
     log(left < 8 ? `travel: arrived ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}` : `travel: called off at ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}, ${left} to go`, { dc: left < 8 });
+  },
+  // restore x y z [x y z ...]: put dirt back into cells this bot dug by someone's builds (the 14:51 hole in the spawn's ground) - the
+  // dirt comes from natural ground well away from any build; placing it back is mending, not building, so the guard does not stop it
+  restore: async (a) => {
+    const cells = []; for (let i = 0; i + 2 < a.length; i += 3) cells.push(a.slice(i, i + 3).map(Number));
+    const b = me.bot; if (!b || !cells.length) return log('restore x y z [x y z ...]');
+    const dirt = () => { const m = /minecraft:dirt\*(\d+)/g; let n = 0, x; const s = b.invText?.() ?? ''; while ((x = m.exec(s))) n += +x[1]; return n; };
+    if (dirt() < cells.length) {
+      const q = b.state().pos, ang = Math.atan2(q.z - cells[0][2], q.x - cells[0][0]) || 0;
+      log(`restore: ${cells.length - dirt()} dirt to fetch from natural ground away from the builds`);
+      await BUILTIN.travel([String(Math.round(cells[0][0] + Math.cos(ang) * 70)), String(Math.round(cells[0][2] + Math.sin(ang) * 70))]);
+      if (guardReason(b)) { log(`restore: still by a build here (${guardReason(b)}): not digging`); return; }
+      await b.act('mine_dirt', [String(cells.length + 2)]).catch(() => {});
+    }
+    if (dirt() < cells.length) return log('restore: no dirt');
+    await BUILTIN.travel([String(cells[0][0] + 2), String(cells[0][2])]);
+    for (const [x, y, z] of cells.sort((p, q) => p[1] - q[1])) {
+      if (!/air|water/.test(b.world.block(x, y, z)?.name ?? '')) continue;
+      await b.act('hold_dirt', []).catch(() => {});
+      await b.act('useon', [String(x), String(y - 1), String(z), 'up']).catch(() => {});
+      await sleep(600);
+      log(`restore: ${x} ${y} ${z}: ${(b.world.block(x, y, z)?.name ?? '?').replace('minecraft:', '')}`, { dc: true });
+    }
   },
   wait: async (a) => sleep(+(a[0] ?? 1000)),
   // join again now (it also does by itself, once, when the server really dropped it)
@@ -626,5 +654,5 @@ try { if (JSON.parse(fsx.readFileSync(AUTOF, 'utf8')).on) { me.queue.push('auto'
 NOW['auto'] = (a) => { if (a[0] === 'stop') return BUILTIN.auto(a); me.queue.push('auto'); };
 
 worker();
-return { command, status, dispose: () => { disposed = true; ctx.taps.delete(deathTap); ctx.taps.delete(deathArmTap); for (const t of timers) clearInterval(t); if (live()) { me.autoGen++; me.abort = true; me.bot?.act('stop', []).catch(() => {}); } autoRun = null; }, guardOn: () => guardOn, setGuard: (v) => { guardOn = v; } };
+return { command, status, dispose: () => { disposed = true; ctx.taps.delete(deathTap); ctx.taps.delete(weatherTap); ctx.taps.delete(deathArmTap); for (const t of timers) clearInterval(t); if (live()) { me.autoGen++; me.abort = true; me.bot?.act('stop', []).catch(() => {}); } autoRun = null; }, guardOn: () => guardOn, setGuard: (v) => { guardOn = v; } };
 };
