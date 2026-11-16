@@ -1719,7 +1719,22 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         if (a[3] === 'hold') { digging = { pos: b, face: faceToward(b), phase: 'start', ticks: 0, hold: true, done() {} }; return ticks(4); }   // keep digging until `release`
         const kb = world.block(b.x, b.y, b.z);
         if (kb ? kb.name === 'minecraft:air' : blockAt && (await blockAt(b))?.id === 'minecraft:air') return say('dig: nothing to dig (air)');
-        if (legit) { await ticks(1); if (!underCrosshair(b)) return say(`dig: ${b.x} ${b.y} ${b.z} is not under the crosshair (out of reach or behind a block): not dug`); }
+        if (legit) {
+          // as a player does: try each face it could be looking at; leaves or a plant in the way are cut first (natural, and what the
+          // crosshair lands on), then aim again (review of 09:42: every log in a tree was "not under the crosshair", behind leaves)
+          await ticks(1);
+          for (let k = 0; k < 8 && !underCrosshair(b); k++) {
+            const faces = [faceToward(b), 0, 1, 2, 3, 4, 5].filter((f, i, a) => a.indexOf(f) === i);
+            let ok = false;
+            for (const f of faces) { lookAt(facePoint(b, f)); if (underCrosshair(b)) { ok = true; break; } }
+            if (ok) { await ticks(1); break; }
+            lookAt(facePoint(b, faceToward(b)));
+            const h = raycast();
+            if (h?.kind === 'block' && /leaves|short_grass|tall_grass|fern|vine|bush|flower|sapling|snow_layer|leaf_litter|azalea|mangrove_roots/.test(h.block?.name ?? '') && (h.x !== b.x || h.y !== b.y || h.z !== b.z)) { await bot.act('dig', [h.x, h.y, h.z].map(String)); continue; }
+            break;
+          }
+          if (!underCrosshair(b)) return say(`dig: ${b.x} ${b.y} ${b.z} is not under the crosshair (out of reach or behind a block): not dug`);
+        }
         const stopAt = num(a[3], 0);   // dig x y z [ticks]: stop (abort) after that many ticks
         const broken = await new Promise((done) => { digging = { pos: b, face: faceToward(b), phase: 'start', ticks: 0, max: 400, broken: false, done, stopAt }; });
         if (!broken) say(stopAt ? 'dig: stopped before breaking' : 'dig: block did not break');

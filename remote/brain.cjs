@@ -84,6 +84,7 @@ async function handStairs(tx, tz, maxSteps = 60) {
 // ---------- learning from each death: a report, and the knob that cause points at turned one notch (run/adapt.json) ----------
 const ADAPTF = require('node:path').join(ctx.RUN, 'adapt.json');
 const AD = Object.assign({ drop: 4, breakAwayHp: 6, engageR: 5, nightStart: 12800, avoidWater: false, deaths: {} }, (() => { try { return JSON.parse(require('node:fs').readFileSync(ADAPTF, 'utf8')); } catch { return {}; } })());
+AD.breakAwayHp = Math.min(AD.breakAwayHp, 8);   // (an earlier rule let it grow to 12: it fled from every fight)
 const saveAD = () => { try { require('node:fs').writeFileSync(ADAPTF, JSON.stringify(AD, null, 1)); } catch { /* */ } };
 function learn(cause, report) {
   AD.deaths[cause] = (AD.deaths[cause] ?? 0) + 1;
@@ -91,7 +92,9 @@ function learn(cause, report) {
   if (/fall/.test(cause)) AD.drop = Math.max(2, AD.drop - 1);                                   // fell: smaller drops count as cliffs
   if (/drown/.test(cause)) AD.avoidWater = true;                                                // drowned (or drowned mobs): keep out of water
   if (/arrow|skeleton|stray|bogged|pillager/.test(cause)) AD.engageR = Math.min(12, AD.engageR + 2);   // shot: go for shooters sooner
-  if (/mob|zombie|spider|husk|drowned|creeper/.test(cause)) AD.breakAwayHp = Math.min(12, AD.breakAwayHp + 2);   // beaten: break away earlier
+  // beaten in melee: break away earlier only when it had a weapon (unarmed, running from a zombie only gets it hit in the back:
+  // review of 09:42); the cap stays low enough that it still fights
+  if (/mob|zombie|spider|husk|drowned|creeper/.test(cause) && report.held) AD.breakAwayHp = Math.min(8, AD.breakAwayHp + 1);
   if (report.night) AD.nightStart = Math.max(11800, AD.nightStart - 300);                      // died at night: dig in earlier
   saveAD();
   const now = JSON.stringify({ drop: AD.drop, breakAwayHp: AD.breakAwayHp, engageR: AD.engageR, nightStart: AD.nightStart, avoidWater: AD.avoidWater });
