@@ -13,6 +13,9 @@
 // Online-mode servers: Xbox sign-in by a microsoft.com/link code (printed, written to status.json, sent to Discord), once;
 // the account is kept in run/auth/. NetherNet or RakNet: found by asking the server (GET /v1/join on its TCP port).
 const fs = require('node:fs');
+// the terminal must never stop the bot: a paused terminal (Ctrl+S, a long selection) blocks a write to it, and a blocked write stopped
+// the whole bot for hours at 11:09 (nothing read, nothing written, not even the watchdog's own line). Writes to it are queued instead.
+try { for (const s of [process.stdout, process.stderr]) if (s.isTTY) s._handle?.setBlocking?.(false); } catch { /* */ }
 const path = require('node:path');
 const http = require('node:http');
 const readline = require('node:readline');

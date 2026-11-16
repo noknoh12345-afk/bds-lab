@@ -34,7 +34,7 @@ while true; do
   set +e
   "$NODE" bot.cjs "$@" & pid=$!
   ( while kill -0 $pid 2>/dev/null; do sleep 30; f=run/status.json
-      if [ -f $f ] && [ $(( $(date +%s) - $(stat -f %m $f 2>/dev/null || stat -c %Y $f) )) -gt 180 ]; then echo "watchdog: the bot froze: starting it again"; kill -9 $pid; fi
+      if [ -f $f ] && [ $(( $(date +%s) - $(stat -f %m $f 2>/dev/null || stat -c %Y $f) )) -gt 180 ]; then kill -9 $pid; echo "$(date +%H:%M:%S) watchdog: the bot froze: started again" >> run/out.log; fi
     done ) &
   wd=$!
   wait $pid; code=$?; kill $wd 2>/dev/null
