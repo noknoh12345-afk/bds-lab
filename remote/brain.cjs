@@ -115,7 +115,7 @@ const deathTap = (l) => {
 };
 ctx.taps.add(deathTap);
 try { me.reviewPending ??= JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'review.json'), 'utf8')); } catch { /* none */ }
-async function reviewWait() { if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) { const b = me.bot; const f = b && me.connected ? hostilesNear(b, 8) : []; if (f.length) await breakAway(b, f); else await sleep(2000); } me.abort = false; }
+async function reviewWait() { if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) { const b = me.bot; const f = b && me.connected ? hostilesNear(b, 8) : []; if (f.length && !fighting) { fighting = true; try { await breakAway(b, f); } finally { fighting = false; } } else await sleep(2000); } me.abort = false; }   // (fighting set: the fight timer and this wait broke away at once, two ways)
 const nightNow = (b) => { const t = b.time?.(); if (t === null || t === undefined) return false; const d = ((t % 24000) + 24000) % 24000; return d >= AD.nightStart && d <= 23200; };
 // the night out: dug in if it can be; if not (rock, nothing to build with), it does not stand there idle - it watches and fights
 // (10:24-10:26: the shelter failed, it stood still 3 minutes with a stone sword in the inventory, three zombies, dead)
