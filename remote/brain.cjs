@@ -327,6 +327,16 @@ async function engage(b, maxMs = 12000) {
     }
   } finally { fighting = false; }
 }
+// a goal verb under way is cut short (cancel) when the night comes with no armour on, or a hostile closes in that is in sight:
+// then this brain deals with it (dig in / fight) and the step is tried again (review of death 09:10: a cow hunt went on into the
+// night, a creeper was run from and a drowned killed it with a stone sword unused in the inventory)
+timers.push(setInterval(() => {
+  const b = me.bot; if (!b || !me.connected || fighting || me.interrupt || b.state().dead) return;
+  if (!/^auto: (get|kill|mine)_/.test(String(me.busy ?? ''))) return;
+  if (me.dim === 'overworld' && nightNow(b) && !me.armored && !guardReason(b)) { me.interrupt = 'night'; log('auto: night falls mid-task: stopping to dig in', { dc: true }); b.cancel?.(); return; }
+  const f = hostilesNear(b, 4).filter((x) => !/creeper/.test(x.e.type) || x.d < 3);
+  if (f.length) { me.interrupt = 'fight'; b.cancel?.(); }
+}, 400));
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || b.state().dead) return;
   if (/^auto: (get|kill|mine|fight|stronghold)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself)
@@ -370,6 +380,11 @@ async function run(cmd, why) {   // one command, as the worker would: guard firs
   const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap);
   try { await (BUILTIN[v] ? BUILTIN[v](a) : me.bot.act(v, a)); } catch (e) { ok = false; log(`auto: "${cmd}" failed: ${e.message}`); }
   finally { if (watch) clearInterval(watch); ctx.taps.delete(tap); me.busy = null; }
+  if (me.interrupt) {
+    const why = me.interrupt; me.interrupt = null; ok = false;
+    if (why === 'night') { await me.bot.act('shelter', []).catch(() => {}); while (nightNow(me.bot) && me.connected && !disposed && !me.reviewPending) await sleep(5000); log('auto: morning: back to work'); }
+    if (why === 'fight') await engage(me.bot);
+  }
   if (seen.some((l) => /: (gave up|failed|could not|cannot|no way|not found|nothing to)|did not break|not under the crosshair/i.test(l))) ok = false;
   log(`auto: ${ok ? 'done' : 'not done'} "${cmd}"${why ? ` (${why})` : ''} in ${Math.round((Date.now() - t) / 1000)}s`, { dc: ok });
   return ok && !me.abort;
@@ -407,7 +422,8 @@ async function safeStart() {
   const b = me.bot; if (!b || me.dim !== 'overworld' || guardReason(b)) return;
   const lastInv = nightNow(b) ? await invList(b) : '';
   if (!openSky(b, b.state().pos)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
-  if (nightNow(b) && !WEAPONS.some((w) => lastInv.includes('minecraft:' + w + '*'))) { log('auto: night and nothing to fight with: dug in until morning', { dc: true }); await b.act('shelter', []).catch(() => {}); while (nightNow(b) && me.connected && !disposed) await sleep(5000); }
+  me.armored = /_chestplate\*/.test(lastInv || (await invList(b)));
+  if (nightNow(b) && !me.armored) { log('auto: night and no armour: dug in until morning', { dc: true }); await b.act('shelter', []).catch(() => {}); while (nightNow(b) && me.connected && !disposed) await sleep(5000); }
 }
 async function goFar() {
   await reviewWait();
