@@ -161,7 +161,8 @@ async function walkTo(tx, tz, maxMs = 600000) {
           stuckFor++; await b.act('jump', []).catch(() => {});
           // still nowhere after a few tries and nobody's build near: dig the way ahead (natural ground only), as a person would
           if (stuckFor >= 3 && !guardReason(b)) {
-            const ry = ((Math.atan2(-dx, dz) * 180) / Math.PI) * Math.PI / 180, fx = Math.floor(p.x - Math.sin(ry) * 1.1), fz = Math.floor(p.z + Math.cos(ry) * 1.1);
+            const ry = ((Math.atan2(-dx, dz) * 180) / Math.PI) * Math.PI / 180; let fx = Math.floor(p.x - Math.sin(ry) * 1.1), fz = Math.floor(p.z + Math.cos(ry) * 1.1);
+            if (fx === Math.floor(p.x) && fz === Math.floor(p.z)) { fx = Math.floor(p.x - Math.sin(ry) * 1.8); fz = Math.floor(p.z + Math.cos(ry) * 1.8); }   // (1.1 ahead was still its own cell at 157 129: 'not under the crosshair' x8)
             for (const y of [Math.floor(p.y) + 1, Math.floor(p.y)]) { const n = b.world.block(fx, y, fz)?.name ?? ''; if (n && !/air|water|lava|bedrock/.test(n)) await b.act('dig', [String(fx), String(y), String(fz)]).catch(() => {}); }
             turn = 0;
           } else turn = (stuckFor % 2 ? 1 : -1) * Math.min(150, 40 * stuckFor);
@@ -170,7 +171,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
         last = p; lastT = Date.now();
         if (++me.walkTick % 10 === 0) log(`travel: at ${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.z.toFixed(0)}, ${Math.round(Math.hypot(dx, dz))} to go${stuckFor ? ` (stuck ${stuckFor})` : ''}`);
         if (stuckFor === 6 && !guardReason(b) && !openSky(b, p)) { log('travel: stuck under the ground, going up first'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(tx, tz); }
-        if (stuckFor >= 10) return false;
+        if (stuckFor >= 7) { log('travel: the straight walk is stuck: over to the path search'); return false; }   // (travel's walk_xz found the way that the straight walk never did)
       }
     }
   } finally { if (me.walking === ctx) me.walking = null; await b.act('sprint', ['off']).catch(() => {}); }
@@ -210,10 +211,11 @@ const BUILTIN = {
   // a long walk in steps over the chunks the client has (goto alone only paths through what it already knows)
   travel: async (a) => {
     const tx = +a[0], tz = +a[1];
+    if (me.reviewPending) { log('travel: a death waits for its review: not walking now'); return; }
     if (await walkTo(tx, tz)) { const r = me.bot.state().pos; log(`travel: arrived ${r.x.toFixed(0)} ${r.y.toFixed(0)} ${r.z.toFixed(0)}`, { dc: true }); return; }
     if (me.abort || disposed) return;
     const deaths0 = me.deaths;
-    for (let i = 0; i < 400 && !me.abort && !disposed && me.deaths === deaths0; i++) {
+    for (let i = 0; i < 400 && !me.abort && !disposed && me.deaths === deaths0 && !me.reviewPending; i++) {
       while (!me.connected || !me.bot) { if (me.abort || disposed) return; await sleep(1000); }   // dropped on the way: carry on once back in
       const q = me.bot.state().pos, dx = tx - q.x, dz = tz - q.z, d = Math.hypot(dx, dz);
       if (d < 4) break;
@@ -315,8 +317,11 @@ async function breakAway(b, foes) {
   const P = b.state().pos; let ax = 0, az = 0; for (const f of foes) { ax += P.x - f.e.x; az += P.z - f.e.z; }
   const yaw = (Math.atan2(-ax, az) * 180) / Math.PI;
   log(`fight: ${me.armed ? `health ${me.hp}` : 'unarmed'}: breaking away from ${foes.length} (${foes.map((f) => f.e.type.replace('minecraft:', '')).join(' ')})`);
-  await b.act('look', [yaw.toFixed(0), '0']).catch(() => {});
+  // in water (a drowned's home): looking level and sprinting barely moves; head up and swim (jump) away, toward air
+  const wet = /water/.test(b.world.block(Math.floor(P.x), Math.floor(P.y), Math.floor(P.z))?.name ?? '') || /water/.test(b.world.block(Math.floor(P.x), Math.floor(P.y) + 1, Math.floor(P.z))?.name ?? '');
+  await b.act('look', [yaw.toFixed(0), wet ? '-35' : '0']).catch(() => {});
   await b.act('sprint', ['on']).catch(() => {}); await b.act('option', ['autojump', 'on']).catch(() => {});
+  if (wet) { for (let i = 0; i < 8; i++) { await b.act('jump', []).catch(() => {}); await sleep(250); } }
   await sleep(me.armed ? 2500 : 5000); await b.act('sprint', ['off']).catch(() => {});
   if (me.armed) await b.act('eat', []).catch(() => {});
 }
@@ -448,6 +453,7 @@ async function goFar() {
   if (me.spawnSet && Math.hypot(p.x - me.spawnSet.x, p.z - me.spawnSet.z) < 64) return;
   log(`auto: near the spawn (${Math.round(p.x)} ${Math.round(p.z)}): out to the work area ${WORK.join(' ')} (by ${WAYOUT.join(' ')})`, { dc: true });
   for (let i = 0; i < 5 && live(); i++) {
+    await reviewWait(); if (!(await waitIn())) return;
     me.abort = false;
     const q0 = me.bot.state().pos;
     if (Math.hypot(q0.x, q0.z) < 60 && q0.z < WAYOUT[1] - 10) await BUILTIN.travel([String(WAYOUT[0]), String(WAYOUT[1])]);
