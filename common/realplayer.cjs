@@ -2221,7 +2221,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           });
           if (ok) { plan = { r, cells }; break; }
         }
-        if (!plan) return say(tooBig && !table ? `craft: ${want} needs a crafting table (open x y z of one first)` : `craft: missing ingredients for ${want} (needs ${outs[0].ings.map((g) => `${g.count * times} ${g.tag ? '#' + g.tag : g.name}`).join(', ')})`);
+        if (!plan) return say(tooBig && !table ? `craft: ${want} needs a crafting table (open x y z of one first)` : `craft: missing ingredients for ${want} (needs ${outs[0].ings.map((g) => `${g.count * times} ${g.tag ? '#' + g.tag : g.name}`).join(', ')})${outs.length > 1 ? ` [${outs.length} recipes; with what is carried: ${outs.filter((r) => r.ings.every((g) => g.tag || have.some((h) => h.name === g.name))).map((r) => r.ings.map((g) => (g.tag ? '#' + g.tag : g.name) + (g.meta ? ':' + g.meta : '') + 'x' + g.count).join('+') + ` ${r.w ?? '-'}x${r.h ?? '-'} raw ${r.raw.length}`).slice(0, 3).join(' | ') || 'none'}]` : ''}`);
         const total = plan.r.out.count * times;
         const usedUp = new Map();
         for (const c of plan.cells) for (const u of c.src) usedUp.set(u.i, (usedUp.get(u.i) ?? 0) + u.n);
