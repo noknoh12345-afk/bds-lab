@@ -468,7 +468,8 @@ async function engage(b, maxMs = 12000) {
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || me.interrupt || b.state().dead) return;
   if (!/^auto: (get|kill|mine)_/.test(String(me.busy ?? ''))) return;
-  if (me.dim === 'overworld' && nightNow(b) && !me.armored && !guardReason(b)) { me.interrupt = 'night'; log('auto: night falls mid-task: stopping to dig in', { dc: true }); b.cancel?.(); return; }
+  if (me.dim === 'overworld' && nightNow(b) && !me.armored && !guardReason(b) && openSky(b, b.state().pos)) { me.interrupt = 'night';   // (underground the night does not matter: it mines on)
+    log('auto: night falls mid-task: stopping to dig in', { dc: true }); b.cancel?.(); return; }
   const f = hostilesNear(b, 4).filter((x) => !/creeper/.test(x.e.type) || x.d < 3);
   if (f.length) { me.interrupt = 'fight'; b.cancel?.(); }
 }, 400));
@@ -486,14 +487,20 @@ const skipUntil = new Map();
 // the dragon already gone → the elytra (end gateway, end city); afterwards diamonds, as many as can be mined, until ENDS_AT.
 // Every step is retried; a death is followed by fetching the things back; a guard stop by moving away first.
 const ENDS_AT = cfg.autoUntil ?? '08:00';   // local time to keep going until (after the goal)
+// worked back from the goal (the dragon dead): the End needs ~12 eyes = 12 ender pearls + 6 blaze rods; the rods need the Nether =
+// a portal (bucket + flint and steel on a lava pool) and a fortress fought through (iron sword, shield, chestplate); the dragon itself
+// goes fastest to beds (they explode in the End on Bedrock). So: iron first - mined underground, where the night does not reach it -
+// then only as much food as the trip needs, then the Nether, pearls, the stronghold. (Until 15:50 the order had 10 cooked meat of
+// one kind before any iron: three nights in a row cut the hunt short and it never got past food.)
 const STEPS = [
   { name: 'stone tools', cmds: ['get_wooden_sword', 'get_stone_pickaxe', 'get_stone_sword', 'get_stone_axe'], has: ['stone_pickaxe', 'stone_sword'] },   // (a weapon before anything: every death so far was with nothing in hand)
   { name: 'a bed as the spawn point (out here, not among the builds)', special: 'bedspawn', optional: true },
-  { name: 'food', cmds: ['get_cooked_beef 10', 'get_cooked_porkchop 10', 'get_cooked_mutton 10', 'get_cooked_chicken 10', 'get_bread 10'], food: 8 },
-  { name: 'iron gear', cmds: ['get_iron_pickaxe', 'get_iron_sword', 'get_bucket', 'get_shield', 'get_iron_chestplate', 'get_iron_leggings', 'get_iron_helmet', 'get_iron_boots'], has: ['iron_pickaxe', 'iron_sword', 'bucket'] },
+  { name: 'iron: pickaxe, bucket, sword, shield, chestplate', cmds: ['get_iron_pickaxe', 'get_bucket', 'get_iron_sword', 'get_shield', 'get_iron_chestplate'], has: ['iron_pickaxe', 'bucket', 'iron_sword'] },
+  { name: 'food (enough for the trip, any kind)', cmds: ['get_cooked_beef 6', 'get_cooked_porkchop 6', 'get_cooked_mutton 6', 'get_cooked_chicken 6', 'get_bread 6'], food: 8, optional: true },
   { name: 'flint and steel', cmds: ['get_flint_and_steel'], has: ['flint_and_steel'] },
-  { name: 'beds (dragon)', cmds: ['get_white_bed 4'], optional: true },
-  { name: 'eyes of ender', cmds: ['get_ender_eye 14'], has: ['ender_eye'] },
+  { name: 'iron: the rest of the armour', cmds: ['get_iron_helmet', 'get_iron_leggings', 'get_iron_boots'], optional: true },
+  { name: 'eyes of ender (the Nether: blaze rods; pearls)', cmds: ['get_ender_eye 12'], has: ['ender_eye'] },
+  { name: 'beds for the dragon', cmds: ['get_white_bed 4'], optional: true },
   { name: 'stronghold → the end', cmds: ['stronghold'], dim: 'the_end' },
   { name: 'the dragon', special: 'dragon' },
 ];
@@ -559,7 +566,7 @@ async function safeStart() {
   //  breathe: frozen until the watchdog)
   if (!me.spawnSet && !inBedSpawn && !nightNow(b) && /\d+:minecraft:(\w+_)?bed\*/.test(await invList(b))) { log('auto: a bed carried and no respawn point yet: setting it down first'); await bedSpawn(); }
   const lastInv = nightNow(b) ? await invList(b) : '';
-  if (!openSky(b, b.state().pos)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
+  if (!openSky(b, b.state().pos) && !nightNow(b)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
   me.armored = /_chestplate\*/.test(lastInv || (await invList(b)));
   if (nightNow(b) && !me.armored) { log('auto: night and no armour: dug in until morning', { dc: true }); await sitOutNight(b); }
 }
