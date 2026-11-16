@@ -185,7 +185,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
             turn = 0;
           } else turn = (stuckFor % 2 ? 1 : -1) * Math.min(150, 40 * stuckFor);
         }
-        else { stuckFor = 0; turn = Math.abs(turn) < 10 ? 0 : turn * 0.5; }
+        else { if (Date.now() - bestT < 4000) stuckFor = 0; turn = Math.abs(turn) < 10 ? 0 : turn * 0.5; }   // (moving without getting closer does not clear it: 14:25 it shuffled at -7 66 4 for minutes, 'stuck 2' over and over)
         last = p; lastT = Date.now();
         if (++me.walkTick % 10 === 0) log(`travel: at ${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.z.toFixed(0)}, ${Math.round(Math.hypot(dx, dz))} to go${stuckFor ? ` (stuck ${stuckFor})` : ''}`);
         if (stuckFor === 6 && !guardReason(b) && !openSky(b, p)) { log('travel: stuck under the ground, going up first'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(tx, tz); }
@@ -484,7 +484,7 @@ async function goFar() {
     me.abort = false;
     const q0 = me.bot.state().pos;
     if (Math.hypot(q0.x, q0.z) < 60 && q0.z < WAYOUT[1] - 10) await BUILTIN.travel([String(WAYOUT[0]), String(WAYOUT[1])]);
-    await BUILTIN.travel([String(WORK[0]), String(WORK[1])]);
+    { let pb = null; try { pb = JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'bed.json'), 'utf8')); } catch { /* */ } await BUILTIN.travel(pb ? [String(pb.x + 2), String(pb.z)] : [String(WORK[0]), String(WORK[1])]); }   // (our bed's place is the work area once there is one)
     const q = me.bot.state().pos; if (Math.hypot(q.x, q.z) >= FAR) return;
   }
 }
