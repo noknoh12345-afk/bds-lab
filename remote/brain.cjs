@@ -299,7 +299,7 @@ function deathArmTap(l) { if (/ died \(/.test(l)) me.armed = false; }
 const inSight = (b, P, x) => { const ex = P.x, ey = P.y + 1.62, ez = P.z, tx = x.x, ty = x.y + 0.9, tz = x.z, n = Math.ceil(Math.hypot(tx - ex, ty - ey, tz - ez) * 3);
   for (let i = 1; i < n; i++) { const f = i / n, nm = b.world.block(Math.floor(ex + (tx - ex) * f), Math.floor(ey + (ty - ey) * f), Math.floor(ez + (tz - ez) * f))?.name ?? 'minecraft:air'; if (!/air|water|grass|fern|flower|leaf_litter|snow_layer|vine|torch|sapling|bush/.test(nm)) return false; } return true; };
 const hostilesNear = (b, r) => { const P = b.state().pos; return [...b.entities.values()].filter((x) => HOSTILE.test(x.type ?? '') && Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) < r && inSight(b, P, x)).map((x) => ({ e: x, d: Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) })).sort((p, q) => p.d - q.d); };
-async function invList(b) { const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap); await b.act('inv', []).catch(() => {}); ctx.taps.delete(tap); return seen.join(' '); }
+async function invList(b) { if (b.invText) { try { return b.invText(); } catch { /* fall back */ } } const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap); await b.act('inv', []).catch(() => {}); ctx.taps.delete(tap); return seen.join(' '); }
 async function armUp(b) {
   if (Date.now() - lastWeaponCheck < 30000) return; lastWeaponCheck = Date.now();
   const inv = await invList(b), w = WEAPONS.find((x) => inv.includes('minecraft:' + x + '*'));
