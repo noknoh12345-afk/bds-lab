@@ -86,6 +86,7 @@ async function connect() {
     log(l);
     for (const t of taps) { try { t(l); } catch { /* */ } }
     if (/ died \(|disconnected|kicked|error: /.test(l)) discord(l);
+    if (/server_id_conflict/.test(l)) me.lastConflict = Date.now();
     if (/ died \(/.test(l)) { me.deaths++; setTimeout(() => me.bot?.act('respawn', []).catch(() => {}), 1500); }
     const m = /^@\S+ %death\.\S+ \[(\S+)\]/.exec(l); if (m) me.account = m[1];
   };
@@ -116,8 +117,16 @@ async function connect() {
 async function joinOnce() {
   // the server may be down for a while (a restart, an update): keep trying every cfg.joinEveryMin minutes (default 30), never give up
   const every = (cfg.joinEveryMin ?? 30) * 60000;
+  // (server_id_conflict = the server still holds our last session, e.g. just after our own restart: not a server that is down -
+  //  it lets go within a minute or two, so up to 3 short retries 90 s apart before the 30-minute rhythm)
+  let conflicts = 0;
   for (let i = 0; !me.connected && !me.quitting; i++) {
-    try { await connect(); } catch (e) { log(`join failed: ${e.message}: next try in ${Math.round(every / 60000)} min`, { dc: true }); await sleep(every); }
+    try { await connect(); } catch (e) {
+      const conflict = Date.now() - (me.lastConflict ?? 0) < 15000 || /server_id_conflict/.test(String(e.message));
+      const wait = conflict && conflicts++ < 3 ? 90000 : every;
+      log(`join failed: ${e.message}${conflict ? ' (server_id_conflict: the old session is still held)' : ''}: next try in ${wait < 60000 * 2 ? Math.round(wait / 1000) + ' s' : Math.round(wait / 60000) + ' min'}`, { dc: true });
+      me.kicked = null; await sleep(wait);
+    }
   }
 }
 setInterval(async () => {
@@ -174,4 +183,5 @@ process.on('unhandledRejection', (e) => log('error: ' + (e?.message ?? e)));
 process.on('uncaughtException', (e) => log('error: ' + (e?.stack ?? e).toString().split('\n').slice(0, 3).join(' | ')));
 loadBrain();
 log(`bdslab remote bot: ${cfg.name} → ${cfg.host}:${cfg.port} (type "help")`, { dc: true });
-joinOnce();
+// after our own restart (exit 75) the server may still hold the old session for a few seconds: give it 20 s first
+(async () => { if (process.env.LAB_RESTARTED || fs.existsSync(path.join(RUN, 'auto.json'))) await sleep(20000); joinOnce(); })();
