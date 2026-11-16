@@ -110,11 +110,12 @@ const deathTap = (l) => {
   lastFoes = '';
   // after every death the run waits for a review (cfg.reviewDeaths, default on): the death is looked into and the bot improved
   // before it goes on (`resume`); meanwhile it only defends itself where it stands
-  if (cfg.reviewDeaths !== false) { me.reviewPending = { at: new Date().toISOString(), death: me.deaths + 1, cause: m[1] }; try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'review.json'), JSON.stringify(me.reviewPending)); } catch { /* */ } log('auto: paused for a review of this death (resume when improved)', { dc: true }); }
+  if (cfg.reviewDeaths !== false && me.reviewPending) { me.reviewPending.more = (me.reviewPending.more ?? 0) + 1; try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'review.json'), JSON.stringify(me.reviewPending)); } catch { /* */ } }
+  else if (cfg.reviewDeaths !== false) { me.reviewPending = { at: new Date().toISOString(), death: me.deaths + 1, cause: m[1] }; try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'review.json'), JSON.stringify(me.reviewPending)); } catch { /* */ } log('auto: paused for a review of this death (resume when improved)', { dc: true }); }
 };
 ctx.taps.add(deathTap);
 try { me.reviewPending ??= JSON.parse(require('node:fs').readFileSync(require('node:path').join(ctx.RUN, 'review.json'), 'utf8')); } catch { /* none */ }
-async function reviewWait() { if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) await sleep(3000); me.abort = false; }
+async function reviewWait() { if (!me.reviewPending) return; me.abort = true; me.bot?.cancel?.(); while (me.reviewPending && !disposed) { const b = me.bot; const f = b && me.connected ? hostilesNear(b, 8) : []; if (f.length) await breakAway(b, f); else await sleep(2000); } me.abort = false; }
 const nightNow = (b) => { const t = b.time?.(); if (t === null || t === undefined) return false; const d = ((t % 24000) + 24000) % 24000; return d >= AD.nightStart && d <= 23200; };
 async function walkTo(tx, tz, maxMs = 600000) {
   me.walkTick ??= 0;
@@ -145,7 +146,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
       if (builtTurns >= 11 && !guardReason(b)) builtTurns = 0; else if (builtTurns < 11) builtTurns = 0;
       // the night out in the open, no armour: dug in until morning (the way RTA players sit out the night), then on
       if (nightNow(b) && me.dim === 'overworld' && !guardReason(b)) { await b.act('sprint', ['off']).catch(() => {}); log('travel: night: digging in until morning', { dc: true }); await b.act('shelter', []).catch(() => {}); while (nightNow(b) && me.connected && !me.abort && !disposed) await sleep(5000); log('travel: morning: on'); last = b.state().pos; lastT = Date.now(); continue; }
-      if (hostilesNear(b, AD.engageR).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); last = b.state().pos; lastT = Date.now(); continue; }
+      if (me.armed && hostilesNear(b, AD.engageR).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); last = b.state().pos; lastT = Date.now(); continue; }   // (unarmed: it keeps running on its way)
       await b.act('look', [String(yaw.toFixed(1)), '0']).catch(() => {});
       await b.act('sprint', ['on']).catch(() => {});
       await sleep(400);
@@ -289,6 +290,11 @@ timers.push(setInterval(() => {
 // and eat. Runs whenever no goal verb is fighting for itself (get_/kill_ have their own reflexes), and inside long walks.
 const WEAPONS = ['netherite_sword', 'diamond_sword', 'iron_sword', 'stone_sword', 'wooden_sword', 'diamond_axe', 'iron_axe', 'stone_axe', 'wooden_axe'];
 let fighting = false, lastWeaponCheck = 0;
+// armed or not, from the inventory every 15 s and at once after a death (nothing is carried after one)
+me.armed = me.armed ?? false;
+timers.push(setInterval(async () => { const b = me.bot; if (!b || !me.connected || fighting) return; const inv = await invList(b); me.armed = WEAPONS.some((w) => inv.includes('minecraft:' + w + '*')); me.armored = /_chestplate\*/.test(inv); }, 15000));
+ctx.taps.add(deathArmTap);
+function deathArmTap(l) { if (/ died \(/.test(l)) me.armed = false; }
 // in sight: nothing solid on the straight line from the eyes to its middle (a mob behind a wall is not fought: it cannot be reached)
 const inSight = (b, P, x) => { const ex = P.x, ey = P.y + 1.62, ez = P.z, tx = x.x, ty = x.y + 0.9, tz = x.z, n = Math.ceil(Math.hypot(tx - ex, ty - ey, tz - ez) * 3);
   for (let i = 1; i < n; i++) { const f = i / n, nm = b.world.block(Math.floor(ex + (tx - ex) * f), Math.floor(ey + (ty - ey) * f), Math.floor(ez + (tz - ez) * f))?.name ?? 'minecraft:air'; if (!/air|water|grass|fern|flower|leaf_litter|snow_layer|vine|torch|sapling|bush/.test(nm)) return false; } return true; };
@@ -303,11 +309,11 @@ async function armUp(b) {
 async function breakAway(b, foes) {
   const P = b.state().pos; let ax = 0, az = 0; for (const f of foes) { ax += P.x - f.e.x; az += P.z - f.e.z; }
   const yaw = (Math.atan2(-ax, az) * 180) / Math.PI;
-  log(`fight: health ${me.hp}: breaking away from ${foes.length} (${foes.map((f) => f.e.type.replace('minecraft:', '')).join(' ')})`);
+  log(`fight: ${me.armed ? `health ${me.hp}` : 'unarmed'}: breaking away from ${foes.length} (${foes.map((f) => f.e.type.replace('minecraft:', '')).join(' ')})`);
   await b.act('look', [yaw.toFixed(0), '0']).catch(() => {});
   await b.act('sprint', ['on']).catch(() => {}); await b.act('option', ['autojump', 'on']).catch(() => {});
-  await sleep(2500); await b.act('sprint', ['off']).catch(() => {});
-  await b.act('eat', []).catch(() => {});
+  await sleep(me.armed ? 2500 : 5000); await b.act('sprint', ['off']).catch(() => {});
+  if (me.armed) await b.act('eat', []).catch(() => {});
 }
 async function engage(b, maxMs = 12000) {
   if (fighting) return; fighting = true;
@@ -315,7 +321,8 @@ async function engage(b, maxMs = 12000) {
   try {
     while (Date.now() - t0 < maxMs && me.connected && !b.state().dead) {
       const foes = hostilesNear(b, 7); if (!foes.length) return;
-      if (me.hp !== null && me.hp <= AD.breakAwayHp) { await breakAway(b, foes); return; }
+      // nothing to fight with: no fist fight against a zombie (20 health against 1 a punch) - run, sprinting, they are slower
+      if (!me.armed || (me.hp !== null && me.hp <= AD.breakAwayHp)) { await breakAway(b, foes); return; }
       const { e, d } = foes[0], kind = e.type.replace('minecraft:', '');
       await armUp(b);
       if (/creeper/.test(kind) && d < 3.2) { await b.act('attack', [kind]).catch(() => {}); await b.act('look', [String((((Math.atan2(-(b.state().pos.x - e.x), b.state().pos.z - e.z)) * 180) / Math.PI).toFixed(0)), '0']).catch(() => {}); await b.act('sprint', ['on']).catch(() => {}); await sleep(1200); await b.act('sprint', ['off']).catch(() => {}); continue; }
@@ -536,5 +543,5 @@ try { if (JSON.parse(fsx.readFileSync(AUTOF, 'utf8')).on) { me.queue.push('auto'
 NOW['auto'] = (a) => { if (a[0] === 'stop') return BUILTIN.auto(a); me.queue.push('auto'); };
 
 worker();
-return { command, status, dispose: () => { disposed = true; ctx.taps.delete(deathTap); for (const t of timers) clearInterval(t); if (live()) { me.autoGen++; me.abort = true; me.bot?.act('stop', []).catch(() => {}); } autoRun = null; }, guardOn: () => guardOn, setGuard: (v) => { guardOn = v; } };
+return { command, status, dispose: () => { disposed = true; ctx.taps.delete(deathTap); ctx.taps.delete(deathArmTap); for (const t of timers) clearInterval(t); if (live()) { me.autoGen++; me.abort = true; me.bot?.act('stop', []).catch(() => {}); } autoRun = null; }, guardOn: () => guardOn, setGuard: (v) => { guardOn = v; } };
 };
