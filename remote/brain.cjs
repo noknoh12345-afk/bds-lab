@@ -294,7 +294,10 @@ const BUILTIN = {
     if (dirt() < cells.length) {
       const q = b.state().pos, ang = Math.atan2(q.z - cells[0][2], q.x - cells[0][0]) || 0;
       log(`restore: ${cells.length - dirt()} dirt to fetch from natural ground away from the builds`);
-      await BUILTIN.travel([String(Math.round(cells[0][0] + Math.cos(ang) * 70)), String(Math.round(cells[0][2] + Math.sin(ang) * 70))]);
+      for (const dist of [70, 110, 150, 200, 260]) {   // (out until no build is within the guard's reach: the spawn has them all around)
+        await BUILTIN.travel([String(Math.round(cells[0][0] + Math.cos(ang) * dist)), String(Math.round(cells[0][2] + Math.sin(ang) * dist))]);
+        if (!guardReason(b)) break;
+      }
       if (guardReason(b)) { log(`restore: still by a build here (${guardReason(b)}): not digging`); return; }
       await b.act('mine_dirt', [String(cells.length + 2)]).catch(() => {});
     }
