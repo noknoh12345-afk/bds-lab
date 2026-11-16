@@ -609,6 +609,9 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     for (const r of [...(p.shaped_recipes ?? []), ...(p.shapeless_recipes ?? [])]) if (r.block === 'cartography_table' && r.output?.[0]) (special.cartography ??= []).push({ net: r.network_id, out: r.output[0], input: r.input, id: r.recipe_id });
     for (const r of [...(p.shaped_recipes ?? []), ...(p.shapeless_recipes ?? [])]) {
       if (r.block !== 'crafting_table' || !r.output?.[0]) continue;
+      // (some names come as 'minecraft:black_wool:0' - the data value in the name: no carried item is named so, and no bed was ever
+      //  crafted from 3 wool of a colour; the value goes to metadata)
+      for (const i of r.input ?? []) if (i?.descriptor_type === 'name' && /:\d+$/.test(i.name ?? '')) { const m = /^(.*):(\d+)$/.exec(i.name); i.name = m[1]; i.metadata ??= +m[2]; }
       const ings = new Map();
       for (const i of r.input ?? []) {
         if (i.type !== 'valid' || !['name', 'item_tag'].includes(i.descriptor_type)) continue;
