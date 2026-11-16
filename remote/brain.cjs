@@ -458,7 +458,9 @@ const WAYOUT = (cfg.wayOut ?? '0 60').split(/\s+/).map(Number);   // (8 130 led 
 // (the death of 08:53 under review: a goal started in a drowned cave at night, unarmed, and a skeleton shot it there)
 async function safeStart() {
   const b = me.bot; if (!b || me.dim !== 'overworld' || guardReason(b)) return;
-  if (!me.spawnSet && !nightNow(b) && /\d+:minecraft:(\w+_)?bed\*/.test(await invList(b))) { log('auto: a bed carried and no respawn point yet: setting it down first'); await bedSpawn(); }
+  // (not from inside bedSpawn: its own run()s come back here - 13:36 that was an endless chain of promises that never let the process
+  //  breathe: frozen until the watchdog)
+  if (!me.spawnSet && !inBedSpawn && !nightNow(b) && /\d+:minecraft:(\w+_)?bed\*/.test(await invList(b))) { log('auto: a bed carried and no respawn point yet: setting it down first'); await bedSpawn(); }
   const lastInv = nightNow(b) ? await invList(b) : '';
   if (!openSky(b, b.state().pos)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
   me.armored = /_chestplate\*/.test(lastInv || (await invList(b)));
@@ -482,7 +484,9 @@ async function goFar() {
 }
 // a bed set down out in the work area and clicked: the respawn point is here from then on (a death no longer means the long
 // walk back from the world spawn through the mobs there). Clicking a bed sets it at any time of day on Bedrock.
-async function bedSpawn() {
+let inBedSpawn = false;
+async function bedSpawn() { if (inBedSpawn) return false; inBedSpawn = true; try { return await bedSpawn0(); } finally { inBedSpawn = false; } }
+async function bedSpawn0() {
   if (me.dim !== 'overworld' || me.spawnSet) return true;
   // three wool of one colour (sheep come in several): sheep until some colour has three, then the bed of that colour from the
   // inventory (get_bed plans for white wool only)
