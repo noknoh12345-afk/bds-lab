@@ -97,10 +97,20 @@ const S = {
     srv(...['iron_sword', 'bow', 'arrow 64', 'arrow 64', 'arrow 64', 'cooked_beef 32', 'cobblestone 64', 'iron_pickaxe', ...(process.env.NO_PUMPKIN ? [] : ['carved_pumpkin']), 'iron_helmet', 'iron_chestplate', 'iron_leggings', 'iron_boots', 'shield'].map((i) => `give ${NAME} ${i}`));
     await sleep(2000); send('armor_up'); await sleep(5000); if (!process.env.NO_PUMPKIN) { send('equip carved_pumpkin'); await sleep(3000); }
     srv(`execute in the_end run tp ${NAME} 30 61 30 0 60`); await waitLog(/dimension the_end/, 20000); await sleep(1500);
+    // UNCAGE=1: the open crystals are gone already, only the two in cages are left (the part being worked on, without 3 min first)
+    if (process.env.UNCAGE) { lab('do', '-a', 'lamp', "js (()=>{let n=0;for(const e of p('" + NAME + "').dimension.getEntities({type:'minecraft:ender_crystal'})){const l=e.location;const bars=e.dimension.getBlock({x:Math.floor(l.x)+2,y:Math.floor(l.y),z:Math.floor(l.z)})?.typeId;if(!/iron_bars/.test(bars??'')){e.remove();n++}}return n})()"); srv(`give ${NAME} cobblestone 64`); }
     send(process.env.DRAGON_CMD ?? 'dragon');
     const d0 = status().deaths ?? 0;
     const m = await waitFor(() => /dragon: (killed|not killed)/.exec(since()) || /(done|failed) "fight_ender_dragon[^"]*"[^\n]*/.exec(since()) || ((status().deaths ?? 0) > d0 ? ['', 'died'] : null), Number(process.env.DRAGON_MS ?? 1500000));
     return m && m[1] === 'killed' ? true : `${m ? m[1] : 'still going'} · ${since().split('\n').filter((l) => /dragon:/.test(l)).slice(-6).join(' | ')}`;
+  },
+  // mechanics by hand (MECH="cmd;cmd;..."): each sent in turn, 4 s apart, then the log
+  async mech() {
+    await fresh();
+    srv(`give ${NAME} end_stone 16`, `give ${NAME} cobblestone 64`, `give ${NAME} iron_pickaxe 1`); await sleep(2000);
+    for (const c of (process.env.MECH ?? '').split(';')) { send(c.trim()); await sleep(Number(process.env.MECH_GAP ?? 4000)); }
+    console.log(since().split('\n').filter((l) => !/dbg/.test(l)).slice(-40).join('\n'));
+    return true;
   },
   // a chest of our own: the diamonds go in (read back from the open chest), the inventory is lost, they come out again
   async stash() {
@@ -116,7 +126,7 @@ const S = {
   },
 };
 async function main() {
-  const want = process.argv.slice(2).filter((a) => S[a]); const names = want.length ? want : Object.keys(S).filter((n) => n !== 'dragon');
+  const want = process.argv.slice(2).filter((a) => S[a]); const names = want.length ? want : Object.keys(S).filter((n) => n !== 'dragon' && n !== 'mech');
   fs.rmSync(path.dirname(RUN), { recursive: true, force: true }); fs.mkdirSync(path.join(RUN, 'inbox'), { recursive: true });
   // the same untouched world every run: `up` keeps what a run left behind (a chest from the last run's stash scenario was "someone's
   // build" to the next) - a clean copy is put aside the first time and put back before each run
