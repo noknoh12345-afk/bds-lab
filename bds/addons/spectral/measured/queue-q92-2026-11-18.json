@@ -1,0 +1,83 @@
+{
+ "queue": "q92_speech_duck",
+ "run": "44176881265",
+ "date": "2026-11-18",
+ "commit": "eb61a7c",
+ "what": "読み上げ 3 文の横に 4 ブロック先のライブ（rock_big_e、24 音、near）。ダッキング 0 / 6 / 12 dB と曲なし（dknone = 参照）",
+ "per_recording": {
+  "0_hello": {
+   "speech_strength_median": 0.912,
+   "sn_db_median": -1.62,
+   "windows": 26,
+   "visqol": 3.6482,
+   "mrstft": 2.6273,
+   "lag_ms": 1557.2
+  },
+  "6_hello": {
+   "speech_strength_median": 0.835,
+   "sn_db_median": 3.95,
+   "windows": 26,
+   "visqol": 4.3409,
+   "mrstft": 1.343,
+   "lag_ms": 1642.8
+  },
+  "12_hello": {
+   "speech_strength_median": 0.606,
+   "sn_db_median": -3.26,
+   "windows": 27,
+   "visqol": 4.4716,
+   "mrstft": 1.4013,
+   "lag_ms": 1664.0
+  },
+  "0_weather": {
+   "speech_strength_median": 0.989,
+   "sn_db_median": 2.53,
+   "windows": 21,
+   "visqol": 3.8342,
+   "mrstft": 3.2081,
+   "lag_ms": 1600.0
+  },
+  "6_weather": {
+   "speech_strength_median": 0.955,
+   "sn_db_median": 10.05,
+   "windows": 22,
+   "visqol": 4.7002,
+   "mrstft": 0.8794,
+   "lag_ms": 1642.8
+  },
+  "12_weather": {
+   "speech_strength_median": 0.531,
+   "sn_db_median": -1.1,
+   "windows": 22,
+   "visqol": 4.6465,
+   "mrstft": 1.1025,
+   "lag_ms": 1618.2
+  },
+  "0_piano": {
+   "speech_strength_median": 0.79,
+   "sn_db_median": -2.37,
+   "windows": 28,
+   "visqol": 3.6389,
+   "mrstft": 2.8769,
+   "lag_ms": 1514.8
+  },
+  "6_piano": {
+   "speech_strength_median": 0.949,
+   "sn_db_median": 7.63,
+   "windows": 27,
+   "visqol": 4.5539,
+   "mrstft": 0.986,
+   "lag_ms": 1621.2
+  },
+  "12_piano": {
+   "speech_strength_median": 0.94,
+   "sn_db_median": 7.52,
+   "windows": 27,
+   "visqol": 4.4959,
+   "mrstft": 1.1637,
+   "lag_ms": 1557.2
+  }
+ },
+ "low_band_30_150Hz": "曲だけが持つ 30-150 Hz: 0 dB では読み上げの間も後も 15-30 dB で続く。6・12 dB では読み上げが始まって 0.5-1 秒で読み上げだけの値（約 0 dB）まで約 20 dB 落ち、読み上げが終わっても戻らず、録音の最後の 2-3 秒は無音（デジタル 0）。ファイルの大きさも 218 kB → 151 kB",
+ "reading": "実測: ダッキングを入れると、曲は下がるのではなく電話から消え、戻らない。ViSQOL の上がり（3.65 → 4.34-4.70）は曲が消えたためで、ダッキングの効果ではない。推測: 下げられた曲の音が電話の 32 音の中で一番小さくなり、電話が止める（戻さない）。既定は切のまま"
+}
