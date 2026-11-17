@@ -21,8 +21,9 @@ const http = require('node:http');
 const readline = require('node:readline');
 const { createRequire } = require('node:module');
 
-const HERE = __dirname, RUN = path.join(HERE, 'run'), INBOX = path.join(RUN, 'inbox');
-const CONFIG = path.join(HERE, 'config.json');
+// (BOT_RUN / BOT_CONFIG / BOT_DEPS: another run folder, config and node_modules - remote/labtest.mjs runs this same bot against the lab's BDS)
+const HERE = __dirname, RUN = process.env.BOT_RUN || path.join(HERE, 'run'), INBOX = path.join(RUN, 'inbox');
+const CONFIG = process.env.BOT_CONFIG || path.join(HERE, 'config.json');
 fs.mkdirSync(INBOX, { recursive: true });
 
 // `node remote/bot.cjs send "<cmd>" ...`: drop commands into the inbox of a running bot and leave
@@ -36,9 +37,12 @@ if (process.argv[2] === 'send') {
 const DEF = { host: '127.0.0.1', port: 19132, name: 'bot', version: '1.26.60', webhook: '', guardRadius: 48, transport: 'auto' };
 if (!fs.existsSync(CONFIG)) fs.writeFileSync(CONFIG, JSON.stringify(DEF, null, 2) + '\n');
 const cfg = { ...DEF, ...JSON.parse(fs.readFileSync(CONFIG, 'utf8')) };
-const req = createRequire(path.join(HERE, '.deps', 'package.json'));
+const req = createRequire(path.join(process.env.BOT_DEPS || path.join(HERE, '.deps'), 'package.json'));
 // someone's crafting table, furnace or chest is never used: only what this player set down itself (common/goal-exec.cjs)
 process.env.LAB_OWN_ONLY = '1';
+// a generated world with the game's own rules (day and night, weather, mobs): the goal runner's own night, dusk, storm and
+// sword-first reflexes are only on with this (it was never set here: they were all off on the real server until 11/16)
+process.env.LAB_WORLD ??= 'normal';
 const { createRealPlayer } = require('../common/realplayer.cjs');
 
 // ---------- output: terminal, run/out.log, Discord ----------
@@ -96,7 +100,7 @@ async function connect() {
   const bot = await createRealPlayer({
     req, host: cfg.host, port: cfg.port, name: cfg.name, version: cfg.version, emit, transport: tr,
     rtc: tr === 'nethernet' ? req('node-datachannel/polyfill') : null, nn: { pins: path.join(RUN, 'nethernet-pins.json') }, opts: {}, timeoutMs: 300000,   // (the first join includes the sign-in)
-    online: { profilesFolder: path.join(RUN, 'auth'), onMsaCode: (d) => { me.msa = d.user_code; log(`SIGN IN: open ${d.verification_uri} and enter ${d.user_code}`, { dc: true }); } },
+    online: cfg.offline ? null : { profilesFolder: path.join(RUN, 'auth'), onMsaCode: (d) => { me.msa = d.user_code; log(`SIGN IN: open ${d.verification_uri} and enter ${d.user_code}`, { dc: true }); } },
   });
   knownTransport = tr; me.msa = null; me.bot = bot; me.connected = true; me.closedAt = null; me.kicked = null;
   bot.setLegit?.(cfg.legit !== false);

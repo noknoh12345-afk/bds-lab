@@ -2593,7 +2593,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   bot.close = () => { loop.stop(); try { client.close(); } catch { /* closed */ } };
   bot.state = () => big({ pos: feet(), yaw, pitch, dead });
   // remote/bot.cjs (a resident player on someone's server) reads these: the chunks it knows, the mobs and players in sight, the connection
-  bot.invText = () => `inv ${list(inv.slots)} (holding slot ${inv.selected})`;   // the inventory as `inv` prints it, without printing it
+  bot.invText = () => `inv ${list(inv.slots)} (holding slot ${inv.selected})`;
+  bot.boxText = () => (box ? list(box.slots) : null);   // the open container as its `container ..` line lists it; null: none open   // the inventory as `inv` prints it, without printing it
   bot.world = world; bot.entities = entities; bot.client = client; bot.placedByMe = placedByMe; bot.players = () => [...players.keys()];
   bot.setLegit = (v) => { legit = !!v; };
   bot.time = () => (worldTime === null ? null : Number(worldTime) + (clockPaused ? 0 : Number(BigInt(tick) - BigInt(worldTimeTick))));
