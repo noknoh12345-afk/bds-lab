@@ -1864,9 +1864,16 @@
   "tries": 1
  },
  "q94_speech_duck_return": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "f95127a",
+  "conclusion": "success",
+  "ended": "2026-11-18 08:00",
+  "failed_steps": 0,
+  "recordings": 9,
   "run": "44189786872",
   "started": "2026-11-18 07:24",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  }
 }
