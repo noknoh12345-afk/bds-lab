@@ -14,7 +14,7 @@ import { OSC_AMP, BASE_HZ, NOISE_RMS, NOISE_BANDS, BURST_RMS, BURST_BANDS, SUB }
 import demo from './songs/demo';
 import programs, { Program } from './calib_programs';
 import { readPart, joinParts, decodeSongJob, songHeader, payloadText, payloadFrom, Part, SongMeta, FIELD_CHARS, PHONE_CHARS } from './songtext';
-import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes, LiveKeys, WARM, HEAD3D } from './notes';
+import { NotePlayer, NoteSong, NoteMeta, isNoteMeta, decodeNotes, LiveKeys, WARM, HEAD3D, NOTE_DUCK } from './notes';
 import notesDemo from './songs/notes_demo';
 import bandDemo from './songs/band_demo';
 import { saySong } from './say';
@@ -459,7 +459,8 @@ class Session {
     // frame (under half a frame, 25 ms)
     if ((this.d.vd || this.d.nzd) && this.s.speed === 1 && !this.frozen && !Number.isInteger(this.ph)) this.ph = Math.round(this.ph);
     const d = this.d, N = d.N, sp = this.frozen ? 0 : this.s.speed, ph = this.ph, ph2 = ph + sp;
-    let gain = (this.s.volume * this.lv) / OSC_AMP, lv = this.lv;
+    const duck = duckOf(this.targets);
+    let gain = (this.s.volume * this.lv * duck) / OSC_AMP, lv = this.lv * duck;
     const r = this.ratio;
     if ((sp > 0 && ph >= d.F - 1) || (sp < 0 && ph <= 0)) {
       if (this.s.loop) { this.seek(sp > 0 ? 0 : d.F - 1); return; }
@@ -661,6 +662,43 @@ const sessions = new Map<string, Session>();
 const notePlays = new Map<string, NotePlayer>();
 /** the file songs playing, by player */
 const filePlays = new Map<string, FilePlayer>();
+
+/** ducking: while a listener hears speech (a note song of the voice, /spectral:say or a speech song), the sine songs and live
+ *  streams they hear are turned down DUCK.db dB (q90: the speech sounds at 84-94 % beside a 24-voice stream — it is heard less
+ *  because the song covers it, not because it loses its sounds). Down in DUCK_DOWN ticks, held DUCK_HOLD ticks after the speech,
+ *  back up in DUCK_UP ticks; the sampler's notes started meanwhile too. Off (0 dB) until measured: `scriptevent spectral:duck <dB>` */
+export const DUCK = { db: 0 };
+const DUCK_DOWN = 2, DUCK_HOLD = 6, DUCK_UP = 8;
+/** each listener's ducking now (1 = none) and the last tick they heard speech */
+const ducks = new Map<string, { g: number; heard: number }>();
+const isSpeech = (n: NotePlayer) => n.song.meta.programs.some((c) => c >= 200);
+NOTE_DUCK.of = (n) => (isSpeech(n) ? 1 : duckOf(n.o.where === 'phones' ? [{ player: n.owner }] : [{ dim: n.dim, loc: n.loc }]));
+function updateDucks() {
+  if (DUCK.db <= 0) { ducks.clear(); return; }
+  const now = system.currentTick, hear = new Set<string>();
+  for (const n of notePlays.values()) {
+    if (!n.started || n.paused || n.ending || !isSpeech(n) || !n.owner.isValid) continue;
+    if (n.o.where === 'phones') { hear.add(n.owner.id); continue; }
+    for (const q of world.getPlayers()) if (q.dimension.id === n.dim.id && dist(q.location, n.loc) <= FOLLOW_RANGE) hear.add(q.id);
+  }
+  const low = Math.pow(10, -DUCK.db / 20);
+  for (const id of hear) { const d = ducks.get(id); if (d) d.heard = now; else ducks.set(id, { g: 1, heard: now }); }
+  for (const [id, d] of ducks) {
+    if (now - d.heard <= DUCK_HOLD) d.g = Math.max(low, d.g * Math.pow(low, 1 / DUCK_DOWN));
+    else { d.g = Math.min(1, d.g / Math.pow(low, 1 / DUCK_UP)); if (d.g >= 1) ducks.delete(id); }
+  }
+}
+/** the ducking of what these targets hear: a listener's own, or for a speaker the lowest of the listeners near it */
+function duckOf(targets: { player?: Player; dim?: Dimension; loc?: Vector3 }[]): number {
+  if (!ducks.size) return 1;
+  let g = 1;
+  for (const t of targets) {
+    if (t.player) { g = Math.min(g, ducks.get(t.player.id)?.g ?? 1); continue; }
+    if (!t.dim || !t.loc) continue;
+    for (const q of world.getPlayers()) { const d = ducks.get(q.id); if (d && q.dimension.id === t.dim.id && dist(q.location, t.loc) <= FOLLOW_RANGE) g = Math.min(g, d.g); }
+  }
+  return g;
+}
 // (settings are saved whole whenever one changes, so a saved value may only be the default of its time: rev 2 = saved by this
 // version. A phone's drums saved before it (rev 1) were the old default, not a choice: the client's default replaces them)
 const SETTINGS_REV = 2;
@@ -673,6 +711,7 @@ const settingsOf = (p: Player): Settings => {
 const keep = (p: Player, s: Settings) => save(p, 'spectral:settings', { ...s, rev: SETTINGS_REV });
 
 system.runInterval(() => {
+  try { updateDucks(); } catch (e) { console.warn(`[spectral] duck: ${e}`); }
   for (const [id, s] of sessions) {
     try { s.tick(); } catch (e) { console.warn(`[spectral] tick: ${e}`); s.ending = -1; }
     if (s.ending > 0 && ++s.ending > 4) { s.stop(); sessions.delete(id); if (s.owner.isValid) s.owner.sendMessage(`§7■ ${s.song.meta.title} — end`); }
@@ -845,8 +884,19 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
   // (q89: the speaker's head-room counted at each note's gain only — `scriptevent spectral:head3d level|one|<dB>`)
   if (e.id === 'spectral:head3d') {
     const m = e.message.trim(), db = Number(m);
-    if (m !== '' && Number.isFinite(db)) { HEAD3D.mode = 'db'; HEAD3D.db = Math.max(0, Math.min(18, db)); } else HEAD3D.mode = m === 'one' ? 'one' : 'level';
-    console.warn(`[spectral] head3d ${HEAD3D.mode === 'db' ? `${HEAD3D.db} dB` : HEAD3D.mode}`); return;
+    if (m !== '' && Number.isFinite(db)) { HEAD3D.mode = 'db'; HEAD3D.db = Math.max(0, Math.min(18, db)); } else HEAD3D.mode = m === 'one' ? 'one' : m === 'auto' ? 'auto' : 'level';
+    console.warn(`[spectral] head3d ${HEAD3D.mode === 'db' ? `${HEAD3D.db} dB` : HEAD3D.mode === 'auto' ? `auto (drums ${HEAD3D.drumDb} dB)` : HEAD3D.mode}`); return;
+  }
+  // (q90 → q92: the songs and live streams near a listener turned down while they hear speech — `scriptevent spectral:duck <dB>`, 0 = off)
+  if (e.id === 'spectral:duck') {
+    if (e.message.trim() === 'show') {
+      const names = new Map(world.getPlayers().map((q) => [q.id, q.name] as [string, string]));
+      const l = [...ducks].map(([id, d]) => `${names.get(id) ?? id} ${(20 * Math.log10(d.g)).toFixed(1)} dB`);
+      console.warn(`[spectral] ducked ${l.length ? l.join(', ') : 'none'}`); return;
+    }
+    const db = Number(e.message.trim());
+    DUCK.db = Number.isFinite(db) ? Math.max(0, Math.min(30, db)) : 0;
+    console.warn(`[spectral] duck ${DUCK.db ? `${DUCK.db} dB` : 'off'}`); return;
   }
   if (e.id === 'spectral:fileover') { FILE_OVER.on = e.message.trim() === 'true'; console.warn(`[spectral] file over ${FILE_OVER.on}`); return; }
   if (e.id === 'spectral:warmcfg') {
@@ -1654,12 +1704,13 @@ class LivePlayer {
     this.idle = 0;
     // (the tick from frame p to p+1: levels and pitch of p+1, the fade INTO p+1 — the live encoder knows a frame's own rise as
     // it makes it, without waiting for the next one)
-    const i0 = st.slot(this.p), i1 = st.slot(this.p + 1), gain = this.lv / OSC_AMP;
+    const duck = duckOf(this.targets), lvd = this.lv * duck;
+    const i0 = st.slot(this.p), i1 = st.slot(this.p + 1), gain = lvd / OSC_AMP;
     for (let v = 0; v < N; v++) {
       const a0 = this.lastL[v] > this.floor ? st.amp[i0 * N + v] : 0, f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;
       this.sendVoice(v, f0 && f1 ? Math.sqrt(f0 * f1) : f1 || f0, fdS[st.vd[i1 * N + v]], a1 * gain, st.att[i1 * N + v] === 1);
     }
-    for (let b = 0; b < M; b++) this.sendNoise(b, fdS[st.nzd[i1 * M + b]], (st.nz[i1 * M + b] * this.lv) / NOISE_RMS[b]);
+    for (let b = 0; b < M; b++) this.sendNoise(b, fdS[st.nzd[i1 * M + b]], (st.nz[i1 * M + b] * lvd) / NOISE_RMS[b]);
     this.p++;
   }
   status() {

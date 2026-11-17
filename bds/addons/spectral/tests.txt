@@ -958,3 +958,27 @@ until note 0 2000
 ~ \[spectral\] note 0 piano\.\d+ key 48 pitch [\d.]+ seek [\d.]+ at 0 ms alias -$
 @A cmd /spectral:stop
 @A cmd /spectral:sampler 2 250 28 300 false
+
+## measuring the speaker's head-room per song (q93): 'auto' counts 5 dB of the 3D +10 dB for a song with drums and the whole +10 dB for the rest (q91: counting 5 dB raised the band 3.46 → 3.73 and lowered the piano songs 4.24 → 4.08)
+scriptevent spectral:head3d auto
+~ \[spectral\] head3d auto \(drums 5 dB\)
+scriptevent spectral:head3d level
+~ \[spectral\] head3d level
+
+## ducking (q92, off by default): while a listener hears speech, the songs they hear are turned down that many dB (q90: the speech sounds at 84-94 % beside a 24-voice stream, it is covered by the song) — down in 2 ticks while the speech plays, back up after it; the speech itself is not turned down
+scriptevent spectral:duck 12
+~ \[spectral\] duck 12 dB
+tp A 2 -60 0
+tp B 0 -60 0
+@B cmd /spectral:play demo speaker
+@A cmd /spectral:say "こんにちは、マインクラフト。"
+wait 1500
+scriptevent spectral:duck show
+~ \[spectral\] ducked A -1[12]\.\d dB
+wait 5000
+scriptevent spectral:duck show
+~ \[spectral\] ducked none
+@B cmd /spectral:stop
+@A cmd /spectral:stop
+scriptevent spectral:duck 0
+~ \[spectral\] duck off

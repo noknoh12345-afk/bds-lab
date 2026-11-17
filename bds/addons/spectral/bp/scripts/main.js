@@ -986,7 +986,8 @@ function warmEvent(ev, where, owner, dim, loc, range3d = 1) {
 }
 var HEAD_LIMIT = 1.9;
 var HEAD_DECAY_MS = 1200;
-var HEAD3D = { mode: "level", db: 5 };
+var HEAD3D = { mode: "level", db: 5, drumDb: 5 };
+var NOTE_DUCK = {};
 var RELAY_MS = 350;
 var RELAY_FADE = 0.15;
 var RELAY_FROM = 0.4;
@@ -1067,13 +1068,13 @@ var NotePlayer = class {
     if (!this.o.place) {
       const from = this.idx;
       while (this.idx < this.nt.n && this.nt.on[this.idx] < t + 50 * sp) this.idx++;
-      const g = this.headroom(from, this.idx, t);
+      const g = this.headroom(from, this.idx, t) * (NOTE_DUCK.of?.(this) ?? 1);
       for (let i = from; i < this.idx; i++) this.noteOn(i, t, false, g);
     } else if (tk >= this.nextBundle) {
       this.nextBundle = tk + Math.max(1, this.o.bundle);
       const until = t + (this.o.ahead + Math.max(1, this.o.bundle) * 50) * sp, from = this.idx;
       while (this.idx < this.nt.n && this.nt.on[this.idx] < until) this.idx++;
-      const g = this.headroom(from, this.idx, t);
+      const g = this.headroom(from, this.idx, t) * (NOTE_DUCK.of?.(this) ?? 1);
       for (let i = from; i < this.idx; i++) this.noteOn(i, t, true, g);
     }
     this.peakVoices = Math.max(this.peakVoices, this.voices.length);
@@ -1150,10 +1151,16 @@ var NotePlayer = class {
     const key = drum || voice ? nt.key[i] : nt.key[i] + this.o.semis;
     return { got: pick(code, drum || voice ? nt.key[i] : Math.max(0, Math.min(127, Math.round(key))), nt.vel[i], voice ? cents : cents + (key - Math.round(key)) * 100), key };
   }
+  drums;
+  /** whether the song has a drum kit (a program 128-199) */
+  hasDrums() {
+    return this.drums ??= this.song.meta.programs.some((c) => c >= 128 && c < 200);
+  }
   /** how much the notes from..to (one bundle) are turned down: 1 while what still sounds and they stay under HEAD_LIMIT */
   headroom(from, to, t) {
     if (to <= from) return 1;
-    const k3 = this.o.where === "phones" || HEAD3D.mode === "one" ? 1 : HEAD3D.mode === "db" ? Math.min(this.o.level3d, Math.pow(10, HEAD3D.db / 20)) : this.o.level3d;
+    const db = HEAD3D.mode === "db" ? HEAD3D.db : HEAD3D.mode === "auto" && this.hasDrums() ? HEAD3D.drumDb : -1;
+    const k3 = this.o.where === "phones" || HEAD3D.mode === "one" ? 1 : db >= 0 ? Math.min(this.o.level3d, Math.pow(10, db / 20)) : this.o.level3d;
     let now = 0, add = 0;
     for (const v of this.voices) {
       const age = Math.max(0, t - v.on) / this.o.speed;
@@ -2275,7 +2282,8 @@ var Session = class {
     }
     if ((this.d.vd || this.d.nzd) && this.s.speed === 1 && !this.frozen && !Number.isInteger(this.ph)) this.ph = Math.round(this.ph);
     const d = this.d, N = d.N, sp = this.frozen ? 0 : this.s.speed, ph = this.ph, ph2 = ph + sp;
-    let gain = this.s.volume * this.lv / OSC_AMP, lv = this.lv;
+    const duck = duckOf(this.targets);
+    let gain = this.s.volume * this.lv * duck / OSC_AMP, lv = this.lv * duck;
     const r = this.ratio;
     if (sp > 0 && ph >= d.F - 1 || sp < 0 && ph <= 0) {
       if (this.s.loop) {
@@ -2525,6 +2533,57 @@ var dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 var sessions = /* @__PURE__ */ new Map();
 var notePlays = /* @__PURE__ */ new Map();
 var filePlays = /* @__PURE__ */ new Map();
+var DUCK = { db: 0 };
+var DUCK_DOWN = 2;
+var DUCK_HOLD = 6;
+var DUCK_UP = 8;
+var ducks = /* @__PURE__ */ new Map();
+var isSpeech = (n) => n.song.meta.programs.some((c) => c >= 200);
+NOTE_DUCK.of = (n) => isSpeech(n) ? 1 : duckOf(n.o.where === "phones" ? [{ player: n.owner }] : [{ dim: n.dim, loc: n.loc }]);
+function updateDucks() {
+  if (DUCK.db <= 0) {
+    ducks.clear();
+    return;
+  }
+  const now = system4.currentTick, hear = /* @__PURE__ */ new Set();
+  for (const n of notePlays.values()) {
+    if (!n.started || n.paused || n.ending || !isSpeech(n) || !n.owner.isValid) continue;
+    if (n.o.where === "phones") {
+      hear.add(n.owner.id);
+      continue;
+    }
+    for (const q of world2.getPlayers()) if (q.dimension.id === n.dim.id && dist(q.location, n.loc) <= FOLLOW_RANGE) hear.add(q.id);
+  }
+  const low = Math.pow(10, -DUCK.db / 20);
+  for (const id of hear) {
+    const d = ducks.get(id);
+    if (d) d.heard = now;
+    else ducks.set(id, { g: 1, heard: now });
+  }
+  for (const [id, d] of ducks) {
+    if (now - d.heard <= DUCK_HOLD) d.g = Math.max(low, d.g * Math.pow(low, 1 / DUCK_DOWN));
+    else {
+      d.g = Math.min(1, d.g / Math.pow(low, 1 / DUCK_UP));
+      if (d.g >= 1) ducks.delete(id);
+    }
+  }
+}
+function duckOf(targets) {
+  if (!ducks.size) return 1;
+  let g = 1;
+  for (const t of targets) {
+    if (t.player) {
+      g = Math.min(g, ducks.get(t.player.id)?.g ?? 1);
+      continue;
+    }
+    if (!t.dim || !t.loc) continue;
+    for (const q of world2.getPlayers()) {
+      const d = ducks.get(q.id);
+      if (d && q.dimension.id === t.dim.id && dist(q.location, t.loc) <= FOLLOW_RANGE) g = Math.min(g, d.g);
+    }
+  }
+  return g;
+}
 var SETTINGS_REV = 2;
 var settingsOf = (p) => {
   const plat = platformEngine(p), saved = load(p, "spectral:settings", {});
@@ -2538,6 +2597,11 @@ var settingsOf = (p) => {
 };
 var keep = (p, s) => save(p, "spectral:settings", { ...s, rev: SETTINGS_REV });
 system4.runInterval(() => {
+  try {
+    updateDucks();
+  } catch (e) {
+    console.warn(`[spectral] duck: ${e}`);
+  }
   for (const [id, s] of sessions) {
     try {
       s.tick();
@@ -2862,8 +2926,20 @@ system4.afterEvents.scriptEventReceive.subscribe((e) => {
     if (m !== "" && Number.isFinite(db)) {
       HEAD3D.mode = "db";
       HEAD3D.db = Math.max(0, Math.min(18, db));
-    } else HEAD3D.mode = m === "one" ? "one" : "level";
-    console.warn(`[spectral] head3d ${HEAD3D.mode === "db" ? `${HEAD3D.db} dB` : HEAD3D.mode}`);
+    } else HEAD3D.mode = m === "one" ? "one" : m === "auto" ? "auto" : "level";
+    console.warn(`[spectral] head3d ${HEAD3D.mode === "db" ? `${HEAD3D.db} dB` : HEAD3D.mode === "auto" ? `auto (drums ${HEAD3D.drumDb} dB)` : HEAD3D.mode}`);
+    return;
+  }
+  if (e.id === "spectral:duck") {
+    if (e.message.trim() === "show") {
+      const names = new Map(world2.getPlayers().map((q) => [q.id, q.name]));
+      const l = [...ducks].map(([id, d]) => `${names.get(id) ?? id} ${(20 * Math.log10(d.g)).toFixed(1)} dB`);
+      console.warn(`[spectral] ducked ${l.length ? l.join(", ") : "none"}`);
+      return;
+    }
+    const db = Number(e.message.trim());
+    DUCK.db = Number.isFinite(db) ? Math.max(0, Math.min(30, db)) : 0;
+    console.warn(`[spectral] duck ${DUCK.db ? `${DUCK.db} dB` : "off"}`);
     return;
   }
   if (e.id === "spectral:fileover") {
@@ -4050,12 +4126,13 @@ var LivePlayer = class {
       return;
     }
     this.idle = 0;
-    const i0 = st.slot(this.p), i1 = st.slot(this.p + 1), gain = this.lv / OSC_AMP;
+    const duck = duckOf(this.targets), lvd = this.lv * duck;
+    const i0 = st.slot(this.p), i1 = st.slot(this.p + 1), gain = lvd / OSC_AMP;
     for (let v = 0; v < N; v++) {
       const a0 = this.lastL[v] > this.floor ? st.amp[i0 * N + v] : 0, f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;
       this.sendVoice(v, f0 && f1 ? Math.sqrt(f0 * f1) : f1 || f0, fdS[st.vd[i1 * N + v]], a1 * gain, st.att[i1 * N + v] === 1);
     }
-    for (let b = 0; b < M; b++) this.sendNoise(b, fdS[st.nzd[i1 * M + b]], st.nz[i1 * M + b] * this.lv / NOISE_RMS[b]);
+    for (let b = 0; b < M; b++) this.sendNoise(b, fdS[st.nzd[i1 * M + b]], st.nz[i1 * M + b] * lvd / NOISE_RMS[b]);
     this.p++;
   }
   status() {
@@ -4372,6 +4449,7 @@ world2.afterEvents.worldLoad.subscribe(() => system4.sendScriptEvent("spectral:h
 cmdAny("spectral:library", "Song count (console too)", {}, () => `library ${songs.size}: ${[...songs.keys()].join(" ")}`);
 addSong(demo_default.meta, demo_default.data);
 export {
+  DUCK,
   addNoteSong,
   addSong,
   liveMessage

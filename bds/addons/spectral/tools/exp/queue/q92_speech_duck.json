@@ -1,0 +1,243 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 92（tools/exp/queue/q92_speech_duck.json、11-18 の q90 から）: 読み上げの間だけ近くの曲（4 ブロック先、正弦波のライブ 24 音）を下げる（ダッキング、scriptevent spectral:duck <dB>）0 / 6 / 12 dB と、曲なし。q90: 読み上げは 84〜94 % で鳴っているが曲にかぶられて聞き取れない。3 文"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song rock_big suffix=_e pack=tools/exp/packs/run10",
+  "audio song speech_hello,speech_weather,speech_piano pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "dk_none_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 0",
+    "audio start dknone_hello",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export dknone_hello 160"
+   ]
+  },
+  {
+   "title": "dk_0_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 0",
+    "audio start dk0_hello",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export dk0_hello 160"
+   ]
+  },
+  {
+   "title": "dk_6_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 6",
+    "audio start dk6_hello",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export dk6_hello 160"
+   ]
+  },
+  {
+   "title": "dk_12_hello",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 12",
+    "audio start dk12_hello",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_hello",
+    "wait 7600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export dk12_hello 160"
+   ]
+  },
+  {
+   "title": "dk_none_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 0",
+    "audio start dknone_weather",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export dknone_weather 160"
+   ]
+  },
+  {
+   "title": "dk_0_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 0",
+    "audio start dk0_weather",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export dk0_weather 160"
+   ]
+  },
+  {
+   "title": "dk_6_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 6",
+    "audio start dk6_weather",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export dk6_weather 160"
+   ]
+  },
+  {
+   "title": "dk_12_weather",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 12",
+    "audio start dk12_weather",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_weather",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export dk12_weather 160"
+   ]
+  },
+  {
+   "title": "dk_none_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 0",
+    "audio start dknone_piano",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export dknone_piano 160"
+   ]
+  },
+  {
+   "title": "dk_0_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 0",
+    "audio start dk0_piano",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export dk0_piano 160"
+   ]
+  },
+  {
+   "title": "dk_6_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 6",
+    "audio start dk6_piano",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export dk6_piano 160"
+   ]
+  },
+  {
+   "title": "dk_12_piano",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 12",
+    "audio start dk12_piano",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run spectral:play speech_piano",
+    "wait 9000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export dk12_piano 160"
+   ]
+  },
+  {
+   "title": "dk_reset",
+   "lines": [
+    "do scriptevent spectral:duck 0"
+   ]
+  }
+ ]
+}

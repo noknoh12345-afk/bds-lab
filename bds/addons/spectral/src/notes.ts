@@ -172,10 +172,14 @@ const HEAD_LIMIT = 1.9, HEAD_DECAY_MS = 1200;
  *  'one' counts it at its gain only (a 3D note reaches the mix about 30 dB under its level 3 blocks away, run 41270487804 — so
  *  'level' turned every loud note down: q80, the speaker's velocity ramp flat from 72 (piano) / 104 (strings)). Measuring (q89):
  *  `scriptevent spectral:head3d level|one` */
-export const HEAD3D = { mode: 'level' as 'level' | 'one' | 'db', db: 5 };
+export const HEAD3D = { mode: 'level' as 'level' | 'one' | 'db' | 'auto', db: 5, drumDb: 5 };
+// (q91: counting 5 dB, the band rose 3.46 → 3.73 and the piano songs fell 4.24 → 4.08 / 3.94 → 3.64 — 'auto' counts drumDb for a
+//  song with drums (a program 128-199) and the whole level for the rest: q93)
 // (q89: 'one' let the velocity ramp follow but squashed loud piano notes — ViSQOL 4.23 → 3.89; 'db' counts each 3D note at
 //  gain × 10^(db/20), between the two: q91)
 /** a sustained note is relayed RELAY_MS before its sample ends, crossfading over RELAY_FADE s, from RELAY_FROM of the sample */
+/** the ducking of a note song's new notes (set by main.ts: DUCK — a speech song is not ducked) */
+export const NOTE_DUCK: { of?: (n: NotePlayer) => number } = {};
 const RELAY_MS = 350, RELAY_FADE = 0.15, RELAY_FROM = 0.4;
 
 export class NotePlayer {
@@ -219,13 +223,13 @@ export class NotePlayer {
     if (!this.o.place) {
       const from = this.idx;
       while (this.idx < this.nt.n && this.nt.on[this.idx] < t + 50 * sp) this.idx++;
-      const g = this.headroom(from, this.idx, t);
+      const g = this.headroom(from, this.idx, t) * (NOTE_DUCK.of?.(this) ?? 1);
       for (let i = from; i < this.idx; i++) this.noteOn(i, t, false, g);
     } else if (tk >= this.nextBundle) {
       this.nextBundle = tk + Math.max(1, this.o.bundle);
       const until = t + (this.o.ahead + Math.max(1, this.o.bundle) * 50) * sp, from = this.idx;
       while (this.idx < this.nt.n && this.nt.on[this.idx] < until) this.idx++;
-      const g = this.headroom(from, this.idx, t);
+      const g = this.headroom(from, this.idx, t) * (NOTE_DUCK.of?.(this) ?? 1);
       for (let i = from; i < this.idx; i++) this.noteOn(i, t, true, g);
     }
     this.peakVoices = Math.max(this.peakVoices, this.voices.length);
@@ -290,10 +294,14 @@ export class NotePlayer {
     const key = drum || voice ? nt.key[i] : nt.key[i] + this.o.semis;
     return { got: pick(code, drum || voice ? nt.key[i] : Math.max(0, Math.min(127, Math.round(key))), nt.vel[i], voice ? cents : cents + (key - Math.round(key)) * 100), key };
   }
+  private drums?: boolean;
+  /** whether the song has a drum kit (a program 128-199) */
+  hasDrums() { return (this.drums ??= this.song.meta.programs.some((c) => c >= 128 && c < 200)); }
   /** how much the notes from..to (one bundle) are turned down: 1 while what still sounds and they stay under HEAD_LIMIT */
   private headroom(from: number, to: number, t: number): number {
     if (to <= from) return 1;
-    const k3 = this.o.where === 'phones' || HEAD3D.mode === 'one' ? 1 : HEAD3D.mode === 'db' ? Math.min(this.o.level3d, Math.pow(10, HEAD3D.db / 20)) : this.o.level3d;
+    const db = HEAD3D.mode === 'db' ? HEAD3D.db : HEAD3D.mode === 'auto' && this.hasDrums() ? HEAD3D.drumDb : -1;
+    const k3 = this.o.where === 'phones' || HEAD3D.mode === 'one' ? 1 : db >= 0 ? Math.min(this.o.level3d, Math.pow(10, db / 20)) : this.o.level3d;
     let now = 0, add = 0;
     for (const v of this.voices) {
       const age = Math.max(0, t - v.on) / this.o.speed;
