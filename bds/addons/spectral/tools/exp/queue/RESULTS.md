@@ -131,3 +131,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q89_speaker_head3d | 42707141129 | success | 16 | — | 0 | 2026-11-10 06:56 → 2026-11-10 07:19 |
 | q90_speech_stream_voices | 42714269600 | success | 12 | — | 0 | 2026-11-10 07:42 → 2026-11-10 08:03 |
 | q91_speaker_head3d_mid | 42717230528 | success | 24 | — | 0 | 2026-11-10 08:03 → 2026-11-10 08:31 |
+| q92_speech_duck | 44176881265 | success | 12 | — | 0 | 2026-11-18 06:09 → 2026-11-18 06:46 |

@@ -1838,10 +1838,17 @@
   "tries": 1
  },
  "q92_speech_duck": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "eb61a7c",
+  "conclusion": "success",
+  "ended": "2026-11-18 06:46",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "44176881265",
   "started": "2026-11-18 06:09",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q93_speaker_head3d_auto": {
   "status": "pending"
