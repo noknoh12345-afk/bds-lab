@@ -1864,6 +1864,9 @@
   "tries": 1
  },
  "q94_speech_duck_return": {
-  "status": "pending"
+  "commit": "f95127a",
+  "run": "44189786872",
+  "started": "2026-11-18 07:24",
+  "status": "running"
  }
 }
