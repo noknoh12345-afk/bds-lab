@@ -172,7 +172,8 @@ const HEAD_LIMIT = 1.9, HEAD_DECAY_MS = 1200;
  *  'one' counts it at its gain only (a 3D note reaches the mix about 30 dB under its level 3 blocks away, run 41270487804 — so
  *  'level' turned every loud note down: q80, the speaker's velocity ramp flat from 72 (piano) / 104 (strings)). Measuring (q89):
  *  `scriptevent spectral:head3d level|one` */
-export const HEAD3D = { mode: 'level' as 'level' | 'one' | 'db' | 'auto', db: 5, drumDb: 5 };
+export const HEAD3D = { mode: 'auto' as 'level' | 'one' | 'db' | 'auto', db: 5, drumDb: 5 };
+// (q93, run 44183381485: auto against level, 2 pairs — band 3.30 → 3.57 in both, piano songs the same (4.22 / 3.90): auto by default since 1.5.10)
 // (q91: counting 5 dB, the band rose 3.46 → 3.73 and the piano songs fell 4.24 → 4.08 / 3.94 → 3.64 — 'auto' counts drumDb for a
 //  song with drums (a program 128-199) and the whole level for the rest: q93)
 // (q89: 'one' let the velocity ramp follow but squashed loud piano notes — ViSQOL 4.23 → 3.89; 'db' counts each 3D note at

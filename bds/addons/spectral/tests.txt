@@ -959,11 +959,11 @@ until note 0 2000
 @A cmd /spectral:stop
 @A cmd /spectral:sampler 2 250 28 300 false
 
-## measuring the speaker's head-room per song (q93): 'auto' counts 5 dB of the 3D +10 dB for a song with drums and the whole +10 dB for the rest (q91: counting 5 dB raised the band 3.46 → 3.73 and lowered the piano songs 4.24 → 4.08)
-scriptevent spectral:head3d auto
-~ \[spectral\] head3d auto \(drums 5 dB\)
+## the speaker's head-room per song (q93, the default since 1.5.10: band 3.30 → 3.57, piano songs the same): 'auto' counts 5 dB of the 3D +10 dB for a song with drums and the whole +10 dB for the rest (q91: counting 5 dB raised the band 3.46 → 3.73 and lowered the piano songs 4.24 → 4.08)
 scriptevent spectral:head3d level
 ~ \[spectral\] head3d level
+scriptevent spectral:head3d auto
+~ \[spectral\] head3d auto \(drums 5 dB\)
 
 ## ducking (q92, off by default): while a listener hears speech, the songs they hear are turned down that many dB (q90: the speech sounds at 84-94 % beside a 24-voice stream, it is covered by the song) — down in 2 ticks while the speech plays, back up after it; the speech itself is not turned down
 scriptevent spectral:duck 12

@@ -986,7 +986,7 @@ function warmEvent(ev, where, owner, dim, loc, range3d = 1) {
 }
 var HEAD_LIMIT = 1.9;
 var HEAD_DECAY_MS = 1200;
-var HEAD3D = { mode: "level", db: 5, drumDb: 5 };
+var HEAD3D = { mode: "auto", db: 5, drumDb: 5 };
 var NOTE_DUCK = {};
 var RELAY_MS = 350;
 var RELAY_FADE = 0.15;

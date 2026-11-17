@@ -1,0 +1,66 @@
+{
+ "queue": "q93_speaker_head3d_auto",
+ "run": "44183381485",
+ "date": "2026-11-18",
+ "commit": "dcf713e",
+ "what": "スピーカー 6 ブロック先、head3d auto（ドラムのある曲だけ 3D の上乗せのうち 5 dB を数える）と level（10 dB）を 3 曲 2 組ずつ交互に。参照は tools/notes.py --render",
+ "per_recording": {
+  "h3xa1_bd": {
+   "visqol": 3.5879,
+   "mrstft": 1.4318
+  },
+  "h3xa1_fe": {
+   "visqol": 3.8984,
+   "mrstft": 1.5576
+  },
+  "h3xa1_pd": {
+   "visqol": 4.2364,
+   "mrstft": 1.5712
+  },
+  "h3xa2_bd": {
+   "visqol": 3.5552,
+   "mrstft": 1.2946
+  },
+  "h3xa2_fe": {
+   "visqol": 3.9271,
+   "mrstft": 1.582
+  },
+  "h3xa2_pd": {
+   "visqol": 4.2131,
+   "mrstft": 1.5762
+  },
+  "h3xl1_bd": {
+   "visqol": 3.2811,
+   "mrstft": 1.2876
+  },
+  "h3xl1_fe": {
+   "visqol": 3.9372,
+   "mrstft": 1.6755
+  },
+  "h3xl1_pd": {
+   "visqol": 4.2099,
+   "mrstft": 1.5404
+  },
+  "h3xl2_bd": {
+   "visqol": 3.328,
+   "mrstft": 1.3514
+  },
+  "h3xl2_fe": {
+   "visqol": 3.871,
+   "mrstft": 1.514
+  },
+  "h3xl2_pd": {
+   "visqol": 4.2387,
+   "mrstft": 1.5685
+  }
+ },
+ "median": {
+  "band auto": 3.57,
+  "band level": 3.3,
+  "etude auto": 4.225,
+  "etude level": 4.224,
+  "elise auto": 3.913,
+  "elise level": 3.904
+ },
+ "reading": "実測: バンドは 2 組とも auto が上（+0.27、q91 の 5 dB の +0.27 と同じ）。ピアノの曲はドラムが無いので auto も level と同じ動き（差 0.01 以内 = ゆらぎ）。→ 1.5.10 で auto を既定に"
+}
