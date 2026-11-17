@@ -9,7 +9,7 @@ const timers = [];
 
 // ---------- the rule: keep away from builds and other players ----------
 // blocks no world generates by itself in the open (villages and ruins have some too: kept away from as well, which is fine)
-const BUILT = /planks|glass|crafting_table|chest|barrel|_bed$|torch|lantern|wool|(?<!moss_)carpet|concrete|bricks|_slab|_stairs|_door|fence|furnace|smoker|anvil|_sign|bookshelf|rail|redstone_(wire|torch|lamp|block)|repeater|comparator|piston|hopper|composter|lectern|scaffolding|ladder|banner|bell|item_frame|shulker_box|enchanting_table|brewing_stand|beacon|quartz_block|smooth_stone|polished_|cut_|_wall$|campfire|flower_pot|candle|lever|_button|pressure_plate|observer|dispenser|dropper|tnt|iron_block|gold_block|diamond_block|emerald_block|copper_block|hay_block|glazed_terracotta|stained|sea_lantern|end_rod/;
+const BUILT = /planks|glass|crafting_table|chest|barrel|_bed$|torch|lantern|wool|(?<!moss_)carpet|concrete|bricks|_slab|_stairs|_door|fence|furnace|smoker|anvil|_sign|bookshelf|rail|redstone_(wire|torch|lamp|block)|repeater|comparator|piston|hopper|composter|lectern|scaffolding|ladder|banner|bell|item_frame|shulker_box|enchanting_table|brewing_stand|beacon|quartz_block|smooth_stone|polished_|cut_|_wall$|campfire|flower_pot|candle|lever|_button|pressure_plate|observer|dispenser|dropper|tnt|(?<!raw_)iron_block|(?<!raw_)gold_block|diamond_block|emerald_block|(?<!raw_)copper_block|hay_block|glazed_terracotta|stained|sea_lantern|end_rod/;
 // actions that only move or look: allowed anywhere (they change nothing)
 const PASSIVE = /^(auto|restore|bed|nightsit|stash|map|walk_xz|to_surface|shelter|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
 let guardOn = ctx.guardOn ?? true;
@@ -22,7 +22,7 @@ function scanBuilt(bot, R) {
     for (let y = Math.max(-64, Y - 24); y <= Y + 24; y++) {
       const id = bot.world.block(x, y, z)?.name;
       if (id && MARKER.test(id)) marks.add(MARKER.exec(id)[1]);
-      if (id && BUILT.test(id) && !bot.placedByMe?.has(`${x},${y},${z}`)) { const k = id.replace('minecraft:', ''); const h = hits.get(k); if (h) h.n++; else hits.set(k, { n: 1, x, y, z, d: Math.round(Math.hypot(x - X, z - Z)) }); }
+      if (id && BUILT.test(id) && !bot.placedByMe?.has(`${x},${y},${z}`)) { const k = id.replace('minecraft:', ''); const h = hits.get(k); if (h) { h.n++; h.top = Math.max(h.top, y); } else hits.set(k, { n: 1, top: y, x, y, z, d: Math.round(Math.hypot(x - X, z - Z)) }); }
     }
   }
   return [...hits].map(([k, h]) => ({ block: k, ...h })).sort((a, b) => a.d - b.d);
@@ -37,9 +37,12 @@ function nearPlayers(bot, R) {
 // strongholds may be used). Told apart by what only generation leaves and no player-only block near; in doubt it is someone's.
 //   village: two or more villagers, a path or a bell, away from the world spawn's hub  ·  ruined portal: crying obsidian
 //   stronghold: mossy and cracked stone bricks together under the ground, or a portal frame  ·  the Nether and the End: all of it
-const MARKER = /^minecraft:(grass_path|bell|crying_obsidian|mossy_stone_bricks|cracked_stone_bricks|end_portal_frame|infested_\w+)$/;
+const MARKER = /^minecraft:(grass_path|bell|crying_obsidian|mossy_stone_bricks|cracked_stone_bricks|end_portal_frame|infested_\w+|web)$/;
 const PLAYER_ONLY = /shulker|beacon|concrete|redstone|repeater|comparator|piston|hopper|rail|enchanting_table|ender_chest|item_frame|banner|_sign|scaffolding|quartz|glass_pane|stained_glass/;
 function naturalHere(bot, hits) {
+  // (an abandoned mineshaft: cobwebs, and nothing but its own timber, rails, torches and chests, all of it under the ground;
+  //  raw ore blocks of a vein are the world's too: they are not in BUILT)
+  if (me.dim === 'overworld' && (me.marks ?? new Set()).has('web') && hits.length && hits.every((h) => h.top < 50 && /^((dark_)?oak_(planks|fence)|rail|torch|chest)$/.test(h.block))) return 'mineshaft';
   if (hits.some((h) => PLAYER_ONLY.test(h.block))) return null;
   if (me.dim !== 'overworld') return me.dim;
   const p = bot.state().pos, m = me.marks ?? new Set();
@@ -149,31 +152,39 @@ async function fetchThenReview(dp, rv) {
     // (a circuit breaker: back to the same place at most twice in 20 minutes - a recovery that keeps walking into what killed it only
     //  feeds the loop: one bot elsewhere was sent back into a camp 226 times)
     me.fetchLog = (me.fetchLog ?? []).filter((f) => Date.now() - f.t < 1200000);
-    if (me.fetchLog.filter((f) => Math.hypot(f.x - dp.x, f.z - dp.z) < 32).length >= 2) { log('death: not going back - twice to that place already in the last 20 minutes'); return; }
-    me.fetchLog.push({ x: dp.x, z: dp.z, t: Date.now() });
+    if (me.fetchLog.filter((f) => !f.ok && Math.hypot(f.x - dp.x, f.z - dp.z) < 32).length >= 2)   // (trips that brought nothing back; one that did is no loop)
+      { log('death: not going back - twice to that place already in the last 20 minutes'); return; }
     if (me.dim !== 'overworld' || far > 450) { log(`death: my things lie ${Math.round(far)} blocks off: too far to reach in time`); return; }
     // which is faster: the walk back, or making it all again? (seconds to make each again, from the plans' own times on this server:
     // a stone tool 15-40 s, a wooden sword ~40 s, a bed ~3 min with the sheep, iron minutes of mining and smelting)
     const go = far / 4.5 + 20, inv = rv.inv ?? '', val = remakeSeconds(inv), danger = rv.night && /zombie|skeleton|spider|creeper|drowned|husk|stray|witch/.test(rv.foes ?? '') && !me.armed;
     if (go > val || danger) { log(`death: not going back (${Math.round(far)} blocks ≈ ${Math.round(go)} s${danger ? ', at night with them still there and nothing in hand' : ''}; making it again ≈ ${Math.round(val)} s)`, { dc: true }); return; }
     log(`death: back for my things at ${Math.round(dp.x)} ${Math.round(dp.y)} ${Math.round(dp.z)} (${Math.round(far)} blocks, ${Math.round((300000 - (Date.now() - dp.t)) / 1000)} s before they vanish)`, { dc: true });
-    me.abort = false;
+    const trip = { x: dp.x, z: dp.z, t: Date.now(), ok: false }; me.fetchLog.push(trip);   // (counted when it does go)
+    me.abort = false; me.fetchArmed = WEAPONS.some((w) => inv.includes('minecraft:' + w + '*'));   // (a weapon lies there: no making one on the way)
     const stop = setTimeout(() => { me.abort = true; b.cancel?.(); }, Math.max(10000, 285000 - (Date.now() - dp.t)));
     try {
       if (far > 6) await BUILTIN.travel([String(Math.round(dp.x)), String(Math.round(dp.z))]);
       // (the dropped things show up a moment after the chunk does: up to 6 s for the first of them - 'back with empty' was this;
       //  then each is walked onto and waited for until the server has taken it off the ground)
-      const lying = () => { const p = b.state().pos; return [...b.entities.values()].filter((e) => e.type === 'minecraft:item' && Math.hypot(e.x - dp.x, e.z - dp.z) < 10 && Math.abs(e.y - dp.y) < 8).sort((u, v) => Math.hypot(u.x - p.x, u.z - p.z) - Math.hypot(v.x - p.x, v.z - p.z)); };
+      const lying = () => { const p = b.state().pos; return [...b.entities.values()].filter((e) => e.type === 'minecraft:item' && Math.hypot(e.x - dp.x, e.z - dp.z) < 16 && Math.abs(e.y - dp.y) < 8).sort((u, v) => Math.hypot(u.x - p.x, u.z - p.z) - Math.hypot(v.x - p.x, v.z - p.z)); };
       for (let t = 0; t < 12 && !lying().length && !me.abort; t++) await sleep(500);
       let dug = 0;
       for (let k = 0; k < 24 && !me.abort && Date.now() - dp.t < 295000; k++) {
-        const items = lying(); if (!items.length) break;
+        let items = lying();
+        if (!items.length) { await sleep(1500); items = lying(); if (!items.length) break; }   // (the rest of them come into view a moment after the first: 14:42 it left with the sword alone)
         const it = items[0];
+        if (process.env.BOT_DEBUG) { const p0 = b.state().pos; log(`death: fetch ${k}: ${items.length} lying, nearest ${Math.hypot(it.x - p0.x, it.z - p0.z).toFixed(1)} off, ${(p0.y - it.y).toFixed(1)} below`); }
         await gotoFor([String(Math.floor(it.x)), String(Math.floor(it.z))], 8000);
         for (let t = 0; t < 8 && [...b.entities.values()].includes(it); t++) await sleep(250);
         // (they lie under the ground: it died down a hole or in its night shelter, and walking stops on the ground above them -
         //  straight down to them, twice at most; never where someone has built)
         const p = b.state().pos, deep = Math.round(p.y - it.y);
+        // (one step lower, right beside: the path ends on the block above them, 0.3 away and out of reach for good - 14:54, twenty
+        //  rounds of standing there. Onto their very spot)
+        if ([...b.entities.values()].includes(it) && p.y - it.y > 0.6 && deep < 2) {
+          for (let t = 0; t < 3 && [...b.entities.values()].includes(it) && !me.abort; t++) { await gotoFor([String(it.x), String(it.y), String(it.z)], 1500, 'lookat'); await gotoFor(['forward', '8'], 1500, 'walk'); await sleep(400); }
+        }
         if ([...b.entities.values()].includes(it) && deep >= 2 && Math.hypot(it.x - p.x, it.z - p.z) < 2.5 && dug < 2 && !guardReason(b)) {
           dug++; log(`death: they lie ${deep} below me: down to them`);
           // (an open hole: the path stops at its rim - step in over them; closed ground: dig)
@@ -186,7 +197,8 @@ async function fetchThenReview(dp, rv) {
       await b.act('inv', []).catch(() => {});   // (the server's copy of the inventory, not this client's guess)
     } finally { clearTimeout(stop); }
     lastWeaponCheck = 0; me.armed = WEAPONS.some((w) => (b.invText?.() ?? '').includes('minecraft:' + w + '*'));
-    log(`death: back with ${(b.invText?.() ?? 'inv empty').replace(/^inv /, '').slice(0, 160)}`, { dc: true });
+    trip.ok = /\d+:minecraft:/.test(b.invText?.() ?? '');
+    log(`death: back with ${(b.invText?.() ?? 'inv empty').replace(/^inv /, '').slice(0, 400)}`, { dc: true });
   } catch (e) { log('death: fetching failed: ' + e.message); }
   finally {
     me.fetching = false; me.abort = false;
@@ -273,7 +285,8 @@ async function walkTo(tx, tz, maxMs = 600000) {
       if (nightNow(b) && me.dim === 'overworld' && !guardReason(b)) { await b.act('sprint', ['off']).catch(() => {}); log('travel: night: digging in until morning', { dc: true }); await sitOutNight(b, () => me.abort); log('travel: morning: on'); last = b.state().pos; lastT = Date.now(); continue; }
       // nothing in hand, out of the builds' reach, by day: a sword first (logs - planks - sword, half a minute), then on - the long walk
       // unarmed from the world spawn to the bed was three deaths in a row (14:42 - 14:47)
-      if (!me.armed && Date.now() - armTried > 180000 && !guardReason(b) && !nightNow(b) && me.dim === 'overworld') {
+      if (!me.armed) me.armed = WEAPONS.some((w) => (b.invText?.() ?? '').includes('minecraft:' + w + '*'));   // (as it is now, not as it was 15 s ago)
+      if (!me.armed && !(me.fetching && me.fetchArmed) && Date.now() - armTried > 180000 && !guardReason(b) && !nightNow(b) && me.dim === 'overworld') {
         armTried = Date.now(); await b.act('sprint', ['off']).catch(() => {}); log('travel: nothing to fight with: a sword first');
         const t = setTimeout(() => b.cancel?.(), 300000); await b.act('get_wooden_sword', []).catch(() => {}); clearTimeout(t);
         lastWeaponCheck = 0; await armUp(b).catch(() => {}); me.armed = WEAPONS.some((w) => (b.invText?.() ?? '').includes('minecraft:' + w + '*'));
@@ -467,6 +480,9 @@ function deathArmTap(l) { if (/ died \(/.test(l)) me.armed = false; }
 // in sight: nothing solid on the straight line from the eyes to its middle (a mob behind a wall is not fought: it cannot be reached)
 const inSight = (b, P, x) => { const ex = P.x, ey = P.y + 1.62, ez = P.z, tx = x.x, ty = x.y + 0.9, tz = x.z, n = Math.ceil(Math.hypot(tx - ex, ty - ey, tz - ez) * 3);
   for (let i = 1; i < n; i++) { const f = i / n, nm = b.world.block(Math.floor(ex + (tx - ex) * f), Math.floor(ey + (ty - ey) * f), Math.floor(ez + (tz - ez) * f))?.name ?? 'minecraft:air'; if (!/air|water|grass|fern|flower|leaf_litter|snow_layer|vine|torch|sapling|bush/.test(nm)) return false; } return true; };
+// (all of them within r, seen or not: for counting the odds and for which way is away - 14:19 in the lab two of six were in sight,
+//  it ran from those two into the other four: 20 health to 2)
+const hostilesAll = (b, r) => { const P = b.state().pos; return [...b.entities.values()].filter((x) => HOSTILE.test(x.type ?? '') && Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) < r).map((x) => ({ e: x, d: Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) })).sort((p, q) => p.d - q.d); };
 const hostilesNear = (b, r) => { const P = b.state().pos; return [...b.entities.values()].filter((x) => HOSTILE.test(x.type ?? '') && Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) < r && inSight(b, P, x)).map((x) => ({ e: x, d: Math.hypot(x.x - P.x, x.y - P.y, x.z - P.z) })).sort((p, q) => p.d - q.d); };
 async function invList(b) { if (b.invText) { try { return b.invText(); } catch { /* fall back */ } } const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap); await b.act('inv', []).catch(() => {}); ctx.taps.delete(tap); return seen.join(' '); }
 async function armUp(b) {
@@ -476,7 +492,7 @@ async function armUp(b) {
   if (w && !new RegExp(`\\d+:minecraft:${w}\\*\\d+[^|]*\\(holding slot`).test(inv)) await b.act('hold_' + w, []).catch(() => {});
 }
 async function breakAway(b, foes) {
-  const P = b.state().pos; let ax = 0, az = 0; for (const f of foes) { ax += P.x - f.e.x; az += P.z - f.e.z; }
+  const P = b.state().pos; let ax = 0, az = 0; for (const f of [...new Map([...foes, ...hostilesAll(b, 12)].map((f) => [f.e, f])).values()]) { const w = 1 / Math.max(1, f.d * f.d); ax += (P.x - f.e.x) * w; az += (P.z - f.e.z) * w; }   // (the near ones count most: out through the gap)
   const yaw = (Math.atan2(-ax, az) * 180) / Math.PI;
   log(`fight: ${me.armed ? `health ${me.hp}` : 'unarmed'}: breaking away from ${foes.length} (${foes.map((f) => f.e.type.replace('minecraft:', '')).join(' ')})`);
   // in water (a drowned's home): looking level and sprinting barely moves; head up and swim (jump) away, toward air
@@ -484,8 +500,30 @@ async function breakAway(b, foes) {
   await b.act('look', [yaw.toFixed(0), wet ? '-35' : '0']).catch(() => {});
   await b.act('sprint', ['on']).catch(() => {}); await b.act('option', ['autojump', 'on']).catch(() => {});
   if (wet) { for (let i = 0; i < 8; i++) { await b.act('jump', []).catch(() => {}); await sleep(250); } }
-  await sleep(me.armed ? 2500 : 5000); await b.act('sprint', ['off']).catch(() => {});
-  if (me.armed) await b.act('eat', []).catch(() => {});
+  // (14:26 in the lab: 2.5 s of running, then it stood and ate with four husks five blocks behind - dead in 11 s. Running goes on,
+  //  re-aimed every second, until none is within 16 blocks or 15 s are up; eating only once clear)
+  let clear = false;
+  for (let t = 0; t < 15 && me.connected && !b.state().dead; t++) {
+    await sleep(1000);
+    const near = hostilesAll(b, 16); if (!near.length) { clear = true; break; }
+    const Q = b.state().pos; let bx = 0, bz = 0; for (const f of near) { const w = 1 / Math.max(1, f.d * f.d); bx += (Q.x - f.e.x) * w; bz += (Q.z - f.e.z) * w; }
+    await b.act('look', [((Math.atan2(-bx, bz) * 180) / Math.PI).toFixed(0), wet ? '-35' : '0']).catch(() => {});
+    if (wet || t % 2) await b.act('jump', []).catch(() => {});
+  }
+  await b.act('sprint', ['off']).catch(() => {});
+  if (clear && me.armed) await b.act('eat', []).catch(() => {});
+}
+// fight or leave, worked out before the first swing (the 27-hour run elsewhere: 605 deaths, most of them fights it could have
+// counted beforehand). Bedrock: no swing cooldown, a mob cannot be hurt again for half a second → two hits a second; what each of
+// them has and deals on normal difficulty; they are fought nearest first, and all of them hit until their turn comes.
+const FOE = { zombie: [20, 3], husk: [20, 3], drowned: [20, 3], zombie_villager_v2: [20, 3], skeleton: [20, 2.5], stray: [20, 2.5], bogged: [16, 2.5], spider: [16, 2], cave_spider: [12, 3], creeper: [20, 0], witch: [26, 3], slime: [16, 3], magma_cube: [16, 4], pillager: [24, 3], vindicator: [24, 13], silverfish: [8, 1], phantom: [20, 3], blaze: [20, 5], wither_skeleton: [20, 8], piglin_brute: [50, 13], hoglin: [40, 6], ghast: [10, 6], endermite: [8, 2], breeze: [30, 3] };
+const HIT = { netherite_sword: 9, diamond_sword: 8, iron_sword: 7, stone_sword: 6, wooden_sword: 5, diamond_axe: 7, iron_axe: 6, stone_axe: 5, wooden_axe: 4 };
+function odds(b, foes) {
+  const inv = b.invText?.() ?? '', w = WEAPONS.find((x) => inv.includes('minecraft:' + x + '*')), hit = w ? HIT[w] : 1;
+  const armour = (/iron_chestplate|diamond_chestplate|netherite_chestplate/.test(inv) || me.armored ? 0.7 : 1) * (/shield\*/.test(inv) ? 0.8 : 1);
+  let t = 0, taken = 0;
+  for (const f of foes) { const [hp, dps] = FOE[f.e.type.replace('minecraft:', '')] ?? [20, 4]; t += hp / (hit * 2) + 0.5; taken += dps * 0.6 * t * armour; }   // (0.6: each of my hits knocks it back out of its reach for a moment)
+  return { taken: Math.round(taken), secs: Math.round(t), ok: taken * 1.2 < (me.hp ?? 20) - 1 };
 }
 async function engage(b, maxMs = 12000) {
   if (fighting) return; fighting = true;
@@ -493,8 +531,11 @@ async function engage(b, maxMs = 12000) {
   try {
     while (Date.now() - t0 < maxMs && me.connected && !b.state().dead) {
       const foes = hostilesNear(b, 7); if (!foes.length) return;
+      if (!me.armed) me.armed = WEAPONS.some((w) => (b.invText?.() ?? '').includes('minecraft:' + w + '*'));   // (as it is now: 14:45 it ran from one zombie with a sword just picked up)
       // nothing to fight with: no fist fight against a zombie (20 health against 1 a punch) - run, sprinting, they are slower
       if (!me.armed || (me.hp !== null && me.hp <= AD.breakAwayHp)) { await breakAway(b, foes); return; }
+      { const all = hostilesAll(b, 12), o = odds(b, all);   // (those a little further off join in before it is over)
+        if (!o.ok) { log(`fight: not this one: ${all.length} of them would cost about ${o.taken} of my ${me.hp ?? 20} health over ${o.secs} s`, { dc: true }); await breakAway(b, all); return; } }
       const { e, d } = foes[0], kind = e.type.replace('minecraft:', '');
       await armUp(b);
       if (/creeper/.test(kind) && d < 3.2) { await b.act('attack', [kind]).catch(() => {}); await b.act('look', [String((((Math.atan2(-(b.state().pos.x - e.x), b.state().pos.z - e.z)) * 180) / Math.PI).toFixed(0)), '0']).catch(() => {}); await b.act('sprint', ['on']).catch(() => {}); await sleep(1200); await b.act('sprint', ['off']).catch(() => {}); continue; }
@@ -690,7 +731,19 @@ async function bedSpawn0() {
   if (!bed) { log('auto: the bed did not go down'); return false; }
   try { require('node:fs').writeFileSync(require('node:path').join(ctx.RUN, 'bed.json'), JSON.stringify({ x: bed[0], y: bed[1], z: bed[2] })); } catch { /* */ }
   const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap);
-  await me.bot.act('useon', bed.map(String)).catch(() => {}); await sleep(1500); ctx.taps.delete(tap);
+  // (14:29 in the lab: '%tile.bed.tooFar' - clicked from three blocks off. Right beside it first, on a free cell next to either half,
+  //  and the half nearest; once more from another side if the server still says too far)
+  const isBed = (x, y, z) => /(^|:)(\w+_)?bed$/.test(me.bot.world.block(x, y, z)?.name ?? '');
+  const halves = [bed, ...[[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dz]) => [bed[0] + dx, bed[1], bed[2] + dz]).filter((c) => isBed(...c))];
+  const sides = halves.flatMap((h) => [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dz]) => ({ h, x: h[0] + dx, z: h[2] + dz }))).filter((c) => /air/.test(me.bot.world.block(c.x, bed[1], c.z)?.name ?? '') && /air/.test(me.bot.world.block(c.x, bed[1] + 1, c.z)?.name ?? ''));
+  for (let k = 0; k < 3 && live(); k++) {
+    const q = me.bot.state().pos; sides.sort((u, v) => Math.hypot(u.x + 0.5 - q.x, u.z + 0.5 - q.z) - Math.hypot(v.x + 0.5 - q.x, v.z + 0.5 - q.z));
+    const sd = sides[k % Math.max(1, sides.length)]; if (sd) await gotoFor([String(sd.x), String(sd.z)], 8000);
+    seen.length = 0;
+    await me.bot.act('useon', (sd?.h ?? bed).map(String)).catch(() => {}); await sleep(1500);
+    if (!seen.some((l) => /tooFar|not under the crosshair/.test(l))) break;
+  }
+  ctx.taps.delete(tap);
   // (only when the server says so: 13:43 the click never went out - 'not under the crosshair' - and 'respawn point set' was logged
   //  anyway; the death at 14:14 went back to the world spawn)
   if (!seen.some((l) => /respawnSet|respawn point set/i.test(l))) { log(`auto: the bed at ${bed.join(' ')} did not take as the respawn point (${seen.filter((l) => /useon|bed/.test(l)).slice(-1)[0] ?? 'no answer'})`, { dc: true }); return false; }
@@ -782,7 +835,14 @@ async function stash(take) {
     if (!openSky(b, b.state().pos)) await b.act('to_surface', []).catch(() => {});
     const g = guardReason(b); if (g) { log(`stash: no chest here: ${g}`); return false; }
     const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap);
-    await run('place_chest', 'set the chest down'); await sleep(600); ctx.taps.delete(tap);
+    // (no free spot in front - a slope, a hole's rim, tall grass: each of the four ways, then a few steps on and again)
+    for (let k = 0; k < 8 && live(); k++) {
+      said.length = 0; await run('place_chest', 'set the chest down'); await sleep(600);
+      if (/chest set at/.test(said.join('\n'))) break;
+      await b.act('look', [String((k % 4) * 90), '0']).catch(() => {});
+      if (k === 3) { const q2 = b.state().pos; await gotoFor([String(Math.floor(q2.x) + 5), String(Math.floor(q2.z) + 3)], 12000); }
+    }
+    ctx.taps.delete(tap);
     // (where the verb says it set it, checked in the world: a chest stands there now)
     { const m = /chest set at (-?\d+) (-?\d+) (-?\d+)/.exec(said.join('\n')); if (m && isChest(b, +m[1], +m[2], +m[3])) c = { x: +m[1], y: +m[2], z: +m[3] }; }
     const p = b.state().pos, X = Math.floor(p.x), Y = Math.floor(p.y), Z = Math.floor(p.z);

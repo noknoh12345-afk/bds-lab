@@ -8,7 +8,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.dirname(HERE);
 const RUN = process.env.LABTEST_RUN || '/tmp/labbot/run', CFG = path.join(path.dirname(RUN), 'config.json');
-const ENV = { ...process.env, LAB_WORLD: 'normal', LAB_SEED: process.env.LAB_SEED ?? '7' };
+const ENV = { ...process.env, LAB_WORLD: 'normal', LAB_SEED: process.env.LAB_SEED ?? '11' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const lab = (...a) => { const r = spawnSync(process.execPath, ['lab.mjs', ...a], { cwd: ROOT, env: ENV, encoding: 'utf8', timeout: 400000 }); return (r.stdout ?? '') + (r.stderr ?? ''); };
 const srv = (...cmds) => lab('do', '-a', 'lamp', ...cmds);
@@ -71,6 +71,26 @@ const S = {
     if (!m) return `no fetch report · ${since().split('\n').slice(-6).join(' | ')}`;
     return /back with .*stone_sword/.test(m[1]) && /stone_pickaxe/.test(m[1]) ? true : m[1].slice(0, 200);
   },
+  // dead at the bottom of a hole three deep: down to the things, back up with them
+  async fetch_hole() {
+    await fresh();
+    srv(`give ${NAME} stone_sword 1`, `give ${NAME} stone_pickaxe 1`, `give ${NAME} cobblestone 20`); await sleep(2000);
+    send('dig_down 3'); await sleep(9000);
+    srv(`kill ${NAME}`);
+    const m = await waitLog(/death: (back with .*|not going back.*|my things lie.*|fetching failed.*)/, 150000);
+    if (!m) return `no fetch report · ${since().split('\n').slice(-6).join(' | ')}`;
+    return /back with .*stone_sword/.test(m[1]) && /stone_pickaxe/.test(m[1]) ? true : m[1].slice(0, 200);
+  },
+  // a stone sword and six husks: counted beforehand, not fought - away from them, and alive 40 s on
+  async flee_many() {
+    await fresh();
+    srv(`give ${NAME} stone_sword 1`); await sleep(1500);
+    srv(...[4, -4, 5, -5, 6, -6].map((d, i) => `execute at ${NAME} run summon husk ~${d} ~ ~${i % 2 ? 3 : -3}`));
+    const d0 = status().deaths ?? 0;
+    const m = await waitLog(/fight: not this one/, 20000);
+    for (let t = 0; t < 8; t++) { await sleep(5000); if ((status().deaths ?? 0) > d0) return `died after ${t * 5} s · ${since().split('\n').filter((l) => /fight|died/.test(l)).slice(-6).join(' | ')}`; }
+    return m ? true : `it never counted the odds · ${since().split('\n').filter((l) => /fight/.test(l)).slice(-5).join(' | ')}`;
+  },
   // a chest of our own: the diamonds go in (read back from the open chest), the inventory is lost, they come out again
   async stash() {
     await fresh();
@@ -87,6 +107,11 @@ const S = {
 async function main() {
   const want = process.argv.slice(2).filter((a) => S[a]); const names = want.length ? want : Object.keys(S);
   fs.rmSync(path.dirname(RUN), { recursive: true, force: true }); fs.mkdirSync(path.join(RUN, 'inbox'), { recursive: true });
+  // the same untouched world every run: `up` keeps what a run left behind (a chest from the last run's stash scenario was "someone's
+  // build" to the next) - a clean copy is put aside the first time and put back before each run
+  { const tpl = path.join(ROOT, 'bds', '.lab', `world-normal-${ENV.LAB_SEED}`), clean = tpl + '.clean';
+    if (fs.existsSync(clean)) { fs.rmSync(tpl, { recursive: true, force: true }); fs.cpSync(clean, tpl, { recursive: true }); }
+    else if (!fs.existsSync(tpl)) { lab('up', '-a', 'lamp'); lab('down'); if (fs.existsSync(tpl)) fs.cpSync(tpl, clean, { recursive: true }); } }
   process.stdout.write('lab server (generated world) ... ');
   const up = lab('up', '-a', 'lamp'); if (!/OK live/.test(up)) { console.log('FAIL\n' + up.slice(-1500)); process.exit(1); }
   const live = JSON.parse(fs.readFileSync(path.join(ROOT, 'bds', '.lab', 'live.json'), 'utf8'));

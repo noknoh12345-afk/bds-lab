@@ -106,7 +106,8 @@ async function connect() {
   bot.setLegit?.(cfg.legit !== false);
   // what it set down before (its own table, furnace, bed) stays its own across restarts
   try { for (const k of JSON.parse(fs.readFileSync(path.join(RUN, 'placed.json'), 'utf8'))) bot.placedByMe?.add(k); } catch { /* none yet */ }   // only what a person could do: looking at it, in reach, nothing in between
-  bot.client.on('update_attributes', (p) => { for (const a of p.attributes ?? []) { if (a.name === 'minecraft:health') me.hp = a.current; if (a.name === 'minecraft:player.hunger') me.food = a.current; } });
+  bot.client.on('update_attributes', (p) => { const r = bot.rid?.(); if (r === null || r === undefined || BigInt(p.runtime_entity_id) !== BigInt(r)) return;   // (its own only: every mob's health came through here too - 'health 0' while alive, and running from a fight it was winning)
+    for (const a of p.attributes ?? []) { if (a.name === 'minecraft:health') me.hp = a.current; if (a.name === 'minecraft:player.hunger') me.food = a.current; } });
   bot.client.on('change_dimension', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? String(p.dimension); });
   bot.client.on('start_game', (p) => { me.dim = ['overworld', 'nether', 'the_end'][p.dimension] ?? me.dim; });
   // 'close' can fire while the server still talks to us (a NetherNet data channel closing): gone only when packets stopped too
