@@ -1,0 +1,54 @@
+{
+ "queue": "q94_speech_duck_return",
+ "run": "44189786872",
+ "date": "2026-11-18",
+ "what": "q92 の続き: ダッキング 0 / 3 / 6 dB、読み上げの後 5 秒まで録る。曲だけの 30-150 Hz の中央値（dB、相対）を読み上げの間と後で",
+ "per_recording": {
+  "0_hello": {
+   "during": 18.6,
+   "after": 17.9,
+   "silent_frames_after_start": 0
+  },
+  "3_hello": {
+   "during": 16.3,
+   "after": 14.2,
+   "silent_frames_after_start": 0
+  },
+  "6_hello": {
+   "during": 14.1,
+   "after": 15.6,
+   "silent_frames_after_start": 0
+  },
+  "0_weather": {
+   "during": 19.1,
+   "after": 14.5,
+   "silent_frames_after_start": 0
+  },
+  "3_weather": {
+   "during": 15.4,
+   "after": 16.6,
+   "silent_frames_after_start": 0
+  },
+  "6_weather": {
+   "during": 13.2,
+   "after": 18.3,
+   "silent_frames_after_start": 0
+  },
+  "0_piano": {
+   "during": 18.6,
+   "after": 17.6,
+   "silent_frames_after_start": 0
+  },
+  "3_piano": {
+   "during": 15.6,
+   "after": 16.1,
+   "silent_frames_after_start": 0
+  },
+  "6_piano": {
+   "during": 13.6,
+   "after": 14.5,
+   "silent_frames_after_start": 0
+  }
+ },
+ "reading": "実測: 3・6 dB とも曲は消えず、読み上げの間だけ下がって（0 dB より約 3 dB・約 5 dB）後で戻った。q92 の「消えて戻らない」は再現しなかった → q95 で q92 をそのままやり直す"
+}
