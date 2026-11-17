@@ -1,0 +1,82 @@
+{
+ "queue": "q95_speech_duck_again",
+ "run": "44195741655",
+ "date": "2026-11-18",
+ "what": "q92 を同じ手順でやり直し（ダッキング 0 / 6 / 12 dB と曲なし、3 文）",
+ "per_recording": {
+  "0_hello": {
+   "speech_strength_median": 0.929,
+   "sn_db_median": 2.51,
+   "windows": 26,
+   "visqol": 3.5515,
+   "mrstft": 2.6129,
+   "lag_ms": 1578.8
+  },
+  "6_hello": {
+   "speech_strength_median": 0.943,
+   "sn_db_median": 7.9,
+   "windows": 27,
+   "visqol": 4.2726,
+   "mrstft": 1.5852,
+   "lag_ms": 1642.8
+  },
+  "12_hello": {
+   "speech_strength_median": 0.893,
+   "sn_db_median": 7.58,
+   "windows": 26,
+   "visqol": 4.3394,
+   "mrstft": 1.6258,
+   "lag_ms": 1578.8
+  },
+  "0_weather": {
+   "speech_strength_median": 0.954,
+   "sn_db_median": -0.8,
+   "windows": 22,
+   "visqol": 3.959,
+   "mrstft": 3.2403,
+   "lag_ms": 1450.8
+  },
+  "6_weather": {
+   "speech_strength_median": 0.895,
+   "sn_db_median": 4.91,
+   "windows": 22,
+   "visqol": 4.4265,
+   "mrstft": 1.4224,
+   "lag_ms": 1514.8
+  },
+  "12_weather": {
+   "speech_strength_median": 0.929,
+   "sn_db_median": 11.75,
+   "windows": 22,
+   "visqol": 4.4073,
+   "mrstft": 1.511,
+   "lag_ms": 1536.0
+  },
+  "0_piano": {
+   "speech_strength_median": 0.995,
+   "sn_db_median": 3.51,
+   "windows": 27,
+   "visqol": 3.7615,
+   "mrstft": 2.7779,
+   "lag_ms": 1536.0
+  },
+  "6_piano": {
+   "speech_strength_median": 0.588,
+   "sn_db_median": -3.27,
+   "windows": 28,
+   "visqol": 4.3496,
+   "mrstft": 1.4582,
+   "lag_ms": 1642.8
+  },
+  "12_piano": {
+   "speech_strength_median": 0.246,
+   "sn_db_median": -9.78,
+   "windows": 28,
+   "visqol": 4.3427,
+   "mrstft": 1.4325,
+   "lag_ms": 1621.2
+  }
+ },
+ "low_band_30_150Hz": "q92 と同じ: 6・12 dB では読み上げの 1-2 秒後に曲だけの 30-150 Hz が読み上げだけの値まで落ち、読み上げの後も戻らず無音。0 dB は最後まで続く",
+ "reading": "実測: q92 の「曲が消えて戻らない」は再現した（3 回のうち 2 回、q94 だけ消えなかった）。q94 との違いは並び（q92・q95 は曲なし → 0 → 6 → 12、q94 は 0 → 3 → 6 で、読み上げの後 5 秒長い）だが、原因は分からない。ViSQOL の上がりは曲が消えたため。ダッキングは既定にしない（切のまま）"
+}
