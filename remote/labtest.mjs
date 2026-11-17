@@ -94,12 +94,12 @@ const S = {
   // the End, with what the plan brings there: the crystals, then the dragon (long: asked for by name only)
   async dragon() {
     await fresh();
-    srv(...['iron_sword', 'bow', 'arrow 64', 'arrow 64', 'arrow 64', 'cooked_beef 32', 'cobblestone 64', 'iron_helmet', 'iron_chestplate', 'iron_leggings', 'iron_boots', 'shield'].map((i) => `give ${NAME} ${i}`));
-    await sleep(2000); send('armor_up'); await sleep(5000);
+    srv(...['iron_sword', 'bow', 'arrow 64', 'arrow 64', 'arrow 64', 'cooked_beef 32', 'cobblestone 64', 'iron_pickaxe', ...(process.env.NO_PUMPKIN ? [] : ['carved_pumpkin']), 'iron_helmet', 'iron_chestplate', 'iron_leggings', 'iron_boots', 'shield'].map((i) => `give ${NAME} ${i}`));
+    await sleep(2000); send('armor_up'); await sleep(5000); if (!process.env.NO_PUMPKIN) { send('equip carved_pumpkin'); await sleep(3000); }
     srv(`execute in the_end run tp ${NAME} 30 61 30 0 60`); await waitLog(/dimension the_end/, 20000); await sleep(1500);
-    send('dragon');
+    send(process.env.DRAGON_CMD ?? 'dragon');
     const d0 = status().deaths ?? 0;
-    const m = await waitFor(() => /dragon: (killed|not killed)/.exec(since()) || ((status().deaths ?? 0) > d0 ? ['', 'died'] : null), Number(process.env.DRAGON_MS ?? 1500000));
+    const m = await waitFor(() => /dragon: (killed|not killed)/.exec(since()) || /(done|failed) "fight_ender_dragon[^"]*"[^\n]*/.exec(since()) || ((status().deaths ?? 0) > d0 ? ['', 'died'] : null), Number(process.env.DRAGON_MS ?? 1500000));
     return m && m[1] === 'killed' ? true : `${m ? m[1] : 'still going'} · ${since().split('\n').filter((l) => /dragon:/.test(l)).slice(-6).join(' | ')}`;
   },
   // a chest of our own: the diamonds go in (read back from the open chest), the inventory is lost, they come out again

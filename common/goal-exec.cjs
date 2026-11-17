@@ -1378,7 +1378,9 @@ function goalVerbs(K, H) {
   // a hole two deep with a block over it: nothing gets in, nothing shoots in. Wait there for the morning, eating when hungry
   let sheltering = false, underway = 0, shelterFailed = -1e9;
   // blocks to build with: what is carried for pillars first, else wood, stone, dirt
-  const blockItem = () => scaffoldNow() ?? [...invMap().keys()].find((k) => /_(log|planks|wood|stem)$|^(cobblestone|cobbled_deepslate|dirt|grass_block|stone|sand|gravel|netherrack|coarse_dirt|mud|andesite|diorite|granite|tuff|deepslate)$/.test(k)) ?? null;
+  // (end stone first where there is one: the dragon flies through every other block - 19:26 in the lab, shut in under cobblestone
+  //  near the fountain and killed by its body through the seal)
+  const blockItem = () => scaffoldNow() ?? [...invMap().keys()].find((k) => /^(end_stone|obsidian)$/.test(k)) ?? [...invMap().keys()].find((k) => /_(log|planks|wood|stem)$|^(cobblestone|cobbled_deepslate|dirt|grass_block|stone|sand|gravel|netherrack|coarse_dirt|mud|andesite|diorite|granite|tuff|deepslate)$/.test(k)) ?? null;
   // a block into an empty cell, set against any solid neighbour of it
   const FACES = [[0, -1, 0, 'up'], [1, 0, 0, 'west'], [-1, 0, 0, 'east'], [0, 0, 1, 'north'], [0, 0, -1, 'south'], [0, 1, 0, 'down']];
   async function fillCell(at) {
