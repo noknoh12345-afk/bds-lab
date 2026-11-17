@@ -1875,5 +1875,11 @@
   "started": "2026-11-18 07:24",
   "status": "done",
   "tries": 1
+ },
+ "q95_speech_duck_again": {
+  "commit": "8ae6244",
+  "run": "44195741655",
+  "started": "2026-11-18 08:02",
+  "status": "running"
  }
 }
