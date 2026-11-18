@@ -1,0 +1,250 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 104（tools/exp/queue/q104_talker_room.json、11-18）: q103 で話し手（ライブ 24+8 音）がサンプラーのバンドの横で約 20 dB 弱くなった（当てはめの強さ 0.01〜0.16: 電話の 32 音を超える）。room 12 songs（サンプラーを聞いている間ライブが 12 音あける）と 0 を 12・0・0・12、話し手だけも。英語 → 日本語"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0",
+  "summon armor_stand talker 0 -60 3"
+ ],
+ "prep": [
+  "audio song speech_ja_soseki,speech_en_wordsworth suffix=_e pack=tools/exp/packs/run10"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "tr_none_en",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:room 0",
+    "do scriptevent spectral:duck 12",
+    "do scriptevent spectral:duck live off",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do tp @e[name=talker] 0 -60 3",
+    "audio start trnone_en",
+    "do execute as @a run spectral:live_demo speech_en_wordsworth_e follow @s 24 \"follow:talker\"",
+    "wait 10000",
+    "do execute as @a run spectral:live demo_speech_en_wordsworth_e stop",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export trnone_en 160"
+   ]
+  },
+  {
+   "title": "tr_r12_en",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:room 12 songs",
+    "do scriptevent spectral:duck 12",
+    "do scriptevent spectral:duck live off",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do tp @e[name=talker] 0 -60 3",
+    "audio start trr12_en",
+    "do execute as @a run spectral:play band_demo",
+    "wait 1500",
+    "do execute as @a run spectral:live_demo speech_en_wordsworth_e follow @s 24 \"follow:talker\"",
+    "wait 10000",
+    "do execute as @a run spectral:live demo_speech_en_wordsworth_e stop",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export trr12_en 160"
+   ]
+  },
+  {
+   "title": "tr_r0_en",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:room 0",
+    "do scriptevent spectral:duck 12",
+    "do scriptevent spectral:duck live off",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do tp @e[name=talker] 0 -60 3",
+    "audio start trr0_en",
+    "do execute as @a run spectral:play band_demo",
+    "wait 1500",
+    "do execute as @a run spectral:live_demo speech_en_wordsworth_e follow @s 24 \"follow:talker\"",
+    "wait 10000",
+    "do execute as @a run spectral:live demo_speech_en_wordsworth_e stop",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export trr0_en 160"
+   ]
+  },
+  {
+   "title": "tr_r0b_en",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:room 0",
+    "do scriptevent spectral:duck 12",
+    "do scriptevent spectral:duck live off",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do tp @e[name=talker] 0 -60 3",
+    "audio start trr0b_en",
+    "do execute as @a run spectral:play band_demo",
+    "wait 1500",
+    "do execute as @a run spectral:live_demo speech_en_wordsworth_e follow @s 24 \"follow:talker\"",
+    "wait 10000",
+    "do execute as @a run spectral:live demo_speech_en_wordsworth_e stop",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export trr0b_en 160"
+   ]
+  },
+  {
+   "title": "tr_r12b_en",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:room 12 songs",
+    "do scriptevent spectral:duck 12",
+    "do scriptevent spectral:duck live off",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do tp @e[name=talker] 0 -60 3",
+    "audio start trr12b_en",
+    "do execute as @a run spectral:play band_demo",
+    "wait 1500",
+    "do execute as @a run spectral:live_demo speech_en_wordsworth_e follow @s 24 \"follow:talker\"",
+    "wait 10000",
+    "do execute as @a run spectral:live demo_speech_en_wordsworth_e stop",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export trr12b_en 160"
+   ]
+  },
+  {
+   "title": "tr_none_ja",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:room 0",
+    "do scriptevent spectral:duck 12",
+    "do scriptevent spectral:duck live off",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do tp @e[name=talker] 0 -60 3",
+    "audio start trnone_ja",
+    "do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 \"follow:talker\"",
+    "wait 10000",
+    "do execute as @a run spectral:live demo_speech_ja_soseki_e stop",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export trnone_ja 160"
+   ]
+  },
+  {
+   "title": "tr_r12_ja",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:room 12 songs",
+    "do scriptevent spectral:duck 12",
+    "do scriptevent spectral:duck live off",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do tp @e[name=talker] 0 -60 3",
+    "audio start trr12_ja",
+    "do execute as @a run spectral:play band_demo",
+    "wait 1500",
+    "do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 \"follow:talker\"",
+    "wait 10000",
+    "do execute as @a run spectral:live demo_speech_ja_soseki_e stop",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export trr12_ja 160"
+   ]
+  },
+  {
+   "title": "tr_r0_ja",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:room 0",
+    "do scriptevent spectral:duck 12",
+    "do scriptevent spectral:duck live off",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do tp @e[name=talker] 0 -60 3",
+    "audio start trr0_ja",
+    "do execute as @a run spectral:play band_demo",
+    "wait 1500",
+    "do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 \"follow:talker\"",
+    "wait 10000",
+    "do execute as @a run spectral:live demo_speech_ja_soseki_e stop",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export trr0_ja 160"
+   ]
+  },
+  {
+   "title": "tr_r0b_ja",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:room 0",
+    "do scriptevent spectral:duck 12",
+    "do scriptevent spectral:duck live off",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do tp @e[name=talker] 0 -60 3",
+    "audio start trr0b_ja",
+    "do execute as @a run spectral:play band_demo",
+    "wait 1500",
+    "do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 \"follow:talker\"",
+    "wait 10000",
+    "do execute as @a run spectral:live demo_speech_ja_soseki_e stop",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export trr0b_ja 160"
+   ]
+  },
+  {
+   "title": "tr_r12b_ja",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:room 12 songs",
+    "do scriptevent spectral:duck 12",
+    "do scriptevent spectral:duck live off",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do tp @e[name=talker] 0 -60 3",
+    "audio start trr12b_ja",
+    "do execute as @a run spectral:play band_demo",
+    "wait 1500",
+    "do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 \"follow:talker\"",
+    "wait 10000",
+    "do execute as @a run spectral:live demo_speech_ja_soseki_e stop",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export trr12b_ja 160"
+   ]
+  },
+  {
+   "title": "tr_reset",
+   "lines": [
+    "do scriptevent spectral:room 0"
+   ]
+  }
+ ]
+}

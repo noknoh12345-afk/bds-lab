@@ -1,0 +1,73 @@
+{
+ "queue": "q103_talker_duck",
+ "run": "44310953850",
+ "date": "2026-11-18",
+ "what": "話し手（ライブ follow、3 ブロック先、日本語・英語）の横でサンプラーのバンド（ヘッドホン）、duck live on / off を on・on・off・off、話し手だけ（参照）",
+ "per_recording": {
+  "off_ja": {
+   "speech_strength_median": 0.095,
+   "sn_db_median": -9.54,
+   "windows": 40,
+   "visqol": 4.4597,
+   "mrstft": 1.3365,
+   "lag_ms": 2031.2
+  },
+  "on_ja": {
+   "speech_strength_median": 0.105,
+   "sn_db_median": -10.26,
+   "windows": 40,
+   "visqol": 4.4577,
+   "mrstft": 1.3714,
+   "lag_ms": 2048.8
+  },
+  "on2_ja": {
+   "speech_strength_median": 0.158,
+   "sn_db_median": -7.49,
+   "windows": 40,
+   "visqol": 4.4524,
+   "mrstft": 1.3794,
+   "lag_ms": 2045.8
+  },
+  "off2_ja": {
+   "speech_strength_median": 0.102,
+   "sn_db_median": -10.07,
+   "windows": 40,
+   "visqol": 4.454,
+   "mrstft": 1.4841,
+   "lag_ms": 2029.8
+  },
+  "off_en": {
+   "speech_strength_median": 0.007,
+   "sn_db_median": -15.67,
+   "windows": 38,
+   "visqol": 4.3173,
+   "mrstft": 2.0831,
+   "lag_ms": 2043.2
+  },
+  "on_en": {
+   "speech_strength_median": 0.079,
+   "sn_db_median": -12.53,
+   "windows": 37,
+   "visqol": 4.3173,
+   "mrstft": 1.6135,
+   "lag_ms": 2065.8
+  },
+  "on2_en": {
+   "speech_strength_median": 0.044,
+   "sn_db_median": -13.77,
+   "windows": 38,
+   "visqol": 4.3173,
+   "mrstft": 1.7093,
+   "lag_ms": 2039.5
+  },
+  "off2_en": {
+   "speech_strength_median": 0.029,
+   "sn_db_median": -19.14,
+   "windows": 39,
+   "visqol": 4.3173,
+   "mrstft": 1.8457,
+   "lag_ms": 1988.5
+  }
+ },
+ "reading": "実測: 話し手だけの録音を当てはめた強さは on / off とも 0.01〜0.16（ずれは 2.0 s でそろい、当てはめは話し手を見つけている）→ バンドが鳴ると話し手は約 20 dB 弱くなる。話し手 24 声 + 8 帯 = 32 音にサンプラーの音が足されて電話の 32 音を超え、話し手が落ちる、と読む。ViSQOL は on / off で同じ（英語 4.317 が 4 本とも同じ値: 話し手がほぼ無く比べられない）。duck live の効き目はこれでは分からない → q104 で room 12 songs"
+}
