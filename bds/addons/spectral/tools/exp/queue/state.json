@@ -1914,5 +1914,11 @@
   "started": "2026-11-18 17:49",
   "status": "done",
   "tries": 1
+ },
+ "q98_speech_duck_renew_rev": {
+  "commit": "8e8f47c",
+  "run": "44275635762",
+  "started": "2026-11-18 18:24",
+  "status": "running"
  }
 }
