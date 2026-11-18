@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 97（tools/exp/queue/q97_speech_duck_renew.json、11-18）: q95 と同じ手順（ダッキング 0 / 6 / 12 dB と曲なし、3 文）に、読み上げの後にライブの音を作り直す renew（1.5.12、既定で入）。q92・q95・q96 で電話が落としたライブの音が、読み上げの後に戻るか。読み上げの後 4 秒長く録る
+# キュー 98（tools/exp/queue/q98_speech_duck_renew_rev.json、11-18）: q97 の 2 回目、並びを逆に（文は piano → weather → hello、ダッキングは 12 → 6 → 0 → 曲なし）。renew で曲が戻るのが続くか、読み上げの ViSQOL の上がり（q97: 0 → 6 → 12 で 3 文とも上）が続くか
 
 section title
 audio info
@@ -25,62 +25,144 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section rn_none_hello
-do scriptevent spectral:room 0
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:duck 0
-audio start rnnone_hello
-do execute as @a run spectral:play speech_hello
-wait 11600
-do execute as @a run spectral:stop
-audio stop
-audio export rnnone_hello 160
-
-section rn_0_hello
-do scriptevent spectral:room 0
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:duck 0
-audio start rn0_hello
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_hello
-wait 11600
-do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
-audio stop
-audio export rn0_hello 160
-
-section rn_6_hello
-do scriptevent spectral:room 0
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:duck 6
-audio start rn6_hello
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_hello
-wait 11600
-do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
-audio stop
-audio export rn6_hello 160
-
-section rn_12_hello
+section rv_12_piano
 do scriptevent spectral:room 0
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
 do scriptevent spectral:duck 12
-audio start rn12_hello
+audio start rv12_piano
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play speech_piano
+wait 13000
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export rv12_piano 160
+
+section rv_6_piano
+do scriptevent spectral:room 0
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:duck 6
+audio start rv6_piano
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play speech_piano
+wait 13000
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export rv6_piano 160
+
+section rv_0_piano
+do scriptevent spectral:room 0
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:duck 0
+audio start rv0_piano
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play speech_piano
+wait 13000
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export rv0_piano 160
+
+section rv_none_piano
+do scriptevent spectral:room 0
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:duck 0
+audio start rvnone_piano
+do execute as @a run spectral:play speech_piano
+wait 13000
+do execute as @a run spectral:stop
+audio stop
+audio export rvnone_piano 160
+
+section rv_12_weather
+do scriptevent spectral:room 0
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:duck 12
+audio start rv12_weather
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play speech_weather
+wait 13000
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export rv12_weather 160
+
+section rv_6_weather
+do scriptevent spectral:room 0
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:duck 6
+audio start rv6_weather
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play speech_weather
+wait 13000
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export rv6_weather 160
+
+section rv_0_weather
+do scriptevent spectral:room 0
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:duck 0
+audio start rv0_weather
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play speech_weather
+wait 13000
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export rv0_weather 160
+
+section rv_none_weather
+do scriptevent spectral:room 0
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:duck 0
+audio start rvnone_weather
+do execute as @a run spectral:play speech_weather
+wait 13000
+do execute as @a run spectral:stop
+audio stop
+audio export rvnone_weather 160
+
+section rv_12_hello
+do scriptevent spectral:room 0
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:duck 12
+audio start rv12_hello
 do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 1000
 do execute as @a run spectral:play speech_hello
@@ -88,137 +170,55 @@ wait 11600
 do execute as @a run spectral:stop
 do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export rn12_hello 160
+audio export rv12_hello 160
 
-section rn_none_weather
-do scriptevent spectral:room 0
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:duck 0
-audio start rnnone_weather
-do execute as @a run spectral:play speech_weather
-wait 13000
-do execute as @a run spectral:stop
-audio stop
-audio export rnnone_weather 160
-
-section rn_0_weather
-do scriptevent spectral:room 0
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:duck 0
-audio start rn0_weather
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_weather
-wait 13000
-do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
-audio stop
-audio export rn0_weather 160
-
-section rn_6_weather
+section rv_6_hello
 do scriptevent spectral:room 0
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
 do scriptevent spectral:duck 6
-audio start rn6_weather
+audio start rv6_hello
 do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 1000
-do execute as @a run spectral:play speech_weather
-wait 13000
+do execute as @a run spectral:play speech_hello
+wait 11600
 do execute as @a run spectral:stop
 do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export rn6_weather 160
+audio export rv6_hello 160
 
-section rn_12_weather
-do scriptevent spectral:room 0
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:duck 12
-audio start rn12_weather
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_weather
-wait 13000
-do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
-audio stop
-audio export rn12_weather 160
-
-section rn_none_piano
+section rv_0_hello
 do scriptevent spectral:room 0
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
 do scriptevent spectral:duck 0
-audio start rnnone_piano
-do execute as @a run spectral:play speech_piano
-wait 13000
+audio start rv0_hello
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play speech_hello
+wait 11600
 do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export rnnone_piano 160
+audio export rv0_hello 160
 
-section rn_0_piano
+section rv_none_hello
 do scriptevent spectral:room 0
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
 do scriptevent spectral:duck 0
-audio start rn0_piano
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_piano
-wait 13000
+audio start rvnone_hello
+do execute as @a run spectral:play speech_hello
+wait 11600
 do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export rn0_piano 160
+audio export rvnone_hello 160
 
-section rn_6_piano
-do scriptevent spectral:room 0
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:duck 6
-audio start rn6_piano
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_piano
-wait 13000
-do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
-audio stop
-audio export rn6_piano 160
-
-section rn_12_piano
-do scriptevent spectral:room 0
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:duck 12
-audio start rn12_piano
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play speech_piano
-wait 13000
-do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
-audio stop
-audio export rn12_piano 160
-
-section rn_reset
+section rv_reset
 do scriptevent spectral:duck 0
