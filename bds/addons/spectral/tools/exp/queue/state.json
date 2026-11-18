@@ -602,6 +602,12 @@
   "status": "done",
   "tries": 1
  },
+ "q106_talker_defaults": {
+  "commit": "2d7654f",
+  "run": "44334611389",
+  "started": "2026-11-19 00:21",
+  "status": "running"
+ },
  "q10_live_10min": {
   "arms": {},
   "checkpoints": 0,
