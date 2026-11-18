@@ -971,6 +971,8 @@ async function dragonFight() {
           burrow.in = Date.now(); burrow.kills = 0;
           log(`dragon: down in our hole (${T - Math.floor(b.state().pos.y + 0.01)} deep${sealed ? ', shut' : ', open'}) · health ${me.hp}${outFor ? ` · out ${Math.round(outFor / 1000)} s` : ''}`);
           for (let t = 0; t < 120 && me.connected && !b.state().dead && !perchedNow() && ((me.hp ?? 0) < 19.5 || Date.now() - burrow.in < 10000); t++) {
+            if (me.hp !== null && burrow.hp0 != null && me.hp < burrow.hp0 - 0.5) { const d = ents(/ender_dragon$/)[0], Q = b.state().pos; log(`dragon: hurt in our hole ${burrow.hp0} → ${me.hp} at y ${Q.y.toFixed(1)}: it at ${d ? `${Math.round(Math.hypot(d.x - Q.x, d.z - Q.z))} off, y ${d.y.toFixed(1)}` : '?'} · clouds within 8: ${ents(/area_effect_cloud$/).filter((e) => !e.burn && Math.hypot(e.x - Q.x, e.z - Q.z) < 8).map((e) => `${Math.hypot(e.x - Q.x, e.z - Q.z).toFixed(1)}/y${e.y.toFixed(0)}`).join(' ') || '-'} · over me ${bname(Math.floor(Q.x), Math.floor(Q.y + 0.01) + 2, Math.floor(Q.z))}`); }
+            burrow.hp0 = me.hp;
             // (an enderman in the hole with us, health going: the sword at it - 17:19, killed by one down there with the pickaxe in hand)
             { const hp1 = me.hp; const em = ents(/enderman$/).find((e) => Math.hypot(e.x - b.state().pos.x, e.y - b.state().pos.y, e.z - b.state().pos.z) < 3.5);
               if (em && (Date.now() - wHurt < 3000 || (hp1 ?? 20) < 19)) { if (Date.now() - emSaid > 8000) { emSaid = Date.now(); log(`dragon: an enderman at our hole (health ${me.hp}): the sword`); } await armUp(b); for (let k = 0; k < 6 && [...b.entities.values()].includes(em); k++) { await b.act('attack', ['enderman']).catch(() => {}); await sleep(250); } continue; } }
