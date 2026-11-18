@@ -816,7 +816,14 @@ async function dragonFight() {
     const [dx, dz] = Math.abs(c.x) > Math.abs(c.z) ? [-Math.sign(c.x), 0] : [0, -Math.sign(c.z)], [lx, lz] = [-dz, dx];
     let kw = 0; for (let k = 1; k <= 6 && !kw; k++) if (bname(bx + dx * k, by, bz + dz * k) === 'iron_bars') kw = k;
     if (!kw) { log(`dragon: no cage wall found toward the middle from the crystal at ${key(c)}`, { dc: true }); return false; }
-    const sx = bx + dx * (kw + 1), sz = bz + dz * (kw + 1);
+    // (a cell with end stone for ground and room above it, one to three out from the wall, nearest first: 'beside the wall' was
+    //  obsidian or air at 12 -36 and the path search set the pillar down eight blocks off - 23:12)
+    let sx = bx + dx * (kw + 1), sz = bz + dz * (kw + 1);
+    { const ground = (x, z) => { for (let y = 72; y > 50; y--) if (!/^(air|\?)$/.test(bname(x, y, z))) return { y, n: bname(x, y, z) }; return null; };
+      let best = null;
+      for (const k of [1, 2, 3]) for (const l of [0, -1, 1, -2, 2]) { if (best) break; const x = bx + dx * (kw + k) + lx * l, z = bz + dz * (kw + k) + lz * l, g = ground(x, z);
+        if (g && g.n === 'end_stone' && bname(x, g.y + 1, z) === 'air' && bname(x, g.y + 2, z) === 'air') best = [x, z]; }
+      if (best) [sx, sz] = best; else { log(`dragon: uncage: no ground beside the cage of ${key(c)}`); return false; } }
     log(`dragon: the caged crystal at ${key(c)} (y ${by}): up beside its wall at ${sx} ${sz}, the bars out, back down, shot from out by the middle`, { dc: true });
     // (there by the path search with the watches off, twice if need be: walk() waited on its breath and gave up - 21:43)
     delegating = true; try { for (let t = 0; t < 2 && Math.hypot(b.state().pos.x - sx - 0.5, b.state().pos.z - sz - 0.5) > 1; t++) await gotoFor([String(sx), String(sz)], 20000); } finally { delegating = false; }
@@ -827,12 +834,13 @@ async function dragonFight() {
     delegating = true; try {
       // (on the middle of the cell first: off its middle each pillar step slid it about - 22:25, 12 to 16.8 and never up)
       { const C = b.state().pos; if (Math.abs(C.x - Math.floor(C.x) - 0.5) > 0.2 || Math.abs(C.z - Math.floor(C.z) - 0.5) > 0.2) { await b.act('lookat', [String(Math.floor(C.x) + 0.5), String(C.y), String(Math.floor(C.z) + 0.5)]).catch(() => {}); await b.act('sneak', ['on']).catch(() => {}); await b.act('walk', ['forward', '3']).catch(() => {}); await b.act('sneak', ['off']).catch(() => {}); } }
-      for (let t = 0, last = feet(); t < 12 && feet() < by - 1 && me.connected && !b.state().dead; t++) { const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap); const p0 = b.state().pos; await gotoFor([String(Math.min(6, by - 1 - feet())), blockId()], 12000, 'pillar'); ctx.taps.delete(tap); log(`dragon: uncage: pillar step ${t}: from ${p0.x.toFixed(1)} ${p0.y.toFixed(1)} ${p0.z.toFixed(1)} to feet ${feet()} · ${blockId()} ${cnt(blockId())} · ${said.filter((l) => /pillar|cancel|stopp|not /.test(l)).slice(-2).join(' | ').slice(0, 160)}`); if (feet() === last && t > 1) break; last = feet(); }
+      for (let t = 0, last = feet(); t < 12 && feet() < by - 1 && me.connected && !b.state().dead; t++) { const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap); const p0 = b.state().pos; await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(Math.min(6, by - 1 - feet())), blockId()], 12000, 'pillar'); await b.act('sneak', ['off']).catch(() => {});   /* (sneaking: it slid off its own pillar's edge, 12 to 16.8 to 20 - 23:12) */ ctx.taps.delete(tap); log(`dragon: uncage: pillar step ${t}: from ${p0.x.toFixed(1)} ${p0.y.toFixed(1)} ${p0.z.toFixed(1)} to feet ${feet()} · ${blockId()} ${cnt(blockId())} · ${said.filter((l) => /pillar|cancel|stopp|not /.test(l)).slice(-2).join(' | ').slice(0, 160)}`); if (feet() === last && t > 1) break; last = feet(); }
     } finally { delegating = false; }
-    if (feet() < by - 2) { log(`dragon: uncage: the pillar stopped at ${feet()} (wanted ${by - 1})`); return false; }   /* (one short is near enough to reach the bars: 22:25, stopped at 78 of 79 under the cage's edge) */
+    if (feet() < by - 2) { log(`dragon: uncage: the pillar stopped at ${feet()} (wanted ${by - 1})`); return false; }
+    let misplaced = false; { const A = b.state().pos; if (Math.hypot(Math.floor(A.x) - sx, Math.floor(A.z) - sz) > 1.5) { misplaced = true; log(`dragon: uncage: the pillar went up at ${Math.floor(A.x)} ${Math.floor(A.z)}, not beside the wall (${sx} ${sz}): down again`); } }   /* (22:57: up at 20 -37, eight from the bars) */   /* (one short is near enough to reach the bars: 22:25, stopped at 78 of 79 under the cage's edge) */
     let broke = 0;
     // (the pickaxe, not the cobblestone the pillar left in hand: 22:51, 28 s on one bar by hand, then off the pillar)
-    delegating = true; try { await holdPick(); for (const y of [by - 1, by, by + 1]) for (const l of [0, -1, 1]) { const x = bx + dx * kw + lx * l, z = bz + dz * kw + lz * l; if (bname(x, y, z) !== 'iron_bars') continue; await gotoFor([String(x), String(y), String(z)], 3000, 'dig'); if (bname(x, y, z) !== 'iron_bars') broke++; } } finally { delegating = false; }
+    delegating = true; try { await holdPick(); if (!misplaced) for (const y of [by - 1, by, by + 1]) for (const l of [0, -1, 1]) { const x = bx + dx * kw + lx * l, z = bz + dz * kw + lz * l; if (bname(x, y, z) !== 'iron_bars') continue; await gotoFor([String(x), String(y), String(z)], 3000, 'dig'); if (bname(x, y, z) !== 'iron_bars') broke++; } } finally { delegating = false; }
     log(`dragon: uncage: ${broke} bars broken out; down again`);
     // (down our own pillar a block at a time, the pickaxe in hand and each fall waited for: dig_down took three minutes of 'nothing to
     //  dig (air)' - 22:07)
