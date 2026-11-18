@@ -1929,9 +1929,16 @@
   "tries": 1
  },
  "q99_speech_defaults": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "1a45ca9",
+  "conclusion": "success",
+  "ended": "2026-11-18 19:42",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "44282539942",
   "started": "2026-11-18 19:08",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  }
 }
