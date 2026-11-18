@@ -951,6 +951,34 @@ async function dragonFight() {
   async function dragonLoop() {
   setTimeout(() => {}, 0);
   log(`dragon: in the End with ${cnt('arrow')} arrows; crystals in view: ${ents(/ender_crystal$/).length}`, { dc: true });
+  // arriving through the portal: the obsidian platform out over the void (100 out from the middle). A bridge of our blocks toward the
+  // island, sneaking at the edge, until there is end stone under us
+  { const A0 = b.state().pos, under = () => bname(Math.floor(b.state().pos.x), Math.floor(b.state().pos.y + 0.01) - 1, Math.floor(b.state().pos.z));
+    if (under() === 'obsidian' || Math.hypot(A0.x, A0.z) > 75) {
+      const [ddx, ddz] = Math.abs(A0.x) > Math.abs(A0.z) ? [-Math.sign(A0.x), 0] : [0, -Math.sign(A0.z)], yaw = ddx === 1 ? -90 : ddx === -1 ? 90 : ddz === 1 ? 0 : 180;
+      log(`dragon: on the platform at ${Math.round(A0.x)} ${Math.round(A0.z)}: a bridge toward the island`, { dc: true });
+      delegating = true;
+      try {
+        // (up to the island's height first: bridged at the platform's 49, it ran in under the island's edge at 68 and could not climb
+        //  out - 01:35. Its top out there lies about 55-62)
+        for (let t = 0; t < 6 && Math.floor(b.state().pos.y + 0.01) < 63; t++) { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(Math.min(6, 63 - Math.floor(b.state().pos.y + 0.01))), blockId()], 12000, 'pillar'); await b.act('sneak', ['off']).catch(() => {}); }
+        for (let t = 0; t < 60 && me.connected && !b.state().dead; t++) {
+          if (process.env.BOT_DEBUG) { const C = b.state().pos; log(`dragon: dbg bridge ${t}: at ${C.x.toFixed(1)} ${C.y.toFixed(1)} ${C.z.toFixed(1)} on ${under()}`); }
+          // (on to the edge of what is under us first, along the bridge's line, then a few blocks out)
+          for (let w = 0; w < 6 && /^(obsidian|cobblestone|end_stone)$/.test(bname(Math.floor(b.state().pos.x) + ddx, Math.floor(b.state().pos.y + 0.01) - 1, Math.floor(b.state().pos.z) + ddz)); w++) await gotoFor([String(Math.floor(b.state().pos.x) + ddx), String(Math.floor(b.state().pos.z) + ddz)], 2000);
+          if (under() === 'end_stone' && Math.hypot(b.state().pos.x, b.state().pos.z) < 75) break;
+          // (on the line's middle: it drifted half a block sideways and the next click aimed at the cell beside the bridge - 01:27)
+          { const C = b.state().pos; const cx = ddx ? C.x : Math.floor(A0.x) + 0.5, cz = ddz ? C.z : Math.floor(A0.z) + 0.5; if (Math.abs(C.x - cx) > 0.2 || Math.abs(C.z - cz) > 0.2) { await b.act('sneak', ['on']).catch(() => {}); await b.act('lookat', [String(cx), String(C.y), String(cz)]).catch(() => {}); await b.act('walk', ['forward', '3']).catch(() => {}); await b.act('sneak', ['off']).catch(() => {}); } }
+          // (the island's side ahead, higher than the bridge: up a block onto it)
+          { const C = b.state().pos, ax = Math.floor(C.x) + ddx, az = Math.floor(C.z) + ddz, fy0 = Math.floor(C.y + 0.01); if (!/^(air|\?)$/.test(bname(ax, fy0, az))) { await gotoFor(['1', blockId()], 3000, 'pillar'); await gotoFor([String(ax), String(az)], 3000); continue; } }
+          await b.act('look', [String(yaw), '75']).catch(() => {});
+          const x0 = b.state().pos.x, z0 = b.state().pos.z;
+          await gotoFor(['3', blockId()], 9000, 'bridge');
+          if (Math.hypot(b.state().pos.x - x0, b.state().pos.z - z0) < 0.5) { log(`dragon: the bridge did not go on at ${Math.round(x0)} ${Math.round(z0)}`); if (t > 3) break; }
+        }
+        log(`dragon: off the bridge at ${Math.round(b.state().pos.x)} ${Math.round(b.state().pos.z)} on ${under()}`);
+      } finally { delegating = false; }
+    } }
   if (process.env.BOT_FOX && cnt('cobblestone') >= 8 && /pickaxe/.test(b.invText?.() ?? '')) await prepFox().catch((e) => log(`dragon: hole: ${e.message}`));
   let itT = Date.now();
   while (live() && me.connected && me.dim === 'the_end' && Date.now() - t0 < 3600000) {
