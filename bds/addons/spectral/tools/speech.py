@@ -73,14 +73,15 @@ def morae(text):
             cons = ''
         elif p3.lower() in VOW:
             k = kana_of(cons, p3)
-            out.append({'kana': FIX.get(k, k), 'dev': p3.isupper(), 'phrase': phrase, 'pos': a2, 'acc': acc, 'pause': 0})
+            out.append({'kana': FIX.get(k, k), 'dev': p3.isupper(), 'phrase': phrase, 'pos': a2, 'acc': acc, 'pause': 0,
+                        'v': p3.lower(), 'cons': cons})
             cons = ''
         else:
             cons = p3
     return out
 
 
-def plan(ms, voice, prog=200, mora_ms=180.0, rng=4.0, overlap=25.0, cut=10.0):
+def plan(ms, voice, prog=200, mora_ms=180.0, rng=4.0, overlap=25.0, cut=10.0, merge=0.0):
     """notes for the morae: each unit started its consonant ahead of its vowel, the vowel on the beat; Tokyo accent (the first mora
     low unless the nucleus is on it, high up to the nucleus, low after it; a flat phrase stays high), each phrase a little lower
     than the one before (a downstep after an accented one), the sentence's last mora lower still"""
@@ -106,11 +107,17 @@ def plan(ms, voice, prog=200, mora_ms=180.0, rng=4.0, overlap=25.0, cut=10.0):
             semis -= 2.0; dur *= 1.15
         beats.append((t, dur, m, semis))
         t += dur + m['pause']
+    prev_m = None
     for b, nxt in zip(beats, beats[1:] + [None]):
         if b is None:
-            continue
+            prev_m = None; continue
         t, dur, m, semis = b
         kana = m['kana']
+        # (merge: a vowel after a mora of the same vowel (a long vowel ー, pyopenjtalk's "a a") is not started again — the mora
+        #  before it holds on through its beat (cut stretches it to the next unit): a new vowel's attack made サーバー 「さぁ、ワー」)
+        if merge and prev_m is not None and prev_m['pause'] == 0 and m.get('cons', None) == '' and m.get('v') and m['v'] == prev_m.get('v'):
+            prev_m = m; continue
+        prev_m = m
         if kana == 'ン' and 'ン' not in idx:
             kana = 'ヌ'
         u = idx.get(kana)

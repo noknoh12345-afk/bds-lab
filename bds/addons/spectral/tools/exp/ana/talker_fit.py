@@ -18,10 +18,13 @@ def spec(x):
         out.append([P[(f >= edges[k]) & (f < edges[k + 1])].sum() for k in range(48)])
     return np.array(out)
 def env(x): return np.sqrt(np.convolve(x * x, np.ones(480) / 480, 'same')[::480])
-def lag(a, b):
+def lag(a, b, most=None):
+    """b's lag in a by envelope correlation; `most` seconds: only lags that small (a song that repeats can match a bar off)"""
     ea, eb = env(a), env(b); n = 1 << int(np.ceil(np.log2(len(ea) + len(eb))))
     c = np.fft.irfft(np.fft.rfft(ea - ea.mean(), n) * np.conj(np.fft.rfft(eb - eb.mean(), n)), n)
-    k = int(np.argmax(c)); return (k if k < n // 2 else k - n) * 480
+    ks = np.arange(n); ks = np.where(ks < n // 2, ks, ks - n)
+    if most is not None: c = np.where(np.abs(ks * 480) <= most * SR, c, -np.inf)
+    return int(ks[int(np.argmax(c))]) * 480
 def place(ref, n, l):
     s = np.zeros(n)
     if l >= 0: m = min(len(ref), n - l); s[l:l + m] = ref[:m]
@@ -31,7 +34,7 @@ T0, B0 = M.load(f'{D}/{pre}{tn}.opus'), M.load(f'{D}/{pre}{bn}.opus')
 out = {}
 for mn in mixes:
     X = M.load(f'{D}/{pre}{mn}.opus')
-    lt = lag(X - 0, T0); lb = lag(X, B0)
+    lt = lag(X, T0); lb = lag(X, B0, most=1.0)   # (the song starts at the same moment in every recording of a plan)
     T, B = place(T0, len(X), lt), place(B0, len(X), lb)
     St, Sb, Sx = spec(T), spec(B), spec(X)
     thr = 0.05 * np.median(St.sum(1)[St.sum(1) > 0]) if (St.sum(1) > 0).any() else 0
