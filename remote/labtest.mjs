@@ -109,6 +109,7 @@ const S = {
   async mech() {
     await fresh();
     srv(`give ${NAME} end_stone 16`, `give ${NAME} bed 4 14`, `give ${NAME} cobblestone 64`, `give ${NAME} iron_pickaxe 1`); await sleep(2000);
+    if (process.env.MECH_END) { srv(`give ${NAME} carved_pumpkin 1`, `effect ${NAME} resistance 9999 4 true`); await sleep(1000); send('equip carved_pumpkin'); await sleep(2000); srv(`execute in the_end run tp ${NAME} ${process.env.MECH_END.replace(/,/g, ' ')}`); await waitLog(/dimension the_end/, 20000); await sleep(3000); }
     for (const c of (process.env.MECH ?? '').split(';')) { send(c.trim()); await sleep(Number(process.env.MECH_GAP ?? 4000)); }
     console.log(since().split('\n').filter((l) => !/dbg/.test(l)).slice(-40).join('\n'));
     return true;
