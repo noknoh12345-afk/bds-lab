@@ -1888,5 +1888,11 @@
   "started": "2026-11-18 08:02",
   "status": "done",
   "tries": 1
+ },
+ "q96_speech_room": {
+  "commit": "4d8cf5d",
+  "run": "44263231013",
+  "started": "2026-11-18 17:00",
+  "status": "running"
  }
 }
