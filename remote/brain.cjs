@@ -920,7 +920,7 @@ async function dragonFight() {
   const pitchFor = (h, dy, v = 3) => { let best = null; for (let a = -30; a <= 60; a += 0.25) { const r = (a * Math.PI) / 180; let x = 0, y = 0, vx = Math.cos(r) * v, vy = Math.sin(r) * v; for (let t = 0; t < 200 && x < h; t++) { x += vx; y += vy; vx *= 0.99; vy = vy * 0.99 - 0.05; } if (x >= h && (best === null || Math.abs(y - dy) < best.e)) { best = { a, e: Math.abs(y - dy) }; if (best.e < 0.15) break; } } return best ? best.a : 45; };
   const shootAt = async (x, y, z, k = 1) => { const P = b.state().pos, eye = P.y + 1.62, h = Math.hypot(x - P.x, z - P.z), a = pitchFor(h, y - eye, 3 * k); await b.act('hold_bow', []).catch(() => {}); await gotoFor([String(x), String(eye + h * Math.tan((a * Math.PI) / 180)), String(z)], 1500, 'lookat'); await gotoFor(['22'], 3000, 'use'); };
   let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, gappleAt = 0, gapSaid = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), gaps = new Map(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
-  const gapple = async () => { if (me.hp !== null && me.hp <= 12 && Date.now() - gappleAt > 6000) { const g = /minecraft:(enchanted_golden_apple|golden_apple)\*/.exec(b.invText?.() ?? '')?.[1]; if (g) { gappleAt = Date.now(); log(`dragon: health ${me.hp}: a ${g.replace(/_/g, ' ')}`); await gotoFor([g], 2600, 'eat'); return true; } } return false; };
+  const gapple = async () => { if (me.hp !== null && me.hp <= (process.env.BOT_NOHEALHOLE ? 14 : 12) && Date.now() - gappleAt > 6000) { const g = /minecraft:(enchanted_golden_apple|golden_apple)\*/.exec(b.invText?.() ?? '')?.[1]; if (g) { gappleAt = Date.now(); log(`dragon: health ${me.hp}: a ${g.replace(/_/g, ' ')}`); await gotoFor([g], 2600, 'eat'); return true; } } return false; };
   await gotoFor([], 8000, 'armor_up');   // (what is carried is worn)
   if (/minecraft:shield\*/.test(b.invText?.() ?? '')) await gotoFor(['shield'], 4000, 'offhand');
   // (a carved pumpkin on the head: an enderman looked at stays calm. 19:12 and 19:15 in the lab, killed by one in the first four
@@ -1087,7 +1087,8 @@ async function dragonFight() {
     // (before the breath's own branch, which kept it running from cloud to cloud down to 2 health - 05:54. Out of the cloud is enough)
     // (measured in the lab, 18:59: a player standing still under end stone lived three minutes beside the dragon and its breath,
     //  one in the open died in twenty seconds. Hurt: down into the end stone, shut in above, eat and heal to full, then out again)
-    if (me.hp !== null && me.hp < 16 && !inCloud() && !(perchedNow() && me.hp >= 10) && !ents(/enderman$/).some((e) => Math.hypot(e.x - P.x, e.y - P.y, e.z - P.z) < 5) && Date.now() - holedAt > 20000 && cnt('end_stone') + cnt('cobblestone') + cnt('dirt') > 0) {
+    // (BOT_NOHEALHOLE: none - 05:08 and 05:12 in the lab, dead ten seconds after digging in, to its breath and to its bite)
+    if (!process.env.BOT_NOHEALHOLE && me.hp !== null && me.hp < 16 && !inCloud() && !(perchedNow() && me.hp >= 10) && !ents(/enderman$/).some((e) => Math.hypot(e.x - P.x, e.y - P.y, e.z - P.z) < 5) && Date.now() - holedAt > 20000 && cnt('end_stone') + cnt('cobblestone') + cnt('dirt') > 0) {
       holedAt = Date.now(); log(`dragon: health ${me.hp}: dug in to heal`, { dc: true });
       delegating = true;
       try {
