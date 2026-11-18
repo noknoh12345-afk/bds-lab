@@ -790,6 +790,7 @@ BUILTIN.standtest = async (a) => { pieceRun++; try { const b = me.bot, H = Numbe
 BUILTIN.blk = async (a) => { const b = me.bot, [x, y, z] = a.map(Number), w = b.world.block(x, y, z), P = b.state().pos; log(`blk ${x} ${y} ${z}: ${w?.name} shape ${JSON.stringify(w?.shape)} · me ${P.x.toFixed(2)} ${P.y.toFixed(2)} ${P.z.toFixed(2)} yaw ${b.state().yaw?.toFixed?.(0)} pitch ${b.state().pitch?.toFixed?.(0)}`); };
 BUILTIN.seal = async () => { pieceRun++; try { log(`seal: ${(await sealOverHead(me.bot, (m) => log(m))) ? 'shut' : 'not shut'}`); } finally { pieceRun--; } };
 const BOWL = !!process.env.BOT_BOWL;
+const CLOUD_MARGIN = Number(process.env.BOT_CLOUD_MARGIN ?? 3);
 // (a blow on the way down from a jump: half again as much, the critical hit)
 const CRIT = process.env.BOT_CRIT !== '0';
 async function dragonFight() {
@@ -798,7 +799,7 @@ async function dragonFight() {
   //  health gone in seven seconds with no cloud 'near' by the radius as sent. And where health went with nothing to explain it, a
   //  burn spot of our own, 4 round, for 10 s)
   const cloudSeen = new Map(), burns = [];
-  const cr = (e) => { if (e.burn) return 4; let t0 = cloudSeen.get(e); if (!t0) { t0 = Date.now(); cloudSeen.set(e, t0); } const age = (Date.now() - t0) / 50; return Math.max(0, (e.radius ?? 5) + (Number.isFinite(e.cloudRate) ? e.cloudRate * age : 0)) + 1; };
+  const cr = (e) => { if (e.burn) return 4; let t0 = cloudSeen.get(e); if (!t0) { t0 = Date.now(); cloudSeen.set(e, t0); } const age = (Date.now() - t0) / 50; return Math.max(5, (e.radius ?? 5) + (Number.isFinite(e.cloudRate) ? e.cloudRate * age : 0)) + CLOUD_MARGIN; };   /* (hurt with the nearest cloud 12-17 off by its radius as sent, many times: a wider berth, CLOUD_MARGIN, 3 by default) */
   const ents = (re) => { const l = [...b.entities.values()].filter((e) => re.test(e.type ?? '') && !(/area_effect_cloud/.test(e.type ?? '') && Number.isFinite(e.cloudDur) && e.cloudDur > 0 && (Date.now() - (cloudSeen.get(e) ?? Date.now())) / 50 > e.cloudDur + 10));
     if (re.test('minecraft:area_effect_cloud')) { const now = Date.now(); for (let i = burns.length - 1; i >= 0; i--) if (now - burns[i].t > 10000) burns.splice(i, 1); l.push(...burns); }
     return l; };
@@ -832,7 +833,9 @@ async function dragonFight() {
       if (best) [sx, sz] = best; else { log(`dragon: uncage: no ground beside the cage of ${key(c)}`); return false; } }
     log(`dragon: the caged crystal at ${key(c)} (y ${by}): up beside its wall at ${sx} ${sz}, the bars out, back down, shot from out by the middle`, { dc: true });
     // (there by the path search with the watches off, twice if need be: walk() waited on its breath and gave up - 21:43)
-    delegating = true; try { for (let t = 0; t < 2 && Math.hypot(b.state().pos.x - sx - 0.5, b.state().pos.z - sz - 0.5) > 1; t++) await gotoFor([String(sx), String(sz)], 20000); } finally { delegating = false; }
+    // (on the way the breath watch stays on: 03:04, walking to the second cage with every watch off, through its breath, dead in six
+    //  seconds from full health. Cut short if a cloud is met; the pillar and the bars are done with the watches off)
+    for (let t = 0; t < 3 && Math.hypot(b.state().pos.x - sx - 0.5, b.state().pos.z - sz - 0.5) > 1; t++) { if (inCloud()) { log('dragon: uncage: its breath on the way: later'); return false; } await walk(sx + 0.5, sz + 0.5, 6000, true); if (Math.hypot(b.state().pos.x - sx - 0.5, b.state().pos.z - sz - 0.5) > 1 && !inCloud()) await gotoFor([String(sx), String(sz)], 8000); }
     let P = b.state().pos; if (Math.hypot(Math.floor(P.x) - sx, Math.floor(P.z) - sz) > 1.5 || Math.hypot(Math.floor(P.x) - (bx + dx * kw), Math.floor(P.z) - (bz + dz * kw)) < 0.5) {   /* (a cell beside it does: 07:03, one block off and given up) */ log(`dragon: uncage: could not stand at ${sx} ${sz} (at ${Math.floor(P.x)} ${Math.floor(P.z)})`); return false; }
     const feet = () => Math.floor(b.state().pos.y + 0.01), up = by - 1 - feet();
     // (up in steps, the breath watch off meanwhile - it stopped the pillar at 60 and 69 of 82 and 79, 07:12: up there, there is no
@@ -848,6 +851,7 @@ async function dragonFight() {
     // (the pickaxe, not the cobblestone the pillar left in hand: 22:51, 28 s on one bar by hand, then off the pillar)
     delegating = true; try { await holdPick(); if (!misplaced) for (const y of [by - 1, by, by + 1]) for (const l of [0, -1, 1]) { const x = bx + dx * kw + lx * l, z = bz + dz * kw + lz * l; if (bname(x, y, z) !== 'iron_bars') continue; await gotoFor([String(x), String(y), String(z)], 3000, 'dig'); if (bname(x, y, z) !== 'iron_bars') broke++; } } finally { delegating = false; }
     log(`dragon: uncage: ${broke} bars broken out; down again`);
+    if (broke >= 3) gaps.set(key(c), { bx, bz, by, dx, dz, kw });
     // (down our own pillar a block at a time, the pickaxe in hand and each fall waited for: dig_down took three minutes of 'nothing to
     //  dig (air)' - 22:07)
     delegating = true; try { await holdPick();
@@ -898,7 +902,7 @@ async function dragonFight() {
   //  brings it to the height of the target at its distance, the lower of the two. k nudges the speed when it keeps missing)
   const pitchFor = (h, dy, v = 3) => { let best = null; for (let a = -30; a <= 60; a += 0.25) { const r = (a * Math.PI) / 180; let x = 0, y = 0, vx = Math.cos(r) * v, vy = Math.sin(r) * v; for (let t = 0; t < 200 && x < h; t++) { x += vx; y += vy; vx *= 0.99; vy = vy * 0.99 - 0.05; } if (x >= h && (best === null || Math.abs(y - dy) < best.e)) { best = { a, e: Math.abs(y - dy) }; if (best.e < 0.15) break; } } return best ? best.a : 45; };
   const shootAt = async (x, y, z, k = 1) => { const P = b.state().pos, eye = P.y + 1.62, h = Math.hypot(x - P.x, z - P.z), a = pitchFor(h, y - eye, 3 * k); await b.act('hold_bow', []).catch(() => {}); await gotoFor([String(x), String(eye + h * Math.tan((a * Math.PI) / 180)), String(z)], 1500, 'lookat'); await gotoFor(['22'], 3000, 'use'); };
-  let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, gappleAt = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
+  let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, gappleAt = 0, gapSaid = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), gaps = new Map(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
   const gapple = async () => { if (me.hp !== null && me.hp <= 12 && Date.now() - gappleAt > 6000) { const g = /minecraft:(enchanted_golden_apple|golden_apple)\*/.exec(b.invText?.() ?? '')?.[1]; if (g) { gappleAt = Date.now(); log(`dragon: health ${me.hp}: a ${g.replace(/_/g, ' ')}`); await gotoFor([g], 2600, 'eat'); return true; } } return false; };
   await gotoFor([], 8000, 'armor_up');   // (what is carried is worn)
   if (/minecraft:shield\*/.test(b.invText?.() ?? '')) await gotoFor(['shield'], 4000, 'offhand');
@@ -1175,7 +1179,7 @@ async function dragonFight() {
     for (const e of ents(/ender_crystal$/)) { all.add(key(e)); if (gone.delete(key(e))) log(`dragon: the crystal at ${key(e)} stands after all`); }
     // (a cage is seen, not guessed from misses: iron bars two out on its sides. 07:50, three open ones given up from one bad spot)
     for (const e of ents(/ender_crystal$/)) { const k0 = key(e); if (left.has(k0) || opened.has(k0)) continue; const X = Math.floor(e.x), Y = Math.floor(e.y), Z = Math.floor(e.z);
-      if ([[2, 0], [-2, 0], [0, 2], [0, -2]].filter(([dx, dz]) => bname(X + dx, Y, Z + dz) === 'iron_bars').length >= 2) { left.add(k0); caged.add(k0); log(`dragon: the crystal at ${k0} (y ${Y}) is in a cage of iron bars`); } }
+      if (!gaps.has(k0) && [[2, 0], [-2, 0], [0, 2], [0, -2]].filter(([dx, dz]) => bname(X + dx, Y, Z + dz) === 'iron_bars').length >= 2) { left.add(k0); caged.add(k0); log(`dragon: the crystal at ${k0} (y ${Y}) is in a cage of iron bars`); } }
     // (one given up for misses alone, not caged: tried again a minute later from wherever it is then)
     for (const k0 of [...left]) if (!caged.has(k0) && Date.now() - (leftAt.get(k0) ?? 0) > 60000) { left.delete(k0); tries.set(k0, 0); log(`dragon: the crystal at ${k0} once more`); }
     const crystals = ents(/ender_crystal$/).filter((e) => !left.has(key(e)));
@@ -1191,7 +1195,11 @@ async function dragonFight() {
       if (BOWL) { const bx = Math.round((c.x / r) * 3), bz = Math.round((c.z / r) * 3); if (Math.hypot(P.x - bx, P.z - bz) > 2.2 && !perched) { await walk(bx, bz, 4000, true); continue; } }
       else
       // (from where it stands when the distance will do: every walk is a chance to be hit; else toward the spot in short legs)
-      if (!opened.has(k) && (D < 18 || D > 70) && Math.hypot(P.x - sx, P.z - sz) > 4) { await walk(sx, sz); continue; }   // (an opened cage: from where uncage left us, in line with its gap)
+      // (an opened cage is shot only along its gap's line: 03:49, twelve arrows from wherever the dodging left it, all on the bars)
+      if (gaps.has(k)) { const g = gaps.get(k), eye = P.y + 1.62, along = g.dx ? (P.x - (g.bx + 0.5)) * g.dx : (P.z - (g.bz + 0.5)) * g.dz, lat = g.dx ? P.z - (g.bz + 0.5) : P.x - (g.bx + 0.5);
+        const f = (g.kw - 0.5) / Math.max(1, along), yAt = c.y + 1 + (eye - c.y - 1) * f, latAt = lat * f;
+        if (!(along > 15 && Math.abs(latAt) < 1.2 && yAt >= g.by - 1 && yAt <= g.by + 2)) { const tx = g.bx + g.dx * (g.kw + 30), tz = g.bz + g.dz * (g.kw + 30); if (Date.now() - (gapSaid ?? 0) > 15000) { gapSaid = Date.now(); log(`dragon: to the line of the cage's gap (${tx} ${tz})`); } await walk(tx + 0.5, tz + 0.5, 5000, true); continue; } }
+      else if (!opened.has(k) && (D < 18 || D > 70) && Math.hypot(P.x - sx, P.z - sz) > 4) { await walk(sx, sz); continue; }   // (an opened cage: from where uncage left us, in line with its gap)
       if (!opened.has(k) && n && n % 3 === 0 && moved !== `${k}:${n}`) { moved = `${k}:${n}`; const a = Math.atan2(P.z, P.x) + 0.45, rr = Math.max(18, Math.min(36, Math.hypot(P.x, P.z))); await walk(Math.cos(a) * rr, Math.sin(a) * rr, 4000); continue; }   // (three misses: another angle, round the ring)   // (in short legs: what hurts is looked at in between)
       await shootAt(c.x, c.y + 1, c.z, [1, 0.97, 1.03, 0.94, 1, 1.06, 0.91, 1][n % 8]); shots++; tries.set(k, n + 1);   // (1.12 first: what hit in the lab, three times of three)
       for (let t = 0; t < 6 && [...b.entities.values()].includes(c); t++) { await sleep(300); const Q = b.state().pos; if (ents(/area_effect_cloud$|dragon_fireball$/).some((e) => Math.hypot(e.x - Q.x, e.z - Q.z) < 6)) break; }   // (the arrow's flight, an eye on its breath)
@@ -1217,7 +1225,7 @@ async function dragonFight() {
     // (while it sits: in flight it knocked the bot off the pillar every time, 21:40-22:38; sitting it stayed a minute and more)
     if ((process.env.BOT_UNCAGE || process.env.BOT_UNCAGE_PERCH) && !uncaging && (process.env.BOT_UNCAGE_PERCH ? perchedNow() : !perchedNow()) && (me.hp ?? 0) >= 16 && left.size && !crystals.length && cnt('arrow') > 0 && cnt(blockId()) >= 24 && /pickaxe/.test(b.invText?.() ?? '')) {
       const cc = ents(/ender_crystal$/).find((e) => left.has(key(e)) && !opened.has(key(e)));
-      if (cc) { uncaging = true; try { const ok = await uncage(cc); opened.add(key(cc)); if (ok) { left.delete(key(cc)); tries.set(key(cc), 0); } } finally { uncaging = false; } continue; }
+      if (cc) { uncaging = true; try { const ok = await uncage(cc); if (ok) { opened.add(key(cc)); caged.delete(key(cc)); left.delete(key(cc)); tries.set(key(cc), 0); } } finally { uncaging = false; } continue; }
     }
     // no crystal left to shoot: the fight at the fountain is the goal runner's end_fight (tick by tick: the bowl by the pillar away
     // from it, the shield toward it while it is low and near, out of the puddles by their landing point, the sword with a crit when
