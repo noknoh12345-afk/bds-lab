@@ -603,10 +603,20 @@
   "tries": 1
  },
  "q106_talker_defaults": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "2d7654f",
+  "conclusion": "failure",
+  "earlier_runs": [
+   "44334611389"
+  ],
+  "ended": "2026-11-19 01:01",
+  "failed_steps": 1,
+  "recordings": 0,
   "run": "44334611389",
   "started": "2026-11-19 00:21",
-  "status": "running"
+  "status": "pending",
+  "tries": 1
  },
  "q10_live_10min": {
   "arms": {},
