@@ -606,17 +606,17 @@
   "arms": {},
   "checkpoints": 0,
   "commit": "6526994",
-  "conclusion": "failure",
+  "conclusion": "success",
   "earlier_runs": [
    "44334611389"
   ],
-  "ended": "2026-11-19 01:01",
-  "failed_steps": 1,
-  "recordings": 0,
+  "ended": "2026-11-19 01:39",
+  "failed_steps": 0,
+  "recordings": 10,
   "run": "44342318422",
   "started": "2026-11-19 01:01",
-  "status": "running",
-  "tries": 1
+  "status": "done",
+  "tries": 2
  },
  "q10_live_10min": {
   "arms": {},

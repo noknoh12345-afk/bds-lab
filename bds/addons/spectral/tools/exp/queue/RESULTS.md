@@ -146,3 +146,4 @@ tools/exp/queue_run.py が書く。ViSQOL・mrstft・1/3 oct（dB）は腕（録
 | q104_talker_room | 44317748372 | success | 10 | — | 0 | 2026-11-18 22:50 → 2026-11-18 23:25 |
 | q105_talker_duck_spec | 44324799635 | success | 12 | — | 0 | 2026-11-18 23:29 → 2026-11-19 00:12 |
 | q106_talker_defaults | 44334611389 | failure（もう一度） | 0 | — | 1（✘ 19 join） | 2026-11-19 00:21 → 2026-11-19 01:01 |
+| q106_talker_defaults | 44342318422 | success | 10 | — | 0 | 2026-11-19 01:01 → 2026-11-19 01:39 |
