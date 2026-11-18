@@ -11,7 +11,7 @@ const timers = [];
 // blocks no world generates by itself in the open (villages and ruins have some too: kept away from as well, which is fine)
 const BUILT = /planks|glass|crafting_table|chest|barrel|_bed$|torch|lantern|wool|(?<!moss_)carpet|concrete|bricks|_slab|_stairs|_door|fence|furnace|smoker|anvil|_sign|bookshelf|rail|redstone_(wire|torch|lamp|block)|repeater|comparator|piston|hopper|composter|lectern|scaffolding|ladder|banner|bell|item_frame|shulker_box|enchanting_table|brewing_stand|beacon|quartz_block|smooth_stone|polished_|cut_|_wall$|campfire|flower_pot|candle|lever|_button|pressure_plate|observer|dispenser|dropper|tnt|(?<!raw_)iron_block|(?<!raw_)gold_block|diamond_block|emerald_block|(?<!raw_)copper_block|hay_block|glazed_terracotta|stained|sea_lantern|end_rod/;
 // actions that only move or look: allowed anywhere (they change nothing)
-const PASSIVE = /^(auto|restore|bed|bedat|standtest|nightsit|stash|dragon|seal|map|walk_xz|to_surface|shelter|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
+const PASSIVE = /^(auto|restore|bed|bedat|standtest|blk|nightsit|stash|dragon|seal|map|walk_xz|to_surface|shelter|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
 let guardOn = ctx.guardOn ?? true;
 const HOSTILE = /^minecraft:(zombie|husk|drowned|skeleton|stray|bogged|spider|cave_spider|creeper|witch|slime|magma_cube|zombie_villager_v2|pillager|vindicator|silverfish|phantom|blaze|wither_skeleton|piglin_brute|hoglin|ghast|endermite|breeze)$/;
 function scanBuilt(bot, R) {
@@ -787,6 +787,7 @@ BUILTIN.standtest = async (a) => { pieceRun++; try { const b = me.bot, H = Numbe
   await gotoFor([], 1500, 'hold_cobblestone');
   for (let k = 0; k < H; k++) for (const [x, z] of [...cs].reverse()) { const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap); await b.act('useon', [String(x), String(fy + k - 1), String(z), 'up']).catch((e) => said.push(e.message)); await sleep(300); ctx.taps.delete(tap); log(`standtest: up face of ${x} ${fy + k - 1} ${z} (${bn(x, fy + k - 1, z)}) → ${bn(x, fy + k, z)} ${said.join(' | ').slice(0, 150)}`); }
 } finally { pieceRun--; } };
+BUILTIN.blk = async (a) => { const b = me.bot, [x, y, z] = a.map(Number), w = b.world.block(x, y, z), P = b.state().pos; log(`blk ${x} ${y} ${z}: ${w?.name} shape ${JSON.stringify(w?.shape)} · me ${P.x.toFixed(2)} ${P.y.toFixed(2)} ${P.z.toFixed(2)} yaw ${b.state().yaw?.toFixed?.(0)} pitch ${b.state().pitch?.toFixed?.(0)}`); };
 BUILTIN.seal = async () => { pieceRun++; try { log(`seal: ${(await sealOverHead(me.bot, (m) => log(m))) ? 'shut' : 'not shut'}`); } finally { pieceRun--; } };
 const BOWL = !!process.env.BOT_BOWL;
 async function dragonFight() {
@@ -817,19 +818,30 @@ async function dragonFight() {
     if (!kw) { log(`dragon: no cage wall found toward the middle from the crystal at ${key(c)}`, { dc: true }); return false; }
     const sx = bx + dx * (kw + 1), sz = bz + dz * (kw + 1);
     log(`dragon: the caged crystal at ${key(c)} (y ${by}): up beside its wall at ${sx} ${sz}, the bars out, back down, shot from out by the middle`, { dc: true });
-    await walk(sx + 0.5, sz + 0.5, 15000, true); await gotoFor([String(sx), String(sz)], 8000);
+    // (there by the path search with the watches off, twice if need be: walk() waited on its breath and gave up - 21:43)
+    delegating = true; try { for (let t = 0; t < 2 && Math.hypot(b.state().pos.x - sx - 0.5, b.state().pos.z - sz - 0.5) > 1; t++) await gotoFor([String(sx), String(sz)], 20000); } finally { delegating = false; }
     let P = b.state().pos; if (Math.hypot(Math.floor(P.x) - sx, Math.floor(P.z) - sz) > 1.5 || Math.hypot(Math.floor(P.x) - (bx + dx * kw), Math.floor(P.z) - (bz + dz * kw)) < 0.5) {   /* (a cell beside it does: 07:03, one block off and given up) */ log(`dragon: uncage: could not stand at ${sx} ${sz} (at ${Math.floor(P.x)} ${Math.floor(P.z)})`); return false; }
     const feet = () => Math.floor(b.state().pos.y + 0.01), up = by - 1 - feet();
     // (up in steps, the breath watch off meanwhile - it stopped the pillar at 60 and 69 of 82 and 79, 07:12: up there, there is no
     //  getting away from it anyway)
     delegating = true; try {
-      for (let t = 0, last = feet(); t < 12 && feet() < by - 1 && me.connected && !b.state().dead; t++) { await gotoFor([String(Math.min(6, by - 1 - feet())), blockId()], 12000, 'pillar'); if (feet() === last && t > 1) break; last = feet(); }
+      // (on the middle of the cell first: off its middle each pillar step slid it about - 22:25, 12 to 16.8 and never up)
+      { const C = b.state().pos; if (Math.abs(C.x - Math.floor(C.x) - 0.5) > 0.2 || Math.abs(C.z - Math.floor(C.z) - 0.5) > 0.2) { await b.act('lookat', [String(Math.floor(C.x) + 0.5), String(C.y), String(Math.floor(C.z) + 0.5)]).catch(() => {}); await b.act('sneak', ['on']).catch(() => {}); await b.act('walk', ['forward', '3']).catch(() => {}); await b.act('sneak', ['off']).catch(() => {}); } }
+      for (let t = 0, last = feet(); t < 12 && feet() < by - 1 && me.connected && !b.state().dead; t++) { const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap); const p0 = b.state().pos; await gotoFor([String(Math.min(6, by - 1 - feet())), blockId()], 12000, 'pillar'); ctx.taps.delete(tap); log(`dragon: uncage: pillar step ${t}: from ${p0.x.toFixed(1)} ${p0.y.toFixed(1)} ${p0.z.toFixed(1)} to feet ${feet()} · ${blockId()} ${cnt(blockId())} · ${said.filter((l) => /pillar|cancel|stopp|not /.test(l)).slice(-2).join(' | ').slice(0, 160)}`); if (feet() === last && t > 1) break; last = feet(); }
     } finally { delegating = false; }
-    if (feet() < by - 1) { log(`dragon: uncage: the pillar stopped at ${feet()} (wanted ${by - 1})`); return false; }
+    if (feet() < by - 2) { log(`dragon: uncage: the pillar stopped at ${feet()} (wanted ${by - 1})`); return false; }   /* (one short is near enough to reach the bars: 22:25, stopped at 78 of 79 under the cage's edge) */
     let broke = 0;
-    delegating = true; try { for (const y of [by - 1, by, by + 1]) for (const l of [0, -1, 1]) { const x = bx + dx * kw + lx * l, z = bz + dz * kw + lz * l; if (bname(x, y, z) !== 'iron_bars') continue; await gotoFor([String(x), String(y), String(z)], 3000, 'dig'); if (bname(x, y, z) !== 'iron_bars') broke++; } } finally { delegating = false; }
+    // (the pickaxe, not the cobblestone the pillar left in hand: 22:51, 28 s on one bar by hand, then off the pillar)
+    delegating = true; try { await holdPick(); for (const y of [by - 1, by, by + 1]) for (const l of [0, -1, 1]) { const x = bx + dx * kw + lx * l, z = bz + dz * kw + lz * l; if (bname(x, y, z) !== 'iron_bars') continue; await gotoFor([String(x), String(y), String(z)], 3000, 'dig'); if (bname(x, y, z) !== 'iron_bars') broke++; } } finally { delegating = false; }
     log(`dragon: uncage: ${broke} bars broken out; down again`);
-    for (let t = 0; t < 40 && feet() > 61 && me.connected && !b.state().dead; t++) { const f = feet(); await gotoFor(['1'], 3000, 'dig_down'); if (feet() === f && /(obsidian|bedrock|end_stone)/.test(bname(Math.floor(b.state().pos.x), f - 1, Math.floor(b.state().pos.z)))) break; }
+    // (down our own pillar a block at a time, the pickaxe in hand and each fall waited for: dig_down took three minutes of 'nothing to
+    //  dig (air)' - 22:07)
+    delegating = true; try { await holdPick();
+      for (let t = 0; t < 40 && me.connected && !b.state().dead; t++) { const F = b.state().pos, x1 = Math.floor(F.x), z1 = Math.floor(F.z), y1 = Math.floor(F.y + 0.01), under = bname(x1, y1 - 1, z1);
+        if (!/^(cobblestone|end_stone|dirt|netherrack|cobbled_deepslate|stone)$/.test(under) || (under === 'end_stone' && y1 <= 62)) break;
+        await gotoFor([String(x1), String(y1 - 1), String(z1)], 3000, 'dig');
+        for (let w = 0; w < 15 && Math.floor(b.state().pos.y + 0.01) >= y1; w++) await sleep(100); }
+    } finally { delegating = false; }
     // out toward the middle until the line from the eyes to it passes the wall's gap (the arrow's arc ignored: it is near flat here)
     for (let D = 26; D <= 40; D += 4) { const tx = bx + dx * (kw + D), tz = bz + dz * (kw + D); await walk(tx + 0.5, tz + 0.5, 8000, true);
       P = b.state().pos; const eye = P.y + 1.62, h = Math.hypot(c.x - P.x, c.z - P.z), dy = c.y + 1 - eye, yAt = c.y + 1 - dy * ((kw - 0.5) / h);
@@ -1156,7 +1168,8 @@ async function dragonFight() {
       if (want) { const l = Math.hypot(want[0], want[1]) || 1; if (Date.now() - (seekSaid ?? 0) > 20000) { seekSaid = Date.now(); log(`dragon: the crystal at ${want.join(',')} is out of sight: over toward it`); } await walk((want[0] / l) * 22, (want[1] / l) * 22, 6000, true); continue; } }
     // (BOT_UNCAGE only: up twenty blocks beside a pillar with the dragon about it was knocked off or breathed on, 07:44, 08:02, 08:04;
     //  it heals only within 32 blocks of one and the cages stand 42 out - sitting on the fountain it does not heal at all)
-    if (process.env.BOT_UNCAGE && !uncaging && !perchedNow() && (me.hp ?? 0) >= 16 && left.size && !crystals.length && cnt('arrow') > 0 && cnt(blockId()) >= 24 && /pickaxe/.test(b.invText?.() ?? '')) {
+    // (while it sits: in flight it knocked the bot off the pillar every time, 21:40-22:38; sitting it stayed a minute and more)
+    if ((process.env.BOT_UNCAGE || process.env.BOT_UNCAGE_PERCH) && !uncaging && (process.env.BOT_UNCAGE_PERCH ? perchedNow() : !perchedNow()) && (me.hp ?? 0) >= 16 && left.size && !crystals.length && cnt('arrow') > 0 && cnt(blockId()) >= 24 && /pickaxe/.test(b.invText?.() ?? '')) {
       const cc = ents(/ender_crystal$/).find((e) => left.has(key(e)) && !opened.has(key(e)));
       if (cc) { uncaging = true; try { const ok = await uncage(cc); opened.add(key(cc)); if (ok) { left.delete(key(cc)); tries.set(key(cc), 0); } } finally { uncaging = false; } continue; }
     }
