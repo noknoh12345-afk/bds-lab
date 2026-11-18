@@ -537,6 +537,12 @@
   "status": "done",
   "tries": 1
  },
+ "q101_sampler_room_again": {
+  "commit": "f3c01dd",
+  "run": "44297051973",
+  "started": "2026-11-18 20:42",
+  "status": "running"
+ },
  "q10_live_10min": {
   "arms": {},
   "checkpoints": 0,
