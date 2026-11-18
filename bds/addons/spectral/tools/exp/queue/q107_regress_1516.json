@@ -1,0 +1,123 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 107（tools/exp/queue/q107_regress_1516.json、11-19）: 1.5.16 の既定のまま、読み上げも話し手も無しで、エチュード・エリーゼ・バンドをスピーカー（6 ブロック）とヘッドホンで 1 本ずつ。q93 の auto（エチュード 4.22・エリーゼ 3.91・バンド 3.57）と比べて、1.5.9〜1.5.16 の変更で普通の曲が変わっていないか"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song velocity_ramp pack=tools/exp/packs/q40",
+  "audio song fur_elise pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "rg_sp_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio start rg_sp_pd",
+    "do execute as @a run spectral:play piano_demo speaker",
+    "wait 700",
+    "do tp @a -6 -60 0 0 0",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio stop",
+    "audio export rg_sp_pd 160"
+   ]
+  },
+  {
+   "title": "rg_ph_pd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio start rg_ph_pd",
+    "do execute as @a run spectral:play piano_demo",
+    "wait 21200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export rg_ph_pd 160"
+   ]
+  },
+  {
+   "title": "rg_sp_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio start rg_sp_fe",
+    "do execute as @a run spectral:play fur_elise speaker",
+    "wait 700",
+    "do tp @a -6 -60 0 0 0",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio stop",
+    "audio export rg_sp_fe 160"
+   ]
+  },
+  {
+   "title": "rg_ph_fe",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio start rg_ph_fe",
+    "do execute as @a run spectral:play fur_elise",
+    "wait 15200",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export rg_ph_fe 160"
+   ]
+  },
+  {
+   "title": "rg_sp_bd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio start rg_sp_bd",
+    "do execute as @a run spectral:play band_demo speaker",
+    "wait 700",
+    "do tp @a -6 -60 0 0 0",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio stop",
+    "audio export rg_sp_bd 160"
+   ]
+  },
+  {
+   "title": "rg_ph_bd",
+   "lines": [
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "audio start rg_ph_bd",
+    "do execute as @a run spectral:play band_demo",
+    "wait 10700",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export rg_ph_bd 160"
+   ]
+  }
+ ]
+}
