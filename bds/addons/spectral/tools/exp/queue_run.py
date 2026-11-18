@@ -61,7 +61,7 @@ def nap(seconds):
 def load_state():
     st = json.load(open(STATE)) if os.path.exists(STATE) else {}
     # (p<NN>_*.json: plans added later for something being built — they sort, and run, before the twenty q<NN>)
-    for f in sorted(glob.glob(os.path.join(Q, 'p[0-9][0-9]_*.json')) + glob.glob(os.path.join(Q, 'q[0-9][0-9]_*.json'))):
+    for f in sorted(glob.glob(os.path.join(Q, 'p[0-9][0-9]_*.json')) + glob.glob(os.path.join(Q, 'q[0-9][0-9]_*.json')) + glob.glob(os.path.join(Q, 'q[0-9][0-9][0-9]_*.json'))):
         st.setdefault(os.path.basename(f)[:-5], {'status': 'pending'})
     return st
 
