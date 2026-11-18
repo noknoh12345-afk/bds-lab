@@ -1297,7 +1297,7 @@ async function dragonFight() {
     }
     // beds: one blows up when used in the End - set down by it while it sits, a step back, and clicked (a fifth of its health a bed,
     // the guides say; read back from its health here). BOT_NOBED to leave them
-    if (perched && dr && !process.env.BOT_NOBED && (me.hp ?? 0) >= 19.5 && Date.now() - bedAt > 600 && /\d+:minecraft:(\w+_)?bed\*/.test(b.invText?.() ?? '')) {
+    if (perched && dr && !process.env.BOT_NOBED && (me.hp ?? 0) >= 18.5 && Date.now() - bedAt > 600 && /\d+:minecraft:(\w+_)?bed\*/.test(b.invText?.() ?? '')) {
       bedAt = Date.now(); const bar0 = bar(), me0 = me.hp; const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap);
       try {
         // (where a bed can go: just outside its box, to the side of its head, about 9 from its middle - beds set inside its box are
