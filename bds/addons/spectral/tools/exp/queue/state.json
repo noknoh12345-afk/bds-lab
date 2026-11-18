@@ -618,6 +618,12 @@
   "status": "done",
   "tries": 2
  },
+ "q107_regress_1516": {
+  "commit": "fc3ad38",
+  "run": "44350479155",
+  "started": "2026-11-19 01:43",
+  "status": "running"
+ },
  "q10_live_10min": {
   "arms": {},
   "checkpoints": 0,
