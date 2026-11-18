@@ -600,7 +600,7 @@ const STEPS = [
   { name: 'eyes of ender (the Nether: blaze rods; pearls)', cmds: ['get_ender_eye 12'], has: ['ender_eye'] },
   { name: 'beds for the dragon', cmds: ['get_white_bed 4'], optional: true },
   { name: 'out of the chest: everything for the way to the end', special: 'unstash', optional: true },
-  { name: 'blocks for the End (pillars, a seal over a hole, stands for beds)', cmds: ['get_cobblestone 128'], has: ['cobblestone'], optional: true },
+  { name: 'blocks for the End (pillars, a seal over a hole, stands for beds)', cmds: ['get_cobblestone 256'], has: ['cobblestone'], optional: true },
   { name: 'a carved pumpkin (the endermen in the End: looked at, they stay calm)', cmds: ['get_carved_pumpkin'], has: ['carved_pumpkin'], optional: true },
   { name: 'stronghold → the end', cmds: ['stronghold'], dim: 'the_end' },
   { name: 'the dragon', special: 'dragon' },
@@ -1257,13 +1257,8 @@ async function dragonFight() {
     // (BOT_UNCAGE only: up twenty blocks beside a pillar with the dragon about it was knocked off or breathed on, 07:44, 08:02, 08:04;
     //  it heals only within 32 blocks of one and the cages stand 42 out - sitting on the fountain it does not heal at all)
     // (while it sits: in flight it knocked the bot off the pillar every time, 21:40-22:38; sitting it stayed a minute and more)
-    // (blocks for the cage pillars dug from the island itself when short: 06:10, 20 cobblestone left and the cages never tried
-    //  again for half an hour while the dragon healed off them. The ground beside us, a block at a time, the drop picked up)
-    if ((process.env.BOT_UNCAGE || process.env.BOT_UNCAGE_PERCH) && caged.size && cnt('cobblestone') + cnt('end_stone') < 40 && !perchedNow() && !inCloud() && (me.hp ?? 0) >= 14 && /pickaxe/.test(b.invText?.() ?? '') && (!dr || Math.hypot(dr.x - P.x, dr.y - P.y, dr.z - P.z) > 25)) {
-      const fx = Math.floor(P.x), fy = Math.floor(P.y + 0.01), fz = Math.floor(P.z), cells = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([u, v]) => bname(fx + u, fy - 1, fz + v) === 'end_stone' && bname(fx + u, fy, fz + v) === 'air');
-      if (cells.length) { const n0 = cnt('end_stone'); delegating = true; try { await holdPick(); for (const [u, v] of cells) { await gotoFor([String(fx + u), String(fy - 1), String(fz + v)], 2500, 'dig'); await sleep(350); } } finally { delegating = false; }
-        if (Date.now() - (digSaid ?? 0) > 30000) { digSaid = Date.now(); log(`dragon: blocks for the cage pillars dug from the island: end stone ${n0} → ${cnt('end_stone')}, cobblestone ${cnt('cobblestone')}`); } continue; }
-      else if (Math.hypot(P.x, P.z) > 20) { const a = Math.atan2(P.z, P.x) + 0.15, r = Math.hypot(P.x, P.z); await walk(Math.cos(a) * r, Math.sin(a) * r, 2000, true); continue; } }
+    // (blocks for the cage pillars are carried, not dug here: 06:47, the ground beside us 'not under the crosshair' and nothing
+    //  gained - 256 are brought, see get_cobblestone)
     if ((process.env.BOT_UNCAGE || process.env.BOT_UNCAGE_PERCH) && !uncaging && Date.now() > uncageWait && (process.env.BOT_UNCAGE_PERCH ? perchedNow() : !perchedNow()) && (me.hp ?? 0) >= 16 && left.size && !crystals.length && cnt('arrow') > 0 && cnt('cobblestone') + cnt('end_stone') >= 24 && /pickaxe/.test(b.invText?.() ?? '')) {
       const cc = ents(/ender_crystal$/).find((e) => left.has(key(e)) && !opened.has(key(e)));
       if (cc) { uncaging = true; try { const ok = await uncage(cc); if (ok) { opened.add(key(cc)); caged.delete(key(cc)); left.delete(key(cc)); tries.set(key(cc), 0); } } finally { uncaging = false; } continue; }
