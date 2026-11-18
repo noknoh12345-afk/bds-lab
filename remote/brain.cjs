@@ -600,6 +600,7 @@ const STEPS = [
   { name: 'eyes of ender (the Nether: blaze rods; pearls)', cmds: ['get_ender_eye 12'], has: ['ender_eye'] },
   { name: 'beds for the dragon', cmds: ['get_white_bed 4'], optional: true },
   { name: 'out of the chest: everything for the way to the end', special: 'unstash', optional: true },
+  { name: 'blocks for the End (pillars, a seal over a hole, stands for beds)', cmds: ['get_cobblestone 128'], has: ['cobblestone'], optional: true },
   { name: 'a carved pumpkin (the endermen in the End: looked at, they stay calm)', cmds: ['get_carved_pumpkin'], has: ['carved_pumpkin'], optional: true },
   { name: 'stronghold → the end', cmds: ['stronghold'], dim: 'the_end' },
   { name: 'the dragon', special: 'dragon' },
@@ -833,7 +834,7 @@ async function dragonFight() {
   //  brings it to the height of the target at its distance, the lower of the two. k nudges the speed when it keeps missing)
   const pitchFor = (h, dy, v = 3) => { let best = null; for (let a = -30; a <= 60; a += 0.25) { const r = (a * Math.PI) / 180; let x = 0, y = 0, vx = Math.cos(r) * v, vy = Math.sin(r) * v; for (let t = 0; t < 200 && x < h; t++) { x += vx; y += vy; vx *= 0.99; vy = vy * 0.99 - 0.05; } if (x >= h && (best === null || Math.abs(y - dy) < best.e)) { best = { a, e: Math.abs(y - dy) }; if (best.e < 0.15) break; } } return best ? best.a : 45; };
   const shootAt = async (x, y, z, k = 1) => { const P = b.state().pos, eye = P.y + 1.62, h = Math.hypot(x - P.x, z - P.z), a = pitchFor(h, y - eye, 3 * k); await b.act('hold_bow', []).catch(() => {}); await gotoFor([String(x), String(eye + h * Math.tan((a * Math.PI) / 180)), String(z)], 1500, 'lookat'); await gotoFor(['22'], 3000, 'use'); };
-  let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, uncaging = false, opened = new Set(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
+  let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, uncaging = false, opened = new Set(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
   await gotoFor([], 8000, 'armor_up');   // (what is carried is worn)
   if (/minecraft:shield\*/.test(b.invText?.() ?? '')) await gotoFor(['shield'], 4000, 'offhand');
   // (a carved pumpkin on the head: an enderman looked at stays calm. 19:12 and 19:15 in the lab, killed by one in the first four
@@ -1024,7 +1025,7 @@ async function dragonFight() {
       if (BOWL) { const bx = Math.round((c.x / r) * 3), bz = Math.round((c.z / r) * 3); if (Math.hypot(P.x - bx, P.z - bz) > 2.2 && !perched) { await walk(bx, bz, 4000, true); continue; } }
       else
       // (from where it stands when the distance will do: every walk is a chance to be hit; else toward the spot in short legs)
-      if (!opened.has(k) && (D < 30 || D > 95) && Math.hypot(P.x - sx, P.z - sz) > 4) { await walk(sx, sz); continue; }   // (an opened cage: from where uncage left us, in line with its gap)
+      if (!opened.has(k) && (D < 18 || D > 70) && Math.hypot(P.x - sx, P.z - sz) > 4) { await walk(sx, sz); continue; }   // (an opened cage: from where uncage left us, in line with its gap)
       if (!opened.has(k) && n && n % 3 === 0 && moved !== `${k}:${n}`) { moved = `${k}:${n}`; const a = Math.atan2(P.z, P.x) + 0.45, rr = Math.max(18, Math.min(36, Math.hypot(P.x, P.z))); await walk(Math.cos(a) * rr, Math.sin(a) * rr, 4000); continue; }   // (three misses: another angle, round the ring)   // (in short legs: what hurts is looked at in between)
       await shootAt(c.x, c.y + 1, c.z, [1, 0.97, 1.03, 0.94, 1, 1.06, 0.91, 1][n % 8]); shots++; tries.set(k, n + 1);   // (1.12 first: what hit in the lab, three times of three)
       for (let t = 0; t < 6 && [...b.entities.values()].includes(c); t++) { await sleep(300); const Q = b.state().pos; if (ents(/area_effect_cloud$|dragon_fireball$/).some((e) => Math.hypot(e.x - Q.x, e.z - Q.z) < 6)) break; }   // (the arrow's flight, an eye on its breath)
@@ -1036,6 +1037,10 @@ async function dragonFight() {
     // the caged ones (iron bars all round: arrows stop on them). Up our own pillar beside the cage wall on the side toward the
     // middle, the bars of that wall broken out (three wide, three high), down the pillar again, and the crystal shot from 26+ blocks
     // out through the gap - never from close: its blast at four blocks is more than full health in iron
+    // (one known to stand but out of sight - beyond what the server shows from here: toward where it was seen. 11:10-11:17, two
+    //  open ones out of view and seven minutes waiting at the fountain for a dragon that does not sit while they stand)
+    if (!crystals.length && cnt('arrow') > 0) { const want = [...all].filter((k0) => !gone.has(k0) && !left.has(k0)).map((k0) => k0.split(',').map(Number)).sort((u, w) => Math.hypot(u[0] - P.x, u[1] - P.z) - Math.hypot(w[0] - P.x, w[1] - P.z))[0];
+      if (want) { const l = Math.hypot(want[0], want[1]) || 1; if (Date.now() - (seekSaid ?? 0) > 20000) { seekSaid = Date.now(); log(`dragon: the crystal at ${want.join(',')} is out of sight: over toward it`); } await walk((want[0] / l) * 22, (want[1] / l) * 22, 6000, true); continue; } }
     // (BOT_UNCAGE only: up twenty blocks beside a pillar with the dragon about it was knocked off or breathed on, 07:44, 08:02, 08:04;
     //  it heals only within 32 blocks of one and the cages stand 42 out - sitting on the fountain it does not heal at all)
     if (process.env.BOT_UNCAGE && !uncaging && !perchedNow() && (me.hp ?? 0) >= 16 && left.size && !crystals.length && cnt('arrow') > 0 && cnt(blockId()) >= 24 && /pickaxe/.test(b.invText?.() ?? '')) {
@@ -1060,7 +1065,9 @@ async function dragonFight() {
     if (perched && Date.now() - perchSaid > 20000) { perchSaid = Date.now(); log(`dragon: it sits on the fountain: its box from y ${dr.y.toFixed(1)} (${dr.bw ?? '?'} wide, ${dr.bh ?? '?'} high), my eyes at ${(P.y + 1.62).toFixed(1)}, ${Math.round(Math.hypot(dr.x - P.x, dr.z - P.z))} blocks off`); }
     // (15:32 in the lab: 65 swings from the ground beside the fountain, none on it - its box begins more than a sword's reach over
     //  the ground. Up on a pillar of our own blocks until the underside is within reach)
-    if (perched && dr && dr.y - (P.y + 1.62) > 2.4 && cnt('cobblestone') + cnt('end_stone') + cnt('dirt') + cnt('netherrack') > 0) { const up = Math.min(5, Math.ceil(dr.y - (P.y + 1.62) - 1.8)); log(`dragon: ${up} up on a pillar to reach it`); await gotoFor([String(up), blockId()], 2500 * up, 'pillar'); continue; }
+    // (a pillar that does not rise is not tried again for twenty seconds: 11:46, a hundred tries in a pit with no blocks left
+    //  while it sat there healing back to 162)
+    if (perched && dr && dr.y - (P.y + 1.62) > 2.4 && Date.now() - pillarFail > 20000 && cnt(blockId()) > 0) { const up = Math.min(5, Math.ceil(dr.y - (P.y + 1.62) - 1.8)), y0 = P.y; log(`dragon: ${up} up on a pillar to reach it`); await gotoFor([String(up), blockId()], 2500 * up, 'pillar'); if (b.state().pos.y < y0 + 0.9) { pillarFail = Date.now(); log(`dragon: the pillar did not rise (${cnt(blockId())} ${blockId()} left): the sword from here`); } continue; }
     inFight = !!(perched && dr && (me.hp ?? 20) >= 12);
     // beds: one blows up when used in the End - set down by it while it sits, a step back, and clicked (a fifth of its health a bed,
     // the guides say; read back from its health here). BOT_NOBED to leave them
@@ -1071,9 +1078,29 @@ async function dragonFight() {
         // (a cell with ground under it and under its head end, free above both, toward it first: 09:20, set down on air three times)
         const solidAt = (x, y, z) => !/^(air|\?|.*fire|.*water|.*lava)$/.test(bname(x, y, z)), freeAt = (x, y, z) => /^(air)$/.test(bname(x, y, z));
         const DIRS = [[1, 0, 'east'], [-1, 0, 'west'], [0, 1, 'south'], [0, -1, 'north']].sort((u, w) => (w[0] * vx + w[1] * vz) - (u[0] * vx + u[1] * vz));
+        // (higher: a stand of our blocks under each half up to two below its box's foot - from the floor a bed did 6 to 9, 10:21; each
+        //  of the four ways tried, the one toward it first)
+        const H = Math.max(0, Math.min(3, Math.round(dr.y - 2 - fy)));
+        if (!process.env.BOT_BED_FLOOR && H > 0 && cnt(blockId()) >= 2 * H) {
+          let done = false;
+          for (const [ddx, ddz, ddir] of DIRS) { if (done) break;
+            const cs = [[fx + ddx, fz + ddz], [fx + 2 * ddx, fz + 2 * ddz]];
+            if (!cs.every(([x, z]) => [...Array(H + 2).keys()].every((k) => bname(x, fy + k, z) === 'air') && !/^(air|\?)$/.test(bname(x, fy - 1, z)))) continue;
+            await gotoFor([], 1500, 'hold_' + blockId());
+            for (let k = 0; k < H; k++) for (const [x, z] of cs) { await b.act('useon', [String(x), String(fy + k - 1), String(z), 'up']).catch(() => {}); await sleep(200); }
+            if (!cs.every(([x, z]) => bname(x, fy + H - 1, z) !== 'air')) { log(`dragon: the stand for a bed (${H} high, ${ddir}) did not go up`); continue; }
+            await gotoFor([String(cs[0][0]), String(fy + H), String(cs[0][1]), ddir], 2500, 'place_bed'); await sleep(250);
+            if (!/(^|_)bed$/.test(bname(cs[0][0], fy + H, cs[0][1]))) { log(`dragon: no bed on the stand ${H} high (${ddir})`); continue; }
+            const Q2 = b.state().pos; await dash(Q2.x - ddx * 1.5, Q2.z - ddz * 1.5, 700);
+            await b.act('useon', [String(cs[0][0]), String(fy + H), String(cs[0][1]), 'up']).catch(() => {}); await sleep(800);
+            log(`dragon: a bed on a stand ${H} high blown at ${cs[0][0]} ${fy + H} ${cs[0][1]}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}`, { dc: true }); done = true;
+          }
+          if (done) continue;
+        }
         const picks = [];
         for (const [ddx, ddz, ddir] of DIRS) for (const k of [1, 2]) for (const yy of [fy + 1, fy, fy - 1]) { const x = fx + ddx * k, z = fz + ddz * k; if (freeAt(x, yy, z) && freeAt(x + ddx, yy, z + ddz) && solidAt(x, yy - 1, z) && solidAt(x + ddx, yy - 1, z + ddz) && freeAt(x, yy + 1, z)) picks.push([ddx, ddz, ddir, x, z, yy]); }
-        if (!picks.length) { log('dragon: no room for a bed here'); continue; }
+        if (!picks.length) { if (Date.now() - (noRoomAt ?? 0) > 10000) { noRoomAt = Date.now(); log('dragon: no room for a bed here'); } bedAt = Date.now() + 4000; }
+        if (!picks.length) continue;
         // (the higher the better: 62 under its box did 1.6, 63 did 17 - 09:44, 09:45. Each spot of the four best tried in turn)
         picks.sort((u, w) => w[5] - u[5]);
         const isBed = (x, y, z) => /(^|_)bed$/.test(bname(x, y, z));

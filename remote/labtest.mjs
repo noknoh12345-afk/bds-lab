@@ -94,7 +94,7 @@ const S = {
   // the End, with what the plan brings there: the crystals, then the dragon (long: asked for by name only)
   async dragon() {
     await fresh();
-    srv(...['iron_sword', 'bow', 'arrow 64', 'arrow 64', 'arrow 64', 'cooked_beef 32', 'cobblestone 64', 'iron_pickaxe', ...(process.env.LABTEST_BEDS ? [`bed ${process.env.LABTEST_BEDS} 14`] : []), ...(process.env.NO_PUMPKIN ? [] : ['carved_pumpkin']), 'iron_helmet', 'iron_chestplate', 'iron_leggings', 'iron_boots', 'shield'].map((i) => `give ${NAME} ${i}`));
+    srv(...['iron_sword', 'bow', 'arrow 64', 'arrow 64', 'arrow 64', 'cooked_beef 32', 'cobblestone 64', 'cobblestone 64', 'iron_pickaxe', ...(process.env.LABTEST_BEDS ? [`bed ${process.env.LABTEST_BEDS} 14`] : []), ...(process.env.NO_PUMPKIN ? [] : ['carved_pumpkin']), 'iron_helmet', 'iron_chestplate', 'iron_leggings', 'iron_boots', 'shield'].map((i) => `give ${NAME} ${i}`));
     await sleep(2000); send('armor_up'); await sleep(5000); if (!process.env.NO_PUMPKIN) { send('equip carved_pumpkin'); await sleep(3000); }
     srv(`execute in the_end run tp ${NAME} 30 61 30 0 60`); await waitLog(/dimension the_end/, 20000); await sleep(1500);
     // UNCAGE=1: the open crystals are gone already, only the two in cages are left (the part being worked on, without 3 min first)
