@@ -524,6 +524,12 @@
   "status": "done",
   "tries": 1
  },
+ "q100_sampler_room": {
+  "commit": "fe79cff",
+  "run": "44291243938",
+  "started": "2026-11-18 20:04",
+  "status": "running"
+ },
  "q10_live_10min": {
   "arms": {},
   "checkpoints": 0,
