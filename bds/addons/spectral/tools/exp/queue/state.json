@@ -590,10 +590,17 @@
   "tries": 1
  },
  "q105_talker_duck_spec": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "5eaca50",
+  "conclusion": "success",
+  "ended": "2026-11-19 00:12",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "44324799635",
   "started": "2026-11-18 23:29",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q10_live_10min": {
   "arms": {},
