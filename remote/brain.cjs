@@ -949,7 +949,11 @@ async function dragonFight() {
     const bad = (x, z) => cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + 3) || (!mid && segD(Q.x, Q.z, x, z, 0, 0) < 12);
     if (bad(tx, tz)) { const r = Math.max(16, Math.min(40, Math.hypot(Q.x, Q.z))), a0 = Math.atan2(Q.z, Q.x), want = Math.atan2(tz, tx); let da = want - a0; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
       const opts = [Math.sign(da || 1) * 0.5, -Math.sign(da || 1) * 0.5].map((d) => [Math.cos(a0 + d) * r, Math.sin(a0 + d) * r]).filter(([x, z]) => !cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + 3));
-      if (!opts.length) { if (Date.now() - (walk.said ?? 0) > 15000) { walk.said = Date.now(); log(`dragon: no way to ${Math.round(tx)} ${Math.round(tz)} clear of its breath: waiting`); } await sleep(400); return; } [tx, tz] = opts[0]; }
+      if (!opts.length) { if (Date.now() - (walk.said ?? 0) > 15000) { walk.said = Date.now(); log(`dragon: no way to ${Math.round(tx)} ${Math.round(tz)} clear of its breath: waiting`); }
+        // (not waiting inside one: 05:30, 'waiting' with its breath on us, 20 to 3 in fourteen seconds - straight away from its middle)
+        const e0 = cl.map((e) => ({ e, d: Math.hypot(Q.x - e.x, Q.z - e.z) })).filter((x) => x.d < cr(x.e) + 1.5).sort((u, w) => u.d - w.d)[0];
+        if (e0) { const l = e0.d || 1, ux = e0.d < 0.3 ? 1 : (Q.x - e0.e.x) / l, uz = e0.d < 0.3 ? 0 : (Q.z - e0.e.z) / l, run = cr(e0.e) + 3 - e0.d; await dash(Q.x + ux * run, Q.z + uz * run, 2500); return; }
+        await sleep(400); return; } [tx, tz] = opts[0]; }
     await down(); await gotoFor([String(Math.round(tx)), String(Math.round(tz))], ms);
   };
   // (its breath is six blocks across and is there in an instant; a shot takes four seconds. Whatever is being done is dropped the
