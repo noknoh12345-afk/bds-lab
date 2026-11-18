@@ -525,10 +525,17 @@
   "tries": 1
  },
  "q100_sampler_room": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "fe79cff",
+  "conclusion": "success",
+  "ended": "2026-11-18 20:38",
+  "failed_steps": 0,
+  "recordings": 8,
   "run": "44291243938",
   "started": "2026-11-18 20:04",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q10_live_10min": {
   "arms": {},
