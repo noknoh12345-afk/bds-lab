@@ -577,10 +577,17 @@
   "tries": 1
  },
  "q104_talker_room": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "d0ffef6",
+  "conclusion": "success",
+  "ended": "2026-11-18 23:25",
+  "failed_steps": 0,
+  "recordings": 10,
   "run": "44317748372",
   "started": "2026-11-18 22:50",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q10_live_10min": {
   "arms": {},
