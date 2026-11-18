@@ -550,6 +550,12 @@
   "status": "done",
   "tries": 1
  },
+ "q102_speech_speaker_duck": {
+  "commit": "754e4de",
+  "run": "44303687105",
+  "started": "2026-11-18 21:25",
+  "status": "running"
+ },
  "q10_live_10min": {
   "arms": {},
   "checkpoints": 0,
