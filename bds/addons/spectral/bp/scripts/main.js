@@ -2540,12 +2540,10 @@ var DUCK_UP = 8;
 var ducks = /* @__PURE__ */ new Map();
 var isSpeech = (n) => n.song.meta.programs.some((c) => c >= 200);
 NOTE_DUCK.of = (n) => isSpeech(n) ? 1 : duckOf(n.o.where === "phones" ? [{ player: n.owner }] : [{ dim: n.dim, loc: n.loc }]);
-function updateDucks() {
-  if (DUCK.db <= 0) {
-    ducks.clear();
-    return;
-  }
-  const now = system4.currentTick, hear = /* @__PURE__ */ new Set();
+var ROOM = { n: 0 };
+var hearing = /* @__PURE__ */ new Set();
+function speechHearers() {
+  const hear = /* @__PURE__ */ new Set();
   for (const n of notePlays.values()) {
     if (!n.started || n.paused || n.ending || !isSpeech(n) || !n.owner.isValid) continue;
     if (n.o.where === "phones") {
@@ -2554,6 +2552,28 @@ function updateDucks() {
     }
     for (const q of world2.getPlayers()) if (q.dimension.id === n.dim.id && dist(q.location, n.loc) <= FOLLOW_RANGE) hear.add(q.id);
   }
+  return hear;
+}
+function updateDucks() {
+  if (DUCK.db <= 0 && ROOM.n <= 0) {
+    ducks.clear();
+    if (hearing.size) {
+      hearing = /* @__PURE__ */ new Set();
+    }
+    return;
+  }
+  const hear = speechHearers();
+  if (ROOM.n > 0 && (hear.size !== hearing.size || [...hear].some((id) => !hearing.has(id)))) {
+    hearing = hear;
+    shareSounds();
+    const names = world2.getPlayers().filter((q) => hear.has(q.id)).map((q) => q.name);
+    console.warn(`[spectral] room: ${names.length ? `${names.join(", ")} hearing speech` : "no speech"}`);
+  } else hearing = hear;
+  if (DUCK.db <= 0) {
+    ducks.clear();
+    return;
+  }
+  const now = system4.currentTick;
   const low = Math.pow(10, -DUCK.db / 20);
   for (const id of hear) {
     const d = ducks.get(id);
@@ -2928,6 +2948,14 @@ system4.afterEvents.scriptEventReceive.subscribe((e) => {
       HEAD3D.db = Math.max(0, Math.min(18, db));
     } else HEAD3D.mode = m === "one" ? "one" : m === "auto" ? "auto" : "level";
     console.warn(`[spectral] head3d ${HEAD3D.mode === "db" ? `${HEAD3D.db} dB` : HEAD3D.mode === "auto" ? `auto (drums ${HEAD3D.drumDb} dB)` : HEAD3D.mode}`);
+    return;
+  }
+  if (e.id === "spectral:room") {
+    const n = Math.round(Number(e.message.trim()));
+    ROOM.n = Number.isFinite(n) ? Math.max(0, Math.min(29, n)) : 0;
+    if (!ROOM.n) hearing = /* @__PURE__ */ new Set();
+    shareSounds();
+    console.warn(`[spectral] room ${ROOM.n ? `${ROOM.n} sounds` : "off"}`);
     return;
   }
   if (e.id === "spectral:duck") {
@@ -3528,6 +3556,7 @@ function shareSounds() {
       lim = SHARE ? soundsOf(list[0][1].player) : 0;
     } catch {
     }
+    if (lim > 0 && ROOM.n > 0 && hearing.has(list[0][1].player.id)) lim = Math.max(SHARE_VMIN, lim - ROOM.n);
     const need = list.map(([lp]) => lp.st.meta.N + lp.st.meta.M), give2 = lim > 0 ? fill(need, lim) : need;
     list.forEach(([lp, t], j) => {
       const { N, M } = lp.st.meta, s = give2[j];
@@ -4450,6 +4479,7 @@ cmdAny("spectral:library", "Song count (console too)", {}, () => `library ${song
 addSong(demo_default.meta, demo_default.data);
 export {
   DUCK,
+  ROOM,
   addNoteSong,
   addSong,
   liveMessage

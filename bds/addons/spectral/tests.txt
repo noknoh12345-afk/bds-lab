@@ -982,3 +982,27 @@ scriptevent spectral:duck show
 @A cmd /spectral:stop
 scriptevent spectral:duck 0
 ~ \[spectral\] duck off
+
+## room for speech (q96, off by default): while a listener hears speech, the live streams they hear share that many fewer of their client's sounds, so the speech's own sounds fit (q92-q95: turning the songs down instead made the stream vanish from the phone in 2 of 3 runs); back to all once the speech is over
+spectral:share on 32
+~ share: on
+scriptevent spectral:room 8
+~ \[spectral\] room 8 sounds
+@B leave
+@C leave
+tp A 0 -60 0
+@A cmd /spectral:live_demo demo near @s 24 "near:4,-58.5,0,overworld"
+wait 800
+@A cmd /spectral:live
+!~ demo_demo.*sharing
+@A cmd /spectral:say "こんにちは、マインクラフト。きょうは いい てんき です。"
+until \[spectral\] room: A hearing speech 5000
+wait 300
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, near.*sharing 18\+6 sounds
+until \[spectral\] room: no speech 40000
+@A cmd /spectral:live demo_demo stop
+@A cmd /spectral:stop
+scriptevent spectral:room 0
+~ \[spectral\] room off
+spectral:share on 0

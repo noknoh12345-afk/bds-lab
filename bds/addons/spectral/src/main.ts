@@ -673,14 +673,32 @@ const DUCK_DOWN = 2, DUCK_HOLD = 6, DUCK_UP = 8;
 const ducks = new Map<string, { g: number; heard: number }>();
 const isSpeech = (n: NotePlayer) => n.song.meta.programs.some((c) => c >= 200);
 NOTE_DUCK.of = (n) => (isSpeech(n) ? 1 : duckOf(n.o.where === 'phones' ? [{ player: n.owner }] : [{ dim: n.dim, loc: n.loc }]));
-function updateDucks() {
-  if (DUCK.db <= 0) { ducks.clear(); return; }
-  const now = system.currentTick, hear = new Set<string>();
+/** room for speech (q92-q95: turning the songs down made the stream vanish from the phone in 2 of 3 runs): while a listener hears
+ *  speech, the live streams they hear share ROOM.n fewer of their client's sounds (shareSounds), so the speech's own sounds fit in
+ *  the phone's 32 and the songs keep their level. 0 = off (the default until measured): `scriptevent spectral:room <n>` */
+export const ROOM = { n: 0 };
+/** the listeners hearing speech now (worked out each tick when ducking or room is on) */
+let hearing = new Set<string>();
+function speechHearers(): Set<string> {
+  const hear = new Set<string>();
   for (const n of notePlays.values()) {
     if (!n.started || n.paused || n.ending || !isSpeech(n) || !n.owner.isValid) continue;
     if (n.o.where === 'phones') { hear.add(n.owner.id); continue; }
     for (const q of world.getPlayers()) if (q.dimension.id === n.dim.id && dist(q.location, n.loc) <= FOLLOW_RANGE) hear.add(q.id);
   }
+  return hear;
+}
+function updateDucks() {
+  if (DUCK.db <= 0 && ROOM.n <= 0) { ducks.clear(); if (hearing.size) { hearing = new Set(); } return; }
+  const hear = speechHearers();
+  if (ROOM.n > 0 && (hear.size !== hearing.size || [...hear].some((id) => !hearing.has(id)))) {
+    hearing = hear; shareSounds();
+    const names = world.getPlayers().filter((q) => hear.has(q.id)).map((q) => q.name);
+    console.warn(`[spectral] room: ${names.length ? `${names.join(', ')} hearing speech` : 'no speech'}`);
+  }
+  else hearing = hear;
+  if (DUCK.db <= 0) { ducks.clear(); return; }
+  const now = system.currentTick;
   const low = Math.pow(10, -DUCK.db / 20);
   for (const id of hear) { const d = ducks.get(id); if (d) d.heard = now; else ducks.set(id, { g: 1, heard: now }); }
   for (const [id, d] of ducks) {
@@ -888,6 +906,13 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
     console.warn(`[spectral] head3d ${HEAD3D.mode === 'db' ? `${HEAD3D.db} dB` : HEAD3D.mode === 'auto' ? `auto (drums ${HEAD3D.drumDb} dB)` : HEAD3D.mode}`); return;
   }
   // (q90 → q92: the songs and live streams near a listener turned down while they hear speech — `scriptevent spectral:duck <dB>`, 0 = off)
+  if (e.id === 'spectral:room') {
+    const n = Math.round(Number(e.message.trim()));
+    ROOM.n = Number.isFinite(n) ? Math.max(0, Math.min(29, n)) : 0;
+    if (!ROOM.n) hearing = new Set();
+    shareSounds();
+    console.warn(`[spectral] room ${ROOM.n ? `${ROOM.n} sounds` : 'off'}`); return;
+  }
   if (e.id === 'spectral:duck') {
     if (e.message.trim() === 'show') {
       const names = new Map(world.getPlayers().map((q) => [q.id, q.name] as [string, string]));
@@ -1357,6 +1382,7 @@ function shareSounds() {
   }
   for (const list of by.values()) {
     let lim = 0; try { lim = SHARE ? soundsOf(list[0][1].player!) : 0; } catch { /* gone */ }
+    if (lim > 0 && ROOM.n > 0 && hearing.has(list[0][1].player!.id)) lim = Math.max(SHARE_VMIN, lim - ROOM.n);
     const need = list.map(([lp]) => lp.st.meta.N + lp.st.meta.M), give = lim > 0 ? fill(need, lim) : need;
     list.forEach(([lp, t], j) => {
       const { N, M } = lp.st.meta, s = give[j];
