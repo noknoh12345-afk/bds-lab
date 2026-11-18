@@ -425,7 +425,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   const npcMeta = (e, md) => {
     if (e) for (const m of md ?? []) {
       if (m.key === 'name_raw_text') e.npcName = m.value; if (m.key === 'url_tag') e.npcActions = m.value; if (m.key === 'boundingbox_width') e.bw = m.value; if (m.key === 'boundingbox_height') e.bh = m.value;
-      if (m.key === 'flags' && m.value && typeof m.value === 'object') { const lit = !!m.value.ignited; if (lit && !e.lit) e.litAt = Number(tick); e.lit = lit; e.baby = !!m.value.baby; }
+      if (m.key === 'flags' && m.value && typeof m.value === 'object') { const lit = !!m.value.ignited; if (lit && !e.lit) e.litAt = Number(tick); e.lit = lit; e.baby = !!m.value.baby; e.angry = !!m.value.angry; }
+      if (m.key === 'target_eid') e.target = String(m.value);
     }
   };
   client.on('add_entity', (p) => {

@@ -1172,8 +1172,9 @@ async function dragonFight() {
     if (Date.now() - hurtAt < 15000 || Date.now() - wHurt < 15000) {
       // (16:00 in the lab: one swing, it stepped back out of reach, the bow came out again, and it killed from behind during the
       //  shot. While health is falling and one is within eight blocks nothing else is done: face it, the sword when it is in reach)
-      const em = ents(/enderman$/).map((e) => ({ e, d: Math.hypot(e.x - P.x, e.y - P.y, e.z - P.z) })).filter((x) => x.d < 8).sort((u, v) => u.d - v.d)[0];
-      // (only when nothing else can have done it: the dragon well away, no breath near. 19:42 in the lab: the dragon's hit taken
+      const em = ents(/enderman$/).map((e) => ({ e, d: Math.hypot(e.x - P.x, e.y - P.y, e.z - P.z) })).filter((x) => x.d < 8 && (x.e.angry || (x.e.target && !/^-?[01]$/.test(x.e.target)))).sort((u, v) => u.d - v.d)[0];
+      // (only one that is after us - its angry flag or a target set; 04:58 in the lab, calm ones struck while the dragon hurt us and
+      //  four came for us in a minute. And only when nothing else can have done it: the dragon well away, no breath near. 19:42 in the lab: the dragon's hit taken
       //  for an enderman's, a calm one struck, and dead to it in four seconds - with the pumpkin on, they are never the first)
       const other = (dr0 && Math.hypot(dr0.x - P.x, dr0.y - P.y, dr0.z - P.z) < 22) || ents(/area_effect_cloud$/).some((e) => Math.hypot(e.x - P.x, e.z - P.z) < cr(e) + 3);
       if (em && !other && Date.now() - Math.max(hurtAt, wHurt) < 8000) { emFight = true; if (Date.now() - emSaid > 10000) { emSaid = Date.now(); log(`dragon: an enderman on me (health ${me.hp}): the sword`); }
