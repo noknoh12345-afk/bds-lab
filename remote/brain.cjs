@@ -860,10 +860,27 @@ async function dragonFight() {
         await gotoFor([String(x1), String(y1 - 1), String(z1)], 3000, 'dig');
         for (let w = 0; w < 15 && Math.floor(b.state().pos.y + 0.01) >= y1; w++) await sleep(100); }
     } finally { delegating = false; }
-    // out toward the middle until the line from the eyes to it passes the wall's gap (the arrow's arc ignored: it is near flat here)
-    for (let D = 26; D <= 40; D += 4) { const tx = bx + dx * (kw + D), tz = bz + dz * (kw + D); await walk(tx + 0.5, tz + 0.5, 8000, true);
-      P = b.state().pos; const eye = P.y + 1.62, h = Math.hypot(c.x - P.x, c.z - P.z), dy = c.y + 1 - eye, yAt = c.y + 1 - dy * ((kw - 0.5) / h);
-      if (yAt >= by - 1 && yAt <= by + 2) break; }
+    // shot from a pillar of ours nine out along the gap's line, the eyes level with the gap: from the ground the line only passes a
+    // wall four blocks from the crystal from 33+ out - the fountain (04:16, 'to the line of the gap' for minutes). Nine out its blast
+    // is mostly spent
+    if (broke >= 3) {
+      const tx = bx + dx * (kw + 9), tz = bz + dz * (kw + 9);
+      for (let t = 0; t < 3 && Math.hypot(b.state().pos.x - tx - 0.5, b.state().pos.z - tz - 0.5) > 1; t++) { if (inCloud()) return true; await walk(tx + 0.5, tz + 0.5, 6000, true); if (Math.hypot(b.state().pos.x - tx - 0.5, b.state().pos.z - tz - 0.5) > 1) await gotoFor([String(tx), String(tz)], 8000); }
+      if (Math.hypot(b.state().pos.x - tx - 0.5, b.state().pos.z - tz - 0.5) <= 1.2) {
+        delegating = true; try {
+          await b.act('stop', []).catch(() => {});
+          for (let t = 0, last = feet(); t < 8 && feet() < by - 1 && me.connected && !b.state().dead; t++) { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(Math.min(6, by - 1 - feet())), blockId()], 12000, 'pillar'); await b.act('sneak', ['off']).catch(() => {}); if (feet() === last && t > 1) break; last = feet(); }
+          log(`dragon: uncage: on a pillar ${Math.round(Math.hypot(c.x - b.state().pos.x, c.z - b.state().pos.z))} out, eyes at ${(b.state().pos.y + 1.62).toFixed(1)}: shooting through the gap`);
+          for (let n = 0; n < 6 && [...b.entities.values()].includes(c); n++) { await shootAt(c.x, c.y + 1, c.z, [1, 0.97, 1.03, 1, 0.94, 1.06][n]); for (let w = 0; w < 6 && [...b.entities.values()].includes(c); w++) await sleep(300); }
+          const hit = ![...b.entities.values()].includes(c);
+          log(`dragon: uncage: ${hit ? 'the caged crystal is gone' : 'six arrows and it stands'}`, { dc: true });
+          await holdPick();
+          for (let t = 0; t < 40 && me.connected && !b.state().dead; t++) { const F = b.state().pos, x1 = Math.floor(F.x), z1 = Math.floor(F.z), y1 = Math.floor(F.y + 0.01), under = bname(x1, y1 - 1, z1);
+            if (!/^(cobblestone|end_stone|dirt|netherrack|cobbled_deepslate|stone)$/.test(under) || (under === 'end_stone' && y1 <= 62)) break;
+            await gotoFor([String(x1), String(y1 - 1), String(z1)], 3000, 'dig'); for (let w = 0; w < 15 && Math.floor(b.state().pos.y + 0.01) >= y1; w++) await sleep(100); }
+        } finally { delegating = false; }
+      }
+    }
     return true;
   }
   let fox = null;
