@@ -1,4 +1,4 @@
-# HANDOFF（最終更新：2026-11-19 04:25 JST）
+# HANDOFF（最終更新：2026-11-19 05:15 JST）
 
 ## 1. 依頼（時系列）
 - ユーザーの統合版サーバー `dis.daggskog.org:19132`（1.26.60）で、ボット LabBot（リポジトリ noknoh12345-afk/bds-lab、ブランチ remote-bot、`remote/bot.cjs` + `remote/brain.cjs`）がエンダードラゴンを倒す。既に倒されていればエリトラを持ち帰る。その後はダイヤを掘り続ける。何か月かかっても止めない。
@@ -17,11 +17,12 @@
 - 参加・退出はできるだけ少なく。
 - push はユーザーの許可を得てから（11-18 時点で未許可。ローカルにコミット済み、未プッシュ）。実機ボットは停止中（ユーザーが `bash ~/test/bdsbot.sh` を実行すると remote-bot ブランチを取得して起動）。
 
-## 4. 現在の状態（2026-11-18 20:10）
-- 最新コミット 2392fbe（ローカルのみ）。`remote/bench.sh` `par.sh` `hole.sh` は未コミット。
-- ラボの7シナリオ（bed, night_unarmed, fight_zombie, fetch, fetch_hole, flee_many, stash）は 11-17 時点で合格。その後ドラゴン戦の変更が多く、7つの通しは再確認が必要。
-- ドラゴン戦：未勝利。耐性付き（仕組み確認）では残り57/200まで削れた。耐性なしでは生存1〜15分。
-- 並行検証：`/home/claude/bds-lab{,2..6}` にラボの複製。`bash /tmp/bench.sh 3 1`（= remote/bench.sh）で3台同時。2コアのため3台が上限（6台は遅延で破綻）。結果は `/tmp/par.txt`、各ログは `/tmp/labbotN/run/out.log`。
+## 4. 現在の状態（2026-11-19 05:15）
+- コミットはローカルのみ（push 未許可）。最新：「opened cage is shot from a pillar of ours nine out」。その後の未コミット変更：uncage の柱で叩き落とされたら中止、BOT_UNCAGE_PERCH では着地が終わったら中止（brain.cjs の2か所）。
+- 耐性あり（仕組み確認）：01:01 に討伐成功（1589 秒）。04:30 には1回の戦闘で檻を2つとも割れた（2本目の柱から撃つ方式）。
+- 本番条件（耐性なし、ダメージ軽減 IV の鉄、金リンゴ 16、黒曜石の足場に到着）、04:35 開始の3台：生存 19〜25 分。ドラゴンの体力は最低 185/200。死因は、ベッド爆破の自爆（20→11）のあとのブレスとエンダーマン、および uncage の柱から叩き落とされたこと（71→58）。
+- 課題：着地中の与ダメージ（剣は1振り約1）。ベッドは1回13〜30だが、自分も約8受ける。
+- 並行検証：`/home/claude/bds-lab{,2..6}` にラボの複製。`bash /tmp/bench.sh 3 1`（= remote/bench.sh）で3台同時（2コアのため3台が上限）。結果は `/tmp/par.txt`、ログは `/tmp/labbotN/run/out.log`。
 
 ## 5. 試したことと結果（ドラゴン戦）
 - 弾道計算で矢を撃つ → クリスタル1〜2本で破壊（成功）。
@@ -62,11 +63,11 @@
 - 開けた檻のクリスタルは、格子の隙間の延長線上からしか撃たない（ずれた位置から12本外した）。
 
 ## 7. 次の一手
-0. （00:10 時点）13,-38 側の柱の位置（地面 y58 のくぼみ、セル中央に立てない）を直す。両方の檻を割ってから、着地中の与ダメージ（剣の当て方、ベッドの位置）を上げる。耐性なしでの勝率を測る。
-1. `cd /home/claude/bds-lab && git add remote/*.sh HANDOFF.md && git commit`（ローカル）。
-2. （20:30〜21:25 に一部済み：着地判定・架空クリスタル・ベッドの位置と台の修正）ベッドを確実に置く：着地中、ドラゴンの横に「2ブロックの台＋ベッド」を作って押す処理（brain.cjs の `// beds: one blows up when used in the End` 付近）。失敗理由（`no bed on the stand`、`not clicking`）をログで確認し、成功率を上げる。
-3. `LABTEST_RESIST=1` の3台同時でベッドのダメージを測り、続けて耐性なしの3台同時で勝率を測る。
-4. 余力があれば、7シナリオの通し（`node remote/labtest.mjs`）を回し直す。
+1. 本番条件のバッチ：`export BOT_UNCAGE_PERCH=1 BOT_NOBURROW=1 LABTEST_PROT=4 LABTEST_GAPPLES=16 LABTEST_ARRIVE=platform DRAGON_MS=2700000; bash /tmp/bench.sh 3 1`。uncage の中止処理の効果を見る。
+2. ベッドの自爆を減らす：体力20になってから押す、押した直後に金リンゴを食べてブレスから離れる、エンダーマン対策（カボチャを被ったままにできているか）。
+3. 着地中の与ダメージを上げる（頭を狙う、ベッドの回数を増やす）。
+4. 実機の手順に「ダメージ軽減のエンチャント」を追加する。
+5. 7シナリオの通し（`node remote/labtest.mjs`）を再確認する。
 
 ## 8. 再現と検証の手順
 - ラボ1本：`cd /home/claude/bds-lab && LABTEST_BEDS=16 DRAGON_MS=1200000 LABTEST_KEEP=1 node remote/labtest.mjs dragon`（ログは /tmp/labbot/run/out.log）
