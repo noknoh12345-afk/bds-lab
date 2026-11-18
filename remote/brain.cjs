@@ -904,8 +904,8 @@ async function dragonFight() {
   // before the click: four and a half out from the bed straight back along its line (the furthest a click reaches), a block of ours
   // set on the floor between, then the click over it (12:13 in the lab: from a block and a half, 18 health to dead by our own bed)
   async function backOff(bx, by, bz, dx, dz) {
-    const tx = bx - dx * 3.6, tz = bz - dz * 3.6;
-    for (let t = 0; t < 3 && Math.hypot(b.state().pos.x - bx - 0.5, b.state().pos.z - bz - 0.5) < 3.6; t++) { if (t === 0) await dash(tx + 0.5, tz + 0.5, 1500); else await gotoFor([String(tx), String(tz)], 2500); }
+    const tx = bx - dx * 4.2, tz = bz - dz * 4.2;
+    for (let t = 0; t < 3 && Math.hypot(b.state().pos.x - bx - 0.5, b.state().pos.z - bz - 0.5) < 4.0; t++) { if (t === 0) await dash(tx + 0.5, tz + 0.5, 1500); else await gotoFor([String(tx), String(tz)], 2500); }
     const Q = b.state().pos, fx = Math.floor(Q.x), fz = Math.floor(Q.z), fy = Math.floor(Q.y + 0.01), cx = fx + dx, cz = fz + dz;
     if (bname(cx, fy, cz) === 'air' && !/^(air|\?)$/.test(bname(cx, fy - 1, cz)) && Math.hypot(cx - bx, cz - bz) > 0.5) { await gotoFor([], 1200, 'hold_' + blockId()); await b.act('useon', [String(cx), String(fy - 1), String(cz), 'up']).catch(() => {}); await sleep(250); }
     const off = Math.hypot(Q.x - bx - 0.5, Q.z - bz - 0.5);
