@@ -1916,9 +1916,16 @@
   "tries": 1
  },
  "q98_speech_duck_renew_rev": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "8e8f47c",
+  "conclusion": "success",
+  "ended": "2026-11-18 18:58",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "44275635762",
   "started": "2026-11-18 18:24",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  }
 }
