@@ -2540,7 +2540,8 @@ var DUCK_UP = 8;
 var ducks = /* @__PURE__ */ new Map();
 var isSpeech = (n) => n.song.meta.programs.some((c) => c >= 200);
 NOTE_DUCK.of = (n) => isSpeech(n) ? 1 : duckOf(n.o.where === "phones" ? [{ player: n.owner }] : [{ dim: n.dim, loc: n.loc }]);
-var ROOM = { n: 0 };
+var ROOM = { n: 0, songs: false };
+var roomFor = /* @__PURE__ */ new Set();
 var RENEW = { on: true, wait: 10 };
 function renewFor(id, wait) {
   system4.runTimeout(() => {
@@ -2549,10 +2550,10 @@ function renewFor(id, wait) {
   }, wait);
 }
 var hearing = /* @__PURE__ */ new Set();
-function speechHearers() {
+function speechHearers(any = false) {
   const hear = /* @__PURE__ */ new Set();
   for (const n of notePlays.values()) {
-    if (!n.started || n.paused || n.ending || !isSpeech(n) || !n.owner.isValid) continue;
+    if (!n.started || n.paused || n.ending || !any && !isSpeech(n) || !n.owner.isValid) continue;
     if (n.o.where === "phones") {
       hear.add(n.owner.id);
       continue;
@@ -2573,12 +2574,14 @@ function updateDucks() {
   if (RENEW.on && lives.size) {
     for (const id of hearing) if (!hear.has(id)) renewFor(id, RENEW.wait);
   }
-  if (ROOM.n > 0 && (hear.size !== hearing.size || [...hear].some((id) => !hearing.has(id)))) {
-    hearing = hear;
+  hearing = hear;
+  const rf = ROOM.n <= 0 ? /* @__PURE__ */ new Set() : ROOM.songs ? speechHearers(true) : hear;
+  if (rf.size !== roomFor.size || [...rf].some((id) => !roomFor.has(id))) {
+    roomFor = rf;
     shareSounds();
-    const names = world2.getPlayers().filter((q) => hear.has(q.id)).map((q) => q.name);
-    console.warn(`[spectral] room: ${names.length ? `${names.join(", ")} hearing speech` : "no speech"}`);
-  } else hearing = hear;
+    const names = world2.getPlayers().filter((q) => rf.has(q.id)).map((q) => q.name);
+    console.warn(`[spectral] room: ${names.length ? `${names.join(", ")} hearing ${ROOM.songs ? "notes" : "speech"}` : `no ${ROOM.songs ? "notes" : "speech"}`}`);
+  }
   if (DUCK.db <= 0) {
     ducks.clear();
     return;
@@ -2968,11 +2971,12 @@ system4.afterEvents.scriptEventReceive.subscribe((e) => {
     return;
   }
   if (e.id === "spectral:room") {
-    const n = Math.round(Number(e.message.trim()));
+    const [a, b] = e.message.trim().split(/\s+/), n = Math.round(Number(a));
     ROOM.n = Number.isFinite(n) ? Math.max(0, Math.min(29, n)) : 0;
-    if (!ROOM.n) hearing = /* @__PURE__ */ new Set();
+    ROOM.songs = b === "songs";
+    if (!ROOM.n) roomFor = /* @__PURE__ */ new Set();
     shareSounds();
-    console.warn(`[spectral] room ${ROOM.n ? `${ROOM.n} sounds` : "off"}`);
+    console.warn(`[spectral] room ${ROOM.n ? `${ROOM.n} sounds${ROOM.songs ? " (any note song)" : ""}` : "off"}`);
     return;
   }
   if (e.id === "spectral:duck") {
@@ -3573,7 +3577,7 @@ function shareSounds() {
       lim = SHARE ? soundsOf(list[0][1].player) : 0;
     } catch {
     }
-    if (lim > 0 && ROOM.n > 0 && hearing.has(list[0][1].player.id)) lim = Math.max(SHARE_VMIN, lim - ROOM.n);
+    if (lim > 0 && ROOM.n > 0 && roomFor.has(list[0][1].player.id)) lim = Math.max(SHARE_VMIN, lim - ROOM.n);
     const need = list.map(([lp]) => lp.st.meta.N + lp.st.meta.M), give2 = lim > 0 ? fill(need, lim) : need;
     list.forEach(([lp, t], j) => {
       const { N, M } = lp.st.meta, s = give2[j];

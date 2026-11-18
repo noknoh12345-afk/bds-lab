@@ -678,7 +678,10 @@ NOTE_DUCK.of = (n) => (isSpeech(n) ? 1 : duckOf(n.o.where === 'phones' ? [{ play
 /** room for speech (q92-q95: turning the songs down made the stream vanish from the phone in 2 of 3 runs): while a listener hears
  *  speech, the live streams they hear share ROOM.n fewer of their client's sounds (shareSounds), so the speech's own sounds fit in
  *  the phone's 32 and the songs keep their level. 0 = off (the default until measured): `scriptevent spectral:room <n>` */
-export const ROOM = { n: 0 };
+export const ROOM = { n: 0, songs: false };
+/** the listeners the room is kept for now: hearing speech, or (ROOM.songs) any note song — the sampler (q57/q58: another song taking
+ *  the phone's 32 sounds dropped the sampler's notes, −2.3) */
+let roomFor = new Set<string>();
 /** after a listener's speech, the live streams they hear make their sounds again, `wait` ticks later (after ducking's release):
  *  `scriptevent spectral:renew on|off [ticks]` */
 export const RENEW = { on: true, wait: 10 };
@@ -690,10 +693,10 @@ function renewFor(id: string, wait: number) {
 }
 /** the listeners hearing speech now (worked out each tick when ducking or room is on) */
 let hearing = new Set<string>();
-function speechHearers(): Set<string> {
+function speechHearers(any = false): Set<string> {
   const hear = new Set<string>();
   for (const n of notePlays.values()) {
-    if (!n.started || n.paused || n.ending || !isSpeech(n) || !n.owner.isValid) continue;
+    if (!n.started || n.paused || n.ending || (!any && !isSpeech(n)) || !n.owner.isValid) continue;
     if (n.o.where === 'phones') { hear.add(n.owner.id); continue; }
     for (const q of world.getPlayers()) if (q.dimension.id === n.dim.id && dist(q.location, n.loc) <= FOLLOW_RANGE) hear.add(q.id);
   }
@@ -706,12 +709,13 @@ function updateDucks() {
   const hear = speechHearers();
   // (a listener whose speech is over: the live streams they hear make their sounds again — RENEW, on by default, with or without ducking: q98)
   if (RENEW.on && lives.size) for (const id of hearing) if (!hear.has(id)) renewFor(id, RENEW.wait);
-  if (ROOM.n > 0 && (hear.size !== hearing.size || [...hear].some((id) => !hearing.has(id)))) {
-    hearing = hear; shareSounds();
-    const names = world.getPlayers().filter((q) => hear.has(q.id)).map((q) => q.name);
-    console.warn(`[spectral] room: ${names.length ? `${names.join(', ')} hearing speech` : 'no speech'}`);
+  hearing = hear;
+  const rf = ROOM.n <= 0 ? new Set<string>() : ROOM.songs ? speechHearers(true) : hear;
+  if (rf.size !== roomFor.size || [...rf].some((id) => !roomFor.has(id))) {
+    roomFor = rf; shareSounds();
+    const names = world.getPlayers().filter((q) => rf.has(q.id)).map((q) => q.name);
+    console.warn(`[spectral] room: ${names.length ? `${names.join(', ')} hearing ${ROOM.songs ? 'notes' : 'speech'}` : `no ${ROOM.songs ? 'notes' : 'speech'}`}`);
   }
-  else hearing = hear;
   if (DUCK.db <= 0) { ducks.clear(); return; }
   const now = system.currentTick;
   const low = Math.pow(10, -DUCK.db / 20);
@@ -927,11 +931,11 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
     console.warn(`[spectral] renew ${RENEW.on ? `on, ${RENEW.wait} ticks after the speech` : 'off'}`); return;
   }
   if (e.id === 'spectral:room') {
-    const n = Math.round(Number(e.message.trim()));
-    ROOM.n = Number.isFinite(n) ? Math.max(0, Math.min(29, n)) : 0;
-    if (!ROOM.n) hearing = new Set();
+    const [a, b] = e.message.trim().split(/\s+/), n = Math.round(Number(a));
+    ROOM.n = Number.isFinite(n) ? Math.max(0, Math.min(29, n)) : 0; ROOM.songs = b === 'songs';
+    if (!ROOM.n) roomFor = new Set();
     shareSounds();
-    console.warn(`[spectral] room ${ROOM.n ? `${ROOM.n} sounds` : 'off'}`); return;
+    console.warn(`[spectral] room ${ROOM.n ? `${ROOM.n} sounds${ROOM.songs ? ' (any note song)' : ''}` : 'off'}`); return;
   }
   if (e.id === 'spectral:duck') {
     if (e.message.trim() === 'show') {
@@ -1402,7 +1406,7 @@ function shareSounds() {
   }
   for (const list of by.values()) {
     let lim = 0; try { lim = SHARE ? soundsOf(list[0][1].player!) : 0; } catch { /* gone */ }
-    if (lim > 0 && ROOM.n > 0 && hearing.has(list[0][1].player!.id)) lim = Math.max(SHARE_VMIN, lim - ROOM.n);
+    if (lim > 0 && ROOM.n > 0 && roomFor.has(list[0][1].player!.id)) lim = Math.max(SHARE_VMIN, lim - ROOM.n);
     const need = list.map(([lp]) => lp.st.meta.N + lp.st.meta.M), give = lim > 0 ? fill(need, lim) : need;
     list.forEach(([lp, t], j) => {
       const { N, M } = lp.st.meta, s = give[j];

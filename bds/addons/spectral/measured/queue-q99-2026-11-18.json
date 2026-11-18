@@ -1,0 +1,82 @@
+{
+ "queue": "q99_speech_defaults",
+ "run": "44282539942",
+ "date": "2026-11-18",
+ "what": "1.5.13 の既定（ダッキング 12 dB + 読み上げのたびの renew）を確かめる。文ごとに 読み上げだけ・既定・ダッキング切・既定",
+ "per_recording": {
+  "def_hello": {
+   "speech_strength_median": 0.864,
+   "sn_db_median": 5.25,
+   "windows": 26,
+   "visqol": 4.1207,
+   "mrstft": 3.1245,
+   "lag_ms": 1578.8
+  },
+  "off_hello": {
+   "speech_strength_median": 0.977,
+   "sn_db_median": 1.69,
+   "windows": 26,
+   "visqol": 3.9058,
+   "mrstft": 3.3063,
+   "lag_ms": 1536.0
+  },
+  "def2_hello": {
+   "speech_strength_median": 0.932,
+   "sn_db_median": 4.95,
+   "windows": 26,
+   "visqol": 4.1687,
+   "mrstft": 3.2084,
+   "lag_ms": 1514.8
+  },
+  "def_weather": {
+   "speech_strength_median": 0.992,
+   "sn_db_median": 9.79,
+   "windows": 22,
+   "visqol": 4.2492,
+   "mrstft": 3.6004,
+   "lag_ms": 1600.0
+  },
+  "off_weather": {
+   "speech_strength_median": 0.997,
+   "sn_db_median": 3.33,
+   "windows": 22,
+   "visqol": 4.1231,
+   "mrstft": 3.6386,
+   "lag_ms": 1664.0
+  },
+  "def2_weather": {
+   "speech_strength_median": 0.485,
+   "sn_db_median": -3.57,
+   "windows": 22,
+   "visqol": 4.2254,
+   "mrstft": 3.6161,
+   "lag_ms": 1600.0
+  },
+  "def_piano": {
+   "speech_strength_median": 0.543,
+   "sn_db_median": -4.2,
+   "windows": 28,
+   "visqol": 4.1291,
+   "mrstft": 3.2953,
+   "lag_ms": 1578.8
+  },
+  "off_piano": {
+   "speech_strength_median": 0.765,
+   "sn_db_median": -4.14,
+   "windows": 27,
+   "visqol": 3.921,
+   "mrstft": 3.3412,
+   "lag_ms": 1493.2
+  },
+  "def2_piano": {
+   "speech_strength_median": 0.648,
+   "sn_db_median": -0.64,
+   "windows": 27,
+   "visqol": 4.1357,
+   "mrstft": 3.2559,
+   "lag_ms": 1493.2
+  }
+ },
+ "low_band_30_150Hz": "曲ありの 9 本とも曲は消えず、既定では読み上げの間だけ下がって戻る",
+ "reading": "実測: 読み上げだけを参照の ViSQOL 既定 / 切 / 既定: hello 4.12 / 3.91 / 4.17、weather 4.25 / 4.12 / 4.23、piano 4.13 / 3.92 / 4.14 — 6 組とも既定が上。既定のまま確定"
+}

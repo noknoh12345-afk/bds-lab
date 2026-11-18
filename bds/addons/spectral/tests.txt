@@ -1020,3 +1020,22 @@ scriptevent spectral:renew on 20
 ~ \[spectral\] renew on, 20 ticks after the speech
 scriptevent spectral:renew on 10
 ~ \[spectral\] renew on, 10 ticks after the speech
+
+## room for the sampler's songs too (q100, off by default): `room <n> songs` keeps the room while a listener hears any note song (q57/q58: another song taking the phone's 32 sounds dropped the sampler's notes, −2.3)
+spectral:share on 32
+scriptevent spectral:room 12 songs
+~ \[spectral\] room 12 sounds \(any note song\)
+@A cmd /spectral:live_demo demo near @s 24 "near:4,-58.5,0,overworld"
+wait 800
+@A cmd /spectral:play piano_demo
+until \[spectral\] room: A hearing notes 8000
+wait 300
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices,.* near .*sharing 14\+6 sounds
+@A cmd /spectral:stop
+until \[spectral\] room: no notes 5000
+@A cmd /spectral:live demo_demo stop
+scriptevent spectral:room 0
+~ \[spectral\] room off
+spectral:share on 0
+
