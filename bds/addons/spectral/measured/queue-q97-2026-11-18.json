@@ -1,0 +1,82 @@
+{
+ "queue": "q97_speech_duck_renew",
+ "run": "44270242529",
+ "date": "2026-11-18",
+ "what": "q95 と同じ手順（ダッキング 0 / 6 / 12 dB と曲なし、3 文）に renew（1.5.12、読み上げの後にライブの音を作り直す）",
+ "per_recording": {
+  "0_hello": {
+   "speech_strength_median": 0.408,
+   "sn_db_median": -10.15,
+   "windows": 27,
+   "visqol": 3.7865,
+   "mrstft": 3.1771,
+   "lag_ms": 1621.2
+  },
+  "6_hello": {
+   "speech_strength_median": 0.939,
+   "sn_db_median": 3.66,
+   "windows": 27,
+   "visqol": 4.035,
+   "mrstft": 3.2463,
+   "lag_ms": 1621.2
+  },
+  "12_hello": {
+   "speech_strength_median": 0.828,
+   "sn_db_median": 4.49,
+   "windows": 26,
+   "visqol": 4.0985,
+   "mrstft": 3.1925,
+   "lag_ms": 1600.0
+  },
+  "0_weather": {
+   "speech_strength_median": 0.834,
+   "sn_db_median": -0.7,
+   "windows": 22,
+   "visqol": 4.1141,
+   "mrstft": 3.5441,
+   "lag_ms": 1578.5
+  },
+  "6_weather": {
+   "speech_strength_median": 0.878,
+   "sn_db_median": -2.25,
+   "windows": 22,
+   "visqol": 4.1606,
+   "mrstft": 3.6423,
+   "lag_ms": 1621.2
+  },
+  "12_weather": {
+   "speech_strength_median": 0.362,
+   "sn_db_median": -5.68,
+   "windows": 22,
+   "visqol": 4.2204,
+   "mrstft": 3.6126,
+   "lag_ms": 1633.2
+  },
+  "0_piano": {
+   "speech_strength_median": 0.7,
+   "sn_db_median": -3.3,
+   "windows": 28,
+   "visqol": 3.9705,
+   "mrstft": 3.306,
+   "lag_ms": 1600.0
+  },
+  "6_piano": {
+   "speech_strength_median": 0.932,
+   "sn_db_median": 4.78,
+   "windows": 27,
+   "visqol": 4.0588,
+   "mrstft": 3.2563,
+   "lag_ms": 1557.2
+  },
+  "12_piano": {
+   "speech_strength_median": 0.917,
+   "sn_db_median": 4.35,
+   "windows": 27,
+   "visqol": 4.1199,
+   "mrstft": 3.2612,
+   "lag_ms": 1514.8
+  }
+ },
+ "low_band_30_150Hz": "6・12 dB とも曲は消えず、読み上げの間だけ下がり（6: 約 5 dB、12: 約 10 dB）、読み上げの後に戻る（renew の作り直しで一度だけ立ち上がりの山）",
+ "reading": "実測: 読み上げだけを参照の ViSQOL 0 → 6 → 12: hello 3.79 → 4.04 → 4.10、weather 4.11 → 4.16 → 4.22、piano 3.97 → 4.06 → 4.12。曲が残ったままの上がりは初めて。この run では曲が消えなかったので renew が効いたかは別に確かめる（q98）"
+}
