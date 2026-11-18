@@ -1,0 +1,74 @@
+{
+ "queue": "q104_talker_room",
+ "run": "44317748372",
+ "date": "2026-11-18",
+ "what": "話し手の横でサンプラーのバンド、room 12 songs と 0 を 12・0・0・12",
+ "per_recording": {
+  "r12_ja": {
+   "speech_strength_median": 0.173,
+   "sn_db_median": -9.77,
+   "windows": 42,
+   "visqol": 4.4415,
+   "mrstft": 1.3826,
+   "lag_ms": 2051.0
+  },
+  "r0_ja": {
+   "speech_strength_median": 0.069,
+   "sn_db_median": -9.04,
+   "windows": 40,
+   "visqol": 4.4397,
+   "mrstft": 1.3662,
+   "lag_ms": 2028.8
+  },
+  "r0b_ja": {
+   "speech_strength_median": -0.1,
+   "sn_db_median": -7.34,
+   "windows": 41,
+   "visqol": 4.4463,
+   "mrstft": 1.2668,
+   "lag_ms": 2117.0
+  },
+  "r12b_ja": {
+   "speech_strength_median": 0.226,
+   "sn_db_median": -8.42,
+   "windows": 39,
+   "visqol": 4.4415,
+   "mrstft": 1.2261,
+   "lag_ms": 1981.5
+  },
+  "r12_en": {
+   "speech_strength_median": 0.09,
+   "sn_db_median": -19.19,
+   "windows": 37,
+   "visqol": 4.3203,
+   "mrstft": 1.7469,
+   "lag_ms": 2001.0
+  },
+  "r0_en": {
+   "speech_strength_median": -0.046,
+   "sn_db_median": -16.36,
+   "windows": 37,
+   "visqol": 4.3203,
+   "mrstft": 1.8326,
+   "lag_ms": 2020.0
+  },
+  "r0b_en": {
+   "speech_strength_median": 0.043,
+   "sn_db_median": -16.92,
+   "windows": 39,
+   "visqol": 4.3203,
+   "mrstft": 1.8783,
+   "lag_ms": 2049.2
+  },
+  "r12b_en": {
+   "speech_strength_median": 0.149,
+   "sn_db_median": -17.51,
+   "windows": 37,
+   "visqol": 4.3205,
+   "mrstft": 1.7321,
+   "lag_ms": 1997.8
+  }
+ },
+ "correction": "訂正（11-18 23:30）: 波形の当てはめはライブ（話し手）には使えない — ライブは正弦波の位相が毎回違うので、同じ声でも波形が合わない（読み上げはサンプラーの同じ録音なので合う）。強さ 0.01〜0.2 は測り方のせいで、話し手が弱くなったのではない。位相に関係ない ViSQOL は arm によらず高く同じ（日本語 4.44〜4.46、英語 4.32）",
+ "reading": "ViSQOL は room 12 / 0 で同じ（日本語 4.44・4.44 / 4.44・4.45、英語 4.32 が 4 本とも）。波形の当てはめは使えない（上の訂正）。→ q105 で曲だけの録音も取り、パワースペクトルで「混ぜ ≈ a × 話し手 + b × 曲」を当てはめる"
+}
