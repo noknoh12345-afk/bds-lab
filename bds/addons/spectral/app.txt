@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 106（tools/exp/queue/q106_talker_defaults.json、11-19）: 1.5.16 の既定（話し手でもダッキング 12 dB）を、サンプラーのエチュード（21 秒）で確かめる。話し手 10 秒 → 止めて曲だけ 6 秒（曲が戻るか）。文ごとに 話し手だけ・曲だけ・既定・切・既定
+# キュー 107（tools/exp/queue/q107_regress_1516.json、11-19）: 1.5.16 の既定のまま、読み上げも話し手も無しで、エチュード・エリーゼ・バンドをスピーカー（6 ブロック）とヘッドホンで 1 本ずつ。q93 の auto（エチュード 4.22・エリーゼ 3.91・バンド 3.57）と比べて、1.5.9〜1.5.16 の変更で普通の曲が変わっていないか
 
 section title
 audio info
@@ -13,7 +13,8 @@ audio info
 shot title
 
 section prep
-audio song speech_ja_soseki,speech_en_wordsworth suffix=_e pack=tools/exp/packs/run10
+audio song velocity_ramp pack=tools/exp/packs/q40
+audio song fur_elise pack=tools/exp/packs/notes
 
 section join
 join
@@ -23,211 +24,90 @@ do time set noon
 do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
-do execute as @a run summon armor_stand talker 0 -60 3
 
-section tq_tn_en
+section rg_sp_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-do scriptevent spectral:duck 12
-do scriptevent spectral:duck live on
 do execute as @a run tp @s 0 -60 0 0 0
-do tp @e[name=talker] 0 -60 3
-audio start tqtn_en
-wait 1500
-do execute as @a run spectral:live_demo speech_en_wordsworth_e follow @s 24 "follow:talker"
-wait 10000
-do execute as @a run spectral:live demo_speech_en_wordsworth_e stop
-wait 6000
+audio start rg_sp_pd
+do execute as @a run spectral:play piano_demo speaker
+wait 700
+do tp @a -6 -60 0 0 0
+wait 21200
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export tqtn_en 160
+audio export rg_sp_pd 160
 
-section tq_bn_en
+section rg_ph_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-do scriptevent spectral:duck 12
-do scriptevent spectral:duck live on
 do execute as @a run tp @s 0 -60 0 0 0
-do tp @e[name=talker] 0 -60 3
-audio start tqbn_en
+audio start rg_ph_pd
 do execute as @a run spectral:play piano_demo
-wait 1500
-wait 10000
-wait 6000
+wait 21200
 do execute as @a run spectral:stop
 audio stop
-audio export tqbn_en 160
+audio export rg_ph_pd 160
 
-section tq_def_en
+section rg_sp_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-do scriptevent spectral:duck 12
-do scriptevent spectral:duck live on
 do execute as @a run tp @s 0 -60 0 0 0
-do tp @e[name=talker] 0 -60 3
-audio start tqdef_en
-do execute as @a run spectral:play piano_demo
-wait 1500
-do execute as @a run spectral:live_demo speech_en_wordsworth_e follow @s 24 "follow:talker"
-wait 10000
-do execute as @a run spectral:live demo_speech_en_wordsworth_e stop
-wait 6000
+audio start rg_sp_fe
+do execute as @a run spectral:play fur_elise speaker
+wait 700
+do tp @a -6 -60 0 0 0
+wait 15200
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export tqdef_en 160
+audio export rg_sp_fe 160
 
-section tq_off_en
+section rg_ph_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-do scriptevent spectral:duck 12
-do scriptevent spectral:duck live off
 do execute as @a run tp @s 0 -60 0 0 0
-do tp @e[name=talker] 0 -60 3
-audio start tqoff_en
-do execute as @a run spectral:play piano_demo
-wait 1500
-do execute as @a run spectral:live_demo speech_en_wordsworth_e follow @s 24 "follow:talker"
-wait 10000
-do execute as @a run spectral:live demo_speech_en_wordsworth_e stop
-wait 6000
+audio start rg_ph_fe
+do execute as @a run spectral:play fur_elise
+wait 15200
 do execute as @a run spectral:stop
 audio stop
-audio export tqoff_en 160
+audio export rg_ph_fe 160
 
-section tq_def2_en
+section rg_sp_bd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-do scriptevent spectral:duck 12
-do scriptevent spectral:duck live on
 do execute as @a run tp @s 0 -60 0 0 0
-do tp @e[name=talker] 0 -60 3
-audio start tqdef2_en
-do execute as @a run spectral:play piano_demo
-wait 1500
-do execute as @a run spectral:live_demo speech_en_wordsworth_e follow @s 24 "follow:talker"
-wait 10000
-do execute as @a run spectral:live demo_speech_en_wordsworth_e stop
-wait 6000
+audio start rg_sp_bd
+do execute as @a run spectral:play band_demo speaker
+wait 700
+do tp @a -6 -60 0 0 0
+wait 10700
 do execute as @a run spectral:stop
+do execute as @a run tp @s 0 -60 0 0 0
 audio stop
-audio export tqdef2_en 160
+audio export rg_sp_bd 160
 
-section tq_tn_ja
+section rg_ph_bd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-do scriptevent spectral:duck 12
-do scriptevent spectral:duck live on
 do execute as @a run tp @s 0 -60 0 0 0
-do tp @e[name=talker] 0 -60 3
-audio start tqtn_ja
-wait 1500
-do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 "follow:talker"
-wait 10000
-do execute as @a run spectral:live demo_speech_ja_soseki_e stop
-wait 6000
+audio start rg_ph_bd
+do execute as @a run spectral:play band_demo
+wait 10700
 do execute as @a run spectral:stop
 audio stop
-audio export tqtn_ja 160
-
-section tq_bn_ja
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-do scriptevent spectral:duck 12
-do scriptevent spectral:duck live on
-do execute as @a run tp @s 0 -60 0 0 0
-do tp @e[name=talker] 0 -60 3
-audio start tqbn_ja
-do execute as @a run spectral:play piano_demo
-wait 1500
-wait 10000
-wait 6000
-do execute as @a run spectral:stop
-audio stop
-audio export tqbn_ja 160
-
-section tq_def_ja
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-do scriptevent spectral:duck 12
-do scriptevent spectral:duck live on
-do execute as @a run tp @s 0 -60 0 0 0
-do tp @e[name=talker] 0 -60 3
-audio start tqdef_ja
-do execute as @a run spectral:play piano_demo
-wait 1500
-do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 "follow:talker"
-wait 10000
-do execute as @a run spectral:live demo_speech_ja_soseki_e stop
-wait 6000
-do execute as @a run spectral:stop
-audio stop
-audio export tqdef_ja 160
-
-section tq_off_ja
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-do scriptevent spectral:duck 12
-do scriptevent spectral:duck live off
-do execute as @a run tp @s 0 -60 0 0 0
-do tp @e[name=talker] 0 -60 3
-audio start tqoff_ja
-do execute as @a run spectral:play piano_demo
-wait 1500
-do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 "follow:talker"
-wait 10000
-do execute as @a run spectral:live demo_speech_ja_soseki_e stop
-wait 6000
-do execute as @a run spectral:stop
-audio stop
-audio export tqoff_ja 160
-
-section tq_def2_ja
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-do scriptevent spectral:duck 12
-do scriptevent spectral:duck live on
-do execute as @a run tp @s 0 -60 0 0 0
-do tp @e[name=talker] 0 -60 3
-audio start tqdef2_ja
-do execute as @a run spectral:play piano_demo
-wait 1500
-do execute as @a run spectral:live_demo speech_ja_soseki_e follow @s 24 "follow:talker"
-wait 10000
-do execute as @a run spectral:live demo_speech_ja_soseki_e stop
-wait 6000
-do execute as @a run spectral:stop
-audio stop
-audio export tqdef2_ja 160
-
-section tq_reset
-do scriptevent spectral:duck live on
+audio export rg_ph_bd 160
