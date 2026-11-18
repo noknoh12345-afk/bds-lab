@@ -551,10 +551,17 @@
   "tries": 1
  },
  "q102_speech_speaker_duck": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "754e4de",
+  "conclusion": "success",
+  "ended": "2026-11-18 21:59",
+  "failed_steps": 0,
+  "recordings": 9,
   "run": "44303687105",
   "started": "2026-11-18 21:25",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  },
  "q10_live_10min": {
   "arms": {},
