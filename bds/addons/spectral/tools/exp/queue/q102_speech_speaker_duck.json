@@ -1,0 +1,231 @@
+{
+ "header": [
+  "# Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid",
+  "#   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の",
+  "#   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）",
+  "# キュー 102（tools/exp/queue/q102_speech_speaker_duck.json、11-18）: 読み上げをスピーカー（3D、置いた所から 3 ブロック離れて聞く）で鳴らしたときの既定のダッキング（12 dB + renew）と切、読み上げだけ。ライブは 4 ブロック先の near 24 音。3 文"
+ ],
+ "setup": [
+  "tp @s 0 -60 0 0 0"
+ ],
+ "prep": [
+  "audio song rock_big suffix=_e pack=tools/exp/packs/run10",
+  "audio song speech_hello,speech_weather,speech_piano pack=tools/exp/packs/notes"
+ ],
+ "arms": [],
+ "sections": [
+  {
+   "title": "sp_none_weather",
+   "lines": [
+    "do scriptevent spectral:room 0",
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 12",
+    "audio start spnone_weather",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do execute as @a run spectral:play speech_weather speaker",
+    "wait 300",
+    "do tp @a -3 -60 0 0 0",
+    "wait 13000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export spnone_weather 160",
+    "do execute as @a run tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "title": "sp_def_weather",
+   "lines": [
+    "do scriptevent spectral:room 0",
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 12",
+    "audio start spdef_weather",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do execute as @a run spectral:play speech_weather speaker",
+    "wait 300",
+    "do tp @a -3 -60 0 0 0",
+    "wait 13000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export spdef_weather 160",
+    "do execute as @a run tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "title": "sp_off_weather",
+   "lines": [
+    "do scriptevent spectral:room 0",
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 0",
+    "audio start spoff_weather",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do execute as @a run spectral:play speech_weather speaker",
+    "wait 300",
+    "do tp @a -3 -60 0 0 0",
+    "wait 13000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export spoff_weather 160",
+    "do execute as @a run tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "title": "sp_none_piano",
+   "lines": [
+    "do scriptevent spectral:room 0",
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 12",
+    "audio start spnone_piano",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do execute as @a run spectral:play speech_piano speaker",
+    "wait 300",
+    "do tp @a -3 -60 0 0 0",
+    "wait 13000",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export spnone_piano 160",
+    "do execute as @a run tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "title": "sp_def_piano",
+   "lines": [
+    "do scriptevent spectral:room 0",
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 12",
+    "audio start spdef_piano",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do execute as @a run spectral:play speech_piano speaker",
+    "wait 300",
+    "do tp @a -3 -60 0 0 0",
+    "wait 13000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export spdef_piano 160",
+    "do execute as @a run tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "title": "sp_off_piano",
+   "lines": [
+    "do scriptevent spectral:room 0",
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 0",
+    "audio start spoff_piano",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do execute as @a run spectral:play speech_piano speaker",
+    "wait 300",
+    "do tp @a -3 -60 0 0 0",
+    "wait 13000",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export spoff_piano 160",
+    "do execute as @a run tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "title": "sp_none_hello",
+   "lines": [
+    "do scriptevent spectral:room 0",
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 12",
+    "audio start spnone_hello",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do execute as @a run spectral:play speech_hello speaker",
+    "wait 300",
+    "do tp @a -3 -60 0 0 0",
+    "wait 11600",
+    "do execute as @a run spectral:stop",
+    "audio stop",
+    "audio export spnone_hello 160",
+    "do execute as @a run tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "title": "sp_def_hello",
+   "lines": [
+    "do scriptevent spectral:room 0",
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 12",
+    "audio start spdef_hello",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do execute as @a run spectral:play speech_hello speaker",
+    "wait 300",
+    "do tp @a -3 -60 0 0 0",
+    "wait 11600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export spdef_hello 160",
+    "do execute as @a run tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "title": "sp_off_hello",
+   "lines": [
+    "do scriptevent spectral:room 0",
+    "do execute as @a run spectral:pitch 0",
+    "do execute as @a run spectral:speed 1",
+    "do execute as @a run spectral:volume 100",
+    "do execute as @a run spectral:sampler 2 250 28 300 false 600 true true",
+    "do scriptevent spectral:duck 0",
+    "audio start spoff_hello",
+    "do execute as @a run spectral:live_demo rock_big_e near @s 24 \"near:4,-58.5,0,overworld\"",
+    "wait 1000",
+    "do execute as @a run tp @s 0 -60 0 0 0",
+    "do execute as @a run spectral:play speech_hello speaker",
+    "wait 300",
+    "do tp @a -3 -60 0 0 0",
+    "wait 11600",
+    "do execute as @a run spectral:stop",
+    "do execute as @a run spectral:live demo_rock_big_e stop",
+    "audio stop",
+    "audio export spoff_hello 160",
+    "do execute as @a run tp @s 0 -60 0 0 0"
+   ]
+  },
+  {
+   "title": "sp_reset",
+   "lines": [
+    "do scriptevent spectral:duck 12"
+   ]
+  }
+ ]
+}

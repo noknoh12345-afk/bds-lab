@@ -1,0 +1,73 @@
+{
+ "queue": "q101_sampler_room_again",
+ "run": "44297051973",
+ "date": "2026-11-18",
+ "what": "q100 の 2 回目: room 12 songs と 0 を 12・0・0・12 の並びで、エリーゼ → エチュード",
+ "per_recording": {
+  "12a_pd": {
+   "speech_strength_median": 0.96,
+   "sn_db_median": 2.22,
+   "windows": 102,
+   "visqol": 3.8862,
+   "mrstft": 1.5718,
+   "lag_ms": 1600.0
+  },
+  "0a_pd": {
+   "speech_strength_median": 0.978,
+   "sn_db_median": 1.84,
+   "windows": 102,
+   "visqol": 4.0636,
+   "mrstft": 1.5213,
+   "lag_ms": 1600.0
+  },
+  "0b_pd": {
+   "speech_strength_median": 0.482,
+   "sn_db_median": -7.81,
+   "windows": 101,
+   "visqol": 4.0462,
+   "mrstft": 1.5771,
+   "lag_ms": 1557.2
+  },
+  "12b_pd": {
+   "speech_strength_median": 0.98,
+   "sn_db_median": 2.18,
+   "windows": 102,
+   "visqol": 3.8401,
+   "mrstft": 1.594,
+   "lag_ms": 1664.0
+  },
+  "12a_fe": {
+   "speech_strength_median": 0.935,
+   "sn_db_median": 3.13,
+   "windows": 73,
+   "visqol": 4.0654,
+   "mrstft": 1.5973,
+   "lag_ms": 981.2
+  },
+  "0a_fe": {
+   "speech_strength_median": 0.272,
+   "sn_db_median": -7.98,
+   "windows": 73,
+   "visqol": 4.1989,
+   "mrstft": 1.6719,
+   "lag_ms": 1021.0
+  },
+  "0b_fe": {
+   "speech_strength_median": 0.887,
+   "sn_db_median": -1.75,
+   "windows": 74,
+   "visqol": 3.9467,
+   "mrstft": 1.7688,
+   "lag_ms": 1045.2
+  },
+  "12b_fe": {
+   "speech_strength_median": 1.003,
+   "sn_db_median": 5.79,
+   "windows": 73,
+   "visqol": 4.0276,
+   "mrstft": 1.7328,
+   "lag_ms": 1024.0
+  }
+ },
+ "reading": "実測: サンプラーの強さ 12 / 0: エチュード 0.96・0.98 / 0.98・0.48、エリーゼ 0.94・1.00 / 0.27・0.89 — room 12 では 4 本とも落ちない、0 では 4 本のうち 2 本で大きく落ちる。ViSQOL 12 / 0: エチュード 3.89・3.84 / 4.06・4.05（0 が上）、エリーゼ 4.07・4.03 / 4.20・3.95。→ 落ちるのは防ぐが、ViSQOL は上がらない（エチュードは下がる）。既定は切のまま"
+}
