@@ -898,7 +898,8 @@ async function dragonFight() {
   //  brings it to the height of the target at its distance, the lower of the two. k nudges the speed when it keeps missing)
   const pitchFor = (h, dy, v = 3) => { let best = null; for (let a = -30; a <= 60; a += 0.25) { const r = (a * Math.PI) / 180; let x = 0, y = 0, vx = Math.cos(r) * v, vy = Math.sin(r) * v; for (let t = 0; t < 200 && x < h; t++) { x += vx; y += vy; vx *= 0.99; vy = vy * 0.99 - 0.05; } if (x >= h && (best === null || Math.abs(y - dy) < best.e)) { best = { a, e: Math.abs(y - dy) }; if (best.e < 0.15) break; } } return best ? best.a : 45; };
   const shootAt = async (x, y, z, k = 1) => { const P = b.state().pos, eye = P.y + 1.62, h = Math.hypot(x - P.x, z - P.z), a = pitchFor(h, y - eye, 3 * k); await b.act('hold_bow', []).catch(() => {}); await gotoFor([String(x), String(eye + h * Math.tan((a * Math.PI) / 180)), String(z)], 1500, 'lookat'); await gotoFor(['22'], 3000, 'use'); };
-  let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
+  let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, gappleAt = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
+  const gapple = async () => { if (me.hp !== null && me.hp <= 12 && Date.now() - gappleAt > 6000) { const g = /minecraft:(enchanted_golden_apple|golden_apple)\*/.exec(b.invText?.() ?? '')?.[1]; if (g) { gappleAt = Date.now(); log(`dragon: health ${me.hp}: a ${g.replace(/_/g, ' ')}`); await gotoFor([g], 2600, 'eat'); return true; } } return false; };
   await gotoFor([], 8000, 'armor_up');   // (what is carried is worn)
   if (/minecraft:shield\*/.test(b.invText?.() ?? '')) await gotoFor(['shield'], 4000, 'offhand');
   // (a carved pumpkin on the head: an enderman looked at stays calm. 19:12 and 19:15 in the lab, killed by one in the first four
@@ -991,6 +992,8 @@ async function dragonFight() {
     if (onPillar && (Math.hypot(P.x - onPillar.x - 0.5, P.z - onPillar.z - 0.5) > 1.2 || P.y < onPillar.y - 1)) onPillar = null;   // (knocked or walked off it)
     if (Date.now() - lastSay > 30000) { lastSay = Date.now(); log(`dragon: ${Math.round((Date.now() - t0) / 1000)} s · its health ${bar()} of 200 (from its bar) · health ${me.hp} · crystals ${all.size - gone.size} of ${all.size} seen stand (${left.size} left alone) · arrows ${cnt('arrow')} · at ${Math.round(P.x)} ${Math.round(P.y)} ${Math.round(P.z)}`); }
     // its breath on the ground, a fireball coming: ten blocks round the fountain, away from it
+    // a golden apple at 12 or less (regeneration and absorption at once - what keeps a player in iron alive through its breath)
+    if (me.hp !== null && me.hp <= 12 && /minecraft:(enchanted_)?golden_apple\*/.test(b.invText?.() ?? '') && Date.now() - gappleAt > 6000) { gappleAt = Date.now(); const g = /minecraft:(enchanted_golden_apple|golden_apple)\*/.exec(b.invText?.() ?? '')[1]; log(`dragon: health ${me.hp}: a ${g.replace(/_/g, ' ')}`); await gotoFor([g], 2600, 'eat'); continue; }
     // BURROW (default; BOT_NOBURROW to leave): out in the open only in short spells. Measured in the lab, 16:20-16:40: a player
     // standing still on open ground beside the dragon was dead in 70 s (twice); in a 1x1 hole two deep it lived the three minutes
     // two times of three; sealed over with end stone three of three. So: one hole of ours, out of it to shoot (two crystals, 15 s,
@@ -1037,11 +1040,12 @@ async function dragonFight() {
             // (an enderman in the hole with us, health going: the sword at it - 17:19, killed by one down there with the pickaxe in hand)
             { const hp1 = me.hp; const em = ents(/enderman$/).find((e) => Math.hypot(e.x - b.state().pos.x, e.y - b.state().pos.y, e.z - b.state().pos.z) < 3.5);
               if (em && (Date.now() - wHurt < 3000 || (hp1 ?? 20) < 19)) { if (Date.now() - emSaid > 8000) { emSaid = Date.now(); log(`dragon: an enderman at our hole (health ${me.hp}): the sword`); } await armUp(b); for (let k = 0; k < 6 && [...b.entities.values()].includes(em); k++) { await b.act('attack', ['enderman']).catch(() => {}); await sleep(250); } continue; } }
-            const food = /minecraft:(cooked_\w+|bread|baked_potato|golden_carrot|golden_apple|apple|carrot)\*/.exec(b.invText?.() ?? '')?.[1];
+            if (await gapple()) continue;
+            const food = /minecraft:(cooked_\w+|bread|baked_potato|golden_carrot|apple|carrot)\*/.exec(b.invText?.() ?? '')?.[1];
             if (food && (me.food ?? 20) < 20) await gotoFor([food], 2600, 'eat'); else await sleep(1000);
           }
           // (not out into its breath lying over the hole: 17:58, out of the hole into a cloud on its top, 20 to 5 in seconds)
-          for (let t = 0; t < 150 && me.connected && !b.state().dead && ents(/area_effect_cloud$/).some((e) => !e.burn && Math.hypot(e.x - burrow.at.x - 0.5, e.z - burrow.at.z - 0.5) < cr(e) + 1.5); t++) { if (t % 20 === 0) log(`dragon: its breath lies over our hole: waiting under it (health ${me.hp})`); await sleep(1000); }
+          for (let t = 0; t < 150 && me.connected && !b.state().dead && ents(/area_effect_cloud$/).some((e) => !e.burn && Math.hypot(e.x - burrow.at.x - 0.5, e.z - burrow.at.z - 0.5) < cr(e) + 1.5); t++) { if (t % 20 === 0) log(`dragon: its breath lies over our hole: waiting under it (health ${me.hp})`); if (!(await gapple())) await sleep(1000); }
           // out: the seal dug, up our cobblestone to the ground
           const P2 = b.state().pos, gx = Math.floor(P2.x), gz = Math.floor(P2.z), gy = Math.floor(P2.y + 0.01);
           // (a block at a time up to the ground's level, what is over the head dug first each time; read back: 17:20, the way out
