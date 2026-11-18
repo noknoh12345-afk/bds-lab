@@ -1890,9 +1890,16 @@
   "tries": 1
  },
  "q96_speech_room": {
+  "arms": {},
+  "checkpoints": 0,
   "commit": "4d8cf5d",
+  "conclusion": "success",
+  "ended": "2026-11-18 17:38",
+  "failed_steps": 0,
+  "recordings": 12,
   "run": "44263231013",
   "started": "2026-11-18 17:00",
-  "status": "running"
+  "status": "done",
+  "tries": 1
  }
 }
