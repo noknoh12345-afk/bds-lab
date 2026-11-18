@@ -1,0 +1,82 @@
+{
+ "queue": "q98_speech_duck_renew_rev",
+ "run": "44275635762",
+ "date": "2026-11-18",
+ "what": "q97 の 2 回目、並び逆（piano → weather → hello、12 → 6 → 0 → 曲なし）",
+ "per_recording": {
+  "0_hello": {
+   "speech_strength_median": 0.937,
+   "sn_db_median": 7.41,
+   "windows": 27,
+   "visqol": 4.4432,
+   "mrstft": 0.7897,
+   "lag_ms": 1621.2
+  },
+  "6_hello": {
+   "speech_strength_median": 0.847,
+   "sn_db_median": -1.09,
+   "windows": 26,
+   "visqol": 3.9763,
+   "mrstft": 3.3223,
+   "lag_ms": 1536.0
+  },
+  "12_hello": {
+   "speech_strength_median": 0.933,
+   "sn_db_median": 2.07,
+   "windows": 27,
+   "visqol": 4.0775,
+   "mrstft": 3.2776,
+   "lag_ms": 1557.2
+  },
+  "0_weather": {
+   "speech_strength_median": 0.696,
+   "sn_db_median": -4.51,
+   "windows": 22,
+   "visqol": 4.1027,
+   "mrstft": 3.5273,
+   "lag_ms": 1664.0
+  },
+  "6_weather": {
+   "speech_strength_median": 0.887,
+   "sn_db_median": 1.21,
+   "windows": 22,
+   "visqol": 4.0995,
+   "mrstft": 3.6787,
+   "lag_ms": 1557.2
+  },
+  "12_weather": {
+   "speech_strength_median": 0.628,
+   "sn_db_median": -0.29,
+   "windows": 22,
+   "visqol": 4.2248,
+   "mrstft": 3.6334,
+   "lag_ms": 1621.2
+  },
+  "0_piano": {
+   "speech_strength_median": 0.63,
+   "sn_db_median": -5.57,
+   "windows": 27,
+   "visqol": 3.9924,
+   "mrstft": 3.1985,
+   "lag_ms": 1578.8
+  },
+  "6_piano": {
+   "speech_strength_median": 0.098,
+   "sn_db_median": -12.08,
+   "windows": 27,
+   "visqol": 3.9461,
+   "mrstft": 3.3769,
+   "lag_ms": 1609.5
+  },
+  "12_piano": {
+   "speech_strength_median": 0.47,
+   "sn_db_median": -6.19,
+   "windows": 28,
+   "visqol": 4.1858,
+   "mrstft": 3.2097,
+   "lag_ms": 1536.0
+  }
+ },
+ "low_band_30_150Hz": "hello の 0 dB（ダッキング無し、renew も動かない）で読み上げの始まりに曲が消えて戻らない。6・12 dB は全部、読み上げの間だけ下がって後で戻る",
+ "reading": "実測: 曲が消えるのはダッキングのせいではない（ダッキング無しでも消えた）。読み上げの始まりに電話がライブの音を落とすことがある。ダッキングの run は renew で戻った。ViSQOL 0 / 6 / 12: weather 4.10 / 4.10 / 4.22、piano 3.99 / 3.95 / 4.19（hello の 0 は曲が消えたので 4.44）。12 dB は q97 と合わせ 5 文とも上、6 dB は q98 で上がらず → 1.5.13: 既定 12 dB、renew はダッキングに関係なく読み上げのたびに"
+}

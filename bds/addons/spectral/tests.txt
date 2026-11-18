@@ -965,7 +965,7 @@ scriptevent spectral:head3d level
 scriptevent spectral:head3d auto
 ~ \[spectral\] head3d auto \(drums 5 dB\)
 
-## ducking (q92, off by default): while a listener hears speech, the songs they hear are turned down that many dB (q90: the speech sounds at 84-94 % beside a 24-voice stream, it is covered by the song) — down in 2 ticks while the speech plays, back up after it; the speech itself is not turned down
+## ducking (q92; 12 dB by default since 1.5.13 — q97/q98 with renew: the speech's ViSQOL up in all 5 sentences where the song stayed): while a listener hears speech, the songs they hear are turned down that many dB (q90: the speech sounds at 84-94 % beside a 24-voice stream, it is covered by the song) — down in 2 ticks while the speech plays, back up after it; the speech itself is not turned down
 scriptevent spectral:duck 12
 ~ \[spectral\] duck 12 dB
 tp A 2 -60 0
@@ -982,6 +982,8 @@ scriptevent spectral:duck show
 @A cmd /spectral:stop
 scriptevent spectral:duck 0
 ~ \[spectral\] duck off
+scriptevent spectral:duck 12
+~ \[spectral\] duck 12 dB
 
 ## room for speech (q96, off by default): while a listener hears speech, the live streams they hear share that many fewer of their client's sounds, so the speech's own sounds fit (q92-q95: turning the songs down instead made the stream vanish from the phone in 2 of 3 runs); back to all once the speech is over
 spectral:share on 32

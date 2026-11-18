@@ -2533,7 +2533,7 @@ var dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 var sessions = /* @__PURE__ */ new Map();
 var notePlays = /* @__PURE__ */ new Map();
 var filePlays = /* @__PURE__ */ new Map();
-var DUCK = { db: 0 };
+var DUCK = { db: 12 };
 var DUCK_DOWN = 2;
 var DUCK_HOLD = 6;
 var DUCK_UP = 8;
@@ -2562,7 +2562,7 @@ function speechHearers() {
   return hear;
 }
 function updateDucks() {
-  if (DUCK.db <= 0 && ROOM.n <= 0) {
+  if (DUCK.db <= 0 && ROOM.n <= 0 && !(RENEW.on && lives.size)) {
     ducks.clear();
     if (hearing.size) {
       hearing = /* @__PURE__ */ new Set();
@@ -2570,7 +2570,7 @@ function updateDucks() {
     return;
   }
   const hear = speechHearers();
-  if (RENEW.on) {
+  if (RENEW.on && lives.size) {
     for (const id of hearing) if (!hear.has(id)) renewFor(id, RENEW.wait);
   }
   if (ROOM.n > 0 && (hear.size !== hearing.size || [...hear].some((id) => !hearing.has(id)))) {

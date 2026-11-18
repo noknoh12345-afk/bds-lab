@@ -667,7 +667,9 @@ const filePlays = new Map<string, FilePlayer>();
  *  streams they hear are turned down DUCK.db dB (q90: the speech sounds at 84-94 % beside a 24-voice stream — it is heard less
  *  because the song covers it, not because it loses its sounds). Down in DUCK_DOWN ticks, held DUCK_HOLD ticks after the speech,
  *  back up in DUCK_UP ticks; the sampler's notes started meanwhile too. Off (0 dB) until measured: `scriptevent spectral:duck <dB>` */
-export const DUCK = { db: 0 };
+export const DUCK = { db: 12 };
+// (q97/q98 with renew: 12 dB raised the speech's ViSQOL in all 5 sentences where the song stayed (3.79 → 4.10, 4.11 → 4.22, 3.97 → 4.12;
+//  4.10 → 4.22, 3.99 → 4.19); 6 dB not in both runs. 12 dB by default since 1.5.13)
 const DUCK_DOWN = 2, DUCK_HOLD = 6, DUCK_UP = 8;
 /** each listener's ducking now (1 = none) and the last tick they heard speech */
 const ducks = new Map<string, { g: number; heard: number }>();
@@ -698,10 +700,12 @@ function speechHearers(): Set<string> {
   return hear;
 }
 function updateDucks() {
-  if (DUCK.db <= 0 && ROOM.n <= 0) { ducks.clear(); if (hearing.size) { hearing = new Set(); } return; }
+  // (q98: the phone dropped a stream at the speech's start with no ducking at all — so who hears speech is followed whenever a
+  //  live stream plays, for renew)
+  if (DUCK.db <= 0 && ROOM.n <= 0 && !(RENEW.on && lives.size)) { ducks.clear(); if (hearing.size) { hearing = new Set(); } return; }
   const hear = speechHearers();
-  // (a listener whose speech is over: the live streams they hear make their sounds again — RENEW, on by default with ducking or room)
-  if (RENEW.on) for (const id of hearing) if (!hear.has(id)) renewFor(id, RENEW.wait);
+  // (a listener whose speech is over: the live streams they hear make their sounds again — RENEW, on by default, with or without ducking: q98)
+  if (RENEW.on && lives.size) for (const id of hearing) if (!hear.has(id)) renewFor(id, RENEW.wait);
   if (ROOM.n > 0 && (hear.size !== hearing.size || [...hear].some((id) => !hearing.has(id)))) {
     hearing = hear; shareSounds();
     const names = world.getPlayers().filter((q) => hear.has(q.id)).map((q) => q.name);
