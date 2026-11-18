@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# handoff.sh [作業フォルダ] [出力先フォルダ]
+# 引き継ぎパッケージ作成.sh [作業フォルダ] [出力先フォルダ]
 # 別のAIが完全に続きをできる引き継ぎパッケージ（zip）を作る。何度実行してもよい。
 #   中身: HANDOFF.md / RESUME.md / 追跡ファイル一式 / 未コミット差分 / 新規ファイル / git bundle（全履歴）/ ログ末尾 / 環境情報
 #   秘密情報らしいファイル（.env, *.key, *.pem, id_*, *token*, *secret*, *webhook* など）は入れない
 set -u
 SRC="$(cd "${1:-.}" && pwd)"
-OUT="$(mkdir -p "${2:-$SRC/handoff-out}" && cd "${2:-$SRC/handoff-out}" && pwd)"
-STAMP="$(date +%Y%m%d-%H%M%S)"
-NAME="handoff-$(basename "$SRC")-$STAMP"
+OUT="$(mkdir -p "${2:-$SRC/引き継ぎ}" && cd "${2:-$SRC/引き継ぎ}" && pwd)"
+STAMP="$(date +%Y-%m-%d_%H%M)"
+NAME="引き継ぎ_$(basename "$SRC")_$STAMP"   # (人が付けたような、読んで分かる名前)
 TMP="$(mktemp -d)"; PKG="$TMP/$NAME"; mkdir -p "$PKG/meta"
 SECRET='(^|/)(\.env[^/]*|.*\.(key|pem|p12|pfx)|id_(rsa|ed25519|ecdsa)[^/]*|.*(token|secret|password|credential|webhook)[^/]*)$'
 MAXSIZE=$((20 * 1024 * 1024))   # 1ファイル20MBまで（大きいものは meta/skipped.txt に名前だけ残す）
@@ -27,10 +27,10 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git branch -vv > "$PKG/meta/git-branches.txt" 2>&1
   git remote -v | sed -E 's#https://[^@/]*@#https://#' > "$PKG/meta/git-remotes.txt" 2>&1
   git diff HEAD > "$PKG/uncommitted.patch" 2>/dev/null
-  TRACKED="$(git ls-files)"
-  LIST="$( (git ls-files; git ls-files --others --exclude-standard) | sort -u)"
+  TRACKED="$(git -c core.quotepath=off ls-files)"
+  LIST="$( (git -c core.quotepath=off ls-files; git -c core.quotepath=off ls-files --others --exclude-standard) | sort -u)"
 else
-  LIST="$(find . -type f -not -path './handoff-out/*' -not -path './.git/*' -not -path '*/node_modules/*' | sed 's#^\./##')"
+  LIST="$(find . -type f -not -path './handoff-out/*' -not -path './引き継ぎ/*' -not -path './.git/*' -not -path '*/node_modules/*' | sed 's#^\./##')"
 fi
 
 mkdir -p "$PKG/files"
@@ -74,11 +74,11 @@ cat > "$PKG/RESUME.md" <<EOF
      その後、未コミットの変更を \`git apply ../uncommitted.patch\` で戻す（新規ファイルは files/ にある）
    - bundle なし: files/ をそのまま作業フォルダにする
 3. meta/ を見る：git-status.txt（未保存の変更）、logs/（最後の出力）、env.txt（使っていた道具と実行中だったプロセス）、skipped.txt（入れなかったファイル。秘密情報はユーザーに頼む）
-4. HANDOFF.md の「次の一手」から再開する。最初に AGENT_RULES.md（あれば）に従って自分用の HANDOFF 更新と再開予約を設定する。
+4. HANDOFF.md の「次の一手」から再開する。最初に「長時間タスク用エージェント規約.md」（あれば）に従って自分用の HANDOFF 更新と再開予約を設定する。
 EOF
-[ -f "$SRC/AGENT_RULES.md" ] && cp "$SRC/AGENT_RULES.md" "$PKG/"
+for r in "$SRC/長時間タスク用エージェント規約.md" "$SRC/AGENT_RULES.md"; do [ -f "$r" ] && cp "$r" "$PKG/"; done
 
 (cd "$TMP" && zip -qr "$OUT/$NAME.zip" "$NAME")
 rm -rf "$TMP"
-ln -sf "$NAME.zip" "$OUT/handoff-latest.zip" 2>/dev/null
+ln -sf "$NAME.zip" "$OUT/引き継ぎ_最新.zip" 2>/dev/null
 echo "$OUT/$NAME.zip ($(du -h "$OUT/$NAME.zip" | cut -f1))"
