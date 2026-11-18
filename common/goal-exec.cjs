@@ -1414,7 +1414,7 @@ function goalVerbs(K, H) {
   async function shelter0(moved, o = {}) {
     stopKeys();
     const tS = gnow(), slow = () => gnow() - tS > 90000;   // (building it has a minute and a half: past that, not a shelter for this night)
-    if (cnt('bed') > 0 && !o.hold && nightNow()) {   // a bed carried: set it down and sleep the night away (a speedrunner's way; not with monsters right here)
+    if (cnt('bed') > 0 && !o.hold && nightNow() && dimName() === 'overworld') {   /* (a bed blows up anywhere else: 12:47 in the lab, the End's shelter at its "night" killed the bot) */   // a bed carried: set it down and sleep the night away (a speedrunner's way; not with monsters right here)
       const b = spotBeside();
       if (b) {
         await grab('bed', 'sleep'); K.lookAt(b[0] + 0.5, b[1], b[2] + 0.5); await K.act('useon', [S(b[0]), S(b[1] - 1), S(b[2]), 'up']); await K.ticks(6);

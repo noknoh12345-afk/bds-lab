@@ -666,7 +666,7 @@ async function safeStart() {
   const b = me.bot; if (!b || me.dim !== 'overworld' || guardReason(b)) return;
   // (not from inside bedSpawn: its own run()s come back here - 13:36 that was an endless chain of promises that never let the process
   //  breathe: frozen until the watchdog)
-  if (!me.spawnSet && !inBedSpawn && !nightNow(b) && /\d+:minecraft:(\w+_)?bed\*/.test(await invList(b))) { log('auto: a bed carried and no respawn point yet: setting it down first'); await bedSpawn(); }
+  if (me.dim === 'overworld' && !me.spawnSet && !inBedSpawn && !nightNow(b) && /\d+:minecraft:(\w+_)?bed\*/.test(await invList(b))) { log('auto: a bed carried and no respawn point yet: setting it down first'); await bedSpawn(); }
   const lastInv = nightNow(b) ? await invList(b) : '';
   if (!openSky(b, b.state().pos) && !nightNow(b)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
   me.armored = /_chestplate\*/.test(lastInv || (await invList(b)));
@@ -783,7 +783,14 @@ BUILTIN.seal = async () => { pieceRun++; try { log(`seal: ${(await sealOverHead(
 const BOWL = !!process.env.BOT_BOWL;
 async function dragonFight() {
   const b = me.bot, t0 = Date.now(), tries = new Map(), left = new Set();
-  const ents = (re) => [...b.entities.values()].filter((e) => re.test(e.type ?? ''));
+  // (a cloud's size now, not as it came: they grow by their change rate each tick and go when their time is up - 12:05, twenty
+  //  health gone in seven seconds with no cloud 'near' by the radius as sent. And where health went with nothing to explain it, a
+  //  burn spot of our own, 4 round, for 10 s)
+  const cloudSeen = new Map(), burns = [];
+  const cr = (e) => { if (e.burn) return 4; let t0 = cloudSeen.get(e); if (!t0) { t0 = Date.now(); cloudSeen.set(e, t0); } const age = (Date.now() - t0) / 50; return Math.max(0, (e.radius ?? 5) + (Number.isFinite(e.cloudRate) ? e.cloudRate * age : 0)) + 1; };
+  const ents = (re) => { const l = [...b.entities.values()].filter((e) => re.test(e.type ?? '') && !(/area_effect_cloud/.test(e.type ?? '') && Number.isFinite(e.cloudDur) && e.cloudDur > 0 && (Date.now() - (cloudSeen.get(e) ?? Date.now())) / 50 > e.cloudDur + 10));
+    if (re.test('minecraft:area_effect_cloud')) { const now = Date.now(); for (let i = burns.length - 1; i >= 0; i--) if (now - burns[i].t > 10000) burns.splice(i, 1); l.push(...burns); }
+    return l; };
   const cnt = (id) => [...(b.invText?.() ?? '').matchAll(new RegExp(`minecraft:${id}\\*(\\d+)`, 'g'))].reduce((n, m) => n + Number(m[1]), 0);
   const portalOpen = () => { for (let x = -2; x <= 2; x++) for (let z = -2; z <= 2; z++) for (let y = 40; y <= 80; y++) if (/(^|:)end_portal$/.test(b.world.block(x, y, z)?.name ?? '')) return true; return false; };
   const blockId = () => ['cobblestone', 'end_stone', 'dirt', 'netherrack', 'cobbled_deepslate', 'stone'].find((i) => cnt(i) > 0) ?? 'cobblestone';   // (pillar with blocks in hand, not the bow: 18:17, four tries and no pillar)
@@ -829,12 +836,23 @@ async function dragonFight() {
   }
   // its health as its bar shows it (the attribute updates seldom: 63.8 for four minutes while the bar went 63% to 100%, 09:47)
   const bar = () => (b.bossHealth ? Math.round(b.bossHealth.v * 200) : '?');
+  // before the click: four and a half out from the bed straight back along its line (the furthest a click reaches), a block of ours
+  // set on the floor between, then the click over it (12:13 in the lab: from a block and a half, 18 health to dead by our own bed)
+  async function backOff(bx, by, bz, dx, dz) {
+    const tx = bx - dx * 3.6, tz = bz - dz * 3.6;
+    for (let t = 0; t < 3 && Math.hypot(b.state().pos.x - bx - 0.5, b.state().pos.z - bz - 0.5) < 3.6; t++) { if (t === 0) await dash(tx + 0.5, tz + 0.5, 1500); else await gotoFor([String(tx), String(tz)], 2500); }
+    const Q = b.state().pos, fx = Math.floor(Q.x), fz = Math.floor(Q.z), fy = Math.floor(Q.y + 0.01), cx = fx + dx, cz = fz + dz;
+    if (bname(cx, fy, cz) === 'air' && !/^(air|\?)$/.test(bname(cx, fy - 1, cz)) && Math.hypot(cx - bx, cz - bz) > 0.5) { await gotoFor([], 1200, 'hold_' + blockId()); await b.act('useon', [String(cx), String(fy - 1), String(cz), 'up']).catch(() => {}); await sleep(250); }
+    const off = Math.hypot(Q.x - bx - 0.5, Q.z - bz - 0.5);
+    log(`dragon: ${off < 3.1 ? 'not clicking' : 'clicking'} the bed from ${off.toFixed(1)} off${bname(cx, fy, cz) !== 'air' ? ', a block between' : ''}`);
+    return off >= 3.1;   /* (12:57: 'from 0.2 off' - standing on it - and dead by it) */
+  }
   const key = (e) => `${Math.round(e.x)},${Math.round(e.z)}`;
   // (the arrow's flight worked out, not guessed: full draw 3 blocks a tick, 0.05 down a tick, 1% lost a tick; the pitch that
   //  brings it to the height of the target at its distance, the lower of the two. k nudges the speed when it keeps missing)
   const pitchFor = (h, dy, v = 3) => { let best = null; for (let a = -30; a <= 60; a += 0.25) { const r = (a * Math.PI) / 180; let x = 0, y = 0, vx = Math.cos(r) * v, vy = Math.sin(r) * v; for (let t = 0; t < 200 && x < h; t++) { x += vx; y += vy; vx *= 0.99; vy = vy * 0.99 - 0.05; } if (x >= h && (best === null || Math.abs(y - dy) < best.e)) { best = { a, e: Math.abs(y - dy) }; if (best.e < 0.15) break; } } return best ? best.a : 45; };
   const shootAt = async (x, y, z, k = 1) => { const P = b.state().pos, eye = P.y + 1.62, h = Math.hypot(x - P.x, z - P.z), a = pitchFor(h, y - eye, 3 * k); await b.act('hold_bow', []).catch(() => {}); await gotoFor([String(x), String(eye + h * Math.tan((a * Math.PI) / 180)), String(z)], 1500, 'lookat'); await gotoFor(['22'], 3000, 'use'); };
-  let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, uncaging = false, opened = new Set(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
+  let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, sideSaid = 0, sideSaid2 = 0, uncaging = false, opened = new Set(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
   await gotoFor([], 8000, 'armor_up');   // (what is carried is worn)
   if (/minecraft:shield\*/.test(b.invText?.() ?? '')) await gotoFor(['shield'], 4000, 'offhand');
   // (a carved pumpkin on the head: an enderman looked at stays calm. 19:12 and 19:15 in the lab, killed by one in the first four
@@ -856,16 +874,16 @@ async function dragonFight() {
   };
   const walk = async (tx, tz, ms = 3000, mid = false) => {
     const Q = b.state().pos, cl = ents(/area_effect_cloud$/);
-    const bad = (x, z) => cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < (e.radius ?? 3) + 3) || (!mid && segD(Q.x, Q.z, x, z, 0, 0) < 12);
+    const bad = (x, z) => cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + 3) || (!mid && segD(Q.x, Q.z, x, z, 0, 0) < 12);
     if (bad(tx, tz)) { const r = Math.max(16, Math.min(40, Math.hypot(Q.x, Q.z))), a0 = Math.atan2(Q.z, Q.x), want = Math.atan2(tz, tx); let da = want - a0; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
-      const opts = [Math.sign(da || 1) * 0.5, -Math.sign(da || 1) * 0.5].map((d) => [Math.cos(a0 + d) * r, Math.sin(a0 + d) * r]).filter(([x, z]) => !cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < (e.radius ?? 3) + 3));
+      const opts = [Math.sign(da || 1) * 0.5, -Math.sign(da || 1) * 0.5].map((d) => [Math.cos(a0 + d) * r, Math.sin(a0 + d) * r]).filter(([x, z]) => !cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + 3));
       if (!opts.length) { if (Date.now() - (walk.said ?? 0) > 15000) { walk.said = Date.now(); log(`dragon: no way to ${Math.round(tx)} ${Math.round(tz)} clear of its breath: waiting`); } await sleep(400); return; } [tx, tz] = opts[0]; }
     await down(); await gotoFor([String(Math.round(tx)), String(Math.round(tz))], ms);
   };
   // (its breath is six blocks across and is there in an instant; a shot takes four seconds. Whatever is being done is dropped the
   //  moment a cloud reaches to within two blocks - looked for three times a second, not once a shot)
   let fleeing = false, inFight = false, emFight = false, delegating = false;
-  const inCloud = () => { const Q = b.state().pos; return ents(/area_effect_cloud$/).some((e) => Math.hypot(e.x - Q.x, e.z - Q.z) < (e.radius ?? 3) + 2 && Math.abs(e.y - Q.y) < 6); };
+  const inCloud = () => { const Q = b.state().pos; return ents(/area_effect_cloud$/).some((e) => Math.hypot(e.x - Q.x, e.z - Q.z) < cr(e) + 2 && Math.abs(e.y - Q.y) < 6); };
   // (and an enderman at arm's length while health is falling: 15:43, twenty health gone in six seconds mid-shot)
   let wHp = me.hp, wHurt = 0;
   const emOnMe = () => { const Q = b.state().pos; return Date.now() - wHurt < 4000 && ents(/enderman$/).some((e) => Math.hypot(e.x - Q.x, e.y - Q.y, e.z - Q.z) < 3.4); };
@@ -947,11 +965,11 @@ async function dragonFight() {
     }
     // (15:09 in the lab: 17 health gone in six seconds standing in it. Straight away from it, fourteen blocks, at a sprint; near the
     //  island's edge, along the edge instead)
-    const cloud = ents(/area_effect_cloud$|dragon_fireball$/).filter((e) => Math.hypot(e.x - P.x, e.z - P.z) < (e.radius ?? 3) + 6 && Math.abs(e.y - P.y) < 8).sort((u, v) => Math.hypot(u.x - P.x, u.z - P.z) - Math.hypot(v.x - P.x, v.z - P.z))[0];
+    const cloud = ents(/area_effect_cloud$|dragon_fireball$/).filter((e) => Math.hypot(e.x - P.x, e.z - P.z) < cr(e) + 6 && Math.abs(e.y - P.y) < 8).sort((u, v) => Math.hypot(u.x - P.x, u.z - P.z) - Math.hypot(v.x - P.x, v.z - P.z))[0];
     if (dodge && Date.now() - dodge.t < 3000) { const dd = dodge; dodge = null; if (Date.now() - dodgeSaid > 8000) { dodgeSaid = Date.now(); log('dragon: a fireball coming down near me: out of its line'); }
       // (18:19 in the lab: out of the fireball's line straight into an older cloud. Of the two sides, and further out on each, the
       //  first whose way crosses no cloud and stays on the island)
-      const cl = ents(/area_effect_cloud$/), ok2 = (x, z) => Math.hypot(x, z) < 44 && !cl.some((e) => segD(P.x, P.z, x, z, e.x, e.z) < (e.radius ?? 3) + 1.5);
+      const cl = ents(/area_effect_cloud$/), ok2 = (x, z) => Math.hypot(x, z) < 44 && !cl.some((e) => segD(P.x, P.z, x, z, e.x, e.z) < cr(e) + 1.5);
       const cands = [[dd.x, dd.z], [2 * P.x - dd.x, 2 * P.z - dd.z], [P.x + (dd.x - P.x) * 1.6, P.z + (dd.z - P.z) * 1.6], [P.x - (dd.x - P.x) * 1.6, P.z - (dd.z - P.z) * 1.6], [P.x + (dd.x - P.x) * 0.6, P.z + (dd.z - P.z) * 0.6], [P.x - (dd.x - P.x) * 0.6, P.z - (dd.z - P.z) * 0.6]];
       let [tx, tz] = cands.find(([x, z]) => ok2(x, z)) ?? cands[0];
       fleeing = true; try { await down(); await dash(tx, tz, 2500); } finally { fleeing = false; } continue; }
@@ -979,6 +997,7 @@ async function dragonFight() {
     // (15:11 in the lab: dead in twenty seconds to an enderman it had looked at on the way, sword in the pack. Hurt, and one within
     //  five blocks: that one first - 40 health, six swings of an iron sword)
     if (me.hp !== null && hpWas !== null && me.hp < hpWas - 0.5) hurtAt = Date.now();
+    if (me.hp !== null && hpWas !== null && me.hp < hpWas - 0.5) { const dN = ents(/ender_dragon$/)[0]; if ((!dN || Math.hypot(dN.x - P.x, dN.y - P.y, dN.z - P.z) > 14) && !ents(/enderman$/).some((e) => Math.hypot(e.x - P.x, e.z - P.z) < 4)) burns.push({ type: 'minecraft:area_effect_cloud', burn: true, x: P.x, y: P.y, z: P.z, t: Date.now() }); }
     if (process.env.BOT_DEBUG && me.hp !== null && hpWas !== null && me.hp < hpWas - 0.5) { const cs = ents(/area_effect_cloud$|dragon_fireball$/).map((e) => `${e.type.replace('minecraft:', '').slice(0, 5)}@${Math.hypot(e.x - P.x, e.z - P.z).toFixed(1)}/r${e.radius ?? '?'}/dy${(e.y - P.y).toFixed(1)}`).sort().slice(0, 4).join(' '); setTimeout(() => { const Q = b.state().pos; log(`dragon: dbg +1s near: ${ents(/area_effect_cloud$|dragon_fireball$/).map((e) => `${e.type.replace('minecraft:', '').slice(0, 5)}@${Math.hypot(e.x - Q.x, e.z - Q.z).toFixed(1)}/r${e.radius ?? '?'}`).sort().slice(0, 4).join(' ')}`); }, 1000); log(`dragon: dbg hurt ${hpWas}→${me.hp} at ${P.x.toFixed(0)} ${P.y.toFixed(0)} ${P.z.toFixed(0)}: ${cs || 'no cloud known'}; dragon ${dr0 ? Math.hypot(dr0.x - P.x, dr0.z - P.z).toFixed(0) : '-'} off`); }
     hpWas = me.hp;
     emFight = false;
@@ -988,11 +1007,11 @@ async function dragonFight() {
       const em = ents(/enderman$/).map((e) => ({ e, d: Math.hypot(e.x - P.x, e.y - P.y, e.z - P.z) })).filter((x) => x.d < 8).sort((u, v) => u.d - v.d)[0];
       // (only when nothing else can have done it: the dragon well away, no breath near. 19:42 in the lab: the dragon's hit taken
       //  for an enderman's, a calm one struck, and dead to it in four seconds - with the pumpkin on, they are never the first)
-      const other = (dr0 && Math.hypot(dr0.x - P.x, dr0.y - P.y, dr0.z - P.z) < 22) || ents(/area_effect_cloud$/).some((e) => Math.hypot(e.x - P.x, e.z - P.z) < (e.radius ?? 3) + 3);
+      const other = (dr0 && Math.hypot(dr0.x - P.x, dr0.y - P.y, dr0.z - P.z) < 22) || ents(/area_effect_cloud$/).some((e) => Math.hypot(e.x - P.x, e.z - P.z) < cr(e) + 3);
       if (em && !other && Date.now() - Math.max(hurtAt, wHurt) < 8000) { emFight = true; if (Date.now() - emSaid > 10000) { emSaid = Date.now(); log(`dragon: an enderman on me (health ${me.hp}): the sword`); }
         // (sword against sword it costs some 14 health each time, and it steps away and comes back: three blocks up on our own
         //  pillar it cannot reach, and is hit from above; the crystals are shot from up there too)
-        if (!onPillar && cnt('cobblestone') + cnt('end_stone') >= 3 && !ents(/area_effect_cloud$/).some((e) => Math.hypot(e.x - P.x, e.z - P.z) < (e.radius ?? 3) + 5)) {   // (not beside its breath: 18:29, up a pillar by a cloud and dead in it)
+        if (!onPillar && cnt('cobblestone') + cnt('end_stone') >= 3 && !ents(/area_effect_cloud$/).some((e) => Math.hypot(e.x - P.x, e.z - P.z) < cr(e) + 5)) {   // (not beside its breath: 18:29, up a pillar by a cloud and dead in it)
         log('dragon: three up on a pillar, out of its reach'); await gotoFor(['3', blockId()], 6000, 'pillar'); onPillar = { x: Math.floor(b.state().pos.x), z: Math.floor(b.state().pos.z), y: b.state().pos.y }; continue; }
         await armUp(b);
         if (em.d < 3.6) { await b.act('attack', ['enderman']).catch(() => {}); emHits++; } else await gotoFor([String(em.e.x), String(em.e.y + 1.5), String(em.e.z)], 600, 'lookat');
@@ -1069,9 +1088,19 @@ async function dragonFight() {
     //  while it sat there healing back to 162)
     if (perched && dr && dr.y - (P.y + 1.62) > 2.4 && Date.now() - pillarFail > 20000 && cnt(blockId()) > 0) { const up = Math.min(5, Math.ceil(dr.y - (P.y + 1.62) - 1.8)), y0 = P.y; log(`dragon: ${up} up on a pillar to reach it`); await gotoFor([String(up), blockId()], 2500 * up, 'pillar'); if (b.state().pos.y < y0 + 0.9) { pillarFail = Date.now(); log(`dragon: the pillar did not rise (${cnt(blockId())} ${blockId()} left): the sword from here`); } continue; }
     inFight = !!(perched && dr && (me.hp ?? 20) >= 12);
+    // (its head points against its yaw as Bedrock sends it: its breath while sitting lay at -0.98 of yaw's way, 13:29)
+    // sitting, it breathes ahead of its head: never in front of it - to its side, four and a half out from its middle (13:03-13:17
+    // in the lab: five times it sat, five times the bowl in front of it took the health and the time it sat went on healing)
+    if (perched && dr && Number.isFinite(dr.yaw)) {
+      const r = (dr.yaw * Math.PI) / 180, hx = Math.sin(r), hz = -Math.cos(r), ox = P.x - dr.x, oz = P.z - dr.z, ol = Math.hypot(ox, oz) || 1, ahead = (ox * hx + oz * hz) / ol;
+      if (process.env.BOT_DEBUG && Date.now() - (sideSaid ?? 0) > 3000) { sideSaid = Date.now(); const cl = ents(/area_effect_cloud$/).filter((e) => !e.burn && Math.hypot(e.x - dr.x, e.z - dr.z) < 14).map((e) => (((e.x - dr.x) * hx + (e.z - dr.z) * hz) / (Math.hypot(e.x - dr.x, e.z - dr.z) || 1)).toFixed(2)); log(`dragon: dbg sitting yaw ${dr.yaw.toFixed(0)}, me ahead ${ahead.toFixed(2)}, clouds near it ahead ${cl.join(' ') || '-'}`); }
+      if (ahead > 0.3) { const s1 = [dr.x - hz * 4.5, dr.z + hx * 4.5], s2 = [dr.x + hz * 4.5, dr.z - hx * 4.5], sd = Math.hypot(s1[0] - P.x, s1[1] - P.z) < Math.hypot(s2[0] - P.x, s2[1] - P.z) ? s1 : s2;
+        if (Date.now() - (sideSaid2 ?? 0) > 8000) { sideSaid2 = Date.now(); log('dragon: in front of its head: round to its side'); }
+        await dash(sd[0], sd[1], 1500); continue; }
+    }
     // beds: one blows up when used in the End - set down by it while it sits, a step back, and clicked (a fifth of its health a bed,
     // the guides say; read back from its health here). BOT_NOBED to leave them
-    if (perched && dr && !process.env.BOT_NOBED && (me.hp ?? 0) >= 12 && Date.now() - bedAt > 600 && /\d+:minecraft:(\w+_)?bed\*/.test(b.invText?.() ?? '')) {
+    if (perched && dr && !process.env.BOT_NOBED && (me.hp ?? 0) >= 18 && Date.now() - bedAt > 600 && /\d+:minecraft:(\w+_)?bed\*/.test(b.invText?.() ?? '')) {
       bedAt = Date.now(); const bar0 = bar(), me0 = me.hp; const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap);
       try {
         const Q = b.state().pos, fx = Math.floor(Q.x), fy = Math.floor(Q.y + 0.01), fz = Math.floor(Q.z), vx = dr.x - Q.x, vz = dr.z - Q.z;
@@ -1091,7 +1120,7 @@ async function dragonFight() {
             if (!cs.every(([x, z]) => bname(x, fy + H - 1, z) !== 'air')) { log(`dragon: the stand for a bed (${H} high, ${ddir}) did not go up`); continue; }
             await gotoFor([String(cs[0][0]), String(fy + H), String(cs[0][1]), ddir], 2500, 'place_bed'); await sleep(250);
             if (!/(^|_)bed$/.test(bname(cs[0][0], fy + H, cs[0][1]))) { log(`dragon: no bed on the stand ${H} high (${ddir})`); continue; }
-            const Q2 = b.state().pos; await dash(Q2.x - ddx * 1.5, Q2.z - ddz * 1.5, 700);
+            if (!(await backOff(cs[0][0], fy + H, cs[0][1], ddx, ddz))) { done = true; break; }
             await b.act('useon', [String(cs[0][0]), String(fy + H), String(cs[0][1]), 'up']).catch(() => {}); await sleep(800);
             log(`dragon: a bed on a stand ${H} high blown at ${cs[0][0]} ${fy + H} ${cs[0][1]}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}`, { dc: true }); done = true;
           }
@@ -1107,7 +1136,7 @@ async function dragonFight() {
         let pick = null; for (const pk of picks.slice(0, 4)) { await gotoFor([String(pk[3]), String(pk[5]), String(pk[4]), pk[2]], 2500, 'place_bed'); await sleep(250); if (isBed(pk[3], pk[5], pk[4])) { pick = pk; break; } }
         const [dx, dz, dir, X, Z, BY] = pick ?? picks[0];
         if (isBed(X, BY, Z)) {
-          await dash(Q.x - dx * 2, Q.z - dz * 2, 900);
+          if (!(await backOff(X, BY, Z, dx, dz))) continue;
           await b.act('useon', [String(X), String(BY), String(Z), 'up']).catch(() => {}); await sleep(800);
           log(`dragon: a bed blown at ${X} ${BY} ${Z}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}${isBed(X, BY, Z) ? ' (the bed still stands: not clicked?)' : ''}`, { dc: true });
         } else log(`dragon: no bed set down at ${X} ${BY} ${Z} (${bname(X, BY, Z)}): ${said.filter((l) => /bed|put/.test(l)).slice(-1)[0] ?? '?'}`);
