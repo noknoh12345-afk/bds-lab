@@ -1,0 +1,82 @@
+{
+ "queue": "q96_speech_room",
+ "run": "44263231013",
+ "date": "2026-11-18",
+ "what": "読み上げの間だけ近くのライブが電話の音を room 個少なく分け合う（spectral:room）0 / 8 / 16 と曲なし、3 文",
+ "per_recording": {
+  "0_hello": {
+   "speech_strength_median": 0.927,
+   "sn_db_median": 0.74,
+   "windows": 26,
+   "visqol": 3.9171,
+   "mrstft": 3.0497,
+   "lag_ms": 1578.8
+  },
+  "8_hello": {
+   "speech_strength_median": 0.938,
+   "sn_db_median": 0.9,
+   "windows": 27,
+   "visqol": 3.9002,
+   "mrstft": 3.1764,
+   "lag_ms": 1664.0
+  },
+  "16_hello": {
+   "speech_strength_median": 0.944,
+   "sn_db_median": 8.43,
+   "windows": 26,
+   "visqol": 4.4955,
+   "mrstft": 0.6802,
+   "lag_ms": 1578.8
+  },
+  "0_weather": {
+   "speech_strength_median": 0.436,
+   "sn_db_median": -8.13,
+   "windows": 22,
+   "visqol": 4.0834,
+   "mrstft": 3.5837,
+   "lag_ms": 1600.0
+  },
+  "8_weather": {
+   "speech_strength_median": 0.291,
+   "sn_db_median": -10.86,
+   "windows": 22,
+   "visqol": 4.0774,
+   "mrstft": 3.6154,
+   "lag_ms": 1667.5
+  },
+  "16_weather": {
+   "speech_strength_median": 0.907,
+   "sn_db_median": 1.8,
+   "windows": 22,
+   "visqol": 4.0903,
+   "mrstft": 3.5732,
+   "lag_ms": 1578.8
+  },
+  "0_piano": {
+   "speech_strength_median": 0.916,
+   "sn_db_median": -1.58,
+   "windows": 28,
+   "visqol": 3.8792,
+   "mrstft": 3.2726,
+   "lag_ms": 1621.2
+  },
+  "8_piano": {
+   "speech_strength_median": 0.067,
+   "sn_db_median": -12.0,
+   "windows": 28,
+   "visqol": 3.9051,
+   "mrstft": 3.3167,
+   "lag_ms": 1596.8
+  },
+  "16_piano": {
+   "speech_strength_median": 0.494,
+   "sn_db_median": -6.38,
+   "windows": 27,
+   "visqol": 3.9017,
+   "mrstft": 3.31,
+   "lag_ms": 1514.8
+  }
+ },
+ "low_band_30_150Hz": "room 8 は 3 文とも曲が最後まで続く（0 と同じ大きさ）。room 16 は hello で読み上げの始まりに曲が消えて戻らない（weather・piano は続く）",
+ "reading": "実測: room 8 は読み上げの ViSQOL も SN も 0 と変わらない（hello 3.92 / 3.90、weather 4.08 / 4.08、piano 3.88 / 3.91）。room 16 は 1 回曲が消えた（ダッキングと同じ消え方）。→ 音量でも数でも、ライブの音を大きく変えると電話が音を落とすことがある、と読む。renew（読み上げの後に音を作り直す）を q97 で"
+}

@@ -1001,8 +1001,20 @@ wait 300
 @A cmd /spectral:live
 ~ @A live demo_demo: \d+ frames, 24 voices, near.*sharing 18\+6 sounds
 until \[spectral\] room: no speech 40000
+until \[spectral\] renew: A 3000
+wait 1000
+@A cmd /spectral:live
+~ @A live demo_demo: \d+ frames, 24 voices, near
 @A cmd /spectral:live demo_demo stop
 @A cmd /spectral:stop
 scriptevent spectral:room 0
 ~ \[spectral\] room off
 spectral:share on 0
+
+## after speech, the live streams a listener hears make their sounds again (renew, on by default; q92/q95/q96: the phone dropped a stream's looping sounds and they never came back — the server cannot see it), and it can be turned off or delayed
+scriptevent spectral:renew off
+~ \[spectral\] renew off
+scriptevent spectral:renew on 20
+~ \[spectral\] renew on, 20 ticks after the speech
+scriptevent spectral:renew on 10
+~ \[spectral\] renew on, 10 ticks after the speech

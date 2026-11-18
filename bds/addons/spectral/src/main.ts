@@ -677,6 +677,15 @@ NOTE_DUCK.of = (n) => (isSpeech(n) ? 1 : duckOf(n.o.where === 'phones' ? [{ play
  *  speech, the live streams they hear share ROOM.n fewer of their client's sounds (shareSounds), so the speech's own sounds fit in
  *  the phone's 32 and the songs keep their level. 0 = off (the default until measured): `scriptevent spectral:room <n>` */
 export const ROOM = { n: 0 };
+/** after a listener's speech, the live streams they hear make their sounds again, `wait` ticks later (after ducking's release):
+ *  `scriptevent spectral:renew on|off [ticks]` */
+export const RENEW = { on: true, wait: 10 };
+function renewFor(id: string, wait: number) {
+  system.runTimeout(() => {
+    for (const st of lives.values()) for (const t of st.player?.targets ?? []) if (t.player?.id === id) st.player!.renew(t);
+    console.warn(`[spectral] renew: ${world.getPlayers().find((q) => q.id === id)?.name ?? id}`);
+  }, wait);
+}
 /** the listeners hearing speech now (worked out each tick when ducking or room is on) */
 let hearing = new Set<string>();
 function speechHearers(): Set<string> {
@@ -691,6 +700,8 @@ function speechHearers(): Set<string> {
 function updateDucks() {
   if (DUCK.db <= 0 && ROOM.n <= 0) { ducks.clear(); if (hearing.size) { hearing = new Set(); } return; }
   const hear = speechHearers();
+  // (a listener whose speech is over: the live streams they hear make their sounds again — RENEW, on by default with ducking or room)
+  if (RENEW.on) for (const id of hearing) if (!hear.has(id)) renewFor(id, RENEW.wait);
   if (ROOM.n > 0 && (hear.size !== hearing.size || [...hear].some((id) => !hearing.has(id)))) {
     hearing = hear; shareSounds();
     const names = world.getPlayers().filter((q) => hear.has(q.id)).map((q) => q.name);
@@ -906,6 +917,11 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
     console.warn(`[spectral] head3d ${HEAD3D.mode === 'db' ? `${HEAD3D.db} dB` : HEAD3D.mode === 'auto' ? `auto (drums ${HEAD3D.drumDb} dB)` : HEAD3D.mode}`); return;
   }
   // (q90 → q92: the songs and live streams near a listener turned down while they hear speech — `scriptevent spectral:duck <dB>`, 0 = off)
+  if (e.id === 'spectral:renew') {
+    const [m, w] = e.message.trim().split(/\s+/);
+    RENEW.on = m !== 'off'; if (w && Number.isFinite(Number(w))) RENEW.wait = Math.max(0, Math.min(200, Math.round(Number(w))));
+    console.warn(`[spectral] renew ${RENEW.on ? `on, ${RENEW.wait} ticks after the speech` : 'off'}`); return;
+  }
   if (e.id === 'spectral:room') {
     const n = Math.round(Number(e.message.trim()));
     ROOM.n = Number.isFinite(n) ? Math.max(0, Math.min(29, n)) : 0;
@@ -1521,6 +1537,14 @@ class LivePlayer {
   /** the lowest noise band a target plays (its share keeps the top ones: the high bands carry speech) */
   low(t: Target) { return this.st.meta.M - this.nbOf(t); }
   /** a target's sounds over its share stop: its last voices, its lowest noise bands */
+  /** a target's sounds all made again (stopped now, made by the next ticks): after speech, the phone may have dropped a stream's
+   *  looping sounds for good (q92/q95/q96: the stream vanished from the phone and did not come back) — the server cannot see that */
+  renew(t: Target) {
+    if (t.building || t.gone) return;
+    for (const s of t.osc) { try { s.stop(); } catch { /* gone */ } this.calls++; }
+    for (const s of t.nz) { if (!s) continue; try { s.stop(); } catch { /* gone */ } this.calls++; }
+    t.osc = []; t.nz = [];
+  }
   trim(t: Target) {
     const nv = this.nvOf(t), lo = this.low(t);
     while (t.osc.length > nv) { const s = t.osc.pop(); try { s?.stop(); } catch { /* gone */ } this.calls++; }

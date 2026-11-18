@@ -2541,6 +2541,13 @@ var ducks = /* @__PURE__ */ new Map();
 var isSpeech = (n) => n.song.meta.programs.some((c) => c >= 200);
 NOTE_DUCK.of = (n) => isSpeech(n) ? 1 : duckOf(n.o.where === "phones" ? [{ player: n.owner }] : [{ dim: n.dim, loc: n.loc }]);
 var ROOM = { n: 0 };
+var RENEW = { on: true, wait: 10 };
+function renewFor(id, wait) {
+  system4.runTimeout(() => {
+    for (const st of lives.values()) for (const t of st.player?.targets ?? []) if (t.player?.id === id) st.player.renew(t);
+    console.warn(`[spectral] renew: ${world2.getPlayers().find((q) => q.id === id)?.name ?? id}`);
+  }, wait);
+}
 var hearing = /* @__PURE__ */ new Set();
 function speechHearers() {
   const hear = /* @__PURE__ */ new Set();
@@ -2563,6 +2570,9 @@ function updateDucks() {
     return;
   }
   const hear = speechHearers();
+  if (RENEW.on) {
+    for (const id of hearing) if (!hear.has(id)) renewFor(id, RENEW.wait);
+  }
   if (ROOM.n > 0 && (hear.size !== hearing.size || [...hear].some((id) => !hearing.has(id)))) {
     hearing = hear;
     shareSounds();
@@ -2948,6 +2958,13 @@ system4.afterEvents.scriptEventReceive.subscribe((e) => {
       HEAD3D.db = Math.max(0, Math.min(18, db));
     } else HEAD3D.mode = m === "one" ? "one" : m === "auto" ? "auto" : "level";
     console.warn(`[spectral] head3d ${HEAD3D.mode === "db" ? `${HEAD3D.db} dB` : HEAD3D.mode === "auto" ? `auto (drums ${HEAD3D.drumDb} dB)` : HEAD3D.mode}`);
+    return;
+  }
+  if (e.id === "spectral:renew") {
+    const [m, w] = e.message.trim().split(/\s+/);
+    RENEW.on = m !== "off";
+    if (w && Number.isFinite(Number(w))) RENEW.wait = Math.max(0, Math.min(200, Math.round(Number(w))));
+    console.warn(`[spectral] renew ${RENEW.on ? `on, ${RENEW.wait} ticks after the speech` : "off"}`);
     return;
   }
   if (e.id === "spectral:room") {
@@ -3792,6 +3809,28 @@ var LivePlayer = class {
     return this.st.meta.M - this.nbOf(t);
   }
   /** a target's sounds over its share stop: its last voices, its lowest noise bands */
+  /** a target's sounds all made again (stopped now, made by the next ticks): after speech, the phone may have dropped a stream's
+   *  looping sounds for good (q92/q95/q96: the stream vanished from the phone and did not come back) — the server cannot see that */
+  renew(t) {
+    if (t.building || t.gone) return;
+    for (const s of t.osc) {
+      try {
+        s.stop();
+      } catch {
+      }
+      this.calls++;
+    }
+    for (const s of t.nz) {
+      if (!s) continue;
+      try {
+        s.stop();
+      } catch {
+      }
+      this.calls++;
+    }
+    t.osc = [];
+    t.nz = [];
+  }
   trim(t) {
     const nv = this.nvOf(t), lo = this.low(t);
     while (t.osc.length > nv) {
@@ -4479,6 +4518,7 @@ cmdAny("spectral:library", "Song count (console too)", {}, () => `library ${song
 addSong(demo_default.meta, demo_default.data);
 export {
   DUCK,
+  RENEW,
   ROOM,
   addNoteSong,
   addSong,
