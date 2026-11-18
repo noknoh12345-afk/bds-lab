@@ -1342,6 +1342,8 @@ async function dragonFight() {
         if (isBed(X, BY, Z)) {
           if (!(await backOff(X, BY, Z, dx, dz))) continue;
           await b.act('useon', [String(X), String(BY), String(Z), 'up']).catch(() => {}); await sleep(800);
+          // (once more when it still stands: 07:25, 'not clicked?' and the bed left there for the next perch)
+          if (isBed(X, BY, Z)) { const said2 = []; const t2 = (l) => said2.push(l); ctx.taps.add(t2); await b.act('useon', [String(X), String(BY), String(Z), 'up']).catch(() => {}); await sleep(800); ctx.taps.delete(t2); if (isBed(X, BY, Z)) log(`dragon: the bed would not take the click: ${said2.slice(-1)[0] ?? '?'}`); }
           log(`dragon: a bed blown at ${X} ${BY} ${Z}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}${isBed(X, BY, Z) ? ' (the bed still stands: not clicked?)' : ''}`, { dc: true });
         } else log(`dragon: no bed set down at ${X} ${BY} ${Z} (${bname(X, BY, Z)}): ${said.filter((l) => /bed|put/.test(l)).slice(-1)[0] ?? '?'}`);
       } finally { ctx.taps.delete(tap); }
