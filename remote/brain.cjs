@@ -790,6 +790,8 @@ BUILTIN.standtest = async (a) => { pieceRun++; try { const b = me.bot, H = Numbe
 BUILTIN.blk = async (a) => { const b = me.bot, [x, y, z] = a.map(Number), w = b.world.block(x, y, z), P = b.state().pos; log(`blk ${x} ${y} ${z}: ${w?.name} shape ${JSON.stringify(w?.shape)} · me ${P.x.toFixed(2)} ${P.y.toFixed(2)} ${P.z.toFixed(2)} yaw ${b.state().yaw?.toFixed?.(0)} pitch ${b.state().pitch?.toFixed?.(0)}`); };
 BUILTIN.seal = async () => { pieceRun++; try { log(`seal: ${(await sealOverHead(me.bot, (m) => log(m))) ? 'shut' : 'not shut'}`); } finally { pieceRun--; } };
 const BOWL = !!process.env.BOT_BOWL;
+// (a blow on the way down from a jump: half again as much, the critical hit)
+const CRIT = process.env.BOT_CRIT !== '0';
 async function dragonFight() {
   const b = me.bot, t0 = Date.now(), tries = new Map(), left = new Set();
   // (a cloud's size now, not as it came: they grow by their change rate each tick and go when their time is up - 12:05, twenty
@@ -1296,7 +1298,7 @@ async function dragonFight() {
         } else log(`dragon: no bed set down at ${X} ${BY} ${Z} (${bname(X, BY, Z)}): ${said.filter((l) => /bed|put/.test(l)).slice(-1)[0] ?? '?'}`);
       } finally { ctx.taps.delete(tap); }
       continue; }
-    if (perched && dr) { await armUp(b); let miss = false; const mt = (l) => { if (/not under the crosshair|no .* in (view|reach)/.test(l)) miss = true; }; ctx.taps.add(mt); await b.act('attack', ['ender_dragon']).catch(() => {}); ctx.taps.delete(mt); if (!miss) { hits++; if (hits % 10 === 1) log(`dragon: the sword is on it (${hits}) · its health ${bar()}`); } await sleep(200); continue; }
+    if (perched && dr) { await armUp(b); let miss = false; const mt = (l) => { if (/not under the crosshair|no .* in (view|reach)/.test(l)) miss = true; }; ctx.taps.add(mt); if (CRIT) { await b.act('jump', ['on']).catch(() => {}); await sleep(100); await b.act('jump', ['off']).catch(() => {}); await sleep(330); } await b.act('attack', ['ender_dragon']).catch(() => {}); ctx.taps.delete(mt); if (!miss) { hits++; if (hits % 10 === 1) log(`dragon: the sword is on it (${hits}) · its health ${bar()}`); } await sleep(200); continue; }
     if (dr && cnt('arrow') > 0 && Math.hypot(dr.x - P.x, dr.z - P.z) < 45) { await shootAt(dr.x, dr.y + 1, dr.z); shots++; continue; }
     await sleep(500);
   }
