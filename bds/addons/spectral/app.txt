@@ -1,7 +1,7 @@
 # Spectral Player の測定リグ（本物のクライアントが鳴らした音を録る）: node lab.mjs app run -a spectral --device redroid
 #   GitHub では Actions → redroid → Run workflow（addon: spectral, mode: run）。録音そのものは `audio export` が Opus にして実行の成果物の
 #   public/spectral/rec/ に公開する（notify.yml が Discord に送る・tools/rig/fetch_rec.py <run> で取る）。1 録音 = 1 区切り（失敗はその録音だけ）
-# キュー 100（tools/exp/queue/q100_sampler_room.json、11-18）: サンプラーの曲（ヘッドホン、エチュード・エリーゼ）の横に 4 ブロック先のライブ 24 音（電話の 32 音を取る）。room <n> songs（サンプラーを聞いている間ライブが電話の音を n 個あける）0 / 12 / 20 と、サンプラーだけ。q57/q58: もう 1 曲が電話の 32 音を取るとサンプラーの音が落ちる（−2.3）
+# キュー 101（tools/exp/queue/q101_sampler_room_again.json、11-18）: q100 の 2 回目。room 12 songs と 0 を 2 組ずつ交互（12・0・0・12）、エリーゼ → エチュード、サンプラーだけも。q100: サンプラーの残り方（当てはめの強さ）は 0.48 → 0.81（エリーゼ）、ViSQOL はエチュードだけ上
 
 section title
 audio info
@@ -26,87 +26,26 @@ do gamerule dodaylightcycle false
 do weather clear
 do execute as @a run tp @s 0 -60 0 0 0
 
-section sr_none_pd
+section sq_none_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
 do scriptevent spectral:room 0
-audio start srnone_pd
-do execute as @a run spectral:play piano_demo
-wait 21500
+audio start sqnone_fe
+do execute as @a run spectral:play fur_elise
+wait 15500
 do execute as @a run spectral:stop
 audio stop
-audio export srnone_pd 160
+audio export sqnone_fe 160
 
-section sr_0_pd
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-audio start sr0_pd
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play piano_demo
-wait 21500
-do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
-audio stop
-audio export sr0_pd 160
-
-section sr_12_pd
+section sq_12a_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
 do scriptevent spectral:room 12 songs
-audio start sr12_pd
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play piano_demo
-wait 21500
-do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
-audio stop
-audio export sr12_pd 160
-
-section sr_20_pd
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 20 songs
-audio start sr20_pd
-do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
-wait 1000
-do execute as @a run spectral:play piano_demo
-wait 21500
-do execute as @a run spectral:stop
-do execute as @a run spectral:live demo_rock_big_e stop
-audio stop
-audio export sr20_pd 160
-
-section sr_none_fe
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-audio start srnone_fe
-do execute as @a run spectral:play fur_elise
-wait 15500
-do execute as @a run spectral:stop
-audio stop
-audio export srnone_fe 160
-
-section sr_0_fe
-do execute as @a run spectral:pitch 0
-do execute as @a run spectral:speed 1
-do execute as @a run spectral:volume 100
-do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 0
-audio start sr0_fe
+audio start sq12a_fe
 do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 1000
 do execute as @a run spectral:play fur_elise
@@ -114,15 +53,47 @@ wait 15500
 do execute as @a run spectral:stop
 do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export sr0_fe 160
+audio export sq12a_fe 160
 
-section sr_12_fe
+section sq_0a_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:room 0
+audio start sq0a_fe
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play fur_elise
+wait 15500
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export sq0a_fe 160
+
+section sq_0b_fe
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:room 0
+audio start sq0b_fe
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play fur_elise
+wait 15500
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export sq0b_fe 160
+
+section sq_12b_fe
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
 do scriptevent spectral:room 12 songs
-audio start sr12_fe
+audio start sq12b_fe
 do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 1000
 do execute as @a run spectral:play fur_elise
@@ -130,23 +101,84 @@ wait 15500
 do execute as @a run spectral:stop
 do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export sr12_fe 160
+audio export sq12b_fe 160
 
-section sr_20_fe
+section sq_none_pd
 do execute as @a run spectral:pitch 0
 do execute as @a run spectral:speed 1
 do execute as @a run spectral:volume 100
 do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
-do scriptevent spectral:room 20 songs
-audio start sr20_fe
+do scriptevent spectral:room 0
+audio start sqnone_pd
+do execute as @a run spectral:play piano_demo
+wait 21500
+do execute as @a run spectral:stop
+audio stop
+audio export sqnone_pd 160
+
+section sq_12a_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:room 12 songs
+audio start sq12a_pd
 do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
 wait 1000
-do execute as @a run spectral:play fur_elise
-wait 15500
+do execute as @a run spectral:play piano_demo
+wait 21500
 do execute as @a run spectral:stop
 do execute as @a run spectral:live demo_rock_big_e stop
 audio stop
-audio export sr20_fe 160
+audio export sq12a_pd 160
 
-section sr_reset
+section sq_0a_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:room 0
+audio start sq0a_pd
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play piano_demo
+wait 21500
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export sq0a_pd 160
+
+section sq_0b_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:room 0
+audio start sq0b_pd
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play piano_demo
+wait 21500
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export sq0b_pd 160
+
+section sq_12b_pd
+do execute as @a run spectral:pitch 0
+do execute as @a run spectral:speed 1
+do execute as @a run spectral:volume 100
+do execute as @a run spectral:sampler 2 250 28 300 false 600 true true
+do scriptevent spectral:room 12 songs
+audio start sq12b_pd
+do execute as @a run spectral:live_demo rock_big_e near @s 24 "near:4,-58.5,0,overworld"
+wait 1000
+do execute as @a run spectral:play piano_demo
+wait 21500
+do execute as @a run spectral:stop
+do execute as @a run spectral:live demo_rock_big_e stop
+audio stop
+audio export sq12b_pd 160
+
+section sq_reset
 do scriptevent spectral:room 0
