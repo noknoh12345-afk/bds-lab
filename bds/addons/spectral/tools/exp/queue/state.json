@@ -1901,5 +1901,11 @@
   "started": "2026-11-18 17:00",
   "status": "done",
   "tries": 1
+ },
+ "q97_speech_duck_renew": {
+  "commit": "9971e11",
+  "run": "44270242529",
+  "started": "2026-11-18 17:49",
+  "status": "running"
  }
 }
