@@ -845,7 +845,16 @@ async function dragonFight() {
       { const C = b.state().pos; if (Math.abs(C.x - Math.floor(C.x) - 0.5) > 0.2 || Math.abs(C.z - Math.floor(C.z) - 0.5) > 0.2) { await b.act('lookat', [String(Math.floor(C.x) + 0.5), String(C.y), String(Math.floor(C.z) + 0.5)]).catch(() => {}); await b.act('sneak', ['on']).catch(() => {}); await b.act('walk', ['forward', '3']).catch(() => {}); await b.act('sneak', ['off']).catch(() => {}); } }
       for (let t = 0, last = feet(); t < 12 && feet() < by - 1 && me.connected && !b.state().dead; t++) { const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap); const p0 = b.state().pos; await b.act('stop', []).catch(() => {}); await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(Math.min(6, by - 1 - feet())), blockId()], 12000, 'pillar'); await b.act('sneak', ['off']).catch(() => {});   /* (sneaking: it slid off its own pillar's edge, 12 to 16.8 to 20 - 23:12) */ ctx.taps.delete(tap); log(`dragon: uncage: pillar step ${t}: from ${p0.x.toFixed(1)} ${p0.y.toFixed(1)} ${p0.z.toFixed(1)} to feet ${feet()} · ${blockId()} ${cnt(blockId())} · ${said.filter((l) => /pillar|cancel|stopp|not /.test(l)).slice(-2).join(' | ').slice(0, 160)}`); if (feet() === last && t > 1) break; if (feet() < last - 1) { log(`dragon: uncage: knocked off the pillar (${last} → ${feet()}): not again this time`); break; } if (process.env.BOT_UNCAGE_PERCH && !perchedNow() && t >= 1) { log('dragon: uncage: it left its perch while we climbed: down'); break; } last = feet(); }
     } finally { delegating = false; }
-    if (feet() < by - 2) { log(`dragon: uncage: the pillar stopped at ${feet()} (wanted ${by - 1})`); return false; }
+    const down = async () => {
+    delegating = true; try { await holdPick();
+      for (let t = 0; t < 40 && me.connected && !b.state().dead; t++) { const F = b.state().pos, x1 = Math.floor(F.x), z1 = Math.floor(F.z), y1 = Math.floor(F.y + 0.01), under = bname(x1, y1 - 1, z1);
+        if (!/^(cobblestone|end_stone|dirt|netherrack|cobbled_deepslate|stone)$/.test(under) || (under === 'end_stone' && y1 <= 62)) break;
+        await gotoFor([String(x1), String(y1 - 1), String(z1)], 3000, 'dig');
+        for (let w = 0; w < 15 && Math.floor(b.state().pos.y + 0.01) >= y1; w++) await sleep(100); }
+    } finally { delegating = false; }
+    };
+    // (down again first: 05:16, left twelve up on its pillar when the climb was cut short, dead there a minute later)
+    if (feet() < by - 2) { log(`dragon: uncage: the pillar stopped at ${feet()} (wanted ${by - 1})`); await down(); return false; }
     let misplaced = false; { const A = b.state().pos; if (Math.hypot(Math.floor(A.x) - sx, Math.floor(A.z) - sz) > 1.5) { misplaced = true; log(`dragon: uncage: the pillar went up at ${Math.floor(A.x)} ${Math.floor(A.z)}, not beside the wall (${sx} ${sz}): down again`); } }   /* (22:57: up at 20 -37, eight from the bars) */   /* (one short is near enough to reach the bars: 22:25, stopped at 78 of 79 under the cage's edge) */
     let broke = 0;
     // (the pickaxe, not the cobblestone the pillar left in hand: 22:51, 28 s on one bar by hand, then off the pillar)
@@ -854,12 +863,7 @@ async function dragonFight() {
     if (broke >= 3) gaps.set(key(c), { bx, bz, by, dx, dz, kw });
     // (down our own pillar a block at a time, the pickaxe in hand and each fall waited for: dig_down took three minutes of 'nothing to
     //  dig (air)' - 22:07)
-    delegating = true; try { await holdPick();
-      for (let t = 0; t < 40 && me.connected && !b.state().dead; t++) { const F = b.state().pos, x1 = Math.floor(F.x), z1 = Math.floor(F.z), y1 = Math.floor(F.y + 0.01), under = bname(x1, y1 - 1, z1);
-        if (!/^(cobblestone|end_stone|dirt|netherrack|cobbled_deepslate|stone)$/.test(under) || (under === 'end_stone' && y1 <= 62)) break;
-        await gotoFor([String(x1), String(y1 - 1), String(z1)], 3000, 'dig');
-        for (let w = 0; w < 15 && Math.floor(b.state().pos.y + 0.01) >= y1; w++) await sleep(100); }
-    } finally { delegating = false; }
+    await down();
     // shot from a pillar of ours nine out along the gap's line, the eyes level with the gap: from the ground the line only passes a
     // wall four blocks from the crystal from 33+ out - the fountain (04:16, 'to the line of the gap' for minutes). Nine out its blast
     // is mostly spent
