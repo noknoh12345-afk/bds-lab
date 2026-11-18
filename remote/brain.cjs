@@ -11,7 +11,7 @@ const timers = [];
 // blocks no world generates by itself in the open (villages and ruins have some too: kept away from as well, which is fine)
 const BUILT = /planks|glass|crafting_table|chest|barrel|_bed$|torch|lantern|wool|(?<!moss_)carpet|concrete|bricks|_slab|_stairs|_door|fence|furnace|smoker|anvil|_sign|bookshelf|rail|redstone_(wire|torch|lamp|block)|repeater|comparator|piston|hopper|composter|lectern|scaffolding|ladder|banner|bell|item_frame|shulker_box|enchanting_table|brewing_stand|beacon|quartz_block|smooth_stone|polished_|cut_|_wall$|campfire|flower_pot|candle|lever|_button|pressure_plate|observer|dispenser|dropper|tnt|(?<!raw_)iron_block|(?<!raw_)gold_block|diamond_block|emerald_block|(?<!raw_)copper_block|hay_block|glazed_terracotta|stained|sea_lantern|end_rod/;
 // actions that only move or look: allowed anywhere (they change nothing)
-const PASSIVE = /^(auto|restore|bed|nightsit|stash|dragon|seal|map|walk_xz|to_surface|shelter|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
+const PASSIVE = /^(auto|restore|bed|bedat|nightsit|stash|dragon|seal|map|walk_xz|to_surface|shelter|goto|travel|walk|sprint|sneak|jump|swim|look|lookat|turn|pos|inv|near|stop|status|players|survey|around|help|guard|respawn|goto_death|wait|sleepms|leave|fly|land|crawl)$/;
 let guardOn = ctx.guardOn ?? true;
 const HOSTILE = /^minecraft:(zombie|husk|drowned|skeleton|stray|bogged|spider|cave_spider|creeper|witch|slime|magma_cube|zombie_villager_v2|pillager|vindicator|silverfish|phantom|blaze|wither_skeleton|piglin_brute|hoglin|ghast|endermite|breeze)$/;
 function scanBuilt(bot, R) {
@@ -777,6 +777,7 @@ const bname = (x, y, z) => (b.world.block(x, y, z)?.name ?? '?').replace('minecr
   }
   return false;
 }
+BUILTIN.bedat = async () => { pieceRun++; try { const b = me.bot, Q = b.state().pos, X = Math.floor(Q.x) + Number(process.env.BEDAT_DX ?? 2), Y = Math.floor(Q.y + 0.01), Z = Math.floor(Q.z); const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap); await gotoFor([String(X), String(Y), String(Z), process.env.BEDAT_DIR ?? "east"], 5000, 'place_bed'); ctx.taps.delete(tap); log(`bedat: ${X} ${Y} ${Z} (under it ${b.world.block(X, Y - 1, Z)?.name}, feet ${Q.x.toFixed(2)} ${Q.y.toFixed(2)} ${Q.z.toFixed(2)}) → ${(b.world.block(X, Y, Z)?.name ?? "?")} · ${said.join(' | ').slice(0, 300)}`); } finally { pieceRun--; } };
 BUILTIN.seal = async () => { pieceRun++; try { log(`seal: ${(await sealOverHead(me.bot, (m) => log(m))) ? 'shut' : 'not shut'}`); } finally { pieceRun--; } };
 const BOWL = !!process.env.BOT_BOWL;
 async function dragonFight() {
@@ -825,12 +826,14 @@ async function dragonFight() {
     await gotoFor([String(dy), 'cobblestone'], dy * 1600 + 2000, 'pillar');
     fox = { x: fx, z: fz }; log(`dragon: a hole to heal in made ready at ${fx} ${fz} (${dy} deep, filled with our cobblestone; end stone ${cnt('end_stone')})`);
   }
+  // its health as its bar shows it (the attribute updates seldom: 63.8 for four minutes while the bar went 63% to 100%, 09:47)
+  const bar = () => (b.bossHealth ? Math.round(b.bossHealth.v * 200) : '?');
   const key = (e) => `${Math.round(e.x)},${Math.round(e.z)}`;
   // (the arrow's flight worked out, not guessed: full draw 3 blocks a tick, 0.05 down a tick, 1% lost a tick; the pitch that
   //  brings it to the height of the target at its distance, the lower of the two. k nudges the speed when it keeps missing)
   const pitchFor = (h, dy, v = 3) => { let best = null; for (let a = -30; a <= 60; a += 0.25) { const r = (a * Math.PI) / 180; let x = 0, y = 0, vx = Math.cos(r) * v, vy = Math.sin(r) * v; for (let t = 0; t < 200 && x < h; t++) { x += vx; y += vy; vx *= 0.99; vy = vy * 0.99 - 0.05; } if (x >= h && (best === null || Math.abs(y - dy) < best.e)) { best = { a, e: Math.abs(y - dy) }; if (best.e < 0.15) break; } } return best ? best.a : 45; };
   const shootAt = async (x, y, z, k = 1) => { const P = b.state().pos, eye = P.y + 1.62, h = Math.hypot(x - P.x, z - P.z), a = pitchFor(h, y - eye, 3 * k); await b.act('hold_bow', []).catch(() => {}); await gotoFor([String(x), String(eye + h * Math.tan((a * Math.PI) / 180)), String(z)], 1500, 'lookat'); await gotoFor(['22'], 3000, 'use'); };
-  let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, uncaging = false, opened = new Set(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
+  let seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, uncaging = false, opened = new Set(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
   await gotoFor([], 8000, 'armor_up');   // (what is carried is worn)
   if (/minecraft:shield\*/.test(b.invText?.() ?? '')) await gotoFor(['shield'], 4000, 'offhand');
   // (a carved pumpkin on the head: an enderman looked at stays calm. 19:12 and 19:15 in the lab, killed by one in the first four
@@ -855,7 +858,7 @@ async function dragonFight() {
     const bad = (x, z) => cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < (e.radius ?? 3) + 3) || (!mid && segD(Q.x, Q.z, x, z, 0, 0) < 12);
     if (bad(tx, tz)) { const r = Math.max(16, Math.min(40, Math.hypot(Q.x, Q.z))), a0 = Math.atan2(Q.z, Q.x), want = Math.atan2(tz, tx); let da = want - a0; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
       const opts = [Math.sign(da || 1) * 0.5, -Math.sign(da || 1) * 0.5].map((d) => [Math.cos(a0 + d) * r, Math.sin(a0 + d) * r]).filter(([x, z]) => !cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < (e.radius ?? 3) + 3));
-      if (!opts.length) { await sleep(400); return; } [tx, tz] = opts[0]; }
+      if (!opts.length) { if (Date.now() - (walk.said ?? 0) > 15000) { walk.said = Date.now(); log(`dragon: no way to ${Math.round(tx)} ${Math.round(tz)} clear of its breath: waiting`); } await sleep(400); return; } [tx, tz] = opts[0]; }
     await down(); await gotoFor([String(Math.round(tx)), String(Math.round(tz))], ms);
   };
   // (its breath is six blocks across and is there in an instant; a shot takes four seconds. Whatever is being done is dropped the
@@ -893,12 +896,12 @@ async function dragonFight() {
     if (portalOpen() && seenDragon && !ents(/ender_dragon$/).length) { log(`dragon: the exit portal is open: the dragon is dead (${Math.round((Date.now() - t0) / 1000)} s, ${shots} arrows, ${hits} sword hits)`, { dc: true }); return true; }
     const P = b.state().pos;
     if (onPillar && (Math.hypot(P.x - onPillar.x - 0.5, P.z - onPillar.z - 0.5) > 1.2 || P.y < onPillar.y - 1)) onPillar = null;   // (knocked or walked off it)
-    if (Date.now() - lastSay > 30000) { lastSay = Date.now(); log(`dragon: ${Math.round((Date.now() - t0) / 1000)} s · health ${me.hp} · crystals ${all.size - gone.size} of ${all.size} seen stand (${left.size} left alone) · arrows ${cnt('arrow')} · at ${Math.round(P.x)} ${Math.round(P.y)} ${Math.round(P.z)}`); }
+    if (Date.now() - lastSay > 30000) { lastSay = Date.now(); log(`dragon: ${Math.round((Date.now() - t0) / 1000)} s · its health ${bar()} of 200 (from its bar) · health ${me.hp} · crystals ${all.size - gone.size} of ${all.size} seen stand (${left.size} left alone) · arrows ${cnt('arrow')} · at ${Math.round(P.x)} ${Math.round(P.y)} ${Math.round(P.z)}`); }
     // its breath on the ground, a fireball coming: ten blocks round the fountain, away from it
     // (before the breath's own branch, which kept it running from cloud to cloud down to 2 health - 05:54. Out of the cloud is enough)
     // (measured in the lab, 18:59: a player standing still under end stone lived three minutes beside the dragon and its breath,
     //  one in the open died in twenty seconds. Hurt: down into the end stone, shut in above, eat and heal to full, then out again)
-    if (me.hp !== null && me.hp < 15 && !inCloud() && !(perchedNow() && me.hp >= 10) && !ents(/enderman$/).some((e) => Math.hypot(e.x - P.x, e.y - P.y, e.z - P.z) < 5) && Date.now() - holedAt > 20000 && cnt('end_stone') + cnt('cobblestone') + cnt('dirt') > 0) {
+    if (me.hp !== null && me.hp < 16 && !inCloud() && !(perchedNow() && me.hp >= 10) && !ents(/enderman$/).some((e) => Math.hypot(e.x - P.x, e.y - P.y, e.z - P.z) < 5) && Date.now() - holedAt > 20000 && cnt('end_stone') + cnt('cobblestone') + cnt('dirt') > 0) {
       holedAt = Date.now(); log(`dragon: health ${me.hp}: dug in to heal`, { dc: true });
       delegating = true;
       try {
@@ -932,7 +935,7 @@ async function dragonFight() {
           const Q = b.state().pos, fx = Math.floor(Q.x), fz = Math.floor(Q.z), fy = Math.floor(Q.y + 0.01);
           // (the ground's top round the shaft, not what is over the head: 06:27, 'out' at the bottom of an open shaft, shooting at
           //  walls - six crystals given up for caged)
-          let top = fy - 1; for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let y = fy; y < fy + 10; y++) if (!/^(air|\?)$/.test(bname(fx + dx, y, fz + dz))) top = Math.max(top, y);
+          let top = fy - 1; for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let y = fy; y < fy + 5; y++) if (/^(end_stone|cobblestone|dirt)$/.test(bname(fx + dx, y, fz + dz))) top = Math.max(top, y);   /* (the ground, not a pillar beside it: 09:56, up the obsidian to 83 and off) */
           for (let y = fy + 2; y <= top + 2; y++) if (!/^(air|\?)$/.test(bname(fx, y, fz))) await gotoFor([String(fx), String(y), String(fz)], 3000, 'dig');
           if (top < fy) break;
           await gotoFor([String(top + 1 - fy), blockId()], (top + 1 - fy) * 1600 + 2000, 'pillar');
@@ -1003,6 +1006,11 @@ async function dragonFight() {
     if (dr && Math.hypot(dr.x - P.x, dr.y - P.y, dr.z - P.z) < 5.5) { await armUp(b); let miss = false; const mt = (l) => { if (/not under the crosshair|no .* in (view|reach)/.test(l)) miss = true; }; ctx.taps.add(mt); await b.act('attack', ['ender_dragon']).catch(() => {}); ctx.taps.delete(mt); if (!miss) hits++; await sleep(250); continue; }
     // (gone is said when it is out of sight after a shot; one that shows again was only out of sight: back on the list)
     for (const e of ents(/ender_crystal$/)) { all.add(key(e)); if (gone.delete(key(e))) log(`dragon: the crystal at ${key(e)} stands after all`); }
+    // (a cage is seen, not guessed from misses: iron bars two out on its sides. 07:50, three open ones given up from one bad spot)
+    for (const e of ents(/ender_crystal$/)) { const k0 = key(e); if (left.has(k0) || opened.has(k0)) continue; const X = Math.floor(e.x), Y = Math.floor(e.y), Z = Math.floor(e.z);
+      if ([[2, 0], [-2, 0], [0, 2], [0, -2]].filter(([dx, dz]) => bname(X + dx, Y, Z + dz) === 'iron_bars').length >= 2) { left.add(k0); caged.add(k0); log(`dragon: the crystal at ${k0} (y ${Y}) is in a cage of iron bars`); } }
+    // (one given up for misses alone, not caged: tried again a minute later from wherever it is then)
+    for (const k0 of [...left]) if (!caged.has(k0) && Date.now() - (leftAt.get(k0) ?? 0) > 60000) { left.delete(k0); tries.set(k0, 0); log(`dragon: the crystal at ${k0} once more`); }
     const crystals = ents(/ender_crystal$/).filter((e) => !left.has(key(e)));
     if (crystals.length && cnt('arrow') > 0) {
       // (one at a time until it is gone or given up: the one begun, else the one best placed from here - 45 to 75 blocks off)
@@ -1022,13 +1030,15 @@ async function dragonFight() {
       for (let t = 0; t < 6 && [...b.entities.values()].includes(c); t++) { await sleep(300); const Q = b.state().pos; if (ents(/area_effect_cloud$|dragon_fireball$/).some((e) => Math.hypot(e.x - Q.x, e.z - Q.z) < 6)) break; }   // (the arrow's flight, an eye on its breath)
       if (![...b.entities.values()].includes(c)) { aim = null; gone.add(k); }
       if (![...b.entities.values()].includes(c)) log(`dragon: crystal at ${k} gone (${n + 1} arrows)`, { dc: true });
-      else if (n + 1 >= 8) { aim = null; left.add(k); log(`dragon: the crystal at ${k} (y ${Math.round(c.y)}) took eight arrows and stands: caged or out of reach - left alone`, { dc: true }); }
+      else if (n + 1 >= 16) { aim = null; left.add(k); leftAt.set(k, Date.now()); log(`dragon: the crystal at ${k} (y ${Math.round(c.y)}) took eight arrows and stands: caged or out of reach - left alone`, { dc: true }); }
       continue;
     }
     // the caged ones (iron bars all round: arrows stop on them). Up our own pillar beside the cage wall on the side toward the
     // middle, the bars of that wall broken out (three wide, three high), down the pillar again, and the crystal shot from 26+ blocks
     // out through the gap - never from close: its blast at four blocks is more than full health in iron
-    if (!uncaging && !perchedNow() && (me.hp ?? 0) >= 16 && left.size && !crystals.length && cnt('arrow') > 0 && cnt(blockId()) >= 24 && /pickaxe/.test(b.invText?.() ?? '')) {
+    // (BOT_UNCAGE only: up twenty blocks beside a pillar with the dragon about it was knocked off or breathed on, 07:44, 08:02, 08:04;
+    //  it heals only within 32 blocks of one and the cages stand 42 out - sitting on the fountain it does not heal at all)
+    if (process.env.BOT_UNCAGE && !uncaging && !perchedNow() && (me.hp ?? 0) >= 16 && left.size && !crystals.length && cnt('arrow') > 0 && cnt(blockId()) >= 24 && /pickaxe/.test(b.invText?.() ?? '')) {
       const cc = ents(/ender_crystal$/).find((e) => left.has(key(e)) && !opened.has(key(e)));
       if (cc) { uncaging = true; try { const ok = await uncage(cc); opened.add(key(cc)); if (ok) { left.delete(key(cc)); tries.set(key(cc), 0); } } finally { uncaging = false; } continue; }
     }
@@ -1052,7 +1062,31 @@ async function dragonFight() {
     //  the ground. Up on a pillar of our own blocks until the underside is within reach)
     if (perched && dr && dr.y - (P.y + 1.62) > 2.4 && cnt('cobblestone') + cnt('end_stone') + cnt('dirt') + cnt('netherrack') > 0) { const up = Math.min(5, Math.ceil(dr.y - (P.y + 1.62) - 1.8)); log(`dragon: ${up} up on a pillar to reach it`); await gotoFor([String(up), blockId()], 2500 * up, 'pillar'); continue; }
     inFight = !!(perched && dr && (me.hp ?? 20) >= 12);
-    if (perched && dr) { await armUp(b); let miss = false; const mt = (l) => { if (/not under the crosshair|no .* in (view|reach)/.test(l)) miss = true; }; ctx.taps.add(mt); await b.act('attack', ['ender_dragon']).catch(() => {}); ctx.taps.delete(mt); if (!miss) { hits++; if (hits % 10 === 1) log(`dragon: the sword is on it (${hits})`); } await sleep(200); continue; }
+    // beds: one blows up when used in the End - set down by it while it sits, a step back, and clicked (a fifth of its health a bed,
+    // the guides say; read back from its health here). BOT_NOBED to leave them
+    if (perched && dr && !process.env.BOT_NOBED && (me.hp ?? 0) >= 12 && Date.now() - bedAt > 600 && /\d+:minecraft:(\w+_)?bed\*/.test(b.invText?.() ?? '')) {
+      bedAt = Date.now(); const bar0 = bar(), me0 = me.hp; const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap);
+      try {
+        const Q = b.state().pos, fx = Math.floor(Q.x), fy = Math.floor(Q.y + 0.01), fz = Math.floor(Q.z), vx = dr.x - Q.x, vz = dr.z - Q.z;
+        // (a cell with ground under it and under its head end, free above both, toward it first: 09:20, set down on air three times)
+        const solidAt = (x, y, z) => !/^(air|\?|.*fire|.*water|.*lava)$/.test(bname(x, y, z)), freeAt = (x, y, z) => /^(air)$/.test(bname(x, y, z));
+        const DIRS = [[1, 0, 'east'], [-1, 0, 'west'], [0, 1, 'south'], [0, -1, 'north']].sort((u, w) => (w[0] * vx + w[1] * vz) - (u[0] * vx + u[1] * vz));
+        const picks = [];
+        for (const [ddx, ddz, ddir] of DIRS) for (const k of [1, 2]) for (const yy of [fy + 1, fy, fy - 1]) { const x = fx + ddx * k, z = fz + ddz * k; if (freeAt(x, yy, z) && freeAt(x + ddx, yy, z + ddz) && solidAt(x, yy - 1, z) && solidAt(x + ddx, yy - 1, z + ddz) && freeAt(x, yy + 1, z)) picks.push([ddx, ddz, ddir, x, z, yy]); }
+        if (!picks.length) { log('dragon: no room for a bed here'); continue; }
+        // (the higher the better: 62 under its box did 1.6, 63 did 17 - 09:44, 09:45. Each spot of the four best tried in turn)
+        picks.sort((u, w) => w[5] - u[5]);
+        const isBed = (x, y, z) => /(^|_)bed$/.test(bname(x, y, z));
+        let pick = null; for (const pk of picks.slice(0, 4)) { await gotoFor([String(pk[3]), String(pk[5]), String(pk[4]), pk[2]], 2500, 'place_bed'); await sleep(250); if (isBed(pk[3], pk[5], pk[4])) { pick = pk; break; } }
+        const [dx, dz, dir, X, Z, BY] = pick ?? picks[0];
+        if (isBed(X, BY, Z)) {
+          await dash(Q.x - dx * 2, Q.z - dz * 2, 900);
+          await b.act('useon', [String(X), String(BY), String(Z), 'up']).catch(() => {}); await sleep(800);
+          log(`dragon: a bed blown at ${X} ${BY} ${Z}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}${isBed(X, BY, Z) ? ' (the bed still stands: not clicked?)' : ''}`, { dc: true });
+        } else log(`dragon: no bed set down at ${X} ${BY} ${Z} (${bname(X, BY, Z)}): ${said.filter((l) => /bed|put/.test(l)).slice(-1)[0] ?? '?'}`);
+      } finally { ctx.taps.delete(tap); }
+      continue; }
+    if (perched && dr) { await armUp(b); let miss = false; const mt = (l) => { if (/not under the crosshair|no .* in (view|reach)/.test(l)) miss = true; }; ctx.taps.add(mt); await b.act('attack', ['ender_dragon']).catch(() => {}); ctx.taps.delete(mt); if (!miss) { hits++; if (hits % 10 === 1) log(`dragon: the sword is on it (${hits}) · its health ${bar()}`); } await sleep(200); continue; }
     if (dr && cnt('arrow') > 0 && Math.hypot(dr.x - P.x, dr.z - P.z) < 45) { await shootAt(dr.x, dr.y + 1, dr.z); shots++; continue; }
     await sleep(500);
   }

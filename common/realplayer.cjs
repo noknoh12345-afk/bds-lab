@@ -402,6 +402,10 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   const autoOff = new Set();
   const auto = (n, params) => { if (autoOff.has(n)) return; if (!send(n, params)) autoOff.add(n); };
   // a boss bar shown to this client: the client registers itself for it (BossEvent RegisterPlayer), like the game does
+  // (its health as the bar shows it, 0..1: how a fight is going, read from what a player sees)
+  client.on('boss_event', (p) => { if (typeof p.progress === 'number' && (p.type === 'show_bar' || p.type === 'set_bar_progress' || p.type === 0 || p.type === 4)) bot.bossHealth = { v: p.progress, t: Date.now() }; });
+  // (any other entity's health as its attributes come: a mob's, the dragon's - what a fight did to it, read back)
+  client.on('update_attributes', (p) => { if (rid !== null && BigInt(p.runtime_entity_id) === BigInt(rid)) return; const e = entities.get(String(p.runtime_entity_id)); const h = (p.attributes ?? []).find((a) => /health/.test(a.name)); if (e && h) { e.hp = h.current; e.hpMax = h.max; } });
   client.on('boss_event', (p) => { if (rid !== null && (p.type === 'show_bar' || p.type === 0)) auto('boss_event', { boss_entity_id: p.boss_entity_id, type: 'register_player', player_id: rid }); });
   client.on('server_settings_response', (p) => {   // the settings screen's server page (answered with `form`, like modal forms)
     let j; try { j = JSON.parse(p.data); } catch { j = { type: '?' }; }
@@ -463,9 +467,9 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   // a killed mob stays visible ~1s (death animation) before remove_entity: forget it as soon as it dies
   let bite = false;
   client.on('entity_event', (p) => { if (p.event_id === 'death_animation') { const d = entities.get(String(p.runtime_entity_id)); if (d) d.dead = true; entities.delete(String(p.runtime_entity_id)); } if (p.event_id === 'fish_hook_hook') bite = true; if (process.env.LAB_DEBUG && /fish/.test(p.event_id)) say('dbg ' + p.event_id); });
-  client.on('move_entity', (p) => { const e = entities.get(String(p.runtime_entity_id)); if (e && p.position) Object.assign(e, p.position); });
+  client.on('move_entity', (p) => { const e = entities.get(String(p.runtime_entity_id)); if (e && p.position) Object.assign(e, p.position); if (e && p.rotation) { e.yaw = p.rotation.yaw ?? p.rotation.y ?? e.yaw; e.headYaw = p.rotation.head_yaw ?? p.rotation.z ?? e.headYaw; } });
   // most movement of mobs and dropped items comes as deltas (only the coordinates that changed, absolute values)
-  client.on('move_entity_delta', (p) => { const e = entities.get(String(p.runtime_entity_id)); if (!e) return; if (p.x != null) e.x = p.x; if (p.y != null) e.y = p.y - (e.type === 'minecraft:player' ? EYE : 0); if (p.z != null) e.z = p.z; e.moved = tick; });
+  client.on('move_entity_delta', (p) => { const e = entities.get(String(p.runtime_entity_id)); if (!e) return; if (p.x != null) e.x = p.x; if (p.y != null) e.y = p.y - (e.type === 'minecraft:player' ? EYE : 0); if (p.z != null) e.z = p.z; if (p.rot_y != null) e.yaw = p.rot_y * 1.40625; if (p.rot_z != null) e.headYaw = p.rot_z * 1.40625; e.moved = tick; });
   client.on('move_player', (p) => {
     if (rid !== null && BigInt(p.runtime_id) === BigInt(rid)) { if (process.env.LAB_DEBUG_MOVE) say(`dbg mp t=${tick} y=${p.position.y.toFixed(2)} mode=${p.mode}`); pos = { ...p.position }; fallV = 0; resetMove(); yaw = p.yaw; pitch = p.pitch; teleportAck = true; }
     else { const e = entities.get(String(p.runtime_id)); if (e) Object.assign(e, p.position, { y: p.position.y - (e.type === 'minecraft:player' ? EYE : 0) }); }
@@ -1774,6 +1778,11 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           // the mob moves while the turn goes out: aim again each tick (a moving zombie at 2 blocks was 'not under the crosshair' 20 times
           // in a row and it died); grass or a flower in the way is punched away first, as a player does
           const aimY = () => e.y + (e.bh > 0 ? e.bh / 2 : e.type === 'minecraft:player' ? 0.9 : 0.5);
+          // the dragon: its head, out in front of the body along its yaw (LAB_DRAGON_HEAD=forward,up blocks; hits on the head count in full)
+          // (measured in the lab, resistance on, sword hits at the sitting dragon read back from its health: aimed 1 block over the box's
+          //  foot in its middle 9-10 health per ten swings; the box's middle 6; 6 ahead 2 up 7-10; 9 ahead nothing)
+          if (/ender_dragon$/.test(e.type) && e.yaw != null) { const [f, u] = (process.env.LAB_DRAGON_HEAD ?? '0,1').split(',').map(Number), r = (e.yaw * Math.PI) / 180, hx = e.x - Math.sin(r) * f, hz = e.z + Math.cos(r) * f, hy = e.y + u;
+            lookAt({ x: hx, y: hy, z: hz }); await ticks(2); if (process.env.LAB_DEBUG) say(`dbg dragon head aim ${hx.toFixed(1)} ${hy.toFixed(1)} ${hz.toFixed(1)} (yaw ${e.yaw.toFixed(0)}) from ${pos.x.toFixed(1)} ${pos.y.toFixed(1)} ${pos.z.toFixed(1)}`); hitTx(e, action, true); return ticks(4); }
           let onIt = false, hit = null;
           for (let k = 0; k < 5 && !onIt; k++) {
             lookAt({ x: e.x, y: aimY(), z: e.z });
