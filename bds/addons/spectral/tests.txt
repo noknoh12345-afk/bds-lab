@@ -1039,7 +1039,7 @@ scriptevent spectral:room 0
 ~ \[spectral\] room off
 spectral:share on 0
 
-## a talker in the voice chat (a live stream that follows a player) ducks what its listeners hear too, when `duck live on` (q103, off by default) — never the talker itself
+## a talker in the voice chat (a live stream that follows a player) ducks what its listeners hear too (`duck live`, on by default since 1.5.16 — q105: talker-to-song +10 to +20 dB) — never the talker itself
 scriptevent spectral:duck live on
 ~ \[spectral\] duck live on: talkers duck too
 tp A 0 -60 0
@@ -1061,4 +1061,6 @@ scriptevent spectral:duck show
 ~ \[spectral\] ducked none
 @A cmd /spectral:live demo_demo stop
 kill @e[name=talker]
+scriptevent spectral:duck live on
+~ \[spectral\] duck live on: talkers duck too
 

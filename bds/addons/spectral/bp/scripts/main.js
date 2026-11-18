@@ -2533,7 +2533,7 @@ var dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 var sessions = /* @__PURE__ */ new Map();
 var notePlays = /* @__PURE__ */ new Map();
 var filePlays = /* @__PURE__ */ new Map();
-var DUCK = { db: 12, live: false };
+var DUCK = { db: 12, live: true };
 var isTalker = (lp) => lp.at.kind === "follow";
 function talkHearers(into) {
   const now = system4.currentTick;

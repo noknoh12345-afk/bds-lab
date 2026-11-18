@@ -1,0 +1,73 @@
+{
+ "queue": "q105_talker_duck_spec",
+ "run": "44324799635",
+ "date": "2026-11-19",
+ "what": "話し手（ライブ follow、3 ブロック先）の横でサンプラーのバンド。話し手だけ・バンドだけ・duck live on / off ×2。tools/exp/ana/talker_fit.py（200 ms ごとのパワースペクトルで 混ぜ ≈ a × 話し手 + b × バンド）",
+ "per_recording": {
+  "on_ja": {
+   "talker_kept": 0.972,
+   "song_level": 0.012,
+   "talker_to_song_db": 26.71,
+   "windows": 36,
+   "lag_talker_s": 2.09,
+   "lag_song_s": 1.99
+  },
+  "off_ja": {
+   "talker_kept": 0.638,
+   "song_level": 0.967,
+   "talker_to_song_db": 6.31,
+   "windows": 36,
+   "lag_talker_s": 2.0,
+   "lag_song_s": 0.0
+  },
+  "off2_ja": {
+   "talker_kept": 0.948,
+   "song_level": 0.989,
+   "talker_to_song_db": 10.33,
+   "windows": 34,
+   "lag_talker_s": 2.04,
+   "lag_song_s": 0.0
+  },
+  "on2_ja": {
+   "talker_kept": 1.014,
+   "song_level": 0.005,
+   "talker_to_song_db": 28.74,
+   "windows": 33,
+   "lag_talker_s": 2.04,
+   "lag_song_s": 1.94
+  },
+  "on_en": {
+   "talker_kept": 0.811,
+   "song_level": 0.043,
+   "talker_to_song_db": 15.43,
+   "windows": 35,
+   "lag_talker_s": 2.1,
+   "lag_song_s": -0.16
+  },
+  "off_en": {
+   "talker_kept": 0.831,
+   "song_level": 0.985,
+   "talker_to_song_db": 5.18,
+   "windows": 35,
+   "lag_talker_s": 2.09,
+   "lag_song_s": -0.02
+  },
+  "off2_en": {
+   "talker_kept": 0.764,
+   "song_level": 0.996,
+   "talker_to_song_db": 3.03,
+   "windows": 36,
+   "lag_talker_s": 2.1,
+   "lag_song_s": 0.0
+  },
+  "on2_en": {
+   "talker_kept": 0.768,
+   "song_level": 0.058,
+   "talker_to_song_db": 13.03,
+   "windows": 35,
+   "lag_talker_s": 2.14,
+   "lag_song_s": -0.02
+  }
+ },
+ "reading": "実測: 話し手は残る（talker_kept 0.64〜1.01）。on でバンドは 0.005〜0.06（−12 dB 以上）、話し手 / 曲の比 on / off: 日本語 26.7・28.7 / 6.3・10.3 dB、英語 15.4・13.0 / 5.2・3.0 dB — 2 文とも 2 組で +10〜+20 dB。日本語の on はバンドだけの録音とのずれが 2 s で当てはめが粗いが、向きは英語と同じ → 1.5.16 で duck live を既定 on"
+}

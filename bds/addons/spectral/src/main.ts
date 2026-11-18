@@ -667,9 +667,11 @@ const filePlays = new Map<string, FilePlayer>();
  *  streams they hear are turned down DUCK.db dB (q90: the speech sounds at 84-94 % beside a 24-voice stream — it is heard less
  *  because the song covers it, not because it loses its sounds). Down in DUCK_DOWN ticks, held DUCK_HOLD ticks after the speech,
  *  back up in DUCK_UP ticks; the sampler's notes started meanwhile too. Off (0 dB) until measured: `scriptevent spectral:duck <dB>` */
-export const DUCK = { db: 12, live: false };
+export const DUCK = { db: 12, live: true };
+// (q105, run 44324799635, power spectra: with talkers ducking the song, talker-to-song 26.7 / 28.7 against 6.3 / 10.3 dB (ja) and
+//  15.4 / 13.0 against 5.2 / 3.0 dB (en) — on by default since 1.5.16)
 /** (DUCK.live) a talker's live stream (follow: a player's voice from the voice chat) also ducks what its listeners hear — the sampler's
- *  new notes, sine songs, live streams that are not talkers; never a talker. Off until measured: `scriptevent spectral:duck live on|off` */
+ *  new notes, sine songs, live streams that are not talkers; never a talker. On by default since 1.5.16 (q105): `scriptevent spectral:duck live on|off` */
 const isTalker = (lp: LivePlayer) => lp.at.kind === 'follow';
 function talkHearers(into: Set<string>) {
   const now = system.currentTick;
