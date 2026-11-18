@@ -576,6 +576,12 @@
   "status": "done",
   "tries": 1
  },
+ "q104_talker_room": {
+  "commit": "d0ffef6",
+  "run": "44317748372",
+  "started": "2026-11-18 22:50",
+  "status": "running"
+ },
  "q10_live_10min": {
   "arms": {},
   "checkpoints": 0,
