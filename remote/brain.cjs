@@ -873,11 +873,18 @@ async function dragonFight() {
       if (Math.hypot(b.state().pos.x - tx - 0.5, b.state().pos.z - tz - 0.5) <= 1.2) {
         delegating = true; try {
           await b.act('stop', []).catch(() => {});
-          for (let t = 0, last = feet(); t < 8 && feet() < by - 1 && me.connected && !b.state().dead; t++) { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(Math.min(6, by - 1 - feet())), blockId()], 12000, 'pillar'); await b.act('sneak', ['off']).catch(() => {}); if (feet() === last && t > 1) break; if (feet() < last - 1) { log(`dragon: uncage: knocked off the pillar (${last} → ${feet()}): not again this time`); break; } last = feet(); }
+          for (let tries = 0; tries < 2 && feet() < by - 2 && me.connected && !b.state().dead && (me.hp ?? 0) >= 12 && cnt('cobblestone') + cnt('end_stone') >= by - feet(); tries++) {
+            if (tries) { log('dragon: uncage: up the shooting pillar once more'); if (Math.hypot(b.state().pos.x - tx - 0.5, b.state().pos.z - tz - 0.5) > 1) await gotoFor([String(tx), String(tz)], 6000); await b.act('stop', []).catch(() => {}); }
+            for (let t = 0, last = feet(); t < 8 && feet() < by - 1 && me.connected && !b.state().dead; t++) { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(Math.min(6, by - 1 - feet())), blockId()], 12000, 'pillar'); await b.act('sneak', ['off']).catch(() => {}); if (feet() === last && t > 1) break; if (feet() < last - 1) { log(`dragon: uncage: knocked off the pillar (${last} → ${feet()}): not again this time`); break; } last = feet(); }
+          }
+          // (shot only with the eyes level with the gap: 06:28, knocked down to 64 and six arrows sent from there into the bars)
+          if (feet() < by - 3) { log(`dragon: uncage: not up to the gap (feet ${feet()}): from the ground on its line later`); }
+          else {
           log(`dragon: uncage: on a pillar ${Math.round(Math.hypot(c.x - b.state().pos.x, c.z - b.state().pos.z))} out, eyes at ${(b.state().pos.y + 1.62).toFixed(1)}: shooting through the gap`);
           for (let n = 0; n < 6 && [...b.entities.values()].includes(c); n++) { await shootAt(c.x, c.y + 1, c.z, [1, 0.97, 1.03, 1, 0.94, 1.06][n]); for (let w = 0; w < 6 && [...b.entities.values()].includes(c); w++) await sleep(300); }
           const hit = ![...b.entities.values()].includes(c);
           log(`dragon: uncage: ${hit ? 'the caged crystal is gone' : 'six arrows and it stands'}`, { dc: true });
+          }
           await holdPick();
           for (let t = 0; t < 40 && me.connected && !b.state().dead; t++) { const F = b.state().pos, x1 = Math.floor(F.x), z1 = Math.floor(F.z), y1 = Math.floor(F.y + 0.01), under = bname(x1, y1 - 1, z1);
             if (!/^(cobblestone|end_stone|dirt|netherrack|cobbled_deepslate|stone)$/.test(under) || (under === 'end_stone' && y1 <= 62)) break;
