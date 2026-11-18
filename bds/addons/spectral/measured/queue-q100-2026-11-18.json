@@ -1,0 +1,57 @@
+{
+ "queue": "q100_sampler_room",
+ "run": "44291243938",
+ "date": "2026-11-18",
+ "what": "サンプラーの曲（ヘッドホン）の横にライブ 24 音、room <n> songs 0 / 12 / 20 と、サンプラーだけ（参照）",
+ "per_recording": {
+  "0_pd": {
+   "speech_strength_median": 0.915,
+   "sn_db_median": 0.45,
+   "windows": 102,
+   "visqol": 3.6326,
+   "mrstft": 1.6191,
+   "lag_ms": 1685.2
+  },
+  "12_pd": {
+   "speech_strength_median": 0.917,
+   "sn_db_median": 0.06,
+   "windows": 102,
+   "visqol": 3.9089,
+   "mrstft": 1.5992,
+   "lag_ms": 1706.8
+  },
+  "20_pd": {
+   "speech_strength_median": 0.969,
+   "sn_db_median": 4.31,
+   "windows": 102,
+   "visqol": 3.7885,
+   "mrstft": 1.5619,
+   "lag_ms": 1664.0
+  },
+  "0_fe": {
+   "speech_strength_median": 0.477,
+   "sn_db_median": -6.4,
+   "windows": 74,
+   "visqol": 3.905,
+   "mrstft": 1.8009,
+   "lag_ms": 1673.2
+  },
+  "12_fe": {
+   "speech_strength_median": 0.812,
+   "sn_db_median": -1.61,
+   "windows": 73,
+   "visqol": 3.8961,
+   "mrstft": 1.8647,
+   "lag_ms": 1578.8
+  },
+  "20_fe": {
+   "speech_strength_median": 0.921,
+   "sn_db_median": 3.35,
+   "windows": 74,
+   "visqol": 3.8416,
+   "mrstft": 1.8366,
+   "lag_ms": 1685.2
+  }
+ },
+ "reading": "実測: サンプラーだけの録音を当てはめた強さ 0 / 12 / 20: エチュード 0.92 / 0.92 / 0.97、エリーゼ 0.48 / 0.81 / 0.92。SN（中央値）エチュード 0.5 / 0.1 / 4.3 dB、エリーゼ −6.4 / −1.6 / 3.4 dB。ViSQOL エチュード 3.63 / 3.91 / 3.79、エリーゼ 3.91 / 3.90 / 3.84。サンプラーの音が落ちるのは減るが、ViSQOL ははっきりしない → q101 で 2 回目。room 20 のエリーゼはライブが途中で何度か下がる"
+}
