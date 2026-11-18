@@ -2533,7 +2533,16 @@ var dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 var sessions = /* @__PURE__ */ new Map();
 var notePlays = /* @__PURE__ */ new Map();
 var filePlays = /* @__PURE__ */ new Map();
-var DUCK = { db: 12 };
+var DUCK = { db: 12, live: false };
+var isTalker = (lp) => lp.at.kind === "follow";
+function talkHearers(into) {
+  const now = system4.currentTick;
+  for (const st of lives.values()) {
+    const lp = st.player;
+    if (!lp || !isTalker(lp) || !lp.playing || now - st.lastAt > LIVE_IDLE) continue;
+    for (const t of lp.targets) if (t.player && !t.gone) into.add(t.player.id);
+  }
+}
 var DUCK_DOWN = 2;
 var DUCK_HOLD = 6;
 var DUCK_UP = 8;
@@ -2588,7 +2597,9 @@ function updateDucks() {
   }
   const now = system4.currentTick;
   const low = Math.pow(10, -DUCK.db / 20);
-  for (const id of hear) {
+  const duckHear = DUCK.live ? new Set(hear) : hear;
+  if (DUCK.live) talkHearers(duckHear);
+  for (const id of duckHear) {
     const d = ducks.get(id);
     if (d) d.heard = now;
     else ducks.set(id, { g: 1, heard: now });
@@ -2980,6 +2991,12 @@ system4.afterEvents.scriptEventReceive.subscribe((e) => {
     return;
   }
   if (e.id === "spectral:duck") {
+    const lm = /^live\s+(on|off)$/.exec(e.message.trim());
+    if (lm) {
+      DUCK.live = lm[1] === "on";
+      console.warn(`[spectral] duck live ${DUCK.live ? "on: talkers duck too" : "off"}`);
+      return;
+    }
     if (e.message.trim() === "show") {
       const names = new Map(world2.getPlayers().map((q) => [q.id, q.name]));
       const l = [...ducks].map(([id, d]) => `${names.get(id) ?? id} ${(20 * Math.log10(d.g)).toFixed(1)} dB`);
@@ -4198,7 +4215,7 @@ var LivePlayer = class {
       return;
     }
     this.idle = 0;
-    const duck = duckOf(this.targets), lvd = this.lv * duck;
+    const duck = isTalker(this) ? 1 : duckOf(this.targets), lvd = this.lv * duck;
     const i0 = st.slot(this.p), i1 = st.slot(this.p + 1), gain = lvd / OSC_AMP;
     for (let v = 0; v < N; v++) {
       const a0 = this.lastL[v] > this.floor ? st.amp[i0 * N + v] : 0, f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;

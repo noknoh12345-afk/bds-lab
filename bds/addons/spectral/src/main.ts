@@ -667,7 +667,17 @@ const filePlays = new Map<string, FilePlayer>();
  *  streams they hear are turned down DUCK.db dB (q90: the speech sounds at 84-94 % beside a 24-voice stream — it is heard less
  *  because the song covers it, not because it loses its sounds). Down in DUCK_DOWN ticks, held DUCK_HOLD ticks after the speech,
  *  back up in DUCK_UP ticks; the sampler's notes started meanwhile too. Off (0 dB) until measured: `scriptevent spectral:duck <dB>` */
-export const DUCK = { db: 12 };
+export const DUCK = { db: 12, live: false };
+/** (DUCK.live) a talker's live stream (follow: a player's voice from the voice chat) also ducks what its listeners hear — the sampler's
+ *  new notes, sine songs, live streams that are not talkers; never a talker. Off until measured: `scriptevent spectral:duck live on|off` */
+const isTalker = (lp: LivePlayer) => lp.at.kind === 'follow';
+function talkHearers(into: Set<string>) {
+  const now = system.currentTick;
+  for (const st of lives.values()) {
+    const lp = st.player; if (!lp || !isTalker(lp) || !lp.playing || now - st.lastAt > LIVE_IDLE) continue;
+    for (const t of lp.targets) if (t.player && !t.gone) into.add(t.player.id);
+  }
+}
 // (q97/q98 with renew: 12 dB raised the speech's ViSQOL in all 5 sentences where the song stayed (3.79 → 4.10, 4.11 → 4.22, 3.97 → 4.12;
 //  4.10 → 4.22, 3.99 → 4.19); 6 dB not in both runs. 12 dB by default since 1.5.13)
 const DUCK_DOWN = 2, DUCK_HOLD = 6, DUCK_UP = 8;
@@ -719,7 +729,9 @@ function updateDucks() {
   if (DUCK.db <= 0) { ducks.clear(); return; }
   const now = system.currentTick;
   const low = Math.pow(10, -DUCK.db / 20);
-  for (const id of hear) { const d = ducks.get(id); if (d) d.heard = now; else ducks.set(id, { g: 1, heard: now }); }
+  const duckHear = DUCK.live ? new Set(hear) : hear;
+  if (DUCK.live) talkHearers(duckHear);
+  for (const id of duckHear) { const d = ducks.get(id); if (d) d.heard = now; else ducks.set(id, { g: 1, heard: now }); }
   for (const [id, d] of ducks) {
     if (now - d.heard <= DUCK_HOLD) d.g = Math.max(low, d.g * Math.pow(low, 1 / DUCK_DOWN));
     else { d.g = Math.min(1, d.g / Math.pow(low, 1 / DUCK_UP)); if (d.g >= 1) ducks.delete(id); }
@@ -938,6 +950,8 @@ system.afterEvents.scriptEventReceive.subscribe((e) => {
     console.warn(`[spectral] room ${ROOM.n ? `${ROOM.n} sounds${ROOM.songs ? ' (any note song)' : ''}` : 'off'}`); return;
   }
   if (e.id === 'spectral:duck') {
+    const lm = /^live\s+(on|off)$/.exec(e.message.trim());
+    if (lm) { DUCK.live = lm[1] === 'on'; console.warn(`[spectral] duck live ${DUCK.live ? 'on: talkers duck too' : 'off'}`); return; }
     if (e.message.trim() === 'show') {
       const names = new Map(world.getPlayers().map((q) => [q.id, q.name] as [string, string]));
       const l = [...ducks].map(([id, d]) => `${names.get(id) ?? id} ${(20 * Math.log10(d.g)).toFixed(1)} dB`);
@@ -1762,7 +1776,7 @@ class LivePlayer {
     this.idle = 0;
     // (the tick from frame p to p+1: levels and pitch of p+1, the fade INTO p+1 — the live encoder knows a frame's own rise as
     // it makes it, without waiting for the next one)
-    const duck = duckOf(this.targets), lvd = this.lv * duck;
+    const duck = isTalker(this) ? 1 : duckOf(this.targets), lvd = this.lv * duck;
     const i0 = st.slot(this.p), i1 = st.slot(this.p + 1), gain = lvd / OSC_AMP;
     for (let v = 0; v < N; v++) {
       const a0 = this.lastL[v] > this.floor ? st.amp[i0 * N + v] : 0, f0 = a0 > 0 ? st.freq[i0 * N + v] : 0, a1 = st.amp[i1 * N + v], f1 = a1 > 0 ? st.freq[i1 * N + v] : 0;

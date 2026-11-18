@@ -1,0 +1,57 @@
+{
+ "queue": "q102_speech_speaker_duck",
+ "run": "44303687105",
+ "date": "2026-11-18",
+ "what": "読み上げをスピーカー（3 ブロック離れて聞く）で、既定（ダッキング 12 dB + renew）と切、読み上げだけ",
+ "per_recording": {
+  "def_hello": {
+   "speech_strength_median": 0.803,
+   "sn_db_median": 0.37,
+   "windows": 27,
+   "visqol": 4.3513,
+   "mrstft": 3.2917,
+   "lag_ms": 1685.2
+  },
+  "off_hello": {
+   "speech_strength_median": 0.561,
+   "sn_db_median": -6.8,
+   "windows": 26,
+   "visqol": 4.1996,
+   "mrstft": 3.3491,
+   "lag_ms": 1706.5
+  },
+  "def_weather": {
+   "speech_strength_median": 0.184,
+   "sn_db_median": -6.54,
+   "windows": 21,
+   "visqol": 4.3817,
+   "mrstft": 3.5605,
+   "lag_ms": 1633.5
+  },
+  "off_weather": {
+   "speech_strength_median": 0.25,
+   "sn_db_median": -10.88,
+   "windows": 22,
+   "visqol": 4.2541,
+   "mrstft": 3.6783,
+   "lag_ms": 1481.5
+  },
+  "def_piano": {
+   "speech_strength_median": 0.669,
+   "sn_db_median": 0.38,
+   "windows": 28,
+   "visqol": 4.4177,
+   "mrstft": 3.3626,
+   "lag_ms": 1621.2
+  },
+  "off_piano": {
+   "speech_strength_median": 0.926,
+   "sn_db_median": 2.77,
+   "windows": 28,
+   "visqol": 4.3503,
+   "mrstft": 3.3794,
+   "lag_ms": 1578.8
+  }
+ },
+ "reading": "実測: ViSQOL 既定 / 切: hello 4.35 / 4.20、weather 4.38 / 4.25、piano 4.42 / 4.35 — 3 文とも既定が上。曲は読み上げの間だけ下がって後で戻る。スピーカーでも効く"
+}
