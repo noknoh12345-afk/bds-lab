@@ -563,6 +563,12 @@
   "status": "done",
   "tries": 1
  },
+ "q103_talker_duck": {
+  "commit": "150c5b3",
+  "run": "44310953850",
+  "started": "2026-11-18 22:10",
+  "status": "running"
+ },
  "q10_live_10min": {
   "arms": {},
   "checkpoints": 0,
