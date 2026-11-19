@@ -1091,7 +1091,7 @@ async function dragonFight() {
     } }
   if (process.env.BOT_FOX && cnt('cobblestone') >= 8 && /pickaxe/.test(b.invText?.() ?? '')) await prepFox().catch((e) => log(`dragon: hole: ${e.message}`));
   let itT = Date.now();
-  while (live() && me.connected && me.dim === 'the_end' && Date.now() - t0 < 3600000) {
+  while (live() && me.connected && me.dim === 'the_end' && Date.now() - t0 < Number(process.env.BOT_FIGHT_MS ?? 10800000)) {
     if (process.env.BOT_DEBUG && Date.now() - itT > 3500) log(`dragon: dbg a round took ${((Date.now() - itT) / 1000).toFixed(1)} s`); itT = Date.now();
     if (b.state().dead) { log('dragon: dead', { dc: true }); return false; }
     if (portalOpen() && seenDragon && !ents(/ender_dragon$/).length) { log(`dragon: the exit portal is open: the dragon is dead (${Math.round((Date.now() - t0) / 1000)} s, ${shots} arrows, ${hits} sword hits)`, { dc: true }); return true; }
