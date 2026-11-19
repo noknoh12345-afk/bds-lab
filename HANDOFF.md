@@ -1,4 +1,4 @@
-# HANDOFF（最終更新：2026-11-19 13:55 JST）
+# HANDOFF（最終更新：2026-11-19 15:10 JST）
 
 ## 1. 依頼（時系列）
 - ユーザーの統合版サーバー `dis.daggskog.org:19132`（1.26.60）で、ボット LabBot（リポジトリ noknoh12345-afk/bds-lab、ブランチ remote-bot、`remote/bot.cjs` + `remote/brain.cjs`）がエンダードラゴンを倒す。既に倒されていればエリトラを持ち帰る。その後はダイヤを掘り続ける。何か月かかっても止めない。
@@ -6,6 +6,7 @@
 - 2026-11-16「1はあり2は任せる3は倒されていない前提で。まずはプログラム書いて」：自然生成の構造物は使ってよい／スポーンの穴埋めは任せる／ドラゴンは生きている前提。
 - 11-17「完璧にするまで作って」「さらに」。11-18「検証を繰り返して使用制限くるまで続けて」「並行で一瞬で検証して」。
 - 11-18 20:05：止まらない規約と引き継ぎ zip の仕組み（汎用）を作る → `/mnt/user-data/outputs/agent-rules/` に作成・送付済み。
+- 11-19 15:05（原文）「使用制限が来るから別AIに途中までを渡せる完全zipを用意して」→ 15:10 に作成・送付。
 - 11-19 13:49（原文）「実機でアクセスして本番用のサバ本番用のクライアントに。ただし十分勝機をラボで見いだせるまでやらないで。使用制限まで続けて／あとコンピューターの操作を許可する。ターミナルも許可する。」→ 実機起動の基準：現実的な装備（Protection III・Feather Falling III・金リンゴ8・ベッド8）でラボ連続3本中2勝以上。満たしたら Mac のターミナルで `bash ~/test/bdsbot.sh`。Mac のブリッジは device_bash（VM、~/mnt/test が ~/test）。
 - 11-19 09:20（原文）「続き+githubにpushやその他の操作を許可する」→ push 許可。09:22 に remote-bot を push（a6aac3a..de83f2a）。
 
@@ -91,8 +92,16 @@
   - 空振りの着地は「no way to … clear of its breath: waiting」（座ったドラゴンのブレスで近づけない）。→ 着地中は雲の余白を 3→0.8（BOT_PERCH_MARGIN）、回り道を4方向に（ec4a46a）。バッチE（12:47〜、全台 R18）で検証中。
   - 13:00 以降の修正：Feather Falling オプション（LABTEST_FEATHER、柱から落とされて 19→1）、見失ったクリスタルの再挑戦は2回まで・矢24本超のときだけ（檻付きに88本使い切った）。
   - 13:46 に環境が3回目の再起動（w3 は 36/200 まで削っていた）。バッチF（13:47〜、全台 現実的装備）。
+  - 14:00〜14:40 バッチF（現実的装備：Protection III・Feather Falling III・金リンゴ8・ベッド8）：5本とも死亡（9〜20分、金リンゴを使い切ってブレス死）。現実的装備ではまだ勝てない。
+  - そのあと直したこと（push 済み）：檻の柱の根元で体力13以下・ブレスの中・2回押し出されたら中止（14:03）／戦闘中は bedClick 以外でベッドを押さない（b.act の useon を包む、14:19 残ったベッドが足元で爆発）／ダッシュは中心から50（BOT_EDGE_R）より外へ行かない（14:40 奈落）。
+  - hole.sh 実験（saturation 効果つき、3分静止）：半径50の深さ2・地表はいずれも生存、(28,28) の深さ2は死亡・地表は生存。サンプルが少なく結論は出ていない。
+  - 14:48〜 バッチG（中間装備：Protection IV・Feather III・金リンゴ16・ベッド12、BOT_WAIT_R=18）：15:10 時点で w2 は10分で死亡（金リンゴ15個を10分で消費：飛行中の火の玉とブレスの被弾が大きい）、w1 は 200/200 で生存18分、w3 は 145/200（ベッド1発で-55）で生存19分。
 
 ## 7. 次の一手
+0. **再開時に最初にやること**：この環境（/home/claude）が別の機械なら、zip から復元（RESUME.md）→ `sh setup.sh`（BDS とツール。数分）→ `cp -a bds-lab bds-lab2; cp -a bds-lab bds-lab3` → `cp remote/par.sh remote/bench.sh /tmp/`。GitHub（noknoh12345-afk/bds-lab の remote-bot）は push 済みなので、clone でもよい（最新は push したコミット）。
+   - 3台同時（中間装備）：`export BOT_UNCAGE_PERCH=1 BOT_NOBURROW=1 BOT_NOHEALHOLE=1 LABTEST_ARRIVE=platform DRAGON_MS=5400000 PAR_TIMEOUT=5800 BOT_WAIT_R=18 LABTEST_PROT=4 LABTEST_GAPPLES=16 LABTEST_BEDS=12 LABTEST_FEATHER=3; bash /tmp/bench.sh 3 1`。結果は /tmp/par.txt、ログは /tmp/labbotN/run/out.log（終わった回は /tmp/poutN-1.log）。勝てば out.log に `the exit portal is open`。
+   - 着地ごとの成績は out.log の `perch over:` 行（5秒未満はちらつきなので無視）。
+   - 実機起動の基準（ユーザー指示 13:49）：ラボで十分な勝機（目安：実機で揃えられる装備で連続3本中2勝）。満たしたら Mac のターミナルで `bash ~/test/bdsbot.sh`（ユーザーがコンピューター操作・ターミナルを許可済み。ただし computer use はターミナルに文字入力できない制限がある。だめならユーザーに頼む）。Mac のブリッジは device_bash（VM の中、~/mnt/test が Mac の ~/test）。実機ボットは 11/16 16:03 から停止中。
 1. 90分バッチ：`export BOT_UNCAGE_PERCH=1 BOT_NOBURROW=1 BOT_NOHEALHOLE=1 LABTEST_PROT=4 LABTEST_GAPPLES=32 LABTEST_ARRIVE=platform DRAGON_MS=5400000 PAR_TIMEOUT=5800; bash /tmp/bench.sh 3 1`。討伐（ログに `exit portal`）を確認する。
 2. 着地が20分来ないことがある（07:26〜07:46）。全クリスタルを破壊済みでも起きる。どこで待てば着地が来るか調べる。
 3. ベッドが押せない（「not clicked?」）原因を `would not take the click` のログで調べる。
