@@ -885,7 +885,9 @@ async function dragonFight() {
           else if (Math.hypot(c.x - b.state().pos.x, c.z - b.state().pos.z) < 6) { log(`dragon: uncage: ${Math.round(Math.hypot(c.x - b.state().pos.x, c.z - b.state().pos.z))} from the crystal: too near its blast to shoot`); }
           else {
           log(`dragon: uncage: on a pillar ${Math.round(Math.hypot(c.x - b.state().pos.x, c.z - b.state().pos.z))} out, eyes at ${(b.state().pos.y + 1.62).toFixed(1)}: shooting through the gap`);
-          for (let n = 0; n < 6 && [...b.entities.values()].includes(c); n++) { await shootAt(c.x, c.y + 1, c.z, [1, 0.97, 1.03, 1, 0.94, 1.06][n]); for (let w = 0; w < 6 && [...b.entities.values()].includes(c); w++) await sleep(300); }
+          // (10:07-10:08 on 19 Nov: six arrows from the shooting pillar while its breath took us from 19 to 5 - no apple while up there.
+          //  An apple at 12 or less between arrows, and down at 8)
+          for (let n = 0; n < 6 && [...b.entities.values()].includes(c); n++) { if ((me.hp ?? 20) <= 8) { log(`dragon: uncage: health ${me.hp} on the shooting pillar: down`); break; } if (await gapple()) await sleep(300); await shootAt(c.x, c.y + 1, c.z, [1, 0.97, 1.03, 1, 0.94, 1.06][n]); for (let w = 0; w < 6 && [...b.entities.values()].includes(c); w++) await sleep(300); }
           const hit = ![...b.entities.values()].includes(c);
           log(`dragon: uncage: ${hit ? 'the caged crystal is gone' : 'six arrows and it stands'}`, { dc: true });
           }
