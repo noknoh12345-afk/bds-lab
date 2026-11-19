@@ -1063,7 +1063,10 @@ async function dragonFight() {
     else if (Date.now() - stuckAt.t > 60000 && Math.floor(P.y + 0.01) < 56 && !perchedNow() && cnt(blockId()) >= 4) {
       const y0 = Math.floor(P.y + 0.01), up = Math.min(6, 60 - y0); log(`dragon: stuck at ${Math.round(P.x)} ${y0} ${Math.round(P.z)} for ${Math.round((Date.now() - stuckAt.t) / 1000)} s: ${up} up on a pillar`, { dc: true });
       delegating = true; try { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(up), blockId()], 12000, 'pillar'); } finally { await b.act('sneak', ['off']).catch(() => {}); delegating = false; }
-      if (Math.floor(b.state().pos.y + 0.01) <= y0) { log('dragon: the pillar did not rise: a walk toward the middle'); await gotoFor([String(Math.round(P.x * 0.6)), String(Math.round(P.z * 0.6))], 15000); }
+      // (11:05-11:08: the same pit at 46 48 -15 again, and the pillar rose two under an overhang. Up through it to the sky then -
+      //  goal-exec's to_surface digs its own way - and only if that fails a walk toward the middle)
+      if (Math.floor(b.state().pos.y + 0.01) < Math.min(56, y0 + 4)) { log(`dragon: the pillar stopped at ${Math.floor(b.state().pos.y + 0.01)}: up to the sky by digging`); await holdPick(); delegating = true; try { await gotoFor([], 40000, 'to_surface'); } finally { delegating = false; } }
+      if (Math.floor(b.state().pos.y + 0.01) < 56) { log(`dragon: still at ${Math.floor(b.state().pos.y + 0.01)}: a walk toward the middle`); await gotoFor([String(Math.round(P.x * 0.6)), String(Math.round(P.z * 0.6))], 15000); }
       stuckAt = null; continue;
     }
     if (Date.now() - lastSay > 30000) { lastSay = Date.now(); log(`dragon: ${Math.round((Date.now() - t0) / 1000)} s · its health ${bar()} of 200 (from its bar) · health ${me.hp} · crystals ${all.size - gone.size} of ${all.size} seen stand (${left.size} left alone) · arrows ${cnt('arrow')} · at ${Math.round(P.x)} ${Math.round(P.y)} ${Math.round(P.z)}`); }
