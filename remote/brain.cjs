@@ -1256,8 +1256,9 @@ async function dragonFight() {
     { const food = /minecraft:(cooked_\w+|bread|baked_potato|golden_carrot|golden_apple|apple|carrot|melon_slice|sweet_berries|cookie|pumpkin_pie|beef|porkchop|mutton|chicken)\*/.exec(b.invText?.() ?? '')?.[1];
       if (food && ((me.food !== null && me.food < 18) || (me.hp !== null && me.hp < 10 && (me.food ?? 20) < 20))) { await gotoFor([food], 2600, 'eat'); continue; } }
     const dr = ents(/ender_dragon$/)[0]; if (dr) seenDragon = true;
-    // within reach: the sword, whatever else was going on
-    if (dr && Math.hypot(dr.x - P.x, dr.y - P.y, dr.z - P.z) < 5.5) { await armUp(b); let miss = false; const mt = (l) => { if (/not under the crosshair|no .* in (view|reach)/.test(l)) miss = true; }; ctx.taps.add(mt); await b.act('attack', ['ender_dragon']).catch(() => {}); ctx.taps.delete(mt); if (!miss) hits++; await sleep(250); continue; }
+    // within reach: the sword, whatever else was going on - in flight only. Sitting, the perch's own turn below (beds first, then the
+    // sword): 12:07 on 19 Nov, 16 beds carried and none used in five perches - this caught every round while it sat 5 off
+    if (dr && !perched && Math.hypot(dr.x - P.x, dr.y - P.y, dr.z - P.z) < 5.5) { await armUp(b); let miss = false; const mt = (l) => { if (/not under the crosshair|no .* in (view|reach)/.test(l)) miss = true; }; ctx.taps.add(mt); await b.act('attack', ['ender_dragon']).catch(() => {}); ctx.taps.delete(mt); if (!miss) hits++; await sleep(250); continue; }
     // (gone is said when it is out of sight after a shot; one that shows again was only out of sight: back on the list)
     for (const e of ents(/ender_crystal$/)) { all.add(key(e)); if (gone.delete(key(e))) log(`dragon: the crystal at ${key(e)} stands after all`); }
     // (a cage is seen, not guessed from misses: iron bars two out on its sides. 07:50, three open ones given up from one bad spot)
