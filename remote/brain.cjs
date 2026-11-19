@@ -1113,6 +1113,9 @@ async function dragonFight() {
     // (low counts, not only still: 00:56-01:09 on 20 Nov, thirteen minutes in the pit at 46-48 48 -10..-16, pacing six blocks to and
     //  fro, so never 'still' - the clock runs while the feet stay under 56 and only resets above it)
     if (!stuckAt || Math.floor(P.y + 0.01) >= 56 || Math.abs(P.y - stuckAt.y) > 3) stuckAt = { x: P.x, y: P.y, z: P.z, t: Date.now() };
+    // (no blocks left for the pillar: up by digging alone - 07:48-08:22 on 20 Nov, out of cobblestone after the cages, half an hour
+    //  in the pit at 48 47 -9 with nothing tried)
+    else if (Date.now() - stuckAt.t > 60000 && Math.floor(P.y + 0.01) < 56 && !perchedNow() && cnt(blockId()) < 4) { log(`dragon: stuck at ${Math.round(P.x)} ${Math.floor(P.y + 0.01)} ${Math.round(P.z)} with no blocks: up to the sky by digging`, { dc: true }); await holdPick(); delegating = true; try { await gotoFor([], 40000, 'to_surface'); } finally { delegating = false; } if (Math.floor(b.state().pos.y + 0.01) < 56) await gotoFor([String(Math.round(P.x * 0.6)), String(Math.round(P.z * 0.6))], 15000); stuckAt = null; continue; }
     else if (Date.now() - stuckAt.t > 60000 && Math.floor(P.y + 0.01) < 56 && !perchedNow() && cnt(blockId()) >= 4) {
       const y0 = Math.floor(P.y + 0.01), up = Math.min(6, 60 - y0); log(`dragon: stuck at ${Math.round(P.x)} ${y0} ${Math.round(P.z)} for ${Math.round((Date.now() - stuckAt.t) / 1000)} s: ${up} up on a pillar`, { dc: true });
       delegating = true; try { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(up), blockId()], 12000, 'pillar'); } finally { await b.act('sneak', ['off']).catch(() => {}); delegating = false; }
