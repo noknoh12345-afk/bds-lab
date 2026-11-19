@@ -916,6 +916,17 @@ async function dragonFight() {
   const bar = () => (b.bossHealth ? Math.round(b.bossHealth.v * 200) : '?');
   // before the click: four and a half out from the bed straight back along its line (the furthest a click reaches), a block of ours
   // set on the floor between, then the click over it (12:13 in the lab: from a block and a half, 18 health to dead by our own bed)
+  // a bed clicked on the face the eyes can see: its top when the eyes are well over it, else the side toward us, then the other
+  // (10:18 on 19 Nov: a bed on a stand, its top at 62.56 and the eyes at 62.6 after the step back down the slope - 'not under the
+  //  crosshair' on the top face twice, the bed left standing for the next perch)
+  async function bedClick(X, BY, Z, dx, dz) {
+    const isB = () => /(^|_)bed$/.test(bname(X, BY, Z)), side = dx > 0 ? 'west' : dx < 0 ? 'east' : dz > 0 ? 'north' : 'south';
+    const eye = b.state().pos.y + 1.62, faces = eye > BY + 0.5625 + 0.25 ? ['up', side] : [side, 'up'];
+    const said2 = []; const t2 = (l) => said2.push(l); ctx.taps.add(t2);
+    try { for (const f of faces) { if (!isB()) break; await b.act('useon', [String(X), String(BY), String(Z), f]).catch(() => {}); await sleep(800); } } finally { ctx.taps.delete(t2); }
+    if (isB()) log(`dragon: the bed would not take the click (${faces.join(', then ')}; eyes ${eye.toFixed(2)}, its top ${(BY + 0.5625).toFixed(2)}): ${said2.slice(-1)[0] ?? '?'}`);
+    return !isB();
+  }
   async function backOff(bx, by, bz, dx, dz) {
     const tx = bx - dx * 4.2, tz = bz - dz * 4.2;
     for (let t = 0; t < 3 && Math.hypot(b.state().pos.x - bx - 0.5, b.state().pos.z - bz - 0.5) < 4.0; t++) { if (t === 0) await dash(tx + 0.5, tz + 0.5, 1500); else await gotoFor([String(tx), String(tz)], 2500); }
@@ -1343,7 +1354,7 @@ async function dragonFight() {
             await gotoFor([String(cs[0][0]), String(fy + H), String(cs[0][1]), ddir], 2500, 'place_bed'); await sleep(250);
             if (!/(^|_)bed$/.test(bname(cs[0][0], fy + H, cs[0][1]))) { log(`dragon: no bed on the stand ${H} high (${ddir})`); continue; }
             if (!(await backOff(cs[0][0], fy + H, cs[0][1], ddx, ddz))) { done = true; break; }
-            await b.act('useon', [String(cs[0][0]), String(fy + H), String(cs[0][1]), 'up']).catch(() => {}); await sleep(800);
+            await bedClick(cs[0][0], fy + H, cs[0][1], ddx, ddz);
             log(`dragon: a bed on a stand ${H} high blown at ${cs[0][0]} ${fy + H} ${cs[0][1]}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}`, { dc: true }); done = true;
           }
           if (done) continue;
@@ -1359,15 +1370,16 @@ async function dragonFight() {
         const [dx, dz, dir, X, Z, BY] = pick ?? picks[0];
         if (isBed(X, BY, Z)) {
           if (!(await backOff(X, BY, Z, dx, dz))) continue;
-          await b.act('useon', [String(X), String(BY), String(Z), 'up']).catch(() => {}); await sleep(800);
           // (once more when it still stands: 07:25, 'not clicked?' and the bed left there for the next perch)
-          if (isBed(X, BY, Z)) { const said2 = []; const t2 = (l) => said2.push(l); ctx.taps.add(t2); await b.act('useon', [String(X), String(BY), String(Z), 'up']).catch(() => {}); await sleep(800); ctx.taps.delete(t2); if (isBed(X, BY, Z)) log(`dragon: the bed would not take the click: ${said2.slice(-1)[0] ?? '?'}`); }
+          await bedClick(X, BY, Z, dx, dz);
           log(`dragon: a bed blown at ${X} ${BY} ${Z}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}${isBed(X, BY, Z) ? ' (the bed still stands: not clicked?)' : ''}`, { dc: true });
         } else log(`dragon: no bed set down at ${X} ${BY} ${Z} (${bname(X, BY, Z)}): ${said.filter((l) => /bed|put/.test(l)).slice(-1)[0] ?? '?'}`);
       } finally { ctx.taps.delete(tap); }
       continue; }
     if (perched && dr) { await armUp(b); let miss = false; const mt = (l) => { if (/not under the crosshair|no .* in (view|reach)/.test(l)) miss = true; }; ctx.taps.add(mt); if (CRIT) { await b.act('jump', ['on']).catch(() => {}); await sleep(100); await b.act('jump', ['off']).catch(() => {}); await sleep(330); } await b.act('attack', ['ender_dragon']).catch(() => {}); ctx.taps.delete(mt); if (!miss) { hits++; if (hits % 10 === 1) log(`dragon: the sword is on it (${hits}) · its health ${bar()}`); } await sleep(200); continue; }
-    if (dr && cnt('arrow') > 0 && Math.hypot(dr.x - P.x, dr.z - P.z) < 45) { await shootAt(dr.x, dr.y + 1, dr.z); shots++; continue; }
+    // (arrows at it in flight only while more than 48 are left - those are for crystals a respawn brings and the cages: 10:23 on 19
+    //  Nov, 192 → 22 in 25 minutes from 36 out and its bar 200 → 190 for them)
+    if (dr && cnt('arrow') > Number(process.env.BOT_ARROW_KEEP ?? 48) && Math.hypot(dr.x - P.x, dr.z - P.z) < 45) { await shootAt(dr.x, dr.y + 1, dr.z); shots++; continue; }
     await sleep(500);
   }
   return false;
