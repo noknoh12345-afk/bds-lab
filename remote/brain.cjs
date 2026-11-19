@@ -795,6 +795,13 @@ const CLOUD_MARGIN = Number(process.env.BOT_CLOUD_MARGIN ?? 3);
 const CRIT = process.env.BOT_CRIT !== '0';
 async function dragonFight() {
   const b = me.bot, t0 = Date.now(), tries = new Map(), left = new Set();
+  // (no click on a bed but the one meant: 14:19 on 19 Nov, a bed left standing from a click that missed, then a block for the next
+  //  stand or the blast cover set 'on' it - it blew up at our feet, 19.8 → dead. Every useon here is looked at first; a bed is only
+  //  clicked inside bedClick)
+  const act0 = b.act; let bedOK = false;
+  b.act = function (v, a, ...r) { if (v === 'useon' && !bedOK && a && a.length >= 3) { const w = b.world?.block?.(Math.floor(+a[0]), Math.floor(+a[1]), Math.floor(+a[2])); if (w && /(^|_)bed$/.test(String(w.name ?? '').replace(/^minecraft:/, ''))) { log(`dragon: not clicking the bed at ${a.slice(0, 3).join(' ')} (a block meant for beside it)`); return Promise.resolve(); } } return act0.call(this, v, a, ...r); };
+  try { return await dragonFight0(); } finally { b.act = act0; }
+  async function dragonFight0() {
   // (a cloud's size now, not as it came: they grow by their change rate each tick and go when their time is up - 12:05, twenty
   //  health gone in seven seconds with no cloud 'near' by the radius as sent. And where health went with nothing to explain it, a
   //  burn spot of our own, 4 round, for 10 s)
@@ -926,7 +933,7 @@ async function dragonFight() {
     const isB = () => /(^|_)bed$/.test(bname(X, BY, Z)), side = dx > 0 ? 'west' : dx < 0 ? 'east' : dz > 0 ? 'north' : 'south';
     const eye = b.state().pos.y + 1.62, faces = eye > BY + 0.5625 + 0.25 ? ['up', side] : [side, 'up'];
     const said2 = []; const t2 = (l) => said2.push(l); ctx.taps.add(t2);
-    try { for (const f of faces) { if (!isB()) break; await b.act('useon', [String(X), String(BY), String(Z), f]).catch(() => {}); await sleep(800); } } finally { ctx.taps.delete(t2); }
+    bedOK = true; try { for (const f of faces) { if (!isB()) break; await b.act('useon', [String(X), String(BY), String(Z), f]).catch(() => {}); await sleep(800); } } finally { bedOK = false; ctx.taps.delete(t2); }
     if (isB()) log(`dragon: the bed would not take the click (${faces.join(', then ')}; eyes ${eye.toFixed(2)}, its top ${(BY + 0.5625).toFixed(2)}): ${said2.slice(-1)[0] ?? '?'}`);
     return !isB();
   }
@@ -1413,6 +1420,7 @@ async function dragonFight() {
     await sleep(500);
   }
   return false;
+  }
   }
 }
 BUILTIN.dragon = async () => { pieceRun++; try { log(`dragon: ${(await dragonFight()) ? 'killed' : 'not killed'}`, { dc: true }); } finally { pieceRun--; } };
