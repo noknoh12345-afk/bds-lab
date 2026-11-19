@@ -1243,6 +1243,8 @@ async function dragonFight() {
       let [tx, tz] = cands.find(([x, z]) => ok2(x, z)) ?? cands[0];
       fleeing = true; try { await down(); await dash(tx, tz, 2500); } finally { fleeing = false; } continue; }
     dodge = null;
+    // (an apple before the shield at 12 or less: 01:49 on 20 Nov, 15 → 8 → dead by its charge, shield up, seven apples carried)
+    if ((me.hp ?? 20) <= 12 && charging() && (await gapple())) continue;
     { const ch = charging(); if (ch && !inCloud()) { guarding = true; try {
         if (Date.now() - guardSaid > 15000) { guardSaid = Date.now(); log(`dragon: it comes at me (${Math.round(Math.hypot(ch.x - P.x, ch.z - P.z))} blocks): shield up`); }
         // (at most four seconds, and only while it is still closing in and nothing else hurts: 18:03, fourteen health gone standing
