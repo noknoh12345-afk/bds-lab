@@ -936,6 +936,9 @@ async function dragonFight() {
   //  crosshair' on the top face twice, the bed left standing for the next perch)
   async function bedClick(X, BY, Z, dx, dz) {
     const isB = () => /(^|_)bed$/.test(bname(X, BY, Z)), side = dx > 0 ? 'west' : dx < 0 ? 'east' : dz > 0 ? 'north' : 'south';
+    // (health read again at the click, not at the start of the try: 00:50 on 20 Nov, eighteen seconds of stands that did not go up
+    //  between, then clicked uncovered from 4.4 and dead by it)
+    if ((me.hp ?? 0) < 18) { log(`dragon: health ${me.hp} at the click: the bed left for now`); return false; }
     const eye = b.state().pos.y + 1.62, faces = eye > BY + 0.5625 + 0.25 ? ['up', side] : [side, 'up'];
     const said2 = []; const t2 = (l) => said2.push(l); ctx.taps.add(t2);
     bedOK = true; try { for (const f of faces) { if (!isB()) break; await b.act('useon', [String(X), String(BY), String(Z), f]).catch(() => {}); await sleep(800); } } finally { bedOK = false; ctx.taps.delete(t2); }
@@ -956,7 +959,7 @@ async function dragonFight() {
     // (no block between and under 4.2 off: not clicked - 18:39 on 19 Nov, 3.1 off with nothing between, 19 → 3.8 by our own bed and
     //  dead a few seconds later)
     // (and nothing between for any reason - the cell taken, the click refused: 21:40, 3.7 off and uncovered, 20 → 5.8, dead 14 s on)
-    if ((!clears || bname(cx, fy, cz) === 'air') && off < 4.2) { log(`dragon: not clicking the bed from ${off.toFixed(1)} off with nothing between`); return false; }
+    if ((!clears || bname(cx, fy, cz) === 'air') && off < Number(process.env.BOT_BED_BARE ?? 5)) { log(`dragon: not clicking the bed from ${off.toFixed(1)} off with nothing between`); return false; }
     return off >= 3.1;   /* (12:57: 'from 0.2 off' - standing on it - and dead by it) */
   }
   // (how deep: 17:58 in the lab, three deep and sealed with end stone, killed by the dragon's own body flying low over it)
