@@ -1044,7 +1044,7 @@ async function dragonFight() {
   const watch2 = setInterval(() => { if (delegating || eatingG) return; if (me.hp !== null && wHp !== null && me.hp < wHp - 0.5) wHurt = Date.now(); wHp = me.hp; if (!fleeing && (!inFight || inCloud()) && me.connected && (inCloud() || (emOnMe() && !emFight))) { b.cancel?.(); if (inCloud()) onPillar = null; } }, 300);
   // (an apple before anything at 8 or less: 21:00 on 19 Nov, its bar at 1 of 200, us at 4.4 with seven apples left, and seventeen
   //  seconds of dashes from its breath with none eaten - then dead. Whatever is going on is cut short so the round's apple comes)
-  const watch4 = setInterval(() => { if (eatingG || delegating || !me.connected) return; if ((me.hp ?? 20) <= 8 && Date.now() - gappleAt > 6000 && /minecraft:(enchanted_)?golden_apple\*/.test(b.invText?.() ?? '')) b.cancel?.(); }, 300);
+  const watch4 = setInterval(() => { if (eatingG || delegating || !me.connected) return; if ((me.hp ?? 20) <= 12 && Date.now() - gappleAt > 6000 && /minecraft:(enchanted_)?golden_apple\*/.test(b.invText?.() ?? '')) b.cancel?.(); }, 300);
   try { return await dragonLoop(); } finally { clearInterval(watch4); clearInterval(watch); clearInterval(watch2); clearInterval(watch3); clearInterval(dSample); if (dbgT) clearInterval(dbgT); await b.act('sneak', ['off']).catch(() => {}); }
   async function dragonLoop() {
   setTimeout(() => {}, 0);
