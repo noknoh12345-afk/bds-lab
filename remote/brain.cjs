@@ -995,7 +995,7 @@ async function dragonFight() {
       const opts = (mid ? [0.5, -0.5, 1.0, -1.0] : [0.5, -0.5]).map((k) => Math.sign(da || 1) * k).map((d) => [Math.cos(a0 + d) * r, Math.sin(a0 + d) * r]).filter(([x, z]) => !cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + M));
       // (to it while it sits, with health to spare, straight through: 15:13 on 19 Nov, 'no way to -3 -3 clear of its breath' and a
       //  31 s perch gone by with no sword and no bed even at 0.8 of berth - a second in its breath costs less than a perch)
-      if (!opts.length && mid && (me.hp ?? 0) >= Number(process.env.BOT_PERCH_THROUGH_HP ?? 16)) { if (Date.now() - (walk.thru ?? 0) > 15000) { walk.thru = Date.now(); log(`dragon: through its breath to it while it sits (health ${me.hp})`); } await dash(tx, tz, 2500); return; }
+      if (!opts.length && mid && (me.hp ?? 0) >= Number(process.env.BOT_PERCH_THROUGH_HP ?? 16)) { if (Date.now() - (walk.thru ?? 0) > 15000) { walk.thru = Date.now(); log(`dragon: through its breath to it while it sits (health ${me.hp})`); } eatingG = true; try { await dash(tx, tz, 2500); } finally { eatingG = false; } return; }
       if (!opts.length) { if (Date.now() - (walk.said ?? 0) > 15000) { walk.said = Date.now(); log(`dragon: no way to ${Math.round(tx)} ${Math.round(tz)} clear of its breath: waiting`); }
         // (not waiting inside one: 05:30, 'waiting' with its breath on us, 20 to 3 in fourteen seconds - straight away from its middle)
         const e0 = cl.map((e) => ({ e, d: Math.hypot(Q.x - e.x, Q.z - e.z) })).filter((x) => x.d < cr(x.e) + 1.5).sort((u, w) => u.d - w.d)[0];
