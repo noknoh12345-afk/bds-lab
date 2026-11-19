@@ -975,9 +975,12 @@ async function dragonFight() {
   };
   const walk = async (tx, tz, ms = 3000, mid = false) => {
     const Q = b.state().pos, cl = ents(/area_effect_cloud$/);
-    const bad = (x, z) => cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + 3) || (!mid && segD(Q.x, Q.z, x, z, 0, 0) < 12);
+    // (to it while it sits, the clouds' berth is narrower and the ways round wider: 12:17 on 19 Nov, of thirty perches twenty passed
+    //  with no sword and no bed - 'no way to -1 4 clear of its breath: waiting' while it sat 54 s)
+    const M = mid ? Number(process.env.BOT_PERCH_MARGIN ?? 0.8) : 3;
+    const bad = (x, z) => cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + M) || (!mid && segD(Q.x, Q.z, x, z, 0, 0) < 12);
     if (bad(tx, tz)) { const r = Math.max(16, Math.min(40, Math.hypot(Q.x, Q.z))), a0 = Math.atan2(Q.z, Q.x), want = Math.atan2(tz, tx); let da = want - a0; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
-      const opts = [Math.sign(da || 1) * 0.5, -Math.sign(da || 1) * 0.5].map((d) => [Math.cos(a0 + d) * r, Math.sin(a0 + d) * r]).filter(([x, z]) => !cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + 3));
+      const opts = (mid ? [0.5, -0.5, 1.0, -1.0] : [0.5, -0.5]).map((k) => Math.sign(da || 1) * k).map((d) => [Math.cos(a0 + d) * r, Math.sin(a0 + d) * r]).filter(([x, z]) => !cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + M));
       if (!opts.length) { if (Date.now() - (walk.said ?? 0) > 15000) { walk.said = Date.now(); log(`dragon: no way to ${Math.round(tx)} ${Math.round(tz)} clear of its breath: waiting`); }
         // (not waiting inside one: 05:30, 'waiting' with its breath on us, 20 to 3 in fourteen seconds - straight away from its middle)
         const e0 = cl.map((e) => ({ e, d: Math.hypot(Q.x - e.x, Q.z - e.z) })).filter((x) => x.d < cr(x.e) + 1.5).sort((u, w) => u.d - w.d)[0];
