@@ -1031,7 +1031,10 @@ async function dragonFight() {
   //  went down - the cloud watch cancelled every eat at once)
   const watch = setInterval(() => { if (delegating || eatingG) return; if (!guarding && !fleeing && !inFight && me.connected && charging()) b.cancel?.(); }, 250);
   const watch2 = setInterval(() => { if (delegating || eatingG) return; if (me.hp !== null && wHp !== null && me.hp < wHp - 0.5) wHurt = Date.now(); wHp = me.hp; if (!fleeing && (!inFight || inCloud()) && me.connected && (inCloud() || (emOnMe() && !emFight))) { b.cancel?.(); if (inCloud()) onPillar = null; } }, 300);
-  try { return await dragonLoop(); } finally { clearInterval(watch); clearInterval(watch2); clearInterval(watch3); clearInterval(dSample); if (dbgT) clearInterval(dbgT); await b.act('sneak', ['off']).catch(() => {}); }
+  // (an apple before anything at 8 or less: 21:00 on 19 Nov, its bar at 1 of 200, us at 4.4 with seven apples left, and seventeen
+  //  seconds of dashes from its breath with none eaten - then dead. Whatever is going on is cut short so the round's apple comes)
+  const watch4 = setInterval(() => { if (eatingG || delegating || !me.connected) return; if ((me.hp ?? 20) <= 8 && Date.now() - gappleAt > 6000 && /minecraft:(enchanted_)?golden_apple\*/.test(b.invText?.() ?? '')) b.cancel?.(); }, 300);
+  try { return await dragonLoop(); } finally { clearInterval(watch4); clearInterval(watch); clearInterval(watch2); clearInterval(watch3); clearInterval(dSample); if (dbgT) clearInterval(dbgT); await b.act('sneak', ['off']).catch(() => {}); }
   async function dragonLoop() {
   setTimeout(() => {}, 0);
   log(`dragon: in the End with ${cnt('arrow')} arrows; crystals in view: ${ents(/ender_crystal$/).length}`, { dc: true });
@@ -1441,7 +1444,8 @@ async function dragonFight() {
     if (perched && dr) { await armUp(b); let miss = false; const mt = (l) => { if (/not under the crosshair|no .* in (view|reach)/.test(l)) miss = true; }; ctx.taps.add(mt); if (CRIT) { await b.act('jump', ['on']).catch(() => {}); await sleep(100); await b.act('jump', ['off']).catch(() => {}); await sleep(330); } await b.act('attack', ['ender_dragon']).catch(() => {}); ctx.taps.delete(mt); if (!miss) { hits++; if (hits % 10 === 1) log(`dragon: the sword is on it (${hits}) · its health ${bar()}`); } await sleep(200); continue; }
     // (arrows at it in flight only while more than 48 are left - those are for crystals a respawn brings and the cages: 10:23 on 19
     //  Nov, 192 → 22 in 25 minutes from 36 out and its bar 200 → 190 for them)
-    if (dr && cnt('arrow') > Number(process.env.BOT_ARROW_KEEP ?? 48) && Math.hypot(dr.x - P.x, dr.z - P.z) < 45) { await shootAt(dr.x, dr.y + 1, dr.z); shots++; continue; }
+    // (its last few points from the bow at any count of arrows: 21:00, its bar at 1 for a minute and 108 arrows kept back)
+    if (dr && cnt('arrow') > (bar() <= 12 ? 0 : Number(process.env.BOT_ARROW_KEEP ?? 48)) && Math.hypot(dr.x - P.x, dr.z - P.z) < (bar() <= 12 ? 60 : 45)) { await shootAt(dr.x, dr.y + 1, dr.z); shots++; continue; }
     await sleep(500);
   }
   return false;
