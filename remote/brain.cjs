@@ -1283,8 +1283,9 @@ async function dragonFight() {
       await sleep(1000); continue;
     }
     // no crystal to shoot: beside the fountain, where it comes down; arrows at it while it flies near
-    // (out at 18 while it flies; in to the fountain's side when it has come down)
-    { const l = Math.hypot(P.x, P.z) || 1, want = perched ? 4 : 18, wx = Math.round((P.x / l) * want), wz = Math.round((P.z / l) * want); if (Math.abs(l - want) > 2.5) { await walk(wx, wz, 3000, perched); continue; } }
+    // (out at 18 while it flies - BOT_WAIT_R to try farther: 09:42 on 19 Nov, both cages broken by 13 min and every crystal gone,
+    //  then three minutes of its breath 1-10 blocks off at 18 out, six golden apples, dead; in to the fountain's side when it sits)
+    { const l = Math.hypot(P.x, P.z) || 1, want = perched ? 4 : Number(process.env.BOT_WAIT_R || 18), wx = Math.round((P.x / l) * want), wz = Math.round((P.z / l) * want); if (Math.abs(l - want) > 2.5) { await walk(wx, wz, 3000, perched); continue; } }
     if (perched && Date.now() - perchSaid > 20000) { perchSaid = Date.now(); log(`dragon: it sits on the fountain: its box from y ${dr.y.toFixed(1)} (${dr.bw ?? '?'} wide, ${dr.bh ?? '?'} high), my eyes at ${(P.y + 1.62).toFixed(1)}, ${Math.round(Math.hypot(dr.x - P.x, dr.z - P.z))} blocks off`); }
     // (15:32 in the lab: 65 swings from the ground beside the fountain, none on it - its box begins more than a sword's reach over
     //  the ground. Up on a pillar of our own blocks until the underside is within reach)
