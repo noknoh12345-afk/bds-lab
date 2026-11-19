@@ -943,9 +943,13 @@ async function dragonFight() {
     if ((me.hp ?? 0) < 18) { log(`dragon: health ${me.hp} at the click: the bed left for now`); return false; }
     const eye = b.state().pos.y + 1.62, faces = eye > BY + 0.5625 + 0.25 ? ['up', side] : [side, 'up'];
     const said2 = []; const t2 = (l) => said2.push(l); ctx.taps.add(t2);
-    bedOK = true; try { for (const f of faces) { if (!isB()) break; await b.act('useon', [String(X), String(BY), String(Z), f]).catch(() => {}); await sleep(800); } } finally { bedOK = false; ctx.taps.delete(t2); }
-    if (isB()) log(`dragon: the bed would not take the click (${faces.join(', then ')}; eyes ${eye.toFixed(2)}, its top ${(BY + 0.5625).toFixed(2)}): ${said2.slice(-1)[0] ?? '?'}`);
-    return !isB();
+    // (both halves of it: 06:37 on 20 Nov in the lab, the side of the far half asked for and the crosshair on the near half - 'not under
+    //  the crosshair' though it was the same bed. The half nearer us first)
+    const Q0 = b.state().pos, halves = [[X, Z], ...[[1, 0], [-1, 0], [0, 1], [0, -1]].map(([u, w]) => [X + u, Z + w]).filter(([x, z]) => /(^|_)bed$/.test(bname(x, BY, z)))].sort((u, w) => Math.hypot(u[0] + 0.5 - Q0.x, u[1] + 0.5 - Q0.z) - Math.hypot(w[0] + 0.5 - Q0.x, w[1] + 0.5 - Q0.z));
+    const anyB = () => halves.some(([x, z]) => /(^|_)bed$/.test(bname(x, BY, z)));
+    bedOK = true; try { for (const [hx, hz] of halves) for (const f of faces) { if (!anyB()) break; await b.act('useon', [String(hx), String(BY), String(hz), f]).catch(() => {}); await sleep(600); } } finally { bedOK = false; ctx.taps.delete(t2); }
+    if (anyB()) log(`dragon: the bed would not take the click (${faces.join(', then ')}; eyes ${eye.toFixed(2)}, its top ${(BY + 0.5625).toFixed(2)}): ${said2.slice(-1)[0] ?? '?'}`);
+    return !anyB();
   }
   async function backOff(bx, by, bz, dx, dz) {
     const tx = bx - dx * 4.2, tz = bz - dz * 4.2;
