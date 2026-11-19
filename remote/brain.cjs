@@ -951,7 +951,7 @@ async function dragonFight() {
   //  brings it to the height of the target at its distance, the lower of the two. k nudges the speed when it keeps missing)
   const pitchFor = (h, dy, v = 3) => { let best = null; for (let a = -30; a <= 60; a += 0.25) { const r = (a * Math.PI) / 180; let x = 0, y = 0, vx = Math.cos(r) * v, vy = Math.sin(r) * v; for (let t = 0; t < 200 && x < h; t++) { x += vx; y += vy; vx *= 0.99; vy = vy * 0.99 - 0.05; } if (x >= h && (best === null || Math.abs(y - dy) < best.e)) { best = { a, e: Math.abs(y - dy) }; if (best.e < 0.15) break; } } return best ? best.a : 45; };
   const shootAt = async (x, y, z, k = 1) => { const P = b.state().pos, eye = P.y + 1.62, h = Math.hypot(x - P.x, z - P.z), a = pitchFor(h, y - eye, 3 * k); await b.act('hold_bow', []).catch(() => {}); await gotoFor([String(x), String(eye + h * Math.tan((a * Math.PI) / 180)), String(z)], 1500, 'lookat'); await gotoFor(['22'], 3000, 'use'); };
-  let uncageWait = 0, digSaid = 0, seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, gappleAt = 0, gapSaid = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), gaps = new Map(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
+  let stuckAt = null, uncageWait = 0, digSaid = 0, seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, gappleAt = 0, gapSaid = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), gaps = new Map(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
   const gapple = async () => { if (me.hp !== null && me.hp <= (process.env.BOT_NOHEALHOLE ? 14 : 12) && Date.now() - gappleAt > 6000) { const g = /minecraft:(enchanted_golden_apple|golden_apple)\*/.exec(b.invText?.() ?? '')?.[1]; if (g) { gappleAt = Date.now(); log(`dragon: health ${me.hp}: a ${g.replace(/_/g, ' ')}`); await gotoFor([g], 2600, 'eat'); return true; } } return false; };
   await gotoFor([], 8000, 'armor_up');   // (what is carried is worn)
   if (/minecraft:shield\*/.test(b.invText?.() ?? '')) await gotoFor(['shield'], 4000, 'offhand');
@@ -1054,6 +1054,16 @@ async function dragonFight() {
     if (portalOpen() && seenDragon && !ents(/ender_dragon$/).length) { log(`dragon: the exit portal is open: the dragon is dead (${Math.round((Date.now() - t0) / 1000)} s, ${shots} arrows, ${hits} sword hits)`, { dc: true }); return true; }
     const P = b.state().pos;
     if (onPillar && (Math.hypot(P.x - onPillar.x - 0.5, P.z - onPillar.z - 0.5) > 1.2 || P.y < onPillar.y - 1)) onPillar = null;   // (knocked or walked off it)
+    // (stuck down below the island's top: 10:24-10:45 on 19 Nov in the lab, knocked down to 46 48 -15 beside the island's flank and
+    //  twenty minutes there - 'no way ... waiting' - with its bar at 137 and full health. Not moved 2 blocks in 60 s and the feet
+    //  under 56: a pillar of our blocks up to 60, sneaking, then on)
+    if (!stuckAt || Math.hypot(P.x - stuckAt.x, P.z - stuckAt.z) > 2 || Math.abs(P.y - stuckAt.y) > 2) stuckAt = { x: P.x, y: P.y, z: P.z, t: Date.now() };
+    else if (Date.now() - stuckAt.t > 60000 && Math.floor(P.y + 0.01) < 56 && !perchedNow() && cnt(blockId()) >= 4) {
+      const y0 = Math.floor(P.y + 0.01), up = Math.min(6, 60 - y0); log(`dragon: stuck at ${Math.round(P.x)} ${y0} ${Math.round(P.z)} for ${Math.round((Date.now() - stuckAt.t) / 1000)} s: ${up} up on a pillar`, { dc: true });
+      delegating = true; try { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(up), blockId()], 12000, 'pillar'); } finally { await b.act('sneak', ['off']).catch(() => {}); delegating = false; }
+      if (Math.floor(b.state().pos.y + 0.01) <= y0) { log('dragon: the pillar did not rise: a walk toward the middle'); await gotoFor([String(Math.round(P.x * 0.6)), String(Math.round(P.z * 0.6))], 15000); }
+      stuckAt = null; continue;
+    }
     if (Date.now() - lastSay > 30000) { lastSay = Date.now(); log(`dragon: ${Math.round((Date.now() - t0) / 1000)} s · its health ${bar()} of 200 (from its bar) · health ${me.hp} · crystals ${all.size - gone.size} of ${all.size} seen stand (${left.size} left alone) · arrows ${cnt('arrow')} · at ${Math.round(P.x)} ${Math.round(P.y)} ${Math.round(P.z)}`); }
     // its breath on the ground, a fireball coming: ten blocks round the fountain, away from it
     // a golden apple at 12 or less (regeneration and absorption at once - what keeps a player in iron alive through its breath)
