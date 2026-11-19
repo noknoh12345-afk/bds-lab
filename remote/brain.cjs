@@ -1047,13 +1047,19 @@ async function dragonFight() {
         //  out - 01:35. Its top out there lies about 55-62)
         for (let t = 0; t < 6 && Math.floor(b.state().pos.y + 0.01) < 63; t++) { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(Math.min(6, 63 - Math.floor(b.state().pos.y + 0.01))), blockId()], 12000, 'pillar'); await b.act('sneak', ['off']).catch(() => {}); }
         let bHp = me.hp;
+        // (19:39 on 19 Nov: at the bridge's island end its breath took 20 → 0 in ten seconds inside one 9 s bridge step - nothing
+        //  looked in between. A watch on the bridge: at 12 or in its breath the step is cut short, then an apple, then back along
+        //  the bridge, sneaking, until clear)
+        const bw = setInterval(() => { if (!eatingG && me.connected && ((me.hp ?? 20) <= 12 || inCloud())) b.cancel?.(); }, 250);
+        try {
         for (let t = 0; t < 60 && me.connected && !b.state().dead; t++) {
+          for (let k = 0; k < 8 && inCloud() && me.connected && !b.state().dead; k++) { if (k === 0) log('dragon: its breath on the bridge: back along it'); await b.act('sneak', ['on']).catch(() => {}); await b.act('look', [String(yaw + 180), '60']).catch(() => {}); eatingG = true; try { await b.act('walk', ['forward', '12']).catch(() => {}); } finally { eatingG = false; } await sleep(300); }
           // (09:25-09:29 on 19 Nov in the lab: four silent minutes on the bridge, health down to 1 with nothing logged and no apple
           //  eaten - the watches are off while delegating - then knocked off it into the void. Health said when it falls, and a
           //  golden apple at 12 or less here too, sneaking so a knock does not carry us over the edge while we eat)
           if (me.hp !== null && bHp !== null && me.hp < bHp - 0.5) log(`dragon: hurt on the bridge: ${bHp} → ${me.hp} at ${Math.round(b.state().pos.x)} ${Math.round(b.state().pos.y)} ${Math.round(b.state().pos.z)}`);
           bHp = me.hp;
-          if (me.hp !== null && me.hp <= 12 && /minecraft:(enchanted_)?golden_apple\*/.test(b.invText?.() ?? '')) { const g = /minecraft:(enchanted_golden_apple|golden_apple)\*/.exec(b.invText?.() ?? '')[1]; log(`dragon: health ${me.hp} on the bridge: a ${g.replace(/_/g, ' ')}`); await b.act('sneak', ['on']).catch(() => {}); await gotoFor([g], 2600, 'eat'); bHp = me.hp; }
+          if (me.hp !== null && me.hp <= 12 && /minecraft:(enchanted_)?golden_apple\*/.test(b.invText?.() ?? '')) { const g = /minecraft:(enchanted_golden_apple|golden_apple)\*/.exec(b.invText?.() ?? '')[1]; log(`dragon: health ${me.hp} on the bridge: a ${g.replace(/_/g, ' ')}`); await b.act('sneak', ['on']).catch(() => {}); eatingG = true; try { await gotoFor([g], 2600, 'eat'); } finally { eatingG = false; } bHp = me.hp; }
           if (process.env.BOT_DEBUG) { const C = b.state().pos; log(`dragon: dbg bridge ${t}: at ${C.x.toFixed(1)} ${C.y.toFixed(1)} ${C.z.toFixed(1)} on ${under()}`); }
           // (on to the edge of what is under us first, along the bridge's line, then a few blocks out)
           for (let w = 0; w < 6 && /^(obsidian|cobblestone|end_stone)$/.test(bname(Math.floor(b.state().pos.x) + ddx, Math.floor(b.state().pos.y + 0.01) - 1, Math.floor(b.state().pos.z) + ddz)); w++) await gotoFor([String(Math.floor(b.state().pos.x) + ddx), String(Math.floor(b.state().pos.z) + ddz)], 2000);
@@ -1067,6 +1073,7 @@ async function dragonFight() {
           await gotoFor(['3', blockId()], 9000, 'bridge');
           if (Math.hypot(b.state().pos.x - x0, b.state().pos.z - z0) < 0.5) { log(`dragon: the bridge did not go on at ${Math.round(x0)} ${Math.round(z0)}`); if (t > 3) break; }
         }
+        } finally { clearInterval(bw); }
         log(`dragon: off the bridge at ${Math.round(b.state().pos.x)} ${Math.round(b.state().pos.z)} on ${under()}`);
       } finally { delegating = false; }
     } }
