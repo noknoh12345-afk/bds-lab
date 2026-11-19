@@ -959,7 +959,9 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     // entities: their boxes (players 0.6 x 1.8, others from minecraft-data, else 0.6 x 1)
     const emax = reach('entity');
     for (const e of entities.values()) {
-      if (e.type === 'minecraft:item') continue;
+      // (what a crosshair cannot rest on in the game either: a lingering cloud, an arrow stuck in the ground, an xp orb, a falling
+      //  block, a fireball in flight - 19 Nov in the End, the dragon's breath cloud over the ground took every click near it)
+      if (e.type === 'minecraft:item' || /(area_effect_cloud|arrow|xp_orb|experience_orb|falling_block|fireball|dragon_fireball|evocation_fang|lightning_bolt)$/.test(e.type)) continue;
       const sz = e.bw > 0 && e.bh > 0 ? { w: e.bw, h: e.bh } : e.type === 'minecraft:player' ? { w: 0.6, h: 1.8 } : ENT_SIZE(e.type);
       const h = hitBox(o, d, [e.x - sz.w / 2, e.y, e.z - sz.w / 2, e.x + sz.w / 2, e.y + sz.h, e.z + sz.w / 2]);
       if (h && h.t <= emax && (!best || h.t < best.t)) best = { kind: 'entity', entity: e, t: h.t };
@@ -1683,7 +1685,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const brid = known !== undefined ? known >>> 0 : blk ? blockHash(req, blk.id, blk.states, version) >>> 0 : 0;
         if (process.env.LAB_DEBUG) say(`dbg useon known=${known} ${JSON.stringify(blk)}`);
         if (!fast) await ticks(1);
-        if (legit && !fast && !underCrosshairPlace(b, face)) return say(`useon: ${b.x} ${b.y} ${b.z} is not under the crosshair (out of reach or behind a block): not clicked`);
+        if (legit && !fast && !underCrosshairPlace(b, face)) { const hh = raycast(); return say(`useon: ${b.x} ${b.y} ${b.z} is not under the crosshair (out of reach or behind a block; the crosshair is on ${hh?.kind === 'block' ? `${(world.block(hh.x, hh.y, hh.z)?.name ?? '?').replace('minecraft:', '')} at ${hh.x} ${hh.y} ${hh.z}` : hh?.kind === 'entity' ? hh.entity.type : 'nothing'}): not clicked`); }
         const cp = pt.length === 3 && pt.every((v) => v >= 0 && v <= 1) ? { x: pt[0], y: pt[1], z: pt[2] } : [{ x: 0.5, y: 0, z: 0.5 }, { x: 0.5, y: 1, z: 0.5 }, { x: 0.5, y: 0.5, z: 0 }, { x: 0.5, y: 0.5, z: 1 }, { x: 0, y: 0.5, z: 0.5 }, { x: 1, y: 0.5, z: 0.5 }][face] ?? { x: 0.5, y: 0.5, z: 0.5 };
         if (pt.length && !(pt.length === 3 && pt.every((v) => v >= 0 && v <= 1))) throw new Error('useon x y z [face] [cx cy cz] [hold]: cx cy cz are 0..1 inside the block');
         const pa = (action) => client.queue('player_action', { runtime_entity_id: rid, action, position: b, result_position: b, face });
