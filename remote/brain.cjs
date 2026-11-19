@@ -976,6 +976,9 @@ async function dragonFight() {
   // (out of its breath at once: straight there at a sprint, no path search first - 18:50, five seconds on one spot in a cloud while
   //  a path was worked out; the path search only when the straight run did not get anywhere)
   const dash = async (tx, tz, ms = 3000) => {
+    // (never out past the island's edge on a dash: 14:40 on 19 Nov, away from its breath outward from 35 18 to 47 42 and on into the
+    //  void. A target beyond BOT_EDGE_R from the middle is drawn back onto that circle while we stand on the island)
+    { const E = Number(process.env.BOT_EDGE_R ?? 50), q = b.state().pos, rt = Math.hypot(tx, tz); if (rt > E && Math.hypot(q.x, q.z) < E + 12) { tx = (tx / rt) * E; tz = (tz / rt) * E; } }
     const Q = b.state().pos, yaw = (Math.atan2(-(tx - Q.x), tz - Q.z) * 180) / Math.PI, d = Math.hypot(tx - Q.x, tz - Q.z);
     await b.act('look', [yaw.toFixed(0), '35']).catch(() => {}); await b.act('sprint', ['on']).catch(() => {});
     await b.act('walk', ['forward', String(Math.min(Math.round(ms / 50), Math.round((d / 5.6) * 20) + 2))]).catch(() => {});
