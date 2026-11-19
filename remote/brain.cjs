@@ -1264,7 +1264,7 @@ async function dragonFight() {
     if (me.hp !== null && me.hp < 10) resting = true; else if (me.hp === null || me.hp >= 16) resting = false;
     if (resting || (!BOWL && !perched && Math.hypot(P.x, P.z) < 13)) {
       if (Math.hypot(P.x, P.z) < 22) { const l = Math.hypot(P.x, P.z) || 1, ux = l < 1.5 ? 1 : P.x / l, uz = l < 1.5 ? 0 : P.z / l; await down(); await b.act('sprint', ['on']).catch(() => {}); await gotoFor([String(Math.round(ux * 24)), String(Math.round(uz * 24))], 3000); await b.act('sprint', ['off']).catch(() => {}); continue; }
-      if (resting) { const food = /minecraft:(cooked_\w+|bread|baked_potato|golden_carrot|golden_apple|apple)\*/.exec(b.invText?.() ?? '')?.[1]; if (food && (me.food ?? 20) < 20) await gotoFor([food], 2600, 'eat'); else if (!cloud) await sleep(700); if (!cloud) continue; }
+      if (resting) { const food = /minecraft:(cooked_\w+|bread|baked_potato|golden_carrot|(?<!golden_)apple)\*/.exec(b.invText?.() ?? '')?.[1]; if (food && (me.food ?? 20) < 20) await gotoFor([food], 2600, 'eat'); else if (!cloud) await sleep(700); if (!cloud) continue; }
     }
     // (while it sits and health is 12+, only a cloud we stand in or a fireball sends us off - not one six blocks off: 20:24-20:25 on
     //  19 Nov, a 57 s perch of approach, 'away', approach, and no swing; the escape ran ten past its edge every time)
