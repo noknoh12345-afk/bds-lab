@@ -908,6 +908,9 @@ async function dragonFight() {
         } finally { delegating = false; }
       }
     }
+    // (fewer than three bars out and the crystal still there: not opened - tried again later, not counted as open: 21:35 on 19 Nov,
+    //  two bars broken, the cage taken as open, eight arrows into the bars from the ground, and left alone for good)
+    if (broke < 3 && [...b.entities.values()].includes(c)) { uncageWait = Date.now() + 25000; log(`dragon: uncage: only ${broke} bars out: the cage still shut, later`); return false; }
     return true;
   }
   let fox = null;
@@ -1302,7 +1305,7 @@ async function dragonFight() {
     // (one given up for misses alone, not caged: tried again a minute later from wherever it is then)
     // (twice more at most, and only while arrows last: 12:49-13:14 on 19 Nov, the two caged ones - their bars not seen - tried eleven
     //  times, 88 arrows of 192, none left for anything after)
-    for (const k0 of [...left]) if (!caged.has(k0) && Date.now() - (leftAt.get(k0) ?? 0) > 60000 && (again.get(k0) ?? 0) < 2 && cnt('arrow') > 24) { again.set(k0, (again.get(k0) ?? 0) + 1); left.delete(k0); tries.set(k0, 0); log(`dragon: the crystal at ${k0} once more (${again.get(k0)} of 2)`); }
+    for (const k0 of [...left]) if (!caged.has(k0) && Date.now() - (leftAt.get(k0) ?? 0) > 60000 && (gaps.has(k0) || (again.get(k0) ?? 0) < 2) && cnt('arrow') > 24) { again.set(k0, (again.get(k0) ?? 0) + 1); left.delete(k0); tries.set(k0, 0); log(`dragon: the crystal at ${k0} once more (${again.get(k0)} of 2)`); }
     const crystals = ents(/ender_crystal$/).filter((e) => !left.has(key(e)));
     if (crystals.length && cnt('arrow') > 0) {
       // (one at a time until it is gone or given up: the one begun, else the one best placed from here - 45 to 75 blocks off)
