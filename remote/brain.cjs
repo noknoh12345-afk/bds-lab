@@ -1250,7 +1250,10 @@ async function dragonFight() {
       if (Math.hypot(P.x, P.z) < 22) { const l = Math.hypot(P.x, P.z) || 1, ux = l < 1.5 ? 1 : P.x / l, uz = l < 1.5 ? 0 : P.z / l; await down(); await b.act('sprint', ['on']).catch(() => {}); await gotoFor([String(Math.round(ux * 24)), String(Math.round(uz * 24))], 3000); await b.act('sprint', ['off']).catch(() => {}); continue; }
       if (resting) { const food = /minecraft:(cooked_\w+|bread|baked_potato|golden_carrot|golden_apple|apple)\*/.exec(b.invText?.() ?? '')?.[1]; if (food && (me.food ?? 20) < 20) await gotoFor([food], 2600, 'eat'); else if (!cloud) await sleep(700); if (!cloud) continue; }
     }
-    if (cloud && !(perched && (me.hp ?? 20) >= 12 && Math.hypot(P.x, P.z) < 9)) { let ux = P.x - cloud.x, uz = P.z - cloud.z; const l = Math.hypot(ux, uz) || 1; ux /= l; uz /= l; const far = (cloud.radius ?? 3) + 10; let tx = cloud.x + ux * far, tz = cloud.z + uz * far;
+    // (while it sits and health is 12+, only a cloud we stand in or a fireball sends us off - not one six blocks off: 20:24-20:25 on
+    //  19 Nov, a 57 s perch of approach, 'away', approach, and no swing; the escape ran ten past its edge every time)
+    const cloudIn = cloud && (/dragon_fireball$/.test(cloud.type ?? '') || Math.hypot(cloud.x - P.x, cloud.z - P.z) < cr(cloud) + 0.6);
+    if (cloud && !(perched && (me.hp ?? 20) >= 12 && (Math.hypot(P.x, P.z) < 9 || !cloudIn))) { let ux = P.x - cloud.x, uz = P.z - cloud.z; const l = Math.hypot(ux, uz) || 1; ux /= l; uz /= l; const far = (cloud.radius ?? 3) + 10; let tx = cloud.x + ux * far, tz = cloud.z + uz * far;
       if (Math.hypot(tx, tz) < 14) { const l2 = Math.hypot(P.x, P.z) || 1; tx = (P.x / l2) * 24; tz = (P.z / l2) * 24; }   // (never through the middle)
       if (Math.hypot(tx, tz) > 42) { tx = P.x - uz * 14; tz = P.z + ux * 14; if (Math.hypot(tx, tz) > 42) { tx = P.x + uz * 14; tz = P.z - ux * 14; } }
       if (!me.breathSaid || Date.now() - me.breathSaid > 10000) { me.breathSaid = Date.now(); log(`dragon: its breath ${Math.round(l)} blocks off: away`); }
