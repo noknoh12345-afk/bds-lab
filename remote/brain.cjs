@@ -861,6 +861,8 @@ async function dragonFight() {
     delegating = true; try { await holdPick();
       for (let t = 0; t < 40 && me.connected && !b.state().dead; t++) { const F = b.state().pos, x1 = Math.floor(F.x), z1 = Math.floor(F.z), y1 = Math.floor(F.y + 0.01), under = bname(x1, y1 - 1, z1);
         if (!/^(cobblestone|end_stone|dirt|netherrack|cobbled_deepslate|stone)$/.test(under) || (under === 'end_stone' && y1 <= 62)) break;
+        // (an apple on the way down at 14 or less: 02:57 on 20 Nov, killed by its breath digging down the cage pillar, no apple)
+        if (await gapple()) { await holdPick(); continue; }
         await gotoFor([String(x1), String(y1 - 1), String(z1)], 3000, 'dig');
         for (let w = 0; w < 15 && Math.floor(b.state().pos.y + 0.01) >= y1; w++) await sleep(100); }
     } finally { delegating = false; }
