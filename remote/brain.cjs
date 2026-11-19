@@ -874,11 +874,15 @@ async function dragonFight() {
         delegating = true; try {
           await b.act('stop', []).catch(() => {});
           for (let tries = 0; tries < 2 && feet() < by - 2 && me.connected && !b.state().dead && (me.hp ?? 0) >= 12 && cnt('cobblestone') + cnt('end_stone') >= by - feet(); tries++) {
-            if (tries) { log('dragon: uncage: up the shooting pillar once more'); if (Math.hypot(b.state().pos.x - tx - 0.5, b.state().pos.z - tz - 0.5) > 1) await gotoFor([String(tx), String(tz)], 6000); await b.act('stop', []).catch(() => {}); }
+            if (tries) { log('dragon: uncage: up the shooting pillar once more'); if (Math.hypot(b.state().pos.x - tx - 0.5, b.state().pos.z - tz - 0.5) > 1) await gotoFor([String(tx), String(tz)], 6000); await b.act('stop', []).catch(() => {});
+              // (09:44 on 19 Nov: knocked off, the second pillar went up wherever it stood - 1 out from the crystal - and its blast
+              //  killed us at the first arrow. Only from the spot nine out)
+              if (Math.hypot(b.state().pos.x - tx - 0.5, b.state().pos.z - tz - 0.5) > 1.2) { log(`dragon: uncage: not back on the shooting spot (${Math.round(b.state().pos.x)} ${Math.round(b.state().pos.z)} for ${tx} ${tz}): not again this time`); break; } }
             for (let t = 0, last = feet(); t < 8 && feet() < by - 1 && me.connected && !b.state().dead; t++) { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(Math.min(6, by - 1 - feet())), blockId()], 12000, 'pillar'); await b.act('sneak', ['off']).catch(() => {}); if (feet() === last && t > 1) break; if (feet() < last - 1) { log(`dragon: uncage: knocked off the pillar (${last} → ${feet()}): not again this time`); break; } last = feet(); }
           }
           // (shot only with the eyes level with the gap: 06:28, knocked down to 64 and six arrows sent from there into the bars)
           if (feet() < by - 3) { log(`dragon: uncage: not up to the gap (feet ${feet()}): from the ground on its line later`); }
+          else if (Math.hypot(c.x - b.state().pos.x, c.z - b.state().pos.z) < 6) { log(`dragon: uncage: ${Math.round(Math.hypot(c.x - b.state().pos.x, c.z - b.state().pos.z))} from the crystal: too near its blast to shoot`); }
           else {
           log(`dragon: uncage: on a pillar ${Math.round(Math.hypot(c.x - b.state().pos.x, c.z - b.state().pos.z))} out, eyes at ${(b.state().pos.y + 1.62).toFixed(1)}: shooting through the gap`);
           for (let n = 0; n < 6 && [...b.entities.values()].includes(c); n++) { await shootAt(c.x, c.y + 1, c.z, [1, 0.97, 1.03, 1, 0.94, 1.06][n]); for (let w = 0; w < 6 && [...b.entities.values()].includes(c); w++) await sleep(300); }
@@ -914,7 +918,11 @@ async function dragonFight() {
     const tx = bx - dx * 4.2, tz = bz - dz * 4.2;
     for (let t = 0; t < 3 && Math.hypot(b.state().pos.x - bx - 0.5, b.state().pos.z - bz - 0.5) < 4.0; t++) { if (t === 0) await dash(tx + 0.5, tz + 0.5, 1500); else await gotoFor([String(tx), String(tz)], 2500); }
     const Q = b.state().pos, fx = Math.floor(Q.x), fz = Math.floor(Q.z), fy = Math.floor(Q.y + 0.01), cx = fx + dx, cz = fz + dz;
-    if (bname(cx, fy, cz) === 'air' && !/^(air|\?)$/.test(bname(cx, fy - 1, cz)) && Math.hypot(cx - bx, cz - bz) > 0.5) { await gotoFor([], 1200, 'hold_' + blockId()); await b.act('useon', [String(cx), String(fy - 1), String(cz), 'up']).catch(() => {}); await sleep(250); }
+    // (the block between only where the line from the eyes to the bed's top still passes over it: 09:51 on 19 Nov, set at 3.2 off
+    //  and the bed 'not under the crosshair' twice - the line from the eyes ran into the block's far top edge)
+    const offB = Math.hypot(Q.x - bx - 0.5, Q.z - bz - 0.5), farEdge = Math.abs(dx ? (dx > 0 ? cx + 1 - Q.x : Q.x - cx) : (dz > 0 ? cz + 1 - Q.z : Q.z - cz)), eyeY = Q.y + 1.62, lineY = eyeY - ((eyeY - (by + 0.5625)) * farEdge) / (offB || 1), clears = lineY > fy + 1.08;
+    if (!clears) log(`dragon: no block between (the line to the bed would run into it: ${lineY.toFixed(2)} over its top at ${fy + 1})`);
+    if (clears && bname(cx, fy, cz) === 'air' && !/^(air|\?)$/.test(bname(cx, fy - 1, cz)) && Math.hypot(cx - bx, cz - bz) > 0.5) { await gotoFor([], 1200, 'hold_' + blockId()); await b.act('useon', [String(cx), String(fy - 1), String(cz), 'up']).catch(() => {}); await sleep(250); }
     const off = Math.hypot(Q.x - bx - 0.5, Q.z - bz - 0.5);
     log(`dragon: ${off < 3.1 ? 'not clicking' : 'clicking'} the bed from ${off.toFixed(1)} off${bname(cx, fy, cz) !== 'air' ? ', a block between' : ''}`);
     return off >= 3.1;   /* (12:57: 'from 0.2 off' - standing on it - and dead by it) */
