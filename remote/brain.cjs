@@ -1001,7 +1001,14 @@ async function dragonFight() {
         // (up to the island's height first: bridged at the platform's 49, it ran in under the island's edge at 68 and could not climb
         //  out - 01:35. Its top out there lies about 55-62)
         for (let t = 0; t < 6 && Math.floor(b.state().pos.y + 0.01) < 63; t++) { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(Math.min(6, 63 - Math.floor(b.state().pos.y + 0.01))), blockId()], 12000, 'pillar'); await b.act('sneak', ['off']).catch(() => {}); }
+        let bHp = me.hp;
         for (let t = 0; t < 60 && me.connected && !b.state().dead; t++) {
+          // (09:25-09:29 on 19 Nov in the lab: four silent minutes on the bridge, health down to 1 with nothing logged and no apple
+          //  eaten - the watches are off while delegating - then knocked off it into the void. Health said when it falls, and a
+          //  golden apple at 12 or less here too, sneaking so a knock does not carry us over the edge while we eat)
+          if (me.hp !== null && bHp !== null && me.hp < bHp - 0.5) log(`dragon: hurt on the bridge: ${bHp} → ${me.hp} at ${Math.round(b.state().pos.x)} ${Math.round(b.state().pos.y)} ${Math.round(b.state().pos.z)}`);
+          bHp = me.hp;
+          if (me.hp !== null && me.hp <= 12 && /minecraft:(enchanted_)?golden_apple\*/.test(b.invText?.() ?? '')) { const g = /minecraft:(enchanted_golden_apple|golden_apple)\*/.exec(b.invText?.() ?? '')[1]; log(`dragon: health ${me.hp} on the bridge: a ${g.replace(/_/g, ' ')}`); await b.act('sneak', ['on']).catch(() => {}); await gotoFor([g], 2600, 'eat'); bHp = me.hp; }
           if (process.env.BOT_DEBUG) { const C = b.state().pos; log(`dragon: dbg bridge ${t}: at ${C.x.toFixed(1)} ${C.y.toFixed(1)} ${C.z.toFixed(1)} on ${under()}`); }
           // (on to the edge of what is under us first, along the bridge's line, then a few blocks out)
           for (let w = 0; w < 6 && /^(obsidian|cobblestone|end_stone)$/.test(bname(Math.floor(b.state().pos.x) + ddx, Math.floor(b.state().pos.y + 0.01) - 1, Math.floor(b.state().pos.z) + ddz)); w++) await gotoFor([String(Math.floor(b.state().pos.x) + ddx), String(Math.floor(b.state().pos.z) + ddz)], 2000);
