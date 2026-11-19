@@ -940,7 +940,7 @@ async function dragonFight() {
     const isB = () => /(^|_)bed$/.test(bname(X, BY, Z)), side = dx > 0 ? 'west' : dx < 0 ? 'east' : dz > 0 ? 'north' : 'south';
     // (health read again at the click, not at the start of the try: 00:50 on 20 Nov, eighteen seconds of stands that did not go up
     //  between, then clicked uncovered from 4.4 and dead by it)
-    if ((me.hp ?? 0) < 18) { log(`dragon: health ${me.hp} at the click: the bed left for now`); return false; }
+    if ((me.hp ?? 0) < Number(process.env.BOT_BED_HP ?? 18.5) - 0.5) { log(`dragon: health ${me.hp} at the click: the bed left for now`); return false; }
     const eye = b.state().pos.y + 1.62, faces = eye > BY + 0.5625 + 0.25 ? ['up', side] : [side, 'up'];
     const said2 = []; const t2 = (l) => said2.push(l); ctx.taps.add(t2);
     // (both halves of it: 06:37 on 20 Nov in the lab, the side of the far half asked for and the crosshair on the near half - 'not under
@@ -1412,7 +1412,7 @@ async function dragonFight() {
     }
     // beds: one blows up when used in the End - set down by it while it sits, a step back, and clicked (a fifth of its health a bed,
     // the guides say; read back from its health here). BOT_NOBED to leave them
-    if (perched && dr && !process.env.BOT_NOBED && (me.hp ?? 0) >= 18.5 && Date.now() - bedAt > 600 && /\d+:minecraft:(\w+_)?bed\*/.test(b.invText?.() ?? '')) {
+    if (perched && dr && !process.env.BOT_NOBED && (me.hp ?? 0) >= Number(process.env.BOT_BED_HP ?? 18.5) && Date.now() - bedAt > 600 && /\d+:minecraft:(\w+_)?bed\*/.test(b.invText?.() ?? '')) {
       bedAt = Date.now(); const bar0 = bar(), me0 = me.hp, nb0 = bedsBlown; const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap);
       // (a bed try that blew nothing leaves the sword eight seconds before the next: 18:38-18:43 on 19 Nov, perch after perch in
       //  stands that did not go up and clicks that did not take, and hardly a swing - 0 to 3 hits a perch)
