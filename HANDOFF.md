@@ -1,4 +1,4 @@
-# HANDOFF（最終更新：2026-11-19 22:35 JST）
+# HANDOFF（最終更新：2026-11-20 01:35 JST）
 
 ## 1. 依頼（時系列）
 - ユーザーの統合版サーバー `dis.daggskog.org:19132`（1.26.60）で、ボット LabBot（リポジトリ noknoh12345-afk/bds-lab、ブランチ remote-bot、`remote/bot.cjs` + `remote/brain.cjs`）がエンダードラゴンを倒す。既に倒されていればエリトラを持ち帰る。その後はダイヤを掘り続ける。何か月かかっても止めない。
@@ -6,6 +6,7 @@
 - 2026-11-16「1はあり2は任せる3は倒されていない前提で。まずはプログラム書いて」：自然生成の構造物は使ってよい／スポーンの穴埋めは任せる／ドラゴンは生きている前提。
 - 11-17「完璧にするまで作って」「さらに」。11-18「検証を繰り返して使用制限くるまで続けて」「並行で一瞬で検証して」。
 - 11-18 20:05：止まらない規約と引き継ぎ zip の仕組み（汎用）を作る → `/mnt/user-data/outputs/agent-rules/` に作成・送付済み。
+- 11-19 22:47 ユーザーの選択（AskUserQuestion）：「ドラゴン戦の勝率をもっと固める」→ 実機は起動せず、中間装備でシリーズを回し続ける。
 - 11-19 15:05（原文）「使用制限が来るから別AIに途中までを渡せる完全zipを用意して」→ 15:10 に作成・送付。
 - 11-19 13:49（原文）「実機でアクセスして本番用のサバ本番用のクライアントに。ただし十分勝機をラボで見いだせるまでやらないで。使用制限まで続けて／あとコンピューターの操作を許可する。ターミナルも許可する。」→ 実機起動の基準：現実的な装備（Protection III・Feather Falling III・金リンゴ8・ベッド8）でラボ連続3本中2勝以上。満たしたら Mac のターミナルで `bash ~/test/bdsbot.sh`。Mac のブリッジは device_bash（VM、~/mnt/test が ~/test）。
 - 11-19 09:20（原文）「続き+githubにpushやその他の操作を許可する」→ push 許可。09:22 に remote-bot を push（a6aac3a..de83f2a）。
@@ -106,10 +107,14 @@
   - 21:35〜22:00 の修正：檻の柱が1段目以降で持ち場から外れたらその場で中止（4ca7502）、覆いのブロックが本当にないときは4.2未満からベッドを押さない・爆破で12以下になったらすぐ金リンゴ（d6198cb）、**格子を3本未満しか割れなかった檻は「開いた」扱いにしない／開いた檻のクリスタルは諦めない（b1277ce）**。
   - **22:32:37 中間装備で初勝利**（w2、b1277ce、Protection IV 鉄・Feather III・金リンゴ16・ベッド12・BOT_WAIT_R=18・BOT_WAIT_FAR=46）：2248 s、金リンゴ7、ベッド7、矢105、剣59、死亡0。ログ /mnt/user-data/outputs/ドラゴン討伐ログ_ラボ_中間装備_2026-11-19_2232.log。
   - 以降、b1277ce 以降のコードで連続3本中2勝を確かめる（実機起動の基準）。
+  - 22:43:35 **中間装備で2勝目**（w3、b1277ce）：2897 s、金リンゴ7、ベッド6、矢127、剣19。ログ /mnt/user-data/outputs/ドラゴン討伐ログ_ラボ_中間装備_2026-11-19_2243.log。b1277ce で 2戦2勝（同時に走った w1 は d6198cb で負け）。
+  - 22:57 環境が再起動（w1 は 25/200 まで削っていた）。00:27 から シリーズK。**remote/series.sh** で各ワーカーが自動で回り続ける（`nohup bash /tmp/series.sh n &`、毎回コードをコピーし、/tmp/par.txt に追記）。bench.sh は par.txt を消さないようにした。
+  - 00:50 以降の修正：ベッドは押す直前に体力18以上を確認（e930778、失敗した台に18秒使った後に体力不足で押して爆死）、穴（46〜48,48,-10〜-16）判定を「足が56未満の時間」に（7bb0af2、うろうろして13分）、**戦闘の上限が1時間のままだった**→3時間（BOT_FIGHT_MS、ドラゴン66で打ち切られた）。シリーズは DRAGON_MS=7200000 PAR_TIMEOUT=7500 に延長。
+  - 実機の自動進行（STEPS）に、ラボで勝った装備を追加：矢192、金リンゴ16（任意）、ベッド12（2d7b0c5）。**ダメージ軽減IVのエンチャントは工程にまだない**（enchant_item 動詞はある）。
 
 ## 7. 次の一手
 0. **再開時に最初にやること**：この環境（/home/claude）が別の機械なら、zip から復元（RESUME.md）→ `sh setup.sh`（BDS とツール。数分）→ `cp -a bds-lab bds-lab2; cp -a bds-lab bds-lab3` → `cp remote/par.sh remote/bench.sh /tmp/`。GitHub（noknoh12345-afk/bds-lab の remote-bot）は push 済みなので、clone でもよい（最新は push したコミット）。
-   - 3台同時（中間装備）：`export BOT_UNCAGE_PERCH=1 BOT_NOBURROW=1 BOT_NOHEALHOLE=1 LABTEST_ARRIVE=platform DRAGON_MS=5400000 PAR_TIMEOUT=5800 BOT_WAIT_R=18 LABTEST_PROT=4 LABTEST_GAPPLES=16 LABTEST_BEDS=12 LABTEST_FEATHER=3 BOT_WAIT_FAR=46; bash /tmp/bench.sh 3 1`。結果は /tmp/par.txt、ログは /tmp/labbotN/run/out.log（終わった回は /tmp/poutN-1.log）。勝てば out.log に `the exit portal is open`。
+   - 3台同時（中間装備）：`export BOT_UNCAGE_PERCH=1 BOT_NOBURROW=1 BOT_NOHEALHOLE=1 LABTEST_ARRIVE=platform DRAGON_MS=5400000 PAR_TIMEOUT=5800 BOT_WAIT_R=18 LABTEST_PROT=4 LABTEST_GAPPLES=16 LABTEST_BEDS=12 LABTEST_FEATHER=3 BOT_WAIT_FAR=46; for n in 1 2 3; do nohup bash /tmp/series.sh $n & done`（DRAGON_MS=7200000 PAR_TIMEOUT=7500 も export）。結果は /tmp/par.txt、ログは /tmp/labbotN/run/out.log（終わった回は /tmp/poutN-1.log）。勝てば out.log に `the exit portal is open`。
    - 着地ごとの成績は out.log の `perch over:` 行（5秒未満はちらつきなので無視）。
    - 実機起動の基準（ユーザー指示 13:49）：ラボで十分な勝機（目安：実機で揃えられる装備で連続3本中2勝）。満たしたら Mac のターミナルで `bash ~/test/bdsbot.sh`（ユーザーがコンピューター操作・ターミナルを許可済み。ただし computer use はターミナルに文字入力できない制限がある。だめならユーザーに頼む）。Mac のブリッジは device_bash（VM の中、~/mnt/test が Mac の ~/test）。実機ボットは 11/16 16:03 から停止中。
 1. 90分バッチ：`export BOT_UNCAGE_PERCH=1 BOT_NOBURROW=1 BOT_NOHEALHOLE=1 LABTEST_PROT=4 LABTEST_GAPPLES=32 LABTEST_ARRIVE=platform DRAGON_MS=5400000 PAR_TIMEOUT=5800; bash /tmp/bench.sh 3 1`。討伐（ログに `exit portal`）を確認する。
