@@ -948,6 +948,9 @@ async function dragonFight() {
     if (clears && bname(cx, fy, cz) === 'air' && !/^(air|\?)$/.test(bname(cx, fy - 1, cz)) && Math.hypot(cx - bx, cz - bz) > 0.5) { await gotoFor([], 1200, 'hold_' + blockId()); await b.act('useon', [String(cx), String(fy - 1), String(cz), 'up']).catch(() => {}); await sleep(250); }
     const off = Math.hypot(Q.x - bx - 0.5, Q.z - bz - 0.5);
     log(`dragon: ${off < 3.1 ? 'not clicking' : 'clicking'} the bed from ${off.toFixed(1)} off${bname(cx, fy, cz) !== 'air' ? ', a block between' : ''}`);
+    // (no block between and under 4.2 off: not clicked - 18:39 on 19 Nov, 3.1 off with nothing between, 19 → 3.8 by our own bed and
+    //  dead a few seconds later)
+    if (!clears && off < 4.2) { log(`dragon: not clicking the bed from ${off.toFixed(1)} off with nothing between`); return false; }
     return off >= 3.1;   /* (12:57: 'from 0.2 off' - standing on it - and dead by it) */
   }
   // (how deep: 17:58 in the lab, three deep and sealed with end stone, killed by the dragon's own body flying low over it)
@@ -1369,7 +1372,10 @@ async function dragonFight() {
     // beds: one blows up when used in the End - set down by it while it sits, a step back, and clicked (a fifth of its health a bed,
     // the guides say; read back from its health here). BOT_NOBED to leave them
     if (perched && dr && !process.env.BOT_NOBED && (me.hp ?? 0) >= 18.5 && Date.now() - bedAt > 600 && /\d+:minecraft:(\w+_)?bed\*/.test(b.invText?.() ?? '')) {
-      bedAt = Date.now(); const bar0 = bar(), me0 = me.hp; const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap);
+      bedAt = Date.now(); const bar0 = bar(), me0 = me.hp, nb0 = bedsBlown; const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap);
+      // (a bed try that blew nothing leaves the sword eight seconds before the next: 18:38-18:43 on 19 Nov, perch after perch in
+      //  stands that did not go up and clicks that did not take, and hardly a swing - 0 to 3 hits a perch)
+      try {
       try {
         // (where a bed can go: just outside its box, to the side of its head, about 9 from its middle - beds set inside its box are
         //  refused by the server; of 40 tries 21:00-21:10 only those 6+ off went down, and the one at 7 off toward its head took 52)
@@ -1417,6 +1423,7 @@ async function dragonFight() {
           bedsBlown++; log(`dragon: a bed blown at ${X} ${BY} ${Z}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}${isBed(X, BY, Z) ? ' (the bed still stands: not clicked?)' : ''}`, { dc: true });
         } else log(`dragon: no bed set down at ${X} ${BY} ${Z} (${bname(X, BY, Z)}): ${said.filter((l) => /bed|put/.test(l)).slice(-1)[0] ?? '?'}`);
       } finally { ctx.taps.delete(tap); }
+      } finally { if (bedsBlown === nb0) bedAt = Math.max(bedAt, Date.now() + 7400); }
       continue; }
     if (perched && dr && process.env.BOT_SWORD_MAX && perchRec && hits - perchRec.hits >= Number(process.env.BOT_SWORD_MAX)) { await sleep(300); continue; }
     if (perched && dr) { await armUp(b); let miss = false; const mt = (l) => { if (/not under the crosshair|no .* in (view|reach)/.test(l)) miss = true; }; ctx.taps.add(mt); if (CRIT) { await b.act('jump', ['on']).catch(() => {}); await sleep(100); await b.act('jump', ['off']).catch(() => {}); await sleep(330); } await b.act('attack', ['ender_dragon']).catch(() => {}); ctx.taps.delete(mt); if (!miss) { hits++; if (hits % 10 === 1) log(`dragon: the sword is on it (${hits}) · its health ${bar()}`); } await sleep(200); continue; }
