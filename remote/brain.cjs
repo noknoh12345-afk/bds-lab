@@ -1100,7 +1100,9 @@ async function dragonFight() {
     // (stuck down below the island's top: 10:24-10:45 on 19 Nov in the lab, knocked down to 46 48 -15 beside the island's flank and
     //  twenty minutes there - 'no way ... waiting' - with its bar at 137 and full health. Not moved 2 blocks in 60 s and the feet
     //  under 56: a pillar of our blocks up to 60, sneaking, then on)
-    if (!stuckAt || Math.hypot(P.x - stuckAt.x, P.z - stuckAt.z) > 2 || Math.abs(P.y - stuckAt.y) > 2) stuckAt = { x: P.x, y: P.y, z: P.z, t: Date.now() };
+    // (low counts, not only still: 00:56-01:09 on 20 Nov, thirteen minutes in the pit at 46-48 48 -10..-16, pacing six blocks to and
+    //  fro, so never 'still' - the clock runs while the feet stay under 56 and only resets above it)
+    if (!stuckAt || Math.floor(P.y + 0.01) >= 56 || Math.abs(P.y - stuckAt.y) > 3) stuckAt = { x: P.x, y: P.y, z: P.z, t: Date.now() };
     else if (Date.now() - stuckAt.t > 60000 && Math.floor(P.y + 0.01) < 56 && !perchedNow() && cnt(blockId()) >= 4) {
       const y0 = Math.floor(P.y + 0.01), up = Math.min(6, 60 - y0); log(`dragon: stuck at ${Math.round(P.x)} ${y0} ${Math.round(P.z)} for ${Math.round((Date.now() - stuckAt.t) / 1000)} s: ${up} up on a pillar`, { dc: true });
       delegating = true; try { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(up), blockId()], 12000, 'pillar'); } finally { await b.act('sneak', ['off']).catch(() => {}); delegating = false; }
