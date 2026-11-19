@@ -596,9 +596,11 @@ const STEPS = [
   { name: 'food (enough for the trip, any kind)', cmds: ['get_cooked_beef 6', 'get_cooked_porkchop 6', 'get_cooked_mutton 6', 'get_cooked_chicken 6', 'get_bread 6'], food: 8, optional: true },
   { name: 'flint and steel', cmds: ['get_flint_and_steel'], has: ['flint_and_steel'] },
   { name: 'iron: the rest of the armour', cmds: ['get_iron_helmet', 'get_iron_leggings', 'get_iron_boots', 'armor_up'], optional: true },
-  { name: 'a bow and arrows (the crystals on the pillars)', cmds: ['get_bow', 'get_arrow 64'], has: ['bow', 'arrow'] },
+  { name: 'a bow and arrows (the crystals on the pillars, the cages, its last points: 105-127 used in the lab wins)', cmds: ['get_bow', 'get_arrow 192'], has: ['bow', 'arrow'] },
+  // (golden apples: the lab's wins on the real terms ate 7 and 19 - without them its breath wins in 10-20 minutes. 16 wanted, as many as there are)
+  { name: 'golden apples (its breath)', cmds: ['get_golden_apple 16'], has: ['golden_apple'], optional: true },
   { name: 'eyes of ender (the Nether: blaze rods; pearls)', cmds: ['get_ender_eye 12'], has: ['ender_eye'] },
-  { name: 'beds for the dragon', cmds: ['get_white_bed 4'], optional: true },
+  { name: 'beds for the dragon (6 and 7 blown in the lab wins)', cmds: ['get_bed 12'], optional: true },
   { name: 'out of the chest: everything for the way to the end', special: 'unstash', optional: true },
   { name: 'blocks for the End (pillars, a seal over a hole, stands for beds)', cmds: ['get_cobblestone 256'], has: ['cobblestone'], optional: true },
   { name: 'a carved pumpkin (the endermen in the End: looked at, they stay calm)', cmds: ['get_carved_pumpkin'], has: ['carved_pumpkin'], optional: true },
