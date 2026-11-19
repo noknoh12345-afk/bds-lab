@@ -950,7 +950,8 @@ async function dragonFight() {
     log(`dragon: ${off < 3.1 ? 'not clicking' : 'clicking'} the bed from ${off.toFixed(1)} off${bname(cx, fy, cz) !== 'air' ? ', a block between' : ''}`);
     // (no block between and under 4.2 off: not clicked - 18:39 on 19 Nov, 3.1 off with nothing between, 19 → 3.8 by our own bed and
     //  dead a few seconds later)
-    if (!clears && off < 4.2) { log(`dragon: not clicking the bed from ${off.toFixed(1)} off with nothing between`); return false; }
+    // (and nothing between for any reason - the cell taken, the click refused: 21:40, 3.7 off and uncovered, 20 → 5.8, dead 14 s on)
+    if ((!clears || bname(cx, fy, cz) === 'air') && off < 4.2) { log(`dragon: not clicking the bed from ${off.toFixed(1)} off with nothing between`); return false; }
     return off >= 3.1;   /* (12:57: 'from 0.2 off' - standing on it - and dead by it) */
   }
   // (how deep: 17:58 in the lab, three deep and sealed with end stone, killed by the dragon's own body flying low over it)
@@ -1418,7 +1419,7 @@ async function dragonFight() {
             if (!/(^|_)bed$/.test(bname(cs[0][0], fy + H, cs[0][1]))) { log(`dragon: no bed on the stand ${H} high (${ddir})`); continue; }
             if (!(await backOff(cs[0][0], fy + H, cs[0][1], ddx, ddz))) { done = true; break; }
             await bedClick(cs[0][0], fy + H, cs[0][1], ddx, ddz);
-            bedsBlown++; log(`dragon: a bed on a stand ${H} high blown at ${cs[0][0]} ${fy + H} ${cs[0][1]}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}`, { dc: true }); done = true;
+            bedsBlown++; log(`dragon: a bed on a stand ${H} high blown at ${cs[0][0]} ${fy + H} ${cs[0][1]}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}`, { dc: true }); if ((me.hp ?? 20) <= 12) { gappleAt = 0; await gapple(); } done = true;
           }
           if (done) continue;
         }
@@ -1435,7 +1436,7 @@ async function dragonFight() {
           if (!(await backOff(X, BY, Z, dx, dz))) continue;
           // (once more when it still stands: 07:25, 'not clicked?' and the bed left there for the next perch)
           await bedClick(X, BY, Z, dx, dz);
-          bedsBlown++; log(`dragon: a bed blown at ${X} ${BY} ${Z}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}${isBed(X, BY, Z) ? ' (the bed still stands: not clicked?)' : ''}`, { dc: true });
+          bedsBlown++; log(`dragon: a bed blown at ${X} ${BY} ${Z}: its bar ${bar0} → ${bar()}, mine ${me0} → ${me.hp}${isBed(X, BY, Z) ? ' (the bed still stands: not clicked?)' : ''}`, { dc: true }); if ((me.hp ?? 20) <= 12) { gappleAt = 0; await gapple(); }
         } else log(`dragon: no bed set down at ${X} ${BY} ${Z} (${bname(X, BY, Z)}): ${said.filter((l) => /bed|put/.test(l)).slice(-1)[0] ?? '?'}`);
       } finally { ctx.taps.delete(tap); }
       } finally { if (bedsBlown === nb0) bedAt = Math.max(bedAt, Date.now() + 7400); }
