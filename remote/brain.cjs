@@ -548,6 +548,13 @@ function dropAhead(b, P, yaw) {
 }
 function safeYaw(b, P, yaw) { for (const d of [0, 45, -45, 90, -90, 135, -135, 180]) if (!dropAhead(b, P, yaw + d)) return yaw + d; return yaw; }
 async function breakAway(b, foes) {
+  // under the ground: no running through the caves (11/20 the lab's deep mine: 'doing nothing' between two steps, the brain ran from a
+  // zombie and a skeleton through the dark - dead at y 23, twice) - shut in where it stands, the goal's shelter (a wall, a lid)
+  if (me.dim === 'overworld' && !openSky(b, b.state().pos) && b.state().pos.y < 55) {
+    log(`fight: under the ground - shutting myself in from ${foes.length} (${foes.map((f) => f.e.type.replace('minecraft:', '')).join(' ')})`);
+    const t = setTimeout(() => b.cancel?.(), 60000); try { await b.act('shelter', []).catch(() => {}); } finally { clearTimeout(t); }
+    return;
+  }
   const P = b.state().pos; let ax = 0, az = 0; for (const f of [...new Map([...foes, ...hostilesAll(b, 12)].map((f) => [f.e, f])).values()]) { const w = 1 / Math.max(1, f.d * f.d); ax += (P.x - f.e.x) * w; az += (P.z - f.e.z) * w; }   // (the near ones count most: out through the gap)
   const yaw = safeYaw(b, P, (Math.atan2(-ax, az) * 180) / Math.PI);
   log(`fight: ${me.armed ? `health ${me.hp}` : 'unarmed'}: breaking away from ${foes.length} (${foes.map((f) => f.e.type.replace('minecraft:', '')).join(' ')})`);
