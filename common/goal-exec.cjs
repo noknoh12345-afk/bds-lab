@@ -2454,7 +2454,13 @@ function goalVerbs(K, H) {
   // to the portal room's frames, each filled with an eye, then into the portal
   async function intoEndPortal(fr, maxSec = 600) {
     const t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
-    await travel((x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z) <= 3.5, (x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z), { radius: 200, dig: true, pillar: true, legs: 40 });
+    // (back to the frames from wherever the room was: tried again closer in when the long way stopped short - 11/20 from the library's
+    //  gallery '0 frames within 12' and no End)
+    for (let k = 0; k < 4 && !K.dead(); k++) {
+      const g = K.feet(); if (hyp(g.x - fr.x, g.y - fr.y, g.z - fr.z) <= 6) break;
+      await travel((x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z) <= 3.5, (x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z), k ? { radius: 64, dig: true, pillar: true, legs: 12, nodes: 30000 } : { radius: 200, dig: true, pillar: true, legs: 40 });
+      const h = K.feet(); if (hyp(h.x - fr.x, h.y - fr.y, h.z - fr.z) > 6) log(`stronghold: still ${Math.round(hyp(h.x - fr.x, h.y - fr.y, h.z - fr.z))} from the frames at ${fr.x} ${fr.y} ${fr.z} (from ${Math.floor(h.x)} ${Math.floor(h.y)} ${Math.floor(h.z)})`);
+    }
     const frames = () => K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 12, radius: 12, from: K.feet() });
     { const fs = frames(); log(`stronghold: ${fs.length} frames within 12, ${fs.filter(({ x, y, z }) => { const st = B(x, y, z)?.states ?? {}; return st.end_portal_eye_bit === 1 || st.end_portal_eye_bit === true; }).length} with an eye; ${cnt('ender_eye')} eyes carried; states ${JSON.stringify(fs[0] && B(fs[0].x, fs[0].y, fs[0].z)?.states)}`); }
     // (passes until none is empty: one click of twelve did not take - 'the portal did not open (1 frames empty)')
