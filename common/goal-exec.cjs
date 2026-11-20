@@ -394,9 +394,12 @@ function goalVerbs(K, H) {
   const goodSword = () => SWORDS.slice(0, 7).some((x) => cnt(x) > 0);
   // the monsters within r (not an enderman: left alone it leaves you alone), nearest first; ones far above or below (a cave under
   // the feet, a cliff top) are not counted
+  // (one fought for seconds without a blow - a silverfish in the stronghold's wall - is not fought again for a minute: 11/20 the lab
+  //  stood in the library 25 minutes, 'broken off after 0 blows in 24 s' 54 times over the same one)
+  const foeUnreach = new WeakMap();
   function foesNear(r = 16) {
     const f = K.feet();
-    return K.all().filter((e) => HOSTILE.test(e.type) && !/enderman/.test(e.type) && !e.gone).map((e) => ({ e, d: hyp(e.x - f.x, e.y - f.y, e.z - f.z) })).filter((q) => q.d < r && Math.abs(q.e.y - f.y) < 7).sort((p, q) => p.d - q.d);
+    return K.all().filter((e) => HOSTILE.test(e.type) && !/enderman/.test(e.type) && !e.gone && !(gnow() - (foeUnreach.get(e) ?? -1e9) < 60000)).map((e) => ({ e, d: hyp(e.x - f.x, e.y - f.y, e.z - f.z) })).filter((q) => q.d < r && Math.abs(q.e.y - f.y) < 7).sort((p, q) => p.d - q.d);
   }
   const sees = (e) => { const x = eye(); return clear3(x.x, x.y, x.z, Math.floor(e.x), Math.floor(e.y + 1.4), Math.floor(e.z)); };
   // what to do about them now: null (carry on), { act: 'fight' } (here, and a fight worth taking), { act: 'evade', why } (out of
@@ -1940,6 +1943,7 @@ function goalVerbs(K, H) {
       await K.ticks(1);
     }
     stopKeys();
+    if (K.all().includes(e) && !hits && (Number(K.tick()) - t0) > 60) foeUnreach.set(e, gnow());   // (no blow in 3+ s and still there: out of reach - in a wall, behind bars; let be for a minute)
     if (process.env.LAB_GOAL_DEBUG) log(`fight ${sh(e.type)}: ${K.all().includes(e) ? 'broken off' : 'dead'} after ${hits} blows in ${((Number(K.tick()) - t0) / 20).toFixed(1)} s, ${hurtBy ? `lost ${hurtBy.toFixed(1)} health` : 'not touched'}`);
     return !K.all().includes(e);
   }
