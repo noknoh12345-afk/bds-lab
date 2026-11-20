@@ -532,9 +532,19 @@ async function armUp(b) {
   lastHeld = w ?? '';
   if (w && !new RegExp(`\\d+:minecraft:${w}\\*\\d+[^|]*\\(holding slot`).test(inv)) await b.act('hold_' + w, []).catch(() => {});
 }
+// a run that goes over an edge: a drop of 4+ within six blocks that way (a second of sprinting) (11/20 the lab's spawn ravine: away from a creeper and down
+// thirty blocks, twice - 'death.fell.accident.generic' at full health)
+function dropAhead(b, P, yaw) {
+  const r = (yaw * Math.PI) / 180;
+  for (let d = 1; d <= 6; d++) { const x = Math.floor(P.x - Math.sin(r) * d), z = Math.floor(P.z + Math.cos(r) * d); let drop = 0;
+    for (let y = Math.floor(P.y) - 1; y > Math.floor(P.y) - 9; y--) { const n = b.world.block(x, y, z)?.name; if (n === undefined || !/^minecraft:(air|cave_air|short_grass|tall_grass|fern)$/.test(n)) break; drop++; }
+    if (drop >= 4) return true; }
+  return false;
+}
+function safeYaw(b, P, yaw) { for (const d of [0, 45, -45, 90, -90, 135, -135, 180]) if (!dropAhead(b, P, yaw + d)) return yaw + d; return yaw; }
 async function breakAway(b, foes) {
   const P = b.state().pos; let ax = 0, az = 0; for (const f of [...new Map([...foes, ...hostilesAll(b, 12)].map((f) => [f.e, f])).values()]) { const w = 1 / Math.max(1, f.d * f.d); ax += (P.x - f.e.x) * w; az += (P.z - f.e.z) * w; }   // (the near ones count most: out through the gap)
-  const yaw = (Math.atan2(-ax, az) * 180) / Math.PI;
+  const yaw = safeYaw(b, P, (Math.atan2(-ax, az) * 180) / Math.PI);
   log(`fight: ${me.armed ? `health ${me.hp}` : 'unarmed'}: breaking away from ${foes.length} (${foes.map((f) => f.e.type.replace('minecraft:', '')).join(' ')})`);
   // in water (a drowned's home): looking level and sprinting barely moves; head up and swim (jump) away, toward air
   const wet = /water/.test(b.world.block(Math.floor(P.x), Math.floor(P.y), Math.floor(P.z))?.name ?? '') || /water/.test(b.world.block(Math.floor(P.x), Math.floor(P.y) + 1, Math.floor(P.z))?.name ?? '');
@@ -550,7 +560,7 @@ async function breakAway(b, foes) {
     await sleep(1000);
     const near = hostilesAll(b, lone ? 10 : 16); if (!near.length) { clear = true; break; }
     const Q = b.state().pos; let bx = 0, bz = 0; for (const f of near) { const w = 1 / Math.max(1, f.d * f.d); bx += (Q.x - f.e.x) * w; bz += (Q.z - f.e.z) * w; }
-    await b.act('look', [((Math.atan2(-bx, bz) * 180) / Math.PI).toFixed(0), wet ? '-35' : '0']).catch(() => {});
+    await b.act('look', [safeYaw(b, Q, (Math.atan2(-bx, bz) * 180) / Math.PI).toFixed(0), wet ? '-35' : '0']).catch(() => {});
     if (wet || t % 2) await b.act('jump', []).catch(() => {});
   }
   await b.act('sprint', ['off']).catch(() => {});
