@@ -2279,7 +2279,11 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const total = plan.r.out.count * times;
         const usedUp = new Map();
         for (const c of plan.cells) for (const u of c.src) usedUp.set(u.i, (usedUp.get(u.i) ?? 0) + u.n);
-        let free = [...Array(36).keys()].find((i) => !inv.slots[i]?.network_id || usedUp.get(i) === inv.slots[i].count);
+        // (onto a stack of the same kind with room, as the game's own crafting screen does: 11/20 fifteen bookshelves crafted one at a time
+        //  took ten slots, the bag was full and the planks for the shovels could not be made)
+        const STACKS = /(_planks|bookshelf|stick|^minecraft:book|paper|torch|cobblestone|_slab|_stairs|_ingot|_nugget|_block|_wool|_carpet|glass|bread|ender_eye|blaze_powder|_dye|bone_meal|arrow|_log|sugar|lapis_lazuli|crafting_table|furnace|chest)$/;
+        const same = STACKS.test(want) ? [...Array(36).keys()].find((i) => inv.slots[i]?.network_id && itemNames.get(inv.slots[i].network_id) === want && !usedUp.has(i) && inv.slots[i].count + plan.r.out.count * times <= 64) : undefined;
+        let free = same ?? [...Array(36).keys()].find((i) => !inv.slots[i]?.network_id || usedUp.get(i) === inv.slots[i].count);
         if (free === undefined) return say('craft: inventory full');
         let opened = false;
         if (!table) {
@@ -2315,7 +2319,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           { type_id: 'results_deprecated', legacy_type_id: LEGACY.results_deprecated, result_items: [resultsLegacy ? o : { type: 'name', legacy_type: 1, name: want, metadata: o.metadata ?? 0, count: o.count, block_runtime_id: o.block_runtime_id ?? 0, extra: { has_nbt: 0, can_place_on: [], can_destroy: [] } }], times_crafted: times },
           ...plan.cells.map((c) => ({ type_id: 'consume', legacy_type_id: LEGACY.consume, count: c.n, source: { slot_type: { container_id: 'crafting_input' }, slot: c.cell, stack_id: ids.get(c.cell) ?? 0 } })),
           ...(left ? [{ type_id: 'create', legacy_type_id: LEGACY.create, result_slot_id: 0 }] : []),
-          { type_id: 'place', legacy_type_id: LEGACY.place, count: total, source: outSrc, destination: slotInfo('hotbar_and_inventory', free, null) },
+          { type_id: 'place', legacy_type_id: LEGACY.place, count: total, source: outSrc, destination: slotInfo('hotbar_and_inventory', free, same !== undefined ? inv.slots[free] : null) },
           ...(left ? [{ type_id: 'create', legacy_type_id: LEGACY.create, result_slot_id: 1 }, ...leftovers] : []),
         ]);
         const st = await r2;
