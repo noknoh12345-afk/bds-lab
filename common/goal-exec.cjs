@@ -2168,10 +2168,12 @@ function goalVerbs(K, H) {
         if (ok) return { x: bx, y: by, z: bz };
         dir += 1.2; continue;
       }
-      const tx = f.x + Math.cos(dir) * 48, tz = f.z + Math.sin(dir) * 48;
+      // (long straight legs, a quarter turn after each: the bricks are seen out to the view distance either side, so a straight line sweeps
+      //  a wide band - short random legs went round in the same few chunks)
+      const tx = f.x + Math.cos(dir) * 150, tz = f.z + Math.sin(dir) * 150;
       if (dbg) log(`nether: no fortress in sight at ${f.x.toFixed(0)} ${f.y.toFixed(0)} ${f.z.toFixed(0)}: a leg toward ${tx.toFixed(0)} ${tz.toFixed(0)}`);
-      await tunnelTo(tx, tz, 64, 4);
-      const g = K.feet(); if (hyp(g.x - f.x, g.z - f.z) < 12) dir += 0.9;   // (blocked that way: turned)
+      await tunnelTo(tx, tz, 180, 4);
+      const g = K.feet(); dir += hyp(g.x - f.x, g.z - f.z) < 12 ? 0.9 : Math.PI / 2;   // (blocked that way: turned a little; else the quarter turn)
     }
     return null;
   }
@@ -3082,6 +3084,16 @@ function goalVerbs(K, H) {
     }
     return null;
   }
+  async function makePortalSite() {
+    const [fx, fy, fz] = feet(), x0 = fx - 1, z0 = fz - 2, y0 = fy;   // the frame along x, the player at its stand (two out, in front)
+    const cols = []; for (let u = -1; u <= 2; u++) cols.push([x0 + u, z0]); cols.push([fx, fz], [fx, fz - 1]);
+    for (const [cx, cz] of cols) for (let h = -1; h <= 4; h++) if (fAt(cx, y0 + h, cz) & (F_WET | F_UNBREAK)) { log(`portal: no place here (${sh(bname(cx, y0 + h, cz))} at ${cx} ${y0 + h} ${cz})`); return null; }
+    for (const [cx, cz] of cols) for (let h = 4; h >= 0; h--) if (solid(B(cx, y0 + h, cz)) && !(cx === fx && cz === fz && h <= 1)) await breakAt(cx, y0 + h, cz);
+    for (const [cx, cz] of cols) if (!(fAt(cx, y0 - 1, cz) & F_SOLID)) await fillCell([cx, y0 - 1, cz]);
+    const ok = cols.every(([cx, cz]) => (fAt(cx, y0 - 1, cz) & F_SOLID) && [0, 1, 2, 3, 4].every((h) => (cx === fx && cz === fz && h <= 1) || !solid(B(cx, y0 + h, cz))));
+    log(`portal: a place made at ${x0} ${y0} ${z0}: ${ok ? 'ready' : 'not clear'}`);
+    return ok ? [x0, y0, z0, 'x'] : null;
+  }
   // a free cell with a floor, in reach and in plain view, not where the player stands: where a block can be set down
   const REPLACEABLE = /^minecraft:(air|cave_air|void_air|short_grass|tall_grass|fern|large_fern|snow_layer|deadbush|short_dry_grass|tall_dry_grass|seagrass|leaf_litter|vine|glow_lichen)$/;
   const CLICKY = /chest|barrel|shulker_box|furnace|smoker|crafting_table|door|trapdoor|fence_gate|bed$|lectern|anvil|enchanting_table|brewing_stand|hopper|dispenser|dropper|loom|grindstone|cartography|smithing|stonecutter|beacon|jukebox|noteblock|lever|button|cake|composter|campfire|bell|vault|crafter|decorated_pot/;
@@ -3590,6 +3602,9 @@ function goalVerbs(K, H) {
           const [fx, , fz] = feet(), a2 = (k * Math.PI) / 3, tx = fx + Math.round(Math.cos(a2) * 14), tz = fz + Math.round(Math.sin(a2) * 14);
           await travel((q, w, e) => hyp(q - tx, e - tz) <= 3, (q, w, e) => hyp(q - tx, e - tz), { radius: 32, legs: 2 }); site = portalSite();
         }
+        // (still none: made here - the frame's cells and the stand dug clear, the floor filled where it is missing; 11/20 at the lab's
+        //  2400 -2400 nothing flat within reach)
+        if (!site) site = await makePortalSite();
         if (!site) return 'no flat open place for a portal';
         K.memo.set('goal:portalSite', site);
         log(`building the portal at ${site.slice(0, 3).join(' ')}${inFrame ? ` (${inFrame} of its obsidian set before)` : ''}`);

@@ -500,6 +500,22 @@ const KIT = [['Protection IV on all four', () => allProt4()], ['golden apples 8'
   ['food 32', () => n(/^(cooked_\w+|bread|baked_potato|golden_carrot)$/) >= 32], ['eyes of ender 12', () => n(/^ender_eye$/) >= 12]];
 const kitMissing = () => KIT.filter(([, f]) => !f()).map(([k]) => k);
 B.road_kit = () => stepRun('road_kit', async () => { const m = kitMissing(); return m.length ? `still missing: ${m.join(', ')}` : true; });
+// ---------- room in the bag: junk dropped when the inventory is nearly full (11/20 a miner with 580 cobbled deepslate could not craft
+// a table: 'inventory full', and its golden apple step ended there after 27 minutes) ----------
+const KEEP = { cobblestone: 320, cobbled_deepslate: 64, netherrack: 64, blackstone: 32, gravel: 16, dirt: 16, sand: 0, diorite: 0, andesite: 0, granite: 0, tuff: 0, calcite: 0, basalt: 0, smooth_basalt: 0, deepslate: 0, rotten_flesh: 0, spider_eye: 0, poisonous_potato: 0, wheat_seeds: 0, pumpkin_seeds: 0, beetroot_seeds: 0, cobweb: 0, flint_and_steel_broken: 0, bone: 8, arrow_stuck: 0, red_sand: 0, terracotta: 0, magma: 0, soul_sand: 0, soul_soil: 0, moss_block: 0, clay_ball: 0, kelp: 0, ink_sac: 0, gold_nugget: 999, egg: 0, mud: 0, stick: 64 };
+async function tidy() {
+  const k = K(); if (!k || !me.connected || k.screen()) return;
+  const free = () => slots().filter((it, i) => i < 36 && !it?.network_id).length;
+  if (free() >= 4) return;
+  const byKind = new Map(); slots().forEach((it, i) => { if (i >= 36 || !it?.network_id) return; const nmx = nameOf(it); if (!(nmx in KEEP)) return; (byKind.get(nmx) ?? byKind.set(nmx, []).get(nmx)).push({ i, c: it.count }); });
+  for (const [nmx, list] of [...byKind].sort((a, b) => b[1].reduce((s, x) => s + x.c, 0) - a[1].reduce((s, x) => s + x.c, 0))) {
+    let total = list.reduce((s, x) => s + x.c, 0); const keep = KEEP[nmx];
+    for (const x of list.sort((a, b) => a.c - b.c)) { if (total - x.c < keep || free() >= 6) break; await act('drop_all', [x.i]); total -= x.c; await sleep(150); }
+    if (free() >= 6) break;
+  }
+}
+if (me.roadTidy) clearInterval(me.roadTidy);
+me.roadTidy = setInterval(() => { if (!tidy.busy) { tidy.busy = true; tidy().catch(() => {}).finally(() => { tidy.busy = false; }); } }, 15000);
 B.road_debug = async (a) => { debug = a[0] !== 'off'; log(`road_debug ${debug ? 'on' : 'off'}`); };
 B.road_status = async () => log(`road_status: ${JSON.stringify(st)} · armour ${armourText()} · level ${level()}`);
 

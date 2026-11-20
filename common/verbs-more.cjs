@@ -1184,6 +1184,8 @@ function moreVerbs(K, H) {
       const rise = async () => { await K.sync(); if (!has(filler)) return false; const y0 = K.feet().y; await V.pillar(['1', filler]); await K.ticks(4); if (K.feet().y > y0 + 0.5) { up++; return true; } return false; };
       let ok = true;
       try {
+        // (grass and flowers in the frame and in front of it first: the crosshair rests on them - 11/20 on plains, 'on short_grass', 0 set)
+        for (let u = -1; u <= 2; u++) for (const off of [0, 1]) for (let h = 0; h <= 4; h++) { const c = [x + ax[0] * u + per[0] * off, y + h, z + ax[1] * u + per[1] * off], b = blockAt(...c); if (b && !isAir(b) && !solid(b) && !/water|lava/.test(b.name)) { await K.act('dig', c.map(S)); await K.ticks(2); } }
         for (const [item, u] of [[filler, -1], [filler, 2], ['obsidian', 0], ['obsidian', 1]]) ok = ok && await put(item, u, 0);
         for (let h = 1; h <= 3 && ok; h++) {
           if (h >= 2 && !(await rise())) { say('nether_portal', `could not get up a block to set row ${h}`); ok = false; break; }

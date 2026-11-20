@@ -496,7 +496,9 @@ const WEAPONS = ['netherite_sword', 'diamond_sword', 'iron_sword', 'stone_sword'
 let fighting = false, lastWeaponCheck = 0;
 // armed or not, from the inventory every 15 s and at once after a death (nothing is carried after one)
 me.armed = me.armed ?? false;
-timers.push(setInterval(async () => { const b = me.bot; if (!b || !me.connected || fighting) return; const inv = await invList(b); me.armed = WEAPONS.some((w) => inv.includes('minecraft:' + w + '*')); me.armored = /_chestplate\*/.test(inv); }, 15000));
+timers.push(setInterval(async () => { const b = me.bot; if (!b || !me.connected || fighting) return; const inv = await invList(b); me.armed = WEAPONS.some((w) => inv.includes('minecraft:' + w + '*')); me.armored = /_chestplate\*/.test(inv) || wornChest(); }, 15000));
+// (a chestplate worn is not in the inventory's list: 11/20 the lab's bot in full iron dug in for every night, 'night and no armour')
+function wornChest() { const k = me.bot?.K, it = k?.inv?.armor?.[1]; return !!it?.network_id && /chestplate/.test(String(k.itemNames.get(it.network_id) ?? '')); }
 ctx.taps.add(deathArmTap);
 function deathArmTap(l) { if (/ died \(/.test(l)) me.armed = false; }
 // in sight: nothing solid on the straight line from the eyes to its middle (a mob behind a wall is not fought: it cannot be reached)
@@ -593,7 +595,7 @@ timers.push(setInterval(() => {
 }, 400));
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || b.state().dead) return;
-  if (/^auto: (get|kill|mine|fight|stronghold)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself)
+  if (/^auto: (get|kill|mine|fight|stronghold|blaze_rods|nether_seek|tunnel_to|portal_go|nether_in|end_fight)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself: 11/20 this one's breaking away ran the bot out of the blaze bunker, among five blazes, to its death)
   const f = hostilesNear(b, AD.engageR); if (!f.length) return;
   engage(b).catch(() => {});
 }, 500));
@@ -707,7 +709,7 @@ async function safeStart() {
   if (me.dim === 'overworld' && !me.spawnSet && !inBedSpawn && !nightNow(b) && /\d+:minecraft:(\w+_)?bed\*/.test(await invList(b))) { log('auto: a bed carried and no respawn point yet: setting it down first'); await bedSpawn(); }
   const lastInv = nightNow(b) ? await invList(b) : '';
   if (!openSky(b, b.state().pos) && !nightNow(b)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
-  me.armored = /_chestplate\*/.test(lastInv || (await invList(b)));
+  me.armored = /_chestplate\*/.test(lastInv || (await invList(b))) || wornChest();
   if (nightNow(b) && !me.armored) { log('auto: night and no armour: dug in until morning', { dc: true }); await sitOutNight(b); }
 }
 async function goFar() {
