@@ -2457,6 +2457,8 @@ function goalVerbs(K, H) {
     await travel((x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z) <= 3.5, (x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z), { radius: 200, dig: true, pillar: true, legs: 40 });
     const frames = () => K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 12, radius: 12, from: K.feet() });
     { const fs = frames(); log(`stronghold: ${fs.length} frames within 12, ${fs.filter(({ x, y, z }) => { const st = B(x, y, z)?.states ?? {}; return st.end_portal_eye_bit === 1 || st.end_portal_eye_bit === true; }).length} with an eye; ${cnt('ender_eye')} eyes carried; states ${JSON.stringify(fs[0] && B(fs[0].x, fs[0].y, fs[0].z)?.states)}`); }
+    // (passes until none is empty: one click of twelve did not take - 'the portal did not open (1 frames empty)')
+    for (let pass = 0; pass < 3 && frames().some(({ x, y, z }) => !B(x, y, z)?.states?.end_portal_eye_bit) && cnt('ender_eye') > 0; pass++)
     for (const { x, y, z } of frames()) {   // (findBlocks hands back {x, y, z}: the array destructuring threw - the End was never reached this way)
       const b = B(x, y, z); if (b?.states?.end_portal_eye_bit === 1 || b?.states?.end_portal_eye_bit === true) continue;
       if (cnt('ender_eye') < 1) break;
@@ -2464,8 +2466,7 @@ function goalVerbs(K, H) {
       try { await grab('ender_eye', 'use'); await K.act('useon', [String(x), String(y), String(z), '1']); } catch {}
       await K.ticks(3);
     }
-    await K.ticks(10);
-    const pc = K.findBlocks((b) => b.name === 'minecraft:end_portal', { max: 1, radius: 12, from: K.feet() });
+    let pc = []; for (let t = 0; t < 8 && !pc.length; t++) { await K.ticks(5); pc = K.findBlocks((b) => b.name === 'minecraft:end_portal', { max: 1, radius: 12, from: K.feet() }); }
     if (!pc.length) { if (dbg) log(`stronghold: the portal did not open (${frames().filter(({ x, y, z }) => !B(x, y, z)?.states?.end_portal_eye_bit).length} frames empty)`); return false; }
     const { x: px, y: py, z: pz } = pc[0];
     await travel((x, y, z) => x === px && z === pz && Math.abs(y - py) <= 1, (x, y, z) => hyp(x - px, y - py, z - pz), { radius: 24, dig: true, legs: 6 });
