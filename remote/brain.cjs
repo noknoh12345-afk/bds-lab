@@ -585,11 +585,11 @@ const FOE = { zombie: [20, 3], husk: [20, 3], drowned: [20, 3], zombie_villager_
 const HIT = { netherite_sword: 9, diamond_sword: 8, iron_sword: 7, stone_sword: 6, wooden_sword: 5, diamond_axe: 7, iron_axe: 6, stone_axe: 5, wooden_axe: 4 };
 function odds(b, foes) {
   const inv = b.invText?.() ?? '', w = WEAPONS.find((x) => inv.includes('minecraft:' + x + '*')), hit = w ? HIT[w] : 1;
-  let worn = 1; try { worn = ROAD.armourShare(); } catch { worn = /iron_chestplate|diamond_chestplate|netherite_chestplate/.test(inv) || me.armored ? 0.7 : 1; }
+  let worn = 1; try { worn = ROAD.armourShare(); } catch (e) { if (!odds.said) { odds.said = 1; log('fight odds: armour not read: ' + e.message); } worn = /iron_chestplate|diamond_chestplate|netherite_chestplate/.test(inv) || me.armored ? 0.7 : 1; }
   const armour = worn * (/shield\*/.test(inv) ? 0.8 : 1);
   let t = 0, taken = 0;
   for (const f of foes) { const [hp, dps] = FOE[f.e.type.replace('minecraft:', '')] ?? [20, 4]; t += hp / (hit * 2) + 0.5; taken += dps * 0.6 * t * armour; }   // (0.6: each of my hits knocks it back out of its reach for a moment)
-  return { taken: Math.round(taken), secs: Math.round(t), ok: taken * 1.2 < (me.hp ?? 20) - 1 };
+  return { taken: Math.round(taken), secs: Math.round(t), ok: taken * 1.2 < (me.hp ?? 20) - 1, armour: Math.round(armour * 100) / 100 };
 }
 async function engage(b, maxMs = 12000) {
   if (fighting) return; fighting = true;
@@ -601,7 +601,7 @@ async function engage(b, maxMs = 12000) {
       // nothing to fight with: no fist fight against a zombie (20 health against 1 a punch) - run, sprinting, they are slower
       if (!me.armed || (me.hp !== null && me.hp <= AD.breakAwayHp)) { await breakAway(b, foes); return; }
       { const all = hostilesAll(b, 12), o = odds(b, all);   // (those a little further off join in before it is over)
-        if (!o.ok) { log(`fight: not this one: ${all.length} of them would cost about ${o.taken} of my ${me.hp ?? 20} health over ${o.secs} s`, { dc: true }); await breakAway(b, all); return; } }
+        if (!o.ok) { log(`fight: not this one: ${all.length} of them would cost about ${o.taken} of my ${me.hp ?? 20} health over ${o.secs} s (armour lets ${o.armour} through)`, { dc: true }); await breakAway(b, all); return; } }
       const { e, d } = foes[0], kind = e.type.replace('minecraft:', '');
       await armUp(b);
       if (/creeper/.test(kind) && d < 3.2) { await b.act('attack', [kind]).catch(() => {}); await b.act('look', [String((((Math.atan2(-(b.state().pos.x - e.x), b.state().pos.z - e.z)) * 180) / Math.PI).toFixed(0)), '0']).catch(() => {}); await b.act('sprint', ['on']).catch(() => {}); await sleep(1200); await b.act('sprint', ['off']).catch(() => {}); continue; }
