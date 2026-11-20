@@ -1139,11 +1139,13 @@ async function dragonFight() {
     //  in the pit at 48 47 -9 with nothing tried)
     else if (Date.now() - stuckAt.t > 60000 && Math.floor(P.y + 0.01) < 56 && Math.hypot(P.x, P.z) < 85 && !perchedNow() && cnt(blockId()) < 4) { log(`dragon: stuck at ${Math.round(P.x)} ${Math.floor(P.y + 0.01)} ${Math.round(P.z)} with no blocks: up to the sky by digging`, { dc: true }); await holdPick(); delegating = true; try { await gotoFor([], 40000, 'to_surface'); } finally { delegating = false; } if (Math.floor(b.state().pos.y + 0.01) < 56) await gotoFor([String(Math.round(P.x * 0.6)), String(Math.round(P.z * 0.6))], 15000); stuckAt = null; continue; }
     else if (Date.now() - stuckAt.t > 60000 && Math.floor(P.y + 0.01) < 56 && Math.hypot(P.x, P.z) < 85 && !perchedNow() && cnt(blockId()) >= 4) {
-      const y0 = Math.floor(P.y + 0.01), up = Math.min(6, 60 - y0); log(`dragon: stuck at ${Math.round(P.x)} ${y0} ${Math.round(P.z)} for ${Math.round((Date.now() - stuckAt.t) / 1000)} s: ${up} up on a pillar`, { dc: true });
+      const y0 = Math.floor(P.y + 0.01), up = Math.min(12, 61 - y0); log(`dragon: stuck at ${Math.round(P.x)} ${y0} ${Math.round(P.z)} for ${Math.round((Date.now() - stuckAt.t) / 1000)} s: ${up} up on a pillar`, { dc: true });
       delegating = true; try { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(up), blockId()], 12000, 'pillar'); } finally { await b.act('sneak', ['off']).catch(() => {}); delegating = false; }
       // (11:05-11:08: the same pit at 46 48 -15 again, and the pillar rose two under an overhang. Up through it to the sky then -
       //  goal-exec's to_surface digs its own way - and only if that fails a walk toward the middle)
       if (Math.floor(b.state().pos.y + 0.01) < Math.min(56, y0 + 4)) { log(`dragon: the pillar stopped at ${Math.floor(b.state().pos.y + 0.01)}: up to the sky by digging`); await holdPick(); delegating = true; try { await gotoFor([], 40000, 'to_surface'); } finally { delegating = false; } }
+      // (21 Nov 04:50-04:53: six up from the pit at 46-48 48 -16..-1 was not out of it - three times 'still at 49', back in, dead with
+      //  no apples left. Up to 61: over the island's own ground beside it)
       if (Math.floor(b.state().pos.y + 0.01) < 56) { log(`dragon: still at ${Math.floor(b.state().pos.y + 0.01)}: a walk toward the middle`); await gotoFor([String(Math.round(P.x * 0.6)), String(Math.round(P.z * 0.6))], 15000); }
       stuckAt = null; continue;
     }
