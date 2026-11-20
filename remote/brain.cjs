@@ -1505,7 +1505,9 @@ async function dragonFight() {
     // (arrows at it in flight only while more than 48 are left - those are for crystals a respawn brings and the cages: 10:23 on 19
     //  Nov, 192 → 22 in 25 minutes from 36 out and its bar 200 → 190 for them)
     // (its last few points from the bow at any count of arrows: 21:00, its bar at 1 for a minute and 108 arrows kept back)
-    if (dr && cnt('arrow') > (bar() <= 12 ? 0 : Number(process.env.BOT_ARROW_KEEP ?? 48)) && Math.hypot(dr.x - P.x, dr.z - P.z) < (bar() <= 12 ? 60 : 45)) { await shootAt(dr.x, dr.y + 1, dr.z); shots++; continue; }
+    // (the reserve kept for its last 12 points: 16 arrows, not 48 - 21 Nov in the lab, 48 sat unused for half an hour of no ranged
+    //  damage; with 16 the first try killed in 4529 s with no death, the others 5400-6500)
+    if (dr && cnt('arrow') > (bar() <= 12 ? 0 : Number(process.env.BOT_ARROW_KEEP ?? 16)) && Math.hypot(dr.x - P.x, dr.z - P.z) < (bar() <= 12 ? 60 : 45)) { await shootAt(dr.x, dr.y + 1, dr.z); shots++; continue; }
     await sleep(500);
   }
   return false;
