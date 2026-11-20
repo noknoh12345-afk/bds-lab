@@ -849,7 +849,7 @@ async function dragonFight() {
         if (g && g.n === 'end_stone' && [...Array(by - g.y + 3).keys()].slice(1).every((h) => bname(x, g.y + h, z) === 'air')) cands.push({ x, z, y: g.y, k }); }
       cands.sort((u, w) => w.y - u.y || u.k - w.k);
       const best = cands[0] ? [cands[0].x, cands[0].z] : null;
-      if (best) [sx, sz] = best; else { log(`dragon: uncage: no ground beside the cage of ${key(c)}`); return false; } }
+      if (best) [sx, sz] = best; else { log(`dragon: uncage: no ground beside the cage of ${key(c)}`); uncageWait = Date.now() + 25000; await sleep(300); return false; } }
     log(`dragon: the caged crystal at ${key(c)} (y ${by}): up beside its wall at ${sx} ${sz}, the bars out, back down, shot from out by the middle`, { dc: true });
     // (there by the path search with the watches off, twice if need be: walk() waited on its breath and gave up - 21:43)
     // (on the way the breath watch stays on: 03:04, walking to the second cage with every watch off, through its breath, dead in six
