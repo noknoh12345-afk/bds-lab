@@ -1946,7 +1946,7 @@ function goalVerbs(K, H) {
       await K.ticks(1);
     }
     stopKeys();
-    if (K.all().includes(e) && !hits && (Number(K.tick()) - t0) > 60) foeUnreach.set(e, gnow());   // (no blow in 3+ s and still there: out of reach - in a wall, behind bars; let be for a minute)
+    if (K.all().includes(e) && !hits && (Number(K.tick()) - t0) > 60 && !ARCHER_T.test(e.type)) foeUnreach.set(e, gnow());   // (not an archer: one out of reach still shoots - let be, it shot the bot dead standing still)   // (no blow in 3+ s and still there: out of reach - in a wall, behind bars; let be for a minute)
     if (process.env.LAB_GOAL_DEBUG) log(`fight ${sh(e.type)}: ${K.all().includes(e) ? 'broken off' : 'dead'} after ${hits} blows in ${((Number(K.tick()) - t0) / 20).toFixed(1)} s, ${hurtBy ? `lost ${hurtBy.toFixed(1)} health` : 'not touched'}`);
     return !K.all().includes(e);
   }
@@ -3730,6 +3730,9 @@ function goalVerbs(K, H) {
     return {
       inventory: (() => {   // what the furnace is cooking counts; what an RTA already got for its other parts is not to be used up
         const m = invMap(); if (oven) m.set(oven.item, (m.get(oven.item) ?? 0) + oven.n);
+        // (what is worn counts as had: 11/20 a second iron chestplate was mined and smelted for over the one on the chest - 8 iron, 7 minutes)
+        for (const it of K.inv.armor ?? []) if (it?.network_id) { const k = sh(nm(it)); m.set(k, (m.get(k) ?? 0) + 1); }
+        { const off = K.inv.offhand?.[0] ?? K.inv.offhand; if (off?.network_id) { const k = sh(nm(off)); m.set(k, (m.get(k) ?? 0) + (off.count ?? 1)); } }
         for (const [it, k] of reserved) if (m.has(it)) m.set(it, Math.max(0, m.get(it) - k));
         return m;
       })(), dim: dimName(), y: f.y, surfaceY: rtaRun?.start?.y, banned, portalKnown: dimName() === 'overworld' && !!known(/^minecraft:portal$/, { max: 1, radius: 64, fair: false })[0],
