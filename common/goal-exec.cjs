@@ -4183,8 +4183,10 @@ function goalVerbs(K, H) {
   M.mine_near = async (a) => {
     await healUp();
     const re = new RegExp(`^minecraft:(${a[0] ?? 'bookshelf'})$`), want = Number(a[1]) || 1, r = Number(a[2]) || 64;
-    let got = 0, fails = 0; const bad = new Set();
-    for (let k = 0; k < want * 3 + 6 && got < want && fails < 8 && !K.dead() && !late(); k++) {
+    // (the ones it could not get at are remembered between calls, and more tries: the library's two floors, its cobwebs and walls -
+    //  11/20 9 of 16 and then the same unreachable shelf picked every call)
+    let got = 0, fails = 0; const bad = (M.mine_near.bad ??= new Set());
+    for (let k = 0; k < want * 4 + 10 && got < want && fails < 20 && !K.dead() && !late(); k++) {
       await reflexes(); if ((K.attrs().health ?? 20) < 12) await healUp();
       const ok = (h) => !bad.has(`${h.x},${h.y},${h.z}`);
       let h = known(re, { max: 1, radius: r, ok })[0];
