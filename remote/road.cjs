@@ -130,6 +130,15 @@ async function buildRoom() {
   const b = me.bot;
   { const g = R.guardReason(b); if (g) return `no room here: ${g}`; }
   let C = roomSite();
+  // (water in the way of the dug place: away from it first, a dozen blocks, up to three times - 11/20 over the lab's stronghold the
+  //  place was dug beside a pond and filled with water)
+  for (let k = 0; !C && k < 3; k++) {
+    const f = b.state().pos, X = Math.floor(f.x), Y = Math.floor(f.y + 0.01), Z = Math.floor(f.z); let wx = 0, wz = 0, wn = 0;
+    for (let dx = -5; dx <= 5; dx++) for (let dz = -5; dz <= 6; dz++) for (const dy of [-1, 0, 1]) if (/water/.test(blk(X + dx, Y + dy, Z + dz))) { wx += dx; wz += dz; wn++; }
+    if (!wn) break;
+    const d = Math.hypot(wx, wz) || 1, tx = Math.round(X - (wx / d) * 12), tz = Math.round(Z - (wz / d) * 12);
+    log(`road: water by the room's place (${wn} blocks): over to ${tx} ${tz}`); await R.travel(tx, tz); C = roomSite();
+  }
   if (!C) { await makeSite(); C = roomSite(); }
   if (!C) return 'no level place for the room near here';
   const [x, y, z] = C;
