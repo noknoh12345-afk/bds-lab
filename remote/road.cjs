@@ -414,7 +414,7 @@ B.road_obsidian = () => stepRun('road_obsidian', async () => {
 });
 // the enchanting room's makings: the table, fifteen bookshelves (45 books), wooden shovels to buy new offers with
 B.road_books = () => stepRun('road_books', async () => {
-  const need = () => roomKnown() && (st.room.shelves ?? 15) >= 15 ? [['wooden_shovel', 4]] : [['enchanting_table', 1], ['bookshelf', 15], ['wooden_shovel', 6]];
+  const need = () => roomKnown() && (st.room.shelves ?? 15) >= 15 ? [['wooden_shovel', 3]] : [['enchanting_table', 1], ['bookshelf', 15], ['wooden_shovel', 3]];
   const short = () => need().filter(([it, m]) => n(new RegExp(`^${it}$`)) < m);
   // the paper first from the cane farm (planted early: road_cane), the leather meanwhile; short of cane, the wait is used (cobblestone
   // for the End) rather than a search of the whole world for wild cane
@@ -532,6 +532,7 @@ B.road_prot = () => stepRun('road_prot', async () => {
     if (level() >= 1) {   // (from level 1: new offers are bought cheap down there until one shows Protection IV - enchantArmour)
       if (st.room && me.dim === 'overworld') { const f = me.bot.state().pos; if (Math.hypot(f.x - st.room.x, f.z - st.room.z) > 6 || Math.abs(f.y - st.room.y) > 3) { if (f.y < 55 || st.room.y < 55) await R.run(`walk_to ${st.room.x} ${st.room.y} ${st.room.z + 1} 1`, 'back to the room'); else await R.travel(st.room.x, st.room.z + 3); } }
       const r = await enchantArmour(); if (r === true) return true; lastWhy = r;
+      if (/nothing cheap left/.test(String(r))) { await R.run('get_wooden_shovel 3', 'more cheap things for new offers'); continue; }   // (three carried at a time: they do not stack)
       if (!/^level \d+/.test(String(r))) return r;
     }
     const lacking = PIECES.filter((p) => { const a = armour()[p]; return a && lvlOf(a.ench, 'protection') < 4; }).length;
@@ -624,7 +625,8 @@ B.road_kit = () => stepRun('road_kit', async () => { const m = kitMissing(); ret
 const KEEP = { stone_bricks: 0, mossy_stone_bricks: 0, cracked_stone_bricks: 0, chiseled_stone_bricks: 0, mossy_cobblestone: 0, iron_bars: 0, stone_brick_stairs: 0, stone_brick_slab: 0, oak_fence: 0, string: 8, paper: 0, map: 0, empty_map: 0, cobweb: 0, web: 0,   // (the stronghold's own blocks, dug through to its library: 11/20 'inventory full' crafting the shovels)
   cobblestone: 320, cobbled_deepslate: 64, netherrack: 64, blackstone: 32, gravel: 16, dirt: 16, sand: 0, diorite: 0, andesite: 0, granite: 0, tuff: 0, calcite: 0, basalt: 0, smooth_basalt: 0, deepslate: 0, rotten_flesh: 0, spider_eye: 0, poisonous_potato: 0, wheat_seeds: 0, pumpkin_seeds: 0, beetroot_seeds: 0, cobweb: 0, flint_and_steel_broken: 0, bone: 8, arrow_stuck: 0, red_sand: 0, terracotta: 0, magma: 0, soul_sand: 0, soul_soil: 0, moss_block: 0, clay_ball: 0, kelp: 0, ink_sac: 0, gold_nugget: 999, egg: 0, mud: 0, stick: 64 };
 async function tidy(want = 4) {
-  const k = K(); if (!k || !me.connected || k.screen()) return;
+  const k = K(); if (!k || !me.connected) return;
+  if (k.screen()) { if (want <= 4) return; await act('close'); await sleep(300); }
   const free = () => slots().filter((it, i) => i < 36 && !it?.network_id).length;
   if (free() >= want) return;
   const byKind = new Map(); slots().forEach((it, i) => { if (i >= 36 || !it?.network_id) return; const nmx = nameOf(it); if (!(nmx in KEEP)) return; (byKind.get(nmx) ?? byKind.set(nmx, []).get(nmx)).push({ i, c: it.count }); });
@@ -635,9 +637,10 @@ async function tidy(want = 4) {
   }
   // still short of room when it is wanted (the armour off for the table): what the iron kit makes spare - stone and wooden tools beside
   // iron ones, loose dirt, gravel, sand - goes too (11/20 'no free slot to take the armour off into')
+  if (want > 4) log(`road: tidy: ${free()} free slots of 36 (want ${want})${k.screen() ? ', a screen open' : ''}`);
   if (want > 4 && free() < want) {
     const have = (re) => slots().some((it, i) => i < 36 && re.test(nameOf(it)));
-    const spare = (nmx) => (/^(stone|wooden|golden)_(axe|pickaxe|sword|shovel|hoe)$/.test(nmx) && nmx !== 'wooden_shovel' && have(new RegExp(`^(iron|diamond|netherite)_${nmx.split('_')[1]}$`))) || /^(dirt|gravel|sand|red_sand|clay_ball|leaf_litter|rotten_flesh|spider_eye|bone|wheat_seeds|flint)$/.test(nmx);
+    const spare = (nmx) => (/^(stone|wooden|golden)_(axe|pickaxe|sword|shovel|hoe)$/.test(nmx) && nmx !== 'wooden_shovel' && have(new RegExp(`^(iron|diamond|netherite)_${nmx.split('_')[1]}$`))) || /^(dirt|gravel|sand|red_sand|clay_ball|leaf_litter|rotten_flesh|spider_eye|bone|wheat_seeds|flint|raw_copper|copper_ingot|copper_(helmet|chestplate|leggings|boots)|golden_(helmet|chestplate|leggings|boots)|leather_(helmet|chestplate|leggings|boots))$/.test(nmx);
     for (let i = 0; i < 36 && free() < want; i++) { const it = slots()[i]; if (it?.network_id && spare(nameOf(it))) { await act('drop_all', [i]); await sleep(150); } }
   }
 }
