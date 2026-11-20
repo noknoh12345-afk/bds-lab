@@ -2415,7 +2415,7 @@ function goalVerbs(K, H) {
       // (looked for down to 60 under the feet: the portal room lies at y 10-30, a 48 ball from the surface missed it - 11/20 the lab
       //  stood over it at y 69 throwing eyes that flew off a few blocks each way)
       const fr = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 1, radius: 64, from: { x: K.feet().x, y: K.feet().y - 30, z: K.feet().z } });
-      if (fr.length) { if (dbg) log(`stronghold: its frames at ${fr[0].slice(0, 3).join(' ')}`); return { x: fr[0][0], y: fr[0][1], z: fr[0][2] }; }
+      if (fr.length) { const q = { x: fr[0].x ?? fr[0][0], y: fr[0].y ?? fr[0][1], z: fr[0].z ?? fr[0][2] }; log(`stronghold: its frames at ${q.x} ${q.y} ${q.z}`); return q; }   // (findBlocks hands back {x, y, z, block}: fr[0].slice threw)
       // the night on the way is sat out dug in (11/20 the lab: 2300 blocks walked in 23 minutes, at the stronghold's spot at dusk, then
       // five zombies and skeletons at once and an arrow - iron armour and a sword do not hold a night in the open)
       if (nightNow() && dimName() === 'overworld' && (skyOver() || K.feet().y > 40) && !K.dead()) { log('stronghold: night - dug in until morning'); await shelter(false, { why: 'stronghold: night' }); if (nightNow()) await K.ticks(100); continue; }
@@ -2435,7 +2435,7 @@ function goalVerbs(K, H) {
       const tx = f.x + Math.cos(r.ang) * step, tz = f.z + Math.sin(r.ang) * step;
       if (r.sank) {   // under the spot it sank at: the frames within 48 below, found from the blocks sent - dug down toward them
         const fr2 = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 1, radius: 64, from: { x: r.at.x, y: f.y - 30, z: r.at.z } });
-        if (fr2.length) return { x: fr2[0][0], y: fr2[0][1], z: fr2[0][2] };
+        if (fr2.length) return { x: fr2[0].x ?? fr2[0][0], y: fr2[0].y ?? fr2[0][1], z: fr2[0].z ?? fr2[0][2] };
       }
       await travel((x, y, z) => hyp(x - tx, z - tz) <= 6, (x, y, z) => hyp(x - tx, z - tz), { radius: 180, dig: true, pillar: true, legs: 30, sprint: true, stop: () => nightNow() && dimName() === 'overworld' && skyOver() });
     }
@@ -2446,7 +2446,7 @@ function goalVerbs(K, H) {
     const t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
     await travel((x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z) <= 3.5, (x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z), { radius: 200, dig: true, pillar: true, legs: 40 });
     const frames = () => K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 12, radius: 12, from: K.feet() });
-    for (const [x, y, z] of frames()) {
+    for (const { x, y, z } of frames()) {   // (findBlocks hands back {x, y, z}: the array destructuring threw - the End was never reached this way)
       const b = B(x, y, z); if (b?.states?.end_portal_eye_bit === 1 || b?.states?.end_portal_eye_bit === true) continue;
       if (cnt('ender_eye') < 1) break;
       await goToBlock(x, y, z, 4);
@@ -2455,8 +2455,8 @@ function goalVerbs(K, H) {
     }
     await K.ticks(10);
     const pc = K.findBlocks((b) => b.name === 'minecraft:end_portal', { max: 1, radius: 12, from: K.feet() });
-    if (!pc.length) { if (dbg) log(`stronghold: the portal did not open (${frames().filter(([x, y, z]) => !B(x, y, z)?.states?.end_portal_eye_bit).length} frames empty)`); return false; }
-    const [px, py, pz] = pc[0];
+    if (!pc.length) { if (dbg) log(`stronghold: the portal did not open (${frames().filter(({ x, y, z }) => !B(x, y, z)?.states?.end_portal_eye_bit).length} frames empty)`); return false; }
+    const { x: px, y: py, z: pz } = pc[0];
     await travel((x, y, z) => x === px && z === pz && Math.abs(y - py) <= 1, (x, y, z) => hyp(x - px, y - py, z - pz), { radius: 24, dig: true, legs: 6 });
     for (let t = 0; t < 100 && dimName() !== 'the_end'; t++) await K.ticks(1);
     if (dbg) log(`stronghold: ${dimName() === 'the_end' ? 'in the End' : 'not through'} after ${((Number(K.tick()) - t0) / 20).toFixed(0)} s`);
