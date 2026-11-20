@@ -2412,7 +2412,9 @@ function goalVerbs(K, H) {
   async function findStronghold(maxSec = 900) {
     const t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
     for (let k = 0; (Number(K.tick()) - t0) / 20 < maxSec && !K.dead() && cnt('ender_eye') > 0; k++) {
-      const fr = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 1, radius: 48, from: K.feet() });
+      // (looked for down to 60 under the feet: the portal room lies at y 10-30, a 48 ball from the surface missed it - 11/20 the lab
+      //  stood over it at y 69 throwing eyes that flew off a few blocks each way)
+      const fr = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 1, radius: 64, from: { x: K.feet().x, y: K.feet().y - 30, z: K.feet().z } });
       if (fr.length) { if (dbg) log(`stronghold: its frames at ${fr[0].slice(0, 3).join(' ')}`); return { x: fr[0][0], y: fr[0][1], z: fr[0][2] }; }
       // the night on the way is sat out dug in (11/20 the lab: 2300 blocks walked in 23 minutes, at the stronghold's spot at dusk, then
       // five zombies and skeletons at once and an arrow - iron armour and a sword do not hold a night in the open)
