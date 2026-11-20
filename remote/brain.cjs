@@ -312,6 +312,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
         armTried = Date.now(); await b.act('sprint', ['off']).catch(() => {}); log('travel: nothing to fight with: a sword first');
         const t = setTimeout(() => b.cancel?.(), 300000); await b.act('get_wooden_sword', []).catch(() => {}); clearTimeout(t);
         lastWeaponCheck = 0; await armUp(b).catch(() => {}); me.armed = WEAPONS.some((w) => (b.invText?.() ?? '').includes('minecraft:' + w + '*'));
+        if (!me.armed) { armTried = Date.now() + 600000; log('travel: no sword to be had here (no trees?): on without one'); }   // (the mesa at the lab's spawn: 5 min looking every 3 min walking)
         last = b.state().pos; lastT = Date.now(); bestT = Date.now(); continue;
       }
       if (me.armed && hostilesNear(b, AD.engageR).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); last = b.state().pos; lastT = Date.now(); continue; }   // (unarmed: it keeps running on its way)

@@ -711,6 +711,7 @@ function goalVerbs(K, H) {
       if (late()) return goal(...feet());
       const [x, y, z] = feet();
       if (goal(x, y, z)) return true;
+      if (o.stop?.()) return false;   // (the caller's reason to stop between legs: the night falling on a long walk)
       const hv = h(x, y, z);
       if (hv < best - 0.5) { best = hv; stuck = 0; } else if (++stuck >= 3) { if (process.env.LAB_GOAL_DEBUG) log(`travel: three legs without getting closer at ${x} ${y} ${z} (${hv.toFixed(1)} to go)`); return false; }   // three legs without getting closer: not this way
       await reflexes();
@@ -2404,6 +2405,9 @@ function goalVerbs(K, H) {
     for (let k = 0; (Number(K.tick()) - t0) / 20 < maxSec && !K.dead() && cnt('ender_eye') > 0; k++) {
       const fr = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 1, radius: 48, from: K.feet() });
       if (fr.length) { if (dbg) log(`stronghold: its frames at ${fr[0].slice(0, 3).join(' ')}`); return { x: fr[0][0], y: fr[0][1], z: fr[0][2] }; }
+      // the night on the way is sat out dug in (11/20 the lab: 2300 blocks walked in 23 minutes, at the stronghold's spot at dusk, then
+      // five zombies and skeletons at once and an arrow - iron armour and a sword do not hold a night in the open)
+      if (nightNow() && dimName() === 'overworld' && skyOver() && !K.dead()) { log('stronghold: night - dug in until morning'); await shelter(false, { why: 'stronghold: night' }); if (nightNow()) await K.ticks(100); continue; }
       const r = await throwEye();
       if (!r) { if (dbg) log('stronghold: the eye went nowhere (broke?)'); continue; }
       const f = K.feet();
@@ -2422,7 +2426,7 @@ function goalVerbs(K, H) {
         const fr2 = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 1, radius: 64, from: { x: r.at.x, y: f.y - 30, z: r.at.z } });
         if (fr2.length) return { x: fr2[0][0], y: fr2[0][1], z: fr2[0][2] };
       }
-      await travel((x, y, z) => hyp(x - tx, z - tz) <= 6, (x, y, z) => hyp(x - tx, z - tz), { radius: 180, dig: true, pillar: true, legs: 30, sprint: true });
+      await travel((x, y, z) => hyp(x - tx, z - tz) <= 6, (x, y, z) => hyp(x - tx, z - tz), { radius: 180, dig: true, pillar: true, legs: 30, sprint: true, stop: () => nightNow() && dimName() === 'overworld' && skyOver() });
     }
     return null;
   }
