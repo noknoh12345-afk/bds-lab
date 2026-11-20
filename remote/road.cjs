@@ -123,7 +123,13 @@ async function makeSite() {
   if (fails.length) log(`road: makeSite: not dug - ${fails.join(' | ')}`);
   { const bad = []; for (let ax = -2; ax <= 2; ax++) for (let az = -2; az <= 3; az++) { const x = X + ax, z = Z + az; if (!AIRY.test(blk(x, Y, z)) || !AIRY.test(blk(x, Y + 1, z)) || !SOLID(blk(x, Y - 1, z))) bad.push(`${x},${z}:${blk(x, Y - 1, z)}/${blk(x, Y, z)}/${blk(x, Y + 1, z)}`); } if (bad.length) log(`road: makeSite: still not level - ${bad.slice(0, 6).join(' ')}`); }
   const floorItem = ['cobblestone', 'dirt', 'cobbled_deepslate', 'stone_bricks', 'andesite', 'diorite', 'granite'].find((it) => count(new RegExp(`^${it}$`)) > 0);
-  for (let ax = -2; ax <= 2; ax++) for (let az = -2; az <= 3; az++) { const x = X + ax, z = Z + az; if (!SOLID(blk(x, Y - 1, z)) && floorItem && SOLID(blk(x, Y - 2, z))) { await act('place', [floorItem, x, Y - 1, z]); if (SOLID(blk(x, Y - 1, z))) laid++; } }
+  // (a floor cell over air - a library's gallery - is set against a side: a floor cell beside it, the nearest first, in passes)
+  const FACE = [[1, 0, 0, 'west'], [-1, 0, 0, 'east'], [0, 0, 1, 'north'], [0, 0, -1, 'south'], [0, -1, 0, 'up']];
+  for (let pass = 0; pass < 4 && floorItem; pass++) for (let ax = -2; ax <= 2; ax++) for (let az = -2; az <= 3; az++) {
+    const x = X + ax, z = Z + az, y = Y - 1; if (SOLID(blk(x, y, z))) continue;
+    await act(`hold_${floorItem}`);
+    for (const [dx, dy, dz, face] of FACE) { const nx = x + dx, ny = y + dy, nz = z + dz; if (!SOLID(blk(nx, ny, nz))) continue; await act('useon', [nx, ny, nz, face]); for (let t = 0; t < 10 && !SOLID(blk(x, y, z)); t++) await sleep(100); if (SOLID(blk(x, y, z))) { laid++; break; } }
+  }
   log(`road: a place for the room dug out at ${X} ${Y} ${Z} (${dug} blocks dug, ${laid} floor laid)`);
 }
 async function buildRoom() {
