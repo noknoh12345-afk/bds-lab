@@ -1074,7 +1074,13 @@ async function dragonFight() {
         //  the bridge, sneaking, until clear)
         const bw = setInterval(() => { if (!eatingG && me.connected && ((me.hp ?? 20) <= 12 || inCloud())) b.cancel?.(); }, 250);
         try {
+        const bT0 = Date.now(); let bSaid = 0;
         for (let t = 0; t < 60 && me.connected && !b.state().dead; t++) {
+          // (13:54-14:06 on 20 Nov: twelve silent minutes at 69 50 0, the bridge run in at 50 under the island's side - its pillar
+          //  to 63 had not risen. Said every 30 s; after 5 min, up through the island by digging, then on)
+          if (Date.now() - bSaid > 30000) { bSaid = Date.now(); const C = b.state().pos; log(`dragon: bridging at ${C.x.toFixed(0)} ${C.y.toFixed(0)} ${C.z.toFixed(0)} (${Math.round((Date.now() - bT0) / 1000)} s)`); }
+          if (Date.now() - bT0 > 300000) { log('dragon: five minutes on the bridge: up through the island by digging'); await holdPick(); await gotoFor([], 40000, 'to_surface'); break; }
+          if (Math.floor(b.state().pos.y + 0.01) < 60 && Math.hypot(b.state().pos.x, b.state().pos.z) < 75 && /^(air|\?)$/.test(bname(Math.floor(b.state().pos.x) + ddx, Math.floor(b.state().pos.y + 0.01), Math.floor(b.state().pos.z) + ddz)) === false) { log('dragon: the island\'s side ahead and the bridge low: up a pillar first'); await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(Math.min(6, 63 - Math.floor(b.state().pos.y + 0.01))), blockId()], 12000, 'pillar'); await b.act('sneak', ['off']).catch(() => {}); }
           for (let k = 0; k < 8 && inCloud() && me.connected && !b.state().dead; k++) { if (k === 0) log('dragon: its breath on the bridge: back along it'); await b.act('sneak', ['on']).catch(() => {}); await b.act('look', [String(yaw + 180), '60']).catch(() => {}); eatingG = true; try { await b.act('walk', ['forward', '12']).catch(() => {}); } finally { eatingG = false; } await sleep(300); }
           // (09:25-09:29 on 19 Nov in the lab: four silent minutes on the bridge, health down to 1 with nothing logged and no apple
           //  eaten - the watches are off while delegating - then knocked off it into the void. Health said when it falls, and a
