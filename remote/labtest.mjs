@@ -65,6 +65,7 @@ async function road({ kit = [], cmds = ['auto'], ms = 3600000, check, why = () =
   await fresh();
   if (kit.length) { srv(...kit.map((i) => `give ${NAME} ${i}`)); await sleep(2500); }
   if (setup) await setup();
+  if (process.env.ROAD_SETUP) srv(...process.env.ROAD_SETUP.split(';').map((c) => c.trim()).filter(Boolean));   // (server commands after the setup: 'time set 13000' for a night probe)
   mark = logText().length;
   if (process.env.ROAD_GUARD === 'off') send('guard off');   // (exploring one verb in the lab: its natural chests are 'someone's build' to the guard)
   for (const c of cmds) send(c);

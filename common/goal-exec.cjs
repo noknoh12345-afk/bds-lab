@@ -10,7 +10,7 @@ const G = require('./goal.cjs');
 const S = String;
 const PASS = /^minecraft:(air|cave_air|void_air|water|flowing_water|light_block.*|structure_void|short_grass|tall_grass|fern|large_fern|deadbush|.*_sapling|dandelion|poppy|blue_orchid|allium|azure_bluet|.*_tulip|oxeye_daisy|cornflower|lily_of_the_valley|wither_rose|torchflower|sunflower|lilac|rose_bush|peony|pink_petals|wildflowers|leaf_litter|.*_mushroom|snow_layer|seagrass|kelp|kelp_plant|vine|glow_lichen|sweet_berry_bush|.*_carpet|.*torch|redstone_wire|.*rail|.*_button|lever|tripwire|.*pressure_plate|reeds|wheat|carrots|potatoes|beetroot|nether_sprouts|crimson_roots|warped_roots|hanging_roots|cave_vines.*|bush|firefly_bush|short_dry_grass|tall_dry_grass|cactus_flower)$/;
 const DANGER = /lava|fire|magma|cactus|sweet_berry_bush|powder_snow|wither_rose|campfire|pointed_dripstone/;
-const WATER = /^minecraft:(flowing_)?water$/;
+const WATER = /^minecraft:((flowing_)?water|kelp|kelp_plant|seagrass|tall_seagrass|bubble_column)$/;   // (kelp and seagrass stand in water always: a head in kelp is a head under water - 11/20 swimUp stopped there and the dig-in went on at the sea floor)
 const SEE_THROUGH = /leaves|glass|ice$|water|lava|fence|pane|bars|door|trapdoor|slab|stairs|torch|lantern|leaf_litter|scaffolding|chain|carpet|snow_layer|web|vine/;
 const UNBREAKABLE = /^minecraft:(bedrock|barrier|end_portal_frame|command_block|structure_block|jigsaw|end_gateway|end_portal|portal|allow|deny|border_block|reinforced_deepslate|light_block.*)$/;
 const COMMON = /^minecraft:(stone|andesite|diorite|granite|tuff|deepslate|dirt|grass_block|netherrack|end_stone|sand|sandstone|gravel)$/;   // known to be there without seeing it (under the ground)
@@ -1422,6 +1422,9 @@ function goalVerbs(K, H) {
   }
   async function shelter0(moved, o = {}) {
     stopKeys();
+    // in the water: onto dry land first (11/20 the lab, a beach of drowned at night: a hole under water is no hole - 'rock here', then
+    // 'not under the crosshair' digging the sand from afloat, a dozen tries in a row and a trident)
+    if ((fAt(...feet()) & F_WATER) && dimName() === 'overworld' && !K.dead()) { log('in the water: out onto dry land before digging in'); await toLand(); }
     const tS = gnow(), slow = () => gnow() - tS > 90000;   // (building it has a minute and a half: past that, not a shelter for this night)
     if (cnt('bed') > 0 && !o.hold && nightNow() && dimName() === 'overworld') {   /* (a bed blows up anywhere else: 12:47 in the lab, the End's shelter at its "night" killed the bot) */   // a bed carried: set it down and sleep the night away (a speedrunner's way; not with monsters right here)
       const b = spotBeside();
