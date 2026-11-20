@@ -4219,7 +4219,7 @@ function goalVerbs(K, H) {
     if (!sp0) return K.say('spawner_xp: no spawner near');
     const sp = { x: sp0.x ?? sp0[0], y: sp0.y ?? sp0[1], z: sp0.z ?? sp0[2] };
     const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
-    let kills = 0, ateAt = -99, spawnerMiss = 0; const skipFoe = new WeakMap();
+    let kills = 0, ateAt = -99, spawnerMiss = 0, lastKill = Number(K.tick()), side = 0; const skipFoe = new WeakMap();
     log(`spawner_xp: the spawner at ${sp.x} ${sp.y} ${sp.z}`);
     // the lava round it filled first (a stronghold's portal room: a pool under the portal, a strip in two corners - 11/20 the lab, of 26
     // silverfish 21 ended in the lava, no experience, and the bot ran into it from one: dead)
@@ -4232,7 +4232,7 @@ function goalVerbs(K, H) {
       // (on the floor round it, not under it: 11/20 the probe ended up at y 9 in the floor under the spawner, the silverfish over its
       //  head 'broken off after 0 blows' for twenty minutes)
       // (up at its own height: from the floor two below, the silverfish on its platform were out of reach - nine minutes, no kill)
-      if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 4 || f.y < sp.y - 1.5) {
+      if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 7 || f.y < sp.y - 2.5) {
         const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 3 && y >= sp.y - 1 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: true, pillar: true, legs: 8, nodes: 30000 });
         if (!ok) { const g = K.feet(); spawnerMiss++; log(`spawner_xp: no way to the spawner at ${sp.x} ${sp.y} ${sp.z} from ${Math.floor(g.x)} ${Math.floor(g.y)} ${Math.floor(g.z)} (${spawnerMiss})`); if (spawnerMiss >= 4) break; await K.ticks(20); }
         continue; }
@@ -4241,7 +4241,12 @@ function goalVerbs(K, H) {
       const e = K.all().filter((q) => HOSTILE.test(q.type) && !/enderman/.test(q.type) && !q.dead && (skipFoe.get(q) ?? 0) < 2 && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 10).sort((p1, p2) => hyp(p1.x - f.x, p1.z - f.z) - hyp(p2.x - f.x, p2.z - f.z))[0];
       if (e) { const k0 = kills, t1 = Number(K.tick()); try { await fightOne(e, 15); } catch { /* gone */ } if (e.dead || !K.all().includes(e)) kills++; else skipFoe.set(e, (skipFoe.get(e) ?? 0) + 1);
         if (Number(K.tick()) - t1 < 5) await K.ticks(5);
+        if (kills !== k0) lastKill = Number(K.tick());
         if (kills !== k0 && kills % 10 === 0) log(`spawner_xp: ${kills} killed, level ${lv()}`); continue; }
+      // (nothing sent for three minutes: another side of it, a little further off - 11/20 two bots stood 20 minutes beside the spawner
+      //  with nothing coming once they were right up against it)
+      if (Number(K.tick()) - lastKill > 3600) { side++; const ang = side * 2.1, r = 3 + (side % 3); const tx = Math.round(sp.x + Math.cos(ang) * r), tz = Math.round(sp.z + Math.sin(ang) * r);
+        log(`spawner_xp: nothing for 3 minutes - over to ${tx} ${tz}`); await travel((x, y, z) => hyp(x - tx, z - tz) <= 1.5 && Math.abs(y - sp.y) <= 2, (x, y, z) => hyp(x - tx, y - sp.y, z - tz), { radius: 24, dig: true, legs: 3 }); lastKill = Number(K.tick()); continue; }
       await K.ticks(10);
     }
     return K.say(`spawner_xp: level ${lv()} of ${target} (${kills} killed in ${Math.round((Number(K.tick()) - t0) / 20)} s)`);
