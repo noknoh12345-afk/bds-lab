@@ -834,7 +834,9 @@ async function dragonFight() {
     const bx = Math.floor(c.x), by = Math.floor(c.y), bz = Math.floor(c.z);
     const [dx, dz] = Math.abs(c.x) > Math.abs(c.z) ? [-Math.sign(c.x), 0] : [0, -Math.sign(c.z)], [lx, lz] = [-dz, dx];
     let kw = 0; for (let k = 1; k <= 6 && !kw; k++) if (bname(bx + dx * k, by, bz + dz * k) === 'iron_bars') kw = k;
-    if (!kw) { log(`dragon: no cage wall found toward the middle from the crystal at ${key(c)}`, { dc: true }); return false; }
+    // (21 Nov 08:31: 380,000 times in forty seconds - returned with no await, the loop spun, no packet was read, and the bot died at
+    //  '19 health'. Later, and a pause)
+    if (!kw) { log(`dragon: no cage wall found toward the middle from the crystal at ${key(c)}`, { dc: true }); uncageWait = Date.now() + 25000; await sleep(300); return false; }
     // (a cell with end stone for ground and room above it, one to three out from the wall, nearest first: 'beside the wall' was
     //  obsidian or air at 12 -36 and the path search set the pillar down eight blocks off - 23:12)
     let sx = bx + dx * (kw + 1), sz = bz + dz * (kw + 1);
