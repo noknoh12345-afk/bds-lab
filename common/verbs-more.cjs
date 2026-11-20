@@ -1160,24 +1160,44 @@ function moreVerbs(K, H) {
     pool: async (a) => { const [x1, z1, x2, z2] = H.box2(a), y0 = here()[1] - 1, d = n(a[4], 2); await M.dig_pit([S(x1), S(z1), S(x2), S(z2), S(d), S(y0)]); for (const [x, z] of [[x1, z1], [x2, z2]]) { await K.sync(); if (!has('water_bucket')) break; await grab('water_bucket', 'pool'); await near(x, y0 - d, z); await useOn([x, y0 - d, z].map(S), 'up'); } return K.ticks(1); },
     nether_portal: async (a) => {   // nether_portal x y z [x|z]: an obsidian frame (2 wide, 3 tall inside) along that axis, lit inside
       const [x, y, z] = nums(a, 0, 3), ax = a[3] === 'z' ? [0, 1] : [1, 0], per = [ax[1], ax[0]], P = (u, h) => [x + ax[0] * u, y + h, z + ax[1] * u];
-      // stand two blocks out in front of it (never in a spot the frame needs), and set every block from there: bottom, the
-      // corners (any block: the sides and the top are set against them, nothing floats), the sides upward, the top
+      // built from the spot two out in front of it, a block higher for each row (a pillar under the feet): each block goes on the top
+      // face of the one under it, and a top face is only seen from above it - from the ground the third row was 'nothing to set it
+      // against' and a corner 'not under the crosshair' behind the bottom's obsidian (11/20 in the lab). The corners (any block) before
+      // the bottom; the top's two set against the inner faces of the top corners. Cells already filled (an earlier try) are kept.
       await K.sync();
       const filler = ['cobblestone', 'dirt', 'cobbled_deepslate', 'netherrack', 'stone', 'oak_planks', 'spruce_planks', 'birch_planks'].find((f) => has(f)) ?? 'obsidian';
-      await go(x + ax[0] * 1 + per[0] * 2 + 0.5 * (1 - ax[0]) + 0.5 * ax[0], z + ax[1] * 1 + per[1] * 2 + 0.5 * (1 - ax[1]) + 0.5 * ax[1], 200);
+      const stand = [x + ax[0] + per[0] * 2, z + ax[1] + per[1] * 2];
+      await go(stand[0] + 0.5, stand[1] + 0.5, 200);
       K.controls.sneak = true;   // a click on the placed obsidian must not open anything, and no stepping off
-      let c = 0;
+      let c = 0, up = 0;
+      const inner = { [-1]: ax[0] ? 'east' : 'south', 2: ax[0] ? 'west' : 'north' };
+      const put = async (item, u, h, against) => {
+        const [cx, cy, cz] = P(u, h); const cur = blockAt(cx, cy, cz); if (cur && solid(cur)) return true;
+        await K.sync(); if (!has(item)) { say('nether_portal', `ran out of ${item}`); return false; }
+        const t = against ?? [cx, cy - 1, cz, 'up'];
+        if (!solid(blockAt(t[0], t[1], t[2]))) { say('nether_portal', `nothing to set the block at ${cx} ${cy} ${cz} against`); return false; }
+        await grab(item, 'nether_portal'); await useOn([t[0], t[1], t[2]].map(S), t[3]); await K.ticks(3);
+        for (let k = 0; k < 10 && !solid(blockAt(cx, cy, cz)); k++) await K.ticks(2);
+        if (solid(blockAt(cx, cy, cz))) { c++; return true; }
+        say('nether_portal', `the block at ${cx} ${cy} ${cz} did not go down`); return false;
+      };
+      const rise = async () => { await K.sync(); if (!has(filler)) return false; const y0 = K.feet().y; await V.pillar(['1', filler]); await K.ticks(4); if (K.feet().y > y0 + 0.5) { up++; return true; } return false; };
+      let ok = true;
       try {
-        for (const [item, cells] of [['obsidian', [P(0, 0), P(1, 0)]], [filler, [P(-1, 0), P(2, 0)]], ['obsidian', [P(-1, 1), P(2, 1), P(-1, 2), P(2, 2), P(-1, 3), P(2, 3)]], [filler, [P(-1, 4), P(2, 4)]], ['obsidian', [P(0, 4), P(1, 4)]]]) {
-          for (const [cx, cy, cz] of cells) {
-            const cur = blockAt(cx, cy, cz); if (cur && solid(cur)) continue;
-            await K.sync(); if (!has(item)) return say('nether_portal', `ran out of ${item}`);
-            const nb = [[0, -1, 0, 'up'], [-ax[0], 0, -ax[1], ax[0] ? 'east' : 'south'], [ax[0], 0, ax[1], ax[0] ? 'west' : 'north'], [0, 1, 0, 'down']].find(([dx, dy, dz]) => solid(blockAt(cx + dx, cy + dy, cz + dz)));
-            if (!nb) return say('nether_portal', `nothing to set the block at ${cx} ${cy} ${cz} against`);
-            await grab(item, 'nether_portal'); await useOn([cx + nb[0], cy + nb[1], cz + nb[2]].map(S), nb[3]); await K.ticks(3); c++;
-          }
+        for (const [item, u] of [[filler, -1], [filler, 2], ['obsidian', 0], ['obsidian', 1]]) ok = ok && await put(item, u, 0);
+        for (let h = 1; h <= 3 && ok; h++) {
+          if (h >= 2 && !(await rise())) { say('nether_portal', `could not get up a block to set row ${h}`); ok = false; break; }
+          ok = await put('obsidian', -1, h) && await put('obsidian', 2, h);
         }
-      } finally { K.controls.sneak = false; }
+        if (ok && (await rise())) {
+          ok = await put(filler, -1, 4) && await put(filler, 2, 4);
+          if (ok) { const l = P(-1, 4), r = P(2, 4); ok = await put('obsidian', 0, 4, [...l, inner[-1]]) && await put('obsidian', 1, 4, [...r, inner[2]]); }
+        } else if (ok) { say('nether_portal', 'could not get up a block to set the top'); ok = false; }
+      } finally {
+        K.controls.sneak = false;
+        if (up) { await V.dig_down([S(up)]); await K.ticks(4); }   // (back down the pillar)
+      }
+      if (!ok) return say('nether_portal', `${c} set, the frame not closed`);
       await grabAny('flint_and_steel|fire_charge', 'nether_portal'); await useOn(P(0, 0).map(S), 'up'); await K.ticks(6);
       return say('nether_portal', `${c} set, lit`);
     },

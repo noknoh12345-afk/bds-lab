@@ -267,6 +267,108 @@ async function enchStats(n) {
 B.ench_stats = async (a) => { const r = await enchStats(Number(a[0]) || 20); if (r !== true) log(`ench_stats: ${r}`); };
 B.road_enchant = async () => { const r = await enchantArmour(); log(`road_enchant: ${r === true ? 'Protection IV on all four' : 'could not finish: ' + r}`); };
 B.ench_peek = async () => { const r = await enchantArmour({ peekOnly: true }); if (r !== true) log(`ench_peek: ${r}`); };
+// ---------- the steps of the road (each a command in brain.cjs's STEPS: it ends with '<name>: done' or '<name>: could not finish: ...'
+// - auto takes the second as a step to try again - and each picks up where an earlier try left off, from what is carried and road.json)
+const n = (re) => count(re);
+const allProt4 = () => { const a = armour(); return PIECES.every((p) => a[p] && lvlOf(a[p].ench, 'protection') >= 4); };
+const roomKnown = () => !!st.room && (blk(st.room.x, st.room.y, st.room.z) === 'enchanting_table' || blk(st.room.x, st.room.y, st.room.z) === '?');
+async function stepRun(name, fn) {
+  return R.piece(async () => { let r; try { r = await fn(); } catch (e) { r = 'error ' + e.message; } log(`${name}: ${r === true ? 'done' : 'could not finish: ' + r}`, { dc: true }); return r; });
+}
+// far, the path finder's legs of 32 (the Nether: lava kept away from, dug through and climbed where the way needs it)
+async function walkFar(x, z, tol = 3) {
+  for (let k = 0, stuck = 0; k < 80 && R.live(); k++) {
+    const f = me.bot.state().pos, d = Math.hypot(x - f.x, z - f.z);
+    if (d <= tol) return true;
+    const s = Math.min(32, d), ang = Math.atan2(z - f.z, x - f.x) + (stuck ? (stuck % 2 ? 1 : -1) * Math.min(2.4, 0.8 * Math.ceil(stuck / 2)) : 0);
+    await R.gotoFor([String(Math.round(f.x + Math.cos(ang) * s)), String(Math.round(f.z + Math.sin(ang) * s)), String(s < 32 ? tol : 3)], 90000, 'walk_xz');
+    const g = me.bot.state().pos; stuck = Math.hypot(g.x - f.x, g.z - f.z) < 2 ? stuck + 1 : 0;
+    if (stuck >= 8) { log(`road: walk to ${x} ${z}: stuck at ${Math.round(g.x)} ${Math.round(g.y)} ${Math.round(g.z)}`); return false; }
+  }
+  const f = me.bot.state().pos; return Math.hypot(x - f.x, z - f.z) <= tol + 2;
+}
+// diamonds (two for the table, three for the pickaxe that mines obsidian) and lapis (the table: 3 an offer taken, 1 a new set)
+B.road_mine = () => stepRun('road_mine', async () => {
+  const dWant = () => (roomKnown() || n(/^enchanting_table$/) ? 0 : 2) + (n(/^(diamond|netherite)_pickaxe$/) || st.obsidianDone ? 0 : 3), lWant = () => (allProt4() ? 0 : 32);
+  for (let k = 0; k < 3 && R.live(); k++) {
+    if (n(/^diamond$/) < dWant()) await R.run(`get_diamond ${dWant()}`, 'diamonds: the enchanting table, a diamond pickaxe');
+    if (n(/^lapis_lazuli$/) < lWant()) await R.run(`get_lapis_lazuli ${lWant()}`, 'lapis for the enchanting table');
+    if (n(/^diamond$/) >= dWant() && n(/^lapis_lazuli$/) >= lWant()) return true;
+  }
+  return `diamonds ${n(/^diamond$/)} of ${dWant()}, lapis ${n(/^lapis_lazuli$/)} of ${lWant()}`;
+});
+// obsidian: ten for the portal, four for the table (a diamond pickaxe first)
+B.road_obsidian = () => stepRun('road_obsidian', async () => {
+  const want = () => (st.portalO ? 0 : 10) + (roomKnown() || n(/^enchanting_table$/) ? 0 : 4);
+  for (let k = 0; k < 3 && R.live() && n(/^obsidian$/) < want(); k++) {
+    if (!n(/^(diamond|netherite)_pickaxe$/)) await R.run('get_diamond_pickaxe', 'a diamond pickaxe: obsidian');
+    await R.run(`get_obsidian ${want()}`, 'obsidian: the portal, the enchanting table');
+  }
+  if (n(/^obsidian$/) >= want()) { st.obsidianDone = true; save(); return true; }
+  return `obsidian ${n(/^obsidian$/)} of ${want()}`;
+});
+// the enchanting room's makings: the table, fifteen bookshelves (45 books), wooden shovels to buy new offers with
+B.road_books = () => stepRun('road_books', async () => {
+  const need = () => roomKnown() && (st.room.shelves ?? 15) >= 15 ? [['wooden_shovel', 4]] : [['enchanting_table', 1], ['bookshelf', 15], ['wooden_shovel', 6]];
+  const short = () => need().filter(([it, m]) => n(new RegExp(`^${it}$`)) < m);
+  for (let k = 0; k < 3 && R.live() && short().length; k++) for (const [it, m] of short()) await R.run(`get_${it} ${m}`, `the enchanting room: ${it}`);
+  return short().length ? short().map(([it, m]) => `${it} ${n(new RegExp(`^${it}$`))} of ${m}`).join(', ') : true;
+});
+// the room set up at the base (by the bed), before the Nether: the portal is built beside it, and the levels go straight to the table
+B.road_room = () => stepRun('road_room', async () => {
+  if (roomKnown()) return true;
+  if (!n(/^enchanting_table$/)) return 'no enchanting table carried';
+  let pb = null; try { pb = JSON.parse(fs.readFileSync(path.join(R.ctx.RUN, 'bed.json'), 'utf8')); } catch { /* */ }
+  if (pb && me.dim === 'overworld') { const f = me.bot.state().pos; if (Math.hypot(f.x - pb.x, f.z - pb.z) > 12) await R.travel(pb.x + 6, pb.z + 6); }
+  const r = await buildRoom(); if (r !== true) return r;
+  st.room.shelves = shelvesAt([st.room.x, st.room.y, st.room.z]); save();
+  return st.room.shelves >= 15 ? true : `the room has ${st.room.shelves} bookshelves that count`;
+});
+// a trip into the Nether: in by the portal beside the room (built the first time), to a fortress, blazes by its spawner until there are
+// `rods` blaze rods and the XP level is `level`, back the way it came
+async function netherTrip({ rods = 8, lv = 0, minutes = 40 } = {}) {
+  if (me.dim === 'overworld') {
+    const at = st.portalO ?? (st.room ? { x: st.room.x + 5, z: st.room.z } : null);
+    if (at) { const f = me.bot.state().pos; if (Math.hypot(f.x - at.x, f.z - at.z) > 10) await R.travel(at.x, at.z); }
+    const before = me.bot.state().pos;
+    await R.run('nether_in', 'into the Nether (a portal by the room)');
+    for (let t = 0; t < 20 && me.dim !== 'nether'; t++) await sleep(500);
+    if (me.dim !== 'nether') return 'not into the Nether';
+    if (!st.portalO) st.portalO = { x: Math.floor(before.x), y: Math.floor(before.y), z: Math.floor(before.z) };
+    const f = me.bot.state().pos; st.portalN = { x: Math.floor(f.x), y: Math.floor(f.y), z: Math.floor(f.z) }; save();
+    log(`road: in the Nether at ${st.portalN.x} ${st.portalN.y} ${st.portalN.z} (the overworld's portal by ${st.portalO.x} ${st.portalO.z})`, { dc: true });
+  }
+  if (me.dim !== 'nether') return `in the ${me.dim}, not the Nether`;
+  const t0 = Date.now(), d0 = me.deaths;
+  await R.run('nether_seek 1200', 'a nether fortress');
+  if (me.dim === 'nether' && me.deaths === d0) await R.run(`blaze_rods ${rods} ${Math.max(300, minutes * 60 - Math.round((Date.now() - t0) / 1000))} ${lv}`, 'blaze rods and levels');
+  if (me.dim !== 'nether') return `left the Nether (died? deaths ${me.deaths - d0})`;
+  log(`road: the Nether: ${n(/^blaze_rod$/)} rods, level ${level()} - back to the portal at ${st.portalN.x} ${st.portalN.z}`, { dc: true });
+  if (st.portalN) await walkFar(st.portalN.x, st.portalN.z);
+  await R.run('portal_go 160', 'back through the portal');
+  for (let t = 0; t < 20 && me.dim === 'nether'; t++) await sleep(500);
+  return me.dim === 'overworld' ? true : 'still in the Nether (the way back to the portal?)';
+}
+B.road_nether = (a) => stepRun('road_nether', async () => {
+  const rods = Number(a?.[0]) || 8, lv = Number(a?.[1]) || 0;
+  if (n(/^blaze_rod$/) + Math.ceil(n(/^blaze_powder$/) / 2) + Math.ceil(n(/^ender_eye$/) / 2) >= rods && level() >= lv) return true;
+  return netherTrip({ rods, lv });
+});
+// Protection IV on all four: to the room with level 30 and enchant; short of levels, to the Nether's blazes for them (and back)
+B.road_prot = () => stepRun('road_prot', async () => {
+  for (let k = 0; k < 6 && R.live(); k++) {
+    if (allProt4()) return true;
+    if (level() >= 30) {
+      if (st.room && me.dim === 'overworld') { const f = me.bot.state().pos; if (Math.hypot(f.x - st.room.x, f.z - st.room.z) > 6) await R.travel(st.room.x, st.room.z + 3); }
+      const r = await enchantArmour(); if (r === true) return true;
+      if (!/^level \d+/.test(String(r))) return r;
+    }
+    const lacking = PIECES.filter((p) => { const a = armour()[p]; return a && lvlOf(a.ench, 'protection') < 4; }).length;
+    const r = await netherTrip({ rods: 8, lv: Math.min(45, 30 + 4 * lacking), minutes: 45 });
+    if (r !== true) log(`road: the trip for levels: ${r}`);
+  }
+  return allProt4() ? true : `Protection IV on ${PIECES.filter((p) => { const a = armour()[p]; return a && lvlOf(a.ench, 'protection') >= 4; }).length} of 4, level ${level()}`;
+});
 B.road_debug = async (a) => { debug = a[0] !== 'off'; log(`road_debug ${debug ? 'on' : 'off'}`); };
 B.road_status = async () => log(`road_status: ${JSON.stringify(st)} · armour ${armourText()} · level ${level()}`);
 

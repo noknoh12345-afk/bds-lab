@@ -45,6 +45,14 @@ const KIT = [['Protection IV on all four', (c) => ARMOUR.every((p) => protOf(c, 
   ['iron sword', (c) => nOf(c, /^(iron|diamond|netherite)_sword$/) >= 1], ['iron pickaxe', (c) => nOf(c, /^(iron|diamond|netherite)_pickaxe$/) >= 1], ['shield', (c) => nOf(c, /^shield$/) >= 1],
   ['food 16+', (c) => nOf(c, /^(cooked_\w+|bread|baked_potato|golden_carrot)$/) >= 16]];
 const kitMissing = (c) => KIT.filter(([, f]) => !f(c)).map(([n]) => n);
+// the bot moved to x z on the surface for a test, unhurt (spreadplayers into land not yet made dropped it from the sky: 11/20 a death)
+async function moveTo(at) {
+  const [x, z] = at.split(/\s+/);
+  srv(`effect ${NAME} slow_falling 90 0 true`, `effect ${NAME} resistance 90 4 true`, `tp ${NAME} ${x} 140 ${z}`);
+  await sleep(8000); srv(`spreadplayers ${x} ${z} 0 4 ${NAME}`); await sleep(3000);
+  for (let t = 0, y0 = -999; t < 45; t++) { const y = status().pos?.y ?? 0; if (Math.abs(y - y0) < 0.05) break; y0 = y; await sleep(2000); }   // (on the ground: still for 2 s)
+  srv(`effect ${NAME} clear`); await sleep(1000);
+}
 const mmss = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
 function roadLine(t0, c, d0) {
   const steps = [...since().matchAll(/auto: step "([^"]+)"/g)].map((m) => m[1]), s = status(), p = s.pos ?? {};
@@ -219,6 +227,22 @@ const S = {
     await sleep(Number(process.env.ROAD_MS ?? 2400000));
     return true;
   },
+  // one verb of the road tried from the iron kit: ROAD_KIT more to give (',' between), ROAD_CMD the commands (';' between),
+  // ROAD_WANT '<item regex>:<n>' carried makes it a pass, ROAD_AT 'x z' a place to start from (spread there: the lab's spawn is mesa,
+  // no tree, sheep or cow near) - what each get_ of the road does today
+  async road_probe() {
+    const [re, n = '1'] = (process.env.ROAD_WANT ?? 'diamond:5').split(':'), R = new RegExp(`^(${re})$`);
+    return road({ kit: [...IRON_KIT, ...(process.env.ROAD_KIT ?? '').split(',').filter(Boolean)], cmds: ['armor_up', ...(process.env.ROAD_CMD ?? `get_${re} ${n}`).split(';')], ms: Number(process.env.ROAD_MS ?? 2 * 3600000), check: (c) => nOf(c, R) >= Number(n), why: (c) => ` · ${re} ${nOf(c, R)}`,
+      setup: async () => { if (process.env.ROAD_AT) await moveTo(process.env.ROAD_AT); } });
+  },
+  // the Nether trip of road.cjs: the iron kit and 10 obsidian given; the portal built, a fortress found, blazes by the spawner until
+  // ROAD_RODS rods (8) and XP level ROAD_LEVEL (0), and back through the portal - a pass is the overworld again with the rods
+  async road_nether() {
+    const rods = Number(process.env.ROAD_RODS ?? 8), lv = Number(process.env.ROAD_LEVEL ?? 0);
+    return road({ kit: [...IRON_KIT, 'obsidian 10', 'cobblestone 64', 'cooked_beef 16'], cmds: ['armor_up', `road_nether ${rods} ${lv}`], ms: 3 * 3600000,
+      check: (c) => c.dim === 'overworld' && nOf(c, /^blaze_rod$/) >= rods && c.lv >= lv, why: (c) => ` · in ${c.dim}, rods ${nOf(c, /^blaze_rod$/)}, level ${c.lv}`,
+      setup: async () => { if (process.env.ROAD_AT) await moveTo(process.env.ROAD_AT); } });
+  },
   // the iron kit given: twelve eyes of ender (the Nether's blaze rods, ender pearls), however get_ender_eye plans them
   async road_eyes() {
     return road({ kit: IRON_KIT, cmds: ['armor_up', process.env.ROAD_CMD ?? 'get_ender_eye 12'], ms: 4 * 3600000, check: (c) => nOf(c, /^ender_eye$/) >= 12, why: (c) => ` · eyes ${nOf(c, /^ender_eye$/)}, pearls ${nOf(c, /^ender_pearl$/)}, rods ${nOf(c, /^blaze_rod$/)}, powder ${nOf(c, /^blaze_powder$/)}, obsidian ${nOf(c, /^obsidian$/)}` });
@@ -242,7 +266,7 @@ async function main() {
   const up = lab('up', '-a', 'lamp'); if (!/OK live/.test(up)) { console.log('FAIL\n' + up.slice(-1500)); process.exit(1); }
   const live = JSON.parse(fs.readFileSync(path.join(ROOT, 'bds', '.lab', 'live.json'), 'utf8'));
   console.log(`up on ${live.port}`);
-  fs.writeFileSync(CFG, JSON.stringify({ host: '127.0.0.1', port: live.port, name: NAME, version: live.version ?? undefined, transport: 'raknet', offline: true, webhook: '', guardRadius: 48, joinEveryMin: 0.2, reviewDeaths: false }));
+  fs.writeFileSync(CFG, JSON.stringify({ host: '127.0.0.1', port: live.port, name: NAME, version: live.version ?? undefined, transport: 'raknet', offline: true, webhook: '', guardRadius: 48, joinEveryMin: 0.2, reviewDeaths: false, ...(process.env.ROAD_WORK ? { workArea: process.env.ROAD_WORK } : {}) }));   // (ROAD_WORK 'x z': where auto works - the lab's spawn is mesa, the nearest wood ~400 off)
   bot = spawn(process.execPath, [path.join(HERE, 'bot.cjs')], { env: { ...ENV, BOT_RUN: RUN, BOT_CONFIG: CFG, BOT_DEPS: path.join(ROOT, 'bds', '.lab', 'node') }, stdio: ['pipe', fs.openSync(path.join(path.dirname(RUN), 'terminal.log'), 'w'), 'inherit'] });
   let fail = 0;
   try {

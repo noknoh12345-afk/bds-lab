@@ -2146,6 +2146,8 @@ function goalVerbs(K, H) {
     for (const [dx, dy, dz, face] of faces) { const s1 = [c[0] + dx, c[1] + dy, c[2] + dz]; if (fAt(...s1) & F_SOLID) { try { await K.act('punch', [...s1.map(String), String(face)]); } catch {} if (!/fire$/.test(bname(...c))) return true; } }
     return !/fire$/.test(bname(...c));
   }
+  // (a level to reach as well as the rods: remote/road.cjs farms the levels for the enchanting table there - blazes give 10 each)
+  let blazeLevel = 0; const levelOk = () => !blazeLevel || (K.attrs()['player.level'] ?? 0) >= blazeLevel;
   async function blazeBunker(sp, want, maxSec) {
     // (the reflexes stand down in here: their evade dug the player out of the closed box into the fortress, twice, to its death)
     const rb0 = reflexBusy, hs0 = holdStill; reflexBusy = true; holdStill = true;
@@ -2231,30 +2233,31 @@ function goalVerbs(K, H) {
       // runs; with 3 off and health 8 it went out twice, met a blaze's fists out there and died at 261 s with none)
       const clear = !bl.some((q) => hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 4.5);
       const quick = close.length && clear && hp >= 10 && now - (blazeBunker0.outAt ?? -999) > 60;
-      if ((lying.length && now - quietT > 100) || (cnt('blaze_rod') + lying.length >= want && now - quietT > 20) || quick) {
+      if ((lying.length && now - quietT > 100) || (cnt('blaze_rod') + lying.length >= want && levelOk() && now - quietT > 20) || quick) {
         blazeBunker0.outAt = now; blazeBunker0.last = quick ? 'out for the rods by the door' : 'out for the rods';
         if (dbg) log(`blaze: ${lying.length} rods lying out${quick ? ` (${close.length} by the door, no blaze within 4.5)` : ''} - out through the door`);
         stopKeys(); await rawDig(door);
         try { await collect(f, quick ? 6 : 12, /blaze_rod/); } catch {}
         await travel((a, b, c) => a === home[0] && b === home[1] && c === home[2], (a, b, c) => hyp(a - home[0], b - home[1], c - home[2]), { radius: 24, legs: 3 });
         await fillCell(door); await repair(); if (w) { try { await grab(w, 'fight'); } catch {} }
-        if (cnt('blaze_rod') >= want) break;
+        if (cnt('blaze_rod') >= want && levelOk()) break;
         quietT = Number(K.tick()); continue;
       }
       faceOut(); shield();
       await K.ticks(1);
     }
     stopKeys();
-    return cnt('blaze_rod') >= want;
+    return cnt('blaze_rod') >= want && levelOk();
   }
-  async function blazeRods(want = 6, maxSec = 400) {
+  async function blazeRods(want = 6, maxSec = 400, level = 0) {
+    blazeLevel = level;
     const t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
     const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
     if (offName() !== 'shield' && cnt('shield') > 0) { try { await duelOffhand(); } catch {} }
     let sp = null, ateAt = -99, quietT = Number(K.tick());
     const deaths0 = K.memo.get('goal:deaths') ?? 0;
     for (;;) {
-      const now = Number(K.tick()); if ((now - t0) / 20 > maxSec || K.dead() || cnt('blaze_rod') >= want || (K.memo.get('goal:deaths') ?? 0) !== deaths0) break;
+      const now = Number(K.tick()); if ((now - t0) / 20 > maxSec || K.dead() || (cnt('blaze_rod') >= want && levelOk()) || (K.memo.get('goal:deaths') ?? 0) !== deaths0) break;
       const f = K.feet(), hp = K.attrs().health ?? 20;
       if (!sp) { const s1 = K.findBlocks((b) => /mob_spawner/.test(b.name), { max: 4, radius: 64, from: f }) ?? []; if (s1[0]) { sp = { x: s1[0].x ?? s1[0][0], y: s1[0].y ?? s1[0][1], z: s1[0].z ?? s1[0][2] }; if (dbg) log(`blaze: a spawner at ${sp.x} ${sp.y} ${sp.z}`); } }
       // fire in the player's own cells (a fireball lit the floor: the last run burned to death standing in it, 12 health in 12 s):
@@ -2291,7 +2294,7 @@ function goalVerbs(K, H) {
     // (the last pick-up only where no blaze is near: two runs walked out among them when the time was up, and died there)
     if (!K.dead() && !K.all().some((q) => q.type === 'minecraft:blaze' && !q.dead && hyp(q.x - K.feet().x, q.y - K.feet().y, q.z - K.feet().z) < 8)) { try { await collect(K.feet(), 6, /blaze_rod/); } catch {} }
     if (dbg) log(`blaze: ${cnt('blaze_rod')} rods after ${((Number(K.tick()) - t0) / 20).toFixed(0)} s, health ${Math.round(K.attrs().health ?? 0)}`);
-    return cnt('blaze_rod') >= want;
+    return cnt('blaze_rod') >= want && levelOk();
   }
   // ---------------- the stronghold: eyes of ender (rebuilt from training/RTA_NOTES.md m3107-m3160) ----------------
   // An eye thrown flies some 12 blocks toward the stronghold - rising while it is far, sinking within ~12 of it - and falls as an item
@@ -3029,7 +3032,7 @@ function goalVerbs(K, H) {
       for (const [ax, az, name] of [[1, 0, 'x'], [0, 1, 'z']]) {
         let ok = true;
         for (let u = -1; u <= 2 && ok; u++) for (let h = 0; h <= 4 && ok; h++) { const b = B(x + ax * u, y + h, z + az * u); if (!b || solid(b) || isWater(b) || DANGER.test(b.name)) ok = false; }
-        for (let u = 0; u <= 1 && ok; u++) if (!floorOk(B(x + ax * u, y - 1, z + az * u))) ok = false;
+        for (let u = -1; u <= 2 && ok; u++) if (!floorOk(B(x + ax * u, y - 1, z + az * u))) ok = false;   // (the corners too: they are set on it)
         // not where the player stands; and a spot to build it from, two out in front
         if (ok && [-1, 0, 1, 2].some((u) => x + ax * u === x0 && z + az * u === z0)) ok = false;
         if (ok && !standable(x + ax + az * 2, y, z + az + ax * 2)) ok = false;
@@ -3535,10 +3538,20 @@ function goalVerbs(K, H) {
       if (dimName() === 'nether') return true;
       let h = known(/^minecraft:portal$/, { max: 1, radius: 64, fair: false })[0];
       if (!h) {
-        if (cnt('obsidian') < 10) return `a portal takes 10 obsidian (have ${cnt('obsidian')})`;
+        // (a frame begun before and left unclosed: its obsidian counts, and it is finished where it stands - 11/20 a try that set two and
+        // failed left 8 carried, and every try after it was 'a portal takes 10 obsidian (have 8)')
+        const prev = K.memo.get('goal:portalSite'), cell = (st0, u, hh) => [st0[0] + (st0[3] === 'z' ? 0 : u), st0[1] + hh, st0[2] + (st0[3] === 'z' ? u : 0)];
+        const inFrame = prev ? [[0, 0], [1, 0], [-1, 1], [2, 1], [-1, 2], [2, 2], [-1, 3], [2, 3], [0, 4], [1, 4]].filter(([u, hh]) => /obsidian/.test(bname(...cell(prev, u, hh)))).length : 0;
+        if (cnt('obsidian') + inFrame < 10) return `a portal takes 10 obsidian (have ${cnt('obsidian')}${inFrame ? ` and ${inFrame} in the frame begun at ${prev.slice(0, 3).join(' ')}` : ''})`;
         if (!cnt('flint_and_steel') && !cnt('fire_charge')) return 'no flint and steel to light it';
-        const site = portalSite(); if (!site) return 'no flat open place for a portal';
-        log(`building the portal at ${site.slice(0, 3).join(' ')}`);
+        let site = inFrame ? prev : portalSite();
+        for (let k = 0; k < 6 && !site; k++) {   // (none in reach here - dunes, a slope: a few steps on, each way in turn, and look again)
+          const [fx, , fz] = feet(), a2 = (k * Math.PI) / 3, tx = fx + Math.round(Math.cos(a2) * 14), tz = fz + Math.round(Math.sin(a2) * 14);
+          await travel((q, w, e) => hyp(q - tx, e - tz) <= 3, (q, w, e) => hyp(q - tx, e - tz), { radius: 32, legs: 2 }); site = portalSite();
+        }
+        if (!site) return 'no flat open place for a portal';
+        K.memo.set('goal:portalSite', site);
+        log(`building the portal at ${site.slice(0, 3).join(' ')}${inFrame ? ` (${inFrame} of its obsidian set before)` : ''}`);
         await H.M.nether_portal([...site.slice(0, 3).map(S), site[3]]);
         await K.ticks(10);
         h = known(/^minecraft:portal$/, { max: 1, radius: 16, fair: false })[0];
@@ -3953,7 +3966,23 @@ function goalVerbs(K, H) {
   M.to_surface = async () => { await toSurface('asked'); return K.say(`to_surface: y=${feet()[1]}`); };
   M.end_run = async (a) => K.say(`end_run: ${await endRun(Number(a[0]) || 900)}`);
   M.nether_seek = async (a) => { const r = await netherSeek(Number(a[0]) || 600); return K.say(`nether_seek: ${r ? `fortress at ${r.x} ${r.y} ${r.z}` : 'none found'}`); };
-  M.blaze_rods = async (a) => K.say(`blaze_rods: ${(await blazeRods(Number(a[0]) || 6, Number(a[1]) || 400)) ? 'got them' : `only ${cnt('blaze_rod')}`}`);
+  M.blaze_rods = async (a) => K.say(`blaze_rods: ${(await blazeRods(Number(a[0]) || 6, Number(a[1]) || 400, Number(a[2]) || 0)) ? 'got them' : `only ${cnt('blaze_rod')}, level ${Math.floor(K.attrs()['player.level'] ?? 0)}`}`);   // blaze_rods [rods] [seconds] [level]: rods, and (the third) on until that XP level too
+  // nether_in: into the Nether by a portal near (else one built here: 10 obsidian, flint and steel) - remote/road.cjs
+  M.nether_in = async () => K.say(`nether_in: ${await RUN.portal({})}`);
+  // portal_go [radius]: through the nearest nether portal this client knows (built here before, or the one it came by), either way
+  M.portal_go = async (a) => {
+    const d0 = dimName(), h = known(/^minecraft:portal$/, { max: 1, radius: Number(a[0]) || 128, fair: false })[0];
+    if (!h) return K.say('portal_go: no portal known near');
+    let [px, py, pz] = [h.x, h.y, h.z]; while (/portal/.test(bname(px, py - 1, pz))) py--;
+    await travel((x, y, z) => x === px && z === pz && y === py, (x, y, z) => hyp(x - px, y - py, z - pz), { radius: 160, legs: 12, dig: true, pillar: true });
+    for (let t = 0; t < 300 && dimName() === d0; t++) {   // into the purple and wait (4 s in it)
+      const f = K.feet(), dx = px + 0.5 - f.x, dz = pz + 0.5 - f.z;
+      if (hyp(dx, dz) > 0.3) { K.look((Math.atan2(-dx, dz) * 180) / Math.PI, 0); K.controls.forward = true; } else K.controls.forward = false;
+      await K.ticks(1);
+    }
+    stopKeys(); await K.ticks(40);
+    return K.say(`portal_go: ${dimName() !== d0 ? `through, in the ${dimName()} at ${feet().join(' ')}` : `not through (at ${feet().join(' ')}, the portal at ${px} ${py} ${pz})`}`);
+  };
   M.stronghold = async (a) => { const fr = await findStronghold(Number(a[0]) || 900); if (!fr) return K.say('stronghold: not found'); return K.say(`stronghold: ${(await intoEndPortal(fr)) ? 'in the End' : 'not in'}`); };
   M.end_fight = async (a) => K.say(`end_fight: ${(await endFight(Number(a[0]) || 600)) ? 'the dragon is dead' : 'not dead'}`);
   M.duel_mob = async (a) => {   // duel_mob <type> [seconds]: a mob fought like a PvP duel (kept out of its reach, the blow on its tenth tick, crits, W-tap) - add-on PvP bots that are mobs (MPVPBOT's armies)

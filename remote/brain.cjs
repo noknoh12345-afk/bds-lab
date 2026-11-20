@@ -37,12 +37,15 @@ function nearPlayers(bot, R) {
 // strongholds may be used). Told apart by what only generation leaves and no player-only block near; in doubt it is someone's.
 //   village: two or more villagers, a path or a bell, away from the world spawn's hub  ·  ruined portal: crying obsidian
 //   stronghold: mossy and cracked stone bricks together under the ground, or a portal frame  ·  the Nether and the End: all of it
-const MARKER = /^minecraft:(grass_path|bell|crying_obsidian|mossy_stone_bricks|cracked_stone_bricks|end_portal_frame|infested_\w+|web)$/;
+const MARKER = /^minecraft:(grass_path|bell|crying_obsidian|mossy_stone_bricks|cracked_stone_bricks|end_portal_frame|infested_\w+|web|trial_spawner|vault|reinforced_deepslate|sculk_shrieker|mob_spawner)$/;
 const PLAYER_ONLY = /shulker|beacon|concrete|redstone|repeater|comparator|piston|hopper|rail|enchanting_table|ender_chest|item_frame|banner|_sign|scaffolding|quartz|glass_pane|stained_glass/;
 function naturalHere(bot, hits) {
   // (an abandoned mineshaft: cobwebs, and nothing but its own timber, rails, torches and chests, all of it under the ground;
   //  raw ore blocks of a vein are the world's too: they are not in BUILT)
   if (me.dim === 'overworld' && (me.marks ?? new Set()).has('web') && hits.length && hits.every((h) => h.top < 50 && /^((dark_)?oak_(planks|fence)|rail|torch|chest)$/.test(h.block))) return 'mineshaft';
+  // (a trial chamber by its own blocks when its spawners are out of the scan: all of it deep, tuff and copper among it, its hoppers and
+  //  dispensers too - 11/20 in the lab at y 6 over its tuff bricks at -18, then a hopper of it at -25)
+  if (me.dim === 'overworld' && hits.every((h) => h.top < 10 && /^(tuff_bricks|polished_tuff|chiseled_tuff(_bricks)?|(polished_)?tuff(_brick)?_(slab|stairs|wall|double_slab)|(waxed_)?(exposed_|weathered_|oxidized_)?(cut_copper(_slab|_stairs)?|copper_(block|grate|bulb|door|trapdoor)|chiseled_copper)|\w+_glazed_terracotta|decorated_pot|(\w+_)?candle|chest|barrel|dispenser|hopper|redstone_(wire|torch)|(\w+_)?button|(\w+_)?pressure_plate|lever)$/.test(h.block)) && hits.some((h) => /tuff|copper/.test(h.block))) return 'trial chamber';
   if (hits.some((h) => PLAYER_ONLY.test(h.block))) return null;
   if (me.dim !== 'overworld') return me.dim;
   const p = bot.state().pos, m = me.marks ?? new Set();
@@ -51,6 +54,13 @@ function naturalHere(bot, hits) {
   //  at the surface, 47 blocks off its stone bricks at y 48)
   if ((m.has('mossy_stone_bricks') || m.has('cracked_stone_bricks')) && hits.every((h) => h.top < 55 && /^(stone_bricks|mossy_stone_bricks|cracked_stone_bricks|chiseled_stone_bricks|(mossy_)?stone_brick_(stairs|slab|wall)|stone_brick_double_slab|smooth_stone(_slab)?|stone_slab\d?|iron_bars|iron_door|wooden_door|oak_door|torch|wall_torch|bookshelf|oak_planks|oak_fence|chest|ladder|stone_button|web)$/.test(h.block))) return 'stronghold';
   if (m.has('crying_obsidian')) return 'ruined portal';
+  // (deep under the ground by what no player can have: a trial chamber's spawners and vaults, an ancient city's reinforced deepslate
+  //  and shriekers - 11/20 in the lab a dig down to the diamonds was stopped at y 6 by a trial chamber's polished tuff 35 blocks off;
+  //  a dungeon: its chests and nothing else built, by a spawner)
+  if (hits.every((h) => h.top < 20) && (['trial_spawner', 'vault', 'reinforced_deepslate', 'sculk_shrieker'].some((k) => m.has(k)) || hits.slice(0, 2).some((h) => {   // (or beside what was seen, below the scan)
+    for (let dx = -8; dx <= 8; dx++) for (let dz = -8; dz <= 8; dz++) for (let dy = -8; dy <= 8; dy++) if (/^minecraft:(trial_spawner|vault|reinforced_deepslate|sculk_shrieker)$/.test(bot.world.block(h.x + dx, h.y + dy, h.z + dz)?.name ?? '')) return true;
+    return false; }))) return 'trial chamber or ancient city';
+  if (m.has('mob_spawner') && hits.every((h) => h.top < 50 && /^(chest|trapped_chest)$/.test(h.block))) return 'dungeon';
   const folk = [...bot.entities.values()].filter((e) => /^minecraft:(villager_v2|iron_golem)$/.test(e.type) && Math.hypot(e.x - p.x, e.z - p.z) < 80).length;
   if (folk >= 2 && (m.has('grass_path') || m.has('bell')) && Math.hypot(p.x, p.z) > 200) return 'village';
   return null;
@@ -593,7 +603,7 @@ const ENDS_AT = cfg.autoUntil ?? '08:00';   // local time to keep going until (a
 // one kind before any iron: three nights in a row cut the hunt short and it never got past food.)
 // the road to the End's own commands (remote/road.cjs, the second Claude's part: the enchanting, golden apples, the Nether ...)
 delete require.cache[require.resolve('./road.cjs')];
-const ROAD = require('./road.cjs')({ me, cfg, log, sleep, ctx, run: (c, w) => run(c, w), guardReason: (b) => guardReason(b), gotoFor: (a, ms, v) => gotoFor(a, ms, v), live: () => live() });
+const ROAD = require('./road.cjs')({ me, cfg, log, sleep, ctx, run: (c, w) => run(c, w), guardReason: (b) => guardReason(b), gotoFor: (a, ms, v) => gotoFor(a, ms, v), live: () => live(), piece: async (fn) => { pieceRun++; try { return await fn(); } finally { pieceRun--; } }, travel: (x, z) => BUILTIN.travel([String(x), String(z)]) });
 Object.assign(BUILTIN, ROAD.builtins);
 const STEPS = [
   { name: 'stone tools', cmds: ['get_wooden_sword', 'get_stone_pickaxe', 'get_stone_sword', 'get_stone_axe'], has: ['stone_pickaxe', 'stone_sword'] },   // (a weapon before anything: every death so far was with nothing in hand)
