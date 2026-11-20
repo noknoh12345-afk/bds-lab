@@ -701,7 +701,7 @@ async function waitIn() { while (!me.connected || !me.bot) { if (!live()) return
 async function run(cmd, why) {   // one command, as the worker would: guard first, then the bot; true when it finished without a failure
   await reviewWait();
   if (!(await waitIn())) return false;
-  await safeStart();
+  await safeStart(cmd);
   const [v, ...a] = cmd.split(/\s+/);
   const g = PASSIVE.test(v) || BUILTIN[v] ? null : guardReason(me.bot);
   if (g) { log(`auto: "${cmd}" waits: ${g}`); await escape(); return false; }
@@ -752,7 +752,7 @@ const WORK = (cfg.workArea ?? '260 260').split(/\s+/).map(Number), FAR = cfg.far
 const WAYOUT = (cfg.wayOut ?? '0 60').split(/\s+/).map(Number);   // (8 130 led over a drowned cave at -24 43 107 it fell into twice)
 // before work: not down in a cave (up to the sky first), and not out in the night with nothing to fight with (dug in until morning)
 // (the death of 08:53 under review: a goal started in a drowned cave at night, unarmed, and a skeleton shot it there)
-async function safeStart() {
+async function safeStart(cmd = '') {
   const b = me.bot; if (!b || me.dim !== 'overworld' || guardReason(b)) return;
   // (not from inside bedSpawn: its own run()s come back here - 13:36 that was an endless chain of promises that never let the process
   //  breathe: frozen until the watchdog)
@@ -761,7 +761,10 @@ async function safeStart() {
   // (down in the stronghold for its library, its spawner, its portal: no going up first - 11/20 the lab's road_library began by
   //  digging up out of the portal room into the silverfish)
   { const fr = b.K?.memo?.get('goal:frames'), q = b.state().pos; if (fr && Math.hypot(fr.x - q.x, fr.z - q.z) < 120 && q.y < fr.y + 40 && !openSky(b, q)) return; }
-  if (!openSky(b, b.state().pos) && !nightNow(b)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
+  // (a mining step goes on down there: up to the sky and down again between the diamonds and the lapis was minutes each, and 'digging
+  //  up by hand' between y 27 and 28 for good once)
+  const deepWork = /^(get_(diamond|lapis_lazuli|redstone|raw_iron|iron_ingot|raw_gold|gold_ingot|coal|emerald)|ore_mine|road_mine|spawner_xp|mine_near)\b/.test(cmd);
+  if (!openSky(b, b.state().pos) && !nightNow(b) && !deepWork) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
   me.armored = /_chestplate\*/.test(lastInv || (await invList(b))) || wornChest();
   if (nightNow(b) && (!me.armored || me.nightIn)) { log(me.nightIn ? 'auto: night: dug in until morning (the road shelters every night until Protection IV)' : 'auto: night and no armour: dug in until morning', { dc: true }); await sitOutNight(b); }
 }
