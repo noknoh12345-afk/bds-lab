@@ -623,6 +623,9 @@ timers.push(setInterval(() => {
   if (!/^auto: (get|kill|mine)_/.test(String(me.busy ?? ''))) return;
   if (me.dim === 'overworld' && nightNow(b) && (!me.armored || me.nightIn) && !guardReason(b) && openSky(b, b.state().pos)) { me.interrupt = 'night';   // (underground the night does not matter: it mines on)
     log('auto: night falls mid-task: stopping to dig in', { dc: true }); b.cancel?.(); return; }
+  // (not down in the stronghold: there the verb fights for itself in the corridors - 11/20 this cut the library short with five about,
+  //  and the breaking away ran the bot through the corridors to its death)
+  { const fr = b.K?.memo?.get('goal:frames'), q = b.state().pos; if (fr && Math.hypot(fr.x - q.x, fr.z - q.z) < 120 && !openSky(b, q)) return; }
   const f = hostilesNear(b, 4).filter((x) => !/creeper/.test(x.e.type) || x.d < 3);
   if (f.length) { me.interrupt = 'fight'; b.cancel?.(); }
 }, 400));
