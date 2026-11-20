@@ -227,7 +227,7 @@ async function enchantArmour({ peekOnly = false, maxRerolls = 60 } = {}) {
     const r = await buildRoom(); if (r !== true) return r;
     T = ownTable(); if (!T) return 'the table is not there after building the room';
   }
-  await tidy(6);   // (room in the bag first: the armour comes off into it and each enchanted item comes back - 'enchant rejected: inventory full', 11/20)
+  await tidy(10);   // (room in the bag first: the armour comes off into it and each enchanted item comes back - 'enchant rejected: inventory full', 11/20)
   const shelves = shelvesAt(T);
   if (shelves < 15) log(`road: enchant: only ${shelves} bookshelves count round the table at ${T.join(' ')}: its top offer is under level 30`);
   // to the cell south of the table, inside the ring
@@ -259,7 +259,8 @@ async function enchantArmour({ peekOnly = false, maxRerolls = 60 } = {}) {
       if (pick) {
         const cur = nameOf(K().inv.ui?.[14]);
         if (cur !== `iron_${pick.p}`) { await backOut(); const a = armour()[pick.p]; await offersFor(a.at); }
-        const r = await act('enchant', [pick.k]);
+        let r = await act('enchant', [pick.k]);
+        if (/inventory full/.test(r)) { log('road: enchant: inventory full - room made, again'); await act('close'); await sleep(300); await tidy(12); if (!(await openTable(T))) { why = 'the table did not open'; break; } continue; }
         log(`road: enchant: ${pick.p} ← offer ${pick.k} (level ${pick.x.cost}): ${enText(pick.x.list)} · ${r.slice(0, 100)}`);
         await sleep(300); await backOut(); done++;
         continue;
