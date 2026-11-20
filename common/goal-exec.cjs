@@ -4121,6 +4121,17 @@ function goalVerbs(K, H) {
   // long walks fall back to it); to_surface: up to the open sky by the way it came or a shaft
   // (`shelter night`: kept in until the morning by the clock - a remote bot's night; plain `shelter` may go out early, armed and well)
   M.shelter = async (a) => K.say(`shelter: ${await shelter(false, a?.[0] === 'night' ? { hold: () => { const t = dayTime(); return t !== null && t >= 11800 && t < 23300; } } : {})}`);   // dig in and shut the way they come (the night)
+  // across the Nether round a fortress, not through it: a tunnel's straight line that passes within 16 of its bricks goes by a point 48
+  // to the side with fewer of them (11/20 the way to a warped forest ran past the blaze spawner: five blazes, dead)
+  async function tunnelAround(tx, tz, maxLen = 400, tol = 8) {
+    const f = K.feet(), L = hyp(tx - f.x, tz - f.z) || 1, ux = (tx - f.x) / L, uz = (tz - f.z) / L;
+    const BR = (b) => /^minecraft:(nether_brick|nether_bricks|nether_brick_fence|red_nether_brick|mob_spawner)$/.test(b.name);
+    const near = (x, z) => K.findBlocks(BR, { max: 4, radius: 16, from: { x, y: f.y, z } }).length;
+    let hit = false; for (let d = 8; d < L && !hit; d += 8) if (near(f.x + ux * d, f.z + uz * d)) hit = true;
+    if (hit) { const mx = (f.x + tx) / 2, mz = (f.z + tz) / 2, a = { x: mx - uz * 48, z: mz + ux * 48 }, b = { x: mx + uz * 48, z: mz - ux * 48 }, w = near(a.x, a.z) <= near(b.x, b.z) ? a : b;
+      log(`nether: a fortress on the way - round it by ${Math.round(w.x)} ${Math.round(w.z)}`); await tunnelTo(w.x, w.z, maxLen, 6); }
+    return tunnelTo(tx, tz, maxLen, tol);
+  }
   // pearl_hunt <pearls> [sec]: in the Nether, to a warped forest (endermen by day and night there) and endermen fought one at a time for
   // their pearls, a carved pumpkin on the head so that looking at them does not set them on (the helmet off meanwhile, back on after)
   M.pearl_hunt = async (a) => {
@@ -4138,7 +4149,7 @@ function goalVerbs(K, H) {
       const g = K.feet(); dir += hyp(g.x - f.x, g.z - f.z) < 12 ? 0.9 : Math.PI / 2;
     }
     if (!forest) return K.say(`pearl_hunt: no warped forest found (pearls ${have()} of ${want})`);
-    if (hyp(K.feet().x - forest.x, K.feet().z - forest.z) > 16) await tunnelTo(forest.x, forest.z, 400, 10);
+    if (hyp(K.feet().x - forest.x, K.feet().z - forest.z) > 16) await tunnelAround(forest.x, forest.z, 400, 10);
     // the pumpkin on: the helmet off into the bag first
     let swapped = false;
     if (cnt('carved_pumpkin') > 0) { try { if ((K.inv.armor?.[0])?.network_id) await K.act('move', ['head', String(K.inv.slots.findIndex((it, i) => i < 36 && !it?.network_id))]); const pi = K.inv.slots.findIndex((it) => it?.network_id && sh(nm(it)) === 'carved_pumpkin'); if (pi >= 0) { await K.act('move', [String(pi), 'head']); swapped = true; } } catch (e) { log(`pearl_hunt: the pumpkin did not go on: ${e.message}`); } }
