@@ -399,7 +399,12 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40 } = {}) {
   if (me.dim !== 'nether') return `in the ${me.dim}, not the Nether`;
   const t0 = Date.now(), d0 = me.deaths;
   await R.run('nether_seek 1200', 'a nether fortress');
-  if (me.dim === 'nether' && me.deaths === d0) await R.run(`blaze_rods ${rods} ${Math.max(300, minutes * 60 - Math.round((Date.now() - t0) / 1000))} ${lv}`, 'blaze rods and levels');
+  // the rods at the spawner (and its XP); the levels after that from nether quartz along tunnels - faster than waiting for blazes at a
+  // slit (the lab: about one blaze a minute)
+  if (me.dim === 'nether' && me.deaths === d0 && n(/^blaze_rod$/) < rods) await R.run(`blaze_rods ${rods} ${Math.max(300, Math.min(1200, minutes * 60 - Math.round((Date.now() - t0) / 1000)))} 0`, 'blaze rods');
+  // (away from the spawner first - back toward the portal by the tunnel: 11/20 the quartz tunnel went past the spawner, nine blazes, burned)
+  if (me.dim === 'nether' && me.deaths === d0 && level() < lv && st.portalN) await R.run(`tunnel_to ${st.portalN.x} ${st.portalN.z} 600 6`, 'away from the spawner, toward the portal');
+  if (me.dim === 'nether' && me.deaths === d0 && level() < lv) await R.run(`quartz_mine ${lv} ${Math.max(300, minutes * 60 - Math.round((Date.now() - t0) / 1000))}`, 'levels from nether quartz');
   if (me.dim !== 'nether' || me.deaths !== d0) return `the trip ended in the Nether: ${me.deaths !== d0 ? 'died' : 'out of it'} (rods ${n(/^blaze_rod$/)}, level ${level()})`;   // (11/20: killed by magma cubes, it went on to 'the way back' from the overworld)
   log(`road: the Nether: ${n(/^blaze_rod$/)} rods, level ${level()} - back to the portal at ${st.portalN.x} ${st.portalN.z}`, { dc: true });
   if (st.portalN) await R.run(`tunnel_to ${st.portalN.x} ${st.portalN.z} 600 3`, 'back toward the portal by a tunnel');   // (the Nether's ledges: no walking in the open)

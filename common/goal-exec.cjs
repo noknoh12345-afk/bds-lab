@@ -1531,7 +1531,7 @@ function goalVerbs(K, H) {
       // the night's shelter, armed, healed and fed, with no crowd outside: out and on with the run, like a runner with a sword (the
       // monsters that come are fought one or two at a time); a crowd, a creeper, an archer about - on waiting
       // (with a wooden sword: the morning - out at once with one, looking for sheep, two zombies and a spider came, and it died)
-      if (!o.hold && !perched && goodSword() && hp >= 16 && food >= 10 && gnow() - t0 > 15000) {
+      if (!o.hold && !K.memo.get('goal:nightIn') && !perched && goodSword() && hp >= 16 && food >= 10 && gnow() - t0 > 15000) {   // (goal:nightIn: remote/road.cjs keeps the night in until Protection IV)
         const fs = foesNear(20), mel = fs.filter((q) => MELEE_T.test(q.e.type)).length;
         if (mel <= 1 && !fs.some((q) => /creeper/.test(q.e.type) || (ARCHER_T.test(q.e.type) && q.d < 16))) { log(`shelter: armed and well, ${mel ? 'one about' : 'none about'} - out and on with it`); break; }
       }
@@ -2153,6 +2153,30 @@ function goalVerbs(K, H) {
       if (k % 30 === 29) log(`tunnel toward ${Math.round(tx)} ${Math.round(tz)}: ${dist} blocks, at ${feet().join(' ')}`);
     }
     return hyp(tx - feet()[0], tz - feet()[2]) <= tol;
+  }
+  // nether quartz for XP (2-5 each, Bedrock): along a tunnel through the netherrack, every quartz ore that comes into view within reach dug
+  // out, until the XP level is `level` (remote/road.cjs: the enchanting table's 30; the blaze spawner gave ~10 a minute in the lab)
+  async function quartzMine(level, maxSec = 900) {
+    const t0 = gnow(); let ores = 0, legs = 0;
+    const lv = () => K.attrs()['player.level'] ?? 0;
+    // (the way with the most netherrack - quartz grows only in it - and away from soul sand: 11/20 the tunnel went through the fortress and
+    //  into a soul sand valley, no quartz in 287 s and shot dead by its skeletons)
+    const bestDir = () => { const [x, y, z] = feet(); let best = 0, bs = -1e9; for (let k = 0; k < 8; k++) { const a = (k * Math.PI) / 4; let sc = 0; for (let d = 4; d <= 40; d += 3) for (let dy = -3; dy <= 3; dy += 2) { const n = bname(Math.round(x + Math.cos(a) * d), y + dy, Math.round(z + Math.sin(a) * d)); if (/netherrack|quartz_ore|nether_gold_ore/.test(n)) sc++; else if (/soul_(sand|soil)|nether_brick|basalt|blackstone|lava/.test(n)) sc -= 2; } if (sc > bs) { bs = sc; best = a; } } return best; };
+    let dir = bestDir();
+    while ((gnow() - t0) / 1000 < maxSec && !K.dead() && lv() < level) {
+      const ORE = /^minecraft:(quartz_ore|nether_gold_ore)$/;   // (nether gold too: nuggets for the golden apples, 2-6 an ore)
+      const h = known(ORE, { max: 6, radius: 6 }).find((q) => !unreachable(q)) ?? known(ORE, { max: 4, radius: 2.5, fair: false }).find((q) => !unreachable(q));   // (seen, else right in the tunnel's wall)
+      if (h) {
+        if (await goToBlock(h.x, h.y, h.z)) { if (await breakAt(h.x, h.y, h.z)) ores++; else markUnreachable(h, 'quartz_ore'); } else markUnreachable(h, 'quartz_ore');
+        if (ores % 10 === 0) log(`quartz: ${ores} ores, level ${Math.floor(lv())}`);
+        await reflexes(); continue;
+      }
+      const [x, , z] = feet(), tx = x + Math.cos(dir) * 16, tz = z + Math.sin(dir) * 16;
+      if (!(await tunnelTo(tx, tz, 20, 1))) dir += Math.PI / 2; else if (++legs % 4 === 0) dir = bestDir();
+      await reflexes();
+    }
+    log(`quartz: ${ores} ores in ${Math.round((gnow() - t0) / 1000)} s, level ${Math.floor(lv())}`);
+    return lv() >= level;
   }
   async function netherSeek(maxSec = 600) {
     const t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
@@ -4035,6 +4059,8 @@ function goalVerbs(K, H) {
   M.blaze_rods = async (a) => K.say(`blaze_rods: ${(await blazeRods(Number(a[0]) || 6, Number(a[1]) || 400, Number(a[2]) || 0)) ? 'got them' : `only ${cnt('blaze_rod')}, level ${Math.floor(K.attrs()['player.level'] ?? 0)}`}`);   // blaze_rods [rods] [seconds] [level]: rods, and (the third) on until that XP level too
   // tunnel_to x z [max] [tol]: the Nether's safe way across (tunnelTo)
   M.tunnel_to = async (a) => K.say(`tunnel_to: ${(await tunnelTo(Number(a[0]), Number(a[1]), Number(a[2]) || 300, Number(a[3]) || 3)) ? 'there' : 'not there'} (${feet().join(' ')})`);
+  // quartz_mine <level> [seconds]: nether quartz for the XP until that level (quartzMine)
+  M.quartz_mine = async (a) => K.say(`quartz_mine: ${(await quartzMine(Number(a[0]) || 30, Number(a[1]) || 900)) ? 'level reached' : `level ${Math.floor(K.attrs()['player.level'] ?? 0)}`}`);
   // nether_in: into the Nether by a portal near (else one built here: 10 obsidian, flint and steel) - remote/road.cjs
   M.nether_in = async () => K.say(`nether_in: ${await RUN.portal({})}`);
   // portal_go [radius]: through the nearest nether portal this client knows (built here before, or the one it came by), either way
