@@ -65,7 +65,7 @@ function naturalHere(bot, hits) {
   //  stopped the sheep for a bed at a river's chest at y 54, 'someone's build', and the bot went round it into the night)
   { const nm = (x, y, z) => bot.world.block(x, y, z)?.name ?? '';
     const wet = (h) => [[0, 1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]].some(([dx, dy, dz]) => /water|kelp|seagrass/.test(nm(h.x + dx, h.y + dy, h.z + dz)));
-    const buried = (h) => [[0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]].every(([dx, dy, dz]) => /:(sand|gravel|dirt|stone|sandstone|clay|grass_block|chest)$/.test(nm(h.x + dx, h.y + dy, h.z + dz)));
+    const buried = (h) => [[0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]].every(([dx, dy, dz]) => /:(sand|gravel|dirt|coarse_dirt|stone|andesite|diorite|granite|tuff|deepslate|sandstone|red_sandstone|clay|grass_block|chest|\w+_ore)$/.test(nm(h.x + dx, h.y + dy, h.z + dz)));
     if (hits.length && hits.length <= 12 && hits.every((h) => h.top < 66 && ((/^(chest|trapped_chest|barrel)$/.test(h.block) && (wet(h) || buried(h))) || (/_(planks|log|fence|trapdoor|door|stairs|slab|wood)$/.test(h.block) && wet(h))))) return 'shipwreck or buried treasure'; }
   const folk = [...bot.entities.values()].filter((e) => /^minecraft:(villager_v2|iron_golem)$/.test(e.type) && Math.hypot(e.x - p.x, e.z - p.z) < 80).length;
   if (folk >= 2 && (m.has('grass_path') || m.has('bell')) && Math.hypot(p.x, p.z) > 200) return 'village';
@@ -612,7 +612,7 @@ timers.push(setInterval(() => {
 }, 400));
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || b.state().dead) return;
-  if (/^auto: (get|kill|mine|fight|stronghold|blaze_rods|nether_seek|tunnel_to|portal_go|nether_in|end_fight|quartz_mine|ore_mine)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself: 11/20 this one's breaking away ran the bot out of the blaze bunker, among five blazes, to its death)
+  if (/^(auto: )?(get|kill|mine|fight|stronghold|blaze_rods|nether_seek|tunnel_to|portal_go|nether_in|end_fight|quartz_mine|ore_mine)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself: 11/20 this one's breaking away ran the bot out of the blaze bunker, among five blazes, to its death)
   const f = hostilesNear(b, AD.engageR); if (!f.length) return;
   engage(b).catch(() => {});
 }, 500));

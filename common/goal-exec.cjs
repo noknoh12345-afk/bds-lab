@@ -665,6 +665,7 @@ function goalVerbs(K, H) {
     let lastHop = -100;
     for (let i = 1; i < path.length; i++) {
       const p = path[i];
+      if (o.stop && i % 8 === 0 && o.stop()) { stopKeys(); return false; }   // (the caller's stop, every few steps of a long path too)
       if (p.digs) { stopKeys(); await K.ticks(2); for (const [cx, cy, cz] of p.digs.slice().sort((a, b) => b[1] - a[1])) if (!(await breakAt(cx, cy, cz))) return false; }
       if (p.pil) { stopKeys(); if (!(await pillarUp())) return false; continue; }
       let still = 0, lastPos = K.feet();
