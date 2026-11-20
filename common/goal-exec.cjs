@@ -4135,17 +4135,29 @@ function goalVerbs(K, H) {
     const fr = await findStronghold(Number(a[0]) || 900);
     if (!fr) return K.say('stronghold_find: not found');
     K.memo.set('goal:frames', fr);
+    await healUp();
     await travel((x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z) <= 4.5, (x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z), { radius: 200, dig: true, pillar: true, legs: 40 });
     const f = K.feet(), d = hyp(f.x - fr.x, f.y - fr.y, f.z - fr.z);
     return K.say(`stronghold_find: ${d <= 6 ? 'at' : `${Math.round(d)} blocks from`} the frames ${fr.x} ${fr.y} ${fr.z}`);
   };
   // mine_near <block> <n> [radius]: n of that block near here broken and picked up (a stronghold library's bookshelves: 3 books each).
   // Blocks in sight first; none in sight, the nearest known one (a library lies along the stronghold's corridors), dug to
+  // eaten up to health before the next part (11/20 the lab: at the stronghold's frames with 1 health after the walk, into the library,
+  // dead to the first skeleton) - health comes back only with the food bar high
+  async function healUp(to = 18) {
+    for (let k = 0; k < 6 && !K.dead(); k++) {
+      const at = K.attrs(); if ((at.health ?? 20) >= to && (at['player.hunger'] ?? 20) >= 18) break;
+      const fd = FOOD.find(edible); if (!fd) break;
+      if (foesNear(4).length) { const q = foesNear(4)[0]; try { await fightOne(q.e, 10); } catch { /* */ } continue; }
+      stopKeys(); await grab(fd, 'eat'); await K.act('use', ['36']); await K.ticks(60);
+    }
+  }
   M.mine_near = async (a) => {
+    await healUp();
     const re = new RegExp(`^minecraft:(${a[0] ?? 'bookshelf'})$`), want = Number(a[1]) || 1, r = Number(a[2]) || 64;
     let got = 0, fails = 0; const bad = new Set();
     for (let k = 0; k < want * 3 + 6 && got < want && fails < 8 && !K.dead() && !late(); k++) {
-      await reflexes();
+      await reflexes(); if ((K.attrs().health ?? 20) < 12) await healUp();
       const ok = (h) => !bad.has(`${h.x},${h.y},${h.z}`);
       let h = known(re, { max: 1, radius: r, ok })[0];
       if (!h) { h = known(re, { max: 1, radius: r, fair: false, ok })[0]; if (h && k === 0) log(`mine_near: none in sight - to the nearest at ${h.x} ${h.y} ${h.z}`); }
