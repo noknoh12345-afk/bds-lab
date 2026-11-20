@@ -2477,6 +2477,15 @@ function goalVerbs(K, H) {
     const { x: px, y: py, z: pz } = pc[0];
     await travel((x, y, z) => x === px && z === pz && Math.abs(y - py) <= 1, (x, y, z) => hyp(x - px, y - py, z - pz), { radius: 24, dig: true, legs: 6 });
     for (let t = 0; t < 100 && dimName() !== 'the_end'; t++) await K.ticks(1);
+    // (not in yet: the last step into it by hand - towards the portal's middle, off the frame's edge - and a longer wait for the End
+    //  to load: 11/20 'not through after 24 s' beside the open portal)
+    for (let k = 0; k < 3 && dimName() !== 'the_end' && !K.dead(); k++) {
+      const all = K.findBlocks((b) => b.name === 'minecraft:end_portal', { max: 9, radius: 12, from: K.feet() }); if (!all.length) break;
+      const cx = all.reduce((a, q) => a + q.x, 0) / all.length + 0.5, cz = all.reduce((a, q) => a + q.z, 0) / all.length + 0.5;
+      for (let t = 0; t < 30 && dimName() !== 'the_end'; t++) { const g = K.feet(); K.look((Math.atan2(-(cx - g.x), cz - g.z) * 180) / Math.PI, 30); K.controls.forward = true; K.controls.jump = t % 8 === 0; await K.ticks(1); }
+      stopKeys();
+      for (let t = 0; t < 200 && dimName() !== 'the_end'; t++) await K.ticks(1);
+    }
     if (dbg) log(`stronghold: ${dimName() === 'the_end' ? 'in the End' : 'not through'} after ${((Number(K.tick()) - t0) / 20).toFixed(0)} s`);
     return dimName() === 'the_end';
   }
