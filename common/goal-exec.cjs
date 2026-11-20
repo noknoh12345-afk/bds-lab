@@ -4141,7 +4141,8 @@ function goalVerbs(K, H) {
   // until the level is reached - silverfish 5 each, ~10 a minute: the experience for the four Protection IV enchantments
   M.spawner_xp = async (a) => {
     const target = Number(a[0]) || 30, maxSec = Number(a[1]) || 3600, t0 = Number(K.tick()), lv = () => K.attrs()['player.level'] ?? 0;
-    const sp0 = K.findBlocks((b) => /mob_spawner/.test(b.name), { max: 1, radius: 48, from: K.feet() })[0];
+    const mf = K.memo.get('goal:frames'), ff = K.feet(), nearFr = mf && hyp(mf.x - ff.x, mf.z - ff.z) < 200;   // (up at the room over the stronghold: the portal room's spawner, from the frames kept)
+    const sp0 = K.findBlocks((b) => /mob_spawner/.test(b.name), { max: 1, radius: nearFr ? 24 : 48, from: nearFr ? mf : ff })[0];
     if (!sp0) return K.say('spawner_xp: no spawner near');
     const sp = { x: sp0.x ?? sp0[0], y: sp0.y ?? sp0[1], z: sp0.z ?? sp0[2] };
     const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
@@ -4153,7 +4154,7 @@ function goalVerbs(K, H) {
       if (hp < 7 && !FOOD.some((x) => cnt(x) > 0)) { log('spawner_xp: hurt and nothing to eat - stopping'); break; }
       // (within 4 of the spawner, not on top of it: it spawns round the player inside 4 blocks of itself, and only with a player within 16)
       if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 5) {
-        const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 4 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 48, dig: true, pillar: true, legs: 4, nodes: 30000 });
+        const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 4 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: true, pillar: true, legs: 8, nodes: 30000 });
         if (!ok) { const g = K.feet(); spawnerMiss++; log(`spawner_xp: no way to the spawner at ${sp.x} ${sp.y} ${sp.z} from ${Math.floor(g.x)} ${Math.floor(g.y)} ${Math.floor(g.z)} (${spawnerMiss})`); if (spawnerMiss >= 4) break; await K.ticks(20); }
         continue; }
       const e = K.all().filter((q) => HOSTILE.test(q.type) && !/enderman/.test(q.type) && !q.dead && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 10).sort((p1, p2) => hyp(p1.x - f.x, p1.z - f.z) - hyp(p2.x - f.x, p2.z - f.z))[0];

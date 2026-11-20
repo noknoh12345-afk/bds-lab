@@ -37,6 +37,7 @@ const carried = () => {
 };
 const ARMOUR = ['helmet', 'chestplate', 'leggings', 'boots'];
 const nOf = (c, re) => Object.entries(c?.m ?? {}).filter(([k]) => re.test(k)).reduce((s, [, n]) => s + n, 0);
+const prot4 = (c) => ['helmet', 'chestplate', 'leggings', 'boots'].filter((p) => protOf(c, p) >= 4).length;
 const protOf = (c, piece) => Math.max(0, ...(c?.en ?? []).filter((e) => new RegExp(`(^|:)iron_${piece}\\[`).test(e)).map((e) => Number(/(^|\[|,)protection (\d)/.exec(e)?.[2] ?? 0)));
 // the kit the lab's dragon wins had (HANDOFF: Protection IV iron, Feather Falling III, 16 golden apples, 12 beds, 192 arrows, 256
 // cobblestone, a carved pumpkin, sword, pickaxe, shield, food) - the floor of it: what the brief says may not be cut
@@ -255,6 +256,15 @@ const S = {
     return road({ kit: IRON_KIT, cmds: ['armor_up', process.env.ROAD_CMD ?? 'get_ender_eye 12'], ms: 4 * 3600000, check: (c) => nOf(c, /^ender_eye$/) >= 12, why: (c) => ` · eyes ${nOf(c, /^ender_eye$/)}, pearls ${nOf(c, /^ender_pearl$/)}, rods ${nOf(c, /^blaze_rod$/)}, powder ${nOf(c, /^blaze_powder$/)}, obsidian ${nOf(c, /^obsidian$/)}` });
   },
   // the iron kit and twelve eyes given: the stronghold found, its portal filled and entered
+  // the stronghold part of the road from the kit it is reached with: found (not entered), its library's books, the table and shelves,
+  // the silverfish spawner's levels, the room over it, Protection IV on all four, then in to the End (pass: in the End with all four).
+  // ROAD_AT 'x z' where it starts (default 300 blocks off the lab's stronghold), ROAD_CMD other commands (';' between)
+  async road_sh() {
+    const cmds = (process.env.ROAD_CMD ?? 'stronghold_find 3600;road_library;road_books;spawner_xp 40 2400;to_surface;road_room here;road_prot;stronghold 3600').split(';');
+    return road({ kit: [...IRON_KIT, 'ender_eye 12', 'diamond 2', 'obsidian 4', 'lapis_lazuli 48', 'oak_log 32'], cmds: ['armor_up', ...cmds], ms: 3 * 3600000,
+      check: (c) => c.dim === 'the_end' && prot4(c) >= 4, why: (c) => ` · in ${c.dim}, Protection IV on ${prot4(c)}, level ${c.lv}, books ${nOf(c, /^book$/)}, shelves ${nOf(c, /^bookshelf$/)}`,
+      setup: async () => moveTo(process.env.ROAD_AT ?? '1200 1650') });
+  },
   async road_stronghold() {
     return road({ kit: [...IRON_KIT, 'ender_eye 12'], cmds: ['armor_up', 'stronghold 3600'], ms: 2 * 3600000, check: (c) => c.dim === 'the_end', why: (c) => ` · in ${c.dim}, eyes ${nOf(c, /^ender_eye$/)}` });
   },

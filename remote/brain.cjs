@@ -650,15 +650,11 @@ const STEPS = [
   { name: 'a chest of our own by the bed: what a death must not cost goes in', special: 'stash', optional: true },
   { name: 'food (enough for the trip, any kind)', cmds: ['get_cooked_beef 6', 'get_cooked_porkchop 6', 'get_cooked_mutton 6', 'get_cooked_chicken 6', 'get_bread 6'], food: 8, optional: true },
   { name: 'flint and steel', cmds: ['get_flint_and_steel'], has: ['flint_and_steel'] },
-  { name: 'a sugar cane farm by water (paper for 45 books: it grows while the rest is done)', cmds: ['road_cane 138'], optional: true },
   // (all four pieces now: each takes Protection IV - with Protection III the lab's dragon fights were 0 of 5, with IV they are won)
   { name: 'iron: the rest of the armour', cmds: ['get_iron_helmet', 'get_iron_leggings', 'get_iron_boots', 'armor_up'], has: ['iron_helmet', 'iron_leggings', 'iron_boots'] },
   // ---- the road's own steps (remote/road.cjs): the enchanting table, its room, the Nether's levels, Protection IV ----
   { name: 'diamonds and lapis (the enchanting table, a diamond pickaxe; the table\'s lapis)', cmds: ['road_mine'], has: ['diamond'] },
   { name: 'obsidian (the portal, the enchanting table)', cmds: ['road_obsidian'], has: ['obsidian'] },
-  { name: 'books: the enchanting table, fifteen bookshelves; wooden shovels', cmds: ['road_books'], has: ['bookshelf'] },
-  { name: 'the enchanting room by the bed', cmds: ['road_room'], has: ['enchanting_table'] },
-  { name: 'Protection IV on all four (the Nether\'s blazes for the levels, and blaze rods)', cmds: ['road_prot'], has: ['protection'] },
   // (golden apples: the lab's wins on the real terms ate 5-19 - without them its breath wins in 10-20 minutes. 8 at the least, 16 wanted)
   { name: 'golden apples (its breath): 8 at the least', cmds: ['get_golden_apple 8'], has: ['golden_apple'] },
   { name: 'golden apples: 16', cmds: ['get_golden_apple 16'], optional: true },
@@ -669,6 +665,15 @@ const STEPS = [
   { name: 'blocks for the End (pillars, a seal over a hole, stands for beds)', cmds: ['get_cobblestone 256'], has: ['cobblestone'] },
   { name: 'a carved pumpkin (the endermen in the End: looked at, they stay calm)', cmds: ['road_pumpkin'], has: ['carved_pumpkin'] },
   { name: 'food for the End', cmds: ['get_cooked_beef 32'], food: 32, optional: true },
+  // ---- at the stronghold, before going in (11/20 the lab: its library gave 48 books in 3 minutes - the 135 sugar cane and 45 leather
+  //      were never got in the wild - and its portal room's silverfish spawner gives the levels down there, out of the night) ----
+  { name: 'the stronghold found (its frames; not in yet)', cmds: ['stronghold_find 3600'], has: ['frames'] },
+  { name: 'books from its library (3 a bookshelf)', cmds: ['road_library'], has: ['book'] },
+  { name: 'the enchanting table, fifteen bookshelves; wooden shovels', cmds: ['road_books'], has: ['bookshelf'] },
+  { name: 'levels from its silverfish spawner', cmds: ['spawner_xp 40 2400'], optional: true },
+  { name: 'up to the surface over it', cmds: ['to_surface'], optional: true },
+  { name: 'the enchanting room over the stronghold', cmds: ['road_room here'], has: ['enchanting_table'] },
+  { name: 'Protection IV on all four (more levels from the spawner when short)', cmds: ['road_prot'], has: ['protection'] },
   { name: 'the kit counted (what is still missing goes back to its step)', cmds: ['road_kit'], optional: true },
   { name: 'stronghold → the end', cmds: ['stronghold 3600'], dim: 'the_end' },
   { name: 'the dragon', special: 'dragon' },

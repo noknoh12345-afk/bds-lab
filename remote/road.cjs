@@ -425,10 +425,18 @@ B.road_cane = (a) => stepRun('road_cane', async () => {
   return caneN() >= want ? true : `cane ${caneN()} of ${want} (the farm of ${st.cane.length} grows: a block in ~18 minutes)`;
 });
 // the room set up at the base (by the bed), before the Nether: the portal is built beside it, and the levels go straight to the table
-B.road_room = () => stepRun('road_room', async () => {
-  if (roomKnown()) return true;
+// ---------- the stronghold's library: the 45 books of the bookshelves (and the table's one) from its own shelves, 3 each ----------
+// (11/20 the lab: 15 of the library's shelves broken in 3 minutes, 48 books - against 135 sugar cane and 45 leather, never got)
+const booksNeeded = () => (n(/^enchanting_table$/) || roomKnown() ? 0 : 1) + 3 * Math.max(0, 15 - n(/^bookshelf$/) - (roomKnown() ? 15 : 0));
+B.road_library = () => stepRun('road_library', async () => {
+  for (let k = 0; k < 3 && R.live() && n(/^book$/) < booksNeeded(); k++) await R.run(`mine_near bookshelf ${Math.ceil((booksNeeded() - n(/^book$/)) / 3)} 96`, 'books from the stronghold library');
+  return n(/^book$/) >= booksNeeded() ? true : `books ${n(/^book$/)} of ${booksNeeded()}`;
+});
+B.road_room = (a = []) => stepRun('road_room', async () => {
+  if (roomKnown() && (a[0] !== 'here' || Math.hypot(me.bot.state().pos.x - st.room.x, me.bot.state().pos.z - st.room.z) < 300)) return true;
   if (!n(/^enchanting_table$/)) return 'no enchanting table carried';
   let pb = null; try { pb = JSON.parse(fs.readFileSync(path.join(R.ctx.RUN, 'bed.json'), 'utf8')); } catch { /* */ }
+  if (a[0] === 'here') { pb = null; st.room = null; }   // (over the stronghold: built where it stands, the old room far behind)
   if (pb && me.dim === 'overworld') { const f = me.bot.state().pos; if (Math.hypot(f.x - pb.x, f.z - pb.z) > 12) await R.travel(pb.x + 6, pb.z + 6); }
   const r = await buildRoom(); if (r !== true) return r;
   st.room.shelves = shelvesAt([st.room.x, st.room.y, st.room.z]); save();
@@ -482,7 +490,9 @@ B.road_prot = () => stepRun('road_prot', async () => {
     // the levels from the deep ores (redstone, lapis, diamonds: a tunnel shut in on every side) - the Nether's blazes and quartz were
     // deadly in the lab (five trips of six dead: blaze swarms, magma cubes, skeletons) and the spawner gave about one blaze a minute
     const target = Math.min(42, 30 + 3 * lacking);
-    if (me.dim === 'overworld') { await R.run(`ore_mine ${target} 2400`, 'levels from the deep ores'); await R.run('to_surface', 'back up to the room'); }
+    const fr = K()?.memo?.get('goal:frames'), fp = me.bot.state().pos, atSh = fr && Math.hypot(fr.x - fp.x, fr.z - fp.z) < 200;
+    if (me.dim === 'overworld' && atSh) { await R.run(`spawner_xp ${target} 2400`, 'levels from the stronghold\'s silverfish spawner'); await R.run('to_surface', 'back up to the room'); }
+    else if (me.dim === 'overworld') { await R.run(`ore_mine ${target} 2400`, 'levels from the deep ores'); await R.run('to_surface', 'back up to the room'); }
     else { const r = await netherTrip({ rods: 8, lv: target, minutes: 45 }); if (r !== true) log(`road: the trip for levels: ${r}`); }
   }
   return allProt4() ? true : `Protection IV on ${PIECES.filter((p) => { const a = armour()[p]; return a && lvlOf(a.ench, 'protection') >= 4; }).length} of 4, level ${level()}`;
