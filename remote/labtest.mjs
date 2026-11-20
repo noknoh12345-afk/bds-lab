@@ -260,7 +260,7 @@ const S = {
   // the silverfish spawner's levels, the room over it, Protection IV on all four, then in to the End (pass: in the End with all four).
   // ROAD_AT 'x z' where it starts (default 300 blocks off the lab's stronghold), ROAD_CMD other commands (';' between)
   async road_sh() {
-    const cmds = (process.env.ROAD_CMD ?? 'stronghold_find 3600;road_library;road_books;spawner_xp 40 2400;to_surface;road_room here;road_prot;stronghold 3600').split(';');
+    const cmds = (process.env.ROAD_CMD ?? 'stronghold_find 3600;road_library;road_books;to_surface;road_room here;road_prot;stronghold 3600').split(';');
     return road({ kit: [...IRON_KIT, 'ender_eye 12', 'diamond 2', 'obsidian 4', 'lapis_lazuli 48', 'oak_log 32'], cmds: ['armor_up', ...cmds], ms: 3 * 3600000,
       check: (c) => c.dim === 'the_end' && prot4(c) >= 4, why: (c) => ` · in ${c.dim}, Protection IV on ${prot4(c)}, level ${c.lv}, books ${nOf(c, /^book$/)}, shelves ${nOf(c, /^bookshelf$/)}`,
       setup: async () => moveTo(process.env.ROAD_AT ?? '1200 1650') });

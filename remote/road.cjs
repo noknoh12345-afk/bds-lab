@@ -194,13 +194,13 @@ async function enchantArmour({ peekOnly = false, maxRerolls = 60 } = {}) {
       if (!(await openTable(T))) { why = 'the table did not open'; break; }
       if (!(await lapisOn())) { why = 'no lapis lazuli'; break; }
       const lv = level(), seen = [];
-      let pick = null;
+      let pick = null, anyP4 = null;
       for (const p of want) {
         const a = armour()[p]; if (typeof a?.at !== 'number') continue;
         await backOut();
         const o = await offersFor(a.at); if (!o) continue;
         seen.push(`${p}: ${o.map((x, k) => `${k}:L${x.cost} ${enText(x.list)}`).join(' / ') || 'no offers'}`);
-        o.forEach((x, k) => { if (lvlOf(x.list, 'protection') >= 4 && x.cost <= lv) { const ff = p === 'boots' ? lvlOf(x.list, 'feather_falling') : 0; const score = ff * 10 - x.cost; if (!pick || score > pick.score) pick = { p, k, score, x }; } });
+        o.forEach((x, k) => { if (lvlOf(x.list, 'protection') >= 4) anyP4 ??= p; if (lvlOf(x.list, 'protection') >= 4 && x.cost <= lv) { const ff = p === 'boots' ? lvlOf(x.list, 'feather_falling') : 0; const score = ff * 10 - x.cost; if (!pick || score > pick.score) pick = { p, k, score, x }; } });
         if (peekOnly) continue;
         if (pick && pick.p === p) break;   // (this one now: it is on the table)
       }
@@ -216,7 +216,10 @@ async function enchantArmour({ peekOnly = false, maxRerolls = 60 } = {}) {
       }
       // nothing offers it now: a new set of offers, bought with the cheapest offer on something cheap
       if (rerolls >= maxRerolls) { why = `no Protection IV offered after ${rerolls} new sets of offers`; break; }
-      if (lv < 30) { why = `level ${lv}: the top offer (Protection IV) needs level 30`; break; }
+      // (offers are shown whatever the level: new ones are bought while the level is low and a level costs little - 7 to 40 experience
+      //  against 60-100 up at 30 - and once one shows Protection IV the set is kept, nothing enchanted, until the level is there for it)
+      if (anyP4) { why = `level ${lv}: Protection IV is offered for the ${anyP4} at level 30 - kept until then`; break; }
+      if (lv < 1) { why = `level ${lv}: not even a level for new offers`; break; }
       await backOut();
       await K().sync();
       if (count(/^lapis_lazuli$/) + (K().inv.ui?.[15]?.count ?? 0) < 1) { why = 'no lapis lazuli left'; break; }
@@ -479,17 +482,19 @@ B.road_nether = (a) => stepRun('road_nether', async () => {
 });
 // Protection IV on all four: to the room with level 30 and enchant; short of levels, to the Nether's blazes for them (and back)
 B.road_prot = () => stepRun('road_prot', async () => {
-  for (let k = 0; k < 6 && R.live(); k++) {
+  let lastWhy = null;
+  for (let k = 0; k < 8 && R.live(); k++) {
     if (allProt4()) return true;
-    if (level() >= 30) {
+    if (level() >= 1) {   // (from level 1: new offers are bought cheap down there until one shows Protection IV - enchantArmour)
       if (st.room && me.dim === 'overworld') { const f = me.bot.state().pos; if (Math.hypot(f.x - st.room.x, f.z - st.room.z) > 6) await R.travel(st.room.x, st.room.z + 3); }
-      const r = await enchantArmour(); if (r === true) return true;
+      const r = await enchantArmour(); if (r === true) return true; lastWhy = r;
       if (!/^level \d+/.test(String(r))) return r;
     }
     const lacking = PIECES.filter((p) => { const a = armour()[p]; return a && lvlOf(a.ench, 'protection') < 4; }).length;
     // the levels from the deep ores (redstone, lapis, diamonds: a tunnel shut in on every side) - the Nether's blazes and quartz were
     // deadly in the lab (five trips of six dead: blaze swarms, magma cubes, skeletons) and the spawner gave about one blaze a minute
-    const target = Math.min(42, 30 + 3 * lacking);
+    // (a set already showing Protection IV: level 30 is all it needs; else 30 and three for each piece after it)
+    const target = /is offered for/.test(String(lastWhy)) ? 30 : Math.min(42, 30 + 3 * lacking);
     const fr = K()?.memo?.get('goal:frames'), fp = me.bot.state().pos, atSh = fr && Math.hypot(fr.x - fp.x, fr.z - fp.z) < 200;
     if (me.dim === 'overworld' && atSh) { await R.run(`spawner_xp ${target} 2400`, 'levels from the stronghold\'s silverfish spawner'); await R.run('to_surface', 'back up to the room'); }
     else if (me.dim === 'overworld') { await R.run(`ore_mine ${target} 2400`, 'levels from the deep ores'); await R.run('to_surface', 'back up to the room'); }
