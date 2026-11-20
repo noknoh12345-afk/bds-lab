@@ -876,7 +876,11 @@ async function dragonFight() {
     let broke = 0;
     // (the pickaxe, not the cobblestone the pillar left in hand: 22:51, 28 s on one bar by hand, then off the pillar)
     delegating = true; try { await holdPick(); if (!misplaced) for (const y of [by - 1, by, by + 1]) for (const l of [0, -1, 1]) { const x = bx + dx * kw + lx * l, z = bz + dz * kw + lz * l; if (bname(x, y, z) !== 'iron_bars') continue; await gotoFor([String(x), String(y), String(z)], 3000, 'dig'); if (bname(x, y, z) !== 'iron_bars') broke++; } } finally { delegating = false; }
-    log(`dragon: uncage: ${broke} bars broken out; down again`);
+    // (20 Nov 20:57 in the lab: 1 broken - the last of that face, the rest gone on an earlier climb - called 'still shut', and up
+    //  again and again on 27 cobblestone. Open is: none left in the face)
+    let left = 0; if (!misplaced) for (const y of [by - 1, by, by + 1]) for (const l of [0, -1, 1]) if (bname(bx + dx * kw + lx * l, y, bz + dz * kw + lz * l) === 'iron_bars') left++;
+    log(`dragon: uncage: ${broke} bars broken out (${left} left in that face); down again`);
+    if (!misplaced && broke >= 1 && left === 0 && broke < 3) broke = 3;
     if (broke >= 3) gaps.set(key(c), { bx, bz, by, dx, dz, kw });
     // (down our own pillar a block at a time, the pickaxe in hand and each fall waited for: dig_down took three minutes of 'nothing to
     //  dig (air)' - 22:07)
