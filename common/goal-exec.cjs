@@ -4142,8 +4142,8 @@ function goalVerbs(K, H) {
     const WARPED = /^minecraft:(warped_nylium|warped_stem|warped_wart_block)$/;
     while (!forest && (Number(K.tick()) - t0) / 20 < maxSec * 0.6 && !K.dead()) {
       // (a part of it away from any fortress: 11/20 its edge by the fortress was full of blazes, dead twice)
-      const BR = (b) => /^minecraft:(nether_brick|nether_bricks|nether_brick_fence|mob_spawner)$/.test(b.name);
-      const f = K.feet(), w = K.findBlocks((b) => WARPED.test(b.name), { max: 60, radius: 128, from: f }).find((q, i, all) => !K.findBlocks(BR, { max: 1, radius: 40, from: q }).length || i === all.length - 1 && false);
+      const SP = (b) => b.name === 'minecraft:mob_spawner';   // (a blaze spawner is the danger, not the bricks: 'no fortress within 40' found no forest at all and the search died)
+      const f = K.feet(), w = K.findBlocks((b) => WARPED.test(b.name), { max: 60, radius: 128, from: f }).find((q) => !K.findBlocks(SP, { max: 1, radius: 48, from: q }).length);
       if (w) { forest = { x: w.x, y: w.y, z: w.z }; log(`pearl_hunt: a warped forest at ${w.x} ${w.y} ${w.z} (${Math.round(hyp(w.x - f.x, w.z - f.z))} off)`); break; }
       const tx = f.x + Math.cos(dir) * 150, tz = f.z + Math.sin(dir) * 150;
       if (dbg) log(`pearl_hunt: no warped forest in sight: a leg toward ${Math.round(tx)} ${Math.round(tz)}`);
