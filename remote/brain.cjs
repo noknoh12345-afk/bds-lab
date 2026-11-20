@@ -829,6 +829,7 @@ async function dragonFight() {
   const dSample = setInterval(() => { const d = [...b.entities.values()].find((e) => /ender_dragon$/.test(e.type ?? '')); if (!d) { dLast = null; return; } if (!dLast || Math.hypot(d.x - dLast.x, d.y - dLast.y, d.z - dLast.z) > 0.25) { dMoved = Date.now(); dLast = { x: d.x, y: d.y, z: d.z }; } }, 250);
   const perchedNow = () => { const d = ents(/ender_dragon$/)[0]; return !!d && Math.hypot(d.x, d.z) < 8 && d.y < 72 && Date.now() - dMoved > 800; };
   const bname = (x, y, z) => (b.world.block(x, y, z)?.name ?? '?').replace('minecraft:', '');
+  const badStand = new Map();
   async function uncage(c) {
     const bx = Math.floor(c.x), by = Math.floor(c.y), bz = Math.floor(c.z);
     const [dx, dz] = Math.abs(c.x) > Math.abs(c.z) ? [-Math.sign(c.x), 0] : [0, -Math.sign(c.z)], [lx, lz] = [-dz, dx];
@@ -842,6 +843,7 @@ async function dragonFight() {
       //  there - something over it, or the dip's walls)
       const cands = [];
       for (const k of [1, 2, 3]) for (const l of [0, -1, 1, -2, 2]) { const x = bx + dx * (kw + k) + lx * l, z = bz + dz * (kw + k) + lz * l, g = ground(x, z);
+        if ((badStand.get(`${x},${z}`) ?? 0) >= 2) continue;   // (21 Nov 01:12: 'could not stand at 14 -36' over and over - a pocket the path never enters)
         if (g && g.n === 'end_stone' && [...Array(by - g.y + 3).keys()].slice(1).every((h) => bname(x, g.y + h, z) === 'air')) cands.push({ x, z, y: g.y, k }); }
       cands.sort((u, w) => w.y - u.y || u.k - w.k);
       const best = cands[0] ? [cands[0].x, cands[0].z] : null;
@@ -851,7 +853,7 @@ async function dragonFight() {
     // (on the way the breath watch stays on: 03:04, walking to the second cage with every watch off, through its breath, dead in six
     //  seconds from full health. Cut short if a cloud is met; the pillar and the bars are done with the watches off)
     for (let t = 0; t < 3 && Math.hypot(b.state().pos.x - sx - 0.5, b.state().pos.z - sz - 0.5) > 1; t++) { if (inCloud()) { uncageWait = Date.now() + 25000; log('dragon: uncage: its breath on the way: later (25 s)'); return false; } await walk(sx + 0.5, sz + 0.5, 6000, true); if (Math.hypot(b.state().pos.x - sx - 0.5, b.state().pos.z - sz - 0.5) > 1 && !inCloud()) await gotoFor([String(sx), String(sz)], 8000); }
-    let P = b.state().pos; if (Math.hypot(Math.floor(P.x) - sx, Math.floor(P.z) - sz) > 1.5 || Math.hypot(Math.floor(P.x) - (bx + dx * kw), Math.floor(P.z) - (bz + dz * kw)) < 0.5) {   /* (a cell beside it does: 07:03, one block off and given up) */ log(`dragon: uncage: could not stand at ${sx} ${sz} (at ${Math.floor(P.x)} ${Math.floor(P.z)})`); return false; }
+    let P = b.state().pos; if (Math.hypot(Math.floor(P.x) - sx, Math.floor(P.z) - sz) > 1.5 || Math.hypot(Math.floor(P.x) - (bx + dx * kw), Math.floor(P.z) - (bz + dz * kw)) < 0.5) {   /* (a cell beside it does: 07:03, one block off and given up) */ log(`dragon: uncage: could not stand at ${sx} ${sz} (at ${Math.floor(P.x)} ${Math.floor(P.z)})`); badStand.set(`${sx},${sz}`, (badStand.get(`${sx},${sz}`) ?? 0) + 1); return false; }
     const feet = () => Math.floor(b.state().pos.y + 0.01), up = by - 1 - feet();
     // (up in steps, the breath watch off meanwhile - it stopped the pillar at 60 and 69 of 82 and 79, 07:12: up there, there is no
     //  getting away from it anyway)
