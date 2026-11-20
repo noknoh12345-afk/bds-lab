@@ -3104,8 +3104,12 @@ function goalVerbs(K, H) {
     if (SPACED(e) && !process.env.LAB_OLD_FIGHT) { const off = o.stay ? () => {} : clutchGuard(); try { return await spaceFight(e, max, o); } finally { off(); } }
     let best = Infinity, slow = 0, hits = 0, chase = 0;
     const hostile = HOSTILE.test(e.type);
+    let wetTicks = 0;
     for (let k = 0; k < max && K.all().includes(e) && !K.dead(); k++) {
       const f = K.feet(), d = hyp(e.x - f.x, e.y - f.y, e.z - f.z);
+      // (the head under water: up for air before the next blow - 11/20 a skeleton fought for 24 s from the bottom of a lake, drowned
+      //  twice on the way to the stronghold)
+      { const [hx, hy, hz] = feet(); if (isWater(B(hx, hy + 1, hz))) { if (++wetTicks > 3) { stopKeys(); await swimUp(); wetTicks = 0; if (isWater(B(...feet().map((v, i) => (i === 1 ? v + 1 : v))))) break; } } else wetTicks = 0; }
       if (d > 2.8 && o.stay) break;   // (holding a spot - a hole being dug: what backs off is let go)
       // a fight with monsters is with the one at the throat: another one closer that bites (a spider, a zombie) is the one now - a
       // skeleton that backs off while shooting was chased for nine seconds with a spider and a zombie at the back (20 to 4)
