@@ -4141,7 +4141,9 @@ function goalVerbs(K, H) {
     let dir = Math.random() * Math.PI * 2, forest = null;
     const WARPED = /^minecraft:(warped_nylium|warped_stem|warped_wart_block)$/;
     while (!forest && (Number(K.tick()) - t0) / 20 < maxSec * 0.6 && !K.dead()) {
-      const f = K.feet(), w = K.findBlocks((b) => WARPED.test(b.name), { max: 1, radius: 128, from: f })[0];
+      // (a part of it away from any fortress: 11/20 its edge by the fortress was full of blazes, dead twice)
+      const BR = (b) => /^minecraft:(nether_brick|nether_bricks|nether_brick_fence|mob_spawner)$/.test(b.name);
+      const f = K.feet(), w = K.findBlocks((b) => WARPED.test(b.name), { max: 60, radius: 128, from: f }).find((q, i, all) => !K.findBlocks(BR, { max: 1, radius: 40, from: q }).length || i === all.length - 1 && false);
       if (w) { forest = { x: w.x, y: w.y, z: w.z }; log(`pearl_hunt: a warped forest at ${w.x} ${w.y} ${w.z} (${Math.round(hyp(w.x - f.x, w.z - f.z))} off)`); break; }
       const tx = f.x + Math.cos(dir) * 150, tz = f.z + Math.sin(dir) * 150;
       if (dbg) log(`pearl_hunt: no warped forest in sight: a leg toward ${Math.round(tx)} ${Math.round(tz)}`);
@@ -4159,6 +4161,9 @@ function goalVerbs(K, H) {
       while (have() < want && (Number(K.tick()) - t0) / 20 < maxSec && !K.dead()) {
         if ((K.attrs().health ?? 20) < 12) await healUp();
         const f = K.feet();
+        // (a blaze or a ghast about: away from it first, the other way)
+        { const bz = K.all().find((q) => /blaze$|ghast$|wither_skeleton$/.test(q.type) && !q.dead && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 18);
+          if (bz) { const d = hyp(f.x - bz.x, f.z - bz.z) || 1; log(`pearl_hunt: a ${sh(bz.type)} ${Math.round(d)} off - away from it`); await tunnelTo(f.x + ((f.x - bz.x) / d) * 30, f.z + ((f.z - bz.z) / d) * 30, 60, 4); continue; } }
         const e = K.all().filter((q) => /enderman$/.test(q.type) && !q.dead && Math.abs(q.y - f.y) < 8).sort((p1, p2) => hyp(p1.x - f.x, p1.z - f.z) - hyp(p2.x - f.x, p2.z - f.z))[0];
         if (!e) { // round the forest: to another part of it
           const ws = K.findBlocks((b) => b.name === 'minecraft:warped_nylium', { max: 30, radius: 48, from: f }); const pick = ws[Math.floor(Math.random() * ws.length)];
