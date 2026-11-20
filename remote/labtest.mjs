@@ -28,6 +28,51 @@ async function fresh({ time = 'day', keep = false } = {}) {
   srv(`time set ${time}`, 'weather clear', ...(keep ? [] : [`clear ${NAME}`]), 'kill @e[type=!player,family=monster]', `effect ${NAME} instant_health 1 20`, `effect ${NAME} saturation 1 20`);
   await sleep(1500); mark = logText().length;
 }
+// ---------- the road to the End (作業指示書_エンドまでの道担当.md; its code is remote/road.cjs) ----------
+// what the bot carries, read from the server itself (the Script API): every slot and the armour worn, the enchantments on each,
+// the XP level, the dimension. null when the bot is not in the world.
+const carried = () => {
+  const out = srv(`js (()=>{const p=world.getPlayers({name:'${NAME}'})[0];if(!p)return 'ROAD null';const m={},en=[];const add=(it,w)=>{const k=it.typeId.replace('minecraft:','');m[k]=(m[k]??0)+it.amount;const e=it.getComponent('enchantable');const l=e?e.getEnchantments():[];if(l.length||w)en.push((w?w+':':'')+k+'['+l.map((x)=>String(x.type.id).replace('minecraft:','')+' '+x.level).join(',')+']');};const c=p.getComponent('inventory').container;for(let i=0;i<c.size;i++){const it=c.getItem(i);if(it)add(it,'');}const eq=p.getComponent('equippable');for(const s of ['Head','Chest','Legs','Feet','Offhand']){const it=eq.getEquipment(s);if(it)add(it,s);}return 'ROAD '+JSON.stringify({m,en,lv:p.level,dim:p.dimension.id.replace('minecraft:',''),hp:Math.round(p.getComponent('health').currentValue)});})()`);
+  const l = /^ROAD (.*)$/m.exec(out)?.[1]; try { return JSON.parse(l); } catch { return null; }   // (the line it printed, not the command echoed above it)
+};
+const ARMOUR = ['helmet', 'chestplate', 'leggings', 'boots'];
+const nOf = (c, re) => Object.entries(c?.m ?? {}).filter(([k]) => re.test(k)).reduce((s, [, n]) => s + n, 0);
+const protOf = (c, piece) => Math.max(0, ...(c?.en ?? []).filter((e) => new RegExp(`(^|:)iron_${piece}\\[`).test(e)).map((e) => Number(/(^|\[|,)protection (\d)/.exec(e)?.[2] ?? 0)));
+// the kit the lab's dragon wins had (HANDOFF: Protection IV iron, Feather Falling III, 16 golden apples, 12 beds, 192 arrows, 256
+// cobblestone, a carved pumpkin, sword, pickaxe, shield, food) - the floor of it: what the brief says may not be cut
+const KIT = [['Protection IV on all four', (c) => ARMOUR.every((p) => protOf(c, p) >= 4)], ['golden apples 8+', (c) => nOf(c, /^golden_apple$/) >= 8], ['beds 8+', (c) => nOf(c, /(^|_)bed$/) >= 8],
+  ['bow', (c) => nOf(c, /^bow$/) >= 1], ['arrows 128+', (c) => nOf(c, /^arrow$/) >= 128], ['cobblestone 128+', (c) => nOf(c, /^cobblestone$/) >= 128], ['carved pumpkin', (c) => nOf(c, /^carved_pumpkin$/) >= 1],
+  ['iron sword', (c) => nOf(c, /^(iron|diamond|netherite)_sword$/) >= 1], ['iron pickaxe', (c) => nOf(c, /^(iron|diamond|netherite)_pickaxe$/) >= 1], ['shield', (c) => nOf(c, /^shield$/) >= 1],
+  ['food 16+', (c) => nOf(c, /^(cooked_\w+|bread|baked_potato|golden_carrot)$/) >= 16]];
+const kitMissing = (c) => KIT.filter(([, f]) => !f(c)).map(([n]) => n);
+const mmss = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
+function roadLine(t0, c, d0) {
+  const steps = [...since().matchAll(/auto: step "([^"]+)"/g)].map((m) => m[1]), s = status(), p = s.pos ?? {};
+  const inv = c ? Object.entries(c.m).sort((a, b) => a[0].localeCompare(b[0])).map(([k, n]) => `${k}*${n}`).join(' ') : '?';
+  return `  [${mmss(Date.now() - t0)}] step ${steps.length ? `"${steps.at(-1).slice(0, 48)}"` : '-'} · deaths ${(s.deaths ?? 0) - d0} · ${s.dim ?? '?'} ${Math.round(p.x ?? 0)} ${Math.round(p.y ?? 0)} ${Math.round(p.z ?? 0)} hp ${s.hp ?? '?'} · lv ${c?.lv ?? '?'}${c?.en?.length ? ` · ench ${c.en.join(' ')}` : ''} · ${inv.slice(0, 600)}`;
+}
+// one stage of the road: a kit given (the stages before it, done), commands sent (`auto` by default), then until check(carried)
+// passes or the time is up (ROAD_MS overrides). A line of progress every ROAD_EVERY ms (default 10 min).
+async function road({ kit = [], cmds = ['auto'], ms = 3600000, check, why = () => '', setup }) {
+  await fresh();
+  if (kit.length) { srv(...kit.map((i) => `give ${NAME} ${i}`)); await sleep(2500); }
+  if (setup) await setup();
+  mark = logText().length;
+  if (process.env.ROAD_GUARD === 'off') send('guard off');   // (exploring one verb in the lab: its natural chests are 'someone's build' to the guard)
+  for (const c of cmds) send(c);
+  const t0 = Date.now(), limit = Number(process.env.ROAD_MS ?? ms), every = Number(process.env.ROAD_EVERY ?? 600000), d0 = status().deaths ?? 0;
+  let said = Date.now(), c = null;
+  const last = cmds.at(-1), ends = last === 'auto' ? null : new RegExp(`(done|failed) "${last.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[^\\n]*`);   // (a single command: over when the bot says it is)
+  while (Date.now() - t0 < limit) {
+    await sleep(30000);
+    c = carried();
+    if (c && check(c)) { console.log(roadLine(t0, c, d0)); return true; }
+    if (Date.now() - said >= every) { said = Date.now(); console.log(roadLine(t0, c, d0)); }
+    const e = ends?.exec(since()); if (e) { console.log(roadLine(t0, c, d0)); return `${e[0].slice(0, 200)}${c ? why(c) : ''}`; }
+  }
+  c = carried(); console.log(roadLine(t0, c, d0));
+  return `not done in ${mmss(limit)}${c ? why(c) : ' (not in the world)'}`;
+}
 const S = {
   // a bed set down and clicked becomes the respawn point - said by the server, and a death comes back to it
   async bed() {
@@ -141,9 +186,52 @@ const S = {
     const t = await waitLog(/stash: (everything taken out.*|still in the chest.*|the chest did not.*|no chest.*)/, 60000);
     return t && /everything taken out .*diamond\*3/.test(t[1]) ? true : `take: ${t ? t[1].slice(0, 160) : 'no answer'}`;
   },
+  // ---- the road (long: asked for by name only) ----
+  // the whole of it: nothing carried, `auto`, until it stands in the End (the exit portal's platform) with the kit that wins
+  async road_auto() {
+    return road({ ms: 8 * 3600000, check: (c) => c.dim === 'the_end' && !kitMissing(c).length, why: (c) => ` · in ${c.dim}, kit missing: ${kitMissing(c).join(', ') || 'nothing'}` });
+  },
+  // from nothing to iron: pickaxe, sword, shield, bucket and the four pieces of armour
+  async road_iron() {
+    const need = ['iron_pickaxe', 'iron_sword', 'shield', 'bucket', ...ARMOUR.map((p) => `iron_${p}`)];
+    return road({ ms: 2 * 3600000, check: (c) => need.every((k) => (c.m[k] ?? 0) > 0), why: (c) => ` · missing ${need.filter((k) => !(c.m[k] ?? 0)).join(' ')}` });
+  },
+  // the table, measured: a level floor in the sky, the bot builds the room (its table, 15 bookshelves), lots of levels; every piece's
+  // offers over ROAD_ROUNDS new sets of offers (a book enchanted for each) - how often Protection IV comes up (ench_stats)
+  async road_enchtest() {
+    await fresh();
+    const p = pos(), X = Math.round(p.x), Z = Math.round(p.z), Y = 200;
+    srv(`fill ${X - 5} ${Y - 1} ${Z - 5} ${X + 5} ${Y - 1} ${Z + 6} stone`, `fill ${X - 5} ${Y} ${Z - 5} ${X + 5} ${Y + 3} ${Z + 6} air`, `tp ${NAME} ${X + 0.5} ${Y} ${Z + 4.5}`);
+    await sleep(3000);
+    srv(...['enchanting_table', 'bookshelf 15', 'lapis_lazuli 64', 'book 64', ...ARMOUR.map((a) => `iron_${a}`)].map((i) => `give ${NAME} ${i}`), `xp 300L ${NAME}`);
+    await sleep(3000); mark = logText().length;
+    send(`ench_stats ${process.env.ROAD_ROUNDS ?? 25}`);
+    const m = await waitLog(/ench_stats(?: over|: (?!\d+ book))[^\n]*/, 1800000);
+    console.log(since().split('\n').filter((l) => /road: (ench|enchant|the enchanting|bookshelf|enchanting_table)/.test(l)).slice(-60).join('\n'));
+    return m && / over \d+ sets/.test(m[0]) ? true : (m ? m[0] : 'no answer').slice(0, 300);
+  },
+  // a console for trying things by hand: the server commands of ROAD_SETUP (';' between) run, then nothing but waiting (ROAD_MS,
+  // default 40 min) - commands go to the bot through <run>/inbox/, to the server by `LAB_PORT=<port> node lab.mjs do -a lamp ...`
+  async road_console() {
+    await fresh();
+    if (process.env.ROAD_SETUP) console.log(String(srv(...process.env.ROAD_SETUP.split(';').map((c) => c.trim()).filter(Boolean))).split('\n').filter((l) => !/Watchdog|^\s*\(x/.test(l)).slice(-30).join('\n'));
+    console.log(`console: inbox ${path.join(RUN, 'inbox')}, port ${JSON.parse(fs.readFileSync(path.join(ROOT, 'bds', '.lab', 'live.json'), 'utf8')).port}`);
+    await sleep(Number(process.env.ROAD_MS ?? 2400000));
+    return true;
+  },
+  // the iron kit given: twelve eyes of ender (the Nether's blaze rods, ender pearls), however get_ender_eye plans them
+  async road_eyes() {
+    return road({ kit: IRON_KIT, cmds: ['armor_up', process.env.ROAD_CMD ?? 'get_ender_eye 12'], ms: 4 * 3600000, check: (c) => nOf(c, /^ender_eye$/) >= 12, why: (c) => ` · eyes ${nOf(c, /^ender_eye$/)}, pearls ${nOf(c, /^ender_pearl$/)}, rods ${nOf(c, /^blaze_rod$/)}, powder ${nOf(c, /^blaze_powder$/)}, obsidian ${nOf(c, /^obsidian$/)}` });
+  },
+  // the iron kit and twelve eyes given: the stronghold found, its portal filled and entered
+  async road_stronghold() {
+    return road({ kit: [...IRON_KIT, 'ender_eye 12'], cmds: ['armor_up', 'stronghold 3600'], ms: 2 * 3600000, check: (c) => c.dim === 'the_end', why: (c) => ` · in ${c.dim}, eyes ${nOf(c, /^ender_eye$/)}` });
+  },
 };
+// what the bot has once the iron step is behind it (the stages after it start from this)
+const IRON_KIT = ['iron_pickaxe', 'iron_sword', 'iron_axe', 'iron_shovel', 'shield', 'bucket', 'flint_and_steel', 'iron_helmet', 'iron_chestplate', 'iron_leggings', 'iron_boots', 'cooked_beef 32', 'cobblestone 64', 'oak_planks 32', 'crafting_table', 'furnace', 'coal 16', 'bow', 'arrow 64', 'stone_axe'];
 async function main() {
-  const want = process.argv.slice(2).filter((a) => S[a]); const names = want.length ? want : Object.keys(S).filter((n) => n !== 'dragon' && n !== 'mech');
+  const want = process.argv.slice(2).filter((a) => S[a]); const names = want.length ? want : Object.keys(S).filter((n) => n !== 'dragon' && n !== 'mech' && !n.startsWith('road_'));
   fs.rmSync(path.dirname(RUN), { recursive: true, force: true }); fs.mkdirSync(path.join(RUN, 'inbox'), { recursive: true });
   // the same untouched world every run: `up` keeps what a run left behind (a chest from the last run's stash scenario was "someone's
   // build" to the next) - a clean copy is put aside the first time and put back before each run

@@ -47,6 +47,9 @@ function naturalHere(bot, hits) {
   if (me.dim !== 'overworld') return me.dim;
   const p = bot.state().pos, m = me.marks ?? new Set();
   if (m.has('end_portal_frame') || (p.y < 55 && m.has('mossy_stone_bricks') && m.has('cracked_stone_bricks'))) return 'stronghold';
+  // (and seen from the ground over it: only its own kinds of block, all of them deep - 11/20 in the lab the guard stopped `stronghold`
+  //  at the surface, 47 blocks off its stone bricks at y 48)
+  if ((m.has('mossy_stone_bricks') || m.has('cracked_stone_bricks')) && hits.every((h) => h.top < 55 && /^(stone_bricks|mossy_stone_bricks|cracked_stone_bricks|chiseled_stone_bricks|(mossy_)?stone_brick_(stairs|slab|wall)|stone_brick_double_slab|smooth_stone(_slab)?|stone_slab\d?|iron_bars|iron_door|wooden_door|oak_door|torch|wall_torch|bookshelf|oak_planks|oak_fence|chest|ladder|stone_button|web)$/.test(h.block))) return 'stronghold';
   if (m.has('crying_obsidian')) return 'ruined portal';
   const folk = [...bot.entities.values()].filter((e) => /^minecraft:(villager_v2|iron_golem)$/.test(e.type) && Math.hypot(e.x - p.x, e.z - p.z) < 80).length;
   if (folk >= 2 && (m.has('grass_path') || m.has('bell')) && Math.hypot(p.x, p.z) > 200) return 'village';
@@ -588,6 +591,10 @@ const ENDS_AT = cfg.autoUntil ?? '08:00';   // local time to keep going until (a
 // goes fastest to beds (they explode in the End on Bedrock). So: iron first - mined underground, where the night does not reach it -
 // then only as much food as the trip needs, then the Nether, pearls, the stronghold. (Until 15:50 the order had 10 cooked meat of
 // one kind before any iron: three nights in a row cut the hunt short and it never got past food.)
+// the road to the End's own commands (remote/road.cjs, the second Claude's part: the enchanting, golden apples, the Nether ...)
+delete require.cache[require.resolve('./road.cjs')];
+const ROAD = require('./road.cjs')({ me, cfg, log, sleep, ctx, run: (c, w) => run(c, w), guardReason: (b) => guardReason(b), gotoFor: (a, ms, v) => gotoFor(a, ms, v), live: () => live() });
+Object.assign(BUILTIN, ROAD.builtins);
 const STEPS = [
   { name: 'stone tools', cmds: ['get_wooden_sword', 'get_stone_pickaxe', 'get_stone_sword', 'get_stone_axe'], has: ['stone_pickaxe', 'stone_sword'] },   // (a weapon before anything: every death so far was with nothing in hand)
   { name: 'a bed as the spawn point (out here, not among the builds)', special: 'bedspawn', optional: true },

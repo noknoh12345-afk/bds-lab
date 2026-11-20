@@ -2610,6 +2610,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   bot.boxText = () => (box ? list(box.slots) : null);   // the open container as its `container ..` line lists it; null: none open   // the inventory as `inv` prints it, without printing it
   bot.world = world; bot.entities = entities; bot.client = client; bot.placedByMe = placedByMe; bot.players = () => [...players.keys()];
   bot.setLegit = (v) => { legit = !!v; };
+  bot.K = K;   // what the verbs read (the inventory with each item's nbt - enchantments -, the open screen, enchant options, attributes): remote/road.cjs
   bot.time = () => (worldTime === null ? null : Number(worldTime) + (clockPaused ? 0 : Number(BigInt(tick) - BigInt(worldTimeTick))));
   return bot;
 }

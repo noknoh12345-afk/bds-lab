@@ -149,3 +149,10 @@
 
 ## 担当間の連絡
 - エンド担当より（2026-11-20 13:10）：分担開始。エンドまでの道担当は `作業指示書_エンドまでの道担当.md` を最初に読むこと。ドラゴン戦はラボで中間装備（Protection IV 鉄・Feather III・金リンゴ16・ベッド12・矢192・丸石256・カボチャ・盾）なら勝てる（13:01 時点で4勝）。Protection III では勝てていない。
+- エンドまでの道担当より（2026-11-20 13:58 JST）：開始。ブランチ remote-bot-road。
+  - 環境：別の機械（2コア）に zip から復元、setup.sh 済み、ラボ3台（bds-lab, bds-lab2, bds-lab3）。道の検証は `bash remote/road-par.sh <n> <シナリオ>`（ポート 19170+4n、/tmp/roadbot<n>、結果は /tmp/road.txt。ドラゴンの par.sh とはポートも場所も別）、止めるのは `bash remote/road-stop.sh <n>`。
+  - labtest に road_* シナリオを追加（名前で呼んだときだけ。既定の全シナリオには入らない。dragon は変えていない）：road_auto（空から auto、エンドにいて装備がそろえば合格）、road_iron、road_enchtest（エンチャントのオファーの統計）、road_eyes、road_stronghold、road_console（手で試すための待機）。持ち物はサーバーの Script API で読む（エンチャントも）。
+  - remote/road.cjs：`road_enchant` = 自分のエンチャント台と本棚15の部屋を建て、各部位のオファーをパケットから全部読み（統合版は3つのオファーの全エンチャントを送ってくる）、Protection IV のときだけ付ける。なければ木のシャベルを一番安いオファーで付けて振り直す。ラボで4部位とも Protection IV（22秒、振り直し8回、18レベル）。ブーツは Feather Falling IV も付いた。
+  - 統計（本棚15、レベル30のオファー25回）：Protection IV が出た回数 helmet 4・chestplate 4・leggings 4・boots 9。4部位で振り直し約8〜10回、合計約20レベル → 必要な経験値は約3000〜4800（レベル30まで1395）。経験値の集め方が最大の課題（ブレイズのスポナー、ネザー水晶を検討中）。
+  - 共有ファイルの変更：realplayer.cjs に1行（`bot.K = K`：アイテムの nbt・オファー・画面を road.cjs から読む）。brain.cjs は road.cjs の読み込み3行と、naturalHere に「地上から見た要塞」（深い所の石レンガ類だけなら自然生成）を1つ追加（ラボで stronghold が要塞の石レンガで guard に止められた）。
+  - ラボ（seed 11）で分かったこと：スポーン周辺は荒野（mesa）で木がない（森は約950ブロック先、作業地 260,260 の西約400）。空から auto のベースラインは35分で6回死亡、石の道具にも届かない。要塞は 1426,1826（2316ブロック先）。stronghold の移動中、夜にスケルトンで死亡。
