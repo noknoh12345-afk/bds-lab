@@ -137,7 +137,7 @@
 
 ## 7. 次の一手
 0. **再開時に最初にやること**：この環境（/home/claude）が別の機械なら、zip から復元（RESUME.md）→ `sh setup.sh`（BDS とツール。数分）→ `cp -a bds-lab bds-lab2; cp -a bds-lab bds-lab3` → `cp remote/par.sh remote/bench.sh /tmp/`。GitHub（noknoh12345-afk/bds-lab の remote-bot）は push 済みなので、clone でもよい（最新は push したコミット）。
-   - 3台同時（中間装備）：`export BOT_UNCAGE_PERCH=1 BOT_NOBURROW=1 BOT_NOHEALHOLE=1 LABTEST_ARRIVE=platform DRAGON_MS=5400000 PAR_TIMEOUT=5800 BOT_WAIT_R=18 LABTEST_PROT=4 LABTEST_GAPPLES=16 LABTEST_BEDS=12 LABTEST_FEATHER=3 BOT_WAIT_FAR=40; for n in 1 2 3; do nohup bash /tmp/series.sh $n & done`（DRAGON_MS=7200000 PAR_TIMEOUT=7500 も export）。結果は /tmp/par.txt、ログは /tmp/labbotN/run/out.log（終わった回は /tmp/poutN-1.log）。勝てば out.log に `the exit portal is open`。
+   - 3台同時（中間装備）：`export BOT_UNCAGE_PERCH=1 BOT_NOBURROW=1 BOT_NOHEALHOLE=1 LABTEST_ARRIVE=platform DRAGON_MS=5400000 PAR_TIMEOUT=5800 BOT_WAIT_R=18 LABTEST_PROT=4 LABTEST_GAPPLES=16 LABTEST_BEDS=12 LABTEST_FEATHER=3 BOT_WAIT_FAR=40 LABTEST_RETRIES=3; for n in 1 2 3; do nohup bash /tmp/series.sh $n & done`（DRAGON_MS=10800000 PAR_TIMEOUT=11000 も export）。結果は /tmp/par.txt、ログは /tmp/labbotN/run/out.log（終わった回は /tmp/poutN-1.log）。勝てば out.log に `the exit portal is open`。
    - 着地ごとの成績は out.log の `perch over:` 行（5秒未満はちらつきなので無視）。
    - 実機起動の基準（ユーザー指示 13:49）：ラボで十分な勝機（目安：実機で揃えられる装備で連続3本中2勝）。満たしたら Mac のターミナルで `bash ~/test/bdsbot.sh`（ユーザーがコンピューター操作・ターミナルを許可済み。ただし computer use はターミナルに文字入力できない制限がある。だめならユーザーに頼む）。Mac のブリッジは device_bash（VM の中、~/mnt/test が Mac の ~/test）。実機ボットは 11/16 16:03 から停止中。
 1. 90分バッチ：`export BOT_UNCAGE_PERCH=1 BOT_NOBURROW=1 BOT_NOHEALHOLE=1 LABTEST_PROT=4 LABTEST_GAPPLES=32 LABTEST_ARRIVE=platform DRAGON_MS=5400000 PAR_TIMEOUT=5800; bash /tmp/bench.sh 3 1`。討伐（ログに `exit portal`）を確認する。
