@@ -104,8 +104,14 @@ async function standAt(x, z) {
 async function placeOn(item, x, y, z) {   // the item set on top of the block under (x y z)
   if (!AIRY.test(blk(x, y, z))) return blk(x, y, z) === item;
   const h = await act(`hold_${item}`); if (/not|no /.test(h) && !count(new RegExp(`^${item}$`))) return false;
-  const said = await act('useon', [x, y - 1, z, 'up']);
+  let said = await act('useon', [x, y - 1, z, 'up']);
   for (let t = 0; t < 20 && blk(x, y, z) !== item; t++) await sleep(100);   // (the server's word on the new block comes a moment later)
+  // (the top of the block under it out of sight - a fence, a slab, a block whose top the eye cannot see: 'crosshair on nothing' in the
+  //  stronghold, three shelves missing) - against a side of a solid block beside it
+  if (blk(x, y, z) !== item && /not under the crosshair/.test(said)) for (const [dx, dz, face] of [[1, 0, 'west'], [-1, 0, 'east'], [0, 1, 'north'], [0, -1, 'south']]) {
+    if (!SOLID(blk(x + dx, y, z + dz))) continue; await act(`hold_${item}`); said = await act('useon', [x + dx, y, z + dz, face]);
+    for (let t = 0; t < 10 && blk(x, y, z) !== item; t++) await sleep(100); if (blk(x, y, z) === item) break;
+  }
   if (blk(x, y, z) === item) { me.bot.placedByMe?.add?.(`${x},${y},${z}`); return true; }
   if (said) log(`road: ${item} at ${x} ${y} ${z} did not go down: ${said.slice(0, 160)}`);
   return false;
@@ -269,7 +275,8 @@ async function enchantArmour({ peekOnly = false, maxRerolls = 60 } = {}) {
       if (count(/^lapis_lazuli$/) + (K().inv.ui?.[15]?.count ?? 0) < 1) { why = 'no lapis lazuli left'; break; }
       await lapisOn();
       const ri = rerollSlot(); if (ri < 0) { why = 'nothing cheap left to enchant for new offers (wooden shovels)'; break; }
-      const o = await offersFor(ri); if (!o?.length) { why = `no offers for the ${nameOf(K().inv.ui?.[14]) || 'cheap item'} (the table: ${shelvesAt(T)} shelves, lapis ${K().inv.ui?.[15]?.count ?? 0})`; break; }
+      const o = await offersFor(ri);
+      if (o?.length && o[0].cost > lv) { why = `level ${lv}: new offers cost level ${o[0].cost}`; break; }   // ('enchant rejected: status 39' at level 1 for an offer of level 5) if (!o?.length) { why = `no offers for the ${nameOf(K().inv.ui?.[14]) || 'cheap item'} (the table: ${shelvesAt(T)} shelves, lapis ${K().inv.ui?.[15]?.count ?? 0})`; break; }
       const r = await act('enchant', [0]); rerolls++;
       if (!/enchanted/.test(r)) { why = `the new offers were not bought: ${r.slice(0, 100)}`; break; }
       await sleep(250); await backOut();
