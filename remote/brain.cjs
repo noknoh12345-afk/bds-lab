@@ -812,8 +812,9 @@ async function dragonFight() {
   const cloudSeen = new Map(), burns = [];
   const cr = (e) => { if (e.burn) return 4; let t0 = cloudSeen.get(e); if (!t0) { t0 = Date.now(); cloudSeen.set(e, t0); } const age = (Date.now() - t0) / 50; return Math.max(5, (e.radius ?? 5) + (Number.isFinite(e.cloudRate) ? e.cloudRate * age : 0)) + CLOUD_MARGIN; };   /* (hurt with the nearest cloud 12-17 off by its radius as sent, many times: a wider berth, CLOUD_MARGIN, 3 by default) */
   // (20 Nov 20:40 in the lab: 19.9 to dead in seven seconds by the portal, the apple eaten standing in its breath. In a cloud: out
-  //  first, the apple after - the eating holds every other move for 1.6 s)
-  const inBreathNow = () => { const Q = b.state().pos; return (me.hp ?? 20) > 4 && ents(/area_effect_cloud$/).some((e) => !e.burn && Math.hypot(e.x - Q.x, e.z - Q.z) < cr(e) - 2 && Math.abs(e.y - Q.y) < 5); };
+  //  first, the apple after - the eating holds every other move for 1.6 s. Not under 9: 21 Nov 00:30, 13 → dead fleeing in a pit
+  //  with 16 apples, never one eaten)
+  const inBreathNow = () => { const Q = b.state().pos; return (me.hp ?? 20) > 9 && ents(/area_effect_cloud$/).some((e) => !e.burn && Math.hypot(e.x - Q.x, e.z - Q.z) < cr(e) - 2 && Math.abs(e.y - Q.y) < 5); };
   const ents = (re) => { const l = [...b.entities.values()].filter((e) => re.test(e.type ?? '') && !(/area_effect_cloud/.test(e.type ?? '') && Number.isFinite(e.cloudDur) && e.cloudDur > 0 && (Date.now() - (cloudSeen.get(e) ?? Date.now())) / 50 > e.cloudDur + 10));
     if (re.test('minecraft:area_effect_cloud')) { const now = Date.now(); for (let i = burns.length - 1; i >= 0; i--) if (now - burns[i].t > 10000) burns.splice(i, 1); l.push(...burns); }
     return l; };
