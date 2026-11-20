@@ -2243,7 +2243,8 @@ function goalVerbs(K, H) {
       if (hp < 12 && FOOD.some((q) => cnt(q) > 0)) {
         if (dbg) log(`blaze: hurt (${Math.round(hp)}) - shut in to heal`);
         stopKeys(); blazeBunker0.last = 'shutting the slit'; await fillCell(slit);
-        for (let k = 0; k < 12 && (K.attrs().health ?? 20) < 18 && !K.dead(); k++) {
+        // (healed to 18 before the slit opens again, however long: 11/20 opened at 12, hurt to 10 in three seconds, dead in the box)
+        for (let k = 0; k < 60 && (K.attrs().health ?? 20) < 18 && !K.dead(); k++) {
           { const fire = fireNear(); if (fire) { await fireOut(fire); continue; } }
           if (!centred()) await centre();
           if ((K.attrs()['player.hunger'] ?? 20) < 20 && FOOD.some((q) => cnt(q) > 0)) { try { await grab(FOOD.find((q) => cnt(q) > 0), 'eat'); await K.act('use', ['36']); } catch {} }
