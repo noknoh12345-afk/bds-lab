@@ -1236,7 +1236,7 @@ async function dragonFight() {
         ctx.taps.delete(tap);
         log(`dragon: ${r.replace(/^.*?shelter:/, 'shelter:')}`);
         for (let t = 0; t < 90 && me.connected && !b.state().dead && (me.hp ?? 0) < 19.5; t++) {
-          const food = /minecraft:(cooked_\w+|bread|baked_potato|golden_carrot|golden_apple|apple|carrot)\*/.exec(b.invText?.() ?? '')?.[1];
+          const food = /minecraft:(cooked_\w+|bread|baked_potato|golden_carrot|apple|carrot)\*/.exec(b.invText?.() ?? '')?.[1];
           if (food && (me.food ?? 20) < 20) await gotoFor([food], 2600, 'eat'); else await sleep(1000);
         }
         log(`dragon: healed to ${me.hp}: out again`);
@@ -1321,9 +1321,11 @@ async function dragonFight() {
         if (em.d < 3.6) { await b.act('attack', ['enderman']).catch(() => {}); emHits++; } else await gotoFor([String(em.e.x), String(em.e.y + 1.5), String(em.e.z)], 600, 'lookat');
         await sleep(150); continue; }
     }
+    // (golden apples never for hunger: the match takes the first slot, and the apples sit in slot 2 - 20 Nov 19:50, sixteen gone in
+    //  22 minutes with nine eaten for health, then dead in its breath with none)
     // (food by name: `eat` with the bow in hand drew the bow - 15:19, 7.5 health for a minute and never a bite. Kept full enough
     //  to heal by itself: under 18 of 20 hunger nothing comes back)
-    { const food = /minecraft:(cooked_\w+|bread|baked_potato|golden_carrot|golden_apple|apple|carrot|melon_slice|sweet_berries|cookie|pumpkin_pie|beef|porkchop|mutton|chicken)\*/.exec(b.invText?.() ?? '')?.[1];
+    { const food = /minecraft:(cooked_\w+|bread|baked_potato|golden_carrot|apple|carrot|melon_slice|sweet_berries|cookie|pumpkin_pie|beef|porkchop|mutton|chicken)\*/.exec(b.invText?.() ?? '')?.[1];
       if (food && ((me.food !== null && me.food < 18) || (me.hp !== null && me.hp < 10 && (me.food ?? 20) < 20))) { await gotoFor([food], 2600, 'eat'); continue; } }
     const dr = ents(/ender_dragon$/)[0]; if (dr) seenDragon = true;
     // within reach: the sword, whatever else was going on - in flight only. Sitting, the perch's own turn below (beds first, then the
