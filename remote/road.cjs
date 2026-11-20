@@ -593,5 +593,13 @@ me.roadTidy = setInterval(() => { try { nightPolicy(); } catch { /* */ } if (!ti
 B.road_debug = async (a) => { debug = a[0] !== 'off'; log(`road_debug ${debug ? 'on' : 'off'}`); };
 B.road_status = async () => log(`road_status: ${JSON.stringify(st)} · armour ${armourText()} · level ${level()}`);
 
-return { builtins: B, armour, armourText, level, count };
+// worn armour as the share of a mob's blow that still lands (armour points 4% each, Protection 4% a level - the brain's fight odds:
+// 11/20 a flat 0.7 for 'a chestplate' ran full iron from three zombies, and the running cost the 15 health the fight would not have)
+const PTS = { helmet: { leather: 1, golden: 2, chainmail: 2, iron: 2, diamond: 3, netherite: 3 }, chestplate: { leather: 3, golden: 5, chainmail: 5, iron: 6, diamond: 8, netherite: 8 }, leggings: { leather: 2, golden: 3, chainmail: 4, iron: 5, diamond: 6, netherite: 6 }, boots: { leather: 1, golden: 1, chainmail: 1, iron: 2, diamond: 3, netherite: 3 } };
+function armourShare() {
+  const k = K(); if (!k?.inv?.armor) return 1; let pts = 0, prot = 0;
+  PIECES.forEach((p, i) => { const w = k.inv.armor[i]; if (!w?.network_id) return; const m = /^(\w+?)_(helmet|chestplate|leggings|boots)$/.exec(nameOf(w) ?? ''); if (!m) return; pts += PTS[m[2]]?.[m[1]] ?? 0; prot += lvlOf(enchOf(w), 'protection'); });
+  return (1 - Math.min(20, pts) * 0.04) * (1 - Math.min(20, prot) * 0.04);
+}
+return { builtins: B, armour, armourText, level, count, armourShare };
 };

@@ -578,7 +578,8 @@ const FOE = { zombie: [20, 3], husk: [20, 3], drowned: [20, 3], zombie_villager_
 const HIT = { netherite_sword: 9, diamond_sword: 8, iron_sword: 7, stone_sword: 6, wooden_sword: 5, diamond_axe: 7, iron_axe: 6, stone_axe: 5, wooden_axe: 4 };
 function odds(b, foes) {
   const inv = b.invText?.() ?? '', w = WEAPONS.find((x) => inv.includes('minecraft:' + x + '*')), hit = w ? HIT[w] : 1;
-  const armour = (/iron_chestplate|diamond_chestplate|netherite_chestplate/.test(inv) || me.armored ? 0.7 : 1) * (/shield\*/.test(inv) ? 0.8 : 1);
+  let worn = 1; try { worn = ROAD.armourShare(); } catch { worn = /iron_chestplate|diamond_chestplate|netherite_chestplate/.test(inv) || me.armored ? 0.7 : 1; }
+  const armour = worn * (/shield\*/.test(inv) ? 0.8 : 1);
   let t = 0, taken = 0;
   for (const f of foes) { const [hp, dps] = FOE[f.e.type.replace('minecraft:', '')] ?? [20, 4]; t += hp / (hit * 2) + 0.5; taken += dps * 0.6 * t * armour; }   // (0.6: each of my hits knocks it back out of its reach for a moment)
   return { taken: Math.round(taken), secs: Math.round(t), ok: taken * 1.2 < (me.hp ?? 20) - 1 };
