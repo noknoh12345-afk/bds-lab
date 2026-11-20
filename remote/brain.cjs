@@ -763,7 +763,7 @@ async function safeStart(cmd = '') {
   { const fr = b.K?.memo?.get('goal:frames'), q = b.state().pos; if (fr && Math.hypot(fr.x - q.x, fr.z - q.z) < 120 && q.y < fr.y + 40 && !openSky(b, q)) return; }
   // (a mining step goes on down there: up to the sky and down again between the diamonds and the lapis was minutes each, and 'digging
   //  up by hand' between y 27 and 28 for good once)
-  const deepWork = /^(get_(diamond|lapis_lazuli|redstone|raw_iron|iron_ingot|raw_gold|gold_ingot|coal|emerald)|ore_mine|road_mine|spawner_xp|mine_near)\b/.test(cmd);
+  const deepWork = /^(get_(diamond|lapis_lazuli|redstone|raw_iron|iron_ingot|raw_gold|gold_ingot|coal|emerald)|ore_mine|road_mine|spawner_xp|mine_near|walk_to)\b/.test(cmd);
   if (!openSky(b, b.state().pos) && !nightNow(b) && !deepWork) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
   me.armored = /_chestplate\*/.test(lastInv || (await invList(b))) || wornChest();
   if (nightNow(b) && (!me.armored || me.nightIn)) { log(me.nightIn ? 'auto: night: dug in until morning (the road shelters every night until Protection IV)' : 'auto: night and no armour: dug in until morning', { dc: true }); await sitOutNight(b); }

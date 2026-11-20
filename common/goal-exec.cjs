@@ -4118,6 +4118,9 @@ function goalVerbs(K, H) {
   // long walks fall back to it); to_surface: up to the open sky by the way it came or a shaft
   // (`shelter night`: kept in until the morning by the clock - a remote bot's night; plain `shelter` may go out early, armed and well)
   M.shelter = async (a) => K.say(`shelter: ${await shelter(false, a?.[0] === 'night' ? { hold: () => { const t = dayTime(); return t !== null && t >= 11800 && t < 23300; } } : {})}`);   // dig in and shut the way they come (the night)
+  // walk_to x y z [r]: to within r of a point, under the ground too (dug through where needed) - back to the enchanting room down in the
+  // stronghold from its spawner (the brain's surface walk dug up and down between y 7 and 8 for a minute instead)
+  M.walk_to = async (a) => { const [x, y, z] = a.slice(0, 3).map(Number), r = Number(a[3]) || 2; const ok = await travel((p, q, w) => hyp(p - x, q - y, w - z) <= r, (p, q, w) => hyp(p - x, q - y, w - z), { radius: 96, dig: true, pillar: true, legs: 16, nodes: 30000 }); const f = K.feet(); return K.say(`walk_to: ${ok ? 'there' : `${Math.round(hyp(f.x - x, f.y - y, f.z - z))} short`} (${Math.floor(f.x)} ${Math.floor(f.y)} ${Math.floor(f.z)})`); };
   M.walk_xz = async (a) => { const ok = await goToXZ(Number(a[0]), Number(a[1]), Number(a[2]) || 2); return K.say(`walk_xz: ${ok ? 'there' : 'not there'} (${K.feet().x.toFixed(0)} ${K.feet().y.toFixed(0)} ${K.feet().z.toFixed(0)})`); };
   M.to_surface = async () => { await toSurface('asked'); return K.say(`to_surface: y=${feet()[1]}`); };
   M.end_run = async (a) => K.say(`end_run: ${await endRun(Number(a[0]) || 900)}`);

@@ -530,7 +530,7 @@ B.road_prot = () => stepRun('road_prot', async () => {
   for (let k = 0; k < 8 && R.live(); k++) {
     if (allProt4()) return true;
     if (level() >= 1) {   // (from level 1: new offers are bought cheap down there until one shows Protection IV - enchantArmour)
-      if (st.room && me.dim === 'overworld') { const f = me.bot.state().pos; if (Math.hypot(f.x - st.room.x, f.z - st.room.z) > 6) await R.travel(st.room.x, st.room.z + 3); }
+      if (st.room && me.dim === 'overworld') { const f = me.bot.state().pos; if (Math.hypot(f.x - st.room.x, f.z - st.room.z) > 6 || Math.abs(f.y - st.room.y) > 3) { if (f.y < 55 || st.room.y < 55) await R.run(`walk_to ${st.room.x} ${st.room.y} ${st.room.z + 1} 1`, 'back to the room'); else await R.travel(st.room.x, st.room.z + 3); } }
       const r = await enchantArmour(); if (r === true) return true; lastWhy = r;
       if (!/^level \d+/.test(String(r))) return r;
     }
