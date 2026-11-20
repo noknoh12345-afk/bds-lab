@@ -279,7 +279,9 @@ async function enchantArmour({ peekOnly = false, maxRerolls = 60 } = {}) {
       await lapisOn();
       const ri = rerollSlot(); if (ri < 0) { why = 'nothing cheap left to enchant for new offers (wooden shovels)'; break; }
       const o = await offersFor(ri);
-      if (o?.length && o[0].cost > lv) { why = `level ${lv}: new offers cost level ${o[0].cost}`; break; }   // ('enchant rejected: status 39' at level 1 for an offer of level 5) if (!o?.length) { why = `no offers for the ${nameOf(K().inv.ui?.[14]) || 'cheap item'} (the table: ${shelvesAt(T)} shelves, lapis ${K().inv.ui?.[15]?.count ?? 0})`; break; }
+      if (o?.length && o[0].cost > lv) { why = `level ${lv}: new offers cost level ${o[0].cost}`; break; }   // ('enchant rejected: status 39' at level 1 for an offer of level 5)
+      // (what is on the table must be the cheap thing: once the boots were still there and took 'fire protection I' for new offers)
+      { const on = nameOf(K().inv.ui?.[14]); if (!REROLL.some((re) => re.test(on))) { log(`road: enchant: ${on || 'nothing'} on the table, not the cheap thing - not enchanted`); await backOut(); await act('close'); await sleep(300); if (!(await openTable(T))) { why = 'the table did not open'; break; } continue; } } if (!o?.length) { why = `no offers for the ${nameOf(K().inv.ui?.[14]) || 'cheap item'} (the table: ${shelvesAt(T)} shelves, lapis ${K().inv.ui?.[15]?.count ?? 0})`; break; }
       const r = await act('enchant', [0]); rerolls++;
       // (a refusal once - 'status 50', 'inventory full' - is the client's view behind the server's: closed, synced, opened, and on;
       //  twice in a row it stops)
