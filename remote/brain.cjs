@@ -1036,6 +1036,9 @@ async function dragonFight() {
         // (not waiting inside one: 05:30, 'waiting' with its breath on us, 20 to 3 in fourteen seconds - straight away from its middle)
         const e0 = cl.map((e) => ({ e, d: Math.hypot(Q.x - e.x, Q.z - e.z) })).filter((x) => x.d < cr(x.e) + 1.5).sort((u, w) => u.d - w.d)[0];
         if (e0) { const l = e0.d || 1, ux = e0.d < 0.3 ? 1 : (Q.x - e0.e.x) / l, uz = e0.d < 0.3 ? 0 : (Q.z - e0.e.z) / l, run = cr(e0.e) + 3 - e0.d; await dash(Q.x + ux * run, Q.z + uz * run, 2500); return; }
+        // (not waiting by the fountain either: 21 Nov 07:07, 'waiting' at -2 5 beside it as it sat, its breath came down on us, 18.6 to
+        //  dead in four seconds. Out to 12 from the middle to wait)
+        { const lq = Math.hypot(Q.x, Q.z); if (mid && lq < 11) { const ux = lq < 0.5 ? 1 : Q.x / lq, uz = lq < 0.5 ? 0 : Q.z / lq; await dash(ux * 12, uz * 12, 2500); return; } }
         await sleep(400); return; } [tx, tz] = opts[0]; }
     await down(); await gotoFor([String(Math.round(tx)), String(Math.round(tz))], ms);
   };
