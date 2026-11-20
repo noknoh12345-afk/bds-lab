@@ -799,11 +799,14 @@ async function bedSpawn0() {
     const q = me.bot.state().pos;
     if (pb && Math.hypot(q.x - pb.x, q.z - pb.z) > 4 && Math.hypot(q.x - pb.x, q.z - pb.z) < 600) { log(`auto: back to our bed at ${pb.x} ${pb.y} ${pb.z} to set it as the respawn point`); await BUILTIN.travel([String(pb.x + 2), String(pb.z)]); } }
   let bedOk = /\d+:minecraft:(\w+_)?bed\*/.test(await invList(me.bot)) || !!findBed0();   // (one carried already: straight to setting it down)
-  for (let i = 0; i < 10 && live() && !bedOk; i++) {
+  // (ten minutes for it at most: few sheep about, it was 40 minutes of sheep for two white wool and the third never seen - the bed is
+  //  only the respawn point, the run goes on without it and tries again at the next step)
+  const tWool = Date.now();
+  for (let i = 0; i < 10 && live() && !bedOk && Date.now() - tWool < 600000; i++) {
     if ([...(await woolCounts()).values()].some((n) => n >= 3)) { bedOk = await run('craft_bed', 'the bed from three of one colour'); break; }
     await run('kill_sheep 1', 'wool for a bed');
   }
-  if (!bedOk) bedOk = await run('get_bed 1', 'a bed');
+  if (!bedOk && Date.now() - tWool < 600000) bedOk = await run('get_bed 1', 'a bed');
   if (!bedOk) return false;
   // (13:17 the bed was made in the night's hole: the floor of the spot beside it could not be seen from down there, the bed did not go
   //  down - up to the open sky first; then every spot around, not only the first one, each checked)
