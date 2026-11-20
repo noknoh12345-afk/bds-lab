@@ -1689,6 +1689,11 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const brid = known !== undefined ? known >>> 0 : blk ? blockHash(req, blk.id, blk.states, version) >>> 0 : 0;
         if (process.env.LAB_DEBUG) say(`dbg useon known=${known} ${JSON.stringify(blk)}`);
         if (!fast) await ticks(1);
+        // a plant in the line of sight (leaf litter on the next block, grass): punched away first, as a player does (11/20 in a forest
+        // a crafting table never went down: 'the crosshair is on leaf_litter at' the block beside it, 9 tries)
+        for (let k = 0; legit && !fast && k < 3 && !underCrosshairPlace(b, face); k++) { const hh = raycast();
+          if (hh?.kind !== 'block' || (hh.x === b.x && hh.y === b.y && hh.z === b.z) || !/short_grass|tall_grass|fern|_flower|dandelion|poppy|tulip|orchid|allium|bluet|daisy|cornflower|lily_of_the_valley|bush|leaf_litter|pink_petals|wildflowers|dry_grass|sweet_berry|vine|seagrass|snow_layer/.test(world.block(hh.x, hh.y, hh.z)?.name ?? '')) break;
+          await bot.act('dig', [String(hh.x), String(hh.y), String(hh.z)]).catch(() => {}); lookAt(aim); await ticks(2); }
         if (legit && !fast && !underCrosshairPlace(b, face)) { const hh = raycast(); return say(`useon: ${b.x} ${b.y} ${b.z} is not under the crosshair (out of reach or behind a block; the crosshair is on ${hh?.kind === 'block' ? `${(world.block(hh.x, hh.y, hh.z)?.name ?? '?').replace('minecraft:', '')} at ${hh.x} ${hh.y} ${hh.z}` : hh?.kind === 'entity' ? hh.entity.type : 'nothing'}): not clicked`); }
         const cp = pt.length === 3 && pt.every((v) => v >= 0 && v <= 1) ? { x: pt[0], y: pt[1], z: pt[2] } : [{ x: 0.5, y: 0, z: 0.5 }, { x: 0.5, y: 1, z: 0.5 }, { x: 0.5, y: 0.5, z: 0 }, { x: 0.5, y: 0.5, z: 1 }, { x: 0, y: 0.5, z: 0.5 }, { x: 1, y: 0.5, z: 0.5 }][face] ?? { x: 0.5, y: 0.5, z: 0.5 };
         if (pt.length && !(pt.length === 3 && pt.every((v) => v >= 0 && v <= 1))) throw new Error('useon x y z [face] [cx cy cz] [hold]: cx cy cz are 0..1 inside the block');
