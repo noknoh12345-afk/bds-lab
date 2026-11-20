@@ -110,10 +110,25 @@ async function placeOn(item, x, y, z) {   // the item set on top of the block un
   if (said) log(`road: ${item} at ${x} ${y} ${z} did not go down: ${said.slice(0, 160)}`);
   return false;
 }
+// no level place near (under the ground, over the stronghold): one dug out round the feet - the room's 5 x 6 cells cleared two high,
+// the nearest first (each in reach and in sight once the one before it is gone), holes in the floor filled
+// (11/20 the lab: 'up to the surface' stopped at y 11 in the stronghold, and the room could not go anywhere)
+async function makeSite() {
+  const f = me.bot.state().pos, X = Math.floor(f.x), Y = Math.floor(f.y + 0.01), Z = Math.floor(f.z) - 1;
+  const cells = []; for (let ax = -2; ax <= 2; ax++) for (let az = -2; az <= 3; az++) for (const dy of [1, 0]) cells.push([X + ax, Y + dy, Z + az]);
+  cells.sort((p, q) => Math.hypot(p[0] + 0.5 - f.x, p[1] - f.y - 1, p[2] + 0.5 - f.z) - Math.hypot(q[0] + 0.5 - f.x, q[1] - f.y - 1, q[2] + 0.5 - f.z));
+  let dug = 0, laid = 0;
+  for (let pass = 0; pass < 2; pass++) for (const [x, y, z] of cells) { if (!AIRY.test(blk(x, y, z)) && !/water|lava|bedrock|end_portal/.test(blk(x, y, z))) { await act('dig', [x, y, z]); if (AIRY.test(blk(x, y, z))) dug++; } }
+  const floorItem = ['cobblestone', 'dirt', 'cobbled_deepslate', 'stone_bricks', 'andesite', 'diorite', 'granite'].find((it) => count(new RegExp(`^${it}$`)) > 0);
+  for (let ax = -2; ax <= 2; ax++) for (let az = -2; az <= 3; az++) { const x = X + ax, z = Z + az; if (!SOLID(blk(x, Y - 1, z)) && floorItem && SOLID(blk(x, Y - 2, z))) { await act('place', [floorItem, x, Y - 1, z]); if (SOLID(blk(x, Y - 1, z))) laid++; } }
+  log(`road: a place for the room dug out at ${X} ${Y} ${Z} (${dug} blocks dug, ${laid} floor laid)`);
+}
 async function buildRoom() {
   const b = me.bot;
   { const g = R.guardReason(b); if (g) return `no room here: ${g}`; }
-  const C = roomSite(); if (!C) return 'no level place for the room near here';
+  let C = roomSite();
+  if (!C) { await makeSite(); C = roomSite(); }
+  if (!C) return 'no level place for the room near here';
   const [x, y, z] = C;
   log(`road: the enchanting room at ${x} ${y} ${z} (table), the way in from the south`);
   await standAt(x, z + 1);

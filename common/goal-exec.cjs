@@ -2456,6 +2456,7 @@ function goalVerbs(K, H) {
     const t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
     await travel((x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z) <= 3.5, (x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z), { radius: 200, dig: true, pillar: true, legs: 40 });
     const frames = () => K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 12, radius: 12, from: K.feet() });
+    { const fs = frames(); log(`stronghold: ${fs.length} frames within 12, ${fs.filter(({ x, y, z }) => { const st = B(x, y, z)?.states ?? {}; return st.end_portal_eye_bit === 1 || st.end_portal_eye_bit === true; }).length} with an eye; ${cnt('ender_eye')} eyes carried; states ${JSON.stringify(fs[0] && B(fs[0].x, fs[0].y, fs[0].z)?.states)}`); }
     for (const { x, y, z } of frames()) {   // (findBlocks hands back {x, y, z}: the array destructuring threw - the End was never reached this way)
       const b = B(x, y, z); if (b?.states?.end_portal_eye_bit === 1 || b?.states?.end_portal_eye_bit === true) continue;
       if (cnt('ender_eye') < 1) break;
