@@ -495,7 +495,10 @@ B.road_room = (a = []) => stepRun('road_room', async () => {
   if (roomKnown() && (a[0] !== 'here' || Math.hypot(me.bot.state().pos.x - st.room.x, me.bot.state().pos.z - st.room.z) < 300)) return true;
   if (!n(/^enchanting_table$/)) return 'no enchanting table carried';
   let pb = null; try { pb = JSON.parse(fs.readFileSync(path.join(R.ctx.RUN, 'bed.json'), 'utf8')); } catch { /* */ }
-  if (a[0] === 'here') { pb = null; st.room = null; }   // (over the stronghold: built where it stands, the old room far behind)
+  if (a[0] === 'here') { pb = null; st.room = null;
+    // (by the portal room, at its height: after the library the bot was down at y -7 in a cave under it, and the room went there)
+    const fr = K()?.memo?.get('goal:frames'), f = me.bot.state().pos;
+    if (fr && (Math.hypot(f.x - fr.x, f.z - fr.z) > 16 || Math.abs(f.y - fr.y) > 4)) await R.run(`walk_to ${fr.x} ${fr.y} ${fr.z} 6`, 'back to the portal room for the room'); }   // (over the stronghold: built where it stands, the old room far behind)
   if (pb && me.dim === 'overworld') { const f = me.bot.state().pos; if (Math.hypot(f.x - pb.x, f.z - pb.z) > 12) await R.travel(pb.x + 6, pb.z + 6); }
   const r = await buildRoom(); if (r !== true) return r;
   st.room.shelves = shelvesAt([st.room.x, st.room.y, st.room.z]); save();
