@@ -32,7 +32,7 @@ const reqName = (req) => (!req ? 'hand' : req.kind === 'shears' ? 'shears' : req
 const WILD = [
   [/^(oak|birch|spruce|jungle|acacia|dark_oak|mangrove|cherry|pale_oak|poplar)_log$/, 45], [/^(oak|birch|spruce|jungle|acacia|dark_oak|mangrove|cherry|pale_oak)_(wood)$/, 3000], [/_leaves$/, 45], [/^(short_grass|tall_grass|fern|large_fern)$/, 20],
   [/^(grass_block|dirt|coarse_dirt|podzol|rooted_dirt)$/, 5], [/^(stone|andesite|diorite|granite|tuff)$/, 20, 'overworld', 50], [/^deepslate$/, 90, 'overworld', -8],
-  [/^(sand)$/, 120], [/^red_sand$/, 900], [/^gravel$/, 90], [/^clay$/, 200], [/^reeds$/, 150], [/^(water)$/, 40], [/^(lava)$/, 300], [/^(snow|snow_layer|ice|packed_ice|powder_snow)$/, 900],
+  [/^(sand)$/, 120], [/^red_sand$/, 900], [/^gravel$/, 90], [/^clay$/, 200], [/^reeds$/, 150], [/^(water)$/, 40], [/^(lava)$/, 300, 'overworld', -54, 8],   // (lava lakes under the ground: common at the bottom of the world; remote/road.cjs casts obsidian at one) [/^(snow|snow_layer|ice|packed_ice|powder_snow)$/, 900],
   [/^coal_ore$/, 90, 'overworld', 48, 48], [/^deepslate_coal_ore$/, 600, 'overworld', -4], [/^iron_ore$/, 200, 'overworld', 16], [/^deepslate_iron_ore$/, 300, 'overworld', -8],
   [/^copper_ore$/, 200, 'overworld', 48], [/^deepslate_copper_ore$/, 500, 'overworld', -8], [/^(deepslate_)?gold_ore$/, 500, 'overworld', -16], [/^(deepslate_)?redstone_ore$/, 450, 'overworld', -58],
   [/^(deepslate_)?lapis_ore$/, 500, 'overworld', 0], [/^(deepslate_)?diamond_ore$/, 900, 'overworld', -58], [/^(deepslate_)?emerald_ore$/, 2400, 'overworld', 100],

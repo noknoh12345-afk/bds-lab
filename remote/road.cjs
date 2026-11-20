@@ -299,12 +299,68 @@ B.road_mine = () => stepRun('road_mine', async () => {
   }
   return `diamonds ${n(/^diamond$/)} of ${dWant()}, lapis ${n(/^lapis_lazuli$/)} of ${lWant()}`;
 });
+// obsidian cast from a lava pool: water poured on the pool's rim flows over it and every still lava it covers turns to obsidian (in the
+// lab one pour made a 3x5 pool all obsidian); the water taken up again, then each obsidian with solid ground under it dug with the
+// diamond pickaxe (one over more lava is left: dug, the drop falls in and burns, and the lava is open)
+const lavaSrc = (x, y, z) => { const b = me.bot.world.block(x, y, z); return /^minecraft:lava$/.test(b?.name ?? '') && !(b.states?.liquid_depth > 0); };
+function lavaShore(r = 40) {
+  const f = me.bot.state().pos, X = Math.floor(f.x), Y = Math.floor(f.y + 0.01), Z = Math.floor(f.z); let best = null;
+  for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) for (let dy = -16; dy <= 8; dy++) {
+    const x = X + dx, y = Y + dy, z = Z + dz; if (!lavaSrc(x, y, z) || !AIRY.test(blk(x, y + 1, z))) continue;
+    for (const [sx, sz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {   // a solid rim beside it, air over the rim, and a dry place to stand behind the rim
+      const rx = x + sx, rz = z + sz; if (!SOLID(blk(rx, y, rz)) || !AIRY.test(blk(rx, y + 1, rz)) || !AIRY.test(blk(rx, y + 2, rz))) continue;
+      const tx = rx + sx, tz = rz + sz; if (!SOLID(blk(tx, y, tz)) || !AIRY.test(blk(tx, y + 1, tz)) || !AIRY.test(blk(tx, y + 2, tz)) || [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, c]) => /lava/.test(blk(tx + a, y + 1, tz + c)))) continue;
+      const d = Math.hypot(dx, dy, dz); if (!best || d < best.d) best = { lava: [x, y, z], rim: [rx, y, rz], stand: [tx, y + 1, tz], d };
+    }
+  }
+  return best;
+}
+async function castObsidian(want) {
+  if (!n(/^(diamond|netherite)_pickaxe$/)) return 'no diamond pickaxe';
+  for (let round = 0; round < 6 && n(/^obsidian$/) < want && R.live(); round++) {
+    if (!n(/^water_bucket$/)) await R.run('get_water_bucket', 'water to cast obsidian');
+    if (!n(/^water_bucket$/)) return 'no water bucket';
+    const s = lavaShore();
+    if (!s) return 'no still lava with a rim to pour on found near';
+    log(`road: obsidian: the lava at ${s.lava.join(' ')}, the rim ${s.rim.join(' ')}`);
+    await R.gotoFor([String(s.stand[0]), String(s.stand[2]), '0.4'], 60000, 'walk_xz');
+    const f = me.bot.state().pos; if (Math.hypot(f.x - (s.stand[0] + 0.5), f.z - (s.stand[2] + 0.5)) > 1.2) { log('road: obsidian: could not get to the rim'); continue; }
+    await act('hold_water_bucket'); await act('useon', [s.rim[0], s.rim[1], s.rim[2], 'up']); await sleep(3500);
+    await act('hold_bucket'); await act('useon', [s.rim[0], s.rim[1] + 1, s.rim[2], 'up']); await sleep(800); await K().sync();
+    // the obsidian made, dug where it lies on solid ground, the nearest first, from where it can be reached
+    for (let k = 0; k < 40 && n(/^obsidian$/) < want && R.live(); k++) {
+      const g = me.bot.state().pos; let t = null;
+      for (let dx = -6; dx <= 6; dx++) for (let dz = -6; dz <= 6; dz++) for (let dy = -3; dy <= 1; dy++) {
+        const x = Math.floor(g.x) + dx, y = Math.floor(g.y) + dy, z = Math.floor(g.z) + dz;
+        if (blk(x, y, z) !== 'obsidian' || !SOLID(blk(x, y - 1, z)) || /lava/.test(blk(x, y - 1, z)) || me.bot.placedByMe?.has?.(`${x},${y},${z}`)) continue;
+        const d = Math.hypot(x + 0.5 - g.x, y - g.y, z + 0.5 - g.z); if (d < 4.4 && (!t || d < t.d)) t = { x, y, z, d };
+      }
+      if (!t) {   // none in reach: into the cells already dug (dry, solid under), nearer the rest
+        const more = []; for (let dx = -8; dx <= 8; dx++) for (let dz = -8; dz <= 8; dz++) for (let dy = -3; dy <= 1; dy++) { const x = Math.floor(g.x) + dx, y = Math.floor(g.y) + dy, z = Math.floor(g.z) + dz; if (blk(x, y, z) === 'obsidian' && SOLID(blk(x, y - 1, z)) && !me.bot.placedByMe?.has?.(`${x},${y},${z}`)) more.push([x, y, z]); }
+        const w = more.length ? (() => { const [x, y, z] = more[0]; for (const [a, c] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (AIRY.test(blk(x + a, y + 1, z + c)) && AIRY.test(blk(x + a, y + 2, z + c)) && SOLID(blk(x + a, y, z + c)) && ![[1, 0], [-1, 0], [0, 1], [0, -1], [0, 0]].some(([p, q]) => /lava/.test(blk(x + a + p, y + 1, z + c + q)) || /lava/.test(blk(x + a + p, y, z + c + q)))) return [x + a, z + c]; return null; })() : null;
+        if (!w || k > 30) break;
+        await R.gotoFor([String(w[0]), String(w[1]), '0.4'], 20000, 'walk_xz'); continue;
+      }
+      await act('hold_diamond_pickaxe'); const said = await act('dig', [t.x, t.y, t.z]);
+      if (blk(t.x, t.y, t.z) === 'obsidian') { log(`road: obsidian at ${t.x} ${t.y} ${t.z} not dug: ${said.slice(0, 120)}`); me.bot.placedByMe?.add?.(`${t.x},${t.y},${t.z}`); continue; }   // (not tried again)
+      await sleep(400);
+    }
+    await act('collect', ['8']); await sleep(800); await act('collect', ['8']); await sleep(1000); await K().sync(); await sleep(500);   // (the count read at once said 0 with 9 picked up)
+    log(`road: obsidian ${n(/^obsidian$/)} of ${want}`);
+  }
+  return n(/^obsidian$/) >= want ? true : `obsidian ${n(/^obsidian$/)} of ${want}`;
+}
+B.cast_obsidian = (a) => stepRun('cast_obsidian', () => castObsidian(Number(a?.[0]) || 14));
 // obsidian: ten for the portal, four for the table (a diamond pickaxe first)
 B.road_obsidian = () => stepRun('road_obsidian', async () => {
   const want = () => (st.portalO ? 0 : 10) + (roomKnown() || n(/^enchanting_table$/) ? 0 : 4);
   for (let k = 0; k < 3 && R.live() && n(/^obsidian$/) < want(); k++) {
     if (!n(/^(diamond|netherite)_pickaxe$/)) await R.run('get_diamond_pickaxe', 'a diamond pickaxe: obsidian');
-    await R.run(`get_obsidian ${want()}`, 'obsidian: the portal, the enchanting table');
+    if (!n(/^bucket$|^water_bucket$/)) await R.run('get_bucket', 'a bucket: water for casting');
+    let r = await castObsidian(want());   // (cast from lava: obsidian in the open is rare - 11/20 get_obsidian walked about looking for it)
+    // no lava near: to a lava lake (a bucket of it fetched is the way there: down to the bottom of the world, along a tunnel), cast there
+    if (r !== true && /no still lava/.test(String(r))) { if (!n(/^bucket$/)) await R.run('get_bucket', 'a second bucket: lava'); await R.run('get_lava_bucket', 'the way to a lava lake'); if (n(/^lava_bucket$/)) r = await castObsidian(want()); }
+    if (r !== true) { log(`road: casting: ${r}`); await R.run(`get_obsidian ${want()}`, 'obsidian: the portal, the enchanting table'); }
   }
   if (n(/^obsidian$/) >= want()) { st.obsidianDone = true; save(); return true; }
   return `obsidian ${n(/^obsidian$/)} of ${want()}`;
@@ -344,7 +400,7 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40 } = {}) {
   const t0 = Date.now(), d0 = me.deaths;
   await R.run('nether_seek 1200', 'a nether fortress');
   if (me.dim === 'nether' && me.deaths === d0) await R.run(`blaze_rods ${rods} ${Math.max(300, minutes * 60 - Math.round((Date.now() - t0) / 1000))} ${lv}`, 'blaze rods and levels');
-  if (me.dim !== 'nether') return `left the Nether (died? deaths ${me.deaths - d0})`;
+  if (me.dim !== 'nether' || me.deaths !== d0) return `the trip ended in the Nether: ${me.deaths !== d0 ? 'died' : 'out of it'} (rods ${n(/^blaze_rod$/)}, level ${level()})`;   // (11/20: killed by magma cubes, it went on to 'the way back' from the overworld)
   log(`road: the Nether: ${n(/^blaze_rod$/)} rods, level ${level()} - back to the portal at ${st.portalN.x} ${st.portalN.z}`, { dc: true });
   if (st.portalN) await R.run(`tunnel_to ${st.portalN.x} ${st.portalN.z} 600 3`, 'back toward the portal by a tunnel');   // (the Nether's ledges: no walking in the open)
   await R.run('portal_go 160', 'back through the portal');

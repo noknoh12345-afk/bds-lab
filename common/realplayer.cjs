@@ -935,8 +935,12 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     }
     return t0 >= 0 ? { t: t0, face } : null;
   };
+  // (an empty bucket's ray stops at a liquid's still source, as the game's does: the scoop - 11/20 water poured on lava to cast
+  //  obsidian could not be taken up again, 'the crosshair is on nothing')
+  const LIQUID_SRC = (b) => /^minecraft:(water|lava)$/.test(b.name) && !(b.states?.liquid_depth > 0);
   const raycast = () => {
     const o = { x: pos.x, y: pos.y, z: pos.z }, d = viewDir(), max = reach('block');
+    const scoop = itemNames.get(heldItem().network_id) === 'minecraft:bucket';
     let best = null;
     // blocks: step through the cells along the ray (Amanatides & Woo)
     let x = Math.floor(o.x), y = Math.floor(o.y), z = Math.floor(o.z);
@@ -945,7 +949,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
     const tD = { x: d.x ? Math.abs(1 / d.x) : Infinity, y: d.y ? Math.abs(1 / d.y) : Infinity, z: d.z ? Math.abs(1 / d.z) : Infinity };
     for (let n = 0; n < 64 && !best; n++) {
       const b = world.block(x, y, z);
-      if (b && !NOPICK.test(b.name)) {
+      if (b && (!NOPICK.test(b.name) || (scoop && LIQUID_SRC(b)))) {
         for (const s of b.shape?.length ? b.shape : [[0, 0, 0, 1, 1, 1]]) {
           const h = hitBox(o, d, [x + s[0], y + s[1], z + s[2], x + s[3], y + s[4], z + s[5]]);
           if (h && h.t <= max && (!best || h.t < best.t)) best = { kind: 'block', x, y, z, block: b, face: h.face, t: h.t };
