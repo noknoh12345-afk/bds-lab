@@ -291,6 +291,8 @@ async function walkFar(x, z, tol = 3) {
 B.road_mine = () => stepRun('road_mine', async () => {
   const dWant = () => (roomKnown() || n(/^enchanting_table$/) ? 0 : 2) + (n(/^(diamond|netherite)_pickaxe$/) || st.obsidianDone ? 0 : 3), lWant = () => (allProt4() ? 0 : 32);
   for (let k = 0; k < 3 && R.live(); k++) {
+    // (a spare iron pickaxe down there: 11/20 the one carried broke at y -58, and a stone one does not take diamonds)
+    if (n(/^diamond$/) < dWant() && n(/^(iron|diamond|netherite)_pickaxe$/) < 2) await R.run('get_iron_pickaxe 2', 'a spare iron pickaxe for the deep mine');
     if (n(/^diamond$/) < dWant()) await R.run(`get_diamond ${dWant()}`, 'diamonds: the enchanting table, a diamond pickaxe');
     if (n(/^lapis_lazuli$/) < lWant()) await R.run(`get_lapis_lazuli ${lWant()}`, 'lapis for the enchanting table');
     if (n(/^diamond$/) >= dWant() && n(/^lapis_lazuli$/) >= lWant()) return true;
@@ -344,7 +346,7 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40 } = {}) {
   if (me.dim === 'nether' && me.deaths === d0) await R.run(`blaze_rods ${rods} ${Math.max(300, minutes * 60 - Math.round((Date.now() - t0) / 1000))} ${lv}`, 'blaze rods and levels');
   if (me.dim !== 'nether') return `left the Nether (died? deaths ${me.deaths - d0})`;
   log(`road: the Nether: ${n(/^blaze_rod$/)} rods, level ${level()} - back to the portal at ${st.portalN.x} ${st.portalN.z}`, { dc: true });
-  if (st.portalN) await walkFar(st.portalN.x, st.portalN.z);
+  if (st.portalN) await R.run(`tunnel_to ${st.portalN.x} ${st.portalN.z} 600 3`, 'back toward the portal by a tunnel');   // (the Nether's ledges: no walking in the open)
   await R.run('portal_go 160', 'back through the portal');
   for (let t = 0; t < 20 && me.dim === 'nether'; t++) await sleep(500);
   return me.dim === 'overworld' ? true : 'still in the Nether (the way back to the portal?)';
@@ -369,6 +371,79 @@ B.road_prot = () => stepRun('road_prot', async () => {
   }
   return allProt4() ? true : `Protection IV on ${PIECES.filter((p) => { const a = armour()[p]; return a && lvlOf(a.ench, 'protection') >= 4; }).length} of 4, level ${level()}`;
 });
+// ---------- the rest of the kit ----------
+// a cell beside the feet to set a block in: empty (or a plant) over solid ground
+function cellBeside() {
+  const f = me.bot.state().pos, X = Math.floor(f.x), Y = Math.floor(f.y + 0.01), Z = Math.floor(f.z);
+  for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [2, 0], [0, 2], [-2, 0], [0, -2]]) {
+    const x = X + dx, z = Z + dz; if (AIRY.test(blk(x, Y, z)) && AIRY.test(blk(x, Y + 1, z)) && SOLID(blk(x, Y - 1, z))) return [x, Y, z, dx, dz];
+  }
+  return null;
+}
+// a carved pumpkin (the endermen in the End: looked at, they stay calm): a pumpkin set down, carved with shears, broken and taken up
+B.road_pumpkin = () => stepRun('road_pumpkin', async () => {
+  if (n(/^carved_pumpkin$/)) return true;
+  if (!n(/^shears$/)) await R.run('get_shears', 'shears: a pumpkin to carve');
+  if (!n(/^pumpkin$/)) await R.run('get_pumpkin 1', 'a pumpkin');
+  if (!n(/^pumpkin$/) || !n(/^shears$/)) return `pumpkin ${n(/^pumpkin$/)}, shears ${n(/^shears$/)}`;
+  for (let k = 0; k < 3 && R.live() && !n(/^carved_pumpkin$/); k++) {
+    const c = cellBeside(); if (!c) { await R.gotoFor([String(Math.floor(me.bot.state().pos.x) + 4), String(Math.floor(me.bot.state().pos.z) + 3)], 10000); continue; }
+    const [x, y, z, dx, dz] = c;
+    if (!(await placeOn('pumpkin', x, y, z))) continue;
+    await act('hold_shears');
+    const said = await act('useon', [x, y, z, dx > 0 ? 'west' : dx < 0 ? 'east' : dz > 0 ? 'north' : 'south']);   // (the face toward us)
+    for (let t = 0; t < 10 && blk(x, y, z) !== 'carved_pumpkin'; t++) await sleep(150);
+    if (blk(x, y, z) !== 'carved_pumpkin') log(`road: the pumpkin at ${x} ${y} ${z} was not carved (${blk(x, y, z)}): ${said.slice(0, 120)}`);
+    await act('dig', [x, y, z]); await sleep(700); await act('collect', ['4']); await K().sync();
+  }
+  return n(/^carved_pumpkin$/) ? true : 'the pumpkin was not carved';
+});
+// flint: gravel set down and dug again with a shovel, one in ten gives flint (what a person does with a stack of gravel)
+async function flintFarm(want) {
+  if (n(/^flint$/) >= want) return true;
+  if (n(/^gravel$/) < 4) await R.run('get_gravel 16', 'gravel to sift for flint');
+  if (!n(/^gravel$/)) return false;
+  if (!n(/_shovel$/)) await R.run('get_stone_shovel', 'a shovel for the gravel');
+  const shovel = ['netherite_shovel', 'diamond_shovel', 'iron_shovel', 'stone_shovel', 'wooden_shovel'].find((s) => n(new RegExp(`^${s}$`))) ?? null;
+  const c = cellBeside(); if (!c) return false;
+  const [x, y, z] = c, f0 = n(/^flint$/);
+  for (let k = 0; k < want * 30 && n(/^flint$/) < want && n(/^gravel$/) && R.live(); k++) {
+    if (!(await placeOn('gravel', x, y, z))) { if (k > 3) break; continue; }
+    if (shovel) await act(`hold_${shovel}`);
+    await act('dig', [x, y, z]); await sleep(350);
+    if (k % 10 === 9) { await act('collect', ['3']); await K().sync(); }
+  }
+  await act('collect', ['3']); await K().sync();
+  log(`road: flint ${n(/^flint$/)} (${n(/^flint$/) - f0} sifted from gravel)`);
+  return n(/^flint$/) >= want;
+}
+// a bow and arrows (the crystals, the cages, its last points: 105-158 used in the lab's wins): crafted from flint, feathers, sticks
+B.road_arrows = (a) => stepRun('road_arrows', async () => {
+  const want = Number(a?.[0]) || 192;
+  if (!n(/^bow$/)) await R.run('get_bow', 'a bow');
+  for (let k = 0; k < 4 && R.live() && n(/^arrow$/) < want; k++) {
+    const crafts = Math.ceil((want - n(/^arrow$/)) / 4);
+    if (n(/^feather$/) < crafts) await R.run(`get_feather ${crafts}`, 'feathers for arrows');
+    if (n(/^flint$/) < crafts) await flintFarm(crafts);
+    if (n(/^feather$/) >= Math.min(crafts, 1) && n(/^flint$/) >= 1) await R.run(`get_arrow ${Math.min(want, n(/^arrow$/) + 4 * Math.min(n(/^feather$/), n(/^flint$/)))}`, 'arrows');
+  }
+  return n(/^arrow$/) >= want && n(/^bow$/) ? true : `bow ${n(/^bow$/)}, arrows ${n(/^arrow$/)} of ${want} (feathers ${n(/^feather$/)}, flint ${n(/^flint$/)})`;
+});
+// beds (12: 4-7 blown in the lab's wins): shears first (a sheep shorn gives 1-3 wool, killed 1)
+B.road_beds = (a) => stepRun('road_beds', async () => {
+  const want = Number(a?.[0]) || 12, beds = () => n(/(^|_)bed$/);
+  if (beds() >= want) return true;
+  if (!n(/^shears$/)) await R.run('get_shears', 'shears: wool');
+  for (let k = 0; k < 3 && R.live() && beds() < want; k++) await R.run(`get_bed ${want}`, 'beds for the dragon');
+  return beds() >= want ? true : `beds ${beds()} of ${want}`;
+});
+// what the End needs, counted (the kit of the lab's wins; golden apples 8 at the least): what is still missing
+const KIT = [['Protection IV on all four', () => allProt4()], ['golden apples 8', () => n(/^golden_apple$/) >= 8], ['beds 12', () => n(/(^|_)bed$/) >= 12], ['a bow', () => n(/^bow$/) >= 1],
+  ['arrows 192', () => n(/^arrow$/) >= 192], ['cobblestone 256', () => n(/^cobblestone$/) >= 256], ['a carved pumpkin', () => n(/^carved_pumpkin$/) >= 1],
+  ['an iron sword', () => n(/^(iron|diamond|netherite)_sword$/) >= 1], ['an iron pickaxe', () => n(/^(iron|diamond|netherite)_pickaxe$/) >= 1], ['a shield', () => n(/^shield$/) + (nameOf(K()?.inv.offhand?.[0]) === 'shield' ? 1 : 0) >= 1],
+  ['food 32', () => n(/^(cooked_\w+|bread|baked_potato|golden_carrot)$/) >= 32], ['eyes of ender 12', () => n(/^ender_eye$/) >= 12]];
+const kitMissing = () => KIT.filter(([, f]) => !f()).map(([k]) => k);
+B.road_kit = () => stepRun('road_kit', async () => { const m = kitMissing(); return m.length ? `still missing: ${m.join(', ')}` : true; });
 B.road_debug = async (a) => { debug = a[0] !== 'off'; log(`road_debug ${debug ? 'on' : 'off'}`); };
 B.road_status = async () => log(`road_status: ${JSON.stringify(st)} · armour ${armourText()} · level ${level()}`);
 

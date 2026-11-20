@@ -728,7 +728,9 @@ function goalVerbs(K, H) {
   const clearTo = (e, tx, ty, tz) => clear3(e[0], e[1], e[2], tx, ty, tz);
   function clear3(ex, ey, ez, tx, ty, tz) {   // nothing solid between an eye at ex ey ez and the block
     const dx = tx + 0.5 - ex, dy = ty + 0.5 - ey, dz = tz + 0.5 - ez, steps = Math.ceil(hyp(dx, dy, dz) * 4);
-    for (let i = 1; i < steps; i++) { const px = Math.floor(ex + (dx * i) / steps), py = Math.floor(ey + (dy * i) / steps), pz = Math.floor(ez + (dz * i) / steps); if (px === tx && py === ty && pz === tz) return true; if (fAt(px, py, pz) & F_SOLID) return false; }
+    // (a torch is no block to walk into, but the crosshair rests on it: 11/20 a table to be set down three times behind the miner's own
+    //  torch, 'not under the crosshair - on torch', and the new pickaxe never made)
+    for (let i = 1; i < steps; i++) { const px = Math.floor(ex + (dx * i) / steps), py = Math.floor(ey + (dy * i) / steps), pz = Math.floor(ez + (dz * i) / steps); if (px === tx && py === ty && pz === tz) return true; if (fAt(px, py, pz) & F_SOLID) return false; if (/torch|lantern|_button$|lever$/.test(bname(px, py, pz))) return false; }
     return true;
   }
   // (standing dry: in water breaking and placing are five times slower and the player drifts)
@@ -1115,6 +1117,8 @@ function goalVerbs(K, H) {
               await travel((q, r, t) => hyp(q - tx, t - tz) <= 3, (q, r, t) => hyp(q - tx, t - tz), { radius: 64, legs: 6 });
               top = feet(); K.memo.set('goal:stairTop', top);
             } else if (tries) {   // at the depth and nothing along the tunnel: dig over to somewhere else at this depth, then again
+              // (a pickaxe first: 11/20 the iron one broke at y -58 and the walk over dug deepslate by hand, 15 s a block, for half an hour)
+              if (!bestTool({ kind: 'pickaxe', tier: 1 }) && !(await newPickaxe())) break;
               const [x0, y0, z0] = feet(), a = Math.random() * Math.PI * 2, tx = Math.round(x0 + Math.cos(a) * 20), tz = Math.round(z0 + Math.sin(a) * 20);
               log(`nothing here: moving over to ${tx} ${tz}`);
               await travel((q, r, t) => hyp(q - tx, t - tz) <= 3, (q, r, t) => hyp(q - tx, t - tz) + Math.abs(r - y0), { dig: true, radius: 40, legs: 4, nodes: 20000 });
@@ -2114,6 +2118,40 @@ function goalVerbs(K, H) {
   // ---------------- the nether: a fortress and its blazes (rebuilt from training/RTA_NOTES.md m3199-m3363) ----------------
   // a fortress: its nether bricks among the blocks the server has sent (a whole view distance); none: on in straight legs of 48, the
   // same way while it keeps going, dug and pillared as the path finder needs, until some are
+  // the Nether's safe way across: a tunnel two high at the height it is at, turned toward x z at every step (no edge to be knocked off -
+  // 11/20 in the lab a walk of nether_seek fell 22 blocks off a basalt ledge fighting a magma cube; no ghast in sight; the way back is the
+  // same tunnel). Not dug into lava or water (or beside it), a gap under the next cell bridged with a block first.
+  async function tunnelTo(tx, tz, maxLen = 300, tol = 4) {
+    let stuck = 0, dist = 0;
+    for (let k = 0; dist < maxLen && k < maxLen * 3 && stuck < 12 && !late() && !K.dead(); k++) {
+      const [x, y, z] = feet();
+      if (hyp(tx - x, tz - z) <= tol) return true;
+      if (!bestTool({ kind: 'pickaxe', tier: 1 }) && !(await newPickaxe())) { log('tunnel: no pickaxe'); return false; }
+      const ways = DIRS4.map(([dx, dz]) => ({ dx, dz, d: hyp(tx - (x + dx), tz - (z + dz)) })).sort((a, b) => a.d - b.d);
+      let moved = false;
+      for (const w of ways.slice(0, 3)) {
+        const nx = x + w.dx, nz = z + w.dz, cells = [[nx, y + 1, nz], [nx, y, nz]];
+        if (!cellsSafe(cells)) continue;   // (no breachRisk here: in the Nether there is always a monster beyond some open air - the tunnel never went on)
+        if (!(fAt(nx, y - 1, nz) & F_SOLID)) { if (fAt(nx, y - 1, nz) & (F_LAVA | F_WATER)) continue; await fillCell([nx, y - 1, nz]); if (!(fAt(nx, y - 1, nz) & F_SOLID)) continue; }
+        let ok = true;
+        for (const [a, b, c] of cells) if (solid(B(a, b, c)) && !(await breakAt(a, b, c))) { ok = false; break; }
+        if (ok && (await walkInto(nx, y, nz))) { moved = true; break; }
+      }
+      if (moved) { dist++; stuck = 0; trailAdd(feet()); } else {
+        stuck++;
+        if (stuck % 4 === 1) log(`tunnel toward ${Math.round(tx)} ${Math.round(tz)}: no way on from ${feet().join(' ')} (${ways.slice(0, 3).map((w) => { const c = [[x + w.dx, y + 1, z + w.dz], [x + w.dx, y, z + w.dz]]; return `${w.dx},${w.dz}: ${!cellsSafe(c) ? 'lava/water' : sh(bname(x + w.dx, y, z + w.dz)) + '/' + sh(bname(x + w.dx, y - 1, z + w.dz))}`; }).join(' · ')})`);
+        // (a real wait: without one a tunnel with no way on ran its loop in microtasks, nether_seek called it again at once, and the
+        //  process sat at 100% for minutes with no tick, no packet read, no log - 11/20 in the lab)
+        await K.ticks(4);
+        // the way shut at this height (lava, its walls): a level up (dug over the head, a block under the feet), later a level down
+        if (stuck === 4 && !(fAt(x, y + 2, z) & (F_LAVA | F_WATER | F_UNBREAK)) && cellsSafe([[x, y + 2, z]])) { if (await breakAt(x, y + 2, z)) await pillarUp(); }
+        if (stuck === 8 && (fAt(x, y - 1, z) & F_SOLID) && !(fAt(x, y - 1, z) & F_UNBREAK) && (fAt(x, y - 2, z) & F_SOLID) && cellsSafe([[x, y - 1, z]])) { await breakAt(x, y - 1, z); await K.ticks(8); }
+      }
+      await reflexes();
+      if (k % 30 === 29) log(`tunnel toward ${Math.round(tx)} ${Math.round(tz)}: ${dist} blocks, at ${feet().join(' ')}`);
+    }
+    return hyp(tx - feet()[0], tz - feet()[2]) <= tol;
+  }
   async function netherSeek(maxSec = 600) {
     const t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
     let dir = Math.random() * Math.PI * 2;
@@ -2123,13 +2161,14 @@ function goalVerbs(K, H) {
       if (bricks.length) {
         const b = bricks[0], bx = b.x ?? b[0], by = b.y ?? b[1], bz = b.z ?? b[2];
         if (dbg) log(`nether: a fortress's bricks at ${bx} ${by} ${bz} (${hyp(bx - f.x, bz - f.z).toFixed(0)} off) after ${((Number(K.tick()) - t0) / 20).toFixed(0)} s`);
+        if (hyp(bx - f.x, bz - f.z) > 16) await tunnelTo(bx, bz, 400, 12);   // (across by a tunnel; the last of it by the path finder, up or down to them)
         const ok = await travel((x, y, z) => hyp(x - bx, y - by, z - bz) <= 4, (x, y, z) => hyp(x - bx, y - by, z - bz), { radius: 180, dig: true, pillar: true, legs: 30 });
         if (ok) return { x: bx, y: by, z: bz };
         dir += 1.2; continue;
       }
       const tx = f.x + Math.cos(dir) * 48, tz = f.z + Math.sin(dir) * 48;
       if (dbg) log(`nether: no fortress in sight at ${f.x.toFixed(0)} ${f.y.toFixed(0)} ${f.z.toFixed(0)}: a leg toward ${tx.toFixed(0)} ${tz.toFixed(0)}`);
-      await travel((x, y, z) => hyp(x - tx, z - tz) <= 4, (x, y, z) => hyp(x - tx, z - tz), { radius: 96, dig: true, pillar: true, legs: 8 });
+      await tunnelTo(tx, tz, 64, 4);
       const g = K.feet(); if (hyp(g.x - f.x, g.z - f.z) < 12) dir += 0.9;   // (blocked that way: turned)
     }
     return null;
@@ -3967,6 +4006,8 @@ function goalVerbs(K, H) {
   M.end_run = async (a) => K.say(`end_run: ${await endRun(Number(a[0]) || 900)}`);
   M.nether_seek = async (a) => { const r = await netherSeek(Number(a[0]) || 600); return K.say(`nether_seek: ${r ? `fortress at ${r.x} ${r.y} ${r.z}` : 'none found'}`); };
   M.blaze_rods = async (a) => K.say(`blaze_rods: ${(await blazeRods(Number(a[0]) || 6, Number(a[1]) || 400, Number(a[2]) || 0)) ? 'got them' : `only ${cnt('blaze_rod')}, level ${Math.floor(K.attrs()['player.level'] ?? 0)}`}`);   // blaze_rods [rods] [seconds] [level]: rods, and (the third) on until that XP level too
+  // tunnel_to x z [max] [tol]: the Nether's safe way across (tunnelTo)
+  M.tunnel_to = async (a) => K.say(`tunnel_to: ${(await tunnelTo(Number(a[0]), Number(a[1]), Number(a[2]) || 300, Number(a[3]) || 3)) ? 'there' : 'not there'} (${feet().join(' ')})`);
   // nether_in: into the Nether by a portal near (else one built here: 10 obsidian, flint and steel) - remote/road.cjs
   M.nether_in = async () => K.say(`nether_in: ${await RUN.portal({})}`);
   // portal_go [radius]: through the nearest nether portal this client knows (built here before, or the one it came by), either way
