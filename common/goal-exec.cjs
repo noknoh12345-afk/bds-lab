@@ -4149,7 +4149,7 @@ function goalVerbs(K, H) {
     if (!sp0) return K.say('spawner_xp: no spawner near');
     const sp = { x: sp0.x ?? sp0[0], y: sp0.y ?? sp0[1], z: sp0.z ?? sp0[2] };
     const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
-    let kills = 0, ateAt = -99, spawnerMiss = 0;
+    let kills = 0, ateAt = -99, spawnerMiss = 0; const skipFoe = new WeakMap();
     log(`spawner_xp: the spawner at ${sp.x} ${sp.y} ${sp.z}`);
     // the lava round it filled first (a stronghold's portal room: a pool under the portal, a strip in two corners - 11/20 the lab, of 26
     // silverfish 21 ended in the lava, no experience, and the bot ran into it from one: dead)
@@ -4165,10 +4165,13 @@ function goalVerbs(K, H) {
         const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 4 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: true, pillar: true, legs: 8, nodes: 30000 });
         if (!ok) { const g = K.feet(); spawnerMiss++; log(`spawner_xp: no way to the spawner at ${sp.x} ${sp.y} ${sp.z} from ${Math.floor(g.x)} ${Math.floor(g.y)} ${Math.floor(g.z)} (${spawnerMiss})`); if (spawnerMiss >= 4) break; await K.ticks(20); }
         continue; }
-      const e = K.all().filter((q) => HOSTILE.test(q.type) && !/enderman/.test(q.type) && !q.dead && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 10).sort((p1, p2) => hyp(p1.x - f.x, p1.z - f.z) - hyp(p2.x - f.x, p2.z - f.z))[0];
-      if (e) { try { await fightOne(e, 15); } catch { /* gone */ } if (e.dead || !K.all().includes(e)) kills++; continue; }
+      // (one it cannot get at - in the wall, under the floor - is let be after two tries: 'could not get near' at once, again and
+      //  again, spun the process at full speed for 12 minutes with no tick between)
+      const e = K.all().filter((q) => HOSTILE.test(q.type) && !/enderman/.test(q.type) && !q.dead && (skipFoe.get(q) ?? 0) < 2 && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 10).sort((p1, p2) => hyp(p1.x - f.x, p1.z - f.z) - hyp(p2.x - f.x, p2.z - f.z))[0];
+      if (e) { const k0 = kills, t1 = Number(K.tick()); try { await fightOne(e, 15); } catch { /* gone */ } if (e.dead || !K.all().includes(e)) kills++; else skipFoe.set(e, (skipFoe.get(e) ?? 0) + 1);
+        if (Number(K.tick()) - t1 < 5) await K.ticks(5);
+        if (kills !== k0 && kills % 10 === 0) log(`spawner_xp: ${kills} killed, level ${lv()}`); continue; }
       await K.ticks(10);
-      if (kills && kills % 20 === 0) log(`spawner_xp: ${kills} killed, level ${lv()}`);
     }
     return K.say(`spawner_xp: level ${lv()} of ${target} (${kills} killed in ${Math.round((Number(K.tick()) - t0) / 20)} s)`);
   };
