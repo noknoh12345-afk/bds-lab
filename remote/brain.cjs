@@ -666,7 +666,7 @@ const STEPS = [
   { name: 'golden apples: 16', cmds: ['get_golden_apple 16'], optional: true },
   { name: 'beds for the dragon (4-7 blown in the lab wins)', cmds: ['road_beds 12'], has: ['bed'] },
   { name: 'a bow and arrows (the crystals on the pillars, the cages, its last points: 105-158 used in the lab wins)', cmds: ['road_arrows 192'], has: ['arrow'] },
-  { name: 'eyes of ender (blaze rods from the Nether; pearls)', cmds: ['road_nether 7', 'get_ender_eye 12'], has: ['ender_eye'] },
+  { name: 'eyes of ender (blaze rods from the Nether; pearls)', cmds: ['road_nether 8', 'get_ender_eye 14'], has: ['ender_eye'] },   // (14: the throws to find it break some, and the frames want up to 12 - 11/20 the lab came with 10 for 11 empty frames)
   { name: 'out of the chest: everything for the way to the end', special: 'unstash', optional: true },
   { name: 'blocks for the End (pillars, a seal over a hole, stands for beds)', cmds: ['get_cobblestone 256'], has: ['cobblestone'] },
   { name: 'a carved pumpkin (the endermen in the End: looked at, they stay calm)', cmds: ['road_pumpkin'], has: ['carved_pumpkin'] },

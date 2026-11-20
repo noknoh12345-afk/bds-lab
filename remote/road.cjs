@@ -118,7 +118,10 @@ async function makeSite() {
   const cells = []; for (let ax = -2; ax <= 2; ax++) for (let az = -2; az <= 3; az++) for (const dy of [1, 0]) cells.push([X + ax, Y + dy, Z + az]);
   cells.sort((p, q) => Math.hypot(p[0] + 0.5 - f.x, p[1] - f.y - 1, p[2] + 0.5 - f.z) - Math.hypot(q[0] + 0.5 - f.x, q[1] - f.y - 1, q[2] + 0.5 - f.z));
   let dug = 0, laid = 0;
-  for (let pass = 0; pass < 2; pass++) for (const [x, y, z] of cells) { if (!AIRY.test(blk(x, y, z)) && !/water|lava|bedrock|end_portal/.test(blk(x, y, z))) { await act('dig', [x, y, z]); if (AIRY.test(blk(x, y, z))) dug++; } }
+  const fails = [];
+  for (let pass = 0; pass < 2; pass++) for (const [x, y, z] of cells) { const nm0 = blk(x, y, z); if (!AIRY.test(nm0) && !/water|lava|bedrock|end_portal/.test(nm0)) { const r = await act('dig', [x, y, z]); if (AIRY.test(blk(x, y, z))) dug++; else if (fails.length < 3) fails.push(`${nm0}@${x},${y},${z}: ${r.slice(0, 80)}`); } }
+  if (fails.length) log(`road: makeSite: not dug - ${fails.join(' | ')}`);
+  { const bad = []; for (let ax = -2; ax <= 2; ax++) for (let az = -2; az <= 3; az++) { const x = X + ax, z = Z + az; if (!AIRY.test(blk(x, Y, z)) || !AIRY.test(blk(x, Y + 1, z)) || !SOLID(blk(x, Y - 1, z))) bad.push(`${x},${z}:${blk(x, Y - 1, z)}/${blk(x, Y, z)}/${blk(x, Y + 1, z)}`); } if (bad.length) log(`road: makeSite: still not level - ${bad.slice(0, 6).join(' ')}`); }
   const floorItem = ['cobblestone', 'dirt', 'cobbled_deepslate', 'stone_bricks', 'andesite', 'diorite', 'granite'].find((it) => count(new RegExp(`^${it}$`)) > 0);
   for (let ax = -2; ax <= 2; ax++) for (let az = -2; az <= 3; az++) { const x = X + ax, z = Z + az; if (!SOLID(blk(x, Y - 1, z)) && floorItem && SOLID(blk(x, Y - 2, z))) { await act('place', [floorItem, x, Y - 1, z]); if (SOLID(blk(x, Y - 1, z))) laid++; } }
   log(`road: a place for the room dug out at ${X} ${Y} ${Z} (${dug} blocks dug, ${laid} floor laid)`);
