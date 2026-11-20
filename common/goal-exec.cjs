@@ -329,6 +329,10 @@ function goalVerbs(K, H) {
             }
             stopKeys();
           }
+          // (still under: the block over the head dug however long it takes - 11/20 three swims to 'open water' that never got there, and
+          //  it drowned under the river's bed; the toolless 19 s dig is better than the air running out)
+          { const [x2, y2, z2] = feet(); if (isWater(B(x2, y2 + 1, z2))) { let t2 = null; for (let k = 2; k <= 6; k++) { const b = B(x2, y2 + k, z2); if (!b) break; if (!isWater(b)) { t2 = solid(b) ? [x2, y2 + k, z2] : null; break; } }
+            if (t2 && hyp(t2[0] + 0.5 - eye().x, t2[1] + 0.5 - eye().y, t2[2] + 0.5 - eye().z) < 4.5) { log(`under water: digging up through ${sh(bname(...t2))} at last`); try { await toolFor(...t2); } catch {} K.controls.jump = true; await K.act('dig', [...t2.map(S), S(900)]); K.controls.jump = false; } } }
         }
       }
       K.controls.jump = true; await K.ticks(1);
