@@ -1652,8 +1652,11 @@ function goalVerbs(K, H) {
   const SOFT = /^minecraft:(dirt|grass_block|coarse_dirt|podzol|mycelium|sand|red_sand|gravel)$/;
   function groundAlong(ux, uz, max = 90) {
     const [x0, y0, z0] = feet(); let n = 0, y = y0;
-    for (let d = 4; d <= max; d += 3) {
+    // (every block of the first six, then every third: a way checked from 4 on stepped over the lava pool beside the feet - 11/20 the
+    //  lab, run from a silverfish in the stronghold's portal room straight into its lava)
+    for (let d = 1; d <= max; d += d < 6 ? 1 : 3) {
       const x = Math.floor(x0 + ux * d), z = Math.floor(z0 + uz * d); let f = -1;
+      if ([1, 0, -1, -2].some((dy) => fAt(x, y + dy, z) & (F_LAVA | F_DANGER))) break;
       for (let dy = 3; dy >= -4; dy--) if (standable(x, y + dy, z) && !(fAt(x, y + dy, z) & F_WATER)) { f = y + dy; break; }
       if (f < 0) break;
       n += SOFT.test(bname(x, f - 1, z)) ? 1.5 : 1; y = f;
@@ -4148,6 +4151,11 @@ function goalVerbs(K, H) {
     const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
     let kills = 0, ateAt = -99, spawnerMiss = 0;
     log(`spawner_xp: the spawner at ${sp.x} ${sp.y} ${sp.z}`);
+    // the lava round it filled first (a stronghold's portal room: a pool under the portal, a strip in two corners - 11/20 the lab, of 26
+    // silverfish 21 ended in the lava, no experience, and the bot ran into it from one: dead)
+    { let filled = 0; const lavaNear = () => K.findBlocks((b) => /lava/.test(b.name), { max: 40, radius: 9, from: sp }).filter((h) => blockItem());
+      for (let k = 0; k < 3; k++) { for (const h of lavaNear()) { if (K.dead()) break; if (await goToBlock(h.x, h.y, h.z, 4)) { if (await fillCell([h.x, h.y, h.z])) filled++; } } if (!lavaNear().length) break; }
+      if (filled) log(`spawner_xp: ${filled} lava blocks round it filled${lavaNear().length ? `, ${lavaNear().length} left` : ''}`); }
     while ((Number(K.tick()) - t0) / 20 < maxSec && lv() < target && !K.dead() && !late()) {
       const f = K.feet(), now = Number(K.tick()), at = K.attrs(), hp = at.health ?? 20;
       if ((hp < 12 || (at['player.hunger'] ?? 20) < 14) && now - ateAt > 60 && K.screen() === '') { const fd = FOOD.find(edible); if (fd) { ateAt = now; stopKeys(); await grab(fd, 'eat'); await K.act('use', ['36']); if (w) await grab(w, 'fight'); continue; } }
