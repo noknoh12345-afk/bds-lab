@@ -4135,6 +4135,8 @@ function goalVerbs(K, H) {
     const fr = await findStronghold(Number(a[0]) || 900);
     if (!fr) return K.say('stronghold_find: not found');
     K.memo.set('goal:frames', fr);
+    // (the portal room's lava filled before anything is fought there: a silverfish's knock sent the bot into a corner strip, 11/20)
+    if (hyp(K.feet().x - fr.x, K.feet().y - fr.y, K.feet().z - fr.z) < 10) await fillLavaNear(fr, 10, 'stronghold_find');
     await healUp();
     await travel((x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z) <= 4.5, (x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z), { radius: 200, dig: true, pillar: true, legs: 40 });
     const f = K.feet(), d = hyp(f.x - fr.x, f.y - fr.y, f.z - fr.z);
@@ -4142,6 +4144,17 @@ function goalVerbs(K, H) {
   };
   // mine_near <block> <n> [radius]: n of that block near here broken and picked up (a stronghold library's bookshelves: 3 books each).
   // Blocks in sight first; none in sight, the nearest known one (a library lies along the stronghold's corridors), dug to
+  async function fillLavaNear(sp, rad = 9, who = 'lava') {
+    { let filled = 0; const lavaNear = () => K.findBlocks((b) => /lava/.test(b.name), { max: 40, radius: rad, from: sp }).filter((h) => blockItem());
+      // (from a cell with no lava beside it, and what is at the bot fought first: a silverfish's knock sent it into the pool it was filling)
+      const lavaBy = (x, y, z) => [[1, 0], [-1, 0], [0, 1], [0, -1], [0, 0]].some(([a, c]) => [0, -1].some((dy) => fAt(x + a, y + dy, z + c) & F_LAVA));
+      for (let k = 0; k < 3; k++) { for (const h of lavaNear()) { if (K.dead()) break;
+        for (let t = 0; t < 4; t++) { const g = K.feet(), q = K.all().find((e) => HOSTILE.test(e.type) && !/enderman/.test(e.type) && !e.dead && hyp(e.x - g.x, e.y - g.y, e.z - g.z) < 4); if (!q) break; try { await fightOne(q, 10); } catch { /* */ } await K.ticks(2); }
+        const okAt = reachOk(h.x, h.y, h.z, 4.2), dry = (x, y, z) => okAt(x, y, z) && !lavaBy(x, y, z);
+        if (dry(...feet()) || (await travel(dry, (x, y, z) => Math.max(0, hyp(x - h.x, y - h.y, z - h.z) - 4), { radius: 24, legs: 3 }))) { if (await fillCell([h.x, h.y, h.z])) filled++; } }
+        if (!lavaNear().length) break; }
+      if (filled) log(`${who}: ${filled} lava blocks round it filled${lavaNear().length ? `, ${lavaNear().length} left` : ''}`); }
+  }
   // eaten up to health before the next part (11/20 the lab: at the stronghold's frames with 1 health after the walk, into the library,
   // dead to the first skeleton) - health comes back only with the food bar high
   async function healUp(to = 18) {
@@ -4181,15 +4194,7 @@ function goalVerbs(K, H) {
     log(`spawner_xp: the spawner at ${sp.x} ${sp.y} ${sp.z}`);
     // the lava round it filled first (a stronghold's portal room: a pool under the portal, a strip in two corners - 11/20 the lab, of 26
     // silverfish 21 ended in the lava, no experience, and the bot ran into it from one: dead)
-    { let filled = 0; const lavaNear = () => K.findBlocks((b) => /lava/.test(b.name), { max: 40, radius: 9, from: sp }).filter((h) => blockItem());
-      // (from a cell with no lava beside it, and what is at the bot fought first: a silverfish's knock sent it into the pool it was filling)
-      const lavaBy = (x, y, z) => [[1, 0], [-1, 0], [0, 1], [0, -1], [0, 0]].some(([a, c]) => [0, -1].some((dy) => fAt(x + a, y + dy, z + c) & F_LAVA));
-      for (let k = 0; k < 3; k++) { for (const h of lavaNear()) { if (K.dead()) break;
-        for (let t = 0; t < 4; t++) { const g = K.feet(), q = K.all().find((e) => HOSTILE.test(e.type) && !/enderman/.test(e.type) && !e.dead && hyp(e.x - g.x, e.y - g.y, e.z - g.z) < 4); if (!q) break; try { await fightOne(q, 10); } catch { /* */ } await K.ticks(2); }
-        const okAt = reachOk(h.x, h.y, h.z, 4.2), dry = (x, y, z) => okAt(x, y, z) && !lavaBy(x, y, z);
-        if (dry(...feet()) || (await travel(dry, (x, y, z) => Math.max(0, hyp(x - h.x, y - h.y, z - h.z) - 4), { radius: 24, legs: 3 }))) { if (await fillCell([h.x, h.y, h.z])) filled++; } }
-        if (!lavaNear().length) break; }
-      if (filled) log(`spawner_xp: ${filled} lava blocks round it filled${lavaNear().length ? `, ${lavaNear().length} left` : ''}`); }
+    await fillLavaNear(sp, 9, 'spawner_xp');
     while ((Number(K.tick()) - t0) / 20 < maxSec && lv() < target && !K.dead() && !late()) {
       const f = K.feet(), now = Number(K.tick()), at = K.attrs(), hp = at.health ?? 20;
       if ((hp < 12 || (at['player.hunger'] ?? 20) < 14) && now - ateAt > 60 && K.screen() === '') { const fd = FOOD.find(edible); if (fd) { ateAt = now; stopKeys(); await grab(fd, 'eat'); await K.act('use', ['36']); if (w) await grab(w, 'fight'); continue; } }
