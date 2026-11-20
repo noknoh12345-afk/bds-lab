@@ -1306,6 +1306,7 @@ function goalVerbs(K, H) {
   // getting away from them (evade): the gap it made is the time to dig
   async function nightHide() {
     const a = K.attrs(), hp = a.health ?? 20;
+    if (K.memo.get('goal:nightGame') && hp >= 10) return;   // (a night hunt - endermen for their pearls - is not cut short by digging in while well)
     const shelterOk = gnow() - shelterFailed > 20000 || hp <= 8;   // (a failed try not again at once: the same ground, the same missing blocks)
     if (sheltering || underway || !shelterOk || late() || K.dead() || !(nightNow() || storm()) || !skyOver()) return;
     const fs = foesNear(24), mel = fs.filter((q) => MELEE_T.test(q.e.type)), shooters = fs.filter((q) => ARCHER_T.test(q.e.type) && q.d < 16);
@@ -4136,10 +4137,12 @@ function goalVerbs(K, H) {
   // their pearls, a carved pumpkin on the head so that looking at them does not set them on (the helmet off meanwhile, back on after)
   M.pearl_hunt = async (a) => {
     const want = Number(a[0]) || 12, maxSec = Number(a[1]) || 1800, t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
-    if (dimName() !== 'nether') return K.say('pearl_hunt: not in the Nether');
+    if (dimName() !== 'nether' && dimName() !== 'overworld') return K.say('pearl_hunt: not in the Nether or the overworld');
+    const over = dimName() === 'overworld';   // (the overworld: its endermen at night, wherever it stands - no forest to find)
     const have = () => cnt('ender_pearl') + cnt('ender_eye');
     let dir = Math.random() * Math.PI * 2, forest = null;
     const WARPED = /^minecraft:(warped_nylium|warped_stem|warped_wart_block)$/;
+    if (over) forest = { ...K.feet() };
     while (!forest && (Number(K.tick()) - t0) / 20 < maxSec * 0.6 && !K.dead()) {
       // (a part of it away from any fortress: 11/20 its edge by the fortress was full of blazes, dead twice)
       const SP = (b) => b.name === 'minecraft:mob_spawner';   // (a blaze spawner is the danger, not the bricks: 'no fortress within 40' found no forest at all and the search died)
@@ -4151,7 +4154,8 @@ function goalVerbs(K, H) {
       const g = K.feet(); dir += hyp(g.x - f.x, g.z - f.z) < 12 ? 0.9 : Math.PI / 2;
     }
     if (!forest) return K.say(`pearl_hunt: no warped forest found (pearls ${have()} of ${want})`);
-    if (hyp(K.feet().x - forest.x, K.feet().z - forest.z) > 16) await tunnelAround(forest.x, forest.z, 400, 10);
+    if (!over && hyp(K.feet().x - forest.x, K.feet().z - forest.z) > 16) await tunnelAround(forest.x, forest.z, 400, 10);
+    if (over) K.memo.set('goal:nightGame', true);
     // the pumpkin on: the helmet off into the bag first
     let swapped = false;
     if (cnt('carved_pumpkin') > 0) { try { if ((K.inv.armor?.[0])?.network_id) await K.act('move', ['head', String(K.inv.slots.findIndex((it, i) => i < 36 && !it?.network_id))]); const pi = K.inv.slots.findIndex((it) => it?.network_id && sh(nm(it)) === 'carved_pumpkin'); if (pi >= 0) { await K.act('move', [String(pi), 'head']); swapped = true; } } catch (e) { log(`pearl_hunt: the pumpkin did not go on: ${e.message}`); } }
@@ -4165,8 +4169,9 @@ function goalVerbs(K, H) {
         { const bz = K.all().find((q) => /blaze$|ghast$|wither_skeleton$/.test(q.type) && !q.dead && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 18);
           if (bz) { const d = hyp(f.x - bz.x, f.z - bz.z) || 1; log(`pearl_hunt: a ${sh(bz.type)} ${Math.round(d)} off - away from it`); await tunnelTo(f.x + ((f.x - bz.x) / d) * 30, f.z + ((f.z - bz.z) / d) * 30, 60, 4); continue; } }
         const e = K.all().filter((q) => /enderman$/.test(q.type) && !q.dead && Math.abs(q.y - f.y) < 8).sort((p1, p2) => hyp(p1.x - f.x, p1.z - f.z) - hyp(p2.x - f.x, p2.z - f.z))[0];
-        if (!e) { // round the forest: to another part of it
-          const ws = K.findBlocks((b) => b.name === 'minecraft:warped_nylium', { max: 30, radius: 48, from: f }); const pick = ws[Math.floor(Math.random() * ws.length)];
+        if (over && !nightNow()) { await K.ticks(100); if (!nightNow()) { log('pearl_hunt: day - the endermen are gone; again at night'); break; } }
+        if (!e) { // round the forest: to another part of it (the overworld: a walk to somewhere else within 48)
+          const ws = over ? [{ x: Math.round(f.x + (Math.random() - 0.5) * 80), y: Math.round(f.y), z: Math.round(f.z + (Math.random() - 0.5) * 80) }] : K.findBlocks((b) => b.name === 'minecraft:warped_nylium', { max: 30, radius: 48, from: f }); const pick = ws[Math.floor(Math.random() * ws.length)];
           if (pick) await travel((x, y, z) => hyp(x - pick.x, z - pick.z) <= 3, (x, y, z) => hyp(x - pick.x, y - pick.y - 1, z - pick.z), { radius: 64, dig: true, legs: 3 }); else await K.ticks(40);
           continue; }
         if (hyp(e.x - f.x, e.z - f.z) > 3) { await goToEntity(e, 2.6); continue; }
@@ -4174,6 +4179,7 @@ function goalVerbs(K, H) {
         if (!K.all().includes(e) || e.dead) { kills++; await K.ticks(10); await collect({ x: e.x, y: e.y, z: e.z }, 5, /ender_pearl/); if (kills % 3 === 0) log(`pearl_hunt: ${kills} endermen, pearls ${have()}`); }
       }
     } finally {
+      K.memo.set('goal:nightGame', false);
       if (swapped) { try { const fr = K.inv.slots.findIndex((it, i) => i < 36 && !it?.network_id); if (fr >= 0) await K.act('move', ['head', String(fr)]); const hi = K.inv.slots.findIndex((it) => it?.network_id && /_helmet$/.test(sh(nm(it)))); if (hi >= 0) await K.act('move', [String(hi), 'head']); } catch { /* */ } }
     }
     return K.say(`pearl_hunt: pearls ${have()} of ${want} (${kills} endermen in ${Math.round((Number(K.tick()) - t0) / 20)} s)`);

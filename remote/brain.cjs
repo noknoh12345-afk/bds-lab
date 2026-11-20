@@ -628,7 +628,7 @@ async function engage(b, maxMs = 12000) {
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || me.interrupt || b.state().dead) return;
   if (!/^auto: (get|kill|mine)_/.test(String(me.busy ?? ''))) return;
-  const pearlHunt = /ender_(eye|pearl)|enderman/.test(String(me.busy ?? '')) && me.armored && me.armed && (me.hp ?? 20) >= 14;   // (endermen are out at night: the hunt goes on)
+  const pearlHunt = /ender_(eye|pearl)|enderman|pearl_hunt/.test(String(me.busy ?? '')) && me.armored && me.armed && (me.hp ?? 20) >= 14;   // (endermen are out at night: the hunt goes on)
   if (me.dim === 'overworld' && nightNow(b) && (!me.armored || (me.nightIn && !pearlHunt)) && !guardReason(b) && openSky(b, b.state().pos)) { me.interrupt = 'night';   // (underground the night does not matter: it mines on)
     log('auto: night falls mid-task: stopping to dig in', { dc: true }); b.cancel?.(); return; }
   // (not down in the stronghold: there the verb fights for itself in the corridors - 11/20 this cut the library short with five about,
@@ -769,7 +769,7 @@ async function safeStart(cmd = '') {
   const deepWork = /^(get_(diamond|lapis_lazuli|redstone|raw_iron|iron_ingot|raw_gold|gold_ingot|coal|emerald)|ore_mine|road_mine|spawner_xp|mine_near|walk_to)\b/.test(cmd);
   if (!openSky(b, b.state().pos) && !nightNow(b) && !deepWork) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
   me.armored = /_chestplate\*/.test(lastInv || (await invList(b))) || wornChest();
-  if (nightNow(b) && (!me.armored || me.nightIn)) { log(me.nightIn ? 'auto: night: dug in until morning (the road shelters every night until Protection IV)' : 'auto: night and no armour: dug in until morning', { dc: true }); await sitOutNight(b); }
+  if (nightNow(b) && (!me.armored || me.nightIn) && !(/^pearl_hunt\b/.test(cmd) && me.armored && me.armed)) { log(me.nightIn ? 'auto: night: dug in until morning (the road shelters every night until Protection IV)' : 'auto: night and no armour: dug in until morning', { dc: true }); await sitOutNight(b); }
 }
 async function goFar() {
   await reviewWait();
