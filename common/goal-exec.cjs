@@ -777,7 +777,7 @@ function goalVerbs(K, H) {
       if (found()) return true;
       // (the dark on new ground without a real sword: the morning waited for first, dug in - out looking for sheep at night with a
       // wooden one, two spiders, dead, and the shears with it)
-      if (nightNow() && process.env.LAB_WORLD === 'normal' && !goodSword() && !sheltering) { log(`night: looking for ${nice(what)} in the morning`); await shelter(); if (K.dead() || late()) break; }
+      if (nightNow() && process.env.LAB_WORLD === 'normal' && (!goodSword() || K.memo.get('goal:nightIn')) && !sheltering) { log(`night: looking for ${nice(what)} in the morning`); await shelter(); if (K.dead() || late()) break; }
       const k = spiral.k++, side = step * (1 + Math.floor(k / 2));
       // the corner this leg ends at, counted from the spiral's centre
       let cx = spiral.at[0], cz = spiral.at[1];
@@ -2294,7 +2294,7 @@ function goalVerbs(K, H) {
     return cnt('blaze_rod') >= want && levelOk();
   }
   async function blazeRods(want = 6, maxSec = 400, level = 0) {
-    blazeLevel = level;
+    blazeLevel = level; blazeRods.tunnelled = false; blazeRods.toSpAt = -999;
     const t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
     const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
     if (offName() !== 'shield' && cnt('shield') > 0) { try { await duelOffhand(); } catch {} }
@@ -2317,13 +2317,22 @@ function goalVerbs(K, H) {
       { const o2 = K.all().find((q) => q.type !== 'minecraft:blaze' && (HOSTILE.test(q.type) || /hoglin|piglin_brute/.test(q.type)) && !q.dead && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 4);
         if (o2) { if (dbg) log(`blaze: a ${sh(o2.type)} at me - fought`); stopKeys(); K.controls.sneak = false; try { await fightOne(o2, 20); } catch {} if (w) { try { await grab(w, 'fight'); } catch {} } continue; } }
       if (sp && hyp(sp.x + 0.5 - f.x, sp.z + 0.5 - f.z) <= 8 && Math.abs(sp.y - f.y) <= 3 && !process.env.LAB_NO_BUNKER) { stopKeys(); await blazeBunker(sp, want, maxSec - (now - t0) / 20); break; }
+      // (beside the spawner at its own height for the bunker, whatever blazes hang about: 11/20 a blaze high overhead was waited for under
+      //  the shield for ten minutes, four blocks above the spawner's level, and the bunker never went up)
+      if (sp && (hyp(sp.x + 0.5 - f.x, sp.z + 0.5 - f.z) > 8 || Math.abs(sp.y - f.y) > 3) && !K.all().some((q) => q.type === 'minecraft:blaze' && !q.dead && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 4) && now - (blazeRods.toSpAt ?? -999) > 100) {
+        blazeRods.toSpAt = now; stopKeys(); if (dbg) log(`blaze: to the spawner's height (${f.y.toFixed(0)} vs ${sp.y})`);
+        await travel((x, y, z) => hyp(x - sp.x, z - sp.z) <= 6 && Math.abs(y - sp.y) <= 2, (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: true, legs: 2 }); continue;
+      }
       const bl = K.all().filter((q) => q.type === 'minecraft:blaze' && !q.dead && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 24).sort((p1, p2) => hyp(p1.x - f.x, p1.y - f.y, p1.z - f.z) - hyp(p2.x - f.x, p2.y - f.y, p2.z - f.z));
       const e = bl[0];
       if (!e || hyp(e.x - f.x, e.z - f.z) > 16) {
         if (hp < 16 && now - ateAt > 45 && FOOD.some((x) => cnt(x) > 0)) { ateAt = now; stopKeys(); try { await grab(FOOD.find((x) => cnt(x) > 0), 'eat'); await K.act('use', ['36']); } catch {} if (w) { try { await grab(w, 'fight'); } catch {} } continue; }
         if (now - quietT > 60) { quietT = now; try { await collect(f, 12, /blaze_rod/); } catch {} }
       } else quietT = now;
-      if (!e) { if (sp && hyp(sp.x + 0.5 - f.x, sp.z + 0.5 - f.z) > 6) { stopKeys(); await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 5, (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: true, legs: 1 }); await K.ticks(2); } else { K.controls.sneak = offName() === 'shield'; await K.ticks(5); } continue; }
+      // (to the spawner through the rock and the fortress's walls where it can: walked to in the open among the blazes and a wither
+      //  skeleton, 11/20 it died before the bunker went up)
+      if (sp && hyp(sp.x + 0.5 - f.x, sp.z + 0.5 - f.z) > 10 && !blazeRods.tunnelled) { blazeRods.tunnelled = true; stopKeys(); await tunnelTo(sp.x, sp.z, 160, 6); continue; }
+      if (!e) { if (sp && (hyp(sp.x + 0.5 - f.x, sp.z + 0.5 - f.z) > 6 || Math.abs(sp.y - f.y) > 3)) { stopKeys(); await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 5, (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: true, legs: 1 }); await K.ticks(2); } else { K.controls.sneak = offName() === 'shield'; await K.ticks(5); } continue; }
       track(e, now);
       K.lookAt(e.x, e.y + 0.9, e.z);
       const reach = K.reach?.('entity') ?? 3, g = boxGap(e, e.x, e.z, f.x, f.y, f.z);
@@ -3710,7 +3719,7 @@ function goalVerbs(K, H) {
       // and on with it like a runner (the wait was 8-12 minutes of the race, for one log)
       if (nightNow() && inMine() && surfaceStep(st)) {
         const hp = K.attrs().health ?? 20, food = K.attrs()['player.hunger'] ?? 20;
-        if (!armed() || hp < 14 || food < 7 || (!goodSword() && hp < 18)) { log(`night: waiting down here for the morning (next: ${G.describe(st)})`); await shelter(); }
+        if (!armed() || hp < 14 || food < 7 || (!goodSword() && hp < 18) || K.memo.get('goal:nightIn')) { log(`night: waiting down here for the morning (next: ${G.describe(st)})`); await shelter(); }
         else log(`night, but armed and well: up for it (next: ${G.describe(st)})`);
       }
       // (animals, trees: not looked for down in the mine - nor from a pit or a cave under a hill, with rock over the head: the path

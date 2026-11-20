@@ -514,8 +514,11 @@ async function tidy() {
     if (free() >= 6) break;
   }
 }
+// every night dug in until Protection IV is on (11/20 in the lab, in plain iron: a witch, then zombies and a skeleton in a cave, both
+// probes dead at night); ROAD_NIGHT=fight leaves it to the old rule (armed and well: on in the dark)
+const nightPolicy = () => { const on = process.env.ROAD_NIGHT !== 'fight' && !(K() && allProt4()); me.nightIn = on; K()?.memo?.set('goal:nightIn', on); };
 if (me.roadTidy) clearInterval(me.roadTidy);
-me.roadTidy = setInterval(() => { if (!tidy.busy) { tidy.busy = true; tidy().catch(() => {}).finally(() => { tidy.busy = false; }); } }, 15000);
+me.roadTidy = setInterval(() => { try { nightPolicy(); } catch { /* */ } if (!tidy.busy) { tidy.busy = true; tidy().catch(() => {}).finally(() => { tidy.busy = false; }); } }, 15000);
 B.road_debug = async (a) => { debug = a[0] !== 'off'; log(`road_debug ${debug ? 'on' : 'off'}`); };
 B.road_status = async () => log(`road_status: ${JSON.stringify(st)} · armour ${armourText()} · level ${level()}`);
 

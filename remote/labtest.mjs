@@ -199,6 +199,12 @@ const S = {
   async road_auto() {
     return road({ ms: 8 * 3600000, check: (c) => c.dim === 'the_end' && !kitMissing(c).length, why: (c) => ` · in ${c.dim}, kit missing: ${kitMissing(c).join(', ') || 'nothing'}` });
   },
+  // auto from the iron kit (the early steps behind it) until Protection IV is on all four: mine, obsidian, books, the room, the Nether
+  async road_from_iron() {
+    return road({ kit: [...IRON_KIT, 'wooden_sword', 'stone_pickaxe', 'stone_sword'], ms: 8 * 3600000, check: (c) => ARMOUR.every((p) => protOf(c, p) >= 4),
+      why: (c) => ` · Protection ${ARMOUR.map((p) => protOf(c, p)).join('/')}, level ${c.lv}, ${['diamond', 'lapis_lazuli', 'obsidian', 'bookshelf', 'enchanting_table', 'blaze_rod'].map((k) => `${k} ${c.m[k] ?? 0}`).join(', ')}`,
+      setup: async () => { if (process.env.ROAD_AT) await moveTo(process.env.ROAD_AT); } });
+  },
   // from nothing to iron: pickaxe, sword, shield, bucket and the four pieces of armour
   async road_iron() {
     const need = ['iron_pickaxe', 'iron_sword', 'shield', 'bucket', ...ARMOUR.map((p) => `iron_${p}`)];

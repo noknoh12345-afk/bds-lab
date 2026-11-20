@@ -588,7 +588,7 @@ async function engage(b, maxMs = 12000) {
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || me.interrupt || b.state().dead) return;
   if (!/^auto: (get|kill|mine)_/.test(String(me.busy ?? ''))) return;
-  if (me.dim === 'overworld' && nightNow(b) && !me.armored && !guardReason(b) && openSky(b, b.state().pos)) { me.interrupt = 'night';   // (underground the night does not matter: it mines on)
+  if (me.dim === 'overworld' && nightNow(b) && (!me.armored || me.nightIn) && !guardReason(b) && openSky(b, b.state().pos)) { me.interrupt = 'night';   // (underground the night does not matter: it mines on)
     log('auto: night falls mid-task: stopping to dig in', { dc: true }); b.cancel?.(); return; }
   const f = hostilesNear(b, 4).filter((x) => !/creeper/.test(x.e.type) || x.d < 3);
   if (f.length) { me.interrupt = 'fight'; b.cancel?.(); }
@@ -710,7 +710,7 @@ async function safeStart() {
   const lastInv = nightNow(b) ? await invList(b) : '';
   if (!openSky(b, b.state().pos) && !nightNow(b)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
   me.armored = /_chestplate\*/.test(lastInv || (await invList(b))) || wornChest();
-  if (nightNow(b) && !me.armored) { log('auto: night and no armour: dug in until morning', { dc: true }); await sitOutNight(b); }
+  if (nightNow(b) && (!me.armored || me.nightIn)) { log(me.nightIn ? 'auto: night: dug in until morning (the road shelters every night until Protection IV)' : 'auto: night and no armour: dug in until morning', { dc: true }); await sitOutNight(b); }
 }
 async function goFar() {
   await reviewWait();
