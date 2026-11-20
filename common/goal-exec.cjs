@@ -419,6 +419,9 @@ function goalVerbs(K, H) {
     // a race while "keeping away")
     if (creep.length && creep[0].d < 5.5) return w && hp >= 8 && creep.length === 1 ? { act: 'fight', e: creep[0].e } : run ? { act: 'evade', why: 'a creeper' } : w ? { act: 'fight', e: creep[0].e } : null;
     const melee = all.filter((q) => MELEE_T.test(q.e.type));
+    // (silverfish and endermites, one a blow and 1 health a bite: fought however many, armed and not badly hurt - in the stronghold
+    //  they came by the dozen and every crowd of them was run from into the rock, the bot buried under the spawner's floor)
+    { const small = melee.filter((q) => /silverfish|endermite/.test(q.e.type) && q.d < 5); if (small.length && small.length === melee.filter((q) => q.d < 6).length && w && hp >= 8) return { act: 'fight', e: small[0].e }; }
     const close = melee.filter((q) => q.d < 6 || (q.d - 1.5) / paceOf(q.e) < 0.6 + busy);   // (here before the next thing is done)
     if (close.length) {
       const fast = close.filter((q) => !outrun(q.e));
