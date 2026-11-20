@@ -110,9 +110,11 @@ const S = {
       if (process.env.LABTEST_NOCRYSTALS) { srv(`execute in the_end run kill @e[type=ender_crystal]`); await sleep(1000); srv(`execute in the_end run kill @e[type=ender_crystal]`); }   // (sitting and the blows on it, measured on their own)
       if (process.env.UNCAGE) { srv(...[[-32, 77, 25], [43, 86, 1], [13, 89, 40], [34, 92, -23], [-11, 95, 40], [-41, 98, 1], [-32, 101, -23], [-11, 104, -38]].map(([x, y, z]) => `execute in the_end run kill @e[type=ender_crystal,x=${x},y=${y},z=${z},r=3]`)); srv(`give ${NAME} cobblestone 64`); }   // (the open ones of seed 11 gone: the two caged left)
     }
-      send(process.env.DRAGON_CMD ?? 'dragon');
+      // (20 Nov 21:29: the count of the last death came in late, after a drop and a rejoin - the third try 'died' in its first second.
+      //  A death is one counted and logged after this try began)
+      const mk = logText().length; send(process.env.DRAGON_CMD ?? 'dragon');
       const d0 = status().deaths ?? 0;
-      m = await waitFor(() => /dragon: (killed|not killed)/.exec(since()) || /(done|failed) "fight_ender_dragon[^"]*"[^\n]*/.exec(since()) || ((status().deaths ?? 0) > d0 ? ['', 'died'] : null), Math.max(10000, Number(process.env.DRAGON_MS ?? 1500000) - (Date.now() - T0)));
+      m = await waitFor(() => /dragon: (killed|not killed)/.exec(since()) || /(done|failed) "fight_ender_dragon[^"]*"[^\n]*/.exec(since()) || ((status().deaths ?? 0) > d0 && /died \(/.test(logText().slice(mk)) ? ['', 'died'] : null), Math.max(10000, Number(process.env.DRAGON_MS ?? 1500000) - (Date.now() - T0)));
       if (m && m[1] === 'killed') { console.log(`killed on try ${k + 1} of ${tries}`); return true; }
       await sleep(5000);   // (the deaths count in status.json comes a moment after 'not killed': 10:06, the retry skipped)
       if (!(m && (m[1] === 'died' || m[1] === 'not killed') && ((status().deaths ?? 0) > d0 || /died \(/.test(since())))) break;
