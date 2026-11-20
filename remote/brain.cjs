@@ -284,6 +284,9 @@ async function walkTo(tx, tz, maxMs = 600000) {
   let last = b.state().pos, lastT = Date.now(), turn = 0, stuckFor = 0, builtTurns = 0, dropTurns = 0;
   // progress, not movement: going back and forth (up a slope and back down, round a pit's edge) moves but gets nowhere
   let bestLeft = Infinity, bestT = Date.now(), armTried = 0;
+  // out to the work area: no sword first on the way (it is the place with trees; at the lab's mesa spawn the tree search went round
+  // and round the spawn for ten minutes into the night: two deaths, never out)
+  if (Math.hypot(tx - WORK[0], tz - WORK[1]) < 48) armTried = Date.now() + 3600000;
   await b.act('sprint', ['on']).catch(() => {});
   try {
     while (!me.abort && !disposed && me.connected && Date.now() - t0 < maxMs && me.deaths === deaths0 && !me.reviewPending) {
