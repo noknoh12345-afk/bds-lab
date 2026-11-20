@@ -4108,7 +4108,56 @@ function goalVerbs(K, H) {
     stopKeys(); await K.ticks(40);
     return K.say(`portal_go: ${dimName() !== d0 ? `through, in the ${dimName()} at ${feet().join(' ')}` : `not through (at ${feet().join(' ')}, the portal at ${px} ${py} ${pz})`}`);
   };
-  M.stronghold = async (a) => { const fr = await findStronghold(Number(a[0]) || 900); if (!fr) return K.say('stronghold: not found'); return K.say(`stronghold: ${(await intoEndPortal(fr)) ? 'in the End' : 'not in'}`); };
+  // the stronghold found and walked to (its frames), not entered: the road takes its library's books and its silverfish spawner's
+  // experience there before the End (the frames kept in the memo for `stronghold` to go on from)
+  M.stronghold_find = async (a) => {
+    const fr = await findStronghold(Number(a[0]) || 900);
+    if (!fr) return K.say('stronghold_find: not found');
+    K.memo.set('goal:frames', fr);
+    await travel((x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z) <= 4.5, (x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z), { radius: 200, dig: true, pillar: true, legs: 40 });
+    const f = K.feet(), d = hyp(f.x - fr.x, f.y - fr.y, f.z - fr.z);
+    return K.say(`stronghold_find: ${d <= 6 ? 'at' : `${Math.round(d)} blocks from`} the frames ${fr.x} ${fr.y} ${fr.z}`);
+  };
+  // mine_near <block> <n> [radius]: n of that block near here broken and picked up (a stronghold library's bookshelves: 3 books each).
+  // Blocks in sight first; none in sight, the nearest known one (a library lies along the stronghold's corridors), dug to
+  M.mine_near = async (a) => {
+    const re = new RegExp(`^minecraft:(${a[0] ?? 'bookshelf'})$`), want = Number(a[1]) || 1, r = Number(a[2]) || 64;
+    let got = 0, fails = 0; const bad = new Set();
+    for (let k = 0; k < want * 3 + 6 && got < want && fails < 8 && !K.dead() && !late(); k++) {
+      await reflexes();
+      const ok = (h) => !bad.has(`${h.x},${h.y},${h.z}`);
+      let h = known(re, { max: 1, radius: r, ok })[0];
+      if (!h) { h = known(re, { max: 1, radius: r, fair: false, ok })[0]; if (h && k === 0) log(`mine_near: none in sight - to the nearest at ${h.x} ${h.y} ${h.z}`); }
+      if (!h) break;
+      const key = `${h.x},${h.y},${h.z}`;
+      if (!(await goToBlock(h.x, h.y, h.z))) { fails++; bad.add(key); continue; }
+      if (await breakAt(h.x, h.y, h.z)) { got++; await collect({ x: h.x + 0.5, y: h.y, z: h.z + 0.5 }, 4); } else { fails++; bad.add(key); }
+    }
+    return K.say(`mine_near: ${got} of ${want} ${a[0] ?? 'bookshelf'} broken${got < want ? ' - could not get more' : ''}`);
+  };
+  // spawner_xp <level> [sec]: beside a mob spawner near here (a stronghold's silverfish, a dungeon's zombies), what it sends is fought
+  // until the level is reached - silverfish 5 each, ~10 a minute: the experience for the four Protection IV enchantments
+  M.spawner_xp = async (a) => {
+    const target = Number(a[0]) || 30, maxSec = Number(a[1]) || 3600, t0 = Number(K.tick()), lv = () => K.attrs()['player.level'] ?? 0;
+    const sp0 = K.findBlocks((b) => /mob_spawner/.test(b.name), { max: 1, radius: 48, from: K.feet() })[0];
+    if (!sp0) return K.say('spawner_xp: no spawner near');
+    const sp = { x: sp0.x ?? sp0[0], y: sp0.y ?? sp0[1], z: sp0.z ?? sp0[2] };
+    const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
+    let kills = 0, ateAt = -99;
+    while ((Number(K.tick()) - t0) / 20 < maxSec && lv() < target && !K.dead() && !late()) {
+      const f = K.feet(), now = Number(K.tick()), at = K.attrs(), hp = at.health ?? 20;
+      if ((hp < 12 || (at['player.hunger'] ?? 20) < 14) && now - ateAt > 60 && K.screen() === '') { const fd = FOOD.find(edible); if (fd) { ateAt = now; stopKeys(); await grab(fd, 'eat'); await K.act('use', ['36']); if (w) await grab(w, 'fight'); continue; } }
+      if (hp < 7 && !FOOD.some((x) => cnt(x) > 0)) { log('spawner_xp: hurt and nothing to eat - stopping'); break; }
+      // (within 4 of the spawner, not on top of it: it spawns round the player inside 4 blocks of itself, and only with a player within 16)
+      if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 5) { await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 3.5 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 48, dig: true, legs: 3 }); continue; }
+      const e = K.all().filter((q) => HOSTILE.test(q.type) && !/enderman/.test(q.type) && !q.dead && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 10).sort((p1, p2) => hyp(p1.x - f.x, p1.z - f.z) - hyp(p2.x - f.x, p2.z - f.z))[0];
+      if (e) { try { await fightOne(e, 15); } catch { /* gone */ } if (e.dead || !K.all().includes(e)) kills++; continue; }
+      await K.ticks(10);
+      if (kills && kills % 20 === 0) log(`spawner_xp: ${kills} killed, level ${lv()}`);
+    }
+    return K.say(`spawner_xp: level ${lv()} of ${target} (${kills} killed in ${Math.round((Number(K.tick()) - t0) / 20)} s)`);
+  };
+  M.stronghold = async (a) => { const mf = K.memo.get('goal:frames'), ff = K.feet(); const fr = mf && hyp(mf.x - ff.x, mf.z - ff.z) < 300 ? mf : await findStronghold(Number(a[0]) || 900); if (!fr) return K.say('stronghold: not found'); return K.say(`stronghold: ${(await intoEndPortal(fr)) ? 'in the End' : 'not in'}`); };
   M.end_fight = async (a) => K.say(`end_fight: ${(await endFight(Number(a[0]) || 600)) ? 'the dragon is dead' : 'not dead'}`);
   M.duel_mob = async (a) => {   // duel_mob <type> [seconds]: a mob fought like a PvP duel (kept out of its reach, the blow on its tenth tick, crits, W-tap) - add-on PvP bots that are mobs (MPVPBOT's armies)
     // (bite: how far its blow reaches, centre to centre - an add-on's melee_attack reach_multiplier r on a 0.6-wide mob reaches

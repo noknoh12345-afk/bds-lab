@@ -622,7 +622,7 @@ timers.push(setInterval(() => {
 }, 400));
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || b.state().dead) return;
-  if (/^(auto: )?(get|kill|mine|fight|stronghold|blaze_rods|nether_seek|tunnel_to|portal_go|nether_in|end_fight|quartz_mine|ore_mine)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself: 11/20 this one's breaking away ran the bot out of the blaze bunker, among five blazes, to its death)
+  if (/^(auto: )?(get|kill|mine|fight|stronghold|spawner_xp|blaze_rods|nether_seek|tunnel_to|portal_go|nether_in|end_fight|quartz_mine|ore_mine)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself: 11/20 this one's breaking away ran the bot out of the blaze bunker, among five blazes, to its death)
   const f = hostilesNear(b, AD.engageR); if (!f.length) return;
   engage(b).catch(() => {});
 }, 500));
