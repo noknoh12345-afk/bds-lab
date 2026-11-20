@@ -236,7 +236,7 @@ async function enchantArmour({ peekOnly = false, maxRerolls = 60 } = {}) {
   if (!lack().length && !peekOnly) return true;
   // the pieces worn come off to go on the table (back on at the end)
   for (const [i, p] of PIECES.entries()) { const a = armour()[p]; if (a && a.at === WORN[i] && lvlOf(a.ench, 'protection') < 4) { const j = freeSlot(); if (j < 0) return 'no free slot to take the armour off into'; await act('move', [WORN[i], j]); } }
-  let rerolls = 0, done = 0, why = null;
+  let rerolls = 0, done = 0, why = null, rejects = 0;
   try {
     for (let round = 0; round < 200; round++) {
       const want = lack(); if (!want.length) break;
@@ -280,7 +280,10 @@ async function enchantArmour({ peekOnly = false, maxRerolls = 60 } = {}) {
       const o = await offersFor(ri);
       if (o?.length && o[0].cost > lv) { why = `level ${lv}: new offers cost level ${o[0].cost}`; break; }   // ('enchant rejected: status 39' at level 1 for an offer of level 5) if (!o?.length) { why = `no offers for the ${nameOf(K().inv.ui?.[14]) || 'cheap item'} (the table: ${shelvesAt(T)} shelves, lapis ${K().inv.ui?.[15]?.count ?? 0})`; break; }
       const r = await act('enchant', [0]); rerolls++;
-      if (!/enchanted/.test(r)) { why = `the new offers were not bought: ${r.slice(0, 100)}`; break; }
+      // (a refusal once - 'status 50', 'inventory full' - is the client's view behind the server's: closed, synced, opened, and on;
+      //  twice in a row it stops)
+      if (!/enchanted/.test(r)) { if (rejects++ < 3) { log(`road: enchant: new offers refused (${r.slice(0, 80)}) - again after a sync`); await act('close'); await sleep(400); await K().sync(); await tidy(8); if (!(await openTable(T))) { why = 'the table did not open'; break; } continue; } why = `the new offers were not bought: ${r.slice(0, 100)}`; break; }
+      rejects = 0;
       await sleep(250); await backOut();
     }
   } finally {
