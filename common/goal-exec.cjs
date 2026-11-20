@@ -2413,10 +2413,10 @@ function goalVerbs(K, H) {
       findStronghold.seen = (k ? findStronghold.seen ?? [] : []).concat([{ x: f.x, z: f.z, a: r.ang }]).slice(-4);
       let est = null;
       { const sn = findStronghold.seen; for (let i = sn.length - 2; i >= 0 && !est; i--) { const p1 = sn[i], p2 = sn[sn.length - 1], d1 = [Math.cos(p1.a), Math.sin(p1.a)], d2 = [Math.cos(p2.a), Math.sin(p2.a)], den = d1[0] * d2[1] - d1[1] * d2[0];
-        if (Math.abs(den) > Math.sin(0.15) && hyp(p2.x - p1.x, p2.z - p1.z) > 40) { const t = ((p2.x - p1.x) * d2[1] - (p2.z - p1.z) * d2[0]) / den; if (t > 0) est = { x: p1.x + d1[0] * t, z: p1.z + d1[1] * t }; } } }
+        if (Math.abs(den) > Math.sin(0.05) && hyp(p2.x - p1.x, p2.z - p1.z) > 40) { const t = ((p2.x - p1.x) * d2[1] - (p2.z - p1.z) * d2[0]) / den; if (t > 0) est = { x: p1.x + d1[0] * t, z: p1.z + d1[1] * t }; } } }
       let step = r.sank ? 12 : 150;
       if (est && !r.sank) { const de = hyp(est.x - f.x, est.z - f.z); if (dbg || de > 200) log(`stronghold: two throws cross ${Math.round(de)} off, at about ${Math.round(est.x)} ${Math.round(est.z)}`); if (de > 220) step = Math.min(700, de - 120); }
-      else if (!r.sank && findStronghold.seen.length === 1) { step = 90; r.ang += 0.6; }   // (the second throw from off the line, so the two cross)
+      else if (!r.sank && findStronghold.seen.length === 1) { step = 260; r.ang += 1.2; }   // (the second throw from off the line, so the two cross)
       const tx = f.x + Math.cos(r.ang) * step, tz = f.z + Math.sin(r.ang) * step;
       if (r.sank) {   // under the spot it sank at: the frames within 48 below, found from the blocks sent - dug down toward them
         const fr2 = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 1, radius: 64, from: { x: r.at.x, y: f.y - 30, z: r.at.z } });
