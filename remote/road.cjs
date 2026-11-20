@@ -272,6 +272,8 @@ async function enchantArmour({ peekOnly = false, maxRerolls = 60 } = {}) {
       if (lv < 1) { why = `level ${lv}: not even a level for new offers`; break; }
       await backOut();
       await K().sync();
+      // (a slot free for what comes off the table: four new sets in, 'enchant rejected: inventory full')
+      if (slots().filter((it, i) => i < 36 && !it?.network_id).length < 2) { await act('close'); await sleep(300); await tidy(8); if (!(await openTable(T))) { why = 'the table did not open'; break; } }
       if (count(/^lapis_lazuli$/) + (K().inv.ui?.[15]?.count ?? 0) < 1) { why = 'no lapis lazuli left'; break; }
       await lapisOn();
       const ri = rerollSlot(); if (ri < 0) { why = 'nothing cheap left to enchant for new offers (wooden shovels)'; break; }
