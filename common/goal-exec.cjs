@@ -4145,13 +4145,17 @@ function goalVerbs(K, H) {
     if (!sp0) return K.say('spawner_xp: no spawner near');
     const sp = { x: sp0.x ?? sp0[0], y: sp0.y ?? sp0[1], z: sp0.z ?? sp0[2] };
     const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
-    let kills = 0, ateAt = -99;
+    let kills = 0, ateAt = -99, spawnerMiss = 0;
+    log(`spawner_xp: the spawner at ${sp.x} ${sp.y} ${sp.z}`);
     while ((Number(K.tick()) - t0) / 20 < maxSec && lv() < target && !K.dead() && !late()) {
       const f = K.feet(), now = Number(K.tick()), at = K.attrs(), hp = at.health ?? 20;
       if ((hp < 12 || (at['player.hunger'] ?? 20) < 14) && now - ateAt > 60 && K.screen() === '') { const fd = FOOD.find(edible); if (fd) { ateAt = now; stopKeys(); await grab(fd, 'eat'); await K.act('use', ['36']); if (w) await grab(w, 'fight'); continue; } }
       if (hp < 7 && !FOOD.some((x) => cnt(x) > 0)) { log('spawner_xp: hurt and nothing to eat - stopping'); break; }
       // (within 4 of the spawner, not on top of it: it spawns round the player inside 4 blocks of itself, and only with a player within 16)
-      if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 5) { await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 3.5 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 48, dig: true, legs: 3 }); continue; }
+      if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 5) {
+        const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 4 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 48, dig: true, pillar: true, legs: 4, nodes: 30000 });
+        if (!ok) { const g = K.feet(); spawnerMiss++; log(`spawner_xp: no way to the spawner at ${sp.x} ${sp.y} ${sp.z} from ${Math.floor(g.x)} ${Math.floor(g.y)} ${Math.floor(g.z)} (${spawnerMiss})`); if (spawnerMiss >= 4) break; await K.ticks(20); }
+        continue; }
       const e = K.all().filter((q) => HOSTILE.test(q.type) && !/enderman/.test(q.type) && !q.dead && hyp(q.x - f.x, q.y - f.y, q.z - f.z) < 10).sort((p1, p2) => hyp(p1.x - f.x, p1.z - f.z) - hyp(p2.x - f.x, p2.z - f.z))[0];
       if (e) { try { await fightOne(e, 15); } catch { /* gone */ } if (e.dead || !K.all().includes(e)) kills++; continue; }
       await K.ticks(10);
