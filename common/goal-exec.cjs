@@ -1426,6 +1426,11 @@ function goalVerbs(K, H) {
     // in the water: onto dry land first (11/20 the lab, a beach of drowned at night: a hole under water is no hole - 'rock here', then
     // 'not under the crosshair' digging the sand from afloat, a dozen tries in a row and a trident)
     if ((fAt(...feet()) & F_WATER) && dimName() === 'overworld' && !K.dead()) { log('in the water: out onto dry land before digging in'); await toLand(); }
+    // and not beside it: a hole dug by the water fills (11/20 the lab, a river bank: 'not placed (there: water)' three times, the hole
+    // a pool, a zombie in it) - over to ground with no water two blocks round, if there is some near
+    { const wetNear = (a, b, c) => { for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) for (let dy = -3; dy <= 1; dy++) if (fAt(a + dx, b + dy, c + dz) & F_WATER) return true; return false; };
+      if (!o.hold && dimName() === 'overworld' && !K.dead() && wetNear(...feet())) { log('water beside me: over to dry ground before digging in');
+        await travel((a, b, c) => standable(a, b, c) && !(fAt(a, b - 1, c) & F_WATER) && !wetNear(a, b, c), (a, b, c) => 1, { radius: 40, legs: 4, nodes: 20000 }); stopKeys(); } }
     const tS = gnow(), slow = () => gnow() - tS > 90000;   // (building it has a minute and a half: past that, not a shelter for this night)
     if (cnt('bed') > 0 && !o.hold && nightNow() && dimName() === 'overworld') {   /* (a bed blows up anywhere else: 12:47 in the lab, the End's shelter at its "night" killed the bot) */   // a bed carried: set it down and sleep the night away (a speedrunner's way; not with monsters right here)
       const b = spotBeside();
@@ -2411,7 +2416,7 @@ function goalVerbs(K, H) {
       if (fr.length) { if (dbg) log(`stronghold: its frames at ${fr[0].slice(0, 3).join(' ')}`); return { x: fr[0][0], y: fr[0][1], z: fr[0][2] }; }
       // the night on the way is sat out dug in (11/20 the lab: 2300 blocks walked in 23 minutes, at the stronghold's spot at dusk, then
       // five zombies and skeletons at once and an arrow - iron armour and a sword do not hold a night in the open)
-      if (nightNow() && dimName() === 'overworld' && skyOver() && !K.dead()) { log('stronghold: night - dug in until morning'); await shelter(false, { why: 'stronghold: night' }); if (nightNow()) await K.ticks(100); continue; }
+      if (nightNow() && dimName() === 'overworld' && (skyOver() || K.feet().y > 40) && !K.dead()) { log('stronghold: night - dug in until morning'); await shelter(false, { why: 'stronghold: night' }); if (nightNow()) await K.ticks(100); continue; }
       const r = await throwEye();
       if (!r) { if (dbg) log('stronghold: the eye went nowhere (broke?)'); continue; }
       const f = K.feet();
