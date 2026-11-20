@@ -150,7 +150,17 @@ async function buildRoom() {
   const [x, y, z] = C;
   log(`road: the enchanting room at ${x} ${y} ${z} (table), the way in from the south`);
   await standAt(x, z + 1);
-  if (!(await placeOn('enchanting_table', x, y, z))) return `the table did not go down at ${x} ${y} ${z}`;
+  if (!(await placeOn('enchanting_table', x, y, z))) {
+    // (it went down beside the spot - the click took the face of the block next to it: 11/20 'did not go down', and the table was gone
+    //  from the bag) - that one is the room's table if there is room round it, else picked up again
+    let near = null; for (let dx = -2; dx <= 2 && !near; dx++) for (let dz = -2; dz <= 2 && !near; dz++) for (let dy = -1; dy <= 1 && !near; dy++) if (blk(x + dx, y + dy, z + dz) === 'enchanting_table') near = [x + dx, y + dy, z + dz];
+    if (!near) return `the table did not go down at ${x} ${y} ${z}`;
+    log(`road: the table went down at ${near.join(' ')}, not ${x} ${y} ${z}: taken up again`);
+    await act('dig', near); await sleep(800); await act('collect', []).catch?.(() => {});
+    if (!count(/^enchanting_table$/)) return `the table went down at ${near.join(' ')} and did not come back`;
+    await standAt(x, z + 1);
+    if (!(await placeOn('enchanting_table', x, y, z))) return `the table did not go down at ${x} ${y} ${z} (twice)`;
+  }
   // the shelves side by side, each side from the cell inside it, its corners first (11/20: the south-east corner, clicked from the
   // south over the shelf just set beside it, was 'not under the crosshair' - behind it)
   let n = 0;
