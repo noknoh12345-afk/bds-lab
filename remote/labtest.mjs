@@ -219,8 +219,11 @@ const S = {
     const p = pos(), X = Math.round(p.x), Z = Math.round(p.z), Y = 200;
     srv(`fill ${X - 5} ${Y - 1} ${Z - 5} ${X + 5} ${Y - 1} ${Z + 6} stone`, `fill ${X - 5} ${Y} ${Z - 5} ${X + 5} ${Y + 3} ${Z + 6} air`, `tp ${NAME} ${X + 0.5} ${Y} ${Z + 4.5}`);
     await sleep(3000);
-    srv(...['enchanting_table', 'bookshelf 15', 'lapis_lazuli 64', 'book 64', ...ARMOUR.map((a) => `iron_${a}`)].map((i) => `give ${NAME} ${i}`), `xp 300L ${NAME}`);
+    srv(...['enchanting_table', 'bookshelf 15', 'lapis_lazuli 64', 'book 64', 'wooden_shovel 8', ...ARMOUR.map((a) => `iron_${a}`)].map((i) => `give ${NAME} ${i}`), `xp ${process.env.ROAD_LV ?? '300'}L ${NAME}`);
     await sleep(3000); mark = logText().length;
+    // ROAD_ENCH=<command>: that command instead of the statistics (road_enchant at ROAD_LV=5: new offers bought cheap until one shows
+    // Protection IV, then kept for level 30)
+    if (process.env.ROAD_ENCH) { send(process.env.ROAD_ENCH); const m2 = await waitLog(/(road_enchant|road_prot): (done|Protection IV on all four|could not finish[^\n]*)/, 1800000); console.log(since().split('\n').filter((l) => /enchant/.test(l)).slice(-12).join('\n')); return m2 && /done|on all four/.test(m2[2]) ? true : (m2 ? m2[0] : 'no answer').slice(0, 300); }
     send(`ench_stats ${process.env.ROAD_ROUNDS ?? 25}`);
     const m = await waitLog(/ench_stats(?: over|: (?!\d+ book))[^\n]*/, 1800000);
     console.log(since().split('\n').filter((l) => /road: (ench|enchant|the enchanting|bookshelf|enchanting_table)/.test(l)).slice(-60).join('\n'));
