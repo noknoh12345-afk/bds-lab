@@ -61,6 +61,12 @@ function naturalHere(bot, hits) {
     for (let dx = -8; dx <= 8; dx++) for (let dz = -8; dz <= 8; dz++) for (let dy = -8; dy <= 8; dy++) if (/^minecraft:(trial_spawner|vault|reinforced_deepslate|sculk_shrieker)$/.test(bot.world.block(h.x + dx, h.y + dy, h.z + dz)?.name ?? '')) return true;
     return false; }))) return 'trial chamber or ancient city';
   if (m.has('mob_spawner') && hits.every((h) => h.top < 50 && /^(chest|trapped_chest)$/.test(h.block))) return 'dungeon';
+  // (a shipwreck or buried treasure: chests (and a wreck's own timber) in the water or shut in the sand - 11/20 in the lab the guard
+  //  stopped the sheep for a bed at a river's chest at y 54, 'someone's build', and the bot went round it into the night)
+  { const nm = (x, y, z) => bot.world.block(x, y, z)?.name ?? '';
+    const wet = (h) => [[0, 1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]].some(([dx, dy, dz]) => /water|kelp|seagrass/.test(nm(h.x + dx, h.y + dy, h.z + dz)));
+    const buried = (h) => [[0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]].every(([dx, dy, dz]) => /:(sand|gravel|dirt|stone|sandstone|clay|grass_block|chest)$/.test(nm(h.x + dx, h.y + dy, h.z + dz)));
+    if (hits.length && hits.length <= 12 && hits.every((h) => h.top < 66 && ((/^(chest|trapped_chest|barrel)$/.test(h.block) && (wet(h) || buried(h))) || (/_(planks|log|fence|trapdoor|door|stairs|slab|wood)$/.test(h.block) && wet(h))))) return 'shipwreck or buried treasure'; }
   const folk = [...bot.entities.values()].filter((e) => /^minecraft:(villager_v2|iron_golem)$/.test(e.type) && Math.hypot(e.x - p.x, e.z - p.z) < 80).length;
   if (folk >= 2 && (m.has('grass_path') || m.has('bell')) && Math.hypot(p.x, p.z) > 200) return 'village';
   return null;
@@ -176,6 +182,9 @@ async function fetchThenReview(dp, rv) {
     me.fetchLog = (me.fetchLog ?? []).filter((f) => Date.now() - f.t < 1200000);
     if (me.fetchLog.filter((f) => !f.ok && Math.hypot(f.x - dp.x, f.z - dp.z) < 32).length >= 2)   // (trips that brought nothing back; one that did is no loop)
       { log('death: not going back - twice to that place already in the last 20 minutes'); return; }
+    // (a fall: the things lie at the foot of the drop, and the way back is the drop - 11/20 the lab's spawn ravine, three falls in a row
+    //  going back down for what the first fall left at y 33)
+    if (/fell|fall/.test(rv.cause ?? '')) { log(`death: a fall - not going back down after my things (at y ${Math.round(dp.y)})`); return; }
     if (me.dim !== 'overworld' || far > 450) { log(`death: my things lie ${Math.round(far)} blocks off: too far to reach in time`); return; }
     // which is faster: the walk back, or making it all again? (seconds to make each again, from the plans' own times on this server:
     // a stone tool 15-40 s, a wooden sword ~40 s, a bed ~3 min with the sheep, iron minutes of mining and smelting)
@@ -321,6 +330,10 @@ async function walkTo(tx, tz, maxMs = 600000) {
       if (me.armed && hostilesNear(b, AD.engageR).length) { await b.act('sprint', ['off']).catch(() => {}); await engage(b); last = b.state().pos; lastT = Date.now(); continue; }   // (unarmed: it keeps running on its way)
       await b.act('look', [String(yaw.toFixed(1)), '0']).catch(() => {});
       await b.act('sprint', ['on']).catch(() => {});
+      // in water: swim (space held) while the head or the feet are in it - walking only sinks to the bottom (11/20 the lab: drowned
+      // twice crossing the river on the way out to the work area, no monster about)
+      { const wet = (y) => /water|kelp|seagrass|bubble_column/.test(b.world.block(Math.floor(p.x), y, Math.floor(p.z))?.name ?? ''), sw = wet(Math.floor(p.y) + 1) || wet(Math.floor(p.y));
+        if (sw !== !!me.swimHeld) { me.swimHeld = sw; await b.act('jump', [sw ? 'on' : 'off']).catch(() => {}); } }
       await sleep(400);
       if (Date.now() - lastT > 3000) {
         const moved = Math.hypot(p.x - last.x, p.z - last.z), left = Math.hypot(dx, dz);
@@ -346,7 +359,7 @@ async function walkTo(tx, tz, maxMs = 600000) {
         if (stuckFor >= 7) { log('travel: the straight walk is stuck: over to the path search'); return false; }   // (travel's walk_xz found the way that the straight walk never did)
       }
     }
-  } finally { if (me.walking === ctx) me.walking = null; await b.act('sprint', ['off']).catch(() => {}); }
+  } finally { if (me.walking === ctx) me.walking = null; await b.act('sprint', ['off']).catch(() => {}); if (me.swimHeld) { me.swimHeld = false; await b.act('jump', ['off']).catch(() => {}); } }
   return false;
 }
 // a goto that takes too long (a path search over far too much, a step it keeps retrying) is called off after 30 s
