@@ -309,7 +309,12 @@ async function walkTo(tx, tz, maxMs = 600000) {
       if (AD.avoidWater && /water/.test(b.world.block(ax, Math.floor(p.y), az)?.name ?? '')) drop = 9;
       // (every way a drop or water - in a lake, on a peak: turning round and round without a pause froze the whole process; after a
       //  full turn it goes on anyway)
+      // (and a drop within a second's sprint that way: 1.6 ahead checked every 0.4 s at 5.6 blocks a second ran over the edge of the
+      //  lab's spawn ravine - two deaths in the first minute, three runs in a row)
+      if (drop < AD.drop && me.dim === 'overworld' && dropAhead(b, p, yaw)) drop = 9;
       if (drop >= AD.drop && dropTurns < 8) { dropTurns++; turn += turn >= 0 ? 45 : -45; if (Math.abs(turn) > 180) turn = -turn % 180; await sleep(30); continue; }
+      // (every way a drop: the path search finds the way down or round, not a run over the edge)
+      if (drop >= AD.drop) { log('travel: a drop every way: over to the path search'); return false; }
       dropTurns = 0;
       // the rule while walking too: someone's build within 5 blocks ahead is not walked into or along; steer off it
       // (already among builds, every way has one: then just get out, the shortest way, and steer again once clear)
