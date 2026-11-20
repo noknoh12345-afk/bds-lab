@@ -113,7 +113,8 @@ const S = {
       const d0 = status().deaths ?? 0;
       m = await waitFor(() => /dragon: (killed|not killed)/.exec(since()) || /(done|failed) "fight_ender_dragon[^"]*"[^\n]*/.exec(since()) || ((status().deaths ?? 0) > d0 ? ['', 'died'] : null), Math.max(10000, Number(process.env.DRAGON_MS ?? 1500000) - (Date.now() - T0)));
       if (m && m[1] === 'killed') { console.log(`killed on try ${k + 1} of ${tries}`); return true; }
-      if (!(m && (m[1] === 'died' || m[1] === 'not killed') && (status().deaths ?? 0) > d0)) break;
+      await sleep(5000);   // (the deaths count in status.json comes a moment after 'not killed': 10:06, the retry skipped)
+      if (!(m && (m[1] === 'died' || m[1] === 'not killed') && ((status().deaths ?? 0) > d0 || /died \(/.test(since())))) break;
     }
     return m && m[1] === 'killed' ? true : `${m ? m[1] : 'still going'} · ${since().split('\n').filter((l) => /dragon:/.test(l)).slice(-6).join(' | ')}`;
   },
