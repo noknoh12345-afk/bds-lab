@@ -4158,6 +4158,12 @@ function goalVerbs(K, H) {
     K.memo.set('goal:frames', fr);
     // (the portal room's lava filled before anything is fought there: a silverfish's knock sent the bot into a corner strip, 11/20)
     if (hyp(K.feet().x - fr.x, K.feet().y - fr.y, K.feet().z - fr.z) < 10) await fillLavaNear(fr, 10, 'stronghold_find');
+    // the pit inside the ring of frames filled level with the floor under them (the lava was in it): silverfish fell in there and
+    // could not be reached from outside the frames - the spawner's count was full of them and it sent no more (11/20, 9 minutes)
+    { const fs = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 12, radius: 12, from: fr });
+      if (fs.length >= 8) { const cx = Math.round(fs.reduce((a, q) => a + q.x, 0) / fs.length), cz = Math.round(fs.reduce((a, q) => a + q.z, 0) / fs.length), y = fs[0].y - 1; let n = 0;
+        for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const c = [cx + dx, y, cz + dz]; if (fAt(...c) & F_SOLID) continue; if (await goToBlock(...c, 4)) { if (await fillCell(c)) n++; } }
+        if (n) log(`stronghold_find: the pit under the portal filled (${n} blocks)`); } }
     await healUp();
     await travel((x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z) <= 4.5, (x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z), { radius: 200, dig: true, pillar: true, legs: 40 });
     const f = K.feet(), d = hyp(f.x - fr.x, f.y - fr.y, f.z - fr.z);
