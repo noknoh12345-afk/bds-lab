@@ -211,6 +211,7 @@ async function enchantArmour({ peekOnly = false, maxRerolls = 60 } = {}) {
     const r = await buildRoom(); if (r !== true) return r;
     T = ownTable(); if (!T) return 'the table is not there after building the room';
   }
+  await tidy(6);   // (room in the bag first: the armour comes off into it and each enchanted item comes back - 'enchant rejected: inventory full', 11/20)
   const shelves = shelvesAt(T);
   if (shelves < 15) log(`road: enchant: only ${shelves} bookshelves count round the table at ${T.join(' ')}: its top offer is under level 30`);
   // to the cell south of the table, inside the ring
@@ -612,15 +613,15 @@ B.road_kit = () => stepRun('road_kit', async () => { const m = kitMissing(); ret
 // a table: 'inventory full', and its golden apple step ended there after 27 minutes) ----------
 const KEEP = { stone_bricks: 0, mossy_stone_bricks: 0, cracked_stone_bricks: 0, chiseled_stone_bricks: 0, mossy_cobblestone: 0, iron_bars: 0, stone_brick_stairs: 0, stone_brick_slab: 0, oak_fence: 0, string: 8, paper: 0, map: 0, empty_map: 0, cobweb: 0, web: 0,   // (the stronghold's own blocks, dug through to its library: 11/20 'inventory full' crafting the shovels)
   cobblestone: 320, cobbled_deepslate: 64, netherrack: 64, blackstone: 32, gravel: 16, dirt: 16, sand: 0, diorite: 0, andesite: 0, granite: 0, tuff: 0, calcite: 0, basalt: 0, smooth_basalt: 0, deepslate: 0, rotten_flesh: 0, spider_eye: 0, poisonous_potato: 0, wheat_seeds: 0, pumpkin_seeds: 0, beetroot_seeds: 0, cobweb: 0, flint_and_steel_broken: 0, bone: 8, arrow_stuck: 0, red_sand: 0, terracotta: 0, magma: 0, soul_sand: 0, soul_soil: 0, moss_block: 0, clay_ball: 0, kelp: 0, ink_sac: 0, gold_nugget: 999, egg: 0, mud: 0, stick: 64 };
-async function tidy() {
+async function tidy(want = 4) {
   const k = K(); if (!k || !me.connected || k.screen()) return;
   const free = () => slots().filter((it, i) => i < 36 && !it?.network_id).length;
-  if (free() >= 4) return;
+  if (free() >= want) return;
   const byKind = new Map(); slots().forEach((it, i) => { if (i >= 36 || !it?.network_id) return; const nmx = nameOf(it); if (!(nmx in KEEP)) return; (byKind.get(nmx) ?? byKind.set(nmx, []).get(nmx)).push({ i, c: it.count }); });
   for (const [nmx, list] of [...byKind].sort((a, b) => b[1].reduce((s, x) => s + x.c, 0) - a[1].reduce((s, x) => s + x.c, 0))) {
     let total = list.reduce((s, x) => s + x.c, 0); const keep = KEEP[nmx];
-    for (const x of list.sort((a, b) => a.c - b.c)) { if (total - x.c < keep || free() >= 6) break; await act('drop_all', [x.i]); total -= x.c; await sleep(150); }
-    if (free() >= 6) break;
+    for (const x of list.sort((a, b) => a.c - b.c)) { if (total - x.c < keep || free() >= Math.max(6, want)) break; await act('drop_all', [x.i]); total -= x.c; await sleep(150); }
+    if (free() >= Math.max(6, want)) break;
   }
 }
 // every night dug in until Protection IV is on (11/20 in the lab, in plain iron: a witch, then zombies and a skeleton in a cave, both
