@@ -540,7 +540,7 @@ B.road_prot = () => stepRun('road_prot', async () => {
     // (a set already showing Protection IV: level 30 is all it needs; else 30 and three for each piece after it)
     const target = /is offered for/.test(String(lastWhy)) ? 30 : /not even a level|^level [0-9]: /.test(String(lastWhy)) || level() < 1 ? Math.max(8, level() + 4) : Math.min(42, 30 + 3 * lacking);   // (no set showing it yet: a few levels for cheap new offers first)
     const fr = K()?.memo?.get('goal:frames'), fp = me.bot.state().pos, atSh = fr && Math.hypot(fr.x - fp.x, fr.z - fp.z) < 200;
-    if (me.dim === 'overworld' && atSh) { await R.run(`spawner_xp ${target} 2400`, 'levels from the stronghold\'s silverfish spawner'); await R.run('to_surface', 'back up to the room'); }
+    if (me.dim === 'overworld' && atSh) { await R.run(`spawner_xp ${target} 2400`, 'levels from the stronghold\'s silverfish spawner'); if (st.room && st.room.y > 55) await R.run('to_surface', 'back up to the room'); }   // (a room down there: walk_to it at the top of the loop, no climb up)
     else if (me.dim === 'overworld') { await R.run(`ore_mine ${target} 2400`, 'levels from the deep ores'); await R.run('to_surface', 'back up to the room'); }
     else { const r = await netherTrip({ rods: 8, lv: target, minutes: 45 }); if (r !== true) log(`road: the trip for levels: ${r}`); }
   }
