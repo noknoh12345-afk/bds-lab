@@ -1295,6 +1295,10 @@ async function dragonFight() {
     if (cloud && !(perched && (me.hp ?? 20) >= 12 && (Math.hypot(P.x, P.z) < 9 || !cloudIn))) { let ux = P.x - cloud.x, uz = P.z - cloud.z; const l = Math.hypot(ux, uz) || 1; ux /= l; uz /= l; const far = (cloud.radius ?? 3) + 10; let tx = cloud.x + ux * far, tz = cloud.z + uz * far;
       if (Math.hypot(tx, tz) < 14) { const l2 = Math.hypot(P.x, P.z) || 1; tx = (P.x / l2) * 24; tz = (P.z / l2) * 24; }   // (never through the middle)
       if (Math.hypot(tx, tz) > 42) { tx = P.x - uz * 14; tz = P.z + ux * 14; if (Math.hypot(tx, tz) > 42) { tx = P.x + uz * 14; tz = P.z - ux * 14; } }
+      // (20 Nov 19:50 and 19:59 in the lab: dead out at radius 33 'fleeing' - away from the nearest cloud into the next one, fireballs
+      //  had laid several. The spot is the one clearest of every cloud, 6-14 blocks off, 14-46 from the middle)
+      { const cl = [...ents(/area_effect_cloud$/), ...burns].filter((e) => Math.abs((e.y ?? P.y) - P.y) < 8); const clear = (x, z) => cl.reduce((m, e) => Math.min(m, Math.hypot(e.x - x, e.z - z) - cr(e)), 99);
+        if (cl.length > 1) { let best = { x: tx, z: tz, c: clear(tx, tz) }; for (let k = 0; k < 16; k++) for (const d of [6, 10, 14]) { const x = P.x + Math.cos(k * Math.PI / 8) * d, z = P.z + Math.sin(k * Math.PI / 8) * d, r = Math.hypot(x, z); if (r < 14 || r > 46) continue; const c = clear(x, z) - d * 0.05; if (c > best.c + 0.5) best = { x, z, c }; } tx = best.x; tz = best.z; } }
       if (!me.breathSaid || Date.now() - me.breathSaid > 10000) { me.breathSaid = Date.now(); log(`dragon: its breath ${Math.round(l)} blocks off: away`); }
       fleeing = true; try { await down(); await dash(tx, tz, 3000); } finally { fleeing = false; } continue; }
     // (15:11 in the lab: dead in twenty seconds to an enderman it had looked at on the way, sword in the pack. Hurt, and one within
