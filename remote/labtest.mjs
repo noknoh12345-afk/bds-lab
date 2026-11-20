@@ -238,7 +238,7 @@ const S = {
   // no tree, sheep or cow near) - what each get_ of the road does today
   async road_probe() {
     const [re, n = '1'] = (process.env.ROAD_WANT ?? 'diamond:5').split(':'), R = new RegExp(`^(${re})$`);
-    return road({ kit: [...IRON_KIT, ...(process.env.ROAD_KIT ?? '').split(',').filter(Boolean)], cmds: ['armor_up', ...(process.env.ROAD_CMD ?? `get_${re} ${n}`).split(';')], ms: Number(process.env.ROAD_MS ?? 2 * 3600000), check: (c) => nOf(c, R) >= Number(n), why: (c) => ` · ${re} ${nOf(c, R)}`,
+    return road({ kit: [...IRON_KIT, ...(process.env.ROAD_KIT ?? '').split(',').filter(Boolean)], cmds: ['armor_up', ...(process.env.ROAD_CMD ?? `get_${re} ${n}`).split(';')], ms: Number(process.env.ROAD_MS ?? 2 * 3600000), check: (c) => (re === 'level' ? c.lv : nOf(c, R)) >= Number(n), why: (c) => ` · ${re} ${re === 'level' ? c.lv : nOf(c, R)}`,
       setup: async () => { if (process.env.ROAD_AT) await moveTo(process.env.ROAD_AT); } });
   },
   // the Nether trip of road.cjs: the iron kit and 10 obsidian given; the portal built, a fortress found, blazes by the spawner until

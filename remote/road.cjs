@@ -369,8 +369,60 @@ B.road_obsidian = () => stepRun('road_obsidian', async () => {
 B.road_books = () => stepRun('road_books', async () => {
   const need = () => roomKnown() && (st.room.shelves ?? 15) >= 15 ? [['wooden_shovel', 4]] : [['enchanting_table', 1], ['bookshelf', 15], ['wooden_shovel', 6]];
   const short = () => need().filter(([it, m]) => n(new RegExp(`^${it}$`)) < m);
+  // the paper first from the cane farm (planted early: road_cane), the leather meanwhile; short of cane, the wait is used (cobblestone
+  // for the End) rather than a search of the whole world for wild cane
+  const booksWanted = () => (n(/^enchanting_table$/) || roomKnown() ? 0 : 1) + 3 * Math.max(0, 15 - n(/^bookshelf$/) - (roomKnown() ? 15 : 0));
+  if (booksWanted() > n(/^book$/)) {
+    const lack = booksWanted() - n(/^book$/);
+    if (st.cane?.length) await caneHarvest();
+    if (n(/^leather$/) < lack) await R.run(`get_leather ${lack}`, 'leather for books');
+    if (n(/^sugar_cane$/) + n(/^paper$/) < 3 * lack && st.cane?.length && !st.coblWait) { st.coblWait = true; save(); await R.run('get_cobblestone 256', 'cobblestone for the End while the cane grows'); await caneHarvest(); }
+  }
   for (let k = 0; k < 3 && R.live() && short().length; k++) for (const [it, m] of short()) await R.run(`get_${it} ${m}`, `the enchanting room: ${it}`);
   return short().length ? short().map(([it, m]) => `${it} ${n(new RegExp(`^${it}$`))} of ${m}`).join(', ') : true;
+});
+// ---------- sugar cane: paper for the 45 books of the bookshelves (135 canes - a wild search found none in 22 minutes in the lab) ----------
+// a farm by water near the base: wild cane planted on ground beside water, its top two blocks cut whenever it is passed (it grows a
+// block in ~18 minutes); planted early in the run so that by the books step it has grown
+const caneN = () => n(/^sugar_cane$/) + n(/^paper$/) + 3 * n(/^book$/) + 9 * n(/^bookshelf$/);
+function caneSpots(r = 24) {   // ground beside water, air over it: where a cane can be planted
+  const f = me.bot.state().pos, X = Math.floor(f.x), Y = Math.floor(f.y + 0.01), Z = Math.floor(f.z), out = [];
+  for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) for (let dy = -4; dy <= 3; dy++) {
+    const x = X + dx, y = Y + dy, z = Z + dz;
+    if (!/^(grass_block|dirt|sand|red_sand|podzol|coarse_dirt|mycelium|moss_block|mud)$/.test(blk(x, y, z)) || !AIRY.test(blk(x, y + 1, z)) || !AIRY.test(blk(x, y + 2, z))) continue;
+    if (![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, c]) => /^(water|flowing_water)$/.test(blk(x + a, y, z + c)))) continue;
+    out.push([x, y, z, Math.hypot(dx, dy, dz)]);
+  }
+  return out.sort((a, b) => a[3] - b[3]);
+}
+async function caneHarvest() {   // the farm's canes cut above their first block
+  let cut = 0;
+  for (const [x, y, z] of st.cane ?? []) {
+    if (blk(x, y + 2, z) !== 'reeds') continue;
+    const f = me.bot.state().pos; if (Math.hypot(f.x - x, f.z - z) > 4) await R.gotoFor([String(x + 0.5), String(z + 0.5)], 15000);
+    await act('dig', [x, y + 2, z]); cut++; await sleep(200);
+  }
+  if (cut) { await act('collect', ['6']); await K().sync(); }
+  return cut;
+}
+B.road_cane = (a) => stepRun('road_cane', async () => {
+  const want = Number(a?.[0]) || 138;
+  st.cane ??= [];
+  if (st.cane.length) await caneHarvest();
+  if (caneN() >= want) return true;
+  if (!st.cane.length || st.cane.length < 24) {
+    if (n(/^sugar_cane$/) < 8) await R.run('get_sugar_cane 8', 'sugar cane to plant');
+    const spots = caneSpots().filter(([x, y, z]) => !st.cane.some((c) => c[0] === x && c[2] === z));
+    for (const [x, y, z] of spots) {
+      if (n(/^sugar_cane$/) <= 1 || st.cane.length >= 40) break;
+      const f = me.bot.state().pos; if (Math.hypot(f.x - x, f.z - z) > 4) await R.gotoFor([String(x + 0.5), String(z + 0.5)], 15000);
+      await act('hold_sugar_cane'); await act('useon', [x, y, z, 'up']);
+      for (let t = 0; t < 8 && blk(x, y + 1, z) !== 'reeds'; t++) await sleep(100);
+      if (blk(x, y + 1, z) === 'reeds') st.cane.push([x, y, z]);
+    }
+    save(); log(`road: the cane farm: ${st.cane.length} planted by the water near ${Math.round(me.bot.state().pos.x)} ${Math.round(me.bot.state().pos.z)}`);
+  }
+  return caneN() >= want ? true : `cane ${caneN()} of ${want} (the farm of ${st.cane.length} grows: a block in ~18 minutes)`;
 });
 // the room set up at the base (by the bed), before the Nether: the portal is built beside it, and the levels go straight to the table
 B.road_room = () => stepRun('road_room', async () => {
@@ -427,8 +479,11 @@ B.road_prot = () => stepRun('road_prot', async () => {
       if (!/^level \d+/.test(String(r))) return r;
     }
     const lacking = PIECES.filter((p) => { const a = armour()[p]; return a && lvlOf(a.ench, 'protection') < 4; }).length;
-    const r = await netherTrip({ rods: 8, lv: Math.min(45, 30 + 4 * lacking), minutes: 45 });
-    if (r !== true) log(`road: the trip for levels: ${r}`);
+    // the levels from the deep ores (redstone, lapis, diamonds: a tunnel shut in on every side) - the Nether's blazes and quartz were
+    // deadly in the lab (five trips of six dead: blaze swarms, magma cubes, skeletons) and the spawner gave about one blaze a minute
+    const target = Math.min(42, 30 + 3 * lacking);
+    if (me.dim === 'overworld') { await R.run(`ore_mine ${target} 2400`, 'levels from the deep ores'); await R.run('to_surface', 'back up to the room'); }
+    else { const r = await netherTrip({ rods: 8, lv: target, minutes: 45 }); if (r !== true) log(`road: the trip for levels: ${r}`); }
   }
   return allProt4() ? true : `Protection IV on ${PIECES.filter((p) => { const a = armour()[p]; return a && lvlOf(a.ench, 'protection') >= 4; }).length} of 4, level ${level()}`;
 });

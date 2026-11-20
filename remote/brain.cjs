@@ -595,7 +595,7 @@ timers.push(setInterval(() => {
 }, 400));
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || b.state().dead) return;
-  if (/^auto: (get|kill|mine|fight|stronghold|blaze_rods|nether_seek|tunnel_to|portal_go|nether_in|end_fight)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself: 11/20 this one's breaking away ran the bot out of the blaze bunker, among five blazes, to its death)
+  if (/^auto: (get|kill|mine|fight|stronghold|blaze_rods|nether_seek|tunnel_to|portal_go|nether_in|end_fight|quartz_mine|ore_mine)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself: 11/20 this one's breaking away ran the bot out of the blaze bunker, among five blazes, to its death)
   const f = hostilesNear(b, AD.engageR); if (!f.length) return;
   engage(b).catch(() => {});
 }, 500));
@@ -623,6 +623,7 @@ const STEPS = [
   { name: 'a chest of our own by the bed: what a death must not cost goes in', special: 'stash', optional: true },
   { name: 'food (enough for the trip, any kind)', cmds: ['get_cooked_beef 6', 'get_cooked_porkchop 6', 'get_cooked_mutton 6', 'get_cooked_chicken 6', 'get_bread 6'], food: 8, optional: true },
   { name: 'flint and steel', cmds: ['get_flint_and_steel'], has: ['flint_and_steel'] },
+  { name: 'a sugar cane farm by water (paper for 45 books: it grows while the rest is done)', cmds: ['road_cane 138'], optional: true },
   // (all four pieces now: each takes Protection IV - with Protection III the lab's dragon fights were 0 of 5, with IV they are won)
   { name: 'iron: the rest of the armour', cmds: ['get_iron_helmet', 'get_iron_leggings', 'get_iron_boots', 'armor_up'], has: ['iron_helmet', 'iron_leggings', 'iron_boots'] },
   // ---- the road's own steps (remote/road.cjs): the enchanting table, its room, the Nether's levels, Protection IV ----

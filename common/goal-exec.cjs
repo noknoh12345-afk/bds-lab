@@ -770,7 +770,7 @@ function goalVerbs(K, H) {
     const treeless = /_log|_stem/.test(String(what)) && !known(/^minecraft:[a-z_]*leaves[a-z_0-9]*$/, { max: 1, radius: 96 }).length;
     // (an animal: not a block at all; animals are seen out to ~64, so legs of 48 show new ground each time)
     const w0 = G.wild(String(what).split('|')[0].replace('[a-z_]+', 'oak'));
-    const step = treeless || (w0?.[1] ?? 0) >= 400 ? 64 : !w0 ? 48 : 24;
+    const step = treeless || (w0?.[1] ?? 0) >= 400 || /reeds|pumpkin|melon|cactus|bamboo/.test(String(what)) ? 64 : !w0 ? 48 : 24;   // (sugar cane by the water: new banks with each leg, not the same field again)
     if (!spiral.at || spiral.step !== step || hyp(spiral.at[0] - x0, spiral.at[1] - z0) > 200 + step * 4) { spiral.at = [x0, z0]; spiral.k = 0; spiral.step = step; }
     const D = [[1, 0], [0, 1], [-1, 0], [0, -1]];
     for (let leg = 0; leg < legs && !late(); leg++) {
@@ -2158,13 +2158,17 @@ function goalVerbs(K, H) {
   // out, until the XP level is `level` (remote/road.cjs: the enchanting table's 30; the blaze spawner gave ~10 a minute in the lab)
   async function quartzMine(level, maxSec = 900) {
     const t0 = gnow(); let ores = 0, legs = 0;
+    const nether = dimName() === 'nether';
+    // (the overworld's own: down to the deepslate first, where redstone (1-5 XP an ore), lapis (2-5), diamonds and gold lie - a tunnel
+    //  there is shut in on every side, unlike the Nether's caverns)
+    if (!nether && feet()[1] > -40) { await stairDown(-56, () => false); }
     const lv = () => K.attrs()['player.level'] ?? 0;
     // (the way with the most netherrack - quartz grows only in it - and away from soul sand: 11/20 the tunnel went through the fortress and
     //  into a soul sand valley, no quartz in 287 s and shot dead by its skeletons)
-    const bestDir = () => { const [x, y, z] = feet(); let best = 0, bs = -1e9; for (let k = 0; k < 8; k++) { const a = (k * Math.PI) / 4; let sc = 0; for (let d = 4; d <= 40; d += 3) for (let dy = -3; dy <= 3; dy += 2) { const n = bname(Math.round(x + Math.cos(a) * d), y + dy, Math.round(z + Math.sin(a) * d)); if (/netherrack|quartz_ore|nether_gold_ore/.test(n)) sc++; else if (/soul_(sand|soil)|nether_brick|basalt|blackstone|lava/.test(n)) sc -= 2; } if (sc > bs) { bs = sc; best = a; } } return best; };
+    const bestDir = () => { const [x, y, z] = feet(); let best = 0, bs = -1e9; for (let k = 0; k < 8; k++) { const a = (k * Math.PI) / 4; let sc = 0; for (let d = 4; d <= 40; d += 3) for (let dy = -3; dy <= 3; dy += 2) { const n = bname(Math.round(x + Math.cos(a) * d), y + dy, Math.round(z + Math.sin(a) * d)); if (/netherrack|quartz_ore|nether_gold_ore|deepslate|tuff|_ore$|^minecraft:stone$/.test(n)) sc++; else if (/soul_(sand|soil)|nether_brick|basalt|blackstone|lava|water|air/.test(n)) sc -= 2; } if (sc > bs) { bs = sc; best = a; } } return best; };
     let dir = bestDir();
     while ((gnow() - t0) / 1000 < maxSec && !K.dead() && lv() < level) {
-      const ORE = /^minecraft:(quartz_ore|nether_gold_ore)$/;   // (nether gold too: nuggets for the golden apples, 2-6 an ore)
+      const ORE = nether ? /^minecraft:(quartz_ore|nether_gold_ore)$/ : /^minecraft:(deepslate_)?(redstone|lit_redstone|lapis|diamond|gold|emerald|coal)_ore$|^minecraft:lit_deepslate_redstone_ore$/;   // (nether gold too: nuggets for the golden apples, 2-6 an ore)
       const h = known(ORE, { max: 6, radius: 6 }).find((q) => !unreachable(q)) ?? known(ORE, { max: 4, radius: 2.5, fair: false }).find((q) => !unreachable(q));   // (seen, else right in the tunnel's wall)
       if (h) {
         if (await goToBlock(h.x, h.y, h.z)) { if (await breakAt(h.x, h.y, h.z)) ores++; else markUnreachable(h, 'quartz_ore'); } else markUnreachable(h, 'quartz_ore');
@@ -4060,6 +4064,7 @@ function goalVerbs(K, H) {
   // tunnel_to x z [max] [tol]: the Nether's safe way across (tunnelTo)
   M.tunnel_to = async (a) => K.say(`tunnel_to: ${(await tunnelTo(Number(a[0]), Number(a[1]), Number(a[2]) || 300, Number(a[3]) || 3)) ? 'there' : 'not there'} (${feet().join(' ')})`);
   // quartz_mine <level> [seconds]: nether quartz for the XP until that level (quartzMine)
+  M.ore_mine = async (a) => K.say(`ore_mine: ${(await quartzMine(Number(a[0]) || 30, Number(a[1]) || 900)) ? 'level reached' : `level ${Math.floor(K.attrs()['player.level'] ?? 0)}`}`);   // ore_mine <level> [s]: the overworld's deep ores (or the Nether's quartz) for XP
   M.quartz_mine = async (a) => K.say(`quartz_mine: ${(await quartzMine(Number(a[0]) || 30, Number(a[1]) || 900)) ? 'level reached' : `level ${Math.floor(K.attrs()['player.level'] ?? 0)}`}`);
   // nether_in: into the Nether by a portal near (else one built here: 10 obsidian, flint and steel) - remote/road.cjs
   M.nether_in = async () => K.say(`nether_in: ${await RUN.portal({})}`);
