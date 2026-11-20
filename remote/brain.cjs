@@ -690,8 +690,11 @@ async function run(cmd, why) {   // one command, as the worker would: guard firs
   const t = Date.now(); let ok = true;
   const watch = PASSIVE.test(v) ? null : setInterval(() => { const w = me.connected && guardReason(me.bot); if (w && !me.abort) { log(`guard: stopping "${cmd}": ${w}`, { dc: true }); NOW.stop(); ok = false; } }, 3000);
   const seen = []; const tap = (l) => seen.push(l); ctx.taps.add(tap);
-  try { await (BUILTIN[v] ? BUILTIN[v](a) : me.bot.act(v, a)); } catch (e) { ok = false; log(`auto: "${cmd}" failed: ${e.message}`); }
-  finally { if (watch) clearInterval(watch); ctx.taps.delete(tap); me.busy = null; }
+  // (a verb that does not come back after it was cancelled - 11/20 the lab: 'night falls mid-task', then 18 minutes of nothing, the
+  //  bot idle at y 52 with no pickaxe, the run stopped for good - is left behind a minute after the cancel)
+  let hung = null; const stuck = new Promise((res) => { let since = 0; hung = setInterval(() => { if (me.interrupt || me.abort) { since ||= Date.now(); if (Date.now() - since > 60000) res('hung'); } else since = 0; }, 2000); });
+  try { const r = await Promise.race([BUILTIN[v] ? BUILTIN[v](a) : me.bot.act(v, a), stuck]); if (r === 'hung') { ok = false; log(`auto: "${cmd}" did not stop a minute after it was cancelled: left behind`, { dc: true }); me.bot?.act?.('stop', []).catch?.(() => {}); } } catch (e) { ok = false; log(`auto: "${cmd}" failed: ${e.message}`); }
+  finally { clearInterval(hung); if (watch) clearInterval(watch); ctx.taps.delete(tap); me.busy = null; }
   if (me.interrupt) {
     const why = me.interrupt; me.interrupt = null; ok = false;
     if (why === 'night') { await sitOutNight(me.bot, () => !!me.reviewPending); log('auto: morning: back to work'); }
