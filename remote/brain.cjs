@@ -628,7 +628,8 @@ async function engage(b, maxMs = 12000) {
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || me.interrupt || b.state().dead) return;
   if (!/^auto: (get|kill|mine)_/.test(String(me.busy ?? ''))) return;
-  if (me.dim === 'overworld' && nightNow(b) && (!me.armored || me.nightIn) && !guardReason(b) && openSky(b, b.state().pos)) { me.interrupt = 'night';   // (underground the night does not matter: it mines on)
+  const pearlHunt = /ender_(eye|pearl)|enderman/.test(String(me.busy ?? '')) && me.armored && me.armed && (me.hp ?? 20) >= 14;   // (endermen are out at night: the hunt goes on)
+  if (me.dim === 'overworld' && nightNow(b) && (!me.armored || (me.nightIn && !pearlHunt)) && !guardReason(b) && openSky(b, b.state().pos)) { me.interrupt = 'night';   // (underground the night does not matter: it mines on)
     log('auto: night falls mid-task: stopping to dig in', { dc: true }); b.cancel?.(); return; }
   // (not down in the stronghold: there the verb fights for itself in the corridors - 11/20 this cut the library short with five about,
   //  and the breaking away ran the bot through the corridors to its death)

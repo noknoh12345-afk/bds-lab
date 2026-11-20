@@ -789,7 +789,10 @@ function goalVerbs(K, H) {
       if (found()) return true;
       // (the dark on new ground without a real sword: the morning waited for first, dug in - out looking for sheep at night with a
       // wooden one, two spiders, dead, and the shears with it)
-      if (nightNow() && process.env.LAB_WORLD === 'normal' && (!goodSword() || K.memo.get('goal:nightIn')) && !sheltering) { log(`night: looking for ${nice(what)} in the morning`); await shelter(); if (K.dead() || late()) break; }
+      // (endermen come out at night: their pearls are hunted then, armed and in armour - the road's every-night shelter kept the lab's
+      //  pearl hunt in a hole all night, 'looking for enderman in the morning', and none by day)
+      const nightGame = /enderman/.test(String(what)) && goodSword() && (K.inv.armor ?? []).filter((it) => it?.network_id).length >= 3 && (K.attrs().health ?? 20) >= 14;
+      if (nightNow() && process.env.LAB_WORLD === 'normal' && (!goodSword() || (K.memo.get('goal:nightIn') && !nightGame)) && !sheltering) { log(`night: looking for ${nice(what)} in the morning`); await shelter(); if (K.dead() || late()) break; }
       const k = spiral.k++, side = step * (1 + Math.floor(k / 2));
       // the corner this leg ends at, counted from the spiral's centre
       let cx = spiral.at[0], cz = spiral.at[1];
