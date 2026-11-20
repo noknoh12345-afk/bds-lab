@@ -4225,8 +4225,9 @@ function goalVerbs(K, H) {
       // (within 4 of the spawner, not on top of it: it spawns round the player inside 4 blocks of itself, and only with a player within 16)
       // (on the floor round it, not under it: 11/20 the probe ended up at y 9 in the floor under the spawner, the silverfish over its
       //  head 'broken off after 0 blows' for twenty minutes)
-      if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 5 || f.y < sp.y - 2.5) {
-        const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 4 && y >= sp.y - 2 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: true, pillar: true, legs: 8, nodes: 30000 });
+      // (up at its own height: from the floor two below, the silverfish on its platform were out of reach - nine minutes, no kill)
+      if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 4 || f.y < sp.y - 1.5) {
+        const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 3 && y >= sp.y - 1 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: true, pillar: true, legs: 8, nodes: 30000 });
         if (!ok) { const g = K.feet(); spawnerMiss++; log(`spawner_xp: no way to the spawner at ${sp.x} ${sp.y} ${sp.z} from ${Math.floor(g.x)} ${Math.floor(g.y)} ${Math.floor(g.z)} (${spawnerMiss})`); if (spawnerMiss >= 4) break; await K.ticks(20); }
         continue; }
       // (one it cannot get at - in the wall, under the floor - is let be after two tries: 'could not get near' at once, again and
