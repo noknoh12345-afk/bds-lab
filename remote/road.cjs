@@ -633,6 +633,13 @@ async function tidy(want = 4) {
     for (const x of list.sort((a, b) => a.c - b.c)) { if (total - x.c < keep || free() >= Math.max(6, want)) break; await act('drop_all', [x.i]); total -= x.c; await sleep(150); }
     if (free() >= Math.max(6, want)) break;
   }
+  // still short of room when it is wanted (the armour off for the table): what the iron kit makes spare - stone and wooden tools beside
+  // iron ones, loose dirt, gravel, sand - goes too (11/20 'no free slot to take the armour off into')
+  if (want > 4 && free() < want) {
+    const have = (re) => slots().some((it, i) => i < 36 && re.test(nameOf(it)));
+    const spare = (nmx) => (/^(stone|wooden|golden)_(axe|pickaxe|sword|shovel|hoe)$/.test(nmx) && nmx !== 'wooden_shovel' && have(new RegExp(`^(iron|diamond|netherite)_${nmx.split('_')[1]}$`))) || /^(dirt|gravel|sand|red_sand|clay_ball|leaf_litter|rotten_flesh|spider_eye|bone|wheat_seeds|flint)$/.test(nmx);
+    for (let i = 0; i < 36 && free() < want; i++) { const it = slots()[i]; if (it?.network_id && spare(nameOf(it))) { await act('drop_all', [i]); await sleep(150); } }
+  }
 }
 // every night dug in until Protection IV is on (11/20 in the lab, in plain iron: a witch, then zombies and a skeleton in a cave, both
 // probes dead at night); ROAD_NIGHT=fight leaves it to the old rule (armed and well: on in the dark)
