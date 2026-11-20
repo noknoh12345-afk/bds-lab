@@ -94,18 +94,27 @@ const S = {
   // the End, with what the plan brings there: the crystals, then the dragon (long: asked for by name only)
   async dragon() {
     await fresh();
-    srv(...['iron_sword', 'bow', 'arrow 64', 'arrow 64', 'arrow 64', 'cooked_beef 32', 'cobblestone 64', 'cobblestone 64', 'cobblestone 64', 'cobblestone 64', 'iron_pickaxe', ...(process.env.LABTEST_BEDS ? [`bed ${process.env.LABTEST_BEDS} 14`] : []), ...(process.env.LABTEST_GAPPLES ? [`golden_apple ${process.env.LABTEST_GAPPLES}`] : []), ...(process.env.NO_PUMPKIN ? [] : ['carved_pumpkin']), ...['helmet', 'chestplate', 'leggings', 'boots'].map((p) => `${process.env.LABTEST_ARMOR ?? 'iron'}_${p}`), 'shield'].map((i) => `give ${NAME} ${i}`));
-    await sleep(2000); if (process.env.LABTEST_PROT) for (const pc of ['helmet', 'chestplate', 'leggings', 'boots']) { send(`hold_${process.env.LABTEST_ARMOR ?? 'iron'}_${pc}`); await sleep(2500); srv(`enchant ${NAME} protection ${process.env.LABTEST_PROT}`); await sleep(500); if (pc === 'boots' && process.env.LABTEST_FEATHER) { srv(`enchant ${NAME} feather_falling ${process.env.LABTEST_FEATHER}`); await sleep(500); } }   /* (LABTEST_FEATHER: Feather Falling on the boots too - 13:02 on 19 Nov, knocked off a cage pillar at 74 to 60 and 19 → 1 by the fall) */   // (Protection: the one thing that lessens its breath - armour points do not)
-    send('armor_up'); await sleep(5000); if (!process.env.NO_PUMPKIN) { send('equip carved_pumpkin'); await sleep(3000); }
-    if (process.env.LABTEST_ARRIVE === 'platform') { srv(`execute in the_end run tp ${NAME} 100.5 70 0.5 90 30`, `effect ${NAME} slow_falling 6 1 true`); await sleep(2500); srv('execute in the_end run fill 98 48 -2 102 48 2 obsidian', 'execute in the_end run fill 98 49 -2 102 51 2 air'); await sleep(4000); }   // (the platform a portal makes: a tp alone finds only void there)
-    srv(process.env.LABTEST_ARRIVE === 'platform' ? `execute in the_end run tp ${NAME} 100.5 49 0.5 90 30` : `execute in the_end run tp ${NAME} 30 61 30 0 60`); await waitLog(/dimension the_end/, 20000); await sleep(1500);
-    // UNCAGE=1: the open crystals are gone already, only the two in cages are left (the part being worked on, without 3 min first)
-    if (process.env.LABTEST_NOCRYSTALS) { srv(`execute in the_end run kill @e[type=ender_crystal]`); await sleep(1000); srv(`execute in the_end run kill @e[type=ender_crystal]`); }   // (sitting and the blows on it, measured on their own)
-    if (process.env.UNCAGE) { srv(...[[-32, 77, 25], [43, 86, 1], [13, 89, 40], [34, 92, -23], [-11, 95, 40], [-41, 98, 1], [-32, 101, -23], [-11, 104, -38]].map(([x, y, z]) => `execute in the_end run kill @e[type=ender_crystal,x=${x},y=${y},z=${z},r=3]`)); srv(`give ${NAME} cobblestone 64`); }   // (the open ones of seed 11 gone: the two caged left)
-    if (process.env.LABTEST_RESIST) srv(`effect ${NAME} resistance 9999 4 true`);   // (for measuring the fight's mechanics only: not a result)
-    send(process.env.DRAGON_CMD ?? 'dragon');
-    const d0 = status().deaths ?? 0;
-    const m = await waitFor(() => /dragon: (killed|not killed)/.exec(since()) || /(done|failed) "fight_ender_dragon[^"]*"[^\n]*/.exec(since()) || ((status().deaths ?? 0) > d0 ? ['', 'died'] : null), Number(process.env.DRAGON_MS ?? 1500000));
+    // LABTEST_RETRIES=n: a death in the End is not the end of the fight on a real server - the dragon keeps what it lost and the
+    // crystals stay broken; the bot comes back with a new kit. Each try after the first: respawned, the kit again, the same arrival
+    const tries = 1 + Number(process.env.LABTEST_RETRIES ?? 0), T0 = Date.now(); let m = null;
+    for (let k = 0; k < tries; k++) {
+    if (k) { await sleep(8000); send('stop'); send('resume'); srv(`clear ${NAME}`); await sleep(3000); console.log(`try ${k + 1} of ${tries} (${Math.round((Date.now() - T0) / 1000)} s in)`); mark = logText().length; }
+      srv(...['iron_sword', 'bow', 'arrow 64', 'arrow 64', 'arrow 64', 'cooked_beef 32', 'cobblestone 64', 'cobblestone 64', 'cobblestone 64', 'cobblestone 64', 'iron_pickaxe', ...(process.env.LABTEST_BEDS ? [`bed ${process.env.LABTEST_BEDS} 14`] : []), ...(process.env.LABTEST_GAPPLES ? [`golden_apple ${process.env.LABTEST_GAPPLES}`] : []), ...(process.env.NO_PUMPKIN ? [] : ['carved_pumpkin']), ...['helmet', 'chestplate', 'leggings', 'boots'].map((p) => `${process.env.LABTEST_ARMOR ?? 'iron'}_${p}`), 'shield'].map((i) => `give ${NAME} ${i}`));
+      await sleep(2000); if (process.env.LABTEST_PROT) for (const pc of ['helmet', 'chestplate', 'leggings', 'boots']) { send(`hold_${process.env.LABTEST_ARMOR ?? 'iron'}_${pc}`); await sleep(2500); srv(`enchant ${NAME} protection ${process.env.LABTEST_PROT}`); await sleep(500); if (pc === 'boots' && process.env.LABTEST_FEATHER) { srv(`enchant ${NAME} feather_falling ${process.env.LABTEST_FEATHER}`); await sleep(500); } }   /* (LABTEST_FEATHER: Feather Falling on the boots too - 13:02 on 19 Nov, knocked off a cage pillar at 74 to 60 and 19 → 1 by the fall) */   // (Protection: the one thing that lessens its breath - armour points do not)
+      send('armor_up'); await sleep(5000); if (!process.env.NO_PUMPKIN) { send('equip carved_pumpkin'); await sleep(3000); }
+      if (process.env.LABTEST_ARRIVE === 'platform') { srv(`execute in the_end run tp ${NAME} 100.5 70 0.5 90 30`, `effect ${NAME} slow_falling 6 1 true`); await sleep(2500); srv('execute in the_end run fill 98 48 -2 102 48 2 obsidian', 'execute in the_end run fill 98 49 -2 102 51 2 air'); await sleep(4000); }   // (the platform a portal makes: a tp alone finds only void there)
+      srv(process.env.LABTEST_ARRIVE === 'platform' ? `execute in the_end run tp ${NAME} 100.5 49 0.5 90 30` : `execute in the_end run tp ${NAME} 30 61 30 0 60`); await waitLog(/dimension the_end/, 20000); await sleep(1500);
+      if (process.env.LABTEST_RESIST) srv(`effect ${NAME} resistance 9999 4 true`);   // (for measuring the fight's mechanics only: not a result)
+    if (k === 0) {
+      if (process.env.LABTEST_NOCRYSTALS) { srv(`execute in the_end run kill @e[type=ender_crystal]`); await sleep(1000); srv(`execute in the_end run kill @e[type=ender_crystal]`); }   // (sitting and the blows on it, measured on their own)
+      if (process.env.UNCAGE) { srv(...[[-32, 77, 25], [43, 86, 1], [13, 89, 40], [34, 92, -23], [-11, 95, 40], [-41, 98, 1], [-32, 101, -23], [-11, 104, -38]].map(([x, y, z]) => `execute in the_end run kill @e[type=ender_crystal,x=${x},y=${y},z=${z},r=3]`)); srv(`give ${NAME} cobblestone 64`); }   // (the open ones of seed 11 gone: the two caged left)
+    }
+      send(process.env.DRAGON_CMD ?? 'dragon');
+      const d0 = status().deaths ?? 0;
+      m = await waitFor(() => /dragon: (killed|not killed)/.exec(since()) || /(done|failed) "fight_ender_dragon[^"]*"[^\n]*/.exec(since()) || ((status().deaths ?? 0) > d0 ? ['', 'died'] : null), Math.max(10000, Number(process.env.DRAGON_MS ?? 1500000) - (Date.now() - T0)));
+      if (m && m[1] === 'killed') { console.log(`killed on try ${k + 1} of ${tries}`); return true; }
+      if (!(m && (m[1] === 'died' || m[1] === 'not killed') && (status().deaths ?? 0) > d0)) break;
+    }
     return m && m[1] === 'killed' ? true : `${m ? m[1] : 'still going'} · ${since().split('\n').filter((l) => /dragon:/.test(l)).slice(-6).join(' | ')}`;
   },
   // mechanics by hand (MECH="cmd;cmd;..."): each sent in turn, 4 s apart, then the log
