@@ -744,6 +744,9 @@ async function safeStart() {
   //  breathe: frozen until the watchdog)
   if (me.dim === 'overworld' && !me.spawnSet && !inBedSpawn && !nightNow(b) && /\d+:minecraft:(\w+_)?bed\*/.test(await invList(b))) { log('auto: a bed carried and no respawn point yet: setting it down first'); await bedSpawn(); }
   const lastInv = nightNow(b) ? await invList(b) : '';
+  // (down in the stronghold for its library, its spawner, its portal: no going up first - 11/20 the lab's road_library began by
+  //  digging up out of the portal room into the silverfish)
+  { const fr = b.K?.memo?.get('goal:frames'), q = b.state().pos; if (fr && Math.hypot(fr.x - q.x, fr.z - q.z) < 120 && q.y < fr.y + 40 && !openSky(b, q)) return; }
   if (!openSky(b, b.state().pos) && !nightNow(b)) { log('auto: under the ground: up to the sky before working'); await b.act('to_surface', []).catch(() => {}); if (!openSky(b, b.state().pos)) await handStairs(b.state().pos.x + 8, b.state().pos.z); }
   me.armored = /_chestplate\*/.test(lastInv || (await invList(b))) || wornChest();
   if (nightNow(b) && (!me.armored || me.nightIn)) { log(me.nightIn ? 'auto: night: dug in until morning (the road shelters every night until Protection IV)' : 'auto: night and no armour: dug in until morning', { dc: true }); await sitOutNight(b); }
