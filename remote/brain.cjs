@@ -259,7 +259,7 @@ async function sitOutNight(b, stop = () => false) {
     if (shutIn(b)) { await sleep(5000); continue; }
     if (!warned) { warned = true; log('night: not shut in: standing guard, sword in hand'); lastWeaponCheck = 0; await armUp(b).catch(() => {}); }
     const f = hostilesNear(b, 10);
-    if (f.length) { if (me.armed && (me.hp ?? 20) > AD.breakAwayHp) await engage(b); else await breakAway(b, f); }
+    if (f.length) { if (me.armed && (me.hp ?? 20) > AD.breakAwayHp) await engage(b); else await breakAway(b, f); await sleep(250); }   // (a real wait: engage returns at once while another fight runs, and the loop spun in microtasks - 11/20 the lab's bot froze at 100% for 30 minutes, no tick, no status)
     else { await sleep(1000); if (failed && Date.now() - lastTry > 60000) { lastTry = Date.now(); await dig(); } }   // (after a failed dig-in only: another try a minute on, maybe on better ground; never a new hole after one that worked)
   }
 }
