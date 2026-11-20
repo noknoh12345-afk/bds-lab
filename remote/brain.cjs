@@ -836,6 +836,9 @@ async function dragonFight() {
     let kw = 0; for (let k = 1; k <= 6 && !kw; k++) if (bname(bx + dx * k, by, bz + dz * k) === 'iron_bars') kw = k;
     // (21 Nov 08:31: 380,000 times in forty seconds - returned with no await, the loop spun, no packet was read, and the bot died at
     //  '19 health'. Later, and a pause)
+    // (21 Nov 08:36 on a second try: that face's bars were broken out on the try before - the world keeps it - so 'no wall': it is
+    //  open that way; marked so, and shot from out by the middle)
+    if (!kw && [1, 2, 3].every((k) => bname(bx + dx * k, by, bz + dz * k) === 'air') && [-2, -1, 0, 1, 2].some((l) => [2, 3].some((k) => bname(bx + dx * k + lx * l, by + 2, bz + dz * k + lz * l) === 'iron_bars' || bname(bx - dx * k + lx * l, by, bz - dz * k + lz * l) === 'iron_bars'))) { log(`dragon: the cage of ${key(c)} is open toward the middle already`, { dc: true }); gaps.set(key(c), { bx, bz, by, dx, dz, kw: 2 }); await sleep(100); return true; }
     if (!kw) { log(`dragon: no cage wall found toward the middle from the crystal at ${key(c)}`, { dc: true }); uncageWait = Date.now() + 25000; await sleep(300); return false; }
     // (a cell with end stone for ground and room above it, one to three out from the wall, nearest first: 'beside the wall' was
     //  obsidian or air at 12 -36 and the path search set the pillar down eight blocks off - 23:12)
