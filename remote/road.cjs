@@ -498,7 +498,7 @@ B.road_room = (a = []) => stepRun('road_room', async () => {
   if (a[0] === 'here') { pb = null; st.room = null;
     // (by the portal room, at its height: after the library the bot was down at y -7 in a cave under it, and the room went there)
     const fr = K()?.memo?.get('goal:frames'), f = me.bot.state().pos;
-    if (fr && (Math.hypot(f.x - fr.x, f.z - fr.z) > 16 || Math.abs(f.y - fr.y) > 4)) await R.run(`walk_to ${fr.x} ${fr.y} ${fr.z} 6`, 'back to the portal room for the room'); }   // (over the stronghold: built where it stands, the old room far behind)
+    if (fr && (Math.hypot(f.x - fr.x, f.z - fr.z) > 48 || Math.abs(f.y - fr.y) > 10)) await R.run(`walk_to ${fr.x} ${fr.y} ${fr.z} 6`, 'back to the portal room for the room'); }   // (over the stronghold: built where it stands, the old room far behind)
   if (pb && me.dim === 'overworld') { const f = me.bot.state().pos; if (Math.hypot(f.x - pb.x, f.z - pb.z) > 12) await R.travel(pb.x + 6, pb.z + 6); }
   const r = await buildRoom(); if (r !== true) return r;
   st.room.shelves = shelvesAt([st.room.x, st.room.y, st.room.z]); save();
