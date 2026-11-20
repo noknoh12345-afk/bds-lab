@@ -2277,6 +2277,9 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         }
         if (!plan) return say(tooBig && !table ? `craft: ${want} needs a crafting table (open x y z of one first)` : `craft: missing ingredients for ${want} (needs ${outs[0].ings.map((g) => `${g.count * times} ${g.tag ? '#' + g.tag : g.name}`).join(', ')})${outs.length > 1 ? ` [${outs.length} recipes; with what is carried: ${outs.filter((r) => r.ings.every((g) => g.tag || have.some((h) => h.name === g.name))).map((r) => r.ings.map((g) => (g.tag ? '#' + g.tag : g.name) + (g.meta ? ':' + g.meta : '') + 'x' + g.count).join('+') + ` ${r.w ?? '-'}x${r.h ?? '-'} raw ${r.raw.length}`).slice(0, 3).join(' | ') || 'none'}]` : ''}`);
         const total = plan.r.out.count * times;
+        // (more than a stack at once: in parts - 68 planks in one move got the bot kicked, 'packet malformed: outside of the accepted
+        //  range [1, 64]', 11/20)
+        if (total > 64 && !a.includes('part')) { const per = Math.max(1, Math.floor(64 / plan.r.out.count)); let left = times, last = ''; while (left > 0) { const n = Math.min(per, left); last = String(await bot.act('craft', [a[0], String(n), 'part'])); left -= n; if (!/crafted/.test(last)) break; } return last; }
         const usedUp = new Map();
         for (const c of plan.cells) for (const u of c.src) usedUp.set(u.i, (usedUp.get(u.i) ?? 0) + u.n);
         // (onto a stack of the same kind with room, as the game's own crafting screen does: 11/20 fifteen bookshelves crafted one at a time
