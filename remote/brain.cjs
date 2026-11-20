@@ -593,7 +593,9 @@ const STEPS = [
   { name: 'a bed as the spawn point (out here, not among the builds)', special: 'bedspawn', optional: true },
   { name: 'iron: pickaxe, bucket, sword, shield, chestplate', cmds: ['get_iron_pickaxe', 'get_bucket', 'get_iron_sword', 'get_shield', 'get_iron_chestplate', 'armor_up'], has: ['iron_pickaxe', 'bucket', 'iron_sword'] },
   { name: 'a chest of our own by the bed: what a death must not cost goes in', special: 'stash', optional: true },
-  { name: 'food (enough for the trip, any kind)', cmds: ['get_cooked_beef 6', 'get_cooked_porkchop 6', 'get_cooked_mutton 6', 'get_cooked_chicken 6', 'get_bread 6'], food: 8, optional: true },
+  // (20 Nov 22:30 in the lab: 32 steaks eaten in 77 minutes of the fight, then 0.8 health and hunger 15 with nothing to eat - the
+  //  End takes forty and more. Healing by itself burns the food)
+  { name: 'food (enough for the trip, any kind)', cmds: ['get_cooked_beef 24', 'get_cooked_porkchop 16', 'get_cooked_mutton 16', 'get_cooked_chicken 16', 'get_bread 16'], food: 40, optional: true },
   { name: 'flint and steel', cmds: ['get_flint_and_steel'], has: ['flint_and_steel'] },
   { name: 'iron: the rest of the armour', cmds: ['get_iron_helmet', 'get_iron_leggings', 'get_iron_boots', 'armor_up'], optional: true },
   { name: 'a bow and arrows (the crystals on the pillars, the cages, its last points: 105-127 used in the lab wins)', cmds: ['get_bow', 'get_arrow 192'], has: ['bow', 'arrow'] },
