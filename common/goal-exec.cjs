@@ -2408,7 +2408,16 @@ function goalVerbs(K, H) {
       if (!r) { if (dbg) log('stronghold: the eye went nowhere (broke?)'); continue; }
       const f = K.feet();
       if (dbg) log(`stronghold: throw ${k + 1} at ${f.x.toFixed(0)} ${f.z.toFixed(0)}: bearing ${Math.round((r.ang * 180) / Math.PI)}${r.sank ? ', it sank - close' : ''}`);
-      const step = r.sank ? 12 : 150, tx = f.x + Math.cos(r.ang) * step, tz = f.z + Math.sin(r.ang) * step;
+      // (two throws from places apart cross at the stronghold: walked to near the crossing without throwing on the way - an eye thrown
+      //  every 150 blocks to one 2300 off is 15 throws, a fifth of them breaking, and too few left for the frames)
+      findStronghold.seen = (k ? findStronghold.seen ?? [] : []).concat([{ x: f.x, z: f.z, a: r.ang }]).slice(-4);
+      let est = null;
+      { const sn = findStronghold.seen; for (let i = sn.length - 2; i >= 0 && !est; i--) { const p1 = sn[i], p2 = sn[sn.length - 1], d1 = [Math.cos(p1.a), Math.sin(p1.a)], d2 = [Math.cos(p2.a), Math.sin(p2.a)], den = d1[0] * d2[1] - d1[1] * d2[0];
+        if (Math.abs(den) > Math.sin(0.15) && hyp(p2.x - p1.x, p2.z - p1.z) > 40) { const t = ((p2.x - p1.x) * d2[1] - (p2.z - p1.z) * d2[0]) / den; if (t > 0) est = { x: p1.x + d1[0] * t, z: p1.z + d1[1] * t }; } } }
+      let step = r.sank ? 12 : 150;
+      if (est && !r.sank) { const de = hyp(est.x - f.x, est.z - f.z); if (dbg || de > 200) log(`stronghold: two throws cross ${Math.round(de)} off, at about ${Math.round(est.x)} ${Math.round(est.z)}`); if (de > 220) step = Math.min(700, de - 120); }
+      else if (!r.sank && findStronghold.seen.length === 1) { step = 90; r.ang += 0.6; }   // (the second throw from off the line, so the two cross)
+      const tx = f.x + Math.cos(r.ang) * step, tz = f.z + Math.sin(r.ang) * step;
       if (r.sank) {   // under the spot it sank at: the frames within 48 below, found from the blocks sent - dug down toward them
         const fr2 = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 1, radius: 64, from: { x: r.at.x, y: f.y - 30, z: r.at.z } });
         if (fr2.length) return { x: fr2[0][0], y: fr2[0][1], z: fr2[0][2] };
