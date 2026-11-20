@@ -639,7 +639,7 @@ timers.push(setInterval(() => {
 }, 400));
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || b.state().dead) return;
-  if (/^(auto: )?(get|kill|mine|fight|stronghold|spawner_xp|blaze_rods|nether_seek|tunnel_to|portal_go|nether_in|end_fight|quartz_mine|ore_mine)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself: 11/20 this one's breaking away ran the bot out of the blaze bunker, among five blazes, to its death)
+  if (/^(auto: )?(get|kill|mine|fight|stronghold|spawner_xp|pearl_hunt|walk_to|blaze_rods|nether_seek|tunnel_to|portal_go|nether_in|end_fight|quartz_mine|ore_mine)_?/.test(String(me.busy ?? ''))) return;   // (a goal verb fights for itself: 11/20 this one's breaking away ran the bot out of the blaze bunker, among five blazes, to its death)
   const f = hostilesNear(b, AD.engageR); if (!f.length) return;
   engage(b).catch(() => {});
 }, 500));
@@ -673,14 +673,16 @@ const STEPS = [
   { name: 'diamonds and lapis (the enchanting table, a diamond pickaxe; the table\'s lapis)', cmds: ['road_mine'], has: ['diamond'] },
   { name: 'obsidian (the portal, the enchanting table)', cmds: ['road_obsidian'], has: ['obsidian'] },
   // (golden apples: the lab's wins on the real terms ate 5-19 - without them its breath wins in 10-20 minutes. 8 at the least, 16 wanted)
-  { name: 'golden apples (its breath): 8 at the least', cmds: ['get_golden_apple 8'], has: ['golden_apple'] },
+  // (11/21 the dragon side: the lab's seven wins without a death ate 9-16 golden apples, median 14 - 16 the aim, 12 at the least)
+  { name: 'golden apples (its breath): 12 at the least', cmds: ['get_golden_apple 12'], has: ['golden_apple'] },
   { name: 'golden apples: 16', cmds: ['get_golden_apple 16'], optional: true },
   { name: 'beds for the dragon (4-7 blown in the lab wins)', cmds: ['road_beds 12'], has: ['bed'] },
   { name: 'a bow and arrows (the crystals on the pillars, the cages, its last points: 105-158 used in the lab wins)', cmds: ['road_arrows 192'], has: ['arrow'] },
-  { name: 'eyes of ender (blaze rods from the Nether; pearls)', cmds: ['road_nether 8', 'get_ender_eye 14'], has: ['ender_eye'] },   // (14: the throws to find it break some, and the frames want up to 12 - 11/20 the lab came with 10 for 11 empty frames)
+  { name: 'a carved pumpkin (on the head in the warped forest and in the End: the endermen stay calm)', cmds: ['road_pumpkin'], has: ['carved_pumpkin'] },
+  // (one trip: rods at a fortress, pearls in a warped forest, the levels from nether quartz - the dragon side's answer 11/21)
+  { name: 'the Nether: blaze rods, ender pearls (a warped forest), levels (quartz)', cmds: ['road_nether 8 30 14', 'get_ender_eye 14'], has: ['ender_eye'] },   // (14 eyes: the throws to find it break some, the frames want up to 12)
   { name: 'out of the chest: everything for the way to the end', special: 'unstash', optional: true },
   { name: 'blocks for the End (pillars, a seal over a hole, stands for beds)', cmds: ['get_cobblestone 256'], has: ['cobblestone'] },
-  { name: 'a carved pumpkin (the endermen in the End: looked at, they stay calm)', cmds: ['road_pumpkin'], has: ['carved_pumpkin'] },
   { name: 'food for the End', cmds: ['get_cooked_beef 32'], food: 32, optional: true },
   // ---- at the stronghold, before going in (11/20 the lab: its library gave 48 books in 3 minutes - the 135 sugar cane and 45 leather
   //      were never got in the wild - and its portal room's silverfish spawner gives the levels down there, out of the night) ----

@@ -506,7 +506,7 @@ B.road_room = (a = []) => stepRun('road_room', async () => {
 });
 // a trip into the Nether: in by the portal beside the room (built the first time), to a fortress, blazes by its spawner until there are
 // `rods` blaze rods and the XP level is `level`, back the way it came
-async function netherTrip({ rods = 8, lv = 0, minutes = 40 } = {}) {
+async function netherTrip({ rods = 8, lv = 0, minutes = 40, pearls = 0 } = {}) {
   if (me.dim === 'overworld') {
     const at = st.portalO ?? (st.room ? { x: st.room.x + 5, z: st.room.z } : null);
     if (at) { const f = me.bot.state().pos; if (Math.hypot(f.x - at.x, f.z - at.z) > 10) await R.travel(at.x, at.z); }
@@ -524,6 +524,10 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40 } = {}) {
   // the rods at the spawner (and its XP); the levels after that from nether quartz along tunnels - faster than waiting for blazes at a
   // slit (the lab: about one blaze a minute)
   if (me.dim === 'nether' && me.deaths === d0 && n(/^blaze_rod$/) < rods) await R.run(`blaze_rods ${rods} ${Math.max(300, Math.min(1200, minutes * 60 - Math.round((Date.now() - t0) / 1000)))} 0`, 'blaze rods');
+  // the pearls in a warped forest (endermen there by day and night; the carved pumpkin on: 11/21 the dragon side's answer - the
+  // overworld's endermen come only at night, when the road is dug in)
+  const pearlsHad = () => n(/^ender_pearl$/) + n(/^ender_eye$/);
+  if (me.dim === 'nether' && me.deaths === d0 && pearls && pearlsHad() < pearls) await R.run(`pearl_hunt ${pearls} ${Math.max(600, Math.min(2400, minutes * 60))}`, 'ender pearls in a warped forest');
   // (away from the spawner first - back toward the portal by the tunnel: 11/20 the quartz tunnel went past the spawner, nine blazes, burned)
   if (me.dim === 'nether' && me.deaths === d0 && level() < lv && st.portalN) await R.run(`tunnel_to ${st.portalN.x} ${st.portalN.z} 600 6`, 'away from the spawner, toward the portal');
   if (me.dim === 'nether' && me.deaths === d0 && level() < lv) await R.run(`quartz_mine ${lv} ${Math.max(300, minutes * 60 - Math.round((Date.now() - t0) / 1000))}`, 'levels from nether quartz');
@@ -535,9 +539,9 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40 } = {}) {
   return me.dim === 'overworld' ? true : 'still in the Nether (the way back to the portal?)';
 }
 B.road_nether = (a) => stepRun('road_nether', async () => {
-  const rods = Number(a?.[0]) || 8, lv = Number(a?.[1]) || 0;
-  if (n(/^blaze_rod$/) + Math.ceil(n(/^blaze_powder$/) / 2) + Math.ceil(n(/^ender_eye$/) / 2) >= rods && level() >= lv) return true;
-  return netherTrip({ rods, lv });
+  const rods = Number(a?.[0]) || 8, lv = Number(a?.[1]) || 0, pearls = Number(a?.[2]) || 0;
+  if (n(/^blaze_rod$/) + Math.ceil(n(/^blaze_powder$/) / 2) + Math.ceil(n(/^ender_eye$/) / 2) >= rods && level() >= lv && n(/^ender_pearl$/) + n(/^ender_eye$/) >= pearls) return true;
+  return netherTrip({ rods, lv, pearls, minutes: pearls ? 80 : 40 });
 });
 // Protection IV on all four: to the room with level 30 and enchant; short of levels, to the Nether's blazes for them (and back)
 B.road_prot = () => stepRun('road_prot', async () => {

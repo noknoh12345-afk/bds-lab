@@ -4121,6 +4121,47 @@ function goalVerbs(K, H) {
   // long walks fall back to it); to_surface: up to the open sky by the way it came or a shaft
   // (`shelter night`: kept in until the morning by the clock - a remote bot's night; plain `shelter` may go out early, armed and well)
   M.shelter = async (a) => K.say(`shelter: ${await shelter(false, a?.[0] === 'night' ? { hold: () => { const t = dayTime(); return t !== null && t >= 11800 && t < 23300; } } : {})}`);   // dig in and shut the way they come (the night)
+  // pearl_hunt <pearls> [sec]: in the Nether, to a warped forest (endermen by day and night there) and endermen fought one at a time for
+  // their pearls, a carved pumpkin on the head so that looking at them does not set them on (the helmet off meanwhile, back on after)
+  M.pearl_hunt = async (a) => {
+    const want = Number(a[0]) || 12, maxSec = Number(a[1]) || 1800, t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
+    if (dimName() !== 'nether') return K.say('pearl_hunt: not in the Nether');
+    const have = () => cnt('ender_pearl') + cnt('ender_eye');
+    let dir = Math.random() * Math.PI * 2, forest = null;
+    const WARPED = /^minecraft:(warped_nylium|warped_stem|warped_wart_block)$/;
+    while (!forest && (Number(K.tick()) - t0) / 20 < maxSec * 0.6 && !K.dead()) {
+      const f = K.feet(), w = K.findBlocks((b) => WARPED.test(b.name), { max: 1, radius: 128, from: f })[0];
+      if (w) { forest = { x: w.x, y: w.y, z: w.z }; log(`pearl_hunt: a warped forest at ${w.x} ${w.y} ${w.z} (${Math.round(hyp(w.x - f.x, w.z - f.z))} off)`); break; }
+      const tx = f.x + Math.cos(dir) * 150, tz = f.z + Math.sin(dir) * 150;
+      if (dbg) log(`pearl_hunt: no warped forest in sight: a leg toward ${Math.round(tx)} ${Math.round(tz)}`);
+      await tunnelTo(tx, tz, 180, 4);
+      const g = K.feet(); dir += hyp(g.x - f.x, g.z - f.z) < 12 ? 0.9 : Math.PI / 2;
+    }
+    if (!forest) return K.say(`pearl_hunt: no warped forest found (pearls ${have()} of ${want})`);
+    if (hyp(K.feet().x - forest.x, K.feet().z - forest.z) > 16) await tunnelTo(forest.x, forest.z, 400, 10);
+    // the pumpkin on: the helmet off into the bag first
+    let swapped = false;
+    if (cnt('carved_pumpkin') > 0) { try { if ((K.inv.armor?.[0])?.network_id) await K.act('move', ['head', String(K.inv.slots.findIndex((it, i) => i < 36 && !it?.network_id))]); const pi = K.inv.slots.findIndex((it) => it?.network_id && sh(nm(it)) === 'carved_pumpkin'); if (pi >= 0) { await K.act('move', [String(pi), 'head']); swapped = true; } } catch (e) { log(`pearl_hunt: the pumpkin did not go on: ${e.message}`); } }
+    let kills = 0;
+    try {
+      const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
+      while (have() < want && (Number(K.tick()) - t0) / 20 < maxSec && !K.dead()) {
+        if ((K.attrs().health ?? 20) < 12) await healUp();
+        const f = K.feet();
+        const e = K.all().filter((q) => /enderman$/.test(q.type) && !q.dead && Math.abs(q.y - f.y) < 8).sort((p1, p2) => hyp(p1.x - f.x, p1.z - f.z) - hyp(p2.x - f.x, p2.z - f.z))[0];
+        if (!e) { // round the forest: to another part of it
+          const ws = K.findBlocks((b) => b.name === 'minecraft:warped_nylium', { max: 30, radius: 48, from: f }); const pick = ws[Math.floor(Math.random() * ws.length)];
+          if (pick) await travel((x, y, z) => hyp(x - pick.x, z - pick.z) <= 3, (x, y, z) => hyp(x - pick.x, y - pick.y - 1, z - pick.z), { radius: 64, dig: true, legs: 3 }); else await K.ticks(40);
+          continue; }
+        if (hyp(e.x - f.x, e.z - f.z) > 3) { await goToEntity(e, 2.6); continue; }
+        try { await fightOne(e, 30); } catch { /* gone */ }
+        if (!K.all().includes(e) || e.dead) { kills++; await K.ticks(10); await collect({ x: e.x, y: e.y, z: e.z }, 5, /ender_pearl/); if (kills % 3 === 0) log(`pearl_hunt: ${kills} endermen, pearls ${have()}`); }
+      }
+    } finally {
+      if (swapped) { try { const fr = K.inv.slots.findIndex((it, i) => i < 36 && !it?.network_id); if (fr >= 0) await K.act('move', ['head', String(fr)]); const hi = K.inv.slots.findIndex((it) => it?.network_id && /_helmet$/.test(sh(nm(it)))); if (hi >= 0) await K.act('move', [String(hi), 'head']); } catch { /* */ } }
+    }
+    return K.say(`pearl_hunt: pearls ${have()} of ${want} (${kills} endermen in ${Math.round((Number(K.tick()) - t0) / 20)} s)`);
+  };
   // walk_to x y z [r]: to within r of a point, under the ground too (dug through where needed) - back to the enchanting room down in the
   // stronghold from its spawner (the brain's surface walk dug up and down between y 7 and 8 for a minute instead)
   M.walk_to = async (a) => { const [x, y, z] = a.slice(0, 3).map(Number), r = Number(a[3]) || 2; const ok = await travel((p, q, w) => hyp(p - x, q - y, w - z) <= r, (p, q, w) => hyp(p - x, q - y, w - z), { radius: 96, dig: true, pillar: true, legs: 16, nodes: 30000 }); const f = K.feet(); return K.say(`walk_to: ${ok ? 'there' : `${Math.round(hyp(f.x - x, f.y - y, f.z - z))} short`} (${Math.floor(f.x)} ${Math.floor(f.y)} ${Math.floor(f.z)})`); };
