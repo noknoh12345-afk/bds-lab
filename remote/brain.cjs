@@ -1002,7 +1002,7 @@ async function dragonFight() {
   // (BOT_NEAR_S/BOT_FAR_S: near for so many seconds, then far for so many, while it flies - to be asked to sit without standing in its
   //  fireballs the whole time; off unless both are set)
   const farByClock = () => { const n = Number(process.env.BOT_NEAR_S || 0), f = Number(process.env.BOT_FAR_S || 0); if (!n || !f) return false; return ((Date.now() - t0) / 1000) % (n + f) >= n; };
-  let finSaid = 0, circDir = 1, farMode = false; const again = new Map(); let perchRec = null, bedsBlown = 0, eatingG = false, stuckAt = null, uncageWait = 0, digSaid = 0, seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, gappleAt = 0, gapSaid = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), gaps = new Map(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
+  let finSaid = 0, circDir = 1, farMode = false, gatherAt = 0; const again = new Map(); let perchRec = null, bedsBlown = 0, eatingG = false, stuckAt = null, uncageWait = 0, digSaid = 0, seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, gappleAt = 0, gapSaid = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), gaps = new Map(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
   const gapple = async () => { if (me.hp !== null && me.hp <= (process.env.BOT_NOHEALHOLE ? 14 : 12) && Date.now() - gappleAt > 6000 && !inBreathNow()) { const g = /minecraft:(enchanted_golden_apple|golden_apple)\*/.exec(b.invText?.() ?? '')?.[1]; if (g) { gappleAt = Date.now(); log(`dragon: health ${me.hp}: a ${g.replace(/_/g, ' ')}`); eatingG = true; try { await gotoFor([g], 2600, 'eat'); } finally { eatingG = false; } return true; } } return false; };
   await gotoFor([], 8000, 'armor_up');   // (what is carried is worn)
   if (/minecraft:shield\*/.test(b.invText?.() ?? '')) await gotoFor(['shield'], 4000, 'offhand');
@@ -1418,6 +1418,15 @@ async function dragonFight() {
     // (BOT_UNCAGE only: up twenty blocks beside a pillar with the dragon about it was knocked off or breathed on, 07:44, 08:02, 08:04;
     //  it heals only within 32 blocks of one and the cages stand 42 out - sitting on the fountain it does not heal at all)
     // (while it sits: in flight it knocked the bot off the pillar every time, 21:40-22:38; sitting it stayed a minute and more)
+    // (out of blocks with a caged crystal still healing it: end stone dug from the ground about our feet, the top faces in view -
+    //  21 Nov 15:42-16:12, 13 cobblestone left after the knocked-off pillars, its bar held at 200 for half an hour)
+    if ((process.env.BOT_UNCAGE || process.env.BOT_UNCAGE_PERCH) && left.size && cnt('cobblestone') + cnt('end_stone') < 30 && !perchedNow() && !inCloud() && (me.hp ?? 0) >= 14 && Date.now() - (gatherAt ?? 0) > 90000 && /pickaxe/.test(b.invText?.() ?? '')) {
+      gatherAt = Date.now(); const c0 = cnt('end_stone'); log(`dragon: out of blocks for the cages (${cnt('cobblestone')} cobblestone): end stone from the ground`); await holdPick();
+      for (let t = 0, d = 0; t < 40 && cnt('cobblestone') + cnt('end_stone') < 40 && !inCloud() && (me.hp ?? 0) >= 12 && !b.state().dead; t++) { const F = b.state().pos, x1 = Math.floor(F.x), y1 = Math.floor(F.y + 0.01), z1 = Math.floor(F.z);
+        const cell = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1], [2, 0], [-2, 0], [0, 2], [0, -2]].map(([dx, dz]) => [x1 + dx, z1 + dz]).find(([x, z]) => bname(x, y1 - 1, z) === 'end_stone' && bname(x, y1, z) === 'air' && Math.hypot(x, z) > 6);
+        if (!cell) { await gotoFor([String(x1 + 3), String(z1)], 2500); continue; }
+        const n0 = cnt('end_stone'); await gotoFor([String(cell[0]), String(y1 - 1), String(cell[1])], 3000, 'dig'); await sleep(400); if (cnt('end_stone') <= n0 && ++d > 6) break; }
+      log(`dragon: end stone ${c0} → ${cnt('end_stone')}`); continue; }
     // (blocks for the cage pillars are carried, not dug here: 06:47, the ground beside us 'not under the crosshair' and nothing
     //  gained - 256 are brought, see get_cobblestone)
     if ((process.env.BOT_UNCAGE || process.env.BOT_UNCAGE_PERCH) && !uncaging && Date.now() > uncageWait && (process.env.BOT_UNCAGE_PERCH ? perchedNow() : !perchedNow()) && (me.hp ?? 0) >= 16 && left.size && !crystals.length && cnt('arrow') > 0 && cnt('cobblestone') + cnt('end_stone') >= 24 && /pickaxe/.test(b.invText?.() ?? '')) {
