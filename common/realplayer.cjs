@@ -648,10 +648,10 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
   // a screen asked for: its container_open is the server's answer, lag ticks away (at 20x 5-40). One that comes after this client
   // gave up on it is shut at once (the client thought no screen was open while the server had one: the moves, hits and clicks
   // after it went nowhere - a crafting table marked "would not open" and left behind)
-  let boxGaveUp = 0n;
+  let boxGaveUp = 0n, opening = 0;   // (opening: an 'open' still trying faces - a screen from its previous click is the one it wants)
   const boxWait = async (n = 20) => { boxGaveUp = 0n; const m = Math.max(n, Math.ceil(4 * lag) + 10); for (let k = 0; !box && k < m; k++) await ticks(1); if (!box) boxGaveUp = tick + 400n; return !!box; };
   client.on('container_open', (p) => {
-    if (boxGaveUp && tick < boxGaveUp) { boxGaveUp = 0n; client.queue('container_close', { window_id: p.window_id, window_type: p.window_type, server: false }); say(`(a ${p.window_type} screen opened too late: shut)`); return; }
+    if (boxGaveUp && tick < boxGaveUp && !opening) { boxGaveUp = 0n; client.queue('container_close', { window_id: p.window_id, window_type: p.window_type, server: false }); say(`(a ${p.window_type} screen opened too late: shut)`); return; }
     box = { window: p.window_id, type: p.window_type, slots: [], pos: p.coordinates };
   });
   // a mount's inventory (horse, donkey, llama: saddle, armor, chest) opens with UpdateEquip, not ContainerOpen
@@ -1948,11 +1948,16 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           await boxWait();
           return box ? ticks(2) : say('open: the inventory did not open');
         }
-        box = null;
-        await bot.act('useon', a.slice(0, 3).concat(a[3] ?? '1'));
-        await boxWait();
-        // (its top out of sight - a table set down in a low tunnel: any side opens it as well, as a player clicks the face it sees)
-        if (!box && !a[3]) for (const fc of ['2', '3', '4', '5', '0']) { await bot.act('useon', a.slice(0, 3).concat(fc)); await boxWait(); if (box) break; }
+        box = null; opening++;
+        try {
+          await bot.act('useon', a.slice(0, 3).concat(a[3] ?? '1'));
+          await boxWait();
+          // (its top out of sight - a table set down in a low tunnel: any side opens it as well, as a player clicks the face it sees)
+          // (a screen that comes late - the Nether's lag, 11/21 the lab: ten 'opened too late: shut' in a row and no pickaxe made -
+          //  is taken while still trying, not shut: one more wait before the next face)
+          if (!box && !a[3]) for (const fc of ['2', '3', '4', '5', '0']) { await boxWait(10); if (box) break; await bot.act('useon', a.slice(0, 3).concat(fc)); await boxWait(); if (box) break; }
+          if (!box) await boxWait(20);
+        } finally { opening--; }
         return box ? ticks(4) : say('open: no container opened');
       }
       case 'move': {
