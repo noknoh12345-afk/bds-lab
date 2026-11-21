@@ -1041,7 +1041,7 @@ async function dragonFight() {
       //  31 s perch gone by with no sword and no bed even at 0.8 of berth - a second in its breath costs less than a perch)
       // (its last 30 points, health 17+: through it then - 21 Nov 12:47, its bar at 5 for ten minutes with no arrows, every perch 'no way
       //  to it clear of its breath')
-      if (!opts.length && mid && ((me.hp ?? 0) >= Number(process.env.BOT_PERCH_THROUGH_HP ?? 21) || (bar() <= 30 && bar() > 0 && (me.hp ?? 0) >= 17))) { if (Date.now() - (walk.thru ?? 0) > 15000) { walk.thru = Date.now(); log(`dragon: through its breath to it while it sits (health ${me.hp})`); } eatingG = true; try { await dash(tx, tz, 2500); } finally { eatingG = false; } return; }
+      if (!opts.length && mid && ((me.hp ?? 0) >= Number(process.env.BOT_PERCH_THROUGH_HP ?? 21) || (bar() <= 30 && bar() > 0 && (me.hp ?? 0) >= 17))) { if (Date.now() - (walk.thru ?? 0) > 15000) { walk.thru = Date.now(); log(`dragon: through its breath to it while it sits (health ${me.hp})`); } walk.thruAt = Date.now(); eatingG = true; try { await dash(tx, tz, 2500); } finally { eatingG = false; } return; }
       if (!opts.length) { if (Date.now() - (walk.said ?? 0) > 15000) { walk.said = Date.now(); log(`dragon: no way to ${Math.round(tx)} ${Math.round(tz)} clear of its breath: waiting`); }
         // (not waiting inside one: 05:30, 'waiting' with its breath on us, 20 to 3 in fourteen seconds - straight away from its middle)
         const e0 = cl.map((e) => ({ e, d: Math.hypot(Q.x - e.x, Q.z - e.z) })).filter((x) => x.d < cr(x.e) + 1.5).sort((u, w) => u.d - w.d)[0];
@@ -1328,7 +1328,9 @@ async function dragonFight() {
     // (while it sits and health is 12+, only a cloud we stand in or a fireball sends us off - not one six blocks off: 20:24-20:25 on
     //  19 Nov, a 57 s perch of approach, 'away', approach, and no swing; the escape ran ten past its edge every time)
     const cloudIn = cloud && (/dragon_fireball$/.test(cloud.type ?? '') || Math.hypot(cloud.x - P.x, cloud.z - P.z) < cr(cloud) + 0.6);
-    if (cloud && !(perched && (me.hp ?? 20) >= 12 && (Math.hypot(P.x, P.z) < 9 || !cloudIn))) { let ux = P.x - cloud.x, uz = P.z - cloud.z; const l = Math.hypot(ux, uz) || 1; ux /= l; uz /= l; const far = (cloud.radius ?? 3) + 10; let tx = cloud.x + ux * far, tz = cloud.z + uz * far;
+    // (21 Nov 17:39-17:41: through its breath to it at its bar of 3, and at once 'away' out of the same breath - three times. Just
+    //  through it, 4 s more in it with 10+ health)
+    if (cloud && !(perched && (me.hp ?? 20) >= 12 && (Math.hypot(P.x, P.z) < 9 || !cloudIn)) && !(perched && Date.now() - (walk.thruAt ?? 0) < 4000 && (me.hp ?? 0) >= 10)) { let ux = P.x - cloud.x, uz = P.z - cloud.z; const l = Math.hypot(ux, uz) || 1; ux /= l; uz /= l; const far = (cloud.radius ?? 3) + 10; let tx = cloud.x + ux * far, tz = cloud.z + uz * far;
       if (Math.hypot(tx, tz) < 14) { const l2 = Math.hypot(P.x, P.z) || 1; tx = (P.x / l2) * 24; tz = (P.z / l2) * 24; }   // (never through the middle)
       if (Math.hypot(tx, tz) > 42) { tx = P.x - uz * 14; tz = P.z + ux * 14; if (Math.hypot(tx, tz) > 42) { tx = P.x + uz * 14; tz = P.z - ux * 14; } }
       // (20 Nov 19:50 and 19:59 in the lab: dead out at radius 33 'fleeing' - away from the nearest cloud into the next one, fireballs
