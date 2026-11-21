@@ -1076,7 +1076,7 @@ async function dragonFight() {
   // (no cancel while a golden apple is being eaten: 10:52-10:53 on 19 Nov, 18 → 1 in eleven seconds in its breath and no apple
   //  went down - the cloud watch cancelled every eat at once)
   const watch = setInterval(() => { if (delegating || eatingG) return; if (!guarding && !fleeing && !inFight && me.connected && charging()) b.cancel?.(); }, 250);
-  const watch2 = setInterval(() => { if (delegating || eatingG) return; if (me.hp !== null && wHp !== null && me.hp < wHp - 0.5) wHurt = Date.now(); wHp = me.hp; if (!fleeing && (!inFight || inCloud()) && me.connected && (inCloud() || (emOnMe() && !emFight))) { b.cancel?.(); if (inCloud()) onPillar = null; } }, 300);
+  const watch2 = setInterval(() => { if (delegating || eatingG || (Date.now() - (walk.thruAt ?? 0) < 4000 && (me.hp ?? 0) >= 10)) return; if (me.hp !== null && wHp !== null && me.hp < wHp - 0.5) wHurt = Date.now(); wHp = me.hp; if (!fleeing && (!inFight || inCloud()) && me.connected && (inCloud() || (emOnMe() && !emFight))) { b.cancel?.(); if (inCloud()) onPillar = null; } }, 300);
   // (an apple before anything at 8 or less: 21:00 on 19 Nov, its bar at 1 of 200, us at 4.4 with seven apples left, and seventeen
   //  seconds of dashes from its breath with none eaten - then dead. Whatever is going on is cut short so the round's apple comes)
   let lowSaid = 0;
