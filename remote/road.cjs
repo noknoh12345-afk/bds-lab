@@ -440,6 +440,7 @@ B.road_obsidian = () => stepRun('road_obsidian', async () => {
 });
 // the enchanting room's makings: the table, fifteen bookshelves (45 books), wooden shovels to buy new offers with
 B.road_books = () => stepRun('road_books', async () => {
+  await tidy(6);   // (room for the crafting first: the library's walk left the bag full of stone - 'craft crafting_table did not work')
   const need = () => roomKnown() && (st.room.shelves ?? 15) >= 15 ? [['wooden_shovel', 3]] : [['enchanting_table', 1], ['bookshelf', 15], ['wooden_shovel', 3]];
   const short = () => need().filter(([it, m]) => n(new RegExp(`^${it}$`)) < m);
   // the paper first from the cane farm (planted early: road_cane), the leather meanwhile; short of cane, the wait is used (cobblestone
@@ -686,7 +687,7 @@ async function tidy(want = 4) {
 // probes dead at night); ROAD_NIGHT=fight leaves it to the old rule (armed and well: on in the dark)
 const nightPolicy = () => { const on = process.env.ROAD_NIGHT !== 'fight' && !(K() && allProt4()); me.nightIn = on; K()?.memo?.set('goal:nightIn', on); };
 if (me.roadTidy) clearInterval(me.roadTidy);
-me.roadTidy = setInterval(() => { try { nightPolicy(); } catch { /* */ } if (!tidy.busy) { tidy.busy = true; tidy().catch(() => {}).finally(() => { tidy.busy = false; }); } }, 15000);
+me.roadTidy = setInterval(() => { try { nightPolicy(); } catch { /* */ } if (!tidy.busy) { tidy.busy = true; tidy(5).catch(() => {}).finally(() => { tidy.busy = false; }); } }, 15000);
 B.road_debug = async (a) => { debug = a[0] !== 'off'; log(`road_debug ${debug ? 'on' : 'off'}`); };
 B.road_status = async () => log(`road_status: ${JSON.stringify(st)} · armour ${armourText()} · level ${level()}`);
 
