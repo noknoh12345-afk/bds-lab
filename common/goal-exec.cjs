@@ -2215,6 +2215,7 @@ function goalVerbs(K, H) {
     return lv() >= level;
   }
   async function netherSeek(maxSec = 600) {
+    netherSeek.idle = 0;
     const t0 = Number(K.tick()), dbg = !!process.env.LAB_GOAL_DEBUG;
     let dir = Math.random() * Math.PI * 2;
     for (let leg = 0; (Number(K.tick()) - t0) / 20 < maxSec && !K.dead(); leg++) {
@@ -2234,6 +2235,9 @@ function goalVerbs(K, H) {
       if (dbg) log(`nether: no fortress in sight at ${f.x.toFixed(0)} ${f.y.toFixed(0)} ${f.z.toFixed(0)}: a leg toward ${tx.toFixed(0)} ${tz.toFixed(0)}`);
       await tunnelTo(tx, tz, 180, 4);
       const g = K.feet(); dir += hyp(g.x - f.x, g.z - f.z) < 12 ? 0.9 : Math.PI / 2;   // (blocked that way: turned a little; else the quarter turn)
+      // (a leg that went nowhere at once - no pickaxe, shut in: a real wait, and given up after six - 11/21 the loop ran a 160-block
+      //  block search back to back at 70% CPU for 15 minutes, no log)
+      if (hyp(g.x - f.x, g.z - f.z) < 2) { await K.ticks(20); if (++netherSeek.idle >= 6) { netherSeek.idle = 0; log('nether: no headway on six legs - giving up the search'); return null; } } else netherSeek.idle = 0;
     }
     return null;
   }
