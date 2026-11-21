@@ -203,7 +203,8 @@ const S = {
   },
   // auto from the iron kit (the early steps behind it) until Protection IV is on all four: mine, obsidian, books, the room, the Nether
   async road_from_iron() {
-    return road({ kit: [...IRON_KIT, 'wooden_sword', 'stone_pickaxe', 'stone_sword'], ms: 8 * 3600000, check: (c) => ARMOUR.every((p) => protOf(c, p) >= 4),
+    // (pass: in the End with Protection IV on all four - the road now enchants at the stronghold; ROAD_KIT more to give)
+    return road({ kit: [...IRON_KIT, 'wooden_sword', 'stone_pickaxe', 'stone_sword', ...(process.env.ROAD_KIT ?? '').split(',').filter(Boolean)], ms: 8 * 3600000, check: (c) => c.dim === 'the_end' && ARMOUR.every((p) => protOf(c, p) >= 4),
       why: (c) => ` · Protection ${ARMOUR.map((p) => protOf(c, p)).join('/')}, level ${c.lv}, ${['diamond', 'lapis_lazuli', 'obsidian', 'bookshelf', 'enchanting_table', 'blaze_rod'].map((k) => `${k} ${c.m[k] ?? 0}`).join(', ')}`,
       setup: async () => { if (process.env.ROAD_AT) await moveTo(process.env.ROAD_AT); } });
   },
