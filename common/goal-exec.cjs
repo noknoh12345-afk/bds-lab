@@ -4191,6 +4191,11 @@ function goalVerbs(K, H) {
     }
     return K.say(`pearl_hunt: pearls ${have()} of ${want} (${kills} endermen in ${Math.round((Number(K.tick()) - t0) / 20)} s)`);
   };
+  // fight_near [sec]: the monsters at hand fought, nearest first, with the goal's own fighting (spacing, shield, crits) - the brain's
+  // way out under the ground when one is already on it (a shelter dug with a zombie hitting failed and the bot died at y -3)
+  M.fight_near = async (a) => { const t0 = Number(K.tick()), maxSec = Number(a[0]) || 20; let n = 0;
+    while ((Number(K.tick()) - t0) / 20 < maxSec && !K.dead()) { const q = foesNear(6)[0]; if (!q) break; try { await fightOne(q.e, 20); } catch { /* */ } if (!K.all().includes(q.e)) n++; await K.ticks(2); }
+    return K.say(`fight_near: ${n} down, health ${Math.round(K.attrs().health ?? 0)}`); };
   // walk_to x y z [r]: to within r of a point, under the ground too (dug through where needed) - back to the enchanting room down in the
   // stronghold from its spawner (the brain's surface walk dug up and down between y 7 and 8 for a minute instead)
   M.walk_to = async (a) => { const [x, y, z] = a.slice(0, 3).map(Number), r = Number(a[3]) || 2; const ok = await travel((p, q, w) => hyp(p - x, q - y, w - z) <= r, (p, q, w) => hyp(p - x, q - y, w - z), { radius: 96, dig: true, pillar: true, legs: 16, nodes: 30000 }); const f = K.feet(); return K.say(`walk_to: ${ok ? 'there' : `${Math.round(hyp(f.x - x, f.y - y, f.z - z))} short`} (${Math.floor(f.x)} ${Math.floor(f.y)} ${Math.floor(f.z)})`); };
