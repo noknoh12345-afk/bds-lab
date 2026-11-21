@@ -3327,6 +3327,9 @@ function goalVerbs(K, H) {
     if (!(await goToBlock(...s))) return fail(`could not get to the ${kind} at ${s.join(' ')}`);
     await emptyHand();
     await K.act('open', s.map(S));
+    // (no screen: once more after an Esc and a moment - a screen this client still thought open kept every later click from opening
+    //  one; 11/20 a crafting table 'did not open' for half an hour, new tables crafted one after another)
+    if (!want.test(K.screen()) && !again) { await K.act('close').catch(() => {}); await K.ticks(10); await K.sync(); await K.act('open', s.map(S)); for (let t = 0; t < 20 && !want.test(K.screen()); t++) await K.ticks(1); }
     if (!want.test(K.screen())) return fail(`the ${kind} at ${s.join(' ')} did not open (screen: ${K.screen() || 'none'})`);
     return true;
   }
