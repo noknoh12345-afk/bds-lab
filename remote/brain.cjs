@@ -555,7 +555,8 @@ async function breakAway(b, foes) {
   // zombie and a skeleton through the dark - dead at y 23, twice) - shut in where it stands, the goal's shelter (a wall, a lid)
   if (me.dim === 'overworld' && !openSky(b, b.state().pos) && b.state().pos.y < 55) {
     // (one already at hand and a sword: fought there and then - digging in with it hitting failed, dead at y -3)
-    if (me.armed && foes.some((f) => f.d < 3.5) && foes.length <= 3) { log(`fight: under the ground - fighting the ${foes.length} at hand`); const t2 = setTimeout(() => b.cancel?.(), 40000); try { await b.act('fight_near', ['30']).catch(() => {}); } finally { clearTimeout(t2); } return; }
+    const inSh = (() => { const fr = b.K?.memo?.get('goal:frames'), q = b.state().pos; return fr && Math.hypot(fr.x - q.x, fr.z - q.z) < 120; })();   // (in the stronghold: no hole dug down out of its rooms into the caves under them - 11/21 the bot ended at y -4 under the portal room, a creeper)
+    if ((me.armed && foes.some((f) => f.d < 3.5) && foes.length <= 3) || inSh) { log(`fight: under the ground - fighting the ${foes.length} at hand`); const t2 = setTimeout(() => b.cancel?.(), 40000); try { await b.act('fight_near', ['30']).catch(() => {}); } finally { clearTimeout(t2); } return; }
     log(`fight: under the ground - shutting myself in from ${foes.length} (${foes.map((f) => f.e.type.replace('minecraft:', '')).join(' ')})`);
     const t = setTimeout(() => b.cancel?.(), 60000); try { await b.act('shelter', []).catch(() => {}); } finally { clearTimeout(t); }
     return;
