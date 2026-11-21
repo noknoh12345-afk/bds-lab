@@ -658,7 +658,7 @@ const kitMissing = () => KIT.filter(([, f]) => !f()).map(([k]) => k);
 B.road_kit = () => stepRun('road_kit', async () => { const m = kitMissing(); return m.length ? `still missing: ${m.join(', ')}` : true; });
 // ---------- room in the bag: junk dropped when the inventory is nearly full (11/20 a miner with 580 cobbled deepslate could not craft
 // a table: 'inventory full', and its golden apple step ended there after 27 minutes) ----------
-const KEEP = { stone_bricks: 0, mossy_stone_bricks: 0, cracked_stone_bricks: 0, chiseled_stone_bricks: 0, mossy_cobblestone: 0, iron_bars: 0, stone_brick_stairs: 0, stone_brick_slab: 0, oak_fence: 0, string: 8, paper: 0, map: 0, empty_map: 0, cobweb: 0, web: 0,   // (the stronghold's own blocks, dug through to its library: 11/20 'inventory full' crafting the shovels)
+const KEEP = { enchanted_book: 0, stone_bricks: 0, mossy_stone_bricks: 0, cracked_stone_bricks: 0, chiseled_stone_bricks: 0, mossy_cobblestone: 0, iron_bars: 0, stone_brick_stairs: 0, stone_brick_slab: 0, oak_fence: 0, string: 8, paper: 0, map: 0, empty_map: 0, cobweb: 0, web: 0,   // (the stronghold's own blocks, dug through to its library: 11/20 'inventory full' crafting the shovels)
   cobblestone: 320, cobbled_deepslate: 64, netherrack: 64, blackstone: 32, gravel: 16, dirt: 16, sand: 0, diorite: 0, andesite: 0, granite: 0, tuff: 0, calcite: 0, basalt: 0, smooth_basalt: 0, deepslate: 0, rotten_flesh: 0, spider_eye: 0, poisonous_potato: 0, wheat_seeds: 0, pumpkin_seeds: 0, beetroot_seeds: 0, cobweb: 0, flint_and_steel_broken: 0, bone: 8, arrow_stuck: 0, red_sand: 0, terracotta: 0, magma: 0, soul_sand: 0, soul_soil: 0, moss_block: 0, clay_ball: 0, kelp: 0, ink_sac: 0, gold_nugget: 999, egg: 0, mud: 0, stick: 64 };
 async function tidy(want = 4) {
   const k = K(); if (!k || !me.connected) return;
@@ -677,7 +677,9 @@ async function tidy(want = 4) {
   if (want > 4 && free() < want) {
     const have = (re) => slots().some((it, i) => i < 36 && re.test(nameOf(it)));
     const spare = (nmx) => (/^(stone|wooden|golden)_(axe|pickaxe|sword|shovel|hoe)$/.test(nmx) && nmx !== 'wooden_shovel' && have(new RegExp(`^(iron|diamond|netherite)_${nmx.split('_')[1]}$`))) || /^(dirt|gravel|sand|red_sand|clay_ball|leaf_litter|rotten_flesh|spider_eye|bone|wheat_seeds|flint|raw_copper|copper_ingot|copper_(helmet|chestplate|leggings|boots)|golden_(helmet|chestplate|leggings|boots)|leather_(helmet|chestplate|leggings|boots))$/.test(nmx);
-    for (let i = 0; i < 36 && free() < want; i++) { const it = slots()[i]; if (it?.network_id && spare(nameOf(it))) { await act('drop_all', [i]); await sleep(150); } }
+    // (and what the new offers were bought with: an enchanted shovel or book is of no more use, and they do not stack - six enchanted
+    //  books filled the bag and the lapis could not come back off the table)
+    for (let i = 0; i < 36 && free() < want; i++) { const it = slots()[i]; if (it?.network_id && (spare(nameOf(it)) || (/^(wooden_shovel|wooden_hoe|stone_shovel|stone_hoe|wooden_sword|wooden_pickaxe|wooden_axe|fishing_rod|book|enchanted_book)$/.test(nameOf(it)) && (enchOf(it).length || nameOf(it) === 'enchanted_book')))) { await act('drop_all', [i]); await sleep(150); } }
   }
 }
 // every night dug in until Protection IV is on (11/20 in the lab, in plain iron: a witch, then zombies and a skeleton in a cave, both
