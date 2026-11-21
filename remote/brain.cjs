@@ -1622,6 +1622,9 @@ async function auto() {
     for (let tries = 0; live(); tries++) {
       await reviewWait();
       await goFar();
+      // (armour carried is worn: a step whose things are all had is skipped, its armor_up with it - 11/21 the lab walked out from the
+      //  iron kit with the armour in the bag and died to a drowned's trident; after a death the armour picked up again is carried too)
+      if (/_(helmet|chestplate|leggings|boots)\*/.test(me.bot?.invText?.() ?? '')) await run('armor_up', 'the armour carried, worn');
       log(`auto: step "${st.name}"${tries ? ` (try ${tries + 1})` : ''}`, { dc: !tries });
       let ok = true;
       if (st.special === 'dragon') ok = await dragon();
