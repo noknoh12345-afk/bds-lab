@@ -712,6 +712,7 @@ function goalVerbs(K, H) {
   }
   // go until goal() holds at the feet cell; long ways in legs (each leg as far as the known world allows)
   async function travel(goal, h, o = {}) {
+    if (K.memo.get('goal:noDig')) o = { ...o, dig: false };   // (round the stronghold's spawner: no digging at all - its floor was dug full of holes chasing silverfish)
     let stuck = 0, best = Infinity;
     const deaths0 = K.memo.get('goal:deaths') ?? 0;
     for (let leg = 0; leg < (o.legs ?? 12); leg++) {
@@ -4306,18 +4307,20 @@ function goalVerbs(K, H) {
     // the lava round it filled first (a stronghold's portal room: a pool under the portal, a strip in two corners - 11/20 the lab, of 26
     // silverfish 21 ended in the lava, no experience, and the bot ran into it from one: dead)
     await fillLavaNear(sp, 9, 'spawner_xp');
+    K.memo.set('goal:noDig', true);
+    try {
     while ((Number(K.tick()) - t0) / 20 < maxSec && lv() < target && !K.dead() && !late()) {
       const f = K.feet(), now = Number(K.tick()), at = K.attrs(), hp = at.health ?? 20;
       if ((hp < 12 || (at['player.hunger'] ?? 20) < 14) && now - ateAt > 60 && K.screen() === '') { const fd = FOOD.find(edible); if (fd) { ateAt = now; stopKeys(); await grab(fd, 'eat'); await K.act('use', ['36']); if (w) await grab(w, 'fight'); continue; } }
       if (hp < 7 && !FOOD.some((x) => cnt(x) > 0)) { log('spawner_xp: hurt and nothing to eat - stopping'); break; }
       // (an hour of silverfish wears a sword out - 11/21 the iron one gone, then the fights went on bare-handed for an hour: a new one made)
-      if (!WEAPONS.some((x) => cnt(x) > 0) && now - (spawnerXpArm ?? -1e9) > 1200) { spawnerXpArm = now; log('spawner_xp: the sword is worn out - making another'); stopKeys(); try { await M.get(['stone_sword']); } catch (e) { log(`spawner_xp: no sword made: ${e.message}`); } const w2 = WEAPONS.find((x) => cnt(x) > 0); if (w2) await grab(w2, 'fight'); continue; }
+      if (!WEAPONS.some((x) => cnt(x) > 0) && now - (spawnerXpArm ?? -1e9) > 1200) { spawnerXpArm = now; log('spawner_xp: the sword is worn out - making another'); stopKeys(); K.memo.set('goal:noDig', false); try { await M.get(['stone_sword']); } catch (e) { log(`spawner_xp: no sword made: ${e.message}`); } finally { K.memo.set('goal:noDig', true); } const w2 = WEAPONS.find((x) => cnt(x) > 0); if (w2) await grab(w2, 'fight'); continue; }
       // (within 4 of the spawner, not on top of it: it spawns round the player inside 4 blocks of itself, and only with a player within 16)
       // (on the floor round it, not under it: 11/20 the probe ended up at y 9 in the floor under the spawner, the silverfish over its
       //  head 'broken off after 0 blows' for twenty minutes)
       // (up at its own height: from the floor two below, the silverfish on its platform were out of reach - nine minutes, no kill)
       if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 7 || f.y < sp.y - 2.5) {
-        const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 3 && y >= sp.y - 1 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: true, pillar: true, legs: 8, nodes: 30000 });
+        const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 3 && y >= sp.y - 1 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: false, pillar: true, legs: 8, nodes: 30000 });   // (no digging round the spawner: 11/21 the portal room's floor was dug full of holes into the caves under it, its lava running down them)
         if (!ok) { const g = K.feet(); spawnerMiss++; log(`spawner_xp: no way to the spawner at ${sp.x} ${sp.y} ${sp.z} from ${Math.floor(g.x)} ${Math.floor(g.y)} ${Math.floor(g.z)} (${spawnerMiss})`); if (spawnerMiss >= 4) break; await K.ticks(20); }
         continue; }
       // (one it cannot get at - in the wall, under the floor - is let be after two tries: 'could not get near' at once, again and
@@ -4330,9 +4333,10 @@ function goalVerbs(K, H) {
       // (nothing sent for three minutes: another side of it, a little further off - 11/20 two bots stood 20 minutes beside the spawner
       //  with nothing coming once they were right up against it)
       if (Number(K.tick()) - lastKill > 3600) { side++; const ang = side * 2.1, r = 3 + (side % 3); const tx = Math.round(sp.x + Math.cos(ang) * r), tz = Math.round(sp.z + Math.sin(ang) * r);
-        log(`spawner_xp: nothing for 3 minutes - over to ${tx} ${tz}`); await travel((x, y, z) => hyp(x - tx, z - tz) <= 1.5 && Math.abs(y - sp.y) <= 2, (x, y, z) => hyp(x - tx, y - sp.y, z - tz), { radius: 24, dig: true, legs: 3 }); lastKill = Number(K.tick()); continue; }
+        log(`spawner_xp: nothing for 3 minutes - over to ${tx} ${tz}`); await travel((x, y, z) => hyp(x - tx, z - tz) <= 1.5 && Math.abs(y - sp.y) <= 2, (x, y, z) => hyp(x - tx, y - sp.y, z - tz), { radius: 24, dig: false, legs: 3 }); lastKill = Number(K.tick()); continue; }
       await K.ticks(10);
     }
+    } finally { K.memo.set('goal:noDig', false); }
     return K.say(`spawner_xp: level ${lv()} of ${target} (${kills} killed in ${Math.round((Number(K.tick()) - t0) / 20)} s)`);
   };
   M.stronghold = async (a) => { const mf = K.memo.get('goal:frames'), ff = K.feet(); const fr = mf && hyp(mf.x - ff.x, mf.z - ff.z) < 300 ? mf : await findStronghold(Number(a[0]) || 900); if (!fr) return K.say('stronghold: not found'); return K.say(`stronghold: ${(await intoEndPortal(fr)) ? 'in the End' : 'not in'}`); };
