@@ -1152,6 +1152,12 @@ async function dragonFight() {
       // (11:05-11:08: the same pit at 46 48 -15 again, and the pillar rose two under an overhang. Up through it to the sky then -
       //  goal-exec's to_surface digs its own way - and only if that fails a walk toward the middle)
       if (Math.floor(b.state().pos.y + 0.01) < Math.min(56, y0 + 4)) { log(`dragon: the pillar stopped at ${Math.floor(b.state().pos.y + 0.01)}: up to the sky by digging`); await holdPick(); delegating = true; try { await gotoFor([], 40000, 'to_surface'); } finally { delegating = false; } }
+      // (21 Nov 11:37: under the island's overhang at 38 40 -32, the pillar stopped at 42 and to_surface said 'out' after one block.
+      //  Up by hand then: the block over the head out, one up, again - to 57 or twenty rounds)
+      if (Math.floor(b.state().pos.y + 0.01) < Math.min(56, y0 + 4)) { log(`dragon: still under something at ${Math.floor(b.state().pos.y + 0.01)}: digging up by hand`); delegating = true; try {
+        for (let t = 0; t < 20 && Math.floor(b.state().pos.y + 0.01) < 57 && me.connected && !b.state().dead; t++) { const F = b.state().pos, x1 = Math.floor(F.x), y1 = Math.floor(F.y + 0.01), z1 = Math.floor(F.z);
+          await holdPick(); for (const h of [2, 3]) if (!/^(air|\?)$/.test(bname(x1, y1 + h, z1))) await gotoFor([String(x1), String(y1 + h), String(z1)], 4000, 'dig');
+          await gotoFor(['1', blockId()], 3000, 'pillar'); if (Math.floor(b.state().pos.y + 0.01) <= y1) break; } } finally { delegating = false; } }
       // (21 Nov 04:50-04:53: six up from the pit at 46-48 48 -16..-1 was not out of it - three times 'still at 49', back in, dead with
       //  no apples left. Up to 61: over the island's own ground beside it)
       if (Math.floor(b.state().pos.y + 0.01) < 56) { log(`dragon: still at ${Math.floor(b.state().pos.y + 0.01)}: a walk toward the middle`); await gotoFor([String(Math.round(P.x * 0.6)), String(Math.round(P.z * 0.6))], 15000); }
