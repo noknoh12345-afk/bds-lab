@@ -1986,6 +1986,11 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           if (dst.item?.network_id && !sameItem) stackReq([{ type_id: 'swap', legacy_type_id: LEGACY.swap, source: slotInfo(src.c, src.slot, src.item, src.dyn), destination: slotInfo(dst.c, dst.slot, dst.item) }]);
           else stackReq([{ type_id: 'place', legacy_type_id: LEGACY.place, count: n, source: slotInfo(src.c, src.slot, src.item, src.dyn), destination: slotInfo(dst.c, dst.slot, dst.item?.network_id ? dst.item : null) }]);
           res = await r;
+          // (armour and offhand: the server sends nothing back for a move it accepts, and the inventory resync covers only the bag - 11/21
+          //  the brain read every armour slot as empty all run, iron on: its fight odds ran from one skeleton)
+          if (res === 'ok') { const swapped = dst.item?.network_id && !sameItem;
+            if (dst.c === 'armor' || dst.c === 'offhand') inv[dst.c][dst.slot === 1 && dst.c === 'offhand' ? 0 : dst.slot] = { ...src.item, count: n };
+            if (src.c === 'armor' || src.c === 'offhand') inv[src.c][src.slot === 1 && src.c === 'offhand' ? 0 : src.slot] = swapped ? dst.item : undefined; }
           if (res === 'ok') say(`moved ${iname(src.item).replace(/\*\d+$/, '')}*${n} ${a[0]} -> ${a[1]}`);
           else say(`move rejected: ${res}`);
           }
