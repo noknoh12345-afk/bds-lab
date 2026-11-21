@@ -1048,6 +1048,9 @@ async function dragonFight() {
         if (e0) { const l = e0.d || 1, ux = e0.d < 0.3 ? 1 : (Q.x - e0.e.x) / l, uz = e0.d < 0.3 ? 0 : (Q.z - e0.e.z) / l, run = cr(e0.e) + 3 - e0.d; await dash(Q.x + ux * run, Q.z + uz * run, 2500); return; }
         // (not waiting by the fountain either: 21 Nov 07:07, 'waiting' at -2 5 beside it as it sat, its breath came down on us, 18.6 to
         //  dead in four seconds. Out to 12 from the middle to wait)
+        // (it sits and there is no way to it clear of its breath: the bow at it where it sits - a still mark. 21 Nov 21:27-21:31, eight
+        //  perches in a row passed with 59 arrows carried, 'no way to 4 -2 clear of its breath: waiting')
+        { const dS = ents(/ender_dragon$/)[0], lq0 = Math.hypot(Q.x, Q.z); if (mid && dS && lq0 >= 8 && cnt('arrow') > Number(process.env.BOT_ARROW_KEEP ?? 16) && !cl.some((e) => Math.hypot(Q.x - e.x, Q.z - e.z) < cr(e) + 1)) { if (Date.now() - (walk.bowSaid ?? 0) > 20000) { walk.bowSaid = Date.now(); log('dragon: no way to it: the bow at it where it sits'); } await shootAt(dS.x, dS.y + 1.5, dS.z); return; } }
         { const lq = Math.hypot(Q.x, Q.z); if (mid && lq < 11) { const ux = lq < 0.5 ? 1 : Q.x / lq, uz = lq < 0.5 ? 0 : Q.z / lq; await dash(ux * 12, uz * 12, 2500); return; } }
         await sleep(400); return; } [tx, tz] = opts[0]; }
     await down(); await gotoFor([String(Math.round(tx)), String(Math.round(tz))], ms);
