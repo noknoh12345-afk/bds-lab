@@ -2198,6 +2198,10 @@ function goalVerbs(K, H) {
     // (the overworld's own: down to the deepslate first, where redstone (1-5 XP an ore), lapis (2-5), diamonds and gold lie - a tunnel
     //  there is shut in on every side, unlike the Nether's caverns)
     if (!nether && feet()[1] > -40) { await stairDown(-56, () => false); }
+    // (the Nether's open ground - a basalt delta's magma cubes, a soul sand valley's skeletons - left by a stair down into the netherrack
+    //  under it first; 11/21 the quartz tunnel ran out from the walled portal across a delta and four magma cubes killed the bot)
+    if (nether) { const [x, y, z] = feet(); let open = 0; for (let dx = -6; dx <= 6; dx += 2) for (let dz = -6; dz <= 6; dz += 2) if (/basalt|blackstone|magma|soul_sand|soul_soil/.test(bname(x + dx, y - 1, z + dz))) open++;
+      if (open >= 6 && y > 45) { log(`quartz: open ground here (${open} of 49 basalt/soul sand) - a stair down into the netherrack first`); await stairDown(Math.max(36, y - 14), () => false); } }
     const lv = () => K.attrs()['player.level'] ?? 0;
     // (the way with the most netherrack - quartz grows only in it - and away from soul sand: 11/20 the tunnel went through the fortress and
     //  into a soul sand valley, no quartz in 287 s and shot dead by its skeletons)
