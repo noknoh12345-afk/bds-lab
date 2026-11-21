@@ -1442,7 +1442,10 @@ async function dragonFight() {
     //  the ground. Up on a pillar of our own blocks until the underside is within reach)
     // (a pillar that does not rise is not tried again for twenty seconds: 11:46, a hundred tries in a pit with no blocks left
     //  while it sat there healing back to 162)
-    if (perched && dr && dr.y - (P.y + 1.62) > 2.4 && Date.now() - pillarFail > 20000 && cnt(blockId()) > 0) { const up = Math.min(5, Math.ceil(dr.y - (P.y + 1.62) - 1.8)), y0 = P.y; log(`dragon: ${up} up on a pillar to reach it`); await gotoFor([String(up), blockId()], 2500 * up, 'pillar'); if (b.state().pos.y < y0 + 0.9) { pillarFail = Date.now(); log(`dragon: the pillar did not rise (${cnt(blockId())} ${blockId()} left): the sword from here`); } continue; }
+    if (perched && dr && dr.y - (P.y + 1.62) > 2.4 && Date.now() - pillarFail > 20000 && cnt(blockId()) > 0) { const up = Math.min(5, Math.ceil(dr.y - (P.y + 1.62) - 1.8)), y0 = P.y; log(`dragon: ${up} up on a pillar to reach it`); await gotoFor([String(up), blockId()], 2500 * up, 'pillar');
+      // (21 Nov 10:11: 'the pillar did not rise' with its box 3.5 over the eyes - two up put the head in it. One up then: 2.5 is in reach)
+      if (b.state().pos.y < y0 + 0.9 && up > 1) { log('dragon: one up instead'); await gotoFor(['1', blockId()], 2500, 'pillar'); }
+      if (b.state().pos.y < y0 + 0.9) { pillarFail = Date.now(); log(`dragon: the pillar did not rise (${cnt(blockId())} ${blockId()} left): the sword from here`); } continue; }
     inFight = !!(perched && dr && (me.hp ?? 20) >= 12);
     // (its head points against its yaw as Bedrock sends it: its breath while sitting lay at -0.98 of yaw's way, 13:29)
     // sitting, it breathes ahead of its head: never in front of it - to its side, four and a half out from its middle (13:03-13:17
