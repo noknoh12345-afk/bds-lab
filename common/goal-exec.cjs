@@ -3307,7 +3307,8 @@ function goalVerbs(K, H) {
     // (several while the table is open: a table set down in the Nether and left behind - one that opened late, one out of reach
     // after the tunnel moved on - ended a quartz trip at level 11 with stone and sticks still carried (11/21 the lab))
     const extra = Math.max(0, Math.min(2, Math.floor((cnt('cobblestone') + cnt('cobbled_deepslate') + cnt('blackstone')) / 3) - 1, Math.floor(cnt('stick') / 2) - 1));
-    await K.act('craft', ['stone_pickaxe', String(1 + extra)]); await K.sync(); await closeScreen();
+    const said = await K.act('craft', ['stone_pickaxe', String(1 + extra)]); await K.sync(); await closeScreen();
+    if (extra) log(`stone pickaxes: ${1 + extra} asked (${cnt('stick')} sticks, ${cnt('cobblestone')} cobblestone left): ${String(said).slice(0, 80)}`);
     await pickUp('crafting_table');
     const ok = !!bestTool({ kind: 'pickaxe', tier: 1 });
     log(ok ? 'the pickaxe broke: made a new stone one here' : 'the pickaxe broke: could not make a new one here');
