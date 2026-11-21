@@ -294,6 +294,9 @@ function plan(goal, n, env0, opts = {}) {
   const stations = new Set(env0.stations ?? []);
   const env = { ...env0, have: (it) => inv.get(it) ?? 0, stations, tool: (req) => [...inv.keys()].some((it) => inv.get(it) > 0 && fits(it, req)) };
   const steps = [], problems = [], found = new Set(), making = new Set();
+  // (what could not be had once in this plan, at that many or fewer, is not searched again: 11/21 the search went down 24 levels of
+  //  alternatives again and again for a sheep's wool - the bot at 54% CPU for ten minutes, nothing else done)
+  const noWay = new Map(); let expansions = 0;
   let depth = 0;
   const add = (it, k) => inv.set(it, (inv.get(it) ?? 0) + k);
   const take = (it, k) => { const h = inv.get(it) ?? 0; inv.set(it, h - Math.min(h, k)); return Math.min(h, k); };
@@ -342,6 +345,7 @@ function plan(goal, n, env0, opts = {}) {
       if (!keep) take(it, k); return true;
     }
     if (!rs.length) { problems.push(`${it}: no way to get it from here${routesOf(it).length ? ` (${[...new Set(routesOf(it).map((r) => r.kind + ' ' + (r.block ?? r.mob ?? r.input ?? r.ings?.map((g) => g[0]).join('+') ?? '')))].slice(0, 3).join(', ')} ... none possible here)` : ''}`); return false; }
+    if ((noWay.get(it) ?? Infinity) <= need || ++expansions > 4000) { problems.push(`${it}: ${expansions > 4000 ? 'the search gave up (too many ways tried)' : 'no way (already tried)'}`); return false; }
     depth++; making.add(it);
     let ok = false;
     for (const { r } of rs) {   // the cheapest first; a way whose own needs cannot be met gives way to the next
@@ -351,7 +355,7 @@ function plan(goal, n, env0, opts = {}) {
       if (opts.firstOnly) break;
     }
     depth--; making.delete(it);
-    if (!ok) { problems.push(`${it}: every way needs something that cannot be had`); return false; }
+    if (!ok) { noWay.set(it, Math.min(noWay.get(it) ?? Infinity, need)); problems.push(`${it}: every way needs something that cannot be had`); return false; }
     if (!keep) take(it, k);
     return true;
   }
