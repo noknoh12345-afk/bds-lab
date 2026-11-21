@@ -538,7 +538,11 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40, pearls = 0 } = {}) {
   }
   if (me.dim !== 'nether') return `in the ${me.dim}, not the Nether`;
   const t0 = Date.now(), d0 = me.deaths;
-  await R.run('nether_seek 1200', 'a nether fortress');
+  // (walled in at the portal first, then the levels from quartz along a 2x1 tunnel in the netherrack - no open ground: the dragon side's
+  //  advice 11/21, after three deaths inside five minutes in the open; the fortress after that)
+  await R.run('wall_in 2', 'the portal walled round');
+  if (me.dim === 'nether' && me.deaths === d0 && level() < lv) await R.run(`quartz_mine ${lv} ${Math.max(600, Math.min(2400, minutes * 30))}`, 'levels from nether quartz (a tunnel)');
+  if (me.dim === 'nether' && me.deaths === d0) await R.run('nether_seek 1200', 'a nether fortress');
   // the rods at the spawner (and its XP); the levels after that from nether quartz along tunnels - faster than waiting for blazes at a
   // slit (the lab: about one blaze a minute)
   if (me.dim === 'nether' && me.deaths === d0 && n(/^blaze_rod$/) < rods) await R.run(`blaze_rods ${rods} ${Math.max(300, Math.min(1200, minutes * 60 - Math.round((Date.now() - t0) / 1000)))} 0`, 'blaze rods');

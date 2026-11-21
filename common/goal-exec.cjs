@@ -4207,6 +4207,15 @@ function goalVerbs(K, H) {
       const cr = foesNear(6).find((q) => /creeper/.test(q.e.type)); if (cr) { await evade('a creeper'); await K.ticks(4); continue; }
       const q = foesNear(6)[0]; if (!q) break; try { await fightOne(q.e, 20); } catch { /* */ } if (!K.all().includes(q.e)) n++; await K.ticks(2); }
     return K.say(`fight_near: ${n} down, health ${Math.round(K.attrs().health ?? 0)}`); };
+  // wall_in [r]: the open cells round the feet (r 2, three high) set with blocks - the Nether's arrival, the portal walled round before
+  // anything else (the dragon side, 11/21: magma cubes and ghasts at the portal killed the bot in 38 s); the portal's own cells kept
+  M.wall_in = async (a) => { const r = Number(a[0]) || 2, [fx, fy, fz] = feet(); let n = 0;
+    for (let dy = 0; dy <= 2; dy++) for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
+      if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;   // (the ring at r, not the cells inside)
+      const c = [fx + dx, fy + dy, fz + dz]; if (fAt(...c) & F_SOLID || /portal/.test(bname(...c)) || !blockItem()) continue;
+      if (await fillCell(c)) n++; }
+    { const lid = [fx, fy + 2, fz]; if (!(fAt(...lid) & F_SOLID) && !/portal/.test(bname(...lid)) && blockItem() && (await fillCell(lid))) n++; }
+    return K.say(`wall_in: ${n} blocks set round me`); };
   // walk_to x y z [r]: to within r of a point, under the ground too (dug through where needed) - back to the enchanting room down in the
   // stronghold from its spawner (the brain's surface walk dug up and down between y 7 and 8 for a minute instead)
   M.walk_to = async (a) => { const [x, y, z] = a.slice(0, 3).map(Number), r = Number(a[3]) || 2; const ok = await travel((p, q, w) => hyp(p - x, q - y, w - z) <= r, (p, q, w) => hyp(p - x, q - y, w - z), { radius: 96, dig: true, pillar: true, legs: 16, nodes: 30000 }); const f = K.feet(); return K.say(`walk_to: ${ok ? 'there' : `${Math.round(hyp(f.x - x, f.y - y, f.z - z))} short`} (${Math.floor(f.x)} ${Math.floor(f.y)} ${Math.floor(f.z)})`); };
@@ -4315,6 +4324,14 @@ function goalVerbs(K, H) {
     K.memo.set('goal:noDig', true);   // (before the lava too: the walks to fill it dug the floor away)
     try {
     await fillLavaNear(sp, 9, 'spawner_xp');
+    // the stone bricks round it dug first (radius 4, at its height and one under): the silverfish hidden in them come out and are
+    // fought, and the spawner's count has room again (the dragon side, 11/21: hidden ones counted and it sent no more)
+    { const BRICK = /^minecraft:(infested_\w+|stone_bricks|mossy_stone_bricks|cracked_stone_bricks|chiseled_stone_bricks|stone_brick_stairs|stone_brick_slab)$/;
+      const list = K.findBlocks((b) => BRICK.test(b.name), { max: 80, radius: 4.5, from: sp }).filter((h) => h.y >= sp.y - 1 && !(h.x === sp.x && h.z === sp.z));
+      let dug = 0;
+      for (const h of list) { if (K.dead()) break; const q = foesNear(4)[0]; if (q) { try { await fightOne(q.e, 10); } catch { /* */ } }
+        if (await goToBlock(h.x, h.y, h.z, 4)) { if (await breakAt(h.x, h.y, h.z)) dug++; } }
+      if (dug) log(`spawner_xp: ${dug} stone bricks round it dug (hidden silverfish out)`); }
     while ((Number(K.tick()) - t0) / 20 < maxSec && lv() < target && !K.dead() && !late()) {
       const f = K.feet(), now = Number(K.tick()), at = K.attrs(), hp = at.health ?? 20;
       if ((hp < 12 || (at['player.hunger'] ?? 20) < 14) && now - ateAt > 60 && K.screen() === '') { const fd = FOOD.find(edible); if (fd) { ateAt = now; stopKeys(); await grab(fd, 'eat'); await K.act('use', ['36']); if (w) await grab(w, 'fight'); continue; } }
@@ -4325,8 +4342,9 @@ function goalVerbs(K, H) {
       // (on the floor round it, not under it: 11/20 the probe ended up at y 9 in the floor under the spawner, the silverfish over its
       //  head 'broken off after 0 blows' for twenty minutes)
       // (up at its own height: from the floor two below, the silverfish on its platform were out of reach - nine minutes, no kill)
-      if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 7 || f.y < sp.y - 2.5) {
-        const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 3 && y >= sp.y - 1 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: false, pillar: true, legs: 8, nodes: 30000 });   // (no digging round the spawner: 11/21 the portal room's floor was dug full of holes into the caves under it, its lava running down them)
+      if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 7 || f.y < sp.y - 3.5) {
+        // (below it, two or three off: what it sends comes down to the sword - the dragon side's advice 11/21)
+        const ok = await travel((x, y, z) => { const hd = hyp(x - sp.x, z - sp.z); return hd >= 1.9 && hd <= 3.6 && y >= sp.y - 2 && y <= sp.y - 1; }, (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: false, pillar: true, legs: 8, nodes: 30000 });   // (no digging round the spawner: 11/21 the portal room's floor was dug full of holes into the caves under it, its lava running down them)
         if (!ok) { const g = K.feet(); spawnerMiss++; log(`spawner_xp: no way to the spawner at ${sp.x} ${sp.y} ${sp.z} from ${Math.floor(g.x)} ${Math.floor(g.y)} ${Math.floor(g.z)} (${spawnerMiss})`);
           // (shut in a hole under it with no digging allowed: dug out this once, up toward it - 11/21 four tries from y 6 and the farm ended)
           if (spawnerMiss >= 2) { K.memo.set('goal:noDig', false); try { await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 4 && y >= sp.y - 1, (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 32, dig: true, pillar: true, legs: 6, nodes: 30000 }); } finally { K.memo.set('goal:noDig', true); } }
