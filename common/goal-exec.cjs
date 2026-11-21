@@ -4246,7 +4246,8 @@ function goalVerbs(K, H) {
     //  done, and the bot fell into the pit and died there)
     await travel((x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z) <= 4.5, (x, y, z) => hyp(x - fr.x, y - fr.y, z - fr.z), { radius: 200, dig: true, pillar: true, legs: 40 });
     // (the portal room's lava filled before anything is fought there: a silverfish's knock sent the bot into a corner strip, 11/20)
-    if (hyp(K.feet().x - fr.x, K.feet().y - fr.y, K.feet().z - fr.z) < 10) await fillLavaNear(fr, 10, 'stronghold_find');
+    K.memo.set('goal:noDig', true);
+    try { if (hyp(K.feet().x - fr.x, K.feet().y - fr.y, K.feet().z - fr.z) < 10) await fillLavaNear(fr, 10, 'stronghold_find'); } finally { K.memo.set('goal:noDig', false); }
     // the pit inside the ring of frames filled level with the floor under them (the lava was in it): silverfish fell in there and
     // could not be reached from outside the frames - the spawner's count was full of them and it sent no more (11/20, 9 minutes)
     { const fs = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 12, radius: 12, from: fr });
@@ -4311,9 +4312,9 @@ function goalVerbs(K, H) {
     log(`spawner_xp: the spawner at ${sp.x} ${sp.y} ${sp.z}`);
     // the lava round it filled first (a stronghold's portal room: a pool under the portal, a strip in two corners - 11/20 the lab, of 26
     // silverfish 21 ended in the lava, no experience, and the bot ran into it from one: dead)
-    await fillLavaNear(sp, 9, 'spawner_xp');
-    K.memo.set('goal:noDig', true);
+    K.memo.set('goal:noDig', true);   // (before the lava too: the walks to fill it dug the floor away)
     try {
+    await fillLavaNear(sp, 9, 'spawner_xp');
     while ((Number(K.tick()) - t0) / 20 < maxSec && lv() < target && !K.dead() && !late()) {
       const f = K.feet(), now = Number(K.tick()), at = K.attrs(), hp = at.health ?? 20;
       if ((hp < 12 || (at['player.hunger'] ?? 20) < 14) && now - ateAt > 60 && K.screen() === '') { const fd = FOOD.find(edible); if (fd) { ateAt = now; stopKeys(); await grab(fd, 'eat'); await K.act('use', ['36']); if (w) await grab(w, 'fight'); continue; } }
