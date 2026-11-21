@@ -2291,6 +2291,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         const total = plan.r.out.count * times;
         // (more than a stack at once: in parts - 68 planks in one move got the bot kicked, 'packet malformed: outside of the accepted
         //  range [1, 64]', 11/20)
+        // (one of a kind per slot - tools, armour, a bucket: three stone pickaxes at once came back 'craft rejected: status 14', 11/21)
+        if (times > 1 && !a.includes('part') && /_(pickaxe|axe|shovel|hoe|sword|helmet|chestplate|leggings|boots)$|^minecraft:(bucket|shield|bow|crossbow|flint_and_steel|shears|fishing_rod|bed)$|_bed$/.test(want)) { let last = ''; for (let k = 0; k < times; k++) { last = String(await bot.act('craft', [a[0], '1', 'part'])); if (!/crafted/.test(last)) break; } return last; }
         if (total > 64 && !a.includes('part')) { const per = Math.max(1, Math.floor(64 / plan.r.out.count)); let left = times, last = ''; while (left > 0) { const n = Math.min(per, left); last = String(await bot.act('craft', [a[0], String(n), 'part'])); left -= n; if (!/crafted/.test(last)) break; } return last; }
         const usedUp = new Map();
         for (const c of plan.cells) for (const u of c.src) usedUp.set(u.i, (usedUp.get(u.i) ?? 0) + u.n);
