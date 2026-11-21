@@ -2201,7 +2201,7 @@ function goalVerbs(K, H) {
     // (the Nether's open ground - a basalt delta's magma cubes, a soul sand valley's skeletons - left by a stair down into the netherrack
     //  under it first; 11/21 the quartz tunnel ran out from the walled portal across a delta and four magma cubes killed the bot)
     if (nether) { const [x, y, z] = feet(); let open = 0; for (let dx = -6; dx <= 6; dx += 2) for (let dz = -6; dz <= 6; dz += 2) if (/basalt|blackstone|magma|soul_sand|soul_soil/.test(bname(x + dx, y - 1, z + dz))) open++;
-      if (open >= 6 && y > 45) { log(`quartz: open ground here (${open} of 49 basalt/soul sand) - a stair down into the netherrack first`); await stairDown(Math.max(36, y - 14), () => false); } }
+      if (open >= 6 && y > 45) { log(`quartz: open ground here (${open} of 49 basalt/soul sand) - a stair down into the netherrack first`); const tS = gnow(); await stairDown(Math.max(36, y - 14), () => gnow() - tS > 90000); log(`quartz: the stair down ended at y=${feet()[1]} after ${Math.round((gnow() - tS) / 1000)} s`); } }   // (90 s at most: 13 minutes of it once wore out a diamond pickaxe)
     const lv = () => K.attrs()['player.level'] ?? 0;
     // (the way with the most netherrack - quartz grows only in it - and away from soul sand: 11/20 the tunnel went through the fortress and
     //  into a soul sand valley, no quartz in 287 s and shot dead by its skeletons)
