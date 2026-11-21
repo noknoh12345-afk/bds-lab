@@ -4263,7 +4263,8 @@ function goalVerbs(K, H) {
     // could not be reached from outside the frames - the spawner's count was full of them and it sent no more (11/20, 9 minutes)
     { const fs = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 12, radius: 12, from: fr });
       if (fs.length >= 8) { const cx = Math.round(fs.reduce((a, q) => a + q.x, 0) / fs.length), cz = Math.round(fs.reduce((a, q) => a + q.z, 0) / fs.length), y = fs[0].y - 1; let n = 0;
-        for (let pass = 0; pass < 2; pass++) for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const c = [cx + dx, y, cz + dz]; if (fAt(...c) & F_SOLID) continue; if (await goToBlock(...c, 4)) { if (await fillCell(c)) n++; } }
+        // (a third pass from closer in - on the filled cells inside the ring: the middle two were out of reach from outside the frames)
+        for (let pass = 0; pass < 3; pass++) for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const c = [cx + dx, y, cz + dz]; if (fAt(...c) & F_SOLID) continue; if (await goToBlock(...c, pass === 2 ? 2.5 : 4)) { if (await fillCell(c)) n++; } }
         { const left = []; for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const c = [cx + dx, y, cz + dz]; if (!(fAt(...c) & F_SOLID)) left.push(`${c.join(',')}:${sh(bname(...c))}`); } log(`stronghold_find: the pit under the portal: ${n} filled, ${left.length} open${left.length ? ` (${left.slice(0, 5).join(' ')})` : ''}, frames ${fs.length} round ${cx} ${cz}`); } } else log(`stronghold_find: only ${fs.length} frames seen - the pit not filled`); }
     await healUp();
     const f = K.feet(), d = hyp(f.x - fr.x, f.y - fr.y, f.z - fr.z);
