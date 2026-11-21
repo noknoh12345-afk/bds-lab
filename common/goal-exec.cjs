@@ -939,6 +939,8 @@ function goalVerbs(K, H) {
         if (breachRisk(cells)) { no('monsters behind the rock'); continue; }
         // (sand or gravel over the step: it comes down into the stair, onto the head - a race's player suffocated at y=21)
         if (fAt(nx, y + 2, nz) & F_FALLS) { no('sand or gravel over it'); continue; }
+        // (obsidian - the way home's portal frame, or a pickaxe that cannot cut it: 11 s a try and nothing (11/21 the lab))
+        if (cells.some(([a, b, c]) => /obsidian|portal|bedrock|end_portal_frame|reinforced/.test(bname(a, b, c)))) { no('obsidian or a portal'); continue; }
         if (landing(nx, y - 1, nz) === null) { if (B(nx, y - 2, nz)) { no('a drop'); drop = true; } else no('not loaded'); continue; }
         let ok = true;
         for (const [a, b, c] of cells) if (solid(B(a, b, c)) && !(await breakAt(a, b, c))) { ok = false; no(`${sh(bname(a, b, c))} would not break`); break; }
