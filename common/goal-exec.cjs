@@ -4301,7 +4301,7 @@ function goalVerbs(K, H) {
     if (!sp0) return K.say('spawner_xp: no spawner near');
     const sp = { x: sp0.x ?? sp0[0], y: sp0.y ?? sp0[1], z: sp0.z ?? sp0[2] };
     const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
-    let kills = 0, ateAt = -99, spawnerMiss = 0, lastKill = Number(K.tick()), side = 0; const skipFoe = new WeakMap();
+    let kills = 0, ateAt = -99, spawnerMiss = 0, lastKill = Number(K.tick()), side = 0, spawnerXpArm = null; const skipFoe = new WeakMap();
     log(`spawner_xp: the spawner at ${sp.x} ${sp.y} ${sp.z}`);
     // the lava round it filled first (a stronghold's portal room: a pool under the portal, a strip in two corners - 11/20 the lab, of 26
     // silverfish 21 ended in the lava, no experience, and the bot ran into it from one: dead)
@@ -4310,6 +4310,8 @@ function goalVerbs(K, H) {
       const f = K.feet(), now = Number(K.tick()), at = K.attrs(), hp = at.health ?? 20;
       if ((hp < 12 || (at['player.hunger'] ?? 20) < 14) && now - ateAt > 60 && K.screen() === '') { const fd = FOOD.find(edible); if (fd) { ateAt = now; stopKeys(); await grab(fd, 'eat'); await K.act('use', ['36']); if (w) await grab(w, 'fight'); continue; } }
       if (hp < 7 && !FOOD.some((x) => cnt(x) > 0)) { log('spawner_xp: hurt and nothing to eat - stopping'); break; }
+      // (an hour of silverfish wears a sword out - 11/21 the iron one gone, then the fights went on bare-handed for an hour: a new one made)
+      if (!WEAPONS.some((x) => cnt(x) > 0) && now - (spawnerXpArm ?? -1e9) > 1200) { spawnerXpArm = now; log('spawner_xp: the sword is worn out - making another'); stopKeys(); try { await M.get(['stone_sword']); } catch (e) { log(`spawner_xp: no sword made: ${e.message}`); } const w2 = WEAPONS.find((x) => cnt(x) > 0); if (w2) await grab(w2, 'fight'); continue; }
       // (within 4 of the spawner, not on top of it: it spawns round the player inside 4 blocks of itself, and only with a player within 16)
       // (on the floor round it, not under it: 11/20 the probe ended up at y 9 in the floor under the spawner, the silverfish over its
       //  head 'broken off after 0 blows' for twenty minutes)
