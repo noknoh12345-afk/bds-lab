@@ -178,7 +178,7 @@ async function fetchThenReview(dp, rv) {
     const b = me.bot; if (!b || !me.connected) return;
     // (back at the bed at night with nothing in hand and them waiting there: dug in at once - 11/21 sixteen deaths in five minutes,
     //  each respawn running from the same zombie by the bed)
-    if (me.dim === 'overworld' && nightNow(b) && hostilesNear(b, 16).length) { log('death: night and monsters at the respawn point - digging in first'); const t = setTimeout(() => b.cancel?.(), 120000); try { await b.act('dig_in', []).catch(() => {}); } finally { clearTimeout(t); } }
+    if (me.dim === 'overworld' && nightNow(b) && hostilesNear(b, 16).length) { log('death: night and monsters at the respawn point - digging in first'); const t = setTimeout(() => b.cancel?.(), 600000); try { await b.act('dig_in', []).catch(() => {}); } finally { clearTimeout(t); } }
     const q = b.state().pos, far = Math.hypot(q.x - dp.x, q.z - dp.z);
     // (a circuit breaker: back to the same place at most twice in 20 minutes - a recovery that keeps walking into what killed it only
     //  feeds the loop: one bot elsewhere was sent back into a camp 226 times)
