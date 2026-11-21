@@ -2159,7 +2159,8 @@ function goalVerbs(K, H) {
       if (hyp(tx - x, tz - z) <= tol) return true;
       if (!bestTool({ kind: 'pickaxe', tier: 1 }) && !(await newPickaxe())) { log('tunnel: no pickaxe'); return false; }
       // (monsters about in the open - a basalt delta's magma cubes took 20 health in 30 s: 11/20 - into the rock first, out of their reach)
-      const pressed = foesNear(10).length > 0, inRock = (dx, dz) => ((fAt(x + dx, y, z + dz) & F_SOLID) ? 1 : 0) + ((fAt(x + dx, y + 1, z + dz) & F_SOLID) ? 1 : 0);
+      // (in the Nether always: an open valley is skeletons' and ghasts' ground - 11/21 shot dead in the open five minutes in, twice)
+      const pressed = foesNear(10).length > 0 || dimName() === 'nether', inRock = (dx, dz) => ((fAt(x + dx, y, z + dz) & F_SOLID) ? 1 : 0) + ((fAt(x + dx, y + 1, z + dz) & F_SOLID) ? 1 : 0);
       const ways = DIRS4.map(([dx, dz]) => ({ dx, dz, d: hyp(tx - (x + dx), tz - (z + dz)) - (pressed ? 6 * inRock(dx, dz) : 0) })).sort((a, b) => a.d - b.d);
       let moved = false;
       for (const w of ways.slice(0, 3)) {
