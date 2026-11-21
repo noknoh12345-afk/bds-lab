@@ -1461,7 +1461,10 @@ async function dragonFight() {
     //  waiting at 46 nothing hurt us but it did not sit once in 22 minutes; at 18 it sat every few minutes and its breath wore us down)
     // (out at 18 while it flies - BOT_WAIT_R to try farther: 09:42 on 19 Nov, both cages broken by 13 min and every crystal gone,
     //  then three minutes of its breath 1-10 blocks off at 18 out, six golden apples, dead; in to the fountain's side when it sits)
-    { const l = Math.hypot(P.x, P.z) || 1, want = (perched && !((left.size || crystals.length) && cnt(blockId()) >= 24 && cnt('arrow') > 0)) ? 4 : (process.env.BOT_WAIT_FAR && (farMode = (me.hp ?? 20) <= 12 ? true : (me.hp ?? 20) >= 19.5 ? false : farMode, farMode || farByClock())) ? Number(process.env.BOT_WAIT_FAR) : Number(process.env.BOT_WAIT_R || 18), wx = Math.round((P.x / l) * want), wz = Math.round((P.z / l) * want); if (Math.abs(l - want) > 2.5) { await walk(wx, wz, 3000, perched); continue; } }
+    // (21 Nov 03:55: up the reach pillar, then off it again at once - the walk to 4 out and the bed stands (which cannot go up there).
+    //  Up on our own blocks by the fountain while it sits: the sword, nothing else)
+    const upOnOurs = perched && dr && Math.hypot(P.x, P.z) < 10 && /^(cobblestone|end_stone)$/.test(bname(Math.floor(P.x), Math.floor(P.y + 0.01) - 1, Math.floor(P.z)));
+    if (!upOnOurs) { const l = Math.hypot(P.x, P.z) || 1, want = (perched && !((left.size || crystals.length) && cnt(blockId()) >= 24 && cnt('arrow') > 0)) ? 4 : (process.env.BOT_WAIT_FAR && (farMode = (me.hp ?? 20) <= 12 ? true : (me.hp ?? 20) >= 19.5 ? false : farMode, farMode || farByClock())) ? Number(process.env.BOT_WAIT_FAR) : Number(process.env.BOT_WAIT_R || 18), wx = Math.round((P.x / l) * want), wz = Math.round((P.z / l) * want); if (Math.abs(l - want) > 2.5) { await walk(wx, wz, 3000, perched); continue; } }
     // (BOT_CIRCLE: while it flies, never standing still on the circle - round it 20 degrees a step: its fireballs are aimed at where
     //  we stand and come at 27 blocks a second; 04:12 on 20 Nov, 17 → dead in seventeen seconds standing on the circle at 18)
     if (process.env.BOT_CIRCLE && !perched && !(bar() <= 12 && cnt('arrow') > 0)) { const a = Math.atan2(P.z, P.x) + (circDir * 20 * Math.PI) / 180, r0 = Math.hypot(P.x, P.z) || 18; if (Math.random() < 0.08) circDir = -circDir; await walk(Math.cos(a) * r0, Math.sin(a) * r0, 2500, false); continue; }
@@ -1491,7 +1494,7 @@ async function dragonFight() {
     }
     // beds: one blows up when used in the End - set down by it while it sits, a step back, and clicked (a fifth of its health a bed,
     // the guides say; read back from its health here). BOT_NOBED to leave them
-    if (perched && dr && !process.env.BOT_NOBED && (me.hp ?? 0) >= Number(process.env.BOT_BED_HP ?? 18.5) && Date.now() - bedAt > 600 && /\d+:minecraft:(\w+_)?bed\*/.test(b.invText?.() ?? '')) {
+    if (perched && dr && !upOnOurs && !process.env.BOT_NOBED && (me.hp ?? 0) >= Number(process.env.BOT_BED_HP ?? 18.5) && Date.now() - bedAt > 600 && /\d+:minecraft:(\w+_)?bed\*/.test(b.invText?.() ?? '')) {
       bedAt = Date.now(); const bar0 = bar(), me0 = me.hp, nb0 = bedsBlown; const said = []; const tap = (l) => said.push(l); ctx.taps.add(tap);
       // (a bed try that blew nothing leaves the sword eight seconds before the next: 18:38-18:43 on 19 Nov, perch after perch in
       //  stands that did not go up and clicks that did not take, and hardly a swing - 0 to 3 hits a perch)
