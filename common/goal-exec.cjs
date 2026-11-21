@@ -4261,8 +4261,8 @@ function goalVerbs(K, H) {
     // could not be reached from outside the frames - the spawner's count was full of them and it sent no more (11/20, 9 minutes)
     { const fs = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 12, radius: 12, from: fr });
       if (fs.length >= 8) { const cx = Math.round(fs.reduce((a, q) => a + q.x, 0) / fs.length), cz = Math.round(fs.reduce((a, q) => a + q.z, 0) / fs.length), y = fs[0].y - 1; let n = 0;
-        for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const c = [cx + dx, y, cz + dz]; if (fAt(...c) & F_SOLID) continue; if (await goToBlock(...c, 4)) { if (await fillCell(c)) n++; } }
-        if (n) log(`stronghold_find: the pit under the portal filled (${n} blocks)`); } }
+        for (let pass = 0; pass < 2; pass++) for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const c = [cx + dx, y, cz + dz]; if (fAt(...c) & F_SOLID) continue; if (await goToBlock(...c, 4)) { if (await fillCell(c)) n++; } }
+        { const left = []; for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const c = [cx + dx, y, cz + dz]; if (!(fAt(...c) & F_SOLID)) left.push(`${c.join(',')}:${sh(bname(...c))}`); } log(`stronghold_find: the pit under the portal: ${n} filled, ${left.length} open${left.length ? ` (${left.slice(0, 5).join(' ')})` : ''}, frames ${fs.length} round ${cx} ${cz}`); } } else log(`stronghold_find: only ${fs.length} frames seen - the pit not filled`); }
     await healUp();
     const f = K.feet(), d = hyp(f.x - fr.x, f.y - fr.y, f.z - fr.z);
     return K.say(`stronghold_find: ${d <= 6 ? 'at' : `${Math.round(d)} blocks from`} the frames ${fr.x} ${fr.y} ${fr.z}`);
@@ -4319,6 +4319,7 @@ function goalVerbs(K, H) {
     const w = WEAPONS.find((x) => cnt(x) > 0); if (w) await grab(w, 'fight');
     let kills = 0, ateAt = -99, spawnerMiss = 0, lastKill = Number(K.tick()), side = 0, spawnerXpArm = null; const skipFoe = new WeakMap();
     log(`spawner_xp: the spawner at ${sp.x} ${sp.y} ${sp.z}`);
+    const ring = (() => { const fs = K.findBlocks((b) => /end_portal_frame/.test(b.name), { max: 12, radius: 10, from: sp }); return fs.length >= 8 ? { x: fs.reduce((a, q) => a + q.x, 0) / fs.length, z: fs.reduce((a, q) => a + q.z, 0) / fs.length } : null; })();
     // the lava round it filled first (a stronghold's portal room: a pool under the portal, a strip in two corners - 11/20 the lab, of 26
     // silverfish 21 ended in the lava, no experience, and the bot ran into it from one: dead)
     K.memo.set('goal:noDig', true);   // (before the lava too: the walks to fill it dug the floor away)
@@ -4344,7 +4345,8 @@ function goalVerbs(K, H) {
       // (up at its own height: from the floor two below, the silverfish on its platform were out of reach - nine minutes, no kill)
       if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 7 || f.y < sp.y - 3.5) {
         // (below it, two or three off: what it sends comes down to the sword - the dragon side's advice 11/21)
-        const ok = await travel((x, y, z) => { const hd = hyp(x - sp.x, z - sp.z); return hd >= 1.9 && hd <= 3.6 && y >= sp.y - 2 && y <= sp.y - 1; }, (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: false, pillar: true, legs: 8, nodes: 30000 });   // (no digging round the spawner: 11/21 the portal room's floor was dug full of holes into the caves under it, its lava running down them)
+        // (and not inside the ring of frames: a pit there - dead in it twice)
+        const ok = await travel((x, y, z) => { const hd = hyp(x - sp.x, z - sp.z); return hd >= 1.9 && hd <= 3.6 && y >= sp.y - 2 && y <= sp.y - 1 && !(ring && hyp(x - ring.x, z - ring.z) <= 2.2); }, (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: false, pillar: true, legs: 8, nodes: 30000 });   // (no digging round the spawner: 11/21 the portal room's floor was dug full of holes into the caves under it, its lava running down them)
         if (!ok) { const g = K.feet(); spawnerMiss++; log(`spawner_xp: no way to the spawner at ${sp.x} ${sp.y} ${sp.z} from ${Math.floor(g.x)} ${Math.floor(g.y)} ${Math.floor(g.z)} (${spawnerMiss})`);
           // (shut in a hole under it with no digging allowed: dug out this once, up toward it - 11/21 four tries from y 6 and the farm ended)
           if (spawnerMiss >= 2) { K.memo.set('goal:noDig', false); try { await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 4 && y >= sp.y - 1, (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 32, dig: true, pillar: true, legs: 6, nodes: 30000 }); } finally { K.memo.set('goal:noDig', true); } }
