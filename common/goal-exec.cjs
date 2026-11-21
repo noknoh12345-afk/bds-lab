@@ -1522,6 +1522,10 @@ function goalVerbs(K, H) {
     if (!slow()) for (const c of open()) await fillCell(c);   // (what is left: set against any solid neighbour, not only the floor or a raised side)
     if (K.dead()) return 'failed';
     const gaps = open();
+    if (gaps.length && (feet()[1] !== y || hyp(feet()[0] - x, feet()[2] - z) > 1.5) && (o.redo ?? 0) < 2 && !K.dead()) {   // knocked or slid off the spot (water, a hit): the cells were for another place: again from here
+      log(`shelter: moved off ${x} ${y} ${z} to ${feet().join(' ')} while building: again here`);
+      return shelter0(moved, { ...o, redo: (o.redo ?? 0) + 1 });
+    }
     if (gaps.length) {   // could not shut in: two or three blocks up on a pillar is out of a zombie's reach
       if (blocksHeld() >= 3 && (await pillarUp()) && (await pillarUp()) && (await pillarUp())) { log(`could not shut myself in (dug ${dug}, ${gaps.length} gaps): waiting up on a pillar`); perched = true; }
       else if (!moved && dug < 2) {   // rock underfoot, nothing to build with: over to soft ground (dirt with dirt under it) and again there
