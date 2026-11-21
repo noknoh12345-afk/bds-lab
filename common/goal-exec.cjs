@@ -4202,7 +4202,10 @@ function goalVerbs(K, H) {
   // fight_near [sec]: the monsters at hand fought, nearest first, with the goal's own fighting (spacing, shield, crits) - the brain's
   // way out under the ground when one is already on it (a shelter dug with a zombie hitting failed and the bot died at y -3)
   M.fight_near = async (a) => { const t0 = Number(K.tick()), maxSec = Number(a[0]) || 20; let n = 0;
-    while ((Number(K.tick()) - t0) / 20 < maxSec && !K.dead()) { const q = foesNear(6)[0]; if (!q) break; try { await fightOne(q.e, 20); } catch { /* */ } if (!K.all().includes(q.e)) n++; await K.ticks(2); }
+    while ((Number(K.tick()) - t0) / 20 < maxSec && !K.dead()) {
+      // (a creeper is not stood up to: away from it - 11/21 two deaths in a row to creepers' blasts under the ground)
+      const cr = foesNear(6).find((q) => /creeper/.test(q.e.type)); if (cr) { await evade('a creeper'); await K.ticks(4); continue; }
+      const q = foesNear(6)[0]; if (!q) break; try { await fightOne(q.e, 20); } catch { /* */ } if (!K.all().includes(q.e)) n++; await K.ticks(2); }
     return K.say(`fight_near: ${n} down, health ${Math.round(K.attrs().health ?? 0)}`); };
   // walk_to x y z [r]: to within r of a point, under the ground too (dug through where needed) - back to the enchanting room down in the
   // stronghold from its spawner (the brain's surface walk dug up and down between y 7 and 8 for a minute instead)
