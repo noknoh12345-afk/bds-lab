@@ -120,6 +120,12 @@ async function placeOn(item, x, y, z) {   // the item set on top of the block un
 // the nearest first (each in reach and in sight once the one before it is gone), holes in the floor filled
 // (11/20 the lab: 'up to the surface' stopped at y 11 in the stronghold, and the room could not go anywhere)
 async function makeSite() {
+  // (the level with the most floor under the 5 x 6: standing on a platform - the portal room's, two over its floor - the place was
+  //  dug at the platform's height over air, 20 floor blocks laid and still not level)
+  { const g = me.bot.state().pos, gx = Math.floor(g.x), gy = Math.floor(g.y + 0.01), gz = Math.floor(g.z) - 1;
+    const floorAt = (y) => { let c = 0; for (let ax = -2; ax <= 2; ax++) for (let az = -2; az <= 3; az++) if (SOLID(blk(gx + ax, y - 1, gz + az))) c++; return c; };
+    const best = [0, -1, -2, -3].map((dy) => ({ dy, c: floorAt(gy + dy) })).sort((p, q) => q.c - p.c)[0];
+    if (best.dy && best.c > floorAt(gy) + 4) { log(`road: the room's place a level ${-best.dy} lower (floor ${best.c} of 30 there)`); await R.run(`walk_to ${gx} ${gy + best.dy} ${gz + 1} 1`, 'down to the floor for the room'); } }
   const f = me.bot.state().pos, X = Math.floor(f.x), Y = Math.floor(f.y + 0.01), Z = Math.floor(f.z) - 1;
   const cells = []; for (let ax = -2; ax <= 2; ax++) for (let az = -2; az <= 3; az++) for (const dy of [1, 0]) cells.push([X + ax, Y + dy, Z + az]);
   cells.sort((p, q) => Math.hypot(p[0] + 0.5 - f.x, p[1] - f.y - 1, p[2] + 0.5 - f.z) - Math.hypot(q[0] + 0.5 - f.x, q[1] - f.y - 1, q[2] + 0.5 - f.z));
