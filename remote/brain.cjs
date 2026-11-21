@@ -1631,6 +1631,9 @@ async function auto() {
       if (ok || st.optional) break;
       if (me.deaths > (st.deaths ?? 0)) { st.deaths = me.deaths; const dp = me.bot?.deathPos?.(); if (!dp || Math.hypot(dp.x, dp.z) >= FAR) await run('goto_death', 'fetch the things back'); }
       if (tries >= 7 && !st.has) break;
+      // (failing again and again down in the ground - no wood, no tools after a death there, 'every way needs something that cannot be
+      //  had': 65 tries in a few minutes) - up to the sky every fifth try, where the trees are
+      if (tries % 5 === 4 && me.dim === 'overworld' && me.bot && !openSky(me.bot, me.bot.state().pos)) { log('auto: failing down here - up to the surface before trying again'); await run('to_surface', 'up for wood and a fresh start'); }
       await sleep(3000);
     }
   }
