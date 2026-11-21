@@ -2208,6 +2208,9 @@ function goalVerbs(K, H) {
     const bestDir = () => { const [x, y, z] = feet(); let best = 0, bs = -1e9; for (let k = 0; k < 8; k++) { const a = (k * Math.PI) / 4; let sc = 0; for (let d = 4; d <= 40; d += 3) for (let dy = -3; dy <= 3; dy += 2) { const n = bname(Math.round(x + Math.cos(a) * d), y + dy, Math.round(z + Math.sin(a) * d)); if (/netherrack|quartz_ore|nether_gold_ore|deepslate|tuff|_ore$|^minecraft:stone$/.test(n)) sc++; else if (/soul_(sand|soil)|nether_brick|basalt|blackstone|lava|water|air/.test(n)) sc -= 2; } if (sc > bs) { bs = sc; best = a; } } return best; };
     let dir = bestDir();
     while ((gnow() - t0) / 1000 < maxSec && !K.dead() && lv() < level) {
+      // (the tunnel broke into a pocket of them - magma cubes took 10 health before the first blow: shut in where it stands, eaten up,
+      //  then on; 11/21 dead at level 20 that way)
+      { const hp = K.attrs().health ?? 20, fs = foesNear(8); if (fs.length && (hp < 14 || fs.length >= 2)) { log(`quartz: ${fs.length} ${fs.map((q) => sh(q.e.type)).join(' ')} at me, health ${Math.round(hp)} - shut in and eat`); stopKeys(); await M.wall_in(['1']); await healUp(); await K.ticks(20); } }
       const ORE = nether ? /^minecraft:(quartz_ore|nether_gold_ore)$/ : /^minecraft:(deepslate_)?(redstone|lit_redstone|lapis|diamond|gold|emerald|coal)_ore$|^minecraft:lit_deepslate_redstone_ore$/;   // (nether gold too: nuggets for the golden apples, 2-6 an ore)
       const h = known(ORE, { max: 6, radius: 6 }).find((q) => !unreachable(q)) ?? known(ORE, { max: 4, radius: 2.5, fair: false }).find((q) => !unreachable(q));   // (seen, else right in the tunnel's wall)
       if (h) {
