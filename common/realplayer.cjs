@@ -1951,6 +1951,8 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
         box = null;
         await bot.act('useon', a.slice(0, 3).concat(a[3] ?? '1'));
         await boxWait();
+        // (its top out of sight - a table set down in a low tunnel: any side opens it as well, as a player clicks the face it sees)
+        if (!box && !a[3]) for (const fc of ['2', '3', '4', '5', '0']) { await bot.act('useon', a.slice(0, 3).concat(fc)); await boxWait(); if (box) break; }
         return box ? ticks(4) : say('open: no container opened');
       }
       case 'move': {
