@@ -586,6 +586,7 @@ const HIT = { netherite_sword: 9, diamond_sword: 8, iron_sword: 7, stone_sword: 
 function odds(b, foes) {
   const inv = b.invText?.() ?? '', w = WEAPONS.find((x) => inv.includes('minecraft:' + x + '*')), hit = w ? HIT[w] : 1;
   let worn = 1; try { worn = ROAD.armourShare(); } catch (e) { if (!odds.said) { odds.said = 1; log('fight odds: armour not read: ' + e.message); } worn = /iron_chestplate|diamond_chestplate|netherite_chestplate/.test(inv) || me.armored ? 0.7 : 1; }
+  if (worn >= 1 && !odds.said2) { odds.said2 = 1; try { log(`fight odds: no armour read - armor slots ${JSON.stringify((b.K?.inv?.armor ?? []).map((x) => x?.network_id ?? null))}, worn chest ${wornChest()}`); } catch { /* */ } }
   const armour = worn * (/shield\*/.test(inv) ? 0.8 : 1);
   let t = 0, taken = 0;
   for (const f of foes) { const [hp, dps] = FOE[f.e.type.replace('minecraft:', '')] ?? [20, 4]; t += hp / (hit * 2) + 0.5; taken += dps * 0.6 * t * armour; }   // (0.6: each of my hits knocks it back out of its reach for a moment)
