@@ -1033,7 +1033,7 @@ async function dragonFight() {
     const Q = b.state().pos, cl = ents(/area_effect_cloud$/);
     // (to it while it sits, the clouds' berth is narrower and the ways round wider: 12:17 on 19 Nov, of thirty perches twenty passed
     //  with no sword and no bed - 'no way to -1 4 clear of its breath: waiting' while it sat 54 s)
-    const M = mid ? Number(process.env.BOT_PERCH_MARGIN ?? 1.6) : 3;
+    const M = mid ? Number(process.env.BOT_PERCH_MARGIN ?? 1.1) : 3;
     const bad = (x, z) => cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + M) || (!mid && segD(Q.x, Q.z, x, z, 0, 0) < 12);
     if (bad(tx, tz)) { const r = Math.max(16, Math.min(40, Math.hypot(Q.x, Q.z))), a0 = Math.atan2(Q.z, Q.x), want = Math.atan2(tz, tx); let da = want - a0; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
       const opts = (mid ? [0.5, -0.5, 1.0, -1.0] : [0.5, -0.5]).map((k) => Math.sign(da || 1) * k).map((d) => [Math.cos(a0 + d) * r, Math.sin(a0 + d) * r]).filter(([x, z]) => !cl.some((e) => segD(Q.x, Q.z, x, z, e.x, e.z) < cr(e) + M));
