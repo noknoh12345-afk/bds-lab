@@ -1122,6 +1122,9 @@ function goalVerbs(K, H) {
         underway++;   // (on the way under: at night no hiding on the surface, the stair shuts itself)
         try {
           if (!nightNow()) await provision();   // (not at night: no walking about among the monsters for it)
+          // (far under its depth - the diamonds' -58, now lapis at 0: up a stair to it first; 11/21 forty minutes of tunnels at -54 for
+          //  lapis, none, while 'digging down to y=0')
+          if (feet()[1] < w[3] - 16 && bestTool({ kind: 'pickaxe', tier: 1 })) { log(`${name}: up from y=${feet()[1]} to its depth ${w[3]} first`); await stairUp(w[3]); }
           let top = feet();   // where this way down started
           K.memo.set('goal:stairTop', top);   // (the way back up: toSurface)
           for (let tries = 0; tries < 4 && !pick(); tries++) {
