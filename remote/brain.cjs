@@ -1364,7 +1364,7 @@ async function dragonFight() {
         // (sword against sword it costs some 14 health each time, and it steps away and comes back: three blocks up on our own
         //  pillar it cannot reach, and is hit from above; the crystals are shot from up there too)
         if (!onPillar && cnt('cobblestone') + cnt('end_stone') >= 3 && !ents(/area_effect_cloud$/).some((e) => Math.hypot(e.x - P.x, e.z - P.z) < cr(e) + 5)) {   // (not beside its breath: 18:29, up a pillar by a cloud and dead in it)
-        log('dragon: three up on a pillar, out of its reach'); await gotoFor(['3', blockId()], 6000, 'pillar'); onPillar = { x: Math.floor(b.state().pos.x), z: Math.floor(b.state().pos.z), y: b.state().pos.y }; continue; }
+        log('dragon: three up on a pillar, out of its reach'); await b.act('sprint', ['off']).catch(() => {}); await sleep(400); { const yA = Math.floor(b.state().pos.y + 0.01); delegating = true; try { await gotoFor(['3', blockId()], 6000, 'pillar'); } finally { delegating = false; } if (Math.floor(b.state().pos.y + 0.01) < yA + 2) log(`dragon: the enderman pillar rose only ${Math.floor(b.state().pos.y + 0.01) - yA}`); }   /* (standing still first, and the watches off: 21 Nov 01:37, 'three up' and killed by the enderman down there) */ onPillar = { x: Math.floor(b.state().pos.x), z: Math.floor(b.state().pos.z), y: b.state().pos.y }; continue; }
         await armUp(b);
         if (em.d < 3.6) { await b.act('attack', ['enderman']).catch(() => {}); emHits++; } else await gotoFor([String(em.e.x), String(em.e.y + 1.5), String(em.e.z)], 600, 'lookat');
         await sleep(150); continue; }
