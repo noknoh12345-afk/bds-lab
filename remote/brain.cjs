@@ -61,6 +61,9 @@ function naturalHere(bot, hits) {
     for (let dx = -8; dx <= 8; dx++) for (let dz = -8; dz <= 8; dz++) for (let dy = -8; dy <= 8; dy++) if (/^minecraft:(trial_spawner|vault|reinforced_deepslate|sculk_shrieker)$/.test(bot.world.block(h.x + dx, h.y + dy, h.z + dz)?.name ?? '')) return true;
     return false; }))) return 'trial chamber or ancient city';
   if (m.has('mob_spawner') && hits.every((h) => h.top < 50 && /^(chest|trapped_chest)$/.test(h.block))) return 'dungeon';
+  // (a dungeon by its walls when the spawner is out of the scan: chests deep in the ground with mossy cobblestone round them - 11/21 the
+  //  guard sent the bot walking 960 blocks away from a dungeon chest at y 33, 47 blocks off)
+  if (hits.length <= 3 && hits.every((h) => h.top < 50 && /^(chest|trapped_chest)$/.test(h.block) && (() => { for (let dx = -3; dx <= 3; dx++) for (let dz = -3; dz <= 3; dz++) for (let dy = -1; dy <= 3; dy++) if (/mossy_cobblestone$/.test(bot.world.block(h.x + dx, h.y + dy, h.z + dz)?.name ?? '')) return true; return false; })())) return 'dungeon';
   // (a shipwreck or buried treasure: chests (and a wreck's own timber) in the water or shut in the sand - 11/20 in the lab the guard
   //  stopped the sheep for a bed at a river's chest at y 54, 'someone's build', and the bot went round it into the night)
   { const nm = (x, y, z) => bot.world.block(x, y, z)?.name ?? '';
