@@ -1765,6 +1765,9 @@ function goalVerbs(K, H) {
     const hp0 = K.attrs().health ?? 20, t0 = Number(K.tick());
     for (let t = 0; t < max * 12 && !K.dead() && !late(); t++) {
       const now = Number(K.tick()), f = K.feet(), alive = K.all().includes(e);
+      // (five seconds without a blow and it out of reach - a silverfish in the wall, one over a ledge: let go, not 24 s of trying at
+      //  the stronghold's spawner again and again)
+      if (alive && !hits && now - t0 > 100 && hyp(e.x - f.x, e.y - f.y, e.z - f.z) > 3.5) break;
       // (what this client sees of them is half a round trip old, and the next step takes a tick: judged where they will be by then)
       const L = Math.min(10, Math.round((K.lag?.() ?? 0) / 2) + 2);
       const near = K.all().filter((q) => SPACED(q) && !q.gone && Math.abs(q.y - f.y) < 3 && hyp(q.x - f.x, q.z - f.z) < 8);
