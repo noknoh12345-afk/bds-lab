@@ -1045,8 +1045,8 @@ async function dragonFight() {
       // (to it while it sits, with health to spare, straight through: 15:13 on 19 Nov, 'no way to -3 -3 clear of its breath' and a
       //  31 s perch gone by with no sword and no bed even at 0.8 of berth - a second in its breath costs less than a perch)
       // (its last 30 points, health 17+: through it then - 21 Nov 12:47, its bar at 5 for ten minutes with no arrows, every perch 'no way
-      //  to it clear of its breath')
-      if (!opts.length && mid && ((me.hp ?? 0) >= Number(process.env.BOT_PERCH_THROUGH_HP ?? 21) || (bar() <= 30 && bar() > 0 && (me.hp ?? 0) >= 17))) { if (Date.now() - (walk.thru ?? 0) > 15000) { walk.thru = Date.now(); log(`dragon: through its breath to it while it sits (health ${me.hp})`); } walk.thruAt = Date.now(); eatingG = true; try { await dash(tx, tz, 2500); } finally { eatingG = false; } return; }
+      //  to it clear of its breath'. Only with no arrows: 21 Nov 07:15, through it at its bar of 3 with 50 arrows carried, dead)
+      if (!opts.length && mid && ((me.hp ?? 0) >= Number(process.env.BOT_PERCH_THROUGH_HP ?? 21) || (bar() <= 30 && bar() > 0 && (me.hp ?? 0) >= 17 && cnt('arrow') === 0))) { if (Date.now() - (walk.thru ?? 0) > 15000) { walk.thru = Date.now(); log(`dragon: through its breath to it while it sits (health ${me.hp})`); } walk.thruAt = Date.now(); eatingG = true; try { await dash(tx, tz, 2500); } finally { eatingG = false; } return; }
       if (!opts.length) { if (Date.now() - (walk.said ?? 0) > 15000) { walk.said = Date.now(); log(`dragon: no way to ${Math.round(tx)} ${Math.round(tz)} clear of its breath: waiting`); }
         // (not waiting inside one: 05:30, 'waiting' with its breath on us, 20 to 3 in fourteen seconds - straight away from its middle)
         const e0 = cl.map((e) => ({ e, d: Math.hypot(Q.x - e.x, Q.z - e.z) })).filter((x) => x.d < cr(x.e) + 1.5).sort((u, w) => u.d - w.d)[0];
