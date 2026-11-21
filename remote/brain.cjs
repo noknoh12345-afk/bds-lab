@@ -642,7 +642,11 @@ timers.push(setInterval(() => {
   //  and the breaking away ran the bot through the corridors to its death)
   { const fr = b.K?.memo?.get('goal:frames'), q = b.state().pos; if (fr && Math.hypot(fr.x - q.x, fr.z - q.z) < 120 && !openSky(b, q)) return; }
   const f = hostilesNear(b, 4).filter((x) => !/creeper/.test(x.e.type) || x.d < 3);
-  if (f.length) { me.interrupt = 'fight'; b.cancel?.(); }
+  // (cut short four times in half a minute: the verb is left to fight for itself for a minute - 11/21 'try 50' of a step in five
+  //  minutes, each cancelled in its first second by the same two monsters)
+  me.fightCuts = (me.fightCuts ?? []).filter((t) => Date.now() - t < 30000);
+  if (f.length && me.fightCuts.length >= 4) { if (!me.fightQuiet || Date.now() - me.fightQuiet > 60000) { me.fightQuiet = Date.now(); log('auto: cut short again and again - the step fights for itself for a minute'); } if (Date.now() - me.fightQuiet < 60000) return; }
+  if (f.length) { me.fightCuts.push(Date.now()); me.interrupt = 'fight'; b.cancel?.(); }
 }, 400));
 timers.push(setInterval(() => {
   const b = me.bot; if (!b || !me.connected || fighting || b.state().dead) return;
