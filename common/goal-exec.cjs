@@ -4326,7 +4326,10 @@ function goalVerbs(K, H) {
       // (up at its own height: from the floor two below, the silverfish on its platform were out of reach - nine minutes, no kill)
       if (hyp(sp.x + 0.5 - f.x, sp.y - f.y, sp.z + 0.5 - f.z) > 7 || f.y < sp.y - 2.5) {
         const ok = await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 3 && y >= sp.y - 1 && !(x === sp.x && z === sp.z), (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 64, dig: false, pillar: true, legs: 8, nodes: 30000 });   // (no digging round the spawner: 11/21 the portal room's floor was dug full of holes into the caves under it, its lava running down them)
-        if (!ok) { const g = K.feet(); spawnerMiss++; log(`spawner_xp: no way to the spawner at ${sp.x} ${sp.y} ${sp.z} from ${Math.floor(g.x)} ${Math.floor(g.y)} ${Math.floor(g.z)} (${spawnerMiss})`); if (spawnerMiss >= 4) break; await K.ticks(20); }
+        if (!ok) { const g = K.feet(); spawnerMiss++; log(`spawner_xp: no way to the spawner at ${sp.x} ${sp.y} ${sp.z} from ${Math.floor(g.x)} ${Math.floor(g.y)} ${Math.floor(g.z)} (${spawnerMiss})`);
+          // (shut in a hole under it with no digging allowed: dug out this once, up toward it - 11/21 four tries from y 6 and the farm ended)
+          if (spawnerMiss >= 2) { K.memo.set('goal:noDig', false); try { await travel((x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z) <= 4 && y >= sp.y - 1, (x, y, z) => hyp(x - sp.x, y - sp.y, z - sp.z), { radius: 32, dig: true, pillar: true, legs: 6, nodes: 30000 }); } finally { K.memo.set('goal:noDig', true); } }
+          if (spawnerMiss >= 5) break; await K.ticks(20); }
         continue; }
       // (one it cannot get at - in the wall, under the floor - is let be after two tries: 'could not get near' at once, again and
       //  again, spun the process at full speed for 12 minutes with no tick between)
