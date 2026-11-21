@@ -531,6 +531,7 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40, pearls = 0 } = {}) {
     //  cobblestone for stone ones made there)
     if (n(/^stick$/) < 16) await R.run('get_stick 16', 'sticks for pickaxes made there');
     if (n(/^cobblestone$/) < 48) await R.run('get_cobblestone 64', 'cobblestone for stone pickaxes and the walls');
+    if (!n(/^crafting_table$/)) await R.run('get_crafting_table 1', 'a crafting table for pickaxes made there');
     const before = me.bot.state().pos;
     // (tried again: 'the portal did not light (frame not closed?)' once in the lab, a fresh world, and the trip ended there)
     for (let k = 0; k < 3 && me.dim !== 'nether'; k++) { await R.run('nether_in', k ? 'into the Nether (again)' : 'into the Nether (a portal by the room)'); for (let t = 0; t < 20 && me.dim !== 'nether'; t++) await sleep(500); }
@@ -544,7 +545,7 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40, pearls = 0 } = {}) {
   // (walled in at the portal first, then the levels from quartz along a 2x1 tunnel in the netherrack - no open ground: the dragon side's
   //  advice 11/21, after three deaths inside five minutes in the open; the fortress after that)
   await R.run('wall_in 2', 'the portal walled round');
-  if (me.dim === 'nether' && me.deaths === d0 && level() < lv) await R.run(`quartz_mine ${lv} ${Math.max(600, Math.min(2400, minutes * 30))}`, 'levels from nether quartz (a tunnel)');
+  if (me.dim === 'nether' && me.deaths === d0 && level() < lv) await R.run(`quartz_mine ${lv} 3000`, 'levels from nether quartz (a tunnel)');
   if (me.dim === 'nether' && me.deaths === d0) await R.run('nether_seek 1200', 'a nether fortress');
   // the rods at the spawner (and its XP); the levels after that from nether quartz along tunnels - faster than waiting for blazes at a
   // slit (the lab: about one blaze a minute)
