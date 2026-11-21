@@ -664,7 +664,7 @@ B.road_kit = () => stepRun('road_kit', async () => { const m = kitMissing(); ret
 // ---------- room in the bag: junk dropped when the inventory is nearly full (11/20 a miner with 580 cobbled deepslate could not craft
 // a table: 'inventory full', and its golden apple step ended there after 27 minutes) ----------
 const KEEP = { enchanted_book: 0, stone_bricks: 0, mossy_stone_bricks: 0, cracked_stone_bricks: 0, chiseled_stone_bricks: 0, mossy_cobblestone: 0, iron_bars: 0, stone_brick_stairs: 0, stone_brick_slab: 0, oak_fence: 0, string: 8, paper: 0, map: 0, empty_map: 0, cobweb: 0, web: 0,   // (the stronghold's own blocks, dug through to its library: 11/20 'inventory full' crafting the shovels)
-  cobblestone: 320, cobbled_deepslate: 64, netherrack: 64, blackstone: 32, gravel: 16, dirt: 16, sand: 0, diorite: 0, andesite: 0, granite: 0, tuff: 0, calcite: 0, basalt: 0, smooth_basalt: 0, deepslate: 0, rotten_flesh: 0, spider_eye: 0, poisonous_potato: 0, wheat_seeds: 0, pumpkin_seeds: 0, beetroot_seeds: 0, cobweb: 0, flint_and_steel_broken: 0, bone: 8, arrow_stuck: 0, red_sand: 0, terracotta: 0, magma: 0, soul_sand: 0, soul_soil: 0, moss_block: 0, clay_ball: 0, kelp: 0, ink_sac: 0, gold_nugget: 999, egg: 0, mud: 0, stick: 64 };
+  cobblestone: 320, cobbled_deepslate: 64, netherrack: 32, blackstone: 16, magma: 0, polished_blackstone_bricks: 0, polished_blackstone_brick_stairs: 0, magma_cream: 0, gold_nugget: 576, gravel: 16, dirt: 16, sand: 0, diorite: 0, andesite: 0, granite: 0, tuff: 0, calcite: 0, basalt: 0, smooth_basalt: 0, deepslate: 0, rotten_flesh: 0, spider_eye: 0, poisonous_potato: 0, wheat_seeds: 0, pumpkin_seeds: 0, beetroot_seeds: 0, cobweb: 0, flint_and_steel_broken: 0, bone: 8, arrow_stuck: 0, red_sand: 0, terracotta: 0, magma: 0, soul_sand: 0, soul_soil: 0, moss_block: 0, clay_ball: 0, kelp: 0, ink_sac: 0, gold_nugget: 999, egg: 0, mud: 0, stick: 64 };
 async function tidy(want = 4) {
   const k = K(); if (!k || !me.connected) return;
   if (k.screen()) { if (want <= 4) return; await act('close'); await sleep(300); }
@@ -691,7 +691,9 @@ async function tidy(want = 4) {
 // probes dead at night); ROAD_NIGHT=fight leaves it to the old rule (armed and well: on in the dark)
 const nightPolicy = () => { const on = process.env.ROAD_NIGHT !== 'fight' && !(K() && allProt4()); me.nightIn = on; K()?.memo?.set('goal:nightIn', on); };
 if (me.roadTidy) clearInterval(me.roadTidy);
-me.roadTidy = setInterval(() => { try { nightPolicy(); } catch { /* */ } if (!tidy.busy) { tidy.busy = true; tidy(5).catch(() => {}).finally(() => { tidy.busy = false; }); } }, 15000);
+// (a tidy that never came back - an action that hung - kept every later one from running: 11/21 thirteen stacks of netherrack, 'craft:
+//  inventory full', no new pickaxe; after a minute it is given up)
+me.roadTidy = setInterval(() => { try { nightPolicy(); } catch { /* */ } if (tidy.busy && Date.now() - (tidy.since ?? 0) > 60000) tidy.busy = false; if (!tidy.busy) { tidy.busy = true; tidy.since = Date.now(); tidy(5).catch(() => {}).finally(() => { tidy.busy = false; }); } }, 15000);
 B.road_debug = async (a) => { debug = a[0] !== 'off'; log(`road_debug ${debug ? 'on' : 'off'}`); };
 B.road_status = async () => log(`road_status: ${JSON.stringify(st)} · armour ${armourText()} · level ${level()}`);
 

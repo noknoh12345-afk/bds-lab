@@ -2211,8 +2211,10 @@ function goalVerbs(K, H) {
         if (ores % 10 === 0) log(`quartz: ${ores} ores, level ${Math.floor(lv())}`);
         await reflexes(); continue;
       }
+      // (no pickaxe and none to be made - the bag full, no table: stopped, not a loop of tunnels that go nowhere at 46% CPU)
+      if (!bestTool({ kind: 'pickaxe', tier: 1 }) && !(await newPickaxe())) { log('quartz: no pickaxe and none made - stopping'); break; }
       const [x, , z] = feet(), tx = x + Math.cos(dir) * 16, tz = z + Math.sin(dir) * 16;
-      if (!(await tunnelTo(tx, tz, 20, 1))) dir += Math.PI / 2; else if (++legs % 4 === 0) dir = bestDir();
+      if (!(await tunnelTo(tx, tz, 20, 1))) { dir += Math.PI / 2; await K.ticks(4); } else if (++legs % 4 === 0) dir = bestDir();
       await reflexes();
     }
     log(`quartz: ${ores} ores in ${Math.round((gnow() - t0) / 1000)} s, level ${Math.floor(lv())}`);
