@@ -3304,7 +3304,10 @@ function goalVerbs(K, H) {
     if (cnt('stick') < 2) { await closeScreen(); await K.act('craft', ['stick', '1']); await K.sync(); if (cnt('stick') < 2) return false; }
     if (!cnt('crafting_table') && !known((b) => b.name === 'minecraft:crafting_table', { max: 6, radius: 12, fair: false }).filter(mineOnly).length) { await closeScreen(); await K.act('craft', ['crafting_table', '1']); await K.sync(); }
     if (!(await openStation('crafting_table'))) return false;
-    await K.act('craft', ['stone_pickaxe', '1']); await K.sync(); await closeScreen();
+    // (several while the table is open: a table set down in the Nether and left behind - one that opened late, one out of reach
+    // after the tunnel moved on - ended a quartz trip at level 11 with stone and sticks still carried (11/21 the lab))
+    const extra = Math.max(0, Math.min(2, Math.floor((cnt('cobblestone') + cnt('cobbled_deepslate') + cnt('blackstone')) / 3) - 1, Math.floor(cnt('stick') / 2) - 1));
+    await K.act('craft', ['stone_pickaxe', String(1 + extra)]); await K.sync(); await closeScreen();
     await pickUp('crafting_table');
     const ok = !!bestTool({ kind: 'pickaxe', tier: 1 });
     log(ok ? 'the pickaxe broke: made a new stone one here' : 'the pickaxe broke: could not make a new one here');

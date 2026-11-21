@@ -529,9 +529,9 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40, pearls = 0 } = {}) {
     if (n(/^(iron|diamond)_pickaxe$/) < 2) await R.run('get_iron_pickaxe 2', 'a spare pickaxe for the Nether');
     // (the quartz tunnel wears pickaxes out fast - 160 ores took two iron and five stone ones: the diamond one goes, and sticks and
     //  cobblestone for stone ones made there)
-    if (n(/^stick$/) < 16) await R.run('get_stick 16', 'sticks for pickaxes made there');
+    if (n(/^stick$/) < 24) await R.run('get_stick 24', 'sticks for pickaxes made there');
     if (n(/^cobblestone$/) < 48) await R.run('get_cobblestone 64', 'cobblestone for stone pickaxes and the walls');
-    if (!n(/^crafting_table$/)) await R.run('get_crafting_table 1', 'a crafting table for pickaxes made there');
+    if (n(/^crafting_table$/) < 2) await R.run('get_crafting_table 2', 'a crafting table for pickaxes made there');
     const before = me.bot.state().pos;
     // (tried again: 'the portal did not light (frame not closed?)' once in the lab, a fresh world, and the trip ended there)
     for (let k = 0; k < 3 && me.dim !== 'nether'; k++) { await R.run('nether_in', k ? 'into the Nether (again)' : 'into the Nether (a portal by the room)'); for (let t = 0; t < 20 && me.dim !== 'nether'; t++) await sleep(500); }
@@ -546,17 +546,20 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40, pearls = 0 } = {}) {
   //  advice 11/21, after three deaths inside five minutes in the open; the fortress after that)
   await R.run('wall_in 2', 'the portal walled round');
   if (me.dim === 'nether' && me.deaths === d0 && level() < lv) await R.run(`quartz_mine ${lv} 3000`, 'levels from nether quartz (a tunnel)');
-  if (me.dim === 'nether' && me.deaths === d0) await R.run('nether_seek 1200', 'a nether fortress');
+  // (no pickaxe left: home by the tunnel dug, not on into tunnels it cannot dig - 11/21 six legs of 'tunnel: no pickaxe')
+  const pick = () => n(/_pickaxe$/) > 0;
+  if (me.dim === 'nether' && me.deaths === d0 && pick()) await R.run('nether_seek 1200', 'a nether fortress');
   // the rods at the spawner (and its XP); the levels after that from nether quartz along tunnels - faster than waiting for blazes at a
   // slit (the lab: about one blaze a minute)
-  if (me.dim === 'nether' && me.deaths === d0 && n(/^blaze_rod$/) < rods) await R.run(`blaze_rods ${rods} ${Math.max(300, Math.min(1200, minutes * 60 - Math.round((Date.now() - t0) / 1000)))} 0`, 'blaze rods');
+  if (me.dim === 'nether' && me.deaths === d0 && pick() && n(/^blaze_rod$/) < rods) await R.run(`blaze_rods ${rods} ${Math.max(300, Math.min(1200, minutes * 60 - Math.round((Date.now() - t0) / 1000)))} 0`, 'blaze rods');
   // the pearls in a warped forest (endermen there by day and night; the carved pumpkin on: 11/21 the dragon side's answer - the
   // overworld's endermen come only at night, when the road is dug in)
   const pearlsHad = () => n(/^ender_pearl$/) + n(/^ender_eye$/);
-  if (me.dim === 'nether' && me.deaths === d0 && pearls && pearlsHad() < pearls) await R.run(`pearl_hunt ${pearls} ${Math.max(600, Math.min(2400, minutes * 60))}`, 'ender pearls in a warped forest');
+  if (me.dim === 'nether' && me.deaths === d0 && pick() && pearls && pearlsHad() < pearls) await R.run(`pearl_hunt ${pearls} ${Math.max(600, Math.min(2400, minutes * 60))}`, 'ender pearls in a warped forest');
   // (away from the spawner first - back toward the portal by the tunnel: 11/20 the quartz tunnel went past the spawner, nine blazes, burned)
-  if (me.dim === 'nether' && me.deaths === d0 && level() < lv && st.portalN) await R.run(`tunnel_to ${st.portalN.x} ${st.portalN.z} 600 6`, 'away from the spawner, toward the portal');
-  if (me.dim === 'nether' && me.deaths === d0 && level() < lv) await R.run(`quartz_mine ${lv} ${Math.max(300, minutes * 60 - Math.round((Date.now() - t0) / 1000))}`, 'levels from nether quartz');
+  if (me.dim === 'nether' && me.deaths === d0 && pick() && level() < lv && st.portalN) await R.run(`tunnel_to ${st.portalN.x} ${st.portalN.z} 600 6`, 'away from the spawner, toward the portal');
+  if (me.dim === 'nether' && me.deaths === d0 && pick() && level() < lv) await R.run(`quartz_mine ${lv} ${Math.max(300, minutes * 60 - Math.round((Date.now() - t0) / 1000))}`, 'levels from nether quartz');
+  if (!pick()) log(`road: the Nether: no pickaxe left (level ${level()}) - home before going on`, { dc: true });
   if (me.dim !== 'nether' || me.deaths !== d0) return `the trip ended in the Nether: ${me.deaths !== d0 ? 'died' : 'out of it'} (rods ${n(/^blaze_rod$/)}, level ${level()})`;   // (11/20: killed by magma cubes, it went on to 'the way back' from the overworld)
   log(`road: the Nether: ${n(/^blaze_rod$/)} rods, level ${level()} - back to the portal at ${st.portalN.x} ${st.portalN.z}`, { dc: true });
   if (st.portalN) await R.run(`tunnel_to ${st.portalN.x} ${st.portalN.z} 600 3`, 'back toward the portal by a tunnel');   // (the Nether's ledges: no walking in the open)
