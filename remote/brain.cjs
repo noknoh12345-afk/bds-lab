@@ -1050,7 +1050,7 @@ async function dragonFight() {
         //  dead in four seconds. Out to 12 from the middle to wait)
         // (it sits and there is no way to it clear of its breath: the bow at it where it sits - a still mark. 21 Nov 21:27-21:31, eight
         //  perches in a row passed with 59 arrows carried, 'no way to 4 -2 clear of its breath: waiting')
-        { const dS = ents(/ender_dragon$/)[0], lq0 = Math.hypot(Q.x, Q.z); if (mid && dS && lq0 >= 8 && cnt('arrow') > Number(process.env.BOT_ARROW_KEEP ?? 16) && !cl.some((e) => Math.hypot(Q.x - e.x, Q.z - e.z) < cr(e) + 1)) { if (Date.now() - (walk.bowSaid ?? 0) > 20000) { walk.bowSaid = Date.now(); log('dragon: no way to it: the bow at it where it sits'); } await shootAt(dS.x, dS.y + 1.5, dS.z); return; } }
+        { const dS = ents(/ender_dragon$/)[0], lq0 = Math.hypot(Q.x, Q.z); if (mid && dS && lq0 >= 8 && cnt('arrow') > Number(process.env.BOT_ARROW_KEEP_SIT ?? 16) && !cl.some((e) => Math.hypot(Q.x - e.x, Q.z - e.z) < cr(e) + 1)) { if (Date.now() - (walk.bowSaid ?? 0) > 20000) { walk.bowSaid = Date.now(); log('dragon: no way to it: the bow at it where it sits'); } await shootAt(dS.x, dS.y + 1.5, dS.z); return; } }
         { const lq = Math.hypot(Q.x, Q.z); if (mid && lq < 11) { const ux = lq < 0.5 ? 1 : Q.x / lq, uz = lq < 0.5 ? 0 : Q.z / lq; await dash(ux * 12, uz * 12, 2500); return; } }
         await sleep(400); return; } [tx, tz] = opts[0]; }
     await down(); await gotoFor([String(Math.round(tx)), String(Math.round(tz))], ms);
@@ -1548,9 +1548,10 @@ async function dragonFight() {
     // (arrows at it in flight only while more than 48 are left - those are for crystals a respawn brings and the cages: 10:23 on 19
     //  Nov, 192 → 22 in 25 minutes from 36 out and its bar 200 → 190 for them)
     // (its last few points from the bow at any count of arrows: 21:00, its bar at 1 for a minute and 108 arrows kept back)
-    // (the reserve kept for its last 12 points: 16 arrows, not 48 - 21 Nov in the lab, 48 sat unused for half an hour of no ranged
+    // (in flight only above 64 now that the bow is used on it where it sits when there is no way to it - a still mark, BOT_ARROW_KEEP_SIT 16.
+    //  Before that: the reserve kept for its last 12 points: 16 arrows, not 48 - 21 Nov in the lab, 48 sat unused for half an hour of no ranged
     //  damage; with 16 the first try killed in 4529 s with no death, the others 5400-6500)
-    if (dr && cnt('arrow') > (bar() <= 12 ? 0 : Number(process.env.BOT_ARROW_KEEP ?? 16)) && Math.hypot(dr.x - P.x, dr.z - P.z) < (bar() <= 12 ? 32 : 45)) { await shootAt(dr.x, dr.y + 1, dr.z); shots++; continue; }
+    if (dr && cnt('arrow') > (bar() <= 12 ? 0 : Number(process.env.BOT_ARROW_KEEP ?? 64)) && Math.hypot(dr.x - P.x, dr.z - P.z) < (bar() <= 12 ? 32 : 45)) { await shootAt(dr.x, dr.y + 1, dr.z); shots++; continue; }
     await sleep(500);
   }
   return false;
