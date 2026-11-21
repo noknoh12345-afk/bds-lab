@@ -532,8 +532,8 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40, pearls = 0 } = {}) {
     if (n(/^stick$/) < 16) await R.run('get_stick 16', 'sticks for pickaxes made there');
     if (n(/^cobblestone$/) < 48) await R.run('get_cobblestone 64', 'cobblestone for stone pickaxes and the walls');
     const before = me.bot.state().pos;
-    await R.run('nether_in', 'into the Nether (a portal by the room)');
-    for (let t = 0; t < 20 && me.dim !== 'nether'; t++) await sleep(500);
+    // (tried again: 'the portal did not light (frame not closed?)' once in the lab, a fresh world, and the trip ended there)
+    for (let k = 0; k < 3 && me.dim !== 'nether'; k++) { await R.run('nether_in', k ? 'into the Nether (again)' : 'into the Nether (a portal by the room)'); for (let t = 0; t < 20 && me.dim !== 'nether'; t++) await sleep(500); }
     if (me.dim !== 'nether') return 'not into the Nether';
     if (!st.portalO) st.portalO = { x: Math.floor(before.x), y: Math.floor(before.y), z: Math.floor(before.z) };
     const f = me.bot.state().pos; st.portalN = { x: Math.floor(f.x), y: Math.floor(f.y), z: Math.floor(f.z) }; save();
