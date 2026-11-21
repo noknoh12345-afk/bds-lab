@@ -1486,7 +1486,8 @@ async function dragonFight() {
       if (process.env.BOT_DEBUG && Date.now() - (sideSaid ?? 0) > 3000) { sideSaid = Date.now(); const cl = ents(/area_effect_cloud$/).filter((e) => !e.burn && Math.hypot(e.x - dr.x, e.z - dr.z) < 14).map((e) => (((e.x - dr.x) * hx + (e.z - dr.z) * hz) / (Math.hypot(e.x - dr.x, e.z - dr.z) || 1)).toFixed(2)); log(`dragon: dbg sitting yaw ${dr.yaw.toFixed(0)}, me ahead ${ahead.toFixed(2)}, clouds near it ahead ${cl.join(' ') || '-'}`); }
       if (ahead > 0.3) { const s1 = [dr.x - hz * 4.5, dr.z + hx * 4.5], s2 = [dr.x + hz * 4.5, dr.z - hx * 4.5], sd = Math.hypot(s1[0] - P.x, s1[1] - P.z) < Math.hypot(s2[0] - P.x, s2[1] - P.z) ? s1 : s2;
         if (Date.now() - (sideSaid2 ?? 0) > 8000) { sideSaid2 = Date.now(); log('dragon: in front of its head: round to its side'); }
-        await dash(sd[0], sd[1], 1500); continue; }
+        // (round it by the clouds' way, not a dash through what lies ahead of its head: 21 Nov 01:12, 15.5 to dead in five seconds)
+        await walk(sd[0], sd[1], 1500, true); continue; }
     }
     // beds: one blows up when used in the End - set down by it while it sits, a step back, and clicked (a fifth of its health a bed,
     // the guides say; read back from its health here). BOT_NOBED to leave them
