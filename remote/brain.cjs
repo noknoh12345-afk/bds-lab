@@ -908,6 +908,8 @@ async function dragonFight() {
         delegating = true; try {
           await b.act('stop', []).catch(() => {});
           for (let tries = 0; tries < 2 && feet() < by - 2 && me.connected && !b.state().dead && (me.hp ?? 0) >= 12 && cnt('cobblestone') + cnt('end_stone') >= by - feet(); tries++) {
+            // (not again under 14 health or in its breath: 21 Nov 05:32, knocked off it, up again with the watches off in its breath, dead)
+            if (tries && ((me.hp ?? 0) < 14 || inCloud())) { log(`dragon: uncage: knocked off the shooting pillar, health ${me.hp}${inCloud() ? ', its breath here' : ''}: later`); uncageWait = Date.now() + 25000; break; }
             if (tries) { log('dragon: uncage: up the shooting pillar once more'); if (Math.hypot(b.state().pos.x - tx - 0.5, b.state().pos.z - tz - 0.5) > 1) await gotoFor([String(tx), String(tz)], 6000); await b.act('stop', []).catch(() => {});
               // (09:44 on 19 Nov: knocked off, the second pillar went up wherever it stood - 1 out from the crystal - and its blast
               //  killed us at the first arrow. Only from the spot nine out)
