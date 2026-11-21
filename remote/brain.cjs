@@ -1002,7 +1002,7 @@ async function dragonFight() {
   // (BOT_NEAR_S/BOT_FAR_S: near for so many seconds, then far for so many, while it flies - to be asked to sit without standing in its
   //  fireballs the whole time; off unless both are set)
   const farByClock = () => { const n = Number(process.env.BOT_NEAR_S || 0), f = Number(process.env.BOT_FAR_S || 0); if (!n || !f) return false; return ((Date.now() - t0) / 1000) % (n + f) >= n; };
-  let finSaid = 0, circDir = 1, farMode = false, gatherAt = 0; const again = new Map(); let perchRec = null, bedsBlown = 0, eatingG = false, stuckAt = null, uncageWait = 0, digSaid = 0, seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, gappleAt = 0, gapSaid = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), gaps = new Map(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
+  let finSaid = 0, circDir = 1, farMode = false, gatherAt = 0, edgeSaid = 0; const again = new Map(); let perchRec = null, bedsBlown = 0, eatingG = false, stuckAt = null, uncageWait = 0, digSaid = 0, seenDragon = false, lastSay = 0, shots = 0, hits = 0, hpWas = null, hurtAt = 0, emSaid = 0, emHits = 0, onPillar = null, guardSaid = 0, dodgeSaid = 0, holedAt = 0, bedAt = 0, noRoomAt = 0, seekSaid = 0, pillarFail = 0, gappleAt = 0, gapSaid = 0, sideSaid = 0, sideSaid2 = 0, dbgPerch = 0, uncaging = false, opened = new Set(), gaps = new Map(), caged = new Set(), leftAt = new Map(), aim = null, resting = false, perchSaid = 0, moved = ''; const all = new Set(), gone = new Set();
   // (21 Nov in the lab: the sixteen gone by 63-90 minutes in every long fight, then dead. Out of danger - no cloud within 10, the
   //  dragon 24+ off - the apple waits until 9 and the rest is healed by food)
   const calm = () => { const Q = b.state().pos, d = ents(/ender_dragon$/)[0]; return !ents(/area_effect_cloud$/).some((e) => Math.hypot(e.x - Q.x, e.z - Q.z) < cr(e) + 10) && (!d || Math.hypot(d.x - Q.x, d.y - Q.y, d.z - Q.z) > 24); };
@@ -1327,6 +1327,9 @@ async function dragonFight() {
     }
     // (while it sits and health is 12+, only a cloud we stand in or a fireball sends us off - not one six blocks off: 20:24-20:25 on
     //  19 Nov, a 57 s perch of approach, 'away', approach, and no swing; the escape ran ten past its edge every time)
+    // (21 Nov 20:47: thrown out to 58 from the middle by its charge, on the island's last ground, then off it into the void. Past 52:
+    //  in toward the middle before anything else but the apple)
+    if (Math.hypot(P.x, P.z) > 52 && Math.floor(P.y + 0.01) >= 56 && !b.state().dead) { const l = Math.hypot(P.x, P.z); if (Date.now() - (edgeSaid ?? 0) > 15000) { edgeSaid = Date.now(); log(`dragon: ${Math.round(l)} out, by the edge: in first`); } await b.act('sneak', ['on']).catch(() => {}); try { await gotoFor([String(Math.round(P.x * 40 / l)), String(Math.round(P.z * 40 / l))], 4000); } finally { await b.act('sneak', ['off']).catch(() => {}); } continue; }
     const cloudIn = cloud && (/dragon_fireball$/.test(cloud.type ?? '') || Math.hypot(cloud.x - P.x, cloud.z - P.z) < cr(cloud) + 0.6);
     // (21 Nov 17:39-17:41: through its breath to it at its bar of 3, and at once 'away' out of the same breath - three times. Just
     //  through it, 4 s more in it with 10+ health)
