@@ -894,6 +894,9 @@ async function dragonFight() {
     let left = 0; if (!misplaced) for (const y of [by - 1, by, by + 1]) for (const l of [0, -1, 1]) if (bname(bx + dx * kw + lx * l, y, bz + dz * kw + lz * l) === 'iron_bars') left++;
     log(`dragon: uncage: ${broke} bars broken out (${left} left in that face); down again`);
     if (!misplaced && broke >= 1 && left === 0 && broke < 3) broke = 3;
+    // (back onto our own pillar before down: 21 Nov 06:50, the digs walked it through the gap onto the obsidian top at 14 -40,
+    //  'down the pillar 82 → 82', its breath came down on it there, thirteen apples and dead)
+    for (let t = 0; t < 3 && Math.hypot(Math.floor(b.state().pos.x) - sx, Math.floor(b.state().pos.z) - sz) > 0.5 && !b.state().dead; t++) { log(`dragon: uncage: off our pillar (${Math.floor(b.state().pos.x)} ${Math.floor(b.state().pos.z)}): back to ${sx} ${sz}`); delegating = true; try { await b.act('sneak', ['on']).catch(() => {}); await gotoFor([String(sx), String(sz)], 4000); } finally { await b.act('sneak', ['off']).catch(() => {}); delegating = false; } }
     if (broke >= 3) gaps.set(key(c), { bx, bz, by, dx, dz, kw });
     // (down our own pillar a block at a time, the pickaxe in hand and each fall waited for: dig_down took three minutes of 'nothing to
     //  dig (air)' - 22:07)
