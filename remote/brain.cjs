@@ -1433,7 +1433,7 @@ async function dragonFight() {
     //  waiting at 46 nothing hurt us but it did not sit once in 22 minutes; at 18 it sat every few minutes and its breath wore us down)
     // (out at 18 while it flies - BOT_WAIT_R to try farther: 09:42 on 19 Nov, both cages broken by 13 min and every crystal gone,
     //  then three minutes of its breath 1-10 blocks off at 18 out, six golden apples, dead; in to the fountain's side when it sits)
-    { const l = Math.hypot(P.x, P.z) || 1, want = perched ? 4 : (process.env.BOT_WAIT_FAR && (farMode = (me.hp ?? 20) <= 12 ? true : (me.hp ?? 20) >= 19.5 ? false : farMode, farMode || farByClock())) ? Number(process.env.BOT_WAIT_FAR) : Number(process.env.BOT_WAIT_R || 18), wx = Math.round((P.x / l) * want), wz = Math.round((P.z / l) * want); if (Math.abs(l - want) > 2.5) { await walk(wx, wz, 3000, perched); continue; } }
+    { const l = Math.hypot(P.x, P.z) || 1, want = (perched && !((left.size || crystals.length) && cnt(blockId()) >= 24 && cnt('arrow') > 0)) ? 4 : (process.env.BOT_WAIT_FAR && (farMode = (me.hp ?? 20) <= 12 ? true : (me.hp ?? 20) >= 19.5 ? false : farMode, farMode || farByClock())) ? Number(process.env.BOT_WAIT_FAR) : Number(process.env.BOT_WAIT_R || 18), wx = Math.round((P.x / l) * want), wz = Math.round((P.z / l) * want); if (Math.abs(l - want) > 2.5) { await walk(wx, wz, 3000, perched); continue; } }
     // (BOT_CIRCLE: while it flies, never standing still on the circle - round it 20 degrees a step: its fireballs are aimed at where
     //  we stand and come at 27 blocks a second; 04:12 on 20 Nov, 17 → dead in seventeen seconds standing on the circle at 18)
     if (process.env.BOT_CIRCLE && !perched && !(bar() <= 12 && cnt('arrow') > 0)) { const a = Math.atan2(P.z, P.x) + (circDir * 20 * Math.PI) / 180, r0 = Math.hypot(P.x, P.z) || 18; if (Math.random() < 0.08) circDir = -circDir; await walk(Math.cos(a) * r0, Math.sin(a) * r0, 2500, false); continue; }
@@ -1446,7 +1446,9 @@ async function dragonFight() {
       // (21 Nov 10:11: 'the pillar did not rise' with its box 3.5 over the eyes - two up put the head in it. One up then: 2.5 is in reach)
       if (b.state().pos.y < y0 + 0.9 && up > 1) { log('dragon: one up instead'); const pe = await Promise.race([b.act('pillar', ['1', blockId()]).then(() => null, (e) => String(e?.message ?? e)), sleep(2500).then(() => 'timed out')]); if (pe) log(`dragon: the pillar: ${pe.slice(0, 160)}`); }
       if (b.state().pos.y < y0 + 0.9) { pillarFail = Date.now(); log(`dragon: the pillar did not rise (${cnt(blockId())} ${blockId()} left): the sword from here`); } continue; }
-    inFight = !!(perched && dr && (me.hp ?? 20) >= 12);
+    // (21 Nov 10:49: to the fountain while it sat with a caged crystal still standing - 18.6 to dead in twenty seconds, and every
+    //  blow healed back. While a crystal stands and there is the means to get at it, a perch is for the cages, not the sword)
+    inFight = !!(perched && dr && (me.hp ?? 20) >= 12 && !((left.size || crystals.length) && cnt(blockId()) >= 24 && cnt('arrow') > 0));
     // (its head points against its yaw as Bedrock sends it: its breath while sitting lay at -0.98 of yaw's way, 13:29)
     // sitting, it breathes ahead of its head: never in front of it - to its side, four and a half out from its middle (13:03-13:17
     // in the lab: five times it sat, five times the bowl in front of it took the health and the time it sat went on healing)
