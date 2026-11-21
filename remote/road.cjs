@@ -527,7 +527,10 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40, pearls = 0 } = {}) {
     if (at) { const f = me.bot.state().pos; if (Math.hypot(f.x - at.x, f.z - at.z) > 10) await R.travel(at.x, at.z); }
     // (a spare pickaxe and sticks for a stone one: 11/20 the iron one wore out tunnelling and the hunt stopped dead in a soul sand valley)
     if (n(/^(iron|diamond)_pickaxe$/) < 2) await R.run('get_iron_pickaxe 2', 'a spare pickaxe for the Nether');
-    if (n(/^stick$/) < 8) await R.run('get_stick 8', 'sticks for a pickaxe made there');
+    // (the quartz tunnel wears pickaxes out fast - 160 ores took two iron and five stone ones: the diamond one goes, and sticks and
+    //  cobblestone for stone ones made there)
+    if (n(/^stick$/) < 16) await R.run('get_stick 16', 'sticks for pickaxes made there');
+    if (n(/^cobblestone$/) < 48) await R.run('get_cobblestone 64', 'cobblestone for stone pickaxes and the walls');
     const before = me.bot.state().pos;
     await R.run('nether_in', 'into the Nether (a portal by the room)');
     for (let t = 0; t < 20 && me.dim !== 'nether'; t++) await sleep(500);
