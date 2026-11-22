@@ -1900,7 +1900,10 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           if (!src.item?.network_id) return say(`drop: ${a[1]} is empty`);
           const r = waitResponse(reqId);
           stackReq([{ type_id: 'drop', legacy_type_id: LEGACY.drop, count: Math.min(num(a[0], 1), src.item.count), source: slotInfo(src.c, src.slot, src.item, src.dyn), randomly: false }]);
-          const st = await r;
+          let st = await r;
+          // (refused - a stale stack id while digging changes the bag every few ticks, 'status 49': 11/22 eight stacks of netherrack
+          //  never went and the bag filled): the server's copy again, then once more
+          if (st !== 'ok') { await sync(); await ticks(4); const s2 = slotRef(a[1]); if (s2.item?.network_id) { const r2 = waitResponse(reqId); stackReq([{ type_id: 'drop', legacy_type_id: LEGACY.drop, count: Math.min(num(a[0], 1), s2.item.count), source: slotInfo(s2.c, s2.slot, s2.item, s2.dyn), randomly: false }]); st = await r2; } }
           if (st !== 'ok') say(`drop rejected: ${st}`);
         } finally { if (opened && box) { client.queue('container_close', { window_id: box.window, window_type: box.type, server: false }); box = null; } }
         await ticks(2); await sync(); return ticks(2);
