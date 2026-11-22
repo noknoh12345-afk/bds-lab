@@ -681,7 +681,7 @@ async function tidy(want = 4) {
   const byKind = new Map(); slots().forEach((it, i) => { if (i >= 36 || !it?.network_id) return; const nmx = nameOf(it); if (!(nmx in KEEP)) return; (byKind.get(nmx) ?? byKind.set(nmx, []).get(nmx)).push({ i, c: it.count }); });
   for (const [nmx, list] of [...byKind].sort((a, b) => b[1].reduce((s, x) => s + x.c, 0) - a[1].reduce((s, x) => s + x.c, 0))) {
     let total = list.reduce((s, x) => s + x.c, 0); const keep = KEEP[nmx];
-    for (const x of list.sort((a, b) => a.c - b.c)) { if (total - x.c < keep || free() >= Math.max(6, want)) break; await act('drop_all', [x.i]); total -= x.c; await sleep(150); }
+    for (const x of list.sort((a, b) => a.c - b.c)) { if (total - x.c < keep || free() >= Math.max(6, want)) break; { const was = free(); const r = await act('drop_all', [x.i]); await sleep(150); if (free() <= was && Date.now() - (tidy.failSaid ?? 0) > 60000) { tidy.failSaid = Date.now(); log(`road: tidy: ${nmx} in slot ${x.i} not dropped: ${String(r).slice(0, 120)}`); } } total -= x.c; }
     if (free() >= Math.max(6, want)) break;
   }
   // still short of room when it is wanted (the armour off for the table): what the iron kit makes spare - stone and wooden tools beside
