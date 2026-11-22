@@ -1535,6 +1535,18 @@ function goalVerbs(K, H) {
       log(`shelter: moved off ${x} ${y} ${z} to ${feet().join(' ')} while building: again here`);
       return shelter0(moved, { ...o, redo: (o.redo ?? 0) + 1 });
     }
+    // (only the lid will not go: one deeper, and the lid is the cell over the head, between the hole's own walls - 11/21 and 11/22 at a
+    //  shore the lid two up would not take against the ground beside it, the bot stood guard in the open and died both nights)
+    if (gaps.length === 1 && gaps[0] === lid && (fAt(x, y - 1, z) & F_SOLID) && !(fAt(x, y - 1, z) & F_UNBREAK) && !/lava|water|bedrock/.test(bname(x, y - 2, z) + bname(x, y - 1, z)) && (fAt(x, y - 2, z) & F_SOLID) && (o.deeper ?? 0) < 1 && !K.dead()) {
+      log(`shelter: the lid at ${lid.join(' ')} will not go: one deeper`);
+      if ((await breakAt(x, y - 1, z)) && (await until(() => feet()[1] === y - 1, 30), feet()[1] === y - 1)) {
+        const lid2 = [x, y + 1, z];
+        for (const [dx, dz, face] of SIDES) { if (fAt(...lid2) & F_SOLID) break; if (fAt(x + dx, y + 1, z + dz) & F_SOLID) await put(x + dx, y + 1, z + dz, face, lid2); }
+        if (!(fAt(...lid2) & F_SOLID)) await fillCell(lid2);
+        if ((fAt(...lid2) & F_SOLID) && SIDES.every(([dx, dz]) => (fAt(x + dx, y - 1, z + dz) & F_SOLID) && (fAt(x + dx, y, z + dz) & F_SOLID))) { log('shelter: shut in, one deeper'); gaps.length = 0; }
+        else return shelter0(moved, { ...o, deeper: 1 });
+      }
+    }
     if (gaps.length) {   // could not shut in: two or three blocks up on a pillar is out of a zombie's reach
       if (blocksHeld() >= 3 && (await pillarUp()) && (await pillarUp()) && (await pillarUp())) { log(`could not shut myself in (dug ${dug}, ${gaps.length} gaps): waiting up on a pillar`); perched = true; }
       else if (!moved && dug < 2) {   // rock underfoot, nothing to build with: over to soft ground (dirt with dirt under it) and again there
