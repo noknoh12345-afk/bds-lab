@@ -554,6 +554,13 @@ function goalVerbs(K, H) {
       // and down a drop: four zombies and a fall)
       // (a creeper too: a block between is most of its blast kept off, and it has spent itself - running from one down a tunnel ran
       // into a skeleton's arrows, or it caught up)
+      // (the Nether: no running - open ground there is lava, deltas and more of them; six magma cubes in a cave the quartz tunnel broke
+      //  into, run from: dead at level 21 (11/21 the lab). Shut in where it stands, as quartz_mine does when they reach the tunnel)
+      if (dimName() === 'nether' && blockItem() && !/creeper/.test(why) && !sheltering) {
+        log(`${why}: the Nether - shut in here, not running`); stopKeys();
+        try { await M.wall_in(['1']); await healUp(); } catch (e) { log(`${why}: could not shut in: ${String(e?.message ?? e).slice(0, 80)}`); }
+        return true;
+      }
       if (deepUnder() && (await sealToward(foesNear(16).filter((q) => !ARCHER_T.test(q.e.type) || sees(q.e))))) return true;
       if (deepUnder() && !/creeper/.test(why) && !foesNear(2.5).some((q) => MELEE_T.test(q.e.type)) && (await burrow(why))) return true;   // (a creeper: away from it, not a wall between - it blows the wall)
       // (the open floor of a cave, no wall to make: back up this player's own stair a few steps and shut it below - a creeper or a
