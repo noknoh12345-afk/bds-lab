@@ -2241,6 +2241,14 @@ function goalVerbs(K, H) {
       if (h) {
         if (await goToBlock(h.x, h.y, h.z)) { if (await breakAt(h.x, h.y, h.z)) ores++; else markUnreachable(h, 'quartz_ore'); } else markUnreachable(h, 'quartz_ore');
         if (ores % 10 === 0) log(`quartz: ${ores} ores, level ${Math.floor(lv())}`);
+        // (the netherrack dug piles up - eight stacks, the bag full, no room for a new pickaxe. Dropped where it stands it is walked over
+        //  and taken straight back (11/22: 'not dropped' every 15 s): thrown back down the tunnel already dug, facing away from the way on)
+        if (cnt('netherrack') > 128) {
+          const t = trail(), back = t.length > 4 ? t.at(-5) : null, f = K.feet();
+          if (back) { K.lookAt(back[0] + 0.5, f.y + 1.2, back[2] + 0.5); await K.ticks(2); }
+          for (let i = 0, n = 0; i < 36 && cnt('netherrack') > 64 && n < 8; i++) { const it = K.inv.slots[i]; if (it?.network_id && sh(nm(it)) === 'netherrack') { await K.act('drop', [S(it.count), S(i)]); n++; } }
+          log(`quartz: netherrack thrown back down the tunnel (${cnt('netherrack')} kept)`);
+        }
         await reflexes(); continue;
       }
       // (no pickaxe and none to be made - the bag full, no table: stopped, not a loop of tunnels that go nowhere at 46% CPU)
