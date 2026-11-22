@@ -545,7 +545,7 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40, pearls = 0 } = {}) {
   // (walled in at the portal first, then the levels from quartz along a 2x1 tunnel in the netherrack - no open ground: the dragon side's
   //  advice 11/21, after three deaths inside five minutes in the open; the fortress after that)
   await R.run('wall_in 2', 'the portal walled round');
-  if (me.dim === 'nether' && me.deaths === d0 && level() < lv) await R.run(`quartz_mine ${lv} 3000`, 'levels from nether quartz (a tunnel)');
+  if (me.dim === 'nether' && me.deaths === d0 && level() < lv) await R.run(`quartz_mine ${lv} 5400`, 'levels from nether quartz (a tunnel)');   // (11/22: 191 ores in 50 min, level 23, no death - level 30 is some 45 min more)
   // (no pickaxe left: home by the tunnel dug, not on into tunnels it cannot dig - 11/21 six legs of 'tunnel: no pickaxe')
   const pick = () => n(/_pickaxe$/) > 0;
   if (me.dim === 'nether' && me.deaths === d0 && pick()) await R.run('nether_seek 1200', 'a nether fortress');
