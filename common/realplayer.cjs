@@ -1909,6 +1909,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           //  never went and the bag filled): the server's copy again, then once more
           if (st !== 'ok') { await sync(); await ticks(4); const s2 = slotRef(a[1]); if (s2.item?.network_id) { const r2 = waitResponse(reqId); stackReq([{ type_id: 'drop', legacy_type_id: LEGACY.drop, count: Math.min(num(a[0], 1), s2.item.count), source: slotInfo(s2.c, s2.slot, s2.item, s2.dyn), randomly: false }]); st = await r2; } }
           if (st !== 'ok') say(`drop rejected: ${st}`);
+          else if (process.env.LAB_DROP_DEBUG) { await ticks(2); await sync(); const s3 = slotRef(a[1]); say(`drop: ${a[1]} ok (screen ${box ? box.type : 'none'}, opened ${opened}), now ${s3.item?.network_id ? itemNames.get(s3.item.network_id) + '*' + s3.item.count : 'empty'}`); }
         } finally { if (opened && box) { client.queue('container_close', { window_id: box.window, window_type: box.type, server: false }); box = null; } if (turn && yaw === y0 + 180) { yaw = y0; pitch = p0; } }
         await ticks(2); await sync(); return ticks(2);
       }
