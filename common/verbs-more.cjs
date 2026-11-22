@@ -191,7 +191,10 @@ function moreVerbs(K, H) {
     const k = toolKind(b.name); if (!k) { await emptyHand(); return 'hand'; }
     // (the client's copy of the inventory can be behind - the tool just broke, lost in a death: then the next best, or the hand)
     for (let k2 = 0; k2 < 2; k2++) {
-      const t = k === 'shears' ? carried('shears') : bestOf(k);
+      // (plain rock with the stone pickaxe when one is carried: the iron or diamond one is kept for ore and obsidian - 11/22 the iron
+      //  pickaxe wore out on 200 blocks of deepslate tunnel and the diamond it found could not be mined)
+      const plain = k === 'pickaxe' && /^minecraft:(stone|deepslate|cobblestone|cobbled_deepslate|netherrack|basalt|smooth_basalt|andesite|diorite|granite|tuff|calcite|blackstone|end_stone|sandstone|stone_bricks|mossy_cobblestone|dripstone_block|terracotta|\w+_terracotta)$/.test(b.name);
+      const t = k === 'shears' ? carried('shears') : (plain && carried('stone_pickaxe') && /^(iron|diamond|netherite|golden)_pickaxe$/.test(String(bestOf(k) ?? '').replace(/^minecraft:/, '')) ? 'stone_pickaxe' : bestOf(k));
       if (!t) return 'hand';
       try { await grab(t, 'tool'); return t; } catch { await K.sync(); }
     }
