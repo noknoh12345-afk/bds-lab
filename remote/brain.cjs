@@ -1337,7 +1337,7 @@ async function dragonFight() {
     //  19 Nov, a 57 s perch of approach, 'away', approach, and no swing; the escape ran ten past its edge every time)
     // (21 Nov 20:47: thrown out to 58 from the middle by its charge, on the island's last ground, then off it into the void. Past 52:
     //  in toward the middle before anything else but the apple)
-    if (Math.hypot(P.x, P.z) > 52 && Math.floor(P.y + 0.01) >= 56 && !b.state().dead) { const l = Math.hypot(P.x, P.z); if (Date.now() - (edgeSaid ?? 0) > 15000) { edgeSaid = Date.now(); log(`dragon: ${Math.round(l)} out, by the edge: in first`); } await b.act('sneak', ['on']).catch(() => {}); try { await gotoFor([String(Math.round(P.x * 40 / l)), String(Math.round(P.z * 40 / l))], 4000); } finally { await b.act('sneak', ['off']).catch(() => {}); } continue; }
+    if (Math.hypot(P.x, P.z) > 52 && Math.floor(P.y + 0.01) >= 56 && !b.state().dead && !inCloud()) {   /* (not in its breath: 22 Nov 08:58, sneaking in from 60 through its breath, 11.5 to dead) */ const l = Math.hypot(P.x, P.z); if (Date.now() - (edgeSaid ?? 0) > 15000) { edgeSaid = Date.now(); log(`dragon: ${Math.round(l)} out, by the edge: in first`); } await b.act('sneak', ['on']).catch(() => {}); try { await gotoFor([String(Math.round(P.x * 40 / l)), String(Math.round(P.z * 40 / l))], 4000); } finally { await b.act('sneak', ['off']).catch(() => {}); } continue; }
     const cloudIn = cloud && (/dragon_fireball$/.test(cloud.type ?? '') || Math.hypot(cloud.x - P.x, cloud.z - P.z) < cr(cloud) + 0.6);
     // (21 Nov 17:39-17:41: through its breath to it at its bar of 3, and at once 'away' out of the same breath - three times. Just
     //  through it, 4 s more in it with 10+ health)
