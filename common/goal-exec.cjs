@@ -3278,7 +3278,11 @@ function goalVerbs(K, H) {
       if (re.test(bname(...s))) { placed.set(kind, s); return s; }
       log(`the ${kind} did not go down at ${s.join(' ')} (there: ${sh(bname(...s))}, under: ${sh(bname(s[0], s[1] - 1, s[2]))})`);
       // gone from the hand all the same (set down and taken back: it drops): picked up again
-      await K.sync(); if (cnt(kind) < had) await collect({ x: s[0] + 0.5, y: s[1], z: s[2] + 0.5 }, 4, new RegExp(kind));
+      await K.sync();
+      // (set down beside the spot meant - the click went to another face: none was within 12 before, so one now by the spot is this
+      //  player's own: used and taken back up. Left behind, three tables went in one quartz trip and the pickaxes stopped, 11/22)
+      if (cnt(kind) < had) { const mine = known((b) => re.test(b.name), { max: 3, radius: 5, fair: false }).find((q) => Math.abs(q.x - s[0]) <= 2 && Math.abs(q.y - s[1]) <= 2 && Math.abs(q.z - s[2]) <= 2); if (mine) { const at = [mine.x, mine.y, mine.z]; log(`the ${kind} went down at ${at.join(' ')} instead: that one`); placed.set(kind, at); return at; } }
+      if (cnt(kind) < had) await collect({ x: s[0] + 0.5, y: s[1], z: s[2] + 0.5 }, 4, new RegExp(kind));
       if (!cnt(kind)) { const h = known((b) => re.test(b.name), { max: 1, radius: 6, fair: false })[0]; if (h) return [h.x, h.y, h.z]; }
       const f = K.feet(); K.controls.back = true; await K.ticks(4); K.controls.back = false; await K.ticks(2);   // step back and try again
       if (hyp(K.feet().x - f.x, K.feet().z - f.z) < 0.1) { K.controls.left = true; await K.ticks(4); K.controls.left = false; }
