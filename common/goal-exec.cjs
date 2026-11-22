@@ -558,7 +558,15 @@ function goalVerbs(K, H) {
       // into a skeleton's arrows, or it caught up)
       // (the Nether: no running - open ground there is lava, deltas and more of them; six magma cubes in a cave the quartz tunnel broke
       //  into, run from: dead at level 21 (11/21 the lab). Shut in where it stands, as quartz_mine does when they reach the tunnel)
-      if (dimName() === 'nether' && blockItem() && !/creeper/.test(why) && !sheltering) {
+      // (but not with them already at arm's length: walling with four magma cubes at 1-2 blocks, dead from 12 health in 5 s, twice on
+      //  11/22 - the sword then, and running when weak)
+      const atArm = foesNear(2.8).length;
+      if (dimName() === 'nether' && atArm && bestTool({ kind: 'sword', tier: 1 }) && (K.attrs().health ?? 20) >= 8 && !sheltering) {
+        log(`${why}: the Nether, ${atArm} at arm's length - the sword`); stopKeys();
+        try { await M.fight_near(['12']); } catch { /* */ }
+        if (!foesNear(4).length) { try { await healUp(); } catch { /* */ } return true; }
+      }
+      if (dimName() === 'nether' && blockItem() && !/creeper/.test(why) && !sheltering && !foesNear(2.8).length) {
         log(`${why}: the Nether - shut in here, not running`); stopKeys();
         try { await M.wall_in(['1']); await healUp(); } catch (e) { log(`${why}: could not shut in: ${String(e?.message ?? e).slice(0, 80)}`); }
         return true;
