@@ -401,7 +401,9 @@ function goalVerbs(K, H) {
   const foeUnreach = new WeakMap();
   function foesNear(r = 16) {
     const f = K.feet();
-    return K.all().filter((e) => HOSTILE.test(e.type) && !/enderman/.test(e.type) && !e.gone && !(gnow() - (foeUnreach.get(e) ?? -1e9) < 60000)).map((e) => ({ e, d: hyp(e.x - f.x, e.y - f.y, e.z - f.z) })).filter((q) => q.d < r && Math.abs(q.e.y - f.y) < 7).sort((p, q) => p.d - q.d);
+    // (one marked out of reach is still counted when it is at the player's side: 11/22 a magma cube 'out of reach' for a minute took
+    //  the bot from 13 health to dead with nothing done, four runs in a row)
+    return K.all().filter((e) => HOSTILE.test(e.type) && !/enderman/.test(e.type) && !e.gone && (!(gnow() - (foeUnreach.get(e) ?? -1e9) < 60000) || hyp(e.x - f.x, e.y - f.y, e.z - f.z) < 3)).map((e) => ({ e, d: hyp(e.x - f.x, e.y - f.y, e.z - f.z) })).filter((q) => q.d < r && Math.abs(q.e.y - f.y) < 7).sort((p, q) => p.d - q.d);
   }
   const sees = (e) => { const x = eye(); return clear3(x.x, x.y, x.z, Math.floor(e.x), Math.floor(e.y + 1.4), Math.floor(e.z)); };
   // what to do about them now: null (carry on), { act: 'fight' } (here, and a fight worth taking), { act: 'evade', why } (out of
