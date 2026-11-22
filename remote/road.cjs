@@ -529,8 +529,8 @@ async function netherTrip({ rods = 8, lv = 0, minutes = 40, pearls = 0 } = {}) {
     if (n(/^(iron|diamond)_pickaxe$/) < 2) await R.run('get_iron_pickaxe 2', 'a spare pickaxe for the Nether');
     // (the quartz tunnel wears pickaxes out fast - 160 ores took two iron and five stone ones: the diamond one goes, and sticks and
     //  cobblestone for stone ones made there)
-    if (n(/^stick$/) < 24) await R.run('get_stick 24', 'sticks for pickaxes made there');
-    if (n(/^cobblestone$/) < 48) await R.run('get_cobblestone 64', 'cobblestone for stone pickaxes and the walls');
+    if (n(/^stick$/) < 48) await R.run('get_stick 48', 'sticks for pickaxes made there');
+    if (n(/^cobblestone$/) < 80) await R.run('get_cobblestone 96', 'cobblestone for stone pickaxes and the walls');
     if (n(/^crafting_table$/) < 2) await R.run('get_crafting_table 2', 'a crafting table for pickaxes made there');
     const before = me.bot.state().pos;
     // (tried again: 'the portal did not light (frame not closed?)' once in the lab, a fresh world, and the trip ended there)
@@ -677,6 +677,7 @@ async function tidy(want = 4) {
   if (k.screen()) { if (want <= 4) return; await act('close'); await sleep(300); }
   const free = () => slots().filter((it, i) => i < 36 && !it?.network_id).length;
   if (free() >= want) return;
+  if (Date.now() - (tidy.said ?? 0) > 60000) { tidy.said = Date.now(); log(`road: tidy: ${free()} free of 36 - making room`); }
   const byKind = new Map(); slots().forEach((it, i) => { if (i >= 36 || !it?.network_id) return; const nmx = nameOf(it); if (!(nmx in KEEP)) return; (byKind.get(nmx) ?? byKind.set(nmx, []).get(nmx)).push({ i, c: it.count }); });
   for (const [nmx, list] of [...byKind].sort((a, b) => b[1].reduce((s, x) => s + x.c, 0) - a[1].reduce((s, x) => s + x.c, 0))) {
     let total = list.reduce((s, x) => s + x.c, 0); const keep = KEEP[nmx];
@@ -700,7 +701,8 @@ const nightPolicy = () => { const on = process.env.ROAD_NIGHT !== 'fight' && !(K
 if (me.roadTidy) clearInterval(me.roadTidy);
 // (a tidy that never came back - an action that hung - kept every later one from running: 11/21 thirteen stacks of netherrack, 'craft:
 //  inventory full', no new pickaxe; after a minute it is given up)
-me.roadTidy = setInterval(() => { try { nightPolicy(); } catch { /* */ } if (tidy.busy && Date.now() - (tidy.since ?? 0) > 60000) tidy.busy = false; if (!tidy.busy) { tidy.busy = true; tidy.since = Date.now(); tidy(5).catch(() => {}).finally(() => { tidy.busy = false; }); } }, 15000);
+me.roadTidy = setInterval(() => { try { K()?.memo?.set('goal:tidy', (n) => tidy(n)); } catch { /* */ }   // (the miner makes room itself before a craft: 11/22 463 netherrack, 'craft: inventory full')
+   try { nightPolicy(); } catch { /* */ } if (tidy.busy && Date.now() - (tidy.since ?? 0) > 60000) tidy.busy = false; if (!tidy.busy) { tidy.busy = true; tidy.since = Date.now(); tidy(5).catch(() => {}).finally(() => { tidy.busy = false; }); } }, 15000);
 B.road_debug = async (a) => { debug = a[0] !== 'off'; log(`road_debug ${debug ? 'on' : 'off'}`); };
 B.road_status = async () => log(`road_status: ${JSON.stringify(st)} · armour ${armourText()} · level ${level()}`);
 

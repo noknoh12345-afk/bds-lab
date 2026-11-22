@@ -3315,6 +3315,7 @@ function goalVerbs(K, H) {
   async function newPickaxe() {
     if (bestTool({ kind: 'pickaxe', tier: 1 })) return true;
     if (cnt('cobblestone') + cnt('cobbled_deepslate') + cnt('blackstone') < 3) return false;
+    { const free = K.inv.slots.filter((it, i) => i < 36 && !it?.network_id).length; const t = K.memo.get('goal:tidy'); if (free < 3 && t) { log(`stone pickaxes: ${free} free slots - making room first`); try { await t(6); } catch { /* */ } } }
     const planksN = () => [...invMap()].filter(([k]) => /_planks$/.test(k)).reduce((a, [, v]) => a + v, 0);
     const needPlanks = (cnt('stick') >= 2 ? 0 : 2) + (cnt('crafting_table') || known((b) => b.name === 'minecraft:crafting_table', { max: 6, radius: 12, fair: false }).filter(mineOnly).length ? 0 : 4);
     if (planksN() < needPlanks) {   // planks from a log carried
