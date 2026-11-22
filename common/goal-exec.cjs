@@ -153,7 +153,9 @@ function goalVerbs(K, H) {
     let s = DIGC.get(b); if (s === undefined) { s = digSecOf(b, TOOLS); DIGC.set(b, s); }
     return s;
   };
-  const scaffoldNow = () => { const m = invMap(); return SCAFFOLD.find((x) => (m.get(x) ?? 0) > 0) ?? null; };
+  // (in the Nether the rock dug there first: the cobblestone brought is the stone pickaxes - walls and fills of cobblestone in a basalt
+  //  delta left none, and a quartz trip stopped at level 12 with 41 sticks, 11/22)
+  const scaffoldNow = () => { const m = invMap(); const order = dimName() === 'nether' ? ['netherrack', 'basalt', 'smooth_basalt', 'soul_soil', 'dirt', ...SCAFFOLD] : SCAFFOLD; return order.find((x) => (m.get(x) ?? 0) > (x === 'cobblestone' && dimName() === 'nether' ? 12 : 0)) ?? (m.get('cobblestone') ? 'cobblestone' : null); };
   const scaffoldItem = () => (SCAF !== undefined ? SCAF : scaffoldNow());   // (cached while a found path is walked)
   // neighbours of a standing cell, handed to emit(x, y, z, cost, digs (cells to break first) | null, pillar)
   function moves(x, y, z, o, emit) {
