@@ -2246,7 +2246,7 @@ function goalVerbs(K, H) {
         if (cnt('netherrack') > 128) {
           const t = trail(), back = t.length > 4 ? t.at(-5) : null, f = K.feet();
           if (back) { K.lookAt(back[0] + 0.5, f.y + 1.2, back[2] + 0.5); await K.ticks(2); }
-          for (let i = 0, n = 0; i < 36 && cnt('netherrack') > 64 && n < 8; i++) { const it = K.inv.slots[i]; if (it?.network_id && sh(nm(it)) === 'netherrack') { await K.act('drop', [S(it.count), S(i)]); n++; } }
+          for (let i = 0, n = 0; i < 36 && cnt('netherrack') > 64 && n < 8; i++) { const it = K.inv.slots[i]; if (it?.network_id && sh(nm(it)) === 'netherrack') { await K.act('drop', [S(it.count), S(i), 'aimed']); n++; } }
           log(`quartz: netherrack thrown back down the tunnel (${cnt('netherrack')} kept)`);
         }
         await reflexes(); continue;

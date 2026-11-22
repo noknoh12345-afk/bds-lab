@@ -1894,6 +1894,10 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           await ticks(4); resync(); return ticks(4);
         }
         const opened = !box;
+        // (thrown behind and up, away from the way on: dropped ahead it is walked over and taken straight back - 11/22 the bag stayed
+        //  full of tuff and netherrack with a drop every 15 s; a caller that aimed already - quartz throwing down its tunnel - says 'aimed')
+        const y0 = yaw, p0 = pitch, turn = a[2] !== 'aimed';
+        if (turn) { yaw = y0 + 180; pitch = -35; await ticks(2); }
         if (opened) { client.queue('interact', { action_id: 'open_inventory', target_entity_id: rid, has_position: false }); await boxWait(); }
         try {
           const src = slotRef(a[1]);
@@ -1905,7 +1909,7 @@ async function createRealPlayer({ req, host = '127.0.0.1', port, name, version, 
           //  never went and the bag filled): the server's copy again, then once more
           if (st !== 'ok') { await sync(); await ticks(4); const s2 = slotRef(a[1]); if (s2.item?.network_id) { const r2 = waitResponse(reqId); stackReq([{ type_id: 'drop', legacy_type_id: LEGACY.drop, count: Math.min(num(a[0], 1), s2.item.count), source: slotInfo(s2.c, s2.slot, s2.item, s2.dyn), randomly: false }]); st = await r2; } }
           if (st !== 'ok') say(`drop rejected: ${st}`);
-        } finally { if (opened && box) { client.queue('container_close', { window_id: box.window, window_type: box.type, server: false }); box = null; } }
+        } finally { if (opened && box) { client.queue('container_close', { window_id: box.window, window_type: box.type, server: false }); box = null; } if (turn && yaw === y0 + 180) { yaw = y0; pitch = p0; } }
         await ticks(2); await sync(); return ticks(2);
       }
       case 'inv': {
