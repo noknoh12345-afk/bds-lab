@@ -736,14 +736,17 @@ until note 103 3000
 until ■ Piano étude \(sampler demo\) — end 8000
 @A cmd /spectral:sampler 4 250 28 120 false
 
-## /spectral:say reads kana aloud with the voice (Kokoro-82M's units, Apache-2.0, each cut where its consonant starts in the sound): a mora a note of its unit every 180 ms, placed by its vowel (ト's /t/ 110 ms ahead: on at 2210 ms, started in the bundle at 2200 with 10 ms of silence left), its pitch by setPitch from the nearest of the unit's three pitches (a phrase's first mora low, the rest high, the sentence's last falling); what is not kana is not read (the game has no dictionary: tools/speech.py reads kanji)
+## /spectral:say reads kana aloud with the voice (Kokoro-82M's units, Apache-2.0, natural pitch): a mora a note every 180 ms, placed by its vowel — at the start and after a pause the mora's own unit (コ: voice_ja), after a vowel or ン the unit made after that vowel (VCV: ン after オ is voice_ja_o, ト after ウ voice_ja_u — the join inside the vowel, not at the consonant; Whisper on 20 sentences 0.46 → 0.40 of the characters wrong), a vowel the same as the one before not started again (おおきい: 2 notes, オ and キ — the second オ and the イ held by the unit before), the melody a semitone wide by setPitch; what is not kana is not read (the game has no dictionary: tools/speech.py reads kanji)
 @A cmd /spectral:sampler 4 250 28 120 true
 @A cmd /spectral:say "こんにちは、マインクラフト。"
 ~ @A ▶ こんにちは、マインクラフト。 \(0:02, 12 notes, headphones\)
 until note 0 voice 3000
-~ \[spectral\] note 0 voice_ja\.27 key 9 pitch 1\.1225 seek 0\.6000 at 0 ms
+~ \[spectral\] note 0 voice_ja\.9 key 9 pitch 0\.9715 seek 0\.6000 at 0 ms
+~ \[spectral\] note 1 voice_ja_o\.66 key 66 pitch 1\.0293 seek [\d.]+ at 0 ms
 until ■ こんにちは、マインクラフト。 — end 6000
-~ \[spectral\] note 11 voice_ja\.87 key 29 pitch 0\.9659 seek 0\.5903 at 2200 ms
+~ \[spectral\] note 11 voice_ja_u\.28 key 28 pitch 0\.9357 seek [\d.]+ at 2000 ms
+@A cmd /spectral:say "おおきい"
+~ @A ▶ おおきい \(0:00, 2 notes, headphones\)
 @A cmd /spectral:say "漢字はよめません"
 ~ @A ▶ 漢字はよめません \(0:01, 6 notes, headphones\) \(2 characters not kana: not read\)
 @A cmd /spectral:say ABC

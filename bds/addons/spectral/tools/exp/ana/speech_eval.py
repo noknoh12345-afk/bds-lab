@@ -14,10 +14,11 @@ B = N.bank(); vs = N.voices(B); vi = next(i for i, v in enumerate(vs) if v['id']
 def run(tag, **kw):
     tot = 0; rows = []
     for k, s in enumerate(SENT):
-        ms = S.morae(s); notes = S.plan(ms, vs[vi], prog=200 + vi, **kw)
+        ms = S.morae(s)
+        notes = S.vcv_plan(ms, vs, vi, **kw) if 'base' in vs[vi]['voice'] else S.plan(ms, vs[vi], prog=200 + vi, **kw)
         song = N.encode(notes, 'x', 'x', 'x'); f = f'/tmp/speech_eval_{tag}_{k}.wav'
         N.render(N.decode(song), f, master=1.0)
-        got = model.transcribe(f, language='ja', temperature=0)['text']; c = S.cer(S.reading(s), S.reading(got)); tot += c
+        got = model.transcribe(f, language='ja', temperature=0, fp16=False)['text']; c = S.cer(S.reading(s), S.reading(got)); tot += c
         rows.append((round(c, 3), got))
     print(tag, round(tot / len(SENT), 3), flush=True); json.dump(rows, open(f'/tmp/speech_eval_{tag}.json','w'), ensure_ascii=False)
     return tot / len(SENT)

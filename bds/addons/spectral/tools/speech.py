@@ -81,6 +81,59 @@ def morae(text):
     return out
 
 
+def vcv_plan(ms, vs, vi, mora_ms=180.0, rng=1.0, cut=0.0):
+    """plan() for a VCV voice (tools/samples/voice.py --vcv): each mora the unit made after the vowel before it (voice
+    `<base>_<vowel>`, n after ン; the plain unit after a pause, ッ or at the start), a vowel the same as the one before not started
+    again (the unit before holds on through it), the accent 1 semitone wide (natural pitch units: 2 made Whisper's reading worse,
+    1 the same as none: tools/exp/ana/vcv2.py), each unit stopped where the next starts (its release, 40 ms, the crossfade)"""
+    base = vs[vi]['voice'].get('base') or vs[vi]['id']
+    by = {}
+    for i, b in enumerate(vs):
+        v = b['voice']
+        if (v.get('base') or b['id']) == base:
+            by[v.get('after') or ''] = (i, {u: k for k, u in enumerate(v['units'])}, v['pre'])
+    notes, t, reg, prev_phrase, pv = [], 300.0, 0.0, None, ''
+    for i, m in enumerate(ms):
+        if m['phrase'] != prev_phrase:
+            if prev_phrase is not None:
+                reg -= (0.6 + (1.2 if ms[i - 1]['acc'] else 0)) * rng / 4
+                if ms[i - 1]['pause']:
+                    reg = max(reg, -rng / 4)
+            prev_phrase = m['phrase']
+        acc, pos = m['acc'], m['pos']
+        high = (pos > 1 and (acc == 0 or pos <= acc)) or (acc == 1 and pos == 1)
+        semis = reg + (rng / 2 if high else -rng / 2)
+        if m['kana'] == 'ッ':
+            t += mora_ms * 0.9; pv = ''; continue
+        dur = mora_ms * (0.7 if m['dev'] else 1.0)
+        if m['pause'] >= 400:
+            semis -= rng / 2; dur *= 1.15
+        kana = m['kana']
+        if pv and m.get('cons', None) == '' and m.get('v') and m['v'] == pv and notes:
+            t += dur + m['pause']                              # (the same vowel again: held by the unit before)
+            if m['pause']: pv = ''
+            continue
+        got = None
+        for ctx in ([pv, ''] if pv else ['']):
+            if ctx in by:
+                vi_, idx, pre = by[ctx]
+                u = idx.get(kana) if kana in idx else (idx.get(kana[0]) if len(kana) > 1 else None)
+                if u is not None:
+                    got = (vi_, u, pre[u]); break
+        if got:
+            vi_, u, pre = got
+            notes.append([t - pre, dur + pre + 40, u, 64 if m['dev'] else 100, 200 + vi_, round(semis * 100), m['pause']])
+        t += dur + m['pause']
+        pv = '' if m['pause'] else ('n' if kana == 'ン' else (m.get('v') or pv))
+    if cut is not None:
+        for a, b in zip(notes, notes[1:]):
+            if a[6] == 0:
+                a[1] = max(40.0, b[0] - a[0] + cut)
+    notes = [tuple(n[:6]) for n in notes]
+    t0 = min(n[0] for n in notes)
+    return sorted([(s - t0, *rest) for s, *rest in notes], key=lambda n: n[0])
+
+
 def plan(ms, voice, prog=200, mora_ms=180.0, rng=4.0, overlap=25.0, cut=10.0, merge=0.0):
     """notes for the morae: each unit started its consonant ahead of its vowel, the vowel on the beat; Tokyo accent (the first mora
     low unless the nucleus is on it, high up to the nucleus, low after it; a flat phrase stays high), each phrase a little lower
@@ -158,14 +211,17 @@ def cer(a, b):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('text'); ap.add_argument('--out'); ap.add_argument('--id', default='speech'); ap.add_argument('--title')
-    ap.add_argument('--mora', type=float, default=180.0); ap.add_argument('--range', type=float, default=4.0)
+    ap.add_argument('--mora', type=float, default=180.0); ap.add_argument('--range', type=float, default=None)
     ap.add_argument('--render'); ap.add_argument('--eval', action='store_true'); ap.add_argument('--voice', default='voice_ja')
     a = ap.parse_args()
     B = N.bank()
     vs = N.voices(B)
     vi = next(i for i, v in enumerate(vs) if v['id'] == a.voice)
     ms = morae(a.text)
-    notes = plan(ms, vs[vi], prog=200 + vi, mora_ms=a.mora, rng=a.range)
+    if 'base' in vs[vi]['voice']:
+        notes = vcv_plan(ms, vs, vi, mora_ms=a.mora, rng=1.0 if a.range is None else a.range)
+    else:
+        notes = plan(ms, vs[vi], prog=200 + vi, mora_ms=a.mora, rng=4.0 if a.range is None else a.range)
     song = N.encode(notes, a.id, a.title or a.text[:40], 'Spectral Player (speech)')
     if a.out:
         json.dump(song, open(a.out, 'w'), separators=(',', ':'), ensure_ascii=False)
